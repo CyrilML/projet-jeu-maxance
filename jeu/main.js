@@ -1,0 +1,107 @@
+// ❤️ LE CŒUR DU JEU : la boucle de jeu
+//
+// Ce fichier branche toutes les pièces ensemble, puis fait battre le cœur du jeu :
+// environ 60 fois par seconde, le navigateur nous dit « c'est le moment de dessiner une image ».
+// À chaque battement :
+//   1. on regarde combien de temps s'est écoulé depuis la dernière image ;
+//   2. on fait avancer le monde par petits pas FIXES de 1/120 s (souvent 2 pas par image) ;
+//   3. on dessine le résultat.
+//
+// Pourquoi des pas fixes ? Pour que le saut ait exactement la même hauteur sur un ordinateur
+// rapide et sur un ordinateur lent. Seul le nombre d'images affichées change.
+
+(function () {
+  const C = Jeu.CONFIG;
+  const canvas = document.getElementById("ecran");
+
+  // 1. Brancher les pièces
+  Jeu.Entrees.initialiser(window);
+  Jeu.Sauvegarde.initialiser();
+  Jeu.Rendu.initialiser(canvas);
+  const monde = Jeu.Monde.creer();
+  const options = { rayonsX: false, pause: false, ralenti: false };
+
+  const mesures = { ips: 0, majParSeconde: 0 };
+  let compteurImages = 0;
+  let compteurMaj = 0;
+  let debutMesure = performance.now();
+
+  Jeu.SousLeCapot.initialiser({
+    lireMonde: () => monde,
+    lireMesures: () => mesures,
+    elements: {
+      etat: document.getElementById("etat"),
+      journal: document.getElementById("journal"),
+      viderJournal: document.getElementById("vider-journal"),
+      base: document.getElementById("base"),
+      cle: document.getElementById("cle"),
+      effacerBase: document.getElementById("effacer-base"),
+    },
+  });
+
+  // Les touches « outils » sont gérées ici : elles ne font pas partie des règles du jeu.
+  function touchesOutils() {
+    const E = Jeu.Entrees;
+    if (E.consommer("rayonsX")) options.rayonsX = !options.rayonsX;
+    if (E.consommer("ralenti")) options.ralenti = !options.ralenti;
+    if (E.consommer("pause") && monde.phase === "jeu") options.pause = !options.pause;
+    if (monde.phase !== "jeu") options.pause = false;
+    if (E.consommer("pasSuivant") && options.pause) {
+      Jeu.Monde.mettreAJour(monde, C.pasDeTemps);
+      compteurMaj++;
+    }
+    for (const bouton of document.querySelectorAll("[data-option]")) {
+      bouton.setAttribute("aria-pressed", String(options[bouton.dataset.option]));
+    }
+  }
+
+  // 2. La boucle
+  let accumulateur = 0;
+  let precedent = performance.now();
+
+  function boucle(maintenant) {
+    // Si l'onglet était caché longtemps, on ne rattrape pas plus de 0,1 s (sinon tout « saute »).
+    const ecoule = Math.min((maintenant - precedent) / 1000, 0.1);
+    precedent = maintenant;
+
+    touchesOutils();
+
+    if (!options.pause) {
+      accumulateur += options.ralenti ? ecoule * 0.25 : ecoule;
+      while (accumulateur >= C.pasDeTemps) {
+        Jeu.Monde.mettreAJour(monde, C.pasDeTemps);
+        accumulateur -= C.pasDeTemps;
+        compteurMaj++;
+      }
+    }
+
+    Jeu.Rendu.dessiner(monde, options);
+    compteurImages++;
+
+    if (maintenant - debutMesure >= 1000) {
+      const secondes = (maintenant - debutMesure) / 1000;
+      mesures.ips = Math.round(compteurImages / secondes);
+      mesures.majParSeconde = Math.round(compteurMaj / secondes);
+      compteurImages = 0;
+      compteurMaj = 0;
+      debutMesure = maintenant;
+    }
+
+    requestAnimationFrame(boucle);
+  }
+
+  requestAnimationFrame(boucle);
+
+  // Boutons à l'écran (mêmes effets que les touches)
+  for (const bouton of document.querySelectorAll("[data-action]")) {
+    bouton.addEventListener("click", () => {
+      Jeu.Entrees.appuyer(bouton.dataset.action);
+      canvas.focus();
+    });
+  }
+  canvas.focus();
+
+  // Accès pour les tests et la curiosité : tape Jeu.monde dans la console du navigateur (F12).
+  Jeu.monde = monde;
+  Jeu.options = options;
+})();

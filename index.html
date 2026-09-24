@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Carnet de bord de Maxance</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
+  <style>
+    :root {
+      --fond: #0e1325; --panneau: #171e38; --panneau2: #1d2547; --bord: #2a3460;
+      --texte: #e8ecff; --doux: #9aa5d6; --accent: #ffe27a;
+      --moteur: #5b8cff; --logique: #3fc27a; --donnees: #f2b13c; --affichage: #b57bff;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+    body { margin: 0; background: var(--fond); color: var(--texte); font-family: "Trebuchet MS", system-ui, sans-serif; line-height: 1.55; }
+    a { color: var(--accent); }
+    code, kbd, pre { font-family: ui-monospace, Menlo, Consolas, monospace; }
+    code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 5px; font-size: .9em; color: #ffd98a; }
+    kbd { background: #27305a; border-radius: 4px; padding: 0 5px; font-size: .85em; }
+
+    nav.menu { position: sticky; top: 0; z-index: 5; background: rgba(14,19,37,.95); backdrop-filter: blur(6px); border-bottom: 1px solid var(--bord); }
+    nav.menu .dedans { max-width: 1100px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 6px 16px; flex-wrap: wrap; align-items: center; }
+    nav.menu strong { margin-right: auto; }
+    nav.menu a { text-decoration: none; color: var(--doux); font-weight: bold; font-size: .92rem; }
+    nav.menu a:hover { color: var(--texte); }
+    nav.menu a.jouer { background: #4f7cff; color: #fff; padding: 5px 12px; border-radius: 9px; }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 0 16px 60px; }
+    header.titre { text-align: center; padding: 36px 0 10px; }
+    header.titre h1 { font-size: 2.2rem; margin: 0; }
+    header.titre p { color: var(--doux); margin: 6px auto 0; max-width: 680px; }
+
+    section { margin-top: 44px; }
+    h2 { font-size: 1.6rem; margin: 0 0 6px; }
+    h2 + .chapeau { color: var(--doux); margin: 0 0 18px; }
+    h3 { font-size: 1.15rem; margin: 28px 0 8px; }
+    .carte { background: var(--panneau); border: 1px solid var(--bord); border-radius: 14px; padding: 16px 18px; }
+    .grille { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .carte h4 { margin: 0 0 6px; font-size: 1.05rem; }
+    .carte p, .carte ul, .carte ol { margin: 6px 0; }
+    .carte ul, .carte ol { padding-left: 20px; }
+    .petit { font-size: .88rem; color: var(--doux); }
+    .etiquette { display: inline-block; font-size: .75rem; font-weight: bold; padding: 1px 8px; border-radius: 99px; background: rgba(255,255,255,.1); color: var(--doux); vertical-align: middle; }
+
+    .cycle { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; counter-reset: cycle; }
+    .cycle div { background: var(--panneau2); border-radius: 12px; padding: 12px; position: relative; }
+    .cycle div::before { counter-increment: cycle; content: counter(cycle); position: absolute; top: -10px; left: -6px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #222; font-weight: bold; display: grid; place-items: center; font-size: .85rem; }
+    .cycle b { display: block; }
+    .cycle span { font-size: .88rem; color: var(--doux); }
+
+    .comparaison { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .mauvais { border-left: 5px solid #ff6b6b; }
+    .bon { border-left: 5px solid var(--logique); }
+
+    form.fiche { display: grid; gap: 12px; }
+    form.fiche label { font-weight: bold; display: block; }
+    form.fiche label small { font-weight: normal; color: var(--doux); display: block; }
+    form.fiche input, form.fiche textarea { width: 100%; margin-top: 4px; font: inherit; color: var(--texte); background: #0b1020; border: 1px solid var(--bord); border-radius: 8px; padding: 8px 10px; }
+    form.fiche textarea { min-height: 70px; resize: vertical; }
+    .boutons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    button { font: inherit; font-weight: bold; color: #fff; background: #4f7cff; border: none; border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+    button.secondaire { background: #27305a; }
+    button:hover { filter: brightness(1.12); }
+    pre.resultat { background: #0b1020; border: 1px solid var(--bord); border-radius: 10px; padding: 12px; white-space: pre-wrap; font-size: .85rem; max-height: 360px; overflow: auto; }
+
+    .schema { width: 100%; height: auto; display: block; }
+    .legende { display: flex; gap: 14px; flex-wrap: wrap; font-size: .88rem; margin-top: 8px; }
+    .legende span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+
+    table.fichiers { width: 100%; border-collapse: collapse; font-size: .92rem; }
+    table.fichiers th, table.fichiers td { text-align: left; padding: 8px; border-bottom: 1px solid var(--bord); vertical-align: top; }
+    table.fichiers th { color: var(--doux); font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+    table.fichiers td:first-child { white-space: nowrap; }
+    .pastille { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+    .tableau-defile { overflow-x: auto; }
+
+    .frise { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; }
+    .image { flex: 1 0 200px; background: var(--panneau2); border-radius: 10px; padding: 8px; }
+    .image b { font-size: .85rem; color: var(--doux); }
+    .image .etapes { display: flex; gap: 4px; margin-top: 6px; }
+    .image .etapes span { flex: 1; text-align: center; font-size: .78rem; border-radius: 6px; padding: 4px 2px; }
+    .maj { background: rgba(63,194,122,.25); }
+    .des { background: rgba(181,123,255,.3); }
+
+    ol.voyage { list-style: none; padding: 0; margin: 0; border-left: 3px solid var(--accent); }
+    ol.voyage li { position: relative; padding: 0 0 14px 20px; }
+    ol.voyage li::before { content: ""; position: absolute; left: -8px; top: 6px; width: 13px; height: 13px; border-radius: 50%; background: var(--accent); }
+    ol.voyage .quand { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--accent); font-size: .85rem; }
+
+    .simulateur { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .simulateur label { display: block; font-size: .9rem; margin-bottom: 10px; }
+    .simulateur input[type=range] { width: 100%; }
+    .simulateur canvas { width: 100%; background: #0b1020; border-radius: 10px; border: 1px solid var(--bord); }
+    .mesure { font-size: 1.05rem; margin: 4px 0; }
+    .mesure b { color: var(--accent); }
+
+    details.question { background: var(--panneau2); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
+    details.question summary { cursor: pointer; font-weight: bold; }
+    details.question p { margin: 8px 0 0; }
+
+    .route { display: grid; gap: 12px; }
+    .route .carte { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 14px; }
+    .route .num { grid-row: span 3; width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-size: 1.4rem; font-weight: bold; background: var(--panneau2); }
+    .route .fait .num { background: var(--logique); }
+    .route .prochain { border-color: var(--accent); }
+    .route .prochain .num { background: var(--accent); color: #222; }
+    .route h4 { margin: 0; }
+    .route .apprend { font-size: .9rem; }
+    .route .apprend b { color: var(--doux); }
+
+    textarea.journal { width: 100%; min-height: 110px; font: inherit; color: var(--texte); background: #0b1020; border: 1px solid var(--bord); border-radius: 8px; padding: 10px; margin-top: 6px; }
+
+    @media (max-width: 760px) {
+      .comparaison, .simulateur { grid-template-columns: 1fr; }
+      header.titre h1 { font-size: 1.7rem; }
+      nav.menu strong { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="menu" aria-label="Sommaire">
+    <div class="dedans">
+      <strong>📓 Carnet de Maxance</strong>
+      <a href="#equipe">L'équipe</a>
+      <a href="#demande">Passer commande</a>
+      <a href="#etape1">Étape 1</a>
+      <a href="#route">Vers Minecraft</a>
+      <a href="#journal">Journal</a>
+      <a class="jouer" href="jeu/index.html">▶ Jouer</a>
+    </div>
+  </nav>
+
+  <main>
+    <header class="titre">
+      <h1>🧱 Le projet de Maxance</h1>
+      <p>Un jeu en 2D qui commence par courir, sauter et esquiver des obstacles… et qui va grandir, étape par étape, jusqu'à un monde de blocs façon Minecraft.
+      Ici, on ne se contente pas de jouer : on regarde <strong>comment ça marche à l'intérieur</strong>.</p>
+    </header>
+
+    <!-- ============ L'ÉQUIPE ============ -->
+    <section id="equipe">
+      <h2>👥 L'équipe : qui fait quoi</h2>
+      <p class="chapeau">Comme dans un vrai studio de jeux vidéo, chacun a son rôle. Le code, c'est Claude. Les idées et les décisions, c'est Maxance.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>🎬 Maxance · directeur du jeu</h4>
+          <ul>
+            <li>a les idées et <strong>décide</strong> de ce que fait le jeu ;</li>
+            <li>écrit chaque <strong>demande</strong> avec la fiche (voir plus bas) ;</li>
+            <li><strong>teste</strong> avec les rayons X et vérifie les critères de réussite ;</li>
+            <li>valide ou refuse : « c'est bon » ou « ce n'est pas ce que j'ai demandé » ;</li>
+            <li>note dans le journal ce qu'il a appris.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>🤖 Claude · développeur</h4>
+          <ul>
+            <li>écrit <strong>tout le code</strong> ;</li>
+            <li>pose des questions si la demande n'est pas assez précise ;</li>
+            <li>explique <strong>ce qu'il a fait et pourquoi</strong>, avec des mots simples ;</li>
+            <li>ajoute de quoi voir le fonctionnement interne (rayons X, journal, base de données) ;</li>
+            <li>met à jour ce carnet à chaque étape.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>🧭 Cyril · producteur</h4>
+          <ul>
+            <li>aide Maxance à rendre sa demande claire et précise ;</li>
+            <li>transmet la demande à Claude ;</li>
+            <li>garde le rythme des séances ;</li>
+            <li>relit l'explication avec Maxance et pose des questions.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔁 Comment se passe une étape</h3>
+      <div class="cycle">
+        <div><b>Jouer et relire</b><span>Maxance joue à la version actuelle et relit ce qu'il a appris. <em>10 min</em></span></div>
+        <div><b>Écrire la demande</b><span>Avec la fiche : quoi, comment, en combien de temps, critères. <em>15 min</em></span></div>
+        <div><b>Claude code</b><span>Cyril donne la demande à Claude, qui code et explique. <em>10 à 30 min</em></span></div>
+        <div><b>Tester sous le capot</b><span>Rayons X, pause, ralenti, journal : est-ce que chaque critère est rempli ? <em>15 min</em></span></div>
+        <div><b>Valider et noter</b><span>Validé ? On l'écrit dans le journal. Sinon, on corrige la demande. <em>5 min</em></span></div>
+      </div>
+      <p class="petit">Rythme conseillé : une étape = 1 à 2 séances d'environ 45 minutes. Pas besoin d'aller vite : le but est de comprendre et de s'amuser.</p>
+    </section>
+
+    <!-- ============ PASSER COMMANDE ============ -->
+    <section id="demande">
+      <h2>✍️ Passer commande à Claude</h2>
+      <p class="chapeau">Un développeur fait exactement ce qu'on lui demande. Si la demande est floue, le résultat sera au hasard. Savoir écrire une bonne demande, c'est le vrai super-pouvoir d'un directeur de jeu.</p>
+
+      <div class="comparaison">
+        <div class="carte mauvais">
+          <h4>❌ Demande floue</h4>
+          <p>« Ajoute des ennemis. »</p>
+          <p class="petit">Combien ? Où ? Ils bougent comment ? Qu'est-ce qui se passe si on les touche ? Claude devra tout deviner.</p>
+        </div>
+        <div class="carte bon">
+          <h4>✅ Demande précise</h4>
+          <p>« Ajoute un oiseau qui vole de droite à gauche à hauteur de tête (y = 360), à la même vitesse que les obstacles. Il apparaît à partir du score 10, environ une fois sur quatre à la place d'une caisse. Si on le touche, c'est perdu. Pour l'éviter, il faut <em>ne pas</em> sauter. Je saurai que c'est réussi si, avec les rayons X, je vois sa zone de collision passer au-dessus de ma tête quand je reste au sol. »</p>
+        </div>
+      </div>
+
+      <h3>📋 La fiche de demande</h3>
+      <p>Remplis la fiche, puis clique sur <strong>Préparer le message</strong> : le texte à envoyer à Claude apparaît, prêt à copier. La fiche est sauvegardée dans ce navigateur.</p>
+
+      <div class="carte">
+        <form class="fiche" id="fiche" autocomplete="off">
+          <label>Titre de la demande
+            <small>Court, comme un nom de mission.</small>
+            <input name="titre" placeholder="Ex. : Un monde en blocs">
+          </label>
+          <label>🎯 QUOI : qu'est-ce que je veux ?
+            <small>En une ou deux phrases.</small>
+            <textarea name="quoi" placeholder="Ex. : Je veux que le sol soit fait de blocs, avec des trous et des plateformes, et que la caméra me suive quand j'avance."></textarea>
+          </label>
+          <label>💡 POURQUOI : qu'est-ce que ça apporte au joueur ?
+            <textarea name="pourquoi" placeholder="Ex. : Pour explorer un vrai monde au lieu de rester au même endroit."></textarea>
+          </label>
+          <label>⚙️ COMMENT : les règles précises
+            <small>Avec des nombres et des « si… alors… ». Où ça apparaît, comment ça bouge, ce qui se passe quand on le touche.</small>
+            <textarea name="comment" placeholder="Ex. : Si je tombe dans un trou, je recommence au dernier drapeau. Les plateformes sont à 2 ou 3 blocs de haut."></textarea>
+          </label>
+          <label>⏱️ EN COMBIEN DE TEMPS : durées et vitesses dans le jeu
+            <small>Combien de temps dure une action, à quelle vitesse, tous les combien.</small>
+            <textarea name="temps" placeholder="Ex. : La caméra rattrape le joueur en moins d'une demi-seconde. Un trou tous les 10 blocs environ."></textarea>
+          </label>
+          <label>👥 QUI FAIT QUOI
+            <textarea name="qui">Maxance : décide des règles, teste avec les rayons X, valide.
+Claude : code, explique ce qu'il a fait et pourquoi, met à jour le carnet.
+Cyril : relit la demande avec Maxance et la transmet.</textarea>
+          </label>
+          <label>✅ COMMENT JE SAURAI QUE C'EST RÉUSSI
+            <small>Des tests que Maxance peut faire lui-même, une ligne par test.</small>
+            <textarea name="criteres" placeholder="Ex. : Je peux marcher sur les plateformes sans passer à travers.&#10;Si je tombe dans un trou, je réapparais au drapeau.&#10;Avec les rayons X, je vois la grille et le numéro de chaque case."></textarea>
+          </label>
+          <label>🧠 CE QUE JE VEUX COMPRENDRE
+            <small>Tes questions sur le fonctionnement interne. Claude devra y répondre.</small>
+            <textarea name="comprendre" placeholder="Ex. : Comment le jeu sait sur quelle case je suis ? Comment on range un monde dans la mémoire ?"></textarea>
+          </label>
+          <label>📅 POUR QUAND
+            <input name="quand" placeholder="Ex. : Séance de samedi">
+          </label>
+        </form>
+        <div class="boutons">
+          <button type="button" id="preparer">Préparer le message</button>
+          <button type="button" class="secondaire" id="copier">📋 Copier</button>
+          <button type="button" class="secondaire" id="vider">Vider la fiche</button>
+        </div>
+        <pre class="resultat" id="resultat" hidden></pre>
+      </div>
+    </section>
+
+    <!-- ============ ÉTAPE 1 ============ -->
+    <section id="etape1">
+      <h2>🏃 Étape 1 : courir, sauter, esquiver <span class="etiquette">✅ livrée</span></h2>
+      <p class="chapeau">Le point de départ du projet : un héros qui court à gauche et à droite, qui saute, et des obstacles en blocs à esquiver.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Reconstituée à partir de ce qu'il a raconté. Le fichier complet est dans <code>demandes/01-courir-sauter-esquiver.md</code>.</p>
+          <p><strong>Quoi :</strong> un jeu en 2D où je me déplace de gauche à droite et où je saute pour esquiver des obstacles.</p>
+          <p><strong>Comment :</strong> si je touche un obstacle, j'ai perdu. Chaque obstacle esquivé = 1 point. Mon record est gardé.</p>
+          <p><strong>Pour comprendre :</strong> comment le jeu est organisé, comment il réagit quand j'appuie sur une touche, et à quoi sert une base de données.</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>← → (ou Q D) déplacent le héros, sans sortir de l'écran.</li>
+            <li>Espace / ↑ / Z : saut d'environ 4 blocs, en moins d'une seconde.</li>
+            <li>Garder la touche = saut haut ; appui court = petit saut.</li>
+            <li>Les obstacles accélèrent avec le temps ; tours et murets arrivent aux scores 4 et 8.</li>
+            <li>Le record survit quand on ferme la page.</li>
+            <li>Touche <kbd>X</kbd> : les rayons X montrent tout ce qui est invisible.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🏗️ L'architecture : comment le jeu est organisé</h3>
+      <p>Un jeu, ce n'est pas un seul gros fichier : c'est une équipe de petits morceaux de code, chacun avec <strong>un seul travail</strong>. Ils sont rangés en 4 familles (4 dossiers) :</p>
+
+      <div class="carte">
+        <svg class="schema" viewBox="0 0 900 470" role="img" aria-label="Schéma de l'architecture du jeu">
+          <defs>
+            <marker id="pointe" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#9aa5d6"/>
+            </marker>
+            <style>
+              .b { rx: 10; stroke-width: 2; }
+              .t { fill: #e8ecff; font: bold 14px 'Trebuchet MS', sans-serif; text-anchor: middle; }
+              .s { fill: #9aa5d6; font: 12px 'Trebuchet MS', sans-serif; text-anchor: middle; }
+              .f { stroke: #9aa5d6; stroke-width: 2; fill: none; marker-end: url(#pointe); }
+              .fl { fill: #ffe27a; font: italic 12px 'Trebuchet MS', sans-serif; text-anchor: middle; }
+            </style>
+          </defs>
+
+          <!-- Boucle -->
+          <rect class="b" x="330" y="8" width="380" height="46" fill="#3a1f2e" stroke="#ff6b8a"/>
+          <text class="t" x="520" y="30">❤️ La boucle de jeu · main.js</text>
+          <text class="s" x="520" y="46">120 mises à jour et 60 images par seconde</text>
+
+          <!-- Clavier et entrées -->
+          <rect class="b" x="20" y="110" width="130" height="60" fill="#1d2547" stroke="#9aa5d6"/>
+          <text class="t" x="85" y="136">⌨️ Clavier</text>
+          <text class="s" x="85" y="154">tes doigts</text>
+          <rect class="b" x="190" y="110" width="170" height="60" fill="#1b2a55" stroke="var(--moteur)"/>
+          <text class="t" x="275" y="136">🎮 Entrées</text>
+          <text class="s" x="275" y="154">moteur/entrees.js</text>
+
+          <!-- Monde -->
+          <rect class="b" x="400" y="84" width="240" height="170" fill="#16362a" stroke="var(--logique)"/>
+          <text class="t" x="520" y="106">🌍 Le monde · logique/monde.js</text>
+          <rect class="b" x="415" y="120" width="100" height="56" fill="#1c4533" stroke="var(--logique)"/>
+          <text class="t" x="465" y="143">🧍 Joueur</text>
+          <text class="s" x="465" y="162">joueur.js</text>
+          <rect class="b" x="525" y="120" width="100" height="56" fill="#1c4533" stroke="var(--logique)"/>
+          <text class="t" x="575" y="143">🧱 Obstacles</text>
+          <text class="s" x="575" y="162">obstacles.js</text>
+          <text class="s" x="520" y="202">+ score, vitesse, phase, temps…</text>
+          <text class="s" x="520" y="222">= la mémoire vive du jeu</text>
+
+          <!-- Rendu -->
+          <rect class="b" x="690" y="110" width="190" height="60" fill="#2d1f4d" stroke="var(--affichage)"/>
+          <text class="t" x="785" y="136">🎨 Rendu</text>
+          <text class="s" x="785" y="154">affichage/rendu.js</text>
+          <rect class="b" x="690" y="200" width="190" height="50" fill="#1d2547" stroke="#9aa5d6"/>
+          <text class="t" x="785" y="230">🖥️ Écran</text>
+
+          <!-- Physique, config -->
+          <rect class="b" x="190" y="290" width="170" height="60" fill="#1b2a55" stroke="var(--moteur)"/>
+          <text class="t" x="275" y="316">🍎 Physique</text>
+          <text class="s" x="275" y="334">moteur/physique.js</text>
+          <rect class="b" x="20" y="290" width="130" height="60" fill="#1d2547" stroke="#9aa5d6"/>
+          <text class="t" x="85" y="316">🎛️ Réglages</text>
+          <text class="s" x="85" y="334">config.js · lus par tous</text>
+
+          <!-- Événements, capot, sauvegarde -->
+          <rect class="b" x="400" y="290" width="240" height="60" fill="#1b2a55" stroke="var(--moteur)"/>
+          <text class="t" x="520" y="316">📻 Événements (la radio)</text>
+          <text class="s" x="520" y="334">moteur/evenements.js</text>
+          <rect class="b" x="690" y="290" width="190" height="60" fill="#2d1f4d" stroke="var(--affichage)"/>
+          <text class="t" x="785" y="316">🔧 Sous le capot</text>
+          <text class="s" x="785" y="334">journal, état en direct</text>
+          <rect class="b" x="400" y="395" width="240" height="60" fill="#3b2d12" stroke="var(--donnees)"/>
+          <text class="t" x="520" y="421">💾 Sauvegarde</text>
+          <text class="s" x="520" y="439">donnees/sauvegarde.js</text>
+          <rect class="b" x="690" y="395" width="190" height="60" fill="#3b2d12" stroke="var(--donnees)"/>
+          <text class="t" x="785" y="421">🗄️ Base de données</text>
+          <text class="s" x="785" y="439">localStorage du navigateur</text>
+
+          <!-- Flèches -->
+          <path class="f" d="M150 140 H186"/>
+          <path class="f" d="M360 140 H396"/>
+          <text class="fl" x="378" y="130">intentions</text>
+          <path class="f" d="M640 140 H686"/>
+          <text class="fl" x="664" y="130">lit</text>
+          <path class="f" d="M785 170 V196"/>
+          <path class="f" d="M520 54 V80"/>
+          <path class="f" d="M700 54 Q760 70 770 106"/>
+          <path class="f" d="M360 320 Q390 300 410 258"/>
+          <text class="fl" x="360" y="276">lois de la nature</text>
+          <path class="f" d="M520 254 V286"/>
+          <text class="fl" x="560" y="275">annonce</text>
+          <path class="f" d="M640 320 H686"/>
+          <path class="f" d="M520 350 V391"/>
+          <text class="fl" x="555" y="376">écoute</text>
+          <path class="f" d="M640 425 H686"/>
+          <text class="fl" x="664" y="415">écrit</text>
+        </svg>
+        <div class="legende">
+          <span style="--c: var(--moteur)">moteur/ : les outils génériques (réutilisables dans n'importe quel jeu)</span>
+          <span style="--c: var(--logique)">logique/ : les règles de CE jeu</span>
+          <span style="--c: var(--donnees)">donnees/ : ce qu'on garde pour toujours</span>
+          <span style="--c: var(--affichage)">affichage/ : ce qu'on voit</span>
+        </div>
+      </div>
+
+      <p><strong>La règle d'or :</strong> la logique ne dessine jamais, et le rendu ne change jamais les règles. Le rendu <em>lit</em> le monde et le peint, c'est tout.
+      Grâce à ça, quand on passera aux blocs façon Minecraft, on pourra changer le dessin sans casser la physique, ou l'inverse.</p>
+
+      <div class="carte tableau-defile">
+        <table class="fichiers">
+          <thead><tr><th>Fichier</th><th>Son travail</th><th>Comme…</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pastille" style="background:#ff6b8a"></span><code>main.js</code></td><td>Branche toutes les pièces et fait tourner la boucle de jeu.</td><td>le cœur qui bat</td></tr>
+            <tr><td><span class="pastille" style="background:#9aa5d6"></span><code>config.js</code></td><td>Tous les réglages chiffrés : gravité, force du saut, vitesses…</td><td>le tableau de bord</td></tr>
+            <tr><td><span class="pastille" style="background:var(--moteur)"></span><code>moteur/entrees.js</code></td><td>Transforme les touches en intentions (« gauche », « sauter »).</td><td>les oreilles</td></tr>
+            <tr><td><span class="pastille" style="background:var(--moteur)"></span><code>moteur/physique.js</code></td><td>Gravité, déplacement, sol, collisions.</td><td>les lois de la nature</td></tr>
+            <tr><td><span class="pastille" style="background:var(--moteur)"></span><code>moteur/evenements.js</code></td><td>Permet d'annoncer « j'ai sauté ! » à qui veut l'entendre.</td><td>la radio</td></tr>
+            <tr><td><span class="pastille" style="background:var(--logique)"></span><code>logique/joueur.js</code></td><td>Les données du héros et ses règles (quand a-t-il le droit de sauter ?).</td><td>le personnage</td></tr>
+            <tr><td><span class="pastille" style="background:var(--logique)"></span><code>logique/obstacles.js</code></td><td>Crée, fait avancer et supprime les obstacles.</td><td>le metteur en scène</td></tr>
+            <tr><td><span class="pastille" style="background:var(--logique)"></span><code>logique/monde.js</code></td><td>Contient tout l'état de la partie et les phases (accueil, jeu, perdu).</td><td>la mémoire vive</td></tr>
+            <tr><td><span class="pastille" style="background:var(--donnees)"></span><code>donnees/sauvegarde.js</code></td><td>Écoute la radio et écrit le record et les statistiques dans la base.</td><td>le carnet de souvenirs</td></tr>
+            <tr><td><span class="pastille" style="background:var(--affichage)"></span><code>affichage/rendu.js</code></td><td>Dessine le monde, image par image, et les rayons X.</td><td>le peintre</td></tr>
+            <tr><td><span class="pastille" style="background:var(--affichage)"></span><code>affichage/sous-le-capot.js</code></td><td>Le panneau sous le jeu : état en direct, journal, base de données.</td><td>le tableau de bord du mécano</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>❤️ La boucle de jeu : le cœur qui bat</h3>
+      <p>Un jeu vidéo, c'est une boucle qui ne s'arrête jamais. Environ <strong>60 fois par seconde</strong>, l'écran demande une nouvelle image. À chaque fois, le jeu :</p>
+      <ol>
+        <li>regarde combien de temps s'est écoulé ;</li>
+        <li><strong>met à jour</strong> le monde par petits pas de 1/120 s (8,3 millisecondes) : lire les touches, bouger, appliquer la gravité, tester les collisions ;</li>
+        <li><strong>dessine</strong> le résultat.</li>
+      </ol>
+      <div class="frise" aria-label="Frise de trois images">
+        <div class="image"><b>Image 1 · 0 à 16,7 ms</b><div class="etapes"><span class="maj">mise à jour</span><span class="maj">mise à jour</span><span class="des">dessin</span></div></div>
+        <div class="image"><b>Image 2 · 16,7 à 33,3 ms</b><div class="etapes"><span class="maj">mise à jour</span><span class="maj">mise à jour</span><span class="des">dessin</span></div></div>
+        <div class="image"><b>Image 3 · 33,3 à 50 ms</b><div class="etapes"><span class="maj">mise à jour</span><span class="maj">mise à jour</span><span class="des">dessin</span></div></div>
+      </div>
+      <p class="petit">Pourquoi des pas de temps fixes ? Pour que le saut ait exactement la même hauteur sur un ordinateur rapide et sur un ordinateur lent. Sur un vieil ordi, on affiche moins d'images, mais le monde avance pareil. Dans le panneau « État en direct », compare « images par seconde » et « mises à jour par seconde ».</p>
+
+      <h3>⚡ Le voyage d'une touche : de ton doigt à l'écran</h3>
+      <ol class="voyage">
+        <li><span class="quand">0 ms</span> · Tu appuies sur <kbd>Espace</kbd>. Le navigateur envoie un message « keydown, code = Space ».</li>
+        <li><span class="quand">0 ms</span> · <code>entrees.js</code> le reçoit et note : « intention <em>sauter</em> en attente ».</li>
+        <li><span class="quand">≤ 8 ms</span> · À la mise à jour suivante, <code>joueur.js</code> consomme l'intention. Il vérifie son état : est-il <code>au-sol</code> ? Si oui…</li>
+        <li><span class="quand">≤ 8 ms</span> · … il fixe sa vitesse verticale : <code>vy = -860</code> px/s (négatif = vers le haut), passe dans l'état <code>monte</code> et annonce <code>saut</code> à la radio.</li>
+        <li><span class="quand">≤ 8 ms</span> · La radio prévient la sauvegarde (qui compte le saut) et le journal (qui l'écrit).</li>
+        <li><span class="quand">≤ 17 ms</span> · <code>rendu.js</code> dessine le héros un peu plus haut. Tu vois le saut commencer.</li>
+        <li><span class="quand">+ 8 ms, + 8 ms…</span> · À chaque pas, la gravité ajoute 20 px/s à <code>vy</code>. Le héros ralentit, s'arrête en l'air, puis retombe.</li>
+        <li><span class="quand">≈ 720 ms</span> · <code>physique.js</code> détecte qu'il touche le sol : on le pose dessus, <code>vy = 0</code>, état <code>au-sol</code>, annonce <code>atterrissage</code>.</li>
+      </ol>
+      <p class="petit">Tout ça en moins de 2 centièmes de seconde, c'est pour ça que le jeu paraît instantané. Pour le voir en vrai : touche <kbd>P</kbd> pour mettre en pause, puis <kbd>N</kbd> pour avancer d'un pas à la fois.</p>
+
+      <h3>🔀 La machine à états du joueur</h3>
+      <p>Le héros est toujours dans <strong>un seul état</strong> à la fois. Selon son état, il n'a pas les mêmes droits.</p>
+      <div class="carte">
+        <svg class="schema" viewBox="0 0 900 200" role="img" aria-label="Machine à états du joueur">
+          <defs>
+            <marker id="pointe2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffe27a"/></marker>
+          </defs>
+          <g font-family="Trebuchet MS, sans-serif" text-anchor="middle">
+            <rect x="30" y="60" width="170" height="60" rx="30" fill="#16362a" stroke="#3fc27a" stroke-width="2"/>
+            <text x="115" y="96" fill="#e8ecff" font-weight="bold" font-size="17">au-sol</text>
+            <rect x="360" y="60" width="170" height="60" rx="30" fill="#1b2a55" stroke="#5b8cff" stroke-width="2"/>
+            <text x="445" y="96" fill="#e8ecff" font-weight="bold" font-size="17">monte</text>
+            <rect x="690" y="60" width="170" height="60" rx="30" fill="#1b2a55" stroke="#5b8cff" stroke-width="2"/>
+            <text x="775" y="96" fill="#e8ecff" font-weight="bold" font-size="17">descend</text>
+            <path d="M200 80 H356" stroke="#ffe27a" stroke-width="2" fill="none" marker-end="url(#pointe2)"/>
+            <text x="278" y="70" fill="#ffe27a" font-size="13">saut demandé</text>
+            <path d="M530 80 H686" stroke="#ffe27a" stroke-width="2" fill="none" marker-end="url(#pointe2)"/>
+            <text x="608" y="70" fill="#ffe27a" font-size="13">vy devient positif</text>
+            <path d="M775 120 Q775 185 445 185 Q115 185 115 124" stroke="#ffe27a" stroke-width="2" fill="none" marker-end="url(#pointe2)"/>
+            <text x="445" y="178" fill="#ffe27a" font-size="13">touche le sol</text>
+            <text x="115" y="40" fill="#9aa5d6" font-size="13">peut sauter ✔</text>
+            <text x="445" y="40" fill="#9aa5d6" font-size="13">ne peut pas sauter ✘</text>
+            <text x="775" y="40" fill="#9aa5d6" font-size="13">ne peut pas sauter ✘</text>
+          </g>
+        </svg>
+        <p class="petit">Plus un 4ᵉ état, <code>touche</code>, quand un obstacle nous percute : plus rien ne bouge. Plus tard, on ajoutera sûrement « nage », « grimpe », « creuse »…</p>
+      </div>
+
+      <h3>🍎 La physique du saut : joue avec les nombres</h3>
+      <p>Le saut dépend de deux réglages de <code>config.js</code> : la <strong>force du saut</strong> (vitesse de départ vers le haut) et la <strong>gravité</strong> (qui freine la montée puis accélère la chute). Bouge les curseurs pour voir ce qui change :</p>
+      <div class="carte simulateur">
+        <div>
+          <label>Force du saut : <b id="val-force"></b> px/s<input type="range" id="force" min="400" max="1400" step="10" value="860"></label>
+          <label>Gravité : <b id="val-gravite"></b> px/s²<input type="range" id="gravite" min="800" max="5000" step="50" value="2400"></label>
+          <label>Vitesse du monde : <b id="val-vitesse"></b> px/s<input type="range" id="vitesse" min="200" max="700" step="10" value="280"></label>
+          <p class="mesure">Hauteur : <b id="hauteur"></b></p>
+          <p class="mesure">Durée en l'air : <b id="duree"></b></p>
+          <p class="mesure" id="verdict"></p>
+          <button type="button" class="secondaire" id="reinit-sim">Revenir aux réglages du jeu</button>
+        </div>
+        <canvas id="courbe" width="640" height="300" aria-label="Trajectoire du saut"></canvas>
+      </div>
+      <p class="petit">Les formules (pour les curieux) : hauteur = force² ÷ (2 × gravité), durée = 2 × force ÷ gravité. La trajectoire est une <strong>parabole</strong>, comme un ballon qu'on lance.</p>
+
+      <h3>🎮 Les astuces invisibles qui rendent le jeu agréable</h3>
+      <div class="grille">
+        <div class="carte"><h4>⏳ La mémoire de saut</h4><p>Si tu appuies sur saut <em>juste avant</em> d'atterrir (moins de 0,12 s), le jeu s'en souvient et saute dès que tu touches le sol. Sans ça, le jeu semblerait « rater » des appuis.</p></div>
+        <div class="carte"><h4>✂️ Le saut variable</h4><p>Si tu relâches la touche pendant la montée, la vitesse vers le haut est coupée (× 0,45). Appui court = petit saut, appui long = grand saut.</p></div>
+        <div class="carte"><h4>🤏 La zone de collision gentille</h4><p>La zone qui compte pour les collisions (en rouge dans les rayons X) est 4 px plus petite que le dessin. Quand ça frôle, c'est le joueur qui gagne.</p></div>
+      </div>
+
+      <h3>🧠 Mémoire vive ou base de données ?</h3>
+      <div class="comparaison">
+        <div class="carte">
+          <h4>🌍 La mémoire vive (le monde)</h4>
+          <p>Position du héros, obstacles, score de la partie… Change 120 fois par seconde. <strong>Disparaît</strong> quand on ferme la page.</p>
+          <p class="petit">C'est rapide, mais ça oublie tout.</p>
+        </div>
+        <div class="carte">
+          <h4>🗄️ La base de données</h4>
+          <p>Record, nombre de parties, total de sauts, 5 dernières parties. Écrite seulement à la fin d'une partie. <strong>Reste</strong> même si on éteint l'ordinateur.</p>
+          <p class="petit">C'est plus lent, donc on y écrit rarement et seulement l'important.</p>
+        </div>
+      </div>
+      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 6.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <p>Ouvre le jeu, active les rayons X (<kbd>X</kbd>) et mène l'enquête :</p>
+      <ol>
+        <li>Mets le <strong>ralenti</strong> (<kbd>L</kbd>) et regarde la flèche verte pendant un saut. Que devient-elle au sommet ?</li>
+        <li>En pause (<kbd>P</kbd>), appuie sur <kbd>N</kbd> plusieurs fois pendant un saut. De combien change <code>vy</code> à chaque pas ?</li>
+        <li>Joue une partie et surveille « obstacles en mémoire ». Monte-t-il à l'infini ? Pourquoi ?</li>
+        <li>Fais une partie, puis regarde la base de données. Ferme la page, rouvre-la : qu'est-ce qui est resté, qu'est-ce qui a disparu ?</li>
+        <li>Appuie sur saut juste avant d'atterrir. Que dit le journal ?</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi le rendu n'a-t-il pas le droit de changer la position du héros ?</summary><p>Parce qu'il ne doit faire qu'un seul travail : dessiner. Si tout le monde modifiait tout, on ne saurait plus qui a causé un bug. Les règles sont dans <code>logique/</code>, le dessin dans <code>affichage/</code>.</p></details>
+      <details class="question"><summary>Au sommet d'un saut, combien vaut vy ?</summary><p>0 ! Le héros ne monte plus et ne descend pas encore. C'est à ce moment-là que l'état passe de <code>monte</code> à <code>descend</code>.</p></details>
+      <details class="question"><summary>Pourquoi supprime-t-on les obstacles sortis de l'écran ?</summary><p>Sinon la liste grandirait à chaque obstacle, pour toujours. Après une longue partie, le jeu passerait son temps à mettre à jour des milliers d'obstacles invisibles et finirait par ramer.</p></details>
+      <details class="question"><summary>Pourquoi la sauvegarde n'écrit-elle pas dans la base à chaque saut ?</summary><p>Écrire dans une base de données prend beaucoup plus de temps que modifier la mémoire vive. On compte les sauts en mémoire, et on écrit tout d'un coup à la fin de la partie.</p></details>
+      <details class="question"><summary>Si on double la gravité sans toucher la force du saut, le saut est deux fois moins haut. Vrai ou faux ?</summary><p>Vrai : hauteur = force² ÷ (2 × gravité). Et il dure aussi deux fois moins longtemps. Vérifie avec le simulateur !</p></details>
+    </section>
+
+    <!-- ============ FEUILLE DE ROUTE ============ -->
+    <section id="route">
+      <h2>🗺️ La route vers un jeu façon Minecraft</h2>
+      <p class="chapeau">Chaque étape ajoute une fonctionnalité au jeu ET une grande idée sur le fonctionnement interne des jeux. L'ordre peut changer : c'est Maxance qui décide !</p>
+
+      <div class="route">
+        <div class="carte fait">
+          <div class="num">1</div>
+          <h4>Courir, sauter, esquiver <span class="etiquette">✅ fait</span></h4>
+          <p>Un héros, des obstacles, un score et un record.</p>
+          <p class="apprend"><b>Tu apprends :</b> boucle de jeu, entrées, physique, collisions, machine à états, événements, première base de données. <b>Durée :</b> 1 à 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">2</div>
+          <h4>Un monde en blocs <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <p>Le sol devient une grille de blocs, avec des trous et des plateformes. La caméra suit le héros qui explore vers la droite.</p>
+          <p class="apprend"><b>Tu apprends :</b> ranger un monde dans un tableau à 2 dimensions, coordonnées « monde » et « écran », caméra, collisions avec une grille. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">3</div>
+          <h4>Casser et poser des blocs</h4>
+          <p>Clic gauche pour casser, clic droit pour poser, à portée de bras.</p>
+          <p class="apprend"><b>Tu apprends :</b> transformer un clic en case de la grille, « la donnée d'abord, le dessin suit », événements de la souris. <b>Durée :</b> 1 à 2 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">4</div>
+          <h4>Inventaire et catalogue des blocs</h4>
+          <p>Chaque bloc cassé va dans l'inventaire (piles de 64), avec une barre en bas de l'écran.</p>
+          <p class="apprend"><b>Tu apprends :</b> identifiants (0 = air, 1 = terre, 2 = pierre…), catalogue de propriétés (dureté, solide ou pas), structures de données. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">5</div>
+          <h4>Un monde infini et généré</h4>
+          <p>Collines, grottes et minerais créés automatiquement. Le monde ne s'arrête jamais.</p>
+          <p class="apprend"><b>Tu apprends :</b> génération procédurale, graine (même graine = même monde), bruit de Perlin, découpage en « chunks » chargés et déchargés. <b>Durée :</b> 2 à 3 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">6</div>
+          <h4>Sauvegarder le monde</h4>
+          <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
+          <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">7</div>
+          <h4>Jour, nuit et créatures</h4>
+          <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
+          <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">8</div>
+          <h4>Artisanat (craft)</h4>
+          <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
+          <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">9</div>
+          <h4>Multijoueur</h4>
+          <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
+          <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ JOURNAL ============ -->
+    <section id="journal">
+      <h2>📔 Journal de bord</h2>
+      <p class="chapeau">Après chaque étape : ce qui a été fait, et ce que Maxance a appris, avec ses mots à lui.</p>
+
+      <div class="carte">
+        <h4>Étape 1 · courir, sauter, esquiver <span class="petit">· 24 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le jeu de base avec son architecture en 4 familles, les rayons X, la pause image par image, le ralenti, le journal des événements et la première base de données (record et statistiques).</p>
+        <label for="appris-1"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-1" data-cle="appris-1" placeholder="Ex. : J'ai appris que le jeu se met à jour 120 fois par seconde, et que…"></textarea>
+        <label for="idees-1"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-1" data-cle="idees-1" placeholder="Ex. : Je voudrais des blocs de lave qui…"></textarea>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const PREFIXE = "carnet-maxance:";
+    const lire = (cle) => { try { return localStorage.getItem(PREFIXE + cle); } catch (e) { return null; } };
+    const ecrire = (cle, valeur) => { try { localStorage.setItem(PREFIXE + cle, valeur); } catch (e) {} };
+
+    // --- Fiche de demande ---
+    const fiche = document.getElementById("fiche");
+    const resultat = document.getElementById("resultat");
+
+    for (const champ of fiche.elements) {
+      const sauve = lire("fiche:" + champ.name);
+      if (sauve !== null) champ.value = sauve;
+      champ.addEventListener("input", () => ecrire("fiche:" + champ.name, champ.value));
+    }
+
+    function message() {
+      const v = (nom) => fiche.elements[nom].value.trim() || "(à préciser)";
+      const criteres = fiche.elements.criteres.value.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => "- [ ] " + l).join("\n") || "(à préciser)";
+      return [
+        "Nouvelle demande de Maxance pour son jeu (lis d'abord CLAUDE.md).",
+        "",
+        "# " + v("titre"),
+        "",
+        "## Quoi\n" + v("quoi"),
+        "",
+        "## Pourquoi\n" + v("pourquoi"),
+        "",
+        "## Comment (les règles)\n" + v("comment"),
+        "",
+        "## En combien de temps (durées et vitesses dans le jeu)\n" + v("temps"),
+        "",
+        "## Qui fait quoi\n" + v("qui"),
+        "",
+        "## Critères de réussite\n" + criteres,
+        "",
+        "## Ce que je veux comprendre\n" + v("comprendre"),
+        "",
+        "## Pour quand\n" + v("quand"),
+      ].join("\n");
+    }
+
+    document.getElementById("preparer").addEventListener("click", () => {
+      resultat.textContent = message();
+      resultat.hidden = false;
+    });
+    document.getElementById("copier").addEventListener("click", async (e) => {
+      resultat.textContent = message();
+      resultat.hidden = false;
+      try {
+        await navigator.clipboard.writeText(resultat.textContent);
+        e.target.textContent = "✅ Copié !";
+      } catch (err) {
+        e.target.textContent = "Sélectionne le texte pour le copier";
+      }
+      setTimeout(() => (e.target.textContent = "📋 Copier"), 2000);
+    });
+    document.getElementById("vider").addEventListener("click", () => {
+      if (!confirm("Vider toute la fiche ?")) return;
+      for (const champ of fiche.elements) {
+        if (champ.name === "qui") continue;
+        champ.value = "";
+        ecrire("fiche:" + champ.name, "");
+      }
+      resultat.hidden = true;
+    });
+
+    // --- Journal ---
+    for (const zone of document.querySelectorAll("textarea[data-cle]")) {
+      zone.value = lire(zone.dataset.cle) || "";
+      zone.addEventListener("input", () => ecrire(zone.dataset.cle, zone.value));
+    }
+
+    // --- Simulateur de saut ---
+    const DEFAUT = { force: 860, gravite: 2400, vitesse: 280 };
+    const curseurs = ["force", "gravite", "vitesse"].map((id) => document.getElementById(id));
+    const toile = document.getElementById("courbe");
+    const ctx = toile.getContext("2d");
+    const BLOC = 40;
+
+    function simuler() {
+      const force = +curseurs[0].value, gravite = +curseurs[1].value, vitesse = +curseurs[2].value;
+      document.getElementById("val-force").textContent = force;
+      document.getElementById("val-gravite").textContent = gravite;
+      document.getElementById("val-vitesse").textContent = vitesse;
+
+      const hauteur = (force * force) / (2 * gravite);
+      const duree = (2 * force) / gravite;
+      document.getElementById("hauteur").textContent = Math.round(hauteur) + " px ≈ " + (hauteur / BLOC).toFixed(1).replace(".", ",") + " blocs";
+      document.getElementById("duree").textContent = duree.toFixed(2).replace(".", ",") + " s";
+
+      // Passe-t-on au-dessus d'une tour de 2 blocs ? Il faut rester au-dessus de 80 px
+      // assez longtemps pour que la tour (40 px) et le héros (22 px de zone de collision) se croisent.
+      const tempsAuDessus = hauteur > 80 ? duree * Math.sqrt(1 - 80 / hauteur) : 0;
+      const passe = tempsAuDessus * vitesse >= 62;
+      document.getElementById("verdict").innerHTML = passe
+        ? "✅ Passe au-dessus d'une <b>tour de 2 blocs</b>"
+        : "❌ Ne passe pas au-dessus d'une <b>tour de 2 blocs</b>";
+
+      // Dessin
+      const W = toile.width, H = toile.height, sol = H - 30, depart = 40;
+      ctx.clearRect(0, 0, W, H);
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      for (let x = depart % BLOC; x < W; x += BLOC) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, sol); ctx.stroke(); }
+      for (let y = sol; y > 0; y -= BLOC) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+      ctx.fillStyle = "#5cb336"; ctx.fillRect(0, sol, W, 6);
+      ctx.fillStyle = "#8b5a2b"; ctx.fillRect(0, sol + 6, W, H - sol - 6);
+
+      // La tour placée sous le sommet du saut
+      const xSommet = depart + vitesse * duree / 2;
+      ctx.fillStyle = "#8e939b";
+      ctx.fillRect(xSommet - 20, sol - 80, 40, 80);
+      ctx.strokeStyle = "rgba(0,0,0,.35)";
+      ctx.strokeRect(xSommet - 20, sol - 80, 40, 40); ctx.strokeRect(xSommet - 20, sol - 40, 40, 40);
+
+      // La parabole
+      ctx.strokeStyle = "#ffe27a"; ctx.lineWidth = 3; ctx.beginPath();
+      for (let t = 0; t <= duree + 1e-9; t += duree / 80) {
+        const x = depart + vitesse * t, y = sol - (force * t - gravite * t * t / 2);
+        t === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke(); ctx.lineWidth = 1;
+
+      // Hauteur max
+      ctx.setLineDash([6, 5]); ctx.strokeStyle = "#7bff9e";
+      ctx.beginPath(); ctx.moveTo(0, sol - hauteur); ctx.lineTo(W, sol - hauteur); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "#7bff9e"; ctx.font = "13px Trebuchet MS, sans-serif";
+      ctx.fillText("sommet : " + Math.round(hauteur) + " px", 8, Math.max(14, sol - hauteur - 6));
+
+      // Le héros au départ
+      ctx.fillStyle = "#2fa3d8"; ctx.fillRect(depart - 15, sol - 46, 30, 46);
+      ctx.fillStyle = "#9aa5d6";
+      ctx.fillText("vitesse du monde : le décor défile de " + vitesse + " px chaque seconde", 8, H - 8);
+    }
+
+    curseurs.forEach((c) => c.addEventListener("input", simuler));
+    document.getElementById("reinit-sim").addEventListener("click", () => {
+      curseurs[0].value = DEFAUT.force; curseurs[1].value = DEFAUT.gravite; curseurs[2].value = DEFAUT.vitesse;
+      simuler();
+    });
+    simuler();
+  </script>
+</body>
+</html>
