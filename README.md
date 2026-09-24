@@ -27,8 +27,8 @@ Outils : `X` rayons X, `P` pause, `N` avancer d'un pas, `L` ralenti.
     ├── index.html      la page du jeu
     ├── config.js       tous les réglages chiffrés
     ├── main.js         la boucle de jeu
-    ├── moteur/         outils génériques : entrées, physique, événements
-    ├── logique/        règles du jeu : joueur, obstacles, monde
+    ├── moteur/         outils génériques : entrées, physique, événements, caméra, hasard à graine
+    ├── logique/        règles du jeu : terrain (la carte), joueur, obstacles, monde
     ├── donnees/        sauvegarde (la base de données)
     └── affichage/      rendu et panneau « sous le capot »
 ```

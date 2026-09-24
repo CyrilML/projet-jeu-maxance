@@ -10,16 +10,20 @@
 //
 // À chaque pas de temps, mettreAJour() suit toujours le même ordre :
 //   1. lire les intentions   2. décider   3. appliquer la physique   4. mettre à jour l'état
+//
+// Le héros vit en coordonnées MONDE : x = 4 000 veut dire « 4 000 px après le début du monde »,
+// même si l'écran ne fait que 960 px de large. C'est la caméra qui décide ce qu'on voit.
 
 window.Jeu = window.Jeu || {};
 
 Jeu.Joueur = (function () {
   const C = Jeu.CONFIG;
 
-  function creer() {
+  // Crée le héros debout sur la colonne donnée (en général, celle du drapeau de départ).
+  function creer(colonne) {
     const J = C.joueur;
     return {
-      x: J.departX,
+      x: xAuCentreDe(colonne),
       y: C.solY - J.hauteur,
       l: J.largeur,
       h: J.hauteur,
@@ -31,6 +35,35 @@ Jeu.Joueur = (function () {
       sautCoupe: false,
       debutSaut: 0,
       animation: 0,
+    };
+  }
+
+  // La position x qui place le héros au milieu d'une colonne.
+  function xAuCentreDe(colonne) {
+    return colonne * C.tailleBloc + (C.tailleBloc - C.joueur.largeur) / 2;
+  }
+
+  // Remet le héros debout sur une colonne, immobile (après une chute dans un trou).
+  function reapparaitre(j, colonne) {
+    j.x = xAuCentreDe(colonne);
+    j.y = C.solY - j.h;
+    j.vx = 0;
+    j.vy = 0;
+    j.tamponSaut = 0;
+    j.etat = "au-sol";
+  }
+
+  // Sur quelle case est le héros ? On prend le milieu de ses pieds :
+  //   colonne = partie entière de (x du milieu ÷ 40),  ligne = partie entière de (y des pieds ÷ 40)
+  function caseDuJoueur(j) {
+    const B = C.tailleBloc;
+    const milieu = j.x + j.l / 2;
+    const pieds = j.y + j.h - 1; // 1 px au-dessus du bas : encore DANS le héros
+    return {
+      milieu,
+      pieds,
+      colonne: Jeu.Physique.caseDe(milieu, B),
+      ligne: Jeu.Physique.caseDe(pieds, B),
     };
   }
 
@@ -76,21 +109,28 @@ Jeu.Joueur = (function () {
       emettre("saut-coupe", { y: Math.round(j.y) });
     }
 
-    // 3. Appliquer la physique
+    // 3. Appliquer la physique : gravité, puis déplacement case par case dans la grille du terrain
     Jeu.Physique.appliquerGravite(j, dt);
-    Jeu.Physique.deplacer(j, dt);
-    Jeu.Physique.garderDansEcran(j);
-    const auSol = Jeu.Physique.poserSurLeSol(j);
+    const contact = Jeu.Physique.deplacerDansGrille(j, dt, {
+      taille: C.tailleBloc,
+      estSolide: (colonne, ligne) => Jeu.Terrain.estSolide(monde.terrain, colonne, ligne),
+    });
+    const auSol = contact.bas;
+    if (contact.haut) emettre("tete-cognee", { ligne: Jeu.Physique.caseDe(j.y, C.tailleBloc) - 1 });
 
     // 4. Mettre à jour l'état
     if (auSol) {
-      if (j.etat !== "au-sol") emettre("atterrissage", { duree: monde.temps - j.debutSaut });
+      if (j.etat !== "au-sol") {
+        const ligne = Jeu.Physique.caseDe(j.y + j.h, C.tailleBloc); // la ligne des cases sous les pieds
+        emettre("atterrissage", { duree: monde.temps - j.debutSaut, ligne });
+      }
       j.etat = "au-sol";
     } else {
+      if (j.etat === "au-sol") j.debutSaut = monde.temps; // on vient de marcher dans le vide
       j.etat = j.vy < 0 ? "monte" : "descend";
     }
     j.animation += dt;
   }
 
-  return { creer, hitbox, mettreAJour };
+  return { creer, reapparaitre, caseDuJoueur, hitbox, mettreAJour };
 })();

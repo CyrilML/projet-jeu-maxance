@@ -12,8 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   ecran: { largeur: 960, hauteur: 540 },
 
-  // Taille d'un bloc. Tout le monde est pensé en blocs de 40 px :
-  // c'est la future grille façon Minecraft.
+  // Taille d'un bloc (une case de la grille). Tout le monde est pensé en blocs de 40 px.
   tailleBloc: 40,
 
   // Hauteur (y) du dessus du sol. Rappel : y = 0 en haut de l'écran, y grandit vers le bas.
@@ -26,21 +25,52 @@ Jeu.CONFIG = {
   joueur: {
     largeur: 30,
     hauteur: 46,
-    departX: 160,
     vitesse: 320, // vitesse de marche gauche/droite
     forceSaut: 860, // vitesse vers le haut au moment du saut → saut de ~154 px (≈ 3,8 blocs) en ~0,72 s
     coupureSaut: 0.45, // si on relâche la touche pendant la montée, la vitesse est multipliée par ce nombre
     memoireSaut: 0.12, // un saut demandé juste avant d'atterrir est gardé en mémoire pendant ce temps
-    margeHitbox: 4, // la zone de collision est un peu plus petite que le dessin : le jeu est « gentil »
+    margeHitbox: 4, // la zone de collision avec les obstacles est un peu plus petite que le dessin : le jeu est « gentil »
+  },
+
+  // La carte du monde : une grille de cases de 40 px. Les colonnes sont numérotées de gauche à droite
+  // (0, 1, 2… sans fin), les lignes de haut en bas (0 à 13).
+  carte: {
+    lignes: 14, // 14 lignes × 40 px = 560 px : un peu plus que l'écran
+    ligneSol: 11, // la ligne de l'herbe (11 × 40 = 440 = solY)
+    longueurTroncon: 30, // le monde est fabriqué par morceaux de 30 colonnes, avec un drapeau au début de chacun
+    colonneDrapeau: 2, // le drapeau est dans la 3ᵉ colonne de chaque tronçon (0, 1, 2…)
+    zoneSure: 5, // les 5 premières colonnes d'un tronçon : ni trou ni obstacle autour du drapeau
+    zoneSureDepart: 10, // au tout début du monde, on laisse plus de place pour s'échauffer
+    avance: 12, // on fabrique le monde au moins 12 colonnes plus loin que le bord droit de l'écran
+  },
+
+  trous: {
+    ecartMin: 6, // entre deux trous : 6 à 9 blocs de sol (+ la largeur du trou) → « un trou tous les 10 blocs environ »
+    ecartMax: 9,
+    largeurMin: 1,
+    largeurMax: 3, // le saut franchit environ 5 blocs : un trou de 3 est toujours possible
+    chute: 580, // si les pieds du héros descendent plus bas que ce y, il est tombé dans le trou
+  },
+
+  plateformes: {
+    parTronconMin: 1,
+    parTronconMax: 2,
+    largeurMin: 3,
+    largeurMax: 5,
+    hauteurs: [2, 3], // en blocs au-dessus du sol
   },
 
   obstacles: {
-    vitesseDepart: 280, // vitesse de défilement au début d'une partie
-    vitesseMax: 700,
-    accelerationParSeconde: 10, // la vitesse augmente de 10 px/s chaque seconde
-    premierObstacle: 1.5, // secondes avant le tout premier obstacle
-    ecartMin: 0.95, // temps minimum entre deux obstacles (s)
-    ecartMax: 2.0, // temps maximum entre deux obstacles (s)
+    ecartMin: 8, // en blocs, entre deux obstacles (au moins : s'il n'y a pas la place à cause d'un trou, on pose plus loin)
+    ecartMax: 14,
+    margeTrou: 2, // blocs de sol obligatoires avant et après un obstacle (pour prendre son élan et atterrir)
+    // À partir de quelle colonne chaque obstacle peut apparaître (les caisses : dès le début).
+    debloque: { caisse: 0, tour: 60, muret: 120 },
+  },
+
+  camera: {
+    positionJoueur: 320, // la caméra essaie de garder le héros à 320 px du bord gauche de l'écran
+    tempsDeReaction: 0.07, // plus c'est petit, plus elle suit vite. 0,07 s → après 0,5 s, il reste moins de 0,1 % de l'écart
   },
 
   // Le monde est mis à jour 120 fois par seconde, quel que soit l'ordinateur.

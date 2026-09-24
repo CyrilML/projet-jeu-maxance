@@ -125,6 +125,7 @@
       <a href="#equipe">L'équipe</a>
       <a href="#demande">Passer commande</a>
       <a href="#etape1">Étape 1</a>
+      <a href="#etape2">Étape 2</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -511,6 +512,180 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Si on double la gravité sans toucher la force du saut, le saut est deux fois moins haut. Vrai ou faux ?</summary><p>Vrai : hauteur = force² ÷ (2 × gravité). Et il dure aussi deux fois moins longtemps. Vérifie avec le simulateur !</p></details>
     </section>
 
+    <!-- ============ ÉTAPE 2 ============ -->
+    <section id="etape2">
+      <h2>🗺️ Étape 2 : un monde en blocs <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Le héros ne reste plus au même endroit : il explore un monde sans fin, fait de blocs, avec des trous, des plateformes et des drapeaux. La caméra le suit.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/02-un-monde-en-blocs.md</code>.</p>
+          <p><strong>Quoi :</strong> un sol en blocs avec des trous et des plateformes, et une caméra qui me suit quand j'avance vers la droite.</p>
+          <p><strong>Comment :</strong> trou → retour au dernier drapeau. Plateformes à 2 ou 3 blocs de haut. Obstacle touché → « Aïe ! » et tout recommence à zéro. Monde sans fin. Score = blocs parcourus. Trous de 1 à 3 blocs.</p>
+          <p><strong>Pour comprendre :</strong> comment le jeu sait sur quelle case je suis, et comment on range un monde entier dans la mémoire.</p>
+          <p class="petit">✍️ Au début, il manquait 4 règles (obstacle, taille du monde, score, largeur des trous). Claude a posé la question avant de coder : c'est ça, une demande précise !</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Monte sur une plateforme et marche dessus : tu ne passes pas à travers.</li>
+            <li>☐ Tombe exprès dans un trou : tu réapparais au dernier drapeau vert 🚩.</li>
+            <li>☐ Touche <kbd>X</kbd> : la grille apparaît avec le numéro <code>colonne,ligne</code> de chaque case.</li>
+            <li>Bonus : un trou environ tous les 10 blocs, un drapeau tous les 30 (regarde leur n° de colonne).</li>
+            <li>Bonus : quand tu réapparais, la caméra te rattrape en moins d'une demi-seconde (essaie en ralenti <kbd>L</kbd>).</li>
+            <li>Bonus : touche un obstacle → « Aïe ! », puis Espace : nouveau monde, score à 0.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🧮 Comment le jeu sait sur quelle case tu es</h3>
+      <p>Le héros connaît sa position en <strong>pixels</strong> : par exemple <code>x = 1 300</code>. Une case fait 40 pixels de large. Pour trouver le numéro de la case, le jeu fait <strong>une division</strong> et garde seulement la partie entière (il « jette » ce qui est après la virgule) :</p>
+      <div class="carte">
+        <p class="mesure">colonne = partie entière de (x ÷ 40) &nbsp;&nbsp;·&nbsp;&nbsp; ligne = partie entière de (y ÷ 40)</p>
+        <p>Exemple : 1 300 ÷ 40 = 32,5 → <b>colonne 32</b>. Les pieds sont à y = 439 : 439 ÷ 40 = 10,97 → <b>ligne 10</b>.</p>
+        <p class="petit">Le jeu prend le point jaune au <strong>milieu des pieds</strong> du héros (visible avec les rayons X). La case trouvée est surlignée en jaune, à l'écran et dans « La carte en mémoire ».</p>
+        <div class="simulateur">
+          <div>
+            <label>x du héros : <b id="val-cx"></b> px<input type="range" id="cx" min="0" max="2400" step="1" value="1300"></label>
+            <label>y des pieds : <b id="val-cy"></b> px<input type="range" id="cy" min="0" max="559" step="1" value="439"></label>
+            <p class="mesure" id="calcul-case"></p>
+          </div>
+          <canvas id="dessin-case" width="640" height="220" aria-label="La case trouvée dans la grille"></canvas>
+        </div>
+      </div>
+      <p>C'est grâce à ce calcul que le jeu sait s'il y a du sol sous tes pieds : il regarde la case <em>juste en dessous</em>. Si elle contient <code>0</code> (de l'air), tu tombes. C'est aussi comme ça que la physique t'empêche de rentrer dans un mur : avant de te laisser avancer, elle vérifie les cases que ton corps va toucher.</p>
+
+      <h3>🗄️ Comment on range un monde entier dans la mémoire</h3>
+      <p>Le monde est une <strong>grille de numéros</strong>, comme une feuille à petits carreaux où chaque carreau contient un chiffre : <code>0</code> air, <code>1</code> herbe, <code>2</code> terre, <code>3</code> planche. Le jeu la range <strong>colonne par colonne</strong>, comme des tiroirs posés côte à côte : chaque tiroir contient les 14 cases d'une colonne, de haut en bas.</p>
+      <div class="carte">
+        <svg class="schema" viewBox="0 0 900 300" role="img" aria-label="La grille du monde rangée en colonnes">
+          <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14" text-anchor="middle">
+            <!-- en-têtes -->
+            <text x="40" y="24" fill="#9aa5d6">ligne</text>
+            <g fill="#9aa5d6">
+              <text x="110" y="24">col 0</text><text x="170" y="24">col 1</text><text x="230" y="24">col 2</text><text x="290" y="24">col 3</text><text x="350" y="24">col 4</text><text x="410" y="24">col 5</text>
+              <text x="40" y="64">8</text><text x="40" y="112">9</text><text x="40" y="160">10</text><text x="40" y="208">11</text><text x="40" y="256">12</text>
+            </g>
+            <!-- cases : 6 colonnes × 5 lignes (lignes 8 à 12) -->
+            <g stroke="#0e1325" stroke-width="3">
+              <rect x="80" y="36" width="60" height="48" fill="#1f3a5a"/><rect x="140" y="36" width="60" height="48" fill="#1f3a5a"/><rect x="200" y="36" width="60" height="48" fill="#1f3a5a"/><rect x="260" y="36" width="60" height="48" fill="#c08a45"/><rect x="320" y="36" width="60" height="48" fill="#c08a45"/><rect x="380" y="36" width="60" height="48" fill="#1f3a5a"/>
+              <rect x="80" y="84" width="60" height="48" fill="#1f3a5a"/><rect x="140" y="84" width="60" height="48" fill="#1f3a5a"/><rect x="200" y="84" width="60" height="48" fill="#1f3a5a"/><rect x="260" y="84" width="60" height="48" fill="#1f3a5a"/><rect x="320" y="84" width="60" height="48" fill="#1f3a5a"/><rect x="380" y="84" width="60" height="48" fill="#1f3a5a"/>
+              <rect x="80" y="132" width="60" height="48" fill="#1f3a5a"/><rect x="140" y="132" width="60" height="48" fill="#1f3a5a"/><rect x="200" y="132" width="60" height="48" fill="#1f3a5a"/><rect x="260" y="132" width="60" height="48" fill="#1f3a5a"/><rect x="320" y="132" width="60" height="48" fill="#1f3a5a"/><rect x="380" y="132" width="60" height="48" fill="#1f3a5a"/>
+              <rect x="80" y="180" width="60" height="48" fill="#4d9a2e"/><rect x="140" y="180" width="60" height="48" fill="#4d9a2e"/><rect x="200" y="180" width="60" height="48" fill="#1f3a5a"/><rect x="260" y="180" width="60" height="48" fill="#1f3a5a"/><rect x="320" y="180" width="60" height="48" fill="#4d9a2e"/><rect x="380" y="180" width="60" height="48" fill="#4d9a2e"/>
+              <rect x="80" y="228" width="60" height="48" fill="#74481f"/><rect x="140" y="228" width="60" height="48" fill="#74481f"/><rect x="200" y="228" width="60" height="48" fill="#1f3a5a"/><rect x="260" y="228" width="60" height="48" fill="#1f3a5a"/><rect x="320" y="228" width="60" height="48" fill="#74481f"/><rect x="380" y="228" width="60" height="48" fill="#74481f"/>
+            </g>
+            <g fill="#fff">
+              <text x="110" y="65">0</text><text x="170" y="65">0</text><text x="230" y="65">0</text><text x="290" y="65">3</text><text x="350" y="65">3</text><text x="410" y="65">0</text>
+              <text x="110" y="113">0</text><text x="170" y="113">0</text><text x="230" y="113">0</text><text x="290" y="113">0</text><text x="350" y="113">0</text><text x="410" y="113">0</text>
+              <text x="110" y="161">0</text><text x="170" y="161">0</text><text x="230" y="161">0</text><text x="290" y="161">0</text><text x="350" y="161">0</text><text x="410" y="161">0</text>
+              <text x="110" y="209">1</text><text x="170" y="209">1</text><text x="230" y="209">0</text><text x="290" y="209">0</text><text x="350" y="209">1</text><text x="410" y="209">1</text>
+              <text x="110" y="257">2</text><text x="170" y="257">2</text><text x="230" y="257">0</text><text x="290" y="257">0</text><text x="350" y="257">2</text><text x="410" y="257">2</text>
+            </g>
+            <!-- la colonne 4 = un tiroir -->
+            <rect x="320" y="36" width="60" height="240" fill="none" stroke="#ffe27a" stroke-width="3" rx="4"/>
+            <rect x="320" y="180" width="60" height="48" fill="none" stroke="#ff7b7b" stroke-width="3"/>
+            <g text-anchor="start" font-family="Trebuchet MS, sans-serif" font-size="15">
+              <text x="480" y="60" fill="#ffe27a">Un tiroir = une colonne :</text>
+              <text x="480" y="84" fill="#e8ecff" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14">colonnes[4] = [0,…,3,0,0,1,2,2]</text>
+              <text x="480" y="130" fill="#ff7b7b">Une case :</text>
+              <text x="480" y="154" fill="#e8ecff" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="14">colonnes[4][11] = 1  → de l'herbe</text>
+              <text x="480" y="200" fill="#9aa5d6">Colonnes 2 et 3 : que des 0 → un trou.</text>
+              <text x="480" y="224" fill="#9aa5d6">Ligne 8, colonnes 3 et 4 : des 3 → une plateforme.</text>
+              <text x="480" y="262" fill="#9aa5d6">(on ne montre ici que les lignes 8 à 12)</text>
+            </g>
+          </g>
+        </svg>
+        <div class="legende">
+          <span style="--c:#1f3a5a">0 = air</span><span style="--c:#4d9a2e">1 = herbe</span><span style="--c:#74481f">2 = terre</span><span style="--c:#c08a45">3 = planche</span>
+        </div>
+      </div>
+      <p>On appelle ça un <strong>tableau à 2 dimensions</strong> : un tableau (la liste des colonnes) qui contient des tableaux (les cases de chaque colonne). Dans le code : <code>terrain.colonnes[colonne][ligne]</code>. Le panneau <strong>🗺️ La carte en mémoire</strong>, sous le jeu, te montre ces numéros en direct.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>🏗️ Un monde sans fin… fabriqué au fur et à mesure</h4>
+          <p>Impossible de ranger un monde infini dans la mémoire ! Alors le jeu le fabrique par <strong>tronçons de 30 colonnes</strong>, juste avant que la caméra les montre. Chaque tronçon commence par un drapeau. Minecraft fait pareil avec ses « chunks » de 16 blocs.</p>
+          <p class="petit">Dans le journal : « 🏗️ Tronçon n° 3 fabriqué… → 1 680 cases en mémoire ». Chaque tronçon ajoute 30 × 14 = 420 cases.</p>
+        </div>
+        <div class="carte">
+          <h4>🎲 La graine : le même hasard, rejoué</h4>
+          <p>Les trous et les plateformes sont placés « au hasard », mais un hasard fabriqué à partir d'un nombre : la <strong>graine</strong>. Même graine = même monde, exactement comme les graines de Minecraft. Elle est affichée dans l'état en direct.</p>
+        </div>
+        <div class="carte">
+          <h4>🧱 Les obstacles, rangés à part</h4>
+          <p>Les caisses, tours et murets ne sont <em>pas</em> dans la grille : ils sont dans une liste à part, <code>monde.obstacles</code>. Parce qu'une tour occupe 2 cases mais reste <strong>un seul</strong> objet, avec son numéro et sa règle à elle : la toucher, c'est perdu.</p>
+        </div>
+      </div>
+
+      <h3>🎥 La caméra : coordonnées « monde » et coordonnées « écran »</h3>
+      <p>Le monde est bien plus large que l'écran. La caméra est une <strong>fenêtre</strong> qui glisse au-dessus du monde. Elle ne retient qu'un seul nombre : <code>camera.x</code>, la position du bord gauche de l'écran dans le monde.</p>
+      <div class="carte">
+        <svg class="schema" viewBox="0 0 900 200" role="img" aria-label="La caméra est une fenêtre sur le monde">
+          <g font-family="Trebuchet MS, sans-serif" font-size="14">
+            <rect x="10" y="100" width="880" height="40" fill="#4d9a2e"/>
+            <rect x="10" y="140" width="880" height="30" fill="#74481f"/>
+            <rect x="230" y="100" width="40" height="70" fill="#1f3a5a"/>
+            <rect x="620" y="100" width="80" height="70" fill="#1f3a5a"/>
+            <rect x="420" y="70" width="100" height="16" fill="#c08a45"/>
+            <text x="12" y="192" fill="#9aa5d6">x = 0 (début du monde)</text>
+            <text x="888" y="192" fill="#9aa5d6" text-anchor="end">→ sans fin</text>
+            <rect x="300" y="20" width="360" height="155" fill="rgba(255,226,122,0.08)" stroke="#ffe27a" stroke-width="3" rx="6"/>
+            <text x="480" y="40" fill="#ffe27a" text-anchor="middle" font-weight="bold">🎥 l'écran (960 px)</text>
+            <path d="M10 60 H296" stroke="#7bff9e" stroke-width="2" marker-end="url(#pointe2)"/>
+            <text x="150" y="52" fill="#7bff9e" text-anchor="middle">camera.x = 2 000</text>
+            <rect x="410" y="104" width="16" height="26" fill="#2fa3d8"/>
+            <text x="418" y="160" fill="#fff" text-anchor="middle">héros</text>
+            <text x="760" y="60" fill="#e8ecff" text-anchor="middle">x monde = 2 320</text>
+            <text x="760" y="80" fill="#e8ecff" text-anchor="middle">x écran = 2 320 − 2 000 = 320</text>
+          </g>
+        </svg>
+      </div>
+      <p><strong>La formule magique :</strong> x sur l'écran = x dans le monde − <code>camera.x</code>. Le héros vit à x = 2 320 dans le monde, mais il est dessiné à 320 px du bord de l'écran.</p>
+      <p>La caméra ne saute pas d'un coup : à chaque pas de 1/120 s, elle parcourt une <strong>partie de l'écart</strong> qui reste. Au début l'écart est grand, alors elle va vite ; puis elle ralentit en arrivant. Réglage : <code>camera.tempsDeReaction = 0,07 s</code>. Après une demi-seconde, il reste moins de 0,1 % de l'écart : même quand tu réapparais 30 blocs en arrière, elle t'a rattrapé.</p>
+
+      <h3>🧱 Les collisions avec la grille</h3>
+      <p>À l'étape 1, le sol était une simple ligne (y = 440). Maintenant, le héros peut toucher des cases partout : sol, bord d'un trou, dessous ou dessus d'une plateforme. À chaque pas, <code>moteur/physique.js</code> :</p>
+      <ol>
+        <li>déplace le héros <strong>à l'horizontale</strong>. Si son bord avant entre dans une case solide, il est remis contre le bord de la case : c'est un mur ;</li>
+        <li>puis <strong>à la verticale</strong>. S'il entre dans une case solide en descendant, il est posé dessus (au sol) ; en montant, sa tête cogne (<code>tete-cognee</code> dans le journal).</li>
+      </ol>
+      <p class="petit">Pourquoi en deux temps ? Pour savoir de quel côté on a touché. Si on bougeait en diagonale d'un coup, le jeu ne saurait pas si le héros a cogné un mur ou atterri sur le sol.</p>
+
+      <div class="carte tableau-defile">
+        <table class="fichiers">
+          <thead><tr><th>Nouveau fichier</th><th>Son travail</th><th>Comme…</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pastille" style="background:var(--logique)"></span><code>logique/terrain.js</code></td><td>Range la grille de numéros et fabrique les tronçons (sol, trous, plateformes).</td><td>le cartographe</td></tr>
+            <tr><td><span class="pastille" style="background:var(--moteur)"></span><code>moteur/camera.js</code></td><td>Suit le héros en douceur, et retient <code>camera.x</code>.</td><td>le cadreur</td></tr>
+            <tr><td><span class="pastille" style="background:var(--moteur)"></span><code>moteur/hasard.js</code></td><td>Un hasard qui rejoue toujours pareil avec la même graine.</td><td>le dé truqué</td></tr>
+            <tr><td><span class="pastille" style="background:var(--moteur)"></span><code>moteur/physique.js</code></td><td><em>Modifié :</em> collisions avec les cases de la grille.</td><td>les lois de la nature</td></tr>
+            <tr><td><span class="pastille" style="background:var(--donnees)"></span><code>donnees/sauvegarde.js</code></td><td><em>Modifié :</em> version 2. Le record compte des blocs ; l'ancien record d'obstacles est gardé à part dans <code>etape1</code>.</td><td>le carnet de souvenirs</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <p>Ouvre le jeu, active les rayons X (<kbd>X</kbd>) et mène l'enquête :</p>
+      <ol>
+        <li>Mets-toi en pause (<kbd>P</kbd>) et lis la case du héros. Vérifie le calcul toi-même : x ÷ 40 donne bien la colonne ?</li>
+        <li>Dans « La carte en mémoire », trouve un trou et une plateforme. Quels numéros vois-tu ?</li>
+        <li>Monte sur une plateforme. Que devient « case sous les pieds » dans l'état en direct ?</li>
+        <li>Cours vers la droite et surveille « cases en mémoire ». De combien augmente-t-il à chaque tronçon ? Pourquoi ?</li>
+        <li>Tombe dans un trou en ralenti (<kbd>L</kbd>). Regarde l'écart de la caméra : combien de temps met-elle pour revenir à 0 ?</li>
+        <li>Regarde « x sur l'écran » quand tu cours : pourquoi reste-t-il presque toujours autour de 305 ?</li>
+        <li>Ouvre la base de données : trouve ton ancien record de l'étape 1. Où a-t-il été rangé ?</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Le héros est à x = 1 000. Sur quelle colonne est-il ?</summary><p>1 000 ÷ 40 = 25 → colonne 25. (Et à x = 1 039 : 1 039 ÷ 40 = 25,97… → encore la colonne 25 ! On garde seulement la partie entière.)</p></details>
+      <details class="question"><summary>Que contient <code>colonnes[40][11]</code> s'il y a un trou à la colonne 40 ?</summary><p><code>0</code> : de l'air. Dans un trou, toute la colonne est remplie de 0, c'est pour ça qu'on tombe jusqu'en bas.</p></details>
+      <details class="question"><summary>Pourquoi le jeu ne fabrique-t-il pas tout le monde dès le début ?</summary><p>Parce qu'il est sans fin : il faudrait une mémoire infinie ! On fabrique seulement ce qui va bientôt être visible, tronçon par tronçon.</p></details>
+      <details class="question"><summary>Le héros est à x = 5 000 dans le monde et <code>camera.x</code> = 4 700. Où est-il dessiné sur l'écran ?</summary><p>5 000 − 4 700 = 300 px du bord gauche de l'écran.</p></details>
+      <details class="question"><summary>Pourquoi les obstacles ne sont-ils pas rangés dans la grille, comme le sol ?</summary><p>Parce qu'ils ont leurs propres règles (les toucher = perdu) et qu'une tour ou un muret prend plusieurs cases tout en restant un seul objet, avec un numéro. Une liste d'objets est plus pratique pour ça.</p></details>
+      <details class="question"><summary>Avec la même graine, obtient-on le même monde ?</summary><p>Oui ! Le hasard à graine rejoue toujours les mêmes nombres dans le même ordre. C'est comme ça que deux joueurs de Minecraft peuvent partager un monde juste avec un nombre.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -523,15 +698,15 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>Un héros, des obstacles, un score et un record.</p>
           <p class="apprend"><b>Tu apprends :</b> boucle de jeu, entrées, physique, collisions, machine à états, événements, première base de données. <b>Durée :</b> 1 à 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">2</div>
-          <h4>Un monde en blocs <span class="etiquette">⏭️ prochaine étape</span></h4>
-          <p>Le sol devient une grille de blocs, avec des trous et des plateformes. La caméra suit le héros qui explore vers la droite.</p>
-          <p class="apprend"><b>Tu apprends :</b> ranger un monde dans un tableau à 2 dimensions, coordonnées « monde » et « écran », caméra, collisions avec une grille. <b>Durée :</b> 2 séances.</p>
+          <h4>Un monde en blocs <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Le sol devient une grille de blocs, avec des trous, des plateformes et des drapeaux. Le monde est sans fin et la caméra suit le héros.</p>
+          <p class="apprend"><b>Tu apprends :</b> ranger un monde dans un tableau à 2 dimensions, trouver sa case par une division, coordonnées « monde » et « écran », caméra, collisions avec une grille, tronçons et graine. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte">
+        <div class="carte prochain">
           <div class="num">3</div>
-          <h4>Casser et poser des blocs</h4>
+          <h4>Casser et poser des blocs <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Clic gauche pour casser, clic droit pour poser, à portée de bras.</p>
           <p class="apprend"><b>Tu apprends :</b> transformer un clic en case de la grille, « la donnée d'abord, le dessin suit », événements de la souris. <b>Durée :</b> 1 à 2 séances.</p>
         </div>
@@ -543,9 +718,9 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         </div>
         <div class="carte">
           <div class="num">5</div>
-          <h4>Un monde infini et généré</h4>
-          <p>Collines, grottes et minerais créés automatiquement. Le monde ne s'arrête jamais.</p>
-          <p class="apprend"><b>Tu apprends :</b> génération procédurale, graine (même graine = même monde), bruit de Perlin, découpage en « chunks » chargés et déchargés. <b>Durée :</b> 2 à 3 séances.</p>
+          <h4>Collines, grottes et minerais</h4>
+          <p>Le monde est déjà sans fin depuis l'étape 2. Ici, il devient plus riche : du relief, des grottes, des minerais cachés sous terre.</p>
+          <p class="apprend"><b>Tu apprends :</b> génération procédurale, bruit de Perlin, décharger les tronçons trop loin pour libérer la mémoire. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
           <div class="num">6</div>
@@ -586,6 +761,16 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-1" data-cle="appris-1" placeholder="Ex. : J'ai appris que le jeu se met à jour 120 fois par seconde, et que…"></textarea>
         <label for="idees-1"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-1" data-cle="idees-1" placeholder="Ex. : Je voudrais des blocs de lave qui…"></textarea>
+      </div>
+
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 2 · un monde en blocs <span class="petit">· 24 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> un monde sans fin rangé dans une grille de numéros et fabriqué par tronçons de 30 colonnes (avec une graine), des trous de 1 à 3 blocs, des plateformes à 2 ou 3 blocs de haut, des drapeaux tous les 30 blocs, une caméra qui suit le héros, des collisions avec la grille, les obstacles posés dans le monde, un score en blocs et la base de données en version 2. Sous le capot : la grille numérotée dans les rayons X et le nouveau panneau « La carte en mémoire ».</p>
+        <p class="petit">✍️ Précisions demandées par Claude et décidées par Maxance : obstacle touché = perdu et retour à zéro, monde sans fin, score en blocs, trous de 1 à 3 blocs.</p>
+        <label for="appris-2"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-2" data-cle="appris-2" placeholder="Ex. : J'ai appris que pour savoir sur quelle case je suis, le jeu divise ma position par 40, et que…"></textarea>
+        <label for="idees-2"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-2" data-cle="idees-2" placeholder="Ex. : Je voudrais casser les blocs avec un clic…"></textarea>
       </div>
     </section>
   </main>
@@ -730,6 +915,43 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       simuler();
     });
     simuler();
+
+    // --- Calculatrice de case (étape 2) ---
+    const curseurCase = ["cx", "cy"].map((id) => document.getElementById(id));
+    const toileCase = document.getElementById("dessin-case");
+    const ctxCase = toileCase.getContext("2d");
+
+    function calculerCase() {
+      const x = +curseurCase[0].value, y = +curseurCase[1].value;
+      const colonne = Math.floor(x / BLOC), ligne = Math.floor(y / BLOC);
+      const virgule = (n) => (n / BLOC).toFixed(2).replace(".", ",");
+      document.getElementById("val-cx").textContent = x;
+      document.getElementById("val-cy").textContent = y;
+      document.getElementById("calcul-case").innerHTML =
+        x + " ÷ 40 = " + virgule(x) + " → colonne <b>" + colonne + "</b><br>" +
+        y + " ÷ 40 = " + virgule(y) + " → ligne <b>" + ligne + "</b>";
+
+      // Un morceau de grille de 16 × 5 cases (lignes 8 à 12) centré sur la case trouvée
+      const W = toileCase.width, T = 40, premiere = Math.max(0, colonne - 7), premiereLigne = Math.min(Math.max(0, ligne - 2), 9);
+      ctxCase.clearRect(0, 0, W, toileCase.height);
+      ctxCase.font = "10px ui-monospace, Menlo, Consolas, monospace";
+      for (let i = 0; i < 16; i++) {
+        for (let k = 0; k < 5; k++) {
+          const c = premiere + i, l = premiereLigne + k, px = i * T, py = 10 + k * T;
+          const ici = c === colonne && l === ligne;
+          ctxCase.fillStyle = ici ? "rgba(255,226,122,.45)" : l === 11 ? "#4d9a2e" : l > 11 ? "#74481f" : "#1f3a5a";
+          ctxCase.fillRect(px + 1, py + 1, T - 2, T - 2);
+          ctxCase.fillStyle = ici ? "#fff" : "rgba(255,255,255,.6)";
+          ctxCase.fillText(c + "," + l, px + 3, py + 12);
+        }
+      }
+      // Le point du héros
+      const px = (x - premiere * T), py = 10 + (y - premiereLigne * T);
+      ctxCase.fillStyle = "#ffe27a";
+      ctxCase.beginPath(); ctxCase.arc(px, py, 5, 0, Math.PI * 2); ctxCase.fill();
+    }
+    curseurCase.forEach((c) => c.addEventListener("input", calculerCase));
+    calculerCase();
   </script>
 </body>
 </html>

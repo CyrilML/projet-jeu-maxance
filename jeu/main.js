@@ -16,7 +16,6 @@
 
   // 1. Brancher les pièces
   Jeu.Entrees.initialiser(window);
-  Jeu.Sauvegarde.initialiser();
   Jeu.Rendu.initialiser(canvas);
   const monde = Jeu.Monde.creer();
   const options = { rayonsX: false, pause: false, ralenti: false };
@@ -36,8 +35,11 @@
       base: document.getElementById("base"),
       cle: document.getElementById("cle"),
       effacerBase: document.getElementById("effacer-base"),
+      carte: document.getElementById("carte"),
     },
   });
+  // La sauvegarde est lue APRÈS le branchement du panneau, pour que le journal voie la lecture.
+  Jeu.Sauvegarde.initialiser();
 
   // Les touches « outils » sont gérées ici : elles ne font pas partie des règles du jeu.
   function touchesOutils() {
