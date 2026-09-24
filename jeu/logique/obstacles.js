@@ -3,7 +3,8 @@
 // Depuis l'étape 3, un obstacle est soit SOLIDE, soit LIQUIDE :
 //   - caisse, muret (bois) et tour (pierre) sont SOLIDES : on peut atterrir dessus,
 //     et quand on les touche par le côté, c'est un mur qui bloque (sans faire mal) ;
-//   - la lave est LIQUIDE : on passe à travers… et on brûle. C'est perdu !
+//   - la lave est LIQUIDE : on passe à travers… et on brûle : une vie en moins (étape 4).
+//     Il y a les petites mares (1 ou 2 blocs, au hasard) et une grande fosse tous les 30 blocs.
 //
 // Les obstacles sont écrits DANS LA GRILLE du terrain (numéros 4, 5 et 6), comme le sol.
 // Grâce à ça, la physique les traite exactement comme le sol : il n'y a rien de spécial à coder
@@ -26,11 +27,12 @@ Jeu.Obstacles = (function () {
     tour: { l: 1, h: 2, case: CASES.pierre },
     muret: { l: 2, h: 1, case: CASES.bois },
     lave: { l: 1, h: 1, case: CASES.lave, sousSol: true },
+    fosse: { l: 3, h: 1, case: CASES.lave, sousSol: true }, // jamais tirée au hasard : une par tronçon
   };
 
   // Les obstacles possibles à cette colonne du monde (plus on va loin, plus il y a de choix).
   function typesPossibles(colonne) {
-    return Object.keys(TYPES).filter((nom) => colonne >= C.obstacles.debloque[nom]);
+    return Object.keys(TYPES).filter((nom) => nom !== "fosse" && colonne >= C.obstacles.debloque[nom]);
   }
 
   // Peut-on poser un obstacle de `largeur` blocs à cette colonne ?
@@ -62,11 +64,33 @@ Jeu.Obstacles = (function () {
     }
   }
 
+  // Crée un obstacle, l'écrit dans la grille et l'ajoute à la liste.
+  function poser(monde, nom, colonne, largeur) {
+    const type = TYPES[nom];
+    const o = {
+      id: monde.prochainId++,
+      type: nom,
+      solide: Jeu.Terrain.SOLIDES[type.case],
+      colonne,
+      largeur,
+      // Le rectangle occupé, en pixels (la lave est DANS le sol, les autres au-dessus).
+      x: colonne * B,
+      y: type.sousSol ? C.solY : C.solY - type.h * B,
+      l: largeur * B,
+      h: type.h * B,
+      passe: false,
+    };
+    ecrireDansLaGrille(monde.terrain, o, type);
+    monde.obstacles.push(o);
+  }
+
   // Pose les obstacles d'un tronçon qui vient d'être fabriqué.
   function placerDansTroncon(monde, infos) {
     const O = C.obstacles;
     const de = infos.de;
-    let poses = 0;
+    // D'abord la grande fosse de lave, à sa place réservée.
+    poser(monde, "fosse", infos.fosse.colonne, infos.fosse.largeur);
+    let poses = 1;
     let colonne = infos.debut + infos.zoneSure + O.margeTrou + de.entre(0, 4);
     while (colonne <= infos.fin) {
       const nom = de.choisir(typesPossibles(colonne));
@@ -76,21 +100,7 @@ Jeu.Obstacles = (function () {
         colonne++; // pas de place ici : on essaie la colonne suivante
         continue;
       }
-      const o = {
-        id: monde.prochainId++,
-        type: nom,
-        solide: Jeu.Terrain.SOLIDES[type.case],
-        colonne,
-        largeur,
-        // Le rectangle occupé, en pixels (la lave est DANS le sol, les autres au-dessus).
-        x: colonne * B,
-        y: type.sousSol ? C.solY : C.solY - type.h * B,
-        l: largeur * B,
-        h: type.h * B,
-        passe: false,
-      };
-      ecrireDansLaGrille(monde.terrain, o, type);
-      monde.obstacles.push(o);
+      poser(monde, nom, colonne, largeur);
       poses++;
       colonne += largeur + de.entre(O.ecartMin, O.ecartMax);
     }

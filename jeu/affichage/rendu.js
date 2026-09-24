@@ -177,10 +177,26 @@ Jeu.Rendu = (function () {
     ctx.fillText(message, x, y);
   }
 
+  // Un cœur en pixels (plein = vie restante, vide = vie perdue).
+  function coeur(x, y, plein) {
+    const motif = ["01100110", "11111111", "11111111", "01111110", "00111100", "00011000"];
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fillRect(x - 2, y - 2, 28, 22);
+    motif.forEach((ligne, i) => {
+      for (let k = 0; k < 8; k++) {
+        if (ligne[k] === "1") {
+          ctx.fillStyle = plein ? "#ff3b5c" : "#4a4f6a";
+          ctx.fillRect(x + k * 3, y + i * 3, 3, 3);
+        }
+      }
+    });
+  }
+
   function hud(monde, options) {
     texte("Blocs " + monde.score, 20, 38, 26);
     texte("Record " + Jeu.Sauvegarde.donnees.record, 20, 66, 18, "#ffe27a");
-    texte("🚩 " + monde.dernierDrapeau + "   Chutes " + monde.chutes, 20, 90, 16, "#fff");
+    for (let v = 0; v < C.vies; v++) coeur(20 + v * 30, 80, v < monde.vies);
+    texte("🚩 " + monde.dernierDrapeau + "   Chutes " + monde.chutes + "   Lave " + monde.brulures, 20, 124, 16, "#fff");
     texte("X : rayons X   P : pause", L - 20, 32, 15, "#fff", "right");
     if (options.ralenti) texte("🐢 RALENTI (×0,25)", L / 2, 32, 18, "#ffe27a", "center");
   }
@@ -193,18 +209,20 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 150, 56, "#ffe27a", "center");
-    texte("Étape 3 : solide ou liquide", L / 2, 195, 24, "#fff", "center");
+    texte("Étape 4 : 5 vies et fosses de lave", L / 2, 195, 24, "#fff", "center");
     texte("Espace pour jouer", L / 2, 270, 30, "#fff", "center");
     texte("version " + C.version, L - 12, H - 12, 14, "#cfe0ff", "right");
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 320, 18, "#cfe0ff", "center");
     texte("Va le plus loin possible vers la droite !", L / 2, 348, 18, "#cfe0ff", "center");
-    texte("🕳️ Trou : retour au dernier drapeau 🚩", L / 2, 376, 18, "#cfe0ff", "center");
-    texte("🧱 Caisses, murets, tours : solides, monte dessus !     🔥 Lave : perdu !", L / 2, 404, 18, "#cfe0ff", "center");
+    texte("❤️ 5 vies · 🕳️ Trou : tu repars devant le trou · 🔥 Lave : tu repars au drapeau 🚩", L / 2, 376, 18, "#cfe0ff", "center");
+    texte("🧱 Caisses, murets, tours : solides, monte dessus !", L / 2, 404, 18, "#cfe0ff", "center");
   }
 
   function ecranPerdu(monde) {
     voile();
-    texte("Aïe ! Tu es tombé dans la lave 🔥", L / 2, 170, 48, "#ff7b7b", "center");
+    texte("Aïe ! Plus de vies", L / 2, 150, 56, "#ff7b7b", "center");
+    const derniere = "Ta dernière vie est tombée " + (monde.cause === "lave" ? "dans la lave 🔥" : "dans un trou 🕳️");
+    texte(derniere, L / 2, 190, 22, "#ffd0d0", "center");
     texte(monde.score + " blocs   ·   " + monde.temps.toFixed(1) + " s   ·   " + monde.chutes + " chute" + (monde.chutes > 1 ? "s" : ""), L / 2, 225, 28, "#fff", "center");
     if (monde.nouveauRecord) texte("🏆 Nouveau record !", L / 2, 270, 28, "#ffe27a", "center");
     if (monde.tempsPhase > 0.4) texte("Espace pour recommencer à zéro", L / 2, 330, 26, "#fff", "center");

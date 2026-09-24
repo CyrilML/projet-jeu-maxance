@@ -63,6 +63,12 @@ Jeu.Terrain = (function () {
     // Chaque tronçon a son propre dé, tiré de la graine du monde : même graine → même tronçon.
     const de = Jeu.Hasard.creer(terrain.graine * 1000 + numero);
     const zoneSure = numero === 0 ? CARTE.zoneSureDepart : CARTE.zoneSure;
+    // La place réservée à la fosse de lave (avec sa marge d'herbe) : ni trou ni plateforme ici.
+    const F = C.fosses;
+    const fosse = { colonne: debut + F.position, largeur: F.largeur };
+    const reserveDebut = fosse.colonne - F.marge;
+    const reserveFin = fosse.colonne + F.largeur - 1 + F.marge;
+    const dansLaReserve = (colonne, largeur) => colonne <= reserveFin && colonne + largeur - 1 >= reserveDebut;
 
     // 1. Un sol plein partout : de l'air au-dessus, de l'herbe, puis de la terre en dessous.
     for (let c = debut; c <= fin; c++) {
@@ -80,6 +86,10 @@ Jeu.Terrain = (function () {
     while (true) {
       const largeur = de.entre(T.largeurMin, T.largeurMax);
       if (c + largeur > fin) break; // on garde toujours la dernière colonne du tronçon avec du sol
+      if (dansLaReserve(c, largeur)) {
+        c = reserveFin + 1 + de.entre(1, 3); // pas de trou collé à la fosse : on saute après
+        continue;
+      }
       for (let k = c; k < c + largeur; k++) terrain.colonnes[k].fill(CASES.air);
       trous.push({ colonne: c, largeur });
       c += largeur + de.entre(T.ecartMin, T.ecartMax);
@@ -96,7 +106,7 @@ Jeu.Terrain = (function () {
       const libre = plateformes.every((p) => colonne > p.colonne + p.largeur + 1 || colonne + largeur < p.colonne - 1);
       // Du sol dans les 2 colonnes à sa gauche, pour pouvoir toujours sauter dessus depuis le sol.
       const accessible = [1, 2].every((k) => terrain.colonnes[colonne - k][CARTE.ligneSol] !== CASES.air);
-      if (!libre || !accessible) continue;
+      if (!libre || !accessible || dansLaReserve(colonne - 1, largeur + 2)) continue;
       const hauteur = de.choisir(P.hauteurs);
       const ligne = CARTE.ligneSol - hauteur;
       for (let k = colonne; k < colonne + largeur; k++) terrain.colonnes[k][ligne] = CASES.planche;
@@ -112,6 +122,7 @@ Jeu.Terrain = (function () {
       colonneDrapeau: debut + CARTE.colonneDrapeau,
       trous,
       plateformes,
+      fosse, // la place de la fosse de lave, que obstacles.js remplit
       de, // le même dé servira à placer les obstacles
     };
   }

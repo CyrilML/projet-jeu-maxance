@@ -127,6 +127,7 @@
       <a href="#etape1">Étape 1</a>
       <a href="#etape2">Étape 2</a>
       <a href="#etape3">Étape 3</a>
+      <a href="#etape4">Étape 4</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -493,7 +494,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p class="petit">C'est plus lent, donc on y écrit rarement et seulement l'important.</p>
         </div>
       </div>
-      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 7.</p>
+      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 8.</p>
 
       <h3>🔍 Missions d'exploration</h3>
       <p>Ouvre le jeu, active les rayons X (<kbd>X</kbd>) et mène l'enquête :</p>
@@ -531,7 +532,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <h4>✅ Ce que tu peux vérifier</h4>
           <ul>
             <li>☐ Monte sur une plateforme et marche dessus : tu ne passes pas à travers.</li>
-            <li>☐ Tombe exprès dans un trou : tu réapparais au dernier drapeau vert 🚩.</li>
+            <li>☐ Tombe exprès dans un trou : tu réapparais au dernier drapeau vert 🚩. <em>(Changé à l'étape 4 : tu réapparais devant le trou.)</em></li>
             <li>☐ Touche <kbd>X</kbd> : la grille apparaît avec le numéro <code>colonne,ligne</code> de chaque case.</li>
             <li>Bonus : un trou environ tous les 10 blocs, un drapeau tous les 30 (regarde leur n° de colonne).</li>
             <li>Bonus : quand tu réapparais, la caméra te rattrape en moins d'une demi-seconde (essaie en ralenti <kbd>L</kbd>).</li>
@@ -704,7 +705,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <ul>
             <li>☐ Atterris sur une caisse, un muret ou une tour : tu ne meurs pas, tu peux marcher dessus.</li>
             <li>☐ Fonce dans une caisse sans sauter : elle te bloque comme un mur (« contre un mur ? oui » dans l'état en direct).</li>
-            <li>☐ Tombe dans la lave 🟧 : « Aïe ! » et tout recommence à zéro.</li>
+            <li>☐ Tombe dans la lave 🟧 : « Aïe ! » et tout recommence à zéro. <em>(Changé à l'étape 4 : la lave coûte une vie.)</em></li>
             <li>Bonus : marche au bord de la lave, juste un peu au-dessus : tant que tes pieds sont sur l'herbe, tu ne brûles pas.</li>
           </ul>
         </div>
@@ -745,6 +746,99 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Pourquoi n'a-t-on rien codé de spécial pour marcher sur une caisse ?</summary><p>Parce qu'elle est écrite dans la grille comme le sol, avec un numéro solide. La physique ne fait pas la différence entre de l'herbe et une caisse : les deux sont « solides ».</p></details>
     </section>
 
+    <!-- ============ ÉTAPE 4 ============ -->
+    <section id="etape4">
+      <h2>❤️ Étape 4 : 5 vies et fosses de lave <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Tu as maintenant 5 vies. Tomber ne veut plus dire tout recommencer : tu réapparais, soit devant le trou, soit au dernier drapeau. Et une grande fosse de lave t'attend entre chaque paire de drapeaux.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/04-vies-et-fosses-de-lave.md</code>.</p>
+          <p><strong>Règles :</strong> 5 vies. Trou = 1 vie en moins, retour <em>devant le trou</em>. Lave = 1 vie en moins, retour au <em>dernier drapeau</em>. Plus de vie = « Aïe ! » et tout recommence à zéro. Une fosse de lave tous les 30 blocs, en plus des petites mares.</p>
+          <p class="petit">✍️ Maxance ne pouvait pas « tester » ce qui se passe à 0 vie, puisque ça n'existait pas encore. Il a dû l'<strong>imaginer</strong> et décider. C'est exactement le travail d'un directeur de jeu !</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ 5 cœurs rouges en haut à gauche.</li>
+            <li>☐ Tombe dans un trou : un cœur devient gris et tu réapparais juste devant le trou.</li>
+            <li>☐ Tombe dans la lave : un cœur en moins, et retour au dernier drapeau vert.</li>
+            <li>☐ Au 5ᵉ cœur perdu : « Aïe ! Plus de vies », puis Espace pour recommencer à zéro.</li>
+            <li>☐ Une grande fosse de lave de 3 blocs entre chaque paire de drapeaux (regarde son n° de colonne : 16, 46, 76…).</li>
+            <li>Vérifie aussi que la page affiche bien <strong>« version 4 »</strong> en haut à droite.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔢 Comment le jeu retient tes vies</h3>
+      <p>C'est tout simple : le monde contient une case mémoire <code>monde.vies</code>, qui vaut <strong>5</strong> au début de la partie. Chaque chute fait <code>vies = vies − 1</code>. Ensuite, le jeu pose une question : « reste-t-il des vies ? »</p>
+      <div class="carte">
+        <svg class="schema" viewBox="0 0 900 190" role="img" aria-label="Ce qui se passe quand on tombe">
+          <defs><marker id="pointe4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffe27a"/></marker></defs>
+          <g font-family="Trebuchet MS, sans-serif" font-size="14" text-anchor="middle">
+            <rect x="10" y="20" width="170" height="60" rx="10" fill="#3a1f2e" stroke="#ff6b8a" stroke-width="2"/>
+            <text x="95" y="46" fill="#e8ecff" font-weight="bold">Tombé !</text>
+            <text x="95" y="66" fill="#9aa5d6">trou ou lave</text>
+            <rect x="230" y="20" width="170" height="60" rx="10" fill="#1b2a55" stroke="#5b8cff" stroke-width="2"/>
+            <text x="315" y="46" fill="#e8ecff" font-weight="bold">vies = vies − 1</text>
+            <text x="315" y="66" fill="#9aa5d6">un cœur devient gris</text>
+            <rect x="450" y="20" width="170" height="60" rx="30" fill="#16362a" stroke="#3fc27a" stroke-width="2"/>
+            <text x="535" y="55" fill="#e8ecff" font-weight="bold">vies &gt; 0 ?</text>
+            <rect x="690" y="0" width="200" height="72" rx="10" fill="#16362a" stroke="#3fc27a" stroke-width="2"/>
+            <text x="790" y="22" fill="#7bff9e" font-weight="bold">OUI : on réapparaît</text>
+            <text x="790" y="42" fill="#e8ecff">trou → devant le trou</text>
+            <text x="790" y="60" fill="#e8ecff">lave → dernier drapeau</text>
+            <rect x="690" y="110" width="200" height="60" rx="10" fill="#3a1f2e" stroke="#ff6b8a" stroke-width="2"/>
+            <text x="790" y="136" fill="#ff9b9b" font-weight="bold">NON : « Aïe ! »</text>
+            <text x="790" y="156" fill="#e8ecff">tout recommence à zéro</text>
+            <path d="M180 50 H226" stroke="#ffe27a" stroke-width="2" fill="none" marker-end="url(#pointe4)"/>
+            <path d="M400 50 H446" stroke="#ffe27a" stroke-width="2" fill="none" marker-end="url(#pointe4)"/>
+            <path d="M620 45 L686 36" stroke="#ffe27a" stroke-width="2" fill="none" marker-end="url(#pointe4)"/>
+            <path d="M600 72 Q640 140 686 140" stroke="#ffe27a" stroke-width="2" fill="none" marker-end="url(#pointe4)"/>
+          </g>
+        </svg>
+      </div>
+      <p class="petit">Les vies sont dans la <strong>mémoire vive</strong> (le monde), pas dans la base de données : quand la partie recommence, elles reviennent à 5. Le nombre 5 est rangé dans <code>config.js</code> (<code>vies: 5</code>). Change-le, et tout le jeu suit : même le nombre de cœurs dessinés !</p>
+
+      <h3>📍 Comment le jeu sait où te faire réapparaître</h3>
+      <div class="grille">
+        <div class="carte">
+          <h4>🕳️ Dans un trou : juste devant</h4>
+          <p>Le jeu part de la colonne où tu es tombé et <strong>recule case par case</strong> tant que la case du sol (ligne 11) vaut <code>0</code> (de l'air) : il trouve ainsi le bord gauche du trou. Ensuite, il recule encore jusqu'à une colonne où tu peux tenir debout : de l'herbe sous les pieds, et pas de plateforme au-dessus de la tête.</p>
+          <p class="petit">Dans le journal : « Chute dans le trou (bord gauche : colonne 52) → retour juste devant, colonne 51 ».</p>
+        </div>
+        <div class="carte">
+          <h4>🔥 Dans la lave : au dernier drapeau</h4>
+          <p>Le monde retient le numéro du dernier drapeau touché : <code>monde.dernierDrapeau</code>. Il suffit de regarder la colonne de ce drapeau dans la liste <code>monde.drapeaux</code>, et d'y replacer le héros.</p>
+        </div>
+        <div class="carte">
+          <h4>🏗️ Une fosse tous les 30 blocs</h4>
+          <p>Chaque tronçon de 30 colonnes <strong>réserve une place</strong> au milieu (colonnes 16, 17, 18 du tronçon) pour la fosse, avec 2 blocs d'herbe de chaque côté. Les trous et les plateformes n'ont pas le droit d'y aller.</p>
+          <p class="petit">Du coup, il y a un peu moins de trous vides : 2 par tronçon au lieu de 3. Avec la fosse, ça fait toujours environ un « trou » tous les 10 blocs.</p>
+        </div>
+      </div>
+
+      <h3>🗃️ Le problème des versions mélangées (et sa solution)</h3>
+      <p>Pour aller plus vite, ton navigateur garde une copie de chaque fichier pendant 10 minutes : c'est le <strong>cache</strong>. Après une mise à jour, il pouvait mélanger un vieux fichier de règles avec les nouveaux. C'est pour ça que tu mourais encore en atterrissant sur les blocs !</p>
+      <p>La solution : chaque fichier porte maintenant un <strong>numéro de version</strong> (<code>config.js?v=4</code>). Pour le navigateur, un nouveau numéro veut dire un nouveau fichier. La page affiche « version 4 » en haut ; si les fichiers ne correspondent pas, elle affiche « ⚠️ versions mélangées : fais Ctrl + F5 ».</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Tombe dans un trou et lis le journal : quelle est la colonne du bord du trou, et celle où tu réapparais ?</li>
+        <li>Regarde « vies » dans l'état en direct pendant que tu tombes. Quand change-t-il exactement ?</li>
+        <li>Trouve une fosse avec les rayons X. Note sa colonne, puis celle de la suivante : quelle différence ?</li>
+        <li>Dans « La carte en mémoire », repère les trois <code>6</code> côte à côte de la fosse.</li>
+        <li>Tombe exprès 5 fois. Que contient la base de données après la partie ? Les vies y sont-elles ?</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Tu as 2 vies et tu tombes dans la lave. Que se passe-t-il ?</summary><p>vies = 2 − 1 = 1. Il reste une vie, donc tu réapparais au dernier drapeau.</p></details>
+      <details class="question"><summary>Tu as 1 vie et tu tombes dans un trou. Que se passe-t-il ?</summary><p>vies = 1 − 1 = 0. Plus de vie : « Aïe ! Plus de vies » et tout recommence à zéro.</p></details>
+      <details class="question"><summary>Pourquoi les vies ne sont-elles pas dans la base de données ?</summary><p>Parce qu'elles ne servent que pendant une partie. La base de données garde ce qui doit survivre quand on ferme la page, comme le record.</p></details>
+      <details class="question"><summary>Pourquoi réapparaître <em>devant</em> le trou, et pas dedans ?</summary><p>Dedans, tu retomberais tout de suite ! Le jeu recule jusqu'à une case d'herbe où tu tiens debout, pour que tu puisses reprendre ton élan et ressauter.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -769,44 +863,50 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>Caisses, murets et tours deviennent solides (on monte dessus, par le côté c'est un mur). Des mares de lave apparaissent : liquides et mortelles.</p>
           <p class="apprend"><b>Tu apprends :</b> propriétés des blocs (solide, liquide), ranger les obstacles dans la grille, « changer une règle » ou « réparer un bug ». <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">4</div>
+          <h4>5 vies et fosses de lave <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>5 cœurs. Trou → retour devant le trou, lave → retour au drapeau, plus de vie → retour à zéro. Une fosse de lave tous les 30 blocs.</p>
+          <p class="apprend"><b>Tu apprends :</b> compteur en mémoire vive, décisions « si… alors… sinon », chercher une case en parcourant la grille, cache du navigateur et numéros de version. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">5</div>
           <h4>Casser et poser des blocs <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Clic gauche pour casser, clic droit pour poser, à portée de bras.</p>
           <p class="apprend"><b>Tu apprends :</b> transformer un clic en case de la grille, « la donnée d'abord, le dessin suit », événements de la souris. <b>Durée :</b> 1 à 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">5</div>
+          <div class="num">6</div>
           <h4>Inventaire et catalogue des blocs</h4>
           <p>Chaque bloc cassé va dans l'inventaire (piles de 64), avec une barre en bas de l'écran.</p>
           <p class="apprend"><b>Tu apprends :</b> identifiants (déjà 0 à 6 depuis l'étape 3), catalogue de propriétés (dureté, en plus de solide ou liquide), structures de données. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">6</div>
+          <div class="num">7</div>
           <h4>Collines, grottes et minerais</h4>
           <p>Le monde est déjà sans fin depuis l'étape 2. Ici, il devient plus riche : du relief, des grottes, des minerais cachés sous terre.</p>
           <p class="apprend"><b>Tu apprends :</b> génération procédurale, bruit de Perlin, décharger les tronçons trop loin pour libérer la mémoire. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">7</div>
+          <div class="num">8</div>
           <h4>Sauvegarder le monde</h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">8</div>
+          <div class="num">9</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">9</div>
+          <div class="num">10</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">10</div>
+          <div class="num">11</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -846,6 +946,16 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-3" data-cle="appris-3" placeholder="Ex. : J'ai appris que chaque numéro de bloc a une fiche qui dit s'il est solide…"></textarea>
         <label for="idees-3"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-3" data-cle="idees-3" placeholder="Ex. : De l'eau où l'on nage au lieu de mourir…"></textarea>
+      </div>
+
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 4 · 5 vies et fosses de lave <span class="petit">· 24 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> 5 vies (cœurs en haut de l'écran), retour devant le trou ou au dernier drapeau selon la chute, « Aïe ! Plus de vies » et retour à zéro, une fosse de lave de 3 blocs au milieu de chaque tronçon. En plus : un numéro de version sur chaque fichier pour que le navigateur ne mélange plus les versions.</p>
+        <p class="petit">✍️ Maxance a d'abord cru qu'il fallait tester avant de choisir. Il a appris qu'un directeur de jeu <strong>imagine et décide</strong> la règle, puis la teste. Réponses : 1A, 2A, 3B.</p>
+        <label for="appris-4"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-4" data-cle="appris-4" placeholder="Ex. : J'ai appris que les vies sont juste un nombre qui baisse de 1, et que…"></textarea>
+        <label for="idees-4"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-4" data-cle="idees-4" placeholder="Ex. : Un cœur à ramasser pour regagner une vie…"></textarea>
       </div>
     </section>
   </main>

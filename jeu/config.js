@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 3,
+  version: 4,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -63,6 +63,16 @@ Jeu.CONFIG = {
     largeurMax: 5,
     hauteurs: [2, 3], // en blocs au-dessus du sol
   },
+
+  // Une grande fosse de lave au milieu de chaque tronçon : donc une tous les 30 blocs (étape 4).
+  fosses: {
+    largeur: 3, // en blocs (les petites mares au hasard font 1 ou 2 blocs)
+    position: 16, // n° de la colonne dans le tronçon (0 à 29) où commence la fosse
+    marge: 2, // blocs d'herbe gardés de chaque côté (pas de trou ni de plateforme) pour prendre son élan
+  },
+
+  // Les vies (étape 4). Trou ou lave = 1 vie en moins. À 0 vie : « Aïe ! » et tout recommence à zéro.
+  vies: 5,
 
   obstacles: {
     ecartMin: 8, // en blocs, entre deux obstacles (au moins : s'il n'y a pas la place à cause d'un trou, on pose plus loin)
