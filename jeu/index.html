@@ -13,6 +13,7 @@
     .entete { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
     .entete h1 { margin: 0; font-size: 1.2rem; }
     .entete a { color: var(--accent); }
+    .version { color: var(--doux); font-size: .85rem; margin-right: 10px; }
     canvas { display: block; width: 100%; max-width: 960px; aspect-ratio: 16 / 9; margin: 0 auto; border-radius: 12px; border: 2px solid var(--bord); background: #000; outline: none; }
     canvas:focus-visible { border-color: var(--accent); }
     .outils { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0 16px; }
@@ -57,7 +58,7 @@
   <div class="page">
     <header class="entete">
       <h1>🧱 Projet Maxance · Étape 3 : solide ou liquide</h1>
-      <a href="../index.html">📓 Ouvrir le carnet de bord</a>
+      <span><span id="version" class="version"></span> <a href="../index.html">📓 Ouvrir le carnet de bord</a></span>
     </header>
 
     <canvas id="ecran" width="960" height="540" tabindex="0" aria-label="Écran de jeu"></canvas>
@@ -94,20 +95,23 @@
     </section>
   </div>
 
-  <!-- L'ordre compte : chaque fichier peut utiliser ceux chargés AVANT lui. -->
-  <script src="config.js"></script>
-  <script src="moteur/evenements.js"></script>
-  <script src="moteur/entrees.js"></script>
-  <script src="moteur/physique.js"></script>
-  <script src="moteur/hasard.js"></script>
-  <script src="moteur/camera.js"></script>
-  <script src="logique/terrain.js"></script>
-  <script src="logique/joueur.js"></script>
-  <script src="logique/obstacles.js"></script>
-  <script src="logique/monde.js"></script>
-  <script src="donnees/sauvegarde.js"></script>
-  <script src="affichage/rendu.js"></script>
-  <script src="affichage/sous-le-capot.js"></script>
-  <script src="main.js"></script>
+  <!-- L'ordre compte : chaque fichier peut utiliser ceux chargés AVANT lui.
+       Le « ?v=3 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js).
+       Pour le navigateur, un nouveau numéro = un nouveau fichier, donc il ne ressert pas un vieux fichier
+       gardé en mémoire (le « cache »). Sans ça, il pourrait mélanger l'ancienne et la nouvelle version. -->
+  <script src="config.js?v=3"></script>
+  <script src="moteur/evenements.js?v=3"></script>
+  <script src="moteur/entrees.js?v=3"></script>
+  <script src="moteur/physique.js?v=3"></script>
+  <script src="moteur/hasard.js?v=3"></script>
+  <script src="moteur/camera.js?v=3"></script>
+  <script src="logique/terrain.js?v=3"></script>
+  <script src="logique/joueur.js?v=3"></script>
+  <script src="logique/obstacles.js?v=3"></script>
+  <script src="logique/monde.js?v=3"></script>
+  <script src="donnees/sauvegarde.js?v=3"></script>
+  <script src="affichage/rendu.js?v=3"></script>
+  <script src="affichage/sous-le-capot.js?v=3"></script>
+  <script src="main.js?v=3"></script>
 </body>
 </html>

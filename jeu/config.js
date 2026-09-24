@@ -10,6 +10,10 @@
 window.Jeu = window.Jeu || {};
 
 Jeu.CONFIG = {
+  // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
+  // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
+  version: 3,
+
   ecran: { largeur: 960, hauteur: 540 },
 
   // Taille d'un bloc (une case de la grille). Tout le monde est pensé en blocs de 40 px.

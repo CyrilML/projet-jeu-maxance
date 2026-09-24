@@ -14,6 +14,13 @@
   const C = Jeu.CONFIG;
   const canvas = document.getElementById("ecran");
 
+  // Vérifie que tous les fichiers viennent de la même version (voir index.html).
+  const attendue = String(C.version);
+  const melange = [...document.scripts].some((s) => !s.src.endsWith("?v=" + attendue));
+  document.getElementById("version").textContent = melange
+    ? "⚠️ versions mélangées : fais Ctrl + F5"
+    : "version " + attendue;
+
   // 1. Brancher les pièces
   Jeu.Entrees.initialiser(window);
   Jeu.Rendu.initialiser(canvas);

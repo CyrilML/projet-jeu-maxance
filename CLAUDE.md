@@ -50,5 +50,8 @@ Règles :
 - Noms de variables et commentaires en français, avec un en-tête de fichier qui explique son
   rôle avec une image simple (« les oreilles », « le peintre »…).
 - Si le format de la sauvegarde change, augmente `version` et convertis les anciennes données.
+- À chaque livraison, augmente `version` dans `jeu/config.js` ET le `?v=…` de tous les `<script>` de
+  `jeu/index.html` (même numéro). Sinon le navigateur de Maxance peut mélanger des fichiers anciens
+  (gardés 10 minutes en cache par GitHub Pages) et nouveaux.
 - Teste dans un navigateur (Playwright est disponible) avant de livrer : pas d'erreur console,
   critères de la demande vérifiés.

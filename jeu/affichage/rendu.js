@@ -195,6 +195,7 @@ Jeu.Rendu = (function () {
     texte("PROJET MAXANCE", L / 2, 150, 56, "#ffe27a", "center");
     texte("Étape 3 : solide ou liquide", L / 2, 195, 24, "#fff", "center");
     texte("Espace pour jouer", L / 2, 270, 30, "#fff", "center");
+    texte("version " + C.version, L - 12, H - 12, 14, "#cfe0ff", "right");
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 320, 18, "#cfe0ff", "center");
     texte("Va le plus loin possible vers la droite !", L / 2, 348, 18, "#cfe0ff", "center");
     texte("🕳️ Trou : retour au dernier drapeau 🚩", L / 2, 376, 18, "#cfe0ff", "center");
