@@ -1,25 +1,31 @@
-// 🧱 LES OBSTACLES : posés dans le monde
+// 🧱 LES OBSTACLES : des blocs solides et des mares de lave
 //
-// À l'étape 1, les obstacles glissaient vers le héros. Maintenant, ils ne bougent plus :
-// ils sont POSÉS sur le sol du monde, et c'est le héros qui avance vers eux.
-// Quand un tronçon du monde est fabriqué, ce fichier choisit où poser ses obstacles.
+// Depuis l'étape 3, un obstacle est soit SOLIDE, soit LIQUIDE :
+//   - caisse, muret (bois) et tour (pierre) sont SOLIDES : on peut atterrir dessus,
+//     et quand on les touche par le côté, c'est un mur qui bloque (sans faire mal) ;
+//   - la lave est LIQUIDE : on passe à travers… et on brûle. C'est perdu !
 //
-// Les obstacles ne sont PAS rangés dans la grille du terrain : ce sont des objets à part,
-// dans la liste monde.obstacles, avec leur numéro, leur type et leur position en pixels.
-// Pourquoi ? Parce qu'ils ont leurs propres règles (les toucher = perdu) et qu'une tour ou un muret
-// occupe plusieurs cases mais reste UN seul obstacle.
+// Les obstacles sont écrits DANS LA GRILLE du terrain (numéros 4, 5 et 6), comme le sol.
+// Grâce à ça, la physique les traite exactement comme le sol : il n'y a rien de spécial à coder
+// pour pouvoir marcher dessus. La liste monde.obstacles garde en plus leur nom et leur numéro,
+// pour le journal et les rayons X.
 
 window.Jeu = window.Jeu || {};
 
 Jeu.Obstacles = (function () {
   const C = Jeu.CONFIG;
   const B = C.tailleBloc;
+  const CASES = Jeu.Terrain.CASES;
 
   // Le « catalogue » des obstacles, en blocs de 40 px.
+  //   case   : le numéro écrit dans la grille
+  //   sousSol : la lave REMPLACE l'herbe (c'est une mare creusée dans le sol) ;
+  //             les autres sont posés PAR-DESSUS le sol.
   const TYPES = {
-    caisse: { l: 1, h: 1, matiere: "bois" },
-    tour: { l: 1, h: 2, matiere: "pierre" },
-    muret: { l: 2, h: 1, matiere: "bois" },
+    caisse: { l: 1, h: 1, case: CASES.bois },
+    tour: { l: 1, h: 2, case: CASES.pierre },
+    muret: { l: 2, h: 1, case: CASES.bois },
+    lave: { l: 1, h: 1, case: CASES.lave, sousSol: true },
   };
 
   // Les obstacles possibles à cette colonne du monde (plus on va loin, plus il y a de choix).
@@ -28,20 +34,32 @@ Jeu.Obstacles = (function () {
   }
 
   // Peut-on poser un obstacle de `largeur` blocs à cette colonne ?
-  // Il faut du sol tout autour (pour prendre son élan et atterrir) et pas de plateforme juste au-dessus.
+  // Il faut de l'herbe tout autour (pour prendre son élan et atterrir) et pas de plateforme juste au-dessus.
   function placeLibre(terrain, colonne, largeur, infos) {
     const O = C.obstacles;
     const CARTE = C.carte;
     for (let c = colonne - O.margeTrou; c < colonne + largeur + O.margeTrou; c++) {
       if (c < infos.debut + infos.zoneSure || c > infos.fin) return false;
-      if (Jeu.Terrain.lireCase(terrain, c, CARTE.ligneSol) === Jeu.Terrain.CASES.air) return false; // un trou
+      if (Jeu.Terrain.lireCase(terrain, c, CARTE.ligneSol) !== CASES.herbe) return false; // un trou ou de la lave
     }
     for (let c = colonne - 1; c <= colonne + largeur; c++) {
       for (let l = 0; l < CARTE.ligneSol; l++) {
-        if (Jeu.Terrain.estSolide(terrain, c, l)) return false; // une plateforme au-dessus
+        if (Jeu.Terrain.estSolide(terrain, c, l)) return false; // une plateforme ou un autre obstacle
       }
     }
     return true;
+  }
+
+  // Écrit l'obstacle dans la grille, case par case.
+  function ecrireDansLaGrille(terrain, o, type) {
+    const ligneSol = C.carte.ligneSol;
+    for (let c = o.colonne; c < o.colonne + o.largeur; c++) {
+      if (type.sousSol) {
+        Jeu.Terrain.ecrireCase(terrain, c, ligneSol, type.case);
+      } else {
+        for (let k = 1; k <= type.h; k++) Jeu.Terrain.ecrireCase(terrain, c, ligneSol - k, type.case);
+      }
+    }
   }
 
   // Pose les obstacles d'un tronçon qui vient d'être fabriqué.
@@ -53,23 +71,28 @@ Jeu.Obstacles = (function () {
     while (colonne <= infos.fin) {
       const nom = de.choisir(typesPossibles(colonne));
       const type = TYPES[nom];
-      if (!placeLibre(monde.terrain, colonne, type.l, infos)) {
+      const largeur = nom === "lave" ? de.entre(O.laveLargeurMin, O.laveLargeurMax) : type.l;
+      if (!placeLibre(monde.terrain, colonne, largeur, infos)) {
         colonne++; // pas de place ici : on essaie la colonne suivante
         continue;
       }
-      monde.obstacles.push({
+      const o = {
         id: monde.prochainId++,
         type: nom,
-        matiere: type.matiere,
+        solide: Jeu.Terrain.SOLIDES[type.case],
         colonne,
+        largeur,
+        // Le rectangle occupé, en pixels (la lave est DANS le sol, les autres au-dessus).
         x: colonne * B,
-        y: C.solY - type.h * B,
-        l: type.l * B,
+        y: type.sousSol ? C.solY : C.solY - type.h * B,
+        l: largeur * B,
         h: type.h * B,
         passe: false,
-      });
+      };
+      ecrireDansLaGrille(monde.terrain, o, type);
+      monde.obstacles.push(o);
       poses++;
-      colonne += type.l + de.entre(O.ecartMin, O.ecartMax);
+      colonne += largeur + de.entre(O.ecartMin, O.ecartMax);
     }
     return poses;
   }
@@ -86,5 +109,10 @@ Jeu.Obstacles = (function () {
     }
   }
 
-  return { TYPES, placerDansTroncon, mettreAJour };
+  // La mare de lave touchée par la zone du héros, s'il y en a une.
+  function laveTouchee(monde, zone) {
+    return monde.obstacles.find((o) => !o.solide && Jeu.Physique.seChevauchent(zone, o));
+  }
+
+  return { TYPES, placerDansTroncon, mettreAJour, laveTouchee };
 })();

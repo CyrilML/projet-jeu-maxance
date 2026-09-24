@@ -7,9 +7,10 @@
 //
 // Le jeu a trois PHASES : "accueil" → "jeu" → "perdu" → "jeu" → …
 //
-// Les règles de l'étape 2 :
+// Les règles :
 //   - tomber dans un trou → on réapparaît au dernier drapeau atteint ;
-//   - toucher un obstacle → « Aïe ! », la partie est finie et tout recommence à zéro ;
+//   - caisses, murets, tours → SOLIDES : on marche dessus, et par le côté c'est un mur (étape 3) ;
+//   - tomber dans la lave → « Aïe ! », la partie est finie et tout recommence à zéro (étape 3) ;
 //   - le score = le nombre de blocs parcourus vers la droite (la colonne la plus loin atteinte).
 
 window.Jeu = window.Jeu || {};
@@ -46,12 +47,12 @@ Jeu.Monde = (function () {
     Jeu.Evenements.emettre("debut-partie", { graine: monde.graine });
   }
 
-  function perdre(monde, obstacle) {
+  function perdre(monde, lave) {
     monde.phase = "perdu";
     monde.tempsPhase = 0;
     monde.joueur.etat = "touche";
     monde.nouveauRecord = monde.score > Jeu.Sauvegarde.donnees.record;
-    Jeu.Evenements.emettre("collision", { type: obstacle.type, id: obstacle.id });
+    Jeu.Evenements.emettre("brule", { id: lave.id, colonne: lave.colonne });
     Jeu.Evenements.emettre("fin-partie", { score: monde.score, temps: monde.temps, chutes: monde.chutes });
   }
 
@@ -125,13 +126,10 @@ Jeu.Monde = (function () {
     if (blocs > monde.score) monde.score = blocs;
 
     Jeu.Obstacles.mettreAJour(monde);
-    const zoneJoueur = Jeu.Joueur.hitbox(j);
-    for (const o of monde.obstacles) {
-      if (Jeu.Physique.seChevauchent(zoneJoueur, o)) {
-        perdre(monde, o);
-        break;
-      }
-    }
+    // Les obstacles solides n'ont plus besoin de règle ici : la physique s'en occupe, comme pour le sol.
+    // Seule la lave (liquide) est dangereuse.
+    const lave = Jeu.Obstacles.laveTouchee(monde, Jeu.Joueur.hitbox(j));
+    if (lave) perdre(monde, lave);
 
     suivreAvecLaCamera(monde, dt);
     fabriquerDevant(monde);

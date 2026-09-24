@@ -64,8 +64,11 @@ Jeu.CONFIG = {
     ecartMin: 8, // en blocs, entre deux obstacles (au moins : s'il n'y a pas la place à cause d'un trou, on pose plus loin)
     ecartMax: 14,
     margeTrou: 2, // blocs de sol obligatoires avant et après un obstacle (pour prendre son élan et atterrir)
-    // À partir de quelle colonne chaque obstacle peut apparaître (les caisses : dès le début).
-    debloque: { caisse: 0, tour: 60, muret: 120 },
+    // À partir de quelle colonne chaque obstacle peut apparaître (caisses et lave : dès le début).
+    debloque: { caisse: 0, lave: 0, tour: 60, muret: 120 },
+    // Largeur d'une mare de lave, en blocs (tirée au hasard entre les deux).
+    laveLargeurMin: 1,
+    laveLargeurMax: 2,
   },
 
   camera: {

@@ -6,7 +6,7 @@
 // les plus importantes de l'architecture d'un jeu.
 //
 // Le peintre repeint TOUT l'écran à chaque image, du fond vers l'avant :
-// ciel → nuages → collines → blocs du terrain → drapeaux → obstacles → joueur → textes → rayons X.
+// ciel → nuages → collines → blocs du terrain (obstacles compris) → drapeaux → joueur → textes → rayons X.
 //
 // Le monde est plus grand que l'écran : on dessine à travers la CAMÉRA.
 // Pour chaque objet :  x sur l'écran = x dans le monde − camera.x
@@ -74,7 +74,19 @@ Jeu.Rendu = (function () {
       bois: ["#b5793a", "#8c5a28"],
       pierre: ["#8e939b", "#6f747c"],
       planche: ["#d9a55b", "#a8773a"],
+      lave: ["#ff7a1a", "#ffd23f"],
     }[matiere];
+    if (matiere === "lave") {
+      // Un liquide : la surface est un peu plus basse que le haut de la case, avec des bulles claires.
+      ctx.fillStyle = "#c2410c";
+      ctx.fillRect(x, y + 8, B, B - 8);
+      ctx.fillStyle = couleurs[0];
+      ctx.fillRect(x, y + 8, B, 10);
+      ctx.fillStyle = couleurs[1];
+      ctx.fillRect(x + ((graine * 7) % 28) + 2, y + 11, 8, 4);
+      ctx.fillRect(x + ((graine * 13) % 26) + 4, y + 24, 6, 6);
+      return;
+    }
     ctx.fillStyle = couleurs[0];
     ctx.fillRect(x, y, B, B);
     ctx.fillStyle = couleurs[1];
@@ -130,14 +142,6 @@ Jeu.Rendu = (function () {
     }
   }
 
-  function obstacles(liste) {
-    for (const o of liste) {
-      for (let bx = 0; bx < o.l; bx += B) {
-        for (let by = 0; by < o.h; by += B) bloc(o.x + bx, o.y + by, o.matiere, o.id * 3 + bx + by);
-      }
-    }
-  }
-
   function joueur(j, phase) {
     const x = Math.round(j.x);
     const y = Math.round(j.y);
@@ -189,16 +193,17 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 150, 56, "#ffe27a", "center");
-    texte("Étape 2 : un monde en blocs", L / 2, 195, 24, "#fff", "center");
+    texte("Étape 3 : solide ou liquide", L / 2, 195, 24, "#fff", "center");
     texte("Espace pour jouer", L / 2, 270, 30, "#fff", "center");
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 320, 18, "#cfe0ff", "center");
     texte("Va le plus loin possible vers la droite !", L / 2, 348, 18, "#cfe0ff", "center");
-    texte("🕳️ Trou : retour au dernier drapeau 🚩     🧱 Obstacle : perdu !", L / 2, 376, 18, "#cfe0ff", "center");
+    texte("🕳️ Trou : retour au dernier drapeau 🚩", L / 2, 376, 18, "#cfe0ff", "center");
+    texte("🧱 Caisses, murets, tours : solides, monte dessus !     🔥 Lave : perdu !", L / 2, 404, 18, "#cfe0ff", "center");
   }
 
   function ecranPerdu(monde) {
     voile();
-    texte("Aïe !", L / 2, 170, 60, "#ff7b7b", "center");
+    texte("Aïe ! Tu es tombé dans la lave 🔥", L / 2, 170, 48, "#ff7b7b", "center");
     texte(monde.score + " blocs   ·   " + monde.temps.toFixed(1) + " s   ·   " + monde.chutes + " chute" + (monde.chutes > 1 ? "s" : ""), L / 2, 225, 28, "#fff", "center");
     if (monde.nouveauRecord) texte("🏆 Nouveau record !", L / 2, 270, 28, "#ffe27a", "center");
     if (monde.tempsPhase > 0.4) texte("Espace pour recommencer à zéro", L / 2, 330, 26, "#fff", "center");
@@ -294,15 +299,16 @@ Jeu.Rendu = (function () {
       if (d.numero === monde.dernierDrapeau) note("↻ point de retour", x, C.solY - 134, couleur);
     }
 
-    // 6. Les obstacles : zone de collision + identité
+    // 6. Les obstacles : solide (blanc, on peut marcher dessus) ou liquide (rouge, danger !)
     for (const o of monde.obstacles) {
       const x = o.x - camX;
       if (x + o.l < 0 || x > L) continue;
-      ctx.strokeStyle = "#ff4d4d";
+      ctx.strokeStyle = o.solide ? "#ffffff" : "#ff4d4d";
       ctx.lineWidth = 2;
       ctx.strokeRect(x, o.y, o.l, o.h);
-      note("#" + o.id + " " + o.type, x, o.y - 20, "#fff");
-      note("colonne " + o.colonne, x, o.y - 5, "#fff");
+      const haut = o.solide ? o.y : o.y - 30;
+      note("#" + o.id + " " + o.type + " · colonne " + o.colonne, x, haut - 20, "#fff");
+      note(o.solide ? "solide : on marche dessus" : "liquide : on brûle !", x, haut - 5, o.solide ? "#7bff9e" : "#ff9b9b");
     }
 
     // 7. La caméra : l'endroit où elle essaie de garder le héros
@@ -385,7 +391,6 @@ Jeu.Rendu = (function () {
     ctx.translate(-camX, 0);
     terrain(monde);
     drapeaux(monde);
-    obstacles(monde.obstacles);
     joueur(monde.joueur, monde.phase);
     ctx.restore();
 

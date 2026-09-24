@@ -33,6 +33,7 @@ Jeu.Joueur = (function () {
       tamponSaut: 0, // temps restant pendant lequel un saut demandé est gardé en mémoire
       sautMemorise: false,
       sautCoupe: false,
+      contreMur: false, // est-il en train de pousser contre un bloc solide ?
       debutSaut: 0,
       animation: 0,
     };
@@ -117,6 +118,18 @@ Jeu.Joueur = (function () {
     });
     const auSol = contact.bas;
     if (contact.haut) emettre("tete-cognee", { ligne: Jeu.Physique.caseDe(j.y, C.tailleBloc) - 1 });
+    // Un bloc solide touché par le côté = un mur. On ne l'annonce qu'au premier contact.
+    const contreMur = contact.gauche || contact.droite;
+    if (contreMur && !j.contreMur) {
+      const B = C.tailleBloc;
+      const colonne = contact.droite ? Jeu.Physique.caseDe(j.x + j.l, B) : Jeu.Physique.caseDe(j.x, B) - 1;
+      let numero = 0; // quelle matière forme le mur ? On cherche la case solide à hauteur du héros.
+      for (let l = Jeu.Physique.caseDe(j.y, B); l <= Jeu.Physique.caseDe(j.y + j.h - 1, B); l++) {
+        if (Jeu.Terrain.estSolide(monde.terrain, colonne, l)) numero = Jeu.Terrain.lireCase(monde.terrain, colonne, l);
+      }
+      emettre("mur", { colonne, matiere: Jeu.Terrain.NOMS[numero] });
+    }
+    j.contreMur = contreMur;
 
     // 4. Mettre à jour l'état
     if (auSol) {

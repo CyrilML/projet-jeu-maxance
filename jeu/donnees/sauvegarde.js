@@ -13,7 +13,7 @@
 // Quand on passera à une vraie base de données sur un serveur, seul ce fichier changera.
 //
 // Attention : la CARTE du monde n'est pas sauvegardée. Elle vit seulement en mémoire vive
-// (sauvegarder un monde entier, c'est pour l'étape 6).
+// (sauvegarder un monde entier, c'est pour l'étape 7 de la feuille de route).
 
 window.Jeu = window.Jeu || {};
 

@@ -32,7 +32,7 @@
     #journal { list-style: none; margin: 0; padding: 0; height: 330px; overflow-y: auto; font-size: .82rem; }
     #journal li { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
     #journal .temps { display: inline-block; min-width: 58px; color: var(--doux); font-family: ui-monospace, Menlo, Consolas, monospace; }
-    #journal li[data-evenement="collision"], #journal li[data-evenement="fin-partie"] { color: #ff9b9b; }
+    #journal li[data-evenement="brule"], #journal li[data-evenement="fin-partie"] { color: #ff9b9b; }
     #journal li[data-evenement="sauvegarde"], #journal li[data-evenement="nouveau-record"] { color: var(--accent); }
     pre { margin: 0; background: #0b1020; border-radius: 8px; padding: 8px; font-size: .78rem; overflow: auto; max-height: 280px; color: #b9f5c9; }
     code { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--accent); }
@@ -45,6 +45,9 @@
     table.carte td.c1 { background: #4d9a2e; }
     table.carte td.c2 { background: #74481f; }
     table.carte td.c3 { background: #c08a45; }
+    table.carte td.c4 { background: #8c5a28; }
+    table.carte td.c5 { background: #6f747c; }
+    table.carte td.c6 { background: #ff7a1a; color: #3a1400; font-weight: bold; }
     table.carte td.heros { outline: 2px solid var(--accent); outline-offset: -2px; color: var(--accent); font-weight: bold; }
     .legende-carte { display: flex; gap: 12px; flex-wrap: wrap; font-size: .8rem; color: var(--doux); margin-top: 6px; }
     @media (max-width: 1000px) { .capot { grid-template-columns: 1fr; } #journal { height: 220px; } }
@@ -53,7 +56,7 @@
 <body>
   <div class="page">
     <header class="entete">
-      <h1>🧱 Projet Maxance · Étape 2 : un monde en blocs</h1>
+      <h1>🧱 Projet Maxance · Étape 3 : solide ou liquide</h1>
       <a href="../index.html">📓 Ouvrir le carnet de bord</a>
     </header>
 
@@ -84,9 +87,9 @@
       </div>
       <div class="bloc carte-bloc">
         <h2>🗺️ La carte en mémoire</h2>
-        <p class="aide">Le monde n'est qu'une grille de numéros : <code>terrain.colonnes[colonne][ligne]</code>. Voici les colonnes que tu vois à l'écran. La case encadrée en jaune est celle du héros. Les obstacles ne sont pas dans cette grille : ils sont rangés à part, dans la liste <code>monde.obstacles</code>.</p>
+        <p class="aide">Le monde n'est qu'une grille de numéros : <code>terrain.colonnes[colonne][ligne]</code>. Voici les colonnes que tu vois à l'écran. La case encadrée en jaune est celle du héros. Depuis l'étape 3, les obstacles sont aussi dans cette grille : 4 = bois, 5 = pierre, 6 = lave.</p>
         <div class="defile"><table class="carte"><tbody id="carte"></tbody></table></div>
-        <div class="legende-carte"><span>0 = air</span><span>1 = herbe</span><span>2 = terre</span><span>3 = planche</span><span>en haut : n° de colonne · à gauche : n° de ligne</span></div>
+        <div class="legende-carte"><span>0 = air</span><span>1 = herbe</span><span>2 = terre</span><span>3 = planche</span><span>4 = bois (solide)</span><span>5 = pierre (solide)</span><span>6 = lave (liquide)</span><span>en haut : n° de colonne · à gauche : n° de ligne</span></div>
       </div>
     </section>
   </div>

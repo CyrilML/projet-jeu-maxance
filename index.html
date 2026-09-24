@@ -126,6 +126,7 @@
       <a href="#demande">Passer commande</a>
       <a href="#etape1">Étape 1</a>
       <a href="#etape2">Étape 2</a>
+      <a href="#etape3">Étape 3</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -492,7 +493,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p class="petit">C'est plus lent, donc on y écrit rarement et seulement l'important.</p>
         </div>
       </div>
-      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 6.</p>
+      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 7.</p>
 
       <h3>🔍 Missions d'exploration</h3>
       <p>Ouvre le jeu, active les rayons X (<kbd>X</kbd>) et mène l'enquête :</p>
@@ -534,7 +535,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
             <li>☐ Touche <kbd>X</kbd> : la grille apparaît avec le numéro <code>colonne,ligne</code> de chaque case.</li>
             <li>Bonus : un trou environ tous les 10 blocs, un drapeau tous les 30 (regarde leur n° de colonne).</li>
             <li>Bonus : quand tu réapparais, la caméra te rattrape en moins d'une demi-seconde (essaie en ralenti <kbd>L</kbd>).</li>
-            <li>Bonus : touche un obstacle → « Aïe ! », puis Espace : nouveau monde, score à 0.</li>
+            <li>Bonus : touche un obstacle → « Aïe ! », puis Espace : nouveau monde, score à 0. <em>(Changé à l'étape 3 : les obstacles sont devenus solides, seule la lave fait perdre.)</em></li>
           </ul>
         </div>
       </div>
@@ -613,7 +614,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>Les trous et les plateformes sont placés « au hasard », mais un hasard fabriqué à partir d'un nombre : la <strong>graine</strong>. Même graine = même monde, exactement comme les graines de Minecraft. Elle est affichée dans l'état en direct.</p>
         </div>
         <div class="carte">
-          <h4>🧱 Les obstacles, rangés à part</h4>
+          <h4>🧱 Les obstacles, rangés à part <span class="petit">(jusqu'à l'étape 3)</span></h4>
           <p>Les caisses, tours et murets ne sont <em>pas</em> dans la grille : ils sont dans une liste à part, <code>monde.obstacles</code>. Parce qu'une tour occupe 2 cases mais reste <strong>un seul</strong> objet, avec son numéro et sa règle à elle : la toucher, c'est perdu.</p>
         </div>
       </div>
@@ -686,6 +687,64 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Avec la même graine, obtient-on le même monde ?</summary><p>Oui ! Le hasard à graine rejoue toujours les mêmes nombres dans le même ordre. C'est comme ça que deux joueurs de Minecraft peuvent partager un monde juste avec un nombre.</p></details>
     </section>
 
+    <!-- ============ ÉTAPE 3 ============ -->
+    <section id="etape3">
+      <h2>🔥 Étape 3 : solide ou liquide <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Avant, toucher un bloc, c'était perdu, même en atterrissant dessus. Maintenant, chaque bloc est soit solide, soit liquide.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/03-solide-ou-liquide.md</code>.</p>
+          <p><strong>Le problème :</strong> « quand j'atterris sur un bloc, je meurs ». Le jeu obéissait à la règle de l'étape 1 : « toucher un obstacle = perdu ». Pour lui, atterrir dessus, c'était le toucher.</p>
+          <p><strong>La nouvelle règle :</strong> caisses, murets et tours sont <strong>solides</strong> : on monte dessus, et par le côté c'est un mur. La <strong>lave</strong> est liquide : on passe à travers, et c'est « Aïe ! » et retour à zéro.</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Atterris sur une caisse, un muret ou une tour : tu ne meurs pas, tu peux marcher dessus.</li>
+            <li>☐ Fonce dans une caisse sans sauter : elle te bloque comme un mur (« contre un mur ? oui » dans l'état en direct).</li>
+            <li>☐ Tombe dans la lave 🟧 : « Aïe ! » et tout recommence à zéro.</li>
+            <li>Bonus : marche au bord de la lave, juste un peu au-dessus : tant que tes pieds sont sur l'herbe, tu ne brûles pas.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🧪 Comment le jeu sait qu'un bloc est solide ou liquide</h3>
+      <p>Chaque case de la grille contient un numéro (tu l'as vu à l'étape 2). Maintenant, le jeu a aussi une <strong>fiche de propriétés</strong> pour chaque numéro : une liste qui dit « solide : oui ou non ». Quand la physique veut savoir si le héros peut avancer, elle lit le numéro de la case, puis regarde dans la fiche.</p>
+      <div class="carte tableau-defile">
+        <table class="fichiers">
+          <thead><tr><th>Numéro</th><th>Nom</th><th>Solide ?</th><th>Ce qui se passe</th></tr></thead>
+          <tbody>
+            <tr><td><code>0</code></td><td>air</td><td>non</td><td>on passe à travers (et on tombe si c'est sous les pieds)</td></tr>
+            <tr><td><code>1</code> <code>2</code> <code>3</code></td><td>herbe, terre, planche</td><td>oui</td><td>on marche dessus</td></tr>
+            <tr><td><code>4</code></td><td>bois (caisse, muret)</td><td>oui</td><td>on marche dessus ; par le côté, c'est un mur</td></tr>
+            <tr><td><code>5</code></td><td>pierre (tour)</td><td>oui</td><td>pareil : on peut monter dessus</td></tr>
+            <tr><td><code>6</code></td><td>lave</td><td>non, <strong>liquide</strong></td><td>on passe à travers… et on brûle : perdu !</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Dans le code (<code>logique/terrain.js</code>), la fiche ressemble à ça : <code>SOLIDES = [non, oui, oui, oui, oui, oui, non]</code>. La case n° 4 de la liste dit si le bois est solide. <strong>Changer une seule valeur</strong> dans cette liste suffit pour que tout le jeu traite ce bloc autrement !</p>
+
+      <h3>💡 La grande idée : les obstacles sont entrés dans la grille</h3>
+      <p>À l'étape 2, les obstacles étaient rangés à part, avec leur propre règle « toucher = perdu ». Maintenant, une caisse est écrite <strong>dans la grille</strong>, comme le sol, avec le numéro 4. Résultat : la physique la traite exactement comme le sol. On n'a <em>rien</em> eu à coder pour pouvoir marcher dessus ou s'y cogner : c'est la même règle que pour une plateforme.</p>
+      <p class="petit">Seule la lave a une règle spéciale, dans <code>logique/monde.js</code> : si la zone rouge du héros touche une mare de lave, c'est perdu. On garde aussi la liste <code>monde.obstacles</code>, mais seulement pour donner un nom et un numéro à chaque obstacle (journal, rayons X).</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Pousse contre une tour. Que dit le journal ? Et « contre un mur ? » dans l'état en direct ?</li>
+        <li>Monte sur une caisse. Que devient « case sous les pieds » ?</li>
+        <li>Dans « La carte en mémoire », trouve une tour, une caisse et une mare de lave. Quels numéros ont-elles ?</li>
+        <li>Avec les rayons X, compare le cadre d'une caisse (blanc) et celui de la lave (rouge). Pourquoi ces couleurs ?</li>
+        <li>En pause (<kbd>P</kbd>), avance pas à pas (<kbd>N</kbd>) au-dessus de la lave : à quel moment exact perds-tu ?</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi mourais-tu en atterrissant sur une caisse ?</summary><p>Parce que la règle de l'étape 1 disait « si je touche un obstacle, j'ai perdu ». Un ordinateur fait exactement ce qu'on lui dit : atterrir dessus, c'est aussi toucher. Il fallait changer la règle, pas réparer un bug.</p></details>
+      <details class="question"><summary>Que faudrait-il changer pour que le bois devienne liquide ?</summary><p>Une seule valeur : la 5ᵉ case de la liste <code>SOLIDES</code> (le numéro 4, car on compte à partir de 0), qui passerait de <code>true</code> à <code>false</code>.</p></details>
+      <details class="question"><summary>Pourquoi n'a-t-on rien codé de spécial pour marcher sur une caisse ?</summary><p>Parce qu'elle est écrite dans la grille comme le sol, avec un numéro solide. La physique ne fait pas la différence entre de l'herbe et une caisse : les deux sont « solides ».</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -704,44 +763,50 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>Le sol devient une grille de blocs, avec des trous, des plateformes et des drapeaux. Le monde est sans fin et la caméra suit le héros.</p>
           <p class="apprend"><b>Tu apprends :</b> ranger un monde dans un tableau à 2 dimensions, trouver sa case par une division, coordonnées « monde » et « écran », caméra, collisions avec une grille, tronçons et graine. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">3</div>
+          <h4>Solide ou liquide <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Caisses, murets et tours deviennent solides (on monte dessus, par le côté c'est un mur). Des mares de lave apparaissent : liquides et mortelles.</p>
+          <p class="apprend"><b>Tu apprends :</b> propriétés des blocs (solide, liquide), ranger les obstacles dans la grille, « changer une règle » ou « réparer un bug ». <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">4</div>
           <h4>Casser et poser des blocs <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Clic gauche pour casser, clic droit pour poser, à portée de bras.</p>
           <p class="apprend"><b>Tu apprends :</b> transformer un clic en case de la grille, « la donnée d'abord, le dessin suit », événements de la souris. <b>Durée :</b> 1 à 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">4</div>
+          <div class="num">5</div>
           <h4>Inventaire et catalogue des blocs</h4>
           <p>Chaque bloc cassé va dans l'inventaire (piles de 64), avec une barre en bas de l'écran.</p>
-          <p class="apprend"><b>Tu apprends :</b> identifiants (0 = air, 1 = terre, 2 = pierre…), catalogue de propriétés (dureté, solide ou pas), structures de données. <b>Durée :</b> 2 séances.</p>
+          <p class="apprend"><b>Tu apprends :</b> identifiants (déjà 0 à 6 depuis l'étape 3), catalogue de propriétés (dureté, en plus de solide ou liquide), structures de données. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">5</div>
+          <div class="num">6</div>
           <h4>Collines, grottes et minerais</h4>
           <p>Le monde est déjà sans fin depuis l'étape 2. Ici, il devient plus riche : du relief, des grottes, des minerais cachés sous terre.</p>
           <p class="apprend"><b>Tu apprends :</b> génération procédurale, bruit de Perlin, décharger les tronçons trop loin pour libérer la mémoire. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">6</div>
+          <div class="num">7</div>
           <h4>Sauvegarder le monde</h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">7</div>
+          <div class="num">8</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">8</div>
+          <div class="num">9</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">9</div>
+          <div class="num">10</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -771,6 +836,16 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-2" data-cle="appris-2" placeholder="Ex. : J'ai appris que pour savoir sur quelle case je suis, le jeu divise ma position par 40, et que…"></textarea>
         <label for="idees-2"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-2" data-cle="idees-2" placeholder="Ex. : Je voudrais casser les blocs avec un clic…"></textarea>
+      </div>
+
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 3 · solide ou liquide <span class="petit">· 24 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les caisses, murets et tours sont écrits dans la grille et deviennent solides (on monte dessus, par le côté c'est un mur) ; des mares de lave liquides font perdre et recommencer à zéro. Sous le capot : les numéros 4, 5, 6 dans la carte, les cadres blanc ou rouge des rayons X, les événements « mur » et « lave » dans le journal.</p>
+        <p class="petit">✍️ Maxance a repéré le problème en jouant (« quand j'atterris sur un bloc, je meurs ») et a choisi les règles : 1A, 2A, 3B.</p>
+        <label for="appris-3"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-3" data-cle="appris-3" placeholder="Ex. : J'ai appris que chaque numéro de bloc a une fiche qui dit s'il est solide…"></textarea>
+        <label for="idees-3"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-3" data-cle="idees-3" placeholder="Ex. : De l'eau où l'on nage au lieu de mourir…"></textarea>
       </div>
     </section>
   </main>
