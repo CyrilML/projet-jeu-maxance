@@ -4,7 +4,7 @@
 // un simple NUMÉRO qui dit ce qu'il y a dedans :
 //     0 = air      1 = herbe      2 = terre      3 = planche (plateforme)
 //     4 = bois (caisse)    5 = pierre (tour)    6 = lave    7 = bois à pics (muret)
-//     8 = brique (un bloc posé par le joueur, étape 10)
+//     8 = brique (un bloc posé par le joueur, étape 10)    9 = fer (à casser avec la pioche, étape 12)
 //
 // Chaque sorte de case a des PROPRIÉTÉS, rangées dans des listes :
 //   - SOLIDE : on peut marcher dessus, et par le côté c'est un mur ;
@@ -28,12 +28,29 @@ Jeu.Terrain = (function () {
   const C = Jeu.CONFIG;
   const CARTE = C.carte;
 
-  const CASES = { air: 0, herbe: 1, terre: 2, planche: 3, bois: 4, pierre: 5, lave: 6, pics: 7, brique: 8 };
-  const NOMS = ["air", "herbe", "terre", "planche", "bois", "pierre", "lave", "pics", "brique"];
-  //              air    herbe terre planche bois  pierre lave   pics   brique
-  const SOLIDES = [false, true, true, true, true, true, false, false, true]; // peut-on marcher dessus / se cogner dedans ?
-  const LIQUIDES = [false, false, false, false, false, false, true, false, false]; // passe-t-on à travers comme dans de l'eau ?
-  const MORTELS = [false, false, false, false, false, false, true, true, false]; // le toucher coûte-t-il une vie ?
+  const CASES = { air: 0, herbe: 1, terre: 2, planche: 3, bois: 4, pierre: 5, lave: 6, pics: 7, brique: 8, fer: 9 };
+  const NOMS = ["air", "herbe", "terre", "planche", "bois", "pierre", "lave", "pics", "brique", "fer"];
+  //              air    herbe terre planche bois  pierre lave   pics   brique fer
+  const SOLIDES = [false, true, true, true, true, true, false, false, true, true]; // peut-on marcher dessus / se cogner dedans ?
+  const LIQUIDES = [false, false, false, false, false, false, true, false, false, false]; // passe-t-on à travers comme dans de l'eau ?
+  const MORTELS = [false, false, false, false, false, false, true, true, false, false]; // le toucher coûte-t-il une vie ?
+
+  // L'arrivée (étape 12 : au bloc 1 000). On compte les blocs depuis le drapeau de départ (colonne 2).
+  const COLONNE_ARRIVEE = CARTE.colonneDrapeau + C.arrivee.bloc;
+  const TRONCON_ARRIVEE = Math.floor(COLONNE_ARRIVEE / CARTE.longueurTroncon);
+
+  // Des rendez-vous réguliers : premier, premier + écart, … jusqu'à dernier (en blocs).
+  function rendezVous(premier, ecart, dernier) {
+    const liste = [];
+    for (let bloc = premier; bloc <= dernier; bloc += ecart) liste.push(bloc);
+    return liste;
+  }
+
+  // Le tronçon qui s'occupe d'une colonne idéale. Ce qui tomberait dans le tronçon de l'arrivée
+  // (tout plat) va dans le tronçon d'avant.
+  function tronconDe(colonne) {
+    return Math.min(Math.floor(colonne / CARTE.longueurTroncon), TRONCON_ARRIVEE - 1);
+  }
 
   function creer(graine) {
     return { graine, colonnes: [], troncons: 0, fini: false };
@@ -102,7 +119,8 @@ Jeu.Terrain = (function () {
     if (arrivee) {
       terrain.troncons++;
       terrain.fini = true;
-      return { numero, debut, fin, zoneSure, colonneDrapeau: debut + CARTE.colonneDrapeau, trous: [], plateformes: [], fosse: null, arrivee: true, de };
+      // Le drapeau d'arrivée est pile au bloc 1 000 (pas forcément au début du tronçon).
+      return { numero, debut, fin, zoneSure, colonneDrapeau: COLONNE_ARRIVEE, trous: [], plateformes: [], fosse: null, lac: null, monstre: null, murets: [], arrivee: true, de };
     }
 
     // 2. Les trous : on vide des colonnes entières. Environ un tous les 10 blocs.
@@ -170,15 +188,11 @@ Jeu.Terrain = (function () {
   function placesDesMurets(debut, fin, zoneSure, autresReserves) {
     const M = C.obstacles.murets;
     const marge = C.obstacles.margeTrou;
-    const depart = CARTE.colonneDrapeau;
-    const arrivee = C.arrivee.drapeau * CARTE.longueurTroncon + depart;
     const colonnes = [];
-    for (let bloc = M.premier; bloc <= arrivee - depart; bloc += M.ecart) {
-      const ideale = depart + bloc;
-      // Chaque muret appartient à UN seul tronçon : celui où tombe sa place idéale
-      // (sauf le dernier, qui tomberait sur l'arrivée : il va dans le tronçon d'avant).
-      const proprietaire = Math.min(Math.floor(ideale / CARTE.longueurTroncon), C.arrivee.drapeau - 1);
-      if (proprietaire !== debut / CARTE.longueurTroncon) continue;
+    for (const bloc of rendezVous(M.premier, M.ecart, C.arrivee.bloc)) {
+      const ideale = CARTE.colonneDrapeau + bloc;
+      // Chaque muret appartient à UN seul tronçon : celui où tombe sa place idéale.
+      if (tronconDe(ideale) !== debut / CARTE.longueurTroncon) continue;
       for (let d = 0; d <= 20; d++) {
         const trouvee = [ideale - d, ideale + d].find((c) => {
           const g = c - marge;
@@ -201,9 +215,9 @@ Jeu.Terrain = (function () {
   function placeDuMonstre(debut, fin, zoneSure, danger) {
     const Mo = C.monstres;
     const numero = debut / CARTE.longueurTroncon;
-    for (const bloc of Mo.blocs) {
+    for (const bloc of rendezVous(Mo.premier, Mo.ecart, C.arrivee.bloc)) {
       const ideale = CARTE.colonneDrapeau + bloc;
-      if (Math.min(Math.floor(ideale / CARTE.longueurTroncon), C.arrivee.drapeau - 1) !== numero) continue;
+      if (tronconDe(ideale) !== numero) continue;
       for (let d = 0; d <= 20; d++) {
         const trouvee = [ideale - d, ideale + d].find((c) => {
           const g = c - Mo.espace;
@@ -220,9 +234,9 @@ Jeu.Terrain = (function () {
   // Il doit tenir en entier dans le tronçon, avec sa marge, et laisser la zone du drapeau tranquille.
   function placeDuLac(debut, fin, zoneSure) {
     const Lc = C.lacs;
-    for (const bloc of Lc.blocs) {
+    for (const bloc of rendezVous(Lc.premier, Lc.ecart, Lc.dernier)) {
       const ideale = CARTE.colonneDrapeau + bloc;
-      if (Math.floor(ideale / CARTE.longueurTroncon) !== debut / CARTE.longueurTroncon) continue;
+      if (tronconDe(ideale) !== debut / CARTE.longueurTroncon) continue;
       const min = debut + zoneSure + Lc.marge;
       const max = fin - Lc.marge - Lc.largeur + 1;
       return Math.max(min, Math.min(max, ideale));
@@ -235,5 +249,5 @@ Jeu.Terrain = (function () {
     return terrain.colonnes.length * CARTE.lignes;
   }
 
-  return { CASES, NOMS, SOLIDES, LIQUIDES, MORTELS, creer, lireCase, ecrireCase, estSolide, estLiquide, fabriquerTroncon, nombreDeCases };
+  return { CASES, NOMS, SOLIDES, LIQUIDES, MORTELS, COLONNE_ARRIVEE, TRONCON_ARRIVEE, rendezVous, tronconDe, creer, lireCase, ecrireCase, estSolide, estLiquide, fabriquerTroncon, nombreDeCases };
 })();

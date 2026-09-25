@@ -135,6 +135,7 @@
       <a href="#etape9">Étape 9</a>
       <a href="#etape10">Étape 10</a>
       <a href="#etape11">Étape 11</a>
+      <a href="#etape12">Étape 12</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -501,7 +502,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p class="petit">C'est plus lent, donc on y écrit rarement et seulement l'important.</p>
         </div>
       </div>
-      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 15.</p>
+      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 16.</p>
 
       <h3>🔍 Missions d'exploration</h3>
       <p>Ouvre le jeu, active les rayons X (<kbd>X</kbd>) et mène l'enquête :</p>
@@ -1238,6 +1239,55 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Pourquoi le monstre attend-il un temps au hasard entre ses coups ?</summary><p>Pour que tu ne puisses pas deviner le moment exact : c'est plus vivant, et ça ressemble plus à un vrai combat.</p></details>
     </section>
 
+    <!-- ============ ÉTAPE 12 ============ -->
+    <section id="etape12">
+      <h2>⛏️ Étape 12 : 1 000 blocs, fer et pioche <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Le voyage est trois fois plus long : 1 000 blocs, 10 monstres. Heureusement, du fer t'attend tous les 20 blocs pour réparer ton équipement.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/12-mille-blocs-fer-pioche.md</code>.</p>
+          <p><strong>Règles :</strong> arrivée au bloc 1 000, tout continue au même rythme. Épée : 20 coups, puis cassée. Fer tous les 20 blocs, posé sur le sol : pioche (<kbd>F</kbd>) × 3 = 1 fer. <kbd>R</kbd> : 1 fer répare à neuf l'épée ou le bouclier (le plus abîmé).</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « encore 1000 blocs » au départ, en haut à droite.</li>
+            <li>☐ <kbd>F</kbd> trois fois devant un bloc de fer : il se fissure, puis casse ; « fer 1 ».</li>
+            <li>☐ La barre de l'épée baisse à chaque coup sur un monstre ; à 0, « CASSÉE ! ».</li>
+            <li>☐ <kbd>R</kbd> : l'épée (ou le bouclier) redevient neuve.</li>
+            <li>Vérifie « version 12 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔧 L'usure : un compteur qui descend</h3>
+      <p>L'épée a un compteur : <code>epee = 20</code>. Chaque coup qui touche un monstre fait <code>epee = epee − 1</code>. À 0, le jeu refuse de faire des dégâts. Réparer, c'est juste remettre le compteur à 20. Le bouclier marche pareil, avec 3.</p>
+      <div class="carte">
+        <p><strong>Lequel réparer ?</strong> Le jeu compare l'<strong>usure</strong> des deux, en fraction :</p>
+        <p class="mesure">usure de l'épée = 1 − coups restants ÷ 20 · usure du bouclier = 1 − coups restants ÷ 3</p>
+        <p class="petit">Exemple : épée à 5/20 → usure 0,75 ; bouclier à 1/3 → usure 0,67. L'épée est plus abîmée : c'est elle qu'on répare. On compare des <em>fractions</em> et pas des nombres de coups, parce que 5 coups sur 20 et 1 coup sur 3, ça ne se compare pas directement !</p>
+      </div>
+
+      <h3>📏 1 000 blocs, et un drapeau d'arrivée pas comme les autres</h3>
+      <p>Les drapeaux sont tous les 30 blocs, mais 1 000 n'est pas dans la table de 30 (30 × 33 = 990). Le drapeau d'arrivée n'est donc plus au début d'un tronçon : il est placé pile au <strong>bloc 1 000</strong>, dans le dernier tronçon, tout plat. Tous les rendez-vous (monstres, lacs, murets, fer) sont calculés avec la même petite fonction : « premier, premier + écart, … jusqu'à dernier ».</p>
+      <p class="petit">Quand deux rendez-vous tombent au même endroit (un fer sur un trou, un muret sur un monstre…), le plus important garde sa place et l'autre se décale, ou saute son tour. Résultat : environ 40 blocs de fer sur 49, et 16 murets sur 20.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Casse un bloc de fer et trouve le <code>9</code> qui disparaît dans « La carte en mémoire ».</li>
+        <li>Compte combien de monstres tu peux battre avant que ton épée casse.</li>
+        <li>Abîme ton bouclier et ton épée, puis répare une seule fois : lequel est réparé ? Pourquoi ?</li>
+        <li>Dans l'état en direct, surveille « épée (coups restants) » et « fer dans le sac ».</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de monstres peux-tu battre avec une épée neuve ?</summary><p>20 ÷ 6 = 3,3 : trois monstres, et il restera 2 coups pour le quatrième. Il faut donc du fer !</p></details>
+      <details class="question"><summary>Épée à 10/20, bouclier à 1/3 : que répare R ?</summary><p>Usure de l'épée : 0,5 ; du bouclier : 0,67. C'est le bouclier qui est réparé.</p></details>
+      <details class="question"><summary>Pourquoi le drapeau d'arrivée est-il à la colonne 1002 ?</summary><p>On part de la colonne 2, et on compte 1 000 blocs : 2 + 1 000 = 1 002.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -1310,44 +1360,50 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>3 monstres de 30 PV gardent le chemin ; épée (T), bouclier (3 coups), potion (H), 20 PV, armure rigolote.</p>
           <p class="apprend"><b>Tu apprends :</b> combat en temps réel avec des minuteurs, hasard dans un combat, PV et vies, un « arbitre » séparé du dessin. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">12</div>
+          <h4>1 000 blocs, fer et pioche <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Arrivée au bloc 1 000 (10 monstres), épée qui s'use, fer tous les 20 blocs à casser avec la pioche (F) pour réparer (R).</p>
+          <p class="apprend"><b>Tu apprends :</b> compteurs d'usure, comparer des fractions, rendez-vous réguliers et conflits de place. <b>Durée :</b> 1 à 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">13</div>
           <h4>Casser et poser des blocs <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Clic gauche pour casser, clic droit pour poser, à portée de bras.</p>
           <p class="apprend"><b>Tu apprends :</b> transformer un clic en case de la grille, « la donnée d'abord, le dessin suit », événements de la souris. <b>Durée :</b> 1 à 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">13</div>
+          <div class="num">14</div>
           <h4>Inventaire et catalogue des blocs</h4>
           <p>Chaque bloc cassé va dans l'inventaire (piles de 64), avec une barre en bas de l'écran.</p>
           <p class="apprend"><b>Tu apprends :</b> identifiants (déjà 0 à 6 depuis l'étape 3), catalogue de propriétés (dureté, en plus de solide ou liquide), structures de données. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">14</div>
+          <div class="num">15</div>
           <h4>Collines, grottes et minerais</h4>
           <p>Le monde est déjà sans fin depuis l'étape 2. Ici, il devient plus riche : du relief, des grottes, des minerais cachés sous terre.</p>
           <p class="apprend"><b>Tu apprends :</b> génération procédurale, bruit de Perlin, décharger les tronçons trop loin pour libérer la mémoire. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">15</div>
+          <div class="num">16</div>
           <h4>Sauvegarder le monde</h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">16</div>
+          <div class="num">17</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">17</div>
+          <div class="num">18</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">18</div>
+          <div class="num">19</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -1466,6 +1522,16 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-11" data-cle="appris-11" placeholder="Ex. : J'ai appris que le monstre a un minuteur qui…"></textarea>
         <label for="idees-11"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-11" data-cle="idees-11" placeholder="Ex. : Un boss à la fin, avec beaucoup plus de PV…"></textarea>
+      </div>
+
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 12 · 1 000 blocs, fer et pioche <span class="petit">· 25 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> arrivée au bloc 1 000 avec des rendez-vous réguliers (10 monstres, 9 lacs, murets, drapeaux) ; épée qui s'use (20 coups) ; blocs de fer (n° 9) tous les 20 blocs, pioche (F, 3 coups), réparation (R) de l'objet le plus abîmé.</p>
+        <p class="petit">✍️ Réponses de Maxance : 1A, 2A, 3A, 4A, 5A.</p>
+        <label for="appris-12"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-12" data-cle="appris-12" placeholder="Ex. : J'ai appris que l'usure, c'est un compteur qui descend…"></textarea>
+        <label for="idees-12"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-12" data-cle="idees-12" placeholder="Ex. : Un boss au bloc 1 000…"></textarea>
       </div>
     </section>
   </main>

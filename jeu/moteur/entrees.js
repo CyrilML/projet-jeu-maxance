@@ -21,6 +21,8 @@ Jeu.Entrees = (function () {
     poserBloc: ["KeyP"],
     frapper: ["KeyT"], // un coup d'épée (étape 11)
     boirePotion: ["KeyH"], // boire la potion (étape 11)
+    piocher: ["KeyF"], // un coup de pioche (étape 12)
+    reparer: ["KeyR"], // réparer avec un fer (étape 12)
     rayonsX: ["KeyX"],
     pasSuivant: ["KeyN"],
     ralenti: ["KeyL"],

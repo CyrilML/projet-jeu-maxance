@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 11,
+  version: 12,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -71,8 +71,8 @@ Jeu.CONFIG = {
     marge: 2, // blocs d'herbe gardés de chaque côté (pas de trou ni de plateforme) pour prendre son élan
   },
 
-  // L'arrivée (étape 6) : le monde s'arrête au drapeau n° 10, donc après 10 × 30 = 300 blocs.
-  arrivee: { drapeau: 10 },
+  // L'arrivée : au bloc 1 000 (étape 12 ; avant, c'était 300). Le monde s'arrête juste après.
+  arrivee: { bloc: 1000 },
 
   // Le classement (étape 6).
   classement: {
@@ -98,7 +98,9 @@ Jeu.CONFIG = {
   // Les lacs de lave (étape 10) : trop larges pour être sautés, avec une plateforme trop haute pour
   // être atteinte d'un saut. Il faut poser des blocs de l'inventaire pour monter dessus.
   lacs: {
-    blocs: [75, 175, 275], // vers quels blocs sont les 3 lacs
+    premier: 75, // le premier lac est vers le bloc 75…
+    ecart: 100, // … puis un tous les 100 blocs (175, 275…)
+    dernier: 875, // … jusqu'au bloc 875 (après, la place est prise par le dernier monstre)
     largeur: 8, // en blocs
     hauteurLave: 3, // la lave remplit 3 cases : la ligne du sol + 2 au-dessus (elle monte 2 blocs plus haut que le sol)
     hauteurPlateforme: 5, // le dessus de la plateforme est 5 blocs au-dessus du sol (un saut monte d'environ 3,8 blocs)
@@ -118,11 +120,13 @@ Jeu.CONFIG = {
     porteeEpee: 40, // l'épée touche jusqu'à 1 bloc devant le héros (px)
     dureeCoup: 0.2, // durée de l'animation du coup d'épée (s)
     bouclier: 3, // le bouclier arrête 3 coups, puis il casse
+    usureEpee: 20, // l'épée tient 20 coups sur un monstre, puis elle est cassée (étape 12)
     potions: 1, // une potion par partie (touche H)
     soinPotion: 10, // elle rend 10 PV
   },
   monstres: {
-    blocs: [100, 200, 300], // vers quels blocs sont les monstres (le dernier garde l'arrivée)
+    premier: 100, // un monstre tous les 100 blocs : 100, 200… jusqu'à l'arrivée (le dernier la garde)
+    ecart: 100,
     pv: 30,
     degats: 3, // un coup de monstre enlève 3 PV au héros
     attenteMin: 1, // il frappe toutes les 1 à 2 s (au hasard) quand le héros est à portée
@@ -132,6 +136,13 @@ Jeu.CONFIG = {
     riposte: 0.3, // … au bout de 0,3 s
     portee: 44, // il touche le héros jusqu'à 44 px devant lui
     espace: 4, // blocs d'herbe plate gardés devant lui pour se battre
+  },
+
+  // Le fer (étape 12) : un bloc de fer tous les 20 blocs, à casser avec la pioche (F) pour réparer (R).
+  fer: {
+    ecart: 20, // un bloc de fer tous les 20 blocs
+    decalageMax: 6, // s'il y a un trou ou autre chose pile à cet endroit, on le décale d'au plus 6 blocs
+    coupsPioche: 3, // 3 coups de pioche pour le casser
   },
 
   // Les vies (étape 4). Trou ou lave = 1 vie en moins. À 0 vie : « Aïe ! » et tout recommence à zéro.

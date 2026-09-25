@@ -77,6 +77,7 @@ Jeu.Rendu = (function () {
       lave: ["#ff7a1a", "#ffd23f"],
       pics: ["#8c5a28", "#5e3a18"], // le bois du muret, plus sombre, avec des pics rouges
       brique: ["#b5523b", "#e8d9c4"], // les blocs posés par le joueur : brique rouge et joints clairs
+      fer: ["#c9ced6", "#8a929e"], // le bloc de fer : gris clair, avec des rivets et des taches de minerai
     }[matiere];
     if (matiere === "lave-profonde") {
       // La lave sous la surface d'un lac : pleine, sans surface, avec quelques bulles.
@@ -85,6 +86,20 @@ Jeu.Rendu = (function () {
       ctx.fillStyle = "#ff7a1a";
       ctx.fillRect(x + ((graine * 11) % 26) + 4, y + 8, 6, 6);
       ctx.fillRect(x + ((graine * 5) % 28) + 2, y + 26, 5, 5);
+      return;
+    }
+    if (matiere === "fer") {
+      ctx.fillStyle = couleurs[0];
+      ctx.fillRect(x, y, B, B);
+      ctx.fillStyle = couleurs[1];
+      ctx.fillRect(x, y, B, 3);
+      ctx.fillRect(x, y + B - 3, B, 3);
+      for (const [rx, ry] of [[5, 7], [31, 7], [5, 31], [31, 31]]) ctx.fillRect(x + rx, y + ry, 4, 4); // les rivets
+      ctx.fillStyle = "#d9a066"; // des taches de minerai
+      ctx.fillRect(x + 14, y + 13, 6, 5);
+      ctx.fillRect(x + 22, y + 22, 5, 4);
+      ctx.strokeStyle = "rgba(0,0,0,0.35)";
+      ctx.strokeRect(x + 0.5, y + 0.5, B - 1, B - 1);
       return;
     }
     if (matiere === "brique") {
@@ -261,6 +276,22 @@ Jeu.Rendu = (function () {
     ctx.fillStyle = "#e0303a";
     ctx.fillRect(x + 14, y - 14, 4, 10); // la plume
     ctx.fillRect(x + 11, y - 16, 4, 4);
+    // La pioche (étape 12) : pendant un coup de pioche (touche F), elle remplace l'épée dans la main.
+    if (eq && eq.pioche > 0) {
+      ctx.fillStyle = "#8a5a2b";
+      ctx.fillRect(x + 27, y + 16, 22, 4); // le manche, tendu vers l'avant
+      ctx.fillStyle = "#8a929e";
+      ctx.fillRect(x + 46, y + 8, 5, 20); // la tête de la pioche
+      ctx.fillRect(x + 44, y + 6, 4, 4);
+      ctx.fillRect(x + 44, y + 26, 4, 4);
+    } else if (eq && eq.epee <= 0) {
+      // L'épée cassée : il ne reste que la poignée et un bout de lame
+      ctx.fillStyle = "#6b4423";
+      ctx.fillRect(x + 27, y + 24, 4, 7);
+      ctx.fillRect(x + 25, y + 23, 9, 2);
+      ctx.fillStyle = "#9aa3ad";
+      ctx.fillRect(x + 28, y + 17, 3, 6);
+    } else
     // L'épée (étape 11) : levée au repos, tendue vers l'avant pendant un coup (touche T).
     if (eq && eq.coup > 0) {
       ctx.fillStyle = "#6b4423";
@@ -278,6 +309,21 @@ Jeu.Rendu = (function () {
       ctx.fillRect(x + 25, y + 23, 9, 2);
     }
     ctx.restore();
+  }
+
+  // Les fissures des blocs de fer déjà frappés à la pioche (étape 12) : une fissure par coup.
+  function fissures(liste) {
+    ctx.fillStyle = "#1d1d3a";
+    for (const o of liste) {
+      if (o.type !== "fer" || o.casse || o.coups >= C.fer.coupsPioche) continue;
+      const coupsDonnes = C.fer.coupsPioche - o.coups;
+      ctx.fillRect(o.x + 18, o.y + 4, 3, 16);
+      ctx.fillRect(o.x + 12, o.y + 18, 8, 3);
+      if (coupsDonnes >= 2) {
+        ctx.fillRect(o.x + 22, o.y + 20, 3, 14);
+        ctx.fillRect(o.x + 24, o.y + 30, 10, 3);
+      }
+    }
   }
 
   // Les monstres (étape 11) : un petit bonhomme vert à cornes, avec sa barre de PV au-dessus.
@@ -420,7 +466,7 @@ Jeu.Rendu = (function () {
     texte("🚩 " + monde.dernierDrapeau + "   Chutes " + monde.chutes + "   Lave " + monde.brulures + "   Pièges " + monde.piegesTouches, 20, 124, 16, "#fff");
     texte("X : rayons X   Échap : pause", L - 20, 32, 15, "#fff", "right");
     texte("👤 " + monde.pseudo, L - 20, 56, 18, "#ffe27a", "right");
-    const reste = monde.drapeaux.length ? C.arrivee.drapeau * C.carte.longueurTroncon - monde.score : 0;
+    const reste = monde.drapeaux.length ? C.arrivee.bloc - monde.score : 0;
     if (reste > 0) texte("🏁 encore " + reste + " blocs", L - 20, 80, 15, "#fff", "right");
     // L'inventaire : une petite brique par bloc qui reste dans le sac (étape 10)
     const inv = monde.inventaire;
@@ -444,6 +490,15 @@ Jeu.Rendu = (function () {
     ctx.fillStyle = eq.pv > 6 ? "#3fc27a" : "#ff9f1a";
     ctx.fillRect(20, 166, Math.round(160 * eq.pv / C.combat.pvJoueur), 10);
     texte("PV " + eq.pv + "/" + C.combat.pvJoueur + "   🛡️ " + eq.bouclier + "   🧪 " + eq.potions + "   T : épée · H : potion", 192, 177, 15, "#fff");
+    // L'épée qui s'use, le fer dans le sac (étape 12)
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(16, 186, 168, 18);
+    ctx.fillStyle = "#3a3f55";
+    ctx.fillRect(20, 190, 160, 10);
+    ctx.fillStyle = eq.epee > 5 ? "#dfe6ee" : eq.epee > 0 ? "#ff9f1a" : "#e0303a";
+    ctx.fillRect(20, 190, Math.round(160 * eq.epee / C.combat.usureEpee), 10);
+    const etatEpee = eq.epee > 0 ? "⚔️ " + eq.epee + "/" + C.combat.usureEpee : "⚔️ CASSÉE !";
+    texte(etatEpee + "   ⛓️ fer " + eq.fer + "   F : pioche · R : réparer", 192, 201, 15, eq.epee > 0 ? "#fff" : "#ff9b9b");
     if (options.ralenti) texte("🐢 RALENTI (×0,25)", L / 2, 32, 18, "#ffe27a", "center");
   }
 
@@ -463,15 +518,15 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 11 : épée, monstres, bouclier et potion", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 12 : 1 000 blocs, fer et pioche", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
-    texte("🏁 Arrive au drapeau n° " + C.arrivee.drapeau + " (" + C.arrivee.drapeau * C.carte.longueurTroncon + " blocs) le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
+    texte("🏁 Arrive au bloc " + C.arrivee.bloc + " le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
     texte("❤️ " + C.vies + " vies · 🕳️ Trou : tu repars devant le trou", L / 2, 386, 17, "#cfe0ff", "center");
     texte("🔥 Lave et 💀 murets à pics (un tous les 50 blocs) : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
     texte("📦 Caisses et 🗼 tours en pierre : sans danger, monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
     texte("🎒 " + C.inventaire.blocs + " blocs : saute puis P pour poser un bloc sous tes pieds (Échap : pause)", L / 2, 470, 17, "#cfe0ff", "center");
-    texte("⚔️ T : épée · 🧪 H : potion · 👾 un monstre de " + C.monstres.pv + " PV tous les 100 blocs", L / 2, 496, 17, "#cfe0ff", "center");
+    texte("⚔️ T : épée · 🧪 H : potion · 👾 un monstre tous les 100 blocs · ⛓️ F : pioche · R : réparer", L / 2, 496, 16, "#cfe0ff", "center");
     const premier = Jeu.Sauvegarde.donnees.classement[0];
     if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 522, 16, "#ffe27a", "center");
     texte("version " + C.version, L - 12, H - 12, 14, "#cfe0ff", "right");
@@ -623,7 +678,8 @@ Jeu.Rendu = (function () {
       ctx.strokeRect(x, o.y, o.l, o.h);
       const haut = o.y < C.solY ? o.y : o.y - 30;
       note("#" + o.id + " " + o.type + " · colonne " + o.colonne, x, haut - 20, "#fff");
-      const danger = !o.mortel ? "solide : on marche dessus" : o.solide ? "" : o.type === "lave" || o.type === "fosse" || o.type === "lac" ? "liquide : on brûle !" : "piège : ne pas toucher !";
+      if (o.casse) continue;
+      const danger = o.type === "fer" ? "fer : " + o.coups + " coup(s) de pioche (F)" : !o.mortel ? "solide : on marche dessus" : o.solide ? "" : o.type === "lave" || o.type === "fosse" || o.type === "lac" ? "liquide : on brûle !" : "piège : ne pas toucher !";
       note(danger, x, haut - 5, o.mortel ? "#ff9b9b" : "#7bff9e");
     }
 
@@ -746,6 +802,7 @@ Jeu.Rendu = (function () {
     ctx.translate(-camX, 0);
     terrain(monde);
     drapeaux(monde);
+    fissures(monde.obstacles);
     monstres(monde.monstres);
     joueur(monde.joueur, monde.phase, monde.equipement);
     flammes(monde.flammes);

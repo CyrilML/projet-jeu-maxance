@@ -17,7 +17,7 @@
 //   - un monstre tous les 100 blocs (étape 11) : le héros a 20 PV ; à 0 PV, il perd un cœur et
 //     repart au dernier drapeau avec 20 PV (règles de logique/combat.js) ;
 //   - plus de vie → « Aïe ! », la partie est finie et tout recommence à zéro ;
-//   - drapeau n° 10 atteint (300 blocs) → c'est l'ARRIVÉE, la partie est gagnée (étape 6) ;
+//   - drapeau d'arrivée atteint (bloc 1 000, étape 12) → c'est l'ARRIVÉE, la partie est gagnée ;
 //   - à la fin de chaque partie, le score entre au classement (logique/classement.js) ;
 //   - tours en pierre et caisses → SOLIDES : on marche dessus, et par le côté c'est un mur ;
 //   - le score = le nombre de blocs parcourus vers la droite (la colonne la plus loin atteinte).
@@ -111,7 +111,7 @@ Jeu.Monde = (function () {
   function fabriquerDevant(monde) {
     const colonneVoulue = Math.floor((monde.camera.x + C.ecran.largeur) / B) + C.carte.avance;
     while (!monde.terrain.fini && monde.terrain.colonnes.length <= colonneVoulue) {
-      const arrivee = monde.terrain.troncons === C.arrivee.drapeau;
+      const arrivee = monde.terrain.troncons === Jeu.Terrain.TRONCON_ARRIVEE;
       const infos = Jeu.Terrain.fabriquerTroncon(monde.terrain, arrivee);
       monde.drapeaux.push({ numero: infos.numero, colonne: infos.colonneDrapeau, atteint: infos.numero === 0, arrivee });
       const obstacles = Jeu.Obstacles.placerDansTroncon(monde, infos);
@@ -240,6 +240,8 @@ Jeu.Monde = (function () {
       Entrees.consommer("poserBloc"); // hors d'une partie, la touche P ne fait rien
       Entrees.consommer("frapper");
       Entrees.consommer("boirePotion");
+      Entrees.consommer("piocher");
+      Entrees.consommer("reparer");
       // À l'accueil, c'est le formulaire du pseudo qui lance la partie (voir main.js).
       // À la fin d'une partie : petite pause pour ne pas relancer par accident.
       const pret = monde.phase !== "accueil" && monde.tempsPhase > 0.4;
@@ -253,7 +255,7 @@ Jeu.Monde = (function () {
     monde.temps += dt;
     if (monde.brulure || monde.danse) {
       // pas de bloc, pas de coup d'épée, pas de potion pendant qu'on brûle ou qu'on danse
-      for (const action of ["poserBloc", "frapper", "boirePotion"]) Jeu.Entrees.consommer(action);
+      for (const action of ["poserBloc", "frapper", "boirePotion", "piocher", "reparer"]) Jeu.Entrees.consommer(action);
     }
     if (monde.brulure) {
       brulerUnPeu(monde, dt);

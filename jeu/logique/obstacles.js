@@ -30,6 +30,7 @@ Jeu.Obstacles = (function () {
     caisse: { l: 1, h: 1, case: CASES.bois },
     tour: { l: 1, h: 2, case: CASES.pierre },
     muret: { l: 2, h: 1, case: CASES.pics }, // bois à pics : mortel (étape 8)
+    fer: { l: 1, h: 1, case: CASES.fer }, // bloc de fer : solide, à casser avec la pioche (étape 12)
     lave: { l: 1, h: 1, case: CASES.lave, sousSol: true },
     fosse: { l: 3, h: 1, case: CASES.lave, sousSol: true }, // jamais tirée au hasard : une par tronçon
     lac: { l: C.lacs.largeur, h: C.lacs.hauteurLave, case: CASES.lave, sousSol: true }, // étape 10 : plusieurs cases de haut
@@ -38,7 +39,7 @@ Jeu.Obstacles = (function () {
   // Les obstacles possibles à cette colonne du monde (plus on va loin, plus il y a de choix).
   function typesPossibles(colonne) {
     // La fosse et le muret ont leurs propres places (ils ne sont jamais tirés au hasard).
-    return Object.keys(TYPES).filter((nom) => !["fosse", "muret", "lac"].includes(nom) && colonne >= C.obstacles.debloque[nom]);
+    return Object.keys(TYPES).filter((nom) => !["fosse", "muret", "lac", "fer"].includes(nom) && colonne >= C.obstacles.debloque[nom]);
   }
 
   // Peut-on poser un obstacle de `largeur` blocs à cette colonne ?
@@ -63,6 +64,27 @@ Jeu.Obstacles = (function () {
       for (let l = 0; l < CARTE.ligneSol; l++) {
         if (Jeu.Terrain.lireCase(terrain, c, l) !== CASES.air) return false; // une plateforme ou un autre obstacle
       }
+    }
+    return true;
+  }
+
+  // Le bloc de fer (étape 12) est sans danger : il lui faut juste de l'herbe dessous et à côté
+  // (pas au bord d'un trou ou de la lave), rien au-dessus, et pas trop près d'un lac ou d'un monstre.
+  function placePourLeFer(terrain, colonne, infos) {
+    const T = Jeu.Terrain;
+    const sol = C.carte.ligneSol;
+    if (colonne < infos.debut || colonne > infos.fin) return false;
+    if (Math.abs(colonne - infos.colonneDrapeau) < 2) return false; // pas sur le drapeau
+    for (let c = colonne - 1; c <= colonne + 1; c++) {
+      if (T.lireCase(terrain, c, sol) !== T.CASES.herbe) return false;
+      for (let l = 0; l < sol; l++) if (T.lireCase(terrain, c, l) !== T.CASES.air) return false;
+    }
+    if (infos.lac !== null && infos.lac !== undefined) {
+      const loin = C.lacs.sansObstacle;
+      if (colonne >= infos.lac - loin && colonne <= infos.lac + C.lacs.largeur - 1 + loin) return false;
+    }
+    if (infos.monstre !== null && infos.monstre !== undefined) {
+      if (colonne >= infos.monstre - C.monstres.espace - 1 && colonne <= infos.monstre + 2) return false;
     }
     return true;
   }
@@ -130,6 +152,21 @@ Jeu.Obstacles = (function () {
       const colonne = poserMuretVers(monde, cible, infos);
       Jeu.Evenements.emettre("muret-pose", { cible: cible - C.carte.colonneDrapeau, bloc: colonne - C.carte.colonneDrapeau, colonne });
       if (colonne >= 0) poses++;
+    }
+    // Puis les blocs de fer, tous les 20 blocs (étape 12), le plus près possible de leur rendez-vous.
+    const F = C.fer;
+    for (const bloc of Jeu.Terrain.rendezVous(F.ecart, F.ecart, C.arrivee.bloc - 1)) {
+      const ideale = C.carte.colonneDrapeau + bloc;
+      if (Jeu.Terrain.tronconDe(ideale) !== infos.numero) continue;
+      for (let d = 0; d <= F.decalageMax; d++) {
+        const colonne = [ideale + d, ideale - d].find((c) => placePourLeFer(monde.terrain, c, infos));
+        if (colonne !== undefined) {
+          poser(monde, "fer", colonne, 1);
+          monde.obstacles[monde.obstacles.length - 1].coups = F.coupsPioche; // coups de pioche restants
+          poses++;
+          break;
+        }
+      }
     }
     // Enfin, les autres obstacles au hasard, dans la place qui reste.
     let colonne = infos.debut + infos.zoneSure + O.margeTrou + de.entre(0, 4);

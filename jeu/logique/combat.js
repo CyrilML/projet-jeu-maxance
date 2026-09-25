@@ -11,6 +11,10 @@
 //   - PV du héros à 0 → il perd un CŒUR et repart au dernier drapeau avec tous ses PV (règle 7A).
 //     Le monstre, lui, garde ses blessures.
 // Un monstre vivant GARDE LE PASSAGE : le héros ne peut pas aller plus loin que lui, même en sautant.
+//
+// Étape 12 : l'épée S'USE (20 coups sur un monstre, puis elle est cassée et ne fait plus de dégâts).
+//   - Touche F : un coup de pioche sur le bloc de fer juste devant. 3 coups → il casse → +1 fer.
+//   - Touche R : 1 fer répare À NEUF ce qui est le plus abîmé : l'épée ou le bouclier.
 
 window.Jeu = window.Jeu || {};
 
@@ -20,7 +24,15 @@ Jeu.Combat = (function () {
 
   // Ce que le héros porte au début d'une partie.
   function creerEquipement() {
-    return { pv: C.combat.pvJoueur, bouclier: C.combat.bouclier, potions: C.combat.potions, coup: 0 };
+    return {
+      pv: C.combat.pvJoueur,
+      bouclier: C.combat.bouclier,
+      potions: C.combat.potions,
+      epee: C.combat.usureEpee, // coups qui restent avant que l'épée casse (étape 12)
+      fer: 0, // morceaux de fer dans le sac (étape 12)
+      coup: 0, // animation du coup d'épée (s)
+      pioche: 0, // animation du coup de pioche (s)
+    };
   }
 
   // Un monstre posé sur la colonne donnée, debout sur l'herbe.
@@ -57,6 +69,18 @@ Jeu.Combat = (function () {
   function distance(monde, m) {
     const j = monde.joueur;
     return m.x - (j.x + j.l);
+  }
+
+  // Le bloc de fer (pas encore cassé) juste devant le héros, à portée de pioche.
+  function ferDevant(monde) {
+    const j = monde.joueur;
+    for (const o of monde.obstacles) {
+      if (o.type !== "fer" || o.casse) continue;
+      const devant = j.regard > 0 ? o.x - (j.x + j.l) : j.x - (o.x + o.l);
+      const memeHauteur = j.y < o.y + o.h && j.y + j.h > o.y;
+      if (devant >= -2 && devant <= C.combat.porteeEpee && memeHauteur) return o;
+    }
+    return null;
   }
 
   function hasard(min, max) {
@@ -108,7 +132,11 @@ Jeu.Combat = (function () {
       const aPortee = m && j.regard > 0 && distance(monde, m) <= C.combat.porteeEpee;
       if (!aPortee) {
         emettre("coup-epee", { touche: false });
+      } else if (eq.epee <= 0) {
+        emettre("coup-epee", { touche: true, cassee: true, id: m.id, pvMonstre: m.pv }); // épée cassée : aucun dégât
       } else {
+        eq.epee -= 1; // chaque coup sur un monstre use l'épée
+        if (eq.epee === 0) emettre("epee-cassee", {});
         m.pv = Math.max(0, m.pv - C.combat.degatsEpee);
         m.touche = 0.2;
         emettre("coup-epee", { touche: true, id: m.id, degats: C.combat.degatsEpee, pvMonstre: m.pv });
@@ -119,6 +147,40 @@ Jeu.Combat = (function () {
           m.minuteur = Math.min(m.minuteur, C.monstres.riposte); // il riposte !
           emettre("riposte", { id: m.id });
         }
+      }
+    }
+
+    // 3 bis. La pioche (F) : un coup sur le bloc de fer juste devant le héros
+    eq.pioche = Math.max(0, eq.pioche - dt);
+    if (E.consommer("piocher")) {
+      eq.pioche = C.combat.dureeCoup;
+      const fer = ferDevant(monde);
+      if (!fer) emettre("pioche", { touche: false });
+      else {
+        fer.coups -= 1;
+        if (fer.coups > 0) emettre("pioche", { touche: true, id: fer.id, reste: fer.coups });
+        else {
+          // Cassé ! La case redevient de l'air, et le héros ramasse un fer.
+          fer.casse = true;
+          Jeu.Terrain.ecrireCase(monde.terrain, fer.colonne, C.carte.ligneSol - 1, Jeu.Terrain.CASES.air);
+          eq.fer += 1;
+          emettre("fer-casse", { id: fer.id, colonne: fer.colonne, fer: eq.fer });
+        }
+      }
+    }
+
+    // 3 ter. Réparer (R) : 1 fer répare à neuf ce qui est le plus abîmé
+    if (E.consommer("reparer")) {
+      const usureEpee = 1 - eq.epee / C.combat.usureEpee; // 0 = neuve, 1 = cassée
+      const usureBouclier = 1 - eq.bouclier / C.combat.bouclier;
+      if (eq.fer <= 0) emettre("reparation-refusee", { raison: "pas de fer dans le sac" });
+      else if (usureEpee === 0 && usureBouclier === 0) emettre("reparation-refusee", { raison: "l'épée et le bouclier sont déjà neufs" });
+      else {
+        eq.fer -= 1;
+        const objet = usureEpee >= usureBouclier ? "épée" : "bouclier";
+        if (objet === "épée") eq.epee = C.combat.usureEpee;
+        else eq.bouclier = C.combat.bouclier;
+        emettre("reparation", { objet, fer: eq.fer });
       }
     }
 
@@ -143,5 +205,5 @@ Jeu.Combat = (function () {
     return null;
   }
 
-  return { creerEquipement, creerMonstre, monstreDevant, distance, mettreAJour };
+  return { creerEquipement, creerMonstre, monstreDevant, ferDevant, distance, mettreAJour };
 })();

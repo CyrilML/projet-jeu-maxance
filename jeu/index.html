@@ -65,6 +65,7 @@
     table.carte td.c5 { background: #6f747c; }
     table.carte td.c6 { background: #ff7a1a; color: #3a1400; font-weight: bold; }
     table.carte td.c8 { background: #b5523b; }
+    table.carte td.c9 { background: #c9ced6; color: #1d1d3a; font-weight: bold; }
     table.carte td.c7 { background: #5e3a18; color: #ff6b6b; font-weight: bold; }
     table.carte td.heros { outline: 2px solid var(--accent); outline-offset: -2px; color: var(--accent); font-weight: bold; }
     .legende-carte { display: flex; gap: 12px; flex-wrap: wrap; font-size: .8rem; color: var(--doux); margin-top: 6px; }
@@ -74,7 +75,7 @@
 <body>
   <div class="page">
     <header class="entete">
-      <h1>🧱 Projet Maxance · Étape 11 : épée, monstres, bouclier et potion</h1>
+      <h1>🧱 Projet Maxance · Étape 12 : 1 000 blocs, fer et pioche</h1>
       <span><span id="version" class="version"></span> <a href="../index.html">📓 Ouvrir le carnet de bord</a></span>
     </header>
 
@@ -123,7 +124,7 @@
         <h2>🗺️ La carte en mémoire</h2>
         <p class="aide">Le monde n'est qu'une grille de numéros : <code>terrain.colonnes[colonne][ligne]</code>. Voici les colonnes que tu vois à l'écran. La case encadrée en jaune est celle du héros. Depuis l'étape 3, les obstacles sont aussi dans cette grille : 4 = bois, 5 = pierre, 6 = lave.</p>
         <div class="defile"><table class="carte"><tbody id="carte"></tbody></table></div>
-        <div class="legende-carte"><span>0 = air</span><span>1 = herbe</span><span>2 = terre</span><span>3 = planche</span><span>4 = bois (solide)</span><span>5 = pierre (solide)</span><span>6 = lave (liquide, mortelle)</span><span>7 = bois à pics (mortel)</span><span>8 = brique (posée par toi)</span><span>en haut : n° de colonne · à gauche : n° de ligne</span></div>
+        <div class="legende-carte"><span>0 = air</span><span>1 = herbe</span><span>2 = terre</span><span>3 = planche</span><span>4 = bois (solide)</span><span>5 = pierre (solide)</span><span>6 = lave (liquide, mortelle)</span><span>7 = bois à pics (mortel)</span><span>8 = brique (posée par toi)</span><span>9 = fer (pioche)</span><span>en haut : n° de colonne · à gauche : n° de ligne</span></div>
       </div>
     </section>
   </div>
@@ -132,23 +133,23 @@
        Le « ?v=3 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js).
        Pour le navigateur, un nouveau numéro = un nouveau fichier, donc il ne ressert pas un vieux fichier
        gardé en mémoire (le « cache »). Sans ça, il pourrait mélanger l'ancienne et la nouvelle version. -->
-  <script src="config.js?v=11"></script>
-  <script src="moteur/evenements.js?v=11"></script>
-  <script src="moteur/entrees.js?v=11"></script>
-  <script src="moteur/physique.js?v=11"></script>
-  <script src="moteur/hasard.js?v=11"></script>
-  <script src="moteur/camera.js?v=11"></script>
-  <script src="moteur/particules.js?v=11"></script>
-  <script src="logique/terrain.js?v=11"></script>
-  <script src="logique/joueur.js?v=11"></script>
-  <script src="logique/obstacles.js?v=11"></script>
-  <script src="logique/classement.js?v=11"></script>
-  <script src="logique/inventaire.js?v=11"></script>
-  <script src="logique/combat.js?v=11"></script>
-  <script src="logique/monde.js?v=11"></script>
-  <script src="donnees/sauvegarde.js?v=11"></script>
-  <script src="affichage/rendu.js?v=11"></script>
-  <script src="affichage/sous-le-capot.js?v=11"></script>
-  <script src="main.js?v=11"></script>
+  <script src="config.js?v=12"></script>
+  <script src="moteur/evenements.js?v=12"></script>
+  <script src="moteur/entrees.js?v=12"></script>
+  <script src="moteur/physique.js?v=12"></script>
+  <script src="moteur/hasard.js?v=12"></script>
+  <script src="moteur/camera.js?v=12"></script>
+  <script src="moteur/particules.js?v=12"></script>
+  <script src="logique/terrain.js?v=12"></script>
+  <script src="logique/joueur.js?v=12"></script>
+  <script src="logique/obstacles.js?v=12"></script>
+  <script src="logique/classement.js?v=12"></script>
+  <script src="logique/inventaire.js?v=12"></script>
+  <script src="logique/combat.js?v=12"></script>
+  <script src="logique/monde.js?v=12"></script>
+  <script src="donnees/sauvegarde.js?v=12"></script>
+  <script src="affichage/rendu.js?v=12"></script>
+  <script src="affichage/sous-le-capot.js?v=12"></script>
+  <script src="main.js?v=12"></script>
 </body>
 </html>
