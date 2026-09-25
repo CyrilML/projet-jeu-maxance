@@ -129,6 +129,7 @@
       <a href="#etape3">Étape 3</a>
       <a href="#etape4">Étape 4</a>
       <a href="#etape5">Étape 5</a>
+      <a href="#etape6">Étape 6</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -495,7 +496,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p class="petit">C'est plus lent, donc on y écrit rarement et seulement l'important.</p>
         </div>
       </div>
-      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 9.</p>
+      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 10.</p>
 
       <h3>🔍 Missions d'exploration</h3>
       <p>Ouvre le jeu, active les rayons X (<kbd>X</kbd>) et mène l'enquête :</p>
@@ -607,7 +608,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
 
       <div class="grille">
         <div class="carte">
-          <h4>🏗️ Un monde sans fin… fabriqué au fur et à mesure</h4>
+          <h4>🏗️ Un monde sans fin… fabriqué au fur et à mesure <span class="petit">(depuis l'étape 6, il s'arrête au drapeau n° 10, mais il est toujours fabriqué au fur et à mesure)</span></h4>
           <p>Impossible de ranger un monde infini dans la mémoire ! Alors le jeu le fabrique par <strong>tronçons de 30 colonnes</strong>, juste avant que la caméra les montre. Chaque tronçon commence par un drapeau. Minecraft fait pareil avec ses « chunks » de 16 blocs.</p>
           <p class="petit">Dans le journal : « 🏗️ Tronçon n° 3 fabriqué… → 1 680 cases en mémoire ». Chaque tronçon ajoute 30 × 14 = 420 cases.</p>
         </div>
@@ -894,6 +895,76 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Que faudrait-il changer pour que la pierre devienne mortelle elle aussi ?</summary><p>Mettre <code>true</code> pour le numéro 5 dans la liste <code>MORTELS</code>. (Et sûrement <code>false</code> dans <code>SOLIDES</code>.)</p></details>
     </section>
 
+    <!-- ============ ÉTAPE 6 ============ -->
+    <section id="etape6">
+      <h2>🏆 Étape 6 : pseudo, arrivée et classement <span class="etiquette">✅ livrée · classement en ligne à venir</span></h2>
+      <p class="chapeau">Chaque joueur écrit son pseudo, la course s'arrête au drapeau n° 10, et un tableau d'honneur range les 10 meilleurs.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/06-pseudo-arrivee-classement.md</code>.</p>
+          <p><strong>Règles :</strong> un pseudo avant de jouer. Arrivée au drapeau n° 10 (300 blocs). Classement des 10 meilleurs joueurs : plus de blocs, puis plus de vies, puis le plus rapide. Colonnes : rang, joueur, blocs, vies, temps.</p>
+          <p class="petit">⏳ Maxance a choisi un classement <strong>en ligne</strong> pour tous les joueurs du monde. Pour l'instant, il réunit les joueurs <strong>de cet ordinateur</strong> : la version en ligne attend une base de données sur Internet (voir plus bas).</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ À l'accueil, écris ton pseudo puis Entrée. Sans pseudo, le jeu refuse.</li>
+            <li>☐ Pendant que tu écris, les touches du jeu (X, P, espace…) ne font rien.</li>
+            <li>☐ Arrive au drapeau à damier n° 10 : « Bravo, tu es arrivé ! ».</li>
+            <li>☐ À la fin, le classement s'affiche avec ta ligne en jaune.</li>
+            <li>☐ Joue avec plusieurs pseudos : l'ordre respecte blocs, puis vies, puis temps.</li>
+            <li>Espace : rejouer avec le même pseudo. C : changer de pseudo. Vérifie « version 6 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🥇 Comment le jeu range les joueurs dans l'ordre</h3>
+      <p>Pour trier, l'ordinateur compare les joueurs <strong>deux par deux</strong>, et une petite fonction répond à la question « qui passe devant ? ». Elle suit tes 3 règles, dans l'ordre :</p>
+      <div class="carte">
+        <ol>
+          <li>Qui a le plus de <strong>blocs</strong> ? S'ils ne sont pas à égalité, c'est réglé.</li>
+          <li>Sinon, qui a le plus de <strong>vies</strong> ?</li>
+          <li>Sinon, qui a mis le moins de <strong>temps</strong> ?</li>
+        </ol>
+        <p class="petit">Exemple : Léa (300 blocs, 4 vies, 100 s) et Tom (300 blocs, 4 vies, 120 s) sont à égalité sur les blocs et les vies : Léa est devant, parce qu'elle a été plus rapide. Avec cette seule fonction, <code>.sort()</code> range toute la liste, comme on range des cartes à jouer. Ensuite, on garde les 10 premiers.</p>
+        <p class="petit">Une seule ligne par joueur : si tu fais mieux que ta meilleure partie, ta ligne est remplacée ; sinon, elle ne bouge pas (le journal dit « reste 2e »). « Max » et « max » comptent comme le même joueur.</p>
+      </div>
+
+      <h3>🌍 Pourquoi un classement en ligne a besoin d'un serveur</h3>
+      <div class="comparaison">
+        <div class="carte">
+          <h4>💻 Aujourd'hui : dans ton ordinateur</h4>
+          <p>Le classement est rangé dans la base de données <strong>de ton navigateur</strong>, avec ton record. Tous ceux qui jouent sur <em>cet</em> ordinateur y apparaissent. Mais ton copain, chez lui, a son propre classement, qui ne voit pas le tien.</p>
+        </div>
+        <div class="carte">
+          <h4>☁️ Demain : sur un serveur</h4>
+          <p>Pour que tout le monde voie le même tableau, chaque jeu doit <strong>envoyer</strong> son score à un ordinateur allumé en permanence sur Internet (un <strong>serveur</strong>), qui garde la liste et la <strong>renvoie</strong> à tous. C'est Cyril qui doit choisir ce service et créer le compte.</p>
+        </div>
+      </div>
+      <p class="petit">Bonne nouvelle : tout ce qui touche au rangement du classement est dans <strong>un seul fichier</strong>, <code>donnees/sauvegarde.js</code>. Pour passer en ligne, c'est le seul fichier du jeu à changer. Les règles du tri (<code>logique/classement.js</code>) ne changeront pas.</p>
+      <p class="petit">⚠️ Un classement en ligne pose de nouvelles questions de directeur de jeu : que faire si quelqu'un écrit un gros mot comme pseudo ? Et si un tricheur envoie un faux score ? On en reparlera à ce moment-là.</p>
+
+      <h3>🛡️ Un pseudo, ce n'est que du texte</h3>
+      <p>Si quelqu'un écrit <code>&lt;b&gt;Zoé&lt;/b&gt;</code> comme pseudo, le jeu doit l'afficher <em>tel quel</em>, et pas le comprendre comme du code de page web. C'est pour ça que le panneau écrit les pseudos avec <code>textContent</code> (« écris ce texte ») et jamais avec <code>innerHTML</code> (« fabrique ce code »). C'est une règle de sécurité importante dès qu'on affiche ce que quelqu'un d'autre a tapé.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Joue avec 3 pseudos différents, puis regarde le panneau « 🏆 Classement » et la clé <code>classement</code> dans la base de données.</li>
+        <li>Rejoue avec le premier pseudo, mais fais moins bien. Que dit le journal ? La ligne a-t-elle changé ?</li>
+        <li>Pendant une partie, surveille « blocs avant l'arrivée » dans l'état en direct.</li>
+        <li>Avec les rayons X, trouve le drapeau d'arrivée : quelle est sa colonne ? Pourquoi celle-là ?</li>
+        <li>Regarde la base de données : quel est son numéro de <code>version</code> maintenant ? Pourquoi a-t-il changé ?</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Ana : 300 blocs, 2 vies, 90 s. Bob : 300 blocs, 4 vies, 150 s. Qui est premier ?</summary><p>Bob ! À égalité de blocs, on regarde les vies avant le temps : 4 vies contre 2.</p></details>
+      <details class="question"><summary>Pourquoi ton copain ne voit-il pas ton score chez lui ?</summary><p>Parce que le classement est rangé dans la base de données de <em>ton</em> navigateur. Pour le partager, il faut un serveur sur Internet.</p></details>
+      <details class="question"><summary>Pourquoi la base de données est-elle passée en version 3 ?</summary><p>Parce que son format a changé : on a ajouté le classement et le dernier pseudo. Le numéro de version permet de convertir les anciennes sauvegardes sans perdre ton record.</p></details>
+      <details class="question"><summary>Pourquoi le drapeau d'arrivée est-il à la colonne 302 ?</summary><p>Le drapeau n° 10 est au début du 11ᵉ tronçon : 10 × 30 = 300, plus 2 (le drapeau est dans la 3ᵉ colonne du tronçon). On part de la colonne 2, donc il y a bien 300 blocs à parcourir.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -930,44 +1001,50 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>Caisses et murets en bois : mortels (1 vie, retour au drapeau). Seules les tours en pierre sont sans danger.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les blocs par des propriétés (solide, mortel), changer le jeu en changeant une donnée, ajuster une règle après l'avoir testée. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">6</div>
+          <h4>Pseudo, arrivée et classement <span class="etiquette">✅ fait · en ligne à venir</span></h4>
+          <p>Un pseudo avant de jouer, une arrivée au drapeau n° 10, et les 10 meilleurs joueurs (blocs, puis vies, puis temps). Pour l'instant sur cet ordinateur ; en ligne quand le serveur sera prêt.</p>
+          <p class="apprend"><b>Tu apprends :</b> trier une liste avec une fonction de comparaison, formulaire et case de texte, sécurité des textes tapés par les joueurs, pourquoi il faut un serveur pour partager des données. <b>Durée :</b> 1 à 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">7</div>
           <h4>Casser et poser des blocs <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Clic gauche pour casser, clic droit pour poser, à portée de bras.</p>
           <p class="apprend"><b>Tu apprends :</b> transformer un clic en case de la grille, « la donnée d'abord, le dessin suit », événements de la souris. <b>Durée :</b> 1 à 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">7</div>
+          <div class="num">8</div>
           <h4>Inventaire et catalogue des blocs</h4>
           <p>Chaque bloc cassé va dans l'inventaire (piles de 64), avec une barre en bas de l'écran.</p>
           <p class="apprend"><b>Tu apprends :</b> identifiants (déjà 0 à 6 depuis l'étape 3), catalogue de propriétés (dureté, en plus de solide ou liquide), structures de données. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">8</div>
+          <div class="num">9</div>
           <h4>Collines, grottes et minerais</h4>
           <p>Le monde est déjà sans fin depuis l'étape 2. Ici, il devient plus riche : du relief, des grottes, des minerais cachés sous terre.</p>
           <p class="apprend"><b>Tu apprends :</b> génération procédurale, bruit de Perlin, décharger les tronçons trop loin pour libérer la mémoire. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">9</div>
+          <div class="num">10</div>
           <h4>Sauvegarder le monde</h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">10</div>
+          <div class="num">11</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">11</div>
+          <div class="num">12</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">12</div>
+          <div class="num">13</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -1027,6 +1104,16 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-5" data-cle="appris-5" placeholder="Ex. : J'ai appris qu'on peut changer tous les blocs en bois en changeant une seule valeur…"></textarea>
         <label for="idees-5"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-5" data-cle="idees-5" placeholder="Ex. : Mon pseudo et un classement des meilleurs scores…"></textarea>
+      </div>
+
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 6 · pseudo, arrivée et classement <span class="petit">· 25 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> un formulaire de pseudo à l'accueil, une arrivée au drapeau n° 10 (300 blocs) avec l'écran « Bravo », un classement des 10 meilleurs joueurs (blocs, puis vies, puis temps) affiché à la fin de chaque partie et dans le panneau, et la base de données en version 3. Le classement est sur cet ordinateur ; la version en ligne attend un serveur.</p>
+        <p class="petit">✍️ Réponses de Maxance : 1B (en ligne), 2B (arrivée), 3 « A et B » (blocs puis vies), 4A (10 meilleurs joueurs).</p>
+        <label for="appris-6"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-6" data-cle="appris-6" placeholder="Ex. : J'ai appris que pour trier, l'ordinateur compare les joueurs deux par deux…"></textarea>
+        <label for="idees-6"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-6" data-cle="idees-6" placeholder="Ex. : Plusieurs niveaux, chacun avec son classement…"></textarea>
       </div>
     </section>
   </main>

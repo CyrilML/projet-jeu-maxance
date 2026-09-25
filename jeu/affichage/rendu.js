@@ -129,6 +129,20 @@ Jeu.Rendu = (function () {
       if (x < monde.camera.x - B || x > monde.camera.x + L + B) continue;
       ctx.fillStyle = "#e8e8e8";
       ctx.fillRect(x, C.solY - 110, 5, 110);
+      if (d.arrivee) {
+        // Le drapeau d'arrivée : un damier noir et blanc, comme dans les courses.
+        for (let i = 0; i < 6; i++) {
+          for (let k = 0; k < 3; k++) {
+            ctx.fillStyle = (i + k) % 2 ? "#111" : "#fff";
+            ctx.fillRect(x + 5 + i * 8, C.solY - 110 + k * 8, 8, 8);
+          }
+        }
+        ctx.font = "bold 16px 'Trebuchet MS', system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#ffe27a";
+        ctx.fillText("ARRIVÉE", x + 28, C.solY - 120);
+        continue;
+      }
       ctx.fillStyle = d.atteint ? "#3fc27a" : "#e05555";
       ctx.beginPath();
       ctx.moveTo(x + 5, C.solY - 110);
@@ -198,6 +212,9 @@ Jeu.Rendu = (function () {
     for (let v = 0; v < C.vies; v++) coeur(20 + v * 30, 80, v < monde.vies);
     texte("🚩 " + monde.dernierDrapeau + "   Chutes " + monde.chutes + "   Lave " + monde.brulures + "   Pièges " + monde.piegesTouches, 20, 124, 16, "#fff");
     texte("X : rayons X   P : pause", L - 20, 32, 15, "#fff", "right");
+    texte("👤 " + monde.pseudo, L - 20, 56, 18, "#ffe27a", "right");
+    const reste = monde.drapeaux.length ? C.arrivee.drapeau * C.carte.longueurTroncon - monde.score : 0;
+    if (reste > 0) texte("🏁 encore " + reste + " blocs", L - 20, 80, 15, "#fff", "right");
     if (options.ralenti) texte("🐢 RALENTI (×0,25)", L / 2, 32, 18, "#ffe27a", "center");
   }
 
@@ -206,28 +223,74 @@ Jeu.Rendu = (function () {
     ctx.fillRect(0, 0, L, H);
   }
 
-  function ecranAccueil() {
-    voile();
-    texte("PROJET MAXANCE", L / 2, 150, 56, "#ffe27a", "center");
-    texte("Étape 5 : attention au bois !", L / 2, 195, 24, "#fff", "center");
-    texte("Espace pour jouer", L / 2, 270, 30, "#fff", "center");
-    texte("version " + C.version, L - 12, H - 12, 14, "#cfe0ff", "right");
-    texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 320, 18, "#cfe0ff", "center");
-    texte("Va le plus loin possible vers la droite !", L / 2, 348, 18, "#cfe0ff", "center");
-    texte("❤️ 5 vies · 🕳️ Trou : tu repars devant le trou", L / 2, 376, 18, "#cfe0ff", "center");
-    texte("🔥 Lave, 📦 caisses et murets en bois : tu repars au drapeau 🚩", L / 2, 404, 18, "#cfe0ff", "center");
-    texte("🗼 Seules les tours en pierre sont sans danger : monte dessus !", L / 2, 432, 18, "#cfe0ff", "center");
+  // Une durée lisible : « 42,5 s » ou « 1 min 05 s ».
+  function duree(secondes) {
+    if (secondes < 60) return secondes.toFixed(1).replace(".", ",") + " s";
+    const minutes = Math.floor(secondes / 60);
+    const reste = Math.floor(secondes % 60);
+    return minutes + " min " + String(reste).padStart(2, "0") + " s";
   }
 
-  function ecranPerdu(monde) {
+  function ecranAccueil() {
     voile();
-    texte("Aïe ! Plus de vies", L / 2, 150, 56, "#ff7b7b", "center");
-    const ou = { lave: "dans la lave 🔥", trou: "dans un trou 🕳️", caisse: "sur une caisse 📦", muret: "sur un muret 🧱" };
-    const derniere = "Ta dernière vie est tombée " + (ou[monde.cause] || "");
-    texte(derniere, L / 2, 190, 22, "#ffd0d0", "center");
-    texte(monde.score + " blocs   ·   " + monde.temps.toFixed(1) + " s   ·   " + monde.chutes + " chute" + (monde.chutes > 1 ? "s" : ""), L / 2, 225, 28, "#fff", "center");
-    if (monde.nouveauRecord) texte("🏆 Nouveau record !", L / 2, 270, 28, "#ffe27a", "center");
-    if (monde.tempsPhase > 0.4) texte("Espace pour recommencer à zéro", L / 2, 330, 26, "#fff", "center");
+    texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
+    texte("Étape 6 : pseudo, arrivée et classement", L / 2, 116, 22, "#fff", "center");
+    // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
+    texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
+    texte("🏁 Arrive au drapeau n° " + C.arrivee.drapeau + " (" + C.arrivee.drapeau * C.carte.longueurTroncon + " blocs) le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
+    texte("❤️ " + C.vies + " vies · 🕳️ Trou : tu repars devant le trou", L / 2, 386, 17, "#cfe0ff", "center");
+    texte("🔥 Lave, 📦 caisses et murets en bois : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
+    texte("🗼 Seules les tours en pierre sont sans danger : monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
+    const premier = Jeu.Sauvegarde.donnees.classement[0];
+    if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 482, 18, "#ffe27a", "center");
+    texte("version " + C.version, L - 12, H - 12, 14, "#cfe0ff", "right");
+  }
+
+  // Le tableau des 10 meilleurs, dessiné sur l'écran de fin de partie.
+  function tableauClassement(monde, haut) {
+    const liste = Jeu.Sauvegarde.donnees.classement;
+    const colonnes = [
+      { titre: "Rang", x: 200, alignement: "left" },
+      { titre: "Joueur", x: 290, alignement: "left" },
+      { titre: "Blocs", x: 560, alignement: "right" },
+      { titre: "Vies", x: 640, alignement: "right" },
+      { titre: "Temps", x: 770, alignement: "right" },
+    ];
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillRect(180, haut - 24, 600, 34 + Math.max(liste.length, 1) * 25);
+    for (const c of colonnes) texte(c.titre, c.x, haut, 15, "#9aa5d6", c.alignement);
+    if (!liste.length) texte("Personne pour l'instant", L / 2, haut + 28, 16, "#cfe0ff", "center");
+    const medailles = ["🥇", "🥈", "🥉"];
+    liste.forEach((p, i) => {
+      const y = haut + 27 + i * 25;
+      const moi = Jeu.Classement.memeJoueur(p.pseudo, monde.pseudo);
+      const couleur = moi ? "#ffe27a" : "#fff";
+      if (moi) {
+        ctx.fillStyle = "rgba(255,226,122,0.15)";
+        ctx.fillRect(184, y - 18, 592, 24);
+      }
+      const valeurs = [(medailles[i] || "") + " " + Jeu.Classement.nomDuRang(i + 1), p.pseudo + (p.arrivee ? " 🏁" : ""), String(p.blocs), String(p.vies), duree(p.temps)];
+      colonnes.forEach((c, k) => texte(valeurs[k], c.x, y, 16, couleur, c.alignement));
+    });
+  }
+
+  function ecranFin(monde) {
+    voile();
+    if (monde.gagne) {
+      texte("🏁 Bravo " + monde.pseudo + ", tu es arrivé !", L / 2, 58, 40, "#7bff9e", "center");
+    } else {
+      texte("Aïe ! Plus de vies", L / 2, 58, 44, "#ff7b7b", "center");
+      const ou = { lave: "dans la lave 🔥", trou: "dans un trou 🕳️", caisse: "sur une caisse 📦", muret: "sur un muret 🧱" };
+      texte("Ta dernière vie est tombée " + (ou[monde.cause] || ""), L / 2, 88, 18, "#ffd0d0", "center");
+    }
+    texte(monde.score + " blocs   ·   " + monde.vies + " vie" + (monde.vies > 1 ? "s" : "") + " restante" + (monde.vies > 1 ? "s" : "") + "   ·   " + duree(monde.temps), L / 2, 122, 24, "#fff", "center");
+    const r = Jeu.Sauvegarde.dernierResultat;
+    let message = "Pas dans les " + C.classement.taille + " meilleurs cette fois : réessaie !";
+    if (r && r.rang && r.ameliore) message = "🏆 Tu es " + Jeu.Classement.nomDuRang(r.rang) + " du classement !";
+    else if (r && r.rang) message = "Ta meilleure partie reste " + Jeu.Classement.nomDuRang(r.rang) + " du classement";
+    texte(message, L / 2, 154, 20, "#ffe27a", "center");
+    tableauClassement(monde, 196);
+    if (monde.tempsPhase > 0.4) texte("Espace : rejouer     C : changer de pseudo", L / 2, H - 16, 20, "#fff", "center");
   }
 
   // --- Rayons X : on dessine ce qui est normalement invisible ---
@@ -316,7 +379,7 @@ Jeu.Rendu = (function () {
       const x = d.colonne * B - camX;
       if (x < -120 || x > L) continue;
       const couleur = d.atteint ? "#7bff9e" : "#ff9b9b";
-      note("drapeau n°" + d.numero + " · colonne " + d.colonne, x, C.solY - 118, couleur);
+      note((d.arrivee ? "ARRIVÉE : " : "") + "drapeau n°" + d.numero + " · colonne " + d.colonne, x, C.solY - 118, couleur);
       if (d.numero === monde.dernierDrapeau) note("↻ point de retour", x, C.solY - 134, couleur);
     }
 
@@ -417,9 +480,9 @@ Jeu.Rendu = (function () {
     ctx.restore();
 
     if (options.rayonsX) rayonsX(monde);
-    if (monde.phase !== "accueil") hud(monde, options);
+    if (monde.phase === "jeu") hud(monde, options);
     if (monde.phase === "accueil") ecranAccueil();
-    if (monde.phase === "perdu") ecranPerdu(monde);
+    if (monde.phase === "perdu" || monde.phase === "gagne") ecranFin(monde);
     if (options.pause && monde.phase === "jeu") {
       // Pas de voile : en pause, on doit pouvoir observer la scène en détail.
       ctx.fillStyle = "rgba(10, 15, 35, 0.75)";

@@ -9,7 +9,14 @@ window.Jeu = window.Jeu || {};
 
 Jeu.SousLeCapot = (function () {
   const MESSAGES = {
-    "debut-partie": (d) => "▶️ Nouvelle partie : tout recommence à zéro, avec un nouveau monde (graine " + d.graine + ")",
+    "debut-partie": (d) => "▶️ Nouvelle partie de « " + d.pseudo + " » : tout recommence à zéro, avec un nouveau monde (graine " + d.graine + ")",
+    arrivee: (d) => "🏁 « " + d.pseudo + " » a atteint l'ARRIVÉE en " + d.temps.toFixed(1) + " s, avec " + d.vies + " vie(s) !",
+    classement: (d) =>
+      d.rang === 0
+        ? "📋 « " + d.pseudo + " » n'entre pas dans les 10 meilleurs cette fois"
+        : d.ameliore
+          ? "🏆 « " + d.pseudo + " » est " + d.nomDuRang + " du classement"
+          : "📋 « " + d.pseudo + " » reste " + d.nomDuRang + " (sa meilleure partie est plus forte)",
     "troncon-fabrique": (d) =>
       "🏗️ Tronçon n° " + d.numero + " fabriqué (colonnes " + d.debut + " à " + d.fin + ") : " +
       d.trous + " trou(s), " + d.plateformes + " plateforme(s), " + d.obstacles + " obstacle(s) → " + d.cases + " cases en mémoire",
@@ -30,7 +37,8 @@ Jeu.SousLeCapot = (function () {
       "🔥 Tombé dans la " + (d.type === "fosse" ? "fosse" : "mare") + " de lave #" + d.id + " (colonne " + d.colonne +
       ") : c'est liquide, on passe à travers → retour au drapeau n° " + d.drapeau,
     "vie-perdue": (d) => (d.vies > 0 ? "💔 Une vie en moins (" + d.cause + ") → il en reste " + d.vies : "💀 Plus de vies ! (" + d.cause + ")"),
-    "fin-partie": (d) => "🏁 Fin de partie : " + d.score + " blocs en " + d.temps.toFixed(1) + " s, " + d.chutes + " chute(s)",
+    "fin-partie": (d) =>
+      (d.gagne ? "🏁 Partie gagnée : " : "🏁 Partie perdue : ") + d.score + " blocs en " + d.temps.toFixed(1) + " s, " + d.vies + " vie(s) restante(s)",
     "nouveau-record": (d) => "🏆 Nouveau record : " + d.score + " blocs",
     "sauvegarde-chargee": (d) => "📂 Base de données lue (version " + d.version + ", record = " + d.record + ")",
     "sauvegarde-convertie": (d) => "🔄 Ancienne sauvegarde convertie : version " + d.de + " → version " + d.vers,
@@ -49,7 +57,10 @@ Jeu.SousLeCapot = (function () {
     Jeu.Evenements.ecouter("*", (donnees, nom) => {
       const fabriquer = MESSAGES[nom];
       ajouterAuJournal(nom, fabriquer ? fabriquer(donnees) : nom);
-      if (nom === "sauvegarde" || nom === "sauvegarde-chargee") afficherBase();
+      if (nom === "sauvegarde" || nom === "sauvegarde-chargee") {
+        afficherBase();
+        afficherClassement();
+      }
     });
 
     elements.effacerBase.addEventListener("click", () => {
@@ -60,6 +71,7 @@ Jeu.SousLeCapot = (function () {
     });
 
     afficherBase();
+    afficherClassement();
     setInterval(() => {
       afficherEtat();
       afficherCarte();
@@ -75,6 +87,41 @@ Jeu.SousLeCapot = (function () {
     ligne.append(temps, " " + message);
     elements.journal.prepend(ligne);
     while (elements.journal.children.length > 80) elements.journal.lastChild.remove();
+  }
+
+  // Le tableau du classement dans le panneau. On écrit les pseudos avec textContent (jamais innerHTML) :
+  // un pseudo comme « <b>Max</b> » s'affiche tel quel au lieu d'être compris comme du code.
+  function afficherClassement() {
+    const tableau = elements.classement;
+    tableau.replaceChildren();
+    const entete = document.createElement("tr");
+    for (const titre of ["Rang", "Joueur", "Blocs", "Vies", "Temps"]) {
+      const th = document.createElement("th");
+      th.textContent = titre;
+      entete.append(th);
+    }
+    tableau.append(entete);
+    const liste = Jeu.Sauvegarde.donnees.classement;
+    const moi = lireMonde().pseudo;
+    liste.forEach((p, i) => {
+      const ligne = document.createElement("tr");
+      if (moi && Jeu.Classement.memeJoueur(p.pseudo, moi)) ligne.className = "moi";
+      const valeurs = [["🥇", "🥈", "🥉"][i] || Jeu.Classement.nomDuRang(i + 1), p.pseudo + (p.arrivee ? " 🏁" : ""), p.blocs, p.vies, p.temps.toFixed(1) + " s"];
+      for (const v of valeurs) {
+        const td = document.createElement("td");
+        td.textContent = v;
+        ligne.append(td);
+      }
+      tableau.append(ligne);
+    });
+    if (!liste.length) {
+      const ligne = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 5;
+      td.textContent = "Personne pour l'instant : à toi de jouer !";
+      ligne.append(td);
+      tableau.append(ligne);
+    }
   }
 
   function afficherBase() {
@@ -95,6 +142,8 @@ Jeu.SousLeCapot = (function () {
       ["pas de temps (dt)", (Jeu.CONFIG.pasDeTemps * 1000).toFixed(2) + " ms"],
       ["Partie", ""],
       ["phase", monde.phase],
+      ["pseudo", monde.pseudo || "(pas encore choisi)"],
+      ["blocs avant l'arrivée", Math.max(0, Jeu.CONFIG.arrivee.drapeau * Jeu.CONFIG.carte.longueurTroncon - monde.score)],
       ["temps de la partie", monde.temps.toFixed(2) + " s"],
       ["blocs parcourus (score)", monde.score],
       ["dernier drapeau", "n° " + monde.dernierDrapeau],

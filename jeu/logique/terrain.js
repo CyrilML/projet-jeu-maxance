@@ -35,7 +35,7 @@ Jeu.Terrain = (function () {
   const MORTELS = [false, false, false, false, true, false, true]; // le toucher coûte-t-il une vie ?
 
   function creer(graine) {
-    return { graine, colonnes: [], troncons: 0 };
+    return { graine, colonnes: [], troncons: 0, fini: false };
   }
 
   // Que contient la case (colonne, ligne) ?
@@ -47,6 +47,7 @@ Jeu.Terrain = (function () {
 
   function estSolide(terrain, colonne, ligne) {
     if (colonne < 0) return true; // un mur invisible au tout début du monde
+    if (terrain.fini && colonne >= terrain.colonnes.length) return true; // et un autre après l'arrivée
     return SOLIDES[lireCase(terrain, colonne, ligne)];
   }
 
@@ -60,7 +61,9 @@ Jeu.Terrain = (function () {
   }
 
   // Fabrique le tronçon suivant et renvoie ce qu'on y a mis (pour les obstacles, les drapeaux, le journal).
-  function fabriquerTroncon(terrain) {
+  // Le tronçon d'ARRIVÉE (étape 6) est tout plat : juste de l'herbe et le drapeau d'arrivée.
+  // Après lui, le monde est fini : on ne fabrique plus rien.
+  function fabriquerTroncon(terrain, arrivee) {
     const numero = terrain.troncons;
     const debut = numero * CARTE.longueurTroncon;
     const fin = debut + CARTE.longueurTroncon - 1; // dernière colonne du tronçon
@@ -81,6 +84,12 @@ Jeu.Terrain = (function () {
         tiroir.push(l < CARTE.ligneSol ? CASES.air : l === CARTE.ligneSol ? CASES.herbe : CASES.terre);
       }
       terrain.colonnes[c] = tiroir;
+    }
+
+    if (arrivee) {
+      terrain.troncons++;
+      terrain.fini = true;
+      return { numero, debut, fin, zoneSure, colonneDrapeau: debut + CARTE.colonneDrapeau, trous: [], plateformes: [], fosse: null, arrivee: true, de };
     }
 
     // 2. Les trous : on vide des colonnes entières. Environ un tous les 10 blocs.

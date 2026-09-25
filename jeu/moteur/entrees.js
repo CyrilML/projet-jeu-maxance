@@ -21,6 +21,7 @@ Jeu.Entrees = (function () {
     rayonsX: ["KeyX"],
     pasSuivant: ["KeyN"],
     ralenti: ["KeyL"],
+    changerPseudo: ["KeyC"],
   };
 
   const actionDeLaTouche = {};
@@ -33,6 +34,8 @@ Jeu.Entrees = (function () {
 
   function initialiser(cible) {
     cible.addEventListener("keydown", (e) => {
+      // Quand on écrit dans une case de texte (le pseudo), les touches servent à écrire, pas à jouer.
+      if (estUnChampDeTexte(e.target)) return;
       const action = actionDeLaTouche[e.code];
       if (!action) return;
       e.preventDefault(); // sinon les flèches et Espace font défiler la page
@@ -43,6 +46,10 @@ Jeu.Entrees = (function () {
     cible.addEventListener("keyup", (e) => touchesEnfoncees.delete(e.code));
     // Si la fenêtre perd le focus, on relâche tout (sinon le héros court tout seul).
     cible.addEventListener("blur", () => touchesEnfoncees.clear());
+  }
+
+  function estUnChampDeTexte(element) {
+    return !!element && (element.tagName === "INPUT" || element.tagName === "TEXTAREA");
   }
 
   // Vrai tant qu'une des touches de l'action est tenue.

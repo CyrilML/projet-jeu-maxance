@@ -14,6 +14,21 @@
     .entete h1 { margin: 0; font-size: 1.2rem; }
     .entete a { color: var(--accent); }
     .version { color: var(--doux); font-size: .85rem; margin-right: 10px; }
+    .cadre-ecran { position: relative; max-width: 960px; margin: 0 auto; }
+    .accueil { position: absolute; left: 50%; top: 41%; transform: translate(-50%, -50%); width: min(420px, 90%); background: rgba(14,19,37,.92); border: 2px solid var(--accent); border-radius: 14px; padding: 14px 16px; text-align: center; }
+    .accueil[hidden] { display: none; }
+    .accueil label { display: block; font-weight: bold; margin-bottom: 8px; }
+    .accueil .ligne { display: flex; gap: 8px; }
+    .accueil input { flex: 1; min-width: 0; font: inherit; font-size: 1.1rem; color: var(--texte); background: #0b1020; border: 1px solid var(--bord); border-radius: 10px; padding: 8px 10px; }
+    .accueil input:focus { outline: 2px solid var(--accent); }
+    .accueil button { background: #4f7cff; border-color: #4f7cff; }
+    .accueil .aide { margin: 8px 0 0; font-size: .82rem; color: var(--doux); }
+    .accueil .erreur { margin: 6px 0 0; color: #ff9b9b; font-size: .9rem; min-height: 1em; }
+    #classement td:first-child { text-align: left; color: var(--texte); }
+    #classement tr.moi td { color: var(--accent); font-weight: bold; }
+    #classement th { text-align: right; color: var(--doux); font-weight: normal; padding: 2px 4px; }
+    #classement th:first-child, #classement th:nth-child(2) { text-align: left; }
+    #classement td:nth-child(2) { text-align: left; color: var(--texte); }
     canvas { display: block; width: 100%; max-width: 960px; aspect-ratio: 16 / 9; margin: 0 auto; border-radius: 12px; border: 2px solid var(--bord); background: #000; outline: none; }
     canvas:focus-visible { border-color: var(--accent); }
     .outils { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0 16px; }
@@ -34,7 +49,7 @@
     #journal li { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
     #journal .temps { display: inline-block; min-width: 58px; color: var(--doux); font-family: ui-monospace, Menlo, Consolas, monospace; }
     #journal li[data-evenement="brule"], #journal li[data-evenement="vie-perdue"], #journal li[data-evenement="piege"], #journal li[data-evenement="fin-partie"] { color: #ff9b9b; }
-    #journal li[data-evenement="sauvegarde"], #journal li[data-evenement="nouveau-record"] { color: var(--accent); }
+    #journal li[data-evenement="sauvegarde"], #journal li[data-evenement="nouveau-record"], #journal li[data-evenement="classement"], #journal li[data-evenement="arrivee"] { color: var(--accent); }
     pre { margin: 0; background: #0b1020; border-radius: 8px; padding: 8px; font-size: .78rem; overflow: auto; max-height: 280px; color: #b9f5c9; }
     code { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--accent); }
     .carte-bloc { grid-column: 1 / -1; }
@@ -57,11 +72,22 @@
 <body>
   <div class="page">
     <header class="entete">
-      <h1>🧱 Projet Maxance · Étape 5 : attention au bois !</h1>
+      <h1>🧱 Projet Maxance · Étape 6 : pseudo, arrivée et classement</h1>
       <span><span id="version" class="version"></span> <a href="../index.html">📓 Ouvrir le carnet de bord</a></span>
     </header>
 
-    <canvas id="ecran" width="960" height="540" tabindex="0" aria-label="Écran de jeu"></canvas>
+    <div class="cadre-ecran">
+      <canvas id="ecran" width="960" height="540" tabindex="0" aria-label="Écran de jeu"></canvas>
+      <form id="accueil" class="accueil" autocomplete="off" hidden>
+        <label for="pseudo">👤 Ton pseudo</label>
+        <div class="ligne">
+          <input id="pseudo" name="pseudo" maxlength="12" placeholder="Écris ton nom ou ton pseudo" spellcheck="false">
+          <button type="submit">▶ Jouer</button>
+        </div>
+        <p class="erreur" id="pseudo-erreur" aria-live="polite"></p>
+        <p class="aide">12 lettres maximum · Entrée pour jouer</p>
+      </form>
+    </div>
 
     <div class="outils">
       <button data-action="rayonsX" data-option="rayonsX" aria-pressed="false">🩻 Rayons X <kbd>X</kbd></button>
@@ -86,6 +112,11 @@
         <p class="aide">Ce qui survit quand on ferme la page. Rangé sous la clé <code id="cle"></code>, au format JSON.</p>
         <pre id="base"></pre>
       </div>
+      <div class="bloc">
+        <h2>🏆 Classement</h2>
+        <p class="aide">Les 10 meilleurs joueurs <strong>de cet ordinateur</strong> : plus de blocs, puis plus de vies, puis le plus rapide. Rangé dans la base de données (clé <code>classement</code>).</p>
+        <table><tbody id="classement"></tbody></table>
+      </div>
       <div class="bloc carte-bloc">
         <h2>🗺️ La carte en mémoire</h2>
         <p class="aide">Le monde n'est qu'une grille de numéros : <code>terrain.colonnes[colonne][ligne]</code>. Voici les colonnes que tu vois à l'écran. La case encadrée en jaune est celle du héros. Depuis l'étape 3, les obstacles sont aussi dans cette grille : 4 = bois, 5 = pierre, 6 = lave.</p>
@@ -99,19 +130,20 @@
        Le « ?v=3 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js).
        Pour le navigateur, un nouveau numéro = un nouveau fichier, donc il ne ressert pas un vieux fichier
        gardé en mémoire (le « cache »). Sans ça, il pourrait mélanger l'ancienne et la nouvelle version. -->
-  <script src="config.js?v=5"></script>
-  <script src="moteur/evenements.js?v=5"></script>
-  <script src="moteur/entrees.js?v=5"></script>
-  <script src="moteur/physique.js?v=5"></script>
-  <script src="moteur/hasard.js?v=5"></script>
-  <script src="moteur/camera.js?v=5"></script>
-  <script src="logique/terrain.js?v=5"></script>
-  <script src="logique/joueur.js?v=5"></script>
-  <script src="logique/obstacles.js?v=5"></script>
-  <script src="logique/monde.js?v=5"></script>
-  <script src="donnees/sauvegarde.js?v=5"></script>
-  <script src="affichage/rendu.js?v=5"></script>
-  <script src="affichage/sous-le-capot.js?v=5"></script>
-  <script src="main.js?v=5"></script>
+  <script src="config.js?v=6"></script>
+  <script src="moteur/evenements.js?v=6"></script>
+  <script src="moteur/entrees.js?v=6"></script>
+  <script src="moteur/physique.js?v=6"></script>
+  <script src="moteur/hasard.js?v=6"></script>
+  <script src="moteur/camera.js?v=6"></script>
+  <script src="logique/terrain.js?v=6"></script>
+  <script src="logique/joueur.js?v=6"></script>
+  <script src="logique/obstacles.js?v=6"></script>
+  <script src="logique/classement.js?v=6"></script>
+  <script src="logique/monde.js?v=6"></script>
+  <script src="donnees/sauvegarde.js?v=6"></script>
+  <script src="affichage/rendu.js?v=6"></script>
+  <script src="affichage/sous-le-capot.js?v=6"></script>
+  <script src="main.js?v=6"></script>
 </body>
 </html>

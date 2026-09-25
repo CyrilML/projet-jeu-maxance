@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 5,
+  version: 6,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -69,6 +69,15 @@ Jeu.CONFIG = {
     largeur: 3, // en blocs (les petites mares au hasard font 1 ou 2 blocs)
     position: 16, // n° de la colonne dans le tronçon (0 à 29) où commence la fosse
     marge: 2, // blocs d'herbe gardés de chaque côté (pas de trou ni de plateforme) pour prendre son élan
+  },
+
+  // L'arrivée (étape 6) : le monde s'arrête au drapeau n° 10, donc après 10 × 30 = 300 blocs.
+  arrivee: { drapeau: 10 },
+
+  // Le classement (étape 6).
+  classement: {
+    taille: 10, // on garde les 10 meilleurs joueurs
+    pseudoMax: 12, // longueur maximum d'un pseudo, en lettres
   },
 
   // Les vies (étape 4). Trou ou lave = 1 vie en moins. À 0 vie : « Aïe ! » et tout recommence à zéro.

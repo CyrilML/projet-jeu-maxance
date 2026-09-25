@@ -43,10 +43,43 @@
       cle: document.getElementById("cle"),
       effacerBase: document.getElementById("effacer-base"),
       carte: document.getElementById("carte"),
+      classement: document.getElementById("classement"),
     },
   });
   // La sauvegarde est lue APRÈS le branchement du panneau, pour que le journal voie la lecture.
   Jeu.Sauvegarde.initialiser();
+
+  // Le formulaire du pseudo, affiché par-dessus l'écran pendant l'accueil (étape 6).
+  const formulaire = document.getElementById("accueil");
+  const champPseudo = document.getElementById("pseudo");
+  const erreurPseudo = document.getElementById("pseudo-erreur");
+  champPseudo.maxLength = C.classement.pseudoMax;
+  formulaire.addEventListener("submit", (e) => {
+    e.preventDefault(); // sinon la page se rechargerait
+    const pseudo = Jeu.Classement.nettoyerPseudo(champPseudo.value);
+    if (!pseudo) {
+      erreurPseudo.textContent = "Écris ton pseudo pour jouer 🙂";
+      champPseudo.focus();
+      return;
+    }
+    erreurPseudo.textContent = "";
+    Jeu.Monde.demarrer(monde, pseudo);
+    canvas.focus();
+  });
+
+  // Montre le formulaire seulement à l'accueil, rempli avec le dernier pseudo utilisé.
+  let formulaireVisible = false;
+  function afficherFormulaire() {
+    const visible = monde.phase === "accueil";
+    if (visible === formulaireVisible) return;
+    formulaireVisible = visible;
+    formulaire.hidden = !visible;
+    if (visible) {
+      champPseudo.value = Jeu.Sauvegarde.donnees.dernierPseudo || "";
+      champPseudo.focus();
+      champPseudo.select();
+    }
+  }
 
   // Les touches « outils » sont gérées ici : elles ne font pas partie des règles du jeu.
   function touchesOutils() {
@@ -74,6 +107,7 @@
     precedent = maintenant;
 
     touchesOutils();
+    afficherFormulaire();
 
     if (!options.pause) {
       accumulateur += options.ralenti ? ecoule * 0.25 : ecoule;

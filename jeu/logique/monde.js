@@ -5,7 +5,7 @@
 // C'est la MÉMOIRE VIVE du jeu : elle disparaît quand on ferme la page.
 // (Ce qui doit survivre, comme le record, part dans la base de données : donnees/sauvegarde.js)
 //
-// Le jeu a trois PHASES : "accueil" → "jeu" → "perdu" → "jeu" → …
+// Le jeu a quatre PHASES : "accueil" (on tape son pseudo) → "jeu" → "perdu" ou "gagne" → "jeu" → …
 //
 // Les règles :
 //   - on a 5 VIES. Un trou ou de la lave = 1 vie en moins (étape 4) ;
@@ -13,6 +13,8 @@
 //   - tomber dans la lave, ou toucher une caisse ou un muret en bois → on réapparaît au dernier
 //     drapeau atteint (étape 5 : seules les tours en pierre ne font pas mourir) ;
 //   - plus de vie → « Aïe ! », la partie est finie et tout recommence à zéro ;
+//   - drapeau n° 10 atteint (300 blocs) → c'est l'ARRIVÉE, la partie est gagnée (étape 6) ;
+//   - à la fin de chaque partie, le score entre au classement (logique/classement.js) ;
 //   - tours en pierre → SOLIDES : on marche dessus, et par le côté c'est un mur ;
 //   - le score = le nombre de blocs parcourus vers la droite (la colonne la plus loin atteinte).
 
@@ -27,6 +29,9 @@ Jeu.Monde = (function () {
     const colonneDepart = C.carte.colonneDrapeau; // on part du drapeau n° 0
     return {
       phase: "accueil",
+      pseudo: "", // le nom du joueur, tapé à l'accueil
+      cause: null, // ce qui a fait perdre la dernière vie
+      gagne: false,
       tempsPhase: 0, // depuis combien de temps on est dans cette phase
       temps: 0, // durée de la partie en cours
       graine,
@@ -48,19 +53,39 @@ Jeu.Monde = (function () {
     };
   }
 
-  function demarrer(monde) {
-    Object.assign(monde, creer(), { phase: "jeu" });
-    Jeu.Evenements.emettre("debut-partie", { graine: monde.graine });
+  // Lance une nouvelle partie pour ce joueur. Appelé par main.js quand le pseudo est validé,
+  // ou par la touche Espace à la fin d'une partie (même joueur).
+  function demarrer(monde, pseudo) {
+    Object.assign(monde, creer(), { phase: "jeu", pseudo });
+    Jeu.Evenements.emettre("debut-partie", { graine: monde.graine, pseudo });
   }
 
-  // Plus de vie : la partie est finie.
-  function perdre(monde, cause) {
-    monde.phase = "perdu";
+  // La partie est finie : perdue (plus de vie) ou gagnée (arrivée).
+  function finir(monde, gagne, cause) {
+    monde.phase = gagne ? "gagne" : "perdu";
+    monde.gagne = gagne;
     monde.tempsPhase = 0;
     monde.cause = cause;
-    monde.joueur.etat = "touche";
+    if (!gagne) monde.joueur.etat = "touche";
     monde.nouveauRecord = monde.score > Jeu.Sauvegarde.donnees.record;
-    Jeu.Evenements.emettre("fin-partie", { score: monde.score, temps: monde.temps, chutes: monde.chutes, cause });
+    Jeu.Evenements.emettre("fin-partie", {
+      pseudo: monde.pseudo,
+      score: monde.score,
+      temps: monde.temps,
+      vies: monde.vies,
+      chutes: monde.chutes,
+      gagne,
+      cause,
+    });
+  }
+
+  function perdre(monde, cause) {
+    finir(monde, false, cause);
+  }
+
+  function gagner(monde) {
+    Jeu.Evenements.emettre("arrivee", { pseudo: monde.pseudo, temps: monde.temps, vies: monde.vies });
+    finir(monde, true, null);
   }
 
   // Enlève une vie. Renvoie vrai s'il en reste (on peut réapparaître), faux sinon.
@@ -75,9 +100,10 @@ Jeu.Monde = (function () {
   // Fabrique les tronçons du monde qui vont bientôt apparaître à droite de l'écran.
   function fabriquerDevant(monde) {
     const colonneVoulue = Math.floor((monde.camera.x + C.ecran.largeur) / B) + C.carte.avance;
-    while (monde.terrain.colonnes.length <= colonneVoulue) {
-      const infos = Jeu.Terrain.fabriquerTroncon(monde.terrain);
-      monde.drapeaux.push({ numero: infos.numero, colonne: infos.colonneDrapeau, atteint: infos.numero === 0 });
+    while (!monde.terrain.fini && monde.terrain.colonnes.length <= colonneVoulue) {
+      const arrivee = monde.terrain.troncons === C.arrivee.drapeau;
+      const infos = Jeu.Terrain.fabriquerTroncon(monde.terrain, arrivee);
+      monde.drapeaux.push({ numero: infos.numero, colonne: infos.colonneDrapeau, atteint: infos.numero === 0, arrivee });
       const obstacles = Jeu.Obstacles.placerDansTroncon(monde, infos);
       Jeu.Evenements.emettre("troncon-fabrique", {
         numero: infos.numero,
@@ -143,11 +169,14 @@ Jeu.Monde = (function () {
     monde.tempsPhase += dt;
 
     if (monde.phase !== "jeu") {
-      // On consomme les deux appuis (| et pas ||) pour qu'aucun ne reste en attente.
+      // On consomme les appuis (| et pas ||) pour qu'aucun ne reste en attente.
       const veutJouer = Entrees.consommer("sauter") | Entrees.consommer("valider");
-      // Petite pause après une défaite pour ne pas relancer par accident.
-      const pret = monde.phase === "accueil" || monde.tempsPhase > 0.4;
-      if (veutJouer && pret) demarrer(monde);
+      const veutChanger = Entrees.consommer("changerPseudo");
+      // À l'accueil, c'est le formulaire du pseudo qui lance la partie (voir main.js).
+      // À la fin d'une partie : petite pause pour ne pas relancer par accident.
+      const pret = monde.phase !== "accueil" && monde.tempsPhase > 0.4;
+      if (veutJouer && pret) demarrer(monde, monde.pseudo);
+      else if (veutChanger && pret) Object.assign(monde, creer()); // retour à l'accueil
       suivreAvecLaCamera(monde, dt);
       fabriquerDevant(monde);
       return;
@@ -170,6 +199,11 @@ Jeu.Monde = (function () {
         d.atteint = true;
         monde.dernierDrapeau = d.numero;
         Jeu.Evenements.emettre("drapeau", { numero: d.numero, colonne: d.colonne });
+        if (d.arrivee) {
+          monde.score = d.colonne - monde.colonneDepart;
+          gagner(monde);
+          return;
+        }
       }
     }
 
@@ -190,5 +224,5 @@ Jeu.Monde = (function () {
     fabriquerDevant(monde);
   }
 
-  return { creer, mettreAJour };
+  return { creer, demarrer, mettreAJour };
 })();

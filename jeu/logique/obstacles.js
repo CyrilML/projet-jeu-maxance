@@ -89,6 +89,7 @@ Jeu.Obstacles = (function () {
   function placerDansTroncon(monde, infos) {
     const O = C.obstacles;
     const de = infos.de;
+    if (infos.arrivee) return 0; // le tronçon d'arrivée est tout plat, sans danger
     // D'abord la grande fosse de lave, à sa place réservée.
     poser(monde, "fosse", infos.fosse.colonne, infos.fosse.largeur);
     let poses = 1;
