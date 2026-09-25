@@ -19,6 +19,8 @@ Jeu.Entrees = (function () {
     valider: ["Enter"],
     pause: ["Escape"], // la touche P sert maintenant à poser un bloc (étape 10)
     poserBloc: ["KeyP"],
+    frapper: ["KeyT"], // un coup d'épée (étape 11)
+    boirePotion: ["KeyH"], // boire la potion (étape 11)
     rayonsX: ["KeyX"],
     pasSuivant: ["KeyN"],
     ralenti: ["KeyL"],

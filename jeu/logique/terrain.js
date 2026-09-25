@@ -81,7 +81,10 @@ Jeu.Terrain = (function () {
       : { debut: lac - C.lacs.marge, fin: lac + C.lacs.largeur - 1 + C.lacs.marge };
     // Les places RÉSERVÉES : la fosse (ou le lac), et les murets de ce tronçon (étape 9).
     const reserves = [grandDanger];
-    const murets = placesDesMurets(debut, fin, zoneSure, grandDanger);
+    // Un monstre dans ce tronçon ? (étape 11) Il lui faut un terrain plat devant lui pour se battre.
+    const monstre = arrivee ? null : placeDuMonstre(debut, fin, zoneSure, grandDanger);
+    if (monstre !== null) reserves.push({ debut: monstre - C.monstres.espace, fin: monstre + 1 });
+    const murets = placesDesMurets(debut, fin, zoneSure, reserves.slice());
     const marge = C.obstacles.margeTrou;
     for (const m of murets) reserves.push({ debut: m - marge, fin: m + LARGEUR_MURET - 1 + marge });
     // La place réservée touchée par ces colonnes, s'il y en a une.
@@ -154,6 +157,7 @@ Jeu.Terrain = (function () {
       plateformes,
       fosse, // la place de la fosse de lave, que obstacles.js remplit (null s'il y a un lac)
       lac, // la première colonne du lac de lave (étape 10), ou null
+      monstre, // la colonne du monstre (étape 11), ou null
       murets, // les colonnes réservées aux murets à pics (étape 9), que obstacles.js remplit
       de, // le même dé servira à placer les obstacles
     };
@@ -163,7 +167,7 @@ Jeu.Terrain = (function () {
   // qui tombent dans ce tronçon. « Environ » : si la place idéale est dans la zone du drapeau, trop
   // près de la fosse ou collée à l'arrivée, on décale le muret de quelques blocs (au plus 10).
   const LARGEUR_MURET = 2;
-  function placesDesMurets(debut, fin, zoneSure, reserveFosse) {
+  function placesDesMurets(debut, fin, zoneSure, autresReserves) {
     const M = C.obstacles.murets;
     const marge = C.obstacles.margeTrou;
     const depart = CARTE.colonneDrapeau;
@@ -175,11 +179,11 @@ Jeu.Terrain = (function () {
       // (sauf le dernier, qui tomberait sur l'arrivée : il va dans le tronçon d'avant).
       const proprietaire = Math.min(Math.floor(ideale / CARTE.longueurTroncon), C.arrivee.drapeau - 1);
       if (proprietaire !== debut / CARTE.longueurTroncon) continue;
-      for (let d = 0; d <= 10; d++) {
+      for (let d = 0; d <= 20; d++) {
         const trouvee = [ideale - d, ideale + d].find((c) => {
           const g = c - marge;
           const dr = c + LARGEUR_MURET - 1 + marge;
-          const loinDeLaFosse = dr < reserveFosse.debut - 2 || g > reserveFosse.fin + 2;
+          const loinDeLaFosse = autresReserves.every((r) => dr < r.debut - 2 || g > r.fin + 2);
           return g >= debut + zoneSure && dr <= fin && loinDeLaFosse;
         });
         if (trouvee !== undefined) {
@@ -189,6 +193,27 @@ Jeu.Terrain = (function () {
       }
     }
     return colonnes;
+  }
+
+  // Le monstre de ce tronçon (étape 11) : renvoie sa colonne, ou null. Le dernier monstre (bloc 300)
+  // tomberait sur l'arrivée : il va juste avant, dans le tronçon d'avant. Il lui faut « espace » blocs
+  // d'herbe devant lui, dans le tronçon, sans toucher la fosse ou le lac.
+  function placeDuMonstre(debut, fin, zoneSure, danger) {
+    const Mo = C.monstres;
+    const numero = debut / CARTE.longueurTroncon;
+    for (const bloc of Mo.blocs) {
+      const ideale = CARTE.colonneDrapeau + bloc;
+      if (Math.min(Math.floor(ideale / CARTE.longueurTroncon), C.arrivee.drapeau - 1) !== numero) continue;
+      for (let d = 0; d <= 20; d++) {
+        const trouvee = [ideale - d, ideale + d].find((c) => {
+          const g = c - Mo.espace;
+          const dr = c + 1;
+          return g >= debut + zoneSure && dr <= fin && (dr < danger.debut || g > danger.fin);
+        });
+        if (trouvee !== undefined) return trouvee;
+      }
+    }
+    return null;
   }
 
   // Le lac de lave de ce tronçon (étape 10) : renvoie sa première colonne, ou null s'il n'y en a pas.

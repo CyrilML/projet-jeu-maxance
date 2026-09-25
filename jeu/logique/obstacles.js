@@ -51,6 +51,10 @@ Jeu.Obstacles = (function () {
       const loin = C.lacs.sansObstacle;
       if (colonne + largeur - 1 >= infos.lac - loin && colonne <= infos.lac + C.lacs.largeur - 1 + loin) return false;
     }
+    // Ni dans la zone de combat d'un monstre (étape 11).
+    if (infos.monstre !== null && infos.monstre !== undefined) {
+      if (colonne + largeur - 1 >= infos.monstre - C.monstres.espace - O.margeTrou && colonne <= infos.monstre + 1 + O.margeTrou) return false;
+    }
     for (let c = colonne - O.margeTrou; c < colonne + largeur + O.margeTrou; c++) {
       if (c < infos.debut + infos.zoneSure || c > infos.fin) return false;
       if (Jeu.Terrain.lireCase(terrain, c, CARTE.ligneSol) !== CASES.herbe) return false; // un trou ou de la lave

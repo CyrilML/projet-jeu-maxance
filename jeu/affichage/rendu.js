@@ -198,7 +198,7 @@ Jeu.Rendu = (function () {
 
   // Le héros. On le dessine comme s'il regardait à droite, entre x = −15 et x = +15 autour de son
   // milieu. S'il regarde à gauche, on retourne le dessin comme dans un miroir : ctx.scale(-1, 1).
-  function joueur(j, phase) {
+  function joueur(j, phase, eq) {
     const milieu = Math.round(j.x + j.l / 2);
     const y = Math.round(j.y);
     if (j.etat === "squelette") return squelette(milieu, y, j.animation);
@@ -209,6 +209,17 @@ Jeu.Rendu = (function () {
     ctx.translate(milieu, 0);
     ctx.scale(j.regard || 1, 1); // −1 = miroir : il regarde à gauche
     const x = -15;
+    // Le bouclier, porté dans le dos (étape 11) : il se fend à chaque coup arrêté, et disparaît quand il casse.
+    if (eq && eq.bouclier > 0) {
+      ctx.fillStyle = "#3a6fd8";
+      ctx.fillRect(x - 5, y + 16, 12, 18);
+      ctx.fillStyle = "#ffe066";
+      ctx.fillRect(x - 1, y + 21, 4, 8); // une étoile toute simple
+      ctx.fillRect(x - 3, y + 23, 8, 4);
+      ctx.fillStyle = "#1d1d3a";
+      if (eq.bouclier < 3) ctx.fillRect(x - 4, y + 18, 2, 7); // les fissures
+      if (eq.bouclier < 2) ctx.fillRect(x + 3, y + 27, 3, 2);
+    }
     // Bras (derrière le corps) : levés s'il tombe dans un trou, le long du corps sinon
     ctx.fillStyle = "#f1c27d";
     if (j.brasLeves) {
@@ -224,8 +235,13 @@ Jeu.Rendu = (function () {
     ctx.fillRect(x + 16, y + 34, 9, pas ? 12 : 9);
     // Corps : rouge s'il a perdu, noirci qui clignote s'il brûle, bleu sinon.
     const clignote = Math.floor(j.animation * 20) % 2;
-    ctx.fillStyle = j.etat === "touche" ? "#e05555" : j.etat === "brule" ? (clignote ? "#3b2a26" : "#ff7a1a") : "#2fa3d8";
+    // L'armure rigolote (étape 11) : un plastron jaune à pois rouges.
+    ctx.fillStyle = j.etat === "touche" ? "#e05555" : j.etat === "brule" ? (clignote ? "#3b2a26" : "#ff7a1a") : "#ffd23f";
     ctx.fillRect(x + 4, y + 18, 22, 17);
+    if (j.etat !== "brule" && j.etat !== "touche") {
+      ctx.fillStyle = "#e0303a";
+      for (const [px, py] of [[7, 21], [15, 20], [21, 24], [10, 28], [18, 30]]) ctx.fillRect(x + px, y + py, 3, 3);
+    }
     // Tête et yeux (tournés du côté où il regarde)
     ctx.fillStyle = "#f1c27d";
     ctx.fillRect(x + 4, y, 22, 19);
@@ -236,7 +252,82 @@ Jeu.Rendu = (function () {
     ctx.fillRect(x + 23, y + 8, 3, 4);
     // Bouche : un petit « o » de surprise quand il tombe dans un trou
     if (j.brasLeves) ctx.fillRect(x + 19, y + 14, 4, 3);
+    // Le casque-casserole (étape 11) : une casserole grise avec son manche, et une plume rouge.
+    ctx.fillStyle = "#a9b0bb";
+    ctx.fillRect(x + 2, y - 5, 26, 9);
+    ctx.fillStyle = "#7d8591";
+    ctx.fillRect(x + 2, y + 2, 26, 2);
+    ctx.fillRect(x - 9, y - 3, 12, 3); // le manche, vers l'arrière
+    ctx.fillStyle = "#e0303a";
+    ctx.fillRect(x + 14, y - 14, 4, 10); // la plume
+    ctx.fillRect(x + 11, y - 16, 4, 4);
+    // L'épée (étape 11) : levée au repos, tendue vers l'avant pendant un coup (touche T).
+    if (eq && eq.coup > 0) {
+      ctx.fillStyle = "#6b4423";
+      ctx.fillRect(x + 27, y + 22, 6, 5);
+      ctx.fillStyle = "#dfe6ee";
+      ctx.fillRect(x + 33, y + 23, 24, 3);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(x + 55, y + 23, 3, 3);
+    } else if (eq) {
+      ctx.fillStyle = "#6b4423";
+      ctx.fillRect(x + 27, y + 24, 4, 7);
+      ctx.fillStyle = "#dfe6ee";
+      ctx.fillRect(x + 28, y + 8, 3, 16);
+      ctx.fillStyle = "#6b4423";
+      ctx.fillRect(x + 25, y + 23, 9, 2);
+    }
     ctx.restore();
+  }
+
+  // Les monstres (étape 11) : un petit bonhomme vert à cornes, avec sa barre de PV au-dessus.
+  // Tant qu'il est vivant, un rideau magique violet montre qu'il garde le passage.
+  function monstres(liste) {
+    for (const m of liste) {
+      if (!m.vivant) continue;
+      const x = Math.round(m.x);
+      const y = Math.round(m.y);
+      const penche = m.frappe > 0 ? -6 : 0; // il se penche vers le héros quand il frappe
+      // Le rideau magique
+      ctx.fillStyle = "rgba(180, 90, 255, 0.12)";
+      ctx.fillRect(x + 12, 0, 12, y);
+      // Le corps
+      ctx.fillStyle = m.touche > 0 ? "#ff6b6b" : "#5fbf3f";
+      ctx.fillRect(x + 4 + penche, y + 14, 30, 42);
+      ctx.fillRect(x + 8, y + 56, 8, 8); // les pieds
+      ctx.fillRect(x + 22, y + 56, 8, 8);
+      // Les cornes
+      ctx.fillStyle = "#f4f1e6";
+      ctx.fillRect(x + 6 + penche, y + 6, 5, 8);
+      ctx.fillRect(x + 27 + penche, y + 6, 5, 8);
+      // Les yeux (il regarde vers la gauche, vers le héros) et la bouche à dents
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(x + 8 + penche, y + 20, 9, 9);
+      ctx.fillRect(x + 21 + penche, y + 20, 9, 9);
+      ctx.fillStyle = "#1d1d3a";
+      ctx.fillRect(x + 8 + penche, y + 23, 4, 5);
+      ctx.fillRect(x + 21 + penche, y + 23, 4, 5);
+      ctx.fillRect(x + 10 + penche, y + 36, 18, 6);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(x + 12 + penche, y + 36, 3, 3);
+      ctx.fillRect(x + 22 + penche, y + 36, 3, 3);
+      // Le bras-massue quand il frappe
+      if (m.frappe > 0) {
+        ctx.fillStyle = "#8a5a2b";
+        ctx.fillRect(x - 16, y + 24, 22, 6);
+      }
+      // La barre de PV
+      ctx.fillStyle = "rgba(0,0,0,0.6)";
+      ctx.fillRect(x - 4, y - 16, 44, 9);
+      ctx.fillStyle = "#e0303a";
+      ctx.fillRect(x - 3, y - 15, 42, 7);
+      ctx.fillStyle = "#3fc27a";
+      ctx.fillRect(x - 3, y - 15, Math.round(42 * m.pv / m.pvMax), 7);
+      ctx.font = "bold 11px 'Trebuchet MS', system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#fff";
+      ctx.fillText(m.pv + " / " + m.pvMax + " PV", x + 18, y - 20);
+    }
   }
 
   // Le petit squelette qui danse (étape 8). Toutes les 1/6 s, il change de pas de danse :
@@ -344,6 +435,15 @@ Jeu.Rendu = (function () {
       }
     }
     texte("🎒 " + inv.blocs + "   saute + P : poser un bloc", 28 + C.inventaire.blocs * 16, 152, 15, "#fff");
+    // Les PV, le bouclier et la potion (étape 11)
+    const eq = monde.equipement;
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(16, 162, 168, 18);
+    ctx.fillStyle = "#6b1f24";
+    ctx.fillRect(20, 166, 160, 10);
+    ctx.fillStyle = eq.pv > 6 ? "#3fc27a" : "#ff9f1a";
+    ctx.fillRect(20, 166, Math.round(160 * eq.pv / C.combat.pvJoueur), 10);
+    texte("PV " + eq.pv + "/" + C.combat.pvJoueur + "   🛡️ " + eq.bouclier + "   🧪 " + eq.potions + "   T : épée · H : potion", 192, 177, 15, "#fff");
     if (options.ralenti) texte("🐢 RALENTI (×0,25)", L / 2, 32, 18, "#ffe27a", "center");
   }
 
@@ -363,7 +463,7 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 10 : lacs de lave et inventaire", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 11 : épée, monstres, bouclier et potion", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au drapeau n° " + C.arrivee.drapeau + " (" + C.arrivee.drapeau * C.carte.longueurTroncon + " blocs) le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
@@ -371,8 +471,9 @@ Jeu.Rendu = (function () {
     texte("🔥 Lave et 💀 murets à pics (un tous les 50 blocs) : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
     texte("📦 Caisses et 🗼 tours en pierre : sans danger, monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
     texte("🎒 " + C.inventaire.blocs + " blocs : saute puis P pour poser un bloc sous tes pieds (Échap : pause)", L / 2, 470, 17, "#cfe0ff", "center");
+    texte("⚔️ T : épée · 🧪 H : potion · 👾 un monstre de " + C.monstres.pv + " PV tous les 100 blocs", L / 2, 496, 17, "#cfe0ff", "center");
     const premier = Jeu.Sauvegarde.donnees.classement[0];
-    if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 504, 18, "#ffe27a", "center");
+    if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 522, 16, "#ffe27a", "center");
     texte("version " + C.version, L - 12, H - 12, 14, "#cfe0ff", "right");
   }
 
@@ -410,7 +511,7 @@ Jeu.Rendu = (function () {
       texte("🏁 Bravo " + monde.pseudo + ", tu es arrivé !", L / 2, 58, 40, "#7bff9e", "center");
     } else {
       texte("Aïe ! Plus de vies", L / 2, 58, 44, "#ff7b7b", "center");
-      const ou = { lave: "dans la lave 🔥", trou: "dans un trou 🕳️", caisse: "sur une caisse 📦", muret: "sur un muret à pics 💀" };
+      const ou = { lave: "dans la lave 🔥", trou: "dans un trou 🕳️", caisse: "sur une caisse 📦", muret: "sur un muret à pics 💀", monstre: "contre un monstre 👾" };
       texte("Ta dernière vie est tombée " + (ou[monde.cause] || ""), L / 2, 88, 18, "#ffd0d0", "center");
     }
     texte(monde.score + " blocs   ·   " + monde.vies + " vie" + (monde.vies > 1 ? "s" : "") + " restante" + (monde.vies > 1 ? "s" : "") + "   ·   " + duree(monde.temps), L / 2, 122, 24, "#fff", "center");
@@ -558,6 +659,24 @@ Jeu.Rendu = (function () {
       ctx.setLineDash([]);
       note(refus ? "P : non, " + refus : "P : un bloc ici", vise.colonne * B - camX + 2, vise.ligne * B + B + 14, refus ? "#ff9b9b" : "#7bff9e");
     }
+    // Le combat : la portée de l'épée, et chaque monstre avec ses PV et son minuteur
+    if (monde.phase === "jeu" && j.regard > 0) {
+      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = "#ffe066";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(j.x + j.l - camX, j.y + 10, C.combat.porteeEpee, 24);
+      ctx.setLineDash([]);
+    }
+    for (const m of monde.monstres) {
+      if (!m.vivant) continue;
+      const mx = m.x - camX;
+      if (mx + m.l < 0 || mx > L) continue;
+      ctx.strokeStyle = "#b45aff";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(mx, m.y, m.l, m.h);
+      note("👾 #" + m.id + " · PV " + m.pv + "/" + m.pvMax, mx - 10, m.y - 44, "#e6c8ff");
+      note(m.minuteur === null ? "attend le héros" : "coup dans " + Math.max(0, m.minuteur).toFixed(2) + " s", mx - 10, m.y - 29, m.minuteur === null ? "#cfe0ff" : "#ff9b9b");
+    }
     if (monde.danse) note("💀 danse encore " + Math.max(0, monde.danse.reste).toFixed(2) + " s", monde.joueur.x - camX - 20, C.solY - 76, "#ffffff");
     if (monde.brulure) note("brûle encore " + Math.max(0, monde.brulure.reste).toFixed(2) + " s", monde.joueur.x - camX - 20, C.solY - 76, "#ff9b9b");
 
@@ -627,7 +746,8 @@ Jeu.Rendu = (function () {
     ctx.translate(-camX, 0);
     terrain(monde);
     drapeaux(monde);
-    joueur(monde.joueur, monde.phase);
+    monstres(monde.monstres);
+    joueur(monde.joueur, monde.phase, monde.equipement);
     flammes(monde.flammes);
     ctx.restore();
 

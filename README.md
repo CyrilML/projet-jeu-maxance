@@ -15,7 +15,7 @@ pas de serveur, pas d'installation.
 - **`jeu/index.html`** : le jeu. S'ouvre d'un double-clic dans le navigateur.
 
 Dans le jeu : ← → (ou Q D) pour bouger, Espace / ↑ / Z pour sauter.
-Outils : `X` rayons X, `Échap` pause, `N` avancer d'un pas, `L` ralenti. `P` (en sautant) : poser un bloc.
+Outils : `X` rayons X, `Échap` pause, `N` avancer d'un pas, `L` ralenti. `P` (en sautant) : poser un bloc. `T` : épée, `H` : potion.
 
 ## Organisation
 

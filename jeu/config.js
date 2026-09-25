@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 10,
+  version: 11,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -109,6 +109,29 @@ Jeu.CONFIG = {
   // L'inventaire (étape 10) : des blocs à poser sous ses pieds pendant un saut (touche P).
   inventaire: {
     blocs: 10, // pour toute la partie
+  },
+
+  // Le combat (étape 11).
+  combat: {
+    pvJoueur: 20, // les points de vie du héros (à 0 : un cœur en moins et retour au drapeau, avec 20 PV)
+    degatsEpee: 5, // un coup d'épée (touche T) enlève 5 PV au monstre
+    porteeEpee: 40, // l'épée touche jusqu'à 1 bloc devant le héros (px)
+    dureeCoup: 0.2, // durée de l'animation du coup d'épée (s)
+    bouclier: 3, // le bouclier arrête 3 coups, puis il casse
+    potions: 1, // une potion par partie (touche H)
+    soinPotion: 10, // elle rend 10 PV
+  },
+  monstres: {
+    blocs: [100, 200, 300], // vers quels blocs sont les monstres (le dernier garde l'arrivée)
+    pv: 30,
+    degats: 3, // un coup de monstre enlève 3 PV au héros
+    attenteMin: 1, // il frappe toutes les 1 à 2 s (au hasard) quand le héros est à portée
+    attenteMax: 2,
+    premierCoup: 0.8, // quand le héros arrive près de lui, il attend un peu avant le premier coup
+    chanceRiposte: 0.3, // quand on le frappe, 3 chances sur 10 qu'il riposte tout de suite
+    riposte: 0.3, // … au bout de 0,3 s
+    portee: 44, // il touche le héros jusqu'à 44 px devant lui
+    espace: 4, // blocs d'herbe plate gardés devant lui pour se battre
   },
 
   // Les vies (étape 4). Trou ou lave = 1 vie en moins. À 0 vie : « Aïe ! » et tout recommence à zéro.

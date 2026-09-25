@@ -48,8 +48,8 @@
     #journal { list-style: none; margin: 0; padding: 0; height: 330px; overflow-y: auto; font-size: .82rem; }
     #journal li { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
     #journal .temps { display: inline-block; min-width: 58px; color: var(--doux); font-family: ui-monospace, Menlo, Consolas, monospace; }
-    #journal li[data-evenement="brule"], #journal li[data-evenement="vie-perdue"], #journal li[data-evenement="piege"], #journal li[data-evenement="fin-danse"], #journal li[data-evenement="fin-partie"] { color: #ff9b9b; }
-    #journal li[data-evenement="sauvegarde"], #journal li[data-evenement="nouveau-record"], #journal li[data-evenement="classement"], #journal li[data-evenement="arrivee"] { color: var(--accent); }
+    #journal li[data-evenement="brule"], #journal li[data-evenement="monstre-attaque"], #journal li[data-evenement="pv-a-zero"], #journal li[data-evenement="vie-perdue"], #journal li[data-evenement="piege"], #journal li[data-evenement="fin-danse"], #journal li[data-evenement="fin-partie"] { color: #ff9b9b; }
+    #journal li[data-evenement="sauvegarde"], #journal li[data-evenement="nouveau-record"], #journal li[data-evenement="classement"], #journal li[data-evenement="arrivee"], #journal li[data-evenement="monstre-vaincu"] { color: var(--accent); }
     pre { margin: 0; background: #0b1020; border-radius: 8px; padding: 8px; font-size: .78rem; overflow: auto; max-height: 280px; color: #b9f5c9; }
     code { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--accent); }
     .carte-bloc { grid-column: 1 / -1; }
@@ -74,7 +74,7 @@
 <body>
   <div class="page">
     <header class="entete">
-      <h1>🧱 Projet Maxance · Étape 10 : lacs de lave et inventaire</h1>
+      <h1>🧱 Projet Maxance · Étape 11 : épée, monstres, bouclier et potion</h1>
       <span><span id="version" class="version"></span> <a href="../index.html">📓 Ouvrir le carnet de bord</a></span>
     </header>
 
@@ -132,22 +132,23 @@
        Le « ?v=3 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js).
        Pour le navigateur, un nouveau numéro = un nouveau fichier, donc il ne ressert pas un vieux fichier
        gardé en mémoire (le « cache »). Sans ça, il pourrait mélanger l'ancienne et la nouvelle version. -->
-  <script src="config.js?v=10"></script>
-  <script src="moteur/evenements.js?v=10"></script>
-  <script src="moteur/entrees.js?v=10"></script>
-  <script src="moteur/physique.js?v=10"></script>
-  <script src="moteur/hasard.js?v=10"></script>
-  <script src="moteur/camera.js?v=10"></script>
-  <script src="moteur/particules.js?v=10"></script>
-  <script src="logique/terrain.js?v=10"></script>
-  <script src="logique/joueur.js?v=10"></script>
-  <script src="logique/obstacles.js?v=10"></script>
-  <script src="logique/classement.js?v=10"></script>
-  <script src="logique/inventaire.js?v=10"></script>
-  <script src="logique/monde.js?v=10"></script>
-  <script src="donnees/sauvegarde.js?v=10"></script>
-  <script src="affichage/rendu.js?v=10"></script>
-  <script src="affichage/sous-le-capot.js?v=10"></script>
-  <script src="main.js?v=10"></script>
+  <script src="config.js?v=11"></script>
+  <script src="moteur/evenements.js?v=11"></script>
+  <script src="moteur/entrees.js?v=11"></script>
+  <script src="moteur/physique.js?v=11"></script>
+  <script src="moteur/hasard.js?v=11"></script>
+  <script src="moteur/camera.js?v=11"></script>
+  <script src="moteur/particules.js?v=11"></script>
+  <script src="logique/terrain.js?v=11"></script>
+  <script src="logique/joueur.js?v=11"></script>
+  <script src="logique/obstacles.js?v=11"></script>
+  <script src="logique/classement.js?v=11"></script>
+  <script src="logique/inventaire.js?v=11"></script>
+  <script src="logique/combat.js?v=11"></script>
+  <script src="logique/monde.js?v=11"></script>
+  <script src="donnees/sauvegarde.js?v=11"></script>
+  <script src="affichage/rendu.js?v=11"></script>
+  <script src="affichage/sous-le-capot.js?v=11"></script>
+  <script src="main.js?v=11"></script>
 </body>
 </html>

@@ -14,6 +14,8 @@
 //     au dernier drapeau ;
 //   - toucher un muret (bois à pics) → le héros devient un petit squelette qui DANSE 5 s (étape 8),
 //     puis réapparaît au dernier drapeau. Les caisses et les tours sont sans danger ;
+//   - un monstre tous les 100 blocs (étape 11) : le héros a 20 PV ; à 0 PV, il perd un cœur et
+//     repart au dernier drapeau avec 20 PV (règles de logique/combat.js) ;
 //   - plus de vie → « Aïe ! », la partie est finie et tout recommence à zéro ;
 //   - drapeau n° 10 atteint (300 blocs) → c'est l'ARRIVÉE, la partie est gagnée (étape 6) ;
 //   - à la fin de chaque partie, le score entre au classement (logique/classement.js) ;
@@ -53,6 +55,8 @@ Jeu.Monde = (function () {
       danse: null, // pendant que le squelette danse : { reste, colonneRetour } (étape 8)
       flammes: [], // les petites flammes (des particules, voir moteur/particules.js)
       inventaire: Jeu.Inventaire.creer(), // le sac à dos : 10 blocs à poser (étape 10)
+      equipement: Jeu.Combat.creerEquipement(), // PV, bouclier, potion (étape 11)
+      monstres: [], // les monstres du monde (étape 11)
       obstaclesPasses: 0,
       nouveauRecord: false,
       prochainId: 1,
@@ -111,6 +115,11 @@ Jeu.Monde = (function () {
       const infos = Jeu.Terrain.fabriquerTroncon(monde.terrain, arrivee);
       monde.drapeaux.push({ numero: infos.numero, colonne: infos.colonneDrapeau, atteint: infos.numero === 0, arrivee });
       const obstacles = Jeu.Obstacles.placerDansTroncon(monde, infos);
+      if (infos.monstre !== null && infos.monstre !== undefined) {
+        const m = Jeu.Combat.creerMonstre(monde.prochainId++, infos.monstre);
+        monde.monstres.push(m);
+        Jeu.Evenements.emettre("monstre-pose", { id: m.id, bloc: infos.monstre - monde.colonneDepart, pv: m.pv });
+      }
       Jeu.Evenements.emettre("troncon-fabrique", {
         numero: infos.numero,
         debut: infos.debut,
@@ -229,6 +238,8 @@ Jeu.Monde = (function () {
       const veutJouer = Entrees.consommer("sauter") | Entrees.consommer("valider");
       const veutChanger = Entrees.consommer("changerPseudo");
       Entrees.consommer("poserBloc"); // hors d'une partie, la touche P ne fait rien
+      Entrees.consommer("frapper");
+      Entrees.consommer("boirePotion");
       // À l'accueil, c'est le formulaire du pseudo qui lance la partie (voir main.js).
       // À la fin d'une partie : petite pause pour ne pas relancer par accident.
       const pret = monde.phase !== "accueil" && monde.tempsPhase > 0.4;
@@ -240,7 +251,10 @@ Jeu.Monde = (function () {
     }
 
     monde.temps += dt;
-    if (monde.brulure || monde.danse) Jeu.Entrees.consommer("poserBloc"); // pas de bloc pendant qu'on brûle ou qu'on danse
+    if (monde.brulure || monde.danse) {
+      // pas de bloc, pas de coup d'épée, pas de potion pendant qu'on brûle ou qu'on danse
+      for (const action of ["poserBloc", "frapper", "boirePotion"]) Jeu.Entrees.consommer(action);
+    }
     if (monde.brulure) {
       brulerUnPeu(monde, dt);
       suivreAvecLaCamera(monde, dt);
@@ -254,6 +268,14 @@ Jeu.Monde = (function () {
     const j = monde.joueur;
     Jeu.Joueur.mettreAJour(j, dt, monde);
     Jeu.Inventaire.mettreAJour(monde); // P pendant un saut : un bloc sous les pieds
+    // Le combat (épée, potion, monstres). PV à 0 : un cœur en moins et retour au drapeau.
+    if (Jeu.Combat.mettreAJour(monde, dt) === "plus-de-pv") {
+      const drapeau = monde.drapeaux[monde.dernierDrapeau];
+      Jeu.Evenements.emettre("pv-a-zero", { drapeau: drapeau.numero });
+      if (!perdreUneVie(monde, "monstre")) return;
+      Jeu.Joueur.reapparaitre(j, drapeau.colonne);
+      monde.equipement.pv = C.combat.pvJoueur;
+    }
     const ici = Jeu.Joueur.caseDuJoueur(j);
 
     // Dans un trou, les pieds passent sous le niveau de l'herbe : le héros lève les bras (étape 8).

@@ -134,6 +134,7 @@
       <a href="#etape8">Étape 8</a>
       <a href="#etape9">Étape 9</a>
       <a href="#etape10">Étape 10</a>
+      <a href="#etape11">Étape 11</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -500,7 +501,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p class="petit">C'est plus lent, donc on y écrit rarement et seulement l'important.</p>
         </div>
       </div>
-      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 14.</p>
+      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 15.</p>
 
       <h3>🔍 Missions d'exploration</h3>
       <p>Ouvre le jeu, active les rayons X (<kbd>X</kbd>) et mène l'enquête :</p>
@@ -1175,6 +1176,68 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Si le héros saute avec les pieds à y = 350, dans quelle ligne va le bloc ?</summary><p>350 ÷ 40 = 8,75, arrondi au-dessus : ligne 9.</p></details>
     </section>
 
+    <!-- ============ ÉTAPE 11 ============ -->
+    <section id="etape11">
+      <h2>⚔️ Étape 11 : épée, monstres, bouclier et potion <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Ton héros part à l'aventure en armure rigolote, épée à la main. Trois monstres gardent le chemin.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/11-epee-monstres-bouclier-potion.md</code>.</p>
+          <p><strong>Règles :</strong> épée (T) = 5 dégâts, monstres de 30 PV vers les blocs 100, 200 et avant l'arrivée. Ils gardent le passage et frappent (3 PV). Héros : 20 PV. Bouclier : arrête 3 coups. Potion (H) : +10 PV. À 0 PV : un cœur en moins et retour au drapeau.</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Ton héros a une épée, un casque-casserole à plume, un plastron à pois et un bouclier.</li>
+            <li>☐ Impossible de passer un monstre vivant, même en sautant.</li>
+            <li>☐ 6 coups d'épée (<kbd>T</kbd>) le battent.</li>
+            <li>☐ Le bouclier arrête 3 coups, puis casse ; ensuite tu perds 3 PV par coup.</li>
+            <li>☐ <kbd>H</kbd> : +10 PV, une seule fois.</li>
+            <li>☐ À 0 PV : un cœur en moins, retour au drapeau avec 20 PV.</li>
+            <li>Vérifie « version 11 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>⏱️ Pas du tour par tour : des minuteurs</h3>
+      <p>Dans un jeu au tour par tour, chacun attend son tour. Ici, tout se passe <strong>en même temps</strong>, 120 fois par seconde. Comment le monstre sait-il quand frapper ? Il a un <strong>minuteur</strong>.</p>
+      <div class="carte">
+        <ol>
+          <li>Tant que tu es loin, son minuteur est éteint.</li>
+          <li>Quand tu arrives à moins d'un bloc, il démarre à 0,8 s, et à chaque pas de 1/120 s, il descend.</li>
+          <li>À 0 : le monstre frappe (3 PV, ou un coup arrêté par le bouclier). Le minuteur repart, entre 1 et 2 s, <strong>au hasard</strong> : tu ne peux pas deviner exactement quand viendra le prochain coup.</li>
+          <li>Quand tu le frappes, 3 fois sur 10 il se fâche : son minuteur tombe à 0,3 s. C'est la <strong>riposte</strong>.</li>
+        </ol>
+        <p class="petit">Avec les rayons X, tu vois le minuteur au-dessus du monstre : « coup dans 0,61 s ». À toi de frapper vite !</p>
+      </div>
+
+      <h3>❤️ Les PV et les cœurs</h3>
+      <div class="comparaison">
+        <div class="carte"><h4>PV (points de vie)</h4><p>20 au départ. Les monstres en enlèvent 3 par coup, la potion en rend 10. À 0 PV, tu perds… un cœur.</p></div>
+        <div class="carte"><h4>Cœurs (vies)</h4><p>5 au départ. Tu en perds un avec les trous, la lave, les murets à pics, ou quand tes PV tombent à 0. Plus de cœur : « Aïe ! ».</p></div>
+      </div>
+      <p class="petit">Dans beaucoup de jeux, c'est comme ça : les PV sont la santé « de tous les jours », les cœurs (ou vies) sont les « essais ».</p>
+
+      <h3>🧩 Qui fait quoi dans le code</h3>
+      <p>Tout le combat est dans un nouveau fichier, <code>logique/combat.js</code> (« l'arbitre du combat »). Il ne dessine rien : il décide qui perd des PV. Le peintre dessine ensuite l'armure, l'épée, le monstre et sa barre de PV. Comme toujours, chaque action est annoncée à la radio : « coup d'épée », « riposte », « bouclier arrête le coup », « monstre vaincu »… Regarde le journal !</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Approche un monstre avec les rayons X et regarde son minuteur descendre.</li>
+        <li>Frappe dans le vide, loin du monstre : que dit le journal ?</li>
+        <li>Compte combien de fois le monstre riposte pendant un combat.</li>
+        <li>Surveille « bouclier (coups restants) » dans l'état en direct pendant un combat.</li>
+        <li>Bois la potion avec tous tes PV : que se passe-t-il ?</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de coups d'épée pour battre un monstre ?</summary><p>30 ÷ 5 = 6 coups.</p></details>
+      <details class="question"><summary>Tu as 20 PV et plus de bouclier. Combien de coups de monstre peux-tu encaisser avant de perdre un cœur ?</summary><p>20 ÷ 3 = 6,67 : au 7ᵉ coup, tes PV tombent à 0 (20 − 7 × 3 = −1, arrondi à 0).</p></details>
+      <details class="question"><summary>Pourquoi le monstre attend-il un temps au hasard entre ses coups ?</summary><p>Pour que tu ne puisses pas deviner le moment exact : c'est plus vivant, et ça ressemble plus à un vrai combat.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -1241,44 +1304,50 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>3 lacs de lave infranchissables, une plateforme haute au-dessus, et 10 blocs de brique à poser en sautant (touche P).</p>
           <p class="apprend"><b>Tu apprends :</b> modifier la grille pendant le jeu, choisir une case avec un arrondi, concevoir un niveau qu'on ne peut pas « tricher ». <b>Durée :</b> 1 à 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">11</div>
+          <h4>Épée, monstres, bouclier et potion <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>3 monstres de 30 PV gardent le chemin ; épée (T), bouclier (3 coups), potion (H), 20 PV, armure rigolote.</p>
+          <p class="apprend"><b>Tu apprends :</b> combat en temps réel avec des minuteurs, hasard dans un combat, PV et vies, un « arbitre » séparé du dessin. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">12</div>
           <h4>Casser et poser des blocs <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Clic gauche pour casser, clic droit pour poser, à portée de bras.</p>
           <p class="apprend"><b>Tu apprends :</b> transformer un clic en case de la grille, « la donnée d'abord, le dessin suit », événements de la souris. <b>Durée :</b> 1 à 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">12</div>
+          <div class="num">13</div>
           <h4>Inventaire et catalogue des blocs</h4>
           <p>Chaque bloc cassé va dans l'inventaire (piles de 64), avec une barre en bas de l'écran.</p>
           <p class="apprend"><b>Tu apprends :</b> identifiants (déjà 0 à 6 depuis l'étape 3), catalogue de propriétés (dureté, en plus de solide ou liquide), structures de données. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">13</div>
+          <div class="num">14</div>
           <h4>Collines, grottes et minerais</h4>
           <p>Le monde est déjà sans fin depuis l'étape 2. Ici, il devient plus riche : du relief, des grottes, des minerais cachés sous terre.</p>
           <p class="apprend"><b>Tu apprends :</b> génération procédurale, bruit de Perlin, décharger les tronçons trop loin pour libérer la mémoire. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">14</div>
+          <div class="num">15</div>
           <h4>Sauvegarder le monde</h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">15</div>
+          <div class="num">16</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">16</div>
+          <div class="num">17</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">17</div>
+          <div class="num">18</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -1387,6 +1456,16 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-10" data-cle="appris-10" placeholder="Ex. : J'ai appris que poser un bloc, c'est écrire 8 dans une case de la grille…"></textarea>
         <label for="idees-10"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-10" data-cle="idees-10" placeholder="Ex. : Une épée, des monstres, un bouclier et une potion…"></textarea>
+      </div>
+
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 11 · épée, monstres, bouclier et potion <span class="petit">· 25 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> un arbitre de combat (<code>logique/combat.js</code>), 3 monstres de 30 PV qui gardent le passage et frappent avec un minuteur au hasard, l'épée (T), le bouclier (3 coups), la potion (H), 20 PV, et l'armure rigolote (casque-casserole, plume, plastron à pois).</p>
+        <p class="petit">✍️ Réponses de Maxance : 1A, 2B, 3B, 4B, 5A, 6A, 7A, 8A. Conséquence : le 6ᵉ muret laisse sa place au dernier monstre.</p>
+        <label for="appris-11"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-11" data-cle="appris-11" placeholder="Ex. : J'ai appris que le monstre a un minuteur qui…"></textarea>
+        <label for="idees-11"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-11" data-cle="idees-11" placeholder="Ex. : Un boss à la fin, avec beaucoup plus de PV…"></textarea>
       </div>
     </section>
   </main>
