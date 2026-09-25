@@ -128,6 +128,7 @@
       <a href="#etape2">Étape 2</a>
       <a href="#etape3">Étape 3</a>
       <a href="#etape4">Étape 4</a>
+      <a href="#etape5">Étape 5</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -494,7 +495,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p class="petit">C'est plus lent, donc on y écrit rarement et seulement l'important.</p>
         </div>
       </div>
-      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 8.</p>
+      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 9.</p>
 
       <h3>🔍 Missions d'exploration</h3>
       <p>Ouvre le jeu, active les rayons X (<kbd>X</kbd>) et mène l'enquête :</p>
@@ -703,7 +704,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <div class="carte">
           <h4>✅ Ce que tu peux vérifier</h4>
           <ul>
-            <li>☐ Atterris sur une caisse, un muret ou une tour : tu ne meurs pas, tu peux marcher dessus.</li>
+            <li>☐ Atterris sur une caisse, un muret ou une tour : tu ne meurs pas, tu peux marcher dessus. <em>(Changé à l'étape 5 : seule la tour est sans danger.)</em></li>
             <li>☐ Fonce dans une caisse sans sauter : elle te bloque comme un mur (« contre un mur ? oui » dans l'état en direct).</li>
             <li>☐ Tombe dans la lave 🟧 : « Aïe ! » et tout recommence à zéro. <em>(Changé à l'étape 4 : la lave coûte une vie.)</em></li>
             <li>Bonus : marche au bord de la lave, juste un peu au-dessus : tant que tes pieds sont sur l'herbe, tu ne brûles pas.</li>
@@ -839,6 +840,60 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Pourquoi réapparaître <em>devant</em> le trou, et pas dedans ?</summary><p>Dedans, tu retomberais tout de suite ! Le jeu recule jusqu'à une case d'herbe où tu tiens debout, pour que tu puisses reprendre ton élan et ressauter.</p></details>
     </section>
 
+    <!-- ============ ÉTAPE 5 ============ -->
+    <section id="etape5">
+      <h2>📦 Étape 5 : attention au bois ! <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les caisses et les murets en bois sont redevenus des pièges. Seules les tours en pierre restent sans danger.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/05-attention-au-bois.md</code>.</p>
+          <p><strong>Règles :</strong> toucher une caisse ou un muret en bois (dessus ou par le côté) = 1 vie en moins et retour au dernier drapeau. Les tours en pierre sont sans danger : on monte dessus.</p>
+          <p class="petit">💡 Remarque de directeur : à l'étape 3, Maxance avait voulu que tous les blocs soient solides. En jouant, il a changé d'avis pour rendre le jeu plus difficile. C'est normal : on teste, puis on ajuste !</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Atterris sur une caisse ou un muret : un cœur en moins, retour au dernier drapeau.</li>
+            <li>☐ Fonce dans une caisse par le côté : pareil.</li>
+            <li>☐ Monte sur une tour en pierre : aucun danger, tu peux marcher dessus.</li>
+            <li>Avec les rayons X : cadre <strong>rouge</strong> « piège : ne pas toucher ! » pour le bois, cadre <strong>blanc</strong> pour la pierre.</li>
+            <li>Vérifie que la page affiche « version 5 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🧪 Changer tous les blocs en bois d'un coup</h3>
+      <p>Tu te souviens de la <strong>fiche de propriétés</strong> de l'étape 3 ? Pour faire ta demande, il a suffi de changer deux cases dans les listes de <code>logique/terrain.js</code>, pour le numéro <code>4</code> (le bois) :</p>
+      <div class="carte tableau-defile">
+        <table class="fichiers">
+          <thead><tr><th>Numéro</th><th>Nom</th><th>Solide ?</th><th>Mortel ?</th></tr></thead>
+          <tbody>
+            <tr><td><code>1</code> <code>2</code> <code>3</code></td><td>herbe, terre, planche</td><td>oui</td><td>non</td></tr>
+            <tr><td><code>4</code></td><td>bois (caisse, muret)</td><td><strong>non</strong> <span class="petit">(avant : oui)</span></td><td><strong>oui</strong> <span class="petit">(nouveau)</span></td></tr>
+            <tr><td><code>5</code></td><td>pierre (tour)</td><td>oui</td><td>non</td></tr>
+            <tr><td><code>6</code></td><td>lave</td><td>non</td><td>oui</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>La nouvelle liste <code>MORTELS</code> dit quels blocs coûtent une vie. La règle, dans <code>logique/monde.js</code>, ne parle plus de « lave » : elle dit « si le héros touche un obstacle <em>mortel</em>, il perd une vie et retourne au drapeau ». Toutes les caisses et tous les murets du monde, même ceux qui ne sont pas encore fabriqués, obéissent donc à la nouvelle règle.</p>
+      <p class="petit">C'est l'avantage de décrire les blocs par des <strong>données</strong> (des listes de oui/non) plutôt que par du code : pour changer le jeu, on change une valeur.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Touche une caisse. Que dit le journal ? Et « pièges en bois touchés » dans l'état en direct ?</li>
+        <li>Avec les rayons X, compte les cadres rouges et les cadres blancs sur l'écran.</li>
+        <li>Pousse contre une tour. Le journal dit « Bloqué par un mur de pierre » : pourquoi pas pour le bois ?</li>
+        <li>Perds ta dernière vie sur une caisse : que dit l'écran « Aïe ! » ?</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de valeurs a-t-il fallu changer pour que le bois devienne mortel ?</summary><p>Deux : « solide » passe de oui à non, et « mortel » (nouvelle liste) vaut oui pour le numéro 4.</p></details>
+      <details class="question"><summary>Pourquoi le bois n'est-il plus solide ?</summary><p>Parce que de toute façon, le toucher fait perdre une vie. S'il restait solide, on pourrait « se poser » dessus une fraction de seconde avant la règle mortelle : c'est plus simple et plus clair qu'il soit juste mortel.</p></details>
+      <details class="question"><summary>Que faudrait-il changer pour que la pierre devienne mortelle elle aussi ?</summary><p>Mettre <code>true</code> pour le numéro 5 dans la liste <code>MORTELS</code>. (Et sûrement <code>false</code> dans <code>SOLIDES</code>.)</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -869,44 +924,50 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>5 cœurs. Trou → retour devant le trou, lave → retour au drapeau, plus de vie → retour à zéro. Une fosse de lave tous les 30 blocs.</p>
           <p class="apprend"><b>Tu apprends :</b> compteur en mémoire vive, décisions « si… alors… sinon », chercher une case en parcourant la grille, cache du navigateur et numéros de version. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">5</div>
+          <h4>Attention au bois ! <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Caisses et murets en bois : mortels (1 vie, retour au drapeau). Seules les tours en pierre sont sans danger.</p>
+          <p class="apprend"><b>Tu apprends :</b> décrire les blocs par des propriétés (solide, mortel), changer le jeu en changeant une donnée, ajuster une règle après l'avoir testée. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">6</div>
           <h4>Casser et poser des blocs <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Clic gauche pour casser, clic droit pour poser, à portée de bras.</p>
           <p class="apprend"><b>Tu apprends :</b> transformer un clic en case de la grille, « la donnée d'abord, le dessin suit », événements de la souris. <b>Durée :</b> 1 à 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">6</div>
+          <div class="num">7</div>
           <h4>Inventaire et catalogue des blocs</h4>
           <p>Chaque bloc cassé va dans l'inventaire (piles de 64), avec une barre en bas de l'écran.</p>
           <p class="apprend"><b>Tu apprends :</b> identifiants (déjà 0 à 6 depuis l'étape 3), catalogue de propriétés (dureté, en plus de solide ou liquide), structures de données. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">7</div>
+          <div class="num">8</div>
           <h4>Collines, grottes et minerais</h4>
           <p>Le monde est déjà sans fin depuis l'étape 2. Ici, il devient plus riche : du relief, des grottes, des minerais cachés sous terre.</p>
           <p class="apprend"><b>Tu apprends :</b> génération procédurale, bruit de Perlin, décharger les tronçons trop loin pour libérer la mémoire. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">8</div>
+          <div class="num">9</div>
           <h4>Sauvegarder le monde</h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">9</div>
+          <div class="num">10</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">10</div>
+          <div class="num">11</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">11</div>
+          <div class="num">12</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -956,6 +1017,16 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-4" data-cle="appris-4" placeholder="Ex. : J'ai appris que les vies sont juste un nombre qui baisse de 1, et que…"></textarea>
         <label for="idees-4"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-4" data-cle="idees-4" placeholder="Ex. : Un cœur à ramasser pour regagner une vie…"></textarea>
+      </div>
+
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 5 · attention au bois ! <span class="petit">· 25 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les caisses et murets en bois sont mortels (dessus ou par le côté : 1 vie en moins et retour au dernier drapeau) ; les tours en pierre restent solides et sans danger. Nouvelle propriété « mortel » dans la fiche des blocs, nouvel événement « piège » dans le journal, cadres rouges ou blancs dans les rayons X.</p>
+        <p class="petit">✍️ Réponses de Maxance : 1A (ça coûte une vie), 2A (par le côté aussi).</p>
+        <label for="appris-5"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-5" data-cle="appris-5" placeholder="Ex. : J'ai appris qu'on peut changer tous les blocs en bois en changeant une seule valeur…"></textarea>
+        <label for="idees-5"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-5" data-cle="idees-5" placeholder="Ex. : Mon pseudo et un classement des meilleurs scores…"></textarea>
       </div>
     </section>
   </main>

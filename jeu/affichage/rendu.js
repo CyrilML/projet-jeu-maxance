@@ -196,7 +196,7 @@ Jeu.Rendu = (function () {
     texte("Blocs " + monde.score, 20, 38, 26);
     texte("Record " + Jeu.Sauvegarde.donnees.record, 20, 66, 18, "#ffe27a");
     for (let v = 0; v < C.vies; v++) coeur(20 + v * 30, 80, v < monde.vies);
-    texte("🚩 " + monde.dernierDrapeau + "   Chutes " + monde.chutes + "   Lave " + monde.brulures, 20, 124, 16, "#fff");
+    texte("🚩 " + monde.dernierDrapeau + "   Chutes " + monde.chutes + "   Lave " + monde.brulures + "   Pièges " + monde.piegesTouches, 20, 124, 16, "#fff");
     texte("X : rayons X   P : pause", L - 20, 32, 15, "#fff", "right");
     if (options.ralenti) texte("🐢 RALENTI (×0,25)", L / 2, 32, 18, "#ffe27a", "center");
   }
@@ -209,19 +209,21 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 150, 56, "#ffe27a", "center");
-    texte("Étape 4 : 5 vies et fosses de lave", L / 2, 195, 24, "#fff", "center");
+    texte("Étape 5 : attention au bois !", L / 2, 195, 24, "#fff", "center");
     texte("Espace pour jouer", L / 2, 270, 30, "#fff", "center");
     texte("version " + C.version, L - 12, H - 12, 14, "#cfe0ff", "right");
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 320, 18, "#cfe0ff", "center");
     texte("Va le plus loin possible vers la droite !", L / 2, 348, 18, "#cfe0ff", "center");
-    texte("❤️ 5 vies · 🕳️ Trou : tu repars devant le trou · 🔥 Lave : tu repars au drapeau 🚩", L / 2, 376, 18, "#cfe0ff", "center");
-    texte("🧱 Caisses, murets, tours : solides, monte dessus !", L / 2, 404, 18, "#cfe0ff", "center");
+    texte("❤️ 5 vies · 🕳️ Trou : tu repars devant le trou", L / 2, 376, 18, "#cfe0ff", "center");
+    texte("🔥 Lave, 📦 caisses et murets en bois : tu repars au drapeau 🚩", L / 2, 404, 18, "#cfe0ff", "center");
+    texte("🗼 Seules les tours en pierre sont sans danger : monte dessus !", L / 2, 432, 18, "#cfe0ff", "center");
   }
 
   function ecranPerdu(monde) {
     voile();
     texte("Aïe ! Plus de vies", L / 2, 150, 56, "#ff7b7b", "center");
-    const derniere = "Ta dernière vie est tombée " + (monde.cause === "lave" ? "dans la lave 🔥" : "dans un trou 🕳️");
+    const ou = { lave: "dans la lave 🔥", trou: "dans un trou 🕳️", caisse: "sur une caisse 📦", muret: "sur un muret 🧱" };
+    const derniere = "Ta dernière vie est tombée " + (ou[monde.cause] || "");
     texte(derniere, L / 2, 190, 22, "#ffd0d0", "center");
     texte(monde.score + " blocs   ·   " + monde.temps.toFixed(1) + " s   ·   " + monde.chutes + " chute" + (monde.chutes > 1 ? "s" : ""), L / 2, 225, 28, "#fff", "center");
     if (monde.nouveauRecord) texte("🏆 Nouveau record !", L / 2, 270, 28, "#ffe27a", "center");
@@ -318,16 +320,17 @@ Jeu.Rendu = (function () {
       if (d.numero === monde.dernierDrapeau) note("↻ point de retour", x, C.solY - 134, couleur);
     }
 
-    // 6. Les obstacles : solide (blanc, on peut marcher dessus) ou liquide (rouge, danger !)
+    // 6. Les obstacles : sans danger (blanc, on peut marcher dessus) ou mortel (rouge, danger !)
     for (const o of monde.obstacles) {
       const x = o.x - camX;
       if (x + o.l < 0 || x > L) continue;
-      ctx.strokeStyle = o.solide ? "#ffffff" : "#ff4d4d";
+      ctx.strokeStyle = o.mortel ? "#ff4d4d" : "#ffffff";
       ctx.lineWidth = 2;
       ctx.strokeRect(x, o.y, o.l, o.h);
-      const haut = o.solide ? o.y : o.y - 30;
+      const haut = o.y < C.solY ? o.y : o.y - 30;
       note("#" + o.id + " " + o.type + " · colonne " + o.colonne, x, haut - 20, "#fff");
-      note(o.solide ? "solide : on marche dessus" : "liquide : on brûle !", x, haut - 5, o.solide ? "#7bff9e" : "#ff9b9b");
+      const danger = !o.mortel ? "solide : on marche dessus" : o.solide ? "" : o.type === "lave" || o.type === "fosse" ? "liquide : on brûle !" : "piège : ne pas toucher !";
+      note(danger, x, haut - 5, o.mortel ? "#ff9b9b" : "#7bff9e");
     }
 
     // 7. La caméra : l'endroit où elle essaie de garder le héros

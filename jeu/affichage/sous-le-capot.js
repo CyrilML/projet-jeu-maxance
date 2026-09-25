@@ -23,6 +23,9 @@ Jeu.SousLeCapot = (function () {
     chute: (d) => "🕳️ Chute dans le trou (bord gauche : colonne " + d.bordDuTrou + ") → retour juste devant, colonne " + d.retour,
     esquive: (d) => "✅ Obstacle #" + d.id + " « " + d.type + " » dépassé (" + d.total + " dans cette partie)",
     mur: (d) => "🧱 Bloqué par un mur de « " + d.matiere + " » (colonne " + d.colonne + ") : c'est solide, saute dessus !",
+    piege: (d) =>
+      "📦 Touché " + (d.type === "caisse" ? "une caisse" : "un muret") + " en bois #" + d.id + " (colonne " + d.colonne +
+      ") : le bois est mortel → retour au drapeau n° " + d.drapeau,
     brule: (d) =>
       "🔥 Tombé dans la " + (d.type === "fosse" ? "fosse" : "mare") + " de lave #" + d.id + " (colonne " + d.colonne +
       ") : c'est liquide, on passe à travers → retour au drapeau n° " + d.drapeau,
@@ -98,6 +101,7 @@ Jeu.SousLeCapot = (function () {
       ["vies", "❤️".repeat(monde.vies) + " " + monde.vies + " / " + Jeu.CONFIG.vies],
       ["chutes dans un trou", monde.chutes],
       ["brûlures dans la lave", monde.brulures],
+      ["pièges en bois touchés", monde.piegesTouches],
       ["Carte en mémoire", ""],
       ["graine du monde", monde.graine],
       ["tronçons fabriqués", monde.terrain.troncons],

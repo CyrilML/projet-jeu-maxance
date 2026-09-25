@@ -1,15 +1,15 @@
-// 🧱 LES OBSTACLES : des blocs solides et des mares de lave
+// 🧱 LES OBSTACLES : des pièges et des tours
 //
-// Depuis l'étape 3, un obstacle est soit SOLIDE, soit LIQUIDE :
-//   - caisse, muret (bois) et tour (pierre) sont SOLIDES : on peut atterrir dessus,
-//     et quand on les touche par le côté, c'est un mur qui bloque (sans faire mal) ;
-//   - la lave est LIQUIDE : on passe à travers… et on brûle : une vie en moins (étape 4).
-//     Il y a les petites mares (1 ou 2 blocs, au hasard) et une grande fosse tous les 30 blocs.
+// Chaque obstacle est soit SANS DANGER, soit MORTEL (règles de l'étape 5) :
+//   - la tour (pierre) est SOLIDE et sans danger : on peut monter dessus, et par le côté c'est un mur ;
+//   - la caisse et le muret (bois) sont MORTELS : les toucher, même par le côté, coûte une vie
+//     et renvoie au dernier drapeau. Il faut les sauter entièrement !
+//   - la lave est LIQUIDE et MORTELLE : on passe à travers… et on brûle. Il y a les petites mares
+//     (1 ou 2 blocs, au hasard) et une grande fosse tous les 30 blocs.
 //
 // Les obstacles sont écrits DANS LA GRILLE du terrain (numéros 4, 5 et 6), comme le sol.
-// Grâce à ça, la physique les traite exactement comme le sol : il n'y a rien de spécial à coder
-// pour pouvoir marcher dessus. La liste monde.obstacles garde en plus leur nom et leur numéro,
-// pour le journal et les rayons X.
+// Leurs propriétés (solide, mortel) viennent des listes de logique/terrain.js. La liste
+// monde.obstacles garde en plus leur nom et leur numéro, pour le journal et les rayons X.
 
 window.Jeu = window.Jeu || {};
 
@@ -46,7 +46,7 @@ Jeu.Obstacles = (function () {
     }
     for (let c = colonne - 1; c <= colonne + largeur; c++) {
       for (let l = 0; l < CARTE.ligneSol; l++) {
-        if (Jeu.Terrain.estSolide(terrain, c, l)) return false; // une plateforme ou un autre obstacle
+        if (Jeu.Terrain.lireCase(terrain, c, l) !== CASES.air) return false; // une plateforme ou un autre obstacle
       }
     }
     return true;
@@ -71,6 +71,7 @@ Jeu.Obstacles = (function () {
       id: monde.prochainId++,
       type: nom,
       solide: Jeu.Terrain.SOLIDES[type.case],
+      mortel: Jeu.Terrain.MORTELS[type.case],
       colonne,
       largeur,
       // Le rectangle occupé, en pixels (la lave est DANS le sol, les autres au-dessus).
@@ -119,10 +120,10 @@ Jeu.Obstacles = (function () {
     }
   }
 
-  // La mare de lave touchée par la zone du héros, s'il y en a une.
-  function laveTouchee(monde, zone) {
-    return monde.obstacles.find((o) => !o.solide && Jeu.Physique.seChevauchent(zone, o));
+  // L'obstacle mortel (caisse, muret, lave) touché par la zone du héros, s'il y en a un.
+  function obstacleMortelTouche(monde, zone) {
+    return monde.obstacles.find((o) => o.mortel && Jeu.Physique.seChevauchent(zone, o));
   }
 
-  return { TYPES, placerDansTroncon, mettreAJour, laveTouchee };
+  return { TYPES, placerDansTroncon, mettreAJour, obstacleMortelTouche };
 })();

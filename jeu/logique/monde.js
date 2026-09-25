@@ -10,9 +10,10 @@
 // Les règles :
 //   - on a 5 VIES. Un trou ou de la lave = 1 vie en moins (étape 4) ;
 //   - tomber dans un trou → on réapparaît juste DEVANT ce trou, pour pouvoir le ressauter ;
-//   - tomber dans la lave → on réapparaît au dernier drapeau atteint ;
+//   - tomber dans la lave, ou toucher une caisse ou un muret en bois → on réapparaît au dernier
+//     drapeau atteint (étape 5 : seules les tours en pierre ne font pas mourir) ;
 //   - plus de vie → « Aïe ! », la partie est finie et tout recommence à zéro ;
-//   - caisses, murets, tours → SOLIDES : on marche dessus, et par le côté c'est un mur (étape 3) ;
+//   - tours en pierre → SOLIDES : on marche dessus, et par le côté c'est un mur ;
 //   - le score = le nombre de blocs parcourus vers la droite (la colonne la plus loin atteinte).
 
 window.Jeu = window.Jeu || {};
@@ -40,6 +41,7 @@ Jeu.Monde = (function () {
       vies: C.vies,
       chutes: 0,
       brulures: 0,
+      piegesTouches: 0,
       obstaclesPasses: 0,
       nouveauRecord: false,
       prochainId: 1,
@@ -102,8 +104,8 @@ Jeu.Monde = (function () {
     const sol = C.carte.ligneSol;
     return (
       Jeu.Terrain.lireCase(T, colonne, sol) === Jeu.Terrain.CASES.herbe &&
-      !Jeu.Terrain.estSolide(T, colonne, sol - 1) &&
-      !Jeu.Terrain.estSolide(T, colonne, sol - 2)
+      Jeu.Terrain.lireCase(T, colonne, sol - 1) === Jeu.Terrain.CASES.air &&
+      Jeu.Terrain.lireCase(T, colonne, sol - 2) === Jeu.Terrain.CASES.air
     );
   }
 
@@ -120,12 +122,20 @@ Jeu.Monde = (function () {
     if (perdreUneVie(monde, "trou")) Jeu.Joueur.reapparaitre(monde.joueur, retour);
   }
 
-  // Le héros est tombé dans la lave : 1 vie en moins, et retour au dernier drapeau.
-  function bruler(monde, lave) {
-    monde.brulures += 1;
+  // Le héros a touché un obstacle mortel : 1 vie en moins, et retour au dernier drapeau.
+  //   lave → événement « brule » ;  caisse ou muret → événement « piege ».
+  function toucherObstacleMortel(monde, o) {
     const drapeau = monde.drapeaux[monde.dernierDrapeau];
-    Jeu.Evenements.emettre("brule", { id: lave.id, type: lave.type, colonne: lave.colonne, drapeau: drapeau.numero });
-    if (perdreUneVie(monde, "lave")) Jeu.Joueur.reapparaitre(monde.joueur, drapeau.colonne);
+    const infos = { id: o.id, type: o.type, colonne: o.colonne, drapeau: drapeau.numero };
+    const estDeLaLave = o.type === "lave" || o.type === "fosse";
+    if (estDeLaLave) {
+      monde.brulures += 1;
+      Jeu.Evenements.emettre("brule", infos);
+    } else {
+      monde.piegesTouches += 1;
+      Jeu.Evenements.emettre("piege", infos);
+    }
+    if (perdreUneVie(monde, estDeLaLave ? "lave" : o.type)) Jeu.Joueur.reapparaitre(monde.joueur, drapeau.colonne);
   }
 
   function mettreAJour(monde, dt) {
@@ -168,11 +178,11 @@ Jeu.Monde = (function () {
     if (blocs > monde.score) monde.score = blocs;
 
     Jeu.Obstacles.mettreAJour(monde);
-    // Les obstacles solides n'ont plus besoin de règle ici : la physique s'en occupe, comme pour le sol.
-    // Seule la lave (liquide) est dangereuse.
-    const lave = Jeu.Obstacles.laveTouchee(monde, Jeu.Joueur.hitbox(j));
-    if (lave) {
-      bruler(monde, lave);
+    // La tour (solide) n'a pas besoin de règle ici : la physique s'en occupe, comme pour le sol.
+    // Les obstacles mortels (lave, caisse, muret) coûtent une vie.
+    const piege = Jeu.Obstacles.obstacleMortelTouche(monde, Jeu.Joueur.hitbox(j));
+    if (piege) {
+      toucherObstacleMortel(monde, piege);
       if (monde.phase !== "jeu") return;
     }
 

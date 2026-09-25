@@ -7,7 +7,10 @@
 //
 // Chaque sorte de case a des PROPRIÉTÉS, rangées dans des listes :
 //   - SOLIDE : on peut marcher dessus, et par le côté c'est un mur ;
-//   - LIQUIDE : on passe à travers (pour la lave, c'est mortel : règle dans logique/monde.js).
+//   - LIQUIDE : on passe à travers, comme dans de l'eau ;
+//   - MORTEL : le toucher coûte une vie (la règle est dans logique/monde.js).
+// Depuis l'étape 5, le bois (caisses, murets) n'est plus solide mais mortel : seule la pierre des
+// tours reste un bloc sur lequel on peut monter.
 //
 // On range la grille colonne par colonne, comme des tiroirs posés côte à côte :
 //     terrain.colonnes[57]      → la colonne n° 57 : une liste de 14 numéros (ligne 0 en haut)
@@ -27,8 +30,9 @@ Jeu.Terrain = (function () {
   const CASES = { air: 0, herbe: 1, terre: 2, planche: 3, bois: 4, pierre: 5, lave: 6 };
   const NOMS = ["air", "herbe", "terre", "planche", "bois", "pierre", "lave"];
   //              air    herbe terre planche bois  pierre lave
-  const SOLIDES = [false, true, true, true, true, true, false]; // peut-on marcher dessus / se cogner dedans ?
+  const SOLIDES = [false, true, true, true, false, true, false]; // peut-on marcher dessus / se cogner dedans ?
   const LIQUIDES = [false, false, false, false, false, false, true]; // passe-t-on à travers comme dans de l'eau ?
+  const MORTELS = [false, false, false, false, true, false, true]; // le toucher coûte-t-il une vie ?
 
   function creer(graine) {
     return { graine, colonnes: [], troncons: 0 };
@@ -132,5 +136,5 @@ Jeu.Terrain = (function () {
     return terrain.colonnes.length * CARTE.lignes;
   }
 
-  return { CASES, NOMS, SOLIDES, LIQUIDES, creer, lireCase, ecrireCase, estSolide, estLiquide, fabriquerTroncon, nombreDeCases };
+  return { CASES, NOMS, SOLIDES, LIQUIDES, MORTELS, creer, lireCase, ecrireCase, estSolide, estLiquide, fabriquerTroncon, nombreDeCases };
 })();

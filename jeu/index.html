@@ -33,7 +33,7 @@
     #journal { list-style: none; margin: 0; padding: 0; height: 330px; overflow-y: auto; font-size: .82rem; }
     #journal li { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
     #journal .temps { display: inline-block; min-width: 58px; color: var(--doux); font-family: ui-monospace, Menlo, Consolas, monospace; }
-    #journal li[data-evenement="brule"], #journal li[data-evenement="vie-perdue"], #journal li[data-evenement="fin-partie"] { color: #ff9b9b; }
+    #journal li[data-evenement="brule"], #journal li[data-evenement="vie-perdue"], #journal li[data-evenement="piege"], #journal li[data-evenement="fin-partie"] { color: #ff9b9b; }
     #journal li[data-evenement="sauvegarde"], #journal li[data-evenement="nouveau-record"] { color: var(--accent); }
     pre { margin: 0; background: #0b1020; border-radius: 8px; padding: 8px; font-size: .78rem; overflow: auto; max-height: 280px; color: #b9f5c9; }
     code { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--accent); }
@@ -57,7 +57,7 @@
 <body>
   <div class="page">
     <header class="entete">
-      <h1>🧱 Projet Maxance · Étape 4 : 5 vies et fosses de lave</h1>
+      <h1>🧱 Projet Maxance · Étape 5 : attention au bois !</h1>
       <span><span id="version" class="version"></span> <a href="../index.html">📓 Ouvrir le carnet de bord</a></span>
     </header>
 
@@ -90,7 +90,7 @@
         <h2>🗺️ La carte en mémoire</h2>
         <p class="aide">Le monde n'est qu'une grille de numéros : <code>terrain.colonnes[colonne][ligne]</code>. Voici les colonnes que tu vois à l'écran. La case encadrée en jaune est celle du héros. Depuis l'étape 3, les obstacles sont aussi dans cette grille : 4 = bois, 5 = pierre, 6 = lave.</p>
         <div class="defile"><table class="carte"><tbody id="carte"></tbody></table></div>
-        <div class="legende-carte"><span>0 = air</span><span>1 = herbe</span><span>2 = terre</span><span>3 = planche</span><span>4 = bois (solide)</span><span>5 = pierre (solide)</span><span>6 = lave (liquide)</span><span>en haut : n° de colonne · à gauche : n° de ligne</span></div>
+        <div class="legende-carte"><span>0 = air</span><span>1 = herbe</span><span>2 = terre</span><span>3 = planche</span><span>4 = bois (mortel)</span><span>5 = pierre (solide)</span><span>6 = lave (liquide, mortelle)</span><span>en haut : n° de colonne · à gauche : n° de ligne</span></div>
       </div>
     </section>
   </div>
@@ -99,19 +99,19 @@
        Le « ?v=3 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js).
        Pour le navigateur, un nouveau numéro = un nouveau fichier, donc il ne ressert pas un vieux fichier
        gardé en mémoire (le « cache »). Sans ça, il pourrait mélanger l'ancienne et la nouvelle version. -->
-  <script src="config.js?v=4"></script>
-  <script src="moteur/evenements.js?v=4"></script>
-  <script src="moteur/entrees.js?v=4"></script>
-  <script src="moteur/physique.js?v=4"></script>
-  <script src="moteur/hasard.js?v=4"></script>
-  <script src="moteur/camera.js?v=4"></script>
-  <script src="logique/terrain.js?v=4"></script>
-  <script src="logique/joueur.js?v=4"></script>
-  <script src="logique/obstacles.js?v=4"></script>
-  <script src="logique/monde.js?v=4"></script>
-  <script src="donnees/sauvegarde.js?v=4"></script>
-  <script src="affichage/rendu.js?v=4"></script>
-  <script src="affichage/sous-le-capot.js?v=4"></script>
-  <script src="main.js?v=4"></script>
+  <script src="config.js?v=5"></script>
+  <script src="moteur/evenements.js?v=5"></script>
+  <script src="moteur/entrees.js?v=5"></script>
+  <script src="moteur/physique.js?v=5"></script>
+  <script src="moteur/hasard.js?v=5"></script>
+  <script src="moteur/camera.js?v=5"></script>
+  <script src="logique/terrain.js?v=5"></script>
+  <script src="logique/joueur.js?v=5"></script>
+  <script src="logique/obstacles.js?v=5"></script>
+  <script src="logique/monde.js?v=5"></script>
+  <script src="donnees/sauvegarde.js?v=5"></script>
+  <script src="affichage/rendu.js?v=5"></script>
+  <script src="affichage/sous-le-capot.js?v=5"></script>
+  <script src="main.js?v=5"></script>
 </body>
 </html>
