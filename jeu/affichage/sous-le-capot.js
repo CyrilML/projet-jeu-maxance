@@ -33,6 +33,10 @@ Jeu.SousLeCapot = (function () {
     piege: (d) =>
       "💀 Touché le muret à pics #" + d.id + " (colonne " + d.colonne + ") : le héros devient un squelette qui danse " +
       d.duree + " s, puis retour au drapeau n° " + d.drapeau,
+    "muret-pose": (d) =>
+      d.colonne < 0
+        ? "🧱 Pas de place pour le muret du bloc " + d.cible
+        : "🧱 Muret à pics posé au bloc " + d.bloc + " (rendez-vous du bloc " + d.cible + ", colonne " + d.colonne + ")",
     "fin-danse": (d) => "🕺 Le squelette a fini de danser (" + d.duree + " s)",
     "bras-leves": (d) => "🙌 Il tombe dans le trou de la colonne " + d.colonne + " : il lève les bras !",
     "demi-tour": (d) => "↩️ Demi-tour : le héros regarde maintenant vers la " + d.regard,

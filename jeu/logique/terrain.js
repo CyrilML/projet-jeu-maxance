@@ -73,9 +73,13 @@ Jeu.Terrain = (function () {
     // La place réservée à la fosse de lave (avec sa marge d'herbe) : ni trou ni plateforme ici.
     const F = C.fosses;
     const fosse = { colonne: debut + F.position, largeur: F.largeur };
-    const reserveDebut = fosse.colonne - F.marge;
-    const reserveFin = fosse.colonne + F.largeur - 1 + F.marge;
-    const dansLaReserve = (colonne, largeur) => colonne <= reserveFin && colonne + largeur - 1 >= reserveDebut;
+    // Les places RÉSERVÉES : la fosse, et les murets de ce tronçon (étape 9). Chacune avec sa marge d'herbe.
+    const reserves = [{ debut: fosse.colonne - F.marge, fin: fosse.colonne + F.largeur - 1 + F.marge }];
+    const murets = placesDesMurets(debut, fin, zoneSure, reserves[0]);
+    const marge = C.obstacles.margeTrou;
+    for (const m of murets) reserves.push({ debut: m - marge, fin: m + LARGEUR_MURET - 1 + marge });
+    // La place réservée touchée par ces colonnes, s'il y en a une.
+    const dansLaReserve = (colonne, largeur) => reserves.find((r) => colonne <= r.fin && colonne + largeur - 1 >= r.debut);
 
     // 1. Un sol plein partout : de l'air au-dessus, de l'herbe, puis de la terre en dessous.
     for (let c = debut; c <= fin; c++) {
@@ -99,8 +103,9 @@ Jeu.Terrain = (function () {
     while (true) {
       const largeur = de.entre(T.largeurMin, T.largeurMax);
       if (c + largeur > fin) break; // on garde toujours la dernière colonne du tronçon avec du sol
-      if (dansLaReserve(c, largeur)) {
-        c = reserveFin + 1 + de.entre(1, 3); // pas de trou collé à la fosse : on saute après
+      const reserve = dansLaReserve(c, largeur);
+      if (reserve) {
+        c = reserve.fin + 1 + de.entre(1, 3); // pas de trou collé à une place réservée : on saute après
         continue;
       }
       for (let k = c; k < c + largeur; k++) terrain.colonnes[k].fill(CASES.air);
@@ -136,8 +141,41 @@ Jeu.Terrain = (function () {
       trous,
       plateformes,
       fosse, // la place de la fosse de lave, que obstacles.js remplit
+      murets, // les colonnes réservées aux murets à pics (étape 9), que obstacles.js remplit
       de, // le même dé servira à placer les obstacles
     };
+  }
+
+  // Les murets à pics : un vers le bloc 50, 100, 150… (étape 9). Renvoie les colonnes des murets
+  // qui tombent dans ce tronçon. « Environ » : si la place idéale est dans la zone du drapeau, trop
+  // près de la fosse ou collée à l'arrivée, on décale le muret de quelques blocs (au plus 10).
+  const LARGEUR_MURET = 2;
+  function placesDesMurets(debut, fin, zoneSure, reserveFosse) {
+    const M = C.obstacles.murets;
+    const marge = C.obstacles.margeTrou;
+    const depart = CARTE.colonneDrapeau;
+    const arrivee = C.arrivee.drapeau * CARTE.longueurTroncon + depart;
+    const colonnes = [];
+    for (let bloc = M.premier; bloc <= arrivee - depart; bloc += M.ecart) {
+      const ideale = depart + bloc;
+      // Chaque muret appartient à UN seul tronçon : celui où tombe sa place idéale
+      // (sauf le dernier, qui tomberait sur l'arrivée : il va dans le tronçon d'avant).
+      const proprietaire = Math.min(Math.floor(ideale / CARTE.longueurTroncon), C.arrivee.drapeau - 1);
+      if (proprietaire !== debut / CARTE.longueurTroncon) continue;
+      for (let d = 0; d <= 10; d++) {
+        const trouvee = [ideale - d, ideale + d].find((c) => {
+          const g = c - marge;
+          const dr = c + LARGEUR_MURET - 1 + marge;
+          const loinDeLaFosse = dr < reserveFosse.debut - 2 || g > reserveFosse.fin + 2;
+          return g >= debut + zoneSure && dr <= fin && loinDeLaFosse;
+        });
+        if (trouvee !== undefined) {
+          colonnes.push(trouvee);
+          break;
+        }
+      }
+    }
+    return colonnes;
   }
 
   // Combien de cases sont rangées en mémoire ?

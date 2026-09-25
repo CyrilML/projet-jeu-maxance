@@ -322,12 +322,12 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 8 : demi-tour, bras levés et squelette", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 9 : un muret tous les 50 blocs", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au drapeau n° " + C.arrivee.drapeau + " (" + C.arrivee.drapeau * C.carte.longueurTroncon + " blocs) le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
     texte("❤️ " + C.vies + " vies · 🕳️ Trou : tu repars devant le trou", L / 2, 386, 17, "#cfe0ff", "center");
-    texte("🔥 Lave et 💀 murets à pics rouges : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
+    texte("🔥 Lave et 💀 murets à pics (un tous les 50 blocs) : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
     texte("📦 Caisses et 🗼 tours en pierre : sans danger, monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
     const premier = Jeu.Sauvegarde.donnees.classement[0];
     if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 482, 18, "#ffe27a", "center");

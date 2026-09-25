@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 8,
+  version: 9,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -103,7 +103,13 @@ Jeu.CONFIG = {
     ecartMax: 14,
     margeTrou: 2, // blocs de sol obligatoires avant et après un obstacle (pour prendre son élan et atterrir)
     // À partir de quelle colonne chaque obstacle peut apparaître (caisses et lave : dès le début).
-    debloque: { caisse: 0, lave: 0, tour: 60, muret: 120 },
+    debloque: { caisse: 0, lave: 0, tour: 60 },
+    // Les murets à pics ne sont plus tirés au hasard (étape 9) : il y en a un tous les 50 blocs environ.
+    murets: {
+      premier: 50, // le premier muret est vers le bloc 50
+      ecart: 50, // puis un tous les 50 blocs : 100, 150, 200, 250, 300
+      decalageMax: 5, // « environ » : s'il y a un trou ou de la lave pile à cet endroit, on le décale d'au plus 5 blocs
+    },
     // Largeur d'une mare de lave, en blocs (tirée au hasard entre les deux).
     laveLargeurMin: 1,
     laveLargeurMax: 2,

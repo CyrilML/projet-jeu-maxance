@@ -5,6 +5,7 @@
 //     et par le côté c'est un mur ;
 //   - le muret (bois à pics rouges) est MORTEL : le toucher, même par le côté, coûte une vie
 //     (le héros devient un petit squelette qui danse) et renvoie au dernier drapeau.
+//     Il n'est pas tiré au hasard : il y en a un tous les 50 blocs environ (étape 9).
 //   - la lave est LIQUIDE et MORTELLE : on passe à travers… et on brûle. Il y a les petites mares
 //     (1 ou 2 blocs, au hasard) et une grande fosse tous les 30 blocs.
 //
@@ -33,7 +34,8 @@ Jeu.Obstacles = (function () {
 
   // Les obstacles possibles à cette colonne du monde (plus on va loin, plus il y a de choix).
   function typesPossibles(colonne) {
-    return Object.keys(TYPES).filter((nom) => nom !== "fosse" && colonne >= C.obstacles.debloque[nom]);
+    // La fosse et le muret ont leurs propres places (ils ne sont jamais tirés au hasard).
+    return Object.keys(TYPES).filter((nom) => nom !== "fosse" && nom !== "muret" && colonne >= C.obstacles.debloque[nom]);
   }
 
   // Peut-on poser un obstacle de `largeur` blocs à cette colonne ?
@@ -86,6 +88,21 @@ Jeu.Obstacles = (function () {
     monde.obstacles.push(o);
   }
 
+  // Pose un muret le plus près possible de sa colonne cible : cible, puis cible ± 1, ± 2… jusqu'à ± 5.
+  // Renvoie la colonne choisie, ou -1 s'il n'y avait vraiment pas de place.
+  function poserMuretVers(monde, cible, infos) {
+    const largeur = TYPES.muret.l;
+    for (let decalage = 0; decalage <= C.obstacles.murets.decalageMax; decalage++) {
+      for (const colonne of [cible + decalage, cible - decalage]) {
+        if (placeLibre(monde.terrain, colonne, largeur, infos)) {
+          poser(monde, "muret", colonne, largeur);
+          return colonne;
+        }
+      }
+    }
+    return -1;
+  }
+
   // Pose les obstacles d'un tronçon qui vient d'être fabriqué.
   function placerDansTroncon(monde, infos) {
     const O = C.obstacles;
@@ -94,6 +111,13 @@ Jeu.Obstacles = (function () {
     // D'abord la grande fosse de lave, à sa place réservée.
     poser(monde, "fosse", infos.fosse.colonne, infos.fosse.largeur);
     let poses = 1;
+    // Ensuite les murets, à leurs rendez-vous (tous les 50 blocs environ).
+    for (const cible of infos.murets) {
+      const colonne = poserMuretVers(monde, cible, infos);
+      Jeu.Evenements.emettre("muret-pose", { cible: cible - C.carte.colonneDrapeau, bloc: colonne - C.carte.colonneDrapeau, colonne });
+      if (colonne >= 0) poses++;
+    }
+    // Enfin, les autres obstacles au hasard, dans la place qui reste.
     let colonne = infos.debut + infos.zoneSure + O.margeTrou + de.entre(0, 4);
     while (colonne <= infos.fin) {
       const nom = de.choisir(typesPossibles(colonne));
