@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 7,
+  version: 8,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -87,6 +87,12 @@ Jeu.CONFIG = {
     vieFlamme: 2, // chaque flamme met 2 s à s'éteindre (elle continue après le départ du héros)
     vitesseMontee: 70, // les flammes montent à environ 70 px/s
     tremblement: 40, // et ondulent de gauche à droite (px/s)
+  },
+
+  // Toucher un muret (étape 8) : le héros devient un petit squelette qui danse, puis réapparaît.
+  squelette: {
+    duree: 5, // le squelette danse pendant environ 5 s avant le retour au dernier drapeau (demandé par Maxance)
+    pasDeDanse: 6, // nombre de mouvements de danse par seconde
   },
 
   // Les vies (étape 4). Trou ou lave = 1 vie en moins. À 0 vie : « Aïe ! » et tout recommence à zéro.

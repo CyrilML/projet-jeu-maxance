@@ -34,6 +34,8 @@ Jeu.Joueur = (function () {
       sautMemorise: false,
       sautCoupe: false,
       contreMur: false, // est-il en train de pousser contre un bloc solide ?
+      regard: 1, // 1 = il regarde vers la droite, -1 = vers la gauche (étape 8)
+      brasLeves: false, // lève-t-il les bras ? (quand il tombe dans un trou, étape 8)
       debutSaut: 0,
       animation: 0,
     };
@@ -52,6 +54,7 @@ Jeu.Joueur = (function () {
     j.vy = 0;
     j.tamponSaut = 0;
     j.etat = "au-sol";
+    j.brasLeves = false;
   }
 
   // Sur quelle case est le héros ? On prend le milieu de ses pieds :
@@ -84,6 +87,11 @@ Jeu.Joueur = (function () {
     if (Entrees.estEnfoncee("gauche")) direction -= 1;
     if (Entrees.estEnfoncee("droite")) direction += 1;
     j.vx = direction * J.vitesse;
+    // Le héros se tourne du côté où il marche (sinon, en reculant, on dirait un moonwalk !).
+    if (direction !== 0 && direction !== j.regard) {
+      j.regard = direction;
+      emettre("demi-tour", { regard: direction > 0 ? "droite" : "gauche" });
+    }
 
     if (Entrees.consommer("sauter")) {
       j.tamponSaut = J.memoireSaut;

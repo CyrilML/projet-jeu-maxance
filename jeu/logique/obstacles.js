@@ -1,13 +1,14 @@
 // 🧱 LES OBSTACLES : des pièges et des tours
 //
-// Chaque obstacle est soit SANS DANGER, soit MORTEL (règles de l'étape 5) :
-//   - la tour (pierre) est SOLIDE et sans danger : on peut monter dessus, et par le côté c'est un mur ;
-//   - la caisse et le muret (bois) sont MORTELS : les toucher, même par le côté, coûte une vie
-//     et renvoie au dernier drapeau. Il faut les sauter entièrement !
+// Chaque obstacle est soit SANS DANGER, soit MORTEL (règles de l'étape 8) :
+//   - la tour (pierre) et la caisse (bois) sont SOLIDES et sans danger : on peut monter dessus,
+//     et par le côté c'est un mur ;
+//   - le muret (bois à pics rouges) est MORTEL : le toucher, même par le côté, coûte une vie
+//     (le héros devient un petit squelette qui danse) et renvoie au dernier drapeau.
 //   - la lave est LIQUIDE et MORTELLE : on passe à travers… et on brûle. Il y a les petites mares
 //     (1 ou 2 blocs, au hasard) et une grande fosse tous les 30 blocs.
 //
-// Les obstacles sont écrits DANS LA GRILLE du terrain (numéros 4, 5 et 6), comme le sol.
+// Les obstacles sont écrits DANS LA GRILLE du terrain (numéros 4, 5, 6 et 7), comme le sol.
 // Leurs propriétés (solide, mortel) viennent des listes de logique/terrain.js. La liste
 // monde.obstacles garde en plus leur nom et leur numéro, pour le journal et les rayons X.
 
@@ -25,7 +26,7 @@ Jeu.Obstacles = (function () {
   const TYPES = {
     caisse: { l: 1, h: 1, case: CASES.bois },
     tour: { l: 1, h: 2, case: CASES.pierre },
-    muret: { l: 2, h: 1, case: CASES.bois },
+    muret: { l: 2, h: 1, case: CASES.pics }, // bois à pics : mortel (étape 8)
     lave: { l: 1, h: 1, case: CASES.lave, sousSol: true },
     fosse: { l: 3, h: 1, case: CASES.lave, sousSol: true }, // jamais tirée au hasard : une par tronçon
   };

@@ -8,16 +8,16 @@
 // Le jeu a quatre PHASES : "accueil" (on tape son pseudo) → "jeu" → "perdu" ou "gagne" → "jeu" → …
 //
 // Les règles :
-//   - on a 5 VIES. Un trou ou de la lave = 1 vie en moins (étape 4) ;
+//   - on a 5 VIES. Un trou, la lave ou un muret = 1 vie en moins (étapes 4 et 8) ;
 //   - tomber dans un trou → on réapparaît juste DEVANT ce trou, pour pouvoir le ressauter ;
 //   - tomber dans la lave → le héros BRÛLE 1 s sur place, avec des flammes (étape 7), puis réapparaît
 //     au dernier drapeau ;
-//   - toucher une caisse ou un muret en bois → on réapparaît au dernier
-//     drapeau atteint (étape 5 : seules les tours en pierre ne font pas mourir) ;
+//   - toucher un muret (bois à pics) → le héros devient un petit squelette qui DANSE 5 s (étape 8),
+//     puis réapparaît au dernier drapeau. Les caisses et les tours sont sans danger ;
 //   - plus de vie → « Aïe ! », la partie est finie et tout recommence à zéro ;
 //   - drapeau n° 10 atteint (300 blocs) → c'est l'ARRIVÉE, la partie est gagnée (étape 6) ;
 //   - à la fin de chaque partie, le score entre au classement (logique/classement.js) ;
-//   - tours en pierre → SOLIDES : on marche dessus, et par le côté c'est un mur ;
+//   - tours en pierre et caisses → SOLIDES : on marche dessus, et par le côté c'est un mur ;
 //   - le score = le nombre de blocs parcourus vers la droite (la colonne la plus loin atteinte).
 
 window.Jeu = window.Jeu || {};
@@ -50,6 +50,7 @@ Jeu.Monde = (function () {
       brulures: 0,
       piegesTouches: 0,
       brulure: null, // pendant que le héros brûle : { reste, allumees, colonneRetour } (étape 7)
+      danse: null, // pendant que le squelette danse : { reste, colonneRetour } (étape 8)
       flammes: [], // les petites flammes (des particules, voir moteur/particules.js)
       obstaclesPasses: 0,
       nouveauRecord: false,
@@ -168,11 +169,29 @@ Jeu.Monde = (function () {
       j.vx = 0;
       j.vy = 0;
       return;
-    } else {
-      monde.piegesTouches += 1;
-      Jeu.Evenements.emettre("piege", infos);
     }
-    if (perdreUneVie(monde, estDeLaLave ? "lave" : o.type)) Jeu.Joueur.reapparaitre(monde.joueur, drapeau.colonne);
+    // Un muret : le héros devient un petit squelette qui danse sur place (voir danserUnPeu).
+    monde.piegesTouches += 1;
+    Jeu.Evenements.emettre("piege", Object.assign(infos, { duree: C.squelette.duree }));
+    monde.danse = { reste: C.squelette.duree, colonneRetour: drapeau.colonne, cause: o.type };
+    const j = monde.joueur;
+    j.etat = "squelette";
+    j.vx = 0;
+    j.vy = 0;
+    j.animation = 0;
+  }
+
+  // Pendant que le squelette danse : il ne bouge pas de sa place, l'affichage le fait danser.
+  // Au bout de 5 s, le héros perd une vie et réapparaît au dernier drapeau.
+  function danserUnPeu(monde, dt) {
+    const d = monde.danse;
+    const j = monde.joueur;
+    d.reste -= dt;
+    j.animation += dt; // l'affichage choisit le pas de danse d'après ce temps
+    if (d.reste > 0) return;
+    monde.danse = null;
+    Jeu.Evenements.emettre("fin-danse", { duree: C.squelette.duree });
+    if (perdreUneVie(monde, d.cause)) Jeu.Joueur.reapparaitre(j, d.colonneRetour);
   }
 
   // Pendant que le héros brûle : il s'enfonce doucement, les flammes s'allument une à une,
@@ -224,9 +243,19 @@ Jeu.Monde = (function () {
       suivreAvecLaCamera(monde, dt);
       return;
     }
+    if (monde.danse) {
+      danserUnPeu(monde, dt);
+      suivreAvecLaCamera(monde, dt);
+      return;
+    }
     const j = monde.joueur;
     Jeu.Joueur.mettreAJour(j, dt, monde);
     const ici = Jeu.Joueur.caseDuJoueur(j);
+
+    // Dans un trou, les pieds passent sous le niveau de l'herbe : le héros lève les bras (étape 8).
+    const dansLeTrou = j.vy > 0 && j.y + j.h > C.solY + 4;
+    if (dansLeTrou && !j.brasLeves) Jeu.Evenements.emettre("bras-leves", { colonne: ici.colonne });
+    j.brasLeves = dansLeTrou;
 
     // Tombé dans un trou ?
     if (j.y > C.trous.chute) {

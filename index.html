@@ -131,6 +131,7 @@
       <a href="#etape5">Étape 5</a>
       <a href="#etape6">Étape 6</a>
       <a href="#etape7">Étape 7</a>
+      <a href="#etape8">Étape 8</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -497,7 +498,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p class="petit">C'est plus lent, donc on y écrit rarement et seulement l'important.</p>
         </div>
       </div>
-      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 11.</p>
+      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 12.</p>
 
       <h3>🔍 Missions d'exploration</h3>
       <p>Ouvre le jeu, active les rayons X (<kbd>X</kbd>) et mène l'enquête :</p>
@@ -857,7 +858,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <div class="carte">
           <h4>✅ Ce que tu peux vérifier</h4>
           <ul>
-            <li>☐ Atterris sur une caisse ou un muret : un cœur en moins, retour au dernier drapeau.</li>
+            <li>☐ Atterris sur une caisse ou un muret : un cœur en moins, retour au dernier drapeau. <em>(Changé à l'étape 8 : la caisse est redevenue sans danger, seul le muret à pics est mortel.)</em></li>
             <li>☐ Fonce dans une caisse par le côté : pareil.</li>
             <li>☐ Monte sur une tour en pierre : aucun danger, tu peux marcher dessus.</li>
             <li>Avec les rayons X : cadre <strong>rouge</strong> « piège : ne pas toucher ! » pour le bois, cadre <strong>blanc</strong> pour la pierre.</li>
@@ -968,7 +969,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
 
     <!-- ============ ÉTAPE 7 ============ -->
     <section id="etape7">
-      <h2>🔥 Étape 7 : les flammes de la lave <span class="etiquette">✅ livrée · à valider</span></h2>
+      <h2>🔥 Étape 7 : les flammes de la lave <span class="etiquette">✅ livrée · validée par Maxance</span></h2>
       <p class="chapeau">Tomber dans la lave, maintenant, ça se voit : le héros brûle une seconde sur place, entouré d'une trentaine de petites flammes.</p>
 
       <div class="grille">
@@ -1019,6 +1020,65 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Où changer pour avoir 100 flammes au lieu de 30 ?</summary><p>Dans <code>config.js</code> : <code>brulure.flammes: 100</code>. Rien d'autre à toucher !</p></details>
     </section>
 
+    <!-- ============ ÉTAPE 8 ============ -->
+    <section id="etape8">
+      <h2>💀 Étape 8 : demi-tour, bras levés et squelette qui danse <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Plus de moonwalk : le héros se retourne quand il recule. Il lève les bras en tombant dans un trou. Et s'il touche un muret à pics… il devient un petit squelette qui danse !</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/08-demi-tour-bras-squelette.md</code>.</p>
+          <p>« Quand il recule, on dirait qu'il fait un moonwalk. Je n'ai pas demandé Michael Jackson dans le jeu ! »</p>
+          <p><strong>Règles :</strong> caisses et tours sans danger, murets mortels. Trou → bras levés. Muret → squelette qui danse environ 5 secondes, puis retour au drapeau.</p>
+          <p class="petit">✍️ Maxance a d'abord accepté 1 seconde de danse, puis il a changé pour 5 secondes pendant que Claude codait. Grâce à <code>config.js</code>, il a suffi de changer un seul nombre.</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Va à gauche : ton héros regarde à gauche.</li>
+            <li>☐ Atterris sur une caisse ou une tour : aucun danger.</li>
+            <li>☐ Touche un muret à pics rouges : un squelette danse environ 5 s, puis un cœur en moins et retour au drapeau.</li>
+            <li>☐ Tombe dans un trou : ton héros lève les bras.</li>
+            <li>Vérifie « version 8 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🪞 Retourner un dessin sans le redessiner</h3>
+      <p>Le héros est toujours dessiné comme s'il regardait à <strong>droite</strong>. Pour qu'il regarde à gauche, on ne refait pas le dessin : on demande au peintre de travailler <strong>dans un miroir</strong>.</p>
+      <div class="carte">
+        <p><code>ctx.scale(-1, 1)</code> veut dire : « multiplie toutes les positions x par −1 ». Un œil dessiné à +5 px à droite du milieu se retrouve à −5 px, donc à gauche.</p>
+        <p>Le héros retient de quel côté il regarde : <code>joueur.regard = 1</code> (droite) ou <code>−1</code> (gauche). Il change seulement quand tu appuies sur ← ou →. Si tu lâches tout, il garde son dernier regard.</p>
+        <p class="petit">Le journal affiche « ↩️ Demi-tour » à chaque fois, et l'état en direct montre « regarde vers ».</p>
+      </div>
+
+      <h3>🕺 Faire danser un squelette</h3>
+      <p>Le squelette a <strong>4 poses</strong> (bras en l'air, bras en bas, jambes écartées, petit saut), qui se suivent en boucle, 6 fois par seconde. Pour choisir la pose, le peintre fait un petit calcul avec le temps écoulé :</p>
+      <div class="carte">
+        <p class="mesure">pose = partie entière de (temps × 6), puis le <strong>reste de la division par 4</strong></p>
+        <p class="petit">Le reste de la division par 4 (qu'on écrit <code>% 4</code>) donne toujours 0, 1, 2 ou 3, puis recommence : 0, 1, 2, 3, 0, 1, 2, 3… C'est l'astuce de toutes les animations qui tournent en boucle, comme les jambes du héros quand il court (lui, il n'a que 2 poses).</p>
+      </div>
+
+      <h3>🧱 Un nouveau bloc : le bois à pics</h3>
+      <p>La caisse et le muret étaient faits du même bois (n° 4). Pour qu'un seul des deux soit mortel, il a fallu un nouveau numéro : <strong>7 = bois à pics</strong>, avec sa propre fiche : solide « non », mortel « oui ». La caisse garde le n° 4, qui redevient solide et sans danger.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Va à gauche puis à droite plusieurs fois. Combien de « Demi-tour » le journal affiche-t-il ?</li>
+        <li>Touche un muret et regarde « squelette qui danse ? » dans l'état en direct. Et avec les rayons X ?</li>
+        <li>En pause, avance pas à pas (<kbd>N</kbd>) pendant la danse : combien de pas faut-il pour changer de pose ?</li>
+        <li>Dans « La carte en mémoire », trouve un muret : quel numéro a-t-il ? Et une caisse ?</li>
+        <li>Tombe dans un trou en ralenti (<kbd>L</kbd>) : à quel moment exact le héros lève-t-il les bras ?</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Si <code>regard = −1</code>, de quel côté regarde le héros ?</summary><p>À gauche. Le peintre retourne le dessin avec <code>ctx.scale(-1, 1)</code>.</p></details>
+      <details class="question"><summary>Combien vaut 7 % 4 ?</summary><p>3 : 7 = 4 × 1 + 3. Le squelette serait donc dans sa 4ᵉ pose (on compte à partir de 0).</p></details>
+      <details class="question"><summary>Pourquoi a-t-il fallu créer le bloc n° 7 ?</summary><p>Parce que les propriétés (solide, mortel) vont avec le <em>numéro</em> du bloc. Avec le même numéro, la caisse et le muret auraient forcément les mêmes règles.</p></details>
+      <details class="question"><summary>Où changer pour que le squelette danse 10 secondes ?</summary><p>Dans <code>config.js</code> : <code>squelette.duree: 10</code>.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -1063,48 +1123,54 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         </div>
         <div class="carte fait">
           <div class="num">7</div>
-          <h4>Les flammes de la lave <span class="etiquette">✅ fait · à valider</span></h4>
+          <h4>Les flammes de la lave <span class="etiquette">✅ fait · validé</span></h4>
           <p>Le héros brûle 1 seconde sur place, avec une trentaine de flammes qui s'éteignent en 2 secondes.</p>
           <p class="apprend"><b>Tu apprends :</b> les particules (des petits objets qui naissent, bougent et meurent), l'âge et la couleur, une « pause » dans les règles. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">8</div>
+          <h4>Demi-tour, bras levés et squelette <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Le héros se retourne quand il recule, lève les bras dans les trous, et devient un squelette qui danse 5 s sur les murets à pics. Caisses et tours sans danger.</p>
+          <p class="apprend"><b>Tu apprends :</b> retourner un dessin avec un miroir (<code>scale(-1, 1)</code>), animations en boucle avec le reste de la division (<code>%</code>), un nouveau type de bloc. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">9</div>
           <h4>Casser et poser des blocs <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Clic gauche pour casser, clic droit pour poser, à portée de bras.</p>
           <p class="apprend"><b>Tu apprends :</b> transformer un clic en case de la grille, « la donnée d'abord, le dessin suit », événements de la souris. <b>Durée :</b> 1 à 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">9</div>
+          <div class="num">10</div>
           <h4>Inventaire et catalogue des blocs</h4>
           <p>Chaque bloc cassé va dans l'inventaire (piles de 64), avec une barre en bas de l'écran.</p>
           <p class="apprend"><b>Tu apprends :</b> identifiants (déjà 0 à 6 depuis l'étape 3), catalogue de propriétés (dureté, en plus de solide ou liquide), structures de données. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">10</div>
+          <div class="num">11</div>
           <h4>Collines, grottes et minerais</h4>
           <p>Le monde est déjà sans fin depuis l'étape 2. Ici, il devient plus riche : du relief, des grottes, des minerais cachés sous terre.</p>
           <p class="apprend"><b>Tu apprends :</b> génération procédurale, bruit de Perlin, décharger les tronçons trop loin pour libérer la mémoire. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">11</div>
+          <div class="num">12</div>
           <h4>Sauvegarder le monde</h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">12</div>
+          <div class="num">13</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">13</div>
+          <div class="num">14</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">14</div>
+          <div class="num">15</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -1184,6 +1250,16 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-7" data-cle="appris-7" placeholder="Ex. : J'ai appris qu'une flamme, c'est plein de petites particules qui…"></textarea>
         <label for="idees-7"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-7" data-cle="idees-7" placeholder="Ex. : Des éclaboussures quand je tombe dans l'eau…"></textarea>
+      </div>
+
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 8 · demi-tour, bras levés et squelette <span class="petit">· 25 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le héros se retourne selon sa direction (dessin en miroir), il a des bras qu'il lève en tombant dans un trou, il devient un petit squelette qui danse 5 s quand il touche un muret. Nouveau bloc n° 7 « bois à pics » pour le muret ; la caisse redevient solide et sans danger.</p>
+        <p class="petit">✍️ Maxance a validé les flammes de l'étape 7 et a demandé un squelette qui danse environ 5 secondes. Pour la caisse touchée par le côté et l'aspect du muret, Claude a pris ses conseils (2A, 3A) : à valider en jouant.</p>
+        <label for="appris-8"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-8" data-cle="appris-8" placeholder="Ex. : J'ai appris qu'on peut retourner un dessin comme dans un miroir…"></textarea>
+        <label for="idees-8"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-8" data-cle="idees-8" placeholder="Ex. : Une musique pour la danse du squelette…"></textarea>
       </div>
     </section>
   </main>

@@ -31,8 +31,11 @@ Jeu.SousLeCapot = (function () {
     esquive: (d) => "✅ Obstacle #" + d.id + " « " + d.type + " » dépassé (" + d.total + " dans cette partie)",
     mur: (d) => "🧱 Bloqué par un mur de « " + d.matiere + " » (colonne " + d.colonne + ") : c'est solide, saute dessus !",
     piege: (d) =>
-      "📦 Touché " + (d.type === "caisse" ? "une caisse" : "un muret") + " en bois #" + d.id + " (colonne " + d.colonne +
-      ") : le bois est mortel → retour au drapeau n° " + d.drapeau,
+      "💀 Touché le muret à pics #" + d.id + " (colonne " + d.colonne + ") : le héros devient un squelette qui danse " +
+      d.duree + " s, puis retour au drapeau n° " + d.drapeau,
+    "fin-danse": (d) => "🕺 Le squelette a fini de danser (" + d.duree + " s)",
+    "bras-leves": (d) => "🙌 Il tombe dans le trou de la colonne " + d.colonne + " : il lève les bras !",
+    "demi-tour": (d) => "↩️ Demi-tour : le héros regarde maintenant vers la " + d.regard,
     brule: (d) =>
       "🔥 Tombé dans la " + (d.type === "fosse" ? "fosse" : "mare") + " de lave #" + d.id + " (colonne " + d.colonne +
       ") : il brûle " + d.duree + " s, " + d.flammes + " flammes s'allument, puis retour au drapeau n° " + d.drapeau,
@@ -151,6 +154,9 @@ Jeu.SousLeCapot = (function () {
       ["chutes dans un trou", monde.chutes],
       ["brûlures dans la lave", monde.brulures],
       ["en train de brûler ?", monde.brulure ? "oui 🔥 encore " + Math.max(0, monde.brulure.reste).toFixed(1) + " s" : "non"],
+      ["squelette qui danse ?", monde.danse ? "oui 💀 encore " + Math.max(0, monde.danse.reste).toFixed(1) + " s" : "non"],
+      ["regarde vers", j.regard < 0 ? "← la gauche" : "la droite →"],
+      ["bras levés ?", j.brasLeves ? "oui 🙌" : "non"],
       ["flammes en mémoire", monde.flammes.length],
       ["pièges en bois touchés", monde.piegesTouches],
       ["Carte en mémoire", ""],

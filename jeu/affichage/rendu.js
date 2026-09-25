@@ -75,6 +75,7 @@ Jeu.Rendu = (function () {
       pierre: ["#8e939b", "#6f747c"],
       planche: ["#d9a55b", "#a8773a"],
       lave: ["#ff7a1a", "#ffd23f"],
+      pics: ["#8c5a28", "#5e3a18"], // le bois du muret, plus sombre, avec des pics rouges
     }[matiere];
     if (matiere === "lave") {
       // Un liquide : la surface est un peu plus basse que le haut de la case, avec des bulles claires.
@@ -90,7 +91,7 @@ Jeu.Rendu = (function () {
     ctx.fillStyle = couleurs[0];
     ctx.fillRect(x, y, B, B);
     ctx.fillStyle = couleurs[1];
-    if (matiere === "bois") {
+    if (matiere === "bois" || matiere === "pics") {
       ctx.fillRect(x, y + 12, B, 3);
       ctx.fillRect(x, y + 26, B, 3);
       ctx.fillRect(x + 2, y + 2, B - 4, 2);
@@ -102,6 +103,17 @@ Jeu.Rendu = (function () {
       for (let k = 0; k < 4; k++) {
         const g = (graine * 31 + k * 17) % 97;
         ctx.fillRect(x + (g % 8) * 4 + 2, y + ((g >> 3) % 8) * 4 + 4, 6, 4);
+      }
+    }
+    if (matiere === "pics") {
+      // Des pics rouges sur le dessus : attention, ce bois-là est mortel !
+      ctx.fillStyle = "#e0303a";
+      for (let k = 0; k < 4; k++) {
+        ctx.beginPath();
+        ctx.moveTo(x + k * 10, y + 10);
+        ctx.lineTo(x + k * 10 + 5, y);
+        ctx.lineTo(x + k * 10 + 10, y + 10);
+        ctx.fill();
       }
     }
     if (matiere === "herbe") {
@@ -156,22 +168,37 @@ Jeu.Rendu = (function () {
     }
   }
 
+  // Le héros. On le dessine comme s'il regardait à droite, entre x = −15 et x = +15 autour de son
+  // milieu. S'il regarde à gauche, on retourne le dessin comme dans un miroir : ctx.scale(-1, 1).
   function joueur(j, phase) {
-    const x = Math.round(j.x);
+    const milieu = Math.round(j.x + j.l / 2);
     const y = Math.round(j.y);
+    if (j.etat === "squelette") return squelette(milieu, y, j.animation);
     const courir = phase === "jeu" && j.etat === "au-sol" && j.vx !== 0;
     const pas = courir ? Math.floor(j.animation * 10) % 2 : 0;
 
+    ctx.save();
+    ctx.translate(milieu, 0);
+    ctx.scale(j.regard || 1, 1); // −1 = miroir : il regarde à gauche
+    const x = -15;
+    // Bras (derrière le corps) : levés s'il tombe dans un trou, le long du corps sinon
+    ctx.fillStyle = "#f1c27d";
+    if (j.brasLeves) {
+      ctx.fillRect(x - 1, y - 12, 5, 31);
+      ctx.fillRect(x + 26, y - 12, 5, 31);
+    } else {
+      ctx.fillRect(x, y + 19, 4, 13);
+      ctx.fillRect(x + 26, y + 19, 4, 13);
+    }
     // Jambes
     ctx.fillStyle = "#34448a";
     ctx.fillRect(x + 5, y + 34, 9, pas ? 9 : 12);
     ctx.fillRect(x + 16, y + 34, 9, pas ? 12 : 9);
-    // Corps
     // Corps : rouge s'il a perdu, noirci qui clignote s'il brûle, bleu sinon.
     const clignote = Math.floor(j.animation * 20) % 2;
     ctx.fillStyle = j.etat === "touche" ? "#e05555" : j.etat === "brule" ? (clignote ? "#3b2a26" : "#ff7a1a") : "#2fa3d8";
-    ctx.fillRect(x + 3, y + 18, 24, 17);
-    // Tête
+    ctx.fillRect(x + 4, y + 18, 22, 17);
+    // Tête et yeux (tournés du côté où il regarde)
     ctx.fillStyle = "#f1c27d";
     ctx.fillRect(x + 4, y, 22, 19);
     ctx.fillStyle = "#5a3a1e";
@@ -179,6 +206,47 @@ Jeu.Rendu = (function () {
     ctx.fillStyle = "#1d1d3a";
     ctx.fillRect(x + 17, y + 8, 3, 4);
     ctx.fillRect(x + 23, y + 8, 3, 4);
+    // Bouche : un petit « o » de surprise quand il tombe dans un trou
+    if (j.brasLeves) ctx.fillRect(x + 19, y + 14, 4, 3);
+    ctx.restore();
+  }
+
+  // Le petit squelette qui danse (étape 8). Toutes les 1/6 s, il change de pas de danse :
+  // bras en l'air ou en bas, jambes écartées, petit saut… Il y a 4 pas, qui se répètent.
+  function squelette(milieu, y, temps) {
+    const pasDeDanse = Math.floor(temps * C.squelette.pasDeDanse) % 4;
+    const saut = pasDeDanse === 1 || pasDeDanse === 3 ? -6 : 0; // il sautille
+    const penche = pasDeDanse < 2 ? -3 : 3; // il se balance de gauche à droite
+    const x = milieu - 15 + penche;
+    const h = y + saut;
+    const os = "#f4f1e6";
+    ctx.fillStyle = os;
+    // Crâne
+    ctx.fillRect(x + 7, h, 16, 14);
+    ctx.fillRect(x + 9, h + 14, 12, 4);
+    ctx.fillStyle = "#1d1d3a";
+    ctx.fillRect(x + 10, h + 5, 4, 4); // les trous des yeux
+    ctx.fillRect(x + 16, h + 5, 4, 4);
+    ctx.fillRect(x + 12, h + 15, 2, 3); // les dents
+    ctx.fillRect(x + 16, h + 15, 2, 3);
+    ctx.fillStyle = os;
+    // Colonne et côtes
+    ctx.fillRect(x + 14, h + 18, 3, 16);
+    for (let k = 0; k < 3; k++) ctx.fillRect(x + 9, h + 20 + k * 4, 13, 2);
+    // Bras : en l'air ou en bas, en alternance (c'est la danse !)
+    const brasHaut = pasDeDanse % 2 === 0;
+    if (brasHaut) {
+      ctx.fillRect(x + 4, h + 6, 3, 16);
+      ctx.fillRect(x + 24, h + 6, 3, 16);
+    } else {
+      ctx.fillRect(x + 4, h + 20, 3, 14);
+      ctx.fillRect(x + 24, h + 20, 3, 14);
+    }
+    // Bassin et jambes : écartées ou serrées
+    ctx.fillRect(x + 9, h + 34, 13, 3);
+    const ecart = pasDeDanse === 2 ? 5 : 0;
+    ctx.fillRect(x + 9 - ecart, h + 37, 3, 9 - saut);
+    ctx.fillRect(x + 19 + ecart, h + 37, 3, 9 - saut);
   }
 
   // Les flammes : chaque particule est une petite flamme en pixels. Jeune, elle est grande et jaune ;
@@ -254,13 +322,13 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 7 : les flammes de la lave", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 8 : demi-tour, bras levés et squelette", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au drapeau n° " + C.arrivee.drapeau + " (" + C.arrivee.drapeau * C.carte.longueurTroncon + " blocs) le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
     texte("❤️ " + C.vies + " vies · 🕳️ Trou : tu repars devant le trou", L / 2, 386, 17, "#cfe0ff", "center");
-    texte("🔥 Lave, 📦 caisses et murets en bois : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
-    texte("🗼 Seules les tours en pierre sont sans danger : monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
+    texte("🔥 Lave et 💀 murets à pics rouges : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
+    texte("📦 Caisses et 🗼 tours en pierre : sans danger, monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
     const premier = Jeu.Sauvegarde.donnees.classement[0];
     if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 482, 18, "#ffe27a", "center");
     texte("version " + C.version, L - 12, H - 12, 14, "#cfe0ff", "right");
@@ -300,7 +368,7 @@ Jeu.Rendu = (function () {
       texte("🏁 Bravo " + monde.pseudo + ", tu es arrivé !", L / 2, 58, 40, "#7bff9e", "center");
     } else {
       texte("Aïe ! Plus de vies", L / 2, 58, 44, "#ff7b7b", "center");
-      const ou = { lave: "dans la lave 🔥", trou: "dans un trou 🕳️", caisse: "sur une caisse 📦", muret: "sur un muret 🧱" };
+      const ou = { lave: "dans la lave 🔥", trou: "dans un trou 🕳️", caisse: "sur une caisse 📦", muret: "sur un muret à pics 💀" };
       texte("Ta dernière vie est tombée " + (ou[monde.cause] || ""), L / 2, 88, 18, "#ffd0d0", "center");
     }
     texte(monde.score + " blocs   ·   " + monde.vies + " vie" + (monde.vies > 1 ? "s" : "") + " restante" + (monde.vies > 1 ? "s" : "") + "   ·   " + duree(monde.temps), L / 2, 122, 24, "#fff", "center");
@@ -437,6 +505,7 @@ Jeu.Rendu = (function () {
       const p0 = monde.flammes[0];
       note("🔥 " + monde.flammes.length + " flammes en mémoire", p0.x - camX - 40, C.solY - 60, "#ffe066");
     }
+    if (monde.danse) note("💀 danse encore " + Math.max(0, monde.danse.reste).toFixed(2) + " s", monde.joueur.x - camX - 20, C.solY - 76, "#ffffff");
     if (monde.brulure) note("brûle encore " + Math.max(0, monde.brulure.reste).toFixed(2) + " s", monde.joueur.x - camX - 20, C.solY - 76, "#ff9b9b");
 
     // 8. Le joueur : dessin, zone de collision, vitesse, case
@@ -459,7 +528,7 @@ Jeu.Rendu = (function () {
     fleche(cx, cy, cx + j.vx * 0.15, cy + j.vy * 0.15, "#7bff9e");
 
     const lignes = [
-      "état : " + j.etat,
+      "état : " + j.etat + "   regard : " + (j.regard < 0 ? "←" : "→") + (j.brasLeves ? "   🙌" : ""),
       "monde : x=" + Math.round(j.x) + "  y=" + Math.round(j.y),
       "écran : x=" + Math.round(jx),
       "case : colonne " + ici.colonne + ", ligne " + ici.ligne,
