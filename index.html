@@ -130,6 +130,7 @@
       <a href="#etape4">Étape 4</a>
       <a href="#etape5">Étape 5</a>
       <a href="#etape6">Étape 6</a>
+      <a href="#etape7">Étape 7</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -496,7 +497,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p class="petit">C'est plus lent, donc on y écrit rarement et seulement l'important.</p>
         </div>
       </div>
-      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 10.</p>
+      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 11.</p>
 
       <h3>🔍 Missions d'exploration</h3>
       <p>Ouvre le jeu, active les rayons X (<kbd>X</kbd>) et mène l'enquête :</p>
@@ -965,6 +966,59 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Pourquoi le drapeau d'arrivée est-il à la colonne 302 ?</summary><p>Le drapeau n° 10 est au début du 11ᵉ tronçon : 10 × 30 = 300, plus 2 (le drapeau est dans la 3ᵉ colonne du tronçon). On part de la colonne 2, donc il y a bien 300 blocs à parcourir.</p></details>
     </section>
 
+    <!-- ============ ÉTAPE 7 ============ -->
+    <section id="etape7">
+      <h2>🔥 Étape 7 : les flammes de la lave <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Tomber dans la lave, maintenant, ça se voit : le héros brûle une seconde sur place, entouré d'une trentaine de petites flammes.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/07-flammes-de-la-lave.md</code>.</p>
+          <p><strong>Règles :</strong> le héros brûle 1 seconde sur place (1A), puis réapparaît au dernier drapeau. Une trentaine de flammes, qui durent 2 secondes chacune (2B).</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Tombe dans la lave : ton héros clignote et des flammes montent de lui.</li>
+            <li>☐ Au bout d'une seconde : un cœur en moins, retour au drapeau.</li>
+            <li>☐ Les flammes continuent de s'éteindre dans la lave après ton départ.</li>
+            <li>Essaie en ralenti (<kbd>L</kbd>) ou en pause (<kbd>P</kbd> puis <kbd>N</kbd>) pour bien les voir. Vérifie « version 7 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>✨ Comment on fabrique des flammes : les particules</h3>
+      <p>Une flamme de jeu vidéo, ce n'est pas un dessin tout fait : c'est plein de <strong>particules</strong>. Chaque particule est un tout petit objet, juste quelques nombres :</p>
+      <div class="carte">
+        <p><code>{ x, y, vx, vy, vie, vieMax, taille }</code> : où elle est, à quelle vitesse elle bouge, combien de temps il lui reste à vivre, et sa taille.</p>
+        <p>À chaque pas de 1/120 s, pour chaque particule :</p>
+        <ol>
+          <li>elle <strong>monte</strong> (<code>vy</code> est négatif) et <strong>ondule</strong> de gauche à droite ;</li>
+          <li>sa <strong>vie</strong> baisse ;</li>
+          <li>quand sa vie arrive à 0, elle est <strong>retirée de la liste</strong> pour libérer la mémoire.</li>
+        </ol>
+        <p>Le peintre regarde l'<strong>âge</strong> de chaque particule (<code>1 − vie ÷ vieMax</code>) pour choisir sa couleur : jeune = grande et jaune, puis orange, vieille = petite et rouge. Trente petits carrés qui font ça en même temps, et ton œil voit… du feu !</p>
+        <p class="petit">Le même outil, <code>moteur/particules.js</code>, pourra servir plus tard pour des étincelles, de la poussière, des bulles d'eau ou de la neige : il ne sait pas que ce sont des flammes.</p>
+      </div>
+
+      <h3>⏸️ Une petite pause dans les règles</h3>
+      <p>Avant, toucher la lave te renvoyait <em>tout de suite</em> au drapeau. Maintenant, le monde retient que le héros « est en train de brûler » : <code>monde.brulure = { reste: 1 }</code>. Tant que <code>reste</code> est plus grand que 0, le héros ne peut plus bouger. À chaque pas, on enlève un peu de temps et on allume des flammes. À 0, il perd sa vie et réapparaît.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Tombe dans la lave et regarde « flammes en mémoire » : jusqu'où monte le nombre ? Et ensuite ?</li>
+        <li>Avec les rayons X, en pause, avance pas à pas (<kbd>N</kbd>) : regarde « brûle encore … s » descendre.</li>
+        <li>Quelle est la couleur d'une flamme qui vient de naître ? Et juste avant de s'éteindre ?</li>
+        <li>Pourquoi les flammes restent-elles dans la lave alors que tu es déjà reparti au drapeau ?</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de nombres faut-il pour décrire une flamme ?</summary><p>Sept : x, y, vx, vy, vie, vieMax et taille (plus un petit nombre pour l'ondulation). Pas besoin d'image !</p></details>
+      <details class="question"><summary>Que se passerait-il si on ne retirait jamais les flammes éteintes ?</summary><p>La liste grandirait à chaque chute dans la lave. Au bout d'un moment, le jeu mettrait à jour et dessinerait des milliers de flammes invisibles, et il ralentirait.</p></details>
+      <details class="question"><summary>Où changer pour avoir 100 flammes au lieu de 30 ?</summary><p>Dans <code>config.js</code> : <code>brulure.flammes: 100</code>. Rien d'autre à toucher !</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -1007,44 +1061,50 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>Un pseudo avant de jouer, une arrivée au drapeau n° 10, et les 10 meilleurs joueurs (blocs, puis vies, puis temps). Pour l'instant sur cet ordinateur ; en ligne quand le serveur sera prêt.</p>
           <p class="apprend"><b>Tu apprends :</b> trier une liste avec une fonction de comparaison, formulaire et case de texte, sécurité des textes tapés par les joueurs, pourquoi il faut un serveur pour partager des données. <b>Durée :</b> 1 à 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">7</div>
+          <h4>Les flammes de la lave <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Le héros brûle 1 seconde sur place, avec une trentaine de flammes qui s'éteignent en 2 secondes.</p>
+          <p class="apprend"><b>Tu apprends :</b> les particules (des petits objets qui naissent, bougent et meurent), l'âge et la couleur, une « pause » dans les règles. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">8</div>
           <h4>Casser et poser des blocs <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Clic gauche pour casser, clic droit pour poser, à portée de bras.</p>
           <p class="apprend"><b>Tu apprends :</b> transformer un clic en case de la grille, « la donnée d'abord, le dessin suit », événements de la souris. <b>Durée :</b> 1 à 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">8</div>
+          <div class="num">9</div>
           <h4>Inventaire et catalogue des blocs</h4>
           <p>Chaque bloc cassé va dans l'inventaire (piles de 64), avec une barre en bas de l'écran.</p>
           <p class="apprend"><b>Tu apprends :</b> identifiants (déjà 0 à 6 depuis l'étape 3), catalogue de propriétés (dureté, en plus de solide ou liquide), structures de données. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">9</div>
+          <div class="num">10</div>
           <h4>Collines, grottes et minerais</h4>
           <p>Le monde est déjà sans fin depuis l'étape 2. Ici, il devient plus riche : du relief, des grottes, des minerais cachés sous terre.</p>
           <p class="apprend"><b>Tu apprends :</b> génération procédurale, bruit de Perlin, décharger les tronçons trop loin pour libérer la mémoire. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">10</div>
+          <div class="num">11</div>
           <h4>Sauvegarder le monde</h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">11</div>
+          <div class="num">12</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">12</div>
+          <div class="num">13</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">13</div>
+          <div class="num">14</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -1114,6 +1174,16 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-6" data-cle="appris-6" placeholder="Ex. : J'ai appris que pour trier, l'ordinateur compare les joueurs deux par deux…"></textarea>
         <label for="idees-6"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-6" data-cle="idees-6" placeholder="Ex. : Plusieurs niveaux, chacun avec son classement…"></textarea>
+      </div>
+
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 7 · les flammes de la lave <span class="petit">· 25 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> un outil de particules (<code>moteur/particules.js</code>), une trentaine de flammes quand le héros tombe dans la lave, le héros qui brûle 1 seconde sur place avant de réapparaître. Sous le capot : « flammes en mémoire » et « en train de brûler ? » dans l'état en direct, les flammes et le compte à rebours dans les rayons X.</p>
+        <p class="petit">✍️ Réponses de Maxance : 1A (il brûle sur place), 2B (une trentaine de flammes, 2 secondes).</p>
+        <label for="appris-7"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-7" data-cle="appris-7" placeholder="Ex. : J'ai appris qu'une flamme, c'est plein de petites particules qui…"></textarea>
+        <label for="idees-7"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-7" data-cle="idees-7" placeholder="Ex. : Des éclaboussures quand je tombe dans l'eau…"></textarea>
       </div>
     </section>
   </main>

@@ -10,7 +10,9 @@
 // Les règles :
 //   - on a 5 VIES. Un trou ou de la lave = 1 vie en moins (étape 4) ;
 //   - tomber dans un trou → on réapparaît juste DEVANT ce trou, pour pouvoir le ressauter ;
-//   - tomber dans la lave, ou toucher une caisse ou un muret en bois → on réapparaît au dernier
+//   - tomber dans la lave → le héros BRÛLE 1 s sur place, avec des flammes (étape 7), puis réapparaît
+//     au dernier drapeau ;
+//   - toucher une caisse ou un muret en bois → on réapparaît au dernier
 //     drapeau atteint (étape 5 : seules les tours en pierre ne font pas mourir) ;
 //   - plus de vie → « Aïe ! », la partie est finie et tout recommence à zéro ;
 //   - drapeau n° 10 atteint (300 blocs) → c'est l'ARRIVÉE, la partie est gagnée (étape 6) ;
@@ -47,6 +49,8 @@ Jeu.Monde = (function () {
       chutes: 0,
       brulures: 0,
       piegesTouches: 0,
+      brulure: null, // pendant que le héros brûle : { reste, allumees, colonneRetour } (étape 7)
+      flammes: [], // les petites flammes (des particules, voir moteur/particules.js)
       obstaclesPasses: 0,
       nouveauRecord: false,
       prochainId: 1,
@@ -156,7 +160,14 @@ Jeu.Monde = (function () {
     const estDeLaLave = o.type === "lave" || o.type === "fosse";
     if (estDeLaLave) {
       monde.brulures += 1;
-      Jeu.Evenements.emettre("brule", infos);
+      Jeu.Evenements.emettre("brule", Object.assign(infos, { duree: C.brulure.duree, flammes: C.brulure.flammes }));
+      // Le héros ne réapparaît pas tout de suite : il brûle d'abord sur place (voir brulerUnPeu).
+      monde.brulure = { reste: C.brulure.duree, allumees: 0, colonneRetour: drapeau.colonne };
+      const j = monde.joueur;
+      j.etat = "brule";
+      j.vx = 0;
+      j.vy = 0;
+      return;
     } else {
       monde.piegesTouches += 1;
       Jeu.Evenements.emettre("piege", infos);
@@ -164,9 +175,34 @@ Jeu.Monde = (function () {
     if (perdreUneVie(monde, estDeLaLave ? "lave" : o.type)) Jeu.Joueur.reapparaitre(monde.joueur, drapeau.colonne);
   }
 
+  // Pendant que le héros brûle : il s'enfonce doucement, les flammes s'allument une à une,
+  // puis, au bout d'une seconde, il perd une vie et réapparaît au dernier drapeau.
+  function brulerUnPeu(monde, dt) {
+    const b = monde.brulure;
+    const R = C.brulure;
+    const j = monde.joueur;
+    b.reste -= dt;
+    j.animation += dt; // pour que l'affichage fasse clignoter le héros
+    j.y = Math.min(j.y + 25 * dt, C.solY - j.h + 20); // il s'enfonce un peu dans la lave
+    // Combien de flammes devraient être allumées à ce moment ? (elles s'allument régulièrement)
+    const voulues = Math.min(R.flammes, Math.ceil(R.flammes * (1 - Math.max(0, b.reste) / R.duree)));
+    while (b.allumees < voulues) {
+      b.allumees++;
+      const x = j.x - 8 + Math.random() * (j.l + 16);
+      const y = C.solY + 6 - Math.random() * 30;
+      const vitesse = R.vitesseMontee * (0.6 + Math.random() * 0.8);
+      Jeu.Particules.ajouter(monde.flammes, x, y, (Math.random() - 0.5) * 20, -vitesse, R.vieFlamme * (0.6 + Math.random() * 0.4), 9 + Math.random() * 9);
+    }
+    if (b.reste > 0) return;
+    monde.brulure = null;
+    if (perdreUneVie(monde, "lave")) Jeu.Joueur.reapparaitre(j, b.colonneRetour);
+  }
+
   function mettreAJour(monde, dt) {
     const Entrees = Jeu.Entrees;
     monde.tempsPhase += dt;
+    // Les flammes vivent dans toutes les phases : elles finissent de s'éteindre même après la partie.
+    Jeu.Particules.mettreAJour(monde.flammes, dt, C.brulure.tremblement);
 
     if (monde.phase !== "jeu") {
       // On consomme les appuis (| et pas ||) pour qu'aucun ne reste en attente.
@@ -183,6 +219,11 @@ Jeu.Monde = (function () {
     }
 
     monde.temps += dt;
+    if (monde.brulure) {
+      brulerUnPeu(monde, dt);
+      suivreAvecLaCamera(monde, dt);
+      return;
+    }
     const j = monde.joueur;
     Jeu.Joueur.mettreAJour(j, dt, monde);
     const ici = Jeu.Joueur.caseDuJoueur(j);

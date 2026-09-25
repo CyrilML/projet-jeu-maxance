@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 6,
+  version: 7,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -78,6 +78,15 @@ Jeu.CONFIG = {
   classement: {
     taille: 10, // on garde les 10 meilleurs joueurs
     pseudoMax: 12, // longueur maximum d'un pseudo, en lettres
+  },
+
+  // Tomber dans la lave (étape 7) : le héros brûle sur place, avec des flammes, puis réapparaît.
+  brulure: {
+    duree: 1, // le héros brûle pendant 1 s avant de réapparaître au dernier drapeau
+    flammes: 30, // nombre de flammes qui s'allument pendant qu'il brûle
+    vieFlamme: 2, // chaque flamme met 2 s à s'éteindre (elle continue après le départ du héros)
+    vitesseMontee: 70, // les flammes montent à environ 70 px/s
+    tremblement: 40, // et ondulent de gauche à droite (px/s)
   },
 
   // Les vies (étape 4). Trou ou lave = 1 vie en moins. À 0 vie : « Aïe ! » et tout recommence à zéro.

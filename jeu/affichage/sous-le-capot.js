@@ -35,7 +35,7 @@ Jeu.SousLeCapot = (function () {
       ") : le bois est mortel → retour au drapeau n° " + d.drapeau,
     brule: (d) =>
       "🔥 Tombé dans la " + (d.type === "fosse" ? "fosse" : "mare") + " de lave #" + d.id + " (colonne " + d.colonne +
-      ") : c'est liquide, on passe à travers → retour au drapeau n° " + d.drapeau,
+      ") : il brûle " + d.duree + " s, " + d.flammes + " flammes s'allument, puis retour au drapeau n° " + d.drapeau,
     "vie-perdue": (d) => (d.vies > 0 ? "💔 Une vie en moins (" + d.cause + ") → il en reste " + d.vies : "💀 Plus de vies ! (" + d.cause + ")"),
     "fin-partie": (d) =>
       (d.gagne ? "🏁 Partie gagnée : " : "🏁 Partie perdue : ") + d.score + " blocs en " + d.temps.toFixed(1) + " s, " + d.vies + " vie(s) restante(s)",
@@ -150,6 +150,8 @@ Jeu.SousLeCapot = (function () {
       ["vies", "❤️".repeat(monde.vies) + " " + monde.vies + " / " + Jeu.CONFIG.vies],
       ["chutes dans un trou", monde.chutes],
       ["brûlures dans la lave", monde.brulures],
+      ["en train de brûler ?", monde.brulure ? "oui 🔥 encore " + Math.max(0, monde.brulure.reste).toFixed(1) + " s" : "non"],
+      ["flammes en mémoire", monde.flammes.length],
       ["pièges en bois touchés", monde.piegesTouches],
       ["Carte en mémoire", ""],
       ["graine du monde", monde.graine],

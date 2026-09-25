@@ -6,7 +6,7 @@
 // les plus importantes de l'architecture d'un jeu.
 //
 // Le peintre repeint TOUT l'écran à chaque image, du fond vers l'avant :
-// ciel → nuages → collines → blocs du terrain (obstacles compris) → drapeaux → joueur → textes → rayons X.
+// ciel → nuages → collines → blocs du terrain (obstacles compris) → drapeaux → joueur → flammes → textes → rayons X.
 //
 // Le monde est plus grand que l'écran : on dessine à travers la CAMÉRA.
 // Pour chaque objet :  x sur l'écran = x dans le monde − camera.x
@@ -167,7 +167,9 @@ Jeu.Rendu = (function () {
     ctx.fillRect(x + 5, y + 34, 9, pas ? 9 : 12);
     ctx.fillRect(x + 16, y + 34, 9, pas ? 12 : 9);
     // Corps
-    ctx.fillStyle = j.etat === "touche" ? "#e05555" : "#2fa3d8";
+    // Corps : rouge s'il a perdu, noirci qui clignote s'il brûle, bleu sinon.
+    const clignote = Math.floor(j.animation * 20) % 2;
+    ctx.fillStyle = j.etat === "touche" ? "#e05555" : j.etat === "brule" ? (clignote ? "#3b2a26" : "#ff7a1a") : "#2fa3d8";
     ctx.fillRect(x + 3, y + 18, 24, 17);
     // Tête
     ctx.fillStyle = "#f1c27d";
@@ -177,6 +179,24 @@ Jeu.Rendu = (function () {
     ctx.fillStyle = "#1d1d3a";
     ctx.fillRect(x + 17, y + 8, 3, 4);
     ctx.fillRect(x + 23, y + 8, 3, 4);
+  }
+
+  // Les flammes : chaque particule est une petite flamme en pixels. Jeune, elle est grande et jaune ;
+  // en vieillissant, elle devient orange, puis rouge, et rapetisse jusqu'à disparaître.
+  function flammes(liste) {
+    for (const p of liste) {
+      const age = 1 - p.vie / p.vieMax; // 0 = vient de naître, 1 = va s'éteindre
+      const t = Math.max(2, Math.round(p.taille * (1 - age * 0.8)));
+      const x = Math.round(p.x - t / 2);
+      const y = Math.round(p.y - t);
+      ctx.fillStyle = age < 0.35 ? "#ff9f1a" : age < 0.7 ? "#ff5a1a" : "#b3261e";
+      ctx.fillRect(x, y + t * 0.3, t, t * 0.7); // la base, large
+      ctx.fillRect(x + t * 0.25, y, t * 0.5, t * 0.4); // la pointe
+      if (age < 0.6) {
+        ctx.fillStyle = "#ffe066"; // le cœur jaune, seulement chez les jeunes flammes
+        ctx.fillRect(x + t * 0.3, y + t * 0.45, t * 0.4, t * 0.45);
+      }
+    }
   }
 
   // --- Textes et écrans ---
@@ -234,7 +254,7 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 6 : pseudo, arrivée et classement", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 7 : les flammes de la lave", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au drapeau n° " + C.arrivee.drapeau + " (" + C.arrivee.drapeau * C.carte.longueurTroncon + " blocs) le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
@@ -410,6 +430,15 @@ Jeu.Rendu = (function () {
     note("caméra x = " + Math.round(cam.x) + "   écart à rattraper = " + Math.round(cam.cible - cam.x) + " px", L - 10, H - 24, "#7bff9e", "right");
     note("monde fabriqué jusqu'à la colonne " + (monde.terrain.colonnes.length - 1) + " →", L - 10, H - 8, "#7bff9e", "right");
 
+    // 7 bis. Les flammes : un petit point par particule, et leur nombre
+    if (monde.flammes.length) {
+      ctx.fillStyle = "#ffe066";
+      for (const p of monde.flammes) ctx.fillRect(p.x - camX - 1, p.y - 1, 3, 3);
+      const p0 = monde.flammes[0];
+      note("🔥 " + monde.flammes.length + " flammes en mémoire", p0.x - camX - 40, C.solY - 60, "#ffe066");
+    }
+    if (monde.brulure) note("brûle encore " + Math.max(0, monde.brulure.reste).toFixed(2) + " s", monde.joueur.x - camX - 20, C.solY - 76, "#ff9b9b");
+
     // 8. Le joueur : dessin, zone de collision, vitesse, case
     const jx = j.x - camX;
     const zone = Jeu.Joueur.hitbox(j);
@@ -477,6 +506,7 @@ Jeu.Rendu = (function () {
     terrain(monde);
     drapeaux(monde);
     joueur(monde.joueur, monde.phase);
+    flammes(monde.flammes);
     ctx.restore();
 
     if (options.rayonsX) rayonsX(monde);
