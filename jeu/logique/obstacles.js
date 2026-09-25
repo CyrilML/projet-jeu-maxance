@@ -7,7 +7,9 @@
 //     (le héros devient un petit squelette qui danse) et renvoie au dernier drapeau.
 //     Il n'est pas tiré au hasard : il y en a un tous les 50 blocs environ (étape 9).
 //   - la lave est LIQUIDE et MORTELLE : on passe à travers… et on brûle. Il y a les petites mares
-//     (1 ou 2 blocs, au hasard) et une grande fosse tous les 30 blocs.
+//     (1 ou 2 blocs, au hasard), une grande fosse tous les 30 blocs, et 3 LACS de lave (étape 10) :
+//     8 blocs de large, la lave monte 2 blocs plus haut que le sol. On les passe par la plateforme
+//     au-dessus, en posant des blocs pour y monter.
 //
 // Les obstacles sont écrits DANS LA GRILLE du terrain (numéros 4, 5, 6 et 7), comme le sol.
 // Leurs propriétés (solide, mortel) viennent des listes de logique/terrain.js. La liste
@@ -30,12 +32,13 @@ Jeu.Obstacles = (function () {
     muret: { l: 2, h: 1, case: CASES.pics }, // bois à pics : mortel (étape 8)
     lave: { l: 1, h: 1, case: CASES.lave, sousSol: true },
     fosse: { l: 3, h: 1, case: CASES.lave, sousSol: true }, // jamais tirée au hasard : une par tronçon
+    lac: { l: C.lacs.largeur, h: C.lacs.hauteurLave, case: CASES.lave, sousSol: true }, // étape 10 : plusieurs cases de haut
   };
 
   // Les obstacles possibles à cette colonne du monde (plus on va loin, plus il y a de choix).
   function typesPossibles(colonne) {
     // La fosse et le muret ont leurs propres places (ils ne sont jamais tirés au hasard).
-    return Object.keys(TYPES).filter((nom) => nom !== "fosse" && nom !== "muret" && colonne >= C.obstacles.debloque[nom]);
+    return Object.keys(TYPES).filter((nom) => !["fosse", "muret", "lac"].includes(nom) && colonne >= C.obstacles.debloque[nom]);
   }
 
   // Peut-on poser un obstacle de `largeur` blocs à cette colonne ?
@@ -43,6 +46,11 @@ Jeu.Obstacles = (function () {
   function placeLibre(terrain, colonne, largeur, infos) {
     const O = C.obstacles;
     const CARTE = C.carte;
+    // Près d'un lac : aucun obstacle (une tour permettrait de sauter jusqu'à la plateforme sans poser de blocs).
+    if (infos.lac !== null && infos.lac !== undefined) {
+      const loin = C.lacs.sansObstacle;
+      if (colonne + largeur - 1 >= infos.lac - loin && colonne <= infos.lac + C.lacs.largeur - 1 + loin) return false;
+    }
     for (let c = colonne - O.margeTrou; c < colonne + largeur + O.margeTrou; c++) {
       if (c < infos.debut + infos.zoneSure || c > infos.fin) return false;
       if (Jeu.Terrain.lireCase(terrain, c, CARTE.ligneSol) !== CASES.herbe) return false; // un trou ou de la lave
@@ -60,7 +68,8 @@ Jeu.Obstacles = (function () {
     const ligneSol = C.carte.ligneSol;
     for (let c = o.colonne; c < o.colonne + o.largeur; c++) {
       if (type.sousSol) {
-        Jeu.Terrain.ecrireCase(terrain, c, ligneSol, type.case);
+        // La lave remplit h cases : la ligne du sol, et (pour un lac) les lignes au-dessus.
+        for (let k = 0; k < type.h; k++) Jeu.Terrain.ecrireCase(terrain, c, ligneSol - k, type.case);
       } else {
         for (let k = 1; k <= type.h; k++) Jeu.Terrain.ecrireCase(terrain, c, ligneSol - k, type.case);
       }
@@ -79,7 +88,7 @@ Jeu.Obstacles = (function () {
       largeur,
       // Le rectangle occupé, en pixels (la lave est DANS le sol, les autres au-dessus).
       x: colonne * B,
-      y: type.sousSol ? C.solY : C.solY - type.h * B,
+      y: type.sousSol ? C.solY - (type.h - 1) * B : C.solY - type.h * B,
       l: largeur * B,
       h: type.h * B,
       passe: false,
@@ -108,8 +117,9 @@ Jeu.Obstacles = (function () {
     const O = C.obstacles;
     const de = infos.de;
     if (infos.arrivee) return 0; // le tronçon d'arrivée est tout plat, sans danger
-    // D'abord la grande fosse de lave, à sa place réservée.
-    poser(monde, "fosse", infos.fosse.colonne, infos.fosse.largeur);
+    // D'abord la grande fosse de lave (ou le lac), à sa place réservée.
+    if (infos.fosse) poser(monde, "fosse", infos.fosse.colonne, infos.fosse.largeur);
+    else poser(monde, "lac", infos.lac, C.lacs.largeur);
     let poses = 1;
     // Ensuite les murets, à leurs rendez-vous (tous les 50 blocs environ).
     for (const cible of infos.murets) {

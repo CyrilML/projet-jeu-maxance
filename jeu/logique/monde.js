@@ -52,6 +52,7 @@ Jeu.Monde = (function () {
       brulure: null, // pendant que le héros brûle : { reste, allumees, colonneRetour } (étape 7)
       danse: null, // pendant que le squelette danse : { reste, colonneRetour } (étape 8)
       flammes: [], // les petites flammes (des particules, voir moteur/particules.js)
+      inventaire: Jeu.Inventaire.creer(), // le sac à dos : 10 blocs à poser (étape 10)
       obstaclesPasses: 0,
       nouveauRecord: false,
       prochainId: 1,
@@ -158,7 +159,7 @@ Jeu.Monde = (function () {
   function toucherObstacleMortel(monde, o) {
     const drapeau = monde.drapeaux[monde.dernierDrapeau];
     const infos = { id: o.id, type: o.type, colonne: o.colonne, drapeau: drapeau.numero };
-    const estDeLaLave = o.type === "lave" || o.type === "fosse";
+    const estDeLaLave = o.type === "lave" || o.type === "fosse" || o.type === "lac";
     if (estDeLaLave) {
       monde.brulures += 1;
       Jeu.Evenements.emettre("brule", Object.assign(infos, { duree: C.brulure.duree, flammes: C.brulure.flammes }));
@@ -227,6 +228,7 @@ Jeu.Monde = (function () {
       // On consomme les appuis (| et pas ||) pour qu'aucun ne reste en attente.
       const veutJouer = Entrees.consommer("sauter") | Entrees.consommer("valider");
       const veutChanger = Entrees.consommer("changerPseudo");
+      Entrees.consommer("poserBloc"); // hors d'une partie, la touche P ne fait rien
       // À l'accueil, c'est le formulaire du pseudo qui lance la partie (voir main.js).
       // À la fin d'une partie : petite pause pour ne pas relancer par accident.
       const pret = monde.phase !== "accueil" && monde.tempsPhase > 0.4;
@@ -238,6 +240,7 @@ Jeu.Monde = (function () {
     }
 
     monde.temps += dt;
+    if (monde.brulure || monde.danse) Jeu.Entrees.consommer("poserBloc"); // pas de bloc pendant qu'on brûle ou qu'on danse
     if (monde.brulure) {
       brulerUnPeu(monde, dt);
       suivreAvecLaCamera(monde, dt);
@@ -250,6 +253,7 @@ Jeu.Monde = (function () {
     }
     const j = monde.joueur;
     Jeu.Joueur.mettreAJour(j, dt, monde);
+    Jeu.Inventaire.mettreAJour(monde); // P pendant un saut : un bloc sous les pieds
     const ici = Jeu.Joueur.caseDuJoueur(j);
 
     // Dans un trou, les pieds passent sous le niveau de l'herbe : le héros lève les bras (étape 8).

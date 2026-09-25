@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 9,
+  version: 10,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -93,6 +93,22 @@ Jeu.CONFIG = {
   squelette: {
     duree: 5, // le squelette danse pendant environ 5 s avant le retour au dernier drapeau (demandé par Maxance)
     pasDeDanse: 6, // nombre de mouvements de danse par seconde
+  },
+
+  // Les lacs de lave (étape 10) : trop larges pour être sautés, avec une plateforme trop haute pour
+  // être atteinte d'un saut. Il faut poser des blocs de l'inventaire pour monter dessus.
+  lacs: {
+    blocs: [75, 175, 275], // vers quels blocs sont les 3 lacs
+    largeur: 8, // en blocs
+    hauteurLave: 3, // la lave remplit 3 cases : la ligne du sol + 2 au-dessus (elle monte 2 blocs plus haut que le sol)
+    hauteurPlateforme: 5, // le dessus de la plateforme est 5 blocs au-dessus du sol (un saut monte d'environ 3,8 blocs)
+    marge: 4, // blocs d'herbe gardés de chaque côté (pas de trou)
+    sansObstacle: 7, // pas de tour ni d'autre obstacle à moins de 7 blocs : sinon on pourrait sauter de là jusqu'à la plateforme
+  },
+
+  // L'inventaire (étape 10) : des blocs à poser sous ses pieds pendant un saut (touche P).
+  inventaire: {
+    blocs: 10, // pour toute la partie
   },
 
   // Les vies (étape 4). Trou ou lave = 1 vie en moins. À 0 vie : « Aïe ! » et tout recommence à zéro.

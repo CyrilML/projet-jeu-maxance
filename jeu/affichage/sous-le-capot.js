@@ -37,11 +37,13 @@ Jeu.SousLeCapot = (function () {
       d.colonne < 0
         ? "🧱 Pas de place pour le muret du bloc " + d.cible
         : "🧱 Muret à pics posé au bloc " + d.bloc + " (rendez-vous du bloc " + d.cible + ", colonne " + d.colonne + ")",
+    "bloc-pose": (d) => "🧱 Bloc posé dans la case colonne " + d.colonne + ", ligne " + d.ligne + " → il en reste " + d.reste + " dans le sac",
+    "bloc-refuse": (d) => "🚫 Pas de bloc : " + d.raison,
     "fin-danse": (d) => "🕺 Le squelette a fini de danser (" + d.duree + " s)",
     "bras-leves": (d) => "🙌 Il tombe dans le trou de la colonne " + d.colonne + " : il lève les bras !",
     "demi-tour": (d) => "↩️ Demi-tour : le héros regarde maintenant vers la " + d.regard,
     brule: (d) =>
-      "🔥 Tombé dans la " + (d.type === "fosse" ? "fosse" : "mare") + " de lave #" + d.id + " (colonne " + d.colonne +
+      "🔥 Tombé dans " + ({ fosse: "la fosse", lac: "le lac" }[d.type] || "la mare") + " de lave #" + d.id + " (colonne " + d.colonne +
       ") : il brûle " + d.duree + " s, " + d.flammes + " flammes s'allument, puis retour au drapeau n° " + d.drapeau,
     "vie-perdue": (d) => (d.vies > 0 ? "💔 Une vie en moins (" + d.cause + ") → il en reste " + d.vies : "💀 Plus de vies ! (" + d.cause + ")"),
     "fin-partie": (d) =>
@@ -161,6 +163,9 @@ Jeu.SousLeCapot = (function () {
       ["squelette qui danse ?", monde.danse ? "oui 💀 encore " + Math.max(0, monde.danse.reste).toFixed(1) + " s" : "non"],
       ["regarde vers", j.regard < 0 ? "← la gauche" : "la droite →"],
       ["bras levés ?", j.brasLeves ? "oui 🙌" : "non"],
+      ["Inventaire (sac à dos)", ""],
+      ["blocs dans le sac", monde.inventaire.blocs + " / " + Jeu.CONFIG.inventaire.blocs],
+      ["blocs posés", monde.inventaire.poses],
       ["flammes en mémoire", monde.flammes.length],
       ["pièges en bois touchés", monde.piegesTouches],
       ["Carte en mémoire", ""],

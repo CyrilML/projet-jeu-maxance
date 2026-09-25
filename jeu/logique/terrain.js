@@ -4,6 +4,7 @@
 // un simple NUMÉRO qui dit ce qu'il y a dedans :
 //     0 = air      1 = herbe      2 = terre      3 = planche (plateforme)
 //     4 = bois (caisse)    5 = pierre (tour)    6 = lave    7 = bois à pics (muret)
+//     8 = brique (un bloc posé par le joueur, étape 10)
 //
 // Chaque sorte de case a des PROPRIÉTÉS, rangées dans des listes :
 //   - SOLIDE : on peut marcher dessus, et par le côté c'est un mur ;
@@ -27,12 +28,12 @@ Jeu.Terrain = (function () {
   const C = Jeu.CONFIG;
   const CARTE = C.carte;
 
-  const CASES = { air: 0, herbe: 1, terre: 2, planche: 3, bois: 4, pierre: 5, lave: 6, pics: 7 };
-  const NOMS = ["air", "herbe", "terre", "planche", "bois", "pierre", "lave", "pics"];
-  //              air    herbe terre planche bois  pierre lave   pics
-  const SOLIDES = [false, true, true, true, true, true, false, false]; // peut-on marcher dessus / se cogner dedans ?
-  const LIQUIDES = [false, false, false, false, false, false, true, false]; // passe-t-on à travers comme dans de l'eau ?
-  const MORTELS = [false, false, false, false, false, false, true, true]; // le toucher coûte-t-il une vie ?
+  const CASES = { air: 0, herbe: 1, terre: 2, planche: 3, bois: 4, pierre: 5, lave: 6, pics: 7, brique: 8 };
+  const NOMS = ["air", "herbe", "terre", "planche", "bois", "pierre", "lave", "pics", "brique"];
+  //              air    herbe terre planche bois  pierre lave   pics   brique
+  const SOLIDES = [false, true, true, true, true, true, false, false, true]; // peut-on marcher dessus / se cogner dedans ?
+  const LIQUIDES = [false, false, false, false, false, false, true, false, false]; // passe-t-on à travers comme dans de l'eau ?
+  const MORTELS = [false, false, false, false, false, false, true, true, false]; // le toucher coûte-t-il une vie ?
 
   function creer(graine) {
     return { graine, colonnes: [], troncons: 0, fini: false };
@@ -70,12 +71,17 @@ Jeu.Terrain = (function () {
     // Chaque tronçon a son propre dé, tiré de la graine du monde : même graine → même tronçon.
     const de = Jeu.Hasard.creer(terrain.graine * 1000 + numero);
     const zoneSure = numero === 0 ? CARTE.zoneSureDepart : CARTE.zoneSure;
-    // La place réservée à la fosse de lave (avec sa marge d'herbe) : ni trou ni plateforme ici.
+    // Un lac de lave dans ce tronçon ? (étape 10) Il prend alors la place de la fosse.
+    const lac = arrivee ? null : placeDuLac(debut, fin, zoneSure);
+    // La place réservée à la fosse de lave (ou au lac), avec sa marge d'herbe : ni trou ni plateforme ici.
     const F = C.fosses;
-    const fosse = { colonne: debut + F.position, largeur: F.largeur };
-    // Les places RÉSERVÉES : la fosse, et les murets de ce tronçon (étape 9). Chacune avec sa marge d'herbe.
-    const reserves = [{ debut: fosse.colonne - F.marge, fin: fosse.colonne + F.largeur - 1 + F.marge }];
-    const murets = placesDesMurets(debut, fin, zoneSure, reserves[0]);
+    const fosse = lac === null ? { colonne: debut + F.position, largeur: F.largeur } : null;
+    const grandDanger = fosse
+      ? { debut: fosse.colonne - F.marge, fin: fosse.colonne + F.largeur - 1 + F.marge }
+      : { debut: lac - C.lacs.marge, fin: lac + C.lacs.largeur - 1 + C.lacs.marge };
+    // Les places RÉSERVÉES : la fosse (ou le lac), et les murets de ce tronçon (étape 9).
+    const reserves = [grandDanger];
+    const murets = placesDesMurets(debut, fin, zoneSure, grandDanger);
     const marge = C.obstacles.margeTrou;
     for (const m of murets) reserves.push({ debut: m - marge, fin: m + LARGEUR_MURET - 1 + marge });
     // La place réservée touchée par ces colonnes, s'il y en a une.
@@ -114,9 +120,15 @@ Jeu.Terrain = (function () {
     }
 
     // 3. Les plateformes : une rangée de planches à 2 ou 3 blocs au-dessus du sol.
+    //    Dans un tronçon avec un lac, une seule plateforme : celle, très haute, au-dessus du lac.
     const P = C.plateformes;
     const plateformes = [];
-    const combien = de.entre(P.parTronconMin, P.parTronconMax);
+    if (lac !== null) {
+      const ligne = CARTE.ligneSol - C.lacs.hauteurPlateforme;
+      for (let k = lac; k < lac + C.lacs.largeur; k++) terrain.colonnes[k][ligne] = CASES.planche;
+      plateformes.push({ colonne: lac, largeur: C.lacs.largeur, hauteur: C.lacs.hauteurPlateforme, ligne, auDessusDuLac: true });
+    }
+    const combien = lac !== null ? 0 : de.entre(P.parTronconMin, P.parTronconMax);
     for (let essai = 0; essai < 20 && plateformes.length < combien; essai++) {
       const largeur = de.entre(P.largeurMin, P.largeurMax);
       const colonne = de.entre(debut + zoneSure, fin - largeur);
@@ -140,7 +152,8 @@ Jeu.Terrain = (function () {
       colonneDrapeau: debut + CARTE.colonneDrapeau,
       trous,
       plateformes,
-      fosse, // la place de la fosse de lave, que obstacles.js remplit
+      fosse, // la place de la fosse de lave, que obstacles.js remplit (null s'il y a un lac)
+      lac, // la première colonne du lac de lave (étape 10), ou null
       murets, // les colonnes réservées aux murets à pics (étape 9), que obstacles.js remplit
       de, // le même dé servira à placer les obstacles
     };
@@ -176,6 +189,20 @@ Jeu.Terrain = (function () {
       }
     }
     return colonnes;
+  }
+
+  // Le lac de lave de ce tronçon (étape 10) : renvoie sa première colonne, ou null s'il n'y en a pas.
+  // Il doit tenir en entier dans le tronçon, avec sa marge, et laisser la zone du drapeau tranquille.
+  function placeDuLac(debut, fin, zoneSure) {
+    const Lc = C.lacs;
+    for (const bloc of Lc.blocs) {
+      const ideale = CARTE.colonneDrapeau + bloc;
+      if (Math.floor(ideale / CARTE.longueurTroncon) !== debut / CARTE.longueurTroncon) continue;
+      const min = debut + zoneSure + Lc.marge;
+      const max = fin - Lc.marge - Lc.largeur + 1;
+      return Math.max(min, Math.min(max, ideale));
+    }
+    return null;
   }
 
   // Combien de cases sont rangées en mémoire ?

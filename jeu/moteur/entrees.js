@@ -17,7 +17,8 @@ Jeu.Entrees = (function () {
     droite: ["ArrowRight", "KeyD"],
     sauter: ["Space", "ArrowUp", "KeyW"],
     valider: ["Enter"],
-    pause: ["KeyP", "Escape"],
+    pause: ["Escape"], // la touche P sert maintenant à poser un bloc (étape 10)
+    poserBloc: ["KeyP"],
     rayonsX: ["KeyX"],
     pasSuivant: ["KeyN"],
     ralenti: ["KeyL"],

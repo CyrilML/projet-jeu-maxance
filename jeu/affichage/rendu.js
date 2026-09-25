@@ -76,7 +76,31 @@ Jeu.Rendu = (function () {
       planche: ["#d9a55b", "#a8773a"],
       lave: ["#ff7a1a", "#ffd23f"],
       pics: ["#8c5a28", "#5e3a18"], // le bois du muret, plus sombre, avec des pics rouges
+      brique: ["#b5523b", "#e8d9c4"], // les blocs posés par le joueur : brique rouge et joints clairs
     }[matiere];
+    if (matiere === "lave-profonde") {
+      // La lave sous la surface d'un lac : pleine, sans surface, avec quelques bulles.
+      ctx.fillStyle = "#c2410c";
+      ctx.fillRect(x, y, B, B);
+      ctx.fillStyle = "#ff7a1a";
+      ctx.fillRect(x + ((graine * 11) % 26) + 4, y + 8, 6, 6);
+      ctx.fillRect(x + ((graine * 5) % 28) + 2, y + 26, 5, 5);
+      return;
+    }
+    if (matiere === "brique") {
+      ctx.fillStyle = couleurs[0];
+      ctx.fillRect(x, y, B, B);
+      ctx.fillStyle = couleurs[1]; // les joints entre les briques
+      for (let r = 0; r < 4; r++) {
+        ctx.fillRect(x, y + r * 10, B, 2);
+        const decale = r % 2 ? 10 : 0;
+        ctx.fillRect(x + decale, y + r * 10, 2, 10);
+        ctx.fillRect(x + decale + 20, y + r * 10, 2, 10);
+      }
+      ctx.strokeStyle = "rgba(0,0,0,0.3)";
+      ctx.strokeRect(x + 0.5, y + 0.5, B - 1, B - 1);
+      return;
+    }
     if (matiere === "lave") {
       // Un liquide : la surface est un peu plus basse que le haut de la case, avec des bulles claires.
       ctx.fillStyle = "#c2410c";
@@ -130,7 +154,11 @@ Jeu.Rendu = (function () {
     for (let c = Math.max(0, premiere); c <= derniere; c++) {
       for (let l = 0; l < C.carte.lignes; l++) {
         const numero = Jeu.Terrain.lireCase(monde.terrain, c, l);
-        if (numero !== Jeu.Terrain.CASES.air) bloc(c * B, l * B, Jeu.Terrain.NOMS[numero], c * 7 + l * 13);
+        if (numero === Jeu.Terrain.CASES.air) continue;
+        let matiere = Jeu.Terrain.NOMS[numero];
+        // De la lave sous de la lave (dans un lac) : pas de surface, elle est « profonde ».
+        if (numero === Jeu.Terrain.CASES.lave && Jeu.Terrain.lireCase(monde.terrain, c, l - 1) === numero) matiere = "lave-profonde";
+        bloc(c * B, l * B, matiere, c * 7 + l * 13);
       }
     }
   }
@@ -299,10 +327,23 @@ Jeu.Rendu = (function () {
     texte("Record " + Jeu.Sauvegarde.donnees.record, 20, 66, 18, "#ffe27a");
     for (let v = 0; v < C.vies; v++) coeur(20 + v * 30, 80, v < monde.vies);
     texte("🚩 " + monde.dernierDrapeau + "   Chutes " + monde.chutes + "   Lave " + monde.brulures + "   Pièges " + monde.piegesTouches, 20, 124, 16, "#fff");
-    texte("X : rayons X   P : pause", L - 20, 32, 15, "#fff", "right");
+    texte("X : rayons X   Échap : pause", L - 20, 32, 15, "#fff", "right");
     texte("👤 " + monde.pseudo, L - 20, 56, 18, "#ffe27a", "right");
     const reste = monde.drapeaux.length ? C.arrivee.drapeau * C.carte.longueurTroncon - monde.score : 0;
     if (reste > 0) texte("🏁 encore " + reste + " blocs", L - 20, 80, 15, "#fff", "right");
+    // L'inventaire : une petite brique par bloc qui reste dans le sac (étape 10)
+    const inv = monde.inventaire;
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(16, 134, C.inventaire.blocs * 16 + 8, 22);
+    for (let k = 0; k < C.inventaire.blocs; k++) {
+      ctx.fillStyle = k < inv.blocs ? "#b5523b" : "#3a3f55";
+      ctx.fillRect(20 + k * 16, 138, 13, 13);
+      if (k < inv.blocs) {
+        ctx.fillStyle = "#e8d9c4";
+        ctx.fillRect(20 + k * 16, 144, 13, 1);
+      }
+    }
+    texte("🎒 " + inv.blocs + "   saute + P : poser un bloc", 28 + C.inventaire.blocs * 16, 152, 15, "#fff");
     if (options.ralenti) texte("🐢 RALENTI (×0,25)", L / 2, 32, 18, "#ffe27a", "center");
   }
 
@@ -322,15 +363,16 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 9 : un muret tous les 50 blocs", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 10 : lacs de lave et inventaire", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au drapeau n° " + C.arrivee.drapeau + " (" + C.arrivee.drapeau * C.carte.longueurTroncon + " blocs) le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
     texte("❤️ " + C.vies + " vies · 🕳️ Trou : tu repars devant le trou", L / 2, 386, 17, "#cfe0ff", "center");
     texte("🔥 Lave et 💀 murets à pics (un tous les 50 blocs) : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
     texte("📦 Caisses et 🗼 tours en pierre : sans danger, monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
+    texte("🎒 " + C.inventaire.blocs + " blocs : saute puis P pour poser un bloc sous tes pieds (Échap : pause)", L / 2, 470, 17, "#cfe0ff", "center");
     const premier = Jeu.Sauvegarde.donnees.classement[0];
-    if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 482, 18, "#ffe27a", "center");
+    if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 504, 18, "#ffe27a", "center");
     texte("version " + C.version, L - 12, H - 12, 14, "#cfe0ff", "right");
   }
 
@@ -480,7 +522,7 @@ Jeu.Rendu = (function () {
       ctx.strokeRect(x, o.y, o.l, o.h);
       const haut = o.y < C.solY ? o.y : o.y - 30;
       note("#" + o.id + " " + o.type + " · colonne " + o.colonne, x, haut - 20, "#fff");
-      const danger = !o.mortel ? "solide : on marche dessus" : o.solide ? "" : o.type === "lave" || o.type === "fosse" ? "liquide : on brûle !" : "piège : ne pas toucher !";
+      const danger = !o.mortel ? "solide : on marche dessus" : o.solide ? "" : o.type === "lave" || o.type === "fosse" || o.type === "lac" ? "liquide : on brûle !" : "piège : ne pas toucher !";
       note(danger, x, haut - 5, o.mortel ? "#ff9b9b" : "#7bff9e");
     }
 
@@ -504,6 +546,17 @@ Jeu.Rendu = (function () {
       for (const p of monde.flammes) ctx.fillRect(p.x - camX - 1, p.y - 1, 3, 3);
       const p0 = monde.flammes[0];
       note("🔥 " + monde.flammes.length + " flammes en mémoire", p0.x - camX - 40, C.solY - 60, "#ffe066");
+    }
+    // La case où irait un bloc si on appuyait sur P maintenant (étape 10)
+    if (monde.phase === "jeu" && j.etat !== "au-sol" && !monde.brulure && !monde.danse) {
+      const vise = Jeu.Inventaire.caseVisee(j);
+      const refus = Jeu.Inventaire.raisonDuRefus(monde);
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = refus ? "#ff7b7b" : "#7bff9e";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(vise.colonne * B - camX + 2, vise.ligne * B + 2, B - 4, B - 4);
+      ctx.setLineDash([]);
+      note(refus ? "P : non, " + refus : "P : un bloc ici", vise.colonne * B - camX + 2, vise.ligne * B + B + 14, refus ? "#ff9b9b" : "#7bff9e");
     }
     if (monde.danse) note("💀 danse encore " + Math.max(0, monde.danse.reste).toFixed(2) + " s", monde.joueur.x - camX - 20, C.solY - 76, "#ffffff");
     if (monde.brulure) note("brûle encore " + Math.max(0, monde.brulure.reste).toFixed(2) + " s", monde.joueur.x - camX - 20, C.solY - 76, "#ff9b9b");
@@ -587,7 +640,7 @@ Jeu.Rendu = (function () {
       ctx.fillStyle = "rgba(10, 15, 35, 0.75)";
       ctx.fillRect(L / 2 - 250, 48, 500, 62);
       texte("⏸ PAUSE", L / 2, 76, 24, "#fff", "center");
-      texte("P : reprendre     N : avancer d'un pas (1/120 s)", L / 2, 100, 16, "#cfe0ff", "center");
+      texte("Échap : reprendre     N : avancer d'un pas (1/120 s)", L / 2, 100, 16, "#cfe0ff", "center");
     }
   }
 
