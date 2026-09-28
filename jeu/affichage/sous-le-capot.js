@@ -98,10 +98,21 @@ Jeu.SousLeCapot = (function () {
 
     afficherBase();
     afficherClassement();
+    // On ne remet à jour les tableaux que si on peut les voir : pas quand ils sont en bas de la page,
+    // hors de l'écran, ni quand l'onglet est caché. Sinon, c'est du travail pour rien, qui fait
+    // saccader le jeu sur les ordinateurs lents (bug trouvé par Maxance le 28/09).
+    let panneauVisible = true;
+    const panneau = elements.etat.closest("section");
+    if (panneau && "IntersectionObserver" in window) {
+      new IntersectionObserver((entrees) => {
+        panneauVisible = entrees[0].isIntersecting;
+      }).observe(panneau);
+    }
     setInterval(() => {
+      if (!panneauVisible || document.hidden) return;
       afficherEtat();
       afficherCarte();
-    }, 100); // 10 fois par seconde suffit pour des yeux humains
+    }, 250); // 4 fois par seconde suffit pour des yeux humains
   }
 
   function ajouterAuJournal(nom, message) {
@@ -214,12 +225,37 @@ Jeu.SousLeCapot = (function () {
       ["Entrées (intentions)", ""],
       ["gauche / droite / sauter", ["gauche", "droite", "sauter"].map((a) => (Jeu.Entrees.estEnfoncee(a) ? "🟢" : "⚪")).join(" ")],
     ];
-    elements.etat.innerHTML = lignes
-      .map(([nom, valeur]) =>
-        valeur === "" ? `<tr class="groupe"><th colspan="2">${nom}</th></tr>` : `<tr><td>${nom}</td><td>${valeur}</td></tr>`
-      )
-      .join("");
+    // Le tableau est construit une seule fois ; ensuite, on change seulement les valeurs qui ont bougé.
+    // (Reconstruire tout le tableau à chaque fois coûte cher à l'ordinateur : il doit tout recalculer.)
+    const noms = lignes.map((l) => l[0]).join("|");
+    if (noms !== etatConstruit.noms) {
+      elements.etat.replaceChildren();
+      etatConstruit = { noms, cases: [] };
+      for (const [nom, valeur] of lignes) {
+        const tr = document.createElement("tr");
+        if (valeur === "") {
+          tr.className = "groupe";
+          const th = document.createElement("th");
+          th.colSpan = 2;
+          th.textContent = nom;
+          tr.append(th);
+          etatConstruit.cases.push(null);
+        } else {
+          const td1 = document.createElement("td");
+          const td2 = document.createElement("td");
+          td1.textContent = nom;
+          tr.append(td1, td2);
+          etatConstruit.cases.push(td2);
+        }
+        elements.etat.append(tr);
+      }
+    }
+    lignes.forEach(([, valeur], i) => {
+      const td = etatConstruit.cases[i];
+      if (td && td.textContent !== String(valeur)) td.textContent = valeur;
+    });
   }
+  let etatConstruit = { noms: "", cases: [] };
 
   // La carte telle qu'elle est rangée en mémoire : les colonnes visibles, avec le numéro de chaque case.
   function afficherCarte() {
@@ -228,20 +264,52 @@ Jeu.SousLeCapot = (function () {
     const premiere = Math.max(0, Math.floor(monde.camera.x / B));
     const derniere = premiere + Math.ceil(Jeu.CONFIG.ecran.largeur / B);
     const ici = Jeu.Joueur.caseDuJoueur(monde.joueur);
-    let html = "<tr><th>lig.</th>";
-    for (let c = premiere; c <= derniere; c++) html += "<th>" + c + "</th>";
-    html += "</tr>";
-    for (let l = 0; l < Jeu.CONFIG.carte.lignes; l++) {
-      html += "<tr><th>" + l + "</th>";
-      for (let c = premiere; c <= derniere; c++) {
+    const largeur = derniere - premiere + 1;
+    const lignes = Jeu.CONFIG.carte.lignes;
+    // Construire les cases une seule fois (la première fois)
+    if (!carteConstruite) {
+      carteConstruite = { entetes: [], cases: [] };
+      const tete = document.createElement("tr");
+      const coin = document.createElement("th");
+      coin.textContent = "lig.";
+      tete.append(coin);
+      for (let k = 0; k < largeur; k++) {
+        const th = document.createElement("th");
+        tete.append(th);
+        carteConstruite.entetes.push(th);
+      }
+      elements.carte.append(tete);
+      for (let l = 0; l < lignes; l++) {
+        const tr = document.createElement("tr");
+        const th = document.createElement("th");
+        th.textContent = l;
+        tr.append(th);
+        const rangee = [];
+        for (let k = 0; k < largeur; k++) {
+          const td = document.createElement("td");
+          tr.append(td);
+          rangee.push(td);
+        }
+        elements.carte.append(tr);
+        carteConstruite.cases.push(rangee);
+      }
+    }
+    // Puis ne changer que ce qui a changé
+    const change = (element, texte, classe) => {
+      if (element.textContent !== texte) element.textContent = texte;
+      if (classe !== undefined && element.className !== classe) element.className = classe;
+    };
+    for (let k = 0; k < largeur; k++) {
+      const c = premiere + k;
+      change(carteConstruite.entetes[k], String(c));
+      for (let l = 0; l < lignes; l++) {
         const numero = Jeu.Terrain.lireCase(monde.terrain, c, l);
         const heros = c === ici.colonne && l === ici.ligne ? " heros" : "";
-        html += '<td class="c' + numero + heros + '">' + numero + "</td>";
+        change(carteConstruite.cases[l][k], String(numero), "c" + numero + heros);
       }
-      html += "</tr>";
     }
-    elements.carte.innerHTML = html;
   }
+  let carteConstruite = null;
 
   return { initialiser };
 })();

@@ -1533,6 +1533,14 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <label for="idees-12"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-12" data-cle="idees-12" placeholder="Ex. : Un boss au bloc 1 000…"></textarea>
       </div>
+
+      <div class="carte" style="margin-top: 14px">
+        <h4>🐞 Bug réparé · le jeu saccadait <span class="petit">· 28 septembre 2026</span></h4>
+        <p><strong>Ce que Maxance a vu :</strong> « le jeu fait did, did, did, il s'arrête puis il reprend ». Ce n'était pas la connexion : une fois chargé, le jeu tourne entièrement dans l'ordinateur.</p>
+        <p><strong>La cause :</strong> le panneau « La carte en mémoire », sous le jeu, était entièrement reconstruit 10 fois par seconde (350 cases). À chaque fois, le navigateur devait tout recalculer. Sur un ordinateur un peu lent, ça bloquait le jeu un instant, 10 fois par seconde.</p>
+        <p><strong>La réparation :</strong> les tableaux sont construits une seule fois, puis on change seulement les cases qui ont changé, 4 fois par seconde, et plus du tout quand le panneau est hors de l'écran. Mesuré sur un ordinateur 6 fois plus lent : 8 images par seconde avant, 20 après (26 au maximum possible).</p>
+        <p class="petit">💡 La leçon : dans un jeu, il faut faire attention à tout ce qui se répète très souvent. Un petit travail × 10 fois par seconde, ça devient vite un gros travail !</p>
+      </div>
     </section>
   </main>
 
