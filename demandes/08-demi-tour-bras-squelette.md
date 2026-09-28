@@ -15,6 +15,7 @@
 ## ⚙️ Comment (les règles)
 - ✍️ Le squelette est le personnage lui-même, qui devient un petit squelette qui DANSE.
 - ✍️ Il danse environ 5 secondes, puis 1 vie en moins et retour au dernier drapeau.
+  → Changé le 28/09/2026 à la demande de Maxance : 3 secondes (5, c'était trop long).
 - 💡 Touchée par le côté, la caisse est un mur (il faut sauter dessus), comme la tour.
 - 💡 Le muret dangereux a des pics rouges pour qu'on le reconnaisse (nouveau bloc n° 7, « bois à pics »).
 

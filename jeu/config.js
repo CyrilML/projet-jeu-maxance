@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 12,
+  version: 13,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -91,7 +91,7 @@ Jeu.CONFIG = {
 
   // Toucher un muret (étape 8) : le héros devient un petit squelette qui danse, puis réapparaît.
   squelette: {
-    duree: 5, // le squelette danse pendant environ 5 s avant le retour au dernier drapeau (demandé par Maxance)
+    duree: 3, // le squelette danse pendant 3 s avant le retour au dernier drapeau (5 s au début, trop long pour Maxance)
     pasDeDanse: 6, // nombre de mouvements de danse par seconde
   },
 

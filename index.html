@@ -1042,7 +1042,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <ul>
             <li>☐ Va à gauche : ton héros regarde à gauche.</li>
             <li>☐ Atterris sur une caisse ou une tour : aucun danger.</li>
-            <li>☐ Touche un muret à pics rouges : un squelette danse environ 5 s, puis un cœur en moins et retour au drapeau.</li>
+            <li>☐ Touche un muret à pics rouges : un squelette danse environ 5 s, puis un cœur en moins et retour au drapeau. <em>(Changé le 28/09 : 3 s, c'était trop long.)</em></li>
             <li>☐ Tombe dans un trou : ton héros lève les bras.</li>
             <li>Vérifie « version 8 ».</li>
           </ul>
@@ -1080,7 +1080,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Si <code>regard = −1</code>, de quel côté regarde le héros ?</summary><p>À gauche. Le peintre retourne le dessin avec <code>ctx.scale(-1, 1)</code>.</p></details>
       <details class="question"><summary>Combien vaut 7 % 4 ?</summary><p>3 : 7 = 4 × 1 + 3. Le squelette serait donc dans sa 4ᵉ pose (on compte à partir de 0).</p></details>
       <details class="question"><summary>Pourquoi a-t-il fallu créer le bloc n° 7 ?</summary><p>Parce que les propriétés (solide, mortel) vont avec le <em>numéro</em> du bloc. Avec le même numéro, la caisse et le muret auraient forcément les mêmes règles.</p></details>
-      <details class="question"><summary>Où changer pour que le squelette danse 10 secondes ?</summary><p>Dans <code>config.js</code> : <code>squelette.duree: 10</code>.</p></details>
+      <details class="question"><summary>Où changer pour que le squelette danse 10 secondes ?</summary><p>Dans <code>config.js</code> : <code>squelette.duree: 10</code>. (C'est exactement ce qu'on a fait quand Maxance a trouvé 5 s trop long : on a mis 3.)</p></details>
     </section>
 
     <!-- ============ ÉTAPE 9 ============ -->
