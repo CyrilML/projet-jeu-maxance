@@ -136,6 +136,7 @@
       <a href="#etape10">Étape 10</a>
       <a href="#etape11">Étape 11</a>
       <a href="#etape12">Étape 12</a>
+      <a href="#etape13">Étape 13</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -502,7 +503,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p class="petit">C'est plus lent, donc on y écrit rarement et seulement l'important.</p>
         </div>
       </div>
-      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 16.</p>
+      <p>Pour l'instant, la base est rangée dans ton navigateur (« localStorage »), au format <strong>JSON</strong>, une façon d'écrire des objets sous forme de texte. Dans Minecraft, le monde entier est sauvegardé de cette manière, bloc par bloc. On y arrivera à l'étape 17.</p>
 
       <h3>🔍 Missions d'exploration</h3>
       <p>Ouvre le jeu, active les rayons X (<kbd>X</kbd>) et mène l'enquête :</p>
@@ -1288,6 +1289,68 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Pourquoi le drapeau d'arrivée est-il à la colonne 1002 ?</summary><p>On part de la colonne 2, et on compte 1 000 blocs : 2 + 1 000 = 1 002.</p></details>
     </section>
 
+    <!-- ============ ÉTAPE 13 ============ -->
+    <section id="etape13">
+      <h2>🐷 Étape 13 : grottes, charbon, cochons et cuisine <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Sous terre, des grottes de pierre cachent du charbon. En surface, des cochons se promènent. Avec les deux, on cuisine de quoi reprendre des forces !</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/13-grottes-charbon-cochons-cuisine.md</code>.</p>
+          <p><strong>Règles :</strong> 4 grottes à escaliers (environ tous les 200 blocs). Charbon : <kbd>F</kbd> × 2. Cochons : 10 PV, 1 viande crue. <kbd>K</kbd> cuit (charbon + viande crue), <kbd>M</kbd> mange (cuite +8 PV, crue +2). Pioche : 30 coups, réparée avec <kbd>R</kbd>.</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Descends un escalier : la caméra te suit sous terre.</li>
+            <li>☐ <kbd>F</kbd> × 2 sur un minerai de charbon : « ⚫ 1 ».</li>
+            <li>☐ 2 coups d'épée sur un cochon : « 🥩 1 ».</li>
+            <li>☐ <kbd>K</kbd> puis <kbd>M</kbd> : +8 PV.</li>
+            <li>☐ La barre grise de la pioche baisse ; <kbd>R</kbd> la répare.</li>
+            <li>Vérifie « version 14 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🎥 Une caméra qui descend</h3>
+      <p>Jusqu'ici, la caméra ne bougeait que de gauche à droite (<code>camera.x</code>). Pour les grottes, le monde est devenu plus profond (24 lignes au lieu de 14), et la caméra a gagné un deuxième nombre : <code>camera.y</code>. La règle : « les pieds du héros ne doivent pas descendre plus bas que 440 px sur l'écran ». En surface, <code>camera.y = 0</code> ; au fond de la grotte, elle vaut 280.</p>
+      <p class="petit">La formule de l'étape 2 devient : x écran = x monde − camera.x, et <strong>y écran = y monde − camera.y</strong>.</p>
+
+      <h3>🏗️ Comment on creuse une grotte</h3>
+      <div class="carte">
+        <p>Dans un tronçon de 30 colonnes, le cartographe :</p>
+        <ol>
+          <li>remplit le sous-sol de roche (n° 10) ;</li>
+          <li>creuse un <strong>escalier qui descend</strong> : à chaque colonne, une marche une ligne plus bas ;</li>
+          <li>vide une <strong>salle</strong> de 4 cases de haut, sous un plafond de terre ;</li>
+          <li>creuse un <strong>escalier qui remonte</strong> ;</li>
+          <li>pose 3 minerais de charbon (n° 11) sur le sol de la grotte.</li>
+        </ol>
+        <p class="petit">L'ouverture de l'escalier fait 7 blocs : trop large pour un saut, donc on est obligé de descendre.</p>
+      </div>
+
+      <h3>🐷 Les cochons : une toute petite intelligence</h3>
+      <p>Chaque cochon suit <strong>une seule règle</strong> : « avance ; si tu es trop loin de chez toi, au bord d'un trou ou devant un mur, fais demi-tour ». Avec juste ça, il a l'air de se promener tout seul ! C'est le début de l'<strong>intelligence artificielle</strong> des jeux vidéo.</p>
+
+      <h3>🍳 Une recette</h3>
+      <p><strong>1 charbon + 1 viande crue → 1 viande cuite.</strong> Pour le jeu, une recette, c'est juste : « si j'ai tout ce qu'il faut, j'enlève les ingrédients et j'ajoute le résultat ». Sinon, le journal dit ce qui manque.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Descends dans une grotte et regarde « camera.y » dans les rayons X.</li>
+        <li>Dans « La carte en mémoire », trouve les <code>10</code> (roche) et les <code>11</code> (charbon). Les numéros de lignes changent quand tu descends : pourquoi ?</li>
+        <li>Observe un cochon : quand fait-il demi-tour ?</li>
+        <li>Appuie sur <kbd>K</kbd> sans charbon : que dit le journal ?</li>
+        <li>Mange de la viande crue, puis de la viande cuite : combien de PV chacune ?</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Au fond de la grotte, tes pieds sont à y = 720. Combien vaut camera.y ?</summary><p>720 − 440 = 280.</p></details>
+      <details class="question"><summary>Combien de charbons dans une partie complète ?</summary><p>4 grottes × 3 minerais = 12 charbons, donc 12 viandes cuites au maximum.</p></details>
+      <details class="question"><summary>Pourquoi le monde est-il passé de 14 à 24 lignes ?</summary><p>Pour avoir de la place sous le sol : la grotte est aux lignes 14 à 17, et son sol à la ligne 18.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -1366,44 +1429,50 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>Arrivée au bloc 1 000 (10 monstres), épée qui s'use, fer tous les 20 blocs à casser avec la pioche (F) pour réparer (R).</p>
           <p class="apprend"><b>Tu apprends :</b> compteurs d'usure, comparer des fractions, rendez-vous réguliers et conflits de place. <b>Durée :</b> 1 à 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">13</div>
+          <h4>Grottes, charbon, cochons et cuisine <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>4 grottes à escaliers, du charbon à piocher, des cochons, une recette (K) et des repas (M) ; la pioche s'use.</p>
+          <p class="apprend"><b>Tu apprends :</b> une caméra qui monte et descend, creuser un niveau dans la grille, une petite intelligence artificielle, une recette. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">14</div>
           <h4>Casser et poser des blocs <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Clic gauche pour casser, clic droit pour poser, à portée de bras.</p>
           <p class="apprend"><b>Tu apprends :</b> transformer un clic en case de la grille, « la donnée d'abord, le dessin suit », événements de la souris. <b>Durée :</b> 1 à 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">14</div>
+          <div class="num">15</div>
           <h4>Inventaire et catalogue des blocs</h4>
           <p>Chaque bloc cassé va dans l'inventaire (piles de 64), avec une barre en bas de l'écran.</p>
           <p class="apprend"><b>Tu apprends :</b> identifiants (déjà 0 à 6 depuis l'étape 3), catalogue de propriétés (dureté, en plus de solide ou liquide), structures de données. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">15</div>
+          <div class="num">16</div>
           <h4>Collines, grottes et minerais</h4>
           <p>Le monde est déjà sans fin depuis l'étape 2. Ici, il devient plus riche : du relief, des grottes, des minerais cachés sous terre.</p>
           <p class="apprend"><b>Tu apprends :</b> génération procédurale, bruit de Perlin, décharger les tronçons trop loin pour libérer la mémoire. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">16</div>
+          <div class="num">17</div>
           <h4>Sauvegarder le monde</h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">17</div>
+          <div class="num">18</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">18</div>
+          <div class="num">19</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">19</div>
+          <div class="num">20</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -1540,6 +1609,16 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <p><strong>La cause :</strong> le panneau « La carte en mémoire », sous le jeu, était entièrement reconstruit 10 fois par seconde (350 cases). À chaque fois, le navigateur devait tout recalculer. Sur un ordinateur un peu lent, ça bloquait le jeu un instant, 10 fois par seconde.</p>
         <p><strong>La réparation :</strong> les tableaux sont construits une seule fois, puis on change seulement les cases qui ont changé, 4 fois par seconde, et plus du tout quand le panneau est hors de l'écran. Mesuré sur un ordinateur 6 fois plus lent : 8 images par seconde avant, 20 après (26 au maximum possible).</p>
         <p class="petit">💡 La leçon : dans un jeu, il faut faire attention à tout ce qui se répète très souvent. Un petit travail × 10 fois par seconde, ça devient vite un gros travail !</p>
+      </div>
+
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 13 · grottes, charbon, cochons et cuisine <span class="petit">· 28 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> un monde plus profond (24 lignes) et une caméra qui descend ; 4 grottes à escaliers avec du charbon (n° 11) dans la roche (n° 10) ; des cochons qui se promènent ; la cuisine (K) et les repas (M) ; la pioche en pierre qui s'use (30 coups) et que R répare.</p>
+        <p class="petit">✍️ Réponses de Maxance : 1A, puis « tout en A ». Le squelette danse maintenant 3 s (demandé le même jour).</p>
+        <label for="appris-13"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-13" data-cle="appris-13" placeholder="Ex. : J'ai appris que la caméra a maintenant un y…"></textarea>
+        <label for="idees-13"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-13" data-cle="idees-13" placeholder="Ex. : Des chauves-souris dans les grottes…"></textarea>
       </div>
     </section>
   </main>

@@ -14,7 +14,11 @@
 //
 // Étape 12 : l'épée S'USE (20 coups sur un monstre, puis elle est cassée et ne fait plus de dégâts).
 //   - Touche F : un coup de pioche sur le bloc de fer juste devant. 3 coups → il casse → +1 fer.
-//   - Touche R : 1 fer répare À NEUF ce qui est le plus abîmé : l'épée ou le bouclier.
+//   - Touche R : 1 fer répare À NEUF ce qui est le plus abîmé : l'épée, le bouclier ou la pioche.
+//
+// Étape 13 : la pioche s'use aussi (30 coups) ; le minerai de charbon des grottes donne du charbon ;
+// l'épée tue les cochons (viande crue) ; K cuit (1 charbon + 1 viande crue = 1 viande cuite) ;
+// M mange (viande cuite +8 PV, crue +2 PV).
 
 window.Jeu = window.Jeu || {};
 
@@ -30,8 +34,12 @@ Jeu.Combat = (function () {
       potions: C.combat.potions,
       epee: C.combat.usureEpee, // coups qui restent avant que l'épée casse (étape 12)
       fer: 0, // morceaux de fer dans le sac (étape 12)
+      pioche: C.pioche.usure, // coups qui restent avant que la pioche casse (étape 13)
+      charbon: 0,
+      viandeCrue: 0,
+      viandeCuite: 0,
       coup: 0, // animation du coup d'épée (s)
-      pioche: 0, // animation du coup de pioche (s)
+      coupPioche: 0, // animation du coup de pioche (s)
     };
   }
 
@@ -71,11 +79,11 @@ Jeu.Combat = (function () {
     return m.x - (j.x + j.l);
   }
 
-  // Le bloc de fer (pas encore cassé) juste devant le héros, à portée de pioche.
+  // Le minerai (fer ou charbon, pas encore cassé) juste devant le héros, à portée de pioche.
   function ferDevant(monde) {
     const j = monde.joueur;
     for (const o of monde.obstacles) {
-      if (o.type !== "fer" || o.casse) continue;
+      if ((o.type !== "fer" && o.type !== "charbon") || o.casse) continue;
       const devant = j.regard > 0 ? o.x - (j.x + j.l) : j.x - (o.x + o.l);
       const memeHauteur = j.y < o.y + o.h && j.y + j.h > o.y;
       if (devant >= -2 && devant <= C.combat.porteeEpee && memeHauteur) return o;
@@ -130,7 +138,21 @@ Jeu.Combat = (function () {
     if (E.consommer("frapper")) {
       eq.coup = C.combat.dureeCoup;
       const aPortee = m && j.regard > 0 && distance(monde, m) <= C.combat.porteeEpee;
-      if (!aPortee) {
+      const cochon = aPortee ? null : Jeu.Cochons.cochonDevant(monde);
+      if (cochon) {
+        // Un cochon (étape 13) : il ne se défend pas. L'épée ne s'use pas sur lui (mais cassée, elle ne fait rien).
+        if (eq.epee <= 0) emettre("coup-epee", { touche: false });
+        else {
+          cochon.pv -= C.combat.degatsEpee;
+          cochon.touche = 0.2;
+          if (cochon.pv > 0) emettre("cochon-touche", { id: cochon.id, pv: cochon.pv });
+          else {
+            cochon.vivant = false;
+            eq.viandeCrue += 1;
+            emettre("cochon-attrape", { id: cochon.id, viandeCrue: eq.viandeCrue });
+          }
+        }
+      } else if (!aPortee) {
         emettre("coup-epee", { touche: false });
       } else if (eq.epee <= 0) {
         emettre("coup-epee", { touche: true, cassee: true, id: m.id, pvMonstre: m.pv }); // épée cassée : aucun dégât
@@ -151,36 +173,73 @@ Jeu.Combat = (function () {
     }
 
     // 3 bis. La pioche (F) : un coup sur le bloc de fer juste devant le héros
-    eq.pioche = Math.max(0, eq.pioche - dt);
+    eq.coupPioche = Math.max(0, eq.coupPioche - dt);
     if (E.consommer("piocher")) {
-      eq.pioche = C.combat.dureeCoup;
-      const fer = ferDevant(monde);
-      if (!fer) emettre("pioche", { touche: false });
+      eq.coupPioche = C.combat.dureeCoup;
+      const minerai = ferDevant(monde);
+      if (eq.pioche <= 0) emettre("pioche", { touche: false, cassee: true });
+      else if (!minerai) emettre("pioche", { touche: false });
       else {
-        fer.coups -= 1;
-        if (fer.coups > 0) emettre("pioche", { touche: true, id: fer.id, reste: fer.coups });
+        minerai.coups -= 1;
+        eq.pioche -= 1; // chaque coup sur un minerai use la pioche (étape 13)
+        if (eq.pioche === 0) emettre("pioche-cassee", {});
+        if (minerai.coups > 0) emettre("pioche", { touche: true, id: minerai.id, type: minerai.type, reste: minerai.coups });
         else {
-          // Cassé ! La case redevient de l'air, et le héros ramasse un fer.
-          fer.casse = true;
-          Jeu.Terrain.ecrireCase(monde.terrain, fer.colonne, C.carte.ligneSol - 1, Jeu.Terrain.CASES.air);
-          eq.fer += 1;
-          emettre("fer-casse", { id: fer.id, colonne: fer.colonne, fer: eq.fer });
+          // Cassé ! La case redevient de l'air, et le héros ramasse un fer ou un charbon.
+          minerai.casse = true;
+          Jeu.Terrain.ecrireCase(monde.terrain, minerai.colonne, Math.floor(minerai.y / B), Jeu.Terrain.CASES.air);
+          if (minerai.type === "fer") {
+            eq.fer += 1;
+            emettre("fer-casse", { id: minerai.id, colonne: minerai.colonne, fer: eq.fer });
+          } else {
+            eq.charbon += 1;
+            emettre("charbon-casse", { id: minerai.id, colonne: minerai.colonne, charbon: eq.charbon });
+          }
         }
+      }
+    }
+
+    // 3 quater. Cuire (K) et manger (M) (étape 13)
+    if (E.consommer("cuire")) {
+      if (eq.charbon <= 0) emettre("cuisson-refusee", { raison: "pas de charbon (il y en a dans les grottes)" });
+      else if (eq.viandeCrue <= 0) emettre("cuisson-refusee", { raison: "pas de viande crue (attrape un cochon)" });
+      else {
+        eq.charbon -= 1;
+        eq.viandeCrue -= 1;
+        eq.viandeCuite += 1;
+        emettre("cuisson", { viandeCuite: eq.viandeCuite, charbon: eq.charbon });
+      }
+    }
+    if (E.consommer("manger")) {
+      const aliment = eq.viandeCuite > 0 ? "cuite" : eq.viandeCrue > 0 ? "crue" : null;
+      if (!aliment) emettre("repas-refuse", { raison: "rien à manger" });
+      else if (eq.pv >= C.combat.pvJoueur) emettre("repas-refuse", { raison: "tes PV sont déjà au maximum" });
+      else {
+        if (aliment === "cuite") eq.viandeCuite -= 1;
+        else eq.viandeCrue -= 1;
+        const avant = eq.pv;
+        eq.pv = Math.min(C.combat.pvJoueur, eq.pv + (aliment === "cuite" ? C.cuisine.soinCuite : C.cuisine.soinCrue));
+        emettre("repas", { aliment, soin: eq.pv - avant, pv: eq.pv });
       }
     }
 
     // 3 ter. Réparer (R) : 1 fer répare à neuf ce qui est le plus abîmé
     if (E.consommer("reparer")) {
-      const usureEpee = 1 - eq.epee / C.combat.usureEpee; // 0 = neuve, 1 = cassée
-      const usureBouclier = 1 - eq.bouclier / C.combat.bouclier;
+      // L'usure de chaque objet, en fraction : 0 = neuf, 1 = cassé. On répare le plus abîmé.
+      const usures = [
+        { objet: "épée", usure: 1 - eq.epee / C.combat.usureEpee },
+        { objet: "bouclier", usure: 1 - eq.bouclier / C.combat.bouclier },
+        { objet: "pioche", usure: 1 - eq.pioche / C.pioche.usure },
+      ];
+      const plusAbime = usures.reduce((a, b) => (b.usure > a.usure ? b : a));
       if (eq.fer <= 0) emettre("reparation-refusee", { raison: "pas de fer dans le sac" });
-      else if (usureEpee === 0 && usureBouclier === 0) emettre("reparation-refusee", { raison: "l'épée et le bouclier sont déjà neufs" });
+      else if (plusAbime.usure === 0) emettre("reparation-refusee", { raison: "l'épée, le bouclier et la pioche sont déjà neufs" });
       else {
         eq.fer -= 1;
-        const objet = usureEpee >= usureBouclier ? "épée" : "bouclier";
-        if (objet === "épée") eq.epee = C.combat.usureEpee;
-        else eq.bouclier = C.combat.bouclier;
-        emettre("reparation", { objet, fer: eq.fer });
+        if (plusAbime.objet === "épée") eq.epee = C.combat.usureEpee;
+        else if (plusAbime.objet === "bouclier") eq.bouclier = C.combat.bouclier;
+        else eq.pioche = C.pioche.usure;
+        emettre("reparation", { objet: plusAbime.objet, fer: eq.fer });
       }
     }
 

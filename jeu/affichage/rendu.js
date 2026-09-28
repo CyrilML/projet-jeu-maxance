@@ -78,6 +78,8 @@ Jeu.Rendu = (function () {
       pics: ["#8c5a28", "#5e3a18"], // le bois du muret, plus sombre, avec des pics rouges
       brique: ["#b5523b", "#e8d9c4"], // les blocs posés par le joueur : brique rouge et joints clairs
       fer: ["#c9ced6", "#8a929e"], // le bloc de fer : gris clair, avec des rivets et des taches de minerai
+      roche: ["#6d6a66", "#57534f"], // la pierre des grottes (étape 13)
+      charbon: ["#6d6a66", "#1c1b1a"], // du minerai de charbon : de la roche avec des taches noires
     }[matiere];
     if (matiere === "lave-profonde") {
       // La lave sous la surface d'un lac : pleine, sans surface, avec quelques bulles.
@@ -86,6 +88,15 @@ Jeu.Rendu = (function () {
       ctx.fillStyle = "#ff7a1a";
       ctx.fillRect(x + ((graine * 11) % 26) + 4, y + 8, 6, 6);
       ctx.fillRect(x + ((graine * 5) % 28) + 2, y + 26, 5, 5);
+      return;
+    }
+    if (matiere === "charbon") {
+      ctx.fillStyle = couleurs[0];
+      ctx.fillRect(x, y, B, B);
+      ctx.fillStyle = couleurs[1];
+      for (const [cx, cy, t] of [[6, 6, 8], [22, 10, 9], [10, 22, 7], [26, 26, 8], [16, 15, 5]]) ctx.fillRect(x + cx, y + cy, t, t - 2);
+      ctx.strokeStyle = "rgba(0,0,0,0.35)";
+      ctx.strokeRect(x + 0.5, y + 0.5, B - 1, B - 1);
       return;
     }
     if (matiere === "fer") {
@@ -166,8 +177,11 @@ Jeu.Rendu = (function () {
 
   function terrain(monde) {
     const { premiere, derniere } = colonnesVisibles(monde.camera);
+    // Seulement les lignes visibles : le monde fait 24 lignes, l'écran en montre 14.
+    const ligneHaut = Math.floor((monde.camera.y || 0) / B);
+    const ligneBas = Math.min(C.carte.lignes - 1, ligneHaut + Math.ceil(H / B));
     for (let c = Math.max(0, premiere); c <= derniere; c++) {
-      for (let l = 0; l < C.carte.lignes; l++) {
+      for (let l = ligneHaut; l <= ligneBas; l++) {
         const numero = Jeu.Terrain.lireCase(monde.terrain, c, l);
         if (numero === Jeu.Terrain.CASES.air) continue;
         let matiere = Jeu.Terrain.NOMS[numero];
@@ -277,13 +291,22 @@ Jeu.Rendu = (function () {
     ctx.fillRect(x + 14, y - 14, 4, 10); // la plume
     ctx.fillRect(x + 11, y - 16, 4, 4);
     // La pioche (étape 12) : pendant un coup de pioche (touche F), elle remplace l'épée dans la main.
-    if (eq && eq.pioche > 0) {
+    if (eq && eq.coupPioche > 0) {
       ctx.fillStyle = "#8a5a2b";
-      ctx.fillRect(x + 27, y + 16, 22, 4); // le manche, tendu vers l'avant
-      ctx.fillStyle = "#8a929e";
-      ctx.fillRect(x + 46, y + 8, 5, 20); // la tête de la pioche
-      ctx.fillRect(x + 44, y + 6, 4, 4);
-      ctx.fillRect(x + 44, y + 26, 4, 4);
+      ctx.fillRect(x + 27, y + 16, 22, 4); // le manche en bois, tendu vers l'avant
+      // La tête de la pioche est en pierre, de la couleur de la roche des grottes (étape 13).
+      // Cassée, il n'en reste qu'un petit bout.
+      ctx.fillStyle = "#6d6a66";
+      if (eq.pioche > 0) {
+        ctx.fillRect(x + 46, y + 8, 5, 20);
+        ctx.fillRect(x + 44, y + 6, 4, 4);
+        ctx.fillRect(x + 44, y + 26, 4, 4);
+        ctx.fillStyle = "#57534f";
+        ctx.fillRect(x + 47, y + 12, 2, 3);
+        ctx.fillRect(x + 47, y + 20, 2, 3);
+      } else {
+        ctx.fillRect(x + 46, y + 14, 5, 6);
+      }
     } else if (eq && eq.epee <= 0) {
       // L'épée cassée : il ne reste que la poignée et un bout de lame
       ctx.fillStyle = "#6b4423";
@@ -315,14 +338,40 @@ Jeu.Rendu = (function () {
   function fissures(liste) {
     ctx.fillStyle = "#1d1d3a";
     for (const o of liste) {
-      if (o.type !== "fer" || o.casse || o.coups >= C.fer.coupsPioche) continue;
-      const coupsDonnes = C.fer.coupsPioche - o.coups;
+      const coupsMax = o.type === "fer" ? C.fer.coupsPioche : o.type === "charbon" ? C.pioche.coupsCharbon : 0;
+      if (!coupsMax || o.casse || o.coups >= coupsMax) continue;
+      const coupsDonnes = coupsMax - o.coups;
       ctx.fillRect(o.x + 18, o.y + 4, 3, 16);
       ctx.fillRect(o.x + 12, o.y + 18, 8, 3);
       if (coupsDonnes >= 2) {
         ctx.fillRect(o.x + 22, o.y + 20, 3, 14);
         ctx.fillRect(o.x + 24, o.y + 30, 10, 3);
       }
+    }
+  }
+
+  // Les cochons (étape 13) : un petit cochon rose, qui regarde où il va et agite les pattes en marchant.
+  function cochons(liste) {
+    for (const co of liste) {
+      if (!co.vivant) continue;
+      ctx.save();
+      ctx.translate(Math.round(co.x + co.l / 2), Math.round(co.y));
+      ctx.scale(co.direction, 1);
+      const pas = Math.floor(co.animation * 8) % 2;
+      ctx.fillStyle = co.touche > 0 ? "#ff6b6b" : "#f4a3b4";
+      ctx.fillRect(-16, 4, 28, 16); // le corps
+      ctx.fillRect(8, 0, 12, 14); // la tête
+      ctx.fillStyle = "#e07a93";
+      ctx.fillRect(18, 6, 5, 6); // le groin
+      ctx.fillRect(9, -3, 4, 4); // l'oreille
+      ctx.fillStyle = "#1d1d3a";
+      ctx.fillRect(15, 4, 2, 3); // l'œil
+      ctx.fillStyle = "#e07a93";
+      ctx.fillRect(-14, 20, 5, pas ? 6 : 4); // les pattes
+      ctx.fillRect(-4, 20, 5, pas ? 4 : 6);
+      ctx.fillRect(4, 20, 5, pas ? 6 : 4);
+      ctx.fillRect(-19, 6, 4, 3); // la queue en tire-bouchon
+      ctx.restore();
     }
   }
 
@@ -499,6 +548,15 @@ Jeu.Rendu = (function () {
     ctx.fillRect(20, 190, Math.round(160 * eq.epee / C.combat.usureEpee), 10);
     const etatEpee = eq.epee > 0 ? "⚔️ " + eq.epee + "/" + C.combat.usureEpee : "⚔️ CASSÉE !";
     texte(etatEpee + "   ⛓️ fer " + eq.fer + "   F : pioche · R : réparer", 192, 201, 15, eq.epee > 0 ? "#fff" : "#ff9b9b");
+    // La pioche qui s'use, le charbon et la viande (étape 13)
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(16, 210, 168, 18);
+    ctx.fillStyle = "#3a3f55";
+    ctx.fillRect(20, 214, 160, 10);
+    ctx.fillStyle = eq.pioche > 5 ? "#8e8a86" : eq.pioche > 0 ? "#ff9f1a" : "#e0303a";
+    ctx.fillRect(20, 214, Math.round(160 * eq.pioche / C.pioche.usure), 10);
+    const etatPioche = eq.pioche > 0 ? "⛏️ " + eq.pioche + "/" + C.pioche.usure : "⛏️ CASSÉE !";
+    texte(etatPioche + "   ⚫ " + eq.charbon + "   🥩 " + eq.viandeCrue + "   🍖 " + eq.viandeCuite + "   K : cuire · M : manger", 192, 225, 15, eq.pioche > 0 ? "#fff" : "#ff9b9b");
     if (options.ralenti) texte("🐢 RALENTI (×0,25)", L / 2, 32, 18, "#ffe27a", "center");
   }
 
@@ -518,7 +576,7 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 12 : 1 000 blocs, fer et pioche", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 13 : grottes, charbon, cochons et cuisine", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au bloc " + C.arrivee.bloc + " le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
@@ -526,7 +584,7 @@ Jeu.Rendu = (function () {
     texte("🔥 Lave et 💀 murets à pics (un tous les 50 blocs) : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
     texte("📦 Caisses et 🗼 tours en pierre : sans danger, monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
     texte("🎒 " + C.inventaire.blocs + " blocs : saute puis P pour poser un bloc sous tes pieds (Échap : pause)", L / 2, 470, 17, "#cfe0ff", "center");
-    texte("⚔️ T : épée · 🧪 H : potion · 👾 un monstre tous les 100 blocs · ⛓️ F : pioche · R : réparer", L / 2, 496, 16, "#cfe0ff", "center");
+    texte("⚔️ T : épée · 🧪 H : potion · ⛓️ F : pioche · R : réparer · 🍖 K : cuire · M : manger", L / 2, 496, 16, "#cfe0ff", "center");
     const premier = Jeu.Sauvegarde.donnees.classement[0];
     if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 522, 16, "#ffe27a", "center");
     texte("version " + C.version, L - 12, H - 12, 14, "#cfe0ff", "right");
@@ -606,8 +664,14 @@ Jeu.Rendu = (function () {
     const { premiere, derniere } = colonnesVisibles(cam);
     const j = monde.joueur;
     const ici = Jeu.Joueur.caseDuJoueur(j);
+    // Sous terre, la caméra descend (étape 13) : tout ce qui suit est décalé de −camera.y.
+    // Les textes « fixes » (en bas de l'écran) ajoutent camY pour rester à leur place.
+    const camY = Math.round(cam.y || 0);
+    const ligneHaut = Math.floor(camY / B);
+    const ligneBas = Math.min(C.carte.lignes - 1, ligneHaut + Math.ceil(H / B));
 
     ctx.save();
+    ctx.translate(0, -camY);
     ctx.textAlign = "left";
 
     // 1. La grille, en coordonnées ÉCRAN (on retire camera.x à chaque x du monde)
@@ -616,11 +680,11 @@ Jeu.Rendu = (function () {
     for (let c = premiere; c <= derniere + 1; c++) {
       const x = c * B - camX + 0.5;
       ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, H);
+      ctx.moveTo(x, camY);
+      ctx.lineTo(x, camY + H);
       ctx.stroke();
     }
-    for (let l = 0; l <= C.carte.lignes; l++) {
+    for (let l = ligneHaut; l <= ligneBas + 1; l++) {
       ctx.beginPath();
       ctx.moveTo(0, l * B + 0.5);
       ctx.lineTo(L, l * B + 0.5);
@@ -637,7 +701,7 @@ Jeu.Rendu = (function () {
     // 3. Le numéro de chaque case (colonne,ligne) et, en jaune, ce qu'elle contient
     ctx.font = "9px ui-monospace, Menlo, Consolas, monospace";
     for (let c = Math.max(0, premiere); c <= derniere; c++) {
-      for (let l = 0; l < C.carte.lignes; l++) {
+      for (let l = ligneHaut; l <= ligneBas; l++) {
         const x = c * B - camX;
         const y = l * B;
         ctx.fillStyle = "rgba(255,255,255,0.75)";
@@ -658,7 +722,7 @@ Jeu.Rendu = (function () {
       const debutDuTrou = Jeu.Terrain.lireCase(monde.terrain, c - 1, C.carte.ligneSol) !== 0;
       if (vide && debutDuTrou) note("trou", c * B - camX + 4, C.solY + 30, "#ff9b9b");
     }
-    note("↓ chute si les pieds passent y = " + C.trous.chute + " (sous l'écran)", 10, H - 8, "#ff9b9b");
+    note("↓ chute si les pieds passent y = " + C.trous.chute + " (sous le monde)", 10, camY + H - 8, "#ff9b9b");
 
     // 5. Les drapeaux
     for (const d of monde.drapeaux) {
@@ -679,7 +743,7 @@ Jeu.Rendu = (function () {
       const haut = o.y < C.solY ? o.y : o.y - 30;
       note("#" + o.id + " " + o.type + " · colonne " + o.colonne, x, haut - 20, "#fff");
       if (o.casse) continue;
-      const danger = o.type === "fer" ? "fer : " + o.coups + " coup(s) de pioche (F)" : !o.mortel ? "solide : on marche dessus" : o.solide ? "" : o.type === "lave" || o.type === "fosse" || o.type === "lac" ? "liquide : on brûle !" : "piège : ne pas toucher !";
+      const danger = o.type === "fer" || o.type === "charbon" ? o.type + " : " + o.coups + " coup(s) de pioche (F)" : !o.mortel ? "solide : on marche dessus" : o.solide ? "" : o.type === "lave" || o.type === "fosse" || o.type === "lac" ? "liquide : on brûle !" : "piège : ne pas toucher !";
       note(danger, x, haut - 5, o.mortel ? "#ff9b9b" : "#7bff9e");
     }
 
@@ -689,13 +753,13 @@ Jeu.Rendu = (function () {
     ctx.lineWidth = 1;
     const xVise = C.camera.positionJoueur;
     ctx.beginPath();
-    ctx.moveTo(xVise + 0.5, 110);
-    ctx.lineTo(xVise + 0.5, H);
+    ctx.moveTo(xVise + 0.5, camY + 110);
+    ctx.lineTo(xVise + 0.5, camY + H);
     ctx.stroke();
     ctx.setLineDash([]);
-    note("la caméra garde le héros ici", xVise + 4, 124, "#7bff9e");
-    note("caméra x = " + Math.round(cam.x) + "   écart à rattraper = " + Math.round(cam.cible - cam.x) + " px", L - 10, H - 24, "#7bff9e", "right");
-    note("monde fabriqué jusqu'à la colonne " + (monde.terrain.colonnes.length - 1) + " →", L - 10, H - 8, "#7bff9e", "right");
+    note("la caméra garde le héros ici", xVise + 4, camY + 124, "#7bff9e");
+    note("caméra x = " + Math.round(cam.x) + "  y = " + camY + "   écart à rattraper = " + Math.round(cam.cible - cam.x) + " px", L - 10, camY + H - 24, "#7bff9e", "right");
+    note("monde fabriqué jusqu'à la colonne " + (monde.terrain.colonnes.length - 1) + " →", L - 10, camY + H - 8, "#7bff9e", "right");
 
     // 7 bis. Les flammes : un petit point par particule, et leur nombre
     if (monde.flammes.length) {
@@ -765,7 +829,7 @@ Jeu.Rendu = (function () {
       "vx=" + Math.round(j.vx) + "  vy=" + Math.round(j.vy),
     ];
     if (j.tamponSaut > 0) lignes.push("saut en mémoire : " + Math.round(j.tamponSaut * 1000) + " ms");
-    const haut = Math.max(118, Math.min(j.y - 12 - lignes.length * 15, C.solY - 250));
+    const haut = Math.max(camY + 118, Math.min(j.y - 12 - lignes.length * 15, Math.max(C.solY, j.y) - 250));
     etiquette(lignes, Math.min(jx, L - 200), haut, 200);
 
     ctx.restore();
@@ -793,14 +857,22 @@ Jeu.Rendu = (function () {
 
   function dessiner(monde, options) {
     const camX = Math.round(monde.camera.x);
+    const camY = Math.round(monde.camera.y || 0);
     ciel();
+    // Le décor descend aussi quand la caméra descend (étape 13) ; sous le sol, c'est la nuit de la terre.
+    ctx.save();
+    ctx.translate(0, -camY);
     nuages(camX);
     collines(camX);
+    ctx.fillStyle = "#2b2520";
+    ctx.fillRect(0, C.solY + 4, L, C.carte.lignes * B);
+    ctx.restore();
 
-    // Tout ce qui est dans le monde est décalé de −camera.x : c'est ça, « regarder à travers la caméra ».
+    // Tout ce qui est dans le monde est décalé de −camera.x (et −camera.y) : c'est ça, « regarder à travers la caméra ».
     ctx.save();
-    ctx.translate(-camX, 0);
+    ctx.translate(-camX, -camY);
     terrain(monde);
+    cochons(monde.cochons);
     drapeaux(monde);
     fissures(monde.obstacles);
     monstres(monde.monstres);

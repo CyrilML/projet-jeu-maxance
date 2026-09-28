@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 13,
+  version: 14,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -39,7 +39,7 @@ Jeu.CONFIG = {
   // La carte du monde : une grille de cases de 40 px. Les colonnes sont numérotées de gauche à droite
   // (0, 1, 2… sans fin), les lignes de haut en bas (0 à 13).
   carte: {
-    lignes: 14, // 14 lignes × 40 px = 560 px : un peu plus que l'écran
+    lignes: 24, // 24 lignes × 40 px = 960 px : plus haut que l'écran, pour avoir de la place sous terre (étape 13)
     ligneSol: 11, // la ligne de l'herbe (11 × 40 = 440 = solY)
     longueurTroncon: 30, // le monde est fabriqué par morceaux de 30 colonnes, avec un drapeau au début de chacun
     colonneDrapeau: 2, // le drapeau est dans la 3ᵉ colonne de chaque tronçon (0, 1, 2…)
@@ -53,7 +53,7 @@ Jeu.CONFIG = {
     ecartMax: 9,
     largeurMin: 1,
     largeurMax: 3, // le saut franchit environ 5 blocs : un trou de 3 est toujours possible
-    chute: 580, // si les pieds du héros descendent plus bas que ce y, il est tombé dans le trou
+    chute: 980, // si les pieds du héros descendent plus bas que ce y (sous le monde), il est tombé dans le trou
   },
 
   plateformes: {
@@ -145,6 +145,37 @@ Jeu.CONFIG = {
     coupsPioche: 3, // 3 coups de pioche pour le casser
   },
 
+  // Les grottes (étape 13) : un escalier descend dans une grotte en pierre, qu'on traverse vers la
+  // droite avant de remonter par un autre escalier. On y trouve du charbon.
+  grottes: {
+    premier: 220, // la première grotte est vers le bloc 220…
+    ecart: 210, // … puis une tous les 210 blocs environ (430, 640, 850)
+    dernier: 900,
+    ligneSol: 18, // le sol de la grotte (le dessus de cette ligne est à 18 × 40 = 720 px)
+    plafond: 13, // la dernière ligne de terre au-dessus de la grotte (la grotte va des lignes 14 à 17)
+    charbons: 3, // blocs de minerai de charbon dans chaque grotte
+  },
+
+  // La pioche s'use (étape 13) et le charbon se casse plus vite que le fer.
+  pioche: {
+    usure: 30, // 30 coups qui touchent un minerai, puis elle est cassée (R la répare avec 1 fer)
+    coupsCharbon: 2, // 2 coups de pioche pour casser un minerai de charbon
+  },
+
+  // Les cochons (étape 13) : ils se promènent, ne se défendent pas, et donnent de la viande.
+  cochons: {
+    ecart: 40, // un cochon environ tous les 40 blocs
+    pv: 10, // 2 coups d'épée
+    vitesse: 30, // ils marchent tranquillement (px/s)
+    promenade: 3, // ils restent à moins de 3 blocs de leur point de départ
+  },
+
+  // La cuisine (étape 13) : K cuit (1 charbon + 1 viande crue = 1 viande cuite), M mange.
+  cuisine: {
+    soinCuite: 8, // la viande cuite rend 8 PV
+    soinCrue: 2, // la viande crue seulement 2 PV
+  },
+
   // Les vies (étape 4). Trou ou lave = 1 vie en moins. À 0 vie : « Aïe ! » et tout recommence à zéro.
   vies: 5,
 
@@ -166,6 +197,7 @@ Jeu.CONFIG = {
   },
 
   camera: {
+    piedsAuPlusBas: 440, // sous terre, la caméra descend pour garder les pieds du héros au plus à 440 px du haut de l'écran
     positionJoueur: 320, // la caméra essaie de garder le héros à 320 px du bord gauche de l'écran
     tempsDeReaction: 0.07, // plus c'est petit, plus elle suit vite. 0,07 s → après 0,5 s, il reste moins de 0,1 % de l'écart
   },

@@ -57,6 +57,8 @@ Jeu.Monde = (function () {
       inventaire: Jeu.Inventaire.creer(), // le sac à dos : 10 blocs à poser (étape 10)
       equipement: Jeu.Combat.creerEquipement(), // PV, bouclier, potion (étape 11)
       monstres: [], // les monstres du monde (étape 11)
+      cochons: [], // les cochons qui se promènent (étape 13)
+      grottesVisitees: 0, // combien de grottes le héros a découvertes (étape 13)
       obstaclesPasses: 0,
       nouveauRecord: false,
       prochainId: 1,
@@ -115,6 +117,11 @@ Jeu.Monde = (function () {
       const infos = Jeu.Terrain.fabriquerTroncon(monde.terrain, arrivee);
       monde.drapeaux.push({ numero: infos.numero, colonne: infos.colonneDrapeau, atteint: infos.numero === 0, arrivee });
       const obstacles = Jeu.Obstacles.placerDansTroncon(monde, infos);
+      Jeu.Cochons.placerDansTroncon(monde, infos);
+      if (infos.grotte) {
+        monde.grottes = monde.grottes || [];
+        monde.grottes.push(Object.assign({ numero: monde.grottes.length + 1, visitee: false }, infos.grotte));
+      }
       if (infos.monstre !== null && infos.monstre !== undefined) {
         const m = Jeu.Combat.creerMonstre(monde.prochainId++, infos.monstre);
         monde.monstres.push(m);
@@ -136,6 +143,9 @@ Jeu.Monde = (function () {
     const j = monde.joueur;
     const cible = j.x + j.l / 2 - C.camera.positionJoueur;
     Jeu.Camera.suivre(monde.camera, cible, dt, C.camera.tempsDeReaction, 0);
+    // Sous terre (étape 13), la caméra descend : les pieds du héros restent au plus à 440 px du haut.
+    const basDuMonde = C.carte.lignes * B - C.ecran.hauteur;
+    Jeu.Camera.suivreY(monde.camera, j.y + j.h - C.camera.piedsAuPlusBas, dt, C.camera.tempsDeReaction, 0, basDuMonde);
   }
 
   // Une colonne où l'on peut se tenir debout : de l'herbe sous les pieds, et rien de solide
@@ -242,6 +252,8 @@ Jeu.Monde = (function () {
       Entrees.consommer("boirePotion");
       Entrees.consommer("piocher");
       Entrees.consommer("reparer");
+      Entrees.consommer("cuire");
+      Entrees.consommer("manger");
       // À l'accueil, c'est le formulaire du pseudo qui lance la partie (voir main.js).
       // À la fin d'une partie : petite pause pour ne pas relancer par accident.
       const pret = monde.phase !== "accueil" && monde.tempsPhase > 0.4;
@@ -255,7 +267,7 @@ Jeu.Monde = (function () {
     monde.temps += dt;
     if (monde.brulure || monde.danse) {
       // pas de bloc, pas de coup d'épée, pas de potion pendant qu'on brûle ou qu'on danse
-      for (const action of ["poserBloc", "frapper", "boirePotion", "piocher", "reparer"]) Jeu.Entrees.consommer(action);
+      for (const action of ["poserBloc", "frapper", "boirePotion", "piocher", "reparer", "cuire", "manger"]) Jeu.Entrees.consommer(action);
     }
     if (monde.brulure) {
       brulerUnPeu(monde, dt);
@@ -270,6 +282,15 @@ Jeu.Monde = (function () {
     const j = monde.joueur;
     Jeu.Joueur.mettreAJour(j, dt, monde);
     Jeu.Inventaire.mettreAJour(monde); // P pendant un saut : un bloc sous les pieds
+    Jeu.Cochons.mettreAJour(monde, dt); // les cochons se promènent (étape 13)
+    // Le héros descend dans une grotte (étape 13) ? On l'annonce une seule fois.
+    for (const g of monde.grottes || []) {
+      if (!g.visitee && j.x > g.salle * B && j.x < g.sortie * B && j.y > C.solY) {
+        g.visitee = true;
+        monde.grottesVisitees += 1;
+        Jeu.Evenements.emettre("grotte", { numero: g.numero, charbons: g.charbons.length });
+      }
+    }
     // Le combat (épée, potion, monstres). PV à 0 : un cœur en moins et retour au drapeau.
     if (Jeu.Combat.mettreAJour(monde, dt) === "plus-de-pv") {
       const drapeau = monde.drapeaux[monde.dernierDrapeau];

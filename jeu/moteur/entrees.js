@@ -23,6 +23,8 @@ Jeu.Entrees = (function () {
     boirePotion: ["KeyH"], // boire la potion (étape 11)
     piocher: ["KeyF"], // un coup de pioche (étape 12)
     reparer: ["KeyR"], // réparer avec un fer (étape 12)
+    cuire: ["KeyK"], // cuire de la viande (étape 13)
+    manger: ["KeyM"], // manger (étape 13)
     rayonsX: ["KeyX"],
     pasSuivant: ["KeyN"],
     ralenti: ["KeyL"],

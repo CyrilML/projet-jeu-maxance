@@ -5,6 +5,7 @@
 //     0 = air      1 = herbe      2 = terre      3 = planche (plateforme)
 //     4 = bois (caisse)    5 = pierre (tour)    6 = lave    7 = bois à pics (muret)
 //     8 = brique (un bloc posé par le joueur, étape 10)    9 = fer (à casser avec la pioche, étape 12)
+//     10 = roche (les murs et les escaliers des grottes)    11 = charbon (minerai, pioche, étape 13)
 //
 // Chaque sorte de case a des PROPRIÉTÉS, rangées dans des listes :
 //   - SOLIDE : on peut marcher dessus, et par le côté c'est un mur ;
@@ -28,12 +29,12 @@ Jeu.Terrain = (function () {
   const C = Jeu.CONFIG;
   const CARTE = C.carte;
 
-  const CASES = { air: 0, herbe: 1, terre: 2, planche: 3, bois: 4, pierre: 5, lave: 6, pics: 7, brique: 8, fer: 9 };
-  const NOMS = ["air", "herbe", "terre", "planche", "bois", "pierre", "lave", "pics", "brique", "fer"];
-  //              air    herbe terre planche bois  pierre lave   pics   brique fer
-  const SOLIDES = [false, true, true, true, true, true, false, false, true, true]; // peut-on marcher dessus / se cogner dedans ?
-  const LIQUIDES = [false, false, false, false, false, false, true, false, false, false]; // passe-t-on à travers comme dans de l'eau ?
-  const MORTELS = [false, false, false, false, false, false, true, true, false, false]; // le toucher coûte-t-il une vie ?
+  const CASES = { air: 0, herbe: 1, terre: 2, planche: 3, bois: 4, pierre: 5, lave: 6, pics: 7, brique: 8, fer: 9, roche: 10, charbon: 11 };
+  const NOMS = ["air", "herbe", "terre", "planche", "bois", "pierre", "lave", "pics", "brique", "fer", "roche", "charbon"];
+  //              air    herbe terre planche bois  pierre lave   pics   brique fer   roche  charbon
+  const SOLIDES = [false, true, true, true, true, true, false, false, true, true, true, true]; // peut-on marcher dessus / se cogner dedans ?
+  const LIQUIDES = [false, false, false, false, false, false, true, false, false, false, false, false]; // passe-t-on à travers comme dans de l'eau ?
+  const MORTELS = [false, false, false, false, false, false, true, true, false, false, false, false]; // le toucher coûte-t-il une vie ?
 
   // L'arrivée (étape 12 : au bloc 1 000). On compte les blocs depuis le drapeau de départ (colonne 2).
   const COLONNE_ARRIVEE = CARTE.colonneDrapeau + C.arrivee.bloc;
@@ -114,6 +115,13 @@ Jeu.Terrain = (function () {
         tiroir.push(l < CARTE.ligneSol ? CASES.air : l === CARTE.ligneSol ? CASES.herbe : CASES.terre);
       }
       terrain.colonnes[c] = tiroir;
+    }
+
+    // Une grotte dans ce tronçon ? (étape 13) Seulement s'il n'y a ni lac ni monstre ici.
+    if (!arrivee && lac === null && monstre === null && estUneGrotte(numero)) {
+      const grotte = creuserGrotte(terrain, debut);
+      terrain.troncons++;
+      return { numero, debut, fin, zoneSure, colonneDrapeau: debut + CARTE.colonneDrapeau, trous: [], plateformes: [], fosse: null, lac: null, monstre: null, murets: [], grotte, de };
     }
 
     if (arrivee) {
@@ -228,6 +236,49 @@ Jeu.Terrain = (function () {
       }
     }
     return null;
+  }
+
+  // Les grottes (étape 13) : les tronçons qui en ont une.
+  function estUneGrotte(numero) {
+    const G = C.grottes;
+    return rendezVous(G.premier, G.ecart, G.dernier).some((bloc) => tronconDe(CARTE.colonneDrapeau + bloc) === numero);
+  }
+
+  // Creuse la grotte d'un tronçon (30 colonnes) :
+  //   colonnes 0 à 5  : l'herbe et le drapeau, en surface ;
+  //   colonnes 6 à 12 : l'escalier qui DESCEND (7 marches de roche, une ligne plus bas à chaque colonne) ;
+  //   colonnes 13 à 22 : la grotte, une salle de 4 cases de haut sous un plafond de terre ;
+  //   colonnes 23 à 29 : l'escalier qui REMONTE jusqu'à l'herbe.
+  // L'ouverture de l'escalier fait 7 blocs : trop large pour être sautée. On est obligé de descendre !
+  function creuserGrotte(terrain, debut) {
+    const G = C.grottes;
+    const sol = CARTE.ligneSol;
+    const remplir = (c, de, a, numero) => {
+      for (let l = de; l <= a; l++) terrain.colonnes[c][l] = numero;
+    };
+    const dernierLigne = CARTE.lignes - 1;
+    // Sous l'herbe, de la roche partout à partir de la grotte
+    for (let k = 6; k <= 29; k++) remplir(debut + k, G.plafond + 1, dernierLigne, CASES.roche);
+    // L'escalier qui descend : marche k (0 à 6) → de l'air au-dessus, le dessus de la marche à la ligne 12 + k
+    for (let k = 0; k <= 6; k++) {
+      const c = debut + 6 + k;
+      remplir(c, 0, sol + k, CASES.air);
+      remplir(c, sol + 1 + k, dernierLigne, CASES.roche);
+    }
+    // La salle : de l'air entre le plafond et le sol de la grotte
+    for (let k = 13; k <= 22; k++) remplir(debut + k, G.plafond + 1, G.ligneSol - 1, CASES.air);
+    // L'escalier qui remonte : marche k (0 à 6) → le dessus de la marche à la ligne 17 − k
+    for (let k = 0; k <= 6; k++) {
+      const c = debut + 23 + k;
+      const dessus = G.ligneSol - 1 - k;
+      remplir(c, 0, dessus - 1, CASES.air);
+      remplir(c, dessus, dernierLigne, k === 6 ? CASES.terre : CASES.roche);
+      if (k === 6) terrain.colonnes[c][dessus] = CASES.herbe; // la dernière marche, c'est l'herbe du dehors
+    }
+    // Le minerai de charbon, posé sur le sol de la grotte (obstacles.js le transforme en obstacles à piocher)
+    const charbons = [];
+    for (let i = 0; i < G.charbons; i++) charbons.push(debut + 14 + i * 3);
+    return { debut, entree: debut + 6, salle: debut + 13, sortie: debut + 23, charbons };
   }
 
   // Le lac de lave de ce tronçon (étape 10) : renvoie sa première colonne, ou null s'il n'y en a pas.

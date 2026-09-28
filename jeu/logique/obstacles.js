@@ -31,6 +31,7 @@ Jeu.Obstacles = (function () {
     tour: { l: 1, h: 2, case: CASES.pierre },
     muret: { l: 2, h: 1, case: CASES.pics }, // bois à pics : mortel (étape 8)
     fer: { l: 1, h: 1, case: CASES.fer }, // bloc de fer : solide, à casser avec la pioche (étape 12)
+    charbon: { l: 1, h: 1, case: CASES.charbon }, // minerai de charbon, dans les grottes (étape 13)
     lave: { l: 1, h: 1, case: CASES.lave, sousSol: true },
     fosse: { l: 3, h: 1, case: CASES.lave, sousSol: true }, // jamais tirée au hasard : une par tronçon
     lac: { l: C.lacs.largeur, h: C.lacs.hauteurLave, case: CASES.lave, sousSol: true }, // étape 10 : plusieurs cases de haut
@@ -39,7 +40,7 @@ Jeu.Obstacles = (function () {
   // Les obstacles possibles à cette colonne du monde (plus on va loin, plus il y a de choix).
   function typesPossibles(colonne) {
     // La fosse et le muret ont leurs propres places (ils ne sont jamais tirés au hasard).
-    return Object.keys(TYPES).filter((nom) => !["fosse", "muret", "lac", "fer"].includes(nom) && colonne >= C.obstacles.debloque[nom]);
+    return Object.keys(TYPES).filter((nom) => !["fosse", "muret", "lac", "fer", "charbon"].includes(nom) && colonne >= C.obstacles.debloque[nom]);
   }
 
   // Peut-on poser un obstacle de `largeur` blocs à cette colonne ?
@@ -143,6 +144,29 @@ Jeu.Obstacles = (function () {
     const O = C.obstacles;
     const de = infos.de;
     if (infos.arrivee) return 0; // le tronçon d'arrivée est tout plat, sans danger
+    if (infos.grotte) {
+      // Dans une grotte (étape 13) : seulement du minerai de charbon, posé sur le sol de la grotte.
+      for (const colonne of infos.grotte.charbons) {
+        const ligne = C.grottes.ligneSol - 1;
+        Jeu.Terrain.ecrireCase(monde.terrain, colonne, ligne, CASES.charbon);
+        monde.obstacles.push({
+          id: monde.prochainId++,
+          type: "charbon",
+          solide: true,
+          mortel: false,
+          colonne,
+          ligne,
+          largeur: 1,
+          x: colonne * B,
+          y: ligne * B,
+          l: B,
+          h: B,
+          passe: false,
+          coups: C.pioche.coupsCharbon,
+        });
+      }
+      return infos.grotte.charbons.length;
+    }
     // D'abord la grande fosse de lave (ou le lac), à sa place réservée.
     if (infos.fosse) poser(monde, "fosse", infos.fosse.colonne, infos.fosse.largeur);
     else poser(monde, "lac", infos.lac, C.lacs.largeur);

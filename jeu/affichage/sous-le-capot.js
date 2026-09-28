@@ -49,11 +49,23 @@ Jeu.SousLeCapot = (function () {
     "potion-bue": (d) => "🧪 Potion bue : +" + d.soin + " PV → " + d.pv + " PV",
     "potion-refusee": (d) => "🧪 Pas de potion : " + d.raison,
     "pv-a-zero": (d) => "💔 Plus de PV ! Un cœur en moins, retour au drapeau n° " + d.drapeau + " avec tous tes PV",
-    pioche: (d) => (d.touche ? "⛏️ Coup de pioche sur le fer #" + d.id + " : encore " + d.reste + " coup(s)" : "⛏️ Coup de pioche dans le vide (pas de fer juste devant)"),
+    pioche: (d) =>
+      d.cassee ? "⛏️ La pioche est cassée : elle ne casse plus rien (R pour la réparer)"
+      : d.touche ? "⛏️ Coup de pioche sur le " + d.type + " #" + d.id + " : encore " + d.reste + " coup(s)"
+      : "⛏️ Coup de pioche dans le vide (pas de minerai juste devant)",
     "fer-casse": (d) => "⛓️ Bloc de fer #" + d.id + " cassé ! +1 fer → " + d.fer + " dans le sac",
     reparation: (d) => "🔧 Réparation : " + (d.objet === "épée" ? "l'épée" : "le bouclier") + " est comme neuf (il reste " + d.fer + " fer)",
     "reparation-refusee": (d) => "🔧 Pas de réparation : " + d.raison,
     "epee-cassee": () => "💔 Ton épée est cassée ! Elle ne fait plus de dégâts : casse du fer (F) et répare-la (R)",
+    grotte: (d) => "⛏️ Tu descends dans la grotte n° " + d.numero + " : " + d.charbons + " minerais de charbon à piocher",
+    "charbon-casse": (d) => "⚫ Minerai de charbon #" + d.id + " cassé ! +1 charbon → " + d.charbon + " dans le sac",
+    "pioche-cassee": () => "💔 Ta pioche est cassée ! Répare-la avec un fer (R)",
+    "cochon-touche": (d) => "🐷 Cochon #" + d.id + " touché : il lui reste " + d.pv + " PV",
+    "cochon-attrape": (d) => "🥩 Cochon #" + d.id + " attrapé : +1 viande crue → " + d.viandeCrue,
+    cuisson: (d) => "🔥 Viande cuite ! (1 charbon + 1 viande crue) → " + d.viandeCuite + " viande(s) cuite(s), " + d.charbon + " charbon",
+    "cuisson-refusee": (d) => "🍳 Pas de cuisson : " + d.raison,
+    repas: (d) => "🍖 Miam : viande " + d.aliment + " → +" + d.soin + " PV (" + d.pv + " PV)",
+    "repas-refuse": (d) => "🍖 Pas de repas : " + d.raison,
     "bloc-pose": (d) => "🧱 Bloc posé dans la case colonne " + d.colonne + ", ligne " + d.ligne + " → il en reste " + d.reste + " dans le sac",
     "bloc-refuse": (d) => "🚫 Pas de bloc : " + d.raison,
     "fin-danse": (d) => "🕺 Le squelette a fini de danser (" + d.duree + " s)",
@@ -197,6 +209,11 @@ Jeu.SousLeCapot = (function () {
       ["potions", monde.equipement.potions],
       ["épée (coups restants)", monde.equipement.epee > 0 ? monde.equipement.epee + " / " + Jeu.CONFIG.combat.usureEpee : "cassée"],
       ["fer dans le sac", monde.equipement.fer],
+      ["pioche (coups restants)", monde.equipement.pioche > 0 ? monde.equipement.pioche + " / " + Jeu.CONFIG.pioche.usure : "cassée"],
+      ["charbon", monde.equipement.charbon],
+      ["viande crue / cuite", monde.equipement.viandeCrue + " / " + monde.equipement.viandeCuite],
+      ["cochons en promenade", monde.cochons.filter((c) => c.vivant).length],
+      ["grottes découvertes", monde.grottesVisitees],
       ["monstres vivants", monde.monstres.filter((m) => m.vivant).length + " / " + monde.monstres.length],
       ["Inventaire (sac à dos)", ""],
       ["blocs dans le sac", monde.inventaire.blocs + " / " + Jeu.CONFIG.inventaire.blocs],
@@ -265,10 +282,12 @@ Jeu.SousLeCapot = (function () {
     const derniere = premiere + Math.ceil(Jeu.CONFIG.ecran.largeur / B);
     const ici = Jeu.Joueur.caseDuJoueur(monde.joueur);
     const largeur = derniere - premiere + 1;
-    const lignes = Jeu.CONFIG.carte.lignes;
+    // On montre 14 lignes : celles que la caméra voit (le monde en a 24 depuis l'étape 13).
+    const lignes = 14;
+    const ligneHaut = Math.min(Jeu.CONFIG.carte.lignes - lignes, Math.max(0, Math.floor((monde.camera.y || 0) / B)));
     // Construire les cases une seule fois (la première fois)
     if (!carteConstruite) {
-      carteConstruite = { entetes: [], cases: [] };
+      carteConstruite = { entetes: [], cases: [], numerosLignes: [] };
       const tete = document.createElement("tr");
       const coin = document.createElement("th");
       coin.textContent = "lig.";
@@ -282,8 +301,8 @@ Jeu.SousLeCapot = (function () {
       for (let l = 0; l < lignes; l++) {
         const tr = document.createElement("tr");
         const th = document.createElement("th");
-        th.textContent = l;
         tr.append(th);
+        carteConstruite.numerosLignes.push(th);
         const rangee = [];
         for (let k = 0; k < largeur; k++) {
           const td = document.createElement("td");
@@ -299,13 +318,15 @@ Jeu.SousLeCapot = (function () {
       if (element.textContent !== texte) element.textContent = texte;
       if (classe !== undefined && element.className !== classe) element.className = classe;
     };
+    for (let r = 0; r < lignes; r++) change(carteConstruite.numerosLignes[r], String(ligneHaut + r));
     for (let k = 0; k < largeur; k++) {
       const c = premiere + k;
       change(carteConstruite.entetes[k], String(c));
-      for (let l = 0; l < lignes; l++) {
+      for (let r = 0; r < lignes; r++) {
+        const l = ligneHaut + r;
         const numero = Jeu.Terrain.lireCase(monde.terrain, c, l);
         const heros = c === ici.colonne && l === ici.ligne ? " heros" : "";
-        change(carteConstruite.cases[l][k], String(numero), "c" + numero + heros);
+        change(carteConstruite.cases[r][k], String(numero), "c" + numero + heros);
       }
     }
   }
