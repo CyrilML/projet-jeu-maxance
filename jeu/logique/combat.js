@@ -42,10 +42,10 @@ Jeu.Combat = (function () {
       hache: C.armes.hache.usure, // (étape 15)
       enMain: 0, // la case de la barre choisie (0 à 8) : touches 1 à 9 (étape 15)
       attente: 0, // secondes avant de pouvoir refrapper ou retirer (étape 15)
-      munitions: C.armes.mitrailleuse.balles, // balles de la mitrailleuse (étape 17)
       roquettes: C.armes.bazooka.roquettes, // roquettes du bazooka (étape 19)
       pierres: 0, // blocs de pierre minés depuis la dernière roquette fabriquée (0 à 9)
       recul: 0, // animation du recul du Magnum (s)
+      rechargement: 0, // animation du rechargement du bazooka (s) (étape 21)
       armure: 0, // coups que l'armure peut encore arrêter (0 = pas d'armure ou cassée)
       armureFabriquee: false, // a-t-on déjà fabriqué l'armure ?
       fer: 0, // morceaux de fer dans le sac (étape 12)
@@ -138,13 +138,6 @@ Jeu.Combat = (function () {
     if (m.pv <= 0) {
       m.vivant = false;
       emettre("monstre-vaincu", { id: m.id, colonne: m.colonne, arme });
-      // Étape 17 : 1 chance sur 2 que le monstre laisse des balles de mitrailleuse (entre 10 et 25).
-      const M = C.armes.mitrailleuse;
-      if (Math.random() < M.chanceButin) {
-        const balles = M.butinMin + Math.floor(Math.random() * (M.butinMax - M.butinMin + 1));
-        monde.equipement.munitions += balles;
-        emettre("balles-trouvees", { id: m.id, balles, total: monde.equipement.munitions });
-      } else emettre("balles-trouvees", { id: m.id, balles: 0, total: monde.equipement.munitions });
       return true;
     }
     return false;
@@ -282,6 +275,7 @@ Jeu.Combat = (function () {
 
     // 3. Le coup d'épée (T) : c'est maintenant logique/armes.js qui décide (voir frapper() plus haut).
     eq.attente = Math.max(0, eq.attente - dt);
+    if (eq.attente < 1e-6) eq.attente = 0; // 0,1 − 12 × (1/120) donne 0,0000000001 et pas 0 : les ordinateurs arrondissent !
 
     // 3 bis. La pioche (F) : un coup sur le bloc de fer juste devant le héros
     eq.coupPioche = Math.max(0, eq.coupPioche - dt);

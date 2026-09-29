@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 20,
+  version: 21,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -141,12 +141,13 @@ Jeu.CONFIG = {
     petitPistolet: { nom: "petit pistolet", degats: 2, attente: 0.25 }, // tire vite
     pistolet: { nom: "pistolet moyen", degats: 4, attente: 0.6 },
     grosPistolet: { nom: "gros pistolet", degats: 8, attente: 1.2 }, // tire lentement, mais fort
-    // La mitrailleuse (étape 17) : tant qu'on tient T, 10 balles par seconde. Mais les balles sont COMPTÉES.
-    mitrailleuse: { nom: "mitrailleuse", degats: 1, attente: 0.1, balles: 50, chanceButin: 0.5, butinMin: 10, butinMax: 25 },
+    // La mitrailleuse (étape 17) : tant qu'on tient T, 10 balles par seconde. Balles infinies depuis l'étape 21.
+    mitrailleuse: { nom: "mitrailleuse", degats: 1, attente: 0.1 },
     // Le Magnum (étape 19) : très fort mais lent. Il RECULE à chaque tir (recul en px) et l'écran tremble.
     magnum: { nom: "Magnum", degats: 15, attente: 1, recul: 8, dureeRecul: 0.35 },
     // Le bazooka (étape 19) : une roquette qui explose. 5 au départ, +1 tous les 10 blocs de pierre minés.
-    bazooka: { nom: "bazooka", degats: 20, attente: 1, roquettes: 5, pierresParRoquette: 10 },
+    // Étape 21 : après chaque tir, le héros RECHARGE (il prend une roquette dans son dos) pendant l'attente.
+    bazooka: { nom: "bazooka", degats: 20, attente: 1.2, roquettes: 5, pierresParRoquette: 10 },
   },
   // La roquette et son explosion (étape 19).
   roquettes: {

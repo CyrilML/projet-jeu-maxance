@@ -16,12 +16,14 @@
 //
 // Étape 17 : deux nouvelles poches. La PELLE (touche 0), pour casser la terre au clic de souris
 // (voir logique/outils.js), et la MITRAILLEUSE (touche °) : tant qu'on tient T, elle tire 10 balles
-// par seconde… mais ses balles sont comptées (50 au départ). Les monstres vaincus en laissent parfois.
+// par seconde. Depuis l'étape 21, ses balles sont infinies.
 //
 // Étape 19 : le MAGNUM (touche =) tire une balle très forte, mais il RECULE : le héros fait un petit
 // pas en arrière et l'écran tremble. Le BAZOOKA (touche ²) tire une ROQUETTE qui explose au contact :
 // dégâts aux monstres proches et un carré de 3 × 3 blocs cassés (sauf près d'un monstre et au fond
 // du monde). 5 roquettes au départ, et 1 de plus tous les 10 blocs de pierre minés.
+// Étape 21 : après chaque tir, le héros RECHARGE : il prend une roquette dans son dos et la glisse
+// dans le tube (eq.rechargement compte le temps qui reste).
 
 window.Jeu = window.Jeu || {};
 
@@ -78,7 +80,6 @@ Jeu.Armes = (function () {
     const eq = monde.equipement;
     eq.attente = arme.attente;
     eq.tir = 0.1; // l'éclair au bout du canon (animation)
-    if (nom === "mitrailleuse") eq.munitions -= 1; // ses balles sont comptées (étape 17)
     const sens = j.regard || 1;
     const balle = {
       id: monde.prochainId++,
@@ -93,7 +94,7 @@ Jeu.Armes = (function () {
     };
     monde.balles.push(balle);
     if (nom === "magnum") reculer(monde, sens, arme);
-    Jeu.Evenements.emettre("tir", { arme: arme.nom, id: balle.id, degats: arme.degats, attente: arme.attente, reste: nom === "mitrailleuse" ? eq.munitions : null });
+    Jeu.Evenements.emettre("tir", { arme: arme.nom, id: balle.id, degats: arme.degats, attente: arme.attente, reste: null });
   }
 
   // Le recul du Magnum (étape 19) : un petit pas en arrière, sans traverser les murs.
@@ -116,6 +117,8 @@ Jeu.Armes = (function () {
     eq.attente = C.armes.bazooka.attente;
     eq.roquettes -= 1;
     eq.tir = 0.15;
+    // Étape 21 : s'il reste une roquette, le héros recharge (il la prend dans son dos) pendant l'attente.
+    if (eq.roquettes > 0) eq.rechargement = C.armes.bazooka.attente;
     const r = { id: monde.prochainId++, x: sens > 0 ? j.x + j.l + 4 : j.x - 22, y: j.y + 12, l: 18, h: 6, vx: sens * C.roquettes.vitesse, parcouru: 0 };
     monde.roquettes.push(r);
     Jeu.Evenements.emettre("roquette-tiree", { id: r.id, reste: eq.roquettes });
@@ -223,6 +226,10 @@ Jeu.Armes = (function () {
     const eq = monde.equipement;
     eq.tir = Math.max(0, (eq.tir || 0) - dt);
     eq.recul = Math.max(0, eq.recul - dt);
+    if (eq.rechargement > 0) {
+      eq.rechargement = Math.max(0, eq.rechargement - dt);
+      if (eq.rechargement === 0) Jeu.Evenements.emettre("bazooka-recharge", { roquettes: eq.roquettes });
+    }
     // 1. Les touches 1 à 9, 0 et ° : changer d'objet en main
     for (let k = 1; k <= BARRE.length; k++) {
       if (E.consommer("choisir" + k)) prendre(monde, k - 1, "touche");
@@ -232,8 +239,7 @@ Jeu.Armes = (function () {
     const appui = E.consommer("frapper");
     if (objet === "mitrailleuse") {
       // Tant que T est tenue : un tir dès que l'attente est finie, s'il reste des balles.
-      if (appui && eq.munitions <= 0) Jeu.Evenements.emettre("plus-de-balles", {});
-      else if ((appui || E.estEnfoncee("frapper")) && eq.attente <= 0 && eq.munitions > 0) tirer(monde, objet);
+      if ((appui || E.estEnfoncee("frapper")) && eq.attente <= 0) tirer(monde, objet); // balles infinies (étape 21)
     } else if (appui && objet === "bazooka") {
       if (eq.roquettes <= 0) Jeu.Evenements.emettre("plus-de-roquettes", { pierres: eq.pierres, besoin: C.armes.bazooka.pierresParRoquette });
       else if (eq.attente > 0) Jeu.Evenements.emettre("pas-pret", { objet: "bazooka", attente: Math.round(eq.attente * 100) / 100 });

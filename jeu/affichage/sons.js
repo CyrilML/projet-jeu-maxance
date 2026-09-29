@@ -82,6 +82,11 @@ Jeu.Orchestre = (function () {
       Son.note({ forme: "triangle", frequence: 988, duree: 0.12, volume: 0.25, quand: t, nom: "roquette fabriquée : ding" });
       Son.note({ forme: "triangle", frequence: 1319, duree: 0.2, volume: 0.25, quand: t + 0.1, nom: "roquette fabriquée : ding" });
     },
+    clac: () => {
+      const t = Son.maintenant();
+      Son.note({ forme: "square", frequence: 500, fin: 300, duree: 0.04, volume: 0.25, quand: t, nom: "bazooka rechargé : clic-clac" });
+      Son.note({ forme: "square", frequence: 350, fin: 200, duree: 0.05, volume: 0.3, quand: t + 0.09, nom: "bazooka rechargé : clic-clac" });
+    },
     ta: () => Son.bruit({ filtre: "highpass", frequence: 1500, duree: 0.05, volume: 0.35, nom: "mitrailleuse : ta" }),
     clic: () => Son.note({ forme: "square", frequence: 1800, duree: 0.02, volume: 0.15, nom: "mitrailleuse vide : clic" }),
     toc: () => Son.note({ forme: "triangle", frequence: 300, fin: 200, duree: 0.06, volume: 0.3, nom: "coup d'outil : toc" }),
@@ -147,10 +152,10 @@ Jeu.Orchestre = (function () {
     ecouter("atterrissage", () => jouer("bring"));
     ecouter("tir", (d) => jouer(d.arme === "mitrailleuse" ? "ta" : d.arme === "Magnum" ? "bang" : "pan"));
     ecouter("roquette-tiree", () => jouer("fshhh"));
+    ecouter("bazooka-recharge", () => jouer("clac"));
     ecouter("explosion", () => jouer("boum"));
     ecouter("roquette-fabriquee", () => jouer("ding"));
     ecouter("plus-de-roquettes", () => jouer("clic"));
-    ecouter("plus-de-balles", () => jouer("clic"));
     ecouter("coup-outil", () => jouer("toc"));
     ecouter("bloc-casse", () => jouer("crac"));
     ecouter("coup-epee", (d) => (d.touche && !d.cassee ? jouer("bonk") : jouer("fiouu")));

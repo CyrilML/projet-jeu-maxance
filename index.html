@@ -144,6 +144,7 @@
       <a href="#etape18">Étape 18</a>
       <a href="#etape19">Étape 19</a>
       <a href="#etape20">Étape 20</a>
+      <a href="#etape21">Étape 21</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -1730,6 +1731,43 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Pourquoi un clic sur la barre ne casse-t-il pas le bloc derrière ?</summary><p>Parce que le jeu regarde d'abord si la souris est sur la barre. Si oui, il choisit l'objet et s'arrête là.</p></details>
     </section>
 
+    <section id="etape21">
+      <h2>🔄 Étape 21 : mitrailleuse infinie et rechargement du bazooka <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">La mitrailleuse ne s'arrête plus jamais, et le héros recharge son bazooka avec une roquette prise dans son dos.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/21-mitrailleuse-infinie-rechargement.md</code>.</p>
+          <p>Mitrailleuse infinie. Bazooka : après chaque tir, le héros bouge le bras, prend une roquette cachée dans son dos, et recharge.</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ <kbd>)</kbd> puis <kbd>T</kbd> tenu : ta-ta-ta… sans fin.</li>
+            <li>☐ <kbd>²</kbd> puis <kbd>T</kbd> : le bras va dans le dos, revient avec une roquette, clic-clac !</li>
+            <li>Vérifie « version 21 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🎞️ Une animation en 3 temps</h3>
+      <p>Le rechargement dure 1,2 s. Le jeu calcule un nombre <strong>k</strong> qui va de 0 (début) à 1 (fin), et place la main du héros selon k :</p>
+      <ol>
+        <li>de 0 à 0,35 : la main va de devant jusque dans le dos ;</li>
+        <li>de 0,35 à 0,75 : elle revient avec une roquette jusqu'au bout du tube ;</li>
+        <li>de 0,75 à 1 : elle pousse la roquette dedans.</li>
+      </ol>
+      <p class="petit">Pour trouver un point entre deux points, on fait « départ + (arrivée − départ) × t ». C'est une <strong>interpolation</strong> : c'est comme ça que presque toutes les animations des jeux vidéo sont faites.</p>
+
+      <h3>🐞 Un petit bug d'arrondi</h3>
+      <p>La mitrailleuse tirait 47 balles en 5 s au lieu de 50. Pourquoi ? Pour un ordinateur, 0,1 − 12 × (1/120) ne fait pas exactement 0, mais 0,0000000000001 ! Alors il attendait un pas de plus avant chaque tir. La réparation : en dessous de 0,000001, on arrondit à 0.</p>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>La main va de x = 30 à x = −8. Où est-elle à t = 0,5 ?</summary><p>30 + (−8 − 30) × 0,5 = 30 − 19 = 11.</p></details>
+      <details class="question"><summary>Combien de balles la mitrailleuse tire-t-elle en 1 minute ?</summary><p>10 par seconde × 60 = 600 balles.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -1856,26 +1894,32 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>Un clic sur une case de la barre prend l'objet en main ; la case survolée s'éclaire et montre son nom.</p>
           <p class="apprend"><b>Tu apprends :</b> savoir si un point est dans un rectangle, partager une même mesure entre le peintre et les règles. <b>Durée :</b> ½ séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">21</div>
+          <h4>Mitrailleuse infinie et rechargement <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>La mitrailleuse est infinie ; le héros recharge le bazooka avec une roquette prise dans son dos.</p>
+          <p class="apprend"><b>Tu apprends :</b> une animation en plusieurs temps, l'interpolation, les petites erreurs d'arrondi des ordinateurs. <b>Durée :</b> ½ séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">22</div>
           <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">22</div>
+          <div class="num">23</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">23</div>
+          <div class="num">24</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">24</div>
+          <div class="num">25</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -2083,6 +2127,14 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-20" data-cle="appris-20" placeholder="Ex. : J'ai appris qu'un clic, c'est un point dans un rectangle…"></textarea>
         <label for="idees-20"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-20" data-cle="idees-20" placeholder="Ex. : Ranger les objets dans l'ordre que je veux…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 21 · mitrailleuse infinie et rechargement <span class="petit">· 29 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la mitrailleuse n'a plus de compteur ; le bazooka a un carquois dans le dos et une animation de rechargement en 3 temps (1,2 s, « clic-clac ») ; un bug d'arrondi réparé (la mitrailleuse tire bien 10 balles par seconde). Sous le capot : « rechargement du bazooka » dans l'état en direct, et « Bazooka rechargé » dans le journal.</p>
+        <label for="appris-21"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-21" data-cle="appris-21" placeholder="Ex. : J'ai appris qu'une animation, c'est calculer une position entre deux points…"></textarea>
+        <label for="idees-21"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-21" data-cle="idees-21" placeholder="Ex. : Une animation pour recharger le Magnum…"></textarea>
       </div>
     </section>
   </main>

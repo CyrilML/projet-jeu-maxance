@@ -289,6 +289,12 @@ Jeu.Rendu = (function () {
       }
       ctx.restore();
     } else if (objet === "bazooka") {
+      // Le carquois de roquettes, dans le dos (étape 21) : on voit dépasser jusqu'à 3 nez rouges.
+      r("#6b4423", -12, 12, 7, 20);
+      for (let k = 0; k < Math.min(3, eq.roquettes - (eq.rechargement > 0 ? 1 : 0)); k++) {
+        r("#9aa3ad", -12 + k * 2, 6 - k, 3, 7);
+        r("#d9483b", -12 + k * 2, 4 - k, 3, 3);
+      }
       // Le bazooka (étape 19) : un gros tube vert posé sur l'épaule.
       r("#3f6b2f", 6, 12, 44, 10); // le tube
       r("#2c4d21", 6, 12, 44, 2);
@@ -296,8 +302,27 @@ Jeu.Rendu = (function () {
       r("#1d1d3a", 2, 13, 4, 8); // l'arrière
       r("#6b4423", 28, 22, 4, 8); // la poignée
       r("#c9a227", 18, 8, 6, 4); // le viseur
-      if (eq.roquettes > 0 && eq.attente <= 0) r("#d9483b", 50, 14, 5, 6); // la roquette prête, au bout
+      if (eq.roquettes > 0 && eq.rechargement <= 0) r("#d9483b", 50, 14, 5, 6); // la roquette prête, au bout
       if (eq.tir > 0) r("#ffe27a", 52, 10, 10, 14);
+      if (eq.rechargement > 0) {
+        // Le rechargement (étape 21), en 3 temps : le bras va dans le dos, revient avec une roquette,
+        // puis la pousse dans le tube. k va de 0 (début) à 1 (fin).
+        const k = 1 - eq.rechargement / C.armes.bazooka.attente;
+        const devant = [30, 24], dos = [-8, 10], bouche = [52, 16], dedans = [47, 16];
+        const entre = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+        const main = k < 0.35 ? entre(devant, dos, k / 0.35) : k < 0.75 ? entre(dos, bouche, (k - 0.35) / 0.4) : entre(bouche, dedans, (k - 0.75) / 0.25);
+        ctx.strokeStyle = "#f1c27d";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(x + 20, y + 21); // l'épaule
+        ctx.lineTo(x + main[0], y + main[1]);
+        ctx.stroke();
+        if (k >= 0.35) {
+          r("#9aa3ad", main[0] - 6, main[1] - 3, 12, 5); // la roquette dans la main
+          r("#d9483b", main[0] + 5, main[1] - 4, 4, 7);
+        }
+        r("#f1c27d", main[0] - 3, main[1] - 3, 6, 6); // la main
+      }
     } else if (Jeu.Armes.PISTOLETS.includes(objet)) {
       const long = objet === "petitPistolet" ? 10 : objet === "pistolet" ? 15 : objet === "mitrailleuse" ? 26 : 21;
       const epais = objet === "grosPistolet" || objet === "mitrailleuse" ? 7 : 5;
@@ -668,7 +693,7 @@ Jeu.Rendu = (function () {
       ctx.strokeStyle = choisi ? "#ffe27a" : i === survol ? "#ffffff" : "rgba(255,255,255,0.35)";
       ctx.lineWidth = choisi || i === survol ? 3 : 1;
       ctx.strokeRect(x + 0.5, haut + 0.5, taille - 1, taille - 1);
-      const inactif = (objet === "mitrailleuse" && eq.munitions <= 0) || (objet === "bazooka" && eq.roquettes <= 0) || (objet === "armure" && eq.armure <= 0) || (eq[objet] !== undefined && objet !== "briques" && eq[objet] <= 0);
+      const inactif = (objet === "bazooka" && eq.roquettes <= 0) || (objet === "armure" && eq.armure <= 0) || (eq[objet] !== undefined && objet !== "briques" && eq[objet] <= 0);
       ctx.globalAlpha = inactif ? 0.45 : 1;
       icone(objet, x + taille / 2, haut + taille / 2 - 2);
       ctx.globalAlpha = 1;
@@ -677,7 +702,6 @@ Jeu.Rendu = (function () {
       const max = objet === "pioche" ? C.pioche.usure : objet === "armure" ? C.armure.usure : C.armes[objet] && C.armes[objet].usure;
       if (objet === "briques") texte(String(monde.inventaire.blocs), x + taille - 4, haut + taille - 5, 13, "#fff", "right");
       else if (objet === "bazooka") texte(String(eq.roquettes), x + taille - 4, haut + taille - 5, 13, eq.roquettes > 0 ? "#ffe27a" : "#ff9b9b", "right");
-      else if (objet === "mitrailleuse") texte(String(eq.munitions), x + taille - 4, haut + taille - 5, 13, eq.munitions > 0 ? "#ffe27a" : "#ff9b9b", "right");
       else if (Jeu.Armes.PISTOLETS.includes(objet)) texte("∞", x + taille - 5, haut + taille - 5, 14, "#ffe27a", "right");
       else if (objet === "armure" && !eq.armureFabriquee) texte(C.armure.fers + "⛓️", x + taille - 4, haut + taille - 5, 12, "#fff", "right");
       else if (max) {
@@ -698,7 +722,7 @@ Jeu.Rendu = (function () {
     let infos = Jeu.Armes.nomDe(objet);
     if (objet === "bazooka") infos += " · " + C.armes.bazooka.degats + " dégâts + explosion 3 × 3 · " + eq.roquettes + " roquettes · pierres minées " + eq.pierres + " / " + C.armes.bazooka.pierresParRoquette;
     else if (objet === "magnum") infos += " · " + arme.degats + " dégâts · attention au recul ! · attente " + arme.attente + " s";
-    else if (objet === "mitrailleuse") infos += " · " + arme.degats + " dégât par balle · " + eq.munitions + " balles · garde T appuyée";
+    else if (objet === "mitrailleuse") infos += " · " + arme.degats + " dégât par balle · balles infinies · garde T appuyée";
     else if (arme) infos += " · " + arme.degats + " dégâts" + (arme.usure ? " · " + eq[objet] + "/" + arme.usure + " coups" : " · balles infinies") + (arme.attente ? " · attente " + arme.attente + " s" : "");
     if (Jeu.Armes.OUTILS.includes(objet)) infos += " · 🖱️ clic : casser " + C.outils[objet].facile.join(", ") + (C.outils[objet].casseTout ? " (le reste en " + C.outils.clicsDifficiles + " clics)" : "");
     if (objet === "briques") infos += " · 🖱️ clic : poser";
