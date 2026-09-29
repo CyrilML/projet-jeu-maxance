@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 19,
+  version: 20,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -155,6 +155,10 @@ Jeu.CONFIG = {
     rayon: 1, // l'explosion casse un carré de 3 × 3 blocs (1 bloc autour de l'impact)
     dureeExplosion: 0.5, // s : le temps que l'explosion reste affichée
   },
+
+  // La barre d'inventaire en bas de l'écran (étapes 15 et 20) : taille d'une case, écart, marge du bas (px).
+  // Étape 20 : on peut aussi CLIQUER sur une case pour prendre l'objet en main.
+  barre: { taille: 46, ecart: 6, margeBas: 10 },
 
   // Les outils pour casser les blocs au clic de souris (étape 17). Le bon outil casse en 1 clic ;
   // la pioche casse tout ce qui est solide, mais 3 clics pour ce qui n'est pas de la pierre.

@@ -160,6 +160,12 @@ Jeu.Inventaire = (function () {
       }
     }
     if (Jeu.Entrees.consommer("poserIci")) {
+      // Étape 20 : un clic sur une case de la barre du bas prend cet objet en main (et ne casse rien).
+      const caseBarre = Jeu.Armes.caseSousLaSouris();
+      if (caseBarre >= 0) {
+        Jeu.Armes.prendre(monde, caseBarre, "clic");
+        return;
+      }
       // Étape 17 : le clic dépend de l'objet en main. Un outil CASSE, les briques POSENT.
       const cible = caseSousLaSouris(monde);
       const objet = Jeu.Armes.objetEnMain(monde);

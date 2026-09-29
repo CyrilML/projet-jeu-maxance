@@ -62,7 +62,7 @@ Jeu.SousLeCapot = (function () {
     "reparation-refusee": (d) => "🔧 Pas de réparation : " + d.raison,
     "epee-cassee": (d) => "💔 Ton arme est cassée (" + ((d && d.arme) || "épée") + ") ! Elle ne fait plus de dégâts : casse du fer (F) et répare-la (R)",
     "reglage-son": (d) => (d.quoi === "musique" ? "🎵 Musique " + (d.actif ? "remise" : "coupée") : "🔊 Bruits " + (d.actif ? "remis" : "coupés")) + (d.quoi === "musique" ? " (touche J)" : " (touche B)"),
-    "objet-en-main": (d) => "🎒 Touche " + d.touche + " : tu tiens maintenant " + d.objet,
+    "objet-en-main": (d) => "🎒 " + (d.facon === "clic" ? "Clic sur la barre" : "Touche " + d.touche) + " : tu tiens maintenant " + d.objet,
     "pas-pret": (d) => "⏳ " + d.objet + " pas encore prêt(e) : attends encore " + d.attente + " s",
     tir: (d) => "🔫 Pan ! Tir " + (d.arme === "mitrailleuse" ? "à la " : "au ") + d.arme + " (balle #" + d.id + ", " + d.degats + " dégât" + (d.degats > 1 ? "s" : "") + ")" + (d.reste !== null && d.reste !== undefined ? " · il reste " + d.reste + " balles" : " · prochain tir dans " + d.attente + " s"),
     "roquette-tiree": (d) => "🚀 Roquette #" + d.id + " tirée au bazooka ! (il en reste " + d.reste + ")",
@@ -210,6 +210,8 @@ Jeu.SousLeCapot = (function () {
     if (monde.phase !== "jeu") return "—";
     const c = Jeu.Inventaire.caseSousLaSouris(monde);
     if (!c) return "souris hors de l'écran";
+    const barre = Jeu.Armes.caseSousLaSouris();
+    if (barre >= 0) return "sur la barre, case " + (barre + 1) + " : clic = prendre " + Jeu.Armes.nomDe(Jeu.Armes.BARRE[barre]);
     const objet = Jeu.Armes.objetEnMain(monde);
     const debut = "col. " + c.colonne + ", ligne " + c.ligne + " (" + Jeu.Terrain.NOMS[Jeu.Terrain.lireCase(monde.terrain, c.colonne, c.ligne)] + ") : ";
     if (Jeu.Armes.OUTILS.includes(objet)) {

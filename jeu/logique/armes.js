@@ -1,6 +1,6 @@
 // 🔫 LES ARMES : la barre d'inventaire, l'objet en main et les balles (étape 15)
 //
-// Imagine une ceinture à 11 poches, en bas de l'écran. Les touches 1 à 9, 0 et ° choisissent la poche,
+// Imagine une ceinture à 13 poches, en bas de l'écran. Les touches (ou un clic sur la poche, étape 20) choisissent la poche,
 // et la touche T UTILISE ce qu'il y a dedans. Ce fichier est le « chef de la ceinture » :
 // il regarde l'objet en main et décide ce que fait T :
 //   - une épée ou la hache → un coup de corps à corps (logique/combat.js s'en occupe) ;
@@ -39,6 +39,32 @@ Jeu.Armes = (function () {
 
   function nomDe(objet) {
     return (C.armes[objet] && C.armes[objet].nom) || NOMS[objet];
+  }
+
+  // La place de chaque case de la barre sur l'écran (en pixels de l'écran de jeu).
+  // Le peintre s'en sert pour dessiner la barre, et le jeu pour savoir sur quelle case on clique (étape 20).
+  function caseDeLaBarre(i) {
+    const R = C.barre;
+    const largeur = BARRE.length * (R.taille + R.ecart) - R.ecart;
+    return { x: Math.round(C.ecran.largeur / 2 - largeur / 2) + i * (R.taille + R.ecart), y: C.ecran.hauteur - R.taille - R.margeBas, l: R.taille, h: R.taille };
+  }
+
+  // Le numéro de la case de la barre sous la souris, ou −1 si la souris n'est pas sur la barre.
+  function caseSousLaSouris() {
+    const s = Jeu.Entrees.souris;
+    if (!s.dedans) return -1;
+    return BARRE.findIndex((_, i) => {
+      const c = caseDeLaBarre(i);
+      return s.x >= c.x && s.x < c.x + c.l && s.y >= c.y && s.y < c.y + c.h;
+    });
+  }
+
+  // Prendre en main l'objet de la case i (touche ou clic).
+  function prendre(monde, i, facon) {
+    const eq = monde.equipement;
+    if (eq.enMain === i) return;
+    eq.enMain = i;
+    Jeu.Evenements.emettre("objet-en-main", { touche: TOUCHES[i], objet: nomDe(BARRE[i]), facon });
   }
 
   function objetEnMain(monde) {
@@ -199,10 +225,7 @@ Jeu.Armes = (function () {
     eq.recul = Math.max(0, eq.recul - dt);
     // 1. Les touches 1 à 9, 0 et ° : changer d'objet en main
     for (let k = 1; k <= BARRE.length; k++) {
-      if (E.consommer("choisir" + k) && eq.enMain !== k - 1) {
-        eq.enMain = k - 1;
-        Jeu.Evenements.emettre("objet-en-main", { touche: TOUCHES[k - 1], objet: nomDe(BARRE[k - 1]) });
-      }
+      if (E.consommer("choisir" + k)) prendre(monde, k - 1, "touche");
     }
     // 2. T : utiliser l'objet en main
     const objet = objetEnMain(monde);
@@ -231,5 +254,5 @@ Jeu.Armes = (function () {
     deplacerLesRoquettes(monde, dt);
   }
 
-  return { BARRE, TOUCHES, CORPS_A_CORPS, PISTOLETS, OUTILS, nomDe, objetEnMain, mettreAJour };
+  return { BARRE, TOUCHES, CORPS_A_CORPS, PISTOLETS, OUTILS, nomDe, objetEnMain, caseDeLaBarre, caseSousLaSouris, prendre, mettreAJour };
 })();

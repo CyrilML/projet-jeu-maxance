@@ -43,7 +43,7 @@ Jeu.Entrees = (function () {
     choisir9: ["Digit9", "Numpad9"],
     choisir10: ["Digit0", "Numpad0"], // la pelle (étape 17)
     choisir11: ["Minus"], // la mitrailleuse : la touche « ) » (ou °) à droite du 0 (clavier français)
-    choisir12: ["Equal"], // le Magnum : la touche « = » (étape 19)
+    choisir12: ["Equal", "Slash"], // le Magnum : la touche « = » (Slash = la touche « = » d'un Mac français)
     choisir13: ["Backquote", "IntlBackslash"], // le bazooka : la touche « ² », en haut à gauche (étape 19)
     rayonsX: ["KeyX"],
     pasSuivant: ["KeyN"],

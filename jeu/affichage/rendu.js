@@ -657,17 +657,16 @@ Jeu.Rendu = (function () {
   function barreInventaire(monde) {
     const eq = monde.equipement;
     const barre = Jeu.Armes.BARRE;
-    const taille = 46;
-    const ecart = 6;
-    const gauche = Math.round(L / 2 - (barre.length * (taille + ecart) - ecart) / 2);
-    const haut = H - taille - 10;
+    const taille = C.barre.taille;
+    const haut = Jeu.Armes.caseDeLaBarre(0).y;
+    const survol = Jeu.Armes.caseSousLaSouris(); // la case sous la souris (étape 20)
     barre.forEach((objet, i) => {
-      const x = gauche + i * (taille + ecart);
+      const x = Jeu.Armes.caseDeLaBarre(i).x;
       const choisi = i === eq.enMain;
-      ctx.fillStyle = choisi ? "rgba(60,50,10,0.85)" : "rgba(0,0,0,0.55)";
+      ctx.fillStyle = choisi ? "rgba(60,50,10,0.85)" : i === survol ? "rgba(60,60,80,0.8)" : "rgba(0,0,0,0.55)";
       ctx.fillRect(x, haut, taille, taille);
-      ctx.strokeStyle = choisi ? "#ffe27a" : "rgba(255,255,255,0.35)";
-      ctx.lineWidth = choisi ? 3 : 1;
+      ctx.strokeStyle = choisi ? "#ffe27a" : i === survol ? "#ffffff" : "rgba(255,255,255,0.35)";
+      ctx.lineWidth = choisi || i === survol ? 3 : 1;
       ctx.strokeRect(x + 0.5, haut + 0.5, taille - 1, taille - 1);
       const inactif = (objet === "mitrailleuse" && eq.munitions <= 0) || (objet === "bazooka" && eq.roquettes <= 0) || (objet === "armure" && eq.armure <= 0) || (eq[objet] !== undefined && objet !== "briques" && eq[objet] <= 0);
       ctx.globalAlpha = inactif ? 0.45 : 1;
@@ -689,7 +688,11 @@ Jeu.Rendu = (function () {
         ctx.fillRect(x + 5, haut + taille - 7, Math.round((taille - 10) * reste / max), 4);
       }
     });
-    // Le nom de l'objet en main, au-dessus de la barre
+    // Au-dessus de la barre : le nom de la case sous la souris (étape 20), sinon celui de l'objet en main
+    if (survol >= 0 && survol !== eq.enMain) {
+      texte("🖱️ clic : prendre " + Jeu.Armes.nomDe(barre[survol]) + " (ou touche " + Jeu.Armes.TOUCHES[survol] + ")", L / 2, haut - 8, 15, "#ffffff", "center");
+      return;
+    }
     const objet = Jeu.Armes.objetEnMain(monde);
     const arme = C.armes[objet];
     let infos = Jeu.Armes.nomDe(objet);
@@ -789,7 +792,7 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 19 : le Magnum et le bazooka", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 20 : clique sur la barre pour choisir", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au bloc " + C.arrivee.bloc + " le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
@@ -797,7 +800,7 @@ Jeu.Rendu = (function () {
     texte("🔥 Lave et 💀 murets à pics (un tous les 50 blocs) : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
     texte("📦 Caisses et 🗼 tours en pierre : sans danger, monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
     texte("🎒 " + C.inventaire.blocs + " blocs (sac rempli à chaque 🚩) · un bloc cassé va dans le sac · saute + P : sous tes pieds", L / 2, 470, 16, "#cfe0ff", "center");
-    texte("1…9, 0, ), =, ² : choisir l'objet · T : l'utiliser · 🖱️ clic : casser (outil) ou poser (briques) · H · F · R · K · M", L / 2, 496, 15, "#cfe0ff", "center");
+    texte("1…9, 0, ), =, ² ou clic sur la barre : choisir l'objet · T : l'utiliser · 🖱️ clic : casser (outil) ou poser (briques) · H · F · R · K · M", L / 2, 496, 15, "#cfe0ff", "center");
     texte("🎵 J : couper la musique · 🔊 B : couper les bruits", L / 2, 140, 14, "#ffe27a", "center");
     const premier = Jeu.Sauvegarde.donnees.classement[0];
     if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 522, 16, "#ffe27a", "center");
@@ -1184,7 +1187,7 @@ Jeu.Rendu = (function () {
       });
       ctx.stroke();
     }
-    if (!c) return;
+    if (!c || Jeu.Armes.caseSousLaSouris() >= 0) return; // sur la barre du bas, le clic choisit un objet (étape 20)
     const objet = Jeu.Armes.objetEnMain(monde);
     const outil = Jeu.Armes.OUTILS.includes(objet);
     if (!outil && objet !== "briques") return; // avec une arme en main, le clic ne fait rien
