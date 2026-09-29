@@ -60,6 +60,8 @@ Jeu.Monde = (function () {
       balles: [], // les balles des pistolets en vol (étape 15)
       roquettes: [], // les roquettes du bazooka en vol (étape 19)
       explosions: [], // les explosions en cours, pour le dessin (étape 19)
+      douilles: [], // les douilles qui sautent des armes (étape 22)
+      rayons: [], // les rayons du pistolet laser, pendant 0,12 s (étape 22)
       cassage: null, // le bloc en train d'être cassé au clic : { colonne, ligne, clics, besoin } (étape 17)
       cochons: [], // les cochons qui se promènent (étape 13)
       grottesVisitees: 0, // combien de grottes le héros a découvertes (étape 13)

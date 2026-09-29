@@ -64,8 +64,16 @@ Jeu.SousLeCapot = (function () {
     "reglage-son": (d) => (d.quoi === "musique" ? "🎵 Musique " + (d.actif ? "remise" : "coupée") : "🔊 Bruits " + (d.actif ? "remis" : "coupés")) + (d.quoi === "musique" ? " (touche J)" : " (touche B)"),
     "objet-en-main": (d) => "🎒 " + (d.facon === "clic" ? "Clic sur la barre" : "Touche " + d.touche) + " : tu tiens maintenant " + d.objet,
     "pas-pret": (d) => "⏳ " + d.objet + " pas encore prêt(e) : attends encore " + d.attente + " s",
-    tir: (d) => "🔫 Pan ! Tir " + (d.arme === "mitrailleuse" ? "à la " : "au ") + d.arme + " (balle #" + d.id + ", " + d.degats + " dégât" + (d.degats > 1 ? "s" : "") + ")" + (d.reste !== null && d.reste !== undefined ? " · il reste " + d.reste + " balles" : " · prochain tir dans " + d.attente + " s"),
-    "bazooka-recharge": (d) => "🔄 Bazooka rechargé : le héros a pris une roquette dans son dos (il en reste " + d.roquettes + ")",
+    tir: (d) => {
+      const bruit = { "pistolet laser": "⚡ Piou !", "lance-flammes": "🔥 Frrr !", "pistolet à eau": "💦 Pschit !", "fusil à pompe": "💥 BOOM !", Magnum: "💥 BANG !" }[d.arme] || "🔫 Pan !";
+      const au = d.arme === "mitrailleuse" ? "à la " : /^[aeéiouh]/i.test(d.arme) ? "à l'" : "au ";
+      return bruit + " Tir " + au + d.arme + (d.id !== null && d.id !== undefined ? " (balle #" + d.id + ", " + d.degats + " dégât" + (d.degats > 1 ? "s" : "") + ")" : "") + (d.reste !== null && d.reste !== undefined ? " · encore " + d.reste + " dans le chargeur" : "");
+    },
+    rechargement: (d) => "⟳ Chargeur vide : le héros recharge son " + d.arme + " (" + d.duree + " s)",
+    "recharge-finie": (d) => "🔄 " + d.arme + " rechargé" + (d.roquettes !== null ? " : le héros a pris une roquette dans son dos (il en reste " + d.roquettes + ")" : " : " + d.balles + " dans le chargeur"),
+    laser: (d) => "⚡ Piou ! Le laser touche le " + d.cible + " à " + d.blocs + " blocs : −" + d.degats + " PV → " + d.pv + " PV",
+    "flammes-touchent": (d) => "🔥 Le lance-flammes brûle : " + d.touches + " (−" + d.degats + " PV)",
+    arrose: (d) => "💦 Splash ! Le " + d.cible + " est arrosé et recule de " + Math.abs(d.recul) + " px (sans être blessé)",
     "roquette-tiree": (d) => "🚀 Roquette #" + d.id + " tirée au bazooka ! (il en reste " + d.reste + ")",
     explosion: (d) => "💥 BOUM ! Explosion en colonne " + d.colonne + ", ligne " + d.ligne + " : touché " + d.touches + " · " + (d.protege !== null ? "aucun bloc cassé (le monstre #" + d.protege + " est trop près)" : d.blocs + " bloc(s) cassé(s)"),
     "plus-de-roquettes": (d) => "🚀 Plus de roquettes ! Mine encore " + (d.besoin - d.pierres) + " bloc(s) de pierre pour en fabriquer une",
@@ -75,7 +83,7 @@ Jeu.SousLeCapot = (function () {
     "bloc-casse": (d) => "💥 Bloc " + (/^[aeéiouh]/.test(d.bloc) ? "d'" : "de ") + d.bloc + " cassé à la " + d.outil + " (colonne " + d.colonne + ", ligne " + d.ligne + ") → " + d.sac + " blocs dans le sac",
     "casse-refusee": (d) => "🚫 Pas cassé : " + d.raison,
     "balle-touche": (d) => "🎯 La balle #" + d.id + " touche le " + d.cible + " : −" + d.degats + " PV → " + d.pv + " PV",
-    "balle-mur": (d) => "🧱 La balle #" + d.id + " s'écrase sur un bloc de " + d.bloc + " (colonne " + d.colonne + ", ligne " + d.ligne + ")",
+    "balle-mur": (d) => (d.eau ? "💦 La goutte #" + d.id + " éclabousse" : "🧱 La balle #" + d.id + " s'écrase") + " sur un bloc " + (/^[aeéiouh]/.test(d.bloc) ? "d'" : "de ") + d.bloc + " (colonne " + d.colonne + ", ligne " + d.ligne + ")",
     "caisse-cassee": (d) => "🪓 Caisse #" + d.id + " cassée à la hache ! (encore " + d.reste + " coups avant que la hache casse)",
     "armure-fabriquee": (d) => "🦺 Armure en fer fabriquée avec " + d.fers + " fers ! (il te reste " + d.reste + " fer)",
     "armure-refusee": (d) => "🦺 Pas d'armure : " + d.raison,
@@ -272,7 +280,9 @@ Jeu.SousLeCapot = (function () {
       ["balles en vol", monde.balles.length],
       ["roquettes du bazooka", monde.equipement.roquettes + " (pierres minées : " + monde.equipement.pierres + " / " + Jeu.CONFIG.armes.bazooka.pierresParRoquette + ")"],
       ["roquettes en vol", monde.roquettes.length],
-      ["rechargement du bazooka", monde.equipement.rechargement > 0 ? monde.equipement.rechargement.toFixed(2) + " s" : "non"],
+      ["rechargement", monde.equipement.rechargement > 0 ? monde.equipement.armeRecharge + " : " + monde.equipement.rechargement.toFixed(2) + " s" : "non"],
+      ["chargeur de l'arme en main", monde.equipement.chargeurs[Jeu.Armes.objetEnMain(monde)] !== undefined ? monde.equipement.chargeurs[Jeu.Armes.objetEnMain(monde)] + " / " + Jeu.CONFIG.armes[Jeu.Armes.objetEnMain(monde)].chargeur : "—"],
+      ["douilles qui tombent", monde.douilles.length],
       ["recul du Magnum", monde.equipement.recul > 0 ? monde.equipement.recul.toFixed(2) + " s" : "non"],
       ["blocs cassés au clic", monde.inventaire.casses],
       ["bloc en train d'être cassé", monde.cassage ? "col. " + monde.cassage.colonne + ", ligne " + monde.cassage.ligne + " : " + monde.cassage.clics + " / " + monde.cassage.besoin + " clics" : "aucun"],

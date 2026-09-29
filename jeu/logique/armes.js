@@ -24,6 +24,15 @@
 // du monde). 5 roquettes au départ, et 1 de plus tous les 10 blocs de pierre minés.
 // Étape 21 : après chaque tir, le héros RECHARGE : il prend une roquette dans son dos et la glisse
 // dans le tube (eq.rechargement compte le temps qui reste).
+//
+// Étape 22 : 5 nouvelles armes (on les prend en cliquant sur la barre, il n'y a plus de touches libres) :
+//   - le FUSIL À POMPE tire 5 plombs en éventail (les balles ont maintenant une vitesse verticale vy) ;
+//   - le FUSIL DE SNIPER tire très loin et très fort (le peintre dessine son laser de visée) ;
+//   - le PISTOLET LASER touche tout de suite : pas de balle qui voyage, on cherche la 1re cible sur la ligne ;
+//   - le LANCE-FLAMMES brûle tout ce qui est à moins de 3 blocs devant, tant qu'on tient T ;
+//   - le PISTOLET À EAU tire des gouttes qui retombent (gravité) et POUSSENT les monstres sans les blesser.
+// Toutes les armes à feu ont un CHARGEUR (eq.chargeurs) : vide, le héros recharge avec une animation.
+// Et les DOUILLES sautent de l'arme à chaque tir (monde.douilles) : elles tombent et rebondissent.
 
 window.Jeu = window.Jeu || {};
 
@@ -31,11 +40,12 @@ Jeu.Armes = (function () {
   const C = Jeu.CONFIG;
   const B = C.tailleBloc;
 
-  // Les 11 poches de la ceinture, dans l'ordre des touches 1 à 9, puis 0 et °.
-  const BARRE = ["epee", "epeeDoree", "hache", "petitPistolet", "pistolet", "grosPistolet", "pioche", "briques", "armure", "pelle", "mitrailleuse", "magnum", "bazooka"];
-  const TOUCHES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ")", "=", "²"];
+  // Les 18 poches de la ceinture : touches 1 à 9, 0, ), =, ², puis 5 poches à choisir en cliquant (étape 22).
+  const BARRE = ["epee", "epeeDoree", "hache", "petitPistolet", "pistolet", "grosPistolet", "pioche", "briques", "armure", "pelle", "mitrailleuse", "magnum", "bazooka", "fusilPompe", "sniper", "laser", "lanceFlammes", "pistoletEau"];
+  const TOUCHES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ")", "=", "²", "", "", "", "", ""];
   const CORPS_A_CORPS = ["epee", "epeeDoree", "hache"];
-  const PISTOLETS = ["petitPistolet", "pistolet", "grosPistolet", "mitrailleuse", "magnum"]; // tout ce qui tire des balles
+  // Tout ce qui tire (sauf le bazooka, qui a ses roquettes) : ces armes ont un chargeur et un éclair.
+  const PISTOLETS = ["petitPistolet", "pistolet", "grosPistolet", "mitrailleuse", "magnum", "fusilPompe", "sniper", "laser", "lanceFlammes", "pistoletEau"];
   const OUTILS = ["pelle", "hache", "pioche"]; // ce qui casse les blocs au clic (étape 17)
   const NOMS = { pioche: "pioche", briques: "briques", armure: "armure en fer", pelle: "pelle", bazooka: "bazooka" };
 
@@ -73,28 +83,131 @@ Jeu.Armes = (function () {
     return BARRE[monde.equipement.enMain];
   }
 
-  // Un tir : une balle part du bout du pistolet, dans la direction où regarde le héros.
+  // Une balle part du bout de l'arme. `angle` penche la balle (fusil à pompe), `options` change son style.
+  function nouvelleBalle(monde, nom, angle, options) {
+    const j = monde.joueur;
+    const arme = C.armes[nom];
+    const sens = j.regard || 1;
+    const vitesse = arme.vitesse || C.balles.vitesse;
+    const balle = Object.assign(
+      {
+        id: monde.prochainId++,
+        x: sens > 0 ? j.x + j.l + 6 : j.x - 12,
+        y: j.y + 22,
+        l: 6,
+        h: 3,
+        vx: sens * vitesse * Math.cos(angle),
+        vy: vitesse * Math.sin(angle),
+        gravite: 0,
+        degats: arme.degats,
+        arme: arme.nom,
+        portee: (arme.portee || C.balles.portee) * B,
+        parcouru: 0,
+      },
+      options || {}
+    );
+    monde.balles.push(balle);
+    return balle;
+  }
+
+  // Une douille qui saute de l'arme vers l'arrière (étape 22).
+  function ejecterDouille(monde, couleur) {
+    const j = monde.joueur;
+    const sens = j.regard || 1;
+    monde.douilles.push({ x: j.x + j.l / 2 + sens * 12, y: j.y + 20, vx: -sens * (40 + Math.random() * 60), vy: -(120 + Math.random() * 90), vie: 1.2, couleur });
+  }
+
+  // Un tir avec l'arme `nom`. Chaque arme a sa façon de tirer.
   function tirer(monde, nom) {
     const j = monde.joueur;
     const arme = C.armes[nom];
     const eq = monde.equipement;
+    const sens = j.regard || 1;
     eq.attente = arme.attente;
     eq.tir = 0.1; // l'éclair au bout du canon (animation)
-    const sens = j.regard || 1;
-    const balle = {
-      id: monde.prochainId++,
-      x: sens > 0 ? j.x + j.l + 6 : j.x - 12,
-      y: j.y + 22,
-      l: 6,
-      h: 3,
-      vx: sens * C.balles.vitesse,
-      degats: arme.degats,
-      arme: arme.nom,
-      parcouru: 0,
-    };
-    monde.balles.push(balle);
+    let id = null;
+    if (nom === "fusilPompe") {
+      // 5 plombs en éventail : de −dispersion à +dispersion (en radians)
+      for (let k = 0; k < arme.plombs; k++) id = nouvelleBalle(monde, nom, -arme.dispersion + (2 * arme.dispersion * k) / (arme.plombs - 1), { l: 4, h: 3 }).id;
+    } else if (nom === "laser") {
+      tirerLaser(monde, arme, sens);
+    } else if (nom === "lanceFlammes") {
+      cracherDesFlammes(monde, arme, sens);
+    } else if (nom === "pistoletEau") {
+      id = nouvelleBalle(monde, nom, -0.12, { l: 6, h: 6, gravite: arme.gravite, eau: true }).id;
+    } else {
+      id = nouvelleBalle(monde, nom, 0, nom === "sniper" ? { l: 10, h: 2 } : null).id;
+    }
+    if (arme.douille) ejecterDouille(monde, arme.douille);
     if (nom === "magnum") reculer(monde, sens, arme);
-    Jeu.Evenements.emettre("tir", { arme: arme.nom, id: balle.id, degats: arme.degats, attente: arme.attente, reste: null });
+    eq.chargeurs[nom] -= 1;
+    Jeu.Evenements.emettre("tir", { arme: arme.nom, id, degats: arme.degats, attente: arme.attente, reste: eq.chargeurs[nom] });
+    if (eq.chargeurs[nom] <= 0) recharger(monde, nom);
+  }
+
+  // Le pistolet laser (étape 22) : on avance sur la ligne de tir, 4 px par 4 px, jusqu'à la première cible.
+  function tirerLaser(monde, arme, sens) {
+    const j = monde.joueur;
+    const chevauche = Jeu.Physique.seChevauchent;
+    const y = j.y + 22;
+    const depart = sens > 0 ? j.x + j.l + 6 : j.x - 6;
+    let x = depart;
+    let cible = null;
+    for (let d = 0; d < arme.portee * B; d += 4) {
+      x = depart + sens * d;
+      const point = { x, y, l: 1, h: 1 };
+      const m = monde.monstres.find((o) => o.vivant && chevauche(point, o));
+      const c = m ? null : monde.cochons.find((o) => o.vivant && chevauche(point, o));
+      if (m || c) {
+        cible = m ? { quoi: "monstre #" + m.id, pv: Math.max(0, m.pv - arme.degats) } : { quoi: "cochon #" + c.id, pv: Math.max(0, c.pv - arme.degats) };
+        Jeu.Evenements.emettre("laser", { cible: cible.quoi, degats: arme.degats, pv: cible.pv, blocs: Math.round(d / B) });
+        if (m) Jeu.Combat.blesserMonstre(monde, m, arme.degats, arme.nom);
+        else Jeu.Combat.blesserCochon(monde, c, arme.degats);
+        break;
+      }
+      if (Jeu.Terrain.estSolide(monde.terrain, Math.floor(x / B), Math.floor(y / B))) break;
+    }
+    monde.rayons.push({ x1: depart, x2: x, y, age: 0, couleur: arme.eclair });
+  }
+
+  // Le lance-flammes (étape 22) : des flammes jaillissent, et tout ce qui est dans la zone devant brûle.
+  function cracherDesFlammes(monde, arme, sens) {
+    const j = monde.joueur;
+    const zone = { x: sens > 0 ? j.x + j.l : j.x - arme.portee * B, y: j.y + 6, l: arme.portee * B, h: j.h - 6 };
+    for (let k = 0; k < 3; k++) {
+      Jeu.Particules.ajouter(monde.flammes, sens > 0 ? j.x + j.l + 20 : j.x - 20, j.y + 24, sens * (220 + Math.random() * 80), (Math.random() - 0.5) * 60, 0.35 + Math.random() * 0.1, 8 + Math.random() * 8);
+    }
+    const touches = [];
+    for (const m of monde.monstres) {
+      if (m.vivant && Jeu.Physique.seChevauchent(zone, m)) {
+        touches.push("monstre #" + m.id);
+        Jeu.Combat.blesserMonstre(monde, m, arme.degats, arme.nom);
+      }
+    }
+    for (const c of monde.cochons) {
+      if (c.vivant && Jeu.Physique.seChevauchent(zone, c)) {
+        touches.push("cochon #" + c.id);
+        Jeu.Combat.blesserCochon(monde, c, arme.degats);
+      }
+    }
+    if (touches.length) Jeu.Evenements.emettre("flammes-touchent", { touches: touches.join(", "), degats: arme.degats });
+  }
+
+  // Le pistolet à eau (étape 22) : pousse la cible, sans la blesser, mais pas plus loin que pousseeMax blocs de chez elle.
+  function arroser(monde, cible, maison, sens) {
+    const arme = C.armes.pistoletEau;
+    const avant = cible.x;
+    cible.x = Math.max(maison - arme.pousseeMax * B, Math.min(maison + arme.pousseeMax * B, cible.x + sens * arme.poussee));
+    return Math.round(cible.x - avant);
+  }
+
+  // Commencer à recharger l'arme `nom` (le chargeur est vide, ou le bazooka vient de tirer).
+  function recharger(monde, nom) {
+    const eq = monde.equipement;
+    if (nom === "bazooka" && eq.roquettes <= 0) return; // plus de roquette à mettre dedans
+    eq.rechargement = C.armes[nom].recharge;
+    eq.armeRecharge = nom;
+    Jeu.Evenements.emettre("rechargement", { arme: C.armes[nom].nom, duree: C.armes[nom].recharge });
   }
 
   // Le recul du Magnum (étape 19) : un petit pas en arrière, sans traverser les murs.
@@ -116,12 +229,12 @@ Jeu.Armes = (function () {
     const sens = j.regard || 1;
     eq.attente = C.armes.bazooka.attente;
     eq.roquettes -= 1;
+    eq.chargeurs.bazooka = 0;
     eq.tir = 0.15;
-    // Étape 21 : s'il reste une roquette, le héros recharge (il la prend dans son dos) pendant l'attente.
-    if (eq.roquettes > 0) eq.rechargement = C.armes.bazooka.attente;
     const r = { id: monde.prochainId++, x: sens > 0 ? j.x + j.l + 4 : j.x - 22, y: j.y + 12, l: 18, h: 6, vx: sens * C.roquettes.vitesse, parcouru: 0 };
     monde.roquettes.push(r);
     Jeu.Evenements.emettre("roquette-tiree", { id: r.id, reste: eq.roquettes });
+    recharger(monde, "bazooka"); // étape 21 : s'il reste une roquette, le héros la prend dans son dos
   }
 
   // BOUM ! Au point (x, y) : dégâts aux monstres et cochons proches, et un carré de blocs cassés.
@@ -195,12 +308,19 @@ Jeu.Armes = (function () {
     const T = Jeu.Terrain;
     const chevauche = Jeu.Physique.seChevauchent;
     for (const b of monde.balles) {
-      const pas = b.vx * dt;
-      b.x += pas;
-      b.parcouru += Math.abs(pas);
+      b.vy += b.gravite * dt; // les gouttes d'eau retombent (étape 22)
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      b.parcouru += Math.hypot(b.vx, b.vy) * dt;
       const monstre = monde.monstres.find((m) => m.vivant && chevauche(b, m));
       const cochon = monstre ? null : monde.cochons.find((c) => c.vivant && chevauche(b, c));
-      if (monstre) {
+      if (b.eau && (monstre || cochon)) {
+        // Le pistolet à eau pousse sans blesser.
+        b.fini = true;
+        const cible = monstre || cochon;
+        const recul = arroser(monde, cible, monstre ? monstre.colonne * B + 2 : cochon.maison, Math.sign(b.vx));
+        emettre("arrose", { cible: (monstre ? "monstre #" : "cochon #") + cible.id, recul });
+      } else if (monstre) {
         b.fini = true;
         emettre("balle-touche", { id: b.id, cible: "monstre #" + monstre.id, degats: b.degats, pv: Math.max(0, monstre.pv - b.degats) });
         Jeu.Combat.blesserMonstre(monde, monstre, b.degats, b.arme);
@@ -213,11 +333,29 @@ Jeu.Armes = (function () {
         const ligne = Math.floor((b.y + b.h / 2) / B);
         if (T.estSolide(monde.terrain, colonne, ligne)) {
           b.fini = true;
-          emettre("balle-mur", { id: b.id, bloc: T.NOMS[T.lireCase(monde.terrain, colonne, ligne)], colonne, ligne });
-        } else if (b.parcouru > C.balles.portee * B) b.fini = true; // trop loin : elle disparaît sans bruit
+          emettre("balle-mur", { id: b.id, bloc: T.NOMS[T.lireCase(monde.terrain, colonne, ligne)], colonne, ligne, eau: !!b.eau });
+        } else if (b.parcouru > b.portee || b.y > C.carte.lignes * B) b.fini = true; // trop loin : elle disparaît sans bruit
       }
     }
     monde.balles = monde.balles.filter((b) => !b.fini);
+  }
+
+  // Les douilles tombent et rebondissent sur les blocs ; les rayons laser s'effacent (étape 22).
+  function deplacerLesDouilles(monde, dt) {
+    for (const d of monde.douilles) {
+      d.vie -= dt;
+      d.vy += 900 * dt;
+      d.x += d.vx * dt;
+      d.y += d.vy * dt;
+      if (d.vy > 0 && Jeu.Terrain.estSolide(monde.terrain, Math.floor(d.x / B), Math.floor((d.y + 3) / B))) {
+        d.y = Math.floor((d.y + 3) / B) * B - 3; // posée sur le bloc
+        d.vy = -d.vy * 0.35; // elle rebondit, un peu moins haut à chaque fois
+        d.vx *= 0.5;
+      }
+    }
+    monde.douilles = monde.douilles.filter((d) => d.vie > 0);
+    for (const r of monde.rayons) r.age += dt;
+    monde.rayons = monde.rayons.filter((r) => r.age < 0.12);
   }
 
   // Appelé à chaque pas de temps, AVANT l'inventaire et le combat : T devient la bonne action.
@@ -226,9 +364,18 @@ Jeu.Armes = (function () {
     const eq = monde.equipement;
     eq.tir = Math.max(0, (eq.tir || 0) - dt);
     eq.recul = Math.max(0, eq.recul - dt);
+    // Le rechargement (étapes 21 et 22) : il continue seulement si l'arme est encore en main.
     if (eq.rechargement > 0) {
-      eq.rechargement = Math.max(0, eq.rechargement - dt);
-      if (eq.rechargement === 0) Jeu.Evenements.emettre("bazooka-recharge", { roquettes: eq.roquettes });
+      if (objetEnMain(monde) !== eq.armeRecharge) eq.rechargement = 0; // on a changé d'arme : on recommencera plus tard
+      else {
+        eq.rechargement = Math.max(0, eq.rechargement - dt);
+        if (eq.rechargement === 0) {
+          const nom = eq.armeRecharge;
+          eq.chargeurs[nom] = C.armes[nom].chargeur;
+          if (nom === "magnum") for (let k = 0; k < 6; k++) ejecterDouille(monde, "#c9a227"); // le barillet se vide
+          Jeu.Evenements.emettre("recharge-finie", { arme: C.armes[nom].nom, balles: eq.chargeurs[nom], roquettes: nom === "bazooka" ? eq.roquettes : null });
+        }
+      }
     }
     // 1. Les touches 1 à 9, 0 et ° : changer d'objet en main
     for (let k = 1; k <= BARRE.length; k++) {
@@ -237,18 +384,24 @@ Jeu.Armes = (function () {
     // 2. T : utiliser l'objet en main
     const objet = objetEnMain(monde);
     const appui = E.consommer("frapper");
-    if (objet === "mitrailleuse") {
-      // Tant que T est tenue : un tir dès que l'attente est finie, s'il reste des balles.
-      if ((appui || E.estEnfoncee("frapper")) && eq.attente <= 0) tirer(monde, objet); // balles infinies (étape 21)
-    } else if (appui && objet === "bazooka") {
-      if (eq.roquettes <= 0) Jeu.Evenements.emettre("plus-de-roquettes", { pierres: eq.pierres, besoin: C.armes.bazooka.pierresParRoquette });
-      else if (eq.attente > 0) Jeu.Evenements.emettre("pas-pret", { objet: "bazooka", attente: Math.round(eq.attente * 100) / 100 });
-      else tirerRoquette(monde);
-    } else if (appui) {
+    const arme = C.armes[objet];
+    const aFeu = PISTOLETS.includes(objet) || objet === "bazooka";
+    if (aFeu && (appui || (arme.rafale && E.estEnfoncee("frapper")))) {
+      // Les armes à feu (mitrailleuse et lance-flammes : tant qu'on tient T)
+      if (eq.rechargement > 0) {
+        if (appui) Jeu.Evenements.emettre("pas-pret", { objet: nomDe(objet) + " (en train de recharger)", attente: Math.round(eq.rechargement * 100) / 100 });
+      } else if (objet === "bazooka" && eq.roquettes <= 0) {
+        if (appui) Jeu.Evenements.emettre("plus-de-roquettes", { pierres: eq.pierres, besoin: C.armes.bazooka.pierresParRoquette });
+      } else if (eq.chargeurs[objet] <= 0) {
+        if (appui) recharger(monde, objet); // chargeur vide (on avait changé d'arme pendant le rechargement)
+      } else if (eq.attente > 0) {
+        if (appui && !arme.rafale) Jeu.Evenements.emettre("pas-pret", { objet: nomDe(objet), attente: Math.round(eq.attente * 100) / 100 });
+      } else if (objet === "bazooka") tirerRoquette(monde);
+      else tirer(monde, objet);
+    } else if (appui && !aFeu) {
       const pret = eq.attente <= 0;
-      if (CORPS_A_CORPS.includes(objet) || PISTOLETS.includes(objet)) {
+      if (CORPS_A_CORPS.includes(objet)) {
         if (!pret) Jeu.Evenements.emettre("pas-pret", { objet: nomDe(objet), attente: Math.round(eq.attente * 100) / 100 });
-        else if (PISTOLETS.includes(objet)) tirer(monde, objet);
         else Jeu.Combat.frapper(monde, objet);
       } else if (objet === "pioche") E.appuyer("piocher"); // le combat fera le coup de pioche, comme avec F
       else if (objet === "briques") E.appuyer("poserBloc"); // l'inventaire posera le bloc, comme avec P
@@ -258,6 +411,7 @@ Jeu.Armes = (function () {
     // 3. Les balles et les roquettes en vol
     deplacerLesBalles(monde, dt);
     deplacerLesRoquettes(monde, dt);
+    deplacerLesDouilles(monde, dt);
   }
 
   return { BARRE, TOUCHES, CORPS_A_CORPS, PISTOLETS, OUTILS, nomDe, objetEnMain, caseDeLaBarre, caseSousLaSouris, prendre, mettreAJour };

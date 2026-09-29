@@ -87,6 +87,20 @@ Jeu.Orchestre = (function () {
       Son.note({ forme: "square", frequence: 500, fin: 300, duree: 0.04, volume: 0.25, quand: t, nom: "bazooka rechargé : clic-clac" });
       Son.note({ forme: "square", frequence: 350, fin: 200, duree: 0.05, volume: 0.3, quand: t + 0.09, nom: "bazooka rechargé : clic-clac" });
     },
+    // Étape 22 : les bruits des nouvelles armes
+    pompe: () => {
+      Son.bruit({ filtre: "lowpass", frequence: 1800, fin: 200, duree: 0.4, volume: 0.7, nom: "fusil à pompe : BOOM" });
+      Son.note({ forme: "square", frequence: 120, fin: 45, duree: 0.2, volume: 0.3, nom: "fusil à pompe : BOOM" });
+    },
+    sniper: () => {
+      const t = Son.maintenant();
+      Son.bruit({ filtre: "highpass", frequence: 1200, duree: 0.1, volume: 0.6, quand: t, nom: "sniper : PAN… (écho)" });
+      Son.bruit({ filtre: "bandpass", frequence: 900, duree: 0.25, volume: 0.15, quand: t + 0.25, nom: "sniper : PAN… (écho)" }); // l'écho
+    },
+    piou: () => Son.note({ forme: "square", frequence: 1600, fin: 250, duree: 0.18, volume: 0.25, nom: "laser : piou" }),
+    flamme: () => Son.bruit({ filtre: "lowpass", frequence: 700, duree: 0.12, volume: 0.25, nom: "lance-flammes : frrr" }),
+    pschit: () => Son.bruit({ filtre: "bandpass", frequence: 3500, duree: 0.08, volume: 0.2, nom: "pistolet à eau : pschit" }),
+    chik: () => Son.note({ forme: "square", frequence: 900, fin: 700, duree: 0.03, volume: 0.15, nom: "rechargement : chik" }),
     ta: () => Son.bruit({ filtre: "highpass", frequence: 1500, duree: 0.05, volume: 0.35, nom: "mitrailleuse : ta" }),
     clic: () => Son.note({ forme: "square", frequence: 1800, duree: 0.02, volume: 0.15, nom: "mitrailleuse vide : clic" }),
     toc: () => Son.note({ forme: "triangle", frequence: 300, fin: 200, duree: 0.06, volume: 0.3, nom: "coup d'outil : toc" }),
@@ -150,9 +164,12 @@ Jeu.Orchestre = (function () {
     const ecouter = Jeu.Evenements.ecouter;
     ecouter("saut", () => jouer("boom"));
     ecouter("atterrissage", () => jouer("bring"));
-    ecouter("tir", (d) => jouer(d.arme === "mitrailleuse" ? "ta" : d.arme === "Magnum" ? "bang" : "pan"));
+    // Chaque arme a son bruit (étape 22)
+    const BRUIT_DE = { mitrailleuse: "ta", Magnum: "bang", "fusil à pompe": "pompe", "fusil de sniper": "sniper", "pistolet laser": "piou", "lance-flammes": "flamme", "pistolet à eau": "pschit" };
+    ecouter("tir", (d) => jouer(BRUIT_DE[d.arme] || "pan"));
+    ecouter("rechargement", () => jouer("chik"));
+    ecouter("recharge-finie", () => jouer("clac"));
     ecouter("roquette-tiree", () => jouer("fshhh"));
-    ecouter("bazooka-recharge", () => jouer("clac"));
     ecouter("explosion", () => jouer("boum"));
     ecouter("roquette-fabriquee", () => jouer("ding"));
     ecouter("plus-de-roquettes", () => jouer("clic"));

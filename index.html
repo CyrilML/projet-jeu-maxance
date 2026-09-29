@@ -145,6 +145,7 @@
       <a href="#etape19">Étape 19</a>
       <a href="#etape20">Étape 20</a>
       <a href="#etape21">Étape 21</a>
+      <a href="#etape22">Étape 22</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -1768,6 +1769,70 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Combien de balles la mitrailleuse tire-t-elle en 1 minute ?</summary><p>10 par seconde × 60 = 600 balles.</p></details>
     </section>
 
+    <section id="etape22">
+      <h2>🎯 Étape 22 : cinq nouvelles armes à feu <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Fusil à pompe, fusil de sniper, pistolet laser, lance-flammes et pistolet à eau : chacun a son dessin, son éclair, son bruit, ses douilles et son rechargement.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/22-cinq-armes-a-feu.md</code>.</p>
+          <p><strong>Règles :</strong> 5 armes (1abcde), balles infinies (2a), on clique sur la barre pour les prendre (3b), et du style : dessin, éclair, bruit, douilles, rechargement (4abc).</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Clique sur les 5 dernières cases de la barre.</li>
+            <li>☐ Pompe : 5 plombs. Sniper : laser rouge. Laser : rayon bleu.</li>
+            <li>☐ Lance-flammes : ça brûle ! Eau : le monstre recule, sans blessure.</li>
+            <li>☐ Les douilles sautent et rebondissent.</li>
+            <li>☐ Chargeur vide : ⟳ et le héros recharge.</li>
+            <li>Vérifie « version 22 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🧰 Le catalogue des armes à feu</h3>
+      <div class="carte">
+        <div style="overflow-x: auto">
+        <table>
+          <tr><th>Arme</th><th>Dégâts</th><th>Portée</th><th>Chargeur</th><th>Ce qu'elle a de spécial</th></tr>
+          <tr><td>Fusil à pompe</td><td>5 × 3</td><td>5 blocs</td><td>5</td><td>5 plombs en éventail</td></tr>
+          <tr><td>Fusil de sniper</td><td>25</td><td>25 blocs</td><td>4</td><td>laser rouge de visée, balle très rapide</td></tr>
+          <tr><td>Pistolet laser</td><td>6</td><td>15 blocs</td><td>20</td><td>touche tout de suite, pas de balle</td></tr>
+          <tr><td>Lance-flammes</td><td>1 par 0,1 s</td><td>3 blocs</td><td>50</td><td>tant que tu tiens T</td></tr>
+          <tr><td>Pistolet à eau</td><td>0</td><td>8 blocs</td><td>30</td><td>pousse le monstre, gouttes qui retombent</td></tr>
+        </table>
+        </div>
+      </div>
+
+      <h3>📐 L'éventail du fusil à pompe</h3>
+      <p>Jusqu'ici, les balles allaient tout droit : seulement une vitesse horizontale <code>vx</code>. Maintenant elles ont aussi une vitesse verticale <code>vy</code>. Les 5 plombs partent avec 5 angles différents (−0,22 ; −0,11 ; 0 ; 0,11 ; 0,22 radian) : vx = vitesse × cos(angle), vy = vitesse × sin(angle). Plus on est loin, plus les plombs s'écartent… c'est pour ça qu'il faut tirer de près !</p>
+
+      <h3>⚡ Le laser : chercher sur une ligne</h3>
+      <p>Le laser n'envoie pas de balle. Le jeu avance sur la ligne de tir, 4 pixels par 4 pixels, et s'arrête à la première chose qu'il trouve : un monstre, un cochon ou un bloc solide. C'est le <strong>lancer de rayon</strong>. Le laser rouge du sniper utilise exactement la même méthode, mais juste pour le dessin.</p>
+
+      <h3>💧 Les gouttes retombent : la gravité</h3>
+      <p>Les gouttes du pistolet à eau ont une gravité : à chaque pas, <code>vy</code> augmente un peu, alors elles font une courbe, comme le héros quand il saute. Les douilles aussi tombent, et elles rebondissent : quand elles touchent un bloc, <code>vy</code> change de signe et perd 65 % de sa force.</p>
+
+      <h3>🔁 Balles infinies… mais un chargeur</h3>
+      <p>Chaque arme a un compteur <code>chargeurs[arme]</code>. À chaque tir, −1. À 0, le héros recharge pendant 1 à 2 secondes (la main va à la ceinture et revient avec un chargeur), puis le compteur revient au maximum. Les balles ne s'épuisent jamais, mais il faut choisir le bon moment pour tirer !</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Tire au fusil à pompe de loin, puis de près : combien de PV perd le monstre à chaque fois ?</li>
+        <li>Regarde « chargeur de l'arme en main » dans l'état en direct pendant que tu tires.</li>
+        <li>Arrose un monstre plusieurs fois : jusqu'où recule-t-il ?</li>
+        <li>Mets le jeu en pause juste après un tir de laser : trouve le rayon bleu.</li>
+        <li>Compte les douilles quand tu recharges le Magnum.</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de tirs de sniper pour un monstre de 30 PV ?</summary><p>2 tirs : 25 + 25 = 50, c'est plus que 30.</p></details>
+      <details class="question"><summary>Combien de temps de flammes pour vaincre un monstre de 30 PV ?</summary><p>1 PV toutes les 0,1 s = 10 PV par seconde, donc 3 secondes.</p></details>
+      <details class="question"><summary>Si les 5 plombs touchent, combien de dégâts fait le fusil à pompe ?</summary><p>5 × 3 = 15 PV, comme le Magnum !</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -1900,26 +1965,32 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>La mitrailleuse est infinie ; le héros recharge le bazooka avec une roquette prise dans son dos.</p>
           <p class="apprend"><b>Tu apprends :</b> une animation en plusieurs temps, l'interpolation, les petites erreurs d'arrondi des ordinateurs. <b>Durée :</b> ½ séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">22</div>
+          <h4>Cinq nouvelles armes à feu <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Fusil à pompe, sniper, laser, lance-flammes et pistolet à eau, avec douilles, éclairs, bruits et rechargements.</p>
+          <p class="apprend"><b>Tu apprends :</b> vitesse horizontale et verticale, le lancer de rayon, la gravité et les rebonds, un chargeur (compteur qui se remplit). <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">23</div>
           <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">23</div>
+          <div class="num">24</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">24</div>
+          <div class="num">25</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">25</div>
+          <div class="num">26</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -2135,6 +2206,15 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-21" data-cle="appris-21" placeholder="Ex. : J'ai appris qu'une animation, c'est calculer une position entre deux points…"></textarea>
         <label for="idees-21"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-21" data-cle="idees-21" placeholder="Ex. : Une animation pour recharger le Magnum…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 22 · cinq nouvelles armes à feu <span class="petit">· 29 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la barre passe à 18 cases ; fusil à pompe (5 plombs en éventail), fusil de sniper (laser de visée), pistolet laser (lancer de rayon), lance-flammes (zone de 3 blocs) et pistolet à eau (gouttes qui retombent et poussent) ; chaque arme à feu a un chargeur, une animation de rechargement, un éclair et un bruit à elle ; des douilles qui rebondissent. Sous le capot : chargeur et rechargement dans l'état en direct, nouveaux messages dans le journal.</p>
+        <p class="petit">✍️ Réponses de Maxance : 1abcde 2a 3b 4abc.</p>
+        <label for="appris-22"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-22" data-cle="appris-22" placeholder="Ex. : J'ai appris qu'une balle peut aller en biais avec vx et vy…"></textarea>
+        <label for="idees-22"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-22" data-cle="idees-22" placeholder="Ex. : Des grenades qui rebondissent comme les douilles…"></textarea>
       </div>
     </section>
   </main>

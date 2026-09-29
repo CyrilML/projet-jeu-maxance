@@ -31,6 +31,13 @@ Jeu.Combat = (function () {
   const C = Jeu.CONFIG;
   const B = C.tailleBloc;
 
+  // Un chargeur plein pour chaque arme qui en a un (étape 22).
+  function chargeursPleins() {
+    const chargeurs = {};
+    for (const nom in C.armes) if (C.armes[nom].chargeur) chargeurs[nom] = C.armes[nom].chargeur;
+    return chargeurs;
+  }
+
   // Ce que le héros porte au début d'une partie.
   function creerEquipement() {
     return {
@@ -45,7 +52,9 @@ Jeu.Combat = (function () {
       roquettes: C.armes.bazooka.roquettes, // roquettes du bazooka (étape 19)
       pierres: 0, // blocs de pierre minés depuis la dernière roquette fabriquée (0 à 9)
       recul: 0, // animation du recul du Magnum (s)
-      rechargement: 0, // animation du rechargement du bazooka (s) (étape 21)
+      rechargement: 0, // temps qui reste avant la fin du rechargement (s) (étapes 21 et 22)
+      armeRecharge: null, // l'arme en train d'être rechargée
+      chargeurs: chargeursPleins(), // balles dans le chargeur de chaque arme à feu (étape 22)
       armure: 0, // coups que l'armure peut encore arrêter (0 = pas d'armure ou cassée)
       armureFabriquee: false, // a-t-on déjà fabriqué l'armure ?
       fer: 0, // morceaux de fer dans le sac (étape 12)

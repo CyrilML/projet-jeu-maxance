@@ -288,10 +288,17 @@ Jeu.Rendu = (function () {
         ctx.fillRect(x + 54, y + 8 - (1 - k) * 12, 8, 8);
       }
       ctx.restore();
+      if (eq.rechargement > 0 && eq.armeRecharge === "magnum") {
+        // Recharger le barillet (étape 22) : la main va à la ceinture et revient avec des balles dorées.
+        brasQuiRecharge(x, y, 1 - eq.rechargement / C.armes.magnum.recharge, [34, 24], [10, 34], [32, 22], [34, 22], (mx, my) => {
+          r("#c9a227", mx - 4, my - 3, 3, 6);
+          r("#c9a227", mx, my - 3, 3, 6);
+        });
+      }
     } else if (objet === "bazooka") {
       // Le carquois de roquettes, dans le dos (étape 21) : on voit dépasser jusqu'à 3 nez rouges.
       r("#6b4423", -12, 12, 7, 20);
-      for (let k = 0; k < Math.min(3, eq.roquettes - (eq.rechargement > 0 ? 1 : 0)); k++) {
+      for (let k = 0; k < Math.min(3, eq.roquettes - (eq.rechargement > 0 && eq.armeRecharge === "bazooka" ? 1 : 0)); k++) {
         r("#9aa3ad", -12 + k * 2, 6 - k, 3, 7);
         r("#d9483b", -12 + k * 2, 4 - k, 3, 3);
       }
@@ -302,36 +309,28 @@ Jeu.Rendu = (function () {
       r("#1d1d3a", 2, 13, 4, 8); // l'arrière
       r("#6b4423", 28, 22, 4, 8); // la poignée
       r("#c9a227", 18, 8, 6, 4); // le viseur
-      if (eq.roquettes > 0 && eq.rechargement <= 0) r("#d9483b", 50, 14, 5, 6); // la roquette prête, au bout
+      if (eq.roquettes > 0 && eq.chargeurs.bazooka > 0) r("#d9483b", 50, 14, 5, 6); // la roquette prête, au bout
       if (eq.tir > 0) r("#ffe27a", 52, 10, 10, 14);
-      if (eq.rechargement > 0) {
-        // Le rechargement (étape 21), en 3 temps : le bras va dans le dos, revient avec une roquette,
-        // puis la pousse dans le tube. k va de 0 (début) à 1 (fin).
-        const k = 1 - eq.rechargement / C.armes.bazooka.attente;
-        const devant = [30, 24], dos = [-8, 10], bouche = [52, 16], dedans = [47, 16];
-        const entre = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-        const main = k < 0.35 ? entre(devant, dos, k / 0.35) : k < 0.75 ? entre(dos, bouche, (k - 0.35) / 0.4) : entre(bouche, dedans, (k - 0.75) / 0.25);
-        ctx.strokeStyle = "#f1c27d";
-        ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.moveTo(x + 20, y + 21); // l'épaule
-        ctx.lineTo(x + main[0], y + main[1]);
-        ctx.stroke();
-        if (k >= 0.35) {
-          r("#9aa3ad", main[0] - 6, main[1] - 3, 12, 5); // la roquette dans la main
-          r("#d9483b", main[0] + 5, main[1] - 4, 4, 7);
-        }
-        r("#f1c27d", main[0] - 3, main[1] - 3, 6, 6); // la main
+      if (eq.rechargement > 0 && eq.armeRecharge === "bazooka") {
+        // Le rechargement (étape 21) : le bras va dans le dos, revient avec une roquette, la pousse dans le tube.
+        brasQuiRecharge(x, y, 1 - eq.rechargement / C.armes.bazooka.recharge, [30, 24], [-8, 10], [52, 16], [47, 16], (mx, my) => {
+          r("#9aa3ad", mx - 6, my - 3, 12, 5); // la roquette dans la main
+          r("#d9483b", mx + 5, my - 4, 4, 7);
+        });
       }
     } else if (Jeu.Armes.PISTOLETS.includes(objet)) {
-      const long = objet === "petitPistolet" ? 10 : objet === "pistolet" ? 15 : objet === "mitrailleuse" ? 26 : 21;
-      const epais = objet === "grosPistolet" || objet === "mitrailleuse" ? 7 : 5;
-      if (objet === "mitrailleuse") r("#c9a227", 33, 27, 5, 8); // le chargeur
-      r("#6b4423", 27, 24, 5, 8); // poignée
-      r(objet === "grosPistolet" ? "#3b4252" : "#5b6472", 27, 20, long, epais); // canon, tendu vers l'avant
-      if (eq.tir > 0) {
-        r("#ffe27a", 27 + long, 18, 8, epais + 4); // l'éclair du tir
-        r("#fff", 29 + long, 20, 4, epais);
+      const bout = dessinerArme(objet, x, y, r); // chaque arme a son dessin (étape 22) ; bout = x du bout du canon
+      const arme = C.armes[objet];
+      if (eq.tir > 0 && eq.rechargement <= 0) {
+        r(arme.eclair, bout, 17, 9, 11); // l'éclair du tir, de la couleur de l'arme
+        r("#fff", bout + 2, 20, 4, 5);
+      }
+      if (eq.rechargement > 0 && eq.armeRecharge === objet) {
+        // Le rechargement (étape 22) : la main va à la ceinture, prend un chargeur, et le glisse dans l'arme.
+        brasQuiRecharge(x, y, 1 - eq.rechargement / arme.recharge, [34, 24], [10, 34], [32, 30], [32, 27], (mx, my) => {
+          const couleur = objet === "laser" ? "#4fd1ff" : objet === "pistoletEau" ? "#6fc3ff" : objet === "lanceFlammes" ? "#d9483b" : objet === "fusilPompe" ? "#d9483b" : "#2f3440";
+          r(couleur, mx - 3, my - 4, 6, 8); // chargeur, batterie, cartouches, bidon ou eau
+        });
       }
     } else if (objet === "pelle") {
       r("#8a5a2b", 27, 8, 4, 22);
@@ -343,6 +342,71 @@ Jeu.Rendu = (function () {
       r("#b5523b", 26, 20, 12, 10);
       r("#e8d9c4", 26, 25, 12, 1);
     }
+  }
+
+  // Un bras qui recharge, en 3 temps (étapes 21 et 22). k va de 0 (début) à 1 (fin).
+  // La main va de `devant` à `reserve` (où sont les munitions), puis jusqu'à `arme`, puis pousse vers `dedans`.
+  // `munition(mx, my)` dessine ce que la main tient pendant le retour.
+  function brasQuiRecharge(x, y, k, devant, reserve, arme, dedans, munition) {
+    const entre = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+    const main = k < 0.35 ? entre(devant, reserve, k / 0.35) : k < 0.75 ? entre(reserve, arme, (k - 0.35) / 0.4) : entre(arme, dedans, (k - 0.75) / 0.25);
+    ctx.strokeStyle = "#f1c27d";
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(x + 20, y + 21); // l'épaule
+    ctx.lineTo(x + main[0], y + main[1]);
+    ctx.stroke();
+    if (k >= 0.35) munition(x + main[0], y + main[1]);
+    ctx.fillStyle = "#f1c27d";
+    ctx.fillRect(x + main[0] - 3, y + main[1] - 3, 6, 6); // la main
+  }
+
+  // Le dessin de chaque arme à feu dans la main (étape 22). Renvoie la position du bout du canon.
+  function dessinerArme(objet, x, y, r) {
+    if (objet === "fusilPompe") {
+      r("#6b3a1e", 14, 22, 14, 6); // crosse en bois
+      r("#2f3440", 27, 19, 30, 4); // le canon
+      r("#8a5a2b", 34, 23, 12, 4); // la pompe, sous le canon
+      r("#6b4423", 27, 24, 5, 8); // la poignée
+      return 57;
+    }
+    if (objet === "sniper") {
+      r("#3b2a1e", 12, 22, 16, 6); // crosse
+      r("#1d1d3a", 27, 20, 38, 3); // très long canon
+      r("#1d1d3a", 32, 14, 14, 5); // la lunette
+      r("#4fd1ff", 45, 15, 2, 3); // le verre de la lunette
+      r("#1d1d3a", 40, 23, 2, 6); // le bipied
+      r("#6b4423", 27, 24, 5, 8);
+      return 65;
+    }
+    if (objet === "laser") {
+      r("#e8eef5", 27, 19, 20, 7); // un corps blanc futuriste
+      r("#4fd1ff", 29, 21, 16, 2); // la bande lumineuse
+      r("#4fd1ff", 46, 20, 4, 5); // le bout qui brille
+      r("#8e949e", 27, 25, 5, 8);
+      return 50;
+    }
+    if (objet === "lanceFlammes") {
+      r("#b8342f", -12, 12, 9, 20); // le réservoir, dans le dos
+      r("#1d1d3a", -8, 10, 2, 3);
+      r("#5b6472", 27, 20, 24, 5); // la buse
+      r("#6b4423", 27, 24, 5, 8);
+      r(Math.floor(Date.now() / 90) % 2 ? "#ffe27a" : "#ff9f1a", 51, 20, 3, 4); // la petite veilleuse toujours allumée
+      return 51;
+    }
+    if (objet === "pistoletEau") {
+      r("#37c871", 27, 21, 18, 6); // plastique vert
+      r("#ff9f1a", 30, 13, 10, 8); // le réservoir orange
+      r("#6fc3ff", 31, 15, 8, 5); // l'eau dedans
+      r("#ffd23f", 27, 26, 5, 7);
+      return 45;
+    }
+    const long = objet === "petitPistolet" ? 10 : objet === "pistolet" ? 15 : objet === "mitrailleuse" ? 26 : 21;
+    const epais = objet === "grosPistolet" || objet === "mitrailleuse" ? 7 : 5;
+    if (objet === "mitrailleuse") r("#c9a227", 33, 27, 5, 8); // le chargeur
+    r("#6b4423", 27, 24, 5, 8); // poignée
+    r(objet === "grosPistolet" ? "#3b4252" : "#5b6472", 27, 20, long, epais); // canon, tendu vers l'avant
+    return 27 + long;
   }
 
   // Le héros. On le dessine comme s'il regardait à droite, entre x = −15 et x = +15 autour de son
@@ -702,7 +766,11 @@ Jeu.Rendu = (function () {
       const max = objet === "pioche" ? C.pioche.usure : objet === "armure" ? C.armure.usure : C.armes[objet] && C.armes[objet].usure;
       if (objet === "briques") texte(String(monde.inventaire.blocs), x + taille - 4, haut + taille - 5, 13, "#fff", "right");
       else if (objet === "bazooka") texte(String(eq.roquettes), x + taille - 4, haut + taille - 5, 13, eq.roquettes > 0 ? "#ffe27a" : "#ff9b9b", "right");
-      else if (Jeu.Armes.PISTOLETS.includes(objet)) texte("∞", x + taille - 5, haut + taille - 5, 14, "#ffe27a", "right");
+      else if (Jeu.Armes.PISTOLETS.includes(objet)) {
+        // ∞ balles, mais un chargeur (étape 22) : on montre ce qu'il reste dedans, ou ⟳ pendant le rechargement
+        const recharge = eq.rechargement > 0 && eq.armeRecharge === objet;
+        texte(recharge ? "⟳" : eq.chargeurs[objet] + "", x + taille - 4, haut + taille - 5, 12, recharge ? "#9fdcff" : "#ffe27a", "right");
+      }
       else if (objet === "armure" && !eq.armureFabriquee) texte(C.armure.fers + "⛓️", x + taille - 4, haut + taille - 5, 12, "#fff", "right");
       else if (max) {
         const reste = eq[objet];
@@ -714,7 +782,8 @@ Jeu.Rendu = (function () {
     });
     // Au-dessus de la barre : le nom de la case sous la souris (étape 20), sinon celui de l'objet en main
     if (survol >= 0 && survol !== eq.enMain) {
-      texte("🖱️ clic : prendre " + Jeu.Armes.nomDe(barre[survol]) + " (ou touche " + Jeu.Armes.TOUCHES[survol] + ")", L / 2, haut - 8, 15, "#ffffff", "center");
+      const touche = Jeu.Armes.TOUCHES[survol];
+      texte("🖱️ clic : prendre " + Jeu.Armes.nomDe(barre[survol]) + (touche ? " (ou touche " + touche + ")" : ""), L / 2, haut - 8, 15, "#ffffff", "center");
       return;
     }
     const objet = Jeu.Armes.objetEnMain(monde);
@@ -723,7 +792,11 @@ Jeu.Rendu = (function () {
     if (objet === "bazooka") infos += " · " + C.armes.bazooka.degats + " dégâts + explosion 3 × 3 · " + eq.roquettes + " roquettes · pierres minées " + eq.pierres + " / " + C.armes.bazooka.pierresParRoquette;
     else if (objet === "magnum") infos += " · " + arme.degats + " dégâts · attention au recul ! · attente " + arme.attente + " s";
     else if (objet === "mitrailleuse") infos += " · " + arme.degats + " dégât par balle · balles infinies · garde T appuyée";
-    else if (arme) infos += " · " + arme.degats + " dégâts" + (arme.usure ? " · " + eq[objet] + "/" + arme.usure + " coups" : " · balles infinies") + (arme.attente ? " · attente " + arme.attente + " s" : "");
+    else if (objet === "pistoletEau") infos += " · ne blesse pas : pousse les monstres · chargeur " + eq.chargeurs[objet] + "/" + arme.chargeur;
+    else if (objet === "lanceFlammes") infos += " · brûle à " + arme.portee + " blocs · garde T appuyée · réservoir " + eq.chargeurs[objet] + "/" + arme.chargeur;
+    else if (arme && arme.chargeur) infos += " · " + (arme.plombs ? arme.plombs + " plombs × " : "") + arme.degats + " dégâts · balles infinies · chargeur " + eq.chargeurs[objet] + "/" + arme.chargeur + (arme.attente ? " · attente " + arme.attente + " s" : "");
+    else if (arme) infos += " · " + arme.degats + " dégâts" + (arme.usure ? " · " + eq[objet] + "/" + arme.usure + " coups" : "") + (arme.attente ? " · attente " + arme.attente + " s" : "");
+    if (eq.rechargement > 0 && eq.armeRecharge === objet) infos += " · ⟳ recharge…";
     if (Jeu.Armes.OUTILS.includes(objet)) infos += " · 🖱️ clic : casser " + C.outils[objet].facile.join(", ") + (C.outils[objet].casseTout ? " (le reste en " + C.outils.clicsDifficiles + " clics)" : "");
     if (objet === "briques") infos += " · 🖱️ clic : poser";
     if (eq.attente > 0 && arme) infos += " · ⏳";
@@ -751,6 +824,31 @@ Jeu.Rendu = (function () {
       r("#8a5a2b", -2, -12, 4, 24); // manche
       r("#9aa3ad", 2, -12, 9, 11); // lame
       r("#dfe6ee", 9, -12, 3, 11);
+    } else if (objet === "fusilPompe") {
+      r("#6b3a1e", -17, -1, 10, 6);
+      r("#2f3440", -8, -4, 26, 4);
+      r("#8a5a2b", -2, 0, 10, 4);
+    } else if (objet === "sniper") {
+      r("#3b2a1e", -18, 0, 10, 5);
+      r("#1d1d3a", -9, -2, 28, 3);
+      r("#1d1d3a", -5, -8, 12, 5);
+      r("#4fd1ff", 6, -7, 2, 3);
+    } else if (objet === "laser") {
+      r("#e8eef5", -12, -5, 20, 8);
+      r("#4fd1ff", -10, -3, 16, 2);
+      r("#4fd1ff", 8, -4, 5, 6);
+      r("#8e949e", -12, 2, 6, 9);
+    } else if (objet === "lanceFlammes") {
+      r("#b8342f", -15, -10, 9, 20);
+      r("#5b6472", -6, -2, 18, 5);
+      r("#ff9f1a", 12, -4, 5, 9);
+      r("#ffe27a", 14, -2, 3, 5);
+    } else if (objet === "pistoletEau") {
+      r("#37c871", -12, -3, 20, 7);
+      r("#ff9f1a", -8, -12, 11, 9);
+      r("#6fc3ff", -7, -10, 9, 5);
+      r("#ffd23f", -12, 3, 6, 8);
+      r("#6fc3ff", 10, -2, 3, 3);
     } else if (objet === "magnum") {
       r("#6b3a1e", -12, 1, 6, 11); // crosse
       r("#b9c0c9", -7, -6, 8, 8); // barillet
@@ -816,7 +914,7 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 20 : clique sur la barre pour choisir", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 22 : 5 nouvelles armes à feu", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au bloc " + C.arrivee.bloc + " le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
@@ -824,7 +922,7 @@ Jeu.Rendu = (function () {
     texte("🔥 Lave et 💀 murets à pics (un tous les 50 blocs) : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
     texte("📦 Caisses et 🗼 tours en pierre : sans danger, monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
     texte("🎒 " + C.inventaire.blocs + " blocs (sac rempli à chaque 🚩) · un bloc cassé va dans le sac · saute + P : sous tes pieds", L / 2, 470, 16, "#cfe0ff", "center");
-    texte("1…9, 0, ), =, ² ou clic sur la barre : choisir l'objet · T : l'utiliser · 🖱️ clic : casser (outil) ou poser (briques) · H · F · R · K · M", L / 2, 496, 15, "#cfe0ff", "center");
+    texte("Clic sur la barre (ou 1…9, 0, ), =, ²) : choisir l'objet · T : l'utiliser · 🖱️ clic : casser (outil) ou poser (briques) · H · F · R · K · M", L / 2, 496, 15, "#cfe0ff", "center");
     texte("🎵 J : couper la musique · 🔊 B : couper les bruits", L / 2, 140, 14, "#ffe27a", "center");
     const premier = Jeu.Sauvegarde.donnees.classement[0];
     if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 522, 16, "#ffe27a", "center");
@@ -1158,10 +1256,51 @@ Jeu.Rendu = (function () {
   // Les balles des pistolets (étape 15) : un petit trait jaune avec une traînée.
   function balles(liste) {
     for (const b of liste || []) {
+      if (b.eau) {
+        // une goutte d'eau (étape 22)
+        ctx.fillStyle = "#6fc3ff";
+        ctx.fillRect(Math.round(b.x), Math.round(b.y), b.l, b.h);
+        ctx.fillStyle = "#e6f6ff";
+        ctx.fillRect(Math.round(b.x) + 1, Math.round(b.y) + 1, 2, 2);
+        continue;
+      }
       ctx.fillStyle = "rgba(255,226,122,0.35)";
       ctx.fillRect(Math.round(b.x - Math.sign(b.vx) * 14), Math.round(b.y), 14, b.h);
       ctx.fillStyle = "#ffe27a";
       ctx.fillRect(Math.round(b.x), Math.round(b.y), b.l, b.h);
+    }
+  }
+
+  // Les douilles qui sautent, les rayons laser, et le laser de visée du sniper (étape 22).
+  function effetsDesArmes(monde) {
+    for (const d of monde.douilles || []) {
+      ctx.fillStyle = d.couleur;
+      ctx.fillRect(Math.round(d.x), Math.round(d.y), 4, 3);
+    }
+    for (const r of monde.rayons || []) {
+      const k = 1 - r.age / 0.12;
+      ctx.fillStyle = "rgba(79,209,255," + (0.35 * k).toFixed(2) + ")";
+      ctx.fillRect(Math.min(r.x1, r.x2), r.y - 4, Math.abs(r.x2 - r.x1), 8);
+      ctx.fillStyle = "rgba(230,250,255," + k.toFixed(2) + ")";
+      ctx.fillRect(Math.min(r.x1, r.x2), r.y - 1, Math.abs(r.x2 - r.x1), 3);
+    }
+    if (monde.phase === "jeu" && Jeu.Armes.objetEnMain(monde) === "sniper" && !monde.brulure && !monde.danse) {
+      // Le laser rouge de visée : il s'arrête sur le premier bloc solide ou le premier monstre.
+      const j = monde.joueur;
+      const sens = j.regard || 1;
+      const y = j.y + 21;
+      const depart = sens > 0 ? j.x + j.l + 25 : j.x - 25;
+      let fin = depart;
+      for (let d = 0; d < C.armes.sniper.portee * B; d += 4) {
+        fin = depart + sens * d;
+        const point = { x: fin, y, l: 1, h: 1 };
+        if (Jeu.Terrain.estSolide(monde.terrain, Math.floor(fin / B), Math.floor(y / B))) break;
+        if (monde.monstres.some((m) => m.vivant && Jeu.Physique.seChevauchent(point, m))) break;
+      }
+      ctx.fillStyle = "rgba(255,40,40,0.55)";
+      ctx.fillRect(Math.min(depart, fin), y, Math.abs(fin - depart), 1);
+      ctx.fillStyle = "#ff2828";
+      ctx.fillRect(fin - 2, y - 2, 4, 4); // le point rouge
     }
   }
 
@@ -1259,6 +1398,7 @@ Jeu.Rendu = (function () {
     flammes(monde.flammes);
     balles(monde.balles);
     roquettes(monde);
+    effetsDesArmes(monde);
     if (monde.phase === "jeu" && !monde.brulure && !monde.danse) caseDeConstruction(monde);
     ctx.restore();
 
