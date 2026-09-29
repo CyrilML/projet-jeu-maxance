@@ -298,7 +298,7 @@ Jeu.Rendu = (function () {
     } else if (objet === "bazooka") {
       // Le carquois de roquettes, dans le dos (étape 21) : on voit dépasser jusqu'à 3 nez rouges.
       r("#6b4423", -12, 12, 7, 20);
-      for (let k = 0; k < Math.min(3, eq.roquettes - (eq.rechargement > 0 && eq.armeRecharge === "bazooka" ? 1 : 0)); k++) {
+      for (let k = 0; k < (eq.rechargement > 0 && eq.armeRecharge === "bazooka" ? 2 : 3); k++) {
         r("#9aa3ad", -12 + k * 2, 6 - k, 3, 7);
         r("#d9483b", -12 + k * 2, 4 - k, 3, 3);
       }
@@ -309,7 +309,7 @@ Jeu.Rendu = (function () {
       r("#1d1d3a", 2, 13, 4, 8); // l'arrière
       r("#6b4423", 28, 22, 4, 8); // la poignée
       r("#c9a227", 18, 8, 6, 4); // le viseur
-      if (eq.roquettes > 0 && eq.chargeurs.bazooka > 0) r("#d9483b", 50, 14, 5, 6); // la roquette prête, au bout
+      if (!(eq.rechargement > 0 && eq.armeRecharge === "bazooka")) r("#d9483b", 50, 14, 5, 6); // la roquette prête, au bout
       if (eq.tir > 0) r("#ffe27a", 52, 10, 10, 14);
       if (eq.rechargement > 0 && eq.armeRecharge === "bazooka") {
         // Le rechargement (étape 21) : le bras va dans le dos, revient avec une roquette, la pousse dans le tube.
@@ -403,9 +403,17 @@ Jeu.Rendu = (function () {
     }
     const long = objet === "petitPistolet" ? 10 : objet === "pistolet" ? 15 : objet === "mitrailleuse" ? 26 : 21;
     const epais = objet === "grosPistolet" || objet === "mitrailleuse" ? 7 : 5;
-    if (objet === "mitrailleuse") r("#c9a227", 33, 27, 5, 8); // le chargeur
+    if (objet === "mitrailleuse") {
+      r("#c9a227", 33, 27, 5, 8); // le chargeur de balles
+      r("#6b4423", 16, 21, 11, 5); // la crosse contre l'épaule
+      r("#2f3440", 36, 18, long - 9, 2); // la poignée de transport, sur le dessus
+    }
     r("#6b4423", 27, 24, 5, 8); // poignée
+    r("#3a2616", 28, 26, 3, 5); // les stries de la poignée (pour mieux tenir)
     r(objet === "grosPistolet" ? "#3b4252" : "#5b6472", 27, 20, long, epais); // canon, tendu vers l'avant
+    r("#1d1d3a", 27, 20 + epais - 1, long, 1); // la glissière (le dessous plus sombre)
+    r("#1d1d3a", 32, 20 + epais, 4, 3); // le pontet, qui protège la gâchette
+    r("#1d1d3a", 27 + long - 2, 18, 2, 2); // le guidon, pour viser
     return 27 + long;
   }
 
@@ -414,17 +422,31 @@ Jeu.Rendu = (function () {
   function joueur(j, phase, eq) {
     const milieu = Math.round(j.x + j.l / 2);
     const y = Math.round(j.y);
-    if (j.etat === "squelette") return squelette(milieu, y, j.animation);
+    // Étape 24 : le dessin a été fait pour un héros de 46 px ; on l'agrandit pour qu'il mesure 2 blocs.
+    // k = agrandissement en largeur ; kHaut = en hauteur (plus petit quand il est baissé : il se tasse).
+    const k = C.joueur.hauteur / C.joueur.tailleDuDessin;
+    const kHaut = j.h / C.joueur.tailleDuDessin;
+    if (j.etat === "squelette") {
+      ctx.save();
+      ctx.translate(milieu, y + j.h);
+      ctx.scale(k, k);
+      ctx.translate(-milieu, -(y + C.joueur.tailleDuDessin));
+      squelette(milieu, y, j.animation);
+      ctx.restore();
+      return;
+    }
     const courir = phase === "jeu" && j.etat === "au-sol" && j.vx !== 0;
     const pas = courir ? Math.floor(j.animation * 10) % 2 : 0;
 
     ctx.save();
-    ctx.translate(milieu, 0);
-    ctx.scale(j.regard || 1, 1); // −1 = miroir : il regarde à gauche
+    // On agrandit le dessin autour du haut de la tête : (milieu, y). Ensuite, on dessine comme avant.
+    ctx.translate(milieu, y);
+    ctx.scale((j.regard || 1) * k, kHaut); // −1 = miroir : il regarde à gauche
+    ctx.translate(0, -y);
     // Le recul du Magnum (étape 19) : le héros gesticule, penché en arrière autour de ses pieds.
     if (eq && eq.recul > 0) {
       const k = eq.recul / C.armes.magnum.dureeRecul;
-      const pieds = y + j.h;
+      const pieds = y + C.joueur.tailleDuDessin; // les pieds, dans le dessin avant agrandissement
       ctx.translate(0, pieds);
       ctx.rotate(-0.15 * k * Math.cos((1 - k) * 12));
       ctx.translate(0, -pieds);
@@ -511,7 +533,13 @@ Jeu.Rendu = (function () {
         ctx.fillRect(x + 46, y + 14, 5, 6);
       }
     } else if (eq) {
+      // Étape 24 : les armes grandissent avec le héros, mais un peu moins (× 0,85), pour garder la bonne taille.
+      ctx.save();
+      ctx.translate(x + 28, y + 24); // la main
+      ctx.scale(0.85, 0.85);
+      ctx.translate(-(x + 28), -(y + 24));
       objetDansLaMain(Jeu.Armes.BARRE[eq.enMain], eq, x, y);
+      ctx.restore();
     }
     ctx.restore();
   }
@@ -757,7 +785,7 @@ Jeu.Rendu = (function () {
       ctx.strokeStyle = choisi ? "#ffe27a" : i === survol ? "#ffffff" : "rgba(255,255,255,0.35)";
       ctx.lineWidth = choisi || i === survol ? 3 : 1;
       ctx.strokeRect(x + 0.5, haut + 0.5, taille - 1, taille - 1);
-      const inactif = (objet === "bazooka" && eq.roquettes <= 0) || (objet === "armure" && eq.armure <= 0) || (eq[objet] !== undefined && objet !== "briques" && eq[objet] <= 0);
+      const inactif = (objet === "armure" && eq.armure <= 0) || (eq[objet] !== undefined && objet !== "briques" && eq[objet] <= 0);
       ctx.globalAlpha = inactif ? 0.45 : 1;
       icone(objet, x + taille / 2, haut + taille / 2 - 2);
       ctx.globalAlpha = 1;
@@ -765,7 +793,7 @@ Jeu.Rendu = (function () {
       // En dessous : l'usure (armes, pioche, armure), le nombre (briques) ou ∞ (pistolets)
       const max = objet === "pioche" ? C.pioche.usure : objet === "armure" ? C.armure.usure : C.armes[objet] && C.armes[objet].usure;
       if (objet === "briques") texte(String(monde.inventaire.blocs), x + taille - 4, haut + taille - 5, 13, "#fff", "right");
-      else if (objet === "bazooka") texte(String(eq.roquettes), x + taille - 4, haut + taille - 5, 13, eq.roquettes > 0 ? "#ffe27a" : "#ff9b9b", "right");
+      else if (objet === "bazooka") texte("∞", x + taille - 5, haut + taille - 5, 14, "#ffe27a", "right");
       else if (Jeu.Armes.PISTOLETS.includes(objet)) {
         // ∞ balles, mais un chargeur (étape 22) : on montre ce qu'il reste dedans, ou ⟳ pendant le rechargement
         const recharge = eq.rechargement > 0 && eq.armeRecharge === objet;
@@ -789,7 +817,7 @@ Jeu.Rendu = (function () {
     const objet = Jeu.Armes.objetEnMain(monde);
     const arme = C.armes[objet];
     let infos = Jeu.Armes.nomDe(objet);
-    if (objet === "bazooka") infos += " · " + C.armes.bazooka.degats + " dégâts + explosion 3 × 3 · " + eq.roquettes + " roquettes · pierres minées " + eq.pierres + " / " + C.armes.bazooka.pierresParRoquette;
+    if (objet === "bazooka") infos += " · " + C.armes.bazooka.degats + " dégâts + explosion 3 × 3 · roquettes illimitées";
     else if (objet === "magnum") infos += " · " + arme.degats + " dégâts · attention au recul ! · attente " + arme.attente + " s";
     else if (objet === "mitrailleuse") infos += " · " + arme.degats + " dégât par balle · balles infinies · garde T appuyée";
     else if (objet === "pistoletEau") infos += " · ne blesse pas : pousse les monstres · eau infinie";
@@ -1083,8 +1111,8 @@ Jeu.Rendu = (function () {
       ctx.strokeStyle = "rgba(255,226,122,0.7)";
       ctx.setLineDash([4, 6]);
       ctx.beginPath();
-      ctx.moveTo(depart - camX, j.y + 23);
-      ctx.lineTo(depart + sens * C.balles.portee * B - camX, j.y + 23);
+      ctx.moveTo(depart - camX, Jeu.Joueur.hauteurDeLaMain(j));
+      ctx.lineTo(depart + sens * C.balles.portee * B - camX, Jeu.Joueur.hauteurDeLaMain(j));
       ctx.stroke();
       ctx.setLineDash([]);
       ctx.fillStyle = "#ffe27a";
@@ -1288,7 +1316,7 @@ Jeu.Rendu = (function () {
       // Le laser rouge de visée : il s'arrête sur le premier bloc solide ou le premier monstre.
       const j = monde.joueur;
       const sens = j.regard || 1;
-      const y = j.y + 21;
+      const y = Jeu.Joueur.hauteurDeLaMain(j) - 2;
       const depart = sens > 0 ? j.x + j.l + 25 : j.x - 25;
       let fin = depart;
       for (let d = 0; d < C.armes.sniper.portee * B; d += 4) {

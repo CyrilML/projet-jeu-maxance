@@ -36,6 +36,7 @@ Jeu.Joueur = (function () {
       contreMur: false, // est-il en train de pousser contre un bloc solide ?
       regard: 1, // 1 = il regarde vers la droite, -1 = vers la gauche (étape 8)
       brasLeves: false, // lève-t-il les bras ? (quand il tombe dans un trou, étape 8)
+      accroupi: false, // est-il baissé ? (touche S, étape 24)
       debutSaut: 0,
       animation: 0,
     };
@@ -55,6 +56,11 @@ Jeu.Joueur = (function () {
     j.tamponSaut = 0;
     j.etat = "au-sol";
     j.brasLeves = false;
+    if (j.accroupi) {
+      j.accroupi = false; // il réapparaît debout (étape 24)
+      j.h = C.joueur.hauteur;
+      j.y = C.solY - j.h;
+    }
   }
 
   // Sur quelle case est le héros ? On prend le milieu de ses pieds :
@@ -77,16 +83,51 @@ Jeu.Joueur = (function () {
     return { x: j.x + m, y: j.y + m, l: j.l - 2 * m, h: j.h - m };
   }
 
+  // Y a-t-il `hauteur` px de place libre juste au-dessus de la tête ? (pour se relever, étape 24)
+  function placeAuDessus(j, hauteur, monde) {
+    const B = C.tailleBloc;
+    const caseDe = Jeu.Physique.caseDe;
+    for (let col = caseDe(j.x, B); col <= caseDe(j.x + j.l - 0.001, B); col++) {
+      for (let lig = caseDe(j.y - hauteur, B); lig <= caseDe(j.y - 0.001, B); lig++) {
+        if (Jeu.Terrain.estSolide(monde.terrain, col, lig)) return false;
+      }
+    }
+    return true;
+  }
+
+  // La hauteur de la main du héros, là où il tient son arme (au milieu de son corps).
+  function hauteurDeLaMain(j) {
+    return j.y + j.h * 0.5;
+  }
+
   function mettreAJour(j, dt, monde) {
     const J = C.joueur;
     const Entrees = Jeu.Entrees;
     const emettre = Jeu.Evenements.emettre;
 
+    // 0. Se baisser (étape 24) : S tenue → le héros devient petit (ses pieds ne bougent pas).
+    //    Pour se relever, il faut de la place au-dessus de sa tête, sinon il reste baissé.
+    const veutSeBaisser = Entrees.estEnfoncee("baisser");
+    if (veutSeBaisser && !j.accroupi) {
+      j.y += J.hauteur - J.hauteurAccroupi;
+      j.h = J.hauteurAccroupi;
+      j.accroupi = true;
+      emettre("accroupi", { hauteur: j.h });
+    } else if (!veutSeBaisser && j.accroupi) {
+      if (placeAuDessus(j, J.hauteur - J.hauteurAccroupi, monde)) {
+        j.y -= J.hauteur - J.hauteurAccroupi;
+        j.h = J.hauteur;
+        j.accroupi = false;
+        emettre("debout", { hauteur: j.h });
+      } else if (!j.bloqueEnHaut) emettre("reste-baisse", {});
+      j.bloqueEnHaut = j.accroupi;
+    }
+
     // 1. Lire les intentions
     let direction = 0;
     if (Entrees.estEnfoncee("gauche")) direction -= 1;
     if (Entrees.estEnfoncee("droite")) direction += 1;
-    j.vx = direction * J.vitesse;
+    j.vx = direction * (j.accroupi ? J.vitesseAccroupi : J.vitesse);
     // Le héros se tourne du côté où il marche (sinon, en reculant, on dirait un moonwalk !).
     if (direction !== 0 && direction !== j.regard) {
       j.regard = direction;
@@ -153,5 +194,5 @@ Jeu.Joueur = (function () {
     j.animation += dt;
   }
 
-  return { creer, reapparaitre, caseDuJoueur, hitbox, mettreAJour };
+  return { creer, reapparaitre, caseDuJoueur, hitbox, hauteurDeLaMain, mettreAJour };
 })();

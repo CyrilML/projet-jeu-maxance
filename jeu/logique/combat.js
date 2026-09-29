@@ -49,8 +49,6 @@ Jeu.Combat = (function () {
       hache: C.armes.hache.usure, // (étape 15)
       enMain: 0, // la case de la barre choisie (0 à 8) : touches 1 à 9 (étape 15)
       attente: 0, // secondes avant de pouvoir refrapper ou retirer (étape 15)
-      roquettes: C.armes.bazooka.roquettes, // roquettes du bazooka (étape 19)
-      pierres: 0, // blocs de pierre minés depuis la dernière roquette fabriquée (0 à 9)
       recul: 0, // animation du recul du Magnum (s)
       rechargement: 0, // temps qui reste avant la fin du rechargement (s) (étapes 21 et 22)
       armeRecharge: null, // l'arme en train d'être rechargée

@@ -20,6 +20,7 @@ Jeu.Entrees = (function () {
     gauche: ["ArrowLeft", "KeyA"],
     droite: ["ArrowRight", "KeyD"],
     sauter: ["Space", "ArrowUp", "KeyW"],
+    baisser: ["KeyS", "ArrowDown"], // se baisser pour passer sous un bloc (étape 24)
     valider: ["Enter"],
     pause: ["Escape"], // la touche P sert maintenant à poser un bloc (étape 10)
     poserBloc: ["KeyP"],

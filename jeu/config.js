@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 23,
+  version: 24,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -26,11 +26,16 @@ Jeu.CONFIG = {
   gravite: 2400,
   vitesseChuteMax: 1400,
 
+  // Étape 24 : le héros mesure 2 blocs de haut (80 px), et il est plus large (52 px) : un trou d'un
+  // seul bloc est trop étroit pour qu'il tombe dedans. Il saute plus haut, et il peut se BAISSER (S).
   joueur: {
-    largeur: 30,
-    hauteur: 46,
+    largeur: 52, // 30 px avant l'étape 24, × 1,74
+    hauteur: 80, // 2 blocs (46 px avant l'étape 24)
+    hauteurAccroupi: 38, // accroupi (touche S ou ↓) : il passe sous un seul bloc
+    vitesseAccroupi: 150, // il avance moins vite quand il est baissé
+    tailleDuDessin: 46, // le dessin du héros a été fait pour 46 px de haut : on l'agrandit pour 80
     vitesse: 320, // vitesse de marche gauche/droite
-    forceSaut: 860, // vitesse vers le haut au moment du saut → saut de ~154 px (≈ 3,8 blocs) en ~0,72 s
+    forceSaut: 930, // vitesse vers le haut au moment du saut → saut de ~180 px (≈ 4,5 blocs) en ~0,78 s
     coupureSaut: 0.45, // si on relâche la touche pendant la montée, la vitesse est multipliée par ce nombre
     memoireSaut: 0.12, // un saut demandé juste avant d'atterrir est gardé en mémoire pendant ce temps
     margeHitbox: 4, // la zone de collision avec les obstacles est un peu plus petite que le dessin : le jeu est « gentil »
@@ -150,9 +155,9 @@ Jeu.CONFIG = {
     // Le Magnum (étape 19) : très fort mais lent. Il RECULE à chaque tir (recul en px) et l'écran tremble.
     // Un vrai revolver : pas de douille au tir, mais les 6 douilles tombent quand on recharge le barillet.
     magnum: { nom: "Magnum", degats: 15, attente: 1, recul: 8, dureeRecul: 0.35, recharge: 0.9, eclair: "#ffffff", douille: null },
-    // Le bazooka (étape 19) : une roquette qui explose. 5 au départ, +1 tous les 10 blocs de pierre minés.
-    // Étape 21 : après chaque tir, le héros RECHARGE (il prend une roquette dans son dos).
-    bazooka: { nom: "bazooka", degats: 20, attente: 1.2, roquettes: 5, pierresParRoquette: 10, chargeur: 1, recharge: 1.2, eclair: "#ffe27a", douille: null },
+    // Le bazooka (étape 19) : une roquette qui explose. Roquettes illimitées depuis l'étape 24.
+    // Étape 21 : après chaque tir, le héros prend une roquette dans son dos (pendant l'attente).
+    bazooka: { nom: "bazooka", degats: 20, attente: 1.2, recharge: 1.1, eclair: "#ffe27a", douille: null },
     // Étape 22 : 5 nouvelles armes à feu, chacune avec son style.
     fusilPompe: { nom: "fusil à pompe", degats: 3, plombs: 5, dispersion: 0.22, portee: 5, attente: 0.9, recharge: 0.8, eclair: "#ff9f1a", douille: "#d9483b" },
     sniper: { nom: "fusil de sniper", degats: 25, portee: 25, vitesse: 1500, attente: 2, recharge: 1.6, eclair: "#ffffff", douille: "#c9a227" },
