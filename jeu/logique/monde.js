@@ -58,6 +58,9 @@ Jeu.Monde = (function () {
       equipement: Jeu.Combat.creerEquipement(), // PV, bouclier, potion (étape 11)
       monstres: [], // les monstres du monde (étape 11)
       balles: [], // les balles des pistolets en vol (étape 15)
+      coffres: [], // les coffres laissés par les boss vaincus (étape 25)
+      grottesConquises: 0, // les grottes dont on a vaincu tous les monstres (étape 25)
+      retourGrotte: null, // le drapeau de la dernière grotte conquise : on y réapparaît (étape 25)
       roquettes: [], // les roquettes du bazooka en vol (étape 19)
       explosions: [], // les explosions en cours, pour le dessin (étape 19)
       douilles: [], // les douilles qui sautent des armes (étape 22)
@@ -126,12 +129,20 @@ Jeu.Monde = (function () {
       Jeu.Cochons.placerDansTroncon(monde, infos);
       if (infos.grotte) {
         monde.grottes = monde.grottes || [];
-        monde.grottes.push(Object.assign({ numero: monde.grottes.length + 1, visitee: false }, infos.grotte));
+        const g = Object.assign({ numero: monde.grottes.length + 1, visitee: false, conquise: false }, infos.grotte);
+        monde.grottes.push(g);
+        // Étape 25 : 2 monstres dans la salle de la grotte, bien répartis.
+        const place = (g.sortie - g.salle) / (C.monstresGrotte.nombre + 1);
+        for (let k = 1; k <= C.monstresGrotte.nombre; k++) {
+          const m = Jeu.Combat.creerMonstreGrotte(monde.prochainId++, g.salle + Math.round(place * k), g.numero);
+          monde.monstres.push(m);
+          Jeu.Evenements.emettre("monstre-pose", { id: m.id, bloc: m.colonne - monde.colonneDepart, pv: m.pv, grotte: g.numero });
+        }
       }
       if (infos.monstre !== null && infos.monstre !== undefined) {
-        const m = Jeu.Combat.creerMonstre(monde.prochainId++, infos.monstre);
+        const m = Jeu.Combat.creerBoss(monde.prochainId++, infos.monstre);
         monde.monstres.push(m);
-        Jeu.Evenements.emettre("monstre-pose", { id: m.id, bloc: infos.monstre - monde.colonneDepart, pv: m.pv });
+        Jeu.Evenements.emettre("monstre-pose", { id: m.id, bloc: infos.monstre - monde.colonneDepart, pv: m.pv, boss: true });
       }
       Jeu.Evenements.emettre("troncon-fabrique", {
         numero: infos.numero,
@@ -179,17 +190,25 @@ Jeu.Monde = (function () {
     if (perdreUneVie(monde, "trou")) Jeu.Joueur.reapparaitre(monde.joueur, retour);
   }
 
+  // Où réapparaître après une vie perdue ? Au dernier drapeau… ou au drapeau de la grotte conquise,
+  // si on l'a conquise après avoir touché ce drapeau (étape 25).
+  function pointDeRetour(monde) {
+    if (monde.retourGrotte) return Object.assign({}, monde.retourGrotte, { numero: "drapeau de ta grotte n° " + monde.retourGrotte.numero });
+    const d = monde.drapeaux[monde.dernierDrapeau];
+    return { numero: d.numero, colonne: d.colonne, ligneSol: C.carte.ligneSol };
+  }
+
   // Le héros a touché un obstacle mortel : 1 vie en moins, et retour au dernier drapeau.
   //   lave → événement « brule » ;  caisse ou muret → événement « piege ».
   function toucherObstacleMortel(monde, o) {
-    const drapeau = monde.drapeaux[monde.dernierDrapeau];
+    const drapeau = pointDeRetour(monde);
     const infos = { id: o.id, type: o.type, colonne: o.colonne, drapeau: drapeau.numero };
     const estDeLaLave = o.type === "lave" || o.type === "fosse" || o.type === "lac";
     if (estDeLaLave) {
       monde.brulures += 1;
       Jeu.Evenements.emettre("brule", Object.assign(infos, { duree: C.brulure.duree, flammes: C.brulure.flammes }));
       // Le héros ne réapparaît pas tout de suite : il brûle d'abord sur place (voir brulerUnPeu).
-      monde.brulure = { reste: C.brulure.duree, allumees: 0, colonneRetour: drapeau.colonne };
+      monde.brulure = { reste: C.brulure.duree, allumees: 0, colonneRetour: drapeau.colonne, ligneRetour: drapeau.ligneSol };
       const j = monde.joueur;
       j.etat = "brule";
       j.vx = 0;
@@ -199,7 +218,7 @@ Jeu.Monde = (function () {
     // Un muret : le héros devient un petit squelette qui danse sur place (voir danserUnPeu).
     monde.piegesTouches += 1;
     Jeu.Evenements.emettre("piege", Object.assign(infos, { duree: C.squelette.duree }));
-    monde.danse = { reste: C.squelette.duree, colonneRetour: drapeau.colonne, cause: o.type };
+    monde.danse = { reste: C.squelette.duree, colonneRetour: drapeau.colonne, ligneRetour: drapeau.ligneSol, cause: o.type };
     const j = monde.joueur;
     j.etat = "squelette";
     j.vx = 0;
@@ -217,7 +236,7 @@ Jeu.Monde = (function () {
     if (d.reste > 0) return;
     monde.danse = null;
     Jeu.Evenements.emettre("fin-danse", { duree: C.squelette.duree });
-    if (perdreUneVie(monde, d.cause)) Jeu.Joueur.reapparaitre(j, d.colonneRetour);
+    if (perdreUneVie(monde, d.cause)) Jeu.Joueur.reapparaitre(j, d.colonneRetour, d.ligneRetour);
   }
 
   // Pendant que le héros brûle : il s'enfonce doucement, les flammes s'allument une à une,
@@ -240,7 +259,7 @@ Jeu.Monde = (function () {
     }
     if (b.reste > 0) return;
     monde.brulure = null;
-    if (perdreUneVie(monde, "lave")) Jeu.Joueur.reapparaitre(j, b.colonneRetour);
+    if (perdreUneVie(monde, "lave")) Jeu.Joueur.reapparaitre(j, b.colonneRetour, b.ligneRetour);
   }
 
   function mettreAJour(monde, dt) {
@@ -302,10 +321,10 @@ Jeu.Monde = (function () {
     }
     // Le combat (épée, potion, monstres). PV à 0 : un cœur en moins et retour au drapeau.
     if (Jeu.Combat.mettreAJour(monde, dt) === "plus-de-pv") {
-      const drapeau = monde.drapeaux[monde.dernierDrapeau];
+      const drapeau = pointDeRetour(monde);
       Jeu.Evenements.emettre("pv-a-zero", { drapeau: drapeau.numero });
       if (!perdreUneVie(monde, "monstre")) return;
-      Jeu.Joueur.reapparaitre(j, drapeau.colonne);
+      Jeu.Joueur.reapparaitre(j, drapeau.colonne, drapeau.ligneSol);
       monde.equipement.pv = C.combat.pvJoueur;
     }
     const ici = Jeu.Joueur.caseDuJoueur(j);
@@ -327,6 +346,7 @@ Jeu.Monde = (function () {
         d.atteint = true;
         monde.dernierDrapeau = d.numero;
         Jeu.Evenements.emettre("drapeau", { numero: d.numero, colonne: d.colonne });
+        monde.retourGrotte = null; // un nouveau drapeau : c'est lui, le point de retour (étape 25)
         Jeu.Inventaire.remplir(monde, d.numero); // le sac revient à 100 blocs (étape 14)
         if (d.arrivee) {
           monde.score = d.colonne - monde.colonneDepart;

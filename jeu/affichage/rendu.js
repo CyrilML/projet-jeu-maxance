@@ -585,17 +585,157 @@ Jeu.Rendu = (function () {
     }
   }
 
-  // Les monstres (étape 11) : un petit bonhomme vert à cornes, avec sa barre de PV au-dessus.
-  // Tant qu'il est vivant, un rideau magique violet montre qu'il garde le passage.
-  function monstres(liste) {
+  // Le boss (étape 25) : un DRAGON MUTANT géant. Il est dessiné tourné vers la gauche, dans un cadre
+  // de 110 × 160 ; s'il regarde à droite, on le retourne comme un miroir (comme le héros).
+  function dragon(m, temps) {
+    const x = Math.round(m.x);
+    const y = Math.round(m.y);
+    const souffle = Math.sin(temps * 3 + m.id) * 2; // il respire : son corps gonfle un peu
+    const aile = Math.sin(temps * 4 + m.id) * 10; // ses ailes battent doucement
+    const coup = m.frappe > 0; // il frappe avec ses griffes et ouvre la gueule
+    const pas = Math.floor(m.marche * 6) % 2;
+    ctx.save();
+    if (m.regard > 0) {
+      ctx.translate(x + m.l / 2, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-(x + m.l / 2), 0);
+    }
+    const r = (couleur, dx, dy, l, h) => {
+      ctx.fillStyle = couleur;
+      ctx.fillRect(x + dx, y + dy, l, h);
+    };
+    const forme = (couleur, points) => {
+      ctx.fillStyle = couleur;
+      ctx.beginPath();
+      ctx.moveTo(x + points[0][0], y + points[0][1]);
+      for (const [px, py] of points.slice(1)) ctx.lineTo(x + px, y + py);
+      ctx.closePath();
+      ctx.fill();
+    };
+    // Des couleurs de dessin animé : impressionnant, mais pas trop effrayant (demande de Maxance).
+    const peau = m.touche > 0 ? "#ff8a8a" : "#7a4fb0";
+    const ventre = m.touche > 0 ? "#ffc4c4" : "#f0c96a";
+    // L'aile (derrière le corps), qui bat
+    forme("#5a3a8a", [[62, 64], [100, 4 - aile], [110, 30 - aile], [104, 52 - aile / 2], [92, 76]]);
+    ctx.strokeStyle = "#a57fd6";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + 62, y + 64); ctx.lineTo(x + 100, y + 4 - aile);
+    ctx.moveTo(x + 66, y + 68); ctx.lineTo(x + 108, y + 30 - aile);
+    ctx.stroke();
+    // La queue à pointe
+    r(peau, 84, 112, 22, 14);
+    r(peau, 98, 96, 12, 22);
+    forme("#e8e2d0", [[98, 96], [104, 80], [110, 96]]);
+    // Les pattes arrière, qui marchent
+    r(peau, 34, 124 + (pas ? 2 : 0), 22, 36 - (pas ? 2 : 0));
+    r(peau, 68, 124 + (pas ? 0 : 2), 22, 36 - (pas ? 0 : 2));
+    r("#e8e2d0", 32, 154, 6, 6); r("#e8e2d0", 42, 154, 6, 6); // les griffes des pieds
+    r("#e8e2d0", 66, 154, 6, 6); r("#e8e2d0", 76, 154, 6, 6);
+    // Le gros corps (il respire) et son ventre à écailles
+    r(peau, 22, 58 - souffle, 74, 72 + souffle);
+    r(ventre, 28, 84 - souffle, 30, 44 + souffle);
+    ctx.fillStyle = "#d9a94a";
+    for (let k = 0; k < 4; k++) ctx.fillRect(x + 28, y + 92 + k * 10 - souffle, 30, 2);
+    // Les pics sur le dos
+    for (let k = 0; k < 5; k++) forme("#e8e2d0", [[42 + k * 11, 60 - souffle], [47 + k * 11, 46 - souffle], [52 + k * 11, 60 - souffle]]);
+    // Les taches vertes : c'est un mutant !
+    ctx.fillStyle = "#7ed957";
+    for (const [px, py, t] of [[70, 76, 7], [80, 98, 5], [62, 112, 6], [88, 70, 4]]) ctx.fillRect(x + px, y + py - souffle, t, t);
+    // Le long cou
+    r(peau, 12, 38, 26, 42);
+    // Le bras avec ses griffes : replié, ou lancé vers le héros quand il frappe
+    if (coup) {
+      r(peau, -12, 88, 36, 12);
+      forme("#e8e2d0", [[-12, 88], [-22, 84], [-14, 94]]);
+      forme("#e8e2d0", [[-12, 96], [-22, 100], [-14, 92]]);
+    } else {
+      r(peau, 16, 86, 14, 26);
+      r("#e8e2d0", 14, 110, 5, 6); r("#e8e2d0", 22, 110, 5, 6);
+    }
+    // La tête : un grand museau, des cornes, des yeux rouges qui brillent
+    r(peau, -4, 12, 44, 32);
+    r(peau, -20, 22, 22, 16); // le museau
+    const machoire = coup ? 12 : 3; // la gueule s'ouvre quand il attaque
+    r("#5a3a8a", -20, 38 + machoire - 3, 40, 8); // la mâchoire du bas
+    r("#c24a5a", -18, 38, 36, machoire); // l'intérieur de la gueule
+    ctx.fillStyle = "#fff";
+    for (const k of [0, 2, 4]) ctx.fillRect(x - 16 + k * 6, y + 37, 3, 3); // quelques petites dents
+    r("#1d1d3a", -18, 26, 3, 3); // les narines
+    r("#1d1d3a", -12, 26, 3, 3);
+    forme("#e8e2d0", [[18, 14], [24, -8], [30, 14]]); // les cornes
+    forme("#e8e2d0", [[30, 14], [40, -4], [40, 16]]);
+    r("#fff6c2", 1, 18, 12, 10); // un gros œil jaune
+    r("#1d1d3a", 3, 21, 5, 6); // la pupille
+    r("#fff", 4, 21, 2, 2); // un petit reflet
+    r("#5a3a8a", 0, 15, 14, 3); // le sourcil froncé (il a l'air décidé !)
+    // Une petite fumée qui sort des narines
+    ctx.fillStyle = "rgba(220,220,220," + (0.4 + Math.sin(temps * 2) * 0.2).toFixed(2) + ")";
+    ctx.fillRect(x - 26 - (Math.floor(temps * 3) % 3) * 3, y + 22 - (Math.floor(temps * 3) % 3) * 3, 6, 6);
+    ctx.restore();
+    // La barre de PV du boss, large, avec son nom
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    ctx.fillRect(x - 10, y - 34, m.l + 20, 14);
+    ctx.fillStyle = "#6b1f24";
+    ctx.fillRect(x - 8, y - 32, m.l + 16, 10);
+    ctx.fillStyle = "#c83cff";
+    ctx.fillRect(x - 8, y - 32, Math.round((m.l + 16) * m.pv / m.pvMax), 10);
+    ctx.font = "bold 13px 'Trebuchet MS', system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ffe27a";
+    ctx.fillText("🐉 " + C.boss.nom + " · " + m.pv + " / " + m.pvMax + " PV", x + m.l / 2, y - 40);
+    ctx.textAlign = "left";
+  }
+
+  // Les coffres laissés par les boss (étape 25) : fermés, ou ouverts et vides.
+  function coffres(liste) {
+    for (const c of liste || []) {
+      const x = Math.round(c.x);
+      const y = Math.round(c.y);
+      ctx.fillStyle = "#8a5a2b";
+      ctx.fillRect(x, y + (c.ouvert ? 8 : 6), c.l, c.h - (c.ouvert ? 8 : 6));
+      ctx.fillStyle = "#c9a227";
+      ctx.fillRect(x, y + 14, c.l, 3);
+      ctx.fillRect(x + c.l / 2 - 3, y + 10, 6, 8); // la serrure
+      ctx.fillStyle = "#6b4423";
+      if (c.ouvert) ctx.fillRect(x - 2, y - 6, c.l + 4, 6); // le couvercle ouvert
+      else ctx.fillRect(x, y, c.l, 8);
+      if (!c.ouvert) {
+        ctx.fillStyle = "rgba(255,226,122," + (0.4 + Math.sin(Date.now() / 200) * 0.3).toFixed(2) + ")";
+        ctx.fillRect(x - 4, y - 10, c.l + 8, 4); // il brille : viens l'ouvrir !
+      }
+    }
+  }
+
+  // Le drapeau à ton nom dans une grotte conquise (étape 25).
+  function drapeauxDesGrottes(monde) {
+    for (const g of monde.grottes || []) {
+      if (!g.conquise) continue;
+      const x = (g.salle + Math.floor((g.sortie - g.salle) / 2)) * B + B / 2;
+      const sol = C.grottes.ligneSol * B;
+      ctx.fillStyle = "#e8e2d0";
+      ctx.fillRect(x - 2, sol - 110, 4, 110);
+      ctx.font = "bold 12px 'Trebuchet MS', system-ui, sans-serif";
+      const nom = "🏴 " + (monde.pseudo || "");
+      ctx.fillStyle = "#c83cff";
+      ctx.fillRect(x + 2, sol - 110, ctx.measureText(nom).width + 12, 26); // le drapeau s'allonge avec le nom
+      ctx.fillStyle = "#fff";
+      ctx.fillText(nom, x + 8, sol - 92);
+    }
+  }
+
+  // Les monstres des grottes (étapes 11 et 25) : un petit bonhomme vert à cornes, avec sa barre de PV.
+  // Le boss, lui, est dessiné par dragon().
+  function monstres(liste, temps) {
     for (const m of liste) {
       if (!m.vivant) continue;
+      if (m.type === "boss") {
+        dragon(m, temps || 0);
+        continue;
+      }
       const x = Math.round(m.x);
       const y = Math.round(m.y);
-      const penche = m.frappe > 0 ? -6 : 0; // il se penche vers le héros quand il frappe
-      // Le rideau magique
-      ctx.fillStyle = "rgba(180, 90, 255, 0.12)";
-      ctx.fillRect(x + 12, 0, 12, y);
+      const penche = m.frappe > 0 ? -6 * -(m.regard || -1) : 0; // il se penche vers le héros quand il frappe
       // Le corps
       ctx.fillStyle = m.touche > 0 ? "#ff6b6b" : "#5fbf3f";
       ctx.fillRect(x + 4 + penche, y + 14, 30, 42);
@@ -616,10 +756,10 @@ Jeu.Rendu = (function () {
       ctx.fillStyle = "#fff";
       ctx.fillRect(x + 12 + penche, y + 36, 3, 3);
       ctx.fillRect(x + 22 + penche, y + 36, 3, 3);
-      // Le bras-massue quand il frappe
+      // Le bras-massue quand il frappe, du côté du héros
       if (m.frappe > 0) {
         ctx.fillStyle = "#8a5a2b";
-        ctx.fillRect(x - 16, y + 24, 22, 6);
+        ctx.fillRect(m.regard > 0 ? x + 30 : x - 16, y + 24, 22, 6);
       }
       // La barre de PV
       ctx.fillStyle = "rgba(0,0,0,0.6)";
@@ -942,7 +1082,7 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 22 : 5 nouvelles armes à feu", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 25 : dragons mutants et grottes à conquérir", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au bloc " + C.arrivee.bloc + " le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
@@ -1222,8 +1362,16 @@ Jeu.Rendu = (function () {
       ctx.strokeStyle = "#b45aff";
       ctx.lineWidth = 2;
       ctx.strokeRect(mx, m.y, m.l, m.h);
-      note("👾 #" + m.id + " · PV " + m.pv + "/" + m.pvMax, mx - 10, m.y - 44, "#e6c8ff");
-      note(m.minuteur === null ? "attend le héros" : "coup dans " + Math.max(0, m.minuteur).toFixed(2) + " s", mx - 10, m.y - 29, m.minuteur === null ? "#cfe0ff" : "#ff9b9b");
+      // Étape 25 : sa zone de vue (10 blocs pour le boss, 6 dans les grottes) et sa laisse
+      ctx.fillStyle = m.aVuLeHeros ? "rgba(255,90,90,0.10)" : "rgba(180,90,255,0.07)";
+      ctx.fillRect(mx - m.vue * B, m.y + m.h - 3 * B, m.l + 2 * m.vue * B, 3 * B);
+      ctx.setLineDash([6, 4]);
+      ctx.strokeStyle = "rgba(255,226,122,0.6)";
+      ctx.strokeRect(m.maison - m.laisse * B - camX, m.y + m.h + 2, 2 * m.laisse * B + m.l, 4);
+      ctx.setLineDash([]);
+      note("zone de vue : " + m.vue + " blocs" + (m.aVuLeHeros ? " · il t'a vu, il s'approche !" : ""), mx - m.vue * B + 4, m.y + m.h - 3 * B + 14, m.aVuLeHeros ? "#ff9b9b" : "#e6c8ff");
+      note((m.type === "boss" ? "🐉 boss #" : "👾 #") + m.id + " · PV " + m.pv + "/" + m.pvMax + " · coup : " + m.degats + " PV", mx - 10, m.y - 44 - (m.type === "boss" ? 22 : 0), "#e6c8ff");
+      note(m.minuteur === null ? "attend le héros" : "coup dans " + Math.max(0, m.minuteur).toFixed(2) + " s", mx - 10, m.y - 29 - (m.type === "boss" ? 22 : 0), m.minuteur === null ? "#cfe0ff" : "#ff9b9b");
     }
     if (monde.danse) note("💀 danse encore " + Math.max(0, monde.danse.reste).toFixed(2) + " s", monde.joueur.x - camX - 20, C.solY - 76, "#ffffff");
     if (monde.brulure) note("brûle encore " + Math.max(0, monde.brulure.reste).toFixed(2) + " s", monde.joueur.x - camX - 20, C.solY - 76, "#ff9b9b");
@@ -1421,7 +1569,9 @@ Jeu.Rendu = (function () {
     cochons(monde.cochons);
     drapeaux(monde);
     fissures(monde.obstacles);
-    monstres(monde.monstres);
+    drapeauxDesGrottes(monde);
+    coffres(monde.coffres);
+    monstres(monde.monstres, monde.temps);
     joueur(monde.joueur, monde.phase, monde.equipement);
     flammes(monde.flammes);
     balles(monde.balles);

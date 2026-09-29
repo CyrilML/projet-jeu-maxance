@@ -170,7 +170,12 @@ Jeu.Inventaire = (function () {
       const cible = caseSousLaSouris(monde);
       const objet = Jeu.Armes.objetEnMain(monde);
       if (!cible) Jeu.Evenements.emettre("bloc-refuse", { raison: "la souris n'est pas sur l'écran" });
-      else if (Jeu.Armes.OUTILS.includes(objet)) Jeu.Outils.casser(monde, cible.colonne, cible.ligne, objet);
+      else if (Jeu.Armes.OUTILS.includes(objet)) {
+        // Étape 25 : le clic ne casse que les blocs SOUS les pieds du héros ; pour le reste, c'est T.
+        const pieds = Jeu.Joueur.caseDuJoueur(monde.joueur).ligne;
+        if (cible.ligne > pieds) Jeu.Outils.casser(monde, cible.colonne, cible.ligne, objet);
+        else Jeu.Evenements.emettre("casse-refusee", { raison: "le clic sert seulement pour les blocs sous tes pieds : pour les autres, vise avec la souris et appuie sur T" });
+      }
       else if (objet !== "briques") Jeu.Evenements.emettre("bloc-refuse", { raison: "prends les briques (touche 8) pour poser, ou un outil (pelle 0, hache 3, pioche 7) pour casser" });
       else {
         const raison = raisonDuRefusIci(monde, cible.colonne, cible.ligne);

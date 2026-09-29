@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 24,
+  version: 25,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -206,8 +206,33 @@ Jeu.CONFIG = {
     protection: 2, // chaque coup de monstre enlève 2 PV de moins (3 → 1)
     usure: 20, // elle arrête 20 coups, puis elle casse ; R la répare avec 1 fer
   },
+  // Étape 25 : tous les 100 blocs, ce n'est plus un petit monstre mais un BOSS. Il attend, et il
+  // s'approche du héros quand celui-ci est à 10 blocs ou moins. Il garde le passage.
+  boss: {
+    pv: 500,
+    nom: "Dragon mutant",
+    largeur: 110, // presque 3 blocs de large
+    hauteur: 160, // 4 blocs de haut : 2 fois plus grand que le héros
+    vue: 10, // il s'approche quand le héros est à 10 blocs ou moins
+    vitesse: 160, // lent : la moitié de la vitesse du héros
+    laisse: 12, // il ne s'éloigne pas à plus de 12 blocs de sa place
+    degats: 8, // un coup de poing enlève 8 PV
+    attente: 1.5, // un coup de poing toutes les 1,5 s quand il touche le héros
+    premierCoup: 0.8,
+    portee: 20, // ses griffes touchent jusqu'à 20 px devant lui
+    coffre: { potions: 1, fer: 5 }, // la récompense quand on le bat
+  },
+  // Étape 25 : les petits monstres sont maintenant dans les grottes, 2 par grotte.
+  // Ils s'approchent quand le héros est à 6 blocs ou moins. Les battre tous = la grotte est à toi !
+  monstresGrotte: {
+    nombre: 2,
+    pv: 30,
+    vue: 6,
+    vitesse: 90,
+    laisse: 5, // ils restent dans la salle de la grotte
+  },
   monstres: {
-    premier: 100, // un monstre tous les 100 blocs : 100, 200… jusqu'à l'arrivée (le dernier la garde)
+    premier: 100, // un boss tous les 100 blocs : 100, 200… jusqu'à l'arrivée (le dernier la garde)
     ecart: 100,
     pv: 30,
     degats: 3, // un coup de monstre enlève 3 PV au héros

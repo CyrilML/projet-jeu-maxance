@@ -8,6 +8,11 @@
 window.Jeu = window.Jeu || {};
 
 Jeu.SousLeCapot = (function () {
+  // « drapeau n° 3 », ou « drapeau de ta grotte n° 1 » (étape 25 : on réapparaît dans une grotte conquise)
+  function nomDuDrapeau(numero) {
+    return typeof numero === "number" ? "drapeau n° " + numero : numero;
+  }
+
   const MESSAGES = {
     "debut-partie": (d) => "▶️ Nouvelle partie de « " + d.pseudo + " » : tout recommence à zéro, avec un nouveau monde (graine " + d.graine + ")",
     arrivee: (d) => "🏁 « " + d.pseudo + " » a atteint l'ARRIVÉE en " + d.temps.toFixed(1) + " s, avec " + d.vies + " vie(s) !",
@@ -32,12 +37,16 @@ Jeu.SousLeCapot = (function () {
     mur: (d) => "🧱 Bloqué par un mur de « " + d.matiere + " » (colonne " + d.colonne + ") : c'est solide, saute dessus !",
     piege: (d) =>
       "💀 Touché le muret à pics #" + d.id + " (colonne " + d.colonne + ") : le héros devient un squelette qui danse " +
-      d.duree + " s, puis retour au drapeau n° " + d.drapeau,
+      d.duree + " s, puis retour au " + nomDuDrapeau(d.drapeau),
     "muret-pose": (d) =>
       d.colonne < 0
         ? "🧱 Pas de place pour le muret du bloc " + d.cible
         : "🧱 Muret à pics posé au bloc " + d.bloc + " (rendez-vous du bloc " + d.cible + ", colonne " + d.colonne + ")",
-    "monstre-pose": (d) => "👾 Un monstre #" + d.id + " (" + d.pv + " PV) garde le passage au bloc " + d.bloc,
+    "monstre-pose": (d) => d.boss ? "🐉 Un " + Jeu.CONFIG.boss.nom + " (" + d.pv + " PV) garde le passage au bloc " + d.bloc : "👾 Un monstre #" + d.id + " (" + d.pv + " PV) attend dans la grotte n° " + d.grotte,
+    "monstre-approche": (d) => (d.boss ? "🐉 Le " + Jeu.CONFIG.boss.nom + " #" + d.id : "👾 Le monstre #" + d.id) + " t'a vu (tu es à moins de " + d.vue + " blocs) : il s'approche !",
+    "coffre-apparait": (d) => "🎁 Le boss #" + d.id + " laisse un coffre : va le toucher pour l'ouvrir !",
+    "coffre-ouvert": (d) => "🎁 Coffre ouvert : +" + d.potions + " potion, +" + d.fer + " fers → " + d.totalPotions + " potion(s), " + d.totalFer + " fers",
+    "grotte-conquise": (d) => "🏴 La grotte n° " + d.numero + " est à toi, " + d.pseudo + " ! Ton drapeau y est planté : tu y réapparaîtras (" + d.total + " grotte(s) conquise(s))",
     "coup-epee": (d) => {
       const nom = d.arme || "épée";
       const coup = "⚔️ Coup " + (/^[aeéiou]/.test(nom) ? "d'" : "de ") + nom; // « coup d'épée », « coup de petite hache »
@@ -46,13 +55,13 @@ Jeu.SousLeCapot = (function () {
         : coup + " dans le vide (rien à moins d'un bloc devant)";
     },
     riposte: (d) => "😠 Le monstre #" + d.id + " riposte tout de suite !",
-    "monstre-attaque": (d) => "👾 Le monstre #" + d.id + " te frappe : −" + d.degats + " PV → il te reste " + d.pv + " PV",
+    "monstre-attaque": (d) => (d.boss ? "🐉 Le " + Jeu.CONFIG.boss.nom + " #" + d.id + " te donne un coup de griffe" : "👾 Le monstre #" + d.id + " te frappe") + " : −" + d.degats + " PV → il te reste " + d.pv + " PV",
     "bouclier-bloque": (d) => "🛡️ Le bouclier arrête le coup du monstre #" + d.id + " (encore " + d.reste + " coup(s) avant de casser)",
     "bouclier-casse": (d) => "💥 Le bouclier arrête le coup… et se casse !",
-    "monstre-vaincu": (d) => "🏆 Monstre #" + d.id + " vaincu ! Le passage est libre",
+    "monstre-vaincu": (d) => d.boss ? "🏆 Le " + Jeu.CONFIG.boss.nom + " #" + d.id + " est vaincu ! Le passage est libre" : "🏆 Monstre #" + d.id + " vaincu !",
     "potion-bue": (d) => "🧪 Potion bue : +" + d.soin + " PV → " + d.pv + " PV",
     "potion-refusee": (d) => "🧪 Pas de potion : " + d.raison,
-    "pv-a-zero": (d) => "💔 Plus de PV ! Un cœur en moins, retour au drapeau n° " + d.drapeau + " avec tous tes PV",
+    "pv-a-zero": (d) => "💔 Plus de PV ! Un cœur en moins, retour au " + nomDuDrapeau(d.drapeau) + " avec tous tes PV",
     pioche: (d) =>
       d.cassee ? "⛏️ La pioche est cassée : elle ne casse plus rien (R pour la réparer)"
       : d.touche ? "⛏️ Coup de pioche sur le " + d.type + " #" + d.id + " : encore " + d.reste + " coup(s)"
@@ -108,7 +117,7 @@ Jeu.SousLeCapot = (function () {
     "demi-tour": (d) => "↩️ Demi-tour : le héros regarde maintenant vers la " + d.regard,
     brule: (d) =>
       "🔥 Tombé dans " + ({ fosse: "la fosse", lac: "le lac" }[d.type] || "la mare") + " de lave #" + d.id + " (colonne " + d.colonne +
-      ") : il brûle " + d.duree + " s, " + d.flammes + " flammes s'allument, puis retour au drapeau n° " + d.drapeau,
+      ") : il brûle " + d.duree + " s, " + d.flammes + " flammes s'allument, puis retour au " + nomDuDrapeau(d.drapeau),
     "vie-perdue": (d) => (d.vies > 0 ? "💔 Une vie en moins (" + d.cause + ") → il en reste " + d.vies : "💀 Plus de vies ! (" + d.cause + ")"),
     "fin-partie": (d) =>
       (d.gagne ? "🏁 Partie gagnée : " : "🏁 Partie perdue : ") + d.score + " blocs en " + d.temps.toFixed(1) + " s, " + d.vies + " vie(s) restante(s)",
@@ -234,6 +243,16 @@ Jeu.SousLeCapot = (function () {
     return debut + (refus ? "🚫 " + refus : "✅ clic = brique");
   }
 
+  // Le boss vivant le plus proche du héros, et ce qu'il fait (étape 25).
+  function bossProche(monde) {
+    const j = monde.joueur;
+    let meilleur = null;
+    for (const m of monde.monstres) if (m.vivant && m.type === "boss" && (!meilleur || Math.abs(m.x - j.x) < Math.abs(meilleur.x - j.x))) meilleur = m;
+    if (!meilleur) return "aucun";
+    const blocs = (Jeu.Combat.ecart(monde, meilleur) / Jeu.CONFIG.tailleBloc).toFixed(1);
+    return "#" + meilleur.id + " · " + meilleur.pv + " PV · à " + blocs + " blocs · " + (meilleur.aVuLeHeros ? "il s'approche !" : "il attend (vue : " + meilleur.vue + " blocs)");
+  }
+
   function afficherEtat() {
     const monde = lireMonde();
     const mesures = lireMesures();
@@ -292,6 +311,9 @@ Jeu.SousLeCapot = (function () {
       ["viande crue / cuite", monde.equipement.viandeCrue + " / " + monde.equipement.viandeCuite],
       ["cochons en promenade", monde.cochons.filter((c) => c.vivant).length],
       ["grottes découvertes", monde.grottesVisitees],
+      ["grottes conquises (étape 25)", monde.grottesConquises],
+      ["point de retour", monde.retourGrotte ? "🏴 drapeau de la grotte n° " + monde.retourGrotte.numero : "🚩 drapeau n° " + monde.dernierDrapeau],
+      ["boss le plus proche", bossProche(monde)],
       ["monstres vivants", monde.monstres.filter((m) => m.vivant).length + " / " + monde.monstres.length],
       ["Inventaire (sac à dos)", ""],
       ["blocs dans le sac", monde.inventaire.blocs + " / " + Jeu.CONFIG.inventaire.blocs],

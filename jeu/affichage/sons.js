@@ -101,6 +101,23 @@ Jeu.Orchestre = (function () {
     flamme: () => Son.bruit({ filtre: "lowpass", frequence: 700, duree: 0.12, volume: 0.25, nom: "lance-flammes : frrr" }),
     pschit: () => Son.bruit({ filtre: "bandpass", frequence: 3500, duree: 0.08, volume: 0.2, nom: "pistolet à eau : pschit" }),
     chik: () => Son.note({ forme: "square", frequence: 900, fin: 700, duree: 0.03, volume: 0.15, nom: "rechargement : chik" }),
+    // Étape 25 : le grognement du dragon, son gros coup de griffe, le coffre et la grotte conquise
+    grogne: () => {
+      Son.note({ forme: "sawtooth", frequence: 90, fin: 60, duree: 0.7, volume: 0.25, nom: "dragon : GRRROAR" });
+      Son.bruit({ filtre: "lowpass", frequence: 400, duree: 0.7, volume: 0.25, nom: "dragon : GRRROAR" });
+    },
+    griffe: () => {
+      Son.bruit({ filtre: "lowpass", frequence: 800, fin: 150, duree: 0.25, volume: 0.6, nom: "dragon : coup de griffe" });
+      Son.note({ forme: "square", frequence: 110, fin: 50, duree: 0.2, volume: 0.3, nom: "dragon : coup de griffe" });
+    },
+    tresor: () => {
+      const t = Son.maintenant();
+      [784, 988, 1175, 1568].forEach((f, k) => Son.note({ forme: "triangle", frequence: f, duree: 0.15, volume: 0.25, quand: t + k * 0.08, nom: "coffre : trésor !" }));
+    },
+    fanfare: () => {
+      const t = Son.maintenant();
+      [523, 659, 784, 1047, 784, 1047].forEach((f, k) => Son.note({ forme: "square", frequence: f, duree: 0.16, volume: 0.15, quand: t + k * 0.13, nom: "grotte conquise : fanfare" }));
+    },
     ta: () => Son.bruit({ filtre: "highpass", frequence: 1500, duree: 0.05, volume: 0.35, nom: "mitrailleuse : ta" }),
     clic: () => Son.note({ forme: "square", frequence: 1800, duree: 0.02, volume: 0.15, nom: "mitrailleuse vide : clic" }),
     toc: () => Son.note({ forme: "triangle", frequence: 300, fin: 200, duree: 0.06, volume: 0.3, nom: "coup d'outil : toc" }),
@@ -170,6 +187,10 @@ Jeu.Orchestre = (function () {
     ecouter("rechargement", () => jouer("chik"));
     ecouter("recharge-finie", () => jouer("clac"));
     ecouter("roquette-tiree", () => jouer("fshhh"));
+    ecouter("monstre-approche", (d) => d.boss && jouer("grogne"));
+    ecouter("monstre-attaque", (d) => d.boss && jouer("griffe"));
+    ecouter("coffre-ouvert", () => jouer("tresor"));
+    ecouter("grotte-conquise", () => jouer("fanfare"));
     ecouter("explosion", () => jouer("boum"));
     ecouter("coup-outil", () => jouer("toc"));
     ecouter("bloc-casse", () => jouer("crac"));

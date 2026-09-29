@@ -13,6 +13,12 @@
 // près d'un monstre (comme pour construire), ou le bloc sur lequel marche un cochon.
 //
 // Casser un bloc, c'est simplement écrire 0 (l'air) dans la grille, comme pour reprendre une brique.
+//
+// Étape 25 : on mine surtout avec la touche T (outil en main). Quel bloc ?
+//   1. celui que vise la souris, s'il est à portée ;
+//   2. sinon, si le héros est baissé (S), le bloc sous ses pieds ;
+//   3. sinon, le bloc juste devant lui.
+// Le clic de souris ne sert plus que pour les blocs SOUS les pieds du héros.
 
 window.Jeu = window.Jeu || {};
 
@@ -107,5 +113,39 @@ Jeu.Outils = (function () {
     emettre("bloc-casse", { outil: C.outils[objet].nom, bloc: nom, colonne, ligne, sac: monde.inventaire.blocs });
   }
 
-  return { clicsNecessaires, raisonDuRefus, casser, oublierLesObstaclesVides };
+  // Le bloc que T va casser (étape 25), ou null s'il n'y a rien.
+  function cibleDeT(monde) {
+    const T = Jeu.Terrain;
+    const j = monde.joueur;
+    const solide = (c, l) => T.estSolide(monde.terrain, c, l);
+    // 1. La souris vise un bloc solide, pas trop loin (et pas sur la barre du bas)
+    const visee = Jeu.Inventaire.caseSousLaSouris(monde);
+    if (visee && Jeu.Armes.caseSousLaSouris() < 0 && solide(visee.colonne, visee.ligne) && Jeu.Inventaire.distanceDuHeros(monde, visee.colonne, visee.ligne) <= C.construction.portee) {
+      return { colonne: visee.colonne, ligne: visee.ligne, comment: "visé avec la souris" };
+    }
+    const ici = Jeu.Joueur.caseDuJoueur(j);
+    // 2. Baissé : le bloc sous ses pieds
+    if (j.accroupi) return solide(ici.colonne, ici.ligne + 1) ? { colonne: ici.colonne, ligne: ici.ligne + 1, comment: "sous tes pieds" } : null;
+    // 3. Le bloc devant lui : d'abord à hauteur de la main, puis des pieds jusqu'à la tête
+    const colonne = j.regard > 0 ? Math.floor((j.x + j.l + 2) / B) : Math.floor((j.x - 2) / B);
+    const main = Math.floor(Jeu.Joueur.hauteurDeLaMain(j) / B);
+    const lignes = [main];
+    for (let l = Math.floor((j.y + j.h - 1) / B); l >= Math.floor(j.y / B); l--) if (l !== main) lignes.push(l);
+    for (const l of lignes) if (solide(colonne, l)) return { colonne, ligne: l, comment: "devant toi" };
+    return null;
+  }
+
+  // T avec un outil en main : casser le bloc choisi par cibleDeT.
+  function casserAvecT(monde, objet) {
+    const cible = cibleDeT(monde);
+    if (!cible) {
+      Jeu.Evenements.emettre("casse-refusee", { raison: "rien à casser devant toi (vise un bloc avec la souris, ou baisse-toi avec S pour creuser)" });
+      return;
+    }
+    if (objet === "pioche") monde.equipement.coupPioche = C.combat.dureeCoup; // l'animation du coup
+    else monde.equipement.coup = C.combat.dureeCoup;
+    casser(monde, cible.colonne, cible.ligne, objet);
+  }
+
+  return { clicsNecessaires, raisonDuRefus, casser, casserAvecT, cibleDeT, oublierLesObstaclesVides };
 })();

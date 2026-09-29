@@ -395,13 +395,15 @@ Jeu.Armes = (function () {
       else tirer(monde, objet);
     } else if (appui && !aFeu) {
       const pret = eq.attente <= 0;
-      if (CORPS_A_CORPS.includes(objet)) {
+      if (objet === "hache" && !Jeu.Combat.cibleDevant(monde) && !Jeu.Cochons.cochonDevant(monde) && Jeu.Outils.cibleDeT(monde)) {
+        Jeu.Outils.casserAvecT(monde, "hache"); // rien à frapper : la hache mine (étape 25)
+      } else if (CORPS_A_CORPS.includes(objet)) {
         if (!pret) Jeu.Evenements.emettre("pas-pret", { objet: nomDe(objet), attente: Math.round(eq.attente * 100) / 100 });
         else Jeu.Combat.frapper(monde, objet);
-      } else if (objet === "pioche") E.appuyer("piocher"); // le combat fera le coup de pioche, comme avec F
+      } else if (objet === "pioche") Jeu.Outils.casserAvecT(monde, "pioche"); // étape 25 : T mine (F marche toujours)
       else if (objet === "briques") E.appuyer("poserBloc"); // l'inventaire posera le bloc, comme avec P
       else if (objet === "armure") Jeu.Combat.fabriquerArmure(monde);
-      else if (objet === "pelle") Jeu.Evenements.emettre("astuce", { texte: "la pelle se sert avec la souris : clique sur un bloc de terre ou d'herbe" });
+      else if (objet === "pelle") Jeu.Outils.casserAvecT(monde, "pelle"); // étape 25 : T mine
     }
     // 3. Les balles et les roquettes en vol
     deplacerLesBalles(monde, dt);

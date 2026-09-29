@@ -48,9 +48,12 @@ Jeu.Joueur = (function () {
   }
 
   // Remet le héros debout sur une colonne, immobile (après une chute dans un trou).
-  function reapparaitre(j, colonne) {
+  // Réapparaître debout sur la colonne donnée. `ligneSol` : la ligne du sol (par défaut, l'herbe ;
+  // une autre ligne pour le drapeau d'une grotte conquise, étape 25).
+  function reapparaitre(j, colonne, ligneSol) {
+    const sol = ligneSol === undefined ? C.solY : ligneSol * C.tailleBloc;
     j.x = xAuCentreDe(colonne);
-    j.y = C.solY - j.h;
+    j.y = sol - j.h;
     j.vx = 0;
     j.vy = 0;
     j.tamponSaut = 0;
@@ -59,7 +62,7 @@ Jeu.Joueur = (function () {
     if (j.accroupi) {
       j.accroupi = false; // il réapparaît debout (étape 24)
       j.h = C.joueur.hauteur;
-      j.y = C.solY - j.h;
+      j.y = sol - j.h;
     }
   }
 

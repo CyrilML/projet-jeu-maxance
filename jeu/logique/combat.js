@@ -12,6 +12,10 @@
 //     Le monstre, lui, garde ses blessures.
 // Un monstre vivant GARDE LE PASSAGE : le héros ne peut pas aller plus loin que lui, même en sautant.
 //
+// Étape 25 : tous les 100 blocs, c'est un BOSS (500 PV, coups de poing de 8 PV) qui garde le passage.
+// Les petits monstres sont dans les grottes. Tous s'approchent du héros quand il est assez près.
+// Le boss vaincu laisse un COFFRE (potion + 5 fers) ; une grotte vidée de ses monstres est CONQUISE.
+//
 // Étape 12 : l'épée S'USE (20 coups sur un monstre, puis elle est cassée et ne fait plus de dégâts).
 //   - Touche F : un coup de pioche sur le bloc de fer juste devant. 3 coups → il casse → +1 fer.
 //   - Touche R : 1 fer répare À NEUF ce qui est le plus abîmé : l'épée, le bouclier ou la pioche.
@@ -65,40 +69,106 @@ Jeu.Combat = (function () {
     };
   }
 
-  // Un monstre posé sur la colonne donnée, debout sur l'herbe.
-  function creerMonstre(id, colonne) {
-    const Mo = C.monstres;
-    return {
-      id,
-      colonne,
-      x: colonne * B + 2,
-      y: C.solY - 64,
-      l: 36,
-      h: 64,
-      pv: Mo.pv,
-      pvMax: Mo.pv,
-      minuteur: null, // null = le héros n'est pas à portée ; sinon, secondes avant son prochain coup
-      frappe: 0, // animation de son coup (s)
-      touche: 0, // animation « aïe » quand il reçoit un coup (s)
-      vivant: true,
-    };
+  // Étape 25 : deux sortes de monstres, décrits par des nombres (voir config.js).
+  //   - le BOSS, tous les 100 blocs, sur l'herbe : 500 PV, gros coups de poing, il garde le passage ;
+  //   - les monstres des GROTTES, 2 par grotte, sur le sol de la grotte : 30 PV.
+  // Tous s'approchent du héros quand il entre dans leur zone de vue (10 ou 6 blocs).
+  function nouveauMonstre(id, type, colonne, ySol, largeur, hauteur, reglages) {
+    const x = colonne * B + Math.round((B - largeur) / 2);
+    return Object.assign(
+      {
+        id,
+        type,
+        colonne,
+        maison: x, // sa place de départ (px) : il ne s'en éloigne pas plus que sa laisse
+        x,
+        y: ySol - hauteur,
+        l: largeur,
+        h: hauteur,
+        vivant: true,
+        minuteur: null, // null = le héros n'est pas à portée ; sinon, secondes avant son prochain coup
+        frappe: 0, // animation de son coup (s)
+        touche: 0, // animation « aïe » quand il reçoit un coup (s)
+        marche: 0, // animation de la marche (s)
+        regard: -1, // il regarde vers la gauche (d'où arrive le héros)
+      },
+      reglages
+    );
   }
 
-  // Le premier monstre vivant devant le héros (le plus proche à sa droite).
+  function creerBoss(id, colonne) {
+    const Bo = C.boss;
+    return nouveauMonstre(id, "boss", colonne, C.solY, Bo.largeur, Bo.hauteur, {
+      pv: Bo.pv, pvMax: Bo.pv, vue: Bo.vue, vitesse: Bo.vitesse, laisse: Bo.laisse, degats: Bo.degats,
+      attenteMin: Bo.attente, attenteMax: Bo.attente, premierCoup: Bo.premierCoup, portee: Bo.portee, gardeLePassage: true,
+    });
+  }
+
+  function creerMonstreGrotte(id, colonne, grotte) {
+    const G = C.monstresGrotte;
+    const Mo = C.monstres;
+    return nouveauMonstre(id, "grotte", colonne, C.grottes.ligneSol * B, 36, 64, {
+      pv: G.pv, pvMax: G.pv, vue: G.vue, vitesse: G.vitesse, laisse: G.laisse, degats: Mo.degats,
+      attenteMin: Mo.attenteMin, attenteMax: Mo.attenteMax, premierCoup: Mo.premierCoup, portee: Mo.portee, gardeLePassage: false, grotte,
+    });
+  }
+
+  // Le premier boss vivant devant le héros (à sa droite) : c'est lui qui garde le passage.
   function monstreDevant(monde) {
     const j = monde.joueur;
     let meilleur = null;
     for (const m of monde.monstres) {
-      if (!m.vivant || m.x + m.l < j.x) continue;
+      if (!m.vivant || !m.gardeLePassage || m.x + m.l < j.x) continue;
       if (!meilleur || m.x < meilleur.x) meilleur = m;
     }
     return meilleur;
   }
 
-  // La distance entre le devant du héros et le monstre (en px).
-  function distance(monde, m) {
+  // L'écart en px entre le héros et le monstre (0 s'ils se touchent), et se chevauchent-ils en hauteur ?
+  function ecart(monde, m) {
     const j = monde.joueur;
-    return m.x - (j.x + j.l);
+    return Math.max(0, m.x - (j.x + j.l), j.x - (m.x + m.l));
+  }
+  function memeHauteur(monde, m) {
+    const j = monde.joueur;
+    return j.y < m.y + m.h && j.y + j.h > m.y;
+  }
+
+  // Le monstre que l'arme de corps à corps peut toucher : du côté où regarde le héros, à portée.
+  function cibleDevant(monde) {
+    const j = monde.joueur;
+    let meilleur = null;
+    for (const m of monde.monstres) {
+      if (!m.vivant || !memeHauteur(monde, m)) continue;
+      const devant = j.regard > 0 ? m.x + m.l / 2 > j.x + j.l / 2 : m.x + m.l / 2 < j.x + j.l / 2;
+      if (devant && ecart(monde, m) <= C.combat.porteeEpee && (!meilleur || ecart(monde, m) < ecart(monde, meilleur))) meilleur = m;
+    }
+    return meilleur;
+  }
+
+  // Compatibilité : la distance entre le devant du héros et le monstre (en px).
+  function distance(monde, m) {
+    return ecart(monde, m);
+  }
+
+  // Un monstre s'approche du héros (étape 25), sans sortir de sa laisse, sans tomber, sans traverser un mur.
+  function approcher(monde, m, dt) {
+    const j = monde.joueur;
+    const T = Jeu.Terrain;
+    const sens = Math.sign(j.x + j.l / 2 - (m.x + m.l / 2));
+    if (!sens || !m.vitesse) return;
+    m.regard = sens;
+    let x = m.x + sens * m.vitesse * dt;
+    x = Math.max(m.maison - m.laisse * B, Math.min(m.maison + m.laisse * B, x));
+    if (sens > 0) x = Math.min(x, j.x - m.l - 2); // il s'arrête contre le héros, sans lui rentrer dedans
+    else x = Math.max(x, j.x + j.l + 2);
+    if ((x - m.x) * sens <= 0) return;
+    const devant = Math.floor((sens > 0 ? x + m.l - 1 : x) / B);
+    const pieds = Math.floor((m.y + m.h) / B);
+    if (!T.estSolide(monde.terrain, devant, pieds)) return; // pas de sol : il ne va pas plus loin
+    for (let l = Math.floor(m.y / B); l < pieds; l++) if (T.estSolide(monde.terrain, devant, l)) return; // un mur
+    m.x = x;
+    m.marche += dt;
   }
 
   // Le minerai (fer ou charbon, pas encore cassé) juste devant le héros, à portée de pioche.
@@ -126,15 +196,15 @@ Jeu.Combat = (function () {
       emettre(eq.bouclier > 0 ? "bouclier-bloque" : "bouclier-casse", { id: m.id, reste: eq.bouclier });
       return;
     }
-    let degats = C.monstres.degats;
+    let degats = m.degats;
     if (eq.armure > 0) {
       // L'armure en fer (étape 15) : le coup fait moins mal, et l'armure s'use un peu.
       degats = Math.max(0, degats - C.armure.protection);
       eq.armure -= 1;
-      emettre(eq.armure > 0 ? "armure-protege" : "armure-cassee", { id: m.id, evite: C.monstres.degats - degats, reste: eq.armure });
+      emettre(eq.armure > 0 ? "armure-protege" : "armure-cassee", { id: m.id, evite: m.degats - degats, reste: eq.armure });
     }
     eq.pv = Math.max(0, eq.pv - degats);
-    emettre("monstre-attaque", { id: m.id, degats, pv: eq.pv });
+    emettre("monstre-attaque", { id: m.id, degats, pv: eq.pv, boss: m.type === "boss" });
   }
 
   // Un monstre reçoit des dégâts (coup ou balle). Renvoie vrai s'il est vaincu.
@@ -144,7 +214,13 @@ Jeu.Combat = (function () {
     m.touche = 0.2;
     if (m.pv <= 0) {
       m.vivant = false;
-      emettre("monstre-vaincu", { id: m.id, colonne: m.colonne, arme });
+      emettre("monstre-vaincu", { id: m.id, colonne: m.colonne, arme, boss: m.type === "boss" });
+      if (m.type === "boss") {
+        // Le coffre du boss (étape 25) : il apparaît là où le boss est tombé.
+        monde.coffres.push({ id: monde.prochainId++, x: m.x + m.l / 2 - 16, y: m.y + m.h - 26, l: 32, h: 26, ouvert: false });
+        emettre("coffre-apparait", { id: m.id });
+      }
+      if (m.type === "grotte") conquerirSiPossible(monde, m.grotte);
       return true;
     }
     return false;
@@ -182,10 +258,10 @@ Jeu.Combat = (function () {
     const eq = monde.equipement;
     const j = monde.joueur;
     const arme = C.armes[nom];
-    const m = monstreDevant(monde);
+    const m = cibleDevant(monde);
     eq.coup = C.combat.dureeCoup;
     eq.attente = arme.attente;
-    const aPortee = m && j.regard > 0 && distance(monde, m) <= C.combat.porteeEpee;
+    const aPortee = !!m;
     const cochon = aPortee ? null : Jeu.Cochons.cochonDevant(monde);
     const caisse = aPortee || cochon || !arme.casseLesCaisses ? null : caisseDevant(monde, C.combat.porteeEpee);
     if (cochon) {
@@ -237,6 +313,32 @@ Jeu.Combat = (function () {
     } else {
       eq.charbon += 1;
       emettre("charbon-casse", { id: minerai.id, colonne: minerai.colonne, charbon: eq.charbon });
+    }
+  }
+
+  // Tous les monstres de la grotte sont vaincus ? La grotte est à toi (étape 25) : un drapeau à ton nom,
+  // et tu y réapparaîtras si tu perds une vie (tant que tu n'as pas atteint un nouveau drapeau).
+  function conquerirSiPossible(monde, numero) {
+    if (monde.monstres.some((o) => o.vivant && o.grotte === numero)) return;
+    const g = (monde.grottes || []).find((o) => o.numero === numero);
+    if (!g || g.conquise) return;
+    g.conquise = true;
+    monde.grottesConquises += 1;
+    const colonne = g.salle + Math.floor((g.sortie - g.salle) / 2);
+    monde.retourGrotte = { numero, colonne, ligneSol: C.grottes.ligneSol };
+    Jeu.Evenements.emettre("grotte-conquise", { numero, colonne, pseudo: monde.pseudo, total: monde.grottesConquises });
+  }
+
+  // Le héros touche un coffre fermé : il l'ouvre et prend la récompense (étape 25).
+  function ouvrirLesCoffres(monde) {
+    const eq = monde.equipement;
+    const zone = Jeu.Joueur.hitbox(monde.joueur);
+    for (const c of monde.coffres) {
+      if (c.ouvert || !Jeu.Physique.seChevauchent(zone, c)) continue;
+      c.ouvert = true;
+      eq.potions += C.boss.coffre.potions;
+      eq.fer += C.boss.coffre.fer;
+      Jeu.Evenements.emettre("coffre-ouvert", { potions: C.boss.coffre.potions, fer: C.boss.coffre.fer, totalPotions: eq.potions, totalFer: eq.fer });
     }
   }
 
@@ -349,21 +451,27 @@ Jeu.Combat = (function () {
       mo.frappe = Math.max(0, mo.frappe - dt);
       mo.touche = Math.max(0, mo.touche - dt);
       if (!mo.vivant) continue;
-      const proche = distance(monde, mo) <= C.monstres.portee && j.x + j.l / 2 < mo.x + mo.l && j.y + j.h > mo.y;
+      // Étape 25 : dans sa zone de vue, il s'approche du héros (et il le signale une fois).
+      const vu = ecart(monde, mo) <= mo.vue * B && Math.abs(j.y + j.h - (mo.y + mo.h)) < 3 * B;
+      if (vu && !mo.aVuLeHeros) Jeu.Evenements.emettre("monstre-approche", { id: mo.id, boss: mo.type === "boss", vue: mo.vue });
+      mo.aVuLeHeros = vu;
+      if (vu && ecart(monde, mo) > 2) approcher(monde, mo, dt);
+      const proche = ecart(monde, mo) <= mo.portee && memeHauteur(monde, mo);
       if (!proche) {
         mo.minuteur = null;
         continue;
       }
-      if (mo.minuteur === null) mo.minuteur = C.monstres.premierCoup;
+      if (mo.minuteur === null) mo.minuteur = mo.premierCoup;
       mo.minuteur -= dt;
       if (mo.minuteur <= 0) {
         blesserHeros(monde, mo);
-        mo.minuteur = hasard(C.monstres.attenteMin, C.monstres.attenteMax);
+        mo.minuteur = hasard(mo.attenteMin, mo.attenteMax);
         if (eq.pv <= 0) return "plus-de-pv";
       }
     }
+    ouvrirLesCoffres(monde);
     return null;
   }
 
-  return { creerEquipement, creerMonstre, monstreDevant, ferDevant, distance, frapper, piocherMinerai, fabriquerArmure, blesserMonstre, blesserCochon, mettreAJour };
+  return { creerEquipement, creerBoss, creerMonstreGrotte, monstreDevant, cibleDevant, ecart, ferDevant, distance, frapper, piocherMinerai, fabriquerArmure, blesserMonstre, blesserCochon, mettreAJour };
 })();

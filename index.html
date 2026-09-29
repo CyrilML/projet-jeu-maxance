@@ -147,6 +147,7 @@
       <a href="#etape21">Étape 21</a>
       <a href="#etape22">Étape 22</a>
       <a href="#etape24">Étape 24</a>
+      <a href="#etape25">Étape 25</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -1878,6 +1879,69 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Le héros saute de 4,4 blocs. Combien de briques pour monter sur une plateforme à 5 blocs ?</summary><p>Une seule : 1 + 4,4 = 5,4 blocs, c'est plus que 5.</p></details>
     </section>
 
+    <section id="etape25">
+      <h2>🐉 Étape 25 : des dragons, des grottes à conquérir, miner avec T <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Tous les 100 blocs, un dragon mutant de 500 PV garde le passage. Les petits monstres se cachent dans les grottes : bats-les, et la grotte est à toi. Et pour miner, il suffit d'appuyer sur T.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/25-dragons-grottes-miner-avec-t.md</code>.</p>
+          <p><strong>Règles :</strong> boss de 500 PV, coups de griffes de 8 PV, lent, il garde le passage, un coffre en récompense (1a à 4a). 2 monstres par grotte, grotte conquise = drapeau à ton nom (5a, 6a). Miner avec T : la souris, sinon sous les pieds (baissé), sinon devant (7).</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Au bloc 100 : le dragon attend… puis s'approche quand tu es à 10 blocs.</li>
+            <li>☐ Ses griffes : −8 PV. Il t'empêche de passer.</li>
+            <li>☐ Vaincu : un coffre. Touche-le : +1 potion, +5 fers.</li>
+            <li>☐ Grotte : 2 monstres s'approchent. Bats-les : ton drapeau !</li>
+            <li>☐ Outil en main : <kbd>T</kbd> casse le bloc devant toi.</li>
+            <li>Vérifie « version 25 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>👀 La zone de vue : « il m'a vu ! »</h3>
+      <p>Chaque monstre a une <strong>zone de vue</strong> : 10 blocs pour le dragon, 6 pour les monstres des grottes. À chaque pas de temps, le jeu mesure l'écart entre le héros et le monstre. S'il est plus petit que la zone de vue, le monstre marche vers le héros. Sinon, il attend. Dans les rayons X (<kbd>X</kbd>), la zone de vue est un rectangle violet, qui devient rouge quand il t'a vu.</p>
+
+      <h3>🦮 La laisse : il ne va pas partout</h3>
+      <p>Un monstre ne s'éloigne jamais trop de sa place : c'est sa <strong>laisse</strong> (12 blocs pour le dragon, 5 pour les monstres des grottes). Et avant chaque pas, il vérifie qu'il y a du sol devant lui et pas de mur : les monstres ne tombent pas dans les trous !</p>
+
+      <h3>🧠 Une petite intelligence artificielle</h3>
+      <div class="carte">
+        <p>Le cerveau d'un monstre, c'est juste 3 questions posées 120 fois par seconde :</p>
+        <ol>
+          <li>Est-ce que je vois le héros ? → Si oui, je m'approche.</li>
+          <li>Est-ce que je le touche ? → Si oui, mon minuteur descend.</li>
+          <li>Mon minuteur est à 0 ? → Je frappe, et le minuteur recommence.</li>
+        </ol>
+        <p class="petit">C'est la même idée que les cochons (étape 13), avec une question en plus.</p>
+      </div>
+
+      <h3>🏴 La grotte conquise : un nouveau point de retour</h3>
+      <p>Quand le dernier monstre d'une grotte est vaincu, le jeu plante ton drapeau au milieu de la salle et se souvient de cet endroit (<code>retourGrotte</code>). Si tu perds une vie, tu réapparais là, sur le sol de la grotte, et plus au dernier drapeau. Dès que tu atteins un nouveau drapeau, c'est lui qui redevient ton point de retour.</p>
+
+      <h3>⛏️ Miner avec T : 3 règles dans l'ordre</h3>
+      <ol>
+        <li>La souris vise un bloc solide à portée ? → C'est lui.</li>
+        <li>Sinon, tu es baissé (<kbd>S</kbd>) ? → Le bloc sous tes pieds (pour creuser vers le bas).</li>
+        <li>Sinon → le bloc juste devant toi.</li>
+      </ol>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Approche-toi du dragon bloc par bloc : à combien de blocs se met-il à bouger ? Vérifie dans les rayons X.</li>
+        <li>Combien de tirs de sniper (25 dégâts) pour vaincre un dragon ? Et de roquettes (20) ?</li>
+        <li>Regarde « point de retour » dans l'état en direct avant et après avoir conquis une grotte.</li>
+        <li>Creuse un puits : baisse-toi avec <kbd>S</kbd>, prends la pioche et appuie sur <kbd>T</kbd>.</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de coups de Magnum (15 dégâts) pour vaincre un dragon de 500 PV ?</summary><p>500 ÷ 15 = 33,3… donc 34 coups.</p></details>
+      <details class="question"><summary>Tu as 20 PV et pas de bouclier. Combien de coups de griffes peux-tu encaisser ?</summary><p>8 + 8 = 16, le 3ᵉ coup fait passer à 0 : tu tiens 2 coups. Avec l'armure (−2 par coup), chaque coup n'enlève que 6 PV : tu en tiens 3.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -2022,26 +2086,32 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>Le héros mesure 2 blocs, saute plus haut, se baisse avec S ; ses armes grandissent avec lui. Toutes les armes ont un tir illimité.</p>
           <p class="apprend"><b>Tu apprends :</b> agrandir un dessin avec une échelle, ce qu'une taille change dans les règles, vérifier la place avant de bouger. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">25</div>
+          <h4>Dragons, grottes à conquérir, miner avec T <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Un dragon mutant de 500 PV tous les 100 blocs, des monstres dans les grottes qu'on peut conquérir, un coffre en récompense, et T pour miner.</p>
+          <p class="apprend"><b>Tu apprends :</b> zone de vue et laisse, une petite intelligence artificielle, un point de retour qui change, des règles essayées dans un ordre. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">26</div>
           <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">26</div>
+          <div class="num">27</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">27</div>
+          <div class="num">28</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">28</div>
+          <div class="num">29</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -2282,6 +2352,15 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-24" data-cle="appris-24" placeholder="Ex. : J'ai appris qu'agrandir un dessin, c'est multiplier toutes ses mesures…"></textarea>
         <label for="idees-24"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-24" data-cle="idees-24" placeholder="Ex. : Pouvoir ramper…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 25 · dragons, grottes à conquérir, miner avec T <span class="petit">· 29 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> un dragon mutant de 500 PV tous les 100 blocs (dessiné en style dessin animé, 4 blocs de haut), qui s'approche à 10 blocs et garde le passage ; un coffre (potion + 5 fers) quand il est vaincu ; 2 monstres de 30 PV dans chaque grotte, qui s'approchent à 6 blocs ; une grotte vidée devient la tienne (drapeau à ton nom, point de retour) ; T mine avec la pelle, la hache ou la pioche. Sous le capot : zones de vue et laisses dans les rayons X, « boss le plus proche », « grottes conquises » et « point de retour » dans l'état en direct, des grognements et une fanfare.</p>
+        <p class="petit">✍️ Réponses de Maxance : tout en A, sauf la 7 (toutes les options). « Pas effrayant à ce point » : le dragon a été adouci.</p>
+        <label for="appris-25"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-25" data-cle="appris-25" placeholder="Ex. : J'ai appris qu'un monstre qui s'approche, c'est juste une zone de vue et une laisse…"></textarea>
+        <label for="idees-25"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-25" data-cle="idees-25" placeholder="Ex. : Un dragon qui crache du feu…"></textarea>
       </div>
     </section>
   </main>
