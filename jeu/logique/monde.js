@@ -54,7 +54,7 @@ Jeu.Monde = (function () {
       brulure: null, // pendant que le héros brûle : { reste, allumees, colonneRetour } (étape 7)
       danse: null, // pendant que le squelette danse : { reste, colonneRetour } (étape 8)
       flammes: [], // les petites flammes (des particules, voir moteur/particules.js)
-      inventaire: Jeu.Inventaire.creer(), // le sac à dos : 10 blocs à poser (étape 10)
+      inventaire: Jeu.Inventaire.creer(), // le sac à dos : 100 blocs à poser (étapes 10 et 14)
       equipement: Jeu.Combat.creerEquipement(), // PV, bouclier, potion (étape 11)
       monstres: [], // les monstres du monde (étape 11)
       cochons: [], // les cochons qui se promènent (étape 13)
@@ -248,6 +248,7 @@ Jeu.Monde = (function () {
       const veutJouer = Entrees.consommer("sauter") | Entrees.consommer("valider");
       const veutChanger = Entrees.consommer("changerPseudo");
       Entrees.consommer("poserBloc"); // hors d'une partie, la touche P ne fait rien
+      Entrees.consommer("poserIci"); // ni le clic de souris
       Entrees.consommer("frapper");
       Entrees.consommer("boirePotion");
       Entrees.consommer("piocher");
@@ -267,7 +268,7 @@ Jeu.Monde = (function () {
     monde.temps += dt;
     if (monde.brulure || monde.danse) {
       // pas de bloc, pas de coup d'épée, pas de potion pendant qu'on brûle ou qu'on danse
-      for (const action of ["poserBloc", "frapper", "boirePotion", "piocher", "reparer", "cuire", "manger"]) Jeu.Entrees.consommer(action);
+      for (const action of ["poserBloc", "poserIci", "frapper", "boirePotion", "piocher", "reparer", "cuire", "manger"]) Jeu.Entrees.consommer(action);
     }
     if (monde.brulure) {
       brulerUnPeu(monde, dt);
@@ -281,7 +282,7 @@ Jeu.Monde = (function () {
     }
     const j = monde.joueur;
     Jeu.Joueur.mettreAJour(j, dt, monde);
-    Jeu.Inventaire.mettreAJour(monde); // P pendant un saut : un bloc sous les pieds
+    Jeu.Inventaire.mettreAJour(monde); // P pendant un saut, ou clic de souris : poser un bloc
     Jeu.Cochons.mettreAJour(monde, dt); // les cochons se promènent (étape 13)
     // Le héros descend dans une grotte (étape 13) ? On l'annonce une seule fois.
     for (const g of monde.grottes || []) {
@@ -318,6 +319,7 @@ Jeu.Monde = (function () {
         d.atteint = true;
         monde.dernierDrapeau = d.numero;
         Jeu.Evenements.emettre("drapeau", { numero: d.numero, colonne: d.colonne });
+        Jeu.Inventaire.remplir(monde, d.numero); // le sac revient à 100 blocs (étape 14)
         if (d.arrivee) {
           monde.score = d.colonne - monde.colonneDepart;
           gagner(monde);

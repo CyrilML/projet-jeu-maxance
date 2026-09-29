@@ -66,7 +66,9 @@ Jeu.SousLeCapot = (function () {
     "cuisson-refusee": (d) => "🍳 Pas de cuisson : " + d.raison,
     repas: (d) => "🍖 Miam : viande " + d.aliment + " → +" + d.soin + " PV (" + d.pv + " PV)",
     "repas-refuse": (d) => "🍖 Pas de repas : " + d.raison,
-    "bloc-pose": (d) => "🧱 Bloc posé dans la case colonne " + d.colonne + ", ligne " + d.ligne + " → il en reste " + d.reste + " dans le sac",
+    "bloc-pose": (d) => "🧱 Bloc posé (" + (d.facon === "souris" ? "clic de souris" : "touche P") + ") dans la case colonne " + d.colonne + ", ligne " + d.ligne + " → il en reste " + d.reste + " dans le sac",
+    "brique-reprise": (d) => "⛏️ Brique reprise à la pioche (colonne " + d.colonne + ", ligne " + d.ligne + ") → " + d.sac + " blocs dans le sac",
+    "sac-rempli": (d) => "🎒 Drapeau n° " + d.drapeau + " : le sac se remplit (+" + d.ajoutes + " blocs) → " + d.sac + " blocs",
     "bloc-refuse": (d) => "🚫 Pas de bloc : " + d.raison,
     "fin-danse": (d) => "🕺 Le squelette a fini de danser (" + d.duree + " s)",
     "bras-leves": (d) => "🙌 Il tombe dans le trou de la colonne " + d.colonne + " : il lève les bras !",
@@ -178,6 +180,15 @@ Jeu.SousLeCapot = (function () {
     elements.base.textContent = JSON.stringify(Jeu.Sauvegarde.donnees, null, 2);
   }
 
+  // La case sous la souris et ce qui se passerait si on cliquait (étape 14).
+  function caseSouris(monde) {
+    if (monde.phase !== "jeu") return "—";
+    const c = Jeu.Inventaire.caseSousLaSouris(monde);
+    if (!c) return "souris hors de l'écran";
+    const refus = Jeu.Inventaire.raisonDuRefusIci(monde, c.colonne, c.ligne);
+    return "col. " + c.colonne + ", ligne " + c.ligne + " : " + (refus ? "🚫 " + refus : "✅ clic = brique");
+  }
+
   function afficherEtat() {
     const monde = lireMonde();
     const mesures = lireMesures();
@@ -218,6 +229,9 @@ Jeu.SousLeCapot = (function () {
       ["Inventaire (sac à dos)", ""],
       ["blocs dans le sac", monde.inventaire.blocs + " / " + Jeu.CONFIG.inventaire.blocs],
       ["blocs posés", monde.inventaire.poses],
+      ["briques reprises (pioche)", monde.inventaire.reprises],
+      ["sac rempli aux drapeaux", monde.inventaire.recharges + " fois"],
+      ["case sous la souris", caseSouris(monde)],
       ["flammes en mémoire", monde.flammes.length],
       ["pièges en bois touchés", monde.piegesTouches],
       ["Carte en mémoire", ""],

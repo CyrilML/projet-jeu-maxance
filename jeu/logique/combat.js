@@ -177,7 +177,10 @@ Jeu.Combat = (function () {
     if (E.consommer("piocher")) {
       eq.coupPioche = C.combat.dureeCoup;
       const minerai = ferDevant(monde);
+      // Pas de minerai ? La pioche peut reprendre une brique posée (étape 14) : 1 coup, sans user la pioche.
+      const brique = minerai ? null : Jeu.Inventaire.briqueAReprendre(monde);
       if (eq.pioche <= 0) emettre("pioche", { touche: false, cassee: true });
+      else if (brique) Jeu.Inventaire.reprendre(monde, brique);
       else if (!minerai) emettre("pioche", { touche: false });
       else {
         minerai.coups -= 1;

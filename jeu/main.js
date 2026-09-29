@@ -23,6 +23,7 @@
 
   // 1. Brancher les pièces
   Jeu.Entrees.initialiser(window);
+  Jeu.Entrees.initialiserSouris(canvas); // la souris sert à construire (étape 14)
   Jeu.Rendu.initialiser(canvas);
   const monde = Jeu.Monde.creer();
   const options = { rayonsX: false, pause: false, ralenti: false };
@@ -88,7 +89,7 @@
     if (E.consommer("ralenti")) options.ralenti = !options.ralenti;
     if (E.consommer("pause") && monde.phase === "jeu") options.pause = !options.pause;
     // En pause, un appui sur P (poser un bloc) est oublié : sinon le bloc apparaîtrait à la reprise.
-    if (options.pause) for (const action of ["poserBloc", "frapper", "boirePotion", "piocher", "reparer", "cuire", "manger"]) E.consommer(action);
+    if (options.pause) for (const action of ["poserBloc", "poserIci", "frapper", "boirePotion", "piocher", "reparer", "cuire", "manger"]) E.consommer(action);
     if (monde.phase !== "jeu") options.pause = false;
     if (E.consommer("pasSuivant") && options.pause) {
       Jeu.Monde.mettreAJour(monde, C.pasDeTemps);

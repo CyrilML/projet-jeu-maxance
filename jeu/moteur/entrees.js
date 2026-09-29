@@ -8,6 +8,10 @@
 //
 // On utilise e.code (la position physique de la touche) : KeyA est la touche Q
 // sur un clavier français (AZERTY), KeyW est la touche Z.
+//
+// Depuis l'étape 14, les oreilles écoutent aussi la SOURIS : où elle se trouve sur l'écran de jeu,
+// et quand on clique (intention « poserIci »). Les positions sont en pixels de l'écran de jeu
+// (0 à 960 de gauche à droite), même si l'écran est affiché plus petit dans la page.
 
 window.Jeu = window.Jeu || {};
 
@@ -36,6 +40,9 @@ Jeu.Entrees = (function () {
     for (const code of CARTE[action]) actionDeLaTouche[code] = action;
   }
 
+  // La souris sur l'écran de jeu : x, y en pixels de l'écran ; dedans = est-elle sur l'écran ?
+  const souris = { x: 0, y: 0, dedans: false };
+
   const touchesEnfoncees = new Set(); // les touches tenues en ce moment
   const appuisEnAttente = new Set(); // les appuis pas encore traités par le jeu
 
@@ -53,6 +60,25 @@ Jeu.Entrees = (function () {
     cible.addEventListener("keyup", (e) => touchesEnfoncees.delete(e.code));
     // Si la fenêtre perd le focus, on relâche tout (sinon le héros court tout seul).
     cible.addEventListener("blur", () => touchesEnfoncees.clear());
+  }
+
+  // Branche la souris sur l'écran de jeu (le canvas).
+  function initialiserSouris(canvas) {
+    function lirePosition(e) {
+      // L'écran peut être affiché plus petit (téléphone) : on remet la position à l'échelle 960 × 540.
+      const cadre = canvas.getBoundingClientRect();
+      souris.x = ((e.clientX - cadre.left) * canvas.width) / cadre.width;
+      souris.y = ((e.clientY - cadre.top) * canvas.height) / cadre.height;
+      souris.dedans = true;
+    }
+    canvas.addEventListener("pointermove", lirePosition);
+    canvas.addEventListener("pointerleave", () => (souris.dedans = false));
+    canvas.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return; // seulement le bouton gauche
+      lirePosition(e);
+      canvas.focus();
+      appuisEnAttente.add("poserIci");
+    });
   }
 
   function estUnChampDeTexte(element) {
@@ -76,5 +102,5 @@ Jeu.Entrees = (function () {
     appuisEnAttente.add(action);
   }
 
-  return { initialiser, estEnfoncee, consommer, appuyer };
+  return { initialiser, initialiserSouris, souris, estEnfoncee, consommer, appuyer };
 })();

@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 14,
+  version: 15,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -109,8 +109,15 @@ Jeu.CONFIG = {
   },
 
   // L'inventaire (étape 10) : des blocs à poser sous ses pieds pendant un saut (touche P).
+  // Étape 14 : 100 blocs, et le sac se remplit à chaque nouveau drapeau.
   inventaire: {
-    blocs: 10, // pour toute la partie
+    blocs: 100, // au départ, et à chaque nouveau drapeau le sac revient à 100
+  },
+
+  // Les constructions à la souris (étape 14) : un clic sur une case vide pose une brique.
+  construction: {
+    portee: 4, // on ne peut poser (ou reprendre) une brique qu'à 4 blocs au plus du héros
+    distanceMonstre: 6, // interdit de construire à moins de 6 blocs d'un monstre vivant
   },
 
   // Le combat (étape 11).

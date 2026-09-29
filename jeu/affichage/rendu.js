@@ -517,19 +517,16 @@ Jeu.Rendu = (function () {
     texte("👤 " + monde.pseudo, L - 20, 56, 18, "#ffe27a", "right");
     const reste = monde.drapeaux.length ? C.arrivee.bloc - monde.score : 0;
     if (reste > 0) texte("🏁 encore " + reste + " blocs", L - 20, 80, 15, "#fff", "right");
-    // L'inventaire : une petite brique par bloc qui reste dans le sac (étape 10)
+    // L'inventaire : une brique dessinée et le nombre de blocs dans le sac (étapes 10 et 14)
     const inv = monde.inventaire;
     ctx.fillStyle = "rgba(0,0,0,0.5)";
-    ctx.fillRect(16, 134, C.inventaire.blocs * 16 + 8, 22);
-    for (let k = 0; k < C.inventaire.blocs; k++) {
-      ctx.fillStyle = k < inv.blocs ? "#b5523b" : "#3a3f55";
-      ctx.fillRect(20 + k * 16, 138, 13, 13);
-      if (k < inv.blocs) {
-        ctx.fillStyle = "#e8d9c4";
-        ctx.fillRect(20 + k * 16, 144, 13, 1);
-      }
-    }
-    texte("🎒 " + inv.blocs + "   saute + P : poser un bloc", 28 + C.inventaire.blocs * 16, 152, 15, "#fff");
+    ctx.fillRect(16, 134, 24, 22);
+    ctx.fillStyle = inv.blocs > 0 ? "#b5523b" : "#3a3f55";
+    ctx.fillRect(20, 138, 16, 14);
+    ctx.fillStyle = "#e8d9c4";
+    ctx.fillRect(20, 144, 16, 1);
+    ctx.fillRect(27, 138, 1, 6);
+    texte("🎒 " + inv.blocs + " / " + C.inventaire.blocs + "   clic : poser · F : reprendre · saute + P : sous tes pieds", 48, 152, 15, "#fff");
     // Les PV, le bouclier et la potion (étape 11)
     const eq = monde.equipement;
     ctx.fillStyle = "rgba(0,0,0,0.5)";
@@ -576,15 +573,15 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 13 : grottes, charbon, cochons et cuisine", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 14 : 100 blocs pour construire", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au bloc " + C.arrivee.bloc + " le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
     texte("❤️ " + C.vies + " vies · 🕳️ Trou : tu repars devant le trou", L / 2, 386, 17, "#cfe0ff", "center");
     texte("🔥 Lave et 💀 murets à pics (un tous les 50 blocs) : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
     texte("📦 Caisses et 🗼 tours en pierre : sans danger, monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
-    texte("🎒 " + C.inventaire.blocs + " blocs : saute puis P pour poser un bloc sous tes pieds (Échap : pause)", L / 2, 470, 17, "#cfe0ff", "center");
-    texte("⚔️ T : épée · 🧪 H : potion · ⛓️ F : pioche · R : réparer · 🍖 K : cuire · M : manger", L / 2, 496, 16, "#cfe0ff", "center");
+    texte("🎒 " + C.inventaire.blocs + " blocs (sac rempli à chaque 🚩) · 🖱️ clic : poser · saute + P : sous tes pieds", L / 2, 470, 17, "#cfe0ff", "center");
+    texte("⚔️ T : épée · 🧪 H : potion · ⛓️ F : pioche (reprend aussi tes briques) · R : réparer · 🍖 K : cuire · M : manger", L / 2, 496, 16, "#cfe0ff", "center");
     const premier = Jeu.Sauvegarde.donnees.classement[0];
     if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 522, 16, "#ffe27a", "center");
     texte("version " + C.version, L - 12, H - 12, 14, "#cfe0ff", "right");
@@ -689,6 +686,30 @@ Jeu.Rendu = (function () {
       ctx.moveTo(0, l * B + 0.5);
       ctx.lineTo(L, l * B + 0.5);
       ctx.stroke();
+    }
+
+    // 1 bis. La construction (étape 14) : le cercle de portée de la souris (4 blocs autour du héros)
+    // et, en rouge, les colonnes interdites autour des monstres vivants.
+    const R = C.construction;
+    ctx.strokeStyle = "rgba(125,255,155,0.8)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath();
+    ctx.arc(j.x + j.l / 2 - camX, j.y + j.h / 2, R.portee * B, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = "bold 13px 'Trebuchet MS', system-ui, sans-serif";
+    ctx.fillStyle = "#7dff9b";
+    ctx.fillText("portée de construction : " + R.portee + " blocs", j.x + j.l / 2 - camX - 80, j.y + j.h / 2 - R.portee * B - 6);
+    for (const m of monde.monstres) {
+      if (!m.vivant) continue;
+      const gauche = (m.colonne - R.distanceMonstre) * B - camX;
+      const largeur = (2 * R.distanceMonstre + 1) * B;
+      if (gauche > L || gauche + largeur < 0) continue;
+      ctx.fillStyle = "rgba(255,60,60,0.12)";
+      ctx.fillRect(gauche, camY, largeur, H);
+      ctx.fillStyle = "#ff8a8a";
+      ctx.fillText("🚫 construction interdite (monstre #" + m.id + ")", gauche + 6, camY + H - 60);
     }
 
     // 2. La case du héros, surlignée
@@ -853,6 +874,25 @@ Jeu.Rendu = (function () {
     ctx.fill();
   }
 
+  // La case visée par la souris (étape 14) : cadre vert = un clic pose une brique ici,
+  // cadre rouge = interdit (trop loin, case pleine, monstre trop proche…). Dessinée dans le monde.
+  function caseDeConstruction(monde) {
+    const c = Jeu.Inventaire.caseSousLaSouris(monde);
+    if (!c) return;
+    const ok = !Jeu.Inventaire.raisonDuRefusIci(monde, c.colonne, c.ligne);
+    const x = c.colonne * B;
+    const y = c.ligne * B;
+    if (ok) {
+      ctx.fillStyle = "rgba(181,82,59,0.35)"; // une brique « fantôme »
+      ctx.fillRect(x, y, B, B);
+    }
+    ctx.strokeStyle = ok ? "#7dff9b" : "rgba(255,90,90,0.9)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeRect(x + 1, y + 1, B - 2, B - 2);
+    ctx.setLineDash([]);
+  }
+
   // --- Le tableau complet ---
 
   function dessiner(monde, options) {
@@ -878,6 +918,7 @@ Jeu.Rendu = (function () {
     monstres(monde.monstres);
     joueur(monde.joueur, monde.phase, monde.equipement);
     flammes(monde.flammes);
+    if (monde.phase === "jeu" && !monde.brulure && !monde.danse) caseDeConstruction(monde);
     ctx.restore();
 
     if (options.rayonsX) rayonsX(monde);

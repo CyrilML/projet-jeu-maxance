@@ -137,6 +137,7 @@
       <a href="#etape11">Étape 11</a>
       <a href="#etape12">Étape 12</a>
       <a href="#etape13">Étape 13</a>
+      <a href="#etape14">Étape 14</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -1351,6 +1352,69 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Pourquoi le monde est-il passé de 14 à 24 lignes ?</summary><p>Pour avoir de la place sous le sol : la grotte est aux lignes 14 à 17, et son sol à la ligne 18.</p></details>
     </section>
 
+    <section id="etape14">
+      <h2>🧱 Étape 14 : 100 blocs pour construire <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Le héros devient bâtisseur : 100 briques dans le sac, un clic de souris pour les poser où on veut (pas trop loin), et la pioche pour les reprendre.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/14-cent-blocs-pour-construire.md</code>.</p>
+          <p><strong>Règles :</strong> 100 blocs, sac rempli à chaque drapeau (1c). Clic de souris sur une case proche (2c). <kbd>F</kbd> reprend une brique (3a). Pas de construction près d'un monstre (4b).</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « 🎒 100 / 100 » en haut à gauche.</li>
+            <li>☐ Passe la souris sur l'écran : cadre vert = OK, rouge = interdit.</li>
+            <li>☐ Construis un escalier et monte dessus.</li>
+            <li>☐ Vise une brique et appuie sur <kbd>F</kbd> : elle revient dans le sac.</li>
+            <li>☐ Près d'un monstre : cadre rouge.</li>
+            <li>☐ Au drapeau suivant : le sac revient à 100.</li>
+            <li>Vérifie « version 15 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🖱️ Du clic à la case</h3>
+      <p>Quand tu cliques, le navigateur donne la position de la souris <strong>sur l'écran</strong>. Mais le monde est bien plus grand que l'écran ! On fait donc le chemin inverse de l'étape 2 :</p>
+      <div class="carte">
+        <ol>
+          <li><strong>x monde = x écran + camera.x</strong> (et pareil pour y avec camera.y) ;</li>
+          <li><strong>colonne = x monde ÷ 40</strong>, arrondi vers le bas ; <strong>ligne = y monde ÷ 40</strong>, arrondi vers le bas.</li>
+        </ol>
+        <p class="petit">Exemple : souris à x = 300 sur l'écran, caméra à 3 420 → x monde = 3 720 → colonne 93. Petit piège : l'écran est parfois affiché plus petit (sur un téléphone), alors on remet d'abord la position à l'échelle 960 × 540.</p>
+      </div>
+
+      <h3>📏 La portée : le théorème de Pythagore</h3>
+      <p>Pour savoir si une case est « proche », on mesure la distance entre le milieu du héros et le milieu de la case : <strong>distance = √(dx² + dy²)</strong>. Si elle dépasse 4 blocs, c'est refusé. Dans les rayons X, le cercle vert en pointillés montre cette portée.</p>
+
+      <h3>🚦 Le gardien des règles</h3>
+      <p>Avant de poser, le jeu pose des questions, dans l'ordre. Dès qu'une réponse est « non », il s'arrête et le journal dit pourquoi :</p>
+      <ol>
+        <li>Reste-t-il des blocs dans le sac ?</li>
+        <li>La case est-elle dans le monde, et vide (de l'air) ?</li>
+        <li>Est-on assez loin d'un monstre vivant (plus de 6 blocs) ?</li>
+        <li>La case est-elle à portée (4 blocs) ?</li>
+        <li>Personne n'est dedans (toi, un cochon, un monstre) ?</li>
+      </ol>
+      <p class="petit">Le cadre vert ou rouge sous la souris utilise exactement les mêmes questions : c'est pour ça qu'il ne se trompe jamais.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Dans « L'état en direct », regarde la ligne « case sous la souris » en bougeant la souris.</li>
+        <li>Active les rayons X (<kbd>X</kbd>) près d'un monstre : trouve la zone rouge « construction interdite ».</li>
+        <li>Pose une brique, puis cherche le <code>8</code> dans « La carte en mémoire ».</li>
+        <li>Dépense 30 blocs, puis passe un drapeau : que dit le journal ?</li>
+        <li>Essaie de construire un pont au-dessus d'un lac de lave.</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>La caméra est à x = 2 000. Tu cliques à x = 130 sur l'écran. Quelle colonne ?</summary><p>2 000 + 130 = 2 130, et 2 130 ÷ 40 = 53,25 → colonne 53.</p></details>
+      <details class="question"><summary>Une case est à 3 blocs à droite et 3 blocs au-dessus du héros. Peux-tu y poser une brique ?</summary><p>√(3² + 3²) = √18 ≈ 4,2 blocs : c'est plus que 4, donc non !</p></details>
+      <details class="question"><summary>Pourquoi interdire de construire près d'un monstre ?</summary><p>Sinon on pourrait construire un pont par-dessus lui et passer sans le combattre.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -1435,15 +1499,15 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>4 grottes à escaliers, du charbon à piocher, des cochons, une recette (K) et des repas (M) ; la pioche s'use.</p>
           <p class="apprend"><b>Tu apprends :</b> une caméra qui monte et descend, creuser un niveau dans la grille, une petite intelligence artificielle, une recette. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">14</div>
-          <h4>Casser et poser des blocs <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
-          <p>Clic gauche pour casser, clic droit pour poser, à portée de bras.</p>
-          <p class="apprend"><b>Tu apprends :</b> transformer un clic en case de la grille, « la donnée d'abord, le dessin suit », événements de la souris. <b>Durée :</b> 1 à 2 séances.</p>
+          <h4>100 blocs pour construire <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>100 briques (sac rempli à chaque drapeau), un clic de souris pour poser à 4 blocs au plus, <kbd>F</kbd> pour reprendre, rien près des monstres.</p>
+          <p class="apprend"><b>Tu apprends :</b> transformer un clic en case de la grille, mesurer une distance (Pythagore), une liste de règles qui dit « oui » ou « non, parce que… ». <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte">
+        <div class="carte prochain">
           <div class="num">15</div>
-          <h4>Inventaire et catalogue des blocs</h4>
+          <h4>Inventaire et catalogue des blocs <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Chaque bloc cassé va dans l'inventaire (piles de 64), avec une barre en bas de l'écran.</p>
           <p class="apprend"><b>Tu apprends :</b> identifiants (déjà 0 à 6 depuis l'étape 3), catalogue de propriétés (dureté, en plus de solide ou liquide), structures de données. <b>Durée :</b> 2 séances.</p>
         </div>
@@ -1619,6 +1683,15 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-13" data-cle="appris-13" placeholder="Ex. : J'ai appris que la caméra a maintenant un y…"></textarea>
         <label for="idees-13"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-13" data-cle="idees-13" placeholder="Ex. : Des chauves-souris dans les grottes…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 14 · 100 blocs pour construire <span class="petit">· 29 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> 100 briques dans le sac, remplies à chaque drapeau ; les oreilles du jeu écoutent maintenant la souris ; un clic pose une brique à 4 blocs au plus (cadre vert ou rouge) ; <kbd>F</kbd> reprend une brique ; pas de construction à moins de 6 blocs d'un monstre. Sous le capot : la « case sous la souris » en direct, le cercle de portée et les zones interdites dans les rayons X, les événements « brique reprise » et « sac rempli ».</p>
+        <p class="petit">✍️ Réponses de Maxance : 1c 2c 3a 4b.</p>
+        <label for="appris-14"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-14" data-cle="appris-14" placeholder="Ex. : J'ai appris qu'un clic devient une case en ajoutant la caméra puis en divisant par 40…"></textarea>
+        <label for="idees-14"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-14" data-cle="idees-14" placeholder="Ex. : Choisir la couleur de mes blocs…"></textarea>
       </div>
     </section>
   </main>
