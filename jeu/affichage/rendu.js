@@ -1326,6 +1326,17 @@ Jeu.Rendu = (function () {
     ctx.stroke();
     ctx.setLineDash([]);
     note("la caméra garde le héros ici", xVise + 4, camY + 124, "#7bff9e");
+    // Étape 26 : les deux lignes que le héros ne dépasse jamais à l'écran (sinon la caméra bouge)
+    ctx.setLineDash([4, 8]);
+    ctx.beginPath();
+    for (const yLigne of [C.camera.teteAuPlusHaut, C.camera.piedsAuPlusBas]) {
+      ctx.moveTo(xVise - 120, camY + yLigne + 0.5);
+      ctx.lineTo(xVise + 120, camY + yLigne + 0.5);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    note("↑ la tête ne monte pas plus haut : sinon la caméra monte", xVise - 118, camY + C.camera.teteAuPlusHaut - 4, "#7bff9e");
+    note("↓ les pieds ne descendent pas plus bas : sinon la caméra descend", xVise - 118, camY + C.camera.piedsAuPlusBas + 14, "#7bff9e");
     note("caméra x = " + Math.round(cam.x) + "  y = " + camY + "   écart à rattraper = " + Math.round(cam.cible - cam.x) + " px", L - 10, camY + H - 24, "#7bff9e", "right");
     note("monde fabriqué jusqu'à la colonne " + (monde.terrain.colonnes.length - 1) + " →", L - 10, camY + H - 8, "#7bff9e", "right");
 

@@ -148,6 +148,7 @@
       <a href="#etape22">Étape 22</a>
       <a href="#etape24">Étape 24</a>
       <a href="#etape25">Étape 25</a>
+      <a href="#etape26">Étape 26</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -1942,6 +1943,35 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Tu as 20 PV et pas de bouclier. Combien de coups de griffes peux-tu encaisser ?</summary><p>8 + 8 = 16, le 3ᵉ coup fait passer à 0 : tu tiens 2 coups. Avec l'armure (−2 par coup), chaque coup n'enlève que 6 PV : tu en tiens 3.</p></details>
     </section>
 
+    <section id="etape26">
+      <h2>📷 Étape 26 : la caméra qui monte <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Quand tu grimpes sur tes blocs, la caméra monte avec toi. Tu ne sors plus jamais de l'écran par le haut.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/26-camera-qui-monte.md</code>.</p>
+          <p>« Quand je monte sur les blocs, je veux que la caméra me suive. »</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Construis une grande tour et monte dessus : la caméra monte.</li>
+            <li>☐ Saute du haut : elle suit encore.</li>
+            <li>☐ Redescends : elle revient à sa place.</li>
+            <li>Vérifie « version 26 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🖼️ Deux lignes invisibles</h3>
+      <p>La caméra garde le héros entre deux lignes de l'écran : sa <strong>tête</strong> ne monte pas plus haut que 250 px, et ses <strong>pieds</strong> ne descendent pas plus bas que 440 px. S'il dépasse une ligne, la caméra bouge juste assez pour le remettre dedans. Entre les deux, elle revient doucement à sa place (<code>camera.y = 0</code>). Active les rayons X (<kbd>X</kbd>) pour voir ces deux lignes en pointillés verts.</p>
+      <p class="petit">Quand la caméra monte au-dessus du monde, <code>camera.y</code> devient <strong>négatif</strong> : on regarde plus haut que la ligne 0. C'est la même formule qu'à l'étape 13 : y écran = y monde − camera.y.</p>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>La tête du héros est à y = 100 dans le monde. Combien vaut camera.y ?</summary><p>La tête doit être à 250 px sur l'écran : 100 − camera.y = 250, donc camera.y = −150.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -2092,26 +2122,32 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>Un dragon mutant de 500 PV tous les 100 blocs, des monstres dans les grottes qu'on peut conquérir, un coffre en récompense, et T pour miner.</p>
           <p class="apprend"><b>Tu apprends :</b> zone de vue et laisse, une petite intelligence artificielle, un point de retour qui change, des règles essayées dans un ordre. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">26</div>
+          <h4>La caméra qui monte <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>La caméra suit le héros vers le haut quand il grimpe, et revient à sa place quand il redescend.</p>
+          <p class="apprend"><b>Tu apprends :</b> garder un objet entre deux limites, des coordonnées négatives. <b>Durée :</b> ½ séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">27</div>
           <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">27</div>
+          <div class="num">28</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">28</div>
+          <div class="num">29</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">29</div>
+          <div class="num">30</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -2361,6 +2397,14 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-25" data-cle="appris-25" placeholder="Ex. : J'ai appris qu'un monstre qui s'approche, c'est juste une zone de vue et une laisse…"></textarea>
         <label for="idees-25"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-25" data-cle="idees-25" placeholder="Ex. : Un dragon qui crache du feu…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 26 · la caméra qui monte <span class="petit">· 29 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la caméra garde la tête du héros sous 250 px et ses pieds au-dessus de 440 px ; elle peut monter au-dessus du monde (camera.y négatif). Sous le capot : les deux lignes de la caméra dans les rayons X.</p>
+        <label for="appris-26"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-26" data-cle="appris-26" placeholder="Ex. : J'ai appris que camera.y peut être négatif…"></textarea>
+        <label for="idees-26"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-26" data-cle="idees-26" placeholder="Ex. : Des nuages sur lesquels on peut marcher…"></textarea>
       </div>
     </section>
   </main>

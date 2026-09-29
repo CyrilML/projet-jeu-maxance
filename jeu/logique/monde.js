@@ -161,8 +161,13 @@ Jeu.Monde = (function () {
     const cible = j.x + j.l / 2 - C.camera.positionJoueur;
     Jeu.Camera.suivre(monde.camera, cible, dt, C.camera.tempsDeReaction, 0);
     // Sous terre (étape 13), la caméra descend : les pieds du héros restent au plus à 440 px du haut.
+    // Quand il grimpe (étape 26), elle monte : sa tête reste au moins à 250 px du haut.
+    // Entre les deux, elle revient à sa place normale (0).
     const basDuMonde = C.carte.lignes * B - C.ecran.hauteur;
-    Jeu.Camera.suivreY(monde.camera, j.y + j.h - C.camera.piedsAuPlusBas, dt, C.camera.tempsDeReaction, 0, basDuMonde);
+    let cibleY = 0;
+    if (j.y + j.h - C.camera.piedsAuPlusBas > 0) cibleY = j.y + j.h - C.camera.piedsAuPlusBas;
+    else if (j.y - C.camera.teteAuPlusHaut < 0) cibleY = j.y - C.camera.teteAuPlusHaut;
+    Jeu.Camera.suivreY(monde.camera, cibleY, dt, C.camera.tempsDeReaction, C.camera.plusHaut, basDuMonde);
   }
 
   // Une colonne où l'on peut se tenir debout : de l'herbe sous les pieds, et rien de solide

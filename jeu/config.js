@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 25,
+  version: 26,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -305,6 +305,8 @@ Jeu.CONFIG = {
 
   camera: {
     piedsAuPlusBas: 440, // sous terre, la caméra descend pour garder les pieds du héros au plus à 440 px du haut de l'écran
+    teteAuPlusHaut: 250, // étape 26 : quand il grimpe, la caméra monte pour garder sa tête au moins à 250 px du haut (sous les compteurs)
+    plusHaut: -600, // la caméra peut monter jusqu'à 600 px au-dessus du haut du monde (pour voir le ciel)
     positionJoueur: 320, // la caméra essaie de garder le héros à 320 px du bord gauche de l'écran
     tempsDeReaction: 0.07, // plus c'est petit, plus elle suit vite. 0,07 s → après 0,5 s, il reste moins de 0,1 % de l'écart
   },

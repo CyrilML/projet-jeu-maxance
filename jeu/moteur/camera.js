@@ -29,7 +29,8 @@ Jeu.Camera = (function () {
     if (Math.abs(camera.cible - camera.x) < 0.05) camera.x = camera.cible;
   }
 
-  // Pareil, mais de haut en bas (étape 13 : la caméra descend dans les grottes).
+  // Pareil, mais de haut en bas (étape 13 : la caméra descend dans les grottes ; étape 26 : elle monte
+  // aussi quand le héros grimpe, et camera.y devient alors négatif : on regarde au-dessus du monde).
   // `min` et `max` : la caméra ne sort jamais du monde.
   function suivreY(camera, cibleY, dt, tempsDeReaction, min, max) {
     camera.cibleY = Math.max(min, Math.min(max, cibleY));
