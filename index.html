@@ -1786,7 +1786,7 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
             <li>☐ Pompe : 5 plombs. Sniper : laser rouge. Laser : rayon bleu.</li>
             <li>☐ Lance-flammes : ça brûle ! Eau : le monstre recule, sans blessure.</li>
             <li>☐ Les douilles sautent et rebondissent.</li>
-            <li>☐ Chargeur vide : ⟳ et le héros recharge.</li>
+            <li>☐ Magnum, sniper, pompe : le héros recharge entre deux tirs (⟳), sans jamais s'arrêter.</li>
             <li>Vérifie « version 22 ».</li>
           </ul>
         </div>
@@ -1796,12 +1796,12 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <div class="carte">
         <div style="overflow-x: auto">
         <table>
-          <tr><th>Arme</th><th>Dégâts</th><th>Portée</th><th>Chargeur</th><th>Ce qu'elle a de spécial</th></tr>
-          <tr><td>Fusil à pompe</td><td>5 × 3</td><td>5 blocs</td><td>5</td><td>5 plombs en éventail</td></tr>
-          <tr><td>Fusil de sniper</td><td>25</td><td>25 blocs</td><td>4</td><td>laser rouge de visée, balle très rapide</td></tr>
-          <tr><td>Pistolet laser</td><td>6</td><td>15 blocs</td><td>20</td><td>touche tout de suite, pas de balle</td></tr>
-          <tr><td>Lance-flammes</td><td>1 par 0,1 s</td><td>3 blocs</td><td>50</td><td>tant que tu tiens T</td></tr>
-          <tr><td>Pistolet à eau</td><td>0</td><td>8 blocs</td><td>30</td><td>pousse le monstre, gouttes qui retombent</td></tr>
+          <tr><th>Arme</th><th>Dégâts</th><th>Portée</th><th>Ce qu'elle a de spécial</th></tr>
+          <tr><td>Fusil à pompe</td><td>5 × 3</td><td>5 blocs</td><td>5 plombs en éventail</td></tr>
+          <tr><td>Fusil de sniper</td><td>25</td><td>25 blocs</td><td>laser rouge de visée, balle très rapide</td></tr>
+          <tr><td>Pistolet laser</td><td>6</td><td>15 blocs</td><td>touche tout de suite, pas de balle</td></tr>
+          <tr><td>Lance-flammes</td><td>1 par 0,1 s</td><td>3 blocs</td><td>tant que tu tiens T</td></tr>
+          <tr><td>Pistolet à eau</td><td>0</td><td>8 blocs</td><td>pousse le monstre, gouttes qui retombent</td></tr>
         </table>
         </div>
       </div>
@@ -1815,8 +1815,8 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <h3>💧 Les gouttes retombent : la gravité</h3>
       <p>Les gouttes du pistolet à eau ont une gravité : à chaque pas, <code>vy</code> augmente un peu, alors elles font une courbe, comme le héros quand il saute. Les douilles aussi tombent, et elles rebondissent : quand elles touchent un bloc, <code>vy</code> change de signe et perd 65 % de sa force.</p>
 
-      <h3>🔁 Balles infinies… mais un chargeur</h3>
-      <p>Chaque arme a un compteur <code>chargeurs[arme]</code>. À chaque tir, −1. À 0, le héros recharge pendant 1 à 2 secondes (la main va à la ceinture et revient avec un chargeur), puis le compteur revient au maximum. Les balles ne s'épuisent jamais, mais il faut choisir le bon moment pour tirer !</p>
+      <h3>🔁 Le rechargement, juste pour le style (corrigé à l'étape 23)</h3>
+      <p>D'abord, Claude avait mis un chargeur à chaque arme : à 0, il fallait s'arrêter pour recharger. Mais Maxance voulait des balles <strong>vraiment</strong> infinies ! Maintenant, il n'y a plus de chargeur. Les armes lentes (Magnum, sniper, pompe, gros pistolet) font leur animation de rechargement <strong>pendant</strong> l'attente normale entre deux tirs : la main va à la ceinture et revient, mais ça ne ralentit jamais le tir.</p>
 
       <h3>🔍 Missions d'exploration</h3>
       <ol>
@@ -2207,6 +2207,13 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <label for="idees-21"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-21" data-cle="idees-21" placeholder="Ex. : Une animation pour recharger le Magnum…"></textarea>
       </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>🐞 Correction · des balles vraiment infinies (étape 23) <span class="petit">· 29 septembre 2026</span></h4>
+        <p><strong>Ce que Maxance a dit :</strong> « Je t'avais dit que je voulais qu'il y ait des balles infinies. » Claude avait ajouté des chargeurs : les balles ne s'épuisaient pas, mais il fallait s'arrêter pour recharger.</p>
+        <p><strong>La correction :</strong> plus de chargeur. L'animation de rechargement se joue pendant l'attente normale des armes lentes, juste pour le style. Le bazooka garde ses roquettes comptées. (<code>demandes/23-balles-vraiment-infinies.md</code>, version 23)</p>
+        <p class="petit">💡 La leçon : « balles infinies » peut vouloir dire « on n'en manque jamais » ou « on ne s'arrête jamais ». Plus une règle est précise, moins le développeur se trompe. C'est pour ça que la fiche de demande a une partie « Comment ».</p>
+      </div>
+
       <div class="carte" style="margin-top: 14px">
         <h4>Étape 22 · cinq nouvelles armes à feu <span class="petit">· 29 septembre 2026</span></h4>
         <p><strong>Ce qui a été construit :</strong> la barre passe à 18 cases ; fusil à pompe (5 plombs en éventail), fusil de sniper (laser de visée), pistolet laser (lancer de rayon), lance-flammes (zone de 3 blocs) et pistolet à eau (gouttes qui retombent et poussent) ; chaque arme à feu a un chargeur, une animation de rechargement, un éclair et un bruit à elle ; des douilles qui rebondissent. Sous le capot : chargeur et rechargement dans l'état en direct, nouveaux messages dans le journal.</p>

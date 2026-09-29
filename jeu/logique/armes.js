@@ -31,7 +31,8 @@
 //   - le PISTOLET LASER touche tout de suite : pas de balle qui voyage, on cherche la 1re cible sur la ligne ;
 //   - le LANCE-FLAMMES brûle tout ce qui est à moins de 3 blocs devant, tant qu'on tient T ;
 //   - le PISTOLET À EAU tire des gouttes qui retombent (gravité) et POUSSENT les monstres sans les blesser.
-// Toutes les armes à feu ont un CHARGEUR (eq.chargeurs) : vide, le héros recharge avec une animation.
+// Étape 23 : balles INFINIES, sans chargeur (seul le bazooka en garde un, pour ses roquettes).
+// Les armes lentes font une animation de rechargement PENDANT l'attente entre deux tirs : juste pour le style.
 // Et les DOUILLES sautent de l'arme à chaque tir (monde.douilles) : elles tombent et rebondissent.
 
 window.Jeu = window.Jeu || {};
@@ -140,9 +141,8 @@ Jeu.Armes = (function () {
     }
     if (arme.douille) ejecterDouille(monde, arme.douille);
     if (nom === "magnum") reculer(monde, sens, arme);
-    eq.chargeurs[nom] -= 1;
-    Jeu.Evenements.emettre("tir", { arme: arme.nom, id, degats: arme.degats, attente: arme.attente, reste: eq.chargeurs[nom] });
-    if (eq.chargeurs[nom] <= 0) recharger(monde, nom);
+    Jeu.Evenements.emettre("tir", { arme: arme.nom, id, degats: arme.degats, attente: arme.attente, reste: null });
+    if (arme.recharge) recharger(monde, nom); // les armes lentes rechargent pendant l'attente, pour le style (étape 23)
   }
 
   // Le pistolet laser (étape 22) : on avance sur la ligne de tir, 4 px par 4 px, jusqu'à la première cible.
@@ -371,9 +371,9 @@ Jeu.Armes = (function () {
         eq.rechargement = Math.max(0, eq.rechargement - dt);
         if (eq.rechargement === 0) {
           const nom = eq.armeRecharge;
-          eq.chargeurs[nom] = C.armes[nom].chargeur;
-          if (nom === "magnum") for (let k = 0; k < 6; k++) ejecterDouille(monde, "#c9a227"); // le barillet se vide
-          Jeu.Evenements.emettre("recharge-finie", { arme: C.armes[nom].nom, balles: eq.chargeurs[nom], roquettes: nom === "bazooka" ? eq.roquettes : null });
+          if (C.armes[nom].chargeur) eq.chargeurs[nom] = C.armes[nom].chargeur;
+          if (nom === "magnum") ejecterDouille(monde, "#c9a227"); // l'ancienne douille tombe du barillet
+          Jeu.Evenements.emettre("recharge-finie", { arme: C.armes[nom].nom, roquettes: nom === "bazooka" ? eq.roquettes : null });
         }
       }
     }
@@ -388,11 +388,11 @@ Jeu.Armes = (function () {
     const aFeu = PISTOLETS.includes(objet) || objet === "bazooka";
     if (aFeu && (appui || (arme.rafale && E.estEnfoncee("frapper")))) {
       // Les armes à feu (mitrailleuse et lance-flammes : tant qu'on tient T)
-      if (eq.rechargement > 0) {
+      if (eq.rechargement > 0 && arme.chargeur) {
         if (appui) Jeu.Evenements.emettre("pas-pret", { objet: nomDe(objet) + " (en train de recharger)", attente: Math.round(eq.rechargement * 100) / 100 });
       } else if (objet === "bazooka" && eq.roquettes <= 0) {
         if (appui) Jeu.Evenements.emettre("plus-de-roquettes", { pierres: eq.pierres, besoin: C.armes.bazooka.pierresParRoquette });
-      } else if (eq.chargeurs[objet] <= 0) {
+      } else if (arme.chargeur && eq.chargeurs[objet] <= 0) {
         if (appui) recharger(monde, objet); // chargeur vide (on avait changé d'arme pendant le rechargement)
       } else if (eq.attente > 0) {
         if (appui && !arme.rafale) Jeu.Evenements.emettre("pas-pret", { objet: nomDe(objet), attente: Math.round(eq.attente * 100) / 100 });

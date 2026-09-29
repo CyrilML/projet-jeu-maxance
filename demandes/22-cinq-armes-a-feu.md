@@ -18,8 +18,8 @@ Plusieurs types d'armes à feu, et que ça ait du style.
 - ✍️ Style (4abc) : chaque arme a son dessin, sa couleur d'éclair et son bruit ; des douilles sautent
   à chaque tir ; une animation de rechargement pour chaque arme.
 - Choisi par Claude :
-  - balles infinies, mais chaque arme a un CHARGEUR : quand il est vide, le héros recharge
-    (la main va à la ceinture, prend un chargeur et le glisse dans l'arme). Tailles et durées dans config.js ;
+  - ~~balles infinies, mais chaque arme a un CHARGEUR~~ → corrigé à la demande n° 23 : plus de chargeur,
+    l'animation de rechargement se joue pendant l'attente des armes lentes ;
   - le Magnum est un revolver : pas de douille au tir, mais 6 douilles tombent quand on recharge ;
   - le pistolet à eau pousse au plus de 4 blocs de la place du monstre ;
   - si on change d'arme pendant un rechargement, il est annulé (T le relance).
@@ -29,6 +29,6 @@ Plusieurs types d'armes à feu, et que ça ait du style.
 - [ ] Le fusil à pompe tire 5 plombs ; le sniper a un laser rouge ; le laser fait un rayon bleu.
 - [ ] Le lance-flammes brûle le monstre ; le pistolet à eau le fait reculer sans le blesser.
 - [ ] Des douilles sautent et rebondissent.
-- [ ] Quand le chargeur est vide, le héros recharge (⟳ dans la case).
+- [ ] Les armes lentes font une animation de rechargement entre deux tirs (⟳), sans jamais bloquer.
 
 → Explications dans le carnet, rubrique « Étape 22 ».

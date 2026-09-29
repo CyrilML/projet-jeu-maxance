@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 22,
+  version: 23,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -138,26 +138,27 @@ Jeu.CONFIG = {
     epee: { nom: "épée", degats: 5, usure: 20, attente: 0 }, // l'épée de départ (étapes 11 et 12)
     epeeDoree: { nom: "épée dorée", degats: 7, usure: 40, attente: 0 }, // plus stylée, et elle s'use 2 fois moins vite
     hache: { nom: "petite hache", degats: 8, usure: 30, attente: 0.8, casseLesCaisses: true }, // forte mais lente
-    // Les armes à feu. Balles infinies, mais chaque arme a un CHARGEUR (étape 22) : quand il est vide,
-    // le héros recharge pendant `recharge` secondes (avec une animation). `eclair` : la couleur de la flamme
-    // du tir ; `douille` : la couleur des douilles qui sautent (null = pas de douille).
-    petitPistolet: { nom: "petit pistolet", degats: 2, attente: 0.25, chargeur: 8, recharge: 0.8, eclair: "#ffe27a", douille: "#c9a227" }, // tire vite
-    pistolet: { nom: "pistolet moyen", degats: 4, attente: 0.6, chargeur: 10, recharge: 1, eclair: "#ffe27a", douille: "#c9a227" },
-    grosPistolet: { nom: "gros pistolet", degats: 8, attente: 1.2, chargeur: 6, recharge: 1.2, eclair: "#ffb03a", douille: "#c9a227" }, // lent, mais fort
+    // Les armes à feu. Balles INFINIES, sans chargeur (étape 23 : demandé par Maxance).
+    // `recharge` : pour les armes lentes, une petite animation de rechargement (en s) qui se joue PENDANT
+    // l'attente entre deux tirs, juste pour le style : elle ne ralentit jamais le tir.
+    // `eclair` : la couleur de la flamme du tir ; `douille` : la couleur des douilles (null = pas de douille).
+    petitPistolet: { nom: "petit pistolet", degats: 2, attente: 0.25, eclair: "#ffe27a", douille: "#c9a227" }, // tire vite
+    pistolet: { nom: "pistolet moyen", degats: 4, attente: 0.6, eclair: "#ffe27a", douille: "#c9a227" },
+    grosPistolet: { nom: "gros pistolet", degats: 8, attente: 1.2, recharge: 1, eclair: "#ffb03a", douille: "#c9a227" }, // lent, mais fort
     // La mitrailleuse (étape 17) : tant qu'on tient T, 10 balles par seconde. Balles infinies depuis l'étape 21.
-    mitrailleuse: { nom: "mitrailleuse", degats: 1, attente: 0.1, chargeur: 50, recharge: 1.5, eclair: "#fff2a8", douille: "#c9a227", rafale: true },
+    mitrailleuse: { nom: "mitrailleuse", degats: 1, attente: 0.1, eclair: "#fff2a8", douille: "#c9a227", rafale: true },
     // Le Magnum (étape 19) : très fort mais lent. Il RECULE à chaque tir (recul en px) et l'écran tremble.
     // Un vrai revolver : pas de douille au tir, mais les 6 douilles tombent quand on recharge le barillet.
-    magnum: { nom: "Magnum", degats: 15, attente: 1, recul: 8, dureeRecul: 0.35, chargeur: 6, recharge: 1.5, eclair: "#ffffff", douille: null },
+    magnum: { nom: "Magnum", degats: 15, attente: 1, recul: 8, dureeRecul: 0.35, recharge: 0.9, eclair: "#ffffff", douille: null },
     // Le bazooka (étape 19) : une roquette qui explose. 5 au départ, +1 tous les 10 blocs de pierre minés.
     // Étape 21 : après chaque tir, le héros RECHARGE (il prend une roquette dans son dos).
     bazooka: { nom: "bazooka", degats: 20, attente: 1.2, roquettes: 5, pierresParRoquette: 10, chargeur: 1, recharge: 1.2, eclair: "#ffe27a", douille: null },
     // Étape 22 : 5 nouvelles armes à feu, chacune avec son style.
-    fusilPompe: { nom: "fusil à pompe", degats: 3, plombs: 5, dispersion: 0.22, portee: 5, attente: 0.9, chargeur: 5, recharge: 1.5, eclair: "#ff9f1a", douille: "#d9483b" },
-    sniper: { nom: "fusil de sniper", degats: 25, portee: 25, vitesse: 1500, attente: 2, chargeur: 4, recharge: 1.8, eclair: "#ffffff", douille: "#c9a227" },
-    laser: { nom: "pistolet laser", degats: 6, portee: 15, attente: 0.35, chargeur: 20, recharge: 1, eclair: "#4fd1ff", douille: null },
-    lanceFlammes: { nom: "lance-flammes", degats: 1, portee: 3, attente: 0.1, chargeur: 50, recharge: 1.5, eclair: "#ff9f1a", douille: null, rafale: true },
-    pistoletEau: { nom: "pistolet à eau", degats: 0, poussee: 14, pousseeMax: 4, vitesse: 450, gravite: 700, portee: 8, attente: 0.15, chargeur: 30, recharge: 1.2, eclair: "#9fdcff", douille: null },
+    fusilPompe: { nom: "fusil à pompe", degats: 3, plombs: 5, dispersion: 0.22, portee: 5, attente: 0.9, recharge: 0.8, eclair: "#ff9f1a", douille: "#d9483b" },
+    sniper: { nom: "fusil de sniper", degats: 25, portee: 25, vitesse: 1500, attente: 2, recharge: 1.6, eclair: "#ffffff", douille: "#c9a227" },
+    laser: { nom: "pistolet laser", degats: 6, portee: 15, attente: 0.35, eclair: "#4fd1ff", douille: null },
+    lanceFlammes: { nom: "lance-flammes", degats: 1, portee: 3, attente: 0.1, eclair: "#ff9f1a", douille: null, rafale: true },
+    pistoletEau: { nom: "pistolet à eau", degats: 0, poussee: 14, pousseeMax: 4, vitesse: 450, gravite: 700, portee: 8, attente: 0.15, eclair: "#9fdcff", douille: null },
   },
   // La roquette et son explosion (étape 19).
   roquettes: {

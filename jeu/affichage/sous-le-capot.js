@@ -69,8 +69,8 @@ Jeu.SousLeCapot = (function () {
       const au = d.arme === "mitrailleuse" ? "à la " : /^[aeéiouh]/i.test(d.arme) ? "à l'" : "au ";
       return bruit + " Tir " + au + d.arme + (d.id !== null && d.id !== undefined ? " (balle #" + d.id + ", " + d.degats + " dégât" + (d.degats > 1 ? "s" : "") + ")" : "") + (d.reste !== null && d.reste !== undefined ? " · encore " + d.reste + " dans le chargeur" : "");
     },
-    rechargement: (d) => "⟳ Chargeur vide : le héros recharge son " + d.arme + " (" + d.duree + " s)",
-    "recharge-finie": (d) => "🔄 " + d.arme + " rechargé" + (d.roquettes !== null ? " : le héros a pris une roquette dans son dos (il en reste " + d.roquettes + ")" : " : " + d.balles + " dans le chargeur"),
+    rechargement: (d) => "⟳ Le héros recharge son " + d.arme + " (" + d.duree + " s, pendant l'attente : balles infinies)",
+    "recharge-finie": (d) => "🔄 " + d.arme + " rechargé" + (d.roquettes !== null ? " : le héros a pris une roquette dans son dos (il en reste " + d.roquettes + ")" : ""),
     laser: (d) => "⚡ Piou ! Le laser touche le " + d.cible + " à " + d.blocs + " blocs : −" + d.degats + " PV → " + d.pv + " PV",
     "flammes-touchent": (d) => "🔥 Le lance-flammes brûle : " + d.touches + " (−" + d.degats + " PV)",
     arrose: (d) => "💦 Splash ! Le " + d.cible + " est arrosé et recule de " + Math.abs(d.recul) + " px (sans être blessé)",
@@ -281,7 +281,6 @@ Jeu.SousLeCapot = (function () {
       ["roquettes du bazooka", monde.equipement.roquettes + " (pierres minées : " + monde.equipement.pierres + " / " + Jeu.CONFIG.armes.bazooka.pierresParRoquette + ")"],
       ["roquettes en vol", monde.roquettes.length],
       ["rechargement", monde.equipement.rechargement > 0 ? monde.equipement.armeRecharge + " : " + monde.equipement.rechargement.toFixed(2) + " s" : "non"],
-      ["chargeur de l'arme en main", monde.equipement.chargeurs[Jeu.Armes.objetEnMain(monde)] !== undefined ? monde.equipement.chargeurs[Jeu.Armes.objetEnMain(monde)] + " / " + Jeu.CONFIG.armes[Jeu.Armes.objetEnMain(monde)].chargeur : "—"],
       ["douilles qui tombent", monde.douilles.length],
       ["recul du Magnum", monde.equipement.recul > 0 ? monde.equipement.recul.toFixed(2) + " s" : "non"],
       ["blocs cassés au clic", monde.inventaire.casses],

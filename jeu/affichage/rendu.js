@@ -769,7 +769,7 @@ Jeu.Rendu = (function () {
       else if (Jeu.Armes.PISTOLETS.includes(objet)) {
         // ∞ balles, mais un chargeur (étape 22) : on montre ce qu'il reste dedans, ou ⟳ pendant le rechargement
         const recharge = eq.rechargement > 0 && eq.armeRecharge === objet;
-        texte(recharge ? "⟳" : eq.chargeurs[objet] + "", x + taille - 4, haut + taille - 5, 12, recharge ? "#9fdcff" : "#ffe27a", "right");
+        texte(recharge ? "⟳" : "∞", x + taille - 4, haut + taille - 5, recharge ? 12 : 14, recharge ? "#9fdcff" : "#ffe27a", "right");
       }
       else if (objet === "armure" && !eq.armureFabriquee) texte(C.armure.fers + "⛓️", x + taille - 4, haut + taille - 5, 12, "#fff", "right");
       else if (max) {
@@ -792,9 +792,9 @@ Jeu.Rendu = (function () {
     if (objet === "bazooka") infos += " · " + C.armes.bazooka.degats + " dégâts + explosion 3 × 3 · " + eq.roquettes + " roquettes · pierres minées " + eq.pierres + " / " + C.armes.bazooka.pierresParRoquette;
     else if (objet === "magnum") infos += " · " + arme.degats + " dégâts · attention au recul ! · attente " + arme.attente + " s";
     else if (objet === "mitrailleuse") infos += " · " + arme.degats + " dégât par balle · balles infinies · garde T appuyée";
-    else if (objet === "pistoletEau") infos += " · ne blesse pas : pousse les monstres · chargeur " + eq.chargeurs[objet] + "/" + arme.chargeur;
-    else if (objet === "lanceFlammes") infos += " · brûle à " + arme.portee + " blocs · garde T appuyée · réservoir " + eq.chargeurs[objet] + "/" + arme.chargeur;
-    else if (arme && arme.chargeur) infos += " · " + (arme.plombs ? arme.plombs + " plombs × " : "") + arme.degats + " dégâts · balles infinies · chargeur " + eq.chargeurs[objet] + "/" + arme.chargeur + (arme.attente ? " · attente " + arme.attente + " s" : "");
+    else if (objet === "pistoletEau") infos += " · ne blesse pas : pousse les monstres · eau infinie";
+    else if (objet === "lanceFlammes") infos += " · brûle à " + arme.portee + " blocs · garde T appuyée · flammes infinies";
+    else if (Jeu.Armes.PISTOLETS.includes(objet)) infos += " · " + (arme.plombs ? arme.plombs + " plombs × " : "") + arme.degats + " dégâts · balles infinies" + (arme.attente ? " · attente " + arme.attente + " s" : "");
     else if (arme) infos += " · " + arme.degats + " dégâts" + (arme.usure ? " · " + eq[objet] + "/" + arme.usure + " coups" : "") + (arme.attente ? " · attente " + arme.attente + " s" : "");
     if (eq.rechargement > 0 && eq.armeRecharge === objet) infos += " · ⟳ recharge…";
     if (Jeu.Armes.OUTILS.includes(objet)) infos += " · 🖱️ clic : casser " + C.outils[objet].facile.join(", ") + (C.outils[objet].casseTout ? " (le reste en " + C.outils.clicsDifficiles + " clics)" : "");
