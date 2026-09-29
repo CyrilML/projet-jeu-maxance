@@ -49,6 +49,7 @@
   });
   // La sauvegarde est lue APRÈS le branchement du panneau, pour que le journal voie la lecture.
   Jeu.Sauvegarde.initialiser();
+  Jeu.Orchestre.initialiser(); // la musique et les bruits (étape 16)
 
   // Le formulaire du pseudo, affiché par-dessus l'écran pendant l'accueil (étape 6).
   const formulaire = document.getElementById("accueil");
@@ -87,6 +88,8 @@
     const E = Jeu.Entrees;
     if (E.consommer("rayonsX")) options.rayonsX = !options.rayonsX;
     if (E.consommer("ralenti")) options.ralenti = !options.ralenti;
+    if (E.consommer("musique")) Jeu.Orchestre.basculer("musique"); // J (étape 16)
+    if (E.consommer("bruits")) Jeu.Orchestre.basculer("bruits"); // B (étape 16)
     if (E.consommer("pause") && monde.phase === "jeu") options.pause = !options.pause;
     // En pause, un appui sur P (poser un bloc) est oublié : sinon le bloc apparaîtrait à la reprise.
     if (options.pause) for (const action of ["poserBloc", "poserIci", "frapper", "boirePotion", "piocher", "reparer", "cuire", "manger"]) E.consommer(action);
@@ -122,6 +125,7 @@
     }
 
     Jeu.Rendu.dessiner(monde, options);
+    Jeu.Orchestre.mettreAJour(monde, options, ecoule); // la musique et les bruits de pas
     compteurImages++;
 
     if (maintenant - debutMesure >= 1000) {

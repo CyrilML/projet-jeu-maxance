@@ -139,6 +139,7 @@
       <a href="#etape13">Étape 13</a>
       <a href="#etape14">Étape 14</a>
       <a href="#etape15">Étape 15</a>
+      <a href="#etape16">Étape 16</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -1484,6 +1485,71 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Avec l'armure, combien de coups de monstre pour perdre 20 PV ?</summary><p>3 coups arrêtés par le bouclier, puis 20 coups à 1 PV : 23 coups. Sans rien : 7 coups (3 × 7 = 21).</p></details>
     </section>
 
+    <section id="etape16">
+      <h2>🎵 Étape 16 : musique et bruitages <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Le jeu n'est plus muet ! Une petite musique rétro, des pas qui font « chhh » sur l'herbe et « toc » sur le bois, un « boom, bring » au saut… et aucun fichier de son : tout est fabriqué avec des nombres.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/16-musique-et-bruitages.md</code>.</p>
+          <p><strong>Règles :</strong> musique rétro joyeuse (1a). Pas sur l'herbe, le bois et la pierre (2b). « Boom » au saut, « bring » à l'atterrissage (3a). Tir, épée, monstre touché, lave (4abcd). <kbd>J</kbd> pour la musique, <kbd>B</kbd> pour les bruits (5b).</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Une musique démarre avec la partie.</li>
+            <li>☐ Cours sur l'herbe, puis sur une planche : deux bruits différents.</li>
+            <li>☐ Saute : « boom »… puis « bring ».</li>
+            <li>☐ Tire, frappe, touche un monstre, tombe dans la lave.</li>
+            <li>☐ <kbd>J</kbd> coupe la musique, <kbd>B</kbd> coupe les bruits.</li>
+            <li>Vérifie « version 17 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>〰️ Un son, c'est de l'air qui vibre</h3>
+      <p>Le haut-parleur pousse l'air très vite, en avant, en arrière… Le nombre d'allers-retours par seconde, c'est la <strong>fréquence</strong>, en hertz (Hz). 440 Hz, c'est la note La. Plus la fréquence est grande, plus le son est aigu. Et la <strong>forme</strong> de la vibration change le « goût » du son :</p>
+      <div class="carte">
+        <svg viewBox="0 0 600 120" role="img" aria-label="Trois formes d'onde : sinus, triangle et carré" style="width:100%;max-width:600px;display:block;margin:0 auto">
+          <g fill="none" stroke="currentColor" stroke-width="3">
+            <path d="M10 60 Q 35 10 60 60 T 110 60 T 160 60"/>
+            <path d="M220 60 L 245 15 L 295 105 L 345 15 L 370 60"/>
+            <path d="M430 60 L 430 15 L 470 15 L 470 105 L 510 105 L 510 15 L 550 15 L 550 60"/>
+          </g>
+          <g fill="currentColor" font-size="15" text-anchor="middle">
+            <text x="85" y="118">sine : doux (le « boom »)</text>
+            <text x="295" y="118">triangle : flûte (la basse)</text>
+            <text x="490" y="118">carré : vieux jeu vidéo</text>
+          </g>
+        </svg>
+        <p class="petit">Et le <strong>bruit</strong>, ce sont des vibrations au hasard : « chhh ». En gardant seulement les graves ou les aigus (un <em>filtre</em>), on obtient l'herbe, le tir ou la lave qui grésille.</p>
+      </div>
+
+      <h3>📈 L'enveloppe : « toc » ou « bong » ?</h3>
+      <p>Chaque son a une <strong>enveloppe</strong> : le volume monte très vite (l'attaque), puis redescend jusqu'au silence. Si ça redescend en 0,04 s, ça fait « toc » (un pas). En 0,8 s, ça fait « pschhh » (la lave). Et si la fréquence glisse de 160 Hz à 55 Hz pendant le son, ça fait « boom » !</p>
+
+      <h3>🎼 La musique : une partition et un séquenceur</h3>
+      <p>La musique est une <strong>liste de notes</strong> (8 mesures de 4 temps) : quelle note, à quel temps, pendant combien de temps. Chaque note a un numéro (60 = Do, 69 = La) et on calcule sa fréquence : <strong>440 × 2<sup>(numéro − 69) ÷ 12</sup></strong>. Monter de 12 numéros, c'est monter d'une octave : la fréquence double. Toutes les 0,1 s, le <strong>séquenceur</strong> prépare les notes des 0,3 secondes suivantes, pour que la musique ne boite jamais.</p>
+
+      <h3>👂 Qui décide des sons ?</h3>
+      <p>L'<strong>orchestre</strong> (<code>affichage/sons.js</code>) écoute les événements du jeu, comme le journal : « saut » → boom, « tir » → pan… Pour les pas, il regarde le bloc sous les pieds du héros (le même nombre que dans « La carte en mémoire ») et choisit herbe, bois ou pierre.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Dans l'état en direct, regarde « sous les pieds » et « dernier bruit » pendant que tu cours.</li>
+        <li>Regarde « musique » : sur quelle mesure est-on ? Combien y en a-t-il ?</li>
+        <li>Coupe la musique (<kbd>J</kbd>) : que dit le journal ?</li>
+        <li>Cours sur tes propres briques : quel bruit font-elles ?</li>
+        <li>Dans <code>config.js</code>, trouve le tempo et la fréquence des pas.</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>La note n° 81 : quelle fréquence ?</summary><p>81 = 69 + 12 : une octave au-dessus du La, donc 440 × 2 = 880 Hz.</p></details>
+      <details class="question"><summary>À 132 temps par minute, combien dure un tour de musique (32 temps) ?</summary><p>Un temps = 60 ÷ 132 ≈ 0,45 s, donc 32 × 0,45 ≈ 14,5 secondes.</p></details>
+      <details class="question"><summary>Pourquoi le son ne marche-t-il qu'après avoir appuyé sur une touche ?</summary><p>Les navigateurs interdisent aux pages de faire du bruit toutes seules : il faut d'abord un geste du joueur (une touche ou un clic).</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -1580,15 +1646,15 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>Une barre d'inventaire (touches 1 à 9), 3 pistolets aux balles infinies, une hache qui casse les caisses, une épée dorée et une armure en fer (5 fers).</p>
           <p class="apprend"><b>Tu apprends :</b> un catalogue de fiches au lieu d'une règle par arme, un compte à rebours, la vie d'un projectile, une soustraction pour se protéger. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">16</div>
-          <h4>Sons et musique <span class="etiquette">⏭️ prochaine étape</span></h4>
-          <p>Une petite musique, un bruit d'herbe ou de bois sous les pieds, un « boom, bring » quand on saute.</p>
-          <p class="apprend"><b>Tu apprends :</b> fabriquer un son avec des nombres (fréquence, durée, volume), déclencher un son avec un événement. <b>Durée :</b> 1 séance.</p>
+          <h4>Musique et bruitages <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Une musique rétro, des pas sur l'herbe, le bois et la pierre, « boom, bring » au saut, tir, épée, monstre et lave. J et B pour couper.</p>
+          <p class="apprend"><b>Tu apprends :</b> fréquence, forme d'onde et enveloppe, une partition et un séquenceur, déclencher un son avec un événement. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte">
+        <div class="carte prochain">
           <div class="num">17</div>
-          <h4>Sauvegarder le monde</h4>
+          <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
@@ -1770,6 +1836,15 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-15" data-cle="appris-15" placeholder="Ex. : J'ai appris qu'une arme, c'est juste une fiche avec des nombres…"></textarea>
         <label for="idees-15"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-15" data-cle="idees-15" placeholder="Ex. : Un arc avec des flèches qui tombent…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 16 · musique et bruitages <span class="petit">· 29 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> un synthétiseur (<code>moteur/son.js</code>) qui fabrique les sons avec des nombres ; un orchestre (<code>affichage/sons.js</code>) qui écoute les événements et regarde le bloc sous les pieds ; une musique rétro de 8 mesures ; des bruits pour les pas (herbe, bois, pierre), le saut, le tir, l'épée, le monstre touché et la lave ; <kbd>J</kbd> et <kbd>B</kbd> pour couper. Sous le capot : l'état du son en direct et le journal des réglages. Et la touche <kbd>M</kbd> (manger) marche maintenant aussi sur un clavier français.</p>
+        <p class="petit">✍️ Réponses de Maxance : 1a 2b 3a 4abcd 5b.</p>
+        <label for="appris-16"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-16" data-cle="appris-16" placeholder="Ex. : J'ai appris qu'un son aigu vibre plus vite qu'un son grave…"></textarea>
+        <label for="idees-16"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-16" data-cle="idees-16" placeholder="Ex. : Une musique différente dans les grottes…"></textarea>
       </div>
     </section>
   </main>

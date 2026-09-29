@@ -556,7 +556,8 @@ Jeu.Rendu = (function () {
     texte("Record " + Jeu.Sauvegarde.donnees.record, 20, 66, 18, "#ffe27a");
     for (let v = 0; v < C.vies; v++) coeur(20 + v * 30, 80, v < monde.vies);
     texte("🚩 " + monde.dernierDrapeau + "   Chutes " + monde.chutes + "   Lave " + monde.brulures + "   Pièges " + monde.piegesTouches, 20, 124, 16, "#fff");
-    texte("X : rayons X   Échap : pause", L - 20, 32, 15, "#fff", "right");
+    const son = Jeu.Orchestre.resume();
+    texte("X : rayons X   Échap : pause   " + (son.musique ? "🎵" : "🔇") + " J   " + (son.bruits ? "🔊" : "🔇") + " B", L - 20, 32, 15, "#fff", "right");
     texte("👤 " + monde.pseudo, L - 20, 56, 18, "#ffe27a", "right");
     const reste = monde.drapeaux.length ? C.arrivee.bloc - monde.score : 0;
     if (reste > 0) texte("🏁 encore " + reste + " blocs", L - 20, 80, 15, "#fff", "right");
@@ -709,7 +710,7 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 15 : pistolets, hache, épée dorée et armure", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 16 : musique et bruitages", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au bloc " + C.arrivee.bloc + " le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
@@ -718,6 +719,7 @@ Jeu.Rendu = (function () {
     texte("📦 Caisses et 🗼 tours en pierre : sans danger, monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
     texte("🎒 " + C.inventaire.blocs + " blocs (sac rempli à chaque 🚩) · 🖱️ clic : poser · saute + P : sous tes pieds", L / 2, 470, 17, "#cfe0ff", "center");
     texte("1 à 9 : choisir l'objet · T : l'utiliser (frapper, tirer…) · H : potion · F : pioche · R : réparer · K : cuire · M : manger", L / 2, 496, 15, "#cfe0ff", "center");
+    texte("🎵 J : couper la musique · 🔊 B : couper les bruits", L / 2, 140, 14, "#ffe27a", "center");
     const premier = Jeu.Sauvegarde.donnees.classement[0];
     if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 522, 16, "#ffe27a", "center");
     texte("version " + C.version, L - 12, H - 12, 14, "#cfe0ff", "right");

@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 16,
+  version: 17,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -146,6 +146,14 @@ Jeu.CONFIG = {
     vitesse: 700, // px/s
     portee: 10, // une balle disparaît après 10 blocs
   },
+  // Le son (étape 16) : tout est fabriqué par le synthétiseur (moteur/son.js), aucun fichier.
+  sons: {
+    volume: 0.6, // volume général (0 = muet, 1 = le plus fort)
+    tempo: 132, // vitesse de la musique, en temps par minute
+    volumeMusique: 0.5, // la musique est plus douce que les bruits (multiplie les volumes de la partition)
+    intervallePas: 0.28, // un bruit de pas toutes les 0,28 s quand le héros court
+  },
+
   // L'armure en fer (étape 15) : on la fabrique avec 5 fers (touche 9, puis T).
   armure: {
     fers: 5, // prix de fabrication

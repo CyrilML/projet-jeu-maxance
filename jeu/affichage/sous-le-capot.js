@@ -61,6 +61,7 @@ Jeu.SousLeCapot = (function () {
     reparation: (d) => "🔧 Réparation avec 1 fer : " + d.objet + " remis(e) à neuf (il reste " + d.fer + " fer)",
     "reparation-refusee": (d) => "🔧 Pas de réparation : " + d.raison,
     "epee-cassee": (d) => "💔 Ton arme est cassée (" + ((d && d.arme) || "épée") + ") ! Elle ne fait plus de dégâts : casse du fer (F) et répare-la (R)",
+    "reglage-son": (d) => (d.quoi === "musique" ? "🎵 Musique " + (d.actif ? "remise" : "coupée") : "🔊 Bruits " + (d.actif ? "remis" : "coupés")) + (d.quoi === "musique" ? " (touche J)" : " (touche B)"),
     "objet-en-main": (d) => "🎒 Touche " + d.touche + " : tu tiens maintenant " + d.objet,
     "pas-pret": (d) => "⏳ " + d.objet + " pas encore prêt(e) : attends encore " + d.attente + " s",
     tir: (d) => "🔫 Pan ! Tir au " + d.arme + " (balle #" + d.id + ", " + d.degats + " dégâts) · prochain tir dans " + d.attente + " s",
@@ -209,6 +210,7 @@ Jeu.SousLeCapot = (function () {
     const j = monde.joueur;
     const ici = Jeu.Joueur.caseDuJoueur(j);
     const sousLesPieds = Jeu.Terrain.lireCase(monde.terrain, ici.colonne, ici.ligne + 1);
+    const son = Jeu.Orchestre.resume();
     const lignes = [
       ["Boucle", ""],
       ["images par seconde", mesures.ips],
@@ -234,6 +236,13 @@ Jeu.SousLeCapot = (function () {
       ["potions", monde.equipement.potions],
       ["épée (coups restants)", monde.equipement.epee > 0 ? monde.equipement.epee + " / " + Jeu.CONFIG.armes.epee.usure : "cassée"],
       ["fer dans le sac", monde.equipement.fer],
+      ["Son (étape 16)", ""],
+      ["synthétiseur", son.allume ? "allumé" : "éteint (appuie sur une touche : le navigateur attend un geste)"],
+      ["musique (J)", !son.musique ? "coupée" : son.joue ? "▶ mesure " + son.mesure + " / " + son.mesures + " · tempo " + Jeu.CONFIG.sons.tempo : "en attente (seulement pendant la partie)"],
+      ["bruits (B)", son.bruits ? "oui" : "coupés"],
+      ["sous les pieds", son.pieds],
+      ["dernier bruit", son.dernier],
+      ["sons joués (notes comprises)", son.total],
       ["Armes (étape 15)", ""],
       ["objet en main", (monde.equipement.enMain + 1) + " : " + Jeu.Armes.nomDe(Jeu.Armes.objetEnMain(monde))],
       ["attente avant le prochain coup", monde.equipement.attente.toFixed(2) + " s"],

@@ -28,7 +28,9 @@ Jeu.Entrees = (function () {
     piocher: ["KeyF"], // un coup de pioche (étape 12)
     reparer: ["KeyR"], // réparer avec un fer (étape 12)
     cuire: ["KeyK"], // cuire de la viande (étape 13)
-    manger: ["KeyM"], // manger (étape 13)
+    manger: ["KeyM", "Semicolon"], // manger (étape 13) ; Semicolon = la touche M d'un clavier français
+    musique: ["KeyJ"], // couper / remettre la musique (étape 16)
+    bruits: ["KeyB"], // couper / remettre les bruits (étape 16)
     // Les 9 cases de la barre d'inventaire (étape 15) : touches 1 à 9 (au-dessus des lettres ou pavé numérique).
     choisir1: ["Digit1", "Numpad1"],
     choisir2: ["Digit2", "Numpad2"],
