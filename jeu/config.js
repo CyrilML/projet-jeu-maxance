@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 17,
+  version: 18,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -141,6 +141,19 @@ Jeu.CONFIG = {
     petitPistolet: { nom: "petit pistolet", degats: 2, attente: 0.25 }, // tire vite
     pistolet: { nom: "pistolet moyen", degats: 4, attente: 0.6 },
     grosPistolet: { nom: "gros pistolet", degats: 8, attente: 1.2 }, // tire lentement, mais fort
+    // La mitrailleuse (étape 17) : tant qu'on tient T, 10 balles par seconde. Mais les balles sont COMPTÉES.
+    mitrailleuse: { nom: "mitrailleuse", degats: 1, attente: 0.1, balles: 50, chanceButin: 0.5, butinMin: 10, butinMax: 25 },
+  },
+
+  // Les outils pour casser les blocs au clic de souris (étape 17). Le bon outil casse en 1 clic ;
+  // la pioche casse tout ce qui est solide, mais 3 clics pour ce qui n'est pas de la pierre.
+  // Le fer et le charbon gardent leurs coups de pioche (3 et 2), car ils donnent un trésor.
+  // Un bloc cassé (sauf les minerais) va dans le sac comme une brique.
+  outils: {
+    pelle: { nom: "pelle", facile: ["herbe", "terre"] },
+    hache: { nom: "petite hache", facile: ["bois", "planche"] },
+    pioche: { nom: "pioche", facile: ["pierre", "roche", "brique"], casseTout: true },
+    clicsDifficiles: 3, // la pioche sur la terre, le bois…
   },
   balles: {
     vitesse: 700, // px/s

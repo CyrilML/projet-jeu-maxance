@@ -261,14 +261,18 @@ Jeu.Rendu = (function () {
       }
       if (eq.hache <= 0) r("#1d1d3a", 33, 9, 3, 3); // une entaille : elle est cassée
     } else if (Jeu.Armes.PISTOLETS.includes(objet)) {
-      const long = objet === "petitPistolet" ? 10 : objet === "pistolet" ? 15 : 21;
-      const epais = objet === "grosPistolet" ? 7 : 5;
+      const long = objet === "petitPistolet" ? 10 : objet === "pistolet" ? 15 : objet === "mitrailleuse" ? 26 : 21;
+      const epais = objet === "grosPistolet" || objet === "mitrailleuse" ? 7 : 5;
+      if (objet === "mitrailleuse") r("#c9a227", 33, 27, 5, 8); // le chargeur
       r("#6b4423", 27, 24, 5, 8); // poignée
       r(objet === "grosPistolet" ? "#3b4252" : "#5b6472", 27, 20, long, epais); // canon, tendu vers l'avant
       if (eq.tir > 0) {
         r("#ffe27a", 27 + long, 18, 8, epais + 4); // l'éclair du tir
         r("#fff", 29 + long, 20, 4, epais);
       }
+    } else if (objet === "pelle") {
+      r("#8a5a2b", 27, 8, 4, 22);
+      r("#9aa3ad", 25, 28, 8, 8);
     } else if (objet === "pioche") {
       r("#8a5a2b", 27, 6, 4, 26);
       r("#6d6a66", 21, 4, 16, 4);
@@ -570,7 +574,7 @@ Jeu.Rendu = (function () {
     ctx.fillStyle = "#e8d9c4";
     ctx.fillRect(20, 144, 16, 1);
     ctx.fillRect(27, 138, 1, 6);
-    texte("🎒 " + inv.blocs + " / " + C.inventaire.blocs + "   clic : poser · F : reprendre · saute + P : sous tes pieds", 48, 152, 15, "#fff");
+    texte("🎒 " + inv.blocs + "   8 + clic : poser · 0/3/7 + clic : casser · saute + P : sous tes pieds", 48, 152, 15, "#fff");
     // Les PV, le bouclier et la potion (étape 11)
     const eq = monde.equipement;
     ctx.fillStyle = "rgba(0,0,0,0.5)";
@@ -619,14 +623,15 @@ Jeu.Rendu = (function () {
       ctx.strokeStyle = choisi ? "#ffe27a" : "rgba(255,255,255,0.35)";
       ctx.lineWidth = choisi ? 3 : 1;
       ctx.strokeRect(x + 0.5, haut + 0.5, taille - 1, taille - 1);
-      const inactif = (objet === "armure" && eq.armure <= 0) || (eq[objet] !== undefined && objet !== "briques" && eq[objet] <= 0);
+      const inactif = (objet === "mitrailleuse" && eq.munitions <= 0) || (objet === "armure" && eq.armure <= 0) || (eq[objet] !== undefined && objet !== "briques" && eq[objet] <= 0);
       ctx.globalAlpha = inactif ? 0.45 : 1;
       icone(objet, x + taille / 2, haut + taille / 2 - 2);
       ctx.globalAlpha = 1;
-      texte(String(i + 1), x + 4, haut + 13, 12, "#fff");
+      texte(Jeu.Armes.TOUCHES[i], x + 4, haut + 13, 12, "#fff");
       // En dessous : l'usure (armes, pioche, armure), le nombre (briques) ou ∞ (pistolets)
       const max = objet === "pioche" ? C.pioche.usure : objet === "armure" ? C.armure.usure : C.armes[objet] && C.armes[objet].usure;
       if (objet === "briques") texte(String(monde.inventaire.blocs), x + taille - 4, haut + taille - 5, 13, "#fff", "right");
+      else if (objet === "mitrailleuse") texte(String(eq.munitions), x + taille - 4, haut + taille - 5, 13, eq.munitions > 0 ? "#ffe27a" : "#ff9b9b", "right");
       else if (Jeu.Armes.PISTOLETS.includes(objet)) texte("∞", x + taille - 5, haut + taille - 5, 14, "#ffe27a", "right");
       else if (objet === "armure" && !eq.armureFabriquee) texte(C.armure.fers + "⛓️", x + taille - 4, haut + taille - 5, 12, "#fff", "right");
       else if (max) {
@@ -641,9 +646,12 @@ Jeu.Rendu = (function () {
     const objet = Jeu.Armes.objetEnMain(monde);
     const arme = C.armes[objet];
     let infos = Jeu.Armes.nomDe(objet);
-    if (arme) infos += " · " + arme.degats + " dégâts" + (arme.usure ? " · " + eq[objet] + "/" + arme.usure + " coups" : " · balles infinies") + (arme.attente ? " · attente " + arme.attente + " s" : "");
+    if (objet === "mitrailleuse") infos += " · " + arme.degats + " dégât par balle · " + eq.munitions + " balles · garde T appuyée";
+    else if (arme) infos += " · " + arme.degats + " dégâts" + (arme.usure ? " · " + eq[objet] + "/" + arme.usure + " coups" : " · balles infinies") + (arme.attente ? " · attente " + arme.attente + " s" : "");
+    if (Jeu.Armes.OUTILS.includes(objet)) infos += " · 🖱️ clic : casser " + C.outils[objet].facile.join(", ") + (C.outils[objet].casseTout ? " (le reste en " + C.outils.clicsDifficiles + " clics)" : "");
+    if (objet === "briques") infos += " · 🖱️ clic : poser";
     if (eq.attente > 0 && arme) infos += " · ⏳";
-    texte(infos + "   (T : utiliser)", L / 2, haut - 8, 15, "#ffe27a", "center");
+    texte(infos + (objet === "pelle" || objet === "briques" ? "" : "   (T : utiliser)"), L / 2, haut - 8, 15, "#ffe27a", "center");
   }
 
   // Les petits dessins des objets (étape 15), centrés sur (cx, cy). Chaque arme est faite de rectangles.
@@ -667,13 +675,24 @@ Jeu.Rendu = (function () {
       r("#8a5a2b", -2, -12, 4, 24); // manche
       r("#9aa3ad", 2, -12, 9, 11); // lame
       r("#dfe6ee", 9, -12, 3, 11);
-    } else if (Jeu.Armes.PISTOLETS.includes(objet)) {
+    } else if (Jeu.Armes.PISTOLETS.includes(objet) && objet !== "mitrailleuse") {
       const taille = objet === "petitPistolet" ? 0.75 : objet === "pistolet" ? 1 : 1.3;
       const corps = objet === "grosPistolet" ? "#3b4252" : objet === "pistolet" ? "#5b6472" : "#7c8796";
       r(corps, -12 * taille, -5 * taille, 22 * taille, 7 * taille); // canon
       r("#6b4423", -12 * taille, 2 * taille, 7 * taille, 10 * taille); // poignée
       r("#1d1d3a", 8 * taille, -4 * taille, 3 * taille, 3 * taille); // bout du canon
       if (objet === "grosPistolet") r("#e0303a", -4, -8, 8, 3);
+    } else if (objet === "pelle") {
+      r("#8a5a2b", -2, -13, 4, 17); // manche
+      r("#8a5a2b", -5, -14, 10, 3); // poignée
+      r("#9aa3ad", -6, 3, 12, 8); // la lame en fer
+      r("#9aa3ad", -4, 11, 8, 3);
+    } else if (objet === "mitrailleuse") {
+      r("#2f3440", -14, -5, 26, 7); // canon long
+      r("#1d1d3a", 12, -4, 3, 5);
+      r("#2f3440", -8, 2, 6, 10); // poignée
+      r("#c9a227", 0, 2, 6, 8); // le chargeur de balles
+      r("#6b4423", -16, -3, 4, 8); // la crosse
     } else if (objet === "pioche") {
       r("#8a5a2b", -2, -10, 4, 22);
       r("#6d6a66", -12, -13, 24, 5);
@@ -710,15 +729,15 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 16 : musique et bruitages", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 17 : pelle, casser les blocs et mitrailleuse", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au bloc " + C.arrivee.bloc + " le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
     texte("❤️ " + C.vies + " vies · 🕳️ Trou : tu repars devant le trou", L / 2, 386, 17, "#cfe0ff", "center");
     texte("🔥 Lave et 💀 murets à pics (un tous les 50 blocs) : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
     texte("📦 Caisses et 🗼 tours en pierre : sans danger, monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
-    texte("🎒 " + C.inventaire.blocs + " blocs (sac rempli à chaque 🚩) · 🖱️ clic : poser · saute + P : sous tes pieds", L / 2, 470, 17, "#cfe0ff", "center");
-    texte("1 à 9 : choisir l'objet · T : l'utiliser (frapper, tirer…) · H : potion · F : pioche · R : réparer · K : cuire · M : manger", L / 2, 496, 15, "#cfe0ff", "center");
+    texte("🎒 " + C.inventaire.blocs + " blocs (sac rempli à chaque 🚩) · un bloc cassé va dans le sac · saute + P : sous tes pieds", L / 2, 470, 16, "#cfe0ff", "center");
+    texte("1…9, 0, ° : choisir l'objet · T : l'utiliser · 🖱️ clic : casser (outil) ou poser (briques) · H · F · R · K · M", L / 2, 496, 15, "#cfe0ff", "center");
     texte("🎵 J : couper la musique · 🔊 B : couper les bruits", L / 2, 140, 14, "#ffe27a", "center");
     const premier = Jeu.Sauvegarde.donnees.classement[0];
     if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 522, 16, "#ffe27a", "center");
@@ -1049,17 +1068,34 @@ Jeu.Rendu = (function () {
   // cadre rouge = interdit (trop loin, case pleine, monstre trop proche…). Dessinée dans le monde.
   function caseDeConstruction(monde) {
     const c = Jeu.Inventaire.caseSousLaSouris(monde);
+    // Les fissures du bloc en train d'être cassé (étape 17) : une fissure par clic.
+    const k = monde.cassage;
+    if (k) {
+      ctx.strokeStyle = "#1d1d3a";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      const fissures = [[[8, 6], [18, 18], [14, 30]], [[32, 8], [22, 20], [30, 34]], [[6, 22], [20, 20], [34, 24]]];
+      fissures.slice(0, k.clics).forEach((f) => {
+        ctx.moveTo(k.colonne * B + f[0][0], k.ligne * B + f[0][1]);
+        for (const [px, py] of f.slice(1)) ctx.lineTo(k.colonne * B + px, k.ligne * B + py);
+      });
+      ctx.stroke();
+    }
     if (!c) return;
-    const ok = !Jeu.Inventaire.raisonDuRefusIci(monde, c.colonne, c.ligne);
+    const objet = Jeu.Armes.objetEnMain(monde);
+    const outil = Jeu.Armes.OUTILS.includes(objet);
+    if (!outil && objet !== "briques") return; // avec une arme en main, le clic ne fait rien
+    const ok = outil ? !Jeu.Outils.raisonDuRefus(monde, c.colonne, c.ligne, objet) : !Jeu.Inventaire.raisonDuRefusIci(monde, c.colonne, c.ligne);
     const x = c.colonne * B;
     const y = c.ligne * B;
-    if (ok) {
+    if (ok && !outil) {
       ctx.fillStyle = "rgba(181,82,59,0.35)"; // une brique « fantôme »
       ctx.fillRect(x, y, B, B);
     }
-    ctx.strokeStyle = ok ? "#7dff9b" : "rgba(255,90,90,0.9)";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([6, 4]);
+    // Vert = on peut poser ; orange = on peut casser ; rouge = interdit.
+    ctx.strokeStyle = !ok ? "rgba(255,90,90,0.9)" : outil ? "#ffb03a" : "#7dff9b";
+    ctx.lineWidth = outil && ok ? 3 : 2;
+    ctx.setLineDash(outil ? [] : [6, 4]);
     ctx.strokeRect(x + 1, y + 1, B - 2, B - 2);
     ctx.setLineDash([]);
   }

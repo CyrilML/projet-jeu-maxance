@@ -140,6 +140,8 @@
       <a href="#etape14">Étape 14</a>
       <a href="#etape15">Étape 15</a>
       <a href="#etape16">Étape 16</a>
+      <a href="#etape17">Étape 17</a>
+      <a href="#etape18">Étape 18</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -1550,6 +1552,99 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Pourquoi le son ne marche-t-il qu'après avoir appuyé sur une touche ?</summary><p>Les navigateurs interdisent aux pages de faire du bruit toutes seules : il faut d'abord un geste du joueur (une touche ou un clic).</p></details>
     </section>
 
+    <section id="etape17">
+      <h2>⛏️ Étape 17 : pelle, casser les blocs et mitrailleuse <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">On creuse ! La pelle, la hache et la pioche cassent les blocs d'un clic de souris, et chaque bloc cassé va dans le sac. Et une mitrailleuse, mais avec des balles comptées.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/17-pelle-casser-mitrailleuse.md</code>.</p>
+          <p><strong>Règles :</strong> la pioche casse tout ce qui est solide, sauf le fond du monde (1a). Le bon outil casse en 1 clic, la pioche en 3 clics sinon (2a). Bloc cassé → sac (3b). Outil = casser, briques = poser (4a). 11 cases : <kbd>0</kbd> pelle, <kbd>°</kbd> mitrailleuse (5a). Rafale de 10 balles/s, 1 PV (6a). Butin : 1 chance sur 2, de 10 à 25 balles (7a).</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ <kbd>0</kbd> + clic sur l'herbe : cassée, 🎒 +1.</li>
+            <li>☐ <kbd>3</kbd> + clic sur une planche : cassée.</li>
+            <li>☐ <kbd>7</kbd> + 3 clics sur la terre : 1, 2 fissures… cassée !</li>
+            <li>☐ Le fond du monde ne se casse pas.</li>
+            <li>☐ <kbd>°</kbd> + <kbd>T</kbd> tenue : ta-ta-ta-ta !</li>
+            <li>Vérifie « version 18 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🧰 Le bon outil pour le bon bloc</h3>
+      <div class="carte">
+        <table>
+          <tr><th>Outil</th><th>1 clic</th><th>3 clics</th></tr>
+          <tr><td>🪏 Pelle (<kbd>0</kbd>)</td><td>herbe, terre</td><td>—</td></tr>
+          <tr><td>🪓 Hache (<kbd>3</kbd>)</td><td>bois, planche</td><td>—</td></tr>
+          <tr><td>⛏️ Pioche (<kbd>7</kbd>)</td><td>pierre, roche, brique</td><td>tout le reste de solide</td></tr>
+        </table>
+        <p class="petit">Le jeu ne connaît pas les outils un par un : il lit une petite liste dans <code>config.js</code> (« la pelle casse facilement : herbe, terre »). C'est la même idée que le catalogue d'armes de l'étape 15.</p>
+      </div>
+
+      <h3>🧠 Le jeu se souvient du bloc que tu tapes</h3>
+      <p>Pour les blocs à 3 clics, le monde garde une petite fiche : <code>cassage = { colonne, ligne, clics, besoin }</code>. À chaque clic sur le <strong>même</strong> bloc, <code>clics</code> augmente (et une fissure apparaît). Si tu cliques sur un autre bloc, la fiche recommence à zéro. Quand <code>clics</code> atteint <code>besoin</code>, on écrit 0 (l'air) dans la grille… et le bloc disparaît.</p>
+
+      <h3>🎲 Le butin : le hasard et les compteurs</h3>
+      <p>La mitrailleuse a un <strong>compteur</strong> de balles : −1 à chaque tir. À 0, clic, plus rien ! Quand un monstre est vaincu, le jeu tire un nombre au hasard entre 0 et 1 : s'il est plus petit que 0,5 (1 chance sur 2), il tire un deuxième nombre entre 10 et 25… et c'est ton butin.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Creuse un puits jusqu'au fond du monde. Regarde « La carte en mémoire » : les cases deviennent des <code>0</code>.</li>
+        <li>Dans l'état en direct, regarde « bloc en train d'être cassé » pendant tes 3 clics de pioche.</li>
+        <li>Clique 2 fois sur un bloc, puis 1 fois sur un autre, puis reviens : combien de clics faut-il encore ?</li>
+        <li>Garde <kbd>T</kbd> appuyée 2 secondes avec la mitrailleuse : combien de balles as-tu tirées ?</li>
+        <li>Bats 4 monstres et note le butin de chacun dans le journal.</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de secondes dure une rafale de 50 balles ?</summary><p>10 balles par seconde : 50 ÷ 10 = 5 secondes.</p></details>
+      <details class="question"><summary>Combien de balles de mitrailleuse pour vaincre un monstre de 30 PV ?</summary><p>1 PV par balle : 30 balles (3 secondes de rafale).</p></details>
+      <details class="question"><summary>Tu casses 12 blocs de terre avec la pelle. Combien de blocs gagnes-tu dans le sac ?</summary><p>12 : chaque bloc cassé devient une brique à reposer.</p></details>
+    </section>
+
+    <section id="etape18">
+      <h2>🥁 Étape 18 : un cri dans les trous et une batterie sur les murets <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Deux nouveaux bruitages rigolos : le héros crie de surprise quand il tombe dans un trou, et le squelette danse sur un vrai rythme de batterie.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/18-cri-et-batterie.md</code>.</p>
+          <p>Un petit cri de surprise dans les trous. Sur le muret à pics, une musique « batterie » : tac-tac-tac-tac-tac, fort mais rigolo.</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Tombe dans un trou : « ouh-OUH-oh ? »</li>
+            <li>☐ Touche un muret à pics : tac-tac-tac-tac-TAC, boum-tchak, pschiii !</li>
+            <li>☐ <kbd>B</kbd> coupe aussi ces bruits.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🗣️ Un cri, c'est une fréquence qui monte puis descend</h3>
+      <p>Le cri est fait de deux notes collées : la première glisse de 330 Hz à 880 Hz (la voix monte, « ouh-OUH »), la seconde redescend de 880 Hz à 420 Hz (« oh ? »). C'est la même astuce que le « boom » du saut, mais dans l'autre sens.</p>
+
+      <h3>🥁 Une batterie avec seulement 3 sons</h3>
+      <div class="carte">
+        <ul>
+          <li><strong>La grosse caisse (boum) :</strong> une note douce qui tombe très vite de 150 Hz à 45 Hz.</li>
+          <li><strong>La caisse claire (tac) :</strong> un petit morceau de bruit aigu, très court.</li>
+          <li><strong>La cymbale (pschiii) :</strong> du bruit très aigu qui dure presque une seconde.</li>
+        </ul>
+        <p class="petit">Toutes les frappes sont préparées d'avance, chacune avec son heure exacte : 5 « tac » espacés de 0,09 s, puis un coup tous les quarts de seconde. C'est l'orchestre qui écoute l'événement « piege » du journal.</p>
+      </div>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Les 5 « tac » sont espacés de 0,09 s. Combien de temps dure le « tac-tac-tac-tac-tac » ?</summary><p>Du 1er au 5e coup : 4 × 0,09 = 0,36 s. C'est très rapide !</p></details>
+      <details class="question"><summary>Quel événement du journal déclenche le cri ?</summary><p>« bras-leves » : le moment où le héros lève les bras en tombant dans un trou (étape 8).</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -1652,26 +1747,38 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>Une musique rétro, des pas sur l'herbe, le bois et la pierre, « boom, bring » au saut, tir, épée, monstre et lave. J et B pour couper.</p>
           <p class="apprend"><b>Tu apprends :</b> fréquence, forme d'onde et enveloppe, une partition et un séquenceur, déclencher un son avec un événement. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">17</div>
+          <h4>Pelle, casser les blocs et mitrailleuse <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Pelle, hache et pioche cassent les blocs au clic (le bon outil en 1 clic), les blocs cassés vont dans le sac. Une mitrailleuse de 50 balles, et du butin sur les monstres.</p>
+          <p class="apprend"><b>Tu apprends :</b> une table « outil → blocs », une fiche qui se souvient des clics, un compteur de munitions, le hasard en deux temps. <b>Durée :</b> 1 à 2 séances.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">18</div>
+          <h4>Un cri et une batterie <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Un cri de surprise dans les trous, et une batterie « tac-tac-tac » quand le squelette danse sur un muret.</p>
+          <p class="apprend"><b>Tu apprends :</b> une fréquence qui monte puis descend, une batterie faite de 3 sons, préparer des sons à l'avance. <b>Durée :</b> ½ séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">19</div>
           <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">18</div>
+          <div class="num">20</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">19</div>
+          <div class="num">21</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">20</div>
+          <div class="num">22</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -1845,6 +1952,23 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-16" data-cle="appris-16" placeholder="Ex. : J'ai appris qu'un son aigu vibre plus vite qu'un son grave…"></textarea>
         <label for="idees-16"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-16" data-cle="idees-16" placeholder="Ex. : Une musique différente dans les grottes…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 17 · pelle, casser les blocs et mitrailleuse <span class="petit">· 29 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> un nouveau fichier <code>logique/outils.js</code> (casser au clic : le bon outil en 1 clic, la pioche en 3 clics pour le reste) ; les blocs cassés vont dans le sac ; la barre passe à 11 cases (<kbd>0</kbd> pelle, <kbd>°</kbd> mitrailleuse) ; la mitrailleuse tire en rafale tant qu'on tient <kbd>T</kbd>, avec 50 balles ; les monstres laissent parfois des balles. Sous le capot : le cadre orange des blocs cassables, les fissures, le bloc en train d'être cassé et les balles dans l'état en direct, des sons « toc », « crac » et « ta-ta-ta ».</p>
+        <p class="petit">✍️ Réponses de Maxance : tout en A, sauf 3B.</p>
+        <label for="appris-17"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-17" data-cle="appris-17" placeholder="Ex. : J'ai appris que casser un bloc, c'est écrire 0 dans la grille…"></textarea>
+        <label for="idees-17"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-17" data-cle="idees-17" placeholder="Ex. : Garder le vrai type de bloc dans le sac…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 18 · un cri et une batterie <span class="petit">· 29 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> deux bruitages dans l'orchestre (<code>affichage/sons.js</code>) : un cri de surprise quand le héros tombe dans un trou, et une batterie (tac-tac-tac-tac-tac, boum-tchak, cymbale) quand il touche un muret à pics.</p>
+        <label for="appris-18"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-18" data-cle="appris-18" placeholder="Ex. : J'ai appris qu'une batterie, c'est du bruit très court…"></textarea>
+        <label for="idees-18"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-18" data-cle="idees-18" placeholder="Ex. : Un bruit de cochon « groin groin »…"></textarea>
       </div>
     </section>
   </main>

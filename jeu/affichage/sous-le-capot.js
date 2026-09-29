@@ -64,7 +64,13 @@ Jeu.SousLeCapot = (function () {
     "reglage-son": (d) => (d.quoi === "musique" ? "🎵 Musique " + (d.actif ? "remise" : "coupée") : "🔊 Bruits " + (d.actif ? "remis" : "coupés")) + (d.quoi === "musique" ? " (touche J)" : " (touche B)"),
     "objet-en-main": (d) => "🎒 Touche " + d.touche + " : tu tiens maintenant " + d.objet,
     "pas-pret": (d) => "⏳ " + d.objet + " pas encore prêt(e) : attends encore " + d.attente + " s",
-    tir: (d) => "🔫 Pan ! Tir au " + d.arme + " (balle #" + d.id + ", " + d.degats + " dégâts) · prochain tir dans " + d.attente + " s",
+    tir: (d) => "🔫 Pan ! Tir " + (d.arme === "mitrailleuse" ? "à la " : "au ") + d.arme + " (balle #" + d.id + ", " + d.degats + " dégât" + (d.degats > 1 ? "s" : "") + ")" + (d.reste !== null && d.reste !== undefined ? " · il reste " + d.reste + " balles" : " · prochain tir dans " + d.attente + " s"),
+    "plus-de-balles": () => "🔫 Clic ! La mitrailleuse est vide : bats un monstre pour trouver des balles",
+    "balles-trouvees": (d) => d.balles ? "🎁 Le monstre #" + d.id + " laisse " + d.balles + " balles de mitrailleuse → " + d.total + " balles" : "🎲 Le monstre #" + d.id + " n'avait pas de balles (1 chance sur 2)",
+    astuce: (d) => "💡 " + d.texte,
+    "coup-outil": (d) => "⛏️ Coup de " + d.outil + " sur le bloc " + (/^[aeéiouh]/.test(d.bloc) ? "d'" : "de ") + d.bloc + " : " + d.clics + " / " + d.besoin + " clics",
+    "bloc-casse": (d) => "💥 Bloc " + (/^[aeéiouh]/.test(d.bloc) ? "d'" : "de ") + d.bloc + " cassé à la " + d.outil + " (colonne " + d.colonne + ", ligne " + d.ligne + ") → " + d.sac + " blocs dans le sac",
+    "casse-refusee": (d) => "🚫 Pas cassé : " + d.raison,
     "balle-touche": (d) => "🎯 La balle #" + d.id + " touche le " + d.cible + " : −" + d.degats + " PV → " + d.pv + " PV",
     "balle-mur": (d) => "🧱 La balle #" + d.id + " s'écrase sur un bloc de " + d.bloc + " (colonne " + d.colonne + ", ligne " + d.ligne + ")",
     "caisse-cassee": (d) => "🪓 Caisse #" + d.id + " cassée à la hache ! (encore " + d.reste + " coups avant que la hache casse)",
@@ -200,8 +206,18 @@ Jeu.SousLeCapot = (function () {
     if (monde.phase !== "jeu") return "—";
     const c = Jeu.Inventaire.caseSousLaSouris(monde);
     if (!c) return "souris hors de l'écran";
+    const objet = Jeu.Armes.objetEnMain(monde);
+    const debut = "col. " + c.colonne + ", ligne " + c.ligne + " (" + Jeu.Terrain.NOMS[Jeu.Terrain.lireCase(monde.terrain, c.colonne, c.ligne)] + ") : ";
+    if (Jeu.Armes.OUTILS.includes(objet)) {
+      // Étape 17 : avec un outil, le clic casse
+      const refus = Jeu.Outils.raisonDuRefus(monde, c.colonne, c.ligne, objet);
+      if (refus) return debut + "🚫 " + refus;
+      const clics = Jeu.Outils.clicsNecessaires(objet, Jeu.Terrain.NOMS[Jeu.Terrain.lireCase(monde.terrain, c.colonne, c.ligne)]);
+      return debut + "✅ clic = casser (" + clics + " clic" + (clics > 1 ? "s" : "") + ")";
+    }
+    if (objet !== "briques") return debut + "le clic ne fait rien (prends les briques ou un outil)";
     const refus = Jeu.Inventaire.raisonDuRefusIci(monde, c.colonne, c.ligne);
-    return "col. " + c.colonne + ", ligne " + c.ligne + " : " + (refus ? "🚫 " + refus : "✅ clic = brique");
+    return debut + (refus ? "🚫 " + refus : "✅ clic = brique");
   }
 
   function afficherEtat() {
@@ -249,6 +265,9 @@ Jeu.SousLeCapot = (function () {
       ["épée dorée (coups restants)", monde.equipement.epeeDoree + " / " + Jeu.CONFIG.armes.epeeDoree.usure],
       ["petite hache (coups restants)", monde.equipement.hache + " / " + Jeu.CONFIG.armes.hache.usure],
       ["balles en vol", monde.balles.length],
+      ["balles de mitrailleuse", monde.equipement.munitions],
+      ["blocs cassés au clic", monde.inventaire.casses],
+      ["bloc en train d'être cassé", monde.cassage ? "col. " + monde.cassage.colonne + ", ligne " + monde.cassage.ligne + " : " + monde.cassage.clics + " / " + monde.cassage.besoin + " clics" : "aucun"],
       ["armure", monde.equipement.armure > 0 ? monde.equipement.armure + " / " + Jeu.CONFIG.armure.usure : monde.equipement.armureFabriquee ? "cassée" : "pas encore fabriquée"],
       ["pioche (coups restants)", monde.equipement.pioche > 0 ? monde.equipement.pioche + " / " + Jeu.CONFIG.pioche.usure : "cassée"],
       ["charbon", monde.equipement.charbon],

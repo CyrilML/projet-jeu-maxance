@@ -58,6 +58,7 @@ Jeu.Monde = (function () {
       equipement: Jeu.Combat.creerEquipement(), // PV, bouclier, potion (étape 11)
       monstres: [], // les monstres du monde (étape 11)
       balles: [], // les balles des pistolets en vol (étape 15)
+      cassage: null, // le bloc en train d'être cassé au clic : { colonne, ligne, clics, besoin } (étape 17)
       cochons: [], // les cochons qui se promènent (étape 13)
       grottesVisitees: 0, // combien de grottes le héros a découvertes (étape 13)
       obstaclesPasses: 0,
@@ -250,7 +251,7 @@ Jeu.Monde = (function () {
       const veutChanger = Entrees.consommer("changerPseudo");
       Entrees.consommer("poserBloc"); // hors d'une partie, la touche P ne fait rien
       Entrees.consommer("poserIci"); // ni le clic de souris
-      for (let k = 1; k <= 9; k++) Entrees.consommer("choisir" + k); // ni les touches de la barre
+      for (let k = 1; k <= Jeu.Armes.BARRE.length; k++) Entrees.consommer("choisir" + k); // ni les touches de la barre
       Entrees.consommer("frapper");
       Entrees.consommer("boirePotion");
       Entrees.consommer("piocher");

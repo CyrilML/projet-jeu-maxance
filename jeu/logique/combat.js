@@ -42,6 +42,7 @@ Jeu.Combat = (function () {
       hache: C.armes.hache.usure, // (étape 15)
       enMain: 0, // la case de la barre choisie (0 à 8) : touches 1 à 9 (étape 15)
       attente: 0, // secondes avant de pouvoir refrapper ou retirer (étape 15)
+      munitions: C.armes.mitrailleuse.balles, // balles de la mitrailleuse (étape 17)
       armure: 0, // coups que l'armure peut encore arrêter (0 = pas d'armure ou cassée)
       armureFabriquee: false, // a-t-on déjà fabriqué l'armure ?
       fer: 0, // morceaux de fer dans le sac (étape 12)
@@ -134,6 +135,13 @@ Jeu.Combat = (function () {
     if (m.pv <= 0) {
       m.vivant = false;
       emettre("monstre-vaincu", { id: m.id, colonne: m.colonne, arme });
+      // Étape 17 : 1 chance sur 2 que le monstre laisse des balles de mitrailleuse (entre 10 et 25).
+      const M = C.armes.mitrailleuse;
+      if (Math.random() < M.chanceButin) {
+        const balles = M.butinMin + Math.floor(Math.random() * (M.butinMax - M.butinMin + 1));
+        monde.equipement.munitions += balles;
+        emettre("balles-trouvees", { id: m.id, balles, total: monde.equipement.munitions });
+      } else emettre("balles-trouvees", { id: m.id, balles: 0, total: monde.equipement.munitions });
       return true;
     }
     return false;
@@ -206,6 +214,29 @@ Jeu.Combat = (function () {
     }
   }
 
+  // Un coup de pioche sur un minerai (fer ou charbon) : avec F, ou avec un clic de souris (étape 17).
+  function piocherMinerai(monde, minerai) {
+    const emettre = Jeu.Evenements.emettre;
+    const eq = monde.equipement;
+    minerai.coups -= 1;
+    eq.pioche -= 1; // chaque coup sur un minerai use la pioche (étape 13)
+    if (eq.pioche === 0) emettre("pioche-cassee", {});
+    if (minerai.coups > 0) {
+      emettre("pioche", { touche: true, id: minerai.id, type: minerai.type, reste: minerai.coups });
+      return;
+    }
+    // Cassé ! La case redevient de l'air, et le héros ramasse un fer ou un charbon.
+    minerai.casse = true;
+    Jeu.Terrain.ecrireCase(monde.terrain, minerai.colonne, Math.floor(minerai.y / B), Jeu.Terrain.CASES.air);
+    if (minerai.type === "fer") {
+      eq.fer += 1;
+      emettre("fer-casse", { id: minerai.id, colonne: minerai.colonne, fer: eq.fer });
+    } else {
+      eq.charbon += 1;
+      emettre("charbon-casse", { id: minerai.id, colonne: minerai.colonne, charbon: eq.charbon });
+    }
+  }
+
   // Fabriquer l'armure en fer avec 5 fers (étape 15).
   function fabriquerArmure(monde) {
     const emettre = Jeu.Evenements.emettre;
@@ -259,24 +290,7 @@ Jeu.Combat = (function () {
       if (eq.pioche <= 0) emettre("pioche", { touche: false, cassee: true });
       else if (brique) Jeu.Inventaire.reprendre(monde, brique);
       else if (!minerai) emettre("pioche", { touche: false });
-      else {
-        minerai.coups -= 1;
-        eq.pioche -= 1; // chaque coup sur un minerai use la pioche (étape 13)
-        if (eq.pioche === 0) emettre("pioche-cassee", {});
-        if (minerai.coups > 0) emettre("pioche", { touche: true, id: minerai.id, type: minerai.type, reste: minerai.coups });
-        else {
-          // Cassé ! La case redevient de l'air, et le héros ramasse un fer ou un charbon.
-          minerai.casse = true;
-          Jeu.Terrain.ecrireCase(monde.terrain, minerai.colonne, Math.floor(minerai.y / B), Jeu.Terrain.CASES.air);
-          if (minerai.type === "fer") {
-            eq.fer += 1;
-            emettre("fer-casse", { id: minerai.id, colonne: minerai.colonne, fer: eq.fer });
-          } else {
-            eq.charbon += 1;
-            emettre("charbon-casse", { id: minerai.id, colonne: minerai.colonne, charbon: eq.charbon });
-          }
-        }
-      }
+      else piocherMinerai(monde, minerai);
     }
 
     // 3 quater. Cuire (K) et manger (M) (étape 13)
@@ -347,5 +361,5 @@ Jeu.Combat = (function () {
     return null;
   }
 
-  return { creerEquipement, creerMonstre, monstreDevant, ferDevant, distance, frapper, fabriquerArmure, blesserMonstre, blesserCochon, mettreAJour };
+  return { creerEquipement, creerMonstre, monstreDevant, ferDevant, distance, frapper, piocherMinerai, fabriquerArmure, blesserMonstre, blesserCochon, mettreAJour };
 })();

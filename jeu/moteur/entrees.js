@@ -41,6 +41,8 @@ Jeu.Entrees = (function () {
     choisir7: ["Digit7", "Numpad7"],
     choisir8: ["Digit8", "Numpad8"],
     choisir9: ["Digit9", "Numpad9"],
+    choisir10: ["Digit0", "Numpad0"], // la pelle (étape 17)
+    choisir11: ["Minus"], // la mitrailleuse : la touche « ° » à droite du 0 (clavier français)
     rayonsX: ["KeyX"],
     pasSuivant: ["KeyN"],
     ralenti: ["KeyL"],

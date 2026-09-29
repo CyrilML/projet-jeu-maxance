@@ -4,6 +4,8 @@
 // et décide quoi jouer, comme un bruiteur de cinéma qui regarde le film :
 //   - il écoute les ÉVÉNEMENTS : « saut » → boom, « atterrissage » → bring, « tir » → pan,
 //     « coup-epee » → fiouu, monstre touché → bonk, « brule » → pschhh ;
+//     (étape 17) mitrailleuse → ta-ta-ta, coup d'outil → toc, bloc cassé → crac ;
+//     (étape 18) chute dans un trou → cri de surprise, muret à pics → batterie « tac-tac-tac » ;
 //   - il REGARDE le monde à chaque image : si le héros court, un bruit de pas toutes les 0,28 s,
 //     selon le bloc sous ses pieds (herbe, bois ou pierre) ;
 //   - il joue la MUSIQUE pendant la partie (pas à l'accueil, ni en pause).
@@ -65,6 +67,40 @@ Jeu.Orchestre = (function () {
       Son.bruit({ filtre: "highpass", frequence: 900, duree: 0.12, volume: 0.45, nom: "tir : pan" });
       Son.note({ forme: "square", frequence: 320, fin: 70, duree: 0.1, volume: 0.2, nom: "tir : pan" });
     },
+    ta: () => Son.bruit({ filtre: "highpass", frequence: 1500, duree: 0.05, volume: 0.35, nom: "mitrailleuse : ta" }),
+    clic: () => Son.note({ forme: "square", frequence: 1800, duree: 0.02, volume: 0.15, nom: "mitrailleuse vide : clic" }),
+    toc: () => Son.note({ forme: "triangle", frequence: 300, fin: 200, duree: 0.06, volume: 0.3, nom: "coup d'outil : toc" }),
+    crac: () => {
+      Son.bruit({ filtre: "lowpass", frequence: 1200, duree: 0.18, volume: 0.45, nom: "bloc cassé : crac" });
+      Son.note({ forme: "square", frequence: 140, fin: 60, duree: 0.12, volume: 0.2, nom: "bloc cassé : crac" });
+    },
+    // Étape 18 : le cri de surprise quand il tombe dans un trou (« ouh-OUH-oh ? »), une voix qui monte puis redescend.
+    cri: () => {
+      const t = Son.maintenant();
+      Son.note({ forme: "triangle", frequence: 330, fin: 880, duree: 0.16, volume: 0.45, quand: t, nom: "chute : cri de surprise" });
+      Son.note({ forme: "triangle", frequence: 880, fin: 420, duree: 0.3, volume: 0.45, quand: t + 0.16, nom: "chute : cri de surprise" });
+      Son.note({ forme: "square", frequence: 440, fin: 1100, duree: 0.16, volume: 0.06, quand: t, nom: "chute : cri de surprise" }); // un peu de « grain » dans la voix
+    },
+    // Étape 18 : la batterie du squelette qui danse sur le muret à pics.
+    // D'abord « tac-tac-tac-tac-tac » (5 coups de caisse claire), puis un rythme boum-tchak pendant la danse,
+    // et une cymbale à la fin. Toutes les frappes sont préparées d'avance, avec leur heure exacte (quand).
+    batterie: () => {
+      const t = Son.maintenant();
+      const tac = (quand, fort) => {
+        Son.bruit({ filtre: "highpass", frequence: 2200, duree: 0.07, volume: fort, quand, nom: "muret : batterie" });
+        Son.note({ forme: "triangle", frequence: 240, fin: 160, duree: 0.05, volume: fort * 0.6, quand, nom: "muret : batterie" });
+      };
+      const boum = (quand) => Son.note({ forme: "sine", frequence: 150, fin: 45, duree: 0.16, volume: 0.7, quand, nom: "muret : batterie" });
+      for (let k = 0; k < 5; k++) tac(t + k * 0.09, 0.3 + k * 0.08); // tac-tac-tac-tac-TAC, de plus en plus fort
+      const debut = t + 0.55;
+      const temps = 0.25; // un coup tous les quarts de seconde
+      const fin = C.squelette.duree - 0.6; // la danse dure 3 s
+      for (let k = 0; debut + k * temps < t + fin; k++) {
+        if (k % 4 === 0 || k % 4 === 2 || k % 8 === 7) boum(debut + k * temps); // boum… boum… boum-boum
+        if (k % 4 === 1 || k % 4 === 3) tac(debut + k * temps, 0.45); // tchak !
+      }
+      Son.bruit({ filtre: "highpass", frequence: 6000, duree: 0.9, volume: 0.35, attaque: 0.005, quand: t + fin, nom: "muret : batterie" }); // la cymbale : pschiii !
+    },
     fiouu: () => Son.bruit({ filtre: "bandpass", frequence: 3200, fin: 700, duree: 0.14, volume: 0.35, nom: "coup d'épée : fiouu" }),
     bonk: () => Son.note({ forme: "square", frequence: 260, fin: 110, duree: 0.15, volume: 0.3, nom: "monstre touché : bonk" }),
     pschhh: () => {
@@ -94,10 +130,15 @@ Jeu.Orchestre = (function () {
     const ecouter = Jeu.Evenements.ecouter;
     ecouter("saut", () => jouer("boom"));
     ecouter("atterrissage", () => jouer("bring"));
-    ecouter("tir", () => jouer("pan"));
+    ecouter("tir", (d) => jouer(d.arme === "mitrailleuse" ? "ta" : "pan"));
+    ecouter("plus-de-balles", () => jouer("clic"));
+    ecouter("coup-outil", () => jouer("toc"));
+    ecouter("bloc-casse", () => jouer("crac"));
     ecouter("coup-epee", (d) => (d.touche && !d.cassee ? jouer("bonk") : jouer("fiouu")));
     ecouter("balle-touche", (d) => d.cible.startsWith("monstre") && jouer("bonk"));
     ecouter("brule", () => jouer("pschhh"));
+    ecouter("bras-leves", () => jouer("cri")); // il tombe dans un trou (étape 18)
+    ecouter("piege", () => jouer("batterie")); // il touche un muret à pics (étape 18)
   }
 
   // J et B : couper ou remettre (appelé par main.js, comme les autres touches « outils »).

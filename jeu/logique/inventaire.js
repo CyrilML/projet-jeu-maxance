@@ -7,6 +7,8 @@
 //   1. la touche P pendant un saut : le bloc apparaît dans la case juste SOUS SES PIEDS (étape 10) ;
 //   2. un CLIC de souris sur une case vide, pas trop loin du héros (4 blocs) : le bloc apparaît
 //      dans cette case (étape 14). C'est comme ça qu'on construit des murs, des escaliers, des ponts…
+//      Depuis l'étape 17, il faut avoir les briques en main (touche 8) : avec un outil, le clic CASSE
+//      (voir logique/outils.js).
 //
 // Et on peut REPRENDRE une brique avec la pioche (F) : celle que vise la souris, ou celle juste
 // devant le héros. Elle retourne dans le sac.
@@ -24,7 +26,7 @@ Jeu.Inventaire = (function () {
   const B = C.tailleBloc;
 
   function creer() {
-    return { blocs: C.inventaire.blocs, poses: 0, reprises: 0, recharges: 0 };
+    return { blocs: C.inventaire.blocs, poses: 0, reprises: 0, recharges: 0, casses: 0 };
   }
 
   // La case où irait le bloc de la touche P : celle qui est entièrement sous les pieds du héros.
@@ -158,10 +160,17 @@ Jeu.Inventaire = (function () {
       }
     }
     if (Jeu.Entrees.consommer("poserIci")) {
+      // Étape 17 : le clic dépend de l'objet en main. Un outil CASSE, les briques POSENT.
       const cible = caseSousLaSouris(monde);
-      const raison = cible ? raisonDuRefusIci(monde, cible.colonne, cible.ligne) : "la souris n'est pas sur l'écran";
-      if (raison) Jeu.Evenements.emettre("bloc-refuse", { raison });
-      else poser(monde, cible.colonne, cible.ligne, "souris");
+      const objet = Jeu.Armes.objetEnMain(monde);
+      if (!cible) Jeu.Evenements.emettre("bloc-refuse", { raison: "la souris n'est pas sur l'écran" });
+      else if (Jeu.Armes.OUTILS.includes(objet)) Jeu.Outils.casser(monde, cible.colonne, cible.ligne, objet);
+      else if (objet !== "briques") Jeu.Evenements.emettre("bloc-refuse", { raison: "prends les briques (touche 8) pour poser, ou un outil (pelle 0, hache 3, pioche 7) pour casser" });
+      else {
+        const raison = raisonDuRefusIci(monde, cible.colonne, cible.ligne);
+        if (raison) Jeu.Evenements.emettre("bloc-refuse", { raison });
+        else poser(monde, cible.colonne, cible.ligne, "souris");
+      }
     }
   }
 
