@@ -57,6 +57,7 @@ Jeu.Monde = (function () {
       inventaire: Jeu.Inventaire.creer(), // le sac à dos : 100 blocs à poser (étapes 10 et 14)
       equipement: Jeu.Combat.creerEquipement(), // PV, bouclier, potion (étape 11)
       monstres: [], // les monstres du monde (étape 11)
+      balles: [], // les balles des pistolets en vol (étape 15)
       cochons: [], // les cochons qui se promènent (étape 13)
       grottesVisitees: 0, // combien de grottes le héros a découvertes (étape 13)
       obstaclesPasses: 0,
@@ -249,6 +250,7 @@ Jeu.Monde = (function () {
       const veutChanger = Entrees.consommer("changerPseudo");
       Entrees.consommer("poserBloc"); // hors d'une partie, la touche P ne fait rien
       Entrees.consommer("poserIci"); // ni le clic de souris
+      for (let k = 1; k <= 9; k++) Entrees.consommer("choisir" + k); // ni les touches de la barre
       Entrees.consommer("frapper");
       Entrees.consommer("boirePotion");
       Entrees.consommer("piocher");
@@ -282,6 +284,7 @@ Jeu.Monde = (function () {
     }
     const j = monde.joueur;
     Jeu.Joueur.mettreAJour(j, dt, monde);
+    Jeu.Armes.mettreAJour(monde, dt); // touches 1 à 9, T selon l'objet en main, et les balles (étape 15)
     Jeu.Inventaire.mettreAJour(monde); // P pendant un saut, ou clic de souris : poser un bloc
     Jeu.Cochons.mettreAJour(monde, dt); // les cochons se promènent (étape 13)
     // Le héros descend dans une grotte (étape 13) ? On l'annonce une seule fois.

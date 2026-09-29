@@ -225,6 +225,59 @@ Jeu.Rendu = (function () {
     }
   }
 
+  // L'objet que le héros tient dans la main (étape 15), dessiné du côté où il regarde.
+  // Pendant un coup (eq.coup), l'arme est tendue vers l'avant ; au repos, elle est levée.
+  function objetDansLaMain(objet, eq, x, y) {
+    const r = (couleur, dx, dy, l, h) => {
+      ctx.fillStyle = couleur;
+      ctx.fillRect(x + dx, y + dy, l, h);
+    };
+    if (objet === "epee" || objet === "epeeDoree") {
+      const lame = objet === "epee" ? "#dfe6ee" : "#ffd23f";
+      const garde = objet === "epee" ? "#6b4423" : "#b8342f";
+      if (eq[objet] <= 0) {
+        // L'épée cassée : il ne reste que la poignée et un bout de lame
+        r(garde, 27, 24, 4, 7);
+        r(garde, 25, 23, 9, 2);
+        r("#9aa3ad", 28, 17, 3, 6);
+      } else if (eq.coup > 0) {
+        r(garde, 27, 22, 6, 5);
+        r(lame, 33, 23, 24, 3);
+        r("#ffffff", 55, 23, 3, 3);
+      } else {
+        r("#6b4423", 27, 24, 4, 7);
+        r(lame, 28, 8, 3, 16);
+        r(garde, 25, 23, 9, 2);
+        if (objet === "epeeDoree") r("#4fd1ff", 28, 22, 3, 3);
+      }
+    } else if (objet === "hache") {
+      if (eq.coup > 0) {
+        r("#8a5a2b", 27, 22, 24, 4);
+        r("#9aa3ad", 44, 12, 9, 12);
+      } else {
+        r("#8a5a2b", 27, 6, 4, 26);
+        r("#9aa3ad", 31, 6, 9, 10);
+        r("#dfe6ee", 38, 6, 2, 10);
+      }
+      if (eq.hache <= 0) r("#1d1d3a", 33, 9, 3, 3); // une entaille : elle est cassée
+    } else if (Jeu.Armes.PISTOLETS.includes(objet)) {
+      const long = objet === "petitPistolet" ? 10 : objet === "pistolet" ? 15 : 21;
+      const epais = objet === "grosPistolet" ? 7 : 5;
+      r("#6b4423", 27, 24, 5, 8); // poignée
+      r(objet === "grosPistolet" ? "#3b4252" : "#5b6472", 27, 20, long, epais); // canon, tendu vers l'avant
+      if (eq.tir > 0) {
+        r("#ffe27a", 27 + long, 18, 8, epais + 4); // l'éclair du tir
+        r("#fff", 29 + long, 20, 4, epais);
+      }
+    } else if (objet === "pioche") {
+      r("#8a5a2b", 27, 6, 4, 26);
+      r("#6d6a66", 21, 4, 16, 4);
+    } else if (objet === "briques") {
+      r("#b5523b", 26, 20, 12, 10);
+      r("#e8d9c4", 26, 25, 12, 1);
+    }
+  }
+
   // Le héros. On le dessine comme s'il regardait à droite, entre x = −15 et x = +15 autour de son
   // milieu. S'il regarde à gauche, on retourne le dessin comme dans un miroir : ctx.scale(-1, 1).
   function joueur(j, phase, eq) {
@@ -268,8 +321,19 @@ Jeu.Rendu = (function () {
     ctx.fillStyle = j.etat === "touche" ? "#e05555" : j.etat === "brule" ? (clignote ? "#3b2a26" : "#ff7a1a") : "#ffd23f";
     ctx.fillRect(x + 4, y + 18, 22, 17);
     if (j.etat !== "brule" && j.etat !== "touche") {
-      ctx.fillStyle = "#e0303a";
-      for (const [px, py] of [[7, 21], [15, 20], [21, 24], [10, 28], [18, 30]]) ctx.fillRect(x + px, y + py, 3, 3);
+      if (eq && eq.armure > 0) {
+        // La vraie armure en fer (étape 15) : des plaques grises avec des rivets, par-dessus le plastron.
+        ctx.fillStyle = "#c9ced6";
+        ctx.fillRect(x + 3, y + 17, 24, 18);
+        ctx.fillStyle = "#8e949e";
+        ctx.fillRect(x + 3, y + 25, 24, 2);
+        ctx.fillRect(x + 14, y + 17, 2, 18);
+        ctx.fillStyle = "#5b616b";
+        for (const [px, py] of [[6, 20], [22, 20], [6, 30], [22, 30]]) ctx.fillRect(x + px, y + py, 2, 2);
+      } else {
+        ctx.fillStyle = "#e0303a";
+        for (const [px, py] of [[7, 21], [15, 20], [21, 24], [10, 28], [18, 30]]) ctx.fillRect(x + px, y + py, 3, 3);
+      }
     }
     // Tête et yeux (tournés du côté où il regarde)
     ctx.fillStyle = "#f1c27d";
@@ -307,29 +371,8 @@ Jeu.Rendu = (function () {
       } else {
         ctx.fillRect(x + 46, y + 14, 5, 6);
       }
-    } else if (eq && eq.epee <= 0) {
-      // L'épée cassée : il ne reste que la poignée et un bout de lame
-      ctx.fillStyle = "#6b4423";
-      ctx.fillRect(x + 27, y + 24, 4, 7);
-      ctx.fillRect(x + 25, y + 23, 9, 2);
-      ctx.fillStyle = "#9aa3ad";
-      ctx.fillRect(x + 28, y + 17, 3, 6);
-    } else
-    // L'épée (étape 11) : levée au repos, tendue vers l'avant pendant un coup (touche T).
-    if (eq && eq.coup > 0) {
-      ctx.fillStyle = "#6b4423";
-      ctx.fillRect(x + 27, y + 22, 6, 5);
-      ctx.fillStyle = "#dfe6ee";
-      ctx.fillRect(x + 33, y + 23, 24, 3);
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(x + 55, y + 23, 3, 3);
     } else if (eq) {
-      ctx.fillStyle = "#6b4423";
-      ctx.fillRect(x + 27, y + 24, 4, 7);
-      ctx.fillStyle = "#dfe6ee";
-      ctx.fillRect(x + 28, y + 8, 3, 16);
-      ctx.fillStyle = "#6b4423";
-      ctx.fillRect(x + 25, y + 23, 9, 2);
+      objetDansLaMain(Jeu.Armes.BARRE[eq.enMain], eq, x, y);
     }
     ctx.restore();
   }
@@ -535,16 +578,16 @@ Jeu.Rendu = (function () {
     ctx.fillRect(20, 166, 160, 10);
     ctx.fillStyle = eq.pv > 6 ? "#3fc27a" : "#ff9f1a";
     ctx.fillRect(20, 166, Math.round(160 * eq.pv / C.combat.pvJoueur), 10);
-    texte("PV " + eq.pv + "/" + C.combat.pvJoueur + "   🛡️ " + eq.bouclier + "   🧪 " + eq.potions + "   T : épée · H : potion", 192, 177, 15, "#fff");
-    // L'épée qui s'use, le fer dans le sac (étape 12)
+    texte("PV " + eq.pv + "/" + C.combat.pvJoueur + "   🛡️ " + eq.bouclier + "   🧪 " + eq.potions + "   H : potion", 192, 177, 15, "#fff");
+    // L'armure en fer et le fer dans le sac (étape 15). L'usure des armes est dans la barre du bas.
     ctx.fillStyle = "rgba(0,0,0,0.5)";
     ctx.fillRect(16, 186, 168, 18);
     ctx.fillStyle = "#3a3f55";
     ctx.fillRect(20, 190, 160, 10);
-    ctx.fillStyle = eq.epee > 5 ? "#dfe6ee" : eq.epee > 0 ? "#ff9f1a" : "#e0303a";
-    ctx.fillRect(20, 190, Math.round(160 * eq.epee / C.combat.usureEpee), 10);
-    const etatEpee = eq.epee > 0 ? "⚔️ " + eq.epee + "/" + C.combat.usureEpee : "⚔️ CASSÉE !";
-    texte(etatEpee + "   ⛓️ fer " + eq.fer + "   F : pioche · R : réparer", 192, 201, 15, eq.epee > 0 ? "#fff" : "#ff9b9b");
+    ctx.fillStyle = eq.armure > 5 ? "#c9ced6" : "#ff9f1a";
+    ctx.fillRect(20, 190, Math.round(160 * eq.armure / C.armure.usure), 10);
+    const etatArmure = eq.armure > 0 ? "🦺 armure " + eq.armure + "/" + C.armure.usure : eq.armureFabriquee ? "🦺 armure CASSÉE !" : "🦺 pas d'armure (9 puis T : " + C.armure.fers + " fers)";
+    texte(etatArmure + "   ⛓️ fer " + eq.fer + "   R : réparer", 192, 201, 15, eq.armure > 0 || !eq.armureFabriquee ? "#fff" : "#ff9b9b");
     // La pioche qui s'use, le charbon et la viande (étape 13)
     ctx.fillStyle = "rgba(0,0,0,0.5)";
     ctx.fillRect(16, 210, 168, 18);
@@ -555,6 +598,99 @@ Jeu.Rendu = (function () {
     const etatPioche = eq.pioche > 0 ? "⛏️ " + eq.pioche + "/" + C.pioche.usure : "⛏️ CASSÉE !";
     texte(etatPioche + "   ⚫ " + eq.charbon + "   🥩 " + eq.viandeCrue + "   🍖 " + eq.viandeCuite + "   K : cuire · M : manger", 192, 225, 15, eq.pioche > 0 ? "#fff" : "#ff9b9b");
     if (options.ralenti) texte("🐢 RALENTI (×0,25)", L / 2, 32, 18, "#ffe27a", "center");
+    barreInventaire(monde);
+  }
+
+  // La barre d'inventaire (étape 15) : 9 cases en bas de l'écran, touches 1 à 9.
+  // La case de l'objet en main est encadrée en jaune ; sous chaque arme, une barre d'usure.
+  function barreInventaire(monde) {
+    const eq = monde.equipement;
+    const barre = Jeu.Armes.BARRE;
+    const taille = 46;
+    const ecart = 6;
+    const gauche = Math.round(L / 2 - (barre.length * (taille + ecart) - ecart) / 2);
+    const haut = H - taille - 10;
+    barre.forEach((objet, i) => {
+      const x = gauche + i * (taille + ecart);
+      const choisi = i === eq.enMain;
+      ctx.fillStyle = choisi ? "rgba(60,50,10,0.85)" : "rgba(0,0,0,0.55)";
+      ctx.fillRect(x, haut, taille, taille);
+      ctx.strokeStyle = choisi ? "#ffe27a" : "rgba(255,255,255,0.35)";
+      ctx.lineWidth = choisi ? 3 : 1;
+      ctx.strokeRect(x + 0.5, haut + 0.5, taille - 1, taille - 1);
+      const inactif = (objet === "armure" && eq.armure <= 0) || (eq[objet] !== undefined && objet !== "briques" && eq[objet] <= 0);
+      ctx.globalAlpha = inactif ? 0.45 : 1;
+      icone(objet, x + taille / 2, haut + taille / 2 - 2);
+      ctx.globalAlpha = 1;
+      texte(String(i + 1), x + 4, haut + 13, 12, "#fff");
+      // En dessous : l'usure (armes, pioche, armure), le nombre (briques) ou ∞ (pistolets)
+      const max = objet === "pioche" ? C.pioche.usure : objet === "armure" ? C.armure.usure : C.armes[objet] && C.armes[objet].usure;
+      if (objet === "briques") texte(String(monde.inventaire.blocs), x + taille - 4, haut + taille - 5, 13, "#fff", "right");
+      else if (Jeu.Armes.PISTOLETS.includes(objet)) texte("∞", x + taille - 5, haut + taille - 5, 14, "#ffe27a", "right");
+      else if (objet === "armure" && !eq.armureFabriquee) texte(C.armure.fers + "⛓️", x + taille - 4, haut + taille - 5, 12, "#fff", "right");
+      else if (max) {
+        const reste = eq[objet];
+        ctx.fillStyle = "#3a3f55";
+        ctx.fillRect(x + 5, haut + taille - 7, taille - 10, 4);
+        ctx.fillStyle = reste / max > 0.25 ? "#3fc27a" : reste > 0 ? "#ff9f1a" : "#e0303a";
+        ctx.fillRect(x + 5, haut + taille - 7, Math.round((taille - 10) * reste / max), 4);
+      }
+    });
+    // Le nom de l'objet en main, au-dessus de la barre
+    const objet = Jeu.Armes.objetEnMain(monde);
+    const arme = C.armes[objet];
+    let infos = Jeu.Armes.nomDe(objet);
+    if (arme) infos += " · " + arme.degats + " dégâts" + (arme.usure ? " · " + eq[objet] + "/" + arme.usure + " coups" : " · balles infinies") + (arme.attente ? " · attente " + arme.attente + " s" : "");
+    if (eq.attente > 0 && arme) infos += " · ⏳";
+    texte(infos + "   (T : utiliser)", L / 2, haut - 8, 15, "#ffe27a", "center");
+  }
+
+  // Les petits dessins des objets (étape 15), centrés sur (cx, cy). Chaque arme est faite de rectangles.
+  function icone(objet, cx, cy) {
+    const r = (couleur, x, y, l, h) => {
+      ctx.fillStyle = couleur;
+      ctx.fillRect(Math.round(cx + x), Math.round(cy + y), l, h);
+    };
+    if (objet === "epee" || objet === "epeeDoree") {
+      const lame = objet === "epee" ? "#dfe6ee" : "#ffd23f";
+      const garde = objet === "epee" ? "#6b4423" : "#b8342f";
+      for (let k = 0; k < 7; k++) r(lame, -12 + k * 3 + 6, 6 - k * 3 - 6, 4, 4); // lame en diagonale
+      r(garde, -10, 4, 10, 3);
+      r(garde, -7, 1, 3, 10);
+      r("#6b4423", -12, 8, 4, 4);
+      if (objet === "epeeDoree") {
+        r("#fff7c2", 6, -12, 2, 2); // un éclat qui brille
+        r("#4fd1ff", -6, 5, 2, 2); // une pierre bleue sur la garde
+      }
+    } else if (objet === "hache") {
+      r("#8a5a2b", -2, -12, 4, 24); // manche
+      r("#9aa3ad", 2, -12, 9, 11); // lame
+      r("#dfe6ee", 9, -12, 3, 11);
+    } else if (Jeu.Armes.PISTOLETS.includes(objet)) {
+      const taille = objet === "petitPistolet" ? 0.75 : objet === "pistolet" ? 1 : 1.3;
+      const corps = objet === "grosPistolet" ? "#3b4252" : objet === "pistolet" ? "#5b6472" : "#7c8796";
+      r(corps, -12 * taille, -5 * taille, 22 * taille, 7 * taille); // canon
+      r("#6b4423", -12 * taille, 2 * taille, 7 * taille, 10 * taille); // poignée
+      r("#1d1d3a", 8 * taille, -4 * taille, 3 * taille, 3 * taille); // bout du canon
+      if (objet === "grosPistolet") r("#e0303a", -4, -8, 8, 3);
+    } else if (objet === "pioche") {
+      r("#8a5a2b", -2, -10, 4, 22);
+      r("#6d6a66", -12, -13, 24, 5);
+      r("#6d6a66", -13, -10, 4, 4);
+      r("#6d6a66", 9, -10, 4, 4);
+    } else if (objet === "briques") {
+      r("#b5523b", -12, -10, 24, 20);
+      r("#e8d9c4", -12, -1, 24, 2);
+      r("#e8d9c4", -1, -10, 2, 9);
+      r("#e8d9c4", -7, 1, 2, 9);
+      r("#e8d9c4", 5, 1, 2, 9);
+    } else if (objet === "armure") {
+      r("#c9ced6", -11, -11, 22, 22);
+      r("#8e949e", -11, -11, 5, 6);
+      r("#8e949e", 6, -11, 5, 6);
+      r("#8e949e", -2, -6, 4, 16);
+      r("#1d1d3a", -5, -11, 10, 4); // l'encolure
+    }
   }
 
   function voile() {
@@ -573,7 +709,7 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 14 : 100 blocs pour construire", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 15 : pistolets, hache, épée dorée et armure", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au bloc " + C.arrivee.bloc + " le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
@@ -581,7 +717,7 @@ Jeu.Rendu = (function () {
     texte("🔥 Lave et 💀 murets à pics (un tous les 50 blocs) : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
     texte("📦 Caisses et 🗼 tours en pierre : sans danger, monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
     texte("🎒 " + C.inventaire.blocs + " blocs (sac rempli à chaque 🚩) · 🖱️ clic : poser · saute + P : sous tes pieds", L / 2, 470, 17, "#cfe0ff", "center");
-    texte("⚔️ T : épée · 🧪 H : potion · ⛓️ F : pioche (reprend aussi tes briques) · R : réparer · 🍖 K : cuire · M : manger", L / 2, 496, 16, "#cfe0ff", "center");
+    texte("1 à 9 : choisir l'objet · T : l'utiliser (frapper, tirer…) · H : potion · F : pioche · R : réparer · K : cuire · M : manger", L / 2, 496, 15, "#cfe0ff", "center");
     const premier = Jeu.Sauvegarde.donnees.classement[0];
     if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 522, 16, "#ffe27a", "center");
     texte("version " + C.version, L - 12, H - 12, 14, "#cfe0ff", "right");
@@ -710,6 +846,29 @@ Jeu.Rendu = (function () {
       ctx.fillRect(gauche, camY, largeur, H);
       ctx.fillStyle = "#ff8a8a";
       ctx.fillText("🚫 construction interdite (monstre #" + m.id + ")", gauche + 6, camY + H - 60);
+    }
+
+    // 1 ter. Les armes (étape 15) : chaque balle avec son cadre et sa vitesse, et la portée du pistolet en main.
+    ctx.font = "bold 12px 'Trebuchet MS', system-ui, sans-serif";
+    for (const b of monde.balles) {
+      ctx.strokeStyle = "#ffe27a";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(b.x - camX - 2, b.y - 2, b.l + 4, b.h + 4);
+      ctx.fillStyle = "#ffe27a";
+      ctx.fillText("balle #" + b.id + " · vx = " + b.vx + " px/s · " + Math.round(b.parcouru / B) + "/" + C.balles.portee + " blocs", b.x - camX - 40, b.y - 8);
+    }
+    if (Jeu.Armes.PISTOLETS.includes(Jeu.Armes.objetEnMain(monde))) {
+      const sens = j.regard || 1;
+      const depart = sens > 0 ? j.x + j.l : j.x;
+      ctx.strokeStyle = "rgba(255,226,122,0.7)";
+      ctx.setLineDash([4, 6]);
+      ctx.beginPath();
+      ctx.moveTo(depart - camX, j.y + 23);
+      ctx.lineTo(depart + sens * C.balles.portee * B - camX, j.y + 23);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#ffe27a";
+      ctx.fillText("portée des balles : " + C.balles.portee + " blocs", depart + sens * C.balles.portee * B - camX - (sens > 0 ? 150 : 0), j.y + 16);
     }
 
     // 2. La case du héros, surlignée
@@ -874,6 +1033,16 @@ Jeu.Rendu = (function () {
     ctx.fill();
   }
 
+  // Les balles des pistolets (étape 15) : un petit trait jaune avec une traînée.
+  function balles(liste) {
+    for (const b of liste || []) {
+      ctx.fillStyle = "rgba(255,226,122,0.35)";
+      ctx.fillRect(Math.round(b.x - Math.sign(b.vx) * 14), Math.round(b.y), 14, b.h);
+      ctx.fillStyle = "#ffe27a";
+      ctx.fillRect(Math.round(b.x), Math.round(b.y), b.l, b.h);
+    }
+  }
+
   // La case visée par la souris (étape 14) : cadre vert = un clic pose une brique ici,
   // cadre rouge = interdit (trop loin, case pleine, monstre trop proche…). Dessinée dans le monde.
   function caseDeConstruction(monde) {
@@ -918,6 +1087,7 @@ Jeu.Rendu = (function () {
     monstres(monde.monstres);
     joueur(monde.joueur, monde.phase, monde.equipement);
     flammes(monde.flammes);
+    balles(monde.balles);
     if (monde.phase === "jeu" && !monde.brulure && !monde.danse) caseDeConstruction(monde);
     ctx.restore();
 

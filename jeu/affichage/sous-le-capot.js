@@ -38,9 +38,13 @@ Jeu.SousLeCapot = (function () {
         ? "🧱 Pas de place pour le muret du bloc " + d.cible
         : "🧱 Muret à pics posé au bloc " + d.bloc + " (rendez-vous du bloc " + d.cible + ", colonne " + d.colonne + ")",
     "monstre-pose": (d) => "👾 Un monstre #" + d.id + " (" + d.pv + " PV) garde le passage au bloc " + d.bloc,
-    "coup-epee": (d) =>
-      d.cassee ? "⚔️ Coup d'épée CASSÉE sur le monstre #" + d.id + " : aucun dégât (il a encore " + d.pvMonstre + " PV)" :
-      d.touche ? "⚔️ Coup d'épée sur le monstre #" + d.id + " : −" + d.degats + " PV → il lui reste " + d.pvMonstre + " PV" : "⚔️ Coup d'épée dans le vide (aucun monstre à moins d'un bloc devant)",
+    "coup-epee": (d) => {
+      const nom = d.arme || "épée";
+      const coup = "⚔️ Coup " + (/^[aeéiou]/.test(nom) ? "d'" : "de ") + nom; // « coup d'épée », « coup de petite hache »
+      return d.cassee ? coup + " CASSÉE : aucun dégât" + (d.id ? " (le monstre #" + d.id + " a encore " + d.pvMonstre + " PV)" : "")
+        : d.touche ? coup + " sur le monstre #" + d.id + " : −" + d.degats + " PV → il lui reste " + d.pvMonstre + " PV"
+        : coup + " dans le vide (rien à moins d'un bloc devant)";
+    },
     riposte: (d) => "😠 Le monstre #" + d.id + " riposte tout de suite !",
     "monstre-attaque": (d) => "👾 Le monstre #" + d.id + " te frappe : −" + d.degats + " PV → il te reste " + d.pv + " PV",
     "bouclier-bloque": (d) => "🛡️ Le bouclier arrête le coup du monstre #" + d.id + " (encore " + d.reste + " coup(s) avant de casser)",
@@ -54,9 +58,19 @@ Jeu.SousLeCapot = (function () {
       : d.touche ? "⛏️ Coup de pioche sur le " + d.type + " #" + d.id + " : encore " + d.reste + " coup(s)"
       : "⛏️ Coup de pioche dans le vide (pas de minerai juste devant)",
     "fer-casse": (d) => "⛓️ Bloc de fer #" + d.id + " cassé ! +1 fer → " + d.fer + " dans le sac",
-    reparation: (d) => "🔧 Réparation : " + (d.objet === "épée" ? "l'épée" : "le bouclier") + " est comme neuf (il reste " + d.fer + " fer)",
+    reparation: (d) => "🔧 Réparation avec 1 fer : " + d.objet + " remis(e) à neuf (il reste " + d.fer + " fer)",
     "reparation-refusee": (d) => "🔧 Pas de réparation : " + d.raison,
-    "epee-cassee": () => "💔 Ton épée est cassée ! Elle ne fait plus de dégâts : casse du fer (F) et répare-la (R)",
+    "epee-cassee": (d) => "💔 Ton arme est cassée (" + ((d && d.arme) || "épée") + ") ! Elle ne fait plus de dégâts : casse du fer (F) et répare-la (R)",
+    "objet-en-main": (d) => "🎒 Touche " + d.touche + " : tu tiens maintenant " + d.objet,
+    "pas-pret": (d) => "⏳ " + d.objet + " pas encore prêt(e) : attends encore " + d.attente + " s",
+    tir: (d) => "🔫 Pan ! Tir au " + d.arme + " (balle #" + d.id + ", " + d.degats + " dégâts) · prochain tir dans " + d.attente + " s",
+    "balle-touche": (d) => "🎯 La balle #" + d.id + " touche le " + d.cible + " : −" + d.degats + " PV → " + d.pv + " PV",
+    "balle-mur": (d) => "🧱 La balle #" + d.id + " s'écrase sur un bloc de " + d.bloc + " (colonne " + d.colonne + ", ligne " + d.ligne + ")",
+    "caisse-cassee": (d) => "🪓 Caisse #" + d.id + " cassée à la hache ! (encore " + d.reste + " coups avant que la hache casse)",
+    "armure-fabriquee": (d) => "🦺 Armure en fer fabriquée avec " + d.fers + " fers ! (il te reste " + d.reste + " fer)",
+    "armure-refusee": (d) => "🦺 Pas d'armure : " + d.raison,
+    "armure-protege": (d) => "🦺 L'armure te protège du monstre #" + d.id + " : " + d.evite + " PV évités (encore " + d.reste + " coups)",
+    "armure-cassee": (d) => "💔 L'armure arrête le coup du monstre #" + d.id + "… et se casse ! (R pour la réparer)",
     grotte: (d) => "⛏️ Tu descends dans la grotte n° " + d.numero + " : " + d.charbons + " minerais de charbon à piocher",
     "charbon-casse": (d) => "⚫ Minerai de charbon #" + d.id + " cassé ! +1 charbon → " + d.charbon + " dans le sac",
     "pioche-cassee": () => "💔 Ta pioche est cassée ! Répare-la avec un fer (R)",
@@ -218,8 +232,15 @@ Jeu.SousLeCapot = (function () {
       ["PV du héros", monde.equipement.pv + " / " + Jeu.CONFIG.combat.pvJoueur],
       ["bouclier (coups restants)", monde.equipement.bouclier > 0 ? monde.equipement.bouclier + " 🛡️" : "cassé"],
       ["potions", monde.equipement.potions],
-      ["épée (coups restants)", monde.equipement.epee > 0 ? monde.equipement.epee + " / " + Jeu.CONFIG.combat.usureEpee : "cassée"],
+      ["épée (coups restants)", monde.equipement.epee > 0 ? monde.equipement.epee + " / " + Jeu.CONFIG.armes.epee.usure : "cassée"],
       ["fer dans le sac", monde.equipement.fer],
+      ["Armes (étape 15)", ""],
+      ["objet en main", (monde.equipement.enMain + 1) + " : " + Jeu.Armes.nomDe(Jeu.Armes.objetEnMain(monde))],
+      ["attente avant le prochain coup", monde.equipement.attente.toFixed(2) + " s"],
+      ["épée dorée (coups restants)", monde.equipement.epeeDoree + " / " + Jeu.CONFIG.armes.epeeDoree.usure],
+      ["petite hache (coups restants)", monde.equipement.hache + " / " + Jeu.CONFIG.armes.hache.usure],
+      ["balles en vol", monde.balles.length],
+      ["armure", monde.equipement.armure > 0 ? monde.equipement.armure + " / " + Jeu.CONFIG.armure.usure : monde.equipement.armureFabriquee ? "cassée" : "pas encore fabriquée"],
       ["pioche (coups restants)", monde.equipement.pioche > 0 ? monde.equipement.pioche + " / " + Jeu.CONFIG.pioche.usure : "cassée"],
       ["charbon", monde.equipement.charbon],
       ["viande crue / cuite", monde.equipement.viandeCrue + " / " + monde.equipement.viandeCuite],

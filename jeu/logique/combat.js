@@ -19,6 +19,11 @@
 // Étape 13 : la pioche s'use aussi (30 coups) ; le minerai de charbon des grottes donne du charbon ;
 // l'épée tue les cochons (viande crue) ; K cuit (1 charbon + 1 viande crue = 1 viande cuite) ;
 // M mange (viande cuite +8 PV, crue +2 PV).
+//
+// Étape 15 : d'autres armes (épée dorée, petite hache, 3 pistolets) et une vraie ARMURE en fer.
+// C'est logique/armes.js qui choisit quoi faire quand on appuie sur T ; pour un coup de corps à corps,
+// il appelle frapper() ci-dessous. Les dégâts de chaque arme sont dans config.js (C.armes).
+// L'armure se fabrique avec 5 fers : chaque coup de monstre enlève alors 2 PV de moins.
 
 window.Jeu = window.Jeu || {};
 
@@ -32,7 +37,13 @@ Jeu.Combat = (function () {
       pv: C.combat.pvJoueur,
       bouclier: C.combat.bouclier,
       potions: C.combat.potions,
-      epee: C.combat.usureEpee, // coups qui restent avant que l'épée casse (étape 12)
+      epee: C.armes.epee.usure, // coups qui restent avant que l'épée casse (étape 12)
+      epeeDoree: C.armes.epeeDoree.usure, // (étape 15)
+      hache: C.armes.hache.usure, // (étape 15)
+      enMain: 0, // la case de la barre choisie (0 à 8) : touches 1 à 9 (étape 15)
+      attente: 0, // secondes avant de pouvoir refrapper ou retirer (étape 15)
+      armure: 0, // coups que l'armure peut encore arrêter (0 = pas d'armure ou cassée)
+      armureFabriquee: false, // a-t-on déjà fabriqué l'armure ?
       fer: 0, // morceaux de fer dans le sac (étape 12)
       pioche: C.pioche.usure, // coups qui restent avant que la pioche casse (étape 13)
       charbon: 0,
@@ -104,8 +115,109 @@ Jeu.Combat = (function () {
       emettre(eq.bouclier > 0 ? "bouclier-bloque" : "bouclier-casse", { id: m.id, reste: eq.bouclier });
       return;
     }
-    eq.pv = Math.max(0, eq.pv - C.monstres.degats);
-    emettre("monstre-attaque", { id: m.id, degats: C.monstres.degats, pv: eq.pv });
+    let degats = C.monstres.degats;
+    if (eq.armure > 0) {
+      // L'armure en fer (étape 15) : le coup fait moins mal, et l'armure s'use un peu.
+      degats = Math.max(0, degats - C.armure.protection);
+      eq.armure -= 1;
+      emettre(eq.armure > 0 ? "armure-protege" : "armure-cassee", { id: m.id, evite: C.monstres.degats - degats, reste: eq.armure });
+    }
+    eq.pv = Math.max(0, eq.pv - degats);
+    emettre("monstre-attaque", { id: m.id, degats, pv: eq.pv });
+  }
+
+  // Un monstre reçoit des dégâts (coup ou balle). Renvoie vrai s'il est vaincu.
+  function blesserMonstre(monde, m, degats, arme) {
+    const emettre = Jeu.Evenements.emettre;
+    m.pv = Math.max(0, m.pv - degats);
+    m.touche = 0.2;
+    if (m.pv <= 0) {
+      m.vivant = false;
+      emettre("monstre-vaincu", { id: m.id, colonne: m.colonne, arme });
+      return true;
+    }
+    return false;
+  }
+
+  // Un cochon reçoit des dégâts : il ne se défend pas. À 0 PV, le héros gagne 1 viande crue.
+  function blesserCochon(monde, cochon, degats) {
+    const emettre = Jeu.Evenements.emettre;
+    cochon.pv -= degats;
+    cochon.touche = 0.2;
+    if (cochon.pv > 0) emettre("cochon-touche", { id: cochon.id, pv: cochon.pv });
+    else {
+      cochon.vivant = false;
+      monde.equipement.viandeCrue += 1;
+      emettre("cochon-attrape", { id: cochon.id, viandeCrue: monde.equipement.viandeCrue });
+    }
+  }
+
+  // La caisse en bois juste devant le héros (pour la hache, étape 15).
+  function caisseDevant(monde, portee) {
+    const j = monde.joueur;
+    for (const o of monde.obstacles) {
+      if (o.type !== "caisse" || o.casse) continue;
+      const devant = j.regard > 0 ? o.x - (j.x + j.l) : j.x - (o.x + o.l);
+      const memeHauteur = j.y < o.y + o.h && j.y + j.h > o.y;
+      if (devant >= -2 && devant <= portee && memeHauteur) return o;
+    }
+    return null;
+  }
+
+  // Un coup de corps à corps avec l'arme nommée (epee, epeeDoree ou hache). Appelé par logique/armes.js.
+  // Chaque arme garde son propre compteur d'usure : eq.epee, eq.epeeDoree, eq.hache.
+  function frapper(monde, nom) {
+    const emettre = Jeu.Evenements.emettre;
+    const eq = monde.equipement;
+    const j = monde.joueur;
+    const arme = C.armes[nom];
+    const m = monstreDevant(monde);
+    eq.coup = C.combat.dureeCoup;
+    eq.attente = arme.attente;
+    const aPortee = m && j.regard > 0 && distance(monde, m) <= C.combat.porteeEpee;
+    const cochon = aPortee ? null : Jeu.Cochons.cochonDevant(monde);
+    const caisse = aPortee || cochon || !arme.casseLesCaisses ? null : caisseDevant(monde, C.combat.porteeEpee);
+    if (cochon) {
+      // Un cochon (étape 13) : l'arme ne s'use pas sur lui (mais cassée, elle ne fait rien).
+      if (eq[nom] <= 0) emettre("coup-epee", { touche: false, arme: arme.nom });
+      else blesserCochon(monde, cochon, arme.degats);
+    } else if (caisse) {
+      // La hache casse les caisses en bois (étape 15) : la case redevient de l'air.
+      if (eq[nom] <= 0) emettre("coup-epee", { touche: false, arme: arme.nom, cassee: true });
+      else {
+        eq[nom] -= 1;
+        caisse.casse = true;
+        for (let k = 0; k < caisse.h / B; k++) Jeu.Terrain.ecrireCase(monde.terrain, caisse.colonne, Math.floor(caisse.y / B) + k, Jeu.Terrain.CASES.air);
+        emettre("caisse-cassee", { id: caisse.id, colonne: caisse.colonne, reste: eq[nom] });
+        if (eq[nom] === 0) emettre("epee-cassee", { arme: arme.nom });
+      }
+    } else if (!aPortee) {
+      emettre("coup-epee", { touche: false, arme: arme.nom });
+    } else if (eq[nom] <= 0) {
+      emettre("coup-epee", { touche: true, cassee: true, id: m.id, pvMonstre: m.pv, arme: arme.nom }); // arme cassée : aucun dégât
+    } else {
+      eq[nom] -= 1; // chaque coup sur un monstre use l'arme
+      if (eq[nom] === 0) emettre("epee-cassee", { arme: arme.nom });
+      emettre("coup-epee", { touche: true, id: m.id, degats: arme.degats, pvMonstre: Math.max(0, m.pv - arme.degats), arme: arme.nom });
+      if (!blesserMonstre(monde, m, arme.degats, arme.nom) && Math.random() < C.monstres.chanceRiposte && m.minuteur !== null) {
+        m.minuteur = Math.min(m.minuteur, C.monstres.riposte); // il riposte !
+        emettre("riposte", { id: m.id });
+      }
+    }
+  }
+
+  // Fabriquer l'armure en fer avec 5 fers (étape 15).
+  function fabriquerArmure(monde) {
+    const emettre = Jeu.Evenements.emettre;
+    const eq = monde.equipement;
+    if (eq.armure >= C.armure.usure) emettre("armure-refusee", { raison: "tu portes déjà une armure neuve" });
+    else if (eq.fer < C.armure.fers) emettre("armure-refusee", { raison: "il faut " + C.armure.fers + " fers (tu en as " + eq.fer + ")" });
+    else {
+      eq.fer -= C.armure.fers;
+      eq.armure = C.armure.usure;
+      eq.armureFabriquee = true;
+      emettre("armure-fabriquee", { fers: C.armure.fers, reste: eq.fer });
+    }
   }
 
   function mettreAJour(monde, dt) {
@@ -134,43 +246,8 @@ Jeu.Combat = (function () {
       }
     }
 
-    // 3. Le coup d'épée (T)
-    if (E.consommer("frapper")) {
-      eq.coup = C.combat.dureeCoup;
-      const aPortee = m && j.regard > 0 && distance(monde, m) <= C.combat.porteeEpee;
-      const cochon = aPortee ? null : Jeu.Cochons.cochonDevant(monde);
-      if (cochon) {
-        // Un cochon (étape 13) : il ne se défend pas. L'épée ne s'use pas sur lui (mais cassée, elle ne fait rien).
-        if (eq.epee <= 0) emettre("coup-epee", { touche: false });
-        else {
-          cochon.pv -= C.combat.degatsEpee;
-          cochon.touche = 0.2;
-          if (cochon.pv > 0) emettre("cochon-touche", { id: cochon.id, pv: cochon.pv });
-          else {
-            cochon.vivant = false;
-            eq.viandeCrue += 1;
-            emettre("cochon-attrape", { id: cochon.id, viandeCrue: eq.viandeCrue });
-          }
-        }
-      } else if (!aPortee) {
-        emettre("coup-epee", { touche: false });
-      } else if (eq.epee <= 0) {
-        emettre("coup-epee", { touche: true, cassee: true, id: m.id, pvMonstre: m.pv }); // épée cassée : aucun dégât
-      } else {
-        eq.epee -= 1; // chaque coup sur un monstre use l'épée
-        if (eq.epee === 0) emettre("epee-cassee", {});
-        m.pv = Math.max(0, m.pv - C.combat.degatsEpee);
-        m.touche = 0.2;
-        emettre("coup-epee", { touche: true, id: m.id, degats: C.combat.degatsEpee, pvMonstre: m.pv });
-        if (m.pv <= 0) {
-          m.vivant = false;
-          emettre("monstre-vaincu", { id: m.id, colonne: m.colonne });
-        } else if (Math.random() < C.monstres.chanceRiposte && m.minuteur !== null) {
-          m.minuteur = Math.min(m.minuteur, C.monstres.riposte); // il riposte !
-          emettre("riposte", { id: m.id });
-        }
-      }
-    }
+    // 3. Le coup d'épée (T) : c'est maintenant logique/armes.js qui décide (voir frapper() plus haut).
+    eq.attente = Math.max(0, eq.attente - dt);
 
     // 3 bis. La pioche (F) : un coup sur le bloc de fer juste devant le héros
     eq.coupPioche = Math.max(0, eq.coupPioche - dt);
@@ -229,19 +306,22 @@ Jeu.Combat = (function () {
     // 3 ter. Réparer (R) : 1 fer répare à neuf ce qui est le plus abîmé
     if (E.consommer("reparer")) {
       // L'usure de chaque objet, en fraction : 0 = neuf, 1 = cassé. On répare le plus abîmé.
-      const usures = [
-        { objet: "épée", usure: 1 - eq.epee / C.combat.usureEpee },
-        { objet: "bouclier", usure: 1 - eq.bouclier / C.combat.bouclier },
-        { objet: "pioche", usure: 1 - eq.pioche / C.pioche.usure },
+      // Chaque objet : son nom, son compteur dans l'équipement, et son maximum.
+      const objets = [
+        { objet: "épée", cle: "epee", max: C.armes.epee.usure },
+        { objet: "épée dorée", cle: "epeeDoree", max: C.armes.epeeDoree.usure },
+        { objet: "petite hache", cle: "hache", max: C.armes.hache.usure },
+        { objet: "bouclier", cle: "bouclier", max: C.combat.bouclier },
+        { objet: "pioche", cle: "pioche", max: C.pioche.usure },
       ];
-      const plusAbime = usures.reduce((a, b) => (b.usure > a.usure ? b : a));
+      if (eq.armureFabriquee) objets.push({ objet: "armure", cle: "armure", max: C.armure.usure }); // étape 15
+      for (const o of objets) o.usure = 1 - eq[o.cle] / o.max;
+      const plusAbime = objets.reduce((a, b) => (b.usure > a.usure ? b : a));
       if (eq.fer <= 0) emettre("reparation-refusee", { raison: "pas de fer dans le sac" });
-      else if (plusAbime.usure === 0) emettre("reparation-refusee", { raison: "l'épée, le bouclier et la pioche sont déjà neufs" });
+      else if (plusAbime.usure === 0) emettre("reparation-refusee", { raison: "tout est déjà neuf" });
       else {
         eq.fer -= 1;
-        if (plusAbime.objet === "épée") eq.epee = C.combat.usureEpee;
-        else if (plusAbime.objet === "bouclier") eq.bouclier = C.combat.bouclier;
-        else eq.pioche = C.pioche.usure;
+        eq[plusAbime.cle] = plusAbime.max;
         emettre("reparation", { objet: plusAbime.objet, fer: eq.fer });
       }
     }
@@ -267,5 +347,5 @@ Jeu.Combat = (function () {
     return null;
   }
 
-  return { creerEquipement, creerMonstre, monstreDevant, ferDevant, distance, mettreAJour };
+  return { creerEquipement, creerMonstre, monstreDevant, ferDevant, distance, frapper, fabriquerArmure, blesserMonstre, blesserCochon, mettreAJour };
 })();

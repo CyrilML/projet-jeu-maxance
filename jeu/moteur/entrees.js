@@ -23,12 +23,22 @@ Jeu.Entrees = (function () {
     valider: ["Enter"],
     pause: ["Escape"], // la touche P sert maintenant à poser un bloc (étape 10)
     poserBloc: ["KeyP"],
-    frapper: ["KeyT"], // un coup d'épée (étape 11)
+    frapper: ["KeyT"], // utiliser l'objet en main : frapper, tirer… (étapes 11 et 15)
     boirePotion: ["KeyH"], // boire la potion (étape 11)
     piocher: ["KeyF"], // un coup de pioche (étape 12)
     reparer: ["KeyR"], // réparer avec un fer (étape 12)
     cuire: ["KeyK"], // cuire de la viande (étape 13)
     manger: ["KeyM"], // manger (étape 13)
+    // Les 9 cases de la barre d'inventaire (étape 15) : touches 1 à 9 (au-dessus des lettres ou pavé numérique).
+    choisir1: ["Digit1", "Numpad1"],
+    choisir2: ["Digit2", "Numpad2"],
+    choisir3: ["Digit3", "Numpad3"],
+    choisir4: ["Digit4", "Numpad4"],
+    choisir5: ["Digit5", "Numpad5"],
+    choisir6: ["Digit6", "Numpad6"],
+    choisir7: ["Digit7", "Numpad7"],
+    choisir8: ["Digit8", "Numpad8"],
+    choisir9: ["Digit9", "Numpad9"],
     rayonsX: ["KeyX"],
     pasSuivant: ["KeyN"],
     ralenti: ["KeyL"],

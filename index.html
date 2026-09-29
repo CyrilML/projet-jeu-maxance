@@ -138,6 +138,7 @@
       <a href="#etape12">Étape 12</a>
       <a href="#etape13">Étape 13</a>
       <a href="#etape14">Étape 14</a>
+      <a href="#etape15">Étape 15</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -1415,6 +1416,74 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Pourquoi interdire de construire près d'un monstre ?</summary><p>Sinon on pourrait construire un pont par-dessus lui et passer sans le combattre.</p></details>
     </section>
 
+    <section id="etape15">
+      <h2>🔫 Étape 15 : pistolets, hache, épée dorée et armure <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Une barre d'inventaire en bas de l'écran, 3 pistolets aux balles infinies, une hache qui casse les caisses, une épée dorée, et une vraie armure en fer à fabriquer.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/15-pistolets-armes-armure.md</code>.</p>
+          <p><strong>Règles :</strong> touches <kbd>1</kbd> à <kbd>9</kbd> pour choisir, <kbd>T</kbd> pour utiliser (1a). 3 pistolets (2b), balles infinies (3b), tir tout droit (4a). Toutes les armes au départ (5a). La hache casse les caisses (6b). Armure : 5 fers (7c).</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ La barre des 9 objets en bas, avec la case choisie en jaune.</li>
+            <li>☐ <kbd>6</kbd> puis <kbd>T</kbd> devant un monstre : −8 PV.</li>
+            <li>☐ Le petit pistolet (<kbd>4</kbd>) tire plus vite que le gros.</li>
+            <li>☐ La hache (<kbd>3</kbd>) casse une caisse.</li>
+            <li>☐ Avec 5 fers : <kbd>9</kbd> puis <kbd>T</kbd>, et l'armure grise apparaît.</li>
+            <li>Vérifie « version 16 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🧰 Un catalogue d'armes</h3>
+      <p>Chaque arme est une petite <strong>fiche</strong> dans <code>config.js</code> : son nom, ses dégâts, son usure et son attente. Le jeu n'a pas une règle par arme : il a <strong>une seule règle</strong> (« enlève les dégâts de l'arme en main ») qui lit la fiche. Pour inventer une nouvelle arme, il suffit d'ajouter une fiche !</p>
+      <div class="carte">
+        <table>
+          <tr><th>Arme</th><th>Dégâts</th><th>Attente</th><th>Usure</th></tr>
+          <tr><td>Épée</td><td>5</td><td>0 s</td><td>20 coups</td></tr>
+          <tr><td>Épée dorée</td><td>7</td><td>0 s</td><td>40 coups</td></tr>
+          <tr><td>Petite hache</td><td>8</td><td>0,8 s</td><td>30 coups</td></tr>
+          <tr><td>Petit pistolet</td><td>2</td><td>0,25 s</td><td>jamais</td></tr>
+          <tr><td>Pistolet moyen</td><td>4</td><td>0,6 s</td><td>jamais</td></tr>
+          <tr><td>Gros pistolet</td><td>8</td><td>1,2 s</td><td>jamais</td></tr>
+        </table>
+      </div>
+
+      <h3>⏳ L'attente : un compte à rebours</h3>
+      <p>Après chaque coup ou tir, un nombre (<code>attente</code>) se met à 0,25, 0,6 ou 1,2. À chaque pas de temps, on lui enlève 1/120 de seconde. Tant qu'il n'est pas à 0, <kbd>T</kbd> ne fait rien et le journal dit « pas encore prêt ». C'est comme ça que des balles infinies ne deviennent pas une mitraillette !</p>
+
+      <h3>💨 La vie d'une balle</h3>
+      <div class="carte">
+        <ol>
+          <li><strong>Naissance :</strong> elle apparaît au bout du canon, avec une vitesse de 700 px/s.</li>
+          <li><strong>À chaque pas :</strong> x = x + 700 × 1/120, soit environ 6 px.</li>
+          <li><strong>Mort :</strong> elle touche un monstre ou un cochon (dégâts), un bloc solide, ou elle a fait 10 blocs.</li>
+        </ol>
+        <p class="petit">C'est exactement comme les flammes de l'étape 7 : des petits objets qui naissent, bougent et disparaissent.</p>
+      </div>
+
+      <h3>🦺 L'armure : une soustraction</h3>
+      <p>Un monstre frappe 3 PV. Avec l'armure : 3 − 2 = <strong>1 PV</strong> seulement. À chaque coup, l'armure s'use (20 coups). Le bouclier passe avant : il arrête les 3 premiers coups tout seul.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Active les rayons X (<kbd>X</kbd>) avec un pistolet en main : trouve la ligne de portée, puis tire et regarde la balle avancer (pause, puis <kbd>N</kbd>).</li>
+        <li>Tire au gros pistolet, puis appuie tout de suite encore sur <kbd>T</kbd> : que dit le journal ?</li>
+        <li>Combien de coups d'épée dorée faut-il pour vaincre un monstre de 30 PV ? Et au gros pistolet ?</li>
+        <li>Casse 5 fers, fabrique l'armure, et compare « PV » avant et après un coup de monstre.</li>
+        <li>Dans l'état en direct, regarde « attente avant le prochain coup » descendre.</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de balles du petit pistolet pour vaincre un monstre de 30 PV ?</summary><p>30 ÷ 2 = 15 balles, soit au moins 15 × 0,25 = 3,75 secondes.</p></details>
+      <details class="question"><summary>Qui tape le plus fort en 10 secondes : la hache ou l'épée dorée ?</summary><p>La hache : un coup à 0 s, 0,8 s, 1,6 s… jusqu'à 9,6 s, donc 13 coups et 104 dégâts. L'épée dorée n'a pas d'attente : tout dépend de la vitesse de ton doigt !</p></details>
+      <details class="question"><summary>Avec l'armure, combien de coups de monstre pour perdre 20 PV ?</summary><p>3 coups arrêtés par le bouclier, puis 20 coups à 1 PV : 23 coups. Sans rien : 7 coups (3 × 7 = 21).</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -1505,17 +1574,17 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>100 briques (sac rempli à chaque drapeau), un clic de souris pour poser à 4 blocs au plus, <kbd>F</kbd> pour reprendre, rien près des monstres.</p>
           <p class="apprend"><b>Tu apprends :</b> transformer un clic en case de la grille, mesurer une distance (Pythagore), une liste de règles qui dit « oui » ou « non, parce que… ». <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">15</div>
-          <h4>Inventaire et catalogue des blocs <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
-          <p>Chaque bloc cassé va dans l'inventaire (piles de 64), avec une barre en bas de l'écran.</p>
-          <p class="apprend"><b>Tu apprends :</b> identifiants (déjà 0 à 6 depuis l'étape 3), catalogue de propriétés (dureté, en plus de solide ou liquide), structures de données. <b>Durée :</b> 2 séances.</p>
+          <h4>Pistolets, hache, épée dorée et armure <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Une barre d'inventaire (touches 1 à 9), 3 pistolets aux balles infinies, une hache qui casse les caisses, une épée dorée et une armure en fer (5 fers).</p>
+          <p class="apprend"><b>Tu apprends :</b> un catalogue de fiches au lieu d'une règle par arme, un compte à rebours, la vie d'un projectile, une soustraction pour se protéger. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte">
+        <div class="carte prochain">
           <div class="num">16</div>
-          <h4>Collines, grottes et minerais</h4>
-          <p>Le monde est déjà sans fin depuis l'étape 2. Ici, il devient plus riche : du relief, des grottes, des minerais cachés sous terre.</p>
-          <p class="apprend"><b>Tu apprends :</b> génération procédurale, bruit de Perlin, décharger les tronçons trop loin pour libérer la mémoire. <b>Durée :</b> 2 à 3 séances.</p>
+          <h4>Sons et musique <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <p>Une petite musique, un bruit d'herbe ou de bois sous les pieds, un « boom, bring » quand on saute.</p>
+          <p class="apprend"><b>Tu apprends :</b> fabriquer un son avec des nombres (fréquence, durée, volume), déclencher un son avec un événement. <b>Durée :</b> 1 séance.</p>
         </div>
         <div class="carte">
           <div class="num">17</div>
@@ -1692,6 +1761,15 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-14" data-cle="appris-14" placeholder="Ex. : J'ai appris qu'un clic devient une case en ajoutant la caméra puis en divisant par 40…"></textarea>
         <label for="idees-14"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-14" data-cle="idees-14" placeholder="Ex. : Choisir la couleur de mes blocs…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 15 · pistolets, hache, épée dorée et armure <span class="petit">· 29 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> une barre d'inventaire de 9 cases en bas de l'écran (touches 1 à 9, <kbd>T</kbd> pour utiliser) ; un catalogue d'armes dans config.js ; 3 pistolets aux balles infinies avec une attente entre deux tirs ; une petite hache qui casse les caisses ; une épée dorée ; une armure en fer à fabriquer avec 5 fers. Sous le capot : les balles et la portée dans les rayons X, l'objet en main et l'attente dans l'état en direct, et de nouveaux messages dans le journal (tir, balle, armure…).</p>
+        <p class="petit">✍️ Réponses de Maxance : 1a 2b 3b 4a 5a 6b 7c.</p>
+        <label for="appris-15"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-15" data-cle="appris-15" placeholder="Ex. : J'ai appris qu'une arme, c'est juste une fiche avec des nombres…"></textarea>
+        <label for="idees-15"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-15" data-cle="idees-15" placeholder="Ex. : Un arc avec des flèches qui tombent…"></textarea>
       </div>
     </section>
   </main>

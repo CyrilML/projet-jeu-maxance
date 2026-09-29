@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 15,
+  version: 16,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -123,13 +123,34 @@ Jeu.CONFIG = {
   // Le combat (étape 11).
   combat: {
     pvJoueur: 20, // les points de vie du héros (à 0 : un cœur en moins et retour au drapeau, avec 20 PV)
-    degatsEpee: 5, // un coup d'épée (touche T) enlève 5 PV au monstre
     porteeEpee: 40, // l'épée touche jusqu'à 1 bloc devant le héros (px)
     dureeCoup: 0.2, // durée de l'animation du coup d'épée (s)
     bouclier: 3, // le bouclier arrête 3 coups, puis il casse
-    usureEpee: 20, // l'épée tient 20 coups sur un monstre, puis elle est cassée (étape 12)
     potions: 1, // une potion par partie (touche H)
     soinPotion: 10, // elle rend 10 PV
+  },
+
+  // Les armes (étape 15). On les a toutes dès le départ ; les touches 1 à 9 choisissent l'objet en main,
+  // et T l'utilise. Les armes de corps à corps s'usent (coups sur un monstre ou une caisse) ;
+  // les pistolets ont des balles INFINIES, mais il faut attendre entre deux tirs.
+  //   degats : PV enlevés   usure : coups avant de casser   attente : secondes entre deux coups/tirs
+  armes: {
+    epee: { nom: "épée", degats: 5, usure: 20, attente: 0 }, // l'épée de départ (étapes 11 et 12)
+    epeeDoree: { nom: "épée dorée", degats: 7, usure: 40, attente: 0 }, // plus stylée, et elle s'use 2 fois moins vite
+    hache: { nom: "petite hache", degats: 8, usure: 30, attente: 0.8, casseLesCaisses: true }, // forte mais lente
+    petitPistolet: { nom: "petit pistolet", degats: 2, attente: 0.25 }, // tire vite
+    pistolet: { nom: "pistolet moyen", degats: 4, attente: 0.6 },
+    grosPistolet: { nom: "gros pistolet", degats: 8, attente: 1.2 }, // tire lentement, mais fort
+  },
+  balles: {
+    vitesse: 700, // px/s
+    portee: 10, // une balle disparaît après 10 blocs
+  },
+  // L'armure en fer (étape 15) : on la fabrique avec 5 fers (touche 9, puis T).
+  armure: {
+    fers: 5, // prix de fabrication
+    protection: 2, // chaque coup de monstre enlève 2 PV de moins (3 → 1)
+    usure: 20, // elle arrête 20 coups, puis elle casse ; R la répare avec 1 fer
   },
   monstres: {
     premier: 100, // un monstre tous les 100 blocs : 100, 200… jusqu'à l'arrivée (le dernier la garde)
