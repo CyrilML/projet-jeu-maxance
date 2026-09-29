@@ -67,6 +67,21 @@ Jeu.Orchestre = (function () {
       Son.bruit({ filtre: "highpass", frequence: 900, duree: 0.12, volume: 0.45, nom: "tir : pan" });
       Son.note({ forme: "square", frequence: 320, fin: 70, duree: 0.1, volume: 0.2, nom: "tir : pan" });
     },
+    // Étape 19 : le Magnum fait un gros BANG grave, le bazooka « fshhh », et l'explosion un énorme BOUM.
+    bang: () => {
+      Son.bruit({ filtre: "lowpass", frequence: 2500, fin: 300, duree: 0.35, volume: 0.7, nom: "Magnum : BANG" });
+      Son.note({ forme: "square", frequence: 180, fin: 40, duree: 0.25, volume: 0.35, nom: "Magnum : BANG" });
+    },
+    fshhh: () => Son.bruit({ filtre: "bandpass", frequence: 600, fin: 2400, duree: 0.45, volume: 0.4, attaque: 0.03, nom: "bazooka : fshhh" }),
+    boum: () => {
+      Son.bruit({ filtre: "lowpass", frequence: 900, fin: 120, duree: 1.1, volume: 0.8, attaque: 0.005, nom: "explosion : BOUM" });
+      Son.note({ forme: "sine", frequence: 90, fin: 30, duree: 0.8, volume: 0.8, nom: "explosion : BOUM" });
+    },
+    ding: () => {
+      const t = Son.maintenant();
+      Son.note({ forme: "triangle", frequence: 988, duree: 0.12, volume: 0.25, quand: t, nom: "roquette fabriquée : ding" });
+      Son.note({ forme: "triangle", frequence: 1319, duree: 0.2, volume: 0.25, quand: t + 0.1, nom: "roquette fabriquée : ding" });
+    },
     ta: () => Son.bruit({ filtre: "highpass", frequence: 1500, duree: 0.05, volume: 0.35, nom: "mitrailleuse : ta" }),
     clic: () => Son.note({ forme: "square", frequence: 1800, duree: 0.02, volume: 0.15, nom: "mitrailleuse vide : clic" }),
     toc: () => Son.note({ forme: "triangle", frequence: 300, fin: 200, duree: 0.06, volume: 0.3, nom: "coup d'outil : toc" }),
@@ -130,7 +145,11 @@ Jeu.Orchestre = (function () {
     const ecouter = Jeu.Evenements.ecouter;
     ecouter("saut", () => jouer("boom"));
     ecouter("atterrissage", () => jouer("bring"));
-    ecouter("tir", (d) => jouer(d.arme === "mitrailleuse" ? "ta" : "pan"));
+    ecouter("tir", (d) => jouer(d.arme === "mitrailleuse" ? "ta" : d.arme === "Magnum" ? "bang" : "pan"));
+    ecouter("roquette-tiree", () => jouer("fshhh"));
+    ecouter("explosion", () => jouer("boum"));
+    ecouter("roquette-fabriquee", () => jouer("ding"));
+    ecouter("plus-de-roquettes", () => jouer("clic"));
     ecouter("plus-de-balles", () => jouer("clic"));
     ecouter("coup-outil", () => jouer("toc"));
     ecouter("bloc-casse", () => jouer("crac"));

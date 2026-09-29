@@ -260,6 +260,44 @@ Jeu.Rendu = (function () {
         r("#dfe6ee", 38, 6, 2, 10);
       }
       if (eq.hache <= 0) r("#1d1d3a", 33, 9, 3, 3); // une entaille : elle est cassée
+    } else if (objet === "magnum") {
+      // Le Magnum (étape 19) : un revolver argenté, long canon, barillet et crosse en bois.
+      // Pendant le recul, le bras et l'arme remontent d'un coup (on tourne le dessin autour de la main).
+      const k = eq.recul > 0 ? eq.recul / C.armes.magnum.dureeRecul : 0;
+      ctx.save();
+      ctx.translate(x + 29, y + 26);
+      ctx.rotate(-0.6 * k);
+      ctx.translate(-(x + 29), -(y + 26));
+      r("#f1c27d", 22, 22, 8, 5); // l'avant-bras, tendu (pas levé en l'air)
+      r("#6b3a1e", 27, 24, 5, 9); // crosse en bois
+      r("#4a2a14", 28, 26, 3, 5);
+      r("#b9c0c9", 30, 19, 9, 7); // le barillet
+      r("#8e949e", 31, 20, 7, 1);
+      r("#8e949e", 31, 24, 7, 1);
+      r("#d7dde4", 38, 20, 16, 4); // le long canon
+      r("#8e949e", 38, 23, 16, 1);
+      r("#1d1d3a", 52, 18, 2, 2); // le guidon
+      r("#1d1d3a", 31, 26, 3, 3); // la gâchette
+      if (eq.tir > 0) {
+        r("#ffe27a", 54, 15, 12, 12); // grosse flamme de départ
+        r("#ff9f1a", 56, 17, 8, 8);
+        r("#fff", 57, 19, 4, 4);
+      }
+      if (k > 0) {
+        ctx.fillStyle = "rgba(200,200,200," + (0.6 * k).toFixed(2) + ")"; // un petit nuage de fumée
+        ctx.fillRect(x + 54, y + 8 - (1 - k) * 12, 8, 8);
+      }
+      ctx.restore();
+    } else if (objet === "bazooka") {
+      // Le bazooka (étape 19) : un gros tube vert posé sur l'épaule.
+      r("#3f6b2f", 6, 12, 44, 10); // le tube
+      r("#2c4d21", 6, 12, 44, 2);
+      r("#1d1d3a", 48, 11, 4, 12); // la bouche du tube
+      r("#1d1d3a", 2, 13, 4, 8); // l'arrière
+      r("#6b4423", 28, 22, 4, 8); // la poignée
+      r("#c9a227", 18, 8, 6, 4); // le viseur
+      if (eq.roquettes > 0 && eq.attente <= 0) r("#d9483b", 50, 14, 5, 6); // la roquette prête, au bout
+      if (eq.tir > 0) r("#ffe27a", 52, 10, 10, 14);
     } else if (Jeu.Armes.PISTOLETS.includes(objet)) {
       const long = objet === "petitPistolet" ? 10 : objet === "pistolet" ? 15 : objet === "mitrailleuse" ? 26 : 21;
       const epais = objet === "grosPistolet" || objet === "mitrailleuse" ? 7 : 5;
@@ -294,6 +332,14 @@ Jeu.Rendu = (function () {
     ctx.save();
     ctx.translate(milieu, 0);
     ctx.scale(j.regard || 1, 1); // −1 = miroir : il regarde à gauche
+    // Le recul du Magnum (étape 19) : le héros gesticule, penché en arrière autour de ses pieds.
+    if (eq && eq.recul > 0) {
+      const k = eq.recul / C.armes.magnum.dureeRecul;
+      const pieds = y + j.h;
+      ctx.translate(0, pieds);
+      ctx.rotate(-0.15 * k * Math.cos((1 - k) * 12));
+      ctx.translate(0, -pieds);
+    }
     const x = -15;
     // Le bouclier, porté dans le dos (étape 11) : il se fend à chaque coup arrêté, et disparaît quand il casse.
     if (eq && eq.bouclier > 0) {
@@ -623,7 +669,7 @@ Jeu.Rendu = (function () {
       ctx.strokeStyle = choisi ? "#ffe27a" : "rgba(255,255,255,0.35)";
       ctx.lineWidth = choisi ? 3 : 1;
       ctx.strokeRect(x + 0.5, haut + 0.5, taille - 1, taille - 1);
-      const inactif = (objet === "mitrailleuse" && eq.munitions <= 0) || (objet === "armure" && eq.armure <= 0) || (eq[objet] !== undefined && objet !== "briques" && eq[objet] <= 0);
+      const inactif = (objet === "mitrailleuse" && eq.munitions <= 0) || (objet === "bazooka" && eq.roquettes <= 0) || (objet === "armure" && eq.armure <= 0) || (eq[objet] !== undefined && objet !== "briques" && eq[objet] <= 0);
       ctx.globalAlpha = inactif ? 0.45 : 1;
       icone(objet, x + taille / 2, haut + taille / 2 - 2);
       ctx.globalAlpha = 1;
@@ -631,6 +677,7 @@ Jeu.Rendu = (function () {
       // En dessous : l'usure (armes, pioche, armure), le nombre (briques) ou ∞ (pistolets)
       const max = objet === "pioche" ? C.pioche.usure : objet === "armure" ? C.armure.usure : C.armes[objet] && C.armes[objet].usure;
       if (objet === "briques") texte(String(monde.inventaire.blocs), x + taille - 4, haut + taille - 5, 13, "#fff", "right");
+      else if (objet === "bazooka") texte(String(eq.roquettes), x + taille - 4, haut + taille - 5, 13, eq.roquettes > 0 ? "#ffe27a" : "#ff9b9b", "right");
       else if (objet === "mitrailleuse") texte(String(eq.munitions), x + taille - 4, haut + taille - 5, 13, eq.munitions > 0 ? "#ffe27a" : "#ff9b9b", "right");
       else if (Jeu.Armes.PISTOLETS.includes(objet)) texte("∞", x + taille - 5, haut + taille - 5, 14, "#ffe27a", "right");
       else if (objet === "armure" && !eq.armureFabriquee) texte(C.armure.fers + "⛓️", x + taille - 4, haut + taille - 5, 12, "#fff", "right");
@@ -646,7 +693,9 @@ Jeu.Rendu = (function () {
     const objet = Jeu.Armes.objetEnMain(monde);
     const arme = C.armes[objet];
     let infos = Jeu.Armes.nomDe(objet);
-    if (objet === "mitrailleuse") infos += " · " + arme.degats + " dégât par balle · " + eq.munitions + " balles · garde T appuyée";
+    if (objet === "bazooka") infos += " · " + C.armes.bazooka.degats + " dégâts + explosion 3 × 3 · " + eq.roquettes + " roquettes · pierres minées " + eq.pierres + " / " + C.armes.bazooka.pierresParRoquette;
+    else if (objet === "magnum") infos += " · " + arme.degats + " dégâts · attention au recul ! · attente " + arme.attente + " s";
+    else if (objet === "mitrailleuse") infos += " · " + arme.degats + " dégât par balle · " + eq.munitions + " balles · garde T appuyée";
     else if (arme) infos += " · " + arme.degats + " dégâts" + (arme.usure ? " · " + eq[objet] + "/" + arme.usure + " coups" : " · balles infinies") + (arme.attente ? " · attente " + arme.attente + " s" : "");
     if (Jeu.Armes.OUTILS.includes(objet)) infos += " · 🖱️ clic : casser " + C.outils[objet].facile.join(", ") + (C.outils[objet].casseTout ? " (le reste en " + C.outils.clicsDifficiles + " clics)" : "");
     if (objet === "briques") infos += " · 🖱️ clic : poser";
@@ -675,6 +724,17 @@ Jeu.Rendu = (function () {
       r("#8a5a2b", -2, -12, 4, 24); // manche
       r("#9aa3ad", 2, -12, 9, 11); // lame
       r("#dfe6ee", 9, -12, 3, 11);
+    } else if (objet === "magnum") {
+      r("#6b3a1e", -12, 1, 6, 11); // crosse
+      r("#b9c0c9", -7, -6, 8, 8); // barillet
+      r("#d7dde4", 1, -5, 14, 5); // canon
+      r("#1d1d3a", 13, -7, 2, 2);
+    } else if (objet === "bazooka") {
+      r("#3f6b2f", -16, -5, 32, 9);
+      r("#1d1d3a", 14, -6, 3, 11);
+      r("#d9483b", 17, -3, 4, 5); // la roquette
+      r("#6b4423", -2, 4, 4, 7);
+      r("#c9a227", -8, -9, 5, 4);
     } else if (Jeu.Armes.PISTOLETS.includes(objet) && objet !== "mitrailleuse") {
       const taille = objet === "petitPistolet" ? 0.75 : objet === "pistolet" ? 1 : 1.3;
       const corps = objet === "grosPistolet" ? "#3b4252" : objet === "pistolet" ? "#5b6472" : "#7c8796";
@@ -729,7 +789,7 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 17 : pelle, casser les blocs et mitrailleuse", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 19 : le Magnum et le bazooka", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au bloc " + C.arrivee.bloc + " le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
@@ -737,7 +797,7 @@ Jeu.Rendu = (function () {
     texte("🔥 Lave et 💀 murets à pics (un tous les 50 blocs) : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
     texte("📦 Caisses et 🗼 tours en pierre : sans danger, monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
     texte("🎒 " + C.inventaire.blocs + " blocs (sac rempli à chaque 🚩) · un bloc cassé va dans le sac · saute + P : sous tes pieds", L / 2, 470, 16, "#cfe0ff", "center");
-    texte("1…9, 0, ° : choisir l'objet · T : l'utiliser · 🖱️ clic : casser (outil) ou poser (briques) · H · F · R · K · M", L / 2, 496, 15, "#cfe0ff", "center");
+    texte("1…9, 0, ), =, ² : choisir l'objet · T : l'utiliser · 🖱️ clic : casser (outil) ou poser (briques) · H · F · R · K · M", L / 2, 496, 15, "#cfe0ff", "center");
     texte("🎵 J : couper la musique · 🔊 B : couper les bruits", L / 2, 140, 14, "#ffe27a", "center");
     const premier = Jeu.Sauvegarde.donnees.classement[0];
     if (premier) texte("🥇 À battre : " + premier.pseudo + " · " + premier.blocs + " blocs · " + duree(premier.temps), L / 2, 522, 16, "#ffe27a", "center");
@@ -877,6 +937,20 @@ Jeu.Rendu = (function () {
       ctx.strokeRect(b.x - camX - 2, b.y - 2, b.l + 4, b.h + 4);
       ctx.fillStyle = "#ffe27a";
       ctx.fillText("balle #" + b.id + " · vx = " + b.vx + " px/s · " + Math.round(b.parcouru / B) + "/" + C.balles.portee + " blocs", b.x - camX - 40, b.y - 8);
+    }
+    // Les roquettes (étape 19) : leur cadre, et le carré de 3 × 3 blocs qui explosera autour du nez.
+    for (const r of monde.roquettes) {
+      const nez = r.vx > 0 ? r.x + r.l : r.x;
+      const c = Math.floor(nez / B);
+      const l = Math.floor((r.y + r.h / 2) / B);
+      ctx.strokeStyle = "#ff8a3a";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(r.x - camX - 2, r.y - 2, r.l + 4, r.h + 4);
+      ctx.setLineDash([5, 4]);
+      ctx.strokeRect((c - C.roquettes.rayon) * B - camX, (l - C.roquettes.rayon) * B, (2 * C.roquettes.rayon + 1) * B, (2 * C.roquettes.rayon + 1) * B);
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#ff8a3a";
+      ctx.fillText("roquette #" + r.id + " · " + Math.round(r.parcouru / B) + "/" + C.roquettes.portee + " blocs · zone d'explosion", r.x - camX - 60, r.y - 50);
     }
     if (Jeu.Armes.PISTOLETS.includes(Jeu.Armes.objetEnMain(monde))) {
       const sens = j.regard || 1;
@@ -1064,6 +1138,35 @@ Jeu.Rendu = (function () {
     }
   }
 
+  // Les roquettes (étape 19) : corps gris, nez rouge, flamme à l'arrière. Et les explosions : un anneau qui grandit.
+  function roquettes(monde) {
+    for (const r of monde.roquettes || []) {
+      const sens = Math.sign(r.vx);
+      const x = Math.round(r.x);
+      const y = Math.round(r.y);
+      ctx.fillStyle = "#9aa3ad";
+      ctx.fillRect(x, y, r.l, r.h);
+      ctx.fillStyle = "#d9483b";
+      ctx.fillRect(sens > 0 ? x + r.l - 5 : x, y - 1, 5, r.h + 2);
+      ctx.fillStyle = Math.floor(monde.temps * 30) % 2 ? "#ffe27a" : "#ff9f1a";
+      ctx.fillRect(sens > 0 ? x - 9 : x + r.l, y + 1, 9, r.h - 2);
+    }
+    for (const e of monde.explosions || []) {
+      const k = e.age / C.roquettes.dureeExplosion;
+      ctx.strokeStyle = "rgba(255,200,80," + (1 - k).toFixed(2) + ")";
+      ctx.lineWidth = 6 * (1 - k) + 1;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, 10 + k * B * 1.8, 0, Math.PI * 2);
+      ctx.stroke();
+      if (k < 0.3) {
+        ctx.fillStyle = "rgba(255,255,220," + (0.8 - k * 2).toFixed(2) + ")";
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, 26, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
   // La case visée par la souris (étape 14) : cadre vert = un clic pose une brique ici,
   // cadre rouge = interdit (trop loin, case pleine, monstre trop proche…). Dessinée dans le monde.
   function caseDeConstruction(monde) {
@@ -1117,7 +1220,9 @@ Jeu.Rendu = (function () {
 
     // Tout ce qui est dans le monde est décalé de −camera.x (et −camera.y) : c'est ça, « regarder à travers la caméra ».
     ctx.save();
-    ctx.translate(-camX, -camY);
+    // L'écran tremble un tout petit peu pendant le recul du Magnum (étape 19). Seul le dessin bouge.
+    const secousse = monde.equipement && monde.equipement.recul > 0 ? (monde.equipement.recul / C.armes.magnum.dureeRecul) * 4 : 0;
+    ctx.translate(-camX + Math.round(Math.sin(monde.temps * 90) * secousse), -camY + Math.round(Math.cos(monde.temps * 70) * secousse));
     terrain(monde);
     cochons(monde.cochons);
     drapeaux(monde);
@@ -1126,6 +1231,7 @@ Jeu.Rendu = (function () {
     joueur(monde.joueur, monde.phase, monde.equipement);
     flammes(monde.flammes);
     balles(monde.balles);
+    roquettes(monde);
     if (monde.phase === "jeu" && !monde.brulure && !monde.danse) caseDeConstruction(monde);
     ctx.restore();
 

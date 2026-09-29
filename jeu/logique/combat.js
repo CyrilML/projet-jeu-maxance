@@ -43,6 +43,9 @@ Jeu.Combat = (function () {
       enMain: 0, // la case de la barre choisie (0 à 8) : touches 1 à 9 (étape 15)
       attente: 0, // secondes avant de pouvoir refrapper ou retirer (étape 15)
       munitions: C.armes.mitrailleuse.balles, // balles de la mitrailleuse (étape 17)
+      roquettes: C.armes.bazooka.roquettes, // roquettes du bazooka (étape 19)
+      pierres: 0, // blocs de pierre minés depuis la dernière roquette fabriquée (0 à 9)
+      recul: 0, // animation du recul du Magnum (s)
       armure: 0, // coups que l'armure peut encore arrêter (0 = pas d'armure ou cassée)
       armureFabriquee: false, // a-t-on déjà fabriqué l'armure ?
       fer: 0, // morceaux de fer dans le sac (étape 12)

@@ -105,7 +105,17 @@ Jeu.Outils = (function () {
     monde.inventaire.blocs += 1;
     monde.inventaire.casses += 1;
     emettre("bloc-casse", { outil: C.outils[objet].nom, bloc: nom, colonne, ligne, sac: monde.inventaire.blocs });
+    // Étape 19 : 10 blocs de pierre (ou de roche) minés = 1 roquette de bazooka, fabriquée toute seule.
+    if (nom === "pierre" || nom === "roche") {
+      const eq = monde.equipement;
+      eq.pierres += 1;
+      if (eq.pierres >= C.armes.bazooka.pierresParRoquette) {
+        eq.pierres = 0;
+        eq.roquettes += 1;
+        emettre("roquette-fabriquee", { roquettes: eq.roquettes, pierres: C.armes.bazooka.pierresParRoquette });
+      }
+    }
   }
 
-  return { clicsNecessaires, raisonDuRefus, casser };
+  return { clicsNecessaires, raisonDuRefus, casser, oublierLesObstaclesVides };
 })();

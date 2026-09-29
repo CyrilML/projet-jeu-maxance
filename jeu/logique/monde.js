@@ -58,6 +58,8 @@ Jeu.Monde = (function () {
       equipement: Jeu.Combat.creerEquipement(), // PV, bouclier, potion (étape 11)
       monstres: [], // les monstres du monde (étape 11)
       balles: [], // les balles des pistolets en vol (étape 15)
+      roquettes: [], // les roquettes du bazooka en vol (étape 19)
+      explosions: [], // les explosions en cours, pour le dessin (étape 19)
       cassage: null, // le bloc en train d'être cassé au clic : { colonne, ligne, clics, besoin } (étape 17)
       cochons: [], // les cochons qui se promènent (étape 13)
       grottesVisitees: 0, // combien de grottes le héros a découvertes (étape 13)

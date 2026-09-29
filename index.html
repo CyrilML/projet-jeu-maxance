@@ -142,6 +142,7 @@
       <a href="#etape16">Étape 16</a>
       <a href="#etape17">Étape 17</a>
       <a href="#etape18">Étape 18</a>
+      <a href="#etape19">Étape 19</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -1645,6 +1646,59 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Quel événement du journal déclenche le cri ?</summary><p>« bras-leves » : le moment où le héros lève les bras en tombant dans un trou (étape 8).</p></details>
     </section>
 
+    <section id="etape19">
+      <h2>🚀 Étape 19 : le Magnum et le bazooka <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Un Magnum qui recule quand il tire (le héros gesticule et l'écran tremble), et un bazooka qui tire des roquettes explosives. Pour recharger le bazooka, il faut miner de la pierre.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/19-magnum-et-bazooka.md</code>.</p>
+          <p><strong>Règles :</strong> Magnum 15 dégâts, 1 tir/s (1a). Recul + petit tremblement (2a). Roquette : 20 dégâts, casse 3 × 3 blocs (3a). 10 pierres minées = 1 roquette (4a). Touches <kbd>=</kbd> et <kbd>²</kbd> (5c).</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ <kbd>=</kbd> puis <kbd>T</kbd> : BANG, recul, l'écran tremble.</li>
+            <li>☐ Le monstre perd 15 PV.</li>
+            <li>☐ <kbd>²</kbd> puis <kbd>T</kbd> : fshhh… BOUM !</li>
+            <li>☐ Contre un mur de pierre : un trou de 3 × 3.</li>
+            <li>☐ 10 pierres minées : « une roquette fabriquée ! »</li>
+            <li>Vérifie « version 19 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔙 Le recul : action et réaction</h3>
+      <p>Quand une arme pousse une balle très fort vers l'avant, la balle pousse l'arme vers l'arrière : c'est le <strong>recul</strong>. Dans le jeu, le héros recule de 8 px, sans traverser les murs, grâce à la même règle de collision que pour marcher. Pendant 0,35 s, le dessin du héros se penche et son bras remonte, puis tout revient en place.</p>
+      <p class="petit">Le tremblement de l'écran ne change pas le monde : c'est seulement le peintre qui décale un peu son dessin (quelques pixels, en suivant un sinus). La caméra, elle, ne bouge pas.</p>
+
+      <h3>💥 L'explosion : une zone de 3 × 3</h3>
+      <div class="carte">
+        <p>La roquette avance comme une balle, mais plus lentement. Quand elle touche quelque chose (ou après 12 blocs), le jeu :</p>
+        <ol>
+          <li>trouve la case de l'impact (colonne, ligne) ;</li>
+          <li>dessine autour un carré de 3 × 3 cases : c'est la <strong>zone d'explosion</strong> ;</li>
+          <li>blesse chaque monstre et chaque cochon qui touche la zone (20 PV) ;</li>
+          <li>écrit 0 (l'air) dans chaque case solide de la zone… sauf la dernière ligne du monde, et sauf si un monstre vivant est tout près ;</li>
+          <li>lance 24 flammes dans toutes les directions (les particules de l'étape 7 !).</li>
+        </ol>
+      </div>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ol>
+        <li>Active les rayons X (<kbd>X</kbd>), tire une roquette et mets en pause (<kbd>Échap</kbd>) : trouve le carré orange de la zone d'explosion.</li>
+        <li>Tire au Magnum et regarde « recul du Magnum » dans l'état en direct.</li>
+        <li>Mine de la pierre dans une grotte et regarde « pierres minées » monter jusqu'à 10.</li>
+        <li>Tire une roquette dans la terre : combien de blocs sont cassés ? Et contre le fond du monde ?</li>
+      </ol>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de tirs de Magnum pour vaincre un monstre de 30 PV ? Combien de roquettes ?</summary><p>Magnum : 30 ÷ 15 = 2 tirs. Roquettes : 20 PV chacune, donc 2 roquettes (la 2e finit le travail).</p></details>
+      <details class="question"><summary>Combien de cases au maximum une explosion peut-elle casser ?</summary><p>3 × 3 = 9 cases.</p></details>
+      <details class="question"><summary>Tu as 0 roquette. Combien de blocs de pierre dois-tu miner pour en avoir 3 ?</summary><p>3 × 10 = 30 blocs de pierre (ou de roche).</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -1759,26 +1813,32 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>Un cri de surprise dans les trous, et une batterie « tac-tac-tac » quand le squelette danse sur un muret.</p>
           <p class="apprend"><b>Tu apprends :</b> une fréquence qui monte puis descend, une batterie faite de 3 sons, préparer des sons à l'avance. <b>Durée :</b> ½ séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">19</div>
+          <h4>Le Magnum et le bazooka <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Un Magnum qui recule (le héros gesticule, l'écran tremble) et un bazooka à roquettes explosives, rechargé en minant de la pierre.</p>
+          <p class="apprend"><b>Tu apprends :</b> action et réaction (le recul), une zone d'effet autour d'un point, un tremblement qui ne touche que le dessin, fabriquer avec un compteur. <b>Durée :</b> 1 à 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">20</div>
           <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">20</div>
+          <div class="num">21</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">21</div>
+          <div class="num">22</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">22</div>
+          <div class="num">23</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -1969,6 +2029,15 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-18" data-cle="appris-18" placeholder="Ex. : J'ai appris qu'une batterie, c'est du bruit très court…"></textarea>
         <label for="idees-18"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-18" data-cle="idees-18" placeholder="Ex. : Un bruit de cochon « groin groin »…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 19 · le Magnum et le bazooka <span class="petit">· 29 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la barre passe à 13 cases (<kbd>=</kbd> Magnum, <kbd>²</kbd> bazooka) ; le Magnum tire fort et recule (petit pas en arrière, le héros se penche, l'écran tremble) ; le bazooka tire des roquettes qui explosent (20 PV, un carré de 3 × 3 blocs cassés, des flammes) ; tous les 10 blocs de pierre minés, une roquette de plus. Sous le capot : la zone d'explosion dans les rayons X, les roquettes et le recul dans l'état en direct, de nouveaux sons (BANG, fshhh, BOUM, ding).</p>
+        <p class="petit">✍️ Réponses de Maxance : tout en A, sauf 5C.</p>
+        <label for="appris-19"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-19" data-cle="appris-19" placeholder="Ex. : J'ai appris que le recul, c'est la balle qui pousse l'arme en arrière…"></textarea>
+        <label for="idees-19"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-19" data-cle="idees-19" placeholder="Ex. : Des grenades qui rebondissent…"></textarea>
       </div>
     </section>
   </main>

@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 18,
+  version: 19,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -143,6 +143,17 @@ Jeu.CONFIG = {
     grosPistolet: { nom: "gros pistolet", degats: 8, attente: 1.2 }, // tire lentement, mais fort
     // La mitrailleuse (étape 17) : tant qu'on tient T, 10 balles par seconde. Mais les balles sont COMPTÉES.
     mitrailleuse: { nom: "mitrailleuse", degats: 1, attente: 0.1, balles: 50, chanceButin: 0.5, butinMin: 10, butinMax: 25 },
+    // Le Magnum (étape 19) : très fort mais lent. Il RECULE à chaque tir (recul en px) et l'écran tremble.
+    magnum: { nom: "Magnum", degats: 15, attente: 1, recul: 8, dureeRecul: 0.35 },
+    // Le bazooka (étape 19) : une roquette qui explose. 5 au départ, +1 tous les 10 blocs de pierre minés.
+    bazooka: { nom: "bazooka", degats: 20, attente: 1, roquettes: 5, pierresParRoquette: 10 },
+  },
+  // La roquette et son explosion (étape 19).
+  roquettes: {
+    vitesse: 350, // px/s : plus lente qu'une balle
+    portee: 12, // elle explose d'elle-même après 12 blocs
+    rayon: 1, // l'explosion casse un carré de 3 × 3 blocs (1 bloc autour de l'impact)
+    dureeExplosion: 0.5, // s : le temps que l'explosion reste affichée
   },
 
   // Les outils pour casser les blocs au clic de souris (étape 17). Le bon outil casse en 1 clic ;

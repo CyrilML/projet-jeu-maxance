@@ -42,7 +42,9 @@ Jeu.Entrees = (function () {
     choisir8: ["Digit8", "Numpad8"],
     choisir9: ["Digit9", "Numpad9"],
     choisir10: ["Digit0", "Numpad0"], // la pelle (étape 17)
-    choisir11: ["Minus"], // la mitrailleuse : la touche « ° » à droite du 0 (clavier français)
+    choisir11: ["Minus"], // la mitrailleuse : la touche « ) » (ou °) à droite du 0 (clavier français)
+    choisir12: ["Equal"], // le Magnum : la touche « = » (étape 19)
+    choisir13: ["Backquote", "IntlBackslash"], // le bazooka : la touche « ² », en haut à gauche (étape 19)
     rayonsX: ["KeyX"],
     pasSuivant: ["KeyN"],
     ralenti: ["KeyL"],
