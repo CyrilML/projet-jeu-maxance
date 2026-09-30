@@ -146,6 +146,21 @@ Jeu.Combat = (function () {
     return meilleur;
   }
 
+  // Un bloc solide entre le héros et le monstre ? Alors le héros est CACHÉ : les coups ne passent pas (étape 27).
+  function blocEntre(monde, m) {
+    const j = monde.joueur;
+    const gauche = Math.min(j.x + j.l, m.x + m.l);
+    const droite = Math.max(j.x, m.x);
+    const haut = Math.max(j.y, m.y);
+    const bas = Math.min(j.y + j.h, m.y + m.h) - 1;
+    for (let c = Math.floor(gauche / B); c <= Math.floor((droite - 1) / B); c++) {
+      for (let l = Math.floor(haut / B); l <= Math.floor(bas / B); l++) {
+        if (Jeu.Terrain.estSolide(monde.terrain, c, l)) return true;
+      }
+    }
+    return false;
+  }
+
   // Compatibilité : la distance entre le devant du héros et le monstre (en px).
   function distance(monde, m) {
     return ecart(monde, m);
@@ -456,7 +471,7 @@ Jeu.Combat = (function () {
       if (vu && !mo.aVuLeHeros) Jeu.Evenements.emettre("monstre-approche", { id: mo.id, boss: mo.type === "boss", vue: mo.vue });
       mo.aVuLeHeros = vu;
       if (vu && ecart(monde, mo) > 2) approcher(monde, mo, dt);
-      const proche = ecart(monde, mo) <= mo.portee && memeHauteur(monde, mo);
+      const proche = ecart(monde, mo) <= mo.portee && memeHauteur(monde, mo) && !blocEntre(monde, mo);
       if (!proche) {
         mo.minuteur = null;
         continue;
@@ -473,5 +488,5 @@ Jeu.Combat = (function () {
     return null;
   }
 
-  return { creerEquipement, creerBoss, creerMonstreGrotte, monstreDevant, cibleDevant, ecart, ferDevant, distance, frapper, piocherMinerai, fabriquerArmure, blesserMonstre, blesserCochon, mettreAJour };
+  return { blocEntre, creerEquipement, creerBoss, creerMonstreGrotte, monstreDevant, cibleDevant, ecart, ferDevant, distance, frapper, piocherMinerai, fabriquerArmure, blesserMonstre, blesserCochon, mettreAJour };
 })();

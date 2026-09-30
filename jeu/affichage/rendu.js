@@ -534,8 +534,14 @@ Jeu.Rendu = (function () {
       }
     } else if (eq) {
       // Étape 24 : les armes grandissent avec le héros, mais un peu moins (× 0,85), pour garder la bonne taille.
+      // Étape 27 : caché derrière un bloc, il lève son arme par-dessus (eq.releve, en px du monde).
+      const leve = (eq.releve || 0) / kHaut / 0.85;
+      if (leve > 0) {
+        ctx.fillStyle = "#f1c27d";
+        ctx.fillRect(x + 25, y + 20 - leve, 5, leve + 4); // le bras tendu vers le haut
+      }
       ctx.save();
-      ctx.translate(x + 28, y + 24); // la main
+      ctx.translate(x + 28, y + 24 - leve); // la main
       ctx.scale(0.85, 0.85);
       ctx.translate(-(x + 28), -(y + 24));
       objetDansLaMain(Jeu.Armes.BARRE[eq.enMain], eq, x, y);

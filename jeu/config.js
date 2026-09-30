@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 26,
+  version: 27,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -56,8 +56,9 @@ Jeu.CONFIG = {
   trous: {
     ecartMin: 6, // entre deux trous : 6 à 9 blocs de sol (+ la largeur du trou) → « un trou tous les 10 blocs environ »
     ecartMax: 9,
-    largeurMin: 1,
-    largeurMax: 3, // le saut franchit environ 5 blocs : un trou de 3 est toujours possible
+    // Étape 27 : le héros fait 52 px de large : un trou d'un bloc ne sert à rien, il marche par-dessus.
+    largeurMin: 2,
+    largeurMax: 3, // le saut franchit bien plus de 3 blocs : toujours possible
     chute: 980, // si les pieds du héros descendent plus bas que ce y (sous le monde), il est tombé dans le trou
   },
 
@@ -66,7 +67,9 @@ Jeu.CONFIG = {
     parTronconMax: 2,
     largeurMin: 3,
     largeurMax: 5,
-    hauteurs: [2, 3], // en blocs au-dessus du sol
+    // Étape 27 : le héros fait 2 blocs de haut. Les plateformes sont à 3 ou 4 blocs au-dessus du sol :
+    // il passe dessous debout (2 ou 3 blocs de place), et il saute dessus (il saute de 4,4 blocs).
+    hauteurs: [3, 4], // en blocs au-dessus du sol
   },
 
   // Une grande fosse de lave au milieu de chaque tronçon : donc une tous les 30 blocs (étape 4).
@@ -242,7 +245,8 @@ Jeu.CONFIG = {
     chanceRiposte: 0.3, // quand on le frappe, 3 chances sur 10 qu'il riposte tout de suite
     riposte: 0.3, // … au bout de 0,3 s
     portee: 44, // il touche le héros jusqu'à 44 px devant lui
-    espace: 4, // blocs d'herbe plate gardés devant lui pour se battre
+    espace: 6, // blocs d'herbe plate gardés devant le boss pour se battre (étape 27 : plus de place)
+    espaceDerriere: 2, // … et derrière lui : le dragon fait presque 3 blocs de large (étape 27)
   },
 
   // Le fer (étape 12) : un bloc de fer tous les 20 blocs, à casser avec la pioche (F) pour réparer (R).
@@ -299,8 +303,9 @@ Jeu.CONFIG = {
       decalageMax: 5, // « environ » : s'il y a un trou ou de la lave pile à cet endroit, on le décale d'au plus 5 blocs
     },
     // Largeur d'une mare de lave, en blocs (tirée au hasard entre les deux).
-    laveLargeurMin: 1,
-    laveLargeurMax: 2,
+    // Étape 27 : 2 ou 3 blocs (une mare d'un bloc, le héros la survole sans la toucher).
+    laveLargeurMin: 2,
+    laveLargeurMax: 3,
   },
 
   camera: {

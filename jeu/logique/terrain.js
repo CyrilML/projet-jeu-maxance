@@ -101,7 +101,7 @@ Jeu.Terrain = (function () {
     const reserves = [grandDanger];
     // Un monstre dans ce tronçon ? (étape 11) Il lui faut un terrain plat devant lui pour se battre.
     const monstre = arrivee ? null : placeDuMonstre(debut, fin, zoneSure, grandDanger);
-    if (monstre !== null) reserves.push({ debut: monstre - C.monstres.espace, fin: monstre + 1 });
+    if (monstre !== null) reserves.push({ debut: monstre - C.monstres.espace, fin: monstre + C.monstres.espaceDerriere });
     const murets = placesDesMurets(debut, fin, zoneSure, reserves.slice());
     const marge = C.obstacles.margeTrou;
     for (const m of murets) reserves.push({ debut: m - marge, fin: m + LARGEUR_MURET - 1 + marge });
@@ -229,7 +229,7 @@ Jeu.Terrain = (function () {
       for (let d = 0; d <= 20; d++) {
         const trouvee = [ideale - d, ideale + d].find((c) => {
           const g = c - Mo.espace;
-          const dr = c + 1;
+          const dr = c + Mo.espaceDerriere;
           return g >= debut + zoneSure && dr <= fin && (dr < danger.debut || g > danger.fin);
         });
         if (trouvee !== undefined) return trouvee;

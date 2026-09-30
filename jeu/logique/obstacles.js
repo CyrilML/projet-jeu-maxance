@@ -55,7 +55,7 @@ Jeu.Obstacles = (function () {
     }
     // Ni dans la zone de combat d'un monstre (étape 11).
     if (infos.monstre !== null && infos.monstre !== undefined) {
-      if (colonne + largeur - 1 >= infos.monstre - C.monstres.espace - O.margeTrou && colonne <= infos.monstre + 1 + O.margeTrou) return false;
+      if (colonne + largeur - 1 >= infos.monstre - C.monstres.espace - O.margeTrou && colonne <= infos.monstre + C.monstres.espaceDerriere + O.margeTrou) return false;
     }
     for (let c = colonne - O.margeTrou; c < colonne + largeur + O.margeTrou; c++) {
       if (c < infos.debut + infos.zoneSure || c > infos.fin) return false;
@@ -85,7 +85,7 @@ Jeu.Obstacles = (function () {
       if (colonne >= infos.lac - loin && colonne <= infos.lac + C.lacs.largeur - 1 + loin) return false;
     }
     if (infos.monstre !== null && infos.monstre !== undefined) {
-      if (colonne >= infos.monstre - C.monstres.espace - 1 && colonne <= infos.monstre + 2) return false;
+      if (colonne >= infos.monstre - C.monstres.espace - 1 && colonne <= infos.monstre + C.monstres.espaceDerriere + 1) return false;
     }
     return true;
   }

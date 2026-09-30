@@ -84,6 +84,22 @@ Jeu.Armes = (function () {
     return BARRE[monde.equipement.enMain];
   }
 
+  // Étape 27 : caché derrière un bloc, le héros lève son arme PAR-DESSUS le bloc pour tirer.
+  // Si le bloc juste devant lui est à la hauteur du tir, le tir part juste au-dessus du bloc
+  // (s'il y a de la place au-dessus, et si ce n'est pas trop haut pour son bras).
+  function hauteurDeTir(monde, yVoulu) {
+    const j = monde.joueur;
+    const T = Jeu.Terrain;
+    const sens = j.regard || 1;
+    const colonne = Math.floor((sens > 0 ? j.x + j.l + 6 : j.x - 6) / B);
+    const ligne = Math.floor(yVoulu / B);
+    if (!T.estSolide(monde.terrain, colonne, ligne)) return yVoulu; // rien devant : on tire droit
+    const auDessus = ligne * B - 6; // juste au-dessus du bloc
+    const brasTropCourt = auDessus < j.y - 24; // au plus un peu plus haut que la tête
+    if (brasTropCourt || T.estSolide(monde.terrain, colonne, ligne - 1)) return yVoulu;
+    return auDessus;
+  }
+
   // Une balle part du bout de l'arme. `angle` penche la balle (fusil à pompe), `options` change son style.
   function nouvelleBalle(monde, nom, angle, options) {
     const j = monde.joueur;
@@ -94,7 +110,7 @@ Jeu.Armes = (function () {
       {
         id: monde.prochainId++,
         x: sens > 0 ? j.x + j.l + 6 : j.x - 12,
-        y: Jeu.Joueur.hauteurDeLaMain(j) - 1,
+        y: hauteurDeTir(monde, Jeu.Joueur.hauteurDeLaMain(j) - 1),
         l: 6,
         h: 3,
         vx: sens * vitesse * Math.cos(angle),
@@ -149,7 +165,7 @@ Jeu.Armes = (function () {
   function tirerLaser(monde, arme, sens) {
     const j = monde.joueur;
     const chevauche = Jeu.Physique.seChevauchent;
-    const y = Jeu.Joueur.hauteurDeLaMain(j) - 1;
+    const y = hauteurDeTir(monde, Jeu.Joueur.hauteurDeLaMain(j) - 1);
     const depart = sens > 0 ? j.x + j.l + 6 : j.x - 6;
     let x = depart;
     let cible = null;
@@ -173,9 +189,10 @@ Jeu.Armes = (function () {
   // Le lance-flammes (étape 22) : des flammes jaillissent, et tout ce qui est dans la zone devant brûle.
   function cracherDesFlammes(monde, arme, sens) {
     const j = monde.joueur;
-    const zone = { x: sens > 0 ? j.x + j.l : j.x - arme.portee * B, y: j.y + 6, l: arme.portee * B, h: j.h - 6 };
+    const yFlammes = hauteurDeTir(monde, Jeu.Joueur.hauteurDeLaMain(j));
+    const zone = { x: sens > 0 ? j.x + j.l : j.x - arme.portee * B, y: Math.min(j.y + 6, yFlammes - 12), l: arme.portee * B, h: j.h - 6 };
     for (let k = 0; k < 3; k++) {
-      Jeu.Particules.ajouter(monde.flammes, sens > 0 ? j.x + j.l + 20 : j.x - 20, Jeu.Joueur.hauteurDeLaMain(j), sens * (220 + Math.random() * 80), (Math.random() - 0.5) * 60, 0.35 + Math.random() * 0.1, 8 + Math.random() * 8);
+      Jeu.Particules.ajouter(monde.flammes, sens > 0 ? j.x + j.l + 20 : j.x - 20, yFlammes, sens * (220 + Math.random() * 80), (Math.random() - 0.5) * 60, 0.35 + Math.random() * 0.1, 8 + Math.random() * 8);
     }
     const touches = [];
     for (const m of monde.monstres) {
@@ -228,7 +245,7 @@ Jeu.Armes = (function () {
     const sens = j.regard || 1;
     eq.attente = C.armes.bazooka.attente;
     eq.tir = 0.15;
-    const r = { id: monde.prochainId++, x: sens > 0 ? j.x + j.l + 4 : j.x - 22, y: j.y + j.h * 0.26, l: 18, h: 6, vx: sens * C.roquettes.vitesse, parcouru: 0 };
+    const r = { id: monde.prochainId++, x: sens > 0 ? j.x + j.l + 4 : j.x - 22, y: hauteurDeTir(monde, j.y + j.h * 0.26 + 3) - 3, l: 18, h: 6, vx: sens * C.roquettes.vitesse, parcouru: 0 };
     monde.roquettes.push(r);
     Jeu.Evenements.emettre("roquette-tiree", { id: r.id });
     recharger(monde, "bazooka"); // étape 21 : s'il reste une roquette, le héros la prend dans son dos
@@ -361,6 +378,10 @@ Jeu.Armes = (function () {
     const eq = monde.equipement;
     eq.tir = Math.max(0, (eq.tir || 0) - dt);
     eq.recul = Math.max(0, eq.recul - dt);
+    // Étape 27 : de combien le héros lève son arme au-dessus d'un bloc (pour le dessin et les rayons X)
+    const enMain = objetEnMain(monde);
+    const main = Jeu.Joueur.hauteurDeLaMain(monde.joueur) - 1;
+    eq.releve = PISTOLETS.includes(enMain) || enMain === "bazooka" ? Math.round(main - hauteurDeTir(monde, main)) : 0;
     // Le rechargement (étapes 21 et 22) : il continue seulement si l'arme est encore en main.
     if (eq.rechargement > 0) {
       if (objetEnMain(monde) !== eq.armeRecharge) eq.rechargement = 0; // on a changé d'arme : on recommencera plus tard
@@ -411,5 +432,5 @@ Jeu.Armes = (function () {
     deplacerLesDouilles(monde, dt);
   }
 
-  return { BARRE, TOUCHES, CORPS_A_CORPS, PISTOLETS, OUTILS, nomDe, objetEnMain, caseDeLaBarre, caseSousLaSouris, prendre, mettreAJour };
+  return { hauteurDeTir, BARRE, TOUCHES, CORPS_A_CORPS, PISTOLETS, OUTILS, nomDe, objetEnMain, caseDeLaBarre, caseSousLaSouris, prendre, mettreAJour };
 })();

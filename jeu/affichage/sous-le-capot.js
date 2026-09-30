@@ -279,6 +279,8 @@ Jeu.SousLeCapot = (function () {
       ["squelette qui danse ?", monde.danse ? "oui 💀 encore " + Math.max(0, monde.danse.reste).toFixed(1) + " s" : "non"],
       ["regarde vers", j.regard < 0 ? "← la gauche" : "la droite →"],
       ["bras levés ?", j.brasLeves ? "oui 🙌" : "non"],
+      ["arme levée par-dessus un bloc (étape 27)", monde.equipement.releve > 0 ? "oui : +" + monde.equipement.releve + " px 🧱🔫" : "non"],
+      ["caché derrière un bloc ?", monde.monstres.some((m) => m.vivant && Jeu.Combat.ecart(monde, m) <= m.portee + 40 && Jeu.Combat.blocEntre(monde, m)) ? "oui : les coups ne passent pas 🛡️" : "non"],
       ["taille (étape 24)", j.l + " × " + j.h + " px" + (j.accroupi ? " · baissé 🧎 (S)" : " · debout 🧍")],
       ["Combat", ""],
       ["PV du héros", monde.equipement.pv + " / " + Jeu.CONFIG.combat.pvJoueur],
