@@ -48,7 +48,7 @@ Jeu.Outils = (function () {
     if (!outil) return "prends un outil : pelle (0), hache (3) ou pioche (7)";
     if (objet === "pioche" && eq.pioche <= 0) return "ta pioche est cassée (R pour la réparer)";
     if (objet === "hache" && eq.hache <= 0) return "ta hache est cassée (R pour la réparer)";
-    if (ligne < 0 || ligne >= C.carte.lignes) return "c'est en dehors du monde";
+    if (ligne >= C.carte.lignes) return "c'est sous le monde"; // au-dessus, on peut (étape 28)
     if (ligne === C.carte.lignes - 1) return "la dernière ligne du monde est incassable";
     const numero = T.lireCase(monde.terrain, colonne, ligne);
     const nom = T.NOMS[numero];
@@ -106,11 +106,39 @@ Jeu.Outils = (function () {
       return;
     }
     monde.cassage = null;
+    const numero = T.lireCase(monde.terrain, colonne, ligne);
     T.ecrireCase(monde.terrain, colonne, ligne, T.CASES.air);
     oublierLesObstaclesVides(monde, colonne, ligne);
-    monde.inventaire.blocs += 1;
     monde.inventaire.casses += 1;
+    const eq = monde.equipement;
+    if (numero === T.CASES.tronc) {
+      // Un bloc de tronc = 1 bois (étape 28). Plus de tronc du tout ? Les feuilles disparaissent.
+      eq.bois += 1;
+      emettre("bloc-casse", { outil: C.outils[objet].nom, bloc: nom, colonne, ligne, bois: eq.bois });
+      abattreSiPlusDeTronc(monde, colonne);
+      return;
+    }
+    if (numero === T.CASES.porte || T.estUnEscalier(numero)) {
+      // Une porte ou un escalier cassé : on récupère son bois (la porte part en entier, ses 2 cases).
+      const objetBois = numero === T.CASES.porte ? "porte" : "escalier";
+      if (numero === T.CASES.porte) for (const l of [ligne - 1, ligne + 1]) if (T.lireCase(monde.terrain, colonne, l) === T.CASES.porte) T.ecrireCase(monde.terrain, colonne, l, T.CASES.air);
+      eq.bois += C.constructions[objetBois].bois;
+      emettre("bloc-casse", { outil: C.outils[objet].nom, bloc: objetBois, colonne, ligne, bois: eq.bois });
+      return;
+    }
+    monde.inventaire.blocs += 1;
     emettre("bloc-casse", { outil: C.outils[objet].nom, bloc: nom, colonne, ligne, sac: monde.inventaire.blocs });
+  }
+
+  // Le tronc de cet arbre est entièrement coupé ? Ses feuilles disparaissent (étape 28).
+  function abattreSiPlusDeTronc(monde, colonne) {
+    const T = Jeu.Terrain;
+    const arbre = monde.arbres.find((a) => a.colonne === colonne && !a.abattu);
+    if (!arbre) return;
+    for (let l = arbre.haut; l < C.carte.ligneSol; l++) if (T.lireCase(monde.terrain, colonne, l) === T.CASES.tronc) return;
+    arbre.abattu = true;
+    for (const [c, l] of arbre.feuilles) if (T.lireCase(monde.terrain, c, l) === T.CASES.feuilles) T.ecrireCase(monde.terrain, c, l, T.CASES.air);
+    Jeu.Evenements.emettre("arbre-abattu", { colonne, hauteur: arbre.hauteur, bois: monde.equipement.bois });
   }
 
   // Le bloc que T va casser (étape 25), ou null s'il n'y a rien.

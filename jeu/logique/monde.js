@@ -59,6 +59,7 @@ Jeu.Monde = (function () {
       monstres: [], // les monstres du monde (étape 11)
       balles: [], // les balles des pistolets en vol (étape 15)
       coffres: [], // les coffres laissés par les boss vaincus (étape 25)
+      arbres: [], // les arbres du monde (étape 28)
       grottesConquises: 0, // les grottes dont on a vaincu tous les monstres (étape 25)
       retourGrotte: null, // le drapeau de la dernière grotte conquise : on y réapparaît (étape 25)
       roquettes: [], // les roquettes du bazooka en vol (étape 19)
@@ -127,6 +128,7 @@ Jeu.Monde = (function () {
       monde.drapeaux.push({ numero: infos.numero, colonne: infos.colonneDrapeau, atteint: infos.numero === 0, arrivee });
       const obstacles = Jeu.Obstacles.placerDansTroncon(monde, infos);
       Jeu.Cochons.placerDansTroncon(monde, infos);
+      for (const a of infos.arbres || []) monde.arbres.push(a); // étape 28
       if (infos.grotte) {
         monde.grottes = monde.grottes || [];
         const g = Object.assign({ numero: monde.grottes.length + 1, visitee: false, conquise: false }, infos.grotte);
@@ -150,6 +152,7 @@ Jeu.Monde = (function () {
         fin: infos.fin,
         trous: infos.trous.length,
         plateformes: infos.plateformes.length,
+        arbres: (infos.arbres || []).length,
         obstacles,
         cases: Jeu.Terrain.nombreDeCases(monde.terrain),
       });
@@ -352,7 +355,7 @@ Jeu.Monde = (function () {
         monde.dernierDrapeau = d.numero;
         Jeu.Evenements.emettre("drapeau", { numero: d.numero, colonne: d.colonne });
         monde.retourGrotte = null; // un nouveau drapeau : c'est lui, le point de retour (étape 25)
-        Jeu.Inventaire.remplir(monde, d.numero); // le sac revient à 100 blocs (étape 14)
+        // (étape 28 : les briques sont illimitées, le sac n'a plus besoin de se remplir aux drapeaux)
         if (d.arrivee) {
           monde.score = d.colonne - monde.colonneDepart;
           gagner(monde);

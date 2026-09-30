@@ -92,10 +92,39 @@ Jeu.Joueur = (function () {
     const caseDe = Jeu.Physique.caseDe;
     for (let col = caseDe(j.x, B); col <= caseDe(j.x + j.l - 0.001, B); col++) {
       for (let lig = caseDe(j.y - hauteur, B); lig <= caseDe(j.y - 0.001, B); lig++) {
-        if (Jeu.Terrain.estSolide(monde.terrain, col, lig)) return false;
+        if (Jeu.Terrain.estSolidePourLeHeros(monde.terrain, col, lig)) return false;
       }
     }
     return true;
+  }
+
+  // Les cases que le corps du héros touche (étape 28).
+  function casesDuHeros(j) {
+    const B = C.tailleBloc;
+    const cases = [];
+    for (let c = Math.floor(j.x / B); c <= Math.floor((j.x + j.l - 1) / B); c++) {
+      for (let l = Math.floor(j.y / B); l <= Math.floor((j.y + j.h - 1) / B); l++) cases.push([c, l]);
+    }
+    return cases;
+  }
+
+  // Monter sur la marche d'escalier juste devant les pieds (étape 28), s'il y a la place au-dessus.
+  function monterUneMarche(j, sens, monde) {
+    const B = C.tailleBloc;
+    const T = Jeu.Terrain;
+    const devant = Math.floor((sens > 0 ? j.x + j.l + 1 : j.x - 1) / B);
+    const pieds = Math.floor((j.y + j.h - 1) / B);
+    if (!T.estUnEscalier(T.lireCase(monde.terrain, devant, pieds))) return;
+    const nouveauY = pieds * B - j.h; // debout sur la marche
+    const gauche = Math.min(Math.floor(j.x / B), devant);
+    const droite = Math.max(Math.floor((j.x + j.l - 1) / B), devant);
+    for (let c = gauche; c <= droite; c++) {
+      for (let l = Math.floor(nouveauY / B); l < pieds; l++) {
+        if (T.estSolidePourLeHeros(monde.terrain, c, l)) return; // pas la place au-dessus de la marche
+      }
+    }
+    j.y = nouveauY;
+    Jeu.Evenements.emettre("marche", { colonne: devant, ligne: pieds });
   }
 
   // La hauteur de la main du héros, là où il tient son arme (au milieu de son corps).
@@ -162,12 +191,21 @@ Jeu.Joueur = (function () {
       emettre("saut-coupe", { y: Math.round(j.y) });
     }
 
-    // 3. Appliquer la physique : gravité, puis déplacement case par case dans la grille du terrain
+    // 2 bis. L'escalier (étape 28) : s'il y a une marche juste devant les pieds, et de la place au-dessus,
+    //    le héros monte dessus en marchant, sans sauter.
+    if (j.vx !== 0 && j.etat === "au-sol") monterUneMarche(j, Math.sign(j.vx), monde);
+
+    // 3. Appliquer la physique : gravité, puis déplacement case par case dans la grille du terrain.
+    //    Étape 28 : pour le héros, une porte n'est pas solide (elle s'ouvre toute seule).
     Jeu.Physique.appliquerGravite(j, dt);
     const contact = Jeu.Physique.deplacerDansGrille(j, dt, {
       taille: C.tailleBloc,
-      estSolide: (colonne, ligne) => Jeu.Terrain.estSolide(monde.terrain, colonne, ligne),
+      estSolide: (colonne, ligne) => Jeu.Terrain.estSolidePourLeHeros(monde.terrain, colonne, ligne),
     });
+    // Le héros passe une porte ? On l'annonce une fois, quand il entre dedans.
+    const dansUnePorte = casesDuHeros(j).some(([c, l]) => Jeu.Terrain.lireCase(monde.terrain, c, l) === Jeu.Terrain.CASES.porte);
+    if (dansUnePorte && !j.dansUnePorte) emettre("porte-ouverte", { colonne: Jeu.Physique.caseDe(j.x + j.l / 2, C.tailleBloc) });
+    j.dansUnePorte = dansUnePorte;
     const auSol = contact.bas;
     if (contact.haut) emettre("tete-cognee", { ligne: Jeu.Physique.caseDe(j.y, C.tailleBloc) - 1 });
     // Un bloc solide touché par le côté = un mur. On ne l'annonce qu'au premier contact.

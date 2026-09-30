@@ -6,6 +6,8 @@
 //     4 = bois (caisse)    5 = pierre (tour)    6 = lave    7 = bois à pics (muret)
 //     8 = brique (un bloc posé par le joueur, étape 10)    9 = fer (à casser avec la pioche, étape 12)
 //     10 = roche (les murs et les escaliers des grottes)    11 = charbon (minerai, pioche, étape 13)
+//     12 = tronc d'arbre    13 = feuilles    14 = porte    15 et 16 = escalier (qui monte vers la droite / la gauche)
+//     (étape 28)
 //
 // Chaque sorte de case a des PROPRIÉTÉS, rangées dans des listes :
 //   - SOLIDE : on peut marcher dessus, et par le côté c'est un mur ;
@@ -29,12 +31,12 @@ Jeu.Terrain = (function () {
   const C = Jeu.CONFIG;
   const CARTE = C.carte;
 
-  const CASES = { air: 0, herbe: 1, terre: 2, planche: 3, bois: 4, pierre: 5, lave: 6, pics: 7, brique: 8, fer: 9, roche: 10, charbon: 11 };
-  const NOMS = ["air", "herbe", "terre", "planche", "bois", "pierre", "lave", "pics", "brique", "fer", "roche", "charbon"];
-  //              air    herbe terre planche bois  pierre lave   pics   brique fer   roche  charbon
-  const SOLIDES = [false, true, true, true, true, true, false, false, true, true, true, true]; // peut-on marcher dessus / se cogner dedans ?
-  const LIQUIDES = [false, false, false, false, false, false, true, false, false, false, false, false]; // passe-t-on à travers comme dans de l'eau ?
-  const MORTELS = [false, false, false, false, false, false, true, true, false, false, false, false]; // le toucher coûte-t-il une vie ?
+  const CASES = { air: 0, herbe: 1, terre: 2, planche: 3, bois: 4, pierre: 5, lave: 6, pics: 7, brique: 8, fer: 9, roche: 10, charbon: 11, tronc: 12, feuilles: 13, porte: 14, escalierDroite: 15, escalierGauche: 16 };
+  const NOMS = ["air", "herbe", "terre", "planche", "bois", "pierre", "lave", "pics", "brique", "fer", "roche", "charbon", "tronc", "feuilles", "porte", "escalier", "escalier"];
+  //              air    herbe terre planche bois  pierre lave   pics   brique fer   roche  charbon tronc feuilles porte escalier×2
+  const SOLIDES = [false, true, true, true, true, true, false, false, true, true, true, true, true, false, true, true, true]; // peut-on marcher dessus / se cogner dedans ?
+  const LIQUIDES = [false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false]; // passe-t-on à travers comme dans de l'eau ?
+  const MORTELS = [false, false, false, false, false, false, true, true, false, false, false, false, false, false, false, false, false]; // le toucher coûte-t-il une vie ?
 
   // L'arrivée (étape 12 : au bloc 1 000). On compte les blocs depuis le drapeau de départ (colonne 2).
   const COLONNE_ARRIVEE = CARTE.colonneDrapeau + C.arrivee.bloc;
@@ -58,10 +60,22 @@ Jeu.Terrain = (function () {
   }
 
   // Que contient la case (colonne, ligne) ?
+  // Étape 28 : on peut construire AU-DESSUS du monde (lignes négatives : −1, −2…). JavaScript range
+  // ces cases dans le même tiroir, sous l'étiquette « -1 », « -2 »… Une case jamais remplie, c'est de l'air.
   function lireCase(terrain, colonne, ligne) {
-    if (ligne < 0 || ligne >= CARTE.lignes) return CASES.air; // au-dessus du ciel ou sous le monde
+    if (ligne >= CARTE.lignes) return CASES.air; // sous le monde
     const tiroir = terrain.colonnes[colonne];
-    return tiroir ? tiroir[ligne] : CASES.air;
+    const numero = tiroir ? tiroir[ligne] : undefined;
+    return numero === undefined ? CASES.air : numero;
+  }
+
+  // Pour le héros, une porte n'est pas solide : elle s'ouvre toute seule devant lui (étape 28).
+  function estSolidePourLeHeros(terrain, colonne, ligne) {
+    return lireCase(terrain, colonne, ligne) === CASES.porte ? false : estSolide(terrain, colonne, ligne);
+  }
+
+  function estUnEscalier(numero) {
+    return numero === CASES.escalierDroite || numero === CASES.escalierGauche;
   }
 
   function estSolide(terrain, colonne, ligne) {
@@ -102,6 +116,9 @@ Jeu.Terrain = (function () {
     // Un monstre dans ce tronçon ? (étape 11) Il lui faut un terrain plat devant lui pour se battre.
     const monstre = arrivee ? null : placeDuMonstre(debut, fin, zoneSure, grandDanger);
     if (monstre !== null) reserves.push({ debut: monstre - C.monstres.espace, fin: monstre + C.monstres.espaceDerriere });
+    // Étape 28 : les arbres évitent seulement la lave et la zone du dragon (les murets, eux, se décalent).
+    const reservesDesArbres = reserves.slice();
+    const pasPourLesArbres = (colonne, largeur) => reservesDesArbres.find((r) => colonne <= r.fin && colonne + largeur - 1 >= r.debut);
     const murets = placesDesMurets(debut, fin, zoneSure, reserves.slice());
     const marge = C.obstacles.margeTrou;
     for (const m of murets) reserves.push({ debut: m - marge, fin: m + LARGEUR_MURET - 1 + marge });
@@ -172,6 +189,9 @@ Jeu.Terrain = (function () {
       plateformes.push({ colonne, largeur, hauteur, ligne });
     }
 
+    // 4. Les arbres (étape 28) : un tous les 15 blocs environ, là où il y a la place.
+    const arbres = planterLesArbres(terrain, debut, fin, zoneSure, pasPourLesArbres, de);
+
     terrain.troncons++;
     return {
       numero,
@@ -181,6 +201,7 @@ Jeu.Terrain = (function () {
       colonneDrapeau: debut + CARTE.colonneDrapeau,
       trous,
       plateformes,
+      arbres,
       fosse, // la place de la fosse de lave, que obstacles.js remplit (null s'il y a un lac)
       lac, // la première colonne du lac de lave (étape 10), ou null
       monstre, // la colonne du monstre (étape 11), ou null
@@ -236,6 +257,49 @@ Jeu.Terrain = (function () {
       }
     }
     return null;
+  }
+
+  // Plante les arbres d'un tronçon (étape 28). Un arbre = un tronc (cases 12) et une boule de feuilles (13).
+  // Il lui faut de l'herbe sous lui et autour, et rien au-dessus (pas de plateforme), hors des places réservées.
+  function planterLesArbres(terrain, debut, fin, zoneSure, dansLaReserve, de) {
+    const A = C.arbres;
+    const sol = CARTE.ligneSol;
+    const arbres = [];
+    // Il faut de l'herbe sous le tronc, et de l'air là où poussent le tronc et le haut
+    // des feuilles. Les feuilles qui tomberaient sur une plateforme ne poussent simplement pas.
+    const libre = (c) => {
+      if (c - 1 < debut + zoneSure || c + 1 > fin || dansLaReserve(c - 1, 3)) return false;
+      if (terrain.colonnes[c][sol] !== CASES.herbe) return false;
+      for (let l = sol - A.hauteurMax - 2; l < sol; l++) if (terrain.colonnes[c][l] !== CASES.air) return false;
+      return true;
+    };
+    // On avance dans le tronçon : dès qu'il y a la place, un arbre ; puis on saute environ 15 blocs.
+    let colonne = debut + zoneSure + de.entre(1, 4);
+    while (colonne <= fin - 1) {
+      if (!libre(colonne)) {
+        colonne++;
+        continue;
+      }
+      const hauteur = de.entre(A.hauteurMin, A.hauteurMax);
+      const haut = sol - hauteur; // la case du haut du tronc
+      for (let l = haut; l < sol; l++) terrain.colonnes[colonne][l] = CASES.tronc;
+      const feuilles = [];
+      const feuille = (c, l) => {
+        if (c < debut || c > fin) return; // pas de feuilles dans un tronçon voisin (il n'est peut-être pas encore fabriqué)
+        if (terrain.colonnes[c][l] === CASES.air) {
+          terrain.colonnes[c][l] = CASES.feuilles;
+          feuilles.push([c, l]);
+        }
+      };
+      for (let c = colonne - 1; c <= colonne + 1; c++) for (const l of [haut - 1, haut - 2]) feuille(c, l);
+      feuille(colonne - 1, haut);
+      feuille(colonne + 1, haut);
+      feuille(colonne - 2, haut - 1);
+      feuille(colonne + 2, haut - 1);
+      arbres.push({ colonne, hauteur, haut, feuilles, abattu: false });
+      colonne += A.ecart + de.entre(-A.decalageMax, A.decalageMax);
+    }
+    return arbres;
   }
 
   // Les grottes (étape 13) : les tronçons qui en ont une.
@@ -300,5 +364,5 @@ Jeu.Terrain = (function () {
     return terrain.colonnes.length * CARTE.lignes;
   }
 
-  return { CASES, NOMS, SOLIDES, LIQUIDES, MORTELS, COLONNE_ARRIVEE, TRONCON_ARRIVEE, rendezVous, tronconDe, creer, lireCase, ecrireCase, estSolide, estLiquide, fabriquerTroncon, nombreDeCases };
+  return { estSolidePourLeHeros, estUnEscalier, CASES, NOMS, SOLIDES, LIQUIDES, MORTELS, COLONNE_ARRIVEE, TRONCON_ARRIVEE, rendezVous, tronconDe, creer, lireCase, ecrireCase, estSolide, estLiquide, fabriquerTroncon, nombreDeCases };
 })();

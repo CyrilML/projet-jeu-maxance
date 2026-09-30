@@ -62,6 +62,7 @@ Jeu.Combat = (function () {
       fer: 0, // morceaux de fer dans le sac (étape 12)
       pioche: C.pioche.usure, // coups qui restent avant que la pioche casse (étape 13)
       charbon: 0,
+      bois: 0, // bois des arbres coupés (étape 28) : pour fabriquer des portes et des escaliers
       viandeCrue: 0,
       viandeCuite: 0,
       coup: 0, // animation du coup d'épée (s)
@@ -249,6 +250,7 @@ Jeu.Combat = (function () {
     if (cochon.pv > 0) emettre("cochon-touche", { id: cochon.id, pv: cochon.pv });
     else {
       cochon.vivant = false;
+      cochon.danseMort = C.cochons.danseMort; // sa petite danse d'adieu (étape 28)
       monde.equipement.viandeCrue += 1;
       emettre("cochon-attrape", { id: cochon.id, viandeCrue: monde.equipement.viandeCrue });
     }

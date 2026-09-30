@@ -26,7 +26,7 @@ Jeu.Inventaire = (function () {
   const B = C.tailleBloc;
 
   function creer() {
-    return { blocs: C.inventaire.blocs, poses: 0, reprises: 0, recharges: 0, casses: 0 };
+    return { blocs: C.inventaire.blocs, poses: 0, reprises: 0, recharges: 0, casses: 0, constructions: 0 };
   }
 
   // La case où irait le bloc de la touche P : celle qui est entièrement sous les pieds du héros.
@@ -72,20 +72,19 @@ Jeu.Inventaire = (function () {
   }
 
   // Les règles communes aux deux façons de poser : renvoie la raison du refus, ou null si c'est permis.
+  // Étape 28 : plus de limite en hauteur (on construit au-dessus du monde) ni de portée pour la souris.
+  // Étape 28 : plus AUCUNE limite de construction (demande de Maxance) : briques illimitées, pas de
+  // limite de hauteur ni de distance, et on peut construire près d'un dragon. Il faut juste une case vide.
   function refusCommun(monde, colonne, ligne) {
-    if (monde.inventaire.blocs <= 0) return "plus de blocs dans le sac (le prochain drapeau le remplit)";
-    if (ligne >= C.carte.lignes || ligne < 0) return "c'est en dehors du monde";
+    if (ligne >= C.carte.lignes) return "c'est sous le monde";
     const numero = Jeu.Terrain.lireCase(monde.terrain, colonne, ligne);
     if (numero !== Jeu.Terrain.CASES.air) return "la case n'est pas vide (" + Jeu.Terrain.NOMS[numero] + ")";
-    const m = monstreProche(monde, colonne);
-    if (m) return "trop près du monstre #" + m.id + " (il faut être à plus de " + C.construction.distanceMonstre + " blocs)";
     return null;
   }
 
   // Peut-on poser un bloc sous ses pieds (touche P) maintenant ? Renvoie la raison si c'est non.
   function raisonDuRefus(monde) {
     const j = monde.joueur;
-    if (monde.inventaire.blocs <= 0) return "plus de blocs dans le sac (le prochain drapeau le remplit)";
     if (j.etat === "au-sol") return "il faut sauter d'abord";
     const cible = caseVisee(j);
     return refusCommun(monde, cible.colonne, cible.ligne);
@@ -95,8 +94,6 @@ Jeu.Inventaire = (function () {
   function raisonDuRefusIci(monde, colonne, ligne) {
     const refus = refusCommun(monde, colonne, ligne);
     if (refus) return refus;
-    const d = distanceDuHeros(monde, colonne, ligne);
-    if (d > C.construction.portee) return "trop loin (" + d.toFixed(1) + " blocs, le maximum est " + C.construction.portee + ")";
     const qui = quiOccupe(monde, colonne, ligne);
     if (qui) return "la case est occupée par " + qui;
     return null;
@@ -104,9 +101,38 @@ Jeu.Inventaire = (function () {
 
   function poser(monde, colonne, ligne, facon) {
     Jeu.Terrain.ecrireCase(monde.terrain, colonne, ligne, Jeu.Terrain.CASES.brique);
-    monde.inventaire.blocs -= 1;
-    monde.inventaire.poses += 1;
+    monde.inventaire.poses += 1; // briques illimitées (étape 28) : le sac ne se vide plus
     Jeu.Evenements.emettre("bloc-pose", { colonne, ligne, reste: monde.inventaire.blocs, facon });
+  }
+
+  // Peut-on poser une porte ou un escalier (étape 28) avec la case du bas en (colonne, ligne) ?
+  // La porte fait 2 blocs de haut : il faut aussi la case du dessus.
+  function raisonDuRefusConstruction(monde, objet, colonne, ligne) {
+    const K = C.constructions[objet];
+    if (monde.equipement.bois < K.bois) return "il faut " + K.bois + " bois pour " + (objet === "porte" ? "une porte" : "un escalier") + " (tu en as " + monde.equipement.bois + ") : coupe un arbre avec la hache";
+    const lignes = objet === "porte" ? [ligne, ligne - 1] : [ligne];
+    for (const l of lignes) {
+      const refus = refusCommun(monde, colonne, l);
+      if (refus) return refus;
+      const qui = quiOccupe(monde, colonne, l);
+      if (qui) return "la case est occupée par " + qui;
+    }
+    return null;
+  }
+
+  function poserConstruction(monde, objet, colonne, ligne) {
+    const T = Jeu.Terrain;
+    const K = C.constructions[objet];
+    if (objet === "porte") {
+      T.ecrireCase(monde.terrain, colonne, ligne, T.CASES.porte);
+      T.ecrireCase(monde.terrain, colonne, ligne - 1, T.CASES.porte);
+    } else {
+      // L'escalier monte du côté où regarde le héros : il marche vers la marche.
+      T.ecrireCase(monde.terrain, colonne, ligne, monde.joueur.regard > 0 ? T.CASES.escalierDroite : T.CASES.escalierGauche);
+    }
+    monde.equipement.bois -= K.bois;
+    monde.inventaire.constructions += 1;
+    Jeu.Evenements.emettre("construction-posee", { objet: K.nom, colonne, ligne, bois: K.bois, reste: monde.equipement.bois });
   }
 
   // La brique que la pioche peut reprendre : d'abord celle sous la souris (si elle est à portée),
@@ -176,7 +202,11 @@ Jeu.Inventaire = (function () {
         if (cible.ligne > pieds) Jeu.Outils.casser(monde, cible.colonne, cible.ligne, objet);
         else Jeu.Evenements.emettre("casse-refusee", { raison: "le clic sert seulement pour les blocs sous tes pieds : pour les autres, vise avec la souris et appuie sur T" });
       }
-      else if (objet !== "briques") Jeu.Evenements.emettre("bloc-refuse", { raison: "prends les briques (touche 8) pour poser, ou un outil (pelle 0, hache 3, pioche 7) pour casser" });
+      else if (objet === "porte" || objet === "escalier") {
+        const raison = raisonDuRefusConstruction(monde, objet, cible.colonne, cible.ligne);
+        if (raison) Jeu.Evenements.emettre("bloc-refuse", { raison });
+        else poserConstruction(monde, objet, cible.colonne, cible.ligne);
+      } else if (objet !== "briques") Jeu.Evenements.emettre("bloc-refuse", { raison: "prends les briques (touche 8), une porte ou un escalier pour poser, ou un outil (pelle 0, hache 3, pioche 7) pour casser" });
       else {
         const raison = raisonDuRefusIci(monde, cible.colonne, cible.ligne);
         if (raison) Jeu.Evenements.emettre("bloc-refuse", { raison });
@@ -193,6 +223,7 @@ Jeu.Inventaire = (function () {
     monstreProche,
     raisonDuRefus,
     raisonDuRefusIci,
+    raisonDuRefusConstruction,
     briqueAReprendre,
     reprendre,
     remplir,

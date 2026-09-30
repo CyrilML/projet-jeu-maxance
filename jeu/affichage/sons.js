@@ -118,6 +118,12 @@ Jeu.Orchestre = (function () {
       const t = Son.maintenant();
       [523, 659, 784, 1047, 784, 1047].forEach((f, k) => Son.note({ forme: "square", frequence: f, duree: 0.16, volume: 0.15, quand: t + k * 0.13, nom: "grotte conquise : fanfare" }));
     },
+    // Étape 28 : l'arbre qui tombe, la porte qui grince
+    arbre: () => {
+      Son.bruit({ filtre: "lowpass", frequence: 700, fin: 150, duree: 0.7, volume: 0.45, nom: "arbre abattu : crrrac-boum" });
+      Son.note({ forme: "triangle", frequence: 180, fin: 70, duree: 0.5, volume: 0.3, nom: "arbre abattu : crrrac-boum" });
+    },
+    grince: () => Son.note({ forme: "sawtooth", frequence: 420, fin: 620, duree: 0.35, volume: 0.07, nom: "porte : griiinc" }),
     ta: () => Son.bruit({ filtre: "highpass", frequence: 1500, duree: 0.05, volume: 0.35, nom: "mitrailleuse : ta" }),
     clic: () => Son.note({ forme: "square", frequence: 1800, duree: 0.02, volume: 0.15, nom: "mitrailleuse vide : clic" }),
     toc: () => Son.note({ forme: "triangle", frequence: 300, fin: 200, duree: 0.06, volume: 0.3, nom: "coup d'outil : toc" }),
@@ -187,6 +193,9 @@ Jeu.Orchestre = (function () {
     ecouter("rechargement", () => jouer("chik"));
     ecouter("recharge-finie", () => jouer("clac"));
     ecouter("roquette-tiree", () => jouer("fshhh"));
+    ecouter("arbre-abattu", () => jouer("arbre"));
+    ecouter("porte-ouverte", () => jouer("grince"));
+    ecouter("construction-posee", () => jouer("toc"));
     ecouter("monstre-approche", (d) => d.boss && jouer("grogne"));
     ecouter("monstre-attaque", (d) => d.boss && jouer("griffe"));
     ecouter("coffre-ouvert", () => jouer("tresor"));

@@ -150,6 +150,7 @@
       <a href="#etape25">Étape 25</a>
       <a href="#etape26">Étape 26</a>
       <a href="#etape27">Étape 27</a>
+      <a href="#etape28">Étape 28</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -2019,6 +2020,49 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Le héros baissé mesure 38 px, un bloc 40 px. Dépasse-t-il de sa cachette ?</summary><p>Non : 38 est plus petit que 40, il est entièrement caché. Mais son bras, lui, passe au-dessus pour tirer !</p></details>
     </section>
 
+    <section id="etape28">
+      <h2>🌳 Étape 28 : des arbres, des portes et des escaliers <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Des arbres poussent le long du chemin. Coupe-les à la hache pour avoir du bois, et fabrique des portes et des escaliers. Et maintenant, tu peux construire où tu veux, aussi haut que tu veux !</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/28-arbres-portes-escaliers.md</code>.</p>
+          <p><strong>Règles :</strong> arbres au tronc solide (1a), 1 bloc de tronc = 1 bois (2a), porte 4 bois et escalier 2 bois (3a), porte qui s'ouvre pour toi et pas pour les monstres (4a), escalier qu'on monte en marchant (5a). Plus de limite pour construire. Le petit pistolet est parti. Le cochon danse.</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Coupe un arbre à la hache (<kbd>3</kbd> + <kbd>T</kbd>) : 🪵 +1 par bloc.</li>
+            <li>☐ <kbd>4</kbd> : pose une porte, traverse-la.</li>
+            <li>☐ Dernière case : pose un escalier, monte sans sauter.</li>
+            <li>☐ Construis une tour qui dépasse le haut du monde.</li>
+            <li>☐ Un cochon vaincu danse !</li>
+            <li>Vérifie « version 28 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🌲 Un arbre, ce sont des cases</h3>
+      <p>Un arbre, c'est juste des numéros dans la grille : 12 pour le tronc (solide) et 13 pour les feuilles (pas solides). Le jeu se souvient de chaque arbre (sa colonne et ses feuilles) : quand la dernière case de tronc est coupée, il écrit 0 (l'air) à la place de toutes ses feuilles.</p>
+
+      <h3>🚪 Une porte qui choisit qui passe</h3>
+      <p>Une porte est solide… sauf pour le héros ! Le jeu a maintenant deux questions : « est-ce solide ? » (pour les monstres et les balles) et « est-ce solide <strong>pour le héros</strong> ? ». Pour la seconde, une porte répond non. Le peintre la dessine ouverte quand le héros la touche.</p>
+
+      <h3>🪜 Monter une marche sans sauter</h3>
+      <p>Quand le héros marche, le jeu regarde la case juste devant ses pieds. Si c'est une marche d'escalier et qu'il y a de la place au-dessus, il pose le héros dessus : y = haut de la marche − sa taille. C'est aussi simple que ça !</p>
+
+      <h3>⬆️ Construire sans limite, au-dessus du monde</h3>
+      <p>Plus aucune limite : les briques sont <strong>illimitées</strong>, on pose à n'importe quelle distance, et même près d'un dragon. La grille avait 24 lignes, de 0 à 23. Pour construire plus haut, on utilise des lignes <strong>négatives</strong> : −1, −2, −3… Une case jamais remplie, c'est de l'air. Et la caméra n'a plus de limite vers le haut.</p>
+
+      <h3>🐷 La danse du cochon</h3>
+      <p>Quand un cochon est vaincu, il reste encore 1,5 seconde dans le monde avec un compte à rebours (<code>danseMort</code>). Pendant ce temps, le peintre le dessine debout, en faisant bouger ses pattes avant avec un sinus (comme les ailes du dragon), puis il le rend de plus en plus transparent.</p>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Tu coupes un arbre de 5 blocs. Combien de portes peux-tu fabriquer ?</summary><p>5 bois ÷ 4 = 1 porte (et il reste 1 bois). Ou 2 escaliers (4 bois).</p></details>
+      <details class="question"><summary>Pourquoi les monstres ne passent-ils pas la porte ?</summary><p>Pour eux, la porte est solide : c'est un mur. Seule la règle du héros dit « la porte n'est pas solide ».</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -2181,26 +2225,32 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>Trous, lave, plateformes et zone du dragon réglés pour le héros de 2 blocs ; tirer par-dessus un bloc et être protégé derrière.</p>
           <p class="apprend"><b>Tu apprends :</b> les métriques d'un niveau (des mesures qui vont ensemble), vérifier une case avant de tirer, la couverture. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">28</div>
+          <h4>Arbres, portes et escaliers <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Des arbres à couper pour le bois, des portes qui ne s'ouvrent que pour le héros, des escaliers qu'on monte en marchant, et plus de limite pour construire.</p>
+          <p class="apprend"><b>Tu apprends :</b> un objet fait de plusieurs cases, deux règles de solidité, monter une marche, des lignes négatives. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">29</div>
           <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">29</div>
+          <div class="num">30</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">30</div>
+          <div class="num">31</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">31</div>
+          <div class="num">32</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -2466,6 +2516,15 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-27" data-cle="appris-27" placeholder="Ex. : J'ai appris que changer la taille du héros oblige à changer le monde…"></textarea>
         <label for="idees-27"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-27" data-cle="idees-27" placeholder="Ex. : Des murs à moitié cassés pour se cacher…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 28 · arbres, portes et escaliers <span class="petit">· 30 septembre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> des arbres (tronc 12, feuilles 13) ; 🪵 bois en coupant les troncs ; portes (14) et escaliers (15, 16) à poser avec la souris ; une porte n'est pas solide pour le héros ; on monte les marches en marchant ; plus aucune limite pour construire : briques illimitées, ni distance, ni hauteur (lignes négatives), ni dragon ; le petit pistolet enlevé ; la danse du cochon vaincu. Sous le capot : bois, arbres, constructions et cochons qui dansent dans l'état en direct, les nouveaux numéros dans « La carte en mémoire ».</p>
+        <p class="petit">✍️ Réponses de Maxance : tout en A.</p>
+        <label for="appris-28"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-28" data-cle="appris-28" placeholder="Ex. : J'ai appris qu'une porte peut être solide pour les uns et pas pour les autres…"></textarea>
+        <label for="idees-28"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-28" data-cle="idees-28" placeholder="Ex. : Construire une maison avec un toit…"></textarea>
       </div>
     </section>
   </main>

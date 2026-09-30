@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 27,
+  version: 28,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -150,7 +150,6 @@ Jeu.CONFIG = {
     // `recharge` : pour les armes lentes, une petite animation de rechargement (en s) qui se joue PENDANT
     // l'attente entre deux tirs, juste pour le style : elle ne ralentit jamais le tir.
     // `eclair` : la couleur de la flamme du tir ; `douille` : la couleur des douilles (null = pas de douille).
-    petitPistolet: { nom: "petit pistolet", degats: 2, attente: 0.25, eclair: "#ffe27a", douille: "#c9a227" }, // tire vite
     pistolet: { nom: "pistolet moyen", degats: 4, attente: 0.6, eclair: "#ffe27a", douille: "#c9a227" },
     grosPistolet: { nom: "gros pistolet", degats: 8, attente: 1.2, recharge: 1, eclair: "#ffb03a", douille: "#c9a227" }, // lent, mais fort
     // La mitrailleuse (étape 17) : tant qu'on tient T, 10 balles par seconde. Balles infinies depuis l'étape 21.
@@ -176,10 +175,24 @@ Jeu.CONFIG = {
     dureeExplosion: 0.5, // s : le temps que l'explosion reste affichée
   },
 
+  // Les arbres (étape 28) : un arbre tous les 20 blocs environ, avec un tronc de 3 à 5 blocs.
+  // Le tronc est solide (il bloque le passage) ; les feuilles ne bloquent pas.
+  arbres: {
+    ecart: 8, // entre deux arbres, 8 blocs (à 3 près) : il reste environ un arbre tous les 20 blocs, car la lave, les trous et les dragons prennent de la place…
+    decalageMax: 3, // … à 3 blocs près (au hasard), et plus loin s'il n'y a pas la place
+    hauteurMin: 3,
+    hauteurMax: 5,
+  },
+  // Les constructions en bois (étape 28) : 1 bloc de tronc coupé = 1 bois.
+  constructions: {
+    porte: { nom: "porte", bois: 4 }, // 2 blocs de haut ; elle s'ouvre toute seule pour le héros, pas pour les monstres
+    escalier: { nom: "escalier", bois: 2 }, // une marche : le héros monte dessus sans sauter
+  },
+
   // La barre d'inventaire en bas de l'écran (étapes 15 et 20) : taille d'une case, écart, marge du bas (px).
   // Étape 20 : on peut aussi CLIQUER sur une case pour prendre l'objet en main.
   // Étape 22 : 18 cases, un peu plus petites pour tenir dans l'écran.
-  barre: { taille: 44, ecart: 5, margeBas: 10 },
+  barre: { taille: 42, ecart: 5, margeBas: 10 }, // étape 28 : 19 cases
 
   // Les outils pour casser les blocs au clic de souris (étape 17). Le bon outil casse en 1 clic ;
   // la pioche casse tout ce qui est solide, mais 3 clics pour ce qui n'est pas de la pierre.
@@ -187,7 +200,7 @@ Jeu.CONFIG = {
   // Un bloc cassé (sauf les minerais) va dans le sac comme une brique.
   outils: {
     pelle: { nom: "pelle", facile: ["herbe", "terre"] },
-    hache: { nom: "petite hache", facile: ["bois", "planche"] },
+    hache: { nom: "petite hache", facile: ["bois", "planche", "tronc", "porte", "escalier"] }, // étape 28 : les arbres !
     pioche: { nom: "pioche", facile: ["pierre", "roche", "brique"], casseTout: true },
     clicsDifficiles: 3, // la pioche sur la terre, le bois…
   },
@@ -279,6 +292,7 @@ Jeu.CONFIG = {
     pv: 10, // 2 coups d'épée
     vitesse: 30, // ils marchent tranquillement (px/s)
     promenade: 3, // ils restent à moins de 3 blocs de leur point de départ
+    danseMort: 1.5, // étape 28 : vaincu, il se lève sur ses pattes arrière et secoue ses pattes avant pendant 1,5 s
   },
 
   // La cuisine (étape 13) : K cuit (1 charbon + 1 viande crue = 1 viande cuite), M mange.
@@ -311,7 +325,7 @@ Jeu.CONFIG = {
   camera: {
     piedsAuPlusBas: 440, // sous terre, la caméra descend pour garder les pieds du héros au plus à 440 px du haut de l'écran
     teteAuPlusHaut: 250, // étape 26 : quand il grimpe, la caméra monte pour garder sa tête au moins à 250 px du haut (sous les compteurs)
-    plusHaut: -600, // la caméra peut monter jusqu'à 600 px au-dessus du haut du monde (pour voir le ciel)
+    plusHaut: -1000000, // étape 28 : pas de limite, la caméra monte aussi haut que le héros construit
     positionJoueur: 320, // la caméra essaie de garder le héros à 320 px du bord gauche de l'écran
     tempsDeReaction: 0.07, // plus c'est petit, plus elle suit vite. 0,07 s → après 0,5 s, il reste moins de 0,1 % de l'écart
   },

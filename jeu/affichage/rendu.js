@@ -81,6 +81,69 @@ Jeu.Rendu = (function () {
       roche: ["#6d6a66", "#57534f"], // la pierre des grottes (étape 13)
       charbon: ["#6d6a66", "#1c1b1a"], // du minerai de charbon : de la roche avec des taches noires
     }[matiere];
+    // Étape 28 : le tronc, les feuilles, la porte et l'escalier
+    if (matiere === "tronc") {
+      ctx.fillStyle = "#7a4e26";
+      ctx.fillRect(x + 6, y, B - 12, B);
+      ctx.fillStyle = "#5c3a1a"; // l'écorce : des lignes sombres
+      ctx.fillRect(x + 11, y + ((graine * 3) % 10), 2, 18);
+      ctx.fillRect(x + 20, y + ((graine * 7) % 14) + 8, 2, 16);
+      ctx.fillRect(x + 27, y + ((graine * 5) % 12), 2, 14);
+      return;
+    }
+    if (matiere === "feuilles") {
+      ctx.fillStyle = "#3f9e3a";
+      ctx.fillRect(x, y, B, B);
+      ctx.fillStyle = "#2f7d2c"; // des touffes plus sombres
+      ctx.fillRect(x + ((graine * 7) % 24), y + 4, 12, 10);
+      ctx.fillRect(x + ((graine * 3) % 20) + 4, y + 22, 14, 10);
+      ctx.fillStyle = "#6cc55f"; // et plus claires
+      ctx.fillRect(x + ((graine * 11) % 26) + 2, y + 14, 8, 6);
+      return;
+    }
+    if (matiere.startsWith("porte")) {
+      const haut = matiere.includes("haut");
+      if (matiere.includes("ouverte")) {
+        // Ouverte : on la voit de profil, toute fine, contre le bord gauche de la case
+        ctx.fillStyle = "#8c5a28";
+        ctx.fillRect(x, y, 7, B);
+        ctx.fillStyle = "#5e3a18";
+        ctx.fillRect(x + 5, y, 2, B);
+        return;
+      }
+      ctx.fillStyle = "#b5793a";
+      ctx.fillRect(x + 3, y, B - 6, B);
+      ctx.fillStyle = "#8c5a28"; // les planches
+      for (const k of [12, 22]) ctx.fillRect(x + k, y, 2, B);
+      ctx.strokeStyle = "#5e3a18";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x + 4, y + (haut ? 1 : 0), B - 8, B - (haut ? 1 : 1));
+      if (!haut) {
+        ctx.fillStyle = "#ffd23f"; // la poignée
+        ctx.fillRect(x + B - 12, y + 6, 4, 4);
+      } else {
+        ctx.fillStyle = "#9fdcff"; // une petite fenêtre
+        ctx.fillRect(x + 13, y + 10, 14, 10);
+      }
+      return;
+    }
+    if (matiere.startsWith("escalier")) {
+      // Une marche en pente : trois petits paliers qui montent du côté de la flèche
+      const droite = matiere.endsWith("droite");
+      ctx.fillStyle = "#b5793a";
+      for (let k = 0; k < 3; k++) {
+        const h = (k + 1) * (B / 3);
+        const px = droite ? x + k * (B / 3) : x + B - (k + 1) * (B / 3);
+        ctx.fillRect(Math.round(px), Math.round(y + B - h), Math.ceil(B / 3), Math.ceil(h));
+      }
+      ctx.fillStyle = "#8c5a28";
+      for (let k = 0; k < 3; k++) {
+        const h = (k + 1) * (B / 3);
+        const px = droite ? x + k * (B / 3) : x + B - (k + 1) * (B / 3);
+        ctx.fillRect(Math.round(px), Math.round(y + B - h), Math.ceil(B / 3), 3); // le bord de chaque palier
+      }
+      return;
+    }
     if (matiere === "lave-profonde") {
       // La lave sous la surface d'un lac : pleine, sans surface, avec quelques bulles.
       ctx.fillStyle = "#c2410c";
@@ -185,6 +248,16 @@ Jeu.Rendu = (function () {
         const numero = Jeu.Terrain.lireCase(monde.terrain, c, l);
         if (numero === Jeu.Terrain.CASES.air) continue;
         let matiere = Jeu.Terrain.NOMS[numero];
+        const K = Jeu.Terrain.CASES;
+        if (numero === K.escalierDroite) matiere = "escalier-droite";
+        if (numero === K.escalierGauche) matiere = "escalier-gauche";
+        if (numero === K.porte) {
+          // Une porte s'ouvre quand le héros la touche (étape 28)
+          const j = monde.joueur;
+          const ouverte = j.x < (c + 1) * B + 6 && j.x + j.l > c * B - 6 && j.y < (l + 1) * B && j.y + j.h > l * B - B;
+          const haut = Jeu.Terrain.lireCase(monde.terrain, c, l + 1) === K.porte;
+          matiere = "porte-" + (haut ? "haut" : "bas") + (ouverte ? "-ouverte" : "");
+        }
         // De la lave sous de la lave (dans un lac) : pas de surface, elle est « profonde ».
         if (numero === Jeu.Terrain.CASES.lave && Jeu.Terrain.lireCase(monde.terrain, c, l - 1) === numero) matiere = "lave-profonde";
         bloc(c * B, l * B, matiere, c * 7 + l * 13);
@@ -338,6 +411,9 @@ Jeu.Rendu = (function () {
     } else if (objet === "pioche") {
       r("#8a5a2b", 27, 6, 4, 26);
       r("#6d6a66", 21, 4, 16, 4);
+    } else if (objet === "porte" || objet === "escalier") {
+      r("#b5793a", 26, 18, 10, 14); // une planche de bois dans la main (étape 28)
+      r("#8c5a28", 30, 18, 2, 14);
     } else if (objet === "briques") {
       r("#b5523b", 26, 20, 12, 10);
       r("#e8d9c4", 26, 25, 12, 1);
@@ -401,7 +477,7 @@ Jeu.Rendu = (function () {
       r("#ffd23f", 27, 26, 5, 7);
       return 45;
     }
-    const long = objet === "petitPistolet" ? 10 : objet === "pistolet" ? 15 : objet === "mitrailleuse" ? 26 : 21;
+    const long = objet === "pistolet" ? 15 : objet === "mitrailleuse" ? 26 : 21;
     const epais = objet === "grosPistolet" || objet === "mitrailleuse" ? 7 : 5;
     if (objet === "mitrailleuse") {
       r("#c9a227", 33, 27, 5, 8); // le chargeur de balles
@@ -567,9 +643,41 @@ Jeu.Rendu = (function () {
   }
 
   // Les cochons (étape 13) : un petit cochon rose, qui regarde où il va et agite les pattes en marchant.
+  // Étape 28 : le cochon vaincu se lève sur ses pattes arrière et secoue ses pattes avant,
+  // en sautillant, puis il s'efface doucement.
+  function cochonQuiDanse(co) {
+    const t = C.cochons.danseMort - co.danseMort; // depuis combien de temps il danse
+    const leve = Math.min(1, t / 0.25); // il se redresse en 0,25 s
+    const saut = -Math.abs(Math.sin(t * 9)) * 4;
+    const secoue = Math.sin(t * 35) * 4; // les pattes avant qui s'agitent
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, co.danseMort / 0.3);
+    ctx.translate(Math.round(co.x + co.l / 2), Math.round(co.y + co.h + saut));
+    ctx.rotate((1 - leve) * (co.direction > 0 ? Math.PI / 2 : -Math.PI / 2) * 0.9);
+    const r = (couleur, x, y, l, h) => {
+      ctx.fillStyle = couleur;
+      ctx.fillRect(x, y, l, h);
+    };
+    r("#e07a93", -7, -6, 5, 6); // les pattes arrière
+    r("#e07a93", 2, -6, 5, 6);
+    r("#f4a3b4", -9, -32, 18, 27); // le corps, debout
+    r("#f4a3b4", -8, -45, 16, 14); // la tête
+    r("#e07a93", -3, -38, 6, 5); // le groin, de face
+    r("#1d1d3a", -5, -42, 2, 2); // les yeux
+    r("#1d1d3a", 3, -42, 2, 2);
+    r("#e07a93", -9, -48, 4, 4); // les oreilles
+    r("#e07a93", 5, -48, 4, 4);
+    r("#e07a93", -15, -26 + secoue, 6, 4); // les pattes avant qui se secouent
+    r("#e07a93", 9, -26 - secoue, 6, 4);
+    ctx.restore();
+  }
+
   function cochons(liste) {
     for (const co of liste) {
-      if (!co.vivant) continue;
+      if (!co.vivant) {
+        if (co.danseMort > 0) cochonQuiDanse(co);
+        continue;
+      }
       ctx.save();
       ctx.translate(Math.round(co.x + co.l / 2), Math.round(co.y));
       ctx.scale(co.direction, 1);
@@ -878,12 +986,12 @@ Jeu.Rendu = (function () {
     const inv = monde.inventaire;
     ctx.fillStyle = "rgba(0,0,0,0.5)";
     ctx.fillRect(16, 134, 24, 22);
-    ctx.fillStyle = inv.blocs > 0 ? "#b5523b" : "#3a3f55";
+    ctx.fillStyle = "#b5523b";
     ctx.fillRect(20, 138, 16, 14);
     ctx.fillStyle = "#e8d9c4";
     ctx.fillRect(20, 144, 16, 1);
     ctx.fillRect(27, 138, 1, 6);
-    texte("🎒 " + inv.blocs + "   8 + clic : poser · 0/3/7 + clic : casser · saute + P : sous tes pieds", 48, 152, 15, "#fff");
+    texte("🎒 ∞ briques   8 + clic : poser où tu veux · 0/3/7 + T : casser · saute + P : sous tes pieds", 48, 152, 15, "#fff");
     // Les PV, le bouclier et la potion (étape 11)
     const eq = monde.equipement;
     ctx.fillStyle = "rgba(0,0,0,0.5)";
@@ -910,7 +1018,7 @@ Jeu.Rendu = (function () {
     ctx.fillStyle = eq.pioche > 5 ? "#8e8a86" : eq.pioche > 0 ? "#ff9f1a" : "#e0303a";
     ctx.fillRect(20, 214, Math.round(160 * eq.pioche / C.pioche.usure), 10);
     const etatPioche = eq.pioche > 0 ? "⛏️ " + eq.pioche + "/" + C.pioche.usure : "⛏️ CASSÉE !";
-    texte(etatPioche + "   ⚫ " + eq.charbon + "   🥩 " + eq.viandeCrue + "   🍖 " + eq.viandeCuite + "   K : cuire · M : manger", 192, 225, 15, eq.pioche > 0 ? "#fff" : "#ff9b9b");
+    texte(etatPioche + " 🪵 " + eq.bois + "   ⚫ " + eq.charbon + "   🥩 " + eq.viandeCrue + "   🍖 " + eq.viandeCuite + "   K : cuire · M : manger", 192, 225, 15, eq.pioche > 0 ? "#fff" : "#ff9b9b");
     if (options.ralenti) texte("🐢 RALENTI (×0,25)", L / 2, 32, 18, "#ffe27a", "center");
     barreInventaire(monde);
   }
@@ -931,14 +1039,20 @@ Jeu.Rendu = (function () {
       ctx.strokeStyle = choisi ? "#ffe27a" : i === survol ? "#ffffff" : "rgba(255,255,255,0.35)";
       ctx.lineWidth = choisi || i === survol ? 3 : 1;
       ctx.strokeRect(x + 0.5, haut + 0.5, taille - 1, taille - 1);
-      const inactif = (objet === "armure" && eq.armure <= 0) || (eq[objet] !== undefined && objet !== "briques" && eq[objet] <= 0);
+      const pasAssezDeBois = (objet === "porte" || objet === "escalier") && eq.bois < C.constructions[objet].bois;
+      const inactif = pasAssezDeBois || (objet === "armure" && eq.armure <= 0) || (eq[objet] !== undefined && objet !== "briques" && eq[objet] <= 0);
       ctx.globalAlpha = inactif ? 0.45 : 1;
       icone(objet, x + taille / 2, haut + taille / 2 - 2);
       ctx.globalAlpha = 1;
       texte(Jeu.Armes.TOUCHES[i], x + 4, haut + 13, 12, "#fff");
       // En dessous : l'usure (armes, pioche, armure), le nombre (briques) ou ∞ (pistolets)
       const max = objet === "pioche" ? C.pioche.usure : objet === "armure" ? C.armure.usure : C.armes[objet] && C.armes[objet].usure;
-      if (objet === "briques") texte(String(monde.inventaire.blocs), x + taille - 4, haut + taille - 5, 13, "#fff", "right");
+      if (objet === "briques") texte("∞", x + taille - 5, haut + taille - 5, 14, "#ffe27a", "right"); // illimitées (étape 28)
+      else if (objet === "porte" || objet === "escalier") {
+        // Combien on peut en fabriquer avec le bois qu'on a (étape 28)
+        const combien = Math.floor(eq.bois / C.constructions[objet].bois);
+        texte("×" + combien, x + taille - 4, haut + taille - 5, 12, combien > 0 ? "#fff" : "#ff9b9b", "right");
+      }
       else if (objet === "bazooka") texte("∞", x + taille - 5, haut + taille - 5, 14, "#ffe27a", "right");
       else if (Jeu.Armes.PISTOLETS.includes(objet)) {
         // ∞ balles, mais un chargeur (étape 22) : on montre ce qu'il reste dedans, ou ⟳ pendant le rechargement
@@ -973,6 +1087,7 @@ Jeu.Rendu = (function () {
     if (eq.rechargement > 0 && eq.armeRecharge === objet) infos += " · ⟳ recharge…";
     if (Jeu.Armes.OUTILS.includes(objet)) infos += " · 🖱️ clic : casser " + C.outils[objet].facile.join(", ") + (C.outils[objet].casseTout ? " (le reste en " + C.outils.clicsDifficiles + " clics)" : "");
     if (objet === "briques") infos += " · 🖱️ clic : poser";
+    if (objet === "porte" || objet === "escalier") infos += " · " + C.constructions[objet].bois + " bois (tu as 🪵 " + eq.bois + ") · 🖱️ clic : poser où tu veux";
     if (eq.attente > 0 && arme) infos += " · ⏳";
     texte(infos + (objet === "pelle" || objet === "briques" ? "" : "   (T : utiliser)"), L / 2, haut - 8, 15, "#ffe27a", "center");
   }
@@ -1035,12 +1150,20 @@ Jeu.Rendu = (function () {
       r("#6b4423", -2, 4, 4, 7);
       r("#c9a227", -8, -9, 5, 4);
     } else if (Jeu.Armes.PISTOLETS.includes(objet) && objet !== "mitrailleuse") {
-      const taille = objet === "petitPistolet" ? 0.75 : objet === "pistolet" ? 1 : 1.3;
+      const taille = objet === "pistolet" ? 1 : 1.3;
       const corps = objet === "grosPistolet" ? "#3b4252" : objet === "pistolet" ? "#5b6472" : "#7c8796";
       r(corps, -12 * taille, -5 * taille, 22 * taille, 7 * taille); // canon
       r("#6b4423", -12 * taille, 2 * taille, 7 * taille, 10 * taille); // poignée
       r("#1d1d3a", 8 * taille, -4 * taille, 3 * taille, 3 * taille); // bout du canon
       if (objet === "grosPistolet") r("#e0303a", -4, -8, 8, 3);
+    } else if (objet === "porte") {
+      r("#b5793a", -9, -14, 18, 28); // une petite porte en bois (étape 28)
+      r("#8c5a28", -3, -14, 2, 28);
+      r("#9fdcff", -6, -10, 12, 7);
+      r("#ffd23f", 4, 2, 3, 3);
+    } else if (objet === "escalier") {
+      for (let k = 0; k < 3; k++) r("#b5793a", -12 + k * 8, 8 - (k + 1) * 8, 8, (k + 1) * 8); // trois marches
+      r("#8c5a28", -12, 0, 24, 2);
     } else if (objet === "pelle") {
       r("#8a5a2b", -2, -13, 4, 17); // manche
       r("#8a5a2b", -5, -14, 10, 3); // poignée
@@ -1088,14 +1211,14 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 25 : dragons mutants et grottes à conquérir", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 28 : des arbres, des portes et des escaliers", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au bloc " + C.arrivee.bloc + " le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
     texte("❤️ " + C.vies + " vies · 🕳️ Trou : tu repars devant le trou", L / 2, 386, 17, "#cfe0ff", "center");
     texte("🔥 Lave et 💀 murets à pics (un tous les 50 blocs) : tu repars au drapeau 🚩", L / 2, 414, 17, "#cfe0ff", "center");
     texte("📦 Caisses et 🗼 tours en pierre : sans danger, monte dessus !", L / 2, 442, 17, "#cfe0ff", "center");
-    texte("🎒 " + C.inventaire.blocs + " blocs (sac rempli à chaque 🚩) · un bloc cassé va dans le sac · saute + P : sous tes pieds", L / 2, 470, 16, "#cfe0ff", "center");
+    texte("🎒 Briques illimitées : construis où tu veux, aussi haut que tu veux ! · 🌳 coupe les arbres pour le bois", L / 2, 470, 16, "#cfe0ff", "center");
     texte("Clic sur la barre (ou 1…9, 0, ), =, ²) : choisir l'objet · T : l'utiliser · 🖱️ clic : casser (outil) ou poser (briques) · H · F · R · K · M", L / 2, 496, 15, "#cfe0ff", "center");
     texte("🎵 J : couper la musique · 🔊 B : couper les bruits", L / 2, 140, 14, "#ffe27a", "center");
     const premier = Jeu.Sauvegarde.donnees.classement[0];
@@ -1546,8 +1669,20 @@ Jeu.Rendu = (function () {
     if (!c || Jeu.Armes.caseSousLaSouris() >= 0) return; // sur la barre du bas, le clic choisit un objet (étape 20)
     const objet = Jeu.Armes.objetEnMain(monde);
     const outil = Jeu.Armes.OUTILS.includes(objet);
-    if (!outil && objet !== "briques") return; // avec une arme en main, le clic ne fait rien
-    const ok = outil ? !Jeu.Outils.raisonDuRefus(monde, c.colonne, c.ligne, objet) : !Jeu.Inventaire.raisonDuRefusIci(monde, c.colonne, c.ligne);
+    const construction = objet === "porte" || objet === "escalier"; // étape 28
+    if (!outil && objet !== "briques" && !construction) return; // avec une arme en main, le clic ne fait rien
+    const ok = outil ? !Jeu.Outils.raisonDuRefus(monde, c.colonne, c.ligne, objet)
+      : construction ? !Jeu.Inventaire.raisonDuRefusConstruction(monde, objet, c.colonne, c.ligne)
+      : !Jeu.Inventaire.raisonDuRefusIci(monde, c.colonne, c.ligne);
+    if (construction) {
+      // Le cadre montre toute la place : 2 cases pour la porte
+      ctx.strokeStyle = ok ? "#7dff9b" : "rgba(255,90,90,0.9)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.strokeRect(c.colonne * B + 1, (objet === "porte" ? c.ligne - 1 : c.ligne) * B + 1, B - 2, (objet === "porte" ? 2 : 1) * B - 2);
+      ctx.setLineDash([]);
+      return;
+    }
     const x = c.colonne * B;
     const y = c.ligne * B;
     if (ok && !outil) {

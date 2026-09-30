@@ -42,13 +42,14 @@ Jeu.Armes = (function () {
   const B = C.tailleBloc;
 
   // Les 18 poches de la ceinture : touches 1 à 9, 0, ), =, ², puis 5 poches à choisir en cliquant (étape 22).
-  const BARRE = ["epee", "epeeDoree", "hache", "petitPistolet", "pistolet", "grosPistolet", "pioche", "briques", "armure", "pelle", "mitrailleuse", "magnum", "bazooka", "fusilPompe", "sniper", "laser", "lanceFlammes", "pistoletEau"];
-  const TOUCHES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ")", "=", "²", "", "", "", "", ""];
+  // Étape 28 : le petit pistolet est parti ; sa case (touche 4) est pour la PORTE, et l'ESCALIER est au bout.
+  const BARRE = ["epee", "epeeDoree", "hache", "porte", "pistolet", "grosPistolet", "pioche", "briques", "armure", "pelle", "mitrailleuse", "magnum", "bazooka", "fusilPompe", "sniper", "laser", "lanceFlammes", "pistoletEau", "escalier"];
+  const TOUCHES = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ")", "=", "²", "", "", "", "", "", ""];
   const CORPS_A_CORPS = ["epee", "epeeDoree", "hache"];
   // Tout ce qui tire des balles (le bazooka tire des roquettes) : ces armes ont un éclair et un bruit à elles.
-  const PISTOLETS = ["petitPistolet", "pistolet", "grosPistolet", "mitrailleuse", "magnum", "fusilPompe", "sniper", "laser", "lanceFlammes", "pistoletEau"];
+  const PISTOLETS = ["pistolet", "grosPistolet", "mitrailleuse", "magnum", "fusilPompe", "sniper", "laser", "lanceFlammes", "pistoletEau"];
   const OUTILS = ["pelle", "hache", "pioche"]; // ce qui casse les blocs au clic (étape 17)
-  const NOMS = { pioche: "pioche", briques: "briques", armure: "armure en fer", pelle: "pelle", bazooka: "bazooka" };
+  const NOMS = { pioche: "pioche", briques: "briques", armure: "armure en fer", pelle: "pelle", bazooka: "bazooka", porte: "porte", escalier: "escalier" };
 
   function nomDe(objet) {
     return (C.armes[objet] && C.armes[objet].nom) || NOMS[objet];
@@ -425,6 +426,7 @@ Jeu.Armes = (function () {
       else if (objet === "briques") E.appuyer("poserBloc"); // l'inventaire posera le bloc, comme avec P
       else if (objet === "armure") Jeu.Combat.fabriquerArmure(monde);
       else if (objet === "pelle") Jeu.Outils.casserAvecT(monde, "pelle"); // étape 25 : T mine
+      else if (objet === "porte" || objet === "escalier") Jeu.Evenements.emettre("astuce", { texte: "la " + (objet === "porte" ? "porte" : "l'escalier") + " se pose avec un clic de souris, là où tu veux (" + C.constructions[objet].bois + " bois)" });
     }
     // 3. Les balles et les roquettes en vol
     deplacerLesBalles(monde, dt);

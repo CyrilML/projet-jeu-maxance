@@ -63,7 +63,10 @@ Jeu.Cochons = (function () {
     const T = Jeu.Terrain;
     for (const co of monde.cochons) {
       co.touche = Math.max(0, co.touche - dt);
-      if (!co.vivant) continue;
+      if (!co.vivant) {
+        co.danseMort = Math.max(0, (co.danseMort || 0) - dt); // l'affichage le fait danser (étape 28)
+        continue;
+      }
       co.animation += dt;
       const suivant = co.x + co.direction * C.cochons.vitesse * dt;
       const bord = co.direction > 0 ? suivant + co.l : suivant; // le bout de son groin
