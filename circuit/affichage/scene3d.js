@@ -31,6 +31,7 @@ Circuit.Scene3D = (function () {
   const piecesPool = [], cartonsPool = [];
   const flotte = {}; // étape 39 : les voitures garées et celles de la circulation (une réserve par modèle)
   let bonhomme = null; // étape 39 : le personnage
+  let flamme = null; // étape 40 : les flammes du nitro, derrière la voiture
   let materiauPiece = null, geoPiece = null, materiauCarton = null, geoCarton = null, fil = null;
 
   // ------------------------------------------------------------------ démarrage
@@ -105,6 +106,18 @@ Circuit.Scene3D = (function () {
     materiauCarton = new THREE.MeshStandardMaterial({ map: Circuit.Textures.carton(), roughness: 0.9 });
     fil = new THREE.MeshBasicMaterial({ color: 0x5af29a, wireframe: true, transparent: true, opacity: 0.35, fog: false });
 
+    // Étape 40 : les flammes du nitro. Deux cônes (orange dehors, jaune dedans) qui « s'additionnent »
+    // à la lumière de l'image (blending additif) : ça brille comme du feu.
+    flamme = new THREE.Group();
+    for (const [rayon, longueur, couleur] of [[0.32, 1.8, 0xff6a1a], [0.18, 1.2, 0xfff2a0]]) {
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(rayon, longueur, 12), new THREE.MeshBasicMaterial({ color: couleur, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }));
+      cone.rotation.z = Math.PI / 2; // la pointe vers l'arrière
+      cone.position.x = -longueur / 2;
+      flamme.add(cone);
+    }
+    flamme.visible = false;
+    scene.add(flamme);
+
     adversaire = Circuit.Modeles.fabriquer("classique", [0.12, 0.38, 0.92], [0.07, 0.22, 0.6]);
     scene.add(adversaire.g);
     rayonsMobiles = Circuit.RayonsX.mobiles({ voiture: { x: 0, z: 0, angle: 0, vitesse: 0 }, carte: "", pieces: [] });
@@ -121,6 +134,7 @@ Circuit.Scene3D = (function () {
     if (!decors[carte]) {
       let groupe, maj = null;
       if (carte === "parcours") groupe = Circuit.DecorParcours.construire();
+      else if (carte === "grand") ({ groupe, maj } = Circuit.DecorGrandParcours.construire()); // étape 40
       else if (carte === "ville") ({ groupe, maj } = Circuit.DecorVille.construire());
       else groupe = Circuit.DecorCircuit.construire();
       const rayons = Circuit.RayonsX.fixes(carte);
@@ -138,6 +152,8 @@ Circuit.Scene3D = (function () {
     if (!vehicules[modele]) {
       const fiche = Circuit.Garage.ficheDe(modele);
       vehicules[modele] = Circuit.Modeles.fabriquer(modele, fiche.couleurs[0], fiche.couleurs[1]);
+      // Étape 40 : où est l'arrière de la voiture (pour y accrocher les flammes du nitro) ?
+      vehicules[modele].arriere = new THREE.Box3().setFromObject(vehicules[modele].g).min.x;
       scene.add(vehicules[modele].g);
     }
     return vehicules[modele];
@@ -187,8 +203,11 @@ Circuit.Scene3D = (function () {
     } else {
       // Derrière la voiture ; la caméra suit aussi la hauteur (un peu moins, pour qu'on voie bien les sauts).
       const recul = v.modele === "monster" ? 1.3 : v.modele === "camion" ? 1.6 : monde.pieton ? 0.5 : 1;
-      oeil = [v.x - cos * R.distance * recul, R.hauteur * recul + y * 0.75, v.z - sin * R.distance * recul];
-      cible = [v.x + cos * R.regardDevant, 1 + y * 0.85, v.z + sin * R.regardDevant];
+      // Étape 40 : sur le grand parcours, les routes sont très hautes (jusqu'à 22 m) : la caméra suit toute la hauteur,
+      // sinon elle passerait sous la route !
+      const suivi = monde.carte === "grand" ? 1 : 0.75;
+      oeil = [v.x - cos * R.distance * recul, R.hauteur * recul + y * suivi, v.z - sin * R.distance * recul];
+      cible = [v.x + cos * R.regardDevant, 1 + y * Math.min(1, suivi + 0.1), v.z + sin * R.regardDevant];
     }
     cam.position.set(oeil[0], oeil[1], oeil[2]);
     cam.up.set(haut[0], haut[1], haut[2]);
@@ -232,6 +251,23 @@ Circuit.Scene3D = (function () {
     placerVoiture(joueur, v);
     adversaire.g.visible = !!monde.adversaire;
     if (monde.adversaire) placerVoiture(adversaire, monde.adversaire.voiture);
+
+    // Étape 40 : les flammes du nitro (elles tremblent un peu), et le gyrophare de la police.
+    flamme.visible = v.nitro > 0 && !monde.pieton && joueur.g.visible;
+    if (flamme.visible) {
+      flamme.position.copy(joueur.g.position);
+      flamme.rotation.copy(joueur.g.rotation);
+      flamme.children.forEach((cone, i) => {
+        cone.position.set(joueur.arriere + 0.1 - (i ? 0.6 : 0.9) * (0.85 + 0.3 * Math.random()), 0.55, 0);
+        cone.scale.set(1, 0.85 + 0.3 * Math.random(), 1);
+      });
+    }
+    if (joueur.gyro) {
+      const allume = monde.sirene && !monde.pieton;
+      const tic = Math.floor(monde.temps * 4) % 2;
+      joueur.gyro.rouge.emissiveIntensity = allume && tic ? 5 : 0.05;
+      joueur.gyro.bleu.emissiveIntensity = allume && !tic ? 5 : 0.05;
+    }
 
     // Étape 39 : les voitures garées et celles de la circulation, et le personnage.
     const compte = {};

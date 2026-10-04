@@ -2,7 +2,8 @@
 //
 // Avant chaque course, on passe par le garage. On y voit les voitures, une par une (← →).
 // Étape 37 : chaque carte a son garage (le circuit : 5 voitures de course ; le parcours : 4 tout-terrain ;
-// la ville, depuis l'étape 39 : citadine, SUV, voiture basse, camionnette et camion).
+// la ville, depuis l'étape 39 : citadine, SUV, voiture basse, camionnette et camion ; depuis l'étape 40, un rallye
+// au circuit, un quad au parcours, un taxi et une police en ville, et le garage du grand parcours avec son kart).
 // Les pièces et les voitures achetées sont les mêmes partout.
 //   - si la voiture est à toi : Entrée → tu la prends et la course commence ;
 //   - sinon, si tu as assez de pièces : Entrée → tu l'achètes (le prix est enlevé de tes pièces) ;
@@ -18,6 +19,16 @@ Circuit.Garage = (function () {
   const radio = Circuit.Evenements;
   // Étape 37 : ✍️ un garage par carte, avec des véhicules qui s'adaptent à la carte.
   const LISTES = { course: C.voitures, parcours: C.vehiculesParcours, ville: C.vehiculesVille };
+  // Étape 40 : le garage du grand parcours. Un nom tout seul (« buggy ») = la fiche du même véhicule dans un
+  // autre garage. Acheté une fois, il est à toi dans les deux garages.
+  LISTES.grand = C.vehiculesGrandParcours.map((v) => {
+    if (typeof v !== "string") return v;
+    for (const l of Object.values(LISTES)) {
+      const f = l.find((x) => x.id === v);
+      if (f) return f;
+    }
+    return null;
+  }).filter(Boolean);
   let carte = "course";
 
   // Le garage de quelle carte ?

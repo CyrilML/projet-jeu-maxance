@@ -146,7 +146,7 @@ Circuit.TableauDeBord = (function () {
 
     panneau(W / 2 - 240, 12, 480, 50);
     const nomCarte = (C.cartes.find((c) => c.id === monde.carte) || {}).nom || "";
-    texte("🏠 Garage · " + nomCarte, W / 2 - 225, 46, 24, "#ffe27a");
+    texte("🏠 Garage · " + nomCarte, W / 2 - 225, 46, nomCarte.length > 14 ? 20 : 24, "#ffe27a"); // étape 40 : un nom plus long
     texte("🪙 " + sauvegarde.pieces, W / 2 + 225, 46, 24, "#ffd34d", "right");
 
     // Les 5 places du garage, en petit : ✅ à toi, 🔒 pas encore.
@@ -196,50 +196,127 @@ Circuit.TableauDeBord = (function () {
   function dessinerCartes(monde) {
     panneau(W / 2 - 230, 30, 460, 56);
     texte("🗺️ Choisis ta carte", W / 2, 70, 32, "#ffe27a", "center");
-    const n = C.cartes.length, largeur = 270, ecart = 20;
+    const n = C.cartes.length, ecart = 16;
+    const largeur = Math.min(270, (W - 60 - (n - 1) * ecart) / n); // étape 40 : 4 cartes doivent tenir
     const gauche = W / 2 - (n * largeur + (n - 1) * ecart) / 2;
     C.cartes.forEach((carte, i) => {
       const x = gauche + i * (largeur + ecart), y = 130;
       const ici = i === monde.choixCarte;
-      const prete = true; // étape 39 : les 3 cartes sont prêtes
+      const prete = true; // étape 40 : les 4 cartes sont prêtes
       ctx.fillStyle = ici ? "rgba(255,226,122,.92)" : "rgba(10,14,30,.72)";
       ctx.beginPath();
       ctx.roundRect(x, y, largeur, 230, 14);
       ctx.fill();
       const couleur = ici ? "#1a1a1a" : "#fff";
       texte(carte.icone, x + largeur / 2, y + 80, 60, couleur, "center", ici);
-      texte((i + 1) + ". " + carte.nom, x + largeur / 2, y + 135, 26, couleur, "center", ici);
+      texte((i + 1) + ". " + carte.nom, x + largeur / 2, y + 135, n > 3 ? 18 : 26, couleur, "center", ici);
       texte(carte.texte, x + largeur / 2, y + 170, 13, ici ? "#333" : "#cfd6ff", "center", ici);
       if (!prete) texte("🚧 en construction", x + largeur / 2, y + 205, 16, ici ? "#7a3b00" : "#ffb37a", "center", ici);
     });
     if (monde.messageCarte) texte(monde.messageCarte, W / 2, 400, 20, "#ffb37a", "center");
     panneau(W / 2 - 250, H - 80, 500, 50);
-    texte("← → ou 1 2 3 pour choisir · Entrée pour aller au garage", W / 2, H - 48, 18, "#cfd6ff", "center");
+    texte("← → ou 1 2 3 4 pour choisir · Entrée pour aller au garage", W / 2, H - 48, 18, "#cfd6ff", "center");
   }
 
   // Étape 37 : pendant la balade sur le parcours.
+  // Étape 40 : le même écran sert au grand parcours.
   function dessinerBalade(monde, options, sauvegarde) {
     const v = monde.voiture;
-    panneau(12, 12, 250, 112);
-    texte("🎢 Le parcours", 24, 42, 24, "#ffe27a");
+    const grand = monde.carte === "grand";
+    panneau(12, 12, 270, 112);
+    texte(grand ? "🛣️ Le grand parcours" : "🎢 Le parcours", 24, 42, 24, "#ffe27a");
     texte("🪙 " + monde.piecesCourse + " / " + monde.pieces.length + " pièces trouvées", 24, 68, 17, "#ffd34d");
     texte("porte-monnaie : " + sauvegarde.pieces, 24, 90, 14, "#cfd6ff");
-    texte("📦 cartons défoncés : " + monde.cartonsCasses, 24, 112, 14, "#cfd6ff");
+    if (grand) texte("🔥 nitros : " + monde.nitrosPris + " · 😵 chutes : " + monde.chutes, 24, 112, 14, "#cfd6ff");
+    else texte("📦 cartons défoncés : " + monde.cartonsCasses, 24, 112, 14, "#cfd6ff");
 
     // Le compteur de vitesse et la hauteur.
     panneau(W - 190, H - 92, 178, 80);
     texte(Math.round(Math.abs(v.vitesse) * 3.6) + "", W - 70, H - 36, 46, "#fff", "right");
     texte("km/h", W - 62, H - 36, 18, "#cfd6ff");
     if (v.y > 0.3) texte("↕ " + v.y.toFixed(1).replace(".", ",") + " m de haut", W - 101, H - 104, 18, "#7dffa0", "center");
+    // Étape 40 : la jauge du nitro (elle se vide pendant la poussée).
+    if (v.nitro > 0) {
+      panneau(W / 2 - 110, H - 70, 220, 46);
+      texte("🔥 NITRO", W / 2 - 98, H - 40, 20, "#7fe8ff");
+      ctx.fillStyle = "rgba(255,255,255,.15)";
+      ctx.fillRect(W / 2 + 2, H - 54, 96, 14);
+      ctx.fillStyle = "#33e0ff";
+      ctx.fillRect(W / 2 + 2, H - 54, (96 * v.nitro) / C.nitro.duree, 14);
+    }
 
-    dessinerMiniCarteParcours(monde);
+    if (grand) dessinerMiniCarteGrand(monde);
+    else dessinerMiniCarteParcours(monde);
 
     if (monde.message && monde.temps < monde.message.jusqua) texte(monde.message.texte, W / 2, H / 2 - 70, 36, "#ffe27a", "center");
     if (monde.boucle) texte("🎢 " + Math.round((monde.boucle.theta * 180) / Math.PI) + "°", W / 2, 120, 26, "#fff", "center");
     texte("R : retour au départ · ⌫ : changer de carte", 24, H - 22, 14, "#cfd6ff");
     if (options.pause) texte("⏸ Pause", W / 2, H - 30, 28, "#fff", "center");
     if (options.ralenti) texte("🐢 Ralenti", 280, 40, 18, "#cfd6ff");
-    if (options.rayonsX) dessinerEtiquettesParcours(monde);
+    if (options.rayonsX) {
+      if (grand) dessinerEtiquettesGrand(monde);
+      else dessinerEtiquettesParcours(monde);
+    }
+  }
+
+  // Étape 40 : la mini-carte du grand parcours : la route (plus claire quand elle est haute), les plateformes,
+  // le creux, les nitros, les pièces et la voiture.
+  function dessinerMiniCarteGrand(monde) {
+    const GP = Circuit.GrandParcours;
+    const taille = 136;
+    const echelle = taille / 640;
+    const cx = W - 12 - taille / 2 + 30 * echelle, cz = 12 + taille / 2 - 80 * echelle; // la route est un peu décalée vers −x et +z
+    panneau(W - 12 - taille - 6, 6, taille + 12, taille + 12);
+    const K = GP.creux;
+    ctx.fillStyle = "#6b5332";
+    ctx.fillRect(cx + (K.x - K.longueur / 2) * echelle, cz + (K.z - K.largeur / 2) * echelle, K.longueur * echelle, K.largeur * echelle);
+    for (const p of GP.plateformes) {
+      ctx.fillStyle = "#b9bcc2";
+      ctx.fillRect(cx + (p.x - p.longueur / 2) * echelle, cz + (p.z - p.largeur / 2) * echelle, p.longueur * echelle, p.largeur * echelle);
+      ctx.fillStyle = "#1a1d26";
+      for (const t of p.trous) ctx.fillRect(cx + (t.x - t.longueur / 2) * echelle, cz + (t.z - t.largeur / 2) * echelle, t.longueur * echelle, t.largeur * echelle);
+    }
+    ctx.lineWidth = 3;
+    for (const t of GP.routes) {
+      const c = Math.round(110 + Math.min(1, t.ya / 20) * 120);
+      ctx.strokeStyle = "rgb(" + c + "," + c + "," + (c + 10) + ")";
+      ctx.beginPath();
+      ctx.moveTo(cx + t.ax * echelle, cz + t.az * echelle);
+      ctx.lineTo(cx + (t.ax + t.ux * t.longueur) * echelle, cz + (t.az + t.uz * t.longueur) * echelle);
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#33e0ff";
+    for (const n of GP.nitros) ctx.fillRect(cx + n.x * echelle - 1.5, cz + n.z * echelle - 1.5, 3, 3);
+    ctx.fillStyle = "#ffd34d";
+    for (const p of monde.pieces) if (!p.prise) ctx.fillRect(cx + p.x * echelle - 1, cz + p.z * echelle - 1, 2, 2);
+    const v = monde.voiture;
+    ctx.save();
+    ctx.translate(cx + v.x * echelle, cz + v.z * echelle);
+    ctx.rotate(v.angle);
+    ctx.fillStyle = "#ff3b30";
+    ctx.beginPath();
+    ctx.moveTo(6, 0);
+    ctx.lineTo(-4, -4);
+    ctx.lineTo(-4, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Étape 40 : aux rayons X sur le grand parcours : les plateformes, le saut du creux et ce qui est sous la voiture.
+  function dessinerEtiquettesGrand(monde) {
+    const GP = Circuit.GrandParcours;
+    const vp = Circuit.Scene3D.vueProjection;
+    const ecrire = (t, x, y, z, couleur) => {
+      const e = Circuit.Maths3D.versEcran(vp, x, y, z, W, H);
+      if (e && e.x > -80 && e.x < W + 80 && e.y > 0) texte(t, e.x, e.y, 14, couleur, "center");
+    };
+    for (const p of GP.plateformes) ecrire(p.nom + " · " + p.y + " m de haut", p.x, p.y + 3, p.z, "#7fe0ff");
+    const s = GP.saut;
+    ecrire("le creux : " + Math.round(s.longueur) + " m à sauter", (s.depart.x + s.arrivee.x) / 2, s.depart.y + 6, (s.depart.z + s.arrivee.z) / 2, "#ffe27a");
+    const v = monde.voiture;
+    const sous = GP.sous(v.x, v.z, v.y || 0);
+    ecrire("sous moi : " + sous.quoi + " · y = " + (v.y || 0).toFixed(1).replace(".", ",") + " m · vy = " + (v.vy || 0).toFixed(1).replace(".", ",") + " m/s", v.x, (v.y || 0) + 2.8, v.z, "#ffb37a");
   }
 
   // Étape 39 : en ville.
@@ -260,7 +337,8 @@ Circuit.TableauDeBord = (function () {
     dessinerMiniCarteVille(monde);
     if (monde.message && monde.temps < monde.message.jusqua) texte(monde.message.texte, W / 2, H / 2 - 70, 30, "#ffe27a", "center");
     if (p && monde.voitureProche) texte("E : monter dans " + monde.voitureProche, W / 2, H - 60, 22, "#7dffa0", "center");
-    texte(p ? "↑ ↓ ← → marcher · E : monter · R : départ · ⌫ : cartes" : "E : descendre · R : retour au départ · ⌫ : changer de carte", 24, H - 22, 14, "#cfd6ff");
+    texte(p ? "↑ ↓ ← → marcher · E : monter · R : départ · ⌫ : cartes" : "E : descendre · R : retour au départ · ⌫ : changer de carte" + (fiche.sirene ? " · H : sirène" : ""), 24, H - 22, 14, "#cfd6ff");
+    if (monde.sirene && fiche.sirene && !p) texte("🚨 Sirène", 300, 70, 20, Math.floor(monde.temps * 4) % 2 ? "#ff5a4a" : "#5a8aff");
     if (options.pause) texte("⏸ Pause", W / 2, H - 30, 28, "#fff", "center");
     if (options.ralenti) texte("🐢 Ralenti", 300, 40, 18, "#cfd6ff");
   }

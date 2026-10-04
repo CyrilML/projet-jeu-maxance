@@ -15,6 +15,7 @@ Circuit.RayonsX = (function () {
   const COULEURS = {
     milieu: [1, 0.89, 0.48], bords: [0.3, 0.9, 1], porte: [0.85, 0.45, 1], prochaine: [0.3, 1, 0.45],
     fleche: [0.3, 1, 0.45], ecart: [1, 0.6, 0.2], carotte: [0.45, 0.75, 1], cercles: [1, 1, 1], rouge: [1, 0.2, 0.2],
+    nitro: [0.2, 0.95, 1],
   };
 
   // Transforme les traits du constructeur en un objet Three.js (des segments colorés).
@@ -54,6 +55,7 @@ Circuit.RayonsX = (function () {
   // Les traits qui ne bougent pas : la route et les portes (circuit), les formes et les loopings (parcours).
   function fixes(carte) {
     if (carte === "parcours") return versThree(Circuit.DecorParcours.rayonsX({ bords: COULEURS.bords, entree: COULEURS.prochaine, rail: COULEURS.milieu }));
+    if (carte === "grand") return versThree(Circuit.DecorGrandParcours.rayonsX({ bords: COULEURS.bords, danger: COULEURS.rouge, nitro: COULEURS.nitro, saut: COULEURS.milieu }));
     if (carte === "ville") {
       // Étape 39 : le milieu des rues (en jaune) et le contour des immeubles (en bleu).
       const c = Circuit.Constructeur();
@@ -116,8 +118,22 @@ Circuit.RayonsX = (function () {
       c.ligne([v.x, 0.3, v.z], [m.x, 0.3, m.z], COULEURS.ecart);
       porte(c, Piste.portes[monde.prochainePorte], COULEURS.prochaine);
     }
-    // Un trait jaune entre la voiture et le sol : sa longueur, c'est la hauteur.
-    if ((v.y || 0) > 0.05) c.ligne([v.x, 0, v.z], [v.x, v.y, v.z], COULEURS.milieu);
+    // Un trait jaune entre la voiture et le sol : sa longueur, c'est la hauteur au-dessus du sol.
+    const sol = monde.carte === "grand" ? Circuit.GrandParcours.solDeBase(v.x, v.z) : 0;
+    if ((v.y || 0) - sol > 0.05) c.ligne([v.x, sol, v.z], [v.x, v.y, v.z], COULEURS.milieu);
+    // Étape 40 : en l'air, la COURBE DU SAUT prévue (une parabole) : où la voiture va passer dans les 2 prochaines secondes.
+    if (v.enLAir) {
+      let x = v.x, y = v.y, z = v.z, vy = v.vy;
+      const dt = 0.1;
+      for (let i = 0; i < 20; i++) {
+        const avant = [x, y, z];
+        x += cos * v.vitesse * dt;
+        z += sin * v.vitesse * dt;
+        vy -= C.parcours.gravite * dt;
+        y += vy * dt;
+        c.ligne(avant, [x, y, z], COULEURS.ecart);
+      }
+    }
     // Étape 39 : pour chaque voiture de la circulation, un trait vers le carrefour où elle va.
     for (const cv of monde.circulation || []) {
       const cible = [Circuit.Ville.rue(cv.vers[0]), 0.5, Circuit.Ville.rue(cv.vers[1])];

@@ -14,6 +14,8 @@
 //   - L'HERBE : un « chhhh » qui monte avec la vitesse quand tu roules dans l'herbe.
 //   - LE CHOC : « BOUM » quand les voitures se cognent (plus fort si le choc est violent).
 //   - LES BIPS DU DÉPART : un bip grave à chaque feu rouge, un bip aigu au « GO ».
+//   - Étape 40 : le NITRO fait « fffff » (un souffle aigu), et la SIRÈNE de la police fait « pin-pon » :
+//     deux notes qui changent toutes les demi-secondes (440 Hz, puis 587 Hz).
 //
 // Comme le reste de l'affichage, ce fichier LIT le monde, il ne le modifie jamais.
 
@@ -22,7 +24,7 @@ window.Circuit = window.Circuit || {};
 Circuit.Sons = (function () {
   const S = Circuit.CONFIG.sons;
   const Son = Circuit.Son;
-  let moteurJoueur = null, moteurAdversaire = null, herbe = null;
+  let moteurJoueur = null, moteurAdversaire = null, herbe = null, souffle = null, sirene = null;
   // Ce qu'on entend en ce moment : lu par le panneau « sous le capot ».
   const enDirect = { frequence: 0, volume: 0, frequenceAdversaire: 0, volumeAdversaire: 0, cote: 0, herbe: 0 };
 
@@ -31,6 +33,8 @@ Circuit.Sons = (function () {
     moteurJoueur = Son.creerMoteur();
     moteurAdversaire = Son.creerMoteur();
     herbe = Son.creerBruit(S.herbe.frequenceFiltre);
+    souffle = Son.creerBruit(2600); // étape 40 : le nitro
+    sirene = Son.creerMoteur(); // étape 40 : la sirène (un « moteur » qui joue 2 notes)
 
     const radio = Circuit.Evenements;
     radio.ecouter("decompte", () => Son.bip(S.bips.frequenceFeu, 0.18, S.bips.volume));
@@ -46,6 +50,8 @@ Circuit.Sons = (function () {
     });
     // Étape 36 : « ding » quand on prend une pièce, « ding-ding » quand on achète une voiture.
     radio.ecouter("piece", () => Son.bip(1320, 0.08, 0.12));
+    radio.ecouter("nitro", () => Son.bip(220, 0.25, 0.12));
+    radio.ecouter("chute", (d) => Son.boum(Math.min(12, d.hauteur)));
     radio.ecouter("achat", () => {
       Son.bip(988, 0.12, 0.15);
       setTimeout(() => Son.bip(1319, 0.25, 0.15), 130);
@@ -66,7 +72,7 @@ Circuit.Sons = (function () {
     const v = monde.voiture;
 
     // 1. Ton moteur
-    const accelere = v.pedale === "accélérateur";
+    const accelere = v.pedale.startsWith("accélérateur") || v.nitro > 0;
     const f = frequenceDuMoteur(v);
     // Étape 39 : à pied, le moteur de ta voiture est coupé.
     const volume = silence || monde.pieton ? 0 : accelere ? S.moteur.volumeAccelere : S.moteur.volumeLache;
@@ -101,6 +107,16 @@ Circuit.Sons = (function () {
     const volumeHerbe = !silence && monde.sol === "herbe" ? S.herbe.volume * Math.min(1, Math.abs(v.vitesse) / 10) : 0;
     Son.reglerBruit(herbe, volumeHerbe);
     enDirect.herbe = volumeHerbe;
+
+    // 4. Étape 40 : le souffle du nitro, et la sirène de la police.
+    const volumeNitro = !silence && v.nitro > 0 && !monde.pieton ? 0.35 * Math.min(1, v.nitro) : 0;
+    Son.reglerBruit(souffle, volumeNitro);
+    enDirect.nitro = volumeNitro;
+    const fiche = Circuit.Garage.ficheDe(v.modele) || {};
+    const hurle = !silence && monde.sirene && fiche.sirene && !monde.pieton;
+    const note = Math.floor(monde.temps * 2) % 2 ? 587 : 440;
+    Son.reglerMoteur(sirene, note, hurle ? 0.16 : 0, 1, 0);
+    enDirect.sirene = hurle ? note : 0;
   }
 
   function basculer() {

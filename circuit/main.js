@@ -74,6 +74,8 @@
       carte1: E.consommer("carte1"),
       carte2: E.consommer("carte2"),
       carte3: E.consommer("carte3"),
+      carte4: E.consommer("carte4"), // étape 40
+      sirene: E.consommer("sirene"), // étape 40 : H
       retour: E.consommer("retour"),
       monter: E.consommer("monter"), // étape 39 : E en ville
       valider: E.consommer("valider"),

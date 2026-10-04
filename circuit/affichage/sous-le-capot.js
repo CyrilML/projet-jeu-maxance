@@ -57,6 +57,10 @@ Circuit.SousLeCapot = (function () {
     monter: (d) => "🔑 Tu montes dans " + d.voiture + (d.ou === "garée" ? " (elle était garée)" : d.ou === "circulation" ? " (la voiture de la circulation t'a laissé la place)" : ""),
     "menu-cartes": () => "🗺️ Menu des cartes : choisis où rouler",
     "choix-carte": (d) => "🗺️ Carte choisie : " + d.nom + " → son garage s'ouvre",
+    "grand-parcours": (d) => "🛣️ Grand parcours : " + Math.round(d.longueur).toLocaleString("fr-FR") + " m de route, " + d.nitros + " plaques de nitro, " + d.pieces + " pièces à trouver",
+    nitro: (d) => "🔥 NITRO (plaque n° " + d.plaque + ") à " + Math.round(Math.abs(d.vitesse) * 3.6) + " km/h : poussée pendant " + virgule(d.duree, 1) + " s",
+    chute: (d) => "😵 Chute de " + virgule(d.hauteur, 1) + " m ! Tu es maintenant sur " + d.ou,
+    sirene: (d) => (d.allumee ? "🚨 Sirène et gyrophare allumés (H)" : "🔕 Sirène éteinte (H)"),
     balade: (d) => "🎢 Balade sur le parcours : " + d.pieces + " pièces à trouver et " + d.cartons + " cartons à défoncer",
     "retour-depart": () => "↩️ Retour au départ (R)",
     decollage: (d) => "🛫 Décollage à " + Math.round(Math.abs(d.vitesse) * 3.6) + " km/h, vitesse vers le haut " + virgule(d.vy, 1) + " m/s",
@@ -170,6 +174,28 @@ Circuit.SousLeCapot = (function () {
         ["trouvées", monde.piecesCourse + " / " + monde.pieces.length],
         ["porte-monnaie", Circuit.Sauvegarde.donnees.pieces + " pièce(s)"],
       ]);
+    } else if (monde.carte === "grand") {
+      // Étape 40 : le grand parcours.
+      const GP = Circuit.GrandParcours;
+      const sous = GP.sous(v.x, v.z, v.y || 0);
+      const saut = monde.dernierSaut;
+      lignes = [
+        ["Le grand parcours"],
+        ["phase", monde.phase],
+        ["sous la voiture", sous.quoi + " (à " + virgule(sous.h, 2) + " m)"],
+        ["vitesse vers le haut (vy)", virgule(v.vy || 0, 1) + " m/s"],
+        ["nitro", v.nitro > 0 ? "🔥 encore " + virgule(v.nitro, 1) + " s (vitesse max × " + virgule(Circuit.CONFIG.nitro.facteur, 1) + ")" : "—"],
+        ["plaques de nitro prises", monde.nitrosPris + " (il y en a " + GP.nitros.length + ")"],
+        ["dernier saut", saut ? Math.round(saut.distance) + " m de long, " + virgule(saut.hauteurMax, 1) + " m de haut, " + virgule(saut.duree, 2) + " s" : "—"],
+        ["le creux", Math.round(GP.saut.longueur) + " m à sauter"],
+        ["chutes", monde.chutes],
+        ["route", Math.round(GP.longueurTour).toLocaleString("fr-FR") + " m en " + GP.troncons.length + " tronçons de 3 m"],
+        ["saut du véhicule", "× " + virgule(fiche.saut || 1, 1)],
+      ].concat(voiture, [
+        ["Les pièces"],
+        ["trouvées", monde.piecesCourse + " / " + monde.pieces.length],
+        ["porte-monnaie", Circuit.Sauvegarde.donnees.pieces + " pièce(s)"],
+      ]);
     } else if (monde.carte === "parcours") {
       // Étape 37 : la balade sur le parcours.
       const saut = monde.dernierSaut;
@@ -229,6 +255,8 @@ Circuit.SousLeCapot = (function () {
       ["moteur bleu", Math.round(Circuit.Sons.enDirect.frequenceAdversaire) + " Hz · volume " + virgule(Circuit.Sons.enDirect.volumeAdversaire, 2) + " (à " + Math.round(Circuit.Sons.enDirect.distance || 0) + " m)"],
       ["côté (gauche −1, droite +1)", virgule(Circuit.Sons.enDirect.cote || 0, 2)],
       ["herbe « chhhh »", "volume " + virgule(Circuit.Sons.enDirect.herbe, 2)],
+      ["nitro « fffff » (étape 40)", "volume " + virgule(Circuit.Sons.enDirect.nitro || 0, 2)],
+      ["sirène (étape 40)", Circuit.Sons.enDirect.sirene ? Math.round(Circuit.Sons.enDirect.sirene) + " Hz" : "éteinte"],
       ["Le dessin"],
       ["caméra", Circuit.Scene3D.camera.mode],
       ["triangles dessinés", compteur.triangles.toLocaleString("fr-FR")],

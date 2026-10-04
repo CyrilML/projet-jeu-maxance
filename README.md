@@ -13,9 +13,10 @@ pas de serveur, pas d'installation.
 - **`index.html`** : le carnet de bord. Il explique qui fait quoi, contient la fiche pour
   passer commande à Claude, les explications de chaque étape et la feuille de route.
 - **`jeu/index.html`** : le jeu. S'ouvre d'un double-clic dans le navigateur.
-- **`circuit/index.html`** : le deuxième jeu (étapes 32 à 39), un jeu de voiture en 3D (Three.js) avec 3 cartes : un circuit ovale
-  (course contre une voiture bleue), un parcours (tremplins, loopings, tunnels) et une ville (circulation, feux, personnage
-  qui descend de la voiture avec E). Un garage par carte, avec des voitures à acheter avec des pièces.
+- **`circuit/index.html`** : le deuxième jeu (étapes 32 à 40), un jeu de voiture en 3D (Three.js) avec 4 cartes : un circuit ovale
+  (course contre une voiture bleue), un parcours (tremplins, loopings, tunnels), une ville (circulation, feux, personnage
+  qui descend de la voiture avec E) et un grand parcours façon Carrera (ponts, grande rampe, plateforme à trous, nitros,
+  saut du creux). Un garage par carte, avec des voitures à acheter avec des pièces.
   ↑ accélérer, ↓ freiner, ← → tourner, C caméra, X rayons X. Même architecture que le premier jeu,
   avec un petit moteur 3D fait maison (`circuit/moteur/projecteur.js`), sans aucune dépendance.
 

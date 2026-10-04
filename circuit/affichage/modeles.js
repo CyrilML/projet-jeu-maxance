@@ -430,6 +430,150 @@ Circuit.Modeles = (function () {
     return { g, roues: ajouterRoues(g, [[2.7, true], [-2.0, false], [-3.2, false]], 1.05, 0.5, 0.4), yCapot: 3.2 };
   }
 
+  // ---------------------------------------------------------------- étape 40 : les nouveaux véhicules
+
+  // Une petite toile avec un texte (pour le panneau TAXI et les autocollants du rallye).
+  function etiquette(texte, fond, encre, largeur, hauteur) {
+    const toile = document.createElement("canvas");
+    toile.width = 256;
+    toile.height = 96;
+    const ctx = toile.getContext("2d");
+    ctx.fillStyle = fond;
+    ctx.fillRect(0, 0, 256, 96);
+    ctx.fillStyle = encre;
+    ctx.font = "bold 64px 'Trebuchet MS', sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(texte, 128, 52, 240);
+    const tex = new THREE.CanvasTexture(toile);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return new THREE.Mesh(new THREE.PlaneGeometry(largeur, hauteur), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.5 }));
+  }
+
+  // La voiture de rallye : une petite compacte, un grand aileron, des autocollants et des phares sur le capot.
+  function rallye(k1, k2) {
+    const p = { L: 4.2, W: 1.9, r: 0.36, xAv: 1.3, xAr: -1.3, g: 0.24, hNez: 0.66, rondNez: 0.25, hCapot: 0.88, hCeinture: 0.98, hCoffre: 1.05,
+      hToit: 1.45, xPareBrise: 0.75, xToitAv: 0.15, xToitAr: -1.6, xLunette: -1.85, Wtoit: 1.6 };
+    const g = carrosserie(p, k1, k2);
+    g.add(boite(0.45, 0.06, 1.85, peinture(k2), -2.0, 1.55, 0)); // le grand aileron
+    for (const z of [-0.7, 0.7]) g.add(boite(0.25, 0.4, 0.06, peinture(k2), -1.95, 1.33, z));
+    for (const z of [-1, 1]) {
+      // Une large bande et un numéro sur chaque portière.
+      g.add(boite(3.6, 0.22, 0.02, peinture(k2), 0, 0.62, z * 0.97));
+      const numero = etiquette("7", "#ffffff", "#111111", 0.55, 0.42);
+      numero.position.set(-0.1, 0.8, z * 0.99);
+      if (z < 0) numero.rotation.y = Math.PI;
+      g.add(numero);
+    }
+    g.add(boite(1.2, 0.01, 0.4, peinture(k2), 1.45, 0.89, 0)); // la bande sur le capot
+    for (const z of [-0.4, -0.13, 0.13, 0.4]) {
+      // La rampe de phares de nuit, sur le capot.
+      const phare = cylindre(0.11, 0.08, M.phare, 16);
+      phare.rotation.z = Math.PI / 2;
+      phare.position.set(1.8, 0.98, z);
+      g.add(phare);
+    }
+    return { g, roues: ajouterRoues(g, [[1.3, true], [-1.3, false]], 0.9, 0.36, 0.28), yCapot: 1.3 };
+  }
+
+  // Le quad : un petit engin à 4 grosses roues, avec un pilote assis dessus et un guidon.
+  function quad(k1, k2) {
+    const g = new THREE.Group();
+    g.add(extruder([[1.1, 0.55, 0.1], [0.95, 0.85, 0.2], [0.3, 0.85, 0.1], [-0.2, 0.95, 0.1], [-1.0, 0.95, 0.15], [-1.1, 0.55, 0.1]], 0.9, peinture(k1), 0.08));
+    for (const x of [0.85, -0.8]) g.add(boite(0.75, 0.06, 1.35, peinture(k1), x, 0.98, 0)); // les garde-boue
+    g.add(boite(0.7, 0.18, 0.5, M.siege, -0.35, 1.05, 0)); // la selle
+    g.add(boite(0.4, 0.35, 0.6, M.noir, 0.0, 0.5, 0)); // le moteur
+    g.add(tube([0.45, 0.95, 0], [0.35, 1.3, 0], 0.04, M.noir));
+    g.add(tube([0.35, 1.3, -0.4], [0.35, 1.3, 0.4], 0.035, M.noir)); // le guidon
+    g.add(boite(0.06, 0.12, 0.5, M.phare, 1.12, 0.75, 0));
+    // Le pilote, assis, les mains sur le guidon.
+    const pilote = personnage();
+    pilote.g.scale.setScalar(0.9);
+    pilote.g.position.set(-0.4, 0.15, 0);
+    for (const j of pilote.jambes) j.rotation.z = 1.25;
+    for (const b of pilote.bras) b.rotation.z = 1.0;
+    g.add(pilote.g);
+    return { g, roues: ajouterRoues(g, [[0.85, true], [-0.8, false]], 0.62, 0.36, 0.34), yCapot: 1.9 };
+  }
+
+  // Le taxi : une berline jaune avec son panneau « TAXI » sur le toit et un damier sur les côtés.
+  function taxi(k1, k2) {
+    const p = { L: 4.6, W: 1.85, r: 0.34, xAv: 1.4, xAr: -1.4, g: 0.2, hNez: 0.66, rondNez: 0.3, hCapot: 0.88, hCeinture: 0.98, hCoffre: 1.0,
+      hToit: 1.47, xPareBrise: 0.8, xToitAv: 0.25, xToitAr: -1.05, xLunette: -1.6, Wtoit: 1.52 };
+    const g = carrosserie(p, k1, k2);
+    const enseigne = new THREE.Group();
+    enseigne.add(boite(0.4, 0.28, 0.9, M.phare, 0, 0, 0));
+    for (const z of [-1, 1]) {
+      const mot = etiquette("TAXI", "#ffe14d", "#111111", 0.8, 0.24);
+      mot.position.z = z * 0.46;
+      mot.rotation.y = z > 0 ? 0 : Math.PI;
+      enseigne.add(mot);
+    }
+    enseigne.position.set(-0.4, 1.66, 0);
+    enseigne.rotation.y = Math.PI / 2;
+    g.add(enseigne);
+    // Le damier noir et blanc sur les portières.
+    for (const z of [-1, 1]) {
+      for (let i = 0; i < 12; i++) {
+        g.add(boite(0.25, 0.12, 0.02, i % 2 ? M.noir : peinture([0.95, 0.95, 0.95]), -1.4 + i * 0.25, 0.72, z * 0.94));
+        g.add(boite(0.25, 0.12, 0.02, i % 2 ? peinture([0.95, 0.95, 0.95]) : M.noir, -1.4 + i * 0.25, 0.6, z * 0.94));
+      }
+    }
+    return { g, roues: ajouterRoues(g, [[1.4, true], [-1.4, false]], 0.87, 0.34, 0.26), yCapot: 1.3 };
+  }
+
+  // La voiture de police : blanche et bleue, avec POLICE écrit dessus et un GYROPHARE (rouge et bleu).
+  // Les deux lampes du gyrophare ont leur propre matériau : affichage/scene3d.js les fait clignoter.
+  function police(k1, k2) {
+    const p = { L: 4.7, W: 1.88, r: 0.35, xAv: 1.45, xAr: -1.42, g: 0.2, hNez: 0.64, rondNez: 0.3, hCapot: 0.86, hCeinture: 0.97, hCoffre: 1.0,
+      hToit: 1.45, xPareBrise: 0.85, xToitAv: 0.25, xToitAr: -1.0, xLunette: -1.65, Wtoit: 1.52 };
+    const g = carrosserie(p, k1, k2);
+    for (const z of [-1, 1]) {
+      g.add(boite(4.0, 0.3, 0.02, peinture(k2), 0, 0.62, z * 0.95)); // la grande bande bleue
+      const mot = etiquette("POLICE", "#0d2a66", "#ffffff", 1.4, 0.28);
+      mot.position.set(-0.1, 0.62, z * 0.97);
+      if (z < 0) mot.rotation.y = Math.PI;
+      g.add(mot);
+    }
+    g.add(boite(0.08, 0.35, 1.7, M.noir, 2.38, 0.45, 0)); // le pare-chocs renforcé
+    const gyro = {
+      rouge: new THREE.MeshStandardMaterial({ color: 0x661010, emissive: 0xff1a1a, emissiveIntensity: 0.05, roughness: 0.3 }),
+      bleu: new THREE.MeshStandardMaterial({ color: 0x101a66, emissive: 0x1a5cff, emissiveIntensity: 0.05, roughness: 0.3 }),
+    };
+    g.add(boite(0.32, 0.08, 1.2, M.noir, -0.4, 1.5, 0));
+    g.add(boite(0.28, 0.16, 0.5, gyro.rouge, -0.4, 1.6, -0.3));
+    g.add(boite(0.28, 0.16, 0.5, gyro.bleu, -0.4, 1.6, 0.3));
+    return { g, roues: ajouterRoues(g, [[1.45, true], [-1.42, false]], 0.88, 0.35, 0.27), yCapot: 1.3, gyro };
+  }
+
+  // Le kart : tout petit et tout plat, un pilote casqué, un volant, un moteur à l'arrière.
+  function kart(k1, k2) {
+    const g = new THREE.Group();
+    g.add(boite(2.0, 0.06, 0.9, M.noir, 0, 0.2, 0)); // le châssis
+    g.add(extruder([[1.25, 0.15, 0.05], [1.2, 0.42, 0.1], [0.6, 0.45, 0.1], [0.55, 0.15, 0.05]], 1.0, peinture(k1), 0.06)); // le carénage avant
+    for (const z of [-1, 1]) g.add(extruder([[0.45, 0.15, 0.05], [0.35, 0.38, 0.1], [-0.55, 0.38, 0.1], [-0.6, 0.15, 0.05]], 0.22, peinture(k1), 0.04).translateZ(z * 0.62)); // les pontons
+    g.add(boite(0.3, 0.06, 1.25, peinture(k2), -1.08, 0.38, 0)); // le pare-chocs arrière
+    g.add(boite(0.45, 0.5, 0.5, M.siege, -0.35, 0.45, 0)); // le siège
+    g.add(boite(0.35, 0.3, 0.3, M.chrome, -0.85, 0.42, 0.3)); // le moteur
+    g.add(tube([0.55, 0.45, 0], [0.25, 0.75, 0], 0.03, M.noir));
+    const volant = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.025, 8, 20), M.noir);
+    volant.position.set(0.22, 0.78, 0);
+    volant.rotation.y = Math.PI / 2;
+    g.add(volant);
+    // Le pilote : son corps (pull) et son casque.
+    const pull = peinture(k2);
+    const corps = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.35, 4, 10), pull);
+    corps.position.set(-0.3, 0.85, 0);
+    corps.rotation.z = 0.3;
+    g.add(corps);
+    const casque = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 12), M.casque);
+    casque.position.set(-0.18, 1.3, 0);
+    g.add(casque);
+    g.add(boite(0.06, 0.08, 0.3, M.noir, 0.0, 1.32, 0)); // la visière
+    for (const z of [-1, 1]) g.add(tube([-0.2, 1.0, z * 0.2], [0.18, 0.8, z * 0.14], 0.05, pull)); // les bras
+    return { g, roues: ajouterRoues(g, [[0.75, true], [-0.8, false]], 0.62, 0.22, 0.24), yCapot: 1.1 };
+  }
+
   // ---------------------------------------------------------------- étape 39 : le personnage
   // Un petit bonhomme : jambes, corps, bras, tête et casquette. Les jambes et les bras ont un « pivot »
   // à la hanche et à l'épaule : en les faisant tourner d'avant en arrière, il marche.
@@ -468,9 +612,10 @@ Circuit.Modeles = (function () {
     return { g, jambes, bras };
   }
 
-  const FABRIQUES = { classique, taureau, fleche, fusee, f1, quatre, pickup, buggy, monster, citadine, suv, basse, camionnette, camion };
+  const FABRIQUES = { classique, taureau, fleche, fusee, f1, quatre, pickup, buggy, monster, citadine, suv, basse, camionnette, camion, rallye, quad, taxi, police, kart };
 
-  // Fabrique une voiture. Renvoie { g (le groupe Three.js), roues (pour les faire tourner), yCapot (pour la caméra) }.
+  // Fabrique une voiture. Renvoie { g (le groupe Three.js), roues (pour les faire tourner), yCapot (pour la caméra),
+  // et pour la police : gyro (les 2 lampes du gyrophare) }.
   function fabriquer(modele, couleur1, couleur2) {
     materiaux();
     return FABRIQUES[modele](couleur1, couleur2);

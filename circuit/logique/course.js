@@ -10,7 +10,7 @@
 //     ✍️ Règle de Maxance : si l'adversaire finit ses 3 tours avant toi, c'est « Perdu ! » tout de suite.
 //   - depuis l'étape 36 : le GARAGE au début (logique/garage.js) et les PIÈCES à ramasser (logique/pieces.js).
 //   - depuis l'étape 37 : le MENU DES CARTES avant le garage. Le circuit garde ses règles ici ;
-//     le parcours (balade libre) a les siennes dans logique/balade.js.
+//     le parcours (balade libre) a les siennes dans logique/balade.js (le grand parcours aussi, depuis l'étape 40).
 //
 // Un « concurrent » = une voiture + où elle en est dans la course (tour, porte, chrono…).
 // Le joueur, ce sont les champs du monde lui-même (monde.voiture, monde.tour…) ;
@@ -54,7 +54,7 @@ Circuit.Course = (function () {
   // Sur le parcours, elle attend au milieu de la map (x = 0, z = 0).
   function voitureDuJoueur(index) {
     const fiche = Circuit.Garage.voitureNumero(index);
-    if (Circuit.Garage.carte === "parcours") return Circuit.Voiture.creer(0, 0, 0, fiche);
+    if (Circuit.Garage.carte === "parcours" || Circuit.Garage.carte === "grand") return Circuit.Voiture.creer(0, 0, 0, fiche);
     if (Circuit.Garage.carte === "ville") {
       const d = Circuit.Ville.depart();
       return Circuit.Voiture.creer(d.x, d.z, d.angle, fiche);
@@ -100,7 +100,7 @@ Circuit.Course = (function () {
 
   // Étape 37 : les cartes qu'on peut choisir (la ville depuis l'étape 39).
   function disponible(id) {
-    return id === "course" || id === "parcours" || id === "ville";
+    return C.cartes.some((c) => c.id === id); // étape 40 : les 4 cartes sont prêtes
   }
 
   // Ouvre le garage de la carte choisie, sur la voiture choisie la dernière fois sur cette carte.
@@ -114,6 +114,7 @@ Circuit.Course = (function () {
     monde.pieces = [];
     monde.cartons = [];
     monde.pieton = null; // étape 39
+    monde.sirene = false; // étape 40
     monde.garees = [];
     monde.circulation = [];
     radio.emettre("garage", { pieces: Circuit.Sauvegarde.donnees.pieces });
@@ -151,6 +152,14 @@ Circuit.Course = (function () {
   function etape(monde, dt, intentions) {
     monde.temps += dt;
     const adv = monde.adversaire;
+    // Étape 40 : H allume ou éteint la sirène (et le gyrophare) de la voiture de police.
+    if (intentions.sirene) {
+      const fiche = Circuit.Garage.ficheDe(monde.voiture.modele) || {};
+      if (fiche.sirene && !monde.pieton) {
+        monde.sirene = !monde.sirene;
+        radio.emettre("sirene", { allumee: monde.sirene });
+      }
+    }
     if (monde.phase === "cartes") {
       const n = C.cartes.length;
       if (intentions.gaucheAppui || intentions.droiteAppui) {
@@ -194,7 +203,7 @@ Circuit.Course = (function () {
       const reponse = Circuit.Garage.etape(monde, intentions);
       if (reponse === "regarde") preparer(monde, voitureDuJoueur(monde.garage.index)); // on montre la nouvelle voiture
       if (reponse === "depart") {
-        if (monde.carte === "parcours") Circuit.Balade.lancer(monde, voitureDuJoueur(monde.garage.index));
+        if (monde.carte === "parcours" || monde.carte === "grand") Circuit.Balade.lancer(monde, voitureDuJoueur(monde.garage.index));
         else if (monde.carte === "ville") Circuit.EnVille.lancer(monde, voitureDuJoueur(monde.garage.index));
         else lancer(monde);
       }

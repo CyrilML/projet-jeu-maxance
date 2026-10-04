@@ -197,9 +197,46 @@ Circuit.Textures = (function () {
       }
     });
 
+  // Étape 40 : la plaque de NITRO. Des flèches bleu électrique sur fond sombre, qui pointent vers l'avant.
+  const nitro = () =>
+    texture("nitro", 128, (ctx, t) => {
+      ctx.fillStyle = "#0b1730";
+      ctx.fillRect(0, 0, t, t);
+      ctx.fillStyle = "#33e0ff";
+      for (const x of [8, 48, 88]) {
+        ctx.beginPath();
+        ctx.moveTo(x, 12);
+        ctx.lineTo(x + 26, t / 2);
+        ctx.lineTo(x, t - 12);
+        ctx.lineTo(x + 14, t - 12);
+        ctx.lineTo(x + 40, t / 2);
+        ctx.lineTo(x + 14, 12);
+        ctx.fill();
+      }
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 4;
+      ctx.strokeRect(2, 2, t - 4, t - 4);
+    });
+
+  // Étape 40 : le bord des plateformes, jaune et noir (« attention, ça tombe ! »).
+  const danger = () =>
+    texture("danger", 64, (ctx, t) => {
+      ctx.fillStyle = "#f2c81a";
+      ctx.fillRect(0, 0, t, t);
+      ctx.fillStyle = "#151515";
+      for (let k = -t; k < t * 2; k += 32) {
+        ctx.beginPath();
+        ctx.moveTo(k, 0);
+        ctx.lineTo(k + 16, 0);
+        ctx.lineTo(k + 16 + t, t);
+        ctx.lineTo(k + t, t);
+        ctx.fill();
+      }
+    });
+
   const toit = () => texture("toit", 128, (ctx, t) => bruit(ctx, t, "#55575c", 0.25, 5000, 2));
 
   // La fonction `bruit` remplit la toile d'une couleur : avec une couleur transparente, elle ne fait
   // qu'ajouter des grains par-dessus ce qui est déjà peint.
-  return { herbe, goudron, terre, beton, bordure, damier, carton, tremplin, planches, rail, facade, trottoir, toit };
+  return { herbe, goudron, terre, beton, bordure, damier, carton, tremplin, planches, rail, facade, trottoir, toit, nitro, danger };
 })();

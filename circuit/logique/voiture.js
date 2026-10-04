@@ -13,6 +13,9 @@
 // Le point 3, c'est de la trigonométrie : cos et sin découpent « avancer tout droit »
 // en « un peu vers x » + « un peu vers z », selon l'angle.
 //
+// Étape 40 : LE NITRO. Tant que voiture.nitro > 0 (des secondes), la vitesse max est multipliée par 1,5
+// et une poussée s'ajoute, même sans appuyer sur ↑. Après, la voiture revient DOUCEMENT à sa vitesse max.
+//
 // Ce fichier ne dessine rien : il calcule. C'est affichage/scene3d.js qui dessine la voiture.
 
 window.Circuit = window.Circuit || {};
@@ -33,6 +36,7 @@ Circuit.Voiture = (function () {
       y: 0, // étape 37 : la hauteur (m) ; 0 = posée sur le sol
       vy: 0, // étape 37 : la vitesse vers le haut (m/s)
       enLAir: false, // étape 37 : vrai pendant un saut de tremplin
+      nitro: 0, // étape 40 : les secondes de nitro qui restent (0 = pas de nitro)
       volant: 0, // de −1 (à fond à gauche) à +1 (à fond à droite), pour tourner les roues avant du dessin
       rotationRoues: 0, // radians : de combien les roues ont tourné depuis le départ
       distance: 0, // m parcourus dans la course
@@ -45,6 +49,9 @@ Circuit.Voiture = (function () {
   // sol = "route", "bordure", "herbe", "terre" (le parcours) ou "air"
   // virage (facultatif, étape 37) : la vitesse de rotation de ce véhicule, en rad/s.
   function avancer(voiture, intentions, dt, sol, virage) {
+    const N = Circuit.CONFIG.nitro;
+    const nitro = voiture.nitro > 0;
+    if (nitro) voiture.nitro = Math.max(0, voiture.nitro - dt);
     // Étape 37 : en l'air, les pédales et le volant ne servent à rien. La voiture file tout droit.
     if (sol === "air") {
       voiture.pedale = "aucune (en l'air)";
@@ -72,8 +79,16 @@ Circuit.Voiture = (function () {
     }
 
     // La vitesse maximale dépend du sol : l'herbe freine fort.
-    const max = sol === "herbe" ? Math.min(V.vitesseMaxHerbe, voiture.vitesseMax) : voiture.vitesseMax;
-    if (v > max) v = Math.max(max, v - (sol === "herbe" ? V.freinHerbe : V.freinage) * dt);
+    let max = sol === "herbe" ? Math.min(V.vitesseMaxHerbe, voiture.vitesseMax) : voiture.vitesseMax;
+    if (nitro) {
+      // Étape 40 : la poussée du nitro.
+      max *= N.facteur;
+      if (v < max) v = Math.min(max, v + N.poussee * dt);
+      voiture.pedale += " + 🔥 nitro";
+    }
+    // Trop vite ? Dans l'herbe, ça freine fort ; ailleurs (après un nitro), on ralentit doucement.
+    // (on part de la vitesse d'avant : au-dessus de la vitesse max, l'accélérateur ne fait plus monter la vitesse)
+    if (v > max) v = Math.max(max, Math.min(v, voiture.vitesse) - (sol === "herbe" ? V.freinHerbe : intentions.freiner ? V.freinage : N.ralentissement) * dt);
     voiture.vitesse = v;
 
     // 2. Le volant : on tourne d'autant plus vite qu'on roule (jusqu'à 10 m/s), et à l'envers en marche arrière.

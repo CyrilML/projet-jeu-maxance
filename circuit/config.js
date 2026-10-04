@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 8,
+  version: 9,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -59,6 +59,9 @@ Circuit.CONFIG = {
       couleurs: [[0.55, 0.05, 0.14], [0.08, 0.08, 0.09]], son: { ralenti: 32, max: 88 } },
     { id: "f1", nom: "La Formule 1", modele: "f1", prix: 400, vitesseMax: 52.8, acceleration: 19,
       couleurs: [[0.05, 0.6, 0.38], [0.95, 0.95, 0.95]], son: { ralenti: 170, max: 560 } }, // ✍️ son aigu
+    // Étape 40 : ✍️ la voiture de rallye (aileron et autocollants). Elle est aussi au garage du grand parcours.
+    { id: "rallye", nom: "La voiture de rallye", modele: "rallye", prix: 300, vitesseMax: 48.6, acceleration: 18, virage: 2.2, saut: 1.1,
+      couleurs: [[0.1, 0.3, 0.85], [1, 0.8, 0.1]], son: { ralenti: 75, max: 230 } },
   ],
 
   // Étape 37 : LES CARTES. ✍️ On choisit la carte avant le garage, et chaque carte a son garage.
@@ -66,6 +69,7 @@ Circuit.CONFIG = {
     { id: "course", nom: "Le circuit", icone: "🏁", texte: "3 tours contre la voiture bleue" },
     { id: "parcours", nom: "Le parcours", icone: "🎢", texte: "Tremplins, loopings, tunnels" },
     { id: "ville", nom: "La ville", icone: "🏙️", texte: "Rues, voitures, personnage" },
+    { id: "grand", nom: "Le grand parcours", icone: "🛣️", texte: "Rampes, nitros, plateformes" }, // étape 40
   ],
 
   // Étape 37 : le garage du parcours. ✍️ Monster truck, 4x4, pickup et buggy.
@@ -80,6 +84,9 @@ Circuit.CONFIG = {
       couleurs: [[1, 0.72, 0.05], [0.1, 0.1, 0.11]], son: { ralenti: 95, max: 270 } },
     { id: "monster", nom: "Le monster truck", modele: "monster", prix: 200, vitesseMax: 33.3, acceleration: 14, virage: 1.5, saut: 1.5, ecrase: true,
       couleurs: [[0.15, 0.35, 0.9], [1, 0.45, 0.05]], son: { ralenti: 30, max: 80 } },
+    // Étape 40 : ✍️ le quad, léger : il saute très haut et tourne vite.
+    { id: "quad", nom: "Le quad", modele: "quad", prix: 150, vitesseMax: 38.9, acceleration: 16, virage: 2.5, saut: 1.4,
+      couleurs: [[0.95, 0.45, 0.05], [0.12, 0.12, 0.13]], son: { ralenti: 110, max: 330 } },
   ],
 
   // Étape 39 : le garage de la ville. ✍️ Petite citadine, SUV, voiture basse, camionnette et camion.
@@ -94,7 +101,70 @@ Circuit.CONFIG = {
       couleurs: [[0.95, 0.95, 0.95], [0.2, 0.45, 0.85]], son: { ralenti: 45, max: 110 } },
     { id: "camion", nom: "Le camion", modele: "camion", prix: 300, vitesseMax: 27.8, acceleration: 7, virage: 1.4, saut: 1, ecrase: true,
       couleurs: [[0.85, 0.12, 0.1], [0.92, 0.92, 0.92]], son: { ralenti: 28, max: 70 } },
+    // Étape 40 : ✍️ le taxi et la voiture de police (gyrophare et sirène : touche H).
+    { id: "taxi", nom: "Le taxi", modele: "taxi", prix: 150, vitesseMax: 38.9, acceleration: 12, virage: 2.0, saut: 1,
+      couleurs: [[1, 0.78, 0.05], [0.1, 0.1, 0.11]], son: { ralenti: 48, max: 125 } },
+    { id: "police", nom: "La voiture de police", modele: "police", prix: 400, vitesseMax: 47.2, acceleration: 16, virage: 2.1, saut: 1, sirene: true,
+      couleurs: [[0.95, 0.95, 0.97], [0.08, 0.15, 0.4]], son: { ralenti: 50, max: 150 } },
   ],
+
+  // Étape 40 : le garage du GRAND PARCOURS. ✍️ Le kart (offert), puis des véhicules qui sont aussi dans
+  // d'autres garages : on les écrit par leur nom (« buggy »…), le garage va chercher leur fiche.
+  vehiculesGrandParcours: [
+    { id: "kart", nom: "Le kart", modele: "kart", prix: 0, vitesseMax: 38.9, acceleration: 18, virage: 2.6, saut: 1,
+      couleurs: [[0.9, 0.1, 0.45], [0.1, 0.1, 0.11]], son: { ralenti: 140, max: 420 } },
+    "buggy",
+    "quad",
+    "rallye",
+  ],
+
+  // Étape 40 : LES NITROS. ✍️ Des plaques au sol : dès que tu passes dessus, ça te propulse.
+  nitro: {
+    duree: 2.5, // s : le temps que dure la poussée
+    facteur: 1.5, // la vitesse max est multipliée par 1,5 pendant la poussée
+    poussee: 26, // m/s² : la poussée s'ajoute à l'accélération, même sans appuyer sur ↑
+    ralentissement: 9, // m/s² : après la poussée, la voiture revient doucement à sa vitesse max
+  },
+
+  // Étape 40 : le GRAND PARCOURS (comme un circuit Carrera). Une route qui monte, descend et passe sur des ponts.
+  // points = le milieu de la route : [x, z, hauteur, ce qu'il y a jusqu'au point suivant]
+  //   "route" (par défaut), "tremplin" (le bout qui relève pour sauter), "plateforme" (pas de route : on roule
+  //   sur une plateforme), "vide" (pas de route du tout : il faut sauter par-dessus !).
+  // Le dernier point est relié au premier : la route fait une boucle.
+  grandParcours: {
+    taille: 800, // m : la map fait 800 m × 800 m
+    largeur: 14, // m : la largeur de la route
+    epaisseur: 1, // m : l'épaisseur du tablier des ponts (on passe dessous s'il est assez haut)
+    hauteurVoiture: 1.6, // m : une voiture se cogne sous un pont plus bas que ça
+    points: [
+      [0, 0, 0], [90, 0, 0], [150, 20, 4], [180, 70, 9], [175, 130, 10], [130, 170, 7], [70, 175, 3], [20, 150, 0],
+      [-10, 100, 3], [5, 50, 9], [30, -45, 10], [10, -110, 6], [-50, -140, 0],
+      [-100, -140, 0], // ✍️ la GRANDE RAMPE : de 0 à 14 m de haut
+      [-160, -140, 14, "plateforme"], [-225, -125, 14, "plateforme"], // la plateforme à trous et à bosses
+      [-225, -115, 14], [-225, -60, 14, "plateforme"], // un pont, puis la plateforme plate
+      [-225, -20, 14], // ✍️ la longue ligne droite, qui monte doucement (avec des nitros)
+      [-225, 150, 20, "tremplin"], [-225, 165, 21.5, "vide"], // le tremplin… et le CREUX à sauter (50 m)
+      [-225, 215, 16], [-225, 280, 11], [-200, 322, 6], [-140, 338, 2], [-80, 305, 0], [-60, 230, 0], // l'arrivée du saut : une longue descente
+      [-75, 110, 0], [-70, 40, 0], [-40, 5, 0],
+    ],
+    // Les plateformes : x, z = le centre ; longueur (le long de x) et largeur (le long de z) ; y = la hauteur.
+    plateformes: [
+      { nom: "plateforme à trous", x: -200, z: -140, longueur: 80, largeur: 50, y: 14,
+        // ✍️ des trous (si tu tombes dedans… tu tombes en bas !) et des bosses
+        trous: [{ x: -180, z: -140, longueur: 16, largeur: 24 }, { x: -202, z: -125, longueur: 14, largeur: 20 }, { x: -227, z: -150, longueur: 12, largeur: 30 }],
+        bosses: [{ x: -166, z: -158 }, { x: -166, z: -122 }, { x: -180, z: -121 }, { x: -180, z: -160 }, { x: -202, z: -150 }, { x: -215, z: -140 }, { x: -238, z: -125 }] },
+      { nom: "plateforme plate", x: -225, z: -40, longueur: 40, largeur: 40, y: 14, trous: [], bosses: [] },
+    ],
+    bosse: { rayon: 3.5, hauteur: 0.8 }, // m
+    // Le creux sous le saut : un grand trou dans le sol, en pente douce sur les bords (pour en ressortir).
+    creux: { x: -225, z: 190, longueur: 120, largeur: 50, profondeur: 8, pente: 12 },
+    // ✍️ Les plaques de nitro : [numéro du morceau de route, où sur ce morceau (0 = au début, 1 = à la fin)]
+    nitros: [[0, 0.6], [1, 0.5], [4, 0.4], [6, 0.6], [10, 0.4], [12, 0.5], [13, 0.15], [16, 0.5], [17, 0.5],
+      [18, 0.3], [18, 0.6], [18, 0.9], [23, 0.5], [25, 0.5], [27, 0.5], [28, 0.4]],
+    longueurNitro: 6, largeurNitro: 5, // m
+    ecartPieces: 36, // m : une pièce tous les 36 m le long de la route
+    graine: 40,
+  },
 
   // Étape 39 : la VILLE. Une grille de rues (comme un damier) : entre les rues, des pâtés de maisons.
   ville: {

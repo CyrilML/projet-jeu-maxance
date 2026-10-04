@@ -10,6 +10,10 @@
 //   - LES PIÈCES : des pièces partout, même en l'air. Pour les prendre, il faut passer tout près,
 //     aussi en HAUTEUR (on compare x, z ET y).
 //
+// Étape 40 : les mêmes règles servent au GRAND PARCOURS (logique/grand-parcours.js), qui a en plus :
+//   - LES NITROS : ✍️ des plaques au sol. Dès que tu roules dessus, la voiture est poussée (voiture.nitro) ;
+//   - LES CHUTES : ✍️ si tu tombes d'une route en hauteur, d'une plateforme ou dans le creux, tu tombes en bas !
+//
 // Touches : R = retour au départ, ⌫ = changer de carte.
 
 window.Circuit = window.Circuit || {};
@@ -18,14 +22,23 @@ Circuit.Balade = (function () {
   const C = Circuit.CONFIG;
   const P = C.parcours;
   const radio = Circuit.Evenements;
-  const LIMITE = P.taille / 2 - 3;
+
+  // Le terrain : le parcours, ou le grand parcours (étape 40). Ils savent dire les mêmes choses.
+  function terrain(monde) {
+    return monde.carte === "grand" ? Circuit.GrandParcours : Circuit.Parcours;
+  }
+  const depart = (T) => T.depart || { x: 0, z: 0, angle: 0 };
+  const limite = (T) => T.limite || P.taille / 2 - 3;
 
   // Commence la balade (après le garage).
   function lancer(monde, voiture) {
+    const T = terrain(monde);
+    const d = depart(T);
+    Object.assign(voiture, { x: d.x, z: d.z, angle: d.angle, y: 0, vy: 0, vitesse: 0, enLAir: false, nitro: 0 });
     monde.phase = "balade";
     monde.voiture = voiture;
-    monde.pieces = Circuit.Parcours.placerPieces();
-    monde.cartons = Circuit.Parcours.placerCartons();
+    monde.pieces = T.placerPieces();
+    monde.cartons = T.placerCartons();
     monde.piecesCourse = 0;
     monde.cartonsCasses = 0;
     monde.pilesOuvertes = []; // les piles qui ont déjà donné leur pièce cachée
@@ -35,7 +48,12 @@ Circuit.Balade = (function () {
     monde.message = null; // { texte, jusqua } : un message au milieu de l'écran
     monde.saut = null; // le saut en cours : { debut, x, z, hauteurMax }
     monde.dernierSaut = null;
-    radio.emettre("balade", { pieces: monde.pieces.length, cartons: monde.cartons.length });
+    monde.nitrosPris = 0; // étape 40
+    monde.plaque = -1; // la plaque de nitro sous la voiture (−1 = aucune)
+    monde.chutes = 0;
+    monde.surQuoi = null;
+    if (monde.carte === "grand") radio.emettre("grand-parcours", { pieces: monde.pieces.length, nitros: T.nitros.length, longueur: T.longueurTour });
+    else radio.emettre("balade", { pieces: monde.pieces.length, cartons: monde.cartons.length });
   }
 
   function message(monde, texte, duree) {
@@ -45,8 +63,10 @@ Circuit.Balade = (function () {
   function etape(monde, dt, intentions) {
     const v = monde.voiture;
     const fiche = Circuit.Garage.ficheDe(v.modele) || {};
+    const T = terrain(monde);
     if (intentions.recommencer) {
-      Object.assign(v, { x: 0, z: 0, y: 0, vy: 0, angle: 0, vitesse: 0, enLAir: false });
+      const d = depart(T);
+      Object.assign(v, { x: d.x, z: d.z, y: 0, vy: 0, angle: d.angle, vitesse: 0, enLAir: false, nitro: 0 });
       monde.boucle = null;
       radio.emettre("retour-depart", {});
       return;
@@ -58,6 +78,7 @@ Circuit.Balade = (function () {
     } else {
       Circuit.Voiture.avancer(v, intentions, dt, v.enLAir ? "air" : "terre", fiche.virage);
       // La clôture tout autour.
+      const LIMITE = limite(T);
       if (Math.abs(v.x) > LIMITE || Math.abs(v.z) > LIMITE) {
         v.x = Math.max(-LIMITE, Math.min(LIMITE, v.x));
         v.z = Math.max(-LIMITE, Math.min(LIMITE, v.z));
@@ -65,15 +86,17 @@ Circuit.Balade = (function () {
         v.vitesse = 0;
       }
       // 2. Les murs (côtés des plateaux, murs des tunnels…)
-      const choc = Circuit.Parcours.murs(v, C.chocs.rayon);
+      const choc = T.murs(v, C.chocs.rayon);
       if (choc > 1) {
         v.vitesse = -v.vitesse * 0.25;
         radio.emettre("choc", { force: choc, vitesse: v.vitesse, contre: "mur" });
       }
       // 3. Monter, descendre, sauter
-      sauter(monde, v, dt, fiche);
+      sauter(monde, v, dt, fiche, T);
       // 4. Entrer dans un looping ?
-      if (!v.enLAir) entrerDansUnLooping(monde, v);
+      if (!v.enLAir) entrerDansUnLooping(monde, v, T);
+      // 4 bis (étape 40). Une plaque de nitro sous les roues ?
+      if (T.plaqueSous) nitro(monde, v, T);
     }
 
     // 5. Les cartons et les pièces
@@ -82,17 +105,19 @@ Circuit.Balade = (function () {
   }
 
   // LE SAUT (comme à l'étape 37 du plan) : on suit le sol, ou on vole.
-  function sauter(monde, v, dt, fiche) {
-    const sol = Circuit.Parcours.hauteurSol(v.x, v.z, v.y);
+  function sauter(monde, v, dt, fiche, T) {
+    const info = T.sous ? T.sous(v.x, v.z, v.y) : { h: T.hauteurSol(v.x, v.z, v.y) };
+    const sol = info.h;
     if (!v.enLAir) {
       if (sol >= v.y - 0.3) {
         v.vy = dt > 0 ? (sol - v.y) / dt : 0; // en montant (ou en descendant) une pente
         v.y = sol;
+        monde.surQuoi = info; // étape 40 : sur quoi on roule (pour savoir d'où on s'envole)
       } else {
         // Le sol s'est dérobé : on s'envole ! Le monster truck saute plus haut (fiche.saut).
         v.enLAir = true;
         v.vy = Math.max(0, v.vy) * (fiche.saut || 1);
-        monde.saut = { debut: monde.temps, x: v.x, z: v.z, hauteurMax: v.y };
+        monde.saut = { debut: monde.temps, x: v.x, z: v.z, hauteurMax: v.y, yDepart: v.y, troncon: monde.surQuoi ? monde.surQuoi.troncon : null };
         radio.emettre("decollage", { vitesse: v.vitesse, vy: v.vy, hauteur: v.y });
       }
       return;
@@ -109,15 +134,40 @@ Circuit.Balade = (function () {
         const distance = Math.hypot(v.x - s.x, v.z - s.z);
         monde.dernierSaut = { duree: monde.temps - s.debut, hauteurMax: s.hauteurMax, distance };
         radio.emettre("atterrissage", monde.dernierSaut);
-        if (distance > 8) message(monde, "✈️ Saut de " + Math.round(distance) + " m !", 2);
+        // Une CHUTE : on atterrit beaucoup plus bas, et pas sur la suite de la route (dans l'herbe, le creux,
+        // ou sur une route plus basse). Un grand saut réussi, lui, retombe sur la suite de la route.
+        const chute = s.yDepart - v.y;
+        const ici = T.sous ? info : null;
+        const n = T.troncons ? T.troncons.length : 1;
+        const suite = ici && ici.troncon !== undefined && s.troncon !== null && s.troncon !== undefined && (ici.troncon - s.troncon + n) % n < 60;
+        if (chute > 5 && !suite) {
+          // Étape 40 : ✍️ tombé d'une route, d'une plateforme ou dans le creux… on est en bas !
+          monde.chutes++;
+          message(monde, "😵 Tu es tombé de " + Math.round(chute) + " m !", 2.5);
+          radio.emettre("chute", { hauteur: chute, ou: T.sous ? T.sous(v.x, v.z, v.y).quoi : "le sol" });
+        } else if (distance > 8) message(monde, "✈️ Saut de " + Math.round(distance) + " m !", 2);
         monde.saut = null;
       }
     }
   }
 
+  // Étape 40 : LE NITRO. En roulant sur une plaque, la voiture reçoit une poussée de quelques secondes
+  // (le calcul de la poussée est dans logique/voiture.js). On compte une plaque une seule fois par passage.
+  function nitro(monde, v, T) {
+    const plaque = v.enLAir ? -1 : T.plaqueSous(v);
+    if (plaque >= 0) {
+      if (plaque !== monde.plaque) {
+        monde.nitrosPris++;
+        radio.emettre("nitro", { plaque: plaque + 1, vitesse: v.vitesse, duree: C.nitro.duree });
+      }
+      v.nitro = C.nitro.duree;
+    }
+    monde.plaque = plaque;
+  }
+
   // Le looping : on vérifie qu'on est à l'entrée, dans le bon sens, assez vite.
-  function entrerDansUnLooping(monde, v) {
-    for (const l of Circuit.Parcours.loopings) {
+  function entrerDansUnLooping(monde, v, T) {
+    for (const l of T.loopings) {
       const dx = v.x - l.x, dz = v.z - l.z;
       const avance = dx * l.dx + dz * l.dz, cote = dx * l.lx + dz * l.lz;
       if (Math.abs(avance) > 1.5 || Math.abs(cote) > 2.5) continue; // pas à l'entrée
