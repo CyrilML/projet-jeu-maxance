@@ -158,6 +158,7 @@
       <a href="#etape33">Étape 33</a>
       <a href="#etape34">Étape 34</a>
       <a href="#etape35">Étape 35</a>
+      <a href="#etape36">Étape 36</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -2558,6 +2559,64 @@ rayon:           40  →  120</pre>
       <details class="question"><summary>Pourquoi le jeu attend-il que tu appuies sur une touche pour faire du bruit ?</summary><p>Les navigateurs interdisent aux pages de faire du bruit toutes seules, pour protéger tes oreilles. Il faut un geste de toi (une touche, un clic).</p></details>
     </section>
 
+    <section id="etape36">
+      <h2>🏠 Étape 36 : le garage, 5 voitures et les pièces <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Le jeu commence maintenant au garage. Ramasse les pièces dorées sur le circuit pour t'acheter des voitures plus rapides ! <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/36-garage-et-pieces.md</code>.</p>
+          <ul>
+            <li>✍️ 5 voitures, chacune avec sa forme, sa couleur et sa vitesse : la Rouge, une « Lamborghini », une « Porsche », une « Bugatti » et une Formule 1 au son aigu.</li>
+            <li>✍️ Prix : 0, 50, 100, 200, 400 pièces.</li>
+            <li>✍️ 50 pièces sur le circuit à chaque course.</li>
+            <li>✍️ Les pièces sont gardées, même si tu perds.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Le jeu commence au garage. <kbd>←</kbd> <kbd>→</kbd> : les 5 voitures, chacune avec sa forme.</li>
+            <li>☐ Sur une voiture trop chère, <kbd>Entrée</kbd> : le garage dit combien il te manque.</li>
+            <li>☐ Sur la route : des pièces dorées qui tournent. Passe dessus : « ding » !</li>
+            <li>☐ Après la course, gagnée ou perdue : tes pièces sont gardées, et tu reviens au garage.</li>
+            <li>☐ Avec 50 pièces, achète le Taureau : il va plus vite et il a un autre bruit.</li>
+            <li>☐ La Formule 1 a un son aigu.</li>
+            <li>Vérifie « version 5 » en haut de la page du circuit.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🗂️ Une voiture, c'est une fiche</h3>
+      <p>Les 5 voitures sont rangées dans <code>circuit/config.js</code>, comme des fiches :</p>
+      <pre style="white-space: pre-wrap">{ nom: "Le Taureau", prix: 50, vitesseMax: 44.4, acceleration: 15,
+  couleurs: [jaune, noir], son: { ralenti: 55, max: 150 } }</pre>
+      <p>Le code de la voiture est le même pour toutes : il lit simplement la fiche de la voiture choisie. Pour ajouter une 6e voiture, il suffirait d'ajouter une fiche (et sa forme). C'est ce qu'on appelle <strong>décrire avec des données</strong>.</p>
+
+      <h3>🛠️ Sculpter une voiture avec des tranches</h3>
+      <p>Pour donner une forme à chaque voiture (<code>circuit/affichage/modeles.js</code>), on empile des <strong>tranches</strong> : des boîtes qu'on peut pincer (plus étroites en haut) et pencher (plus basses à l'avant). Le Taureau est un grand coin pointu, la Flèche a un dos qui plonge, la Fusée est longue avec une calandre en fer à cheval, et la Formule 1 est un corps tout fin avec 2 ailerons et un pilote au casque jaune. Appuie sur <kbd>X</kbd> au garage : tu verras les triangles de chaque voiture !</p>
+
+      <h3>🪙 Les pièces : une marche au hasard</h3>
+      <p>Les 50 pièces sont posées tous les 29 m environ (1 474 m ÷ 50), sur une des 3 voies : gauche, milieu ou droite. Pour qu'on puisse les enchaîner, la voie change petit à petit : la plupart du temps on reste sur la même voie, parfois on passe à la voisine. Pour savoir si tu prends une pièce, le jeu mesure la distance entre le milieu de ta voiture et la pièce : moins de 2,4 m, et elle est à toi !</p>
+
+      <h3>💾 Le porte-monnaie dans la base de données</h3>
+      <p>Tes pièces, tes voitures achetées et ta voiture choisie sont rangées dans la base de données (version 3). Elles survivent quand tu fermes la page. Le garage ne touche jamais au tiroir lui-même : il annonce « achat » à la radio, et c'est la sauvegarde qui enlève les pièces et range la nouvelle voiture.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans l'état en direct, regarde « prochaine pièce devant » : à combien de mètres, et sur quelle voie ?</li>
+        <li>Dans la base de données, regarde <code>pieces</code> pendant la course, puis à l'arrivée.</li>
+        <li>Achète une voiture et lis le journal : qui annonce l'achat ? Qui range ?</li>
+        <li>Avec chaque voiture, regarde « ton moteur » dans « Le son » : combien de Hz à fond ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de pièces faut-il en tout pour acheter les 4 voitures ?</summary><p>50 + 100 + 200 + 400 = 750 pièces, soit au moins 15 courses parfaites.</p></details>
+      <details class="question"><summary>190 km/h, ça fait combien de mètres par seconde ?</summary><p>190 ÷ 3,6 ≈ 52,8 m/s : c'est le nombre écrit dans la fiche de la Formule 1.</p></details>
+      <details class="question"><summary>Pourquoi les pièces ne sont-elles pas écrites dans le tiroir à chaque « ding » ?</summary><p>Écrire 50 fois par course, ce serait du gaspillage : le jeu compte les pièces en mémoire vive, et les écrit à la fin de la course.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -2768,26 +2827,32 @@ rayon:           40  →  120</pre>
           <p>Un gros moteur grave qui monte avec la vitesse, la voiture bleue qu'on entend selon la distance, « BOUM », « chhhh » et les bips du départ.</p>
           <p class="apprend"><b>Tu apprends :</b> fréquence et hertz, synthétiseur (formes de vibration, filtre, tremblement), volume selon la distance, panoramique gauche-droite. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">36</div>
+          <h4>Le garage, 5 voitures et les pièces <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Un garage au début, 5 voitures (la Rouge, Lamborghini, Porsche, Bugatti, Formule 1), chacune avec sa forme, sa vitesse et son bruit. 50 pièces par course pour les acheter.</p>
+          <p class="apprend"><b>Tu apprends :</b> décrire des objets avec des fiches de données, sculpter en 3D avec des tranches, une marche au hasard, un porte-monnaie dans la base de données. <b>Durée :</b> 3 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">37</div>
           <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">37</div>
+          <div class="num">38</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">38</div>
+          <div class="num">39</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">39</div>
+          <div class="num">40</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -3125,6 +3190,15 @@ rayon:           40  →  120</pre>
         <textarea class="journal" id="appris-35" data-cle="appris-35" placeholder="Ex. : J'ai appris qu'un son, c'est une fréquence en hertz…"></textarea>
         <label for="idees-35"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-35" data-cle="idees-35" placeholder="Ex. : Un bruit de klaxon, une musique de course…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 36 · le garage, 5 voitures et les pièces <span class="petit">· 4 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le garage (← → Entrée, caméra qui tourne autour de la voiture), 5 voitures avec leur forme (<code>affichage/modeles.js</code>), leur couleur, leur vitesse (150 à 190 km/h) et leur bruit ; 50 pièces dorées par course (<code>logique/pieces.js</code>), le « ding », le compteur et les points dorés sur la mini-carte ; la base de données en version 3 (pièces, voitures achetées, voiture choisie). Sous le capot : « Les pièces » dans l'état en direct, et les achats et pièces dans le journal.</p>
+        <p class="petit">✍️ Réponses de Maxance : couleur et vitesse puis formes (Lamborghini, Porsche, Bugatti, Formule 1 au son aigu), 50 pièces, prix 50 / 100 / 200 / 400, pièces gardées même si on perd.</p>
+        <label for="appris-36"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-36" data-cle="appris-36" placeholder="Ex. : J'ai appris qu'une voiture, c'est une fiche de données…"></textarea>
+        <label for="idees-36"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-36" data-cle="idees-36" placeholder="Ex. : Une 6e voiture, des couleurs à choisir, un adversaire plus fort…"></textarea>
       </div>
     </section>
   </main>

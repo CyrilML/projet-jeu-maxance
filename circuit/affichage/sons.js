@@ -3,8 +3,10 @@
 // Ce fichier décide QUAND et COMMENT le jeu fait du bruit. Il ne fabrique pas les sons lui-même
 // (c'est moteur/son.js, le synthétiseur) : il lit le monde et il écoute la radio.
 //
-//   - TON MOTEUR : un gros moteur grave (✍️ choix de Maxance). Sa fréquence suit la vitesse :
-//       fréquence = 38 Hz (au ralenti) + 52 Hz × (vitesse ÷ vitesse max)  →  de 38 à 90 Hz.
+//   - TON MOTEUR : sa fréquence suit la vitesse :
+//       fréquence = ralenti + (max − ralenti) × (vitesse ÷ vitesse max)
+//     Depuis l'étape 36, chaque voiture du garage a ses propres fréquences (dans config.js) :
+//     la Rouge garde son gros moteur grave (38 → 90 Hz) et la Formule 1 crie dans les aigus (170 → 560 Hz).
 //     Quand tu accélères, il est plus fort et moins étouffé ; quand tu lâches, il ronronne.
 //   - LE MOTEUR DE LA VOITURE BLEUE : le même, mais son volume dépend de la DISTANCE
 //     (fort tout près, plus rien après 70 m), et il est à gauche ou à droite dans le casque,
@@ -35,12 +37,20 @@ Circuit.Sons = (function () {
     radio.ecouter("feu", () => Son.bip(S.bips.frequenceFeu, 0.18, S.bips.volume));
     radio.ecouter("depart", () => Son.bip(S.bips.frequenceGo, 0.5, S.bips.volume));
     radio.ecouter("choc", (d) => Son.boum(d.force));
+    // Étape 36 : « ding » quand on prend une pièce, « ding-ding » quand on achète une voiture.
+    radio.ecouter("piece", () => Son.bip(1320, 0.08, 0.12));
+    radio.ecouter("achat", () => {
+      Son.bip(988, 0.12, 0.15);
+      setTimeout(() => Son.bip(1319, 0.25, 0.15), 130);
+    });
   }
 
-  // La fréquence d'un moteur selon sa vitesse.
+  // La fréquence d'un moteur selon sa vitesse, et selon le modèle de voiture.
   function frequenceDuMoteur(voiture) {
-    const part = Math.min(1, Math.abs(voiture.vitesse) / Circuit.CONFIG.voiture.vitesseMax);
-    return S.moteur.frequenceRalenti + (S.moteur.frequenceMax - S.moteur.frequenceRalenti) * part;
+    const fiche = Circuit.CONFIG.voitures.find((v) => v.modele === voiture.modele);
+    const son = fiche ? fiche.son : { ralenti: S.moteur.frequenceRalenti, max: S.moteur.frequenceMax };
+    const part = Math.min(1, Math.abs(voiture.vitesse) / voiture.vitesseMax);
+    return son.ralenti + (son.max - son.ralenti) * part;
   }
 
   // Appelé à chaque image.

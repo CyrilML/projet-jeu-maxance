@@ -21,12 +21,14 @@ Circuit.Voiture = (function () {
   const V = Circuit.CONFIG.voiture;
   const RAYON_ROUE = 0.38; // m, pour faire tourner les roues à la bonne vitesse
 
-  // reglages (facultatif) : { vitesseMax, acceleration } pour une voiture différente (l'adversaire).
+  // reglages (facultatif) : { vitesseMax, acceleration, modele } pour une voiture différente
+  // (l'adversaire, ou une voiture achetée au garage).
   function creer(x, z, angle, reglages) {
     return {
       x, z, angle,
       vitesseMax: (reglages && reglages.vitesseMax) || V.vitesseMax, // m/s sur la route
       acceleration: (reglages && reglages.acceleration) || V.acceleration, // m/s²
+      modele: (reglages && reglages.modele) || "classique", // étape 36 : la forme de la voiture (voir affichage/modeles.js)
       vitesse: 0, // m/s
       volant: 0, // de −1 (à fond à gauche) à +1 (à fond à droite), pour tourner les roues avant du dessin
       rotationRoues: 0, // radians : de combien les roues ont tourné depuis le départ

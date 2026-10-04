@@ -44,6 +44,13 @@ Circuit.SousLeCapot = (function () {
     cloture: (d) => "🧱 Choc contre la clôture à " + Math.round(Math.abs(d.vitesse) * 3.6) + " km/h : la voiture s'arrête net",
     sauvegarde: (d) => "💾 Base de données écrite (" + d.raison + ")",
     "base-effacee": () => "🗑️ Base de données effacée",
+    garage: (d) => "🏠 Au garage, avec " + d.pieces + " pièce(s) dans le porte-monnaie",
+    "garage-regarde": (d) =>
+      "👀 Au garage : " + d.voiture + (d.statut === "a-toi" ? " (à toi)" : d.statut === "achetable" ? " (tu peux l'acheter)" : " (trop chère pour l'instant)"),
+    "pas-assez": (d) => "🔒 " + d.voiture + " coûte " + d.prix + " pièces : il t'en manque " + d.manque,
+    achat: (d) => "🎉 ACHAT : " + d.voiture + " pour " + d.prix + " pièces",
+    "choix-voiture": (d) => "🔑 Tu prends " + d.voiture,
+    piece: (d) => "🪙 Pièce n° " + d.numero + " ramassée (à " + d.s + " m du départ) : " + d.total + " dans cette course",
     "son-allume": (d) => "🔊 Synthétiseur allumé (" + d.frequenceEchantillons.toLocaleString("fr-FR") + " échantillons de son par seconde)",
     son: (d) => (d.allume ? "🔊 Son remis (B)" : "🔇 Son coupé (B)"),
     camera: (d) => "🎥 Caméra : " + d.mode,
@@ -77,6 +84,19 @@ Circuit.SousLeCapot = (function () {
     });
   }
 
+  // La pièce pas encore prise la plus proche devant la voiture (en mètres le long de la route).
+  function prochainePiece(monde) {
+    const L = Circuit.Piste.longueurTour;
+    let meilleure = null;
+    for (const p of monde.pieces) {
+      if (p.prise) continue;
+      const devant = (((p.s - monde.reperage.s) % L) + L) % L;
+      if (!meilleure || devant < meilleure.devant) meilleure = { devant, p };
+    }
+    if (!meilleure) return "—";
+    return "n° " + meilleure.p.numero + " à " + Math.round(meilleure.devant) + " m, voie " + ["gauche", "milieu", "droite"][meilleure.p.voie];
+  }
+
   // Mis à jour 10 fois par seconde seulement : écrire dans la page coûte cher.
   function mettreAJour(maintenant) {
     if (maintenant - derniereMaj < 100) return;
@@ -100,6 +120,7 @@ Circuit.SousLeCapot = (function () {
       ["position", monde.position === 1 ? "🥇 1er" : "🥈 2e"],
       ["chocs", monde.chocs + (monde.enContact ? " (💥 en contact)" : "")],
       ["La voiture"],
+      ["modèle", (Circuit.CONFIG.voitures.find((x) => x.modele === v.modele) || {}).nom + " (vitesse max " + Math.round(v.vitesseMax * 3.6) + " km/h)"],
       ["x (gauche ↔ droite)", virgule(v.x, 1) + " m"],
       ["z (avant ↔ arrière)", virgule(v.z, 1) + " m"],
       ["angle", virgule(v.angle, 2) + " rad = " + degres + "°"],
@@ -118,6 +139,10 @@ Circuit.SousLeCapot = (function () {
       ["voie visée", (adv.voie > 0 ? "extérieure (+" : "intérieure (") + virgule(adv.voie, 1) + " m)"],
       ["cible", Math.round((adv.difference * 180) / Math.PI) + "° → " + (Math.abs(adv.difference) <= 0.02 ? "tout droit" : adv.difference < 0 ? "tourne à gauche" : "tourne à droite")],
       ["avance sur toi", Math.round(Circuit.Course.progression(adv) - Circuit.Course.progression(monde)) + " m"],
+      ["Les pièces"],
+      ["ramassées dans la course", monde.piecesCourse + " / " + monde.pieces.length],
+      ["porte-monnaie", Circuit.Sauvegarde.donnees.pieces + " pièce(s)"],
+      ["prochaine pièce devant", prochainePiece(monde)],
       ["Le son"],
       ["synthétiseur", Circuit.Son.etat()],
       ["ton moteur", Math.round(Circuit.Sons.enDirect.frequence) + " Hz · volume " + virgule(Circuit.Sons.enDirect.volume, 2)],

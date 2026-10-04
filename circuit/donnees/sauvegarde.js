@@ -13,12 +13,17 @@
 //   1 (étape 32) : records, nombre de courses, de tours, de sorties, les 5 dernières courses.
 //   2 (étape 34) : on ajoute les victoires et les défaites contre l'adversaire,
 //                  et chaque course gardée dit si elle est « gagnée » ou « perdue ».
+//   3 (étape 36) : on ajoute les PIÈCES (ton porte-monnaie), les voitures achetées et la voiture choisie.
+//                  Chaque course gardée dit aussi avec quelle voiture, et combien de pièces ramassées.
+//
+// Les pièces sont comptées dès qu'on les ramasse, mais écrites dans le tiroir à la fin de la course
+// (ou si on recommence, ou si on ferme la page) : écrire 50 fois par course, ce serait du gaspillage.
 
 window.Circuit = window.Circuit || {};
 
 Circuit.Sauvegarde = (function () {
   const CLE = "circuit-maxance:sauvegarde";
-  const VERSION = 2;
+  const VERSION = 3;
   const radio = Circuit.Evenements;
 
   function vide() {
@@ -29,6 +34,10 @@ Circuit.Sauvegarde = (function () {
       courses: 0, // nombre de courses finies (gagnées ou perdues)
       victoires: 0, // depuis la version 2
       defaites: 0, // depuis la version 2
+      pieces: 0, // depuis la version 3 : les pièces que tu as (ton porte-monnaie)
+      piecesTotal: 0, // depuis la version 3 : toutes les pièces ramassées depuis le début
+      voituresAchetees: ["classique"], // depuis la version 3 : la Rouge est offerte
+      voitureChoisie: "classique", // depuis la version 3
       toursTotal: 0,
       sortiesTotal: 0,
       distanceTotale: 0, // m parcourus dans toutes les courses finies
@@ -70,6 +79,13 @@ Circuit.Sauvegarde = (function () {
       d.defaites = 0;
       d.dernieresCourses = (anciennes.dernieresCourses || []).map((c) => Object.assign({ resultat: "seul" }, c));
     }
+    if ((anciennes.version || 1) < 3) {
+      // Version 2 → 3 : pas encore de pièces ni de garage. Tu avais la Rouge.
+      d.pieces = 0;
+      d.piecesTotal = 0;
+      d.voituresAchetees = ["classique"];
+      d.voitureChoisie = "classique";
+    }
     d.version = VERSION;
     return d;
   }
@@ -77,14 +93,40 @@ Circuit.Sauvegarde = (function () {
   function ecrire(raison) {
     try {
       localStorage.setItem(CLE, JSON.stringify(donnees));
+      piecesAEcrire = false;
       radio.emettre("sauvegarde", { raison });
     } catch (e) {
       // Navigation privée ou tiroir plein : le jeu continue, sans mémoire.
     }
   }
 
+  let piecesAEcrire = false; // des pièces ramassées pas encore écrites dans le tiroir
+
   function initialiser(lireDistance) {
     lire();
+
+    // Étape 36 : les pièces et le garage.
+    radio.ecouter("piece", () => {
+      donnees.pieces++;
+      donnees.piecesTotal++;
+      piecesAEcrire = true;
+    });
+    radio.ecouter("achat", (d) => {
+      donnees.pieces -= d.prix;
+      donnees.voituresAchetees.push(d.id);
+      ecrire("achat : " + d.voiture + " pour " + d.prix + " pièces");
+    });
+    radio.ecouter("choix-voiture", (d) => {
+      if (donnees.voitureChoisie === d.id) return;
+      donnees.voitureChoisie = d.id;
+      ecrire("voiture choisie : " + d.voiture);
+    });
+    radio.ecouter("decompte", () => {
+      if (piecesAEcrire) ecrire("pièces de la course d'avant (recommencée)");
+    });
+    window.addEventListener("pagehide", () => {
+      if (piecesAEcrire) ecrire("page fermée");
+    });
 
     radio.ecouter("tour-termine", (d) => {
       donnees.toursTotal++;
@@ -113,6 +155,8 @@ Circuit.Sauvegarde = (function () {
       donnees.dernieresCourses.unshift({
         date: new Date().toLocaleDateString("fr-FR"),
         resultat: "gagnée",
+        voiture: d.voiture,
+        pieces: d.pieces,
         temps: arrondir(d.temps),
         meilleurTour: arrondir(d.meilleurTour),
         sorties: d.sorties,
@@ -129,6 +173,8 @@ Circuit.Sauvegarde = (function () {
       donnees.dernieresCourses.unshift({
         date: new Date().toLocaleDateString("fr-FR"),
         resultat: "perdue",
+        voiture: d.voiture,
+        pieces: d.pieces,
         temps: arrondir(d.temps),
         tourAtteint: d.tourJoueur,
         sorties: d.sorties,

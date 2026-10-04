@@ -48,6 +48,11 @@ Circuit.TableauDeBord = (function () {
   function dessiner(monde, options, sauvegarde) {
     ctx.clearRect(0, 0, W, H);
     const v = monde.voiture;
+    if (monde.phase === "garage") {
+      dessinerGarage(monde, sauvegarde);
+      if (options.rayonsX) dessinerEtiquettesRayonsX(monde);
+      return;
+    }
 
     // En haut à gauche : tour et chronos
     panneau(12, 12, 230, 160);
@@ -67,7 +72,7 @@ Circuit.TableauDeBord = (function () {
     texte(kmh + "", W - 70, H - 36, 46, "#fff", "right");
     texte("km/h", W - 62, H - 36, 18, "#cfd6ff");
     // une barre qui se remplit avec la vitesse
-    const part = Math.min(1, Math.abs(v.vitesse) / C.voiture.vitesseMax);
+    const part = Math.min(1, Math.abs(v.vitesse) / v.vitesseMax);
     ctx.fillStyle = "rgba(255,255,255,.15)";
     ctx.fillRect(W - 176, H - 26, 150, 6);
     ctx.fillStyle = v.vitesse < 0 ? "#7fb2ff" : part > 0.85 ? "#ff6b4a" : "#ffe27a";
@@ -76,14 +81,13 @@ Circuit.TableauDeBord = (function () {
 
     dessinerMiniCarte(monde);
 
+    // Étape 36 : les pièces, sous la mini-carte.
+    panneau(W - 160, 106, 148, 52);
+    texte("🪙 " + monde.piecesCourse + " / " + C.pieces.nombre, W - 148, 130, 20, "#ffd34d");
+    texte("porte-monnaie : " + sauvegarde.pieces, W - 148, 150, 13, "#cfd6ff");
+
     // Les messages au milieu
-    if (monde.phase === "accueil") {
-      panneau(W / 2 - 260, H / 2 - 90, 520, 170);
-      texte("🏎️ Le circuit de Maxance", W / 2, H / 2 - 48, 32, "#ffe27a", "center");
-      texte(C.course.tours + " tours : bats la voiture bleue !", W / 2, H / 2 - 10, 20, "#fff", "center");
-      texte("↑ accélérer · ↓ freiner · ← → tourner", W / 2, H / 2 + 22, 18, "#cfd6ff", "center");
-      texte("Appuie sur Entrée pour démarrer", W / 2, H / 2 + 60, 22, "#7dffa0", "center");
-    } else if (monde.phase === "decompte") {
+    if (monde.phase === "decompte") {
       dessinerFeux(Math.ceil(monde.decompte));
     } else if (monde.phase === "course") {
       if (monde.chronoCourse < 1.2) texte("GO !", W / 2, H / 2 - 40, 72, "#7dffa0", "center");
@@ -99,19 +103,74 @@ Circuit.TableauDeBord = (function () {
       if (monde.resultat) texte("La voiture bleue était à " + monde.resultat.avance.toLocaleString("fr-FR") + " m derrière toi", W / 2, H / 2 - 26, 17, "#9cc4ff", "center");
       monde.tempsDesTours.forEach((t, i) => texte("Tour " + (i + 1) + " : " + chrono(t), W / 2, H / 2 + 2 + i * 22, 17, "#cfd6ff", "center"));
       if (Circuit.Sauvegarde.recordDerniereCourse) texte("🏆 Nouveau record !", W / 2, H / 2 + 80, 22, "#7dffa0", "center");
-      texte("Entrée : rejouer", W / 2, H / 2 + 108, 18, "#cfd6ff", "center");
+      texte("🪙 +" + monde.piecesCourse + " pièces · Entrée : retour au garage", W / 2, H / 2 + 108, 18, "#ffd34d", "center");
     } else if (monde.phase === "perdu") {
       panneau(W / 2 - 230, H / 2 - 110, 460, 200);
       texte("😢 Perdu !", W / 2, H / 2 - 64, 42, "#ff8a7a", "center");
       texte("La voiture bleue a fini ses " + C.course.tours + " tours avant toi", W / 2, H / 2 - 24, 20, "#fff", "center");
       texte("(en " + chrono(monde.chronoCourse) + ")", W / 2, H / 2 + 2, 17, "#9cc4ff", "center");
       if (monde.resultat) texte("Il te restait " + monde.resultat.retard.toLocaleString("fr-FR") + " m à faire", W / 2, H / 2 + 30, 18, "#cfd6ff", "center");
-      texte("Entrée : la revanche !", W / 2, H / 2 + 66, 20, "#7dffa0", "center");
+      texte("🪙 +" + monde.piecesCourse + " pièces gardées quand même !", W / 2, H / 2 + 58, 18, "#ffd34d", "center");
+      texte("Entrée : retour au garage, puis la revanche !", W / 2, H / 2 + 82, 18, "#7dffa0", "center");
     }
 
     if (options.pause) texte("⏸ Pause", W / 2, H - 30, 28, "#fff", "center");
     if (options.ralenti) texte("🐢 Ralenti", 260, 40, 18, "#cfd6ff");
     if (options.rayonsX) dessinerEtiquettesRayonsX(monde);
+  }
+
+  // Étape 36 : l'écran du garage. La voiture tourne en 3D derrière (voir affichage/scene3d.js).
+  function dessinerGarage(monde, sauvegarde) {
+    const g = monde.garage;
+    const voiture = C.voitures[g.index];
+    const statut = Circuit.Garage.statut(g.index);
+    const max = C.voitures[C.voitures.length - 1];
+
+    panneau(W / 2 - 200, 12, 400, 50);
+    texte("🏠 Le garage", W / 2 - 180, 46, 28, "#ffe27a");
+    texte("🪙 " + sauvegarde.pieces + " pièces", W / 2 + 180, 46, 24, "#ffd34d", "right");
+
+    // Les 5 places du garage, en petit : ✅ à toi, 🔒 pas encore.
+    C.voitures.forEach((v, i) => {
+      const x = W / 2 + (i - 2) * 64;
+      const ici = i === g.index;
+      ctx.fillStyle = ici ? "rgba(255,226,122,.9)" : "rgba(10,14,30,.6)";
+      ctx.beginPath();
+      ctx.roundRect(x - 26, 72, 52, 34, 8);
+      ctx.fill();
+      texte((Circuit.Garage.possede(v.id) ? "✅" : "🔒") + (i + 1), x, 96, 16, ici ? "#1a1a1a" : "#fff", "center");
+    });
+
+    // La fiche de la voiture, en bas.
+    panneau(W / 2 - 300, H - 178, 600, 166);
+    texte("◀", W / 2 - 280, H - 140, 26, "#cfd6ff");
+    texte("▶", W / 2 + 280, H - 140, 26, "#cfd6ff", "right");
+    texte(voiture.nom, W / 2, H - 140, 28, "#fff", "center");
+    // Les barres de qualités (comparées à la Formule 1, la plus forte).
+    const barre = (y, nom, valeur, total, texteValeur) => {
+      texte(nom, W / 2 - 250, y, 15, "#cfd6ff");
+      ctx.fillStyle = "rgba(255,255,255,.15)";
+      ctx.fillRect(W / 2 - 110, y - 11, 260, 10);
+      ctx.fillStyle = "#ffe27a";
+      ctx.fillRect(W / 2 - 110, y - 11, (260 * valeur) / total, 10);
+      texte(texteValeur, W / 2 + 250, y, 15, "#fff", "right");
+    };
+    barre(H - 108, "Vitesse max", voiture.vitesseMax, max.vitesseMax, Math.round(voiture.vitesseMax * 3.6) + " km/h");
+    barre(H - 84, "Accélération", voiture.acceleration, max.acceleration, voiture.acceleration + " m/s²");
+
+    let action, couleur;
+    if (statut === "a-toi") {
+      action = "✅ À toi · Entrée : rouler avec elle";
+      couleur = "#7dffa0";
+    } else if (statut === "achetable") {
+      action = "🪙 " + voiture.prix + " pièces · Entrée : l'acheter";
+      couleur = "#ffd34d";
+    } else {
+      action = "🔒 " + voiture.prix + " pièces · il t'en manque " + (voiture.prix - sauvegarde.pieces);
+      couleur = "#ffb37a";
+    }
+    texte(g.message || action, W / 2, H - 50, 20, g.message ? "#7dffa0" : couleur, "center");
+    texte("← → changer de voiture · ramasse les pièces 🪙 sur le circuit pour en acheter", W / 2, H - 24, 14, "#cfd6ff", "center");
   }
 
   // Les 3 feux rouges du départ : un s'éteint chaque seconde.
@@ -147,6 +206,9 @@ Circuit.TableauDeBord = (function () {
     const d = Circuit.Piste.pointA(0);
     ctx.fillStyle = "#fff";
     ctx.fillRect(cx + d.x * echelle - 1, cz + d.z * echelle - 5, 2, 10);
+    // les pièces pas encore prises : de petits points dorés
+    ctx.fillStyle = "#ffd34d";
+    for (const p of monde.pieces) if (!p.prise) ctx.fillRect(cx + p.x * echelle - 1, cz + p.z * echelle - 1, 2, 2);
     // les voitures : l'adversaire en bleu, toi en rouge (dessinée en dernier, par-dessus)
     for (const [v, couleur] of [[monde.adversaire.voiture, "#2f6bff"], [monde.voiture, "#ff3b30"]]) {
       ctx.beginPath();

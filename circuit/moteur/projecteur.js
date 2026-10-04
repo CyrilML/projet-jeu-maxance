@@ -76,6 +76,32 @@ Circuit.Constructeur = function () {
     }
   }
 
+  // Étape 36 : une FORME à 8 coins, comme une boîte qu'on aurait écrasée ou penchée (un capot en pente,
+  // un aileron…). `bas` et `haut` : 4 coins chacun, dans le même ordre (avant-gauche, avant-droit,
+  // arrière-droit, arrière-gauche). Les normales sont tournées vers l'extérieur toutes seules.
+  function forme(bas, haut, couleur) {
+    const centre = [0, 1, 2].map((k) => (bas.concat(haut).reduce((somme, p) => somme + p[k], 0)) / 8);
+    const face = (a, b, c, d) => {
+      quadOriente(a, b, c, d, couleur, centre);
+    };
+    face(haut[0], haut[1], haut[2], haut[3]); // dessus
+    face(bas[0], bas[1], bas[2], bas[3]); // dessous
+    for (let i = 0; i < 4; i++) {
+      const j = (i + 1) % 4;
+      face(bas[i], bas[j], haut[j], haut[i]); // les 4 côtés
+    }
+  }
+
+  // Un quadrilatère dont la face regarde « loin du centre » (pour que la lumière tombe du bon côté).
+  function quadOriente(a, b, c, d, couleur, centre) {
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+    const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    const mx = (a[0] + c[0]) / 2 - centre[0], my = (a[1] + c[1]) / 2 - centre[1], mz = (a[2] + c[2]) / 2 - centre[2];
+    if (nx * mx + ny * my + nz * mz >= 0) quad(a, b, c, d, couleur);
+    else quad(a, d, c, b, couleur);
+  }
+
   // Un segment (pour les rayons X), dessiné comme une ligne.
   function ligne(a, b, couleur) {
     nombres.push(a[0], a[1], a[2], 0, 1, 0, couleur[0], couleur[1], couleur[2]);
@@ -86,7 +112,7 @@ Circuit.Constructeur = function () {
     return new Float32Array(nombres);
   }
 
-  return { triangle, quad, boite, cone, roue, ligne, fin };
+  return { triangle, quad, boite, cone, roue, forme, ligne, fin };
 };
 
 // Transforme une liste de triangles en liste d'arêtes (pour voir le « fil de fer » aux rayons X).

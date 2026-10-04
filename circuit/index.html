@@ -40,6 +40,7 @@
     #journal li { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
     #journal .temps { display: inline-block; min-width: 58px; color: var(--doux); font-family: ui-monospace, Menlo, Consolas, monospace; }
     #journal li[data-evenement="sortie-de-piste"], #journal li[data-evenement="cloture"], #journal li[data-evenement="ligne-a-l-envers"], #journal li[data-evenement="perdu"], #journal li[data-evenement="choc"] { color: #ff9b9b; }
+    #journal li[data-evenement="piece"], #journal li[data-evenement="achat"] { color: #ffd34d; }
     #journal li[data-evenement="tour-adversaire"], #journal li[data-evenement="adversaire-change-de-voie"] { color: #9cc4ff; }
     #journal li[data-evenement="nouveau-record"], #journal li[data-evenement="arrivee"], #journal li[data-evenement="tour-termine"], #journal li[data-evenement="sauvegarde"] { color: var(--accent); }
     pre { margin: 0; background: #0b1020; border-radius: 8px; padding: 8px; font-size: .78rem; overflow: auto; max-height: 420px; color: #b9f5c9; }
@@ -61,7 +62,7 @@
     </div>
 
     <div class="outils">
-      <button data-action="valider">▶ Démarrer <kbd>Entrée</kbd></button>
+      <button data-action="valider">▶ Valider <kbd>Entrée</kbd></button>
       <button data-action="recommencer">🔄 Recommencer <kbd>R</kbd></button>
       <button data-action="camera">🎥 Caméra <kbd>C</kbd></button>
       <button data-action="son">🔊 Son <kbd>B</kbd></button>
@@ -70,7 +71,7 @@
       <button data-action="pasSuivant">⏭ Un pas <kbd>N</kbd></button>
       <button data-action="ralenti" data-option="ralenti" aria-pressed="false">🐢 Ralenti <kbd>L</kbd></button>
     </div>
-    <p class="commandes">Conduire : <kbd>↑</kbd> ou <kbd>Z</kbd> accélérer · <kbd>↓</kbd> ou <kbd>S</kbd> freiner et reculer · <kbd>←</kbd> <kbd>→</kbd> ou <kbd>Q</kbd> <kbd>D</kbd> tourner</p>
+    <p class="commandes">Garage : <kbd>←</kbd> <kbd>→</kbd> choisir une voiture, <kbd>Entrée</kbd> l'acheter ou rouler · Conduire : <kbd>↑</kbd> ou <kbd>Z</kbd> accélérer · <kbd>↓</kbd> ou <kbd>S</kbd> freiner et reculer · <kbd>←</kbd> <kbd>→</kbd> ou <kbd>Q</kbd> <kbd>D</kbd> tourner</p>
 
     <section class="capot" aria-label="Sous le capot">
       <div class="bloc">
@@ -92,23 +93,26 @@
   </div>
 
   <!-- L'ordre compte : chaque fichier peut utiliser ceux chargés AVANT lui.
-       Le « ?v=4 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
-  <script src="config.js?v=4"></script>
-  <script src="moteur/evenements.js?v=4"></script>
-  <script src="moteur/entrees.js?v=4"></script>
-  <script src="moteur/maths3d.js?v=4"></script>
-  <script src="moteur/projecteur.js?v=4"></script>
-  <script src="moteur/chocs.js?v=4"></script>
-  <script src="moteur/son.js?v=4"></script>
-  <script src="logique/piste.js?v=4"></script>
-  <script src="logique/voiture.js?v=4"></script>
-  <script src="logique/pilote.js?v=4"></script>
-  <script src="logique/course.js?v=4"></script>
-  <script src="donnees/sauvegarde.js?v=4"></script>
-  <script src="affichage/scene3d.js?v=4"></script>
-  <script src="affichage/tableau-de-bord.js?v=4"></script>
-  <script src="affichage/sons.js?v=4"></script>
-  <script src="affichage/sous-le-capot.js?v=4"></script>
-  <script src="main.js?v=4"></script>
+       Le « ?v=5 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
+  <script src="config.js?v=5"></script>
+  <script src="moteur/evenements.js?v=5"></script>
+  <script src="moteur/entrees.js?v=5"></script>
+  <script src="moteur/maths3d.js?v=5"></script>
+  <script src="moteur/projecteur.js?v=5"></script>
+  <script src="moteur/chocs.js?v=5"></script>
+  <script src="moteur/son.js?v=5"></script>
+  <script src="logique/piste.js?v=5"></script>
+  <script src="logique/voiture.js?v=5"></script>
+  <script src="logique/pilote.js?v=5"></script>
+  <script src="logique/pieces.js?v=5"></script>
+  <script src="logique/course.js?v=5"></script>
+  <script src="logique/garage.js?v=5"></script>
+  <script src="donnees/sauvegarde.js?v=5"></script>
+  <script src="affichage/modeles.js?v=5"></script>
+  <script src="affichage/scene3d.js?v=5"></script>
+  <script src="affichage/tableau-de-bord.js?v=5"></script>
+  <script src="affichage/sons.js?v=5"></script>
+  <script src="affichage/sous-le-capot.js?v=5"></script>
+  <script src="main.js?v=5"></script>
 </body>
 </html>

@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 4,
+  version: 5,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -42,6 +42,31 @@ Circuit.CONFIG = {
     freinHerbe: 30, // m/s² : l'herbe freine fort quand on y entre trop vite
     vitesseVirage: 1.9, // radians par seconde : la vitesse à laquelle la voiture tourne
     angleRoues: 0.45, // radians : jusqu'où les roues avant tournent (pour le dessin)
+  },
+
+  // Étape 36 : LE GARAGE. 5 voitures, chacune avec sa forme, sa couleur, sa vitesse et son bruit.
+  // ✍️ Choix de Maxance : les plus chères vont plus vite ; prix 0, 50, 100, 200, 400 pièces ;
+  // la 1re reste telle quelle, puis une « Lamborghini », une « Porsche », une « Bugatti » et une Formule 1 au son aigu.
+  // vitesseMax en m/s (× 3,6 = km/h) ; acceleration en m/s² ; son = fréquences du moteur en Hz (ralenti → à fond).
+  voitures: [
+    { id: "classique", nom: "La Rouge", modele: "classique", prix: 0, vitesseMax: 41.7, acceleration: 14,
+      couleurs: [[0.9, 0.15, 0.1], [0.65, 0.08, 0.06]], son: { ralenti: 38, max: 90 } },
+    { id: "taureau", nom: "Le Taureau (style Lamborghini)", modele: "taureau", prix: 50, vitesseMax: 44.4, acceleration: 15,
+      couleurs: [[0.98, 0.76, 0.05], [0.1, 0.1, 0.11]], son: { ralenti: 55, max: 150 } },
+    { id: "fleche", nom: "La Flèche (style Porsche)", modele: "fleche", prix: 100, vitesseMax: 47.2, acceleration: 16,
+      couleurs: [[0.78, 0.8, 0.84], [0.12, 0.12, 0.14]], son: { ralenti: 62, max: 175 } },
+    { id: "fusee", nom: "La Fusée (style Bugatti)", modele: "fusee", prix: 200, vitesseMax: 50, acceleration: 17,
+      couleurs: [[0.55, 0.05, 0.14], [0.08, 0.08, 0.09]], son: { ralenti: 32, max: 88 } },
+    { id: "f1", nom: "La Formule 1", modele: "f1", prix: 400, vitesseMax: 52.8, acceleration: 19,
+      couleurs: [[0.05, 0.6, 0.38], [0.95, 0.95, 0.95]], son: { ralenti: 170, max: 560 } }, // ✍️ son aigu
+  ],
+
+  // Étape 36 : les pièces à ramasser pour acheter les voitures.
+  pieces: {
+    nombre: 50, // ✍️ 50 pièces posées sur le circuit à chaque course (une pièce prise ne revient pas avant la course suivante)
+    voies: [-4.5, 0, 4.5], // m : à gauche, au milieu ou à droite de la route
+    rayonRamassage: 2.4, // m : la pièce est prise si le milieu de la voiture passe à moins de 2,4 m
+    hauteur: 1.2, // m : les pièces flottent au-dessus de la route
   },
 
   // Étape 34 : la voiture adverse, conduite par l'ordinateur.

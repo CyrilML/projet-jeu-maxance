@@ -1,13 +1,14 @@
 // 🏁 LA COURSE : l'arbitre
 //
 // Ce fichier contient le « monde » (tout ce que le jeu garde en mémoire vive) et les règles :
-//   - les PHASES de la course : accueil → décompte (3, 2, 1) → course → arrivée (gagné) ou perdu ;
+//   - les PHASES de la course : garage → décompte (3, 2, 1) → course → arrivée (gagné) ou perdu → garage ;
 //   - le CHRONO du tour et de la course ;
 //   - les TOURS : un tour compte seulement si la voiture a passé les portes 1, 2, 3 dans l'ordre,
 //     puis la ligne d'arrivée (la porte 0). Sinon on pourrait tricher en faisant demi-tour !
 //   - la sortie de piste (dans l'herbe) et la clôture tout autour ;
 //   - depuis l'étape 34 : la voiture ADVERSE, les chocs, la position (1er ou 2e).
 //     ✍️ Règle de Maxance : si l'adversaire finit ses 3 tours avant toi, c'est « Perdu ! » tout de suite.
+//   - depuis l'étape 36 : le GARAGE au début (logique/garage.js) et les PIÈCES à ramasser (logique/pieces.js).
 //
 // Un « concurrent » = une voiture + où elle en est dans la course (tour, porte, chrono…).
 // Le joueur, ce sont les champs du monde lui-même (monde.voiture, monde.tour…) ;
@@ -47,9 +48,17 @@ Circuit.Course = (function () {
     return adversaire;
   }
 
+  // La voiture du joueur : celle qui est regardée au garage (numéro `index` dans la liste du garage).
+  function voitureDuJoueur(index) {
+    return placeDeDepart(C.adversaire.voie, Circuit.Garage.voitureNumero(index));
+  }
+
   function creer() {
     const monde = {
-      phase: "accueil", // accueil, decompte, course, arrivee (tu as gagné), perdu
+      phase: "garage", // garage, decompte, course, arrivee (tu as gagné), perdu
+      garage: { index: 0, message: null }, // étape 36 : la voiture regardée au garage
+      pieces: [], // étape 36 : les pièces posées sur le circuit
+      piecesCourse: 0, // pièces ramassées pendant cette course
       temps: 0, // secondes depuis l'ouverture de la page
       decompte: 0,
       chronoCourse: 0,
@@ -61,13 +70,26 @@ Circuit.Course = (function () {
       resultat: null, // à la fin : { gagne, avance } ou { gagne: false, retard } (en mètres)
       adversaire: creerAdversaire(),
     };
-    preparer(monde, placeDeDepart(C.adversaire.voie));
+    preparer(monde, voitureDuJoueur(0));
     return monde;
+  }
+
+  // Ouvre le garage, sur la voiture choisie la dernière fois.
+  function ouvrirGarage(monde) {
+    monde.phase = "garage";
+    monde.garage.index = Circuit.Garage.trouver(Circuit.Sauvegarde.donnees.voitureChoisie);
+    monde.garage.message = null;
+    preparer(monde, voitureDuJoueur(monde.garage.index));
+    monde.adversaire = creerAdversaire();
+    monde.pieces = [];
+    radio.emettre("garage", { pieces: Circuit.Sauvegarde.donnees.pieces });
   }
 
   // Remet tout à zéro et lance le décompte 3, 2, 1.
   function lancer(monde) {
-    preparer(monde, placeDeDepart(C.adversaire.voie));
+    preparer(monde, voitureDuJoueur(monde.garage.index));
+    monde.pieces = Circuit.Pieces.placer();
+    monde.piecesCourse = 0;
     monde.adversaire = creerAdversaire();
     monde.chronoCourse = 0;
     monde.sortiesDePiste = 0;
@@ -96,17 +118,21 @@ Circuit.Course = (function () {
     monde.temps += dt;
     const adv = monde.adversaire;
 
-    if (monde.phase === "accueil" || monde.phase === "arrivee" || monde.phase === "perdu") {
+    if (monde.phase === "garage") {
+      const reponse = Circuit.Garage.etape(monde, intentions);
+      if (reponse === "regarde") preparer(monde, voitureDuJoueur(monde.garage.index)); // on montre la nouvelle voiture
+      if (reponse === "depart") lancer(monde);
+      return;
+    }
+    if (monde.phase === "arrivee" || monde.phase === "perdu") {
       if (intentions.valider) {
-        lancer(monde);
+        ouvrirGarage(monde); // après la course, on retourne au garage (pour dépenser ses pièces !)
         return;
       }
-      if (monde.phase !== "accueil") {
-        // Après la course, ta voiture finit en roue libre, et l'adversaire continue de rouler.
-        rouler(monde, monde, dt, {});
-        rouler(monde, adv, dt, Circuit.Pilote.decider(adv, null));
-        cogner(monde);
-      }
+      // Après la course, ta voiture finit en roue libre, et l'adversaire continue de rouler.
+      rouler(monde, monde, dt, {});
+      rouler(monde, adv, dt, Circuit.Pilote.decider(adv, null));
+      cogner(monde);
       return;
     }
     if (intentions.recommencer) {
@@ -139,6 +165,7 @@ Circuit.Course = (function () {
     });
     rouler(monde, adv, dt, intentionsAdv);
     cogner(monde);
+    Circuit.Pieces.ramasser(monde);
 
     verifierPortes(monde, monde, avantJoueur, monde.reperage.s);
     if (monde.phase !== "course") return;
@@ -249,6 +276,8 @@ Circuit.Course = (function () {
           tourJoueur: monde.tour,
           retard: monde.resultat.retard,
           sorties: monde.sortiesDePiste,
+          pieces: monde.piecesCourse,
+          voiture: monde.voiture.modele,
         });
       } else {
         c.tour++;
@@ -268,11 +297,13 @@ Circuit.Course = (function () {
         tours: monde.tempsDesTours.slice(),
         sorties: monde.sortiesDePiste,
         avance: monde.resultat.avance, // m d'avance sur l'adversaire
+        pieces: monde.piecesCourse,
+        voiture: monde.voiture.modele,
       });
     } else {
       c.tour++;
     }
   }
 
-  return { creer, lancer, etape, progression };
+  return { creer, lancer, ouvrirGarage, etape, progression };
 })();
