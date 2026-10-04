@@ -45,6 +45,7 @@
   });
   // La sauvegarde est lue APRÈS le branchement du panneau, pour que le journal voie la lecture.
   Circuit.Sauvegarde.initialiser(() => monde.voiture.distance);
+  Circuit.Sons.initialiser(); // étape 35 : le bruit du moteur, de l'herbe, des chocs et du départ
 
   // Les boutons sous l'écran font comme les touches.
   for (const bouton of document.querySelectorAll("[data-action]")) {
@@ -80,6 +81,7 @@
     if (E.consommer("rayonsX")) options.rayonsX = !options.rayonsX;
     if (E.consommer("pause")) options.pause = !options.pause;
     if (E.consommer("ralenti")) options.ralenti = !options.ralenti;
+    if (E.consommer("son")) Circuit.Sons.basculer();
     if (E.consommer("camera")) Circuit.Evenements.emettre("camera", { mode: Circuit.Scene3D.changerCamera() });
     rafraichirBoutons();
 
@@ -102,6 +104,7 @@
 
     Circuit.Scene3D.dessiner(monde, options, options.pause ? 0 : ecoule);
     Circuit.TableauDeBord.dessiner(monde, options, Circuit.Sauvegarde.donnees);
+    Circuit.Sons.mettreAJour(monde, options);
     Circuit.SousLeCapot.mettreAJour(maintenant);
 
     images++;

@@ -44,6 +44,8 @@ Circuit.SousLeCapot = (function () {
     cloture: (d) => "🧱 Choc contre la clôture à " + Math.round(Math.abs(d.vitesse) * 3.6) + " km/h : la voiture s'arrête net",
     sauvegarde: (d) => "💾 Base de données écrite (" + d.raison + ")",
     "base-effacee": () => "🗑️ Base de données effacée",
+    "son-allume": (d) => "🔊 Synthétiseur allumé (" + d.frequenceEchantillons.toLocaleString("fr-FR") + " échantillons de son par seconde)",
+    son: (d) => (d.allume ? "🔊 Son remis (B)" : "🔇 Son coupé (B)"),
     camera: (d) => "🎥 Caméra : " + d.mode,
   };
 
@@ -116,6 +118,12 @@ Circuit.SousLeCapot = (function () {
       ["voie visée", (adv.voie > 0 ? "extérieure (+" : "intérieure (") + virgule(adv.voie, 1) + " m)"],
       ["cible", Math.round((adv.difference * 180) / Math.PI) + "° → " + (Math.abs(adv.difference) <= 0.02 ? "tout droit" : adv.difference < 0 ? "tourne à gauche" : "tourne à droite")],
       ["avance sur toi", Math.round(Circuit.Course.progression(adv) - Circuit.Course.progression(monde)) + " m"],
+      ["Le son"],
+      ["synthétiseur", Circuit.Son.etat()],
+      ["ton moteur", Math.round(Circuit.Sons.enDirect.frequence) + " Hz · volume " + virgule(Circuit.Sons.enDirect.volume, 2)],
+      ["moteur bleu", Math.round(Circuit.Sons.enDirect.frequenceAdversaire) + " Hz · volume " + virgule(Circuit.Sons.enDirect.volumeAdversaire, 2) + " (à " + Math.round(Circuit.Sons.enDirect.distance || 0) + " m)"],
+      ["côté (gauche −1, droite +1)", virgule(Circuit.Sons.enDirect.cote, 2)],
+      ["herbe « chhhh »", "volume " + virgule(Circuit.Sons.enDirect.herbe, 2)],
       ["Le dessin"],
       ["caméra", Circuit.Scene3D.camera.mode],
       ["triangles dessinés", compteur.triangles.toLocaleString("fr-FR")],

@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 3,
+  version: 4,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -57,6 +57,17 @@ Circuit.CONFIG = {
   chocs: {
     rayon: 1.05, // m : rayon de chaque cercle (la voiture fait 2 m de large)
     rebond: 0.3, // 0 = les voitures se collent, 1 = elles rebondissent comme des balles
+  },
+
+  // Étape 35 : les sons (fabriqués par le synthétiseur, aucun fichier). Fréquences en hertz (Hz).
+  sons: {
+    volumeGeneral: 0.5,
+    // ✍️ Choix de Maxance : un gros moteur grave. Plus on va vite, plus le son monte.
+    moteur: { frequenceRalenti: 38, frequenceMax: 90, volumeAccelere: 0.55, volumeLache: 0.3 },
+    // ✍️ On entend la voiture bleue selon la distance : fort tout près, plus rien à 70 m.
+    adversaire: { volume: 0.45, distanceMax: 70 },
+    herbe: { volume: 0.35, frequenceFiltre: 900 }, // le « chhhh » dans l'herbe
+    bips: { frequenceFeu: 440, frequenceGo: 880, volume: 0.2 }, // 440 Hz = la note La
   },
 
   course: {

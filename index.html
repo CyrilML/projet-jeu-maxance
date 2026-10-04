@@ -157,6 +157,7 @@
       <a href="#etape32">Étape 32 · circuit 3D</a>
       <a href="#etape33">Étape 33</a>
       <a href="#etape34">Étape 34</a>
+      <a href="#etape35">Étape 35</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -2506,6 +2507,57 @@ rayon:           40  →  120</pre>
       <details class="question"><summary>Si la carotte était à 3 m au lieu de 18 m, que se passerait-il ?</summary><p>Le pilote tournerait très brusquement, il zigzaguerait. Une carotte plus loin rend la conduite plus douce.</p></details>
     </section>
 
+    <section id="etape35">
+      <h2>🔊 Étape 35 : le bruit du moteur <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Vroum ! Ta voiture a maintenant un gros moteur grave, et tu entends la voiture bleue arriver. <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/35-bruit-du-moteur.md</code>.</p>
+          <ul>
+            <li>✍️ Un gros moteur grave, qui monte avec la vitesse.</li>
+            <li>✍️ La voiture bleue s'entend selon la distance.</li>
+            <li>✍️ « BOUM » au choc, « chhhh » dans l'herbe, bips au départ.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Le moteur devient plus aigu quand tu accélères.</li>
+            <li>☐ La voiture bleue s'entend quand elle est près, et plus du tout quand elle est loin.</li>
+            <li>☐ Avec un casque : elle est à gauche ou à droite selon sa place.</li>
+            <li>☐ Bips au départ, « chhhh » dans l'herbe, « BOUM » au choc.</li>
+            <li>☐ <kbd>B</kbd> coupe et remet le son.</li>
+            <li>Vérifie « version 4 » en haut de la page du circuit.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🎛️ Un son fabriqué avec des nombres</h3>
+      <p>Le jeu n'a <strong>aucun fichier de son</strong> : il fabrique ses sons, comme un synthétiseur (<code>circuit/moteur/son.js</code>). Un son, c'est de l'air qui vibre. Le nombre de vibrations par seconde s'appelle la <strong>fréquence</strong>, en hertz (Hz) : plus c'est grand, plus c'est aigu.</p>
+      <pre style="white-space: pre-wrap">fréquence du moteur = 38 Hz + 52 Hz × (vitesse ÷ vitesse max)
+à l'arrêt  :  38 Hz   (très grave)
+à fond     :  90 Hz</pre>
+      <p>Pour faire un gros moteur, on mélange 3 vibrations « en dents de scie » (un son rugueux), on fait <strong>trembler</strong> le volume (les explosions dans les cylindres), et on passe le tout dans un <strong>filtre</strong> qui étouffe les aigus, comme une main devant la bouche.</p>
+
+      <h3>📏 Entendre la distance</h3>
+      <p>Le volume de la voiture bleue dépend de la distance entre vous deux : à 0 m, à fond ; à 70 m, plus rien. Le jeu calcule aussi si elle est à ta gauche ou à ta droite, et il envoie le son plus dans une oreille que dans l'autre : c'est le <strong>panoramique</strong>.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans l'état en direct, regarde « ton moteur » : combien de Hz à l'arrêt ? Et à fond ?</li>
+        <li>Regarde « moteur bleu » quand elle s'éloigne : que devient son volume ?</li>
+        <li>Mets un casque et regarde « côté » : −1, c'est quelle oreille ?</li>
+        <li>Mets-toi en pause (<kbd>Échap</kbd>) : que devient le son ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un son de 880 Hz est-il plus grave ou plus aigu qu'un son de 440 Hz ?</summary><p>Plus aigu : 2 fois plus de vibrations par seconde. C'est le bip du « GO ».</p></details>
+      <details class="question"><summary>À la moitié de la vitesse max, quelle est la fréquence du moteur ?</summary><p>38 + 52 × 0,5 = 64 Hz.</p></details>
+      <details class="question"><summary>Pourquoi le jeu attend-il que tu appuies sur une touche pour faire du bruit ?</summary><p>Les navigateurs interdisent aux pages de faire du bruit toutes seules, pour protéger tes oreilles. Il faut un geste de toi (une touche, un clic).</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -2710,26 +2762,32 @@ rayon:           40  →  120</pre>
           <p>Une voiture bleue, conduite par l'ordinateur à 140 km/h, qui change de voie pour doubler. Les voitures se cognent. Si elle finit avant toi : perdu !</p>
           <p class="apprend"><b>Tu apprends :</b> une intelligence artificielle simple (la carotte), réutiliser le même code pour deux voitures, détecter un choc avec des cercles, faire rebondir, calculer qui est devant. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">35</div>
+          <h4>Le bruit du moteur <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Un gros moteur grave qui monte avec la vitesse, la voiture bleue qu'on entend selon la distance, « BOUM », « chhhh » et les bips du départ.</p>
+          <p class="apprend"><b>Tu apprends :</b> fréquence et hertz, synthétiseur (formes de vibration, filtre, tremblement), volume selon la distance, panoramique gauche-droite. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">36</div>
           <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">36</div>
+          <div class="num">37</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">37</div>
+          <div class="num">38</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">38</div>
+          <div class="num">39</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -3058,6 +3116,15 @@ rayon:           40  →  120</pre>
         <textarea class="journal" id="appris-34" data-cle="appris-34" placeholder="Ex. : J'ai appris que l'ordinateur conduit en suivant une carotte…"></textarea>
         <label for="idees-34"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-34" data-cle="idees-34" placeholder="Ex. : Plusieurs adversaires, choisir le niveau, des bonus sur la route…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 35 · le bruit du moteur <span class="petit">· 4 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> un synthétiseur pour le circuit (<code>moteur/son.js</code>) et un ingénieur du son (<code>affichage/sons.js</code>) : ton gros moteur grave (38 à 90 Hz), le moteur de la voiture bleue (volume selon la distance, gauche ou droite), « chhhh » dans l'herbe, « BOUM » au choc, bips du départ, <kbd>B</kbd> pour couper. Sous le capot : la rubrique « Le son » dans l'état en direct.</p>
+        <p class="petit">✍️ Réponses de Maxance : gros moteur grave, la voiture bleue s'entend selon la distance, choc + herbe + bips.</p>
+        <label for="appris-35"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-35" data-cle="appris-35" placeholder="Ex. : J'ai appris qu'un son, c'est une fréquence en hertz…"></textarea>
+        <label for="idees-35"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-35" data-cle="idees-35" placeholder="Ex. : Un bruit de klaxon, une musique de course…"></textarea>
       </div>
     </section>
   </main>

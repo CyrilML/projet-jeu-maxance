@@ -21,6 +21,7 @@ Circuit.Entrees = (function () {
     pasSuivant: ["KeyN"],
     ralenti: ["KeyL"],
     camera: ["KeyC"],
+    son: ["KeyB"], // étape 35 : couper / remettre le son (comme dans le jeu de plateforme)
   };
 
   const actionsDeLaTouche = {};

@@ -1,0 +1,87 @@
+// 🎺 LES SONS DU CIRCUIT : l'ingénieur du son
+//
+// Ce fichier décide QUAND et COMMENT le jeu fait du bruit. Il ne fabrique pas les sons lui-même
+// (c'est moteur/son.js, le synthétiseur) : il lit le monde et il écoute la radio.
+//
+//   - TON MOTEUR : un gros moteur grave (✍️ choix de Maxance). Sa fréquence suit la vitesse :
+//       fréquence = 38 Hz (au ralenti) + 52 Hz × (vitesse ÷ vitesse max)  →  de 38 à 90 Hz.
+//     Quand tu accélères, il est plus fort et moins étouffé ; quand tu lâches, il ronronne.
+//   - LE MOTEUR DE LA VOITURE BLEUE : le même, mais son volume dépend de la DISTANCE
+//     (fort tout près, plus rien après 70 m), et il est à gauche ou à droite dans le casque,
+//     selon où elle est par rapport à toi.
+//   - L'HERBE : un « chhhh » qui monte avec la vitesse quand tu roules dans l'herbe.
+//   - LE CHOC : « BOUM » quand les voitures se cognent (plus fort si le choc est violent).
+//   - LES BIPS DU DÉPART : un bip grave à chaque feu rouge, un bip aigu au « GO ».
+//
+// Comme le reste de l'affichage, ce fichier LIT le monde, il ne le modifie jamais.
+
+window.Circuit = window.Circuit || {};
+
+Circuit.Sons = (function () {
+  const S = Circuit.CONFIG.sons;
+  const Son = Circuit.Son;
+  let moteurJoueur = null, moteurAdversaire = null, herbe = null;
+  // Ce qu'on entend en ce moment : lu par le panneau « sous le capot ».
+  const enDirect = { frequence: 0, volume: 0, frequenceAdversaire: 0, volumeAdversaire: 0, cote: 0, herbe: 0 };
+
+  function initialiser() {
+    Son.initialiser(S.volumeGeneral);
+    moteurJoueur = Son.creerMoteur();
+    moteurAdversaire = Son.creerMoteur();
+    herbe = Son.creerBruit(S.herbe.frequenceFiltre);
+
+    const radio = Circuit.Evenements;
+    radio.ecouter("decompte", () => Son.bip(S.bips.frequenceFeu, 0.18, S.bips.volume));
+    radio.ecouter("feu", () => Son.bip(S.bips.frequenceFeu, 0.18, S.bips.volume));
+    radio.ecouter("depart", () => Son.bip(S.bips.frequenceGo, 0.5, S.bips.volume));
+    radio.ecouter("choc", (d) => Son.boum(d.force));
+  }
+
+  // La fréquence d'un moteur selon sa vitesse.
+  function frequenceDuMoteur(voiture) {
+    const part = Math.min(1, Math.abs(voiture.vitesse) / Circuit.CONFIG.voiture.vitesseMax);
+    return S.moteur.frequenceRalenti + (S.moteur.frequenceMax - S.moteur.frequenceRalenti) * part;
+  }
+
+  // Appelé à chaque image.
+  function mettreAJour(monde, options) {
+    const silence = options.pause;
+    const v = monde.voiture;
+
+    // 1. Ton moteur
+    const accelere = v.pedale === "accélérateur";
+    const f = frequenceDuMoteur(v);
+    const volume = silence ? 0 : accelere ? S.moteur.volumeAccelere : S.moteur.volumeLache;
+    Son.reglerMoteur(moteurJoueur, f, volume, accelere ? 1 : 0.2, 0);
+    enDirect.frequence = f;
+    enDirect.volume = volume;
+
+    // 2. Le moteur de la voiture bleue : plus elle est loin, moins on l'entend.
+    const a = monde.adversaire.voiture;
+    const dx = a.x - v.x, dz = a.z - v.z;
+    const distance = Math.hypot(dx, dz);
+    const proche = Math.max(0, 1 - distance / S.adversaire.distanceMax);
+    const volumeAdv = silence ? 0 : S.adversaire.volume * proche * proche;
+    // Gauche ou droite ? On compare la direction de la voiture bleue avec la droite de ta voiture.
+    const droiteX = -Math.sin(v.angle), droiteZ = Math.cos(v.angle);
+    const cote = distance > 0.1 ? (dx * droiteX + dz * droiteZ) / distance : 0;
+    const fAdv = frequenceDuMoteur(a) * 1.06; // un tout petit peu plus aigu, pour les reconnaître
+    Son.reglerMoteur(moteurAdversaire, fAdv, volumeAdv, 0.7, cote);
+    enDirect.frequenceAdversaire = fAdv;
+    enDirect.volumeAdversaire = volumeAdv;
+    enDirect.cote = cote;
+    enDirect.distance = distance;
+
+    // 3. L'herbe
+    const volumeHerbe = !silence && monde.sol === "herbe" ? S.herbe.volume * Math.min(1, Math.abs(v.vitesse) / 10) : 0;
+    Son.reglerBruit(herbe, volumeHerbe);
+    enDirect.herbe = volumeHerbe;
+  }
+
+  function basculer() {
+    const allume = Son.basculer();
+    Circuit.Evenements.emettre("son", { allume });
+  }
+
+  return { initialiser, mettreAJour, basculer, enDirect };
+})();
