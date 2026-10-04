@@ -118,7 +118,7 @@ Circuit.SousLeCapot = (function () {
     const r = monde.reperage;
     const adv = monde.adversaire;
     const mesures = lireMesures();
-    const compteur = Circuit.Projecteur.compteur;
+    const compteur = Circuit.Scene3D.compteur; // étape 38 : compté par Three.js
     const degres = Math.round((v.angle * 180) / Math.PI);
 
     const fiche = Circuit.Garage.ficheDe(v.modele) || {};
@@ -197,6 +197,7 @@ Circuit.SousLeCapot = (function () {
       ["Le dessin"],
       ["caméra", Circuit.Scene3D.camera.mode],
       ["triangles dessinés", compteur.triangles.toLocaleString("fr-FR")],
+      ["objets envoyés à la carte graphique", compteur.objets.toLocaleString("fr-FR")],
       ["lignes (rayons X)", compteur.lignes.toLocaleString("fr-FR")],
       ["images par seconde", mesures.ips],
       ["pas de calcul par seconde", mesures.majParSeconde],

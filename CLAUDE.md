@@ -42,6 +42,10 @@ est en ligne environ une minute après. Ne pousse sur `main` que du code testé.
 Règles :
 - Pas d'étape de compilation, pas de dépendances : de simples fichiers `<script>` chargés dans
   l'ordre, pour que le jeu s'ouvre d'un double-clic. Chaque module s'attache à l'objet global `Jeu`.
+  Exception décidée par Maxance et Cyril (étape 38) : le jeu de course `circuit/` utilise Three.js
+  pour un rendu réaliste. Il est rangé dans `circuit/vendor/three.min.js` (version r159, la dernière
+  qui se charge avec une simple balise `<script>`, licence MIT) : pas de téléchargement, pas de serveur.
+  Aucune autre dépendance.
 - Les modules communiquent par événements (`Jeu.Evenements`) quand l'un n'a pas besoin de
   connaître l'autre. Chaque nouvel événement doit avoir son message dans le journal
   (`affichage/sous-le-capot.js`).

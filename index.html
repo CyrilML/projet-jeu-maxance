@@ -160,6 +160,7 @@
       <a href="#etape35">Étape 35</a>
       <a href="#etape36">Étape 36</a>
       <a href="#etape37">Étape 37</a>
+      <a href="#etape38">Étape 38</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -2690,6 +2691,51 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Dans un looping de 12 m de rayon, à quelle hauteur es-tu tout en haut ?</summary><p>12 × (1 − cos 180°) = 12 × 2 = 24 m.</p></details>
     </section>
 
+    <section id="etape38">
+      <h2>✨ Étape 38 : un rendu réaliste avec Three.js <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Fini les blocs : des voitures arrondies et brillantes, de vraies ombres, de l'herbe et du goudron qui ont l'air vrais. <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/38-rendu-realiste.md</code>.</p>
+          <ul>
+            <li>✍️ Plus réaliste, « pas en pixels ».</li>
+            <li>✍️ Avec Three.js, pour les voitures et les maps en même temps.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Les voitures sont arrondies, avec vitres, jantes et phares.</li>
+            <li>☐ Des ombres sous les voitures, les arbres, la tribune.</li>
+            <li>☐ L'herbe, le goudron et la terre ont l'air vrais.</li>
+            <li>☐ <kbd>⌫</kbd> ou le bouton « 🗺️ Cartes » : retour au menu des cartes.</li>
+            <li>Vérifie « version 7 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>📚 Three.js, une « bibliothèque »</h3>
+      <p>Jusqu'ici, on dessinait tout avec notre propre moteur 3D. Pour faire plus beau, on utilise <strong>Three.js</strong> : un moteur 3D écrit par des milliers de développeurs. C'est une <strong>bibliothèque</strong> : du code tout prêt qu'on range dans le projet (<code>circuit/vendor/three.min.js</code>). Les règles du jeu (la physique, les tours, les pièces) n'ont pas changé : seul « le peintre » a changé.</p>
+      <h3>🚗 Une voiture : un profil « extrudé »</h3>
+      <p>On dessine le <strong>profil</strong> de la voiture vu de côté (le nez, le capot, le toit, les passages de roues), avec des coins arrondis. Puis on l'<strong>extrude</strong> sur la largeur de la voiture, comme un emporte-pièce dans de la pâte : le dessin plat devient un volume (<code>circuit/affichage/modeles.js</code>).</p>
+      <h3>☀️ Lumière, ombres, matériaux, textures</h3>
+      <ul>
+        <li><strong>Les ombres</strong> : le soleil « regarde » la scène ; tout ce qu'il ne voit pas est à l'ombre.</li>
+        <li><strong>Les matériaux</strong> : la peinture est vernie et reflète le ciel, le pneu est mat, le chrome brille, les phares émettent leur propre lumière.</li>
+        <li><strong>Les textures</strong> : des images collées sur les objets. Ici, elles sont peintes par le code, point par point, avec un peu de hasard (<code>circuit/affichage/textures.js</code>).</li>
+        <li><strong>Les instances</strong> : pour 260 arbres, on envoie la forme d'un seul arbre à la carte graphique, puis juste leurs positions.</li>
+      </ul>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans « sous le capot », regarde « triangles dessinés » : combien maintenant ? (avant : environ 24 000)</li>
+        <li>Fais le tour d'une voiture au garage : vois-tu le ciel se refléter sur la peinture ?</li>
+        <li>Aux rayons X (<kbd>X</kbd>), regarde de quels triangles est faite une voiture arrondie.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Qu'est-ce qui a changé dans les règles du jeu avec Three.js ?</summary><p>Rien ! Seul l'affichage a changé. C'est pour ça qu'on range le code en familles : la logique ne dessine jamais.</p></details>
+      <details class="question"><summary>Pourquoi utiliser des « instances » pour les arbres ?</summary><p>Pour aller plus vite : la forme est envoyée une seule fois, puis seulement les positions.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -3293,6 +3339,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-37" data-cle="appris-37" placeholder="Ex. : J'ai appris que la gravité enlève 20 m/s chaque seconde…"></textarea>
         <label for="idees-37"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-37" data-cle="idees-37" placeholder="Ex. : Un looping géant, une rampe pour sauter par-dessus un tunnel…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 38 · un rendu réaliste avec Three.js <span class="petit">· 4 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> Three.js (rangé dans <code>circuit/vendor/</code>) ; 9 véhicules arrondis, avec vitres, jantes et phares ; ombres, reflets, ciel, brouillard ; textures peintes par le code ; décors du circuit et du parcours refaits ; <kbd>⌫</kbd> et un bouton « 🗺️ Cartes » pour changer de map.</p>
+        <label for="appris-38"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-38" data-cle="appris-38" placeholder="Ex. : J'ai appris qu'une bibliothèque, c'est du code tout prêt…"></textarea>
+        <label for="idees-38"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-38" data-cle="idees-38" placeholder="Ex. : La nuit avec les phares allumés…"></textarea>
       </div>
     </section>
   </main>

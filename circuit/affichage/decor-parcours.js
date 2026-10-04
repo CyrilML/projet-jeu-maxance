@@ -1,8 +1,8 @@
-// 🏗️ LE DÉCOR DU PARCOURS : le constructeur de la fête foraine
+// 🏗️ LE DÉCOR DU PARCOURS : le constructeur de la fête foraine (étape 38, version réaliste)
 //
-// Étape 37. Il fabrique, une fois pour toutes, les triangles de la map du parcours : le grand sol plat,
-// les montées (pente + plateau + pente), les tremplins rayés, les tunnels avec leurs lampes, les loopings
-// rouges et blancs, la zone de départ en damier et les arbres.
+// Il fabrique la map du parcours avec Three.js : le grand sol en terre et herbe, les montées (pente +
+// plateau en planches + pente), les tremplins rayés orange et noir, les tunnels en béton avec leurs
+// lampes, les loopings rouges et blancs, la zone de départ en damier et les arbres.
 //
 // Il lit les formes de logique/parcours.js : ce qu'on voit est exactement ce sur quoi on roule.
 
@@ -10,153 +10,180 @@ window.Circuit = window.Circuit || {};
 
 Circuit.DecorParcours = (function () {
   const P = Circuit.CONFIG.parcours;
-  const K = {
-    sol1: [0.62, 0.74, 0.38], sol2: [0.58, 0.7, 0.35], loin: [0.55, 0.68, 0.33],
-    plateau: [0.82, 0.68, 0.45], cote: [0.62, 0.5, 0.35], pente: [0.95, 0.6, 0.15], tremplin: [0.95, 0.35, 0.15],
-    noir: [0.08, 0.08, 0.09], blanc: [0.95, 0.95, 0.95], rouge: [0.85, 0.12, 0.12],
-    beton: [0.6, 0.6, 0.63], toit: [0.45, 0.45, 0.48], lampe: [1, 0.9, 0.5],
-    tronc: [0.45, 0.3, 0.16], feuilles: [0.2, 0.55, 0.25], feuilles2: [0.28, 0.62, 0.28], gris: [0.6, 0.62, 0.66],
-  };
 
   // Un point d'une forme, de (u, w, y) vers le monde.
   function monde(f, u, w, y) {
     return [f.x + f.cos * u - f.sin * w, y, f.z + f.sin * u + f.cos * w];
   }
 
+  // Une pente : un coin, de 0 m à sa hauteur. On donne les 6 coins, Three.js fait les triangles.
+  function pente(f, materiauDessus, materiauCotes) {
+    const L = f.demiLongueur, W = f.demiLargeur, h = f.hauteur;
+    const a = monde(f, -L, -W, 0), b = monde(f, -L, W, 0), c = monde(f, L, W, 0), d = monde(f, L, -W, 0);
+    const e = monde(f, L, W, h), k = monde(f, L, -W, h);
+    const sommets = [];
+    const uvs = [];
+    const faces = [];
+    const ajouter = (pts, uv, groupe) => {
+      const debut = sommets.length / 3;
+      pts.forEach((p) => sommets.push(...p));
+      uvs.push(...uv);
+      faces.push({ debut, n: pts.length, groupe });
+    };
+    const longueur = Math.hypot(2 * L, h) / 4;
+    ajouter([a, k, e, a, e, b], [0, 0, longueur, 0, longueur, (2 * W) / 4, 0, 0, longueur, (2 * W) / 4, 0, (2 * W) / 4], 0); // le dessus en pente
+    ajouter([d, c, e, d, e, k], [0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1], 1); // le dos (vertical)
+    ajouter([a, d, k], [0, 0, 1, 0, 1, 1], 1); // les 2 côtés (triangles)
+    ajouter([b, e, c], [0, 0, 1, 1, 1, 0], 1);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(sommets, 3));
+    geo.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+    for (const f2 of faces) geo.addGroup(f2.debut, f2.n, f2.groupe);
+    geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, [materiauDessus, materiauCotes]);
+    m.material.forEach((x) => (x.side = THREE.DoubleSide));
+    m.castShadow = m.receiveShadow = true;
+    return m;
+  }
+
+  // Un bloc (plateau, mur de tunnel) : une boîte tournée.
+  function bloc(f, materiaux) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(2 * f.demiLongueur, f.hauteur, 2 * f.demiLargeur), materiaux);
+    m.position.set(f.x, f.hauteur / 2, f.z);
+    m.rotation.y = -f.angle;
+    m.castShadow = m.receiveShadow = true;
+    return m;
+  }
+
+  // Une texture répétée (on fait une copie pour régler la répétition de chaque objet).
+  function repeter(texture, x, y) {
+    const t = texture.clone();
+    t.needsUpdate = true;
+    t.repeat.set(x, y);
+    return t;
+  }
+
   function construire() {
-    const c = Circuit.Constructeur();
+    const D = Circuit.DecorCircuit;
+    const T = Circuit.Textures;
+    const mat = D.mat;
+    const g = new THREE.Group();
     const demi = P.taille / 2;
 
-    // Le sol : un damier de carreaux de 25 m, puis encore de l'herbe au-delà de la clôture.
-    const carreau = 25;
-    for (let x = -demi; x < demi; x += carreau) {
-      for (let z = -demi; z < demi; z += carreau) {
-        const k = (Math.floor((x + demi) / carreau) + Math.floor((z + demi) / carreau)) % 2 ? K.sol1 : K.sol2;
-        c.quad([x, 0, z], [x, 0, z + carreau], [x + carreau, 0, z + carreau], [x + carreau, 0, z], k);
-      }
-    }
-    const bord = demi + 250, grand = 50;
-    for (let x = -bord; x < bord; x += grand) {
-      for (let z = -bord; z < bord; z += grand) {
-        if (x >= -demi && x < demi && z >= -demi && z < demi) continue;
-        c.quad([x, -0.01, z], [x, -0.01, z + grand], [x + grand, -0.01, z + grand], [x + grand, -0.01, z], K.loin);
-      }
-    }
+    // Le sol : terre et herbe mélangées.
+    g.add(D.pelouse(P.taille + 800, T.terre(), (P.taille + 800) / 14));
 
-    // La zone de départ : un damier noir et blanc de 12 m × 12 m.
-    for (let i = -6; i < 6; i += 2) {
-      for (let j = -6; j < 6; j += 2) {
-        c.quad([i, 0.03, j], [i, 0.03, j + 2], [i + 2, 0.03, j + 2], [i + 2, 0.03, j], (i + j) % 4 === 0 ? K.noir : K.blanc);
-      }
-    }
+    // La zone de départ en damier.
+    const depart = new THREE.Mesh(new THREE.PlaneGeometry(12, 12), mat({ map: repeter(T.damier(), 3, 3), roughness: 0.6 }));
+    depart.rotation.x = -Math.PI / 2;
+    depart.position.y = 0.03;
+    depart.receiveShadow = true;
+    g.add(depart);
 
     // Les blocs et les pentes.
+    const cotes = mat({ color: 0x8a6a48 });
     for (const f of Circuit.Parcours.formes) {
-      const L = f.demiLongueur, W = f.demiLargeur;
-      const pente = f.type === "pente";
-      const hAvant = f.hauteur, hArriere = pente ? 0.02 : f.hauteur;
-      const couleur = f.nom === "mur de tunnel" ? K.beton : f.nom === "tremplin" ? K.tremplin : pente ? K.pente : K.cote;
-      c.forme(
-        [monde(f, L, -W, 0), monde(f, L, W, 0), monde(f, -L, W, 0), monde(f, -L, -W, 0)],
-        [monde(f, L, -W, hAvant), monde(f, L, W, hAvant), monde(f, -L, W, hArriere), monde(f, -L, -W, hArriere)],
-        couleur
-      );
-      if (f.nom === "plateau") {
-        // Le dessus du plateau, avec un bord rouge et blanc pour voir où il s'arrête.
-        c.quad(monde(f, L, -W, f.hauteur + 0.02), monde(f, L, W, f.hauteur + 0.02), monde(f, -L, W, f.hauteur + 0.02), monde(f, -L, -W, f.hauteur + 0.02), K.plateau);
-        for (let u = -L; u < L; u += 2) {
-          const k = Math.round((u + L) / 2) % 2 ? K.rouge : K.blanc;
-          for (const s of [-1, 1]) {
-            c.quad(monde(f, u, s * W, f.hauteur + 0.04), monde(f, u + 2, s * W, f.hauteur + 0.04), monde(f, u + 2, s * (W - 0.6), f.hauteur + 0.04), monde(f, u, s * (W - 0.6), f.hauteur + 0.04), k);
-          }
-        }
-      }
-      if (pente) {
-        // Des bandes noires sur la pente (des chevrons de chantier).
-        for (const t of [0.15, 0.4, 0.65, 0.9]) {
-          const ua = -L + 2 * L * t, ub = ua + 0.8;
-          const ya = (f.hauteur * (ua + L)) / (2 * L) + 0.03, yb = (f.hauteur * (ub + L)) / (2 * L) + 0.03;
-          c.quad(monde(f, ua, -W, ya), monde(f, ub, -W, yb), monde(f, ub, W, yb), monde(f, ua, W, ya), K.noir);
+      if (f.type === "pente") {
+        const dessus = mat({ map: repeter(f.nom === "tremplin" ? T.tremplin() : T.planches(), 1, 1), roughness: 0.7 });
+        g.add(pente(f, dessus, f.nom === "tremplin" ? mat({ color: 0x3a3a3e, metalness: 0.5, roughness: 0.5 }) : cotes));
+      } else if (f.nom === "mur de tunnel") {
+        const beton = mat({ map: repeter(T.beton(), (2 * f.demiLongueur) / 8, f.hauteur / 8) });
+        g.add(bloc(f, beton));
+      } else {
+        // Un plateau : des côtés en béton, un dessus en planches.
+        const beton = mat({ map: repeter(T.beton(), (2 * f.demiLongueur) / 8, f.hauteur / 8) });
+        const planches = mat({ map: repeter(T.planches(), (2 * f.demiLongueur) / 6, (2 * f.demiLargeur) / 6) });
+        g.add(bloc(f, [beton, beton, planches, beton, beton, beton]));
+        // un bord rouge et blanc tout autour du dessus
+        for (const s of [-1, 1]) {
+          const bord = new THREE.Mesh(new THREE.BoxGeometry(2 * f.demiLongueur, 0.25, 0.4), mat({ map: repeter(T.bordure(), f.demiLongueur, 1) }));
+          bord.position.set(...monde(f, 0, s * (f.demiLargeur - 0.2), f.hauteur + 0.12));
+          bord.rotation.y = -f.angle;
+          g.add(bord);
         }
       }
     }
 
-    // Les tunnels : le toit (les murs sont déjà des blocs) et des lampes au plafond.
+    // Les tunnels : un toit en béton et des lampes qui brillent au plafond.
+    const lampe = new THREE.MeshStandardMaterial({ color: 0xfff3c4, emissive: 0xfff0b0, emissiveIntensity: 2 });
     for (const t of Circuit.Parcours.tunnels) {
-      const f = { x: t.x, z: t.z, cos: Math.cos(t.angle), sin: Math.sin(t.angle) };
-      const L = t.longueur / 2, W = t.largeur / 2 + 1;
-      c.forme(
-        [monde(f, L, -W, t.hauteur), monde(f, L, W, t.hauteur), monde(f, -L, W, t.hauteur), monde(f, -L, -W, t.hauteur)],
-        [monde(f, L, -W, t.hauteur + 0.8), monde(f, L, W, t.hauteur + 0.8), monde(f, -L, W, t.hauteur + 0.8), monde(f, -L, -W, t.hauteur + 0.8)],
-        K.toit
-      );
-      for (let u = -L + 5; u < L; u += 10) {
-        const p = monde(f, u, 0, t.hauteur - 0.1);
-        c.boite(p[0], p[1], p[2], 1.2, 0.15, 0.6, K.lampe);
+      const f = { x: t.x, z: t.z, angle: t.angle, cos: Math.cos(t.angle), sin: Math.sin(t.angle), demiLongueur: t.longueur / 2, demiLargeur: t.largeur / 2 + 1, hauteur: 0.8 };
+      const toit = bloc(f, mat({ map: repeter(T.beton(), t.longueur / 8, 2) }));
+      toit.position.y = t.hauteur + 0.4;
+      g.add(toit);
+      for (let u = -t.longueur / 2 + 5; u < t.longueur / 2; u += 10) {
+        const l = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.12, 0.5), lampe);
+        l.position.set(...monde(f, u, 0, t.hauteur - 0.08));
+        l.rotation.y = -t.angle;
+        g.add(l);
       }
-      // Le sol du tunnel, plus sombre.
-      c.quad(monde(f, L, -W, 0.02), monde(f, L, W, 0.02), monde(f, -L, W, 0.02), monde(f, -L, -W, 0.02), K.toit);
+      const solTunnel = new THREE.Mesh(new THREE.PlaneGeometry(t.longueur, t.largeur + 2), mat({ map: repeter(T.goudron(), t.longueur / 10, 1) }));
+      solTunnel.rotation.set(-Math.PI / 2, 0, -t.angle);
+      solTunnel.position.set(t.x, 0.025, t.z);
+      solTunnel.receiveShadow = true;
+      g.add(solTunnel);
     }
 
-    // Les loopings : un ruban rouge et blanc qui fait un tour complet (en se décalant un peu sur le côté).
+    // Les loopings : un ruban rouge et blanc qui fait un tour complet, et deux piliers.
     for (const l of Circuit.Parcours.loopings) {
-      const n = 64, demiLargeur = 2.6;
-      for (let i = 0; i < n; i++) {
-        const a = Circuit.Parcours.pointLooping(l, (i / n) * Math.PI * 2);
-        const b = Circuit.Parcours.pointLooping(l, ((i + 1) / n) * Math.PI * 2);
-        const k = i % 2 ? K.rouge : K.blanc;
-        c.quad(
-          [a.x - l.lx * demiLargeur, a.y, a.z - l.lz * demiLargeur],
-          [b.x - l.lx * demiLargeur, b.y, b.z - l.lz * demiLargeur],
-          [b.x + l.lx * demiLargeur, b.y, b.z + l.lz * demiLargeur],
-          [a.x + l.lx * demiLargeur, a.y, a.z + l.lz * demiLargeur],
-          k
-        );
+      const n = 96, demiLargeur = 2.6;
+      const positions = [], uvs = [], indices = [];
+      for (let i = 0; i <= n; i++) {
+        const p = Circuit.Parcours.pointLooping(l, (i / n) * Math.PI * 2);
+        for (const [cote, v] of [[-1, 0], [1, 1]]) {
+          positions.push(p.x + l.lx * cote * demiLargeur, p.y, p.z + l.lz * cote * demiLargeur);
+          uvs.push((i / n) * 24, v);
+        }
+        if (i < n) indices.push(i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 1, i * 2 + 3, i * 2 + 2);
       }
-      // Deux piliers qui tiennent le looping, et une flèche au sol pour montrer l'entrée.
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+      geo.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+      geo.setIndex(indices);
+      geo.computeVertexNormals();
+      const ruban = new THREE.Mesh(geo, mat({ map: repeter(T.rail(), 1, 1), roughness: 0.5, metalness: 0.3, side: THREE.DoubleSide }));
+      ruban.castShadow = ruban.receiveShadow = true;
+      g.add(ruban);
       for (const theta of [Math.PI / 2, (3 * Math.PI) / 2]) {
         const p = Circuit.Parcours.pointLooping(l, theta);
         const cote = theta < Math.PI ? -1 : 1;
-        const x = p.x + l.lx * cote * 4, z = p.z + l.lz * cote * 4;
-        c.boite(x, p.y / 2, z, 0.6, p.y, 0.6, K.gris);
+        const pilier = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, p.y, 12), mat({ color: 0x8c9096, metalness: 0.6, roughness: 0.4 }));
+        pilier.position.set(p.x + l.lx * cote * 4, p.y / 2, p.z + l.lz * cote * 4);
+        pilier.castShadow = true;
+        g.add(pilier);
       }
-      const e = { x: l.x, z: l.z, cos: l.dx, sin: l.dz };
-      c.triangle(monde(e, -3, -2, 0.04), monde(e, -3, 2, 0.04), monde(e, 0, 0, 0.04), K.blanc);
-      c.quad(monde(e, -9, -0.8, 0.04), monde(e, -9, 0.8, 0.04), monde(e, -3, 0.8, 0.04), monde(e, -3, -0.8, 0.04), K.blanc);
+      // Une flèche blanche au sol pour montrer l'entrée.
+      const dessin = new THREE.Shape();
+      [[-3, -0.6], [0, -0.6], [0, -1.6], [2.5, 0], [0, 1.6], [0, 0.6], [-3, 0.6]].forEach(([x, y], i) => (i ? dessin.lineTo(x, y) : dessin.moveTo(x, y)));
+      const fleche = new THREE.Mesh(new THREE.ShapeGeometry(dessin), mat({ color: 0xffffff }));
+      fleche.rotation.x = -Math.PI / 2;
+      const support = new THREE.Group();
+      support.add(fleche);
+      support.position.set(l.x - l.dx * 7, 0.05, l.z - l.dz * 7);
+      support.rotation.y = -l.angle;
+      g.add(support);
     }
 
-    // La clôture tout autour.
-    const limite = demi - 2;
-    for (let k = -limite, n = 0; k < limite; k += 8, n++) {
-      const couleur = n % 2 ? K.blanc : K.rouge;
-      c.boite(k + 4, 0.6, -limite, 8, 1.2, 0.4, couleur);
-      c.boite(k + 4, 0.6, limite, 8, 1.2, 0.4, couleur);
-      c.boite(-limite, 0.6, k + 4, 0.4, 1.2, 8, couleur);
-      c.boite(limite, 0.6, k + 4, 0.4, 1.2, 8, couleur);
-    }
-
-    // Des arbres ronds, loin des formes, des loopings et du départ.
+    // La clôture et des arbres, loin des formes, des loopings et du départ.
+    for (const c of D.cloture(demi - 2)) g.add(c);
     let etat = 99;
     const alea = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
-    let poses = 0, essais = 0;
-    while (poses < 140 && essais < 4000) {
+    const arbres = [];
+    let essais = 0;
+    while (arbres.length < 150 && essais < 4000) {
       essais++;
-      const x = (alea() * 2 - 1) * (limite - 8), z = (alea() * 2 - 1) * (limite - 8);
+      const x = (alea() * 2 - 1) * (demi - 10), z = (alea() * 2 - 1) * (demi - 10);
       if (Math.hypot(x, z) < 30) continue;
       const libre = Circuit.Parcours.formes.every((f) => Math.hypot(x - f.x, z - f.z) > Math.max(f.demiLongueur, f.demiLargeur) + 12)
         && Circuit.Parcours.loopings.every((l) => Math.hypot(x - l.x, z - l.z) > 40)
         && Circuit.Parcours.tunnels.every((t) => Math.hypot(x - t.x, z - t.z) > t.longueur / 2 + 15);
-      if (!libre) continue;
-      const taille = 0.8 + alea() * 0.7;
-      c.boite(x, 1.2 * taille, z, 0.5 * taille, 2.4 * taille, 0.5 * taille, K.tronc);
-      c.cone(x, 2 * taille, z, 2.2 * taille, 2.5 * taille, 7, K.feuilles);
-      c.cone(x, 3.6 * taille, z, 1.5 * taille, 2 * taille, 7, K.feuilles2);
-      poses++;
+      if (libre) arbres.push([x, z, 0.8 + alea() * 0.7]);
     }
-    return c.fin();
+    g.add(D.foret(arbres));
+    return g;
   }
 
-  // Les rayons X du parcours : le contour du dessus de chaque forme, avec sa hauteur.
+  // Les rayons X du parcours : le contour du dessus de chaque forme, et le rail des loopings.
   function rayonsX(couleurs) {
     const c = Circuit.Constructeur();
     for (const f of Circuit.Parcours.formes) {
@@ -166,7 +193,6 @@ Circuit.DecorParcours = (function () {
       for (let i = 0; i < 4; i++) c.ligne(coins[i], coins[(i + 1) % 4], couleurs.bords);
     }
     for (const l of Circuit.Parcours.loopings) {
-      // La « porte d'entrée » du looping, en vert, et le cercle du rail en jaune.
       const e = { x: l.x, z: l.z, cos: l.dx, sin: l.dz };
       c.ligne(monde(e, 0, -2.5, 0), monde(e, 0, -2.5, 4), couleurs.entree);
       c.ligne(monde(e, 0, 2.5, 0), monde(e, 0, 2.5, 4), couleurs.entree);
@@ -179,14 +205,5 @@ Circuit.DecorParcours = (function () {
     return c.fin();
   }
 
-  // Un carton : une caisse marron avec un ruban adhésif.
-  function carton() {
-    const c = Circuit.Constructeur();
-    c.boite(0, 0, 0, 1.2, 1.2, 1.2, [0.72, 0.52, 0.3]);
-    c.boite(0, 0.61, 0, 1.22, 0.02, 0.25, [0.85, 0.75, 0.55]);
-    c.boite(0, 0, 0.61, 1.22, 0.25, 0.02, [0.85, 0.75, 0.55]);
-    return c.fin();
-  }
-
-  return { construire, rayonsX, carton };
+  return { construire, rayonsX };
 })();

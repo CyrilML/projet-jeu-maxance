@@ -1,236 +1,380 @@
-// 🛠️ LES MODÈLES : le carrossier
+// 🛠️ LES MODÈLES : le carrossier (étape 38 : version réaliste, avec Three.js)
 //
-// Ici, on fabrique la FORME des 5 voitures du garage, avec des triangles (voir moteur/projecteur.js).
-// Toutes sont construites « nez vers x+ », posées au sol (y = 0), centrées en x = 0 et z = 0 :
-// la scène 3D les déplace et les tourne ensuite.
+// Comment dessiner une voiture ronde et réaliste ? Comme un vrai designer automobile :
+//   1. on dessine son PROFIL, vu de côté (le nez, le capot, le pare-brise, le toit, le coffre,
+//      les passages de roues en demi-cercle…), avec des coins ARRONDIS ;
+//   2. on « EXTRUDE » ce profil sur toute la largeur de la voiture, comme un emporte-pièce dans de la pâte :
+//      le dessin plat devient un volume. Les bords sont arrondis (un « chanfrein ») ;
+//   3. on ajoute les vitres, les roues (pneu + jante chromée + rayons), les phares qui brillent…
 //
-// La brique de base, c'est la TRANCHE : une boîte qu'on peut pincer (plus étroite en haut ou à l'avant)
-// et pencher (plus basse à l'avant qu'à l'arrière). En empilant des tranches, on sculpte un capot
-// en pente, un pare-brise penché, un aileron… comme avec de la pâte à modeler, mais en chiffres.
+// Les MATÉRIAUX disent comment chaque surface renvoie la lumière : la peinture est brillante et vernie
+// (elle reflète le ciel), le pneu est mat, la jante est en métal, le phare émet sa propre lumière.
 //
-//   la Rouge       → la voiture du début, telle quelle
-//   le Taureau     → très basse, toute en pointes et en angles (style Lamborghini)
-//   la Flèche      → arrondie, avec un toit qui descend jusqu'à l'arrière (style Porsche)
-//   la Fusée       → longue, deux couleurs, grosse calandre en fer à cheval (style Bugatti)
-//   la Formule 1   → fine, sans toit, roues dehors, ailerons devant et derrière
-//
-// Chaque modèle dit aussi où sont ses roues et quelle taille elles font.
+// Toutes les voitures sont construites « nez vers x+ », posées au sol (y = 0), centrées en x = 0 et z = 0.
 
 window.Circuit = window.Circuit || {};
 
 Circuit.Modeles = (function () {
-  const NOIR = [0.08, 0.08, 0.09], VITRE = [0.15, 0.22, 0.35], PHARE = [1, 0.9, 0.5], FEU = [0.85, 0.1, 0.1];
-  const BLANC = [0.95, 0.95, 0.95], ARGENT = [0.82, 0.84, 0.88], JAUNE = [1, 0.85, 0.1];
+  const M = {}; // les matériaux, fabriqués une fois
 
-  // Une tranche : de x = ar (arrière) à x = av (avant), posée à la hauteur `bas`.
-  //   hAv, hAr : la hauteur du dessus à l'avant et à l'arrière (pour pencher) ;
-  //   l, lAr   : la demi-largeur en bas, à l'avant et à l'arrière ;
-  //   lh, lhAr : la demi-largeur en haut (plus petite = pincée) ;
-  //   xhAv, xhAr : où commence et finit le dessus (pour un pare-brise penché).
-  function tranche(c, o, couleur) {
-    const lAr = o.lAr !== undefined ? o.lAr : o.l;
-    const lh = o.lh !== undefined ? o.lh : o.l;
-    const lhAr = o.lhAr !== undefined ? o.lhAr : o.lAr !== undefined ? lAr : lh;
-    const hAr = o.hAr !== undefined ? o.hAr : o.hAv;
-    const xhAv = o.xhAv !== undefined ? o.xhAv : o.av, xhAr = o.xhAr !== undefined ? o.xhAr : o.ar;
-    c.forme(
-      [[o.av, o.bas, -o.l], [o.av, o.bas, o.l], [o.ar, o.bas, lAr], [o.ar, o.bas, -lAr]],
-      [[xhAv, o.hAv, -lh], [xhAv, o.hAv, lh], [xhAr, hAr, lhAr], [xhAr, hAr, -lhAr]],
-      couleur
-    );
+  function materiaux() {
+    if (M.pneu) return M;
+    M.vitre = new THREE.MeshPhysicalMaterial({ color: 0x0f1a26, metalness: 0.1, roughness: 0.05, clearcoat: 1, envMapIntensity: 1.5 });
+    M.noir = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.55, metalness: 0.2 });
+    M.pneu = new THREE.MeshStandardMaterial({ color: 0x18181a, roughness: 0.95 });
+    M.chrome = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 1, roughness: 0.18 });
+    M.jante = new THREE.MeshStandardMaterial({ color: 0xb9bcc2, metalness: 0.9, roughness: 0.3 });
+    M.phare = new THREE.MeshStandardMaterial({ color: 0xfff6d8, emissive: 0xfff2c0, emissiveIntensity: 1.6, roughness: 0.2 });
+    M.feu = new THREE.MeshStandardMaterial({ color: 0xaa0000, emissive: 0xff1010, emissiveIntensity: 1.2, roughness: 0.3 });
+    M.casque = new THREE.MeshPhysicalMaterial({ color: 0xffd21a, roughness: 0.25, clearcoat: 1 });
+    M.siege = new THREE.MeshStandardMaterial({ color: 0x222226, roughness: 0.8 });
+    return M;
   }
 
-  // 1. La Rouge : la voiture du début (étape 32), telle quelle.
-  function classique(c, k1, k2) {
-    c.boite(0, 0.55, 0, 4.2, 0.5, 1.9, k1); // le bas de caisse
-    c.boite(1.6, 0.86, 0, 1, 0.14, 1.7, k1); // le capot
-    c.boite(-0.3, 1.06, 0, 2, 0.5, 1.62, VITRE); // les vitres
-    c.boite(-0.3, 1.34, 0, 1.8, 0.08, 1.5, k2); // le toit
-    c.boite(-2.05, 1.2, 0, 0.35, 0.08, 1.9, NOIR); // l'aileron
-    for (const z of [-0.7, 0.7]) {
-      c.boite(-2.05, 0.95, z, 0.1, 0.45, 0.1, NOIR);
-      c.boite(2.11, 0.6, z, 0.04, 0.18, 0.35, PHARE);
-      c.boite(-2.11, 0.6, z, 0.04, 0.15, 0.4, FEU);
+  // La peinture de carrosserie : une couleur brillante, avec un vernis (clearcoat) qui reflète le ciel.
+  const peintures = {};
+  function peinture(rgb) {
+    const cle = rgb.join(",");
+    if (!peintures[cle]) {
+      peintures[cle] = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color(rgb[0], rgb[1], rgb[2]).convertSRGBToLinear(),
+        metalness: 0.55, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.08,
+      });
     }
-    c.boite(0.1, 0.81, 0, 0.6, 0.02, 1.9, BLANC); // la bande de course
-    return { avant: 1.35, arriere: -1.35, z: 0.95, rayon: 0.38, epaisseur: 0.3 };
+    return peintures[cle];
   }
 
-  // 2. Le Taureau (style Lamborghini) : très bas, en forme de coin, plein d'angles.
-  function taureau(c, k1, k2) {
-    tranche(c, { av: 2.35, ar: -2.2, bas: 0.25, hAv: 0.42, hAr: 0.82, l: 0.95, lAr: 1.02, lh: 0.9, lhAr: 1.0 }, k1); // la caisse en coin
-    tranche(c, { av: 1.05, ar: -1.25, bas: 0.8, hAv: 1.12, xhAv: 0.05, xhAr: -0.75, l: 0.85, lh: 0.62, lAr: 0.9, lhAr: 0.62 }, VITRE); // la bulle vitrée, très penchée
-    tranche(c, { av: 0.05, ar: -0.75, bas: 1.11, hAv: 1.15, l: 0.62 }, k1); // le toit
-    tranche(c, { av: -0.75, ar: -2.1, bas: 0.8, hAv: 1.05, hAr: 0.86, xhAv: -0.85, l: 0.9, lh: 0.55, lAr: 0.95, lhAr: 0.8 }, k1); // le capot moteur
+  // Un profil (une liste de points [x, y, arrondi]) → une forme plate aux coins arrondis.
+  function forme(points) {
+    const s = new THREE.Shape();
+    const n = points.length;
+    for (let i = 0; i < n; i++) {
+      const [x, y, r] = points[i];
+      const avant = points[(i - 1 + n) % n], apres = points[(i + 1) % n];
+      if (!r) {
+        if (i === 0) s.moveTo(x, y);
+        else s.lineTo(x, y);
+        continue;
+      }
+      // Coin arrondi : on s'arrête un peu avant le coin, et on tourne en courbe jusqu'un peu après.
+      const d1 = Math.hypot(avant[0] - x, avant[1] - y), d2 = Math.hypot(apres[0] - x, apres[1] - y);
+      const r1 = Math.min(r, d1 / 2), r2 = Math.min(r, d2 / 2);
+      const a = [x + ((avant[0] - x) * r1) / d1, y + ((avant[1] - y) * r1) / d1];
+      const b = [x + ((apres[0] - x) * r2) / d2, y + ((apres[1] - y) * r2) / d2];
+      if (i === 0) s.moveTo(a[0], a[1]);
+      else s.lineTo(a[0], a[1]);
+      s.quadraticCurveTo(x, y, b[0], b[1]);
+    }
+    s.closePath();
+    return s;
+  }
+
+  // Extrude un profil sur une largeur, centré en z = 0, avec des bords arrondis.
+  function extruder(points, largeur, materiau, chanfrein) {
+    const c = chanfrein === undefined ? 0.1 : chanfrein;
+    const geo = new THREE.ExtrudeGeometry(forme(points), {
+      depth: Math.max(0.01, largeur - 2 * c), bevelEnabled: c > 0, bevelThickness: c, bevelSize: c, bevelSegments: 4, curveSegments: 10,
+    });
+    geo.translate(0, 0, -(largeur - 2 * c) / 2);
+    const m = new THREE.Mesh(geo, materiau);
+    m.castShadow = true;
+    m.receiveShadow = true;
+    return m;
+  }
+
+  // Un demi-cercle de points au-dessus d'une roue (le passage de roue), de gauche à droite.
+  function passage(x, rayon, centreY) {
+    const pts = [];
+    for (let i = 0; i <= 10; i++) {
+      const a = Math.PI - (i / 10) * Math.PI;
+      pts.push([x + Math.cos(a) * rayon, centreY + Math.sin(a) * rayon, 0]);
+    }
+    return pts;
+  }
+
+  function boite(lx, ly, lz, materiau, x, y, z) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(lx, ly, lz), materiau);
+    m.position.set(x, y, z);
+    m.castShadow = true;
+    return m;
+  }
+
+  function cylindre(rayon, longueur, materiau, segments) {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(rayon, rayon, longueur, segments || 20), materiau);
+    m.castShadow = true;
+    return m;
+  }
+
+  // Un tube entre deux points (pour l'arceau du buggy).
+  function tube(a, b, rayon, materiau) {
+    const va = new THREE.Vector3(...a), vb = new THREE.Vector3(...b);
+    const m = cylindre(rayon, va.distanceTo(vb), materiau, 8);
+    m.position.copy(va).add(vb).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), vb.clone().sub(va).normalize());
+    return m;
+  }
+
+  // Une roue : le pneu, la jante chromée et 5 rayons (pour la voir tourner).
+  // Le « pivot » tourne pour braquer, la « roue » tourne sur elle-même pour rouler.
+  function roue(rayon, epaisseur, jante) {
+    const pivot = new THREE.Group();
+    const r = new THREE.Group();
+    const pneu = cylindre(rayon, epaisseur, M.pneu, 28);
+    pneu.rotation.x = Math.PI / 2;
+    r.add(pneu);
+    for (const cote of [-1, 1]) {
+      const disque = cylindre(rayon * 0.62, 0.04, jante || M.jante, 24);
+      disque.rotation.x = Math.PI / 2;
+      disque.position.z = (cote * epaisseur) / 2;
+      r.add(disque);
+      for (let k = 0; k < 5; k++) {
+        const rayonJante = boite(rayon * 1.05, rayon * 0.12, 0.03, M.noir, 0, 0, cote * (epaisseur / 2 + 0.02));
+        rayonJante.rotation.z = (k * Math.PI) / 5;
+        r.add(rayonJante);
+      }
+      const moyeu = cylindre(rayon * 0.15, 0.06, M.chrome, 12);
+      moyeu.rotation.x = Math.PI / 2;
+      moyeu.position.z = cote * (epaisseur / 2 + 0.03);
+      r.add(moyeu);
+    }
+    pivot.add(r);
+    return { pivot, roue: r };
+  }
+
+  // Une voiture « classique » à partir de quelques nombres :
+  //   L = longueur, W = largeur, r = rayon des roues, xAv / xAr = position des roues, g = hauteur du bas de caisse,
+  //   hNez, hCapot, hCeinture (le haut des portières), hCoffre, hToit, xPareBrise (bas du pare-brise),
+  //   xToitAv / xToitAr (le toit), xLunette (bas de la vitre arrière), Wtoit = largeur du toit.
+  function carrosserie(p, k1, k2) {
+    const g = new THREE.Group();
+    const ra = p.r + 0.07; // le passage de roue est un peu plus grand que la roue
+    // Le profil, de l'arrière-bas vers l'avant (en passant au-dessus des roues), puis le haut vers l'arrière.
+    let profil = [[-p.L / 2, p.g + 0.08, 0.15]];
+    if (p.passages !== false) {
+      profil = profil.concat([[p.xAr - ra, p.g, 0]], passage(p.xAr, ra, p.r), [[p.xAr + ra, p.g, 0], [p.xAv - ra, p.g, 0]], passage(p.xAv, ra, p.r), [[p.xAv + ra, p.g, 0]]);
+    }
+    profil = profil.concat([
+      [p.L / 2, p.g + 0.05, 0.12],
+      [p.L / 2 + 0.03, p.hNez, p.rondNez || 0.25],
+      [p.L / 2 - 0.55, p.hCapot, 0.4],
+      [p.xPareBrise, p.hCeinture, 0.1],
+      [p.xLunette, p.hCeinture, 0.1],
+      [-p.L / 2 + 0.25, p.hCoffre, 0.25],
+      [-p.L / 2, p.hCoffre - 0.2, 0.15],
+    ]);
+    g.add(extruder(profil, p.W, peinture(k1), 0.12));
+    // La cabine vitrée, puis le toit peint par-dessus.
+    const cabine = [
+      [p.xPareBrise, p.hCeinture - 0.02, 0.05],
+      [p.xToitAv, p.hToit, 0.25],
+      [p.xToitAr, p.hToit, 0.3],
+      [p.xLunette, p.hCeinture - 0.02, 0.05],
+    ];
+    g.add(extruder(cabine, p.Wtoit, M.vitre, 0.08));
+    const couleurToit = peinture(p.toitCouleur2 ? k2 : k1);
+    const toit = [
+      [p.xToitAv + 0.12, p.hToit - 0.04, 0.05],
+      [p.xToitAv + 0.06, p.hToit + 0.03, 0.05],
+      [p.xToitAr - 0.06, p.hToit + 0.03, 0.05],
+      [p.xToitAr - 0.12, p.hToit - 0.04, 0.05],
+    ];
+    g.add(extruder(toit, p.Wtoit + 0.02, couleurToit, 0.03));
+    // Le montant entre les vitres (couleur de la carrosserie).
+    const milieu = (p.xToitAv + p.xToitAr) / 2;
+    g.add(boite(0.1, p.hToit - p.hCeinture, p.Wtoit + 0.02, couleurToit, milieu, (p.hToit + p.hCeinture) / 2, 0));
+    // Phares, feux, calandre, rétroviseurs.
     for (const z of [-1, 1]) {
-      tranche(c, { av: -0.1, ar: -1.1, bas: 0.4, hAv: 0.7, l: 0.06 }, k2); // les grandes prises d'air sur les côtés
-      c.boite(-0.6, 0.55, z * 1.0, 1.0, 0.3, 0.06, k2);
-      c.boite(2.25, 0.46, z * 0.62, 0.12, 0.05, 0.42, PHARE); // les phares fins, en fente
-      c.boite(-2.2, 0.68, z * 0.62, 0.05, 0.06, 0.5, FEU); // les feux en « Y »
+      const phare = boite(0.08, 0.1, 0.38, M.phare, p.L / 2 - 0.02, p.hNez + 0.02, z * (p.W / 2 - 0.32));
+      phare.rotation.z = -0.4;
+      g.add(phare);
+      g.add(boite(0.06, 0.1, 0.42, M.feu, -p.L / 2 - 0.01, p.hCoffre - 0.15, z * (p.W / 2 - 0.3)));
+      g.add(boite(0.18, 0.1, 0.12, peinture(k1), p.xPareBrise - 0.1, p.hCeinture + 0.08, z * (p.W / 2 + 0.05)));
     }
-    c.boite(-2.15, 0.4, 0, 0.12, 0.25, 1.6, k2); // le diffuseur arrière
-    c.boite(-1.95, 1.0, 0, 0.3, 0.05, 1.7, k2); // le petit aileron
-    return { avant: 1.45, arriere: -1.45, z: 1.0, rayon: 0.36, epaisseur: 0.34 };
+    g.add(boite(0.05, 0.12, p.W * 0.45, M.noir, p.L / 2 + 0.02, p.g + 0.2, 0)); // la calandre
+    return g;
   }
 
-  // 3. La Flèche (style Porsche) : ronde, phares « yeux de grenouille », toit qui plonge vers l'arrière.
-  function fleche(c, k1, k2) {
-    tranche(c, { av: 2.15, ar: -2.15, bas: 0.25, hAv: 0.55, hAr: 0.72, l: 0.88, lh: 0.82, lAr: 0.95, lhAr: 0.9 }, k1); // la caisse
-    tranche(c, { av: 2.1, ar: 0.95, bas: 0.55, hAv: 0.6, hAr: 0.8, l: 0.82, lh: 0.55, lAr: 0.88, lhAr: 0.75 }, k1); // le capot avant arrondi
-    tranche(c, { av: 0.95, ar: -0.4, bas: 0.8, hAv: 1.25, xhAv: 0.35, xhAr: -0.4, l: 0.82, lh: 0.62, lAr: 0.85, lhAr: 0.66 }, VITRE); // pare-brise et vitres
-    tranche(c, { av: 0.35, ar: -0.4, bas: 1.24, hAv: 1.28, l: 0.62, lAr: 0.66 }, k1); // le toit
-    tranche(c, { av: -0.4, ar: -2.1, bas: 0.72, hAv: 1.27, hAr: 0.85, l: 0.88, lh: 0.66, lAr: 0.9, lhAr: 0.72 }, k1); // le dos qui plonge
-    tranche(c, { av: -0.6, ar: -1.6, bas: 1.0, hAv: 1.16, hAr: 0.97, xhAv: -0.6, l: 0.55, lh: 0.45 }, VITRE); // la vitre arrière
+  // Les roues d'un modèle (positions et taille), ajoutées au groupe.
+  function ajouterRoues(g, xs, z, rayon, epaisseur, jante) {
+    const roues = [];
+    for (const [x, avant] of xs) {
+      for (const cote of [-1, 1]) {
+        const r = roue(rayon, epaisseur, jante);
+        r.pivot.position.set(x, rayon, cote * z);
+        g.add(r.pivot);
+        roues.push(Object.assign(r, { avant }));
+      }
+    }
+    return roues;
+  }
+
+  // ---------------------------------------------------------------- les 5 voitures du circuit
+
+  function classique(k1, k2) {
+    const p = { L: 4.4, W: 1.86, r: 0.34, xAv: 1.32, xAr: -1.33, g: 0.2, hNez: 0.62, hCapot: 0.85, hCeinture: 0.95, hCoffre: 0.97,
+      hToit: 1.38, xPareBrise: 0.75, xToitAv: 0.1, xToitAr: -0.85, xLunette: -1.45, Wtoit: 1.5 };
+    const g = carrosserie(p, k1, k2);
+    // l'aileron et la bande de course
+    g.add(boite(0.35, 0.05, 1.8, M.noir, -2.05, 1.25, 0));
+    for (const z of [-0.65, 0.65]) g.add(boite(0.08, 0.28, 0.06, M.noir, -2.05, 1.1, z));
+    g.add(boite(1.4, 0.01, 0.35, peinture([0.95, 0.95, 0.95]), 1.3, 0.9, 0));
+    return { g, roues: ajouterRoues(g, [[1.32, true], [-1.33, false]], 0.88, 0.34, 0.26), yCapot: 1.2 };
+  }
+
+  function taureau(k1, k2) {
+    const p = { L: 4.6, W: 2.0, r: 0.35, xAv: 1.4, xAr: -1.38, g: 0.12, hNez: 0.42, rondNez: 0.15, hCapot: 0.6, hCeinture: 0.8, hCoffre: 0.92,
+      hToit: 1.13, xPareBrise: 0.95, xToitAv: -0.1, xToitAr: -0.7, xLunette: -1.95, Wtoit: 1.45 };
+    const g = carrosserie(p, k1, k2);
+    for (const z of [-1, 1]) g.add(boite(1.1, 0.28, 0.06, M.noir, -0.7, 0.6, z * 1.0)); // les prises d'air
+    g.add(boite(0.3, 0.04, 1.7, M.noir, -2.1, 1.02, 0)); // le petit aileron
+    return { g, roues: ajouterRoues(g, [[1.4, true], [-1.38, false]], 0.92, 0.35, 0.3), yCapot: 1.0 };
+  }
+
+  function fleche(k1, k2) {
+    const p = { L: 4.5, W: 1.86, r: 0.34, xAv: 1.25, xAr: -1.2, g: 0.16, hNez: 0.55, rondNez: 0.35, hCapot: 0.74, hCeinture: 0.9, hCoffre: 0.82,
+      hToit: 1.3, xPareBrise: 0.7, xToitAv: 0.05, xToitAr: -0.55, xLunette: -2.0, Wtoit: 1.42 };
+    const g = carrosserie(p, k1, k2);
+    // les phares ronds, « yeux de grenouille »
+    for (const z of [-0.62, 0.62]) {
+      const oeil = cylindre(0.16, 0.12, M.phare, 20);
+      oeil.rotation.z = Math.PI / 2 - 0.3;
+      oeil.position.set(2.0, 0.72, z);
+      g.add(oeil);
+    }
+    g.add(boite(0.25, 0.04, 1.2, peinture(k1), -2.05, 0.9, 0)); // le becquet « queue de canard »
+    return { g, roues: ajouterRoues(g, [[1.25, true], [-1.2, false]], 0.87, 0.34, 0.27), yCapot: 1.15 };
+  }
+
+  function fusee(k1, k2) {
+    const p = { L: 4.75, W: 2.03, r: 0.37, xAv: 1.45, xAr: -1.45, g: 0.13, hNez: 0.55, hCapot: 0.8, hCeinture: 0.92, hCoffre: 0.97,
+      hToit: 1.22, xPareBrise: 0.85, xToitAv: 0.0, xToitAr: -0.85, xLunette: -1.8, Wtoit: 1.5, toitCouleur2: true };
+    const g = carrosserie(p, k1, k2);
+    // La grande ligne en « C » chromée sur les côtés, et la calandre en fer à cheval.
     for (const z of [-1, 1]) {
-      tranche(c, { av: 1.95, ar: 1.65, bas: 0.55, hAv: 0.78, l: 0.13 }, k1); // les « yeux » des phares
-      c.boite(1.96, 0.68, z * 0.68, 0.06, 0.16, 0.22, PHARE);
-      c.boite(1.8, 0.68, z * 0.68, 0.32, 0.22, 0.28, k1);
+      const c = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.035, 8, 24, Math.PI * 1.2), M.chrome);
+      c.position.set(0.15, 0.6, z * 1.02);
+      c.rotation.z = Math.PI * 0.4;
+      g.add(c);
     }
-    c.boite(-2.12, 0.65, 0, 0.05, 0.08, 1.7, FEU); // la barre de feux arrière, d'un côté à l'autre
-    c.boite(-1.95, 0.88, 0, 0.3, 0.05, 1.3, k2); // le petit becquet « queue de canard »
-    c.boite(0, 0.3, 0, 4.0, 0.12, 1.92, k2); // le bas de caisse sombre
-    return { avant: 1.32, arriere: -1.32, z: 0.95, rayon: 0.37, epaisseur: 0.3 };
+    const fer = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.04, 8, 20, Math.PI * 1.4), M.chrome);
+    fer.position.set(2.39, 0.4, 0);
+    fer.rotation.set(0, Math.PI / 2, -Math.PI * 0.2);
+    g.add(fer);
+    g.add(boite(0.05, 0.05, 1.8, M.feu, -2.38, 0.85, 0)); // la barre de feux arrière
+    return { g, roues: ajouterRoues(g, [[1.45, true], [-1.45, false]], 0.93, 0.37, 0.32), yCapot: 1.1 };
   }
 
-  // 4. La Fusée (style Bugatti) : longue et large, deux couleurs, calandre en fer à cheval, la ligne en « C ».
-  function fusee(c, k1, k2) {
-    tranche(c, { av: 2.4, ar: -2.35, bas: 0.25, hAv: 0.6, hAr: 0.85, l: 0.95, lh: 0.9, lAr: 1.05, lhAr: 1.0 }, k1); // la caisse (couleur 1)
-    tranche(c, { av: 2.35, ar: 1.0, bas: 0.6, hAv: 0.66, hAr: 0.85, l: 0.9, lh: 0.6 }, k1); // le long capot
-    tranche(c, { av: 1.0, ar: -0.6, bas: 0.85, hAv: 1.22, xhAv: 0.4, xhAr: -0.4, l: 0.85, lh: 0.62 }, VITRE); // la bulle vitrée
-    tranche(c, { av: 0.4, ar: -0.4, bas: 1.21, hAv: 1.25, l: 0.62 }, k2); // le toit (couleur 2)
-    tranche(c, { av: -0.6, ar: -2.3, bas: 0.85, hAv: 1.15, hAr: 0.95, xhAv: -0.7, l: 0.95, lh: 0.65, lAr: 1.0, lhAr: 0.85 }, k2); // l'arrière (couleur 2)
-    // La grande ligne en « C » sur les côtés, couleur argent.
-    for (const z of [-1, 1]) {
-      const zz = z * 0.97;
-      c.boite(0.6, 0.55, zz, 0.1, 0.55, 0.06, ARGENT);
-      c.boite(0.2, 0.84, zz, 0.9, 0.08, 0.06, ARGENT);
-      c.boite(0.2, 0.3, zz, 0.9, 0.08, 0.06, ARGENT);
-      c.boite(-0.4, 0.57, z * 1.0, 0.8, 0.45, 0.04, k2); // l'intérieur du « C » (couleur 2)
-      c.boite(2.3, 0.6, z * 0.62, 0.12, 0.08, 0.4, PHARE); // les phares
-    }
-    // La calandre en fer à cheval, au milieu de l'avant.
-    c.boite(2.42, 0.48, 0, 0.06, 0.32, 0.36, ARGENT);
-    c.boite(2.44, 0.5, 0, 0.04, 0.22, 0.24, NOIR);
-    c.boite(-2.36, 0.75, 0, 0.05, 0.08, 1.9, FEU); // la barre de feux arrière
-    c.boite(-2.2, 1.0, 0, 0.35, 0.05, 1.6, k2); // l'aileron
-    return { avant: 1.5, arriere: -1.5, z: 1.0, rayon: 0.4, epaisseur: 0.36 };
+  function f1(k1, k2) {
+    const g = new THREE.Group();
+    // Le corps : très fin, avec le nez pointu et la prise d'air au-dessus du pilote.
+    g.add(extruder([[2.7, 0.22, 0.05], [2.7, 0.34, 0.1], [1.0, 0.62, 0.3], [0.55, 0.66, 0.05], [-0.1, 0.66, 0.05], [-0.2, 1.05, 0.15], [-0.6, 1.0, 0.3], [-2.1, 0.55, 0.2], [-2.1, 0.2, 0.05]], 0.62, peinture(k1), 0.08));
+    g.add(extruder([[0.5, 0.18, 0.1], [0.4, 0.55, 0.25], [-1.6, 0.48, 0.25], [-1.7, 0.18, 0.1]], 1.45, peinture(k1), 0.1)); // les pontons
+    g.add(boite(0.65, 0.05, 0.5, M.noir, 0.25, 0.67, 0)); // le trou du cockpit
+    const casque = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), M.casque);
+    casque.position.set(0.15, 0.82, 0);
+    g.add(casque);
+    g.add(boite(0.06, 0.06, 0.28, M.noir, 0.3, 0.84, 0)); // la visière
+    const halo = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.03, 8, 16, Math.PI), M.noir);
+    halo.position.set(0.2, 0.82, 0);
+    halo.rotation.set(Math.PI / 2, 0, Math.PI / 2);
+    g.add(halo);
+    // Les ailerons.
+    g.add(boite(0.45, 0.04, 2.0, peinture(k2), 2.5, 0.12, 0));
+    g.add(boite(0.3, 0.03, 1.8, peinture(k1), 2.4, 0.2, 0));
+    for (const z of [-1, 1]) g.add(boite(0.5, 0.22, 0.03, peinture(k2), 2.5, 0.2, z * 1.0));
+    g.add(boite(0.45, 0.05, 1.45, peinture(k2), -2.15, 1.0, 0));
+    g.add(boite(0.35, 0.04, 1.45, peinture(k1), -2.15, 1.1, 0));
+    for (const z of [-1, 1]) g.add(boite(0.5, 0.5, 0.03, peinture(k2), -2.15, 0.85, z * 0.73));
+    g.add(boite(0.06, 0.08, 0.12, M.feu, -2.12, 0.4, 0));
+    return { g, roues: ajouterRoues(g, [[1.75, true], [-1.6, false]], 0.95, 0.45, 0.42), yCapot: 1.1 };
   }
 
-  // 5. La Formule 1 : un corps très fin, le pilote assis dedans, roues à l'air, deux ailerons.
-  function f1(c, k1, k2) {
-    tranche(c, { av: 2.6, ar: 1.0, bas: 0.25, hAv: 0.38, hAr: 0.62, l: 0.14, lAr: 0.35, lh: 0.1, lhAr: 0.3 }, k1); // le nez
-    tranche(c, { av: 1.0, ar: -0.4, bas: 0.2, hAv: 0.62, hAr: 0.7, l: 0.38, lh: 0.32 }, k1); // la coque du pilote
-    tranche(c, { av: 0.4, ar: -1.5, bas: 0.2, hAv: 0.55, hAr: 0.5, l: 0.72, lh: 0.62 }, k1); // les pontons sur les côtés
-    tranche(c, { av: -0.2, ar: -2.0, bas: 0.5, hAv: 1.05, hAr: 0.55, xhAv: -0.3, xhAr: -1.0, l: 0.3, lh: 0.12, lAr: 0.2, lhAr: 0.1 }, k2); // le capot moteur et la prise d'air
-    c.boite(0.25, 0.8, 0, 0.32, 0.26, 0.28, JAUNE); // le casque du pilote
-    c.boite(0.32, 0.8, 0, 0.18, 0.08, 0.3, NOIR); // la visière
-    c.boite(0.55, 0.92, 0, 0.6, 0.04, 0.06, NOIR); // le « halo » qui protège la tête
-    // L'aileron avant, très large, et ses deux petites plaques au bout.
-    c.boite(2.45, 0.14, 0, 0.45, 0.05, 2.1, k2);
-    c.boite(2.35, 0.22, 0, 0.3, 0.04, 1.9, k1);
-    for (const z of [-1, 1]) c.boite(2.45, 0.22, z * 1.05, 0.5, 0.22, 0.04, k1);
-    // L'aileron arrière, haut et large.
-    c.boite(-2.15, 1.0, 0, 0.45, 0.06, 1.5, k2);
-    c.boite(-2.15, 1.12, 0, 0.35, 0.05, 1.5, k1);
-    for (const z of [-1, 1]) c.boite(-2.15, 0.85, z * 0.76, 0.5, 0.45, 0.04, k1);
-    c.boite(-1.95, 0.75, 0, 0.1, 0.5, 0.1, NOIR); // le support de l'aileron
-    c.boite(-2.05, 0.4, 0, 0.06, 0.08, 0.12, FEU); // le petit feu de pluie
-    return { avant: 1.75, arriere: -1.6, z: 0.95, rayon: 0.45, epaisseur: 0.45 };
+  // ---------------------------------------------------------------- les 4 véhicules du parcours
+
+  function quatre(k1, k2) {
+    const p = { L: 4.5, W: 1.95, r: 0.48, xAv: 1.45, xAr: -1.45, g: 0.5, hNez: 1.05, rondNez: 0.12, hCapot: 1.2, hCeinture: 1.28, hCoffre: 1.28,
+      hToit: 2.0, xPareBrise: 0.95, xToitAv: 0.7, xToitAr: -2.0, xLunette: -2.12, Wtoit: 1.84 };
+    const g = carrosserie(p, k1, k2);
+    // La roue de secours derrière, les barres de toit, le pare-buffle.
+    const secours = cylindre(0.4, 0.22, M.pneu, 20);
+    secours.rotation.z = Math.PI / 2;
+    secours.position.set(-2.38, 1.15, 0);
+    g.add(secours);
+    for (const x of [-1.6, -0.6, 0.3]) g.add(boite(0.06, 0.06, 1.9, M.noir, x, 2.08, 0));
+    g.add(boite(0.08, 0.5, 1.6, M.noir, 2.3, 0.85, 0));
+    for (const z of [-1, 1]) g.add(boite(3.0, 0.08, 0.15, M.noir, 0, 0.55, z * 1.02)); // les marchepieds
+    return { g, roues: ajouterRoues(g, [[1.45, true], [-1.45, false]], 0.98, 0.48, 0.36), yCapot: 1.8 };
   }
 
-  // ---------------------------------------------------------------- étape 37 : le garage du parcours
-
-  // Le 4x4 : une grosse boîte carrée, haute sur pattes, avec une roue de secours derrière.
-  function quatre(c, k1, k2) {
-    tranche(c, { av: 2.2, ar: -2.2, bas: 0.55, hAv: 1.25, l: 1.0 }, k1); // la caisse
-    tranche(c, { av: 2.25, ar: 1.6, bas: 0.5, hAv: 1.0, l: 1.02 }, k2); // le pare-chocs avant
-    tranche(c, { av: 0.9, ar: -2.1, bas: 1.24, hAv: 1.95, xhAv: 0.6, l: 0.97, lh: 0.92 }, VITRE); // les vitres
-    tranche(c, { av: 0.6, ar: -2.1, bas: 1.94, hAv: 2.02, l: 0.92 }, k1); // le toit
-    for (const x of [-1.4, -0.4, 0.5]) c.boite(x, 2.08, 0, 0.08, 0.1, 1.9, k2); // les barres de toit
-    c.boite(-2.33, 1.0, 0, 0.22, 0.8, 0.8, NOIR); // la roue de secours, accrochée derrière
-    c.boite(-2.45, 1.0, 0, 0.04, 0.35, 0.35, ARGENT);
-    for (const z of [-1, 1]) {
-      c.boite(2.24, 0.95, z * 0.65, 0.04, 0.22, 0.3, PHARE);
-      c.boite(-2.22, 0.95, z * 0.75, 0.04, 0.25, 0.2, FEU);
-      c.boite(0, 0.62, z * 1.06, 3.2, 0.14, 0.12, k2); // le marchepied
-    }
-    return { avant: 1.45, arriere: -1.45, z: 1.05, rayon: 0.5, epaisseur: 0.38 };
+  function pickup(k1, k2) {
+    const p = { L: 5.1, W: 2.0, r: 0.46, xAv: 1.7, xAr: -1.6, g: 0.45, hNez: 1.0, hCapot: 1.18, hCeinture: 1.25, hCoffre: 1.3,
+      hToit: 1.95, xPareBrise: 1.15, xToitAv: 0.75, xToitAr: -0.35, xLunette: -0.45, Wtoit: 1.85 };
+    const g = carrosserie(p, k1, k2);
+    // La benne : un fond sombre et des parois.
+    g.add(boite(2.0, 0.02, 1.75, M.noir, -1.5, 1.27, 0));
+    for (const z of [-1, 1]) g.add(boite(2.1, 0.32, 0.08, peinture(k1), -1.5, 1.44, z * 0.93));
+    g.add(boite(0.08, 0.32, 1.9, peinture(k1), -2.52, 1.44, 0));
+    g.add(boite(0.08, 0.32, 1.9, peinture(k2), -0.48, 1.44, 0));
+    return { g, roues: ajouterRoues(g, [[1.7, true], [-1.6, false]], 1.0, 0.46, 0.34), yCapot: 1.75 };
   }
 
-  // Le pickup : une cabine devant, une benne ouverte derrière.
-  function pickup(c, k1, k2) {
-    tranche(c, { av: 2.5, ar: -2.5, bas: 0.55, hAv: 1.15, l: 1.0 }, k1); // le bas de caisse
-    tranche(c, { av: 2.5, ar: 1.5, bas: 1.14, hAv: 1.25, hAr: 1.3, l: 0.98 }, k1); // le capot
-    tranche(c, { av: 1.5, ar: -0.4, bas: 1.29, hAv: 1.95, xhAv: 1.0, l: 0.96, lh: 0.9 }, VITRE); // la cabine vitrée
-    tranche(c, { av: 1.0, ar: -0.4, bas: 1.94, hAv: 2.0, l: 0.9 }, k1); // le toit
-    // La benne : un plancher et 3 parois (ouverte en haut).
-    c.boite(-1.45, 1.17, 0, 2.1, 0.06, 1.9, k2);
-    c.boite(-1.45, 1.45, 0.97, 2.1, 0.5, 0.06, k1);
-    c.boite(-1.45, 1.45, -0.97, 2.1, 0.5, 0.06, k1);
-    c.boite(-2.48, 1.45, 0, 0.06, 0.5, 1.9, k1);
-    c.boite(0.3, 0.4, 0, 4.6, 0.12, 2.0, k2); // le châssis
-    for (const z of [-1, 1]) {
-      c.boite(2.52, 0.9, z * 0.7, 0.04, 0.2, 0.3, PHARE);
-      c.boite(-2.52, 1.05, z * 0.8, 0.04, 0.3, 0.15, FEU);
-    }
-    return { avant: 1.65, arriere: -1.6, z: 1.02, rayon: 0.48, epaisseur: 0.36 };
-  }
-
-  // Le buggy : un cadre en tubes, un petit siège, roues bien dehors. Léger et rapide !
-  function buggy(c, k1, k2) {
-    tranche(c, { av: 1.8, ar: -1.6, bas: 0.35, hAv: 0.55, hAr: 0.75, l: 0.55, lAr: 0.7, lh: 0.5, lhAr: 0.65 }, k1); // la coque
-    tranche(c, { av: 2.0, ar: 1.6, bas: 0.35, hAv: 0.45, l: 0.7 }, k2); // le pare-chocs
-    c.boite(-0.2, 0.85, 0, 0.6, 0.6, 0.6, k2); // le siège
-    c.boite(-0.15, 1.35, 0, 0.32, 0.3, 0.3, JAUNE); // le casque du pilote
-    // L'arceau : des tubes qui forment une cage au-dessus du pilote.
+  function buggy(k1, k2) {
+    const g = new THREE.Group();
+    g.add(extruder([[1.9, 0.3, 0.1], [1.8, 0.55, 0.15], [0.6, 0.6, 0.1], [-1.5, 0.75, 0.15], [-1.6, 0.3, 0.1]], 1.2, peinture(k1), 0.1)); // la coque
+    g.add(boite(0.55, 0.6, 0.55, M.siege, -0.2, 0.95, 0));
+    const casque = new THREE.Mesh(new THREE.SphereGeometry(0.18, 18, 12), M.casque);
+    casque.position.set(-0.1, 1.42, 0);
+    g.add(casque);
+    // L'arceau : des tubes qui forment une cage.
+    const t = (a, b) => g.add(tube(a, b, 0.04, M.noir));
     for (const z of [-0.55, 0.55]) {
-      c.boite(0.5, 1.1, z, 0.07, 1.3, 0.07, NOIR);
-      c.boite(-0.9, 1.1, z, 0.07, 1.3, 0.07, NOIR);
-      c.boite(-0.2, 1.75, z, 1.47, 0.07, 0.07, NOIR);
-      c.boite(1.15, 0.85, z, 1.3, 0.07, 0.07, NOIR); // les tubes vers l'avant
+      t([0.55, 0.55, z], [0.25, 1.75, z * 0.85]);
+      t([-0.95, 0.65, z], [-0.85, 1.75, z * 0.85]);
+      t([0.25, 1.75, z * 0.85], [-0.85, 1.75, z * 0.85]);
+      t([0.55, 0.55, z], [1.8, 0.55, z * 0.6]);
     }
-    c.boite(0.5, 1.75, 0, 0.07, 0.07, 1.17, NOIR);
-    c.boite(-0.9, 1.75, 0, 0.07, 0.07, 1.17, NOIR);
-    c.boite(-1.5, 0.95, 0, 0.5, 0.5, 0.9, NOIR); // le moteur, derrière
-    c.boite(-1.7, 1.3, 0, 0.2, 0.06, 1.3, k1); // le petit aileron
-    for (const z of [-1, 1]) c.boite(1.9, 0.6, z * 0.35, 0.06, 0.16, 0.16, PHARE);
-    return { avant: 1.45, arriere: -1.3, z: 1.05, rayon: 0.45, epaisseur: 0.4 };
+    t([0.25, 1.75, -0.47], [0.25, 1.75, 0.47]);
+    t([-0.85, 1.75, -0.47], [-0.85, 1.75, 0.47]);
+    g.add(boite(0.55, 0.5, 0.9, M.noir, -1.4, 0.95, 0)); // le moteur, derrière
+    g.add(boite(0.2, 0.05, 1.3, peinture(k2), -1.75, 1.32, 0)); // le petit aileron
+    for (const z of [-0.35, 0.35]) g.add(boite(0.06, 0.14, 0.18, M.phare, 1.92, 0.5, z));
+    return { g, roues: ajouterRoues(g, [[1.45, true], [-1.3, false]], 1.05, 0.46, 0.4), yCapot: 1.5 };
   }
 
-  // Le monster truck : un petit pickup perché sur 4 roues géantes.
-  function monster(c, k1, k2) {
-    const h = 1.35; // la caisse commence très haut
-    tranche(c, { av: 2.2, ar: -2.2, bas: h, hAv: h + 0.6, l: 1.05 }, k1);
-    tranche(c, { av: 2.2, ar: 1.2, bas: h + 0.59, hAv: h + 0.7, hAr: h + 0.75, l: 1.0 }, k1); // le capot
-    tranche(c, { av: 1.2, ar: -0.6, bas: h + 0.74, hAv: h + 1.3, xhAv: 0.75, l: 0.98, lh: 0.9 }, VITRE);
-    tranche(c, { av: 0.75, ar: -0.6, bas: h + 1.29, hAv: h + 1.35, l: 0.9 }, k1);
-    c.boite(-1.4, h + 0.75, 0, 1.6, 0.3, 2.0, k1); // la benne
+  function monster(k1, k2) {
+    const h = 1.25; // la caisse commence très haut
+    const p = { L: 4.6, W: 2.1, r: 0.95, xAv: 1.6, xAr: -1.6, g: h, hNez: h + 0.5, hCapot: h + 0.68, hCeinture: h + 0.75, hCoffre: h + 0.8,
+      hToit: h + 1.35, xPareBrise: 1.05, xToitAv: 0.7, xToitAr: -0.55, xLunette: -0.65, Wtoit: 1.9, passages: false };
+    const g = carrosserie(p, k1, k2);
     // Des flammes peintes sur les côtés (couleur 2).
     for (const z of [-1, 1]) {
       for (let i = 0; i < 4; i++) {
-        const x = 1.6 - i * 0.7;
-        c.boite(x - 0.05, h + 0.3, z * 1.06, 0.6, 0.25 - i * 0.03, 0.02, k2);
+        const flamme = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.9 - i * 0.12, 4), peinture(k2));
+        flamme.rotation.z = -Math.PI / 2;
+        flamme.position.set(1.4 - i * 0.55, h + 0.35 + (i % 2) * 0.12, z * 1.06);
+        flamme.scale.z = 0.15;
+        g.add(flamme);
       }
-      c.boite(2.22, h + 0.4, z * 0.7, 0.04, 0.2, 0.3, PHARE);
-      c.boite(-2.22, h + 0.4, z * 0.8, 0.04, 0.25, 0.2, FEU);
     }
-    // Le châssis et les grosses suspensions.
-    c.boite(0, 1.0, 0, 3.6, 0.3, 0.8, NOIR);
+    // Le châssis, les essieux et les gros amortisseurs.
+    g.add(boite(3.6, 0.25, 0.8, M.noir, 0, 1.05, 0));
     for (const x of [-1.6, 1.6]) {
-      c.boite(x, 0.95, 0, 0.25, 0.25, 2.2, NOIR); // les essieux
-      for (const z of [-0.7, 0.7]) c.boite(x, 1.25, z, 0.15, 0.6, 0.15, ARGENT); // les amortisseurs
+      const essieu = cylindre(0.1, 2.5, M.noir, 10);
+      essieu.rotation.x = Math.PI / 2;
+      essieu.position.set(x, 0.95, 0);
+      g.add(essieu);
+      for (const z of [-0.65, 0.65]) g.add(tube([x, 0.95, z], [x - 0.2, 1.45, z], 0.07, M.chrome));
     }
-    return { avant: 1.6, arriere: -1.6, z: 1.35, rayon: 0.95, epaisseur: 0.75 };
+    return { g, roues: ajouterRoues(g, [[1.6, true], [-1.6, false]], 1.35, 0.95, 0.75), yCapot: 2.9 };
   }
 
   const FABRIQUES = { classique, taureau, fleche, fusee, f1, quatre, pickup, buggy, monster };
 
-  // Fabrique les triangles d'un modèle. Renvoie { carrosserie (les triangles), roues (où et quelle taille) }.
+  // Fabrique une voiture. Renvoie { g (le groupe Three.js), roues (pour les faire tourner), yCapot (pour la caméra) }.
   function fabriquer(modele, couleur1, couleur2) {
-    const c = Circuit.Constructeur();
-    const roues = FABRIQUES[modele](c, couleur1, couleur2);
-    return { carrosserie: c.fin(), roues };
+    materiaux();
+    return FABRIQUES[modele](couleur1, couleur2);
   }
 
-  return { fabriquer };
+  return { fabriquer, materiaux };
 })();

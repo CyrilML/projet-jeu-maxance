@@ -192,6 +192,10 @@ Circuit.Course = (function () {
       cogner(monde);
       return;
     }
+    if (intentions.retour) {
+      ouvrirCartes(monde); // ⌫ : changer de carte, même au milieu d'une course
+      return;
+    }
     if (intentions.recommencer) {
       lancer(monde);
       return;

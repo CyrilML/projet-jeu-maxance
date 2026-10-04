@@ -1,328 +1,141 @@
-// 🎬 LA SCÈNE 3D : le décorateur et le caméraman
+// 🎬 LA SCÈNE 3D : le réalisateur (étape 38 : version réaliste, avec Three.js)
 //
-// Au démarrage, le décorateur fabrique une fois pour toutes les objets du décor avec des triangles :
-// l'herbe, la route, les bordures rouges et blanches, la ligne d'arrivée en damier, le portique,
-// la tribune, les arbres, la clôture… et la voiture.
+// Jusqu'à l'étape 37, on dessinait avec notre propre moteur 3D. Pour un rendu réaliste, on utilise
+// maintenant Three.js, un moteur 3D très connu. Il sait faire ce qui serait très long à écrire nous-mêmes :
+//   - de VRAIES OMBRES : le soleil « regarde » la scène depuis le ciel ; tout ce qu'il ne voit pas est à l'ombre ;
+//   - des MATÉRIAUX réalistes : la peinture brillante reflète le ciel, le pneu est mat, le chrome brille ;
+//   - des TEXTURES : des images collées sur les objets (le goudron, l'herbe…) ;
+//   - le BROUILLARD au loin et un CIEL en dégradé avec son soleil.
 //
-// Ensuite, à chaque image, le caméraman :
-//   1. place la caméra derrière la voiture (ou au-dessus, ou sur le capot : touche C) ;
-//   2. demande au projecteur de dessiner chaque objet, à sa place.
-//
-// Ce fichier LIT le monde (où est la voiture ?) mais ne le modifie jamais.
+// Ce fichier fait comme avant : il place la caméra (derrière la voiture, au-dessus, ou sur le capot),
+// il met chaque objet à sa place (voitures, pièces, cartons), puis il demande à Three.js de dessiner.
+// Il LIT le monde, il ne le modifie jamais.
 
 window.Circuit = window.Circuit || {};
 
 Circuit.Scene3D = (function () {
   const C = Circuit.CONFIG;
   const M = Circuit.Maths3D;
-  const Projecteur = Circuit.Projecteur;
-  const Piste = Circuit.Piste;
-
-  const COULEURS = {
-    ciel: [0.55, 0.78, 0.97],
-    herbe1: [0.32, 0.62, 0.25],
-    herbe2: [0.29, 0.57, 0.23],
-    route: [0.27, 0.28, 0.31],
-    blanc: [0.95, 0.95, 0.95],
-    rouge: [0.85, 0.12, 0.12],
-    noir: [0.08, 0.08, 0.09],
-    gris: [0.6, 0.62, 0.66],
-    tronc: [0.45, 0.3, 0.16],
-    sapin: [0.13, 0.42, 0.2],
-    sapinClair: [0.2, 0.52, 0.24],
-    adversaire: [0.12, 0.38, 0.92], // étape 34 : la voiture adverse est bleue
-    adversaireFoncee: [0.07, 0.22, 0.6],
-    vitre: [0.15, 0.22, 0.35],
-    phare: [1, 0.9, 0.5],
-    tribune: [0.55, 0.57, 0.62],
-    // Rayons X
-    xMilieu: [1, 0.89, 0.48],
-    xBords: [0.3, 0.9, 1],
-    xPorte: [0.85, 0.45, 1],
-    xProchaine: [0.3, 1, 0.45],
-    xFil: [0.35, 0.95, 0.6],
-    xFleche: [0.3, 1, 0.45],
-    xEcart: [1, 0.6, 0.2],
-    xCarotte: [0.45, 0.75, 1], // le point que vise le pilote adverse
-    xCercles: [1, 1, 1], // les cercles de choc
-  };
-
-  const maillages = {};
-  const camera = { mode: "poursuite", angle: 0, x: 0, y: 0, z: 0, pret: false };
+  const camera = { mode: "poursuite", angle: 0, pret: false };
   const MODES = ["poursuite", "ciel", "capot"];
+  const compteur = { triangles: 0, lignes: 0, objets: 0 };
+  const SOLEIL = new THREE.Vector3(0.45, 0.75, 0.35).normalize(); // d'où vient la lumière du soleil
+
+  let rendu, scene, sceneX, cam, soleil, ciel;
   let vueProjection = M.identite();
-  let rapport = 16 / 9;
-
-  // Un petit générateur de hasard « à graine » : les arbres sont toujours au même endroit.
-  function hasard(graine) {
-    let etat = graine >>> 0;
-    return () => {
-      etat = (etat * 1664525 + 1013904223) >>> 0;
-      return etat / 4294967296;
-    };
-  }
-
-  // ------------------------------------------------------------------ le décor
-  function construireDecor() {
-    const c = Circuit.Constructeur();
-    const P = C.piste;
-    const demiTerrain = P.tailleHerbe / 2;
-
-    // L'herbe : un damier de grands carreaux de 20 m (deux verts, comme une pelouse tondue).
-    const carreau = 20;
-    for (let x = -demiTerrain; x < demiTerrain; x += carreau) {
-      for (let z = -demiTerrain; z < demiTerrain; z += carreau) {
-        const couleur = Math.floor((x + demiTerrain) / carreau) % 2 ? COULEURS.herbe1 : COULEURS.herbe2;
-        c.quad([x, 0, z], [x, 0, z + carreau], [x + carreau, 0, z + carreau], [x + carreau, 0, z], couleur);
-      }
-    }
-    // Derrière la clôture, encore 200 m d'herbe (en plus grands carreaux) : sinon, vu du ciel,
-    // on verrait le bout du monde.
-    const bord = demiTerrain + 200, grand = 50;
-    for (let x = -bord; x < bord; x += grand) {
-      for (let z = -bord; z < bord; z += grand) {
-        if (x >= -demiTerrain && x < demiTerrain && z >= -demiTerrain && z < demiTerrain) continue;
-        c.quad([x, -0.01, z], [x, -0.01, z + grand], [x + grand, -0.01, z + grand], [x + grand, -0.01, z], COULEURS.herbe2);
-      }
-    }
-
-    // La route et ses bordures : on suit le milieu de la route tous les 3 m environ.
-    const morceaux = Math.round(Piste.longueurTour / 3);
-    const pas = Piste.longueurTour / morceaux;
-    const demi = P.largeur / 2;
-    const ext = demi + P.largeurBordure;
-    // Le point à `s` mètres, décalé de `ecart` mètres sur le côté (vers la gauche de la route), à la hauteur y.
-    const cote = (s, ecart, y) => {
-      const p = Piste.pointA(s);
-      return [p.x + p.dz * ecart, y, p.z - p.dx * ecart];
-    };
-    for (let i = 0; i < morceaux; i++) {
-      const s0 = i * pas, s1 = (i + 1) * pas;
-      // la route
-      c.quad(cote(s0, -demi, 0.02), cote(s1, -demi, 0.02), cote(s1, demi, 0.02), cote(s0, demi, 0.02), COULEURS.route);
-      // les bordures : rouge, blanc, rouge, blanc…
-      const couleur = i % 2 ? COULEURS.rouge : COULEURS.blanc;
-      c.quad(cote(s0, demi, 0.04), cote(s1, demi, 0.04), cote(s1, ext, 0.04), cote(s0, ext, 0.04), couleur);
-      c.quad(cote(s0, -ext, 0.04), cote(s1, -ext, 0.04), cote(s1, -demi, 0.04), cote(s0, -demi, 0.04), couleur);
-      // la ligne blanche du milieu, en pointillés
-      if (i % 3 === 0) c.quad(cote(s0, -0.15, 0.03), cote(s1, -0.15, 0.03), cote(s1, 0.15, 0.03), cote(s0, 0.15, 0.03), COULEURS.blanc);
-    }
-
-    // La ligne d'arrivée : un damier noir et blanc, 2 rangées de carrés de 1 m.
-    for (let rangee = 0; rangee < 2; rangee++) {
-      for (let k = 0; k < P.largeur; k++) {
-        const couleur = (k + rangee) % 2 ? COULEURS.noir : COULEURS.blanc;
-        const s0 = rangee - 1, s1 = rangee;
-        const e0 = -demi + k, e1 = e0 + 1;
-        c.quad(cote(s0, e0, 0.05), cote(s1, e0, 0.05), cote(s1, e1, 0.05), cote(s0, e1, 0.05), couleur);
-      }
-    }
-
-    // Le portique au-dessus de la ligne : 2 poteaux et une banderole.
-    const depart = Piste.pointA(0);
-    for (const e of [-(ext + 1), ext + 1]) {
-      const p = cote(0, e, 0);
-      c.boite(p[0], 3.2, p[2], 0.5, 6.4, 0.5, COULEURS.gris);
-    }
-    c.boite(depart.x, 6.6, depart.z, 0.5, 1.4, 2 * ext + 3, COULEURS.rouge);
-    for (let k = 0; k < 8; k++) {
-      c.boite(depart.x - 0.3, 6.6, depart.z - ext + k * (2 * ext / 7), 0.05, 0.7, 0.7, k % 2 ? COULEURS.noir : COULEURS.blanc);
-    }
-
-    // La tribune, le long de la ligne droite du départ, côté extérieur : 4 marches et des spectateurs.
-    const alea = hasard(C.decor.graine);
-    const zTribune = P.rayon + ext + 6;
-    for (let marche = 0; marche < 4; marche++) {
-      c.boite(0, 0.5 + marche * 0.8, zTribune + 1.5 + marche * 1.6, 70, 1 + marche * 1.6, 1.6, COULEURS.tribune);
-      for (let x = -33; x <= 33; x += 1.6) {
-        if (alea() < 0.35) continue;
-        const habit = [alea(), alea(), alea()];
-        c.boite(x + alea() * 0.4, 1.4 + marche * 1.6, zTribune + 1.5 + marche * 1.6, 0.6, 0.9, 0.5, habit);
-      }
-    }
-    c.boite(0, 7, zTribune + 8, 72, 0.3, 4, COULEURS.rouge); // le toit
-    for (const x of [-35, 35]) c.boite(x, 3.5, zTribune + 8.5, 0.4, 7, 0.4, COULEURS.gris);
-
-    // La clôture tout autour du terrain.
-    const limite = demiTerrain - 2;
-    for (let k = -limite, n = 0; k < limite; k += 8, n++) {
-      const couleur = n % 2 ? COULEURS.blanc : COULEURS.rouge;
-      c.boite(k + 4, 0.6, -limite, 8, 1.2, 0.4, couleur);
-      c.boite(k + 4, 0.6, limite, 8, 1.2, 0.4, couleur);
-      c.boite(-limite, 0.6, k + 4, 0.4, 1.2, 8, couleur);
-      c.boite(limite, 0.6, k + 4, 0.4, 1.2, 8, couleur);
-    }
-
-    // Les sapins : loin de la route (au moins 8 m du bord) et pas sur la tribune.
-    let poses = 0, essais = 0;
-    while (poses < C.decor.arbres && essais < 5000) {
-      essais++;
-      const x = (alea() * 2 - 1) * (limite - 6), z = (alea() * 2 - 1) * (limite - 6);
-      const r = Piste.reperer(x, z);
-      if (Math.abs(r.ecart) < ext + 8) continue;
-      if (Math.abs(x) < 42 && z > zTribune - 3 && z < zTribune + 14) continue;
-      const taille = 0.8 + alea() * 0.6;
-      c.boite(x, 1 * taille, z, 0.6 * taille, 2 * taille, 0.6 * taille, COULEURS.tronc);
-      c.cone(x, 1.6 * taille, z, 2.4 * taille, 3.2 * taille, 7, COULEURS.sapin);
-      c.cone(x, 3.4 * taille, z, 1.7 * taille, 2.8 * taille, 7, COULEURS.sapinClair);
-      poses++;
-    }
-
-    return c.fin();
-  }
-
-  // ------------------------------------------------------------------ les voitures et les pièces
-  // Étape 36 : les formes des 5 voitures sont fabriquées par le carrossier (affichage/modeles.js).
-  // Ici, on envoie leurs triangles à la carte graphique, une fois pour toutes.
-  function preparerModele(modele, couleur1, couleur2) {
-    const m = Circuit.Modeles.fabriquer(modele, couleur1, couleur2);
-    const c = Circuit.Constructeur();
-    c.roue(0, 0, 0, m.roues.rayon, m.roues.epaisseur, 12, COULEURS.noir, COULEURS.gris);
-    const roue = c.fin();
-    return {
-      roues: m.roues,
-      carrosserie: Projecteur.creerMaillage(m.carrosserie),
-      fil: Projecteur.creerMaillage(Circuit.Constructeur.aretes(m.carrosserie, COULEURS.xFil), true),
-      roue: Projecteur.creerMaillage(roue),
-      filRoue: Projecteur.creerMaillage(Circuit.Constructeur.aretes(roue, COULEURS.xFil), true),
-      triangles: m.carrosserie.length / 27 + 4 * (roue.length / 27),
-    };
-  }
-
-  // Une pièce : un disque doré debout (une roue très fine, sans pneu !).
-  function construirePiece() {
-    const c = Circuit.Constructeur();
-    c.roue(0, 0, 0, 0.75, 0.16, 16, [1, 0.78, 0.12], [1, 0.92, 0.45]);
-    return c.fin();
-  }
-
-  function construireOmbre() {
-    const c = Circuit.Constructeur();
-    c.quad([-2.3, 0.06, -1.1], [-2.3, 0.06, 1.1], [2.3, 0.06, 1.1], [2.3, 0.06, -1.1], [0.12, 0.14, 0.1]);
-    return c.fin();
-  }
-
-  // ------------------------------------------------------------------ les rayons X
-  function construireRayonsX() {
-    const c = Circuit.Constructeur();
-    const morceaux = Math.round(Piste.longueurTour / 3);
-    const pas = Piste.longueurTour / morceaux;
-    const demi = C.piste.largeur / 2;
-    const cote = (s, ecart, y) => {
-      const p = Piste.pointA(s);
-      return [p.x + p.dz * ecart, y, p.z - p.dx * ecart];
-    };
-    for (let i = 0; i < morceaux; i++) {
-      const s0 = i * pas, s1 = (i + 1) * pas;
-      c.ligne(cote(s0, 0, 0.2), cote(s1, 0, 0.2), COULEURS.xMilieu); // le milieu de la route
-      c.ligne(cote(s0, -demi, 0.2), cote(s1, -demi, 0.2), COULEURS.xBords); // le bord intérieur
-      c.ligne(cote(s0, demi, 0.2), cote(s1, demi, 0.2), COULEURS.xBords); // le bord extérieur
-    }
-    // Le squelette caché au centre (voir logique/piste.js) et quelques rayons de 40 m.
-    const D = C.piste.longueurDroite / 2;
-    c.ligne([-D, 0.3, 0], [D, 0.3, 0], COULEURS.xEcart);
-    for (const x of [-D, 0, D]) {
-      c.ligne([x, 0.3, 0], [x, 0.3, C.piste.rayon], COULEURS.xEcart);
-      c.ligne([x, 0.3, 0], [x, 0.3, -C.piste.rayon], COULEURS.xEcart);
-    }
-    for (const s of Piste.portes) ajouterPorte(c, s, COULEURS.xPorte);
-    return c.fin();
-  }
-
-  // Une porte invisible : un cadre vertical en travers de la route.
-  function ajouterPorte(c, s, couleur) {
-    const p = Piste.pointA(s);
-    const e = C.piste.largeur / 2 + C.piste.largeurBordure;
-    const a = [p.x - p.dz * e, 0, p.z + p.dx * e], b = [p.x + p.dz * e, 0, p.z - p.dx * e];
-    const h = 5;
-    c.ligne(a, [a[0], h, a[2]], couleur);
-    c.ligne(b, [b[0], h, b[2]], couleur);
-    c.ligne([a[0], h, a[2]], [b[0], h, b[2]], couleur);
-    c.ligne([a[0], h * 0.5, a[2]], [b[0], h * 0.5, b[2]], couleur);
-  }
-
-  // Les flèches des rayons X qui bougent avec la voiture (refaites à chaque image).
-  function construireRayonsXVoiture(monde) {
-    const c = Circuit.Constructeur();
-    const v = monde.voiture;
-    const cos = Math.cos(v.angle), sin = Math.sin(v.angle);
-    const h = 1.8;
-    // La flèche de vitesse : sa longueur = la distance parcourue en 0,5 s.
-    const L = v.vitesse * 0.5;
-    const bout = [v.x + cos * L, h, v.z + sin * L];
-    c.ligne([v.x, h, v.z], bout, COULEURS.xFleche);
-    if (Math.abs(L) > 0.5) {
-      const recul = Math.sign(L) * 1.2;
-      c.ligne(bout, [bout[0] - cos * recul - sin * 0.8, h, bout[2] - sin * recul + cos * 0.8], COULEURS.xFleche);
-      c.ligne(bout, [bout[0] - cos * recul + sin * 0.8, h, bout[2] - sin * recul - cos * 0.8], COULEURS.xFleche);
-    }
-    if (monde.carte === "course") {
-      // Le trait vers le milieu de la route le plus proche : sa longueur, c'est « l'écart ».
-      const m = Piste.pointA(monde.reperage.s);
-      c.ligne([v.x, 0.3, v.z], [m.x, 0.3, m.z], COULEURS.xEcart);
-      // La prochaine porte à passer, en vert.
-      ajouterPorte(c, Piste.portes[monde.prochainePorte], COULEURS.xProchaine);
-    }
-    // Étape 37 : un trait jaune entre la voiture et le sol (sa longueur = la hauteur).
-    if ((v.y || 0) > 0.05) c.ligne([v.x, 0, v.z], [v.x, v.y, v.z], COULEURS.xMilieu);
-
-    // Étape 34 : la « carotte » du pilote adverse (le point qu'il vise) et sa voie.
-    const adv = monde.adversaire;
-    if (adv && adv.cible) {
-      c.ligne([adv.voiture.x, 1.2, adv.voiture.z], [adv.cible.x, 1.2, adv.cible.z], COULEURS.xCarotte);
-      c.ligne([adv.cible.x, 0, adv.cible.z], [adv.cible.x, 3, adv.cible.z], COULEURS.xCarotte);
-    }
-    // Les cercles de choc des deux voitures (voir moteur/chocs.js).
-    const r = C.chocs.rayon;
-    for (const voiture of adv ? [v, adv.voiture] : [v]) {
-      for (const centre of Circuit.Chocs.cercles(voiture, r)) {
-        for (let i = 0; i < 16; i++) {
-          const a1 = (i / 16) * Math.PI * 2, a2 = ((i + 1) / 16) * Math.PI * 2;
-          c.ligne(
-            [centre[0] + Math.cos(a1) * r, 0.3, centre[1] + Math.sin(a1) * r],
-            [centre[0] + Math.cos(a2) * r, 0.3, centre[1] + Math.sin(a2) * r],
-            monde.enContact ? COULEURS.rouge : COULEURS.xCercles
-          );
-        }
-      }
-    }
-    return c.fin();
-  }
+  const decors = {}; // le décor de chaque carte (fabriqué la première fois)
+  let carteDessinee = null;
+  let rayonsFixes = null, rayonsMobiles = null;
+  const vehicules = {}; // un exemplaire de chaque modèle de voiture
+  let adversaire = null;
+  const piecesPool = [], cartonsPool = [];
+  let materiauPiece = null, geoPiece = null, materiauCarton = null, geoCarton = null, fil = null;
 
   // ------------------------------------------------------------------ démarrage
   function initialiser(canvas) {
-    if (!Projecteur.initialiser(canvas)) return false;
-    rapport = canvas.width / canvas.height;
-    // Les véhicules de tous les garages (dans leurs couleurs), et la voiture bleue (la forme de la Rouge, en bleu).
-    maillages.modeles = {};
-    for (const v of C.voitures.concat(C.vehiculesParcours)) maillages.modeles[v.modele] = preparerModele(v.modele, v.couleurs[0], v.couleurs[1]);
-    maillages.adversaire = preparerModele("classique", COULEURS.adversaire, COULEURS.adversaireFoncee);
-    maillages.piece = Projecteur.creerMaillage(construirePiece());
-    maillages.ombre = Projecteur.creerMaillage(construireOmbre());
-    maillages.rayonsXVoiture = Projecteur.creerMaillage(new Float32Array(0), true);
-    maillages.carton = Projecteur.creerMaillage(Circuit.DecorParcours.carton());
+    try {
+      rendu = new THREE.WebGLRenderer({ canvas, antialias: true });
+    } catch (e) {
+      return false; // pas de WebGL sur cet ordinateur
+    }
+    rendu.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    rendu.setSize(canvas.width, canvas.height, false);
+    rendu.outputColorSpace = THREE.SRGBColorSpace;
+    rendu.toneMapping = THREE.ACESFilmicToneMapping; // des couleurs « comme au cinéma »
+    rendu.toneMappingExposure = 1.0;
+    rendu.shadowMap.enabled = true;
+    rendu.shadowMap.type = THREE.PCFSoftShadowMap; // des ombres aux bords doux
+
+    scene = new THREE.Scene();
+    sceneX = new THREE.Scene(); // les traits des rayons X, dessinés par-dessus
+    cam = new THREE.PerspectiveCamera(C.camera.champDeVision, canvas.width / canvas.height, 0.3, 3000);
+
+    // Le ciel : une immense sphère, bleu foncé en haut, clair à l'horizon, avec le soleil.
+    ciel = new THREE.Mesh(
+      new THREE.SphereGeometry(2000, 32, 16),
+      new THREE.ShaderMaterial({
+        side: THREE.BackSide, depthWrite: false, fog: false,
+        uniforms: { soleil: { value: SOLEIL } },
+        vertexShader: "varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
+        fragmentShader:
+          "uniform vec3 soleil; varying vec3 vDir;" +
+          "void main(){ float h = max(vDir.y, 0.0);" +
+          " vec3 c = mix(vec3(0.78,0.88,0.98), vec3(0.25,0.5,0.9), pow(h, 0.6));" +
+          " float s = max(dot(normalize(vDir), soleil), 0.0);" +
+          " c += vec3(1.0,0.9,0.7) * (pow(s, 600.0) * 4.0 + pow(s, 12.0) * 0.25);" +
+          " if (vDir.y < 0.0) c = vec3(0.6,0.68,0.6);" +
+          " gl_FragColor = vec4(c, 1.0); }",
+      })
+    );
+    scene.add(ciel);
+    scene.fog = new THREE.Fog(0xc6dcf2, 280, 1100);
+
+    // Les reflets : on fabrique une « carte d'environnement » à partir du ciel. La peinture des voitures
+    // et les vitres la reflètent, comme une vraie carrosserie reflète le ciel.
+    const pmrem = new THREE.PMREMGenerator(rendu);
+    const sceneCiel = new THREE.Scene();
+    sceneCiel.add(ciel.clone());
+    const solReflet = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.MeshBasicMaterial({ color: 0x4a5a3a }));
+    solReflet.rotation.x = -Math.PI / 2;
+    solReflet.position.y = -5;
+    sceneCiel.add(solReflet);
+    scene.environment = pmrem.fromScene(sceneCiel, 0.02).texture;
+
+    // Les lumières : le ciel et le sol (lumière douce de partout), et le soleil (qui fait les ombres).
+    scene.add(new THREE.HemisphereLight(0xcfe6ff, 0x5a6b3e, 0.7));
+    soleil = new THREE.DirectionalLight(0xfff1dd, 2.4);
+    soleil.castShadow = true;
+    soleil.shadow.mapSize.set(2048, 2048);
+    const o = soleil.shadow.camera;
+    o.left = o.bottom = -70;
+    o.right = o.top = 70;
+    o.near = 1;
+    o.far = 400;
+    soleil.shadow.bias = -0.0004;
+    soleil.shadow.normalBias = 0.03;
+    scene.add(soleil, soleil.target);
+
+    // Les pièces : un disque doré et brillant. Les cartons : une caisse en carton.
+    geoPiece = new THREE.CylinderGeometry(0.75, 0.75, 0.16, 28);
+    geoPiece.rotateX(Math.PI / 2);
+    materiauPiece = new THREE.MeshStandardMaterial({ color: 0xffc83a, metalness: 1, roughness: 0.25, emissive: 0x6b4a00, emissiveIntensity: 0.6 });
+    geoCarton = new THREE.BoxGeometry(1.2, 1.2, 1.2);
+    materiauCarton = new THREE.MeshStandardMaterial({ map: Circuit.Textures.carton(), roughness: 0.9 });
+    fil = new THREE.MeshBasicMaterial({ color: 0x5af29a, wireframe: true, transparent: true, opacity: 0.35, fog: false });
+
+    adversaire = Circuit.Modeles.fabriquer("classique", [0.12, 0.38, 0.92], [0.07, 0.22, 0.6]);
+    scene.add(adversaire.g);
+    rayonsMobiles = Circuit.RayonsX.mobiles({ voiture: { x: 0, z: 0, angle: 0, vitesse: 0 }, carte: "", pieces: [] });
+    sceneX.add(rayonsMobiles);
     return true;
   }
 
-  // Étape 37 : le décor de chaque carte est fabriqué la première fois qu'on la choisit, puis gardé.
-  const decors = {};
-  let carteDessinee = null;
+  // Le décor de chaque carte est fabriqué la première fois qu'on la choisit, puis gardé.
   function preparerCarte(carte) {
-    if (!decors[carte]) {
-      const parcours = carte === "parcours";
-      const decor = parcours ? Circuit.DecorParcours.construire() : construireDecor();
-      decors[carte] = {
-        decor: Projecteur.creerMaillage(decor),
-        // Le « fil de fer » : les arêtes de tous les triangles, pour voir de quoi tout est fait.
-        filDecor: Projecteur.creerMaillage(Circuit.Constructeur.aretes(decor, COULEURS.xFil), true),
-        rayonsX: Projecteur.creerMaillage(
-          parcours ? Circuit.DecorParcours.rayonsX({ bords: COULEURS.xBords, entree: COULEURS.xProchaine, rail: COULEURS.xMilieu }) : construireRayonsX(),
-          true
-        ),
-      };
+    if (carteDessinee && decors[carteDessinee]) {
+      decors[carteDessinee].groupe.visible = false;
+      decors[carteDessinee].rayons.visible = false;
     }
-    Object.assign(maillages, decors[carte]);
+    if (!decors[carte]) {
+      const groupe = carte === "parcours" ? Circuit.DecorParcours.construire() : Circuit.DecorCircuit.construire();
+      const rayons = Circuit.RayonsX.fixes(carte);
+      scene.add(groupe);
+      sceneX.add(rayons);
+      decors[carte] = { groupe, rayons };
+    }
+    decors[carte].groupe.visible = true;
+    rayonsFixes = decors[carte].rayons;
     carteDessinee = carte;
+  }
+
+  // Un exemplaire de chaque modèle de voiture (fabriqué la première fois).
+  function vehicule(modele) {
+    if (!vehicules[modele]) {
+      const fiche = Circuit.Garage.ficheDe(modele);
+      vehicules[modele] = Circuit.Modeles.fabriquer(modele, fiche.couleurs[0], fiche.couleurs[1]);
+      scene.add(vehicules[modele].g);
+    }
+    return vehicules[modele];
   }
 
   function changerCamera() {
@@ -341,108 +154,129 @@ Circuit.Scene3D = (function () {
     camera.angle += difference * douceur;
     camera.pret = true;
     const cos = Math.cos(camera.angle), sin = Math.sin(camera.angle);
+    const y = v.y || 0;
 
     let oeil, cible, haut = [0, 1, 0];
     if (monde.boucle && camera.mode !== "capot") {
-      // Étape 37 : pendant un looping, la caméra se met sur le côté pour voir le tour en entier.
+      // Pendant un looping, la caméra se met sur le côté pour voir le tour en entier.
       const l = monde.boucle.looping;
-      const centre = Circuit.Parcours.pointLooping(l, Math.PI);
       const cx = l.x + l.lx * (C.parcours.decalageLooping / 2), cz = l.z + l.lz * (C.parcours.decalageLooping / 2);
       oeil = [cx - l.lx * l.rayon * 3.2, l.rayon * 1.1, cz - l.lz * l.rayon * 3.2];
-      cible = [cx, centre.y / 2, cz];
-    } else if (monde.phase === "garage") {
-      // Étape 36 : au garage, la caméra tourne lentement autour de la voiture, comme dans une vitrine.
+      cible = [cx, l.rayon, cz];
+    } else if (monde.phase === "garage" || monde.phase === "cartes") {
+      // Au garage, la caméra tourne lentement autour de la voiture, comme dans une vitrine.
       const a = monde.temps * 0.35;
-      oeil = [v.x + Math.cos(a) * 8, 2.4, v.z + Math.sin(a) * 8];
-      cible = [v.x, 0.7, v.z];
-      camera.angle = v.angle; // prête à suivre la voiture dès le départ
+      const recul = v.modele === "monster" ? 10 : 8;
+      oeil = [v.x + Math.cos(a) * recul, 2.6, v.z + Math.sin(a) * recul];
+      cible = [v.x, 0.9, v.z];
+      camera.angle = v.angle;
     } else if (camera.mode === "ciel") {
-      // Vue d'hélicoptère, droit vers le bas : le « haut » de l'écran est l'avant de la voiture.
       oeil = [v.x, 110, v.z];
       cible = [v.x, 0, v.z];
       haut = [cos, 0, sin];
     } else if (camera.mode === "capot") {
-      const y = (v.y || 0) + (v.modele === "monster" ? 2.6 : 1.5);
-      oeil = [v.x + Math.cos(v.angle) * 0.6, y, v.z + Math.sin(v.angle) * 0.6];
-      cible = [v.x + Math.cos(v.angle) * 20, y - 0.3, v.z + Math.sin(v.angle) * 20];
+      const h = y + (vehicule(v.modele).yCapot || 1.4);
+      oeil = [v.x + Math.cos(v.angle) * 0.4, h, v.z + Math.sin(v.angle) * 0.4];
+      cible = [v.x + Math.cos(v.angle) * 20, h - 0.3, v.z + Math.sin(v.angle) * 20];
     } else {
-      // Étape 37 : la caméra suit aussi la voiture en hauteur (un peu moins, pour qu'on voie bien les sauts).
-      const y = v.y || 0;
-      oeil = [v.x - cos * R.distance, R.hauteur + y * 0.75, v.z - sin * R.distance];
+      // Derrière la voiture ; la caméra suit aussi la hauteur (un peu moins, pour qu'on voie bien les sauts).
+      const recul = v.modele === "monster" ? 1.3 : 1;
+      oeil = [v.x - cos * R.distance * recul, R.hauteur * recul + y * 0.75, v.z - sin * R.distance * recul];
       cible = [v.x + cos * R.regardDevant, 1 + y * 0.85, v.z + sin * R.regardDevant];
     }
-    camera.x = oeil[0];
-    camera.y = oeil[1];
-    camera.z = oeil[2];
-    const projection = M.perspective((R.champDeVision * Math.PI) / 180, rapport, 0.3, 1600);
-    vueProjection = M.multiplier(projection, M.regarder(oeil, cible, haut));
-    return oeil;
+    cam.position.set(oeil[0], oeil[1], oeil[2]);
+    cam.up.set(haut[0], haut[1], haut[2]);
+    cam.lookAt(cible[0], cible[1], cible[2]);
+    cam.updateMatrixWorld();
+    // La matrice « vue + perspective », pour que le tableau de bord sache où tombe un point sur l'écran.
+    vueProjection = new Float32Array(new THREE.Matrix4().multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse).elements);
+  }
+
+  // Met une voiture (le groupe Three.js) à la place de la voiture du monde.
+  function placerVoiture(objet, v) {
+    const y = v.y || 0;
+    const penche = v.tangage || (Math.abs(v.vy || 0) > 0.01 ? Math.max(-0.6, Math.min(0.6, Math.atan2(v.vy, Math.abs(v.vitesse) || 1))) : 0);
+    objet.g.position.set(v.x, y, v.z);
+    objet.g.rotation.set(0, -v.angle, penche, "YZX"); // d'abord tourner (angle), puis pencher (pente, looping)
+    for (const r of objet.roues) {
+      r.roue.rotation.z = -v.rotationRoues; // la roue roule
+      r.pivot.rotation.y = r.avant ? -v.volant * C.voiture.angleRoues : 0; // les roues avant braquent
+    }
+  }
+
+  // Prend un objet dans une réserve (pour ne pas en refabriquer à chaque image).
+  function depuisReserve(reserve, index, fabriquer) {
+    if (!reserve[index]) {
+      reserve[index] = fabriquer();
+      scene.add(reserve[index]);
+    }
+    reserve[index].visible = true;
+    return reserve[index];
   }
 
   function dessiner(monde, options, dt) {
     if (monde.carte !== carteDessinee) preparerCarte(monde.carte);
-    const oeil = placerCamera(monde, dt);
-    Projecteur.commencerImage({
-      ciel: COULEURS.ciel,
-      vueProjection,
-      soleil: normaliser([0.4, 0.8, 0.3]),
-      oeil,
-      brouillard: true,
-    });
+    placerCamera(monde, dt);
+    const v = monde.voiture;
 
-    // Le décor ne bouge jamais : sa matrice « modèle » est l'identité.
-    Projecteur.dessiner(maillages.decor, null);
+    // Les voitures : on montre seulement celle du joueur, et la voiture bleue s'il y en a une.
+    const joueur = vehicule(v.modele);
+    for (const [modele, objet] of Object.entries(vehicules)) objet.g.visible = modele === v.modele;
+    joueur.g.visible = camera.mode !== "capot" || monde.phase === "garage" || monde.phase === "cartes";
+    placerVoiture(joueur, v);
+    adversaire.g.visible = !!monde.adversaire;
+    if (monde.adversaire) placerVoiture(adversaire, monde.adversaire.voiture);
 
-    // Les deux voitures. En vue « capot », on ne dessine pas la nôtre (on est dedans !).
-    if (camera.mode !== "capot" || monde.phase === "garage") dessinerVoiture(monde.voiture, maillages.modeles[monde.voiture.modele], options.rayonsX);
-    if (monde.adversaire) dessinerVoiture(monde.adversaire.voiture, maillages.adversaire, options.rayonsX);
-
-    // Étape 37 : les cartons du parcours (ils tournent sur eux-mêmes quand ils volent).
-    for (const c of monde.cartons) {
-      if (Math.abs(c.x - oeil[0]) > 400 || Math.abs(c.z - oeil[2]) > 400) continue;
-      Projecteur.dessiner(maillages.carton, M.enchainer(M.deplacement(c.x, c.y, c.z), M.rotationY(c.rotation), M.rotationZ(c.rotation * 0.7)));
-    }
-
-    // Étape 36 : les pièces qui tournent sur elles-mêmes et flottent de haut en bas.
-    const tourne = M.rotationY(monde.temps * 3);
+    // Les pièces qui tournent sur elles-mêmes et flottent, et les cartons.
+    let n = 0;
     for (const p of monde.pieces) {
       if (p.prise) continue;
-      if (Math.abs(p.x - oeil[0]) > 450 || Math.abs(p.z - oeil[2]) > 450) continue; // trop loin : on ne la voit pas
-      const flotte = (p.y !== undefined ? p.y : C.pieces.hauteur) + Math.sin(monde.temps * 2.5 + p.numero) * 0.2;
-      Projecteur.dessiner(maillages.piece, M.multiplier(M.deplacement(p.x, flotte, p.z), tourne), { sansLumiere: true }); // sans ombre : elles brillent
+      const m = depuisReserve(piecesPool, n++, () => {
+        const piece = new THREE.Mesh(geoPiece, materiauPiece);
+        piece.castShadow = true;
+        return piece;
+      });
+      m.position.set(p.x, (p.y !== undefined ? p.y : C.pieces.hauteur) + Math.sin(monde.temps * 2.5 + p.numero) * 0.2, p.z);
+      m.rotation.y = monde.temps * 3;
     }
+    for (let i = n; i < piecesPool.length; i++) piecesPool[i].visible = false;
+    const cartons = monde.cartons || [];
+    cartons.forEach((c, i) => {
+      const m = depuisReserve(cartonsPool, i, () => {
+        const carton = new THREE.Mesh(geoCarton, materiauCarton);
+        carton.castShadow = carton.receiveShadow = true;
+        return carton;
+      });
+      m.position.set(c.x, c.y, c.z);
+      m.rotation.set(0, c.rotation, c.rotation * 0.7);
+    });
+    for (let i = cartons.length; i < cartonsPool.length; i++) cartonsPool[i].visible = false;
 
+    // Le soleil suit la voiture, pour que les ombres soient nettes autour d'elle.
+    soleil.position.set(v.x + SOLEIL.x * 150, SOLEIL.y * 150, v.z + SOLEIL.z * 150);
+    soleil.target.position.set(v.x, 0, v.z);
+    ciel.position.copy(cam.position);
+
+    // On dessine !
+    rendu.autoClear = true;
+    rendu.render(scene, cam);
+    compteur.triangles = rendu.info.render.triangles;
+    compteur.objets = rendu.info.render.calls;
+    compteur.lignes = 0;
     if (options.rayonsX) {
-      Projecteur.dessiner(maillages.filDecor, null);
-      Projecteur.dessiner(maillages.rayonsX, null, { parDessus: true });
-      Projecteur.remplacerSommets(maillages.rayonsXVoiture, construireRayonsXVoiture(monde));
-      Projecteur.dessiner(maillages.rayonsXVoiture, null, { parDessus: true });
+      // Aux rayons X : on redessine tout en « fil de fer » par-dessus, puis les traits secrets.
+      rendu.autoClear = false;
+      scene.overrideMaterial = fil;
+      ciel.visible = false;
+      rendu.render(scene, cam);
+      scene.overrideMaterial = null;
+      ciel.visible = true;
+      rayonsFixes.visible = true;
+      Circuit.RayonsX.mobiles(monde, rayonsMobiles);
+      rendu.render(sceneX, cam);
+      compteur.lignes = (rayonsFixes.geometry.attributes.position.count + rayonsMobiles.geometry.attributes.position.count) / 2;
+      rendu.autoClear = true;
     }
-  }
-
-  // Une voiture : on la tourne de son angle, puis on la déplace à sa place. Ses 4 roues suivent.
-  // `modele` = les maillages d'un modèle (carrosserie, roue, et où sont les roues).
-  function dessinerVoiture(v, modele, rayonsX) {
-    // Étape 37 : la voiture peut être en l'air (y), penchée sur une pente, ou la tête en bas dans un looping.
-    const y = v.y || 0;
-    const penche = v.tangage || (Math.abs(v.vy || 0) > 0.01 ? Math.max(-0.6, Math.min(0.6, Math.atan2(v.vy, Math.abs(v.vitesse) || 1))) : 0);
-    const placeVoiture = M.enchainer(M.deplacement(v.x, y, v.z), M.rotationY(-v.angle), M.rotationZ(penche));
-    const placeOmbre = M.multiplier(M.deplacement(v.x, v.enLAir || v.tangage ? 0 : y, v.z), M.rotationY(-v.angle));
-    Projecteur.dessiner(maillages.ombre, placeOmbre, { sansLumiere: true });
-    Projecteur.dessiner(modele.carrosserie, placeVoiture);
-    if (rayonsX) Projecteur.dessiner(modele.fil, placeVoiture);
-    const R = modele.roues;
-    for (const [rx, rz, avant] of [[R.avant, -R.z, true], [R.avant, R.z, true], [R.arriere, -R.z, false], [R.arriere, R.z, false]]) {
-      const braquage = avant ? -v.volant * C.voiture.angleRoues : 0;
-      const place = M.enchainer(placeVoiture, M.deplacement(rx, R.rayon, rz), M.rotationY(braquage), M.rotationZ(-v.rotationRoues));
-      Projecteur.dessiner(modele.roue, place);
-      if (rayonsX) Projecteur.dessiner(modele.filRoue, place);
-    }
-  }
-
-  function normaliser(v) {
-    const n = Math.hypot(v[0], v[1], v[2]);
-    return [v[0] / n, v[1] / n, v[2] / n];
   }
 
   return {
@@ -450,6 +284,7 @@ Circuit.Scene3D = (function () {
     dessiner,
     changerCamera,
     camera,
+    compteur,
     get vueProjection() {
       return vueProjection;
     },

@@ -64,6 +64,7 @@
 
     <div class="outils">
       <button data-action="valider">▶ Valider <kbd>Entrée</kbd></button>
+      <button data-action="retour">🗺️ Cartes <kbd>⌫</kbd></button>
       <button data-action="recommencer">🔄 Recommencer <kbd>R</kbd></button>
       <button data-action="camera">🎥 Caméra <kbd>C</kbd></button>
       <button data-action="son">🔊 Son <kbd>B</kbd></button>
@@ -94,29 +95,34 @@
   </div>
 
   <!-- L'ordre compte : chaque fichier peut utiliser ceux chargés AVANT lui.
-       Le « ?v=6 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
-  <script src="config.js?v=6"></script>
-  <script src="moteur/evenements.js?v=6"></script>
-  <script src="moteur/entrees.js?v=6"></script>
-  <script src="moteur/maths3d.js?v=6"></script>
-  <script src="moteur/projecteur.js?v=6"></script>
-  <script src="moteur/chocs.js?v=6"></script>
-  <script src="moteur/son.js?v=6"></script>
-  <script src="logique/piste.js?v=6"></script>
-  <script src="logique/voiture.js?v=6"></script>
-  <script src="logique/pilote.js?v=6"></script>
-  <script src="logique/pieces.js?v=6"></script>
-  <script src="logique/parcours.js?v=6"></script>
-  <script src="logique/balade.js?v=6"></script>
-  <script src="logique/course.js?v=6"></script>
-  <script src="logique/garage.js?v=6"></script>
-  <script src="donnees/sauvegarde.js?v=6"></script>
-  <script src="affichage/modeles.js?v=6"></script>
-  <script src="affichage/decor-parcours.js?v=6"></script>
-  <script src="affichage/scene3d.js?v=6"></script>
-  <script src="affichage/tableau-de-bord.js?v=6"></script>
-  <script src="affichage/sons.js?v=6"></script>
-  <script src="affichage/sous-le-capot.js?v=6"></script>
-  <script src="main.js?v=6"></script>
+       Le « ?v=7 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
+  <!-- Étape 38 : Three.js, le moteur 3D qui fait le rendu réaliste (rangé dans le dépôt, licence MIT). -->
+  <script src="vendor/three.min.js?v=7"></script>
+  <script src="config.js?v=7"></script>
+  <script src="moteur/evenements.js?v=7"></script>
+  <script src="moteur/entrees.js?v=7"></script>
+  <script src="moteur/maths3d.js?v=7"></script>
+  <script src="moteur/projecteur.js?v=7"></script>
+  <script src="moteur/chocs.js?v=7"></script>
+  <script src="moteur/son.js?v=7"></script>
+  <script src="logique/piste.js?v=7"></script>
+  <script src="logique/voiture.js?v=7"></script>
+  <script src="logique/pilote.js?v=7"></script>
+  <script src="logique/pieces.js?v=7"></script>
+  <script src="logique/parcours.js?v=7"></script>
+  <script src="logique/balade.js?v=7"></script>
+  <script src="logique/course.js?v=7"></script>
+  <script src="logique/garage.js?v=7"></script>
+  <script src="donnees/sauvegarde.js?v=7"></script>
+  <script src="affichage/textures.js?v=7"></script>
+  <script src="affichage/modeles.js?v=7"></script>
+  <script src="affichage/decor-circuit.js?v=7"></script>
+  <script src="affichage/decor-parcours.js?v=7"></script>
+  <script src="affichage/rayons-x.js?v=7"></script>
+  <script src="affichage/scene3d.js?v=7"></script>
+  <script src="affichage/tableau-de-bord.js?v=7"></script>
+  <script src="affichage/sons.js?v=7"></script>
+  <script src="affichage/sous-le-capot.js?v=7"></script>
+  <script src="main.js?v=7"></script>
 </body>
 </html>

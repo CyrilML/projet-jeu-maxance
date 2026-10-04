@@ -1,16 +1,10 @@
-// 📽️ LE PROJECTEUR : le moteur 3D, fait maison
+// 📐 LE CONSTRUCTEUR DE TRIANGLES ET DE TRAITS
 //
-// Une carte graphique ne sait dessiner qu'une seule forme : le TRIANGLE.
-// Une voiture, un arbre, la route… tout est fait de triangles, comme une sculpture en papier plié.
-//
-// Ce fichier contient deux outils :
-//   1. Le CONSTRUCTEUR : on lui dit « une boîte ici, un cône là », il découpe tout en triangles.
-//      Chaque coin de triangle (un « sommet ») a 9 nombres : position (x, y, z),
-//      direction de la face (nx, ny, nz, pour la lumière) et couleur (rouge, vert, bleu).
-//   2. Le PROJECTEUR : il envoie ces triangles à la carte graphique (WebGL) et lui demande
-//      de les dessiner, vus depuis la caméra, avec un soleil qui éclaire les faces.
-//
-// Aucun outil extérieur : tout est là, en quelques centaines de lignes.
+// Étapes 32 à 37 : ce fichier contenait notre moteur 3D fait maison (le « projecteur », en WebGL).
+// Étape 38 : pour un rendu réaliste, c'est maintenant Three.js qui dessine (voir affichage/scene3d.js).
+// On garde ici le petit CONSTRUCTEUR : il découpe des formes en triangles, et surtout il écrit les TRAITS
+// des rayons X (affichage/rayons-x.js). Chaque coin (un « sommet ») a 9 nombres : position (x, y, z),
+// direction de la face (nx, ny, nz) et couleur (rouge, vert, bleu).
 
 window.Circuit = window.Circuit || {};
 
@@ -126,124 +120,3 @@ Circuit.Constructeur.aretes = function (triangles, couleur) {
   }
   return c.fin();
 };
-
-// ---------------------------------------------------------------------------------------------
-// 2. LE PROJECTEUR (WebGL)
-// ---------------------------------------------------------------------------------------------
-Circuit.Projecteur = (function () {
-  // Les deux petits programmes qui tournent DANS la carte graphique (en langage GLSL).
-  // Le premier place chaque sommet sur l'écran ; le second colorie chaque pixel.
-  const PROGRAMME_SOMMETS = `
-    attribute vec3 aPosition;
-    attribute vec3 aNormale;
-    attribute vec3 aCouleur;
-    uniform mat4 uVueProjection;
-    uniform mat4 uModele;
-    uniform vec3 uSoleil;
-    uniform float uLumiere;
-    uniform vec3 uOeil;
-    varying vec3 vCouleur;
-    varying float vDistance;
-    void main() {
-      vec4 monde = uModele * vec4(aPosition, 1.0);
-      gl_Position = uVueProjection * monde;
-      vec3 n = normalize(mat3(uModele) * aNormale);
-      float eclairage = 0.55 + 0.45 * max(dot(n, uSoleil), 0.0);
-      vCouleur = aCouleur * mix(1.0, eclairage, uLumiere);
-      vDistance = distance(monde.xyz, uOeil);
-    }`;
-  const PROGRAMME_PIXELS = `
-    precision mediump float;
-    varying vec3 vCouleur;
-    varying float vDistance;
-    uniform vec3 uCiel;
-    uniform float uBrouillard;
-    void main() {
-      float brume = smoothstep(300.0, 750.0, vDistance) * uBrouillard;
-      gl_FragColor = vec4(mix(vCouleur, uCiel, brume), 1.0);
-    }`;
-
-  let gl = null;
-  let programme = null;
-  const emplacements = {};
-  const compteur = { triangles: 0, lignes: 0, dessins: 0 }; // ce qui a été dessiné dans l'image
-
-  function compiler(type, texte) {
-    const s = gl.createShader(type);
-    gl.shaderSource(s, texte);
-    gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
-    return s;
-  }
-
-  // Renvoie false si l'ordinateur ne sait pas faire de 3D (WebGL absent).
-  function initialiser(canvas) {
-    gl = canvas.getContext("webgl", { antialias: true });
-    if (!gl) return false;
-    programme = gl.createProgram();
-    gl.attachShader(programme, compiler(gl.VERTEX_SHADER, PROGRAMME_SOMMETS));
-    gl.attachShader(programme, compiler(gl.FRAGMENT_SHADER, PROGRAMME_PIXELS));
-    gl.linkProgram(programme);
-    if (!gl.getProgramParameter(programme, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(programme));
-    gl.useProgram(programme);
-    for (const nom of ["aPosition", "aNormale", "aCouleur"]) emplacements[nom] = gl.getAttribLocation(programme, nom);
-    for (const nom of ["uVueProjection", "uModele", "uSoleil", "uLumiere", "uOeil", "uCiel", "uBrouillard"]) {
-      emplacements[nom] = gl.getUniformLocation(programme, nom);
-    }
-    gl.enable(gl.DEPTH_TEST); // ce qui est devant cache ce qui est derrière
-    return true;
-  }
-
-  // Envoie une liste de sommets à la carte graphique, une fois pour toutes.
-  // `lignes` = true pour des segments (rayons X) au lieu de triangles.
-  function creerMaillage(sommets, lignes) {
-    const tampon = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, tampon);
-    gl.bufferData(gl.ARRAY_BUFFER, sommets, gl.STATIC_DRAW);
-    return { tampon, nombre: sommets.length / 9, lignes: !!lignes };
-  }
-
-  // Pour ce qui change à chaque image (les flèches des rayons X).
-  function remplacerSommets(maillage, sommets) {
-    gl.bindBuffer(gl.ARRAY_BUFFER, maillage.tampon);
-    gl.bufferData(gl.ARRAY_BUFFER, sommets, gl.DYNAMIC_DRAW);
-    maillage.nombre = sommets.length / 9;
-  }
-
-  // Efface l'écran (couleur du ciel) et prépare la caméra pour toute l'image.
-  function commencerImage(reglages) {
-    compteur.triangles = compteur.lignes = compteur.dessins = 0;
-    const ciel = reglages.ciel;
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-    gl.clearColor(ciel[0], ciel[1], ciel[2], 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.uniformMatrix4fv(emplacements.uVueProjection, false, reglages.vueProjection);
-    gl.uniform3fv(emplacements.uSoleil, reglages.soleil);
-    gl.uniform3fv(emplacements.uOeil, reglages.oeil);
-    gl.uniform3fv(emplacements.uCiel, ciel);
-    gl.uniform1f(emplacements.uBrouillard, reglages.brouillard ? 1 : 0);
-  }
-
-  // Dessine un maillage, placé dans le monde par sa matrice « modèle ».
-  // options.sansLumiere : couleurs pures (rayons X) ; options.parDessus : visible à travers tout.
-  function dessiner(maillage, modele, options) {
-    options = options || {};
-    if (!maillage.nombre) return;
-    gl.bindBuffer(gl.ARRAY_BUFFER, maillage.tampon);
-    const taille = 9 * 4; // 9 nombres de 4 octets par sommet
-    gl.vertexAttribPointer(emplacements.aPosition, 3, gl.FLOAT, false, taille, 0);
-    gl.vertexAttribPointer(emplacements.aNormale, 3, gl.FLOAT, false, taille, 12);
-    gl.vertexAttribPointer(emplacements.aCouleur, 3, gl.FLOAT, false, taille, 24);
-    for (const nom of ["aPosition", "aNormale", "aCouleur"]) gl.enableVertexAttribArray(emplacements[nom]);
-    gl.uniformMatrix4fv(emplacements.uModele, false, modele || Circuit.Maths3D.identite());
-    gl.uniform1f(emplacements.uLumiere, options.sansLumiere || maillage.lignes ? 0 : 1);
-    if (options.parDessus) gl.disable(gl.DEPTH_TEST);
-    gl.drawArrays(maillage.lignes ? gl.LINES : gl.TRIANGLES, 0, maillage.nombre);
-    if (options.parDessus) gl.enable(gl.DEPTH_TEST);
-    compteur.dessins++;
-    if (maillage.lignes) compteur.lignes += maillage.nombre / 2;
-    else compteur.triangles += maillage.nombre / 3;
-  }
-
-  return { initialiser, creerMaillage, remplacerSommets, commencerImage, dessiner, compteur };
-})();

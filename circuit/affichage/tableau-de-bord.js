@@ -112,7 +112,7 @@ Circuit.TableauDeBord = (function () {
       if (monde.resultat) texte("La voiture bleue était à " + monde.resultat.avance.toLocaleString("fr-FR") + " m derrière toi", W / 2, H / 2 - 26, 17, "#9cc4ff", "center");
       monde.tempsDesTours.forEach((t, i) => texte("Tour " + (i + 1) + " : " + chrono(t), W / 2, H / 2 + 2 + i * 22, 17, "#cfd6ff", "center"));
       if (Circuit.Sauvegarde.recordDerniereCourse) texte("🏆 Nouveau record !", W / 2, H / 2 + 80, 22, "#7dffa0", "center");
-      texte("🪙 +" + monde.piecesCourse + " pièces · Entrée : retour au garage", W / 2, H / 2 + 108, 18, "#ffd34d", "center");
+      texte("🪙 +" + monde.piecesCourse + " pièces · Entrée : choisir une carte", W / 2, H / 2 + 108, 18, "#ffd34d", "center");
     } else if (monde.phase === "perdu") {
       panneau(W / 2 - 230, H / 2 - 110, 460, 200);
       texte("😢 Perdu !", W / 2, H / 2 - 64, 42, "#ff8a7a", "center");
@@ -120,9 +120,10 @@ Circuit.TableauDeBord = (function () {
       texte("(en " + chrono(monde.chronoCourse) + ")", W / 2, H / 2 + 2, 17, "#9cc4ff", "center");
       if (monde.resultat) texte("Il te restait " + monde.resultat.retard.toLocaleString("fr-FR") + " m à faire", W / 2, H / 2 + 30, 18, "#cfd6ff", "center");
       texte("🪙 +" + monde.piecesCourse + " pièces gardées quand même !", W / 2, H / 2 + 58, 18, "#ffd34d", "center");
-      texte("Entrée : retour au garage, puis la revanche !", W / 2, H / 2 + 82, 18, "#7dffa0", "center");
+      texte("Entrée : choisir une carte, puis la revanche !", W / 2, H / 2 + 82, 18, "#7dffa0", "center");
     }
 
+    if (monde.phase === "course" || monde.phase === "decompte") texte("R : recommencer la course · ⌫ : changer de carte", 24, H - 22, 14, "#cfd6ff");
     if (options.pause) texte("⏸ Pause", W / 2, H - 30, 28, "#fff", "center");
     if (options.ralenti) texte("🐢 Ralenti", 260, 40, 18, "#cfd6ff");
     if (options.rayonsX) dessinerEtiquettesRayonsX(monde);
