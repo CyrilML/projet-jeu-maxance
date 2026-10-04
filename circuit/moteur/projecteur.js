@@ -133,7 +133,7 @@ Circuit.Projecteur = (function () {
     uniform vec3 uCiel;
     uniform float uBrouillard;
     void main() {
-      float brume = smoothstep(180.0, 420.0, vDistance) * uBrouillard;
+      float brume = smoothstep(300.0, 750.0, vDistance) * uBrouillard;
       gl_FragColor = vec4(mix(vCouleur, uCiel, brume), 1.0);
     }`;
 

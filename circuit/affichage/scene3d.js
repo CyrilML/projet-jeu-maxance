@@ -74,6 +74,15 @@ Circuit.Scene3D = (function () {
         c.quad([x, 0, z], [x, 0, z + carreau], [x + carreau, 0, z + carreau], [x + carreau, 0, z], couleur);
       }
     }
+    // Derrière la clôture, encore 200 m d'herbe (en plus grands carreaux) : sinon, vu du ciel,
+    // on verrait le bout du monde.
+    const bord = demiTerrain + 200, grand = 50;
+    for (let x = -bord; x < bord; x += grand) {
+      for (let z = -bord; z < bord; z += grand) {
+        if (x >= -demiTerrain && x < demiTerrain && z >= -demiTerrain && z < demiTerrain) continue;
+        c.quad([x, -0.01, z], [x, -0.01, z + grand], [x + grand, -0.01, z + grand], [x + grand, -0.01, z], COULEURS.herbe2);
+      }
+    }
 
     // La route et ses bordures : on suit le milieu de la route tous les 3 m environ.
     const morceaux = Math.round(Piste.longueurTour / 3);
@@ -306,7 +315,7 @@ Circuit.Scene3D = (function () {
     camera.x = oeil[0];
     camera.y = oeil[1];
     camera.z = oeil[2];
-    const projection = M.perspective((R.champDeVision * Math.PI) / 180, rapport, 0.3, 900);
+    const projection = M.perspective((R.champDeVision * Math.PI) / 180, rapport, 0.3, 1600);
     vueProjection = M.multiplier(projection, M.regarder(oeil, cible, haut));
     return oeil;
   }

@@ -14,18 +14,19 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 1,
+  version: 2,
 
   ecran: { largeur: 960, hauteur: 540 },
 
   // Le circuit le plus simple possible : un ovale, comme un stade.
   // Deux lignes droites, reliées par deux demi-cercles.
   piste: {
-    longueurDroite: 120, // longueur de chaque ligne droite (m)
-    rayon: 40, // rayon des virages, mesuré au milieu de la route (m)
+    // Étape 33 : le circuit est 3 fois plus grand (avant : 120 m et 40 m). Un tour ≈ 1 474 m.
+    longueurDroite: 360, // longueur de chaque ligne droite (m)
+    rayon: 120, // rayon des virages, mesuré au milieu de la route (m)
     largeur: 14, // largeur de la route (m)
     largeurBordure: 1.2, // les bandes rouges et blanches sur les côtés (m)
-    tailleHerbe: 400, // le carré d'herbe autour du circuit (m de côté)
+    tailleHerbe: 800, // le carré d'herbe autour du circuit (m de côté) ; 400 avant l'étape 33
   },
 
   // La voiture
@@ -59,7 +60,7 @@ Circuit.CONFIG = {
 
   // Le décor
   decor: {
-    arbres: 70, // nombre d'arbres autour du circuit
+    arbres: 260, // nombre d'arbres autour du circuit (70 avant l'étape 33 : le terrain est 4 fois plus grand)
     graine: 7, // le « hasard » des arbres est toujours le même avec la même graine
   },
 

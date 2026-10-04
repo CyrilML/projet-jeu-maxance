@@ -4,18 +4,18 @@
 // Deux lignes droites, reliées par deux demi-cercles.
 //
 // Astuce de géomètre : tous les points du MILIEU de la route sont exactement à la même distance
-// (le rayon, 40 m) d'un segment caché au centre du stade, le « squelette » :
+// (le rayon, 120 m) d'un segment caché au centre du stade, le « squelette » :
 //
 //        ╭──────────────────────╮
 //       │   ●────squelette────●   │    ← chaque point du milieu de la route
-//        ╰──────────────────────╯       est à 40 m du squelette
+//        ╰──────────────────────╯       est à 120 m du squelette
 //
 // Donc, pour savoir si la voiture est sur la route, il suffit de mesurer sa distance au squelette :
-//   distance au milieu de la route = | distance au squelette − 40 |
+//   distance au milieu de la route = | distance au squelette − 120 |
 //   si c'est moins que la moitié de la largeur (7 m) → sur la route, sinon → dans l'herbe.
 //
 // Ce fichier sait aussi dire « où en est la voiture » sur le tour : la PROGRESSION, en mètres
-// depuis la ligne de départ (0 m = sur la ligne ; un tour complet ≈ 491 m).
+// depuis la ligne de départ (0 m = sur la ligne ; un tour complet ≈ 1 474 m).
 
 window.Circuit = window.Circuit || {};
 
@@ -27,25 +27,25 @@ Circuit.Piste = (function () {
 
   // Le point du milieu de la route, à `s` mètres de la ligne de départ.
   // Renvoie aussi la direction de la route (dx, dz) à cet endroit.
-  // La ligne de départ est au milieu de la ligne droite du bas (x = 0, z = +40), et on roule vers x+.
+  // La ligne de départ est au milieu de la ligne droite du bas (x = 0, z = +120), et on roule vers x+.
   function pointA(s) {
     let d = (((s + DEMI) % longueurTour) + longueurTour) % longueurTour; // distance depuis le bout gauche de la droite du bas
     if (d < L) return { x: -DEMI + d, z: R, dx: 1, dz: 0 }; // droite du bas, vers x+
     d -= L;
     if (d < Math.PI * R) {
-      const t = d / R; // virage de droite, centré en (+60, 0)
+      const t = d / R; // virage de droite, centré en (+180, 0)
       return { x: DEMI + R * Math.sin(t), z: R * Math.cos(t), dx: Math.cos(t), dz: -Math.sin(t) };
     }
     d -= Math.PI * R;
     if (d < L) return { x: DEMI - d, z: -R, dx: -1, dz: 0 }; // droite du haut, vers x−
     d -= L;
-    const t = d / R; // virage de gauche, centré en (−60, 0)
+    const t = d / R; // virage de gauche, centré en (−180, 0)
     return { x: -DEMI - R * Math.sin(t), z: -R * Math.cos(t), dx: -Math.cos(t), dz: Math.sin(t) };
   }
 
   // Où est le point (x, z) par rapport au circuit ?
   function reperer(x, z) {
-    // Le point le plus proche sur le squelette (le segment de x = −60 à x = +60, en z = 0).
+    // Le point le plus proche sur le squelette (le segment de x = −180 à x = +180, en z = 0).
     const sx = Math.max(-DEMI, Math.min(DEMI, x));
     const distanceSquelette = Math.hypot(x - sx, z);
     const ecart = distanceSquelette - R; // > 0 : côté extérieur ; < 0 : côté intérieur

@@ -155,6 +155,7 @@
       <a href="#etape30">Étape 30</a>
       <a href="#etape31">Étape 31</a>
       <a href="#etape32">Étape 32 · circuit 3D</a>
+      <a href="#etape33">Étape 33</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -2378,6 +2379,63 @@ z = z + sin(angle) × vitesse × temps</pre>
       <details class="question"><summary>Pourquoi faut-il passer les portes dans l'ordre ?</summary><p>Pour qu'on ne puisse pas tricher en faisant des allers-retours sur la ligne d'arrivée.</p></details>
     </section>
 
+    <section id="etape33">
+      <h2>📏 Étape 33 : un circuit 3 fois plus grand <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Tu as testé le circuit, tu aimes le style, mais il était trop petit. Le voici 3 fois plus grand : <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a>.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/33-circuit-plus-grand.md</code>.</p>
+          <ul>
+            <li>✍️ 3 fois plus grand : lignes droites de 360 m, virages de 120 m de rayon.</li>
+            <li>✍️ La route garde sa largeur : 14 m.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Les lignes droites sont beaucoup plus longues.</li>
+            <li>☐ Les virages sont plus doux.</li>
+            <li>☐ La route a la même largeur qu'avant.</li>
+            <li>☐ La mini-carte montre tout le circuit.</li>
+            <li>☐ Un tour à fond prend environ 35 s.</li>
+            <li>Vérifie « version 2 » en haut de la page du circuit.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🎛️ Deux nombres ont suffi</h3>
+      <p>Pour agrandir tout le circuit, on a changé seulement 2 nombres dans <code>circuit/config.js</code> :</p>
+      <pre style="white-space: pre-wrap">longueurDroite: 120  →  360
+rayon:           40  →  120</pre>
+      <p>La route, les bordures, le damier, la tribune, les portes invisibles, les rayons X : tout est <strong>calculé</strong> à partir de ces nombres. Personne n'a redessiné le circuit à la main ! C'est la force d'un fichier de réglages.</p>
+
+      <h3>🧮 Combien de mètres dans un tour ?</h3>
+      <p>Un tour = 2 lignes droites + 2 demi-cercles (= 1 cercle entier) :</p>
+      <pre style="white-space: pre-wrap">tour = 2 × 360 + 2 × 3,14 × 120
+     = 720 + 754
+     ≈ 1 474 m        (avant : 491 m, donc 3 fois plus)</pre>
+      <p>À 42 m/s (150 km/h), ça fait 1 474 ÷ 42 ≈ 35 secondes.</p>
+
+      <h3>🌫️ La brume et la mini-carte</h3>
+      <p>Au loin, les objets se fondent dans la couleur du ciel : c'est la <strong>brume</strong>. Elle cache le bord du monde, et elle aide l'ordinateur (il n'a pas besoin de dessiner très loin). Avec un circuit plus grand, on l'a repoussée : elle commence à 300 m au lieu de 180 m.</p>
+      <p>La mini-carte, elle, calcule toute seule son <strong>échelle</strong> : 130 pixels ÷ la largeur du circuit. Aujourd'hui, 1 m = 0,21 pixel. Si tu agrandis encore le circuit, elle s'adaptera.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Vue du ciel (<kbd>C</kbd>) : est-ce que tu vois encore le virage en entier ?</li>
+        <li>Dans l'état en direct, regarde « progression » : sur combien de mètres compte-t-on maintenant ?</li>
+        <li>Aux rayons X (<kbd>X</kbd>), regarde où sont les portes : à combien de mètres chacune ?</li>
+        <li>Combien de triangles dessinés maintenant ? Pourquoi plus qu'avant ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Si on met le rayon à 200 m, le circuit devient plus long ou plus court ?</summary><p>Plus long : les demi-cercles sont plus grands (2 × 3,14 × 200 ≈ 1 257 m de virages au lieu de 754).</p></details>
+      <details class="question"><summary>Pourquoi a-t-il fallu plus de sapins ?</summary><p>Le terrain est passé de 400 m à 800 m de côté : sa surface est 4 fois plus grande. Avec 70 sapins, il aurait eu l'air vide.</p></details>
+      <details class="question"><summary>Les portes invisibles ont-elles bougé ?</summary><p>Oui : elles sont toujours à 1/4, 1/2 et 3/4 du tour, mais le tour est plus long, donc elles sont plus loin (environ 369 m, 737 m et 1 106 m).</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -2570,26 +2628,32 @@ z = z + sin(angle) × vitesse × temps</pre>
           <p>Une voiture sur un circuit ovale, en 3D : 3 tours, un chrono, des records, 3 caméras.</p>
           <p class="apprend"><b>Tu apprends :</b> tout est fait de triangles, x y z, caméra et perspective, matrices, avancer en biais avec cos et sin, portes invisibles anti-triche. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">33</div>
+          <h4>Un circuit 3 fois plus grand <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Lignes droites de 360 m, virages de 120 m de rayon : un tour fait 1 474 m. Le terrain, les sapins, la brume et la mini-carte suivent.</p>
+          <p class="apprend"><b>Tu apprends :</b> tout calculer à partir de quelques réglages, la longueur d'un tour (périmètre), la brume, l'échelle d'une carte. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">34</div>
           <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">34</div>
+          <div class="num">35</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">35</div>
+          <div class="num">36</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">36</div>
+          <div class="num">37</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -2900,6 +2964,15 @@ z = z + sin(angle) × vitesse × temps</pre>
         <textarea class="journal" id="appris-32" data-cle="appris-32" placeholder="Ex. : J'ai appris qu'en 3D tout est fait de triangles, et que…"></textarea>
         <label for="idees-32"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-32" data-cle="idees-32" placeholder="Ex. : Une voiture adversaire, un circuit en 8, un bruit de moteur…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 33 · un circuit 3 fois plus grand <span class="petit">· 4 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le circuit passe de 491 m à 1 474 m par tour (lignes droites de 360 m, virages de 120 m de rayon), la route reste à 14 m. Le terrain passe à 800 m de côté avec 260 sapins, la brume commence plus loin, et la mini-carte calcule son échelle toute seule.</p>
+        <p class="petit">✍️ Réponses de Maxance : 3 fois plus grand, route de la même largeur.</p>
+        <label for="appris-33"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-33" data-cle="appris-33" placeholder="Ex. : J'ai appris qu'en changeant 2 nombres, tout le circuit change…"></textarea>
+        <label for="idees-33"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-33" data-cle="idees-33" placeholder="Ex. : Des virages dans l'autre sens, une ligne droite avec un pont…"></textarea>
       </div>
     </section>
   </main>

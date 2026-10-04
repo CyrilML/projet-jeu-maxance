@@ -116,10 +116,12 @@ Circuit.TableauDeBord = (function () {
 
   // La mini-carte : le circuit vu d'en haut, avec un point pour la voiture.
   function dessinerMiniCarte(monde) {
-    const echelle = 0.55; // 1 m = 0,55 pixel
+    // L'échelle est calculée pour que le circuit entier tienne dans 130 pixels de large.
+    const P = C.piste;
+    const echelle = 130 / (P.longueurDroite + 2 * P.rayon + P.largeur); // ≈ 0,21 : 1 m = 0,21 pixel
     const cx = W - 86, cz = 56;
     panneau(W - 160, 12, 148, 88);
-    ctx.lineWidth = C.piste.largeur * echelle;
+    ctx.lineWidth = Math.max(4, P.largeur * echelle);
     ctx.strokeStyle = "#5b5e66";
     ctx.beginPath();
     for (let s = 0; s <= Circuit.Piste.longueurTour; s += 6) {
