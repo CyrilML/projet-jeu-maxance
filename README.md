@@ -13,6 +13,9 @@ pas de serveur, pas d'installation.
 - **`index.html`** : le carnet de bord. Il explique qui fait quoi, contient la fiche pour
   passer commande à Claude, les explications de chaque étape et la feuille de route.
 - **`jeu/index.html`** : le jeu. S'ouvre d'un double-clic dans le navigateur.
+- **`circuit/index.html`** : le deuxième jeu (étape 32), une course de voiture en 3D sur un circuit ovale.
+  ↑ accélérer, ↓ freiner, ← → tourner, C caméra, X rayons X. Même architecture que le premier jeu,
+  avec un petit moteur 3D fait maison (`circuit/moteur/projecteur.js`), sans aucune dépendance.
 
 Dans le jeu : ← → (ou Q D) pour bouger, Espace / ↑ / Z pour sauter.
 Outils : `X` rayons X, `Échap` pause, `N` avancer d'un pas, `L` ralenti. `P` (en sautant) : poser un bloc. `T` : épée, `H` : potion, `F` : pioche, `R` : réparer, `K` : cuire, `M` : manger.
@@ -23,6 +26,7 @@ Outils : `X` rayons X, `Échap` pause, `N` avancer d'un pas, `L` ralenti. `P` (e
 ├── index.html          le carnet de bord
 ├── CLAUDE.md           les consignes pour Claude (rôles, architecture, façon de travailler)
 ├── demandes/           les demandes de Maxance, une par étape
+├── circuit/            le jeu de course en 3D (mêmes familles : moteur, logique, donnees, affichage)
 └── jeu/
     ├── index.html      la page du jeu
     ├── config.js       tous les réglages chiffrés

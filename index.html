@@ -154,9 +154,11 @@
       <a href="#etape29">Étape 29</a>
       <a href="#etape30">Étape 30</a>
       <a href="#etape31">Étape 31</a>
+      <a href="#etape32">Étape 32 · circuit 3D</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
+      <a class="jouer" href="circuit/index.html">🏎️ Circuit 3D</a>
     </div>
   </nav>
 
@@ -2300,6 +2302,82 @@ tronçon 33         → l'arrivée (pareil pour tous)</pre>
       <details class="question"><summary>Si la rampe donnait 900 px/s vers le haut au lieu de 620, que se passerait-il ?</summary><p>La voiture monterait plus haut et resterait plus longtemps en l'air : elle sauterait des trous plus larges.</p></details>
     </section>
 
+    <section id="etape32">
+      <h2>🏎️ Étape 32 : un nouveau jeu, le circuit en 3D <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Un deuxième jeu, à côté du premier : une voiture qui fait la course sur un circuit, en 3D. Il s'ouvre ici : <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a>.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/32-circuit-3d.md</code>.</p>
+          <p>« Un jeu en 3D, un jeu de circuit avec une voiture. Le circuit, le plus simple possible. »</p>
+          <p><strong>Choisi par Claude</strong> (à toi de dire si ça te va) :</p>
+          <ul>
+            <li>un ovale : 2 lignes droites et 2 virages ;</li>
+            <li>3 tours, avec un chrono et des records ;</li>
+            <li>dans l'herbe, 50 km/h maximum ;</li>
+            <li>3 caméras (<kbd>C</kbd>).</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ <kbd>Entrée</kbd> : les 3 feux rouges s'éteignent, puis « GO ! ».</li>
+            <li>☐ <kbd>↑</kbd> accélère, <kbd>↓</kbd> freine puis recule, <kbd>←</kbd> <kbd>→</kbd> tournent.</li>
+            <li>☐ Les roues avant tournent avec le volant.</li>
+            <li>☐ Dans l'herbe, la voiture ralentit.</li>
+            <li>☐ Après 3 tours : l'écran « Arrivée ».</li>
+            <li>☐ Recharge la page : ton record est encore là.</li>
+            <li>☐ <kbd>C</kbd> change de caméra, <kbd>X</kbd> montre les rayons X.</li>
+            <li>Vérifie « version 1 » en haut de la page du circuit.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔺 Tout est fait de triangles</h3>
+      <p>Une carte graphique ne sait dessiner qu'une forme : le <strong>triangle</strong>. La voiture, les sapins, la route, la tribune… tout est découpé en triangles, comme une sculpture en papier plié. Une boîte (le bas de la voiture) = 6 faces = 12 triangles. Une roue = 48 triangles.</p>
+      <p>Appuie sur <kbd>X</kbd> : tu vois les arêtes de tous les triangles en vert. Dans « sous le capot », la ligne « triangles dessinés » te dit combien il y en a : environ 9 000, dessinés 60 fois par seconde !</p>
+
+      <h3>📐 Trois nombres pour une position : x, y, z</h3>
+      <p>Dans le jeu de plateforme, une position avait 2 nombres : x (gauche-droite) et y (haut-bas). En 3D, il en faut <strong>3</strong> :</p>
+      <pre style="white-space: pre-wrap">x = gauche ↔ droite
+y = bas ↕ haut        (le sol est à y = 0)
+z = avant ↔ arrière   (la profondeur)</pre>
+      <p>Ici, on compte en <strong>mètres</strong>, pas en pixels. La voiture fait 4,2 m de long, comme une vraie.</p>
+
+      <h3>🎥 La caméra et la perspective</h3>
+      <p>Pour dessiner, l'ordinateur se pose une question pour chaque coin de triangle : « ce point du monde, où tombe-t-il sur l'écran plat ? ». Il fait 2 calculs :</p>
+      <ol>
+        <li><strong>La caméra</strong> : où est l'œil, et vers où il regarde (11 m derrière la voiture, 4,5 m de haut) ;</li>
+        <li><strong>La perspective</strong> : on divise par la distance. Ce qui est 2 fois plus loin paraît 2 fois plus petit. C'est pour ça que la route devient toute fine au loin.</li>
+      </ol>
+      <p>Ces calculs sont rangés dans des <strong>matrices</strong> (des tableaux de 16 nombres), dans <code>circuit/moteur/maths3d.js</code>.</p>
+
+      <h3>🧭 Avancer en biais : cos et sin</h3>
+      <p>La voiture a un <strong>angle</strong> (vers où elle regarde) et une <strong>vitesse</strong>. Pour avancer, il faut découper « tout droit » en « un peu vers x » et « un peu vers z » :</p>
+      <pre style="white-space: pre-wrap">x = x + cos(angle) × vitesse × temps
+z = z + sin(angle) × vitesse × temps</pre>
+      <p>Avec un angle de 0, cos = 1 et sin = 0 : on avance seulement vers x. Avec un angle de 90°, c'est l'inverse.</p>
+
+      <h3>🚪 Les portes invisibles</h3>
+      <p>Comment le jeu sait qu'un tour est fini ? Le circuit est coupé en 4 : la ligne (porte 0) et 3 portes invisibles. Il faut les passer <strong>dans l'ordre</strong> : 1, 2, 3, puis la ligne. Sinon, on pourrait tricher : passer la ligne, reculer, la repasser… Aux rayons X, les portes sont violettes, et la prochaine est verte.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Roule tout droit et regarde « angle » dans l'état en direct : il ne bouge pas. Tourne : il change.</li>
+        <li>Mets-toi dans l'herbe : regarde « écart au milieu ». À partir de combien de mètres es-tu dans l'herbe ?</li>
+        <li>Recule à travers la ligne d'arrivée : que dit le journal ?</li>
+        <li>Vue du ciel (<kbd>C</kbd>) et rayons X : trouve le « squelette » orange caché au milieu du stade.</li>
+        <li>Combien de triangles en vue « capot » ? Pourquoi moins qu'en vue « poursuite » ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de triangles pour une boîte ?</summary><p>6 faces × 2 triangles = 12 triangles.</p></details>
+      <details class="question"><summary>Combien de nombres faut-il pour dire où est un point en 3D ?</summary><p>3 : x, y et z.</p></details>
+      <details class="question"><summary>Un sapin 2 fois plus loin paraît comment ?</summary><p>2 fois plus petit : c'est la perspective (on divise par la distance).</p></details>
+      <details class="question"><summary>Pourquoi faut-il passer les portes dans l'ordre ?</summary><p>Pour qu'on ne puisse pas tricher en faisant des allers-retours sur la ligne d'arrivée.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -2486,26 +2564,32 @@ tronçon 33         → l'arrivée (pareil pour tous)</pre>
           <p>Après le dragon du bloc 100, on choisit : sous terre (lave et minerais), dans le ciel (planches), ou tout droit sur la route, en voiture, avec de l'essence.</p>
           <p class="apprend"><b>Tu apprends :</b> un monde qui dépend d'un choix, fabriquer selon un mot rangé en mémoire, un véhicule qui réutilise la physique du héros, un compteur d'essence. <b>Durée :</b> 3 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">32</div>
+          <h4>Un nouveau jeu : le circuit 3D <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Une voiture sur un circuit ovale, en 3D : 3 tours, un chrono, des records, 3 caméras.</p>
+          <p class="apprend"><b>Tu apprends :</b> tout est fait de triangles, x y z, caméra et perspective, matrices, avancer en biais avec cos et sin, portes invisibles anti-triche. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">33</div>
           <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">33</div>
+          <div class="num">34</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">34</div>
+          <div class="num">35</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">35</div>
+          <div class="num">36</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -2807,6 +2891,15 @@ tronçon 33         → l'arrivée (pareil pour tous)</pre>
         <textarea class="journal" id="appris-31" data-cle="appris-31" placeholder="Ex. : J'ai appris qu'un jeu peut fabriquer son monde selon mes choix…"></textarea>
         <label for="idees-31"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-31" data-cle="idees-31" placeholder="Ex. : Une course contre un autre pilote…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 32 · le circuit 3D <span class="petit">· 4 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> un deuxième jeu, dans le dossier <code>circuit/</code> : un moteur 3D fait maison (WebGL, sans aucun outil extérieur), un circuit ovale avec bordures, damier, portique, tribune, sapins et clôture, une voiture avec des roues qui tournent et braquent, 3 tours avec feux de départ, chrono, portes anti-triche, sortie dans l'herbe, records sauvegardés, 3 caméras. Sous le capot : la voiture en nombres (x, z, angle, vitesse), l'écart au milieu de la route, les triangles dessinés, les rayons X (fil de fer, portes, flèche de vitesse).</p>
+        <p class="petit">✍️ La demande disait « le plus simple » : Claude a choisi l'ovale, 3 tours et l'herbe qui freine. À Maxance de valider ou de changer ces règles.</p>
+        <label for="appris-32"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-32" data-cle="appris-32" placeholder="Ex. : J'ai appris qu'en 3D tout est fait de triangles, et que…"></textarea>
+        <label for="idees-32"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-32" data-cle="idees-32" placeholder="Ex. : Une voiture adversaire, un circuit en 8, un bruit de moteur…"></textarea>
       </div>
     </section>
   </main>
