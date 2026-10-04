@@ -70,6 +70,11 @@ Jeu.Monde = (function () {
       cochons: [], // les cochons qui se promènent (étape 13)
       grottesVisitees: 0, // combien de grottes le héros a découvertes (étape 13)
       obstaclesPasses: 0,
+      chemin: null, // le chemin choisi au carrefour : "souterrain", "ciel" ou "route" (étape 31)
+      choixDuChemin: false, // vrai pendant que le menu du carrefour est ouvert
+      voiture: null, // la voiture du chemin « tout droit » (étape 31)
+      auVolant: false, // le héros est-il dans la voiture ?
+      bidons: [], // les bidons d'essence posés sur la route
       nouveauRecord: false,
       prochainId: 1,
     };
@@ -125,10 +130,30 @@ Jeu.Monde = (function () {
   function fabriquerDevant(monde) {
     const colonneVoulue = Math.floor((monde.camera.x + C.ecran.largeur) / B) + C.carte.avance;
     while (!monde.terrain.fini && monde.terrain.colonnes.length <= colonneVoulue) {
-      const arrivee = monde.terrain.troncons === Jeu.Terrain.TRONCON_ARRIVEE;
-      const infos = Jeu.Terrain.fabriquerTroncon(monde.terrain, arrivee);
-      monde.drapeaux.push({ numero: infos.numero, colonne: infos.colonneDrapeau, atteint: infos.numero === 0, arrivee });
+      const numero = monde.terrain.troncons;
+      const arrivee = numero === Jeu.Terrain.TRONCON_ARRIVEE;
+      // Étape 31 : après le carrefour, on attend que le joueur ait choisi son chemin.
+      let chemin = null;
+      if (numero === Jeu.Terrain.TRONCON_CARREFOUR) chemin = "carrefour";
+      else if (numero > Jeu.Terrain.TRONCON_CARREFOUR) {
+        if (!monde.chemin) break;
+        chemin = monde.chemin;
+      }
+      const infos = Jeu.Terrain.fabriquerTroncon(monde.terrain, arrivee, chemin);
+      monde.drapeaux.push({ numero: infos.numero, colonne: infos.colonneDrapeau, atteint: infos.numero === 0, arrivee, ligneSol: infos.ligneDrapeau || C.carte.ligneSol, carrefour: infos.chemin === "carrefour" });
       const obstacles = Jeu.Obstacles.placerDansTroncon(monde, infos);
+      if (infos.chemin === "ciel") {
+        // Les planches du ciel, posées après les obstacles du sol (voir logique/terrain.js)
+        Jeu.Terrain.poserLesPlanchesDuCiel(monde.terrain, infos);
+        for (const m of infos.mineraisDuCiel) Jeu.Obstacles.noterMinerai(monde, m.type, m.colonne, m.ligne);
+      }
+      for (const colonne of infos.monstresSouterrain || []) {
+        const m = Jeu.Combat.creerMonstreGrotte(monde.prochainId++, colonne, null);
+        monde.monstres.push(m);
+        Jeu.Evenements.emettre("monstre-pose", { id: m.id, bloc: colonne - monde.colonneDepart, pv: m.pv, souterrain: true });
+      }
+      if (infos.voiture) monde.voiture = Jeu.Voiture.creer(infos.voiture);
+      for (const colonne of infos.bidons || []) monde.bidons.push({ x: colonne * B + 8, y: C.solY - 30, l: 24, h: 30, pris: false });
       Jeu.Cochons.placerDansTroncon(monde, infos);
       for (const a of infos.arbres || []) monde.arbres.push(a); // étape 28
       if (infos.grotte) {
@@ -156,6 +181,7 @@ Jeu.Monde = (function () {
         plateformes: infos.plateformes.length,
         arbres: (infos.arbres || []).length,
         obstacles,
+        chemin: infos.chemin || "normal",
         cases: Jeu.Terrain.nombreDeCases(monde.terrain),
       });
     }
@@ -185,8 +211,11 @@ Jeu.Monde = (function () {
   function placeDebout(monde, colonne) {
     const T = monde.terrain;
     const sol = C.carte.ligneSol;
+    // Étape 31 : du sol solide (herbe, ou goudron de la route), et 2 cases d'air au-dessus.
+    const numero = Jeu.Terrain.lireCase(T, colonne, sol);
     return (
-      Jeu.Terrain.lireCase(T, colonne, sol) === Jeu.Terrain.CASES.herbe &&
+      Jeu.Terrain.SOLIDES[numero] &&
+      !Jeu.Terrain.estUnEscalier(numero) &&
       Jeu.Terrain.lireCase(T, colonne, sol - 1) === Jeu.Terrain.CASES.air &&
       Jeu.Terrain.lireCase(T, colonne, sol - 2) === Jeu.Terrain.CASES.air
     );
@@ -210,7 +239,7 @@ Jeu.Monde = (function () {
   function pointDeRetour(monde) {
     if (monde.retourGrotte) return Object.assign({}, monde.retourGrotte, { numero: "drapeau de ta grotte n° " + monde.retourGrotte.numero });
     const d = monde.drapeaux[monde.dernierDrapeau];
-    return { numero: d.numero, colonne: d.colonne, ligneSol: C.carte.ligneSol };
+    return { numero: d.numero, colonne: d.colonne, ligneSol: d.ligneSol || C.carte.ligneSol }; // étape 31 : un drapeau peut être sous terre
   }
 
   // Le héros a touché un obstacle mortel : 1 vie en moins, et retour au dernier drapeau.
@@ -223,7 +252,7 @@ Jeu.Monde = (function () {
       monde.brulures += 1;
       Jeu.Evenements.emettre("brule", Object.assign(infos, { duree: C.brulure.duree, flammes: C.brulure.flammes }));
       // Le héros ne réapparaît pas tout de suite : il brûle d'abord sur place (voir brulerUnPeu).
-      monde.brulure = { reste: C.brulure.duree, allumees: 0, colonneRetour: drapeau.colonne, ligneRetour: drapeau.ligneSol };
+      monde.brulure = { reste: C.brulure.duree, allumees: 0, colonneRetour: drapeau.colonne, ligneRetour: drapeau.ligneSol, yDepart: monde.joueur.y };
       const j = monde.joueur;
       j.etat = "brule";
       j.vx = 0;
@@ -262,13 +291,13 @@ Jeu.Monde = (function () {
     const j = monde.joueur;
     b.reste -= dt;
     j.animation += dt; // pour que l'affichage fasse clignoter le héros
-    j.y = Math.min(j.y + 25 * dt, C.solY - j.h + 20); // il s'enfonce un peu dans la lave
+    j.y = Math.min(j.y + 25 * dt, b.yDepart + 20); // il s'enfonce un peu dans la lave (étape 31 : aussi sous terre)
     // Combien de flammes devraient être allumées à ce moment ? (elles s'allument régulièrement)
     const voulues = Math.min(R.flammes, Math.ceil(R.flammes * (1 - Math.max(0, b.reste) / R.duree)));
     while (b.allumees < voulues) {
       b.allumees++;
       const x = j.x - 8 + Math.random() * (j.l + 16);
-      const y = C.solY + 6 - Math.random() * 30;
+      const y = b.yDepart + j.h + 6 - Math.random() * 30;
       const vitesse = R.vitesseMontee * (0.6 + Math.random() * 0.8);
       Jeu.Particules.ajouter(monde.flammes, x, y, (Math.random() - 0.5) * 20, -vitesse, R.vieFlamme * (0.6 + Math.random() * 0.4), 9 + Math.random() * 9);
     }
@@ -322,9 +351,16 @@ Jeu.Monde = (function () {
       return;
     }
     const j = monde.joueur;
-    Jeu.Joueur.mettreAJour(j, dt, monde);
+    // Étape 31 : le menu du carrefour est ouvert ? Le monde attend ta décision.
+    if (Jeu.Carrefour.mettreAJour(monde)) {
+      suivreAvecLaCamera(monde, dt);
+      return;
+    }
+    if (!monde.auVolant) Jeu.Joueur.mettreAJour(j, dt, monde);
+    // La voiture (étape 31) : E pour monter ou descendre, G pour l'essence ; au volant, les flèches la conduisent.
+    if (Jeu.Voiture.mettreAJour(monde, dt) === "tombee" && !perdreUneVie(monde, "trou")) return;
     Jeu.Armes.mettreAJour(monde, dt); // touches 1 à 9, T selon l'objet en main, et les balles (étape 15)
-    Jeu.Inventaire.mettreAJour(monde); // P pendant un saut, ou clic de souris : poser un bloc
+    if (!monde.auVolant) Jeu.Inventaire.mettreAJour(monde); // Entrée pendant un saut, ou clic de souris : poser un bloc
     Jeu.Cochons.mettreAJour(monde, dt); // les cochons se promènent (étape 13)
     // Le héros descend dans une grotte (étape 13) ? On l'annonce une seule fois.
     for (const g of monde.grottes || []) {

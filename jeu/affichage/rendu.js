@@ -84,6 +84,16 @@ Jeu.Rendu = (function () {
       roche: ["#6d6a66", "#57534f"], // la pierre des grottes (étape 13)
       charbon: ["#6d6a66", "#1c1b1a"], // du minerai de charbon : de la roche avec des taches noires
     }[matiere];
+    // Étape 31 : la route en goudron, avec ses pointillés jaunes
+    if (matiere === "route") {
+      ctx.fillStyle = "#3b3d42";
+      ctx.fillRect(x, y, B, B);
+      ctx.fillStyle = "#2c2e32";
+      ctx.fillRect(x, y + B - 10, B, 10);
+      ctx.fillStyle = "#ffd23f";
+      if (graine % 2 === 0) ctx.fillRect(x + 6, y + 3, 24, 4);
+      return;
+    }
     // Étape 28 : le tronc, les feuilles, la porte et l'escalier
     if (matiere === "tronc") {
       ctx.fillStyle = "#7a4e26";
@@ -272,33 +282,35 @@ Jeu.Rendu = (function () {
     for (const d of monde.drapeaux) {
       const x = d.colonne * B + 17;
       if (x < monde.camera.x - B || x > monde.camera.x + L + B) continue;
+      // Étape 31 : sous terre, le drapeau est planté sur le sol du souterrain.
+      const solY = (d.ligneSol || C.carte.ligneSol) * B;
       ctx.fillStyle = "#e8e8e8";
-      ctx.fillRect(x, C.solY - 170, 6, 170);
+      ctx.fillRect(x, solY - 170, 6, 170);
       if (d.arrivee) {
         // Le drapeau d'arrivée : un damier noir et blanc, comme dans les courses.
         for (let i = 0; i < 6; i++) {
           for (let k = 0; k < 3; k++) {
             ctx.fillStyle = (i + k) % 2 ? "#111" : "#fff";
-            ctx.fillRect(x + 6 + i * 12, C.solY - 170 + k * 12, 12, 12);
+            ctx.fillRect(x + 6 + i * 12, solY - 170 + k * 12, 12, 12);
           }
         }
         ctx.font = "bold 16px 'Trebuchet MS', system-ui, sans-serif";
         ctx.textAlign = "center";
         ctx.fillStyle = "#ffe27a";
-        ctx.fillText("ARRIVÉE", x + 40, C.solY - 180);
+        ctx.fillText("ARRIVÉE", x + 40, solY - 180);
         continue;
       }
       ctx.fillStyle = d.atteint ? "#3fc27a" : "#e05555";
       ctx.beginPath();
       // Étape 29 : un drapeau plus grand (mât de 170 px, plus haut que le héros).
-      ctx.moveTo(x + 6, C.solY - 170);
-      ctx.lineTo(x + 70, C.solY - 148);
-      ctx.lineTo(x + 6, C.solY - 126);
+      ctx.moveTo(x + 6, solY - 170);
+      ctx.lineTo(x + 70, solY - 148);
+      ctx.lineTo(x + 6, solY - 126);
       ctx.fill();
       ctx.font = "bold 16px 'Trebuchet MS', system-ui, sans-serif";
       ctx.textAlign = "left";
       ctx.fillStyle = "#fff";
-      ctx.fillText(String(d.numero), x + 14, C.solY - 142);
+      ctx.fillText(String(d.numero), x + 14, solY - 142);
     }
   }
 
@@ -871,6 +883,118 @@ Jeu.Rendu = (function () {
   }
 
   // Les coffres laissés par les boss (étape 25) : fermés, ou ouverts et vides.
+  // --- Étape 31 : le carrefour, la voiture et les bidons ---
+
+  // Le panneau du carrefour : un poteau en bois et 3 flèches (sous terre, remonter, tout droit).
+  function panneauDuCarrefour(monde) {
+    const d = monde.drapeaux.find((o) => o.carrefour);
+    if (!d) return;
+    const x = (d.colonne + C.carrefour.declencheur + 2) * B;
+    const sol = C.solY;
+    ctx.fillStyle = "#7a4e26";
+    ctx.fillRect(x + 16, sol - 150, 8, 150);
+    const fleche = (y, texteFleche, couleur) => {
+      ctx.fillStyle = couleur;
+      ctx.fillRect(x - 40, y, 120, 26);
+      ctx.fillStyle = "#1d1d3a";
+      ctx.font = "bold 14px 'Trebuchet MS', system-ui, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(texteFleche, x - 34, y + 18);
+    };
+    fleche(sol - 150, "☁️ ↑ remonter", "#cfe9ff");
+    fleche(sol - 118, "🚗 → tout droit", "#ffe27a");
+    fleche(sol - 86, "⛏️ ↓ sous terre", "#c9b8a0");
+  }
+
+  // La voiture : une petite voiture rouge, avec ses roues qui tournent. Au volant, on voit la tête du héros.
+  function voiture(monde) {
+    const v = monde.voiture;
+    if (!v) return;
+    const x = Math.round(v.x);
+    const y = Math.round(v.y);
+    ctx.save();
+    if (v.regard < 0) {
+      ctx.translate(x + v.l / 2, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-(x + v.l / 2), 0);
+    }
+    const r = (couleur, dx, dy, l, h) => {
+      ctx.fillStyle = couleur;
+      ctx.fillRect(x + dx, y + dy, l, h);
+    };
+    // La tête du héros, dans la voiture (avec son casque-casserole et sa plume)
+    if (monde.auVolant) {
+      r("#f1c27d", 52, 2, 20, 18);
+      r("#1d1d3a", 66, 8, 3, 4);
+      r("#a9b0bb", 50, -4, 24, 8);
+      r("#e0303a", 61, -12, 4, 8);
+    }
+    r("#d9483b", 4, 22, 112, 22); // la carrosserie
+    r("#b8342f", 4, 38, 112, 6);
+    r("#d9483b", 30, 4, 60, 20); // le toit
+    r("#9fdcff", 36, 8, 22, 14); // les vitres
+    r("#9fdcff", 62, 8, 22, 14);
+    if (monde.auVolant) r("#f1c27d", 66, 12, 10, 10); // le héros derrière la vitre
+    r("#ffe27a", 108, 26, 8, 6); // le phare
+    r("#5b0f12", 4, 26, 6, 6); // le feu arrière
+    // Les roues : un cercle noir, avec un rayon qui tourne
+    for (const rx of [28, 92]) {
+      ctx.fillStyle = "#1d1d3a";
+      ctx.beginPath();
+      ctx.arc(x + rx, y + 44, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#9aa3ad";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x + rx, y + 44);
+      ctx.lineTo(x + rx + Math.cos(v.roues) * 9, y + 44 + Math.sin(v.roues) * 9);
+      ctx.stroke();
+    }
+    if (v.enPanne && Math.floor(monde.temps * 3) % 2) r("#ff9f1a", 40, -30, 40, 18); // la bulle de panne
+    ctx.restore();
+    if (v.enPanne && Math.floor(monde.temps * 3) % 2) {
+      ctx.font = "bold 13px 'Trebuchet MS', system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#1d1d3a";
+      ctx.fillText("⛽ G !", x + v.l / 2, y - 16);
+    }
+  }
+
+  // Les bidons d'essence à ramasser sur la route : un jerrican rouge.
+  function bidons(liste) {
+    for (const b of liste || []) {
+      if (b.pris) continue;
+      ctx.fillStyle = "#d9483b";
+      ctx.fillRect(b.x, b.y + 6, b.l, b.h - 6);
+      ctx.fillStyle = "#1d1d3a";
+      ctx.fillRect(b.x + 4, b.y, 8, 6); // le bouchon
+      ctx.fillStyle = "#b8342f";
+      ctx.fillRect(b.x + 14, b.y + 2, 8, 4); // la poignée
+      ctx.fillStyle = "#ffe27a";
+      ctx.fillRect(b.x + 6, b.y + 14, 12, 8); // l'étiquette
+    }
+  }
+
+  // Le menu du carrefour (sur l'écran, par-dessus le monde) : 3 gros boutons.
+  function menuDuCarrefour() {
+    ctx.fillStyle = "rgba(10, 15, 35, 0.8)";
+    ctx.fillRect(L / 2 - 420, 150, 840, 230);
+    texte("🚦 Le carrefour ! Choisis ton chemin", L / 2, 195, 26, "#ffe27a", "center");
+    const souris = Jeu.Entrees.souris;
+    Jeu.Carrefour.CHEMINS.forEach((ch, i) => {
+      const b = Jeu.Carrefour.bouton(i);
+      const survol = souris.dedans && souris.x >= b.x && souris.x < b.x + b.l && souris.y >= b.y && souris.y < b.y + b.h;
+      ctx.fillStyle = survol ? "#3fc27a" : "#2c3550";
+      ctx.fillRect(b.x, b.y, b.l, b.h);
+      ctx.strokeStyle = "#ffe27a";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(b.x + 1, b.y + 1, b.l - 2, b.h - 2);
+      texte(ch.titre, b.x + b.l / 2, b.y + 42, 24, "#fff", "center");
+      texte(ch.texte, b.x + b.l / 2, b.y + 72, 16, "#cfe0ff", "center");
+      texte("touche " + ch.touche + " ou clic", b.x + b.l / 2, b.y + 102, 14, "#ffe27a", "center");
+    });
+  }
+
   function coffres(liste) {
     for (const c of liste || []) {
       const x = Math.round(c.x);
@@ -1095,6 +1219,21 @@ Jeu.Rendu = (function () {
     ctx.fillRect(20, 214, Math.round(160 * eq.pioche / C.pioche.usure), 10);
     const etatPioche = eq.pioche > 0 ? "⛏️ " + eq.pioche + "/" + C.pioche.usure : "⛏️ CASSÉE !";
     texte(etatPioche + " 🪵 " + eq.bois + "   ⚫ " + eq.charbon + "   🥩 " + eq.viandeCrue + "   🍖 " + eq.viandeCuite + "   K : cuire · M : manger", 192, 225, 15, eq.pioche > 0 ? "#fff" : "#ff9b9b");
+    // Étape 31 : le chemin choisi, et la voiture sur la route
+    if (monde.chemin === "route") {
+      const v = monde.voiture;
+      const essence = v ? Math.ceil(v.essence) : 0;
+      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      ctx.fillRect(16, 234, 168, 18);
+      ctx.fillStyle = "#3a3f55";
+      ctx.fillRect(20, 238, 160, 10);
+      ctx.fillStyle = essence > 10 ? "#ffd23f" : "#e0303a";
+      ctx.fillRect(20, 238, Math.round(160 * essence / C.voiture.blocsParBidon), 10);
+      const aide = monde.auVolant ? "← → : conduire · E : descendre" : "E : monter (tout près)";
+      texte("⛽ " + essence + " blocs   🛢️ bidons " + eq.bidons + "   G : verser · " + aide, 192, 249, 15, essence > 0 ? "#fff" : "#ff9b9b");
+    } else if (monde.chemin) {
+      texte(monde.chemin === "souterrain" ? "⛏️ chemin : sous terre" : "☁️ chemin : dans le ciel", 20, 249, 15, "#ffe27a");
+    }
     if (options.ralenti) texte("🐢 RALENTI (×" + String(C.ralenti).replace(".", ",") + ") : le son aussi", L / 2, 32, 18, "#ffe27a", "center");
     barreInventaire(monde);
   }
@@ -1287,7 +1426,7 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 30 : l'arme dans le dos et les lasers", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 31 : le carrefour et la voiture", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au bloc " + C.arrivee.bloc + " le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
@@ -1801,10 +1940,13 @@ Jeu.Rendu = (function () {
     drapeaux(monde);
     fissures(monde.obstacles);
     drapeauxDesGrottes(monde);
+    panneauDuCarrefour(monde);
+    bidons(monde.bidons);
     coffres(monde.coffres);
     monstres(monde.monstres, monde.temps);
     viseurs(monde);
-    joueur(monde.joueur, monde.phase, monde.equipement);
+    if (!monde.auVolant) joueur(monde.joueur, monde.phase, monde.equipement); // au volant, on le voit dans la voiture
+    voiture(monde);
     flammes(monde.flammes);
     balles(monde.balles);
     roquettes(monde);
@@ -1818,6 +1960,7 @@ Jeu.Rendu = (function () {
     L = C.ecran.largeur;
     H = C.ecran.hauteur;
     if (monde.phase === "jeu") hud(monde, options);
+    if (monde.phase === "jeu" && monde.choixDuChemin) menuDuCarrefour();
     if (monde.phase === "accueil") ecranAccueil();
     if (monde.phase === "perdu" || monde.phase === "gagne") ecranFin(monde);
     if (options.pause && monde.phase === "jeu") {

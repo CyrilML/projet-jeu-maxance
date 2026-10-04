@@ -41,7 +41,7 @@ Jeu.SousLeCapot = (function () {
           ? "🏆 « " + d.pseudo + " » est " + d.nomDuRang + " du classement"
           : "📋 « " + d.pseudo + " » reste " + d.nomDuRang + " (sa meilleure partie est plus forte)",
     "troncon-fabrique": (d) =>
-      "🏗️ Tronçon n° " + d.numero + " fabriqué (colonnes " + d.debut + " à " + d.fin + ") : " +
+      "🏗️ Tronçon n° " + d.numero + (d.chemin && d.chemin !== "normal" ? " [" + d.chemin + "]" : "") + " fabriqué (colonnes " + d.debut + " à " + d.fin + ") : " +
       d.trous + " trou(s), " + d.plateformes + " plateforme(s), " + (d.arbres || 0) + " arbre(s), " + d.obstacles + " obstacle(s) → " + d.cases + " cases en mémoire",
     saut: (d) =>
       "🦘 Saut ! vitesse verticale = " + Math.round(d.vy) + " px/s" + (d.depuisMemoire ? " (grâce à la mémoire de saut)" : ""),
@@ -94,6 +94,17 @@ Jeu.SousLeCapot = (function () {
     "arme-rangee": (d) => "🎒 " + d.arme + " rangé(e) dans le dos (" + (d.raison === "saut" ? "il monte" : "collé à un mur") + ")",
     "arme-sortie": (d) => (d.rapide ? "⚡ " : "🗡️ ") + d.arme + " sorti(e) du dos en " + d.duree + " s" + (d.rapide ? " (vite, avec T)" : " : shliiing !"),
     "saut-de-tir": (d) => "🦘 Petit saut automatique (" + d.hauteur + " px) : le tir du " + d.arme + " partira en haut du saut, par-dessus le mur",
+    carrefour: (d) => "🚦 Le carrefour (colonne " + d.colonne + ") : le monde attend ton choix. Il ne fabrique plus rien tant que tu n'as pas choisi",
+    "chemin-choisi": (d) => "🧭 Chemin choisi : " + d.titre + " → monde.chemin = \"" + d.chemin + "\" : les prochains tronçons seront fabriqués comme ça",
+    "voiture-monter": (d) => "🚗 Le héros monte dans la voiture (⛽ " + d.essence + " blocs d'essence, 🛢️ " + d.bidons + " bidon(s) dans le sac)",
+    "voiture-descendre": (d) => "🚶 Le héros descend de la voiture (il reste " + d.essence + " blocs d'essence)",
+    "voiture-refus": (d) => "🚫 Voiture : " + d.raison,
+    panne: (d) => "⛽ PANNE ! Le réservoir est vide. G : verser un bidon (" + d.bidons + " dans le sac)",
+    plein: (d) => "🛢️ Un bidon versé : +" + d.blocs + " blocs d'essence (il reste " + d.bidons + " bidon(s))",
+    rampe: (d) => "🛫 Rampe (colonne " + d.colonne + ") : la voiture prend son élan (" + d.elan + " px/s vers le haut)",
+    "voiture-atterrit": (d) => "🛬 La voiture atterrit (colonne " + d.colonne + ")",
+    "voiture-tombee": (d) => "🕳️ La voiture tombe dans le trou ! Elle revient au " + nomDuDrapeau(d.drapeau),
+    "bidon-ramasse": (d) => "🛢️ Bidon d'essence ramassé : " + d.bidons + " dans le sac",
     "reglage-son": (d) => (d.quoi === "musique" ? "🎵 Musique " + (d.actif ? "remise" : "coupée") : "🔊 Bruits " + (d.actif ? "remis" : "coupés")) + (d.quoi === "musique" ? " (touche J)" : " (touche B)"),
     "objet-en-main": (d) => "🎒 " + (d.facon === "clic" ? "Clic sur la barre" : "Touche " + d.touche) + " : tu tiens maintenant " + d.objet,
     "pas-pret": (d) => "⏳ " + d.objet + " pas encore prêt(e) : attends encore " + d.attente + " s",
@@ -345,6 +356,9 @@ Jeu.SousLeCapot = (function () {
       ["viande crue / cuite", monde.equipement.viandeCrue + " / " + monde.equipement.viandeCuite],
       ["cochons en promenade", monde.cochons.filter((c) => c.vivant).length],
       ["grottes découvertes", monde.grottesVisitees],
+      ["chemin (étape 31)", monde.chemin ? "monde.chemin = \"" + monde.chemin + "\"" : monde.choixDuChemin ? "🚦 menu ouvert : le monde attend" : "pas encore choisi (carrefour au tronçon " + Jeu.Terrain.TRONCON_CARREFOUR + ")"],
+      ["voiture (étape 31)", monde.voiture ? (monde.auVolant ? "🚗 au volant" : "garée") + " · ⛽ " + Math.ceil(monde.voiture.essence) + " / " + Jeu.CONFIG.voiture.blocsParBidon + " blocs · vitesse " + Math.round(monde.voiture.vx) + " px/s · " + (monde.voiture.auSol ? "au sol" : "en l'air ✈️") + " · " + Math.round(monde.voiture.parcouru) + " blocs parcourus" : "— (sur le chemin « tout droit »)"],
+      ["bidons d'essence", "🛢️ " + monde.equipement.bidons + " dans le sac" + (monde.bidons.length ? " · " + monde.bidons.filter((b) => !b.pris).length + " sur la route" : "")],
       ["bois (étape 28)", "🪵 " + monde.equipement.bois + " → " + Math.floor(monde.equipement.bois / Jeu.CONFIG.constructions.porte.bois) + " porte(s) ou " + Math.floor(monde.equipement.bois / Jeu.CONFIG.constructions.escalier.bois) + " escalier(s)"],
       ["arbres (abattus / plantés)", monde.arbres.filter((a) => a.abattu).length + " / " + monde.arbres.length],
       ["portes et escaliers posés", monde.inventaire.constructions],

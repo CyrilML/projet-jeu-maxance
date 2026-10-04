@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 30,
+  version: 31,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -212,6 +212,50 @@ Jeu.CONFIG = {
     petitSaut: 480, // px/s : collé à un mur, T fait un petit saut tout seul (≈ 1 bloc) pour tirer par-dessus
     soldat: 0.35, // s : après une marche d'escalier, il garde l'arme pointée vers le bas, comme un soldat
   },
+  // Le carrefour (étape 31) : juste après le dragon du bloc 100, un menu propose 3 chemins.
+  carrefour: {
+    bloc: 100, // le tronçon juste après celui du dragon du bloc 100
+    declencheur: 2, // le menu s'ouvre 2 blocs après le drapeau du carrefour
+  },
+  // 1. Sous terre : un long souterrain, avec de la lave et des minerais, jusqu'à l'arrivée.
+  souterrain: {
+    plafond: 12, // la dernière ligne de terre au-dessus du couloir (le couloir va des lignes 13 à 17)
+    ligneSol: 18, // le sol du couloir
+    laveEcartMin: 7, // entre deux mares de lave (en blocs)
+    laveEcartMax: 11,
+    laveLargeurMin: 2,
+    laveLargeurMax: 3,
+    charbons: 2, // minerais de charbon par tronçon
+    fers: 1, // et de fer
+    monstres: 1, // un monstre des grottes par tronçon
+  },
+  // 2. Remonter : un chemin de planches dans le ciel, au-dessus du jeu normal (tomber = revenir au jeu normal).
+  ciel: {
+    ligne: 2, // les planches du ciel sont à la ligne 2 (le dessus à y = 80)
+    longueurMin: 4, // une plateforme fait 4 à 7 blocs
+    longueurMax: 7,
+    trouMin: 2, // entre deux plateformes, 2 ou 3 blocs de vide
+    trouMax: 3,
+    fers: 1, // un bloc de fer (trésor) par tronçon, posé sur une plateforme
+  },
+  // 3. Tout droit : une route, pour la voiture. Des bosses, et des rampes pour sauter les trous.
+  route: {
+    ecartMin: 6, // entre deux bosses ou rampes (en blocs)
+    ecartMax: 10,
+    trouMin: 3, // un trou après chaque rampe : 3 ou 4 blocs
+    trouMax: 4,
+    bidonTous: 75, // un bidon d'essence à ramasser tous les 75 blocs de route
+  },
+  voiture: {
+    largeur: 112, // presque 3 blocs de long : elle peut tomber dans un trou de 3 blocs si elle n'a pas d'élan
+    hauteur: 56,
+    vitesse: 520, // px/s (le héros : 320)
+    elan: 620, // px/s vers le haut quand elle monte une rampe : elle s'envole au-dessus du trou
+    blocsParBidon: 50, // 1 bidon d'essence = 50 blocs de route
+    bidonsAuDepart: 5, // les bidons dans le sac du héros
+    distanceMonter: 30, // px : il faut être tout près de la voiture pour monter dedans (E)
+  },
+
   // Les viseurs laser (étape 30) : un trait vert montre où partira le tir.
   viseurs: {
     armes: ["mitrailleuse", "magnum", "bazooka", "fusilPompe", "sniper"],

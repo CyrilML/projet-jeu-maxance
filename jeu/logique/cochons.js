@@ -41,7 +41,7 @@ Jeu.Cochons = (function () {
 
   // Place les cochons d'un tronçon qui vient d'être fabriqué (environ tous les 40 blocs).
   function placerDansTroncon(monde, infos) {
-    if (infos.arrivee || infos.grotte) return 0;
+    if (infos.arrivee || infos.grotte || (infos.chemin && infos.chemin !== "ciel")) return 0; // étape 31 : pas de cochon sur la route ni sous terre
     let poses = 0;
     for (const bloc of Jeu.Terrain.rendezVous(C.cochons.ecart, C.cochons.ecart, C.arrivee.bloc - 1)) {
       const ideale = C.carte.colonneDrapeau + bloc;

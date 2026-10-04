@@ -115,6 +115,16 @@ Jeu.Orchestre = (function () {
       Son.note({ forme: "triangle", frequence: 2637, duree: 0.35, volume: 0.12, quand: t + 0.22, nom: "sortir l'arme : shliiing !" });
       Son.note({ forme: "sine", frequence: 3951, duree: 0.3, volume: 0.06, quand: t + 0.24, nom: "sortir l'arme : shliiing !" });
     },
+    // Étape 31 : la voiture
+    vroum: () => {
+      const t = Son.maintenant();
+      Son.note({ forme: "sawtooth", frequence: 70, fin: 160, duree: 0.5, volume: 0.18, quand: t, nom: "voiture : vrouuum" });
+      Son.bruit({ filtre: "lowpass", frequence: 300, fin: 600, duree: 0.5, volume: 0.15, quand: t, nom: "voiture : vrouuum" });
+    },
+    moteur: () => Son.note({ forme: "sawtooth", frequence: 85 + Math.random() * 10, duree: 0.09, volume: 0.07, nom: "voiture : le moteur" }),
+    panne: () => [0, 0.18, 0.36].forEach((k) => Son.note({ forme: "square", frequence: 90, fin: 50, duree: 0.12, volume: 0.15, quand: Son.maintenant() + k, nom: "panne : teuf-teuf-teuf" })),
+    glouglou: () => [0, 0.1, 0.2, 0.3].forEach((k, i) => Son.note({ forme: "sine", frequence: 300 + i * 60, fin: 200 + i * 60, duree: 0.08, volume: 0.2, quand: Son.maintenant() + k, nom: "essence : glouglou" })),
+    carrefour: () => [659, 523].forEach((f, k) => Son.note({ forme: "triangle", frequence: f, duree: 0.35, volume: 0.25, quand: Son.maintenant() + k * 0.3, nom: "carrefour : ding-dong" })),
     shk: () => Son.bruit({ filtre: "bandpass", frequence: 3000, fin: 6000, duree: 0.08, volume: 0.25, nom: "sortir l'arme vite : shk" }),
     hop: () => Son.note({ forme: "sine", frequence: 300, fin: 520, duree: 0.09, volume: 0.2, nom: "petit saut pour tirer : hop" }),
     flamme: () => Son.bruit({ filtre: "lowpass", frequence: 700, duree: 0.12, volume: 0.25, nom: "lance-flammes : frrr" }),
@@ -212,6 +222,13 @@ Jeu.Orchestre = (function () {
     ecouter("rechargement", () => jouer("chik"));
     ecouter("arme-sortie", (d) => jouer(d.rapide ? "shk" : "shling")); // étape 30
     ecouter("saut-de-tir", () => jouer("hop"));
+    ecouter("voiture-monter", () => jouer("vroum")); // étape 31
+    ecouter("rampe", () => jouer("vroum"));
+    ecouter("panne", () => jouer("panne"));
+    ecouter("plein", () => jouer("glouglou"));
+    ecouter("bidon-ramasse", () => jouer("tresor"));
+    ecouter("carrefour", () => jouer("carrefour"));
+    ecouter("voiture-tombee", () => jouer("cri"));
     ecouter("recharge-finie", () => jouer("clac"));
     ecouter("roquette-tiree", () => jouer("fshhh"));
     ecouter("arbre-abattu", () => jouer("arbre"));
@@ -248,6 +265,15 @@ Jeu.Orchestre = (function () {
     if (!doitJouer && sequenceur.joue) sequenceur.arreter();
 
     const j = monde.joueur;
+    // Étape 31 : au volant, le moteur ronronne au lieu des bruits de pas.
+    if (monde.auVolant && monde.phase === "jeu" && !options.pause && monde.voiture.vx !== 0) {
+      etat.prochainPas -= options.ralenti ? dt * C.ralenti : dt;
+      if (etat.prochainPas <= 0) {
+        etat.prochainPas = 0.1;
+        jouer("moteur");
+      }
+      return;
+    }
     const court = monde.phase === "jeu" && !options.pause && j.etat === "au-sol" && j.vx !== 0;
     etat.pieds = monde.phase === "jeu" ? matiereSousLesPieds(monde) || "rien" : "—";
     if (!court) {

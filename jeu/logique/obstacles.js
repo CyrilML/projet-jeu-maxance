@@ -140,11 +140,46 @@ Jeu.Obstacles = (function () {
     return -1;
   }
 
+  // Un minerai (fer ou charbon) déjà écrit dans la grille : on le note dans la liste, avec ses coups de pioche.
+  function noterMinerai(monde, type, colonne, ligne) {
+    monde.obstacles.push({
+      id: monde.prochainId++,
+      type,
+      solide: true,
+      mortel: false,
+      colonne,
+      ligne,
+      largeur: 1,
+      x: colonne * B,
+      y: ligne * B,
+      l: B,
+      h: B,
+      passe: false,
+      coups: type === "fer" ? C.fer.coupsPioche : C.pioche.coupsCharbon,
+    });
+  }
+
+  // Étape 31 : les obstacles des chemins spéciaux (sous terre, route, carrefour) sont déjà choisis par
+  // logique/terrain.js : on les note dans la liste (pour la règle « mortel », le journal, les rayons X).
+  function placerSurUnChemin(monde, infos) {
+    let poses = 0;
+    for (const v of infos.laves || []) {
+      monde.obstacles.push({ id: monde.prochainId++, type: "lave", solide: false, mortel: true, colonne: v.colonne, largeur: v.largeur, x: v.colonne * B, y: v.ligne * B, l: v.largeur * B, h: B, passe: false });
+      poses++;
+    }
+    for (const m of infos.minerais || []) {
+      noterMinerai(monde, m.type, m.colonne, m.ligne);
+      poses++;
+    }
+    return poses;
+  }
+
   // Pose les obstacles d'un tronçon qui vient d'être fabriqué.
   function placerDansTroncon(monde, infos) {
     const O = C.obstacles;
     const de = infos.de;
     if (infos.arrivee) return 0; // le tronçon d'arrivée est tout plat, sans danger
+    if (infos.chemin && infos.chemin !== "ciel") return placerSurUnChemin(monde, infos); // étape 31
     if (infos.grotte) {
       // Dans une grotte (étape 13) : seulement du minerai de charbon, posé sur le sol de la grotte.
       for (const colonne of infos.grotte.charbons) {
@@ -237,5 +272,5 @@ Jeu.Obstacles = (function () {
     });
   }
 
-  return { TYPES, placerDansTroncon, mettreAJour, obstacleMortelTouche };
+  return { TYPES, placerDansTroncon, noterMinerai, mettreAJour, obstacleMortelTouche };
 })();

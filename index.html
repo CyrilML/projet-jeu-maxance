@@ -153,6 +153,7 @@
       <a href="#etape28">Étape 28</a>
       <a href="#etape29">Étape 29</a>
       <a href="#etape30">Étape 30</a>
+      <a href="#etape31">Étape 31</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -2227,6 +2228,78 @@ x dans le monde = x à l'écran ÷ zoom + caméra   ← pour savoir quelle case 
       <details class="question"><summary>Avec un petit saut de 600 px/s au lieu de 480, il monterait de combien ?</summary><p>600 × 600 ÷ 4 800 = 75 px.</p></details>
     </section>
 
+    <section id="etape31">
+      <h2>🚦 Étape 31 : le carrefour et la voiture <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Après le dragon du bloc 100, c'est toi qui choisis la suite : sous terre, dans le ciel, ou tout droit, sur la route, en voiture !</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/31-carrefour-et-voiture.md</code>.</p>
+          <p><strong>Règles :</strong></p>
+          <ul>
+            <li>1a : le carrefour est après le dragon du bloc 100.</li>
+            <li>2b : un menu à 3 boutons.</li>
+            <li>3b : sous terre = lave et minerais ; remonter = chemin dans le ciel.</li>
+            <li>4a : la route avec des bosses, des trous et des rampes.</li>
+            <li>5a : 1 bidon = 50 blocs, on remet un bidon quand c'est vide.</li>
+            <li>6b : la voiture ne saute pas.</li>
+            <li>7b : <kbd>E</kbd> pour monter dans la voiture.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Bats le dragon du bloc 100 : le menu « Choisis ton chemin » s'ouvre.</li>
+            <li>☐ <kbd>1</kbd> : descends dans le souterrain.</li>
+            <li>☐ <kbd>2</kbd> : monte dans le ciel.</li>
+            <li>☐ <kbd>3</kbd> : la route. Colle-toi à la voiture et appuie sur <kbd>E</kbd>, puis <kbd>←</kbd> <kbd>→</kbd>.</li>
+            <li>☐ Fonce sur une rampe : la voiture s'envole au-dessus du trou !</li>
+            <li>☐ Plus d'essence ? <kbd>G</kbd> verse un bidon.</li>
+            <li>Vérifie « version 31 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🧭 Un monde qui attend ta décision</h3>
+      <p>Le monde est fabriqué morceau par morceau, juste avant que tu le voies (les tronçons de 30 blocs). Au carrefour, le jeu <strong>arrête de fabriquer</strong> : il ne sait pas encore quoi mettre ! Quand tu choisis, il range un mot dans sa mémoire : <code>monde.chemin = "souterrain"</code>, <code>"ciel"</code> ou <code>"route"</code>. Ensuite, chaque nouveau tronçon est fabriqué selon ce mot.</p>
+      <pre style="white-space: pre-wrap">tronçon 0, 1, 2, 3 → normal (le dragon du bloc 100 est dans le 3)
+tronçon 4          → le carrefour (tout plat, avec le panneau)
+tronçon 5 … 32     → selon monde.chemin
+tronçon 33         → l'arrivée (pareil pour tous)</pre>
+      <p>C'est comme un livre dont tu es le héros : « si tu descends, va à la page 12 ».</p>
+
+      <h3>🚗 La voiture, un « corps » comme le héros</h3>
+      <p>La voiture a les mêmes nombres que le héros : x, y, largeur, hauteur, vitesse. Elle utilise la même gravité et la même façon d'avancer dans la grille. Quand tu es au volant, le héros ne bouge plus tout seul : il est « collé » au milieu de la voiture.</p>
+      <p><strong>La rampe :</strong> quand la voiture monte une marche, le jeu lui donne une vitesse vers le haut (620 px/s). Comme elle va vite vers l'avant, elle s'envole au-dessus du trou.</p>
+
+      <h3>⛽ L'essence, un compteur qui descend</h3>
+      <p>Le réservoir compte des blocs : 50 au départ. À chaque pas, le jeu enlève la distance parcourue (en blocs). À 0, les flèches ne font plus avancer la voiture. <kbd>G</kbd> enlève 1 bidon du sac et remet 50 dans le réservoir.</p>
+
+      <h3>⛏️ Sous terre et ☁️ dans le ciel</h3>
+      <p><strong>Sous terre</strong>, chaque colonne est remplie ainsi :</p>
+      <ul>
+        <li>de l'herbe et de la terre en haut ;</li>
+        <li>un couloir d'air (lignes 13 à 17) ;</li>
+        <li>de la roche en bas, avec des mares de lave.</li>
+      </ul>
+      <p>Les drapeaux sont plantés sur le sol du couloir : on y réapparaît.</p>
+      <p><strong>Dans le ciel</strong>, le jeu fabrique un tronçon normal, puis il pose une ligne de planches tout en haut (ligne 2). Les dragons ne gardent pas le passage quand tu es bien au-dessus d'eux.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans l'état en direct, regarde « chemin » avant et après le carrefour.</li>
+        <li>Au volant, regarde « voiture » : la vitesse, « au sol » ou « en l'air ✈️ », et l'essence qui baisse.</li>
+        <li>Avec les rayons X (<kbd>X</kbd>), regarde les numéros des cases de la route : quel numéro a le goudron ?</li>
+        <li>Dans le journal, cherche les lignes « Tronçon n° … [souterrain] ».</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Avec 1 bidon dans le réservoir et 5 dans le sac, combien de blocs peux-tu rouler ?</summary><p>6 × 50 = 300 blocs. C'est pour ça qu'il y a des bidons à ramasser sur la route !</p></details>
+      <details class="question"><summary>Pourquoi le monde arrête-t-il d'être fabriqué au carrefour ?</summary><p>Parce que la suite dépend de ton choix : tant que <code>monde.chemin</code> est vide, il ne sait pas quoi fabriquer.</p></details>
+      <details class="question"><summary>Si la rampe donnait 900 px/s vers le haut au lieu de 620, que se passerait-il ?</summary><p>La voiture monterait plus haut et resterait plus longtemps en l'air : elle sauterait des trous plus larges.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -2407,26 +2480,32 @@ x dans le monde = x à l'écran ÷ zoom + caméra   ← pour savoir quelle case 
           <p>L'arme se range dans le dos pendant un saut ou contre un mur, et ressort à l'atterrissage ; un petit saut pour tirer par-dessus un mur ; une pose de soldat dans l'escalier ; des lasers verts ; un bruit de science-fiction.</p>
           <p class="apprend"><b>Tu apprends :</b> une machine à états pour un objet, se souvenir de l'état d'avant, interpolation et rotation d'un dessin, trouver un bug de dessin. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">31</div>
+          <h4>Le carrefour et la voiture <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Après le dragon du bloc 100, on choisit : sous terre (lave et minerais), dans le ciel (planches), ou tout droit sur la route, en voiture, avec de l'essence.</p>
+          <p class="apprend"><b>Tu apprends :</b> un monde qui dépend d'un choix, fabriquer selon un mot rangé en mémoire, un véhicule qui réutilise la physique du héros, un compteur d'essence. <b>Durée :</b> 3 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">32</div>
           <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">32</div>
+          <div class="num">33</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">33</div>
+          <div class="num">34</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">34</div>
+          <div class="num">35</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -2719,6 +2798,15 @@ x dans le monde = x à l'écran ÷ zoom + caméra   ← pour savoir quelle case 
         <textarea class="journal" id="appris-30" data-cle="appris-30" placeholder="Ex. : J'ai appris qu'un objet dessiné avec la main bouge avec la main…"></textarea>
         <label for="idees-30"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-30" data-cle="idees-30" placeholder="Ex. : Des échelles à poser…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 31 · le carrefour et la voiture <span class="petit">· 4 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le carrefour après le dragon du bloc 100, avec un menu à 3 boutons ; le souterrain (couloir, lave, charbon, fer, monstres, drapeaux sous terre) ; le chemin du ciel (grand escalier, planches, fer ; on passe au-dessus des dragons) ; la route (goudron = case 17, bosses, rampes, trous, bidons) ; la voiture (E, ← →, rampes, essence, G, chute). Sous le capot : « chemin », « voiture » et « bidons » dans l'état en direct, et tous les messages du carrefour et de la voiture dans le journal.</p>
+        <p class="petit">✍️ Réponses de Maxance : 1a 2b 3b 4a 5a 6b 7b.</p>
+        <label for="appris-31"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-31" data-cle="appris-31" placeholder="Ex. : J'ai appris qu'un jeu peut fabriquer son monde selon mes choix…"></textarea>
+        <label for="idees-31"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-31" data-cle="idees-31" placeholder="Ex. : Une course contre un autre pilote…"></textarea>
       </div>
     </section>
   </main>

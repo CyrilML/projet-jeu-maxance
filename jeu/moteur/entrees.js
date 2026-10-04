@@ -50,6 +50,8 @@ Jeu.Entrees = (function () {
     pasSuivant: ["KeyN"],
     ralenti: ["KeyL"],
     zoom: ["KeyV"], // étape 29 : la loupe (×1, ×1,5, ×2)
+    voiture: ["KeyE"], // étape 31 : monter dans la voiture, ou en descendre
+    essence: ["KeyG"], // étape 31 : verser un bidon d'essence dans le réservoir
     changerPseudo: ["KeyC"],
   };
 

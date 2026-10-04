@@ -63,6 +63,7 @@ Jeu.Combat = (function () {
       pioche: C.pioche.usure, // coups qui restent avant que la pioche casse (étape 13)
       charbon: 0,
       bois: 0, // bois des arbres coupés (étape 28) : pour fabriquer des portes et des escaliers
+      bidons: C.voiture.bidonsAuDepart, // bidons d'essence pour la voiture (étape 31)
       viandeCrue: 0,
       viandeCuite: 0,
       coup: 0, // animation du coup d'épée (s)
@@ -391,8 +392,9 @@ Jeu.Combat = (function () {
     eq.coup = Math.max(0, eq.coup - dt);
 
     // 1. Le passage est gardé : pas plus loin qu'un monstre vivant.
+    //    Étape 31 : sauf si le héros passe bien AU-DESSUS de lui (par le chemin du ciel).
     const m = monstreDevant(monde);
-    if (m && j.x + j.l > m.x) {
+    if (m && j.x + j.l > m.x && j.y + j.h > m.y - B) {
       j.x = m.x - j.l;
       j.vx = 0;
     }

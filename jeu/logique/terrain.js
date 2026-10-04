@@ -7,7 +7,7 @@
 //     8 = brique (un bloc posé par le joueur, étape 10)    9 = fer (à casser avec la pioche, étape 12)
 //     10 = roche (les murs et les escaliers des grottes)    11 = charbon (minerai, pioche, étape 13)
 //     12 = tronc d'arbre    13 = feuilles    14 = porte    15 et 16 = escalier (qui monte vers la droite / la gauche)
-//     (étape 28)
+//     (étape 28)    17 = route (le goudron du chemin « tout droit », étape 31)
 //
 // Chaque sorte de case a des PROPRIÉTÉS, rangées dans des listes :
 //   - SOLIDE : on peut marcher dessus, et par le côté c'est un mur ;
@@ -31,16 +31,18 @@ Jeu.Terrain = (function () {
   const C = Jeu.CONFIG;
   const CARTE = C.carte;
 
-  const CASES = { air: 0, herbe: 1, terre: 2, planche: 3, bois: 4, pierre: 5, lave: 6, pics: 7, brique: 8, fer: 9, roche: 10, charbon: 11, tronc: 12, feuilles: 13, porte: 14, escalierDroite: 15, escalierGauche: 16 };
-  const NOMS = ["air", "herbe", "terre", "planche", "bois", "pierre", "lave", "pics", "brique", "fer", "roche", "charbon", "tronc", "feuilles", "porte", "escalier", "escalier"];
-  //              air    herbe terre planche bois  pierre lave   pics   brique fer   roche  charbon tronc feuilles porte escalier×2
-  const SOLIDES = [false, true, true, true, true, true, false, false, true, true, true, true, true, false, true, true, true]; // peut-on marcher dessus / se cogner dedans ?
-  const LIQUIDES = [false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false]; // passe-t-on à travers comme dans de l'eau ?
-  const MORTELS = [false, false, false, false, false, false, true, true, false, false, false, false, false, false, false, false, false]; // le toucher coûte-t-il une vie ?
+  const CASES = { air: 0, herbe: 1, terre: 2, planche: 3, bois: 4, pierre: 5, lave: 6, pics: 7, brique: 8, fer: 9, roche: 10, charbon: 11, tronc: 12, feuilles: 13, porte: 14, escalierDroite: 15, escalierGauche: 16, route: 17 };
+  const NOMS = ["air", "herbe", "terre", "planche", "bois", "pierre", "lave", "pics", "brique", "fer", "roche", "charbon", "tronc", "feuilles", "porte", "escalier", "escalier", "route"];
+  //              air    herbe terre planche bois  pierre lave   pics   brique fer   roche  charbon tronc feuilles porte escalier×2 route
+  const SOLIDES = [false, true, true, true, true, true, false, false, true, true, true, true, true, false, true, true, true, true]; // peut-on marcher dessus / se cogner dedans ?
+  const LIQUIDES = [false, false, false, false, false, false, true, false, false, false, false, false, false, false, false, false, false, false]; // passe-t-on à travers comme dans de l'eau ?
+  const MORTELS = [false, false, false, false, false, false, true, true, false, false, false, false, false, false, false, false, false, false]; // le toucher coûte-t-il une vie ?
 
   // L'arrivée (étape 12 : au bloc 1 000). On compte les blocs depuis le drapeau de départ (colonne 2).
   const COLONNE_ARRIVEE = CARTE.colonneDrapeau + C.arrivee.bloc;
   const TRONCON_ARRIVEE = Math.floor(COLONNE_ARRIVEE / CARTE.longueurTroncon);
+  // Le carrefour (étape 31) : le tronçon juste après celui du dragon du bloc 100.
+  const TRONCON_CARREFOUR = Math.floor((CARTE.colonneDrapeau + C.carrefour.bloc) / CARTE.longueurTroncon) + 1;
 
   // Des rendez-vous réguliers : premier, premier + écart, … jusqu'à dernier (en blocs).
   function rendezVous(premier, ecart, dernier) {
@@ -93,10 +95,219 @@ Jeu.Terrain = (function () {
     terrain.colonnes[colonne][ligne] = numero;
   }
 
-  // Fabrique le tronçon suivant et renvoie ce qu'on y a mis (pour les obstacles, les drapeaux, le journal).
+  // Fabrique le tronçon suivant (étape 31 : selon le CHEMIN choisi au carrefour).
+  //   chemin = null (avant le carrefour), "carrefour", "souterrain", "ciel" ou "route".
+  // Le tronçon d'arrivée est le même pour tous les chemins.
+  function fabriquerTroncon(terrain, arrivee, chemin) {
+    const numero = terrain.troncons;
+    const premier = numero === TRONCON_CARREFOUR + 1; // le premier tronçon du chemin choisi
+    const dernier = numero === TRONCON_ARRIVEE - 1; // le dernier avant l'arrivée
+    if (!arrivee && chemin === "carrefour") return fabriquerCarrefour(terrain);
+    if (!arrivee && chemin === "souterrain") return fabriquerSouterrain(terrain, premier, dernier);
+    if (!arrivee && chemin === "route") return fabriquerRoute(terrain, premier);
+    const infos = fabriquerNormal(terrain, arrivee);
+    if (!arrivee && chemin === "ciel") ajouterLeCiel(terrain, infos, premier, dernier);
+    return infos;
+  }
+
+  // Le début commun des tronçons spéciaux (étape 31) : numéro, colonnes, et un dé tiré de la graine.
+  function debutDeTroncon(terrain) {
+    const numero = terrain.troncons;
+    const debut = numero * CARTE.longueurTroncon;
+    return { numero, debut, fin: debut + CARTE.longueurTroncon - 1, de: Jeu.Hasard.creer(terrain.graine * 1000 + numero) };
+  }
+
+  // Remplit une colonne : `haut` (une fonction ligne → numéro) dit ce qu'il y a dans chaque case.
+  function remplirColonne(terrain, c, quoi) {
+    const tiroir = [];
+    for (let l = 0; l < CARTE.lignes; l++) tiroir.push(quoi(l));
+    terrain.colonnes[c] = tiroir;
+  }
+
+  // Ce que les tronçons spéciaux renvoient : comme un tronçon normal, mais sans fosse, lac, dragon, muret.
+  function infosSpeciales(t, chemin, plus) {
+    return Object.assign({ numero: t.numero, debut: t.debut, fin: t.fin, zoneSure: CARTE.zoneSure, colonneDrapeau: t.debut + CARTE.colonneDrapeau, trous: [], plateformes: [], arbres: [], fosse: null, lac: null, monstre: null, murets: [], de: t.de, chemin }, plus);
+  }
+
+  // Le CARREFOUR (étape 31) : un tronçon tout plat, avec un panneau à 3 flèches. Le menu s'ouvre ici.
+  function fabriquerCarrefour(terrain) {
+    const t = debutDeTroncon(terrain);
+    for (let c = t.debut; c <= t.fin; c++) remplirColonne(terrain, c, (l) => (l < CARTE.ligneSol ? CASES.air : l === CARTE.ligneSol ? CASES.herbe : CASES.terre));
+    terrain.troncons++;
+    return infosSpeciales(t, "carrefour", { panneau: t.debut + CARTE.colonneDrapeau + C.carrefour.declencheur + 2 });
+  }
+
+  // SOUS TERRE (étape 31) : un couloir creusé dans la roche (lignes 13 à 17), avec des mares de lave
+  // dans le sol, du charbon, du fer et des monstres. On y descend par un escalier au premier tronçon,
+  // et on remonte par un escalier juste avant l'arrivée.
+  function fabriquerSouterrain(terrain, premier, dernier) {
+    const S = C.souterrain;
+    const t = debutDeTroncon(terrain);
+    const sol = CARTE.ligneSol;
+    for (let c = t.debut; c <= t.fin; c++) {
+      remplirColonne(terrain, c, (l) => (l < sol ? CASES.air : l === sol ? CASES.herbe : l <= S.plafond ? CASES.terre : l < S.ligneSol ? CASES.air : CASES.roche));
+    }
+    let depart = t.debut + CARTE.zoneSure; // où commencent les dangers
+    let fin = t.fin - 2;
+    if (premier) {
+      // Au premier tronçon : de la roche pleine sous le drapeau, puis l'escalier qui descend (7 marches).
+      for (let c = t.debut; c < t.debut + 6; c++) for (let l = S.plafond + 1; l < S.ligneSol; l++) terrain.colonnes[c][l] = CASES.roche;
+      for (let k = 0; k <= 6; k++) {
+        const c = t.debut + 6 + k;
+        for (let l = 0; l < CARTE.lignes; l++) terrain.colonnes[c][l] = l <= sol + k ? CASES.air : CASES.roche;
+      }
+      depart = t.debut + 18; // un peu de place au pied de l'escalier avant la première lave
+    }
+    if (dernier) {
+      // Au dernier tronçon : l'escalier qui remonte jusqu'à l'herbe, juste avant l'arrivée.
+      for (let k = 0; k <= 6; k++) {
+        const c = t.fin - 6 + k;
+        const dessus = S.ligneSol - 1 - k;
+        for (let l = 0; l < CARTE.lignes; l++) terrain.colonnes[c][l] = l < dessus ? CASES.air : l === dessus && k === 6 ? CASES.herbe : l > dessus && k === 6 ? CASES.terre : CASES.roche;
+      }
+      fin = t.fin - 9;
+    }
+    // Les mares de lave, creusées dans le sol du couloir
+    const laves = [];
+    let c = depart + t.de.entre(0, 3);
+    while (true) {
+      const largeur = t.de.entre(S.laveLargeurMin, S.laveLargeurMax);
+      if (c + largeur - 1 > fin) break;
+      for (let k = c; k < c + largeur; k++) terrain.colonnes[k][S.ligneSol] = CASES.lave;
+      laves.push({ colonne: c, largeur, ligne: S.ligneSol });
+      c += largeur + t.de.entre(S.laveEcartMin, S.laveEcartMax);
+    }
+    // Des places libres sur le sol du couloir (loin de la lave) pour les minerais et les monstres
+    const libre = (col) => col >= depart && col <= fin && laves.every((v) => col < v.colonne - 1 || col > v.colonne + v.largeur) && terrain.colonnes[col][S.ligneSol - 1] === CASES.air;
+    const places = [];
+    for (let col = depart; col <= fin; col++) if (libre(col)) places.push(col);
+    const prendre = () => {
+      if (!places.length) return null;
+      const i = t.de.entre(0, places.length - 1);
+      const col = places[i];
+      places.splice(Math.max(0, i - 1), 3); // pas deux choses collées
+      return col;
+    };
+    const monstres = [];
+    for (let k = 0; k < S.monstres; k++) {
+      const col = prendre();
+      if (col !== null) monstres.push(col);
+    }
+    const minerais = [];
+    for (let k = 0; k < S.charbons; k++) {
+      const col = prendre();
+      if (col !== null) minerais.push({ type: "charbon", colonne: col, ligne: S.ligneSol - 1 });
+    }
+    for (let k = 0; k < S.fers; k++) {
+      const col = prendre();
+      if (col !== null) minerais.push({ type: "fer", colonne: col, ligne: S.ligneSol - 1 });
+    }
+    for (const m of minerais) terrain.colonnes[m.colonne][m.ligne] = m.type === "fer" ? CASES.fer : CASES.charbon;
+    terrain.troncons++;
+    return infosSpeciales(t, "souterrain", { ligneDrapeau: premier ? sol : S.ligneSol, laves, minerais, monstresSouterrain: monstres });
+  }
+
+  // REMONTER (étape 31) : le jeu normal continue en bas, et un chemin de planches passe dans le ciel.
+  // Au premier tronçon, un grand escalier monte jusqu'au ciel. Tomber = retrouver le jeu normal.
+  function ajouterLeCiel(terrain, infos, premier, dernier) {
+    const K = C.ciel;
+    if (premier) {
+      // Un escalier de marches flottantes, de la ligne 10 jusqu'à la ligne du ciel.
+      const s = infos.debut + 6;
+      const marches = CARTE.ligneSol - 1 - K.ligne;
+      for (let col = s - 2; col <= s + marches + 3; col++) {
+        for (let l = -4; l < CARTE.ligneSol; l++) terrain.colonnes[col][l] = CASES.air; // on dégage la place
+        terrain.colonnes[col][CARTE.ligneSol] = CASES.herbe;
+        for (let l = CARTE.ligneSol + 1; l < CARTE.lignes; l++) terrain.colonnes[col][l] = CASES.terre;
+      }
+      infos.arbres = infos.arbres.filter((a) => a.colonne < s - 4 || a.colonne > s + marches + 5);
+      infos.trous = infos.trous.filter((tr) => tr.colonne + tr.largeur < s - 2 || tr.colonne > s + marches + 3);
+      for (let k = 0; k <= marches; k++) terrain.colonnes[s + k][CARTE.ligneSol - 1 - k] = CASES.escalierDroite;
+      infos.escalierDuCiel = s;
+    }
+    infos.chemin = "ciel";
+    infos.dernierDuCiel = dernier;
+  }
+
+  // Les planches du ciel sont posées APRÈS les obstacles du sol (logique/monde.js) : sinon, les
+  // obstacles verraient les planches au-dessus d'eux et ne trouveraient plus de place.
+  function poserLesPlanchesDuCiel(terrain, infos) {
+    const K = C.ciel;
+    const de = infos.de;
+    let c = infos.escalierDuCiel !== undefined ? infos.escalierDuCiel + CARTE.ligneSol - K.ligne : infos.debut;
+    const limite = infos.dernierDuCiel ? infos.fin - 5 : infos.fin;
+    const morceaux = [];
+    while (c <= limite) {
+      const longueur = Math.min(de.entre(K.longueurMin, K.longueurMax), limite - c + 1);
+      for (let k = c; k < c + longueur; k++) terrain.colonnes[k][K.ligne] = CASES.planche;
+      morceaux.push({ colonne: c, largeur: longueur, ligne: K.ligne });
+      c += longueur + de.entre(K.trouMin, K.trouMax);
+    }
+    // Un trésor : un bloc de fer posé sur une plateforme (à casser à la pioche)
+    infos.mineraisDuCiel = [];
+    const grands = morceaux.filter((m) => m.largeur >= 5);
+    for (let k = 0; k < K.fers && grands.length; k++) {
+      const m = grands.splice(de.entre(0, grands.length - 1), 1)[0];
+      const col = m.colonne + Math.floor(m.largeur / 2);
+      terrain.colonnes[col][K.ligne - 1] = CASES.fer;
+      infos.mineraisDuCiel.push({ type: "fer", colonne: col, ligne: K.ligne - 1 });
+    }
+    infos.ciel = morceaux;
+  }
+
+  // TOUT DROIT (étape 31) : une route en goudron, avec des bosses et des rampes pour sauter les trous en
+  // voiture. La voiture attend au début du premier tronçon. Des bidons d'essence à ramasser.
+  function fabriquerRoute(terrain, premier) {
+    const R = C.route;
+    const t = debutDeTroncon(terrain);
+    const sol = CARTE.ligneSol;
+    for (let col = t.debut; col <= t.fin; col++) remplirColonne(terrain, col, (l) => (l < sol ? CASES.air : l === sol ? CASES.route : CASES.terre));
+    const trous = [];
+    let bosses = 0;
+    let rampes = 0;
+    let c = t.debut + (premier ? 14 : CARTE.zoneSure + 1) + t.de.entre(0, 2);
+    while (c <= t.fin - 8) {
+      if (t.de.entre(0, 2) === 0) {
+        // Une bosse : une marche qui monte, une qui descend
+        terrain.colonnes[c][sol - 1] = CASES.escalierDroite;
+        terrain.colonnes[c + 1][sol - 1] = CASES.escalierGauche;
+        bosses++;
+        c += 2;
+      } else {
+        // Une rampe de 2 marches, puis un trou : la voiture s'envole par-dessus
+        const largeur = t.de.entre(R.trouMin, R.trouMax);
+        terrain.colonnes[c][sol - 1] = CASES.escalierDroite;
+        terrain.colonnes[c + 1][sol - 1] = CASES.route;
+        terrain.colonnes[c + 1][sol - 2] = CASES.escalierDroite;
+        for (let k = c + 2; k < c + 2 + largeur; k++) terrain.colonnes[k].fill(CASES.air);
+        trous.push({ colonne: c + 2, largeur });
+        rampes++;
+        c += 2 + largeur;
+      }
+      c += t.de.entre(R.ecartMin, R.ecartMax);
+    }
+    // Les bidons d'essence : un tous les 75 blocs de route, sur une case plate
+    const bidons = [];
+    const plat = (col) => terrain.colonnes[col] && terrain.colonnes[col][sol] === CASES.route && terrain.colonnes[col][sol - 1] === CASES.air;
+    const debutRoute = (TRONCON_CARREFOUR + 1) * CARTE.longueurTroncon;
+    for (let col = debutRoute + R.bidonTous; col < COLONNE_ARRIVEE; col += R.bidonTous) {
+      if (col < t.debut || col > t.fin) continue;
+      for (let d = 0; d < 8; d++) {
+        const place = [col + d, col - d].find((x) => x >= t.debut && x <= t.fin && plat(x));
+        if (place !== undefined) {
+          bidons.push(place);
+          break;
+        }
+      }
+    }
+    terrain.troncons++;
+    return infosSpeciales(t, "route", { trous, bosses, rampes, bidons, voiture: premier ? t.debut + 6 : null });
+  }
+
+  // Un tronçon NORMAL (le jeu d'avant l'étape 31).
   // Le tronçon d'ARRIVÉE (étape 6) est tout plat : juste de l'herbe et le drapeau d'arrivée.
   // Après lui, le monde est fini : on ne fabrique plus rien.
-  function fabriquerTroncon(terrain, arrivee) {
+  function fabriquerNormal(terrain, arrivee) {
     const numero = terrain.troncons;
     const debut = numero * CARTE.longueurTroncon;
     const fin = debut + CARTE.longueurTroncon - 1; // dernière colonne du tronçon
@@ -362,5 +573,5 @@ Jeu.Terrain = (function () {
     return terrain.colonnes.length * CARTE.lignes;
   }
 
-  return { estSolidePourLeHeros, estUnEscalier, CASES, NOMS, SOLIDES, LIQUIDES, MORTELS, COLONNE_ARRIVEE, TRONCON_ARRIVEE, rendezVous, tronconDe, creer, lireCase, ecrireCase, estSolide, estLiquide, fabriquerTroncon, nombreDeCases };
+  return { estSolidePourLeHeros, estUnEscalier, CASES, NOMS, SOLIDES, LIQUIDES, MORTELS, COLONNE_ARRIVEE, TRONCON_ARRIVEE, TRONCON_CARREFOUR, poserLesPlanchesDuCiel, rendezVous, tronconDe, creer, lireCase, ecrireCase, estSolide, estLiquide, fabriquerTroncon, nombreDeCases };
 })();
