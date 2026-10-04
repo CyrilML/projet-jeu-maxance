@@ -33,7 +33,8 @@ Circuit.SousLeCapot = (function () {
     perdu: (d) =>
       "😢 PERDU : la voiture bleue a fini ses tours en " + chrono(d.temps) + ". Tu étais au tour " + d.tourJoueur + ", il te restait " + d.retard.toLocaleString("fr-FR") + " m",
     "tour-adversaire": (d) => "🔵 La voiture bleue a fini son tour n° " + d.numero + " en " + chrono(d.temps),
-    choc: (d) => "💥 Choc avec la voiture bleue ! Vitesse du choc : " + virgule(d.force, 1) + " m/s. Ta vitesse après : " + Math.round(d.vitesse * 3.6) + " km/h",
+    choc: (d) =>
+      "💥 Choc " + (d.contre === "mur" ? "contre un mur" : "avec la voiture bleue") + " ! Vitesse du choc : " + virgule(d.force, 1) + " m/s. Ta vitesse après : " + Math.round(d.vitesse * 3.6) + " km/h",
     depassement: (d) => (d.position === 1 ? "🥇 Tu doubles la voiture bleue : tu es 1er" : "🥈 La voiture bleue te double : tu es 2e") + " (tour " + d.tour + ")",
     "adversaire-change-de-voie": (d) =>
       "🤖 Tu bouches le passage (" + Math.round(d.avance) + " m devant) : la voiture bleue passe sur la voie " + (d.voie > 0 ? "extérieure" : "intérieure"),
@@ -50,7 +51,18 @@ Circuit.SousLeCapot = (function () {
     "pas-assez": (d) => "🔒 " + d.voiture + " coûte " + d.prix + " pièces : il t'en manque " + d.manque,
     achat: (d) => "🎉 ACHAT : " + d.voiture + " pour " + d.prix + " pièces",
     "choix-voiture": (d) => "🔑 Tu prends " + d.voiture,
-    piece: (d) => "🪙 Pièce n° " + d.numero + " ramassée (à " + d.s + " m du départ) : " + d.total + " dans cette course",
+    piece: (d) => "🪙 Pièce n° " + d.numero + " ramassée" + (d.ou ? " (" + d.ou + ")" : " (à " + d.s + " m du départ)") + " : " + d.total + " trouvées",
+    "menu-cartes": () => "🗺️ Menu des cartes : choisis où rouler",
+    "choix-carte": (d) => "🗺️ Carte choisie : " + d.nom + " → son garage s'ouvre",
+    balade: (d) => "🎢 Balade sur le parcours : " + d.pieces + " pièces à trouver et " + d.cartons + " cartons à défoncer",
+    "retour-depart": () => "↩️ Retour au départ (R)",
+    decollage: (d) => "🛫 Décollage à " + Math.round(Math.abs(d.vitesse) * 3.6) + " km/h, vitesse vers le haut " + virgule(d.vy, 1) + " m/s",
+    atterrissage: (d) => "🛬 Atterrissage : " + Math.round(d.distance) + " m de saut, " + virgule(d.hauteurMax, 1) + " m de haut, " + virgule(d.duree, 2) + " s en l'air",
+    "looping-debut": (d) => "🎢 Accroché au looping (rayon " + d.rayon + " m) à " + Math.round(d.vitesse * 3.6) + " km/h",
+    "looping-fini": () => "🎢 Looping réussi : un tour complet, 360° !",
+    "looping-trop-lent": (d) => "🐢 Trop lent pour le looping : " + Math.round(d.vitesse * 3.6) + " km/h, il en faut " + Math.round(d.besoin * 3.6),
+    carton: (d) => "📦 Pile de cartons n° " + d.pile + " défoncée à " + Math.round(Math.abs(d.vitesse) * 3.6) + " km/h" + (d.piece ? " : une pièce cachée apparaît !" : ""),
+    "toutes-les-pieces": (d) => "🏆 Toutes les pièces du parcours trouvées (" + d.total + ") !",
     "son-allume": (d) => "🔊 Synthétiseur allumé (" + d.frequenceEchantillons.toLocaleString("fr-FR") + " échantillons de son par seconde)",
     son: (d) => (d.allume ? "🔊 Son remis (B)" : "🔇 Son coupé (B)"),
     camera: (d) => "🎥 Caméra : " + d.mode,
@@ -109,45 +121,78 @@ Circuit.SousLeCapot = (function () {
     const compteur = Circuit.Projecteur.compteur;
     const degres = Math.round((v.angle * 180) / Math.PI);
 
-    const lignes = [
-      ["La course"],
-      ["phase", monde.phase],
-      ["tour", Math.min(monde.tour, Circuit.CONFIG.course.tours) + " / " + Circuit.CONFIG.course.tours],
-      ["prochaine porte", monde.prochainePorte === 0 ? "0 (la ligne)" : monde.prochainePorte],
-      ["chrono du tour", chrono(monde.chronoTour)],
-      ["chrono de la course", chrono(monde.chronoCourse)],
-      ["sorties de piste", monde.sortiesDePiste],
-      ["position", monde.position === 1 ? "🥇 1er" : "🥈 2e"],
-      ["chocs", monde.chocs + (monde.enContact ? " (💥 en contact)" : "")],
+    const fiche = Circuit.Garage.ficheDe(v.modele) || {};
+    const voiture = [
       ["La voiture"],
-      ["modèle", (Circuit.CONFIG.voitures.find((x) => x.modele === v.modele) || {}).nom + " (vitesse max " + Math.round(v.vitesseMax * 3.6) + " km/h)"],
+      ["modèle", fiche.nom + " (vitesse max " + Math.round(v.vitesseMax * 3.6) + " km/h)"],
       ["x (gauche ↔ droite)", virgule(v.x, 1) + " m"],
       ["z (avant ↔ arrière)", virgule(v.z, 1) + " m"],
+      ["y (hauteur)", virgule(v.y || 0, 2) + " m" + (v.enLAir ? " ✈️ en l'air" : "")],
       ["angle", virgule(v.angle, 2) + " rad = " + degres + "°"],
       ["vitesse", virgule(v.vitesse, 1) + " m/s = " + Math.round(Math.abs(v.vitesse) * 3.6) + " km/h"],
       ["pédale", v.pedale],
       ["volant", virgule(v.volant, 2) + (Math.abs(v.volant) < 0.05 ? " (tout droit)" : v.volant < 0 ? " (à gauche)" : " (à droite)")],
       ["distance parcourue", Math.round(v.distance) + " m"],
-      ["Sur le circuit"],
-      ["sol sous la voiture", monde.sol === "herbe" ? "🌱 herbe" : monde.sol === "bordure" ? "🟥 bordure" : "🛣️ route"],
-      ["écart au milieu", virgule(r.ecart, 1) + " m (route : ± " + virgule(Circuit.CONFIG.piste.largeur / 2, 1) + ")"],
-      ["progression", Math.round(r.s) + " m sur " + Math.round(Circuit.Piste.longueurTour)],
-      ["La voiture bleue (le pilote)"],
-      ["tour", Math.min(adv.tour, Circuit.CONFIG.course.tours) + " / " + Circuit.CONFIG.course.tours],
-      ["x, z", virgule(adv.voiture.x, 1) + " ; " + virgule(adv.voiture.z, 1) + " m"],
-      ["vitesse", virgule(adv.voiture.vitesse, 1) + " m/s = " + Math.round(Math.abs(adv.voiture.vitesse) * 3.6) + " km/h"],
-      ["voie visée", (adv.voie > 0 ? "extérieure (+" : "intérieure (") + virgule(adv.voie, 1) + " m)"],
-      ["cible", Math.round((adv.difference * 180) / Math.PI) + "° → " + (Math.abs(adv.difference) <= 0.02 ? "tout droit" : adv.difference < 0 ? "tourne à gauche" : "tourne à droite")],
-      ["avance sur toi", Math.round(Circuit.Course.progression(adv) - Circuit.Course.progression(monde)) + " m"],
-      ["Les pièces"],
-      ["ramassées dans la course", monde.piecesCourse + " / " + monde.pieces.length],
-      ["porte-monnaie", Circuit.Sauvegarde.donnees.pieces + " pièce(s)"],
-      ["prochaine pièce devant", prochainePiece(monde)],
+    ];
+    let lignes;
+    if (monde.carte === "parcours") {
+      // Étape 37 : la balade sur le parcours.
+      const saut = monde.dernierSaut;
+      lignes = [
+        ["Le parcours"],
+        ["phase", monde.phase],
+        ["vitesse vers le haut (vy)", virgule(v.vy || 0, 1) + " m/s"],
+        ["sol sous la voiture", virgule(Circuit.Parcours.hauteurSol(v.x, v.z, v.y || 0), 2) + " m"],
+        ["looping", monde.boucle ? "🎢 " + Math.round((monde.boucle.theta * 180) / Math.PI) + "° sur 360°" : "—"],
+        ["dernier saut", saut ? Math.round(saut.distance) + " m de long, " + virgule(saut.hauteurMax, 1) + " m de haut, " + virgule(saut.duree, 2) + " s" : "—"],
+        ["cartons défoncés", monde.cartonsCasses + " / " + monde.cartons.length],
+        ["saut du véhicule", "× " + virgule(fiche.saut || 1, 1) + (fiche.ecrase ? " · écrase les cartons" : "")],
+      ].concat(voiture, [
+        ["Les pièces"],
+        ["trouvées", monde.piecesCourse + " / " + monde.pieces.length],
+        ["porte-monnaie", Circuit.Sauvegarde.donnees.pieces + " pièce(s)"],
+      ]);
+    } else {
+      lignes = [
+        ["La course"],
+        ["phase", monde.phase],
+        ["tour", Math.min(monde.tour, Circuit.CONFIG.course.tours) + " / " + Circuit.CONFIG.course.tours],
+        ["prochaine porte", monde.prochainePorte === 0 ? "0 (la ligne)" : monde.prochainePorte],
+        ["chrono du tour", chrono(monde.chronoTour)],
+        ["chrono de la course", chrono(monde.chronoCourse)],
+        ["sorties de piste", monde.sortiesDePiste],
+        ["position", monde.position === 1 ? "🥇 1er" : "🥈 2e"],
+        ["chocs", monde.chocs + (monde.enContact ? " (💥 en contact)" : "")],
+      ].concat(voiture, [
+        ["Sur le circuit"],
+        ["sol sous la voiture", monde.sol === "herbe" ? "🌱 herbe" : monde.sol === "bordure" ? "🟥 bordure" : "🛣️ route"],
+        ["écart au milieu", virgule(r.ecart, 1) + " m (route : ± " + virgule(Circuit.CONFIG.piste.largeur / 2, 1) + ")"],
+        ["progression", Math.round(r.s) + " m sur " + Math.round(Circuit.Piste.longueurTour)],
+      ]);
+      if (adv) {
+        lignes = lignes.concat([
+          ["La voiture bleue (le pilote)"],
+          ["tour", Math.min(adv.tour, Circuit.CONFIG.course.tours) + " / " + Circuit.CONFIG.course.tours],
+          ["x, z", virgule(adv.voiture.x, 1) + " ; " + virgule(adv.voiture.z, 1) + " m"],
+          ["vitesse", virgule(adv.voiture.vitesse, 1) + " m/s = " + Math.round(Math.abs(adv.voiture.vitesse) * 3.6) + " km/h"],
+          ["voie visée", (adv.voie > 0 ? "extérieure (+" : "intérieure (") + virgule(adv.voie, 1) + " m)"],
+          ["cible", Math.round((adv.difference * 180) / Math.PI) + "° → " + (Math.abs(adv.difference) <= 0.02 ? "tout droit" : adv.difference < 0 ? "tourne à gauche" : "tourne à droite")],
+          ["avance sur toi", Math.round(Circuit.Course.progression(adv) - Circuit.Course.progression(monde)) + " m"],
+        ]);
+      }
+      lignes = lignes.concat([
+        ["Les pièces"],
+        ["ramassées dans la course", monde.piecesCourse + " / " + monde.pieces.length],
+        ["porte-monnaie", Circuit.Sauvegarde.donnees.pieces + " pièce(s)"],
+        ["prochaine pièce devant", prochainePiece(monde)],
+      ]);
+    }
+    lignes = lignes.concat([
       ["Le son"],
       ["synthétiseur", Circuit.Son.etat()],
       ["ton moteur", Math.round(Circuit.Sons.enDirect.frequence) + " Hz · volume " + virgule(Circuit.Sons.enDirect.volume, 2)],
       ["moteur bleu", Math.round(Circuit.Sons.enDirect.frequenceAdversaire) + " Hz · volume " + virgule(Circuit.Sons.enDirect.volumeAdversaire, 2) + " (à " + Math.round(Circuit.Sons.enDirect.distance || 0) + " m)"],
-      ["côté (gauche −1, droite +1)", virgule(Circuit.Sons.enDirect.cote, 2)],
+      ["côté (gauche −1, droite +1)", virgule(Circuit.Sons.enDirect.cote || 0, 2)],
       ["herbe « chhhh »", "volume " + virgule(Circuit.Sons.enDirect.herbe, 2)],
       ["Le dessin"],
       ["caméra", Circuit.Scene3D.camera.mode],
@@ -155,7 +200,7 @@ Circuit.SousLeCapot = (function () {
       ["lignes (rayons X)", compteur.lignes.toLocaleString("fr-FR")],
       ["images par seconde", mesures.ips],
       ["pas de calcul par seconde", mesures.majParSeconde],
-    ];
+    ]);
     elements.etat.innerHTML = lignes
       .map((l) => (l.length === 1 ? '<tr class="groupe"><th colspan="2">' + l[0] + "</th></tr>" : "<tr><td>" + l[0] + "</td><td>" + l[1] + "</td></tr>"))
       .join("");

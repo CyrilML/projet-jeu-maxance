@@ -67,5 +67,47 @@ Circuit.Chocs = (function () {
     return { touche: true, force: -rapprochement };
   }
 
-  return { cercles, resoudre };
+  // Étape 37 : une voiture contre une BOÎTE fixe (un muret, un immeuble), même tournée.
+  // boite = { x, z, angle, demiLongueur, demiLargeur }. Pour chaque cercle de la voiture, on se met
+  // « dans le repère de la boîte » (comme si elle était droite), on trouve le point de la boîte le plus
+  // proche du cercle, et on regarde s'il est à moins d'un rayon. Si oui, on repousse la voiture.
+  // Renvoie la vitesse du choc (0 si pas de choc).
+  function contreBoite(v, boite, rayon) {
+    const cb = Math.cos(boite.angle), sb = Math.sin(boite.angle);
+    let pire = 0;
+    for (const centre of cercles(v, rayon)) {
+      // Le centre du cercle, vu depuis la boîte (u = le long de la boîte, w = en travers).
+      const dx = centre[0] - boite.x, dz = centre[1] - boite.z;
+      const u = dx * cb + dz * sb, w = -dx * sb + dz * cb;
+      const pu = Math.max(-boite.demiLongueur, Math.min(boite.demiLongueur, u));
+      const pw = Math.max(-boite.demiLargeur, Math.min(boite.demiLargeur, w));
+      let nu = u - pu, nw = w - pw;
+      let d = Math.hypot(nu, nw);
+      if (d >= rayon) continue;
+      if (d < 0.0001) {
+        // Le centre est DANS la boîte : on sort par le côté le plus proche.
+        const versU = boite.demiLongueur - Math.abs(u), versW = boite.demiLargeur - Math.abs(w);
+        if (versU < versW) { nu = Math.sign(u) || 1; nw = 0; d = -versU; }
+        else { nu = 0; nw = Math.sign(w) || 1; d = -versW; }
+      } else {
+        nu /= d;
+        nw /= d;
+      }
+      // La direction pour sortir, dans le monde.
+      const nx = nu * cb - nw * sb, nz = nu * sb + nw * cb;
+      const enfoncement = rayon - d;
+      v.x += nx * enfoncement;
+      v.z += nz * enfoncement;
+      const vers = Math.cos(v.angle) * v.vitesse * nx + Math.sin(v.angle) * v.vitesse * nz;
+      if (vers < 0) pire = Math.max(pire, -vers);
+    }
+    return pire;
+  }
+
+  // Un petit cercle (un plot) touche-t-il la voiture ?
+  function toucheCercle(v, x, z, r, rayon) {
+    return cercles(v, rayon).some((c) => Math.hypot(c[0] - x, c[1] - z) < r + rayon);
+  }
+
+  return { cercles, resoudre, contreBoite, toucheCercle };
 })();

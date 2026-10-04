@@ -138,7 +138,92 @@ Circuit.Modeles = (function () {
     return { avant: 1.75, arriere: -1.6, z: 0.95, rayon: 0.45, epaisseur: 0.45 };
   }
 
-  const FABRIQUES = { classique, taureau, fleche, fusee, f1 };
+  // ---------------------------------------------------------------- étape 37 : le garage du parcours
+
+  // Le 4x4 : une grosse boîte carrée, haute sur pattes, avec une roue de secours derrière.
+  function quatre(c, k1, k2) {
+    tranche(c, { av: 2.2, ar: -2.2, bas: 0.55, hAv: 1.25, l: 1.0 }, k1); // la caisse
+    tranche(c, { av: 2.25, ar: 1.6, bas: 0.5, hAv: 1.0, l: 1.02 }, k2); // le pare-chocs avant
+    tranche(c, { av: 0.9, ar: -2.1, bas: 1.24, hAv: 1.95, xhAv: 0.6, l: 0.97, lh: 0.92 }, VITRE); // les vitres
+    tranche(c, { av: 0.6, ar: -2.1, bas: 1.94, hAv: 2.02, l: 0.92 }, k1); // le toit
+    for (const x of [-1.4, -0.4, 0.5]) c.boite(x, 2.08, 0, 0.08, 0.1, 1.9, k2); // les barres de toit
+    c.boite(-2.33, 1.0, 0, 0.22, 0.8, 0.8, NOIR); // la roue de secours, accrochée derrière
+    c.boite(-2.45, 1.0, 0, 0.04, 0.35, 0.35, ARGENT);
+    for (const z of [-1, 1]) {
+      c.boite(2.24, 0.95, z * 0.65, 0.04, 0.22, 0.3, PHARE);
+      c.boite(-2.22, 0.95, z * 0.75, 0.04, 0.25, 0.2, FEU);
+      c.boite(0, 0.62, z * 1.06, 3.2, 0.14, 0.12, k2); // le marchepied
+    }
+    return { avant: 1.45, arriere: -1.45, z: 1.05, rayon: 0.5, epaisseur: 0.38 };
+  }
+
+  // Le pickup : une cabine devant, une benne ouverte derrière.
+  function pickup(c, k1, k2) {
+    tranche(c, { av: 2.5, ar: -2.5, bas: 0.55, hAv: 1.15, l: 1.0 }, k1); // le bas de caisse
+    tranche(c, { av: 2.5, ar: 1.5, bas: 1.14, hAv: 1.25, hAr: 1.3, l: 0.98 }, k1); // le capot
+    tranche(c, { av: 1.5, ar: -0.4, bas: 1.29, hAv: 1.95, xhAv: 1.0, l: 0.96, lh: 0.9 }, VITRE); // la cabine vitrée
+    tranche(c, { av: 1.0, ar: -0.4, bas: 1.94, hAv: 2.0, l: 0.9 }, k1); // le toit
+    // La benne : un plancher et 3 parois (ouverte en haut).
+    c.boite(-1.45, 1.17, 0, 2.1, 0.06, 1.9, k2);
+    c.boite(-1.45, 1.45, 0.97, 2.1, 0.5, 0.06, k1);
+    c.boite(-1.45, 1.45, -0.97, 2.1, 0.5, 0.06, k1);
+    c.boite(-2.48, 1.45, 0, 0.06, 0.5, 1.9, k1);
+    c.boite(0.3, 0.4, 0, 4.6, 0.12, 2.0, k2); // le châssis
+    for (const z of [-1, 1]) {
+      c.boite(2.52, 0.9, z * 0.7, 0.04, 0.2, 0.3, PHARE);
+      c.boite(-2.52, 1.05, z * 0.8, 0.04, 0.3, 0.15, FEU);
+    }
+    return { avant: 1.65, arriere: -1.6, z: 1.02, rayon: 0.48, epaisseur: 0.36 };
+  }
+
+  // Le buggy : un cadre en tubes, un petit siège, roues bien dehors. Léger et rapide !
+  function buggy(c, k1, k2) {
+    tranche(c, { av: 1.8, ar: -1.6, bas: 0.35, hAv: 0.55, hAr: 0.75, l: 0.55, lAr: 0.7, lh: 0.5, lhAr: 0.65 }, k1); // la coque
+    tranche(c, { av: 2.0, ar: 1.6, bas: 0.35, hAv: 0.45, l: 0.7 }, k2); // le pare-chocs
+    c.boite(-0.2, 0.85, 0, 0.6, 0.6, 0.6, k2); // le siège
+    c.boite(-0.15, 1.35, 0, 0.32, 0.3, 0.3, JAUNE); // le casque du pilote
+    // L'arceau : des tubes qui forment une cage au-dessus du pilote.
+    for (const z of [-0.55, 0.55]) {
+      c.boite(0.5, 1.1, z, 0.07, 1.3, 0.07, NOIR);
+      c.boite(-0.9, 1.1, z, 0.07, 1.3, 0.07, NOIR);
+      c.boite(-0.2, 1.75, z, 1.47, 0.07, 0.07, NOIR);
+      c.boite(1.15, 0.85, z, 1.3, 0.07, 0.07, NOIR); // les tubes vers l'avant
+    }
+    c.boite(0.5, 1.75, 0, 0.07, 0.07, 1.17, NOIR);
+    c.boite(-0.9, 1.75, 0, 0.07, 0.07, 1.17, NOIR);
+    c.boite(-1.5, 0.95, 0, 0.5, 0.5, 0.9, NOIR); // le moteur, derrière
+    c.boite(-1.7, 1.3, 0, 0.2, 0.06, 1.3, k1); // le petit aileron
+    for (const z of [-1, 1]) c.boite(1.9, 0.6, z * 0.35, 0.06, 0.16, 0.16, PHARE);
+    return { avant: 1.45, arriere: -1.3, z: 1.05, rayon: 0.45, epaisseur: 0.4 };
+  }
+
+  // Le monster truck : un petit pickup perché sur 4 roues géantes.
+  function monster(c, k1, k2) {
+    const h = 1.35; // la caisse commence très haut
+    tranche(c, { av: 2.2, ar: -2.2, bas: h, hAv: h + 0.6, l: 1.05 }, k1);
+    tranche(c, { av: 2.2, ar: 1.2, bas: h + 0.59, hAv: h + 0.7, hAr: h + 0.75, l: 1.0 }, k1); // le capot
+    tranche(c, { av: 1.2, ar: -0.6, bas: h + 0.74, hAv: h + 1.3, xhAv: 0.75, l: 0.98, lh: 0.9 }, VITRE);
+    tranche(c, { av: 0.75, ar: -0.6, bas: h + 1.29, hAv: h + 1.35, l: 0.9 }, k1);
+    c.boite(-1.4, h + 0.75, 0, 1.6, 0.3, 2.0, k1); // la benne
+    // Des flammes peintes sur les côtés (couleur 2).
+    for (const z of [-1, 1]) {
+      for (let i = 0; i < 4; i++) {
+        const x = 1.6 - i * 0.7;
+        c.boite(x - 0.05, h + 0.3, z * 1.06, 0.6, 0.25 - i * 0.03, 0.02, k2);
+      }
+      c.boite(2.22, h + 0.4, z * 0.7, 0.04, 0.2, 0.3, PHARE);
+      c.boite(-2.22, h + 0.4, z * 0.8, 0.04, 0.25, 0.2, FEU);
+    }
+    // Le châssis et les grosses suspensions.
+    c.boite(0, 1.0, 0, 3.6, 0.3, 0.8, NOIR);
+    for (const x of [-1.6, 1.6]) {
+      c.boite(x, 0.95, 0, 0.25, 0.25, 2.2, NOIR); // les essieux
+      for (const z of [-0.7, 0.7]) c.boite(x, 1.25, z, 0.15, 0.6, 0.15, ARGENT); // les amortisseurs
+    }
+    return { avant: 1.6, arriere: -1.6, z: 1.35, rayon: 0.95, epaisseur: 0.75 };
+  }
+
+  const FABRIQUES = { classique, taureau, fleche, fusee, f1, quatre, pickup, buggy, monster };
 
   // Fabrique les triangles d'un modèle. Renvoie { carrosserie (les triangles), roues (où et quelle taille) }.
   function fabriquer(modele, couleur1, couleur2) {

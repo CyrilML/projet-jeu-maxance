@@ -28,12 +28,13 @@ Circuit.TableauDeBord = (function () {
     return min + ":" + s.toFixed(2).padStart(5, "0").replace(".", ",");
   }
 
-  function texte(t, x, y, taille, couleur, alignement) {
+  // sansContour : pour un texte foncé sur un fond clair (le contour noir le rendrait flou).
+  function texte(t, x, y, taille, couleur, alignement, sansContour) {
     ctx.font = "bold " + taille + "px 'Trebuchet MS', system-ui, sans-serif";
     ctx.textAlign = alignement || "left";
     ctx.lineWidth = Math.max(3, taille / 6);
     ctx.strokeStyle = "rgba(0,0,0,.65)";
-    ctx.strokeText(t, x, y);
+    if (!sansContour) ctx.strokeText(t, x, y);
     ctx.fillStyle = couleur || "#fff";
     ctx.fillText(t, x, y);
   }
@@ -48,9 +49,17 @@ Circuit.TableauDeBord = (function () {
   function dessiner(monde, options, sauvegarde) {
     ctx.clearRect(0, 0, W, H);
     const v = monde.voiture;
+    if (monde.phase === "cartes") {
+      dessinerCartes(monde);
+      return;
+    }
     if (monde.phase === "garage") {
       dessinerGarage(monde, sauvegarde);
-      if (options.rayonsX) dessinerEtiquettesRayonsX(monde);
+      if (options.rayonsX && monde.carte === "course") dessinerEtiquettesRayonsX(monde);
+      return;
+    }
+    if (monde.phase === "balade") {
+      dessinerBalade(monde, options, sauvegarde);
       return;
     }
 
@@ -122,23 +131,28 @@ Circuit.TableauDeBord = (function () {
   // Étape 36 : l'écran du garage. La voiture tourne en 3D derrière (voir affichage/scene3d.js).
   function dessinerGarage(monde, sauvegarde) {
     const g = monde.garage;
-    const voiture = C.voitures[g.index];
+    const liste = Circuit.Garage.liste(); // étape 37 : le garage de la carte choisie
+    const voiture = liste[g.index];
     const statut = Circuit.Garage.statut(g.index);
-    const max = C.voitures[C.voitures.length - 1];
+    const max = {
+      vitesseMax: Math.max(...liste.map((v) => v.vitesseMax)),
+      acceleration: Math.max(...liste.map((v) => v.acceleration)),
+    };
 
-    panneau(W / 2 - 200, 12, 400, 50);
-    texte("🏠 Le garage", W / 2 - 180, 46, 28, "#ffe27a");
-    texte("🪙 " + sauvegarde.pieces + " pièces", W / 2 + 180, 46, 24, "#ffd34d", "right");
+    panneau(W / 2 - 240, 12, 480, 50);
+    const nomCarte = (C.cartes.find((c) => c.id === monde.carte) || {}).nom || "";
+    texte("🏠 Garage · " + nomCarte, W / 2 - 225, 46, 24, "#ffe27a");
+    texte("🪙 " + sauvegarde.pieces, W / 2 + 225, 46, 24, "#ffd34d", "right");
 
     // Les 5 places du garage, en petit : ✅ à toi, 🔒 pas encore.
-    C.voitures.forEach((v, i) => {
-      const x = W / 2 + (i - 2) * 64;
+    liste.forEach((v, i) => {
+      const x = W / 2 + (i - (liste.length - 1) / 2) * 64;
       const ici = i === g.index;
       ctx.fillStyle = ici ? "rgba(255,226,122,.9)" : "rgba(10,14,30,.6)";
       ctx.beginPath();
       ctx.roundRect(x - 26, 72, 52, 34, 8);
       ctx.fill();
-      texte((Circuit.Garage.possede(v.id) ? "✅" : "🔒") + (i + 1), x, 96, 16, ici ? "#1a1a1a" : "#fff", "center");
+      texte((Circuit.Garage.possede(v.id) ? "✅" : "🔒") + (i + 1), x, 96, 16, ici ? "#1a1a1a" : "#fff", "center", ici);
     });
 
     // La fiche de la voiture, en bas.
@@ -170,7 +184,111 @@ Circuit.TableauDeBord = (function () {
       couleur = "#ffb37a";
     }
     texte(g.message || action, W / 2, H - 50, 20, g.message ? "#7dffa0" : couleur, "center");
-    texte("← → changer de voiture · ramasse les pièces 🪙 sur le circuit pour en acheter", W / 2, H - 24, 14, "#cfd6ff", "center");
+    texte("← → changer de voiture · ⌫ changer de carte · ramasse les pièces 🪙 pour en acheter", W / 2, H - 24, 14, "#cfd6ff", "center");
+  }
+
+  // Étape 37 : l'écran « Choisis ta carte ».
+  function dessinerCartes(monde) {
+    panneau(W / 2 - 230, 30, 460, 56);
+    texte("🗺️ Choisis ta carte", W / 2, 70, 32, "#ffe27a", "center");
+    const n = C.cartes.length, largeur = 270, ecart = 20;
+    const gauche = W / 2 - (n * largeur + (n - 1) * ecart) / 2;
+    C.cartes.forEach((carte, i) => {
+      const x = gauche + i * (largeur + ecart), y = 130;
+      const ici = i === monde.choixCarte;
+      const prete = carte.id !== "ville";
+      ctx.fillStyle = ici ? "rgba(255,226,122,.92)" : "rgba(10,14,30,.72)";
+      ctx.beginPath();
+      ctx.roundRect(x, y, largeur, 230, 14);
+      ctx.fill();
+      const couleur = ici ? "#1a1a1a" : "#fff";
+      texte(carte.icone, x + largeur / 2, y + 80, 60, couleur, "center", ici);
+      texte((i + 1) + ". " + carte.nom, x + largeur / 2, y + 135, 26, couleur, "center", ici);
+      texte(carte.texte, x + largeur / 2, y + 170, 13, ici ? "#333" : "#cfd6ff", "center", ici);
+      if (!prete) texte("🚧 en construction", x + largeur / 2, y + 205, 16, ici ? "#7a3b00" : "#ffb37a", "center", ici);
+    });
+    if (monde.messageCarte) texte(monde.messageCarte, W / 2, 400, 20, "#ffb37a", "center");
+    panneau(W / 2 - 250, H - 80, 500, 50);
+    texte("← → ou 1 2 3 pour choisir · Entrée pour aller au garage", W / 2, H - 48, 18, "#cfd6ff", "center");
+  }
+
+  // Étape 37 : pendant la balade sur le parcours.
+  function dessinerBalade(monde, options, sauvegarde) {
+    const v = monde.voiture;
+    panneau(12, 12, 250, 112);
+    texte("🎢 Le parcours", 24, 42, 24, "#ffe27a");
+    texte("🪙 " + monde.piecesCourse + " / " + monde.pieces.length + " pièces trouvées", 24, 68, 17, "#ffd34d");
+    texte("porte-monnaie : " + sauvegarde.pieces, 24, 90, 14, "#cfd6ff");
+    texte("📦 cartons défoncés : " + monde.cartonsCasses, 24, 112, 14, "#cfd6ff");
+
+    // Le compteur de vitesse et la hauteur.
+    panneau(W - 190, H - 92, 178, 80);
+    texte(Math.round(Math.abs(v.vitesse) * 3.6) + "", W - 70, H - 36, 46, "#fff", "right");
+    texte("km/h", W - 62, H - 36, 18, "#cfd6ff");
+    if (v.y > 0.3) texte("↕ " + v.y.toFixed(1).replace(".", ",") + " m de haut", W - 101, H - 104, 18, "#7dffa0", "center");
+
+    dessinerMiniCarteParcours(monde);
+
+    if (monde.message && monde.temps < monde.message.jusqua) texte(monde.message.texte, W / 2, H / 2 - 70, 36, "#ffe27a", "center");
+    if (monde.boucle) texte("🎢 " + Math.round((monde.boucle.theta * 180) / Math.PI) + "°", W / 2, 120, 26, "#fff", "center");
+    texte("R : retour au départ · ⌫ : changer de carte", 24, H - 22, 14, "#cfd6ff");
+    if (options.pause) texte("⏸ Pause", W / 2, H - 30, 28, "#fff", "center");
+    if (options.ralenti) texte("🐢 Ralenti", 280, 40, 18, "#cfd6ff");
+    if (options.rayonsX) dessinerEtiquettesParcours(monde);
+  }
+
+  // La mini-carte du parcours : les formes, les loopings, les pièces et la voiture, vus d'en haut.
+  function dessinerMiniCarteParcours(monde) {
+    const taille = 136;
+    const echelle = taille / C.parcours.taille;
+    const cx = W - 12 - taille / 2, cz = 12 + taille / 2;
+    panneau(W - 12 - taille - 6, 6, taille + 12, taille + 12);
+    for (const f of Circuit.Parcours.formes) {
+      ctx.fillStyle = f.nom === "mur de tunnel" ? "#9aa0a8" : f.type === "pente" ? "#f0a040" : "#c9a676";
+      ctx.save();
+      ctx.translate(cx + f.x * echelle, cz + f.z * echelle);
+      ctx.rotate(f.angle);
+      ctx.fillRect(-f.demiLongueur * echelle, -f.demiLargeur * echelle, Math.max(2, 2 * f.demiLongueur * echelle), Math.max(2, 2 * f.demiLargeur * echelle));
+      ctx.restore();
+    }
+    ctx.strokeStyle = "#ff5a4a";
+    ctx.lineWidth = 2;
+    for (const l of Circuit.Parcours.loopings) {
+      ctx.beginPath();
+      ctx.arc(cx + l.x * echelle, cz + l.z * echelle, 3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#ffd34d";
+    for (const p of monde.pieces) if (!p.prise) ctx.fillRect(cx + p.x * echelle - 1, cz + p.z * echelle - 1, 2, 2);
+    const v = monde.voiture;
+    ctx.save();
+    ctx.translate(cx + v.x * echelle, cz + v.z * echelle);
+    ctx.rotate(v.angle);
+    ctx.fillStyle = "#ff3b30";
+    ctx.beginPath();
+    ctx.moveTo(6, 0);
+    ctx.lineTo(-4, -4);
+    ctx.lineTo(-4, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Aux rayons X sur le parcours : la hauteur des formes et la vitesse qu'il faut pour les loopings.
+  function dessinerEtiquettesParcours(monde) {
+    const vp = Circuit.Scene3D.vueProjection;
+    for (const f of Circuit.Parcours.formes) {
+      if (f.nom === "mur de tunnel" || f.nom === "descente") continue;
+      const e = Circuit.Maths3D.versEcran(vp, f.x, f.hauteur + 1.5, f.z, W, H);
+      if (e && e.x > -50 && e.x < W + 50 && e.y > 0) texte(f.nom + " · " + String(f.hauteur).replace(".", ",") + " m", e.x, e.y, 14, "#7fe0ff", "center");
+    }
+    for (const l of Circuit.Parcours.loopings) {
+      const e = Circuit.Maths3D.versEcran(vp, l.x, 5, l.z, W, H);
+      if (e && e.y > 0) texte("entrée du looping · ≥ " + Math.round(C.parcours.vitesseLooping * 3.6) + " km/h", e.x, e.y, 14, "#7dffa0", "center");
+    }
+    const v = monde.voiture;
+    const e = Circuit.Maths3D.versEcran(vp, v.x, (v.y || 0) + 2.8, v.z, W, H);
+    if (e) texte("y = " + (v.y || 0).toFixed(1).replace(".", ",") + " m · vy = " + (v.vy || 0).toFixed(1).replace(".", ",") + " m/s", e.x, e.y, 14, "#ffb37a", "center");
   }
 
   // Les 3 feux rouges du départ : un s'éteint chaque seconde.

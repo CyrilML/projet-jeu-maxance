@@ -37,6 +37,13 @@ Circuit.Sons = (function () {
     radio.ecouter("feu", () => Son.bip(S.bips.frequenceFeu, 0.18, S.bips.volume));
     radio.ecouter("depart", () => Son.bip(S.bips.frequenceGo, 0.5, S.bips.volume));
     radio.ecouter("choc", (d) => Son.boum(d.force));
+    // Étape 37 : le parcours.
+    radio.ecouter("carton", () => Son.boum(3));
+    radio.ecouter("atterrissage", (d) => { if (d.duree > 0.3) Son.boum(Math.min(10, d.hauteurMax * 2)); });
+    radio.ecouter("looping-fini", () => {
+      Son.bip(660, 0.1, 0.12);
+      setTimeout(() => Son.bip(990, 0.25, 0.12), 110);
+    });
     // Étape 36 : « ding » quand on prend une pièce, « ding-ding » quand on achète une voiture.
     radio.ecouter("piece", () => Son.bip(1320, 0.08, 0.12));
     radio.ecouter("achat", () => {
@@ -47,7 +54,7 @@ Circuit.Sons = (function () {
 
   // La fréquence d'un moteur selon sa vitesse, et selon le modèle de voiture.
   function frequenceDuMoteur(voiture) {
-    const fiche = Circuit.CONFIG.voitures.find((v) => v.modele === voiture.modele);
+    const fiche = Circuit.Garage.ficheDe(voiture.modele); // étape 37 : dans tous les garages
     const son = fiche ? fiche.son : { ralenti: S.moteur.frequenceRalenti, max: S.moteur.frequenceMax };
     const part = Math.min(1, Math.abs(voiture.vitesse) / voiture.vitesseMax);
     return son.ralenti + (son.max - son.ralenti) * part;
@@ -67,6 +74,12 @@ Circuit.Sons = (function () {
     enDirect.volume = volume;
 
     // 2. Le moteur de la voiture bleue : plus elle est loin, moins on l'entend.
+    if (!monde.adversaire) {
+      // Pas de voiture bleue (le parcours) : son moteur se tait.
+      Son.reglerMoteur(moteurAdversaire, 50, 0, 0, 0);
+      enDirect.volumeAdversaire = 0;
+      enDirect.distance = 0;
+    } else {
     const a = monde.adversaire.voiture;
     const dx = a.x - v.x, dz = a.z - v.z;
     const distance = Math.hypot(dx, dz);
@@ -81,6 +94,7 @@ Circuit.Sons = (function () {
     enDirect.volumeAdversaire = volumeAdv;
     enDirect.cote = cote;
     enDirect.distance = distance;
+    }
 
     // 3. L'herbe
     const volumeHerbe = !silence && monde.sol === "herbe" ? S.herbe.volume * Math.min(1, Math.abs(v.vitesse) / 10) : 0;

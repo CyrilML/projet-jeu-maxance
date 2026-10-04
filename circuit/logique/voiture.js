@@ -30,6 +30,9 @@ Circuit.Voiture = (function () {
       acceleration: (reglages && reglages.acceleration) || V.acceleration, // m/s²
       modele: (reglages && reglages.modele) || "classique", // étape 36 : la forme de la voiture (voir affichage/modeles.js)
       vitesse: 0, // m/s
+      y: 0, // étape 37 : la hauteur (m) ; 0 = posée sur le sol
+      vy: 0, // étape 37 : la vitesse vers le haut (m/s)
+      enLAir: false, // étape 37 : vrai pendant un saut de tremplin
       volant: 0, // de −1 (à fond à gauche) à +1 (à fond à droite), pour tourner les roues avant du dessin
       rotationRoues: 0, // radians : de combien les roues ont tourné depuis le départ
       distance: 0, // m parcourus dans la course
@@ -39,8 +42,18 @@ Circuit.Voiture = (function () {
 
   // Avance la voiture d'un petit pas de temps dt.
   // intentions = { accelerer, freiner, gauche, droite } (vrai ou faux)
-  // sol = "route", "bordure" ou "herbe"
-  function avancer(voiture, intentions, dt, sol) {
+  // sol = "route", "bordure", "herbe", "terre" (le parcours) ou "air"
+  // virage (facultatif, étape 37) : la vitesse de rotation de ce véhicule, en rad/s.
+  function avancer(voiture, intentions, dt, sol, virage) {
+    // Étape 37 : en l'air, les pédales et le volant ne servent à rien. La voiture file tout droit.
+    if (sol === "air") {
+      voiture.pedale = "aucune (en l'air)";
+      voiture.x += Math.cos(voiture.angle) * voiture.vitesse * dt;
+      voiture.z += Math.sin(voiture.angle) * voiture.vitesse * dt;
+      voiture.distance += Math.abs(voiture.vitesse) * dt;
+      voiture.rotationRoues += (voiture.vitesse * dt) / RAYON_ROUE;
+      return;
+    }
     // 1. Les pédales
     let v = voiture.vitesse;
     if (intentions.accelerer && !intentions.freiner) {
@@ -66,7 +79,7 @@ Circuit.Voiture = (function () {
     // 2. Le volant : on tourne d'autant plus vite qu'on roule (jusqu'à 10 m/s), et à l'envers en marche arrière.
     const direction = (intentions.droite ? 1 : 0) - (intentions.gauche ? 1 : 0);
     const efficacite = Math.min(1, Math.abs(v) / 10) * Math.sign(v);
-    voiture.angle += direction * V.vitesseVirage * efficacite * dt;
+    voiture.angle += direction * (virage || V.vitesseVirage) * efficacite * dt;
     voiture.angle = ((voiture.angle + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; // rester entre −π et π
     voiture.volant += (direction - voiture.volant) * Math.min(1, dt * 10); // le volant tourne en douceur
 

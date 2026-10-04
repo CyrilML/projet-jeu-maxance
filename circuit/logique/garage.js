@@ -1,6 +1,8 @@
 // 🏠 LE GARAGE : le vendeur de voitures
 //
-// Avant chaque course, on passe par le garage. On y voit les 5 voitures, une par une (← →).
+// Avant chaque course, on passe par le garage. On y voit les voitures, une par une (← →).
+// Étape 37 : chaque carte a son garage (le circuit : 5 voitures de course ; le parcours : 4 tout-terrain).
+// Les pièces et les voitures achetées sont les mêmes partout.
 //   - si la voiture est à toi : Entrée → tu la prends et la course commence ;
 //   - sinon, si tu as assez de pièces : Entrée → tu l'achètes (le prix est enlevé de tes pièces) ;
 //   - sinon : le garage te dit combien de pièces il te manque.
@@ -11,15 +13,36 @@
 window.Circuit = window.Circuit || {};
 
 Circuit.Garage = (function () {
-  const VOITURES = Circuit.CONFIG.voitures;
+  const C = Circuit.CONFIG;
   const radio = Circuit.Evenements;
+  // Étape 37 : ✍️ un garage par carte, avec des véhicules qui s'adaptent à la carte.
+  const LISTES = { course: C.voitures, parcours: C.vehiculesParcours };
+  let carte = "course";
+
+  // Le garage de quelle carte ?
+  function utiliser(id) {
+    carte = id;
+  }
+
+  function liste() {
+    return LISTES[carte] || C.voitures;
+  }
 
   function voitureNumero(index) {
-    return VOITURES[index];
+    return liste()[index];
   }
 
   function trouver(id) {
-    return Math.max(0, VOITURES.findIndex((v) => v.id === id));
+    return Math.max(0, liste().findIndex((v) => v.id === id));
+  }
+
+  // La fiche d'un véhicule, d'après sa forme (cherchée dans tous les garages).
+  function ficheDe(modele) {
+    for (const l of Object.values(LISTES)) {
+      const f = l.find((v) => v.modele === modele);
+      if (f) return f;
+    }
+    return null;
   }
 
   function possede(id) {
@@ -28,7 +51,7 @@ Circuit.Garage = (function () {
 
   // Ce que le garage peut dire de la voiture regardée : "a-toi", "achetable", ou "trop-chere".
   function statut(index) {
-    const v = VOITURES[index];
+    const v = liste()[index];
     if (possede(v.id)) return "a-toi";
     return Circuit.Sauvegarde.donnees.pieces >= v.prix ? "achetable" : "trop-chere";
   }
@@ -37,14 +60,15 @@ Circuit.Garage = (function () {
   function etape(monde, intentions) {
     const g = monde.garage;
     if (intentions.gaucheAppui || intentions.droiteAppui) {
-      g.index = (g.index + (intentions.droiteAppui ? 1 : -1) + VOITURES.length) % VOITURES.length;
+      const n = liste().length;
+      g.index = (g.index + (intentions.droiteAppui ? 1 : -1) + n) % n;
       g.message = null;
-      radio.emettre("garage-regarde", { voiture: VOITURES[g.index].nom, statut: statut(g.index) });
+      radio.emettre("garage-regarde", { voiture: liste()[g.index].nom, statut: statut(g.index) });
       return "regarde";
     }
     if (!intentions.valider) return null;
 
-    const v = VOITURES[g.index];
+    const v = liste()[g.index];
     const s = statut(g.index);
     if (s === "trop-chere") {
       const manque = v.prix - Circuit.Sauvegarde.donnees.pieces;
@@ -57,9 +81,9 @@ Circuit.Garage = (function () {
       g.message = "🎉 Elle est à toi ! Entrée pour rouler";
       return null;
     }
-    radio.emettre("choix-voiture", { id: v.id, voiture: v.nom });
+    radio.emettre("choix-voiture", { id: v.id, voiture: v.nom, carte });
     return "depart";
   }
 
-  return { VOITURES, voitureNumero, trouver, possede, statut, etape };
+  return { utiliser, liste, voitureNumero, trouver, ficheDe, possede, statut, etape, get carte() { return carte; } };
 })();

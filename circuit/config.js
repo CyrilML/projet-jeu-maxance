@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 5,
+  version: 6,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -60,6 +60,70 @@ Circuit.CONFIG = {
     { id: "f1", nom: "La Formule 1", modele: "f1", prix: 400, vitesseMax: 52.8, acceleration: 19,
       couleurs: [[0.05, 0.6, 0.38], [0.95, 0.95, 0.95]], son: { ralenti: 170, max: 560 } }, // ✍️ son aigu
   ],
+
+  // Étape 37 : LES CARTES. ✍️ On choisit la carte avant le garage, et chaque carte a son garage.
+  cartes: [
+    { id: "course", nom: "Le circuit", icone: "🏁", texte: "3 tours contre la voiture bleue" },
+    { id: "parcours", nom: "Le parcours", icone: "🎢", texte: "Tremplins, loopings, tunnels" },
+    { id: "ville", nom: "La ville", icone: "🏙️", texte: "Rues, livraisons et course" },
+  ],
+
+  // Étape 37 : le garage du parcours. ✍️ Monster truck, 4x4, pickup et buggy.
+  //   virage = vitesse à laquelle le véhicule tourne (rad/s) ; saut = combien il saute plus haut qu'une voiture normale ;
+  //   ecrase = il passe à travers les cartons sans ralentir.
+  vehiculesParcours: [
+    { id: "4x4", nom: "Le 4x4", modele: "quatre", prix: 0, vitesseMax: 36.1, acceleration: 12, virage: 1.9, saut: 1,
+      couleurs: [[0.38, 0.48, 0.26], [0.14, 0.14, 0.15]], son: { ralenti: 45, max: 115 } },
+    { id: "pickup", nom: "Le pickup", modele: "pickup", prix: 50, vitesseMax: 38.9, acceleration: 13, virage: 1.9, saut: 1,
+      couleurs: [[0.8, 0.14, 0.12], [0.95, 0.95, 0.95]], son: { ralenti: 42, max: 110 } },
+    { id: "buggy", nom: "Le buggy", modele: "buggy", prix: 100, vitesseMax: 44.4, acceleration: 17, virage: 2.3, saut: 1.1,
+      couleurs: [[1, 0.72, 0.05], [0.1, 0.1, 0.11]], son: { ralenti: 95, max: 270 } },
+    { id: "monster", nom: "Le monster truck", modele: "monster", prix: 200, vitesseMax: 33.3, acceleration: 14, virage: 1.5, saut: 1.5, ecrase: true,
+      couleurs: [[0.15, 0.35, 0.9], [1, 0.45, 0.05]], son: { ralenti: 30, max: 80 } },
+  ],
+
+  // Étape 37 : la map du PARCOURS. ✍️ Plate, en balade libre (pas de chrono), avec des montées, des tremplins,
+  // des loopings, des tunnels, des pièces partout et des piles de cartons à défoncer.
+  // x, z = le centre (en mètres) ; angle = la direction (radians : 0 = vers x+, π/2 = vers z+).
+  parcours: {
+    taille: 700, // m : la map fait 700 m × 700 m
+    gravite: 20, // m/s² : ce qui fait retomber la voiture après un saut
+    marche: 0.7, // m : une marche plus petite que ça, la voiture la monte ; plus grande, c'est un mur
+    // Les montées : une pente pour monter, un plateau en haut, une pente pour redescendre.
+    montees: [
+      { x: -130, z: -150, angle: 0, longueur: 40, largeur: 14, hauteur: 5, pente: 25 },
+      { x: 160, z: 170, angle: Math.PI / 2, longueur: 30, largeur: 16, hauteur: 9, pente: 40 },
+      { x: -220, z: 190, angle: Math.PI / 4, longueur: 20, largeur: 14, hauteur: 3, pente: 15 },
+    ],
+    // Les tremplins : une pente qui s'arrête net. Au bout, on s'envole !
+    tremplins: [
+      { x: 70, z: -40, angle: 0, longueur: 14, largeur: 10, hauteur: 2.5 },
+      { x: -60, z: 110, angle: Math.PI, longueur: 16, largeur: 10, hauteur: 3.5 },
+      { x: 230, z: -190, angle: -Math.PI / 2, longueur: 18, largeur: 12, hauteur: 5 },
+      { x: -280, z: -260, angle: Math.PI / 4, longueur: 14, largeur: 10, hauteur: 3 },
+    ],
+    // Les loopings : x, z = l'entrée (en bas). Il faut arriver assez vite, dans le bon sens.
+    loopings: [
+      { x: -260, z: -30, angle: 0, rayon: 9 },
+      { x: 60, z: 270, angle: Math.PI, rayon: 12 },
+    ],
+    vitesseLooping: 15, // m/s (54 km/h) : en dessous, on n'a pas assez d'élan pour faire le tour
+    decalageLooping: 5, // m : le looping se décale sur le côté pendant le tour, pour que l'entrée et la sortie ne se croisent pas
+    // Les tunnels : on roule dedans, entre deux murs, sous un toit.
+    tunnels: [
+      { x: 260, z: 60, angle: Math.PI / 2, longueur: 80, largeur: 10, hauteur: 5 },
+      { x: -40, z: -280, angle: 0, longueur: 120, largeur: 10, hauteur: 5 },
+    ],
+    // Les piles de cartons : ✍️ quand on fonce dedans, ils volent ! Certaines cachent une pièce.
+    cartons: [
+      { x: 30, z: 40, piece: true }, { x: -90, z: -40, piece: false }, { x: 120, z: 60, piece: true },
+      { x: -170, z: 60, piece: false }, { x: 200, z: -60, piece: true }, { x: -30, z: 200, piece: false },
+      { x: -300, z: 100, piece: true }, { x: 300, z: 280, piece: false }, { x: 100, z: -260, piece: true },
+      { x: -200, z: -200, piece: false }, { x: 300, z: -300, piece: false }, { x: -320, z: 300, piece: true },
+    ],
+    piecesAuSol: 25, // pièces éparpillées au hasard sur le sol (en plus de celles sur les montées, tremplins…)
+    graine: 11,
+  },
 
   // Étape 36 : les pièces à ramasser pour acheter les voitures.
   pieces: {

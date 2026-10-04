@@ -22,6 +22,11 @@ Circuit.Entrees = (function () {
     ralenti: ["KeyL"],
     camera: ["KeyC"],
     son: ["KeyB"], // étape 35 : couper / remettre le son (comme dans le jeu de plateforme)
+    // Étape 37 : choisir la carte (1, 2, 3) et revenir au menu des cartes depuis le garage.
+    carte1: ["Digit1", "Numpad1"],
+    carte2: ["Digit2", "Numpad2"],
+    carte3: ["Digit3", "Numpad3"],
+    retour: ["Backspace"],
   };
 
   const actionsDeLaTouche = {};

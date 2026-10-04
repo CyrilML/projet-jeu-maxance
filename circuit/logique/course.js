@@ -9,6 +9,8 @@
 //   - depuis l'étape 34 : la voiture ADVERSE, les chocs, la position (1er ou 2e).
 //     ✍️ Règle de Maxance : si l'adversaire finit ses 3 tours avant toi, c'est « Perdu ! » tout de suite.
 //   - depuis l'étape 36 : le GARAGE au début (logique/garage.js) et les PIÈCES à ramasser (logique/pieces.js).
+//   - depuis l'étape 37 : le MENU DES CARTES avant le garage. Le circuit garde ses règles ici ;
+//     le parcours (balade libre) a les siennes dans logique/balade.js.
 //
 // Un « concurrent » = une voiture + où elle en est dans la course (tour, porte, chrono…).
 // Le joueur, ce sont les champs du monde lui-même (monde.voiture, monde.tour…) ;
@@ -49,13 +51,20 @@ Circuit.Course = (function () {
   }
 
   // La voiture du joueur : celle qui est regardée au garage (numéro `index` dans la liste du garage).
+  // Sur le parcours, elle attend au milieu de la map (x = 0, z = 0).
   function voitureDuJoueur(index) {
-    return placeDeDepart(C.adversaire.voie, Circuit.Garage.voitureNumero(index));
+    const fiche = Circuit.Garage.voitureNumero(index);
+    if (Circuit.Garage.carte === "parcours") return Circuit.Voiture.creer(0, 0, 0, fiche);
+    return placeDeDepart(C.adversaire.voie, fiche);
   }
 
   function creer() {
     const monde = {
-      phase: "garage", // garage, decompte, course, arrivee (tu as gagné), perdu
+      phase: "cartes", // cartes, garage, decompte, course, arrivee (tu as gagné), perdu, balade (le parcours)
+      carte: "course", // étape 37 : la carte choisie
+      choixCarte: 0, // étape 37 : la carte regardée dans le menu
+      messageCarte: null,
+      cartons: [], // étape 37 : les cartons du parcours
       garage: { index: 0, message: null }, // étape 36 : la voiture regardée au garage
       pieces: [], // étape 36 : les pièces posées sur le circuit
       piecesCourse: 0, // pièces ramassées pendant cette course
@@ -74,14 +83,29 @@ Circuit.Course = (function () {
     return monde;
   }
 
-  // Ouvre le garage, sur la voiture choisie la dernière fois.
+  // Étape 37 : le menu des cartes (au début, et après chaque course ou balade).
+  function ouvrirCartes(monde) {
+    monde.phase = "cartes";
+    monde.choixCarte = Math.max(0, C.cartes.findIndex((c) => c.id === monde.carte));
+    monde.messageCarte = null;
+    radio.emettre("menu-cartes", {});
+  }
+
+  // Étape 37 : les cartes qu'on peut déjà choisir (la ville arrive bientôt).
+  function disponible(id) {
+    return id === "course" || id === "parcours";
+  }
+
+  // Ouvre le garage de la carte choisie, sur la voiture choisie la dernière fois sur cette carte.
   function ouvrirGarage(monde) {
     monde.phase = "garage";
-    monde.garage.index = Circuit.Garage.trouver(Circuit.Sauvegarde.donnees.voitureChoisie);
+    Circuit.Garage.utiliser(monde.carte);
+    monde.garage.index = Circuit.Garage.trouver(Circuit.Sauvegarde.donnees.voituresChoisies[monde.carte]);
     monde.garage.message = null;
     preparer(monde, voitureDuJoueur(monde.garage.index));
-    monde.adversaire = creerAdversaire();
+    monde.adversaire = monde.carte === "course" ? creerAdversaire() : null;
     monde.pieces = [];
+    monde.cartons = [];
     radio.emettre("garage", { pieces: Circuit.Sauvegarde.donnees.pieces });
   }
 
@@ -117,16 +141,49 @@ Circuit.Course = (function () {
   function etape(monde, dt, intentions) {
     monde.temps += dt;
     const adv = monde.adversaire;
+    if (monde.phase === "cartes") {
+      const n = C.cartes.length;
+      if (intentions.gaucheAppui || intentions.droiteAppui) {
+        monde.choixCarte = (monde.choixCarte + (intentions.droiteAppui ? 1 : -1) + n) % n;
+        monde.messageCarte = null;
+      }
+      for (let i = 0; i < n; i++) if (intentions["carte" + (i + 1)]) monde.choixCarte = i;
+      if (!intentions.valider) return;
+      const carte = C.cartes[monde.choixCarte];
+      if (!disponible(carte.id)) {
+        monde.messageCarte = "🚧 La ville est en construction : bientôt !";
+        return;
+      }
+      monde.carte = carte.id;
+      radio.emettre("choix-carte", { id: carte.id, nom: carte.nom });
+      ouvrirGarage(monde);
+      return;
+    }
+    if (monde.phase === "balade") {
+      if (intentions.retour) {
+        ouvrirCartes(monde);
+        return;
+      }
+      Circuit.Balade.etape(monde, dt, intentions);
+      return;
+    }
 
     if (monde.phase === "garage") {
+      if (intentions.retour) {
+        ouvrirCartes(monde);
+        return;
+      }
       const reponse = Circuit.Garage.etape(monde, intentions);
       if (reponse === "regarde") preparer(monde, voitureDuJoueur(monde.garage.index)); // on montre la nouvelle voiture
-      if (reponse === "depart") lancer(monde);
+      if (reponse === "depart") {
+        if (monde.carte === "parcours") Circuit.Balade.lancer(monde, voitureDuJoueur(monde.garage.index));
+        else lancer(monde);
+      }
       return;
     }
     if (monde.phase === "arrivee" || monde.phase === "perdu") {
       if (intentions.valider) {
-        ouvrirGarage(monde); // après la course, on retourne au garage (pour dépenser ses pièces !)
+        ouvrirCartes(monde); // après la course : le menu des cartes, puis le garage (pour dépenser ses pièces !)
         return;
       }
       // Après la course, ta voiture finit en roue libre, et l'adversaire continue de rouler.
@@ -305,5 +362,5 @@ Circuit.Course = (function () {
     }
   }
 
-  return { creer, lancer, ouvrirGarage, etape, progression };
+  return { creer, lancer, ouvrirGarage, ouvrirCartes, etape, progression };
 })();

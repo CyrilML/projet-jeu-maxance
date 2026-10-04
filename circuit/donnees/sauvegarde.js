@@ -15,6 +15,8 @@
 //                  et chaque course gardée dit si elle est « gagnée » ou « perdue ».
 //   3 (étape 36) : on ajoute les PIÈCES (ton porte-monnaie), les voitures achetées et la voiture choisie.
 //                  Chaque course gardée dit aussi avec quelle voiture, et combien de pièces ramassées.
+//   4 (étape 37) : un garage par carte. « voitureChoisie » devient « voituresChoisies » (une par carte),
+//                  et le 4x4 du parcours est offert.
 //
 // Les pièces sont comptées dès qu'on les ramasse, mais écrites dans le tiroir à la fin de la course
 // (ou si on recommence, ou si on ferme la page) : écrire 50 fois par course, ce serait du gaspillage.
@@ -23,7 +25,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.Sauvegarde = (function () {
   const CLE = "circuit-maxance:sauvegarde";
-  const VERSION = 3;
+  const VERSION = 4;
   const radio = Circuit.Evenements;
 
   function vide() {
@@ -36,8 +38,8 @@ Circuit.Sauvegarde = (function () {
       defaites: 0, // depuis la version 2
       pieces: 0, // depuis la version 3 : les pièces que tu as (ton porte-monnaie)
       piecesTotal: 0, // depuis la version 3 : toutes les pièces ramassées depuis le début
-      voituresAchetees: ["classique"], // depuis la version 3 : la Rouge est offerte
-      voitureChoisie: "classique", // depuis la version 3
+      voituresAchetees: ["classique", "4x4"], // depuis la version 3 : la Rouge est offerte (et le 4x4 depuis la version 4)
+      voituresChoisies: { course: "classique", parcours: "4x4" }, // depuis la version 4 : la voiture choisie sur chaque carte
       toursTotal: 0,
       sortiesTotal: 0,
       distanceTotale: 0, // m parcourus dans toutes les courses finies
@@ -84,7 +86,13 @@ Circuit.Sauvegarde = (function () {
       d.pieces = 0;
       d.piecesTotal = 0;
       d.voituresAchetees = ["classique"];
-      d.voitureChoisie = "classique";
+      d.voitureChoisie = "classique"; // (remplacé par voituresChoisies à la version 4, juste en dessous)
+    }
+    if ((anciennes.version || 1) < 4) {
+      // Version 3 → 4 : la voiture choisie était celle du circuit ; on offre le 4x4 du parcours.
+      d.voituresChoisies = { course: anciennes.voitureChoisie || "classique", parcours: "4x4" };
+      delete d.voitureChoisie;
+      if (!d.voituresAchetees.includes("4x4")) d.voituresAchetees.push("4x4");
     }
     d.version = VERSION;
     return d;
@@ -117,9 +125,12 @@ Circuit.Sauvegarde = (function () {
       ecrire("achat : " + d.voiture + " pour " + d.prix + " pièces");
     });
     radio.ecouter("choix-voiture", (d) => {
-      if (donnees.voitureChoisie === d.id) return;
-      donnees.voitureChoisie = d.id;
-      ecrire("voiture choisie : " + d.voiture);
+      if (donnees.voituresChoisies[d.carte] === d.id) return;
+      donnees.voituresChoisies[d.carte] = d.id;
+      ecrire("voiture choisie pour « " + d.carte + " » : " + d.voiture);
+    });
+    radio.ecouter("menu-cartes", () => {
+      if (piecesAEcrire) ecrire("pièces de la balade");
     });
     radio.ecouter("decompte", () => {
       if (piecesAEcrire) ecrire("pièces de la course d'avant (recommencée)");

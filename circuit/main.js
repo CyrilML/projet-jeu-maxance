@@ -46,7 +46,7 @@
   // La sauvegarde est lue APRÈS le branchement du panneau, pour que le journal voie la lecture.
   Circuit.Sauvegarde.initialiser(() => monde.voiture.distance);
   Circuit.Sons.initialiser(); // étape 35 : le bruit du moteur, de l'herbe, des chocs et du départ
-  Circuit.Course.ouvrirGarage(monde); // étape 36 : on commence au garage, sur la voiture choisie la dernière fois
+  Circuit.Course.ouvrirCartes(monde); // étape 37 : on commence par choisir la carte, puis le garage
 
   // Les boutons sous l'écran font comme les touches.
   for (const bouton of document.querySelectorAll("[data-action]")) {
@@ -70,6 +70,11 @@
       // Étape 36 : un appui (et pas « tenue ») sur ← ou →, pour passer d'une voiture à l'autre au garage.
       gaucheAppui: E.consommer("gauche"),
       droiteAppui: E.consommer("droite"),
+      // Étape 37 : le menu des cartes.
+      carte1: E.consommer("carte1"),
+      carte2: E.consommer("carte2"),
+      carte3: E.consommer("carte3"),
+      retour: E.consommer("retour"),
       valider: E.consommer("valider"),
       recommencer: E.consommer("recommencer"),
     };
