@@ -108,7 +108,7 @@ Jeu.Combat = (function () {
   function creerMonstreGrotte(id, colonne, grotte) {
     const G = C.monstresGrotte;
     const Mo = C.monstres;
-    return nouveauMonstre(id, "grotte", colonne, C.grottes.ligneSol * B, 36, 64, {
+    return nouveauMonstre(id, "grotte", colonne, C.grottes.ligneSol * B, G.largeur, G.hauteur, {
       pv: G.pv, pvMax: G.pv, vue: G.vue, vitesse: G.vitesse, laisse: G.laisse, degats: Mo.degats,
       attenteMin: Mo.attenteMin, attenteMax: Mo.attenteMax, premierCoup: Mo.premierCoup, portee: Mo.portee, gardeLePassage: false, grotte,
     });

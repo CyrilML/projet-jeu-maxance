@@ -21,9 +21,9 @@ Jeu.Entrees = (function () {
     droite: ["ArrowRight", "KeyD"],
     sauter: ["Space", "ArrowUp", "KeyW"],
     baisser: ["KeyS", "ArrowDown"], // se baisser pour passer sous un bloc (étape 24)
-    valider: ["Enter"],
-    pause: ["Escape"], // la touche P sert maintenant à poser un bloc (étape 10)
-    poserBloc: ["KeyP"],
+    valider: ["Enter", "NumpadEnter"],
+    pause: ["Escape"], // Échap : pause (étape 29 : on pose un bloc en sautant avec Entrée)
+    poserBloc: ["Enter", "NumpadEnter"], // étape 29 : on saute et on appuie sur Entrée (avant : P)
     frapper: ["KeyT"], // utiliser l'objet en main : frapper, tirer… (étapes 11 et 15)
     boirePotion: ["KeyH"], // boire la potion (étape 11)
     piocher: ["KeyF"], // un coup de pioche (étape 12)
@@ -49,12 +49,15 @@ Jeu.Entrees = (function () {
     rayonsX: ["KeyX"],
     pasSuivant: ["KeyN"],
     ralenti: ["KeyL"],
+    zoom: ["KeyV"], // étape 29 : la loupe (×1, ×1,5, ×2)
     changerPseudo: ["KeyC"],
   };
 
-  const actionDeLaTouche = {};
+  // Une touche peut servir à plusieurs actions (étape 29 : Entrée = « valider » dans les menus,
+  // et « poser un bloc » pendant la partie). Chaque partie du jeu ne lit que l'action qui la concerne.
+  const actionsDeLaTouche = {};
   for (const action in CARTE) {
-    for (const code of CARTE[action]) actionDeLaTouche[code] = action;
+    for (const code of CARTE[action]) (actionsDeLaTouche[code] = actionsDeLaTouche[code] || []).push(action);
   }
 
   // La souris sur l'écran de jeu : x, y en pixels de l'écran ; dedans = est-elle sur l'écran ?
@@ -67,12 +70,12 @@ Jeu.Entrees = (function () {
     cible.addEventListener("keydown", (e) => {
       // Quand on écrit dans une case de texte (le pseudo), les touches servent à écrire, pas à jouer.
       if (estUnChampDeTexte(e.target)) return;
-      const action = actionDeLaTouche[e.code];
-      if (!action) return;
+      const actions = actionsDeLaTouche[e.code];
+      if (!actions) return;
       e.preventDefault(); // sinon les flèches et Espace font défiler la page
       touchesEnfoncees.add(e.code);
       // Quand on garde une touche enfoncée, le navigateur répète l'appui : on l'ignore.
-      if (!e.repeat) appuisEnAttente.add(action);
+      if (!e.repeat) for (const action of actions) appuisEnAttente.add(action);
     });
     cible.addEventListener("keyup", (e) => touchesEnfoncees.delete(e.code));
     // Si la fenêtre perd le focus, on relâche tout (sinon le héros court tout seul).

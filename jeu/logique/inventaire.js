@@ -4,7 +4,7 @@
 // le sac se remplit de nouveau jusqu'à 100 : c'est une « recharge ».
 //
 // Il y a deux façons de poser un bloc :
-//   1. la touche P pendant un saut : le bloc apparaît dans la case juste SOUS SES PIEDS (étape 10) ;
+//   1. la touche Entrée pendant un saut (P jusqu'à l'étape 28) : le bloc apparaît dans la case juste SOUS SES PIEDS (étape 10) ;
 //   2. un CLIC de souris sur une case vide, pas trop loin du héros (4 blocs) : le bloc apparaît
 //      dans cette case (étape 14). C'est comme ça qu'on construit des murs, des escaliers, des ponts…
 //      Depuis l'étape 17, il faut avoir les briques en main (touche 8) : avec un outil, le clic CASSE
@@ -29,7 +29,7 @@ Jeu.Inventaire = (function () {
     return { blocs: C.inventaire.blocs, poses: 0, reprises: 0, recharges: 0, casses: 0, constructions: 0 };
   }
 
-  // La case où irait le bloc de la touche P : celle qui est entièrement sous les pieds du héros.
+  // La case où irait le bloc de la touche Entrée : celle qui est entièrement sous les pieds du héros.
   //   colonne = celle du milieu du héros ;  ligne = la première ligne qui commence sous ses pieds.
   function caseVisee(j) {
     return {
@@ -43,8 +43,9 @@ Jeu.Inventaire = (function () {
   function caseSousLaSouris(monde) {
     const s = Jeu.Entrees.souris;
     if (!s.dedans) return null;
-    const x = s.x + Math.round(monde.camera.x);
-    const y = s.y + Math.round(monde.camera.y || 0);
+    const z = monde.camera.zoom || 1; // étape 29 : avec le zoom, 1 px d'écran = 1/zoom px du monde
+    const x = s.x / z + Math.round(monde.camera.x);
+    const y = s.y / z + Math.round(monde.camera.y || 0);
     return { colonne: Math.floor(x / B), ligne: Math.floor(y / B) };
   }
 
@@ -82,7 +83,7 @@ Jeu.Inventaire = (function () {
     return null;
   }
 
-  // Peut-on poser un bloc sous ses pieds (touche P) maintenant ? Renvoie la raison si c'est non.
+  // Peut-on poser un bloc sous ses pieds (touche Entrée) maintenant ? Renvoie la raison si c'est non.
   function raisonDuRefus(monde) {
     const j = monde.joueur;
     if (j.etat === "au-sol") return "il faut sauter d'abord";
@@ -182,7 +183,7 @@ Jeu.Inventaire = (function () {
       if (raison) Jeu.Evenements.emettre("bloc-refuse", { raison });
       else {
         const cible = caseVisee(monde.joueur);
-        poser(monde, cible.colonne, cible.ligne, "P");
+        poser(monde, cible.colonne, cible.ligne, "Entrée");
       }
     }
     if (Jeu.Entrees.consommer("poserIci")) {

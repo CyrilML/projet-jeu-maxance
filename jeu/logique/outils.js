@@ -8,7 +8,7 @@
 //     gardent leurs coups de pioche (3 et 2), car ils donnent un trésor.
 // Un bloc cassé va dans le sac, comme une brique qu'on peut reposer.
 //
-// Impossible de casser : la lave et les pics (ce ne sont pas des blocs solides), la dernière
+// Impossible de casser : la lave (et les pics, sauf avec la pioche depuis l'étape 29), la dernière
 // ligne tout en bas du monde (sinon on tomberait dans le vide), un bloc trop loin, un bloc
 // près d'un monstre (comme pour construire), ou le bloc sur lequel marche un cochon.
 //
@@ -53,7 +53,9 @@ Jeu.Outils = (function () {
     const numero = T.lireCase(monde.terrain, colonne, ligne);
     const nom = T.NOMS[numero];
     if (numero === T.CASES.air) return "il n'y a rien à casser ici";
-    if (!T.SOLIDES[numero]) return "on ne peut pas casser " + (nom === "lave" ? "la lave" : "les pics");
+    // Étape 29 : la pioche peut casser les pics du muret (en 3 coups) ; la lave, jamais.
+    if (numero === T.CASES.pics && objet !== "pioche") return "il faut la pioche pour casser les pics";
+    if (!T.SOLIDES[numero] && numero !== T.CASES.pics) return "on ne peut pas casser la lave";
     if ((nom === "fer" || nom === "charbon") && objet !== "pioche") return "il faut la pioche pour le " + nom;
     if (!clicsNecessaires(objet, nom)) return "la " + outil.nom + " ne casse que " + outil.facile.join(" et ");
     const d = Jeu.Inventaire.distanceDuHeros(monde, colonne, ligne);
@@ -145,7 +147,8 @@ Jeu.Outils = (function () {
   function cibleDeT(monde) {
     const T = Jeu.Terrain;
     const j = monde.joueur;
-    const solide = (c, l) => T.estSolide(monde.terrain, c, l);
+    // Un bloc qu'on peut viser : solide, ou un pic (étape 29, la pioche casse le muret).
+    const solide = (c, l) => T.estSolide(monde.terrain, c, l) || T.lireCase(monde.terrain, c, l) === T.CASES.pics;
     // 1. La souris vise un bloc solide, pas trop loin (et pas sur la barre du bas)
     const visee = Jeu.Inventaire.caseSousLaSouris(monde);
     if (visee && Jeu.Armes.caseSousLaSouris() < 0 && solide(visee.colonne, visee.ligne) && Jeu.Inventaire.distanceDuHeros(monde, visee.colonne, visee.ligne) <= C.construction.portee) {

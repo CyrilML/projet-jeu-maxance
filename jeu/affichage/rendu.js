@@ -17,8 +17,10 @@ window.Jeu = window.Jeu || {};
 Jeu.Rendu = (function () {
   const C = Jeu.CONFIG;
   const B = C.tailleBloc;
-  const L = C.ecran.largeur;
-  const H = C.ecran.hauteur;
+  // La taille de l'écran… VUE PAR LE MONDE. Avec le zoom (étape 29), le monde voit un écran plus petit :
+  // à ×2, l'écran de 960 px ne montre que 480 px de monde. dessiner() les change le temps de dessiner le monde.
+  let L = C.ecran.largeur;
+  let H = C.ecran.hauteur;
   let ctx;
 
   function initialiser(canvas) {
@@ -44,10 +46,11 @@ Jeu.Rendu = (function () {
   function nuages(cameraX) {
     ctx.fillStyle = "rgba(255,255,255,0.9)";
     for (let i = 0; i < 5; i++) {
-      const x = ((i * 260 - cameraX * 0.1) % (L + 200) + L + 200) % (L + 200) - 100;
-      const y = 50 + ((i * 53) % 90);
-      ctx.fillRect(x, y, 80, 20);
-      ctx.fillRect(x + 20, y - 14, 50, 14);
+      const x = ((i * 300 - cameraX * 0.1) % (L + 300) + L + 300) % (L + 300) - 180;
+      const y = 40 + ((i * 53) % 90);
+      // Étape 29 : des nuages 2 fois plus grands, à l'échelle du héros de 2 blocs.
+      ctx.fillRect(x, y, 160, 40);
+      ctx.fillRect(x + 40, y - 28, 100, 28);
     }
   }
 
@@ -56,8 +59,8 @@ Jeu.Rendu = (function () {
     ctx.beginPath();
     ctx.moveTo(0, H);
     for (let x = 0; x <= L; x += 8) {
-      const u = (x + cameraX * 0.3) / 140;
-      ctx.lineTo(x, C.solY - 70 - 30 * Math.sin(u) - 15 * Math.sin(u * 2.3));
+      const u = (x + cameraX * 0.3) / 220;
+      ctx.lineTo(x, C.solY - 130 - 60 * Math.sin(u) - 30 * Math.sin(u * 2.3)); // étape 29 : des collines 2 fois plus hautes
     }
     ctx.lineTo(L, H);
     ctx.fill();
@@ -270,31 +273,32 @@ Jeu.Rendu = (function () {
       const x = d.colonne * B + 17;
       if (x < monde.camera.x - B || x > monde.camera.x + L + B) continue;
       ctx.fillStyle = "#e8e8e8";
-      ctx.fillRect(x, C.solY - 110, 5, 110);
+      ctx.fillRect(x, C.solY - 170, 6, 170);
       if (d.arrivee) {
         // Le drapeau d'arrivée : un damier noir et blanc, comme dans les courses.
         for (let i = 0; i < 6; i++) {
           for (let k = 0; k < 3; k++) {
             ctx.fillStyle = (i + k) % 2 ? "#111" : "#fff";
-            ctx.fillRect(x + 5 + i * 8, C.solY - 110 + k * 8, 8, 8);
+            ctx.fillRect(x + 6 + i * 12, C.solY - 170 + k * 12, 12, 12);
           }
         }
         ctx.font = "bold 16px 'Trebuchet MS', system-ui, sans-serif";
         ctx.textAlign = "center";
         ctx.fillStyle = "#ffe27a";
-        ctx.fillText("ARRIVÉE", x + 28, C.solY - 120);
+        ctx.fillText("ARRIVÉE", x + 40, C.solY - 180);
         continue;
       }
       ctx.fillStyle = d.atteint ? "#3fc27a" : "#e05555";
       ctx.beginPath();
-      ctx.moveTo(x + 5, C.solY - 110);
-      ctx.lineTo(x + 45, C.solY - 96);
-      ctx.lineTo(x + 5, C.solY - 82);
+      // Étape 29 : un drapeau plus grand (mât de 170 px, plus haut que le héros).
+      ctx.moveTo(x + 6, C.solY - 170);
+      ctx.lineTo(x + 70, C.solY - 148);
+      ctx.lineTo(x + 6, C.solY - 126);
       ctx.fill();
-      ctx.font = "bold 12px 'Trebuchet MS', system-ui, sans-serif";
+      ctx.font = "bold 16px 'Trebuchet MS', system-ui, sans-serif";
       ctx.textAlign = "left";
       ctx.fillStyle = "#fff";
-      ctx.fillText(String(d.numero), x + 12, C.solY - 92);
+      ctx.fillText(String(d.numero), x + 14, C.solY - 142);
     }
   }
 
@@ -653,6 +657,7 @@ Jeu.Rendu = (function () {
     ctx.save();
     ctx.globalAlpha = Math.min(1, co.danseMort / 0.3);
     ctx.translate(Math.round(co.x + co.l / 2), Math.round(co.y + co.h + saut));
+    ctx.scale(co.l / 32, co.h / 26); // étape 29 : le dessin (fait pour 32 × 26) grandit avec le cochon
     ctx.rotate((1 - leve) * (co.direction > 0 ? Math.PI / 2 : -Math.PI / 2) * 0.9);
     const r = (couleur, x, y, l, h) => {
       ctx.fillStyle = couleur;
@@ -680,7 +685,7 @@ Jeu.Rendu = (function () {
       }
       ctx.save();
       ctx.translate(Math.round(co.x + co.l / 2), Math.round(co.y));
-      ctx.scale(co.direction, 1);
+      ctx.scale(co.direction * co.l / 32, co.h / 26); // étape 29 : dessin fait pour 32 × 26, agrandi
       const pas = Math.floor(co.animation * 8) % 2;
       ctx.fillStyle = co.touche > 0 ? "#ff6b6b" : "#f4a3b4";
       ctx.fillRect(-16, 4, 28, 16); // le corps
@@ -828,13 +833,13 @@ Jeu.Rendu = (function () {
       const x = (g.salle + Math.floor((g.sortie - g.salle) / 2)) * B + B / 2;
       const sol = C.grottes.ligneSol * B;
       ctx.fillStyle = "#e8e2d0";
-      ctx.fillRect(x - 2, sol - 110, 4, 110);
+      ctx.fillRect(x - 2, sol - 170, 5, 170);
       ctx.font = "bold 12px 'Trebuchet MS', system-ui, sans-serif";
       const nom = "🏴 " + (monde.pseudo || "");
       ctx.fillStyle = "#c83cff";
-      ctx.fillRect(x + 2, sol - 110, ctx.measureText(nom).width + 12, 26); // le drapeau s'allonge avec le nom
+      ctx.fillRect(x + 3, sol - 170, ctx.measureText(nom).width + 12, 26); // le drapeau s'allonge avec le nom
       ctx.fillStyle = "#fff";
-      ctx.fillText(nom, x + 8, sol - 92);
+      ctx.fillText(nom, x + 9, sol - 152);
     }
   }
 
@@ -847,8 +852,12 @@ Jeu.Rendu = (function () {
         dragon(m, temps || 0);
         continue;
       }
-      const x = Math.round(m.x);
-      const y = Math.round(m.y);
+      // Étape 29 : le dessin est fait pour 36 × 64 px ; on l'agrandit à la vraie taille du monstre (72 × 128).
+      ctx.save();
+      ctx.translate(Math.round(m.x), Math.round(m.y));
+      ctx.scale(m.l / 36, m.h / 64);
+      let x = 0;
+      let y = 0;
       const penche = m.frappe > 0 ? -6 * -(m.regard || -1) : 0; // il se penche vers le héros quand il frappe
       // Le corps
       ctx.fillStyle = m.touche > 0 ? "#ff6b6b" : "#5fbf3f";
@@ -875,17 +884,20 @@ Jeu.Rendu = (function () {
         ctx.fillStyle = "#8a5a2b";
         ctx.fillRect(m.regard > 0 ? x + 30 : x - 16, y + 24, 22, 6);
       }
-      // La barre de PV
+      ctx.restore();
+      // La barre de PV (pas agrandie : elle reste lisible)
+      x = Math.round(m.x + m.l / 2 - 22);
+      y = Math.round(m.y);
       ctx.fillStyle = "rgba(0,0,0,0.6)";
-      ctx.fillRect(x - 4, y - 16, 44, 9);
+      ctx.fillRect(x - 4, y - 16, 52, 9);
       ctx.fillStyle = "#e0303a";
-      ctx.fillRect(x - 3, y - 15, 42, 7);
+      ctx.fillRect(x - 3, y - 15, 50, 7);
       ctx.fillStyle = "#3fc27a";
-      ctx.fillRect(x - 3, y - 15, Math.round(42 * m.pv / m.pvMax), 7);
+      ctx.fillRect(x - 3, y - 15, Math.round(50 * m.pv / m.pvMax), 7);
       ctx.font = "bold 11px 'Trebuchet MS', system-ui, sans-serif";
       ctx.textAlign = "center";
       ctx.fillStyle = "#fff";
-      ctx.fillText(m.pv + " / " + m.pvMax + " PV", x + 18, y - 20);
+      ctx.fillText(m.pv + " / " + m.pvMax + " PV", x + 22, y - 20);
     }
   }
 
@@ -978,7 +990,7 @@ Jeu.Rendu = (function () {
     for (let v = 0; v < C.vies; v++) coeur(20 + v * 30, 80, v < monde.vies);
     texte("🚩 " + monde.dernierDrapeau + "   Chutes " + monde.chutes + "   Lave " + monde.brulures + "   Pièges " + monde.piegesTouches, 20, 124, 16, "#fff");
     const son = Jeu.Orchestre.resume();
-    texte("X : rayons X   Échap : pause   " + (son.musique ? "🎵" : "🔇") + " J   " + (son.bruits ? "🔊" : "🔇") + " B", L - 20, 32, 15, "#fff", "right");
+    texte("X : rayons X   V : zoom   Échap : pause   " + (son.musique ? "🎵" : "🔇") + " J   " + (son.bruits ? "🔊" : "🔇") + " B", L - 20, 32, 15, "#fff", "right");
     texte("👤 " + monde.pseudo, L - 20, 56, 18, "#ffe27a", "right");
     const reste = monde.drapeaux.length ? C.arrivee.bloc - monde.score : 0;
     if (reste > 0) texte("🏁 encore " + reste + " blocs", L - 20, 80, 15, "#fff", "right");
@@ -991,7 +1003,7 @@ Jeu.Rendu = (function () {
     ctx.fillStyle = "#e8d9c4";
     ctx.fillRect(20, 144, 16, 1);
     ctx.fillRect(27, 138, 1, 6);
-    texte("🎒 ∞ briques   8 + clic : poser où tu veux · 0/3/7 + T : casser · saute + P : sous tes pieds", 48, 152, 15, "#fff");
+    texte("🎒 ∞ briques   8 + clic : poser où tu veux · 0/3/7 + T : casser · saute + Entrée : sous tes pieds", 48, 152, 15, "#fff");
     // Les PV, le bouclier et la potion (étape 11)
     const eq = monde.equipement;
     ctx.fillStyle = "rgba(0,0,0,0.5)";
@@ -1019,7 +1031,7 @@ Jeu.Rendu = (function () {
     ctx.fillRect(20, 214, Math.round(160 * eq.pioche / C.pioche.usure), 10);
     const etatPioche = eq.pioche > 0 ? "⛏️ " + eq.pioche + "/" + C.pioche.usure : "⛏️ CASSÉE !";
     texte(etatPioche + " 🪵 " + eq.bois + "   ⚫ " + eq.charbon + "   🥩 " + eq.viandeCrue + "   🍖 " + eq.viandeCuite + "   K : cuire · M : manger", 192, 225, 15, eq.pioche > 0 ? "#fff" : "#ff9b9b");
-    if (options.ralenti) texte("🐢 RALENTI (×0,25)", L / 2, 32, 18, "#ffe27a", "center");
+    if (options.ralenti) texte("🐢 RALENTI (×" + String(C.ralenti).replace(".", ",") + ") : le son aussi", L / 2, 32, 18, "#ffe27a", "center");
     barreInventaire(monde);
   }
 
@@ -1211,7 +1223,7 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 28 : des arbres, des portes et des escaliers", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 29 : le monde à ta taille (V : zoom)", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au bloc " + C.arrivee.bloc + " le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
@@ -1448,7 +1460,7 @@ Jeu.Rendu = (function () {
     ctx.strokeStyle = "#7bff9e";
     ctx.setLineDash([8, 6]);
     ctx.lineWidth = 1;
-    const xVise = C.camera.positionJoueur;
+    const xVise = C.camera.positionJoueur / (monde.camera.zoom || 1);
     ctx.beginPath();
     ctx.moveTo(xVise + 0.5, camY + 110);
     ctx.lineTo(xVise + 0.5, camY + H);
@@ -1476,7 +1488,7 @@ Jeu.Rendu = (function () {
       const p0 = monde.flammes[0];
       note("🔥 " + monde.flammes.length + " flammes en mémoire", p0.x - camX - 40, C.solY - 60, "#ffe066");
     }
-    // La case où irait un bloc si on appuyait sur P maintenant (étape 10)
+    // La case où irait un bloc si on appuyait sur Entrée maintenant (étape 10 ; c'était P jusqu'à l'étape 28)
     if (monde.phase === "jeu" && j.etat !== "au-sol" && !monde.brulure && !monde.danse) {
       const vise = Jeu.Inventaire.caseVisee(j);
       const refus = Jeu.Inventaire.raisonDuRefus(monde);
@@ -1485,7 +1497,7 @@ Jeu.Rendu = (function () {
       ctx.lineWidth = 2;
       ctx.strokeRect(vise.colonne * B - camX + 2, vise.ligne * B + 2, B - 4, B - 4);
       ctx.setLineDash([]);
-      note(refus ? "P : non, " + refus : "P : un bloc ici", vise.colonne * B - camX + 2, vise.ligne * B + B + 14, refus ? "#ff9b9b" : "#7bff9e");
+      note(refus ? "Entrée : non, " + refus : "Entrée : un bloc ici", vise.colonne * B - camX + 2, vise.ligne * B + B + 14, refus ? "#ff9b9b" : "#7bff9e");
     }
     // Le combat : la portée de l'épée, et chaque monstre avec ses PV et son minuteur
     if (monde.phase === "jeu" && j.regard > 0) {
@@ -1702,7 +1714,13 @@ Jeu.Rendu = (function () {
   function dessiner(monde, options) {
     const camX = Math.round(monde.camera.x);
     const camY = Math.round(monde.camera.y || 0);
+    const zoom = monde.camera.zoom || 1;
     ciel();
+    // Étape 29 : la loupe. Tout le monde est dessiné agrandi (×zoom), et l'écran « vu par le monde » rétrécit.
+    ctx.save();
+    ctx.scale(zoom, zoom);
+    L = C.ecran.largeur / zoom;
+    H = C.ecran.hauteur / zoom;
     // Le décor descend aussi quand la caméra descend (étape 13) ; sous le sol, c'est la nuit de la terre.
     ctx.save();
     ctx.translate(0, -camY);
@@ -1733,6 +1751,10 @@ Jeu.Rendu = (function () {
     ctx.restore();
 
     if (options.rayonsX) rayonsX(monde);
+    // Fin de la loupe : les compteurs, la barre et les écrans restent à leur taille normale.
+    ctx.restore();
+    L = C.ecran.largeur;
+    H = C.ecran.hauteur;
     if (monde.phase === "jeu") hud(monde, options);
     if (monde.phase === "accueil") ecranAccueil();
     if (monde.phase === "perdu" || monde.phase === "gagne") ecranFin(monde);

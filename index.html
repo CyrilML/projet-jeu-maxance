@@ -151,6 +151,7 @@
       <a href="#etape26">Étape 26</a>
       <a href="#etape27">Étape 27</a>
       <a href="#etape28">Étape 28</a>
+      <a href="#etape29">Étape 29</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -2066,6 +2067,89 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
       <details class="question"><summary>Pourquoi les monstres ne passent-ils pas la porte ?</summary><p>Pour eux, la porte est solide : c'est un mur. Seule la règle du héros dit « la porte n'est pas solide ».</p></details>
     </section>
 
+    <section id="etape29">
+      <h2>📏 Étape 29 : le monde à ta taille <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Ton héros mesure 2 blocs : maintenant, le monde aussi a grandi ! Caisses, tours, murets, cochons, monstres et arbres sont à sa taille. Tu as aussi une loupe (V), un son qui se tait quand tu regardes ailleurs, un son au ralenti, et la touche Entrée pour poser un bloc en sautant.</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/29-monde-a-ta-taille.md</code>.</p>
+          <p><strong>Règles :</strong> toutes les options !</p>
+          <ul>
+            <li>1a : les choses et les créatures grandissent.</li>
+            <li>1b : un zoom avec <kbd>V</kbd>.</li>
+            <li>1c : le décor grandit.</li>
+            <li>2a + 2b : le muret de 2 blocs se saute, ou se casse à la pioche.</li>
+          </ul>
+          <p>En plus :</p>
+          <ul>
+            <li>le son s'endort quand tu regardes une autre fenêtre ;</li>
+            <li>le ralenti ralentit aussi le son ;</li>
+            <li>saute + <kbd>Entrée</kbd> pose un bloc (au lieu de <kbd>P</kbd>).</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Les caisses font 2 blocs, les tours 4, les murets 2 de haut. Monte sur une caisse.</li>
+            <li>☐ Les cochons et les monstres des grottes sont 2 fois plus grands.</li>
+            <li>☐ Saute par-dessus un muret, puis casse-en un avec la pioche (<kbd>7</kbd> + <kbd>T</kbd>, 3 coups par pic).</li>
+            <li>☐ <kbd>V</kbd> : ×1,5, puis ×2, puis ×1. La souris vise toujours la bonne case.</li>
+            <li>☐ Va sur la page de Claude : silence. Reviens : la musique repart.</li>
+            <li>☐ <kbd>L</kbd> : la musique et les bruits sont lents et graves.</li>
+            <li>☐ Saute et appuie sur <kbd>Entrée</kbd> : une brique sous tes pieds.</li>
+            <li>Vérifie « version 29 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>📐 Les « métriques » du monde</h3>
+      <p>Dans un jeu, les tailles vont ensemble. Le héros mesure 2 blocs et saute 4,5 blocs. Alors :</p>
+      <ul>
+        <li>une caisse de 2 blocs, c'est un saut facile ;</li>
+        <li>une tour de 4 blocs, c'est un saut difficile (saute d'abord, puis avance) ;</li>
+        <li>un muret de 2 blocs de haut et 2 de large, il faut bien prendre son élan.</li>
+      </ul>
+      <p>Tous ces nombres sont dans <code>config.js</code>. Par exemple, <code>hauteurs: { caisse: 2, tour: 4, muret: 2 }</code>. Changer un nombre suffit à changer le monde !</p>
+
+      <h3>🔍 La loupe : le zoom</h3>
+      <p>Pour dessiner avec le zoom, le peintre dit au crayon : « tout ce que tu dessines, fais-le 2 fois plus grand » (<code>ctx.scale(2, 2)</code>). Mais l'écran ne grandit pas : il montre donc 2 fois moins de monde.</p>
+      <pre style="white-space: pre-wrap">x à l'écran = (x dans le monde − caméra) × zoom
+x dans le monde = x à l'écran ÷ zoom + caméra   ← pour savoir quelle case vise la souris</pre>
+      <p>Les compteurs et la barre du bas sont dessinés <em>après</em> la loupe : ils restent à leur taille.</p>
+
+      <h3>⛏️ Un muret qu'on casse</h3>
+      <p>Avant, le jeu disait « tu touches le rectangle du muret → tu meurs ». Maintenant, il regarde aussi la <strong>grille</strong> : il ne pique que si une case touchée contient encore un pic (numéro 7). Un pic cassé, c'est une case 0 (l'air).</p>
+
+      <h3>😴 Le son qui s'endort</h3>
+      <p>Le navigateur prévient le jeu quand la fenêtre perd le « focus » (<code>blur</code>) ou quand l'onglet est caché (<code>visibilitychange</code>). Le synthétiseur se met alors en pause (<code>suspend</code>). Il repart (<code>resume</code>) quand tu reviens.</p>
+
+      <h3>🐢 Le son au ralenti</h3>
+      <p>Au ralenti, le temps du monde avance 4 fois moins vite (× 0,25). Pour le son, on fait pareil :</p>
+      <ul>
+        <li>chaque durée est divisée par 0,25 (donc 4 fois plus longue) ;</li>
+        <li>chaque fréquence est multipliée par 0,25 (donc plus grave : 2 octaves plus bas).</li>
+      </ul>
+      <p>C'est exactement ce qui arrive à un disque qu'on freine avec le doigt !</p>
+
+      <h3>⌨️ Une touche, deux actions</h3>
+      <p><kbd>Entrée</kbd> veut dire « valider » dans les menus, et « poser un bloc » pendant la partie. Le livre des touches (<code>entrees.js</code>) peut maintenant donner plusieurs actions à une même touche : chaque partie du jeu ne lit que la sienne.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Rayons X (<kbd>X</kbd>) + zoom ×2 : la grille et les cases grandissent aussi. Combien de colonnes vois-tu ?</li>
+        <li>Dans l'état en direct, regarde la ligne « zoom » : combien de pixels fait un bloc à ×1,5 ?</li>
+        <li>Casse un seul pic d'un muret, puis touche les autres : lesquels piquent encore ?</li>
+        <li>Mets le ralenti et lis la ligne « vitesse du son ». Puis va sur une autre fenêtre : que dit le journal ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Au zoom ×2, combien de pixels fait un bloc à l'écran ?</summary><p>40 × 2 = 80 px.</p></details>
+      <details class="question"><summary>Au ralenti, une note de 440 Hz devient… ?</summary><p>440 × 0,25 = 110 Hz : beaucoup plus grave.</p></details>
+      <details class="question"><summary>Pourquoi un muret cassé à moitié ne pique-t-il plus là où le pic est cassé ?</summary><p>Parce que le jeu regarde la grille : une case cassée contient 0 (l'air), et l'air ne pique pas.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -2234,26 +2318,32 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
           <p>Des arbres à couper pour le bois, des portes qui ne s'ouvrent que pour le héros, des escaliers qu'on monte en marchant, et plus de limite pour construire.</p>
           <p class="apprend"><b>Tu apprends :</b> un objet fait de plusieurs cases, deux règles de solidité, monter une marche, des lignes négatives. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">29</div>
+          <h4>Le monde à ta taille <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Caisses, tours, murets, cochons, monstres et arbres à la taille du héros de 2 blocs ; un zoom (V) ; le son qui s'endort quand on regarde ailleurs et qui ralentit au ralenti ; Entrée pour poser un bloc en sautant.</p>
+          <p class="apprend"><b>Tu apprends :</b> les métriques d'un niveau, le zoom (agrandir le dessin et diviser la souris), un objet cassé morceau par morceau, les événements de la fenêtre, une touche pour deux actions. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">30</div>
           <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">30</div>
+          <div class="num">31</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">31</div>
+          <div class="num">32</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">32</div>
+          <div class="num">33</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -2528,6 +2618,15 @@ Cyril : relit la demande avec Maxance et la transmet.</textarea>
         <textarea class="journal" id="appris-28" data-cle="appris-28" placeholder="Ex. : J'ai appris qu'une porte peut être solide pour les uns et pas pour les autres…"></textarea>
         <label for="idees-28"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-28" data-cle="idees-28" placeholder="Ex. : Construire une maison avec un toit…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 29 · le monde à ta taille <span class="petit">· 4 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> caisses de 2 blocs, tours de 4, murets à pics de 2 de haut ; cochons et monstres des grottes 2 fois plus grands ; grottes plus hautes ; arbres de 5 à 8 blocs ; drapeaux, nuages et collines plus grands ; zoom ×1 / ×1,5 / ×2 avec V ; la pioche casse les pics ; le son s'endort quand une autre fenêtre passe devant ; le son ralentit au ralenti ; saute + Entrée pose un bloc (au lieu de P). Sous le capot : « zoom » et « vitesse du son » dans l'état en direct, les messages du zoom et du son endormi dans le journal.</p>
+        <p class="petit">✍️ Réponses de Maxance : toutes les options.</p>
+        <label for="appris-29"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-29" data-cle="appris-29" placeholder="Ex. : J'ai appris que toutes les tailles d'un jeu vont ensemble…"></textarea>
+        <label for="idees-29"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-29" data-cle="idees-29" placeholder="Ex. : Des maisons à la taille du héros…"></textarea>
       </div>
     </section>
   </main>

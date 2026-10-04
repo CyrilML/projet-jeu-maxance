@@ -88,6 +88,13 @@
     const E = Jeu.Entrees;
     if (E.consommer("rayonsX")) options.rayonsX = !options.rayonsX;
     if (E.consommer("ralenti")) options.ralenti = !options.ralenti;
+    if (E.consommer("zoom")) {
+      // Étape 29 : V passe au zoom suivant de la liste (×1 → ×1,5 → ×2 → ×1…).
+      const zooms = C.camera.zooms;
+      const avant = monde.camera.zoom;
+      monde.camera.zoom = zooms[(zooms.indexOf(avant) + 1) % zooms.length];
+      Jeu.Evenements.emettre("zoom", { avant, apres: monde.camera.zoom, blocAEcran: C.tailleBloc * monde.camera.zoom });
+    }
     if (E.consommer("musique")) Jeu.Orchestre.basculer("musique"); // J (étape 16)
     if (E.consommer("bruits")) Jeu.Orchestre.basculer("bruits"); // B (étape 16)
     if (E.consommer("pause") && monde.phase === "jeu") options.pause = !options.pause;
@@ -116,7 +123,7 @@
     afficherFormulaire();
 
     if (!options.pause) {
-      accumulateur += options.ralenti ? ecoule * 0.25 : ecoule;
+      accumulateur += options.ralenti ? ecoule * C.ralenti : ecoule;
       while (accumulateur >= C.pasDeTemps) {
         Jeu.Monde.mettreAJour(monde, C.pasDeTemps);
         accumulateur -= C.pasDeTemps;

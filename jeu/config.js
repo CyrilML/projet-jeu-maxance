@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 28,
+  version: 29,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -116,7 +116,7 @@ Jeu.CONFIG = {
     sansObstacle: 7, // pas de tour ni d'autre obstacle à moins de 7 blocs : sinon on pourrait sauter de là jusqu'à la plateforme
   },
 
-  // L'inventaire (étape 10) : des blocs à poser sous ses pieds pendant un saut (touche P).
+  // L'inventaire (étape 10) : des blocs à poser sous ses pieds pendant un saut (touche Entrée depuis l'étape 29).
   // Étape 14 : 100 blocs, et le sac se remplit à chaque nouveau drapeau.
   inventaire: {
     blocs: 100, // au départ, et à chaque nouveau drapeau le sac revient à 100
@@ -175,13 +175,13 @@ Jeu.CONFIG = {
     dureeExplosion: 0.5, // s : le temps que l'explosion reste affichée
   },
 
-  // Les arbres (étape 28) : un arbre tous les 20 blocs environ, avec un tronc de 3 à 5 blocs.
+  // Les arbres (étape 28) : un arbre tous les 20 blocs environ (étape 29 : tronc de 5 à 8 blocs).
   // Le tronc est solide (il bloque le passage) ; les feuilles ne bloquent pas.
   arbres: {
     ecart: 8, // entre deux arbres, 8 blocs (à 3 près) : il reste environ un arbre tous les 20 blocs, car la lave, les trous et les dragons prennent de la place…
     decalageMax: 3, // … à 3 blocs près (au hasard), et plus loin s'il n'y a pas la place
-    hauteurMin: 3,
-    hauteurMax: 5,
+    hauteurMin: 5, // étape 29 : des arbres plus grands que le héros (tronc de 5 à 8 blocs)
+    hauteurMax: 8,
   },
   // Les constructions en bois (étape 28) : 1 bloc de tronc coupé = 1 bois.
   constructions: {
@@ -246,6 +246,8 @@ Jeu.CONFIG = {
     vue: 6,
     vitesse: 90,
     laisse: 5, // ils restent dans la salle de la grotte
+    largeur: 72, // étape 29 : 2 fois plus grands (avant : 36 × 64 px)
+    hauteur: 128,
   },
   monstres: {
     premier: 100, // un boss tous les 100 blocs : 100, 200… jusqu'à l'arrivée (le dernier la garde)
@@ -276,7 +278,7 @@ Jeu.CONFIG = {
     ecart: 210, // … puis une tous les 210 blocs environ (430, 640, 850)
     dernier: 900,
     ligneSol: 18, // le sol de la grotte (le dessus de cette ligne est à 18 × 40 = 720 px)
-    plafond: 13, // la dernière ligne de terre au-dessus de la grotte (la grotte va des lignes 14 à 17)
+    plafond: 12, // la dernière ligne de terre au-dessus de la grotte (étape 29 : la salle va des lignes 13 à 17, 5 blocs de haut)
     charbons: 3, // blocs de minerai de charbon dans chaque grotte
   },
 
@@ -292,6 +294,8 @@ Jeu.CONFIG = {
     pv: 10, // 2 coups d'épée
     vitesse: 30, // ils marchent tranquillement (px/s)
     promenade: 3, // ils restent à moins de 3 blocs de leur point de départ
+    largeur: 64, // étape 29 : 2 fois plus gros (avant : 32 × 26 px)
+    hauteur: 52,
     danseMort: 1.5, // étape 28 : vaincu, il se lève sur ses pattes arrière et secoue ses pattes avant pendant 1,5 s
   },
 
@@ -320,6 +324,9 @@ Jeu.CONFIG = {
     // Étape 27 : 2 ou 3 blocs (une mare d'un bloc, le héros la survole sans la toucher).
     laveLargeurMin: 2,
     laveLargeurMax: 3,
+    // Étape 29 : le monde à la taille du héros (2 blocs de haut). Hauteurs en blocs.
+    // Le muret de 2 blocs se saute (le héros saute 4,5 blocs), ou se casse à la pioche (3 coups par pic).
+    hauteurs: { caisse: 2, tour: 4, muret: 2 },
   },
 
   camera: {
@@ -328,7 +335,12 @@ Jeu.CONFIG = {
     plusHaut: -1000000, // étape 28 : pas de limite, la caméra monte aussi haut que le héros construit
     positionJoueur: 320, // la caméra essaie de garder le héros à 320 px du bord gauche de l'écran
     tempsDeReaction: 0.07, // plus c'est petit, plus elle suit vite. 0,07 s → après 0,5 s, il reste moins de 0,1 % de l'écart
+    zooms: [1, 1.5, 2], // étape 29 : la touche V change le zoom (×1 → ×1,5 → ×2 → ×1…)
   },
+
+  // Le ralenti (touche L) : le temps du monde avance 4 fois moins vite. Étape 29 : la musique, les sons
+  // et les bruits aussi (ils deviennent plus lents… et plus graves, comme un disque qu'on freine).
+  ralenti: 0.25,
 
   // Le monde est mis à jour 120 fois par seconde, quel que soit l'ordinateur.
   pasDeTemps: 1 / 120,

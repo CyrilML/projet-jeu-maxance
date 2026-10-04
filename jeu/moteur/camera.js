@@ -8,6 +8,8 @@
 //   - coordonnées MONDE : où est l'objet dans le monde entier (le héros peut être à x = 5 000) ;
 //   - coordonnées ÉCRAN : où on le dessine sur l'écran de 960 px.
 //   Pour passer de l'une à l'autre :  x écran = x monde − camera.x   (et y écran = y monde − camera.y)
+//   Avec le ZOOM (étape 29, touche V) :  x écran = (x monde − camera.x) × zoom
+//   C'est comme une loupe : à ×2, chaque bloc fait 80 px à l'écran, et l'écran montre 2 fois moins de monde.
 //
 // La caméra ne saute pas d'un coup sur sa cible : à chaque pas, elle parcourt une partie
 // de l'écart qui reste. C'est ce qui rend le mouvement doux.
@@ -16,7 +18,8 @@ window.Jeu = window.Jeu || {};
 
 Jeu.Camera = (function () {
   function creer() {
-    return { x: 0, cible: 0, y: 0, cibleY: 0 };
+    // zoom (étape 29) : 1 = normal, 2 = tout est 2 fois plus grand (et on voit 2 fois moins loin).
+    return { x: 0, cible: 0, y: 0, cibleY: 0, zoom: 1 };
   }
 
   // Rapproche la caméra de cibleX. `tempsDeReaction` (en s) règle la douceur :

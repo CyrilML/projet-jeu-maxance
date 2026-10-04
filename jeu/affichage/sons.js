@@ -220,6 +220,8 @@ Jeu.Orchestre = (function () {
   function mettreAJour(monde, options, dt) {
     // Étape 28 : pendant la danse du squelette (muret à pics), la musique se tait : on n'entend que la batterie.
     etat.silenceBatterie = !!monde.danse;
+    // Étape 29 : au ralenti, le synthétiseur joue tout plus lentement (et plus grave).
+    Son.changerVitesse(options.ralenti ? C.ralenti : 1);
     const doitJouer = reglages.musique && monde.phase === "jeu" && !options.pause && !monde.danse && Son.pret();
     if (doitJouer && !sequenceur.joue) sequenceur.demarrer();
     if (!doitJouer && sequenceur.joue) sequenceur.arreter();
@@ -231,7 +233,7 @@ Jeu.Orchestre = (function () {
       etat.prochainPas = 0; // le premier pas sonne dès qu'il repart
       return;
     }
-    etat.prochainPas -= dt;
+    etat.prochainPas -= options.ralenti ? dt * C.ralenti : dt; // au ralenti, les pas s'espacent
     if (etat.prochainPas <= 0) {
       etat.prochainPas = C.sons.intervallePas;
       const matiere = matiereSousLesPieds(monde);
@@ -243,6 +245,8 @@ Jeu.Orchestre = (function () {
   function resume() {
     return {
       allume: Son.pret(),
+      endormi: Son.endormi(), // étape 29 : autre fenêtre devant le jeu → silence
+      vitesse: Son.vitesse(), // étape 29 : 0,25 au ralenti
       musique: reglages.musique,
       bruits: reglages.bruits,
       joue: sequenceur ? sequenceur.joue : false,

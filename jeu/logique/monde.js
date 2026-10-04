@@ -78,7 +78,9 @@ Jeu.Monde = (function () {
   // Lance une nouvelle partie pour ce joueur. Appelé par main.js quand le pseudo est validé,
   // ou par la touche Espace à la fin d'une partie (même joueur).
   function demarrer(monde, pseudo) {
+    const zoom = monde.camera ? monde.camera.zoom : 1; // le zoom choisi (touche V) est gardé d'une partie à l'autre
     Object.assign(monde, creer(), { phase: "jeu", pseudo });
+    monde.camera.zoom = zoom;
     Jeu.Evenements.emettre("debut-partie", { graine: monde.graine, pseudo });
   }
 
@@ -161,15 +163,20 @@ Jeu.Monde = (function () {
 
   function suivreAvecLaCamera(monde, dt) {
     const j = monde.joueur;
-    const cible = j.x + j.l / 2 - C.camera.positionJoueur;
+    // Étape 29 : avec le zoom, l'écran montre moins de monde (largeur / zoom), donc toutes les
+    // distances « à l'écran » de la caméra sont divisées par le zoom.
+    const z = monde.camera.zoom || 1;
+    const cible = j.x + j.l / 2 - C.camera.positionJoueur / z;
     Jeu.Camera.suivre(monde.camera, cible, dt, C.camera.tempsDeReaction, 0);
     // Sous terre (étape 13), la caméra descend : les pieds du héros restent au plus à 440 px du haut.
     // Quand il grimpe (étape 26), elle monte : sa tête reste au moins à 250 px du haut.
     // Entre les deux, elle revient à sa place normale (0).
-    const basDuMonde = C.carte.lignes * B - C.ecran.hauteur;
-    let cibleY = 0;
-    if (j.y + j.h - C.camera.piedsAuPlusBas > 0) cibleY = j.y + j.h - C.camera.piedsAuPlusBas;
-    else if (j.y - C.camera.teteAuPlusHaut < 0) cibleY = j.y - C.camera.teteAuPlusHaut;
+    // Avec le zoom, la place « normale » garde le sol à la même hauteur de l'écran.
+    const basDuMonde = C.carte.lignes * B - C.ecran.hauteur / z;
+    const normale = C.solY - C.solY / z; // 0 sans zoom
+    let cibleY = normale;
+    if (j.y + j.h - C.camera.piedsAuPlusBas / z > normale) cibleY = j.y + j.h - C.camera.piedsAuPlusBas / z;
+    else if (j.y - C.camera.teteAuPlusHaut / z < normale) cibleY = j.y - C.camera.teteAuPlusHaut / z;
     Jeu.Camera.suivreY(monde.camera, cibleY, dt, C.camera.tempsDeReaction, C.camera.plusHaut, basDuMonde);
   }
 
@@ -280,7 +287,7 @@ Jeu.Monde = (function () {
       // On consomme les appuis (| et pas ||) pour qu'aucun ne reste en attente.
       const veutJouer = Entrees.consommer("sauter") | Entrees.consommer("valider");
       const veutChanger = Entrees.consommer("changerPseudo");
-      Entrees.consommer("poserBloc"); // hors d'une partie, la touche P ne fait rien
+      Entrees.consommer("poserBloc"); // hors d'une partie, Entrée ne pose pas de bloc
       Entrees.consommer("poserIci"); // ni le clic de souris
       for (let k = 1; k <= Jeu.Armes.BARRE.length; k++) Entrees.consommer("choisir" + k); // ni les touches de la barre
       Entrees.consommer("frapper");

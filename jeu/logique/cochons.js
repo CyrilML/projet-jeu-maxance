@@ -18,9 +18,9 @@ Jeu.Cochons = (function () {
       colonne,
       maison: colonne * B + 4, // son point de départ (px)
       x: colonne * B + 4,
-      y: C.solY - 26,
-      l: 32,
-      h: 26,
+      y: C.solY - C.cochons.hauteur,
+      l: C.cochons.largeur, // étape 29 : 2 fois plus gros (voir config.js)
+      h: C.cochons.hauteur,
       pv: C.cochons.pv,
       direction: Math.random() < 0.5 ? -1 : 1,
       touche: 0,

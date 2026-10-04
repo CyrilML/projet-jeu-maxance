@@ -423,7 +423,7 @@ Jeu.Armes = (function () {
         if (!pret) Jeu.Evenements.emettre("pas-pret", { objet: nomDe(objet), attente: Math.round(eq.attente * 100) / 100 });
         else Jeu.Combat.frapper(monde, objet);
       } else if (objet === "pioche") Jeu.Outils.casserAvecT(monde, "pioche"); // étape 25 : T mine (F marche toujours)
-      else if (objet === "briques") E.appuyer("poserBloc"); // l'inventaire posera le bloc, comme avec P
+      else if (objet === "briques") E.appuyer("poserBloc"); // l'inventaire posera le bloc, comme avec Entrée
       else if (objet === "armure") Jeu.Combat.fabriquerArmure(monde);
       else if (objet === "pelle") Jeu.Outils.casserAvecT(monde, "pelle"); // étape 25 : T mine
       else if (objet === "porte" || objet === "escalier") Jeu.Evenements.emettre("astuce", { texte: "la " + (objet === "porte" ? "porte" : "l'escalier") + " se pose avec un clic de souris, là où tu veux (" + C.constructions[objet].bois + " bois)" });

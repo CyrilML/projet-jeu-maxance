@@ -27,9 +27,10 @@ Jeu.Obstacles = (function () {
   //   sousSol : la lave REMPLACE l'herbe (c'est une mare creusée dans le sol) ;
   //             les autres sont posés PAR-DESSUS le sol.
   const TYPES = {
-    caisse: { l: 1, h: 1, case: CASES.bois },
-    tour: { l: 1, h: 2, case: CASES.pierre },
-    muret: { l: 2, h: 1, case: CASES.pics }, // bois à pics : mortel (étape 8)
+    // Étape 29 : le monde à la taille du héros (2 blocs) : caisse de 2 blocs, tour de 4, muret de 2 de haut.
+    caisse: { l: 1, h: C.obstacles.hauteurs.caisse, case: CASES.bois },
+    tour: { l: 1, h: C.obstacles.hauteurs.tour, case: CASES.pierre },
+    muret: { l: 2, h: C.obstacles.hauteurs.muret, case: CASES.pics }, // bois à pics : mortel (étape 8)
     fer: { l: 1, h: 1, case: CASES.fer }, // bloc de fer : solide, à casser avec la pioche (étape 12)
     charbon: { l: 1, h: 1, case: CASES.charbon }, // minerai de charbon, dans les grottes (étape 13)
     lave: { l: 1, h: 1, case: CASES.lave, sousSol: true },
@@ -221,9 +222,19 @@ Jeu.Obstacles = (function () {
     }
   }
 
-  // L'obstacle mortel (caisse, muret, lave) touché par la zone du héros, s'il y en a un.
+  // L'obstacle mortel (muret, lave) touché par la zone du héros, s'il y en a un.
+  // Étape 29 : on regarde aussi la GRILLE, car un bout de muret cassé à la pioche ne pique plus.
   function obstacleMortelTouche(monde, zone) {
-    return monde.obstacles.find((o) => o.mortel && Jeu.Physique.seChevauchent(zone, o));
+    const T = Jeu.Terrain;
+    return monde.obstacles.find((o) => {
+      if (!o.mortel || o.casse || !Jeu.Physique.seChevauchent(zone, o)) return false;
+      const gauche = Math.max(zone.x, o.x), droite = Math.min(zone.x + zone.l, o.x + o.l);
+      const haut = Math.max(zone.y, o.y), bas = Math.min(zone.y + zone.h, o.y + o.h);
+      for (let c = Math.floor(gauche / B); c < Math.ceil(droite / B); c++) {
+        for (let l = Math.floor(haut / B); l < Math.ceil(bas / B); l++) if (T.MORTELS[T.lireCase(monde.terrain, c, l)]) return true;
+      }
+      return false;
+    });
   }
 
   return { TYPES, placerDansTroncon, mettreAJour, obstacleMortelTouche };

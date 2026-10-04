@@ -270,7 +270,7 @@ Jeu.Terrain = (function () {
     const libre = (c) => {
       if (c - 1 < debut + zoneSure || c + 1 > fin || dansLaReserve(c - 1, 3)) return false;
       if (terrain.colonnes[c][sol] !== CASES.herbe) return false;
-      for (let l = sol - A.hauteurMax - 2; l < sol; l++) if (terrain.colonnes[c][l] !== CASES.air) return false;
+      for (let l = sol - A.hauteurMax - 3; l < sol; l++) if (terrain.colonnes[c][l] !== CASES.air) return false;
       return true;
     };
     // On avance dans le tronçon : dès qu'il y a la place, un arbre ; puis on saute environ 15 blocs.
@@ -291,11 +291,9 @@ Jeu.Terrain = (function () {
           feuilles.push([c, l]);
         }
       };
-      for (let c = colonne - 1; c <= colonne + 1; c++) for (const l of [haut - 1, haut - 2]) feuille(c, l);
-      feuille(colonne - 1, haut);
-      feuille(colonne + 1, haut);
-      feuille(colonne - 2, haut - 1);
-      feuille(colonne + 2, haut - 1);
+      // Étape 29 : une couronne plus grande, à la taille des grands troncs.
+      for (let c = colonne - 2; c <= colonne + 2; c++) for (const l of [haut, haut - 1, haut - 2]) if (c !== colonne || l !== haut) feuille(c, l);
+      for (let c = colonne - 1; c <= colonne + 1; c++) feuille(c, haut - 3);
       arbres.push({ colonne, hauteur, haut, feuilles, abattu: false });
       colonne += A.ecart + de.entre(-A.decalageMax, A.decalageMax);
     }
@@ -311,7 +309,7 @@ Jeu.Terrain = (function () {
   // Creuse la grotte d'un tronçon (30 colonnes) :
   //   colonnes 0 à 5  : l'herbe et le drapeau, en surface ;
   //   colonnes 6 à 12 : l'escalier qui DESCEND (7 marches de roche, une ligne plus bas à chaque colonne) ;
-  //   colonnes 13 à 22 : la grotte, une salle de 4 cases de haut sous un plafond de terre ;
+  //   colonnes 13 à 22 : la grotte, une salle de 5 cases de haut sous un plafond de terre (étape 29) ;
   //   colonnes 23 à 29 : l'escalier qui REMONTE jusqu'à l'herbe.
   // L'ouverture de l'escalier fait 7 blocs : trop large pour être sautée. On est obligé de descendre !
   function creuserGrotte(terrain, debut) {
