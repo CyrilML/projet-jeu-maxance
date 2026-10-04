@@ -157,7 +157,49 @@ Circuit.Textures = (function () {
       ctx.fillRect(0, 0, t, t / 2);
     });
 
+  // Étape 39 : les façades des immeubles. Un « carreau » = un morceau de mur avec une fenêtre ;
+  // Three.js le répète sur toute la façade (une fenêtre tous les 4 m, un étage tous les 3,5 m).
+  const STYLES_FACADE = [
+    { mur: "#c9b79a", fenetre: "#4b6a8a", cadre: "#f2efe6" }, // pierre beige
+    { mur: "#9a4b3a", fenetre: "#3d566e", cadre: "#e8e0d0" }, // brique
+    { mur: "#8f979f", fenetre: "#5c7c99", cadre: "#c5ccd2" }, // béton gris
+    { mur: "#2d4a63", fenetre: "#7fb2d9", cadre: "#1e3346" }, // tour de verre
+  ];
+  const facade = (style) =>
+    texture("facade" + style, 128, (ctx, t) => {
+      const st = STYLES_FACADE[style];
+      bruit(ctx, t, st.mur, 0.12, 1500, 2);
+      ctx.fillStyle = st.cadre;
+      ctx.fillRect(t * 0.18, t * 0.2, t * 0.64, t * 0.55);
+      // la vitre, avec un reflet en dégradé
+      const reflet = ctx.createLinearGradient(0, t * 0.24, t, t * 0.7);
+      reflet.addColorStop(0, st.fenetre);
+      reflet.addColorStop(0.5, "#cfe3f2");
+      reflet.addColorStop(1, st.fenetre);
+      ctx.fillStyle = reflet;
+      ctx.fillRect(t * 0.22, t * 0.24, t * 0.56, t * 0.47);
+      ctx.fillStyle = st.cadre;
+      ctx.fillRect(t * 0.49, t * 0.24, t * 0.02, t * 0.47);
+    });
+
+  const trottoir = () =>
+    texture("trottoir", 128, (ctx, t) => {
+      bruit(ctx, t, "#b4b2ac", 0.15, 3000, 2);
+      ctx.strokeStyle = "rgba(90,90,90,.5)";
+      ctx.lineWidth = 2;
+      for (let k = 0; k <= t; k += 32) {
+        ctx.beginPath();
+        ctx.moveTo(k, 0);
+        ctx.lineTo(k, t);
+        ctx.moveTo(0, k);
+        ctx.lineTo(t, k);
+        ctx.stroke();
+      }
+    });
+
+  const toit = () => texture("toit", 128, (ctx, t) => bruit(ctx, t, "#55575c", 0.25, 5000, 2));
+
   // La fonction `bruit` remplit la toile d'une couleur : avec une couleur transparente, elle ne fait
   // qu'ajouter des grains par-dessus ce qui est déjà peint.
-  return { herbe, goudron, terre, beton, bordure, damier, carton, tremplin, planches, rail };
+  return { herbe, goudron, terre, beton, bordure, damier, carton, tremplin, planches, rail, facade, trottoir, toit };
 })();

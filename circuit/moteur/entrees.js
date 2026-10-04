@@ -27,6 +27,7 @@ Circuit.Entrees = (function () {
     carte2: ["Digit2", "Numpad2"],
     carte3: ["Digit3", "Numpad3"],
     retour: ["Backspace"],
+    monter: ["KeyE"], // étape 39 : descendre de la voiture, ou monter dans une voiture (en ville)
   };
 
   const actionsDeLaTouche = {};

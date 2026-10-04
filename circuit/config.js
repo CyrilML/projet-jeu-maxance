@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 7,
+  version: 8,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -65,7 +65,7 @@ Circuit.CONFIG = {
   cartes: [
     { id: "course", nom: "Le circuit", icone: "🏁", texte: "3 tours contre la voiture bleue" },
     { id: "parcours", nom: "Le parcours", icone: "🎢", texte: "Tremplins, loopings, tunnels" },
-    { id: "ville", nom: "La ville", icone: "🏙️", texte: "Rues, livraisons et course" },
+    { id: "ville", nom: "La ville", icone: "🏙️", texte: "Rues, voitures, personnage" },
   ],
 
   // Étape 37 : le garage du parcours. ✍️ Monster truck, 4x4, pickup et buggy.
@@ -81,6 +81,49 @@ Circuit.CONFIG = {
     { id: "monster", nom: "Le monster truck", modele: "monster", prix: 200, vitesseMax: 33.3, acceleration: 14, virage: 1.5, saut: 1.5, ecrase: true,
       couleurs: [[0.15, 0.35, 0.9], [1, 0.45, 0.05]], son: { ralenti: 30, max: 80 } },
   ],
+
+  // Étape 39 : le garage de la ville. ✍️ Petite citadine, SUV, voiture basse, camionnette et camion.
+  vehiculesVille: [
+    { id: "citadine", nom: "La citadine", modele: "citadine", prix: 0, vitesseMax: 33.3, acceleration: 11, virage: 2.1, saut: 1,
+      couleurs: [[0.3, 0.75, 0.85], [0.95, 0.95, 0.95]], son: { ralenti: 55, max: 140 } },
+    { id: "suv", nom: "Le SUV", modele: "suv", prix: 50, vitesseMax: 38.9, acceleration: 12, virage: 1.9, saut: 1,
+      couleurs: [[0.2, 0.22, 0.26], [0.75, 0.75, 0.78]], son: { ralenti: 40, max: 105 } },
+    { id: "basse", nom: "La voiture basse", modele: "basse", prix: 100, vitesseMax: 47.2, acceleration: 17, virage: 2.1, saut: 1,
+      couleurs: [[0.85, 0.3, 0.05], [0.1, 0.1, 0.11]], son: { ralenti: 65, max: 190 } },
+    { id: "camionnette", nom: "La camionnette", modele: "camionnette", prix: 200, vitesseMax: 33.3, acceleration: 9, virage: 1.7, saut: 1,
+      couleurs: [[0.95, 0.95, 0.95], [0.2, 0.45, 0.85]], son: { ralenti: 45, max: 110 } },
+    { id: "camion", nom: "Le camion", modele: "camion", prix: 300, vitesseMax: 27.8, acceleration: 7, virage: 1.4, saut: 1, ecrase: true,
+      couleurs: [[0.85, 0.12, 0.1], [0.92, 0.92, 0.92]], son: { ralenti: 28, max: 70 } },
+  ],
+
+  // Étape 39 : la VILLE. Une grille de rues (comme un damier) : entre les rues, des pâtés de maisons.
+  ville: {
+    blocs: 5, // 5 × 5 pâtés de maisons
+    tailleBloc: 72, // m : la taille d'un pâté (avec ses trottoirs)
+    largeurRue: 16, // m : 2 voies de 4 m, plus de la place
+    voie: 4, // m : on roule à 4 m à droite du milieu de la rue
+    trottoir: 3, // m
+    ruelle: 6, // m : la petite rue qui coupe chaque pâté en 4 (on peut y passer, à pied ou en voiture)
+    hauteurMin: 10, // m : les immeubles font entre 10 et 70 m de haut
+    hauteurMax: 70,
+    parcs: [[1, 1], [3, 3]], // ✍️ les pâtés qui sont des parcs (numéro de colonne, numéro de ligne)
+    circulation: 16, // ✍️ le nombre de voitures qui circulent toutes seules
+    vitesseCirculation: 11, // m/s (40 km/h, on est en ville !)
+    feuVert: 8, // s : chaque feu reste vert 8 s, puis orange 2 s, puis rouge pendant que l'autre rue passe
+    feuOrange: 2,
+    garees: 14, // voitures garées le long des trottoirs (on peut les prendre !)
+    pieces: 50, // ✍️ des pièces cachées un peu partout
+    graine: 23,
+  },
+
+  // Étape 39 : le PERSONNAGE. ✍️ Il descend de la voiture pour en prendre une autre (touche E).
+  pieton: {
+    vitesse: 5, // m/s : il court
+    recul: 2.5, // m/s : il recule plus lentement
+    virage: 3, // rad/s : il tourne vite sur lui-même
+    distanceMonter: 4, // m : il peut monter dans une voiture à moins de 4 m
+    vitesseMaxPourDescendre: 3, // m/s : on ne descend pas d'une voiture qui roule vite !
+  },
 
   // Étape 37 : la map du PARCOURS. ✍️ Plate, en balade libre (pas de chrono), avec des montées, des tremplins,
   // des loopings, des tunnels, des pièces partout et des piles de cartons à défoncer.

@@ -1,7 +1,8 @@
 // 🏠 LE GARAGE : le vendeur de voitures
 //
 // Avant chaque course, on passe par le garage. On y voit les voitures, une par une (← →).
-// Étape 37 : chaque carte a son garage (le circuit : 5 voitures de course ; le parcours : 4 tout-terrain).
+// Étape 37 : chaque carte a son garage (le circuit : 5 voitures de course ; le parcours : 4 tout-terrain ;
+// la ville, depuis l'étape 39 : citadine, SUV, voiture basse, camionnette et camion).
 // Les pièces et les voitures achetées sont les mêmes partout.
 //   - si la voiture est à toi : Entrée → tu la prends et la course commence ;
 //   - sinon, si tu as assez de pièces : Entrée → tu l'achètes (le prix est enlevé de tes pièces) ;
@@ -16,7 +17,7 @@ Circuit.Garage = (function () {
   const C = Circuit.CONFIG;
   const radio = Circuit.Evenements;
   // Étape 37 : ✍️ un garage par carte, avec des véhicules qui s'adaptent à la carte.
-  const LISTES = { course: C.voitures, parcours: C.vehiculesParcours };
+  const LISTES = { course: C.voitures, parcours: C.vehiculesParcours, ville: C.vehiculesVille };
   let carte = "course";
 
   // Le garage de quelle carte ?

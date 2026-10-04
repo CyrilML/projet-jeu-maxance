@@ -68,7 +68,8 @@ Circuit.Sons = (function () {
     // 1. Ton moteur
     const accelere = v.pedale === "accélérateur";
     const f = frequenceDuMoteur(v);
-    const volume = silence ? 0 : accelere ? S.moteur.volumeAccelere : S.moteur.volumeLache;
+    // Étape 39 : à pied, le moteur de ta voiture est coupé.
+    const volume = silence || monde.pieton ? 0 : accelere ? S.moteur.volumeAccelere : S.moteur.volumeLache;
     Son.reglerMoteur(moteurJoueur, f, volume, accelere ? 1 : 0.2, 0);
     enDirect.frequence = f;
     enDirect.volume = volume;

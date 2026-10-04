@@ -62,6 +62,10 @@ Circuit.TableauDeBord = (function () {
       dessinerBalade(monde, options, sauvegarde);
       return;
     }
+    if (monde.phase === "ville") {
+      dessinerVille(monde, options, sauvegarde);
+      return;
+    }
 
     // En haut à gauche : tour et chronos
     panneau(12, 12, 230, 160);
@@ -197,7 +201,7 @@ Circuit.TableauDeBord = (function () {
     C.cartes.forEach((carte, i) => {
       const x = gauche + i * (largeur + ecart), y = 130;
       const ici = i === monde.choixCarte;
-      const prete = carte.id !== "ville";
+      const prete = true; // étape 39 : les 3 cartes sont prêtes
       ctx.fillStyle = ici ? "rgba(255,226,122,.92)" : "rgba(10,14,30,.72)";
       ctx.beginPath();
       ctx.roundRect(x, y, largeur, 230, 14);
@@ -236,6 +240,62 @@ Circuit.TableauDeBord = (function () {
     if (options.pause) texte("⏸ Pause", W / 2, H - 30, 28, "#fff", "center");
     if (options.ralenti) texte("🐢 Ralenti", 280, 40, 18, "#cfd6ff");
     if (options.rayonsX) dessinerEtiquettesParcours(monde);
+  }
+
+  // Étape 39 : en ville.
+  function dessinerVille(monde, options, sauvegarde) {
+    const v = monde.voiture, p = monde.pieton;
+    const fiche = Circuit.Garage.ficheDe(v.modele) || {};
+    panneau(12, 12, 270, 112);
+    texte("🏙️ La ville", 24, 42, 24, "#ffe27a");
+    texte("🪙 " + monde.piecesCourse + " / " + monde.pieces.length + " pièces trouvées", 24, 68, 17, "#ffd34d");
+    texte("porte-monnaie : " + sauvegarde.pieces, 24, 90, 14, "#cfd6ff");
+    texte(p ? "🚶 À pied" : "🚗 " + fiche.nom, 24, 112, 14, "#cfd6ff");
+
+    panneau(W - 190, H - 92, 178, 80);
+    const vitesse = p ? p.vitesse : v.vitesse;
+    texte(Math.round(Math.abs(vitesse) * 3.6) + "", W - 70, H - 36, 46, "#fff", "right");
+    texte("km/h", W - 62, H - 36, 18, "#cfd6ff");
+
+    dessinerMiniCarteVille(monde);
+    if (monde.message && monde.temps < monde.message.jusqua) texte(monde.message.texte, W / 2, H / 2 - 70, 30, "#ffe27a", "center");
+    if (p && monde.voitureProche) texte("E : monter dans " + monde.voitureProche, W / 2, H - 60, 22, "#7dffa0", "center");
+    texte(p ? "↑ ↓ ← → marcher · E : monter · R : départ · ⌫ : cartes" : "E : descendre · R : retour au départ · ⌫ : changer de carte", 24, H - 22, 14, "#cfd6ff");
+    if (options.pause) texte("⏸ Pause", W / 2, H - 30, 28, "#fff", "center");
+    if (options.ralenti) texte("🐢 Ralenti", 300, 40, 18, "#cfd6ff");
+  }
+
+  // La mini-carte de la ville : les rues, les parcs, les voitures et les pièces, vus d'en haut.
+  function dessinerMiniCarteVille(monde) {
+    const Ville = Circuit.Ville;
+    const taille = 136;
+    const echelle = taille / (Ville.taille + 40);
+    const cx = W - 12 - taille / 2, cz = 12 + taille / 2;
+    panneau(W - 12 - taille - 6, 6, taille + 12, taille + 12);
+    const L = C.ville.tailleBloc * echelle;
+    for (let i = 0; i < C.ville.blocs; i++) for (let j = 0; j < C.ville.blocs; j++) {
+      const x = (Ville.rue(i) + C.ville.largeurRue / 2) * echelle, z = (Ville.rue(j) + C.ville.largeurRue / 2) * echelle;
+      ctx.fillStyle = Ville.parc(i, j) ? "#3f8a3a" : "#8a8d93";
+      ctx.fillRect(cx + x, cz + z, L, L);
+    }
+    ctx.fillStyle = "#cfd6ff";
+    for (const g of monde.garees) ctx.fillRect(cx + g.x * echelle - 1, cz + g.z * echelle - 1, 2, 2);
+    ctx.fillStyle = "#9cc4ff";
+    for (const c of monde.circulation) ctx.fillRect(cx + c.voiture.x * echelle - 1.5, cz + c.voiture.z * echelle - 1.5, 3, 3);
+    ctx.fillStyle = "#ffd34d";
+    for (const p of monde.pieces) if (!p.prise) ctx.fillRect(cx + p.x * echelle - 1, cz + p.z * echelle - 1, 2, 2);
+    const qui = monde.pieton || monde.voiture;
+    ctx.save();
+    ctx.translate(cx + qui.x * echelle, cz + qui.z * echelle);
+    ctx.rotate(qui.angle);
+    ctx.fillStyle = monde.pieton ? "#7dffa0" : "#ff3b30";
+    ctx.beginPath();
+    ctx.moveTo(6, 0);
+    ctx.lineTo(-4, -4);
+    ctx.lineTo(-4, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
   }
 
   // La mini-carte du parcours : les formes, les loopings, les pièces et la voiture, vus d'en haut.

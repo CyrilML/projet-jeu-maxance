@@ -29,6 +29,8 @@ Circuit.Scene3D = (function () {
   const vehicules = {}; // un exemplaire de chaque modèle de voiture
   let adversaire = null;
   const piecesPool = [], cartonsPool = [];
+  const flotte = {}; // étape 39 : les voitures garées et celles de la circulation (une réserve par modèle)
+  let bonhomme = null; // étape 39 : le personnage
   let materiauPiece = null, geoPiece = null, materiauCarton = null, geoCarton = null, fil = null;
 
   // ------------------------------------------------------------------ démarrage
@@ -117,11 +119,14 @@ Circuit.Scene3D = (function () {
       decors[carteDessinee].rayons.visible = false;
     }
     if (!decors[carte]) {
-      const groupe = carte === "parcours" ? Circuit.DecorParcours.construire() : Circuit.DecorCircuit.construire();
+      let groupe, maj = null;
+      if (carte === "parcours") groupe = Circuit.DecorParcours.construire();
+      else if (carte === "ville") ({ groupe, maj } = Circuit.DecorVille.construire());
+      else groupe = Circuit.DecorCircuit.construire();
       const rayons = Circuit.RayonsX.fixes(carte);
       scene.add(groupe);
       sceneX.add(rayons);
-      decors[carte] = { groupe, rayons };
+      decors[carte] = { groupe, rayons, maj };
     }
     decors[carte].groupe.visible = true;
     rayonsFixes = decors[carte].rayons;
@@ -145,7 +150,8 @@ Circuit.Scene3D = (function () {
 
   // ------------------------------------------------------------------ chaque image
   function placerCamera(monde, dt) {
-    const v = monde.voiture;
+    // Étape 39 : à pied, la caméra suit le personnage (plus près, plus bas).
+    const v = monde.pieton ? Object.assign({ modele: "pieton" }, monde.pieton) : monde.voiture;
     const R = C.camera;
     // La caméra tourne en douceur pour suivre l'angle de la voiture (par le chemin le plus court).
     let difference = v.angle - camera.angle;
@@ -166,7 +172,7 @@ Circuit.Scene3D = (function () {
     } else if (monde.phase === "garage" || monde.phase === "cartes") {
       // Au garage, la caméra tourne lentement autour de la voiture, comme dans une vitrine.
       const a = monde.temps * 0.35;
-      const recul = v.modele === "monster" ? 10 : 8;
+      const recul = v.modele === "monster" ? 10 : v.modele === "camion" ? 14 : 8;
       oeil = [v.x + Math.cos(a) * recul, 2.6, v.z + Math.sin(a) * recul];
       cible = [v.x, 0.9, v.z];
       camera.angle = v.angle;
@@ -175,12 +181,12 @@ Circuit.Scene3D = (function () {
       cible = [v.x, 0, v.z];
       haut = [cos, 0, sin];
     } else if (camera.mode === "capot") {
-      const h = y + (vehicule(v.modele).yCapot || 1.4);
+      const h = y + (monde.pieton ? 1.8 : vehicule(v.modele).yCapot || 1.4);
       oeil = [v.x + Math.cos(v.angle) * 0.4, h, v.z + Math.sin(v.angle) * 0.4];
       cible = [v.x + Math.cos(v.angle) * 20, h - 0.3, v.z + Math.sin(v.angle) * 20];
     } else {
       // Derrière la voiture ; la caméra suit aussi la hauteur (un peu moins, pour qu'on voie bien les sauts).
-      const recul = v.modele === "monster" ? 1.3 : 1;
+      const recul = v.modele === "monster" ? 1.3 : v.modele === "camion" ? 1.6 : monde.pieton ? 0.5 : 1;
       oeil = [v.x - cos * R.distance * recul, R.hauteur * recul + y * 0.75, v.z - sin * R.distance * recul];
       cible = [v.x + cos * R.regardDevant, 1 + y * 0.85, v.z + sin * R.regardDevant];
     }
@@ -222,10 +228,43 @@ Circuit.Scene3D = (function () {
     // Les voitures : on montre seulement celle du joueur, et la voiture bleue s'il y en a une.
     const joueur = vehicule(v.modele);
     for (const [modele, objet] of Object.entries(vehicules)) objet.g.visible = modele === v.modele;
-    joueur.g.visible = camera.mode !== "capot" || monde.phase === "garage" || monde.phase === "cartes";
+    joueur.g.visible = camera.mode !== "capot" || monde.phase === "garage" || monde.phase === "cartes" || !!monde.pieton;
     placerVoiture(joueur, v);
     adversaire.g.visible = !!monde.adversaire;
     if (monde.adversaire) placerVoiture(adversaire, monde.adversaire.voiture);
+
+    // Étape 39 : les voitures garées et celles de la circulation, et le personnage.
+    const compte = {};
+    const montrer = (voiture) => {
+      const k = (compte[voiture.modele] = (compte[voiture.modele] || 0) + 1) - 1;
+      const reserve = (flotte[voiture.modele] = flotte[voiture.modele] || []);
+      if (!reserve[k]) {
+        const fiche = Circuit.Garage.ficheDe(voiture.modele);
+        reserve[k] = Circuit.Modeles.fabriquer(voiture.modele, fiche.couleurs[0], fiche.couleurs[1]);
+        scene.add(reserve[k].g);
+      }
+      reserve[k].g.visible = true;
+      placerVoiture(reserve[k], voiture);
+    };
+    for (const g of monde.garees || []) montrer(g);
+    for (const c of monde.circulation || []) montrer(c.voiture);
+    for (const [modele, reserve] of Object.entries(flotte)) for (let k = compte[modele] || 0; k < reserve.length; k++) reserve[k].g.visible = false;
+    if (monde.pieton) {
+      if (!bonhomme) {
+        bonhomme = Circuit.Modeles.personnage();
+        scene.add(bonhomme.g);
+      }
+      const p = monde.pieton;
+      bonhomme.g.visible = camera.mode !== "capot";
+      bonhomme.g.position.set(p.x, 0.12, p.z);
+      bonhomme.g.rotation.set(0, -p.angle, 0);
+      // Les jambes et les bras se balancent quand il marche (comme un pendule).
+      const balance = Math.sin(p.pas * 2.4) * Math.min(1, Math.abs(p.vitesse)) * 0.7;
+      bonhomme.jambes[0].rotation.z = balance;
+      bonhomme.jambes[1].rotation.z = -balance;
+      bonhomme.bras[0].rotation.z = -balance;
+      bonhomme.bras[1].rotation.z = balance;
+    } else if (bonhomme) bonhomme.g.visible = false;
 
     // Les pièces qui tournent sur elles-mêmes et flottent, et les cartons.
     let n = 0;
@@ -252,9 +291,11 @@ Circuit.Scene3D = (function () {
     });
     for (let i = cartons.length; i < cartonsPool.length; i++) cartonsPool[i].visible = false;
 
-    // Le soleil suit la voiture, pour que les ombres soient nettes autour d'elle.
-    soleil.position.set(v.x + SOLEIL.x * 150, SOLEIL.y * 150, v.z + SOLEIL.z * 150);
-    soleil.target.position.set(v.x, 0, v.z);
+    // Le soleil suit la voiture (ou le personnage), pour que les ombres soient nettes autour d'elle.
+    const suivi = monde.pieton || v;
+    soleil.position.set(suivi.x + SOLEIL.x * 150, SOLEIL.y * 150, suivi.z + SOLEIL.z * 150);
+    soleil.target.position.set(suivi.x, 0, suivi.z);
+    if (decors[carteDessinee].maj) decors[carteDessinee].maj(monde.temps); // étape 39 : les feux de la ville
     ciel.position.copy(cam.position);
 
     // On dessine !

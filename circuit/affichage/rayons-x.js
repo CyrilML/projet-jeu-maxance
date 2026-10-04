@@ -54,6 +54,22 @@ Circuit.RayonsX = (function () {
   // Les traits qui ne bougent pas : la route et les portes (circuit), les formes et les loopings (parcours).
   function fixes(carte) {
     if (carte === "parcours") return versThree(Circuit.DecorParcours.rayonsX({ bords: COULEURS.bords, entree: COULEURS.prochaine, rail: COULEURS.milieu }));
+    if (carte === "ville") {
+      // Étape 39 : le milieu des rues (en jaune) et le contour des immeubles (en bleu).
+      const c = Circuit.Constructeur();
+      const Ville = Circuit.Ville;
+      const a = Ville.rue(0), b = Ville.rue(Ville.n - 1);
+      for (let k = 0; k < Ville.n; k++) {
+        c.ligne([a, 0.3, Ville.rue(k)], [b, 0.3, Ville.rue(k)], COULEURS.milieu);
+        c.ligne([Ville.rue(k), 0.3, a], [Ville.rue(k), 0.3, b], COULEURS.milieu);
+      }
+      for (const im of Ville.immeubles) {
+        const L = im.demiLongueur, W = im.demiLargeur, h = 0.4;
+        const coins = [[im.x - L, h, im.z - W], [im.x + L, h, im.z - W], [im.x + L, h, im.z + W], [im.x - L, h, im.z + W]];
+        for (let i = 0; i < 4; i++) c.ligne(coins[i], coins[(i + 1) % 4], COULEURS.bords);
+      }
+      return versThree(c.fin());
+    }
     const c = Circuit.Constructeur();
     const morceaux = Math.round(Piste.longueurTour / 3);
     const pas = Piste.longueurTour / morceaux;
@@ -102,6 +118,11 @@ Circuit.RayonsX = (function () {
     }
     // Un trait jaune entre la voiture et le sol : sa longueur, c'est la hauteur.
     if ((v.y || 0) > 0.05) c.ligne([v.x, 0, v.z], [v.x, v.y, v.z], COULEURS.milieu);
+    // Étape 39 : pour chaque voiture de la circulation, un trait vers le carrefour où elle va.
+    for (const cv of monde.circulation || []) {
+      const cible = [Circuit.Ville.rue(cv.vers[0]), 0.5, Circuit.Ville.rue(cv.vers[1])];
+      c.ligne([cv.voiture.x, 0.5, cv.voiture.z], cible, cv.feuAttendu ? COULEURS.rouge : COULEURS.carotte);
+    }
     // La « carotte » du pilote adverse (le point qu'il vise).
     const adv = monde.adversaire;
     if (adv && adv.cible) {

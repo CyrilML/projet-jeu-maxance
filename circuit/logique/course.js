@@ -55,6 +55,10 @@ Circuit.Course = (function () {
   function voitureDuJoueur(index) {
     const fiche = Circuit.Garage.voitureNumero(index);
     if (Circuit.Garage.carte === "parcours") return Circuit.Voiture.creer(0, 0, 0, fiche);
+    if (Circuit.Garage.carte === "ville") {
+      const d = Circuit.Ville.depart();
+      return Circuit.Voiture.creer(d.x, d.z, d.angle, fiche);
+    }
     return placeDeDepart(C.adversaire.voie, fiche);
   }
 
@@ -65,6 +69,9 @@ Circuit.Course = (function () {
       choixCarte: 0, // étape 37 : la carte regardée dans le menu
       messageCarte: null,
       cartons: [], // étape 37 : les cartons du parcours
+      pieton: null, // étape 39 : ton personnage, quand il est descendu de la voiture (en ville)
+      garees: [], // étape 39 : les voitures garées de la ville
+      circulation: [], // étape 39 : les voitures qui circulent toutes seules
       garage: { index: 0, message: null }, // étape 36 : la voiture regardée au garage
       pieces: [], // étape 36 : les pièces posées sur le circuit
       piecesCourse: 0, // pièces ramassées pendant cette course
@@ -91,9 +98,9 @@ Circuit.Course = (function () {
     radio.emettre("menu-cartes", {});
   }
 
-  // Étape 37 : les cartes qu'on peut déjà choisir (la ville arrive bientôt).
+  // Étape 37 : les cartes qu'on peut choisir (la ville depuis l'étape 39).
   function disponible(id) {
-    return id === "course" || id === "parcours";
+    return id === "course" || id === "parcours" || id === "ville";
   }
 
   // Ouvre le garage de la carte choisie, sur la voiture choisie la dernière fois sur cette carte.
@@ -106,6 +113,9 @@ Circuit.Course = (function () {
     monde.adversaire = monde.carte === "course" ? creerAdversaire() : null;
     monde.pieces = [];
     monde.cartons = [];
+    monde.pieton = null; // étape 39
+    monde.garees = [];
+    monde.circulation = [];
     radio.emettre("garage", { pieces: Circuit.Sauvegarde.donnees.pieces });
   }
 
@@ -159,6 +169,14 @@ Circuit.Course = (function () {
       ouvrirGarage(monde);
       return;
     }
+    if (monde.phase === "ville") {
+      if (intentions.retour) {
+        ouvrirCartes(monde);
+        return;
+      }
+      Circuit.EnVille.etape(monde, dt, intentions);
+      return;
+    }
     if (monde.phase === "balade") {
       if (intentions.retour) {
         ouvrirCartes(monde);
@@ -177,6 +195,7 @@ Circuit.Course = (function () {
       if (reponse === "regarde") preparer(monde, voitureDuJoueur(monde.garage.index)); // on montre la nouvelle voiture
       if (reponse === "depart") {
         if (monde.carte === "parcours") Circuit.Balade.lancer(monde, voitureDuJoueur(monde.garage.index));
+        else if (monde.carte === "ville") Circuit.EnVille.lancer(monde, voitureDuJoueur(monde.garage.index));
         else lancer(monde);
       }
       return;

@@ -368,7 +368,107 @@ Circuit.Modeles = (function () {
     return { g, roues: ajouterRoues(g, [[1.6, true], [-1.6, false]], 1.35, 0.95, 0.75), yCapot: 2.9 };
   }
 
-  const FABRIQUES = { classique, taureau, fleche, fusee, f1, quatre, pickup, buggy, monster };
+  // ---------------------------------------------------------------- étape 39 : le garage de la ville
+
+  // La petite citadine : courte, haute et toute ronde.
+  function citadine(k1, k2) {
+    const p = { L: 3.7, W: 1.72, r: 0.32, xAv: 1.18, xAr: -1.18, g: 0.2, hNez: 0.62, rondNez: 0.35, hCapot: 0.8, hCeinture: 0.92, hCoffre: 0.95,
+      hToit: 1.5, xPareBrise: 0.95, xToitAv: 0.35, xToitAr: -1.55, xLunette: -1.75, Wtoit: 1.5, toitCouleur2: true };
+    const g = carrosserie(p, k1, k2);
+    return { g, roues: ajouterRoues(g, [[1.18, true], [-1.18, false]], 0.8, 0.32, 0.24), yCapot: 1.3 };
+  }
+
+  // Le SUV : une grosse voiture haute, avec des barres de toit.
+  function suv(k1, k2) {
+    const p = { L: 4.7, W: 1.95, r: 0.42, xAv: 1.5, xAr: -1.5, g: 0.38, hNez: 0.95, rondNez: 0.3, hCapot: 1.12, hCeinture: 1.2, hCoffre: 1.22,
+      hToit: 1.82, xPareBrise: 0.95, xToitAv: 0.45, xToitAr: -1.95, xLunette: -2.2, Wtoit: 1.75 };
+    const g = carrosserie(p, k1, k2);
+    for (const z of [-0.7, 0.7]) g.add(boite(2.2, 0.05, 0.05, peinture(k2), -0.75, 1.88, z));
+    for (const z of [-1, 1]) g.add(boite(3.0, 0.1, 0.06, peinture(k2), 0, 0.5, z * 0.99));
+    return { g, roues: ajouterRoues(g, [[1.5, true], [-1.5, false]], 0.95, 0.42, 0.32), yCapot: 1.65 };
+  }
+
+  // La voiture basse : toute plate, très près du sol, avec un long capot.
+  function basse(k1, k2) {
+    const p = { L: 4.6, W: 1.95, r: 0.34, xAv: 1.45, xAr: -1.35, g: 0.1, hNez: 0.4, rondNez: 0.2, hCapot: 0.58, hCeinture: 0.72, hCoffre: 0.8,
+      hToit: 1.05, xPareBrise: 0.55, xToitAv: -0.25, xToitAr: -0.9, xLunette: -1.75, Wtoit: 1.35 };
+    const g = carrosserie(p, k1, k2);
+    g.add(boite(0.3, 0.04, 1.7, peinture(k2), -2.15, 0.95, 0));
+    for (const z of [-0.6, 0.6]) g.add(boite(0.06, 0.18, 0.06, peinture(k2), -2.15, 0.85, z));
+    for (const z of [-1, 1]) g.add(boite(1.0, 0.2, 0.05, M.noir, -0.6, 0.45, z * 0.98)); // les prises d'air
+    return { g, roues: ajouterRoues(g, [[1.45, true], [-1.35, false]], 0.9, 0.34, 0.3), yCapot: 0.95 };
+  }
+
+  // La camionnette : une cabine devant, une grande caisse fermée derrière.
+  function camionnette(k1, k2) {
+    const p = { L: 5.0, W: 1.98, r: 0.38, xAv: 1.7, xAr: -1.6, g: 0.3, hNez: 0.9, rondNez: 0.3, hCapot: 1.1, hCeinture: 1.2, hCoffre: 1.2,
+      hToit: 2.3, xPareBrise: 1.6, xToitAv: 1.0, xToitAr: -2.45, xLunette: -2.5, Wtoit: 1.9 };
+    const g = carrosserie(p, k1, k2);
+    // La grande caisse (sans fenêtres) recouvre l'arrière de la cabine vitrée.
+    g.add(extruder([[0.55, 1.15, 0.05], [0.55, 2.35, 0.1], [-2.5, 2.35, 0.15], [-2.5, 1.15, 0.05]], 1.96, peinture(k1), 0.06));
+    // Une bande de couleur 2 sur les côtés (le logo de la société de livraison !).
+    for (const z of [-1, 1]) g.add(boite(2.6, 0.35, 0.02, peinture(k2), -1.0, 1.65, z * 0.99));
+    return { g, roues: ajouterRoues(g, [[1.7, true], [-1.6, false]], 0.92, 0.38, 0.3), yCapot: 1.8 };
+  }
+
+  // Le camion : une cabine haute, un grand caisson, et 6 roues.
+  function camion(k1, k2) {
+    const g = new THREE.Group();
+    // La cabine (à l'avant).
+    g.add(extruder([[3.6, 0.7, 0.1], [3.65, 1.7, 0.3], [3.4, 3.0, 0.3], [1.9, 3.05, 0.2], [1.9, 0.7, 0.05]], 2.3, peinture(k1), 0.1));
+    g.add(extruder([[3.62, 1.95, 0.05], [3.42, 2.85, 0.1], [3.3, 2.85, 0.05], [3.5, 1.95, 0.05]], 2.0, M.vitre, 0.04)); // le pare-brise
+    for (const z of [-1, 1]) {
+      g.add(boite(0.9, 0.7, 0.03, M.vitre, 2.9, 2.35, z * 1.15)); // les vitres de côté
+      g.add(boite(0.08, 0.14, 0.4, M.phare, 3.68, 1.0, z * 0.85));
+      g.add(boite(0.06, 0.3, 0.15, M.noir, 3.3, 2.4, z * 1.3)); // les rétroviseurs
+    }
+    g.add(boite(0.06, 0.4, 1.4, M.chrome, 3.7, 1.25, 0)); // la calandre
+    // Le grand caisson (couleur 2), et le châssis.
+    g.add(extruder([[1.75, 0.85, 0.05], [1.75, 3.6, 0.1], [-4.2, 3.6, 0.1], [-4.2, 0.85, 0.05]], 2.45, peinture(k2), 0.05));
+    g.add(boite(7.6, 0.3, 1.2, M.noir, -0.3, 0.65, 0));
+    for (const z of [-1, 1]) g.add(boite(0.06, 0.15, 0.5, M.feu, -4.22, 1.1, z * 0.9));
+    return { g, roues: ajouterRoues(g, [[2.7, true], [-2.0, false], [-3.2, false]], 1.05, 0.5, 0.4), yCapot: 3.2 };
+  }
+
+  // ---------------------------------------------------------------- étape 39 : le personnage
+  // Un petit bonhomme : jambes, corps, bras, tête et casquette. Les jambes et les bras ont un « pivot »
+  // à la hanche et à l'épaule : en les faisant tourner d'avant en arrière, il marche.
+  function personnage() {
+    materiaux();
+    const g = new THREE.Group();
+    const peau = new THREE.MeshStandardMaterial({ color: 0xe0b48f, roughness: 0.6 });
+    const pull = new THREE.MeshStandardMaterial({ color: 0xd33b2f, roughness: 0.8 });
+    const jean = new THREE.MeshStandardMaterial({ color: 0x2b4a7a, roughness: 0.85 });
+    const membre = (rayon, longueur, materiau, x, y, z) => {
+      const pivot = new THREE.Group();
+      pivot.position.set(x, y, z);
+      const m = new THREE.Mesh(new THREE.CapsuleGeometry(rayon, longueur, 4, 8), materiau);
+      m.position.y = -longueur / 2 - rayon * 0.5;
+      m.castShadow = true;
+      pivot.add(m);
+      g.add(pivot);
+      return pivot;
+    };
+    const jambes = [membre(0.11, 0.7, jean, 0, 0.95, -0.13), membre(0.11, 0.7, jean, 0, 0.95, 0.13)];
+    const corps = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.5, 4, 10), pull);
+    corps.position.y = 1.3;
+    corps.castShadow = true;
+    g.add(corps);
+    const bras = [membre(0.08, 0.55, pull, 0, 1.6, -0.33), membre(0.08, 0.55, pull, 0, 1.6, 0.33)];
+    const tete = new THREE.Mesh(new THREE.SphereGeometry(0.19, 16, 12), peau);
+    tete.position.y = 1.92;
+    tete.castShadow = true;
+    g.add(tete);
+    const casquette = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.08, 16), M.casque);
+    casquette.position.y = 2.06;
+    g.add(casquette);
+    const visiere = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.03, 0.3), M.casque);
+    visiere.position.set(0.2, 2.03, 0);
+    g.add(visiere);
+    return { g, jambes, bras };
+  }
+
+  const FABRIQUES = { classique, taureau, fleche, fusee, f1, quatre, pickup, buggy, monster, citadine, suv, basse, camionnette, camion };
 
   // Fabrique une voiture. Renvoie { g (le groupe Three.js), roues (pour les faire tourner), yCapot (pour la caméra) }.
   function fabriquer(modele, couleur1, couleur2) {
@@ -376,5 +476,5 @@ Circuit.Modeles = (function () {
     return FABRIQUES[modele](couleur1, couleur2);
   }
 
-  return { fabriquer, materiaux };
+  return { fabriquer, materiaux, personnage };
 })();

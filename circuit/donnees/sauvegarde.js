@@ -17,6 +17,7 @@
 //                  Chaque course gardée dit aussi avec quelle voiture, et combien de pièces ramassées.
 //   4 (étape 37) : un garage par carte. « voitureChoisie » devient « voituresChoisies » (une par carte),
 //                  et le 4x4 du parcours est offert.
+//   5 (étape 39) : le garage de la ville ; la citadine est offerte.
 //
 // Les pièces sont comptées dès qu'on les ramasse, mais écrites dans le tiroir à la fin de la course
 // (ou si on recommence, ou si on ferme la page) : écrire 50 fois par course, ce serait du gaspillage.
@@ -25,7 +26,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.Sauvegarde = (function () {
   const CLE = "circuit-maxance:sauvegarde";
-  const VERSION = 4;
+  const VERSION = 5;
   const radio = Circuit.Evenements;
 
   function vide() {
@@ -38,8 +39,8 @@ Circuit.Sauvegarde = (function () {
       defaites: 0, // depuis la version 2
       pieces: 0, // depuis la version 3 : les pièces que tu as (ton porte-monnaie)
       piecesTotal: 0, // depuis la version 3 : toutes les pièces ramassées depuis le début
-      voituresAchetees: ["classique", "4x4"], // depuis la version 3 : la Rouge est offerte (et le 4x4 depuis la version 4)
-      voituresChoisies: { course: "classique", parcours: "4x4" }, // depuis la version 4 : la voiture choisie sur chaque carte
+      voituresAchetees: ["classique", "4x4", "citadine"], // depuis la version 3 : la Rouge est offerte (et le 4x4 depuis la version 4)
+      voituresChoisies: { course: "classique", parcours: "4x4", ville: "citadine" }, // depuis la version 4 : la voiture choisie sur chaque carte
       toursTotal: 0,
       sortiesTotal: 0,
       distanceTotale: 0, // m parcourus dans toutes les courses finies
@@ -93,6 +94,11 @@ Circuit.Sauvegarde = (function () {
       d.voituresChoisies = { course: anciennes.voitureChoisie || "classique", parcours: "4x4" };
       delete d.voitureChoisie;
       if (!d.voituresAchetees.includes("4x4")) d.voituresAchetees.push("4x4");
+    }
+    if ((anciennes.version || 1) < 5) {
+      // Version 4 → 5 : la ville arrive, avec sa citadine offerte.
+      d.voituresChoisies = Object.assign({ ville: "citadine" }, d.voituresChoisies);
+      if (!d.voituresAchetees.includes("citadine")) d.voituresAchetees.push("citadine");
     }
     d.version = VERSION;
     return d;

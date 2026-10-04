@@ -161,6 +161,7 @@
       <a href="#etape36">Étape 36</a>
       <a href="#etape37">Étape 37</a>
       <a href="#etape38">Étape 38</a>
+      <a href="#etape39">Étape 39</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -2736,6 +2737,50 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Pourquoi utiliser des « instances » pour les arbres ?</summary><p>Pour aller plus vite : la forme est envoyée une seule fois, puis seulement les positions.</p></details>
     </section>
 
+    <section id="etape39">
+      <h2>🏙️ Étape 39 : la ville <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Une vraie ville : immeubles, feux rouges, voitures qui circulent, parcs… et ton personnage qui descend de la voiture pour en prendre une autre ! <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/39-la-ville.md</code>.</p>
+          <ul>
+            <li>✍️ Immeubles, rues, carrefours, circulation, feux rouges, parcs, pièces cachées.</li>
+            <li>✍️ Un personnage qui descend (<kbd>E</kbd>) et prend d'autres voitures.</li>
+            <li>✍️ Garage : citadine, SUV, voiture basse, camionnette, camion.</li>
+            <li>Livraisons et course dans les rues : à l'étape 40.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Menu → <kbd>3</kbd> : le garage de la ville, avec 5 véhicules.</li>
+            <li>☐ Les feux changent de couleur ; les voitures s'arrêtent au rouge.</li>
+            <li>☐ Arrête-toi, <kbd>E</kbd> : ton personnage descend. Les flèches le font marcher.</li>
+            <li>☐ Va à côté d'une voiture garée, <kbd>E</kbd> : tu montes dedans !</li>
+            <li>☐ Cherche les pièces dans les ruelles et les parcs.</li>
+            <li>Vérifie « version 8 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🗺️ Une ville en damier</h3>
+      <p>La ville est une <strong>grille</strong> : 6 rues dans un sens, 6 dans l'autre, et 36 carrefours. Pour trouver où est la rue numéro k, une seule formule : <code>position = début + k × (pâté + rue)</code>. Entre les rues, des pâtés de maisons, coupés en 4 par une ruelle.</p>
+      <h3>🚦 Le code de la route de l'ordinateur</h3>
+      <p>Chaque voiture de la circulation va d'un carrefour au carrefour voisin, sur la voie de droite. Au carrefour, elle tire au hasard : tout droit, à gauche ou à droite. Pour tourner en douceur, elle suit une <strong>courbe de Bézier</strong> : un départ, une arrivée, et un point au coin qui « tire » la courbe. Avant d'avancer, elle regarde : le feu est rouge ? quelqu'un est juste devant ? Alors elle freine.</p>
+      <h3>🚶 Le personnage</h3>
+      <p>Ton personnage est comme une toute petite voiture : une position, un angle, une vitesse. Il se cogne aux immeubles avec les mêmes calculs que les voitures. Ses jambes et ses bras se balancent comme un <strong>pendule</strong> (avec sin) quand il marche.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans l'état en direct, regarde « feux de ce carrefour » quand tu attends au feu.</li>
+        <li>Aux rayons X, chaque voiture de la circulation a un trait vers le carrefour où elle va (rouge si elle attend).</li>
+        <li>Mets-toi à pied devant une voiture de la circulation : que fait-elle ?</li>
+        <li>Trouve le monster truck garé quelque part en ville !</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de carrefours y a-t-il dans une grille de 6 × 6 rues ?</summary><p>6 × 6 = 36.</p></details>
+      <details class="question"><summary>Pourquoi une voiture de la circulation n'attend-elle que les voitures qui vont dans le même sens qu'elle ?</summary><p>Sinon, deux voitures qui tournent au même carrefour pourraient s'attendre l'une l'autre pour toujours : un « blocage ».</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -2960,7 +3005,7 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         </div>
         <div class="carte">
           <div class="num">38</div>
-          <h4>La ville <span class="etiquette">🚧 en construction</span></h4>
+          <h4>La ville <span class="etiquette">✅ fait (livraisons et course : étape 40)</span></h4>
           <p>Des immeubles, un parc, des feux rouges, des voitures qui circulent, des pièces cachées ; ton personnage qui descend de la voiture (<kbd>E</kbd>) pour en prendre une autre ; des livraisons et une course dans les rues. Un garage : citadine, SUV, voiture basse, camionnette, camion.</p>
           <p class="apprend"><b>Tu apprends :</b> une ville en grille, des voitures qui circulent toutes seules, un personnage qui marche, des missions. <b>Durée :</b> plusieurs séances.</p>
         </div>
@@ -3347,6 +3392,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-38" data-cle="appris-38" placeholder="Ex. : J'ai appris qu'une bibliothèque, c'est du code tout prêt…"></textarea>
         <label for="idees-38"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-38" data-cle="idees-38" placeholder="Ex. : La nuit avec les phares allumés…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 39 · la ville <span class="petit">· 4 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la ville en grille (<code>logique/ville.js</code>), la circulation avec les feux (<code>logique/circulation.js</code>), le personnage et les règles de la ville (<code>logique/en-ville.js</code>), le décor (<code>affichage/decor-ville.js</code>), 5 nouveaux véhicules et le personnage (<code>affichage/modeles.js</code>), la base de données en version 5.</p>
+        <label for="appris-39"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-39" data-cle="appris-39" placeholder="Ex. : J'ai appris que les voitures de l'ordinateur suivent des courbes de Bézier…"></textarea>
+        <label for="idees-39"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-39" data-cle="idees-39" placeholder="Ex. : Une voiture de police qui me poursuit…"></textarea>
       </div>
     </section>
   </main>

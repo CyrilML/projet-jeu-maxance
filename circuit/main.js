@@ -75,6 +75,7 @@
       carte2: E.consommer("carte2"),
       carte3: E.consommer("carte3"),
       retour: E.consommer("retour"),
+      monter: E.consommer("monter"), // étape 39 : E en ville
       valider: E.consommer("valider"),
       recommencer: E.consommer("recommencer"),
     };
