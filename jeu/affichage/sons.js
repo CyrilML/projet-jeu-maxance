@@ -218,7 +218,9 @@ Jeu.Orchestre = (function () {
 
   // À chaque image : la musique (seulement pendant la partie) et les bruits de pas.
   function mettreAJour(monde, options, dt) {
-    const doitJouer = reglages.musique && monde.phase === "jeu" && !options.pause && Son.pret();
+    // Étape 28 : pendant la danse du squelette (muret à pics), la musique se tait : on n'entend que la batterie.
+    etat.silenceBatterie = !!monde.danse;
+    const doitJouer = reglages.musique && monde.phase === "jeu" && !options.pause && !monde.danse && Son.pret();
     if (doitJouer && !sequenceur.joue) sequenceur.demarrer();
     if (!doitJouer && sequenceur.joue) sequenceur.arreter();
 
@@ -244,6 +246,7 @@ Jeu.Orchestre = (function () {
       musique: reglages.musique,
       bruits: reglages.bruits,
       joue: sequenceur ? sequenceur.joue : false,
+      silenceBatterie: etat.silenceBatterie, // la musique se tait pour la batterie du squelette
       mesure: sequenceur ? sequenceur.mesure : 0,
       mesures: MELODIE.length,
       pieds: etat.pieds,

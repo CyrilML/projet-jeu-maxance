@@ -22,6 +22,8 @@
   illimitées, on pose un bloc (brique, porte, escalier) à n'importe quelle distance, au-dessus du haut
   du monde, et même près d'un dragon. La caméra monte sans limite.
 - Le cochon vaincu se lève sur ses pattes arrière, secoue ses pattes avant en sautillant (1,5 s), puis s'efface.
+- Quand le héros tombe sur un muret à pics, la musique (style Game Boy) s'arrête : on n'entend plus que
+  le « tac-tac-tac-tac-TAC » et la batterie du squelette. Elle reprend quand il réapparaît.
 - Choisi par Claude :
   - un arbre environ tous les 20 blocs : ni sur la lave, ni près des dragons, ni dans les grottes ;
   - les feuilles ne bloquent pas ;

@@ -294,7 +294,7 @@ Jeu.SousLeCapot = (function () {
       ["fer dans le sac", monde.equipement.fer],
       ["Son (étape 16)", ""],
       ["synthétiseur", son.allume ? "allumé" : "éteint (appuie sur une touche : le navigateur attend un geste)"],
-      ["musique (J)", !son.musique ? "coupée" : son.joue ? "▶ mesure " + son.mesure + " / " + son.mesures + " · tempo " + Jeu.CONFIG.sons.tempo : "en attente (seulement pendant la partie)"],
+      ["musique (J)", !son.musique ? "coupée" : son.silenceBatterie ? "⏸ silence : place à la batterie du squelette 🥁" : son.joue ? "▶ mesure " + son.mesure + " / " + son.mesures + " · tempo " + Jeu.CONFIG.sons.tempo : "en attente (seulement pendant la partie)"],
       ["bruits (B)", son.bruits ? "oui" : "coupés"],
       ["sous les pieds", son.pieds],
       ["dernier bruit", son.dernier],
