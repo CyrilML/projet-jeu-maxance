@@ -124,6 +124,7 @@ Jeu.Joueur = (function () {
       }
     }
     j.y = nouveauY;
+    j.derniereMarche = monde.temps; // étape 30 : l'arme pointée vers le bas, comme un soldat qui monte
     Jeu.Evenements.emettre("marche", { colonne: devant, ligne: pieds });
   }
 

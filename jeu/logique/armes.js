@@ -34,6 +34,17 @@
 // Étape 23 : balles INFINIES, sans chargeur (et roquettes illimitées depuis l'étape 24).
 // Les armes lentes font une animation de rechargement PENDANT l'attente entre deux tirs : juste pour le style.
 // Et les DOUILLES sautent de l'arme à chaque tir (monde.douilles) : elles tombent et rebondissent.
+//
+// Étape 30 : l'ÉTUI. Comme une épée qu'on range dans son fourreau, les armes (épées et armes à feu)
+// vont dans le DOS du héros :
+//   - quand il monte (saut) : à l'atterrissage, il la ressort (0,6 s, « shling ! ») ;
+//   - quand il est collé à un mur : T la ressort, et pour une arme à feu, il fait un PETIT SAUT tout
+//     seul et tire par-dessus le mur, en haut du saut ;
+//   - T avec l'arme dans le dos (en l'air) : il la sort très vite (0,15 s) et tire tout de suite.
+// Sur un escalier, il ne la range pas : il la pointe vers le bas, comme un soldat.
+// Les outils, les briques, la porte et l'escalier restent toujours en main.
+// Et les VISEURS LASER : un trait vert montre où partira le tir (mitrailleuse, Magnum, bazooka,
+// fusil à pompe, sniper).
 
 window.Jeu = window.Jeu || {};
 
@@ -49,6 +60,8 @@ Jeu.Armes = (function () {
   // Tout ce qui tire des balles (le bazooka tire des roquettes) : ces armes ont un éclair et un bruit à elles.
   const PISTOLETS = ["pistolet", "grosPistolet", "mitrailleuse", "magnum", "fusilPompe", "sniper", "laser", "lanceFlammes", "pistoletEau"];
   const OUTILS = ["pelle", "hache", "pioche"]; // ce qui casse les blocs au clic (étape 17)
+  // Étape 30 : ce qui se range dans le dos (les armes, pas les outils ni les blocs).
+  const ARMES_DANS_LE_DOS = ["epee", "epeeDoree", ...PISTOLETS, "bazooka"];
   const NOMS = { pioche: "pioche", briques: "briques", armure: "armure en fer", pelle: "pelle", bazooka: "bazooka", porte: "porte", escalier: "escalier" };
 
   function nomDe(objet) {
@@ -373,6 +386,111 @@ Jeu.Armes = (function () {
     monde.rayons = monde.rayons.filter((r) => r.age < 0.12);
   }
 
+  // --- L'étui (étape 30) ---
+
+  // Le héros est-il collé à un mur ? (un bloc solide juste devant lui, à hauteur de la main)
+  function contreUnMur(monde) {
+    const j = monde.joueur;
+    const sens = j.regard || 1;
+    const colonne = Math.floor((sens > 0 ? j.x + j.l + 2 : j.x - 2) / B);
+    const ligne = Math.floor(Jeu.Joueur.hauteurDeLaMain(j) / B);
+    const T = Jeu.Terrain;
+    // Une marche d'escalier n'est pas un mur : on la monte (en soldat, l'arme vers le bas).
+    return T.estSolide(monde.terrain, colonne, ligne) && !T.estUnEscalier(T.lireCase(monde.terrain, colonne, ligne));
+  }
+
+  function ranger(monde, objet, raison) {
+    const eq = monde.equipement;
+    eq.dansLeDos = true;
+    eq.raisonDos = raison;
+    eq.sortie = 0;
+    Jeu.Evenements.emettre("arme-rangee", { arme: nomDe(objet), raison });
+  }
+
+  function sortir(monde, objet, duree, rapide) {
+    const eq = monde.equipement;
+    eq.dansLeDos = false;
+    eq.raisonDos = null;
+    eq.sortie = duree;
+    eq.dureeSortie = duree;
+    Jeu.Evenements.emettre("arme-sortie", { arme: nomDe(objet), duree, rapide });
+  }
+
+  // L'arme est-elle en train de servir ? (on ne la range pas au milieu d'un coup ou d'un rechargement)
+  function occupe(monde) {
+    const eq = monde.equipement;
+    return eq.sortie > 0 || eq.attente > 0 || eq.coup > 0 || eq.rechargement > 0 || Jeu.Entrees.estEnfoncee("frapper");
+  }
+
+  // À chaque pas : faut-il ranger l'arme dans le dos, ou la ressortir ?
+  function mettreAJourEtui(monde, dt, objet) {
+    const eq = monde.equipement;
+    const j = monde.joueur;
+    eq.sortie = Math.max(0, eq.sortie - dt);
+    const atterrit = j.etat === "au-sol" && eq.etatAvant !== "au-sol";
+    eq.etatAvant = j.etat;
+    if (atterrit) {
+      eq.sautDeTir = false;
+      eq.tirEnAttente = false;
+      eq.gardeEnMain = false;
+    }
+    // Sur une marche d'escalier (il y a moins de 0,35 s) : l'arme pointée vers le bas.
+    eq.soldat = ARMES_DANS_LE_DOS.includes(objet) && j.derniereMarche !== undefined && monde.temps - j.derniereMarche < C.etui.soldat;
+    if (!ARMES_DANS_LE_DOS.includes(objet)) {
+      eq.dansLeDos = false; // un outil ou des blocs : toujours en main
+      eq.raisonDos = null;
+      return;
+    }
+    if (eq.soldat) {
+      if (eq.dansLeDos) sortir(monde, objet, C.etui.sortieRapide, true);
+      return;
+    }
+    if (!eq.dansLeDos) {
+      // (sautDeTir, gardeEnMain : il vient de la sortir pour tirer en l'air, il la garde jusqu'au sol)
+      if (j.etat === "monte" && !eq.sautDeTir && !eq.gardeEnMain) ranger(monde, objet, "saut");
+      else if (j.etat === "au-sol" && contreUnMur(monde) && !occupe(monde)) ranger(monde, objet, "mur");
+    } else if (j.etat === "au-sol") {
+      // Il vient d'atterrir, ou il s'est éloigné du mur : il ressort son arme… sauf s'il est collé à un mur.
+      if (contreUnMur(monde)) eq.raisonDos = "mur";
+      else sortir(monde, objet, C.etui.dureeSortie, false);
+    }
+  }
+
+  // Le viseur laser (étape 30) : où partira le tir de l'arme en main ? Renvoie null s'il n'y en a pas.
+  // { x1, x2, y } : le trait, en px du monde ; cible : ce qu'il touche ; blocs : sa longueur.
+  function viseurLaser(monde) {
+    const objet = objetEnMain(monde);
+    const eq = monde.equipement;
+    if (!C.viseurs.armes.includes(objet) || eq.dansLeDos || eq.sortie > 0 || eq.soldat) return null;
+    const j = monde.joueur;
+    const sens = j.regard || 1;
+    const chevauche = Jeu.Physique.seChevauchent;
+    const y = objet === "bazooka" ? hauteurDeTir(monde, j.y + j.h * 0.26 + 3) : hauteurDeTir(monde, Jeu.Joueur.hauteurDeLaMain(j) - 1) + 1;
+    const portee = (objet === "bazooka" ? C.roquettes.portee : C.armes[objet].portee || C.balles.portee) * B;
+    const depart = sens > 0 ? j.x + j.l + 6 : j.x - 6;
+    let x2 = depart;
+    let cible = "rien";
+    for (let d = 0; d < portee; d += 4) {
+      x2 = depart + sens * d;
+      const point = { x: x2, y, l: 1, h: 1 };
+      const m = monde.monstres.find((o) => o.vivant && chevauche(point, o));
+      if (m) {
+        cible = "monstre #" + m.id;
+        break;
+      }
+      const c = monde.cochons.find((o) => o.vivant && chevauche(point, o));
+      if (c) {
+        cible = "cochon #" + c.id;
+        break;
+      }
+      if (Jeu.Terrain.estSolide(monde.terrain, Math.floor(x2 / B), Math.floor(y / B))) {
+        cible = "un bloc";
+        break;
+      }
+    }
+    return { x1: depart, x2, y, cible, blocs: Math.round(Math.abs(x2 - depart) / B * 10) / 10 };
+  }
+
   // Appelé à chaque pas de temps, AVANT l'inventaire et le combat : T devient la bonne action.
   function mettreAJour(monde, dt) {
     const E = Jeu.Entrees;
@@ -402,10 +520,40 @@ Jeu.Armes = (function () {
     }
     // 2. T : utiliser l'objet en main
     const objet = objetEnMain(monde);
-    const appui = E.consommer("frapper");
+    const j = monde.joueur;
+    let appui = E.consommer("frapper");
     const arme = C.armes[objet];
     const aFeu = PISTOLETS.includes(objet) || objet === "bazooka";
-    if (aFeu && (appui || (arme.rafale && E.estEnfoncee("frapper")))) {
+    // Étape 30 : l'étui. Ranger ou ressortir l'arme, puis T avec l'arme dans le dos.
+    mettreAJourEtui(monde, dt, objet);
+    let attendre = false; // pendant la montée du petit saut, on ne tire pas encore
+    if (eq.dansLeDos && (appui || (aFeu && arme.rafale && E.estEnfoncee("frapper")))) {
+      const raison = eq.raisonDos;
+      sortir(monde, objet, C.etui.sortieRapide, true);
+      if (j.etat !== "au-sol") eq.gardeEnMain = true; // en l'air : il la garde en main jusqu'à l'atterrissage
+      if (raison === "mur" && aFeu && j.etat === "au-sol") {
+        // Collé à un mur : un petit saut tout seul, et le tir part en haut du saut.
+        j.vy = -C.etui.petitSaut;
+        j.etat = "monte";
+        j.sautCoupe = true; // (sinon le « saut variable » le couperait : on ne tient pas Espace)
+        j.debutSaut = monde.temps;
+        eq.etatAvant = "monte";
+        eq.sautDeTir = true;
+        eq.tirEnAttente = true;
+        Jeu.Evenements.emettre("saut-de-tir", { arme: nomDe(objet), hauteur: Math.round((C.etui.petitSaut * C.etui.petitSaut) / (2 * C.gravite)) });
+        appui = false;
+        attendre = true;
+      }
+    }
+    if (aFeu && eq.sautDeTir && j.vy < 0) {
+      if (appui) eq.tirEnAttente = true;
+      appui = false;
+      attendre = true;
+    } else if (aFeu && eq.tirEnAttente) {
+      appui = true; // en haut du petit saut : le tir part !
+      eq.tirEnAttente = false;
+    }
+    if (aFeu && !attendre && (appui || (arme.rafale && E.estEnfoncee("frapper")))) {
       // Les armes à feu (mitrailleuse et lance-flammes : tant qu'on tient T)
       if (eq.rechargement > 0 && arme.chargeur) {
         if (appui) Jeu.Evenements.emettre("pas-pret", { objet: nomDe(objet) + " (en train de recharger)", attente: Math.round(eq.rechargement * 100) / 100 });
@@ -434,5 +582,5 @@ Jeu.Armes = (function () {
     deplacerLesDouilles(monde, dt);
   }
 
-  return { hauteurDeTir, BARRE, TOUCHES, CORPS_A_CORPS, PISTOLETS, OUTILS, nomDe, objetEnMain, caseDeLaBarre, caseSousLaSouris, prendre, mettreAJour };
+  return { hauteurDeTir, viseurLaser, contreUnMur, ARMES_DANS_LE_DOS, BARRE, TOUCHES, CORPS_A_CORPS, PISTOLETS, OUTILS, nomDe, objetEnMain, caseDeLaBarre, caseSousLaSouris, prendre, mettreAJour };
 })();

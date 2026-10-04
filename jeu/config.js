@@ -12,7 +12,7 @@ window.Jeu = window.Jeu || {};
 Jeu.CONFIG = {
   // Numéro de la version du jeu. Il doit être le même que le « ?v=… » des fichiers dans index.html.
   // Affiché en haut de la page : si les deux ne correspondent pas, le navigateur a mélangé des versions.
-  version: 29,
+  version: 30,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -204,6 +204,20 @@ Jeu.CONFIG = {
     pioche: { nom: "pioche", facile: ["pierre", "roche", "brique"], casseTout: true },
     clicsDifficiles: 3, // la pioche sur la terre, le bois…
   },
+  // L'étui (étape 30) : les ARMES (épées et armes à feu) se rangent dans le dos du héros quand il
+  // monte (saut) ou qu'il est collé à un mur. À l'atterrissage, il les ressort (« shling ! »).
+  etui: {
+    dureeSortie: 0.6, // s : sortir l'arme du dos après un saut
+    sortieRapide: 0.15, // s : T avec l'arme dans le dos → il la sort très vite, et il tire tout de suite
+    petitSaut: 480, // px/s : collé à un mur, T fait un petit saut tout seul (≈ 1 bloc) pour tirer par-dessus
+    soldat: 0.35, // s : après une marche d'escalier, il garde l'arme pointée vers le bas, comme un soldat
+  },
+  // Les viseurs laser (étape 30) : un trait vert montre où partira le tir.
+  viseurs: {
+    armes: ["mitrailleuse", "magnum", "bazooka", "fusilPompe", "sniper"],
+    couleur: "#39ff6a",
+  },
+
   balles: {
     vitesse: 700, // px/s
     portee: 10, // une balle disparaît après 10 blocs

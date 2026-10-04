@@ -67,6 +67,16 @@ Jeu.Combat = (function () {
       viandeCuite: 0,
       coup: 0, // animation du coup d'épée (s)
       coupPioche: 0, // animation du coup de pioche (s)
+      // L'étui (étape 30)
+      dansLeDos: false, // l'arme est-elle rangée dans le dos ?
+      raisonDos: null, // pourquoi : "saut" ou "mur"
+      sortie: 0, // temps qui reste pour sortir l'arme (animation, s)
+      dureeSortie: 0, // durée totale de cette sortie (0,6 s ou 0,15 s)
+      sautDeTir: false, // le petit saut automatique pour tirer par-dessus un mur
+      tirEnAttente: false, // le tir partira en haut du petit saut
+      soldat: false, // sur un escalier : arme pointée vers le bas
+      gardeEnMain: false, // sortie en l'air pour tirer : il la garde jusqu'à l'atterrissage
+      etatAvant: "au-sol", // l'état du héros au pas précédent (pour voir l'atterrissage)
     };
   }
 

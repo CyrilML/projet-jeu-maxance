@@ -152,6 +152,7 @@
       <a href="#etape27">Étape 27</a>
       <a href="#etape28">Étape 28</a>
       <a href="#etape29">Étape 29</a>
+      <a href="#etape30">Étape 30</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -2150,6 +2151,82 @@ x dans le monde = x à l'écran ÷ zoom + caméra   ← pour savoir quelle case 
       <details class="question"><summary>Pourquoi un muret cassé à moitié ne pique-t-il plus là où le pic est cassé ?</summary><p>Parce que le jeu regarde la grille : une case cassée contient 0 (l'air), et l'air ne pique pas.</p></details>
     </section>
 
+    <section id="etape30">
+      <h2>🎒 Étape 30 : l'arme dans le dos, et les lasers <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Quand ton héros saute, il range son arme dans son dos, comme une épée dans son fourreau, et il la ressort en atterrissant. Collé à un mur, il fait un petit saut tout seul pour tirer par-dessus. Et tes meilleures armes ont un laser vert d'élite !</p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande de Maxance</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/30-arme-dans-le-dos-et-lasers.md</code>.</p>
+          <p><strong>Règles :</strong></p>
+          <ul>
+            <li>1b + petit saut : collé à un mur, l'arme va dans le dos. T = petit saut tout seul et tir par-dessus.</li>
+            <li>2b : dans le dos quand il monte. Sur un escalier : pose de soldat, arme vers le bas.</li>
+            <li>3b : T avec l'arme dans le dos = il la sort vite et tire.</li>
+            <li>4b : à l'atterrissage, il la sort en 0,6 s, « shliiing ! ».</li>
+            <li>5b : seulement les armes, pas les outils ni les blocs.</li>
+          </ul>
+          <p>En plus : des lasers verts, et un pistolet laser qui fait un bruit de science-fiction.</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Saute avec l'épée (<kbd>1</kbd>) : elle va dans le dos. Atterris : « shliiing ! ».</li>
+            <li>☐ Colle-toi à une tour avec le lance-flammes : le réservoir reste sur ton dos.</li>
+            <li>☐ Colle-toi à un mur avec le Magnum (<kbd>=</kbd>), appuie sur <kbd>T</kbd> : petit saut et tir par-dessus.</li>
+            <li>☐ En l'air, appuie sur <kbd>T</kbd> : il sort son arme vite et tire.</li>
+            <li>☐ Monte un escalier avec une arme : pose de soldat.</li>
+            <li>☐ Mitrailleuse (<kbd>)</kbd>), Magnum, bazooka (<kbd>²</kbd>), fusil à pompe, sniper : laser vert.</li>
+            <li>☐ Pistolet laser : « vwiiiou-ou-ou ».</li>
+            <li>Vérifie « version 30 ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🐛 Le bug du lance-flammes</h3>
+      <p>Le réservoir du lance-flammes était dessiné <em>avec</em> l'arme. Le peintre déplaçait tout le dessin de l'arme au même endroit que la main. Quand la main se levait au-dessus d'un bloc (étape 27), le réservoir montait avec elle et s'envolait !</p>
+      <p>La réparation : le réservoir (et le carquois du bazooka) est maintenant dessiné avec le <strong>corps</strong>, pas avec la main. Il reste accroché au dos, quoi que fasse l'arme.</p>
+
+      <h3>🎒 Une petite machine à états pour l'arme</h3>
+      <p>L'arme a maintenant 4 états, comme le héros (au sol, monte, descend…) :</p>
+      <pre style="white-space: pre-wrap">✋ en main ──(il saute, ou collé à un mur)──▶ 🎒 dans le dos
+🎒 dans le dos ──(il atterrit, ou T)──▶ 🗡️ il la sort (0,6 s, ou 0,15 s avec T) ──▶ ✋ en main
+✋ en main ──(une marche d'escalier)──▶ 🪖 soldat (arme vers le bas)</pre>
+      <p>Pour voir l'atterrissage, le jeu se souvient de l'état du héros au pas d'avant : « avant : en l'air, maintenant : au sol » → il vient d'atterrir !</p>
+
+      <h3>🔄 Faire tourner un dessin</h3>
+      <p>Une « pose » de l'arme, c'est 3 nombres : où est la main (x, y), et un angle. Pour la sortie, le jeu glisse doucement de la pose « dos » à la pose « main ». À la moitié du temps, il est à la moitié du chemin et à la moitié de l'angle : c'est une <strong>interpolation</strong>. Le peintre utilise <code>ctx.rotate(angle)</code> pour tourner le dessin.</p>
+
+      <h3>🦘 Le petit saut et le tir en haut</h3>
+      <p>Collé à un mur, <kbd>T</kbd> donne au héros une vitesse vers le haut de 480 px/s. La gravité le ralentit. En haut du saut, sa vitesse devient 0 (ou positive) : c'est là que le tir part. Hauteur du saut : 480 × 480 ÷ (2 × 2400) = 48 px.</p>
+
+      <h3>🟢 Le laser de visée</h3>
+      <p>Le jeu avance sur la ligne du tir, 4 px par 4 px, jusqu'à toucher un bloc, un monstre ou un cochon. Le peintre trace un trait vert jusque-là, avec un point qui clignote. C'est le même calcul que pour le pistolet laser, mais sans dégâts !</p>
+
+      <h3>🔊 Un bruit de science-fiction</h3>
+      <p>Le nouveau bruit du pistolet laser, ce sont 4 sons en même temps :</p>
+      <ul>
+        <li>une note qui descend de 2 600 Hz à 120 Hz (« vwiiiou ») ;</li>
+        <li>la même note une octave plus bas (pour le corps) ;</li>
+        <li>un grésillement électrique ;</li>
+        <li>3 petits échos de plus en plus graves (« ou-ou-ou »).</li>
+      </ul>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans l'état en direct, regarde la ligne « l'arme » pendant un saut, puis à l'atterrissage.</li>
+        <li>Prends le sniper et regarde « viseur laser » : à combien de blocs touche-t-il le prochain bloc ?</li>
+        <li>Mets le ralenti (<kbd>L</kbd>) et le zoom ×2 (<kbd>V</kbd>), puis saute : regarde l'épée tourner en sortant du dos.</li>
+        <li>Prends la hache et saute : est-ce qu'elle va dans le dos ? Pourquoi ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi le réservoir du lance-flammes s'envolait-il ?</summary><p>Parce qu'il était dessiné avec la main : quand la main montait, il montait aussi. Maintenant il est dessiné avec le corps.</p></details>
+      <details class="question"><summary>À la moitié de la sortie (0,3 s sur 0,6 s), où est l'arme ?</summary><p>À peu près à mi-chemin entre le dos et la main, et à moitié tournée. (Le jeu ralentit au début et à la fin pour que ce soit plus joli.)</p></details>
+      <details class="question"><summary>Avec un petit saut de 600 px/s au lieu de 480, il monterait de combien ?</summary><p>600 × 600 ÷ 4 800 = 75 px.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -2324,26 +2401,32 @@ x dans le monde = x à l'écran ÷ zoom + caméra   ← pour savoir quelle case 
           <p>Caisses, tours, murets, cochons, monstres et arbres à la taille du héros de 2 blocs ; un zoom (V) ; le son qui s'endort quand on regarde ailleurs et qui ralentit au ralenti ; Entrée pour poser un bloc en sautant.</p>
           <p class="apprend"><b>Tu apprends :</b> les métriques d'un niveau, le zoom (agrandir le dessin et diviser la souris), un objet cassé morceau par morceau, les événements de la fenêtre, une touche pour deux actions. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">30</div>
+          <h4>L'arme dans le dos, et les lasers <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>L'arme se range dans le dos pendant un saut ou contre un mur, et ressort à l'atterrissage ; un petit saut pour tirer par-dessus un mur ; une pose de soldat dans l'escalier ; des lasers verts ; un bruit de science-fiction.</p>
+          <p class="apprend"><b>Tu apprends :</b> une machine à états pour un objet, se souvenir de l'état d'avant, interpolation et rotation d'un dessin, trouver un bug de dessin. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">31</div>
           <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">31</div>
+          <div class="num">32</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">32</div>
+          <div class="num">33</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">33</div>
+          <div class="num">34</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -2627,6 +2710,15 @@ x dans le monde = x à l'écran ÷ zoom + caméra   ← pour savoir quelle case 
         <textarea class="journal" id="appris-29" data-cle="appris-29" placeholder="Ex. : J'ai appris que toutes les tailles d'un jeu vont ensemble…"></textarea>
         <label for="idees-29"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-29" data-cle="idees-29" placeholder="Ex. : Des maisons à la taille du héros…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 30 · l'arme dans le dos, et les lasers <span class="petit">· 4 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le bug du lance-flammes réparé (le réservoir reste sur le dos) ; les armes vont dans le dos pendant un saut ou contre un mur, et ressortent à l'atterrissage en 0,6 s (« shliiing ! ») ou vite avec T ; contre un mur, T fait un petit saut tout seul et tire en haut ; pose de soldat dans l'escalier ; lasers verts sur la mitrailleuse, le Magnum, le bazooka, le fusil à pompe et le sniper ; un bruit de science-fiction pour le pistolet laser. Sous le capot : « l'arme » et « viseur laser » dans l'état en direct ; arme rangée, arme sortie et petit saut dans le journal.</p>
+        <p class="petit">✍️ Réponses de Maxance : 1b avec un petit saut automatique, 2b, 3b, 4b, 5b.</p>
+        <label for="appris-30"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-30" data-cle="appris-30" placeholder="Ex. : J'ai appris qu'un objet dessiné avec la main bouge avec la main…"></textarea>
+        <label for="idees-30"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-30" data-cle="idees-30" placeholder="Ex. : Des échelles à poser…"></textarea>
       </div>
     </section>
   </main>

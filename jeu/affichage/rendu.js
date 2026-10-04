@@ -373,12 +373,7 @@ Jeu.Rendu = (function () {
         });
       }
     } else if (objet === "bazooka") {
-      // Le carquois de roquettes, dans le dos (étape 21) : on voit dépasser jusqu'à 3 nez rouges.
-      r("#6b4423", -12, 12, 7, 20);
-      for (let k = 0; k < (eq.rechargement > 0 && eq.armeRecharge === "bazooka" ? 2 : 3); k++) {
-        r("#9aa3ad", -12 + k * 2, 6 - k, 3, 7);
-        r("#d9483b", -12 + k * 2, 4 - k, 3, 3);
-      }
+      // (le carquois de roquettes est dessiné par affairesDansLeDos, étape 30)
       // Le bazooka (étape 19) : un gros tube vert posé sur l'épaule.
       r("#3f6b2f", 6, 12, 44, 10); // le tube
       r("#2c4d21", 6, 12, 44, 2);
@@ -424,6 +419,65 @@ Jeu.Rendu = (function () {
     }
   }
 
+  // Ce qui est accroché au dos du héros, quoi qu'il fasse avec son arme (étape 30 : le réservoir du
+  // lance-flammes et le carquois du bazooka restent sur le dos, ils ne bougent plus avec la main).
+  function affairesDansLeDos(objet, eq, x, y) {
+    const r = (couleur, dx, dy, l, h) => {
+      ctx.fillStyle = couleur;
+      ctx.fillRect(x + dx, y + dy, l, h);
+    };
+    if (objet === "lanceFlammes") {
+      r("#b8342f", -6, 17, 9, 18); // le réservoir
+      r("#1d1d3a", -3, 15, 3, 3); // son bouchon
+      r("#8a2420", -6, 24, 9, 2);
+    } else if (objet === "bazooka") {
+      // Le carquois de roquettes (étape 21) : on voit dépasser jusqu'à 3 nez rouges.
+      r("#6b4423", -6, 17, 7, 18);
+      for (let k = 0; k < (eq.rechargement > 0 && eq.armeRecharge === "bazooka" ? 2 : 3); k++) {
+        r("#9aa3ad", -6 + k * 2, 11 - k, 3, 7);
+        r("#d9483b", -6 + k * 2, 9 - k, 3, 3);
+      }
+    }
+  }
+
+  // Étape 30 : où est l'arme, et tournée comment ? Une « pose » = le point où est la main (px, py) et un angle.
+  //   - en main : la main devant le corps, angle 0 ;
+  //   - dans le dos : l'épée en travers du dos, la poignée près de l'épaule ; l'arme à feu en bandoulière ;
+  //   - soldat (escalier) : l'arme pointée vers le bas, devant lui.
+  function poseDeLArme(objet, eq, x, y) {
+    const epee = objet === "epee" || objet === "epeeDoree";
+    const main = { px: x + 28, py: y + 24, angle: 0 };
+    // L'épée dans le dos : la lame descend dans le fourreau (caché par le corps), la poignée dépasse au-dessus de l'épaule.
+    const dos = epee ? { px: x + 1, py: y + 13, angle: Math.PI - 0.55 } : { px: x + 7, py: y + 27, angle: -2.2 };
+    if (eq.dansLeDos) return { pose: dos, derriere: true };
+    if (eq.sortie > 0) {
+      // La sortie : la pose glisse du dos jusqu'à la main (l'arme tourne en même temps).
+      const k = 1 - eq.sortie / (eq.dureeSortie || 1);
+      const doux = k * k * (3 - 2 * k); // démarre et finit doucement
+      const entre = (a, b) => a + (b - a) * doux;
+      return { pose: { px: entre(dos.px, main.px), py: entre(dos.py, main.py), angle: entre(dos.angle, main.angle) }, bras: true };
+    }
+    if (eq.soldat) return { pose: { px: x + 26, py: y + 27, angle: epee ? Math.PI - 0.5 : 0.9 } };
+    return { pose: main };
+  }
+
+  function dessinerALaPose(objet, eq, x, y, pose, fourreau) {
+    ctx.save();
+    ctx.translate(pose.px, pose.py);
+    ctx.rotate(pose.angle);
+    ctx.scale(0.85, 0.85);
+    ctx.translate(-(x + 28), -(y + 24));
+    objetDansLaMain(objet, eq, x, y);
+    if (fourreau) {
+      // Le fourreau en cuir, par-dessus la lame (seule la poignée dépasse).
+      ctx.fillStyle = "#5a3a1e";
+      ctx.fillRect(x + 27, y + 6, 5, 17);
+      ctx.fillStyle = "#c9a227";
+      ctx.fillRect(x + 27, y + 6, 5, 2); // le bout doré
+    }
+    ctx.restore();
+  }
+
   // Un bras qui recharge, en 3 temps (étapes 21 et 22). k va de 0 (début) à 1 (fin).
   // La main va de `devant` à `reserve` (où sont les munitions), puis jusqu'à `arme`, puis pousse vers `dedans`.
   // `munition(mx, my)` dessine ce que la main tient pendant le retour.
@@ -467,8 +521,7 @@ Jeu.Rendu = (function () {
       return 50;
     }
     if (objet === "lanceFlammes") {
-      r("#b8342f", -12, 12, 9, 20); // le réservoir, dans le dos
-      r("#1d1d3a", -8, 10, 2, 3);
+      // (le réservoir est dessiné dans le dos par affairesDansLeDos, étape 30 : il ne s'envole plus)
       r("#5b6472", 27, 20, 24, 5); // la buse
       r("#6b4423", 27, 24, 5, 8);
       r(Math.floor(Date.now() / 90) % 2 ? "#ffe27a" : "#ff9f1a", 51, 20, 3, 4); // la petite veilleuse toujours allumée
@@ -531,7 +584,18 @@ Jeu.Rendu = (function () {
       ctx.rotate(-0.15 * k * Math.cos((1 - k) * 12));
       ctx.translate(0, -pieds);
     }
+    // Étape 30 : sur l'escalier avec une arme, il se penche un peu en avant, comme un soldat.
+    if (eq && eq.soldat) {
+      const pieds = y + C.joueur.tailleDuDessin;
+      ctx.translate(0, pieds);
+      ctx.rotate(0.1);
+      ctx.translate(0, -pieds);
+    }
     const x = -15;
+    // Étape 30 : l'arme rangée dans le dos est dessinée AVANT le corps (le corps passe devant).
+    const objet = eq ? Jeu.Armes.BARRE[eq.enMain] : null;
+    const placeArme = eq && !(eq.coupPioche > 0) ? poseDeLArme(objet, eq, x, y) : null;
+    if (placeArme && placeArme.derriere) dessinerALaPose(objet, eq, x, y, placeArme.pose, objet === "epee" || objet === "epeeDoree");
     // Le bouclier, porté dans le dos (étape 11) : il se fend à chaque coup arrêté, et disparaît quand il casse.
     if (eq && eq.bouclier > 0) {
       ctx.fillStyle = "#3a6fd8";
@@ -543,6 +607,7 @@ Jeu.Rendu = (function () {
       if (eq.bouclier < 3) ctx.fillRect(x - 4, y + 18, 2, 7); // les fissures
       if (eq.bouclier < 2) ctx.fillRect(x + 3, y + 27, 3, 2);
     }
+    if (eq) affairesDansLeDos(objet, eq, x, y);
     // Bras (derrière le corps) : levés s'il tombe dans un trou, le long du corps sinon
     ctx.fillStyle = "#f1c27d";
     if (j.brasLeves) {
@@ -612,20 +677,19 @@ Jeu.Rendu = (function () {
       } else {
         ctx.fillRect(x + 46, y + 14, 5, 6);
       }
-    } else if (eq) {
+    } else if (placeArme && !placeArme.derriere) {
       // Étape 24 : les armes grandissent avec le héros, mais un peu moins (× 0,85), pour garder la bonne taille.
-      // Étape 27 : caché derrière un bloc, il lève son arme par-dessus (eq.releve, en px du monde).
-      const leve = (eq.releve || 0) / kHaut / 0.85;
-      if (leve > 0) {
-        ctx.fillStyle = "#f1c27d";
-        ctx.fillRect(x + 25, y + 20 - leve, 5, leve + 4); // le bras tendu vers le haut
+      // Étape 30 : plus de bras levé au-dessus d'un mur (c'est un petit saut maintenant).
+      if (placeArme.bras) {
+        // Pendant la sortie, on voit le bras aller chercher l'arme dans le dos.
+        ctx.strokeStyle = "#f1c27d";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(x + 20, y + 21); // l'épaule
+        ctx.lineTo(placeArme.pose.px, placeArme.pose.py);
+        ctx.stroke();
       }
-      ctx.save();
-      ctx.translate(x + 28, y + 24 - leve); // la main
-      ctx.scale(0.85, 0.85);
-      ctx.translate(-(x + 28), -(y + 24));
-      objetDansLaMain(Jeu.Armes.BARRE[eq.enMain], eq, x, y);
-      ctx.restore();
+      dessinerALaPose(objet, eq, x, y, placeArme.pose);
     }
     ctx.restore();
   }
@@ -1223,7 +1287,7 @@ Jeu.Rendu = (function () {
   function ecranAccueil() {
     voile();
     texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
-    texte("Étape 29 : le monde à ta taille (V : zoom)", L / 2, 116, 22, "#fff", "center");
+    texte("Étape 30 : l'arme dans le dos et les lasers", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");
     texte("🏁 Arrive au bloc " + C.arrivee.bloc + " le plus vite possible !", L / 2, 358, 17, "#cfe0ff", "center");
@@ -1599,7 +1663,7 @@ Jeu.Rendu = (function () {
     }
   }
 
-  // Les douilles qui sautent, les rayons laser, et le laser de visée du sniper (étape 22).
+  // Les douilles qui sautent et les rayons laser (étape 22). Les viseurs verts sont dans viseurs() (étape 30).
   function effetsDesArmes(monde) {
     for (const d of monde.douilles || []) {
       ctx.fillStyle = d.couleur;
@@ -1612,24 +1676,21 @@ Jeu.Rendu = (function () {
       ctx.fillStyle = "rgba(230,250,255," + k.toFixed(2) + ")";
       ctx.fillRect(Math.min(r.x1, r.x2), r.y - 1, Math.abs(r.x2 - r.x1), 3);
     }
-    if (monde.phase === "jeu" && Jeu.Armes.objetEnMain(monde) === "sniper" && !monde.brulure && !monde.danse) {
-      // Le laser rouge de visée : il s'arrête sur le premier bloc solide ou le premier monstre.
-      const j = monde.joueur;
-      const sens = j.regard || 1;
-      const y = Jeu.Joueur.hauteurDeLaMain(j) - 2;
-      const depart = sens > 0 ? j.x + j.l + 25 : j.x - 25;
-      let fin = depart;
-      for (let d = 0; d < C.armes.sniper.portee * B; d += 4) {
-        fin = depart + sens * d;
-        const point = { x: fin, y, l: 1, h: 1 };
-        if (Jeu.Terrain.estSolide(monde.terrain, Math.floor(fin / B), Math.floor(y / B))) break;
-        if (monde.monstres.some((m) => m.vivant && Jeu.Physique.seChevauchent(point, m))) break;
-      }
-      ctx.fillStyle = "rgba(255,40,40,0.55)";
-      ctx.fillRect(Math.min(depart, fin), y, Math.abs(fin - depart), 1);
-      ctx.fillStyle = "#ff2828";
-      ctx.fillRect(fin - 2, y - 2, 4, 4); // le point rouge
-    }
+  }
+
+  // Les viseurs laser verts (étape 30) : un trait fin qui montre où partira le tir, et un point au bout.
+  // Le jeu calcule le trait (Jeu.Armes.viseurLaser) ; le peintre le dessine AVANT le héros, pour que
+  // l'arme passe devant le début du trait.
+  function viseurs(monde) {
+    if (monde.phase !== "jeu" || monde.brulure || monde.danse) return;
+    const v = Jeu.Armes.viseurLaser(monde);
+    if (!v) return;
+    const y = Math.round(v.y);
+    ctx.fillStyle = "rgba(57,255,106,0.55)";
+    ctx.fillRect(Math.min(v.x1, v.x2), y, Math.abs(v.x2 - v.x1), 1);
+    const clignote = Math.floor(monde.temps * 6) % 2;
+    ctx.fillStyle = C.viseurs.couleur;
+    ctx.fillRect(v.x2 - 2, y - 2, clignote ? 5 : 4, clignote ? 5 : 4); // le point vert
   }
 
   // Les roquettes (étape 19) : corps gris, nez rouge, flamme à l'arrière. Et les explosions : un anneau qui grandit.
@@ -1742,6 +1803,7 @@ Jeu.Rendu = (function () {
     drapeauxDesGrottes(monde);
     coffres(monde.coffres);
     monstres(monde.monstres, monde.temps);
+    viseurs(monde);
     joueur(monde.joueur, monde.phase, monde.equipement);
     flammes(monde.flammes);
     balles(monde.balles);

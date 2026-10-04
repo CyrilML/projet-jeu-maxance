@@ -97,7 +97,26 @@ Jeu.Orchestre = (function () {
       Son.bruit({ filtre: "highpass", frequence: 1200, duree: 0.1, volume: 0.6, quand: t, nom: "sniper : PAN… (écho)" });
       Son.bruit({ filtre: "bandpass", frequence: 900, duree: 0.25, volume: 0.15, quand: t + 0.25, nom: "sniper : PAN… (écho)" }); // l'écho
     },
-    piou: () => Son.note({ forme: "square", frequence: 1600, fin: 250, duree: 0.18, volume: 0.25, nom: "laser : piou" }),
+    // Étape 30 : un vrai bruit de science-fiction pour le pistolet laser : un « vwiiiou » qui descend,
+    // une octave plus grave pour le corps, un grésillement électrique, et un écho qui ondule (ou-ou-ou).
+    piou: () => {
+      const t = Son.maintenant();
+      const nom = "laser : vwiiiou-ou-ou (science-fiction)";
+      Son.note({ forme: "sine", frequence: 2600, fin: 120, duree: 0.32, volume: 0.3, quand: t, nom });
+      Son.note({ forme: "triangle", frequence: 1300, fin: 60, duree: 0.32, volume: 0.15, quand: t + 0.01, nom });
+      Son.bruit({ filtre: "bandpass", frequence: 4000, fin: 800, duree: 0.15, volume: 0.08, quand: t, nom });
+      [900, 700, 500].forEach((f, k) => Son.note({ forme: "sine", frequence: f, fin: f * 0.7, duree: 0.06, volume: 0.12 - k * 0.03, quand: t + 0.08 * (k + 1), nom }));
+    },
+    // Étape 30 : sortir son arme du dos. Lente : « shliiing ! » (le métal qui glisse, puis qui sonne).
+    // Rapide (T avec l'arme dans le dos) : juste un petit « shk ».
+    shling: () => {
+      const t = Son.maintenant();
+      Son.bruit({ filtre: "bandpass", frequence: 2000, fin: 7000, duree: 0.3, volume: 0.25, attaque: 0.02, quand: t, nom: "sortir l'arme : shliiing !" });
+      Son.note({ forme: "triangle", frequence: 2637, duree: 0.35, volume: 0.12, quand: t + 0.22, nom: "sortir l'arme : shliiing !" });
+      Son.note({ forme: "sine", frequence: 3951, duree: 0.3, volume: 0.06, quand: t + 0.24, nom: "sortir l'arme : shliiing !" });
+    },
+    shk: () => Son.bruit({ filtre: "bandpass", frequence: 3000, fin: 6000, duree: 0.08, volume: 0.25, nom: "sortir l'arme vite : shk" }),
+    hop: () => Son.note({ forme: "sine", frequence: 300, fin: 520, duree: 0.09, volume: 0.2, nom: "petit saut pour tirer : hop" }),
     flamme: () => Son.bruit({ filtre: "lowpass", frequence: 700, duree: 0.12, volume: 0.25, nom: "lance-flammes : frrr" }),
     pschit: () => Son.bruit({ filtre: "bandpass", frequence: 3500, duree: 0.08, volume: 0.2, nom: "pistolet à eau : pschit" }),
     chik: () => Son.note({ forme: "square", frequence: 900, fin: 700, duree: 0.03, volume: 0.15, nom: "rechargement : chik" }),
@@ -191,6 +210,8 @@ Jeu.Orchestre = (function () {
     const BRUIT_DE = { mitrailleuse: "ta", Magnum: "bang", "fusil à pompe": "pompe", "fusil de sniper": "sniper", "pistolet laser": "piou", "lance-flammes": "flamme", "pistolet à eau": "pschit" };
     ecouter("tir", (d) => jouer(BRUIT_DE[d.arme] || "pan"));
     ecouter("rechargement", () => jouer("chik"));
+    ecouter("arme-sortie", (d) => jouer(d.rapide ? "shk" : "shling")); // étape 30
+    ecouter("saut-de-tir", () => jouer("hop"));
     ecouter("recharge-finie", () => jouer("clac"));
     ecouter("roquette-tiree", () => jouer("fshhh"));
     ecouter("arbre-abattu", () => jouer("arbre"));

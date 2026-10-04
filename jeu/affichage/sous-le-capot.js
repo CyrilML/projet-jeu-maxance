@@ -9,6 +9,24 @@ window.Jeu = window.Jeu || {};
 
 Jeu.SousLeCapot = (function () {
   // « drapeau n° 3 », ou « drapeau de ta grotte n° 1 » (étape 25 : on réapparaît dans une grotte conquise)
+  // Étape 30 : où est l'arme du héros ?
+  function etatDeLArme(monde) {
+    const eq = monde.equipement;
+    const objet = Jeu.Armes.objetEnMain(monde);
+    if (!Jeu.Armes.ARMES_DANS_LE_DOS.includes(objet)) return "outil ou blocs : toujours en main";
+    if (eq.dansLeDos) return "🎒 dans le dos (" + (eq.raisonDos === "saut" ? "il monte" : "collé à un mur : T = petit saut et tir") + ")";
+    if (eq.sautDeTir) return "🦘 petit saut pour tirer" + (eq.tirEnAttente ? " : tir en haut du saut" : "");
+    if (eq.sortie > 0) return "🗡️ il la sort… encore " + eq.sortie.toFixed(2) + " s";
+    if (eq.soldat) return "🪖 pointée vers le bas (escalier, comme un soldat)";
+    return "✋ en main";
+  }
+
+  function viseurEnDirect(monde) {
+    const v = Jeu.Armes.viseurLaser(monde);
+    if (!v) return Jeu.CONFIG.viseurs.armes.includes(Jeu.Armes.objetEnMain(monde)) ? "éteint (arme pas en main)" : "— (pas sur cette arme)";
+    return "touche " + v.cible + " à " + String(v.blocs).replace(".", ",") + " blocs";
+  }
+
   function nomDuDrapeau(numero) {
     return typeof numero === "number" ? "drapeau n° " + numero : numero;
   }
@@ -73,6 +91,9 @@ Jeu.SousLeCapot = (function () {
     zoom: (d) => "🔍 Zoom ×" + String(d.avant).replace(".", ",") + " → ×" + String(d.apres).replace(".", ",") + " (touche V) : un bloc fait maintenant " + d.blocAEcran + " px à l'écran",
     "son-endormi": (d) => "😴 Le son s'endort (" + d.raison + ") : plus de musique ni de bruits",
     "son-reveille": () => "🎵 Te revoilà ! Le son se réveille",
+    "arme-rangee": (d) => "🎒 " + d.arme + " rangé(e) dans le dos (" + (d.raison === "saut" ? "il monte" : "collé à un mur") + ")",
+    "arme-sortie": (d) => (d.rapide ? "⚡ " : "🗡️ ") + d.arme + " sorti(e) du dos en " + d.duree + " s" + (d.rapide ? " (vite, avec T)" : " : shliiing !"),
+    "saut-de-tir": (d) => "🦘 Petit saut automatique (" + d.hauteur + " px) : le tir du " + d.arme + " partira en haut du saut, par-dessus le mur",
     "reglage-son": (d) => (d.quoi === "musique" ? "🎵 Musique " + (d.actif ? "remise" : "coupée") : "🔊 Bruits " + (d.actif ? "remis" : "coupés")) + (d.quoi === "musique" ? " (touche J)" : " (touche B)"),
     "objet-en-main": (d) => "🎒 " + (d.facon === "clic" ? "Clic sur la barre" : "Touche " + d.touche) + " : tu tiens maintenant " + d.objet,
     "pas-pret": (d) => "⏳ " + d.objet + " pas encore prêt(e) : attends encore " + d.attente + " s",
@@ -286,7 +307,9 @@ Jeu.SousLeCapot = (function () {
       ["squelette qui danse ?", monde.danse ? "oui 💀 encore " + Math.max(0, monde.danse.reste).toFixed(1) + " s" : "non"],
       ["regarde vers", j.regard < 0 ? "← la gauche" : "la droite →"],
       ["bras levés ?", j.brasLeves ? "oui 🙌" : "non"],
-      ["arme levée par-dessus un bloc (étape 27)", monde.equipement.releve > 0 ? "oui : +" + monde.equipement.releve + " px 🧱🔫" : "non"],
+      ["tir par-dessus un bloc (étape 27)", monde.equipement.releve > 0 ? "oui : +" + monde.equipement.releve + " px 🧱🔫" : "non"],
+      ["l'arme (étape 30)", etatDeLArme(monde)],
+      ["viseur laser 🟢 (étape 30)", viseurEnDirect(monde)],
       ["caché derrière un bloc ?", monde.monstres.some((m) => m.vivant && Jeu.Combat.ecart(monde, m) <= m.portee + 40 && Jeu.Combat.blocEntre(monde, m)) ? "oui : les coups ne passent pas 🛡️" : "non"],
       ["taille (étape 24)", j.l + " × " + j.h + " px" + (j.accroupi ? " · baissé 🧎 (S)" : " · debout 🧍")],
       ["zoom (V, étape 29)", "×" + String(monde.camera.zoom).replace(".", ",") + " : un bloc fait " + Math.round(Jeu.CONFIG.tailleBloc * monde.camera.zoom) + " px à l'écran"],
