@@ -156,6 +156,7 @@
       <a href="#etape31">Étape 31</a>
       <a href="#etape32">Étape 32 · circuit 3D</a>
       <a href="#etape33">Étape 33</a>
+      <a href="#etape34">Étape 34</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -2436,6 +2437,75 @@ rayon:           40  →  120</pre>
       <details class="question"><summary>Les portes invisibles ont-elles bougé ?</summary><p>Oui : elles sont toujours à 1/4, 1/2 et 3/4 du tour, mais le tour est plus long, donc elles sont plus loin (environ 369 m, 737 m et 1 106 m).</p></details>
     </section>
 
+    <section id="etape34">
+      <h2>🔵 Étape 34 : une voiture adverse <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Tu n'es plus seul sur la piste : une voiture bleue, conduite par l'ordinateur, veut gagner la course ! <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/34-voiture-adverse.md</code>.</p>
+          <ul>
+            <li>✍️ Vitesse « moyen » : 140 km/h (toi : 150 km/h).</li>
+            <li>✍️ Les voitures se cognent et rebondissent.</li>
+            <li>✍️ Si elle finit ses 3 tours avant toi : perdu tout de suite.</li>
+          </ul>
+          <p class="petit">Choisi par Claude : elle est bleue, elle change de voie pour te doubler, et la base de données compte tes victoires et tes défaites.</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Une voiture bleue part à côté de toi.</li>
+            <li>☐ Elle fait le tour toute seule, sans sortir de la route.</li>
+            <li>☐ Mets-toi juste devant elle : elle change de voie pour te doubler.</li>
+            <li>☐ Touche-la : « BOUM ! », les deux voitures rebondissent.</li>
+            <li>☐ En haut à gauche : 1er ou 2e. Sur la mini-carte : un point bleu.</li>
+            <li>☐ Elle finit avant toi : « Perdu ! ». Toi avant elle : « Gagné ! ».</li>
+            <li>Vérifie « version 3 » en haut de la page du circuit.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🤖 Comment l'ordinateur conduit : la carotte</h3>
+      <p>La voiture bleue est <strong>exactement la même</strong> que la tienne : même fichier, mêmes calculs. La seule différence, c'est qui appuie sur les touches. Pour toi, c'est le clavier. Pour elle, c'est un petit cerveau, le <strong>pilote</strong> (<code>circuit/logique/pilote.js</code>). 120 fois par seconde, il fait 3 choses :</p>
+      <ol>
+        <li>il regarde un point 18 m devant lui, au milieu de sa voie : c'est la « carotte » ;</li>
+        <li>si la carotte est à sa gauche, il appuie sur ←, et si elle est à sa droite, sur → ;</li>
+        <li>il garde toujours le pied sur l'accélérateur.</li>
+      </ol>
+      <p>Comme la carotte avance avec lui, il ne l'attrape jamais… et il fait le tour du circuit ! Aux rayons X (<kbd>X</kbd>), tu vois la carotte en bleu clair, et ce que pense le pilote : « cible à 3° → à droite ».</p>
+      <p><strong>Pour te doubler :</strong> si tu es devant lui, sur sa voie, à moins de 22 m, il change de voie (intérieure ↔ extérieure).</p>
+
+      <h3>💥 Comment savoir si deux voitures se touchent : les cercles</h3>
+      <p>Tester si deux rectangles tournés se touchent, c'est compliqué. L'astuce des jeux vidéo, c'est de remplacer chaque voiture par <strong>2 cercles</strong>, un à l'avant et un à l'arrière. Deux cercles se touchent si la distance entre leurs centres est plus petite que 2 rayons. C'est un seul calcul !</p>
+      <pre style="white-space: pre-wrap">rayon d'un cercle = 1,05 m
+ça touche si : distance entre les centres &lt; 2 × 1,05 = 2,1 m</pre>
+      <p>Quand ça touche, le jeu fait 2 choses (<code>circuit/moteur/chocs.js</code>) :</p>
+      <ol>
+        <li>il <strong>écarte</strong> les voitures, pour qu'elles ne se rentrent plus dedans ;</li>
+        <li>il les fait <strong>rebondir</strong> : chacune reçoit une poussée dans la direction du choc. Le réglage <code>rebond: 0.3</code> dit si elles rebondissent peu (0) ou beaucoup (1).</li>
+      </ol>
+      <p>Aux rayons X, tu vois les cercles blancs autour des deux voitures. Ils deviennent rouges quand ça touche.</p>
+
+      <h3>🥇 Qui est devant ?</h3>
+      <p>Pour savoir qui est 1er, le jeu calcule la <strong>distance parcourue</strong> par chaque voiture depuis le départ : (tour − 1) × 1 474 m + la progression sur le tour en cours. La plus grande est devant.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Aux rayons X, suis la carotte bleue : à combien de mètres devant la voiture bleue est-elle ?</li>
+        <li>Dans l'état en direct, regarde « cible » : quand la voiture bleue est dans un virage, que dit-elle ?</li>
+        <li>Mets-toi devant elle sur sa voie : que dit le journal ?</li>
+        <li>Fais exprès de la cogner, et regarde « Vitesse du choc » dans le journal. Que se passe-t-il si tu la cognes plus fort ?</li>
+        <li>Dans la base de données, trouve tes victoires et tes défaites.</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Quelle est la différence entre ta voiture et la voiture bleue ?</summary><p>Seulement qui appuie sur les touches (le clavier ou le pilote), sa couleur et sa vitesse maximale. Le reste, c'est exactement le même code.</p></details>
+      <details class="question"><summary>Deux cercles de 1,05 m de rayon, avec 3 m entre leurs centres : ils se touchent ?</summary><p>Non : il faudrait moins de 2,1 m.</p></details>
+      <details class="question"><summary>Si on met la vitesse max de l'adversaire à 41,7 m/s, ça fait combien en km/h ?</summary><p>41,7 × 3,6 ≈ 150 km/h : aussi vite que toi ! Ce serait le niveau « difficile ».</p></details>
+      <details class="question"><summary>Si la carotte était à 3 m au lieu de 18 m, que se passerait-il ?</summary><p>Le pilote tournerait très brusquement, il zigzaguerait. Une carotte plus loin rend la conduite plus douce.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -2634,26 +2704,32 @@ rayon:           40  →  120</pre>
           <p>Lignes droites de 360 m, virages de 120 m de rayon : un tour fait 1 474 m. Le terrain, les sapins, la brume et la mini-carte suivent.</p>
           <p class="apprend"><b>Tu apprends :</b> tout calculer à partir de quelques réglages, la longueur d'un tour (périmètre), la brume, l'échelle d'une carte. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">34</div>
+          <h4>Une voiture adverse <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Une voiture bleue, conduite par l'ordinateur à 140 km/h, qui change de voie pour doubler. Les voitures se cognent. Si elle finit avant toi : perdu !</p>
+          <p class="apprend"><b>Tu apprends :</b> une intelligence artificielle simple (la carotte), réutiliser le même code pour deux voitures, détecter un choc avec des cercles, faire rebondir, calculer qui est devant. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">35</div>
           <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine étape (idée)</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">35</div>
+          <div class="num">36</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">36</div>
+          <div class="num">37</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">37</div>
+          <div class="num">38</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -2973,6 +3049,15 @@ rayon:           40  →  120</pre>
         <textarea class="journal" id="appris-33" data-cle="appris-33" placeholder="Ex. : J'ai appris qu'en changeant 2 nombres, tout le circuit change…"></textarea>
         <label for="idees-33"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-33" data-cle="idees-33" placeholder="Ex. : Des virages dans l'autre sens, une ligne droite avec un pont…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 34 · une voiture adverse <span class="petit">· 4 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> une voiture bleue conduite par un pilote automatique (la carotte, 18 m devant, sur sa voie), qui change de voie pour doubler ; les chocs entre les voitures (2 cercles par voiture, écartement et rebond) ; la position 1er ou 2e ; « Gagné ! » ou « Perdu ! » ; la base de données en version 2 avec les victoires et les défaites. Sous le capot : la carotte et les cercles aux rayons X, « La voiture bleue » dans l'état en direct, et les chocs, dépassements et tours de l'adversaire dans le journal.</p>
+        <p class="petit">✍️ Réponses de Maxance : vitesse « moyen » (140 km/h), les voitures se cognent, perdu tout de suite si l'adversaire finit avant.</p>
+        <label for="appris-34"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-34" data-cle="appris-34" placeholder="Ex. : J'ai appris que l'ordinateur conduit en suivant une carotte…"></textarea>
+        <label for="idees-34"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-34" data-cle="idees-34" placeholder="Ex. : Plusieurs adversaires, choisir le niveau, des bonus sur la route…"></textarea>
       </div>
     </section>
   </main>

@@ -39,7 +39,8 @@
     #journal { list-style: none; margin: 0; padding: 0; height: 420px; overflow-y: auto; font-size: .82rem; }
     #journal li { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
     #journal .temps { display: inline-block; min-width: 58px; color: var(--doux); font-family: ui-monospace, Menlo, Consolas, monospace; }
-    #journal li[data-evenement="sortie-de-piste"], #journal li[data-evenement="cloture"], #journal li[data-evenement="ligne-a-l-envers"] { color: #ff9b9b; }
+    #journal li[data-evenement="sortie-de-piste"], #journal li[data-evenement="cloture"], #journal li[data-evenement="ligne-a-l-envers"], #journal li[data-evenement="perdu"], #journal li[data-evenement="choc"] { color: #ff9b9b; }
+    #journal li[data-evenement="tour-adversaire"], #journal li[data-evenement="adversaire-change-de-voie"] { color: #9cc4ff; }
     #journal li[data-evenement="nouveau-record"], #journal li[data-evenement="arrivee"], #journal li[data-evenement="tour-termine"], #journal li[data-evenement="sauvegarde"] { color: var(--accent); }
     pre { margin: 0; background: #0b1020; border-radius: 8px; padding: 8px; font-size: .78rem; overflow: auto; max-height: 420px; color: #b9f5c9; }
     code { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--accent); }
@@ -90,19 +91,21 @@
   </div>
 
   <!-- L'ordre compte : chaque fichier peut utiliser ceux chargés AVANT lui.
-       Le « ?v=2 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
-  <script src="config.js?v=2"></script>
-  <script src="moteur/evenements.js?v=2"></script>
-  <script src="moteur/entrees.js?v=2"></script>
-  <script src="moteur/maths3d.js?v=2"></script>
-  <script src="moteur/projecteur.js?v=2"></script>
-  <script src="logique/piste.js?v=2"></script>
-  <script src="logique/voiture.js?v=2"></script>
-  <script src="logique/course.js?v=2"></script>
-  <script src="donnees/sauvegarde.js?v=2"></script>
-  <script src="affichage/scene3d.js?v=2"></script>
-  <script src="affichage/tableau-de-bord.js?v=2"></script>
-  <script src="affichage/sous-le-capot.js?v=2"></script>
-  <script src="main.js?v=2"></script>
+       Le « ?v=3 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
+  <script src="config.js?v=3"></script>
+  <script src="moteur/evenements.js?v=3"></script>
+  <script src="moteur/entrees.js?v=3"></script>
+  <script src="moteur/maths3d.js?v=3"></script>
+  <script src="moteur/projecteur.js?v=3"></script>
+  <script src="moteur/chocs.js?v=3"></script>
+  <script src="logique/piste.js?v=3"></script>
+  <script src="logique/voiture.js?v=3"></script>
+  <script src="logique/pilote.js?v=3"></script>
+  <script src="logique/course.js?v=3"></script>
+  <script src="donnees/sauvegarde.js?v=3"></script>
+  <script src="affichage/scene3d.js?v=3"></script>
+  <script src="affichage/tableau-de-bord.js?v=3"></script>
+  <script src="affichage/sous-le-capot.js?v=3"></script>
+  <script src="main.js?v=3"></script>
 </body>
 </html>

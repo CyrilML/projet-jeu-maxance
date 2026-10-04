@@ -8,12 +8,17 @@
 // (« tour-termine », « arrivee ») et c'est ce fichier qui décide quoi enregistrer.
 //
 // Attention : ce tiroir est séparé de celui du jeu de plateforme (clé différente).
+//
+// Versions du format :
+//   1 (étape 32) : records, nombre de courses, de tours, de sorties, les 5 dernières courses.
+//   2 (étape 34) : on ajoute les victoires et les défaites contre l'adversaire,
+//                  et chaque course gardée dit si elle est « gagnée » ou « perdue ».
 
 window.Circuit = window.Circuit || {};
 
 Circuit.Sauvegarde = (function () {
   const CLE = "circuit-maxance:sauvegarde";
-  const VERSION = 1;
+  const VERSION = 2;
   const radio = Circuit.Evenements;
 
   function vide() {
@@ -21,11 +26,13 @@ Circuit.Sauvegarde = (function () {
       version: VERSION, // si le format change un jour, ce numéro permettra de convertir les anciennes données
       meilleurTour: null, // en secondes
       meilleureCourse: null, // en secondes, pour les 3 tours
-      courses: 0, // nombre de courses finies
+      courses: 0, // nombre de courses finies (gagnées ou perdues)
+      victoires: 0, // depuis la version 2
+      defaites: 0, // depuis la version 2
       toursTotal: 0,
       sortiesTotal: 0,
       distanceTotale: 0, // m parcourus dans toutes les courses finies
-      dernieresCourses: [], // les 5 dernières : { date, temps, meilleurTour, sorties }
+      dernieresCourses: [], // les 5 dernières : { date, resultat, temps, meilleurTour, sorties }
     };
   }
 
@@ -40,12 +47,31 @@ Circuit.Sauvegarde = (function () {
   function lire() {
     try {
       const texte = localStorage.getItem(CLE);
-      if (texte) donnees = Object.assign(vide(), JSON.parse(texte));
-      radio.emettre("lecture", { trouve: !!texte });
+      let converti = false;
+      if (texte) {
+        const lues = JSON.parse(texte);
+        converti = (lues.version || 1) < VERSION;
+        donnees = convertir(lues);
+      }
+      radio.emettre("lecture", { trouve: !!texte, converti });
+      if (converti) ecrire("conversion en version " + VERSION);
     } catch (e) {
       donnees = vide();
       radio.emettre("lecture", { trouve: false, erreur: true });
     }
+  }
+
+  // Transforme une ancienne sauvegarde en sauvegarde de la version actuelle, marche par marche.
+  function convertir(anciennes) {
+    const d = Object.assign(vide(), anciennes);
+    if ((anciennes.version || 1) < 2) {
+      // Version 1 → 2 : il n'y avait pas d'adversaire, toutes les courses finies étaient des courses « seul ».
+      d.victoires = 0;
+      d.defaites = 0;
+      d.dernieresCourses = (anciennes.dernieresCourses || []).map((c) => Object.assign({ resultat: "seul" }, c));
+    }
+    d.version = VERSION;
+    return d;
   }
 
   function ecrire(raison) {
@@ -77,6 +103,7 @@ Circuit.Sauvegarde = (function () {
     radio.ecouter("arrivee", (d) => {
       recordDerniereCourse = donnees.meilleureCourse === null || d.temps < donnees.meilleureCourse;
       donnees.courses++;
+      donnees.victoires++;
       donnees.distanceTotale = Math.round(donnees.distanceTotale + lireDistance());
       if (recordDerniereCourse) {
         const ancien = donnees.meilleureCourse;
@@ -85,12 +112,29 @@ Circuit.Sauvegarde = (function () {
       }
       donnees.dernieresCourses.unshift({
         date: new Date().toLocaleDateString("fr-FR"),
+        resultat: "gagnée",
         temps: arrondir(d.temps),
         meilleurTour: arrondir(d.meilleurTour),
         sorties: d.sorties,
       });
       donnees.dernieresCourses = donnees.dernieresCourses.slice(0, 5);
-      ecrire("course finie");
+      ecrire("course gagnée");
+    });
+
+    radio.ecouter("perdu", (d) => {
+      recordDerniereCourse = false;
+      donnees.courses++;
+      donnees.defaites++;
+      donnees.distanceTotale = Math.round(donnees.distanceTotale + lireDistance());
+      donnees.dernieresCourses.unshift({
+        date: new Date().toLocaleDateString("fr-FR"),
+        resultat: "perdue",
+        temps: arrondir(d.temps),
+        tourAtteint: d.tourJoueur,
+        sorties: d.sorties,
+      });
+      donnees.dernieresCourses = donnees.dernieresCourses.slice(0, 5);
+      ecrire("course perdue");
     });
   }
 

@@ -43,6 +43,13 @@ Circuit.Piste = (function () {
     return { x: -DEMI - R * Math.sin(t), z: -R * Math.cos(t), dx: -Math.cos(t), dz: Math.sin(t) };
   }
 
+  // Un point à `s` mètres de la ligne, décalé sur le côté de `decalage` mètres
+  // (positif = vers l'extérieur du circuit, négatif = vers l'intérieur). Sert à faire rouler l'adversaire sur sa « voie ».
+  function pointDecale(s, decalage) {
+    const p = pointA(s);
+    return { x: p.x - p.dz * decalage, z: p.z + p.dx * decalage, dx: p.dx, dz: p.dz };
+  }
+
   // Où est le point (x, z) par rapport au circuit ?
   function reperer(x, z) {
     // Le point le plus proche sur le squelette (le segment de x = −180 à x = +180, en z = 0).
@@ -73,5 +80,5 @@ Circuit.Piste = (function () {
   const portes = [];
   for (let i = 0; i < Circuit.CONFIG.course.portes; i++) portes.push((i * longueurTour) / Circuit.CONFIG.course.portes);
 
-  return { longueurTour, pointA, reperer, portes };
+  return { longueurTour, pointA, pointDecale, reperer, portes };
 })();

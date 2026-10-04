@@ -21,9 +21,12 @@ Circuit.Voiture = (function () {
   const V = Circuit.CONFIG.voiture;
   const RAYON_ROUE = 0.38; // m, pour faire tourner les roues à la bonne vitesse
 
-  function creer(x, z, angle) {
+  // reglages (facultatif) : { vitesseMax, acceleration } pour une voiture différente (l'adversaire).
+  function creer(x, z, angle, reglages) {
     return {
       x, z, angle,
+      vitesseMax: (reglages && reglages.vitesseMax) || V.vitesseMax, // m/s sur la route
+      acceleration: (reglages && reglages.acceleration) || V.acceleration, // m/s²
       vitesse: 0, // m/s
       volant: 0, // de −1 (à fond à gauche) à +1 (à fond à droite), pour tourner les roues avant du dessin
       rotationRoues: 0, // radians : de combien les roues ont tourné depuis le départ
@@ -40,11 +43,11 @@ Circuit.Voiture = (function () {
     let v = voiture.vitesse;
     if (intentions.accelerer && !intentions.freiner) {
       voiture.pedale = "accélérateur";
-      v += (v < 0 ? V.freinage : V.acceleration) * dt;
+      v += (v < 0 ? V.freinage : voiture.acceleration) * dt;
     } else if (intentions.freiner && !intentions.accelerer) {
       voiture.pedale = "frein";
       // On freine… et une fois arrêté, on recule.
-      v -= (v > 0 ? V.freinage : V.acceleration * 0.6) * dt;
+      v -= (v > 0 ? V.freinage : voiture.acceleration * 0.6) * dt;
       v = Math.max(v, -V.vitesseMarcheArriere);
     } else {
       voiture.pedale = "aucune";
@@ -54,7 +57,7 @@ Circuit.Voiture = (function () {
     }
 
     // La vitesse maximale dépend du sol : l'herbe freine fort.
-    const max = sol === "herbe" ? V.vitesseMaxHerbe : V.vitesseMax;
+    const max = sol === "herbe" ? Math.min(V.vitesseMaxHerbe, voiture.vitesseMax) : voiture.vitesseMax;
     if (v > max) v = Math.max(max, v - (sol === "herbe" ? V.freinHerbe : V.freinage) * dt);
     voiture.vitesse = v;
 

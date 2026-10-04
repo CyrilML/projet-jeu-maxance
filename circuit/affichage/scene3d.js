@@ -32,6 +32,8 @@ Circuit.Scene3D = (function () {
     sapinClair: [0.2, 0.52, 0.24],
     carrosserie: [0.9, 0.15, 0.1],
     carrosserieFoncee: [0.65, 0.08, 0.06],
+    adversaire: [0.12, 0.38, 0.92], // étape 34 : la voiture adverse est bleue
+    adversaireFoncee: [0.07, 0.22, 0.6],
     vitre: [0.15, 0.22, 0.35],
     phare: [1, 0.9, 0.5],
     tribune: [0.55, 0.57, 0.62],
@@ -43,6 +45,8 @@ Circuit.Scene3D = (function () {
     xFil: [0.35, 0.95, 0.6],
     xFleche: [0.3, 1, 0.45],
     xEcart: [1, 0.6, 0.2],
+    xCarotte: [0.45, 0.75, 1], // le point que vise le pilote adverse
+    xCercles: [1, 1, 1], // les cercles de choc
   };
 
   const maillages = {};
@@ -171,13 +175,14 @@ Circuit.Scene3D = (function () {
 
   // ------------------------------------------------------------------ la voiture
   // Fabriquée « nez vers x+ », centrée en (0, 0, 0) : la scène la déplace et la tourne ensuite.
-  function construireCarrosserie() {
+  // Les deux voitures ont la même forme : seules les couleurs changent (rouge pour toi, bleu pour l'adversaire).
+  function construireCarrosserie(couleur, couleurFoncee) {
     const c = Circuit.Constructeur();
     const k = COULEURS;
-    c.boite(0, 0.55, 0, 4.2, 0.5, 1.9, k.carrosserie); // le bas de caisse
-    c.boite(1.6, 0.86, 0, 1, 0.14, 1.7, k.carrosserie); // le capot (un peu plus haut)
+    c.boite(0, 0.55, 0, 4.2, 0.5, 1.9, couleur); // le bas de caisse
+    c.boite(1.6, 0.86, 0, 1, 0.14, 1.7, couleur); // le capot (un peu plus haut)
     c.boite(-0.3, 1.06, 0, 2, 0.5, 1.62, k.vitre); // les vitres
-    c.boite(-0.3, 1.34, 0, 1.8, 0.08, 1.5, k.carrosserieFoncee); // le toit
+    c.boite(-0.3, 1.34, 0, 1.8, 0.08, 1.5, couleurFoncee); // le toit
     c.boite(-2.05, 1.2, 0, 0.35, 0.08, 1.9, k.noir); // l'aileron
     for (const z of [-0.7, 0.7]) {
       c.boite(-2.05, 0.95, z, 0.1, 0.45, 0.1, k.noir); // les pieds de l'aileron
@@ -259,6 +264,27 @@ Circuit.Scene3D = (function () {
     c.ligne([v.x, 0.3, v.z], [m.x, 0.3, m.z], COULEURS.xEcart);
     // La prochaine porte à passer, en vert.
     ajouterPorte(c, Piste.portes[monde.prochainePorte], COULEURS.xProchaine);
+
+    // Étape 34 : la « carotte » du pilote adverse (le point qu'il vise) et sa voie.
+    const adv = monde.adversaire;
+    if (adv.cible) {
+      c.ligne([adv.voiture.x, 1.2, adv.voiture.z], [adv.cible.x, 1.2, adv.cible.z], COULEURS.xCarotte);
+      c.ligne([adv.cible.x, 0, adv.cible.z], [adv.cible.x, 3, adv.cible.z], COULEURS.xCarotte);
+    }
+    // Les cercles de choc des deux voitures (voir moteur/chocs.js).
+    const r = C.chocs.rayon;
+    for (const voiture of [v, adv.voiture]) {
+      for (const centre of Circuit.Chocs.cercles(voiture, r)) {
+        for (let i = 0; i < 16; i++) {
+          const a1 = (i / 16) * Math.PI * 2, a2 = ((i + 1) / 16) * Math.PI * 2;
+          c.ligne(
+            [centre[0] + Math.cos(a1) * r, 0.3, centre[1] + Math.sin(a1) * r],
+            [centre[0] + Math.cos(a2) * r, 0.3, centre[1] + Math.sin(a2) * r],
+            monde.enContact ? COULEURS.rouge : COULEURS.xCercles
+          );
+        }
+      }
+    }
     return c.fin();
   }
 
@@ -267,10 +293,12 @@ Circuit.Scene3D = (function () {
     if (!Projecteur.initialiser(canvas)) return false;
     rapport = canvas.width / canvas.height;
     const decor = construireDecor();
-    const carrosserie = construireCarrosserie();
+    const carrosserie = construireCarrosserie(COULEURS.carrosserie, COULEURS.carrosserieFoncee);
+    const carrosserieAdverse = construireCarrosserie(COULEURS.adversaire, COULEURS.adversaireFoncee);
     const roue = construireRoue();
     maillages.decor = Projecteur.creerMaillage(decor);
     maillages.carrosserie = Projecteur.creerMaillage(carrosserie);
+    maillages.carrosserieAdverse = Projecteur.creerMaillage(carrosserieAdverse);
     maillages.roue = Projecteur.creerMaillage(roue);
     maillages.ombre = Projecteur.creerMaillage(construireOmbre());
     maillages.rayonsX = Projecteur.creerMaillage(construireRayonsX(), true);
@@ -333,30 +361,29 @@ Circuit.Scene3D = (function () {
     // Le décor ne bouge jamais : sa matrice « modèle » est l'identité.
     Projecteur.dessiner(maillages.decor, null);
 
-    // La voiture : on la tourne de son angle, puis on la déplace à sa place.
-    const v = monde.voiture;
-    const placeVoiture = M.multiplier(M.deplacement(v.x, 0, v.z), M.rotationY(-v.angle));
-    if (camera.mode !== "capot") {
-      Projecteur.dessiner(maillages.ombre, placeVoiture, { sansLumiere: true });
-      Projecteur.dessiner(maillages.carrosserie, placeVoiture);
-    }
-    const placesRoues = [];
-    for (const [rx, rz, avant] of [[1.35, -0.95, true], [1.35, 0.95, true], [-1.35, -0.95, false], [-1.35, 0.95, false]]) {
-      const braquage = avant ? -v.volant * C.voiture.angleRoues : 0;
-      const place = M.enchainer(placeVoiture, M.deplacement(rx, 0.38, rz), M.rotationY(braquage), M.rotationZ(-v.rotationRoues));
-      placesRoues.push(place);
-      if (camera.mode !== "capot") Projecteur.dessiner(maillages.roue, place);
-    }
+    // Les deux voitures. En vue « capot », on ne dessine pas la nôtre (on est dedans !).
+    if (camera.mode !== "capot") dessinerVoiture(monde.voiture, maillages.carrosserie, options.rayonsX);
+    dessinerVoiture(monde.adversaire.voiture, maillages.carrosserieAdverse, options.rayonsX);
 
     if (options.rayonsX) {
       Projecteur.dessiner(maillages.filDecor, null);
-      if (camera.mode !== "capot") {
-        Projecteur.dessiner(maillages.filCarrosserie, placeVoiture);
-        for (const place of placesRoues) Projecteur.dessiner(maillages.filRoue, place);
-      }
       Projecteur.dessiner(maillages.rayonsX, null, { parDessus: true });
       Projecteur.remplacerSommets(maillages.rayonsXVoiture, construireRayonsXVoiture(monde));
       Projecteur.dessiner(maillages.rayonsXVoiture, null, { parDessus: true });
+    }
+  }
+
+  // Une voiture : on la tourne de son angle, puis on la déplace à sa place. Ses 4 roues suivent.
+  function dessinerVoiture(v, carrosserie, rayonsX) {
+    const placeVoiture = M.multiplier(M.deplacement(v.x, 0, v.z), M.rotationY(-v.angle));
+    Projecteur.dessiner(maillages.ombre, placeVoiture, { sansLumiere: true });
+    Projecteur.dessiner(carrosserie, placeVoiture);
+    if (rayonsX) Projecteur.dessiner(maillages.filCarrosserie, placeVoiture);
+    for (const [rx, rz, avant] of [[1.35, -0.95, true], [1.35, 0.95, true], [-1.35, -0.95, false], [-1.35, 0.95, false]]) {
+      const braquage = avant ? -v.volant * C.voiture.angleRoues : 0;
+      const place = M.enchainer(placeVoiture, M.deplacement(rx, 0.38, rz), M.rotationY(braquage), M.rotationZ(-v.rotationRoues));
+      Projecteur.dessiner(maillages.roue, place);
+      if (rayonsX) Projecteur.dessiner(maillages.filRoue, place);
     }
   }
 

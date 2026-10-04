@@ -12,7 +12,10 @@ Circuit.SousLeCapot = (function () {
 
   // Le message du journal pour chaque événement de la radio.
   const MESSAGES = {
-    lecture: (d) => (d.trouve ? "📂 Base de données lue : records retrouvés" : "📂 Base de données vide : première visite sur cet ordinateur"),
+    lecture: (d) =>
+      d.trouve
+        ? "📂 Base de données lue : records retrouvés" + (d.converti ? " (ancienne version, convertie en version 2 : victoires et défaites ajoutées)" : "")
+        : "📂 Base de données vide : première visite sur cet ordinateur",
     decompte: (d) => "🚦 Feux rouges allumés : départ dans " + d.secondes + " s",
     feu: (d) => "🔴 Encore " + d.reste + " s…",
     depart: (d) => "🟢 Feu vert ! " + d.tours + " tours, le chrono tourne",
@@ -25,7 +28,15 @@ Circuit.SousLeCapot = (function () {
     "tour-termine": (d) => "✅ Tour n° " + d.numero + " fini en " + chrono(d.temps),
     "nouveau-record": (d) =>
       "🏆 Nouveau record " + (d.quoi === "tour" ? "du tour" : "de la course") + " : " + chrono(d.temps) + (d.ancien !== null ? " (avant : " + chrono(d.ancien) + ")" : " (le premier !)"),
-    arrivee: (d) => "🏁 ARRIVÉE en " + chrono(d.temps) + " · meilleur tour " + chrono(d.meilleurTour) + " · " + d.sorties + " sortie(s) de piste",
+    arrivee: (d) =>
+      "🏁 GAGNÉ ! Arrivée en " + chrono(d.temps) + ", " + d.avance.toLocaleString("fr-FR") + " m devant la voiture bleue · meilleur tour " + chrono(d.meilleurTour) + " · " + d.sorties + " sortie(s) de piste",
+    perdu: (d) =>
+      "😢 PERDU : la voiture bleue a fini ses tours en " + chrono(d.temps) + ". Tu étais au tour " + d.tourJoueur + ", il te restait " + d.retard.toLocaleString("fr-FR") + " m",
+    "tour-adversaire": (d) => "🔵 La voiture bleue a fini son tour n° " + d.numero + " en " + chrono(d.temps),
+    choc: (d) => "💥 Choc avec la voiture bleue ! Vitesse du choc : " + virgule(d.force, 1) + " m/s. Ta vitesse après : " + Math.round(d.vitesse * 3.6) + " km/h",
+    depassement: (d) => (d.position === 1 ? "🥇 Tu doubles la voiture bleue : tu es 1er" : "🥈 La voiture bleue te double : tu es 2e") + " (tour " + d.tour + ")",
+    "adversaire-change-de-voie": (d) =>
+      "🤖 Tu bouches le passage (" + Math.round(d.avance) + " m devant) : la voiture bleue passe sur la voie " + (d.voie > 0 ? "extérieure" : "intérieure"),
     "sortie-de-piste": (d) =>
       "🌱 Sortie de piste à " + Math.round(d.vitesse * 3.6) + " km/h, côté " + (d.ecart > 0 ? "extérieur" : "intérieur") + " : l'herbe limite la vitesse",
     "retour-sur-la-piste": () => "🛣️ Retour sur la route",
@@ -71,6 +82,7 @@ Circuit.SousLeCapot = (function () {
     const monde = lireMonde();
     const v = monde.voiture;
     const r = monde.reperage;
+    const adv = monde.adversaire;
     const mesures = lireMesures();
     const compteur = Circuit.Projecteur.compteur;
     const degres = Math.round((v.angle * 180) / Math.PI);
@@ -83,6 +95,8 @@ Circuit.SousLeCapot = (function () {
       ["chrono du tour", chrono(monde.chronoTour)],
       ["chrono de la course", chrono(monde.chronoCourse)],
       ["sorties de piste", monde.sortiesDePiste],
+      ["position", monde.position === 1 ? "🥇 1er" : "🥈 2e"],
+      ["chocs", monde.chocs + (monde.enContact ? " (💥 en contact)" : "")],
       ["La voiture"],
       ["x (gauche ↔ droite)", virgule(v.x, 1) + " m"],
       ["z (avant ↔ arrière)", virgule(v.z, 1) + " m"],
@@ -95,6 +109,13 @@ Circuit.SousLeCapot = (function () {
       ["sol sous la voiture", monde.sol === "herbe" ? "🌱 herbe" : monde.sol === "bordure" ? "🟥 bordure" : "🛣️ route"],
       ["écart au milieu", virgule(r.ecart, 1) + " m (route : ± " + virgule(Circuit.CONFIG.piste.largeur / 2, 1) + ")"],
       ["progression", Math.round(r.s) + " m sur " + Math.round(Circuit.Piste.longueurTour)],
+      ["La voiture bleue (le pilote)"],
+      ["tour", Math.min(adv.tour, Circuit.CONFIG.course.tours) + " / " + Circuit.CONFIG.course.tours],
+      ["x, z", virgule(adv.voiture.x, 1) + " ; " + virgule(adv.voiture.z, 1) + " m"],
+      ["vitesse", virgule(adv.voiture.vitesse, 1) + " m/s = " + Math.round(Math.abs(adv.voiture.vitesse) * 3.6) + " km/h"],
+      ["voie visée", (adv.voie > 0 ? "extérieure (+" : "intérieure (") + virgule(adv.voie, 1) + " m)"],
+      ["cible", Math.round((adv.difference * 180) / Math.PI) + "° → " + (Math.abs(adv.difference) <= 0.02 ? "tout droit" : adv.difference < 0 ? "tourne à gauche" : "tourne à droite")],
+      ["avance sur toi", Math.round(Circuit.Course.progression(adv) - Circuit.Course.progression(monde)) + " m"],
       ["Le dessin"],
       ["caméra", Circuit.Scene3D.camera.mode],
       ["triangles dessinés", compteur.triangles.toLocaleString("fr-FR")],

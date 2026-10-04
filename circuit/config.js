@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 2,
+  version: 3,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -42,6 +42,21 @@ Circuit.CONFIG = {
     freinHerbe: 30, // m/s² : l'herbe freine fort quand on y entre trop vite
     vitesseVirage: 1.9, // radians par seconde : la vitesse à laquelle la voiture tourne
     angleRoues: 0.45, // radians : jusqu'où les roues avant tournent (pour le dessin)
+  },
+
+  // Étape 34 : la voiture adverse, conduite par l'ordinateur.
+  adversaire: {
+    vitesseMax: 38.9, // m/s = 140 km/h (✍️ choix de Maxance : « moyen ») ; toi, tu vas jusqu'à 150 km/h
+    acceleration: 12, // m/s² : elle démarre un peu moins vite que toi
+    voie: 3.5, // m : elle roule à 3,5 m du milieu de la route (côté intérieur au départ)
+    regardDevant: 18, // m : le pilote vise un point 18 m devant lui sur sa voie
+    distanceDepassement: 22, // m : si tu es devant elle, sur sa voie, à moins de 22 m, elle change de voie
+  },
+
+  // Étape 34 : les chocs entre les voitures. Chaque voiture est vue comme 2 cercles (l'avant et l'arrière).
+  chocs: {
+    rayon: 1.05, // m : rayon de chaque cercle (la voiture fait 2 m de large)
+    rebond: 0.3, // 0 = les voitures se collent, 1 = elles rebondissent comme des balles
   },
 
   course: {
