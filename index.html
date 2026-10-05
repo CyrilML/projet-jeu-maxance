@@ -168,10 +168,12 @@
       <a href="#etape43">Étape 43</a>
       <a href="#etape44">Étape 44</a>
       <a href="#etape45">Étape 45</a>
+      <a href="#etape46">Étape 46 · village</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
       <a class="jouer" href="circuit/index.html">🏎️ Circuit 3D</a>
+      <a class="jouer" href="village/index.html">🏘️ Village</a>
     </div>
   </nav>
 
@@ -3048,6 +3050,104 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Tu as 4 étoiles et tu te caches. Au bout de combien de temps la police est-elle semée ?</summary><p>6 s pour que ça clignote, puis 4 × 5 s : 6 + 20 = 26 secondes.</p></details>
     </section>
 
+    <section id="etape46">
+      <h2>🏘️ Étape 46 : un nouveau jeu, le village (la carte et la caméra) <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Un troisième jeu : un jeu de gestion façon The Settlers, sans combat. On fait grandir son village, on gère les ressources et les habitants, on passe d'un âge à l'autre. Première étape : la carte inventée au hasard, vue de biais, et la caméra. <a href="village/index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/46-le-village.md</code>.</p>
+          <ul>
+            <li>✍️ Vue de biais (isométrique), style dessin animé.</li>
+            <li>✍️ Des routes et des porteurs (étapes suivantes).</li>
+            <li>✍️ 5 âges : Pierre → Bronze → Fer → Moyen Âge → Renaissance.</li>
+            <li>✍️ La faim et les saisons : on peut perdre des habitants.</li>
+            <li>✍️ Une nouvelle carte au hasard à chaque partie.</li>
+            <li>✍️ Carrières de pierre, mines de charbon, de fer et d'or, et leurs industries.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ La carte en losanges : forêts, rivières, lacs, rochers, montagnes.</li>
+            <li>☐ Les filons au pied des montagnes : ⚫ charbon, 🟠 fer, 🟡 or (l'or scintille).</li>
+            <li>☐ <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd>, <kbd>Z</kbd> <kbd>Q</kbd> <kbd>S</kbd> <kbd>D</kbd> ou la souris : la carte glisse.</li>
+            <li>☐ La molette zoome là où est la souris. <kbd>H</kbd> : retour au village.</li>
+            <li>☐ Les arbres bougent dans le vent, l'eau ondule, le feu fume.</li>
+            <li>☐ <kbd>G</kbd> : nouvelle carte. Recharge la page : c'est toujours la même.</li>
+            <li>☐ Un clic sur une case : sa colonne, sa ligne et son terrain sous le capot.</li>
+            <li>Vérifie « version 1 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔷 Comment on dessine « de biais »</h3>
+      <p>Dans la mémoire, la carte est une grille toute simple de 64 × 64 cases, comme une bataille navale : chaque case a une <strong>colonne</strong> et une <strong>ligne</strong>. Pour la voir de biais, on fait 2 choses : on tourne la grille d'un huitième de tour (45°), puis on l'écrase 2 fois en hauteur. Chaque carré devient un <strong>losange</strong> de 64 px de large et 32 px de haut.</p>
+      <svg class="schema" viewBox="0 0 660 230" role="img" aria-label="Une grille de carrés devient une grille de losanges">
+        <g transform="translate(40 40)" stroke="#7bcf4f" stroke-width="2" fill="rgba(123,207,79,.25)">
+          <rect x="0" y="0" width="40" height="40"/><rect x="40" y="0" width="40" height="40"/><rect x="80" y="0" width="40" height="40"/>
+          <rect x="0" y="40" width="40" height="40"/><rect x="40" y="40" width="40" height="40" fill="rgba(255,226,122,.6)"/><rect x="80" y="40" width="40" height="40"/>
+          <rect x="0" y="80" width="40" height="40"/><rect x="40" y="80" width="40" height="40"/><rect x="80" y="80" width="40" height="40"/>
+        </g>
+        <text x="100" y="218" fill="#9aa5d6" font-size="14" text-anchor="middle">1. la grille (en mémoire)</text>
+        <text x="200" y="110" fill="#ffe27a" font-size="26">→</text>
+        <g transform="translate(330 100) rotate(45)" stroke="#7bcf4f" stroke-width="2" fill="rgba(123,207,79,.25)">
+          <rect x="-60" y="-60" width="40" height="40"/><rect x="-20" y="-60" width="40" height="40"/><rect x="20" y="-60" width="40" height="40"/>
+          <rect x="-60" y="-20" width="40" height="40"/><rect x="-20" y="-20" width="40" height="40" fill="rgba(255,226,122,.6)"/><rect x="20" y="-20" width="40" height="40"/>
+          <rect x="-60" y="20" width="40" height="40"/><rect x="-20" y="20" width="40" height="40"/><rect x="20" y="20" width="40" height="40"/>
+        </g>
+        <text x="330" y="218" fill="#9aa5d6" font-size="14" text-anchor="middle">2. on tourne de 45°</text>
+        <text x="440" y="110" fill="#ffe27a" font-size="26">→</text>
+        <g transform="translate(560 100) scale(1 .5) rotate(45)" stroke="#7bcf4f" stroke-width="2" fill="rgba(123,207,79,.25)">
+          <rect x="-60" y="-60" width="40" height="40"/><rect x="-20" y="-60" width="40" height="40"/><rect x="20" y="-60" width="40" height="40"/>
+          <rect x="-60" y="-20" width="40" height="40"/><rect x="-20" y="-20" width="40" height="40" fill="rgba(255,226,122,.6)"/><rect x="20" y="-20" width="40" height="40"/>
+          <rect x="-60" y="20" width="40" height="40"/><rect x="-20" y="20" width="40" height="40"/><rect x="20" y="20" width="40" height="40"/>
+        </g>
+        <text x="560" y="218" fill="#9aa5d6" font-size="14" text-anchor="middle">3. on écrase en hauteur</text>
+      </svg>
+      <p>Le calcul est dans <code>village/moteur/iso.js</code>. Pour la case (colonne, ligne) :</p>
+      <pre style="white-space: pre-wrap">x à l'écran = (colonne − ligne) × 32
+y à l'écran = (colonne + ligne) × 16</pre>
+      <p>Avancer d'une colonne : on va vers la droite et vers le bas. Avancer d'une ligne : vers la gauche et vers le bas.</p>
+
+      <h3>🖱️ Sur quelle case est la souris ?</h3>
+      <p>C'est le même calcul, <strong>à l'envers</strong>. D'abord, on enlève la caméra et le zoom pour savoir où est la souris dans le monde (X, Y). Puis :</p>
+      <pre style="white-space: pre-wrap">colonne = (X ÷ 32 + Y ÷ 16) ÷ 2
+ligne   = (Y ÷ 16 − X ÷ 32) ÷ 2</pre>
+      <p>On obtient des nombres à virgule, par exemple 31,11 : on garde la partie avant la virgule, 31. Appuie sur <kbd>X</kbd> : le calcul s'affiche en direct en haut à droite !</p>
+
+      <h3>🎲 Une carte inventée avec une graine</h3>
+      <p>Un ordinateur ne sait pas vraiment tirer au hasard : il fait un calcul qui donne des nombres qui ont l'<em>air</em> mélangés. On part d'un numéro, la <strong>graine</strong>. Même graine = mêmes nombres = <strong>même carte</strong>. C'est pour ça que la base de données garde un seul nombre, la graine, et pas les 4 096 cases !</p>
+      <p>Pour que la carte ressemble à un vrai paysage, on utilise un <strong>bruit</strong> : un hasard tout doux, où deux cases voisines ont presque la même valeur. Chaque case reçoit une <strong>altitude</strong> et une <strong>humidité</strong> :</p>
+      <ul>
+        <li>les 30 % de cases les plus basses deviennent de l'<strong>eau</strong>, puis un peu de <strong>sable</strong> ;</li>
+        <li>les 5 % les plus hautes deviennent des <strong>montagnes</strong>, avec des filons de charbon, de fer ou d'or ;</li>
+        <li>juste en dessous, des <strong>rochers</strong> (pour la future carrière de pierre) ;</li>
+        <li>au milieu : <strong>forêt</strong> si c'est humide, <strong>prairie fleurie</strong> si c'est sec, sinon de l'herbe.</li>
+      </ul>
+      <p>Ensuite, 2 <strong>rivières</strong> partent des montagnes. À chaque pas, elles vont vers la case voisine la plus basse, comme une vraie goutte d'eau qui descend la pente.</p>
+
+      <h3>🎨 Le peintre dessine du fond vers l'avant</h3>
+      <p>Le peintre (<code>village/affichage/peintre.js</code>) dessine d'abord tout le sol, puis les objets (arbres, montagnes, tente) <strong>du fond vers l'avant</strong>. Ce qui est peint en dernier passe par-dessus. En vue de biais, une case est « plus devant » quand <strong>colonne + ligne</strong> est plus grand. Si on peignait dans le désordre, un arbre du fond passerait devant une montagne !</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Mets la souris sur une case et regarde « dans la grille » sous le capot. Bouge d'une case vers la droite : qu'est-ce qui change, la colonne ou la ligne ?</li>
+        <li>Aux rayons X, trouve les 2 flèches « colonne → » et « ligne → », et la case (0, 0).</li>
+        <li>Aux rayons X, suis une rivière en bleu clair depuis sa « source ». Où finit-elle ?</li>
+        <li>Dézoome au maximum : combien de « cases peintes » ? Et en zoomant à fond ? Pourquoi c'est mieux de ne pas tout peindre ?</li>
+        <li>Note la graine de ta carte, appuie sur <kbd>G</kbd>, puis efface la base de données et recharge : est-ce la même carte ?</li>
+        <li>Dans <code>village/config.js</code>, trouve <code>montagne: 0.95</code>. Que se passerait-il avec 0.8 ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de nombres faut-il ranger dans la base de données pour retrouver toute la carte ?</summary><p>Un seul : la graine. Avec la même graine, l'inventeur refait exactement la même carte.</p></details>
+      <details class="question"><summary>Où est dessinée la case (2, 2) ? Et la case (3, 1) ?</summary><p>(2, 2) : x = (2 − 2) × 32 = 0 et y = (2 + 2) × 16 = 64. (3, 1) : x = (3 − 1) × 32 = 64 et y = (3 + 1) × 16 = 64. Elles sont à la même hauteur, côte à côte !</p></details>
+      <details class="question"><summary>Un arbre est sur la case (10, 12), une montagne sur la case (11, 10). Lequel est peint en premier ?</summary><p>10 + 12 = 22 et 11 + 10 = 21 : la montagne est plus au fond, elle est peinte en premier. L'arbre passe devant.</p></details>
+      <details class="question"><summary>Pourquoi les montagnes ne sont-elles pas réparties au hasard, case par case ?</summary><p>Parce que l'altitude vient d'un bruit doux : deux cases voisines ont presque la même altitude. Les montagnes forment donc des massifs, comme dans la vraie vie.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -3335,6 +3435,47 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
+        </div>
+      </div>
+
+      <h3>🏘️ La route du village</h3>
+      <p class="petit">Le jeu de gestion, étape par étape. Maxance peut changer l'ordre ou ajouter des étapes.</p>
+      <div class="route">
+        <div class="carte fait">
+          <div class="num">46</div>
+          <h4>La carte et la caméra <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Une carte inventée au hasard, vue de biais : forêts, rivières, rochers, montagnes et filons. On glisse et on zoome.</p>
+          <p class="apprend"><b>Tu apprends :</b> la vue isométrique, une graine et le bruit, trouver la case sous la souris, peindre du fond vers l'avant. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">47</div>
+          <h4>La première chaîne : bûcheron, scierie, entrepôt <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <p>Poser des bâtiments sur la carte. Le bûcheron coupe les arbres, la scierie transforme les troncs en planches.</p>
+          <p class="apprend"><b>Tu apprends :</b> les recettes (ce qui entre, ce qui sort, en combien de temps), les stocks, un bâtiment qui attend. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">48</div>
+          <h4>Les habitants et les routes</h4>
+          <p>Construire des routes ; des porteurs animés transportent les troncs et les planches d'un bâtiment à l'autre.</p>
+          <p class="apprend"><b>Tu apprends :</b> trouver le plus court chemin (A*), une file d'attente de livraisons, des petits bonshommes qui marchent. <b>Durée :</b> 3 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">49</div>
+          <h4>Nourriture, maisons et saisons</h4>
+          <p>Champs, moulin, boulangerie, pêcheur. Les habitants mangent. En hiver, rien ne pousse : il faut des réserves. Trop longtemps affamés, ils partent.</p>
+          <p class="apprend"><b>Tu apprends :</b> une horloge des saisons, une jauge de faim, l'équilibre entre ce qu'on produit et ce qu'on consomme. <b>Durée :</b> 3 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">50</div>
+          <h4>La recherche et l'âge du bronze</h4>
+          <p>La hutte du sage fait des recherches ; un arbre des découvertes débloque de nouveaux bâtiments et le passage à l'âge suivant.</p>
+          <p class="apprend"><b>Tu apprends :</b> un arbre de dépendances (« pour débloquer B, il faut A »), des règles écrites comme des données. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">51</div>
+          <h4>Pierre, charbon, fer et or</h4>
+          <p>Carrière de pierre, mines de charbon, de fer et d'or, fonderie, forge, orfèvre : les industries, jusqu'à la Renaissance.</p>
+          <p class="apprend"><b>Tu apprends :</b> des chaînes longues, les goulots d'étranglement (le maillon le plus lent décide de tout), des statistiques de production. <b>Durée :</b> plusieurs séances.</p>
         </div>
       </div>
     </section>
@@ -3751,6 +3892,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-45" data-cle="appris-45" placeholder="Ex. : J'ai appris ce qu'est une recherche gourmande…"></textarea>
         <label for="idees-45"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-45" data-cle="idees-45" placeholder="Ex. : Des barrages de police sur les ponts…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 46 · le village : la carte et la caméra <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> un troisième jeu (<code>village/</code>), avec la même architecture que les autres : le hasard à graine et le bruit (<code>moteur/hasard.js</code>), la vue de biais (<code>moteur/iso.js</code>), l'inventeur de cartes (<code>logique/carte.js</code>), la caméra et la souris (<code>logique/monde.js</code>), le peintre en style dessin animé avec la mini-carte (<code>affichage/peintre.js</code>), les rayons X, la base de données en version 1.</p>
+        <label for="appris-46"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-46" data-cle="appris-46" placeholder="Ex. : J'ai appris qu'avec une graine, on retrouve toujours la même carte…"></textarea>
+        <label for="idees-46"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-46" data-cle="idees-46" placeholder="Ex. : Des animaux dans la forêt, que le chasseur pourra chasser…"></textarea>
       </div>
     </section>
   </main>

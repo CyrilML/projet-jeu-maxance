@@ -20,6 +20,11 @@ pas de serveur, pas d'installation.
   ↑ accélérer, ↓ freiner, ← → tourner, C caméra, X rayons X. Même architecture que le premier jeu,
   avec un petit moteur 3D fait maison (`circuit/moteur/projecteur.js`), sans aucune dépendance.
 
+- **`village/index.html`** : le troisième jeu (à partir de l'étape 46), un jeu de gestion façon The Settlers, sans combat,
+  en vue de biais et en style dessin animé. Pour l'instant : une carte inventée au hasard (forêts, rivières, rochers,
+  montagnes avec des filons de charbon, de fer et d'or), qu'on explore avec les flèches, la souris et la molette.
+  G = nouvelle carte, H = retour au village, X = rayons X.
+
 Dans le jeu : ← → (ou Q D) pour bouger, Espace / ↑ / Z pour sauter.
 Outils : `X` rayons X, `Échap` pause, `N` avancer d'un pas, `L` ralenti. `P` (en sautant) : poser un bloc. `T` : épée, `H` : potion, `F` : pioche, `R` : réparer, `K` : cuire, `M` : manger.
 
@@ -30,6 +35,7 @@ Outils : `X` rayons X, `Échap` pause, `N` avancer d'un pas, `L` ralenti. `P` (e
 ├── CLAUDE.md           les consignes pour Claude (rôles, architecture, façon de travailler)
 ├── demandes/           les demandes de Maxance, une par étape
 ├── circuit/            le jeu de course en 3D (mêmes familles : moteur, logique, donnees, affichage)
+├── village/            le jeu de gestion du village (mêmes familles)
 └── jeu/
     ├── index.html      la page du jeu
     ├── config.js       tous les réglages chiffrés

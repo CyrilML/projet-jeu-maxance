@@ -39,6 +39,10 @@ est en ligne environ une minute après. Ne pousse sur `main` que du code testé.
 - `affichage/` : rendu et panneau « sous le capot ». Lit le monde, ne le modifie jamais.
 - `main.js` : branche les pièces et fait tourner la boucle à pas fixe (1/120 s).
 
+Les autres jeux suivent les mêmes familles et les mêmes règles, chacun dans son dossier avec son propre
+`config.js` et son propre numéro de version : `circuit/` (le jeu de course 3D, objet global `Circuit`) et
+`village/` (le jeu de gestion, depuis l'étape 46, objet global `Village`).
+
 Règles :
 - Pas d'étape de compilation, pas de dépendances : de simples fichiers `<script>` chargés dans
   l'ordre, pour que le jeu s'ouvre d'un double-clic. Chaque module s'attache à l'objet global `Jeu`.

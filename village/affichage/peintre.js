@@ -1,0 +1,568 @@
+// 🎨 LE PEINTRE : il dessine le village, 60 fois par seconde
+//
+// Le peintre LIT le monde (la carte, la caméra, l'horloge) et le dessine. Il ne change jamais rien.
+//
+// Comment il peint, comme un vrai peintre :
+//   1. le fond : la mer tout autour de l'île ;
+//   2. le SOL, case par case : un losange de couleur (herbe, sable, eau…), l'écume sur les côtes,
+//      les fleurs et les touffes d'herbe ;
+//   3. les OBJETS (arbres, rochers, montagnes, tente…), du FOND vers l'AVANT : ce qui est dessiné
+//      en dernier passe par-dessus. Un arbre devant une montagne doit être peint après elle !
+//      En vue de biais, « devant » veut dire « colonne + ligne plus grand ».
+//   4. les nuages et leur ombre ;
+//   5. par-dessus tout, à plat sur l'écran : les panneaux, la mini-carte, et les rayons X.
+//
+// Style dessin animé : couleurs vives, contours foncés et épais, petites ombres rondes.
+
+window.Village = window.Village || {};
+
+Village.Peintre = (function () {
+  const C = Village.CONFIG, K = Village.Carte, Iso = Village.Iso;
+  const T = K.TERRAIN, O = K.OBJET, F = K.FILON;
+  const L = C.carte.largeurCase, Hc = C.carte.hauteurCase;
+  const W = C.ecran.largeur, He = C.ecran.hauteur;
+  const TOUR = Math.PI * 2;
+
+  // Ce que le peintre a fait à la dernière image (lu par « sous le capot »).
+  const stats = { casesDessinees: 0, objetsDessines: 0, ms: 0 };
+
+  let ctx = null;
+  let cache = null; // ce qui est préparé une seule fois par carte : les couleurs et la mini-carte
+
+  // Les couleurs des terrains (rouge, vert, bleu), dans l'ordre des numéros de Village.Carte.TERRAIN.
+  const COULEURS = [
+    [47, 127, 209], // eau profonde
+    [73, 166, 234], // eau
+    [243, 216, 139], // sable
+    [123, 207, 79], // herbe
+    [154, 219, 92], // prairie fleurie
+    [92, 170, 60], // forêt
+    [186, 177, 146], // rochers
+    [158, 141, 118], // montagne
+  ];
+  // Les « familles » de terrain : on trace un trait foncé entre deux familles différentes (effet dessin animé).
+  const FAMILLE = [0, 0, 1, 2, 2, 2, 3, 4];
+  const FLEURS = ["#ff6fa8", "#fff36b", "#ffffff", "#c48bff", "#ff9a3c"];
+  const FILONS = { 1: ["#2b2b30", "#6a6a75"], 2: ["#c4622f", "#f0a070"], 3: ["#ffcf2e", "#fff6b0"] };
+
+  function initialiser(toile) {
+    ctx = toile.getContext("2d");
+  }
+
+  const rgb = (c, f) => "rgb(" + Math.round(Math.min(255, c[0] * f)) + "," + Math.round(Math.min(255, c[1] * f)) + "," + Math.round(Math.min(255, c[2] * f)) + ")";
+
+  // Préparé UNE fois par carte : chaque case a une couleur un tout petit peu différente
+  // (sinon l'herbe ressemble à du plastique), et la mini-carte est dessinée d'avance.
+  function preparer(carte) {
+    if (cache && cache.carte === carte) return;
+    const n = carte.terrain.length;
+    const couleurs = new Array(n), variante = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const c = i % carte.colonnes, l = Math.floor(i / carte.colonnes);
+      const v = Village.Hasard.pourCase(carte.graine, c, l);
+      variante[i] = v;
+      const t = carte.terrain[i];
+      let f = 0.95 + v * 0.1;
+      if (t >= T.herbe && t <= T.foret) f -= (carte.altitude[i] - 0.45) * 0.25; // plus haut = un peu plus foncé
+      couleurs[i] = rgb(COULEURS[t], f);
+    }
+
+    // La mini-carte : chaque case = 2 × 1 pixels, rangés en losange comme la grande carte.
+    const mini = document.createElement("canvas");
+    mini.width = carte.colonnes + carte.lignes;
+    mini.height = Math.ceil((carte.colonnes + carte.lignes) / 2) + 1;
+    const m = mini.getContext("2d");
+    for (let l = 0; l < carte.lignes; l++) {
+      for (let c = 0; c < carte.colonnes; c++) {
+        const i = l * carte.colonnes + c, o = carte.objet[i];
+        m.fillStyle = o === O.arbre || o === O.sapin ? "#3d8a2e" : o === O.montagne ? "#7a6a58" : o === O.rocher ? "#9b9480" : couleurs[i];
+        if (carte.filon[i]) m.fillStyle = FILONS[carte.filon[i]][0];
+        if (o === O.feuDeCamp || o === O.tente) m.fillStyle = "#ff4b3e";
+        m.fillRect(c - l + carte.lignes - 1, (c + l) / 2, 2, 1);
+      }
+    }
+    cache = { carte, couleurs, variante, mini };
+  }
+
+  // Le milieu de la case (c, l) en px du monde.
+  const milieu = (c, l) => ({ x: (c - l) * (L / 2), y: (c + l + 1) * (Hc / 2) });
+
+  function losange(x, y, marge) {
+    const a = L / 2 + marge, b = Hc / 2 + marge / 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y - b); ctx.lineTo(x + a, y); ctx.lineTo(x, y + b); ctx.lineTo(x - a, y);
+    ctx.closePath();
+  }
+
+  // ---------------------------------------------------------------- l'image complète
+  function dessiner(monde, options) {
+    const debut = performance.now();
+    const carte = monde.carte, cam = monde.camera, z = cam.zoom, t = monde.temps;
+    preparer(carte);
+
+    // 1. La mer tout autour
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = rgb(COULEURS[0], 1);
+    ctx.fillRect(0, 0, W, He);
+
+    // La caméra : on décale et on agrandit tout le dessin d'un coup.
+    ctx.setTransform(z, 0, 0, z, W / 2 - cam.x * z, He / 2 - cam.y * z);
+
+    // Quelles cases sont visibles ? On retourne les 4 coins de l'écran en colonnes et lignes.
+    const coins = [[0, 0], [W, 0], [0, He], [W, He]].map(([x, y]) => {
+      const m = Village.Monde.ecranVersMonde(cam, x, y);
+      return Iso.versGrille(m.x, m.y, L, Hc);
+    });
+    const borne = (v, max) => Math.max(0, Math.min(max - 1, v));
+    const cMin = borne(Math.floor(Math.min(...coins.map((p) => p.colonne))) - 1, carte.colonnes);
+    const cMax = borne(Math.ceil(Math.max(...coins.map((p) => p.colonne))) + 3, carte.colonnes);
+    const lMin = borne(Math.floor(Math.min(...coins.map((p) => p.ligne))) - 1, carte.lignes);
+    const lMax = borne(Math.ceil(Math.max(...coins.map((p) => p.ligne))) + 3, carte.lignes);
+    // Le rectangle visible, en px du monde (pour sauter les cases hors de l'écran).
+    const vue = { x0: cam.x - W / 2 / z - L, x1: cam.x + W / 2 / z + L, y0: cam.y - He / 2 / z - Hc, y1: cam.y + He / 2 / z + 110 };
+
+    stats.casesDessinees = 0;
+    stats.objetsDessines = 0;
+
+    // 2. Le sol
+    for (let l = lMin; l <= lMax; l++) {
+      for (let c = cMin; c <= cMax; c++) {
+        const p = milieu(c, l);
+        if (p.x < vue.x0 || p.x > vue.x1 || p.y < vue.y0 || p.y > vue.y1 - 90) continue;
+        dessinerSol(carte, c, l, p.x, p.y, t, z);
+        stats.casesDessinees++;
+      }
+    }
+
+    // 3. Les objets, du fond vers l'avant : diagonale par diagonale (colonne + ligne = d).
+    for (let d = cMin + lMin; d <= cMax + lMax; d++) {
+      for (let c = Math.max(cMin, d - lMax); c <= Math.min(cMax, d - lMin); c++) {
+        const l = d - c, i = l * carte.colonnes + c, o = carte.objet[i];
+        if (!o) continue;
+        const p = milieu(c, l);
+        if (p.x < vue.x0 || p.x > vue.x1 || p.y < vue.y0 || p.y > vue.y1) continue;
+        dessinerObjet(o, p.x, p.y, cache.variante[i], t, carte.filon[i], z);
+        stats.objetsDessines++;
+      }
+    }
+
+    // La case sous la souris, et la case choisie
+    if (monde.survol) {
+      const p = milieu(monde.survol.colonne, monde.survol.ligne);
+      losange(p.x, p.y, 0);
+      ctx.lineWidth = 2.5 / z; ctx.strokeStyle = "rgba(255, 240, 120, .95)"; ctx.stroke();
+    }
+    if (monde.choisie) {
+      const p = milieu(monde.choisie.colonne, monde.choisie.ligne);
+      losange(p.x, p.y, 0);
+      ctx.lineWidth = 3 / z; ctx.strokeStyle = "rgba(255,255,255," + (0.6 + 0.4 * Math.sin(t * 6)) + ")"; ctx.stroke();
+    }
+
+    // 4. Les nuages
+    dessinerNuages(carte, t, z);
+
+    if (options.rayonsX) Village.RayonsX.dessinerDansLeMonde(ctx, monde, { cMin, cMax, lMin, lMax });
+
+    // 5. Les panneaux, à plat sur l'écran
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    dessinerPanneaux(monde, options);
+    if (options.rayonsX) Village.RayonsX.dessinerSurLEcran(ctx, monde);
+
+    stats.ms = performance.now() - debut;
+  }
+
+  // ---------------------------------------------------------------- le sol
+  function dessinerSol(carte, c, l, x, y, t, z) {
+    const i = l * carte.colonnes + c, ter = carte.terrain[i], v = cache.variante[i];
+    losange(x, y, 0.7);
+    ctx.fillStyle = cache.couleurs[i];
+    ctx.fill();
+
+    const voisin = (dc, dl) => {
+      const nc = c + dc, nl = l + dl;
+      if (nc < 0 || nl < 0 || nc >= carte.colonnes || nl >= carte.lignes) return T.eauProfonde;
+      return carte.terrain[nl * carte.colonnes + nc];
+    };
+    // Les 4 bords du losange, et la case voisine de l'autre côté de chaque bord.
+    const a = L / 2, b = Hc / 2;
+    const bords = [
+      { dc: 0, dl: -1, x1: x, y1: y - b, x2: x + a, y2: y }, // haut-droite
+      { dc: 1, dl: 0, x1: x + a, y1: y, x2: x, y2: y + b }, // bas-droite
+      { dc: 0, dl: 1, x1: x, y1: y + b, x2: x - a, y2: y }, // bas-gauche
+      { dc: -1, dl: 0, x1: x - a, y1: y, x2: x, y2: y - b }, // haut-gauche
+    ];
+
+    if (ter <= T.eau) {
+      // L'écume : un trait blanc qui « respire » là où l'eau touche la terre.
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      for (const e of bords) {
+        if (voisin(e.dc, e.dl) <= T.eau) continue;
+        ctx.strokeStyle = "rgba(255,255,255," + (0.55 + 0.3 * Math.sin(t * C.animation.vagues * 2 + c * 0.9 + l * 0.7)) + ")";
+        // Le trait est un peu rentré dans l'eau.
+        const rx = (x - (e.x1 + e.x2) / 2) * 0.12, ry = (y - (e.y1 + e.y2) / 2) * 0.12;
+        ctx.beginPath(); ctx.moveTo(e.x1 + rx, e.y1 + ry); ctx.lineTo(e.x2 + rx, e.y2 + ry); ctx.stroke();
+      }
+      // Des vaguelettes qui glissent sur certaines cases.
+      if (v < 0.3 && z > 0.45) {
+        const dx = Math.sin(t * C.animation.vagues + v * 40) * 6;
+        ctx.strokeStyle = "rgba(255,255,255,.55)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x - 10 + dx, y); ctx.quadraticCurveTo(x - 5 + dx, y - 4, x + dx, y); ctx.quadraticCurveTo(x + 5 + dx, y + 4, x + 10 + dx, y);
+        ctx.stroke();
+      }
+      return;
+    }
+
+    // Un trait foncé entre deux familles de terrain (herbe / sable / rochers / montagne).
+    for (const e of bords) {
+      const tv = voisin(e.dc, e.dl);
+      if (tv <= T.eau || FAMILLE[tv] === FAMILLE[ter]) continue;
+      if (FAMILLE[tv] < FAMILLE[ter]) continue; // un seul des deux voisins trace le trait
+      ctx.strokeStyle = "rgba(60, 50, 30, .28)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(e.x1, e.y1); ctx.lineTo(e.x2, e.y2); ctx.stroke();
+    }
+
+    if (z < 0.55) return; // de loin, on ne voit pas les petits détails : on gagne du temps
+    if (carte.objet[i] === O.fleurs) {
+      for (let k = 0; k < 5; k++) {
+        const r1 = Village.Hasard.pourCase(carte.graine + k, c, l), r2 = Village.Hasard.pourCase(carte.graine + 50 + k, c, l);
+        const fx = x + (r1 - 0.5) * L * 0.55, fy = y + (r2 - 0.5) * Hc * 0.55;
+        ctx.fillStyle = "#3e8a2a";
+        ctx.fillRect(fx - 0.5, fy, 1, 3);
+        ctx.fillStyle = FLEURS[(k + Math.floor(v * 10)) % FLEURS.length];
+        ctx.beginPath(); ctx.arc(fx, fy, 2.2, 0, TOUR); ctx.fill();
+      }
+    } else if ((ter === T.herbe || ter === T.foret) && v > 0.55) {
+      // Des touffes d'herbe en « v », qui bougent un peu avec le vent.
+      const vent = Math.sin(t * C.animation.vent * 2 + v * 30) * 1.5;
+      ctx.strokeStyle = "rgba(40, 110, 30, .55)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      for (let k = 0; k < 2; k++) {
+        const gx = x + (Village.Hasard.pourCase(carte.graine + 9 + k, c, l) - 0.5) * L * 0.5, gy = y + (k - 0.5) * 6;
+        ctx.moveTo(gx - 3, gy - 4); ctx.lineTo(gx, gy); ctx.lineTo(gx + 3 + vent, gy - 5);
+      }
+      ctx.stroke();
+    } else if (ter === T.sable && v > 0.8) {
+      ctx.fillStyle = "rgba(160, 120, 60, .35)";
+      ronds([[x - 6, y + 2, 1.5], [x + 7, y - 3, 1.2]]);
+    }
+  }
+
+  // ---------------------------------------------------------------- les objets
+  // Plusieurs ronds dans un seul dessin. Le moveTo évite qu'un trait relie un rond au suivant.
+  function ronds(liste) {
+    ctx.beginPath();
+    for (const [x, y, r] of liste) { ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, TOUR); }
+    ctx.fill();
+  }
+
+  function ombre(x, y, rx, ry) {
+    ctx.fillStyle = "rgba(20, 40, 10, .22)";
+    ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, TOUR); ctx.fill();
+  }
+
+  // Le balancement dans le vent : chaque arbre a son propre décalage (sinon ils bougeraient tous ensemble).
+  const balancement = (t, v) => Math.sin(t * C.animation.vent * 2 + v * 50) * C.animation.forceDuVent;
+
+  function dessinerObjet(o, x, y, v, t, filon, z) {
+    switch (o) {
+      case O.arbre: return arbre(x, y + 2, v, t);
+      case O.sapin: return sapin(x, y + 3, v, t);
+      case O.rocher: return rochers(x, y, v);
+      case O.montagne: return montagne(x, y, v, t, filon);
+      case O.buisson: return buisson(x, y, v, t);
+      case O.feuDeCamp: return feuDeCamp(x, y, t);
+      case O.tente: return tente(x, y, t);
+    }
+  }
+
+  function arbre(x, y, v, t) {
+    const e = 0.85 + v * 0.35; // la taille de cet arbre
+    ombre(x + 5, y, 17 * e, 7 * e);
+    ctx.lineJoin = "round";
+    // Le tronc
+    ctx.fillStyle = "#8a5a2b"; ctx.strokeStyle = "#3b2614"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.rect(x - 3 * e, y - 16 * e, 6 * e, 16 * e); ctx.fill(); ctx.stroke();
+    // Le feuillage, qui se balance autour du haut du tronc
+    ctx.save();
+    ctx.translate(x, y - 14 * e);
+    ctx.rotate(balancement(t, v));
+    ctx.scale(e, e);
+    const verts = ["#4caf3e", "#5cbf45", "#43a33a", "#6cc94a"];
+    const boules = [[-9, -9, 11], [9, -9, 11], [0, -20, 13], [0, -6, 10]];
+    // D'abord le contour foncé (des boules un peu plus grosses), puis le vert par-dessus :
+    // les boules se fondent en un seul nuage de feuilles, entouré d'un trait. Style dessin animé !
+    ctx.fillStyle = "#24521c";
+    ronds(boules.map(([bx, by, r]) => [bx, by, r + 2]));
+    ctx.fillStyle = verts[Math.floor(v * 4)];
+    ronds(boules);
+    ctx.fillStyle = "rgba(255,255,255,.22)";
+    ronds([[-4, -24, 5], [-11, -12, 3.5]]);
+    // Quelques arbres ont des pommes 🍎
+    if (v > 0.8) {
+      ctx.fillStyle = "#e8402e";
+      ronds([[6, -12, 2.4], [-6, -4, 2.4], [3, -22, 2.4]]);
+    }
+    ctx.restore();
+  }
+
+  function sapin(x, y, v, t) {
+    const e = 0.85 + v * 0.4;
+    ombre(x + 4, y, 13 * e, 6 * e);
+    ctx.fillStyle = "#6e4523"; ctx.strokeStyle = "#2e1d0e"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.rect(x - 2.5, y - 8 * e, 5, 8 * e); ctx.fill(); ctx.stroke();
+    ctx.save();
+    ctx.translate(x, y - 6 * e);
+    ctx.rotate(balancement(t, v) * 0.7);
+    ctx.scale(e, e);
+    ctx.lineJoin = "round"; ctx.lineWidth = 2.2; ctx.strokeStyle = "#173d22";
+    const etages = [[0, 14, 30], [-11, 11, 25], [-21, 8, 19]]; // [hauteur de la base, demi-largeur, hauteur]
+    etages.forEach(([b, dl, h], k) => {
+      ctx.fillStyle = k === 1 ? "#2f8a4a" : "#3a9d55";
+      ctx.beginPath(); ctx.moveTo(-dl, b); ctx.lineTo(0, b - h); ctx.lineTo(dl, b); ctx.closePath(); ctx.fill(); ctx.stroke();
+    });
+    // Un peu de neige sur les sapins les plus hauts
+    if (v > 0.75) {
+      ctx.fillStyle = "#f5f9ff";
+      ctx.beginPath(); ctx.moveTo(-4, -34); ctx.lineTo(0, -40); ctx.lineTo(4, -34); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function rochers(x, y, v) {
+    const pierres = [[-8, 2, 9 + v * 4], [7, -1, 7 + v * 3], [1, 6, 5]];
+    for (const [dx, dy, r] of pierres) {
+      const px = x + dx, py = y + dy;
+      ombre(px + 2, py + 2, r, r * 0.45);
+      ctx.fillStyle = "#a3a8ad"; ctx.strokeStyle = "#4a4f55"; ctx.lineWidth = 2; ctx.lineJoin = "round";
+      ctx.beginPath();
+      ctx.moveTo(px - r, py); ctx.lineTo(px - r * 0.7, py - r * 0.8); ctx.lineTo(px + r * 0.1, py - r * 1.1);
+      ctx.lineTo(px + r * 0.85, py - r * 0.6); ctx.lineTo(px + r, py); ctx.quadraticCurveTo(px, py + r * 0.45, px - r, py);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,.35)";
+      ctx.beginPath(); ctx.moveTo(px - r * 0.6, py - r * 0.6); ctx.lineTo(px + r * 0.1, py - r * 0.95); ctx.lineTo(px - r * 0.1, py - r * 0.45); ctx.closePath(); ctx.fill();
+    }
+  }
+
+  function montagne(x, y, v, t, filon) {
+    const h = 46 + v * 34, lb = L * 0.5;
+    const sommet = { x: x + (v - 0.5) * 14, y: y - h };
+    ctx.lineJoin = "round";
+    // Face éclairée (gauche) et face à l'ombre (droite)
+    ctx.fillStyle = "#a99883";
+    ctx.beginPath(); ctx.moveTo(x - lb, y + 3); ctx.lineTo(sommet.x, sommet.y); ctx.lineTo(x + 4, y + 9); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#7f705f";
+    ctx.beginPath(); ctx.moveTo(sommet.x, sommet.y); ctx.lineTo(x + lb, y + 3); ctx.lineTo(x + 4, y + 9); ctx.closePath(); ctx.fill();
+    // La neige du sommet, avec un bord en zigzag
+    const n = 0.3; // la neige couvre 30 % du haut
+    const g = { x: sommet.x + (x - lb - sommet.x) * n, y: sommet.y + (y + 3 - sommet.y) * n };
+    const d = { x: sommet.x + (x + lb - sommet.x) * n, y: sommet.y + (y + 3 - sommet.y) * n };
+    ctx.fillStyle = "#f4f7ff";
+    ctx.beginPath(); ctx.moveTo(sommet.x, sommet.y); ctx.lineTo(d.x, d.y);
+    ctx.lineTo(d.x - 5, d.y + 4); ctx.lineTo((g.x + d.x) / 2 + 2, (g.y + d.y) / 2 - 1); ctx.lineTo(g.x + 5, g.y + 5); ctx.lineTo(g.x, g.y);
+    ctx.closePath(); ctx.fill();
+    // Le contour
+    ctx.strokeStyle = "#3d342b"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(x - lb, y + 3); ctx.lineTo(sommet.x, sommet.y); ctx.lineTo(x + lb, y + 3); ctx.stroke();
+
+    // Le filon : des cristaux de couleur au pied de la montagne
+    if (filon) {
+      const [fonce, clair] = FILONS[filon];
+      for (const [dx, dy, r] of [[-10, -4, 5], [-2, 0, 6.5], [7, -5, 4.5]]) {
+        const px = x + dx, py = y + dy;
+        ctx.fillStyle = fonce; ctx.strokeStyle = "#1c1814"; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(px, py - r * 1.3); ctx.lineTo(px + r * 0.7, py); ctx.lineTo(px, py + r * 0.5); ctx.lineTo(px - r * 0.7, py); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = clair;
+        ctx.beginPath(); ctx.moveTo(px, py - r * 1.3); ctx.lineTo(px - r * 0.7, py); ctx.lineTo(px - r * 0.15, py); ctx.closePath(); ctx.fill();
+      }
+      // L'or scintille ✨
+      if (filon === F.or) {
+        const eclat = Math.max(0, Math.sin(t * 3 + v * 20));
+        if (eclat > 0.6) {
+          const r = (eclat - 0.6) * 18;
+          ctx.strokeStyle = "#fffbe0"; ctx.lineWidth = 1.6;
+          ctx.beginPath(); ctx.moveTo(x - 2 - r, y - 8); ctx.lineTo(x - 2 + r, y - 8); ctx.moveTo(x - 2, y - 8 - r); ctx.lineTo(x - 2, y - 8 + r); ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function buisson(x, y, v, t) {
+    ombre(x + 3, y + 2, 11, 5);
+    const b = balancement(t, v) * 20;
+    ctx.fillStyle = "#24521c";
+    ronds([[x - 5 + b * 0.3, y - 4, 7.5], [x + 5 + b * 0.3, y - 4, 7.5], [x + b * 0.5, y - 9, 8]]);
+    ctx.fillStyle = v > 0.5 ? "#55b843" : "#4aa83c";
+    ronds([[x - 5 + b * 0.3, y - 4, 5.7], [x + 5 + b * 0.3, y - 4, 5.7], [x + b * 0.5, y - 9, 6.2]]);
+    if (v > 0.6) {
+      ctx.fillStyle = "#e33a6b";
+      ronds([[x - 4, y - 7, 1.8], [x + 4, y - 3, 1.8], [x + 1, y - 12, 1.8]]);
+    }
+  }
+
+  function feuDeCamp(x, y, t) {
+    // La lumière du feu, qui tremble
+    const lueur = 0.22 + 0.06 * Math.sin(t * 9) + 0.04 * Math.sin(t * 23);
+    const g = ctx.createRadialGradient(x, y - 4, 2, x, y - 4, 46);
+    g.addColorStop(0, "rgba(255, 190, 80," + lueur + ")"); g.addColorStop(1, "rgba(255, 190, 80, 0)");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, 46, 26, 0, 0, TOUR); ctx.fill();
+    // Le cercle de pierres
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * TOUR;
+      ctx.fillStyle = "#8d9196"; ctx.strokeStyle = "#3d4045"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.ellipse(x + Math.cos(a) * 11, y + Math.sin(a) * 5.5, 3.5, 2.6, 0, 0, TOUR); ctx.fill(); ctx.stroke();
+    }
+    // Les bûches
+    ctx.strokeStyle = "#5a3818"; ctx.lineWidth = 3.5; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(x - 7, y + 2); ctx.lineTo(x + 7, y - 2); ctx.moveTo(x - 7, y - 2); ctx.lineTo(x + 7, y + 2); ctx.stroke();
+    // Les flammes : 3 gouttes qui dansent
+    const flammes = [[-4, 0.9, 0], [4, 0.8, 2], [0, 1.2, 4]];
+    for (const [dx, taille, phase] of flammes) {
+      const h = (12 + 4 * Math.sin(t * 11 + phase)) * taille;
+      const penche = Math.sin(t * 7 + phase) * 2;
+      ctx.fillStyle = "#ff7b1c";
+      goutte(x + dx, y, 4.5 * taille, h, penche);
+      ctx.fillStyle = "#ffd93b";
+      goutte(x + dx, y, 2.4 * taille, h * 0.6, penche * 0.6);
+    }
+    // La fumée : des boules grises qui montent, grossissent et s'effacent, poussées par le vent
+    for (let k = 0; k < 6; k++) {
+      const p = (t * 0.3 + k / 6) % 1;
+      const fx = x + Math.sin(p * 7 + k) * 5 + p * 22, fy = y - 18 - p * 80, r = 4 + p * 11;
+      ctx.fillStyle = "rgba(235, 235, 240," + 0.55 * (1 - p) + ")";
+      ctx.beginPath(); ctx.arc(fx, fy, r, 0, TOUR); ctx.fill();
+    }
+  }
+
+  function goutte(x, y, largeur, hauteur, penche) {
+    ctx.beginPath();
+    ctx.moveTo(x - largeur, y - 1);
+    ctx.quadraticCurveTo(x - largeur, y - hauteur * 0.6, x + penche, y - hauteur);
+    ctx.quadraticCurveTo(x + largeur, y - hauteur * 0.6, x + largeur, y - 1);
+    ctx.closePath(); ctx.fill();
+  }
+
+  function tente(x, y, t) {
+    ombre(x + 4, y + 2, 24, 9);
+    ctx.lineJoin = "round"; ctx.lineWidth = 2.2; ctx.strokeStyle = "#5a4220";
+    // Le côté au soleil et le côté à l'ombre
+    ctx.fillStyle = "#f1d9a6";
+    ctx.beginPath(); ctx.moveTo(x - 22, y + 4); ctx.lineTo(x - 2, y - 30); ctx.lineTo(x + 2, y + 9); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#d4b27a";
+    ctx.beginPath(); ctx.moveTo(x - 2, y - 30); ctx.lineTo(x + 22, y + 2); ctx.lineTo(x + 2, y + 9); ctx.closePath(); ctx.fill(); ctx.stroke();
+    // La porte
+    ctx.fillStyle = "#6b4a22";
+    ctx.beginPath(); ctx.moveTo(x - 9, y + 6); ctx.lineTo(x - 3, y - 10); ctx.lineTo(x + 1, y + 8); ctx.closePath(); ctx.fill();
+    // Le mât et le drapeau rouge qui flotte
+    ctx.strokeStyle = "#3b2614"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x - 2, y - 30); ctx.lineTo(x - 2, y - 46); ctx.stroke();
+    ctx.fillStyle = "#e8402e"; ctx.strokeStyle = "#7a1d12"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x - 2, y - 46);
+    for (let k = 0; k <= 4; k++) ctx.lineTo(x - 2 + k * 4, y - 46 + Math.sin(t * 6 + k) * 1.5);
+    for (let k = 4; k >= 0; k--) ctx.lineTo(x - 2 + k * 4, y - 38 + Math.sin(t * 6 + k) * 1.5);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+
+  // ---------------------------------------------------------------- les nuages
+  function dessinerNuages(carte, t, z) {
+    const largeur = (carte.colonnes + carte.lignes) * (L / 2), x0 = -carte.lignes * (L / 2);
+    const hauteur = (carte.colonnes + carte.lignes) * (Hc / 2);
+    // Vu de près, on est « sous » les nuages : ils deviennent plus transparents.
+    const opacite = Math.max(0.15, Math.min(0.85, 1.25 - z * 0.6));
+    for (let k = 0; k < C.animation.nuages; k++) {
+      const r1 = Village.Hasard.pourCase(carte.graine, k, 901), r2 = Village.Hasard.pourCase(carte.graine, k, 902);
+      const taille = 0.8 + Village.Hasard.pourCase(carte.graine, k, 903) * 0.8;
+      // Les nuages vont vers la droite et réapparaissent à gauche quand ils sortent de la carte.
+      const x = x0 + ((r1 * largeur + t * C.animation.vitesseNuages * (0.7 + taille * 0.3)) % largeur);
+      const y = 80 + r2 * (hauteur - 160);
+      // L'ombre sur le sol
+      ctx.fillStyle = "rgba(10, 30, 60, .1)";
+      ctx.beginPath(); ctx.ellipse(x + 40, y + 60, 70 * taille, 28 * taille, 0, 0, TOUR); ctx.fill();
+      // Le nuage, en l'air
+      ctx.globalAlpha = opacite;
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      for (const [dx, dy, r] of [[-40, 0, 26], [-10, -14, 34], [26, -6, 28], [50, 6, 20], [0, 10, 26]]) {
+        ctx.moveTo(x + dx * taille + r * taille, y + dy * taille); ctx.arc(x + dx * taille, y + dy * taille, r * taille, 0, TOUR);
+      }
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // ---------------------------------------------------------------- les panneaux
+  function bulle(x, y, l, h) {
+    ctx.fillStyle = "rgba(255, 250, 235, .93)";
+    ctx.strokeStyle = "#5a4220";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, l, h, 12); else ctx.rect(x, y, l, h);
+    ctx.fill(); ctx.stroke();
+  }
+
+  function dessinerPanneaux(monde, options) {
+    const carte = monde.carte;
+    ctx.textBaseline = "middle";
+    // En haut à gauche : le nom du village et l'âge
+    bulle(12, 12, 250, 48);
+    ctx.fillStyle = "#3b2614";
+    ctx.font = "bold 18px 'Trebuchet MS', sans-serif";
+    ctx.fillText("🏘️ Ton village", 26, 30);
+    ctx.font = "13px 'Trebuchet MS', sans-serif";
+    ctx.fillStyle = "#7a5a30";
+    ctx.fillText("🪨 Âge de pierre · carte n° " + carte.graine, 26, 48);
+
+    // En bas à gauche : la case sous la souris
+    const k = monde.survol || monde.choisie;
+    if (k) {
+      let texte = "Case (" + k.colonne + ", " + k.ligne + ") · " + k.nomTerrain;
+      if (k.objet && k.objet !== O.montagne) texte += " · " + k.nomObjet;
+      if (k.filon) texte += " · filon de " + k.nomFilon + " " + ["", "⚫", "🟠", "🟡"][k.filon];
+      ctx.font = "bold 14px 'Trebuchet MS', sans-serif";
+      const l = ctx.measureText(texte).width + 28;
+      bulle(12, He - 46, l, 34);
+      ctx.fillStyle = "#3b2614";
+      ctx.fillText(texte, 26, He - 29);
+    }
+
+    // En bas à droite : la mini-carte, avec un cadre qui montre ce que l'écran regarde
+    const echelle = 1.5, mw = cache.mini.width * echelle, mh = cache.mini.height * echelle;
+    const mx = W - mw - 14, my = He - mh - 14;
+    bulle(mx - 8, my - 8, mw + 16, mh + 16);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(cache.mini, mx, my, mw, mh);
+    ctx.imageSmoothingEnabled = true;
+    // Les 4 coins de l'écran, ramenés sur la mini-carte
+    const cam = monde.camera;
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    [[0, 0], [W, 0], [W, He], [0, He]].forEach(([ex, ey], n) => {
+      const m = Village.Monde.ecranVersMonde(cam, ex, ey);
+      const px = mx + (m.x / (L / 2) + carte.lignes) * echelle, py = my + (m.y / Hc) * echelle;
+      n ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    });
+    ctx.closePath(); ctx.stroke();
+
+    // Le zoom
+    ctx.font = "bold 12px 'Trebuchet MS', sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,.9)";
+    ctx.textAlign = "right";
+    ctx.fillText("🔍 " + Math.round(cam.zoom * 100) + " %", W - 14, my - 22);
+    ctx.textAlign = "left";
+
+    if (options.pause) {
+      bulle(W / 2 - 80, 16, 160, 40);
+      ctx.fillStyle = "#3b2614";
+      ctx.font = "bold 18px 'Trebuchet MS', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("⏸ PAUSE", W / 2, 37);
+      ctx.textAlign = "left";
+    }
+  }
+
+  return { initialiser, dessiner, stats, milieu };
+})();
