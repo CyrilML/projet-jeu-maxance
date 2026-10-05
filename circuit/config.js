@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 20,
+  version: 21,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -503,6 +503,29 @@ Circuit.CONFIG = {
     roulis: 0.0055, // rad par m/s² : la caisse penche vers l'extérieur dans un virage
     penteMax: 0.07, // rad (4°) : jamais plus penché que ça
     gros: 2.5, // m/s : à partir de ce choc, on l'écrit dans le journal
+  },
+
+  // Étape 52 : ✍️ les VRAIES maquettes 3D (faites par des artistes, téléchargées sur Sketchfab, licence CC BY : on doit
+  // écrire le nom de l'artiste). Chaque fichier de circuit/maquettes/ contient une voiture « amincie » (moins de
+  // triangles). Tant qu'une maquette n'est pas chargée, le jeu montre la voiture dessinée en code (étape 51).
+  //   longueur (m) : la vraie longueur de la voiture (la maquette est mise à cette taille) ;
+  //   tourner (rad) : pour que le nez de la maquette regarde vers l'avant du jeu (x+) ;
+  //   peinture : les mots qui reconnaissent le matériau de la carrosserie (on le repeint avec la couleur choisie) ;
+  //   roues : les mots qui reconnaissent les roues (elles tournent quand on roule) ;
+  //   disponible : vrai quand le fichier de la maquette a été préparé (sinon, le jeu ne le cherche même pas).
+  maquettes: {
+    trafic: true, // les voitures de la circulation et les voitures garées utilisent aussi les maquettes
+    liste: {
+      chiron: { fichier: "chiron", uid: "b28585c3e5bc4fc78db39d80fcd6b604", titre: "Bugatti chiron", auteur: "kevin (ケビン)", longueur: 4.54, tourner: 0, disponible: false },
+      porsche911: { fichier: "porsche911", uid: "877b1bc1739f4a2bb65d62fd7ffd9f75", titre: "Porsche 911 with interior", auteur: "n.brizitskaya", longueur: 4.52, tourner: 0, disponible: false },
+      aventador: { fichier: "aventador", uid: "2263b49846d840618046538012720c59", titre: "Lamborghini Aventador", auteur: "BlackCube", longueur: 4.78, tourner: 0, disponible: false },
+      basse: { fichier: "nsx", uid: "1cc15628a00a4739a6b6c01128927c8d", titre: "Honda NSX 1990", auteur: "Lexyc16", longueur: 4.41, tourner: 0, disponible: false },
+      suv: { fichier: "peugeot508", uid: "8192f18de3d2431197c9e707666212c7", titre: "Peugeot 508", auteur: "Mona x Supercars", longueur: 4.75, tourner: 0, disponible: false },
+      camionnette: { fichier: "vito", uid: "c7d3bf8fce824a0bbfc6e173ec12a0da", titre: "Mercedes-Benz Vito MK3 W447 from 2014", auteur: "Merc_TV", longueur: 5.14, tourner: 0, disponible: false },
+      moto: { fichier: "ninja", uid: "a0fcb1b23e6948639a09d804939f7c70", titre: "Kawasaki Ninja 650", auteur: "alban", longueur: 2.06, tourner: 0, disponible: false },
+    },
+    peinture: ["paint", "body", "carpaint", "car_paint", "kaross", "exterior", "color", "colour"],
+    roues: ["wheel", "tire", "tyre", "rim", "roue", "pneu"],
   },
 
   pasFixe: 1 / 120, // la boucle de jeu avance par petits pas de 1/120 s

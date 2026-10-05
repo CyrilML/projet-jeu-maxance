@@ -873,6 +873,15 @@ Circuit.Modeles = (function () {
   // et pour la police : gyro (les 2 lampes du gyrophare) }.
   function fabriquer(modele, couleur1, couleur2) {
     materiaux();
+    // Étape 52 : s'il existe une vraie maquette 3D de ce modèle et qu'elle est prête, on la prend. Sinon, on demande
+    // à la charger, et en attendant on fabrique la voiture en code (marquée « provisoire » : elle sera échangée).
+    const MQ = Circuit.Maquettes;
+    if (MQ && MQ.existe(modele)) {
+      const vraie = MQ.fabriquer(modele, couleur1, couleur2);
+      if (vraie) return vraie;
+      MQ.charger(modele);
+      return Object.assign(FABRIQUES[modele](couleur1, couleur2), { provisoire: true });
+    }
     return FABRIQUES[modele](couleur1, couleur2);
   }
 

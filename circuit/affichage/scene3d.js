@@ -144,6 +144,24 @@ Circuit.Scene3D = (function () {
     brouillardCarte = carte === "ville" ? 2400 : 1100; // (étape 47 : la météo peut voir moins loin, affichage/meteo3d.js)
   }
 
+  // Étape 52 : quand une vraie maquette 3D est prête, on jette les voitures « provisoires » de ce modèle (dessinées en
+  // code) : elles seront refabriquées, avec la maquette, à la prochaine image.
+  Circuit.Evenements.ecouter("maquette", (d) => {
+    if (d.etat !== "prete") return;
+    for (const cle of Object.keys(vehicules)) {
+      if (cle.split("/")[0] === d.modele && vehicules[cle].provisoire) {
+        scene.remove(vehicules[cle].g);
+        delete vehicules[cle];
+      }
+    }
+    for (const cle of Object.keys(flotte)) {
+      if (cle === d.modele || cle.startsWith(d.modele + "[")) {
+        for (const o of flotte[cle]) scene.remove(o.g);
+        delete flotte[cle];
+      }
+    }
+  });
+
   // Un exemplaire de chaque modèle de voiture (fabriqué la première fois).
   // Étape 42 : une voiture repeinte au magasin (peinture dorée) est un exemplaire à part : « citadine/or ».
   function vehicule(modele) {

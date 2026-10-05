@@ -54,6 +54,7 @@ Circuit.SousLeCapot = (function () {
     piece: (d) => "🪙 Pièce n° " + d.numero + " ramassée" + (d.ou ? " (" + d.ou + ")" : " (à " + d.s + " m du départ)") + " : " + d.total + " trouvées",
     ville: (d) => "🏙️ Balade en ville : " + d.pieces + " pièces cachées, " + d.circulation + " voitures qui circulent, " + d.garees + " véhicules garés" + (d.aeroports ? ", " + d.aeroports + " aéroports, " + d.magasins + " magasins" : ""),
     lieu: (d) => "📍 Tu arrives sur " + d.ou,
+    maquette: (d) => d.etat === "prete" ? "🧸 La maquette 3D « " + d.nom + " » (par " + d.auteur + ") est prête : " + d.triangles.toLocaleString("fr-FR") + " triangles. On remplace la voiture dessinée en code !" : "🧸 La maquette « " + d.nom + " » n'a pas pu être chargée (" + d.etat + ") : on garde la voiture dessinée en code",
     ressorts: (d) => "🌀 Boing ! Les ressorts encaissent un choc de " + virgule(d.choc, 1) + " m/s : la caisse s'écrase, puis rebondit",
     rue: (d) => "🪧 " + d.nom.charAt(0).toUpperCase() + d.nom.slice(1) + " (Ville.nomDeRue regarde de quelle rue tu es à moins de 8 m)",
     meteo: (d) => d.icone + " Météo : " + d.nom + " (adhérence " + Math.round(d.adherence * 100) + " %, vent " + d.vent + " m/s)",
@@ -175,6 +176,10 @@ Circuit.SousLeCapot = (function () {
       ["la règle du ressort", (function () {
         const p = (Circuit.Garage.ficheDe(v.modele) || {}).ressorts ? Circuit.CONFIG.ressorts.monster : Circuit.CONFIG.ressorts.voiture;
         return "poussée = −" + p.raideur + " × écrasement − " + p.amortissement + " × vitesse";
+      })()],
+      ["maquette 3D (étape 52)", (function () {
+        const b = Circuit.Maquettes.bilan().find((x) => x.modele === v.modele);
+        return b ? b.etat + (b.triangles ? " · " + b.triangles.toLocaleString("fr-FR") + " triangles" : "") + " · par " + b.auteur : "pas de maquette pour ce modèle (dessiné en code)";
       })()],
       ["la caisse penche", "avant/arrière " + virgule((v.suspension.tangage * 180) / Math.PI, 1) + "° (accélération " + virgule(v.suspension.accelerationAvant || 0, 1) + " m/s²) · côté " + virgule((v.suspension.roulis * 180) / Math.PI, 1) + "° (virage " + virgule(v.suspension.accelerationCote || 0, 1) + " m/s²)"],
     ] : []);
