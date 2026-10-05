@@ -167,6 +167,7 @@
       <a href="#etape42">Étape 42</a>
       <a href="#etape43">Étape 43</a>
       <a href="#etape44">Étape 44</a>
+      <a href="#etape45">Étape 45</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3003,6 +3004,50 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Une balle va à 450 m/s. En combien de temps fait-elle 900 m ?</summary><p>900 ÷ 450 = 2 secondes… mais elle disparaît au bout de 1,6 s : elle ne va donc qu'à 720 m.</p></details>
     </section>
 
+    <section id="etape45">
+      <h2>🚓 Étape 45 : la police aux 5 étoiles <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Emboutis une voiture et la police arrive ! Plus le choc est fort, plus il y a d'étoiles. À 5 étoiles, l'hélico de la police te suit avec son projecteur… Sème-les ou c'est le commissariat ! <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/44-avions-et-police.md</code>.</p>
+          <ul>
+            <li>✍️ 1 à 5 étoiles selon la force du choc.</li>
+            <li>✍️ L'hélico de la police à 5 étoiles.</li>
+            <li>✍️ Attrapé → commissariat ; semé → loin et caché.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Un petit choc contre une voiture : ⭐ ; un gros : ⭐⭐⭐⭐⭐.</li>
+            <li>☐ Les voitures de police arrivent, sirène et gyrophare allumés.</li>
+            <li>☐ À 5 étoiles : l'hélico et son projecteur.</li>
+            <li>☐ Cache-toi derrière les immeubles : les étoiles clignotent puis s'éteignent.</li>
+            <li>☐ Laisse-toi attraper : retour au commissariat.</li>
+            <li>Vérifie « version 14 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>👀 Comment un policier « voit »</h3>
+      <p>Le jeu trace une ligne droite entre le policier et toi, et regarde un point tous les 6 m sur cette ligne. Si un de ces points est dans un immeuble, le policier ne te voit pas. S'il est à plus de 150 m, non plus. L'hélico, lui, voit par-dessus les immeubles !</p>
+      <h3>🧭 Comment la police te trouve</h3>
+      <p>Si elle te voit, elle fonce droit sur toi. Sinon, elle va de carrefour en carrefour. À chaque carrefour, elle choisit la rue qui la rapproche le plus de toi. C'est une <strong>recherche gourmande</strong> : on prend toujours ce qui semble le meilleur tout de suite. Ça ne marche pas toujours (une impasse…), mais c'est simple et rapide.</p>
+      <h3>⭐ Une jauge qui monte et qui descend</h3>
+      <p>Les étoiles montent d'un coup (une bêtise) et descendent lentement (une toutes les 5 s quand tu es caché). Beaucoup de jeux font comme ça : la « jauge de recherche ».</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Aux rayons X : un cercle de 150 m autour de toi (rouge si on te voit), et des traits bleus vers là où va chaque voiture de police.</li>
+        <li>Dans l'état en direct, regarde « on te voit ? » pendant que tu te caches.</li>
+        <li>Avec l'avion de chasse, abats l'hélico de la police (5 étoiles !).</li>
+        <li>Dans <code>config.js</code>, trouve <code>police</code> et ses <code>seuils</code>.</li>
+        <li>Dans la base de données, trouve <code>police</code> : combien de fois as-tu été attrapé ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Tu fonces dans une voiture à 36 km/h. Combien d'étoiles ?</summary><p>36 km/h = 10 m/s. C'est plus que 8 et moins que 13 : 3 étoiles.</p></details>
+      <details class="question"><summary>Tu as 4 étoiles et tu te caches. Au bout de combien de temps la police est-elle semée ?</summary><p>6 s pour que ça clignote, puis 4 × 5 s : 6 + 20 = 26 secondes.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -3261,15 +3306,15 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
           <p>Petit avion, avion de ligne d'aéroport en aéroport, hélicoptère, et avion de chasse avec mitrailleuse et missiles.</p>
           <p class="apprend"><b>Tu apprends :</b> voler en 3D (monter, descendre, tourner), la portance, décoller et atterrir, un pilote automatique. <b>Durée :</b> 3 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">44</div>
-          <h4>La police aux 5 étoiles <span class="etiquette">⏭️ prochaine étape (demandée)</span></h4>
+          <h4>La police aux 5 étoiles <span class="etiquette">✅ fait · à valider</span></h4>
           <p>Emboutir une voiture fait venir la police : de 1 à 5 étoiles selon le choc, l'hélico de la police à 5 étoiles, le commissariat si on est attrapé.</p>
           <p class="apprend"><b>Tu apprends :</b> une jauge qui monte et qui descend, des poursuivants (intelligence artificielle), voir ou ne pas voir. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte">
+        <div class="carte prochain">
           <div class="num">45</div>
-          <h4>Sauvegarder le monde <span class="etiquette">💡 idée</span></h4>
+          <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine idée</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
@@ -3698,6 +3743,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-44" data-cle="appris-44" placeholder="Ex. : J'ai appris ce qu'est le décrochage…"></textarea>
         <label for="idees-44"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-44" data-cle="idees-44" placeholder="Ex. : Des parachutes pour sauter de l'avion…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 45 · la police <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le commissaire (<code>logique/police.js</code>) : les étoiles, les voitures de police qui vont de carrefour en carrefour, l'hélico, la vue, l'arrestation ; le commissariat, le projecteur, les étoiles à l'écran, la sirène qui s'approche, la base de données en version 11.</p>
+        <label for="appris-45"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-45" data-cle="appris-45" placeholder="Ex. : J'ai appris ce qu'est une recherche gourmande…"></textarea>
+        <label for="idees-45"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-45" data-cle="idees-45" placeholder="Ex. : Des barrages de police sur les ponts…"></textarea>
       </div>
     </section>
   </main>

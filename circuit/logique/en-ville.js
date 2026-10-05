@@ -17,6 +17,7 @@
 // K = klaxon (si tu l'as acheté), J = commencer ou arrêter un petit boulot (étape 43, logique/boulots.js).
 // Étape 44 : dans un avion ou un hélico (aux aéroports), on vole (logique/vol.js) ; l'avion de chasse tire
 // (F = mitrailleuse, G = missile, logique/armes.js).
+// Étape 45 : emboutir une voiture fait venir la police (logique/police.js).
 
 window.Circuit = window.Circuit || {};
 
@@ -57,6 +58,10 @@ Circuit.EnVille = (function () {
       monde.garees.push(avion);
     }
     Circuit.Armes.preparer(monde);
+    // Étape 45 : la police, et deux voitures de police garées devant le commissariat.
+    Circuit.Police.preparer(monde);
+    const cp = Circuit.Police.commissariat;
+    for (const k of [-1, 1]) monde.garees.push(Circuit.Voiture.creer(cp.x + Math.cos(cp.angle) * 7 - Math.sin(cp.angle) * k * 7, cp.z + Math.sin(cp.angle) * 7 + Math.cos(cp.angle) * k * 7, cp.angle + Math.PI / 2, Circuit.Garage.ficheDe("police")));
     monde.boulot = null; // étape 43 : le petit boulot en cours
     monde.boulotProche = null;
     monde.magasin = null; // étape 42 : le magasin où est entré le personnage
@@ -164,6 +169,7 @@ Circuit.EnVille = (function () {
     ramasser(monde, monde.pieton || v);
     Circuit.Boulots.etape(monde, dt, intentions); // étape 43 : les petits boulots
     Circuit.Armes.etape(monde, dt, intentions); // étape 44 : la mitrailleuse et les missiles
+    Circuit.Police.etape(monde, dt); // étape 45 : la police et ses étoiles
     // Étape 42 : où es-tu ? (la ville, un pont, une île…) On l'annonce quand ça change.
     const qui = monde.pieton || v;
     const lieu = Archipel.lieu(qui.x, qui.z).ou;

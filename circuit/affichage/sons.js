@@ -25,7 +25,7 @@ Circuit.Sons = (function () {
   const S = Circuit.CONFIG.sons;
   const Son = Circuit.Son;
   let balles = 0;
-  let moteurJoueur = null, moteurAdversaire = null, herbe = null, souffle = null, sirene = null;
+  let moteurJoueur = null, moteurAdversaire = null, herbe = null, souffle = null, sirene = null, sirenePolice = null;
   // Ce qu'on entend en ce moment : lu par le panneau « sous le capot ».
   const enDirect = { frequence: 0, volume: 0, frequenceAdversaire: 0, volumeAdversaire: 0, cote: 0, herbe: 0 };
 
@@ -36,6 +36,7 @@ Circuit.Sons = (function () {
     herbe = Son.creerBruit(S.herbe.frequenceFiltre);
     souffle = Son.creerBruit(2600); // étape 40 : le nitro
     sirene = Son.creerMoteur(); // étape 40 : la sirène (un « moteur » qui joue 2 notes)
+    sirenePolice = Son.creerMoteur(); // étape 45 : la sirène des voitures de police qui te poursuivent
 
     const radio = Circuit.Evenements;
     radio.ecouter("decompte", () => Son.bip(S.bips.frequenceFeu, 0.18, S.bips.volume));
@@ -79,6 +80,10 @@ Circuit.Sons = (function () {
     });
     radio.ecouter("vol-ligne", () => [523, 659, 784, 1046, 1318].forEach((f, i) => setTimeout(() => Son.bip(f, 0.18, 0.13), i * 130)));
     radio.ecouter("decrochage", () => [880, 880, 880].forEach((f, i) => setTimeout(() => Son.bip(f, 0.1, 0.15), i * 180)));
+    // Étape 45 : la police.
+    radio.ecouter("etoiles", (d) => { if (d.etoiles > d.avant) Son.bip(392, 0.25, 0.13); });
+    radio.ecouter("arrete", () => [523, 392, 330, 262].forEach((f, i) => setTimeout(() => Son.bip(f, 0.22, 0.14), i * 160)));
+    radio.ecouter("police-semee", () => [659, 784, 988].forEach((f, i) => setTimeout(() => Son.bip(f, 0.15, 0.13), i * 120)));
     // Étape 41 : les méga-rampes.
     radio.ecouter("drapeau", () => {
       Son.bip(784, 0.1, 0.12);
@@ -156,6 +161,13 @@ Circuit.Sons = (function () {
     const note = Math.floor(monde.temps * 2) % 2 ? 587 : 440;
     Son.reglerMoteur(sirene, note, hurle ? 0.16 : 0, 1, 0);
     enDirect.sirene = hurle ? note : 0;
+    // Étape 45 : la sirène de la police, plus forte quand la voiture de police est proche (« wiou-wiou »).
+    const police = monde.police && monde.phase === "ville" ? monde.police.voitures : [];
+    const qui = monde.pieton || v;
+    const dMin = police.length ? Math.min(...police.map((pv) => Math.hypot(pv.voiture.x - qui.x, pv.voiture.z - qui.z))) : Infinity;
+    const volumePolice = silence || !isFinite(dMin) ? 0 : 0.14 * Math.max(0, 1 - dMin / 250);
+    Son.reglerMoteur(sirenePolice, 620 + 180 * Math.sin(monde.temps * 5), volumePolice, 1, 0);
+    enDirect.sirenePolice = volumePolice;
   }
 
   function basculer() {

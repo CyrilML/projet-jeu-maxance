@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 13,
+  version: 14,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -259,6 +259,25 @@ Circuit.CONFIG = {
     missile: { vitesse: 140, vie: 6, recharge: 0.8, virage: 2.2, cone: 0.6, rayonExplosion: 10 }, // il suit sa cible (virage en rad/s)
     // ✍️ Les cibles d'entraînement, autour de l'île lointaine : des ballons dans le ciel et des cibles au sol.
     ballons: 16, ciblesAuSol: 6, paieBallon: 3, paieCibleSol: 5, retour: 30, // retour = les cibles reviennent après 30 s
+  },
+
+  // Étape 45 : LA POLICE. ✍️ Emboutir une voiture fait venir la police, avec 1 à 5 étoiles selon la force du choc.
+  police: {
+    // ✍️ La force du choc (la vitesse à laquelle on fonce dans l'autre voiture, en m/s) → le nombre d'étoiles :
+    // moins de 4 m/s (15 km/h) = 1 étoile ; moins de 8 = 2 ; moins de 13 = 3 ; moins de 20 = 4 ; plus = 5 (« à fond »).
+    seuils: [4, 8, 13, 20],
+    etoilesExplosion: 2, // une voiture qu'on fait exploser : +2 étoiles
+    voituresParEtoile: 1, // 1 voiture de police par étoile (5 à 5 étoiles)
+    vitesse: 30, // m/s : la vitesse des voitures de police (+ 2 m/s par étoile)
+    vitesseParEtoile: 2,
+    apparition: [140, 260], // m : les voitures de police arrivent entre 140 et 260 m de toi
+    vue: 150, // ✍️ m : un policier te voit à moins de 150 m, si aucun immeuble ne cache la vue
+    vueHelico: 260, // m : l'hélico, d'en haut, voit plus loin (et par-dessus les immeubles)
+    avantDeClignoter: 6, // s : caché pendant 6 s → les étoiles clignotent…
+    parEtoile: 5, // s : … puis une étoile s'éteint toutes les 5 s
+    arret: { distance: 6, vitesse: 3, temps: 2 }, // ✍️ attrapé : un policier à moins de 6 m, et toi presque arrêté pendant 2 s
+    helico: { hauteur: 45, vitesse: 34, retour: 20 }, // l'hélico (5 étoiles) ; abattu, un autre revient 20 s après
+    commissariat: 40, // le numéro de l'immeuble du commissariat
   },
 
   // Étape 43 : LES PETITS BOULOTS. ✍️ Livreur de pizzas, chauffeur de taxi, vendeur au magasin, ramasser les poubelles.

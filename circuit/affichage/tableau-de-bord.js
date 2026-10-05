@@ -431,9 +431,21 @@ Circuit.TableauDeBord = (function () {
       : "E : descendre · R : retour au départ · ⌫ : changer de carte" + (fiche.sirene ? " · H : sirène" : "") + (sauvegarde.objets && sauvegarde.objets.klaxon ? " · K : klaxon" : "");
     texte(p ? "↑ ↓ ← → marcher · E : monter · R : départ · ⌫ : cartes" : aide, 24, H - 22, 14, "#cfd6ff");
     if (fiche.vol && !p) dessinerVol(monde, v, fiche); // étape 44
+    dessinerEtoiles(monde); // étape 45
     if (monde.sirene && fiche.sirene && !p) texte("🚨 Sirène", 300, 70, 20, Math.floor(monde.temps * 4) % 2 ? "#ff5a4a" : "#5a8aff");
     if (options.pause) texte("⏸ Pause", W / 2, H - 30, 28, "#fff", "center");
     if (options.ralenti) texte("🐢 Ralenti", 300, 40, 18, "#cfd6ff");
+  }
+
+  // Étape 45 : les étoiles de la police, sous la mini-carte. Elles clignotent quand tu es caché.
+  function dessinerEtoiles(monde) {
+    const p = monde.police;
+    if (!p || p.etoiles === 0) return;
+    const clignote = !p.vu && p.cache > C.police.avantDeClignoter && Math.floor(monde.temps * 4) % 2;
+    panneau(W - 160, 162, 148, 52);
+    for (let i = 0; i < 5; i++) texte(i < p.etoiles && !clignote ? "★" : "☆", W - 150 + i * 27, 196, 28, i < p.etoiles ? "#ffd21a" : "rgba(255,255,255,.35)");
+    texte(p.vu ? "🚨 on te voit !" : "🙈 caché (" + Math.floor(p.cache) + " s)", W - 86, 228, 13, p.vu ? "#ff6b4a" : "#7dffa0", "center");
+    if (p.arret > 0.2) texte("🚔 La police t'arrête… (" + (C.police.arret.temps - p.arret).toFixed(1).replace(".", ",") + " s) Fonce !", W / 2, H / 2 + 60, 24, "#ff6b4a", "center");
   }
 
   // Étape 44 : les instruments de vol : l'altitude, la vitesse verticale, la vitesse de décollage,
@@ -511,6 +523,25 @@ Circuit.TableauDeBord = (function () {
     for (const m of AR.magasins) ctx.fillRect(m.x - 14, m.z - 14, 28, 28);
     ctx.fillStyle = "#ffd34d";
     for (const p of monde.pieces) if (!p.prise) ctx.fillRect(p.x - 6, p.z - 6, 12, 12);
+    // Étape 45 : la police (rouge et bleu qui clignotent) et le commissariat.
+    if (monde.police) {
+      const tic = Math.floor(monde.temps * 4) % 2;
+      for (const pv of monde.police.voitures) {
+        ctx.fillStyle = tic ? "#ff3b30" : "#3b7bff";
+        ctx.beginPath();
+        ctx.arc(pv.voiture.x, pv.voiture.z, 16, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (monde.police.helico) {
+        ctx.strokeStyle = "#3b7bff";
+        ctx.lineWidth = 8;
+        ctx.beginPath();
+        ctx.arc(monde.police.helico.x, monde.police.helico.z, 26, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#1b3a8b";
+      ctx.fillRect(Circuit.Police.commissariat.x - 16, Circuit.Police.commissariat.z - 16, 32, 32);
+    }
     // Étape 43 : les départs des boulots (orange), et la cible du boulot en cours (un gros rond jaune qui clignote).
     if (!monde.boulot) {
       ctx.fillStyle = "#ff8a1a";

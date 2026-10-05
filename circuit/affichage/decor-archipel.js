@@ -110,6 +110,22 @@ Circuit.DecorArchipel = (function () {
       g.add(devanture);
     }
 
+    // Étape 45 : le commissariat (une enseigne POLICE bleue, et un gyrophare au-dessus de la porte).
+    if (Circuit.Police) {
+      const cp = Circuit.Police.commissariat;
+      const devanture = new THREE.Group();
+      devanture.add(boite(1.6, 0.25, 12, mat({ color: 0x1b3a8b }), -0.3, 4.2, 0));
+      const nom = enseigne("🚓 POLICE", "#1b3a8b", 11, 2);
+      nom.position.set(-1.0, 5.8, 0);
+      nom.rotation.y = Math.PI / 2;
+      devanture.add(nom);
+      devanture.add(boite(0.15, 3, 2.4, mat({ color: 0x2a2a2a }), -1.45, 1.5, 0));
+      devanture.add(boite(0.6, 0.4, 0.6, mat({ color: 0x1a5cff, emissive: 0x1a5cff, emissiveIntensity: 1.5 }), -0.8, 7.1, 0));
+      devanture.position.set(cp.x, 0, cp.z);
+      devanture.rotation.y = -cp.angle;
+      g.add(devanture);
+    }
+
     function maj(temps) {
       texMer.offset.set(temps * 0.004, temps * 0.002); // les vaguelettes glissent
     }

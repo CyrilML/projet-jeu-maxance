@@ -170,6 +170,24 @@ Circuit.Scene3D = (function () {
     return vehicules[cle];
   }
 
+  // Étape 45 : le projecteur de l'hélico de la police : un cône de lumière jaune, de l'hélico jusqu'à toi.
+  let projecteur = null;
+  function dessinerProjecteur(h, cible) {
+    if (!projecteur) {
+      const geo = new THREE.ConeGeometry(7, 1, 24, 1, true);
+      geo.translate(0, -0.5, 0); // la pointe en haut, à l'hélico
+      projecteur = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xfff2a0, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false }));
+      scene.add(projecteur);
+    }
+    projecteur.visible = !!h;
+    if (!h) return;
+    const haut = new THREE.Vector3(h.x, h.y, h.z), bas = new THREE.Vector3(cible.x, cible.y || 0, cible.z);
+    const longueur = haut.distanceTo(bas);
+    projecteur.position.copy(haut);
+    projecteur.scale.set(1, longueur, 1);
+    projecteur.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), bas.clone().sub(haut).normalize());
+  }
+
   // Étape 44 : les balles (des traits jaunes), les missiles (un tube blanc et sa flamme), les explosions
   // (une boule de feu qui grandit et s'efface), et les cibles d'entraînement (ballons rouges, cibles au sol).
   let armes3d = null;
@@ -474,15 +492,26 @@ Circuit.Scene3D = (function () {
       const reserve = (flotte[cleFlotte] = flotte[cleFlotte] || []);
       if (!reserve[k]) {
         // Étape 41 : un véhicule qui n'est dans aucun garage (la moto) apporte ses propres couleurs.
-        const fiche = Circuit.Garage.ficheDe(voiture.modele) || { couleurs: voiture.couleurs || [[0.8, 0.1, 0.1], [0.1, 0.1, 0.11]] };
+        const fiche = voiture.couleurs ? { couleurs: voiture.couleurs } : Circuit.Garage.ficheDe(voiture.modele) || { couleurs: [[0.8, 0.1, 0.1], [0.1, 0.1, 0.11]] };
         reserve[k] = Circuit.Modeles.fabriquer(voiture.modele, fiche.couleurs[0], fiche.couleurs[1]);
         scene.add(reserve[k].g);
       }
       reserve[k].g.visible = true;
       placerVoiture(reserve[k], voiture);
+      // Étape 45 : les voitures de police en poursuite ont le gyrophare allumé.
+      if (reserve[k].gyro) {
+        const tic = Math.floor(monde.temps * 4 + k) % 2;
+        reserve[k].gyro.rouge.emissiveIntensity = voiture.sirene && tic ? 5 : 0.05;
+        reserve[k].gyro.bleu.emissiveIntensity = voiture.sirene && !tic ? 5 : 0.05;
+      }
     };
     for (const g of monde.garees || []) montrer(g);
     for (const c of monde.circulation || []) montrer(c.voiture);
+    // Étape 45 : la police (ses voitures, et son hélico avec un projecteur).
+    const police = monde.carte === "ville" && monde.phase === "ville" ? monde.police : null;
+    for (const pv of (police && police.voitures) || []) montrer(pv.voiture);
+    if (police && police.helico) montrer(police.helico);
+    dessinerProjecteur(police && police.helico, monde.pieton || v);
     for (const [modele, reserve] of Object.entries(flotte)) for (let k = compte[modele] || 0; k < reserve.length; k++) reserve[k].g.visible = false;
     if (monde.pieton) {
       if (!bonhomme) {

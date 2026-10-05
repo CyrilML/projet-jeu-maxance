@@ -23,6 +23,7 @@
 //   8 (étape 42) : les objets achetés au magasin (objets) et les voitures repeintes en or (peintures).
 //   9 (étape 43) : les petits boulots : combien de tâches réussies pour chacun, et les pièces gagnées en travaillant.
 //  10 (étape 44) : les vols (décollages, vols de ligne, crashs) et les tirs (cibles touchées, voitures explosées).
+//  11 (étape 45) : la police : le plus d'étoiles atteint, combien de fois attrapé, combien de fois semée.
 //
 // Les pièces sont comptées dès qu'on les ramasse, mais écrites dans le tiroir à la fin de la course
 // (ou si on recommence, ou si on ferme la page) : écrire 50 fois par course, ce serait du gaspillage.
@@ -31,7 +32,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.Sauvegarde = (function () {
   const CLE = "circuit-maxance:sauvegarde";
-  const VERSION = 10;
+  const VERSION = 11;
   const radio = Circuit.Evenements;
 
   function vide() {
@@ -52,6 +53,7 @@ Circuit.Sauvegarde = (function () {
       boulots: { pizzas: 0, taxi: 0, vendeur: 0, poubelles: 0 }, // depuis la version 9 : les tâches réussies
       piecesGagneesAuTravail: 0, // depuis la version 9
       vols: { decollages: 0, volsDeLigne: 0, crashs: 0, ciblesTouchees: 0, voituresExplosees: 0 }, // depuis la version 10
+      police: { etoilesMax: 0, arrestations: 0, semee: 0 }, // depuis la version 11
       toursTotal: 0,
       sortiesTotal: 0,
       distanceTotale: 0, // m parcourus dans toutes les courses finies
@@ -135,6 +137,10 @@ Circuit.Sauvegarde = (function () {
       // Version 9 → 10 : les avions arrivent. Personne n'a encore volé.
       d.vols = { decollages: 0, volsDeLigne: 0, crashs: 0, ciblesTouchees: 0, voituresExplosees: 0 };
     }
+    if ((anciennes.version || 1) < 11) {
+      // Version 10 → 11 : la police arrive. Jamais poursuivi pour l'instant.
+      d.police = { etoilesMax: 0, arrestations: 0, semee: 0 };
+    }
     d.version = VERSION;
     return d;
   }
@@ -188,6 +194,17 @@ Circuit.Sauvegarde = (function () {
         radio.emettre("nouveau-record", { quoi: "tour", temps: d.temps, ancien });
       }
       ecrire("tour " + d.numero + " terminé");
+    });
+
+    // Étape 45 : la police.
+    radio.ecouter("etoiles", (d) => { donnees.police.etoilesMax = Math.max(donnees.police.etoilesMax, d.etoiles); });
+    radio.ecouter("arrete", () => {
+      donnees.police.arrestations++;
+      ecrire("attrapé par la police");
+    });
+    radio.ecouter("police-semee", () => {
+      donnees.police.semee++;
+      ecrire("police semée");
     });
 
     // Étape 44 : les vols et les tirs.

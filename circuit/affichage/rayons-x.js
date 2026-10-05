@@ -168,6 +168,14 @@ Circuit.RayonsX = (function () {
       const n = Circuit.Armes.nez(v);
       c.ligne([v.x, (v.y || 0) + 1.5, v.z], [v.x + n.x * 300, (v.y || 0) + 1.5 + n.y * 300, v.z + n.z * 300], COULEURS.fleche);
     }
+    // Étape 45 : chaque voiture de police a un trait bleu vers là où elle va, et un cercle montre jusqu'où un
+    // policier peut te voir (150 m).
+    if (monde.carte === "ville" && monde.police && monde.police.etoiles) {
+      const q = monde.pieton || v;
+      for (const pv of monde.police.voitures) if (pv.vise) c.ligne([pv.voiture.x, 2, pv.voiture.z], [pv.vise.x, 2, pv.vise.z], COULEURS.carotte);
+      const r = C.police.vue;
+      for (let i = 0; i < 48; i++) c.ligne([q.x + Math.cos((i / 48) * 6.283) * r, 1, q.z + Math.sin((i / 48) * 6.283) * r], [q.x + Math.cos(((i + 1) / 48) * 6.283) * r, 1, q.z + Math.sin(((i + 1) / 48) * 6.283) * r], monde.police.vu ? COULEURS.rouge : COULEURS.fleche);
+    }
     // Étape 43 : un trait entre toi et la cible du petit boulot (sa longueur, c'est la distance affichée).
     if (monde.carte === "ville" && monde.boulot && monde.boulot.cible) {
       const q = monde.pieton || v;

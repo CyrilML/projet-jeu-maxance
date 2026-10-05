@@ -1,7 +1,7 @@
 # Demande n° 44 : les avions, les avions de chasse… et la police aux 5 étoiles
 
 > Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
-> questions. Statut : étape 44 (ce qui vole) ✅ livrée le 05/10/2026, à valider · étape 45 (la police) à venir.
+> questions. Statut : étapes 44 (ce qui vole) et 45 (la police) ✅ livrées le 05/10/2026, à valider.
 
 ## 🎯 Quoi
 - Piloter les avions, les hélicos et les avions de ligne (d'aéroport en aéroport).
@@ -42,3 +42,24 @@
 - [ ] L'avion de chasse : F tire, G lance un missile qui suit un ballon et le fait exploser.
 - [ ] Un missile sur une voiture : elle explose.
 - [ ] En haut de la page : « version 13 ».
+
+## 🛠️ Ce que Claude a choisi pour l'étape 45
+- Les étoiles selon la force du choc (la vitesse à laquelle on fonce dans l'autre voiture) :
+  moins de 15 km/h = 1 étoile ; moins de 30 = 2 ; moins de 45 = 3 ; moins de 70 = 4 ; plus = 5.
+  Faire exploser une voiture : +2 étoiles. Être poussé par la police contre une voiture ne compte pas.
+- 1 voiture de police par étoile (sirène, gyrophare), qui arrive entre 140 et 260 m de toi et fonce vers toi
+  (de carrefour en carrefour si un immeuble la cache).
+- 5 étoiles : l'hélico de la police te suit avec son projecteur. Abattu (avion de chasse), un autre revient 20 s après.
+- Vu : un policier à moins de 150 m sans immeuble entre vous (l'hélico : 260 m, par-dessus les immeubles).
+- Semer : caché 6 s → les étoiles clignotent, puis une s'éteint toutes les 5 s.
+- Attrapé : un policier à moins de 6 m pendant 2 s alors que tu es presque arrêté (ou à pied) →
+  retour au commissariat, à pied (2 voitures de police y sont garées…).
+- La base de données passe en version 11 (le plus d'étoiles, les arrestations, les fois où on a semé la police).
+
+## ✅ Critères de réussite (étape 45)
+- [ ] Emboutir doucement une voiture : 1 étoile ; à fond : 5 étoiles (sous la mini-carte).
+- [ ] Les voitures de police arrivent, sirène et gyrophare allumés.
+- [ ] À 5 étoiles, l'hélico de la police arrive avec son projecteur.
+- [ ] Se cacher loin derrière les immeubles : les étoiles clignotent puis s'éteignent.
+- [ ] S'arrêter à côté d'un policier : retour au commissariat.
+- [ ] En haut de la page : « version 14 ».
