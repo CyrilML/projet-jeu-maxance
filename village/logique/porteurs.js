@@ -21,7 +21,7 @@ window.Village = window.Village || {};
 Village.Porteurs = (function () {
   const C = Village.CONFIG;
   const radio = Village.Evenements;
-  const RESSOURCES = ["troncs", "planches", "pierres"];
+  const RESSOURCES = ["troncs", "planches", "pierres", "poissons", "viande"];
 
   function creerTous(monde) {
     const e = entrepot(monde);
@@ -65,6 +65,15 @@ Village.Porteurs = (function () {
           }
         }
       }
+      // Étape 49 : apporter les repas des ouvriers (2 en réserve dans chaque cabane)
+      if (b.etat === "pret") {
+        while (Village.Repas.manque(b) > 0) {
+          const quoi = disponible(monde, "poissons") >= disponible(monde, "viande") ? "poissons" : "viande";
+          if (disponible(monde, quoi) < 1) break;
+          b.enFile[quoi] = (b.enFile[quoi] || 0) + 1;
+          ajouter(monde, { sorte: "apporter", quoi, batiment: b, but: "repas" });
+        }
+      }
       // Apporter des troncs à la scierie
       if (b.type === "scierie" && b.etat === "pret") {
         while (b.entree + (b.enFile.troncs || 0) + (b.enRoute || 0) < C.entreeMax && disponible(monde, "troncs") >= 1) {
@@ -74,6 +83,9 @@ Village.Porteurs = (function () {
       }
     }
   }
+
+  // Les porteurs qui travaillent (pas ceux qui sont partis, ni ceux qui ont trop faim)
+  const actifs = (monde) => monde.porteurs.filter((p) => !p.parti);
 
   let prochainPapier = 1;
   function ajouter(monde, papier) {
@@ -121,7 +133,9 @@ Village.Porteurs = (function () {
     if (minuteurChef <= 0) { minuteurChef = 0.25; planifier(monde); }
 
     for (const p of monde.porteurs) {
+      if (p.parti) continue;
       if (p.etat === "attend") {
+        if (p.affame) continue; // ✍️ trop faim pour travailler
         // Prendre le premier papier de la file qu'on peut faire.
         while (monde.file.length) {
           const papier = monde.file.shift();
@@ -136,7 +150,8 @@ Village.Porteurs = (function () {
             // On prend l'objet dans l'entrepôt, et il n'est plus « promis ».
             monde.stock[papier.quoi]--;
             b.enFile[papier.quoi]--;
-            if (b.etat === "chantier") b.attendu[papier.quoi]--;
+            if (papier.but === "repas") b.repasEnRoute++;
+            else if (b.etat === "chantier") b.attendu[papier.quoi]--;
             else b.enRoute = (b.enRoute || 0) + 1;
             p.porte = papier.quoi;
           }
@@ -152,7 +167,8 @@ Village.Porteurs = (function () {
         // Arrivé au bâtiment
         if (papier.sorte === "apporter") {
           if (existe(monde, b)) {
-            if (b.etat === "chantier") b.livre[papier.quoi] = (b.livre[papier.quoi] || 0) + 1;
+            if (papier.but === "repas") { b.repas[papier.quoi]++; b.repasEnRoute--; }
+            else if (b.etat === "chantier") b.livre[papier.quoi] = (b.livre[papier.quoi] || 0) + 1;
             else { b.entree++; b.enRoute--; }
             radio.emettre("porteur-livre", { porteur: p.numero, quoi: papier.quoi, nom: Village.Batiments.TYPES[b.type].nom, batiment: b.numero });
             p.porte = null;
@@ -182,12 +198,12 @@ Village.Porteurs = (function () {
   // Pour la sauvegarde : ce que les porteurs ont dans les bras retourne là d'où il vient.
   // (On ne sauvegarde ni les porteurs ni la file : ils recommencent au rechargement.)
   function enCours(monde) {
-    const retour = { stock: { troncs: 0, planches: 0, pierres: 0 }, attendu: new Map() };
+    const retour = { stock: { troncs: 0, planches: 0, pierres: 0, poissons: 0, viande: 0 }, attendu: new Map() };
     for (const p of monde.porteurs) {
       if (!p.porte) continue;
       retour.stock[p.porte]++;
       const b = p.travail.batiment;
-      if (p.travail.sorte === "apporter" && p.etat === "aller" && b.etat === "chantier") {
+      if (p.travail.sorte === "apporter" && p.etat === "aller" && b.etat === "chantier" && p.travail.but !== "repas") {
         const a = retour.attendu.get(b) || {};
         a[p.porte] = (a[p.porte] || 0) + 1;
         retour.attendu.set(b, a);
@@ -196,5 +212,5 @@ Village.Porteurs = (function () {
     return retour;
   }
 
-  return { creerTous, disponible, promis, etape, enCours };
+  return { creerTous, disponible, promis, etape, enCours, actifs };
 })();

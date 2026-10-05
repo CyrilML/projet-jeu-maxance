@@ -25,10 +25,12 @@ Village.Batiments = (function () {
     forestier: { nom: "Maison du forestier", court: "Forestier", emoji: "🌱", metier: "forestier" },
     scierie: { nom: "Scierie", court: "Scierie", emoji: "🪚", metier: "scieur" },
     carriere: { nom: "Carrière de pierre", court: "Carrière", emoji: "⛏️", metier: "carrier" },
+    pecheur: { nom: "Cabane du pêcheur", court: "Pêcheur", emoji: "🎣", metier: "pêcheur" }, // étape 49
+    chasseur: { nom: "Cabane du chasseur", court: "Chasseur", emoji: "🏹", metier: "chasseur" }, // étape 49
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere"];
-  const NOMS_RESSOURCES = { troncs: "🪵 troncs", planches: "🟫 planches", pierres: "🪨 pierres" };
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur"];
+  const NOMS_RESSOURCES = { troncs: "🪵 troncs", planches: "🟫 planches", pierres: "🪨 pierres", poissons: "🐟 poissons", viande: "🍖 viande" };
 
   let prochainNumero = 1;
 
@@ -68,20 +70,24 @@ Village.Batiments = (function () {
       // Étape 48
       relie: undefined, // relié à l'entrepôt par une route ?
       sortie: etat.sortie || 0, // objets qui attendent devant la porte qu'un porteur les ramène
-      sortieQuoi: { bucheron: "troncs", carriere: "pierres", scierie: "planches" }[type] || null,
+      sortieQuoi: { bucheron: "troncs", carriere: "pierres", scierie: "planches", pecheur: "poissons", chasseur: "viande" }[type] || null,
       ramassage: 0, // combien de ces objets sont déjà sur un papier de la file
       entree: etat.entree || 0, // la scierie : les troncs en réserve
       enRoute: 0, // la scierie : les troncs qu'un porteur est en train d'apporter
       enFile: {}, // les livraisons « apporter » écrites dans la file pour ce bâtiment
       livre: Object.assign({}, etat.livre), // le chantier : les matériaux arrivés
       attendu: Object.assign({}, etat.attendu), // le chantier : les matériaux réservés, pas encore partis de l'entrepôt
+      // Étape 49
+      repas: Object.assign({ poissons: 0, viande: 0 }, etat.repas), // les repas gardés dans la cabane
+      repasEnRoute: 0, // les repas qu'un porteur est en train d'apporter
     };
     const i = l * monde.carte.colonnes + c;
     monde.batiments.push(b);
     monde.occupees.set(i, b);
     // Les fleurs et les buissons sont enlevés pour faire de la place.
     if (monde.carte.objet[i]) Village.Monde.changerObjet(monde, i, Village.Carte.OBJET.rien);
-    if (b.etat === "pret") embaucher(monde, b);
+    if (b.etat === "pret" && !etat.vide) embaucher(monde, b);
+    if (b.ouvrier && etat.faim) { b.ouvrier.faim = etat.faim; b.ouvrier.ventreVide = etat.ventreVide || 0; b.ouvrier.affame = !!etat.affame; }
     Village.Routes.recalculerReseau(monde);
     return b;
   }
@@ -116,6 +122,7 @@ Village.Batiments = (function () {
     monde.batiments.splice(monde.batiments.indexOf(b), 1);
     monde.occupees.delete(b.ligne * k.colonnes + b.colonne);
     if (b.ouvrier && b.ouvrier.cible) monde.reservees.delete(b.ouvrier.cible.ligne * k.colonnes + b.ouvrier.cible.colonne);
+    if (b.ouvrier && b.ouvrier.proie) b.ouvrier.proie.vise = false;
     // Les papiers de la file pour ce bâtiment sont jetés.
     monde.file = monde.file.filter((t) => t.batiment !== b);
     if (monde.selection === b) monde.selection = null;
@@ -163,6 +170,7 @@ Village.Batiments = (function () {
   // les planches attendent devant la porte (b.sortie).
   function scier(monde, b, dt) {
     const O = C.ouvriers;
+    if (!b.ouvrier || b.ouvrier.affame) return; // pas de scieur, ou il a trop faim (étape 49)
     if (!b.travail) {
       if (b.entree < 1) {
         if (!b.attendTronc) { b.attendTronc = true; radio.emettre("scierie-attend", { numero: b.numero, raison: "pas de tronc" }); }

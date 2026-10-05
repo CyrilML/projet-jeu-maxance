@@ -42,19 +42,27 @@ Village.Monde = (function () {
       file: [], // la file d'attente des livraisons
       outil: null, // "route" ou "demolir" quand on utilise un de ces outils
       routeDepart: null, // la première case touchée pour tracer une route
+      // Étape 49
+      horloge: 0, // secondes depuis le début de LA PARTIE (sauvegardé) : c'est lui qui fait les saisons
+      saison: null, // { nom, emoji, annee, avancement… } (voir logique/saisons.js)
+      animaux: [], // le gibier
+      partis: 0, // les habitants qui ont quitté le village (trop faim)
     };
     if (cameraSauvee) Object.assign(monde.camera, cameraSauvee);
     else centrerSurLeVillage(monde);
     borner(monde);
 
     if (partie) restaurer(monde, partie);
-    else {
+    if (!partie || !partie.animaux) Village.Animaux.peupler(monde, Village.Hasard.creer(graine + 5).suivant);
+    if (!partie) {
       // Une nouvelle partie : l'entrepôt est déjà construit, à côté du feu de camp.
       const v = carte.village;
       Village.Batiments.creer(monde, "entrepot", v.colonne + 2, v.ligne - 1, 1);
     }
     Village.Porteurs.creerTous(monde);
+    if (partie && partie.porteurs) partie.porteurs.forEach((d, n) => { if (monde.porteurs[n]) Object.assign(monde.porteurs[n], d); });
     Village.Routes.recalculerReseau(monde);
+    monde.saison = Village.Saisons.lire(monde.horloge);
     radio.emettre("carte-inventee", {
       graine, colonnes: carte.colonnes, lignes: carte.lignes, compte: carte.compte, village: carte.village, rivieres: carte.rivieres.length,
       reprise: !!partie, batiments: monde.batiments.length, modifs: monde.modifs.size, routes: Village.Routes.compter(monde),
@@ -75,6 +83,9 @@ Village.Monde = (function () {
     Village.Carte.compter(k);
     if (partie.stock) Object.assign(monde.stock, partie.stock);
     for (const i of partie.routes || []) monde.route[i] = 1;
+    monde.horloge = partie.horloge || 0;
+    monde.partis = partie.partis || 0;
+    for (const [x, y, sorte] of partie.animaux || []) Village.Animaux.creer(monde, x, y, sorte);
     for (const b of partie.batiments || []) {
       const nouveau = Village.Batiments.creer(monde, b.type, b.colonne, b.ligne, b.progres, b);
       nouveau.produits = b.produits || 0;
@@ -120,10 +131,14 @@ Village.Monde = (function () {
   // Un pas de temps. `intentions` vient de main.js : { dx, dy, zoom, souris, village, construire, outil, annuler }.
   function etape(monde, dt, intentions) {
     monde.temps += dt;
+    monde.horloge += dt;
+    Village.Saisons.etape(monde);
     camera(monde, dt, intentions);
     joueur(monde, intentions);
     Village.Batiments.etape(monde, dt);
     Village.Porteurs.etape(monde, dt);
+    Village.Animaux.etape(monde, dt);
+    Village.Repas.etape(monde, dt);
     nature(monde, dt);
   }
 
@@ -233,8 +248,10 @@ Village.Monde = (function () {
   }
 
   // Les pousses grandissent. Au bout de 60 s, elles deviennent de vrais arbres.
+  // En hiver, rien ne pousse (étape 49).
   function nature(monde, dt) {
     const O = Village.Carte.OBJET, k = monde.carte;
+    if (monde.saison && monde.saison.hiver) return;
     for (const [i, age] of monde.pousses) {
       const nouvelAge = age + dt;
       if (nouvelAge < C.nature.croissance) { monde.pousses.set(i, nouvelAge); continue; }

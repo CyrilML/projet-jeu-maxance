@@ -12,7 +12,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 3,
+  version: 4,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 47 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -60,7 +60,7 @@ Village.CONFIG = {
   },
 
   // Étape 47 : ✍️ le stock de départ, rangé dans l'entrepôt.
-  depart: { troncs: 0, planches: 20, pierres: 10 },
+  depart: { troncs: 0, planches: 20, pierres: 10, poissons: 6, viande: 4 }, // étape 49 : un peu de nourriture pour commencer
 
   // Étape 47 : les bâtiments. Depuis l'étape 48, le coût est RÉSERVÉ quand on pose le chantier,
   // puis les porteurs apportent les matériaux un par un.
@@ -70,6 +70,8 @@ Village.CONFIG = {
     forestier: { cout: { planches: 3 }, construction: 8, rayon: 5 },
     scierie: { cout: { planches: 4, pierres: 2 }, construction: 12 },
     carriere: { cout: { planches: 3 }, construction: 8, rayon: 6 },
+    pecheur: { cout: { planches: 3 }, construction: 8, rayon: 6 }, // étape 49
+    chasseur: { cout: { planches: 3 }, construction: 8, rayon: 8 }, // étape 49
   },
 
   ouvriers: {
@@ -79,6 +81,8 @@ Village.CONFIG = {
     tailler: 5, // s pour tailler une pierre
     repos: 2, // s de pause entre deux voyages
     scier: 6, // s pour scier 1 tronc
+    pecher: 8, // s pour pêcher 1 poisson (étape 49)
+    chasser: 4, // s pour chasser 1 gibier (étape 49)
     planchesParTronc: 2, // la scierie fait 2 planches avec 1 tronc
     attente: 3, // s avant de chercher à nouveau quand il n'y a rien à faire
   },
@@ -94,6 +98,27 @@ Village.CONFIG = {
   },
   sortieMax: 4, // objets qui peuvent attendre devant un bâtiment (au-delà, l'ouvrier attend)
   entreeMax: 2, // troncs en réserve à la scierie
+
+  // Étape 49 : ✍️ une année dure 10 minutes. 4 saisons de 2 min 30 : printemps, été, automne, hiver.
+  saisons: {
+    dureeAnnee: 600, // s
+  },
+
+  // Étape 49 : les repas. Chaque ouvrier et chaque porteur mange 1 poisson ou 1 morceau de viande.
+  repas: {
+    intervalle: 120, // s entre deux repas (Maxance n'a pas choisi : conseil de Claude, 2 minutes)
+    tropFaim: 150, // ✍️ s le ventre vide avant de quitter le village (une saison)
+    retour: 30, // s avant qu'un nouvel habitant arrive, quand il y a de nouveau à manger
+    reserve: 2, // repas gardés dans chaque cabane (les porteurs les apportent)
+  },
+
+  // Étape 49 : le gibier (cerfs et lapins) qui se promène dans les forêts.
+  animaux: {
+    depart: 24, // au début de la partie
+    maximum: 40,
+    naissance: 20, // s entre deux naissances (pas en hiver)
+    vitesse: 0.7, // cases par seconde
+  },
 
   nature: {
     croissance: 60, // s pour qu'une pousse devienne un arbre

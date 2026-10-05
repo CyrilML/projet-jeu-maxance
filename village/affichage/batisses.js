@@ -21,7 +21,21 @@ Village.Batisses = (function () {
     forestier: { a: 19, h: 14, toit: 15, murG: "#efdcb4", murD: "#cfb68a", toitA: "#4fb556", toitB: "#3a8e3e" },
     scierie: { a: 22, h: 16, toit: 15, murG: "#c48f5d", murD: "#a2703f", toitA: "#6f86b3", toitB: "#556b94" },
     carriere: { a: 19, h: 13, toit: 13, murG: "#b5b5b0", murD: "#90908b", toitA: "#9a6a3c", toitB: "#7c522b", blocs: true },
+    pecheur: { a: 18, h: 13, toit: 14, murG: "#e3c896", murD: "#c2a46f", toitA: "#3fa7b5", toitB: "#2d8592" }, // étape 49
+    chasseur: { a: 18, h: 13, toit: 14, murG: "#8e6038", murD: "#6f4826", toitA: "#6f8a3a", toitB: "#56702c", rondins: true },
   };
+
+  // Un poisson ou un morceau de viande (pour les piles et pour ce qu'on porte)
+  function poisson(ctx, x, y) {
+    ctx.beginPath(); ctx.ellipse(x, y, 4.5, 2.4, 0, 0, TOUR); ctx.fillStyle = "#7fb8e0"; ctx.fill(); contour(ctx, 1);
+    forme(ctx, [[x + 4, y], [x + 7.5, y - 2.5], [x + 7.5, y + 2.5]], "#5a9cc8");
+    ctx.fillStyle = CONTOUR; ctx.beginPath(); ctx.arc(x - 2.5, y - 0.5, 0.7, 0, TOUR); ctx.fill();
+  }
+  function viande(ctx, x, y) {
+    ctx.strokeStyle = "#f3ead8"; ctx.lineWidth = 2.2; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(x + 2, y); ctx.lineTo(x + 6.5, y - 2.5); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(x - 1, y + 0.5, 4, 3, -0.4, 0, TOUR); ctx.fillStyle = "#b4512e"; ctx.fill(); contour(ctx, 1);
+  }
 
   function contour(ctx, largeur) {
     ctx.strokeStyle = CONTOUR;
@@ -104,6 +118,8 @@ Village.Batisses = (function () {
     for (let k = 0; k < nombre; k++) {
       const px = x + (k % 3) * 6 - (Math.floor(k / 3) % 2) * 3, py = y - Math.floor(k / 3) * 5;
       if (sorte === "rondin") { rond(ctx, px, py, 3, "#c78b4a"); ctx.fillStyle = "#8a5a2b"; ctx.beginPath(); ctx.arc(px, py, 1.2, 0, TOUR); ctx.fill(); }
+      else if (sorte === "poisson") poisson(ctx, px, py);
+      else if (sorte === "viande") viande(ctx, px, py);
       else if (sorte === "planche") forme(ctx, [[px - 5, py], [px + 3, py - 3], [px + 6, py - 2], [px - 2, py + 1]], "#d9a866");
       else rond(ctx, px, py, 3.2, "#a3a8ad");
     }
@@ -166,10 +182,41 @@ Village.Batisses = (function () {
         ctx.beginPath(); ctx.moveTo(x - 22, y - 4); ctx.quadraticCurveTo(x - 16, y - 9, x - 10, y - 5); ctx.stroke();
         break;
     }
+    if (b.type === "pecheur") {
+      pile(ctx, x + 14, y + 9, "poisson", b.sortie);
+      // Un filet de pêche accroché au mur
+      ctx.strokeStyle = "rgba(60, 40, 20, .7)"; ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let k = 0; k < 4; k++) { ctx.moveTo(x + 4 + k * 3, y - 3 + k * 1.5); ctx.lineTo(x + 4 + k * 3, y - 11 + k * 1.5); }
+      for (let k = 0; k < 3; k++) { ctx.moveTo(x + 4, y - 4 - k * 3); ctx.lineTo(x + 13, y + 0.5 - k * 3); }
+      ctx.stroke();
+    } else if (b.type === "chasseur") {
+      pile(ctx, x + 14, y + 9, "viande", b.sortie);
+      // Des bois de cerf au-dessus de la porte
+      ctx.strokeStyle = "#e9dcc0"; ctx.lineWidth = 1.8; ctx.lineCap = "round";
+      const bx = x + 4, by = y - m.h - 2;
+      ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx - 6, by - 7); ctx.moveTo(bx - 3, by - 3.5); ctx.lineTo(bx - 7, by - 2); ctx.moveTo(bx, by); ctx.lineTo(bx + 6, by - 7); ctx.moveTo(bx + 3, by - 3.5); ctx.lineTo(bx + 7, by - 2); ctx.stroke();
+    }
     // Un petit panneau avec l'emoji du métier, au-dessus de la porte
     if (b.type !== "entrepot") enseigne(ctx, x - m.a * 0.45, y - 8 - m.h * 0.2, Village.Batiments.TYPES[b.type].emoji);
     if (travaille && b.type === "carriere") poussiere(ctx, x, y, t);
     if (!b.relie) panneauSansRoute(ctx, x, y - m.h - m.toit - 16, t);
+    // Étape 49 : l'ouvrier a trop faim, ou il est parti (la cabane est vide)
+    else if (b.ouvrier && b.ouvrier.affame) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "🍽️");
+    else if (!b.ouvrier && Village.Batiments.TYPES[b.type].metier) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "vide");
+  }
+
+  // Une bulle de pensée, comme dans les bandes dessinées
+  function bulleDePensee(ctx, x, y, t, contenu) {
+    const s = Math.sin(t * 2) * 1.5;
+    ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "#5a4220"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x - 5, y + 13, 2, 0, TOUR); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x - 2, y + 8, 3, 0, TOUR); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(x + 2, y - 3 + s, contenu === "vide" ? 16 : 11, 9, 0, 0, TOUR); ctx.fill(); ctx.stroke();
+    ctx.font = (contenu === "vide" ? "bold 9px 'Trebuchet MS', sans-serif" : "11px sans-serif");
+    ctx.fillStyle = "#c0392b"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(contenu, x + 2, y - 2.5 + s);
+    ctx.textAlign = "left";
   }
 
   // ✍️ Pas de route jusqu'à l'entrepôt : un panneau qui saute, au-dessus du toit (un chemin barré).
@@ -263,9 +310,11 @@ Village.Batisses = (function () {
     bucheron: { habit: "#d8433a", chapeau: "#b52f27", outil: "hache" },
     forestier: { habit: "#4f9e3e", chapeau: "#3a7a2c", outil: "pelle" },
     carriere: { habit: "#5a7bb5", chapeau: "#f2c230", outil: "pioche" },
+    pecheur: { habit: "#f2c230", chapeau: "#e0a81e", outil: "canne" }, // le ciré jaune du pêcheur
+    chasseur: { habit: "#7a5a2e", chapeau: "#4f6b2a", outil: "arc" },
   };
 
-  function dessinerOuvrier(ctx, type, o, x, y, t) {
+  function dessinerOuvrier(ctx, type, o, x, y, t, hiver) {
     const tenue = TENUES[type];
     const marche = o.etat === "aller" || o.etat === "revenir";
     const travaille = o.etat === "travailler";
@@ -287,6 +336,24 @@ Village.Batisses = (function () {
     ctx.fillStyle = CONTOUR; ctx.beginPath(); ctx.arc(1.8, -19.5, 0.8, 0, TOUR); ctx.fill(); // l'œil
     // Le chapeau (un casque jaune pour le carrier)
     ctx.beginPath(); ctx.ellipse(0, -21.5, 4.8, 2.6, 0, Math.PI, TOUR); ctx.fillStyle = tenue.chapeau; ctx.fill(); contour(ctx, 1.2);
+    // ❄️ En hiver, une écharpe rouge
+    if (hiver) { ctx.fillStyle = "#e8402e"; ctx.fillRect(-4, -15.5, 8, 2.5); ctx.fillRect(-4, -15, 2.5, 6); }
+    if (tenue.outil === "canne" || tenue.outil === "arc") {
+      // La canne à pêche (tendue vers l'eau quand il pêche) ou l'arc
+      ctx.save(); ctx.translate(3, -12);
+      if (tenue.outil === "canne") {
+        ctx.rotate(travaille ? 0.9 : 0.3);
+        ctx.strokeStyle = "#8a5a2b"; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -16); ctx.stroke();
+      } else {
+        const tir = travaille ? Math.min(1, (Math.sin(t * 3) + 1) * 0.8) : 0;
+        ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.arc(2, -3, 7, -1.3, 1.3); ctx.stroke(); // le bois de l'arc
+        ctx.strokeStyle = "#e9dcc0"; ctx.lineWidth = 0.8;
+        ctx.beginPath(); ctx.moveTo(2 + Math.cos(-1.3) * 7, -3 + Math.sin(-1.3) * 7); ctx.lineTo(2 - tir * 3, -3); ctx.lineTo(2 + Math.cos(1.3) * 7, -3 + Math.sin(1.3) * 7); ctx.stroke(); // la corde
+      }
+      ctx.restore();
+    } else {
     // L'outil, qui frappe quand il travaille
     const angle = travaille ? -1.2 + Math.abs(Math.sin(t * 6)) * 1.8 : 0.5;
     ctx.save(); ctx.translate(3, -11); ctx.rotate(angle);
@@ -299,6 +366,7 @@ Village.Batisses = (function () {
     else { ctx.moveTo(-5, -10); ctx.quadraticCurveTo(0, -14, 5, -10); ctx.lineTo(0, -12); }
     ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.restore();
+    }
     // Ce qu'il rapporte, sur l'épaule
     if (o.porte === "troncs") {
       ctx.fillStyle = "#b07a40"; ctx.beginPath();
@@ -307,6 +375,41 @@ Village.Batisses = (function () {
       rond(ctx, 7, -15.7, 2.3, "#d9a866");
     } else if (o.porte === "pierres") {
       rond(ctx, -1, -24.5, 3.6, "#a3a8ad");
+    } else if (o.porte === "poissons") poisson(ctx, -4, -12);
+    else if (o.porte === "viande") viande(ctx, -4, -12);
+    ctx.restore();
+  }
+
+  // ---------------------------------------------------------------- un animal (étape 49)
+  // Un cerf (brun, avec ses bois) ou un lapin (gris, longues oreilles). En hiver, le lapin devient blanc.
+  function dessinerAnimal(ctx, a, x, y, t, hiver) {
+    const marche = a.etat === "promener";
+    const saut = a.sorte === "lapin" && marche ? Math.abs(Math.sin(t * 12 + a.numero)) * 4 : 0;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(a.direction, 1);
+    ctx.fillStyle = "rgba(20, 40, 10, .22)";
+    ctx.beginPath(); ctx.ellipse(0, 1, a.sorte === "cerf" ? 8 : 4.5, 2.5, 0, 0, TOUR); ctx.fill();
+    if (a.sorte === "cerf") {
+      const pas = marche ? Math.sin(t * 10 + a.numero) * 2 : 0;
+      ctx.strokeStyle = "#5a3a1e"; ctx.lineWidth = 1.8; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(-5, -7); ctx.lineTo(-5 + pas, 0); ctx.moveTo(-2, -7); ctx.lineTo(-2 - pas, 0); ctx.moveTo(3, -7); ctx.lineTo(3 + pas, 0); ctx.moveTo(6, -7); ctx.lineTo(6 - pas, 0); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0, -9, 8, 4.5, 0, 0, TOUR); ctx.fillStyle = "#b07a45"; ctx.fill(); contour(ctx, 1.4);
+      // le cou et la tête (la tête se baisse quand il broute)
+      const baisse = marche ? 0 : 5 + Math.sin(t * 2 + a.numero) * 1.5;
+      ctx.beginPath(); ctx.ellipse(8, -14 + baisse, 3.2, 2.6, 0.3, 0, TOUR); ctx.fillStyle = "#b07a45"; ctx.fill(); contour(ctx, 1.2);
+      ctx.fillStyle = "#f3ead8"; ctx.beginPath(); ctx.arc(-7, -10, 1.5, 0, TOUR); ctx.fill(); // la queue blanche
+      ctx.strokeStyle = "#e9dcc0"; ctx.lineWidth = 1.3;
+      ctx.beginPath(); ctx.moveTo(8, -16 + baisse); ctx.lineTo(6, -22 + baisse); ctx.lineTo(4, -24 + baisse); ctx.moveTo(6, -22 + baisse); ctx.lineTo(9, -24 + baisse); ctx.stroke();
+      ctx.fillStyle = CONTOUR; ctx.beginPath(); ctx.arc(9.5, -14.5 + baisse, 0.7, 0, TOUR); ctx.fill();
+    } else {
+      const couleur = hiver ? "#f4f6fa" : "#9a8f84";
+      ctx.translate(0, -saut);
+      ctx.beginPath(); ctx.ellipse(0, -4, 4.5, 3.5, 0, 0, TOUR); ctx.fillStyle = couleur; ctx.fill(); contour(ctx, 1.2);
+      ctx.beginPath(); ctx.arc(4, -7, 2.6, 0, TOUR); ctx.fillStyle = couleur; ctx.fill(); contour(ctx, 1.2);
+      ctx.beginPath(); ctx.ellipse(3.5, -12, 1, 3, -0.2, 0, TOUR); ctx.ellipse(5.2, -11.5, 1, 3, 0.2, 0, TOUR); ctx.fillStyle = couleur; ctx.fill(); contour(ctx, 1);
+      ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(-4.5, -4, 1.6, 0, TOUR); ctx.fill();
+      ctx.fillStyle = CONTOUR; ctx.beginPath(); ctx.arc(5, -7.5, 0.6, 0, TOUR); ctx.fill();
     }
     ctx.restore();
   }
@@ -333,7 +436,9 @@ Village.Batisses = (function () {
     if (p.porte) { ctx.moveTo(-3, -13); ctx.lineTo(-3, -25); ctx.moveTo(3, -13); ctx.lineTo(3, -25); }
     else { ctx.moveTo(-4, -12); ctx.lineTo(-5 - pas, -6); ctx.moveTo(4, -12); ctx.lineTo(5 + pas, -6); }
     ctx.stroke();
-    if (p.porte === "troncs") { ctx.fillStyle = "#b07a40"; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(-8, -30, 16, 5, 2); else ctx.rect(-8, -30, 16, 5); ctx.fill(); contour(ctx, 1.2); rond(ctx, 8, -27.5, 2.5, "#d9a866"); }
+    if (p.porte === "poissons") poisson(ctx, 0, -29);
+    else if (p.porte === "viande") viande(ctx, 0, -29);
+    else if (p.porte === "troncs") { ctx.fillStyle = "#b07a40"; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(-8, -30, 16, 5, 2); else ctx.rect(-8, -30, 16, 5); ctx.fill(); contour(ctx, 1.2); rond(ctx, 8, -27.5, 2.5, "#d9a866"); }
     else if (p.porte === "planches") { forme(ctx, [[-9, -27], [9, -29], [9, -26], [-9, -24]], "#d9a866"); }
     else if (p.porte === "pierres") { rond(ctx, 0, -29, 4, "#a3a8ad"); }
     ctx.restore();
@@ -370,5 +475,5 @@ Village.Batisses = (function () {
     ctx.globalAlpha = 1;
   }
 
-  return { dessinerBatiment, dessinerOuvrier, dessinerPorteur, dessinerPousse, dessinerFantome, iconeRoute };
+  return { dessinerBatiment, dessinerOuvrier, dessinerPorteur, dessinerAnimal, dessinerPousse, dessinerFantome, iconeRoute };
 })();

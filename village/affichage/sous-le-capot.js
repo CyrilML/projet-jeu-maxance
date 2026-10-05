@@ -12,7 +12,7 @@ Village.SousLeCapot = (function () {
 
   // Le message du journal pour chaque événement de la radio.
   const MESSAGES = {
-    lecture: (d) => (d.trouve ? "📂 Base de données lue : on reprend la carte n° " + d.graine + (d.converti ? " (ancienne version " + d.depuis + ", convertie en version 3" + (d.depuis < 3 ? " : construis des routes !" : "") + ")" : "") : "📂 Base de données vide : première visite sur cet ordinateur"),
+    lecture: (d) => (d.trouve ? "📂 Base de données lue : on reprend la carte n° " + d.graine + (d.converti ? " (ancienne version " + d.depuis + ", convertie en version " + d.vers + (d.depuis < 3 ? " : construis des routes !" : "") + (d.depuis < 4 ? " : un peu de nourriture est offerte" : "") + ")" : "") : "📂 Base de données vide : première visite sur cet ordinateur"),
     "carte-inventee": (d) =>
       "🗺️ Carte n° " + d.graine + " inventée : " + d.colonnes + " × " + d.lignes + " cases, " + nombre(d.compte.arbres) + " arbres, " +
       d.compte.rochers + " rochers, " + d.compte.montagnes + " montagnes, " + d.rivieres + " rivière(s) · filons : " +
@@ -55,11 +55,21 @@ Village.SousLeCapot = (function () {
     "porteur-part": (d) => "🚚 Porteur " + d.porteur + " prend le papier : " + (d.sorte === "ramener" ? "va chercher " + emo(d.quoi) + " chez " : "apporte " + emo(d.quoi) + " à ") + d.nom + " n° " + d.batiment + " (" + d.pas + " pas de route) · encore " + d.file + " dans la file",
     "porteur-livre": (d) => "🤲 Porteur " + d.porteur + " a livré " + emo(d.quoi) + " à " + d.nom + " n° " + d.batiment,
     "arrivee-entrepot": (d) => "🏠 Porteur " + d.porteur + " range " + emo(d.quoi) + " dans l'entrepôt → " + d.stock + " en stock",
+    // Étape 49
+    saison: (d) => d.emoji + " Nouvelle saison : " + d.nom + " (année " + d.annee + ")" + (d.hiver ? " · les lacs gèlent, rien ne pousse, aucun animal ne naît" : ""),
+    "poisson-peche": (d) => "🎣 Poisson pêché en (" + d.colonne + ", " + d.ligne + ")" + (d.glace ? " par un trou dans la glace ❄️" : ""),
+    "gibier-chasse": (d) => "🏹 " + (d.sorte === "cerf" ? "Cerf" : "Lapin") + " chassé en (" + d.colonne + ", " + d.ligne + ")" + (d.neige ? " dans la neige ❄️" : "") + " · il reste " + d.animaux + " animaux",
+    "animal-ne": (d) => (d.sorte === "cerf" ? "🦌 Un faon" : "🐇 Un lapereau") + " est né en (" + d.colonne + ", " + d.ligne + ") · " + d.total + " animaux",
+    repas: (d) => "😋 " + d.qui + " mange " + emo(d.quoi),
+    affame: (d) => "🍽️ " + d.qui + " a faim et il n'y a rien à manger : il arrête de travailler !",
+    "plus-faim": (d) => "😊 " + d.qui + " a enfin mangé : il se remet au travail",
+    "habitant-part": (d) => "😢 " + d.qui + " quitte le village : il avait trop faim depuis " + Village.CONFIG.repas.tropFaim + " s",
+    "habitant-arrive": (d) => "🙋 " + d.qui + " arrive au village (il y a de nouveau à manger)",
     "plein-ecran": (d) => (d.actif ? "⛶ Plein écran" : "🗗 Fin du plein écran"),
     "base-effacee": () => "🗑️ Base de données effacée",
   };
 
-  const emo = (r) => ({ troncs: "🪵 1 tronc", planches: "🟫 1 planche", pierres: "🪨 1 pierre" }[r] || r);
+  const emo = (r) => ({ troncs: "🪵 1 tronc", planches: "🟫 1 planche", pierres: "🪨 1 pierre", poissons: "🐟 1 poisson", viande: "🍖 1 morceau de viande" }[r] || r);
   const cout = (c) => Object.entries(c).map(([r, n]) => n + " " + Village.Batiments.NOMS_RESSOURCES[r]).join(" + ") || "gratuit";
 
   let monde = null, mesures = null, journal, etat, base, cle;
@@ -114,6 +124,22 @@ Village.SousLeCapot = (function () {
     h += ligne("rochers · montagnes", k.compte.rochers + " · " + k.compte.montagnes);
     h += ligne("filons ⚫ charbon · 🟠 fer · 🟡 or", k.compte.charbon + " · " + k.compte.fer + " · " + k.compte.or);
     h += ligne("place du village", "(" + k.village.colonne + ", " + k.village.ligne + ")");
+    const sa = monde.saison;
+    if (sa) {
+      h += groupe("🗓️ Les saisons (une année = " + Village.CONFIG.saisons.dureeAnnee + " s)");
+      h += ligne("horloge de la partie", virgule(monde.horloge, 0) + " s");
+      h += ligne("moment dans l'année = horloge % " + Village.CONFIG.saisons.dureeAnnee, virgule(monde.horloge % Village.CONFIG.saisons.dureeAnnee, 0) + " s");
+      h += ligne("saison", sa.emoji + " " + sa.nom + " (n° " + sa.numero + ") · année " + sa.annee);
+      h += ligne("prochaine saison dans", Math.ceil(sa.reste) + " s");
+    }
+    h += groupe("🍽️ La nourriture et les habitants");
+    h += ligne("🐟 poissons · 🍖 viande", monde.stock.poissons + " · " + monde.stock.viande);
+    let affames = 0, habitants = 0;
+    for (const b of monde.batiments) if (b.ouvrier) { habitants++; if (b.ouvrier.affame) affames++; }
+    for (const p of monde.porteurs) if (!p.parti) { habitants++; if (p.affame) affames++; }
+    h += ligne("habitants · affamés · partis", habitants + " · " + affames + " · " + monde.partis);
+    h += ligne("repas mangés par minute (environ)", virgule((habitants * 60) / Village.CONFIG.repas.intervalle, 1));
+    h += ligne("🦌 cerfs · 🐇 lapins", monde.animaux.filter((a) => a.sorte === "cerf").length + " · " + monde.animaux.filter((a) => a.sorte === "lapin").length);
     h += groupe("📦 Le stock de l'entrepôt");
     h += ligne("🪵 troncs · 🟫 planches · 🪨 pierres", monde.stock.troncs + " · " + monde.stock.planches + " · " + monde.stock.pierres);
     const Po = Village.Porteurs;
@@ -126,13 +152,16 @@ Village.SousLeCapot = (function () {
       if (b.ouvrier && b.ouvrier.porte) etatB += " · porte des " + b.ouvrier.porte;
       if (b.etat === "chantier") { const m = Village.Batiments.materiaux(b); etatB += " · " + m.arrives + "/" + m.total + " arrivés"; }
       if (b.sortie) etatB += " · " + b.sortie + " devant";
+      if (b.ouvrier && b.etat === "pret") etatB += " · faim " + Math.floor(b.ouvrier.faim || 0) + " s" + (b.ouvrier.affame ? " 🍽️" : "");
+      else if (b.etat === "pret" && Village.Batiments.TYPES[b.type].metier) etatB += " · 😢 vide";
       h += ligne(T.emoji + " n° " + b.numero + " (" + b.colonne + ", " + b.ligne + ")" + (b.relie ? "" : " 🛤️❌"), etatB);
     }
     h += groupe("🚚 Les porteurs et la file d'attente");
     h += ligne("cases de route · reliées à l'entrepôt", Village.Routes.compter(monde) + " · " + monde.reseau.size);
     for (const p of monde.porteurs) {
       const t = p.travail;
-      h += ligne("porteur " + p.numero, p.etat === "attend" ? "attend à l'entrepôt" : (p.etat === "aller" ? "va " : "revient ") + (t.sorte === "ramener" ? "(ramener " : "(apporter ") + t.quoi + ")" + (p.porte ? " · porte des " + p.porte : ""));
+      if (p.parti) { h += ligne("porteur " + p.numero, "😢 parti (trop faim)"); continue; }
+      h += ligne("porteur " + p.numero + " · faim " + Math.floor(p.faim || 0) + " s" + (p.affame ? " 🍽️" : ""), p.etat === "attend" ? (p.affame ? "a trop faim pour travailler" : "attend à l'entrepôt") : (p.etat === "aller" ? "va " : "revient ") + (t.sorte === "ramener" ? "(ramener " : "(apporter ") + t.quoi + ")" + (p.porte ? " · porte des " + p.porte : ""));
     }
     h += ligne("papiers dans la file", monde.file.length);
     monde.file.slice(0, 5).forEach((t, n) => {

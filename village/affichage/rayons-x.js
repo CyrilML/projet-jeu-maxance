@@ -10,7 +10,8 @@
 //   - (étape 47) la zone de travail de chaque ouvrier (jusqu'où va la « tache d'encre »), son chemin,
 //     son état (sa case dans la machine à états), et les cases réservées (croix rouges) ;
 //   - (étape 48) les routes : un point vert si elle est reliée à l'entrepôt, rouge sinon ;
-//     et le chemin de chaque porteur, en violet.
+//     et le chemin de chaque porteur, en violet ;
+//   - (étape 49) le gibier et son état (rouge = visé par un chasseur), la faim de chaque ouvrier.
 
 window.Village = window.Village || {};
 
@@ -136,6 +137,20 @@ Village.RayonsX = (function () {
       const p = point(porteur.x, porteur.y);
       ctx.fillStyle = "#c9b8ff"; ctx.textAlign = "center";
       ctx.fillText("porteur " + porteur.numero + " · " + porteur.etat, p.x, p.y - 36 / Math.min(z, 1.4));
+      ctx.textAlign = "left";
+    }
+    // Étape 49 : le gibier (cercle rouge = visé par un chasseur) et la faim de chaque ouvrier
+    for (const a of monde.animaux) {
+      const p = point(a.x, a.y);
+      ctx.strokeStyle = a.vise ? "#ff4b3e" : "rgba(255, 255, 255, .7)"; ctx.lineWidth = 1.5 / z;
+      ctx.beginPath(); ctx.arc(p.x, p.y - 6, 10, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = "#ffffff"; ctx.textAlign = "center"; ctx.fillText(a.etat + (a.vise ? " (visé)" : ""), p.x, p.y - 20); ctx.textAlign = "left";
+    }
+    for (const bat of monde.batiments) {
+      if (!bat.ouvrier || bat.etat !== "pret") continue;
+      const p = point(bat.colonne + 0.5, bat.ligne + 0.5);
+      ctx.fillStyle = bat.ouvrier.affame ? "#ff6b5b" : "#ffd98a"; ctx.textAlign = "center";
+      ctx.fillText("faim " + Math.floor(bat.ouvrier.faim || 0) + " / " + C.repas.intervalle + " s", p.x, p.y + 18 / Math.min(z, 1.4));
       ctx.textAlign = "left";
     }
     for (const i of monde.reservees) {

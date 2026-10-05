@@ -24,7 +24,8 @@ pas de serveur, pas d'installation.
   en vue de biais et en style dessin animé, jouable au doigt sur téléphone (pincer pour zoomer, plein écran ⛶).
   Une carte inventée au hasard (forêts, rivières, rochers, montagnes avec des filons de charbon, de fer et d'or),
   et la première chaîne de production : bûcheron, forestier, scierie, carrière (touches 1 à 4 ou boutons en bas),
-  reliés à l'entrepôt par des routes (R) où marchent les porteurs.
+  reliés à l'entrepôt par des routes (R) où marchent les porteurs. Pêcheur (5) et chasseur (6) nourrissent les habitants,
+  et les 4 saisons passent en 10 minutes (lacs gelés et neige en hiver).
   G = nouvelle carte, H = retour au village, X = rayons X, Suppr = démolir, Échap = annuler.
 
 Dans le jeu : ← → (ou Q D) pour bouger, Espace / ↑ / Z pour sauter.

@@ -50,6 +50,22 @@ Village.Ouvriers = (function () {
       cherche: (monde, i) => monde.carte.objet[i] === O.rocher && monde.carte.reste[i] > 0 && !monde.reservees.has(i),
       quoi: "un rocher",
     },
+    // Étape 49 : le pêcheur cherche une case d'EAU (il s'arrêtera sur la berge, juste avant).
+    // ✍️ En hiver, l'eau est gelée : il fait un trou dans la glace, et il pêche quand même.
+    pecheur: {
+      duree: () => C.ouvriers.pecher,
+      cherche: (monde, i) => {
+        const t = monde.carte.terrain[i];
+        return (t === T.eau || t === T.eauProfonde) && !monde.reservees.has(i);
+      },
+      quoi: "de l'eau",
+    },
+    // Étape 49 : le chasseur cherche une case où il y a un animal qui n'est pas déjà visé.
+    chasseur: {
+      duree: () => C.ouvriers.chasser,
+      cherche: (monde, i) => !!Village.Animaux.surLaCase(monde, i % monde.carte.colonnes, Math.floor(i / monde.carte.colonnes)),
+      quoi: "du gibier",
+    },
   };
 
   const NOMS_ETATS = {
@@ -61,6 +77,7 @@ Village.Ouvriers = (function () {
     attendre: "n'a rien à faire",
     bloque: "est bloqué : pas de route jusqu'à l'entrepôt",
     plein: "attend un porteur (devant la porte, c'est plein)",
+    affame: "a trop faim pour travailler",
   };
 
   function creer(b) {
@@ -102,8 +119,11 @@ Village.Ouvriers = (function () {
       case "attendre":
       case "bloque":
       case "plein":
+      case "affame":
         o.minuteur -= dt;
         if (o.minuteur > 0) return;
+        // ✍️ Le ventre vide : il ne travaille plus (étape 49).
+        if (o.affame) { changer(o, "affame", 0.5); return; }
         // ✍️ Pas relié à l'entrepôt : on ne travaille pas.
         if (!b.relie) { if (o.etat !== "bloque") radio.emettre("ouvrier-bloque", { numero: b.numero, nom: Village.Batiments.TYPES[b.type].nom }); changer(o, "bloque", 0.5); return; }
         if (b.sortieQuoi && b.sortie >= C.sortieMax) { changer(o, "plein", 0.5); return; }
@@ -127,7 +147,11 @@ Village.Ouvriers = (function () {
         o.dejaPrevenu = false;
         const fin = r.chemin[r.chemin.length - 1];
         o.cible = fin;
-        monde.reservees.add(fin.ligne * carte.colonnes + fin.colonne);
+        if (b.type === "chasseur") {
+          // L'animal visé ne bouge plus.
+          o.proie = Village.Animaux.surLaCase(monde, fin.colonne, fin.ligne);
+          o.proie.vise = true;
+        } else monde.reservees.add(fin.ligne * carte.colonnes + fin.colonne);
         // Les points du chemin = le milieu de chaque case. Le dernier point s'arrête un peu AVANT
         // le milieu de la case visée : on ne se met pas dans le tronc de l'arbre !
         const points = r.chemin.map((k) => ({ x: k.colonne + 0.5, y: k.ligne + 0.5 }));
@@ -185,6 +209,16 @@ Village.Ouvriers = (function () {
         b.produits++;
         radio.emettre("pousse-plantee", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, pousses: monde.pousses.size });
       }
+    } else if (b.type === "pecheur") {
+      o.porte = "poissons";
+      radio.emettre("poisson-peche", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, glace: !!(monde.saison && monde.saison.hiver && carte.terrain[i] === T.eau) });
+    } else if (b.type === "chasseur") {
+      if (o.proie && monde.animaux.includes(o.proie)) {
+        Village.Animaux.retirer(monde, o.proie);
+        o.porte = "viande";
+        radio.emettre("gibier-chasse", { numero: b.numero, sorte: o.proie.sorte, colonne: o.cible.colonne, ligne: o.cible.ligne, animaux: monde.animaux.length, neige: !!(monde.saison && monde.saison.hiver) });
+      }
+      o.proie = null;
     } else if (b.type === "carriere") {
       if (carte.objet[i] === O.rocher && carte.reste[i] > 0) {
         carte.reste[i]--;

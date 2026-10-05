@@ -22,12 +22,16 @@
 //                  déjà tout payé : on les convertit comme si tous leurs matériaux étaient arrivés.
 //                  Les porteurs et la file d'attente ne sont pas sauvegardés : ils recommencent à zéro,
 //                  et ce qu'un porteur avait dans les bras est remis à sa place.
+//   4 (étape 49) : l'horloge de la partie (pour les saisons), la nourriture (poissons, viande) dans le stock,
+//                  les repas gardés dans chaque cabane, la faim de chaque ouvrier et de chaque porteur,
+//                  les habitants partis, et les animaux (position et sorte).
+//                  Une partie en version 3 reçoit la nourriture de départ (sinon tout le monde aurait faim !).
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 3;
+  const VERSION = 4;
   const radio = Village.Evenements;
 
   function vide() {
@@ -55,6 +59,10 @@ Village.Sauvegarde = (function () {
     const d = Object.assign(vide(), lues);
     // Version 1 → 2 : il n'y avait pas encore de partie. On garde la carte (la graine) et la caméra.
     // Version 2 → 3 : pas encore de routes ; les chantiers avaient déjà payé tous leurs matériaux.
+    if ((lues.version || 1) < 4 && d.partie && d.partie.stock) {
+      d.partie.stock.poissons = d.partie.stock.poissons || Village.CONFIG.depart.poissons;
+      d.partie.stock.viande = d.partie.stock.viande || Village.CONFIG.depart.viande;
+    }
     if ((lues.version || 1) < 3 && d.partie) {
       d.partie.routes = d.partie.routes || [];
       for (const b of d.partie.batiments || []) {
@@ -79,7 +87,7 @@ Village.Sauvegarde = (function () {
     } catch (e) {
       donnees = vide();
     }
-    radio.emettre("lecture", { trouve, converti, depuis: converti ? lueVersion : null, graine: donnees.graine });
+    radio.emettre("lecture", { trouve, converti, depuis: converti ? lueVersion : null, vers: VERSION, graine: donnees.graine });
     return donnees;
   }
 
@@ -118,6 +126,8 @@ Village.Sauvegarde = (function () {
     const enCours = Village.Porteurs.enCours(monde);
     const stock = {};
     for (const r in monde.stock) stock[r] = monde.stock[r] + (enCours.stock[r] || 0);
+    // Les repas qu'un porteur apportait à une cabane retournent dans le stock (fait par enCours) ;
+    // on ne sauvegarde pas les repas « en route ».
     const ajout = (a, b) => { const r = Object.assign({}, a); for (const k in b || {}) r[k] = (r[k] || 0) + b[k]; return r; };
     donnees.partie = {
       stock,
@@ -126,9 +136,17 @@ Village.Sauvegarde = (function () {
         if (b.sortie) d.sortie = b.sortie;
         if (b.entree) d.entree = b.entree;
         if (b.etat === "chantier") { d.livre = b.livre; d.attendu = ajout(b.attendu, enCours.attendu.get(b)); }
+        if (b.repas.poissons || b.repas.viande) d.repas = b.repas;
+        const o = b.ouvrier;
+        if (o && o.faim) { d.faim = Math.round(o.faim); if (o.affame) { d.affame = true; d.ventreVide = Math.round(o.ventreVide); } }
+        if (b.etat === "pret" && Village.Batiments.TYPES[b.type].metier && !o) d.vide = true; // l'habitant est parti
         return d;
       }),
       routes: monde.route.reduce((liste, v, i) => (v ? (liste.push(i), liste) : liste), []),
+      horloge: Math.round(monde.horloge),
+      partis: monde.partis,
+      porteurs: monde.porteurs.map((p) => ({ faim: Math.round(p.faim || 0), affame: !!p.affame, ventreVide: Math.round(p.ventreVide || 0), parti: !!p.parti })),
+      animaux: monde.animaux.map((a) => [Math.round(a.x * 10) / 10, Math.round(a.y * 10) / 10, a.sorte]),
       modifs: [...monde.modifs].map(([i, m]) => [i, m.o, m.r]),
       pousses: [...monde.pousses].map(([i, age]) => [i, Math.round(age)]),
     };

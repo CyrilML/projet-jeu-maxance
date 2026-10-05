@@ -9,7 +9,8 @@
 //   3. les OBJETS (arbres, rochers, montagnes, tente, bâtiments, ouvriers…), du FOND vers l'AVANT : ce qui est dessiné
 //      en dernier passe par-dessus. Un arbre devant une montagne doit être peint après elle !
 //      En vue de biais, « devant » veut dire « colonne + ligne plus grand ».
-//   4. les nuages et leur ombre ;
+//   4. les nuages et leur ombre ; (étape 49) les pétales, les feuilles ou la neige qui tombent ;
+//   Et tout change avec la SAISON : herbe jaunie en automne, neige et glace en hiver.
 //   5. par-dessus tout, à plat sur l'écran : les panneaux et les boutons (affichage/interface.js),
 //      et les rayons X.
 //
@@ -30,6 +31,7 @@ Village.Peintre = (function () {
   let ctx = null;
   let cache = null; // ce qui est préparé une seule fois par carte : les couleurs et la mini-carte
   let versionMini = -1; // la mini-carte est refaite quand la carte change (arbre coupé…)
+  let saison = 0, couleursSol = null; // étape 49 : la saison de l'image en cours (0 printemps … 3 hiver)
 
   // Les couleurs des terrains (rouge, vert, bleu), dans l'ordre des numéros de Village.Carte.TERRAIN.
   const COULEURS = [
@@ -76,9 +78,34 @@ Village.Peintre = (function () {
     const mini = document.createElement("canvas");
     mini.width = carte.colonnes + carte.lignes;
     mini.height = Math.ceil((carte.colonnes + carte.lignes) / 2) + 1;
-    cache = { carte, couleurs, variante, mini };
+    cache = { carte, couleurs, variante, mini, saisons: [couleurs] };
     dessinerMini(monde);
     versionMini = version;
+  }
+
+  // Étape 49 : les couleurs du sol pour chaque saison, calculées une seule fois (puis gardées).
+  //   été : un vert un peu plus chaud ; automne : l'herbe jaunit ; hiver : la neige recouvre tout,
+  //   et l'eau peu profonde (lacs, rivières, bord de mer) devient de la GLACE. La mer profonde ne gèle pas.
+  const MELANGES = {
+    1: { herbe: [[110, 175, 50], 0.18] },
+    2: { herbe: [[205, 170, 70], 0.42] },
+    3: { herbe: [[240, 246, 252], 0.82], sable: [[240, 244, 250], 0.65], rochers: [[235, 240, 248], 0.6], montagne: [[235, 240, 248], 0.45], eau: [[214, 236, 248], 0.85] },
+  };
+  function couleursDeLaSaison(numero) {
+    if (cache.saisons[numero]) return cache.saisons[numero];
+    const carte = cache.carte, n = carte.terrain.length, liste = new Array(n), m = MELANGES[numero];
+    for (let i = 0; i < n; i++) {
+      const t = carte.terrain[i], v = cache.variante[i];
+      const famille = t === T.eau ? "eau" : t === T.sable ? "sable" : t === T.rochers ? "rochers" : t === T.montagne ? "montagne" : t >= T.herbe && t <= T.foret ? "herbe" : null;
+      const regle = famille && m[famille];
+      if (!regle) { liste[i] = cache.couleurs[i]; continue; }
+      let f = 0.95 + v * 0.1;
+      if (t >= T.herbe && t <= T.foret) f -= (carte.altitude[i] - 0.45) * 0.25;
+      const base = COULEURS[t].map((x) => x * f), [cible, part] = regle;
+      liste[i] = rgb(base.map((x, k) => x + (cible[k] - x) * part), 1);
+    }
+    cache.saisons[numero] = liste;
+    return liste;
   }
 
   // La mini-carte : chaque case = 2 × 1 pixels, rangés en losange comme la grande carte.
@@ -113,6 +140,8 @@ Village.Peintre = (function () {
     const carte = monde.carte, cam = monde.camera, z = cam.zoom, t = monde.temps;
     const W = Ec.largeur, He = Ec.hauteur, d = Ec.densite;
     preparer(monde);
+    saison = monde.saison ? monde.saison.numero : 0;
+    couleursSol = couleursDeLaSaison(saison);
 
     // 1. La mer tout autour
     ctx.setTransform(d, 0, 0, d, 0, 0);
@@ -151,6 +180,15 @@ Village.Peintre = (function () {
 
     // 2 bis. Les routes, par-dessus le sol (étape 48)
     dessinerRoutes(monde, cMin, cMax, lMin, lMax, vue, t);
+    // Étape 49 : ✍️ le trou dans la glace du pêcheur qui pêche en hiver
+    if (saison === 3) for (const b of monde.batiments) {
+      const o = b.ouvrier;
+      if (b.type !== "pecheur" || !o || o.etat !== "travailler" || !o.cible) continue;
+      if (carte.terrain[o.cible.ligne * carte.colonnes + o.cible.colonne] !== T.eau) continue;
+      const p = milieu(o.cible.colonne, o.cible.ligne);
+      ctx.fillStyle = "#2f7fd1"; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(p.x, p.y, 9, 4.5, 0, 0, TOUR); ctx.fill(); ctx.stroke();
+    }
 
     // Les bâtiments et les ouvriers sont rangés par diagonale, pour être peints au bon moment.
     const parDiagonale = new Map();
@@ -164,8 +202,10 @@ Village.Peintre = (function () {
     }
     // Étape 48 : les porteurs dehors (ceux qui attendent sont dans l'entrepôt)
     for (const porteur of monde.porteurs) {
-      if (porteur.etat !== "attend") ranger(Math.floor(porteur.x) + Math.floor(porteur.y), { porteur });
+      if (porteur.etat !== "attend" && !porteur.parti) ranger(Math.floor(porteur.x) + Math.floor(porteur.y), { porteur });
     }
+    // Étape 49 : le gibier
+    for (const a of monde.animaux) ranger(Math.floor(a.x) + Math.floor(a.y), { animal: a });
 
     // 3. Les objets, du fond vers l'avant : diagonale par diagonale (colonne + ligne = diag).
     for (let diag = cMin + lMin; diag <= cMax + lMax; diag++) {
@@ -182,12 +222,15 @@ Village.Peintre = (function () {
         if (chose.b) {
           const p = milieu(chose.b.colonne, chose.b.ligne);
           Village.Batisses.dessinerBatiment(ctx, chose.b, p.x, p.y, t);
+        } else if (chose.animal) {
+          const p = Iso.versMonde(chose.animal.x, chose.animal.y, L, Hc);
+          Village.Batisses.dessinerAnimal(ctx, chose.animal, p.x, p.y + 2, t, saison === 3);
         } else if (chose.porteur) {
           const p = Iso.versMonde(chose.porteur.x, chose.porteur.y, L, Hc);
           Village.Batisses.dessinerPorteur(ctx, chose.porteur, p.x, p.y + 2, t);
         } else {
           const p = Iso.versMonde(chose.o.x, chose.o.y, L, Hc);
-          Village.Batisses.dessinerOuvrier(ctx, chose.type, chose.o, p.x, p.y + 4, t);
+          Village.Batisses.dessinerOuvrier(ctx, chose.type, chose.o, p.x, p.y + 4, t, saison === 3);
         }
         stats.objetsDessines++;
       }
@@ -215,6 +258,17 @@ Village.Peintre = (function () {
       ctx.lineWidth = 3 / z; ctx.strokeStyle = "rgba(255,255,255," + (0.6 + 0.4 * Math.sin(t * 6)) + ")"; ctx.stroke();
     }
 
+    // Étape 49 : la ligne de pêche, du bout de la canne jusqu'au bouchon
+    for (const b of monde.batiments) {
+      const o = b.ouvrier;
+      if (b.type !== "pecheur" || !o || o.etat !== "travailler" || !o.cible) continue;
+      const a = Iso.versMonde(o.x, o.y, L, Hc), q = milieu(o.cible.colonne, o.cible.ligne);
+      const bouchon = Math.sin(t * 4) * 1.5;
+      ctx.strokeStyle = "rgba(40, 30, 20, .7)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(a.x + 12 * o.direction, a.y - 22); ctx.quadraticCurveTo((a.x + q.x) / 2, a.y - 18, q.x, q.y + bouchon); ctx.stroke();
+      ctx.fillStyle = "#e8402e"; ctx.beginPath(); ctx.arc(q.x, q.y + bouchon - 1, 2.2, 0, TOUR); ctx.fill();
+    }
+
     // 4. Les nuages
     dessinerNuages(carte, t, z);
 
@@ -222,6 +276,7 @@ Village.Peintre = (function () {
 
     // 5. Les panneaux et les boutons, à plat sur l'écran
     ctx.setTransform(d, 0, 0, d, 0, 0);
+    tombe(W, He, t);
     Village.Interface.dessiner(ctx, monde, options, cache.mini);
     if (options.rayonsX) Village.RayonsX.dessinerSurLEcran(ctx, monde);
 
@@ -321,7 +376,7 @@ Village.Peintre = (function () {
   function dessinerSol(carte, c, l, x, y, t, z) {
     const i = l * carte.colonnes + c, ter = carte.terrain[i], v = cache.variante[i];
     losange(x, y, 0.7);
-    ctx.fillStyle = cache.couleurs[i];
+    ctx.fillStyle = couleursSol[i];
     ctx.fill();
 
     const voisin = (dc, dl) => {
@@ -338,12 +393,26 @@ Village.Peintre = (function () {
       { dc: -1, dl: 0, x1: x - a, y1: y, x2: x, y2: y - b }, // haut-gauche
     ];
 
+    if (ter === T.eau && saison === 3) {
+      // ❄️ La glace : quelques fissures blanches, et un reflet.
+      if (v < 0.5 && z > 0.45) {
+        ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.lineWidth = 1.3;
+        ctx.beginPath(); ctx.moveTo(x - 12 + v * 10, y - 3); ctx.lineTo(x - 2, y + 1); ctx.lineTo(x + 4, y - 4); ctx.moveTo(x - 2, y + 1); ctx.lineTo(x + 2, y + 6);
+        ctx.stroke();
+      }
+      for (const e of bords) {
+        if (voisin(e.dc, e.dl) !== T.eauProfonde) continue;
+        ctx.strokeStyle = "rgba(120, 170, 200, .7)"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(e.x1, e.y1); ctx.lineTo(e.x2, e.y2); ctx.stroke(); // le bord de la glace
+      }
+      return;
+    }
     if (ter <= T.eau) {
       // L'écume : un trait blanc qui « respire » là où l'eau touche la terre.
       ctx.lineWidth = 3;
       ctx.lineCap = "round";
       for (const e of bords) {
-        if (voisin(e.dc, e.dl) <= T.eau) continue;
+        if (voisin(e.dc, e.dl) <= T.eau && !(saison === 3 && voisin(e.dc, e.dl) === T.eau)) continue;
         ctx.strokeStyle = "rgba(255,255,255," + (0.55 + 0.3 * Math.sin(t * C.animation.vagues * 2 + c * 0.9 + l * 0.7)) + ")";
         // Le trait est un peu rentré dans l'eau.
         const rx = (x - (e.x1 + e.x2) / 2) * 0.12, ry = (y - (e.y1 + e.y2) / 2) * 0.12;
@@ -372,7 +441,12 @@ Village.Peintre = (function () {
     }
 
     if (z < 0.55) return; // de loin, on ne voit pas les petits détails : on gagne du temps
-    if (carte.objet[i] === O.fleurs) {
+    if (saison === 3) {
+      // ❄️ Des petits tas de neige qui brillent
+      if (v > 0.6) { ctx.fillStyle = "rgba(255,255,255,.9)"; ronds([[x - 8 + v * 8, y + 2, 3], [x + 6, y - 3, 2]]); }
+      return;
+    }
+    if (carte.objet[i] === O.fleurs && (saison === 0 || saison === 1 || v > 0.5)) {
       for (let k = 0; k < 5; k++) {
         const r1 = Village.Hasard.pourCase(carte.graine + k, c, l), r2 = Village.Hasard.pourCase(carte.graine + 50 + k, c, l);
         const fx = x + (r1 - 0.5) * L * 0.55, fy = y + (r2 - 0.5) * Hc * 0.55;
@@ -438,18 +512,20 @@ Village.Peintre = (function () {
     ctx.translate(x, y - 14 * e);
     ctx.rotate(balancement(t, v));
     ctx.scale(e, e);
-    const verts = ["#4caf3e", "#5cbf45", "#43a33a", "#6cc94a"];
+    // Étape 49 : la couleur des feuilles change avec la saison.
+    const verts = saison === 2 ? ["#e8a33a", "#d9652b", "#f2c94c", "#c9552a"] : saison === 3 ? ["#7f9a7c", "#8aa386", "#738f70", "#86a081"] : saison === 1 ? ["#3f9e36", "#4cad3c", "#3a9332", "#58b844"] : ["#4caf3e", "#5cbf45", "#43a33a", "#6cc94a"];
     const boules = [[-9, -9, 11], [9, -9, 11], [0, -20, 13], [0, -6, 10]];
     // D'abord le contour foncé (des boules un peu plus grosses), puis le vert par-dessus :
     // les boules se fondent en un seul nuage de feuilles, entouré d'un trait. Style dessin animé !
-    ctx.fillStyle = "#24521c";
+    ctx.fillStyle = saison === 2 ? "#6b3a14" : "#24521c";
     ronds(boules.map(([bx, by, r]) => [bx, by, r + 2]));
     ctx.fillStyle = verts[Math.floor(v * 4)];
     ronds(boules);
     ctx.fillStyle = "rgba(255,255,255,.22)";
     ronds([[-4, -24, 5], [-11, -12, 3.5]]);
-    // Quelques arbres ont des pommes 🍎
-    if (v > 0.8) {
+    if (saison === 3) { ctx.fillStyle = "#f7fbff"; ronds([[0, -27, 9], [-10, -16, 6.5], [10, -16, 6.5], [-4, -22, 7], [5, -23, 7]]); } // la neige sur l'arbre
+    // Quelques arbres ont des pommes 🍎 (en été et en automne)
+    if (v > 0.8 && (saison === 1 || saison === 2)) {
       ctx.fillStyle = "#e8402e";
       ronds([[6, -12, 2.4], [-6, -4, 2.4], [3, -22, 2.4]]);
     }
@@ -471,8 +547,13 @@ Village.Peintre = (function () {
       ctx.fillStyle = k === 1 ? "#2f8a4a" : "#3a9d55";
       ctx.beginPath(); ctx.moveTo(-dl, b); ctx.lineTo(0, b - h); ctx.lineTo(dl, b); ctx.closePath(); ctx.fill(); ctx.stroke();
     });
+    // ❄️ En hiver, de la neige sur chaque étage du sapin
+    if (saison === 3) {
+      ctx.fillStyle = "#f7fbff";
+      for (const [b, dl, h] of etages) { ctx.beginPath(); ctx.moveTo(-dl * 0.45, b - h * 0.55); ctx.lineTo(0, b - h); ctx.lineTo(dl * 0.45, b - h * 0.55); ctx.closePath(); ctx.fill(); }
+    }
     // Un peu de neige sur les sapins les plus hauts
-    if (v > 0.75) {
+    else if (v > 0.75) {
       ctx.fillStyle = "#f5f9ff";
       ctx.beginPath(); ctx.moveTo(-4, -34); ctx.lineTo(0, -40); ctx.lineTo(4, -34); ctx.closePath(); ctx.fill();
     }
@@ -542,9 +623,10 @@ Village.Peintre = (function () {
     const b = balancement(t, v) * 20;
     ctx.fillStyle = "#24521c";
     ronds([[x - 5 + b * 0.3, y - 4, 7.5], [x + 5 + b * 0.3, y - 4, 7.5], [x + b * 0.5, y - 9, 8]]);
-    ctx.fillStyle = v > 0.5 ? "#55b843" : "#4aa83c";
+    ctx.fillStyle = saison === 2 ? (v > 0.5 ? "#d98a2b" : "#c46a24") : saison === 3 ? "#7f9a7c" : v > 0.5 ? "#55b843" : "#4aa83c";
     ronds([[x - 5 + b * 0.3, y - 4, 5.7], [x + 5 + b * 0.3, y - 4, 5.7], [x + b * 0.5, y - 9, 6.2]]);
-    if (v > 0.6) {
+    if (saison === 3) { ctx.fillStyle = "#f7fbff"; ronds([[x + b * 0.5, y - 13, 5], [x - 5, y - 8, 3.5], [x + 5, y - 8, 3.5]]); }
+    else if (v > 0.6) {
       ctx.fillStyle = "#e33a6b";
       ronds([[x - 4, y - 7, 1.8], [x + 4, y - 3, 1.8], [x + 1, y - 12, 1.8]]);
     }
@@ -611,6 +693,28 @@ Village.Peintre = (function () {
     for (let k = 0; k <= 4; k++) ctx.lineTo(x - 2 + k * 4, y - 46 + Math.sin(t * 6 + k) * 1.5);
     for (let k = 4; k >= 0; k--) ctx.lineTo(x - 2 + k * 4, y - 38 + Math.sin(t * 6 + k) * 1.5);
     ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+
+  // ---------------------------------------------------------------- ce qui tombe du ciel (étape 49)
+  // Au printemps, des pétales roses ; en automne, des feuilles orange ; en hiver, la neige.
+  // Chaque flocon a sa place au départ (un nombre « au hasard » toujours le même), puis il descend
+  // et repart d'en haut quand il sort de l'écran (le reste de la division, encore lui !).
+  function tombe(W, He, t) {
+    const sorte = [{ n: 14, c: ["#ffc0d9", "#ffe3ef"] }, null, { n: 26, c: ["#e8a33a", "#d9652b", "#f2c94c"] }, { n: 110, c: ["#ffffff"] }][saison];
+    if (!sorte) return;
+    for (let k = 0; k < sorte.n; k++) {
+      const r1 = Village.Hasard.pourCase(77, k, 1), r2 = Village.Hasard.pourCase(77, k, 2), r3 = Village.Hasard.pourCase(77, k, 3);
+      const vitesse = saison === 3 ? 30 + r3 * 40 : 22 + r3 * 20;
+      const y = (r2 * (He + 40) + t * vitesse) % (He + 40) - 20;
+      const x = (r1 * (W + 60) + t * (12 + r3 * 10) + Math.sin(t * (1 + r3) + k) * 14) % (W + 60) - 30;
+      ctx.fillStyle = sorte.c[k % sorte.c.length];
+      ctx.globalAlpha = saison === 3 ? 0.85 : 0.9;
+      ctx.beginPath();
+      if (saison === 3) ctx.arc(x, y, 1.2 + r3 * 2, 0, TOUR);
+      else ctx.ellipse(x, y, 3.5, 2, t * 2 + k, 0, TOUR);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
   }
 
   // ---------------------------------------------------------------- les nuages

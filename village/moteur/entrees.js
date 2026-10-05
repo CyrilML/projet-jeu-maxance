@@ -15,7 +15,7 @@ Village.Entrees = (function () {
     gauche: ["ArrowLeft", "KeyA"],
     droite: ["ArrowRight", "KeyD"],
     zoomPlus: ["Equal", "NumpadAdd"], // Equal : la touche « = + »
-    zoomMoins: ["Minus", "Digit6", "NumpadSubtract"], // Digit6 : la touche « - » d'un clavier français
+    zoomMoins: ["Minus", "NumpadSubtract"],
     village: ["KeyH"], // revenir à la place du village
     nouvelleCarte: ["KeyG"],
     pause: ["KeyP"],
@@ -28,6 +28,8 @@ Village.Entrees = (function () {
     forestier: ["Digit2", "Numpad2"],
     scierie: ["Digit3", "Numpad3"],
     carriere: ["Digit4", "Numpad4"],
+    pecheur: ["Digit5", "Numpad5"], // étape 49
+    chasseur: ["Digit6", "Numpad6"], // étape 49 (avant, la touche 6 servait à dézoomer sur un clavier français)
     // Étape 48 : les outils
     route: ["KeyR"],
     demolir: ["Delete", "Backspace"],
