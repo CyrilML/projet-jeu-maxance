@@ -55,6 +55,7 @@ Circuit.RayonsX = (function () {
   // Les traits qui ne bougent pas : la route et les portes (circuit), les formes et les loopings (parcours).
   function fixes(carte) {
     if (carte === "parcours") return versThree(Circuit.DecorParcours.rayonsX({ bords: COULEURS.bords, entree: COULEURS.prochaine, rail: COULEURS.milieu }));
+    if (carte === "ciel") return versThree(Circuit.DecorRampes.rayonsX({ bords: COULEURS.bords, nitro: COULEURS.nitro, saut: COULEURS.milieu, drapeau: COULEURS.prochaine, arrivee: COULEURS.porte }));
     if (carte === "grand") return versThree(Circuit.DecorGrandParcours.rayonsX({ bords: COULEURS.bords, danger: COULEURS.rouge, nitro: COULEURS.nitro, saut: COULEURS.milieu }));
     if (carte === "ville") {
       // Étape 39 : le milieu des rues (en jaune) et le contour des immeubles (en bleu).
@@ -119,7 +120,7 @@ Circuit.RayonsX = (function () {
       porte(c, Piste.portes[monde.prochainePorte], COULEURS.prochaine);
     }
     // Un trait jaune entre la voiture et le sol : sa longueur, c'est la hauteur au-dessus du sol.
-    const sol = monde.carte === "grand" ? Circuit.GrandParcours.solDeBase(v.x, v.z) : 0;
+    const sol = monde.carte === "grand" ? Circuit.GrandParcours.solDeBase(v.x, v.z) : monde.carte === "ciel" ? Math.max(C.rampes.nuages, Circuit.MegaRampes.hauteurSol(v.x, v.z, v.y || 0)) : 0;
     if ((v.y || 0) - sol > 0.05) c.ligne([v.x, sol, v.z], [v.x, v.y, v.z], COULEURS.milieu);
     // Étape 40 : en l'air, la COURBE DU SAUT prévue (une parabole) : où la voiture va passer dans les 2 prochaines secondes.
     if (v.enLAir) {
@@ -135,9 +136,16 @@ Circuit.RayonsX = (function () {
       }
     }
     // Étape 39 : pour chaque voiture de la circulation, un trait vers le carrefour où elle va.
-    for (const cv of monde.circulation || []) {
+    for (const cv of monde.carte === "ville" ? monde.circulation : []) {
       const cible = [Circuit.Ville.rue(cv.vers[0]), 0.5, Circuit.Ville.rue(cv.vers[1])];
       c.ligne([cv.voiture.x, 0.5, cv.voiture.z], cible, cv.feuAttendu ? COULEURS.rouge : COULEURS.carotte);
+    }
+    // Étape 41 : sur les méga-rampes, chaque véhicule à doubler a une flèche bleue (sa vitesse, comme la tienne).
+    if (monde.carte === "ciel") {
+      for (const cv of monde.circulation) {
+        const o = cv.voiture, L2 = cv.vitesse * 0.5;
+        c.ligne([o.x, o.y + 1.8, o.z], [o.x + Math.cos(o.angle) * L2, o.y + 1.8, o.z + Math.sin(o.angle) * L2], COULEURS.carotte);
+      }
     }
     // La « carotte » du pilote adverse (le point qu'il vise).
     const adv = monde.adversaire;

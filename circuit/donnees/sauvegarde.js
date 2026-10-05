@@ -19,6 +19,7 @@
 //                  et le 4x4 du parcours est offert.
 //   5 (étape 39) : le garage de la ville ; la citadine est offerte.
 //   6 (étape 40) : le garage du grand parcours ; le kart est offert.
+//   7 (étape 41) : les méga-rampes : la voiture choisie là-bas, et le record du chrono (recordRampes).
 //
 // Les pièces sont comptées dès qu'on les ramasse, mais écrites dans le tiroir à la fin de la course
 // (ou si on recommence, ou si on ferme la page) : écrire 50 fois par course, ce serait du gaspillage.
@@ -27,7 +28,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.Sauvegarde = (function () {
   const CLE = "circuit-maxance:sauvegarde";
-  const VERSION = 6;
+  const VERSION = 7;
   const radio = Circuit.Evenements;
 
   function vide() {
@@ -41,7 +42,8 @@ Circuit.Sauvegarde = (function () {
       pieces: 0, // depuis la version 3 : les pièces que tu as (ton porte-monnaie)
       piecesTotal: 0, // depuis la version 3 : toutes les pièces ramassées depuis le début
       voituresAchetees: ["classique", "4x4", "citadine", "kart"], // depuis la version 3 : la Rouge est offerte (puis le 4x4, la citadine, le kart)
-      voituresChoisies: { course: "classique", parcours: "4x4", ville: "citadine", grand: "kart" }, // depuis la version 4 : la voiture choisie sur chaque carte
+      voituresChoisies: { course: "classique", parcours: "4x4", ville: "citadine", grand: "kart", ciel: "classique" }, // depuis la version 4 : la voiture choisie sur chaque carte
+      recordRampes: null, // depuis la version 7 : le meilleur temps sur les méga-rampes (en secondes)
       toursTotal: 0,
       sortiesTotal: 0,
       distanceTotale: 0, // m parcourus dans toutes les courses finies
@@ -106,6 +108,11 @@ Circuit.Sauvegarde = (function () {
       d.voituresChoisies = Object.assign({ grand: "kart" }, d.voituresChoisies);
       if (!d.voituresAchetees.includes("kart")) d.voituresAchetees.push("kart");
     }
+    if ((anciennes.version || 1) < 7) {
+      // Version 6 → 7 : les méga-rampes arrivent (on y roule avec la Rouge, et pas encore de record).
+      d.voituresChoisies = Object.assign({ ciel: "classique" }, d.voituresChoisies);
+      d.recordRampes = null;
+    }
     d.version = VERSION;
     return d;
   }
@@ -159,6 +166,16 @@ Circuit.Sauvegarde = (function () {
         radio.emettre("nouveau-record", { quoi: "tour", temps: d.temps, ancien });
       }
       ecrire("tour " + d.numero + " terminé");
+    });
+
+    // Étape 41 : l'arrivée des méga-rampes. Un nouveau record ?
+    radio.ecouter("rampes-arrivee", (d) => {
+      const ancien = donnees.recordRampes;
+      if (ancien === null || d.temps < ancien) {
+        donnees.recordRampes = arrondir(d.temps);
+        radio.emettre("nouveau-record", { quoi: "rampes", temps: d.temps, ancien });
+      }
+      ecrire("arrivée des méga-rampes");
     });
 
     radio.ecouter("sortie-de-piste", () => {

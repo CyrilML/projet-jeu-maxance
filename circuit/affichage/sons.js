@@ -52,6 +52,14 @@ Circuit.Sons = (function () {
     radio.ecouter("piece", () => Son.bip(1320, 0.08, 0.12));
     radio.ecouter("nitro", () => Son.bip(220, 0.25, 0.12));
     radio.ecouter("chute", (d) => Son.boum(Math.min(12, d.hauteur)));
+    // Étape 41 : les méga-rampes.
+    radio.ecouter("drapeau", () => {
+      Son.bip(784, 0.1, 0.12);
+      setTimeout(() => Son.bip(1046, 0.18, 0.12), 100);
+    });
+    radio.ecouter("tombe-nuages", () => Son.bip(196, 0.5, 0.15));
+    radio.ecouter("voiture-cassee", () => Son.boum(12));
+    radio.ecouter("rampes-arrivee", () => [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => Son.bip(f, 0.2, 0.14), i * 140)));
     radio.ecouter("achat", () => {
       Son.bip(988, 0.12, 0.15);
       setTimeout(() => Son.bip(1319, 0.25, 0.15), 130);

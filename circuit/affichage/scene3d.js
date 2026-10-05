@@ -135,6 +135,7 @@ Circuit.Scene3D = (function () {
       let groupe, maj = null;
       if (carte === "parcours") groupe = Circuit.DecorParcours.construire();
       else if (carte === "grand") ({ groupe, maj } = Circuit.DecorGrandParcours.construire()); // étape 40
+      else if (carte === "ciel") ({ groupe, maj } = Circuit.DecorRampes.construire()); // étape 41
       else if (carte === "ville") ({ groupe, maj } = Circuit.DecorVille.construire());
       else groupe = Circuit.DecorCircuit.construire();
       const rayons = Circuit.RayonsX.fixes(carte);
@@ -205,7 +206,7 @@ Circuit.Scene3D = (function () {
       const recul = v.modele === "monster" ? 1.3 : v.modele === "camion" ? 1.6 : monde.pieton ? 0.5 : 1;
       // Étape 40 : sur le grand parcours, les routes sont très hautes (jusqu'à 22 m) : la caméra suit toute la hauteur,
       // sinon elle passerait sous la route !
-      const suivi = monde.carte === "grand" ? 1 : 0.75;
+      const suivi = monde.carte === "grand" || monde.carte === "ciel" ? 1 : 0.75;
       oeil = [v.x - cos * R.distance * recul, R.hauteur * recul + y * suivi, v.z - sin * R.distance * recul];
       cible = [v.x + cos * R.regardDevant, 1 + y * Math.min(1, suivi + 0.1), v.z + sin * R.regardDevant];
     }
@@ -275,7 +276,8 @@ Circuit.Scene3D = (function () {
       const k = (compte[voiture.modele] = (compte[voiture.modele] || 0) + 1) - 1;
       const reserve = (flotte[voiture.modele] = flotte[voiture.modele] || []);
       if (!reserve[k]) {
-        const fiche = Circuit.Garage.ficheDe(voiture.modele);
+        // Étape 41 : un véhicule qui n'est dans aucun garage (la moto) apporte ses propres couleurs.
+        const fiche = Circuit.Garage.ficheDe(voiture.modele) || { couleurs: voiture.couleurs || [[0.8, 0.1, 0.1], [0.1, 0.1, 0.11]] };
         reserve[k] = Circuit.Modeles.fabriquer(voiture.modele, fiche.couleurs[0], fiche.couleurs[1]);
         scene.add(reserve[k].g);
       }
@@ -329,9 +331,10 @@ Circuit.Scene3D = (function () {
 
     // Le soleil suit la voiture (ou le personnage), pour que les ombres soient nettes autour d'elle.
     const suivi = monde.pieton || v;
-    soleil.position.set(suivi.x + SOLEIL.x * 150, SOLEIL.y * 150, suivi.z + SOLEIL.z * 150);
-    soleil.target.position.set(suivi.x, 0, suivi.z);
-    if (decors[carteDessinee].maj) decors[carteDessinee].maj(monde.temps); // étape 39 : les feux de la ville
+    const hautSuivi = suivi.y || 0; // étape 41 : sur les méga-rampes, la voiture est très haut dans le ciel
+    soleil.position.set(suivi.x + SOLEIL.x * 150, hautSuivi + SOLEIL.y * 150, suivi.z + SOLEIL.z * 150);
+    soleil.target.position.set(suivi.x, hautSuivi, suivi.z);
+    if (decors[carteDessinee].maj) decors[carteDessinee].maj(monde.temps, monde); // étape 39 : les feux de la ville
     ciel.position.copy(cam.position);
 
     // On dessine !

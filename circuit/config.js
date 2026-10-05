@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 9,
+  version: 10,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -70,6 +70,7 @@ Circuit.CONFIG = {
     { id: "parcours", nom: "Le parcours", icone: "🎢", texte: "Tremplins, loopings, tunnels" },
     { id: "ville", nom: "La ville", icone: "🏙️", texte: "Rues, voitures, personnage" },
     { id: "grand", nom: "Le grand parcours", icone: "🛣️", texte: "Rampes, nitros, plateformes" }, // étape 40
+    { id: "ciel", nom: "Les méga-rampes", icone: "☁️", texte: "Une piste dans le ciel" }, // étape 41
   ],
 
   // Étape 37 : le garage du parcours. ✍️ Monster truck, 4x4, pickup et buggy.
@@ -118,10 +119,14 @@ Circuit.CONFIG = {
     "rallye",
   ],
 
+  // Étape 41 : le garage des MÉGA-RAMPES : les voitures de course (la piste est faite pour aller vite !).
+  vehiculesCiel: ["classique", "taureau", "fleche", "fusee", "f1", "rallye"],
+
   // Étape 40 : LES NITROS. ✍️ Des plaques au sol : dès que tu passes dessus, ça te propulse.
   nitro: {
     duree: 2.5, // s : le temps que dure la poussée
-    facteur: 1.5, // la vitesse max est multipliée par 1,5 pendant la poussée
+    facteur: 1.5, // la vitesse max est multipliée par 1,5 pendant la poussée…
+    bonusMax: 16, // … mais elle ne gagne jamais plus de 16 m/s (58 km/h) : étape 41, sinon la Formule 1 s'envolait trop loin
     poussee: 26, // m/s² : la poussée s'ajoute à l'accélération, même sans appuyer sur ↑
     ralentissement: 9, // m/s² : après la poussée, la voiture revient doucement à sa vitesse max
   },
@@ -193,6 +198,43 @@ Circuit.CONFIG = {
     virage: 3, // rad/s : il tourne vite sur lui-même
     distanceMonter: 4, // m : il peut monter dans une voiture à moins de 4 m
     vitesseMaxPourDescendre: 3, // m/s : on ne descend pas d'une voiture qui roule vite !
+  },
+
+  // Étape 41 : les MÉGA-RAMPES. ✍️ Une piste en bois, toute seule dans le ciel, au-dessus des nuages,
+  // avec des bords relevés (comme un toboggan), des nitros, de grands sauts, des véhicules à doubler,
+  // une barre de dégâts, des drapeaux et une arrivée avec un chrono.
+  // points = le milieu de la piste : [x, z, hauteur, ce qu'il y a jusqu'au point suivant] ("vide" = un saut !)
+  rampes: {
+    largeur: 12, // m : la largeur de la piste (entre les bords)
+    bord: 1.6, // m : la hauteur des bords relevés
+    nuages: -35, // m : la hauteur de la mer de nuages
+    points: [
+      [0, 0, 20], [90, 0, 20], [170, 0, 40], [230, 0, 40], [290, 0, 30], [330, 0, 30, "tremplin"], [345, 0, 32, "vide"], // saut n° 1 (25 m)
+      [370, 0, 29], [430, 0, 29], [480, 30, 29], [500, 90, 35], [500, 160, 45], [480, 220, 45], [430, 260, 45], [370, 270, 45],
+      [310, 270, 30], [250, 270, 25, "tremplin"], [235, 270, 27, "vide"], // saut n° 2 (40 m)
+      [195, 270, 22], [140, 270, 22], [90, 250, 22], [40, 230, 30], [-40, 230, 55], [-100, 230, 55], // la MÉGA-RAMPE : 55 m de haut
+      [-200, 230, 25], [-260, 230, 22, "tremplin"], [-275, 230, 25, "vide"], // saut n° 3 (60 m) : il faut les nitros !
+      [-335, 230, 16], [-480, 230, 16], [-680, 230, 16], // après le grand saut : tout droit jusqu'à l'arrivée
+    ],
+    // ✍️ Les drapeaux : si tu tombes dans les nuages, tu repars du dernier drapeau passé (numéros des points).
+    drapeaux: [0, 8, 14, 19, 23, 28],
+    arrivee: 80, // m avant le bout de la piste : la ligne d'arrivée (après, il faut de la place pour freiner)
+    nitros: [[1, 0.5], [4, 0.4], [10, 0.5], [15, 0.3], [15, 0.7], [19, 0.5], [24, 0.25], [24, 0.55], [24, 0.85], [28, 0.5]],
+    longueurNitro: 6, largeurNitro: 5, // m
+    // ✍️ Des véhicules qui roulent sur la piste : il faut les doubler sans les toucher.
+    // Chacun fait des allers entre deux points (de, a), sur sa voie (m à gauche − ou à droite +), à sa vitesse (m/s).
+    trafic: [
+      { modele: "moto", nom: "la moto", de: 1, a: 4, voie: -2.5, vitesse: 14, depart: 0.3, couleurs: [[0.85, 0.1, 0.1], [0.1, 0.1, 0.11]] },
+      { modele: "moto", nom: "la moto verte", de: 7, a: 15, voie: 2.5, vitesse: 19, depart: 0.2, couleurs: [[0.1, 0.7, 0.2], [0.1, 0.1, 0.11]] },
+      { modele: "classique", nom: "la voiture rouge", de: 7, a: 15, voie: -2.5, vitesse: 16, depart: 0.55 },
+      { modele: "moto", nom: "la moto bleue", de: 18, a: 24, voie: -2.5, vitesse: 20, depart: 0.15, couleurs: [[0.1, 0.35, 0.9], [0.95, 0.95, 0.95]] },
+      { modele: "classique", nom: "la voiture rouge n° 2", de: 18, a: 24, voie: 2.5, vitesse: 15, depart: 0.5 },
+    ],
+    // ✍️ La barre de dégâts : chaque choc l'abîme ; à 100 %, la voiture est cassée (retour au drapeau, réparée).
+    degatsParChoc: 3, // % de dégâts par m/s de choc (un seul choc compté par demi-seconde)
+    chocMin: 2, // m/s : un frottement plus doux que ça n'abîme pas la voiture
+    chuteMax: 45, // m sous le dernier drapeau : là, on est perdu dans les nuages
+    ecartPieces: 30, // m : une pièce tous les 30 m
   },
 
   // Étape 37 : la map du PARCOURS. ✍️ Plate, en balade libre (pas de chrono), avec des montées, des tremplins,

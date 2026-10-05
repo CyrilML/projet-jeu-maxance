@@ -234,9 +234,50 @@ Circuit.Textures = (function () {
       }
     });
 
+  // Étape 41 : le bois clair de la piste des méga-rampes (des planches posées dans la longueur).
+  const bois = () =>
+    texture("bois", 128, (ctx, t) => {
+      for (let i = 0; i < 8; i++) {
+        const c = 190 + Math.floor(hasard() * 30);
+        ctx.fillStyle = "rgb(" + c + "," + Math.floor(c * 0.8) + "," + Math.floor(c * 0.58) + ")";
+        ctx.fillRect(0, (i * t) / 8, t, t / 8 - 1.5);
+        ctx.fillStyle = "rgba(90,60,30,.35)";
+        ctx.fillRect(Math.floor(hasard() * t), (i * t) / 8, 2, t / 8); // le bout d'une planche
+      }
+      // les veines du bois
+      ctx.strokeStyle = "rgba(120,80,40,.18)";
+      for (let i = 0; i < 40; i++) {
+        const y = hasard() * t;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.bezierCurveTo(t / 3, y + (hasard() - 0.5) * 6, (2 * t) / 3, y + (hasard() - 0.5) * 6, t, y);
+        ctx.stroke();
+      }
+    });
+
+  // Étape 41 : la mer de nuages, vue d'en haut (des taches blanches toutes douces).
+  const nuages = () =>
+    texture("nuages", 256, (ctx, t) => {
+      ctx.fillStyle = "#e9eef5";
+      ctx.fillRect(0, 0, t, t);
+      for (let i = 0; i < 140; i++) {
+        const x = hasard() * t, y = hasard() * t, r = 8 + hasard() * 30;
+        const degrade = ctx.createRadialGradient(x, y, 0, x, y, r);
+        const blanc = hasard() < 0.6;
+        degrade.addColorStop(0, blanc ? "rgba(255,255,255,.9)" : "rgba(190,200,215,.5)");
+        degrade.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = degrade;
+        for (const [dx, dy] of [[0, 0], [-t, 0], [t, 0], [0, -t], [0, t]]) {
+          ctx.beginPath();
+          ctx.arc(x + dx, y + dy, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    });
+
   const toit = () => texture("toit", 128, (ctx, t) => bruit(ctx, t, "#55575c", 0.25, 5000, 2));
 
   // La fonction `bruit` remplit la toile d'une couleur : avec une couleur transparente, elle ne fait
   // qu'ajouter des grains par-dessus ce qui est déjà peint.
-  return { herbe, goudron, terre, beton, bordure, damier, carton, tremplin, planches, rail, facade, trottoir, toit, nitro, danger };
+  return { herbe, goudron, terre, beton, bordure, damier, carton, tremplin, planches, rail, facade, trottoir, toit, nitro, danger, bois, nuages };
 })();

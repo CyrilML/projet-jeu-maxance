@@ -25,16 +25,17 @@ Circuit.Balade = (function () {
 
   // Le terrain : le parcours, ou le grand parcours (étape 40). Ils savent dire les mêmes choses.
   function terrain(monde) {
+    if (monde.carte === "ciel") return Circuit.MegaRampes; // étape 41
     return monde.carte === "grand" ? Circuit.GrandParcours : Circuit.Parcours;
   }
-  const depart = (T) => T.depart || { x: 0, z: 0, angle: 0 };
+  const depart = (T) => Object.assign({ x: 0, z: 0, y: 0, angle: 0 }, T.depart);
   const limite = (T) => T.limite || P.taille / 2 - 3;
 
   // Commence la balade (après le garage).
   function lancer(monde, voiture) {
     const T = terrain(monde);
     const d = depart(T);
-    Object.assign(voiture, { x: d.x, z: d.z, angle: d.angle, y: 0, vy: 0, vitesse: 0, enLAir: false, nitro: 0 });
+    Object.assign(voiture, { x: d.x, z: d.z, angle: d.angle, y: d.y, vy: 0, vitesse: 0, enLAir: false, nitro: 0 });
     monde.phase = "balade";
     monde.voiture = voiture;
     monde.pieces = T.placerPieces();
@@ -52,7 +53,8 @@ Circuit.Balade = (function () {
     monde.plaque = -1; // la plaque de nitro sous la voiture (−1 = aucune)
     monde.chutes = 0;
     monde.surQuoi = null;
-    if (monde.carte === "grand") radio.emettre("grand-parcours", { pieces: monde.pieces.length, nitros: T.nitros.length, longueur: T.longueurTour });
+    if (monde.carte === "ciel") radio.emettre("mega-rampes", { pieces: monde.pieces.length, nitros: T.nitros.length, longueur: T.longueur, drapeaux: T.drapeaux.length });
+    else if (monde.carte === "grand") radio.emettre("grand-parcours", { pieces: monde.pieces.length, nitros: T.nitros.length, longueur: T.longueurTour });
     else radio.emettre("balade", { pieces: monde.pieces.length, cartons: monde.cartons.length });
   }
 
@@ -66,7 +68,7 @@ Circuit.Balade = (function () {
     const T = terrain(monde);
     if (intentions.recommencer) {
       const d = depart(T);
-      Object.assign(v, { x: d.x, z: d.z, y: 0, vy: 0, angle: d.angle, vitesse: 0, enLAir: false, nitro: 0 });
+      Object.assign(v, { x: d.x, z: d.z, y: d.y, vy: 0, angle: d.angle, vitesse: 0, enLAir: false, nitro: 0 });
       monde.boucle = null;
       radio.emettre("retour-depart", {});
       return;
@@ -88,7 +90,7 @@ Circuit.Balade = (function () {
       // 2. Les murs (côtés des plateaux, murs des tunnels…)
       const choc = T.murs(v, C.chocs.rayon);
       if (choc > 1) {
-        v.vitesse = -v.vitesse * 0.25;
+        if (!T.glisse) v.vitesse = -v.vitesse * 0.25; // étape 41 : sur les méga-rampes, le terrain s'en occupe
         radio.emettre("choc", { force: choc, vitesse: v.vitesse, contre: "mur" });
       }
       // 3. Monter, descendre, sauter

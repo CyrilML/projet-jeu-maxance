@@ -27,14 +27,14 @@ Circuit.SousLeCapot = (function () {
         : "🚪 Porte n° " + d.numero + " passée → prochaine : " + (d.prochaine === 0 ? "la ligne d'arrivée" : "porte n° " + d.prochaine),
     "tour-termine": (d) => "✅ Tour n° " + d.numero + " fini en " + chrono(d.temps),
     "nouveau-record": (d) =>
-      "🏆 Nouveau record " + (d.quoi === "tour" ? "du tour" : "de la course") + " : " + chrono(d.temps) + (d.ancien !== null ? " (avant : " + chrono(d.ancien) + ")" : " (le premier !)"),
+      "🏆 Nouveau record " + (d.quoi === "tour" ? "du tour" : d.quoi === "rampes" ? "des méga-rampes" : "de la course") + " : " + chrono(d.temps) + (d.ancien !== null ? " (avant : " + chrono(d.ancien) + ")" : " (le premier !)"),
     arrivee: (d) =>
       "🏁 GAGNÉ ! Arrivée en " + chrono(d.temps) + ", " + d.avance.toLocaleString("fr-FR") + " m devant la voiture bleue · meilleur tour " + chrono(d.meilleurTour) + " · " + d.sorties + " sortie(s) de piste",
     perdu: (d) =>
       "😢 PERDU : la voiture bleue a fini ses tours en " + chrono(d.temps) + ". Tu étais au tour " + d.tourJoueur + ", il te restait " + d.retard.toLocaleString("fr-FR") + " m",
     "tour-adversaire": (d) => "🔵 La voiture bleue a fini son tour n° " + d.numero + " en " + chrono(d.temps),
     choc: (d) =>
-      "💥 Choc " + (d.contre === "mur" ? "contre un mur" : d.contre === "voiture" ? "contre une voiture" : "avec la voiture bleue") + " ! Vitesse du choc : " + virgule(d.force, 1) + " m/s. Ta vitesse après : " + Math.round(d.vitesse * 3.6) + " km/h",
+      "💥 Choc " + (d.contre === "mur" ? "contre un mur" : d.contre === "voiture" ? "contre une voiture" : d.contre === "vehicule" ? "contre " + d.nom : "avec la voiture bleue") + " ! Vitesse du choc : " + virgule(d.force, 1) + " m/s. Ta vitesse après : " + Math.round(d.vitesse * 3.6) + " km/h",
     depassement: (d) => (d.position === 1 ? "🥇 Tu doubles la voiture bleue : tu es 1er" : "🥈 La voiture bleue te double : tu es 2e") + " (tour " + d.tour + ")",
     "adversaire-change-de-voie": (d) =>
       "🤖 Tu bouches le passage (" + Math.round(d.avance) + " m devant) : la voiture bleue passe sur la voie " + (d.voie > 0 ? "extérieure" : "intérieure"),
@@ -57,6 +57,11 @@ Circuit.SousLeCapot = (function () {
     monter: (d) => "🔑 Tu montes dans " + d.voiture + (d.ou === "garée" ? " (elle était garée)" : d.ou === "circulation" ? " (la voiture de la circulation t'a laissé la place)" : ""),
     "menu-cartes": () => "🗺️ Menu des cartes : choisis où rouler",
     "choix-carte": (d) => "🗺️ Carte choisie : " + d.nom + " → son garage s'ouvre",
+    "mega-rampes": (d) => "☁️ Méga-rampes : " + Math.round(d.longueur).toLocaleString("fr-FR") + " m de piste dans le ciel, " + d.drapeaux + " drapeaux, " + d.nitros + " nitros, " + d.pieces + " pièces",
+    drapeau: (d) => "🚩 Drapeau n° " + d.numero + " sur " + d.total + " passé en " + chrono(d.chrono) + " : si tu tombes, tu repars d'ici",
+    "tombe-nuages": (d) => "☁️ Tombé dans les nuages ! Retour au drapeau n° " + d.drapeau + " (le chrono continue)",
+    "voiture-cassee": (d) => "💥 Dégâts à 100 % : voiture cassée ! Réparée et remise au drapeau n° " + d.drapeau,
+    "rampes-arrivee": (d) => "🏁 Arrivée des méga-rampes en " + chrono(d.temps) + " · " + d.chutes + " chute(s) · " + d.pieces + " pièce(s)",
     "grand-parcours": (d) => "🛣️ Grand parcours : " + Math.round(d.longueur).toLocaleString("fr-FR") + " m de route, " + d.nitros + " plaques de nitro, " + d.pieces + " pièces à trouver",
     nitro: (d) => "🔥 NITRO (plaque n° " + d.plaque + ") à " + Math.round(Math.abs(d.vitesse) * 3.6) + " km/h : poussée pendant " + virgule(d.duree, 1) + " s",
     chute: (d) => "😵 Chute de " + virgule(d.hauteur, 1) + " m ! Tu es maintenant sur " + d.ou,
@@ -174,6 +179,30 @@ Circuit.SousLeCapot = (function () {
         ["trouvées", monde.piecesCourse + " / " + monde.pieces.length],
         ["porte-monnaie", Circuit.Sauvegarde.donnees.pieces + " pièce(s)"],
       ]);
+    } else if (monde.carte === "ciel") {
+      // Étape 41 : les méga-rampes.
+      const MR = Circuit.MegaRampes;
+      const sous = MR.sous(v.x, v.z, v.y || 0);
+      lignes = [
+        ["Les méga-rampes"],
+        ["phase", monde.phase],
+        ["chrono", chrono(monde.chrono || 0) + (monde.chronoLance ? "" : " (pas encore parti)")],
+        ["sous la voiture", sous.quoi + (sous.h > -1000 ? " (à " + virgule(sous.h, 1) + " m)" : "")],
+        ["progression", Math.round(monde.progression || 0) + " m sur " + Math.round(MR.arrivee.s) + " (arrivée)"],
+        ["dernier drapeau", (monde.drapeau || 0) + " / " + (MR.drapeaux.length - 1) + " (à " + Math.round(MR.drapeaux[monde.drapeau || 0].s) + " m)"],
+        ["dégâts", Math.round(monde.degats || 0) + " % (+ " + Circuit.CONFIG.rampes.degatsParChoc + " % par m/s de choc)"],
+        ["nitro", v.nitro > 0 ? "🔥 encore " + virgule(v.nitro, 1) + " s" : "—"],
+        ["chutes dans les nuages", monde.chutesNuages || 0],
+        ["voitures cassées", monde.cassees || 0],
+        ["sauts", MR.sauts.map((x) => Math.round(x.longueur) + " m").join(", ")],
+      ];
+      for (const c of monde.circulation || []) lignes.push([c.nom, Math.round(c.vitesse * 3.6) + " km/h, à " + Math.round(c.s) + " m du départ"]);
+      lignes = lignes.concat(voiture, [
+        ["Les pièces"],
+        ["trouvées", monde.piecesCourse + " / " + monde.pieces.length],
+        ["porte-monnaie", Circuit.Sauvegarde.donnees.pieces + " pièce(s)"],
+        ["record (base de données)", chrono(Circuit.Sauvegarde.donnees.recordRampes)],
+      ]);
     } else if (monde.carte === "grand") {
       // Étape 40 : le grand parcours.
       const GP = Circuit.GrandParcours;
@@ -184,7 +213,7 @@ Circuit.SousLeCapot = (function () {
         ["phase", monde.phase],
         ["sous la voiture", sous.quoi + " (à " + virgule(sous.h, 2) + " m)"],
         ["vitesse vers le haut (vy)", virgule(v.vy || 0, 1) + " m/s"],
-        ["nitro", v.nitro > 0 ? "🔥 encore " + virgule(v.nitro, 1) + " s (vitesse max × " + virgule(Circuit.CONFIG.nitro.facteur, 1) + ")" : "—"],
+        ["nitro", v.nitro > 0 ? "🔥 encore " + virgule(v.nitro, 1) + " s (vitesse max × " + virgule(Circuit.CONFIG.nitro.facteur, 1) + ", + " + Math.round(Circuit.CONFIG.nitro.bonusMax * 3.6) + " km/h au plus)" : "—"],
         ["plaques de nitro prises", monde.nitrosPris + " (il y en a " + GP.nitros.length + ")"],
         ["dernier saut", saut ? Math.round(saut.distance) + " m de long, " + virgule(saut.hauteurMax, 1) + " m de haut, " + virgule(saut.duree, 2) + " s" : "—"],
         ["le creux", Math.round(GP.saut.longueur) + " m à sauter"],

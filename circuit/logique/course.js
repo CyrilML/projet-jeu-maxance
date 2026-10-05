@@ -10,7 +10,8 @@
 //     ✍️ Règle de Maxance : si l'adversaire finit ses 3 tours avant toi, c'est « Perdu ! » tout de suite.
 //   - depuis l'étape 36 : le GARAGE au début (logique/garage.js) et les PIÈCES à ramasser (logique/pieces.js).
 //   - depuis l'étape 37 : le MENU DES CARTES avant le garage. Le circuit garde ses règles ici ;
-//     le parcours (balade libre) a les siennes dans logique/balade.js (le grand parcours aussi, depuis l'étape 40).
+//     le parcours (balade libre) a les siennes dans logique/balade.js (le grand parcours aussi, depuis l'étape 40),
+//     et les méga-rampes (étape 41) dans logique/rampes.js.
 //
 // Un « concurrent » = une voiture + où elle en est dans la course (tour, porte, chrono…).
 // Le joueur, ce sont les champs du monde lui-même (monde.voiture, monde.tour…) ;
@@ -55,6 +56,11 @@ Circuit.Course = (function () {
   function voitureDuJoueur(index) {
     const fiche = Circuit.Garage.voitureNumero(index);
     if (Circuit.Garage.carte === "parcours" || Circuit.Garage.carte === "grand") return Circuit.Voiture.creer(0, 0, 0, fiche);
+    if (Circuit.Garage.carte === "ciel") {
+      // Étape 41 : sur la piste dans le ciel, au départ (à 20 m de haut).
+      const d = Circuit.MegaRampes.depart;
+      return Object.assign(Circuit.Voiture.creer(d.x, d.z, d.angle, fiche), { y: d.y });
+    }
     if (Circuit.Garage.carte === "ville") {
       const d = Circuit.Ville.depart();
       return Circuit.Voiture.creer(d.x, d.z, d.angle, fiche);
@@ -186,6 +192,15 @@ Circuit.Course = (function () {
       Circuit.EnVille.etape(monde, dt, intentions);
       return;
     }
+    if (monde.phase === "rampes" || monde.phase === "rampes-fin") {
+      // Étape 41 : les méga-rampes.
+      if (intentions.retour || (monde.phase === "rampes-fin" && intentions.valider)) {
+        ouvrirCartes(monde);
+        return;
+      }
+      Circuit.Rampes.etape(monde, dt, intentions);
+      return;
+    }
     if (monde.phase === "balade") {
       if (intentions.retour) {
         ouvrirCartes(monde);
@@ -205,6 +220,7 @@ Circuit.Course = (function () {
       if (reponse === "depart") {
         if (monde.carte === "parcours" || monde.carte === "grand") Circuit.Balade.lancer(monde, voitureDuJoueur(monde.garage.index));
         else if (monde.carte === "ville") Circuit.EnVille.lancer(monde, voitureDuJoueur(monde.garage.index));
+        else if (monde.carte === "ciel") Circuit.Rampes.lancer(monde, voitureDuJoueur(monde.garage.index)); // étape 41
         else lancer(monde);
       }
       return;

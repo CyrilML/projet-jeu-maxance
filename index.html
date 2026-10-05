@@ -163,6 +163,7 @@
       <a href="#etape38">Étape 38</a>
       <a href="#etape39">Étape 39</a>
       <a href="#etape40">Étape 40</a>
+      <a href="#etape41">Étape 41</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -2813,7 +2814,7 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <h3>🏢 Une route à plusieurs étages</h3>
       <p>Sous un pont, il y a deux sols : la route d'en haut et la route d'en bas. Le jeu garde le sol le plus haut qui soit <em>sous</em> la voiture (pas plus de 0,7 m au-dessus d'elle). Si la voiture est sur le pont, c'est le pont ; si elle est en bas, le pont est trop haut : elle passe dessous. Et s'il n'y a plus rien sous les roues (le bord, un trou, le creux) : la gravité la fait tomber.</p>
       <h3>🔥 Le nitro</h3>
-      <p>Une plaque de nitro donne 2,5 secondes de poussée : la vitesse max est multipliée par 1,5, et la voiture accélère même sans appuyer. Après, elle ralentit doucement jusqu'à sa vitesse normale. Pour sauter le creux de 50 m, il faut aller vite : le saut est une <strong>parabole</strong>, et plus on va vite, plus on va loin.</p>
+      <p>Une plaque de nitro donne 2,5 secondes de poussée : la vitesse max est multipliée par 1,5 (sans gagner plus de 58 km/h, depuis l'étape 41), et la voiture accélère même sans appuyer. Après, elle ralentit doucement jusqu'à sa vitesse normale. Pour sauter le creux de 50 m, il faut aller vite : le saut est une <strong>parabole</strong>, et plus on va vite, plus on va loin.</p>
       <h3>🔎 Missions d'exploration</h3>
       <ul>
         <li>Aux rayons X, en l'air : une courbe orange montre où ta voiture va passer. C'est la parabole !</li>
@@ -2825,6 +2826,49 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <h3>❓ Quiz</h3>
       <details class="question"><summary>Pourquoi la route est-elle découpée en morceaux de 3 m ?</summary><p>Parce que pour chaque petit rectangle, c'est facile de savoir si la voiture est dessus et à quelle hauteur. Une courbe entière, ce serait très compliqué à calculer.</p></details>
       <details class="question"><summary>Une voiture roule à 50 m/s pendant 1 seconde en l'air. Quelle distance fait-elle ?</summary><p>50 m : distance = vitesse × temps. Juste la largeur du creux !</p></details>
+    </section>
+
+    <section id="etape41">
+      <h2>☁️ Étape 41 : les méga-rampes <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Une piste en bois toute seule dans le ciel, avec des bords relevés comme un toboggan, des motos à doubler, de grands sauts, une barre de dégâts et un chrono ! <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/41-mega-rampes.md</code>.</p>
+          <ul>
+            <li>✍️ Une 5e carte, des bords relevés partout.</li>
+            <li>✍️ Tombé dans les nuages → retour au dernier drapeau.</li>
+            <li>✍️ Véhicules à doubler, barre de dégâts, chrono et arrivée, nitros et sauts.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Menu → <kbd>5</kbd>, puis le garage, puis <kbd>↑</kbd> : le chrono démarre.</li>
+            <li>☐ Double les motos sans les toucher (sinon : regarde la barre de dégâts).</li>
+            <li>☐ Les drapeaux deviennent verts ; tombe exprès pour voir où tu repars.</li>
+            <li>☐ Prends les 3 nitros avant le saut n° 3 (60 m).</li>
+            <li>☐ À l'arrivée : ton temps et ton record.</li>
+            <li>Vérifie « version 10 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🛷 Des bords relevés</h3>
+      <p>La coupe de la piste ressemble à un U très plat : le milieu est plat, et les bords montent en quart de cercle, comme dans un skatepark. Pour le jeu, c'est simple : si ta voiture va trop loin sur le côté, on la remet sur la piste et on la tourne un peu dans le bon sens. Elle <strong>glisse</strong> contre le bord au lieu de rebondir. Seul un choc très fort compte comme un choc.</p>
+      <h3>🚩 Les points de contrôle</h3>
+      <p>Le jeu retient le plus loin où tu es allé (en mètres depuis le départ). Dès que tu dépasses un drapeau, il devient « le dernier drapeau ». Si ta hauteur descend 45 m sous lui, tu es perdu dans les nuages : le jeu te remet sur ce drapeau.</p>
+      <h3>💥 La barre de dégâts</h3>
+      <p>Chaque choc a une vitesse (en m/s). Les dégâts augmentent de <code>vitesse du choc × 3</code> %. Un choc à 10 m/s, c'est donc 30 % ! À 100 %, ta voiture est cassée.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Aux rayons X, regarde la longueur de chaque saut et la vitesse de chaque moto.</li>
+        <li>Dans l'état en direct, regarde « progression » et « dernier drapeau » pendant que tu roules.</li>
+        <li>Dans la base de données, trouve <code>recordRampes</code> après ta première arrivée.</li>
+        <li>Essaie le saut n° 3 sans nitro : que se passe-t-il ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Tu touches une moto à 5 m/s puis une autre à 10 m/s. Combien de dégâts ?</summary><p>5 × 3 + 10 × 3 = 15 + 30 = 45 %.</p></details>
+      <details class="question"><summary>Pourquoi le chrono ne s'arrête-t-il pas quand tu tombes ?</summary><p>Parce que tomber doit coûter quelque chose : sinon, on pourrait tomber sans risque. Le temps perdu à recommencer depuis le drapeau, c'est la punition.</p></details>
     </section>
 
     <!-- ============ FEUILLE DE ROUTE ============ -->
@@ -3061,32 +3105,38 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
           <p>Une route comme un circuit Carrera : montées, descentes, ponts, grande rampe, plateforme à trous et à bosses, nitros, saut du creux. Nouveaux véhicules : rallye, quad, taxi, police, kart.</p>
           <p class="apprend"><b>Tu apprends :</b> une courbe qui passe par des points, une route en morceaux, un monde à étages, une poussée (nitro), la parabole d'un saut. <b>Durée :</b> 3 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">40</div>
-          <h4>Livraisons et course en ville <span class="etiquette">⏭️ prochaine étape (prévue)</span></h4>
-          <p>Des colis à livrer en ville avant la fin du chrono, et une course dans les rues.</p>
+          <h4>Les méga-rampes <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Une piste en bois dans le ciel, aux bords relevés : motos à doubler, sauts, nitros, drapeaux, barre de dégâts, chrono et record.</p>
+          <p class="apprend"><b>Tu apprends :</b> un outil partagé (le ruban), des points de contrôle, une barre de dégâts, un record dans la base de données. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">41</div>
+          <h4>La ville géante : pont, aéroport, avions, motos et petits boulots <span class="etiquette">⏭️ prochaine étape (demandée)</span></h4>
+          <p>Une ville énorme : un pont vers un aéroport, des motos, des magasins et des petits boulots, des avions, des hélicoptères et des avions de ligne d'aéroport en aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des missions (une liste de choses à faire), un chrono, une flèche qui montre le chemin. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">41</div>
+          <div class="num">42</div>
           <h4>Sauvegarder le monde <span class="etiquette">💡 idée</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">42</div>
+          <div class="num">43</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">43</div>
+          <div class="num">44</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">44</div>
+          <div class="num">45</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -3466,6 +3516,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-40" data-cle="appris-40" placeholder="Ex. : J'ai appris qu'une route en 3D, c'est plein de petits rectangles…"></textarea>
         <label for="idees-40"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-40" data-cle="idees-40" placeholder="Ex. : Un looping sur le grand parcours…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 41 · les méga-rampes <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le ruban partagé (<code>moteur/ruban.js</code>), la piste dans le ciel (<code>logique/mega-rampes.js</code>), les règles de la course (<code>logique/rampes.js</code>), le décor en bois et les nuages (<code>affichage/decor-rampes.js</code>), la moto, la barre de dégâts, la base de données en version 7.</p>
+        <label for="appris-41"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-41" data-cle="appris-41" placeholder="Ex. : J'ai appris ce qu'est un point de contrôle…"></textarea>
+        <label for="idees-41"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-41" data-cle="idees-41" placeholder="Ex. : Une méga-rampe avec un looping géant…"></textarea>
       </div>
     </section>
   </main>

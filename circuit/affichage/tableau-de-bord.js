@@ -66,6 +66,10 @@ Circuit.TableauDeBord = (function () {
       dessinerVille(monde, options, sauvegarde);
       return;
     }
+    if (monde.phase === "rampes" || monde.phase === "rampes-fin") {
+      dessinerRampes(monde, options, sauvegarde); // étape 41
+      return;
+    }
 
     // En haut à gauche : tour et chronos
     panneau(12, 12, 230, 160);
@@ -202,20 +206,20 @@ Circuit.TableauDeBord = (function () {
     C.cartes.forEach((carte, i) => {
       const x = gauche + i * (largeur + ecart), y = 130;
       const ici = i === monde.choixCarte;
-      const prete = true; // étape 40 : les 4 cartes sont prêtes
+      const prete = true; // étape 41 : toutes les cartes sont prêtes
       ctx.fillStyle = ici ? "rgba(255,226,122,.92)" : "rgba(10,14,30,.72)";
       ctx.beginPath();
       ctx.roundRect(x, y, largeur, 230, 14);
       ctx.fill();
       const couleur = ici ? "#1a1a1a" : "#fff";
       texte(carte.icone, x + largeur / 2, y + 80, 60, couleur, "center", ici);
-      texte((i + 1) + ". " + carte.nom, x + largeur / 2, y + 135, n > 3 ? 18 : 26, couleur, "center", ici);
-      texte(carte.texte, x + largeur / 2, y + 170, 13, ici ? "#333" : "#cfd6ff", "center", ici);
+      texte((i + 1) + ". " + carte.nom, x + largeur / 2, y + 135, n > 4 ? 15 : n > 3 ? 18 : 26, couleur, "center", ici);
+      texte(carte.texte, x + largeur / 2, y + 170, n > 4 ? 11 : 13, ici ? "#333" : "#cfd6ff", "center", ici);
       if (!prete) texte("🚧 en construction", x + largeur / 2, y + 205, 16, ici ? "#7a3b00" : "#ffb37a", "center", ici);
     });
     if (monde.messageCarte) texte(monde.messageCarte, W / 2, 400, 20, "#ffb37a", "center");
     panneau(W / 2 - 250, H - 80, 500, 50);
-    texte("← → ou 1 2 3 4 pour choisir · Entrée pour aller au garage", W / 2, H - 48, 18, "#cfd6ff", "center");
+    texte("← → ou 1 à " + n + " pour choisir · Entrée pour aller au garage", W / 2, H - 48, 18, "#cfd6ff", "center");
   }
 
   // Étape 37 : pendant la balade sur le parcours.
@@ -235,15 +239,7 @@ Circuit.TableauDeBord = (function () {
     texte(Math.round(Math.abs(v.vitesse) * 3.6) + "", W - 70, H - 36, 46, "#fff", "right");
     texte("km/h", W - 62, H - 36, 18, "#cfd6ff");
     if (v.y > 0.3) texte("↕ " + v.y.toFixed(1).replace(".", ",") + " m de haut", W - 101, H - 104, 18, "#7dffa0", "center");
-    // Étape 40 : la jauge du nitro (elle se vide pendant la poussée).
-    if (v.nitro > 0) {
-      panneau(W / 2 - 110, H - 70, 220, 46);
-      texte("🔥 NITRO", W / 2 - 98, H - 40, 20, "#7fe8ff");
-      ctx.fillStyle = "rgba(255,255,255,.15)";
-      ctx.fillRect(W / 2 + 2, H - 54, 96, 14);
-      ctx.fillStyle = "#33e0ff";
-      ctx.fillRect(W / 2 + 2, H - 54, (96 * v.nitro) / C.nitro.duree, 14);
-    }
+    jaugeNitro(v);
 
     if (grand) dessinerMiniCarteGrand(monde);
     else dessinerMiniCarteParcours(monde);
@@ -257,6 +253,89 @@ Circuit.TableauDeBord = (function () {
       if (grand) dessinerEtiquettesGrand(monde);
       else dessinerEtiquettesParcours(monde);
     }
+  }
+
+  // Étape 40 : la jauge du nitro (elle se vide pendant la poussée).
+  function jaugeNitro(v) {
+    if (!(v.nitro > 0)) return;
+    panneau(W / 2 - 110, H - 70, 220, 46);
+    texte("🔥 NITRO", W / 2 - 98, H - 40, 20, "#7fe8ff");
+    ctx.fillStyle = "rgba(255,255,255,.15)";
+    ctx.fillRect(W / 2 + 2, H - 54, 96, 14);
+    ctx.fillStyle = "#33e0ff";
+    ctx.fillRect(W / 2 + 2, H - 54, (96 * v.nitro) / C.nitro.duree, 14);
+  }
+
+  // Étape 41 : l'écran des méga-rampes : chrono, drapeaux, barre de DÉGÂTS (comme dans les jeux de méga-rampes),
+  // la barre de progression jusqu'à l'arrivée, et l'écran d'arrivée.
+  function dessinerRampes(monde, options, sauvegarde) {
+    const v = monde.voiture;
+    const MR = Circuit.MegaRampes;
+    panneau(12, 12, 280, 134);
+    texte("☁️ Les méga-rampes", 24, 42, 24, "#ffe27a");
+    texte("⏱ " + chrono(monde.chrono), 24, 70, 22);
+    texte("Record : " + chrono(sauvegarde.recordRampes), 24, 92, 15, "#cfd6ff");
+    texte("🚩 drapeau " + monde.drapeau + " / " + (MR.drapeaux.length - 1) + " · 🪙 " + monde.piecesCourse, 24, 114, 16, "#ffd34d");
+    texte("☁️ chutes : " + monde.chutesNuages + " · 💥 cassée : " + monde.cassees, 24, 136, 14, "#cfd6ff");
+
+    // En haut à droite : la barre de dégâts (5 cases, du vert au rouge), puis la progression.
+    panneau(W - 250, 12, 238, 88);
+    texte("Dégâts", W - 238, 36, 16, "#fff");
+    texte(Math.round(monde.degats) + " %", W - 24, 36, 16, monde.degats > 70 ? "#ff6b4a" : "#fff", "right");
+    const couleurs = ["#3ad65a", "#9be03a", "#f2d21a", "#f29a1a", "#ef3b2c"];
+    for (let i = 0; i < 5; i++) {
+      const plein = Math.max(0, Math.min(1, monde.degats / 20 - i));
+      ctx.fillStyle = "rgba(255,255,255,.15)";
+      ctx.fillRect(W - 238 + i * 43, 44, 39, 12);
+      ctx.fillStyle = couleurs[i];
+      ctx.fillRect(W - 238 + i * 43, 44, 39 * plein, 12);
+    }
+    const part = Math.min(1, monde.progression / MR.arrivee.s);
+    texte("Arrivée : " + Math.round(part * 100) + " %", W - 238, 80, 14, "#cfd6ff");
+    ctx.fillStyle = "rgba(255,255,255,.15)";
+    ctx.fillRect(W - 140, 70, 116, 10);
+    ctx.fillStyle = "#7fe0ff";
+    ctx.fillRect(W - 140, 70, 116 * part, 10);
+    for (const d of MR.drapeaux) {
+      ctx.fillStyle = d.numero <= monde.drapeau ? "#22c55e" : "#e02424";
+      ctx.fillRect(W - 140 + (116 * d.s) / MR.arrivee.s - 1, 66, 2, 18);
+    }
+
+    panneau(W - 190, H - 92, 178, 80);
+    texte(Math.round(Math.abs(v.vitesse) * 3.6) + "", W - 70, H - 36, 46, "#fff", "right");
+    texte("km/h", W - 62, H - 36, 18, "#cfd6ff");
+    jaugeNitro(v);
+
+    if (monde.phase === "rampes-fin" && monde.resultat) {
+      panneau(W / 2 - 230, H / 2 - 120, 460, 220);
+      texte("🏁 Arrivée !", W / 2, H / 2 - 76, 40, "#ffe27a", "center");
+      texte("Temps : " + chrono(monde.resultat.temps), W / 2, H / 2 - 36, 26, "#fff", "center");
+      texte(monde.resultat.record ? "🏆 Nouveau record !" : "Record : " + chrono(monde.resultat.ancienRecord), W / 2, H / 2 - 4, 22, monde.resultat.record ? "#7dffa0" : "#cfd6ff", "center");
+      texte("☁️ " + monde.chutesNuages + " chute(s) · 💥 " + monde.cassees + " voiture(s) cassée(s)", W / 2, H / 2 + 26, 17, "#cfd6ff", "center");
+      texte("🪙 +" + monde.piecesCourse + " pièces · Entrée : choisir une carte", W / 2, H / 2 + 60, 18, "#ffd34d", "center");
+    } else if (monde.message && monde.temps < monde.message.jusqua) {
+      texte(monde.message.texte, W / 2, H / 2 - 70, 32, "#ffe27a", "center");
+    } else if (!monde.chronoLance) {
+      texte("↑ pour partir : le chrono démarre !", W / 2, H / 2 - 70, 28, "#ffe27a", "center");
+    }
+    texte("R : recommencer · ⌫ : changer de carte", 24, H - 22, 14, "#cfd6ff");
+    if (options.pause) texte("⏸ Pause", W / 2, H - 30, 28, "#fff", "center");
+    if (options.rayonsX) dessinerEtiquettesRampes(monde);
+  }
+
+  // Étape 41 : aux rayons X : la longueur des sauts, les drapeaux, et la vitesse des véhicules à doubler.
+  function dessinerEtiquettesRampes(monde) {
+    const MR = Circuit.MegaRampes;
+    const vp = Circuit.Scene3D.vueProjection;
+    const ecrire = (t, x, y, z, couleur) => {
+      const e = Circuit.Maths3D.versEcran(vp, x, y, z, W, H);
+      if (e && e.x > -80 && e.x < W + 80 && e.y > 0) texte(t, e.x, e.y, 14, couleur, "center");
+    };
+    for (const s of MR.sauts) ecrire("saut n° " + s.numero + " : " + Math.round(s.longueur) + " m", (s.depart.x + s.arrivee.x) / 2, s.depart.y + 6, (s.depart.z + s.arrivee.z) / 2, "#ffe27a");
+    for (const d of MR.drapeaux) ecrire("🚩 " + d.numero + " · " + Math.round(d.s) + " m", d.x, d.y + 8, d.z, "#7dffa0");
+    for (const c of monde.circulation) ecrire(c.nom + " · " + Math.round(c.vitesse * 3.6) + " km/h", c.voiture.x, c.voiture.y + 3, c.voiture.z, "#9cc4ff");
+    const v = monde.voiture;
+    ecrire("y = " + (v.y || 0).toFixed(1).replace(".", ",") + " m · " + Math.round(monde.progression) + " m", v.x, (v.y || 0) + 2.8, v.z, "#ffb37a");
   }
 
   // Étape 40 : la mini-carte du grand parcours : la route (plus claire quand elle est haute), les plateformes,

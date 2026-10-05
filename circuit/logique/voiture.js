@@ -14,6 +14,7 @@
 // en « un peu vers x » + « un peu vers z », selon l'angle.
 //
 // Étape 40 : LE NITRO. Tant que voiture.nitro > 0 (des secondes), la vitesse max est multipliée par 1,5
+// (depuis l'étape 41 : sans dépasser la vitesse max + 16 m/s)
 // et une poussée s'ajoute, même sans appuyer sur ↑. Après, la voiture revient DOUCEMENT à sa vitesse max.
 //
 // Ce fichier ne dessine rien : il calcule. C'est affichage/scene3d.js qui dessine la voiture.
@@ -82,7 +83,7 @@ Circuit.Voiture = (function () {
     let max = sol === "herbe" ? Math.min(V.vitesseMaxHerbe, voiture.vitesseMax) : voiture.vitesseMax;
     if (nitro) {
       // Étape 40 : la poussée du nitro.
-      max *= N.facteur;
+      max = Math.min(max * N.facteur, max + N.bonusMax); // étape 41 : jamais plus de +16 m/s (les F1 allaient à 285 km/h !)
       if (v < max) v = Math.min(max, v + N.poussee * dt);
       voiture.pedale += " + 🔥 nitro";
     }

@@ -21,7 +21,7 @@ Circuit.Garage = (function () {
   const LISTES = { course: C.voitures, parcours: C.vehiculesParcours, ville: C.vehiculesVille };
   // Étape 40 : le garage du grand parcours. Un nom tout seul (« buggy ») = la fiche du même véhicule dans un
   // autre garage. Acheté une fois, il est à toi dans les deux garages.
-  LISTES.grand = C.vehiculesGrandParcours.map((v) => {
+  const fichesDe = (liste) => liste.map((v) => {
     if (typeof v !== "string") return v;
     for (const l of Object.values(LISTES)) {
       const f = l.find((x) => x.id === v);
@@ -29,6 +29,8 @@ Circuit.Garage = (function () {
     }
     return null;
   }).filter(Boolean);
+  LISTES.grand = fichesDe(C.vehiculesGrandParcours);
+  LISTES.ciel = fichesDe(C.vehiculesCiel); // étape 41 : les méga-rampes (les voitures de course)
   let carte = "course";
 
   // Le garage de quelle carte ?

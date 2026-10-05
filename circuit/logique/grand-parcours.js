@@ -5,11 +5,9 @@
 // Sur le chemin : une GRANDE RAMPE qui monte à 14 m, une PLATEFORME avec des trous et des bosses,
 // une plateforme plate, une longue ligne droite avec des NITROS, et un CREUX à sauter.
 //
-// Comment fabriquer une route qui tourne en douceur avec seulement une liste de points ?
-//   1. On relie les points par une COURBE (une « spline de Catmull-Rom ») : elle passe par chaque point
-//      sans faire d'angle. Pour la hauteur, on va tout droit d'un point à l'autre (une pente régulière).
-//   2. On découpe la courbe en petits morceaux de 3 m : les ÉCHANTILLONS.
-//   3. Entre deux échantillons, la route est un petit rectangle (un « tronçon ») de 14 m de large.
+// Comment fabriquer une route qui tourne en douceur avec seulement une liste de points ? C'est le travail
+// du RUBAN (moteur/ruban.js, depuis l'étape 41) : une courbe qui passe par les points, découpée en petits
+// rectangles de 3 m de long et 14 m de large, les « tronçons ».
 //
 // Comme au parcours (logique/parcours.js), le terrain sait dire la HAUTEUR DU SOL sous un point.
 // Mais ici il y a des étages : sous un pont, le sol c'est la route d'en bas ! On garde donc le sol le
@@ -24,76 +22,13 @@ Circuit.GrandParcours = (function () {
   const C = Circuit.CONFIG;
   const G = C.grandParcours;
   const MARCHE = C.parcours.marche;
-  const PAS = 3; // m : la longueur d'un tronçon
-  const RECOUVREMENT = 0.6; // m : les tronçons voisins se chevauchent un peu (sinon il y aurait des fentes dans les virages)
-  const demiLargeur = G.largeur / 2;
-  const points = G.points;
+  // La route elle-même est fabriquée par le ruban (moteur/ruban.js) : courbe, échantillons, tronçons.
+  const R = Circuit.Ruban.creer(G.points, { ferme: true, largeur: G.largeur });
+  const { points, echantillons, troncons, routes, local, hauteurTroncon, loin, pointSurLaRoute } = R;
   const n = points.length;
-
-  // Un point de la courbe de Catmull-Rom, entre les points i et i + 1 (t de 0 à 1).
-  // C'est la version « centripète » : les points sont espacés selon la racine de leur distance. Ainsi la courbe
-  // ne fait jamais de boucle ni de retour en arrière, même quand un point est tout près du suivant (le tremplin !).
-  function courbe(i, t) {
-    const P = [points[(i - 1 + n) % n], points[i], points[(i + 1) % n], points[(i + 2) % n]];
-    const k = [0];
-    for (let j = 1; j < 4; j++) k.push(k[j - 1] + Math.max(0.01, Math.sqrt(Math.hypot(P[j][0] - P[j - 1][0], P[j][1] - P[j - 1][1]))));
-    const u = k[1] + (k[2] - k[1]) * t;
-    const melange = (a, b, ka, kb) => [((kb - u) * a[0] + (u - ka) * b[0]) / (kb - ka), ((kb - u) * a[1] + (u - ka) * b[1]) / (kb - ka)];
-    const A1 = melange(P[0], P[1], k[0], k[1]), A2 = melange(P[1], P[2], k[1], k[2]), A3 = melange(P[2], P[3], k[2], k[3]);
-    const B1 = melange(A1, A2, k[0], k[2]), B2 = melange(A2, A3, k[1], k[3]);
-    const R = melange(B1, B2, k[1], k[2]);
-    return {
-      x: R[0],
-      z: R[1],
-      y: P[1][2] + (P[2][2] - P[1][2]) * t, // la hauteur : en ligne droite d'un point à l'autre
-    };
-  }
-
-  // Ce qu'il y a sur le morceau qui part du point i : "route", "tremplin", "plateforme" ou "vide".
-  const sorte = (i) => points[i][3] || "route";
-  const estRoute = (s) => s === "route" || s === "tremplin";
-
-  // 1 et 2. Les échantillons, tous les 3 m environ.
-  const echantillons = [];
-  let distance = 0;
-  for (let i = 0; i < n; i++) {
-    let longueur = 0, avant = courbe(i, 0);
-    for (let k = 1; k <= 20; k++) {
-      const p = courbe(i, k / 20);
-      longueur += Math.hypot(p.x - avant.x, p.z - avant.z);
-      avant = p;
-    }
-    const morceaux = Math.max(2, Math.round(longueur / PAS));
-    for (let k = 0; k < morceaux; k++) {
-      const p = courbe(i, k / morceaux);
-      echantillons.push({ x: p.x, z: p.z, y: p.y, morceau: i, sorte: sorte(i), s: 0 });
-    }
-  }
-
-  // 3. Les tronçons : un petit rectangle de route entre deux échantillons qui se suivent.
-  const troncons = echantillons.map((a, k) => {
-    const b = echantillons[(k + 1) % echantillons.length];
-    const longueur = Math.hypot(b.x - a.x, b.z - a.z);
-    a.s = distance;
-    distance += longueur;
-    const ux = (b.x - a.x) / longueur, uz = (b.z - a.z) / longueur;
-    return { numero: k, ax: a.x, az: a.z, ya: a.y, yb: b.y, ux, uz, longueur, sorte: a.sorte, morceau: a.morceau,
-      x: (a.x + b.x) / 2, z: (a.z + b.z) / 2, angle: Math.atan2(uz, ux), route: estRoute(a.sorte) };
-  });
-  troncons.forEach((t, k) => {
-    t.avantRoute = troncons[(k - 1 + troncons.length) % troncons.length].route;
-    t.apresRoute = troncons[(k + 1) % troncons.length].route;
-  });
-  const longueurTour = distance;
-  const routes = troncons.filter((t) => t.route);
-
-  // Le point (x, z) vu depuis un tronçon : u le long de la route (depuis son début), w en travers.
-  function local(t, x, z) {
-    const dx = x - t.ax, dz = z - t.az;
-    return { u: dx * t.ux + dz * t.uz, w: -dx * t.uz + dz * t.ux };
-  }
-  const hauteurTroncon = (t, u) => t.ya + (t.yb - t.ya) * Math.max(0, Math.min(1, u / t.longueur));
-  const loin = (t, x, z, marge) => Math.abs(x - t.x) > t.longueur / 2 + marge || Math.abs(z - t.z) > t.longueur / 2 + marge;
+  const demiLargeur = R.demiLargeur;
+  const RECOUVREMENT = R.recouvrement;
+  const longueurTour = R.longueur;
 
   // Le CREUX : un grand trou dans le sol, avec des bords en pente (on peut en ressortir en roulant).
   const K = G.creux;
@@ -121,14 +56,8 @@ Circuit.GrandParcours = (function () {
   function sous(x, z, y) {
     const base = solDeBase(x, z);
     let meilleur = { h: base, quoi: base < -0.5 ? "le creux" : "l'herbe" };
-    for (const t of routes) {
-      if (loin(t, x, z, demiLargeur + 1)) continue;
-      const l = local(t, x, z);
-      if (Math.abs(l.w) > demiLargeur) continue;
-      if (l.u < (t.avantRoute ? -RECOUVREMENT : 0) || l.u > t.longueur + (t.apresRoute ? RECOUVREMENT : 0)) continue;
-      const h = hauteurTroncon(t, l.u);
-      if (h <= y + MARCHE && h > meilleur.h) meilleur = { h, quoi: t.sorte === "tremplin" ? "le tremplin" : h > 0.5 ? "la route (en hauteur)" : "la route", troncon: t.numero };
-    }
+    const route = R.routeSous(x, z, y, MARCHE);
+    if (route && route.h > meilleur.h) meilleur = { h: route.h, quoi: route.sorte === "tremplin" ? "le tremplin" : route.h > 0.5 ? "la route (en hauteur)" : "la route", troncon: route.troncon };
     for (const p of plateformes) {
       const h = dessusPlateforme(p, x, z);
       if (h === "trou") {
@@ -216,25 +145,9 @@ Circuit.GrandParcours = (function () {
     return pire;
   }
 
-  // Un point de la route, au milieu, sur le morceau i (f de 0 à 1), avec sa direction.
-  function pointSurLaRoute(i, f) {
-    const p = courbe(i, f), q = courbe(i, Math.min(1, f + 0.01)), r = courbe(i, Math.max(0, f - 0.01));
-    const angle = Math.atan2(q.z - r.z, q.x - r.x);
-    return { x: p.x, z: p.z, y: p.y, angle, cos: Math.cos(angle), sin: Math.sin(angle) };
-  }
-
   // ✍️ Les plaques de NITRO.
-  const nitros = G.nitros.map(([i, f], numero) => Object.assign({ numero, demiLongueur: G.longueurNitro / 2, demiLargeur: G.largeurNitro / 2 }, pointSurLaRoute(i, f)));
-
-  // Sur quelle plaque de nitro roule la voiture ? (−1 = aucune)
-  function plaqueSous(v) {
-    for (const p of nitros) {
-      const dx = v.x - p.x, dz = v.z - p.z;
-      const u = dx * p.cos + dz * p.sin, w = -dx * p.sin + dz * p.cos;
-      if (Math.abs(u) <= p.demiLongueur && Math.abs(w) <= p.demiLargeur && Math.abs((v.y || 0) - p.y) < 1) return p.numero;
-    }
-    return -1;
-  }
+  const nitros = R.plaques(G.nitros, G.longueurNitro, G.largeurNitro);
+  const plaqueSous = (v) => R.plaqueSous(nitros, v);
 
   // Le saut du creux : les deux bords de la route (le tremplin, puis l'arrivée).
   const iVide = points.findIndex((p) => p[3] === "vide");

@@ -574,6 +574,39 @@ Circuit.Modeles = (function () {
     return { g, roues: ajouterRoues(g, [[0.75, true], [-0.8, false]], 0.62, 0.22, 0.24), yCapot: 1.1 };
   }
 
+  // ---------------------------------------------------------------- étape 41 : la moto (sur les méga-rampes)
+
+  // La moto : un cadre, un réservoir, une selle, un guidon, deux roues… et un pilote penché en avant.
+  function moto(k1, k2) {
+    const g = new THREE.Group();
+    g.add(extruder([[0.9, 0.75, 0.1], [0.75, 1.05, 0.15], [0.1, 1.05, 0.1], [-0.2, 0.95, 0.1], [-0.6, 0.6, 0.1], [0.4, 0.45, 0.1]], 0.34, peinture(k1), 0.06)); // réservoir et carénage
+    g.add(extruder([[1.15, 0.75, 0.05], [1.05, 1.25, 0.15], [0.85, 1.2, 0.05], [0.8, 0.8, 0.05]], 0.5, peinture(k1), 0.05)); // le nez
+    g.add(boite(0.55, 0.12, 0.3, M.siege, -0.3, 1.02, 0)); // la selle
+    g.add(boite(0.5, 0.3, 0.3, M.chrome, 0.15, 0.5, 0)); // le moteur
+    g.add(tube([0.85, 0.35, 0], [1.0, 1.15, 0], 0.04, M.chrome)); // la fourche
+    g.add(tube([-0.85, 0.35, 0], [-0.1, 0.6, 0], 0.04, M.noir)); // le bras arrière
+    g.add(tube([0.95, 1.2, -0.35], [0.95, 1.2, 0.35], 0.03, M.noir)); // le guidon
+    g.add(boite(0.06, 0.12, 0.18, M.phare, 1.17, 1.0, 0));
+    g.add(boite(0.06, 0.08, 0.14, M.feu, -0.7, 1.0, 0));
+    // Le pilote, penché sur le guidon.
+    const pilote = personnage();
+    pilote.g.scale.setScalar(0.85);
+    pilote.g.position.set(-0.35, 0.05, 0);
+    pilote.g.rotation.z = -0.45;
+    for (const j of pilote.jambes) j.rotation.z = 1.1;
+    for (const b of pilote.bras) b.rotation.z = 1.3;
+    g.add(pilote.g);
+    // Deux roues (une devant qui braque, une derrière), centrées sur la moto.
+    const roues = [];
+    for (const [x, avant] of [[0.85, true], [-0.85, false]]) {
+      const r = roue(0.35, 0.16);
+      r.pivot.position.set(x, 0.35, 0);
+      g.add(r.pivot);
+      roues.push(Object.assign(r, { avant }));
+    }
+    return { g, roues, yCapot: 1.5 };
+  }
+
   // ---------------------------------------------------------------- étape 39 : le personnage
   // Un petit bonhomme : jambes, corps, bras, tête et casquette. Les jambes et les bras ont un « pivot »
   // à la hanche et à l'épaule : en les faisant tourner d'avant en arrière, il marche.
@@ -612,7 +645,7 @@ Circuit.Modeles = (function () {
     return { g, jambes, bras };
   }
 
-  const FABRIQUES = { classique, taureau, fleche, fusee, f1, quatre, pickup, buggy, monster, citadine, suv, basse, camionnette, camion, rallye, quad, taxi, police, kart };
+  const FABRIQUES = { classique, taureau, fleche, fusee, f1, quatre, pickup, buggy, monster, citadine, suv, basse, camionnette, camion, rallye, quad, taxi, police, kart, moto };
 
   // Fabrique une voiture. Renvoie { g (le groupe Three.js), roues (pour les faire tourner), yCapot (pour la caméra),
   // et pour la police : gyro (les 2 lampes du gyrophare) }.
