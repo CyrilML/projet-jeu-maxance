@@ -128,6 +128,7 @@
       <a href="#etape2">Étape 2</a>
       <a href="#etape3">Étape 3</a>
       <a href="#etape4">Étape 4</a>
+      <a href="#etape5">Étape 5</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -421,7 +422,7 @@ ligne   = (Y ÷ 16 − X ÷ 32) ÷ 2</pre>
             <li>☐ Au bout de 2 min 30 : l'été, puis l'automne (feuilles orange), puis l'hiver (neige, lacs gelés, écharpes rouges).</li>
             <li>☐ En hiver, le pêcheur fait un trou dans la glace.</li>
             <li>☐ Plus rien à manger ? Une bulle 🍽️ au-dessus des cabanes, puis l'habitant s'en va (« vide »).</li>
-            <li>Vérifie « version 5 » en haut de la page du village (la version 5 a rangé le village à part, avec son propre carnet).</li>
+            <li>Vérifie « version 4 » ou plus en haut de la page du village.</li>
           </ul>
         </div>
       </div>
@@ -461,6 +462,72 @@ ligne   = (Y ÷ 16 − X ÷ 32) ÷ 2</pre>
       <details class="question"><summary>Pourquoi le chasseur ne court-il pas après les lapins ?</summary><p>Quand il choisit un animal, celui-ci est « visé » et s'arrête de bouger. Sinon, le chemin calculé ne mènerait plus nulle part !</p></details>
     </section>
 
+    <section id="etape5">
+      <h2>🎯 Étape 5 : moins de faim, et de plus jolies animations <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Maxance a testé sur son téléphone et a tout noté : trop de faim, un pêcheur qui ne pêche pas, des rochers qui s'épuisent, des animations pas assez jolies, un menu trop chargé. Voici les réglages ! <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/05-plus-juste-et-plus-joli.md</code>.</p>
+          <ul>
+            <li>✍️ Moins de faim, et le ventre vide ne doit pas bloquer : juste ralentir.</li>
+            <li>✍️ Le pêcheur au bord de l'eau, obligatoire.</li>
+            <li>✍️ Déplacer les bâtiments, et un géologue pour trouver de la pierre.</li>
+            <li>✍️ Un cerf vaut plus qu'un lapin, un thon plus qu'une sardine.</li>
+            <li>✍️ Plus de stock au départ, un menu regroupé, de plus jolies animations.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ En haut : 🪵 5 · 🟫 30 · 🪨 30 · 🐟 12 · 🍖 8.</li>
+            <li>☐ Le menu du bas : 🪵 Bois · 🪨 Pierre · 🍖 Nourriture · Route · 🔧 Outils.</li>
+            <li>☐ Un pêcheur loin de l'eau : fantôme rouge, « trop loin de l'eau ».</li>
+            <li>☐ Le poisson pêché saute jusqu'au pêcheur ; d'autres sautent dans l'eau.</li>
+            <li>☐ Le chasseur tend l'arc, la flèche part, l'animal tombe.</li>
+            <li>☐ L'arbre tremble, tombe, et laisse une souche.</li>
+            <li>☐ 🔧 Outils → ↔️ Déplacer : touche un bâtiment, puis sa nouvelle place.</li>
+            <li>☐ Le géologue trouve un rocher (des étincelles !).</li>
+            <li>☐ Plus de nourriture : tout va 2 fois moins vite, et c'est écrit.</li>
+            <li>Vérifie « version 6 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>⚖️ Régler l'équilibre d'un jeu</h3>
+      <p>Avant, chaque habitant mangeait toutes les 2 minutes, et chaque repas demandait <strong>2 voyages</strong> de porteur : ramener le poisson à l'entrepôt, puis l'apporter à la cabane. Les 3 porteurs étaient débordés ! Maintenant :</p>
+      <pre style="white-space: pre-wrap">avant : 9 habitants × 1 repas ÷ 2 min   = 4,5 repas par minute, et 9 voyages de porteur par minute
+après : 9 habitants × 1 repas ÷ 2,5 min = 3,6 repas par minute, et 0 voyage (on mange à l'entrepôt)</pre>
+      <p>C'est le travail du <strong>game designer</strong> : jouer, sentir que c'est trop dur, chercher <em>pourquoi</em> (ici, les porteurs), puis changer quelques nombres dans <code>config.js</code>. Les vrais jeux passent des mois à ça !</p>
+
+      <h3>🐢 Ralentir au lieu de bloquer</h3>
+      <p>Chaque habitant a une <strong>vitesse</strong> : 1 quand il a mangé, 0,5 quand il a faim. Sa marche et son travail sont multipliés par ce nombre :</p>
+      <pre style="white-space: pre-wrap">chemin parcouru = vitesse de marche × vitesse de l'habitant × temps
+couper un arbre : 4 s quand on a mangé, 4 ÷ 0,5 = 8 s le ventre vide</pre>
+
+      <h3>🎲 Des prises qui valent plus ou moins</h3>
+      <p>Quand le pêcheur pêche, le jeu tire au hasard <strong>quel</strong> poisson, selon l'eau. Au bord : 60 % de sardines, 40 % de truites. En eau profonde : 30 % de sardines, 40 % de truites, 30 % de thons. Le poisson attend devant la cabane avec sa <strong>valeur</strong> (un « lot » : un thon = 4 🐟), et le porteur ajoute cette valeur au stock.</p>
+
+      <h3>✨ Une animation qui dure après l'événement</h3>
+      <p>Quand l'arbre est coupé, il disparaît tout de suite de la mémoire du jeu. Mais le nouveau fichier <code>affichage/effets.js</code> écoute la radio : « un arbre est coupé ! ». Il garde alors un <strong>effet</strong> pendant 2,6 s pour le dessiner en train de tomber. Le monde ne sait rien de cette chute : c'est seulement pour nos yeux. Même chose pour le poisson qui saute, l'animal qui tombe et les étincelles du géologue.</p>
+      <p>La flèche du chasseur, elle, est calculée à partir de son minuteur : pendant les 3 premières secondes, il tend l'arc ; quand il reste 1 s, la flèche part ; quand il reste 0,7 s, elle touche l'animal.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Pose un pêcheur au bord de la mer (eau profonde) : pêche-t-il des thons ? Regarde le journal.</li>
+        <li>Survole un cerf, puis un lapin : combien de 🍖 donne chacun ?</li>
+        <li>Mets-toi en pause (<kbd>P</kbd>) pendant que le chasseur tend l'arc, puis avance image par image (<kbd>N</kbd>).</li>
+        <li>Avec le géologue : combien de recherches pour trouver un gisement ? (Journal : « Rien trouvé » ou « Gisement trouvé »).</li>
+        <li>Dans <code>config.js</code>, trouve <code>prises</code> et <code>lentSiFaim</code>.</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Le chasseur rapporte 2 cerfs et 3 lapins. Combien de viande ?</summary><p>2 × 4 + 3 × 1 = 11 🍖.</p></details>
+      <details class="question"><summary>Le géologue a 1 chance sur 2 de trouver. En 10 recherches, combien de gisements environ ?</summary><p>Environ 5 (la moitié). Parfois plus, parfois moins : c'est le hasard !</p></details>
+      <details class="question"><summary>Un carrier affamé taille une pierre. Combien de temps, au lieu de 5 s ?</summary><p>2 fois moins vite : 10 secondes.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -490,20 +557,26 @@ ligne   = (Y ÷ 16 − X ÷ 32) ÷ 2</pre>
           <p>Le pêcheur (qui perce la glace en hiver), le chasseur et le gibier, un repas toutes les 2 minutes, des habitants qui partent quand ils ont trop faim, 4 saisons en 10 minutes.</p>
           <p class="apprend"><b>Tu apprends :</b> l'équilibre entre ce qu'on produit et ce qu'on mange, le modulo (le reste de la division), une palette par saison, des animaux en machine à états. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">5</div>
+          <h4>Moins de faim, et de plus jolies animations <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>1 repas par saison, ralentir au lieu de bloquer, pêcheur au bord de l'eau, déplacer, géologue, sardines et thons, cerfs et lapins, arc et flèche, arbres qui tombent, nouveau menu.</p>
+          <p class="apprend"><b>Tu apprends :</b> régler l'équilibre d'un jeu, une vitesse qui multiplie, des valeurs tirées au hasard, des effets qui durent après l'événement. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">6</div>
           <h4>Maisons et nouveaux habitants <span class="etiquette">⏭️ prochaine idée</span></h4>
           <p>Construire des maisons pour accueillir plus d'habitants (et plus de porteurs). Peut-être les champs de blé, le moulin et la boulangerie.</p>
           <p class="apprend"><b>Tu apprends :</b> la croissance d'une population, une chaîne plus longue (blé → farine → pain). <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">6</div>
+          <div class="num">7</div>
           <h4>La recherche et l'âge du bronze</h4>
           <p>La hutte du sage fait des recherches ; un arbre des découvertes débloque de nouveaux bâtiments et le passage à l'âge suivant.</p>
           <p class="apprend"><b>Tu apprends :</b> un arbre de dépendances (« pour débloquer B, il faut A »), des règles écrites comme des données. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">7</div>
+          <div class="num">8</div>
           <h4>Charbon, fer et or</h4>
           <p>Carrière de pierre, mines de charbon, de fer et d'or, fonderie, forge, orfèvre : les industries, jusqu'à la Renaissance.</p>
           <p class="apprend"><b>Tu apprends :</b> des chaînes longues, les goulots d'étranglement (le maillon le plus lent décide de tout), des statistiques de production. <b>Durée :</b> plusieurs séances.</p>
@@ -552,6 +625,14 @@ ligne   = (Y ÷ 16 − X ÷ 32) ÷ 2</pre>
         <textarea class="journal" id="village-appris-4" data-cle="village-appris-4" placeholder="Ex. : J'ai appris ce qu'est un modulo…"></textarea>
         <label for="village-idees-4"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-4" data-cle="village-idees-4" placeholder="Ex. : Un fumoir pour garder la viande plus longtemps…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 5 · moins de faim, et de plus jolies animations <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la cantine à l'entrepôt et la vitesse des affamés (<code>logique/repas.js</code>), la règle du bord de l'eau, le déplacement des bâtiments, le géologue, les prises qui valent plus ou moins (sardine, truite, thon, cerf, lapin), les effets (<code>affichage/effets.js</code>) : arbre qui tombe, souche, poisson qui saute, flèche, animal qui tombe, étincelles ; les nouveaux animaux et rondins, le menu par groupes, la base de données en version 5.</p>
+        <label for="village-appris-5"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-5" data-cle="village-appris-5" placeholder="Ex. : J'ai appris qu'on règle un jeu en changeant des nombres…"></textarea>
+        <label for="village-idees-5"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-5" data-cle="village-idees-5" placeholder="Ex. : Un bateau de pêche pour aller chercher les thons…"></textarea>
       </div>
     </section>
   </main>

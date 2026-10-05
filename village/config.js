@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 5,
+  version: 6,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -61,7 +61,8 @@ Village.CONFIG = {
   },
 
   // Étape 2 : ✍️ le stock de départ, rangé dans l'entrepôt.
-  depart: { troncs: 0, planches: 20, pierres: 10, poissons: 6, viande: 4 }, // étape 4 : un peu de nourriture pour commencer
+  // Étape 5 : ✍️ plus de stock au départ, pour ne pas frustrer le joueur (avant : 0, 20, 10, 6, 4).
+  depart: { troncs: 5, planches: 30, pierres: 30, poissons: 12, viande: 8 },
 
   // Étape 2 : les bâtiments. Depuis l'étape 3, le coût est RÉSERVÉ quand on pose le chantier,
   // puis les porteurs apportent les matériaux un par un.
@@ -73,7 +74,10 @@ Village.CONFIG = {
     carriere: { cout: { planches: 3 }, construction: 8, rayon: 6 },
     pecheur: { cout: { planches: 3 }, construction: 8, rayon: 6 }, // étape 4
     chasseur: { cout: { planches: 3 }, construction: 8, rayon: 8 }, // étape 4
+    geologue: { cout: { planches: 3, pierres: 1 }, construction: 8, rayon: 8 }, // étape 5
   },
+  // Étape 5 : ✍️ la cabane du pêcheur doit être au bord de l'eau (de l'eau à 3 cases maximum).
+  bordDeLEau: 3,
 
   ouvriers: {
     vitesse: 1.6, // cases par seconde
@@ -82,8 +86,11 @@ Village.CONFIG = {
     tailler: 5, // s pour tailler une pierre
     repos: 2, // s de pause entre deux voyages
     scier: 6, // s pour scier 1 tronc
-    pecher: 8, // s pour pêcher 1 poisson (étape 4)
-    chasser: 4, // s pour chasser 1 gibier (étape 4)
+    pecher: 6, // s pour pêcher 1 poisson (étape 4 ; 8 s avant l'étape 5)
+    chasser: 4, // s pour chasser 1 gibier (étape 4) : 3 s pour tendre l'arc, puis la flèche part
+    prospecter: 6, // s pour qu'un géologue cherche un gisement (étape 5)
+    chanceDeTrouver: 0.5, // étape 5 : 1 chance sur 2 de trouver un gisement à chaque recherche
+    lentSiFaim: 2, // étape 5 : ✍️ le ventre vide, on travaille et on marche 2 fois moins vite
     planchesParTronc: 2, // la scierie fait 2 planches avec 1 tronc
     attente: 3, // s avant de chercher à nouveau quand il n'y a rien à faire
   },
@@ -106,24 +113,36 @@ Village.CONFIG = {
   },
 
   // Étape 4 : les repas. Chaque ouvrier et chaque porteur mange 1 poisson ou 1 morceau de viande.
+  // Étape 5 : ✍️ c'était trop. Maintenant : 1 repas par saison, pris directement à l'entrepôt (la cantine),
+  // et le ventre vide ne bloque plus personne : on travaille juste 2 fois moins vite (ouvriers.lentSiFaim).
   repas: {
-    intervalle: 120, // s entre deux repas (Maxance n'a pas choisi : conseil de Claude, 2 minutes)
-    tropFaim: 150, // ✍️ s le ventre vide avant de quitter le village (une saison)
+    intervalle: 150, // s entre deux repas : 1 par saison (120 s à l'étape 4)
+    tropFaim: 600, // s le ventre vide avant de quitter le village : une année entière (150 s à l'étape 4)
     retour: 30, // s avant qu'un nouvel habitant arrive, quand il y a de nouveau à manger
-    reserve: 2, // repas gardés dans chaque cabane (les porteurs les apportent)
   },
 
   // Étape 4 : le gibier (cerfs et lapins) qui se promène dans les forêts.
   animaux: {
-    depart: 24, // au début de la partie
-    maximum: 40,
-    naissance: 20, // s entre deux naissances (pas en hiver)
+    depart: 40, // au début de la partie (24 avant l'étape 5)
+    maximum: 70, // (40 avant l'étape 5)
+    naissance: 12, // s entre deux naissances (pas en hiver) (20 avant l'étape 5)
     vitesse: 0.7, // cases par seconde
+  },
+
+  // Étape 5 : ✍️ combien de nourriture rapporte chaque prise. Un cerf nourrit plus qu'un lapin,
+  // un thon plus qu'une sardine. Le thon ne vit qu'en eau profonde (la mer).
+  prises: {
+    cerf: 4, lapin: 1, // 🍖
+    sardine: 1, truite: 2, thon: 4, // 🐟
+    // Les chances de pêcher chaque poisson : au bord (eau peu profonde) et en eau profonde
+    peuProfonde: { sardine: 0.6, truite: 0.4, thon: 0 },
+    profonde: { sardine: 0.3, truite: 0.4, thon: 0.3 },
   },
 
   nature: {
     croissance: 60, // s pour qu'une pousse devienne un arbre
-    pierresParRocher: 4, // un rocher donne 4 pierres, puis il disparaît
+    pierresParRocher: 8, // un rocher donne 8 pierres, puis il disparaît (4 avant l'étape 5)
+    pierresGisement: 8, // étape 5 : un gisement découvert par le géologue
   },
 
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques

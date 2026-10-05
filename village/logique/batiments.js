@@ -27,9 +27,10 @@ Village.Batiments = (function () {
     carriere: { nom: "Carrière de pierre", court: "Carrière", emoji: "⛏️", metier: "carrier" },
     pecheur: { nom: "Cabane du pêcheur", court: "Pêcheur", emoji: "🎣", metier: "pêcheur" }, // étape 4
     chasseur: { nom: "Cabane du chasseur", court: "Chasseur", emoji: "🏹", metier: "chasseur" }, // étape 4
+    geologue: { nom: "Cabane du géologue", court: "Géologue", emoji: "🔍", metier: "géologue" }, // étape 5
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur"];
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue"];
   const NOMS_RESSOURCES = { troncs: "🪵 troncs", planches: "🟫 planches", pierres: "🪨 pierres", poissons: "🐟 poissons", viande: "🍖 viande" };
 
   let prochainNumero = 1;
@@ -53,7 +54,54 @@ Village.Batiments = (function () {
     if (o === O.rocher) return "il y a un rocher";
     if (o !== O.rien && o !== O.fleurs && o !== O.buisson) return "la place est prise";
     if (monde.reservees.has(i)) return "un ouvrier va travailler sur cette case";
+    // Étape 5 : ✍️ le pêcheur doit habiter au bord de l'eau.
+    if (type === "pecheur" && !presDeLEau(carte, c, l, C.bordDeLEau)) return "trop loin de l'eau (il faut de l'eau à " + C.bordDeLEau + " cases maximum)";
     return null;
+  }
+
+  // Y a-t-il de l'eau à moins de `r` cases ? (on regarde le carré autour de la case)
+  function presDeLEau(carte, c, l, r) {
+    const T = Village.Carte.TERRAIN;
+    for (let dl = -r; dl <= r; dl++) for (let dc = -r; dc <= r; dc++) {
+      const nc = c + dc, nl = l + dl;
+      if (nc < 0 || nl < 0 || nc >= carte.colonnes || nl >= carte.lignes) continue;
+      const t = carte.terrain[nl * carte.colonnes + nc];
+      if ((t === T.eau || t === T.eauProfonde) && Math.abs(dc) + Math.abs(dl) <= r) return true;
+    }
+    return false;
+  }
+
+  // Étape 5 : déplacer un bâtiment (sans le détruire). Il garde ce qu'il a : son chantier, ses objets
+  // devant la porte, son ouvrier (qui rentre à la maison). Les routes, elles, restent où elles sont.
+  function deplacer(monde, b, c, l) {
+    const k = monde.carte, ancien = b.ligne * k.colonnes + b.colonne;
+    if (c === b.colonne && l === b.ligne) return false;
+    monde.occupees.delete(ancien); // pour que la case de départ ne gêne pas la vérification
+    const raison = raisonInterdite(monde, b.type, c, l);
+    if (raison) {
+      monde.occupees.set(ancien, b);
+      radio.emettre("deplacement-impossible", { nom: TYPES[b.type].nom, raison });
+      return false;
+    }
+    const i = l * k.colonnes + c;
+    if (k.objet[i]) Village.Monde.changerObjet(monde, i, Village.Carte.OBJET.rien);
+    const de = { colonne: b.colonne, ligne: b.ligne };
+    b.colonne = c; b.ligne = l;
+    monde.occupees.set(i, b);
+    // L'ouvrier rentre dans sa nouvelle maison et recommence sa fiche de travail.
+    const o = b.ouvrier;
+    if (o) {
+      if (o.cible) monde.reservees.delete(o.cible.ligne * k.colonnes + o.cible.colonne);
+      if (o.proie) o.proie.vise = false;
+      Object.assign(o, { x: c + 0.5, y: l + 0.5, etat: "repos", minuteur: 1, chemin: null, cible: null, proie: null, porte: null });
+    }
+    // Les papiers de la file pour ce bâtiment sont jetés : le chef les réécrira avec le bon chemin.
+    for (const t of monde.file) if (t.batiment === b) { if (t.sorte === "ramener") b.ramassage = Math.max(0, b.ramassage - 1); else b.enFile[t.quoi] = Math.max(0, (b.enFile[t.quoi] || 0) - 1); }
+    monde.file = monde.file.filter((t) => t.batiment !== b);
+    monde.changements++;
+    Village.Routes.recalculerReseau(monde);
+    radio.emettre("batiment-deplace", { nom: TYPES[b.type].nom, numero: b.numero, de, vers: { colonne: c, ligne: l }, relie: b.relie });
+    return true;
   }
 
   // Créer un bâtiment (sans rien payer) : sert au départ (l'entrepôt) et au rechargement de la sauvegarde.
@@ -72,14 +120,12 @@ Village.Batiments = (function () {
       sortie: etat.sortie || 0, // objets qui attendent devant la porte qu'un porteur les ramène
       sortieQuoi: { bucheron: "troncs", carriere: "pierres", scierie: "planches", pecheur: "poissons", chasseur: "viande" }[type] || null,
       ramassage: 0, // combien de ces objets sont déjà sur un papier de la file
+      lots: (etat.lots || []).slice(), // étape 5 : combien vaut chaque objet qui attend (un cerf = 4 viandes)
       entree: etat.entree || 0, // la scierie : les troncs en réserve
       enRoute: 0, // la scierie : les troncs qu'un porteur est en train d'apporter
       enFile: {}, // les livraisons « apporter » écrites dans la file pour ce bâtiment
       livre: Object.assign({}, etat.livre), // le chantier : les matériaux arrivés
       attendu: Object.assign({}, etat.attendu), // le chantier : les matériaux réservés, pas encore partis de l'entrepôt
-      // Étape 4
-      repas: Object.assign({ poissons: 0, viande: 0 }, etat.repas), // les repas gardés dans la cabane
-      repasEnRoute: 0, // les repas qu'un porteur est en train d'apporter
     };
     const i = l * monde.carte.colonnes + c;
     monde.batiments.push(b);
@@ -170,7 +216,7 @@ Village.Batiments = (function () {
   // les planches attendent devant la porte (b.sortie).
   function scier(monde, b, dt) {
     const O = C.ouvriers;
-    if (!b.ouvrier || b.ouvrier.affame) return; // pas de scieur, ou il a trop faim (étape 4)
+    if (!b.ouvrier) return; // pas de scieur (il est parti)
     if (!b.travail) {
       if (b.entree < 1) {
         if (!b.attendTronc) { b.attendTronc = true; radio.emettre("scierie-attend", { numero: b.numero, raison: "pas de tronc" }); }
@@ -183,14 +229,15 @@ Village.Batiments = (function () {
       radio.emettre("sciage-debut", { numero: b.numero, reserve: b.entree });
       return;
     }
-    b.travail.reste -= dt;
+    b.travail.reste -= dt * Village.Repas.vitesse(b.ouvrier); // étape 5 : ventre vide = 2 fois moins vite
     if (b.travail.reste <= 0) {
       b.travail = null;
       b.sortie += O.planchesParTronc;
+      for (let k = 0; k < O.planchesParTronc; k++) b.lots.push(1);
       b.produits += O.planchesParTronc;
       radio.emettre("planches-sciees", { numero: b.numero, planches: O.planchesParTronc, devant: b.sortie });
     }
   }
 
-  return { TYPES, A_CONSTRUIRE, NOMS_RESSOURCES, cout, assezPour, raisonInterdite, creer, poser, demolir, materiaux, etape };
+  return { TYPES, A_CONSTRUIRE, NOMS_RESSOURCES, cout, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
 })();

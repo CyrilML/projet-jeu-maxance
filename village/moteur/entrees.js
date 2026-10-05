@@ -30,6 +30,8 @@ Village.Entrees = (function () {
     carriere: ["Digit4", "Numpad4"],
     pecheur: ["Digit5", "Numpad5"], // étape 4
     chasseur: ["Digit6", "Numpad6"], // étape 4 (avant, la touche 6 servait à dézoomer sur un clavier français)
+    geologue: ["Digit7", "Numpad7"], // étape 5
+    deplacer: ["KeyM"], // étape 5 : M comme « mettre ailleurs »
     // Étape 3 : les outils
     route: ["KeyR"],
     demolir: ["Delete", "Backspace"],

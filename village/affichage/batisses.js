@@ -12,6 +12,7 @@ window.Village = window.Village || {};
 Village.Batisses = (function () {
   const TOUR = Math.PI * 2;
   const CONTOUR = "#3b2614";
+  const C_ = Village.CONFIG;
 
   // Les couleurs et la taille de chaque bâtiment.
   //   a : demi-largeur du losange au sol (px) ; h : hauteur des murs ; toit : hauteur du toit.
@@ -23,7 +24,22 @@ Village.Batisses = (function () {
     carriere: { a: 19, h: 13, toit: 13, murG: "#b5b5b0", murD: "#90908b", toitA: "#9a6a3c", toitB: "#7c522b", blocs: true },
     pecheur: { a: 18, h: 13, toit: 14, murG: "#e3c896", murD: "#c2a46f", toitA: "#3fa7b5", toitB: "#2d8592" }, // étape 4
     chasseur: { a: 18, h: 13, toit: 14, murG: "#8e6038", murD: "#6f4826", toitA: "#6f8a3a", toitB: "#56702c", rondins: true },
+    geologue: { a: 18, h: 13, toit: 14, murG: "#c9c2b4", murD: "#a59d8e", toitA: "#8a5ab0", toitB: "#6c428c", blocs: true }, // étape 5
   };
+
+  // Étape 5 : un beau rondin, avec son écorce et les cernes du bois au bout, un peu penché.
+  function rondin(ctx, x, y, penche) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(-penche);
+    ctx.beginPath(); ctx.moveTo(-9, -2.8); ctx.lineTo(8, -2.8); ctx.lineTo(8, 2.8); ctx.lineTo(-9, 2.8); ctx.closePath();
+    ctx.fillStyle = "#8f5e2e"; ctx.fill(); contour(ctx, 1.2);
+    ctx.strokeStyle = "rgba(50, 30, 10, .45)"; ctx.lineWidth = 0.8; // l'écorce
+    ctx.beginPath(); ctx.moveTo(-7, -1); ctx.lineTo(-1, -1.2); ctx.moveTo(1, 1); ctx.lineTo(6, 0.8); ctx.moveTo(-5, 1.4); ctx.lineTo(-2, 1.5); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(-9, 0, 1.4, 2.8, 0, 0, TOUR); ctx.fillStyle = "#c9955a"; ctx.fill(); contour(ctx, 1);
+    ctx.beginPath(); ctx.ellipse(8, 0, 1.6, 2.8, 0, 0, TOUR); ctx.fillStyle = "#e6be85"; ctx.fill(); contour(ctx, 1.1);
+    ctx.strokeStyle = "rgba(140, 90, 40, .8)"; ctx.lineWidth = 0.6; // les cernes
+    ctx.beginPath(); ctx.ellipse(8, 0, 0.8, 1.6, 0, 0, TOUR); ctx.stroke();
+    ctx.restore();
+  }
 
   // Un poisson ou un morceau de viande (pour les piles et pour ce qu'on porte)
   function poisson(ctx, x, y) {
@@ -117,7 +133,12 @@ Village.Batisses = (function () {
   function pile(ctx, x, y, sorte, nombre) {
     for (let k = 0; k < nombre; k++) {
       const px = x + (k % 3) * 6 - (Math.floor(k / 3) % 2) * 3, py = y - Math.floor(k / 3) * 5;
-      if (sorte === "rondin") { rond(ctx, px, py, 3, "#c78b4a"); ctx.fillStyle = "#8a5a2b"; ctx.beginPath(); ctx.arc(px, py, 1.2, 0, TOUR); ctx.fill(); }
+      if (sorte === "rondin") {
+        // Le bout d'un rondin : le bois clair, les cernes, et l'écorce autour
+        rond(ctx, px, py, 3.2, "#8f5e2e");
+        ctx.beginPath(); ctx.arc(px, py, 2.3, 0, TOUR); ctx.fillStyle = "#e6be85"; ctx.fill();
+        ctx.strokeStyle = "rgba(140, 90, 40, .8)"; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.arc(px, py, 1.2, 0, TOUR); ctx.stroke();
+      }
       else if (sorte === "poisson") poisson(ctx, px, py);
       else if (sorte === "viande") viande(ctx, px, py);
       else if (sorte === "planche") forme(ctx, [[px - 5, py], [px + 3, py - 3], [px + 6, py - 2], [px - 2, py + 1]], "#d9a866");
@@ -190,6 +211,12 @@ Village.Batisses = (function () {
       for (let k = 0; k < 4; k++) { ctx.moveTo(x + 4 + k * 3, y - 3 + k * 1.5); ctx.lineTo(x + 4 + k * 3, y - 11 + k * 1.5); }
       for (let k = 0; k < 3; k++) { ctx.moveTo(x + 4, y - 4 - k * 3); ctx.lineTo(x + 13, y + 0.5 - k * 3); }
       ctx.stroke();
+    } else if (b.type === "geologue") {
+      // Une loupe géante accrochée au mur, et un caillou brillant
+      ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + 10, y - 2); ctx.lineTo(x + 14, y + 4); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x + 8, y - 5, 4, 0, TOUR); ctx.fillStyle = "rgba(180, 230, 255, .8)"; ctx.fill(); contour(ctx, 1.6);
+      rond(ctx, x - 20, y + 10, 3, "#a3a8ad");
+      if (Math.sin(t * 3) > 0.6) { ctx.strokeStyle = "#fff6b0"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x - 23, y + 7); ctx.lineTo(x - 17, y + 7); ctx.moveTo(x - 20, y + 4); ctx.lineTo(x - 20, y + 10); ctx.stroke(); }
     } else if (b.type === "chasseur") {
       pile(ctx, x + 14, y + 9, "viande", b.sortie);
       // Des bois de cerf au-dessus de la porte
@@ -204,6 +231,11 @@ Village.Batisses = (function () {
     // Étape 4 : l'ouvrier a trop faim, ou il est parti (la cabane est vide)
     else if (b.ouvrier && b.ouvrier.affame) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "🍽️");
     else if (!b.ouvrier && Village.Batiments.TYPES[b.type].metier) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "vide");
+    // Étape 5 : le bâtiment qu'on est en train de déplacer clignote
+    if (Village.monde && Village.monde.aDeplacer === b) {
+      ctx.strokeStyle = "rgba(255, 226, 122," + (0.5 + 0.5 * Math.sin(t * 8)) + ")"; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(x - m.a - 4, y); ctx.lineTo(x, y + m.a / 2 + 2); ctx.lineTo(x + m.a + 4, y); ctx.lineTo(x, y - m.a / 2 - 2); ctx.closePath(); ctx.stroke();
+    }
   }
 
   // Une bulle de pensée, comme dans les bandes dessinées
@@ -312,6 +344,7 @@ Village.Batisses = (function () {
     carriere: { habit: "#5a7bb5", chapeau: "#f2c230", outil: "pioche" },
     pecheur: { habit: "#f2c230", chapeau: "#e0a81e", outil: "canne" }, // le ciré jaune du pêcheur
     chasseur: { habit: "#7a5a2e", chapeau: "#4f6b2a", outil: "arc" },
+    geologue: { habit: "#8a5ab0", chapeau: "#e0a81e", outil: "marteau" }, // étape 5 : le petit marteau du géologue
   };
 
   function dessinerOuvrier(ctx, type, o, x, y, t, hiver) {
@@ -346,11 +379,23 @@ Village.Batisses = (function () {
         ctx.strokeStyle = "#8a5a2b"; ctx.lineWidth = 1.6;
         ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -16); ctx.stroke();
       } else {
-        const tir = travaille ? Math.min(1, (Math.sin(t * 3) + 1) * 0.8) : 0;
-        ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 1.8;
-        ctx.beginPath(); ctx.arc(2, -3, 7, -1.3, 1.3); ctx.stroke(); // le bois de l'arc
-        ctx.strokeStyle = "#e9dcc0"; ctx.lineWidth = 0.8;
-        ctx.beginPath(); ctx.moveTo(2 + Math.cos(-1.3) * 7, -3 + Math.sin(-1.3) * 7); ctx.lineTo(2 - tir * 3, -3); ctx.lineTo(2 + Math.cos(1.3) * 7, -3 + Math.sin(1.3) * 7); ctx.stroke(); // la corde
+        // Étape 5 : il tend l'arc pendant 3 s (la corde recule), puis il lâche la flèche.
+        const m = o.minuteur, tir = travaille && m > 1 ? Math.min(1, (C_.ouvriers.chasser - m) / 2.5) : 0;
+        const vibre = travaille && m <= 1 && m > 0.7 ? Math.sin(t * 60) * 0.8 : 0; // la corde vibre après le tir
+        ctx.rotate(travaille ? -0.15 : 0.4);
+        ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(4, -3, 7.5, -1.25 - tir * 0.15, 1.25 + tir * 0.15); ctx.stroke(); // le bois de l'arc (il se plie)
+        const hx = 4 + Math.cos(-1.25) * 7.5, hy = -3 + Math.sin(-1.25) * 7.5, bx = 4 + Math.cos(1.25) * 7.5, by = -3 + Math.sin(1.25) * 7.5;
+        const cx = (hx + bx) / 2 - tir * 6 + vibre;
+        ctx.strokeStyle = "#f3ead8"; ctx.lineWidth = 0.9;
+        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(cx, -3); ctx.lineTo(bx, by); ctx.stroke(); // la corde
+        if (travaille && m > 1) {
+          // La flèche encochée, prête à partir
+          ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.moveTo(cx, -3); ctx.lineTo(cx + 15, -3); ctx.stroke();
+          ctx.fillStyle = "#c9ccd1"; ctx.beginPath(); ctx.moveTo(cx + 17, -3); ctx.lineTo(cx + 14, -4.6); ctx.lineTo(cx + 14, -1.4); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = "#e8402e"; ctx.beginPath(); ctx.moveTo(cx, -3); ctx.lineTo(cx - 2, -5); ctx.lineTo(cx + 2, -3); ctx.lineTo(cx - 2, -1); ctx.closePath(); ctx.fill();
+        }
       }
       ctx.restore();
     } else {
@@ -362,56 +407,108 @@ Village.Batisses = (function () {
     ctx.fillStyle = "#c9ccd1"; ctx.strokeStyle = CONTOUR; ctx.lineWidth = 1;
     ctx.beginPath();
     if (tenue.outil === "hache") { ctx.moveTo(0, -11); ctx.lineTo(4.5, -12); ctx.lineTo(4.5, -7); ctx.lineTo(0, -8); }
+    else if (tenue.outil === "marteau") { ctx.moveTo(-3, -11); ctx.lineTo(3, -11); ctx.lineTo(3, -14); ctx.lineTo(-3, -14); }
     else if (tenue.outil === "pelle") { ctx.moveTo(-2.5, -11); ctx.lineTo(2.5, -11); ctx.lineTo(1.5, -16); ctx.lineTo(-1.5, -16); }
     else { ctx.moveTo(-5, -10); ctx.quadraticCurveTo(0, -14, 5, -10); ctx.lineTo(0, -12); }
     ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.restore();
     }
     // Ce qu'il rapporte, sur l'épaule
-    if (o.porte === "troncs") {
-      ctx.fillStyle = "#b07a40"; ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(-9, -18, 16, 4.5, 2); else ctx.rect(-9, -18, 16, 4.5);
-      ctx.fill(); contour(ctx, 1.2);
-      rond(ctx, 7, -15.7, 2.3, "#d9a866");
-    } else if (o.porte === "pierres") {
+    if (o.porte === "troncs") rondin(ctx, -1, -17, 0.35); else if (o.porte === "pierres") {
       rond(ctx, -1, -24.5, 3.6, "#a3a8ad");
     } else if (o.porte === "poissons") poisson(ctx, -4, -12);
     else if (o.porte === "viande") viande(ctx, -4, -12);
     ctx.restore();
   }
 
-  // ---------------------------------------------------------------- un animal (étape 4)
-  // Un cerf (brun, avec ses bois) ou un lapin (gris, longues oreilles). En hiver, le lapin devient blanc.
-  function dessinerAnimal(ctx, a, x, y, t, hiver) {
-    const marche = a.etat === "promener";
-    const saut = a.sorte === "lapin" && marche ? Math.abs(Math.sin(t * 12 + a.numero)) * 4 : 0;
+  // ---------------------------------------------------------------- un animal (étapes 4 et 5)
+  // Étape 5 : redessinés pour être plus jolis. Le cerf a un ventre clair, des taches de faon pour
+  // les plus jeunes, des bois ramifiés pour les mâles. Le lapin a de grandes oreilles roses et une queue
+  // en pompon, et il s'écrase un peu quand il retombe d'un bond. En hiver, le lapin devient blanc.
+  // `chute` (de 0 à 1) : l'animal touché par une flèche bascule sur le côté.
+  function dessinerAnimal(ctx, a, x, y, t, hiver, chute) {
+    const marche = a.etat === "promener" && !chute;
     ctx.save();
     ctx.translate(x, y);
-    ctx.scale(a.direction, 1);
+    ctx.scale(a.direction || 1, 1);
     ctx.fillStyle = "rgba(20, 40, 10, .22)";
-    ctx.beginPath(); ctx.ellipse(0, 1, a.sorte === "cerf" ? 8 : 4.5, 2.5, 0, 0, TOUR); ctx.fill();
-    if (a.sorte === "cerf") {
-      const pas = marche ? Math.sin(t * 10 + a.numero) * 2 : 0;
-      ctx.strokeStyle = "#5a3a1e"; ctx.lineWidth = 1.8; ctx.lineCap = "round";
-      ctx.beginPath(); ctx.moveTo(-5, -7); ctx.lineTo(-5 + pas, 0); ctx.moveTo(-2, -7); ctx.lineTo(-2 - pas, 0); ctx.moveTo(3, -7); ctx.lineTo(3 + pas, 0); ctx.moveTo(6, -7); ctx.lineTo(6 - pas, 0); ctx.stroke();
-      ctx.beginPath(); ctx.ellipse(0, -9, 8, 4.5, 0, 0, TOUR); ctx.fillStyle = "#b07a45"; ctx.fill(); contour(ctx, 1.4);
-      // le cou et la tête (la tête se baisse quand il broute)
-      const baisse = marche ? 0 : 5 + Math.sin(t * 2 + a.numero) * 1.5;
-      ctx.beginPath(); ctx.ellipse(8, -14 + baisse, 3.2, 2.6, 0.3, 0, TOUR); ctx.fillStyle = "#b07a45"; ctx.fill(); contour(ctx, 1.2);
-      ctx.fillStyle = "#f3ead8"; ctx.beginPath(); ctx.arc(-7, -10, 1.5, 0, TOUR); ctx.fill(); // la queue blanche
-      ctx.strokeStyle = "#e9dcc0"; ctx.lineWidth = 1.3;
-      ctx.beginPath(); ctx.moveTo(8, -16 + baisse); ctx.lineTo(6, -22 + baisse); ctx.lineTo(4, -24 + baisse); ctx.moveTo(6, -22 + baisse); ctx.lineTo(9, -24 + baisse); ctx.stroke();
-      ctx.fillStyle = CONTOUR; ctx.beginPath(); ctx.arc(9.5, -14.5 + baisse, 0.7, 0, TOUR); ctx.fill();
-    } else {
-      const couleur = hiver ? "#f4f6fa" : "#9a8f84";
-      ctx.translate(0, -saut);
-      ctx.beginPath(); ctx.ellipse(0, -4, 4.5, 3.5, 0, 0, TOUR); ctx.fillStyle = couleur; ctx.fill(); contour(ctx, 1.2);
-      ctx.beginPath(); ctx.arc(4, -7, 2.6, 0, TOUR); ctx.fillStyle = couleur; ctx.fill(); contour(ctx, 1.2);
-      ctx.beginPath(); ctx.ellipse(3.5, -12, 1, 3, -0.2, 0, TOUR); ctx.ellipse(5.2, -11.5, 1, 3, 0.2, 0, TOUR); ctx.fillStyle = couleur; ctx.fill(); contour(ctx, 1);
-      ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(-4.5, -4, 1.6, 0, TOUR); ctx.fill();
-      ctx.fillStyle = CONTOUR; ctx.beginPath(); ctx.arc(5, -7.5, 0.6, 0, TOUR); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, 1, a.sorte === "cerf" ? 11 : 5.5, 3, 0, 0, TOUR); ctx.fill();
+    if (chute) { ctx.translate(0, -2); ctx.rotate(chute * 1.45); ctx.translate(0, 2); }
+    ctx.lineJoin = "round"; ctx.lineCap = "round";
+    if (a.sorte === "cerf") cerf(ctx, a, t, marche);
+    else lapin(ctx, a, t, marche, hiver);
+    // La flèche plantée
+    if (chute) {
+      ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 1.3;
+      ctx.beginPath(); ctx.moveTo(a.sorte === "cerf" ? -1 : 0, a.sorte === "cerf" ? -13 : -6); ctx.lineTo(a.sorte === "cerf" ? -8 : -6, a.sorte === "cerf" ? -19 : -11); ctx.stroke();
+      ctx.fillStyle = "#e8402e"; ctx.beginPath(); ctx.arc(a.sorte === "cerf" ? -8 : -6, a.sorte === "cerf" ? -19 : -11, 1.6, 0, TOUR); ctx.fill();
     }
     ctx.restore();
+  }
+
+  function cerf(ctx, a, t, marche) {
+    const male = a.numero % 3 !== 0, faon = a.numero % 5 === 0;
+    const e = faon ? 0.75 : 1;
+    ctx.scale(e, e);
+    const pas = marche ? Math.sin(t * 9 + a.numero) : 0;
+    // Les pattes (fines, avec un sabot foncé), qui avancent par paires
+    const patte = (px, decal) => {
+      ctx.strokeStyle = "#7a4f28"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(px, -9); ctx.quadraticCurveTo(px + decal * 1.5, -4, px + decal * 2.5, 0); ctx.stroke();
+      ctx.fillStyle = "#3b2614"; ctx.beginPath(); ctx.arc(px + decal * 2.5, 0, 1.1, 0, TOUR); ctx.fill();
+    };
+    patte(-6, pas); patte(-3.5, -pas); patte(5, -pas); patte(7.5, pas);
+    // Le corps : une forme de haricot, plus clair en dessous
+    ctx.beginPath();
+    ctx.moveTo(-9, -11); ctx.bezierCurveTo(-9, -17, 6, -18, 9, -13); ctx.bezierCurveTo(11, -9, 7, -7, 0, -7.5); ctx.bezierCurveTo(-6, -7.5, -9.5, -8, -9, -11);
+    ctx.closePath(); ctx.fillStyle = "#b9824c"; ctx.fill(); contour(ctx, 1.4);
+    ctx.beginPath(); ctx.ellipse(0, -8.8, 6.5, 1.8, 0, 0, Math.PI); ctx.fillStyle = "#ecd4b0"; ctx.fill(); // le ventre
+    if (faon) { ctx.fillStyle = "#f6ead4"; for (const [sx, sy] of [[-4, -13], [0, -14], [3, -12], [-1, -11], [5, -14]]) { ctx.beginPath(); ctx.arc(sx, sy, 0.9, 0, TOUR); ctx.fill(); } }
+    // La queue blanche
+    ctx.fillStyle = "#f6ead4"; ctx.beginPath(); ctx.ellipse(-9.5, -12.5, 1.6, 2.2, 0.4, 0, TOUR); ctx.fill(); contour(ctx, 1);
+    // Le cou et la tête (la tête se baisse quand il broute)
+    const baisse = marche ? 0 : Math.max(0, Math.sin(t * 1.3 + a.numero)) * 7;
+    ctx.save(); ctx.translate(7, -14); ctx.rotate(baisse * 0.09);
+    ctx.beginPath(); ctx.moveTo(-1, 2); ctx.lineTo(1.5, -6); ctx.lineTo(4.5, -6); ctx.lineTo(3.5, 3); ctx.closePath(); ctx.fillStyle = "#b9824c"; ctx.fill(); contour(ctx, 1.2);
+    ctx.beginPath(); ctx.ellipse(5, -7.5, 4, 2.6, 0.35, 0, TOUR); ctx.fillStyle = "#b9824c"; ctx.fill(); contour(ctx, 1.2); // la tête
+    ctx.fillStyle = "#3b2614"; ctx.beginPath(); ctx.arc(8.6, -6.2, 0.9, 0, TOUR); ctx.fill(); // la truffe
+    ctx.fillStyle = "#1c1410"; ctx.beginPath(); ctx.arc(4.6, -8.4, 0.9, 0, TOUR); ctx.fill(); // l'œil
+    ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(4.9, -8.7, 0.35, 0, TOUR); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(1.8, -10, 1.3, 2.6, -0.6, 0, TOUR); ctx.fillStyle = "#a8743f"; ctx.fill(); contour(ctx, 1); // l'oreille
+    if (male && !faon) {
+      // Les bois ramifiés
+      ctx.strokeStyle = "#e9dcc0"; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(3.5, -10); ctx.quadraticCurveTo(2, -15, 4, -19); ctx.moveTo(2.6, -14); ctx.lineTo(0, -16); ctx.moveTo(3.3, -17); ctx.lineTo(6, -19);
+      ctx.moveTo(5, -10); ctx.quadraticCurveTo(7, -14, 6.5, -17); ctx.moveTo(6.4, -13.5); ctx.lineTo(9, -15);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function lapin(ctx, a, t, marche, hiver) {
+    const phase = (t * 2.2 + a.numero * 0.37) % 1;
+    const saut = marche ? Math.sin(phase * Math.PI) * 5 : 0;
+    const ecrase = marche && phase > 0.9 ? 0.85 : 1; // il s'écrase un peu en retombant
+    const pelage = hiver ? "#f4f6fa" : "#a8998a", ombre2 = hiver ? "#dfe4ec" : "#8c7e70";
+    ctx.translate(0, -saut);
+    ctx.scale(1 / ecrase, ecrase);
+    // Le corps tout rond
+    ctx.beginPath(); ctx.ellipse(0, -4.5, 5, 4, 0, 0, TOUR); ctx.fillStyle = pelage; ctx.fill(); contour(ctx, 1.2);
+    ctx.beginPath(); ctx.ellipse(-1, -2, 3, 1.4, 0, 0, Math.PI); ctx.fillStyle = ombre2; ctx.fill(); // la patte arrière
+    // La tête et les grandes oreilles
+    ctx.beginPath(); ctx.arc(4.5, -8, 3, 0, TOUR); ctx.fillStyle = pelage; ctx.fill(); contour(ctx, 1.2);
+    const oreille = marche ? -0.35 : Math.sin(t * 3 + a.numero) * 0.12;
+    for (const [ox, rot] of [[3.6, -0.25 + oreille], [5.4, 0.15 + oreille]]) {
+      ctx.save(); ctx.translate(ox, -10.5); ctx.rotate(rot);
+      ctx.beginPath(); ctx.ellipse(0, -3.5, 1.3, 3.8, 0, 0, TOUR); ctx.fillStyle = pelage; ctx.fill(); contour(ctx, 1);
+      ctx.beginPath(); ctx.ellipse(0, -3.4, 0.6, 2.7, 0, 0, TOUR); ctx.fillStyle = "#f2a6b8"; ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle = "#1c1410"; ctx.beginPath(); ctx.arc(5.6, -8.5, 0.75, 0, TOUR); ctx.fill();
+    ctx.fillStyle = "#f2a6b8"; ctx.beginPath(); ctx.arc(7.4, -7.6, 0.7, 0, TOUR); ctx.fill(); // le nez
+    // La queue en pompon
+    ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(-5, -5.5, 2, 0, TOUR); ctx.fill(); contour(ctx, 0.8);
   }
 
   // ---------------------------------------------------------------- un porteur
@@ -438,7 +535,7 @@ Village.Batisses = (function () {
     ctx.stroke();
     if (p.porte === "poissons") poisson(ctx, 0, -29);
     else if (p.porte === "viande") viande(ctx, 0, -29);
-    else if (p.porte === "troncs") { ctx.fillStyle = "#b07a40"; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(-8, -30, 16, 5, 2); else ctx.rect(-8, -30, 16, 5); ctx.fill(); contour(ctx, 1.2); rond(ctx, 8, -27.5, 2.5, "#d9a866"); }
+    else if (p.porte === "troncs") rondin(ctx, 0, -29, 0);
     else if (p.porte === "planches") { forme(ctx, [[-9, -27], [9, -29], [9, -26], [-9, -24]], "#d9a866"); }
     else if (p.porte === "pierres") { rond(ctx, 0, -29, 4, "#a3a8ad"); }
     ctx.restore();

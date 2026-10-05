@@ -1,17 +1,18 @@
 // 🍽️ LES REPAS : la cantine du village
 //
-// ✍️ Chaque habitant qui travaille (les ouvriers ET les porteurs) mange 1 repas toutes les 2 minutes :
-// 1 poisson 🐟 ou 1 morceau de viande 🍖.
-//   - un ouvrier mange dans sa cabane : les porteurs lui apportent ses repas (2 en réserve au maximum) ;
-//   - un porteur mange à l'entrepôt, quand il y passe.
+// Chaque habitant (les ouvriers ET les porteurs) mange 1 poisson 🐟 ou 1 morceau de viande 🍖.
 //
-// ✍️ Pas de repas → il ARRÊTE de travailler (« affamé »). Son ventre vide compte les secondes.
-// ✍️ Une saison entière le ventre vide (2 min 30) → il QUITTE le village. Sa cabane est vide.
-// Quand il y a de nouveau à manger dans l'entrepôt, un nouvel habitant arrive 30 s plus tard.
+// Étape 5 : ✍️ Maxance a trouvé ça trop dur, alors les règles ont changé :
+//   - on mange 1 repas PAR SAISON (toutes les 2 min 30), plus toutes les 2 minutes ;
+//   - on mange directement à l'entrepôt (la cantine) : les porteurs n'ont plus besoin d'apporter
+//     les repas dans chaque cabane (ils étaient débordés !) ;
+//   - ✍️ le ventre vide ne BLOQUE plus : l'habitant affamé marche et travaille 2 fois moins vite.
+//     C'est écrit au-dessus de sa cabane (bulle 🍽️) et dans son panneau ;
+//   - il ne quitte le village qu'après une ANNÉE entière le ventre vide (10 minutes).
 //
-// Chaque habitant a donc 2 compteurs :
-//   faim : secondes depuis son dernier repas (à 120, il doit manger) ;
-//   ventreVide : secondes passées affamé (à 150, il part).
+// Chaque habitant a 2 compteurs :
+//   faim : secondes depuis son dernier repas (à 150, il doit manger) ;
+//   ventreVide : secondes passées affamé (à 600, il part).
 
 window.Village = window.Village || {};
 
@@ -28,37 +29,39 @@ Village.Repas = (function () {
     return stock.poissons >= stock.viande ? "poissons" : "viande";
   }
 
-  // Le compteur de faim d'un habitant. `manger()` essaie de trouver un repas ; vrai s'il a mangé.
-  // Renvoie "part" s'il quitte le village.
-  function avoirFaim(h, dt, manger, qui, monde) {
+  // Manger à la cantine (l'entrepôt). Vrai si c'est fait.
+  function mangerALaCantine(monde, qui) {
+    const quoi = choisir(monde.stock);
+    if (!quoi) return false;
+    monde.stock[quoi]--;
+    radio.emettre("repas", { qui, quoi, reste: nourritureEnStock(monde) });
+    return true;
+  }
+
+  // Le compteur de faim d'un habitant. Renvoie "part" s'il quitte le village.
+  function avoirFaim(monde, h, dt, qui) {
     h.faim = (h.faim || 0) + dt;
     if (h.faim < C.repas.intervalle) return null;
-    if (manger()) {
+    if (mangerALaCantine(monde, qui)) {
       if (h.affame) radio.emettre("plus-faim", { qui });
       h.faim = 0; h.affame = false; h.ventreVide = 0;
       return null;
     }
     if (!h.affame) { h.affame = true; radio.emettre("affame", { qui }); }
     h.ventreVide = (h.ventreVide || 0) + dt;
-    if (h.ventreVide >= C.repas.tropFaim) return "part";
-    return null;
+    return h.ventreVide >= C.repas.tropFaim ? "part" : null;
   }
+
+  // Le ventre vide ralentit tout : 1 = normal, 0,5 = 2 fois moins vite.
+  const vitesse = (h) => (h && h.affame ? 1 / C.ouvriers.lentSiFaim : 1);
 
   function etape(monde, dt) {
     const B = Village.Batiments;
-    // Les ouvriers, dans leur cabane
     for (const b of monde.batiments) {
       const o = b.ouvrier;
       if (o) {
         const qui = "le " + B.TYPES[b.type].metier + " (" + B.TYPES[b.type].nom + " n° " + b.numero + ")";
-        const r = avoirFaim(o, dt, () => {
-          const quoi = b.repas.poissons > 0 ? "poissons" : b.repas.viande > 0 ? "viande" : null;
-          if (!quoi) return false;
-          b.repas[quoi]--;
-          radio.emettre("repas", { qui, quoi });
-          return true;
-        }, qui, monde);
-        if (r === "part") partir(monde, b, qui);
+        if (avoirFaim(monde, o, dt, qui) === "part") partir(monde, b, qui);
       } else if (b.etat === "pret" && B.TYPES[b.type].metier) {
         // Une cabane vide : un nouvel habitant arrive s'il y a de quoi manger.
         if (nourritureEnStock(monde) >= 2) {
@@ -72,7 +75,6 @@ Village.Repas = (function () {
         } else b.attenteHabitant = 0;
       }
     }
-    // Les porteurs, à l'entrepôt (seulement quand ils y sont, en train d'attendre)
     for (const p of monde.porteurs) {
       if (p.parti) {
         if (nourritureEnStock(monde) >= 2) {
@@ -86,15 +88,7 @@ Village.Repas = (function () {
         continue;
       }
       const qui = "le porteur " + p.numero;
-      const r = avoirFaim(p, dt, () => {
-        if (p.etat !== "attend") return false; // il mangera en rentrant
-        const quoi = choisir(monde.stock);
-        if (!quoi) return false;
-        monde.stock[quoi]--;
-        radio.emettre("repas", { qui, quoi });
-        return true;
-      }, qui, monde);
-      if (r === "part" && p.etat === "attend") {
+      if (avoirFaim(monde, p, dt, qui) === "part" && p.etat === "attend") {
         p.parti = true;
         monde.partis++;
         radio.emettre("habitant-part", { qui });
@@ -112,11 +106,5 @@ Village.Repas = (function () {
     radio.emettre("habitant-part", { qui });
   }
 
-  // Combien de repas manquent dans cette cabane ? (lu par le chef des livraisons)
-  function manque(b) {
-    if (!b.ouvrier) return 0;
-    return C.repas.reserve - (b.repas.poissons + b.repas.viande) - (b.enFile.poissons || 0) - (b.enFile.viande || 0) - (b.repasEnRoute || 0);
-  }
-
-  return { etape, choisir, manque, NOURRITURE, nourritureEnStock };
+  return { etape, choisir, vitesse, NOURRITURE, nourritureEnStock };
 })();

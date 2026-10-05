@@ -65,15 +65,6 @@ Village.Porteurs = (function () {
           }
         }
       }
-      // Étape 4 : apporter les repas des ouvriers (2 en réserve dans chaque cabane)
-      if (b.etat === "pret") {
-        while (Village.Repas.manque(b) > 0) {
-          const quoi = disponible(monde, "poissons") >= disponible(monde, "viande") ? "poissons" : "viande";
-          if (disponible(monde, quoi) < 1) break;
-          b.enFile[quoi] = (b.enFile[quoi] || 0) + 1;
-          ajouter(monde, { sorte: "apporter", quoi, batiment: b, but: "repas" });
-        }
-      }
       // Apporter des troncs à la scierie
       if (b.type === "scierie" && b.etat === "pret") {
         while (b.entree + (b.enFile.troncs || 0) + (b.enRoute || 0) < C.entreeMax && disponible(monde, "troncs") >= 1) {
@@ -114,7 +105,7 @@ Village.Porteurs = (function () {
   }
 
   function marcher(p, dt) {
-    let reste = C.porteurs.vitesse * dt;
+    let reste = C.porteurs.vitesse * Village.Repas.vitesse(p) * dt; // ventre vide : 2 fois moins vite
     while (reste > 0 && p.pas < p.chemin.length) {
       const cible = p.chemin[p.pas];
       const dx = cible.x - p.x, dy = cible.y - p.y, d = Math.hypot(dx, dy);
@@ -135,7 +126,6 @@ Village.Porteurs = (function () {
     for (const p of monde.porteurs) {
       if (p.parti) continue;
       if (p.etat === "attend") {
-        if (p.affame) continue; // ✍️ trop faim pour travailler
         // Prendre le premier papier de la file qu'on peut faire.
         while (monde.file.length) {
           const papier = monde.file.shift();
@@ -150,8 +140,7 @@ Village.Porteurs = (function () {
             // On prend l'objet dans l'entrepôt, et il n'est plus « promis ».
             monde.stock[papier.quoi]--;
             b.enFile[papier.quoi]--;
-            if (papier.but === "repas") b.repasEnRoute++;
-            else if (b.etat === "chantier") b.attendu[papier.quoi]--;
+            if (b.etat === "chantier") b.attendu[papier.quoi]--;
             else b.enRoute = (b.enRoute || 0) + 1;
             p.porte = papier.quoi;
           }
@@ -167,8 +156,7 @@ Village.Porteurs = (function () {
         // Arrivé au bâtiment
         if (papier.sorte === "apporter") {
           if (existe(monde, b)) {
-            if (papier.but === "repas") { b.repas[papier.quoi]++; b.repasEnRoute--; }
-            else if (b.etat === "chantier") b.livre[papier.quoi] = (b.livre[papier.quoi] || 0) + 1;
+            if (b.etat === "chantier") b.livre[papier.quoi] = (b.livre[papier.quoi] || 0) + 1;
             else { b.entree++; b.enRoute--; }
             radio.emettre("porteur-livre", { porteur: p.numero, quoi: papier.quoi, nom: Village.Batiments.TYPES[b.type].nom, batiment: b.numero });
             p.porte = null;
@@ -177,6 +165,7 @@ Village.Porteurs = (function () {
           b.sortie--;
           b.ramassage--;
           p.porte = papier.quoi;
+          p.quantite = b.lots.length ? b.lots.shift() : 1; // étape 5 : un cerf vaut 4 viandes
         }
         p.chemin = p.chemin.slice().reverse();
         p.pas = 1;
@@ -184,9 +173,11 @@ Village.Porteurs = (function () {
       } else {
         // Revenu à l'entrepôt
         if (p.porte) {
-          monde.stock[p.porte]++;
-          radio.emettre("arrivee-entrepot", { porteur: p.numero, quoi: p.porte, stock: monde.stock[p.porte], nom: Village.Batiments.TYPES[b.type].nom });
+          const q = p.quantite || 1;
+          monde.stock[p.porte] += q;
+          radio.emettre("arrivee-entrepot", { porteur: p.numero, quoi: p.porte, quantite: q, stock: monde.stock[p.porte], nom: Village.Batiments.TYPES[b.type].nom });
           p.porte = null;
+          p.quantite = 1;
         }
         p.travail = null;
         p.chemin = null;
@@ -201,9 +192,9 @@ Village.Porteurs = (function () {
     const retour = { stock: { troncs: 0, planches: 0, pierres: 0, poissons: 0, viande: 0 }, attendu: new Map() };
     for (const p of monde.porteurs) {
       if (!p.porte) continue;
-      retour.stock[p.porte]++;
+      retour.stock[p.porte] += p.travail.sorte === "ramener" ? (p.quantite || 1) : 1;
       const b = p.travail.batiment;
-      if (p.travail.sorte === "apporter" && p.etat === "aller" && b.etat === "chantier" && p.travail.but !== "repas") {
+      if (p.travail.sorte === "apporter" && p.etat === "aller" && b.etat === "chantier") {
         const a = retour.attendu.get(b) || {};
         a[p.porte] = (a[p.porte] || 0) + 1;
         retour.attendu.set(b, a);

@@ -60,6 +60,23 @@ Village.Ouvriers = (function () {
       },
       quoi: "de l'eau",
     },
+    // Étape 5 : le géologue cherche un endroit où il pourrait y avoir de la pierre : une case de rochers,
+    // ou une case libre au pied d'une montagne. Pour qu'il n'aille pas toujours au même endroit, chaque
+    // recherche ne regarde qu'une case sur 4, tirée au hasard (avec une graine qui change à chaque fois).
+    geologue: {
+      duree: () => C.ouvriers.prospecter,
+      cherche: (monde, i, o) => {
+        const k = monde.carte, c = i % k.colonnes, l = Math.floor(i / k.colonnes);
+        if (k.objet[i] !== O.rien || monde.occupees.has(i) || monde.route[i] || monde.reservees.has(i)) return false;
+        if (!K.praticable(k, c, l)) return false;
+        const piedDeMontagne = k.terrain[i] === T.rochers || [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dc, dl]) => {
+          const nc = c + dc, nl = l + dl;
+          return nc >= 0 && nl >= 0 && nc < k.colonnes && nl < k.lignes && k.terrain[nl * k.colonnes + nc] === T.montagne;
+        });
+        return piedDeMontagne && Village.Hasard.pourCase(o.recherches || 0, c, l) < 0.25;
+      },
+      quoi: "un endroit à explorer (rochers ou pied de montagne)",
+    },
     // Étape 4 : le chasseur cherche une case où il y a un animal qui n'est pas déjà visé.
     chasseur: {
       duree: () => C.ouvriers.chasser,
@@ -77,7 +94,7 @@ Village.Ouvriers = (function () {
     attendre: "n'a rien à faire",
     bloque: "est bloqué : pas de route jusqu'à l'entrepôt",
     plein: "attend un porteur (devant la porte, c'est plein)",
-    affame: "a trop faim pour travailler",
+    affame: "a faim",
   };
 
   function creer(b) {
@@ -100,7 +117,7 @@ Village.Ouvriers = (function () {
 
   // Avancer le long du chemin. Renvoie vrai quand on est arrivé au bout.
   function marcher(o, dt) {
-    let reste = C.ouvriers.vitesse * dt;
+    let reste = C.ouvriers.vitesse * Village.Repas.vitesse(o) * dt; // étape 5 : ventre vide = 2 fois moins vite
     while (reste > 0 && o.pas < o.chemin.length) {
       const p = o.chemin[o.pas];
       const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy);
@@ -122,8 +139,6 @@ Village.Ouvriers = (function () {
       case "affame":
         o.minuteur -= dt;
         if (o.minuteur > 0) return;
-        // ✍️ Le ventre vide : il ne travaille plus (étape 4).
-        if (o.affame) { changer(o, "affame", 0.5); return; }
         // ✍️ Pas relié à l'entrepôt : on ne travaille pas.
         if (!b.relie) { if (o.etat !== "bloque") radio.emettre("ouvrier-bloque", { numero: b.numero, nom: Village.Batiments.TYPES[b.type].nom }); changer(o, "bloque", 0.5); return; }
         if (b.sortieQuoi && b.sortie >= C.sortieMax) { changer(o, "plein", 0.5); return; }
@@ -134,10 +149,11 @@ Village.Ouvriers = (function () {
         const r = Village.Chemins.chercher(
           carte.colonnes, carte.lignes, { colonne: b.colonne, ligne: b.ligne },
           (c, l) => K.praticable(carte, c, l),
-          (c, l) => metier.cherche(monde, l * carte.colonnes + c),
+          (c, l) => metier.cherche(monde, l * carte.colonnes + c, o),
           C.batiments[b.type].rayon
         );
         o.derniereRecherche = { visitees: r.visitees, longueur: r.chemin ? r.chemin.length - 1 : null };
+        o.recherches = (o.recherches || 0) + 1; // le géologue change de graine à chaque recherche
         if (!r.chemin) {
           if (!o.dejaPrevenu) radio.emettre("rien-a-faire", { numero: b.numero, nom: Village.Batiments.TYPES[b.type].nom, quoi: metier.quoi, rayon: C.batiments[b.type].rayon, visitees: r.visitees });
           o.dejaPrevenu = true;
@@ -171,7 +187,7 @@ Village.Ouvriers = (function () {
         return;
 
       case "travailler":
-        o.minuteur -= dt;
+        o.minuteur -= dt * Village.Repas.vitesse(o); // étape 5 : ventre vide = 2 fois moins vite
         if (o.minuteur > 0) return;
         finirLeTravail(monde, b, o);
         o.chemin = o.chemin.slice().reverse();
@@ -183,10 +199,14 @@ Village.Ouvriers = (function () {
         if (!marcher(o, dt)) return;
         if (o.porte) {
           // Il pose ce qu'il rapporte devant sa porte. Un porteur viendra le chercher.
+          // Étape 5 : un « lot » peut valoir plus qu'un (un cerf = 4 viandes). On le garde dans b.lots.
+          const q = o.quantite || 1;
           b.sortie++;
-          b.produits++;
-          radio.emettre("depose", { numero: b.numero, quoi: o.porte, devant: b.sortie });
+          b.lots.push(q);
+          b.produits += q;
+          radio.emettre("depose", { numero: b.numero, quoi: o.porte, quantite: q, devant: b.sortie });
           o.porte = null;
+          o.quantite = 1;
         }
         changer(o, "repos", C.ouvriers.repos);
         return;
@@ -198,9 +218,12 @@ Village.Ouvriers = (function () {
     monde.reservees.delete(i);
     if (b.type === "bucheron") {
       if (carte.objet[i] === O.arbre || carte.objet[i] === O.sapin) {
+        const sorte = carte.objet[i] === O.sapin ? "sapin" : "arbre";
         Village.Monde.changerObjet(monde, i, O.rien);
         o.porte = "troncs";
-        radio.emettre("arbre-coupe", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, arbres: carte.compte.arbres });
+        // L'arbre tombe du côté opposé au bûcheron (pour le dessin).
+        const sens = o.x - (o.cible.colonne + 0.5) - (o.y - (o.cible.ligne + 0.5)) > 0 ? -1 : 1;
+        radio.emettre("arbre-coupe", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, arbres: carte.compte.arbres, sorte, v: Village.Hasard.pourCase(carte.graine, o.cible.colonne, o.cible.ligne), sens });
       }
     } else if (b.type === "forestier") {
       if (carte.objet[i] === O.rien || carte.objet[i] === O.fleurs) {
@@ -210,15 +233,29 @@ Village.Ouvriers = (function () {
         radio.emettre("pousse-plantee", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, pousses: monde.pousses.size });
       }
     } else if (b.type === "pecheur") {
+      // Étape 5 : quel poisson ? Ça dépend de l'eau (le thon ne vit qu'en eau profonde).
+      const P = C.prises, chances = carte.terrain[i] === T.eauProfonde ? P.profonde : P.peuProfonde;
+      let tirage = Math.random(), espece = "sardine";
+      for (const e of ["sardine", "truite", "thon"]) { if (tirage < chances[e]) { espece = e; break; } tirage -= chances[e]; }
       o.porte = "poissons";
-      radio.emettre("poisson-peche", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, glace: !!(monde.saison && monde.saison.hiver && carte.terrain[i] === T.eau) });
+      o.quantite = P[espece];
+      radio.emettre("poisson-peche", { numero: b.numero, espece, quantite: o.quantite, colonne: o.cible.colonne, ligne: o.cible.ligne, pecheur: { x: o.x, y: o.y }, glace: !!(monde.saison && monde.saison.hiver && carte.terrain[i] === T.eau) });
     } else if (b.type === "chasseur") {
       if (o.proie && monde.animaux.includes(o.proie)) {
         Village.Animaux.retirer(monde, o.proie);
         o.porte = "viande";
-        radio.emettre("gibier-chasse", { numero: b.numero, sorte: o.proie.sorte, colonne: o.cible.colonne, ligne: o.cible.ligne, animaux: monde.animaux.length, neige: !!(monde.saison && monde.saison.hiver) });
+        o.quantite = C.prises[o.proie.sorte]; // étape 5 : un cerf donne 4 🍖, un lapin 1
+        radio.emettre("gibier-chasse", { numero: b.numero, sorte: o.proie.sorte, animal: { x: o.proie.x, y: o.proie.y, sorte: o.proie.sorte, direction: o.proie.direction, numero: o.proie.numero }, colonne: o.cible.colonne, ligne: o.cible.ligne, animaux: monde.animaux.length, neige: !!(monde.saison && monde.saison.hiver) });
       }
       o.proie = null;
+    } else if (b.type === "geologue") {
+      // Étape 5 : 1 chance sur 2 de trouver un gisement de pierre (un nouveau rocher)
+      if (carte.objet[i] === O.rien && !monde.occupees.has(i) && !monde.route[i] && Math.random() < C.ouvriers.chanceDeTrouver) {
+        carte.reste[i] = C.nature.pierresGisement;
+        Village.Monde.changerObjet(monde, i, O.rocher);
+        b.produits++;
+        radio.emettre("gisement-trouve", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, pierres: carte.reste[i] });
+      } else radio.emettre("gisement-rate", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne });
     } else if (b.type === "carriere") {
       if (carte.objet[i] === O.rocher && carte.reste[i] > 0) {
         carte.reste[i]--;

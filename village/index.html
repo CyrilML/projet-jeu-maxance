@@ -64,7 +64,7 @@
   <div class="page">
     <header class="entete">
       <h1>🏘️ Le village de Maxance · un jeu de gestion</h1>
-      <span><span id="version" class="version"></span> <a href="carnet.html#etape4">📓 Ouvrir le carnet du village</a></span>
+      <span><span id="version" class="version"></span> <a href="carnet.html#etape5">📓 Ouvrir le carnet du village</a></span>
     </header>
 
     <div class="cadre-ecran">
@@ -78,6 +78,8 @@
       <button data-action="carriere">⛏️ Carrière <kbd>4</kbd></button>
       <button data-action="pecheur">🎣 Pêcheur <kbd>5</kbd></button>
       <button data-action="chasseur">🏹 Chasseur <kbd>6</kbd></button>
+      <button data-action="geologue">🔍 Géologue <kbd>7</kbd></button>
+      <button data-action="deplacer">↔️ Déplacer <kbd>M</kbd></button>
       <button data-action="route">〰️ Route <kbd>R</kbd></button>
       <button data-action="demolir">🧹 Démolir <kbd>Suppr</kbd></button>
       <button data-action="village">🏠 Le village <kbd>H</kbd></button>
@@ -89,7 +91,7 @@
       <button data-action="pasSuivant">⏭ Un pas <kbd>N</kbd></button>
       <button data-action="ralenti" data-option="ralenti" aria-pressed="false">🐢 Ralenti <kbd>L</kbd></button>
     </div>
-    <p class="commandes">Se déplacer : <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> ou <kbd>Z</kbd> <kbd>Q</kbd> <kbd>S</kbd> <kbd>D</kbd>, ou tirer la carte · Zoomer : molette, <kbd>+</kbd> <kbd>−</kbd>, ou pincer avec 2 doigts · Construire : <kbd>1</kbd> à <kbd>6</kbd> ou les boutons en bas de l'écran, puis une case · Route : <kbd>R</kbd>, touche le départ puis l'arrivée · Démolir : <kbd>Suppr</kbd> · <kbd>Échap</kbd> annuler · Toucher un bâtiment : voir ce qu'il fait</p>
+    <p class="commandes">Se déplacer : <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> ou <kbd>Z</kbd> <kbd>Q</kbd> <kbd>S</kbd> <kbd>D</kbd>, ou tirer la carte · Zoomer : molette, <kbd>+</kbd> <kbd>−</kbd>, ou pincer avec 2 doigts · Construire : <kbd>1</kbd> à <kbd>7</kbd> ou le menu en bas (🪵 Bois, 🪨 Pierre, 🍖 Nourriture) ou les boutons en bas de l'écran, puis une case · Route : <kbd>R</kbd>, touche le départ puis l'arrivée · Déplacer : <kbd>M</kbd> · Démolir : <kbd>Suppr</kbd> · <kbd>Échap</kbd> annuler · Toucher un bâtiment : voir ce qu'il fait</p>
 
     <section class="capot" aria-label="Sous le capot">
       <div class="bloc">
@@ -111,29 +113,30 @@
   </div>
 
   <!-- L'ordre compte : chaque fichier peut utiliser ceux chargés AVANT lui.
-       Le « ?v=5 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
-  <script src="config.js?v=5"></script>
-  <script src="moteur/evenements.js?v=5"></script>
-  <script src="moteur/ecran.js?v=5"></script>
-  <script src="moteur/entrees.js?v=5"></script>
-  <script src="moteur/hasard.js?v=5"></script>
-  <script src="moteur/iso.js?v=5"></script>
-  <script src="moteur/chemins.js?v=5"></script>
-  <script src="logique/carte.js?v=5"></script>
-  <script src="logique/ouvriers.js?v=5"></script>
-  <script src="logique/batiments.js?v=5"></script>
-  <script src="logique/routes.js?v=5"></script>
-  <script src="logique/porteurs.js?v=5"></script>
-  <script src="logique/saisons.js?v=5"></script>
-  <script src="logique/animaux.js?v=5"></script>
-  <script src="logique/repas.js?v=5"></script>
-  <script src="logique/monde.js?v=5"></script>
-  <script src="donnees/sauvegarde.js?v=5"></script>
-  <script src="affichage/batisses.js?v=5"></script>
-  <script src="affichage/interface.js?v=5"></script>
-  <script src="affichage/peintre.js?v=5"></script>
-  <script src="affichage/rayons-x.js?v=5"></script>
-  <script src="affichage/sous-le-capot.js?v=5"></script>
-  <script src="main.js?v=5"></script>
+       Le « ?v=6 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
+  <script src="config.js?v=6"></script>
+  <script src="moteur/evenements.js?v=6"></script>
+  <script src="moteur/ecran.js?v=6"></script>
+  <script src="moteur/entrees.js?v=6"></script>
+  <script src="moteur/hasard.js?v=6"></script>
+  <script src="moteur/iso.js?v=6"></script>
+  <script src="moteur/chemins.js?v=6"></script>
+  <script src="logique/carte.js?v=6"></script>
+  <script src="logique/ouvriers.js?v=6"></script>
+  <script src="logique/batiments.js?v=6"></script>
+  <script src="logique/routes.js?v=6"></script>
+  <script src="logique/porteurs.js?v=6"></script>
+  <script src="logique/saisons.js?v=6"></script>
+  <script src="logique/animaux.js?v=6"></script>
+  <script src="logique/repas.js?v=6"></script>
+  <script src="logique/monde.js?v=6"></script>
+  <script src="donnees/sauvegarde.js?v=6"></script>
+  <script src="affichage/effets.js?v=6"></script>
+  <script src="affichage/batisses.js?v=6"></script>
+  <script src="affichage/interface.js?v=6"></script>
+  <script src="affichage/peintre.js?v=6"></script>
+  <script src="affichage/rayons-x.js?v=6"></script>
+  <script src="affichage/sous-le-capot.js?v=6"></script>
+  <script src="main.js?v=6"></script>
 </body>
 </html>

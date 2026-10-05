@@ -81,7 +81,7 @@
       zoom: (souris ? souris.molette : 0) + (E.consommer("zoomPlus") ? 1 : 0) - (E.consommer("zoomMoins") ? 1 : 0),
       village: E.consommer("village"),
       construire: null,
-      outil: E.consommer("route") ? "route" : E.consommer("demolir") ? "demolir" : null,
+      outil: E.consommer("route") ? "route" : E.consommer("demolir") ? "demolir" : E.consommer("deplacer") ? "deplacer" : null,
       annuler: false,
       allerA: null,
       souris,
@@ -90,11 +90,16 @@
     if (souris && souris.clic) {
       const z = Village.Interface.zoneSous(souris.clic.x, souris.clic.y);
       if (z) {
-        if (z.action === "construire") i.construire = z.valeur;
-        else if (z.action === "outil") i.outil = z.valeur;
+        if (z.action === "menu") Village.Interface.basculerMenu(z.valeur); // étape 5 : ouvrir un groupe du menu
+        else if (z.action === "construire") { i.construire = z.valeur; Village.Interface.fermerMenu(); }
+        else if (z.action === "outil") { i.outil = z.valeur; Village.Interface.fermerMenu(); }
         else if (z.action === "annuler" || z.action === "fermer") i.annuler = true;
         else if (z.action === "pleinEcran") basculerPleinEcran();
         else if (z.action === "miniCarte") i.allerA = z.versMonde(souris.clic.x, souris.clic.y);
+        i.souris = Object.assign({}, souris, { clic: null });
+      } else if (Village.Interface.menuOuvert) {
+        // Toucher la carte quand le menu est ouvert : on ferme juste le menu.
+        Village.Interface.fermerMenu();
         i.souris = Object.assign({}, souris, { clic: null });
       }
     }
@@ -117,6 +122,7 @@
     }
     if (E.consommer("nouvelleCarte")) {
       sauver("avant de changer de carte");
+      Village.Effets.vider();
       monde = Village.Monde.creer(nouvelleGraine(), null, null);
       Village.SousLeCapot.changerMonde(monde);
       Village.monde = monde;

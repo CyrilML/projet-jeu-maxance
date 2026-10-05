@@ -42,6 +42,7 @@ Village.Monde = (function () {
       file: [], // la file d'attente des livraisons
       outil: null, // "route" ou "demolir" quand on utilise un de ces outils
       routeDepart: null, // la première case touchée pour tracer une route
+      aDeplacer: null, // étape 5 : le bâtiment qu'on est en train de déplacer
       // Étape 4
       horloge: 0, // secondes depuis le début de LA PARTIE (sauvegardé) : c'est lui qui fait les saisons
       saison: null, // { nom, emoji, annee, avancement… } (voir logique/saisons.js)
@@ -201,11 +202,13 @@ Village.Monde = (function () {
       monde.construction = null;
       monde.selection = null;
       monde.routeDepart = null;
+      monde.aDeplacer = null;
       radio.emettre("choix-outil", { outil: monde.outil });
     }
     if (intentions.annuler) {
       if (monde.construction) radio.emettre("construction-annulee", { nom: B.TYPES[monde.construction].nom });
       if (monde.outil && monde.routeDepart) monde.routeDepart = null; // d'abord : oublier le départ de la route
+      else if (monde.outil && monde.aDeplacer) monde.aDeplacer = null; // ou le bâtiment qu'on allait déplacer
       else monde.outil = null;
       monde.construction = null;
       monde.selection = null;
@@ -219,6 +222,19 @@ Village.Monde = (function () {
       return;
     }
     if (monde.outil === "route") return tracerRoute(monde, k);
+    if (monde.outil === "deplacer") {
+      // Étape 5 : 1er toucher = le bâtiment, 2e toucher = sa nouvelle place.
+      if (!monde.aDeplacer) {
+        const b = monde.occupees.get(k.numero);
+        if (!b) { radio.emettre("deplacement-impossible", { nom: "Rien", raison: "touche d'abord un bâtiment" }); return; }
+        if (b.type === "entrepot") { radio.emettre("deplacement-impossible", { nom: "L'entrepôt", raison: "il reste au cœur du village" }); return; }
+        monde.aDeplacer = b;
+        radio.emettre("deplacement-choisi", { nom: B.TYPES[b.type].nom, numero: b.numero });
+        return;
+      }
+      if (B.deplacer(monde, monde.aDeplacer, k.colonne, k.ligne)) monde.aDeplacer = null;
+      return;
+    }
     if (monde.outil === "demolir") {
       const b = monde.occupees.get(k.numero);
       if (b) B.demolir(monde, b);

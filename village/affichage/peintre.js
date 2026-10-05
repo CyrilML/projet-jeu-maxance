@@ -32,6 +32,8 @@ Village.Peintre = (function () {
   let cache = null; // ce qui est préparé une seule fois par carte : les couleurs et la mini-carte
   let versionMini = -1; // la mini-carte est refaite quand la carte change (arbre coupé…)
   let saison = 0, couleursSol = null; // étape 4 : la saison de l'image en cours (0 printemps … 3 hiver)
+  const secousses = new Set(); // étape 5 : les arbres qu'on est en train de couper
+  let chutes = new Map(); // étape 5 : animal visé → à quel point il tombe (0 à 1)
 
   // Les couleurs des terrains (rouge, vert, bleu), dans l'ordre des numéros de Village.Carte.TERRAIN.
   const COULEURS = [
@@ -190,6 +192,16 @@ Village.Peintre = (function () {
       ctx.beginPath(); ctx.ellipse(p.x, p.y, 9, 4.5, 0, 0, TOUR); ctx.fill(); ctx.stroke();
     }
 
+    // Étape 5 : qui est en train de couper un arbre, et quel animal est en train d'être touché ?
+    secousses.clear();
+    chutes = new Map();
+    for (const b of monde.batiments) {
+      const o = b.ouvrier;
+      if (!o || o.etat !== "travailler" || !o.cible) continue;
+      if (b.type === "bucheron") secousses.add(o.cible.ligne * carte.colonnes + o.cible.colonne);
+      if (b.type === "chasseur" && o.proie && o.minuteur < 0.7) chutes.set(o.proie, (0.7 - o.minuteur) / 0.7);
+    }
+
     // Les bâtiments et les ouvriers sont rangés par diagonale, pour être peints au bon moment.
     const parDiagonale = new Map();
     const ranger = (diag, chose) => { if (!parDiagonale.has(diag)) parDiagonale.set(diag, []); parDiagonale.get(diag).push(chose); };
@@ -206,6 +218,12 @@ Village.Peintre = (function () {
     }
     // Étape 4 : le gibier
     for (const a of monde.animaux) ranger(Math.floor(a.x) + Math.floor(a.y), { animal: a });
+    // Étape 5 : les effets (arbre qui tombe, souche, animal qui tombe…)
+    for (const ef of Village.Effets.enCours()) {
+      const e = ef.e;
+      if (e.sorte === "animal") ranger(Math.floor(e.animal.x) + Math.floor(e.animal.y), { effet: ef });
+      else if (e.sorte === "chute" || e.sorte === "souche") ranger(e.colonne + e.ligne, { effet: ef });
+    }
 
     // 3. Les objets, du fond vers l'avant : diagonale par diagonale (colonne + ligne = diag).
     for (let diag = cMin + lMin; diag <= cMax + lMax; diag++) {
@@ -215,16 +233,18 @@ Village.Peintre = (function () {
         const p = milieu(c, l);
         if (p.x < vue.x0 || p.x > vue.x1 || p.y < vue.y0 || p.y > vue.y1) continue;
         if (o === O.pousse) Village.Batisses.dessinerPousse(ctx, p.x, p.y, (monde.pousses.get(i) || 0) / C.nature.croissance, t);
-        else dessinerObjet(o, p.x, p.y, cache.variante[i], t, carte.filon[i], z);
+        else dessinerObjet(o, p.x, p.y, cache.variante[i], t, carte.filon[i], z, i);
         stats.objetsDessines++;
       }
       for (const chose of parDiagonale.get(diag) || []) {
         if (chose.b) {
           const p = milieu(chose.b.colonne, chose.b.ligne);
           Village.Batisses.dessinerBatiment(ctx, chose.b, p.x, p.y, t);
+        } else if (chose.effet) {
+          dessinerEffet(chose.effet, t);
         } else if (chose.animal) {
           const p = Iso.versMonde(chose.animal.x, chose.animal.y, L, Hc);
-          Village.Batisses.dessinerAnimal(ctx, chose.animal, p.x, p.y + 2, t, saison === 3);
+          Village.Batisses.dessinerAnimal(ctx, chose.animal, p.x, p.y + 2, t, saison === 3, chutes.get(chose.animal) || 0);
         } else if (chose.porteur) {
           const p = Iso.versMonde(chose.porteur.x, chose.porteur.y, L, Hc);
           Village.Batisses.dessinerPorteur(ctx, chose.porteur, p.x, p.y + 2, t);
@@ -268,6 +288,9 @@ Village.Peintre = (function () {
       ctx.beginPath(); ctx.moveTo(a.x + 12 * o.direction, a.y - 22); ctx.quadraticCurveTo((a.x + q.x) / 2, a.y - 18, q.x, q.y + bouchon); ctx.stroke();
       ctx.fillStyle = "#e8402e"; ctx.beginPath(); ctx.arc(q.x, q.y + bouchon - 1, 2.2, 0, TOUR); ctx.fill();
     }
+
+    // Étape 5 : les copeaux de bois, la flèche du chasseur, les poissons qui sautent, les étincelles
+    dessinerPetitsEffets(monde, carte, t, vue, z);
 
     // 4. Les nuages
     dessinerNuages(carte, t, z);
@@ -488,10 +511,12 @@ Village.Peintre = (function () {
   // Le balancement dans le vent : chaque arbre a son propre décalage (sinon ils bougeraient tous ensemble).
   const balancement = (t, v) => Math.sin(t * C.animation.vent * 2 + v * 50) * C.animation.forceDuVent;
 
-  function dessinerObjet(o, x, y, v, t, filon, z) {
+  function dessinerObjet(o, x, y, v, t, filon, z, i) {
+    // Étape 5 : l'arbre qu'un bûcheron est en train de couper tremble à chaque coup de hache.
+    const secousse = secousses.has(i) ? Math.sin(t * 28) * 0.07 * Math.max(0, Math.sin(t * 6)) : 0;
     switch (o) {
-      case O.arbre: return arbre(x, y + 2, v, t);
-      case O.sapin: return sapin(x, y + 3, v, t);
+      case O.arbre: return arbre(x, y + 2, v, t, secousse);
+      case O.sapin: return sapin(x, y + 3, v, t, secousse);
       case O.rocher: return rochers(x, y, v);
       case O.montagne: return montagne(x, y, v, t, filon);
       case O.buisson: return buisson(x, y, v, t);
@@ -500,7 +525,7 @@ Village.Peintre = (function () {
     }
   }
 
-  function arbre(x, y, v, t) {
+  function arbre(x, y, v, t, secousse) {
     const e = 0.85 + v * 0.35; // la taille de cet arbre
     ombre(x + 5, y, 17 * e, 7 * e);
     ctx.lineJoin = "round";
@@ -510,7 +535,7 @@ Village.Peintre = (function () {
     // Le feuillage, qui se balance autour du haut du tronc
     ctx.save();
     ctx.translate(x, y - 14 * e);
-    ctx.rotate(balancement(t, v));
+    ctx.rotate(balancement(t, v) + (secousse || 0));
     ctx.scale(e, e);
     // Étape 4 : la couleur des feuilles change avec la saison.
     const verts = saison === 2 ? ["#e8a33a", "#d9652b", "#f2c94c", "#c9552a"] : saison === 3 ? ["#7f9a7c", "#8aa386", "#738f70", "#86a081"] : saison === 1 ? ["#3f9e36", "#4cad3c", "#3a9332", "#58b844"] : ["#4caf3e", "#5cbf45", "#43a33a", "#6cc94a"];
@@ -532,14 +557,14 @@ Village.Peintre = (function () {
     ctx.restore();
   }
 
-  function sapin(x, y, v, t) {
+  function sapin(x, y, v, t, secousse) {
     const e = 0.85 + v * 0.4;
     ombre(x + 4, y, 13 * e, 6 * e);
     ctx.fillStyle = "#6e4523"; ctx.strokeStyle = "#2e1d0e"; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.rect(x - 2.5, y - 8 * e, 5, 8 * e); ctx.fill(); ctx.stroke();
     ctx.save();
     ctx.translate(x, y - 6 * e);
-    ctx.rotate(balancement(t, v) * 0.7);
+    ctx.rotate(balancement(t, v) * 0.7 + (secousse || 0));
     ctx.scale(e, e);
     ctx.lineJoin = "round"; ctx.lineWidth = 2.2; ctx.strokeStyle = "#173d22";
     const etages = [[0, 14, 30], [-11, 11, 25], [-21, 8, 19]]; // [hauteur de la base, demi-largeur, hauteur]
@@ -693,6 +718,123 @@ Village.Peintre = (function () {
     for (let k = 0; k <= 4; k++) ctx.lineTo(x - 2 + k * 4, y - 46 + Math.sin(t * 6 + k) * 1.5);
     for (let k = 4; k >= 0; k--) ctx.lineTo(x - 2 + k * 4, y - 38 + Math.sin(t * 6 + k) * 1.5);
     ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+
+  // ---------------------------------------------------------------- les effets (étape 5)
+  function dessinerEffet(ef, t) {
+    const e = ef.e, p = ef.p;
+    if (e.sorte === "chute") {
+      // L'arbre bascule autour de son pied (de plus en plus vite, comme un vrai), puis s'efface.
+      const m = milieu(e.colonne, e.ligne), tombe = Math.min(1, ef.age / 0.9);
+      const angle = e.sens * 1.45 * tombe * tombe;
+      ctx.save();
+      ctx.globalAlpha = ef.age < 1.2 ? 1 : Math.max(0, 1 - (ef.age - 1.2) / 1.4);
+      ctx.translate(m.x, m.y + 2);
+      ctx.rotate(angle);
+      if (e.arbre === "sapin") sapin(0, 1, e.v || 0.5, 0, 0); else arbre(0, 0, e.v || 0.5, 0, 0);
+      ctx.restore();
+      // Le « boum » : un petit nuage de poussière quand il touche le sol
+      if (ef.age > 0.85 && ef.age < 1.6) {
+        const q = (ef.age - 0.85) / 0.75;
+        ctx.fillStyle = "rgba(200, 180, 140," + 0.5 * (1 - q) + ")";
+        for (let k = 0; k < 5; k++) { ctx.beginPath(); ctx.arc(m.x + e.sens * (10 + k * 7), m.y + 2 - q * 6, 4 + q * 8, 0, TOUR); ctx.fill(); }
+      }
+    } else if (e.sorte === "souche") {
+      const m = milieu(e.colonne, e.ligne);
+      ctx.globalAlpha = p < 0.8 ? 1 : (1 - p) / 0.2;
+      ctx.fillStyle = "#8a5a2b"; ctx.strokeStyle = "#3b2614"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.rect(m.x - 4, m.y - 4, 8, 5); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(m.x, m.y - 4, 4, 2, 0, 0, TOUR); ctx.fillStyle = "#e0b277"; ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = "rgba(120, 80, 40, .7)"; ctx.lineWidth = 0.7;
+      ctx.beginPath(); ctx.ellipse(m.x, m.y - 4, 2, 1, 0, 0, TOUR); ctx.stroke();
+      ctx.globalAlpha = 1;
+    } else if (e.sorte === "animal") {
+      const a = e.animal, m = Iso.versMonde(a.x, a.y, L, Hc);
+      ctx.globalAlpha = Math.max(0, 1 - p);
+      Village.Batisses.dessinerAnimal(ctx, Object.assign({ etat: "brouter" }, a), m.x, m.y + 2, t, saison === 3, 1);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function poissonSautant(x, y, taille, angle, couleur) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.scale(taille, taille);
+    ctx.beginPath(); ctx.ellipse(0, 0, 6, 2.6, 0, 0, TOUR); ctx.fillStyle = couleur; ctx.fill();
+    ctx.strokeStyle = "#1f3a4a"; ctx.lineWidth = 1 / taille; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(5.5, 0); ctx.lineTo(9, -3); ctx.lineTo(9, 3); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(-3.5, -0.6, 0.9, 0, TOUR); ctx.fill();
+    ctx.restore();
+  }
+  const POISSONS = { sardine: { taille: 0.8, couleur: "#9fc9e6" }, truite: { taille: 1.15, couleur: "#d7a37a" }, thon: { taille: 1.8, couleur: "#4f6f9a" } };
+
+  function rondsDansLEau(x, y, p) {
+    ctx.strokeStyle = "rgba(255,255,255," + 0.8 * (1 - p) + ")"; ctx.lineWidth = 1.5;
+    for (const r of [p * 14, p * 8]) { ctx.beginPath(); ctx.ellipse(x, y, r + 2, (r + 2) / 2, 0, 0, TOUR); ctx.stroke(); }
+  }
+
+  function dessinerPetitsEffets(monde, carte, t, vue, z) {
+    // Les copeaux qui volent quand le bûcheron frappe
+    for (const b of monde.batiments) {
+      const o = b.ouvrier;
+      if (!o || o.etat !== "travailler" || !o.cible) continue;
+      if (b.type === "bucheron") {
+        const m = milieu(o.cible.colonne, o.cible.ligne);
+        for (let k = 0; k < 4; k++) {
+          const q = (t * 2.2 + k / 4) % 1;
+          ctx.fillStyle = "rgba(230, 190, 120," + (1 - q) + ")";
+          ctx.save(); ctx.translate(m.x + (k % 2 ? 1 : -1) * q * 16, m.y - 8 - Math.sin(q * Math.PI) * 14); ctx.rotate(q * 8 + k);
+          ctx.fillRect(-2, -1, 4, 2); ctx.restore();
+        }
+      } else if (b.type === "chasseur" && o.proie && o.minuteur <= 1 && o.minuteur > 0.7) {
+        // La flèche part de l'arc et file vers l'animal
+        const f = (1 - o.minuteur) / 0.3, a = Iso.versMonde(o.x, o.y, L, Hc), c = Iso.versMonde(o.proie.x, o.proie.y, L, Hc);
+        const x1 = a.x + 6 * o.direction, y1 = a.y - 10, x2 = c.x, y2 = c.y - 6;
+        const x = x1 + (x2 - x1) * f, y = y1 + (y2 - y1) * f - Math.sin(f * Math.PI) * 6, ang = Math.atan2(y2 - y1, x2 - x1);
+        ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+        ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(-9, 0); ctx.lineTo(4, 0); ctx.stroke();
+        ctx.fillStyle = "#c9ccd1"; ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(3, -2); ctx.lineTo(3, 2); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#e8402e"; ctx.beginPath(); ctx.moveTo(-9, 0); ctx.lineTo(-11, -2.5); ctx.lineTo(-7, 0); ctx.lineTo(-11, 2.5); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+    }
+    // Le poisson pêché saute de l'eau jusqu'au pêcheur
+    for (const ef of Village.Effets.enCours()) {
+      const e = ef.e;
+      if (e.sorte === "poisson") {
+        const m = milieu(e.colonne, e.ligne), d = Iso.versMonde(e.vers.x, e.vers.y, L, Hc), p = Math.min(1, ef.p * 1.6);
+        if (ef.p < 0.6) rondsDansLEau(m.x, m.y, ef.p / 0.6);
+        if (p < 1) {
+          const x = m.x + (d.x - m.x) * p, y = m.y + (d.y - 14 - m.y) * p - Math.sin(p * Math.PI) * 30;
+          const f = POISSONS[e.espece] || POISSONS.sardine;
+          poissonSautant(x, y, f.taille, (p - 0.5) * 2.5, f.couleur);
+        }
+      } else if (e.sorte === "etincelles") {
+        const m = milieu(e.colonne, e.ligne);
+        for (let k = 0; k < 7; k++) {
+          const a = (k / 7) * TOUR + ef.p * 2, r = 6 + ef.p * 22, s = (1 - ef.p) * 4;
+          const x = m.x + Math.cos(a) * r, y = m.y - 10 + Math.sin(a) * r * 0.5 - ef.p * 10;
+          ctx.strokeStyle = k % 2 ? "#fff6b0" : "#ffffff"; ctx.lineWidth = 1.6;
+          ctx.beginPath(); ctx.moveTo(x - s, y); ctx.lineTo(x + s, y); ctx.moveTo(x, y - s); ctx.lineTo(x, y + s); ctx.stroke();
+        }
+      }
+    }
+    // Étape 5 : des poissons qui sautent tout seuls dans l'eau (pas en hiver sur la glace).
+    // Chaque « place » choisit une case d'eau au hasard, et un poisson y saute toutes les 5 secondes.
+    if (z < 0.45) return;
+    const eaux = cache.eaux || (cache.eaux = carte.terrain.reduce((liste, ter, i) => (ter <= T.eau ? (liste.push(i), liste) : liste), []));
+    if (!eaux.length) return;
+    for (let k = 0; k < 40; k++) {
+      const cycle = Math.floor((t + k * 0.37) / 5), q = ((t + k * 0.37) % 5) / 1.1;
+      if (q > 1) continue;
+      const i = eaux[Math.floor(Village.Hasard.pourCase(cycle, k, 55) * eaux.length)];
+      const ter = carte.terrain[i];
+      if (ter === T.eau && saison === 3) continue; // gelé
+      const m = milieu(i % carte.colonnes, Math.floor(i / carte.colonnes));
+      if (m.x < vue.x0 || m.x > vue.x1 || m.y < vue.y0 || m.y > vue.y1) continue;
+      const espece = ter === T.eauProfonde ? (Village.Hasard.pourCase(cycle, k, 56) < 0.35 ? "thon" : "truite") : (Village.Hasard.pourCase(cycle, k, 56) < 0.6 ? "sardine" : "truite");
+      const f = POISSONS[espece], haut = 10 + f.taille * 8;
+      poissonSautant(m.x - 8 + q * 16, m.y - Math.sin(q * Math.PI) * haut, f.taille, (q - 0.5) * 2.2, f.couleur);
+      if (q < 0.25 || q > 0.8) rondsDansLEau(q < 0.25 ? m.x - 8 : m.x + 8, m.y, q < 0.25 ? q * 4 : (q - 0.8) * 5);
+    }
   }
 
   // ---------------------------------------------------------------- ce qui tombe du ciel (étape 4)
