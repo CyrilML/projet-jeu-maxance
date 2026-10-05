@@ -801,6 +801,13 @@ Circuit.TableauDeBord = (function () {
     panneau(12, H - 74, 300, 30);
     texte(v.icone + " " + v.nom + (M.etat.melange > 0 ? " → " + prochain.icone + " " + prochain.nom : " · " + prochain.icone + " dans " + reste + " s"), 22, H - 53, 15, "#e8f0ff");
     if (v.adherence < 0.75 && !monde.pieton) texte("⚠️ Route glissante !", 324, H - 53, 15, "#ffb37a");
+    // Étape 53 : DRIFT ! (en gros, avec l'angle de la glissade), et la fumée quand une sportive patine.
+    const vo = monde.voiture;
+    if (!monde.pieton && vo.drift) {
+      const angle = Math.round((Math.abs(vo.derapage || 0) * 180) / Math.PI);
+      texte("DRIFT ! " + angle + "°", W / 2, 150, 34, angle > 25 ? "#ffd84a" : "#ffffff", "center");
+      texte(vo.drift.duree.toFixed(1).replace(".", ",") + " s", W / 2, 180, 18, "#e8f0ff", "center");
+    } else if (!monde.pieton && vo.patine) texte("💨 Les pneus patinent !", W / 2, 150, 24, "#ffffff", "center");
   }
 
   return { initialiser, dessiner, chrono };

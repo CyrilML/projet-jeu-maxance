@@ -111,6 +111,7 @@ Circuit.Scene3D = (function () {
     scene.add(flamme);
 
     Circuit.Meteo3D.initialiser({ ciel, soleil, hemi, rendu, scene }); // étape 47 : la pluie, la neige, les éclairs
+    Circuit.Fumee.initialiser(scene); // étape 53 : la fumée et les traces des pneus
 
     adversaire = Circuit.Modeles.fabriquer("classique", [0.12, 0.38, 0.92], [0.07, 0.22, 0.6]);
     scene.add(adversaire.g);
@@ -140,6 +141,7 @@ Circuit.Scene3D = (function () {
     decors[carte].groupe.visible = true;
     rayonsFixes = decors[carte].rayons;
     carteDessinee = carte;
+    Circuit.Fumee.effacer(); // (étape 53 : les traces de pneus de l'autre carte disparaissent)
     // Étape 42 : la map de la ville est énorme : le brouillard commence plus loin, pour voir les îles.
     brouillardCarte = carte === "ville" ? 2400 : 1100; // (étape 47 : la météo peut voir moins loin, affichage/meteo3d.js)
   }
@@ -386,7 +388,9 @@ Circuit.Scene3D = (function () {
     const v = monde.pieton ? Object.assign({ modele: "pieton" }, monde.pieton) : monde.voiture;
     const R = C.camera;
     // La caméra tourne en douceur pour suivre l'angle de la voiture (par le chemin le plus court).
-    let difference = v.angle - camera.angle;
+    // (Étape 53 : en drift, la caméra suit la direction où la voiture VA, pas son nez : on la voit glisser en biais.)
+    const viseAngle = !monde.pieton && v.drift && v.deplacement !== undefined ? v.deplacement : v.angle;
+    let difference = viseAngle - camera.angle;
     difference = Math.atan2(Math.sin(difference), Math.cos(difference));
     const douceur = camera.pret ? 1 - Math.exp(-R.souplesse * dt) : 1;
     camera.angle += difference * douceur;
@@ -606,6 +610,7 @@ Circuit.Scene3D = (function () {
     ciel.position.copy(cam.position);
     Circuit.Meteo3D.maj(options.pause ? 0 : dt, cam, monde.carte, brouillardCarte); // étape 47
     Circuit.Nature.maj(options.pause ? 0 : dt, cam); // étape 48 : l'herbe plie au vent, on cache l'herbe trop loin
+    Circuit.Fumee.maj(options.pause ? 0 : dt, monde, monde.pieton ? null : vehicule(monde.voiture.modele)); // étape 53
     Circuit.Eau.maj(options.pause ? 0 : dt); // étape 48 : les vagues
 
     // On dessine !

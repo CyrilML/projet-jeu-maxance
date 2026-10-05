@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 21,
+  version: 22,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -53,16 +53,16 @@ Circuit.CONFIG = {
       couleurs: [[0.9, 0.15, 0.1], [0.65, 0.08, 0.06]], son: { ralenti: 38, max: 90 } },
     // Étape 49 : ✍️ les voitures « style » sont remplacées par de VRAIES voitures : la Porsche 911, la Lamborghini
     // Aventador et la Bugatti Chiron (choix de Maxance). Elles prennent la place (et le prix) des anciennes.
-    { id: "porsche911", nom: "La Porsche 911", modele: "porsche911", prix: 50, vitesseMax: 44.4, acceleration: 15,
+    { id: "porsche911", sportive: true, nom: "La Porsche 911", modele: "porsche911", prix: 50, vitesseMax: 44.4, acceleration: 15,
       couleurs: [[0.78, 0.8, 0.84], [0.12, 0.12, 0.14]], son: { ralenti: 62, max: 175 } }, // 6 cylindres à plat : un son rauque et aigu
-    { id: "aventador", nom: "La Lamborghini Aventador", modele: "aventador", prix: 100, vitesseMax: 47.2, acceleration: 16,
+    { id: "aventador", sportive: true, nom: "La Lamborghini Aventador", modele: "aventador", prix: 100, vitesseMax: 47.2, acceleration: 16,
       couleurs: [[0.95, 0.42, 0.04], [0.1, 0.1, 0.11]], son: { ralenti: 58, max: 190 } }, // un V12 qui hurle
-    { id: "chiron", nom: "La Bugatti Chiron", modele: "chiron", prix: 200, vitesseMax: 50, acceleration: 17,
+    { id: "chiron", sportive: true, nom: "La Bugatti Chiron", modele: "chiron", prix: 200, vitesseMax: 50, acceleration: 17,
       couleurs: [[0.1, 0.24, 0.6], [0.03, 0.06, 0.16]], son: { ralenti: 32, max: 88 } }, // le W16 : très grave
-    { id: "f1", nom: "La Formule 1", modele: "f1", prix: 400, vitesseMax: 52.8, acceleration: 19,
+    { id: "f1", sportive: true, nom: "La Formule 1", modele: "f1", prix: 400, vitesseMax: 52.8, acceleration: 19,
       couleurs: [[0.05, 0.6, 0.38], [0.95, 0.95, 0.95]], son: { ralenti: 170, max: 560 } }, // ✍️ son aigu
     // Étape 40 : ✍️ la voiture de rallye (aileron et autocollants). Elle est aussi au garage du grand parcours.
-    { id: "rallye", nom: "La voiture de rallye", modele: "rallye", prix: 300, vitesseMax: 48.6, acceleration: 18, virage: 2.2, saut: 1.1,
+    { id: "rallye", sportive: true, nom: "La voiture de rallye", modele: "rallye", prix: 300, vitesseMax: 48.6, acceleration: 18, virage: 2.2, saut: 1.1,
       couleurs: [[0.1, 0.3, 0.85], [1, 0.8, 0.1]], son: { ralenti: 75, max: 230 } },
   ],
 
@@ -101,7 +101,7 @@ Circuit.CONFIG = {
       couleurs: [[0.3, 0.75, 0.85], [0.95, 0.95, 0.95]], son: { ralenti: 55, max: 140 } },
     { id: "suv", nom: "La Peugeot 508", modele: "suv", prix: 50, vitesseMax: 38.9, acceleration: 12, virage: 1.9, saut: 1,
       couleurs: [[0.08, 0.22, 0.45], [0.75, 0.75, 0.78]], son: { ralenti: 40, max: 105 } },
-    { id: "basse", nom: "La Honda NSX", modele: "basse", prix: 100, vitesseMax: 47.2, acceleration: 17, virage: 2.1, saut: 1,
+    { id: "basse", sportive: true, nom: "La Honda NSX", modele: "basse", prix: 100, vitesseMax: 47.2, acceleration: 17, virage: 2.1, saut: 1,
       couleurs: [[0.8, 0.06, 0.06], [0.08, 0.08, 0.09]], son: { ralenti: 65, max: 190 } },
     { id: "camionnette", nom: "La Mercedes Vito", modele: "camionnette", prix: 200, vitesseMax: 33.3, acceleration: 9, virage: 1.7, saut: 1,
       couleurs: [[0.95, 0.95, 0.95], [0.1, 0.1, 0.11]], son: { ralenti: 45, max: 110 } },
@@ -527,6 +527,21 @@ Circuit.CONFIG = {
     peinture: ["paint", "body", "carpaint", "car_paint", "kaross", "exterior", "color", "colour"],
     roues: ["wheel", "tire", "tyre", "rim", "roue", "pneu"],
   },
+
+  // Étape 53 : ✍️ le DRIFT et la FUMÉE.
+  drift: {
+    entree: 0.7, // ✍️ on part en drift au-dessus de 70 % de la vitesse max…
+    volant: 0.9, // … en tournant (presque) à fond (le volant va de 0 à 1)
+    sortie: 0.5, // le drift s'arrête sous 50 % de la vitesse max, ou quand on redresse le volant
+    adherence: 4.5, // pendant le drift, le déplacement rattrape le nez 4,5 fois par seconde (au lieu de 14) : ça glisse !
+    virage: 1.3, // pendant le drift, la voiture pivote 1,3 fois plus vite
+    angleMax: 0.75, // rad (43°) : la glissade ne dépasse jamais cet angle (sinon on ferait un tête-à-queue)
+    frottement: 3, // m/s² : les pneus qui glissent freinent un peu la voiture
+    patinageVitesse: 9, // m/s : ✍️ une sportive qui démarre à fond patine (fumée) tant qu'elle va moins vite que ça…
+    patinageDuree: 1.3, // s : … et pendant au plus 1,3 s après le démarrage
+  },
+  fumee: { particules: 220, vie: 1.8, taille: [0.8, 4], montee: 0.8, parSeconde: 60, opacite: 0.8 }, // la fumée des pneus
+  traces: { nombre: 700, largeur: 0.24, longueur: 0.5, ecart: 0.35 }, // les traces noires (m) ; ecart = tous les 35 cm
 
   pasFixe: 1 / 120, // la boucle de jeu avance par petits pas de 1/120 s
 };

@@ -54,6 +54,9 @@ Circuit.SousLeCapot = (function () {
     piece: (d) => "🪙 Pièce n° " + d.numero + " ramassée" + (d.ou ? " (" + d.ou + ")" : " (à " + d.s + " m du départ)") + " : " + d.total + " trouvées",
     ville: (d) => "🏙️ Balade en ville : " + d.pieces + " pièces cachées, " + d.circulation + " voitures qui circulent, " + d.garees + " véhicules garés" + (d.aeroports ? ", " + d.aeroports + " aéroports, " + d.magasins + " magasins" : ""),
     lieu: (d) => "📍 Tu arrives sur " + d.ou,
+    "drift-debut": (d) => "🏁 DRIFT ! À " + Math.round(d.vitesse * 3.6) + " km/h, tu tournes à fond : l'arrière décroche et la voiture glisse en crabe",
+    "drift-fin": (d) => "🏁 Fin du drift : " + virgule(d.duree, 1) + " s, angle maximum " + Math.round((d.angle * 180) / Math.PI) + "°",
+    patinage: (d) => "💨 " + d.voiture + " démarre à fond : les pneus patinent et fument !",
     maquette: (d) => d.etat === "prete" ? "🧸 La maquette 3D « " + d.nom + " » (par " + d.auteur + ") est prête : " + d.triangles.toLocaleString("fr-FR") + " triangles. On remplace la voiture dessinée en code !" : "🧸 La maquette « " + d.nom + " » n'a pas pu être chargée (" + d.etat + ") : on garde la voiture dessinée en code",
     ressorts: (d) => "🌀 Boing ! Les ressorts encaissent un choc de " + virgule(d.choc, 1) + " m/s : la caisse s'écrase, puis rebondit",
     rue: (d) => "🪧 " + d.nom.charAt(0).toUpperCase() + d.nom.slice(1) + " (Ville.nomDeRue regarde de quelle rue tu es à moins de 8 m)",
@@ -181,6 +184,8 @@ Circuit.SousLeCapot = (function () {
         const b = Circuit.Maquettes.bilan().find((x) => x.modele === v.modele);
         return b ? b.etat + (b.triangles ? " · " + b.triangles.toLocaleString("fr-FR") + " triangles" : "") + " · par " + b.auteur : "pas de maquette pour ce modèle (dessiné en code)";
       })()],
+["drift (étape 53)", v.drift ? "OUI depuis " + virgule(v.drift.duree, 1) + " s · glissade " + Math.round((Math.abs(v.derapage || 0) * 180) / Math.PI) + "°" : "non (il faut plus de " + Math.round(Circuit.CONFIG.drift.entree * 100) + " % de la vitesse max et tourner à fond)"],
+["pneus", (v.patine ? "💨 patinent · " : "") + "crissement " + Math.round((v.crisse || 0) * 100) + " % · fumée : " + (Circuit.Fumee.bilan.vivantes || 0) + " bouffées · " + Circuit.Fumee.bilan.traces + " traces posées"],
       ["la caisse penche", "avant/arrière " + virgule((v.suspension.tangage * 180) / Math.PI, 1) + "° (accélération " + virgule(v.suspension.accelerationAvant || 0, 1) + " m/s²) · côté " + virgule((v.suspension.roulis * 180) / Math.PI, 1) + "° (virage " + virgule(v.suspension.accelerationCote || 0, 1) + " m/s²)"],
     ] : []);
     let lignes;

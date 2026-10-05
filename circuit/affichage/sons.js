@@ -14,6 +14,7 @@
 //   - L'HERBE : un « chhhh » qui monte avec la vitesse quand tu roules dans l'herbe.
 //   - LE CHOC : « BOUM » quand les voitures se cognent (plus fort si le choc est violent).
 //   - LES BIPS DU DÉPART : un bip grave à chaque feu rouge, un bip aigu au « GO ».
+//   - Étape 53 : les PNEUS CRISSENT en drift ou quand une sportive patine (une note aiguë qui tremble + un « chhhh »).
 //   - Étape 40 : le NITRO fait « fffff » (un souffle aigu), et la SIRÈNE de la police fait « pin-pon » :
 //     deux notes qui changent toutes les demi-secondes (440 Hz, puis 587 Hz).
 //
@@ -25,7 +26,7 @@ Circuit.Sons = (function () {
   const S = Circuit.CONFIG.sons;
   const Son = Circuit.Son;
   let balles = 0;
-  let moteurJoueur = null, moteurAdversaire = null, herbe = null, souffle = null, sirene = null, sirenePolice = null, bruitPluie = null, bruitVent = null;
+  let moteurJoueur = null, moteurAdversaire = null, herbe = null, souffle = null, sirene = null, sirenePolice = null, bruitPluie = null, bruitVent = null, crisse = null, crisseBruit = null;
   // Ce qu'on entend en ce moment : lu par le panneau « sous le capot ».
   const enDirect = { frequence: 0, volume: 0, frequenceAdversaire: 0, volumeAdversaire: 0, cote: 0, herbe: 0 };
 
@@ -39,6 +40,8 @@ Circuit.Sons = (function () {
     sirenePolice = Son.creerMoteur(); // étape 45 : la sirène des voitures de police qui te poursuivent
     bruitPluie = Son.creerBruit(3200); // étape 47 : le « chhhh » de la pluie (aigu)…
     bruitVent = Son.creerBruit(350); // … et le « vououou » du vent (grave)
+    crisse = Son.creerMoteur(); // étape 53 : le CRISSEMENT des pneus : une note aiguë qui tremble…
+    crisseBruit = Son.creerBruit(2300); // … et un « chhhh » aigu (le caoutchouc qui frotte la route)
 
     const radio = Circuit.Evenements;
     radio.ecouter("decompte", () => Son.bip(S.bips.frequenceFeu, 0.18, S.bips.volume));
@@ -172,6 +175,11 @@ Circuit.Sons = (function () {
     const volumePolice = silence || !isFinite(dMin) ? 0 : 0.14 * Math.max(0, 1 - dMin / 250);
     Son.reglerMoteur(sirenePolice, 620 + 180 * Math.sin(monde.temps * 5), volumePolice, 1, 0);
     enDirect.sirenePolice = volumePolice;
+    // Étape 53 : les pneus crissent (en drift, en patinant, ou en glissant fort) : « iiiiiiih ».
+    const fort = silence || monde.pieton ? 0 : v.crisse || 0;
+    Son.reglerMoteur(crisse, 900 + 160 * fort + 120 * Math.sin(monde.temps * 23), 0.11 * fort, 1, 0);
+    Son.reglerBruit(crisseBruit, 0.3 * fort);
+    enDirect.crisse = fort;
     // Étape 47 : la pluie et le vent.
     const m = Circuit.Meteo.etat.valeurs;
     Son.reglerBruit(bruitPluie, silence ? 0 : 0.22 * Math.min(1.3, m.pluie));

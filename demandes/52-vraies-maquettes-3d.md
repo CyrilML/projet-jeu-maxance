@@ -1,6 +1,7 @@
 # Demande n° 52 : les voitures « réellement réelles »
 
-> Statut : 🛠️ en cours (05/10/2026). Tout est prêt dans le jeu ; il manque la clé Sketchfab pour télécharger les maquettes.
+> Statut : ⏸️ mis de côté (05/10/2026). ✍️ Maxance ne veut pas créer de compte Sketchfab : on continue en code.
+> L'outillage reste dans le jeu, éteint (`disponible: false` dans `circuit/config.js`), si un jour on change d'avis.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi

@@ -174,6 +174,7 @@
       <a href="#etape49">Étape 49</a>
       <a href="#etape50">Étape 50</a>
       <a href="#etape51">Étape 51</a>
+      <a href="#etape53">Étape 53</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3293,6 +3294,45 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Qu'est-ce que l'empattement ?</summary><p>La distance entre les roues avant et les roues arrière : 2,71 m pour la Chiron, 2,45 m pour la 911.</p></details>
     </section>
 
+    <section id="etape53">
+      <h2>🏁 Étape 53 : le drift, le crissement et la fumée <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">À fond dans un virage, la voiture part en drift : elle glisse en biais, les pneus crissent, fument et laissent des traces noires. Une sportive qui démarre à fond fait patiner ses pneus. <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <p class="petit">(L'étape 52, les vraies maquettes 3D, est mise de côté : elle demandait un compte Sketchfab.)</p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/53-drift-et-fumee.md</code>.</p>
+          <ul>
+            <li>✍️ Le drift arrive tout seul : vite (plus de 70 % de la vitesse max) et en tournant à fond.</li>
+            <li>✍️ La fumée au démarrage pour toutes les sportives.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Sportive à l'arrêt, <kbd>↑</kbd> à fond : « Les pneus patinent ! », fumée et traces.</li>
+            <li>☐ Très vite, <kbd>←</kbd> ou <kbd>→</kbd> à fond : « DRIFT ! », la voiture glisse en biais, ça crisse.</li>
+            <li>☐ Les traces noires restent sur la route.</li>
+            <li>☐ Sous le capot : « drift » et « pneus ».</li>
+            <li>Vérifie « version 22 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🦀 Pourquoi la voiture avance « en crabe »</h3>
+      <p>Depuis l'étape 47, la voiture a deux directions : celle de son <strong>nez</strong> et celle où elle <strong>va</strong> vraiment. D'habitude, la deuxième rattrape la première 14 fois par seconde : on ne voit rien. En drift, elle ne la rattrape plus que 4,5 fois par seconde, et le nez tourne 1,3 fois plus vite. Les deux directions s'écartent : environ 30°. C'est l'angle de drift !</p>
+      <h3>💨 Les particules</h3>
+      <p>La fumée, ce sont 220 petits nuages qu'on réutilise. Chacun naît derrière une roue, monte, grossit et devient transparent, puis « meurt » au bout de 1,8 s : il est alors prêt à renaître ailleurs.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>circuit/config.js</code>, trouve <code>drift</code> : mets <code>entree: 0.4</code> pour drifter plus facilement.</li>
+        <li>Toujours là, change <code>adherence</code> : à 2, quel angle de drift as-tu ?</li>
+        <li>Dans le journal, regarde la durée et l'angle maximum de ton meilleur drift.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi la fumée ne disparaît pas d'un coup ?</summary><p>Chaque nuage devient un peu plus transparent à chaque image, jusqu'à disparaître à la fin de sa vie.</p></details>
+      <details class="question"><summary>Combien de traces noires au maximum ?</summary><p>700 : après, la plus vieille est réutilisée pour la nouvelle (une « file circulaire »).</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -3603,26 +3643,38 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
           <p>Chiron, 911, Aventador, NSX, Peugeot 508, Mercedes Vito, Kawasaki Ninja : des coques en tranches, de vraies roues, une suspension qui penche (étape 51).</p>
           <p class="apprend"><b>Tu apprends :</b> construire une forme par tranches, interpoler, les pièces d'une roue, le transfert de charge. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte">
+        <div class="carte fait">
           <div class="num">50</div>
+          <h4>Le drift et la fumée <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Drift à fond dans les virages, pneus qui crissent, fumée, traces noires, sportives qui patinent au démarrage (étape 53).</p>
+          <p class="apprend"><b>Tu apprends :</b> deux directions qui s'écartent, les particules, une file circulaire. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">51</div>
+          <h4>Voitures, routes et immeubles très réalistes <span class="etiquette">⏭️ prochaine étape (demandée)</span></h4>
+          <p>Des voitures encore plus réalistes en code, et des routes et des immeubles plus vrais (étape 54).</p>
+          <p class="apprend"><b>Tu apprends :</b> lumières, reflets, détails. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">52</div>
           <h4>Sauvegarder le monde <span class="etiquette">💡 idée</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">51</div>
+          <div class="num">53</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">52</div>
+          <div class="num">54</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">53</div>
+          <div class="num">55</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -4090,6 +4142,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-51" data-cle="appris-51" placeholder="Ex. : J'ai appris ce qu'est un étrier de frein…"></textarea>
         <label for="idees-51"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-51" data-cle="idees-51" placeholder="Ex. : Ouvrir les portières…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 53 · le drift et la fumée <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le drift et le patinage (<code>logique/voiture.js</code>), la fumée et les traces (<code>affichage/fumee.js</code>), le crissement (<code>affichage/sons.js</code>), la caméra qui suit la glissade.</p>
+        <label for="appris-53"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-53" data-cle="appris-53" placeholder="Ex. : J'ai appris ce qu'est une particule…"></textarea>
+        <label for="idees-53"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-53" data-cle="idees-53" placeholder="Ex. : Un score de drift…"></textarea>
       </div>
     </section>
   </main>

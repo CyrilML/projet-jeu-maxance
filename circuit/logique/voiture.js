@@ -55,6 +55,10 @@ Circuit.Voiture = (function () {
   // intentions = { accelerer, freiner, gauche, droite } (vrai ou faux)
   // sol = "route", "bordure", "herbe", "terre" (le parcours) ou "air"
   // virage (facultatif, étape 37) : la vitesse de rotation de ce véhicule, en rad/s.
+  // Étape 53 : on n'écrit dans le journal que ce que fait TA voiture (pas la police ni les autres).
+  const estLeJoueur = (voiture) => !!(Circuit.monde && Circuit.monde.voiture === voiture);
+  const radio = () => Circuit.Evenements;
+
   function avancer(voiture, intentions, dt, sol, virage) {
     const N = Circuit.CONFIG.nitro;
     // Étape 47 : la météo (1 = ça accroche, moins = ça glisse) et le vent.
@@ -103,23 +107,54 @@ Circuit.Voiture = (function () {
     // Trop vite ? Dans l'herbe, ça freine fort ; ailleurs (après un nitro), on ralentit doucement.
     // (on part de la vitesse d'avant : au-dessus de la vitesse max, l'accélérateur ne fait plus monter la vitesse)
     if (v > max) v = Math.max(max, Math.min(v, voiture.vitesse) - (sol === "herbe" ? V.freinHerbe : intentions.freiner ? V.freinage : N.ralentissement) * dt);
+    // Étape 53 : le PATINAGE. Une sportive qui démarre à fond : ses roues arrière tournent plus vite que la route,
+    // le caoutchouc chauffe… et fume ! (pendant 1,3 s au plus, et tant qu'elle va moins vite que 9 m/s).
+    const D = Circuit.CONFIG.drift;
+    const fiche = (Circuit.Garage && Circuit.Garage.ficheDe(voiture.modele)) || {};
+    if (Math.abs(voiture.vitesse) < 0.5 && !intentions.accelerer) voiture.depuisDepart = 0;
+    if (intentions.accelerer) voiture.depuisDepart = (voiture.depuisDepart || 0) + dt;
+    const patine = !!fiche.sportive && intentions.accelerer && !intentions.freiner && v > 0 && v < D.patinageVitesse && voiture.depuisDepart < D.patinageDuree;
+    if (patine && !voiture.patine && estLeJoueur(voiture)) radio().emettre("patinage", { voiture: fiche.nom });
+    voiture.patine = patine;
+    if (voiture.drift) v = Math.max(0, v - D.frottement * dt); // (les pneus qui glissent freinent un peu)
     voiture.vitesse = v;
 
     // 2. Le volant : on tourne d'autant plus vite qu'on roule (jusqu'à 10 m/s), et à l'envers en marche arrière.
     const direction = (intentions.droite ? 1 : 0) - (intentions.gauche ? 1 : 0);
     const efficacite = Math.min(1, Math.abs(v) / 10) * Math.sign(v);
-    voiture.angle += direction * (virage || V.vitesseVirage) * efficacite * dt;
+    // Étape 53 : le DRIFT. Vite (plus de 70 % de la vitesse max) et en tournant à fond : l'arrière décroche, la voiture
+    // pivote plus vite que là où elle va (elle avance « en crabe »). On sort du drift en redressant, ou en ralentissant.
+    const relative = v / voiture.vitesseMax;
+    if (!voiture.drift && sol !== "herbe" && relative > D.entree && Math.abs(voiture.volant) > D.volant && direction !== 0) {
+      voiture.drift = { duree: 0, angleMax: 0 };
+      if (estLeJoueur(voiture)) radio().emettre("drift-debut", { vitesse: v });
+    } else if (voiture.drift) {
+      voiture.drift.duree += dt;
+      voiture.drift.angleMax = Math.max(voiture.drift.angleMax, Math.abs(voiture.derapage || 0));
+      if (relative < D.sortie || sol === "herbe" || (direction === 0 && Math.abs(voiture.derapage || 0) < 0.06)) {
+        if (estLeJoueur(voiture)) radio().emettre("drift-fin", { duree: voiture.drift.duree, angle: voiture.drift.angleMax });
+        voiture.drift = null;
+      }
+    }
+    voiture.angle += direction * (virage || V.vitesseVirage) * efficacite * (voiture.drift ? D.virage : 1) * dt;
     voiture.angle = ((voiture.angle + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; // rester entre −π et π
     voiture.volant += (direction - voiture.volant) * Math.min(1, dt * 10); // le volant tourne en douceur
 
     // 3. Avancer dans la direction de l'angle… ou, si ça glisse (étape 47), dans la direction du déplacement,
     // qui rattrape celle du nez petit à petit (14 fois l'adhérence par seconde).
-    if (adherence >= 0.999 || voiture.deplacement === undefined) voiture.deplacement = voiture.angle;
+    // (Étape 53 : en drift, il le rattrape beaucoup plus lentement, 4,5 fois par seconde : c'est ça, la glissade.)
+    if (voiture.deplacement === undefined || (adherence >= 0.999 && !voiture.drift && Math.abs(voiture.derapage || 0) < 0.01)) voiture.deplacement = voiture.angle;
     else {
       const ecart = Math.atan2(Math.sin(voiture.angle - voiture.deplacement), Math.cos(voiture.angle - voiture.deplacement));
-      voiture.deplacement += ecart * Math.min(1, adherence * 14 * dt);
+      const rattrape = voiture.drift ? D.adherence * (0.5 + 0.5 * adherence) : adherence * 14;
+      voiture.deplacement += ecart * Math.min(1, rattrape * dt);
+      // jamais plus de 43° de glissade (sinon : tête-à-queue)
+      const reste = Math.atan2(Math.sin(voiture.angle - voiture.deplacement), Math.cos(voiture.angle - voiture.deplacement));
+      if (Math.abs(reste) > D.angleMax) voiture.deplacement = voiture.angle - Math.sign(reste) * D.angleMax;
     }
     voiture.derapage = Math.atan2(Math.sin(voiture.angle - voiture.deplacement), Math.cos(voiture.angle - voiture.deplacement));
+    // Étape 53 : combien les pneus crissent (de 0 à 1) : en drift, en patinant, ou en glissant fort sur la route mouillée.
+    voiture.crisse = voiture.drift ? Math.min(1, 0.45 + Math.abs(voiture.derapage) * 1.4) : patine ? 0.8 : Math.abs(voiture.derapage) > 0.2 && Math.abs(v) > 8 ? 0.4 : 0;
     voiture.x += Math.cos(voiture.deplacement) * v * dt;
     voiture.z += Math.sin(voiture.deplacement) * v * dt;
     voiture.distance += Math.abs(v) * dt;
