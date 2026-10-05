@@ -1,6 +1,8 @@
 // 🦌 LES ANIMAUX : le gibier de la forêt
 //
-// Des cerfs et des lapins se promènent dans les forêts et les prairies. Chaque animal suit une fiche
+// Des cerfs et des lapins se promènent dans les forêts et les prairies.
+// Étape 6 : ✍️ plus d'espèces, chacune dans son HABITAT (son coin préféré, voir config.js « especes ») :
+//   🦌 cerf et 🐗 sanglier en forêt, 🐇 lapin dans l'herbe, 🦆 canard au bord de l'eau, 🐐 bouquetin dans les rochers. Chaque animal suit une fiche
 // très simple (encore une machine à états !) :
 //   « se promener » : il choisit une case au hasard à 3 cases maximum, et il y va tranquillement ;
 //   « brouter » : il s'arrête quelques secondes ;
@@ -18,12 +20,43 @@ Village.Animaux = (function () {
 
   let prochainNumero = 1;
 
-  // Une case où un animal se plaît : de l'herbe, une prairie ou une forêt, sans bâtiment ni route.
-  function bonneCase(monde, c, l) {
+  // Les noms (pour le journal et le panneau du bas)
+  const NOMS = {
+    cerf: { nom: "un cerf", emoji: "🦌", petit: "un faon" },
+    lapin: { nom: "un lapin", emoji: "🐇", petit: "un lapereau" },
+    sanglier: { nom: "un sanglier", emoji: "🐗", petit: "un marcassin" },
+    canard: { nom: "un canard", emoji: "🦆", petit: "un caneton" },
+    bouquetin: { nom: "un bouquetin", emoji: "🐐", petit: "un cabri" },
+  };
+
+  // Y a-t-il ce terrain juste à côté (à 1 ou 2 cases) ?
+  function aCote(k, c, l, test, r) {
+    for (let dl = -r; dl <= r; dl++) for (let dc = -r; dc <= r; dc++) {
+      const nc = c + dc, nl = l + dl;
+      if (nc >= 0 && nl >= 0 && nc < k.colonnes && nl < k.lignes && test(k.terrain[nl * k.colonnes + nc])) return true;
+    }
+    return false;
+  }
+
+  // Une case où cet animal se plaît (son habitat), sans bâtiment ni route.
+  function bonneCase(monde, c, l, sorte) {
     const k = monde.carte, T = K.TERRAIN;
     if (!K.praticable(k, c, l)) return false;
     const i = l * k.colonnes + c, t = k.terrain[i];
-    return (t === T.herbe || t === T.prairie || t === T.foret) && !monde.occupees.has(i) && !monde.route[i];
+    if (monde.occupees.has(i) || monde.route[i]) return false;
+    const habitat = (C.especes[sorte] || C.especes.lapin).habitat;
+    const vert = t === T.herbe || t === T.prairie || t === T.foret;
+    if (habitat === "berge") return (vert || t === T.sable) && aCote(k, c, l, (x) => x === T.eau || x === T.eauProfonde, 2);
+    if (habitat === "rochers") return t === T.rochers || (vert && aCote(k, c, l, (x) => x === T.rochers || x === T.montagne, 1));
+    return vert;
+  }
+  // Pour naître, c'est plus précis : un cerf naît en forêt, un lapin dans l'herbe…
+  function bonBerceau(monde, c, l, sorte) {
+    const k = monde.carte, T = K.TERRAIN, t = k.terrain[l * k.colonnes + c], habitat = C.especes[sorte].habitat;
+    if (!bonneCase(monde, c, l, sorte)) return false;
+    if (habitat === "foret") return t === T.foret;
+    if (habitat === "herbe") return t === T.herbe || t === T.prairie;
+    return true;
   }
 
   function creer(monde, x, y, sorte) {
@@ -32,17 +65,20 @@ Village.Animaux = (function () {
     return a;
   }
 
-  // Au début d'une partie : des animaux un peu partout dans les forêts (pas trop près du village).
+  // Au début d'une partie : des animaux de chaque espèce, chacun dans son habitat (pas trop près du village).
   function peupler(monde, de) {
-    const k = monde.carte, T = K.TERRAIN, v = k.village;
-    const forets = [];
-    for (let i = 0; i < k.terrain.length; i++) {
-      const c = i % k.colonnes, l = Math.floor(i / k.colonnes);
-      if (k.terrain[i] === T.foret && Math.hypot(c - v.colonne, l - v.ligne) > 6 && bonneCase(monde, c, l)) forets.push(i);
-    }
-    for (let n = 0; n < C.animaux.depart && forets.length; n++) {
-      const i = forets[Math.floor(de() * forets.length)];
-      creer(monde, (i % k.colonnes) + 0.5, Math.floor(i / k.colonnes) + 0.5, de() < 0.45 ? "cerf" : "lapin");
+    const k = monde.carte, v = k.village;
+    for (const [sorte, e] of Object.entries(C.especes)) {
+      const places = [];
+      for (let i = 0; i < k.terrain.length; i++) {
+        const c = i % k.colonnes, l = Math.floor(i / k.colonnes);
+        if (Math.hypot(c - v.colonne, l - v.ligne) > 5 && bonBerceau(monde, c, l, sorte)) places.push(i);
+      }
+      const nombre = Math.round(C.animaux.depart * e.part);
+      for (let n = 0; n < nombre && places.length; n++) {
+        const i = places[Math.floor(de() * places.length)];
+        creer(monde, (i % k.colonnes) + 0.5, Math.floor(i / k.colonnes) + 0.5, sorte);
+      }
     }
   }
 
@@ -55,14 +91,14 @@ Village.Animaux = (function () {
         if (a.minuteur > 0) continue;
         // Choisir une case au hasard, pas trop loin
         const c = Math.floor(a.x + (Math.random() * 6 - 3)), l = Math.floor(a.y + (Math.random() * 6 - 3));
-        if (bonneCase(monde, c, l)) { a.cible = { x: c + 0.2 + Math.random() * 0.6, y: l + 0.2 + Math.random() * 0.6 }; a.etat = "promener"; }
+        if (bonneCase(monde, c, l, a.sorte)) { a.cible = { x: c + 0.2 + Math.random() * 0.6, y: l + 0.2 + Math.random() * 0.6 }; a.etat = "promener"; }
         else a.minuteur = 1;
       } else {
-        const v = C.animaux.vitesse * (a.sorte === "lapin" ? 1.4 : 1) * dt;
+        const v = C.animaux.vitesse * (C.especes[a.sorte] ? C.especes[a.sorte].vitesse : 1) * dt;
         const dx = a.cible.x - a.x, dy = a.cible.y - a.y, d = Math.hypot(dx, dy);
         // Un lapin ou un cerf ne traverse pas l'eau : si la case devant n'est pas bonne, il s'arrête.
         const nx = a.x + (dx / (d || 1)) * Math.min(v, d), ny = a.y + (dy / (d || 1)) * Math.min(v, d);
-        if (!bonneCase(monde, Math.floor(nx), Math.floor(ny))) { a.etat = "brouter"; a.minuteur = 1 + Math.random() * 2; continue; }
+        if (!bonneCase(monde, Math.floor(nx), Math.floor(ny), a.sorte)) { a.etat = "brouter"; a.minuteur = 1 + Math.random() * 2; continue; }
         a.x = nx; a.y = ny;
         if (Math.abs(dx - dy) > 0.01) a.direction = dx - dy > 0 ? 1 : -1;
         if (d <= v) { a.etat = "brouter"; a.minuteur = 2 + Math.random() * 5; }
@@ -78,7 +114,7 @@ Village.Animaux = (function () {
     if (!monde.animaux.length) return;
     const parent = monde.animaux[Math.floor(Math.random() * monde.animaux.length)];
     const petit = creer(monde, parent.x + (Math.random() - 0.5), parent.y + (Math.random() - 0.5), parent.sorte);
-    if (!bonneCase(monde, Math.floor(petit.x), Math.floor(petit.y))) { petit.x = parent.x; petit.y = parent.y; }
+    if (!bonneCase(monde, Math.floor(petit.x), Math.floor(petit.y), petit.sorte)) { petit.x = parent.x; petit.y = parent.y; }
     radio.emettre("animal-ne", { sorte: parent.sorte, colonne: Math.floor(petit.x), ligne: Math.floor(petit.y), total: monde.animaux.length });
   }
 
@@ -92,5 +128,5 @@ Village.Animaux = (function () {
     if (n >= 0) monde.animaux.splice(n, 1);
   }
 
-  return { peupler, etape, surLaCase, retirer, creer };
+  return { peupler, etape, surLaCase, retirer, creer, NOMS };
 })();

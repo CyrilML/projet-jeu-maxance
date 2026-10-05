@@ -43,6 +43,7 @@ Village.Monde = (function () {
       outil: null, // "route" ou "demolir" quand on utilise un de ces outils
       routeDepart: null, // la première case touchée pour tracer une route
       aDeplacer: null, // étape 5 : le bâtiment qu'on est en train de déplacer
+      age: 0, // étape 6 : le numéro de l'âge (0 = le campement)
       // Étape 4
       horloge: 0, // secondes depuis le début de LA PARTIE (sauvegardé) : c'est lui qui fait les saisons
       saison: null, // { nom, emoji, annee, avancement… } (voir logique/saisons.js)
@@ -85,6 +86,7 @@ Village.Monde = (function () {
     if (partie.stock) Object.assign(monde.stock, partie.stock);
     for (const i of partie.routes || []) monde.route[i] = 1;
     monde.horloge = partie.horloge || 0;
+    monde.age = partie.age || 0;
     monde.partis = partie.partis || 0;
     for (const [x, y, sorte] of partie.animaux || []) Village.Animaux.creer(monde, x, y, sorte);
     for (const b of partie.batiments || []) {
@@ -140,6 +142,7 @@ Village.Monde = (function () {
     Village.Porteurs.etape(monde, dt);
     Village.Animaux.etape(monde, dt);
     Village.Repas.etape(monde, dt);
+    Village.Ages.etape(monde, dt);
     nature(monde, dt);
   }
 

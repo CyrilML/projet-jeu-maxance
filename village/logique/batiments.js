@@ -141,6 +141,12 @@ Village.Batiments = (function () {
   // Poser un chantier : vérifier la place et payer.
   function poser(monde, type, c, l) {
     const nom = TYPES[type].nom;
+    // Étape 6 : ce bâtiment est-il déjà débloqué ?
+    if (!Village.Ages.debloque(monde, type)) {
+      const a = C.ages[Village.Ages.ageDe(type)];
+      radio.emettre("construction-impossible", { nom, colonne: c, ligne: l, raison: "pas encore : il arrive avec " + a.nom.toLowerCase() + " " + a.emoji });
+      return false;
+    }
     const raison = raisonInterdite(monde, type, c, l);
     if (raison) {
       radio.emettre("construction-impossible", { nom, colonne: c, ligne: l, raison });

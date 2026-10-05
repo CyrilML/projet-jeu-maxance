@@ -30,12 +30,14 @@
 //                  Les repas qui étaient dans les cabanes retournent dans le stock. Les rochers, eux,
 //                  ont maintenant 8 pierres au départ. Ce qui attend devant une cabane peut valoir plus
 //                  qu'un (un cerf = 4 viandes) : c'est la liste « lots ».
+//   6 (étape 6)  : l'âge du village (age : 0 = le campement). Une partie plus ancienne qui avait déjà
+//                  un géologue commence au hameau (sinon il serait construit « trop tôt »).
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 5;
+  const VERSION = 6;
   const radio = Village.Evenements;
 
   function vide() {
@@ -63,6 +65,9 @@ Village.Sauvegarde = (function () {
     const d = Object.assign(vide(), lues);
     // Version 1 → 2 : il n'y avait pas encore de partie. On garde la carte (la graine) et la caméra.
     // Version 2 → 3 : pas encore de routes ; les chantiers avaient déjà payé tous leurs matériaux.
+    if ((lues.version || 1) < 6 && d.partie && d.partie.age === undefined) {
+      d.partie.age = (d.partie.batiments || []).some((b) => b.type === "geologue") ? 1 : 0;
+    }
     if ((lues.version || 1) < 5 && d.partie && d.partie.stock) {
       for (const b of d.partie.batiments || []) {
         if (!b.repas) continue;
@@ -153,6 +158,7 @@ Village.Sauvegarde = (function () {
       }),
       routes: monde.route.reduce((liste, v, i) => (v ? (liste.push(i), liste) : liste), []),
       horloge: Math.round(monde.horloge),
+      age: monde.age,
       partis: monde.partis,
       porteurs: monde.porteurs.map((p) => ({ faim: Math.round(p.faim || 0), affame: !!p.affame, ventreVide: Math.round(p.ventreVide || 0), parti: !!p.parti })),
       animaux: monde.animaux.map((a) => [Math.round(a.x * 10) / 10, Math.round(a.y * 10) / 10, a.sorte]),
