@@ -1,7 +1,7 @@
 # Demande n° 42 : la ville géante (pont, aéroports, avions, motos, magasins, petits boulots)
 
 > Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
-> questions. Statut : étape 42 ✅ livrée le 05/10/2026, à valider · étapes 43 et 44 à venir.
+> questions. Statut : étapes 42 et 43 ✅ livrées le 05/10/2026, à valider · étape 44 à venir.
 
 ## 🎯 Quoi
 Agrandir la ville pour en faire une map énorme : un pont, des motos, des magasins, des petits boulots pour

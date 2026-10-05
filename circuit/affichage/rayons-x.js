@@ -158,6 +158,11 @@ Circuit.RayonsX = (function () {
       const cible = [Circuit.Ville.rue(cv.vers[0]), 0.5, Circuit.Ville.rue(cv.vers[1])];
       c.ligne([cv.voiture.x, 0.5, cv.voiture.z], cible, cv.feuAttendu ? COULEURS.rouge : COULEURS.carotte);
     }
+    // Étape 43 : un trait entre toi et la cible du petit boulot (sa longueur, c'est la distance affichée).
+    if (monde.carte === "ville" && monde.boulot && monde.boulot.cible) {
+      const q = monde.pieton || v;
+      c.ligne([q.x, (q.y || 0) + 1, q.z], [monde.boulot.cible.x, 1, monde.boulot.cible.z], COULEURS.milieu);
+    }
     // Étape 41 : sur les méga-rampes, chaque véhicule à doubler a une flèche bleue (sa vitesse, comme la tienne).
     if (monde.carte === "ciel") {
       for (const cv of monde.circulation) {

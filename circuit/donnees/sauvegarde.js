@@ -21,6 +21,7 @@
 //   6 (étape 40) : le garage du grand parcours ; le kart est offert.
 //   7 (étape 41) : les méga-rampes : la voiture choisie là-bas, et le record du chrono (recordRampes).
 //   8 (étape 42) : les objets achetés au magasin (objets) et les voitures repeintes en or (peintures).
+//   9 (étape 43) : les petits boulots : combien de tâches réussies pour chacun, et les pièces gagnées en travaillant.
 //
 // Les pièces sont comptées dès qu'on les ramasse, mais écrites dans le tiroir à la fin de la course
 // (ou si on recommence, ou si on ferme la page) : écrire 50 fois par course, ce serait du gaspillage.
@@ -29,7 +30,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.Sauvegarde = (function () {
   const CLE = "circuit-maxance:sauvegarde";
-  const VERSION = 8;
+  const VERSION = 9;
   const radio = Circuit.Evenements;
 
   function vide() {
@@ -47,6 +48,8 @@ Circuit.Sauvegarde = (function () {
       recordRampes: null, // depuis la version 7 : le meilleur temps sur les méga-rampes (en secondes)
       objets: {}, // depuis la version 8 : ce que tu as acheté au magasin, ex. { baskets: true, glace: 3 }
       peintures: {}, // depuis la version 8 : les voitures repeintes, ex. { citadine: "or" }
+      boulots: { pizzas: 0, taxi: 0, vendeur: 0, poubelles: 0 }, // depuis la version 9 : les tâches réussies
+      piecesGagneesAuTravail: 0, // depuis la version 9
       toursTotal: 0,
       sortiesTotal: 0,
       distanceTotale: 0, // m parcourus dans toutes les courses finies
@@ -121,6 +124,11 @@ Circuit.Sauvegarde = (function () {
       d.objets = {};
       d.peintures = {};
     }
+    if ((anciennes.version || 1) < 9) {
+      // Version 8 → 9 : les petits boulots arrivent. Personne n'a encore travaillé.
+      d.boulots = { pizzas: 0, taxi: 0, vendeur: 0, poubelles: 0 };
+      d.piecesGagneesAuTravail = 0;
+    }
     d.version = VERSION;
     return d;
   }
@@ -174,6 +182,15 @@ Circuit.Sauvegarde = (function () {
         radio.emettre("nouveau-record", { quoi: "tour", temps: d.temps, ancien });
       }
       ecrire("tour " + d.numero + " terminé");
+    });
+
+    // Étape 43 : une paie de petit boulot.
+    radio.ecouter("boulot-etape", (d) => {
+      if (!d.montant) return;
+      donnees.pieces += d.montant;
+      donnees.piecesGagneesAuTravail += d.montant;
+      donnees.boulots[d.sorte] = (donnees.boulots[d.sorte] || 0) + 1;
+      ecrire("paie du boulot (" + d.sorte + ") : +" + d.montant + " pièce(s)");
     });
 
     // Étape 42 : un achat au magasin.

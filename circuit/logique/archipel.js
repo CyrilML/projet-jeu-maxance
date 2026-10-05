@@ -133,22 +133,24 @@ Circuit.Archipel = (function () {
   // ---------------------------------------------------------------- les magasins
   // ✍️ En ville : 4 immeubles ont une boutique au rez-de-chaussée (la porte est sur le côté qui donne sur la rue).
   // Dans chaque aéroport : la boutique de l'aérogare.
-  const magasins = [];
-  const V = C.ville;
-  [5, 30, 52, 77].forEach((k, i) => {
-    const b = Circuit.Ville.immeubles[k % Circuit.Ville.immeubles.length];
-    // Le côté de l'immeuble le plus proche d'une rue : la porte est là, à 1,5 m du mur, sur le trottoir.
-    const rues = [];
-    for (let r = 0; r < Circuit.Ville.n; r++) rues.push(Circuit.Ville.rue(r));
-    const pres = (c) => Math.min(...rues.map((r) => Math.abs(r - c)));
+  // La porte d'un immeuble : sur le côté le plus proche d'une rue, à 1,5 m du mur, sur le trottoir.
+  // (Étape 43 : sert aussi aux maisons où l'on livre les pizzas.)
+  const rues = [];
+  for (let r = 0; r < Circuit.Ville.n; r++) rues.push(Circuit.Ville.rue(r));
+  const pres = (c) => Math.min(...rues.map((r) => Math.abs(r - c)));
+  function porteImmeuble(b) {
     const cotes = [
       { x: b.x + b.demiLongueur + 1.5, z: b.z, angle: 0 }, { x: b.x - b.demiLongueur - 1.5, z: b.z, angle: Math.PI },
       { x: b.x, z: b.z + b.demiLargeur + 1.5, angle: Math.PI / 2 }, { x: b.x, z: b.z - b.demiLargeur - 1.5, angle: -Math.PI / 2 },
     ];
     cotes.sort((p, q) => (Math.abs(Math.cos(p.angle)) > 0.5 ? pres(p.x) : pres(p.z)) - (Math.abs(Math.cos(q.angle)) > 0.5 ? pres(q.x) : pres(q.z)));
-    magasins.push(Object.assign({ numero: i, nom: C.magasins.noms[i], immeuble: b }, cotes[0]));
+    return cotes[0];
+  }
+  const magasins = [];
+  [5, 30, 52, 77].forEach((k, i) => {
+    const b = Circuit.Ville.immeubles[k % Circuit.Ville.immeubles.length];
+    magasins.push(Object.assign({ numero: i, nom: C.magasins.noms[i], immeuble: b }, porteImmeuble(b)));
   });
-  void V;
   for (const ap of aeroports) magasins.push({ numero: magasins.length, nom: "la boutique de " + ap.nom, x: ap.porte.x, z: ap.porte.z, angle: ap.angle + Math.PI / 2, aeroport: ap });
 
   // Le magasin dont la porte est à moins de `distance` m, ou null.
@@ -201,6 +203,6 @@ Circuit.Archipel = (function () {
 
   return {
     aeroports, ponts, magasins, solides, plan: PLAN, versMonde, versLocal,
-    lieu, surQuelPont, hauteurPont, garderSurTerre, murs, magasinProche, placerGarees, placerPieces,
+    lieu, surQuelPont, hauteurPont, garderSurTerre, murs, magasinProche, placerGarees, placerPieces, porteImmeuble,
   };
 })();

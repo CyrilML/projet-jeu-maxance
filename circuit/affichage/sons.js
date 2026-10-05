@@ -61,6 +61,14 @@ Circuit.Sons = (function () {
       Son.bip(1175, 0.08, 0.14);
       setTimeout(() => Son.bip(1568, 0.2, 0.14), 90);
     });
+    // Étape 43 : les petits boulots. « Ka-ching » quand on est payé, une fanfare à la fin.
+    radio.ecouter("boulot-etape", (d) => {
+      if (!d.montant) return Son.bip(660, 0.12, 0.12);
+      Son.bip(988, 0.07, 0.14);
+      setTimeout(() => Son.bip(1319, 0.07, 0.14), 70);
+      setTimeout(() => Son.bip(1760, 0.18, 0.14), 140);
+    });
+    radio.ecouter("boulot-fin", (d) => (d.reussi ? [523, 659, 784, 1046] : [392, 330]).forEach((f, i) => setTimeout(() => Son.bip(f, 0.18, 0.13), i * 150)));
     // Étape 41 : les méga-rampes.
     radio.ecouter("drapeau", () => {
       Son.bip(784, 0.1, 0.12);

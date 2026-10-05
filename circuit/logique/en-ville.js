@@ -14,7 +14,7 @@
 // Entrée pour acheter, E ou ⌫ pour ressortir. Ce qu'on achète change le jeu (les baskets, le klaxon…).
 //
 // Touches : E = descendre / monter / entrer dans un magasin, R = retour au départ, ⌫ = changer de carte,
-// K = klaxon (si tu l'as acheté).
+// K = klaxon (si tu l'as acheté), J = commencer ou arrêter un petit boulot (étape 43, logique/boulots.js).
 
 window.Circuit = window.Circuit || {};
 
@@ -47,6 +47,9 @@ Circuit.EnVille = (function () {
     monde.garees = Circuit.Ville.placerGarees().concat(Archipel.placerGarees()).map((g) => Circuit.Voiture.creer(g.x, g.z, g.angle, Circuit.Garage.ficheDe(g.modele)));
     monde.pieces.push(...Archipel.placerPieces()); // étape 42 : des pièces sur les ponts et les îles
     monde.pieces.forEach((p, i) => (p.numero = i + 1));
+    monde.garees.push(Circuit.Voiture.creer(Circuit.Boulots.camionDuDepot.x, Circuit.Boulots.camionDuDepot.z, 0, Circuit.Garage.ficheDe("camion"))); // étape 43
+    monde.boulot = null; // étape 43 : le petit boulot en cours
+    monde.boulotProche = null;
     monde.magasin = null; // étape 42 : le magasin où est entré le personnage
     monde.magasinProche = null;
     monde.lieu = "la ville";
@@ -123,7 +126,8 @@ Circuit.EnVille = (function () {
     const v = monde.voiture;
     if (monde.magasin) {
       // Étape 42 : dans le magasin. Le monde continue de tourner dehors (la circulation roule).
-      dansLeMagasin(monde, intentions);
+      // Étape 43 : J dans un magasin = travailler comme vendeur (logique/boulots.js).
+      if (!Circuit.Boulots.auMagasin(monde, dt, intentions)) dansLeMagasin(monde, intentions);
       Circuit.Circulation.avancer(monde.circulation, monde.temps, dt, [monde.voiture, monde.pieton], hasard);
       return;
     }
@@ -144,6 +148,7 @@ Circuit.EnVille = (function () {
     const obstacles = [monde.voiture].concat(monde.pieton ? [monde.pieton] : []);
     Circuit.Circulation.avancer(monde.circulation, monde.temps, dt, obstacles, hasard);
     ramasser(monde, monde.pieton || v);
+    Circuit.Boulots.etape(monde, dt, intentions); // étape 43 : les petits boulots
     // Étape 42 : où es-tu ? (la ville, un pont, une île…) On l'annonce quand ça change.
     const qui = monde.pieton || v;
     const lieu = Archipel.lieu(qui.x, qui.z).ou;

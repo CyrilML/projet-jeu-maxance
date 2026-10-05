@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 11,
+  version: 12,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -231,6 +231,17 @@ Circuit.CONFIG = {
       { id: "glace", nom: "Une glace", icone: "🍦", prix: 2, unique: false, texte: "Miam ! Elle ne sert à rien, mais elle est bonne" },
     ],
     couleurOr: [[1, 0.76, 0.18], [0.55, 0.38, 0.05]], // la peinture dorée (couleur 1 et couleur 2)
+  },
+
+  // Étape 43 : LES PETITS BOULOTS. ✍️ Livreur de pizzas, chauffeur de taxi, vendeur au magasin, ramasser les poubelles.
+  // On commence un boulot en allant dans son rond lumineux et en appuyant sur J (et J pour l'arrêter).
+  // Le vendeur, lui, se fait dans n'importe quel magasin : J une fois entré.
+  boulots: {
+    rayonRond: 6, // m : la taille des ronds lumineux (départ d'un boulot, endroit où aller)
+    pizzas: { immeuble: 15, livraisons: 3, temps: 50, paie: 10, bonus: 5 }, // temps (s) pour CHAQUE pizza ; bonus si on va 2 fois plus vite
+    taxi: { clients: 3, paieParMetre: 0.04, paieMin: 8, vitesseArret: 2, tempsParMetre: 0.12, tempsMin: 30, doublePaieEnTaxi: true },
+    vendeur: { clients: 8, temps: 6, paie: 3 }, // temps (s) pour servir chaque client
+    poubelles: { nombre: 8, temps: 150, paie: 3, bonus: 15, rayon: 5, vitesseMax: 9, vehicules: ["camion", "camionnette"] },
   },
 
   // Étape 39 : le PERSONNAGE. ✍️ Il descend de la voiture pour en prendre une autre (touche E).

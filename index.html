@@ -165,6 +165,7 @@
       <a href="#etape40">Étape 40</a>
       <a href="#etape41">Étape 41</a>
       <a href="#etape42">Étape 42</a>
+      <a href="#etape43">Étape 43</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -2917,6 +2918,48 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Pourquoi dessiner un seul plan d'aéroport au lieu de 3 ?</summary><p>Pour écrire moins de code et ne pas faire d'erreur : si on améliore le plan (un hangar de plus), les 3 aéroports changent en même temps.</p></details>
     </section>
 
+    <section id="etape43">
+      <h2>💼 Étape 43 : les petits boulots <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Ton personnage peut travailler pour gagner des pièces : livreur de pizzas, chauffeur de taxi, vendeur au magasin et éboueur ! <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/43-petits-boulots.md</code>.</p>
+          <ul>
+            <li>✍️ Pizzas, taxi, vendeur, poubelles.</li>
+            <li>On commence dans un rond lumineux avec <kbd>J</kbd>.</li>
+            <li>Les avions et les hélicos : à l'étape 44 !</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Les 3 ronds orange sur la mini-carte.</li>
+            <li>☐ 🍕 À la pizzeria, <kbd>J</kbd>, puis suis la flèche jaune.</li>
+            <li>☐ 🚕 À la station de taxis (près du départ), <kbd>J</kbd>, et arrête-toi à côté du client qui fait signe.</li>
+            <li>☐ 🛍️ Dans un magasin, <kbd>J</kbd>, et donne le bon article.</li>
+            <li>☐ 🗑️ Au dépôt, prends le camion (<kbd>E</kbd>), <kbd>J</kbd>, et vide les poubelles vertes doucement.</li>
+            <li>Vérifie « version 12 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🤖 Une machine à états</h3>
+      <p>Chaque boulot est dans une « étape ». Pour le taxi : <code>chercher</code> (aller au client) → il monte → <code>deposer</code> (l'emmener) → il paie → <code>chercher</code> le suivant… Un événement (« je suis arrêté à côté du client ») fait passer à l'étape suivante. C'est la même idée que les phases de la course (garage → décompte → course → arrivée).</p>
+      <h3>🧭 La flèche qui montre le chemin</h3>
+      <p>Le jeu calcule l'angle vers la cible avec <code>atan2</code>, puis enlève l'angle de ta voiture. Si le résultat vaut 0, la cible est droit devant : la flèche pointe vers le haut. C'est exactement le calcul du pilote de la voiture bleue (étape 34) !</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans l'état en direct, regarde « étape » pendant le boulot de taxi : elle passe de « chercher » à « deposer ».</li>
+        <li>Aux rayons X, un trait jaune relie ta voiture à la cible.</li>
+        <li>Dans la base de données, trouve <code>boulots</code> et <code>piecesGagneesAuTravail</code>.</li>
+        <li>Emmène un client du taxi à l'aéroport : combien gagnes-tu ? Et avec le vrai taxi ?</li>
+        <li>Dans <code>config.js</code>, trouve <code>boulots</code> : que se passerait-il avec <code>temps: 20</code> pour les pizzas ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un client de taxi fait 600 m. Combien paie-t-il ? Et dans le vrai taxi ?</summary><p>600 × 0,04 = 24 pièces. Dans le vrai taxi : 48 pièces.</p></details>
+      <details class="question"><summary>Tu livres une pizza en 20 s sur 50 s. As-tu un pourboire ?</summary><p>Oui : il reste 30 s, c'est plus que la moitié (25 s). 10 + 5 = 15 pièces.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -3163,32 +3206,38 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
           <p>La ville sur une île, 2 ponts suspendus, 3 îles-aéroports avec un parking plein de véhicules, des motos et 7 magasins.</p>
           <p class="apprend"><b>Tu apprends :</b> un repère local (un plan qu'on tourne et qu'on pose), un pont en arc avec sinus, interdire la mer, un magasin et un inventaire. <b>Durée :</b> 3 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">42</div>
-          <h4>Les petits boulots <span class="etiquette">⏭️ prochaine étape (demandée)</span></h4>
-          <p>Livreur de pizzas, chauffeur de taxi, vendeur au magasin, ramasser les poubelles. Puis (étape 44) les avions, les hélicos et les avions de ligne.</p>
+          <h4>Les petits boulots <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Livreur de pizzas, chauffeur de taxi, vendeur au magasin, ramasser les poubelles : des pièces à gagner en travaillant.</p>
           <p class="apprend"><b>Tu apprends :</b> des missions (une liste de choses à faire), un chrono, une flèche qui montre le chemin. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte">
+        <div class="carte prochain">
           <div class="num">43</div>
+          <h4>Les avions, les hélicos et les avions de ligne <span class="etiquette">⏭️ prochaine étape (demandée)</span></h4>
+          <p>Monter dans les avions et les hélicos des aéroports, décoller, voler, atterrir, et aller d'aéroport en aéroport en avion de ligne.</p>
+          <p class="apprend"><b>Tu apprends :</b> voler en 3D (monter, descendre, tourner), la portance, décoller et atterrir, un pilote automatique. <b>Durée :</b> 3 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">44</div>
           <h4>Sauvegarder le monde <span class="etiquette">💡 idée</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">44</div>
+          <div class="num">45</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">45</div>
+          <div class="num">46</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">46</div>
+          <div class="num">47</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -3584,6 +3633,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-42" data-cle="appris-42" placeholder="Ex. : J'ai appris ce qu'est un repère local…"></textarea>
         <label for="idees-42"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-42" data-cle="idees-42" placeholder="Ex. : Un bateau pour aller sur l'île lointaine…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 43 · les petits boulots <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le patron des boulots (<code>logique/boulots.js</code>) avec ses 4 machines à états, les ronds lumineux, la colonne de lumière, les poubelles et le client du taxi en 3D, la flèche et le panneau du boulot, le travail de vendeur dans les magasins, la base de données en version 9.</p>
+        <label for="appris-43"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-43" data-cle="appris-43" placeholder="Ex. : J'ai appris ce qu'est une machine à états…"></textarea>
+        <label for="idees-43"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-43" data-cle="idees-43" placeholder="Ex. : Un boulot de pompier avec un camion de pompiers…"></textarea>
       </div>
     </section>
   </main>

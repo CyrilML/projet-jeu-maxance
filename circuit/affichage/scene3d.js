@@ -32,6 +32,7 @@ Circuit.Scene3D = (function () {
   const flotte = {}; // étape 39 : les voitures garées et celles de la circulation (une réserve par modèle)
   let bonhomme = null; // étape 39 : le personnage
   let flamme = null; // étape 40 : les flammes du nitro, derrière la voiture
+  let boulots3d = null; // étape 43 : les ronds des petits boulots, la colonne de lumière, les poubelles, le client
   let materiauPiece = null, geoPiece = null, materiauCarton = null, geoCarton = null, fil = null;
 
   // ------------------------------------------------------------------ démarrage
@@ -166,6 +167,79 @@ Circuit.Scene3D = (function () {
       scene.add(vehicules[cle].g);
     }
     return vehicules[cle];
+  }
+
+  // Étape 43 : les petits boulots en 3D.
+  //   - un ROND lumineux (et sa colonne de lumière) à chaque endroit où l'on commence un boulot ;
+  //   - une grande COLONNE DE LUMIÈRE jaune là où il faut aller (comme dans les jeux de mission) ;
+  //   - les POUBELLES vertes à vider, et le CLIENT du taxi qui attend sur le trottoir.
+  function dessinerBoulots(monde) {
+    if (!boulots3d) {
+      const g = new THREE.Group();
+      const couleurs = { pizzas: 0xff8a1a, taxi: 0xffd21a, poubelles: 0x2ecc71 };
+      const ronds = [];
+      for (const d of Circuit.Boulots.departs) {
+        const c = couleurs[d.sorte];
+        const rond = new THREE.Mesh(new THREE.TorusGeometry(C.boulots.rayonRond - 0.5, 0.25, 8, 40), new THREE.MeshBasicMaterial({ color: c }));
+        rond.rotation.x = Math.PI / 2;
+        rond.position.set(d.x, 0.3, d.z);
+        const colonne = new THREE.Mesh(new THREE.CylinderGeometry(C.boulots.rayonRond - 1, C.boulots.rayonRond - 1, 10, 24, 1, true), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false }));
+        colonne.position.set(d.x, 5, d.z);
+        g.add(rond, colonne);
+        ronds.push(rond, colonne);
+      }
+      const cible = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 120, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0xffe14d, transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false, fog: false }));
+      const rondCible = new THREE.Mesh(new THREE.TorusGeometry(C.boulots.rayonRond - 0.5, 0.3, 8, 40), new THREE.MeshBasicMaterial({ color: 0xffe14d }));
+      rondCible.rotation.x = Math.PI / 2;
+      g.add(cible, rondCible);
+      const poubelles = [];
+      const vert = new THREE.MeshStandardMaterial({ color: 0x1f8f4a, roughness: 0.6 });
+      for (let i = 0; i < C.boulots.poubelles.nombre; i++) {
+        const p = new THREE.Group();
+        const corps = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.3, 1.1), vert);
+        corps.position.y = 0.65;
+        const couvercle = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.15, 1.2), new THREE.MeshStandardMaterial({ color: 0x14532d }));
+        couvercle.position.y = 1.35;
+        const halo = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.12, 6, 24), new THREE.MeshBasicMaterial({ color: 0x7dffa0 }));
+        halo.rotation.x = Math.PI / 2;
+        halo.position.y = 0.1;
+        p.add(corps, couvercle, halo);
+        p.traverse((o) => (o.castShadow = true));
+        g.add(p);
+        poubelles.push(p);
+      }
+      const client = Circuit.Modeles.personnage();
+      client.g.traverse((o) => {
+        if (o.material && o.material.color && o.material.color.getHex() === 0xd33b2f) o.material = new THREE.MeshStandardMaterial({ color: 0x3b6fd3, roughness: 0.8 }); // un pull bleu
+      });
+      g.add(client.g);
+      scene.add(g);
+      boulots3d = { g, ronds, cible, rondCible, poubelles, client };
+    }
+    const b3 = boulots3d;
+    b3.g.visible = monde.carte === "ville" && (monde.phase === "ville");
+    if (!b3.g.visible) return;
+    const b = monde.boulot;
+    for (const r of b3.ronds) r.visible = !b; // les ronds de départ, seulement quand on ne travaille pas
+    b3.cible.visible = b3.rondCible.visible = !!(b && b.cible);
+    if (b && b.cible) {
+      const pulse = 1 + 0.08 * Math.sin(monde.temps * 5);
+      b3.cible.position.set(b.cible.x, 60, b.cible.z);
+      b3.cible.scale.set(pulse, 1, pulse);
+      b3.rondCible.position.set(b.cible.x, 0.35, b.cible.z);
+    }
+    b3.poubelles.forEach((p, i) => {
+      const q = b && b.poubelles && b.poubelles[i];
+      p.visible = !!(q && !q.prise);
+      if (p.visible) p.position.set(q.x, 0, q.z);
+    });
+    b3.client.g.visible = !!(b && b.client);
+    if (b && b.client) {
+      b3.client.g.position.set(b.client.x, 0.12, b.client.z);
+      b3.client.g.rotation.y = -b.client.angle;
+      const bras = Math.sin(monde.temps * 6) * 0.8 - 2.2; // il lève le bras : « Taxi ! »
+      b3.client.bras[1].rotation.x = bras;
+    }
   }
 
   function changerCamera() {
@@ -324,6 +398,8 @@ Circuit.Scene3D = (function () {
       bonhomme.bras[0].rotation.z = -balance;
       bonhomme.bras[1].rotation.z = balance;
     } else if (bonhomme) bonhomme.g.visible = false;
+
+    dessinerBoulots(monde); // étape 43
 
     // Les pièces qui tournent sur elles-mêmes et flottent, et les cartons.
     let n = 0;

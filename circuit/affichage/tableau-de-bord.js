@@ -421,6 +421,8 @@ Circuit.TableauDeBord = (function () {
 
     dessinerMiniCarteVille(monde);
     if (monde.message && monde.temps < monde.message.jusqua) texte(monde.message.texte, W / 2, H / 2 - 70, 30, "#ffe27a", "center");
+    dessinerBoulot(monde); // étape 43
+    if (monde.boulotProche && !monde.boulot) texte("J : commencer le boulot de " + monde.boulotProche, W / 2, H - 92, 22, "#ffb37a", "center");
     if (p && monde.magasinProche && !monde.magasin) texte("E : entrer dans " + monde.magasinProche + " 🛍️", W / 2, H - 60, 22, "#ffd34d", "center");
     else if (p && monde.voitureProche) texte("E : monter dans " + monde.voitureProche, W / 2, H - 60, 22, "#7dffa0", "center");
     texte("📍 " + (monde.lieu || "la ville"), 24, 140, 14, "#9cc4ff");
@@ -479,6 +481,26 @@ Circuit.TableauDeBord = (function () {
     for (const m of AR.magasins) ctx.fillRect(m.x - 14, m.z - 14, 28, 28);
     ctx.fillStyle = "#ffd34d";
     for (const p of monde.pieces) if (!p.prise) ctx.fillRect(p.x - 6, p.z - 6, 12, 12);
+    // Étape 43 : les départs des boulots (orange), et la cible du boulot en cours (un gros rond jaune qui clignote).
+    if (!monde.boulot) {
+      ctx.fillStyle = "#ff8a1a";
+      for (const d of Circuit.Boulots.departs) {
+        ctx.beginPath();
+        ctx.arc(d.x, d.z, 20, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      if (monde.boulot.poubelles) {
+        ctx.fillStyle = "#2ecc71";
+        for (const q of monde.boulot.poubelles) if (!q.prise) ctx.fillRect(q.x - 10, q.z - 10, 20, 20);
+      }
+      if (monde.boulot.cible && Math.floor(monde.temps * 3) % 2) {
+        ctx.fillStyle = "#ffe14d";
+        ctx.beginPath();
+        ctx.arc(monde.boulot.cible.x, monde.boulot.cible.z, 34, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
     ctx.restore();
     // Toi, au milieu de la mini-carte.
     ctx.save();
@@ -492,6 +514,49 @@ Circuit.TableauDeBord = (function () {
     ctx.closePath();
     ctx.fill();
     ctx.restore();
+  }
+
+  // Étape 43 : le boulot en cours : un panneau (le chrono, combien c'est fait, les gains) et une FLÈCHE
+  // en haut de l'écran qui montre où aller. La flèche tourne selon l'angle entre ta direction et la cible :
+  // angle = atan2(cible − toi) − ta direction (comme le pilote de la voiture bleue, étape 34).
+  function dessinerBoulot(monde) {
+    const b = monde.boulot;
+    if (!b) return;
+    const qui = monde.pieton || monde.voiture;
+    panneau(W / 2 - 170, 12, 340, 96);
+    const titres = { pizzas: "🍕 Livreur de pizzas", taxi: "🚕 Chauffeur de taxi", poubelles: "🗑️ Ramassage des poubelles" };
+    texte(titres[b.sorte], W / 2 - 156, 38, 19, "#ffe27a");
+    texte((b.sorte === "taxi" && b.etape === "chercher" ? "client n° " + (b.faits + 1) : "fait : " + b.faits) + " / " + b.total + " · 🪙 " + b.gains, W / 2 - 156, 62, 15, "#ffd34d");
+    if (b.chrono > 0) {
+      const part = Math.max(0, b.chrono / b.tempsMax);
+      ctx.fillStyle = "rgba(255,255,255,.15)";
+      ctx.fillRect(W / 2 + 30, 52, 70, 10);
+      ctx.fillStyle = part > 0.5 ? "#7dffa0" : part > 0.25 ? "#ffd34d" : "#ff6b4a";
+      ctx.fillRect(W / 2 + 30, 52, 70 * part, 10);
+      texte("⏱ " + Math.ceil(b.chrono) + " s", W / 2 + 156, 62, 15, "#fff", "right");
+    }
+    if (b.cible) {
+      const distance = Math.hypot(b.cible.x - qui.x, b.cible.z - qui.z);
+      texte("→ " + b.cible.nom + " · " + Math.round(distance) + " m", W / 2 - 156, 92, 15, "#cfd6ff");
+      // La flèche.
+      const angle = Math.atan2(b.cible.z - qui.z, b.cible.x - qui.x) - qui.angle;
+      ctx.save();
+      ctx.translate(W / 2, 132);
+      ctx.rotate(angle - Math.PI / 2); // 0 = devant toi = la flèche pointe vers le haut de l'écran
+      ctx.fillStyle = "#ffe14d";
+      ctx.strokeStyle = "rgba(0,0,0,.6)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(18, 0);
+      ctx.lineTo(-10, -13);
+      ctx.lineTo(-4, 0);
+      ctx.lineTo(-10, 13);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fill();
+      ctx.restore();
+    }
+    texte("J : arrêter le boulot", W / 2, H - 92, 14, "#cfd6ff", "center");
   }
 
   // Étape 42 : l'écran du magasin : les articles, leur prix, et ce que tu as déjà.
@@ -516,8 +581,23 @@ Circuit.TableauDeBord = (function () {
       if (a.id === "glace" && sauvegarde.objets && sauvegarde.objets.glace) texte("× " + sauvegarde.objets.glace + " mangée(s)", x + 46, y + 80, 12, ici ? "#333" : "#cfd6ff", "left", ici);
     });
     const a = articles[m.index];
+    if (m.vendeur) {
+      // Étape 43 : le travail de vendeur. Le client demande un article : trouve-le et donne-le (Entrée) !
+      const v = m.vendeur, voulu = articles[v.demande];
+      panneau(W / 2 - 330, 428, 660, 70);
+      texte("🧑 Client " + (v.faits + 1) + " / " + v.total + " : « Je voudrais " + voulu.icone + " " + voulu.nom.toLowerCase() + " ! »", W / 2 - 310, 456, 17, "#fff");
+      texte("🪙 " + v.gains, W / 2 + 310, 456, 17, "#ffd34d", "right");
+      const part = Math.max(0, v.chrono / C.boulots.vendeur.temps);
+      ctx.fillStyle = "rgba(255,255,255,.15)";
+      ctx.fillRect(W / 2 - 310, 470, 620, 10);
+      ctx.fillStyle = part > 0.5 ? "#7dffa0" : part > 0.25 ? "#ffd34d" : "#ff6b4a";
+      ctx.fillRect(W / 2 - 310, 470, 620 * part, 10);
+      texte(m.message || "Trouve l'article avec ← →, puis Entrée pour le donner", W / 2, 392, 18, m.message ? "#7dffa0" : "#cfd6ff", "center");
+      texte("← → choisir · Entrée : donner au client · J : arrêter de travailler", W / 2, 412, 14, "#cfd6ff", "center");
+      return;
+    }
     texte(m.message || a.texte, W / 2, 392, 18, m.message ? "#7dffa0" : "#cfd6ff", "center");
-    texte("← → choisir · Entrée : acheter · E ou ⌫ : sortir", W / 2, 412, 14, "#cfd6ff", "center");
+    texte("← → choisir · Entrée : acheter · J : travailler comme vendeur · E ou ⌫ : sortir", W / 2, 412, 14, "#cfd6ff", "center");
   }
 
   // La mini-carte du parcours : les formes, les loopings, les pièces et la voiture, vus d'en haut.

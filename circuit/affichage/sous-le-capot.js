@@ -54,6 +54,9 @@ Circuit.SousLeCapot = (function () {
     piece: (d) => "🪙 Pièce n° " + d.numero + " ramassée" + (d.ou ? " (" + d.ou + ")" : " (à " + d.s + " m du départ)") + " : " + d.total + " trouvées",
     ville: (d) => "🏙️ Balade en ville : " + d.pieces + " pièces cachées, " + d.circulation + " voitures qui circulent, " + d.garees + " véhicules garés" + (d.aeroports ? ", " + d.aeroports + " aéroports, " + d.magasins + " magasins" : ""),
     lieu: (d) => "📍 Tu arrives sur " + d.ou,
+    "boulot-debut": (d) => "💼 Nouveau boulot : " + { pizzas: "livreur de pizzas", taxi: "chauffeur de taxi", vendeur: "vendeur", poubelles: "ramassage des poubelles" }[d.sorte] + " (" + d.nom + ", " + d.total + " à faire)",
+    "boulot-etape": (d) => (d.montant ? "🪙 +" + d.montant + " · " : "➡️ ") + d.texte,
+    "boulot-fin": (d) => (d.reussi ? "🏆 Boulot réussi" : "⏹️ " + d.raison) + " : " + d.faits + " / " + d.total + ", " + d.gains + " pièce(s) gagnée(s)",
     "magasin-entree": (d) => "🛍️ Tu entres dans " + d.nom + " (← → pour choisir, Entrée pour acheter)",
     "magasin-sortie": (d) => "🚪 Tu sors de " + d.nom,
     "achat-objet": (d) => "🛍️ ACHAT : " + d.nom + " pour " + d.prix + " pièce(s)" + (d.id === "peinture" ? " → " + d.nomVoiture + " devient dorée" : ""),
@@ -174,6 +177,12 @@ Circuit.SousLeCapot = (function () {
         ["hauteur du sol", virgule(Circuit.Archipel.lieu(qui.x, qui.z).h, 1) + " m" + (Circuit.Archipel.surQuelPont(qui.x, qui.z) ? " (le pont monte en arc : H × sin(π × u ÷ L))" : "")],
         ["magasin", monde.magasin ? "🛍️ dans " + monde.magasin.nom : monde.magasinProche ? "devant " + monde.magasinProche + " (E)" : "—"],
         ["objets achetés", Object.keys(Circuit.Sauvegarde.donnees.objets || {}).join(", ") || "aucun"],
+        ["Le petit boulot (étape 43)"],
+        ["boulot", monde.boulot ? monde.boulot.nom + " · étape « " + monde.boulot.etape + " »" : monde.magasin && monde.magasin.vendeur ? "vendeur dans " + monde.magasin.nom : monde.boulotProche ? "devant " + monde.boulotProche + " (J)" : "aucun"],
+        ["fait / à faire", monde.boulot ? monde.boulot.faits + " / " + monde.boulot.total : "—"],
+        ["chrono", monde.boulot && monde.boulot.chrono > 0 ? virgule(monde.boulot.chrono, 1) + " s sur " + Math.round(monde.boulot.tempsMax) : "—"],
+        ["cible", monde.boulot && monde.boulot.cible ? monde.boulot.cible.nom + " à " + Math.round(Math.hypot(monde.boulot.cible.x - qui.x, monde.boulot.cible.z - qui.z)) + " m" : "—"],
+        ["pièces gagnées au travail", Circuit.Sauvegarde.donnees.piecesGagneesAuTravail || 0],
       ];
       if (p) {
         lignes = lignes.concat([
