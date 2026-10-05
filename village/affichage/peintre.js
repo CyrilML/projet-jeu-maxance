@@ -9,7 +9,7 @@
 //   3. les OBJETS (arbres, rochers, montagnes, tente, bâtiments, ouvriers…), du FOND vers l'AVANT : ce qui est dessiné
 //      en dernier passe par-dessus. Un arbre devant une montagne doit être peint après elle !
 //      En vue de biais, « devant » veut dire « colonne + ligne plus grand ».
-//   4. les nuages et leur ombre ; (étape 49) les pétales, les feuilles ou la neige qui tombent ;
+//   4. les nuages et leur ombre ; (étape 4) les pétales, les feuilles ou la neige qui tombent ;
 //   Et tout change avec la SAISON : herbe jaunie en automne, neige et glace en hiver.
 //   5. par-dessus tout, à plat sur l'écran : les panneaux et les boutons (affichage/interface.js),
 //      et les rayons X.
@@ -31,7 +31,7 @@ Village.Peintre = (function () {
   let ctx = null;
   let cache = null; // ce qui est préparé une seule fois par carte : les couleurs et la mini-carte
   let versionMini = -1; // la mini-carte est refaite quand la carte change (arbre coupé…)
-  let saison = 0, couleursSol = null; // étape 49 : la saison de l'image en cours (0 printemps … 3 hiver)
+  let saison = 0, couleursSol = null; // étape 4 : la saison de l'image en cours (0 printemps … 3 hiver)
 
   // Les couleurs des terrains (rouge, vert, bleu), dans l'ordre des numéros de Village.Carte.TERRAIN.
   const COULEURS = [
@@ -83,7 +83,7 @@ Village.Peintre = (function () {
     versionMini = version;
   }
 
-  // Étape 49 : les couleurs du sol pour chaque saison, calculées une seule fois (puis gardées).
+  // Étape 4 : les couleurs du sol pour chaque saison, calculées une seule fois (puis gardées).
   //   été : un vert un peu plus chaud ; automne : l'herbe jaunit ; hiver : la neige recouvre tout,
   //   et l'eau peu profonde (lacs, rivières, bord de mer) devient de la GLACE. La mer profonde ne gèle pas.
   const MELANGES = {
@@ -178,9 +178,9 @@ Village.Peintre = (function () {
       }
     }
 
-    // 2 bis. Les routes, par-dessus le sol (étape 48)
+    // 2 bis. Les routes, par-dessus le sol (étape 3)
     dessinerRoutes(monde, cMin, cMax, lMin, lMax, vue, t);
-    // Étape 49 : ✍️ le trou dans la glace du pêcheur qui pêche en hiver
+    // Étape 4 : ✍️ le trou dans la glace du pêcheur qui pêche en hiver
     if (saison === 3) for (const b of monde.batiments) {
       const o = b.ouvrier;
       if (b.type !== "pecheur" || !o || o.etat !== "travailler" || !o.cible) continue;
@@ -200,11 +200,11 @@ Village.Peintre = (function () {
         ranger(Math.floor(b.ouvrier.x) + Math.floor(b.ouvrier.y), { o: b.ouvrier, type: b.type });
       }
     }
-    // Étape 48 : les porteurs dehors (ceux qui attendent sont dans l'entrepôt)
+    // Étape 3 : les porteurs dehors (ceux qui attendent sont dans l'entrepôt)
     for (const porteur of monde.porteurs) {
       if (porteur.etat !== "attend" && !porteur.parti) ranger(Math.floor(porteur.x) + Math.floor(porteur.y), { porteur });
     }
-    // Étape 49 : le gibier
+    // Étape 4 : le gibier
     for (const a of monde.animaux) ranger(Math.floor(a.x) + Math.floor(a.y), { animal: a });
 
     // 3. Les objets, du fond vers l'avant : diagonale par diagonale (colonne + ligne = diag).
@@ -258,7 +258,7 @@ Village.Peintre = (function () {
       ctx.lineWidth = 3 / z; ctx.strokeStyle = "rgba(255,255,255," + (0.6 + 0.4 * Math.sin(t * 6)) + ")"; ctx.stroke();
     }
 
-    // Étape 49 : la ligne de pêche, du bout de la canne jusqu'au bouchon
+    // Étape 4 : la ligne de pêche, du bout de la canne jusqu'au bouchon
     for (const b of monde.batiments) {
       const o = b.ouvrier;
       if (b.type !== "pecheur" || !o || o.etat !== "travailler" || !o.cible) continue;
@@ -512,7 +512,7 @@ Village.Peintre = (function () {
     ctx.translate(x, y - 14 * e);
     ctx.rotate(balancement(t, v));
     ctx.scale(e, e);
-    // Étape 49 : la couleur des feuilles change avec la saison.
+    // Étape 4 : la couleur des feuilles change avec la saison.
     const verts = saison === 2 ? ["#e8a33a", "#d9652b", "#f2c94c", "#c9552a"] : saison === 3 ? ["#7f9a7c", "#8aa386", "#738f70", "#86a081"] : saison === 1 ? ["#3f9e36", "#4cad3c", "#3a9332", "#58b844"] : ["#4caf3e", "#5cbf45", "#43a33a", "#6cc94a"];
     const boules = [[-9, -9, 11], [9, -9, 11], [0, -20, 13], [0, -6, 10]];
     // D'abord le contour foncé (des boules un peu plus grosses), puis le vert par-dessus :
@@ -695,7 +695,7 @@ Village.Peintre = (function () {
     ctx.closePath(); ctx.fill(); ctx.stroke();
   }
 
-  // ---------------------------------------------------------------- ce qui tombe du ciel (étape 49)
+  // ---------------------------------------------------------------- ce qui tombe du ciel (étape 4)
   // Au printemps, des pétales roses ; en automne, des feuilles orange ; en hiver, la neige.
   // Chaque flocon a sa place au départ (un nombre « au hasard » toujours le même), puis il descend
   // et repart d'en haut quand il sort de l'écran (le reste de la division, encore lui !).

@@ -3,7 +3,7 @@
 // Ce fichier connaît la liste des bâtiments (le CATALOGUE), et les règles pour les construire :
 //   - on ne construit que sur une case libre (pas d'eau, pas d'arbre, pas d'autre bâtiment…) ;
 //   - il faut avoir assez de planches et de pierres DISPONIBLES dans l'entrepôt : elles sont réservées ;
-//   - (étape 48) les porteurs apportent les matériaux un par un, et le chantier n'avance que quand
+//   - (étape 3) les porteurs apportent les matériaux un par un, et le chantier n'avance que quand
 //     ils sont arrivés. Quand il est fini, un ouvrier arrive et se met au travail.
 //
 // Un bâtiment passe par 2 états : « chantier » → « prêt ». Simple, mais c'est déjà une
@@ -25,8 +25,8 @@ Village.Batiments = (function () {
     forestier: { nom: "Maison du forestier", court: "Forestier", emoji: "🌱", metier: "forestier" },
     scierie: { nom: "Scierie", court: "Scierie", emoji: "🪚", metier: "scieur" },
     carriere: { nom: "Carrière de pierre", court: "Carrière", emoji: "⛏️", metier: "carrier" },
-    pecheur: { nom: "Cabane du pêcheur", court: "Pêcheur", emoji: "🎣", metier: "pêcheur" }, // étape 49
-    chasseur: { nom: "Cabane du chasseur", court: "Chasseur", emoji: "🏹", metier: "chasseur" }, // étape 49
+    pecheur: { nom: "Cabane du pêcheur", court: "Pêcheur", emoji: "🎣", metier: "pêcheur" }, // étape 4
+    chasseur: { nom: "Cabane du chasseur", court: "Chasseur", emoji: "🏹", metier: "chasseur" }, // étape 4
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
   const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur"];
@@ -67,7 +67,7 @@ Village.Batiments = (function () {
       ouvrier: null,
       travail: null, // la scierie : { reste } quand elle scie
       produits: 0, // combien d'objets ce bâtiment a produits depuis le début
-      // Étape 48
+      // Étape 3
       relie: undefined, // relié à l'entrepôt par une route ?
       sortie: etat.sortie || 0, // objets qui attendent devant la porte qu'un porteur les ramène
       sortieQuoi: { bucheron: "troncs", carriere: "pierres", scierie: "planches", pecheur: "poissons", chasseur: "viande" }[type] || null,
@@ -77,7 +77,7 @@ Village.Batiments = (function () {
       enFile: {}, // les livraisons « apporter » écrites dans la file pour ce bâtiment
       livre: Object.assign({}, etat.livre), // le chantier : les matériaux arrivés
       attendu: Object.assign({}, etat.attendu), // le chantier : les matériaux réservés, pas encore partis de l'entrepôt
-      // Étape 49
+      // Étape 4
       repas: Object.assign({ poissons: 0, viande: 0 }, etat.repas), // les repas gardés dans la cabane
       repasEnRoute: 0, // les repas qu'un porteur est en train d'apporter
     };
@@ -170,7 +170,7 @@ Village.Batiments = (function () {
   // les planches attendent devant la porte (b.sortie).
   function scier(monde, b, dt) {
     const O = C.ouvriers;
-    if (!b.ouvrier || b.ouvrier.affame) return; // pas de scieur, ou il a trop faim (étape 49)
+    if (!b.ouvrier || b.ouvrier.affame) return; // pas de scieur, ou il a trop faim (étape 4)
     if (!b.travail) {
       if (b.entree < 1) {
         if (!b.attendTronc) { b.attendTronc = true; radio.emettre("scierie-attend", { numero: b.numero, raison: "pas de tronc" }); }

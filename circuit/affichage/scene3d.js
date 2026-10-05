@@ -22,7 +22,8 @@ Circuit.Scene3D = (function () {
   const RECUL_VOL = { avionDeLigne: 3.6, petitAvion: 1.6, avionChasse: 2, helico: 1.8 }; // étape 44 : la caméra recule pour les avions
   const SOLEIL = new THREE.Vector3(0.45, 0.75, 0.35).normalize(); // d'où vient la lumière du soleil
 
-  let rendu, scene, sceneX, cam, soleil, ciel;
+  let rendu, scene, sceneX, cam, soleil, ciel, hemi;
+  let brouillardCarte = 1100; // étape 47 : jusqu'où on voit sur cette carte quand il fait beau
   let vueProjection = M.identite();
   const decors = {}; // le décor de chaque carte (fabriqué la première fois)
   let carteDessinee = null;
@@ -58,19 +59,7 @@ Circuit.Scene3D = (function () {
     // Le ciel : une immense sphère, bleu foncé en haut, clair à l'horizon, avec le soleil.
     ciel = new THREE.Mesh(
       new THREE.SphereGeometry(2000, 32, 16),
-      new THREE.ShaderMaterial({
-        side: THREE.BackSide, depthWrite: false, fog: false,
-        uniforms: { soleil: { value: SOLEIL } },
-        vertexShader: "varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
-        fragmentShader:
-          "uniform vec3 soleil; varying vec3 vDir;" +
-          "void main(){ float h = max(vDir.y, 0.0);" +
-          " vec3 c = mix(vec3(0.78,0.88,0.98), vec3(0.25,0.5,0.9), pow(h, 0.6));" +
-          " float s = max(dot(normalize(vDir), soleil), 0.0);" +
-          " c += vec3(1.0,0.9,0.7) * (pow(s, 600.0) * 4.0 + pow(s, 12.0) * 0.25);" +
-          " if (vDir.y < 0.0) c = vec3(0.6,0.68,0.6);" +
-          " gl_FragColor = vec4(c, 1.0); }",
-      })
+      Circuit.Meteo3D.materiauCiel(SOLEIL) // étape 47 : le ciel avec de vrais nuages (affichage/meteo3d.js)
     );
     scene.add(ciel);
     scene.fog = new THREE.Fog(0xc6dcf2, 280, 1100);
@@ -87,7 +76,8 @@ Circuit.Scene3D = (function () {
     scene.environment = pmrem.fromScene(sceneCiel, 0.02).texture;
 
     // Les lumières : le ciel et le sol (lumière douce de partout), et le soleil (qui fait les ombres).
-    scene.add(new THREE.HemisphereLight(0xcfe6ff, 0x5a6b3e, 0.7));
+    hemi = new THREE.HemisphereLight(0xcfe6ff, 0x5a6b3e, 0.7);
+    scene.add(hemi);
     soleil = new THREE.DirectionalLight(0xfff1dd, 2.4);
     soleil.castShadow = true;
     soleil.shadow.mapSize.set(2048, 2048);
@@ -120,6 +110,8 @@ Circuit.Scene3D = (function () {
     flamme.visible = false;
     scene.add(flamme);
 
+    Circuit.Meteo3D.initialiser({ ciel, soleil, hemi, rendu, scene }); // étape 47 : la pluie, la neige, les éclairs
+
     adversaire = Circuit.Modeles.fabriquer("classique", [0.12, 0.38, 0.92], [0.07, 0.22, 0.6]);
     scene.add(adversaire.g);
     rayonsMobiles = Circuit.RayonsX.mobiles({ voiture: { x: 0, z: 0, angle: 0, vitesse: 0 }, carte: "", pieces: [] });
@@ -149,8 +141,7 @@ Circuit.Scene3D = (function () {
     rayonsFixes = decors[carte].rayons;
     carteDessinee = carte;
     // Étape 42 : la map de la ville est énorme : le brouillard commence plus loin, pour voir les îles.
-    scene.fog.near = carte === "ville" ? 450 : 280;
-    scene.fog.far = carte === "ville" ? 2400 : 1100;
+    brouillardCarte = carte === "ville" ? 2400 : 1100; // (étape 47 : la météo peut voir moins loin, affichage/meteo3d.js)
   }
 
   // Un exemplaire de chaque modèle de voiture (fabriqué la première fois).
@@ -427,7 +418,11 @@ Circuit.Scene3D = (function () {
   // Met une voiture (le groupe Three.js) à la place de la voiture du monde.
   function placerVoiture(objet, v) {
     const y = v.y || 0;
-    const penche = v.tangage || (Math.abs(v.vy || 0) > 0.01 ? Math.max(-0.6, Math.min(0.6, Math.atan2(v.vy, Math.abs(v.vitesse) || 1))) : 0);
+    const cible = v.tangage || (Math.abs(v.vy || 0) > 0.01 ? Math.max(-0.6, Math.min(0.6, Math.atan2(v.vy, Math.abs(v.vitesse) || 1))) : 0);
+    // Étape 46 : la voiture penche EN DOUCEUR (elle rattrape un quart de l'écart à chaque image), comme une vraie
+    // suspension. Sans ça, le moindre petit changement de pente la faisait trembler. (Pas pendant un looping.)
+    const penche = v.tangage ? cible : objet.penche === undefined ? cible : objet.penche + (cible - objet.penche) * 0.25;
+    objet.penche = penche;
     objet.g.position.set(v.x, y, v.z);
     objet.g.rotation.set(v.roulis || 0, -v.angle, penche, "YZX"); // d'abord tourner (angle), puis pencher (pente, looping), puis le roulis (étape 44 : un avion qui vire)
     // Étape 44 : le rotor de l'hélico et l'hélice du petit avion tournent (leur angle est rotationRoues).
@@ -573,6 +568,7 @@ Circuit.Scene3D = (function () {
     soleil.target.position.set(suivi.x, hautSuivi, suivi.z);
     if (decors[carteDessinee].maj) decors[carteDessinee].maj(monde.temps, monde); // étape 39 : les feux de la ville
     ciel.position.copy(cam.position);
+    Circuit.Meteo3D.maj(options.pause ? 0 : dt, cam, monde.carte, brouillardCarte); // étape 47
 
     // On dessine !
     rendu.autoClear = true;

@@ -7,11 +7,11 @@
 //   - le chemin des rivières (elles descendent toujours vers la case voisine la plus basse) ;
 //   - la place du village (le cercle où il y a toujours de l'herbe) ;
 //   - le calcul qui trouve la case sous la souris ;
-//   - (étape 47) la zone de travail de chaque ouvrier (jusqu'où va la « tache d'encre »), son chemin,
+//   - (étape 2) la zone de travail de chaque ouvrier (jusqu'où va la « tache d'encre »), son chemin,
 //     son état (sa case dans la machine à états), et les cases réservées (croix rouges) ;
-//   - (étape 48) les routes : un point vert si elle est reliée à l'entrepôt, rouge sinon ;
+//   - (étape 3) les routes : un point vert si elle est reliée à l'entrepôt, rouge sinon ;
 //     et le chemin de chaque porteur, en violet ;
-//   - (étape 49) le gibier et son état (rouge = visé par un chasseur), la faim de chaque ouvrier.
+//   - (étape 4) le gibier et son état (rouge = visé par un chasseur), la faim de chaque ouvrier.
 
 window.Village = window.Village || {};
 
@@ -90,7 +90,7 @@ Village.RayonsX = (function () {
       ctx.textAlign = "left";
     }
 
-    // Étape 47 : les ouvriers
+    // Étape 2 : les ouvriers
     ctx.font = "bold " + 11 / Math.min(z, 1.4) + "px 'Trebuchet MS', sans-serif";
     for (const bat of monde.batiments) {
       const r = C.batiments[bat.type] && C.batiments[bat.type].rayon;
@@ -119,7 +119,7 @@ Village.RayonsX = (function () {
       ctx.fillText(o.etat + (o.minuteur > 0 && (o.etat === "travailler" || o.etat === "repos" || o.etat === "attendre") ? " " + virgule(o.minuteur, 1) + " s" : ""), p.x, p.y - 34 / Math.min(z, 1.4));
       ctx.textAlign = "left";
     }
-    // Étape 48 : les routes du réseau (vert = reliée à l'entrepôt, rouge = pas reliée), et le chemin des porteurs
+    // Étape 3 : les routes du réseau (vert = reliée à l'entrepôt, rouge = pas reliée), et le chemin des porteurs
     for (let i = 0; i < monde.route.length; i++) {
       if (!monde.route[i]) continue;
       const c = i % carte.colonnes, l = Math.floor(i / carte.colonnes);
@@ -139,7 +139,7 @@ Village.RayonsX = (function () {
       ctx.fillText("porteur " + porteur.numero + " · " + porteur.etat, p.x, p.y - 36 / Math.min(z, 1.4));
       ctx.textAlign = "left";
     }
-    // Étape 49 : le gibier (cercle rouge = visé par un chasseur) et la faim de chaque ouvrier
+    // Étape 4 : le gibier (cercle rouge = visé par un chasseur) et la faim de chaque ouvrier
     for (const a of monde.animaux) {
       const p = point(a.x, a.y);
       ctx.strokeStyle = a.vise ? "#ff4b3e" : "rgba(255, 255, 255, .7)"; ctx.lineWidth = 1.5 / z;

@@ -1,7 +1,7 @@
-# Demande n° 46 : un nouveau jeu, le village (gestion, sans combat)
+# Village · demande n° 1 : un nouveau jeu, le village (gestion, sans combat)
 
 > Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
-> questions. Gros projet découpé en étapes. Statut : étape 46 (la carte et la caméra) ✅ livrée le
+> questions. Gros projet découpé en étapes. Statut : étape 1 (la carte et la caméra) ✅ livrée le
 > 05/10/2026, à valider.
 
 ## 🎯 Quoi
@@ -27,7 +27,7 @@ maillon de la chaîne manque, tout s'arrête.
   français. À corriger si ce n'est pas ça.)
 
 ## 🧱 Les étapes prévues
-1. **Étape 46 · la carte et la caméra** : herbe, forêts, rochers, rivière, lacs, montagnes avec leurs
+1. **Étape 1 · la carte et la caméra** : herbe, forêts, rochers, rivière, lacs, montagnes avec leurs
    filons (charbon, fer, or). On se déplace et on zoome.
 2. Première chaîne : bûcheron, scierie, entrepôt (troncs → planches).
 3. Les habitants et les routes : les porteurs animés.
@@ -35,7 +35,7 @@ maillon de la chaîne manque, tout s'arrête.
 5. La recherche et le premier passage d'âge.
 6. Ensuite : carrière de pierre, mines de charbon, de fer et d'or, forge, fonderie, orfèvre…
 
-## 🛠️ Ce que Claude a choisi pour l'étape 46
+## 🛠️ Ce que Claude a choisi pour l'étape 1
 - Une carte de 64 × 64 cases. Chaque case est un losange de 64 px de large et 32 px de haut.
 - Chaque carte a une **graine** (un numéro) : la même graine donne toujours la même carte.
   La graine est sauvegardée : en rechargeant la page, on retrouve sa carte. G = nouvelle carte.
@@ -49,7 +49,7 @@ maillon de la chaîne manque, tout s'arrête.
   qui passent avec leur ombre.
 - Outils : X rayons X, Échap pause, N un pas, L ralenti.
 
-## ✅ Critères de réussite (étape 46)
+## ✅ Critères de réussite (étape 1)
 - [ ] La carte s'affiche en losanges, vue de biais, avec des couleurs de dessin animé.
 - [ ] Je vois des forêts, une rivière, des rochers, des montagnes et des filons de couleur.
 - [ ] Flèches / Z Q S D / clic maintenu : la carte glisse. Molette : ça zoome là où est la souris.

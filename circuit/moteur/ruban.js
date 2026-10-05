@@ -109,7 +109,10 @@ Circuit.Ruban = (function () {
         if (loin(t, x, z, demiLargeur + 1)) continue;
         const l = local(t, x, z);
         if (Math.abs(l.w) > demiLargeur || !dansLaLongueur(t, l.u)) continue;
-        const h = hauteurTroncon(t, l.u);
+        // (Étape 46 : dans la petite zone où deux tronçons se chevauchent, on PROLONGE la pente du tronçon au lieu
+        // de la couper net. Avant, la route semblait plate sur 60 cm à chaque bout de tronçon, puis remontait d'un
+        // coup : 10 petits à-coups par seconde dans les montées et les descentes, la voiture tremblait !)
+        const h = t.ya + ((t.yb - t.ya) * l.u) / t.longueur;
         if (h <= y + marche && (!meilleure || h > meilleure.h)) meilleure = { h, troncon: t.numero, sorte: t.sorte, w: l.w };
       }
       return meilleure;

@@ -4,7 +4,7 @@
 // Pour retrouver SA carte, on n'a pas besoin de ranger les 4 096 cases : il suffit de ranger la
 // GRAINE (un seul numéro). Avec la même graine, l'inventeur refait exactement la même carte !
 //
-// Depuis l'étape 47, la carte CHANGE (arbres coupés, pousses plantées, rochers vidés). On range donc
+// Depuis l'étape 2, la carte CHANGE (arbres coupés, pousses plantées, rochers vidés). On range donc
 // la graine PLUS la liste des changements : « case 1234 : plus rien », « case 2001 : une pousse »…
 // Au rechargement, on refait la carte d'origine, puis on rejoue les changements un par un.
 // C'est beaucoup plus petit que de ranger toute la carte.
@@ -13,16 +13,16 @@
 // au format JSON. Ce tiroir est séparé de ceux des autres jeux (clé différente).
 //
 // Versions du format :
-//   1 (étape 46) : la graine, le nombre de cartes inventées, de cases choisies, la caméra, le temps de jeu.
-//   2 (étape 47) : la partie : le stock, les bâtiments, les changements de la carte, les pousses.
+//   1 (étape 1) : la graine, le nombre de cartes inventées, de cases choisies, la caméra, le temps de jeu.
+//   2 (étape 2) : la partie : le stock, les bâtiments, les changements de la carte, les pousses.
 //                  Une sauvegarde en version 1 est convertie : sa carte est gardée, la partie commence.
-//   3 (étape 48) : les routes (la liste des cases), et pour chaque bâtiment : ce qui attend devant la porte
+//   3 (étape 3) : les routes (la liste des cases), et pour chaque bâtiment : ce qui attend devant la porte
 //                  (sortie), les troncs en réserve (entree), et pour un chantier les matériaux arrivés (livre)
 //                  et ceux encore réservés dans l'entrepôt (attendu). En version 2, les chantiers avaient
 //                  déjà tout payé : on les convertit comme si tous leurs matériaux étaient arrivés.
 //                  Les porteurs et la file d'attente ne sont pas sauvegardés : ils recommencent à zéro,
 //                  et ce qu'un porteur avait dans les bras est remis à sa place.
-//   4 (étape 49) : l'horloge de la partie (pour les saisons), la nourriture (poissons, viande) dans le stock,
+//   4 (étape 4) : l'horloge de la partie (pour les saisons), la nourriture (poissons, viande) dans le stock,
 //                  les repas gardés dans chaque cabane, la faim de chaque ouvrier et de chaque porteur,
 //                  les habitants partis, et les animaux (position et sorte).
 //                  Une partie en version 3 reçoit la nourriture de départ (sinon tout le monde aurait faim !).

@@ -1,4 +1,4 @@
-// 🎮 LES ENTRÉES : les oreilles et les yeux du jeu (et, depuis l'étape 47, ses doigts)
+// 🎮 LES ENTRÉES : les oreilles et les yeux du jeu (et, depuis l'étape 2, ses doigts)
 //
 // Ce fichier écoute le clavier et la souris, et les traduit en INTENTIONS : « glisser à gauche »,
 // « zoomer », « choisir cette case »… Le reste du jeu ne parle jamais de touches.
@@ -23,14 +23,14 @@ Village.Entrees = (function () {
     rayonsX: ["KeyX"],
     pasSuivant: ["KeyN"],
     ralenti: ["KeyL"],
-    // Étape 47 : choisir un bâtiment à construire
+    // Étape 2 : choisir un bâtiment à construire
     bucheron: ["Digit1", "Numpad1"],
     forestier: ["Digit2", "Numpad2"],
     scierie: ["Digit3", "Numpad3"],
     carriere: ["Digit4", "Numpad4"],
-    pecheur: ["Digit5", "Numpad5"], // étape 49
-    chasseur: ["Digit6", "Numpad6"], // étape 49 (avant, la touche 6 servait à dézoomer sur un clavier français)
-    // Étape 48 : les outils
+    pecheur: ["Digit5", "Numpad5"], // étape 4
+    chasseur: ["Digit6", "Numpad6"], // étape 4 (avant, la touche 6 servait à dézoomer sur un clavier français)
+    // Étape 3 : les outils
     route: ["KeyR"],
     demolir: ["Delete", "Backspace"],
   };

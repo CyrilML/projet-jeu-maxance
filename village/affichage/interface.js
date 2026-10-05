@@ -74,7 +74,7 @@ Village.Interface = (function () {
     bulle(ctx, 10, 10, lb, petit ? 54 : 62);
     texte(ctx, "🏘️ Ton village · 🪨 Âge de pierre", 22, petit ? 25 : 28, petit ? 11 : 13, "#7a5a30", true);
     ressources.forEach(([emoji, n], k) => texte(ctx, emoji + " " + n, 22 + k * pas, petit ? 47 : 51, petit ? 14 : 17, n <= 0 && k >= 3 ? "#c0392b" : "#3b2614", true));
-    // Étape 49 : la saison, avec une petite barre qui montre où on en est dans la saison
+    // Étape 4 : la saison, avec une petite barre qui montre où on en est dans la saison
     const sa = monde.saison, ys = petit ? 70 : 78;
     if (sa) {
       const ls = petit ? 150 : 180;
@@ -156,7 +156,7 @@ Village.Interface = (function () {
       }
     }
 
-    // Étape 49 : il n'y a plus rien à manger !
+    // Étape 4 : il n'y a plus rien à manger !
     if (Village.Repas.nourritureEnStock(monde) <= 0 && !(message && maintenant < message.jusqua) && Math.sin(maintenant / 300) > -0.3) {
       const txt = "🍽️ Plus rien à manger ! Construis un pêcheur ou un chasseur";
       ctx.font = "bold " + (petit ? 11 : 13) + "px " + POLICE;
@@ -206,7 +206,7 @@ Village.Interface = (function () {
       if (b.sortieQuoi) lignes.push("Devant la porte : " + b.sortie + " / " + C.sortieMax + " " + ({ troncs: "🪵", pierres: "🪨", poissons: "🐟", viande: "🍖" }[b.sortieQuoi]));
       lignes.push((b.type === "forestier" ? "A planté " : "A rapporté ") + b.produits + ({ bucheron: " troncs", forestier: " pousses", carriere: " pierres", pecheur: " poissons", chasseur: " gibiers" }[b.type]));
     }
-    // Étape 49 : le repas de l'ouvrier
+    // Étape 4 : le repas de l'ouvrier
     const o = b.ouvrier;
     if (o && b.etat === "pret") {
       const ventre = o.affame ? "🍽️ A FAIM depuis " + Math.floor(o.ventreVide) + " s (part à " + C.repas.tropFaim + " s)" : "😋 Prochain repas dans " + Math.max(0, Math.ceil(C.repas.intervalle - o.faim)) + " s";

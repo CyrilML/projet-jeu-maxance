@@ -39,7 +39,7 @@ Village.Carte = (function () {
       terrain: new Uint8Array(n),
       objet: new Uint8Array(n),
       filon: new Uint8Array(n),
-      reste: new Uint8Array(n), // étape 47 : combien de pierres il reste dans chaque rocher
+      reste: new Uint8Array(n), // étape 2 : combien de pierres il reste dans chaque rocher
       altitude: new Float32Array(n),
       humidite: new Float32Array(n),
       village: null,
@@ -197,14 +197,14 @@ Village.Carte = (function () {
     carte.compte = k;
   }
 
-  // Étape 47 : peut-on marcher sur cette case ? (pas dans l'eau, pas dans la montagne)
+  // Étape 2 : peut-on marcher sur cette case ? (pas dans l'eau, pas dans la montagne)
   function praticable(carte, c, l) {
     if (c < 0 || l < 0 || c >= carte.colonnes || l >= carte.lignes) return false;
     const t = carte.terrain[l * carte.colonnes + c];
     return t !== TERRAIN.eau && t !== TERRAIN.eauProfonde && t !== TERRAIN.montagne;
   }
 
-  // Étape 47 : peut-on construire sur cette case ? Il faut un sol praticable, et rien dessus
+  // Étape 2 : peut-on construire sur cette case ? Il faut un sol praticable, et rien dessus
   // (les fleurs et les buissons, on les enlève).
   function constructible(carte, c, l) {
     if (!praticable(carte, c, l)) return false;

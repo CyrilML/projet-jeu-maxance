@@ -13,7 +13,7 @@
 //   - travailler : il coupe (4 s) ;
 //   - revenir : il rapporte le tronc à sa cabane, et le pose devant la porte (un porteur viendra) ;
 //   - se reposer : 2 s, puis on recommence.
-// Étape 48 : 2 états de plus. « bloqué » : pas de route jusqu'à l'entrepôt (✍️ il ne travaille pas).
+// Étape 3 : 2 états de plus. « bloqué » : pas de route jusqu'à l'entrepôt (✍️ il ne travaille pas).
 // « plein » : 4 objets attendent déjà devant la porte, il attend qu'un porteur passe.
 // Le forestier et le carrier suivent exactement la même fiche, avec une autre « chose à chercher ».
 //
@@ -50,7 +50,7 @@ Village.Ouvriers = (function () {
       cherche: (monde, i) => monde.carte.objet[i] === O.rocher && monde.carte.reste[i] > 0 && !monde.reservees.has(i),
       quoi: "un rocher",
     },
-    // Étape 49 : le pêcheur cherche une case d'EAU (il s'arrêtera sur la berge, juste avant).
+    // Étape 4 : le pêcheur cherche une case d'EAU (il s'arrêtera sur la berge, juste avant).
     // ✍️ En hiver, l'eau est gelée : il fait un trou dans la glace, et il pêche quand même.
     pecheur: {
       duree: () => C.ouvriers.pecher,
@@ -60,7 +60,7 @@ Village.Ouvriers = (function () {
       },
       quoi: "de l'eau",
     },
-    // Étape 49 : le chasseur cherche une case où il y a un animal qui n'est pas déjà visé.
+    // Étape 4 : le chasseur cherche une case où il y a un animal qui n'est pas déjà visé.
     chasseur: {
       duree: () => C.ouvriers.chasser,
       cherche: (monde, i) => !!Village.Animaux.surLaCase(monde, i % monde.carte.colonnes, Math.floor(i / monde.carte.colonnes)),
@@ -122,7 +122,7 @@ Village.Ouvriers = (function () {
       case "affame":
         o.minuteur -= dt;
         if (o.minuteur > 0) return;
-        // ✍️ Le ventre vide : il ne travaille plus (étape 49).
+        // ✍️ Le ventre vide : il ne travaille plus (étape 4).
         if (o.affame) { changer(o, "affame", 0.5); return; }
         // ✍️ Pas relié à l'entrepôt : on ne travaille pas.
         if (!b.relie) { if (o.etat !== "bloque") radio.emettre("ouvrier-bloque", { numero: b.numero, nom: Village.Batiments.TYPES[b.type].nom }); changer(o, "bloque", 0.5); return; }

@@ -25,7 +25,7 @@ Village.Monde = (function () {
       survol: null, // la case sous la souris
       souris: null, // { ecranX, ecranY, mondeX, mondeY, colonne, ligne } avec les virgules
       choisie: null, // la dernière case touchée
-      // Étape 47
+      // Étape 2
       stock: Object.assign({}, C.depart),
       batiments: [],
       occupees: new Map(), // numéro de case → bâtiment posé dessus
@@ -35,14 +35,14 @@ Village.Monde = (function () {
       changements: 0, // combien de fois la carte a changé (le peintre refait la mini-carte quand ça bouge)
       construction: null, // le bâtiment qu'on est en train de placer (ex. "scierie"), ou null
       selection: null, // le bâtiment touché (son panneau s'affiche)
-      // Étape 48
+      // Étape 3
       route: new Uint8Array(carte.colonnes * carte.lignes), // 1 = une route sur cette case
       reseau: new Set(), // les routes reliées à l'entrepôt
       porteurs: [],
       file: [], // la file d'attente des livraisons
       outil: null, // "route" ou "demolir" quand on utilise un de ces outils
       routeDepart: null, // la première case touchée pour tracer une route
-      // Étape 49
+      // Étape 4
       horloge: 0, // secondes depuis le début de LA PARTIE (sauvegardé) : c'est lui qui fait les saisons
       saison: null, // { nom, emoji, annee, avancement… } (voir logique/saisons.js)
       animaux: [], // le gibier
@@ -196,7 +196,7 @@ Village.Monde = (function () {
       radio.emettre(monde.construction ? "choix-construction" : "construction-annulee", { nom: B.TYPES[intentions.construire].nom, cout: B.cout(intentions.construire) });
     }
     if (intentions.outil) {
-      // Étape 48 : les outils 🛤️ route et 🧹 démolir.
+      // Étape 3 : les outils 🛤️ route et 🧹 démolir.
       monde.outil = monde.outil === intentions.outil ? null : intentions.outil;
       monde.construction = null;
       monde.selection = null;
@@ -248,7 +248,7 @@ Village.Monde = (function () {
   }
 
   // Les pousses grandissent. Au bout de 60 s, elles deviennent de vrais arbres.
-  // En hiver, rien ne pousse (étape 49).
+  // En hiver, rien ne pousse (étape 4).
   function nature(monde, dt) {
     const O = Village.Carte.OBJET, k = monde.carte;
     if (monde.saison && monde.saison.hiver) return;

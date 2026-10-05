@@ -41,7 +41,12 @@ est en ligne environ une minute après. Ne pousse sur `main` que du code testé.
 
 Les autres jeux suivent les mêmes familles et les mêmes règles, chacun dans son dossier avec son propre
 `config.js` et son propre numéro de version : `circuit/` (le jeu de course 3D, objet global `Circuit`) et
-`village/` (le jeu de gestion, depuis l'étape 46, objet global `Village`).
+`village/` (le jeu de gestion, objet global `Village`).
+
+**Le village est un projet à part** (décidé par Maxance) : il a son propre carnet (`village/carnet.html`),
+ses propres demandes (`village/demandes/NN-titre.md`) et sa propre numérotation d'étapes (1, 2, 3…),
+séparée de celle du carnet principal. Une demande pour le village se range et s'explique là, pas dans
+`demandes/` ni dans `index.html` (qui garde seulement un lien vers le village et son carnet).
 
 Règles :
 - Pas d'étape de compilation, pas de dépendances : de simples fichiers `<script>` chargés dans

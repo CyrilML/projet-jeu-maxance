@@ -24,7 +24,7 @@ Village.SousLeCapot = (function () {
     zoom: (d) => "🔍 Zoom : " + Math.round(d.ancien * 100) + " % → " + Math.round(d.zoom * 100) + " %",
     "retour-village": (d) => "🏠 Retour à la place du village, case (" + d.colonne + ", " + d.ligne + ")",
     sauvegarde: (d) => "💾 Base de données écrite (" + d.raison + ") : " + nombre(d.octets) + " caractères",
-    // Étape 47
+    // Étape 2
     "choix-construction": (d) => "🏗️ Construire : " + d.nom + " (coût : " + cout(d.cout) + "). Choisis une case",
     "construction-annulee": (d) => "↩️ Construction annulée (" + d.nom + ")",
     "construction-impossible": (d) => "🚫 Pas de " + d.nom + " en (" + d.colonne + ", " + d.ligne + ") : " + d.raison,
@@ -40,7 +40,7 @@ Village.SousLeCapot = (function () {
     "scierie-attend": (d) => "⏳ Scierie n° " + d.numero + " : plus de tronc en réserve, elle attend un porteur",
     "sciage-debut": (d) => "🪚 Scierie n° " + d.numero + " : scie 1 tronc (il en reste " + d.reserve + " en réserve)",
     "planches-sciees": (d) => "🟫 Scierie n° " + d.numero + " : +" + d.planches + " planches devant la porte (" + d.devant + ")",
-    // Étape 48
+    // Étape 3
     "choix-outil": (d) => (d.outil === "route" ? "🛤️ Outil route : touche le départ, puis l'arrivée" : d.outil === "demolir" ? "🧹 Outil démolir : touche une route ou un bâtiment" : "↩️ Outil rangé"),
     "route-depart": (d) => "🚩 Départ de la route en (" + d.colonne + ", " + d.ligne + ")",
     "route-construite": (d) => "🛤️ Route construite : " + d.cases + " case(s), dont " + d.nouvelles + " nouvelle(s) → " + d.cout + " 🪨 · " + d.total + " cases de route en tout",
@@ -55,7 +55,7 @@ Village.SousLeCapot = (function () {
     "porteur-part": (d) => "🚚 Porteur " + d.porteur + " prend le papier : " + (d.sorte === "ramener" ? "va chercher " + emo(d.quoi) + " chez " : "apporte " + emo(d.quoi) + " à ") + d.nom + " n° " + d.batiment + " (" + d.pas + " pas de route) · encore " + d.file + " dans la file",
     "porteur-livre": (d) => "🤲 Porteur " + d.porteur + " a livré " + emo(d.quoi) + " à " + d.nom + " n° " + d.batiment,
     "arrivee-entrepot": (d) => "🏠 Porteur " + d.porteur + " range " + emo(d.quoi) + " dans l'entrepôt → " + d.stock + " en stock",
-    // Étape 49
+    // Étape 4
     saison: (d) => d.emoji + " Nouvelle saison : " + d.nom + " (année " + d.annee + ")" + (d.hiver ? " · les lacs gèlent, rien ne pousse, aucun animal ne naît" : ""),
     "poisson-peche": (d) => "🎣 Poisson pêché en (" + d.colonne + ", " + d.ligne + ")" + (d.glace ? " par un trou dans la glace ❄️" : ""),
     "gibier-chasse": (d) => "🏹 " + (d.sorte === "cerf" ? "Cerf" : "Lapin") + " chassé en (" + d.colonne + ", " + d.ligne + ")" + (d.neige ? " dans la neige ❄️" : "") + " · il reste " + d.animaux + " animaux",

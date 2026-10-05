@@ -65,7 +65,7 @@ Village.Porteurs = (function () {
           }
         }
       }
-      // Étape 49 : apporter les repas des ouvriers (2 en réserve dans chaque cabane)
+      // Étape 4 : apporter les repas des ouvriers (2 en réserve dans chaque cabane)
       if (b.etat === "pret") {
         while (Village.Repas.manque(b) > 0) {
           const quoi = disponible(monde, "poissons") >= disponible(monde, "viande") ? "poissons" : "viande";

@@ -17,6 +17,12 @@
 // (depuis l'étape 41 : sans dépasser la vitesse max + 16 m/s)
 // et une poussée s'ajoute, même sans appuyer sur ↑. Après, la voiture revient DOUCEMENT à sa vitesse max.
 //
+// Étape 47 : LA MÉTÉO (logique/meteo.js). Sur une route mouillée ou enneigée, l'ADHÉRENCE baisse :
+//   - on accélère et on freine moins fort ;
+//   - la voiture GLISSE : elle avance dans la direction de son DÉPLACEMENT, qui rattrape seulement petit à petit
+//     la direction de son nez. Plus ça glisse, plus elle met de temps à rattraper (c'est le « dérapage ») ;
+//   - le VENT la pousse sur le côté.
+//
 // Ce fichier ne dessine rien : il calcule. C'est affichage/scene3d.js qui dessine la voiture.
 
 window.Circuit = window.Circuit || {};
@@ -51,6 +57,13 @@ Circuit.Voiture = (function () {
   // virage (facultatif, étape 37) : la vitesse de rotation de ce véhicule, en rad/s.
   function avancer(voiture, intentions, dt, sol, virage) {
     const N = Circuit.CONFIG.nitro;
+    // Étape 47 : la météo (1 = ça accroche, moins = ça glisse) et le vent.
+    const adherence = Circuit.Meteo ? Circuit.Meteo.adherence() : 1;
+    if (Circuit.Meteo) {
+      const vent = Circuit.Meteo.vent(), k = Circuit.CONFIG.meteo.effetVent * dt;
+      voiture.x += vent.x * k;
+      voiture.z += vent.z * k;
+    }
     const nitro = voiture.nitro > 0;
     if (nitro) voiture.nitro = Math.max(0, voiture.nitro - dt);
     // Étape 37 : en l'air, les pédales et le volant ne servent à rien. La voiture file tout droit.
@@ -66,11 +79,11 @@ Circuit.Voiture = (function () {
     let v = voiture.vitesse;
     if (intentions.accelerer && !intentions.freiner) {
       voiture.pedale = "accélérateur";
-      v += (v < 0 ? V.freinage : voiture.acceleration) * dt;
+      v += (v < 0 ? V.freinage : voiture.acceleration) * (0.4 + 0.6 * adherence) * dt;
     } else if (intentions.freiner && !intentions.accelerer) {
       voiture.pedale = "frein";
       // On freine… et une fois arrêté, on recule.
-      v -= (v > 0 ? V.freinage : voiture.acceleration * 0.6) * dt;
+      v -= (v > 0 ? V.freinage * (0.35 + 0.65 * adherence) : voiture.acceleration * 0.6) * dt; // étape 47 : on freine moins bien quand ça glisse
       v = Math.max(v, -V.vitesseMarcheArriere);
     } else {
       voiture.pedale = "aucune";
@@ -99,9 +112,16 @@ Circuit.Voiture = (function () {
     voiture.angle = ((voiture.angle + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; // rester entre −π et π
     voiture.volant += (direction - voiture.volant) * Math.min(1, dt * 10); // le volant tourne en douceur
 
-    // 3. Avancer dans la direction de l'angle
-    voiture.x += Math.cos(voiture.angle) * v * dt;
-    voiture.z += Math.sin(voiture.angle) * v * dt;
+    // 3. Avancer dans la direction de l'angle… ou, si ça glisse (étape 47), dans la direction du déplacement,
+    // qui rattrape celle du nez petit à petit (14 fois l'adhérence par seconde).
+    if (adherence >= 0.999 || voiture.deplacement === undefined) voiture.deplacement = voiture.angle;
+    else {
+      const ecart = Math.atan2(Math.sin(voiture.angle - voiture.deplacement), Math.cos(voiture.angle - voiture.deplacement));
+      voiture.deplacement += ecart * Math.min(1, adherence * 14 * dt);
+    }
+    voiture.derapage = Math.atan2(Math.sin(voiture.angle - voiture.deplacement), Math.cos(voiture.angle - voiture.deplacement));
+    voiture.x += Math.cos(voiture.deplacement) * v * dt;
+    voiture.z += Math.sin(voiture.deplacement) * v * dt;
     voiture.distance += Math.abs(v) * dt;
     voiture.rotationRoues += (v * dt) / RAYON_ROUE;
   }

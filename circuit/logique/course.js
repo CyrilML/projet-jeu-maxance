@@ -158,6 +158,7 @@ Circuit.Course = (function () {
   // Un petit pas de temps dt. intentions = ce que veut le joueur (lu par main.js sur le clavier).
   function etape(monde, dt, intentions) {
     monde.temps += dt;
+    Circuit.Meteo.etape(dt); // étape 47 : la météo change toute seule
     const adv = monde.adversaire;
     // Étape 40 : H allume ou éteint la sirène (et le gyrophare) de la voiture de police.
     if (intentions.sirene) {

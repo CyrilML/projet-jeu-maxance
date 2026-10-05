@@ -1,4 +1,4 @@
-# Demande n° 47 : la première chaîne (bûcheron, forestier, scierie, carrière) et le jeu sur mobile
+# Village · demande n° 2 : la première chaîne (bûcheron, forestier, scierie, carrière) et le jeu sur mobile
 
 > Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
 > questions. Statut : ✅ livrée le 05/10/2026, à valider.
@@ -28,7 +28,7 @@ planches servent à construire. Si un maillon manque, tout s'arrête.
 - La construction dure 8 s (12 s pour la scierie). Les planches et les pierres sont prises tout de suite.
 - On construit sur l'herbe, la prairie, le sable, la forêt sans arbre ou les rochers sans rocher.
   Pas sur l'eau, ni sur une montagne, ni sur un arbre, ni sur un autre bâtiment.
-- **En attendant les routes et les porteurs (étape 48)**, ce que l'ouvrier rapporte à sa cabane arrive
+- **En attendant les routes et les porteurs (étape 3)**, ce que l'ouvrier rapporte à sa cabane arrive
   tout seul dans l'entrepôt.
 - Pour trouver l'arbre le plus proche, l'ouvrier fait une **recherche en largeur** : il regarde les cases
   à 1 pas, puis à 2 pas, puis à 3 pas… comme une tache d'encre qui s'étale. Il ne traverse ni l'eau ni

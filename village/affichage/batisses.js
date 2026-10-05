@@ -1,7 +1,7 @@
 // 🏡 LES BÂTISSES : le dessinateur des maisons et des petits bonshommes
 //
 // Ce fichier sait dessiner chaque bâtiment (entrepôt, cabane du bûcheron, scierie…), les chantiers,
-// les ouvriers, les porteurs (étape 48) et les jeunes pousses. Il est appelé par le peintre, au bon moment (du fond vers l'avant).
+// les ouvriers, les porteurs (étape 3) et les jeunes pousses. Il est appelé par le peintre, au bon moment (du fond vers l'avant).
 //
 // Une maison en vue de biais, c'est une BOÎTE : un losange au sol, deux murs qu'on voit (gauche et
 // droite), et un toit. Tous les bâtiments utilisent la même boîte, avec d'autres couleurs et d'autres
@@ -21,7 +21,7 @@ Village.Batisses = (function () {
     forestier: { a: 19, h: 14, toit: 15, murG: "#efdcb4", murD: "#cfb68a", toitA: "#4fb556", toitB: "#3a8e3e" },
     scierie: { a: 22, h: 16, toit: 15, murG: "#c48f5d", murD: "#a2703f", toitA: "#6f86b3", toitB: "#556b94" },
     carriere: { a: 19, h: 13, toit: 13, murG: "#b5b5b0", murD: "#90908b", toitA: "#9a6a3c", toitB: "#7c522b", blocs: true },
-    pecheur: { a: 18, h: 13, toit: 14, murG: "#e3c896", murD: "#c2a46f", toitA: "#3fa7b5", toitB: "#2d8592" }, // étape 49
+    pecheur: { a: 18, h: 13, toit: 14, murG: "#e3c896", murD: "#c2a46f", toitA: "#3fa7b5", toitB: "#2d8592" }, // étape 4
     chasseur: { a: 18, h: 13, toit: 14, murG: "#8e6038", murD: "#6f4826", toitA: "#6f8a3a", toitB: "#56702c", rondins: true },
   };
 
@@ -201,7 +201,7 @@ Village.Batisses = (function () {
     if (b.type !== "entrepot") enseigne(ctx, x - m.a * 0.45, y - 8 - m.h * 0.2, Village.Batiments.TYPES[b.type].emoji);
     if (travaille && b.type === "carriere") poussiere(ctx, x, y, t);
     if (!b.relie) panneauSansRoute(ctx, x, y - m.h - m.toit - 16, t);
-    // Étape 49 : l'ouvrier a trop faim, ou il est parti (la cabane est vide)
+    // Étape 4 : l'ouvrier a trop faim, ou il est parti (la cabane est vide)
     else if (b.ouvrier && b.ouvrier.affame) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "🍽️");
     else if (!b.ouvrier && Village.Batiments.TYPES[b.type].metier) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "vide");
   }
@@ -380,7 +380,7 @@ Village.Batisses = (function () {
     ctx.restore();
   }
 
-  // ---------------------------------------------------------------- un animal (étape 49)
+  // ---------------------------------------------------------------- un animal (étape 4)
   // Un cerf (brun, avec ses bois) ou un lapin (gris, longues oreilles). En hiver, le lapin devient blanc.
   function dessinerAnimal(ctx, a, x, y, t, hiver) {
     const marche = a.etat === "promener";

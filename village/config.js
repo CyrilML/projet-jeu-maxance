@@ -5,6 +5,7 @@
 // qu'on modifie.
 //
 // Unités : px (pixels), s (secondes), px/s (pixels par seconde).
+// Les numéros d'étapes (« étape 2 »…) sont ceux du carnet du village (village/carnet.html).
 // La carte est une grille de CASES : chaque case a une colonne et une ligne (comme une bataille navale).
 // À l'écran, chaque case est dessinée en LOSANGE : c'est la vue « de biais » (isométrique).
 
@@ -12,9 +13,9 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 4,
+  version: 5,
 
-  // La taille de l'écran du jeu n'est plus fixe depuis l'étape 47 : elle suit la fenêtre
+  // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
 
   // La boucle de jeu avance par petits pas fixes de 1/120 s, comme dans les autres jeux.
@@ -59,10 +60,10 @@ Village.CONFIG = {
     pasDeZoom: 1.15, // un cran de molette multiplie (ou divise) le zoom par 1,15
   },
 
-  // Étape 47 : ✍️ le stock de départ, rangé dans l'entrepôt.
-  depart: { troncs: 0, planches: 20, pierres: 10, poissons: 6, viande: 4 }, // étape 49 : un peu de nourriture pour commencer
+  // Étape 2 : ✍️ le stock de départ, rangé dans l'entrepôt.
+  depart: { troncs: 0, planches: 20, pierres: 10, poissons: 6, viande: 4 }, // étape 4 : un peu de nourriture pour commencer
 
-  // Étape 47 : les bâtiments. Depuis l'étape 48, le coût est RÉSERVÉ quand on pose le chantier,
+  // Étape 2 : les bâtiments. Depuis l'étape 3, le coût est RÉSERVÉ quand on pose le chantier,
   // puis les porteurs apportent les matériaux un par un.
   //   construction : durée du chantier (s) ; rayon : jusqu'où l'ouvrier va travailler (en cases).
   batiments: {
@@ -70,8 +71,8 @@ Village.CONFIG = {
     forestier: { cout: { planches: 3 }, construction: 8, rayon: 5 },
     scierie: { cout: { planches: 4, pierres: 2 }, construction: 12 },
     carriere: { cout: { planches: 3 }, construction: 8, rayon: 6 },
-    pecheur: { cout: { planches: 3 }, construction: 8, rayon: 6 }, // étape 49
-    chasseur: { cout: { planches: 3 }, construction: 8, rayon: 8 }, // étape 49
+    pecheur: { cout: { planches: 3 }, construction: 8, rayon: 6 }, // étape 4
+    chasseur: { cout: { planches: 3 }, construction: 8, rayon: 8 }, // étape 4
   },
 
   ouvriers: {
@@ -81,13 +82,13 @@ Village.CONFIG = {
     tailler: 5, // s pour tailler une pierre
     repos: 2, // s de pause entre deux voyages
     scier: 6, // s pour scier 1 tronc
-    pecher: 8, // s pour pêcher 1 poisson (étape 49)
-    chasser: 4, // s pour chasser 1 gibier (étape 49)
+    pecher: 8, // s pour pêcher 1 poisson (étape 4)
+    chasser: 4, // s pour chasser 1 gibier (étape 4)
     planchesParTronc: 2, // la scierie fait 2 planches avec 1 tronc
     attente: 3, // s avant de chercher à nouveau quand il n'y a rien à faire
   },
 
-  // Étape 48 : les routes et les porteurs
+  // Étape 3 : les routes et les porteurs
   routes: {
     cout: { pierres: 1 }, // ✍️ par case de route
     longueurMax: 40, // en cases : on ne trace pas une route plus longue d'un seul coup
@@ -99,12 +100,12 @@ Village.CONFIG = {
   sortieMax: 4, // objets qui peuvent attendre devant un bâtiment (au-delà, l'ouvrier attend)
   entreeMax: 2, // troncs en réserve à la scierie
 
-  // Étape 49 : ✍️ une année dure 10 minutes. 4 saisons de 2 min 30 : printemps, été, automne, hiver.
+  // Étape 4 : ✍️ une année dure 10 minutes. 4 saisons de 2 min 30 : printemps, été, automne, hiver.
   saisons: {
     dureeAnnee: 600, // s
   },
 
-  // Étape 49 : les repas. Chaque ouvrier et chaque porteur mange 1 poisson ou 1 morceau de viande.
+  // Étape 4 : les repas. Chaque ouvrier et chaque porteur mange 1 poisson ou 1 morceau de viande.
   repas: {
     intervalle: 120, // s entre deux repas (Maxance n'a pas choisi : conseil de Claude, 2 minutes)
     tropFaim: 150, // ✍️ s le ventre vide avant de quitter le village (une saison)
@@ -112,7 +113,7 @@ Village.CONFIG = {
     reserve: 2, // repas gardés dans chaque cabane (les porteurs les apportent)
   },
 
-  // Étape 49 : le gibier (cerfs et lapins) qui se promène dans les forêts.
+  // Étape 4 : le gibier (cerfs et lapins) qui se promène dans les forêts.
   animaux: {
     depart: 24, // au début de la partie
     maximum: 40,

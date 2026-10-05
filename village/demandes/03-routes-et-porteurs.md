@@ -1,4 +1,4 @@
-# Demande n° 48 : les routes et les porteurs
+# Village · demande n° 3 : les routes et les porteurs
 
 > Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
 > questions. Statut : ✅ livrée le 05/10/2026, à valider.

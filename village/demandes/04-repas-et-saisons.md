@@ -1,4 +1,4 @@
-# Demande n° 49 : pêcheur, chasseur, repas et saisons
+# Village · demande n° 4 : pêcheur, chasseur, repas et saisons
 
 > Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
 > questions. Statut : ✅ livrée le 05/10/2026, à valider.

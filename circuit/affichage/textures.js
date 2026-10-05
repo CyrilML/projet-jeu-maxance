@@ -22,6 +22,7 @@ Circuit.Textures = (function () {
     const ctx = toile.getContext("2d");
     peindre(ctx, taille);
     const t = new THREE.CanvasTexture(toile);
+    t.name = nom; // étape 47 : la météo reconnaît les sols à leur nom (« goudron », « herbe »…)
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
     t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = 8;

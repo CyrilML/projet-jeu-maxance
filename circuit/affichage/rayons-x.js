@@ -137,6 +137,13 @@ Circuit.RayonsX = (function () {
       c.ligne([v.x, 0.3, v.z], [m.x, 0.3, m.z], COULEURS.ecart);
       porte(c, Piste.portes[monde.prochainePorte], COULEURS.prochaine);
     }
+    // Étape 47 : la flèche du vent (bleu clair) au-dessus de toi : sa longueur, c'est la force du vent.
+    if (Circuit.Meteo) {
+      const vent = Circuit.Meteo.vent(), q = monde.pieton || v, y = (q.y || 0) + 5;
+      if (vent.force > 0.3) c.ligne([q.x, y, q.z], [q.x + vent.x * 1.5, y, q.z + vent.z * 1.5], COULEURS.nitro);
+      // et le dérapage : la direction où la voiture va vraiment (orange), quand elle glisse.
+      if (Math.abs(v.derapage || 0) > 0.03) c.ligne([v.x, (v.y || 0) + 1, v.z], [v.x + Math.cos(v.deplacement) * 8, (v.y || 0) + 1, v.z + Math.sin(v.deplacement) * 8], COULEURS.ecart);
+    }
     // Un trait jaune entre la voiture et le sol : sa longueur, c'est la hauteur au-dessus du sol.
     const sol = monde.carte === "grand" ? Circuit.GrandParcours.solDeBase(v.x, v.z) : monde.carte === "ciel" ? Math.max(C.rampes.nuages, Circuit.MegaRampes.hauteurSol(v.x, v.z, v.y || 0)) : 0;
     if ((v.y || 0) - sol > 0.05) c.ligne([v.x, sol, v.z], [v.x, v.y, v.z], COULEURS.milieu);
