@@ -52,6 +52,15 @@ Circuit.Sons = (function () {
     radio.ecouter("piece", () => Son.bip(1320, 0.08, 0.12));
     radio.ecouter("nitro", () => Son.bip(220, 0.25, 0.12));
     radio.ecouter("chute", (d) => Son.boum(Math.min(12, d.hauteur)));
+    // Étape 42 : le klaxon (deux notes en même temps, un peu fausses : c'est ça qui fait « klaxon ») et la caisse du magasin.
+    radio.ecouter("klaxon", () => {
+      Son.bip(349, 0.45, 0.16);
+      Son.bip(415, 0.45, 0.12);
+    });
+    radio.ecouter("achat-objet", () => {
+      Son.bip(1175, 0.08, 0.14);
+      setTimeout(() => Son.bip(1568, 0.2, 0.14), 90);
+    });
     // Étape 41 : les méga-rampes.
     radio.ecouter("drapeau", () => {
       Son.bip(784, 0.1, 0.12);

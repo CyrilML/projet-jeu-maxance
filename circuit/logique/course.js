@@ -121,6 +121,7 @@ Circuit.Course = (function () {
     monde.cartons = [];
     monde.pieton = null; // étape 39
     monde.sirene = false; // étape 40
+    monde.magasin = null; // étape 42
     monde.garees = [];
     monde.circulation = [];
     radio.emettre("garage", { pieces: Circuit.Sauvegarde.donnees.pieces });
@@ -185,7 +186,7 @@ Circuit.Course = (function () {
       return;
     }
     if (monde.phase === "ville") {
-      if (intentions.retour) {
+      if (intentions.retour && !monde.magasin) { // (dans un magasin, ⌫ fait seulement sortir du magasin)
         ouvrirCartes(monde);
         return;
       }

@@ -34,7 +34,7 @@ Circuit.SousLeCapot = (function () {
       "😢 PERDU : la voiture bleue a fini ses tours en " + chrono(d.temps) + ". Tu étais au tour " + d.tourJoueur + ", il te restait " + d.retard.toLocaleString("fr-FR") + " m",
     "tour-adversaire": (d) => "🔵 La voiture bleue a fini son tour n° " + d.numero + " en " + chrono(d.temps),
     choc: (d) =>
-      "💥 Choc " + (d.contre === "mur" ? "contre un mur" : d.contre === "voiture" ? "contre une voiture" : d.contre === "vehicule" ? "contre " + d.nom : "avec la voiture bleue") + " ! Vitesse du choc : " + virgule(d.force, 1) + " m/s. Ta vitesse après : " + Math.round(d.vitesse * 3.6) + " km/h",
+      "💥 Choc " + (d.contre === "mur" ? "contre un mur" : d.contre === "voiture" ? "contre une voiture" : d.contre === "vehicule" ? "contre " + d.nom : d.contre === "eau" ? "contre le bord de l'eau (pas de voiture dans la mer !)" : "avec la voiture bleue") + " ! Vitesse du choc : " + virgule(d.force, 1) + " m/s. Ta vitesse après : " + Math.round(d.vitesse * 3.6) + " km/h",
     depassement: (d) => (d.position === 1 ? "🥇 Tu doubles la voiture bleue : tu es 1er" : "🥈 La voiture bleue te double : tu es 2e") + " (tour " + d.tour + ")",
     "adversaire-change-de-voie": (d) =>
       "🤖 Tu bouches le passage (" + Math.round(d.avance) + " m devant) : la voiture bleue passe sur la voie " + (d.voie > 0 ? "extérieure" : "intérieure"),
@@ -52,7 +52,12 @@ Circuit.SousLeCapot = (function () {
     achat: (d) => "🎉 ACHAT : " + d.voiture + " pour " + d.prix + " pièces",
     "choix-voiture": (d) => "🔑 Tu prends " + d.voiture,
     piece: (d) => "🪙 Pièce n° " + d.numero + " ramassée" + (d.ou ? " (" + d.ou + ")" : " (à " + d.s + " m du départ)") + " : " + d.total + " trouvées",
-    ville: (d) => "🏙️ Balade en ville : " + d.pieces + " pièces cachées, " + d.circulation + " voitures qui circulent, " + d.garees + " voitures garées",
+    ville: (d) => "🏙️ Balade en ville : " + d.pieces + " pièces cachées, " + d.circulation + " voitures qui circulent, " + d.garees + " véhicules garés" + (d.aeroports ? ", " + d.aeroports + " aéroports, " + d.magasins + " magasins" : ""),
+    lieu: (d) => "📍 Tu arrives sur " + d.ou,
+    "magasin-entree": (d) => "🛍️ Tu entres dans " + d.nom + " (← → pour choisir, Entrée pour acheter)",
+    "magasin-sortie": (d) => "🚪 Tu sors de " + d.nom,
+    "achat-objet": (d) => "🛍️ ACHAT : " + d.nom + " pour " + d.prix + " pièce(s)" + (d.id === "peinture" ? " → " + d.nomVoiture + " devient dorée" : ""),
+    klaxon: (d) => "📯 Tut-tuuut ! (" + d.voiture + ")",
     descendre: (d) => "🚶 Tu descends de " + d.voiture + " (E pour remonter)",
     monter: (d) => "🔑 Tu montes dans " + d.voiture + (d.ou === "garée" ? " (elle était garée)" : d.ou === "circulation" ? " (la voiture de la circulation t'a laissé la place)" : ""),
     "menu-cartes": () => "🗺️ Menu des cartes : choisis où rouler",
@@ -163,7 +168,12 @@ Circuit.SousLeCapot = (function () {
         ["carrefour le plus proche", "(" + i + ", " + j + ")"],
         ["feux de ce carrefour", "est-ouest : " + Circuit.Circulation.feu(monde.temps, i, j, "x") + " · nord-sud : " + Circuit.Circulation.feu(monde.temps, i, j, "z")],
         ["circulation", monde.circulation.length + " voitures, dont " + arretees + " arrêtée(s)"],
-        ["voitures garées", monde.garees.length],
+        ["véhicules garés", monde.garees.length + " (dont " + Circuit.CONFIG.archipel.parking * Circuit.Archipel.aeroports.length + " aux aéroports)"],
+        ["Où es-tu ? (étape 42)"],
+        ["lieu", monde.lieu || "la ville"],
+        ["hauteur du sol", virgule(Circuit.Archipel.lieu(qui.x, qui.z).h, 1) + " m" + (Circuit.Archipel.surQuelPont(qui.x, qui.z) ? " (le pont monte en arc : H × sin(π × u ÷ L))" : "")],
+        ["magasin", monde.magasin ? "🛍️ dans " + monde.magasin.nom : monde.magasinProche ? "devant " + monde.magasinProche + " (E)" : "—"],
+        ["objets achetés", Object.keys(Circuit.Sauvegarde.donnees.objets || {}).join(", ") || "aucun"],
       ];
       if (p) {
         lignes = lignes.concat([

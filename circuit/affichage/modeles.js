@@ -607,6 +607,150 @@ Circuit.Modeles = (function () {
     return { g, roues, yCapot: 1.5 };
   }
 
+  // ---------------------------------------------------------------- étape 42 : ce qui vole (garé à l'aéroport)
+  // On les voit à l'aéroport dès l'étape 42 ; on les pilotera à l'étape 44. Tous construits « nez vers x+ ».
+
+  // Un fuselage : un long tube arrondi, plus fin vers la queue (un « tour » : on fait tourner un profil).
+  function fuselage(longueur, rayon, materiau) {
+    const pts = [];
+    for (let i = 0; i <= 24; i++) {
+      const t = i / 24; // de la queue (0) au nez (1)
+      const r = t < 0.15 ? rayon * (0.35 + (t / 0.15) * 0.65) : t > 0.88 ? rayon * Math.sqrt(Math.max(0, 1 - Math.pow((t - 0.88) / 0.12, 2))) : rayon;
+      pts.push(new THREE.Vector2(Math.max(0.001, r), (t - 0.5) * longueur));
+    }
+    const geo = new THREE.LatheGeometry(pts, 24);
+    geo.rotateZ(-Math.PI / 2); // l'axe du tour (y) devient l'axe de l'avion (x)
+    const m = new THREE.Mesh(geo, materiau);
+    m.castShadow = true;
+    return m;
+  }
+
+  // Une aile plate en trapèze (vue de dessus), d'épaisseur e.
+  function aile(racine, bout, envergure, fleche, e, materiau) {
+    const forme = new THREE.Shape();
+    forme.moveTo(racine / 2, 0);
+    forme.lineTo(racine / 2 - fleche, envergure);
+    forme.lineTo(racine / 2 - fleche - bout, envergure);
+    forme.lineTo(-racine / 2, 0);
+    forme.closePath();
+    const geo = new THREE.ExtrudeGeometry(forme, { depth: e, bevelEnabled: false });
+    geo.rotateX(Math.PI / 2);
+    const m = new THREE.Mesh(geo, materiau);
+    m.castShadow = true;
+    return m;
+  }
+
+  // L'avion de ligne : 34 m de long, deux réacteurs, des hublots, un empennage coloré.
+  function avionDeLigne(k1, k2) {
+    const g = new THREE.Group();
+    const blanc = peinture([0.95, 0.95, 0.97]);
+    const corps = fuselage(34, 2, blanc);
+    corps.position.y = 3.6;
+    g.add(corps);
+    g.add(boite(28, 0.5, 0.05, peinture(k1), -1, 3.4, 2.0)); // la bande de couleur
+    g.add(boite(28, 0.5, 0.05, peinture(k1), -1, 3.4, -2.0));
+    for (let i = 0; i < 26; i++) for (const z of [-1.98, 1.98]) g.add(boite(0.35, 0.4, 0.04, M.vitre, -11 + i * 0.95, 4.2, z)); // les hublots
+    g.add(boite(1.2, 0.7, 2.6, M.vitre, 15.4, 4.4, 0)); // le cockpit
+    for (const cote of [-1, 1]) {
+      const a = aile(6, 1.6, 15, 5, 0.35, blanc);
+      if (cote < 0) a.rotation.x = Math.PI; // l'autre aile : retournée (un miroir mettrait les faces à l'envers)
+      a.position.set(1, 2.8, 0);
+      g.add(a);
+      const reacteur = cylindre(0.9, 3.4, M.chrome, 20);
+      reacteur.rotation.z = Math.PI / 2;
+      reacteur.position.set(2.2, 1.8, cote * 5.5);
+      g.add(reacteur);
+      g.add(boite(3, 0.2, 0.3, blanc, 2.4, 2.6, cote * 5.5));
+      const stab = aile(3, 1, 5.5, 2.2, 0.2, blanc);
+      if (cote < 0) stab.rotation.x = Math.PI;
+      stab.position.set(-15, 4.2, 0);
+      g.add(stab);
+    }
+    const derive = aile(5, 1.8, 6.5, 4, 0.3, peinture(k2));
+    derive.rotation.x = -Math.PI / 2;
+    derive.position.set(-14.5, 5.2, 0.15);
+    g.add(derive);
+    // Le train d'atterrissage.
+    for (const [x, z] of [[12, 0], [1, -2.4], [1, 2.4]]) {
+      g.add(boite(0.2, 2.2, 0.2, M.noir, x, 1.1, z));
+      const r = cylindre(0.5, 0.4, M.pneu, 16);
+      r.rotation.x = Math.PI / 2;
+      r.position.set(x, 0.5, z);
+      g.add(r);
+    }
+    return { g, roues: [], yCapot: 5 };
+  }
+
+  // Le petit avion à hélice (comme un avion de tourisme) : ailes en haut, une hélice devant.
+  function petitAvion(k1, k2) {
+    const g = new THREE.Group();
+    const corps = fuselage(8, 0.75, peinture(k1));
+    corps.position.y = 1.5;
+    g.add(corps);
+    g.add(boite(1.4, 0.6, 1.3, M.vitre, 1.2, 2.1, 0)); // la cabine
+    for (const cote of [-1, 1]) {
+      const a = aile(1.6, 1.2, 5.5, 0.2, 0.15, peinture(k2));
+      if (cote < 0) a.rotation.x = Math.PI; // l'autre aile : retournée (un miroir mettrait les faces à l'envers)
+      a.position.set(0.9, 2.45, 0);
+      g.add(a);
+      const s = aile(1, 0.6, 1.8, 0.3, 0.1, peinture(k1));
+      if (cote < 0) s.rotation.x = Math.PI;
+      s.position.set(-3.4, 1.6, 0);
+      g.add(s);
+    }
+    const derive = aile(1.3, 0.6, 1.5, 0.7, 0.1, peinture(k2));
+    derive.rotation.x = -Math.PI / 2;
+    derive.position.set(-3.3, 1.7, 0.05);
+    g.add(derive);
+    const helice = new THREE.Group();
+    helice.add(boite(0.08, 2.0, 0.18, M.noir, 0, 0, 0));
+    helice.position.set(4.05, 1.5, 0);
+    g.add(helice);
+    for (const [x, z] of [[2.5, 0], [0.4, -1.2], [0.4, 1.2]]) {
+      g.add(boite(0.08, 1, 0.08, M.noir, x, 0.6, z));
+      const r = cylindre(0.3, 0.2, M.pneu, 14);
+      r.rotation.x = Math.PI / 2;
+      r.position.set(x, 0.3, z);
+      g.add(r);
+    }
+    return { g, roues: [], yCapot: 2.3, helice };
+  }
+
+  // L'hélicoptère : une cabine ronde vitrée, une longue queue, un grand rotor et des patins.
+  function helico(k1, k2) {
+    const g = new THREE.Group();
+    const cabine = new THREE.Mesh(new THREE.SphereGeometry(1.4, 24, 16), peinture(k1));
+    cabine.scale.set(1.5, 1, 1);
+    cabine.position.set(0.3, 1.9, 0);
+    cabine.castShadow = true;
+    g.add(cabine);
+    const bulle = new THREE.Mesh(new THREE.SphereGeometry(1.25, 20, 14, 0, Math.PI, 0, Math.PI / 1.6), M.vitre);
+    bulle.scale.set(1.4, 1, 1);
+    bulle.rotation.y = -Math.PI / 2;
+    bulle.position.set(0.7, 2.0, 0);
+    g.add(bulle);
+    g.add(tube([-1.4, 2.1, 0], [-6.5, 2.6, 0], 0.28, peinture(k1))); // la queue
+    g.add(boite(0.8, 1.2, 0.1, peinture(k2), -6.4, 3.1, 0)); // la dérive
+    const rotorArriere = new THREE.Group();
+    rotorArriere.add(boite(0.1, 1.6, 0.06, M.noir, 0, 0, 0));
+    rotorArriere.position.set(-6.5, 2.7, 0.25);
+    g.add(rotorArriere);
+    g.add(cylindre(0.15, 0.6, M.noir, 10).translateY(3.2));
+    const rotor = new THREE.Group();
+    for (const a of [0, Math.PI / 2]) {
+      const pale = boite(10, 0.06, 0.32, M.noir, 0, 0, 0);
+      pale.rotation.y = a;
+      rotor.add(pale);
+    }
+    rotor.position.set(0, 3.5, 0);
+    g.add(rotor);
+    for (const z of [-1, 1]) {
+      g.add(boite(4, 0.12, 0.12, M.noir, 0.2, 0.2, z * 1.1)); // les patins
+      for (const x of [-0.8, 1.2]) g.add(tube([x, 0.2, z * 1.1], [x, 1.1, z * 0.7], 0.05, M.noir));
+    }
+    return { g, roues: [], yCapot: 2.6, rotor, rotorArriere };
+  }
+
   // ---------------------------------------------------------------- étape 39 : le personnage
   // Un petit bonhomme : jambes, corps, bras, tête et casquette. Les jambes et les bras ont un « pivot »
   // à la hanche et à l'épaule : en les faisant tourner d'avant en arrière, il marche.
@@ -642,10 +786,15 @@ Circuit.Modeles = (function () {
     const visiere = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.03, 0.3), M.casque);
     visiere.position.set(0.2, 2.03, 0);
     g.add(visiere);
-    return { g, jambes, bras };
+    // Étape 42 : les lunettes de soleil (cachées tant qu'on ne les a pas achetées).
+    const lunettes = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.07, 0.3), M.noir);
+    lunettes.position.set(0.18, 1.95, 0);
+    lunettes.visible = false;
+    g.add(lunettes);
+    return { g, jambes, bras, casquette, visiere, lunettes };
   }
 
-  const FABRIQUES = { classique, taureau, fleche, fusee, f1, quatre, pickup, buggy, monster, citadine, suv, basse, camionnette, camion, rallye, quad, taxi, police, kart, moto };
+  const FABRIQUES = { classique, taureau, fleche, fusee, f1, quatre, pickup, buggy, monster, citadine, suv, basse, camionnette, camion, rallye, quad, taxi, police, kart, moto, avionDeLigne, petitAvion, helico };
 
   // Fabrique une voiture. Renvoie { g (le groupe Three.js), roues (pour les faire tourner), yCapot (pour la caméra),
   // et pour la police : gyro (les 2 lampes du gyrophare) }.

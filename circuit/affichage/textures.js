@@ -275,9 +275,27 @@ Circuit.Textures = (function () {
       }
     });
 
+  // Étape 42 : la mer (des vaguelettes claires sur un bleu profond).
+  const mer = () =>
+    texture("mer", 256, (ctx, t) => {
+      bruit(ctx, t, "#1d5f8f", 0.18, 6000, 2);
+      ctx.strokeStyle = "rgba(200,230,255,.35)";
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < 120; i++) {
+        const x = hasard() * t, y = hasard() * t, l = 6 + hasard() * 14;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + l / 2, y - 3, x + l, y);
+        ctx.stroke();
+      }
+    });
+
+  // Étape 42 : le sable des plages, autour des îles.
+  const sable = () => texture("sable", 128, (ctx, t) => bruit(ctx, t, "#d9c48f", 0.2, 5000, 2));
+
   const toit = () => texture("toit", 128, (ctx, t) => bruit(ctx, t, "#55575c", 0.25, 5000, 2));
 
   // La fonction `bruit` remplit la toile d'une couleur : avec une couleur transparente, elle ne fait
   // qu'ajouter des grains par-dessus ce qui est déjà peint.
-  return { herbe, goudron, terre, beton, bordure, damier, carton, tremplin, planches, rail, facade, trottoir, toit, nitro, danger, bois, nuages };
+  return { herbe, goudron, terre, beton, bordure, damier, carton, tremplin, planches, rail, facade, trottoir, toit, nitro, danger, bois, nuages, mer, sable };
 })();

@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 10,
+  version: 11,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -102,6 +102,9 @@ Circuit.CONFIG = {
       couleurs: [[0.95, 0.95, 0.95], [0.2, 0.45, 0.85]], son: { ralenti: 45, max: 110 } },
     { id: "camion", nom: "Le camion", modele: "camion", prix: 300, vitesseMax: 27.8, acceleration: 7, virage: 1.4, saut: 1, ecrase: true,
       couleurs: [[0.85, 0.12, 0.1], [0.92, 0.92, 0.92]], son: { ralenti: 28, max: 70 } },
+    // Étape 42 : ✍️ la moto (rapide et très maniable).
+    { id: "moto", nom: "La moto", modele: "moto", prix: 100, vitesseMax: 45.8, acceleration: 19, virage: 2.7, saut: 1.1,
+      couleurs: [[0.85, 0.1, 0.1], [0.1, 0.1, 0.11]], son: { ralenti: 90, max: 300 } },
     // Étape 40 : ✍️ le taxi et la voiture de police (gyrophare et sirène : touche H).
     { id: "taxi", nom: "Le taxi", modele: "taxi", prix: 150, vitesseMax: 38.9, acceleration: 12, virage: 2.0, saut: 1,
       couleurs: [[1, 0.78, 0.05], [0.1, 0.1, 0.11]], son: { ralenti: 48, max: 125 } },
@@ -189,6 +192,45 @@ Circuit.CONFIG = {
     garees: 14, // voitures garées le long des trottoirs (on peut les prendre !)
     pieces: 50, // ✍️ des pièces cachées un peu partout
     graine: 23,
+  },
+
+  // Étape 42 : LA MAP ÉNORME. ✍️ La ville est sur une île au milieu de la mer. De grands ponts mènent à
+  // d'autres îles, chacune avec un AÉROPORT. x, z en mètres ; angle = la direction de la piste d'atterrissage.
+  archipel: {
+    ileVille: 250, // m : l'île de la ville va de −250 à +250 (la ville fait 456 m)
+    mer: -1.5, // m : la hauteur de l'eau
+    ponts: [
+      // ✍️ « Fais un pont qui relie à l'aéroport » : le pont de l'Est part de la rue n° 3, vers l'aéroport n° 1.
+      { nom: "le pont de l'Est", de: [250, 44], a: [750, 44], largeur: 18, hauteur: 16 },
+      { nom: "le pont du Nord", de: [-44, -250], a: [-44, -750], largeur: 18, hauteur: 16 },
+    ],
+    // Les îles avec un aéroport : leur centre, la direction de la piste, et si un pont y mène.
+    aeroports: [
+      { nom: "l'aéroport de l'Est", numero: 1, x: 1200, z: 50, angle: 0 },
+      { nom: "l'aéroport du Nord", numero: 2, x: -38, z: -1200, angle: -Math.PI / 2 },
+      { nom: "l'aéroport de l'île lointaine", numero: 3, x: -1500, z: 1400, angle: Math.PI / 2 }, // pas de pont : en avion (étape 44) !
+    ],
+    // La forme d'une île-aéroport (en mètres, u = le long de la piste, w = en travers). Toutes les îles sont pareilles.
+    ile: { u: [-450, 450], w: [-350, 400] },
+    parking: 12, // ✍️ des véhicules de tous les garages, garés devant chaque aérogare
+    piecesParPont: 8,
+    piecesParIle: 12,
+  },
+
+  // Étape 42 : LES MAGASINS. ✍️ Le personnage entre (E devant la porte) et achète des choses avec ses pièces.
+  //   unique = on ne l'achète qu'une fois ; sinon on peut en acheter autant qu'on veut.
+  magasins: {
+    distancePorte: 4, // m : il faut être à moins de 4 m de la porte pour entrer
+    noms: ["le magasin de sport", "le bazar de Maxance", "la boutique du coin", "le garage peinture"],
+    articles: [
+      { id: "baskets", nom: "Les baskets de course", icone: "👟", prix: 30, unique: true, texte: "Ton personnage court 2 fois plus vite" },
+      { id: "casquette", nom: "La casquette dorée", icone: "🧢", prix: 15, unique: true, texte: "Une casquette qui brille comme de l'or" },
+      { id: "lunettes", nom: "Les lunettes de soleil", icone: "🕶️", prix: 20, unique: true, texte: "Trop la classe" },
+      { id: "klaxon", nom: "Le klaxon", icone: "📯", prix: 10, unique: true, texte: "Touche K en voiture : tut-tuuut !" },
+      { id: "peinture", nom: "La peinture dorée", icone: "🎨", prix: 40, unique: false, texte: "Pour la voiture que tu as laissée dehors" },
+      { id: "glace", nom: "Une glace", icone: "🍦", prix: 2, unique: false, texte: "Miam ! Elle ne sert à rien, mais elle est bonne" },
+    ],
+    couleurOr: [[1, 0.76, 0.18], [0.55, 0.38, 0.05]], // la peinture dorée (couleur 1 et couleur 2)
   },
 
   // Étape 39 : le PERSONNAGE. ✍️ Il descend de la voiture pour en prendre une autre (touche E).

@@ -66,6 +66,24 @@ Circuit.RayonsX = (function () {
         c.ligne([a, 0.3, Ville.rue(k)], [b, 0.3, Ville.rue(k)], COULEURS.milieu);
         c.ligne([Ville.rue(k), 0.3, a], [Ville.rue(k), 0.3, b], COULEURS.milieu);
       }
+      // Étape 42 : les bords des ponts, le contour des îles, et un rond autour de la porte de chaque magasin.
+      const AR = Circuit.Archipel, A = C.archipel;
+      for (const p of AR.ponts) {
+        for (const w of [-p.largeur / 2, p.largeur / 2]) {
+          for (let i = 0; i < 40; i++) {
+            const u1 = (i / 40) * p.longueur, u2 = ((i + 1) / 40) * p.longueur;
+            c.ligne([p.de[0] + p.ux * u1 - p.uz * w, AR.hauteurPont(p, u1) + 0.3, p.de[1] + p.uz * u1 + p.ux * w], [p.de[0] + p.ux * u2 - p.uz * w, AR.hauteurPont(p, u2) + 0.3, p.de[1] + p.uz * u2 + p.ux * w], COULEURS.bords);
+          }
+        }
+      }
+      const coinsIle = (pts) => pts.forEach((q, i) => c.ligne([q.x, 0.3, q.z], [pts[(i + 1) % 4].x, 0.3, pts[(i + 1) % 4].z], COULEURS.ecart));
+      const v = A.ileVille;
+      coinsIle([{ x: -v, z: -v }, { x: v, z: -v }, { x: v, z: v }, { x: -v, z: v }]);
+      for (const ap of AR.aeroports) coinsIle([[A.ile.u[0], A.ile.w[0]], [A.ile.u[1], A.ile.w[0]], [A.ile.u[1], A.ile.w[1]], [A.ile.u[0], A.ile.w[1]]].map(([u, w]) => AR.versMonde(ap, u, w)));
+      for (const m of AR.magasins) {
+        const r = C.magasins.distancePorte;
+        for (let i = 0; i < 16; i++) c.ligne([m.x + Math.cos((i / 16) * 6.283) * r, 0.4, m.z + Math.sin((i / 16) * 6.283) * r], [m.x + Math.cos(((i + 1) / 16) * 6.283) * r, 0.4, m.z + Math.sin(((i + 1) / 16) * 6.283) * r], COULEURS.porte);
+      }
       for (const im of Ville.immeubles) {
         const L = im.demiLongueur, W = im.demiLargeur, h = 0.4;
         const coins = [[im.x - L, h, im.z - W], [im.x + L, h, im.z - W], [im.x + L, h, im.z + W], [im.x - L, h, im.z + W]];

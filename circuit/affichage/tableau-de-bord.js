@@ -401,8 +401,14 @@ Circuit.TableauDeBord = (function () {
   // Étape 39 : en ville.
   function dessinerVille(monde, options, sauvegarde) {
     const v = monde.voiture, p = monde.pieton;
+    if (monde.magasin) {
+      // Étape 42 : dans un magasin, on ne montre que le magasin (et la mini-carte).
+      dessinerMiniCarteVille(monde);
+      dessinerMagasin(monde, sauvegarde);
+      return;
+    }
     const fiche = Circuit.Garage.ficheDe(v.modele) || {};
-    panneau(12, 12, 270, 112);
+    panneau(12, 12, 270, 136);
     texte("🏙️ La ville", 24, 42, 24, "#ffe27a");
     texte("🪙 " + monde.piecesCourse + " / " + monde.pieces.length + " pièces trouvées", 24, 68, 17, "#ffd34d");
     texte("porte-monnaie : " + sauvegarde.pieces, 24, 90, 14, "#cfd6ff");
@@ -415,35 +421,68 @@ Circuit.TableauDeBord = (function () {
 
     dessinerMiniCarteVille(monde);
     if (monde.message && monde.temps < monde.message.jusqua) texte(monde.message.texte, W / 2, H / 2 - 70, 30, "#ffe27a", "center");
-    if (p && monde.voitureProche) texte("E : monter dans " + monde.voitureProche, W / 2, H - 60, 22, "#7dffa0", "center");
-    texte(p ? "↑ ↓ ← → marcher · E : monter · R : départ · ⌫ : cartes" : "E : descendre · R : retour au départ · ⌫ : changer de carte" + (fiche.sirene ? " · H : sirène" : ""), 24, H - 22, 14, "#cfd6ff");
+    if (p && monde.magasinProche && !monde.magasin) texte("E : entrer dans " + monde.magasinProche + " 🛍️", W / 2, H - 60, 22, "#ffd34d", "center");
+    else if (p && monde.voitureProche) texte("E : monter dans " + monde.voitureProche, W / 2, H - 60, 22, "#7dffa0", "center");
+    texte("📍 " + (monde.lieu || "la ville"), 24, 140, 14, "#9cc4ff");
+    texte(p ? "↑ ↓ ← → marcher · E : monter · R : départ · ⌫ : cartes" : "E : descendre · R : retour au départ · ⌫ : changer de carte" + (fiche.sirene ? " · H : sirène" : "") + (sauvegarde.objets && sauvegarde.objets.klaxon ? " · K : klaxon" : ""), 24, H - 22, 14, "#cfd6ff");
     if (monde.sirene && fiche.sirene && !p) texte("🚨 Sirène", 300, 70, 20, Math.floor(monde.temps * 4) % 2 ? "#ff5a4a" : "#5a8aff");
     if (options.pause) texte("⏸ Pause", W / 2, H - 30, 28, "#fff", "center");
     if (options.ralenti) texte("🐢 Ralenti", 300, 40, 18, "#cfd6ff");
   }
 
-  // La mini-carte de la ville : les rues, les parcs, les voitures et les pièces, vus d'en haut.
+  // La mini-carte de la ville. Étape 42 : la map est énorme, alors la mini-carte SUIT le joueur (il est au
+  // milieu) et montre 1 400 m autour de lui : la ville, la mer, les ponts, les îles et leurs aéroports.
   function dessinerMiniCarteVille(monde) {
-    const Ville = Circuit.Ville;
+    const Ville = Circuit.Ville, AR = Circuit.Archipel, A = C.archipel;
     const taille = 136;
-    const echelle = taille / (Ville.taille + 40);
+    const echelle = taille / 1400;
+    const qui = monde.pieton || monde.voiture;
     const cx = W - 12 - taille / 2, cz = 12 + taille / 2;
     panneau(W - 12 - taille - 6, 6, taille + 12, taille + 12);
-    const L = C.ville.tailleBloc * echelle;
-    for (let i = 0; i < C.ville.blocs; i++) for (let j = 0; j < C.ville.blocs; j++) {
-      const x = (Ville.rue(i) + C.ville.largeurRue / 2) * echelle, z = (Ville.rue(j) + C.ville.largeurRue / 2) * echelle;
-      ctx.fillStyle = Ville.parc(i, j) ? "#3f8a3a" : "#8a8d93";
-      ctx.fillRect(cx + x, cz + z, L, L);
-    }
-    ctx.fillStyle = "#cfd6ff";
-    for (const g of monde.garees) ctx.fillRect(cx + g.x * echelle - 1, cz + g.z * echelle - 1, 2, 2);
-    ctx.fillStyle = "#9cc4ff";
-    for (const c of monde.circulation) ctx.fillRect(cx + c.voiture.x * echelle - 1.5, cz + c.voiture.z * echelle - 1.5, 3, 3);
-    ctx.fillStyle = "#ffd34d";
-    for (const p of monde.pieces) if (!p.prise) ctx.fillRect(cx + p.x * echelle - 1, cz + p.z * echelle - 1, 2, 2);
-    const qui = monde.pieton || monde.voiture;
     ctx.save();
-    ctx.translate(cx + qui.x * echelle, cz + qui.z * echelle);
+    ctx.beginPath();
+    ctx.rect(W - 12 - taille, 12, taille, taille);
+    ctx.clip();
+    ctx.fillStyle = "#2a6d9e"; // la mer
+    ctx.fillRect(W - 12 - taille, 12, taille, taille);
+    ctx.translate(cx - qui.x * echelle, cz - qui.z * echelle);
+    ctx.scale(echelle, echelle);
+    ctx.fillStyle = "#5f9a46";
+    ctx.fillRect(-A.ileVille, -A.ileVille, 2 * A.ileVille, 2 * A.ileVille);
+    ctx.fillStyle = "#8a8d93";
+    for (let i = 0; i < C.ville.blocs; i++) for (let j = 0; j < C.ville.blocs; j++) {
+      if (Ville.parc(i, j)) continue;
+      ctx.fillRect(Ville.rue(i) + C.ville.largeurRue / 2, Ville.rue(j) + C.ville.largeurRue / 2, C.ville.tailleBloc, C.ville.tailleBloc);
+    }
+    for (const ap of AR.aeroports) {
+      ctx.save();
+      ctx.translate(ap.x, ap.z);
+      ctx.rotate(ap.angle);
+      ctx.fillStyle = "#5f9a46";
+      ctx.fillRect(A.ile.u[0], A.ile.w[0], A.ile.u[1] - A.ile.u[0], A.ile.w[1] - A.ile.w[0]);
+      const P = AR.plan;
+      ctx.fillStyle = "#3a3d44";
+      ctx.fillRect(P.piste.u - P.piste.longueur / 2, P.piste.w - P.piste.largeur / 2, P.piste.longueur, P.piste.largeur);
+      ctx.fillStyle = "#b8bcc2";
+      ctx.fillRect(P.tarmac.u - P.tarmac.longueur / 2, P.tarmac.w - P.tarmac.largeur / 2, P.tarmac.longueur, P.tarmac.largeur);
+      ctx.restore();
+    }
+    ctx.strokeStyle = "#d9d9d9";
+    ctx.lineWidth = 22;
+    for (const p of AR.ponts) {
+      ctx.beginPath();
+      ctx.moveTo(p.de[0], p.de[1]);
+      ctx.lineTo(p.a[0], p.a[1]);
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#c06cff"; // les magasins
+    for (const m of AR.magasins) ctx.fillRect(m.x - 14, m.z - 14, 28, 28);
+    ctx.fillStyle = "#ffd34d";
+    for (const p of monde.pieces) if (!p.prise) ctx.fillRect(p.x - 6, p.z - 6, 12, 12);
+    ctx.restore();
+    // Toi, au milieu de la mini-carte.
+    ctx.save();
+    ctx.translate(cx, cz);
     ctx.rotate(qui.angle);
     ctx.fillStyle = monde.pieton ? "#7dffa0" : "#ff3b30";
     ctx.beginPath();
@@ -453,6 +492,32 @@ Circuit.TableauDeBord = (function () {
     ctx.closePath();
     ctx.fill();
     ctx.restore();
+  }
+
+  // Étape 42 : l'écran du magasin : les articles, leur prix, et ce que tu as déjà.
+  function dessinerMagasin(monde, sauvegarde) {
+    const m = monde.magasin;
+    const articles = C.magasins.articles;
+    panneau(W / 2 - 330, 60, 660, 360);
+    texte("🛍️ " + m.nom.charAt(0).toUpperCase() + m.nom.slice(1), W / 2 - 310, 100, 21, "#ffe27a");
+    texte("🪙 " + sauvegarde.pieces, W / 2 + 310, 100, 24, "#ffd34d", "right");
+    articles.forEach((a, i) => {
+      const x = W / 2 - 300 + (i % 3) * 205, y = 125 + Math.floor(i / 3) * 120;
+      const ici = i === m.index;
+      const deja = a.unique && sauvegarde.objets && sauvegarde.objets[a.id];
+      ctx.fillStyle = ici ? "rgba(255,226,122,.92)" : "rgba(255,255,255,.08)";
+      ctx.beginPath();
+      ctx.roundRect(x, y, 190, 108, 10);
+      ctx.fill();
+      const encre = ici ? "#1a1a1a" : "#fff";
+      texte(a.icone, x + 24, y + 46, 28, encre, "center", ici);
+      texte(a.nom, x + 46, y + 32, 12, encre, "left", ici);
+      texte(deja ? "✅ à toi" : "🪙 " + a.prix, x + 46, y + 58, 16, ici ? "#7a3b00" : deja ? "#7dffa0" : "#ffd34d", "left", ici);
+      if (a.id === "glace" && sauvegarde.objets && sauvegarde.objets.glace) texte("× " + sauvegarde.objets.glace + " mangée(s)", x + 46, y + 80, 12, ici ? "#333" : "#cfd6ff", "left", ici);
+    });
+    const a = articles[m.index];
+    texte(m.message || a.texte, W / 2, 392, 18, m.message ? "#7dffa0" : "#cfd6ff", "center");
+    texte("← → choisir · Entrée : acheter · E ou ⌫ : sortir", W / 2, 412, 14, "#cfd6ff", "center");
   }
 
   // La mini-carte du parcours : les formes, les loopings, les pièces et la voiture, vus d'en haut.

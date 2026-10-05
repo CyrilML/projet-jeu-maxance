@@ -31,6 +31,7 @@ Circuit.Entrees = (function () {
     retour: ["Backspace"],
     monter: ["KeyE"], // étape 39 : descendre de la voiture, ou monter dans une voiture (en ville)
     sirene: ["KeyH"], // étape 40 : la sirène de la voiture de police
+    klaxon: ["KeyK"], // étape 42 : le klaxon (acheté au magasin)
   };
 
   const actionsDeLaTouche = {};

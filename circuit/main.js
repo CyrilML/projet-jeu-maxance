@@ -77,6 +77,7 @@
       carte4: E.consommer("carte4"), // étape 40
       carte5: E.consommer("carte5"), // étape 41
       sirene: E.consommer("sirene"), // étape 40 : H
+      klaxon: E.consommer("klaxon"), // étape 42 : K
       retour: E.consommer("retour"),
       monter: E.consommer("monter"), // étape 39 : E en ville
       valider: E.consommer("valider"),

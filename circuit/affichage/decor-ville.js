@@ -1,6 +1,7 @@
 // 🏗️ LE DÉCOR DE LA VILLE : l'architecte
 //
-// Étape 39. Il fabrique la ville avec Three.js : le goudron des rues, les lignes blanches et les passages
+// Étape 39. Il fabrique la ville avec Three.js (et depuis l'étape 42, il appelle affichage/decor-archipel.js
+// pour la mer, les îles, les ponts et les aéroports) : le goudron des rues, les lignes blanches et les passages
 // piétons, les trottoirs, les immeubles (une boîte avec une façade à fenêtres collée dessus, et un toit),
 // les parcs (herbe, étang, arbres, allées), les feux tricolores à chaque carrefour et les lampadaires.
 //
@@ -36,8 +37,10 @@ Circuit.DecorVille = (function () {
     const g = new THREE.Group();
     const taille = Ville.taille;
 
-    // Autour de la ville : de l'herbe. Dans la ville : le goudron des rues (les pâtés sont posés dessus).
-    g.add(D.pelouse(taille + 900, T.herbe(), (taille + 900) / 12));
+    // Autour de la ville : l'archipel (la mer, les îles, les ponts, les aéroports, étape 42).
+    // Dans la ville : le goudron des rues (les pâtés sont posés dessus).
+    const archipel = Circuit.DecorArchipel.construire();
+    g.add(archipel.groupe);
     g.add(plat(taille, taille, mat({ map: repeter(T.goudron(), taille / 10, taille / 10), roughness: 0.85 }), 0, 0.02, 0));
 
     // Les lignes blanches au milieu des rues, et les passages piétons aux carrefours. Il y en a plus de
@@ -137,10 +140,10 @@ Circuit.DecorVille = (function () {
     poteaux.castShadow = true;
     g.add(poteaux, lampes);
 
-    for (const c of D.cloture(taille / 2 + 22)) g.add(c);
 
     // Chaque image : on allume les bonnes lampes des feux.
     function maj(temps) {
+      archipel.maj(temps);
       for (const groupe of feux) {
         for (const axe of ["x", "z"]) {
           const couleur = Circuit.Circulation.feu(temps, groupe.decalage, 0, axe);

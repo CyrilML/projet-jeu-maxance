@@ -146,18 +146,26 @@ Circuit.Scene3D = (function () {
     decors[carte].groupe.visible = true;
     rayonsFixes = decors[carte].rayons;
     carteDessinee = carte;
+    // Étape 42 : la map de la ville est énorme : le brouillard commence plus loin, pour voir les îles.
+    scene.fog.near = carte === "ville" ? 450 : 280;
+    scene.fog.far = carte === "ville" ? 2400 : 1100;
   }
 
   // Un exemplaire de chaque modèle de voiture (fabriqué la première fois).
+  // Étape 42 : une voiture repeinte au magasin (peinture dorée) est un exemplaire à part : « citadine/or ».
   function vehicule(modele) {
-    if (!vehicules[modele]) {
+    const peinture = (Circuit.Sauvegarde.donnees.peintures || {})[modele];
+    const cle = peinture ? modele + "/" + peinture : modele;
+    if (!vehicules[cle]) {
       const fiche = Circuit.Garage.ficheDe(modele);
-      vehicules[modele] = Circuit.Modeles.fabriquer(modele, fiche.couleurs[0], fiche.couleurs[1]);
+      const couleurs = peinture === "or" ? C.magasins.couleurOr : fiche.couleurs;
+      vehicules[cle] = Circuit.Modeles.fabriquer(modele, couleurs[0], couleurs[1]);
+      vehicules[cle].cle = cle;
       // Étape 40 : où est l'arrière de la voiture (pour y accrocher les flammes du nitro) ?
-      vehicules[modele].arriere = new THREE.Box3().setFromObject(vehicules[modele].g).min.x;
-      scene.add(vehicules[modele].g);
+      vehicules[cle].arriere = new THREE.Box3().setFromObject(vehicules[cle].g).min.x;
+      scene.add(vehicules[cle].g);
     }
-    return vehicules[modele];
+    return vehicules[cle];
   }
 
   function changerCamera() {
@@ -206,7 +214,7 @@ Circuit.Scene3D = (function () {
       const recul = v.modele === "monster" ? 1.3 : v.modele === "camion" ? 1.6 : monde.pieton ? 0.5 : 1;
       // Étape 40 : sur le grand parcours, les routes sont très hautes (jusqu'à 22 m) : la caméra suit toute la hauteur,
       // sinon elle passerait sous la route !
-      const suivi = monde.carte === "grand" || monde.carte === "ciel" ? 1 : 0.75;
+      const suivi = monde.carte === "grand" || monde.carte === "ciel" || monde.carte === "ville" ? 1 : 0.75; // (la ville : les ponts, étape 42)
       oeil = [v.x - cos * R.distance * recul, R.hauteur * recul + y * suivi, v.z - sin * R.distance * recul];
       cible = [v.x + cos * R.regardDevant, 1 + y * Math.min(1, suivi + 0.1), v.z + sin * R.regardDevant];
     }
@@ -247,7 +255,7 @@ Circuit.Scene3D = (function () {
 
     // Les voitures : on montre seulement celle du joueur, et la voiture bleue s'il y en a une.
     const joueur = vehicule(v.modele);
-    for (const [modele, objet] of Object.entries(vehicules)) objet.g.visible = modele === v.modele;
+    for (const objet of Object.values(vehicules)) objet.g.visible = objet === joueur;
     joueur.g.visible = camera.mode !== "capot" || monde.phase === "garage" || monde.phase === "cartes" || !!monde.pieton;
     placerVoiture(joueur, v);
     adversaire.g.visible = !!monde.adversaire;
@@ -272,9 +280,14 @@ Circuit.Scene3D = (function () {
 
     // Étape 39 : les voitures garées et celles de la circulation, et le personnage.
     const compte = {};
+    const suivi0 = monde.pieton || v;
     const montrer = (voiture) => {
-      const k = (compte[voiture.modele] = (compte[voiture.modele] || 0) + 1) - 1;
-      const reserve = (flotte[voiture.modele] = flotte[voiture.modele] || []);
+      // Étape 42 : la map est énorme. On ne dessine que les véhicules à moins de 400 m (les autres sont cachés).
+      if (Math.abs(voiture.x - suivi0.x) > 400 || Math.abs(voiture.z - suivi0.z) > 400) return;
+      // Une réserve par modèle ET par couleur (les motos des méga-rampes ont chacune leur couleur).
+      const cleFlotte = voiture.couleurs ? voiture.modele + JSON.stringify(voiture.couleurs) : voiture.modele;
+      const k = (compte[cleFlotte] = (compte[cleFlotte] || 0) + 1) - 1;
+      const reserve = (flotte[cleFlotte] = flotte[cleFlotte] || []);
       if (!reserve[k]) {
         // Étape 41 : un véhicule qui n'est dans aucun garage (la moto) apporte ses propres couleurs.
         const fiche = Circuit.Garage.ficheDe(voiture.modele) || { couleurs: voiture.couleurs || [[0.8, 0.1, 0.1], [0.1, 0.1, 0.11]] };
@@ -293,8 +306,16 @@ Circuit.Scene3D = (function () {
         scene.add(bonhomme.g);
       }
       const p = monde.pieton;
-      bonhomme.g.visible = camera.mode !== "capot";
-      bonhomme.g.position.set(p.x, 0.12, p.z);
+      bonhomme.g.position.set(p.x, (p.y || 0) + 0.12, p.z);
+      // Étape 42 : ce qu'il a acheté au magasin (la casquette dorée, les lunettes).
+      const objets = Circuit.Sauvegarde.donnees.objets || {};
+      bonhomme.lunettes.visible = !!objets.lunettes;
+      if (objets.casquette && !bonhomme.dore) {
+        bonhomme.dore = new THREE.MeshStandardMaterial({ color: 0xffc83a, metalness: 1, roughness: 0.25 });
+        bonhomme.casquette.material = bonhomme.visiere.material = bonhomme.dore;
+      }
+      // Dans un magasin, on ne le voit plus (il est à l'intérieur !).
+      bonhomme.g.visible = camera.mode !== "capot" && !monde.magasin;
       bonhomme.g.rotation.set(0, -p.angle, 0);
       // Les jambes et les bras se balancent quand il marche (comme un pendule).
       const balance = Math.sin(p.pas * 2.4) * Math.min(1, Math.abs(p.vitesse)) * 0.7;

@@ -20,6 +20,7 @@
 //   5 (étape 39) : le garage de la ville ; la citadine est offerte.
 //   6 (étape 40) : le garage du grand parcours ; le kart est offert.
 //   7 (étape 41) : les méga-rampes : la voiture choisie là-bas, et le record du chrono (recordRampes).
+//   8 (étape 42) : les objets achetés au magasin (objets) et les voitures repeintes en or (peintures).
 //
 // Les pièces sont comptées dès qu'on les ramasse, mais écrites dans le tiroir à la fin de la course
 // (ou si on recommence, ou si on ferme la page) : écrire 50 fois par course, ce serait du gaspillage.
@@ -28,7 +29,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.Sauvegarde = (function () {
   const CLE = "circuit-maxance:sauvegarde";
-  const VERSION = 7;
+  const VERSION = 8;
   const radio = Circuit.Evenements;
 
   function vide() {
@@ -44,6 +45,8 @@ Circuit.Sauvegarde = (function () {
       voituresAchetees: ["classique", "4x4", "citadine", "kart"], // depuis la version 3 : la Rouge est offerte (puis le 4x4, la citadine, le kart)
       voituresChoisies: { course: "classique", parcours: "4x4", ville: "citadine", grand: "kart", ciel: "classique" }, // depuis la version 4 : la voiture choisie sur chaque carte
       recordRampes: null, // depuis la version 7 : le meilleur temps sur les méga-rampes (en secondes)
+      objets: {}, // depuis la version 8 : ce que tu as acheté au magasin, ex. { baskets: true, glace: 3 }
+      peintures: {}, // depuis la version 8 : les voitures repeintes, ex. { citadine: "or" }
       toursTotal: 0,
       sortiesTotal: 0,
       distanceTotale: 0, // m parcourus dans toutes les courses finies
@@ -113,6 +116,11 @@ Circuit.Sauvegarde = (function () {
       d.voituresChoisies = Object.assign({ ciel: "classique" }, d.voituresChoisies);
       d.recordRampes = null;
     }
+    if ((anciennes.version || 1) < 8) {
+      // Version 7 → 8 : les magasins arrivent. Rien d'acheté pour l'instant.
+      d.objets = {};
+      d.peintures = {};
+    }
     d.version = VERSION;
     return d;
   }
@@ -166,6 +174,15 @@ Circuit.Sauvegarde = (function () {
         radio.emettre("nouveau-record", { quoi: "tour", temps: d.temps, ancien });
       }
       ecrire("tour " + d.numero + " terminé");
+    });
+
+    // Étape 42 : un achat au magasin.
+    radio.ecouter("achat-objet", (d) => {
+      donnees.pieces -= d.prix;
+      if (d.id === "peinture") donnees.peintures[d.voiture] = "or";
+      else if (d.id === "glace") donnees.objets.glace = (donnees.objets.glace || 0) + 1;
+      else donnees.objets[d.id] = true;
+      ecrire("achat au magasin : " + d.nom + " pour " + d.prix + " pièce(s)");
     });
 
     // Étape 41 : l'arrivée des méga-rampes. Un nouveau record ?
