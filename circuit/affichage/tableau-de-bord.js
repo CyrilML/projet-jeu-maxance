@@ -46,7 +46,7 @@ Circuit.TableauDeBord = (function () {
     ctx.fill();
   }
 
-  function dessiner(monde, options, sauvegarde) {
+  function dessinerEcran(monde, options, sauvegarde) {
     ctx.clearRect(0, 0, W, H);
     const v = monde.voiture;
     if (monde.phase === "cartes") {
@@ -790,6 +790,17 @@ Circuit.TableauDeBord = (function () {
       const decision = Math.abs(adv.difference) <= 0.02 ? "tout droit" : adv.difference < 0 ? "à gauche" : "à droite";
       texte("🤖 cible à " + degres + "° → " + decision + " · voie " + (adv.voie > 0 ? "extérieure" : "intérieure"), ea.x, ea.y, 14, "#9cc4ff", "center");
     }
+  }
+
+  // Étape 47 : la météo, en bas à gauche au-dessus de l'aide, sur toutes les cartes (pas dans les menus).
+  function dessiner(monde, options, sauvegarde) {
+    dessinerEcran(monde, options, sauvegarde);
+    if (monde.phase === "cartes" || monde.phase === "garage" || monde.magasin) return;
+    const M = Circuit.Meteo, v = M.etat.valeurs, prochain = C.meteo.temps[M.suivant()];
+    const reste = Math.max(0, Math.ceil(C.meteo.duree - M.etat.depuis));
+    panneau(12, H - 74, 300, 30);
+    texte(v.icone + " " + v.nom + (M.etat.melange > 0 ? " → " + prochain.icone + " " + prochain.nom : " · " + prochain.icone + " dans " + reste + " s"), 22, H - 53, 15, "#e8f0ff");
+    if (v.adherence < 0.75 && !monde.pieton) texte("⚠️ Route glissante !", 324, H - 53, 15, "#ffb37a");
   }
 
   return { initialiser, dessiner, chrono };

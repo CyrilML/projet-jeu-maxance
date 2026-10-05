@@ -54,6 +54,8 @@ Circuit.SousLeCapot = (function () {
     piece: (d) => "🪙 Pièce n° " + d.numero + " ramassée" + (d.ou ? " (" + d.ou + ")" : " (à " + d.s + " m du départ)") + " : " + d.total + " trouvées",
     ville: (d) => "🏙️ Balade en ville : " + d.pieces + " pièces cachées, " + d.circulation + " voitures qui circulent, " + d.garees + " véhicules garés" + (d.aeroports ? ", " + d.aeroports + " aéroports, " + d.magasins + " magasins" : ""),
     lieu: (d) => "📍 Tu arrives sur " + d.ou,
+    meteo: (d) => d.icone + " Météo : " + d.nom + " (adhérence " + Math.round(d.adherence * 100) + " %, vent " + d.vent + " m/s)",
+    eclair: (d) => "⚡ Éclair à " + d.distance + " m : le tonnerre arrive " + (d.distance / 340).toFixed(1).replace(".", ",") + " s plus tard (le son va à 340 m/s)",
     etoiles: (d) => (d.etoiles > d.avant ? "🚨 " : "🙈 ") + "Police : " + "⭐".repeat(d.etoiles) + (d.etoiles ? "" : "aucune étoile") + " (" + d.raison + ")",
     "police-semee": () => "😎 Police semée : plus aucune étoile !",
     arrete: (d) => "🚔 ATTRAPÉ avec " + d.etoiles + " étoile(s) : retour au commissariat, à pied",
@@ -322,6 +324,13 @@ Circuit.SousLeCapot = (function () {
       ]);
     }
     lignes = lignes.concat([
+      ["La météo (étape 47)"],
+      ["temps", Circuit.Meteo.etat.valeurs.icone + " " + Circuit.Meteo.etat.valeurs.nom + (Circuit.Meteo.etat.melange > 0 ? " (transition : " + Math.round(Circuit.Meteo.etat.melange * 100) + " %)" : "")],
+      ["prochain dans", Math.max(0, Math.ceil(Circuit.CONFIG.meteo.duree - Circuit.Meteo.etat.depuis)) + " s (" + Circuit.CONFIG.meteo.temps[Circuit.Meteo.suivant()].nom + ")"],
+      ["adhérence", Math.round(Circuit.Meteo.etat.valeurs.adherence * 100) + " %" + (v.derapage ? " · dérapage " + Math.round((v.derapage * 180) / Math.PI) + "°" : "")],
+      ["vent", virgule(Circuit.Meteo.vent().force, 1) + " m/s, vers " + Math.round((Circuit.Meteo.etat.directionVent * 180) / Math.PI) + "°"],
+      ["visibilité", Math.round(Circuit.Meteo.etat.valeurs.visibilite) + " m"],
+      ["sol mouillé, enneigé", Math.round(Circuit.Meteo3D.mouille * 100) + " %, " + Math.round(Circuit.Meteo3D.enneige * 100) + " %"],
       ["Le son"],
       ["synthétiseur", Circuit.Son.etat()],
       ["ton moteur", Math.round(Circuit.Sons.enDirect.frequence) + " Hz · volume " + virgule(Circuit.Sons.enDirect.volume, 2)],

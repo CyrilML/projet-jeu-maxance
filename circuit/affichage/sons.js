@@ -25,7 +25,7 @@ Circuit.Sons = (function () {
   const S = Circuit.CONFIG.sons;
   const Son = Circuit.Son;
   let balles = 0;
-  let moteurJoueur = null, moteurAdversaire = null, herbe = null, souffle = null, sirene = null, sirenePolice = null;
+  let moteurJoueur = null, moteurAdversaire = null, herbe = null, souffle = null, sirene = null, sirenePolice = null, bruitPluie = null, bruitVent = null;
   // Ce qu'on entend en ce moment : lu par le panneau « sous le capot ».
   const enDirect = { frequence: 0, volume: 0, frequenceAdversaire: 0, volumeAdversaire: 0, cote: 0, herbe: 0 };
 
@@ -37,6 +37,8 @@ Circuit.Sons = (function () {
     souffle = Son.creerBruit(2600); // étape 40 : le nitro
     sirene = Son.creerMoteur(); // étape 40 : la sirène (un « moteur » qui joue 2 notes)
     sirenePolice = Son.creerMoteur(); // étape 45 : la sirène des voitures de police qui te poursuivent
+    bruitPluie = Son.creerBruit(3200); // étape 47 : le « chhhh » de la pluie (aigu)…
+    bruitVent = Son.creerBruit(350); // … et le « vououou » du vent (grave)
 
     const radio = Circuit.Evenements;
     radio.ecouter("decompte", () => Son.bip(S.bips.frequenceFeu, 0.18, S.bips.volume));
@@ -84,6 +86,8 @@ Circuit.Sons = (function () {
     radio.ecouter("etoiles", (d) => { if (d.etoiles > d.avant) Son.bip(392, 0.25, 0.13); });
     radio.ecouter("arrete", () => [523, 392, 330, 262].forEach((f, i) => setTimeout(() => Son.bip(f, 0.22, 0.14), i * 160)));
     radio.ecouter("police-semee", () => [659, 784, 988].forEach((f, i) => setTimeout(() => Son.bip(f, 0.15, 0.13), i * 120)));
+    // Étape 47 : le tonnerre arrive après l'éclair : la lumière va presque tout de suite, le son à 340 m/s.
+    radio.ecouter("eclair", (d) => setTimeout(() => Son.boum(14), (d.distance / 340) * 1000));
     // Étape 41 : les méga-rampes.
     radio.ecouter("drapeau", () => {
       Son.bip(784, 0.1, 0.12);
@@ -168,6 +172,10 @@ Circuit.Sons = (function () {
     const volumePolice = silence || !isFinite(dMin) ? 0 : 0.14 * Math.max(0, 1 - dMin / 250);
     Son.reglerMoteur(sirenePolice, 620 + 180 * Math.sin(monde.temps * 5), volumePolice, 1, 0);
     enDirect.sirenePolice = volumePolice;
+    // Étape 47 : la pluie et le vent.
+    const m = Circuit.Meteo.etat.valeurs;
+    Son.reglerBruit(bruitPluie, silence ? 0 : 0.22 * Math.min(1.3, m.pluie));
+    Son.reglerBruit(bruitVent, silence ? 0 : Math.min(0.35, Circuit.Meteo.vent().force * 0.025));
   }
 
   function basculer() {

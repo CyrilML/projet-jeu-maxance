@@ -169,6 +169,7 @@
       <a href="#etape44">Étape 44</a>
       <a href="#etape45">Étape 45</a>
       <a href="#etape46">Étape 46</a>
+      <a href="#etape47">Étape 47</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3076,6 +3077,49 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>À 110 km/h (30 m/s), combien de tronçons de 3 m passes-tu par seconde ?</summary><p>30 ÷ 3 = 10 tronçons par seconde : 10 petites marches, d'où le tremblement.</p></details>
     </section>
 
+    <section id="etape47">
+      <h2>🌦️ Étape 47 : la météo et le ciel <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Soleil, vent, brouillard, pluie, orage, neige, blizzard : la météo change toute seule sur toutes les cartes, et elle change la conduite ! <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/47-meteo-et-decor-realiste.md</code>.</p>
+          <ul>
+            <li>✍️ 7 météos qui changent toutes seules (toutes les 2 minutes).</li>
+            <li>✍️ La météo change la conduite.</li>
+            <li>Le décor réaliste et les nouvelles voitures : étapes 48, 49 et 50.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ En bas à gauche : la météo actuelle et la suivante. <kbd>M</kbd> pour passer à la suivante.</li>
+            <li>☐ 🌧️ Pluie : la route brille, la voiture glisse un peu.</li>
+            <li>☐ ⛈️ Orage : un éclair… puis le tonnerre.</li>
+            <li>☐ 🌨️ Neige et ❄️ blizzard : le sol blanchit, la voiture dérape.</li>
+            <li>☐ 🌫️ Brouillard : on ne voit plus loin. 🌬️ Vent : l'avion est poussé.</li>
+            <li>Vérifie « version 16 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>☁️ Des nuages calculés pixel par pixel</h3>
+      <p>Les nuages ne sont pas des images : la carte graphique les calcule pour chaque pixel du ciel. Elle additionne des « vagues de hasard » de plus en plus petites : une grosse vague pour la forme du nuage, puis des petites pour les détails. C'est le <strong>bruit fractal</strong>. Les montagnes et les nuages des films sont souvent faits comme ça !</p>
+      <h3>🚗 Pourquoi la voiture glisse</h3>
+      <p>Sur le sec, la voiture va toujours là où pointe son nez. Sur la neige, elle a deux directions : celle de son nez, et celle où elle va vraiment (son <strong>déplacement</strong>). À chaque pas de calcul, le déplacement rattrape un petit morceau de l'écart avec le nez. Plus l'adhérence est faible, plus le morceau est petit. La voiture « dérape » : elle continue un peu tout droit quand tu tournes.</p>
+      <h3>⚡ L'éclair, puis le tonnerre</h3>
+      <p>La lumière de l'éclair arrive presque tout de suite. Le bruit du tonnerre, lui, va à 340 m/s. Si l'éclair est à 1 020 m, le tonnerre arrive 3 secondes plus tard. Le jeu fait exactement ça !</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Aux rayons X : la flèche bleu clair du vent au-dessus de toi, et une flèche orange quand la voiture dérape (là où elle va vraiment).</li>
+        <li>Dans l'état en direct, regarde « adhérence » et « dérapage » dans un virage sous la neige.</li>
+        <li>Dans le journal, compte les secondes entre l'éclair et le tonnerre.</li>
+        <li>Dans <code>config.js</code>, trouve <code>meteo</code> : change l'<code>adherence</code> de la neige.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un éclair tombe à 1 700 m. Quand entends-tu le tonnerre ?</summary><p>1 700 ÷ 340 = 5 secondes plus tard.</p></details>
+      <details class="question"><summary>Combien de temps faut-il pour voir les 7 météos ?</summary><p>7 × 2 minutes = 14 minutes (ou appuie 6 fois sur M !).</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -3340,26 +3384,38 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
           <p>Emboutir une voiture fait venir la police : de 1 à 5 étoiles selon le choc, l'hélico de la police à 5 étoiles, le commissariat si on est attrapé.</p>
           <p class="apprend"><b>Tu apprends :</b> une jauge qui monte et qui descend, des poursuivants (intelligence artificielle), voir ou ne pas voir. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">45</div>
-          <h4>Sauvegarder le monde <span class="etiquette">⏭️ prochaine idée</span></h4>
+          <h4>La météo <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>7 météos qui changent toutes seules et changent la conduite, un ciel avec de vrais nuages.</p>
+          <p class="apprend"><b>Tu apprends :</b> mélanger deux états (interpolation), le bruit fractal, le dérapage, la vitesse du son. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">46</div>
+          <h4>Le décor réaliste et les nouvelles voitures <span class="etiquette">⏭️ prochaines étapes (demandées)</span></h4>
+          <p>La nature et l'eau (48), les routes et la ville (49), des voitures réalistes : citadine, SUV, moto, camionnette, monster truck à ressorts, quad, voiture basse (50).</p>
+          <p class="apprend"><b>Tu apprends :</b> textures détaillées, végétation, reflets de l'eau, suspensions à ressort. <b>Durée :</b> 4 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">47</div>
+          <h4>Sauvegarder le monde <span class="etiquette">💡 idée</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">46</div>
+          <div class="num">48</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">47</div>
+          <div class="num">49</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">48</div>
+          <div class="num">50</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -3787,6 +3843,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-46" data-cle="appris-46" placeholder="Ex. : J'ai appris qu'on trouve un bug en mesurant…"></textarea>
         <label for="idees-46"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-46" data-cle="idees-46" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 47 · la météo <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le présentateur météo (<code>logique/meteo.js</code>), le dérapage et le vent (<code>logique/voiture.js</code>, <code>logique/vol.js</code>), le peintre du ciel avec les nuages, la pluie, la neige, les éclairs, le sol mouillé et enneigé (<code>affichage/meteo3d.js</code>), les sons de pluie, de vent et de tonnerre.</p>
+        <label for="appris-47"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-47" data-cle="appris-47" placeholder="Ex. : J'ai appris ce qu'est un dérapage…"></textarea>
+        <label for="idees-47"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-47" data-cle="idees-47" placeholder="Ex. : La nuit, avec les phares…"></textarea>
       </div>
     </section>
   </main>

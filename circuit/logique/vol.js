@@ -62,6 +62,12 @@ Circuit.Vol = (function () {
     v.y = Math.min(VOL.altitudeMax, v.y + v.vy * dt);
     v.x += Math.cos(v.angle) * v.vitesse * dt;
     v.z += Math.sin(v.angle) * v.vitesse * dt;
+    // Étape 47 : le vent pousse les avions et les hélicos.
+    if (Circuit.Meteo) {
+      const vent = Circuit.Meteo.vent(), k = C.meteo.effetVentAvion * dt;
+      v.x += vent.x * k;
+      v.z += vent.z * k;
+    }
     v.distance += Math.abs(v.vitesse) * dt;
     toucherLeSol(monde, v, f);
   }

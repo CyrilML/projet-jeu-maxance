@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 15,
+  version: 16,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -259,6 +259,28 @@ Circuit.CONFIG = {
     missile: { vitesse: 140, vie: 6, recharge: 0.8, virage: 2.2, cone: 0.6, rayonExplosion: 10 }, // il suit sa cible (virage en rad/s)
     // ✍️ Les cibles d'entraînement, autour de l'île lointaine : des ballons dans le ciel et des cibles au sol.
     ballons: 16, ciblesAuSol: 6, paieBallon: 3, paieCibleSol: 5, retour: 30, // retour = les cibles reviennent après 30 s
+  },
+
+  // Étape 47 : LA MÉTÉO. ✍️ Elle change toute seule, toutes les 2 minutes, et elle change la conduite.
+  //   adherence : 1 = la route accroche ; 0,3 = ça glisse beaucoup (la voiture continue tout droit en tournant).
+  //   vent : la force du vent (m/s) ; visibilite : jusqu'où on voit (m) ; nuages : 0 = ciel bleu, 1 = tout couvert ;
+  //   pluie, neige : combien de gouttes ou de flocons ; lumiere : la force du soleil (1 = plein soleil) ;
+  //   eclairs : un éclair toutes les… secondes (0 = jamais).
+  meteo: {
+    duree: 120, // ✍️ s : chaque météo dure 2 minutes…
+    transition: 12, // s : … et on passe doucement à la suivante en 12 secondes
+    ordre: ["soleil", "vent", "brouillard", "pluie", "orage", "neige", "blizzard"],
+    temps: {
+      soleil: { nom: "Soleil", icone: "☀️", adherence: 1, vent: 0, visibilite: 1100, nuages: 0.15, pluie: 0, neige: 0, lumiere: 1, eclairs: 0 },
+      vent: { nom: "Vent", icone: "🌬️", adherence: 1, vent: 9, visibilite: 1000, nuages: 0.45, pluie: 0, neige: 0, lumiere: 0.85, eclairs: 0 },
+      brouillard: { nom: "Brouillard", icone: "🌫️", adherence: 0.9, vent: 1, visibilite: 90, nuages: 0.9, pluie: 0, neige: 0, lumiere: 0.45, eclairs: 0 },
+      pluie: { nom: "Pluie", icone: "🌧️", adherence: 0.7, vent: 3, visibilite: 450, nuages: 0.85, pluie: 1, neige: 0, lumiere: 0.45, eclairs: 0 },
+      orage: { nom: "Orage", icone: "⛈️", adherence: 0.6, vent: 7, visibilite: 320, nuages: 1, pluie: 1.6, neige: 0, lumiere: 0.25, eclairs: 6 },
+      neige: { nom: "Neige", icone: "🌨️", adherence: 0.4, vent: 2, visibilite: 380, nuages: 0.9, pluie: 0, neige: 1, lumiere: 0.6, eclairs: 0 },
+      blizzard: { nom: "Blizzard", icone: "❄️", adherence: 0.3, vent: 13, visibilite: 110, nuages: 1, pluie: 0, neige: 2.2, lumiere: 0.4, eclairs: 0 },
+    },
+    effetVent: 0.12, // une voiture est poussée par 12 % de la force du vent (un avion : 60 %)
+    effetVentAvion: 0.6,
   },
 
   // Étape 45 : LA POLICE. ✍️ Emboutir une voiture fait venir la police, avec 1 à 5 étoiles selon la force du choc.

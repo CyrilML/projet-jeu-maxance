@@ -104,6 +104,7 @@
     if (E.consommer("pause")) options.pause = !options.pause;
     if (E.consommer("ralenti")) options.ralenti = !options.ralenti;
     if (E.consommer("son")) Circuit.Sons.basculer();
+    if (E.consommer("meteo")) Circuit.Meteo.choisir(Circuit.Meteo.suivant()); // étape 47 : M = la météo suivante
     if (E.consommer("camera")) Circuit.Evenements.emettre("camera", { mode: Circuit.Scene3D.changerCamera() });
     rafraichirBoutons();
 

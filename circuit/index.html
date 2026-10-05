@@ -68,6 +68,7 @@
       <button data-action="recommencer">🔄 Recommencer <kbd>R</kbd></button>
       <button data-action="camera">🎥 Caméra <kbd>C</kbd></button>
       <button data-action="son">🔊 Son <kbd>B</kbd></button>
+      <button data-action="meteo">🌦️ Météo <kbd>M</kbd></button>
       <button data-action="rayonsX" data-option="rayonsX" aria-pressed="false">🩻 Rayons X <kbd>X</kbd></button>
       <button data-action="pause" data-option="pause" aria-pressed="false">⏸ Pause <kbd>Échap</kbd></button>
       <button data-action="pasSuivant">⏭ Un pas <kbd>N</kbd></button>
@@ -95,50 +96,52 @@
   </div>
 
   <!-- L'ordre compte : chaque fichier peut utiliser ceux chargés AVANT lui.
-       Le « ?v=15 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
+       Le « ?v=16 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
   <!-- Étape 38 : Three.js, le moteur 3D qui fait le rendu réaliste (rangé dans le dépôt, licence MIT). -->
-  <script src="vendor/three.min.js?v=15"></script>
-  <script src="config.js?v=15"></script>
-  <script src="moteur/evenements.js?v=15"></script>
-  <script src="moteur/entrees.js?v=15"></script>
-  <script src="moteur/maths3d.js?v=15"></script>
-  <script src="moteur/projecteur.js?v=15"></script>
-  <script src="moteur/chocs.js?v=15"></script>
-  <script src="moteur/son.js?v=15"></script>
-  <script src="moteur/ruban.js?v=15"></script>
-  <script src="logique/piste.js?v=15"></script>
-  <script src="logique/voiture.js?v=15"></script>
-  <script src="logique/pilote.js?v=15"></script>
-  <script src="logique/pieces.js?v=15"></script>
-  <script src="logique/parcours.js?v=15"></script>
-  <script src="logique/grand-parcours.js?v=15"></script>
-  <script src="logique/mega-rampes.js?v=15"></script>
-  <script src="logique/balade.js?v=15"></script>
-  <script src="logique/rampes.js?v=15"></script>
-  <script src="logique/ville.js?v=15"></script>
-  <script src="logique/circulation.js?v=15"></script>
-  <script src="logique/archipel.js?v=15"></script>
-  <script src="logique/boulots.js?v=15"></script>
-  <script src="logique/vol.js?v=15"></script>
-  <script src="logique/armes.js?v=15"></script>
-  <script src="logique/police.js?v=15"></script>
-  <script src="logique/en-ville.js?v=15"></script>
-  <script src="logique/course.js?v=15"></script>
-  <script src="logique/garage.js?v=15"></script>
-  <script src="donnees/sauvegarde.js?v=15"></script>
-  <script src="affichage/textures.js?v=15"></script>
-  <script src="affichage/modeles.js?v=15"></script>
-  <script src="affichage/decor-circuit.js?v=15"></script>
-  <script src="affichage/decor-parcours.js?v=15"></script>
-  <script src="affichage/decor-grand-parcours.js?v=15"></script>
-  <script src="affichage/decor-rampes.js?v=15"></script>
-  <script src="affichage/decor-archipel.js?v=15"></script>
-  <script src="affichage/decor-ville.js?v=15"></script>
-  <script src="affichage/rayons-x.js?v=15"></script>
-  <script src="affichage/scene3d.js?v=15"></script>
-  <script src="affichage/tableau-de-bord.js?v=15"></script>
-  <script src="affichage/sons.js?v=15"></script>
-  <script src="affichage/sous-le-capot.js?v=15"></script>
-  <script src="main.js?v=15"></script>
+  <script src="vendor/three.min.js?v=16"></script>
+  <script src="config.js?v=16"></script>
+  <script src="moteur/evenements.js?v=16"></script>
+  <script src="moteur/entrees.js?v=16"></script>
+  <script src="moteur/maths3d.js?v=16"></script>
+  <script src="moteur/projecteur.js?v=16"></script>
+  <script src="moteur/chocs.js?v=16"></script>
+  <script src="moteur/son.js?v=16"></script>
+  <script src="moteur/ruban.js?v=16"></script>
+  <script src="logique/piste.js?v=16"></script>
+  <script src="logique/meteo.js?v=16"></script>
+  <script src="logique/voiture.js?v=16"></script>
+  <script src="logique/pilote.js?v=16"></script>
+  <script src="logique/pieces.js?v=16"></script>
+  <script src="logique/parcours.js?v=16"></script>
+  <script src="logique/grand-parcours.js?v=16"></script>
+  <script src="logique/mega-rampes.js?v=16"></script>
+  <script src="logique/balade.js?v=16"></script>
+  <script src="logique/rampes.js?v=16"></script>
+  <script src="logique/ville.js?v=16"></script>
+  <script src="logique/circulation.js?v=16"></script>
+  <script src="logique/archipel.js?v=16"></script>
+  <script src="logique/boulots.js?v=16"></script>
+  <script src="logique/vol.js?v=16"></script>
+  <script src="logique/armes.js?v=16"></script>
+  <script src="logique/police.js?v=16"></script>
+  <script src="logique/en-ville.js?v=16"></script>
+  <script src="logique/course.js?v=16"></script>
+  <script src="logique/garage.js?v=16"></script>
+  <script src="donnees/sauvegarde.js?v=16"></script>
+  <script src="affichage/textures.js?v=16"></script>
+  <script src="affichage/modeles.js?v=16"></script>
+  <script src="affichage/decor-circuit.js?v=16"></script>
+  <script src="affichage/decor-parcours.js?v=16"></script>
+  <script src="affichage/decor-grand-parcours.js?v=16"></script>
+  <script src="affichage/decor-rampes.js?v=16"></script>
+  <script src="affichage/decor-archipel.js?v=16"></script>
+  <script src="affichage/decor-ville.js?v=16"></script>
+  <script src="affichage/rayons-x.js?v=16"></script>
+  <script src="affichage/meteo3d.js?v=16"></script>
+  <script src="affichage/scene3d.js?v=16"></script>
+  <script src="affichage/tableau-de-bord.js?v=16"></script>
+  <script src="affichage/sons.js?v=16"></script>
+  <script src="affichage/sous-le-capot.js?v=16"></script>
+  <script src="main.js?v=16"></script>
 </body>
 </html>

@@ -40,6 +40,7 @@ Circuit.Entrees = (function () {
     volDescendre: ["KeyS", "ShiftLeft", "ShiftRight"],
     tir: ["KeyF"], // la mitrailleuse (tenir F)
     missile: ["KeyG"], // un missile (appuyer sur G)
+    meteo: ["KeyM"], // étape 47 : passer tout de suite à la météo suivante
   };
 
   const actionsDeLaTouche = {};
