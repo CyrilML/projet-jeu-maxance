@@ -11,8 +11,10 @@
 //   - chercher : la « tache d'encre » (Village.Chemins) trouve l'arbre le plus proche et le chemin ;
 //   - aller : il marche de case en case ;
 //   - travailler : il coupe (4 s) ;
-//   - revenir : il rapporte le tronc à sa cabane ;
+//   - revenir : il rapporte le tronc à sa cabane, et le pose devant la porte (un porteur viendra) ;
 //   - se reposer : 2 s, puis on recommence.
+// Étape 48 : 2 états de plus. « bloqué » : pas de route jusqu'à l'entrepôt (✍️ il ne travaille pas).
+// « plein » : 4 objets attendent déjà devant la porte, il attend qu'un porteur passe.
 // Le forestier et le carrier suivent exactement la même fiche, avec une autre « chose à chercher ».
 //
 // Une case visée est RÉSERVÉE : deux bûcherons ne vont pas couper le même arbre.
@@ -39,7 +41,7 @@ Village.Ouvriers = (function () {
       duree: () => C.ouvriers.planter,
       cherche: (monde, i) => {
         const k = monde.carte, t = k.terrain[i], o = k.objet[i];
-        return (t === T.herbe || t === T.prairie || t === T.foret) && (o === O.rien || o === O.fleurs) && !monde.occupees.has(i) && !monde.reservees.has(i);
+        return (t === T.herbe || t === T.prairie || t === T.foret) && (o === O.rien || o === O.fleurs) && !monde.occupees.has(i) && !monde.reservees.has(i) && !monde.route[i];
       },
       quoi: "une case d'herbe libre",
     },
@@ -57,6 +59,8 @@ Village.Ouvriers = (function () {
     revenir: "rentre à la maison",
     repos: "se repose",
     attendre: "n'a rien à faire",
+    bloque: "est bloqué : pas de route jusqu'à l'entrepôt",
+    plein: "attend un porteur (devant la porte, c'est plein)",
   };
 
   function creer(b) {
@@ -96,8 +100,14 @@ Village.Ouvriers = (function () {
     switch (o.etat) {
       case "repos":
       case "attendre":
+      case "bloque":
+      case "plein":
         o.minuteur -= dt;
-        if (o.minuteur <= 0) changer(o, "chercher");
+        if (o.minuteur > 0) return;
+        // ✍️ Pas relié à l'entrepôt : on ne travaille pas.
+        if (!b.relie) { if (o.etat !== "bloque") radio.emettre("ouvrier-bloque", { numero: b.numero, nom: Village.Batiments.TYPES[b.type].nom }); changer(o, "bloque", 0.5); return; }
+        if (b.sortieQuoi && b.sortie >= C.sortieMax) { changer(o, "plein", 0.5); return; }
+        changer(o, "chercher");
         return;
 
       case "chercher": {
@@ -148,10 +158,10 @@ Village.Ouvriers = (function () {
       case "revenir":
         if (!marcher(o, dt)) return;
         if (o.porte) {
-          // ✍️ En attendant les porteurs (étape 48), ce que l'ouvrier rapporte arrive tout seul dans l'entrepôt.
-          monde.stock[o.porte]++;
+          // Il pose ce qu'il rapporte devant sa porte. Un porteur viendra le chercher.
+          b.sortie++;
           b.produits++;
-          radio.emettre("livraison", { numero: b.numero, quoi: o.porte, stock: monde.stock[o.porte] });
+          radio.emettre("depose", { numero: b.numero, quoi: o.porte, devant: b.sortie });
           o.porte = null;
         }
         changer(o, "repos", C.ouvriers.repos);

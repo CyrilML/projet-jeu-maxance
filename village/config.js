@@ -12,7 +12,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 2,
+  version: 3,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 47 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -62,7 +62,8 @@ Village.CONFIG = {
   // Étape 47 : ✍️ le stock de départ, rangé dans l'entrepôt.
   depart: { troncs: 0, planches: 20, pierres: 10 },
 
-  // Étape 47 : les bâtiments. Le coût est pris dans l'entrepôt dès qu'on pose le chantier.
+  // Étape 47 : les bâtiments. Depuis l'étape 48, le coût est RÉSERVÉ quand on pose le chantier,
+  // puis les porteurs apportent les matériaux un par un.
   //   construction : durée du chantier (s) ; rayon : jusqu'où l'ouvrier va travailler (en cases).
   batiments: {
     bucheron: { cout: { planches: 3 }, construction: 8, rayon: 6 },
@@ -81,6 +82,18 @@ Village.CONFIG = {
     planchesParTronc: 2, // la scierie fait 2 planches avec 1 tronc
     attente: 3, // s avant de chercher à nouveau quand il n'y a rien à faire
   },
+
+  // Étape 48 : les routes et les porteurs
+  routes: {
+    cout: { pierres: 1 }, // ✍️ par case de route
+    longueurMax: 40, // en cases : on ne trace pas une route plus longue d'un seul coup
+  },
+  porteurs: {
+    nombre: 3, // les porteurs qui habitent l'entrepôt
+    vitesse: 2.2, // cases par seconde
+  },
+  sortieMax: 4, // objets qui peuvent attendre devant un bâtiment (au-delà, l'ouvrier attend)
+  entreeMax: 2, // troncs en réserve à la scierie
 
   nature: {
     croissance: 60, // s pour qu'une pousse devienne un arbre

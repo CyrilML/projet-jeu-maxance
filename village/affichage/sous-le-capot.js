@@ -12,12 +12,12 @@ Village.SousLeCapot = (function () {
 
   // Le message du journal pour chaque événement de la radio.
   const MESSAGES = {
-    lecture: (d) => (d.trouve ? "📂 Base de données lue : on reprend la carte n° " + d.graine + (d.converti ? " (ancienne version 1, convertie en version 2 : la partie commence)" : "") : "📂 Base de données vide : première visite sur cet ordinateur"),
+    lecture: (d) => (d.trouve ? "📂 Base de données lue : on reprend la carte n° " + d.graine + (d.converti ? " (ancienne version " + d.depuis + ", convertie en version 3" + (d.depuis < 3 ? " : construis des routes !" : "") + ")" : "") : "📂 Base de données vide : première visite sur cet ordinateur"),
     "carte-inventee": (d) =>
       "🗺️ Carte n° " + d.graine + " inventée : " + d.colonnes + " × " + d.lignes + " cases, " + nombre(d.compte.arbres) + " arbres, " +
       d.compte.rochers + " rochers, " + d.compte.montagnes + " montagnes, " + d.rivieres + " rivière(s) · filons : " +
       d.compte.charbon + " charbon, " + d.compte.fer + " fer, " + d.compte.or + " or · le village est en (" + d.village.colonne + ", " + d.village.ligne + ")" +
-      (d.reprise ? " · partie reprise : " + d.batiments + " bâtiment(s), " + d.modifs + " case(s) changée(s) rejouée(s)" : " · nouvelle partie : l'entrepôt est posé"),
+      (d.reprise ? " · partie reprise : " + d.batiments + " bâtiment(s), " + d.routes + " case(s) de route, " + d.modifs + " case(s) changée(s) rejouée(s)" : " · nouvelle partie : l'entrepôt est posé"),
     "case-choisie": (d) =>
       (d.batiment ? "🏠 " + d.batiment + " choisi(e) · " : "") + "📌 Case (" + d.colonne + ", " + d.ligne + ") choisie : " + d.nomTerrain + (d.objet ? ", " + d.nomObjet : "") + (d.filon ? ", filon de " + d.nomFilon : "") +
       " · altitude " + virgule(d.altitude, 2) + ", humidité " + virgule(d.humidite, 2),
@@ -28,7 +28,7 @@ Village.SousLeCapot = (function () {
     "choix-construction": (d) => "🏗️ Construire : " + d.nom + " (coût : " + cout(d.cout) + "). Choisis une case",
     "construction-annulee": (d) => "↩️ Construction annulée (" + d.nom + ")",
     "construction-impossible": (d) => "🚫 Pas de " + d.nom + " en (" + d.colonne + ", " + d.ligne + ") : " + d.raison,
-    "batiment-pose": (d) => "🏗️ Chantier n° " + d.numero + " : " + d.nom + " en (" + d.colonne + ", " + d.ligne + "), " + cout(d.cout) + " pris dans l'entrepôt · fini dans " + d.duree + " s",
+    "batiment-pose": (d) => "🏗️ Chantier n° " + d.numero + " : " + d.nom + " en (" + d.colonne + ", " + d.ligne + "), " + cout(d.cout) + " réservé(s) dans l'entrepôt : les porteurs vont les apporter" + (d.relie ? "" : " (il faut une route !)"),
     "chantier-fini": (d) => "🎉 " + d.nom + " n° " + d.numero + " construit(e)" + (d.metier ? " : le " + d.metier + " arrive" : ""),
     "ouvrier-part": (d) => "🚶 Le " + d.metier + " (n° " + d.numero + ") part vers " + d.quoi + " en (" + d.colonne + ", " + d.ligne + ") : " + d.pas + " pas · la tache d'encre a regardé " + d.visitees + " cases",
     "rien-a-faire": (d) => "😴 " + d.nom + " n° " + d.numero + " : pas de " + d.quoi.replace(/^une? /, "") + " à moins de " + d.rayon + " pas (" + d.visitees + " cases regardées). On réessaie dans " + Village.CONFIG.ouvriers.attente + " s",
@@ -36,14 +36,30 @@ Village.SousLeCapot = (function () {
     "pousse-plantee": (d) => "🌱 Pousse plantée en (" + d.colonne + ", " + d.ligne + ") · " + d.pousses + " pousse(s) en train de grandir",
     "arbre-pousse": (d) => "🌳 La pousse en (" + d.colonne + ", " + d.ligne + ") est devenue un " + d.sorte + " · " + nombre(d.arbres) + " arbres sur la carte",
     "pierre-taillee": (d) => "⛏️ Pierre taillée en (" + d.colonne + ", " + d.ligne + ")" + (d.vide ? " · le rocher est vide, il disparaît" : " · il reste " + d.reste + " pierre(s) dans ce rocher"),
-    livraison: (d) => "📦 " + (d.quoi === "troncs" ? "🪵 1 tronc" : "🪨 1 pierre") + " arrive à l'entrepôt (bâtiment n° " + d.numero + ") → " + d.stock + " en stock",
-    "scierie-attend": (d) => "⏳ Scierie n° " + d.numero + " : plus de troncs dans l'entrepôt, elle attend",
-    "sciage-debut": (d) => "🪚 Scierie n° " + d.numero + " : prend 1 tronc (il en reste " + d.troncs + ")",
-    "planches-sciees": (d) => "🟫 Scierie n° " + d.numero + " : +" + d.planches + " planches → " + d.stock + " en stock",
+    depose: (d) => "📦 " + emo(d.quoi) + " posé(e) devant la porte du bâtiment n° " + d.numero + " (" + d.devant + " qui attendent un porteur)",
+    "scierie-attend": (d) => "⏳ Scierie n° " + d.numero + " : plus de tronc en réserve, elle attend un porteur",
+    "sciage-debut": (d) => "🪚 Scierie n° " + d.numero + " : scie 1 tronc (il en reste " + d.reserve + " en réserve)",
+    "planches-sciees": (d) => "🟫 Scierie n° " + d.numero + " : +" + d.planches + " planches devant la porte (" + d.devant + ")",
+    // Étape 48
+    "choix-outil": (d) => (d.outil === "route" ? "🛤️ Outil route : touche le départ, puis l'arrivée" : d.outil === "demolir" ? "🧹 Outil démolir : touche une route ou un bâtiment" : "↩️ Outil rangé"),
+    "route-depart": (d) => "🚩 Départ de la route en (" + d.colonne + ", " + d.ligne + ")",
+    "route-construite": (d) => "🛤️ Route construite : " + d.cases + " case(s), dont " + d.nouvelles + " nouvelle(s) → " + d.cout + " 🪨 · " + d.total + " cases de route en tout",
+    "route-impossible": (d) => "🚫 Route impossible : " + d.raison,
+    "route-demolie": (d) => "🧹 Route démolie en (" + d.colonne + ", " + d.ligne + ") : 1 🪨 rendue",
+    "batiment-demoli": (d) => "🧹 " + d.nom + " n° " + d.numero + " démoli(e)",
+    "demolition-impossible": (d) => "🚫 " + d.raison,
+    "batiment-relie": (d) => "✅ " + d.nom + " n° " + d.numero + " est relié(e) à l'entrepôt",
+    "batiment-coupe": (d) => "✂️ " + d.nom + " n° " + d.numero + " n'est plus relié(e) à l'entrepôt",
+    "ouvrier-bloque": (d) => "🛤️❌ " + d.nom + " n° " + d.numero + " : pas de route jusqu'à l'entrepôt, l'ouvrier ne travaille pas",
+    "livraison-demandee": (d) => "📋 Papier n° " + d.numero + " dans la file : " + (d.sorte === "ramener" ? "ramener " + emo(d.quoi) + " de " : "apporter " + emo(d.quoi) + " à ") + d.nom + " n° " + d.batiment + " (" + d.file + " dans la file)",
+    "porteur-part": (d) => "🚚 Porteur " + d.porteur + " prend le papier : " + (d.sorte === "ramener" ? "va chercher " + emo(d.quoi) + " chez " : "apporte " + emo(d.quoi) + " à ") + d.nom + " n° " + d.batiment + " (" + d.pas + " pas de route) · encore " + d.file + " dans la file",
+    "porteur-livre": (d) => "🤲 Porteur " + d.porteur + " a livré " + emo(d.quoi) + " à " + d.nom + " n° " + d.batiment,
+    "arrivee-entrepot": (d) => "🏠 Porteur " + d.porteur + " range " + emo(d.quoi) + " dans l'entrepôt → " + d.stock + " en stock",
     "plein-ecran": (d) => (d.actif ? "⛶ Plein écran" : "🗗 Fin du plein écran"),
     "base-effacee": () => "🗑️ Base de données effacée",
   };
 
+  const emo = (r) => ({ troncs: "🪵 1 tronc", planches: "🟫 1 planche", pierres: "🪨 1 pierre" }[r] || r);
   const cout = (c) => Object.entries(c).map(([r, n]) => n + " " + Village.Batiments.NOMS_RESSOURCES[r]).join(" + ") || "gratuit";
 
   let monde = null, mesures = null, journal, etat, base, cle;
@@ -100,13 +116,28 @@ Village.SousLeCapot = (function () {
     h += ligne("place du village", "(" + k.village.colonne + ", " + k.village.ligne + ")");
     h += groupe("📦 Le stock de l'entrepôt");
     h += ligne("🪵 troncs · 🟫 planches · 🪨 pierres", monde.stock.troncs + " · " + monde.stock.planches + " · " + monde.stock.pierres);
+    const Po = Village.Porteurs;
+    h += ligne("promis (réservés)", Po.promis(monde, "troncs") + " · " + Po.promis(monde, "planches") + " · " + Po.promis(monde, "pierres"));
+    h += ligne("libres = stock − promis", Po.disponible(monde, "troncs") + " · " + Po.disponible(monde, "planches") + " · " + Po.disponible(monde, "pierres"));
     h += groupe("🏠 Les bâtiments et leurs ouvriers");
     for (const b of monde.batiments) {
       const T = Village.Batiments.TYPES[b.type];
       let etatB = b.etat === "chantier" ? "chantier " + Math.round(b.progres * 100) + " %" : b.type === "scierie" ? (b.travail ? "scie (" + virgule(b.travail.reste, 1) + " s)" : "attend un tronc") : b.ouvrier ? b.ouvrier.etat + (b.ouvrier.minuteur > 0 ? " " + virgule(b.ouvrier.minuteur, 1) + " s" : "") : "prêt";
       if (b.ouvrier && b.ouvrier.porte) etatB += " · porte des " + b.ouvrier.porte;
-      h += ligne(T.emoji + " n° " + b.numero + " (" + b.colonne + ", " + b.ligne + ")", etatB);
+      if (b.etat === "chantier") { const m = Village.Batiments.materiaux(b); etatB += " · " + m.arrives + "/" + m.total + " arrivés"; }
+      if (b.sortie) etatB += " · " + b.sortie + " devant";
+      h += ligne(T.emoji + " n° " + b.numero + " (" + b.colonne + ", " + b.ligne + ")" + (b.relie ? "" : " 🛤️❌"), etatB);
     }
+    h += groupe("🚚 Les porteurs et la file d'attente");
+    h += ligne("cases de route · reliées à l'entrepôt", Village.Routes.compter(monde) + " · " + monde.reseau.size);
+    for (const p of monde.porteurs) {
+      const t = p.travail;
+      h += ligne("porteur " + p.numero, p.etat === "attend" ? "attend à l'entrepôt" : (p.etat === "aller" ? "va " : "revient ") + (t.sorte === "ramener" ? "(ramener " : "(apporter ") + t.quoi + ")" + (p.porte ? " · porte des " + p.porte : ""));
+    }
+    h += ligne("papiers dans la file", monde.file.length);
+    monde.file.slice(0, 5).forEach((t, n) => {
+      h += ligne((n + 1) + ". papier n° " + t.numero, (t.sorte === "ramener" ? "ramener " : "apporter ") + t.quoi + " · " + Village.Batiments.TYPES[t.batiment.type].emoji + " n° " + t.batiment.numero);
+    });
     h += ligne("cases réservées", monde.reservees.size);
     h += ligne("pousses qui grandissent", monde.pousses.size);
     h += ligne("cases changées (sauvegardées)", monde.modifs.size);

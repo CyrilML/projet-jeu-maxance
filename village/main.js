@@ -81,6 +81,7 @@
       zoom: (souris ? souris.molette : 0) + (E.consommer("zoomPlus") ? 1 : 0) - (E.consommer("zoomMoins") ? 1 : 0),
       village: E.consommer("village"),
       construire: null,
+      outil: E.consommer("route") ? "route" : E.consommer("demolir") ? "demolir" : null,
       annuler: false,
       allerA: null,
       souris,
@@ -90,6 +91,7 @@
       const z = Village.Interface.zoneSous(souris.clic.x, souris.clic.y);
       if (z) {
         if (z.action === "construire") i.construire = z.valeur;
+        else if (z.action === "outil") i.outil = z.valeur;
         else if (z.action === "annuler" || z.action === "fermer") i.annuler = true;
         else if (z.action === "pleinEcran") basculerPleinEcran();
         else if (z.action === "miniCarte") i.allerA = z.versMonde(souris.clic.x, souris.clic.y);
@@ -110,7 +112,7 @@
     // Échap : d'abord annuler ce qu'on est en train de faire ; s'il n'y a rien à annuler, pause.
     let annuler = false;
     if (E.consommer("annuler")) {
-      if (monde.construction || monde.selection) annuler = true;
+      if (monde.construction || monde.selection || monde.outil) annuler = true;
       else options.pause = !options.pause;
     }
     if (E.consommer("nouvelleCarte")) {
@@ -137,7 +139,7 @@
       Village.Monde.etape(monde, dt, intentions);
       // Les pas suivants de la même image : plus de clic, de glissé ni de zoom (déjà faits).
       intentions = Object.assign({}, intentions, {
-        zoom: 0, village: false, construire: null, annuler: false, allerA: null,
+        zoom: 0, village: false, construire: null, outil: null, annuler: false, allerA: null,
         souris: Object.assign({}, intentions.souris, { glisseX: 0, glisseY: 0, molette: 0, pince: 1, centrePince: null, clic: null }),
       });
       pas++;

@@ -1,7 +1,7 @@
 // 🌍 LE MONDE : le chef d'orchestre des règles
 //
 // Le monde contient tout ce qui existe en ce moment : la carte, le stock de l'entrepôt, les bâtiments
-// et leurs ouvriers, les jeunes pousses, la caméra (là où l'on regarde), la case sous la souris…
+// et leurs ouvriers, les jeunes pousses, les routes, les porteurs et leur file d'attente, la caméra (là où l'on regarde), la case sous la souris…
 // À chaque petit pas de temps (1/120 s), `etape` applique les intentions du joueur
 // (glisser, zoomer, construire, choisir) puis fait vivre le village.
 //
@@ -35,6 +35,13 @@ Village.Monde = (function () {
       changements: 0, // combien de fois la carte a changé (le peintre refait la mini-carte quand ça bouge)
       construction: null, // le bâtiment qu'on est en train de placer (ex. "scierie"), ou null
       selection: null, // le bâtiment touché (son panneau s'affiche)
+      // Étape 48
+      route: new Uint8Array(carte.colonnes * carte.lignes), // 1 = une route sur cette case
+      reseau: new Set(), // les routes reliées à l'entrepôt
+      porteurs: [],
+      file: [], // la file d'attente des livraisons
+      outil: null, // "route" ou "demolir" quand on utilise un de ces outils
+      routeDepart: null, // la première case touchée pour tracer une route
     };
     if (cameraSauvee) Object.assign(monde.camera, cameraSauvee);
     else centrerSurLeVillage(monde);
@@ -46,9 +53,11 @@ Village.Monde = (function () {
       const v = carte.village;
       Village.Batiments.creer(monde, "entrepot", v.colonne + 2, v.ligne - 1, 1);
     }
+    Village.Porteurs.creerTous(monde);
+    Village.Routes.recalculerReseau(monde);
     radio.emettre("carte-inventee", {
       graine, colonnes: carte.colonnes, lignes: carte.lignes, compte: carte.compte, village: carte.village, rivieres: carte.rivieres.length,
-      reprise: !!partie, batiments: monde.batiments.length, modifs: monde.modifs.size,
+      reprise: !!partie, batiments: monde.batiments.length, modifs: monde.modifs.size, routes: Village.Routes.compter(monde),
     });
     return monde;
   }
@@ -65,8 +74,9 @@ Village.Monde = (function () {
     for (const [i, age] of partie.pousses || []) if (k.objet[i] === Village.Carte.OBJET.pousse) monde.pousses.set(i, age);
     Village.Carte.compter(k);
     if (partie.stock) Object.assign(monde.stock, partie.stock);
+    for (const i of partie.routes || []) monde.route[i] = 1;
     for (const b of partie.batiments || []) {
-      const nouveau = Village.Batiments.creer(monde, b.type, b.colonne, b.ligne, b.progres);
+      const nouveau = Village.Batiments.creer(monde, b.type, b.colonne, b.ligne, b.progres, b);
       nouveau.produits = b.produits || 0;
     }
   }
@@ -107,12 +117,13 @@ Village.Monde = (function () {
     cam.y = Math.min(yMax, Math.max(0, cam.y));
   }
 
-  // Un pas de temps. `intentions` vient de main.js : { dx, dy, zoom, souris, village, construire, annuler }.
+  // Un pas de temps. `intentions` vient de main.js : { dx, dy, zoom, souris, village, construire, outil, annuler }.
   function etape(monde, dt, intentions) {
     monde.temps += dt;
     camera(monde, dt, intentions);
     joueur(monde, intentions);
     Village.Batiments.etape(monde, dt);
+    Village.Porteurs.etape(monde, dt);
     nature(monde, dt);
   }
 
@@ -161,15 +172,26 @@ Village.Monde = (function () {
   }
 
   function joueur(monde, intentions) {
-    const s = intentions.souris;
+    const s = intentions.souris, B = Village.Batiments;
     if (intentions.construire) {
       // Appuyer 2 fois sur le même bouton = annuler.
       monde.construction = monde.construction === intentions.construire ? null : intentions.construire;
+      monde.outil = null;
       monde.selection = null;
-      radio.emettre(monde.construction ? "choix-construction" : "construction-annulee", { nom: Village.Batiments.TYPES[intentions.construire].nom, cout: Village.Batiments.cout(intentions.construire) });
+      radio.emettre(monde.construction ? "choix-construction" : "construction-annulee", { nom: B.TYPES[intentions.construire].nom, cout: B.cout(intentions.construire) });
+    }
+    if (intentions.outil) {
+      // Étape 48 : les outils 🛤️ route et 🧹 démolir.
+      monde.outil = monde.outil === intentions.outil ? null : intentions.outil;
+      monde.construction = null;
+      monde.selection = null;
+      monde.routeDepart = null;
+      radio.emettre("choix-outil", { outil: monde.outil });
     }
     if (intentions.annuler) {
-      if (monde.construction) radio.emettre("construction-annulee", { nom: Village.Batiments.TYPES[monde.construction].nom });
+      if (monde.construction) radio.emettre("construction-annulee", { nom: B.TYPES[monde.construction].nom });
+      if (monde.outil && monde.routeDepart) monde.routeDepart = null; // d'abord : oublier le départ de la route
+      else monde.outil = null;
       monde.construction = null;
       monde.selection = null;
     }
@@ -178,12 +200,36 @@ Village.Monde = (function () {
     if (!k) return;
     if (monde.construction) {
       // On pose le chantier. Raté (pas la place, pas assez de planches) : on reste en mode construction.
-      if (Village.Batiments.poser(monde, monde.construction, k.colonne, k.ligne)) monde.construction = null;
+      if (B.poser(monde, monde.construction, k.colonne, k.ligne)) monde.construction = null;
+      return;
+    }
+    if (monde.outil === "route") return tracerRoute(monde, k);
+    if (monde.outil === "demolir") {
+      const b = monde.occupees.get(k.numero);
+      if (b) B.demolir(monde, b);
+      else if (!Village.Routes.demolir(monde, k.numero)) radio.emettre("demolition-impossible", { raison: "rien à démolir ici" });
       return;
     }
     monde.choisie = k;
     monde.selection = monde.occupees.get(k.numero) || null;
-    radio.emettre("case-choisie", Object.assign({ batiment: monde.selection ? Village.Batiments.TYPES[monde.selection.type].nom : null }, k));
+    radio.emettre("case-choisie", Object.assign({ batiment: monde.selection ? B.TYPES[monde.selection.type].nom : null }, k));
+  }
+
+  // Tracer une route : 1er toucher = le départ, 2e toucher = l'arrivée. Puis on peut continuer
+  // depuis l'arrivée (elle devient le nouveau départ).
+  function tracerRoute(monde, k) {
+    const ok = monde.occupees.has(k.numero) || monde.route[k.numero] || Village.Routes.routable(monde, k.colonne, k.ligne);
+    if (!monde.routeDepart) {
+      if (!ok) { radio.emettre("route-impossible", { raison: "on ne peut pas commencer une route ici (" + k.nomTerrain + (k.objet ? ", " + k.nomObjet : "") + ")" }); return; }
+      monde.routeDepart = { colonne: k.colonne, ligne: k.ligne };
+      radio.emettre("route-depart", { colonne: k.colonne, ligne: k.ligne });
+      return;
+    }
+    if (k.colonne === monde.routeDepart.colonne && k.ligne === monde.routeDepart.ligne) { monde.routeDepart = null; return; }
+    if (Village.Routes.construire(monde, monde.routeDepart, { colonne: k.colonne, ligne: k.ligne })) {
+      // Si on est arrivé sur un bâtiment, on s'arrête là. Sinon, on peut continuer depuis l'arrivée.
+      monde.routeDepart = monde.occupees.has(k.numero) ? null : { colonne: k.colonne, ligne: k.ligne };
+    }
   }
 
   // Les pousses grandissent. Au bout de 60 s, elles deviennent de vrais arbres.

@@ -56,7 +56,7 @@ Village.Peintre = (function () {
   // Préparé UNE fois par carte : chaque case a une couleur un tout petit peu différente
   // (sinon l'herbe ressemble à du plastique), et la mini-carte est dessinée d'avance.
   function preparer(monde) {
-    const carte = monde.carte, version = monde.changements + monde.batiments.length;
+    const carte = monde.carte, version = monde.changements * 1000 + monde.batiments.length;
     if (cache && cache.carte === carte) {
       if (versionMini !== version) { dessinerMini(monde); versionMini = version; }
       return;
@@ -90,6 +90,7 @@ Village.Peintre = (function () {
         const i = l * carte.colonnes + c, o = carte.objet[i];
         m.fillStyle = o === O.arbre || o === O.sapin ? "#3d8a2e" : o === O.montagne ? "#7a6a58" : o === O.rocher ? "#9b9480" : couleurs[i];
         if (carte.filon[i]) m.fillStyle = FILONS[carte.filon[i]][0];
+        if (monde.route[i]) m.fillStyle = "#e2c38c";
         if (o === O.feuDeCamp || o === O.tente || monde.occupees.has(i)) m.fillStyle = "#ff4b3e";
         m.fillRect(c - l + carte.lignes - 1, (c + l) / 2, 2, 1);
       }
@@ -148,14 +149,22 @@ Village.Peintre = (function () {
       }
     }
 
+    // 2 bis. Les routes, par-dessus le sol (étape 48)
+    dessinerRoutes(monde, cMin, cMax, lMin, lMax, vue, t);
+
     // Les bâtiments et les ouvriers sont rangés par diagonale, pour être peints au bon moment.
     const parDiagonale = new Map();
     const ranger = (diag, chose) => { if (!parDiagonale.has(diag)) parDiagonale.set(diag, []); parDiagonale.get(diag).push(chose); };
     for (const b of monde.batiments) {
       ranger(b.colonne + b.ligne, { b });
-      if (b.ouvrier && b.ouvrier.etat !== "repos" && b.ouvrier.etat !== "attendre" && b.ouvrier.etat !== "chercher") {
+      const dehors = (e) => e === "aller" || e === "travailler" || e === "revenir";
+      if (b.ouvrier && dehors(b.ouvrier.etat)) {
         ranger(Math.floor(b.ouvrier.x) + Math.floor(b.ouvrier.y), { o: b.ouvrier, type: b.type });
       }
+    }
+    // Étape 48 : les porteurs dehors (ceux qui attendent sont dans l'entrepôt)
+    for (const porteur of monde.porteurs) {
+      if (porteur.etat !== "attend") ranger(Math.floor(porteur.x) + Math.floor(porteur.y), { porteur });
     }
 
     // 3. Les objets, du fond vers l'avant : diagonale par diagonale (colonne + ligne = diag).
@@ -173,6 +182,9 @@ Village.Peintre = (function () {
         if (chose.b) {
           const p = milieu(chose.b.colonne, chose.b.ligne);
           Village.Batisses.dessinerBatiment(ctx, chose.b, p.x, p.y, t);
+        } else if (chose.porteur) {
+          const p = Iso.versMonde(chose.porteur.x, chose.porteur.y, L, Hc);
+          Village.Batisses.dessinerPorteur(ctx, chose.porteur, p.x, p.y + 2, t);
         } else {
           const p = Iso.versMonde(chose.o.x, chose.o.y, L, Hc);
           Village.Batisses.dessinerOuvrier(ctx, chose.type, chose.o, p.x, p.y + 4, t);
@@ -184,12 +196,15 @@ Village.Peintre = (function () {
     // Le fantôme du bâtiment qu'on veut poser, sous la souris
     if (monde.construction && monde.survol) {
       const k = monde.survol, p = milieu(k.colonne, k.ligne);
-      const possible = !Village.Batiments.raisonInterdite(monde, monde.construction, k.colonne, k.ligne) && Village.Batiments.assezPour(monde.stock, monde.construction);
+      const possible = !Village.Batiments.raisonInterdite(monde, monde.construction, k.colonne, k.ligne) && Village.Batiments.assezPour(monde, monde.construction);
       Village.Batisses.dessinerFantome(ctx, monde.construction, p.x, p.y, possible, t, L, Hc);
     }
 
+    // Les outils route et démolir
+    if (monde.outil) dessinerOutil(monde, t, z);
+
     // La case sous la souris, et la case choisie
-    if (monde.survol && !monde.construction) {
+    if (monde.survol && !monde.construction && !monde.outil) {
       const p = milieu(monde.survol.colonne, monde.survol.ligne);
       losange(p.x, p.y, 0);
       ctx.lineWidth = 2.5 / z; ctx.strokeStyle = "rgba(255, 240, 120, .95)"; ctx.stroke();
@@ -211,6 +226,95 @@ Village.Peintre = (function () {
     if (options.rayonsX) Village.RayonsX.dessinerSurLEcran(ctx, monde);
 
     stats.ms = performance.now() - debut;
+  }
+
+  // ---------------------------------------------------------------- les routes
+  // Une route = un rond de terre battue au milieu de la case, et une bande vers chaque voisin qui est
+  // aussi une route (ou un bâtiment). On dessine d'abord TOUS les bords foncés, puis toute la terre claire
+  // par-dessus : comme ça, les morceaux se rejoignent sans trait au milieu.
+  // Astuce : on dessine dans un monde « pas écrasé » (y × 2), puis on écrase tout de moitié en hauteur :
+  // les bandes ont l'air couchées sur le sol, en vue de biais.
+  const VERS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  function dessinerRoutes(monde, cMin, cMax, lMin, lMax, vue, t) {
+    const k = monde.carte, segments = [];
+    for (let l = lMin; l <= lMax; l++) for (let c = cMin; c <= cMax; c++) {
+      const i = l * k.colonnes + c;
+      if (!monde.route[i]) continue;
+      const p = milieu(c, l);
+      if (p.x < vue.x0 || p.x > vue.x1 || p.y < vue.y0 || p.y > vue.y1) continue;
+      segments.push([p.x, p.y, p.x, p.y]);
+      for (const [dc, dl] of VERS) {
+        const nc = c + dc, nl = l + dl;
+        if (nc < 0 || nl < 0 || nc >= k.colonnes || nl >= k.lignes) continue;
+        const j = nl * k.colonnes + nc;
+        if (!monde.route[j] && !monde.occupees.has(j)) continue;
+        const q = milieu(nc, nl);
+        segments.push([p.x, p.y, (p.x + q.x) / 2, (p.y + q.y) / 2]);
+      }
+    }
+    if (!segments.length) return;
+    ctx.save();
+    ctx.scale(1, 0.5);
+    ctx.lineCap = "round";
+    const passe = (largeur, couleur) => {
+      ctx.lineWidth = largeur; ctx.strokeStyle = couleur;
+      ctx.beginPath();
+      for (const [x1, y1, x2, y2] of segments) { ctx.moveTo(x1, y1 * 2); ctx.lineTo(x2 + 0.01, y2 * 2); }
+      ctx.stroke();
+    };
+    passe(26, "#9b7440");
+    passe(20, "#e2c38c");
+    passe(6, "rgba(255, 245, 220, .35)");
+    ctx.restore();
+  }
+
+  // L'aperçu de la route qu'on trace, ou la case qu'on va démolir
+  function dessinerOutil(monde, t, z) {
+    const k = monde.survol;
+    if (monde.outil === "route") {
+      if (monde.routeDepart && k) {
+        const tr = Village.Routes.trajet(monde, monde.routeDepart, { colonne: k.colonne, ligne: k.ligne });
+        const assez = tr && tr.cout <= Village.Porteurs.disponible(monde, "pierres");
+        for (const p of tr ? tr.cases : []) {
+          const m = milieu(p.colonne, p.ligne);
+          losange(m.x, m.y, 0);
+          ctx.fillStyle = assez ? "rgba(255, 226, 122, .75)" : "rgba(255, 80, 60, .7)";
+          ctx.fill();
+          ctx.lineWidth = 1.5 / z; ctx.strokeStyle = assez ? "#b8860b" : "#a02818"; ctx.stroke();
+        }
+        if (tr) {
+          const m = milieu(k.colonne, k.ligne);
+          // Le prix, dans une petite bulle
+          const f = 1 / Math.min(z, 1.3);
+          ctx.font = "bold " + 14 * f + "px 'Trebuchet MS', sans-serif";
+          const texte = tr.cout + " 🪨", lt = ctx.measureText(texte).width + 14 * f;
+          ctx.fillStyle = assez ? "rgba(255, 250, 235, .95)" : "rgba(255, 225, 220, .95)";
+          ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(m.x - lt / 2, m.y - 40 * f, lt, 22 * f, 8 * f); else ctx.rect(m.x - lt / 2, m.y - 40 * f, lt, 22 * f);
+          ctx.fill(); ctx.lineWidth = 2 * f; ctx.strokeStyle = "#5a4220"; ctx.stroke();
+          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillStyle = "#3b2614";
+          ctx.fillText(texte, m.x, m.y - 29 * f);
+          ctx.textAlign = "left";
+        }
+      }
+      if (monde.routeDepart) {
+        // Un petit piquet avec un fanion jaune : le départ de la route
+        const m = milieu(monde.routeDepart.colonne, monde.routeDepart.ligne);
+        ctx.strokeStyle = "#3b2614"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.x, m.y - 26); ctx.stroke();
+        ctx.fillStyle = "#ffd23f";
+        ctx.beginPath(); ctx.moveTo(m.x, m.y - 26); ctx.lineTo(m.x + 13, m.y - 22 + Math.sin(t * 6)); ctx.lineTo(m.x, m.y - 17); ctx.closePath(); ctx.fill(); ctx.stroke();
+      } else if (k) {
+        const m = milieu(k.colonne, k.ligne);
+        losange(m.x, m.y, 0);
+        ctx.lineWidth = 2.5 / z; ctx.strokeStyle = "rgba(255, 226, 122, .95)"; ctx.stroke();
+      }
+    } else if (monde.outil === "demolir" && k) {
+      const m = milieu(k.colonne, k.ligne);
+      losange(m.x, m.y, 0);
+      ctx.fillStyle = "rgba(255, 70, 60, .35)"; ctx.fill();
+      ctx.lineWidth = 2.5 / z; ctx.strokeStyle = "#ff6b5b"; ctx.stroke();
+    }
   }
 
   // ---------------------------------------------------------------- le sol

@@ -170,6 +170,7 @@
       <a href="#etape45">Étape 45</a>
       <a href="#etape46">Étape 46 · village</a>
       <a href="#etape47">Étape 47</a>
+      <a href="#etape48">Étape 48</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3240,6 +3241,71 @@ ligne   = (Y ÷ 16 − X ÷ 32) ÷ 2</pre>
       <details class="question"><summary>Pourquoi ne pas ranger les 4 096 cases dans la sauvegarde ?</summary><p>Ce serait beaucoup plus gros. La graine refait la carte d'origine, et on n'ajoute que les quelques cases qui ont changé.</p></details>
     </section>
 
+    <section id="etape48">
+      <h2>🚚 Étape 48 : les routes et les porteurs <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Fini, les troncs qui arrivent tout seuls dans l'entrepôt ! Maintenant, il faut des routes, et des porteurs qui marchent dessus avec les objets. Un bâtiment sans route est bloqué. <a href="village/index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/48-routes-et-porteurs.md</code>.</p>
+          <ul>
+            <li>✍️ Une route coûte <strong>1 pierre par case</strong>.</li>
+            <li>✍️ <strong>Quelques porteurs</strong> partent de l'entrepôt.</li>
+            <li>✍️ Un bâtiment <strong>sans route jusqu'à l'entrepôt est bloqué</strong>.</li>
+          </ul>
+          <p><strong>Choisi par Claude</strong> (à toi de dire si ça te va) : 3 porteurs, 2,2 cases par seconde, 1 objet à la fois. On trace une route en touchant le départ puis l'arrivée. Tout passe par l'entrepôt. 🧹 pour démolir (une route rend sa pierre).</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Pose une cabane : un panneau « chemin barré » saute au-dessus, et le chantier ne bouge pas.</li>
+            <li>☐ <kbd>R</kbd> (ou le bouton Route), touche l'entrepôt, puis la cabane : la route apparaît, les 🪨 baissent.</li>
+            <li>☐ Les porteurs en bleu apportent les planches une par une, puis le chantier avance.</li>
+            <li>☐ Les troncs s'empilent devant la cabane, et un porteur vient les chercher : 🪵 +1.</li>
+            <li>☐ La scierie reçoit des troncs et les porteurs ramènent les planches.</li>
+            <li>☐ 🧹 sur une route : elle disparaît, 🪨 +1, et ce qui était derrière est bloqué.</li>
+            <li>☐ Recharge la page : tes routes sont toujours là.</li>
+            <li>Vérifie « version 3 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>📋 La file d'attente : premier arrivé, premier servi</h3>
+      <p>Le chef des livraisons (<code>village/logique/porteurs.js</code>) regarde tous les bâtiments, 4 fois par seconde. Pour chaque chose à transporter, il écrit un <strong>papier</strong> et le met au <strong>bout de la file</strong>. Un porteur libre prend toujours le papier du <strong>début</strong> de la file, comme à la boulangerie.</p>
+      <pre style="white-space: pre-wrap">file d'attente :  [ apporter 🟫 à la cabane ] [ ramener 🪵 du bûcheron ] [ apporter 🪵 à la scierie ] ← les nouveaux papiers arrivent ici
+                    ↑ le porteur libre prend celui-ci</pre>
+      <p>Sous le capot, tu vois la file en direct : les 5 premiers papiers, et ce que fait chaque porteur. Avec 3 porteurs et beaucoup de bâtiments, la file s'allonge : il faudra peut-être plus de porteurs !</p>
+
+      <h3>🔒 Réservé : promis, mais pas encore parti</h3>
+      <p>Quand tu poses un chantier, ses planches restent dans l'entrepôt jusqu'à ce qu'un porteur les prenne. Mais elles lui sont <strong>promises</strong> : tu ne peux plus les utiliser pour autre chose.</p>
+      <pre style="white-space: pre-wrap">libres = dans l'entrepôt − promis</pre>
+      <p>Touche l'entrepôt : il affiche son stock ET ce qui est libre. Les boutons de construction regardent ce qui est <em>libre</em>.</p>
+
+      <h3>🕸️ Le réseau : qui est relié ?</h3>
+      <p>Encore une tache d'encre ! Elle part de l'entrepôt et suit toutes les routes qui se touchent. Un bâtiment est <strong>relié</strong> si une route de cette tache touche un de ses 4 côtés. Aux rayons X (<kbd>X</kbd>), chaque route a un point : <span style="color:#50ff78">vert</span> si elle est reliée, <span style="color:#ff5040">rouge</span> sinon. Le chemin de chaque porteur est en violet.</p>
+      <p>Pour tracer une route, le jeu cherche aussi le plus court chemin avec la tache d'encre, en évitant l'eau, les montagnes, les arbres, les rochers et les bâtiments.</p>
+
+      <h3>💾 Ce qui n'est pas sauvegardé</h3>
+      <p>La base de données (version 3) garde les routes, ce qui attend devant chaque bâtiment, et les matériaux arrivés sur chaque chantier. Mais <strong>pas</strong> les porteurs ni la file : au rechargement, le chef réécrit tous ses papiers. Ce qu'un porteur avait dans les bras est remis à sa place. C'est un vrai choix de développeur : on sauvegarde ce qui est <em>important</em>, et on <em>recalcule</em> le reste.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Pose 3 chantiers d'un coup, et regarde la file d'attente sous le capot. Qui est servi en premier ?</li>
+        <li>Construis une route en zigzag et une route toute droite vers le même bâtiment. Laquelle prend le porteur ?</li>
+        <li>Démolis la route juste à côté de l'entrepôt. Combien de bâtiments deviennent bloqués ?</li>
+        <li>Une cabane de bûcheron très loin de l'entrepôt : les troncs s'empilent-ils devant la porte ? Que fait le bûcheron quand il y en a 4 ?</li>
+        <li>Dans <code>village/config.js</code>, trouve <code>porteurs</code> : <code>nombre</code> et <code>vitesse</code>.</li>
+        <li>Dans la base de données, trouve <code>routes</code> : ce sont des numéros de cases. Retrouve la colonne et la ligne d'un numéro (ligne × 64 + colonne).</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Tu as 10 pierres. Tu construis une route de 6 cases, dont 2 étaient déjà en route. Combien de pierres te reste-t-il ?</summary><p>Seules les 4 nouvelles cases coûtent : 10 − 4 = 6 pierres.</p></details>
+      <details class="question"><summary>L'entrepôt a 20 planches. Tu poses une scierie (4 planches) et un bûcheron (3 planches). Combien de planches sont libres ?</summary><p>20 − 4 − 3 = 13 planches libres, même si les 20 sont encore dans l'entrepôt.</p></details>
+      <details class="question"><summary>Combien de voyages de porteur faut-il pour construire une scierie ?</summary><p>4 planches + 2 pierres = 6 objets, et un porteur porte 1 objet à la fois : 6 voyages.</p></details>
+      <details class="question"><summary>Pourquoi ne pas sauvegarder la file d'attente ?</summary><p>Parce que le chef des livraisons peut la réécrire tout seul en regardant les bâtiments. On ne sauvegarde que ce qu'on ne peut pas recalculer.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -3545,15 +3611,15 @@ ligne   = (Y ÷ 16 − X ÷ 32) ÷ 2</pre>
           <p>Bûcheron, forestier, scierie, carrière et entrepôt. Les ouvriers trouvent leur travail tout seuls. Le jeu se joue au doigt, en plein écran.</p>
           <p class="apprend"><b>Tu apprends :</b> une chaîne de production, une machine à états, la recherche en largeur, sauvegarder les changements, les doigts et les pixels d'un téléphone. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">48</div>
-          <h4>Les habitants et les routes <span class="etiquette">⏭️ prochaine étape</span></h4>
-          <p>Construire des routes ; des porteurs animés transportent les troncs et les planches d'un bâtiment à l'autre.</p>
-          <p class="apprend"><b>Tu apprends :</b> trouver le plus court chemin (A*), une file d'attente de livraisons, des petits bonshommes qui marchent. <b>Durée :</b> 3 séances.</p>
+          <h4>Les routes et les porteurs <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Des routes à 1 pierre la case, 3 porteurs qui partent de l'entrepôt, des bâtiments bloqués sans route, et 🧹 pour démolir.</p>
+          <p class="apprend"><b>Tu apprends :</b> la file d'attente, réserver (promis / libre), un réseau relié, ce qu'on sauvegarde et ce qu'on recalcule. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte">
+        <div class="carte prochain">
           <div class="num">49</div>
-          <h4>Nourriture, maisons et saisons</h4>
+          <h4>Nourriture, maisons et saisons <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Champs, moulin, boulangerie, pêcheur. Les habitants mangent. En hiver, rien ne pousse : il faut des réserves. Trop longtemps affamés, ils partent.</p>
           <p class="apprend"><b>Tu apprends :</b> une horloge des saisons, une jauge de faim, l'équilibre entre ce qu'on produit et ce qu'on consomme. <b>Durée :</b> 3 séances.</p>
         </div>
@@ -4006,6 +4072,14 @@ ligne   = (Y ÷ 16 − X ÷ 32) ÷ 2</pre>
         <textarea class="journal" id="appris-47" data-cle="appris-47" placeholder="Ex. : J'ai appris qu'un ouvrier est une machine à états…"></textarea>
         <label for="idees-47"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-47" data-cle="idees-47" placeholder="Ex. : Un pêcheur au bord de l'eau…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 48 · les routes et les porteurs <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les routes, leur tracé et le réseau (<code>logique/routes.js</code>), les porteurs et la file d'attente (<code>logique/porteurs.js</code>), les chantiers qui attendent leurs matériaux, les objets qui attendent devant les portes, la démolition, le dessin des routes en terre battue et des porteurs, l'aperçu de la route avec son prix, la base de données en version 3.</p>
+        <label for="appris-48"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-48" data-cle="appris-48" placeholder="Ex. : J'ai appris ce qu'est une file d'attente…"></textarea>
+        <label for="idees-48"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-48" data-cle="idees-48" placeholder="Ex. : Des ânes pour porter plus vite…"></textarea>
       </div>
     </section>
   </main>

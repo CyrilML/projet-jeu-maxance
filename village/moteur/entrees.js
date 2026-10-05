@@ -28,6 +28,9 @@ Village.Entrees = (function () {
     forestier: ["Digit2", "Numpad2"],
     scierie: ["Digit3", "Numpad3"],
     carriere: ["Digit4", "Numpad4"],
+    // Étape 48 : les outils
+    route: ["KeyR"],
+    demolir: ["Delete", "Backspace"],
   };
 
   const actionsDeLaTouche = {};

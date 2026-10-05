@@ -23,8 +23,9 @@ pas de serveur, pas d'installation.
 - **`village/index.html`** : le troisième jeu (à partir de l'étape 46), un jeu de gestion façon The Settlers, sans combat,
   en vue de biais et en style dessin animé, jouable au doigt sur téléphone (pincer pour zoomer, plein écran ⛶).
   Une carte inventée au hasard (forêts, rivières, rochers, montagnes avec des filons de charbon, de fer et d'or),
-  et la première chaîne de production : bûcheron, forestier, scierie, carrière (touches 1 à 4 ou boutons en bas).
-  G = nouvelle carte, H = retour au village, X = rayons X, Échap = annuler.
+  et la première chaîne de production : bûcheron, forestier, scierie, carrière (touches 1 à 4 ou boutons en bas),
+  reliés à l'entrepôt par des routes (R) où marchent les porteurs.
+  G = nouvelle carte, H = retour au village, X = rayons X, Suppr = démolir, Échap = annuler.
 
 Dans le jeu : ← → (ou Q D) pour bouger, Espace / ↑ / Z pour sauter.
 Outils : `X` rayons X, `Échap` pause, `N` avancer d'un pas, `L` ralenti. `P` (en sautant) : poser un bloc. `T` : épée, `H` : potion, `F` : pioche, `R` : réparer, `K` : cuire, `M` : manger.

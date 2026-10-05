@@ -24,6 +24,10 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("construction-impossible", (d) => afficher("🚫 " + d.nom + " : " + d.raison));
   Village.Evenements.ecouter("chantier-fini", (d) => afficher("🎉 " + d.nom + " est construit" + (d.metier ? " : le " + d.metier + " se met au travail !" : " !")));
   Village.Evenements.ecouter("rien-a-faire", (d) => afficher("😴 " + d.nom + " : pas de " + d.quoi.replace(/^une? /, "") + " à moins de " + d.rayon + " pas"));
+  Village.Evenements.ecouter("route-impossible", (d) => afficher("🚫 Route : " + d.raison));
+  Village.Evenements.ecouter("demolition-impossible", (d) => afficher("🚫 " + d.raison));
+  Village.Evenements.ecouter("batiment-relie", (d) => afficher("✅ " + d.nom + " est relié à l'entrepôt !"));
+  Village.Evenements.ecouter("batiment-pose", (d) => { if (!d.relie) afficher("Pense à relier " + d.nom + " à l'entrepôt avec une route !"); });
   function afficher(texte) { message = { texte, jusqua: performance.now() + 3500 }; }
 
   function bulle(ctx, x, y, l, h, couleur) {
@@ -75,20 +79,29 @@ Village.Interface = (function () {
     zone(W - tp - 10, 10, tp, tp, "pleinEcran");
     if (W >= 520) dessinerMini(ctx, monde, mini, W - 10 - tp - 10, 10, petit ? 1 : 1.5);
 
-    // ---- En bas : les boutons de construction
-    const lbt = petit ? 62 : 74, hbt = petit ? 58 : 66, ecart = 8;
-    const total = B.A_CONSTRUIRE.length * lbt + (B.A_CONSTRUIRE.length - 1) * ecart;
+    // ---- En bas : les boutons de construction, puis les outils 🛤️ route et 🧹 démolir
+    const boutons = B.A_CONSTRUIRE.map((type) => ({
+      action: "construire", valeur: type, emoji: B.TYPES[type].emoji, nom: B.TYPES[type].court, touche: String(B.A_CONSTRUIRE.indexOf(type) + 1),
+      cout: Object.entries(B.cout(type)).map(([r, n]) => n + ({ planches: "🟫", pierres: "🪨", troncs: "🪵" }[r])).join(" "),
+      choisi: monde.construction === type, possible: B.assezPour(monde, type),
+    }));
+    boutons.push({ action: "outil", valeur: "route", emoji: null, nom: "Route", touche: "R", cout: C.routes.cout.pierres + "🪨/case", choisi: monde.outil === "route", possible: Village.Porteurs.disponible(monde, "pierres") >= C.routes.cout.pierres });
+    boutons.push({ action: "outil", valeur: "demolir", emoji: "🧹", nom: "Démolir", touche: "Suppr", cout: "", choisi: monde.outil === "demolir", possible: true });
+    const ecart = petit ? 5 : 8, n = boutons.length;
+    const lbt = Math.min(74, Math.floor((W - 16 - (n - 1) * ecart) / n)), hbt = petit ? 58 : 66;
+    const total = n * lbt + (n - 1) * ecart;
     const x0 = (W - total) / 2, y0 = He - hbt - 10;
-    B.A_CONSTRUIRE.forEach((type, k) => {
-      const x = x0 + k * (lbt + ecart), choisi = monde.construction === type, possible = B.assezPour(s, type);
-      bulle(ctx, x, y0, lbt, hbt, choisi ? "rgba(255, 226, 122, .98)" : possible ? "rgba(255, 250, 235, .94)" : "rgba(215, 205, 190, .9)");
-      if (choisi) { ctx.strokeStyle = "#ff8a1f"; ctx.lineWidth = 3.5; ctx.stroke(); }
-      texte(ctx, B.TYPES[type].emoji, x + lbt / 2, y0 + (petit ? 16 : 18), petit ? 20 : 24, null, false, "center");
-      texte(ctx, B.TYPES[type].court, x + lbt / 2, y0 + (petit ? 34 : 39), petit ? 10 : 12, "#3b2614", true, "center");
-      const cout = Object.entries(B.cout(type)).map(([r, n]) => n + ({ planches: "🟫", pierres: "🪨", troncs: "🪵" }[r])).join(" ");
-      texte(ctx, cout, x + lbt / 2, y0 + (petit ? 48 : 55), petit ? 10 : 11, possible ? "#7a5a30" : "#c0392b", true, "center");
-      if (!petit) texte(ctx, String(k + 1), x + 9, y0 + 11, 10, "#a08a6a", true, "center"); // la touche du clavier
-      zone(x, y0, lbt, hbt, "construire", type);
+    const etroit = lbt < 62; // très petit écran : textes plus petits
+    boutons.forEach((bt, k) => {
+      const x = x0 + k * (lbt + ecart);
+      bulle(ctx, x, y0, lbt, hbt, bt.choisi ? "rgba(255, 226, 122, .98)" : bt.possible ? "rgba(255, 250, 235, .94)" : "rgba(215, 205, 190, .9)");
+      if (bt.choisi) { ctx.strokeStyle = "#ff8a1f"; ctx.lineWidth = 3.5; ctx.stroke(); }
+      if (bt.emoji) texte(ctx, bt.emoji, x + lbt / 2, y0 + (petit ? 16 : 18), petit ? 19 : 24, null, false, "center");
+      else Village.Batisses.iconeRoute(ctx, x + lbt / 2, y0 + (petit ? 16 : 18), petit ? 0.7 : 0.85);
+      texte(ctx, bt.nom, x + lbt / 2, y0 + (petit ? 34 : 39), etroit ? 9 : petit ? 10 : 12, "#3b2614", true, "center");
+      if (bt.cout) texte(ctx, bt.cout, x + lbt / 2, y0 + (petit ? 48 : 55), etroit ? 9 : petit ? 10 : 11, bt.possible ? "#7a5a30" : "#c0392b", true, "center");
+      if (!petit) texte(ctx, bt.touche, x + 6, y0 + 11, 10, "#a08a6a", true, "left");
+      zone(x, y0, lbt, hbt, bt.action, bt.valeur);
     });
 
     // ---- Juste au-dessus des boutons : l'aide pour construire, un message, ou la case sous la souris
@@ -97,28 +110,37 @@ Village.Interface = (function () {
     if (message && maintenant < message.jusqua) aide = message.texte;
     else if (monde.construction) {
       aide = (Village.Entrees.toucheRecente() ? "Touche" : "Clique sur") + " une case pour poser : " + B.TYPES[monde.construction].nom;
+    } else if (monde.outil === "route") {
+      aide = monde.routeDepart ? "Maintenant, touche l'arrivée de la route" : "Touche le départ de la route (" + C.routes.cout.pierres + " 🪨 par nouvelle case)";
+    } else if (monde.outil === "demolir") {
+      aide = "Touche une route ou un bâtiment à démolir";
     } else if (monde.survol) {
       const k = monde.survol, O = Village.Carte.OBJET;
       aide = "Case (" + k.colonne + ", " + k.ligne + ") · " + k.nomTerrain;
       const bat = monde.occupees.get(k.numero);
-      if (bat) aide += " · " + B.TYPES[bat.type].nom;
+      if (bat) aide += " · " + B.TYPES[bat.type].nom + (bat.relie ? "" : " (pas de route !)");
+      else if (monde.route[k.numero]) aide += " · route" + (monde.reseau.has(k.numero) ? "" : " (pas reliée à l'entrepôt)");
       else if (k.objet && k.objet !== O.montagne) aide += " · " + k.nomObjet + (k.objet === O.rocher ? " (" + k.reste + " pierres)" : "");
       if (k.filon) aide += " · filon de " + k.nomFilon;
     }
     if (aide) {
-      ctx.font = "bold " + (petit ? 12 : 14) + "px " + POLICE;
-      const l = Math.min(W - 20, ctx.measureText(aide).width + 28), y = y0 - (petit ? 36 : 42);
-      bulle(ctx, (W - l) / 2, y, l, petit ? 28 : 32);
-      texte(ctx, aide, W / 2, y + (petit ? 14 : 16), petit ? 12 : 14, "#3b2614", true, "center");
-      if (monde.construction && !(message && maintenant < message.jusqua)) {
+      // Le texte doit tenir dans l'écran (avec la place du ✖) : sinon, on l'écrit plus petit.
+      const place = W - 20 - (monde.construction || monde.outil ? 38 : 0);
+      let taille = petit ? 12 : 14;
+      ctx.font = "bold " + taille + "px " + POLICE;
+      while (taille > 8 && ctx.measureText(aide).width + 24 > place) { taille -= 0.5; ctx.font = "bold " + taille + "px " + POLICE; }
+      const l = Math.min(place, ctx.measureText(aide).width + 24), y = y0 - (petit ? 36 : 42);
+      bulle(ctx, (W - l) / 2 - (monde.construction || monde.outil ? 19 : 0), y, l, petit ? 28 : 32);
+      texte(ctx, aide, W / 2 - (monde.construction || monde.outil ? 19 : 0), y + (petit ? 14 : 16), taille, "#3b2614", true, "center");
+      if ((monde.construction || monde.outil) && !(message && maintenant < message.jusqua)) {
         // Le petit ✖ pour annuler
-        const ax = (W + l) / 2 + 6;
+        const ax = (W + l) / 2 - 19 + 6;
         if (ax + 30 < W) { bulle(ctx, ax, y, 30, petit ? 28 : 32); texte(ctx, "✖", ax + 15, y + (petit ? 14 : 16), 14, "#c0392b", true, "center"); zone(ax, y, 30, petit ? 28 : 32, "annuler"); }
       }
     }
 
     // ---- Le panneau du bâtiment touché
-    if (monde.selection) panneauBatiment(ctx, monde, monde.selection, 10, petit ? 72 : 82, petit ? 210 : 250);
+    if (monde.selection) panneauBatiment(ctx, monde, monde.selection, 10, petit ? 72 : 82, petit ? 230 : 270);
 
     if (options.pause) {
       bulle(ctx, W / 2 - 70, 12, 140, 36);
@@ -129,22 +151,28 @@ Village.Interface = (function () {
   function panneauBatiment(ctx, monde, b, x, y, l) {
     const B = Village.Batiments, type = B.TYPES[b.type], petit = Ec.petit;
     const lignes = [];
+    if (b.type !== "entrepot") lignes.push(b.relie ? "✅ Relié à l'entrepôt par une route" : "❌ Pas de route jusqu'à l'entrepôt !");
     if (b.etat === "chantier") {
+      const m = B.materiaux(b);
       lignes.push("🏗️ Chantier : " + Math.round(b.progres * 100) + " %");
-      lignes.push("encore " + Math.ceil((1 - b.progres) * C.batiments[b.type].construction) + " s");
+      lignes.push("Matériaux arrivés : " + m.arrives + " / " + m.total);
     } else if (b.type === "entrepot") {
-      lignes.push("Tout le stock du village est rangé ici.");
+      const P = Village.Porteurs, d = (r) => P.disponible(monde, r);
       lignes.push("🪵 " + monde.stock.troncs + "   🟫 " + monde.stock.planches + "   🪨 " + monde.stock.pierres);
+      lignes.push("libres : 🪵 " + d("troncs") + "   🟫 " + d("planches") + "   🪨 " + d("pierres"));
+      const dehors = monde.porteurs.filter((p) => p.etat !== "attend").length;
+      lignes.push("🚚 " + monde.porteurs.length + " porteurs : " + dehors + " au travail");
+      lignes.push("📋 File d'attente : " + monde.file.length + " livraison(s)");
     } else if (b.type === "scierie") {
-      lignes.push(b.travail ? "🪚 Scie un tronc… " + Math.ceil(b.travail.reste) + " s" : monde.stock.troncs ? "Prend un tronc…" : "😴 Attend des troncs");
-      lignes.push("1 🪵 → " + C.ouvriers.planchesParTronc + " 🟫 en " + C.ouvriers.scier + " s");
+      lignes.push(b.travail ? "🪚 Scie un tronc… " + Math.ceil(b.travail.reste) + " s" : b.entree ? "Prête à scier" : "😴 Attend des troncs");
+      lignes.push("Réserve : " + b.entree + " 🪵 · devant la porte : " + b.sortie + " 🟫");
       lignes.push("A fait " + b.produits + " planches");
     } else {
       const o = b.ouvrier;
       lignes.push("👷 Le " + type.metier + " " + Village.Ouvriers.NOMS_ETATS[o.etat]);
       if (o.etat === "travailler") lignes.push("encore " + Math.ceil(o.minuteur) + " s");
+      if (b.sortieQuoi) lignes.push("Devant la porte : " + b.sortie + " / " + C.sortieMax + (b.sortieQuoi === "troncs" ? " 🪵" : " 🪨"));
       lignes.push((b.type === "forestier" ? "A planté " : "A rapporté ") + b.produits + (b.type === "bucheron" ? " troncs" : b.type === "forestier" ? " pousses" : " pierres"));
-      lignes.push("Travaille jusqu'à " + C.batiments[b.type].rayon + " pas de sa maison");
     }
     const h = 34 + lignes.length * (petit ? 17 : 19) + 8;
     bulle(ctx, x, y, l, h);

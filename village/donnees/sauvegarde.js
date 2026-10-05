@@ -16,12 +16,18 @@
 //   1 (étape 46) : la graine, le nombre de cartes inventées, de cases choisies, la caméra, le temps de jeu.
 //   2 (étape 47) : la partie : le stock, les bâtiments, les changements de la carte, les pousses.
 //                  Une sauvegarde en version 1 est convertie : sa carte est gardée, la partie commence.
+//   3 (étape 48) : les routes (la liste des cases), et pour chaque bâtiment : ce qui attend devant la porte
+//                  (sortie), les troncs en réserve (entree), et pour un chantier les matériaux arrivés (livre)
+//                  et ceux encore réservés dans l'entrepôt (attendu). En version 2, les chantiers avaient
+//                  déjà tout payé : on les convertit comme si tous leurs matériaux étaient arrivés.
+//                  Les porteurs et la file d'attente ne sont pas sauvegardés : ils recommencent à zéro,
+//                  et ce qu'un porteur avait dans les bras est remis à sa place.
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 2;
+  const VERSION = 3;
   const radio = Village.Evenements;
 
   function vide() {
@@ -35,7 +41,8 @@ Village.Sauvegarde = (function () {
       tempsDeJeu: 0, // secondes passées sur toutes les cartes
       // Depuis la version 2 : la partie en cours sur cette carte.
       //   stock : { troncs, planches, pierres }
-      //   batiments : [{ type, colonne, ligne, progres, produits }]
+      //   batiments : [{ type, colonne, ligne, progres, produits, sortie, entree, livre, attendu }]
+      //   routes : [numéro de case, …] (depuis la version 3)
       //   modifs : [[numéro de case, objet, pierres restantes], …]
       //   pousses : [[numéro de case, âge en s], …]
       partie: null,
@@ -47,24 +54,32 @@ Village.Sauvegarde = (function () {
   function convertir(lues) {
     const d = Object.assign(vide(), lues);
     // Version 1 → 2 : il n'y avait pas encore de partie. On garde la carte (la graine) et la caméra.
+    // Version 2 → 3 : pas encore de routes ; les chantiers avaient déjà payé tous leurs matériaux.
+    if ((lues.version || 1) < 3 && d.partie) {
+      d.partie.routes = d.partie.routes || [];
+      for (const b of d.partie.batiments || []) {
+        if (b.progres < 1 && !b.livre) { b.livre = Object.assign({}, (Village.CONFIG.batiments[b.type] || {}).cout); b.attendu = {}; }
+      }
+    }
     d.version = VERSION;
     return d;
   }
 
   function lire() {
-    let trouve = false, converti = false;
+    let trouve = false, converti = false, lueVersion = null;
     try {
       const texte = localStorage.getItem(CLE);
       if (texte) {
         const lues = JSON.parse(texte);
-        converti = (lues.version || 1) < VERSION;
+        lueVersion = lues.version || 1;
+        converti = lueVersion < VERSION;
         donnees = convertir(lues);
         trouve = true;
       }
     } catch (e) {
       donnees = vide();
     }
-    radio.emettre("lecture", { trouve, converti, graine: donnees.graine });
+    radio.emettre("lecture", { trouve, converti, depuis: converti ? lueVersion : null, graine: donnees.graine });
     return donnees;
   }
 
@@ -99,9 +114,21 @@ Village.Sauvegarde = (function () {
     donnees.graine = monde.carte.graine;
     donnees.camera = { x: Math.round(monde.camera.x), y: Math.round(monde.camera.y), zoom: Math.round(monde.camera.zoom * 100) / 100 };
     donnees.tempsDeJeu = Math.round(donnees.tempsDeJeu + tempsEnPlus);
+    // Ce que les porteurs ont dans les bras retourne à sa place (dans l'entrepôt, ou réservé pour le chantier).
+    const enCours = Village.Porteurs.enCours(monde);
+    const stock = {};
+    for (const r in monde.stock) stock[r] = monde.stock[r] + (enCours.stock[r] || 0);
+    const ajout = (a, b) => { const r = Object.assign({}, a); for (const k in b || {}) r[k] = (r[k] || 0) + b[k]; return r; };
     donnees.partie = {
-      stock: Object.assign({}, monde.stock),
-      batiments: monde.batiments.map((b) => ({ type: b.type, colonne: b.colonne, ligne: b.ligne, progres: Math.round(b.progres * 100) / 100, produits: b.produits })),
+      stock,
+      batiments: monde.batiments.map((b) => {
+        const d = { type: b.type, colonne: b.colonne, ligne: b.ligne, progres: b.progres >= 1 ? 1 : Math.floor(b.progres * 100) / 100, produits: b.produits };
+        if (b.sortie) d.sortie = b.sortie;
+        if (b.entree) d.entree = b.entree;
+        if (b.etat === "chantier") { d.livre = b.livre; d.attendu = ajout(b.attendu, enCours.attendu.get(b)); }
+        return d;
+      }),
+      routes: monde.route.reduce((liste, v, i) => (v ? (liste.push(i), liste) : liste), []),
       modifs: [...monde.modifs].map(([i, m]) => [i, m.o, m.r]),
       pousses: [...monde.pousses].map(([i, age]) => [i, Math.round(age)]),
     };

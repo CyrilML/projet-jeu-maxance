@@ -8,7 +8,9 @@
 //   - la place du village (le cercle où il y a toujours de l'herbe) ;
 //   - le calcul qui trouve la case sous la souris ;
 //   - (étape 47) la zone de travail de chaque ouvrier (jusqu'où va la « tache d'encre »), son chemin,
-//     son état (sa case dans la machine à états), et les cases réservées (croix rouges).
+//     son état (sa case dans la machine à états), et les cases réservées (croix rouges) ;
+//   - (étape 48) les routes : un point vert si elle est reliée à l'entrepôt, rouge sinon ;
+//     et le chemin de chaque porteur, en violet.
 
 window.Village = window.Village || {};
 
@@ -114,6 +116,26 @@ Village.RayonsX = (function () {
       ctx.fillStyle = "#ffe27a";
       ctx.textAlign = "center";
       ctx.fillText(o.etat + (o.minuteur > 0 && (o.etat === "travailler" || o.etat === "repos" || o.etat === "attendre") ? " " + virgule(o.minuteur, 1) + " s" : ""), p.x, p.y - 34 / Math.min(z, 1.4));
+      ctx.textAlign = "left";
+    }
+    // Étape 48 : les routes du réseau (vert = reliée à l'entrepôt, rouge = pas reliée), et le chemin des porteurs
+    for (let i = 0; i < monde.route.length; i++) {
+      if (!monde.route[i]) continue;
+      const c = i % carte.colonnes, l = Math.floor(i / carte.colonnes);
+      if (c < b.cMin || c > b.cMax || l < b.lMin || l > b.lMax) continue;
+      const p = point(c + 0.5, l + 0.5);
+      ctx.fillStyle = monde.reseau.has(i) ? "rgba(80, 255, 120, .9)" : "rgba(255, 80, 60, .9)";
+      ctx.beginPath(); ctx.arc(p.x, p.y, 4 / Math.min(z, 1.5), 0, Math.PI * 2); ctx.fill();
+    }
+    for (const porteur of monde.porteurs) {
+      if (!porteur.chemin) continue;
+      ctx.strokeStyle = "rgba(160, 140, 255, .9)"; ctx.lineWidth = 2.5 / z;
+      ctx.beginPath();
+      porteur.chemin.forEach((k, n) => { const p = point(k.x, k.y); n ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); });
+      ctx.stroke();
+      const p = point(porteur.x, porteur.y);
+      ctx.fillStyle = "#c9b8ff"; ctx.textAlign = "center";
+      ctx.fillText("porteur " + porteur.numero + " · " + porteur.etat, p.x, p.y - 36 / Math.min(z, 1.4));
       ctx.textAlign = "left";
     }
     for (const i of monde.reservees) {

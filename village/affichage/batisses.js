@@ -1,7 +1,7 @@
 // 🏡 LES BÂTISSES : le dessinateur des maisons et des petits bonshommes
 //
 // Ce fichier sait dessiner chaque bâtiment (entrepôt, cabane du bûcheron, scierie…), les chantiers,
-// les ouvriers et les jeunes pousses. Il est appelé par le peintre, au bon moment (du fond vers l'avant).
+// les ouvriers, les porteurs (étape 48) et les jeunes pousses. Il est appelé par le peintre, au bon moment (du fond vers l'avant).
 //
 // Une maison en vue de biais, c'est une BOÎTE : un losange au sol, deux murs qu'on voit (gauche et
 // droite), et un toit. Tous les bâtiments utilisent la même boîte, avec d'autres couleurs et d'autres
@@ -128,7 +128,7 @@ Village.Batisses = (function () {
         drapeau(ctx, x - 6, y - 50, t, "#3e7bff");
         break;
       case "bucheron":
-        pile(ctx, x + 14, y + 8, "rondin", 5);
+        pile(ctx, x + 14, y + 8, "rondin", b.sortie); // les troncs qui attendent un porteur
         // Une hache plantée dans une souche
         rond(ctx, x - 22, y + 10, 4, "#c78b4a");
         ctx.strokeStyle = "#5a3818"; ctx.lineWidth = 2;
@@ -141,7 +141,8 @@ Village.Batisses = (function () {
         forme(ctx, [[x + 11, y + 6], [x + 17, y - 6], [x + 23, y + 6]], "#3a9d55");
         break;
       case "scierie": {
-        pile(ctx, x + 16, y + 10, "planche", b.produits > 0 ? 4 : 1);
+        pile(ctx, x + 16, y + 10, "planche", b.sortie);
+        pile(ctx, x - 20, y + 12, "rondin", b.entree); // les troncs en réserve
         // La grande lame de scie, qui tourne quand on scie
         const angle = b.travail ? t * 12 : 0, cx = x + 12, cy = y - 8;
         ctx.save(); ctx.translate(cx, cy); ctx.rotate(angle);
@@ -157,7 +158,7 @@ Village.Batisses = (function () {
         break;
       }
       case "carriere":
-        pile(ctx, x + 14, y + 9, "pierre", 4);
+        pile(ctx, x + 14, y + 9, "pierre", b.sortie);
         // Une pioche posée contre le mur
         ctx.strokeStyle = "#5a3818"; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.moveTo(x - 20, y + 9); ctx.lineTo(x - 16, y - 6); ctx.stroke();
@@ -168,6 +169,29 @@ Village.Batisses = (function () {
     // Un petit panneau avec l'emoji du métier, au-dessus de la porte
     if (b.type !== "entrepot") enseigne(ctx, x - m.a * 0.45, y - 8 - m.h * 0.2, Village.Batiments.TYPES[b.type].emoji);
     if (travaille && b.type === "carriere") poussiere(ctx, x, y, t);
+    if (!b.relie) panneauSansRoute(ctx, x, y - m.h - m.toit - 16, t);
+  }
+
+  // ✍️ Pas de route jusqu'à l'entrepôt : un panneau qui saute, au-dessus du toit (un chemin barré).
+  function panneauSansRoute(ctx, x, y, t) {
+    const saut = Math.abs(Math.sin(t * 3)) * 4;
+    ctx.fillStyle = "#fff4f0";
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x - 14, y - 14 - saut, 28, 22, 6); else ctx.rect(x - 14, y - 14 - saut, 28, 22);
+    ctx.fill(); ctx.strokeStyle = "#c0392b"; ctx.lineWidth = 2; ctx.stroke();
+    iconeRoute(ctx, x, y - 3 - saut, 0.55);
+    ctx.strokeStyle = "#e0301e"; ctx.lineWidth = 2.5; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(x - 7, y - 10 - saut); ctx.lineTo(x + 7, y + 4 - saut); ctx.moveTo(x + 7, y - 10 - saut); ctx.lineTo(x - 7, y + 4 - saut); ctx.stroke();
+  }
+
+  // Une petite icône de chemin de terre qui serpente (il n'existe pas d'emoji « chemin »).
+  function iconeRoute(ctx, x, y, e) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(e, e);
+    ctx.lineCap = "round";
+    const chemin = () => { ctx.beginPath(); ctx.moveTo(-12, 14); ctx.bezierCurveTo(-14, 2, 12, 4, 6, -6); ctx.bezierCurveTo(2, -12, 8, -14, 10, -16); };
+    chemin(); ctx.strokeStyle = "#9b7440"; ctx.lineWidth = 10; ctx.stroke();
+    chemin(); ctx.strokeStyle = "#e2c38c"; ctx.lineWidth = 6.5; ctx.stroke();
+    ctx.restore();
   }
 
   function enseigne(ctx, x, y, emoji) {
@@ -215,7 +239,10 @@ Village.Batisses = (function () {
     ctx.beginPath();
     for (const [px, py] of [[x - a, y], [x, y + bb], [x + a, y], [x, y - bb]]) { ctx.moveTo(px, py); ctx.lineTo(px, py - m.h - 6); }
     ctx.stroke();
-    pile(ctx, x + a * 0.7, y + 10, "planche", 3);
+    // Les matériaux arrivés (apportés par les porteurs)
+    pile(ctx, x + a * 0.7, y + 10, "planche", b.livre.planches || 0);
+    pile(ctx, x - a * 0.8, y + 8, "pierre", b.livre.pierres || 0);
+    if (!b.relie) panneauSansRoute(ctx, x, y - m.h - 34, t);
     // La barre de progression
     const l = 36, bx = x - l / 2, by = y - m.h - 22;
     ctx.fillStyle = "rgba(255,250,235,.95)";
@@ -284,6 +311,34 @@ Village.Batisses = (function () {
     ctx.restore();
   }
 
+  // ---------------------------------------------------------------- un porteur
+  // Un petit bonhomme en tunique bleue, qui porte son objet au-dessus de la tête.
+  function dessinerPorteur(ctx, p, x, y, t) {
+    const pas = Math.sin(t * 15 + p.numero), saut = Math.abs(pas) * 1.5;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(p.direction, 1);
+    ctx.fillStyle = "rgba(20, 40, 10, .25)";
+    ctx.beginPath(); ctx.ellipse(0, 1, 6, 2.5, 0, 0, TOUR); ctx.fill();
+    ctx.translate(0, -saut);
+    ctx.strokeStyle = "#5a3a20"; ctx.lineWidth = 2.6; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(-2, -6); ctx.lineTo(-2 + pas * 2.5, 0); ctx.moveTo(2, -6); ctx.lineTo(2 - pas * 2.5, 0); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0, -10, 4.8, 6, 0, 0, TOUR); ctx.fillStyle = "#4a90d9"; ctx.fill(); contour(ctx, 1.5);
+    ctx.fillStyle = "#c98b4f"; ctx.fillRect(-4.5, -9, 9, 2); // la ceinture
+    rond(ctx, 0, -19, 4.3, "#f2c79b");
+    ctx.fillStyle = CONTOUR; ctx.beginPath(); ctx.arc(1.8, -19.5, 0.8, 0, TOUR); ctx.fill();
+    // Les bras levés quand il porte quelque chose
+    ctx.strokeStyle = "#f2c79b"; ctx.lineWidth = 2;
+    ctx.beginPath();
+    if (p.porte) { ctx.moveTo(-3, -13); ctx.lineTo(-3, -25); ctx.moveTo(3, -13); ctx.lineTo(3, -25); }
+    else { ctx.moveTo(-4, -12); ctx.lineTo(-5 - pas, -6); ctx.moveTo(4, -12); ctx.lineTo(5 + pas, -6); }
+    ctx.stroke();
+    if (p.porte === "troncs") { ctx.fillStyle = "#b07a40"; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(-8, -30, 16, 5, 2); else ctx.rect(-8, -30, 16, 5); ctx.fill(); contour(ctx, 1.2); rond(ctx, 8, -27.5, 2.5, "#d9a866"); }
+    else if (p.porte === "planches") { forme(ctx, [[-9, -27], [9, -29], [9, -26], [-9, -24]], "#d9a866"); }
+    else if (p.porte === "pierres") { rond(ctx, 0, -29, 4, "#a3a8ad"); }
+    ctx.restore();
+  }
+
   // ---------------------------------------------------------------- une jeune pousse
   // p : de 0 (on vient de la planter) à 1 (elle va devenir un arbre)
   function dessinerPousse(ctx, x, y, p, t) {
@@ -315,5 +370,5 @@ Village.Batisses = (function () {
     ctx.globalAlpha = 1;
   }
 
-  return { dessinerBatiment, dessinerOuvrier, dessinerPousse, dessinerFantome };
+  return { dessinerBatiment, dessinerOuvrier, dessinerPorteur, dessinerPousse, dessinerFantome, iconeRoute };
 })();
