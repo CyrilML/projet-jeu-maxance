@@ -168,6 +168,7 @@
       <a href="#etape43">Étape 43</a>
       <a href="#etape44">Étape 44</a>
       <a href="#etape45">Étape 45</a>
+      <a href="#etape46">Étape 46</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3048,6 +3049,33 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Tu as 4 étoiles et tu te caches. Au bout de combien de temps la police est-elle semée ?</summary><p>6 s pour que ça clignote, puis 4 × 5 s : 6 + 20 = 26 secondes.</p></details>
     </section>
 
+    <section id="etape46">
+      <h2>🔧 Étape 46 : la voiture ne tremble plus <span class="etiquette">✅ corrigée · à valider</span></h2>
+      <p class="chapeau">Tu as trouvé un bug : la voiture tremblait dans les montées et les descentes. Voici l'enquête ! <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 Le bug</h4>
+          <p class="petit">La fiche est dans <code>demandes/46-voiture-qui-tremble.md</code>.</p>
+          <ul><li>« À chaque montée ou descente, la voiture tremble. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ La grande rampe (carte 4) : plus de tremblement.</li>
+            <li>☐ La méga-rampe (carte 5) : pareil.</li>
+            <li>☐ Les montées du parcours et les ponts de la ville : la voiture penche en douceur.</li>
+            <li>Vérifie « version 15 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🕵️ L'enquête</h3>
+      <p>Pour trouver le bug, Claude a <strong>mesuré</strong> : à chaque pas de calcul (120 par seconde), il a noté la pente de la voiture et additionné tous les changements. C'est la « secousse ». Sur la grande rampe, elle valait 15,5. Sur un pont de la ville, seulement 0,2. Le coupable était donc sur les routes en tronçons de 3 m.</p>
+      <p>Les tronçons se chevauchent un peu (60 cm), pour qu'il n'y ait pas de fente dans les virages. Mais dans ce chevauchement, le jeu croyait que la route était plate, puis elle remontait d'un coup. Ça faisait une petite marche tous les 3 m : à 110 km/h, ça fait 10 marches par seconde. La voiture tremblait ! Maintenant, la pente continue dans le chevauchement, et la secousse ne vaut plus que 0,5.</p>
+      <p>En plus, la voiture penche maintenant <strong>en douceur</strong> : à chaque image, elle rattrape seulement un quart de l'écart avec la bonne pente, comme une vraie suspension.</p>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>À 110 km/h (30 m/s), combien de tronçons de 3 m passes-tu par seconde ?</summary><p>30 ÷ 3 = 10 tronçons par seconde : 10 petites marches, d'où le tremblement.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -3751,6 +3779,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-45" data-cle="appris-45" placeholder="Ex. : J'ai appris ce qu'est une recherche gourmande…"></textarea>
         <label for="idees-45"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-45" data-cle="idees-45" placeholder="Ex. : Des barrages de police sur les ponts…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 46 · la voiture ne tremble plus <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été corrigé :</strong> la hauteur de la route là où deux tronçons se chevauchent (<code>moteur/ruban.js</code>), et la voiture qui penche en douceur (<code>affichage/scene3d.js</code>).</p>
+        <label for="appris-46"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-46" data-cle="appris-46" placeholder="Ex. : J'ai appris qu'on trouve un bug en mesurant…"></textarea>
+        <label for="idees-46"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-46" data-cle="idees-46" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

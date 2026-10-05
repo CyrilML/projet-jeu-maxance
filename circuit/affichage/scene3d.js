@@ -427,7 +427,11 @@ Circuit.Scene3D = (function () {
   // Met une voiture (le groupe Three.js) à la place de la voiture du monde.
   function placerVoiture(objet, v) {
     const y = v.y || 0;
-    const penche = v.tangage || (Math.abs(v.vy || 0) > 0.01 ? Math.max(-0.6, Math.min(0.6, Math.atan2(v.vy, Math.abs(v.vitesse) || 1))) : 0);
+    const cible = v.tangage || (Math.abs(v.vy || 0) > 0.01 ? Math.max(-0.6, Math.min(0.6, Math.atan2(v.vy, Math.abs(v.vitesse) || 1))) : 0);
+    // Étape 46 : la voiture penche EN DOUCEUR (elle rattrape un quart de l'écart à chaque image), comme une vraie
+    // suspension. Sans ça, le moindre petit changement de pente la faisait trembler. (Pas pendant un looping.)
+    const penche = v.tangage ? cible : objet.penche === undefined ? cible : objet.penche + (cible - objet.penche) * 0.25;
+    objet.penche = penche;
     objet.g.position.set(v.x, y, v.z);
     objet.g.rotation.set(v.roulis || 0, -v.angle, penche, "YZX"); // d'abord tourner (angle), puis pencher (pente, looping), puis le roulis (étape 44 : un avion qui vire)
     // Étape 44 : le rotor de l'hélico et l'hélice du petit avion tournent (leur angle est rotationRoues).
