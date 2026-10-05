@@ -64,7 +64,7 @@
   <div class="page">
     <header class="entete">
       <h1>🏘️ Le village de Maxance · un jeu de gestion</h1>
-      <span><span id="version" class="version"></span> <a href="carnet.html#etape6">📓 Ouvrir le carnet du village</a></span>
+      <span><span id="version" class="version"></span> <a href="carnet.html#etape7">📓 Ouvrir le carnet du village</a></span>
     </header>
 
     <div class="cadre-ecran">
@@ -108,36 +108,42 @@
         <h2>💾 Base de données <button id="effacer-base">Effacer</button></h2>
         <p class="aide">Ce qui survit quand on ferme la page. Rangé sous la clé <code id="cle"></code>, au format JSON.</p>
         <pre id="base"></pre>
+        <p class="aide" style="margin-top: 8px">Une copie de secours : copie ta partie dans une note, et recolle-la plus tard ou sur un autre appareil.</p>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap"><button id="copier-partie">📋 Copier ma partie</button> <button id="charger-partie">📥 Charger une partie</button></div>
+        <textarea id="zone-partie" hidden style="width: 100%; min-height: 80px; margin-top: 6px; font: 12px ui-monospace, monospace; background: #0b1020; color: #b9f5c9; border: 1px solid var(--bord); border-radius: 8px"></textarea>
       </div>
     </section>
   </div>
 
   <!-- L'ordre compte : chaque fichier peut utiliser ceux chargés AVANT lui.
-       Le « ?v=7 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
-  <script src="config.js?v=7"></script>
-  <script src="moteur/evenements.js?v=7"></script>
-  <script src="moteur/ecran.js?v=7"></script>
-  <script src="moteur/entrees.js?v=7"></script>
-  <script src="moteur/hasard.js?v=7"></script>
-  <script src="moteur/iso.js?v=7"></script>
-  <script src="moteur/chemins.js?v=7"></script>
-  <script src="logique/carte.js?v=7"></script>
-  <script src="logique/ouvriers.js?v=7"></script>
-  <script src="logique/batiments.js?v=7"></script>
-  <script src="logique/routes.js?v=7"></script>
-  <script src="logique/porteurs.js?v=7"></script>
-  <script src="logique/saisons.js?v=7"></script>
-  <script src="logique/animaux.js?v=7"></script>
-  <script src="logique/repas.js?v=7"></script>
-  <script src="logique/ages.js?v=7"></script>
-  <script src="logique/monde.js?v=7"></script>
-  <script src="donnees/sauvegarde.js?v=7"></script>
-  <script src="affichage/effets.js?v=7"></script>
-  <script src="affichage/batisses.js?v=7"></script>
-  <script src="affichage/interface.js?v=7"></script>
-  <script src="affichage/peintre.js?v=7"></script>
-  <script src="affichage/rayons-x.js?v=7"></script>
-  <script src="affichage/sous-le-capot.js?v=7"></script>
-  <script src="main.js?v=7"></script>
+       Le « ?v=8 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
+  <script src="config.js?v=8"></script>
+  <script src="moteur/evenements.js?v=8"></script>
+  <script src="moteur/ecran.js?v=8"></script>
+  <script src="moteur/entrees.js?v=8"></script>
+  <script src="moteur/hasard.js?v=8"></script>
+  <script src="moteur/iso.js?v=8"></script>
+  <script src="moteur/chemins.js?v=8"></script>
+  <script src="logique/carte.js?v=8"></script>
+  <script src="logique/ouvriers.js?v=8"></script>
+  <script src="logique/batiments.js?v=8"></script>
+  <script src="logique/routes.js?v=8"></script>
+  <script src="logique/porteurs.js?v=8"></script>
+  <script src="logique/saisons.js?v=8"></script>
+  <script src="logique/animaux.js?v=8"></script>
+  <script src="logique/repas.js?v=8"></script>
+  <script src="logique/ages.js?v=8"></script>
+  <script src="logique/recherches.js?v=8"></script>
+  <script src="logique/missions.js?v=8"></script>
+  <script src="logique/boutique.js?v=8"></script>
+  <script src="logique/monde.js?v=8"></script>
+  <script src="donnees/sauvegarde.js?v=8"></script>
+  <script src="affichage/effets.js?v=8"></script>
+  <script src="affichage/batisses.js?v=8"></script>
+  <script src="affichage/interface.js?v=8"></script>
+  <script src="affichage/peintre.js?v=8"></script>
+  <script src="affichage/rayons-x.js?v=8"></script>
+  <script src="affichage/sous-le-capot.js?v=8"></script>
+  <script src="main.js?v=8"></script>
 </body>
 </html>

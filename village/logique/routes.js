@@ -35,7 +35,8 @@ Village.Routes = (function () {
 
   // Le chemin que prendrait la route entre deux cases (sans la construire). Sert aussi à l'aperçu.
   //   Le départ ou l'arrivée peuvent être un bâtiment : la route s'arrête alors juste à côté.
-  function trajet(monde, depart, arrivee) {
+  function trajet(monde, depart, arrivee, sorte) {
+    sorte = sorte || 1;
     const k = monde.carte, iA = arrivee.ligne * k.colonnes + arrivee.colonne;
     const finBatiment = monde.occupees.has(iA);
     const r = Village.Chemins.chercher(
@@ -48,13 +49,16 @@ Village.Routes = (function () {
     // On ne met pas de route sur les bâtiments eux-mêmes (le départ ou l'arrivée).
     const cases = r.chemin.filter((p) => !monde.occupees.has(p.ligne * k.colonnes + p.colonne));
     if (finBatiment && !cases.length) return null;
-    const nouvelles = cases.filter((p) => !monde.route[p.ligne * k.colonnes + p.colonne]).length;
-    return { cases, nouvelles, cout: coutDe(nouvelles) };
+    // Les cases déjà de cette sorte (ou mieux) ne coûtent rien. Une route en pierre coûte 1 🪨 par case.
+    const nouvelles = cases.filter((p) => (monde.route[p.ligne * k.colonnes + p.colonne] || 0) < sorte).length;
+    return { cases, nouvelles, sorte, cout: sorte === 2 ? nouvelles * C.routes.coutPierre.pierres : coutDe(nouvelles) };
   }
 
   // Construire la route. Renvoie vrai si c'est fait.
-  function construire(monde, depart, arrivee) {
-    const t = trajet(monde, depart, arrivee);
+  function construire(monde, depart, arrivee, sorte) {
+    sorte = sorte || 1;
+    if (sorte === 2 && !Village.Recherches.a(monde, "routePierre")) { radio.emettre("route-impossible", { raison: "il faut d'abord la recherche « Routes pavées » 🧱" }); return false; }
+    const t = trajet(monde, depart, arrivee, sorte);
     if (!t || !t.cases.length) {
       radio.emettre("route-impossible", { raison: "pas de chemin possible (eau, montagne, arbre, rocher ou bâtiment sur le passage, ou plus de " + C.routes.longueurMax + " cases)" });
       return false;
@@ -68,28 +72,29 @@ Village.Routes = (function () {
     for (const p of t.cases) {
       const i = p.ligne * k.colonnes + p.colonne;
       if (k.objet[i]) Village.Monde.changerObjet(monde, i, Village.Carte.OBJET.rien); // on enlève les fleurs
-      monde.route[i] = 1;
+      monde.route[i] = Math.max(monde.route[i], sorte); // une route en pierre remplace un chemin de terre
     }
     monde.stock.pierres -= t.cout;
     monde.changements++;
     recalculerReseau(monde);
-    radio.emettre("route-construite", { cases: t.cases.length, nouvelles: t.nouvelles, cout: t.cout, total: compter(monde), pierres: monde.stock.pierres });
+    radio.emettre("route-construite", { sorte, cases: t.cases.length, nouvelles: t.nouvelles, cout: t.cout, total: compter(monde), pierres: monde.stock.pierres });
     return true;
   }
 
   function demolir(monde, i) {
     if (!monde.route[i]) return false;
+    const rendu = monde.route[i] === 2 ? C.routes.coutPierre.pierres : C.routes.cout.pierres || 0;
     monde.route[i] = 0;
-    monde.stock.pierres += C.routes.cout.pierres || 0; // si la route avait coûté une pierre, on la rend
+    monde.stock.pierres += rendu; // la pierre d'une route pavée est rendue
     monde.changements++;
     recalculerReseau(monde);
-    radio.emettre("route-demolie", { rendu: C.routes.cout.pierres || 0, colonne: i % monde.carte.colonnes, ligne: Math.floor(i / monde.carte.colonnes), total: compter(monde) });
+    radio.emettre("route-demolie", { rendu, colonne: i % monde.carte.colonnes, ligne: Math.floor(i / monde.carte.colonnes), total: compter(monde) });
     return true;
   }
 
   function compter(monde) {
     let n = 0;
-    for (const v of monde.route) n += v;
+    for (const v of monde.route) if (v) n++; // une case compte pour 1, terre ou pierre
     return n;
   }
 

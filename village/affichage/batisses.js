@@ -25,6 +25,8 @@ Village.Batisses = (function () {
     pecheur: { a: 18, h: 13, toit: 14, murG: "#e3c896", murD: "#c2a46f", toitA: "#3fa7b5", toitB: "#2d8592" }, // étape 4
     chasseur: { a: 18, h: 13, toit: 14, murG: "#8e6038", murD: "#6f4826", toitA: "#6f8a3a", toitB: "#56702c", rondins: true },
     geologue: { a: 18, h: 13, toit: 14, murG: "#c9c2b4", murD: "#a59d8e", toitA: "#8a5ab0", toitB: "#6c428c", blocs: true }, // étape 5
+    universite: { a: 25, h: 22, toit: 16, murG: "#e8e2d4", murD: "#c7bfae", toitA: "#3f6fc4", toitB: "#2f569c", blocs: true }, // étape 7
+    mineCharbon: { a: 18, h: 12, toit: 10, murG: "#8a6a48", murD: "#6c5036", toitA: "#555a60", toitB: "#43474c", rondins: true }, // étape 7
   };
 
   // Étape 5 : un beau rondin, avec son écorce et les cernes du bois au bout, un peu penché.
@@ -63,6 +65,12 @@ Village.Batisses = (function () {
     ctx.stroke();
     // Un petit nœud du bois
     ctx.beginPath(); ctx.ellipse(x - 2, y - 0.6, 1, 0.5, 0.45, 0, TOUR); ctx.stroke();
+  }
+
+  // Étape 7 : un morceau de charbon, noir et brillant
+  function charbon(ctx, x, y) {
+    forme(ctx, [[x - 3.5, y + 1], [x - 2, y - 2.5], [x + 1.5, y - 3], [x + 3.5, y - 0.5], [x + 2, y + 2], [x - 1.5, y + 2.2]], "#2b2b30");
+    ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.beginPath(); ctx.moveTo(x - 1.5, y - 2); ctx.lineTo(x + 1, y - 2.4); ctx.lineTo(x - 0.5, y - 0.8); ctx.closePath(); ctx.fill();
   }
 
   // Un poisson ou un morceau de viande (pour les piles et pour ce qu'on porte)
@@ -165,6 +173,7 @@ Village.Batisses = (function () {
       }
       else if (sorte === "poisson") poisson(ctx, px, py);
       else if (sorte === "viande") viande(ctx, px, py);
+      else if (sorte === "charbon") charbon(ctx, px, py);
       else if (sorte === "planche") planche(ctx, x + (k % 2 ? 2.5 : -1), y - k * 2.6, 24); // étape 6 : une pile de longues planches, un peu décalées
       else rond(ctx, px, py, 3.2, "#a3a8ad");
     }
@@ -186,7 +195,7 @@ Village.Batisses = (function () {
           ctx.beginPath(); ctx.moveTo(x + dx, y + dy + 3); ctx.lineTo(x + dx, y + dy - 3); contour(ctx, 1.2);
         }
         // Le drapeau du village sur le toit
-        drapeau(ctx, x - 6, y - 50, t, "#3e7bff");
+        drapeau(ctx, x - 6, y - 50, t, Village.Boutique.COULEURS_DRAPEAU[(Village.monde && Village.monde.drapeau) || 0]); // étape 7 : la couleur achetée
         break;
       case "bucheron":
         pile(ctx, x + 14, y + 8, "rondin", b.sortie); // les troncs qui attendent un porteur
@@ -235,6 +244,26 @@ Village.Batisses = (function () {
       for (let k = 0; k < 4; k++) { ctx.moveTo(x + 4 + k * 3, y - 3 + k * 1.5); ctx.lineTo(x + 4 + k * 3, y - 11 + k * 1.5); }
       for (let k = 0; k < 3; k++) { ctx.moveTo(x + 4, y - 4 - k * 3); ctx.lineTo(x + 13, y + 0.5 - k * 3); }
       ctx.stroke();
+    } else if (b.type === "universite") {
+      // Étape 7 : une petite tour avec une coupole, et un télescope pour regarder les étoiles
+      forme(ctx, [[x + 8, y - 22], [x + 18, y - 17], [x + 18, y - 42], [x + 8, y - 47]], "#ddd6c6");
+      ctx.beginPath(); ctx.arc(x + 13, y - 45, 6, Math.PI, 0); ctx.closePath(); ctx.fillStyle = "#3f6fc4"; ctx.fill(); contour(ctx, 1.5);
+      ctx.strokeStyle = "#7a5a30"; ctx.lineWidth = 2.5; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(x + 13, y - 50); ctx.lineTo(x + 22, y - 57); ctx.stroke();
+      const etudie = Village.monde && Village.monde.recherches.enCours;
+      if (etudie && Math.sin(t * 4) > 0) { ctx.fillStyle = "#fff36b"; ctx.beginPath(); ctx.arc(x + 25, y - 60, 2, 0, TOUR); ctx.fill(); } // une étoile : il cherche !
+      if (etudie) bulleDePensee(ctx, x - 10, y - m.h - m.toit - 20, t, Village.Recherches.trouver(etudie.id).emoji);
+    } else if (b.type === "mineCharbon") {
+      // Étape 7 : l'entrée de la mine (des poutres), des rails et un wagonnet de charbon
+      forme(ctx, [[x - 14, y - 2], [x - 4, y + 3], [x - 4, y - 9], [x - 14, y - 14]], "#1c1814");
+      ctx.strokeStyle = "#8a5a2b"; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(x - 15, y - 1); ctx.lineTo(x - 15, y - 15); ctx.lineTo(x - 3, y - 9); ctx.lineTo(x - 3, y + 4); ctx.stroke();
+      ctx.strokeStyle = "#7d8187"; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(x - 6, y + 6); ctx.lineTo(x + 14, y + 16); ctx.moveTo(x - 9, y + 8); ctx.lineTo(x + 11, y + 18); ctx.stroke();
+      forme(ctx, [[x + 2, y + 6], [x + 10, y + 10], [x + 10, y + 5], [x + 2, y + 1]], "#6c5036");
+      charbon(ctx, x + 6, y + 3);
+      pile(ctx, x + 14, y + 4, "charbon", b.sortie);
+      if (b.travail && Math.sin(t * 10) > 0.7) { ctx.fillStyle = "#ffcf2e"; ctx.beginPath(); ctx.arc(x - 9, y - 6, 1.5, 0, TOUR); ctx.fill(); } // la lampe du mineur
     } else if (b.type === "geologue") {
       // Une loupe géante accrochée au mur, et un caillou brillant
       ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + 10, y - 2); ctx.lineTo(x + 14, y + 4); ctx.stroke();
@@ -288,12 +317,13 @@ Village.Batisses = (function () {
   }
 
   // Une petite icône de chemin de terre qui serpente (il n'existe pas d'emoji « chemin »).
-  function iconeRoute(ctx, x, y, e) {
+  function iconeRoute(ctx, x, y, e, pierre) {
     ctx.save(); ctx.translate(x, y); ctx.scale(e, e);
     ctx.lineCap = "round";
     const chemin = () => { ctx.beginPath(); ctx.moveTo(-12, 14); ctx.bezierCurveTo(-14, 2, 12, 4, 6, -6); ctx.bezierCurveTo(2, -12, 8, -14, 10, -16); };
-    chemin(); ctx.strokeStyle = "#9b7440"; ctx.lineWidth = 10; ctx.stroke();
-    chemin(); ctx.strokeStyle = "#e2c38c"; ctx.lineWidth = 6.5; ctx.stroke();
+    chemin(); ctx.strokeStyle = pierre ? "#5e6268" : "#9b7440"; ctx.lineWidth = 10; ctx.stroke();
+    chemin(); ctx.strokeStyle = pierre ? "#b9bdc2" : "#e2c38c"; ctx.lineWidth = 6.5; ctx.stroke();
+    if (pierre) { chemin(); ctx.setLineDash([3, 3]); ctx.strokeStyle = "#7d8187"; ctx.lineWidth = 2; ctx.stroke(); ctx.setLineDash([]); } // les pavés
     ctx.restore();
   }
 
@@ -632,6 +662,7 @@ Village.Batisses = (function () {
     else if (p.porte === "viande") viande(ctx, 0, -29);
     else if (p.porte === "troncs") rondin(ctx, 0, -29, 0);
     else if (p.porte === "planches") planche(ctx, 0, -28, 26);
+    else if (p.porte === "charbon") { charbon(ctx, -2, -28); charbon(ctx, 2, -29); }
     else if (p.porte === "pierres") { rond(ctx, 0, -29, 4, "#a3a8ad"); }
     ctx.restore();
   }

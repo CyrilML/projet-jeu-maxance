@@ -28,10 +28,12 @@ Village.Batiments = (function () {
     pecheur: { nom: "Cabane du pêcheur", court: "Pêcheur", emoji: "🎣", metier: "pêcheur" }, // étape 4
     chasseur: { nom: "Cabane du chasseur", court: "Chasseur", emoji: "🏹", metier: "chasseur" }, // étape 4
     geologue: { nom: "Cabane du géologue", court: "Géologue", emoji: "🔍", metier: "géologue" }, // étape 5
+    universite: { nom: "Université", court: "Université", emoji: "🎓", metier: "savant" }, // étape 7
+    mineCharbon: { nom: "Mine de charbon", court: "Mine charbon", emoji: "⚫", metier: "mineur" }, // étape 7
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue"];
-  const NOMS_RESSOURCES = { troncs: "🪵 troncs", planches: "🟫 planches", pierres: "🪨 pierres", poissons: "🐟 poissons", viande: "🍖 viande" };
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon"];
+  const NOMS_RESSOURCES = { troncs: "🪵 troncs", planches: "🟫 planches", pierres: "🪨 pierres", poissons: "🐟 poissons", viande: "🍖 viande", charbon: "⚫ charbon" };
 
   let prochainNumero = 1;
 
@@ -56,7 +58,21 @@ Village.Batiments = (function () {
     if (monde.reservees.has(i)) return "un ouvrier va travailler sur cette case";
     // Étape 5 : ✍️ le pêcheur doit habiter au bord de l'eau.
     if (type === "pecheur" && !presDeLEau(carte, c, l, C.bordDeLEau)) return "trop loin de l'eau (il faut de l'eau à " + C.bordDeLEau + " cases maximum)";
+    // Étape 7 : la mine se construit collée à une montagne qui a un filon de charbon.
+    if (type === "mineCharbon" && !filonsVoisins(carte, c, l, Village.Carte.FILON.charbon).length) return "il faut un filon de charbon ⚫ juste à côté (au pied d'une montagne)";
     return null;
+  }
+
+  // Étape 7 : les cases de montagne voisines (8 autour) qui ont un filon de cette sorte, pas épuisé.
+  function filonsVoisins(carte, c, l, sorte) {
+    const liste = [];
+    for (let dl = -1; dl <= 1; dl++) for (let dc = -1; dc <= 1; dc++) {
+      const nc = c + dc, nl = l + dl;
+      if ((!dc && !dl) || nc < 0 || nl < 0 || nc >= carte.colonnes || nl >= carte.lignes) continue;
+      const i = nl * carte.colonnes + nc;
+      if (carte.filon[i] === sorte && carte.reste[i] > 0) liste.push(i);
+    }
+    return liste;
   }
 
   // Y a-t-il de l'eau à moins de `r` cases ? (on regarde le carré autour de la case)
@@ -118,7 +134,7 @@ Village.Batiments = (function () {
       // Étape 3
       relie: undefined, // relié à l'entrepôt par une route ?
       sortie: etat.sortie || 0, // objets qui attendent devant la porte qu'un porteur les ramène
-      sortieQuoi: { bucheron: "troncs", carriere: "pierres", scierie: "planches", pecheur: "poissons", chasseur: "viande" }[type] || null,
+      sortieQuoi: { bucheron: "troncs", carriere: "pierres", scierie: "planches", pecheur: "poissons", chasseur: "viande", mineCharbon: "charbon" }[type] || null,
       ramassage: 0, // combien de ces objets sont déjà sur un papier de la file
       lots: (etat.lots || []).slice(), // étape 5 : combien vaut chaque objet qui attend (un cerf = 4 viandes)
       entree: etat.entree || 0, // la scierie : les troncs en réserve
@@ -214,6 +230,8 @@ Village.Batiments = (function () {
         continue;
       }
       if (b.type === "scierie") { if (b.relie) scier(monde, b, dt); }
+      else if (b.type === "mineCharbon") { if (b.relie) miner(monde, b, dt); } // étape 7
+      else if (b.type === "universite") continue; // étape 7 : c'est Village.Recherches qui le fait travailler
       else if (b.ouvrier) Village.Ouvriers.etape(monde, b, dt);
     }
   }
@@ -245,5 +263,29 @@ Village.Batiments = (function () {
     }
   }
 
-  return { TYPES, A_CONSTRUIRE, NOMS_RESSOURCES, cout, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
+  // Étape 7 : la mine. Le mineur creuse dans le filon voisin ; chaque morceau de charbon attend devant
+  // la porte qu'un porteur le ramène. Le filon s'épuise (60 morceaux) : le géologue en trouvera d'autres.
+  function miner(monde, b, dt) {
+    if (!b.ouvrier) return;
+    const k = monde.carte, filons = filonsVoisins(k, b.colonne, b.ligne, Village.Carte.FILON.charbon);
+    if (!filons.length) {
+      if (!b.epuise) { b.epuise = true; radio.emettre("filon-epuise", { numero: b.numero, nom: TYPES[b.type].nom }); }
+      return;
+    }
+    b.epuise = false;
+    if (b.sortie >= C.sortieMax) return; // devant la porte, c'est plein
+    if (!b.travail) { b.travail = { reste: C.ouvriers.miner * Village.Recherches.bonus(monde, "miner") }; return; }
+    b.travail.reste -= dt * Village.Repas.vitesse(b.ouvrier);
+    if (b.travail.reste > 0) return;
+    b.travail = null;
+    const i = filons[0];
+    k.reste[i]--;
+    Village.Monde.changerObjet(monde, i, k.objet[i]); // on note ce qui reste dans le filon (sauvegarde)
+    b.sortie++;
+    b.lots.push(1);
+    b.produits++;
+    radio.emettre("charbon-extrait", { numero: b.numero, reste: k.reste[i], devant: b.sortie });
+  }
+
+  return { TYPES, A_CONSTRUIRE, filonsVoisins, NOMS_RESSOURCES, cout, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
 })();

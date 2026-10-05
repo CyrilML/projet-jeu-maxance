@@ -130,6 +130,7 @@
       <a href="#etape4">Étape 4</a>
       <a href="#etape5">Étape 5</a>
       <a href="#etape6">Étape 6</a>
+      <a href="#etape7">Étape 7</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -591,6 +592,85 @@ route en pierre    × 1,6    (plus tard)</pre>
       <details class="question"><summary>Un bûcheron marche 10 s à travers champs. Combien de temps sur un chemin de terre ?</summary><p>Il va 1 ÷ 0,85 ≈ 1,18 fois plus vite : environ 8,5 s.</p></details>
     </section>
 
+    <section id="etape7">
+      <h2>🎓 Étape 7 : le hameau, l'université, les missions et les gemmes <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Le jeu a maintenant un grand plan sur 5 âges. Le hameau est complet : une université pour faire des recherches, une mine de charbon, des missions avec des personnages, et des gemmes 💎 à gagner. Et ta partie est mieux protégée. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/07-progression-recherches-missions.md</code>.</p>
+          <ul>
+            <li>✍️ Chaque niveau débloque des choses : bâtiments, technologies, recherches.</li>
+            <li>✍️ Une université qui fait des recherches, en payant.</li>
+            <li>✍️ Des minerais au fil du temps : fer, or, argent.</li>
+            <li>✍️ Des missions avec une histoire, un temps limité et une récompense.</li>
+            <li>✍️ Des gemmes pour des améliorations et de l'esthétique.</li>
+            <li>✍️ Ne plus repartir de zéro à chaque mise à jour.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Passe au hameau : +3 💎, et 3 bâtiments débloqués.</li>
+            <li>☐ 🔧 Outils → 🎓 Université. Touche-la : la liste des recherches.</li>
+            <li>☐ Lance « Haches affûtées » : la barre avance, puis « Recherche finie ».</li>
+            <li>☐ ⛏️ Mines → ⚫ Mine de charbon, collée à un filon noir.</li>
+            <li>☐ 📜 en haut à droite : accepte une mission, livre, gagne des 💎.</li>
+            <li>☐ 💎 : achète un porteur de plus.</li>
+            <li>☐ « 📋 Copier ma partie » (sous le jeu) : une copie de secours.</li>
+            <li>Vérifie « version 8 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🗺️ Le grand plan sur 5 âges</h3>
+      <div class="tableau-defile"><table class="fichiers">
+        <tr><th>Âge</th><th>Débloque</th><th>Minerai</th><th>Pour passer au suivant</th></tr>
+        <tr><td>🏕️ Campement</td><td>bûcheron, forestier, scierie, carrière, pêcheur, chasseur, chemin de terre</td><td>🪨 pierre</td><td>6 bâtiments, 40 🟫, 20 🪨, 30 🐟+🍖</td></tr>
+        <tr><td>🛖 Hameau ✅</td><td>🔍 géologue, 🎓 université (8 recherches), ⚫ mine de charbon, 🧱 route en pierre (recherche)</td><td>⚫ charbon</td><td>10 bâtiments, 3 recherches, 80 🟫, 20 ⚫, 60 🐟+🍖</td></tr>
+        <tr><td>🏡 Village</td><td>⛏️ mine de fer, 🔥 fonderie, ⚒️ forge, 🏠 maisons</td><td>🟠 fer</td><td>à construire</td></tr>
+        <tr><td>🏰 Bourg</td><td>⛏️ mines d'or et d'argent, 💍 orfèvre, 🏪 marché</td><td>🟡 or, ⚪ argent</td><td>à construire</td></tr>
+        <tr><td>🏙️ Ville</td><td>🏛️ monuments, 🎭 fêtes, 🚢 port</td><td></td><td>à construire</td></tr>
+      </table></div>
+      <p>Tout ce plan est écrit comme des <strong>données</strong> dans <code>village/config.js</code> : <code>ages</code>, <code>recherches</code>, <code>missions</code>, <code>boutique</code>. Ajouter une recherche ou une mission, c'est ajouter une ligne : pas besoin de toucher au code du jeu !</p>
+
+      <h3>✖️ Une recherche, c'est un multiplicateur</h3>
+      <pre style="white-space: pre-wrap">temps pour couper un arbre = 4 s × bonus « couper »
+sans recherche :            4 s × 1   = 4 s
+avec les haches affûtées :  4 s × 0,6 = 2,4 s   (40 % plus vite)</pre>
+      <p>Si deux recherches touchent la même chose, on multiplie les deux bonus. Sous le capot, la ligne « bonus » montre chaque multiplicateur.</p>
+
+      <h3>📜 Une mission, c'est une machine à états</h3>
+      <pre style="white-space: pre-wrap">(attente 1 min) ──► proposée ──[J'accepte]──► en cours ──[Livrer à temps]──► réussie 🎉 (récompense + 💎)
+                       └──[Plus tard]            └──[temps écoulé]──► ratée (rien de grave)</pre>
+
+      <h3>💎 Des gemmes gagnées en jouant</h3>
+      <p>Dans les vrais jeux de téléphone, les gemmes s'achètent souvent avec de l'argent. Ici, <strong>non</strong> : on les gagne seulement en jouant (missions, nouveaux âges). C'est un choix important. Si un jour le jeu va sur les stores, il faudra réfléchir avec Cyril à ce qui est juste pour les joueurs.</p>
+
+      <h3>💾 Ta partie est gardée</h3>
+      <p>La sauvegarde marchait déjà d'une version à l'autre : chaque nouvelle version <strong>convertit</strong> l'ancienne. Pour plus de sûreté :</p>
+      <ul>
+        <li>la sauvegarde est faite toutes les 15 secondes, et quand le téléphone ferme la page ;</li>
+        <li>« Nouvelle carte » et « Effacer » demandent de toucher 2 fois (avant, un seul toucher effaçait tout !) ;</li>
+        <li>« 📋 Copier ma partie » donne un long texte : garde-le dans une note, et « 📥 Charger une partie » le remet.</li>
+      </ul>
+      <p class="petit">Attention : la navigation privée efface tout quand on ferme l'onglet. Et le jeu ouvert depuis l'icône de l'écran d'accueil a sa propre sauvegarde, différente de celle de Safari.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, trouve « Recherches · missions · gemmes ». Regarde un bonus changer après une recherche.</li>
+        <li>Dans <code>config.js</code>, trouve <code>missions</code> : invente ta propre mission avec ton personnage !</li>
+        <li>Touche le panneau du stock : quels objectifs restent pour le village 🏡 ?</li>
+        <li>Mets 2 mines sur le même filon : il s'épuise 2 fois plus vite ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Le pêcheur met 6 s pour pêcher. Combien avec les filets (× 0,6) ?</summary><p>6 × 0,6 = 3,6 secondes.</p></details>
+      <details class="question"><summary>Un filon donne 60 charbons, et la mine en sort 1 toutes les 8 s. Combien de temps dure le filon ?</summary><p>60 × 8 = 480 s, soit 8 minutes.</p></details>
+      <details class="question"><summary>Tu as 5 💎. Peux-tu acheter un porteur et un coffre ?</summary><p>Non : 4 + 2 = 6 💎. Il t'en manque une.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -632,23 +712,29 @@ route en pierre    × 1,6    (plus tard)</pre>
           <p>Du campement à la ville, des objectifs pour passer au hameau, des chemins gratuits, des saisons de 5 minutes, 5 espèces d'animaux, des poissons à l'endroit, de vraies planches.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs rangés comme des données, une vitesse qui dépend du sol, l'habitat des animaux, la pente d'une courbe. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">7</div>
-          <h4>Maisons et nouveaux habitants <span class="etiquette">⏭️ prochaine idée</span></h4>
-          <p>Construire des maisons pour accueillir plus d'habitants (et plus de porteurs). Peut-être les champs de blé, le moulin et la boulangerie.</p>
-          <p class="apprend"><b>Tu apprends :</b> la croissance d'une population, une chaîne plus longue (blé → farine → pain). <b>Durée :</b> 2 séances.</p>
+          <h4>Le hameau : université, mine de charbon, missions et gemmes <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Le grand plan sur 5 âges, l'université et 8 recherches, la mine de charbon, la route en pierre, 7 missions avec leur histoire, les 💎 et la boutique, une sauvegarde plus solide.</p>
+          <p class="apprend"><b>Tu apprends :</b> un plan de jeu écrit comme des données, des multiplicateurs, une mission en machine à états, protéger une sauvegarde. <b>Durée :</b> 3 séances.</p>
         </div>
-        <div class="carte">
+        <div class="carte prochain">
           <div class="num">8</div>
-          <h4>La recherche et l'âge du bronze</h4>
-          <p>La hutte du sage fait des recherches ; un arbre des découvertes débloque de nouveaux bâtiments et le passage à l'âge suivant.</p>
-          <p class="apprend"><b>Tu apprends :</b> un arbre de dépendances (« pour débloquer B, il faut A »), des règles écrites comme des données. <b>Durée :</b> 2 séances.</p>
+          <h4>🏡 Le village : le fer, la fonderie et la forge <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <p>La mine de fer, la fonderie (fer + charbon → lingots), la forge (outils), des maisons pour plus d'habitants, de nouvelles recherches et de nouvelles missions.</p>
+          <p class="apprend"><b>Tu apprends :</b> une chaîne à 3 étages, un bâtiment qui a besoin de 2 ingrédients. <b>Durée :</b> 3 séances.</p>
         </div>
         <div class="carte">
           <div class="num">9</div>
-          <h4>Charbon, fer et or</h4>
-          <p>Carrière de pierre, mines de charbon, de fer et d'or, fonderie, forge, orfèvre : les industries, jusqu'à la Renaissance.</p>
-          <p class="apprend"><b>Tu apprends :</b> des chaînes longues, les goulots d'étranglement (le maillon le plus lent décide de tout), des statistiques de production. <b>Durée :</b> plusieurs séances.</p>
+          <h4>🏰 Le bourg : l'or, l'argent et le marché</h4>
+          <p>Mines d'or et d'argent, orfèvre, et un marché pour vendre ses surplus contre des pièces.</p>
+          <p class="apprend"><b>Tu apprends :</b> les prix, l'offre et la demande. <b>Durée :</b> 3 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">10</div>
+          <h4>🏙️ La ville : monuments, fêtes et port</h4>
+          <p>Les grands chantiers de fin de jeu.</p>
+          <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
         </div>
         <div class="carte">
           <div class="num">…</div>
@@ -710,6 +796,14 @@ route en pierre    × 1,6    (plus tard)</pre>
         <textarea class="journal" id="village-appris-6" data-cle="village-appris-6" placeholder="Ex. : J'ai appris qu'on peut écrire les règles comme des données…"></textarea>
         <label for="village-idees-6"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-6" data-cle="village-idees-6" placeholder="Ex. : Ce que débloque le village 🏡…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 7 · le hameau, l'université, les missions et les gemmes <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le grand plan des âges (<code>config.js</code>), l'université et les recherches (<code>logique/recherches.js</code>), les missions (<code>logique/missions.js</code>), la boutique et les gemmes (<code>logique/boutique.js</code>), la mine de charbon et les filons qui s'épuisent, la route en pierre, les panneaux dans l'écran, une sauvegarde plus solide (confirmations, copie de secours), la base de données en version 7.</p>
+        <label for="village-appris-7"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-7" data-cle="village-appris-7" placeholder="Ex. : J'ai appris qu'une recherche est un multiplicateur…"></textarea>
+        <label for="village-idees-7"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-7" data-cle="village-idees-7" placeholder="Ex. : Une mission avec un dragon qui veut de l'or…"></textarea>
       </div>
     </section>
   </main>

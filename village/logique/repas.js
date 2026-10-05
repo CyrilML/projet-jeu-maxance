@@ -41,7 +41,7 @@ Village.Repas = (function () {
   // Le compteur de faim d'un habitant. Renvoie "part" s'il quitte le village.
   function avoirFaim(monde, h, dt, qui) {
     h.faim = (h.faim || 0) + dt;
-    if (h.faim < C.repas.intervalle) return null;
+    if (h.faim < C.repas.intervalle * Village.Recherches.bonus(monde, "repas")) return null; // étape 7 : le fumoir
     if (mangerALaCantine(monde, qui)) {
       if (h.affame) radio.emettre("plus-faim", { qui });
       h.faim = 0; h.affame = false; h.ventreVide = 0;

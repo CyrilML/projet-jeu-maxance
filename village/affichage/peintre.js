@@ -233,7 +233,7 @@ Village.Peintre = (function () {
         const p = milieu(c, l);
         if (p.x < vue.x0 || p.x > vue.x1 || p.y < vue.y0 || p.y > vue.y1) continue;
         if (o === O.pousse) Village.Batisses.dessinerPousse(ctx, p.x, p.y, (monde.pousses.get(i) || 0) / C.nature.croissance, t);
-        else dessinerObjet(o, p.x, p.y, cache.variante[i], t, carte.filon[i], z, i);
+        else dessinerObjet(o, p.x, p.y, cache.variante[i], t, carte.reste[i] > 0 ? carte.filon[i] : 0, z, i); // étape 7 : un filon épuisé n'a plus de cristaux
         stats.objetsDessines++;
       }
       for (const chose of parDiagonale.get(diag) || []) {
@@ -314,12 +314,15 @@ Village.Peintre = (function () {
   // les bandes ont l'air couchées sur le sol, en vue de biais.
   const VERS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
   function dessinerRoutes(monde, cMin, cMax, lMin, lMax, vue, t) {
-    const k = monde.carte, segments = [];
+    // Étape 7 : deux sortes de routes. Le chemin de terre (1) est beige ; la route en pierre (2) est grise,
+    // avec des pavés. On range leurs morceaux dans deux listes.
+    const k = monde.carte, terre = [], pierre = [];
     for (let l = lMin; l <= lMax; l++) for (let c = cMin; c <= cMax; c++) {
       const i = l * k.colonnes + c;
       if (!monde.route[i]) continue;
       const p = milieu(c, l);
       if (p.x < vue.x0 || p.x > vue.x1 || p.y < vue.y0 || p.y > vue.y1) continue;
+      const segments = monde.route[i] === 2 ? pierre : terre;
       segments.push([p.x, p.y, p.x, p.y]);
       for (const [dc, dl] of VERS) {
         const nc = c + dc, nl = l + dl;
@@ -330,19 +333,26 @@ Village.Peintre = (function () {
         segments.push([p.x, p.y, (p.x + q.x) / 2, (p.y + q.y) / 2]);
       }
     }
-    if (!segments.length) return;
+    if (!terre.length && !pierre.length) return;
     ctx.save();
     ctx.scale(1, 0.5);
     ctx.lineCap = "round";
-    const passe = (largeur, couleur) => {
+    const passe = (segments, largeur, couleur, tirets) => {
+      if (!segments.length) return;
       ctx.lineWidth = largeur; ctx.strokeStyle = couleur;
+      if (tirets) ctx.setLineDash(tirets);
       ctx.beginPath();
       for (const [x1, y1, x2, y2] of segments) { ctx.moveTo(x1, y1 * 2); ctx.lineTo(x2 + 0.01, y2 * 2); }
       ctx.stroke();
+      ctx.setLineDash([]);
     };
-    passe(26, "#9b7440");
-    passe(20, "#e2c38c");
-    passe(6, "rgba(255, 245, 220, .35)");
+    passe(terre, 26, "#9b7440");
+    passe(terre, 20, "#e2c38c");
+    passe(terre, 6, "rgba(255, 245, 220, .35)");
+    passe(pierre, 28, "#5e6268");
+    passe(pierre, 22, "#a9adb3");
+    passe(pierre, 14, "#c3c6cb", [5, 4]); // les pavés
+    passe(pierre, 4, "rgba(255, 255, 255, .25)");
     ctx.restore();
   }
 

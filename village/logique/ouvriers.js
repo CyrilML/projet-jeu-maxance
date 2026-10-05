@@ -30,7 +30,7 @@ Village.Ouvriers = (function () {
   // Ce que chaque métier cherche, ce qu'il fait sur place, et ce qu'il rapporte.
   const METIERS = {
     bucheron: {
-      duree: () => C.ouvriers.couper,
+      duree: (monde) => C.ouvriers.couper * Village.Recherches.bonus(monde, "couper"), // étape 7 : × le bonus des recherches
       cherche: (monde, i) => {
         const o = monde.carte.objet[i];
         return (o === O.arbre || o === O.sapin) && !monde.reservees.has(i);
@@ -38,7 +38,7 @@ Village.Ouvriers = (function () {
       quoi: "un arbre",
     },
     forestier: {
-      duree: () => C.ouvriers.planter,
+      duree: (monde) => C.ouvriers.planter * Village.Recherches.bonus(monde, "planter"), // étape 7 : × le bonus des recherches
       cherche: (monde, i) => {
         const k = monde.carte, t = k.terrain[i], o = k.objet[i];
         return (t === T.herbe || t === T.prairie || t === T.foret) && (o === O.rien || o === O.fleurs) && !monde.occupees.has(i) && !monde.reservees.has(i) && !monde.route[i];
@@ -46,14 +46,14 @@ Village.Ouvriers = (function () {
       quoi: "une case d'herbe libre",
     },
     carriere: {
-      duree: () => C.ouvriers.tailler,
+      duree: (monde) => C.ouvriers.tailler * Village.Recherches.bonus(monde, "tailler"), // étape 7 : × le bonus des recherches
       cherche: (monde, i) => monde.carte.objet[i] === O.rocher && monde.carte.reste[i] > 0 && !monde.reservees.has(i),
       quoi: "un rocher",
     },
     // Étape 4 : le pêcheur cherche une case d'EAU (il s'arrêtera sur la berge, juste avant).
     // ✍️ En hiver, l'eau est gelée : il fait un trou dans la glace, et il pêche quand même.
     pecheur: {
-      duree: () => C.ouvriers.pecher,
+      duree: (monde) => C.ouvriers.pecher * Village.Recherches.bonus(monde, "pecher"), // étape 7 : × le bonus des recherches
       cherche: (monde, i) => {
         const t = monde.carte.terrain[i];
         return (t === T.eau || t === T.eauProfonde) && !monde.reservees.has(i);
@@ -64,7 +64,7 @@ Village.Ouvriers = (function () {
     // ou une case libre au pied d'une montagne. Pour qu'il n'aille pas toujours au même endroit, chaque
     // recherche ne regarde qu'une case sur 4, tirée au hasard (avec une graine qui change à chaque fois).
     geologue: {
-      duree: () => C.ouvriers.prospecter,
+      duree: (monde) => C.ouvriers.prospecter * Village.Recherches.bonus(monde, "prospecter"), // étape 7 : × le bonus des recherches
       cherche: (monde, i, o) => {
         const k = monde.carte, c = i % k.colonnes, l = Math.floor(i / k.colonnes);
         if (k.objet[i] !== O.rien || monde.occupees.has(i) || monde.route[i] || monde.reservees.has(i)) return false;
@@ -79,7 +79,7 @@ Village.Ouvriers = (function () {
     },
     // Étape 4 : le chasseur cherche une case où il y a un animal qui n'est pas déjà visé.
     chasseur: {
-      duree: () => C.ouvriers.chasser,
+      duree: (monde) => C.ouvriers.chasser * Village.Recherches.bonus(monde, "chasser"), // étape 7 : × le bonus des recherches
       cherche: (monde, i) => !!Village.Animaux.surLaCase(monde, i % monde.carte.colonnes, Math.floor(i / monde.carte.colonnes)),
       quoi: "du gibier",
     },
@@ -184,7 +184,7 @@ Village.Ouvriers = (function () {
       }
 
       case "aller":
-        if (marcher(o, dt, monde)) changer(o, "travailler", metier.duree());
+        if (marcher(o, dt, monde)) changer(o, "travailler", metier.duree(monde));
         return;
 
       case "travailler":
@@ -212,6 +212,23 @@ Village.Ouvriers = (function () {
         changer(o, "repos", C.ouvriers.repos);
         return;
     }
+  }
+
+  // Étape 7 : avec la recherche « Prospection », le géologue peut découvrir un filon de charbon dans une
+  // case de montagne voisine (qui n'en avait pas, ou dont le filon était épuisé).
+  function trouverFilon(monde, c, l) {
+    const k = monde.carte;
+    for (const [dc, dl] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]) {
+      const nc = c + dc, nl = l + dl;
+      if (nc < 0 || nl < 0 || nc >= k.colonnes || nl >= k.lignes) continue;
+      const i = nl * k.colonnes + nc;
+      if (k.terrain[i] !== T.montagne || (k.filon[i] && k.reste[i] > 0)) continue;
+      k.filon[i] = K.FILON.charbon;
+      k.reste[i] = C.nature.reserveFilon;
+      Village.Monde.changerObjet(monde, i, k.objet[i]);
+      return true;
+    }
+    return false;
   }
 
   function finirLeTravail(monde, b, o) {
@@ -256,6 +273,9 @@ Village.Ouvriers = (function () {
         Village.Monde.changerObjet(monde, i, O.rocher);
         b.produits++;
         radio.emettre("gisement-trouve", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, pierres: carte.reste[i] });
+      } else if (Village.Recherches.a(monde, "filons") && Math.random() < 0.5 && trouverFilon(monde, o.cible.colonne, o.cible.ligne)) {
+        b.produits++;
+        radio.emettre("filon-trouve", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, minerai: "charbon", reserve: C.nature.reserveFilon });
       } else radio.emettre("gisement-rate", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne });
     } else if (b.type === "carriere") {
       if (carte.objet[i] === O.rocher && carte.reste[i] > 0) {

@@ -14,7 +14,7 @@ window.Village = window.Village || {};
 Village.Ages = (function () {
   const C = Village.CONFIG;
   const radio = Village.Evenements;
-  const NOMS = { planches: "🟫 planches", pierres: "🪨 pierres", troncs: "🪵 troncs" };
+  const NOMS = { planches: "🟫 planches", pierres: "🪨 pierres", troncs: "🪵 troncs", charbon: "⚫ charbon" };
 
   const actuel = (monde) => C.ages[monde.age || 0];
   const suivant = (monde) => C.ages[(monde.age || 0) + 1] || null;
@@ -35,6 +35,7 @@ Village.Ages = (function () {
       const n = monde.batiments.filter((b) => b.type !== "entrepot" && b.etat === "pret").length;
       liste.push({ texte: "Bâtiments construits", valeur: n, cible: o.batiments });
     }
+    if (o.recherches) liste.push({ texte: "🎓 Recherches faites", valeur: monde.recherches.faites.length, cible: o.recherches });
     for (const [r, cible] of Object.entries(o.stock || {})) liste.push({ texte: NOMS[r] + " dans l'entrepôt", valeur: monde.stock[r], cible });
     if (o.nourriture) liste.push({ texte: "🐟 + 🍖 dans l'entrepôt", valeur: monde.stock.poissons + monde.stock.viande, cible: o.nourriture });
     for (const x of liste) x.fait = x.valeur >= x.cible;
@@ -49,8 +50,9 @@ Village.Ages = (function () {
     const liste = objectifs(monde);
     if (!liste || !suivant(monde) || !liste.every((x) => x.fait)) return;
     monde.age = (monde.age || 0) + 1;
+    monde.gemmes += C.gemmesParAge; // étape 7 : un cadeau en gemmes à chaque nouvel âge
     const a = actuel(monde);
-    radio.emettre("nouvel-age", { nom: a.nom, emoji: a.emoji, numero: monde.age, debloque: a.debloque.map((t) => Village.Batiments.TYPES[t].nom) });
+    radio.emettre("nouvel-age", { nom: a.nom, emoji: a.emoji, numero: monde.age, debloque: a.debloque.map((t) => Village.Batiments.TYPES[t].nom), gemmes: C.gemmesParAge });
   }
 
   return { actuel, suivant, ageDe, debloque, objectifs, etape };

@@ -72,6 +72,15 @@
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") sauver("la page se cache ou se ferme");
   });
+  // Étape 7 : plus de sécurité. « pagehide » arrive aussi quand un téléphone ferme la page d'un coup,
+  // et on sauvegarde toutes les 15 vraies secondes (même en pause).
+  window.addEventListener("pagehide", () => sauver("la page se ferme"));
+  setInterval(() => sauver("sauvegarde automatique"), C.sauvegardeAuto * 1000);
+  // On demande au navigateur de ne pas effacer notre tiroir quand il manque de place.
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+
+  // Étape 7 : ✍️ « Nouvelle carte » efface ta partie : on demande de toucher 2 fois pour confirmer.
+  let confirmerNouvelleCarte = 0;
 
   // Ce que veut le joueur. Un toucher sur un bouton de l'écran est « mangé » par le bouton.
   function lireIntentions(souris) {
@@ -81,7 +90,8 @@
       zoom: (souris ? souris.molette : 0) + (E.consommer("zoomPlus") ? 1 : 0) - (E.consommer("zoomMoins") ? 1 : 0),
       village: E.consommer("village"),
       construire: null,
-      outil: E.consommer("route") ? "route" : E.consommer("demolir") ? "demolir" : E.consommer("deplacer") ? "deplacer" : null,
+      outil: E.consommer("route") ? "route" : E.consommer("routePierre") ? "routePierre" : E.consommer("demolir") ? "demolir" : E.consommer("deplacer") ? "deplacer" : null,
+      recherche: null, mission: null, achat: null, // étape 7
       annuler: false,
       allerA: null,
       souris,
@@ -92,6 +102,11 @@
       if (z) {
         if (z.action === "menu") Village.Interface.basculerMenu(z.valeur); // étape 5 : ouvrir un groupe du menu
         else if (z.action === "objectifs") Village.Interface.basculerObjectifs(); // étape 6 : les objectifs de l'âge
+        else if (z.action === "panneau") Village.Interface.basculerPanneau(z.valeur); // étape 7 : missions, boutique
+        else if (z.action === "fermerPanneau") Village.Interface.fermerPanneau();
+        else if (z.action === "recherche") i.recherche = z.valeur;
+        else if (z.action === "mission") i.mission = z.valeur;
+        else if (z.action === "achat") i.achat = z.valeur;
         else if (z.action === "construire") { i.construire = z.valeur; Village.Interface.fermerMenu(); }
         else if (z.action === "outil") { i.outil = z.valeur; Village.Interface.fermerMenu(); }
         else if (z.action === "annuler" || z.action === "fermer") i.annuler = true;
@@ -122,13 +137,22 @@
       else options.pause = !options.pause;
     }
     if (E.consommer("nouvelleCarte")) {
-      sauver("avant de changer de carte");
-      Village.Effets.vider();
-      monde = Village.Monde.creer(nouvelleGraine(), null, null);
-      Village.SousLeCapot.changerMonde(monde);
-      Village.monde = monde;
-      debutDuMonde = monde.temps;
-      sauver("nouvelle partie sur la carte n° " + monde.carte.graine);
+      if (performance.now() > confirmerNouvelleCarte) {
+        // 1er appui : on prévient. 2e appui dans les 4 secondes : on change vraiment de carte.
+        confirmerNouvelleCarte = performance.now() + 4000;
+        radio.emettre("confirmer-nouvelle-carte");
+        const bouton = document.querySelector('[data-action="nouvelleCarte"]');
+        if (bouton) { bouton.textContent = "⚠️ Sûr ? Ta partie sera perdue : touche encore"; setTimeout(() => (bouton.innerHTML = "🎲 Nouvelle carte <kbd>G</kbd>"), 4000); }
+      } else {
+        confirmerNouvelleCarte = 0;
+        sauver("avant de changer de carte");
+        Village.Effets.vider();
+        monde = Village.Monde.creer(nouvelleGraine(), null, null);
+        Village.SousLeCapot.changerMonde(monde);
+        Village.monde = monde;
+        debutDuMonde = monde.temps;
+        sauver("nouvelle partie sur la carte n° " + monde.carte.graine);
+      }
     }
     rafraichirBoutons();
 
@@ -146,7 +170,7 @@
       Village.Monde.etape(monde, dt, intentions);
       // Les pas suivants de la même image : plus de clic, de glissé ni de zoom (déjà faits).
       intentions = Object.assign({}, intentions, {
-        zoom: 0, village: false, construire: null, outil: null, annuler: false, allerA: null,
+        zoom: 0, village: false, construire: null, outil: null, annuler: false, allerA: null, recherche: null, mission: null, achat: null,
         souris: Object.assign({}, intentions.souris, { glisseX: 0, glisseY: 0, molette: 0, pince: 1, centrePince: null, clic: null }),
       });
       pas++;
@@ -165,7 +189,6 @@
       Village.Monde.etapeEnPause(monde, 1 / 60, intentions);
     }
 
-    if (monde.temps - derniereSauvegarde >= C.sauvegardeAuto) sauver("sauvegarde automatique");
 
     Village.Peintre.dessiner(monde, options);
     Village.SousLeCapot.mettreAJour(maintenant);

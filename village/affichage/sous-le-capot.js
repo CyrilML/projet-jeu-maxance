@@ -63,8 +63,23 @@ Village.SousLeCapot = (function () {
     repas: (d) => "😋 " + d.qui + " mange " + emo(d.quoi) + " à l'entrepôt (il reste " + d.reste + " repas)",
     affame: (d) => "🍽️ " + d.qui + " a faim et il n'y a rien à manger : il travaille 2 fois moins vite !",
     "plus-faim": (d) => "😊 " + d.qui + " a enfin mangé : il retrouve toute sa vitesse",
+    // Étape 7
+    "recherche-lancee": (d) => "🎓 Recherche lancée : " + d.emoji + " " + d.nom + " (" + cout(d.cout) + " payés) · " + d.duree + " s",
+    "recherche-finie": (d) => "🎓 Recherche finie : " + d.emoji + " " + d.nom + " → " + d.texte + " (" + d.total + " faites)",
+    "recherche-impossible": (d) => "🚫 Recherche « " + d.nom + " » impossible : " + d.raison,
+    "mission-proposee": (d) => "📜 Nouvelle mission : " + d.emoji + " " + d.qui + " · « " + d.histoire + " »",
+    "mission-acceptee": (d) => "📜 Mission acceptée : il faut " + cout(d.demande) + " en " + Math.round(d.duree / 60) + " min",
+    "mission-refusee": (d) => "📜 Mission remise à plus tard (" + d.qui + ")",
+    "mission-pas-assez": (d) => "📜 Pas encore assez pour " + d.qui,
+    "mission-reussie": (d) => "🎉 Mission réussie pour " + d.qui + " ! Récompense : " + Object.entries(d.recompense).map(([r, n]) => n + " " + (r === "gemmes" ? "💎" : r)).join(", ") + " · " + d.gemmes + " 💎 en tout",
+    "mission-ratee": (d) => "⌛ Mission ratée : le temps est écoulé (" + d.qui + "). Rien de grave !",
+    achat: (d) => "💎 Achat : " + d.emoji + " " + d.nom + " pour " + d.prix + " 💎 (il en reste " + d.gemmes + ")",
+    "achat-impossible": (d) => "🚫 Achat impossible (" + d.nom + ") : " + d.raison,
+    "charbon-extrait": (d) => "⚫ Mine n° " + d.numero + " : 1 charbon extrait · il reste " + d.reste + " dans le filon · " + d.devant + " devant la porte",
+    "filon-epuise": (d) => "⚫ " + d.nom + " n° " + d.numero + " : plus de charbon dans les filons voisins",
+    "filon-trouve": (d) => "🔍 Filon de " + d.minerai + " trouvé près de (" + d.colonne + ", " + d.ligne + ") : " + d.reserve + " morceaux",
     // Étape 6
-    "nouvel-age": (d) => "🎉 " + d.emoji + " NOUVEL ÂGE : " + d.nom + " (n° " + d.numero + ")" + (d.debloque.length ? " · débloqué : " + d.debloque.join(", ") : ""),
+    "nouvel-age": (d) => "🎉 " + d.emoji + " NOUVEL ÂGE : " + d.nom + " (n° " + d.numero + ")" + (d.debloque.length ? " · débloqué : " + d.debloque.join(", ") : "") + (d.gemmes ? " · +" + d.gemmes + " 💎" : ""),
     // Étape 5
     "deplacement-choisi": (d) => "↔️ Déplacer : " + d.nom + " n° " + d.numero + ". Choisis sa nouvelle place",
     "deplacement-impossible": (d) => "🚫 Déplacement impossible (" + d.nom + ") : " + d.raison,
@@ -75,6 +90,9 @@ Village.SousLeCapot = (function () {
     "habitant-arrive": (d) => "🙋 " + d.qui + " arrive au village (il y a de nouveau à manger)",
     "plein-ecran": (d) => (d.actif ? "⛶ Plein écran" : "🗗 Fin du plein écran"),
     "base-effacee": () => "🗑️ Base de données effacée",
+    "confirmer-nouvelle-carte": () => "⚠️ Nouvelle carte ? Ta partie sera perdue. Appuie encore une fois dans les 4 secondes pour confirmer",
+    "copie-demandee": () => "📋 Copie de secours de ta partie : garde ce texte dans une note",
+    "partie-importee": (d) => "📥 Partie chargée (carte n° " + d.graine + ", version " + d.version + ") : la page va se recharger",
   };
 
   const emo = (r) => ({ troncs: "🪵 1 tronc", planches: "🟫 1 planche", pierres: "🪨 1 pierre", poissons: "🐟 1 poisson", viande: "🍖 1 morceau de viande" }[r] || r);
@@ -92,7 +110,27 @@ Village.SousLeCapot = (function () {
     cle = document.getElementById("cle");
     cle.textContent = Village.Sauvegarde.CLE;
     document.getElementById("vider-journal").addEventListener("click", () => (journal.innerHTML = ""));
-    document.getElementById("effacer-base").addEventListener("click", () => Village.Sauvegarde.effacer());
+    // Étape 7 : effacer demande une confirmation (2 clics), et on peut copier ou recharger sa partie.
+    const effacer = document.getElementById("effacer-base");
+    let confirmer = 0;
+    effacer.addEventListener("click", () => {
+      if (performance.now() > confirmer) { confirmer = performance.now() + 4000; effacer.textContent = "Sûr ? Clique encore"; setTimeout(() => (effacer.textContent = "Effacer"), 4000); return; }
+      confirmer = 0; effacer.textContent = "Effacer";
+      Village.Sauvegarde.effacer();
+    });
+    const copier = document.getElementById("copier-partie"), charger = document.getElementById("charger-partie"), zone = document.getElementById("zone-partie");
+    if (copier) copier.addEventListener("click", async () => {
+      Village.Evenements.emettre("copie-demandee");
+      zone.hidden = false; zone.value = Village.Sauvegarde.exporter(); zone.select();
+      try { await navigator.clipboard.writeText(zone.value); copier.textContent = "✅ Copiée !"; } catch (e) { copier.textContent = "Sélectionne le texte et copie-le"; }
+      setTimeout(() => (copier.textContent = "📋 Copier ma partie"), 3000);
+    });
+    if (charger) charger.addEventListener("click", () => {
+      if (zone.hidden || !zone.value.trim()) { zone.hidden = false; zone.value = ""; zone.placeholder = "Colle ici le texte de ta partie, puis clique encore sur « Charger »"; zone.focus(); return; }
+      const erreur = Village.Sauvegarde.importer(zone.value.trim());
+      if (erreur) { charger.textContent = "❌ " + erreur; setTimeout(() => (charger.textContent = "📥 Charger une partie"), 4000); return; }
+      location.reload();
+    });
   }
 
   function changerMonde(m) { monde = m; }
@@ -136,6 +174,16 @@ Village.SousLeCapot = (function () {
     h += groupe("⏳ L'âge du village");
     h += ligne("âge", ag.emoji + " " + ag.nom + " (n° " + (monde.age || 0) + ")");
     for (const o of objs || []) h += ligne((o.fait ? "✅ " : "⬜ ") + o.texte, Math.min(o.valeur, o.cible) + " / " + o.cible);
+    // Étape 7
+    h += groupe("🎓 Recherches · 📜 missions · 💎 gemmes");
+    h += ligne("💎 gemmes", monde.gemmes);
+    h += ligne("recherches faites", monde.recherches.faites.length ? monde.recherches.faites.join(", ") : "aucune");
+    const rc = monde.recherches.enCours;
+    h += ligne("recherche en cours", rc ? rc.id + " · encore " + Math.ceil(rc.reste) + " s" : "aucune");
+    for (const cle of ["couper", "pecher", "chasser", "tailler", "miner", "porteurs", "repas"]) { const x = Village.Recherches.bonus(monde, cle); if (x !== 1) h += ligne("bonus « " + cle + " »", "× " + virgule(x, 2)); }
+    const mi = monde.missions.actuelle;
+    h += ligne("mission", mi ? mi.id + " · " + mi.etat + (mi.etat === "encours" ? " · encore " + Math.ceil(mi.reste) + " s" : "") : "prochaine dans " + Math.ceil(monde.missions.attente) + " s");
+    h += ligne("missions réussies", monde.missions.reussies.length);
     const sa = monde.saison;
     if (sa) {
       h += groupe("🗓️ Les saisons (une année = " + Village.CONFIG.saisons.dureeAnnee + " s)");

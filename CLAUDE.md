@@ -47,6 +47,9 @@ Les autres jeux suivent les mêmes familles et les mêmes règles, chacun dans s
 ses propres demandes (`village/demandes/NN-titre.md`) et sa propre numérotation d'étapes (1, 2, 3…),
 séparée de celle du carnet principal. Une demande pour le village se range et s'explique là, pas dans
 `demandes/` ni dans `index.html` (qui garde seulement un lien vers le village et son carnet).
+Le contenu du village (âges, recherches, missions, boutique) est rangé comme des données dans
+`village/config.js`. ✍️ Maxance tient à garder sa partie : ne jamais casser la sauvegarde
+(`village/donnees/sauvegarde.js`) ; chaque changement de format augmente `VERSION` et convertit l'ancienne.
 
 Règles :
 - Pas d'étape de compilation, pas de dépendances : de simples fichiers `<script>` chargés dans

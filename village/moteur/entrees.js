@@ -34,6 +34,7 @@ Village.Entrees = (function () {
     deplacer: ["KeyM"], // étape 5 : M comme « mettre ailleurs »
     // Étape 3 : les outils
     route: ["KeyR"],
+    routePierre: ["KeyT"], // étape 7 : la route en pierre
     demolir: ["Delete", "Backspace"],
   };
 

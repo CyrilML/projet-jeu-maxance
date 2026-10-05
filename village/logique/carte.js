@@ -165,6 +165,7 @@ Village.Carte = (function () {
           if (f < F.or) carte.filon[i] = FILON.or;
           else if (f < F.or + F.fer) carte.filon[i] = FILON.fer;
           else if (f < F.or + F.fer + F.charbon) carte.filon[i] = FILON.charbon;
+          if (carte.filon[i]) carte.reste[i] = C.nature.reserveFilon; // étape 7 : ce que le filon peut donner
         }
       }
     }
@@ -172,7 +173,9 @@ Village.Carte = (function () {
     const casesMontagne = montagnes.filter((i) => carte.terrain[i] === TERRAIN.montagne);
     for (const sorte of [FILON.charbon, FILON.fer, FILON.or]) {
       if (!casesMontagne.length || carte.filon.includes(sorte)) continue;
-      carte.filon[casesMontagne[Math.floor(de.suivant() * casesMontagne.length)]] = sorte;
+      const j = casesMontagne[Math.floor(de.suivant() * casesMontagne.length)];
+      carte.filon[j] = sorte;
+      carte.reste[j] = C.nature.reserveFilon;
     }
 
     // 6 : la place du village : le feu de camp au milieu, la tente du chef juste à côté.

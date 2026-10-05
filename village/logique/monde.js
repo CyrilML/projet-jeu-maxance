@@ -44,6 +44,11 @@ Village.Monde = (function () {
       routeDepart: null, // la première case touchée pour tracer une route
       aDeplacer: null, // étape 5 : le bâtiment qu'on est en train de déplacer
       age: 0, // étape 6 : le numéro de l'âge (0 = le campement)
+      // Étape 7
+      gemmes: 0, // 💎 gagnées en jouant (missions, nouveaux âges)
+      recherches: { faites: [], enCours: null }, // 🎓 les recherches de l'université
+      missions: { actuelle: null, attente: 45, derniere: null, reussies: [] }, // 📜 la première arrive après 45 s
+      drapeau: 0, // la couleur du drapeau du village (achetée à la boutique)
       // Étape 4
       horloge: 0, // secondes depuis le début de LA PARTIE (sauvegardé) : c'est lui qui fait les saisons
       saison: null, // { nom, emoji, annee, avancement… } (voir logique/saisons.js)
@@ -61,7 +66,7 @@ Village.Monde = (function () {
       const v = carte.village;
       Village.Batiments.creer(monde, "entrepot", v.colonne + 2, v.ligne - 1, 1);
     }
-    Village.Porteurs.creerTous(monde);
+    Village.Porteurs.creerTous(monde, partie && partie.porteurs ? partie.porteurs.length : 0);
     if (partie && partie.porteurs) partie.porteurs.forEach((d, n) => { if (monde.porteurs[n]) Object.assign(monde.porteurs[n], d); });
     Village.Routes.recalculerReseau(monde);
     monde.saison = Village.Saisons.lire(monde.horloge);
@@ -76,17 +81,23 @@ Village.Monde = (function () {
   // puis on rejoue la liste des changements, un par un.
   function restaurer(monde, partie) {
     const k = monde.carte;
-    for (const [i, o, r] of partie.modifs || []) {
+    for (const [i, o, r, f] of partie.modifs || []) {
       k.objet[i] = o;
       k.reste[i] = r;
-      monde.modifs.set(i, { o, r });
+      if (f !== undefined) k.filon[i] = f; // étape 7 : les filons découverts par le géologue
+      monde.modifs.set(i, { o, r, f: k.filon[i] });
     }
     for (const [i, age] of partie.pousses || []) if (k.objet[i] === Village.Carte.OBJET.pousse) monde.pousses.set(i, age);
     Village.Carte.compter(k);
     if (partie.stock) Object.assign(monde.stock, partie.stock);
     for (const i of partie.routes || []) monde.route[i] = 1;
+    for (const i of partie.routesPierre || []) monde.route[i] = 2; // étape 7
     monde.horloge = partie.horloge || 0;
     monde.age = partie.age || 0;
+    monde.gemmes = partie.gemmes || 0;
+    monde.drapeau = partie.drapeau || 0;
+    if (partie.recherches) monde.recherches = { faites: (partie.recherches.faites || []).slice(), enCours: partie.recherches.enCours || null };
+    if (partie.missions) Object.assign(monde.missions, partie.missions);
     monde.partis = partie.partis || 0;
     for (const [x, y, sorte] of partie.animaux || []) Village.Animaux.creer(monde, x, y, sorte);
     for (const b of partie.batiments || []) {
@@ -98,7 +109,7 @@ Village.Monde = (function () {
   // Changer l'objet d'une case (un arbre coupé, une pousse plantée…) ET noter le changement pour la sauvegarde.
   function changerObjet(monde, i, objet) {
     monde.carte.objet[i] = objet;
-    monde.modifs.set(i, { o: objet, r: monde.carte.reste[i] });
+    monde.modifs.set(i, { o: objet, r: monde.carte.reste[i], f: monde.carte.filon[i] });
     monde.changements++;
     Village.Carte.compter(monde.carte);
   }
@@ -143,6 +154,8 @@ Village.Monde = (function () {
     Village.Animaux.etape(monde, dt);
     Village.Repas.etape(monde, dt);
     Village.Ages.etape(monde, dt);
+    Village.Recherches.etape(monde, dt); // étape 7
+    Village.Missions.etape(monde, dt); // étape 7
     nature(monde, dt);
   }
 
@@ -208,6 +221,12 @@ Village.Monde = (function () {
       monde.aDeplacer = null;
       radio.emettre("choix-outil", { outil: monde.outil });
     }
+    // Étape 7 : les recherches, les missions et la boutique (des boutons dans l'écran)
+    if (intentions.recherche) Village.Recherches.lancer(monde, intentions.recherche);
+    if (intentions.mission === "accepter") Village.Missions.accepter(monde);
+    else if (intentions.mission === "plusTard") Village.Missions.plusTard(monde);
+    else if (intentions.mission === "livrer") Village.Missions.livrer(monde);
+    if (intentions.achat) Village.Boutique.acheter(monde, intentions.achat);
     if (intentions.annuler) {
       if (monde.construction) radio.emettre("construction-annulee", { nom: B.TYPES[monde.construction].nom });
       if (monde.outil && monde.routeDepart) monde.routeDepart = null; // d'abord : oublier le départ de la route
@@ -224,7 +243,7 @@ Village.Monde = (function () {
       if (B.poser(monde, monde.construction, k.colonne, k.ligne)) monde.construction = null;
       return;
     }
-    if (monde.outil === "route") return tracerRoute(monde, k);
+    if (monde.outil === "route" || monde.outil === "routePierre") return tracerRoute(monde, k);
     if (monde.outil === "deplacer") {
       // Étape 5 : 1er toucher = le bâtiment, 2e toucher = sa nouvelle place.
       if (!monde.aDeplacer) {
@@ -260,7 +279,7 @@ Village.Monde = (function () {
       return;
     }
     if (k.colonne === monde.routeDepart.colonne && k.ligne === monde.routeDepart.ligne) { monde.routeDepart = null; return; }
-    if (Village.Routes.construire(monde, monde.routeDepart, { colonne: k.colonne, ligne: k.ligne })) {
+    if (Village.Routes.construire(monde, monde.routeDepart, { colonne: k.colonne, ligne: k.ligne }, monde.outil === "routePierre" ? 2 : 1)) {
       // Si on est arrivé sur un bâtiment, on s'arrête là. Sinon, on peut continuer depuis l'arrivée.
       monde.routeDepart = monde.occupees.has(k.numero) ? null : { colonne: k.colonne, ligne: k.ligne };
     }

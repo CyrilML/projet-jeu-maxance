@@ -32,12 +32,15 @@
 //                  qu'un (un cerf = 4 viandes) : c'est la liste « lots ».
 //   6 (étape 6)  : l'âge du village (age : 0 = le campement). Une partie plus ancienne qui avait déjà
 //                  un géologue commence au hameau (sinon il serait construit « trop tôt »).
+//   7 (étape 7)  : les 💎 gemmes, les recherches (faites et en cours), les missions, la couleur du drapeau,
+//                  le nombre de porteurs, les filons découverts (4e nombre de chaque « modif »),
+//                  et les routes en pierre (routesPierre).
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 6;
+  const VERSION = 7;
   const radio = Village.Evenements;
 
   function vide() {
@@ -108,7 +111,10 @@ Village.Sauvegarde = (function () {
     return donnees;
   }
 
+  let bloquee = false; // étape 7 : après avoir chargé une copie, on n'écrit plus rien avant de recharger la page
+
   function ecrire(raison) {
+    if (bloquee) return;
     try {
       localStorage.setItem(CLE, JSON.stringify(donnees));
       radio.emettre("sauvegarde", { raison, octets: JSON.stringify(donnees).length });
@@ -156,17 +162,35 @@ Village.Sauvegarde = (function () {
         if (b.etat === "pret" && Village.Batiments.TYPES[b.type].metier && !o) d.vide = true; // l'habitant est parti
         return d;
       }),
-      routes: monde.route.reduce((liste, v, i) => (v ? (liste.push(i), liste) : liste), []),
+      routes: monde.route.reduce((liste, v, i) => (v === 1 ? (liste.push(i), liste) : liste), []),
+      routesPierre: monde.route.reduce((liste, v, i) => (v === 2 ? (liste.push(i), liste) : liste), []), // étape 7
       horloge: Math.round(monde.horloge),
       age: monde.age,
+      gemmes: monde.gemmes,
+      drapeau: monde.drapeau,
+      recherches: { faites: monde.recherches.faites, enCours: monde.recherches.enCours && { id: monde.recherches.enCours.id, reste: Math.round(monde.recherches.enCours.reste) } },
+      missions: { actuelle: monde.missions.actuelle && Object.assign({}, monde.missions.actuelle, { reste: Math.round(monde.missions.actuelle.reste) }), attente: Math.round(monde.missions.attente), derniere: monde.missions.derniere, reussies: monde.missions.reussies },
       partis: monde.partis,
       porteurs: monde.porteurs.map((p) => ({ faim: Math.round(p.faim || 0), affame: !!p.affame, ventreVide: Math.round(p.ventreVide || 0), parti: !!p.parti })),
       animaux: monde.animaux.map((a) => [Math.round(a.x * 10) / 10, Math.round(a.y * 10) / 10, a.sorte]),
-      modifs: [...monde.modifs].map(([i, m]) => [i, m.o, m.r]),
+      modifs: [...monde.modifs].map(([i, m]) => (m.f ? [i, m.o, m.r, m.f] : [i, m.o, m.r])),
       pousses: [...monde.pousses].map(([i, age]) => [i, Math.round(age)]),
     };
     ecrire(raison);
   }
 
-  return { CLE, lire, ecrire, effacer, sauverPartie, get donnees() { return donnees; } };
+  // Étape 7 : la copie de secours. On peut copier toute la base de données (du texte JSON), la garder
+  // dans une note, et la recoller plus tard (ou sur un autre appareil).
+  function exporter() { return JSON.stringify(donnees); }
+  function importer(texte) {
+    let lues;
+    try { lues = JSON.parse(texte); } catch (e) { return "ce n'est pas une sauvegarde (le texte est abîmé)"; }
+    if (!lues || typeof lues !== "object" || !lues.graine) return "ce n'est pas une sauvegarde du village";
+    try { localStorage.setItem(CLE, JSON.stringify(lues)); } catch (e) { return "impossible d'écrire dans le navigateur"; }
+    bloquee = true; // sinon la sauvegarde automatique écraserait la copie avant le rechargement
+    radio.emettre("partie-importee", { graine: lues.graine, version: lues.version });
+    return null;
+  }
+
+  return { CLE, lire, ecrire, effacer, sauverPartie, exporter, importer, get donnees() { return donnees; } };
 })();
