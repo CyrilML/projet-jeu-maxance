@@ -20,6 +20,15 @@ pas de serveur, pas d'installation.
   ↑ accélérer, ↓ freiner, ← → tourner, C caméra, X rayons X. Même architecture que le premier jeu,
   avec un petit moteur 3D fait maison (`circuit/moteur/projecteur.js`), sans aucune dépendance.
 
+- **`village/index.html`** : le troisième jeu, un **projet à part** avec son propre carnet (`village/carnet.html`),
+  ses demandes (`village/demandes/`) et ses propres numéros d'étapes. Un jeu de gestion façon The Settlers, sans combat,
+  en vue de biais et en style dessin animé, jouable au doigt sur téléphone (pincer pour zoomer, plein écran ⛶).
+  Une carte inventée au hasard (forêts, rivières, rochers, montagnes avec des filons de charbon, de fer et d'or),
+  et la première chaîne de production : bûcheron, forestier, scierie, carrière (touches 1 à 4 ou boutons en bas),
+  reliés à l'entrepôt par des routes (R) où marchent les porteurs. Pêcheur (5) et chasseur (6) nourrissent les habitants,
+  et les 4 saisons passent en 10 minutes (lacs gelés et neige en hiver).
+  G = nouvelle carte, H = retour au village, X = rayons X, Suppr = démolir, Échap = annuler.
+
 Dans le jeu : ← → (ou Q D) pour bouger, Espace / ↑ / Z pour sauter.
 Outils : `X` rayons X, `Échap` pause, `N` avancer d'un pas, `L` ralenti. `P` (en sautant) : poser un bloc. `T` : épée, `H` : potion, `F` : pioche, `R` : réparer, `K` : cuire, `M` : manger.
 
@@ -30,6 +39,7 @@ Outils : `X` rayons X, `Échap` pause, `N` avancer d'un pas, `L` ralenti. `P` (e
 ├── CLAUDE.md           les consignes pour Claude (rôles, architecture, façon de travailler)
 ├── demandes/           les demandes de Maxance, une par étape
 ├── circuit/            le jeu de course en 3D (mêmes familles : moteur, logique, donnees, affichage)
+├── village/            le jeu de gestion du village (mêmes familles)
 └── jeu/
     ├── index.html      la page du jeu
     ├── config.js       tous les réglages chiffrés

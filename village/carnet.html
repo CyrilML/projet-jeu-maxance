@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Carnet du village de Maxance</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏘️</text></svg>">
+  <style>
+    :root {
+      --fond: #0e1325; --panneau: #171e38; --panneau2: #1d2547; --bord: #2a3460;
+      --texte: #e8ecff; --doux: #9aa5d6; --accent: #ffe27a;
+      --moteur: #5b8cff; --logique: #3fc27a; --donnees: #f2b13c; --affichage: #b57bff;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+    body { margin: 0; background: var(--fond); color: var(--texte); font-family: "Trebuchet MS", system-ui, sans-serif; line-height: 1.55; }
+    a { color: var(--accent); }
+    code, kbd, pre { font-family: ui-monospace, Menlo, Consolas, monospace; }
+    code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 5px; font-size: .9em; color: #ffd98a; }
+    kbd { background: #27305a; border-radius: 4px; padding: 0 5px; font-size: .85em; }
+
+    nav.menu { position: sticky; top: 0; z-index: 5; background: rgba(14,19,37,.95); backdrop-filter: blur(6px); border-bottom: 1px solid var(--bord); }
+    nav.menu .dedans { max-width: 1100px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 6px 16px; flex-wrap: wrap; align-items: center; }
+    nav.menu strong { margin-right: auto; }
+    nav.menu a { text-decoration: none; color: var(--doux); font-weight: bold; font-size: .92rem; }
+    nav.menu a:hover { color: var(--texte); }
+    nav.menu a.jouer { background: #4f7cff; color: #fff; padding: 5px 12px; border-radius: 9px; }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 0 16px 60px; }
+    header.titre { text-align: center; padding: 36px 0 10px; }
+    header.titre h1 { font-size: 2.2rem; margin: 0; }
+    header.titre p { color: var(--doux); margin: 6px auto 0; max-width: 680px; }
+
+    section { margin-top: 44px; }
+    h2 { font-size: 1.6rem; margin: 0 0 6px; }
+    h2 + .chapeau { color: var(--doux); margin: 0 0 18px; }
+    h3 { font-size: 1.15rem; margin: 28px 0 8px; }
+    .carte { background: var(--panneau); border: 1px solid var(--bord); border-radius: 14px; padding: 16px 18px; }
+    .grille { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .carte h4 { margin: 0 0 6px; font-size: 1.05rem; }
+    .carte p, .carte ul, .carte ol { margin: 6px 0; }
+    .carte ul, .carte ol { padding-left: 20px; }
+    .petit { font-size: .88rem; color: var(--doux); }
+    .etiquette { display: inline-block; font-size: .75rem; font-weight: bold; padding: 1px 8px; border-radius: 99px; background: rgba(255,255,255,.1); color: var(--doux); vertical-align: middle; }
+
+    .cycle { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; counter-reset: cycle; }
+    .cycle div { background: var(--panneau2); border-radius: 12px; padding: 12px; position: relative; }
+    .cycle div::before { counter-increment: cycle; content: counter(cycle); position: absolute; top: -10px; left: -6px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #222; font-weight: bold; display: grid; place-items: center; font-size: .85rem; }
+    .cycle b { display: block; }
+    .cycle span { font-size: .88rem; color: var(--doux); }
+
+    .comparaison { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .mauvais { border-left: 5px solid #ff6b6b; }
+    .bon { border-left: 5px solid var(--logique); }
+
+    form.fiche { display: grid; gap: 12px; }
+    form.fiche label { font-weight: bold; display: block; }
+    form.fiche label small { font-weight: normal; color: var(--doux); display: block; }
+    form.fiche input, form.fiche textarea { width: 100%; margin-top: 4px; font: inherit; color: var(--texte); background: #0b1020; border: 1px solid var(--bord); border-radius: 8px; padding: 8px 10px; }
+    form.fiche textarea { min-height: 70px; resize: vertical; }
+    .boutons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    button { font: inherit; font-weight: bold; color: #fff; background: #4f7cff; border: none; border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+    button.secondaire { background: #27305a; }
+    button:hover { filter: brightness(1.12); }
+    pre.resultat { background: #0b1020; border: 1px solid var(--bord); border-radius: 10px; padding: 12px; white-space: pre-wrap; font-size: .85rem; max-height: 360px; overflow: auto; }
+
+    .schema { width: 100%; height: auto; display: block; }
+    .legende { display: flex; gap: 14px; flex-wrap: wrap; font-size: .88rem; margin-top: 8px; }
+    .legende span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+
+    table.fichiers { width: 100%; border-collapse: collapse; font-size: .92rem; }
+    table.fichiers th, table.fichiers td { text-align: left; padding: 8px; border-bottom: 1px solid var(--bord); vertical-align: top; }
+    table.fichiers th { color: var(--doux); font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+    table.fichiers td:first-child { white-space: nowrap; }
+    .pastille { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+    .tableau-defile { overflow-x: auto; }
+
+    .frise { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; }
+    .image { flex: 1 0 200px; background: var(--panneau2); border-radius: 10px; padding: 8px; }
+    .image b { font-size: .85rem; color: var(--doux); }
+    .image .etapes { display: flex; gap: 4px; margin-top: 6px; }
+    .image .etapes span { flex: 1; text-align: center; font-size: .78rem; border-radius: 6px; padding: 4px 2px; }
+    .maj { background: rgba(63,194,122,.25); }
+    .des { background: rgba(181,123,255,.3); }
+
+    ol.voyage { list-style: none; padding: 0; margin: 0; border-left: 3px solid var(--accent); }
+    ol.voyage li { position: relative; padding: 0 0 14px 20px; }
+    ol.voyage li::before { content: ""; position: absolute; left: -8px; top: 6px; width: 13px; height: 13px; border-radius: 50%; background: var(--accent); }
+    ol.voyage .quand { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--accent); font-size: .85rem; }
+
+    .simulateur { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .simulateur label { display: block; font-size: .9rem; margin-bottom: 10px; }
+    .simulateur input[type=range] { width: 100%; }
+    .simulateur canvas { width: 100%; background: #0b1020; border-radius: 10px; border: 1px solid var(--bord); }
+    .mesure { font-size: 1.05rem; margin: 4px 0; }
+    .mesure b { color: var(--accent); }
+
+    details.question { background: var(--panneau2); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
+    details.question summary { cursor: pointer; font-weight: bold; }
+    details.question p { margin: 8px 0 0; }
+
+    .route { display: grid; gap: 12px; }
+    .route .carte { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 14px; }
+    .route .num { grid-row: span 3; width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-size: 1.4rem; font-weight: bold; background: var(--panneau2); }
+    .route .fait .num { background: var(--logique); }
+    .route .prochain { border-color: var(--accent); }
+    .route .prochain .num { background: var(--accent); color: #222; }
+    .route h4 { margin: 0; }
+    .route .apprend { font-size: .9rem; }
+    .route .apprend b { color: var(--doux); }
+
+    textarea.journal { width: 100%; min-height: 110px; font: inherit; color: var(--texte); background: #0b1020; border: 1px solid var(--bord); border-radius: 8px; padding: 10px; margin-top: 6px; }
+
+    @media (max-width: 760px) {
+      .comparaison, .simulateur { grid-template-columns: 1fr; }
+      header.titre h1 { font-size: 1.7rem; }
+      nav.menu strong { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Le carnet du village : un projet à part du jeu de plateforme et du circuit.
+       Ses étapes ont leurs propres numéros (1, 2, 3…), et ses demandes sont dans village/demandes/. -->
+  <nav class="menu" aria-label="Sommaire">
+    <div class="dedans">
+      <strong>🏘️ Carnet du village</strong>
+      <a href="#etape1">Étape 1</a>
+      <a href="#etape2">Étape 2</a>
+      <a href="#etape3">Étape 3</a>
+      <a href="#etape4">Étape 4</a>
+      <a href="#route">Feuille de route</a>
+      <a href="#journal">Journal</a>
+      <a href="../index.html">📓 Carnet principal</a>
+      <a class="jouer" href="index.html">▶ Jouer au village</a>
+    </div>
+  </nav>
+
+  <main>
+    <header class="titre">
+      <h1>🏘️ Le village de Maxance</h1>
+      <p>Un jeu de gestion façon The Settlers, sans combat : faire prospérer son village, gérer les ressources, les habitants et les transports, et passer d'un âge à l'autre. Pour passer commande, utilise la même fiche que d'habitude, dans le <a href="../index.html#demande">carnet principal</a>, en écrivant « village » dans le titre.</p>
+    </header>
+
+    <section id="etape1">
+      <h2>🏘️ Étape 1 : un nouveau jeu, le village (la carte et la caméra) <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Un troisième jeu : un jeu de gestion façon The Settlers, sans combat. On fait grandir son village, on gère les ressources et les habitants, on passe d'un âge à l'autre. Première étape : la carte inventée au hasard, vue de biais, et la caméra. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/01-le-village.md</code>.</p>
+          <ul>
+            <li>✍️ Vue de biais (isométrique), style dessin animé.</li>
+            <li>✍️ Des routes et des porteurs (étapes suivantes).</li>
+            <li>✍️ 5 âges : Pierre → Bronze → Fer → Moyen Âge → Renaissance.</li>
+            <li>✍️ La faim et les saisons : on peut perdre des habitants.</li>
+            <li>✍️ Une nouvelle carte au hasard à chaque partie.</li>
+            <li>✍️ Carrières de pierre, mines de charbon, de fer et d'or, et leurs industries.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ La carte en losanges : forêts, rivières, lacs, rochers, montagnes.</li>
+            <li>☐ Les filons au pied des montagnes : ⚫ charbon, 🟠 fer, 🟡 or (l'or scintille).</li>
+            <li>☐ <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd>, <kbd>Z</kbd> <kbd>Q</kbd> <kbd>S</kbd> <kbd>D</kbd> ou la souris : la carte glisse.</li>
+            <li>☐ La molette zoome là où est la souris. <kbd>H</kbd> : retour au village.</li>
+            <li>☐ Les arbres bougent dans le vent, l'eau ondule, le feu fume.</li>
+            <li>☐ <kbd>G</kbd> : nouvelle carte. Recharge la page : c'est toujours la même.</li>
+            <li>☐ Un clic sur une case : sa colonne, sa ligne et son terrain sous le capot.</li>
+            <li>Vérifie « version 1 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔷 Comment on dessine « de biais »</h3>
+      <p>Dans la mémoire, la carte est une grille toute simple de 64 × 64 cases, comme une bataille navale : chaque case a une <strong>colonne</strong> et une <strong>ligne</strong>. Pour la voir de biais, on fait 2 choses : on tourne la grille d'un huitième de tour (45°), puis on l'écrase 2 fois en hauteur. Chaque carré devient un <strong>losange</strong> de 64 px de large et 32 px de haut.</p>
+      <svg class="schema" viewBox="0 0 660 230" role="img" aria-label="Une grille de carrés devient une grille de losanges">
+        <g transform="translate(40 40)" stroke="#7bcf4f" stroke-width="2" fill="rgba(123,207,79,.25)">
+          <rect x="0" y="0" width="40" height="40"/><rect x="40" y="0" width="40" height="40"/><rect x="80" y="0" width="40" height="40"/>
+          <rect x="0" y="40" width="40" height="40"/><rect x="40" y="40" width="40" height="40" fill="rgba(255,226,122,.6)"/><rect x="80" y="40" width="40" height="40"/>
+          <rect x="0" y="80" width="40" height="40"/><rect x="40" y="80" width="40" height="40"/><rect x="80" y="80" width="40" height="40"/>
+        </g>
+        <text x="100" y="218" fill="#9aa5d6" font-size="14" text-anchor="middle">1. la grille (en mémoire)</text>
+        <text x="200" y="110" fill="#ffe27a" font-size="26">→</text>
+        <g transform="translate(330 100) rotate(45)" stroke="#7bcf4f" stroke-width="2" fill="rgba(123,207,79,.25)">
+          <rect x="-60" y="-60" width="40" height="40"/><rect x="-20" y="-60" width="40" height="40"/><rect x="20" y="-60" width="40" height="40"/>
+          <rect x="-60" y="-20" width="40" height="40"/><rect x="-20" y="-20" width="40" height="40" fill="rgba(255,226,122,.6)"/><rect x="20" y="-20" width="40" height="40"/>
+          <rect x="-60" y="20" width="40" height="40"/><rect x="-20" y="20" width="40" height="40"/><rect x="20" y="20" width="40" height="40"/>
+        </g>
+        <text x="330" y="218" fill="#9aa5d6" font-size="14" text-anchor="middle">2. on tourne de 45°</text>
+        <text x="440" y="110" fill="#ffe27a" font-size="26">→</text>
+        <g transform="translate(560 100) scale(1 .5) rotate(45)" stroke="#7bcf4f" stroke-width="2" fill="rgba(123,207,79,.25)">
+          <rect x="-60" y="-60" width="40" height="40"/><rect x="-20" y="-60" width="40" height="40"/><rect x="20" y="-60" width="40" height="40"/>
+          <rect x="-60" y="-20" width="40" height="40"/><rect x="-20" y="-20" width="40" height="40" fill="rgba(255,226,122,.6)"/><rect x="20" y="-20" width="40" height="40"/>
+          <rect x="-60" y="20" width="40" height="40"/><rect x="-20" y="20" width="40" height="40"/><rect x="20" y="20" width="40" height="40"/>
+        </g>
+        <text x="560" y="218" fill="#9aa5d6" font-size="14" text-anchor="middle">3. on écrase en hauteur</text>
+      </svg>
+      <p>Le calcul est dans <code>village/moteur/iso.js</code>. Pour la case (colonne, ligne) :</p>
+      <pre style="white-space: pre-wrap">x à l'écran = (colonne − ligne) × 32
+y à l'écran = (colonne + ligne) × 16</pre>
+      <p>Avancer d'une colonne : on va vers la droite et vers le bas. Avancer d'une ligne : vers la gauche et vers le bas.</p>
+
+      <h3>🖱️ Sur quelle case est la souris ?</h3>
+      <p>C'est le même calcul, <strong>à l'envers</strong>. D'abord, on enlève la caméra et le zoom pour savoir où est la souris dans le monde (X, Y). Puis :</p>
+      <pre style="white-space: pre-wrap">colonne = (X ÷ 32 + Y ÷ 16) ÷ 2
+ligne   = (Y ÷ 16 − X ÷ 32) ÷ 2</pre>
+      <p>On obtient des nombres à virgule, par exemple 31,11 : on garde la partie avant la virgule, 31. Appuie sur <kbd>X</kbd> : le calcul s'affiche en direct en haut à droite !</p>
+
+      <h3>🎲 Une carte inventée avec une graine</h3>
+      <p>Un ordinateur ne sait pas vraiment tirer au hasard : il fait un calcul qui donne des nombres qui ont l'<em>air</em> mélangés. On part d'un numéro, la <strong>graine</strong>. Même graine = mêmes nombres = <strong>même carte</strong>. C'est pour ça que la base de données garde un seul nombre, la graine, et pas les 4 096 cases !</p>
+      <p>Pour que la carte ressemble à un vrai paysage, on utilise un <strong>bruit</strong> : un hasard tout doux, où deux cases voisines ont presque la même valeur. Chaque case reçoit une <strong>altitude</strong> et une <strong>humidité</strong> :</p>
+      <ul>
+        <li>les 30 % de cases les plus basses deviennent de l'<strong>eau</strong>, puis un peu de <strong>sable</strong> ;</li>
+        <li>les 5 % les plus hautes deviennent des <strong>montagnes</strong>, avec des filons de charbon, de fer ou d'or ;</li>
+        <li>juste en dessous, des <strong>rochers</strong> (pour la future carrière de pierre) ;</li>
+        <li>au milieu : <strong>forêt</strong> si c'est humide, <strong>prairie fleurie</strong> si c'est sec, sinon de l'herbe.</li>
+      </ul>
+      <p>Ensuite, 2 <strong>rivières</strong> partent des montagnes. À chaque pas, elles vont vers la case voisine la plus basse, comme une vraie goutte d'eau qui descend la pente.</p>
+
+      <h3>🎨 Le peintre dessine du fond vers l'avant</h3>
+      <p>Le peintre (<code>village/affichage/peintre.js</code>) dessine d'abord tout le sol, puis les objets (arbres, montagnes, tente) <strong>du fond vers l'avant</strong>. Ce qui est peint en dernier passe par-dessus. En vue de biais, une case est « plus devant » quand <strong>colonne + ligne</strong> est plus grand. Si on peignait dans le désordre, un arbre du fond passerait devant une montagne !</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Mets la souris sur une case et regarde « dans la grille » sous le capot. Bouge d'une case vers la droite : qu'est-ce qui change, la colonne ou la ligne ?</li>
+        <li>Aux rayons X, trouve les 2 flèches « colonne → » et « ligne → », et la case (0, 0).</li>
+        <li>Aux rayons X, suis une rivière en bleu clair depuis sa « source ». Où finit-elle ?</li>
+        <li>Dézoome au maximum : combien de « cases peintes » ? Et en zoomant à fond ? Pourquoi c'est mieux de ne pas tout peindre ?</li>
+        <li>Note la graine de ta carte, appuie sur <kbd>G</kbd>, puis efface la base de données et recharge : est-ce la même carte ?</li>
+        <li>Dans <code>village/config.js</code>, trouve <code>montagne: 0.95</code>. Que se passerait-il avec 0.8 ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de nombres faut-il ranger dans la base de données pour retrouver toute la carte ?</summary><p>Un seul : la graine. Avec la même graine, l'inventeur refait exactement la même carte.</p></details>
+      <details class="question"><summary>Où est dessinée la case (2, 2) ? Et la case (3, 1) ?</summary><p>(2, 2) : x = (2 − 2) × 32 = 0 et y = (2 + 2) × 16 = 64. (3, 1) : x = (3 − 1) × 32 = 64 et y = (3 + 1) × 16 = 64. Elles sont à la même hauteur, côte à côte !</p></details>
+      <details class="question"><summary>Un arbre est sur la case (10, 12), une montagne sur la case (11, 10). Lequel est peint en premier ?</summary><p>10 + 12 = 22 et 11 + 10 = 21 : la montagne est plus au fond, elle est peinte en premier. L'arbre passe devant.</p></details>
+      <details class="question"><summary>Pourquoi les montagnes ne sont-elles pas réparties au hasard, case par case ?</summary><p>Parce que l'altitude vient d'un bruit doux : deux cases voisines ont presque la même altitude. Les montagnes forment donc des massifs, comme dans la vraie vie.</p></details>
+    </section>
+
+    <section id="etape2">
+      <h2>🪓 Étape 2 : la première chaîne, et le jeu sur téléphone <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les premiers bâtiments ! Le bûcheron coupe, la scierie transforme, le forestier replante, le carrier taille la pierre. Et le jeu se joue maintenant au doigt, sur un téléphone. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/02-premiere-chaine.md</code>.</p>
+          <ul>
+            <li>✍️ Le bûcheron ne replante pas : c'est le <strong>forestier</strong>.</li>
+            <li>✍️ On commence avec <strong>20 planches et 10 pierres</strong>.</li>
+            <li>✍️ Jouable sur mobile : le but, c'est peut-être l'App Store et le Play Store.</li>
+          </ul>
+          <p><strong>Choisi par Claude</strong> (à toi de dire si ça te va) : 🪓 bûcheron 3 🟫 · 🌱 forestier 3 🟫 · 🪚 scierie 4 🟫 + 2 🪨 · ⛏️ carrière 3 🟫. La scierie fait 2 planches avec 1 tronc, en 6 s. Un rocher donne 4 pierres.</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ En haut : 🪵 0 · 🟫 20 · 🪨 10.</li>
+            <li>☐ Touche 🪓 en bas, puis une case d'herbe près d'une forêt : le chantier monte, puis la cabane est construite.</li>
+            <li>☐ Le bûcheron marche jusqu'à un arbre, le coupe et revient avec le tronc sur l'épaule : 🪵 +1.</li>
+            <li>☐ Une scierie : 🪵 −1 puis 🟫 +2 (la lame tourne).</li>
+            <li>☐ Le forestier plante des pousses qui deviennent des arbres en 60 s.</li>
+            <li>☐ Le carrier vide un rocher en 4 voyages.</li>
+            <li>☐ Recharge la page : tout est encore là.</li>
+            <li>☐ Sur un téléphone : glisser, pincer pour zoomer, toucher les boutons, ⛶ plein écran.</li>
+            <li>Vérifie « version 2 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>⛓️ Une chaîne de production</h3>
+      <pre style="white-space: pre-wrap">🌳 arbre ──🪓 bûcheron──► 🪵 tronc ──🪚 scierie──► 🟫🟫 2 planches ──► 🏗️ nouveaux bâtiments
+🌱 forestier ──► pousse ──60 s──► 🌳 arbre (sinon, la forêt disparaît !)
+🪨 rocher ──⛏️ carrier──► 🪨 pierre  (4 par rocher)</pre>
+      <p>Si un maillon manque, tout s'arrête : sans bûcheron, la scierie <em>attend des troncs</em>. Sans forestier, le bûcheron finit par n'avoir plus rien à couper. C'est tout le jeu : trouver le maillon qui bloque.</p>
+
+      <h3>🤖 La machine à états de l'ouvrier</h3>
+      <p>Un ouvrier ne « réfléchit » pas : il suit une fiche. À chaque instant, il est dans <strong>un seul état</strong>, et une règle dit quand passer au suivant.</p>
+      <svg class="schema" viewBox="0 0 700 170" role="img" aria-label="Les états de l'ouvrier : chercher, aller, travailler, revenir, se reposer, puis on recommence">
+        <defs><marker id="fl47" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ffe27a"/></marker></defs>
+        <g font-size="14" text-anchor="middle" fill="#e8ecff">
+          <rect x="10" y="40" width="110" height="44" rx="12" fill="#1d2547" stroke="#5b8cff" stroke-width="2"/><text x="65" y="67">🔎 chercher</text>
+          <rect x="150" y="40" width="110" height="44" rx="12" fill="#1d2547" stroke="#5b8cff" stroke-width="2"/><text x="205" y="67">🚶 aller</text>
+          <rect x="290" y="40" width="110" height="44" rx="12" fill="#1d2547" stroke="#5b8cff" stroke-width="2"/><text x="345" y="67">🪓 travailler</text>
+          <rect x="430" y="40" width="110" height="44" rx="12" fill="#1d2547" stroke="#5b8cff" stroke-width="2"/><text x="485" y="67">🏠 revenir</text>
+          <rect x="570" y="40" width="120" height="44" rx="12" fill="#1d2547" stroke="#5b8cff" stroke-width="2"/><text x="630" y="67">😌 se reposer</text>
+          <rect x="10" y="118" width="110" height="40" rx="12" fill="#1d2547" stroke="#ff9b9b" stroke-width="2"/><text x="65" y="143">😴 attendre</text>
+        </g>
+        <g stroke="#ffe27a" stroke-width="2" fill="none" marker-end="url(#fl47)">
+          <path d="M120 62 H148"/><path d="M260 62 H288"/><path d="M400 62 H428"/><path d="M540 62 H568"/>
+          <path d="M630 40 V18 H65 V38"/>
+          <path d="M50 84 V116"/><path d="M80 116 V86"/>
+        </g>
+        <g font-size="11" fill="#9aa5d6"><text x="134" y="104">rien trouvé ↓   ↑ 3 s plus tard</text><text x="330" y="14">2 s plus tard, on recommence</text></g>
+      </svg>
+      <p>Aux rayons X (<kbd>X</kbd>), le nom de l'état est écrit au-dessus de chaque ouvrier, avec son minuteur. Dans « sous le capot », la liste des bâtiments montre l'état de chacun.</p>
+
+      <h3>🖋️ La tache d'encre : trouver l'arbre le plus proche</h3>
+      <p>Le bûcheron fait une <strong>recherche en largeur</strong> (<code>village/moteur/chemins.js</code>) : il regarde toutes les cases à 1 pas, puis à 2 pas, puis à 3 pas… comme une goutte d'encre qui s'étale sur du papier. Il ne traverse ni l'eau ni les montagnes. La première case qui a un arbre est forcément la plus proche ! Chaque case retient d'où l'encre est venue : en remontant, on obtient le chemin.</p>
+      <p>Il s'arrête à 6 pas (son <strong>rayon</strong>). Le journal dit combien de cases la tache a regardées. Une case visée est <strong>réservée</strong> (croix rouge aux rayons X) : deux bûcherons ne vont pas couper le même arbre.</p>
+
+      <h3>💾 Sauvegarder une carte qui change</h3>
+      <p>Avant, on gardait seulement la graine. Mais maintenant, des arbres disparaissent et des pousses apparaissent ! On garde donc <strong>la graine + la liste des changements</strong> : « case 2 281 : plus rien », « case 2 345 : une pousse »… Au rechargement, on refait la carte d'origine avec la graine, puis on <strong>rejoue</strong> les changements un par un. La base de données passe en version 2, avec une sauvegarde automatique toutes les 15 s.</p>
+
+      <h3>📱 Un jeu pour téléphone</h3>
+      <ul>
+        <li><strong>Les doigts</strong> : un doigt glisse, deux doigts pincent pour zoomer. Si les doigts s'écartent 2 fois plus, on zoome 2 fois plus.</li>
+        <li><strong>Les boutons dans l'écran</strong> : au moins 56 points, la taille d'un doigt. L'interface retient où elle a dessiné chaque bouton (les « zones ») : un toucher sur une zone va au bouton, sinon il va à la carte.</li>
+        <li><strong>Points et pixels</strong> : un téléphone a 2 ou 3 vrais pixels par point. On dessine avec tous, sinon l'image est floue.</li>
+        <li><strong>Les stores</strong> : plus tard, on « emballera » la page dans une application (avec un outil comme Capacitor). Comme le jeu est fait de simples fichiers web, c'est possible sans tout réécrire.</li>
+      </ul>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Pose un bûcheron loin des arbres. Que dit le jeu ? Que dit le journal ?</li>
+        <li>Construis une scierie sans bûcheron : regarde son panneau (touche-la).</li>
+        <li>Aux rayons X, regarde la zone de travail (le carré jaune) d'un bâtiment touché. Pourquoi est-ce un carré et pas un rond ?</li>
+        <li>Combien de cases la tache d'encre regarde-t-elle quand l'arbre est à 2 pas ? Et à 6 pas ?</li>
+        <li>Dans « Base de données », trouve <code>modifs</code> : coupe un arbre et regarde une ligne apparaître.</li>
+        <li>Dans <code>village/config.js</code>, trouve <code>planchesParTronc</code> et <code>croissance</code>.</li>
+        <li>Ouvre le jeu sur un téléphone, et essaie le plein écran ⛶.</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Tu as 20 planches et 10 pierres. Tu construis 2 bûcherons et une scierie. Que te reste-t-il ?</summary><p>Planches : 20 − 3 − 3 − 4 = 10. Pierres : 10 − 2 = 8.</p></details>
+      <details class="question"><summary>Avec 6 troncs, combien de planches fait la scierie ? En combien de temps ?</summary><p>6 × 2 = 12 planches, en 6 × 6 = 36 secondes.</p></details>
+      <details class="question"><summary>Pourquoi la première case trouvée par la tache d'encre est-elle la plus proche ?</summary><p>Parce qu'on regarde toutes les cases à 1 pas avant celles à 2 pas, toutes celles à 2 pas avant celles à 3 pas… Une case plus proche aurait été regardée avant.</p></details>
+      <details class="question"><summary>Pourquoi ne pas ranger les 4 096 cases dans la sauvegarde ?</summary><p>Ce serait beaucoup plus gros. La graine refait la carte d'origine, et on n'ajoute que les quelques cases qui ont changé.</p></details>
+    </section>
+
+    <section id="etape3">
+      <h2>🚚 Étape 3 : les routes et les porteurs <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Fini, les troncs qui arrivent tout seuls dans l'entrepôt ! Maintenant, il faut des routes, et des porteurs qui marchent dessus avec les objets. Un bâtiment sans route est bloqué. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/03-routes-et-porteurs.md</code>.</p>
+          <ul>
+            <li>✍️ Une route coûte <strong>1 pierre par case</strong>.</li>
+            <li>✍️ <strong>Quelques porteurs</strong> partent de l'entrepôt.</li>
+            <li>✍️ Un bâtiment <strong>sans route jusqu'à l'entrepôt est bloqué</strong>.</li>
+          </ul>
+          <p><strong>Choisi par Claude</strong> (à toi de dire si ça te va) : 3 porteurs, 2,2 cases par seconde, 1 objet à la fois. On trace une route en touchant le départ puis l'arrivée. Tout passe par l'entrepôt. 🧹 pour démolir (une route rend sa pierre).</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Pose une cabane : un panneau « chemin barré » saute au-dessus, et le chantier ne bouge pas.</li>
+            <li>☐ <kbd>R</kbd> (ou le bouton Route), touche l'entrepôt, puis la cabane : la route apparaît, les 🪨 baissent.</li>
+            <li>☐ Les porteurs en bleu apportent les planches une par une, puis le chantier avance.</li>
+            <li>☐ Les troncs s'empilent devant la cabane, et un porteur vient les chercher : 🪵 +1.</li>
+            <li>☐ La scierie reçoit des troncs et les porteurs ramènent les planches.</li>
+            <li>☐ 🧹 sur une route : elle disparaît, 🪨 +1, et ce qui était derrière est bloqué.</li>
+            <li>☐ Recharge la page : tes routes sont toujours là.</li>
+            <li>Vérifie « version 3 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>📋 La file d'attente : premier arrivé, premier servi</h3>
+      <p>Le chef des livraisons (<code>village/logique/porteurs.js</code>) regarde tous les bâtiments, 4 fois par seconde. Pour chaque chose à transporter, il écrit un <strong>papier</strong> et le met au <strong>bout de la file</strong>. Un porteur libre prend toujours le papier du <strong>début</strong> de la file, comme à la boulangerie.</p>
+      <pre style="white-space: pre-wrap">file d'attente :  [ apporter 🟫 à la cabane ] [ ramener 🪵 du bûcheron ] [ apporter 🪵 à la scierie ] ← les nouveaux papiers arrivent ici
+                    ↑ le porteur libre prend celui-ci</pre>
+      <p>Sous le capot, tu vois la file en direct : les 5 premiers papiers, et ce que fait chaque porteur. Avec 3 porteurs et beaucoup de bâtiments, la file s'allonge : il faudra peut-être plus de porteurs !</p>
+
+      <h3>🔒 Réservé : promis, mais pas encore parti</h3>
+      <p>Quand tu poses un chantier, ses planches restent dans l'entrepôt jusqu'à ce qu'un porteur les prenne. Mais elles lui sont <strong>promises</strong> : tu ne peux plus les utiliser pour autre chose.</p>
+      <pre style="white-space: pre-wrap">libres = dans l'entrepôt − promis</pre>
+      <p>Touche l'entrepôt : il affiche son stock ET ce qui est libre. Les boutons de construction regardent ce qui est <em>libre</em>.</p>
+
+      <h3>🕸️ Le réseau : qui est relié ?</h3>
+      <p>Encore une tache d'encre ! Elle part de l'entrepôt et suit toutes les routes qui se touchent. Un bâtiment est <strong>relié</strong> si une route de cette tache touche un de ses 4 côtés. Aux rayons X (<kbd>X</kbd>), chaque route a un point : <span style="color:#50ff78">vert</span> si elle est reliée, <span style="color:#ff5040">rouge</span> sinon. Le chemin de chaque porteur est en violet.</p>
+      <p>Pour tracer une route, le jeu cherche aussi le plus court chemin avec la tache d'encre, en évitant l'eau, les montagnes, les arbres, les rochers et les bâtiments.</p>
+
+      <h3>💾 Ce qui n'est pas sauvegardé</h3>
+      <p>La base de données (version 3) garde les routes, ce qui attend devant chaque bâtiment, et les matériaux arrivés sur chaque chantier. Mais <strong>pas</strong> les porteurs ni la file : au rechargement, le chef réécrit tous ses papiers. Ce qu'un porteur avait dans les bras est remis à sa place. C'est un vrai choix de développeur : on sauvegarde ce qui est <em>important</em>, et on <em>recalcule</em> le reste.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Pose 3 chantiers d'un coup, et regarde la file d'attente sous le capot. Qui est servi en premier ?</li>
+        <li>Construis une route en zigzag et une route toute droite vers le même bâtiment. Laquelle prend le porteur ?</li>
+        <li>Démolis la route juste à côté de l'entrepôt. Combien de bâtiments deviennent bloqués ?</li>
+        <li>Une cabane de bûcheron très loin de l'entrepôt : les troncs s'empilent-ils devant la porte ? Que fait le bûcheron quand il y en a 4 ?</li>
+        <li>Dans <code>village/config.js</code>, trouve <code>porteurs</code> : <code>nombre</code> et <code>vitesse</code>.</li>
+        <li>Dans la base de données, trouve <code>routes</code> : ce sont des numéros de cases. Retrouve la colonne et la ligne d'un numéro (ligne × 64 + colonne).</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Tu as 10 pierres. Tu construis une route de 6 cases, dont 2 étaient déjà en route. Combien de pierres te reste-t-il ?</summary><p>Seules les 4 nouvelles cases coûtent : 10 − 4 = 6 pierres.</p></details>
+      <details class="question"><summary>L'entrepôt a 20 planches. Tu poses une scierie (4 planches) et un bûcheron (3 planches). Combien de planches sont libres ?</summary><p>20 − 4 − 3 = 13 planches libres, même si les 20 sont encore dans l'entrepôt.</p></details>
+      <details class="question"><summary>Combien de voyages de porteur faut-il pour construire une scierie ?</summary><p>4 planches + 2 pierres = 6 objets, et un porteur porte 1 objet à la fois : 6 voyages.</p></details>
+      <details class="question"><summary>Pourquoi ne pas sauvegarder la file d'attente ?</summary><p>Parce que le chef des livraisons peut la réécrire tout seul en regardant les bâtiments. On ne sauvegarde que ce qu'on ne peut pas recalculer.</p></details>
+    </section>
+
+    <section id="etape4">
+      <h2>🎣 Étape 4 : pêcheur, chasseur, repas et saisons <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les habitants ont faim ! Un pêcheur et un chasseur rapportent la nourriture, et les saisons passent : fleurs au printemps, feuilles orange en automne, neige et lacs gelés en hiver. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/04-repas-et-saisons.md</code>.</p>
+          <ul>
+            <li>✍️ Au début : un <strong>pêcheur</strong> et un <strong>chasseur</strong>.</li>
+            <li>✍️ Une année dure <strong>10 minutes</strong>.</li>
+            <li>✍️ Sans repas, l'ouvrier <strong>arrête de travailler</strong>. S'il a vraiment trop faim, il <strong>quitte le village</strong>.</li>
+            <li>✍️ En hiver, les lacs gèlent, mais le pêcheur fait un <strong>trou dans la glace</strong>, et le chasseur chasse dans la neige.</li>
+          </ul>
+          <p><strong>Choisi par Claude</strong> (Maxance n'a pas choisi la fréquence) : 1 repas toutes les <strong>2 minutes</strong> (dans <code>config.js</code> : <code>repas.intervalle</code>). Il part après une saison le ventre vide (2 min 30). Un nouvel habitant revient 30 s après, s'il y a de nouveau à manger.</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ En haut : 🐟 6 et 🍖 4, et la saison avec sa barre.</li>
+            <li>☐ <kbd>5</kbd> pêcheur près de l'eau (avec une route) : il pêche avec sa canne et son bouchon rouge.</li>
+            <li>☐ <kbd>6</kbd> chasseur près d'une forêt : il vise un cerf ou un lapin avec son arc.</li>
+            <li>☐ Les porteurs apportent les repas aux cabanes.</li>
+            <li>☐ Au bout de 2 min 30 : l'été, puis l'automne (feuilles orange), puis l'hiver (neige, lacs gelés, écharpes rouges).</li>
+            <li>☐ En hiver, le pêcheur fait un trou dans la glace.</li>
+            <li>☐ Plus rien à manger ? Une bulle 🍽️ au-dessus des cabanes, puis l'habitant s'en va (« vide »).</li>
+            <li>Vérifie « version 5 » en haut de la page du village (la version 5 a rangé le village à part, avec son propre carnet).</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>⚖️ L'équilibre : produire plus que ce qu'on mange</h3>
+      <p>Chaque habitant (les ouvriers ET les porteurs) mange 1 repas toutes les 2 minutes. Avec 9 habitants, ça fait :</p>
+      <pre style="white-space: pre-wrap">9 habitants × 1 repas ÷ 2 minutes = 4,5 repas par minute</pre>
+      <p>Un pêcheur rapporte environ 4 poissons par minute. Il faut donc au moins un pêcheur ET un chasseur pour tenir ! Sous le capot, la ligne « repas mangés par minute » fait le calcul pour toi. C'est la vraie règle de tous les jeux de gestion : <strong>ce qui entre doit être plus grand que ce qui sort</strong>.</p>
+
+      <h3>🗓️ Les saisons avec le reste d'une division</h3>
+      <p>Le jeu a une <strong>horloge</strong> : le nombre de secondes depuis le début de la partie. Pour savoir où on en est dans l'année, on prend le <strong>reste</strong> de la division par 600 (le « modulo », qu'on écrit <code>%</code>) :</p>
+      <pre style="white-space: pre-wrap">horloge = 1 000 s
+1 000 % 600 = 400     (1 000 = 1 × 600 + 400 : on est dans la 2e année, à la seconde 400)
+400 ÷ 150 = 2,67 → saison n° 2 = 🍂 l'automne   (0 printemps, 1 été, 2 automne, 3 hiver)</pre>
+      <p>Les flocons de neige utilisent le même tour de magie : quand un flocon sort en bas de l'écran, le reste de la division le fait revenir en haut.</p>
+
+      <h3>🎨 Une palette par saison</h3>
+      <p>Le peintre calcule 4 couleurs pour chaque case (une par saison), une seule fois, et les garde. En hiver, il mélange la couleur de l'herbe avec du blanc (82 % de blanc), et l'eau peu profonde devient de la glace. La mer profonde, elle, ne gèle pas !</p>
+
+      <h3>🦌 Le gibier</h3>
+      <p>Les cerfs et les lapins sont de petites machines à états : <em>brouter</em> (s'arrêter quelques secondes) → <em>se promener</em> (aller vers une case au hasard, pas trop loin) → <em>brouter</em>… Quand un chasseur en choisit un, il est <em>visé</em> et ne bouge plus. Toutes les 20 s, un petit naît à côté d'un parent, sauf en hiver.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Touche une cabane : regarde « prochain repas dans… » et les repas gardés dans la cabane.</li>
+        <li>Combien de poissons rapporte ton pêcheur en une saison ? (Regarde « a rapporté » au début et à la fin.)</li>
+        <li>Aux rayons X : les cercles autour des animaux (rouge = visé), et la faim de chaque ouvrier.</li>
+        <li>Construis beaucoup de bâtiments sans nourriture… et regarde le journal. Qui part en premier ?</li>
+        <li>Dans <code>config.js</code>, trouve <code>dureeAnnee</code> et <code>intervalle</code>. Que se passerait-il avec <code>intervalle: 60</code> ?</li>
+        <li>Sous le capot, regarde « moment dans l'année = horloge % 600 » quand la saison change.</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>L'horloge indique 1 300 s. Quelle saison est-ce ?</summary><p>1 300 % 600 = 100. 100 ÷ 150 = 0,67 → saison n° 0 : le printemps de la 3e année.</p></details>
+      <details class="question"><summary>Tu as 12 habitants. Combien de repas mangent-ils en une année (10 minutes) ?</summary><p>Chacun mange 5 fois (10 ÷ 2). 12 × 5 = 60 repas.</p></details>
+      <details class="question"><summary>Un ouvrier n'a plus rien depuis 100 s. Combien de temps avant qu'il parte ?</summary><p>Il part à 150 s le ventre vide : encore 50 secondes.</p></details>
+      <details class="question"><summary>Pourquoi le chasseur ne court-il pas après les lapins ?</summary><p>Quand il choisit un animal, celui-ci est « visé » et s'arrête de bouger. Sinon, le chemin calculé ne mènerait plus nulle part !</p></details>
+    </section>
+
+    <!-- ============ FEUILLE DE ROUTE ============ -->
+    <section id="route">
+      <h2>🗺️ La feuille de route du village</h2>
+      <p class="chapeau">Le jeu de gestion, étape par étape. Maxance peut changer l'ordre ou ajouter des étapes.</p>
+            <div class="route">
+        <div class="carte fait">
+          <div class="num">1</div>
+          <h4>La carte et la caméra <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Une carte inventée au hasard, vue de biais : forêts, rivières, rochers, montagnes et filons. On glisse et on zoome.</p>
+          <p class="apprend"><b>Tu apprends :</b> la vue isométrique, une graine et le bruit, trouver la case sous la souris, peindre du fond vers l'avant. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">2</div>
+          <h4>La première chaîne, et le jeu sur téléphone <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Bûcheron, forestier, scierie, carrière et entrepôt. Les ouvriers trouvent leur travail tout seuls. Le jeu se joue au doigt, en plein écran.</p>
+          <p class="apprend"><b>Tu apprends :</b> une chaîne de production, une machine à états, la recherche en largeur, sauvegarder les changements, les doigts et les pixels d'un téléphone. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">3</div>
+          <h4>Les routes et les porteurs <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Des routes à 1 pierre la case, 3 porteurs qui partent de l'entrepôt, des bâtiments bloqués sans route, et 🧹 pour démolir.</p>
+          <p class="apprend"><b>Tu apprends :</b> la file d'attente, réserver (promis / libre), un réseau relié, ce qu'on sauvegarde et ce qu'on recalcule. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">4</div>
+          <h4>Pêcheur, chasseur, repas et saisons <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Le pêcheur (qui perce la glace en hiver), le chasseur et le gibier, un repas toutes les 2 minutes, des habitants qui partent quand ils ont trop faim, 4 saisons en 10 minutes.</p>
+          <p class="apprend"><b>Tu apprends :</b> l'équilibre entre ce qu'on produit et ce qu'on mange, le modulo (le reste de la division), une palette par saison, des animaux en machine à états. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">5</div>
+          <h4>Maisons et nouveaux habitants <span class="etiquette">⏭️ prochaine idée</span></h4>
+          <p>Construire des maisons pour accueillir plus d'habitants (et plus de porteurs). Peut-être les champs de blé, le moulin et la boulangerie.</p>
+          <p class="apprend"><b>Tu apprends :</b> la croissance d'une population, une chaîne plus longue (blé → farine → pain). <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">6</div>
+          <h4>La recherche et l'âge du bronze</h4>
+          <p>La hutte du sage fait des recherches ; un arbre des découvertes débloque de nouveaux bâtiments et le passage à l'âge suivant.</p>
+          <p class="apprend"><b>Tu apprends :</b> un arbre de dépendances (« pour débloquer B, il faut A »), des règles écrites comme des données. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">7</div>
+          <h4>Charbon, fer et or</h4>
+          <p>Carrière de pierre, mines de charbon, de fer et d'or, fonderie, forge, orfèvre : les industries, jusqu'à la Renaissance.</p>
+          <p class="apprend"><b>Tu apprends :</b> des chaînes longues, les goulots d'étranglement (le maillon le plus lent décide de tout), des statistiques de production. <b>Durée :</b> plusieurs séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">…</div>
+          <h4>Vers les stores (App Store, Play Store)</h4>
+          <p>Si le jeu plaît : une icône, un écran de démarrage, emballer la page dans une application, tester sur de vrais téléphones, puis publier.</p>
+          <p class="apprend"><b>Tu apprends :</b> ce qu'est une application, les règles des stores, les tests sur plusieurs appareils. <b>Durée :</b> plus tard !</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ JOURNAL ============ -->
+    <section id="journal">
+      <h2>📔 Journal de bord du village</h2>
+      <p class="chapeau">Après chaque étape : ce qui a été fait, et ce que Maxance a appris, avec ses mots à lui.</p>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 1 · le village : la carte et la caméra <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> un troisième jeu (<code>village/</code>), avec la même architecture que les autres : le hasard à graine et le bruit (<code>moteur/hasard.js</code>), la vue de biais (<code>moteur/iso.js</code>), l'inventeur de cartes (<code>logique/carte.js</code>), la caméra et la souris (<code>logique/monde.js</code>), le peintre en style dessin animé avec la mini-carte (<code>affichage/peintre.js</code>), les rayons X, la base de données en version 1.</p>
+        <label for="village-appris-1"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-1" data-cle="village-appris-1" placeholder="Ex. : J'ai appris qu'avec une graine, on retrouve toujours la même carte…"></textarea>
+        <label for="village-idees-1"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-1" data-cle="village-idees-1" placeholder="Ex. : Des animaux dans la forêt, que le chasseur pourra chasser…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 2 · la première chaîne et le jeu sur téléphone <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la recherche en largeur (<code>moteur/chemins.js</code>), l'écran qui s'adapte (<code>moteur/ecran.js</code>), les doigts et le pincement (<code>moteur/entrees.js</code>), les bâtiments et la scierie (<code>logique/batiments.js</code>), la machine à états des ouvriers (<code>logique/ouvriers.js</code>), les pousses qui grandissent, le dessin des maisons et des bonshommes (<code>affichage/batisses.js</code>), les boutons dans l'écran (<code>affichage/interface.js</code>), le plein écran, la base de données en version 2 (graine + changements).</p>
+        <label for="village-appris-2"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-2" data-cle="village-appris-2" placeholder="Ex. : J'ai appris qu'un ouvrier est une machine à états…"></textarea>
+        <label for="village-idees-2"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-2" data-cle="village-idees-2" placeholder="Ex. : Un pêcheur au bord de l'eau…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 3 · les routes et les porteurs <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les routes, leur tracé et le réseau (<code>logique/routes.js</code>), les porteurs et la file d'attente (<code>logique/porteurs.js</code>), les chantiers qui attendent leurs matériaux, les objets qui attendent devant les portes, la démolition, le dessin des routes en terre battue et des porteurs, l'aperçu de la route avec son prix, la base de données en version 3.</p>
+        <label for="village-appris-3"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-3" data-cle="village-appris-3" placeholder="Ex. : J'ai appris ce qu'est une file d'attente…"></textarea>
+        <label for="village-idees-3"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-3" data-cle="village-idees-3" placeholder="Ex. : Des ânes pour porter plus vite…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 4 · pêcheur, chasseur, repas et saisons <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> l'horloge des saisons (<code>logique/saisons.js</code>), le gibier (<code>logique/animaux.js</code>), la cantine (<code>logique/repas.js</code>), le pêcheur et le chasseur, les repas apportés par les porteurs, les palettes des 4 saisons, la glace, la neige qui tombe, les feuilles d'automne, les cerfs et les lapins, les bulles « j'ai faim », la base de données en version 4.</p>
+        <label for="village-appris-4"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-4" data-cle="village-appris-4" placeholder="Ex. : J'ai appris ce qu'est un modulo…"></textarea>
+        <label for="village-idees-4"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-4" data-cle="village-idees-4" placeholder="Ex. : Un fumoir pour garder la viande plus longtemps…"></textarea>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Le journal : ce que Maxance écrit est gardé dans ce navigateur.
+    const PREFIXE = "carnet-maxance:";
+    const lire = (cle) => { try { return localStorage.getItem(PREFIXE + cle); } catch (e) { return null; } };
+    const ecrire = (cle, valeur) => { try { localStorage.setItem(PREFIXE + cle, valeur); } catch (e) {} };
+    for (const zone of document.querySelectorAll("textarea[data-cle]")) {
+      zone.value = lire(zone.dataset.cle) || "";
+      zone.addEventListener("input", () => ecrire(zone.dataset.cle, zone.value));
+    }
+  </script>
+</body>
+</html>
