@@ -1,7 +1,7 @@
 # Demande n° 53 : le drift, le crissement et la fumée
 
 > Statut : ✅ livrée le 05/10/2026 (version 22 du circuit), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé. La suite (voitures très réalistes en code, routes et immeubles) sera l'étape 54.
+> ✍️ = ce que Maxance a décidé. La suite (voitures très réalistes en code, routes et immeubles) sera l’étape 55 (la 54 est le rallye-raid).
 
 ## 🎯 Quoi
 « Quand tu roules à fond et que tu tournes, tu fais un drift et il y a un pneu qui grince. Et quand tu prends la
