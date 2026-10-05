@@ -100,13 +100,20 @@ Circuit.DecorVille = (function () {
       }
     }
 
+    const fenetres = []; // étape 50 : les matériaux des façades (pour allumer les fenêtres quand il fait sombre)
     // Les immeubles : la façade à fenêtres sur les 4 côtés, un toit sombre, et quelques machines sur le toit.
     const toit = mat({ map: repeter(T.toit(), 4, 4) });
     const machine = mat({ color: 0x9a9da2, metalness: 0.5, roughness: 0.5 });
     for (const b of Ville.immeubles) {
       const L = 2 * b.demiLongueur, P = 2 * b.demiLargeur, H = b.hauteur;
-      const faceX = mat({ map: repeter(T.facade(b.style), P / 4, H / 3.5), roughness: 0.6, metalness: b.style === 3 ? 0.5 : 0.1 });
-      const faceZ = mat({ map: repeter(T.facade(b.style), L / 4, H / 3.5), roughness: 0.6, metalness: b.style === 3 ? 0.5 : 0.1 });
+      // (Étape 50 : un carreau de façade = 16 m × 14 m, et les fenêtres allumées brillent quand il fait sombre.)
+      const face = (largeur) => {
+        const m = mat({ map: repeter(T.facade(b.style), largeur / 16, H / 14), roughness: 0.6, metalness: b.style === 3 ? 0.5 : 0.1,
+          emissiveMap: repeter(T.facadeLumiere(b.style), largeur / 16, H / 14), emissive: 0xffffff, emissiveIntensity: V.fenetresAllumees.minimum });
+        fenetres.push(m);
+        return m;
+      };
+      const faceX = face(P), faceZ = face(L);
       const m = new THREE.Mesh(new THREE.BoxGeometry(L, H, P), [faceX, faceX, toit, toit, faceZ, faceZ]);
       m.position.set(b.x, H / 2 + 0.12, b.z);
       m.castShadow = m.receiveShadow = true;
@@ -186,9 +193,16 @@ Circuit.DecorVille = (function () {
     g.add(poteaux, lampes);
 
 
+    // Étape 50 : le mobilier de la rue (panneaux, plaques de rue, bancs, poubelles, bouches d'incendie, plaques d'égout, bordures).
+    mobilier(g, mat);
+
     // Chaque image : on allume les bonnes lampes des feux.
     function maj(temps) {
       archipel.maj(temps);
+      // Étape 50 : plus le soleil est faible (pluie, orage, brouillard…), plus les fenêtres allumées brillent.
+      const F = V.fenetresAllumees;
+      lumiereFenetres = F.minimum + F.force * Math.max(0, 1 - Circuit.Meteo.etat.valeurs.lumiere);
+      for (const m of fenetres) m.emissiveIntensity = lumiereFenetres;
       for (const groupe of feux) {
         for (const axe of ["x", "z"]) {
           const couleur = Circuit.Circulation.feu(temps, groupe.decalage, 0, axe);
@@ -197,6 +211,205 @@ Circuit.DecorVille = (function () {
       }
     }
     return { groupe: g, maj };
+  }
+
+  let lumiereFenetres = V.fenetresAllumees.minimum;
+
+  // Une image dessinée sur une toile (pour les panneaux et les plaques de rue).
+  function toile(largeur, hauteur, peindre) {
+    const c = document.createElement("canvas");
+    c.width = largeur;
+    c.height = hauteur;
+    peindre(c.getContext("2d"), largeur, hauteur);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    return t;
+  }
+
+  // Étape 50 : le MOBILIER URBAIN. Tout est en « instances » (une forme, et la liste des places).
+  function mobilier(g, mat) {
+    const Ville = Circuit.Ville;
+    const M = V.mobilier, demi = V.largeurRue / 2;
+    let etat = V.graine + 50;
+    const hasard = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), un = new THREE.Vector3(1, 1, 1), haut = new THREE.Vector3(0, 1, 0);
+    // Pose une liste de [x, y, z, angle] en instances.
+    function poser(forme, materiau, places, ombre) {
+      if (!places.length) return;
+      const im = new THREE.InstancedMesh(forme, materiau, places.length);
+      places.forEach(([x, y, z, a], i) => im.setMatrixAt(i, m4.compose(new THREE.Vector3(x, y, z), q.setFromAxisAngle(haut, a || 0), un)));
+      im.castShadow = ombre !== false;
+      im.receiveShadow = true;
+      g.add(im);
+    }
+    const metal = mat({ color: 0x5a5e64, metalness: 0.6, roughness: 0.45 });
+
+    // 1. Les BORDURES de trottoir : une bande de granit clair tout autour de chaque pâté.
+    const bordures = [];
+    for (let i = 0; i < V.blocs; i++) {
+      for (let j = 0; j < V.blocs; j++) {
+        const cx = (Ville.rue(i) + Ville.rue(i + 1)) / 2, cz = (Ville.rue(j) + Ville.rue(j + 1)) / 2, d = V.tailleBloc / 2;
+        bordures.push([cx, cz - d, 0], [cx, cz + d, 0], [cx - d, cz, Math.PI / 2], [cx + d, cz, Math.PI / 2]);
+      }
+    }
+    poser(new THREE.BoxGeometry(V.tailleBloc + 0.3, 0.16, 0.3), mat({ color: 0xc9c7c0, roughness: 0.8 }), bordures.map(([x, z, a]) => [x, 0.08, z, a]), false);
+
+    // 2. Les PLAQUES D'ÉGOUT sur les rues (des disques de fonte, un peu à côté du milieu).
+    const egouts = [];
+    while (egouts.length < M.plaquesEgout) {
+      const k = Math.floor(hasard() * Ville.n), le_long = Ville.rue(0) + hasard() * (Ville.rue(Ville.n - 1) - Ville.rue(0));
+      const w = (hasard() < 0.5 ? -1 : 1) * (1.5 + hasard() * 3);
+      egouts.push(hasard() < 0.5 ? [le_long, 0.035, Ville.rue(k) + w, 0] : [Ville.rue(k) + w, 0.035, le_long, 0]);
+    }
+    const plaque = toile(128, 128, (ctx, t) => {
+      ctx.fillStyle = "#2b2c2e";
+      ctx.beginPath();
+      ctx.arc(t / 2, t / 2, t / 2 - 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#4a4b4e";
+      ctx.lineWidth = 4;
+      for (let k = 14; k < t; k += 14) {
+        ctx.beginPath();
+        ctx.moveTo(k, 8);
+        ctx.lineTo(k, t - 8);
+        ctx.stroke();
+      }
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(t / 2, t / 2, t / 2 - 5, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+    const geoPlaque = new THREE.CircleGeometry(0.4, 24);
+    geoPlaque.rotateX(-Math.PI / 2);
+    poser(geoPlaque, mat({ map: plaque, metalness: 0.5, roughness: 0.5, transparent: true }), egouts, false);
+
+    // 3. Les LIGNES D'ARRÊT : un trait blanc large avant chaque passage piéton, sur la voie de droite.
+    const arrets = [];
+    for (let i = 0; i < Ville.n; i++) {
+      for (let j = 0; j < Ville.n; j++) {
+        const cx = Ville.rue(i), cz = Ville.rue(j), e = demi + 4.2;
+        arrets.push([cx - e, 0.034, cz + V.voie, 0], [cx + e, 0.034, cz - V.voie, 0], [cx - V.voie, 0.034, cz - e, Math.PI / 2], [cx + V.voie, 0.034, cz + e, Math.PI / 2]);
+      }
+    }
+    const geoArret = new THREE.PlaneGeometry(0.5, 3.6);
+    geoArret.rotateX(-Math.PI / 2);
+    poser(geoArret, mat({ color: 0xf2f2f2, roughness: 0.6 }), arrets.filter(([x, , z]) => Math.abs(x) < Ville.taille / 2 && Math.abs(z) < Ville.taille / 2), false);
+
+    // 4. Les PLAQUES DE RUE (bleues, comme à Paris), sur le poteau des feux, à chaque carrefour.
+    const parNom = {};
+    for (let i = 0; i < Ville.n; i++) {
+      for (let j = 0; j < Ville.n; j++) {
+        const cx = Ville.rue(i), cz = Ville.rue(j), e = demi + 1;
+        for (const [px, pz] of [[cx - e, cz - e], [cx + e, cz + e]]) {
+          // le nom de la rue est-ouest (on le lit en regardant vers z), et celui de la rue nord-sud
+          (parNom["eo" + j] = parNom["eo" + j] || []).push([px, 3.2, pz, 0]);
+          (parNom["ns" + i] = parNom["ns" + i] || []).push([px, 3.65, pz, Math.PI / 2]);
+        }
+      }
+    }
+    const geoPlaqueRue = new THREE.BoxGeometry(1.6, 0.4, 0.04);
+    for (const [cle, places] of Object.entries(parNom)) {
+      const nom = cle.startsWith("eo") ? V.nomsRues.estOuest[+cle.slice(2)] : V.nomsRues.nordSud[+cle.slice(2)];
+      const texte = nom.charAt(0).toUpperCase() + nom.slice(1);
+      const t = toile(512, 128, (ctx, l, h) => {
+        ctx.fillStyle = "#1d3f8a";
+        ctx.fillRect(0, 0, l, h);
+        ctx.strokeStyle = "#e8eef8";
+        ctx.lineWidth = 8;
+        ctx.strokeRect(10, 10, l - 20, h - 20);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 46px 'Trebuchet MS', sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(texte, l / 2, h / 2 + 2, l - 50);
+      });
+      poser(geoPlaqueRue, mat({ map: t, roughness: 0.5 }), places);
+    }
+
+    // 5. Les PANNEAUX de limite de vitesse, à l'entrée de chaque morceau de rue, sur le trottoir de droite.
+    const panneaux = [];
+    for (let k = 0; k < Ville.n; k++) {
+      for (let l = 0; l < Ville.n - 1; l++) {
+        const debut = Ville.rue(l) + demi + 8, fin = Ville.rue(l + 1) - demi - 8, c = Ville.rue(k);
+        // rue est-ouest : on roule à droite (z + voie vers x+), le panneau regarde vers x−
+        panneaux.push([debut, c + demi + 1.2, -Math.PI / 2], [fin, c - demi - 1.2, Math.PI / 2]);
+        // rue nord-sud
+        panneaux.push([c - demi - 1.2, debut, Math.PI], [c + demi + 1.2, fin, 0]);
+      }
+    }
+    const rond = toile(128, 128, (ctx, t) => {
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(t / 2, t / 2, t / 2 - 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#d21f1f";
+      ctx.lineWidth = 16;
+      ctx.beginPath();
+      ctx.arc(t / 2, t / 2, t / 2 - 10, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "#111";
+      ctx.font = "bold 52px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(V.limiteVitesse), t / 2, t / 2 + 3);
+    });
+    const geoRond = new THREE.CylinderGeometry(0.4, 0.4, 0.04, 28);
+    geoRond.rotateX(Math.PI / 2); // le disque est debout : son dessus (avec l'image) regarde vers z
+    const matRond = [metal, mat({ map: rond, roughness: 0.5 }), metal];
+    const placesPanneaux = panneaux.map(([x, z, a]) => [x, 2.4, z, a]);
+    const imRond = new THREE.InstancedMesh(geoRond, matRond, placesPanneaux.length);
+    placesPanneaux.forEach(([x, y, z, a], i) => imRond.setMatrixAt(i, m4.compose(new THREE.Vector3(x, y, z), q.setFromAxisAngle(haut, a), un)));
+    imRond.castShadow = true;
+    g.add(imRond);
+    poser(new THREE.CylinderGeometry(0.04, 0.04, 2.4, 8), metal, panneaux.map(([x, z]) => [x, 1.2, z, 0]));
+
+    // 6. Les BANCS et les POUBELLES le long des trottoirs (et autour des parcs), les BOUCHES D'INCENDIE rouges.
+    const surTrottoir = () => {
+      const k = Math.floor(hasard() * Ville.n), l = Math.floor(hasard() * V.blocs);
+      const le_long = Ville.rue(l) + demi + 10 + hasard() * (V.tailleBloc - 20), cote = hasard() < 0.5 ? -1 : 1;
+      const d = demi + V.trottoir - 0.8; // au fond du trottoir, contre le mur
+      return hasard() < 0.5
+        ? { x: le_long, z: Ville.rue(k) + cote * d, angle: cote > 0 ? Math.PI : 0 }
+        : { x: Ville.rue(k) + cote * d, z: le_long, angle: cote > 0 ? -Math.PI / 2 : Math.PI / 2 };
+    };
+    const loinDuReste = (liste, p, d) => liste.every((q) => Math.hypot(q.x - p.x, q.z - p.z) > d) && Math.abs(p.x) < Ville.taille / 2 && Math.abs(p.z) < Ville.taille / 2;
+    const tous = [];
+    const tirer = (n, d) => {
+      const r = [];
+      let essais = 0;
+      while (r.length < n && essais++ < n * 30) {
+        const p = surTrottoir();
+        if (loinDuReste(tous, p, d)) {
+          r.push(p);
+          tous.push(p);
+        }
+      }
+      return r;
+    };
+    const bancs = tirer(M.bancs, 6), poubelles = tirer(M.poubelles, 4), bouches = tirer(M.bouchesIncendie, 8);
+    // un banc : l'assise (des lattes de bois), le dossier, 2 pieds en métal
+    const bois = mat({ color: 0x8a5a32, roughness: 0.8 });
+    const assise = bancs.map((b) => [b.x, 0.6, b.z, b.angle]);
+    const geoAssise = new THREE.BoxGeometry(1.8, 0.06, 0.45);
+    const geoDossier = new THREE.BoxGeometry(1.8, 0.4, 0.05);
+    geoDossier.translate(0, 0.3, -0.22);
+    poser(geoAssise, bois, assise);
+    poser(geoDossier, bois, assise);
+    for (const dx of [-0.75, 0.75]) {
+      poser(new THREE.BoxGeometry(0.06, 0.6, 0.45), metal, bancs.map((b) => [b.x + Math.cos(b.angle) * dx, 0.3, b.z - Math.sin(b.angle) * dx, b.angle]));
+    }
+    // une poubelle : un cylindre vert foncé avec un couvercle
+    poser(new THREE.CylinderGeometry(0.3, 0.27, 0.9, 14), mat({ color: 0x2f5a36, roughness: 0.6 }), poubelles.map((p) => [p.x, 0.57, p.z, 0]));
+    poser(new THREE.CylinderGeometry(0.33, 0.33, 0.06, 14), metal, poubelles.map((p) => [p.x, 1.05, p.z, 0]));
+    // une bouche d'incendie : un petit pilier rouge, un chapeau arrondi, 2 bouchons sur les côtés
+    const rouge = mat({ color: 0xc8231d, roughness: 0.5, metalness: 0.2 });
+    poser(new THREE.CylinderGeometry(0.16, 0.2, 0.7, 12), rouge, bouches.map((p) => [p.x, 0.47, p.z, 0]));
+    poser(new THREE.SphereGeometry(0.17, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), rouge, bouches.map((p) => [p.x, 0.82, p.z, 0]));
+    const geoBouchons = new THREE.CylinderGeometry(0.07, 0.07, 0.5, 8);
+    geoBouchons.rotateZ(Math.PI / 2);
+    poser(geoBouchons, metal, bouches.map((p) => [p.x, 0.6, p.z, p.angle]));
+    Circuit.DecorVille.bilanMobilier = { bancs: bancs.length, poubelles: poubelles.length, bouchesIncendie: bouches.length, plaquesEgout: egouts.length, panneaux: panneaux.length, plaquesDeRue: Object.values(parNom).reduce((n, l) => n + l.length, 0) };
   }
 
   // Les feux. Tous les carrefours qui ont le même décalage (i + j) changent de couleur en même temps :
@@ -245,5 +458,5 @@ Circuit.DecorVille = (function () {
     return groupes.filter(Boolean);
   }
 
-  return { construire };
+  return { construire, get lumiereFenetres() { return lumiereFenetres; }, bilanMobilier: null };
 })();

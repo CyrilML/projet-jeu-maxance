@@ -425,7 +425,7 @@ Circuit.TableauDeBord = (function () {
     if (monde.boulotProche && !monde.boulot) texte("J : commencer le boulot de " + monde.boulotProche, W / 2, H - 92, 22, "#ffb37a", "center");
     if (p && monde.magasinProche && !monde.magasin) texte("E : entrer dans " + monde.magasinProche + " 🛍️", W / 2, H - 60, 22, "#ffd34d", "center");
     else if (p && monde.voitureProche) texte("E : monter dans " + monde.voitureProche, W / 2, H - 60, 22, "#7dffa0", "center");
-    texte("📍 " + (monde.lieu || "la ville"), 24, 140, 14, "#9cc4ff");
+    texte("📍 " + (monde.lieu || "la ville") + (monde.surLaRue ? " · " + monde.rue : ""), 24, 140, 14, "#9cc4ff");
     const aide = fiche.vol === "helico" ? "Z/Espace : monter · S/Maj : descendre · ↑ ↓ avancer · ← → tourner · E : descendre (posé)"
       : fiche.vol ? "↑ ↓ : gaz · ← → : tourner · Z/Espace : monter · S/Maj : descendre" + (fiche.armes ? " · F : mitrailleuse · G : missile" : "")
       : "E : descendre · R : retour au départ · ⌫ : changer de carte" + (fiche.sirene ? " · H : sirène" : "") + (sauvegarde.objets && sauvegarde.objets.klaxon ? " · K : klaxon" : "");

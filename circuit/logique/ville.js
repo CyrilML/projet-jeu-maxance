@@ -127,5 +127,21 @@ Circuit.Ville = (function () {
     return { x: (rue(2) + rue(3)) / 2, z: rue(3) + V.voie, angle: 0 };
   }
 
-  return { n, taille, rue, parc, immeubles, arbres, etangs, murs, voisins, placerGarees, placerPieces, depart };
+  // Étape 50 : sur quelle rue est-on ? Les rues « est-ouest » sont à z = rue(k), les rues « nord-sud » à x = rue(k).
+  // Renvoie le nom de la rue, « le carrefour … » si on est sur les deux, ou null (pas sur une rue).
+  function nomDeRue(x, z) {
+    if (Math.abs(x) > taille / 2 || Math.abs(z) > taille / 2) return null;
+    const proche = (a) => {
+      const k = Math.round((a - debut) / pas);
+      return k >= 0 && k < n && Math.abs(a - rue(k)) <= V.largeurRue / 2 ? k : -1;
+    };
+    const kz = proche(z), kx = proche(x);
+    const N = V.nomsRues;
+    if (kz >= 0 && kx >= 0) return "le carrefour " + N.estOuest[kz] + " / " + N.nordSud[kx];
+    if (kz >= 0) return N.estOuest[kz];
+    if (kx >= 0) return N.nordSud[kx];
+    return null;
+  }
+
+  return { n, taille, rue, parc, nomDeRue, immeubles, arbres, etangs, murs, voisins, placerGarees, placerPieces, depart };
 })();

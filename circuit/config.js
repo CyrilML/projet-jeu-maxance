@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 18,
+  version: 19,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -196,6 +196,14 @@ Circuit.CONFIG = {
     garees: 14, // voitures garées le long des trottoirs (on peut les prendre !)
     pieces: 50, // ✍️ des pièces cachées un peu partout
     graine: 23,
+    // Étape 50 : le nom des rues (on le voit sur les plaques aux carrefours, et en haut à gauche de l'écran).
+    nomsRues: {
+      estOuest: ["avenue Maxance", "rue des Pilotes", "boulevard du Turbo", "rue des Nitros", "avenue des Champions", "rue du Klaxon"],
+      nordSud: ["rue Cyril", "boulevard de la Police", "rue des Pizzas", "avenue des Avions", "rue du Garage", "boulevard de la Mer"],
+    },
+    limiteVitesse: 50, // km/h : ce qui est écrit sur les panneaux (ce n'est qu'un panneau : la police ne flashe pas !)
+    fenetresAllumees: { minimum: 0.05, force: 1.3 }, // la lumière des fenêtres = minimum + force × (1 − lumière du soleil)
+    mobilier: { bouchesIncendie: 30, plaquesEgout: 70, bancs: 28, poubelles: 36 }, // combien de chaque sur les trottoirs et les rues
   },
 
   // Étape 42 : LA MAP ÉNORME. ✍️ La ville est sur une île au milieu de la mer. De grands ponts mènent à

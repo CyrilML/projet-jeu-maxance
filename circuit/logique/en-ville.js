@@ -180,6 +180,11 @@ Circuit.EnVille = (function () {
         radio.emettre("lieu", { ou: lieu });
       }
     }
+    // Étape 50 : le nom de la rue où tu es (on l'annonce dans le journal quand il change).
+    const rue = Circuit.Ville.nomDeRue(qui.x, qui.z);
+    if (rue && rue !== monde.rue) radio.emettre("rue", { nom: rue });
+    if (rue) monde.rue = rue;
+    monde.surLaRue = !!rue;
     monde.magasinProche = monde.pieton ? (Archipel.magasinProche(monde.pieton.x, monde.pieton.z, C.magasins.distancePorte) || {}).nom || null : null;
   }
 

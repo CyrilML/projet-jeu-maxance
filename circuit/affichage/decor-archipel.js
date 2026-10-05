@@ -279,7 +279,7 @@ Circuit.DecorArchipel = (function () {
     // Les bâtiments.
     for (const b of P.batiments) {
       if (b.sorte === "aerogare") {
-        const verre = mat({ map: repeter(T.facade(3), b.l / 4, b.h / 3.5), metalness: 0.5, roughness: 0.3 });
+        const verre = mat({ map: repeter(T.facade(3), b.l / 16, b.h / 14), metalness: 0.5, roughness: 0.3 }); // (étape 50 : le carreau fait 16 m × 14 m)
         const toit = mat({ color: 0xdfe3e8 });
         g.add(boite(b.l, b.h, b.p, [verre, verre, toit, toit, verre, verre], b.u, b.h / 2, b.w));
         g.add(boite(b.l + 6, 1.2, b.p + 10, toit, b.u, b.h + 0.6, b.w - 3)); // l'avancée du toit

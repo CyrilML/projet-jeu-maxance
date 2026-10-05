@@ -55,6 +55,7 @@ Circuit.SousLeCapot = (function () {
     ville: (d) => "🏙️ Balade en ville : " + d.pieces + " pièces cachées, " + d.circulation + " voitures qui circulent, " + d.garees + " véhicules garés" + (d.aeroports ? ", " + d.aeroports + " aéroports, " + d.magasins + " magasins" : ""),
     lieu: (d) => "📍 Tu arrives sur " + d.ou,
     ressorts: (d) => "🌀 Boing ! Les ressorts encaissent un choc de " + virgule(d.choc, 1) + " m/s : la caisse s'écrase, puis rebondit",
+    rue: (d) => "🪧 " + d.nom.charAt(0).toUpperCase() + d.nom.slice(1) + " (Ville.nomDeRue regarde de quelle rue tu es à moins de 8 m)",
     meteo: (d) => d.icone + " Météo : " + d.nom + " (adhérence " + Math.round(d.adherence * 100) + " %, vent " + d.vent + " m/s)",
     eclair: (d) => "⚡ Éclair à " + d.distance + " m : le tonnerre arrive " + (d.distance / 340).toFixed(1).replace(".", ",") + " s plus tard (le son va à 340 m/s)",
     etoiles: (d) => (d.etoiles > d.avant ? "🚨 " : "🙈 ") + "Police : " + "⭐".repeat(d.etoiles) + (d.etoiles ? "" : "aucune étoile") + " (" + d.raison + ")",
@@ -193,6 +194,12 @@ Circuit.SousLeCapot = (function () {
         ["véhicules garés", monde.garees.length + " (dont " + Circuit.CONFIG.archipel.parking * Circuit.Archipel.aeroports.length + " aux aéroports)"],
         ["Où es-tu ? (étape 42)"],
         ["lieu", monde.lieu || "la ville"],
+        ["rue (étape 50)", monde.surLaRue ? monde.rue : "pas sur une rue (dernière : " + (monde.rue || "aucune") + ")"],
+        ["fenêtres allumées", Math.round(Circuit.DecorVille.lumiereFenetres * 100) + " % (plus il fait sombre, plus elles brillent)"],
+        ["mobilier de la rue", (function () {
+          const b = Circuit.DecorVille.bilanMobilier;
+          return b ? b.panneaux + " panneaux « " + Circuit.CONFIG.ville.limiteVitesse + " », " + b.plaquesDeRue + " plaques de rue, " + b.bancs + " bancs, " + b.poubelles + " poubelles, " + b.bouchesIncendie + " bouches d'incendie, " + b.plaquesEgout + " plaques d'égout" : "—";
+        })()],
         ["hauteur du sol", virgule(Circuit.Archipel.lieu(qui.x, qui.z).h, 1) + " m" + (Circuit.Archipel.surQuelPont(qui.x, qui.z) ? " (le pont monte en arc : H × sin(π × u ÷ L))" : "")],
         ["magasin", monde.magasin ? "🛍️ dans " + monde.magasin.nom : monde.magasinProche ? "devant " + monde.magasinProche + " (E)" : "—"],
         ["objets achetés", Object.keys(Circuit.Sauvegarde.donnees.objets || {}).join(", ") || "aucun"],

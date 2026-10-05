@@ -109,6 +109,28 @@ Circuit.DecorCircuit = (function () {
     const bordure = mat({ map: T.bordure(), roughness: 0.6 });
     g.add(ruban(L, ext, 0.04, bordure, 4));
     g.add(ruban(-ext, -L, 0.04, bordure, 4));
+    // Étape 50 : les TRACES DE PNEUS. Les pilotes passent toujours aux mêmes endroits (la « trajectoire ») :
+    // le caoutchouc des pneus noircit la route, en longues traînées un peu transparentes.
+    const traces = document.createElement("canvas");
+    traces.width = 512;
+    traces.height = 64;
+    const ctx = traces.getContext("2d");
+    for (let i = 0; i < 70; i++) {
+      const y = 6 + Math.random() * 52, x = Math.random() * 512, l = 60 + Math.random() * 300;
+      ctx.strokeStyle = "rgba(8,8,10," + (0.08 + Math.random() * 0.22) + ")";
+      ctx.lineWidth = 1 + Math.random() * 4;
+      for (const dx of [0, -512]) {
+        ctx.beginPath();
+        ctx.moveTo(x + dx, y);
+        ctx.lineTo(x + dx + l, y + (Math.random() - 0.5) * 6);
+        ctx.stroke();
+      }
+    }
+    const texTraces = new THREE.CanvasTexture(traces);
+    texTraces.wrapS = texTraces.wrapT = THREE.RepeatWrapping;
+    texTraces.colorSpace = THREE.SRGBColorSpace;
+    const gomme = new THREE.MeshStandardMaterial({ map: texTraces, transparent: true, depthWrite: false, roughness: 0.7, polygonOffset: true, polygonOffsetFactor: -1 });
+    for (const e of [-L * 0.55, L * 0.35]) g.add(ruban(e - 1.1, e + 1.1, 0.025, gomme, 40));
     const blanc = mat({ color: 0xf0f0f0, roughness: 0.6 });
     for (let s = 0; s < Piste.longueurTour; s += 9) g.add(ruban(-0.15, 0.15, 0.03, blanc, 3, s, s + 3));
     // La ligne d'arrivée en damier.

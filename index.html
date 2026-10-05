@@ -172,6 +172,7 @@
       <a href="#etape47">Étape 47</a>
       <a href="#etape48">Étape 48</a>
       <a href="#etape49">Étape 49</a>
+      <a href="#etape50">Étape 50</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3213,6 +3214,45 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Pourquoi tes voitures achetées n'ont pas disparu ?</summary><p>La sauvegarde a changé de version (11 → 12) : le jeu a converti les anciens noms (« taureau ») en nouveaux (« porsche911 »).</p></details>
     </section>
 
+    <section id="etape50">
+      <h2>🏙️ Étape 50 : les routes et la ville <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Du goudron fissuré, des traces de pneus, des trottoirs en dalles, des façades détaillées, des fenêtres qui s'allument quand il fait sombre, des panneaux et le nom des rues. <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/50-routes-et-ville.md</code>.</p>
+          <ul>
+            <li>✍️ Un décor ultra réaliste sur toutes les cartes : ici, les routes et la ville.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ En ville, en haut à gauche : le nom de la rue où tu roules.</li>
+            <li>☐ Aux carrefours : les plaques bleues des rues, les panneaux « 50 », les lignes d'arrêt.</li>
+            <li>☐ Sur les trottoirs : des bancs, des poubelles, des bouches d'incendie rouges.</li>
+            <li>☐ Sous l'orage (<kbd>M</kbd>) : les fenêtres allumées brillent.</li>
+            <li>☐ Sur le circuit : des fissures et des traces de pneus.</li>
+            <li>Vérifie « version 19 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>💡 La lumière « émise »</h3>
+      <p>Une façade a DEUX images : la façade normale, et une image toute noire sauf les fenêtres allumées. La deuxième est une lumière <strong>émise</strong> : elle brille toute seule, même sans soleil. Le jeu règle sa force avec la météo : lumière = 0,05 + 1,3 × (1 − soleil). Plein soleil → presque rien ; orage → les fenêtres brillent.</p>
+      <h3>🪧 Sur quelle rue es-tu ?</h3>
+      <p>Les rues sont rangées comme les lignes d'un cahier, tous les 88 m. Pour savoir sur laquelle tu es, le jeu divise ta position par 88 et arrondit : il trouve le numéro de la rue la plus proche. Si tu es à moins de 8 m de son milieu, tu es dessus ! Si tu es sur deux rues en même temps, c'est un carrefour.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, regarde « fenêtres allumées » changer quand la météo change.</li>
+        <li>Dans <code>circuit/config.js</code>, trouve <code>nomsRues</code> et donne ton nom à une rue.</li>
+        <li>Dans <code>config.js</code>, change <code>limiteVitesse</code> : que devient l'écriture des panneaux ?</li>
+        <li>Fais le tour d'un pâté de maisons et compte les noms de rue dans le journal.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi les fenêtres brillent-elles plus sous l'orage qu'au soleil ?</summary><p>Leur lumière est la même, mais le jeu la règle avec la météo : 1 − soleil. Au soleil, 1 − 1 = 0 ; sous l'orage, 1 − 0,25 = 0,75.</p></details>
+      <details class="question"><summary>Combien de plaques de rue y a-t-il ?</summary><p>36 carrefours × 2 poteaux × 2 plaques = 144.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -3511,10 +3551,10 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
           <p>Bugatti Chiron, Porsche 911, Lamborghini Aventador, Honda NSX, citadine, SUV, camionnette, moto, quad, et le monster truck rétro à ressorts (étape 49).</p>
           <p class="apprend"><b>Tu apprends :</b> profil, extrusion et galbe, la loi du ressort, convertir une sauvegarde. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">48</div>
-          <h4>Les routes et la ville <span class="etiquette">⏭️ prochaine étape (demandée)</span></h4>
-          <p>Du goudron avec des fissures, des trottoirs en dalles, des façades détaillées, des fenêtres allumées quand il fait sombre, des panneaux et le nom des rues (étape 50).</p>
+          <h4>Les routes et la ville <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Du goudron avec des fissures, des traces de pneus, des trottoirs en dalles, des façades détaillées, des fenêtres allumées quand il fait sombre, des panneaux et le nom des rues (étape 50).</p>
           <p class="apprend"><b>Tu apprends :</b> textures détaillées, lumière émise, trouver sur quelle rue on est. <b>Durée :</b> 1 à 2 séances.</p>
         </div>
         <div class="carte">
@@ -3988,6 +4028,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-49" data-cle="appris-49" placeholder="Ex. : J'ai appris la loi du ressort…"></textarea>
         <label for="idees-49"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-49" data-cle="idees-49" placeholder="Ex. : Une Ferrari…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 50 · les routes et la ville <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le goudron, les trottoirs et les façades (<code>affichage/textures.js</code>), les fenêtres allumées et le mobilier de la rue (<code>affichage/decor-ville.js</code>), les traces de pneus (<code>affichage/decor-circuit.js</code>), le nom des rues (<code>logique/ville.js</code>).</p>
+        <label for="appris-50"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-50" data-cle="appris-50" placeholder="Ex. : J'ai appris ce qu'est une lumière émise…"></textarea>
+        <label for="idees-50"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-50" data-cle="idees-50" placeholder="Ex. : La nuit, avec les phares…"></textarea>
       </div>
     </section>
   </main>
