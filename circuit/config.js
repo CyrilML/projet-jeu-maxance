@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 19,
+  version: 20,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -95,19 +95,20 @@ Circuit.CONFIG = {
 
   // Étape 39 : le garage de la ville. ✍️ Petite citadine, SUV, voiture basse, camionnette et camion.
   vehiculesVille: [
-    // Étape 49 : ✍️ des voitures plus réalistes (la citadine, le SUV genre 508, la Honda NSX, la camionnette genre Vito).
+    // Étape 49 : ✍️ des voitures plus réalistes. Étape 51 : ✍️ avec leur vrai nom (Peugeot 508, Honda NSX, Mercedes Vito,
+    // Kawasaki Ninja) et construites en coques (affichage/voitures-marques.js).
     { id: "citadine", nom: "La citadine", modele: "citadine", prix: 0, vitesseMax: 33.3, acceleration: 11, virage: 2.1, saut: 1,
       couleurs: [[0.3, 0.75, 0.85], [0.95, 0.95, 0.95]], son: { ralenti: 55, max: 140 } },
-    { id: "suv", nom: "Le SUV (genre Peugeot 508)", modele: "suv", prix: 50, vitesseMax: 38.9, acceleration: 12, virage: 1.9, saut: 1,
+    { id: "suv", nom: "La Peugeot 508", modele: "suv", prix: 50, vitesseMax: 38.9, acceleration: 12, virage: 1.9, saut: 1,
       couleurs: [[0.08, 0.22, 0.45], [0.75, 0.75, 0.78]], son: { ralenti: 40, max: 105 } },
-    { id: "basse", nom: "La Honda NSX (la voiture basse)", modele: "basse", prix: 100, vitesseMax: 47.2, acceleration: 17, virage: 2.1, saut: 1,
+    { id: "basse", nom: "La Honda NSX", modele: "basse", prix: 100, vitesseMax: 47.2, acceleration: 17, virage: 2.1, saut: 1,
       couleurs: [[0.8, 0.06, 0.06], [0.08, 0.08, 0.09]], son: { ralenti: 65, max: 190 } },
-    { id: "camionnette", nom: "La camionnette (genre Mercedes Vito)", modele: "camionnette", prix: 200, vitesseMax: 33.3, acceleration: 9, virage: 1.7, saut: 1,
+    { id: "camionnette", nom: "La Mercedes Vito", modele: "camionnette", prix: 200, vitesseMax: 33.3, acceleration: 9, virage: 1.7, saut: 1,
       couleurs: [[0.95, 0.95, 0.95], [0.1, 0.1, 0.11]], son: { ralenti: 45, max: 110 } },
     { id: "camion", nom: "Le camion", modele: "camion", prix: 300, vitesseMax: 27.8, acceleration: 7, virage: 1.4, saut: 1, ecrase: true,
       couleurs: [[0.85, 0.12, 0.1], [0.92, 0.92, 0.92]], son: { ralenti: 28, max: 70 } },
     // Étape 42 : ✍️ la moto (rapide et très maniable).
-    { id: "moto", nom: "La moto (genre Kawasaki Ninja)", modele: "moto", prix: 100, vitesseMax: 45.8, acceleration: 19, virage: 2.7, saut: 1.1,
+    { id: "moto", nom: "La Kawasaki Ninja", modele: "moto", prix: 100, vitesseMax: 45.8, acceleration: 19, virage: 2.7, saut: 1.1,
       couleurs: [[0.35, 0.75, 0.08], [0.08, 0.08, 0.09]], son: { ralenti: 90, max: 300 } },
     // Étape 40 : ✍️ le taxi et la voiture de police (gyrophare et sirène : touche H).
     { id: "taxi", nom: "Le taxi", modele: "taxi", prix: 150, vitesseMax: 38.9, acceleration: 12, virage: 2.0, saut: 1,
@@ -491,11 +492,16 @@ Circuit.CONFIG = {
 
   // Étape 49 : les RESSORTS du monster truck. Quand les roues sont poussées vers le haut (une bosse, un atterrissage),
   // la caisse, elle, continue un peu vers le bas : le ressort s'écrase, puis la repousse… et elle rebondit.
+  // Étape 51 : TOUTES les voitures ont une suspension (plus dure), et leur caisse PENCHE : vers l'avant quand on freine,
+  // vers l'arrière quand on accélère, vers l'extérieur dans les virages.
   ressorts: {
-    raideur: 110, // ✍️ (1/s²) plus c'est grand, plus le ressort est dur (il rebondit vite et peu)
-    amortissement: 4.5, // (1/s) l'amortisseur freine le rebond : à 0, la caisse rebondirait pour toujours !
-    transmission: 0.55, // la part du choc des roues qui passe dans la caisse
-    course: 0.45, // m : le ressort ne peut pas s'écraser (ou s'étirer) de plus de 45 cm
+    monster: { raideur: 110, amortissement: 4.5, transmission: 0.55, course: 0.45 }, // ✍️ le monster truck : mou, il rebondit
+    voiture: { raideur: 300, amortissement: 17, transmission: 0.3, course: 0.08 }, // les autres : une suspension de voiture
+    // raideur (1/s²) : plus c'est grand, plus c'est dur ; amortissement (1/s) : à 0, ça rebondirait pour toujours ;
+    // transmission : la part du choc des roues qui passe dans la caisse ; course (m) : jusqu'où le ressort peut s'écraser.
+    tangage: 0.004, // rad par m/s² : la caisse plonge (ou se cabre) quand on freine (ou accélère)
+    roulis: 0.0055, // rad par m/s² : la caisse penche vers l'extérieur dans un virage
+    penteMax: 0.07, // rad (4°) : jamais plus penché que ça
     gros: 2.5, // m/s : à partir de ce choc, on l'écrit dans le journal
   },
 

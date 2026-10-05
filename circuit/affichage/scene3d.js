@@ -431,18 +431,24 @@ Circuit.Scene3D = (function () {
     if (objet.helice) objet.helice.rotation.x = (v.rotationRoues || 0) * 3;
     // Étape 49 : les ressorts du monster truck. La caisse monte et descend (logique/ressorts.js), les ressorts s'étirent.
     if (objet.caisse) {
-      const ecrase = v.suspension ? v.suspension.ecrase : 0;
+      const s = v.suspension;
+      const ecrase = s ? s.ecrase : 0;
       objet.caisse.position.y = ecrase;
+      // (étape 51 : la caisse penche aussi : tangage autour de z, roulis autour de x)
+      objet.caisse.rotation.set(s ? s.roulis : 0, 0, s ? s.tangage : 0);
       for (const r of objet.ressorts) r.scale.y = Math.max(0.05, r.userData.base + ecrase);
     }
     // Étape 49 : les ressorts du monster truck. La caisse monte et descend (logique/ressorts.js), les ressorts s'étirent.
     if (objet.caisse) {
-      const ecrase = v.suspension ? v.suspension.ecrase : 0;
+      const s = v.suspension;
+      const ecrase = s ? s.ecrase : 0;
       objet.caisse.position.y = ecrase;
+      // (étape 51 : la caisse penche aussi : tangage autour de z, roulis autour de x)
+      objet.caisse.rotation.set(s ? s.roulis : 0, 0, s ? s.tangage : 0);
       for (const r of objet.ressorts) r.scale.y = Math.max(0.05, r.userData.base + ecrase);
     }
     for (const r of objet.roues) {
-      r.roue.rotation.z = -v.rotationRoues; // la roue roule
+      r.roue.rotation.z = -v.rotationRoues * (r.sens || 1); // la roue roule (étape 51 : une roue de gauche retournée roule dans l'autre sens)
       r.pivot.rotation.y = r.avant ? -v.volant * C.voiture.angleRoues : 0; // les roues avant braquent
     }
   }

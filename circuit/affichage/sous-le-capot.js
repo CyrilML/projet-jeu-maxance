@@ -171,8 +171,12 @@ Circuit.SousLeCapot = (function () {
       ["volant", virgule(v.volant, 2) + (Math.abs(v.volant) < 0.05 ? " (tout droit)" : v.volant < 0 ? " (à gauche)" : " (à droite)")],
       ["distance parcourue", Math.round(v.distance) + " m"],
     ].concat(v.suspension ? [
-      ["ressorts (étape 49)", "écrasés de " + Math.round(-v.suspension.ecrase * 100) + " cm (négatif = étirés), la caisse va à " + virgule(v.suspension.vitesse, 2) + " m/s"],
-      ["la règle du ressort", "poussée = −" + Circuit.CONFIG.ressorts.raideur + " × écrasement − " + Circuit.CONFIG.ressorts.amortissement + " × vitesse"],
+      ["ressorts (étapes 49 et 51)", "écrasés de " + Math.round(-v.suspension.ecrase * 100) + " cm (négatif = étirés), la caisse va à " + virgule(v.suspension.vitesse, 2) + " m/s"],
+      ["la règle du ressort", (function () {
+        const p = (Circuit.Garage.ficheDe(v.modele) || {}).ressorts ? Circuit.CONFIG.ressorts.monster : Circuit.CONFIG.ressorts.voiture;
+        return "poussée = −" + p.raideur + " × écrasement − " + p.amortissement + " × vitesse";
+      })()],
+      ["la caisse penche", "avant/arrière " + virgule((v.suspension.tangage * 180) / Math.PI, 1) + "° (accélération " + virgule(v.suspension.accelerationAvant || 0, 1) + " m/s²) · côté " + virgule((v.suspension.roulis * 180) / Math.PI, 1) + "° (virage " + virgule(v.suspension.accelerationCote || 0, 1) + " m/s²)"],
     ] : []);
     let lignes;
     if (monde.carte === "ville") {

@@ -173,6 +173,7 @@
       <a href="#etape48">Étape 48</a>
       <a href="#etape49">Étape 49</a>
       <a href="#etape50">Étape 50</a>
+      <a href="#etape51">Étape 51</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3253,6 +3254,45 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Combien de plaques de rue y a-t-il ?</summary><p>36 carrefours × 2 poteaux × 2 plaques = 144.</p></details>
     </section>
 
+    <section id="etape51">
+      <h2>🏎️ Étape 51 : les voitures ultra réalistes <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">La Bugatti Chiron, la Porsche 911, la Lamborghini Aventador, la Honda NSX, la Peugeot 508, la Mercedes Vito et la Kawasaki Ninja, refaites avec leurs vraies mesures, des courbes partout et des roues comme dans la réalité. <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/51-voitures-ultra-realistes.md</code>.</p>
+          <ul>
+            <li>✍️ De vraies voitures, avec leur vrai nom (sans logo).</li>
+            <li>✍️ Fait en code, mais avec de vraies courbes.</li>
+            <li>✍️ Des roues comme dans GTA : jantes, pneus, freins et suspension.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Les 7 voitures dans les garages (circuit, ville, méga-rampes).</li>
+            <li>☐ Approche la caméra d'une roue : rayons, écrous, lettres sur le pneu, étrier de couleur.</li>
+            <li>☐ Freine fort : le nez plonge. Tourne vite : la voiture penche vers l'extérieur.</li>
+            <li>☐ Sous le capot : « la caisse penche ».</li>
+            <li>Vérifie « version 20 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🛶 Construire une voiture comme une coque de bateau</h3>
+      <p>Avant, on dessinait le profil de la voiture, puis on le « poussait » sur toute la largeur : la voiture restait un peu « boîte ». Maintenant, on la décrit par une dizaine de <strong>tranches</strong>, vues de face (comme si on coupait la voiture en rondelles) : le bas, les épaules, le dessus, la largeur. Le jeu invente une tranche tous les 4 cm entre elles, en suivant une courbe douce, puis il les relie par des milliers de petits triangles. Les vitres font partie de la peau : chaque triangle est rangé « peinture » ou « vitre », selon sa place.</p>
+      <h3>🛞 Une vraie roue</h3>
+      <p>Le pneu est « tourné » (comme un vase sur un tour de potier), avec des rainures et des lettres moulées. La jante est creuse, avec ses rayons, 5 écrous et un cache. Derrière, le disque percé et l'étrier, la pince qui serre le disque pour freiner. Le disque tourne avec la roue, l'étrier non !</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>circuit/affichage/voitures-marques.js</code>, trouve la Porsche 911 et compte ses tranches (les lignes <code>{ x: …, yb: … }</code>).</li>
+        <li>Dans <code>circuit/config.js</code>, trouve <code>ressorts</code> : mets <code>roulis: 0.02</code> et prends un virage.</li>
+        <li>Dans <code>affichage/roues.js</code>, trouve les styles de jante (« turbine », « y », « fins »…) : lequel a quelle voiture ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi le nez plonge quand on freine ?</summary><p>La caisse est lourde : quand les roues ralentissent, elle continue vers l'avant et appuie sur les ressorts de devant.</p></details>
+      <details class="question"><summary>Qu'est-ce que l'empattement ?</summary><p>La distance entre les roues avant et les roues arrière : 2,71 m pour la Chiron, 2,45 m pour la 911.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -3557,26 +3597,32 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
           <p>Du goudron avec des fissures, des traces de pneus, des trottoirs en dalles, des façades détaillées, des fenêtres allumées quand il fait sombre, des panneaux et le nom des rues (étape 50).</p>
           <p class="apprend"><b>Tu apprends :</b> textures détaillées, lumière émise, trouver sur quelle rue on est. <b>Durée :</b> 1 à 2 séances.</p>
         </div>
-        <div class="carte">
+        <div class="carte fait">
           <div class="num">49</div>
+          <h4>Les voitures ultra réalistes <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Chiron, 911, Aventador, NSX, Peugeot 508, Mercedes Vito, Kawasaki Ninja : des coques en tranches, de vraies roues, une suspension qui penche (étape 51).</p>
+          <p class="apprend"><b>Tu apprends :</b> construire une forme par tranches, interpoler, les pièces d'une roue, le transfert de charge. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">50</div>
           <h4>Sauvegarder le monde <span class="etiquette">💡 idée</span></h4>
           <p>Retrouver son monde exactement comme on l'a laissé, et avoir plusieurs mondes.</p>
           <p class="apprend"><b>Tu apprends :</b> vraie base de données (IndexedDB), sauvegarder seulement ce qui a changé, versions du format, chargement au démarrage. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">50</div>
+          <div class="num">51</div>
           <h4>Jour, nuit et créatures</h4>
           <p>Le soleil se couche, des monstres sortent la nuit, le héros a des points de vie.</p>
           <p class="apprend"><b>Tu apprends :</b> horloge du monde, lumière, intelligence artificielle simple (machines à états : errer, poursuivre, fuir), entités. <b>Durée :</b> 2 à 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">51</div>
+          <div class="num">52</div>
           <h4>Artisanat (craft)</h4>
           <p>Combiner des blocs pour fabriquer des outils ; une pioche casse la pierre plus vite.</p>
           <p class="apprend"><b>Tu apprends :</b> décrire les règles comme des données (recettes), et pas comme du code. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">52</div>
+          <div class="num">53</div>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
@@ -4036,6 +4082,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-50" data-cle="appris-50" placeholder="Ex. : J'ai appris ce qu'est une lumière émise…"></textarea>
         <label for="idees-50"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-50" data-cle="idees-50" placeholder="Ex. : La nuit, avec les phares…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 51 · les voitures ultra réalistes <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le constructeur de coques (<code>affichage/coque.js</code>), l'atelier du pneumaticien (<code>affichage/roues.js</code>), le bureau de design (<code>affichage/voitures-marques.js</code>), la suspension de toutes les voitures (<code>logique/ressorts.js</code>).</p>
+        <label for="appris-51"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-51" data-cle="appris-51" placeholder="Ex. : J'ai appris ce qu'est un étrier de frein…"></textarea>
+        <label for="idees-51"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-51" data-cle="idees-51" placeholder="Ex. : Ouvrir les portières…"></textarea>
       </div>
     </section>
   </main>
