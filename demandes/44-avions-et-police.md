@@ -1,7 +1,7 @@
 # Demande n° 44 : les avions, les avions de chasse… et la police aux 5 étoiles
 
 > Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
-> questions. Statut : 📝 en cours (étape 44 : ce qui vole ; étape 45 : la police).
+> questions. Statut : étape 44 (ce qui vole) ✅ livrée le 05/10/2026, à valider · étape 45 (la police) à venir.
 
 ## 🎯 Quoi
 - Piloter les avions, les hélicos et les avions de ligne (d'aéroport en aéroport).
@@ -20,5 +20,25 @@
 - ✍️ Attrapé par la police : retour au commissariat, sans voiture (pas d'amende).
 - ✍️ Semer la police : loin (plus de 150 m) et caché ; les étoiles clignotent puis s'éteignent une par une.
 
-## ✅ Critères de réussite
-(à compléter à chaque étape)
+## 🛠️ Ce que Claude a choisi pour l'étape 44
+- Dans chaque aéroport : un petit avion, un avion de ligne, un avion de chasse et un hélicoptère (E pour monter).
+- Touches de vol : ↑ ↓ (les flèches) = les gaz ; ← → = tourner ; Z ou Espace = monter ; S ou Maj = descendre.
+  (Z et S servent à monter et descendre en avion ; en voiture, ils servent toujours à accélérer et freiner.)
+- Décoller : rouler jusqu'à la vitesse de décollage (86 km/h le petit avion, 162 km/h le chasseur,
+  180 km/h l'avion de ligne), puis Z. Trop lent en l'air (moins de 75 % de cette vitesse) = décrochage.
+- Atterrir : toucher le sol à moins de 7 m/s vers le bas. Sinon (ou dans la mer, ou contre un immeuble) :
+  crash, retour à pied devant l'aérogare la plus proche.
+- Avion de ligne : 60 pièces en se posant sur la piste d'un autre aéroport.
+- Avion de chasse : mitrailleuse (F, 12 balles par seconde), missiles (G, un toutes les 0,8 s) qui suivent
+  leur cible et explosent (10 m autour).
+- Cibles d'entraînement autour de l'île lointaine : 16 ballons (3 pièces) et 6 cibles au sol (5 pièces),
+  qui reviennent 30 s après. Les voitures touchées explosent.
+- La base de données passe en version 10 (décollages, vols de ligne, crashs, cibles, voitures explosées).
+
+## ✅ Critères de réussite (étape 44)
+- [ ] À l'aéroport, monter dans l'hélico (E), Z : il décolle et peut rester sur place.
+- [ ] Le petit avion : rouler sur la piste, accélérer, Z : il décolle, vire en penchant ses ailes.
+- [ ] L'avion de ligne : décoller d'un aéroport et se poser sur la piste d'un autre → 60 pièces.
+- [ ] L'avion de chasse : F tire, G lance un missile qui suit un ballon et le fait exploser.
+- [ ] Un missile sur une voiture : elle explose.
+- [ ] En haut de la page : « version 13 ».

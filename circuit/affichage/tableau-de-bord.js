@@ -426,10 +426,40 @@ Circuit.TableauDeBord = (function () {
     if (p && monde.magasinProche && !monde.magasin) texte("E : entrer dans " + monde.magasinProche + " 🛍️", W / 2, H - 60, 22, "#ffd34d", "center");
     else if (p && monde.voitureProche) texte("E : monter dans " + monde.voitureProche, W / 2, H - 60, 22, "#7dffa0", "center");
     texte("📍 " + (monde.lieu || "la ville"), 24, 140, 14, "#9cc4ff");
-    texte(p ? "↑ ↓ ← → marcher · E : monter · R : départ · ⌫ : cartes" : "E : descendre · R : retour au départ · ⌫ : changer de carte" + (fiche.sirene ? " · H : sirène" : "") + (sauvegarde.objets && sauvegarde.objets.klaxon ? " · K : klaxon" : ""), 24, H - 22, 14, "#cfd6ff");
+    const aide = fiche.vol === "helico" ? "Z/Espace : monter · S/Maj : descendre · ↑ ↓ avancer · ← → tourner · E : descendre (posé)"
+      : fiche.vol ? "↑ ↓ : gaz · ← → : tourner · Z/Espace : monter · S/Maj : descendre" + (fiche.armes ? " · F : mitrailleuse · G : missile" : "")
+      : "E : descendre · R : retour au départ · ⌫ : changer de carte" + (fiche.sirene ? " · H : sirène" : "") + (sauvegarde.objets && sauvegarde.objets.klaxon ? " · K : klaxon" : "");
+    texte(p ? "↑ ↓ ← → marcher · E : monter · R : départ · ⌫ : cartes" : aide, 24, H - 22, 14, "#cfd6ff");
+    if (fiche.vol && !p) dessinerVol(monde, v, fiche); // étape 44
     if (monde.sirene && fiche.sirene && !p) texte("🚨 Sirène", 300, 70, 20, Math.floor(monde.temps * 4) % 2 ? "#ff5a4a" : "#5a8aff");
     if (options.pause) texte("⏸ Pause", W / 2, H - 30, 28, "#fff", "center");
     if (options.ralenti) texte("🐢 Ralenti", 300, 40, 18, "#cfd6ff");
+  }
+
+  // Étape 44 : les instruments de vol : l'altitude, la vitesse verticale, la vitesse de décollage,
+  // et pour l'avion de chasse un viseur et le missile prêt ou pas.
+  function dessinerVol(monde, v, fiche) {
+    panneau(W - 190, H - 196, 178, 98);
+    const sol = Circuit.Archipel.lieu(v.x, v.z).h;
+    texte("↕ " + Math.round(v.y - sol) + " m", W - 178, H - 166, 22, "#7fe0ff");
+    texte((v.vy >= 0 ? "▲ " : "▼ ") + Math.abs(v.vy).toFixed(1).replace(".", ",") + " m/s", W - 178, H - 142, 15, v.vy < -C.vol.atterrissageDoux ? "#ff6b4a" : "#cfd6ff");
+    texte(v.enVol ? (v.decroche ? "⚠️ DÉCROCHAGE" : "✈️ en vol") : fiche.vol === "avion" ? "🛫 décollage : " + Math.round(fiche.decollage * 3.6) + " km/h" : "🚁 posé : Z pour monter", W - 178, H - 118, 13, v.decroche ? "#ff6b4a" : "#7dffa0");
+    if (fiche.armes) {
+      // Le viseur : au milieu de l'écran.
+      ctx.strokeStyle = "rgba(125,255,160,.85)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(W / 2, H / 2 - 30, 18, 0, Math.PI * 2);
+      ctx.moveTo(W / 2 - 30, H / 2 - 30);
+      ctx.lineTo(W / 2 - 10, H / 2 - 30);
+      ctx.moveTo(W / 2 + 10, H / 2 - 30);
+      ctx.lineTo(W / 2 + 30, H / 2 - 30);
+      ctx.stroke();
+      const pret = monde.temps >= monde.prochainMissile;
+      panneau(12, 156, 200, 52);
+      texte("🚀 missile : " + (pret ? "prêt (G)" : "recharge…"), 24, 178, 14, pret ? "#7dffa0" : "#ffb37a");
+      texte("🎯 cibles : " + monde.ciblesTouchees + " · 💥 " + monde.voituresExplosees, 24, 198, 14, "#cfd6ff");
+    }
   }
 
   // La mini-carte de la ville. Étape 42 : la map est énorme, alors la mini-carte SUIT le joueur (il est au

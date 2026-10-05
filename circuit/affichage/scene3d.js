@@ -19,6 +19,7 @@ Circuit.Scene3D = (function () {
   const camera = { mode: "poursuite", angle: 0, pret: false };
   const MODES = ["poursuite", "ciel", "capot"];
   const compteur = { triangles: 0, lignes: 0, objets: 0 };
+  const RECUL_VOL = { avionDeLigne: 3.6, petitAvion: 1.6, avionChasse: 2, helico: 1.8 }; // étape 44 : la caméra recule pour les avions
   const SOLEIL = new THREE.Vector3(0.45, 0.75, 0.35).normalize(); // d'où vient la lumière du soleil
 
   let rendu, scene, sceneX, cam, soleil, ciel;
@@ -169,6 +170,111 @@ Circuit.Scene3D = (function () {
     return vehicules[cle];
   }
 
+  // Étape 44 : les balles (des traits jaunes), les missiles (un tube blanc et sa flamme), les explosions
+  // (une boule de feu qui grandit et s'efface), et les cibles d'entraînement (ballons rouges, cibles au sol).
+  let armes3d = null;
+  function dessinerArmes(monde) {
+    if (!monde.cibles) {
+      if (armes3d) armes3d.g.visible = false;
+      return; // (les cibles n'existent qu'en ville)
+    }
+    if (!armes3d) {
+      const g = new THREE.Group();
+      const balles = new THREE.InstancedMesh(new THREE.BoxGeometry(6, 0.12, 0.12), new THREE.MeshBasicMaterial({ color: 0xffe066 }), 200);
+      balles.frustumCulled = false;
+      const missiles = [], feux = [], boules = [], ballons = [], ciblesSol = [];
+      const blanc = new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 0.4 });
+      for (let i = 0; i < 20; i++) {
+        const m = new THREE.Group();
+        const corps = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 2.2, 8), blanc);
+        corps.rotation.z = Math.PI / 2;
+        const flamme = new THREE.Mesh(new THREE.ConeGeometry(0.3, 2, 8), new THREE.MeshBasicMaterial({ color: 0xffa020, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false }));
+        flamme.rotation.z = Math.PI / 2;
+        flamme.position.x = -2;
+        m.add(corps, flamme);
+        m.visible = false;
+        g.add(m);
+        missiles.push(m);
+      }
+      for (let i = 0; i < 12; i++) {
+        const b = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffa030, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+        b.visible = false;
+        g.add(b);
+        boules.push(b);
+      }
+      const rouge = new THREE.MeshStandardMaterial({ color: 0xe02020, roughness: 0.4 });
+      const geoBallon = new THREE.SphereGeometry(4, 16, 12);
+      const toile = document.createElement("canvas");
+      toile.width = toile.height = 128;
+      const ctx = toile.getContext("2d");
+      for (let r = 6; r > 0; r--) {
+        ctx.fillStyle = r % 2 ? "#e02020" : "#ffffff";
+        ctx.beginPath();
+        ctx.arc(64, 64, r * 10.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      const texCible = new THREE.CanvasTexture(toile);
+      texCible.colorSpace = THREE.SRGBColorSpace;
+      for (const c of monde.cibles || []) {
+        if (c.sorte === "ballon") {
+          const b = new THREE.Mesh(geoBallon, rouge);
+          b.position.set(c.x, c.y, c.z);
+          g.add(b);
+          ballons.push(b);
+        } else {
+          const cible = new THREE.Mesh(new THREE.CircleGeometry(4, 32), new THREE.MeshStandardMaterial({ map: texCible, side: THREE.DoubleSide }));
+          cible.position.set(c.x, c.y + 1.5, c.z);
+          cible.rotation.y = Math.random() * Math.PI;
+          g.add(cible);
+          ciblesSol.push(cible);
+        }
+      }
+      g.add(balles);
+      scene.add(g);
+      armes3d = { g, balles, missiles, boules, ballons, ciblesSol };
+    }
+    const a3 = armes3d;
+    a3.g.visible = monde.carte === "ville" && monde.phase === "ville";
+    if (!a3.g.visible) return;
+    let nb = 0, nm = 0;
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), un = new THREE.Vector3(1, 1, 1), x = new THREE.Vector3(1, 0, 0);
+    for (const t of monde.tirs) {
+      const dir = new THREE.Vector3(t.vx, t.vy, t.vz).normalize();
+      q.setFromUnitVectors(x, dir);
+      if (t.sorte === "balle" && nb < 200) a3.balles.setMatrixAt(nb++, m4.compose(new THREE.Vector3(t.x, t.y, t.z), q, un));
+      if (t.sorte === "missile" && nm < a3.missiles.length) {
+        const m = a3.missiles[nm++];
+        m.visible = true;
+        m.position.set(t.x, t.y, t.z);
+        m.quaternion.copy(q);
+        m.children[1].scale.set(1, 0.7 + Math.random() * 0.6, 1);
+      }
+    }
+    a3.balles.count = nb;
+    a3.balles.instanceMatrix.needsUpdate = true;
+    for (let i = nm; i < a3.missiles.length; i++) a3.missiles[i].visible = false;
+    monde.explosions.forEach((e, i) => {
+      if (i >= a3.boules.length) return;
+      const b = a3.boules[i];
+      b.visible = true;
+      b.position.set(e.x, e.y + 1, e.z);
+      b.scale.setScalar(e.taille * (0.3 + e.age));
+      b.material.opacity = Math.max(0, 1 - e.age / 1.6);
+      b.material.color.setHSL(0.08 - e.age * 0.04, 1, 0.55 - e.age * 0.2);
+    });
+    for (let i = monde.explosions.length; i < a3.boules.length; i++) a3.boules[i].visible = false;
+    let ib = 0, is = 0;
+    for (const c of monde.cibles) {
+      if (c.sorte === "ballon") {
+        const b = a3.ballons[ib++];
+        if (b) {
+          b.visible = !c.touchee;
+          b.position.y = c.y + Math.sin(monde.temps + ib) * 1.5; // les ballons flottent
+        }
+      } else if (a3.ciblesSol[is]) a3.ciblesSol[is++].visible = !c.touchee;
+    }
+  }
+
   // Étape 43 : les petits boulots en 3D.
   //   - un ROND lumineux (et sa colonne de lumière) à chaque endroit où l'on commence un boulot ;
   //   - une grande COLONNE DE LUMIÈRE jaune là où il faut aller (comme dans les jeux de mission) ;
@@ -285,7 +391,7 @@ Circuit.Scene3D = (function () {
       cible = [v.x + Math.cos(v.angle) * 20, h - 0.3, v.z + Math.sin(v.angle) * 20];
     } else {
       // Derrière la voiture ; la caméra suit aussi la hauteur (un peu moins, pour qu'on voie bien les sauts).
-      const recul = v.modele === "monster" ? 1.3 : v.modele === "camion" ? 1.6 : monde.pieton ? 0.5 : 1;
+      const recul = v.modele === "monster" ? 1.3 : v.modele === "camion" ? 1.6 : monde.pieton ? 0.5 : RECUL_VOL[v.modele] || 1; // étape 44 : les avions sont grands
       // Étape 40 : sur le grand parcours, les routes sont très hautes (jusqu'à 22 m) : la caméra suit toute la hauteur,
       // sinon elle passerait sous la route !
       const suivi = monde.carte === "grand" || monde.carte === "ciel" || monde.carte === "ville" ? 1 : 0.75; // (la ville : les ponts, étape 42)
@@ -305,7 +411,11 @@ Circuit.Scene3D = (function () {
     const y = v.y || 0;
     const penche = v.tangage || (Math.abs(v.vy || 0) > 0.01 ? Math.max(-0.6, Math.min(0.6, Math.atan2(v.vy, Math.abs(v.vitesse) || 1))) : 0);
     objet.g.position.set(v.x, y, v.z);
-    objet.g.rotation.set(0, -v.angle, penche, "YZX"); // d'abord tourner (angle), puis pencher (pente, looping)
+    objet.g.rotation.set(v.roulis || 0, -v.angle, penche, "YZX"); // d'abord tourner (angle), puis pencher (pente, looping), puis le roulis (étape 44 : un avion qui vire)
+    // Étape 44 : le rotor de l'hélico et l'hélice du petit avion tournent (leur angle est rotationRoues).
+    if (objet.rotor) objet.rotor.rotation.y = v.rotationRoues || 0;
+    if (objet.rotorArriere) objet.rotorArriere.rotation.z = (v.rotationRoues || 0) * 1.7;
+    if (objet.helice) objet.helice.rotation.x = (v.rotationRoues || 0) * 3;
     for (const r of objet.roues) {
       r.roue.rotation.z = -v.rotationRoues; // la roue roule
       r.pivot.rotation.y = r.avant ? -v.volant * C.voiture.angleRoues : 0; // les roues avant braquent
@@ -400,6 +510,7 @@ Circuit.Scene3D = (function () {
     } else if (bonhomme) bonhomme.g.visible = false;
 
     dessinerBoulots(monde); // étape 43
+    dessinerArmes(monde); // étape 44
 
     // Les pièces qui tournent sur elles-mêmes et flottent, et les cartons.
     let n = 0;

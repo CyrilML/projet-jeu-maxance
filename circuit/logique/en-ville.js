@@ -15,6 +15,8 @@
 //
 // Touches : E = descendre / monter / entrer dans un magasin, R = retour au départ, ⌫ = changer de carte,
 // K = klaxon (si tu l'as acheté), J = commencer ou arrêter un petit boulot (étape 43, logique/boulots.js).
+// Étape 44 : dans un avion ou un hélico (aux aéroports), on vole (logique/vol.js) ; l'avion de chasse tire
+// (F = mitrailleuse, G = missile, logique/armes.js).
 
 window.Circuit = window.Circuit || {};
 
@@ -48,6 +50,13 @@ Circuit.EnVille = (function () {
     monde.pieces.push(...Archipel.placerPieces()); // étape 42 : des pièces sur les ponts et les îles
     monde.pieces.forEach((p, i) => (p.numero = i + 1));
     monde.garees.push(Circuit.Voiture.creer(Circuit.Boulots.camionDuDepot.x, Circuit.Boulots.camionDuDepot.z, 0, Circuit.Garage.ficheDe("camion"))); // étape 43
+    // Étape 44 : les avions et les hélicos des aéroports (ils se souviennent de leur place de parking).
+    for (const a of Archipel.placerAvions()) {
+      const avion = Circuit.Voiture.creer(a.x, a.z, a.angle, Circuit.Garage.ficheDe(a.modele));
+      avion.parking = { x: a.x, z: a.z, angle: a.angle };
+      monde.garees.push(avion);
+    }
+    Circuit.Armes.preparer(monde);
     monde.boulot = null; // étape 43 : le petit boulot en cours
     monde.boulotProche = null;
     monde.magasin = null; // étape 42 : le magasin où est entré le personnage
@@ -68,7 +77,8 @@ Circuit.EnVille = (function () {
     const p = monde.pieton;
     let meilleure = null;
     const regarder = (voiture, ou, objet) => {
-      const d = Math.hypot(voiture.x - p.x, voiture.z - p.z);
+      // Étape 44 : un avion de ligne fait 34 m : on peut monter dedans plus loin de son centre (rayonMonter).
+      const d = Math.max(0, Math.hypot(voiture.x - p.x, voiture.z - p.z) - ((Circuit.Garage.ficheDe(voiture.modele) || {}).rayonMonter || 0));
       if (d < C.pieton.distanceMonter + 1 && (!meilleure || d < meilleure.d)) meilleure = { d, voiture, ou, objet };
     };
     regarder(monde.voiture, "la tienne");
@@ -81,6 +91,10 @@ Circuit.EnVille = (function () {
   function descendreOuMonter(monde) {
     const v = monde.voiture;
     if (!monde.pieton) {
+      if (v.enVol) {
+        message(monde, "🛬 Atterris d'abord pour descendre !", 2);
+        return;
+      }
       if (Math.abs(v.vitesse) > C.pieton.vitesseMaxPourDescendre) {
         message(monde, "🛑 Arrête-toi d'abord pour descendre !", 2);
         return;
@@ -145,10 +159,11 @@ Circuit.EnVille = (function () {
     else rouler(monde, v, dt, intentions);
 
     // La circulation : elle s'arrête devant toi et devant ton personnage.
-    const obstacles = [monde.voiture].concat(monde.pieton ? [monde.pieton] : []);
+    const obstacles = (v.y > 3 ? [] : [monde.voiture]).concat(monde.pieton ? [monde.pieton] : []); // (un avion en l'air ne bloque personne)
     Circuit.Circulation.avancer(monde.circulation, monde.temps, dt, obstacles, hasard);
     ramasser(monde, monde.pieton || v);
     Circuit.Boulots.etape(monde, dt, intentions); // étape 43 : les petits boulots
+    Circuit.Armes.etape(monde, dt, intentions); // étape 44 : la mitrailleuse et les missiles
     // Étape 42 : où es-tu ? (la ville, un pont, une île…) On l'annonce quand ça change.
     const qui = monde.pieton || v;
     const lieu = Archipel.lieu(qui.x, qui.z).ou;
@@ -195,6 +210,10 @@ Circuit.EnVille = (function () {
   // En voiture.
   function rouler(monde, v, dt, intentions) {
     const fiche = Circuit.Garage.ficheDe(v.modele) || {};
+    if (fiche.vol) {
+      Circuit.Vol.avancer(monde, v, dt, intentions); // étape 44 : ça vole !
+      return;
+    }
     const avantX = v.x, avantZ = v.z;
     Circuit.Voiture.avancer(v, intentions, dt, "route", fiche.virage);
     // Étape 42 : pas dans la mer ! Et sur un pont, la route monte.
@@ -211,7 +230,8 @@ Circuit.EnVille = (function () {
     const autres = monde.garees.concat(monde.circulation.map((c) => Object.assign({}, c.voiture)));
     for (const o of autres) {
       if (Math.abs(o.x - v.x) > 8 || Math.abs(o.z - v.z) > 8 || Math.abs((o.y || 0) - (v.y || 0)) > 3) continue;
-      const r = Circuit.Chocs.resoudre(v, o, C.chocs);
+      // (étape 44 : on ne pousse pas un avion garé : on se cogne dedans, comme dans un mur)
+      const r = Circuit.Chocs.resoudre(v, Circuit.Vol.estVolant(o) ? Object.assign({}, o) : o, C.chocs);
       if (r.touche && r.force > 1.5) radio.emettre("choc", { force: r.force, vitesse: v.vitesse, contre: "voiture" });
     }
     // Les voitures garées poussées : elles suivent le sol (un pont qui monte).

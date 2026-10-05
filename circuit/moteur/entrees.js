@@ -33,6 +33,13 @@ Circuit.Entrees = (function () {
     sirene: ["KeyH"], // étape 40 : la sirène de la voiture de police
     klaxon: ["KeyK"], // étape 42 : le klaxon (acheté au magasin)
     boulot: ["KeyJ"], // étape 43 : commencer ou arrêter un petit boulot
+    // Étape 44 : voler. ✍️ ↑ ↓ (les flèches seules) = les gaz ; Z ou Espace = monter ; S ou Maj = descendre.
+    gaz: ["ArrowUp"],
+    freinVol: ["ArrowDown"],
+    volMonter: ["KeyW", "Space"],
+    volDescendre: ["KeyS", "ShiftLeft", "ShiftRight"],
+    tir: ["KeyF"], // la mitrailleuse (tenir F)
+    missile: ["KeyG"], // un missile (appuyer sur G)
   };
 
   const actionsDeLaTouche = {};

@@ -716,6 +716,61 @@ Circuit.Modeles = (function () {
     return { g, roues: [], yCapot: 2.3, helice };
   }
 
+  // Étape 44 : l'avion de chasse : un fuselage pointu, des ailes en triangle (« delta »), deux dérives,
+  // une verrière, une tuyère… et des missiles sous les ailes.
+  function avionChasse(k1, k2) {
+    const g = new THREE.Group();
+    const gris = peinture(k1), fonce = peinture(k2);
+    const corps = fuselage(15, 1.1, gris);
+    corps.position.y = 2.2;
+    g.add(corps);
+    const verriere = new THREE.Mesh(new THREE.SphereGeometry(0.75, 18, 12), M.vitre);
+    verriere.scale.set(2.6, 0.8, 0.9);
+    verriere.position.set(3.4, 3.05, 0);
+    g.add(verriere);
+    for (const cote of [-1, 1]) {
+      const a = aile(7, 0.8, 5.2, 5.8, 0.18, gris);
+      if (cote < 0) a.rotation.x = Math.PI;
+      a.position.set(-1.2, 2.0, 0);
+      g.add(a);
+      const derive = aile(2.6, 0.8, 2.6, 1.8, 0.12, fonce);
+      derive.rotation.x = -Math.PI / 2;
+      derive.rotation.y = cote * 0.25;
+      derive.position.set(-5.6, 2.8, cote * 0.8);
+      g.add(derive);
+      const stab = aile(2, 0.6, 2.2, 1.2, 0.1, gris);
+      if (cote < 0) stab.rotation.x = Math.PI;
+      stab.position.set(-6.2, 2.1, 0);
+      g.add(stab);
+      // Deux missiles sous chaque aile.
+      for (const z of [2.2, 3.6]) {
+        const m = cylindre(0.12, 2.4, peinture([0.92, 0.92, 0.92]), 10);
+        m.rotation.z = Math.PI / 2;
+        m.position.set(-1.2, 1.7, cote * z);
+        g.add(m);
+        const pointe = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.4, 10), M.feu);
+        pointe.rotation.z = -Math.PI / 2;
+        pointe.position.set(0.2, 1.7, cote * z);
+        g.add(pointe);
+      }
+      // Les entrées d'air sur les côtés.
+      g.add(boite(2.2, 0.7, 0.4, fonce, 1.4, 2.0, cote * 1.05));
+    }
+    const tuyere = cylindre(0.75, 1.2, M.chrome, 18);
+    tuyere.rotation.z = Math.PI / 2;
+    tuyere.position.set(-7.8, 2.2, 0);
+    g.add(tuyere);
+    g.add(boite(0.4, 0.3, 0.3, M.noir, 7.6, 2.0, 0.6)); // le canon de la mitrailleuse
+    for (const [x, z] of [[4.5, 0], [-1.5, -1.3], [-1.5, 1.3]]) {
+      g.add(boite(0.12, 1.4, 0.12, M.noir, x, 0.9, z));
+      const r = cylindre(0.35, 0.25, M.pneu, 14);
+      r.rotation.x = Math.PI / 2;
+      r.position.set(x, 0.35, z);
+      g.add(r);
+    }
+    return { g, roues: [], yCapot: 3.2 };
+  }
+
   // L'hélicoptère : une cabine ronde vitrée, une longue queue, un grand rotor et des patins.
   function helico(k1, k2) {
     const g = new THREE.Group();
@@ -794,7 +849,7 @@ Circuit.Modeles = (function () {
     return { g, jambes, bras, casquette, visiere, lunettes };
   }
 
-  const FABRIQUES = { classique, taureau, fleche, fusee, f1, quatre, pickup, buggy, monster, citadine, suv, basse, camionnette, camion, rallye, quad, taxi, police, kart, moto, avionDeLigne, petitAvion, helico };
+  const FABRIQUES = { classique, taureau, fleche, fusee, f1, quatre, pickup, buggy, monster, citadine, suv, basse, camionnette, camion, rallye, quad, taxi, police, kart, moto, avionDeLigne, petitAvion, helico, avionChasse };
 
   // Fabrique une voiture. Renvoie { g (le groupe Three.js), roues (pour les faire tourner), yCapot (pour la caméra),
   // et pour la police : gyro (les 2 lampes du gyrophare) }.

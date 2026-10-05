@@ -158,6 +158,16 @@ Circuit.RayonsX = (function () {
       const cible = [Circuit.Ville.rue(cv.vers[0]), 0.5, Circuit.Ville.rue(cv.vers[1])];
       c.ligne([cv.voiture.x, 0.5, cv.voiture.z], cible, cv.feuAttendu ? COULEURS.rouge : COULEURS.carotte);
     }
+    // Étape 44 : chaque missile a un trait rouge vers ce qu'il vise, et l'avion de chasse un trait vert vers l'avant (le viseur).
+    for (const t of monde.tirs || []) {
+      if (t.sorte !== "missile" || !t.cible) continue;
+      const vise = t.cible.circulation ? t.cible.circulation.voiture : t.cible.voiture || t.cible.cible || (t.cible.helico ? monde.helicoPolice : t.cible);
+      if (vise) c.ligne([t.x, t.y, t.z], [vise.x, vise.y || 1, vise.z], COULEURS.rouge);
+    }
+    if (monde.carte === "ville" && !monde.pieton && (Circuit.Garage.ficheDe(v.modele) || {}).armes) {
+      const n = Circuit.Armes.nez(v);
+      c.ligne([v.x, (v.y || 0) + 1.5, v.z], [v.x + n.x * 300, (v.y || 0) + 1.5 + n.y * 300, v.z + n.z * 300], COULEURS.fleche);
+    }
     // Étape 43 : un trait entre toi et la cible du petit boulot (sa longueur, c'est la distance affichée).
     if (monde.carte === "ville" && monde.boulot && monde.boulot.cible) {
       const q = monde.pieton || v;

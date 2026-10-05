@@ -31,6 +31,7 @@ Circuit.Garage = (function () {
   }).filter(Boolean);
   LISTES.grand = fichesDe(C.vehiculesGrandParcours);
   LISTES.ciel = fichesDe(C.vehiculesCiel); // étape 41 : les méga-rampes (les voitures de course)
+  LISTES.air = C.vehiculesAir; // étape 44 : ce qui vole (pas de garage : on les trouve dans les aéroports)
   let carte = "course";
 
   // Le garage de quelle carte ?

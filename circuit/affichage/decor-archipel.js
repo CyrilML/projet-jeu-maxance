@@ -5,7 +5,7 @@
 //   - les PONTS : la route monte en arc (la même formule que logique/archipel.js), avec des barrières,
 //     des piles dans l'eau, deux grands pylônes et des câbles, comme un pont suspendu ;
 //   - les AÉROPORTS : la piste et ses marques blanches, le tarmac, l'aérogare vitrée, la tour de contrôle,
-//     les hangars, l'héliport, le parking, et les avions garés. Chaque aéroport est construit UNE fois
+//     les hangars, l'héliport et le parking. Chaque aéroport est construit UNE fois
 //     dans son repère local (u, w), puis tourné et posé à sa place, comme dans logique/archipel.js ;
 //   - les devantures des MAGASINS en ville (un auvent coloré, une enseigne, un tapis vert devant la porte).
 
@@ -291,15 +291,7 @@ Circuit.DecorArchipel = (function () {
         g.add(hangar);
       }
     }
-    // Les avions et l'hélico garés.
-    const couleurs = [[[0.1, 0.3, 0.75], [0.85, 0.15, 0.15]], [[0.9, 0.2, 0.2], [0.95, 0.95, 0.95]], [[0.95, 0.55, 0.05], [0.15, 0.15, 0.18]]];
-    for (const v of P.avions) {
-      const k = couleurs[(ap.numero + P.avions.indexOf(v)) % couleurs.length];
-      const avion = Circuit.Modeles.fabriquer(v.modele, k[0], k[1]);
-      avion.g.position.set(v.u, 0, v.w);
-      avion.g.rotation.y = -v.angle;
-      g.add(avion.g);
-    }
+    // (Étape 44 : les avions et l'hélico garés sont maintenant de vrais véhicules : affichage/scene3d.js les dessine.)
     // Quelques arbres au bord de l'île.
     let etat = 7 + ap.numero;
     const alea = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);

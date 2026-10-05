@@ -22,6 +22,7 @@
 //   7 (étape 41) : les méga-rampes : la voiture choisie là-bas, et le record du chrono (recordRampes).
 //   8 (étape 42) : les objets achetés au magasin (objets) et les voitures repeintes en or (peintures).
 //   9 (étape 43) : les petits boulots : combien de tâches réussies pour chacun, et les pièces gagnées en travaillant.
+//  10 (étape 44) : les vols (décollages, vols de ligne, crashs) et les tirs (cibles touchées, voitures explosées).
 //
 // Les pièces sont comptées dès qu'on les ramasse, mais écrites dans le tiroir à la fin de la course
 // (ou si on recommence, ou si on ferme la page) : écrire 50 fois par course, ce serait du gaspillage.
@@ -30,7 +31,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.Sauvegarde = (function () {
   const CLE = "circuit-maxance:sauvegarde";
-  const VERSION = 9;
+  const VERSION = 10;
   const radio = Circuit.Evenements;
 
   function vide() {
@@ -50,6 +51,7 @@ Circuit.Sauvegarde = (function () {
       peintures: {}, // depuis la version 8 : les voitures repeintes, ex. { citadine: "or" }
       boulots: { pizzas: 0, taxi: 0, vendeur: 0, poubelles: 0 }, // depuis la version 9 : les tâches réussies
       piecesGagneesAuTravail: 0, // depuis la version 9
+      vols: { decollages: 0, volsDeLigne: 0, crashs: 0, ciblesTouchees: 0, voituresExplosees: 0 }, // depuis la version 10
       toursTotal: 0,
       sortiesTotal: 0,
       distanceTotale: 0, // m parcourus dans toutes les courses finies
@@ -129,6 +131,10 @@ Circuit.Sauvegarde = (function () {
       d.boulots = { pizzas: 0, taxi: 0, vendeur: 0, poubelles: 0 };
       d.piecesGagneesAuTravail = 0;
     }
+    if ((anciennes.version || 1) < 10) {
+      // Version 9 → 10 : les avions arrivent. Personne n'a encore volé.
+      d.vols = { decollages: 0, volsDeLigne: 0, crashs: 0, ciblesTouchees: 0, voituresExplosees: 0 };
+    }
     d.version = VERSION;
     return d;
   }
@@ -182,6 +188,26 @@ Circuit.Sauvegarde = (function () {
         radio.emettre("nouveau-record", { quoi: "tour", temps: d.temps, ancien });
       }
       ecrire("tour " + d.numero + " terminé");
+    });
+
+    // Étape 44 : les vols et les tirs.
+    radio.ecouter("decollage-avion", () => donnees.vols.decollages++);
+    radio.ecouter("crash", () => {
+      donnees.vols.crashs++;
+      ecrire("crash d'avion");
+    });
+    radio.ecouter("vol-ligne", (d) => {
+      donnees.vols.volsDeLigne++;
+      donnees.pieces += d.montant;
+      ecrire("vol de ligne : +" + d.montant + " pièces");
+    });
+    radio.ecouter("cible-touchee", (d) => {
+      donnees.vols.ciblesTouchees++;
+      donnees.pieces += d.montant;
+      piecesAEcrire = true;
+    });
+    radio.ecouter("explosion", (d) => {
+      if (d.sorte === "voiture") donnees.vols.voituresExplosees++;
     });
 
     // Étape 43 : une paie de petit boulot.

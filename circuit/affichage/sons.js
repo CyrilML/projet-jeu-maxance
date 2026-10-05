@@ -24,6 +24,7 @@ window.Circuit = window.Circuit || {};
 Circuit.Sons = (function () {
   const S = Circuit.CONFIG.sons;
   const Son = Circuit.Son;
+  let balles = 0;
   let moteurJoueur = null, moteurAdversaire = null, herbe = null, souffle = null, sirene = null;
   // Ce qu'on entend en ce moment : lu par le panneau « sous le capot ».
   const enDirect = { frequence: 0, volume: 0, frequenceAdversaire: 0, volumeAdversaire: 0, cote: 0, herbe: 0 };
@@ -69,6 +70,15 @@ Circuit.Sons = (function () {
       setTimeout(() => Son.bip(1760, 0.18, 0.14), 140);
     });
     radio.ecouter("boulot-fin", (d) => (d.reussi ? [523, 659, 784, 1046] : [392, 330]).forEach((f, i) => setTimeout(() => Son.bip(f, 0.18, 0.13), i * 150)));
+    // Étape 44 : les missiles, les explosions, les cibles, le crash, et la mitrailleuse.
+    radio.ecouter("missile", () => Son.bip(180, 0.35, 0.12));
+    radio.ecouter("explosion", (d) => Son.boum(d.sorte === "crash" ? 14 : 10));
+    radio.ecouter("cible-touchee", () => {
+      Son.bip(880, 0.08, 0.13);
+      setTimeout(() => Son.bip(1175, 0.15, 0.13), 80);
+    });
+    radio.ecouter("vol-ligne", () => [523, 659, 784, 1046, 1318].forEach((f, i) => setTimeout(() => Son.bip(f, 0.18, 0.13), i * 130)));
+    radio.ecouter("decrochage", () => [880, 880, 880].forEach((f, i) => setTimeout(() => Son.bip(f, 0.1, 0.15), i * 180)));
     // Étape 41 : les méga-rampes.
     radio.ecouter("drapeau", () => {
       Son.bip(784, 0.1, 0.12);
@@ -97,7 +107,7 @@ Circuit.Sons = (function () {
     const v = monde.voiture;
 
     // 1. Ton moteur
-    const accelere = v.pedale.startsWith("accélérateur") || v.nitro > 0;
+    const accelere = v.pedale.startsWith("accélérateur") || v.pedale === "gaz" || v.nitro > 0; // (étape 44 : « gaz » dans un avion)
     const f = frequenceDuMoteur(v);
     // Étape 39 : à pied, le moteur de ta voiture est coupé.
     const volume = silence || monde.pieton ? 0 : accelere ? S.moteur.volumeAccelere : S.moteur.volumeLache;
@@ -132,6 +142,10 @@ Circuit.Sons = (function () {
     const volumeHerbe = !silence && monde.sol === "herbe" ? S.herbe.volume * Math.min(1, Math.abs(v.vitesse) / 10) : 0;
     Son.reglerBruit(herbe, volumeHerbe);
     enDirect.herbe = volumeHerbe;
+
+    // Étape 44 : la mitrailleuse fait « ta-ta-ta » (un petit bip grave à chaque balle).
+    if (!silence && (monde.balles || 0) > balles) Son.bip(110, 0.03, 0.08);
+    balles = monde.balles || 0;
 
     // 4. Étape 40 : le souffle du nitro, et la sirène de la police.
     const volumeNitro = !silence && v.nitro > 0 && !monde.pieton ? 0.35 * Math.min(1, v.nitro) : 0;

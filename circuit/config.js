@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 12,
+  version: 13,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -231,6 +231,34 @@ Circuit.CONFIG = {
       { id: "glace", nom: "Une glace", icone: "🍦", prix: 2, unique: false, texte: "Miam ! Elle ne sert à rien, mais elle est bonne" },
     ],
     couleurOr: [[1, 0.76, 0.18], [0.55, 0.38, 0.05]], // la peinture dorée (couleur 1 et couleur 2)
+  },
+
+  // Étape 44 : CE QUI VOLE. Ces véhicules attendent dans les aéroports (on monte avec E, comme dans une voiture).
+  //   vol : "avion" ou "helico" ; vitesseMax (m/s) ; decollage = la vitesse qu'il faut pour voler (m/s) ;
+  //   montee = la vitesse pour monter ou descendre (m/s) ; virage (rad/s) ; rayonMonter = on peut monter dedans
+  //   à cette distance de son centre (un avion de ligne fait 34 m de long !).
+  vehiculesAir: [
+    { id: "petitAvion", nom: "Le petit avion", modele: "petitAvion", vol: "avion", vitesseMax: 55, acceleration: 9, decollage: 24, montee: 9, virage: 0.9,
+      rayonMonter: 4, couleurs: [[0.9, 0.2, 0.2], [0.95, 0.95, 0.95]], son: { ralenti: 70, max: 160 } },
+    { id: "avionDeLigne", nom: "L'avion de ligne", modele: "avionDeLigne", vol: "avion", vitesseMax: 95, acceleration: 6, decollage: 50, montee: 7, virage: 0.45,
+      rayonMonter: 16, ligne: true, couleurs: [[0.1, 0.3, 0.75], [0.85, 0.15, 0.15]], son: { ralenti: 50, max: 120 } },
+    { id: "avionChasse", nom: "L'avion de chasse", modele: "avionChasse", vol: "avion", vitesseMax: 160, acceleration: 22, decollage: 45, montee: 22, virage: 1.4,
+      rayonMonter: 6, armes: true, couleurs: [[0.45, 0.5, 0.55], [0.2, 0.22, 0.25]], son: { ralenti: 90, max: 260 } },
+    { id: "helico", nom: "L'hélicoptère", modele: "helico", vol: "helico", vitesseMax: 40, acceleration: 8, decollage: 0, montee: 9, virage: 1.5,
+      rayonMonter: 5, couleurs: [[0.95, 0.55, 0.05], [0.15, 0.15, 0.18]], son: { ralenti: 35, max: 70 } },
+  ],
+  vol: {
+    gravite: 12, // m/s² : ce qui fait tomber un avion trop lent (le « décrochage »)
+    altitudeMax: 450, // m
+    atterrissageDoux: 7, // m/s : toucher le sol plus vite que ça vers le bas = crash !
+    paieVolDeLigne: 60, // ✍️ pièces gagnées en posant l'avion de ligne sur la piste d'un AUTRE aéroport
+  },
+  // Étape 44 : LES ARMES de l'avion de chasse. ✍️ Une mitrailleuse (F, tenue) et des petits missiles (G).
+  armes: {
+    balle: { vitesse: 450, vie: 1.6, cadence: 12, degats: 1 }, // m/s, s, balles par seconde
+    missile: { vitesse: 140, vie: 6, recharge: 0.8, virage: 2.2, cone: 0.6, rayonExplosion: 10 }, // il suit sa cible (virage en rad/s)
+    // ✍️ Les cibles d'entraînement, autour de l'île lointaine : des ballons dans le ciel et des cibles au sol.
+    ballons: 16, ciblesAuSol: 6, paieBallon: 3, paieCibleSol: 5, retour: 30, // retour = les cibles reviennent après 30 s
   },
 
   // Étape 43 : LES PETITS BOULOTS. ✍️ Livreur de pizzas, chauffeur de taxi, vendeur au magasin, ramasser les poubelles.

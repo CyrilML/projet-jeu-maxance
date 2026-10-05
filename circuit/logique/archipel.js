@@ -7,7 +7,9 @@
 // Ce fichier sait répondre à 3 questions :
 //   - « Ce point est-il sur la terre (une île ou un pont) ? » Si non, c'est la mer : on ne peut pas y aller ;
 //   - « À quelle hauteur est le sol ici ? » Sur un pont, la route monte en ARC (un morceau de sinus) ;
-//   - « Y a-t-il un mur ? » Les bâtiments et les avions de l'aéroport sont des boîtes solides.
+//   - « Y a-t-il un mur ? » Les bâtiments de l'aéroport sont des boîtes solides.
+// Étape 44 : les avions et l'hélico garés sont de vrais véhicules (on monte dedans avec E), et ce fichier
+// sait dire si un point est sur une PISTE (pour savoir où un avion a atterri).
 //
 // Une île-aéroport est décrite UNE fois, dans ses propres coordonnées (u = le long de la piste, w = en travers).
 // Pour chaque aéroport, on la TOURNE et on la DÉPLACE à sa place : c'est un « repère local » (comme un plan
@@ -31,11 +33,12 @@ Circuit.Archipel = (function () {
       { nom: "le hangar n° 1", u: 240, w: 150, l: 60, p: 44, h: 16, sorte: "hangar" },
       { nom: "le hangar n° 2", u: 240, w: 230, l: 60, p: 44, h: 16, sorte: "hangar" },
     ],
-    // Les avions et l'hélico garés (on les pilotera à l'étape 44) : ce sont aussi des obstacles.
+    // Les avions et l'hélico garés, le nez vers la piste (étape 44 : on peut les piloter !).
     avions: [
-      { modele: "avionDeLigne", u: -70, w: 60, angle: -Math.PI / 2, l: 34, p: 6 },
-      { modele: "petitAvion", u: 120, w: 50, angle: -Math.PI / 2, l: 8, p: 3 },
-      { modele: "helico", u: -280, w: 250, angle: 0, l: 10, p: 3 },
+      { modele: "avionDeLigne", u: -70, w: 60, angle: -Math.PI / 2 },
+      { modele: "petitAvion", u: 120, w: 50, angle: -Math.PI / 2 },
+      { modele: "avionChasse", u: 40, w: 45, angle: -Math.PI / 2 },
+      { modele: "helico", u: -280, w: 250, angle: 0 },
     ],
     heliport: { u: -280, w: 250, rayon: 12 },
     porte: { u: 0, w: 140 }, // la porte de la boutique de l'aérogare
@@ -57,13 +60,12 @@ Circuit.Archipel = (function () {
     const ap = Object.assign({}, a);
     const boite = (u, w, l, p, angle, extra) => Object.assign(versMonde(ap, u, w), { angle: ap.angle + (angle || 0), demiLongueur: l / 2, demiLargeur: p / 2 }, extra);
     ap.batiments = PLAN.batiments.map((b) => boite(b.u, b.w, b.l, b.p, 0, { nom: b.nom, hauteur: b.h, sorte: b.sorte }));
-    ap.avions = PLAN.avions.map((v) => boite(v.u, v.w, v.l, v.p, v.angle, { modele: v.modele, hauteur: 4 }));
     ap.porte = Object.assign(versMonde(ap, PLAN.porte.u, PLAN.porte.w), { nom: "la boutique de " + ap.nom.replace(/^l'/, "l'") });
     ap.heliport = Object.assign(versMonde(ap, PLAN.heliport.u, PLAN.heliport.w), { rayon: PLAN.heliport.rayon });
     return ap;
   });
   const solides = [];
-  for (const ap of aeroports) solides.push(...ap.batiments, ...ap.avions);
+  for (const ap of aeroports) solides.push(...ap.batiments);
 
   // ---------------------------------------------------------------- les ponts
   const ponts = A.ponts.map((p) => {
@@ -119,7 +121,7 @@ Circuit.Archipel = (function () {
     return choc;
   }
 
-  // Les murs : les bâtiments et les avions garés des aéroports.
+  // Les murs : les bâtiments des aéroports.
   function murs(v, rayon) {
     let pire = 0;
     for (const b of solides) {
@@ -128,6 +130,30 @@ Circuit.Archipel = (function () {
       pire = Math.max(pire, Circuit.Chocs.contreBoite(v, b, rayon));
     }
     return pire;
+  }
+
+  // Étape 44 : sur quelle PISTE est ce point ? (l'aéroport, ou null)
+  function surPiste(x, z) {
+    for (const ap of aeroports) {
+      const l = versLocal(ap, x, z), P = PLAN.piste;
+      if (Math.abs(l.u - P.u) <= P.longueur / 2 && Math.abs(l.w - P.w) <= P.largeur / 2) return ap;
+    }
+    return null;
+  }
+  // L'aéroport le plus proche d'un point.
+  function aeroportProche(x, z) {
+    return aeroports.reduce((a, b) => (Math.hypot(a.x - x, a.z - z) < Math.hypot(b.x - x, b.z - z) ? a : b));
+  }
+  // Les avions et l'hélico garés de chaque aéroport (des véhicules, comme les voitures garées).
+  function placerAvions() {
+    const liste = [];
+    for (const ap of aeroports) {
+      for (const v of PLAN.avions) {
+        const p = versMonde(ap, v.u, v.w);
+        liste.push({ x: p.x, z: p.z, angle: ap.angle + v.angle, modele: v.modele, aeroport: ap.numero });
+      }
+    }
+    return liste;
   }
 
   // ---------------------------------------------------------------- les magasins
@@ -203,6 +229,6 @@ Circuit.Archipel = (function () {
 
   return {
     aeroports, ponts, magasins, solides, plan: PLAN, versMonde, versLocal,
-    lieu, surQuelPont, hauteurPont, garderSurTerre, murs, magasinProche, placerGarees, placerPieces, porteImmeuble,
+    lieu, surQuelPont, hauteurPont, garderSurTerre, murs, magasinProche, placerGarees, placerPieces, porteImmeuble, surPiste, aeroportProche, placerAvions,
   };
 })();

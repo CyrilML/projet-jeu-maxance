@@ -79,6 +79,13 @@
       sirene: E.consommer("sirene"), // étape 40 : H
       klaxon: E.consommer("klaxon"), // étape 42 : K
       boulot: E.consommer("boulot"), // étape 43 : J
+      // Étape 44 : voler et tirer.
+      gaz: E.estEnfoncee("gaz"),
+      freinVol: E.estEnfoncee("freinVol"),
+      volMonter: E.estEnfoncee("volMonter"),
+      volDescendre: E.estEnfoncee("volDescendre"),
+      tir: E.estEnfoncee("tir"),
+      missile: E.consommer("missile"),
       retour: E.consommer("retour"),
       monter: E.consommer("monter"), // étape 39 : E en ville
       valider: E.consommer("valider"),
