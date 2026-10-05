@@ -74,6 +74,8 @@ Circuit.Garage = (function () {
   // Un pas de temps dans le garage. Renvoie true quand on part en course.
   function etape(monde, intentions) {
     const g = monde.garage;
+    // (Étape 53 : si le numéro de voiture regardée sort de la liste, on revient à la première, au lieu de planter.)
+    if (!(g.index >= 0 && g.index < liste().length)) g.index = 0;
     if (intentions.gaucheAppui || intentions.droiteAppui) {
       const n = liste().length;
       g.index = (g.index + (intentions.droiteAppui ? 1 : -1) + n) % n;
