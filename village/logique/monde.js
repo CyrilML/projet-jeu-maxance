@@ -1,9 +1,9 @@
 // 🌍 LE MONDE : le chef d'orchestre des règles
 //
-// Le monde contient tout ce qui existe en ce moment : la carte, la caméra (là où l'on regarde),
-// la case sous la souris, la case choisie, et l'horloge du jeu.
-// À chaque petit pas de temps (1/120 s), `etape` applique les intentions du joueur :
-// glisser la caméra, zoomer, choisir une case.
+// Le monde contient tout ce qui existe en ce moment : la carte, le stock de l'entrepôt, les bâtiments
+// et leurs ouvriers, les jeunes pousses, la caméra (là où l'on regarde), la case sous la souris…
+// À chaque petit pas de temps (1/120 s), `etape` applique les intentions du joueur
+// (glisser, zoomer, construire, choisir) puis fait vivre le village.
 //
 // Il ne dessine jamais : c'est le travail du peintre.
 
@@ -13,9 +13,10 @@ Village.Monde = (function () {
   const C = Village.CONFIG;
   const radio = Village.Evenements;
   const L = C.carte.largeurCase, Hc = C.carte.hauteurCase;
-  const W = C.ecran.largeur, He = C.ecran.hauteur;
+  const E = Village.Ecran;
 
-  function creer(graine, cameraSauvee) {
+  // `partie` vient de la sauvegarde (null pour une carte toute neuve).
+  function creer(graine, partie, cameraSauvee) {
     const carte = Village.Carte.inventer(graine);
     const monde = {
       carte,
@@ -23,13 +24,59 @@ Village.Monde = (function () {
       camera: { x: 0, y: 0, zoom: C.camera.zoomDepart },
       survol: null, // la case sous la souris
       souris: null, // { ecranX, ecranY, mondeX, mondeY, colonne, ligne } avec les virgules
-      choisie: null, // la dernière case cliquée
+      choisie: null, // la dernière case touchée
+      // Étape 47
+      stock: Object.assign({}, C.depart),
+      batiments: [],
+      occupees: new Map(), // numéro de case → bâtiment posé dessus
+      reservees: new Set(), // les cases où un ouvrier va travailler
+      pousses: new Map(), // numéro de case → âge de la pousse (s)
+      modifs: new Map(), // numéro de case → { o, r } : ce qui a changé depuis l'invention de la carte
+      changements: 0, // combien de fois la carte a changé (le peintre refait la mini-carte quand ça bouge)
+      construction: null, // le bâtiment qu'on est en train de placer (ex. "scierie"), ou null
+      selection: null, // le bâtiment touché (son panneau s'affiche)
     };
     if (cameraSauvee) Object.assign(monde.camera, cameraSauvee);
     else centrerSurLeVillage(monde);
     borner(monde);
-    radio.emettre("carte-inventee", { graine, colonnes: carte.colonnes, lignes: carte.lignes, compte: carte.compte, village: carte.village, rivieres: carte.rivieres.length });
+
+    if (partie) restaurer(monde, partie);
+    else {
+      // Une nouvelle partie : l'entrepôt est déjà construit, à côté du feu de camp.
+      const v = carte.village;
+      Village.Batiments.creer(monde, "entrepot", v.colonne + 2, v.ligne - 1, 1);
+    }
+    radio.emettre("carte-inventee", {
+      graine, colonnes: carte.colonnes, lignes: carte.lignes, compte: carte.compte, village: carte.village, rivieres: carte.rivieres.length,
+      reprise: !!partie, batiments: monde.batiments.length, modifs: monde.modifs.size,
+    });
     return monde;
+  }
+
+  // Remettre la carte comme on l'avait laissée : la graine refait la carte d'origine,
+  // puis on rejoue la liste des changements, un par un.
+  function restaurer(monde, partie) {
+    const k = monde.carte;
+    for (const [i, o, r] of partie.modifs || []) {
+      k.objet[i] = o;
+      k.reste[i] = r;
+      monde.modifs.set(i, { o, r });
+    }
+    for (const [i, age] of partie.pousses || []) if (k.objet[i] === Village.Carte.OBJET.pousse) monde.pousses.set(i, age);
+    Village.Carte.compter(k);
+    if (partie.stock) Object.assign(monde.stock, partie.stock);
+    for (const b of partie.batiments || []) {
+      const nouveau = Village.Batiments.creer(monde, b.type, b.colonne, b.ligne, b.progres);
+      nouveau.produits = b.produits || 0;
+    }
+  }
+
+  // Changer l'objet d'une case (un arbre coupé, une pousse plantée…) ET noter le changement pour la sauvegarde.
+  function changerObjet(monde, i, objet) {
+    monde.carte.objet[i] = objet;
+    monde.modifs.set(i, { o: objet, r: monde.carte.reste[i] });
+    monde.changements++;
+    Village.Carte.compter(monde.carte);
   }
 
   function centrerSurLeVillage(monde) {
@@ -41,7 +88,13 @@ Village.Monde = (function () {
 
   // Écran → monde : on enlève la caméra et le zoom (le calcul inverse du peintre).
   function ecranVersMonde(camera, x, y) {
-    return { x: camera.x + (x - W / 2) / camera.zoom, y: camera.y + (y - He / 2) / camera.zoom };
+    return { x: camera.x + (x - E.largeur / 2) / camera.zoom, y: camera.y + (y - E.hauteur / 2) / camera.zoom };
+  }
+
+  function caseSous(monde, x, y) {
+    const m = ecranVersMonde(monde.camera, x, y);
+    const g = Village.Iso.versGrille(m.x, m.y, L, Hc);
+    return { m, g, k: Village.Carte.lireCase(monde.carte, Math.floor(g.colonne), Math.floor(g.ligne)) };
   }
 
   // La caméra ne doit pas partir trop loin de la carte.
@@ -54,60 +107,98 @@ Village.Monde = (function () {
     cam.y = Math.min(yMax, Math.max(0, cam.y));
   }
 
-  // Un pas de temps. `intentions` vient de main.js : { dx, dy, zoom, souris, village }.
+  // Un pas de temps. `intentions` vient de main.js : { dx, dy, zoom, souris, village, construire, annuler }.
   function etape(monde, dt, intentions) {
     monde.temps += dt;
-    const cam = monde.camera, s = intentions.souris;
+    camera(monde, dt, intentions);
+    joueur(monde, intentions);
+    Village.Batiments.etape(monde, dt);
+    nature(monde, dt);
+  }
 
-    // Glisser avec les flèches : plus on est zoomé, moins on va vite (en px du monde).
+  // En pause : on peut regarder partout et choisir une case, mais le village ne bouge pas.
+  function etapeEnPause(monde, dt, intentions) {
+    camera(monde, dt, intentions);
+    joueur(monde, intentions);
+  }
+
+  function camera(monde, dt, intentions) {
+    const cam = monde.camera, s = intentions.souris;
     cam.x += (intentions.dx * C.camera.vitesse * dt) / cam.zoom;
     cam.y += (intentions.dy * C.camera.vitesse * dt) / cam.zoom;
-    // Tirer la carte avec la souris : la carte suit exactement le doigt.
     if (s) {
       cam.x -= s.glisseX / cam.zoom;
       cam.y -= s.glisseY / cam.zoom;
     }
-
-    // Zoomer « là où est la souris » : le point sous la souris doit rester sous la souris.
-    if (intentions.zoom) {
+    // Zoomer « là où est la souris » (ou entre les deux doigts) : ce point doit rester sous la souris.
+    const facteur = Math.pow(C.camera.pasDeZoom, intentions.zoom || 0) * (s ? s.pince : 1);
+    if (Math.abs(facteur - 1) > 1e-4) {
       const ancien = cam.zoom;
-      const ancre = s && s.dessus ? { x: s.x, y: s.y } : { x: W / 2, y: He / 2 };
+      const ancre = s && s.centrePince ? s.centrePince : s && s.dessus ? { x: s.x, y: s.y } : { x: E.largeur / 2, y: E.hauteur / 2 };
       const avant = ecranVersMonde(cam, ancre.x, ancre.y);
-      cam.zoom = Math.min(C.camera.zoomMax, Math.max(C.camera.zoomMin, cam.zoom * Math.pow(C.camera.pasDeZoom, intentions.zoom)));
+      cam.zoom = Math.min(C.camera.zoomMax, Math.max(C.camera.zoomMin, cam.zoom * facteur));
       const apres = ecranVersMonde(cam, ancre.x, ancre.y);
       cam.x += avant.x - apres.x;
       cam.y += avant.y - apres.y;
-      if (cam.zoom !== ancien) radio.emettre("zoom", { zoom: cam.zoom, ancien });
+      // Avec les doigts, le zoom change un tout petit peu à chaque image : on ne l'annonce qu'à la molette.
+      if (cam.zoom !== ancien && intentions.zoom) radio.emettre("zoom", { zoom: cam.zoom, ancien });
     }
-
+    if (intentions.allerA) { cam.x = intentions.allerA.x; cam.y = intentions.allerA.y; } // un toucher sur la mini-carte
     if (intentions.village) {
       centrerSurLeVillage(monde);
       radio.emettre("retour-village", { colonne: monde.carte.village.colonne, ligne: monde.carte.village.ligne });
     }
     borner(monde);
 
-    // Quelle case est sous la souris ?
     if (s && s.dessus) {
-      const m = ecranVersMonde(cam, s.x, s.y);
-      const g = Village.Iso.versGrille(m.x, m.y, L, Hc);
-      monde.souris = { ecranX: s.x, ecranY: s.y, mondeX: m.x, mondeY: m.y, colonne: g.colonne, ligne: g.ligne };
-      monde.survol = Village.Carte.lireCase(monde.carte, Math.floor(g.colonne), Math.floor(g.ligne));
+      const r = caseSous(monde, s.x, s.y);
+      monde.souris = { ecranX: s.x, ecranY: s.y, mondeX: r.m.x, mondeY: r.m.y, colonne: r.g.colonne, ligne: r.g.ligne };
+      monde.survol = r.k;
     } else {
       monde.souris = null;
       monde.survol = null;
     }
+  }
 
-    // Un clic : on choisit la case.
-    if (s && s.clic) {
-      const m = ecranVersMonde(cam, s.clic.x, s.clic.y);
-      const g = Village.Iso.versGrille(m.x, m.y, L, Hc);
-      const k = Village.Carte.lireCase(monde.carte, Math.floor(g.colonne), Math.floor(g.ligne));
-      if (k) {
-        monde.choisie = k;
-        radio.emettre("case-choisie", k);
-      }
+  function joueur(monde, intentions) {
+    const s = intentions.souris;
+    if (intentions.construire) {
+      // Appuyer 2 fois sur le même bouton = annuler.
+      monde.construction = monde.construction === intentions.construire ? null : intentions.construire;
+      monde.selection = null;
+      radio.emettre(monde.construction ? "choix-construction" : "construction-annulee", { nom: Village.Batiments.TYPES[intentions.construire].nom, cout: Village.Batiments.cout(intentions.construire) });
+    }
+    if (intentions.annuler) {
+      if (monde.construction) radio.emettre("construction-annulee", { nom: Village.Batiments.TYPES[monde.construction].nom });
+      monde.construction = null;
+      monde.selection = null;
+    }
+    if (!s || !s.clic) return;
+    const k = caseSous(monde, s.clic.x, s.clic.y).k;
+    if (!k) return;
+    if (monde.construction) {
+      // On pose le chantier. Raté (pas la place, pas assez de planches) : on reste en mode construction.
+      if (Village.Batiments.poser(monde, monde.construction, k.colonne, k.ligne)) monde.construction = null;
+      return;
+    }
+    monde.choisie = k;
+    monde.selection = monde.occupees.get(k.numero) || null;
+    radio.emettre("case-choisie", Object.assign({ batiment: monde.selection ? Village.Batiments.TYPES[monde.selection.type].nom : null }, k));
+  }
+
+  // Les pousses grandissent. Au bout de 60 s, elles deviennent de vrais arbres.
+  function nature(monde, dt) {
+    const O = Village.Carte.OBJET, k = monde.carte;
+    for (const [i, age] of monde.pousses) {
+      const nouvelAge = age + dt;
+      if (nouvelAge < C.nature.croissance) { monde.pousses.set(i, nouvelAge); continue; }
+      monde.pousses.delete(i);
+      // Comme à l'invention de la carte : plus c'est haut, plus il y a de sapins.
+      const sapin = k.altitude[i] > (k.seuils.sable + k.seuils.rochers) / 2;
+      changerObjet(monde, i, sapin ? O.sapin : O.arbre);
+      radio.emettre("arbre-pousse", { colonne: i % k.colonnes, ligne: Math.floor(i / k.colonnes), sorte: sapin ? "sapin" : "arbre", arbres: k.compte.arbres });
     }
   }
 
-  return { creer, etape, ecranVersMonde };
+  return { creer, etape, etapeEnPause, ecranVersMonde, changerObjet };
 })();

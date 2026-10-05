@@ -23,8 +23,8 @@ Village.Carte = (function () {
   const NOMS_TERRAINS = ["eau profonde", "eau", "sable", "herbe", "prairie fleurie", "forêt", "rochers", "montagne"];
 
   // Les numéros des objets posés sur la case.
-  const OBJET = { rien: 0, arbre: 1, sapin: 2, rocher: 3, montagne: 4, fleurs: 5, buisson: 6, feuDeCamp: 7, tente: 8 };
-  const NOMS_OBJETS = ["rien", "arbre (feuillu)", "sapin", "rocher", "montagne", "fleurs", "buisson", "feu de camp", "tente du chef"];
+  const OBJET = { rien: 0, arbre: 1, sapin: 2, rocher: 3, montagne: 4, fleurs: 5, buisson: 6, feuDeCamp: 7, tente: 8, pousse: 9 };
+  const NOMS_OBJETS = ["rien", "arbre (feuillu)", "sapin", "rocher", "montagne", "fleurs", "buisson", "feu de camp", "tente du chef", "jeune pousse"];
 
   // Les filons cachés dans les montagnes (pour les futures mines).
   const FILON = { aucun: 0, charbon: 1, fer: 2, or: 3 };
@@ -39,6 +39,7 @@ Village.Carte = (function () {
       terrain: new Uint8Array(n),
       objet: new Uint8Array(n),
       filon: new Uint8Array(n),
+      reste: new Uint8Array(n), // étape 47 : combien de pierres il reste dans chaque rocher
       altitude: new Float32Array(n),
       humidite: new Float32Array(n),
       village: null,
@@ -157,7 +158,7 @@ Village.Carte = (function () {
           if (v < 0.35) carte.objet[i] = OBJET.fleurs;
           else if (v < 0.37) carte.objet[i] = OBJET.buisson;
         } else if (t === TERRAIN.rochers) {
-          if (v < 0.45) carte.objet[i] = OBJET.rocher;
+          if (v < 0.45) { carte.objet[i] = OBJET.rocher; carte.reste[i] = C.nature.pierresParRocher; }
         } else if (t === TERRAIN.montagne) {
           carte.objet[i] = OBJET.montagne;
           const f = de.suivant(), F = G.filons;
@@ -196,6 +197,21 @@ Village.Carte = (function () {
     carte.compte = k;
   }
 
+  // Étape 47 : peut-on marcher sur cette case ? (pas dans l'eau, pas dans la montagne)
+  function praticable(carte, c, l) {
+    if (c < 0 || l < 0 || c >= carte.colonnes || l >= carte.lignes) return false;
+    const t = carte.terrain[l * carte.colonnes + c];
+    return t !== TERRAIN.eau && t !== TERRAIN.eauProfonde && t !== TERRAIN.montagne;
+  }
+
+  // Étape 47 : peut-on construire sur cette case ? Il faut un sol praticable, et rien dessus
+  // (les fleurs et les buissons, on les enlève).
+  function constructible(carte, c, l) {
+    if (!praticable(carte, c, l)) return false;
+    const o = carte.objet[l * carte.colonnes + c];
+    return o === OBJET.rien || o === OBJET.fleurs || o === OBJET.buisson;
+  }
+
   // Tout ce qu'on sait sur une case (null si elle est hors de la carte).
   function lireCase(carte, colonne, ligne) {
     if (colonne < 0 || ligne < 0 || colonne >= carte.colonnes || ligne >= carte.lignes) return null;
@@ -206,8 +222,9 @@ Village.Carte = (function () {
       objet: carte.objet[i], nomObjet: NOMS_OBJETS[carte.objet[i]],
       filon: carte.filon[i], nomFilon: NOMS_FILONS[carte.filon[i]],
       altitude: carte.altitude[i], humidite: carte.humidite[i],
+      reste: carte.reste[i],
     };
   }
 
-  return { inventer, lireCase, TERRAIN, OBJET, FILON, NOMS_TERRAINS, NOMS_OBJETS, NOMS_FILONS };
+  return { inventer, compter, lireCase, praticable, constructible, TERRAIN, OBJET, FILON, NOMS_TERRAINS, NOMS_OBJETS, NOMS_FILONS };
 })();

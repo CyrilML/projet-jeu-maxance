@@ -12,9 +12,10 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 1,
+  version: 2,
 
-  ecran: { largeur: 960, hauteur: 540 },
+  // La taille de l'écran du jeu n'est plus fixe depuis l'étape 47 : elle suit la fenêtre
+  // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
 
   // La boucle de jeu avance par petits pas fixes de 1/120 s, comme dans les autres jeux.
   pasFixe: 1 / 120,
@@ -57,6 +58,36 @@ Village.CONFIG = {
     zoomDepart: 1,
     pasDeZoom: 1.15, // un cran de molette multiplie (ou divise) le zoom par 1,15
   },
+
+  // Étape 47 : ✍️ le stock de départ, rangé dans l'entrepôt.
+  depart: { troncs: 0, planches: 20, pierres: 10 },
+
+  // Étape 47 : les bâtiments. Le coût est pris dans l'entrepôt dès qu'on pose le chantier.
+  //   construction : durée du chantier (s) ; rayon : jusqu'où l'ouvrier va travailler (en cases).
+  batiments: {
+    bucheron: { cout: { planches: 3 }, construction: 8, rayon: 6 },
+    forestier: { cout: { planches: 3 }, construction: 8, rayon: 5 },
+    scierie: { cout: { planches: 4, pierres: 2 }, construction: 12 },
+    carriere: { cout: { planches: 3 }, construction: 8, rayon: 6 },
+  },
+
+  ouvriers: {
+    vitesse: 1.6, // cases par seconde
+    couper: 4, // s pour couper un arbre
+    planter: 3, // s pour planter une pousse
+    tailler: 5, // s pour tailler une pierre
+    repos: 2, // s de pause entre deux voyages
+    scier: 6, // s pour scier 1 tronc
+    planchesParTronc: 2, // la scierie fait 2 planches avec 1 tronc
+    attente: 3, // s avant de chercher à nouveau quand il n'y a rien à faire
+  },
+
+  nature: {
+    croissance: 60, // s pour qu'une pousse devienne un arbre
+    pierresParRocher: 4, // un rocher donne 4 pierres, puis il disparaît
+  },
+
+  sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 
   animation: {
     vent: 1.4, // vitesse du balancement des arbres (tours par seconde, à peu près)

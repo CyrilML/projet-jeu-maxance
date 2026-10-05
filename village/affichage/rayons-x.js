@@ -6,7 +6,9 @@
 //   - le numéro du terrain de chaque case près de la souris (le vrai contenu de la mémoire) ;
 //   - le chemin des rivières (elles descendent toujours vers la case voisine la plus basse) ;
 //   - la place du village (le cercle où il y a toujours de l'herbe) ;
-//   - le calcul qui trouve la case sous la souris.
+//   - le calcul qui trouve la case sous la souris ;
+//   - (étape 47) la zone de travail de chaque ouvrier (jusqu'où va la « tache d'encre »), son chemin,
+//     son état (sa case dans la machine à états), et les cases réservées (croix rouges).
 
 window.Village = window.Village || {};
 
@@ -85,6 +87,41 @@ Village.RayonsX = (function () {
       ctx.textAlign = "left";
     }
 
+    // Étape 47 : les ouvriers
+    ctx.font = "bold " + 11 / Math.min(z, 1.4) + "px 'Trebuchet MS', sans-serif";
+    for (const bat of monde.batiments) {
+      const r = C.batiments[bat.type] && C.batiments[bat.type].rayon;
+      if (r && (!monde.selection || monde.selection === bat)) {
+        // La zone de travail : toutes les cases à moins de r pas. En pas (pas en diagonale),
+        // c'est un losange dans la grille… qui devient un carré une fois vu de biais !
+        const c = bat.colonne + 0.5, l = bat.ligne + 0.5;
+        ctx.strokeStyle = "rgba(255, 200, 80, .8)"; ctx.lineWidth = 2 / z; ctx.setLineDash([5 / z, 4 / z]);
+        ctx.beginPath();
+        [[c + r + 0.5, l], [c, l + r + 0.5], [c - r - 0.5, l], [c, l - r - 0.5]].forEach(([pc, pl], n) => {
+          const p = point(pc, pl); n ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y);
+        });
+        ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+      }
+      const o = bat.ouvrier;
+      if (!o) continue;
+      if (o.chemin && (o.etat === "aller" || o.etat === "revenir" || o.etat === "travailler")) {
+        ctx.strokeStyle = "rgba(255, 255, 255, .85)"; ctx.lineWidth = 2 / z;
+        ctx.beginPath();
+        o.chemin.forEach((k, n) => { const p = point(k.x, k.y); n ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y); });
+        ctx.stroke();
+      }
+      const p = point(o.x, o.y);
+      ctx.fillStyle = "#ffe27a";
+      ctx.textAlign = "center";
+      ctx.fillText(o.etat + (o.minuteur > 0 && (o.etat === "travailler" || o.etat === "repos" || o.etat === "attendre") ? " " + virgule(o.minuteur, 1) + " s" : ""), p.x, p.y - 34 / Math.min(z, 1.4));
+      ctx.textAlign = "left";
+    }
+    for (const i of monde.reservees) {
+      const p = point((i % carte.colonnes) + 0.5, Math.floor(i / carte.colonnes) + 0.5), r = 7;
+      ctx.strokeStyle = "#ff4b3e"; ctx.lineWidth = 2.5 / z;
+      ctx.beginPath(); ctx.moveTo(p.x - r, p.y - r / 2); ctx.lineTo(p.x + r, p.y + r / 2); ctx.moveTo(p.x + r, p.y - r / 2); ctx.lineTo(p.x - r, p.y + r / 2); ctx.stroke();
+    }
+
     // La position exacte de la souris dans le monde : un petit point rouge
     if (monde.souris) {
       ctx.fillStyle = "#ff4b3e";
@@ -106,7 +143,6 @@ Village.RayonsX = (function () {
 
   // Le calcul de la case sous la souris, écrit en clair en haut à droite.
   function dessinerSurLEcran(ctx, monde) {
-    const W = C.ecran.largeur;
     const s = monde.souris;
     const lignes = s
       ? [
@@ -118,18 +154,19 @@ Village.RayonsX = (function () {
           monde.survol ? "📦 Case n° " + monde.survol.numero + " = ligne × 64 + colonne" : "❌ Hors de la carte",
         ]
       : ["🖱️ Mets la souris sur la carte", "pour voir le calcul de la case."];
-    const l = 340, h = 14 + lignes.length * 18;
+    const l = Math.min(340, Village.Ecran.largeur - 20), h = 14 + lignes.length * 18;
+    const x0 = 10, y0 = Math.max(80, Village.Ecran.hauteur - h - 130); // en bas à gauche, au-dessus des boutons
     ctx.fillStyle = "rgba(8, 14, 30, .85)";
     ctx.strokeStyle = "#7bff9e";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(W - l - 12, 12, l, h, 10); else ctx.rect(W - l - 12, 12, l, h);
+    if (ctx.roundRect) ctx.roundRect(x0, y0, l, h, 10); else ctx.rect(x0, y0, l, h);
     ctx.fill(); ctx.stroke();
     ctx.font = "12px ui-monospace, Menlo, Consolas, monospace";
     ctx.textBaseline = "middle";
     lignes.forEach((t, n) => {
       ctx.fillStyle = n >= 3 && n <= 4 ? "#ffe27a" : "#b9f5c9";
-      ctx.fillText(t, W - l, 25 + n * 18);
+      ctx.fillText(t, x0 + 12, y0 + 13 + n * 18);
     });
   }
 

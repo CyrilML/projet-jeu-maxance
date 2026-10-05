@@ -2,7 +2,9 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0e1325">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Le village de Maxance</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏘️</text></svg>">
   <style>
@@ -15,7 +17,14 @@
     .entete a { color: var(--accent); }
     .version { color: var(--doux); font-size: .85rem; margin-right: 10px; }
     .cadre-ecran { max-width: 960px; margin: 0 auto; }
-    #ecran { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 2px solid var(--bord); border-radius: 12px; background: #2f7fd1; outline: none; touch-action: none; cursor: grab; }
+    /* La toile prend la taille de sa place sur la page : moteur/ecran.js la mesure et règle ses pixels. */
+    #ecran { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border: 2px solid var(--bord); border-radius: 12px; background: #2f7fd1; outline: none; touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    /* Sur un téléphone en hauteur, une toile en 16/9 serait toute plate : on lui donne plus de hauteur. */
+    @media (max-width: 700px) and (orientation: portrait) { #ecran { aspect-ratio: auto; height: 68vh; } .page { padding: 8px 8px 24px; } }
+    /* Le plein écran : la toile couvre toute la fenêtre (marche aussi sur iPhone, sans l'API plein écran). */
+    body.plein-ecran { overflow: hidden; }
+    body.plein-ecran .cadre-ecran { position: fixed; inset: 0; max-width: none; z-index: 50; background: #2f7fd1; }
+    body.plein-ecran #ecran { width: 100vw; height: 100vh; height: 100dvh; aspect-ratio: auto; border: 0; border-radius: 0; }
     #ecran:active { cursor: grabbing; }
     #ecran:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
     .outils { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0 16px; }
@@ -38,6 +47,8 @@
     #journal .temps { display: inline-block; min-width: 58px; color: var(--doux); font-family: ui-monospace, Menlo, Consolas, monospace; }
     #journal li[data-evenement="carte-inventee"], #journal li[data-evenement="sauvegarde"] { color: var(--accent); }
     #journal li[data-evenement="case-choisie"] { color: #7dffa0; }
+    #journal li[data-evenement="construction-impossible"], #journal li[data-evenement="rien-a-faire"], #journal li[data-evenement="scierie-attend"] { color: #ff9b9b; }
+    #journal li[data-evenement="chantier-fini"], #journal li[data-evenement="livraison"], #journal li[data-evenement="planches-sciees"] { color: #ffd34d; }
     #journal li[data-evenement="zoom"], #journal li[data-evenement="retour-village"] { color: #9cc4ff; }
     pre { margin: 0; background: #0b1020; border-radius: 8px; padding: 8px; font-size: .78rem; overflow: auto; max-height: 420px; color: #b9f5c9; }
     code { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--accent); }
@@ -48,7 +59,7 @@
   <div class="page">
     <header class="entete">
       <h1>🏘️ Le village de Maxance · un jeu de gestion</h1>
-      <span><span id="version" class="version"></span> <a href="../index.html#etape46">📓 Ouvrir le carnet de bord</a></span>
+      <span><span id="version" class="version"></span> <a href="../index.html#etape47">📓 Ouvrir le carnet de bord</a></span>
     </header>
 
     <div class="cadre-ecran">
@@ -56,16 +67,20 @@
     </div>
 
     <div class="outils">
+      <button data-action="bucheron">🪓 Bûcheron <kbd>1</kbd></button>
+      <button data-action="forestier">🌱 Forestier <kbd>2</kbd></button>
+      <button data-action="scierie">🪚 Scierie <kbd>3</kbd></button>
+      <button data-action="carriere">⛏️ Carrière <kbd>4</kbd></button>
       <button data-action="village">🏠 Le village <kbd>H</kbd></button>
       <button data-action="zoomPlus">➕ Zoom <kbd>+</kbd></button>
       <button data-action="zoomMoins">➖ Zoom <kbd>−</kbd></button>
       <button data-action="nouvelleCarte">🎲 Nouvelle carte <kbd>G</kbd></button>
       <button data-action="rayonsX" data-option="rayonsX" aria-pressed="false">🩻 Rayons X <kbd>X</kbd></button>
-      <button data-action="pause" data-option="pause" aria-pressed="false">⏸ Pause <kbd>Échap</kbd></button>
+      <button data-action="pause" data-option="pause" aria-pressed="false">⏸ Pause <kbd>P</kbd></button>
       <button data-action="pasSuivant">⏭ Un pas <kbd>N</kbd></button>
       <button data-action="ralenti" data-option="ralenti" aria-pressed="false">🐢 Ralenti <kbd>L</kbd></button>
     </div>
-    <p class="commandes">Se déplacer : <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> ou <kbd>Z</kbd> <kbd>Q</kbd> <kbd>S</kbd> <kbd>D</kbd>, ou tirer la carte avec la souris · Zoomer : molette ou <kbd>+</kbd> <kbd>−</kbd> · Clic : choisir une case</p>
+    <p class="commandes">Se déplacer : <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> ou <kbd>Z</kbd> <kbd>Q</kbd> <kbd>S</kbd> <kbd>D</kbd>, ou tirer la carte · Zoomer : molette, <kbd>+</kbd> <kbd>−</kbd>, ou pincer avec 2 doigts · Construire : <kbd>1</kbd> à <kbd>4</kbd> ou les boutons en bas de l'écran, puis une case · <kbd>Échap</kbd> annuler · Toucher un bâtiment : voir ce qu'il fait</p>
 
     <section class="capot" aria-label="Sous le capot">
       <div class="bloc">
@@ -87,18 +102,24 @@
   </div>
 
   <!-- L'ordre compte : chaque fichier peut utiliser ceux chargés AVANT lui.
-       Le « ?v=1 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
-  <script src="config.js?v=1"></script>
-  <script src="moteur/evenements.js?v=1"></script>
-  <script src="moteur/entrees.js?v=1"></script>
-  <script src="moteur/hasard.js?v=1"></script>
-  <script src="moteur/iso.js?v=1"></script>
-  <script src="logique/carte.js?v=1"></script>
-  <script src="logique/monde.js?v=1"></script>
-  <script src="donnees/sauvegarde.js?v=1"></script>
-  <script src="affichage/peintre.js?v=1"></script>
-  <script src="affichage/rayons-x.js?v=1"></script>
-  <script src="affichage/sous-le-capot.js?v=1"></script>
-  <script src="main.js?v=1"></script>
+       Le « ?v=2 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
+  <script src="config.js?v=2"></script>
+  <script src="moteur/evenements.js?v=2"></script>
+  <script src="moteur/ecran.js?v=2"></script>
+  <script src="moteur/entrees.js?v=2"></script>
+  <script src="moteur/hasard.js?v=2"></script>
+  <script src="moteur/iso.js?v=2"></script>
+  <script src="moteur/chemins.js?v=2"></script>
+  <script src="logique/carte.js?v=2"></script>
+  <script src="logique/ouvriers.js?v=2"></script>
+  <script src="logique/batiments.js?v=2"></script>
+  <script src="logique/monde.js?v=2"></script>
+  <script src="donnees/sauvegarde.js?v=2"></script>
+  <script src="affichage/batisses.js?v=2"></script>
+  <script src="affichage/interface.js?v=2"></script>
+  <script src="affichage/peintre.js?v=2"></script>
+  <script src="affichage/rayons-x.js?v=2"></script>
+  <script src="affichage/sous-le-capot.js?v=2"></script>
+  <script src="main.js?v=2"></script>
 </body>
 </html>

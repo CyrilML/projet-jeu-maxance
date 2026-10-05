@@ -6,11 +6,12 @@
 //   1. le fond : la mer tout autour de l'île ;
 //   2. le SOL, case par case : un losange de couleur (herbe, sable, eau…), l'écume sur les côtes,
 //      les fleurs et les touffes d'herbe ;
-//   3. les OBJETS (arbres, rochers, montagnes, tente…), du FOND vers l'AVANT : ce qui est dessiné
+//   3. les OBJETS (arbres, rochers, montagnes, tente, bâtiments, ouvriers…), du FOND vers l'AVANT : ce qui est dessiné
 //      en dernier passe par-dessus. Un arbre devant une montagne doit être peint après elle !
 //      En vue de biais, « devant » veut dire « colonne + ligne plus grand ».
 //   4. les nuages et leur ombre ;
-//   5. par-dessus tout, à plat sur l'écran : les panneaux, la mini-carte, et les rayons X.
+//   5. par-dessus tout, à plat sur l'écran : les panneaux et les boutons (affichage/interface.js),
+//      et les rayons X.
 //
 // Style dessin animé : couleurs vives, contours foncés et épais, petites ombres rondes.
 
@@ -20,7 +21,7 @@ Village.Peintre = (function () {
   const C = Village.CONFIG, K = Village.Carte, Iso = Village.Iso;
   const T = K.TERRAIN, O = K.OBJET, F = K.FILON;
   const L = C.carte.largeurCase, Hc = C.carte.hauteurCase;
-  const W = C.ecran.largeur, He = C.ecran.hauteur;
+  const Ec = Village.Ecran; // la taille de l'écran change (téléphone, plein écran…) : on la relit à chaque image
   const TOUR = Math.PI * 2;
 
   // Ce que le peintre a fait à la dernière image (lu par « sous le capot »).
@@ -28,6 +29,7 @@ Village.Peintre = (function () {
 
   let ctx = null;
   let cache = null; // ce qui est préparé une seule fois par carte : les couleurs et la mini-carte
+  let versionMini = -1; // la mini-carte est refaite quand la carte change (arbre coupé…)
 
   // Les couleurs des terrains (rouge, vert, bleu), dans l'ordre des numéros de Village.Carte.TERRAIN.
   const COULEURS = [
@@ -53,8 +55,12 @@ Village.Peintre = (function () {
 
   // Préparé UNE fois par carte : chaque case a une couleur un tout petit peu différente
   // (sinon l'herbe ressemble à du plastique), et la mini-carte est dessinée d'avance.
-  function preparer(carte) {
-    if (cache && cache.carte === carte) return;
+  function preparer(monde) {
+    const carte = monde.carte, version = monde.changements + monde.batiments.length;
+    if (cache && cache.carte === carte) {
+      if (versionMini !== version) { dessinerMini(monde); versionMini = version; }
+      return;
+    }
     const n = carte.terrain.length;
     const couleurs = new Array(n), variante = new Float32Array(n);
     for (let i = 0; i < n; i++) {
@@ -67,21 +73,27 @@ Village.Peintre = (function () {
       couleurs[i] = rgb(COULEURS[t], f);
     }
 
-    // La mini-carte : chaque case = 2 × 1 pixels, rangés en losange comme la grande carte.
     const mini = document.createElement("canvas");
     mini.width = carte.colonnes + carte.lignes;
     mini.height = Math.ceil((carte.colonnes + carte.lignes) / 2) + 1;
-    const m = mini.getContext("2d");
+    cache = { carte, couleurs, variante, mini };
+    dessinerMini(monde);
+    versionMini = version;
+  }
+
+  // La mini-carte : chaque case = 2 × 1 pixels, rangés en losange comme la grande carte.
+  function dessinerMini(monde) {
+    const carte = monde.carte, m = cache.mini.getContext("2d"), couleurs = cache.couleurs;
+    m.clearRect(0, 0, cache.mini.width, cache.mini.height);
     for (let l = 0; l < carte.lignes; l++) {
       for (let c = 0; c < carte.colonnes; c++) {
         const i = l * carte.colonnes + c, o = carte.objet[i];
         m.fillStyle = o === O.arbre || o === O.sapin ? "#3d8a2e" : o === O.montagne ? "#7a6a58" : o === O.rocher ? "#9b9480" : couleurs[i];
         if (carte.filon[i]) m.fillStyle = FILONS[carte.filon[i]][0];
-        if (o === O.feuDeCamp || o === O.tente) m.fillStyle = "#ff4b3e";
+        if (o === O.feuDeCamp || o === O.tente || monde.occupees.has(i)) m.fillStyle = "#ff4b3e";
         m.fillRect(c - l + carte.lignes - 1, (c + l) / 2, 2, 1);
       }
     }
-    cache = { carte, couleurs, variante, mini };
   }
 
   // Le milieu de la case (c, l) en px du monde.
@@ -98,15 +110,17 @@ Village.Peintre = (function () {
   function dessiner(monde, options) {
     const debut = performance.now();
     const carte = monde.carte, cam = monde.camera, z = cam.zoom, t = monde.temps;
-    preparer(carte);
+    const W = Ec.largeur, He = Ec.hauteur, d = Ec.densite;
+    preparer(monde);
 
     // 1. La mer tout autour
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.setTransform(d, 0, 0, d, 0, 0);
     ctx.fillStyle = rgb(COULEURS[0], 1);
     ctx.fillRect(0, 0, W, He);
 
     // La caméra : on décale et on agrandit tout le dessin d'un coup.
-    ctx.setTransform(z, 0, 0, z, W / 2 - cam.x * z, He / 2 - cam.y * z);
+    // (× d : un téléphone a 2 ou 3 vrais pixels par point, on les utilise tous pour une image nette.)
+    ctx.setTransform(z * d, 0, 0, z * d, d * (W / 2 - cam.x * z), d * (He / 2 - cam.y * z));
 
     // Quelles cases sont visibles ? On retourne les 4 coins de l'écran en colonnes et lignes.
     const coins = [[0, 0], [W, 0], [0, He], [W, He]].map(([x, y]) => {
@@ -134,20 +148,48 @@ Village.Peintre = (function () {
       }
     }
 
-    // 3. Les objets, du fond vers l'avant : diagonale par diagonale (colonne + ligne = d).
-    for (let d = cMin + lMin; d <= cMax + lMax; d++) {
-      for (let c = Math.max(cMin, d - lMax); c <= Math.min(cMax, d - lMin); c++) {
-        const l = d - c, i = l * carte.colonnes + c, o = carte.objet[i];
+    // Les bâtiments et les ouvriers sont rangés par diagonale, pour être peints au bon moment.
+    const parDiagonale = new Map();
+    const ranger = (diag, chose) => { if (!parDiagonale.has(diag)) parDiagonale.set(diag, []); parDiagonale.get(diag).push(chose); };
+    for (const b of monde.batiments) {
+      ranger(b.colonne + b.ligne, { b });
+      if (b.ouvrier && b.ouvrier.etat !== "repos" && b.ouvrier.etat !== "attendre" && b.ouvrier.etat !== "chercher") {
+        ranger(Math.floor(b.ouvrier.x) + Math.floor(b.ouvrier.y), { o: b.ouvrier, type: b.type });
+      }
+    }
+
+    // 3. Les objets, du fond vers l'avant : diagonale par diagonale (colonne + ligne = diag).
+    for (let diag = cMin + lMin; diag <= cMax + lMax; diag++) {
+      for (let c = Math.max(cMin, diag - lMax); c <= Math.min(cMax, diag - lMin); c++) {
+        const l = diag - c, i = l * carte.colonnes + c, o = carte.objet[i];
         if (!o) continue;
         const p = milieu(c, l);
         if (p.x < vue.x0 || p.x > vue.x1 || p.y < vue.y0 || p.y > vue.y1) continue;
-        dessinerObjet(o, p.x, p.y, cache.variante[i], t, carte.filon[i], z);
+        if (o === O.pousse) Village.Batisses.dessinerPousse(ctx, p.x, p.y, (monde.pousses.get(i) || 0) / C.nature.croissance, t);
+        else dessinerObjet(o, p.x, p.y, cache.variante[i], t, carte.filon[i], z);
+        stats.objetsDessines++;
+      }
+      for (const chose of parDiagonale.get(diag) || []) {
+        if (chose.b) {
+          const p = milieu(chose.b.colonne, chose.b.ligne);
+          Village.Batisses.dessinerBatiment(ctx, chose.b, p.x, p.y, t);
+        } else {
+          const p = Iso.versMonde(chose.o.x, chose.o.y, L, Hc);
+          Village.Batisses.dessinerOuvrier(ctx, chose.type, chose.o, p.x, p.y + 4, t);
+        }
         stats.objetsDessines++;
       }
     }
 
+    // Le fantôme du bâtiment qu'on veut poser, sous la souris
+    if (monde.construction && monde.survol) {
+      const k = monde.survol, p = milieu(k.colonne, k.ligne);
+      const possible = !Village.Batiments.raisonInterdite(monde, monde.construction, k.colonne, k.ligne) && Village.Batiments.assezPour(monde.stock, monde.construction);
+      Village.Batisses.dessinerFantome(ctx, monde.construction, p.x, p.y, possible, t, L, Hc);
+    }
+
     // La case sous la souris, et la case choisie
-    if (monde.survol) {
+    if (monde.survol && !monde.construction) {
       const p = milieu(monde.survol.colonne, monde.survol.ligne);
       losange(p.x, p.y, 0);
       ctx.lineWidth = 2.5 / z; ctx.strokeStyle = "rgba(255, 240, 120, .95)"; ctx.stroke();
@@ -163,9 +205,9 @@ Village.Peintre = (function () {
 
     if (options.rayonsX) Village.RayonsX.dessinerDansLeMonde(ctx, monde, { cMin, cMax, lMin, lMax });
 
-    // 5. Les panneaux, à plat sur l'écran
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    dessinerPanneaux(monde, options);
+    // 5. Les panneaux et les boutons, à plat sur l'écran
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    Village.Interface.dessiner(ctx, monde, options, cache.mini);
     if (options.rayonsX) Village.RayonsX.dessinerSurLEcran(ctx, monde);
 
     stats.ms = performance.now() - debut;
@@ -491,76 +533,6 @@ Village.Peintre = (function () {
       }
       ctx.fill();
       ctx.globalAlpha = 1;
-    }
-  }
-
-  // ---------------------------------------------------------------- les panneaux
-  function bulle(x, y, l, h) {
-    ctx.fillStyle = "rgba(255, 250, 235, .93)";
-    ctx.strokeStyle = "#5a4220";
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(x, y, l, h, 12); else ctx.rect(x, y, l, h);
-    ctx.fill(); ctx.stroke();
-  }
-
-  function dessinerPanneaux(monde, options) {
-    const carte = monde.carte;
-    ctx.textBaseline = "middle";
-    // En haut à gauche : le nom du village et l'âge
-    bulle(12, 12, 250, 48);
-    ctx.fillStyle = "#3b2614";
-    ctx.font = "bold 18px 'Trebuchet MS', sans-serif";
-    ctx.fillText("🏘️ Ton village", 26, 30);
-    ctx.font = "13px 'Trebuchet MS', sans-serif";
-    ctx.fillStyle = "#7a5a30";
-    ctx.fillText("🪨 Âge de pierre · carte n° " + carte.graine, 26, 48);
-
-    // En bas à gauche : la case sous la souris
-    const k = monde.survol || monde.choisie;
-    if (k) {
-      let texte = "Case (" + k.colonne + ", " + k.ligne + ") · " + k.nomTerrain;
-      if (k.objet && k.objet !== O.montagne) texte += " · " + k.nomObjet;
-      if (k.filon) texte += " · filon de " + k.nomFilon + " " + ["", "⚫", "🟠", "🟡"][k.filon];
-      ctx.font = "bold 14px 'Trebuchet MS', sans-serif";
-      const l = ctx.measureText(texte).width + 28;
-      bulle(12, He - 46, l, 34);
-      ctx.fillStyle = "#3b2614";
-      ctx.fillText(texte, 26, He - 29);
-    }
-
-    // En bas à droite : la mini-carte, avec un cadre qui montre ce que l'écran regarde
-    const echelle = 1.5, mw = cache.mini.width * echelle, mh = cache.mini.height * echelle;
-    const mx = W - mw - 14, my = He - mh - 14;
-    bulle(mx - 8, my - 8, mw + 16, mh + 16);
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(cache.mini, mx, my, mw, mh);
-    ctx.imageSmoothingEnabled = true;
-    // Les 4 coins de l'écran, ramenés sur la mini-carte
-    const cam = monde.camera;
-    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    [[0, 0], [W, 0], [W, He], [0, He]].forEach(([ex, ey], n) => {
-      const m = Village.Monde.ecranVersMonde(cam, ex, ey);
-      const px = mx + (m.x / (L / 2) + carte.lignes) * echelle, py = my + (m.y / Hc) * echelle;
-      n ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
-    });
-    ctx.closePath(); ctx.stroke();
-
-    // Le zoom
-    ctx.font = "bold 12px 'Trebuchet MS', sans-serif";
-    ctx.fillStyle = "rgba(255,255,255,.9)";
-    ctx.textAlign = "right";
-    ctx.fillText("🔍 " + Math.round(cam.zoom * 100) + " %", W - 14, my - 22);
-    ctx.textAlign = "left";
-
-    if (options.pause) {
-      bulle(W / 2 - 80, 16, 160, 40);
-      ctx.fillStyle = "#3b2614";
-      ctx.font = "bold 18px 'Trebuchet MS', sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("⏸ PAUSE", W / 2, 37);
-      ctx.textAlign = "left";
     }
   }
 

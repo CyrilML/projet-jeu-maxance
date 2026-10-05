@@ -12,19 +12,39 @@ Village.SousLeCapot = (function () {
 
   // Le message du journal pour chaque événement de la radio.
   const MESSAGES = {
-    lecture: (d) => (d.trouve ? "📂 Base de données lue : on reprend la carte n° " + d.graine : "📂 Base de données vide : première visite sur cet ordinateur"),
+    lecture: (d) => (d.trouve ? "📂 Base de données lue : on reprend la carte n° " + d.graine + (d.converti ? " (ancienne version 1, convertie en version 2 : la partie commence)" : "") : "📂 Base de données vide : première visite sur cet ordinateur"),
     "carte-inventee": (d) =>
       "🗺️ Carte n° " + d.graine + " inventée : " + d.colonnes + " × " + d.lignes + " cases, " + nombre(d.compte.arbres) + " arbres, " +
       d.compte.rochers + " rochers, " + d.compte.montagnes + " montagnes, " + d.rivieres + " rivière(s) · filons : " +
-      d.compte.charbon + " charbon, " + d.compte.fer + " fer, " + d.compte.or + " or · le village est en (" + d.village.colonne + ", " + d.village.ligne + ")",
+      d.compte.charbon + " charbon, " + d.compte.fer + " fer, " + d.compte.or + " or · le village est en (" + d.village.colonne + ", " + d.village.ligne + ")" +
+      (d.reprise ? " · partie reprise : " + d.batiments + " bâtiment(s), " + d.modifs + " case(s) changée(s) rejouée(s)" : " · nouvelle partie : l'entrepôt est posé"),
     "case-choisie": (d) =>
-      "📌 Case (" + d.colonne + ", " + d.ligne + ") choisie : " + d.nomTerrain + (d.objet ? ", " + d.nomObjet : "") + (d.filon ? ", filon de " + d.nomFilon : "") +
+      (d.batiment ? "🏠 " + d.batiment + " choisi(e) · " : "") + "📌 Case (" + d.colonne + ", " + d.ligne + ") choisie : " + d.nomTerrain + (d.objet ? ", " + d.nomObjet : "") + (d.filon ? ", filon de " + d.nomFilon : "") +
       " · altitude " + virgule(d.altitude, 2) + ", humidité " + virgule(d.humidite, 2),
     zoom: (d) => "🔍 Zoom : " + Math.round(d.ancien * 100) + " % → " + Math.round(d.zoom * 100) + " %",
     "retour-village": (d) => "🏠 Retour à la place du village, case (" + d.colonne + ", " + d.ligne + ")",
-    sauvegarde: (d) => "💾 Base de données écrite (" + d.raison + ")",
+    sauvegarde: (d) => "💾 Base de données écrite (" + d.raison + ") : " + nombre(d.octets) + " caractères",
+    // Étape 47
+    "choix-construction": (d) => "🏗️ Construire : " + d.nom + " (coût : " + cout(d.cout) + "). Choisis une case",
+    "construction-annulee": (d) => "↩️ Construction annulée (" + d.nom + ")",
+    "construction-impossible": (d) => "🚫 Pas de " + d.nom + " en (" + d.colonne + ", " + d.ligne + ") : " + d.raison,
+    "batiment-pose": (d) => "🏗️ Chantier n° " + d.numero + " : " + d.nom + " en (" + d.colonne + ", " + d.ligne + "), " + cout(d.cout) + " pris dans l'entrepôt · fini dans " + d.duree + " s",
+    "chantier-fini": (d) => "🎉 " + d.nom + " n° " + d.numero + " construit(e)" + (d.metier ? " : le " + d.metier + " arrive" : ""),
+    "ouvrier-part": (d) => "🚶 Le " + d.metier + " (n° " + d.numero + ") part vers " + d.quoi + " en (" + d.colonne + ", " + d.ligne + ") : " + d.pas + " pas · la tache d'encre a regardé " + d.visitees + " cases",
+    "rien-a-faire": (d) => "😴 " + d.nom + " n° " + d.numero + " : pas de " + d.quoi.replace(/^une? /, "") + " à moins de " + d.rayon + " pas (" + d.visitees + " cases regardées). On réessaie dans " + Village.CONFIG.ouvriers.attente + " s",
+    "arbre-coupe": (d) => "🪓 Arbre coupé en (" + d.colonne + ", " + d.ligne + ") · il reste " + nombre(d.arbres) + " arbres sur la carte",
+    "pousse-plantee": (d) => "🌱 Pousse plantée en (" + d.colonne + ", " + d.ligne + ") · " + d.pousses + " pousse(s) en train de grandir",
+    "arbre-pousse": (d) => "🌳 La pousse en (" + d.colonne + ", " + d.ligne + ") est devenue un " + d.sorte + " · " + nombre(d.arbres) + " arbres sur la carte",
+    "pierre-taillee": (d) => "⛏️ Pierre taillée en (" + d.colonne + ", " + d.ligne + ")" + (d.vide ? " · le rocher est vide, il disparaît" : " · il reste " + d.reste + " pierre(s) dans ce rocher"),
+    livraison: (d) => "📦 " + (d.quoi === "troncs" ? "🪵 1 tronc" : "🪨 1 pierre") + " arrive à l'entrepôt (bâtiment n° " + d.numero + ") → " + d.stock + " en stock",
+    "scierie-attend": (d) => "⏳ Scierie n° " + d.numero + " : plus de troncs dans l'entrepôt, elle attend",
+    "sciage-debut": (d) => "🪚 Scierie n° " + d.numero + " : prend 1 tronc (il en reste " + d.troncs + ")",
+    "planches-sciees": (d) => "🟫 Scierie n° " + d.numero + " : +" + d.planches + " planches → " + d.stock + " en stock",
+    "plein-ecran": (d) => (d.actif ? "⛶ Plein écran" : "🗗 Fin du plein écran"),
     "base-effacee": () => "🗑️ Base de données effacée",
   };
+
+  const cout = (c) => Object.entries(c).map(([r, n]) => n + " " + Village.Batiments.NOMS_RESSOURCES[r]).join(" + ") || "gratuit";
 
   let monde = null, mesures = null, journal, etat, base, cle;
   const debut = performance.now();
@@ -78,9 +98,23 @@ Village.SousLeCapot = (function () {
     h += ligne("rochers · montagnes", k.compte.rochers + " · " + k.compte.montagnes);
     h += ligne("filons ⚫ charbon · 🟠 fer · 🟡 or", k.compte.charbon + " · " + k.compte.fer + " · " + k.compte.or);
     h += ligne("place du village", "(" + k.village.colonne + ", " + k.village.ligne + ")");
+    h += groupe("📦 Le stock de l'entrepôt");
+    h += ligne("🪵 troncs · 🟫 planches · 🪨 pierres", monde.stock.troncs + " · " + monde.stock.planches + " · " + monde.stock.pierres);
+    h += groupe("🏠 Les bâtiments et leurs ouvriers");
+    for (const b of monde.batiments) {
+      const T = Village.Batiments.TYPES[b.type];
+      let etatB = b.etat === "chantier" ? "chantier " + Math.round(b.progres * 100) + " %" : b.type === "scierie" ? (b.travail ? "scie (" + virgule(b.travail.reste, 1) + " s)" : "attend un tronc") : b.ouvrier ? b.ouvrier.etat + (b.ouvrier.minuteur > 0 ? " " + virgule(b.ouvrier.minuteur, 1) + " s" : "") : "prêt";
+      if (b.ouvrier && b.ouvrier.porte) etatB += " · porte des " + b.ouvrier.porte;
+      h += ligne(T.emoji + " n° " + b.numero + " (" + b.colonne + ", " + b.ligne + ")", etatB);
+    }
+    h += ligne("cases réservées", monde.reservees.size);
+    h += ligne("pousses qui grandissent", monde.pousses.size);
+    h += ligne("cases changées (sauvegardées)", monde.modifs.size);
+    h += ligne("en train de construire", monde.construction ? Village.Batiments.TYPES[monde.construction].nom : "non");
     h += groupe("🎥 La caméra");
     h += ligne("regarde le point du monde", "X " + Math.round(cam.x) + " · Y " + Math.round(cam.y));
     h += ligne("zoom", Math.round(cam.zoom * 100) + " %");
+    h += ligne("écran (points × densité)", Village.Ecran.largeur + " × " + Village.Ecran.hauteur + " × " + Village.Ecran.densite);
     h += ligne("cases peintes", nombre(P.casesDessinees));
     h += ligne("objets peints", nombre(P.objetsDessines));
     h += groupe("🖱️ La souris");
