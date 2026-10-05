@@ -19,7 +19,7 @@ Circuit.Modeles = (function () {
 
   function materiaux() {
     if (M.pneu) return M;
-    M.vitre = new THREE.MeshPhysicalMaterial({ color: 0x0f1a26, metalness: 0.1, roughness: 0.05, clearcoat: 1, envMapIntensity: 1.5 });
+    M.vitre = new THREE.MeshPhysicalMaterial({ color: 0x0f1a26, metalness: 0.1, roughness: 0.05, clearcoat: 1, envMapIntensity: 0.9 });
     M.noir = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.55, metalness: 0.2 });
     M.pneu = new THREE.MeshStandardMaterial({ color: 0x18181a, roughness: 0.95 });
     M.chrome = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 1, roughness: 0.18 });
@@ -28,6 +28,11 @@ Circuit.Modeles = (function () {
     M.feu = new THREE.MeshStandardMaterial({ color: 0xaa0000, emissive: 0xff1010, emissiveIntensity: 1.2, roughness: 0.3 });
     M.casque = new THREE.MeshPhysicalMaterial({ color: 0xffd21a, roughness: 0.25, clearcoat: 1 });
     M.siege = new THREE.MeshStandardMaterial({ color: 0x222226, roughness: 0.8 });
+    // Étape 49 : le plastique noir (pare-chocs, bas de caisse), le disque de frein, le rouge-orangé des clignotants.
+    M.plastique = new THREE.MeshStandardMaterial({ color: 0x1b1c1f, roughness: 0.75, metalness: 0.05 });
+    M.disque = new THREE.MeshStandardMaterial({ color: 0x8a8d92, metalness: 0.8, roughness: 0.35 });
+    M.orange = new THREE.MeshStandardMaterial({ color: 0xaa5500, emissive: 0xff8a10, emissiveIntensity: 0.6, roughness: 0.3 });
+    M.vitreFumee = new THREE.MeshPhysicalMaterial({ color: 0x202830, metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.7, clearcoat: 1 });
     return M;
   }
 
@@ -114,30 +119,85 @@ Circuit.Modeles = (function () {
     return m;
   }
 
-  // Une roue : le pneu, la jante chromée et 5 rayons (pour la voir tourner).
+  // Une roue : le pneu, la jante et ses rayons (pour la voir tourner).
   // Le « pivot » tourne pour braquer, la « roue » tourne sur elle-même pour rouler.
-  function roue(rayon, epaisseur, jante) {
+  // Étape 49 : le pneu a des flancs arrondis (une forme « tournée », comme un vase sur un tour de potier),
+  // la jante est creuse avec de fins rayons, et derrière on voit le DISQUE DE FREIN et son ÉTRIER (qui ne tourne pas).
+  // options : { rayons (combien, 5 par défaut), etrier (la couleur de l'étrier), crampons (des pavés sur le pneu) }
+  const formesPneu = {};
+  function formePneu(rayon, epaisseur) {
+    const cle = rayon + "/" + epaisseur;
+    if (formesPneu[cle]) return formesPneu[cle];
+    const e = epaisseur / 2, j = rayon * 0.66, pts = [];
+    // le profil du pneu, vu en coupe : de la jante (côté gauche) au sommet arrondi, puis à la jante (côté droit)
+    pts.push(new THREE.Vector2(j, -e * 0.92));
+    for (let i = 0; i <= 12; i++) {
+      const a = -Math.PI / 2 + (i / 12) * Math.PI;
+      pts.push(new THREE.Vector2(rayon - e * 0.35 + Math.cos(a) * e * 0.35, Math.sin(a) * e));
+    }
+    pts.push(new THREE.Vector2(j, e * 0.92));
+    const geo = new THREE.LatheGeometry(pts, 32);
+    geo.rotateX(Math.PI / 2); // l'axe de la roue est z
+    return (formesPneu[cle] = geo);
+  }
+  function roue(rayon, epaisseur, jante, options) {
+    const o = options || {};
     const pivot = new THREE.Group();
     const r = new THREE.Group();
-    const pneu = cylindre(rayon, epaisseur, M.pneu, 28);
-    pneu.rotation.x = Math.PI / 2;
+    const pneu = new THREE.Mesh(formePneu(rayon, epaisseur), M.pneu);
+    pneu.castShadow = true;
     r.add(pneu);
+    const metal = jante || M.jante;
+    const nombre = o.rayons || 5;
     for (const cote of [-1, 1]) {
-      const disque = cylindre(rayon * 0.62, 0.04, jante || M.jante, 24);
-      disque.rotation.x = Math.PI / 2;
-      disque.position.z = (cote * epaisseur) / 2;
-      r.add(disque);
-      for (let k = 0; k < 5; k++) {
-        const rayonJante = boite(rayon * 1.05, rayon * 0.12, 0.03, M.noir, 0, 0, cote * (epaisseur / 2 + 0.02));
-        rayonJante.rotation.z = (k * Math.PI) / 5;
+      const z = (cote * epaisseur) / 2;
+      // le fond de la jante (sombre, en retrait), puis le bord de la jante (un anneau de métal)
+      const fond = cylindre(rayon * 0.64, 0.03, M.noir, 24);
+      fond.rotation.x = Math.PI / 2;
+      fond.position.z = z * 0.4;
+      r.add(fond);
+      const levre = new THREE.Mesh(new THREE.TorusGeometry(rayon * 0.64, rayon * 0.035, 6, 28), metal);
+      levre.position.z = z * 0.92;
+      r.add(levre);
+      for (let k = 0; k < nombre; k++) {
+        const rayonJante = boite(rayon * 0.6, rayon * 0.1, 0.035, metal, 0, 0, z * 0.85);
+        rayonJante.geometry.translate(rayon * 0.3, 0, 0);
+        rayonJante.rotation.z = (k * Math.PI * 2) / nombre;
         r.add(rayonJante);
       }
-      const moyeu = cylindre(rayon * 0.15, 0.06, M.chrome, 12);
+      const moyeu = cylindre(rayon * 0.16, 0.06, metal, 12);
       moyeu.rotation.x = Math.PI / 2;
-      moyeu.position.z = cote * (epaisseur / 2 + 0.03);
+      moyeu.position.z = z * 0.9;
       r.add(moyeu);
     }
+    // des crampons (pour le quad et le monster truck) : des petits pavés tout autour du pneu
+    if (o.crampons) {
+      const n = Math.round(rayon * 22);
+      const pave = new THREE.BoxGeometry(rayon * 0.16, rayon * 0.07, epaisseur * 0.42);
+      const im = new THREE.InstancedMesh(pave, M.pneu, n * 2);
+      const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), axe = new THREE.Vector3(0, 0, 1);
+      for (let k = 0; k < n * 2; k++) {
+        const a = ((k >> 1) / n) * Math.PI * 2 + (k % 2) * (Math.PI / n), dz = (k % 2 ? 1 : -1) * epaisseur * 0.22;
+        q.setFromAxisAngle(axe, a + (k % 2 ? 0.35 : -0.35));
+        m4.compose(new THREE.Vector3(Math.cos(a) * rayon * 0.99, Math.sin(a) * rayon * 0.99, dz), q, new THREE.Vector3(1, 1, 1));
+        im.setMatrixAt(k, m4);
+      }
+      im.castShadow = true;
+      r.add(im);
+    }
     pivot.add(r);
+    // le disque de frein et l'étrier : accrochés au pivot (ils braquent avec la roue, mais ne tournent pas)
+    if (o.etrier !== false) {
+      for (const cote of [-1, 1]) {
+        const disque = cylindre(rayon * 0.48, 0.025, M.disque, 20);
+        disque.rotation.x = Math.PI / 2;
+        disque.position.z = (cote * epaisseur) / 2 * 0.2;
+        pivot.add(disque);
+        const etrier = boite(rayon * 0.26, rayon * 0.2, 0.09, o.etrier ? peinture(o.etrier) : M.noir, rayon * 0.32, rayon * 0.2, (cote * epaisseur) / 2 * 0.3);
+        etrier.rotation.z = 0.6;
+        pivot.add(etrier);
+      }
+    }
     return { pivot, roue: r };
   }
 
@@ -153,7 +213,8 @@ Circuit.Modeles = (function () {
     if (p.passages !== false) {
       profil = profil.concat([[p.xAr - ra, p.g, 0]], passage(p.xAr, ra, p.r), [[p.xAr + ra, p.g, 0], [p.xAv - ra, p.g, 0]], passage(p.xAv, ra, p.r), [[p.xAv + ra, p.g, 0]]);
     }
-    profil = profil.concat([
+    // (Étape 49 : une vraie voiture peut donner son propre dessus, p.dessus, du bas du nez au bas de l'arrière.)
+    profil = profil.concat(p.dessus || [
       [p.L / 2, p.g + 0.05, 0.12],
       [p.L / 2 + 0.03, p.hNez, p.rondNez || 0.25],
       [p.L / 2 - 0.55, p.hCapot, 0.4],
@@ -162,26 +223,40 @@ Circuit.Modeles = (function () {
       [-p.L / 2 + 0.25, p.hCoffre, 0.25],
       [-p.L / 2, p.hCoffre - 0.2, 0.15],
     ]);
-    g.add(extruder(profil, p.W, peinture(k1), 0.12));
+    const corps = extruder(profil, p.W, peinture(k1), p.chanfrein === undefined ? 0.12 : p.chanfrein);
+    if (p.galbe) galber(corps.geometry, p);
+    g.add(corps);
+    g.corps = corps;
     // La cabine vitrée, puis le toit peint par-dessus.
-    const cabine = [
+    const cabine = p.cabine || [
       [p.xPareBrise, p.hCeinture - 0.02, 0.05],
       [p.xToitAv, p.hToit, 0.25],
       [p.xToitAr, p.hToit, 0.3],
       [p.xLunette, p.hCeinture - 0.02, 0.05],
     ];
-    g.add(extruder(cabine, p.Wtoit, M.vitre, 0.08));
     const couleurToit = peinture(p.toitCouleur2 ? k2 : k1);
-    const toit = [
-      [p.xToitAv + 0.12, p.hToit - 0.04, 0.05],
-      [p.xToitAv + 0.06, p.hToit + 0.03, 0.05],
-      [p.xToitAr - 0.06, p.hToit + 0.03, 0.05],
-      [p.xToitAr - 0.12, p.hToit - 0.04, 0.05],
-    ];
-    g.add(extruder(toit, p.Wtoit + 0.02, couleurToit, 0.03));
-    // Le montant entre les vitres (couleur de la carrosserie).
-    const milieu = (p.xToitAv + p.xToitAr) / 2;
-    g.add(boite(0.1, p.hToit - p.hCeinture, p.Wtoit + 0.02, couleurToit, milieu, (p.hToit + p.hCeinture) / 2, 0));
+    if (p.galbe) {
+      // Étape 49 : les vraies voitures. La cabine est PEINTE (le toit et les montants), et on y pose de vraies
+      // vitres : le pare-brise, les vitres des côtés et la lunette arrière.
+      const habitacle = extruder(cabine, p.Wtoit, couleurToit, 0.08);
+      galber(habitacle.geometry, p, true);
+      g.add(habitacle);
+      poserVitres(g, p, cabine);
+    } else {
+      const vitres = extruder(cabine, p.Wtoit, M.vitre, 0.08);
+      g.add(vitres);
+      const toit = [
+        [p.xToitAv + 0.12, p.hToit - 0.04, 0.05],
+        [p.xToitAv + 0.06, p.hToit + 0.03, 0.05],
+        [p.xToitAr - 0.06, p.hToit + 0.03, 0.05],
+        [p.xToitAr - 0.12, p.hToit - 0.04, 0.05],
+      ];
+      g.add(extruder(toit, p.Wtoit + 0.02, couleurToit, 0.03));
+      // Le montant entre les vitres (couleur de la carrosserie).
+      const milieu = (p.xToitAv + p.xToitAr) / 2;
+      g.add(boite(0.1, p.hToit - p.hCeinture, p.Wtoit + 0.02, couleurToit, milieu, (p.hToit + p.hCeinture) / 2, 0));
+    }
+    if (p.details === false) return g; // (étape 49 : les vraies voitures dessinent leurs propres phares)
     // Phares, feux, calandre, rétroviseurs.
     for (const z of [-1, 1]) {
       const phare = boite(0.08, 0.1, 0.38, M.phare, p.L / 2 - 0.02, p.hNez + 0.02, z * (p.W / 2 - 0.32));
@@ -194,12 +269,113 @@ Circuit.Modeles = (function () {
     return g;
   }
 
+  // Étape 49 : les vitres d'une cabine peinte. La cabine a 4 coins : A (bas du pare-brise), B (haut du pare-brise),
+  // C (haut de la lunette arrière), D (bas de la lunette arrière).
+  function poserVitres(g, p, cabine) {
+    if (!M.vitre.side || M.vitre.side !== THREE.DoubleSide) M.vitre.side = THREE.DoubleSide;
+    const [A, B, C, D] = cabine;
+    const largeur = (x, y) => (p.Wtoit / 2) * largeurIci(p, x, y, true);
+    // Un point sur le segment de P à Q, à `d` mètres de P.
+    const vers = (P, Q, d) => {
+      const l = Math.hypot(Q[0] - P[0], Q[1] - P[1]);
+      return [P[0] + ((Q[0] - P[0]) * d) / l, P[1] + ((Q[1] - P[1]) * d) / l];
+    };
+    // Une vitre posée sur une pente (le pare-brise, la lunette) : un quadrilatère un peu au-dessus de la cabine.
+    function pente(P, Q, rP, rQ) {
+      const a = vers(P, Q, (rP || 0.05) + 0.04), b = vers(Q, P, (rQ || 0.25) + 0.03);
+      let nx = -(b[1] - a[1]), ny = b[0] - a[0];
+      const l = Math.hypot(nx, ny);
+      nx /= l;
+      ny /= l;
+      if (ny < 0) {
+        nx = -nx;
+        ny = -ny;
+      }
+      const e = 0.092; // juste au-dessus de la peinture (la cabine arrondie déborde de 8 cm de son dessin)
+      const coin = (q, cote) => [q[0] + nx * e, q[1] + ny * e, cote * (largeur(q[0], q[1]) - 0.1)];
+      const pts = [coin(a, -1), coin(a, 1), coin(b, 1), coin(b, -1)];
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(pts.flat(), 3));
+      geo.setIndex([0, 1, 2, 0, 2, 3]);
+      geo.computeVertexNormals();
+      g.add(new THREE.Mesh(geo, M.vitre));
+    }
+    pente(A, B, A[2], B[2]);
+    pente(D, C, D[2], C[2]);
+    // Les vitres des côtés : le contour de la cabine, rétréci de 7 cm (il reste les montants peints autour).
+    // Rétrécir un contour : on pousse chaque côté de 7 cm vers l'intérieur, et on prend les croisements des côtés.
+    const pts = [A, B, C, D].map((q) => [q[0], q[1]]);
+    let aire = 0;
+    for (let i = 0; i < 4; i++) aire += pts[i][0] * pts[(i + 1) % 4][1] - pts[(i + 1) % 4][0] * pts[i][1];
+    const sensInterieur = aire > 0 ? 1 : -1;
+    const lignes = pts.map((q, i) => {
+      const r = pts[(i + 1) % 4], dx = r[0] - q[0], dy = r[1] - q[1], l = Math.hypot(dx, dy);
+      const nx = (-dy / l) * sensInterieur, ny = (dx / l) * sensInterieur;
+      return { x: q[0] + nx * 0.07, y: q[1] + ny * 0.07, dx, dy };
+    });
+    const croisement = (l1, l2) => {
+      const det = l1.dx * l2.dy - l1.dy * l2.dx;
+      const t = ((l2.x - l1.x) * l2.dy - (l2.y - l1.y) * l2.dx) / det;
+      return [l1.x + l1.dx * t, l1.y + l1.dy * t];
+    };
+    const cote = lignes.map((l, i) => croisement(lignes[(i + 3) % 4], l));
+    const contour = forme(cote.map((q, i) => [q[0], q[1], i === 1 || i === 2 ? 0.14 : 0.04]));
+    for (const sens of [-1, 1]) {
+      const geo = new THREE.ShapeGeometry(contour, 8);
+      const pos = geo.attributes.position;
+      for (let i = 0; i < pos.count; i++) pos.setZ(i, sens * (largeur(pos.getX(i), pos.getY(i)) + 0.006));
+      geo.computeVertexNormals();
+      g.add(new THREE.Mesh(geo, M.vitre));
+      // le montant du milieu (peint), entre la vitre de devant et celle de derrière
+      if (p.montantX !== undefined) {
+        const y = (p.hCeinture + p.hToit) / 2;
+        const m = boite(0.08, p.hToit - p.hCeinture - 0.08, 0.01, M.noir, p.montantX, y, sens * (largeur(p.montantX, y) + 0.012));
+        g.add(m);
+      }
+    }
+  }
+
+  // Étape 49 : GALBER une carrosserie. Une vraie voiture n'est pas une boîte : vue de dessus, elle est plus étroite
+  // au nez et à l'arrière (le « pincement ») ; vue de face, ses flancs rentrent vers le haut (le « galbe »).
+  // On déplace chaque point de la forme : z (la largeur) est multiplié par un nombre un peu plus petit que 1.
+  // p.galbe = { nez, arriere (le pincement, ex. 0.15 = 15 % plus étroit tout au bout), haut (le galbe) }
+  function largeurIci(p, x, y, vitre) {
+    const G = p.galbe, xn = x / (p.L / 2);
+    // Les coins arrondis vus de dessus : à partir de 45 % de la demi-longueur, la largeur suit un quart de cercle
+    // (elle diminue de plus en plus vite jusqu'au bout). Au bout, elle a perdu `nez` (ou `arriere`).
+    const u = Math.min(1, Math.max(0, (Math.abs(xn) - 0.4) / 0.63));
+    const pince = 1 - (xn > 0 ? G.nez : G.arriere) * (1 - Math.sqrt(1 - u * u));
+    const bas = (p.g + p.hCeinture) / 2;
+    const t = Math.max(0, Math.min(1, (y - bas) / Math.max(0.1, p.hToit - bas)));
+    return pince * (1 - G.haut * t * t * (vitre ? 0.6 : 1));
+  }
+  function galber(geo, p, vitre) {
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) pos.setZ(i, pos.getZ(i) * largeurIci(p, pos.getX(i), pos.getY(i), vitre));
+    geo.computeVertexNormals();
+  }
+  // La demi-largeur de la carrosserie à l'endroit (x, y) : pour coller les phares et les poignées sur ses flancs.
+  const bord = (p, x, y) => (p.W / 2) * (p.galbe ? largeurIci(p, x, y) : 1);
+  // Où est l'avant (ou l'arrière) de la carrosserie à la hauteur y ? On cherche dans le dessus du profil le morceau
+  // qui passe à cette hauteur. (+ le chanfrein : l'extrusion arrondie déborde un peu du dessin.)
+  function bout(p, y, avant) {
+    const d = p.dessus, c = p.chanfrein === undefined ? 0.12 : p.chanfrein;
+    let meilleur = null;
+    for (let i = 0; i < d.length - 1; i++) {
+      const [x1, y1] = d[i], [x2, y2] = d[i + 1];
+      if ((y - y1) * (y - y2) > 0 || y1 === y2) continue;
+      const x = x1 + ((x2 - x1) * (y - y1)) / (y2 - y1);
+      if (meilleur === null || (avant ? x > meilleur : x < meilleur)) meilleur = x;
+    }
+    return meilleur === null ? (avant ? p.L / 2 : -p.L / 2) : meilleur + (avant ? c : -c);
+  }
+
   // Les roues d'un modèle (positions et taille), ajoutées au groupe.
-  function ajouterRoues(g, xs, z, rayon, epaisseur, jante) {
+  function ajouterRoues(g, xs, z, rayon, epaisseur, jante, options) {
     const roues = [];
     for (const [x, avant] of xs) {
       for (const cote of [-1, 1]) {
-        const r = roue(rayon, epaisseur, jante);
+        const r = roue(rayon, epaisseur, jante, options);
         r.pivot.position.set(x, rayon, cote * z);
         g.add(r.pivot);
         roues.push(Object.assign(r, { avant }));
@@ -219,49 +395,6 @@ Circuit.Modeles = (function () {
     for (const z of [-0.65, 0.65]) g.add(boite(0.08, 0.28, 0.06, M.noir, -2.05, 1.1, z));
     g.add(boite(1.4, 0.01, 0.35, peinture([0.95, 0.95, 0.95]), 1.3, 0.9, 0));
     return { g, roues: ajouterRoues(g, [[1.32, true], [-1.33, false]], 0.88, 0.34, 0.26), yCapot: 1.2 };
-  }
-
-  function taureau(k1, k2) {
-    const p = { L: 4.6, W: 2.0, r: 0.35, xAv: 1.4, xAr: -1.38, g: 0.12, hNez: 0.42, rondNez: 0.15, hCapot: 0.6, hCeinture: 0.8, hCoffre: 0.92,
-      hToit: 1.13, xPareBrise: 0.95, xToitAv: -0.1, xToitAr: -0.7, xLunette: -1.95, Wtoit: 1.45 };
-    const g = carrosserie(p, k1, k2);
-    for (const z of [-1, 1]) g.add(boite(1.1, 0.28, 0.06, M.noir, -0.7, 0.6, z * 1.0)); // les prises d'air
-    g.add(boite(0.3, 0.04, 1.7, M.noir, -2.1, 1.02, 0)); // le petit aileron
-    return { g, roues: ajouterRoues(g, [[1.4, true], [-1.38, false]], 0.92, 0.35, 0.3), yCapot: 1.0 };
-  }
-
-  function fleche(k1, k2) {
-    const p = { L: 4.5, W: 1.86, r: 0.34, xAv: 1.25, xAr: -1.2, g: 0.16, hNez: 0.55, rondNez: 0.35, hCapot: 0.74, hCeinture: 0.9, hCoffre: 0.82,
-      hToit: 1.3, xPareBrise: 0.7, xToitAv: 0.05, xToitAr: -0.55, xLunette: -2.0, Wtoit: 1.42 };
-    const g = carrosserie(p, k1, k2);
-    // les phares ronds, « yeux de grenouille »
-    for (const z of [-0.62, 0.62]) {
-      const oeil = cylindre(0.16, 0.12, M.phare, 20);
-      oeil.rotation.z = Math.PI / 2 - 0.3;
-      oeil.position.set(2.0, 0.72, z);
-      g.add(oeil);
-    }
-    g.add(boite(0.25, 0.04, 1.2, peinture(k1), -2.05, 0.9, 0)); // le becquet « queue de canard »
-    return { g, roues: ajouterRoues(g, [[1.25, true], [-1.2, false]], 0.87, 0.34, 0.27), yCapot: 1.15 };
-  }
-
-  function fusee(k1, k2) {
-    const p = { L: 4.75, W: 2.03, r: 0.37, xAv: 1.45, xAr: -1.45, g: 0.13, hNez: 0.55, hCapot: 0.8, hCeinture: 0.92, hCoffre: 0.97,
-      hToit: 1.22, xPareBrise: 0.85, xToitAv: 0.0, xToitAr: -0.85, xLunette: -1.8, Wtoit: 1.5, toitCouleur2: true };
-    const g = carrosserie(p, k1, k2);
-    // La grande ligne en « C » chromée sur les côtés, et la calandre en fer à cheval.
-    for (const z of [-1, 1]) {
-      const c = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.035, 8, 24, Math.PI * 1.2), M.chrome);
-      c.position.set(0.15, 0.6, z * 1.02);
-      c.rotation.z = Math.PI * 0.4;
-      g.add(c);
-    }
-    const fer = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.04, 8, 20, Math.PI * 1.4), M.chrome);
-    fer.position.set(2.39, 0.4, 0);
-    fer.rotation.set(0, Math.PI / 2, -Math.PI * 0.2);
-    g.add(fer);
-    g.add(boite(0.05, 0.05, 1.8, M.feu, -2.38, 0.85, 0)); // la barre de feux arrière
-    return { g, roues: ajouterRoues(g, [[1.45, true], [-1.45, false]], 0.93, 0.37, 0.32), yCapot: 1.1 };
   }
 
   function f1(k1, k2) {
@@ -341,75 +474,7 @@ Circuit.Modeles = (function () {
     return { g, roues: ajouterRoues(g, [[1.45, true], [-1.3, false]], 1.05, 0.46, 0.4), yCapot: 1.5 };
   }
 
-  function monster(k1, k2) {
-    const h = 1.25; // la caisse commence très haut
-    const p = { L: 4.6, W: 2.1, r: 0.95, xAv: 1.6, xAr: -1.6, g: h, hNez: h + 0.5, hCapot: h + 0.68, hCeinture: h + 0.75, hCoffre: h + 0.8,
-      hToit: h + 1.35, xPareBrise: 1.05, xToitAv: 0.7, xToitAr: -0.55, xLunette: -0.65, Wtoit: 1.9, passages: false };
-    const g = carrosserie(p, k1, k2);
-    // Des flammes peintes sur les côtés (couleur 2).
-    for (const z of [-1, 1]) {
-      for (let i = 0; i < 4; i++) {
-        const flamme = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.9 - i * 0.12, 4), peinture(k2));
-        flamme.rotation.z = -Math.PI / 2;
-        flamme.position.set(1.4 - i * 0.55, h + 0.35 + (i % 2) * 0.12, z * 1.06);
-        flamme.scale.z = 0.15;
-        g.add(flamme);
-      }
-    }
-    // Le châssis, les essieux et les gros amortisseurs.
-    g.add(boite(3.6, 0.25, 0.8, M.noir, 0, 1.05, 0));
-    for (const x of [-1.6, 1.6]) {
-      const essieu = cylindre(0.1, 2.5, M.noir, 10);
-      essieu.rotation.x = Math.PI / 2;
-      essieu.position.set(x, 0.95, 0);
-      g.add(essieu);
-      for (const z of [-0.65, 0.65]) g.add(tube([x, 0.95, z], [x - 0.2, 1.45, z], 0.07, M.chrome));
-    }
-    return { g, roues: ajouterRoues(g, [[1.6, true], [-1.6, false]], 1.35, 0.95, 0.75), yCapot: 2.9 };
-  }
-
   // ---------------------------------------------------------------- étape 39 : le garage de la ville
-
-  // La petite citadine : courte, haute et toute ronde.
-  function citadine(k1, k2) {
-    const p = { L: 3.7, W: 1.72, r: 0.32, xAv: 1.18, xAr: -1.18, g: 0.2, hNez: 0.62, rondNez: 0.35, hCapot: 0.8, hCeinture: 0.92, hCoffre: 0.95,
-      hToit: 1.5, xPareBrise: 0.95, xToitAv: 0.35, xToitAr: -1.55, xLunette: -1.75, Wtoit: 1.5, toitCouleur2: true };
-    const g = carrosserie(p, k1, k2);
-    return { g, roues: ajouterRoues(g, [[1.18, true], [-1.18, false]], 0.8, 0.32, 0.24), yCapot: 1.3 };
-  }
-
-  // Le SUV : une grosse voiture haute, avec des barres de toit.
-  function suv(k1, k2) {
-    const p = { L: 4.7, W: 1.95, r: 0.42, xAv: 1.5, xAr: -1.5, g: 0.38, hNez: 0.95, rondNez: 0.3, hCapot: 1.12, hCeinture: 1.2, hCoffre: 1.22,
-      hToit: 1.82, xPareBrise: 0.95, xToitAv: 0.45, xToitAr: -1.95, xLunette: -2.2, Wtoit: 1.75 };
-    const g = carrosserie(p, k1, k2);
-    for (const z of [-0.7, 0.7]) g.add(boite(2.2, 0.05, 0.05, peinture(k2), -0.75, 1.88, z));
-    for (const z of [-1, 1]) g.add(boite(3.0, 0.1, 0.06, peinture(k2), 0, 0.5, z * 0.99));
-    return { g, roues: ajouterRoues(g, [[1.5, true], [-1.5, false]], 0.95, 0.42, 0.32), yCapot: 1.65 };
-  }
-
-  // La voiture basse : toute plate, très près du sol, avec un long capot.
-  function basse(k1, k2) {
-    const p = { L: 4.6, W: 1.95, r: 0.34, xAv: 1.45, xAr: -1.35, g: 0.1, hNez: 0.4, rondNez: 0.2, hCapot: 0.58, hCeinture: 0.72, hCoffre: 0.8,
-      hToit: 1.05, xPareBrise: 0.55, xToitAv: -0.25, xToitAr: -0.9, xLunette: -1.75, Wtoit: 1.35 };
-    const g = carrosserie(p, k1, k2);
-    g.add(boite(0.3, 0.04, 1.7, peinture(k2), -2.15, 0.95, 0));
-    for (const z of [-0.6, 0.6]) g.add(boite(0.06, 0.18, 0.06, peinture(k2), -2.15, 0.85, z));
-    for (const z of [-1, 1]) g.add(boite(1.0, 0.2, 0.05, M.noir, -0.6, 0.45, z * 0.98)); // les prises d'air
-    return { g, roues: ajouterRoues(g, [[1.45, true], [-1.35, false]], 0.9, 0.34, 0.3), yCapot: 0.95 };
-  }
-
-  // La camionnette : une cabine devant, une grande caisse fermée derrière.
-  function camionnette(k1, k2) {
-    const p = { L: 5.0, W: 1.98, r: 0.38, xAv: 1.7, xAr: -1.6, g: 0.3, hNez: 0.9, rondNez: 0.3, hCapot: 1.1, hCeinture: 1.2, hCoffre: 1.2,
-      hToit: 2.3, xPareBrise: 1.6, xToitAv: 1.0, xToitAr: -2.45, xLunette: -2.5, Wtoit: 1.9 };
-    const g = carrosserie(p, k1, k2);
-    // La grande caisse (sans fenêtres) recouvre l'arrière de la cabine vitrée.
-    g.add(extruder([[0.55, 1.15, 0.05], [0.55, 2.35, 0.1], [-2.5, 2.35, 0.15], [-2.5, 1.15, 0.05]], 1.96, peinture(k1), 0.06));
-    // Une bande de couleur 2 sur les côtés (le logo de la société de livraison !).
-    for (const z of [-1, 1]) g.add(boite(2.6, 0.35, 0.02, peinture(k2), -1.0, 1.65, z * 0.99));
-    return { g, roues: ajouterRoues(g, [[1.7, true], [-1.6, false]], 0.92, 0.38, 0.3), yCapot: 1.8 };
-  }
 
   // Le camion : une cabine haute, un grand caisson, et 6 roues.
   function camion(k1, k2) {
@@ -474,26 +539,6 @@ Circuit.Modeles = (function () {
       g.add(phare);
     }
     return { g, roues: ajouterRoues(g, [[1.3, true], [-1.3, false]], 0.9, 0.36, 0.28), yCapot: 1.3 };
-  }
-
-  // Le quad : un petit engin à 4 grosses roues, avec un pilote assis dessus et un guidon.
-  function quad(k1, k2) {
-    const g = new THREE.Group();
-    g.add(extruder([[1.1, 0.55, 0.1], [0.95, 0.85, 0.2], [0.3, 0.85, 0.1], [-0.2, 0.95, 0.1], [-1.0, 0.95, 0.15], [-1.1, 0.55, 0.1]], 0.9, peinture(k1), 0.08));
-    for (const x of [0.85, -0.8]) g.add(boite(0.75, 0.06, 1.35, peinture(k1), x, 0.98, 0)); // les garde-boue
-    g.add(boite(0.7, 0.18, 0.5, M.siege, -0.35, 1.05, 0)); // la selle
-    g.add(boite(0.4, 0.35, 0.6, M.noir, 0.0, 0.5, 0)); // le moteur
-    g.add(tube([0.45, 0.95, 0], [0.35, 1.3, 0], 0.04, M.noir));
-    g.add(tube([0.35, 1.3, -0.4], [0.35, 1.3, 0.4], 0.035, M.noir)); // le guidon
-    g.add(boite(0.06, 0.12, 0.5, M.phare, 1.12, 0.75, 0));
-    // Le pilote, assis, les mains sur le guidon.
-    const pilote = personnage();
-    pilote.g.scale.setScalar(0.9);
-    pilote.g.position.set(-0.4, 0.15, 0);
-    for (const j of pilote.jambes) j.rotation.z = 1.25;
-    for (const b of pilote.bras) b.rotation.z = 1.0;
-    g.add(pilote.g);
-    return { g, roues: ajouterRoues(g, [[0.85, true], [-0.8, false]], 0.62, 0.36, 0.34), yCapot: 1.9 };
   }
 
   // Le taxi : une berline jaune avec son panneau « TAXI » sur le toit et un damier sur les côtés.
@@ -575,37 +620,6 @@ Circuit.Modeles = (function () {
   }
 
   // ---------------------------------------------------------------- étape 41 : la moto (sur les méga-rampes)
-
-  // La moto : un cadre, un réservoir, une selle, un guidon, deux roues… et un pilote penché en avant.
-  function moto(k1, k2) {
-    const g = new THREE.Group();
-    g.add(extruder([[0.9, 0.75, 0.1], [0.75, 1.05, 0.15], [0.1, 1.05, 0.1], [-0.2, 0.95, 0.1], [-0.6, 0.6, 0.1], [0.4, 0.45, 0.1]], 0.34, peinture(k1), 0.06)); // réservoir et carénage
-    g.add(extruder([[1.15, 0.75, 0.05], [1.05, 1.25, 0.15], [0.85, 1.2, 0.05], [0.8, 0.8, 0.05]], 0.5, peinture(k1), 0.05)); // le nez
-    g.add(boite(0.55, 0.12, 0.3, M.siege, -0.3, 1.02, 0)); // la selle
-    g.add(boite(0.5, 0.3, 0.3, M.chrome, 0.15, 0.5, 0)); // le moteur
-    g.add(tube([0.85, 0.35, 0], [1.0, 1.15, 0], 0.04, M.chrome)); // la fourche
-    g.add(tube([-0.85, 0.35, 0], [-0.1, 0.6, 0], 0.04, M.noir)); // le bras arrière
-    g.add(tube([0.95, 1.2, -0.35], [0.95, 1.2, 0.35], 0.03, M.noir)); // le guidon
-    g.add(boite(0.06, 0.12, 0.18, M.phare, 1.17, 1.0, 0));
-    g.add(boite(0.06, 0.08, 0.14, M.feu, -0.7, 1.0, 0));
-    // Le pilote, penché sur le guidon.
-    const pilote = personnage();
-    pilote.g.scale.setScalar(0.85);
-    pilote.g.position.set(-0.35, 0.05, 0);
-    pilote.g.rotation.z = -0.45;
-    for (const j of pilote.jambes) j.rotation.z = 1.1;
-    for (const b of pilote.bras) b.rotation.z = 1.3;
-    g.add(pilote.g);
-    // Deux roues (une devant qui braque, une derrière), centrées sur la moto.
-    const roues = [];
-    for (const [x, avant] of [[0.85, true], [-0.85, false]]) {
-      const r = roue(0.35, 0.16);
-      r.pivot.position.set(x, 0.35, 0);
-      g.add(r.pivot);
-      roues.push(Object.assign(r, { avant }));
-    }
-    return { g, roues, yCapot: 1.5 };
-  }
 
   // ---------------------------------------------------------------- étape 42 : ce qui vole (garé à l'aéroport)
   // On les voit à l'aéroport dès l'étape 42 ; on les pilotera à l'étape 44. Tous construits « nez vers x+ ».
@@ -849,7 +863,11 @@ Circuit.Modeles = (function () {
     return { g, jambes, bras, casquette, visiere, lunettes };
   }
 
-  const FABRIQUES = { classique, taureau, fleche, fusee, f1, quatre, pickup, buggy, monster, citadine, suv, basse, camionnette, camion, rallye, quad, taxi, police, kart, moto, avionDeLigne, petitAvion, helico, avionChasse };
+  const FABRIQUES = { classique, f1, quatre, pickup, buggy, camion, rallye, taxi, police, kart, avionDeLigne, petitAvion, helico, avionChasse };
+  // Étape 49 : les vraies voitures sont dans affichage/voitures-reelles.js : elles s'ajoutent ici.
+  function ajouter(fabriques) {
+    Object.assign(FABRIQUES, fabriques);
+  }
 
   // Fabrique une voiture. Renvoie { g (le groupe Three.js), roues (pour les faire tourner), yCapot (pour la caméra),
   // et pour la police : gyro (les 2 lampes du gyrophare) }.
@@ -858,5 +876,7 @@ Circuit.Modeles = (function () {
     return FABRIQUES[modele](couleur1, couleur2);
   }
 
-  return { fabriquer, materiaux, personnage };
+  // Les outils du carrossier, prêtés à affichage/voitures-reelles.js (étape 49).
+  const outils = { M, materiaux, peinture, forme, extruder, passage, boite, cylindre, tube, roue, carrosserie, ajouterRoues, etiquette, personnage, galber, bord, bout, largeurIci };
+  return { fabriquer, materiaux, personnage, ajouter, outils };
 })();

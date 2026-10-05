@@ -69,10 +69,51 @@ Circuit.Textures = (function () {
       }
     });
 
+  // (Étape 50 : 512 points de côté, avec des fissures, des « rustines » de goudron plus neuf et des taches d'huile.)
   const goudron = () =>
-    texture("goudron", 256, (ctx, t) => {
-      bruit(ctx, t, "#45474c", 0.3, 14000, 1.5);
-      bruit2(ctx, t, 400, "rgba(20,20,22,.35)", 3); // quelques taches plus sombres
+    texture("goudron", 512, (ctx, t) => {
+      bruit(ctx, t, "#45474c", 0.3, 50000, 1.5);
+      bruit(ctx, t, "rgba(0,0,0,0)", 0.35, 6000, 2.5); // les petits cailloux du goudron
+      bruit2(ctx, t, 500, "rgba(20,20,22,.3)", 4); // des taches plus sombres
+      // des rustines : des rectangles de goudron plus neuf (plus foncé), là où on a réparé la route
+      for (let i = 0; i < 4; i++) {
+        const x = hasard() * t * 0.8, y = hasard() * t * 0.8, l = 30 + hasard() * 80, h = 20 + hasard() * 50;
+        ctx.fillStyle = "rgba(25,26,30,.45)";
+        ctx.fillRect(x, y, l, h);
+        ctx.strokeStyle = "rgba(15,15,18,.6)";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(x, y, l, h);
+      }
+      // des taches d'huile (des ronds sombres et flous)
+      for (let i = 0; i < 6; i++) {
+        const x = hasard() * t, y = hasard() * t, r = 6 + hasard() * 16;
+        const d = ctx.createRadialGradient(x, y, 0, x, y, r);
+        d.addColorStop(0, "rgba(10,10,14,.45)");
+        d.addColorStop(1, "rgba(10,10,14,0)");
+        ctx.fillStyle = d;
+        ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+      }
+      // des fissures : des lignes brisées qui se ramifient
+      for (let i = 0; i < 9; i++) {
+        let x = hasard() * t, y = hasard() * t, angle = hasard() * Math.PI * 2;
+        ctx.strokeStyle = "rgba(12,12,14,.75)";
+        ctx.lineWidth = 0.8 + hasard();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        const pas = 10 + Math.floor(hasard() * 18);
+        for (let k = 0; k < pas; k++) {
+          angle += (hasard() - 0.5) * 1.2;
+          x += Math.cos(angle) * 5;
+          y += Math.sin(angle) * 5;
+          ctx.lineTo(x, y);
+          if (hasard() < 0.12) { // une branche
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + Math.cos(angle + 1.2) * 12, y + Math.sin(angle + 1.2) * 12);
+            ctx.moveTo(x, y);
+          }
+        }
+        ctx.stroke();
+      }
     });
 
   function bruit2(ctx, t, nombre, couleur, rayon) {
@@ -171,42 +212,147 @@ Circuit.Textures = (function () {
       ctx.fillRect(0, 0, t, t / 2);
     });
 
-  // Étape 39 : les façades des immeubles. Un « carreau » = un morceau de mur avec une fenêtre ;
-  // Three.js le répète sur toute la façade (une fenêtre tous les 4 m, un étage tous les 3,5 m).
+  // Étape 39 : les façades des immeubles. Étape 50 : un « carreau » = 4 fenêtres × 4 étages (16 m × 14 m),
+  // toutes un peu différentes (rideaux, stores, plantes, appui de fenêtre). Three.js répète ce carreau sur la façade.
+  // Et une deuxième image, les FENÊTRES ALLUMÉES : noire, sauf les fenêtres où il y a de la lumière. Elle sert de
+  // « lumière émise » : quand il fait sombre (orage, pluie…), on voit les fenêtres allumées briller.
   const STYLES_FACADE = [
     { mur: "#c9b79a", fenetre: "#4b6a8a", cadre: "#f2efe6" }, // pierre beige
     { mur: "#9a4b3a", fenetre: "#3d566e", cadre: "#e8e0d0" }, // brique
     { mur: "#8f979f", fenetre: "#5c7c99", cadre: "#c5ccd2" }, // béton gris
     { mur: "#2d4a63", fenetre: "#7fb2d9", cadre: "#1e3346" }, // tour de verre
   ];
+  const FENETRES = 4; // fenêtres par côté du carreau
+  // Pour chaque fenêtre du carreau : allumée ? quel décor ? (le même tirage pour l'image du jour et celle des lumières)
+  const plansFenetres = {};
+  function planFenetres(style) {
+    if (plansFenetres[style]) return plansFenetres[style];
+    const plan = [];
+    for (let k = 0; k < FENETRES * FENETRES; k++) {
+      plan.push({ allumee: hasard() < 0.38, decor: Math.floor(hasard() * 4), teinte: hasard() < 0.8 ? "#ffd690" : "#a8c8ff", store: hasard() });
+    }
+    return (plansFenetres[style] = plan);
+  }
   const facade = (style) =>
-    texture("facade" + style, 128, (ctx, t) => {
-      const st = STYLES_FACADE[style];
-      bruit(ctx, t, st.mur, 0.12, 1500, 2);
-      ctx.fillStyle = st.cadre;
-      ctx.fillRect(t * 0.18, t * 0.2, t * 0.64, t * 0.55);
-      // la vitre, avec un reflet en dégradé
-      const reflet = ctx.createLinearGradient(0, t * 0.24, t, t * 0.7);
-      reflet.addColorStop(0, st.fenetre);
-      reflet.addColorStop(0.5, "#cfe3f2");
-      reflet.addColorStop(1, st.fenetre);
-      ctx.fillStyle = reflet;
-      ctx.fillRect(t * 0.22, t * 0.24, t * 0.56, t * 0.47);
-      ctx.fillStyle = st.cadre;
-      ctx.fillRect(t * 0.49, t * 0.24, t * 0.02, t * 0.47);
+    texture("facade" + style, 512, (ctx, t) => {
+      const st = STYLES_FACADE[style], plan = planFenetres(style), c = t / FENETRES;
+      bruit(ctx, t, st.mur, 0.12, 12000, 2);
+      if (style === 1) { // les rangées de briques
+        ctx.strokeStyle = "rgba(60,25,20,.35)";
+        ctx.lineWidth = 1;
+        for (let y = 0; y < t; y += 6) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(t, y);
+          ctx.stroke();
+          for (let x = (y / 6) % 2 ? 0 : 7; x < t; x += 14) {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x, y + 6);
+            ctx.stroke();
+          }
+        }
+      }
+      // le bandeau entre les étages
+      ctx.fillStyle = "rgba(0,0,0,.12)";
+      for (let j = 0; j < FENETRES; j++) ctx.fillRect(0, j * c + c * 0.9, t, c * 0.04);
+      plan.forEach((f, k) => {
+        const x = (k % FENETRES) * c, y = Math.floor(k / FENETRES) * c;
+        if (style === 3) { // la tour de verre : de grandes vitres de tout le carreau
+          ctx.fillStyle = st.cadre;
+          ctx.fillRect(x, y, c, c);
+          const r = ctx.createLinearGradient(x, y, x + c, y + c);
+          r.addColorStop(0, st.fenetre);
+          r.addColorStop(0.5, "#cfe3f2");
+          r.addColorStop(1, st.fenetre);
+          ctx.fillStyle = r;
+          ctx.fillRect(x + 3, y + 3, c - 6, c - 6);
+          return;
+        }
+        ctx.fillStyle = st.cadre;
+        ctx.fillRect(x + c * 0.18, y + c * 0.18, c * 0.64, c * 0.58);
+        const vx = x + c * 0.22, vy = y + c * 0.22, vl = c * 0.56, vh = c * 0.5;
+        const r = ctx.createLinearGradient(vx, vy, vx + vl, vy + vh);
+        r.addColorStop(0, st.fenetre);
+        r.addColorStop(0.5, "#cfe3f2");
+        r.addColorStop(1, st.fenetre);
+        ctx.fillStyle = r;
+        ctx.fillRect(vx, vy, vl, vh);
+        // derrière la vitre : des rideaux, un store à moitié baissé, ou une plante
+        if (f.decor === 1) {
+          ctx.fillStyle = "rgba(230,220,200,.75)";
+          ctx.fillRect(vx, vy, vl * 0.22, vh);
+          ctx.fillRect(vx + vl * 0.78, vy, vl * 0.22, vh);
+        } else if (f.decor === 2) {
+          ctx.fillStyle = "rgba(200,195,185,.85)";
+          ctx.fillRect(vx, vy, vl, vh * (0.2 + f.store * 0.6));
+        } else if (f.decor === 3) {
+          ctx.fillStyle = "rgba(50,110,45,.9)";
+          ctx.beginPath();
+          ctx.arc(vx + vl * 0.3, vy + vh * 0.8, vh * 0.25, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.fillStyle = st.cadre; // le montant du milieu
+        ctx.fillRect(vx + vl / 2 - 1.5, vy, 3, vh);
+        ctx.fillStyle = "rgba(0,0,0,.25)"; // l'appui de fenêtre (et son ombre)
+        ctx.fillRect(x + c * 0.15, y + c * 0.76, c * 0.7, c * 0.05);
+        ctx.fillStyle = "rgba(255,255,255,.35)";
+        ctx.fillRect(x + c * 0.15, y + c * 0.76, c * 0.7, c * 0.015);
+      });
+    });
+  const facadeLumiere = (style) =>
+    texture("facade-lumiere" + style, 256, (ctx, t) => {
+      const plan = planFenetres(style), c = t / FENETRES;
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, t, t);
+      plan.forEach((f, k) => {
+        if (!f.allumee) return;
+        const x = (k % FENETRES) * c, y = Math.floor(k / FENETRES) * c;
+        ctx.fillStyle = f.teinte;
+        if (style === 3) ctx.fillRect(x + 3, y + 3, c - 6, c - 6);
+        else ctx.fillRect(x + c * 0.22, y + c * 0.22 + (f.decor === 2 ? c * 0.5 * (0.2 + f.store * 0.6) : 0), c * 0.56, c * 0.5 * (f.decor === 2 ? 0.8 - f.store * 0.6 : 1));
+      });
     });
 
+  // (Étape 50 : de vraies dalles, chacune un peu plus claire ou plus foncée, avec des joints et quelques fissures.)
   const trottoir = () =>
-    texture("trottoir", 128, (ctx, t) => {
-      bruit(ctx, t, "#b4b2ac", 0.15, 3000, 2);
-      ctx.strokeStyle = "rgba(90,90,90,.5)";
-      ctx.lineWidth = 2;
-      for (let k = 0; k <= t; k += 32) {
+    texture("trottoir", 256, (ctx, t) => {
+      const n = 4, d = t / n;
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+          const c = 168 + Math.floor((hasard() - 0.5) * 26);
+          ctx.fillStyle = "rgb(" + c + "," + (c - 2) + "," + (c - 7) + ")";
+          ctx.fillRect(i * d, j * d, d, d);
+        }
+      }
+      bruit(ctx, t, "rgba(0,0,0,0)", 0.18, 9000, 2);
+      ctx.strokeStyle = "rgba(70,70,70,.65)";
+      ctx.lineWidth = 3;
+      for (let k = 0; k <= t; k += d) {
         ctx.beginPath();
         ctx.moveTo(k, 0);
         ctx.lineTo(k, t);
         ctx.moveTo(0, k);
         ctx.lineTo(t, k);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = "rgba(255,255,255,.18)"; // le bord éclairé de chaque dalle
+      ctx.lineWidth = 1.5;
+      for (let k = 2; k <= t; k += d) {
+        ctx.beginPath();
+        ctx.moveTo(k, 0);
+        ctx.lineTo(k, t);
+        ctx.moveTo(0, k);
+        ctx.lineTo(t, k);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = "rgba(60,60,60,.5)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 3; i++) {
+        let x = hasard() * t, y = hasard() * t;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        for (let k = 0; k < 6; k++) ctx.lineTo((x += (hasard() - 0.5) * 14), (y += (hasard() - 0.5) * 14));
         ctx.stroke();
       }
     });
@@ -311,5 +457,5 @@ Circuit.Textures = (function () {
 
   // La fonction `bruit` remplit la toile d'une couleur : avec une couleur transparente, elle ne fait
   // qu'ajouter des grains par-dessus ce qui est déjà peint.
-  return { herbe, goudron, terre, beton, bordure, damier, carton, tremplin, planches, rail, facade, trottoir, toit, nitro, danger, bois, nuages, mer, sable };
+  return { herbe, goudron, terre, beton, bordure, damier, carton, tremplin, planches, rail, facade, trottoir, toit, facadeLumiere, nitro, danger, bois, nuages, mer, sable };
 })();

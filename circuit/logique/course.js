@@ -159,6 +159,7 @@ Circuit.Course = (function () {
   function etape(monde, dt, intentions) {
     monde.temps += dt;
     Circuit.Meteo.etape(dt); // étape 47 : la météo change toute seule
+    if (monde.voiture) Circuit.Ressorts.etape(monde.voiture, dt); // étape 49 : les ressorts du monster truck
     const adv = monde.adversaire;
     // Étape 40 : H allume ou éteint la sirène (et le gyrophare) de la voiture de police.
     if (intentions.sirene) {
