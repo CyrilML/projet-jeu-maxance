@@ -54,6 +54,7 @@ Circuit.SousLeCapot = (function () {
     piece: (d) => "🪙 Pièce n° " + d.numero + " ramassée" + (d.ou ? " (" + d.ou + ")" : " (à " + d.s + " m du départ)") + " : " + d.total + " trouvées",
     ville: (d) => "🏙️ Balade en ville : " + d.pieces + " pièces cachées, " + d.circulation + " voitures qui circulent, " + d.garees + " véhicules garés" + (d.aeroports ? ", " + d.aeroports + " aéroports, " + d.magasins + " magasins" : ""),
     lieu: (d) => "📍 Tu arrives sur " + d.ou,
+    ressorts: (d) => "🌀 Boing ! Les ressorts encaissent un choc de " + virgule(d.choc, 1) + " m/s : la caisse s'écrase, puis rebondit",
     meteo: (d) => d.icone + " Météo : " + d.nom + " (adhérence " + Math.round(d.adherence * 100) + " %, vent " + d.vent + " m/s)",
     eclair: (d) => "⚡ Éclair à " + d.distance + " m : le tonnerre arrive " + (d.distance / 340).toFixed(1).replace(".", ",") + " s plus tard (le son va à 340 m/s)",
     etoiles: (d) => (d.etoiles > d.avant ? "🚨 " : "🙈 ") + "Police : " + "⭐".repeat(d.etoiles) + (d.etoiles ? "" : "aucune étoile") + " (" + d.raison + ")",
@@ -168,7 +169,10 @@ Circuit.SousLeCapot = (function () {
       ["pédale", v.pedale],
       ["volant", virgule(v.volant, 2) + (Math.abs(v.volant) < 0.05 ? " (tout droit)" : v.volant < 0 ? " (à gauche)" : " (à droite)")],
       ["distance parcourue", Math.round(v.distance) + " m"],
-    ];
+    ].concat(v.suspension ? [
+      ["ressorts (étape 49)", "écrasés de " + Math.round(-v.suspension.ecrase * 100) + " cm (négatif = étirés), la caisse va à " + virgule(v.suspension.vitesse, 2) + " m/s"],
+      ["la règle du ressort", "poussée = −" + Circuit.CONFIG.ressorts.raideur + " × écrasement − " + Circuit.CONFIG.ressorts.amortissement + " × vitesse"],
+    ] : []);
     let lignes;
     if (monde.carte === "ville") {
       // Étape 39 : la ville.

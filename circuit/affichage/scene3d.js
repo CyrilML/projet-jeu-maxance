@@ -429,6 +429,18 @@ Circuit.Scene3D = (function () {
     if (objet.rotor) objet.rotor.rotation.y = v.rotationRoues || 0;
     if (objet.rotorArriere) objet.rotorArriere.rotation.z = (v.rotationRoues || 0) * 1.7;
     if (objet.helice) objet.helice.rotation.x = (v.rotationRoues || 0) * 3;
+    // Étape 49 : les ressorts du monster truck. La caisse monte et descend (logique/ressorts.js), les ressorts s'étirent.
+    if (objet.caisse) {
+      const ecrase = v.suspension ? v.suspension.ecrase : 0;
+      objet.caisse.position.y = ecrase;
+      for (const r of objet.ressorts) r.scale.y = Math.max(0.05, r.userData.base + ecrase);
+    }
+    // Étape 49 : les ressorts du monster truck. La caisse monte et descend (logique/ressorts.js), les ressorts s'étirent.
+    if (objet.caisse) {
+      const ecrase = v.suspension ? v.suspension.ecrase : 0;
+      objet.caisse.position.y = ecrase;
+      for (const r of objet.ressorts) r.scale.y = Math.max(0.05, r.userData.base + ecrase);
+    }
     for (const r of objet.roues) {
       r.roue.rotation.z = -v.rotationRoues; // la roue roule
       r.pivot.rotation.y = r.avant ? -v.volant * C.voiture.angleRoues : 0; // les roues avant braquent

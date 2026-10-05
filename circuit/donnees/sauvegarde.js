@@ -24,6 +24,8 @@
 //   9 (étape 43) : les petits boulots : combien de tâches réussies pour chacun, et les pièces gagnées en travaillant.
 //  10 (étape 44) : les vols (décollages, vols de ligne, crashs) et les tirs (cibles touchées, voitures explosées).
 //  11 (étape 45) : la police : le plus d'étoiles atteint, combien de fois attrapé, combien de fois semée.
+//  12 (étape 49) : les voitures « style » deviennent de vraies voitures : le Taureau → la Porsche 911, la Flèche → la
+//      Lamborghini Aventador, la Fusée → la Bugatti Chiron (même prix : on garde ce qu'on a acheté).
 //
 // Les pièces sont comptées dès qu'on les ramasse, mais écrites dans le tiroir à la fin de la course
 // (ou si on recommence, ou si on ferme la page) : écrire 50 fois par course, ce serait du gaspillage.
@@ -32,7 +34,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.Sauvegarde = (function () {
   const CLE = "circuit-maxance:sauvegarde";
-  const VERSION = 11;
+  const VERSION = 12;
   const radio = Circuit.Evenements;
 
   function vide() {
@@ -140,6 +142,16 @@ Circuit.Sauvegarde = (function () {
     if ((anciennes.version || 1) < 11) {
       // Version 10 → 11 : la police arrive. Jamais poursuivi pour l'instant.
       d.police = { etoilesMax: 0, arrestations: 0, semee: 0 };
+    }
+    if ((anciennes.version || 1) < 12) {
+      // Version 11 → 12 : les nouveaux noms des voitures du circuit. Une voiture achetée reste achetée !
+      const NOUVEAU = { taureau: "porsche911", fleche: "aventador", fusee: "chiron" };
+      const renommer = (id) => NOUVEAU[id] || id;
+      d.voituresAchetees = (d.voituresAchetees || []).map(renommer);
+      for (const carte of Object.keys(d.voituresChoisies || {})) d.voituresChoisies[carte] = renommer(d.voituresChoisies[carte]);
+      const peintures = {};
+      for (const [id, p] of Object.entries(d.peintures || {})) peintures[renommer(id)] = p;
+      d.peintures = peintures;
     }
     d.version = VERSION;
     return d;
