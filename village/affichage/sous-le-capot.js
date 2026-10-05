@@ -43,9 +43,9 @@ Village.SousLeCapot = (function () {
     // Étape 3
     "choix-outil": (d) => (d.outil === "route" ? "🛤️ Outil route : touche le départ, puis l'arrivée" : d.outil === "demolir" ? "🧹 Outil démolir : touche une route ou un bâtiment" : "↩️ Outil rangé"),
     "route-depart": (d) => "🚩 Départ de la route en (" + d.colonne + ", " + d.ligne + ")",
-    "route-construite": (d) => "🛤️ Route construite : " + d.cases + " case(s), dont " + d.nouvelles + " nouvelle(s) → " + d.cout + " 🪨 · " + d.total + " cases de route en tout",
+    "route-construite": (d) => "🛤️ Chemin tracé : " + d.cases + " case(s), dont " + d.nouvelles + " nouvelle(s) → " + (d.cout ? d.cout + " 🪨" : "gratuit (chemin de terre)") + " · " + d.total + " cases de chemin en tout",
     "route-impossible": (d) => "🚫 Route impossible : " + d.raison,
-    "route-demolie": (d) => "🧹 Route démolie en (" + d.colonne + ", " + d.ligne + ") : 1 🪨 rendue",
+    "route-demolie": (d) => "🧹 Chemin démoli en (" + d.colonne + ", " + d.ligne + ")" + (d.rendu ? " : " + d.rendu + " 🪨 rendue(s)" : ""),
     "batiment-demoli": (d) => "🧹 " + d.nom + " n° " + d.numero + " démoli(e)",
     "demolition-impossible": (d) => "🚫 " + d.raison,
     "batiment-relie": (d) => "✅ " + d.nom + " n° " + d.numero + " est relié(e) à l'entrepôt",
@@ -58,11 +58,13 @@ Village.SousLeCapot = (function () {
     // Étape 4
     saison: (d) => d.emoji + " Nouvelle saison : " + d.nom + " (année " + d.annee + ")" + (d.hiver ? " · les lacs gèlent, rien ne pousse, aucun animal ne naît" : ""),
     "poisson-peche": (d) => "🎣 " + ({ sardine: "Une sardine pêchée", truite: "Une truite pêchée", thon: "Un thon pêché" }[d.espece] || "Un poisson pêché") + " en (" + d.colonne + ", " + d.ligne + ") : " + d.quantite + " 🐟" + (d.glace ? " · par un trou dans la glace ❄️" : ""),
-    "gibier-chasse": (d) => "🏹 " + (d.sorte === "cerf" ? "Cerf" : "Lapin") + " chassé en (" + d.colonne + ", " + d.ligne + ") : " + Village.CONFIG.prises[d.sorte] + " 🍖" + (d.neige ? " dans la neige ❄️" : "") + " · il reste " + d.animaux + " animaux",
-    "animal-ne": (d) => (d.sorte === "cerf" ? "🦌 Un faon" : "🐇 Un lapereau") + " est né en (" + d.colonne + ", " + d.ligne + ") · " + d.total + " animaux",
+    "gibier-chasse": (d) => "🏹 " + Village.Animaux.NOMS[d.sorte].emoji + " " + Village.Animaux.NOMS[d.sorte].nom.replace(/^une? /, "") + " chassé en (" + d.colonne + ", " + d.ligne + ") : " + Village.CONFIG.prises[d.sorte] + " 🍖" + (d.neige ? " dans la neige ❄️" : "") + " · il reste " + d.animaux + " animaux",
+    "animal-ne": (d) => Village.Animaux.NOMS[d.sorte].emoji + " " + Village.Animaux.NOMS[d.sorte].petit.replace(/^u/, "U") + " est né en (" + d.colonne + ", " + d.ligne + ") · " + d.total + " animaux",
     repas: (d) => "😋 " + d.qui + " mange " + emo(d.quoi) + " à l'entrepôt (il reste " + d.reste + " repas)",
     affame: (d) => "🍽️ " + d.qui + " a faim et il n'y a rien à manger : il travaille 2 fois moins vite !",
     "plus-faim": (d) => "😊 " + d.qui + " a enfin mangé : il retrouve toute sa vitesse",
+    // Étape 6
+    "nouvel-age": (d) => "🎉 " + d.emoji + " NOUVEL ÂGE : " + d.nom + " (n° " + d.numero + ")" + (d.debloque.length ? " · débloqué : " + d.debloque.join(", ") : ""),
     // Étape 5
     "deplacement-choisi": (d) => "↔️ Déplacer : " + d.nom + " n° " + d.numero + ". Choisis sa nouvelle place",
     "deplacement-impossible": (d) => "🚫 Déplacement impossible (" + d.nom + ") : " + d.raison,
@@ -130,6 +132,10 @@ Village.SousLeCapot = (function () {
     h += ligne("rochers · montagnes", k.compte.rochers + " · " + k.compte.montagnes);
     h += ligne("filons ⚫ charbon · 🟠 fer · 🟡 or", k.compte.charbon + " · " + k.compte.fer + " · " + k.compte.or);
     h += ligne("place du village", "(" + k.village.colonne + ", " + k.village.ligne + ")");
+    const ag = Village.Ages.actuel(monde), objs = Village.Ages.objectifs(monde);
+    h += groupe("⏳ L'âge du village");
+    h += ligne("âge", ag.emoji + " " + ag.nom + " (n° " + (monde.age || 0) + ")");
+    for (const o of objs || []) h += ligne((o.fait ? "✅ " : "⬜ ") + o.texte, Math.min(o.valeur, o.cible) + " / " + o.cible);
     const sa = monde.saison;
     if (sa) {
       h += groupe("🗓️ Les saisons (une année = " + Village.CONFIG.saisons.dureeAnnee + " s)");
@@ -145,7 +151,7 @@ Village.SousLeCapot = (function () {
     for (const p of monde.porteurs) if (!p.parti) { habitants++; if (p.affame) affames++; }
     h += ligne("habitants · affamés · partis", habitants + " · " + affames + " · " + monde.partis);
     h += ligne("repas mangés par minute (environ)", virgule((habitants * 60) / Village.CONFIG.repas.intervalle, 1));
-    h += ligne("🦌 cerfs · 🐇 lapins", monde.animaux.filter((a) => a.sorte === "cerf").length + " · " + monde.animaux.filter((a) => a.sorte === "lapin").length);
+    for (const [sorte, n] of Object.entries(Village.Animaux.NOMS)) h += ligne(n.emoji + " " + n.nom.replace(/^une? /, "") + "s (" + Village.CONFIG.prises[sorte] + " 🍖 chacun)", monde.animaux.filter((a) => a.sorte === sorte).length);
     h += groupe("📦 Le stock de l'entrepôt");
     h += ligne("🪵 troncs · 🟫 planches · 🪨 pierres", monde.stock.troncs + " · " + monde.stock.planches + " · " + monde.stock.pierres);
     const Po = Village.Porteurs;

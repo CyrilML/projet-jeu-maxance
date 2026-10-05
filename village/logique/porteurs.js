@@ -90,7 +90,7 @@ Village.Porteurs = (function () {
     const k = monde.carte, e = entrepot(monde);
     const r = Village.Chemins.chercher(
       k.colonnes, k.lignes, { colonne: e.colonne, ligne: e.ligne },
-      (c, l) => monde.route[l * k.colonnes + c] === 1,
+      (c, l) => monde.route[l * k.colonnes + c] > 0, // terre (1) ou pierre (2)
       (c, l) => c === b.colonne && l === b.ligne,
       400
     );
@@ -104,8 +104,9 @@ Village.Porteurs = (function () {
     else b.enFile[papier.quoi] = Math.max(0, (b.enFile[papier.quoi] || 0) - 1);
   }
 
-  function marcher(p, dt) {
-    let reste = C.porteurs.vitesse * Village.Repas.vitesse(p) * dt; // ventre vide : 2 fois moins vite
+  function marcher(p, dt, monde) {
+    // Ventre vide : 2 fois moins vite. Étape 6 : la vitesse dépend du sol (terre ou pierre).
+    let reste = C.porteurs.vitesse * Village.Repas.vitesse(p) * Village.Routes.vitesseDuSol(monde, p.x, p.y) * dt;
     while (reste > 0 && p.pas < p.chemin.length) {
       const cible = p.chemin[p.pas];
       const dx = cible.x - p.x, dy = cible.y - p.y, d = Math.hypot(dx, dy);
@@ -150,7 +151,7 @@ Village.Porteurs = (function () {
         continue;
       }
 
-      if (!marcher(p, dt)) continue;
+      if (!marcher(p, dt, monde)) continue;
       const papier = p.travail, b = papier.batiment;
       if (p.etat === "aller") {
         // Arrivé au bâtiment

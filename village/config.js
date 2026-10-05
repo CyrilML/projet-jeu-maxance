@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 6,
+  version: 7,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -96,9 +96,17 @@ Village.CONFIG = {
   },
 
   // Étape 3 : les routes et les porteurs
+  // Étape 6 : ✍️ au campement, les routes sont des CHEMINS DE TERRE, gratuits. La route en pierre,
+  // plus rapide, sera débloquée plus tard (un autre âge ou une recherche).
   routes: {
-    cout: { pierres: 1 }, // ✍️ par case de route
+    cout: {}, // gratuit (étape 3 : 1 pierre par case)
     longueurMax: 40, // en cases : on ne trace pas une route plus longue d'un seul coup
+  },
+  // Étape 6 : la vitesse de marche selon le sol (× la vitesse normale)
+  sols: {
+    horsRoute: 0.85, // à travers champs
+    terre: 1, // sur un chemin de terre
+    pierre: 1.6, // sur une route en pierre (plus tard)
   },
   porteurs: {
     nombre: 3, // les porteurs qui habitent l'entrepôt
@@ -109,19 +117,28 @@ Village.CONFIG = {
 
   // Étape 4 : ✍️ une année dure 10 minutes. 4 saisons de 2 min 30 : printemps, été, automne, hiver.
   saisons: {
-    dureeAnnee: 600, // s
+    dureeAnnee: 1200, // s : ✍️ étape 6, 20 minutes (5 min par saison). 10 minutes avant.
   },
 
   // Étape 4 : les repas. Chaque ouvrier et chaque porteur mange 1 poisson ou 1 morceau de viande.
   // Étape 5 : ✍️ c'était trop. Maintenant : 1 repas par saison, pris directement à l'entrepôt (la cantine),
   // et le ventre vide ne bloque plus personne : on travaille juste 2 fois moins vite (ouvriers.lentSiFaim).
   repas: {
-    intervalle: 150, // s entre deux repas : 1 par saison (120 s à l'étape 4)
+    intervalle: 150, // s entre deux repas (2 min 30 ; 120 s à l'étape 4)
     tropFaim: 600, // s le ventre vide avant de quitter le village : une année entière (150 s à l'étape 4)
     retour: 30, // s avant qu'un nouvel habitant arrive, quand il y a de nouveau à manger
   },
 
   // Étape 4 : le gibier (cerfs et lapins) qui se promène dans les forêts.
+  // Étape 6 : chaque espèce a son coin préféré (son HABITAT) :
+  //   forêt (cerf, sanglier), herbe et prairie (lapin), bord de l'eau (canard), rochers (bouquetin).
+  especes: {
+    cerf: { part: 0.3, vitesse: 1, habitat: "foret" },
+    lapin: { part: 0.25, vitesse: 1.4, habitat: "herbe" },
+    sanglier: { part: 0.2, vitesse: 0.9, habitat: "foret" },
+    canard: { part: 0.15, vitesse: 0.7, habitat: "berge" },
+    bouquetin: { part: 0.1, vitesse: 1.1, habitat: "rochers" },
+  },
   animaux: {
     depart: 40, // au début de la partie (24 avant l'étape 5)
     maximum: 70, // (40 avant l'étape 5)
@@ -132,7 +149,7 @@ Village.CONFIG = {
   // Étape 5 : ✍️ combien de nourriture rapporte chaque prise. Un cerf nourrit plus qu'un lapin,
   // un thon plus qu'une sardine. Le thon ne vit qu'en eau profonde (la mer).
   prises: {
-    cerf: 4, lapin: 1, // 🍖
+    cerf: 4, lapin: 1, sanglier: 3, canard: 1, bouquetin: 2, // 🍖 (étape 6 : sanglier, canard, bouquetin)
     sardine: 1, truite: 2, thon: 4, // 🐟
     // Les chances de pêcher chaque poisson : au bord (eau peu profonde) et en eau profonde
     peuProfonde: { sardine: 0.6, truite: 0.4, thon: 0 },
@@ -144,6 +161,19 @@ Village.CONFIG = {
     pierresParRocher: 8, // un rocher donne 8 pierres, puis il disparaît (4 avant l'étape 5)
     pierresGisement: 8, // étape 5 : un gisement découvert par le géologue
   },
+
+  // Étape 6 : ✍️ les ÂGES du village (on ne part plus de « l'âge de pierre »). Chaque âge débloque
+  // des bâtiments. On passe au suivant quand tous les objectifs sont remplis.
+  //   batiments : construits (prêts) en plus de l'entrepôt ; stock : ce qu'il faut dans l'entrepôt ;
+  //   nourriture : 🐟 + 🍖 dans l'entrepôt.
+  ages: [
+    { id: "campement", nom: "Le campement", emoji: "🏕️", debloque: ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur"],
+      objectifs: { batiments: 6, stock: { planches: 40, pierres: 20 }, nourriture: 30 } },
+    { id: "hameau", nom: "Le hameau", emoji: "🛖", debloque: ["geologue"], objectifs: null }, // la suite arrive bientôt
+    { id: "village", nom: "Le village", emoji: "🏡", debloque: [], objectifs: null },
+    { id: "bourg", nom: "Le bourg", emoji: "🏰", debloque: [], objectifs: null },
+    { id: "ville", nom: "La ville", emoji: "🏙️", debloque: [], objectifs: null },
+  ],
 
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 

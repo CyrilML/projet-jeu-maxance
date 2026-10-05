@@ -365,7 +365,7 @@ Village.Peintre = (function () {
           // Le prix, dans une petite bulle
           const f = 1 / Math.min(z, 1.3);
           ctx.font = "bold " + 14 * f + "px 'Trebuchet MS', sans-serif";
-          const texte = tr.cout + " 🪨", lt = ctx.measureText(texte).width + 14 * f;
+          const texte = tr.cout ? tr.cout + " 🪨" : tr.nouvelles + " case(s) · gratuit", lt = ctx.measureText(texte).width + 14 * f;
           ctx.fillStyle = assez ? "rgba(255, 250, 235, .95)" : "rgba(255, 225, 220, .95)";
           ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(m.x - lt / 2, m.y - 40 * f, lt, 22 * f, 8 * f); else ctx.rect(m.x - lt / 2, m.y - 40 * f, lt, 22 * f);
           ctx.fill(); ctx.lineWidth = 2 * f; ctx.strokeStyle = "#5a4220"; ctx.stroke();
@@ -756,12 +756,17 @@ Village.Peintre = (function () {
     }
   }
 
+  // Un poisson qui saute. Étape 6 : ✍️ dans le bon sens ! La tête est devant (vers +x), le ventre clair
+  // en bas, et `angle` suit la direction du saut : le nez monte au début, puis il plonge.
   function poissonSautant(x, y, taille, angle, couleur) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.scale(taille, taille);
-    ctx.beginPath(); ctx.ellipse(0, 0, 6, 2.6, 0, 0, TOUR); ctx.fillStyle = couleur; ctx.fill();
-    ctx.strokeStyle = "#1f3a4a"; ctx.lineWidth = 1 / taille; ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(5.5, 0); ctx.lineTo(9, -3); ctx.lineTo(9, 3); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(-3.5, -0.6, 0.9, 0, TOUR); ctx.fill();
+    ctx.lineWidth = 1 / taille; ctx.strokeStyle = "#1f3a4a";
+    ctx.beginPath(); ctx.moveTo(-5, 0); ctx.lineTo(-9, -3.2); ctx.lineTo(-8, 0); ctx.lineTo(-9, 3.2); ctx.closePath(); ctx.fillStyle = couleur; ctx.fill(); ctx.stroke(); // la queue
+    ctx.beginPath(); ctx.moveTo(-1, -2.4); ctx.lineTo(1.5, -4.5); ctx.lineTo(3, -2.2); ctx.closePath(); ctx.fill(); ctx.stroke(); // la nageoire du dos
+    ctx.beginPath(); ctx.ellipse(0, 0, 6, 2.7, 0, 0, TOUR); ctx.fill(); ctx.stroke(); // le corps
+    ctx.beginPath(); ctx.ellipse(0.5, 1.1, 4.5, 1.2, 0, 0, TOUR); ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.fill(); // le ventre clair
+    ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(3.6, -0.7, 1, 0, TOUR); ctx.fill();
+    ctx.fillStyle = "#1f3a4a"; ctx.beginPath(); ctx.arc(3.8, -0.7, 0.5, 0, TOUR); ctx.fill(); // l'œil
     ctx.restore();
   }
   const POISSONS = { sardine: { taille: 0.8, couleur: "#9fc9e6" }, truite: { taille: 1.15, couleur: "#d7a37a" }, thon: { taille: 1.8, couleur: "#4f6f9a" } };
@@ -803,9 +808,14 @@ Village.Peintre = (function () {
         const m = milieu(e.colonne, e.ligne), d = Iso.versMonde(e.vers.x, e.vers.y, L, Hc), p = Math.min(1, ef.p * 1.6);
         if (ef.p < 0.6) rondsDansLEau(m.x, m.y, ef.p / 0.6);
         if (p < 1) {
-          const x = m.x + (d.x - m.x) * p, y = m.y + (d.y - 14 - m.y) * p - Math.sin(p * Math.PI) * 30;
+          const pos = (q) => ({ x: m.x + (d.x - m.x) * q, y: m.y + (d.y - 14 - m.y) * q - Math.sin(q * Math.PI) * 30 });
+          const a = pos(p), b = pos(Math.min(1, p + 0.02));
           const f = POISSONS[e.espece] || POISSONS.sardine;
-          poissonSautant(x, y, f.taille, (p - 0.5) * 2.5, f.couleur);
+          // Le poisson regarde là où il va : à gauche, on le retourne (sinon il aurait le ventre en l'air).
+          const versLaGauche = b.x < a.x;
+          ctx.save(); ctx.translate(a.x, a.y); if (versLaGauche) ctx.scale(-1, 1);
+          poissonSautant(0, 0, f.taille, Math.atan2(b.y - a.y, Math.abs(b.x - a.x) || 0.01), f.couleur);
+          ctx.restore();
         }
       } else if (e.sorte === "etincelles") {
         const m = milieu(e.colonne, e.ligne);
@@ -832,7 +842,9 @@ Village.Peintre = (function () {
       if (m.x < vue.x0 || m.x > vue.x1 || m.y < vue.y0 || m.y > vue.y1) continue;
       const espece = ter === T.eauProfonde ? (Village.Hasard.pourCase(cycle, k, 56) < 0.35 ? "thon" : "truite") : (Village.Hasard.pourCase(cycle, k, 56) < 0.6 ? "sardine" : "truite");
       const f = POISSONS[espece], haut = 10 + f.taille * 8;
-      poissonSautant(m.x - 8 + q * 16, m.y - Math.sin(q * Math.PI) * haut, f.taille, (q - 0.5) * 2.2, f.couleur);
+      // L'angle du saut : vers le haut au début, vers le bas à la fin (la pente de la courbe).
+      const angle = Math.atan2(-Math.PI * Math.cos(q * Math.PI) * haut, 16);
+      poissonSautant(m.x - 8 + q * 16, m.y - Math.sin(q * Math.PI) * haut, f.taille, angle, f.couleur);
       if (q < 0.25 || q > 0.8) rondsDansLEau(q < 0.25 ? m.x - 8 : m.x + 8, m.y, q < 0.25 ? q * 4 : (q - 0.8) * 5);
     }
   }

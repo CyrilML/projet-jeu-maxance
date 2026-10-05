@@ -18,7 +18,8 @@ Village.Interface = (function () {
   const L = C.carte.largeurCase, Hc = C.carte.hauteurCase;
   const POLICE = "'Trebuchet MS', sans-serif";
   let zones = [];
-  let menuOuvert = null; // étape 5 : le groupe du menu ouvert ("bois", "pierre", "nourriture", "outils") ou null
+  let menuOuvert = null;
+  let objectifsOuverts = false; // étape 6 : le panneau des objectifs pour passer à l'âge suivant // étape 5 : le groupe du menu ouvert ("bois", "pierre", "nourriture", "outils") ou null
   let message = null; // { texte, jusqua } : un message qui s'affiche quelques secondes
 
   // Les messages importants de la radio s'affichent aussi dans le jeu (sur téléphone, on ne voit pas le journal).
@@ -32,6 +33,7 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("saison", (d) => afficher(d.emoji + " C'est " + (d.nom === "été" ? "l'été" : d.nom === "automne" ? "l'automne" : d.nom === "hiver" ? "l'hiver : les lacs gèlent !" : "le printemps") + (d.nom === "printemps" ? " · année " + d.annee : "")));
   Village.Evenements.ecouter("habitant-part", (d) => afficher("😢 " + d.qui.charAt(0).toUpperCase() + d.qui.slice(1) + " a quitté le village : il avait faim depuis un an !"));
   Village.Evenements.ecouter("habitant-arrive", (d) => afficher("🙋 " + d.qui.charAt(0).toUpperCase() + d.qui.slice(1) + " arrive au village !"));
+  Village.Evenements.ecouter("nouvel-age", (d) => afficher("🎉 " + d.emoji + " Bienvenue au " + d.nom.replace(/^(Le|La) /, "").toLowerCase() + " !" + (d.debloque.length ? " Nouveau : " + d.debloque.join(", ") : "")));
   Village.Evenements.ecouter("deplacement-impossible", (d) => afficher("🚫 " + d.nom + " : " + d.raison));
   Village.Evenements.ecouter("batiment-deplace", (d) => afficher("↔️ " + d.nom + " a déménagé" + (d.relie ? " !" : " : pense à la route !")));
   Village.Evenements.ecouter("gisement-trouve", (d) => afficher("🔍 Le géologue a trouvé un gisement : " + d.pierres + " 🪨 !"));
@@ -65,7 +67,8 @@ Village.Interface = (function () {
       ? g.batiments.map((type) => ({
           action: "construire", valeur: type, emoji: B.TYPES[type].emoji, nom: B.TYPES[type].court, touche: String(B.A_CONSTRUIRE.indexOf(type) + 1),
           cout: Object.entries(B.cout(type)).map(([r, n]) => n + ({ planches: "🟫", pierres: "🪨", troncs: "🪵" }[r])).join(" "),
-          choisi: monde.construction === type, possible: B.assezPour(monde, type),
+          choisi: monde.construction === type, possible: B.assezPour(monde, type) && Village.Ages.debloque(monde, type),
+          verrou: Village.Ages.debloque(monde, type) ? null : C.ages[Village.Ages.ageDe(type)], // étape 6 : pas encore débloqué
         }))
       : g.outils.map((o) => ({ action: "outil", valeur: o.id, emoji: o.emoji, nom: o.nom, touche: o.touche, cout: "", choisi: monde.outil === o.id, possible: true }));
     const lc = petit ? 74 : 84, hc = petit ? 74 : 84, ec = 8;
@@ -79,12 +82,30 @@ Village.Interface = (function () {
       ctx.fill(); ctx.stroke();
       texte(ctx, el.emoji, x + lc / 2, y0 + hc * 0.3, petit ? 24 : 28, null, false, "center");
       texte(ctx, el.nom, x + lc / 2, y0 + hc * 0.62, petit ? 11 : 12, "#3b2614", true, "center");
-      if (el.cout) texte(ctx, el.cout, x + lc / 2, y0 + hc * 0.84, petit ? 10 : 11, el.possible ? "#7a5a30" : "#c0392b", true, "center");
+      if (el.verrou) texte(ctx, "🔒 " + el.verrou.emoji + " " + el.verrou.nom.replace(/^(Le|La) /, ""), x + lc / 2, y0 + hc * 0.84, petit ? 10 : 11, "#8a7a60", true, "center");
+      else if (el.cout) texte(ctx, el.cout, x + lc / 2, y0 + hc * 0.84, petit ? 10 : 11, el.possible ? "#7a5a30" : "#c0392b", true, "center");
       if (!petit) texte(ctx, el.touche, x + 7, y0 + 10, 10, "#a08a6a", true, "left");
       zone(x, y0, lc, hc, el.action, el.valeur);
     });
     zone(x0, y0 - 8, total, hc + 16, "rien"); // toucher entre les cartes ne touche pas la carte du monde
   }
+
+  // Étape 6 : le panneau des objectifs de l'âge
+  function panneauObjectifs(ctx, monde, x, y, l) {
+    const petit = Ec.petit, age = Village.Ages.actuel(monde), prochain = Village.Ages.suivant(monde), obj = Village.Ages.objectifs(monde);
+    const lignes = [];
+    if (obj && prochain) {
+      lignes.push(["Pour passer au " + prochain.nom.replace(/^(Le|La) /, "").toLowerCase() + " " + prochain.emoji + " :", "#3b2614", true]);
+      for (const o of obj) lignes.push([(o.fait ? "✅ " : "⬜ ") + o.texte + " : " + Math.min(o.valeur, o.cible) + " / " + o.cible, o.fait ? "#2e8a3a" : "#5a4220", false]);
+      const nouveaux = prochain.debloque.map((t) => Village.Batiments.TYPES[t].emoji + " " + Village.Batiments.TYPES[t].court).join(", ");
+      if (nouveaux) lignes.push(["Tu débloqueras : " + nouveaux, "#7a5a30", false]);
+    } else lignes.push([age.emoji + " " + age.nom + " : la suite arrive bientôt !", "#3b2614", true]);
+    const h = 16 + lignes.length * (petit ? 18 : 20);
+    bulle(ctx, x, y, l, h);
+    lignes.forEach(([t, c, g], n) => texte(ctx, t, x + 12, y + 16 + n * (petit ? 18 : 20), petit ? 11 : 13, c, g));
+    zone(x, y, l, h, "objectifs");
+  }
+  function basculerObjectifs() { objectifsOuverts = !objectifsOuverts; }
 
   // Ouvrir ou fermer un groupe du menu (appelé par main.js quand on touche un groupe)
   function basculerMenu(id) { menuOuvert = menuOuvert === id ? null : id; }
@@ -109,17 +130,15 @@ Village.Interface = (function () {
     const ressources = [["🪵", s.troncs], ["🟫", s.planches], ["🪨", s.pierres], ["🐟", s.poissons], ["🍖", s.viande]];
     const pas = petit ? 50 : 62, lb = 24 + ressources.length * pas;
     bulle(ctx, 10, 10, lb, petit ? 54 : 62);
-    texte(ctx, "🏘️ Ton village · 🪨 Âge de pierre", 22, petit ? 25 : 28, petit ? 11 : 13, "#7a5a30", true);
+    // Étape 6 : l'âge du village et, à côté, où on en est des objectifs pour passer au suivant.
+    // (La barre de la saison a été enlevée : ✍️ elle ne servait à rien.) Toucher : voir les objectifs.
+    const age = Village.Ages.actuel(monde), prochain = Village.Ages.suivant(monde), obj = Village.Ages.objectifs(monde);
+    let titre = age.emoji + " " + age.nom;
+    if (obj && prochain) titre += " · " + prochain.emoji + " " + obj.filter((x) => x.fait).length + "/" + obj.length + " 🎯";
+    texte(ctx, titre, 22, petit ? 25 : 28, petit ? 11 : 13, "#7a5a30", true);
     ressources.forEach(([emoji, n], k) => texte(ctx, emoji + " " + n, 22 + k * pas, petit ? 47 : 51, petit ? 14 : 17, n <= 0 && k >= 3 ? "#c0392b" : "#3b2614", true));
-    // Étape 4 : la saison, avec une petite barre qui montre où on en est dans la saison
-    const sa = monde.saison, ys = petit ? 70 : 78;
-    if (sa) {
-      const ls = petit ? 150 : 180;
-      bulle(ctx, 10, ys, ls, petit ? 28 : 32);
-      texte(ctx, sa.emoji + " " + sa.nom.charAt(0).toUpperCase() + sa.nom.slice(1) + " · année " + sa.annee, 20, ys + (petit ? 11 : 12), petit ? 11 : 13, "#3b2614", true);
-      ctx.fillStyle = "rgba(90, 66, 32, .2)"; ctx.fillRect(20, ys + (petit ? 19 : 22), ls - 20, 4);
-      ctx.fillStyle = ["#ff8fc0", "#ffc62e", "#e8862e", "#8fd0ff"][sa.numero]; ctx.fillRect(20, ys + (petit ? 19 : 22), (ls - 20) * sa.avancement, 4);
-    }
+    zone(10, 10, lb, petit ? 54 : 62, "objectifs");
+    if (objectifsOuverts) panneauObjectifs(ctx, monde, 10, petit ? 72 : 80, petit ? 250 : 290);
 
     // ---- En haut à droite : plein écran, puis la mini-carte
     const tp = 40;
@@ -135,7 +154,7 @@ Village.Interface = (function () {
       { id: "bois", emoji: "🪵", nom: "Bois", batiments: ["bucheron", "forestier", "scierie"] },
       { id: "pierre", emoji: "🪨", nom: "Pierre", batiments: ["carriere", "geologue"] },
       { id: "nourriture", emoji: "🍖", nom: "Nourriture", batiments: ["pecheur", "chasseur"] },
-      { id: "route", nom: "Route", outil: "route" },
+      { id: "route", nom: "Chemin", outil: "route" },
       { id: "outils", emoji: "🔧", nom: "Outils", outils: [{ id: "deplacer", emoji: "↔️", nom: "Déplacer", touche: "M" }, { id: "demolir", emoji: "🧹", nom: "Démolir", touche: "Suppr" }] },
     ];
     // Le groupe du bâtiment ou de l'outil choisi reste allumé
@@ -172,7 +191,7 @@ Village.Interface = (function () {
     else if (monde.construction) {
       aide = (Village.Entrees.toucheRecente() ? "Touche" : "Clique sur") + " une case pour poser : " + B.TYPES[monde.construction].nom;
     } else if (monde.outil === "route") {
-      aide = monde.routeDepart ? "Maintenant, touche l'arrivée de la route" : "Touche le départ de la route (" + C.routes.cout.pierres + " 🪨 par nouvelle case)";
+      aide = monde.routeDepart ? "Maintenant, touche l'arrivée du chemin" : "Touche le départ du chemin de terre (gratuit)";
     } else if (monde.outil === "demolir") {
       aide = "Touche une route ou un bâtiment à démolir";
     } else if (monde.outil === "deplacer") {
@@ -200,13 +219,13 @@ Village.Interface = (function () {
       const txt = "🍽️ Plus rien à manger : tout le monde travaille 2 fois moins vite ! Pêcheur ou chasseur ?";
       ctx.font = "bold " + (petit ? 11 : 13) + "px " + POLICE;
       // En haut au milieu sur un grand écran ; sous la saison sur un téléphone.
-      const l = Math.min(W - 20, ctx.measureText(txt).width + 24), y = W > 760 ? 60 : petit ? 104 : 118;
+      const l = Math.min(W - 20, ctx.measureText(txt).width + 24), y = W > 760 ? 60 : petit ? 72 : 80;
       bulle(ctx, (W - l) / 2, y, l, 28, "rgba(255, 225, 220, .95)");
       texte(ctx, txt, W / 2, y + 14, petit ? 11 : 13, "#c0392b", true, "center");
     }
 
     // ---- Le panneau du bâtiment touché
-    if (monde.selection) panneauBatiment(ctx, monde, monde.selection, 10, petit ? 104 : 118, petit ? 230 : 270);
+    if (monde.selection && !objectifsOuverts) panneauBatiment(ctx, monde, monde.selection, 10, petit ? 72 : 80, petit ? 230 : 270);
 
     if (options.pause) {
       bulle(ctx, W / 2 - 70, 12, 140, 36);
@@ -222,11 +241,11 @@ Village.Interface = (function () {
     const s = monde.souris;
     if (s) {
       const a = monde.animaux.find((x) => Math.hypot(x.x - s.colonne, x.y - s.ligne) < 0.6);
-      if (a) return a.sorte === "cerf" ? "🦌 Un cerf · donne " + P.cerf + " 🍖 au chasseur" : "🐇 Un lapin · donne " + P.lapin + " 🍖 au chasseur";
+      if (a) { const n = Village.Animaux.NOMS[a.sorte]; return n.emoji + " " + majuscule(n.nom) + " · donne " + P[a.sorte] + " 🍖 au chasseur"; }
     }
     const bat = monde.occupees.get(k.numero);
     if (bat) return B.TYPES[bat.type].emoji + " " + B.TYPES[bat.type].nom + (bat.relie || bat.type === "entrepot" ? "" : " · pas de route jusqu'à l'entrepôt !");
-    if (monde.route[k.numero]) return "Route" + (monde.reseau.has(k.numero) ? "" : " · pas reliée à l'entrepôt");
+    if (monde.route[k.numero]) return (monde.route[k.numero] === 2 ? "Route en pierre" : "Chemin de terre") + (monde.reseau.has(k.numero) ? "" : " · pas relié à l'entrepôt");
     let t = majuscule(k.nomTerrain);
     if (k.terrain === T.eau) t = (monde.saison && monde.saison.hiver ? "Glace (le pêcheur la perce)" : "Eau") + " · sardines (" + P.sardine + " 🐟) et truites (" + P.truite + " 🐟)";
     else if (k.terrain === T.eauProfonde) t = "Eau profonde · sardines, truites et thons (" + P.thon + " 🐟)";
@@ -308,5 +327,5 @@ Village.Interface = (function () {
     zones.push({ x: mx, y: my, l: mw, h: mh, action: "miniCarte", versMonde: (x, y) => ({ x: ((x - mx) / echelle - carte.lignes) * (L / 2), y: ((y - my) / echelle) * Hc }) });
   }
 
-  return { dessiner, zoneSous, basculerMenu, fermerMenu, get menuOuvert() { return menuOuvert; } };
+  return { dessiner, zoneSous, basculerMenu, fermerMenu, basculerObjectifs, get menuOuvert() { return menuOuvert; } };
 })();

@@ -6,6 +6,10 @@
 // (Village.Chemins) trouve le plus court chemin entre les deux, en évitant l'eau, les montagnes,
 // les arbres, les rochers et les bâtiments. Chaque NOUVELLE case de route coûte 1 pierre.
 //
+// Étape 6 : ✍️ au campement, ce sont des chemins de TERRE (valeur 1 dans le tableau), gratuits.
+// Plus tard viendront les routes en PIERRE (valeur 2), plus rapides (voir config.js, « sols »).
+// La fonction `vitesseDuSol` dit à quelle vitesse on marche sur une case.
+//
 // Le RÉSEAU : en partant de l'entrepôt, on suit toutes les routes qui se touchent (encore une tache
 // d'encre !). Un bâtiment est RELIÉ si une route du réseau touche un de ses 4 côtés.
 // Un bâtiment qui n'est pas relié est bloqué : aucun porteur ne peut venir chez lui.
@@ -26,7 +30,8 @@ Village.Routes = (function () {
     return o === O.rien || o === O.fleurs || o === O.buisson;
   }
 
-  function coutDe(n) { return n * C.routes.cout.pierres; }
+  // Étape 6 : au campement, le chemin de terre est gratuit (pas de pierre dans « cout »).
+  function coutDe(n) { return n * (C.routes.cout.pierres || 0); }
 
   // Le chemin que prendrait la route entre deux cases (sans la construire). Sert aussi à l'aperçu.
   //   Le départ ou l'arrivée peuvent être un bâtiment : la route s'arrête alors juste à côté.
@@ -75,10 +80,10 @@ Village.Routes = (function () {
   function demolir(monde, i) {
     if (!monde.route[i]) return false;
     monde.route[i] = 0;
-    monde.stock.pierres += C.routes.cout.pierres; // la pierre est rendue
+    monde.stock.pierres += C.routes.cout.pierres || 0; // si la route avait coûté une pierre, on la rend
     monde.changements++;
     recalculerReseau(monde);
-    radio.emettre("route-demolie", { colonne: i % monde.carte.colonnes, ligne: Math.floor(i / monde.carte.colonnes), total: compter(monde) });
+    radio.emettre("route-demolie", { rendu: C.routes.cout.pierres || 0, colonne: i % monde.carte.colonnes, ligne: Math.floor(i / monde.carte.colonnes), total: compter(monde) });
     return true;
   }
 
@@ -126,5 +131,13 @@ Village.Routes = (function () {
     }
   }
 
-  return { routable, trajet, construire, demolir, recalculerReseau, compter };
+  // À quelle vitesse marche-t-on sur cette case ? (× la vitesse normale)
+  function vitesseDuSol(monde, x, y) {
+    const k = monde.carte, c = Math.floor(x), l = Math.floor(y);
+    if (c < 0 || l < 0 || c >= k.colonnes || l >= k.lignes) return C.sols.horsRoute;
+    const r = monde.route[l * k.colonnes + c];
+    return r === 2 ? C.sols.pierre : r === 1 ? C.sols.terre : C.sols.horsRoute;
+  }
+
+  return { routable, trajet, construire, demolir, recalculerReseau, compter, vitesseDuSol };
 })();

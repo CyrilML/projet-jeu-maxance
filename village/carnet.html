@@ -129,6 +129,7 @@
       <a href="#etape3">Étape 3</a>
       <a href="#etape4">Étape 4</a>
       <a href="#etape5">Étape 5</a>
+      <a href="#etape6">Étape 6</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -528,6 +529,68 @@ couper un arbre : 4 s quand on a mangé, 4 ÷ 0,5 = 8 s le ventre vide</pre>
       <details class="question"><summary>Un carrier affamé taille une pierre. Combien de temps, au lieu de 5 s ?</summary><p>2 fois moins vite : 10 secondes.</p></details>
     </section>
 
+    <section id="etape6">
+      <h2>⏳ Étape 6 : les âges, les chemins de terre et plus d'animaux <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Plus d'« âge de pierre » : ton village grandit par âges, du campement jusqu'à la ville. Les chemins de terre sont gratuits, les saisons prennent leur temps, et la forêt se remplit d'animaux. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/06-ages-chemins-et-animaux.md</code>.</p>
+          <ul>
+            <li>✍️ Des poissons à l'endroit, plus d'animaux.</li>
+            <li>✍️ Des routes en terre gratuites ; la pierre, plus rapide, plus tard.</li>
+            <li>✍️ Des saisons plus longues, sans la barre.</li>
+            <li>✍️ Pas d'« âge de pierre » ; le géologue plus tard.</li>
+            <li>✍️ De vraies planches.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ En haut : « 🏕️ Le campement · 🛖 0/4 🎯 ». Touche-le : les objectifs s'affichent.</li>
+            <li>☐ Le menu 🪨 Pierre : le géologue est 🔒 jusqu'au hameau.</li>
+            <li>☐ Un chemin ne coûte rien (les 🪨 ne bougent pas).</li>
+            <li>☐ Des 🐗 sangliers, 🦆 canards et 🐐 bouquetins (survole-les : combien de 🍖 ?).</li>
+            <li>☐ Les poissons sautent le ventre en bas.</li>
+            <li>☐ Les planches, devant la scierie et sur le dos des porteurs.</li>
+            <li>☐ Remplis les objectifs : « Bienvenue au hameau ! ».</li>
+            <li>Vérifie « version 7 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>⏳ Les âges : une échelle avec des barreaux</h3>
+      <pre style="white-space: pre-wrap">🏕️ campement ──► 🛖 hameau ──► 🏡 village ──► 🏰 bourg ──► 🏙️ ville
+   (départ)       géologue       bientôt…</pre>
+      <p>Chaque âge <strong>débloque</strong> des bâtiments. Pour monter d'un barreau, il faut remplir tous les <strong>objectifs</strong>. Pour le hameau : 6 bâtiments construits, 40 🟫, 20 🪨 et 30 🐟+🍖 dans l'entrepôt. Une fois par seconde, le jeu coche ce qui est fait (<code>logique/ages.js</code>). Quand tout est coché : nouvel âge ! Les objectifs sont rangés comme des <strong>données</strong> dans <code>config.js</code> (<code>ages</code>) : pour en changer, pas besoin de toucher au code.</p>
+
+      <h3>🛤️ La vitesse dépend du sol</h3>
+      <pre style="white-space: pre-wrap">à travers champs   × 0,85
+chemin de terre    × 1      (gratuit, au campement)
+route en pierre    × 1,6    (plus tard)</pre>
+      <p>À chaque pas, l'habitant regarde sur quelle case il marche, et multiplie sa vitesse par le nombre du sol. Dans la mémoire, une case de chemin vaut <code>1</code> et une case de route en pierre vaudra <code>2</code>.</p>
+
+      <h3>🏞️ L'habitat des animaux</h3>
+      <p>Chaque espèce a son coin : le cerf et le sanglier dans la forêt, le lapin dans l'herbe, le canard au bord de l'eau (à 2 cases maximum), le bouquetin dans les rochers. Quand un animal choisit où aller, le jeu vérifie que la case est dans son habitat. Et un petit naît toujours à côté d'un parent de la même espèce.</p>
+
+      <h3>🐟 Un poisson qui regarde où il va</h3>
+      <p>Pendant le saut, le poisson suit une courbe en cloche. Pour qu'il ait l'air de nager dans l'air, on le tourne selon la <strong>pente</strong> de la courbe : vers le haut au début, vers le bas à la fin. Et s'il saute vers la gauche, on le retourne comme une crêpe, sinon il aurait le ventre en l'air !</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Où trouves-tu des bouquetins ? Et des canards ?</li>
+        <li>Sous le capot, regarde « L'âge du village » et ses objectifs cochés un par un.</li>
+        <li>Mesure le temps d'un porteur sur un long chemin. Tu pourras comparer avec la route en pierre plus tard !</li>
+        <li>Dans <code>config.js</code>, trouve <code>ages</code>, <code>sols</code> et <code>especes</code>.</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Une saison dure 5 minutes. Combien de repas un habitant mange-t-il par année ?</summary><p>Une année = 20 minutes, un repas toutes les 2 min 30 : 20 ÷ 2,5 = 8 repas.</p></details>
+      <details class="question"><summary>Le chasseur rapporte 1 sanglier, 2 canards et 1 bouquetin. Combien de 🍖 ?</summary><p>3 + 2 × 1 + 2 = 7 🍖.</p></details>
+      <details class="question"><summary>Un bûcheron marche 10 s à travers champs. Combien de temps sur un chemin de terre ?</summary><p>Il va 1 ÷ 0,85 ≈ 1,18 fois plus vite : environ 8,5 s.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -563,20 +626,26 @@ couper un arbre : 4 s quand on a mangé, 4 ÷ 0,5 = 8 s le ventre vide</pre>
           <p>1 repas par saison, ralentir au lieu de bloquer, pêcheur au bord de l'eau, déplacer, géologue, sardines et thons, cerfs et lapins, arc et flèche, arbres qui tombent, nouveau menu.</p>
           <p class="apprend"><b>Tu apprends :</b> régler l'équilibre d'un jeu, une vitesse qui multiplie, des valeurs tirées au hasard, des effets qui durent après l'événement. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">6</div>
+          <h4>Les âges, les chemins de terre et plus d'animaux <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Du campement à la ville, des objectifs pour passer au hameau, des chemins gratuits, des saisons de 5 minutes, 5 espèces d'animaux, des poissons à l'endroit, de vraies planches.</p>
+          <p class="apprend"><b>Tu apprends :</b> des objectifs rangés comme des données, une vitesse qui dépend du sol, l'habitat des animaux, la pente d'une courbe. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">7</div>
           <h4>Maisons et nouveaux habitants <span class="etiquette">⏭️ prochaine idée</span></h4>
           <p>Construire des maisons pour accueillir plus d'habitants (et plus de porteurs). Peut-être les champs de blé, le moulin et la boulangerie.</p>
           <p class="apprend"><b>Tu apprends :</b> la croissance d'une population, une chaîne plus longue (blé → farine → pain). <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">7</div>
+          <div class="num">8</div>
           <h4>La recherche et l'âge du bronze</h4>
           <p>La hutte du sage fait des recherches ; un arbre des découvertes débloque de nouveaux bâtiments et le passage à l'âge suivant.</p>
           <p class="apprend"><b>Tu apprends :</b> un arbre de dépendances (« pour débloquer B, il faut A »), des règles écrites comme des données. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">8</div>
+          <div class="num">9</div>
           <h4>Charbon, fer et or</h4>
           <p>Carrière de pierre, mines de charbon, de fer et d'or, fonderie, forge, orfèvre : les industries, jusqu'à la Renaissance.</p>
           <p class="apprend"><b>Tu apprends :</b> des chaînes longues, les goulots d'étranglement (le maillon le plus lent décide de tout), des statistiques de production. <b>Durée :</b> plusieurs séances.</p>
@@ -633,6 +702,14 @@ couper un arbre : 4 s quand on a mangé, 4 ÷ 0,5 = 8 s le ventre vide</pre>
         <textarea class="journal" id="village-appris-5" data-cle="village-appris-5" placeholder="Ex. : J'ai appris qu'on règle un jeu en changeant des nombres…"></textarea>
         <label for="village-idees-5"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-5" data-cle="village-idees-5" placeholder="Ex. : Un bateau de pêche pour aller chercher les thons…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 6 · les âges, les chemins de terre et plus d'animaux <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les âges et leurs objectifs (<code>logique/ages.js</code>), les chemins de terre gratuits et la vitesse selon le sol (<code>logique/routes.js</code>), les habitats et les 3 nouvelles espèces (sanglier, canard, bouquetin), des saisons de 5 minutes, des poissons à l'endroit, de vraies planches, la base de données en version 6.</p>
+        <label for="village-appris-6"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-6" data-cle="village-appris-6" placeholder="Ex. : J'ai appris qu'on peut écrire les règles comme des données…"></textarea>
+        <label for="village-idees-6"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-6" data-cle="village-idees-6" placeholder="Ex. : Ce que débloque le village 🏡…"></textarea>
       </div>
     </section>
   </main>

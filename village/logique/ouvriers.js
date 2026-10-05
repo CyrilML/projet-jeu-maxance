@@ -116,8 +116,9 @@ Village.Ouvriers = (function () {
   }
 
   // Avancer le long du chemin. Renvoie vrai quand on est arrivé au bout.
-  function marcher(o, dt) {
-    let reste = C.ouvriers.vitesse * Village.Repas.vitesse(o) * dt; // étape 5 : ventre vide = 2 fois moins vite
+  function marcher(o, dt, monde) {
+    // Étape 5 : ventre vide = 2 fois moins vite. Étape 6 : un peu plus vite sur un chemin qu'à travers champs.
+    let reste = C.ouvriers.vitesse * Village.Repas.vitesse(o) * Village.Routes.vitesseDuSol(monde, o.x, o.y) * dt;
     while (reste > 0 && o.pas < o.chemin.length) {
       const p = o.chemin[o.pas];
       const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy);
@@ -183,7 +184,7 @@ Village.Ouvriers = (function () {
       }
 
       case "aller":
-        if (marcher(o, dt)) changer(o, "travailler", metier.duree());
+        if (marcher(o, dt, monde)) changer(o, "travailler", metier.duree());
         return;
 
       case "travailler":
@@ -196,7 +197,7 @@ Village.Ouvriers = (function () {
         return;
 
       case "revenir":
-        if (!marcher(o, dt)) return;
+        if (!marcher(o, dt, monde)) return;
         if (o.porte) {
           // Il pose ce qu'il rapporte devant sa porte. Un porteur viendra le chercher.
           // Étape 5 : un « lot » peut valoir plus qu'un (un cerf = 4 viandes). On le garde dans b.lots.

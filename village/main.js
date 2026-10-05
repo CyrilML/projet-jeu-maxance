@@ -91,6 +91,7 @@
       const z = Village.Interface.zoneSous(souris.clic.x, souris.clic.y);
       if (z) {
         if (z.action === "menu") Village.Interface.basculerMenu(z.valeur); // étape 5 : ouvrir un groupe du menu
+        else if (z.action === "objectifs") Village.Interface.basculerObjectifs(); // étape 6 : les objectifs de l'âge
         else if (z.action === "construire") { i.construire = z.valeur; Village.Interface.fermerMenu(); }
         else if (z.action === "outil") { i.outil = z.valeur; Village.Interface.fermerMenu(); }
         else if (z.action === "annuler" || z.action === "fermer") i.annuler = true;
