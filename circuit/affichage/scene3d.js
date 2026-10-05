@@ -569,6 +569,8 @@ Circuit.Scene3D = (function () {
     if (decors[carteDessinee].maj) decors[carteDessinee].maj(monde.temps, monde); // étape 39 : les feux de la ville
     ciel.position.copy(cam.position);
     Circuit.Meteo3D.maj(options.pause ? 0 : dt, cam, monde.carte, brouillardCarte); // étape 47
+    Circuit.Nature.maj(options.pause ? 0 : dt, cam); // étape 48 : l'herbe plie au vent, on cache l'herbe trop loin
+    Circuit.Eau.maj(options.pause ? 0 : dt); // étape 48 : les vagues
 
     // On dessine !
     rendu.autoClear = true;

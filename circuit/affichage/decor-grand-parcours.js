@@ -219,7 +219,41 @@ Circuit.DecorGrandParcours = (function () {
       if (GP.plateformes.some((p) => Math.abs(p.x - x) < p.longueur / 2 + 8 && Math.abs(p.z - z) < p.largeur / 2 + 8)) continue;
       arbres.push([x, z, 0.8 + alea() * 0.8]);
     }
-    g.add(D.foret(arbres));
+    g.add(D.foret(arbres, "grand"));
+
+    // Étape 48 : l'herbe en touffes, les fleurs et les rochers, loin de la route, des plateformes et du creux.
+    // (Pour aller vite, on range les échantillons de la route dans une grille de cases de 20 m.)
+    const grille = new Map(), CASE = 20;
+    const cleDe = (x, z) => Math.floor(x / CASE) + "," + Math.floor(z / CASE);
+    for (const e of ech) {
+      const cle = cleDe(e.x, e.z);
+      if (!grille.has(cle)) grille.set(cle, []);
+      grille.get(cle).push(e);
+    }
+    const presDeLaRoute = (x, z) => {
+      for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+          const liste = grille.get(cleDe(x + i * CASE, z + j * CASE));
+          if (liste && liste.some((e) => Math.abs(e.x - x) < W + 6 && Math.abs(e.z - z) < W + 6)) return true;
+        }
+      }
+      return false;
+    };
+    g.add(Circuit.Nature.tapis({
+      carte: "grand", graine: G.graine + 48,
+      candidat: (a) => {
+        if (a() < 0.5) return { x: (a() * 2 - 1) * (GP.limite - 4), z: (a() * 2 - 1) * (GP.limite - 4) };
+        const k = Math.floor(a() * ech.length), e = ech[k], c = (a() < 0.5 ? -1 : 1) * (W + 7 + a() * 30);
+        const suivant = ech[(k + 1) % ech.length], l = Math.hypot(suivant.x - e.x, suivant.z - e.z) || 1;
+        return { x: e.x - ((suivant.z - e.z) / l) * c, z: e.z + ((suivant.x - e.x) / l) * c };
+      },
+      libre: (x, z) => {
+        if (Math.abs(x) > GP.limite - 3 || Math.abs(z) > GP.limite - 3) return false; // hors de la clôture
+        if (Math.abs(x - K.x) < K.longueur / 2 + 3 && Math.abs(z - K.z) < K.largeur / 2 + 3) return false; // dans le creux
+        if (GP.plateformes.some((p) => Math.abs(p.x - x) < p.longueur / 2 + 4 && Math.abs(p.z - z) < p.largeur / 2 + 4)) return false;
+        return !presDeLaRoute(x, z);
+      },
+    }));
 
     // Chaque image : les plaques de nitro clignotent.
     function maj(temps) {

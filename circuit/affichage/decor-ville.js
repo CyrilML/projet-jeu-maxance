@@ -83,7 +83,7 @@ Circuit.DecorVille = (function () {
           const allee = mat({ map: repeter(T.terre(), 6, 1) });
           g.add(plat(interieur, 4, allee, cx, 0.14, cz));
           g.add(plat(4, interieur, allee, cx, 0.14, cz));
-          const etang = new THREE.Mesh(new THREE.CircleGeometry(9, 40), new THREE.MeshStandardMaterial({ color: 0x2f6f9e, metalness: 0.3, roughness: 0.08 }));
+          const etang = new THREE.Mesh(new THREE.CircleGeometry(9, 40), Circuit.Eau.materiau({ couleur: 0x2c5d6a, repetition: 2, vitesse: 0.6 })); // étape 48 : de l'eau qui ondule
           etang.rotation.x = -Math.PI / 2;
           etang.position.set(cx, 0.15, cz);
           g.add(etang);
@@ -118,7 +118,52 @@ Circuit.DecorVille = (function () {
     }
 
     // Les arbres des parcs (ce sont aussi des obstacles solides).
-    g.add(D.foret(Ville.arbres.map((a) => [a.x, a.z, a.taille])));
+    g.add(D.foret(Ville.arbres.map((a) => [a.x, a.z, a.taille]), "ville"));
+
+    // Étape 48 : l'herbe, les fleurs et les rochers des parcs (pas sur les allées ni dans l'étang),
+    // des roseaux tout autour des étangs, et de l'herbe sur le bord de l'île, entre la ville et la plage.
+    const AR = Circuit.Archipel, A = Circuit.CONFIG.archipel, NA = Circuit.CONFIG.nature;
+    const parcs = [];
+    for (let i = 0; i < V.blocs; i++) {
+      for (let j = 0; j < V.blocs; j++) {
+        if (!Ville.parc(i, j)) continue;
+        const interieur = V.tailleBloc - 2 * V.trottoir;
+        const x0 = Ville.rue(i) + V.largeurRue / 2 + V.trottoir, z0 = Ville.rue(j) + V.largeurRue / 2 + V.trottoir;
+        parcs.push({ x0, z0, l: interieur, cx: x0 + interieur / 2, cz: z0 + interieur / 2 });
+      }
+    }
+    const bordVille = Ville.taille / 2 + 2, bordIle = A.ileVille - 3;
+    const surUnPont = (x, z) => AR.ponts.some((p) => {
+      // la distance au bout de route qui mène au pont (de 32 m avant son début à 4 m après)
+      const dx = x - p.de[0], dz = z - p.de[1], u = Math.max(-32, Math.min(4, dx * p.ux + dz * p.uz));
+      return Math.hypot(dx - p.ux * u, dz - p.uz * u) < p.largeur / 2 + 3;
+    });
+    g.add(Circuit.Nature.tapis({
+      carte: "ville", graine: 4848,
+      candidat: (a) => {
+        if (a() < 0.55 && parcs.length) {
+          const p = parcs[Math.floor(a() * parcs.length)];
+          return { x: p.x0 + 2 + a() * (p.l - 4), z: p.z0 + 2 + a() * (p.l - 4), y: 0.13 };
+        }
+        // le bord de l'île : un des 4 côtés
+        const cote = Math.floor(a() * 4), le_long = (a() * 2 - 1) * bordIle, loin = bordVille + a() * (bordIle - bordVille);
+        return cote === 0 ? { x: loin, z: le_long } : cote === 1 ? { x: -loin, z: le_long } : cote === 2 ? { x: le_long, z: loin } : { x: le_long, z: -loin };
+      },
+      libre: (x, z) => {
+        const p = parcs.find((q) => x > q.x0 && x < q.x0 + q.l && z > q.z0 && z < q.z0 + q.l);
+        if (p) return Math.abs(x - p.cx) > 4 && Math.abs(z - p.cz) > 4 && Math.hypot(x - p.cx, z - p.cz) > 12;
+        if (Math.max(Math.abs(x), Math.abs(z)) < bordVille || Math.max(Math.abs(x), Math.abs(z)) > bordIle) return false;
+        return !surUnPont(x, z);
+      },
+      herbes: Math.round(NA.herbes * 0.6), fleurs: Math.round(NA.fleurs * 0.6), rochers: Math.round(NA.rochers * 0.3),
+    }));
+    g.add(Circuit.Nature.tapis({
+      carte: "ville", graine: 4949, roseaux: true, fleurs: 0, rochers: 0, herbes: 140 * Ville.etangs.length,
+      candidat: (a) => {
+        const e = Ville.etangs[Math.floor(a() * Ville.etangs.length)], angle = a() * Math.PI * 2, r = e.rayon + 0.3 + a() * 1.2;
+        return { x: e.x + Math.cos(angle) * r, z: e.z + Math.sin(angle) * r, y: 0.13 };
+      },
+    }));
 
     // Les feux tricolores : à 2 coins de chaque carrefour, un poteau et 2 boîtiers (un pour chaque rue).
     const feux = construireFeux(g);

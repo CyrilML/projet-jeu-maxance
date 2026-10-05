@@ -71,8 +71,8 @@ Circuit.DecorArchipel = (function () {
     const g = new THREE.Group();
 
     // 1. La mer.
-    const texMer = repeter(T.mer(), 400, 400);
-    const mer = plat(16000, 16000, new THREE.MeshStandardMaterial({ map: texMer, color: 0xffffff, metalness: 0.25, roughness: 0.2 }), 0, A.mer, 0);
+    // Étape 48 : une mer qui bouge (des vagues dessinées par une « carte des pentes » qui glisse, affichage/eau.js).
+    const mer = plat(16000, 16000, Circuit.Eau.materiau({ couleur: 0x1d5878, carte: repeter(T.mer(), 400, 400), repetition: 330, vitesse: 1 }), 0, A.mer, 0);
     g.add(mer);
 
     // 2. L'île de la ville (la ville est posée dessus), et les bouts de route jusqu'aux ponts.
@@ -126,8 +126,8 @@ Circuit.DecorArchipel = (function () {
       g.add(devanture);
     }
 
-    function maj(temps) {
-      texMer.offset.set(temps * 0.004, temps * 0.002); // les vaguelettes glissent
+    function maj() {
+      // (étape 48 : les vagues de la mer bougent maintenant dans affichage/eau.js)
     }
     return { groupe: g, maj };
   }
@@ -317,7 +317,7 @@ Circuit.DecorArchipel = (function () {
       if (w < 270 && u > -330 && u < 330) continue;
       arbres.push([u, w, 0.8 + alea() * 0.6]);
     }
-    g.add(Circuit.DecorCircuit.foret(arbres));
+    g.add(Circuit.DecorCircuit.foret(arbres, "ville"));
 
     g.position.set(ap.x, 0, ap.z);
     g.rotation.y = -ap.angle;

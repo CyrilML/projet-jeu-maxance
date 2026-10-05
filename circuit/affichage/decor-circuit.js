@@ -45,29 +45,10 @@ Circuit.DecorCircuit = (function () {
     return m;
   }
 
-  // Des arbres en « instances » : un tronc et un feuillage arrondi, posés aux positions données.
-  function foret(positions) {
-    const groupe = new THREE.Group();
-    const tronc = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.25, 0.35, 3, 8), mat({ color: 0x5b3d22 }), positions.length);
-    const feuilles = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(2.2, 1), mat({ color: 0x2f6b2a, roughness: 0.8 }), positions.length);
-    const feuilles2 = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1.6, 1), mat({ color: 0x3f8233, roughness: 0.8 }), positions.length);
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Vector3();
-    positions.forEach(([x, z, taille], i) => {
-      e.set(taille, taille, taille);
-      m.compose(new THREE.Vector3(x, 1.5 * taille, z), q, e);
-      tronc.setMatrixAt(i, m);
-      m.compose(new THREE.Vector3(x, 4 * taille, z), q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), x), new THREE.Vector3(taille, taille * 1.15, taille));
-      feuilles.setMatrixAt(i, m);
-      m.compose(new THREE.Vector3(x + 0.6 * taille, 5.6 * taille, z - 0.3 * taille), q, e);
-      feuilles2.setMatrixAt(i, m);
-      q.identity();
-    });
-    for (const im of [tronc, feuilles, feuilles2]) {
-      im.castShadow = true;
-      im.receiveShadow = true;
-      groupe.add(im);
-    }
-    return groupe;
+  // Des arbres en « instances ». Depuis l'étape 48, c'est le jardinier (affichage/nature.js) qui les plante :
+  // des feuillus, des sapins et des bouleaux. positions : [[x, z, taille, y?], …] ; carte : pour le bilan sous le capot.
+  function foret(positions, carte) {
+    return Circuit.Nature.foret(positions, carte);
   }
 
   // La clôture rouge et blanche tout autour d'un carré de `demi` mètres.
@@ -92,11 +73,25 @@ Circuit.DecorCircuit = (function () {
   }
 
   // Le sol : une grande pelouse texturée.
+  // Étape 48 : le sol n'a plus partout la même couleur. Une texture répétée tous les 12 m, ça se voit de loin
+  // (un « carrelage ») : on ajoute de grandes taches plus claires, plus foncées ou plus jaunes (des « couleurs
+  // de sommets » : chaque coin de la grille du sol a sa couleur, et la carte graphique fait le dégradé entre eux).
   function pelouse(taille, texture, repetition) {
     const tex = texture.clone();
     tex.needsUpdate = true;
     tex.repeat.set(repetition, repetition);
-    const sol = new THREE.Mesh(new THREE.PlaneGeometry(taille, taille), mat({ map: tex }));
+    const forme = new THREE.PlaneGeometry(taille, taille, 96, 96);
+    const p = forme.attributes.position, couleurs = [];
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i);
+      const grand = Math.sin(x * 0.021 + 1.7) * Math.sin(y * 0.017 + 0.3) + 0.5 * Math.sin(x * 0.053 + y * 0.041 + 2);
+      const petit = 0.5 * Math.sin(x * 0.11 - y * 0.07) * Math.sin(y * 0.13 + 1);
+      const clair = 0.88 + 0.12 * grand + 0.06 * petit;
+      const jaune = Math.max(0, Math.sin(x * 0.013 - 0.8) * Math.sin(y * 0.019 + 2.1)) * 0.18;
+      couleurs.push(clair + jaune, clair + jaune * 0.6, clair - jaune * 0.4);
+    }
+    forme.setAttribute("color", new THREE.Float32BufferAttribute(couleurs, 3));
+    const sol = new THREE.Mesh(forme, mat({ map: tex, vertexColors: true }));
     sol.rotation.x = -Math.PI / 2;
     sol.receiveShadow = true;
     return sol;
@@ -191,7 +186,21 @@ Circuit.DecorCircuit = (function () {
       if (Math.abs(x) < 42 && z > zTribune - 3 && z < zTribune + 14) continue;
       arbres.push([x, z, 0.8 + alea() * 0.6]);
     }
-    g.add(foret(arbres));
+    g.add(foret(arbres, "course"));
+
+    // Étape 48 : l'herbe en touffes, les fleurs et les rochers. La moitié est semée près de la route
+    // (c'est là que la caméra passe), le reste partout. Jamais sur la route, la bordure ou la tribune.
+    g.add(Circuit.Nature.tapis({
+      carte: "course",
+      graine: C.decor.graine,
+      candidat: (a) => {
+        if (a() < 0.5) return { x: (a() * 2 - 1) * (demi - 4), z: (a() * 2 - 1) * (demi - 4) };
+        const p = Piste.pointA(a() * Piste.longueurTour), e = (a() < 0.5 ? -1 : 1) * (ext + 3 + a() * 35);
+        return { x: p.x + p.dz * e, z: p.z - p.dx * e };
+      },
+      libre: (x, z) => Math.abs(x) < demi - 3 && Math.abs(z) < demi - 3 && Math.abs(Piste.reperer(x, z).ecart) > ext + 3
+        && !(Math.abs(x) < 45 && z > zTribune - 5 && z < zTribune + 16),
+    }));
     return g;
   }
 

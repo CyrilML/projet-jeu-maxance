@@ -1,7 +1,7 @@
 # Demande n° 47 : un décor ultra réaliste et la météo
 
 > Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
-> questions. Statut : étape 47 ✅ livrée le 05/10/2026, à valider · étapes 48, 49, 50 à venir.
+> questions. Statut : étapes 47 et 48 ✅ livrées le 05/10/2026, à valider · étapes 49, 50 à venir.
 
 ## 🎯 Quoi
 Refaire le décor de toutes les maps, « ultra réaliste, comme dans la vraie vie », avec des météos différentes :
@@ -19,7 +19,8 @@ pluie, soleil, neige, brouillard, orage, blizzard, vent.
 
 ## 📦 Découpage
 - Étape 47 : la météo (7 temps, qui changent tout seuls et changent la conduite), le ciel et la lumière.
-- Étape 48 : la nature (herbe, arbres, fleurs, rochers) et l'eau (vagues, reflets).
+- Étape 48 ✅ : la nature (herbe en touffes qui plie au vent, fleurs, rochers, feuillus/sapins/bouleaux) et l'eau
+  (mer et étangs qui ondulent, vagues plus grosses avec le vent). Les plantes blanchissent sous la neige.
 - Étape 49 : les routes et la ville.
 - Étape 50 : les voitures. ✍️ Nouveau message de Maxance : PLUS de voitures « genre Bugatti, Porsche, Lamborghini ».
   À la place, des véhicules plus réalistes :
@@ -27,10 +28,16 @@ pluie, soleil, neige, brouillard, orage, blizzard, vent.
   - un SUV un peu du genre d'une Peugeot 508 ;
   - une moto dans un style Kawasaki ;
   - une camionnette genre Mercedes Vito ;
-  - un monster truck plus réaliste, « avec des plus rétro » (à préciser) et des ressorts qui font rebondir
+  - un monster truck plus réaliste, « avec des plus rétro » (précisé plus bas) et des ressorts qui font rebondir
     un peu sur les bosses ;
   - un quad plus réaliste ;
   - la voiture basse genre Honda.
+  - ✍️ Réponse de Maxance (05/10/2026) : les voitures « style » Bugatti, Porsche et Lamborghini du garage, on les
+    ENLÈVE. À la place : une VRAIE Bugatti, une VRAIE Porsche et une VRAIE Lamborghini (des modèles qui
+    ressemblent le plus possible aux vraies).
+  - ✍️ Modèles choisis : Bugatti CHIRON, Porsche 911, Lamborghini AVENTADOR.
+  - ✍️ Monster truck « plus rétro » = les deux : un vieux pick-up des années 80 (chromes, phares ronds) ET de gros
+    rétroviseurs.
 
 ## 🛠️ Ce que Claude a choisi pour l'étape 47
 - L'ordre des météos : soleil → vent → brouillard → pluie → orage → neige → blizzard → soleil…

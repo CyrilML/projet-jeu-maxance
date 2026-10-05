@@ -42,16 +42,29 @@ Circuit.Textures = (function () {
     }
   }
 
+  // (Étape 48 : 512 points de côté au lieu de 256, des taches plus claires et plus foncées, et des brins plus variés.)
   const herbe = () =>
-    texture("herbe", 256, (ctx, t) => {
-      bruit(ctx, t, "#4f8a2e", 0.25, 9000, 2);
+    texture("herbe", 512, (ctx, t) => {
+      bruit(ctx, t, "#4c862f", 0.22, 30000, 2);
+      // de grandes taches douces (de la mousse, de l'herbe plus sèche…), recopiées sur les bords pour se raccorder
+      for (let i = 0; i < 60; i++) {
+        const x = hasard() * t, y = hasard() * t, r = 20 + hasard() * 60;
+        const couleur = hasard() < 0.5 ? "rgba(140,170,60,.18)" : hasard() < 0.5 ? "rgba(25,60,20,.2)" : "rgba(160,140,70,.14)";
+        for (const [dx, dy] of [[0, 0], [-t, 0], [t, 0], [0, -t], [0, t]]) {
+          const d = ctx.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r);
+          d.addColorStop(0, couleur);
+          d.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.fillStyle = d;
+          ctx.fillRect(x + dx - r, y + dy - r, 2 * r, 2 * r);
+        }
+      }
       // des brins d'herbe
-      for (let i = 0; i < 2500; i++) {
-        const x = hasard() * t, y = hasard() * t;
-        ctx.strokeStyle = hasard() < 0.5 ? "rgba(120,180,60,.6)" : "rgba(40,90,25,.6)";
+      for (let i = 0; i < 12000; i++) {
+        const x = hasard() * t, y = hasard() * t, v = hasard();
+        ctx.strokeStyle = v < 0.4 ? "rgba(125,185,65,.55)" : v < 0.8 ? "rgba(38,85,25,.55)" : "rgba(170,175,90,.45)";
         ctx.beginPath();
         ctx.moveTo(x, y);
-        ctx.lineTo(x + (hasard() - 0.5) * 3, y - 3 - hasard() * 4);
+        ctx.lineTo(x + (hasard() - 0.5) * 4, y - 3 - hasard() * 6);
         ctx.stroke();
       }
     });

@@ -331,6 +331,17 @@ Circuit.SousLeCapot = (function () {
       ["vent", virgule(Circuit.Meteo.vent().force, 1) + " m/s, vers " + Math.round((Circuit.Meteo.etat.directionVent * 180) / Math.PI) + "°"],
       ["visibilité", Math.round(Circuit.Meteo.etat.valeurs.visibilite) + " m"],
       ["sol mouillé, enneigé", Math.round(Circuit.Meteo3D.mouille * 100) + " %, " + Math.round(Circuit.Meteo3D.enneige * 100) + " %"],
+      ["La nature (étape 48)"],
+      ["plantes sur cette carte", (function () {
+        const b = Circuit.Nature.bilan[monde.carte] || { herbes: 0, fleurs: 0, rochers: 0 };
+        return b.herbes + " brins d'herbe, " + b.fleurs + " bouquets de fleurs, " + b.rochers + " rochers";
+      })()],
+      ["arbres", (function () {
+        const b = Circuit.Nature.bilan[monde.carte];
+        return b ? b.arbres + " (" + b.especes.feuillu + " feuillus, " + b.especes.sapin + " sapins, " + b.especes.bouleau + " bouleaux)" : "aucun";
+      })()],
+      ["parcelles d'herbe dessinées", Circuit.Nature.parcellesAffichees + " (les autres sont à plus de " + Circuit.CONFIG.nature.distanceAffichage + " m)"],
+      ["vagues", monde.carte === "ville" ? "force " + virgule(Circuit.Eau.force, 2) + " (le vent les grossit)" : "pas d'eau ici"],
       ["Le son"],
       ["synthétiseur", Circuit.Son.etat()],
       ["ton moteur", Math.round(Circuit.Sons.enDirect.frequence) + " Hz · volume " + virgule(Circuit.Sons.enDirect.volume, 2)],

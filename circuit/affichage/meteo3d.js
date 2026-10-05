@@ -132,13 +132,14 @@ Circuit.Meteo3D = (function () {
     scene.traverse((o) => {
       const liste = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
       for (const m of liste) {
-        if (!m.map || !SOLS.includes(m.map.name)) continue;
+        // (étape 48 : les plantes, les arbres et les rochers sont marqués « neige » : ils blanchissent aussi)
+        if (!(m.map && SOLS.includes(m.map.name)) && !m.userData.neige) continue;
         if (!solsConnus.has(m)) solsConnus.set(m, { roughness: m.roughness, color: m.color.clone(), emissive: m.emissive.clone() });
         const origine = solsConnus.get(m);
         m.roughness = origine.roughness * (1 - 0.7 * mouille);
         // La neige : la couleur de la texture s'efface (on la « dilue »), et le sol renvoie une lumière blanche
         // (« emissive ») : il devient blanc, même à l'ombre.
-        const n = enneige * (m.map.name === "goudron" ? 0.7 : 1); // (sur la route, les voitures tassent la neige : un peu moins blanc)
+        const n = enneige * (m.map && m.map.name === "goudron" ? 0.7 : 1); // (sur la route, les voitures tassent la neige : un peu moins blanc)
         m.color.copy(origine.color).multiplyScalar(1 - 0.55 * n);
         m.emissive.copy(origine.emissive).lerp(new THREE.Color(0.62, 0.64, 0.68), n * 0.95);
       }

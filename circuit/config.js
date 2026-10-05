@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 16,
+  version: 17,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -454,6 +454,27 @@ Circuit.CONFIG = {
   decor: {
     arbres: 260, // nombre d'arbres autour du circuit (70 avant l'étape 33 : le terrain est 4 fois plus grand)
     graine: 7, // le « hasard » des arbres est toujours le même avec la même graine
+  },
+
+  // Étape 48 : la nature (affichage/nature.js) et l'eau (affichage/eau.js).
+  nature: {
+    herbes: 14000, // touffes d'herbe par carte (en petits groupes de quelques touffes)
+    fleurs: 2200, // bouquets de fleurs des champs par carte
+    rochers: 160, // rochers par carte
+    parTouffe: 7, // une « touffe » = jusqu'à 7 brins groupés…
+    rayonTouffe: 2.5, // m : … dans un rond de 2,5 m
+    tailleHerbe: [0.35, 0.8], // m : la hauteur d'une touffe (entre les deux)
+    tailleRocher: [0.3, 1.6], // m
+    parcelle: 80, // m : l'herbe est rangée par carrés de 80 m…
+    distanceAffichage: 230, // m : … et on ne dessine que les carrés à moins de 230 m de la caméra
+    flexion: 0.03, // m par m/s de vent : de combien le haut d'une touffe plie au vent
+    especes: { feuillu: 0.45, sapin: 0.3, bouleau: 0.25 }, // la part de chaque espèce d'arbre
+  },
+  eau: {
+    vitesseVagues: 0.012, // tours de texture par seconde (sans vent)
+    effetVent: 0.0025, // + ça par m/s de vent
+    vaguesCalmes: 0.45, // la force du relief des vagues sans vent…
+    vaguesParVent: 0.06, // … plus ça par m/s de vent (tempête = grosses vagues)
   },
 
   pasFixe: 1 / 120, // la boucle de jeu avance par petits pas de 1/120 s

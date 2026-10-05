@@ -170,6 +170,7 @@
       <a href="#etape45">Étape 45</a>
       <a href="#etape46">Étape 46</a>
       <a href="#etape47">Étape 47</a>
+      <a href="#etape48">Étape 48</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3120,6 +3121,46 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Combien de temps faut-il pour voir les 7 météos ?</summary><p>7 × 2 minutes = 14 minutes (ou appuie 6 fois sur M !).</p></details>
     </section>
 
+    <section id="etape48">
+      <h2>🌿 Étape 48 : la nature et l'eau <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">De l'herbe en touffes qui plie au vent, des fleurs, des rochers, 3 espèces d'arbres, et une mer et des étangs qui ondulent. <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Dans <code>demandes/47-meteo-et-decor-realiste.md</code>.</p>
+          <ul>
+            <li>✍️ Le décor ultra réaliste : herbe, arbres, eau.</li>
+            <li>✍️ Toujours le plus beau (pas de réglage de qualité).</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Sur toutes les cartes (sauf les méga-rampes, dans le ciel) : des touffes d'herbe, des fleurs, des rochers.</li>
+            <li>☐ Des feuillus, des sapins et des bouleaux (tronc blanc).</li>
+            <li>☐ Avec le vent (<kbd>M</kbd>) : l'herbe plie.</li>
+            <li>☐ Dans la ville : la mer et les étangs bougent ; dans l'orage, les vagues grossissent.</li>
+            <li>☐ Sous la neige : l'herbe et les arbres blanchissent.</li>
+            <li>Vérifie « version 17 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🌱 Des milliers de plantes, sans ralentir</h3>
+      <p>Une carte a environ 14 000 touffes d'herbe. Dessiner 14 000 objets un par un serait très lent. L'astuce : les <strong>instances</strong>. On envoie <em>une</em> touffe à la carte graphique, puis une liste de places. Et l'herbe est rangée par <strong>parcelles</strong> de 80 m : on ne dessine que celles à moins de 230 m de la caméra.</p>
+      <h3>🌊 La carte des pentes</h3>
+      <p>L'eau est toute plate ! Mais une image spéciale dit, pour chaque point, dans quel sens l'eau « penche ». La lumière en tient compte : on croit voir des vagues. On fait glisser l'image un peu à chaque image : les vagues bougent.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans l'état en direct, section « La nature » : combien de brins d'herbe, de fleurs, de rochers, d'arbres sur chaque carte ?</li>
+        <li>Roule loin et regarde « parcelles d'herbe dessinées » changer.</li>
+        <li>Dans <code>circuit/config.js</code>, trouve <code>nature</code> : mets <code>flexion: 0.1</code> et regarde l'herbe dans le vent.</li>
+        <li>Toujours dans <code>nature</code>, change <code>especes</code> pour faire une forêt de sapins.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi ne pas dessiner l'herbe à 500 m ?</summary><p>On ne la verrait presque pas, mais elle coûterait du travail à la carte graphique. Le jeu serait plus lent pour rien.</p></details>
+      <details class="question"><summary>L'eau est-elle vraiment en vagues ?</summary><p>Non ! Elle est plate. C'est la carte des pentes qui trompe la lumière.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La route vers un jeu façon Minecraft</h2>
@@ -3390,10 +3431,16 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
           <p>7 météos qui changent toutes seules et changent la conduite, un ciel avec de vrais nuages.</p>
           <p class="apprend"><b>Tu apprends :</b> mélanger deux états (interpolation), le bruit fractal, le dérapage, la vitesse du son. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">46</div>
-          <h4>Le décor réaliste et les nouvelles voitures <span class="etiquette">⏭️ prochaines étapes (demandées)</span></h4>
-          <p>La nature et l'eau (48), les routes et la ville (49), des voitures réalistes : citadine, SUV, moto, camionnette, monster truck à ressorts, quad, voiture basse (50).</p>
+          <h4>La nature et l'eau <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Herbe en touffes qui plie au vent, fleurs, rochers, 3 espèces d'arbres, mer et étangs qui ondulent (étape 48).</p>
+          <p class="apprend"><b>Tu apprends :</b> les instances, les parcelles, la carte des pentes. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">47</div>
+          <h4>Les routes, la ville et les nouvelles voitures <span class="etiquette">⏭️ prochaines étapes (demandées)</span></h4>
+          <p>Les routes et la ville (49), puis les voitures (50) : une vraie Bugatti Chiron, une vraie Porsche 911, une vraie Lamborghini Aventador, citadine, SUV, moto, camionnette, monster truck rétro à ressorts, quad, voiture basse.</p>
           <p class="apprend"><b>Tu apprends :</b> textures détaillées, végétation, reflets de l'eau, suspensions à ressort. <b>Durée :</b> 4 séances.</p>
         </div>
         <div class="carte">
@@ -3851,6 +3898,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-47" data-cle="appris-47" placeholder="Ex. : J'ai appris ce qu'est un dérapage…"></textarea>
         <label for="idees-47"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-47" data-cle="idees-47" placeholder="Ex. : La nuit, avec les phares…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 48 · la nature et l'eau <span class="petit">· 5 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le jardinier (<code>affichage/nature.js</code>) avec l'herbe, les fleurs, les rochers et les arbres, le faiseur de vagues (<code>affichage/eau.js</code>), un sol aux couleurs variées.</p>
+        <label for="appris-48"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-48" data-cle="appris-48" placeholder="Ex. : J'ai appris ce qu'est une instance…"></textarea>
+        <label for="idees-48"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-48" data-cle="idees-48" placeholder="Ex. : Des animaux dans l'herbe…"></textarea>
       </div>
     </section>
   </main>

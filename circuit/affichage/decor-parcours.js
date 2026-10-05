@@ -179,7 +179,21 @@ Circuit.DecorParcours = (function () {
         && Circuit.Parcours.tunnels.every((t) => Math.hypot(x - t.x, z - t.z) > t.longueur / 2 + 15);
       if (libre) arbres.push([x, z, 0.8 + alea() * 0.7]);
     }
-    g.add(D.foret(arbres));
+    g.add(D.foret(arbres, "parcours"));
+
+    // Étape 48 : de l'herbe sèche (un peu jaune, c'est un terrain de terre), des fleurs et beaucoup de rochers.
+    // Pas sur les formes, ni dans les loopings et les tunnels, ni au départ.
+    const loinDesFormes = (x, z) => Math.hypot(x, z) > 20
+      && Circuit.Parcours.formes.every((f) => Math.abs(x - f.x) > f.demiLongueur + 4 || Math.abs(z - f.z) > f.demiLargeur + 4)
+      && Circuit.Parcours.loopings.every((l) => Math.hypot(x - l.x, z - l.z) > 28)
+      && Circuit.Parcours.tunnels.every((t) => Math.hypot(x - t.x, z - t.z) > t.longueur / 2 + 8);
+    g.add(Circuit.Nature.tapis({
+      carte: "parcours", graine: 48, seche: true,
+      zone: [-demi + 4, demi - 4, -demi + 4, demi - 4],
+      herbes: Math.round(Circuit.CONFIG.nature.herbes * 0.6), fleurs: Math.round(Circuit.CONFIG.nature.fleurs * 0.4),
+      rochers: Math.round(Circuit.CONFIG.nature.rochers * 1.5),
+      libre: loinDesFormes,
+    }));
     return g;
   }
 
