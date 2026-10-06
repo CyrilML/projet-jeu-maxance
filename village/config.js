@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 16,
+  version: 17,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -62,7 +62,7 @@ Village.CONFIG = {
 
   // Étape 2 : ✍️ le stock de départ, rangé dans l'entrepôt.
   // Étape 5 : ✍️ plus de stock au départ, pour ne pas frustrer le joueur (avant : 0, 20, 10, 6, 4).
-  depart: { troncs: 5, planches: 30, pierres: 30, poissons: 12, viande: 8, charbon: 0, fer: 0, lingots: 0, outils: 0, ble: 0, farine: 0, pain: 0, or: 0, bijoux: 0, eau: 0, foin: 0, lait: 0, beurre: 0, fromage: 0, yaourt: 0 }, // étape 7 : le charbon ; étape 8 : le fer, les lingots, les outils ; étape 15 : l'élevage
+  depart: { troncs: 5, planches: 30, pierres: 30, poissons: 12, viande: 8, charbon: 0, fer: 0, lingots: 0, outils: 0, ble: 0, farine: 0, pain: 0, or: 0, bijoux: 0, eau: 0, foin: 0, lait: 0, beurre: 0, fromage: 0, yaourt: 0, oeufs: 0, laine: 0, tissu: 0, vetements: 0, jambon: 0 }, // étape 16 : les poules, les moutons, les cochons ; étape 7 : le charbon ; étape 8 : le fer, les lingots, les outils ; étape 15 : l'élevage
 
   // Étape 8 : la fiche de chaque ressource (son emoji et son nom). Tous les panneaux la lisent ici.
   ressources: {
@@ -91,6 +91,15 @@ Village.CONFIG = {
     beurre: { emoji: "🧈", nom: "mottes de beurre", age: 2 },
     fromage: { emoji: "🧀", nom: "fromages", age: 3 },
     yaourt: { emoji: "🍶", nom: "pots de yaourt", age: 3 },
+    // Étape 16 : ✍️ la suite de l'élevage (1C, partie B), elle aussi âge par âge :
+    //   🛖 hameau : 🐔 poulailler → 🥚 œufs
+    //   🏡 village : 🐑 bergerie → 🧶 laine → 🧵 tisserand → tissu ; 🐖 porcherie → 🍖 viande
+    //   🏰 bourg : 🧵 tissu → ✂️ tailleur → 👕 vêtements ; 🍖 viande + ⚫ charbon → 🥓 charcuterie → jambon
+    oeufs: { emoji: "🥚", nom: "œufs", age: 1 },
+    laine: { emoji: "🧶", nom: "pelotes de laine", age: 2 },
+    tissu: { emoji: "🧵", nom: "rouleaux de tissu", age: 2 },
+    vetements: { emoji: "👕", nom: "vêtements", age: 3 },
+    jambon: { emoji: "🥓", nom: "jambons", age: 3 },
   },
 
   // Étape 2 : les bâtiments. Depuis l'étape 3, le coût est RÉSERVÉ quand on pose le chantier,
@@ -128,6 +137,13 @@ Village.CONFIG = {
     veterinaire: { cout: { planches: 10, pierres: 6, outils: 1 }, construction: 14, rayon: 16 },
     fromagerie: { cout: { planches: 12, pierres: 16, outils: 2 }, construction: 18 },
     cremerie: { cout: { planches: 12, pierres: 10, outils: 2 }, construction: 16 },
+    // Étape 16
+    poulailler: { cout: { planches: 6 }, construction: 8 },
+    bergerie: { cout: { planches: 10, pierres: 4 }, construction: 14 },
+    porcherie: { cout: { planches: 8, pierres: 6 }, construction: 12 },
+    tisserand: { cout: { planches: 10, pierres: 6, outils: 1 }, construction: 15 },
+    tailleur: { cout: { planches: 12, pierres: 10, outils: 2 }, construction: 16 },
+    charcuterie: { cout: { planches: 12, pierres: 14, outils: 2 }, construction: 16 },
   },
 
   // Étape 8 : les ATELIERS transforment ce que les porteurs leur apportent (les RECETTES).
@@ -149,6 +165,13 @@ Village.CONFIG = {
     laiterie: { entrees: { lait: 2 }, sorties: { beurre: 1 }, duree: 10, bonus: "baratter" },
     fromagerie: { entrees: { lait: 2 }, sorties: { fromage: 1 }, duree: 18, bonus: "affiner" },
     cremerie: { entrees: { lait: 2 }, sorties: { yaourt: 2 }, duree: 12, bonus: "affiner" },
+    // Étape 16 : les poules boivent ; les moutons et les cochons boivent, et mangent du foin en hiver
+    poulailler: { entrees: { eau: 1 }, sorties: { oeufs: 2 }, duree: 10, bonus: "pondre" },
+    bergerie: { entrees: { eau: 1 }, hiver: { foin: 1 }, sorties: { laine: 2 }, duree: 16, bonus: "tondre" },
+    porcherie: { entrees: { eau: 1 }, hiver: { foin: 1 }, sorties: { viande: 3 }, duree: 14, bonus: "engraisser" },
+    tisserand: { entrees: { laine: 2 }, sorties: { tissu: 1 }, duree: 14, bonus: "tisser" },
+    tailleur: { entrees: { tissu: 1 }, sorties: { vetements: 1 }, duree: 16, bonus: "coudre" },
+    charcuterie: { entrees: { viande: 2, charbon: 1 }, sorties: { jambon: 2 }, duree: 16, bonus: "fumer" }, // le charbon fume le jambon
   },
 
   // Étape 15 : ✍️ (3C) les vaches peuvent tomber MALADES, à partir du village. Une étable malade ne donne plus
@@ -162,7 +185,18 @@ Village.CONFIG = {
     rayonContagion: 4, // en cases
     guerirSeule: 300, // s : sans vétérinaire, la maladie passe toute seule au bout de 5 minutes
     vaches: 3, // vaches dessinées dans l'enclos de chaque étable
+    // Étape 16 : tous les TROUPEAUX peuvent tomber malades. La maladie ne passe qu'aux animaux de la même sorte.
+    troupeaux: {
+      etable: { animal: "vache", noms: "les vaches", nombre: 3 },
+      poulailler: { animal: "poule", noms: "les poules", nombre: 4 },
+      bergerie: { animal: "mouton", noms: "les moutons", nombre: 3 },
+      porcherie: { animal: "cochon", noms: "les cochons", nombre: 3 },
+    },
   },
+  // Étape 16 : ✍️ les VÊTEMENTS 👕, à partir du bourg. Tous les 10 minutes, chaque habitant use ses habits et
+  // en prend des neufs à l'entrepôt (s'il y en a). Bien habillés, les habitants sont plus heureux :
+  //   bonheur + 10 × la part des habitants qui ont eu des habits neufs.
+  habits: { age: 3, intervalle: 600, points: 10 },
 
   // Étape 15 : ✍️ (2C, partie A) le BONHEUR des habitants, une jauge de 0 à 100 %.
   //   bonheur = base + ventre plein + goûts variés + confort − froid − sans pain
@@ -182,7 +216,8 @@ Village.CONFIG = {
   },
   // Étape 15 : les DOUCEURS. À chaque repas, en plus du plat, chacun prend une douceur s'il y en a
   // (celle qu'il n'a pas goûtée depuis le plus longtemps) : ça varie les goûts !
-  douceurs: ["lait", "beurre", "fromage", "yaourt"],
+  // Étape 16 : + les œufs et le jambon
+  douceurs: ["lait", "beurre", "fromage", "yaourt", "oeufs", "jambon"],
   // Étape 8 : les MINES. Chacune creuse le filon de sa sorte, juste à côté d'elle.
   mines: {
     mineCharbon: { filon: "charbon" },
@@ -243,6 +278,13 @@ Village.CONFIG = {
     veterinaire: [{ nom: "Trousse de soins", emoji: "🧰", age: 2, cout: { planches: 6, outils: 2 }, effet: 0.8 }],
     fromagerie: [{ nom: "Presse à fromage", emoji: "🗜️", age: 3, cout: { planches: 16, lingots: 2 }, effet: 0.8 }, { nom: "Cave d'affinage", emoji: "🕳️", age: 3, cout: { pierres: 40, outils: 3 }, effet: 0.7 }],
     cremerie: [{ nom: "Pots en grès", emoji: "🏺", age: 3, cout: { pierres: 20 }, effet: 0.8 }, { nom: "Étuve", emoji: "🔥", age: 3, cout: { pierres: 20, charbon: 15, outils: 2 }, effet: 0.7 }],
+    // Étape 16
+    poulailler: [{ nom: "Perchoirs", emoji: "🪵", age: 1, cout: { planches: 6 }, effet: 0.8 }, { nom: "Nids de paille", emoji: "🪺", age: 2, cout: { planches: 8, foin: 10 }, effet: 0.7 }],
+    bergerie: [{ nom: "Chien de berger", emoji: "🐕", age: 2, cout: { planches: 8, viande: 10 }, effet: 0.8 }, { nom: "Grandes cisailles", emoji: "✂️", age: 3, cout: { outils: 3, lingots: 2 }, effet: 0.7 }],
+    porcherie: [{ nom: "Mare de boue", emoji: "🟤", age: 2, cout: { pierres: 10, eau: 10 }, effet: 0.8 }, { nom: "Auges en pierre", emoji: "🪨", age: 3, cout: { pierres: 30, outils: 2 }, effet: 0.7 }],
+    tisserand: [{ nom: "Rouet", emoji: "🧶", age: 2, cout: { planches: 12 }, effet: 0.8 }, { nom: "Grand métier", emoji: "🪡", age: 3, cout: { planches: 20, outils: 3 }, effet: 0.7 }],
+    tailleur: [{ nom: "Ciseaux fins", emoji: "✂️", age: 3, cout: { lingots: 3 }, effet: 0.8 }, { nom: "Mannequins", emoji: "🧍", age: 3, cout: { planches: 16, tissu: 6 }, effet: 0.7 }],
+    charcuterie: [{ nom: "Crochets", emoji: "🪝", age: 3, cout: { lingots: 3 }, effet: 0.8 }, { nom: "Grand fumoir", emoji: "🔥", age: 3, cout: { pierres: 30, charbon: 15 }, effet: 0.7 }],
     entrepot: [{ nom: "Écurie et chevaux", emoji: "🐴", age: 2, cout: { planches: 40, pierres: 20, outils: 4 }, effet: { porteurs: 1.25 } }],
   },
 
@@ -250,7 +292,7 @@ Village.CONFIG = {
   //   quand tu vends beaucoup, le prix baisse (les acheteurs en ont assez) ;
   //   quand tu achètes beaucoup, il monte ; puis il revient tout doucement vers le prix de base.
   marche: {
-    prix: { troncs: 1, planches: 2, pierres: 2, poissons: 2, viande: 2, charbon: 3, fer: 4, lingots: 10, outils: 22, ble: 1, farine: 3, pain: 4, or: 12, bijoux: 70, eau: 1, foin: 1, lait: 3, beurre: 8, fromage: 14, yaourt: 6 }, // étape 15 : l'élevage
+    prix: { troncs: 1, planches: 2, pierres: 2, poissons: 2, viande: 2, charbon: 3, fer: 4, lingots: 10, outils: 22, ble: 1, farine: 3, pain: 4, or: 12, bijoux: 70, eau: 1, foin: 1, lait: 3, beurre: 8, fromage: 14, yaourt: 6, oeufs: 2, laine: 4, tissu: 10, vetements: 26, jambon: 9 }, // étape 15 et 16 : l'élevage
     lot: 5, // on vend et on achète par paquets de 5
     marge: 1.5, // acheter coûte 1,5 fois le prix de vente (le marchand doit gagner sa vie)
     baisse: 0.02, // chaque objet vendu fait baisser le prix de 2 % (un paquet de 5 : 10 %)
@@ -390,21 +432,21 @@ Village.CONFIG = {
       objectifs: { batiments: 6, stock: { planches: 40, pierres: 20 }, nourriture: 30 } },
     // Étape 7 : le hameau débloque l'université (les recherches), la mine de charbon et le géologue.
     // Étape 15 : le hameau débloque aussi le début de l'élevage (le puits, le faneur et l'étable).
-    { id: "hameau", nom: "Le hameau", emoji: "🛖", debloque: ["geologue", "universite", "mineCharbon", "puits", "faneur", "etable"],
+    { id: "hameau", nom: "Le hameau", emoji: "🛖", debloque: ["geologue", "universite", "mineCharbon", "puits", "faneur", "etable", "poulailler"], // étape 16 : le poulailler
       objectifs: { batiments: 10, recherches: 3, stock: { planches: 80, charbon: 20 }, nourriture: 60 } },
     // La suite (prévue, pas encore construite) : ce que chaque âge débloquera.
     // Étape 8 : le village débloque le fer, la fonderie, la forge, les maisons et le marché.
     //   pieces : 🪙 qu'il faut avoir ; habitants : ouvriers logés.
-    { id: "village", nom: "Le village", emoji: "🏡", debloque: ["mineFer", "fonderie", "forge", "maison", "marche", "laiterie", "veterinaire"], // étape 15 : le beurre et le vétérinaire
+    { id: "village", nom: "Le village", emoji: "🏡", debloque: ["mineFer", "fonderie", "forge", "maison", "marche", "laiterie", "veterinaire", "bergerie", "porcherie", "tisserand"], // étape 15 : le beurre et le vétérinaire ; étape 16 : la laine et les cochons
       objectifs: { batiments: 18, habitants: 16, recherches: 7, stock: { lingots: 10, outils: 10 }, pieces: 150 } },
     // Étape 11 : ✍️ le bourg, et c'est de plus en plus dur ! (chaque âge demande environ 2 fois plus)
     //   Le bourg ajoute 3 nouvelles choses à penser : le PAIN (les habitants en veulent), l'ENTRETIEN
     //   (les bâtiments s'usent) et des HIVERS plus durs (il faut du bois de chauffage).
     // Étape 15 : le bourg débloque aussi le fromage et le yaourt ; pour passer à la ville, il faut des habitants HEUREUX.
-    { id: "bourg", nom: "Le bourg", emoji: "🏰", debloque: ["ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "fromagerie", "cremerie"],
+    { id: "bourg", nom: "Le bourg", emoji: "🏰", debloque: ["ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "fromagerie", "cremerie", "tailleur", "charcuterie"], // étape 16 : les vêtements et le jambon
       objectifs: { batiments: 32, habitants: 34, recherches: 13, stock: { pain: 60, bijoux: 8, outils: 25, fromage: 15 }, pieces: 600, bonheur: 70 } },
     { id: "ville", nom: "La ville", emoji: "🏙️", debloque: [], objectifs: null,
-      aVenir: "🐑 moutons et laine, 🐖 cochons, ⛏️ mines d'argent, 🏛️ grands monuments, 🎭 fêtes, 🚢 port" },
+      aVenir: "🎩 classes d'habitants, ⛏️ mines d'argent, 🏛️ grands monuments, 🎭 fêtes, 🚢 port" },
   ],
   gemmesParAge: 3, // étape 7 : 💎 offertes à chaque nouvel âge
 
@@ -441,6 +483,12 @@ Village.CONFIG = {
     { id: "hygiene", nom: "Étables propres", emoji: "🧽", age: 2, cout: { planches: 30, eau: 20 }, duree: 120, effet: { maladie: 0.5 }, texte: "Les vaches tombent 2 fois moins souvent malades" },
     { id: "remedes", nom: "Remèdes", emoji: "💊", age: 2, cout: { lait: 20, outils: 3 }, duree: 120, effet: { soigner: 0.6 }, texte: "Le vétérinaire soigne 40 % plus vite" },
     { id: "affinage", nom: "Caves d'affinage", emoji: "🧀", age: 3, cout: { pierres: 60, outils: 4 }, duree: 180, effet: { affiner: 0.7 }, texte: "La fromagerie et la crèmerie vont 30 % plus vite" },
+    // Étape 16
+    { id: "pondeuses", nom: "Poules pondeuses", emoji: "🐔", age: 1, cout: { planches: 20, eau: 10 }, duree: 90, effet: { pondre: 0.7 }, texte: "Les poulaillers donnent des œufs 30 % plus vite" },
+    { id: "tonte", nom: "Tonte des moutons", emoji: "🐑", age: 2, cout: { outils: 3, planches: 20 }, duree: 120, effet: { tondre: 0.7, engraisser: 0.8 }, texte: "La bergerie va 30 % plus vite (et la porcherie 20 %)" },
+    { id: "metiers", nom: "Métiers à tisser", emoji: "🪡", age: 2, cout: { planches: 40, outils: 3 }, duree: 150, effet: { tisser: 0.7 }, texte: "Le tisserand va 30 % plus vite" },
+    { id: "aiguilles", nom: "Aiguilles en acier", emoji: "🪡", age: 3, cout: { lingots: 6, tissu: 10 }, duree: 180, effet: { coudre: 0.7 }, texte: "Le tailleur va 30 % plus vite" },
+    { id: "fumage", nom: "Fumage", emoji: "🔥", age: 3, cout: { charbon: 30, pierres: 30 }, duree: 180, effet: { fumer: 0.7 }, texte: "La charcuterie va 30 % plus vite" },
     { id: "filonsFer", nom: "Filons de fer", emoji: "🧭", age: 2, cout: { charbon: 20, outils: 3 }, duree: 120, effet: { filonsFer: true }, texte: "Le géologue peut aussi trouver des filons de fer" },
   ],
 
@@ -470,6 +518,10 @@ Village.CONFIG = {
       { id: "laitEnfants", age: 1, qui: "Mathilde, la maîtresse d'école", emoji: "👩‍🏫", histoire: "Les enfants du hameau grandissent vite ! Un bon bol de lait chaque matin, ce serait merveilleux.", demande: { lait: 20 }, duree: 480, recompense: { gemmes: 3, planches: 15 } },
       { id: "crepes", age: 2, qui: "Léon, le cuisinier de l'auberge", emoji: "🧑‍🍳", histoire: "C'est la Chandeleur ! Il me faut du beurre et du lait pour faire des crêpes à tout le village.", demande: { beurre: 12, lait: 20 }, duree: 720, recompense: { pieces: 90, gemmes: 3 } },
       { id: "fromages", age: 3, qui: "Le grand concours des fromages", emoji: "🏆", histoire: "Les meilleurs fromagers de la région viennent au bourg. Montre-leur tes fromages et tes yaourts !", demande: { fromage: 12, yaourt: 20 }, duree: 1200, recompense: { pieces: 250, gemmes: 5 } },
+      // Étape 16
+      { id: "omelette", age: 1, qui: "Paulette, la fermière", emoji: "👵", histoire: "Demain, c'est la fête des moissons. Je veux faire une omelette géante pour tout le hameau !", demande: { oeufs: 30 }, duree: 480, recompense: { gemmes: 3, pierres: 15 } },
+      { id: "couvertures", age: 2, qui: "Le berger de la montagne", emoji: "🧑‍🦳", histoire: "L'hiver arrive, et les nuits sont glacées là-haut. Il me faudrait du bon tissu pour des couvertures.", demande: { tissu: 10, laine: 10 }, duree: 720, recompense: { pieces: 110, gemmes: 3 } },
+      { id: "noces", age: 3, qui: "Les jeunes mariés du bourg", emoji: "💒", histoire: "On se marie samedi ! Il nous faut de beaux habits pour les invités, et du jambon pour le banquet.", demande: { vetements: 10, jambon: 16 }, duree: 1200, recompense: { pieces: 280, gemmes: 5 } },
       { id: "halle", age: 2, qui: "Les maçons", emoji: "👷‍♂️", histoire: "On veut bâtir une grande halle couverte pour le marché. Il nous faut du bois, de la pierre et de bons outils.", demande: { planches: 60, pierres: 60, outils: 4 }, duree: 900, recompense: { pieces: 120, gemmes: 4 } },
     ],
   },

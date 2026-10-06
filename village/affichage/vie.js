@@ -152,5 +152,5 @@ Village.Vie = (function () {
     }
   }
 
-  return { ranger, dessinerFigurant, oiseaux, debutImage, surLaCase, dessinerPetits, stats };
+  return { ranger, dessinerFigurant, oiseaux, debutImage, surLaCase, dessinerPetits, stats, poule }; // étape 16 : la poule sert aussi au poulailler
 })();

@@ -10,6 +10,7 @@
 //           + 10 × la part des habitants qui dorment dans une MAISON
 //           − 15 s'il fait froid (plus de bois en hiver, au bourg)
 //           − 15 × la part des habitants mécontents (pas de pain, au bourg)
+//           + 10 × la part des habitants bien habillés (étape 16, au bourg : des 👕 vêtements neufs)
 //
 // C'est la VARIÉTÉ qui compte : 100 poissons ne valent pas mieux que 10 poissons, mais du poisson, de la
 // viande, du lait et du beurre, ça fait 4 goûts ! D'où l'intérêt des chaînes de l'élevage.
@@ -53,6 +54,7 @@ Village.Bonheur = (function () {
       { nom: "😋 Goûts variés : " + (gouts.map((a) => C.ressources[a].emoji).join(" ") || "aucun"), points: H.parGout * Math.min(H.goutsMax, gouts.length), max: H.parGout * H.goutsMax },
       { nom: "🛏️ Confort (" + Math.round(confort * 100) + " % dorment dans une maison)", points: H.confort * confort, max: H.confort },
     ];
+    if ((monde.age || 0) >= C.habits.age) parts.push({ nom: "👕 Bien habillés (" + Math.round(monde.habits.part * 100) + " % des habitants)", points: C.habits.points * monde.habits.part, max: C.habits.points }); // étape 16
     if (monde.froid) parts.push({ nom: "🥶 Froid : plus de bois de chauffage", points: -H.froid, max: 0 });
     if (mecontents > 0) parts.push({ nom: "🍞 Pas de pain (" + Math.round(mecontents * 100) + " % mécontents)", points: -H.sansPain * mecontents, max: 0 });
     const total = Math.max(0, Math.min(100, parts.reduce((a, p) => a + p.points, 0)));
@@ -65,8 +67,22 @@ Village.Bonheur = (function () {
   const arrivee = (monde) => H.arrivee[humeur(monde)];
   const emoji = (monde) => EMOJIS[humeur(monde)];
 
+  // Étape 16 : les VÊTEMENTS. Toutes les 10 minutes, chacun prend des habits neufs à l'entrepôt, s'il y en a.
+  function habiller(monde, dt) {
+    const hb = monde.habits;
+    if ((monde.age || 0) < C.habits.age) return;
+    hb.minuteur -= dt;
+    if (hb.minuteur > 0) return;
+    hb.minuteur = C.habits.intervalle;
+    const besoin = Math.max(1, habitants(monde).length), pris = Math.min(besoin, Math.max(0, monde.stock.vetements));
+    monde.stock.vetements -= pris;
+    hb.part = pris / besoin;
+    radio.emettre("habits", { pris, besoin, reste: monde.stock.vetements });
+  }
+
   let minuteur = 0;
   function etape(monde, dt) {
+    habiller(monde, dt);
     minuteur -= dt;
     if (minuteur > 0) return;
     minuteur = 1;

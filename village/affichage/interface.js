@@ -481,11 +481,11 @@ Village.Interface = (function () {
     const tousLesGroupes = [
       { id: "bois", emoji: "🪵", nom: "Bois", batiments: ["bucheron", "forestier", "scierie"] },
       { id: "pierre", emoji: "⛏️", nom: "Mines", batiments: ["carriere", "geologue", "mineCharbon", "mineFer", "mineOr"] },
-      { id: "nourriture", emoji: "🍖", nom: "Nourriture", batiments: ["pecheur", "chasseur", "ferme", "moulin", "boulangerie"] }, // étape 11 : le pain
-      { id: "elevage", emoji: "🐄", nom: "Élevage", batiments: ["puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie"] }, // étape 15
+      { id: "nourriture", emoji: "🍖", nom: "Nourriture", batiments: ["pecheur", "chasseur", "ferme", "moulin", "boulangerie", "laiterie", "fromagerie", "cremerie", "charcuterie"] }, // étape 15 et 16 : les produits de l'élevage // étape 11 : le pain
+      { id: "elevage", emoji: "🐄", nom: "Élevage", batiments: ["puits", "faneur", "etable", "poulailler", "bergerie", "porcherie", "veterinaire"] }, // étape 15 et 16
       // Étape 8 : les logements, et les artisans (fonderie, forge, marché, université)
       { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "maison", "macon"] }, // étape 12 : le maçon-couvreur
-      { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "marche", "universite"] },
+      { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite"] }, // étape 16 : la laine et les habits
       // Étape 7 : le chemin de terre, et la route en pierre (débloquée par la recherche « Routes pavées »)
       { id: "route", nom: "Routes", outils: [
         { id: "route", icone: "terre", nom: "Chemin", touche: "R", cout: "gratuit" },
@@ -711,7 +711,7 @@ Village.Interface = (function () {
       const R = C.ateliers[b.type], q = (obj) => Object.entries(obj).map(([r, n]) => n + " " + EMO(r)).join(" + ");
       lignes.push("📜 Recette : " + (q(R.entrees) || "rien") + " → " + q(R.sorties) + (R.hiver ? " · ❄️ en hiver : + " + q(R.hiver) : ""));
       lignes.push(b.travail ? "⚙️ Fabrique… " + Math.ceil(b.travail.reste) + " s" : b.attend ? "😴 " + b.attend.charAt(0).toUpperCase() + b.attend.slice(1) : "Prêt à travailler");
-      if (b.malade) lignes.push("🤒 Les vaches sont MALADES : plus de lait. " + (monde.batiments.some((x) => x.type === "veterinaire" && x.ouvrier) ? "Le vétérinaire 🩺 va venir." : "Sans vétérinaire 🩺, elles guérissent seules en " + Math.ceil(Math.max(0, C.elevage.guerirSeule - b.malade.depuis) / 60) + " min.")); // étape 15
+      if (b.malade) lignes.push("🤒 " + C.elevage.troupeaux[b.type].noms.replace(/^l/, "L") + " sont MALADES : plus rien ne sort. " + (monde.batiments.some((x) => x.type === "veterinaire" && x.ouvrier) ? "Le vétérinaire 🩺 va venir." : "Sans vétérinaire 🩺, ils guérissent seuls en " + Math.ceil(Math.max(0, C.elevage.guerirSeule - b.malade.depuis) / 60) + " min.")); // étape 15
       lignes.push("Réserve : " + Object.keys(B.entreesDe(monde, b)).map((r) => (b.entrees[r] || 0) + " " + EMO(r)).join(" · ") + " · devant : " + b.sortie + " " + EMO(b.sortieQuoi));
       lignes.push("A fabriqué " + b.produits + " " + C.ressources[b.sortieQuoi].nom);
     } else if (b.type === "macon") {
@@ -734,8 +734,8 @@ Village.Interface = (function () {
       lignes.push("👷 Le " + type.metier + " " + Village.Ouvriers.NOMS_ETATS[o.etat]);
       if (o.etat === "travailler") lignes.push("encore " + Math.ceil(o.minuteur) + " s");
       if (b.sortieQuoi) lignes.push("Devant la porte : " + b.sortie + " / " + C.sortieMax + " " + EMO(b.sortieQuoi));
-      if (b.type === "veterinaire") lignes.push("🐄 " + monde.batiments.filter((x) => x.malade).length + " étable(s) malade(s) au village"); // étape 15
-      lignes.push((b.type === "forestier" ? "A planté " : b.type === "veterinaire" ? "A soigné " : "A rapporté ") + b.produits + ({ bucheron: " troncs", forestier: " pousses", carriere: " pierres", pecheur: " poissons", chasseur: " gibiers", geologue: " découvertes", veterinaire: " étable(s)" }[b.type] || ""));
+      if (b.type === "veterinaire") lignes.push("🐄 " + monde.batiments.filter((x) => x.malade).length + " troupeau(x) malade(s) au village"); // étape 15
+      lignes.push((b.type === "forestier" ? "A planté " : b.type === "veterinaire" ? "A soigné " : "A rapporté ") + b.produits + ({ bucheron: " troncs", forestier: " pousses", carriere: " pierres", pecheur: " poissons", chasseur: " gibiers", geologue: " découvertes", veterinaire: " troupeau(x)" }[b.type] || ""));
     }
     // Étape 4 : le repas de l'ouvrier
     const o = b.ouvrier;

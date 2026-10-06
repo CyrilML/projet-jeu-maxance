@@ -54,12 +54,15 @@
 //                  les étables malades (malade : depuis combien de secondes) et les ressources de l'élevage (eau,
 //                  foin, lait, beurre, fromage, yaourt). Rien à convertir : une partie plus ancienne commence à 0
 //                  de chaque nouvelle ressource, et sa jauge part de sa note au premier calcul.
+//  13 (étape 16) : les habits (habits : [secondes avant la prochaine distribution, part des habitants servis]),
+//                  et les ressources des poules, des moutons et des cochons (oeufs, laine, tissu, vetements,
+//                  jambon). Rien à convertir : une partie plus ancienne commence à 0.
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 12;
+  const VERSION = 13;
   const radio = Village.Evenements;
 
   function vide() {
@@ -218,6 +221,7 @@ Village.Sauvegarde = (function () {
       partis: monde.partis,
       bonheur: monde.bonheur.valeur === null ? undefined : Math.round(monde.bonheur.valeur * 10) / 10, // étape 15
       gouts: monde.gouts,
+      habits: [Math.round(monde.habits.minuteur), Math.round(monde.habits.part * 100) / 100], // étape 16
       porteurs: monde.porteurs.map((p) => ({ faim: Math.round(p.faim || 0), affame: !!p.affame, ventreVide: Math.round(p.ventreVide || 0), parti: !!p.parti })),
       animaux: monde.animaux.map((a) => [Math.round(a.x * 10) / 10, Math.round(a.y * 10) / 10, a.sorte]),
       modifs: [...monde.modifs].map(([i, m]) => (m.f ? [i, m.o, m.r, m.f] : [i, m.o, m.r])),

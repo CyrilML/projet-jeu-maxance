@@ -55,9 +55,16 @@ Village.Batiments = (function () {
     veterinaire: { nom: "Cabinet du vétérinaire", court: "Vétérinaire", emoji: "🩺", metier: "vétérinaire" },
     fromagerie: { nom: "Fromagerie", court: "Fromagerie", emoji: "🧀", metier: "fromager" },
     cremerie: { nom: "Crèmerie", court: "Crèmerie", emoji: "🍶", metier: "crémier" },
+    // Étape 16 : les poules, les moutons, les cochons
+    poulailler: { nom: "Poulailler", court: "Poulailler", emoji: "🐔", metier: "fermière" },
+    bergerie: { nom: "Bergerie", court: "Bergerie", emoji: "🐑", metier: "berger" },
+    porcherie: { nom: "Porcherie", court: "Porcherie", emoji: "🐖", metier: "porcher" },
+    tisserand: { nom: "Atelier du tisserand", court: "Tisserand", emoji: "🧵", metier: "tisserand" },
+    tailleur: { nom: "Atelier du tailleur", court: "Tailleur", emoji: "✂️", metier: "tailleur" },
+    charcuterie: { nom: "Charcuterie", court: "Charcuterie", emoji: "🥓", metier: "charcutier" },
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie"];
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie"];
   // « 🪵 troncs », « 🔩 lingots »… (étape 8 : fabriqué à partir de config.js, « ressources »)
   const NOMS_RESSOURCES = {};
   for (const [r, f] of Object.entries(C.ressources)) NOMS_RESSOURCES[r] = f.emoji + " " + f.nom;
@@ -312,7 +319,7 @@ Village.Batiments = (function () {
       return;
     }
     // Étape 15 : des vaches malades ne donnent pas de lait (voir logique/elevage.js)
-    if (b.malade) { b.attend = "les vaches sont malades 🤒"; return; }
+    if (b.malade) { b.attend = ((C.elevage.troupeaux[b.type] || {}).noms || "les animaux") + " sont malades 🤒"; return; }
     const entrees = entreesDe(monde, b);
     if (!b.travail) {
       const manque = Object.entries(entrees).filter(([r, n]) => (b.entrees[r] || 0) < n).map(([r]) => r);

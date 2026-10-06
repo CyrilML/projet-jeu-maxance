@@ -68,6 +68,7 @@ Village.Monde = (function () {
       porteursBonus: 0, // places de manutentionnaire achetées à la boutique
       // Étape 15
       bonheur: { valeur: null, cible: null, humeur: null }, // 😊 la jauge (logique/bonheur.js) ; null = pas encore calculée
+      habits: { minuteur: 60, part: 0 }, // étape 16 : 👕 la prochaine distribution d'habits (s), et la part des habitants servis
       gouts: { poissons: 0, viande: 0 }, // aliment → horloge du dernier repas où on en a mangé (au début : le repas d'hier soir)
       // Étape 4
       horloge: 0, // secondes depuis le début de LA PARTIE (sauvegardé) : c'est lui qui fait les saisons
@@ -135,6 +136,7 @@ Village.Monde = (function () {
     if (partie.missions) Object.assign(monde.missions, partie.missions);
     monde.partis = partie.partis || 0;
     if (partie.bonheur !== undefined) monde.bonheur.valeur = partie.bonheur; // étape 15
+    if (partie.habits) monde.habits = { minuteur: partie.habits[0], part: partie.habits[1] }; // étape 16
     monde.gouts = partie.gouts ? Object.assign({}, partie.gouts) : { poissons: monde.horloge, viande: monde.horloge }; // une partie plus ancienne : ils viennent de manger
     for (const [x, y, sorte] of partie.animaux || []) Village.Animaux.creer(monde, x, y, sorte);
     for (const b of partie.batiments || []) {
