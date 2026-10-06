@@ -76,13 +76,20 @@ Circuit.Textures = (function () {
       bruit(ctx, t, "rgba(0,0,0,0)", 0.35, 6000, 2.5); // les petits cailloux du goudron
       bruit2(ctx, t, 500, "rgba(20,20,22,.3)", 4); // des taches plus sombres
       // des rustines : des rectangles de goudron plus neuf (plus foncé), là où on a réparé la route
-      for (let i = 0; i < 4; i++) {
-        const x = hasard() * t * 0.8, y = hasard() * t * 0.8, l = 30 + hasard() * 80, h = 20 + hasard() * 50;
-        ctx.fillStyle = "rgba(25,26,30,.45)";
-        ctx.fillRect(x, y, l, h);
-        ctx.strokeStyle = "rgba(15,15,18,.6)";
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(x, y, l, h);
+      // (étape 55 : moins nombreuses et moins sombres, avec des bords un peu irréguliers : on ne voit plus des carrés noirs)
+      for (let i = 0; i < 2; i++) {
+        const x = hasard() * t * 0.8, y = hasard() * t * 0.8, l = 40 + hasard() * 70, h = 25 + hasard() * 40;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + l, y + (hasard() - 0.5) * 6);
+        ctx.lineTo(x + l + (hasard() - 0.5) * 6, y + h);
+        ctx.lineTo(x + (hasard() - 0.5) * 6, y + h + (hasard() - 0.5) * 6);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(30,31,35,.22)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(15,15,18,.35)";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
       }
       // des taches d'huile (des ronds sombres et flous)
       for (let i = 0; i < 6; i++) {
@@ -457,5 +464,145 @@ Circuit.Textures = (function () {
 
   // La fonction `bruit` remplit la toile d'une couleur : avec une couleur transparente, elle ne fait
   // qu'ajouter des grains par-dessus ce qui est déjà peint.
-  return { herbe, goudron, terre, beton, bordure, damier, carton, tremplin, planches, rail, facade, trottoir, toit, facadeLumiere, nitro, danger, bois, nuages, mer, sable };
+  // Étape 55 : une texture qui n'est pas carrée (une bande de vitrines, un garde-corps…).
+  function textureRect(nom, l, h, peindre) {
+    if (cache[nom]) return cache[nom];
+    const toile = document.createElement("canvas");
+    toile.width = l;
+    toile.height = h;
+    peindre(toile.getContext("2d"), l, h);
+    const t = new THREE.CanvasTexture(toile);
+    t.name = nom;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 8;
+    cache[nom] = t;
+    return t;
+  }
+
+  // Étape 55 : les MAGASINS du rez-de-chaussée. Une bande = 4 boutiques de 8 m (32 m × 4 m), chacune avec son
+  // enseigne, sa vitrine (on devine les étagères dedans) et sa porte vitrée. Deux variantes, pour ne pas voir
+  // toujours les mêmes. Et la même bande « allumée » (les vitrines brillent quand il fait sombre).
+  const BOUTIQUES = [
+    [["BOULANGERIE", "#7a4a22"], ["CAFÉ DE LA GARE", "#1f4d3a"], ["PHARMACIE", "#1c7a3c"], ["LIBRAIRIE", "#2a3f6e"]],
+    [["PIZZERIA", "#8a1f1a"], ["FLEURISTE", "#3f6e2a"], ["PRESSE · TABAC", "#a3402a"], ["FROMAGERIE", "#6e5a2a"]],
+  ];
+  const vitrines = (variante) =>
+    textureRect("vitrines" + variante, 1024, 128, (ctx, l, h) => {
+      const u = l / 4;
+      BOUTIQUES[variante].forEach(([nom, couleur], k) => {
+        const x = k * u;
+        ctx.fillStyle = "#2a2826"; // les piliers et le cadre
+        ctx.fillRect(x, 0, u, h);
+        ctx.fillStyle = couleur; // l'enseigne
+        ctx.fillRect(x + 6, 4, u - 12, 26);
+        ctx.fillStyle = "rgba(255,255,255,.12)";
+        ctx.fillRect(x + 6, 4, u - 12, 4);
+        ctx.fillStyle = "#f4ead2";
+        ctx.font = "bold 17px Georgia, serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(nom, x + u / 2, 18, u - 24);
+        // la vitrine : l'intérieur éclairé, des étagères, des reflets du ciel en biais
+        const vx = x + 10, vy = 36, vl = u * 0.62, vh = h - 44;
+        const fond = ctx.createLinearGradient(0, vy, 0, vy + vh);
+        fond.addColorStop(0, "#c9b48a");
+        fond.addColorStop(1, "#5a4a36");
+        ctx.fillStyle = fond;
+        ctx.fillRect(vx, vy, vl, vh);
+        ctx.fillStyle = "rgba(60,40,25,.55)";
+        for (let e = 0; e < 3; e++) ctx.fillRect(vx + 4, vy + 14 + e * 22, vl - 8, 3);
+        for (let o = 0; o < 14; o++) {
+          ctx.fillStyle = ["#b8433a", "#e0c060", "#5c8a4a", "#f2efe6", "#3a5a8a"][(o + k) % 5];
+          ctx.fillRect(vx + 6 + ((o * 37) % (vl - 16)), vy + 6 + Math.floor(o / 5) * 22, 6, 8);
+        }
+        ctx.fillStyle = "rgba(200,225,245,.18)";
+        ctx.beginPath();
+        ctx.moveTo(vx + vl * 0.2, vy);
+        ctx.lineTo(vx + vl * 0.45, vy);
+        ctx.lineTo(vx + vl * 0.15, vy + vh);
+        ctx.lineTo(vx - vl * 0.1, vy + vh);
+        ctx.fill();
+        // la porte vitrée, avec sa poignée
+        const px = vx + vl + 8, pl = u - vl - 26;
+        ctx.fillStyle = "#3a4650";
+        ctx.fillRect(px, vy, pl, vh);
+        ctx.fillStyle = "rgba(180,170,140,.55)";
+        ctx.fillRect(px + 4, vy + 4, pl - 8, vh - 8);
+        ctx.fillStyle = "#c9c9c9";
+        ctx.fillRect(px + pl - 10, vy + vh / 2, 3, 14);
+      });
+    });
+  const vitrinesLumiere = (variante) =>
+    textureRect("vitrines-lumiere" + variante, 256, 32, (ctx, l, h) => {
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, l, h);
+      const u = l / 4;
+      for (let k = 0; k < 4; k++) {
+        ctx.fillStyle = "#ffdca0";
+        ctx.fillRect(k * u + 2.5, 9, u * 0.62, h - 11);
+        ctx.fillStyle = "#fff2d0";
+        ctx.fillRect(k * u + 2, 1, u - 4, 6.5); // l'enseigne éclairée
+      }
+    });
+  // Étape 55 : un garde-corps de balcon en fer forgé (les barreaux ; le reste est transparent).
+  const gardeCorps = () =>
+    textureRect("garde-corps", 256, 64, (ctx, l, h) => {
+      ctx.clearRect(0, 0, l, h);
+      ctx.fillStyle = "#1c1d20";
+      ctx.fillRect(0, 0, l, 6);
+      ctx.fillRect(0, h - 5, l, 5);
+      for (let x = 4; x < l; x += 10) ctx.fillRect(x, 0, 3, h);
+      ctx.strokeStyle = "#1c1d20";
+      ctx.lineWidth = 2.5;
+      for (let x = 0; x < l; x += 40) {
+        ctx.beginPath();
+        ctx.arc(x + 20, h / 2, 12, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    });
+  // Étape 55 : l'USURE des rues, vue en long. En travers (de gauche à droite) : le caniveau sombre au bord, puis
+  // sur chaque voie deux bandes plus sombres et lisses là où passent les roues. C'est transparent ailleurs.
+  const usureRue = () =>
+    textureRect("usure-rue", 256, 256, (ctx, l, h) => {
+      ctx.clearRect(0, 0, l, h);
+      const bande = (centre, largeur, alpha) => {
+        const d = ctx.createLinearGradient(centre - largeur, 0, centre + largeur, 0);
+        d.addColorStop(0, "rgba(10,10,12,0)");
+        d.addColorStop(0.5, "rgba(10,10,12," + alpha + ")");
+        d.addColorStop(1, "rgba(10,10,12,0)");
+        ctx.fillStyle = d;
+        ctx.fillRect(centre - largeur, 0, 2 * largeur, h);
+      };
+      const m = l / 16; // pixels par mètre (la rue fait 16 m de large)
+      bande(0.25 * m, 0.6 * m, 0.55); // les caniveaux
+      bande(l - 0.25 * m, 0.6 * m, 0.55);
+      for (const voie of [-4, 4]) for (const roue of [-0.8, 0.8]) bande(l / 2 + (voie + roue) * m, 0.45 * m, 0.22);
+      for (let i = 0; i < 1500; i++) { // des grains, pour que ce ne soit pas trop lisse
+        ctx.fillStyle = "rgba(0,0,0," + hasard() * 0.15 + ")";
+        ctx.fillRect(hasard() * l, hasard() * h, 2, 2);
+      }
+    });
+
+  // Étape 55 : une grille en NID D'ABEILLE (les calandres et les entrées d'air des voitures).
+  const nidAbeille = () =>
+    texture("nid-abeille", 128, (ctx, t) => {
+      ctx.fillStyle = "#050506";
+      ctx.fillRect(0, 0, t, t);
+      ctx.strokeStyle = "#5a5d62";
+      ctx.lineWidth = 2;
+      const r = 8, h = r * Math.sqrt(3);
+      for (let j = -1; j < t / h + 1; j++) {
+        for (let i = -1; i < t / (r * 3) + 1; i++) {
+          for (const [ox, oy] of [[0, 0], [r * 1.5, h / 2]]) {
+            const cx = i * r * 3 + ox, cy = j * h + oy;
+            ctx.beginPath();
+            for (let k = 0; k <= 6; k++) ctx.lineTo(cx + Math.cos((k * Math.PI) / 3) * r, cy + Math.sin((k * Math.PI) / 3) * r);
+            ctx.stroke();
+          }
+        }
+      }
+    });
+
+  return { herbe, goudron, nidAbeille, vitrines, vitrinesLumiere, gardeCorps, usureRue, terre, beton, bordure, damier, carton, tremplin, planches, rail, facade, trottoir, toit, facadeLumiere, nitro, danger, bois, nuages, mer, sable };
 })();

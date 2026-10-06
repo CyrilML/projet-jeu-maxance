@@ -437,6 +437,8 @@ Circuit.Scene3D = (function () {
     vueProjection = new Float32Array(new THREE.Matrix4().multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse).elements);
   }
 
+  let objetJoueur = null; // (étape 55 : le dessin de ta voiture, pour compter ses pièces sous le capot)
+
   // Met une voiture (le groupe Three.js) à la place de la voiture du monde.
   function placerVoiture(objet, v) {
     const y = v.y || 0;
@@ -460,15 +462,8 @@ Circuit.Scene3D = (function () {
       objet.caisse.rotation.set(s ? s.roulis : 0, 0, s ? s.tangage : 0);
       for (const r of objet.ressorts) r.scale.y = Math.max(0.05, r.userData.base + ecrase);
     }
-    // Étape 49 : les ressorts du monster truck. La caisse monte et descend (logique/ressorts.js), les ressorts s'étirent.
-    if (objet.caisse) {
-      const s = v.suspension;
-      const ecrase = s ? s.ecrase : 0;
-      objet.caisse.position.y = ecrase;
-      // (étape 51 : la caisse penche aussi : tangage autour de z, roulis autour de x)
-      objet.caisse.rotation.set(s ? s.roulis : 0, 0, s ? s.tangage : 0);
-      for (const r of objet.ressorts) r.scale.y = Math.max(0.05, r.userData.base + ecrase);
-    }
+    // Étape 55 : l'ombre douce sous la voiture disparaît quand la voiture saute (elle ne touche plus le sol).
+    if (objet.ombreSol) objet.ombreSol.visible = Math.abs(v.vy || 0) < 1 && !v.tangage;
     for (const r of objet.roues) {
       r.roue.rotation.z = -v.rotationRoues * (r.sens || 1); // la roue roule (étape 51 : une roue de gauche retournée roule dans l'autre sens)
       r.pivot.rotation.y = r.avant ? -v.volant * C.voiture.angleRoues : 0; // les roues avant braquent
@@ -492,6 +487,7 @@ Circuit.Scene3D = (function () {
 
     // Les voitures : on montre seulement celle du joueur, et la voiture bleue s'il y en a une.
     const joueur = vehicule(v.modele);
+    objetJoueur = joueur;
     for (const objet of Object.values(vehicules)) objet.g.visible = objet === joueur;
     joueur.g.visible = camera.mode !== "capot" || monde.phase === "garage" || monde.phase === "cartes" || !!monde.pieton;
     placerVoiture(joueur, v);
@@ -643,6 +639,9 @@ Circuit.Scene3D = (function () {
     compteur,
     get vueProjection() {
       return vueProjection;
+    },
+    get objetJoueur() {
+      return objetJoueur;
     },
   };
 })();

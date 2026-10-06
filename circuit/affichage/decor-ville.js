@@ -8,6 +8,12 @@
 // Les FEUX changent de couleur pendant le jeu : chaque lampe a un matériau qu'on « allume » (il brille)
 // ou qu'on « éteint ». La couleur vient de logique/circulation.js : ce que tu vois, c'est ce que les
 // voitures de la circulation respectent.
+//
+// Étape 55 : les immeubles ne sont plus des boîtes lisses. Une vraie façade a du RELIEF, qui fait des ombres :
+// un socle en pierre, un bandeau à chaque étage, une corniche et un muret (l'« acrotère ») tout en haut, des
+// magasins au rez-de-chaussée avec leurs stores, des balcons en fer forgé, des montants sur les tours de verre,
+// et sur les toits des machines, des cages d'escalier, des réservoirs d'eau et des antennes.
+// Tous ces morceaux sont des « instances » d'une seule boîte (plus de 10 000 morceaux, en quelques dessins).
 
 window.Circuit = window.Circuit || {};
 
@@ -124,6 +130,10 @@ Circuit.DecorVille = (function () {
       g.add(clim);
     }
 
+    // Étape 55 : le RELIEF des immeubles (bandeaux, corniches, magasins, balcons, toits), et l'usure des rues.
+    reliefs(g, mat, fenetres);
+    usure(g, mat);
+
     // Les arbres des parcs (ce sont aussi des obstacles solides).
     g.add(D.foret(Ville.arbres.map((a) => [a.x, a.z, a.taille]), "ville"));
 
@@ -214,6 +224,160 @@ Circuit.DecorVille = (function () {
   }
 
   let lumiereFenetres = V.fenetresAllumees.minimum;
+
+  // Étape 55 : le relief des façades et des toits. Chaque morceau est une boîte (de 1 m de côté) agrandie et posée :
+  // on range tous les morceaux d'une même matière dans une liste, puis on les dessine en « instances ».
+  function reliefs(g, mat, fenetres) {
+    const Ville = Circuit.Ville, T = Circuit.Textures, R = V.reliefs; // (angle : le côté regarde vers (sin angle, cos angle))
+    let etat = V.graine + 55;
+    const hasard = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
+    const listes = {}; // matière → [[x, y, z, lx, ly, lz, angle, couleur]]
+    const ajouter = (matiere, x, y, z, lx, ly, lz, couleur, angle) => (listes[matiere] = listes[matiere] || []).push([x, y, z, lx, ly, lz, angle || 0, couleur]);
+    // Un morceau qui fait le tour de l'immeuble (un bandeau, une corniche…) : 4 boîtes, une par côté.
+    const ceinture = (matiere, b, y, haut, sortie, couleur) => {
+      const L = 2 * b.demiLongueur, P = 2 * b.demiLargeur;
+      ajouter(matiere, b.x, y, b.z - b.demiLargeur - sortie / 2, L + 2 * sortie, haut, sortie, couleur);
+      ajouter(matiere, b.x, y, b.z + b.demiLargeur + sortie / 2, L + 2 * sortie, haut, sortie, couleur);
+      ajouter(matiere, b.x - b.demiLongueur - sortie / 2, y, b.z, sortie, haut, P, couleur);
+      ajouter(matiere, b.x + b.demiLongueur + sortie / 2, y, b.z, sortie, haut, P, couleur);
+    };
+    // Les 4 côtés d'un immeuble : le milieu du côté, sa direction (le long), sa normale (vers la rue) et sa longueur.
+    const cotes = (b) => [
+      { x: b.x, z: b.z - b.demiLargeur, ux: 1, uz: 0, nx: 0, nz: -1, l: 2 * b.demiLongueur, angle: Math.PI },
+      { x: b.x, z: b.z + b.demiLargeur, ux: 1, uz: 0, nx: 0, nz: 1, l: 2 * b.demiLongueur, angle: 0 },
+      { x: b.x - b.demiLongueur, z: b.z, ux: 0, uz: 1, nx: -1, nz: 0, l: 2 * b.demiLargeur, angle: -Math.PI / 2 },
+      { x: b.x + b.demiLongueur, z: b.z, ux: 0, uz: 1, nx: 1, nz: 0, l: 2 * b.demiLargeur, angle: Math.PI / 2 },
+    ];
+    const PIERRE = [0xe6dcc6, 0xe2d8c8, 0xb4bac0, 0x23272c]; // la couleur des bandeaux, pour chaque style de façade
+    const STORES = [0x8a1f1a, 0x1f4d3a, 0x2a3f6e, 0xb88a2a, 0x5a2a5a, 0x3a6e3a];
+    // Les vitrines : 8 formes (2 variantes × 4 boutiques), chacune ne montre qu'un quart de sa bande de magasins.
+    const vitrineMat = [0, 1].map((v) => {
+      const m = mat({ map: T.vitrines(v), emissiveMap: T.vitrinesLumiere(v), emissive: 0xffffff, emissiveIntensity: V.fenetresAllumees.minimum, roughness: 0.35, metalness: 0.1 });
+      fenetres.push(m); // (elles s'allument avec les fenêtres quand il fait sombre)
+      return m;
+    });
+    const formeBoutique = [0, 1, 2, 3].map((k) => {
+      const f = new THREE.PlaneGeometry(1, 1);
+      const uv = f.attributes.uv;
+      for (let i = 0; i < uv.count; i++) uv.setX(i, (k + uv.getX(i)) / 4);
+      return f;
+    });
+    const balcons = [];
+    let vitrinesPosees = 0;
+    Ville.immeubles.forEach((b, n) => {
+      const H = b.hauteur, base = 0.12, etages = Math.floor(H / R.etage), verre = b.style === 3;
+      const pierre = PIERRE[b.style];
+      // le socle (en bas) et, en haut, la corniche puis le muret du toit (l'acrotère) avec sa couvertine
+      if (!verre) ceinture("pierre", b, base + 0.45, 0.9, 0.12, 0x8d877c);
+      ceinture("pierre", b, base + H - 0.3, 0.6, verre ? 0.08 : 0.3, pierre);
+      ceinture("pierre", b, base + H + 0.55, 1.1, 0.25, verre ? 0x30353b : pierre);
+      // un bandeau à chaque étage (au niveau du plancher), sauf pour les tours de verre
+      if (!verre) for (let f = 1; f < etages; f++) ceinture("pierre", b, base + f * R.etage + 0.28, 0.18, 0.14, pierre);
+      for (const c of cotes(b)) {
+        // les tours de verre : un montant vertical tous les 4 m (comme les fenêtres)
+        if (verre) {
+          for (let d = -c.l / 2 + R.fenetre; d < c.l / 2 - 0.5; d += R.fenetre) {
+            ajouter("metal", c.x + c.ux * d + c.nx * 0.15, base + H / 2, c.z + c.uz * d + c.nz * 0.15, c.ux ? 0.18 : 0.3, H, c.uz ? 0.18 : 0.3, 0x2c3138);
+          }
+          continue;
+        }
+        // le rez-de-chaussée : des boutiques de 8 m environ (posées juste devant la façade), et un store devant une sur deux
+        const nb = Math.max(1, Math.round(c.l / R.boutique)), lb = c.l / nb;
+        for (let k = 0; k < nb; k++) {
+          const d = -c.l / 2 + (k + 0.5) * lb;
+          ajouter("vitrine" + (n % 2) + "-" + ((k + n) % 4), c.x + c.ux * d + c.nx * 0.05, base + R.etage / 2 - 0.02, c.z + c.uz * d + c.nz * 0.05, lb - 0.1, R.etage - 0.1, 1, null, c.angle);
+          vitrinesPosees++;
+          if (hasard() < 0.5) continue;
+          ajouter("store", c.x + c.ux * d + c.nx * 0.8, base + 3.05, c.z + c.uz * d + c.nz * 0.8, lb * 0.7, 0.06, 1.5, STORES[Math.floor(hasard() * STORES.length)], c.angle);
+        }
+        // les balcons (les immeubles en pierre) : aux étages 2 et 5, sur toute la longueur du côté
+        if (b.style === 0) {
+          for (const f of [2, 5]) {
+            if (f >= etages - 1) continue;
+            const y = base + f * R.etage + 0.2;
+            ajouter("pierre", c.x + c.nx * 0.45, y, c.z + c.nz * 0.45, c.ux ? c.l : 0.9, 0.16, c.uz ? c.l : 0.9, pierre);
+            balcons.push({ x: c.x + c.nx * 0.88, y: y + 0.58, z: c.z + c.nz * 0.88, l: c.l, angle: c.angle });
+          }
+        }
+      }
+      // le toit : 1 à 3 machines (climatisation), une cage d'escalier, et parfois un réservoir d'eau ou une antenne
+      const L = 2 * b.demiLongueur, P = 2 * b.demiLargeur, toit = base + H;
+      const nm = 1 + Math.floor(hasard() * 3);
+      for (let k = 0; k < nm; k++) {
+        ajouter("metal", b.x + (hasard() - 0.5) * L * 0.6, toit + 0.75, b.z + (hasard() - 0.5) * P * 0.6, 2 + hasard() * 1.5, 1.5, 1.6 + hasard(), 0x9a9da2);
+      }
+      ajouter("pierre", b.x - L * 0.25, toit + 1.5, b.z + P * 0.22, 3.2, 3, 3.6, verre ? 0x30353b : 0xa8a49a);
+      if (!verre && hasard() < 0.45) {
+        const rx = b.x + L * 0.22, rz = b.z + P * 0.2;
+        ajouter("reservoir", rx, toit + 3.6, rz, 2.6, 3, 2.6, 0x8a6a4a);
+        for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) ajouter("metal", rx + dx * 0.9, toit + 1, rz + dz * 0.9, 0.15, 2.1, 0.15, 0x3a3d42);
+      }
+      if (H > 45) ajouter("metal", b.x + L * 0.1, toit + 5, b.z - P * 0.1, 0.18, 9, 0.18, 0x6a6e74);
+    });
+
+    // On dessine chaque liste en instances.
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), haut = new THREE.Vector3(0, 1, 0), v = new THREE.Vector3(), e = new THREE.Vector3(), c = new THREE.Color();
+    const matieres = {
+      pierre: mat({ color: 0xffffff, roughness: 0.85 }),
+      metal: mat({ color: 0xffffff, roughness: 0.45, metalness: 0.6 }),
+      store: mat({ color: 0xffffff, roughness: 0.9, side: THREE.DoubleSide }),
+      reservoir: mat({ color: 0xffffff, roughness: 0.9 }),
+    };
+    const cube = new THREE.BoxGeometry(1, 1, 1);
+    const cylindre = new THREE.CylinderGeometry(0.5, 0.5, 1, 16);
+    const penche = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.35); // le store penche vers la rue
+    let morceaux = 0;
+    for (const [nom, liste] of Object.entries(listes)) {
+      const vitrine = nom.startsWith("vitrine"); // (une vitrine est une image plate, tournée vers la rue)
+      const forme = vitrine ? formeBoutique[+nom.slice(-1)] : nom === "reservoir" ? cylindre : cube;
+      const im = new THREE.InstancedMesh(forme, vitrine ? vitrineMat[+nom.charAt(7)] : matieres[nom], liste.length);
+      liste.forEach(([x, y, z, lx, ly, lz, angle, couleur], i) => {
+        q.setFromAxisAngle(haut, angle);
+        if (nom === "store") q.multiply(penche);
+        // (une boîte est posée de travers selon sa liste (lx le long de x) ; une vitrine ou un store, selon son angle)
+        im.setMatrixAt(i, m4.compose(v.set(x, y, z), q, e.set(lx, ly, lz)));
+        if (!vitrine) im.setColorAt(i, c.setHex(couleur));
+      });
+      im.castShadow = !vitrine;
+      im.receiveShadow = true;
+      g.add(im);
+      morceaux += liste.length;
+    }
+    // Les garde-corps des balcons : une image de barreaux en fer forgé (transparente entre les barreaux), posée par
+    // morceaux d'environ 4 m (comme ça, tous les morceaux sont des instances d'une seule forme).
+    const grille = mat({ map: T.gardeCorps(), transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.6, metalness: 0.4 });
+    const morceauxGrille = [];
+    for (const bc of balcons) {
+      const nb = Math.max(1, Math.round(bc.l / 4)), lm = bc.l / nb, ux = Math.cos(bc.angle), uz = -Math.sin(bc.angle);
+      for (let k = 0; k < nb; k++) {
+        const d = -bc.l / 2 + (k + 0.5) * lm;
+        morceauxGrille.push([bc.x + ux * d, bc.y, bc.z + uz * d, lm, bc.angle]);
+      }
+    }
+    const imGrille = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), grille, morceauxGrille.length);
+    morceauxGrille.forEach(([x, y, z, l, angle], i) => imGrille.setMatrixAt(i, m4.compose(v.set(x, y, z), q.setFromAxisAngle(haut, angle), e.set(l, 1, 1))));
+    g.add(imGrille);
+    Circuit.DecorVille.bilanReliefs = { morceaux, balcons: balcons.length, vitrines: vitrinesPosees };
+  }
+
+  // Étape 55 : l'usure des rues (les caniveaux et les traces des roues), posée en transparence sur le goudron.
+  function usure(g, mat) {
+    const Ville = Circuit.Ville, T = Circuit.Textures;
+    for (let k = 0; k < Ville.n; k++) {
+      for (const axe of ["x", "z"]) {
+        const t = T.usureRue().clone();
+        t.repeat.set(1, Ville.taille / 16);
+        t.needsUpdate = true;
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(V.largeurRue, Ville.taille), mat({ map: t, transparent: true, depthWrite: false, roughness: 0.6 }));
+        m.rotation.x = -Math.PI / 2;
+        if (axe === "x") m.rotation.z = Math.PI / 2;
+        m.position.set(axe === "z" ? Ville.rue(k) : 0, 0.025, axe === "x" ? Ville.rue(k) : 0);
+        m.receiveShadow = true;
+        m.renderOrder = 1;
+        g.add(m);
+      }
+    }
+  }
 
   // Une image dessinée sur une toile (pour les panneaux et les plaques de rue).
   function toile(largeur, hauteur, peindre) {
@@ -458,5 +622,5 @@ Circuit.DecorVille = (function () {
     return groupes.filter(Boolean);
   }
 
-  return { construire, get lumiereFenetres() { return lumiereFenetres; }, bilanMobilier: null };
+  return { construire, get lumiereFenetres() { return lumiereFenetres; }, bilanMobilier: null, bilanReliefs: null };
 })();
