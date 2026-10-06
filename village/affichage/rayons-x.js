@@ -106,6 +106,16 @@ Village.RayonsX = (function () {
         });
         ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
       }
+      // Étape 21 : une mine et le filon qu'elle creuse (jusqu'à 4 cases plus loin)
+      if (C.mines[bat.type] && bat.etat === "pret") {
+        const f = Village.Batiments.filonsVoisins(monde.carte, bat.colonne, bat.ligne, Village.Carte.FILON[C.mines[bat.type].filon])[0];
+        if (f !== undefined) {
+          const a = point(bat.colonne + 0.5, bat.ligne + 0.5), q = point((f % monde.carte.colonnes) + 0.5, Math.floor(f / monde.carte.colonnes) + 0.5);
+          ctx.strokeStyle = "rgba(255, 207, 46, .9)"; ctx.lineWidth = 2.5 / z; ctx.setLineDash([3 / z, 3 / z]);
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(q.x, q.y); ctx.stroke(); ctx.setLineDash([]);
+          ctx.fillStyle = "#ffcf2e"; ctx.beginPath(); ctx.arc(q.x, q.y, 4 / z, 0, Math.PI * 2); ctx.fill();
+        }
+      }
       const o = bat.ouvrier;
       if (!o) continue;
       if (o.chemin && (o.etat === "aller" || o.etat === "revenir" || o.etat === "travailler")) {

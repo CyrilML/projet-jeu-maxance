@@ -136,7 +136,10 @@ Village.Porteurs = (function () {
 
   function marcher(p, dt, monde) {
     // Ventre vide : 2 fois moins vite. Étape 6 : la vitesse dépend du sol (terre ou pierre).
-    let reste = C.porteurs.vitesse * Village.Repas.vitesse(p) * Village.Routes.vitesseDuSol(monde, p.x, p.y) * Village.Recherches.bonus(monde, "porteurs") * Village.Ameliorations.vitessePorteurs(monde) * dt; // étape 7 : les brouettes ; étape 13 : l'écurie
+    // Étape 21 : ✍️ les bonus se multipliaient (× 1,6 × 1,3 × 1,25…) et les porteurs filaient à plus de 7 cases par seconde :
+    // c'était désagréable à regarder. Maintenant, la vitesse a un PLAFOND.
+    const vitesse = Math.min(C.porteurs.vitesseMax, C.porteurs.vitesse * Village.Repas.vitesse(p) * Village.Routes.vitesseDuSol(monde, p.x, p.y) * Village.Recherches.bonus(monde, "porteurs") * Village.Ameliorations.vitessePorteurs(monde)); // étape 7 : les brouettes ; étape 13 : l'écurie
+    let reste = vitesse * dt;
     while (reste > 0 && p.pas < p.chemin.length) {
       const cible = p.chemin[p.pas];
       const dx = cible.x - p.x, dy = cible.y - p.y, d = Math.hypot(dx, dy);

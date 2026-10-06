@@ -108,20 +108,21 @@ Village.Batiments = (function () {
     if (type === "pecheur" && !presDeLEau(carte, c, l, C.bordDeLEau)) return "trop loin de l'eau (il faut de l'eau à " + C.bordDeLEau + " cases maximum)";
     // Étape 7 : la mine se construit collée à une montagne qui a un filon (de charbon, ou de fer à l'étape 8).
     const mine = C.mines[type];
-    if (mine && !filonsVoisins(carte, c, l, Village.Carte.FILON[mine.filon]).length) return "il faut un filon de " + C.ressources[mine.filon].nom.replace("minerai de ", "") + " " + C.ressources[mine.filon].emoji + " juste à côté (au pied d'une montagne)";
+    if (mine && !filonsVoisins(carte, c, l, Village.Carte.FILON[mine.filon]).length) return "il faut un filon de " + C.ressources[mine.filon].nom.replace("minerai de ", "") + " " + C.ressources[mine.filon].emoji + " à " + C.rayonMine + " cases maximum (dans la montagne)"; // étape 21 : plus loin
     return null;
   }
 
   // Étape 7 : les cases de montagne voisines (8 autour) qui ont un filon de cette sorte, pas épuisé.
+  // Étape 21 : ✍️ jusqu'à 4 cases (config.js : rayonMine), le plus proche d'abord.
   function filonsVoisins(carte, c, l, sorte) {
-    const liste = [];
-    for (let dl = -1; dl <= 1; dl++) for (let dc = -1; dc <= 1; dc++) {
+    const liste = [], R = C.rayonMine || 1;
+    for (let dl = -R; dl <= R; dl++) for (let dc = -R; dc <= R; dc++) {
       const nc = c + dc, nl = l + dl;
       if ((!dc && !dl) || nc < 0 || nl < 0 || nc >= carte.colonnes || nl >= carte.lignes) continue;
       const i = nl * carte.colonnes + nc;
-      if (carte.filon[i] === sorte && carte.reste[i] > 0) liste.push(i);
+      if (carte.filon[i] === sorte && carte.reste[i] > 0) liste.push([i, Math.max(Math.abs(dc), Math.abs(dl))]);
     }
-    return liste;
+    return liste.sort((a, b) => a[1] - b[1]).map((x) => x[0]);
   }
 
   // Y a-t-il de l'eau à moins de `r` cases ? (on regarde le carré autour de la case)

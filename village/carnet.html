@@ -144,6 +144,7 @@
       <a href="#etape18">Étape 18</a>
       <a href="#etape19">Étape 19</a>
       <a href="#etape20">Étape 20</a>
+      <a href="#etape21">Étape 21</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1433,6 +1434,45 @@ après : 4 minutes pour finir les chantiers · file de 167 → 23, et les atelie
       <details class="question"><summary>Tu as 6 porteurs. Combien au plus vont aux chantiers ?</summary><p>La moitié : 3. Les 3 autres continuent pour les ateliers.</p></details>
     </section>
 
+    <section id="etape21">
+      <h2>🐢 Étape 21 : des porteurs plus calmes, l'université en pages, des mines plus loin <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les porteurs ne filent plus à toute allure, l'université cache les recherches faites et se lit page par page, et la cabane du mineur peut être à 4 cases du filon. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/22-porteurs-universite-mines.md</code>.</p>
+          <ul>
+            <li>✍️ Les porteurs vont beaucoup trop vite : c'est désagréable à l'œil.</li>
+            <li>✍️ Dans l'université, on ne peut pas descendre ; enlever ce qui est déjà fait.</li>
+            <li>✍️ Les mines sont trop loin : élargir le périmètre du mineur.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Les porteurs marchent normalement, même sur les routes pavées.</li>
+            <li>☐ L'université : les recherches faites sont cachées, ◀ avant / après ▶ en bas.</li>
+            <li>☐ Une mine à 3 ou 4 cases de la montagne : elle creuse quand même.</li>
+            <li>☐ Rayons X : un trait jaune va de la mine à son filon.</li>
+            <li>Vérifie « version 22 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🧮 Quand les bonus se multiplient</h3>
+      <pre style="white-space: pre-wrap">2,8 (porteur) × 1,6 (route pavée) × 1,3 (brouettes) × 1,25 (écurie) = 7,3 cases par seconde 😵
+maintenant : min(3,4 ; 2,2 × 1,6 × 1,3 × 1,25) = min(3,4 ; 5,7) = 3,4 cases par seconde 🙂</pre>
+      <p>Chaque bonus seul est raisonnable, mais multipliés ensemble, ils deviennent énormes. Pour éviter ça, on met un <strong>plafond</strong> (<code>Math.min</code>) : la vitesse ne dépasse jamais 3,4. Pour garder des livraisons rapides, les porteurs portent toujours 3 objets par voyage.</p>
+
+      <h3>📄 Des pages</h3>
+      <p>Quand une liste est plus longue que l'écran, on la coupe en <strong>pages</strong> : on calcule combien de lignes tiennent, puis la page n montre les lignes de n × taille à (n + 1) × taille. C'est la même chose qu'un livre !</p>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>12 recherches, 5 par page. Combien de pages ?</summary><p>12 ÷ 5 = 2,4, arrondi au-dessus : 3 pages (5 + 5 + 2).</p></details>
+      <details class="question"><summary>Un porteur à 2,2 × 1,3 = 2,86 cases par seconde. Le plafond change-t-il quelque chose ?</summary><p>Non : 2,86 est plus petit que 3,4. Le plafond ne sert que quand les bonus s'empilent.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1558,8 +1598,14 @@ après : 4 minutes pour finir les chantiers · file de 167 → 23, et les atelie
           <p>Plus de porteurs, plus rapides, qui portent plus ; la moitié au plus aux chantiers ; 8 places devant les cabanes ; le stock disponible ; des messages qui tiennent.</p>
           <p class="apprend"><b>Tu apprends :</b> le goulot d'étranglement, disponible = stock − promis. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">21</div>
+          <h4>🐢 Porteurs calmes, université en pages, mines plus loin <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Un plafond de vitesse pour les porteurs, les recherches faites cachées et rangées en pages, le mineur à 4 cases du filon.</p>
+          <p class="apprend"><b>Tu apprends :</b> un plafond (Math.min), découper une liste en pages. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">22</div>
           <h4>🏙️ La ville : monuments, fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -1736,6 +1782,14 @@ après : 4 minutes pour finir les chantiers · file de 167 → 23, et les atelie
         <textarea class="journal" id="village-appris-20" data-cle="village-appris-20" placeholder="Ex. : J'ai appris ce qu'est un goulot d'étranglement…"></textarea>
         <label for="village-idees-20"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-20" data-cle="village-idees-20" placeholder="Ex. : Des porteurs à cheval…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 21 · porteurs calmes, université en pages, mines plus loin <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la vitesse des porteurs revenue à 2,2 avec un plafond à 3,4 (<code>logique/porteurs.js</code>), les pages de l'université et les recherches faites cachées (<code>affichage/interface.js</code>), le mineur à 4 cases du filon (<code>rayonMine</code>), le trait jaune de la mine à son filon dans les rayons X.</p>
+        <label for="village-appris-21"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-21" data-cle="village-appris-21" placeholder="Ex. : J'ai appris que des bonus multipliés deviennent énormes…"></textarea>
+        <label for="village-idees-21"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-21" data-cle="village-idees-21" placeholder="Ex. : Un tunnel dans la montagne…"></textarea>
       </div>
     </section>
   </main>

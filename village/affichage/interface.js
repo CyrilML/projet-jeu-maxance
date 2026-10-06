@@ -249,10 +249,19 @@ Village.Interface = (function () {
   const croix = (ctx, x, y, l, action) => { texte(ctx, "✖", x + l - 16, y + 17, 14, "#a08a6a", true, "center"); zone(x + l - 38, y, 38, 34, action); };
 
   // 🎓 Le panneau de l'université : les recherches de notre âge (et celles de l'âge suivant, 🔒)
+  // Étape 21 : ✍️ la liste ne tenait pas dans l'écran. Les recherches faites sont cachées (on les compte), et si
+  // la liste est encore trop longue, elle est rangée en PAGES (◀ ▶ en haut du panneau).
+  let pageUniversite = 0;
+  function changerPage(d) { pageUniversite = Math.max(0, pageUniversite + d); }
   function panneauUniversite(ctx, monde, W, He, petit) {
-    const R = Village.Recherches, liste = C.recherches.filter((r) => r.age <= (monde.age || 0) + 1);
+    const R = Village.Recherches, toutes = C.recherches.filter((r) => r.age <= (monde.age || 0) + 1 && !R.faite(monde, r.id));
     const l = Math.min(W - 20, 470), hl = petit ? 38 : 40, x = (W - l) / 2, y = basDuStock + 4;
-    const h = 46 + liste.length * hl + 8;
+    let parPage = Math.max(3, Math.floor((He - y - (petit ? 96 : 104) - 54) / hl));
+    if (toutes.length > parPage) parPage = Math.max(3, Math.floor((He - y - (petit ? 96 : 104) - 54 - 44) / hl)); // la place des boutons ◀ ▶
+    const pages = Math.max(1, Math.ceil(toutes.length / parPage));
+    pageUniversite = Math.min(pageUniversite, pages - 1);
+    const liste = toutes.slice(pageUniversite * parPage, (pageUniversite + 1) * parPage);
+    const h = 46 + Math.max(1, liste.length) * hl + 8 + (pages > 1 ? 44 : 0);
     bulle(ctx, x, y, l, h, "rgba(255, 250, 235, .98)");
     zone(x, y, l, h, "rien");
     const e = monde.recherches.enCours, u = monde.selection;
@@ -260,7 +269,12 @@ Village.Interface = (function () {
     if (!u.relie) tete = "🎓 Université · ❌ pas de route : les recherches attendent";
     else if (!u.ouvrier) tete = "🎓 Université · 😢 le savant est parti";
     texte(ctx, tete, x + 12, y + 18, petit ? 12 : 14, "#3b2614", true);
-    texte(ctx, "Paie avec ton stock, puis le savant cherche. Une recherche à la fois.", x + 12, y + 35, petit ? 9 : 10, "#7a5a30");
+    texte(ctx, pages > 1 ? "Page " + (pageUniversite + 1) + " / " + pages + " · ✅ " + monde.recherches.faites.length + " faite(s), cachées" : "Paie avec ton stock, puis le savant cherche. ✅ " + monde.recherches.faites.length + " faite(s), cachées.", x + 12, y + 35, petit ? 9 : 10, "#7a5a30");
+    if (pages > 1) { // en bas du panneau
+      bouton(ctx, x + l / 2 - 96, y + h - 42, 88, 34, "◀ avant", "pageUniversite", -1, pageUniversite > 0, "#8a5ab0");
+      bouton(ctx, x + l / 2 + 8, y + h - 42, 88, 34, "après ▶", "pageUniversite", 1, pageUniversite < pages - 1, "#8a5ab0");
+    }
+    if (!toutes.length) texte(ctx, "🎉 Toutes les recherches de ton âge sont faites !", x + 12, y + 44 + hl / 2, petit ? 11 : 12, "#2e8a3a", true);
     croix(ctx, x, y, l, "fermer");
     liste.forEach((r, n) => {
       const ry = y + 44 + n * hl, fait = R.faite(monde, r.id), enCours = e && e.id === r.id, pourquoi = R.raison(monde, r.id);
@@ -968,5 +982,5 @@ Village.Interface = (function () {
     zones.push({ x: mx, y: my, l: mw, h: mh, action: "miniCarte", versMonde: (x, y) => ({ x: ((x - mx) / echelle - carte.lignes) * (L / 2), y: ((y - my) / echelle) * Hc }) });
   }
 
-  return { dessiner, zoneSous, info, basculerMenu, fermerMenu, basculerObjectifs, basculerPanneau, fermerPanneau, get menuOuvert() { return menuOuvert; } };
+  return { dessiner, zoneSous, info, changerPage, basculerMenu, fermerMenu, basculerObjectifs, basculerPanneau, fermerPanneau, get menuOuvert() { return menuOuvert; } };
 })();

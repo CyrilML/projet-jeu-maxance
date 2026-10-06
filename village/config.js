@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 21,
+  version: 22,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -247,6 +247,8 @@ Village.CONFIG = {
   // Étape 16 : + les œufs et le jambon
   douceurs: ["lait", "beurre", "fromage", "yaourt", "oeufs", "jambon"],
   // Étape 8 : les MINES. Chacune creuse le filon de sa sorte, juste à côté d'elle.
+  // Étape 21 : ✍️ « les mines sont trop éloignées » : la cabane du mineur peut être à 4 cases du filon (1 avant).
+  rayonMine: 4,
   mines: {
     mineCharbon: { filon: "charbon" },
     mineFer: { filon: "fer" },
@@ -376,7 +378,8 @@ Village.CONFIG = {
     nombre: 4, // les porteurs qui habitent l'entrepôt (étape 20 : 4)
     partChantiers: 0.5, // étape 20 : ✍️ la moitié des porteurs au plus livre les chantiers (les autres font tourner les ateliers)
     charge: 3, // étape 20 : objets par voyage (s'ils vont au même bâtiment) ; × 2 avec « Ânes et charrettes »
-    vitesse: 2.8, // cases par seconde (étape 20 : 2,8 ; 2,2 avant)
+    vitesse: 2.2, // cases par seconde (étape 21 : ✍️ de nouveau 2,2 : à 2,8, ils couraient beaucoup trop vite)
+    vitesseMax: 3.4, // étape 21 : même avec la route pavée, les brouettes et l'écurie, jamais plus de 3,4 cases par seconde
   },
   sortieMax: 8, // objets qui peuvent attendre devant un bâtiment (au-delà, l'ouvrier attend) · étape 20 : ✍️ 8 (4 avant), l'idée de Maxance
   entreeMax: 2, // de chaque ingrédient en réserve dans un atelier (scierie, fonderie, forge)
