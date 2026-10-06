@@ -697,10 +697,14 @@ avec les haches affûtées :  4 s × 0,6 = 2,4 s   (40 % plus vite)</pre>
             <li>☐ 🏪 Marché : vends 5 🟫, le prix baisse… puis il remonte tout seul.</li>
             <li>☐ 📊 en haut à droite : combien de planches par minute ?</li>
             <li>☐ Ta partie d'avant est toujours là, avec tous ses ouvriers.</li>
+            <li>☐ 🐞 Réparé : sur téléphone, toucher une carte du tiroir (ex. Bois → Bûcheron) ne faisait rien.</li>
             <li>Vérifie « version 9 » en haut de la page du village.</li>
           </ul>
         </div>
       </div>
+
+      <h3>🐞 Le bug du toucher qui passait à côté</h3>
+      <p>✍️ Maxance a remarqué que sur téléphone, Bois → Bûcheron ne faisait rien. La raison : l'écran se souvient des <strong>zones</strong> où sont les boutons, et quand on touche, il prend la zone dessinée <strong>en dernier</strong> (celle du dessus). Sous les cartes du tiroir, il y a une zone invisible « rien » (pour que toucher entre deux cartes ne touche pas la carte du monde)… mais elle était notée <em>après</em> les cartes, donc <em>au-dessus</em> d'elles : elle mangeait tous les touchers ! Maintenant, elle est notée avant. Comme des feuilles empilées : on voit celle du dessus.</p>
 
       <h3>⛓️ Une chaîne à 3 étages</h3>
       <pre style="white-space: pre-wrap">🟤 mine de fer ────── fer ──────┐
