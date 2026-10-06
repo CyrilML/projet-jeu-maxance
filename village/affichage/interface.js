@@ -156,7 +156,7 @@ Village.Interface = (function () {
       else texte(ctx, el.emoji, x + lc / 2, y0 + hc * 0.3, petit ? 24 : 28, null, false, "center");
       texte(ctx, el.nom, x + lc / 2, y0 + hc * 0.62, petit ? 11 : 12, "#3b2614", true, "center");
       if (el.verrou) texte(ctx, el.verrou, x + lc / 2, y0 + hc * 0.84, petit ? 9 : 10, "#8a7a60", true, "center");
-      else if (el.cout && typeof el.cout === "object") { if (Object.keys(el.cout).length > 3) dessinerCout(ctx, Object.fromEntries(Object.entries(el.cout).slice(0, 2)), x + lc / 2, y0 + hc * 0.8, petit ? 11 : 12, el.possible ? "#7a5a30" : "#c0392b"), dessinerCout(ctx, Object.fromEntries(Object.entries(el.cout).slice(2)), x + lc / 2, y0 + hc * 0.93, petit ? 11 : 12, el.possible ? "#7a5a30" : "#c0392b"); else dessinerCout(ctx, el.cout, x + lc / 2, y0 + hc * 0.84, petit ? 11 : 12, el.possible ? "#7a5a30" : "#c0392b"); }
+      else if (el.cout && typeof el.cout === "object") { if (Object.keys(el.cout).length > 2) dessinerCout(ctx, Object.fromEntries(Object.entries(el.cout).slice(0, 2)), x + lc / 2, y0 + hc * 0.8, petit ? 11 : 12, el.possible ? "#7a5a30" : "#c0392b"), dessinerCout(ctx, Object.fromEntries(Object.entries(el.cout).slice(2)), x + lc / 2, y0 + hc * 0.93, petit ? 11 : 12, el.possible ? "#7a5a30" : "#c0392b"); else dessinerCout(ctx, el.cout, x + lc / 2, y0 + hc * 0.84, petit ? 11 : 12, el.possible ? "#7a5a30" : "#c0392b"); }
       else if (el.cout) texte(ctx, el.cout, x + lc / 2, y0 + hc * 0.84, petit ? 10 : 11, el.possible ? "#7a5a30" : "#c0392b", true, "center");
       if (!petit) texte(ctx, el.touche, x + 7, y0 + 10, 10, "#a08a6a", true, "left");
       zone(x, y0, lc, hc, el.action, el.valeur);
@@ -409,9 +409,9 @@ Village.Interface = (function () {
   // courbe (les 5 dernières minutes), ce qui entre et ce qui sort par minute, et le bilan.
   function panneauStats(ctx, monde, W, He, petit) {
     const St = Village.Statistiques, liste = Object.keys(C.ressources).filter((r) => visible(monde, r) || St.parMinute(monde, r).entrees > 0);
-    const x0 = basDuStock + 4, hl = Math.max(16, Math.min(petit ? 24 : 26, Math.floor((He - x0 - 130) / liste.length))); // étape 14 : la liste tient toujours dans l'écran
+    const x0 = basDuStock + 4, hl = Math.max(16, Math.min(petit ? 24 : 26, Math.floor((He - x0 - 150) / liste.length))); // étape 14 : la liste tient toujours dans l'écran
     const l = Math.min(W - 20, 520), x = (W - l) / 2, y = x0;
-    const h = 74 + liste.length * hl + 44;
+    const h = 74 + liste.length * hl + 62; // étape 19 : + la ligne de la nourriture
     bulle(ctx, x, y, l, h, "rgba(255, 250, 235, .98)");
     zone(x, y, l, h, "rien");
     const duree = St.parMinute(monde, "troncs").minutes;
@@ -451,6 +451,10 @@ Village.Interface = (function () {
     const Lg = Village.Logement, actifs = Village.Porteurs.actifs(monde), dehors = actifs.filter((p) => p.etat !== "attend").length;
     const yb = y + 66 + liste.length * hl + 14;
     texte(ctx, "🛏️ Habitants " + Lg.habitants(monde) + " / " + Lg.capacite(monde) + " places · 🚚 porteurs au travail " + dehors + " / " + actifs.length + " · 📋 file " + monde.file.length, x + 12, yb, petit ? 10 : 11, "#5a4220", true);
+    // Étape 19 : ✍️ le bilan de la nourriture : ce que le village produit et ce qu'il mange, par minute
+    const St19 = Village.Statistiques, NOUR = ["poissons", "viande", "pain"].concat(C.douceurs);
+    let prod = 0, mange = 0; for (const r of NOUR) { const m = St19.parMinute(monde, r, true); prod += m.entrees; mange += m.sorties; }
+    texte(ctx, (petit ? "🍽️ +" + chiffre(prod) + " / −" + chiffre(mange) + " par min " : "🍽️ Nourriture : +" + chiffre(prod) + " produite · −" + chiffre(mange) + " mangée par minute ") + (prod >= mange ? "✅" : "⚠️") + " · 👥 " + monde.villageois.length + " sans travail", x + 12, yb + 36, petit ? 10 : 11, prod >= mange ? "#2e8a3a" : "#c0392b", true);
     texte(ctx, "🪙 " + monde.pieces + " pièces · 💎 " + monde.gemmes + " gemmes · " + monde.batiments.filter((b) => b.etat === "pret").length + " bâtiments", x + 12, yb + 18, petit ? 10 : 11, "#5a4220", true);
   }
 
@@ -552,9 +556,10 @@ Village.Interface = (function () {
       { id: "elevage", emoji: "🐄", nom: "Élevage", batiments: ["puits", "faneur", "etable", "poulailler", "bergerie", "porcherie", "veterinaire"] }, // étape 15 et 16
       // Étape 8 : les logements, et les artisans (fonderie, forge, marché, université)
       { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "maison", "macon"] }, // étape 12 : le maçon-couvreur
-      { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite", "depot"] }, // étape 16 : la laine et les habits ; étape 17 : le 2e entrepôt
+      { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite"] }, // étape 16 : la laine et les habits
       // Étape 7 : le chemin de terre, et la route en pierre (débloquée par la recherche « Routes pavées »)
-      { id: "route", nom: "Routes", outils: [
+      // Étape 19 : ✍️ l'entrepôt secondaire est rangé avec les routes (le transport), dès le hameau
+      { id: "route", nom: "Routes", batiments: ["depot"], outils: [
         // Étape 17 : ✍️ une seule route. Après « Routes pavées », elle est pavée (et les anciennes aussi, d'un coup).
         Village.Recherches.a(monde, "routePierre") ? { id: "route", icone: "pierre", nom: "Route pavée", touche: "R", cout: C.routes.coutPierre.pierres + "🪨/case" } : { id: "route", icone: "terre", nom: "Chemin", touche: "R", cout: "gratuit" },
         { id: "deplacer", emoji: "↔️", nom: "Déplacer", touche: "M" }, { id: "demolir", emoji: "🧹", nom: "Démolir", touche: "Suppr" },

@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 19,
+  version: 20,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -146,7 +146,7 @@ Village.CONFIG = {
     tailleur: { cout: { planches: 12, pierres: 10, outils: 2 }, construction: 16 },
     charcuterie: { cout: { planches: 12, pierres: 14, outils: 2 }, construction: 16 },
     // Étape 17 : ✍️ un 2e (et un 3e) ENTREPÔT, très cher : c'est un bâtiment stratégique
-    depot: { cout: { planches: 120, pierres: 90, lingots: 6, outils: 8 }, construction: 40 },
+    depot: { cout: { planches: 120, pierres: 90, charbon: 20 }, construction: 40 }, // étape 19 : dès le hameau (sans lingots ni outils)
     manoir: { cout: { planches: 12, pierres: 16, outils: 2 }, construction: 20 }, // étape 18 : on ne la construit pas, une maison le DEVIENT
   },
   // Étape 18 : ✍️ les CLASSES D'HABITANTS suivent leur logement (voir logique/classes.js).
@@ -183,7 +183,7 @@ Village.CONFIG = {
     // Étape 11 : le pain et l'or. La ferme n'a besoin de rien… sauf qu'il ne fasse pas l'hiver !
     ferme: { entrees: {}, sorties: { ble: 2 }, duree: 14, bonus: "cultiver", pasEnHiver: true, raisonHiver: "c'est l'hiver, le blé ne pousse pas" },
     moulin: { entrees: { ble: 2 }, sorties: { farine: 1 }, duree: 8, bonus: "moudre" },
-    boulangerie: { entrees: { farine: 1, troncs: 1 }, sorties: { pain: 2 }, duree: 10, bonus: "cuire" }, // le tronc chauffe le four
+    boulangerie: { entrees: { farine: 1, troncs: 1 }, sorties: { pain: 3 }, duree: 10, bonus: "cuire" }, // étape 19 : 3 pains (2 avant) // le tronc chauffe le four
     orfevre: { entrees: { or: 2, charbon: 1 }, sorties: { bijoux: 1 }, duree: 20, bonus: "orfevrerie" },
     // Étape 15 : ✍️ l'élevage. « hiver » : ce qu'il faut EN PLUS en hiver (✍️ 3C : du foin, l'herbe est sous la neige).
     puits: { entrees: {}, sorties: { eau: 2 }, duree: 6, bonus: "puiser" },
@@ -195,7 +195,7 @@ Village.CONFIG = {
     // Étape 16 : les poules boivent ; les moutons et les cochons boivent, et mangent du foin en hiver
     poulailler: { entrees: { eau: 1 }, sorties: { oeufs: 2 }, duree: 10, bonus: "pondre" },
     bergerie: { entrees: { eau: 1 }, hiver: { foin: 1 }, sorties: { laine: 2 }, duree: 16, bonus: "tondre" },
-    porcherie: { entrees: { eau: 1 }, hiver: { foin: 1 }, sorties: { viande: 3 }, duree: 14, bonus: "engraisser" },
+    porcherie: { entrees: { eau: 1 }, hiver: { foin: 1 }, sorties: { viande: 4 }, duree: 14, bonus: "engraisser" }, // étape 19 : 4 viandes (3 avant)
     tisserand: { entrees: { laine: 2 }, sorties: { tissu: 1 }, duree: 14, bonus: "tisser" },
     tailleur: { entrees: { tissu: 1 }, sorties: { vetements: 1 }, duree: 16, bonus: "coudre" },
     charcuterie: { entrees: { viande: 2, charbon: 1 }, sorties: { jambon: 2 }, duree: 16, bonus: "fumer" }, // le charbon fume le jambon
@@ -268,6 +268,10 @@ Village.CONFIG = {
     arrivee: 20, // s entre deux arrivées (s'il y a un lit libre et au moins 2 repas en stock)
     vitesse: 1.2, // cases par seconde quand ils vont au travail (0,6 en se promenant)
     promenade: 3, // cases autour du feu de camp
+    // Étape 19 : ✍️ Maxance trouvait qu'il fallait une ÉNORME quantité de nourriture. La mesure : sur 46 habitants,
+    // 35 n'avaient pas de travail (chaque hutte faisait venir 3 bouches de plus) ! Maintenant, un villageois
+    // n'arrive que s'il y a du travail pour lui, ou s'il y a moins de 2 villageois qui attendent déjà.
+    attenteMax: 2,
   },
 
   // Étape 13 : ✍️ (2B) l'ENTREPÔT s'agrandit pour accueillir plus de manutentionnaires (les porteurs).
@@ -413,7 +417,7 @@ Village.CONFIG = {
   // Étape 5 : ✍️ c'était trop. Maintenant : 1 repas par saison, pris directement à l'entrepôt (la cantine),
   // et le ventre vide ne bloque plus personne : on travaille juste 2 fois moins vite (ouvriers.lentSiFaim).
   repas: {
-    intervalle: 150, // s entre deux repas (2 min 30 ; 120 s à l'étape 4)
+    intervalle: 200, // s entre deux repas (étape 19 : 3 min 20 ; 2 min 30 avant ; 120 s à l'étape 4)
     tropFaim: 600, // s le ventre vide avant de quitter le village : une année entière (150 s à l'étape 4)
     retour: 30, // s avant qu'un nouvel habitant arrive, quand il y a de nouveau à manger
   },
@@ -461,12 +465,12 @@ Village.CONFIG = {
       objectifs: { batiments: 6, stock: { planches: 40, pierres: 20 }, nourriture: 30 } },
     // Étape 7 : le hameau débloque l'université (les recherches), la mine de charbon et le géologue.
     // Étape 15 : le hameau débloque aussi le début de l'élevage (le puits, le faneur et l'étable).
-    { id: "hameau", nom: "Le hameau", emoji: "🛖", debloque: ["geologue", "universite", "mineCharbon", "puits", "faneur", "etable", "poulailler"], // étape 16 : le poulailler
+    { id: "hameau", nom: "Le hameau", emoji: "🛖", debloque: ["geologue", "universite", "mineCharbon", "puits", "faneur", "etable", "poulailler", "depot"], // étape 19 : ✍️ l'entrepôt secondaire dès le hameau // étape 16 : le poulailler
       objectifs: { batiments: 10, recherches: 3, stock: { planches: 80, charbon: 20 }, nourriture: 60 } },
     // La suite (prévue, pas encore construite) : ce que chaque âge débloquera.
     // Étape 8 : le village débloque le fer, la fonderie, la forge, les maisons et le marché.
     //   pieces : 🪙 qu'il faut avoir ; habitants : ouvriers logés.
-    { id: "village", nom: "Le village", emoji: "🏡", debloque: ["mineFer", "fonderie", "forge", "maison", "marche", "laiterie", "veterinaire", "bergerie", "porcherie", "tisserand", "depot"], // étape 17 : le 2e entrepôt // étape 15 : le beurre et le vétérinaire ; étape 16 : la laine et les cochons
+    { id: "village", nom: "Le village", emoji: "🏡", debloque: ["mineFer", "fonderie", "forge", "maison", "marche", "laiterie", "veterinaire", "bergerie", "porcherie", "tisserand"], // étape 17 : le 2e entrepôt // étape 15 : le beurre et le vétérinaire ; étape 16 : la laine et les cochons
       objectifs: { batiments: 18, habitants: 16, recherches: 7, stock: { lingots: 10, outils: 10 }, pieces: 150 } },
     // Étape 11 : ✍️ le bourg, et c'est de plus en plus dur ! (chaque âge demande environ 2 fois plus)
     //   Le bourg ajoute 3 nouvelles choses à penser : le PAIN (les habitants en veulent), l'ENTRETIEN

@@ -8,6 +8,7 @@
 // D'où viennent les villageois ? Toutes les 20 secondes, un nouveau arrive au village… s'il y a un LIT
 // libre (huttes, maisons) et au moins 2 repas à l'entrepôt. Pas de lit, pas de villageois ; pas de
 // villageois, la cabane reste vide !
+// Étape 19 : ✍️ un villageois ne vient que s'il y a du travail pour lui (ou s'il y a moins de 2 villageois qui attendent).
 // Étape 15 : le BONHEUR compte aussi : un village triste n'attire personne, un village ravi attire 2 fois plus.
 //
 // Chaque villageois est une petite MACHINE À ÉTATS :
@@ -64,6 +65,14 @@ Village.Villageois = (function () {
     return true;
   }
 
+  // Étape 19 : y a-t-il du travail pour un villageois de plus ? (une cabane vide, ou une place de porteur libre)
+  function travailLibre(monde) {
+    const B = Village.Batiments;
+    const vides = monde.batiments.filter((b) => b.etat === "pret" && B.TYPES[b.type].metier && !b.ouvrier && !versLeTravail(monde, b)).length;
+    const porteurs = Village.Porteurs.entrepots(monde).reduce((n, e) => n + Village.Ameliorations.placesDe(monde, e), 0) - Village.Porteurs.actifs(monde).length;
+    return vides + Math.max(0, porteurs) > libres(monde).length;
+  }
+
   let minuteurArrivee = 0, minuteurChef = 0;
   function etape(monde, dt) {
     const B = Village.Batiments, Lg = Village.Logement;
@@ -71,7 +80,8 @@ Village.Villageois = (function () {
     minuteurArrivee += dt * Village.Bonheur.arrivee(monde); // étape 15 : 😢 personne n'arrive · 😊 × 1,5 · 😄 × 2
     if (minuteurArrivee >= V.arrivee) {
       minuteurArrivee = 0;
-      if (Lg.placeLibre(monde) && Village.Repas.nourritureEnStock(monde) >= 2) {
+      // Étape 19 : ✍️ et seulement s'il y a du TRAVAIL (une cabane vide, une place de porteur), ou peu de villageois qui attendent
+      if (Lg.placeLibre(monde) && Village.Repas.nourritureEnStock(monde) >= 2 && (libres(monde).length < V.attenteMax || travailLibre(monde))) {
         const f = monde.carte.village, a = Math.random() * Math.PI * 2;
         const v = creer(monde, f.colonne + 0.5 + Math.cos(a) * 2.5, f.ligne + 0.5 + Math.sin(a) * 2.5);
         monde.partis = Math.max(0, monde.partis - 1);

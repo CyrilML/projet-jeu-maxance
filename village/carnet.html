@@ -142,6 +142,7 @@
       <a href="#etape16">Étape 16</a>
       <a href="#etape17">Étape 17</a>
       <a href="#etape18">Étape 18</a>
+      <a href="#etape19">Étape 19</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1355,6 +1356,40 @@ la case, elle, ne change pas : le bâtiment occupe toujours 1 case</pre>
       <details class="question"><summary>À 25 % de zoom, de combien dessine-t-on le repère ?</summary><p>20 ÷ 0,25 = 80 : 4 fois plus gros dans le monde, mais la même taille à l'écran.</p></details>
     </section>
 
+    <section id="etape19">
+      <h2>⚖️ Étape 19 : la nourriture rééquilibrée, et l'entrepôt 2 dès le hameau <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Il fallait une énorme quantité de nourriture : on a mesuré pourquoi, et corrigé la vraie cause. Et l'entrepôt secondaire se trouve maintenant dans le menu Routes, dès le hameau. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/20-nourriture-entrepot.md</code>.</p>
+          <ul>
+            <li>✍️ « Je ne vois pas la possibilité de construire un autre entrepôt. »</li>
+            <li>✍️ « La consommation par rapport à la production est déséquilibrée : il faut un apport énorme. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Au hameau, menu 🛤️ Routes : la carte « 🏬 Entrepôt 2 ».</li>
+            <li>☐ 📊 Statistiques, en bas : la ligne 🍽️ (produite / mangée par minute) et les villageois sans travail.</li>
+            <li>☐ Construis des huttes : il n'arrive plus de villageois s'il n'y a pas de travail pour eux.</li>
+            <li>Vérifie « version 20 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔬 Mesurer avant de corriger</h3>
+      <p>Avant de changer les nombres, on a fait une <strong>expérience</strong> : un village de 18 bâtiments, 10 minutes de jeu accéléré, et on compte. Résultat : 46 habitants… dont <strong>35 sans travail</strong> ! Chaque hutte faisait venir 3 bouches de plus, qui se promenaient en mangeant. Ce n'était donc pas la production qui était trop faible : c'étaient trop de mangeurs.</p>
+      <pre style="white-space: pre-wrap">avant :  46 habitants (35 sans travail) · 14 repas mangés par minute
+après :  14 habitants (3 sans travail)  ·  4 repas mangés par minute · 18 rapportés par minute</pre>
+      <p>Les nouvelles règles : un villageois n'arrive que s'il y a du <strong>travail</strong> pour lui (ou s'il y a moins de 2 villageois qui attendent), on mange toutes les 3 min 20 (au lieu de 2 min 30), la boulangerie fait 3 pains, et la porcherie 4 viandes.</p>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un pêcheur rapporte 6 poissons par minute, et chacun mange 1 repas toutes les 200 s. Combien d'habitants nourrit-il ?</summary><p>Un habitant mange 60 ÷ 200 = 0,3 repas par minute. 6 ÷ 0,3 = 20 habitants.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1468,8 +1503,14 @@ la case, elle, ne change pas : le bâtiment occupe toujours 1 case</pre>
           <p>Paysans, artisans et bourgeois ; des logements qui évoluent tout seuls ; des impôts ; un repère pour chaque bâtiment, vu de loin.</p>
           <p class="apprend"><b>Tu apprends :</b> des besoins par paliers, une taille fixe à l'écran. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">19</div>
+          <h4>⚖️ La nourriture rééquilibrée <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Des villageois seulement s'il y a du travail, des repas moins souvent, le bilan de la nourriture dans les statistiques, l'entrepôt 2 dès le hameau.</p>
+          <p class="apprend"><b>Tu apprends :</b> mesurer avant de corriger. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">20</div>
           <h4>🏙️ La ville : monuments, fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -1630,6 +1671,14 @@ la case, elle, ne change pas : le bâtiment occupe toujours 1 case</pre>
         <textarea class="journal" id="village-appris-18" data-cle="village-appris-18" placeholder="Ex. : J'ai appris ce qu'est un besoin par paliers…"></textarea>
         <label for="village-idees-18"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-18" data-cle="village-idees-18" placeholder="Ex. : Une école pour les enfants des artisans…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 19 · la nourriture rééquilibrée <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la règle « un villageois seulement s'il y a du travail » (<code>logique/villageois.js</code>), les repas toutes les 3 min 20, plus de pain et de viande de porc, le bilan de la nourriture dans les statistiques, l'entrepôt 2 dans le menu Routes dès le hameau (sans lingots ni outils).</p>
+        <label for="village-appris-19"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-19" data-cle="village-appris-19" placeholder="Ex. : J'ai appris qu'il faut mesurer avant de corriger…"></textarea>
+        <label for="village-idees-19"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-19" data-cle="village-idees-19" placeholder="Ex. : Un grenier pour la nourriture…"></textarea>
       </div>
     </section>
   </main>
