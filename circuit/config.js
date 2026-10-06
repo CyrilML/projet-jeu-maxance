@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 22,
+  version: 23,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -49,7 +49,7 @@ Circuit.CONFIG = {
   // la 1re reste telle quelle, puis une « Lamborghini », une « Porsche », une « Bugatti » et une Formule 1 au son aigu.
   // vitesseMax en m/s (× 3,6 = km/h) ; acceleration en m/s² ; son = fréquences du moteur en Hz (ralenti → à fond).
   voitures: [
-    { id: "classique", nom: "La Rouge", modele: "classique", prix: 0, vitesseMax: 41.7, acceleration: 14,
+    { id: "classique", nom: "La Peugeot 208 rouge", modele: "classique", prix: 0, vitesseMax: 41.7, acceleration: 14,
       couleurs: [[0.9, 0.15, 0.1], [0.65, 0.08, 0.06]], son: { ralenti: 38, max: 90 } },
     // Étape 49 : ✍️ les voitures « style » sont remplacées par de VRAIES voitures : la Porsche 911, la Lamborghini
     // Aventador et la Bugatti Chiron (choix de Maxance). Elles prennent la place (et le prix) des anciennes.
@@ -97,7 +97,7 @@ Circuit.CONFIG = {
   vehiculesVille: [
     // Étape 49 : ✍️ des voitures plus réalistes. Étape 51 : ✍️ avec leur vrai nom (Peugeot 508, Honda NSX, Mercedes Vito,
     // Kawasaki Ninja) et construites en coques (affichage/voitures-marques.js).
-    { id: "citadine", nom: "La citadine", modele: "citadine", prix: 0, vitesseMax: 33.3, acceleration: 11, virage: 2.1, saut: 1,
+    { id: "citadine", nom: "La Renault Clio", modele: "citadine", prix: 0, vitesseMax: 33.3, acceleration: 11, virage: 2.1, saut: 1,
       couleurs: [[0.3, 0.75, 0.85], [0.95, 0.95, 0.95]], son: { ralenti: 55, max: 140 } },
     { id: "suv", nom: "La Peugeot 508", modele: "suv", prix: 50, vitesseMax: 38.9, acceleration: 12, virage: 1.9, saut: 1,
       couleurs: [[0.08, 0.22, 0.45], [0.75, 0.75, 0.78]], son: { ralenti: 40, max: 105 } },
@@ -111,9 +111,9 @@ Circuit.CONFIG = {
     { id: "moto", nom: "La Kawasaki Ninja", modele: "moto", prix: 100, vitesseMax: 45.8, acceleration: 19, virage: 2.7, saut: 1.1,
       couleurs: [[0.35, 0.75, 0.08], [0.08, 0.08, 0.09]], son: { ralenti: 90, max: 300 } },
     // Étape 40 : ✍️ le taxi et la voiture de police (gyrophare et sirène : touche H).
-    { id: "taxi", nom: "Le taxi", modele: "taxi", prix: 150, vitesseMax: 38.9, acceleration: 12, virage: 2.0, saut: 1,
+    { id: "taxi", nom: "Le taxi (Toyota Corolla)", modele: "taxi", prix: 150, vitesseMax: 38.9, acceleration: 12, virage: 2.0, saut: 1,
       couleurs: [[1, 0.78, 0.05], [0.1, 0.1, 0.11]], son: { ralenti: 48, max: 125 } },
-    { id: "police", nom: "La voiture de police", modele: "police", prix: 400, vitesseMax: 47.2, acceleration: 16, virage: 2.1, saut: 1, sirene: true,
+    { id: "police", nom: "La Peugeot 308 de police", modele: "police", prix: 400, vitesseMax: 47.2, acceleration: 16, virage: 2.1, saut: 1, sirene: true,
       couleurs: [[0.95, 0.95, 0.97], [0.08, 0.15, 0.4]], son: { ralenti: 50, max: 150 } },
   ],
 
@@ -204,6 +204,7 @@ Circuit.CONFIG = {
     },
     limiteVitesse: 50, // km/h : ce qui est écrit sur les panneaux (ce n'est qu'un panneau : la police ne flashe pas !)
     fenetresAllumees: { minimum: 0.05, force: 1.3 }, // la lumière des fenêtres = minimum + force × (1 − lumière du soleil)
+    reliefs: { etage: 3.5, fenetre: 4, boutique: 8 }, // m (étape 55) : la hauteur d'un étage, la largeur d'une fenêtre et d'une boutique (comme sur les façades)
     mobilier: { bouchesIncendie: 30, plaquesEgout: 70, bancs: 28, poubelles: 36 }, // combien de chaque sur les trottoirs et les rues
   },
 

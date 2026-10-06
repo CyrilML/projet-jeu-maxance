@@ -32,6 +32,12 @@ Circuit.Modeles = (function () {
     M.plastique = new THREE.MeshStandardMaterial({ color: 0x1b1c1f, roughness: 0.75, metalness: 0.05 });
     M.disque = new THREE.MeshStandardMaterial({ color: 0x8a8d92, metalness: 0.8, roughness: 0.35 });
     M.orange = new THREE.MeshStandardMaterial({ color: 0xaa5500, emissive: 0xff8a10, emissiveIntensity: 0.6, roughness: 0.3 });
+    // Étape 55 : les blocs optiques (un boîtier chromé foncé, des LED qui brillent, une lentille de verre par-dessus).
+    M.boitier = new THREE.MeshStandardMaterial({ color: 0x15171a, metalness: 0.85, roughness: 0.32 });
+    M.lentille = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.02, clearcoat: 1, transparent: true, opacity: 0.22, depthWrite: false });
+    M.led = new THREE.MeshStandardMaterial({ color: 0xdfe8f2, emissive: 0xe8f0ff, emissiveIntensity: 1.4, roughness: 0.15, metalness: 0.3 });
+    M.feuLed = new THREE.MeshStandardMaterial({ color: 0xff2020, emissive: 0xff1208, emissiveIntensity: 2.4, roughness: 0.3 });
+    M.feuVerre = new THREE.MeshPhysicalMaterial({ color: 0x6a0606, metalness: 0.1, roughness: 0.05, clearcoat: 1, emissive: 0x400000, emissiveIntensity: 0.6 });
     M.vitreFumee = new THREE.MeshPhysicalMaterial({ color: 0x202830, metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.7, clearcoat: 1 });
     return M;
   }
@@ -880,9 +886,39 @@ Circuit.Modeles = (function () {
       const vraie = MQ.fabriquer(modele, couleur1, couleur2);
       if (vraie) return vraie;
       MQ.charger(modele);
-      return Object.assign(FABRIQUES[modele](couleur1, couleur2), { provisoire: true });
+      return Object.assign(ombrer(FABRIQUES[modele](couleur1, couleur2), modele), { provisoire: true });
     }
-    return FABRIQUES[modele](couleur1, couleur2);
+    return ombrer(FABRIQUES[modele](couleur1, couleur2), modele);
+  }
+
+  // Étape 55 : l'OMBRE DOUCE sous la voiture. Là où la voiture touche presque le sol, la lumière du ciel n'arrive
+  // pas : c'est tout sombre juste dessous, et ça s'éclaircit vers les bords. (Les peintres l'appellent « l'ombre
+  // de contact » : sans elle, une voiture a l'air de flotter.) C'est une image floue posée au sol, sous la voiture.
+  let imageOmbre = null;
+  const VOLANTS = ["avionDeLigne", "petitAvion", "helico", "avionChasse"];
+  function ombrer(objet, modele) {
+    if (VOLANTS.includes(modele)) return objet;
+    if (!imageOmbre) {
+      const c = document.createElement("canvas");
+      c.width = c.height = 128;
+      const ctx = c.getContext("2d");
+      const d = ctx.createRadialGradient(64, 64, 8, 64, 64, 64);
+      d.addColorStop(0, "rgba(0,0,0,0.75)");
+      d.addColorStop(0.55, "rgba(0,0,0,0.45)");
+      d.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = d;
+      ctx.fillRect(0, 0, 128, 128);
+      imageOmbre = new THREE.CanvasTexture(c);
+    }
+    const boite = new THREE.Box3().setFromObject(objet.g), taille = new THREE.Vector3();
+    boite.getSize(taille);
+    const plan = new THREE.Mesh(new THREE.PlaneGeometry(taille.x * 1.12, taille.z * 1.35), new THREE.MeshBasicMaterial({ map: imageOmbre, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+    plan.rotation.x = -Math.PI / 2;
+    plan.position.set((boite.min.x + boite.max.x) / 2, 0.02, 0);
+    plan.renderOrder = 2;
+    objet.g.add(plan);
+    objet.ombreSol = plan;
+    return objet;
   }
 
   // Les outils du carrossier, prêtés à affichage/voitures-reelles.js (étape 49).

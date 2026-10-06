@@ -176,6 +176,7 @@
       <a href="#etape51">Étape 51</a>
       <a href="#etape53">Étape 53</a>
       <a href="#etape54">Étape 54</a>
+      <a href="#etape55">Étape 55</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3388,6 +3389,49 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Pourquoi tu glisses plus dans la boue ?</summary><p>Son adhérence est de 32 % : les pneus n'accrochent presque pas, alors la direction où tu vas rattrape lentement la direction de ton nez.</p></details>
     </section>
 
+    <section id="etape55">
+      <h2>🏙️ Étape 55 : voitures, routes et immeubles très réalistes <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les voitures ont de vrais phares à LED, des feux, des plaques et une ombre douce ; la Rouge devient une Peugeot 208. La ville a des boutiques, des balcons, des corniches et des toits pleins de machines. <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/55-voitures-routes-immeubles-realistes.md</code>.</p>
+          <ul>
+            <li>✍️ Des voitures très réalistes, en code (pas de maquettes).</li>
+            <li>✍️ Des routes et des immeubles plus vrais.</li>
+            <li>✍️ Tout d'un coup.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Dans la ville : boutiques (boulangerie, café, pharmacie…), stores, balcons, bandeaux à chaque étage.</li>
+            <li>☐ Regarde les toits depuis un pont : machines, cages d'escalier, réservoirs d'eau, antennes.</li>
+            <li>☐ Au garage : les phares qui brillent, les feux rouges, la plaque, le nom de la marque derrière.</li>
+            <li>☐ La Peugeot 208, la Renault Clio, le taxi Toyota et la Peugeot 308 de police.</li>
+            <li>☐ Sous chaque voiture, une ombre douce (elle disparaît quand tu sautes).</li>
+            <li>Vérifie « version 23 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>💡 Pourquoi une voiture a l'air « vraie »</h3>
+      <p>Ton cerveau reconnaît une vraie voiture grâce à de <strong>petits détails</strong> : des phares avec un verre et des lampes dedans (pas une tache blanche), une plaque, le nom de la marque, une vitre qui penche vers l'intérieur, et surtout <strong>l'ombre de contact</strong> : juste sous la voiture, c'est tout noir, parce que la lumière du ciel n'arrive pas. Sans elle, une voiture a l'air de flotter.</p>
+      <h3>🔩 Recoller les pièces (pour que le jeu reste rapide)</h3>
+      <p>Une voiture a maintenant environ 170 pièces. Pour la carte graphique, chaque pièce est un « dessin » à faire. Alors, une fois la voiture construite, on <strong>recolle</strong> toutes les pièces de la même matière (tout le chrome ensemble, toutes les LED ensemble…). La voiture a la même allure, mais elle n'a plus qu'une cinquantaine de pièces. Résultat : la ville se dessine en <strong>1 536 fois</strong> par image, alors qu'avant c'était 1 969, et pourtant il y a beaucoup plus de détails !</p>
+      <h3>🏢 Le relief des façades</h3>
+      <p>Avant, un immeuble était une boîte avec une image de fenêtres collée dessus : tout plat. Maintenant, on ajoute de vrais morceaux qui <strong>dépassent</strong> du mur : le soleil fait des ombres dessous, et ça change tout. Il y en a plus de 5 000, mais ce sont des « instances » : une seule forme de boîte, et une liste de places et de tailles.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, regarde « dessin de la voiture » : combien de pièces a ta voiture ? Combien brillent ?</li>
+        <li>Toujours sous le capot, regarde « objets envoyés à la carte graphique » en ville.</li>
+        <li>Dans <code>circuit/config.js</code>, trouve <code>reliefs</code> et mets <code>boutique: 16</code> : les boutiques deviennent deux fois plus larges.</li>
+        <li>Lis la plaque d'immatriculation de la Rouge !</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi l'ombre douce disparaît quand la voiture saute ?</summary><p>Parce qu'elle vient de la voiture qui touche presque le sol. En l'air, la voiture est loin du sol : il n'y a plus d'ombre de contact (il reste l'ombre du soleil).</p></details>
+      <details class="question"><summary>Pourquoi recoller les pièces rend le jeu plus rapide ?</summary><p>La carte graphique dessine vite, mais chaque « dessin » à lancer prend du temps. Moins de dessins = plus d'images par seconde.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -3710,11 +3754,11 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
           <p>Un nouveau jeu : un désert avec dunes, boue, cailloux et gué, 7 véhicules du Dakar et 10 pilotes (étape 54).</p>
           <p class="apprend"><b>Tu apprends :</b> les fiches de terrain, le relief avec du bruit, les sauts. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">52</div>
-          <h4>Voitures, routes et immeubles très réalistes <span class="etiquette">⏭️ prochaine étape (demandée)</span></h4>
-          <p>Des voitures encore plus réalistes en code, et des routes et des immeubles plus vrais (étape 55).</p>
-          <p class="apprend"><b>Tu apprends :</b> lumières, reflets, détails. <b>Durée :</b> 2 séances.</p>
+          <h4>Voitures, routes et immeubles très réalistes <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Phares à LED, feux, plaques, ombre douce, Peugeot 208, Clio, taxi Toyota, police 308 ; boutiques, balcons, corniches et toits détaillés (étape 55).</p>
+          <p class="apprend"><b>Tu apprends :</b> l'ombre de contact, recoller les pièces, les instances. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
           <div class="num">53</div>
@@ -4220,6 +4264,15 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-54" data-cle="appris-54" placeholder="Ex. : J'ai appris que chaque terrain a une fiche avec son adhérence…"></textarea>
         <label for="idees-54"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-54" data-cle="idees-54" placeholder="Ex. : Une vraie course avec un chrono et des étapes…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 55 · voitures, routes et immeubles très réalistes <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> des coques avec un vrai toit et des flancs galbés (<code>affichage/coque.js</code>), les blocs optiques, les grilles, les lettres, les plaques et 4 nouvelles voitures de tous les jours (<code>affichage/voitures-marques.js</code>), l'ombre douce (<code>affichage/modeles.js</code>), le relief des immeubles et l'usure des rues (<code>affichage/decor-ville.js</code>, <code>affichage/textures.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : tout d'un coup, en code.</p>
+        <label for="appris-55"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-55" data-cle="appris-55" placeholder="Ex. : J'ai appris ce qu'est une ombre de contact…"></textarea>
+        <label for="idees-55"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-55" data-cle="idees-55" placeholder="Ex. : Des phares qui éclairent la route la nuit…"></textarea>
       </div>
     </section>
   </main>

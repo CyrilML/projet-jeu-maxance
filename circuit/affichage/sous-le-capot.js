@@ -185,6 +185,13 @@ Circuit.SousLeCapot = (function () {
         return b ? b.etat + (b.triangles ? " · " + b.triangles.toLocaleString("fr-FR") + " triangles" : "") + " · par " + b.auteur : "pas de maquette pour ce modèle (dessiné en code)";
       })()],
 ["drift (étape 53)", v.drift ? "OUI depuis " + virgule(v.drift.duree, 1) + " s · glissade " + Math.round((Math.abs(v.derapage || 0) * 180) / Math.PI) + "°" : "non (il faut plus de " + Math.round(Circuit.CONFIG.drift.entree * 100) + " % de la vitesse max et tourner à fond)"],
+["dessin de la voiture (étape 55)", (function () {
+        const o = Circuit.Scene3D && Circuit.Scene3D.objetJoueur;
+        if (!o) return "—";
+        let pieces = 0, leds = 0;
+        o.g.traverse((m) => { if (m.isMesh) { pieces++; if (m.material && m.material.emissiveIntensity > 1) leds++; } });
+        return pieces + " pièces, dont " + leds + " qui brillent (LED, feux) · ombre douce au sol : " + (o.ombreSol ? (o.ombreSol.visible ? "oui" : "cachée (la voiture saute)") : "non");
+      })()],
 ["pneus", (v.patine ? "💨 patinent · " : "") + "crissement " + Math.round((v.crisse || 0) * 100) + " % · fumée : " + (Circuit.Fumee.bilan.vivantes || 0) + " bouffées · " + Circuit.Fumee.bilan.traces + " traces posées"],
       ["la caisse penche", "avant/arrière " + virgule((v.suspension.tangage * 180) / Math.PI, 1) + "° (accélération " + virgule(v.suspension.accelerationAvant || 0, 1) + " m/s²) · côté " + virgule((v.suspension.roulis * 180) / Math.PI, 1) + "° (virage " + virgule(v.suspension.accelerationCote || 0, 1) + " m/s²)"],
     ] : []);
@@ -213,6 +220,10 @@ Circuit.SousLeCapot = (function () {
         ["mobilier de la rue", (function () {
           const b = Circuit.DecorVille.bilanMobilier;
           return b ? b.panneaux + " panneaux « " + Circuit.CONFIG.ville.limiteVitesse + " », " + b.plaquesDeRue + " plaques de rue, " + b.bancs + " bancs, " + b.poubelles + " poubelles, " + b.bouchesIncendie + " bouches d'incendie, " + b.plaquesEgout + " plaques d'égout" : "—";
+        })()],
+        ["relief des immeubles (étape 55)", (function () {
+          const b = Circuit.DecorVille.bilanReliefs;
+          return b ? b.morceaux + " morceaux (bandeaux, corniches, stores, machines…) · " + b.vitrines + " boutiques · " + b.balcons + " balcons" : "—";
         })()],
         ["hauteur du sol", virgule(Circuit.Archipel.lieu(qui.x, qui.z).h, 1) + " m" + (Circuit.Archipel.surQuelPont(qui.x, qui.z) ? " (le pont monte en arc : H × sin(π × u ÷ L))" : "")],
         ["magasin", monde.magasin ? "🛍️ dans " + monde.magasin.nom : monde.magasinProche ? "devant " + monde.magasinProche + " (E)" : "—"],

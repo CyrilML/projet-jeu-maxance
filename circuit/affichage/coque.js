@@ -15,13 +15,20 @@
 // Les VITRES font partie de la peau de la cabine : chaque petit triangle est rangé « peinture » ou « vitre »,
 // selon l'endroit où il est et le sens dans lequel il regarde. Les vitres sont donc parfaitement au ras.
 //
+// Étape 55 : deux réglages de plus, pour des formes plus vraies :
+//   - wt (la demi-largeur du TOIT) : au lieu d'un dôme, le dessus devient un trapèze aux coins arrondis (rayon rt).
+//     Les vitres de côté penchent vers l'intérieur (les designers disent « tumblehome »), et le toit est presque
+//     plat : c'est la forme d'une vraie cabine ;
+//   - wl (la demi-largeur du BAS) : le flanc rentre vers le bas (le bas de caisse est plus étroit que les épaules),
+//     en suivant une courbe : la carrosserie est « galbée », comme une vraie.
+//
 // Toutes les coques sont « nez vers x+ », posées sur y = 0, centrées en z = 0. Ce fichier ne connaît aucune voiture.
 
 window.Circuit = window.Circuit || {};
 
 Circuit.Coque = (function () {
   const PAS = 0.04; // m : une tranche tous les 4 cm
-  const CHAMPS = ["yb", "yc", "yt", "w", "n", "wb"];
+  const CHAMPS = ["yb", "yc", "yt", "w", "n", "wb", "wt", "wl", "rt"];
 
   // Une valeur entre les tranches clés, en suivant une courbe douce (Catmull-Rom).
   function interpoler(cles, x) {
@@ -48,17 +55,19 @@ Circuit.Coque = (function () {
   // (Au-dessus d'une roue, le bas de la tranche fait une « marche » : le milieu reste en bas (le plancher), et seule
   // la partie extérieure, au-dessus du pneu, remonte jusqu'à ya : c'est le passage de roue.)
   function demiTranche(s) {
-    const wb = s.wb === undefined ? s.w * 0.96 : s.wb;
+    const wl = s.wl === undefined ? s.w : Math.min(s.w, s.wl);
+    const wb = s.wb === undefined ? wl * 0.96 : Math.min(s.wb, wl);
     const ya = s.ya === undefined ? s.yb : s.ya, za = Math.min(s.za === undefined ? wb * 0.6 : s.za, wb - 0.06);
     const r = Math.min(0.1, Math.max(0.02, (s.yc - ya) * 0.4));
     const pts = [[0, s.yb], [za * 0.5, s.yb], [za, s.yb], [za, ya], [Math.max(za, wb - r), ya]];
     // le coin du bas, arrondi
     for (let k = 1; k <= 3; k++) {
       const a = -Math.PI / 2 + (k / 3) * (Math.PI / 2);
-      pts.push([wb - r + Math.cos(a) * r + (s.w - wb) * (k / 3), ya + r + Math.sin(a) * r]);
+      pts.push([wb - r + Math.cos(a) * r + (wl - wb) * (k / 3), ya + r + Math.sin(a) * r]);
     }
-    // le flanc, qui monte jusqu'aux épaules
-    for (let k = 1; k <= 2; k++) pts.push([s.w, ya + r + (s.yc - ya - r) * (k / 2)]);
+    // le flanc, qui monte jusqu'aux épaules (en s'écartant doucement du bas de caisse jusqu'à la largeur w)
+    for (let k = 1; k <= 3; k++) pts.push([wl + (s.w - wl) * Math.sin((k / 3) * (Math.PI / 2)), ya + r + (s.yc - ya - r) * (k / 3)]);
+    if (s.wt !== undefined) return pts.concat(dessusTrapeze(s));
     // le dessus : un quart de « super-ellipse » des épaules (w, yc) au milieu (0, yt)
     const n = s.n || 2.5;
     for (let k = 1; k <= N_DESSUS; k++) {
@@ -66,6 +75,25 @@ Circuit.Coque = (function () {
       const c = Math.pow(Math.cos(a), 2 / n), si = Math.pow(Math.sin(a), 2 / n);
       pts.push([s.w * c, s.yc + (s.yt - s.yc) * si]);
     }
+    pts[pts.length - 1][0] = 0;
+    return pts;
+  }
+  // (Étape 55) Le dessus en trapèze : des épaules (w, yc), une ligne droite qui monte vers le coin du toit (wt, yt),
+  // un coin arrondi (une courbe de Bézier), puis le toit, à peine bombé, jusqu'au milieu. Toujours N_DESSUS points.
+  function dessusTrapeze(s) {
+    const wt = Math.max(0.02, Math.min(s.wt, s.w)), rt = s.rt === undefined ? 0.1 : s.rt;
+    const montee = Math.hypot(s.w - wt, s.yt - s.yc), d1 = Math.min(rt, montee * 0.45), d2 = Math.min(rt, wt * 0.45);
+    const ux = (s.w - wt) / (montee || 1), uy = (s.yc - s.yt) / (montee || 1); // de (wt, yt) vers les épaules
+    const A = [wt + ux * d1, s.yt + uy * d1], B = [wt - d2, s.yt], bombe = Math.min(0.03, wt * 0.04);
+    const pts = [];
+    for (let k = 1; k <= 3; k++) { const t = k / 4; pts.push([s.w + (A[0] - s.w) * t, s.yc + (A[1] - s.yc) * t]); }
+    pts.push(A);
+    for (let k = 1; k <= 4; k++) {
+      const t = k / 5, u = 1 - t;
+      pts.push([u * u * A[0] + 2 * u * t * wt + t * t * B[0], u * u * A[1] + 2 * u * t * s.yt + t * t * B[1]]);
+    }
+    pts.push(B);
+    for (let k = 1; k <= 3; k++) { const t = k / 3; pts.push([B[0] * (1 - t), s.yt + bombe * Math.sin((t * Math.PI) / 2)]); }
     pts[pts.length - 1][0] = 0;
     return pts;
   }
@@ -77,7 +105,10 @@ Circuit.Coque = (function () {
   //   pas (m, 4 cm par défaut) }
   // Renvoie { geometrie (groupe 0 = peinture, groupe 1 = vitres), tranche(x), dessus(x, z), xMin, xMax }.
   function construire(options) {
-    const cles = options.cles.slice().sort((a, b) => a.x - b.x);
+    const cles = options.cles.slice().sort((a, b) => a.x - b.x).map((k) => Object.assign({}, k));
+    // (étape 55 : si une tranche a un toit plat (wt), elles en ont toutes un, sinon la courbe entre elles serait cassée)
+    if (cles.some((k) => k.wt !== undefined)) for (const k of cles) { if (k.wt === undefined) k.wt = k.w * 0.6; if (k.rt === undefined) k.rt = 0.1; }
+    if (cles.some((k) => k.wl !== undefined)) for (const k of cles) if (k.wl === undefined) k.wl = k.w;
     const xMin = cles[0].x, xMax = cles[cles.length - 1].x;
     const pas = options.pas || PAS;
     const arches = options.arches || [];
@@ -161,6 +192,10 @@ Circuit.Coque = (function () {
     // La hauteur du dessus de la coque en (x, z) (sur les flancs : la hauteur des épaules).
     function dessus(x, z) {
       const s = tranche(x), n = s.n || 2.5, q = Math.min(1, Math.abs(z) / s.w);
+      if (s.wt !== undefined) {
+        const az = Math.abs(z);
+        return az <= s.wt ? s.yt : s.yt + (s.yc - s.yt) * Math.min(1, (az - s.wt) / Math.max(0.01, s.w - s.wt));
+      }
       const a = Math.acos(Math.pow(q, n / 2));
       return s.yc + (s.yt - s.yc) * Math.pow(Math.sin(a), 2 / n);
     }
