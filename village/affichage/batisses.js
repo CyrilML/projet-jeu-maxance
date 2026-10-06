@@ -445,13 +445,13 @@ Village.Batisses = (function () {
 
   // Étape 9 : un âne (de profil, tourné vers la droite). Il broute quand il attend.
   function ane(ctx, x, y, t, marche) {
-    const pas = marche ? Math.sin(t * 12) : 0, poil = "#8b7a6b", clair = "#d8cfc4", fonce = "#5e5148";
+    const pas = marche ? Math.sin(t * 8) : 0, poil = "#8b7a6b", clair = "#d8cfc4", fonce = "#5e5148";
     ctx.strokeStyle = fonce; ctx.lineWidth = 2.2; ctx.lineCap = "round";
     ctx.beginPath(); for (const [dx, s] of [[-6, 1], [-3.5, -1], [4.5, -1], [7, 1]]) { ctx.moveTo(x + dx, y - 7); ctx.lineTo(x + dx + pas * 1.8 * s, y); } ctx.stroke();
     ctx.fillStyle = "#2b2420"; for (const [dx, s] of [[-6, 1], [-3.5, -1], [4.5, -1], [7, 1]]) ctx.fillRect(x + dx + pas * 1.8 * s - 1.2, y - 1, 2.4, 1.4); // les sabots
     ctx.beginPath(); ctx.ellipse(x, y - 10, 9, 4.8, 0, 0, TOUR); ctx.fillStyle = poil; ctx.fill(); contour(ctx, 1.3);
     ctx.beginPath(); ctx.ellipse(x + 0.5, y - 8, 5.5, 2, 0, 0, TOUR); ctx.fillStyle = clair; ctx.fill(); // le ventre clair
-    const tete = marche ? Math.sin(t * 12) * 0.6 : Math.max(0, Math.sin(t * 1.5)) * 6; // il baisse la tête pour brouter
+    const tete = marche ? Math.sin(t * 8) * 0.6 : Math.max(0, Math.sin(t * 1.5)) * 6; // il baisse la tête pour brouter
     // Le cou, puis la tête allongée avec son museau clair
     forme(ctx, [[x + 6, y - 13], [x + 10, y - 19 + tete], [x + 13, y - 17 + tete], [x + 9, y - 9]], poil);
     ctx.beginPath(); ctx.ellipse(x + 13.5, y - 17 + tete, 4.6, 2.6, 0.45, 0, TOUR); ctx.fillStyle = poil; ctx.fill(); contour(ctx, 1.2);
@@ -464,7 +464,7 @@ Village.Batisses = (function () {
   }
   // Étape 9 : une charrette à 2 roues (de profil), avec son chargement
   function charrette(ctx, x, y, t, quoi, nombre, marche) {
-    const tour = marche ? t * 6 : 0;
+    const tour = marche ? t * 4 : 0;
     forme(ctx, [[x - 9, y - 9], [x + 7, y - 9], [x + 6, y - 4], [x - 8, y - 4]], "#a8743f");
     ctx.strokeStyle = "rgba(40,25,10,.4)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x - 8.5, y - 6.5); ctx.lineTo(x + 6.5, y - 6.5); ctx.stroke();
     ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x + 6, y - 7); ctx.lineTo(x + 15, y - 9); ctx.stroke(); // le timon
@@ -512,6 +512,44 @@ Village.Batisses = (function () {
       else if (C_.ressources[sorte]) objetPorte(ctx, sorte, px, py); // étape 15 et 16 : toutes les autres ressources
       else if (sorte === "planche") planche(ctx, x + (k % 2 ? 2.5 : -1), y - k * 2.6, 24); // étape 6 : une pile de longues planches, un peu décalées
       else caillou(ctx, px, py, k); // étape 9 : de vraies pierres taillées
+    }
+  }
+
+  // ---------------------------------------------------------------- étape 22 : les grands champs et les enclos
+  // ✍️ « on ne devrait pas avoir besoin de cliquer : on devrait le voir ». La ferme a de vrais champs, et les élevages de
+  // vrais enclos pleins d'animaux, sur les cases à côté du bâtiment (config.js : « emprises »).
+  function empriseDessin(ctx, b, x, y, t) {
+    const s = echelleDe(b.type), L = C_.carte.largeurCase / 2 / s, H = C_.carte.hauteurCase / 2 / s; // (on est « à la loupe »)
+    const tr = C_.elevage.troupeaux[b.type];
+    let n = 0;
+    for (const [dc, dl] of b.emprise) {
+      if (dc <= 0) continue; // [0, -1] est sous le bâtiment lui-même
+      const cx = x + (dc - dl) * L, cy = y + (dc + dl) * H;
+      const P = [[cx - L * 0.92, cy], [cx, cy + H * 0.92], [cx + L * 0.92, cy], [cx, cy - H * 0.92]];
+      if (b.type === "ferme") {
+        // Un champ labouré, avec ses rangées de blé (vert au printemps, doré l'été, chaumes à l'automne, neige l'hiver)
+        const sa = Village.monde && Village.monde.saison ? Village.monde.saison.numero : 1, couleur = ["#7cc24a", "#e8c64a", "#d9a640", "#e8eef5"][sa];
+        forme(ctx, P, sa === 3 ? "#e8eef5" : "#9a6a3c");
+        if (sa !== 3) {
+          ctx.strokeStyle = couleur; ctx.lineWidth = 1.6; ctx.lineCap = "round"; ctx.beginPath();
+          for (let r = -3; r <= 3; r++) for (let k = -4; k <= 4; k++) {
+            const u = k / 5, v = r / 4, px = cx + (u - v) * L * 0.8, py = cy + (u + v) * H * 0.8, vent = Math.sin(t * 2 + k + r + dc) * 1;
+            ctx.moveTo(px, py); ctx.lineTo(px + vent, py - (sa === 2 ? 2.5 : 5));
+          }
+          ctx.stroke();
+        }
+      } else if (tr) {
+        // Un enclos : de l'herbe (ou de la boue pour les cochons), une barrière tout autour, et des animaux dedans
+        forme(ctx, P, vue.hiver ? "#eef3f7" : b.type === "porcherie" ? "#8a6a48" : "#7fb24a");
+        if (b.type === "porcherie" && !vue.hiver) { ctx.beginPath(); ctx.ellipse(cx + L * 0.2, cy + H * 0.1, L * 0.3, H * 0.28, 0, 0, TOUR); ctx.fillStyle = "#6b4a2c"; ctx.fill(); }
+        ctx.strokeStyle = "#8a5a2b"; ctx.lineWidth = 1.3; ctx.beginPath();
+        for (let k = 0; k < 4; k++) { const A = P[k], Bq = P[(k + 1) % 4]; ctx.moveTo(A[0], A[1] - 4); ctx.lineTo(Bq[0], Bq[1] - 4); for (let j = 0; j <= 4; j++) { const px = A[0] + (Bq[0] - A[0]) * j / 4, py = A[1] + (Bq[1] - A[1]) * j / 4; ctx.moveTo(px, py); ctx.lineTo(px, py - 6); } }
+        ctx.stroke();
+        if (b.type === "etable" || b.type === "bergerie") { forme(ctx, [[cx + L * 0.35, cy - H * 0.05], [cx + L * 0.6, cy + H * 0.08], [cx + L * 0.6, cy + H * 0.25], [cx + L * 0.35, cy + H * 0.12]], "#9a6a3c"); ctx.fillStyle = "#5fb4e8"; ctx.fillRect(cx + L * 0.38, cy + H * 0.02, L * 0.2, 1.5); } // l'abreuvoir
+        const places = [[-0.35, -0.1, 1], [0.15, 0.25, -1], [0, -0.35, 1], [-0.1, 0.45, -1]];
+        const parCase = b.type === "poulailler" ? 4 : 2;
+        for (let k = 0; k < parCase; k++) { const [u, v, d] = places[k]; animal(ctx, tr.animal, cx + (u - v) * L * 0.9, cy + (u + v) * H * 0.9 + 3, t + n * 1.7 + b.numero, d, n + b.numero, !!b.malade); n++; }
+      }
     }
   }
 
@@ -669,7 +707,8 @@ Village.Batisses = (function () {
     if (b.etat === "chantier") return chantier(ctx, b, x, y, m, t);
     if (b.type === "entrepot") { cour(ctx, x, y, (Village.monde && Village.monde.stock) || {}); silo(ctx, x - 24, y - 12, Village.monde ? Village.monde.reserve.niveau : 1); } // étape 9 : la cour ; étape 11 : le silo
     if (m.linge && vue.fin && !vue.hiver) linge(ctx, x - m.a - 12, y - 2, t); // étape 9
-    if (b.type === "ferme") champs(ctx, x, y, t); // étape 11
+    if (b.type === "ferme" && !(b.emprise && b.emprise.length)) champs(ctx, x, y, t); // étape 11 (une ferme sans place pour ses champs)
+    if (b.emprise && b.emprise.length && b.etat === "pret") empriseDessin(ctx, b, x, y, t); // étape 22 : les grands champs et les enclos
     boite(ctx, x, y, m, 1, true);
     porte(ctx, x, y, m);
     const travaille = b.ouvrier && b.ouvrier.etat === "travailler";
@@ -812,10 +851,12 @@ Village.Batisses = (function () {
       // Étape 15 : ✍️ l'enclos, avec ses vaches qui broutent (et qui se couchent quand elles sont malades)
       // Étape 16 : pareil pour les poules, les moutons et les cochons (qui ont leur mare de boue !)
       const tr = C_.elevage.troupeaux[b.type];
-      if (b.type === "porcherie") { ctx.beginPath(); ctx.ellipse(x + 18, y + 14, 6, 2.6, 0, 0, TOUR); ctx.fillStyle = vue.hiver ? "#cfd8e0" : "#7a5a3a"; ctx.fill(); }
-      enclos(ctx, x + 17, y + 13, 14, 7);
-      const places = [[x + 10, y + 12, 1], [x + 23, y + 13, -1], [x + 16, y + 17, 1], [x + 18, y + 9, -1]];
-      for (let k = 0; k < Math.min(tr.nombre, places.length); k++) animal(ctx, tr.animal, places[k][0], places[k][1], t + k * 1.7 + b.numero, places[k][2], k + b.numero, !!b.malade);
+      if (!(b.emprise && b.emprise.some(([dc]) => dc > 0))) { // étape 22 : sans place à côté, le petit enclos devant
+        if (b.type === "porcherie") { ctx.beginPath(); ctx.ellipse(x + 18, y + 14, 6, 2.6, 0, 0, TOUR); ctx.fillStyle = vue.hiver ? "#cfd8e0" : "#7a5a3a"; ctx.fill(); }
+        enclos(ctx, x + 17, y + 13, 14, 7);
+        const places = [[x + 10, y + 12, 1], [x + 23, y + 13, -1], [x + 16, y + 17, 1], [x + 18, y + 9, -1]];
+        for (let k = 0; k < Math.min(tr.nombre, places.length); k++) animal(ctx, tr.animal, places[k][0], places[k][1], t + k * 1.7 + b.numero, places[k][2], k + b.numero, !!b.malade);
+      }
       pile(ctx, x - 22, y + 12, b.sortieQuoi, b.sortie);
       pile(ctx, x - 14, y + 16, "eau", b.entrees.eau || 0);
       pile(ctx, x - 5, y + 18, "foin", b.entrees.foin || 0);
@@ -965,7 +1006,7 @@ Village.Batisses = (function () {
     // taille à l'écran, comme les icônes d'une carte.
     if (!vue.fin && b.etat === "pret" && !["hutte", "maison", "manoir"].includes(b.type) && Village.monde) repere(ctx, x, y - m.h - m.toit * 0.55, Village.Batiments.TYPES[b.type].emoji, 20 / (Village.monde.camera.zoom * echelleDe(b.type)));
     // Un petit panneau avec l'emoji du métier, au-dessus de la porte
-    if (b.type !== "entrepot" && vue.fin) enseigne(ctx, x - m.a * 0.45, y - 8 - m.h * 0.2, Village.Batiments.TYPES[b.type].emoji);
+    if (b.type !== "entrepot" && vue.fin && !["hutte", "maison", "manoir"].includes(b.type)) enseigne(ctx, x - m.a * 0.45, y - 8 - m.h * 0.2, Village.Batiments.TYPES[b.type].emoji);
     // Étape 13 : une étoile dorée par amélioration, à côté de l'enseigne
     for (let k = 0; k < (b.ameliorations || 0); k++) etoile(ctx, x - m.a * 0.45 + 10 + k * 7, y - 22 - m.h * 0.2);
     if (travaille && b.type === "carriere") poussiere(ctx, x, y, t);
@@ -974,8 +1015,8 @@ Village.Batisses = (function () {
     else if (b.malade) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "🤒"); // étape 15 : les vaches sont malades
     else if (b.ouvrier && b.ouvrier.affame) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "🍽️");
     else if (b.usure >= 1) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "🔧"); // étape 11 : usé !
-    else if (b.ouvrier && b.ouvrier.froid) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "🥶");
-    else if (b.ouvrier && b.ouvrier.mecontent) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "🍞");
+    // (Étape 22 : ✍️ plus de bulle 🍞 ni 🥶 au-dessus de chaque bâtiment : ça devenait illisible. Le pain et le froid
+    // concernent tout le village : ils sont montrés une seule fois, en bas de l'écran.)
     else if (!b.ouvrier && Village.Batiments.TYPES[b.type].metier) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, Village.monde && !Village.Logement.placeLibre(Village.monde) ? "🛏️" : "vide"); // étape 8 : 🛏️ pas de logement
     // Étape 12 : le bâtiment qu'on déplace est « soulevé » : transparent, avec un cadre qui clignote
     if (Village.monde && Village.monde.projet && Village.monde.projet.deplacer === b) {
@@ -1899,22 +1940,36 @@ Village.Batisses = (function () {
   // Étape 9 : ✍️ il porte mieux ! Les longues choses sur l'épaule, le reste dans une hotte ou un sac sur
   // le dos ; avec la recherche « Brouettes », il pousse une brouette pour ce qui est lourd ; avec
   // « Ânes et charrettes », il mène un âne qui tire une charrette (jusqu'à 3 objets). La nuit : une lanterne.
+  // Étape 22 : ✍️ « les charrettes débordent des routes ». Avant, l'âne et la charrette suivaient le porteur à
+  // l'HORIZONTALE, alors que les routes vont en diagonale ! Maintenant, ils sont derrière lui, dans le sens de son
+  // chemin (le vecteur qui va de lui à la prochaine case), et un peu plus petits pour tenir sur la route.
+  function attelage(ctx, p, x, y, t, dir) {
+    let ux = dir * 0.89, uy = 0.45; // (à l'arrêt : derrière lui, un peu en haut)
+    if (p.chemin && p.pas < p.chemin.length) {
+      const q = p.chemin[p.pas], vx = q.x - p.x, vy = q.y - p.y, sx = (vx - vy) * 32, sy = (vx + vy) * 16, n = Math.hypot(sx, sy);
+      if (n > 0.01) { ux = sx / n; uy = sy / n; }
+    }
+    const marche = p.etat !== "attend", d = Math.sign(ux) || dir;
+    const morceau = (dist, f) => { ctx.save(); ctx.translate(x - ux * dist, y - uy * dist); ctx.scale(d * 0.72, 0.72); f(); ctx.restore(); };
+    ctx.fillStyle = "rgba(20, 40, 10, .2)"; ctx.beginPath(); ctx.ellipse(x - ux * 22, y - uy * 22 + 1, 14, 3, Math.atan2(uy, ux), 0, TOUR); ctx.fill();
+    morceau(30, () => charrette(ctx, 0, 0, t, p.porte, p.porte ? Math.min(3, p.nombre || 1) : 0, marche));
+    morceau(15, () => ane(ctx, 0, 0, t, marche));
+    ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x - ux * 15 + d * 8, y - uy * 15 - 12); ctx.lineTo(x + d * 4, y - 12); ctx.stroke(); // la longe
+  }
   function dessinerPorteur(ctx, p, x, y, t) {
     const monde = Village.monde, R = Village.Recherches;
     const avecAne = monde && R.bonus(monde, "chargement") > 1;
+    // Étape 22 : l'attelage qui est DERRIÈRE le porteur à l'écran (quand il descend vers nous) est dessiné avant lui ; sinon, après
+    let attelageDerriere = true;
+    if (avecAne && p.chemin && p.pas < p.chemin.length) { const q = p.chemin[p.pas]; attelageDerriere = q.x - p.x + q.y - p.y > 0; }
+    if (avecAne && attelageDerriere) attelage(ctx, p, x, y, t, p.direction);
     const avecBrouette = !avecAne && monde && R.a(monde, "brouette") && p.porte && LOURD[p.porte];
     const pas = Math.sin(t * 15 + p.numero), saut = Math.abs(pas) * 1.5;
     const dir = p.direction;
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(dir, 1);
-    // L'âne et la charrette marchent derrière le porteur
-    if (avecAne) {
-      ctx.fillStyle = "rgba(20, 40, 10, .22)"; ctx.beginPath(); ctx.ellipse(-26, 1, 22, 3.2, 0, 0, TOUR); ctx.fill();
-      charrette(ctx, -44, 0, t, p.porte, p.porte ? Math.min(3, p.nombre || 1) : 0, true);
-      ane(ctx, -24, 0, t, true);
-      ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(-8, -16); ctx.quadraticCurveTo(-3, -9, 5, -13); ctx.stroke(); // la longe, de la tête de l'âne à la main
-    }
+    // (Étape 22 : l'âne et la charrette sont dessinés plus bas, le long du chemin : voir « attelage »)
     ctx.fillStyle = "rgba(20, 40, 10, .25)";
     ctx.beginPath(); ctx.ellipse(0, 1, 6, 2.5, 0, 0, TOUR); ctx.fill();
     if (avecBrouette) brouette(ctx, 14, 0, t, p.porte, true);
@@ -1949,6 +2004,7 @@ Village.Batisses = (function () {
       lumiere(x + lx * dir, y - saut + ly + 2, 26, "orange", 0.9);
     }
     ctx.restore();
+    if (avecAne && !attelageDerriere) attelage(ctx, p, x, y, t, p.direction);
   }
 
   // ---------------------------------------------------------------- une jeune pousse

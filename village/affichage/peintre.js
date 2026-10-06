@@ -309,6 +309,8 @@ Village.Peintre = (function () {
     if (monde.projet) {
       const pr = monde.projet;
       for (const q of pr.route || []) apercuCase(q, true, t);
+      // Étape 22 : les cases en plus (les champs, les enclos) : vertes si c'est possible, rouges sinon
+      for (const [dc, dl] of Village.Batiments.empriseDe(pr.type)) { const m = milieu(pr.colonne + dc, pr.ligne + dl); losange(m.x, m.y, 4); ctx.fillStyle = pr.possible ? "rgba(90, 200, 90, .4)" : "rgba(255, 70, 60, .45)"; ctx.fill(); }
       const p = milieu(pr.colonne, pr.ligne);
       Village.Batisses.dessinerFantome(ctx, pr.type, p.x, p.y, pr.possible, t, L, Hc);
     }

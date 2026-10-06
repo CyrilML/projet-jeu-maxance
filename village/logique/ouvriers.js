@@ -212,7 +212,7 @@ Village.Ouvriers = (function () {
       }
 
       case "aller":
-        if (marcher(o, dt, monde)) changer(o, "travailler", metier.duree(monde) * Village.Ameliorations.bonus(b)); // étape 13 : × les améliorations de CE bâtiment
+        if (marcher(o, dt, monde)) { changer(o, "travailler", metier.duree(monde) * Village.Ameliorations.bonus(b)); o.dureeTravail = o.minuteur; } // étape 13 : × les améliorations de CE bâtiment ; étape 22 : pour la barre du panneau
         return;
 
       case "travailler":

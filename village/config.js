@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 22,
+  version: 23,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -247,6 +247,16 @@ Village.CONFIG = {
   // Étape 16 : + les œufs et le jambon
   douceurs: ["lait", "beurre", "fromage", "yaourt", "oeufs", "jambon"],
   // Étape 8 : les MINES. Chacune creuse le filon de sa sorte, juste à côté d'elle.
+  // Étape 22 : ✍️ « la ferme doit être plus grande, avec un champ ; idem pour les animaux ». Ces bâtiments prennent
+  // PLUSIEURS cases : en plus de la leur, les cases voisines (en colonnes et lignes de décalage) pour les champs et
+  // les enclos. [0, -1] est sous le long bâtiment ; [1, 0] et [1, -1] sont les champs ou les enclos, à sa droite.
+  emprises: {
+    ferme: [[0, -1], [1, 0], [1, -1]],
+    etable: [[0, -1], [1, 0], [1, -1]],
+    bergerie: [[0, -1], [1, 0], [1, -1]],
+    porcherie: [[0, -1], [1, 0], [1, -1]],
+    poulailler: [[1, 0]],
+  },
   // Étape 21 : ✍️ « les mines sont trop éloignées » : la cabane du mineur peut être à 4 cases du filon (1 avant).
   rayonMine: 4,
   mines: {
@@ -379,6 +389,7 @@ Village.CONFIG = {
     partChantiers: 0.5, // étape 20 : ✍️ la moitié des porteurs au plus livre les chantiers (les autres font tourner les ateliers)
     charge: 3, // étape 20 : objets par voyage (s'ils vont au même bâtiment) ; × 2 avec « Ânes et charrettes »
     vitesse: 2.2, // cases par seconde (étape 21 : ✍️ de nouveau 2,2 : à 2,8, ils couraient beaucoup trop vite)
+    vitesseMaxCharrette: 2.6, // étape 22 : ✍️ avec l'âne et la charrette, on va moins vite (× 0,8, et 2,6 au plus)
     vitesseMax: 3.4, // étape 21 : même avec la route pavée, les brouettes et l'écurie, jamais plus de 3,4 cases par seconde
   },
   sortieMax: 8, // objets qui peuvent attendre devant un bâtiment (au-delà, l'ouvrier attend) · étape 20 : ✍️ 8 (4 avant), l'idée de Maxance
@@ -406,7 +417,7 @@ Village.CONFIG = {
     zoomFigurants: 0.6, // à partir de ce zoom : les poules, les enfants, les papillons
     zoomAnimations: 0.45, // étape 17 : ✍️ les animations devant les bâtiments se voient aussi de plus loin
     // Étape 14 : ✍️ des bâtiments plus GROS, pour les reconnaître d'un coup d'œil (× la taille de l'étape 13)
-    echelleBatiments: 1.35,
+    echelleBatiments: 1.5, // étape 22 : ✍️ encore plus gros (1,35 avant)
     echelleEntrepot: 1.15, // l'entrepôt était déjà grand (et il a sa cour et son silo)
   },
   // Étape 9 : les FIGURANTS (ils ne font que décorer : oiseaux, papillons, poules, enfants)

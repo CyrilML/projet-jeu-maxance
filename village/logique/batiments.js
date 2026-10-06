@@ -89,12 +89,34 @@ Village.Batiments = (function () {
   // Assez de matériaux DISPONIBLES (pas déjà promis à un autre chantier) ?
   const assezPour = (monde, type) => assez(monde, coutPour(monde, type));
 
+  // Étape 22 : ✍️ certains bâtiments prennent PLUSIEURS cases (la ferme et ses champs, les enclos des animaux).
+  //   emprise : les cases EN PLUS de la sienne, en décalage [colonne, ligne] (config.js : « emprises »).
+  const empriseDe = (type) => C.emprises[type] || [];
+  const casesDe = (b) => [[0, 0]].concat(b.emprise || []).map(([dc, dl]) => (b.ligne + dl) * Village.CONFIG.carte.colonnes + b.colonne + dc);
+  function liberer(monde, b) { for (const i of casesDe(b)) if (monde.occupees.get(i) === b) monde.occupees.delete(i); }
+  function occuper(monde, b) { for (const i of casesDe(b)) monde.occupees.set(i, b); }
+  // Une case est-elle libre pour construire ? (null = oui)
+  function raisonCase(monde, c, l) {
+    const carte = monde.carte;
+    if (c < 0 || l < 0 || c >= carte.colonnes || l >= carte.lignes) return "hors de la carte";
+    const i = l * carte.colonnes + c;
+    if (monde.occupees.has(i)) return "il y a déjà un bâtiment";
+    if (monde.route[i]) return "il y a une route";
+    const t = carte.terrain[i], o = carte.objet[i], T = Village.Carte.TERRAIN, O = Village.Carte.OBJET;
+    if (t === T.eau || t === T.eauProfonde || t === T.montagne) return "il y a de l'eau ou une montagne";
+    if (o !== O.rien && o !== O.fleurs && o !== O.buisson) return "il y a un arbre ou un rocher";
+    if (monde.reservees.has(i)) return "un ouvrier va travailler sur cette case";
+    return null;
+  }
+
   // Pourquoi ne peut-on pas construire ici ? (null = on peut)
   function raisonInterdite(monde, type, c, l) {
     const carte = monde.carte;
     if (c < 0 || l < 0 || c >= carte.colonnes || l >= carte.lignes) return "hors de la carte";
     const i = l * carte.colonnes + c;
     if (monde.occupees.has(i)) return "il y a déjà un bâtiment";
+    // Étape 22 : les cases des champs et des enclos doivent être libres aussi
+    for (const [dc, dl] of empriseDe(type)) { const r = raisonCase(monde, c + dc, l + dl); if (r) return "pas assez de place : il faut " + (1 + empriseDe(type).length) + " cases libres (" + r + ")"; }
     if (monde.route[i]) return "il y a une route (construis à côté)";
     const t = carte.terrain[i], o = carte.objet[i], T = Village.Carte.TERRAIN, O = Village.Carte.OBJET;
     if (t === T.eau || t === T.eauProfonde) return "on ne construit pas sur l'eau";
@@ -140,20 +162,19 @@ Village.Batiments = (function () {
   // Étape 5 : déplacer un bâtiment (sans le détruire). Il garde ce qu'il a : son chantier, ses objets
   // devant la porte, son ouvrier (qui rentre à la maison). Les routes, elles, restent où elles sont.
   function deplacer(monde, b, c, l) {
-    const k = monde.carte, ancien = b.ligne * k.colonnes + b.colonne;
+    const k = monde.carte;
     if (c === b.colonne && l === b.ligne) return false;
-    monde.occupees.delete(ancien); // pour que la case de départ ne gêne pas la vérification
+    liberer(monde, b); // pour que ses cases de départ ne gênent pas la vérification (étape 22 : toutes ses cases)
     const raison = raisonInterdite(monde, b.type, c, l);
     if (raison) {
-      monde.occupees.set(ancien, b);
+      occuper(monde, b);
       radio.emettre("deplacement-impossible", { nom: TYPES[b.type].nom, raison });
       return false;
     }
-    const i = l * k.colonnes + c;
-    if (k.objet[i]) Village.Monde.changerObjet(monde, i, Village.Carte.OBJET.rien);
     const de = { colonne: b.colonne, ligne: b.ligne };
-    b.colonne = c; b.ligne = l;
-    monde.occupees.set(i, b);
+    b.colonne = c; b.ligne = l; b.emprise = empriseDe(b.type).slice();
+    for (const j of casesDe(b)) if (k.objet[j]) Village.Monde.changerObjet(monde, j, Village.Carte.OBJET.rien);
+    occuper(monde, b);
     // L'ouvrier rentre dans sa nouvelle maison et recommence sa fiche de travail.
     const o = b.ouvrier;
     if (o) {
@@ -199,11 +220,13 @@ Village.Batiments = (function () {
       niveau: etat.niveau || 1,
       evolution: etat.evo || 0, // étape 18 : depuis combien de secondes les besoins de la classe suivante sont remplis // étape 13 : l'entrepôt qui s'agrandit : de 0 (tout neuf) à 1 (usé : 2 fois moins vite). Un 🔨 outil le répare.
     };
-    const i = l * monde.carte.colonnes + c;
     monde.batiments.push(b);
-    monde.occupees.set(i, b);
+    // Étape 22 : ses cases en plus (champs, enclos). Au rechargement d'une partie plus ancienne, on ne prend que celles
+    // qui sont libres (un voisin peut déjà être là).
+    b.emprise = empriseDe(type).filter(([dc, dl]) => !etat.type || !raisonCase(monde, c + dc, l + dl));
+    occuper(monde, b);
     // Les fleurs et les buissons sont enlevés pour faire de la place.
-    if (monde.carte.objet[i]) Village.Monde.changerObjet(monde, i, Village.Carte.OBJET.rien);
+    for (const i of casesDe(b)) if (monde.carte.objet[i]) Village.Monde.changerObjet(monde, i, Village.Carte.OBJET.rien);
     // Au rechargement (etat.type existe), l'ouvrier revient sans vérifier le logement : il avait déjà sa place.
     if (b.etat === "pret" && !etat.vide) embaucher(monde, b, !!etat.type);
     if (b.ouvrier && etat.faim) { b.ouvrier.faim = etat.faim; b.ouvrier.ventreVide = etat.ventreVide || 0; b.ouvrier.affame = !!etat.affame; }
@@ -252,7 +275,7 @@ Village.Batiments = (function () {
     }
     const k = monde.carte;
     monde.batiments.splice(monde.batiments.indexOf(b), 1);
-    monde.occupees.delete(b.ligne * k.colonnes + b.colonne);
+    liberer(monde, b); // étape 22 : toutes ses cases
     if (b.ouvrier && b.ouvrier.cible) monde.reservees.delete(b.ouvrier.cible.ligne * k.colonnes + b.ouvrier.cible.colonne);
     if (b.ouvrier && b.ouvrier.proie) b.ouvrier.proie.vise = false;
     // Les papiers de la file pour ce bâtiment sont jetés.
@@ -404,5 +427,5 @@ Village.Batiments = (function () {
     radio.emettre("minerai-extrait", { numero: b.numero, nom: TYPES[b.type].nom, quoi: sorte, reste: k.reste[i], devant: b.sortie });
   }
 
-  return { entreesDe, reparer, TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, coutPour, offert, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
+  return { empriseDe, casesDe, liberer, occuper, entreesDe, reparer, TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, coutPour, offert, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
 })();

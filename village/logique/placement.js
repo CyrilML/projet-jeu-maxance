@@ -44,22 +44,22 @@ Village.Placement = (function () {
     let raison;
     if (b) {
       // Pour vérifier, on enlève un instant le bâtiment de sa place (sinon il se gênerait lui-même)
-      const ancien = b.ligne * k.colonnes + b.colonne;
-      monde.occupees.delete(ancien);
+      B().liberer(monde, b); // étape 22 : toutes ses cases (champs, enclos)
       raison = c === b.colonne && l === b.ligne ? null : B().raisonInterdite(monde, b.type, c, l);
-      monde.occupees.set(ancien, b);
+      B().occuper(monde, b);
     } else {
       raison = !Village.Ages.debloque(monde, p.type) ? "pas encore débloqué" : B().raisonInterdite(monde, p.type, c, l);
       if (!raison && !B().assezPour(monde, p.type)) raison = "pas assez de matériaux";
     }
     p.raison = raison; p.possible = !raison;
-    p.route = raison ? [] : routeProposee(monde, c, l, b);
+    p.route = raison ? [] : routeProposee(monde, c, l, b, p.type);
   }
 
   // ✍️ 1B : la route proposée, de la PORTE du bâtiment jusqu'au réseau (ou jusqu'à l'entrepôt).
   // On essaie d'abord la porte ; si elle est bouchée (un arbre, de l'eau), un autre côté.
-  function routeProposee(monde, c, l, deplace) {
+  function routeProposee(monde, c, l, deplace, type) {
     const k = monde.carte, ici = l * k.colonnes + c, Ro = R();
+    const champs = new Set(B().empriseDe(type).map(([dc, dl]) => (l + dl) * k.colonnes + c + dc)); // étape 22 : pas de route sur ses champs
     const auReseau = (i) => monde.reseau.has(i);
     const e = monde.batiments.find((x) => x.type === "entrepot");
     const touche = (cc, ll) => Ro.VOISINS.some(([dc, dl]) => auReseau((ll + dl) * k.colonnes + cc + dc));
@@ -68,7 +68,7 @@ Village.Placement = (function () {
     const libre = (cc, ll) => {
       if (cc < 0 || ll < 0 || cc >= k.colonnes || ll >= k.lignes) return false;
       const i = ll * k.colonnes + cc;
-      if (i === ici) return false; // pas sur le bâtiment lui-même
+      if (i === ici || champs.has(i)) return false; // pas sur le bâtiment lui-même (ni sur ses champs, étape 22)
       return monde.route[i] > 0 || (Ro.routable(monde, cc, ll) && !(deplace && i === deplace.ligne * k.colonnes + deplace.colonne));
     };
     const cotes = [[0, 1], [-1, 0], [1, 0], [0, -1]]; // la porte d'abord

@@ -145,6 +145,7 @@
       <a href="#etape19">Étape 19</a>
       <a href="#etape20">Étape 20</a>
       <a href="#etape21">Étape 21</a>
+      <a href="#etape22">Étape 22</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1473,6 +1474,48 @@ maintenant : min(3,4 ; 2,2 × 1,6 × 1,3 × 1,25) = min(3,4 ; 5,7) = 3,4 cases p
       <details class="question"><summary>Un porteur à 2,2 × 1,3 = 2,86 cases par seconde. Le plafond change-t-il quelque chose ?</summary><p>Non : 2,86 est plus petit que 3,4. Le plafond ne sert que quand les bonus s'empilent.</p></details>
     </section>
 
+    <section id="etape22">
+      <h2>🧹 Étape 22 : moins de brouillon, des champs et des enclos <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">La ferme a de vrais champs et les élevages de vrais enclos pleins d'animaux, sur les cases à côté. Les bâtiments sont plus gros. Plus de bulles 🍞 partout : les alertes du village sont montrées une seule fois. Le panneau d'un bâtiment est rangé en 3 parties. Les ânes et leurs charrettes restent sur la route. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/23-moins-de-brouillon.md</code>.</p>
+          <ul>
+            <li>✍️ Des bulles de pain partout : illisible.</li>
+            <li>✍️ Les maisons trop petites ; voir d'un coup d'œil ce que c'est.</li>
+            <li>✍️ La ferme plus grande avec un champ ; pareil pour les animaux.</li>
+            <li>✍️ Un panneau mieux rangé, sans les informations inutiles.</li>
+            <li>✍️ Les charrettes débordent des routes et vont trop vite.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Pose une ferme : l'aperçu montre ses cases en vert, puis ses champs poussent à côté.</li>
+            <li>☐ Une étable, une bergerie, un poulailler : de grands enclos avec des animaux.</li>
+            <li>☐ Au bourg sans pain : une seule étiquette « 🍞 … sans pain » sous le stock.</li>
+            <li>☐ Touche un bâtiment : problèmes (en rouge), ce qu'il fait, son niveau.</li>
+            <li>☐ Avec « Ânes et charrettes » : l'attelage suit la route.</li>
+            <li>Vérifie « version 23 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🧩 Un bâtiment sur plusieurs cases</h3>
+      <pre style="white-space: pre-wrap">       [0, −1]  [1, −1]          la ferme : sa case [0, 0], plus 3 cases à côté
+  [0, 0] 🏠      [1, 0] 🌾       (en décalage de colonne et de ligne)</pre>
+      <p>Pour poser un grand bâtiment, le jeu vérifie que <strong>toutes</strong> ses cases sont libres. Puis il les marque toutes comme occupées : on ne peut plus construire ni faire de route dessus, et toucher le champ ouvre le panneau de la ferme. Quand on la démolit, toutes ses cases sont libérées. Une partie plus ancienne garde ses fermes : elles prennent seulement les cases libres autour d'elles.</p>
+
+      <h3>📐 Suivre la route avec un vecteur</h3>
+      <p>Avant, l'âne suivait le porteur à l'horizontale, mais les routes vont en diagonale ! Maintenant, on calcule le <strong>vecteur</strong> qui va du porteur à sa prochaine case, et on place l'âne et la charrette derrière lui, sur ce vecteur : ils restent sur la route.</p>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Une ferme en colonne 10, ligne 20. Quelles cases prend-elle ?</summary><p>(10, 20), (10, 19), (11, 20) et (11, 19).</p></details>
+      <details class="question"><summary>Pourquoi une seule étiquette 🍞 au lieu d'une bulle par maison ?</summary><p>Le pain manque à TOUT le village : le dire une fois suffit, et l'écran reste lisible.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1604,8 +1647,14 @@ maintenant : min(3,4 ; 2,2 × 1,6 × 1,3 × 1,25) = min(3,4 ; 5,7) = 3,4 cases p
           <p>Un plafond de vitesse pour les porteurs, les recherches faites cachées et rangées en pages, le mineur à 4 cases du filon.</p>
           <p class="apprend"><b>Tu apprends :</b> un plafond (Math.min), découper une liste en pages. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">22</div>
+          <h4>🧹 Moins de brouillon, des champs et des enclos <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Des bâtiments sur plusieurs cases (champs, enclos), plus gros, des alertes uniques, un panneau en 3 parties, des attelages qui suivent la route.</p>
+          <p class="apprend"><b>Tu apprends :</b> un bâtiment sur plusieurs cases, suivre une direction avec un vecteur. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">23</div>
           <h4>🏙️ La ville : monuments, fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -1790,6 +1839,14 @@ maintenant : min(3,4 ; 2,2 × 1,6 × 1,3 × 1,25) = min(3,4 ; 5,7) = 3,4 cases p
         <textarea class="journal" id="village-appris-21" data-cle="village-appris-21" placeholder="Ex. : J'ai appris que des bonus multipliés deviennent énormes…"></textarea>
         <label for="village-idees-21"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-21" data-cle="village-idees-21" placeholder="Ex. : Un tunnel dans la montagne…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 22 · moins de brouillon, des champs et des enclos <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les emprises (<code>emprises</code> dans config.js, <code>casesDe</code>, <code>occuper</code>, <code>liberer</code> dans logique/batiments.js), les champs et les enclos dessinés (<code>empriseDessin</code>), des bâtiments × 1,5, les alertes du village sous le stock, le panneau rangé en 3 parties, l'attelage qui suit le chemin (<code>attelage</code>), des charrettes plus lentes, moins de messages inutiles.</p>
+        <label for="village-appris-22"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-22" data-cle="village-appris-22" placeholder="Ex. : J'ai appris qu'un bâtiment peut prendre plusieurs cases…"></textarea>
+        <label for="village-idees-22"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-22" data-cle="village-idees-22" placeholder="Ex. : Des vergers avec des pommiers…"></textarea>
       </div>
     </section>
   </main>
