@@ -138,6 +138,8 @@
       <a href="#etape12">Étape 12</a>
       <a href="#etape13">Étape 13</a>
       <a href="#etape14">Étape 14</a>
+      <a href="#etape15">Étape 15</a>
+      <a href="#etape16">Étape 16</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1141,6 +1143,113 @@ la case, elle, ne change pas : le bâtiment occupe toujours 1 case</pre>
       <details class="question"><summary>Pourquoi une seule fonction pour dessiner les icônes partout ?</summary><p>Pour que les planches du stock ressemblent à celles du jeu, et qu'un changement se voie partout d'un coup.</p></details>
     </section>
 
+    <section id="etape15">
+      <h2>🐄 Étape 15 : l'élevage, la laiterie et le bonheur <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Des vaches dans leur enclos, un puits, du foin pour l'hiver, du lait, du beurre, du fromage et des yaourts. Les vaches peuvent tomber malades : le vétérinaire vient les soigner. Et une nouvelle jauge, le 😊 bonheur des habitants, qui change la vitesse de tout le village. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/16-elevage-bonheur.md</code>.</p>
+          <ul>
+            <li>✍️ 1C : la laiterie d'abord (moutons et cochons ensuite), et des chaînes qui s'agrandissent à chaque âge.</li>
+            <li>✍️ 2C : une jauge de bonheur maintenant, des classes d'habitants à la ville.</li>
+            <li>✍️ 3C : enclos, eau, foin en hiver, maladies et vétérinaire.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Le bouton 😊 à droite : touche-le pour voir la note en détail.</li>
+            <li>☐ Au hameau, le menu 🐄 Élevage : puits, faneur, étable. Les vaches broutent.</li>
+            <li>☐ En hiver, l'étable demande du 🌿 foin (son panneau le dit).</li>
+            <li>☐ Au village : 🧈 laiterie et 🩺 vétérinaire. Une étable 🤒 : il va la soigner.</li>
+            <li>☐ Au bourg : 🧀 fromagerie et 🍶 crèmerie.</li>
+            <li>Vérifie « version 16 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔗 Une chaîne qui grandit à chaque âge</h3>
+      <pre style="white-space: pre-wrap">🛖 hameau :   💧 puits ─┐
+              🌿 faneur ─┼─(foin, seulement en hiver)─► 🐄 étable ──► 🥛 lait
+🏡 village :                                              🥛 ──► 🧈 laiterie ──► beurre
+🏰 bourg :                                                🥛 ──► 🧀 fromagerie · 🍶 crèmerie</pre>
+      <p>Le lait est un <strong>produit intermédiaire</strong> : on peut le manger tel quel, ou le transformer en beurre, fromage ou yaourt, qui valent plus cher au marché et donnent de nouveaux goûts. À toi de choisir comment partager ton lait !</p>
+
+      <h3>😊 Le bonheur : une note en plusieurs parties</h3>
+      <pre style="white-space: pre-wrap">bonheur = 15 (la base)
+        + 30 × la part des habitants qui ont le ventre plein
+        +  8 par aliment différent mangé ces 10 dernières minutes (5 au plus)
+        + 10 × la part qui dort dans une maison
+        − 15 s'il fait froid · − 15 × la part sans pain (au bourg)</pre>
+      <p>C'est la <strong>variété</strong> qui compte : 100 poissons ne valent pas mieux que 10. Mais du poisson, de la viande, du lait et du beurre, ça fait 4 goûts ! La jauge ne saute pas : elle avance de 0,5 point par seconde vers sa note (on dit qu'elle est <strong>lissée</strong>). Puis elle agit sur tout le village : 😢 sous 45, tout va 15 % moins vite et plus personne n'arrive ; 😊 à 70, 10 % plus vite ; 😄 à 85, 20 % plus vite.</p>
+
+      <h3>🤒 La contagion</h3>
+      <p>À partir du village, chaque étable a 3 chances sur 100 par minute de tomber malade (3 fois plus si les vaches manquent d'eau ou de foin). Une étable malade rend ses voisines (à 4 cases ou moins) malades plus facilement : 25 % par minute ! C'est pour ça qu'il vaut mieux <strong>espacer</strong> les étables… et construire un vétérinaire.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, trouve « 😊 Le bonheur · 🐄 l'élevage » : combien vaut chaque partie de la note ?</li>
+        <li>Regarde le risque de maladie de chaque étable, puis construis-en deux collées : que se passe-t-il quand l'une tombe malade ?</li>
+        <li>Dans le journal, cherche « 😋 … mange » : tu vois la douceur après le plat (+ 🥛 du lait) ?</li>
+        <li>Dans <code>config.js</code>, trouve <code>bonheur</code> : que se passerait-il si <code>parGout</code> valait 12 ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Tout le monde a mangé, 3 goûts différents, personne en maison. Quelle note ?</summary><p>15 + 30 + 3 × 8 + 0 = 69 % : juste en dessous de 😊 70. Un goût de plus ou une maison, et le village est content !</p></details>
+      <details class="question"><summary>La jauge est à 50, la note à 60. Combien de temps pour l'atteindre ?</summary><p>10 points à 0,5 point par seconde : 20 secondes.</p></details>
+      <details class="question"><summary>Pourquoi l'étable a-t-elle besoin de foin seulement en hiver ?</summary><p>Le reste de l'année, les vaches broutent l'herbe. En hiver, l'herbe est sous la neige : il faut le foin fait par le faneur pendant l'été.</p></details>
+    </section>
+
+    <section id="etape16">
+      <h2>🐑 Étape 16 : les poules, les moutons et les cochons <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">La suite de l'élevage : des œufs au hameau, de la laine, du tissu et des cochons au village, des vêtements et du jambon au bourg. Tous les troupeaux peuvent tomber malades, et les habitants bien habillés sont plus heureux. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/17-moutons-cochons-poules.md</code>.</p>
+          <ul>
+            <li>✍️ 1C, partie B : d'autres animaux que les vaches.</li>
+            <li>✍️ Des chaînes qui s'agrandissent au fil des âges.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Au hameau, dans 🐄 Élevage : le 🐔 poulailler et ses poules.</li>
+            <li>☐ Au village : 🐑 bergerie, 🐖 porcherie (avec sa mare de boue), 🧵 tisserand (dans Artisans).</li>
+            <li>☐ Au bourg : ✂️ tailleur (Artisans) et 🥓 charcuterie (Nourriture).</li>
+            <li>☐ Le bouton 😊 : la ligne « 👕 Bien habillés », au bourg.</li>
+            <li>Vérifie « version 17 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔗 Trois nouvelles chaînes</h3>
+      <pre style="white-space: pre-wrap">🛖 hameau :  💧 ──► 🐔 poulailler ──► 🥚 œufs
+🏡 village : 💧 (+ 🌿 l'hiver) ──► 🐑 bergerie ──► 🧶 laine ──► 🧵 tisserand ──► tissu
+             💧 (+ 🌿 l'hiver) ──► 🐖 porcherie ──► 🍖 viande
+🏰 bourg :   🧵 tissu ──► ✂️ tailleur ──► 👕 vêtements
+             🍖 viande + ⚫ charbon ──► 🥓 charcuterie ──► jambon</pre>
+      <p>Regarde bien la viande : elle sert à manger, mais aussi à faire du jambon. Si la charcuterie prend trop de viande, les habitants risquent d'avoir faim ! C'est un <strong>arbitrage</strong> : une ressource, deux usages, et c'est toi qui choisis.</p>
+
+      <h3>👕 Une ressource qu'on consomme de temps en temps</h3>
+      <p>Au bourg, toutes les 10 minutes, chacun prend des vêtements neufs à l'entrepôt. Avec 30 habitants et 15 vêtements, la moitié est bien habillée : le bonheur gagne 10 × 0,5 = 5 points. C'est une <strong>consommation par paquets</strong> : rien pendant 10 minutes, puis beaucoup d'un coup. Il faut donc faire des réserves.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot : combien de secondes avant les prochains habits neufs ?</li>
+        <li>Construis 2 bergeries collées, puis attends une maladie : la porcherie d'à côté l'attrape-t-elle ? (indice : seulement la même sorte d'animal)</li>
+        <li>Dans <code>config.js</code>, trouve <code>troupeaux</code> : que se passe-t-il si tu mets <code>nombre: 4</code> pour les cochons ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>40 habitants, 10 vêtements à l'entrepôt. Combien de points de bonheur pour les habits ?</summary><p>10 ÷ 40 = 0,25 des habitants sont servis : 10 × 0,25 = 2,5 points.</p></details>
+      <details class="question"><summary>La porcherie fait 3 viandes en 14 s. La charcuterie en prend 2 pour 16 s. Que reste-t-il pour manger en 1 minute (environ) ?</summary><p>Porcherie : 60 ÷ 14 × 3 ≈ 12,9 viandes. Charcuterie : 60 ÷ 16 × 2 = 7,5. Il reste environ 5 viandes par minute pour les repas.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1230,14 +1339,26 @@ la case, elle, ne change pas : le bâtiment occupe toujours 1 case</pre>
           <p>Des bâtiments × 1,35, une animation devant chaque cabane, des bûches couchées, des pépites de charbon, de fer et d'or, et des stocks dessinés comme dans le jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> changer d'échelle (la loupe), des facettes pour donner du relief, une animation calculée avec le modulo. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">15</div>
-          <h4>🐄 L'élevage et les nouvelles industries <span class="etiquette">⏭️ prochaine étape · à préciser</span></h4>
-          <p>Des animaux (vaches, moutons, cochons…), le lait, le beurre, le yaourt, et des chaînes de production plus longues, jusqu'à la grande ville.</p>
-          <p class="apprend"><b>Tu apprends :</b> des chaînes qui se croisent. <b>Durée :</b> plusieurs séances.</p>
+          <h4>🐄 L'élevage, la laiterie et le bonheur <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Puits, faneur, étable et ses vaches, laiterie, fromagerie, crèmerie, vétérinaire et maladies, les douceurs aux repas, et la jauge 😊 du bonheur.</p>
+          <p class="apprend"><b>Tu apprends :</b> un produit intermédiaire, une note en plusieurs parties, une valeur lissée, la contagion. <b>Durée :</b> 3 séances.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">16</div>
+          <h4>🐑 Les poules, les moutons et les cochons <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Poulailler, bergerie, porcherie, tisserand, tailleur, charcuterie, les maladies de tous les troupeaux, et les vêtements qui rendent heureux.</p>
+          <p class="apprend"><b>Tu apprends :</b> un arbitrage (une ressource, deux usages), une consommation par paquets. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">17</div>
+          <h4>🛠️ Tes retours : routes, bâtiments, entrepôt, interface <span class="etiquette">⏭️ en cours</span></h4>
+          <p>Les recherches qui changent ce qu'on voit, des bâtiments plus reconnaissables, un 2e entrepôt, une barre de stock plus petite, ce qui manque pour une recherche, et ce qu'on gagne avec une mission.</p>
+          <p class="apprend"><b>Tu apprends :</b> plusieurs points de départ pour les porteurs. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">16</div>
+          <div class="num">18</div>
           <h4>🏙️ La ville : monuments, fêtes et port</h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -1366,6 +1487,22 @@ la case, elle, ne change pas : le bâtiment occupe toujours 1 case</pre>
         <textarea class="journal" id="village-appris-14" data-cle="village-appris-14" placeholder="Ex. : J'ai appris qu'on peut grossir un dessin avec une loupe…"></textarea>
         <label for="village-idees-14"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-14" data-cle="village-idees-14" placeholder="Ex. : Des vaches, du lait, du beurre…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 15 · l'élevage, la laiterie et le bonheur <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> 7 bâtiments (puits, faneur, étable, laiterie, vétérinaire, fromagerie, crèmerie), 6 ressources, les recettes qui changent en hiver, les maladies et la contagion (<code>logique/elevage.js</code>), la jauge du bonheur (<code>logique/bonheur.js</code>), les douceurs aux repas, les vaches dessinées, 5 recherches, 13 améliorations, 3 missions, la base de données en version 12.</p>
+        <label for="village-appris-15"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-15" data-cle="village-appris-15" placeholder="Ex. : J'ai appris ce qu'est une valeur lissée…"></textarea>
+        <label for="village-idees-15"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-15" data-cle="village-idees-15" placeholder="Ex. : Des moutons pour faire de la laine…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 16 · les poules, les moutons et les cochons <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> 6 bâtiments (poulailler, bergerie, porcherie, tisserand, tailleur, charcuterie), 5 ressources, les maladies pour tous les troupeaux (<code>logique/elevage.js</code>), les habits neufs dans le bonheur (<code>logique/bonheur.js</code>), les poules, moutons et cochons dessinés, 5 recherches, 12 améliorations, 3 missions, la base de données en version 13.</p>
+        <label for="village-appris-16"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-16" data-cle="village-appris-16" placeholder="Ex. : J'ai appris ce qu'est un arbitrage…"></textarea>
+        <label for="village-idees-16"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-16" data-cle="village-idees-16" placeholder="Ex. : Un deuxième entrepôt…"></textarea>
       </div>
     </section>
   </main>

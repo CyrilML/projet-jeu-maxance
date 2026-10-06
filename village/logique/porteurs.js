@@ -84,7 +84,7 @@ Village.Porteurs = (function () {
       // Apporter ses ingrédients à un atelier (étape 8 : chaque ingrédient de sa recette, 2 de chaque au plus)
       const recette = C.ateliers[b.type];
       if (recette && b.etat === "pret") {
-        for (const r of Object.keys(recette.entrees)) {
+        for (const r of Object.keys(Village.Batiments.entreesDe(monde, b))) { // étape 15 : + le foin de l'hiver
           while ((b.entrees[r] || 0) + (b.enFile[r] || 0) + (b.enRoute[r] || 0) < C.entreeMax && disponible(monde, r) >= 1) {
             b.enFile[r] = (b.enFile[r] || 0) + 1;
             ajouter(monde, { sorte: "apporter", quoi: r, batiment: b });

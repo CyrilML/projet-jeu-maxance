@@ -19,6 +19,10 @@
 //     l'habitant MÉCONTENT (20 % moins vite) jusqu'à son prochain repas avec du pain ;
 //   - en HIVER, il faut chauffer les logements : toutes les minutes, chaque logement brûle 1 🪵 tronc.
 //     S'il n'y a plus de bois, tout le monde a FROID (20 % moins vite).
+//
+// Étape 15 : ✍️ les DOUCEURS de l'élevage. Après son plat, chacun prend une douceur s'il y en a (lait, beurre,
+// fromage, yaourt) : celle qu'il n'a pas goûtée depuis le plus longtemps. Chaque aliment mangé est noté
+// dans monde.gouts : plus il y a de goûts différents, plus les habitants sont heureux (logique/bonheur.js).
 
 window.Village = window.Village || {};
 
@@ -30,23 +34,41 @@ Village.Repas = (function () {
   const nourritureEnStock = (monde) => monde.stock.poissons + monde.stock.viande + (monde.stock.pain || 0);
   const auBourg = (monde) => (monde.age || 0) >= C.bourg.ageDesRegles;
 
-  // Ce qu'on mange : du pain d'abord (étape 11), sinon ce dont il y a le plus.
-  function choisir(stock) {
+  // Ce qu'on mange : du pain d'abord (étape 11). Sinon (étape 15 : pour varier les goûts), entre le poisson
+  // et la viande, celui qu'on n'a pas mangé depuis le plus longtemps.
+  function choisir(stock, gouts) {
     if (stock.pain > 0) return "pain";
     if (stock.poissons <= 0 && stock.viande <= 0) return null;
-    return stock.poissons >= stock.viande ? "poissons" : "viande";
+    if (stock.poissons <= 0) return "viande";
+    if (stock.viande <= 0) return "poissons";
+    const g = gouts || {}, quand = (a) => (g[a] === undefined ? -Infinity : g[a]);
+    return quand("viande") < quand("poissons") ? "viande" : "poissons";
+  }
+
+  // Étape 15 : la douceur du repas : parmi celles qui sont en stock, celle goûtée il y a le plus longtemps
+  function choisirDouceur(monde) {
+    let meilleure = null, plusVieux = Infinity;
+    for (const d of C.douceurs) {
+      if (!(monde.stock[d] > 0)) continue;
+      const quand = monde.gouts[d] === undefined ? -Infinity : monde.gouts[d];
+      if (quand < plusVieux) { plusVieux = quand; meilleure = d; }
+    }
+    return meilleure;
   }
 
   // Manger à la cantine (l'entrepôt). Vrai si c'est fait.
   function mangerALaCantine(monde, qui, h) {
-    const quoi = choisir(monde.stock);
+    const quoi = choisir(monde.stock, monde.gouts);
     if (!quoi) return false;
     monde.stock[quoi]--;
+    monde.gouts[quoi] = monde.horloge; // étape 15 : on note ce qu'on a goûté
+    const douceur = choisirDouceur(monde);
+    if (douceur) { monde.stock[douceur]--; monde.gouts[douceur] = monde.horloge; }
     // Étape 11 : au bourg, un repas sans pain rend mécontent
     const mecontent = auBourg(monde) && quoi !== "pain";
     if (mecontent && !h.mecontent) radio.emettre("sans-pain", { qui });
     h.mecontent = mecontent;
-    radio.emettre("repas", { qui, quoi, reste: nourritureEnStock(monde) });
+    radio.emettre("repas", { qui, quoi, douceur, reste: nourritureEnStock(monde) });
     return true;
   }
 
@@ -73,6 +95,7 @@ Village.Repas = (function () {
     if (h.mecontent) v *= C.bourg.sansPain;
     if (h.froid) v *= C.bourg.froid;
     if (h.usee) v *= 0.5;
+    if (h.humeur) v *= h.humeur; // étape 15 : 😢 triste × 0,85 · 😊 content × 1,1 · 😄 ravi × 1,2
     return v;
   }
 
@@ -100,6 +123,11 @@ Village.Repas = (function () {
     chauffer(monde, dt);
     for (const b of monde.batiments) if (b.ouvrier) b.ouvrier.froid = !!monde.froid;
     for (const p of monde.porteurs) p.froid = !!monde.froid;
+    // Étape 15 : le moral (logique/bonheur.js) change la vitesse de tout le monde
+    const humeur = Village.Bonheur.vitesse(monde);
+    for (const b of monde.batiments) if (b.ouvrier) b.ouvrier.humeur = humeur;
+    for (const p of monde.porteurs) p.humeur = humeur;
+    for (const v of monde.villageois) v.humeur = humeur;
     for (const b of monde.batiments) {
       const o = b.ouvrier;
       if (o) {
@@ -134,5 +162,5 @@ Village.Repas = (function () {
     radio.emettre("habitant-part", { qui });
   }
 
-  return { etape, choisir, vitesse, NOURRITURE, nourritureEnStock };
+  return { etape, choisir, choisirDouceur, vitesse, NOURRITURE, nourritureEnStock };
 })();

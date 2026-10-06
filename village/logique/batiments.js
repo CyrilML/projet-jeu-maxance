@@ -47,9 +47,24 @@ Village.Batiments = (function () {
     mineOr: { nom: "Mine d'or", court: "Mine d'or", emoji: "🟡", metier: "mineur" },
     orfevre: { nom: "Atelier de l'orfèvre", court: "Orfèvre", emoji: "💍", metier: "orfèvre" },
     macon: { nom: "Atelier du maçon-couvreur", court: "Maçon", emoji: "🪜", metier: "maçon-couvreur" }, // étape 12
+    // Étape 15 : l'élevage
+    puits: { nom: "Puits", court: "Puits", emoji: "💧", metier: "puisatier" },
+    faneur: { nom: "Grange du faneur", court: "Faneur", emoji: "🌿", metier: "faneur" },
+    etable: { nom: "Étable", court: "Étable", emoji: "🐄", metier: "vacher" },
+    laiterie: { nom: "Laiterie", court: "Laiterie", emoji: "🧈", metier: "laitier" },
+    veterinaire: { nom: "Cabinet du vétérinaire", court: "Vétérinaire", emoji: "🩺", metier: "vétérinaire" },
+    fromagerie: { nom: "Fromagerie", court: "Fromagerie", emoji: "🧀", metier: "fromager" },
+    cremerie: { nom: "Crèmerie", court: "Crèmerie", emoji: "🍶", metier: "crémier" },
+    // Étape 16 : les poules, les moutons, les cochons
+    poulailler: { nom: "Poulailler", court: "Poulailler", emoji: "🐔", metier: "fermière" },
+    bergerie: { nom: "Bergerie", court: "Bergerie", emoji: "🐑", metier: "berger" },
+    porcherie: { nom: "Porcherie", court: "Porcherie", emoji: "🐖", metier: "porcher" },
+    tisserand: { nom: "Atelier du tisserand", court: "Tisserand", emoji: "🧵", metier: "tisserand" },
+    tailleur: { nom: "Atelier du tailleur", court: "Tailleur", emoji: "✂️", metier: "tailleur" },
+    charcuterie: { nom: "Charcuterie", court: "Charcuterie", emoji: "🥓", metier: "charcutier" },
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon"];
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie"];
   // « 🪵 troncs », « 🔩 lingots »… (étape 8 : fabriqué à partir de config.js, « ressources »)
   const NOMS_RESSOURCES = {};
   for (const [r, f] of Object.entries(C.ressources)) NOMS_RESSOURCES[r] = f.emoji + " " + f.nom;
@@ -177,6 +192,7 @@ Village.Batiments = (function () {
       prix: Object.assign({}, etat.prix || cout(type)), // étape 12 : ce que ce chantier coûte vraiment (0 s'il est offert)
       usure: etat.usure || 0, // étape 11
       ameliorations: etat.ameliorations || 0, // étape 13 : combien d'améliorations faites (0, 1 ou 2)
+      malade: etat.malade ? { depuis: etat.malade } : null, // étape 15 : une étable aux vaches malades { depuis (s) }
       niveau: etat.niveau || 1, // étape 13 : l'entrepôt qui s'agrandit : de 0 (tout neuf) à 1 (usé : 2 fois moins vite). Un 🔨 outil le répare.
     };
     const i = l * monde.carte.colonnes + c;
@@ -279,6 +295,17 @@ Village.Batiments = (function () {
     }
   }
 
+  // Étape 15 : les ingrédients d'un atelier MAINTENANT. L'étable a besoin de foin EN PLUS en hiver
+  // (config.js : « hiver »). Les porteurs lisent aussi cette liste pour savoir quoi apporter.
+  function entreesDe(monde, b) {
+    const R = C.ateliers[b.type];
+    if (!R) return {};
+    if (!R.hiver || !(monde.saison && monde.saison.hiver)) return R.entrees;
+    const tout = Object.assign({}, R.entrees);
+    for (const [r, n] of Object.entries(R.hiver)) tout[r] = (tout[r] || 0) + n;
+    return tout;
+  }
+
   // Étape 8 : UN ATELIER (scierie, fonderie, forge) suit sa recette. Les ingrédients arrivent par les
   // porteurs (b.entrees), ce qui est fabriqué attend devant la porte (b.sortie).
   //   1. il a tous les ingrédients ? il les prend et commence (b.travail) ;
@@ -288,11 +315,14 @@ Village.Batiments = (function () {
     if (!b.ouvrier) return; // pas d'ouvrier (il est parti, ou pas encore de logement)
     // Étape 11 : la ferme ne travaille pas en hiver (le blé ne pousse pas sous la neige)
     if (recette.pasEnHiver && monde.saison && monde.saison.hiver) {
-      if (b.attend !== "hiver") { b.attend = "hiver"; radio.emettre("atelier-attend", { nom: TYPES[b.type].nom, numero: b.numero, raison: "c'est l'hiver, le blé ne pousse pas" }); }
+      if (b.attend !== recette.raisonHiver) { b.attend = recette.raisonHiver; radio.emettre("atelier-attend", { nom: TYPES[b.type].nom, numero: b.numero, raison: recette.raisonHiver }); }
       return;
     }
+    // Étape 15 : des vaches malades ne donnent pas de lait (voir logique/elevage.js)
+    if (b.malade) { b.attend = ((C.elevage.troupeaux[b.type] || {}).noms || "les animaux") + " sont malades 🤒"; return; }
+    const entrees = entreesDe(monde, b);
     if (!b.travail) {
-      const manque = Object.entries(recette.entrees).filter(([r, n]) => (b.entrees[r] || 0) < n).map(([r]) => r);
+      const manque = Object.entries(entrees).filter(([r, n]) => (b.entrees[r] || 0) < n).map(([r]) => r);
       if (manque.length) {
         const raison = "il manque " + manque.map((r) => NOMS_RESSOURCES[r]).join(" et ");
         if (b.attend !== raison) { b.attend = raison; radio.emettre("atelier-attend", { nom: TYPES[b.type].nom, numero: b.numero, raison }); }
@@ -301,10 +331,10 @@ Village.Batiments = (function () {
       const quoi = b.sortieQuoi, combien = recette.sorties[quoi];
       if (b.sortie + combien > C.sortieMax) return; // devant la porte, c'est plein
       b.attend = null;
-      for (const [r, n] of Object.entries(recette.entrees)) b.entrees[r] -= n;
+      for (const [r, n] of Object.entries(entrees)) b.entrees[r] -= n;
       const duree = recette.duree * Village.Recherches.bonus(monde, recette.bonus) * Village.Ameliorations.bonus(b); // étape 13 : × les améliorations
       b.travail = { reste: duree, duree };
-      radio.emettre("fabrication-debut", { nom: TYPES[b.type].nom, numero: b.numero, entrees: recette.entrees, reserve: Object.assign({}, b.entrees), duree: Math.round(b.travail.reste * 10) / 10 });
+      radio.emettre("fabrication-debut", { nom: TYPES[b.type].nom, numero: b.numero, entrees, reserve: Object.assign({}, b.entrees), duree: Math.round(b.travail.reste * 10) / 10 });
       return;
     }
     b.travail.reste -= dt * Village.Repas.vitesse(b.ouvrier); // étape 5 : ventre vide = 2 fois moins vite
@@ -363,5 +393,5 @@ Village.Batiments = (function () {
     radio.emettre("minerai-extrait", { numero: b.numero, nom: TYPES[b.type].nom, quoi: sorte, reste: k.reste[i], devant: b.sortie });
   }
 
-  return { reparer, TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, coutPour, offert, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
+  return { entreesDe, reparer, TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, coutPour, offert, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
 })();
