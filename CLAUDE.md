@@ -42,7 +42,8 @@ est en ligne environ une minute après. Ne pousse sur `main` que du code testé.
 Les autres jeux suivent les mêmes familles et les mêmes règles, chacun dans son dossier avec son propre
 `config.js` et son propre numéro de version : `circuit/` (le jeu de course 3D, objet global `Circuit`) et
 `village/` (le jeu de gestion, objet global `Village`) et `raid/` (le rallye-raid 3D de l'étape 54, objet global
-`Raid`, qui réutilise `circuit/vendor/three.min.js`).
+`Raid`, qui réutilise `circuit/vendor/three.min.js`) et `tanks/` (la bataille de tanks 3D de l'étape 60, objet global
+`Tanks`, qui réutilise aussi `circuit/vendor/three.min.js`).
 
 **Le village est un projet à part** (décidé par Maxance) : il a son propre carnet (`village/carnet.html`),
 ses propres demandes (`village/demandes/NN-titre.md`) et sa propre numérotation d'étapes (1, 2, 3…),

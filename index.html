@@ -181,12 +181,14 @@
       <a href="#etape57">Étape 57</a>
       <a href="#etape58">Étape 58</a>
       <a href="#etape59">Étape 59</a>
+      <a href="#etape60">Étape 60</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
       <a class="jouer" href="circuit/index.html">🏎️ Circuit 3D</a>
       <a class="jouer" href="village/index.html">🏘️ Village</a>
       <a class="jouer" href="raid/index.html">🏜️ Rallye-raid</a>
+      <a class="jouer" href="tanks/index.html">🛡️ Tanks</a>
     </div>
   </nav>
 
@@ -3598,6 +3600,54 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Pourquoi le bas des portières est plus sombre que le haut ?</summary><p>Parce qu'il reflète le sol (sombre), et le haut reflète le ciel (clair).</p></details>
     </section>
 
+    <section id="etape60">
+      <h2>🛡️ Étape 60 : la bataille de tanks, un nouveau jeu <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Toi et 3 alliés contre 4 tanks ennemis, dans une campagne avec un village en ruines. Avec un Leclerc, un Abrams ou un Leopard 2. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/60-bataille-de-tanks.md</code>.</p>
+          <ul>
+            <li>✍️ Un nouveau jeu à part.</li>
+            <li>✍️ Équipe contre équipe : toi + 3 alliés contre 4 ennemis.</li>
+            <li>✍️ Une campagne avec un village en ruines.</li>
+            <li>✍️ Leclerc, Abrams, Leopard 2 ; 4 obus pour détruire un tank.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Au garage : <kbd>←</kbd> <kbd>→</kbd> pour les 3 tanks, <kbd>Entrée</kbd> pour la bataille.</li>
+            <li>☐ <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> pour le tank, <kbd>Q</kbd> <kbd>D</kbd> pour la tourelle, <kbd>Espace</kbd> pour tirer.</li>
+            <li>☐ Le viseur devient rouge quand un ennemi est en face : le canon se règle tout seul.</li>
+            <li>☐ 4 obus = le tank est détruit (une épave noire qui fume).</li>
+            <li>☐ Fonce dans un arbre : il est écrasé !</li>
+            <li>Vérifie « version 1 » en haut de la page du jeu.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔄 Deux machines en une</h3>
+      <p>Un tank, c'est la <strong>caisse</strong> (avec les chenilles) et la <strong>tourelle</strong> (avec le canon), qui tournent chacune de leur côté. Le jeu garde deux angles : celui de la caisse, et celui de la tourelle <em>par rapport à la caisse</em>. L'angle du canon dans le monde, c'est la somme des deux. Pour tourner sur place, une chenille avance et l'autre recule : regarde « chenilles » sous le capot.</p>
+      <h3>🎯 Pourquoi l'obus monte un peu</h3>
+      <p>Un obus retombe en volant (la gravité). Pour toucher loin, il faut donc tirer un peu vers le haut. La visée assistée calcule l'angle juste : ½ × arcsin(gravité × distance ÷ vitesse²). Plus la cible est loin, plus le canon monte.</p>
+      <h3>🤖 Le cerveau des 7 autres tanks</h3>
+      <ul>
+        <li>Toutes les 4 s, il choisit sa cible : l'ennemi le plus proche (de préférence celui qu'il voit).</li>
+        <li>Il roule jusqu'à 90 m d'elle, en se faisant repousser par les maisons, les arbres et les autres tanks, comme des aimants.</li>
+        <li>Il tire quand son canon est presque aligné et qu'il VOIT sa cible (aucune maison ni colline entre les deux).</li>
+        <li>S'il ne la voit plus depuis 3 s, il la contourne ; touché, il fait un écart.</li>
+      </ul>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>tanks/config.js</code>, mets <code>vie: 1</code> : un seul obus suffit !</li>
+        <li>Mets <code>ennemis: 8</code> : 8 tanks rouges contre vous.</li>
+        <li>Mets <code>gravite: 20</code> dans <code>obus</code> : regarde l'obus retomber beaucoup plus vite (et le canon monter plus haut).</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi l'ordinateur recharge plus lentement que toi ?</summary><p>Pour que tu aies un petit avantage : il vise presque aussi bien que toi et ils sont 4 !</p></details>
+      <details class="question"><summary>Comment le jeu sait si un tank en voit un autre ?</summary><p>Il avance le long de la ligne droite entre les deux, tous les 4 m, et regarde si ce point est dans une maison ou sous une colline.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4472,6 +4522,15 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-59" data-cle="appris-59" placeholder="Ex. : J'ai appris qu'une voiture brillante est un miroir…"></textarea>
         <label for="idees-59"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-59" data-cle="idees-59" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 60 · la bataille de tanks <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> un nouveau jeu dans <code>tanks/</code> : le champ de bataille (<code>logique/terrain.js</code>), le tank (<code>logique/char.js</code>), les obus (<code>logique/obus.js</code>), le cerveau de l'ordinateur (<code>logique/ia.js</code>), les 3 tanks en 3D (<code>affichage/chars3d.js</code>), le village en ruines (<code>affichage/decor.js</code>), les explosions et la fumée (<code>affichage/effets.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : un jeu à part, équipe contre équipe, une campagne avec un village en ruines, de vrais tanks modernes, 4 obus pour détruire.</p>
+        <label for="appris-60"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-60" data-cle="appris-60" placeholder="Ex. : J'ai appris que la tourelle et la caisse ont chacune leur angle…"></textarea>
+        <label for="idees-60"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-60" data-cle="idees-60" placeholder="Ex. : sortir du tank, des soldats, un hélico…"></textarea>
       </div>
     </section>
   </main>
