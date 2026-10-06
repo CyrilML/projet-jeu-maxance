@@ -107,6 +107,7 @@ Circuit.SousLeCapot = (function () {
     "son-allume": (d) => "🔊 Synthétiseur allumé (" + d.frequenceEchantillons.toLocaleString("fr-FR") + " échantillons de son par seconde)",
     son: (d) => (d.allume ? "🔊 Son remis (B)" : "🔇 Son coupé (B)"),
     camera: (d) => "🎥 Caméra : " + d.mode,
+    qualite: (d) => (d.plus ? "🔼 Ça va vite (" : "🔽 Ça rame (") + Math.round(d.ms) + " ms par image) : qualité automatique à " + Math.round(d.pixels * 100) + " %" + (d.plus ? ", l'image redevient plus fine" : ", on peint moins de pixels"),
   };
 
   let elements = null;
@@ -388,6 +389,7 @@ Circuit.SousLeCapot = (function () {
       ["sirène (étape 40)", Circuit.Sons.enDirect.sirene ? Math.round(Circuit.Sons.enDirect.sirene) + " Hz" : "éteinte"],
       ["Le dessin"],
       ["caméra", Circuit.Scene3D.camera.mode],
+      ["qualité automatique (étape 56)", Math.round(Circuit.Scene3D.qualite.pixels * 100) + " % des pixels · " + (Circuit.Scene3D.qualite.moyenne ? Math.round(Circuit.Scene3D.qualite.moyenne * 1000) + " ms par image en moyenne" : "mesure en cours…")],
       ["triangles dessinés", compteur.triangles.toLocaleString("fr-FR")],
       ["objets envoyés à la carte graphique", compteur.objets.toLocaleString("fr-FR")],
       ["lignes (rayons X)", compteur.lignes.toLocaleString("fr-FR")],

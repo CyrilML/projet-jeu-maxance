@@ -177,6 +177,7 @@
       <a href="#etape53">Étape 53</a>
       <a href="#etape54">Étape 54</a>
       <a href="#etape55">Étape 55</a>
+      <a href="#etape56">Étape 56</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3432,6 +3433,46 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Pourquoi recoller les pièces rend le jeu plus rapide ?</summary><p>La carte graphique dessine vite, mais chaque « dessin » à lancer prend du temps. Moins de dessins = plus d'images par seconde.</p></details>
     </section>
 
+    <section id="etape56">
+      <h2>🐢 Étape 56 : le circuit ne rame plus <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Tu as dit : « ça rame, ça saccade ». On a mené l'enquête, trouvé le coupable (trop d'ordres de dessin) et réparé. <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/56-le-circuit-rame.md</code>.</p>
+          <ul>
+            <li>✍️ Le circuit 3D saccade.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Roule en ville : ça doit être plus fluide.</li>
+            <li>☐ Sous le capot : « objets envoyés à la carte graphique » (moins de 700 en ville au lieu de 1 535).</li>
+            <li>☐ Sous le capot : « qualité automatique ».</li>
+            <li>Vérifie « version 24 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🕵️ L'enquête</h3>
+      <p>Un bon développeur ne devine pas : il <strong>mesure</strong>. On a chronométré chaque morceau du jeu. Les règles : 1 ms par image. Le tableau de bord : moins de 1 ms. Le dessin 3D en ville : 256 ms ! Le coupable, c'était le nombre d'<strong>ordres de dessin</strong> : à chaque image, le jeu disait 1 535 fois à la carte graphique « dessine ça ». Chaque ordre prend un peu de temps, même pour une toute petite pièce.</p>
+      <h3>🧩 Les réparations</h3>
+      <ul>
+        <li><strong>Recoller</strong> : toutes les pièces d'une voiture qui ont la même matière deviennent une seule pièce. Pareil pour tous les immeubles d'un même style.</li>
+        <li><strong>Les instances</strong> : les 102 pièces d'or sont une seule forme, dessinée 102 fois d'un coup.</li>
+        <li><strong>Ne pas dessiner ce qu'on ne voit pas</strong> : en ville, les voitures à plus de 170 m sont cachées par les immeubles.</li>
+        <li><strong>La qualité automatique</strong> : si une image met plus de 30 ms, le jeu peint moins de pixels. C'est ce que font les vrais jeux vidéo.</li>
+      </ul>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, regarde combien de millisecondes met une image sur ton ordinateur.</li>
+        <li>Dans <code>circuit/config.js</code>, trouve <code>qualite</code> et mets <code>distanceVehiculesVille: 60</code> : que vois-tu au bout des rues ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi 100 petites pièces coûtent plus cher qu'une grosse ?</summary><p>Parce que chaque pièce est un ordre de dessin, et chaque ordre prend du temps, même si la pièce est minuscule.</p></details>
+      <details class="question"><summary>Combien de millisecondes pour avoir 60 images par seconde ?</summary><p>1 000 ÷ 60 ≈ 16,7 ms par image.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4273,6 +4314,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-55" data-cle="appris-55" placeholder="Ex. : J'ai appris ce qu'est une ombre de contact…"></textarea>
         <label for="idees-55"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-55" data-cle="idees-55" placeholder="Ex. : Des phares qui éclairent la route la nuit…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 56 · le circuit ne rame plus <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les véhicules recollés (<code>affichage/modeles.js</code>), les immeubles recollés (<code>affichage/decor-ville.js</code>), les pièces en instances et la qualité automatique (<code>affichage/scene3d.js</code>).</p>
+        <label for="appris-56"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-56" data-cle="appris-56" placeholder="Ex. : J'ai appris qu'il faut mesurer avant de réparer…"></textarea>
+        <label for="idees-56"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-56" data-cle="idees-56" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

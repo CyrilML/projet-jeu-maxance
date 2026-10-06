@@ -108,28 +108,57 @@ Circuit.DecorVille = (function () {
 
     const fenetres = []; // étape 50 : les matériaux des façades (pour allumer les fenêtres quand il fait sombre)
     // Les immeubles : la façade à fenêtres sur les 4 côtés, un toit sombre, et quelques machines sur le toit.
-    const toit = mat({ map: repeter(T.toit(), 4, 4) });
+    const toit = mat({ map: repeter(T.toit(), 1, 1) });
+    const climatiseurs = [];
     const machine = mat({ color: 0x9a9da2, metalness: 0.5, roughness: 0.5 });
+    // (Étape 56 : avant, chaque immeuble était dessiné à part, face par face : 6 dessins par immeuble, presque 600 pour
+    // la ville. Maintenant, on recolle tous les immeubles d'un même style en UNE seule forme. Pour que les fenêtres
+    // gardent la bonne taille, chaque face reçoit des coordonnées de texture « en carreaux » : 1 carreau = 16 m × 14 m.)
+    const parStyle = {}; // style → { facades: [], toits: [] } (des listes de triangles)
+    const ajouterBoite = (b, H) => {
+      const L = 2 * b.demiLongueur, P = 2 * b.demiLargeur;
+      const geo = new THREE.BoxGeometry(L, H, P).toNonIndexed();
+      geo.translate(b.x, H / 2 + 0.12, b.z);
+      const pos = geo.attributes.position.array, nor = geo.attributes.normal.array, uv = geo.attributes.uv.array;
+      const st = (parStyle[b.style] = parStyle[b.style] || { facades: { pos: [], nor: [], uv: [] }, toits: { pos: [], nor: [], uv: [] } });
+      for (let f = 0; f < 6; f++) { // les 6 faces, dans l'ordre : +x, −x, +y (le toit), −y, +z, −z (6 points chacune)
+        const toit = f === 2 || f === 3, largeur = f < 2 ? P : L;
+        const cible = toit ? st.toits : st.facades;
+        for (let k = f * 6; k < f * 6 + 6; k++) {
+          cible.pos.push(pos[k * 3], pos[k * 3 + 1], pos[k * 3 + 2]);
+          cible.nor.push(nor[k * 3], nor[k * 3 + 1], nor[k * 3 + 2]);
+          cible.uv.push(uv[k * 2] * (toit ? L / 12 : largeur / 16), uv[k * 2 + 1] * (toit ? P / 12 : H / 14));
+        }
+      }
+    };
     for (const b of Ville.immeubles) {
       const L = 2 * b.demiLongueur, P = 2 * b.demiLargeur, H = b.hauteur;
-      // (Étape 50 : un carreau de façade = 16 m × 14 m, et les fenêtres allumées brillent quand il fait sombre.)
-      const face = (largeur) => {
-        const m = mat({ map: repeter(T.facade(b.style), largeur / 16, H / 14), roughness: 0.6, metalness: b.style === 3 ? 0.5 : 0.1,
-          emissiveMap: repeter(T.facadeLumiere(b.style), largeur / 16, H / 14), emissive: 0xffffff, emissiveIntensity: V.fenetresAllumees.minimum });
-        fenetres.push(m);
-        return m;
-      };
-      const faceX = face(P), faceZ = face(L);
-      const m = new THREE.Mesh(new THREE.BoxGeometry(L, H, P), [faceX, faceX, toit, toit, faceZ, faceZ]);
-      m.position.set(b.x, H / 2 + 0.12, b.z);
-      m.castShadow = m.receiveShadow = true;
-      g.add(m);
+      ajouterBoite(b, H);
       const clim = new THREE.Mesh(new THREE.BoxGeometry(3, 1.5, 2.5), machine);
       clim.position.set(b.x + L * 0.2, H + 0.87, b.z - P * 0.2);
       clim.castShadow = true;
-      g.add(clim);
+      climatiseurs.push(clim);
     }
-
+    const forme = (l) => {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(l.pos, 3));
+      geo.setAttribute("normal", new THREE.Float32BufferAttribute(l.nor, 3));
+      geo.setAttribute("uv", new THREE.Float32BufferAttribute(l.uv, 2));
+      return geo;
+    };
+    for (const [style, l] of Object.entries(parStyle)) {
+      const m = mat({ map: repeter(T.facade(+style), 1, 1), roughness: 0.6, metalness: +style === 3 ? 0.5 : 0.1,
+        emissiveMap: repeter(T.facadeLumiere(+style), 1, 1), emissive: 0xffffff, emissiveIntensity: V.fenetresAllumees.minimum });
+      fenetres.push(m);
+      const facades = new THREE.Mesh(forme(l.facades), m);
+      const toits = new THREE.Mesh(forme(l.toits), toit);
+      for (const x of [facades, toits]) {
+        x.castShadow = x.receiveShadow = true;
+        g.add(x);
+      }
+    }
+    // (les climatiseurs aussi : une seule forme recollée)
+    g.add(recollerBoites(climatiseurs, machine));
     // Étape 55 : le RELIEF des immeubles (bandeaux, corniches, magasins, balcons, toits), et l'usure des rues.
     reliefs(g, mat, fenetres);
     usure(g, mat);
@@ -224,6 +253,24 @@ Circuit.DecorVille = (function () {
   }
 
   let lumiereFenetres = V.fenetresAllumees.minimum;
+
+  // Étape 56 : recolle une liste de petites boîtes (déjà placées) en une seule forme.
+  function recollerBoites(liste, materiau) {
+    const pos = [], nor = [];
+    for (const m of liste) {
+      m.updateMatrix();
+      const geo = m.geometry.clone().toNonIndexed();
+      geo.applyMatrix4(m.matrix);
+      pos.push(...geo.attributes.position.array);
+      nor.push(...geo.attributes.normal.array);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+    const r = new THREE.Mesh(geo, materiau);
+    r.castShadow = r.receiveShadow = true;
+    return r;
+  }
 
   // Étape 55 : le relief des façades et des toits. Chaque morceau est une boîte (de 1 m de côté) agrandie et posée :
   // on range tous les morceaux d'une même matière dans une liste, puis on les dessine en « instances ».
