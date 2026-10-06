@@ -13,8 +13,10 @@ Tanks.Entrees = (function () {
     gauche: ["ArrowLeft"],
     droite: ["ArrowRight"],
     tourelleGauche: ["KeyA", "KeyQ"], // (Q sur un clavier français, ou A)
-    tourelleDroite: ["KeyD", "KeyE"], // (D, ou E)
+    tourelleDroite: ["KeyD"], // (D)
     tirer: ["Space"],
+    monter: ["KeyE"], // étape 61 : sortir du tank, monter dans un engin
+    arme1: ["Digit1", "Numpad1"], arme2: ["Digit2", "Numpad2"], arme3: ["Digit3", "Numpad3"], // étape 61 : les armes à pied
     valider: ["Enter", "NumpadEnter"],
     recommencer: ["KeyR"],
     retour: ["Backspace"],

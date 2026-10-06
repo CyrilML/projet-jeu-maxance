@@ -8,7 +8,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 1,
+  version: 2,
   pasFixe: 1 / 120,
 
   monde: {
@@ -69,6 +69,44 @@ Tanks.CONFIG = {
     regardObstacles: 16, // m : il regarde 16 m devant lui pour éviter les maisons
     changeDeCible: 4, // s : il revoit sa cible toutes les 4 s
     esquive: 2.5, // s : touché, il fait un écart pendant 2,5 s
+  },
+
+  // ------------------------------------------------------------------ étape 61 : à pied, les soldats, les autres engins
+  // ✍️ 12 soldats par équipe, qui avancent avec les tanks et se tirent dessus. Dans chaque équipe, 2 soldats ont un
+  // lance-roquettes (ils visent les tanks). ✍️ 3 balles = un soldat à terre.
+  soldats: {
+    parEquipe: 12, lanceRoquettes: 2,
+    vie: 3, vieJoueur: 5, // (toi, tu tiens 5 balles)
+    vitesse: 4.2, recul: 2.2, rotation: 2.6, // m/s, m/s, rad/s
+    vue: 140, // m : un soldat voit et tire jusqu'à 140 m
+    pense: 0.25, // s : un soldat de l'ordinateur réfléchit 4 fois par seconde (pas plus : ils sont 24 !)
+    ecrase: 3, // m/s : un tank ou un 4x4 ennemi qui roule plus vite écrase un soldat
+  },
+  // ✍️ Les armes à pied : le pistolet, la mitrailleuse et le lance-roquettes (touches 1, 2, 3).
+  // Une balle va tout de suite où on vise (pas de vol) : la chance de toucher baisse avec la distance.
+  armes: {
+    pistolet: { nom: "Pistolet", icone: "🔫", cadence: 0.35, precision: 0.9, portee: 70, degats: 1 },
+    mitrailleuse: { nom: "Mitrailleuse", icone: "🔫🔫", cadence: 0.09, precision: 0.6, portee: 140, degats: 1 },
+    roquettes: { nom: "Lance-roquettes", icone: "🚀", cadence: 3, roquette: true }, // ✍️ 1 roquette = 1 obus pour un tank
+    soldat: { cadence: 0.6, precision: 0.35, portee: 140, degats: 1 }, // le fusil des soldats de l'ordinateur
+  },
+  // Les projectiles qui volent (en plus des obus) : vitesse (m/s), gravité, dégâts sur un tank, rayon de l'explosion.
+  projectiles: {
+    obus: { degatsChar: 1, souffle: 5 }, // (sa vitesse et sa gravité sont plus haut, dans « obus »)
+    roquette: { vitesse: 75, gravite: 0.6, degatsChar: 1, souffle: 5 },
+    bombe: { vitesse: 0, gravite: 9.8, degatsChar: 2, souffle: 11 },
+    missile: { vitesse: 110, gravite: 0, degatsChar: 2, souffle: 7, guide: 1.6 }, // (il tourne vers sa cible : 1,6 rad/s)
+    grenade: { vitesse: 0, gravite: 9.8, degatsChar: 0, souffle: 7 },
+  },
+  // ✍️ Les engins garés dans ton camp (seulement toi les conduis) : le 4x4 à mitrailleuse, l'hélico qui lâche des
+  // bombes, l'avion de chasse, et le drone. Touche E : monter ou descendre.
+  engins: {
+    jeep: { nom: "4x4 à mitrailleuse", icone: "🚙", vitesseMax: 26, acceleration: 7, virage: 1.4, vie: 2, tourelle: 1.6, arme: "mitrailleuse" },
+    helico: { nom: "Hélicoptère Tigre", icone: "🚁", vitesseMax: 45, acceleration: 9, virage: 1, montee: 9, hauteurMax: 150, munitions: 8, recharge: 5, arme: "bombe" },
+    avion: { nom: "Avion de chasse Rafale", icone: "✈️", vitesse: 95, virage: 0.9, tangage: 0.8, hauteurMin: 25, hauteurMax: 400, munitions: 6, recharge: 2.5, arme: "missile", ejection: true },
+    drone: { nom: "Drone", icone: "🛸", vitesseMax: 30, acceleration: 12, virage: 2, montee: 12, hauteurMax: 120, munitions: 6, recharge: 3, arme: "grenade" },
+    distanceMonter: 6, // m : on peut monter dans un engin à moins de 6 m
+    parachute: 4, // m/s : la vitesse de descente en parachute (on s'éjecte de l'avion avec E)
   },
 
   camera: { distance: 15, hauteur: 6.5, regardDevant: 22, souplesse: 6, champ: 60 },

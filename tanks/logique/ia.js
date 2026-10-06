@@ -109,7 +109,12 @@ Tanks.IA = (function () {
     intentions.recharge = I.recharge;
     // 3. Tirer ?
     const aligne = Math.abs(Ch.angleEntre(intentions.viseAngle - Ch.angleTourelle(c))) < I.alignement;
-    ia.voit = d < I.portee && T.vueLibre(c.x, c.y + 2.4, c.z, cible.x, cible.y + 1.5, cible.z);
+    // (étape 61 : il regarde s'il voit sa cible 5 fois par seconde, pas à chaque pas : c'est un long calcul)
+    ia.regard = (ia.regard || 0) - dt;
+    if (ia.regard <= 0) {
+      ia.regard = 0.2;
+      ia.voit = d < I.portee && T.vueLibre(c.x, c.y + 2.4, c.z, cible.x, cible.y + 1.5, cible.z);
+    }
     ia.sansVue = ia.voit ? 0 : ia.sansVue + dt;
     if (aligne && ia.voit && c.recharge === 0) {
       intentions.tirer = true;

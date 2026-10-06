@@ -119,12 +119,18 @@ Tanks.Terrain = (function () {
   }
 
   // La ligne de vue entre deux points (à la hauteur y au-dessus du sol) : rien entre les deux ?
+  // (Étape 61 : pour aller vite — 24 soldats et 8 tanks se posent la question sans arrêt —, on ne regarde que les
+  // boîtes qui sont dans le rectangle autour de la ligne, et le sol tous les 8 m seulement.)
+  for (const b of boites) (b.rayon = Math.hypot(b.demiL, b.demiP)), (b.sol = hauteur(b.x, b.z));
   function vueLibre(x1, y1, z1, x2, y2, z2) {
-    const d = Math.hypot(x2 - x1, z2 - z1), n = Math.max(2, Math.ceil(d / 4));
+    const d = Math.hypot(x2 - x1, z2 - z1);
+    const minX = Math.min(x1, x2), maxX = Math.max(x1, x2), minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);
+    const proches = boites.filter((b) => b.x + b.rayon > minX && b.x - b.rayon < maxX && b.z + b.rayon > minZ && b.z - b.rayon < maxZ);
+    const n = Math.max(2, Math.ceil(d / 3));
     for (let i = 1; i < n; i++) {
       const t = i / n, x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t, z = z1 + (z2 - z1) * t;
-      if (y < hauteur(x, z)) return false; // une colline entre les deux
-      for (const b of boites) if (y < hauteur(b.x, b.z) + b.h && dansBoite(b, x, z)) return false;
+      if (i % 3 === 0 && y < hauteur(x, z)) return false; // une colline entre les deux
+      for (const b of proches) if (y < b.sol + b.h && dansBoite(b, x, z)) return false;
     }
     return true;
   }

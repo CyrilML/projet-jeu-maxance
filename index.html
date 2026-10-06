@@ -182,6 +182,7 @@
       <a href="#etape58">Étape 58</a>
       <a href="#etape59">Étape 59</a>
       <a href="#etape60">Étape 60</a>
+      <a href="#etape61">Étape 61</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3648,6 +3649,56 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Comment le jeu sait si un tank en voit un autre ?</summary><p>Il avance le long de la ligne droite entre les deux, tous les 4 m, et regarde si ce point est dans une maison ou sous une colline.</p></details>
     </section>
 
+    <section id="etape61">
+      <h2>🪖 Étape 61 : sortir du tank, les soldats, le 4x4, l'hélico et l'avion <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Tu peux maintenant sortir de ton tank et te battre à pied, au milieu de 24 soldats, ou prendre un engin garé dans ton camp. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/61-soldats-et-engins.md</code>.</p>
+          <ul>
+            <li>✍️ Sortir du tank ; à pied : pistolet, mitrailleuse, et un lance-roquettes en plus.</li>
+            <li>✍️ 12 soldats par équipe.</li>
+            <li>✍️ Un 4x4 à mitrailleuse, garé dans ton camp.</li>
+            <li>✍️ Un hélico qui lâche des bombes, un avion de chasse, un drone : seulement toi les pilotes.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ <kbd>E</kbd> : tu sors du tank. <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> : pistolet, mitrailleuse, lance-roquettes. <kbd>Espace</kbd> : tirer.</li>
+            <li>☐ Marche vers le 4x4 (derrière ton camp) : « E : monter » apparaît.</li>
+            <li>☐ Hélico : <kbd>Q</kbd> pour décoller, <kbd>↑</kbd> pour avancer, <kbd>Espace</kbd> : une bombe tombe sur la croix rouge.</li>
+            <li>☐ Avion : il décolle tout seul ; <kbd>↓</kbd> pour monter, <kbd>Espace</kbd> pour un missile, <kbd>E</kbd> pour t'éjecter en parachute.</li>
+            <li>☐ Fonce sur un soldat rouge avec ton tank : il est écrasé.</li>
+            <li>Vérifie « version 2 » en haut de la page du jeu.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🎭 Un seul toi, plusieurs « modes »</h3>
+      <p>Le jeu garde une petite fiche, <code>monde.toi</code>, qui dit <strong>où tu es</strong> : <code>char</code>, <code>pied</code>, <code>jeep</code>, <code>helico</code>, <code>avion</code> ou <code>drone</code>. Les touches sont les mêmes partout, mais elles sont envoyées seulement à ce que tu conduis : <kbd>↑</kbd> fait avancer le tank, ou marcher le soldat, ou piquer l'avion. Quand tu es dans un engin, ton soldat est « assis dedans » : il suit l'engin et les balles ne peuvent pas le toucher. Regarde « mode » sous le capot.</p>
+      <h3>🔫 La balle qui ne vole pas</h3>
+      <p>Une balle va beaucoup trop vite pour qu'on la voie voler. Alors le jeu ne la fait pas voler : au moment du tir, il cherche l'ennemi le plus proche dans un petit cône devant l'arme, regarde s'il y a un mur entre les deux, puis tire au sort (le pistolet touche plus souvent que la mitrailleuse, et c'est plus dur de loin). On appelle ça une balle « instantanée ». La roquette, la bombe et le missile, eux, volent vraiment (comme l'obus).</p>
+      <h3>💣 Pourquoi lâcher la bombe AVANT d'être au-dessus</h3>
+      <p>La bombe garde la vitesse de l'hélico en tombant. Elle met √(2 × hauteur ÷ 9,8) secondes pour arriver au sol, et pendant ce temps elle continue d'avancer. La croix rouge fait ce calcul pour toi : c'est là qu'elle tombera.</p>
+      <h3>🤖 Le cerveau des 24 soldats</h3>
+      <ul>
+        <li>Ils ne réfléchissent que 4 fois par seconde (sinon, 24 soldats qui regardent sans arrêt s'il y a un mur, c'est trop de calculs !).</li>
+        <li>S'ils voient un ennemi à moins de 140 m, ils se tournent et tirent ; sinon, ils avancent vers le village, puis vers le camp ennemi, chacun dans son couloir.</li>
+        <li>Les 2 soldats au lance-roquettes de chaque équipe visent les tanks (et ton 4x4).</li>
+      </ul>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>tanks/config.js</code>, mets <code>parEquipe: 30</code> dans <code>soldats</code> : une vraie armée !</li>
+        <li>Mets <code>munitions: 30</code> pour l'hélico : un tapis de bombes.</li>
+        <li>Mets <code>parachute: 1</code> dans <code>engins</code> : ton parachute descend tout doucement.</li>
+        <li>Mets <code>precision: 1</code> au pistolet : il ne rate plus jamais de près.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi tes soldats ne sont pas touchés quand tu es dans l'hélico ?</summary><p>Parce que les balles ne cherchent que les soldats qui ne sont pas « dans un engin », et que les tanks ne tirent pas en l'air.</p></details>
+      <details class="question"><summary>Pourquoi le missile tourne tout seul en vol ?</summary><p>Il est « guidé » : à chaque petit pas (1/120 s), il tourne un peu (1,6 radian par seconde au plus) vers le tank qu'il a choisi.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -3975,6 +4026,12 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
           <h4>Voitures, routes et immeubles très réalistes <span class="etiquette">✅ fait · à valider</span></h4>
           <p>Phares à LED, feux, plaques, ombre douce, Peugeot 208, Clio, taxi Toyota, police 308 ; boutiques, balcons, corniches et toits détaillés (étape 55).</p>
           <p class="apprend"><b>Tu apprends :</b> l'ombre de contact, recoller les pièces, les instances. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">⚔️</div>
+          <h4>Les tanks : soldats, 4x4, hélico, avion <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Un nouveau jeu de bataille (étape 60), puis sortir du tank, 24 soldats, un 4x4 à mitrailleuse, un hélico, un avion de chasse et un drone (étape 61).</p>
+          <p class="apprend"><b>Tu apprends :</b> les modes du joueur, la balle instantanée, les projectiles guidés, faire réfléchir l'ordinateur moins souvent. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
           <div class="num">53</div>
@@ -4531,6 +4588,15 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-60" data-cle="appris-60" placeholder="Ex. : J'ai appris que la tourelle et la caisse ont chacune leur angle…"></textarea>
         <label for="idees-60"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-60" data-cle="idees-60" placeholder="Ex. : sortir du tank, des soldats, un hélico…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 61 · sortir du tank, les soldats et les engins <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le soldat (<code>logique/soldat.js</code>), le sergent des 24 soldats (<code>logique/troupes.js</code>), les engins de ton camp (<code>logique/engins.js</code>), les roquettes, bombes, missiles et grenades (<code>logique/obus.js</code>), « où tu es » (<code>logique/monde.js</code>), les soldats et engins en 3D (<code>affichage/engins3d.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : 12 soldats par équipe, pistolet + mitrailleuse + lance-roquettes, le 4x4 garé dans ton camp, seulement toi pilotes les engins.</p>
+        <label for="appris-61"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-61" data-cle="appris-61" placeholder="Ex. : J'ai appris qu'une balle ne vole pas vraiment dans le jeu…"></textarea>
+        <label for="idees-61"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-61" data-cle="idees-61" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

@@ -272,5 +272,5 @@ Tanks.Chars3D = (function () {
     o.canon.rotation.z = -0.15;
   }
 
-  return { fabriquer, bruler };
+  return { fabriquer, bruler, camouflage };
 })();

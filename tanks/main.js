@@ -47,6 +47,7 @@ window.Tanks = window.Tanks || {};
           tirer: E.estEnfoncee("tirer"),
           gaucheAppui: E.consommer("gauche"), droiteAppui: E.consommer("droite"),
           valider: E.consommer("valider"), recommencer: E.consommer("recommencer"), retour: E.consommer("retour"),
+          monter: E.consommer("monter"), arme1: E.consommer("arme1"), arme2: E.consommer("arme2"), arme3: E.consommer("arme3"), // (étape 61)
         });
       }
     }
