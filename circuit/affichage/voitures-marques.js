@@ -17,7 +17,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.VoituresMarques = (function () {
   const O = Circuit.Modeles.outils;
-  const { M, peinture, boite, cylindre, tube, personnage } = O;
+  const { M, peinture, boite, cylindre, tube, personnage, fusionner } = O;
   const Coque = Circuit.Coque;
 
   // ---------------------------------------------------------------- les outils du bureau de design
@@ -263,50 +263,6 @@ Circuit.VoituresMarques = (function () {
     fusionner(caisse);
     return { g, caisse, roues, yCapot, ressorts: [] };
   }
-  // Étape 55 : une voiture a maintenant plus de 150 petites pièces. Pour la carte graphique, chaque pièce est un
-  // « dessin » à faire, et 30 voitures × 150 dessins, c'est beaucoup ! Alors, une fois la voiture finie, on RECOLLE
-  // ensemble toutes les pièces de la caisse qui ont la même matière (tout le chrome en une seule pièce, toutes les
-  // LED en une autre…) : la voiture a exactement la même allure, mais elle se dessine en une vingtaine de fois.
-  function fusionner(caisse) {
-    caisse.updateMatrixWorld(true);
-    const inverse = caisse.matrixWorld.clone().invert(), paquets = new Map();
-    caisse.traverse((m) => {
-      if (!m.isMesh || Array.isArray(m.material) || !m.geometry.attributes.normal) return;
-      const avecUV = !!m.geometry.attributes.uv, cle = m.material.uuid + (avecUV ? "+uv" : "");
-      if (!paquets.has(cle)) paquets.set(cle, { materiau: m.material, avecUV, pieces: [] });
-      paquets.get(cle).pieces.push(m);
-    });
-    const matrice = new THREE.Matrix4();
-    for (const { materiau, avecUV, pieces } of paquets.values()) {
-      if (pieces.length < 2) continue;
-      const pos = [], nor = [], uv = [];
-      for (const m of pieces) {
-        const geo = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone());
-        matrice.multiplyMatrices(inverse, m.matrixWorld);
-        geo.applyMatrix4(matrice);
-        pos.push(geo.attributes.position.array);
-        nor.push(geo.attributes.normal.array);
-        if (avecUV) uv.push(geo.attributes.uv.array);
-        geo.dispose();
-        m.parent.remove(m);
-      }
-      const colle = (listes) => {
-        const tout = new Float32Array(listes.reduce((n, a) => n + a.length, 0));
-        let k = 0;
-        for (const a of listes) { tout.set(a, k); k += a.length; }
-        return tout;
-      };
-      const geo = new THREE.BufferGeometry();
-      geo.setAttribute("position", new THREE.BufferAttribute(colle(pos), 3));
-      geo.setAttribute("normal", new THREE.BufferAttribute(colle(nor), 3));
-      if (avecUV) geo.setAttribute("uv", new THREE.BufferAttribute(colle(uv), 2));
-      const piece = new THREE.Mesh(geo, materiau);
-      piece.castShadow = !materiau.transparent;
-      piece.receiveShadow = true;
-      caisse.add(piece);
-    }
-  }
-
   // ---------------------------------------------------------------- 🇫🇷 Bugatti Chiron (4,54 m × 2,04 m × 1,21 m)
   // (Étape 55 : refaite. Le flanc rentre vers le bas, la cabine a un vrai toit et des vitres penchées, la ligne en « C »
   // suit la carrosserie, de vrais blocs de phares à 4 lampes, et la longue barre de feux arrière.)

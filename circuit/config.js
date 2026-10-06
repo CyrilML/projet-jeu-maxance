@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 23,
+  version: 24,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -456,7 +456,20 @@ Circuit.CONFIG = {
     portes: 4, // le circuit est coupé en 4 « portes » à passer dans l'ordre (anti-triche)
   },
 
-  camera: {
+  // Étape 56 : la QUALITÉ AUTOMATIQUE (pour que le jeu ne rame pas). Si une image met trop longtemps à se dessiner,
+  // le jeu dessine un peu moins de pixels ; si tout va vite, il remet de la finesse.
+  qualite: {
+    pixelsMax: 1.5, // au plus 1,5 pixel de jeu par pixel de l'écran (les écrans « Retina » en ont 2 : c'est 2 fois moins à peindre)
+    pixelsMin: 0.75, // au moins 0,75 (en dessous, l'image serait trop floue)
+    pas: 0.15, // de combien on change à chaque fois
+    imageLente: 0.03, // s : en moyenne plus de 30 ms par image (moins de 33 images par seconde) → moins de pixels
+    imageRapide: 0.018, // s : moins de 18 ms par image (plus de 55 images par seconde) → plus de pixels
+    mesure: 2, // s : on fait la moyenne sur 2 secondes avant de décider
+    distanceVehicules: 400, // m : on ne dessine pas les véhicules plus loin que ça…
+    distanceVehiculesVille: 170, // m : … et en ville, les immeubles les cachent : 170 m suffisent
+  },
+
+camera: {
     distance: 11, // m derrière la voiture
     hauteur: 4.5, // m au-dessus du sol
     regardDevant: 6, // la caméra vise un point 6 m devant la voiture

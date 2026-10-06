@@ -888,7 +888,76 @@ Circuit.Modeles = (function () {
       MQ.charger(modele);
       return Object.assign(ombrer(FABRIQUES[modele](couleur1, couleur2), modele), { provisoire: true });
     }
-    return ombrer(FABRIQUES[modele](couleur1, couleur2), modele);
+    const objet = ombrer(FABRIQUES[modele](couleur1, couleur2), modele);
+    recoller(objet);
+    return objet;
+  }
+
+  // Étape 55 : une voiture a maintenant plus de 150 petites pièces. Pour la carte graphique, chaque pièce est un
+  // « dessin » à faire, et 30 voitures × 150 dessins, c'est beaucoup ! Alors, une fois la voiture finie, on RECOLLE
+  // ensemble toutes les pièces de la caisse qui ont la même matière (tout le chrome en une seule pièce, toutes les
+  // LED en une autre…) : la voiture a exactement la même allure, mais elle se dessine en une vingtaine de fois.
+  function fusionner(caisse, bougent) {
+    caisse.updateMatrixWorld(true);
+    const inverse = caisse.matrixWorld.clone().invert(), paquets = new Map();
+    const pieces = [];
+    (function parcourir(o) {
+      for (const enfant of o.children) {
+        if (bougent && bougent.has(enfant)) continue; // (une pièce qui bouge : elle sera recollée de son côté)
+        pieces.push(enfant);
+        parcourir(enfant);
+      }
+    })(caisse);
+    pieces.forEach((m) => {
+      if (!m.isMesh || m.isInstancedMesh || Array.isArray(m.material) || !m.geometry.attributes.normal || !m.visible) return;
+      const avecUV = !!m.geometry.attributes.uv, cle = m.material.uuid + (avecUV ? "+uv" : "");
+      if (!paquets.has(cle)) paquets.set(cle, { materiau: m.material, avecUV, pieces: [] });
+      paquets.get(cle).pieces.push(m);
+    });
+    const matrice = new THREE.Matrix4();
+    for (const { materiau, avecUV, pieces } of paquets.values()) {
+      if (pieces.length < 2) continue;
+      const pos = [], nor = [], uv = [];
+      for (const m of pieces) {
+        const geo = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone());
+        matrice.multiplyMatrices(inverse, m.matrixWorld);
+        geo.applyMatrix4(matrice);
+        pos.push(geo.attributes.position.array);
+        nor.push(geo.attributes.normal.array);
+        if (avecUV) uv.push(geo.attributes.uv.array);
+        geo.dispose();
+        m.parent.remove(m);
+      }
+      const colle = (listes) => {
+        const tout = new Float32Array(listes.reduce((n, a) => n + a.length, 0));
+        let k = 0;
+        for (const a of listes) { tout.set(a, k); k += a.length; }
+        return tout;
+      };
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(colle(pos), 3));
+      geo.setAttribute("normal", new THREE.BufferAttribute(colle(nor), 3));
+      if (avecUV) geo.setAttribute("uv", new THREE.BufferAttribute(colle(uv), 2));
+      const piece = new THREE.Mesh(geo, materiau);
+      piece.castShadow = !materiau.transparent;
+      piece.receiveShadow = true;
+      caisse.add(piece);
+    }
+  }
+
+  // Étape 56 : on recolle TOUS les véhicules (pas seulement les voitures de marque) : les voitures garées, la
+  // circulation, les avions… Mais attention aux pièces qui BOUGENT toutes seules (les roues, la caisse sur ses
+  // ressorts, le rotor de l'hélico, l'hélice…) : chacune est recollée de son côté, jamais avec le reste.
+  function recoller(objet) {
+    const bougent = new Set();
+    const noter = (x) => { if (x && x.isObject3D) bougent.add(x); };
+    for (const valeur of Object.values(objet)) {
+      if (Array.isArray(valeur)) for (const e of valeur) { noter(e); if (e && !e.isObject3D) Object.values(e).forEach(noter); }
+      else noter(valeur);
+    }
+    bougent.delete(objet.g);
+    // Chaque « racine » (le véhicule, ou une pièce qui bouge) recolle ses pièces, sans entrer dans les autres racines.
+    for (const racine of [objet.g].concat([...bougent])) fusionner(racine, bougent);
   }
 
   // Étape 55 : l'OMBRE DOUCE sous la voiture. Là où la voiture touche presque le sol, la lumière du ciel n'arrive
@@ -922,6 +991,6 @@ Circuit.Modeles = (function () {
   }
 
   // Les outils du carrossier, prêtés à affichage/voitures-reelles.js (étape 49).
-  const outils = { M, materiaux, peinture, forme, extruder, passage, boite, cylindre, tube, roue, carrosserie, ajouterRoues, etiquette, personnage, galber, bord, bout, largeurIci };
+  const outils = { M, fusionner, materiaux, peinture, forme, extruder, passage, boite, cylindre, tube, roue, carrosserie, ajouterRoues, etiquette, personnage, galber, bord, bout, largeurIci };
   return { fabriquer, materiaux, personnage, ajouter, outils };
 })();

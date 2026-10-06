@@ -30,7 +30,8 @@ Circuit.Scene3D = (function () {
   let rayonsFixes = null, rayonsMobiles = null;
   const vehicules = {}; // un exemplaire de chaque modèle de voiture
   let adversaire = null;
-  const piecesPool = [], cartonsPool = [];
+  const cartonsPool = [];
+  let piecesInstances = null; // étape 56 : les pièces (une seule forme, dessinée 100 fois d'un coup)
   const flotte = {}; // étape 39 : les voitures garées et celles de la circulation (une réserve par modèle)
   let bonhomme = null; // étape 39 : le personnage
   let flamme = null; // étape 40 : les flammes du nitro, derrière la voiture
@@ -44,7 +45,8 @@ Circuit.Scene3D = (function () {
     } catch (e) {
       return false; // pas de WebGL sur cet ordinateur
     }
-    rendu.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    qualite.pixels = Math.min(window.devicePixelRatio || 1, C.qualite.pixelsMax); // (étape 56)
+    rendu.setPixelRatio(qualite.pixels);
     rendu.setSize(canvas.width, canvas.height, false);
     rendu.outputColorSpace = THREE.SRGBColorSpace;
     rendu.toneMapping = THREE.ACESFilmicToneMapping; // des couleurs « comme au cinéma »
@@ -480,7 +482,35 @@ Circuit.Scene3D = (function () {
     return reserve[index];
   }
 
+  // Étape 56 : la QUALITÉ AUTOMATIQUE. On chronomètre chaque image ; toutes les 2 s, on regarde la moyenne :
+  // trop lent → on peint moins de pixels (l'image est un tout petit peu moins fine, mais le jeu ne saccade plus) ;
+  // très rapide → on en remet. C'est ce que font les vrais jeux vidéo (« résolution dynamique »).
+  const qualite = { pixels: 1, moyenne: 0, total: 0, images: 0, debut: 0, avant: 0 };
+  function reglerQualite(maintenant) {
+    const Q = C.qualite;
+    if (qualite.avant) {
+      qualite.total += Math.min(0.25, (maintenant - qualite.avant) / 1000);
+      qualite.images++;
+    }
+    qualite.avant = maintenant;
+    if (!qualite.debut) qualite.debut = maintenant;
+    if (maintenant - qualite.debut < Q.mesure * 1000 || !qualite.images) return;
+    qualite.moyenne = qualite.total / qualite.images;
+    qualite.total = qualite.images = 0;
+    qualite.debut = maintenant;
+    const max = Math.min(window.devicePixelRatio || 1, Q.pixelsMax);
+    let nouveau = qualite.pixels;
+    if (qualite.moyenne > Q.imageLente) nouveau = Math.max(Q.pixelsMin, qualite.pixels - Q.pas);
+    else if (qualite.moyenne < Q.imageRapide) nouveau = Math.min(max, qualite.pixels + Q.pas);
+    if (Math.abs(nouveau - qualite.pixels) < 0.01) return;
+    const plus = nouveau > qualite.pixels;
+    qualite.pixels = nouveau;
+    rendu.setPixelRatio(nouveau); // (Three.js garde la taille de l'écran et change seulement le nombre de pixels peints)
+    Circuit.Evenements.emettre("qualite", { pixels: nouveau, plus, ms: qualite.moyenne * 1000 });
+  }
+
   function dessiner(monde, options, dt) {
+    reglerQualite(performance.now());
     if (monde.carte !== carteDessinee) preparerCarte(monde.carte);
     placerCamera(monde, dt);
     const v = monde.voiture;
@@ -516,7 +546,9 @@ Circuit.Scene3D = (function () {
     const suivi0 = monde.pieton || v;
     const montrer = (voiture) => {
       // Étape 42 : la map est énorme. On ne dessine que les véhicules à moins de 400 m (les autres sont cachés).
-      if (Math.abs(voiture.x - suivi0.x) > 400 || Math.abs(voiture.z - suivi0.z) > 400) return;
+      // (Étape 56 : en ville, 170 m suffisent : plus loin, les immeubles les cachent, et ça faisait ramer.)
+      const loin = monde.carte === "ville" ? C.qualite.distanceVehiculesVille : C.qualite.distanceVehicules;
+      if (Math.abs(voiture.x - suivi0.x) > loin || Math.abs(voiture.z - suivi0.z) > loin) return;
       // Une réserve par modèle ET par couleur (les motos des méga-rampes ont chacune leur couleur).
       const cleFlotte = voiture.couleurs ? voiture.modele + JSON.stringify(voiture.couleurs) : voiture.modele;
       const k = (compte[cleFlotte] = (compte[cleFlotte] || 0) + 1) - 1;
@@ -573,18 +605,24 @@ Circuit.Scene3D = (function () {
     dessinerArmes(monde); // étape 44
 
     // Les pièces qui tournent sur elles-mêmes et flottent, et les cartons.
+    // (Étape 56 : toutes les pièces sont des « instances » d'une seule forme : un seul dessin pour les 100 pièces.)
+    if (!piecesInstances || piecesInstances.instanceMatrix.count < monde.pieces.length) {
+      if (piecesInstances) scene.remove(piecesInstances);
+      piecesInstances = new THREE.InstancedMesh(geoPiece, materiauPiece, Math.max(16, monde.pieces.length));
+      piecesInstances.castShadow = true;
+      piecesInstances.frustumCulled = false; // (elles sont partout sur la carte)
+      scene.add(piecesInstances);
+    }
     let n = 0;
+    const qPiece = new THREE.Quaternion(), un = new THREE.Vector3(1, 1, 1), axeY = new THREE.Vector3(0, 1, 0), m4 = new THREE.Matrix4(), ici = new THREE.Vector3();
+    qPiece.setFromAxisAngle(axeY, monde.temps * 3);
     for (const p of monde.pieces) {
       if (p.prise) continue;
-      const m = depuisReserve(piecesPool, n++, () => {
-        const piece = new THREE.Mesh(geoPiece, materiauPiece);
-        piece.castShadow = true;
-        return piece;
-      });
-      m.position.set(p.x, (p.y !== undefined ? p.y : C.pieces.hauteur) + Math.sin(monde.temps * 2.5 + p.numero) * 0.2, p.z);
-      m.rotation.y = monde.temps * 3;
+      ici.set(p.x, (p.y !== undefined ? p.y : C.pieces.hauteur) + Math.sin(monde.temps * 2.5 + p.numero) * 0.2, p.z);
+      piecesInstances.setMatrixAt(n++, m4.compose(ici, qPiece, un));
     }
-    for (let i = n; i < piecesPool.length; i++) piecesPool[i].visible = false;
+    piecesInstances.count = n;
+    piecesInstances.instanceMatrix.needsUpdate = true;
     const cartons = monde.cartons || [];
     cartons.forEach((c, i) => {
       const m = depuisReserve(cartonsPool, i, () => {
@@ -640,6 +678,7 @@ Circuit.Scene3D = (function () {
     get vueProjection() {
       return vueProjection;
     },
+    qualite,
     get objetJoueur() {
       return objetJoueur;
     },
