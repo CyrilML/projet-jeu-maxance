@@ -57,12 +57,15 @@
 //  13 (étape 16) : les habits (habits : [secondes avant la prochaine distribution, part des habitants servis]),
 //                  et les ressources des poules, des moutons et des cochons (oeufs, laine, tissu, vetements,
 //                  jambon). Rien à convertir : une partie plus ancienne commence à 0.
+//  14 (étape 17) : pour chaque porteur d'un entrepôt secondaire, la place de son entrepôt (m). Une partie plus
+//                  ancienne n'en a pas : tous ses porteurs habitent l'entrepôt principal. Si « Routes pavées » était
+//                  déjà faite, toutes ses routes deviennent pavées au chargement.
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 13;
+  const VERSION = 14;
   const radio = Village.Evenements;
 
   function vide() {
@@ -222,7 +225,7 @@ Village.Sauvegarde = (function () {
       bonheur: monde.bonheur.valeur === null ? undefined : Math.round(monde.bonheur.valeur * 10) / 10, // étape 15
       gouts: monde.gouts,
       habits: [Math.round(monde.habits.minuteur), Math.round(monde.habits.part * 100) / 100], // étape 16
-      porteurs: monde.porteurs.map((p) => ({ faim: Math.round(p.faim || 0), affame: !!p.affame, ventreVide: Math.round(p.ventreVide || 0), parti: !!p.parti })),
+      porteurs: monde.porteurs.map((p) => { const d = { faim: Math.round(p.faim || 0), affame: !!p.affame, ventreVide: Math.round(p.ventreVide || 0), parti: !!p.parti }; if (p.maison && p.maison.type === "depot") d.m = monde.batiments.indexOf(p.maison); return d; }), // étape 17 : m = la place de son entrepôt secondaire
       animaux: monde.animaux.map((a) => [Math.round(a.x * 10) / 10, Math.round(a.y * 10) / 10, a.sorte]),
       modifs: [...monde.modifs].map(([i, m]) => (m.f ? [i, m.o, m.r, m.f] : [i, m.o, m.r])),
       pousses: [...monde.pousses].map(([i, age]) => [i, Math.round(age)]),

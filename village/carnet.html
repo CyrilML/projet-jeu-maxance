@@ -140,6 +140,7 @@
       <a href="#etape14">Étape 14</a>
       <a href="#etape15">Étape 15</a>
       <a href="#etape16">Étape 16</a>
+      <a href="#etape17">Étape 17</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1250,6 +1251,58 @@ la case, elle, ne change pas : le bâtiment occupe toujours 1 case</pre>
       <details class="question"><summary>La porcherie fait 3 viandes en 14 s. La charcuterie en prend 2 pour 16 s. Que reste-t-il pour manger en 1 minute (environ) ?</summary><p>Porcherie : 60 ÷ 14 × 3 ≈ 12,9 viandes. Charcuterie : 60 ÷ 16 × 2 = 7,5. Il reste environ 5 viandes par minute pour les repas.</p></details>
     </section>
 
+    <section id="etape17">
+      <h2>🛠️ Étape 17 : tes retours (routes, bâtiments, entrepôt, interface) <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les recherches changent ce qu'on voit, les routes se pavent toutes seules, les bâtiments ont des formes différentes et une animation chacun, un entrepôt secondaire pour les coins éloignés, des ouvriers qui vont plus loin, une barre de stock plus discrète, et ce qu'on gagne qui s'envole jusqu'au stock. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/18-retours-maxance.md</code>.</p>
+          <ul>
+            <li>✍️ Une recherche finie doit se voir (les routes pavées !), sans tout retracer.</li>
+            <li>✍️ Des bâtiments plus distincts, avec leurs animations.</li>
+            <li>✍️ Un autre entrepôt, très cher.</li>
+            <li>✍️ L'université : de vraies planches, et ce qui manque.</li>
+            <li>✍️ Une barre de stock plus petite, une viande reconnaissable, voir ce qu'on gagne.</li>
+            <li>✍️ Les ouvriers doivent aller plus loin.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Finis « Routes pavées » : toutes tes routes deviennent grises d'un coup.</li>
+            <li>☐ Dézoome : les animations se voient encore (le chat, l'épouvantail, les fanions…).</li>
+            <li>☐ La scierie, la ferme, l'étable, le marché, l'université sont plus longs.</li>
+            <li>☐ Au village : 🏬 Entrepôt 2 (dans Artisans). Ses porteurs livrent son coin.</li>
+            <li>☐ L'université : ce qui manque est écrit en rouge. Touche un bouton grisé.</li>
+            <li>☐ Réussis une mission : la récompense s'envole vers le stock.</li>
+            <li>Vérifie « version 18 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🏬 Plusieurs points de départ</h3>
+      <pre style="white-space: pre-wrap">l'encre part de TOUS les entrepôts en même temps, sur les routes :
+  🏠 entrepôt ──►──►──►  │  ◄──◄── 🏬 entrepôt 2
+  chaque case de route retient l'entrepôt dont l'encre est arrivée en premier = le plus proche</pre>
+      <p>C'est une <strong>recherche en largeur à plusieurs départs</strong>. Chaque bâtiment sait ainsi quel entrepôt est le plus proche par la route, et ce sont les porteurs de cet entrepôt qui le livrent. Si ses porteurs sont tous occupés depuis 15 s, ceux d'un autre entrepôt viennent aider. Le stock, lui, est partagé : c'est le même village.</p>
+
+      <h3>🧱 Une recherche qui se voit</h3>
+      <p>Quand « Routes pavées » est finie, le jeu parcourt toutes les cases de la carte et change chaque chemin de terre (1) en route pavée (2). Puis l'outil Route construit directement des routes pavées. « Outils en fer » change aussi la couleur des outils des ouvriers : de la pierre grise et brune au fer brillant.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, trouve la ligne « 🏬 … : porteurs · bâtiments servis » de chaque entrepôt.</li>
+        <li>Construis un bûcheron entre les 2 entrepôts : lequel le livre ? (regarde son panneau, puis sous le capot)</li>
+        <li>Dans <code>config.js</code>, trouve <code>zoomAnimations</code> et <code>rayon</code> : que valent-ils maintenant ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un bâtiment est à 6 cases de route de l'entrepôt et à 10 cases de l'entrepôt 2. Qui le livre ?</summary><p>L'entrepôt principal : son encre arrive en premier (6 &lt; 10).</p></details>
+      <details class="question"><summary>Les porteurs de l'entrepôt 2 sont tous occupés depuis 20 s. Que se passe-t-il ?</summary><p>Après 15 s d'attente, un porteur d'un autre entrepôt peut prendre la livraison (s'il y a une route).</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1351,14 +1404,20 @@ la case, elle, ne change pas : le bâtiment occupe toujours 1 case</pre>
           <p>Poulailler, bergerie, porcherie, tisserand, tailleur, charcuterie, les maladies de tous les troupeaux, et les vêtements qui rendent heureux.</p>
           <p class="apprend"><b>Tu apprends :</b> un arbitrage (une ressource, deux usages), une consommation par paquets. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">17</div>
-          <h4>🛠️ Tes retours : routes, bâtiments, entrepôt, interface <span class="etiquette">⏭️ en cours</span></h4>
-          <p>Les recherches qui changent ce qu'on voit, des bâtiments plus reconnaissables, un 2e entrepôt, une barre de stock plus petite, ce qui manque pour une recherche, et ce qu'on gagne avec une mission.</p>
-          <p class="apprend"><b>Tu apprends :</b> plusieurs points de départ pour les porteurs. <b>Durée :</b> 2 séances.</p>
+          <h4>🛠️ Tes retours : routes, bâtiments, entrepôt, interface <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Routes pavées automatiques, bâtiments longs et animés, entrepôt secondaire, ouvriers qui vont 2 fois plus loin, barre de stock discrète, ce qui manque en rouge, récompenses qui s'envolent.</p>
+          <p class="apprend"><b>Tu apprends :</b> une recherche en largeur à plusieurs départs. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">18</div>
+          <h4>🎩 Les classes d'habitants <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <p>✍️ 2C, partie B : paysans, artisans, bourgeois… chacun ses besoins, et des maisons qui montent de niveau.</p>
+          <p class="apprend"><b>Tu apprends :</b> des besoins par paliers. <b>Durée :</b> plusieurs séances.</p>
         </div>
         <div class="carte">
-          <div class="num">18</div>
+          <div class="num">19</div>
           <h4>🏙️ La ville : monuments, fêtes et port</h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -1503,6 +1562,14 @@ la case, elle, ne change pas : le bâtiment occupe toujours 1 case</pre>
         <textarea class="journal" id="village-appris-16" data-cle="village-appris-16" placeholder="Ex. : J'ai appris ce qu'est un arbitrage…"></textarea>
         <label for="village-idees-16"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-16" data-cle="village-idees-16" placeholder="Ex. : Un deuxième entrepôt…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 17 · tes retours <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les routes pavées d'un coup (<code>Routes.paver</code>), l'entrepôt secondaire et les porteurs qui ont une maison (<code>logique/porteurs.js</code>, <code>logique/routes.js</code>), les bâtiments longs (<code>a2</code>), une animation pour chaque bâtiment, les outils de pierre puis de fer, les prix dessinés, ce qui manque pour une recherche, la barre du stock plus discrète, la viande en pilon, les récompenses qui s'envolent, les rayons doublés, la base de données en version 14.</p>
+        <label for="village-appris-17"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-17" data-cle="village-appris-17" placeholder="Ex. : J'ai appris qu'une recherche peut partir de plusieurs endroits…"></textarea>
+        <label for="village-idees-17"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-17" data-cle="village-idees-17" placeholder="Ex. : Des ponts sur les rivières…"></textarea>
       </div>
     </section>
   </main>

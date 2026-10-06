@@ -60,7 +60,7 @@ Village.Villageois = (function () {
     const chemin = cheminVers(monde, meilleur, b.colonne, b.ligne);
     if (!chemin) return false;
     Object.assign(meilleur, { etat: "travail", vers: b, chemin, pas: 1 });
-    radio.emettre("villageois-envoye", { numero: meilleur.numero, nom: Village.Batiments.TYPES[b.type].nom, batiment: b.numero, pas: chemin.length - 1, porteur: b.type === "entrepot" });
+    radio.emettre("villageois-envoye", { numero: meilleur.numero, nom: Village.Batiments.TYPES[b.type].nom, batiment: b.numero, pas: chemin.length - 1, porteur: Village.Routes.estEntrepot(b) });
     return true;
   }
 
@@ -87,21 +87,24 @@ Village.Villageois = (function () {
         if (!envoyer(monde, b)) { if (!b.attendVillageois) { b.attendVillageois = true; radio.emettre("cabane-attend", { nom: B.TYPES[b.type].nom, numero: b.numero }); } }
         else b.attendVillageois = false;
       }
-      const e = monde.batiments.find((b) => b.type === "entrepot");
-      const enRoute = monde.villageois.filter((v) => v.etat === "travail" && v.vers === e).length;
-      if (e && Village.Porteurs.actifs(monde).length + enRoute < Village.Ameliorations.placesPorteurs(monde)) envoyer(monde, e);
+      // Étape 17 : chaque entrepôt (le principal et les secondaires) remplit ses places de manutentionnaire
+      for (const e of Village.Porteurs.entrepots(monde)) {
+        const enRoute = monde.villageois.filter((v) => v.etat === "travail" && v.vers === e).length;
+        const ici = monde.porteurs.filter((p) => !p.parti && Village.Porteurs.maisonDe(monde, p) === e).length;
+        if (ici + enRoute < Village.Ameliorations.placesDe(monde, e)) envoyer(monde, e);
+      }
     }
     // 3. Chacun bouge
     const f = monde.carte.village, k = monde.carte;
     for (const v of monde.villageois.slice()) {
       if (v.etat === "travail") {
         const b = v.vers;
-        if (!monde.batiments.includes(b) || (b.type !== "entrepot" && b.ouvrier)) { Object.assign(v, { etat: "repos", minuteur: 1, vers: null, chemin: null }); continue; }
+        if (!monde.batiments.includes(b) || (!Village.Routes.estEntrepot(b) && b.ouvrier)) { Object.assign(v, { etat: "repos", minuteur: 1, vers: null, chemin: null }); continue; }
         if (!marcher(v, dt, V.vitesse * Village.Repas.vitesse(v))) continue;
         monde.villageois.splice(monde.villageois.indexOf(v), 1);
-        if (b.type === "entrepot") Village.Porteurs.ajouterPorteur(monde, v);
+        if (Village.Routes.estEntrepot(b)) Village.Porteurs.ajouterPorteur(monde, v, b); // étape 17 : il habite CET entrepôt
         else { b.ouvrier = Village.Ouvriers.creer(b); Object.assign(b.ouvrier, { faim: v.faim, affame: v.affame, ventreVide: v.ventreVide }); b.attendVillageois = false; }
-        radio.emettre("villageois-embauche", { numero: v.numero, nom: B.TYPES[b.type].nom, batiment: b.numero, metier: b.type === "entrepot" ? "manutentionnaire" : B.TYPES[b.type].metier });
+        radio.emettre("villageois-embauche", { numero: v.numero, nom: B.TYPES[b.type].nom, batiment: b.numero, metier: Village.Routes.estEntrepot(b) ? "manutentionnaire" : B.TYPES[b.type].metier });
       } else if (v.etat === "promenade") {
         if (marcher(v, dt, V.vitesse * 0.5)) { v.etat = "repos"; v.minuteur = 2 + Math.random() * 4; }
       } else {

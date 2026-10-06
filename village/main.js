@@ -121,6 +121,7 @@
         else if (z.action === "panneau") Village.Interface.basculerPanneau(z.valeur); // étape 7 : missions, boutique
         else if (z.action === "fermerPanneau") Village.Interface.fermerPanneau();
         else if (z.action === "recherche") i.recherche = z.valeur;
+        else if (z.action === "info") Village.Interface.info(z.valeur); // étape 17 : ce qui manque
         else if (z.action === "mission") i.mission = z.valeur;
         else if (z.action === "achat") i.achat = z.valeur;
         else if (z.action === "marche") i.marche = z.valeur; // étape 8

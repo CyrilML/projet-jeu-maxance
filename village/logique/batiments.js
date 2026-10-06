@@ -62,9 +62,10 @@ Village.Batiments = (function () {
     tisserand: { nom: "Atelier du tisserand", court: "Tisserand", emoji: "🧵", metier: "tisserand" },
     tailleur: { nom: "Atelier du tailleur", court: "Tailleur", emoji: "✂️", metier: "tailleur" },
     charcuterie: { nom: "Charcuterie", court: "Charcuterie", emoji: "🥓", metier: "charcutier" },
+    depot: { nom: "Entrepôt secondaire", court: "Entrepôt 2", emoji: "🏬", metier: null }, // étape 17
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie"];
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot"];
   // « 🪵 troncs », « 🔩 lingots »… (étape 8 : fabriqué à partir de config.js, « ressources »)
   const NOMS_RESSOURCES = {};
   for (const [r, f] of Object.entries(C.ressources)) NOMS_RESSOURCES[r] = f.emoji + " " + f.nom;
@@ -221,6 +222,11 @@ Village.Batiments = (function () {
       radio.emettre("construction-impossible", { nom, colonne: c, ligne: l, raison });
       return false;
     }
+    // Étape 17 : 2 entrepôts secondaires au plus
+    if (type === "depot" && monde.batiments.filter((b) => b.type === "depot").length >= C.depot.max) {
+      radio.emettre("construction-impossible", { nom, colonne: c, ligne: l, raison: "pas plus de " + C.depot.max + " entrepôts secondaires" });
+      return false;
+    }
     if (!assezPour(monde, type)) {
       const dispo = (r) => Village.Porteurs.disponible(monde, r);
       const manque = Object.entries(cout(type)).filter(([r, n]) => dispo(r) < n).map(([r, n]) => n - dispo(r) + " " + NOMS_RESSOURCES[r]);
@@ -249,6 +255,8 @@ Village.Batiments = (function () {
     // Les papiers de la file pour ce bâtiment sont jetés.
     monde.file = monde.file.filter((t) => t.batiment !== b);
     if (monde.selection === b) monde.selection = null;
+    // Étape 17 : les porteurs d'un entrepôt secondaire démoli rentrent à l'entrepôt principal
+    if (b.type === "depot") for (const p of monde.porteurs) if (p.maison === b) p.maison = monde.batiments.find((x) => x.type === "entrepot");
     monde.changements++;
     Village.Routes.recalculerReseau(monde);
     radio.emettre("batiment-demoli", { nom: TYPES[b.type].nom, numero: b.numero, colonne: b.colonne, ligne: b.ligne });

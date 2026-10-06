@@ -14,6 +14,10 @@
 // Étape 9 : avec la recherche « Ânes et charrettes », un porteur part avec un âne : il prend jusqu'à
 // 3 papiers d'un coup, s'ils vont au même bâtiment, pour la même chose (« 3 planches pour la forge »).
 //
+// Étape 17 : ✍️ il peut y avoir plusieurs ENTREPÔTS. Chaque porteur a sa maison (p.maison) : il part de là
+// et y revient. Chaque livraison est faite par les porteurs de l'entrepôt le plus proche du bâtiment
+// (b.entrepotProche, calculé avec les routes). Si personne n'y est libre depuis 15 s, un autre vient aider.
+//
 // Un mot important : RÉSERVÉ. Quand on pose un chantier, ses planches restent dans l'entrepôt,
 // mais elles lui sont promises : on ne peut plus les utiliser pour autre chose.
 //   disponible = dans l'entrepôt − déjà promis
@@ -32,16 +36,19 @@ Village.Porteurs = (function () {
 
   // Un porteur de plus. Étape 13 : c'est un villageois qui arrive à l'entrepôt (il garde sa faim).
   let prochainPorteur = 1;
-  function ajouterPorteur(monde, villageois) {
-    const e = entrepot(monde);
+  function ajouterPorteur(monde, villageois, maison) {
+    const e = maison || entrepot(monde);
     if (!e) return;
     prochainPorteur = Math.max(prochainPorteur, monde.porteurs.reduce((m, p) => Math.max(m, p.numero + 1), 1));
-    const p = { numero: prochainPorteur++, x: e.colonne + 0.5, y: e.ligne + 0.5, etat: "attend", travail: null, chemin: null, pas: 0, porte: null, direction: 1 };
+    const p = { numero: prochainPorteur++, maison: e, x: e.colonne + 0.5, y: e.ligne + 0.5, etat: "attend", travail: null, chemin: null, pas: 0, porte: null, direction: 1 };
     if (villageois) Object.assign(p, { faim: villageois.faim || 0, affame: !!villageois.affame, ventreVide: villageois.ventreVide || 0 });
     monde.porteurs.push(p);
   }
 
   const entrepot = (monde) => monde.batiments.find((b) => b.type === "entrepot");
+  // Étape 17 : tous les entrepôts (le principal, et les secondaires finis)
+  const entrepots = (monde) => monde.batiments.filter((b) => Village.Routes.estEntrepot(b));
+  const maisonDe = (monde, p) => (p.maison && monde.batiments.includes(p.maison) && Village.Routes.estEntrepot(p.maison) ? p.maison : (p.maison = entrepot(monde)));
 
   // Ce qui est promis (réservé) pour une ressource : les chantiers qui attendent encore,
   // et les livraisons « apporter » écrites dans la file mais pas encore prises.
@@ -100,13 +107,14 @@ Village.Porteurs = (function () {
   let prochainPapier = 1;
   function ajouter(monde, papier) {
     papier.numero = prochainPapier++;
+    papier.depuis = monde.temps; // étape 17 : depuis quand il attend
     monde.file.push(papier);
     radio.emettre("livraison-demandee", { numero: papier.numero, sorte: papier.sorte, quoi: papier.quoi, nom: Village.Batiments.TYPES[papier.batiment.type].nom, batiment: papier.batiment.numero, file: monde.file.length });
   }
 
-  // Le chemin d'un porteur : de l'entrepôt au bâtiment, seulement sur les routes.
-  function cheminVers(monde, b) {
-    const k = monde.carte, e = entrepot(monde);
+  // Le chemin d'un porteur : de son entrepôt au bâtiment, seulement sur les routes.
+  function cheminVers(monde, b, e) {
+    const k = monde.carte;
     const r = Village.Chemins.chercher(
       k.colonnes, k.lignes, { colonne: e.colonne, ligne: e.ligne },
       (c, l) => monde.route[l * k.colonnes + c] > 0, // terre (1) ou pierre (2)
@@ -147,11 +155,18 @@ Village.Porteurs = (function () {
       if (p.parti) continue;
       if (p.etat === "attend") {
         // Prendre le premier papier de la file qu'on peut faire.
-        while (monde.file.length) {
-          const papier = monde.file.shift();
+        // Étape 17 : seulement ceux de SON coin (son entrepôt est le plus proche), sauf s'ils attendent depuis longtemps.
+        const maison = maisonDe(monde, p);
+        if (maison && (Math.abs(p.x - maison.colonne - 0.5) > 0.01 || Math.abs(p.y - maison.ligne - 0.5) > 0.01)) { p.x = maison.colonne + 0.5; p.y = maison.ligne + 0.5; } // (si son entrepôt a bougé)
+        for (let n = 0; n < monde.file.length; n++) {
+          const papier = monde.file[n];
           const b = papier.batiment;
-          const chemin = existe(monde, b) && b.relie ? cheminVers(monde, b) : null;
-          if (!chemin || (papier.sorte === "apporter" && monde.stock[papier.quoi] < 1)) { annuler(papier); continue; }
+          if (!existe(monde, b) || !b.relie || (papier.sorte === "apporter" && monde.stock[papier.quoi] < 1)) { monde.file.splice(n--, 1); annuler(papier); continue; }
+          const proche = b.entrepotProche;
+          if (proche && proche !== maison && monde.temps - (papier.depuis || 0) < C.depot.aide && monde.porteurs.some((q) => !q.parti && q.maison === proche)) continue; // c'est le travail des porteurs de l'autre entrepôt
+          const chemin = cheminVers(monde, b, maison);
+          if (!chemin) continue; // pas de route depuis son entrepôt : un autre porteur le fera
+          monde.file.splice(n, 1);
           p.travail = papier;
           p.chemin = chemin;
           p.pas = 1;
@@ -178,7 +193,7 @@ Village.Porteurs = (function () {
             else b.enRoute[papier.quoi] = (b.enRoute[papier.quoi] || 0) + n;
             p.porte = papier.quoi;
           }
-          radio.emettre("porteur-part", { porteur: p.numero, sorte: papier.sorte, quoi: papier.quoi, nombre: p.nombre, nom: Village.Batiments.TYPES[b.type].nom, batiment: b.numero, pas: chemin.length - 1, file: monde.file.length });
+          radio.emettre("porteur-part", { porteur: p.numero, sorte: papier.sorte, quoi: papier.quoi, nombre: p.nombre, nom: Village.Batiments.TYPES[b.type].nom, batiment: b.numero, pas: chemin.length - 1, file: monde.file.length, depot: maison.type === "depot" ? maison.numero : null });
           break;
         }
         continue;
@@ -224,6 +239,7 @@ Village.Porteurs = (function () {
         p.travail = null;
         p.chemin = null;
         p.etat = "attend";
+        const m = maisonDe(monde, p); if (m) { p.x = m.colonne + 0.5; p.y = m.ligne + 0.5; } // étape 17 : il est rentré chez lui
       }
     }
   }
@@ -245,5 +261,5 @@ Village.Porteurs = (function () {
     return retour;
   }
 
-  return { creerTous, ajouterPorteur, disponible, promis, etape, enCours, actifs };
+  return { entrepots, maisonDe, creerTous, ajouterPorteur, disponible, promis, etape, enCours, actifs };
 })();
