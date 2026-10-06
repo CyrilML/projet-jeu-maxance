@@ -10,6 +10,8 @@
 //   - LE VENT : il pousse les voitures sur le côté, et encore plus les avions ;
 //   - LA VISIBILITÉ : dans le brouillard ou le blizzard, on ne voit pas loin (le dessin s'en occupe).
 //
+// Étape 59 : ✍️ on peut aussi CHOISIR sa météo avant de rouler (fixer) : alors elle ne change plus toute seule.
+//
 // Les nombres de chaque temps sont dans config.js (meteo). Ce fichier ne dessine rien : affichage/meteo3d.js
 // dessine la pluie, la neige, les éclairs et le ciel.
 
@@ -30,6 +32,7 @@ Circuit.Meteo = (function () {
     eclair: 0, // > 0 pendant un éclair (s)
     prochainEclair: 4,
     valeurs: Object.assign({}, M.temps.soleil),
+    fixe: false, // étape 59 : vrai = la météo choisie par le joueur reste (plus de changement toutes les 2 minutes)
   };
 
   const actuel = () => M.ordre[etat.numero];
@@ -54,9 +57,16 @@ Circuit.Meteo = (function () {
     radio.emettre("meteo", { nom: M.temps[nom].nom, icone: M.temps[nom].icone, adherence: M.temps[nom].adherence, vent: M.temps[nom].vent });
   }
 
+  // Étape 59 : choisir une météo qui ne changera plus.
+  function fixer(nom) {
+    choisir(nom);
+    etat.fixe = true;
+  }
+
   // Un pas de temps.
   function etape(dt) {
     etat.depuis += dt;
+    if (etat.fixe) etat.depuis = Math.min(etat.depuis, M.duree - M.transition - 1); // (le temps choisi ne s'arrête jamais)
     const debutTransition = M.duree - M.transition;
     etat.melange = etat.depuis < debutTransition ? 0 : Math.min(1, (etat.depuis - debutTransition) / M.transition);
     if (etat.depuis >= M.duree) {
@@ -88,5 +98,5 @@ Circuit.Meteo = (function () {
     return { x: Math.cos(etat.directionVent) * f, z: Math.sin(etat.directionVent) * f, force: f };
   }
 
-  return { etat, choisir, etape, vent, adherence: () => etat.valeurs.adherence, actuel, suivant };
+  return { etat, choisir, fixer, etape, vent, adherence: () => etat.valeurs.adherence, actuel, suivant };
 })();

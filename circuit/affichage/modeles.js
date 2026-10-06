@@ -21,10 +21,12 @@ Circuit.Modeles = (function () {
   function materiaux() {
     if (M.pneu) return M;
     M.vitre = new THREE.MeshPhysicalMaterial({ color: 0x0f1a26, metalness: 0.1, roughness: 0.05, clearcoat: 1, envMapIntensity: 0.9 });
+    // Étape 59 : une vraie vitre teintée : on voit à travers (l'intérieur, le conducteur), et elle reflète le ciel.
+    M.vitreClaire = new THREE.MeshPhysicalMaterial({ color: 0x1c2a33, metalness: 0, roughness: 0.03, clearcoat: 1, transparent: true, opacity: C.vitres.opacite, depthWrite: false, envMapIntensity: 1.6 });
     M.noir = new THREE.MeshStandardMaterial({ color: 0x141416, roughness: 0.55, metalness: 0.2 });
     M.pneu = new THREE.MeshStandardMaterial({ color: 0x18181a, roughness: 0.95 });
     M.chrome = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 1, roughness: 0.18 });
-    M.jante = new THREE.MeshStandardMaterial({ color: 0xb9bcc2, metalness: 0.9, roughness: 0.3 });
+    M.jante = new THREE.MeshStandardMaterial({ color: 0xa9adb3, metalness: 1, roughness: 0.22 }); // (étape 59 : un vrai alu poli, qui reflète)
     M.phare = new THREE.MeshStandardMaterial({ color: 0xf2f4f6, emissive: 0xf4f6ff, emissiveIntensity: 0.9, roughness: 0.2 }); // (étape 57 : blanc, moins éblouissant)
     M.feu = new THREE.MeshStandardMaterial({ color: 0xaa0000, emissive: 0xff1010, emissiveIntensity: 1.2, roughness: 0.3 });
     M.casque = new THREE.MeshPhysicalMaterial({ color: 0xffd21a, roughness: 0.25, clearcoat: 1 });
@@ -974,6 +976,43 @@ Circuit.Modeles = (function () {
     if (objet.yCapot) objet.yCapot *= k;
   }
 
+  // Étape 59 : ce que REFLÈTENT les voitures. Une vraie carrosserie est un miroir un peu flou : on y voit le ciel en
+  // haut, une ligne d'horizon nette, le sol sombre en bas, des immeubles, et le soleil qui fait un point très brillant.
+  // Sans ça, la peinture avait l'air de plastique. On fabrique ce petit monde une fois, et Three.js en tire une
+  // « carte des reflets » (environment map) pour toutes les peintures, les vitres et les chromes.
+  function decorReflets(scene, soleil) {
+    const sol = new THREE.Mesh(new THREE.CircleGeometry(3000, 48), new THREE.MeshBasicMaterial({ color: 0x4d5a3f }));
+    sol.rotation.x = -Math.PI / 2;
+    sol.position.y = -5;
+    scene.add(sol);
+    const route = new THREE.Mesh(new THREE.CircleGeometry(260, 48), new THREE.MeshBasicMaterial({ color: 0x2f3134 }));
+    route.rotation.x = -Math.PI / 2;
+    route.position.y = -4.9;
+    scene.add(route);
+    let etat = 59;
+    const hasard = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
+    const teintes = [0x6e7276, 0x8a8f94, 0xa59a88, 0x565a60, 0xb7bcc2];
+    for (let k = 0; k < 70; k++) {
+      const a = (k / 70) * Math.PI * 2 + hasard() * 0.05, r = 520 + hasard() * 300, h = 30 + Math.pow(hasard(), 2) * 220;
+      const b = new THREE.Mesh(new THREE.BoxGeometry(40 + hasard() * 60, h, 40 + hasard() * 40), new THREE.MeshBasicMaterial({ color: teintes[k % teintes.length] }));
+      b.position.set(Math.cos(a) * r, h / 2 - 5, Math.sin(a) * r);
+      b.rotation.y = -a;
+      scene.add(b);
+    }
+    // le soleil : un disque très blanc (le point brillant sur la carrosserie) et deux grandes « fenêtres » de lumière
+    const d = (soleil || new THREE.Vector3(0.4, 0.6, 0.3)).clone().normalize();
+    const astre = new THREE.Mesh(new THREE.SphereGeometry(70, 16, 12), new THREE.MeshBasicMaterial({ color: new THREE.Color(6, 5.6, 5) }));
+    astre.position.copy(d).multiplyScalar(1500);
+    scene.add(astre);
+    for (const [ax, ay] of [[0, 900], [Math.PI, 700]]) {
+      const panneau = new THREE.Mesh(new THREE.PlaneGeometry(900, 260), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 1.6, 1.7), side: THREE.DoubleSide }));
+      panneau.position.set(Math.cos(ax) * 400, ay, Math.sin(ax) * 400);
+      panneau.lookAt(0, 0, 0);
+      scene.add(panneau);
+    }
+    return scene;
+  }
+
   // Étape 55 : l'OMBRE DOUCE sous la voiture. Là où la voiture touche presque le sol, la lumière du ciel n'arrive
   // pas : c'est tout sombre juste dessous, et ça s'éclaircit vers les bords. (Les peintres l'appellent « l'ombre
   // de contact » : sans elle, une voiture a l'air de flotter.) C'est une image floue posée au sol, sous la voiture.
@@ -1006,5 +1045,5 @@ Circuit.Modeles = (function () {
 
   // Les outils du carrossier, prêtés à affichage/voitures-reelles.js (étape 49).
   const outils = { M, fusionner, materiaux, peinture, forme, extruder, passage, boite, cylindre, tube, roue, carrosserie, ajouterRoues, etiquette, personnage, galber, bord, bout, largeurIci };
-  return { fabriquer, materiaux, personnage, ajouter, outils };
+  return { fabriquer, materiaux, personnage, ajouter, outils, decorReflets };
 })();

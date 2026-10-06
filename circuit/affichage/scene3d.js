@@ -71,10 +71,7 @@ Circuit.Scene3D = (function () {
     const pmrem = new THREE.PMREMGenerator(rendu);
     const sceneCiel = new THREE.Scene();
     sceneCiel.add(ciel.clone());
-    const solReflet = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.MeshBasicMaterial({ color: 0x4a5a3a }));
-    solReflet.rotation.x = -Math.PI / 2;
-    solReflet.position.y = -5;
-    sceneCiel.add(solReflet);
+    Circuit.Modeles.decorReflets(sceneCiel, SOLEIL); // étape 59 : l'horizon, des immeubles, le soleil
     scene.environment = pmrem.fromScene(sceneCiel, 0.02).texture;
 
     // Les lumières : le ciel et le sol (lumière douce de partout), et le soleil (qui fait les ombres).
@@ -405,7 +402,7 @@ Circuit.Scene3D = (function () {
       const cx = l.x + l.lx * (C.parcours.decalageLooping / 2), cz = l.z + l.lz * (C.parcours.decalageLooping / 2);
       oeil = [cx - l.lx * l.rayon * 3.2, l.rayon * 1.1, cz - l.lz * l.rayon * 3.2];
       cible = [cx, l.rayon, cz];
-    } else if (monde.phase === "garage" || monde.phase === "cartes") {
+    } else if (monde.phase === "garage" || monde.phase === "cartes" || monde.phase === "meteo") {
       // Au garage, la caméra tourne lentement autour de la voiture, comme dans une vitrine.
       const a = monde.temps * 0.35;
       const recul = v.modele === "monster" ? 10 : v.modele === "camion" ? 14 : 8;
@@ -517,7 +514,7 @@ Circuit.Scene3D = (function () {
     const joueur = vehicule(v.modele);
     objetJoueur = joueur;
     for (const objet of Object.values(vehicules)) objet.g.visible = objet === joueur;
-    joueur.g.visible = camera.mode !== "capot" || monde.phase === "garage" || monde.phase === "cartes" || !!monde.pieton;
+    joueur.g.visible = camera.mode !== "capot" || monde.phase === "garage" || monde.phase === "cartes" || monde.phase === "meteo" || !!monde.pieton;
     placerVoiture(joueur, v);
     // Étape 58 : les 11 adversaires. Chacun a son dessin ; on le refait seulement si le modèle a changé.
     const advs = monde.adversaires || [];

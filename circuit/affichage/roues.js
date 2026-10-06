@@ -184,7 +184,7 @@ Circuit.Roues = (function () {
     const fut = new THREE.Mesh(new THREE.CylinderGeometry(rJ, rJ, largeur * 0.92, 32, 1, true), sombre);
     fut.rotation.x = Math.PI / 2;
     roue.add(fut);
-    const levre = new THREE.Mesh(new THREE.TorusGeometry(rJ, rJ * 0.035, 8, 40), metal);
+    const levre = new THREE.Mesh(new THREE.TorusGeometry(rJ, rJ * 0.045, 10, 48), metal);
     levre.position.z = zFace;
     roue.add(levre);
     // la cuvette (le fond de la jante, en retrait)
@@ -226,7 +226,7 @@ Circuit.Roues = (function () {
       }
     }
     // le moyeu, les 5 écrous, le cache central
-    const moyeu = new THREE.Mesh(new THREE.CylinderGeometry(rJ * 0.24, rJ * 0.26, 0.05, 24), metal);
+    const moyeu = new THREE.Mesh(new THREE.CylinderGeometry(rJ * 0.19, rJ * 0.22, 0.05, 24), metal); // (étape 59 : plus petit, comme les vrais)
     moyeu.rotation.x = Math.PI / 2;
     moyeu.position.z = zFace - 0.02;
     roue.add(moyeu);

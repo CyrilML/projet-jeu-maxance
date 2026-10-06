@@ -25,9 +25,12 @@ Circuit.VoituresMarques = (function () {
   // Une coque peinte (avec ses vitres), posée dans la caisse.
   // (Une cabine vitrée est enfoncée de 10 cm dans la carrosserie : sinon on verrait son dessous sous les coins du capot.)
   function coque(caisse, options, materiau) {
+    if (options.arches && options.ailes === undefined) options = Object.assign({}, options, { ailes: C.formes.ailes }); // étape 59
     if (options.vitre) options = Object.assign({}, options, { cles: options.cles.map((k) => Object.assign({}, k, { yb: k.yb - 0.1 })) });
     const c = Coque.construire(options);
-    const m = new THREE.Mesh(c.geometrie, [materiau, M.vitre]);
+    // Étape 59 : une cabine vitrée a maintenant un INTÉRIEUR (on le voit à travers les vitres).
+    if (options.vitre && options.vitre.f) interieur(caisse, c, options.vitre.f);
+    const m = new THREE.Mesh(c.geometrie, [materiau, M.vitreClaire]); // (étape 59 : des vitres qu'on voit à travers)
     m.castShadow = true;
     m.receiveShadow = true;
     caisse.add(m);
@@ -39,7 +42,7 @@ Circuit.VoituresMarques = (function () {
   function regleVitres(f) {
     const pilier = f.pilier || 0.09;
     const dans = (x, r) => r && x > r[0] && x < r[1];
-    return (c, n, s) => {
+    return Object.assign((c, n, s) => {
       const [x, y, z] = c;
       if (y < s.yb + 0.135) return false; // (+ 10 cm : la cabine est enfoncée dans la carrosserie)
       const dessus = Math.abs(n[2]) < 0.55; // ce morceau regarde vers le haut, l'avant ou l'arrière (pas le côté)
@@ -50,7 +53,67 @@ Circuit.VoituresMarques = (function () {
       }
       if (y < s.yt - 0.1 && x < f.av && x > f.ar) return !(f.montants || []).some((m) => Math.abs(x - m) < 0.045);
       return false;
-    };
+    }, { f }); // (on garde la règle : elle sert aussi à placer l'intérieur, étape 59)
+  }
+
+  // Étape 59 : l'INTÉRIEUR d'une cabine, calculé à partir de sa forme : le tableau de bord sous le pare-brise (avec ses
+  // compteurs qui brillent un peu), le volant à gauche (on roule à droite : le conducteur est à gauche, côté z < 0),
+  // deux sièges baquets, une banquette derrière s'il y a la place, et le CONDUCTEUR (son casque, ses épaules, ses bras
+  // sur le volant). Les vitres étant maintenant transparentes, c'est ce qui fait qu'une voiture a l'air « habitée ».
+  const MI = {};
+  function matInterieur() {
+    if (MI.plastique) return MI;
+    MI.plastique = new THREE.MeshStandardMaterial({ color: 0x1b1c1f, roughness: 0.8 });
+    MI.cuir = new THREE.MeshStandardMaterial({ color: 0x2b2522, roughness: 0.6 });
+    MI.compteur = new THREE.MeshStandardMaterial({ color: 0x111111, emissive: 0x3a9bff, emissiveIntensity: 0.6 });
+    MI.peau = new THREE.MeshStandardMaterial({ color: 0xd9a77f, roughness: 0.7 });
+    MI.pull = new THREE.MeshStandardMaterial({ color: 0x2c3e5a, roughness: 0.85 });
+    MI.cheveux = new THREE.MeshStandardMaterial({ color: 0x3a2a1d, roughness: 0.9 });
+    return MI;
+  }
+  function interieur(caisse, c, f) {
+    const m = matInterieur();
+    const x1 = f.pareBrise[1], xAr = f.ar;
+    const ici = c.tranche((x1 + xAr) / 2);
+    const sol = ici.yb + 0.12; // (la cabine est enfoncée de 10 cm : son bas est sous la ceinture de caisse)
+    const w = Math.max(0.35, Math.min(ici.w, ici.wt === undefined ? ici.w : ici.wt + 0.12) - 0.06);
+    const toit = (x) => c.tranche(x).yt;
+    // le tableau de bord (et les compteurs, côté conducteur)
+    const xTdb = x1 - 0.6, hTdb = Math.min(sol - 0.06, c.tranche(xTdb).yb + 0.05); // (sous la ligne du pare-brise)
+    caisse.add(boite(0.4, 0.2, w * 2, m.plastique, xTdb, hTdb - 0.1, 0));
+    caisse.add(boite(0.02, 0.07, 0.24, m.compteur, xTdb - 0.2, hTdb - 0.06, -w * 0.5));
+    caisse.add(boite(0.02, 0.09, 0.18, m.compteur, xTdb - 0.2, hTdb - 0.08, 0)); // l'écran du milieu
+    // les sièges : une assise et un dossier penché, à gauche et à droite
+    const xSiege = x1 - 1.3;
+    for (const z of [-w * 0.5, w * 0.5]) {
+      caisse.add(boite(0.48, 0.12, w * 0.75, m.cuir, xSiege, sol - 0.32, z));
+      const dossier = boite(0.12, 0.62, w * 0.75, m.cuir, xSiege - 0.3, sol - 0.02, z);
+      dossier.rotation.z = 0.22;
+      caisse.add(dossier);
+    }
+    if (x1 - xAr > 2.0) { // une banquette à l'arrière
+      caisse.add(boite(0.45, 0.12, w * 1.7, m.cuir, xSiege - 0.95, sol - 0.3, 0));
+      caisse.add(boite(0.12, 0.5, w * 1.7, m.cuir, xSiege - 1.22, sol - 0.04, 0));
+    }
+    // le volant, devant le conducteur
+    const volant = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.022, 8, 24), m.plastique);
+    volant.position.set(xTdb - 0.3, hTdb, -w * 0.5);
+    volant.rotation.y = Math.PI / 2;
+    volant.rotation.z = -0.5;
+    caisse.add(volant);
+    // le conducteur (sa tête reste toujours sous le toit)
+    const xTete = xSiege - 0.16, yTete = Math.min(sol + 0.4, toit(xTete) - 0.17);
+    const corps = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.25, 4, 10), m.pull);
+    corps.position.set(xSiege - 0.12, yTete - 0.38, -w * 0.5);
+    corps.rotation.z = 0.2;
+    caisse.add(corps);
+    const tete = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10), m.peau);
+    tete.position.set(xTete, yTete, -w * 0.5);
+    caisse.add(tete);
+    const cheveux = new THREE.Mesh(new THREE.SphereGeometry(0.105, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.55), m.cheveux);
+    cheveux.position.set(xTete - 0.01, yTete + 0.01, -w * 0.5);
+    caisse.add(cheveux);
+    for (const dz of [-0.17, 0.17]) caisse.add(tube([xSiege - 0.1, yTete - 0.25, -w * 0.5 + dz], [xTdb - 0.3, hTdb, -w * 0.5 + dz * 0.6], 0.04, m.pull));
   }
   // Les arches des roues : un arc un peu plus grand que le pneu, qui commence juste à l'intérieur du pneu.
   const arches = (R, voie) => R.map((r) => ({ x: r.x, y: r.r, r: r.r + 0.045, z: voie - r.l / 2 - 0.05 }));
@@ -819,7 +882,8 @@ Circuit.VoituresMarques = (function () {
     ];
     const c = coque(caisse, { cles, arches: arches(R, W2 - 0.12) }, peinture(k1));
     // La cabine : le pare-brise part du bas du capot, le toit est presque plat, et l'arrière dépend du type.
-    const xPB = o.xAv - 0.18, xToitAv = xPB - 0.85, xFin = hayon ? -L2 + 0.14 : o.xAr + 0.05;
+    const xPB = o.xAv - 0.4, xToitAv = xPB - 0.78, // (étape 59 : le pare-brise commence derrière la roue avant, comme sur les vraies)
+      xFin = hayon ? -L2 + 0.14 : o.xAr + 0.05;
     const xToitAr = hayon ? -L2 + 0.42 : o.xAr + 0.75;
     const bas = (x) => c.tranche(x).yt - 0.005;
     const cab = [
@@ -927,8 +991,8 @@ Circuit.VoituresMarques = (function () {
       caisse.add(bloc);
       for (let i = 0; i < 3; i++) optiqueAuBout(caisse, c, false, 0.86 - i * 0.05, cote * 0.6, 0.022, 0.22, [[0, 0, 0.01, 0.2]], "feu");
       // les bandes : bleu foncé en bas des portières, et un fin trait rouge au-dessus
-      patchFlanc(caisse, c, -1.6, 1.7, 0.36, 0.56, bleu, cote, 0.004);
-      patchFlanc(caisse, c, -1.6, 1.7, 0.57, 0.6, rouge, cote, 0.004);
+      patchFlanc(caisse, c, -0.92, 1.0, 0.36, 0.56, bleu, cote, 0.004); // (entre les roues : pas par-dessus les passages de roues)
+      patchFlanc(caisse, c, -0.92, 1.0, 0.57, 0.6, rouge, cote, 0.004);
       lettresFlanc(caisse, c, 0.0, 0.46, cote, "POLICE", 0.9, 0.17, "#ffffff");
     }
     grille(caisse, c, true, 0.5, 0, 0.12, 0.7, M.chrome);
