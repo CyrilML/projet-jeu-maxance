@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 11,
+  version: 12,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -62,7 +62,7 @@ Village.CONFIG = {
 
   // Étape 2 : ✍️ le stock de départ, rangé dans l'entrepôt.
   // Étape 5 : ✍️ plus de stock au départ, pour ne pas frustrer le joueur (avant : 0, 20, 10, 6, 4).
-  depart: { troncs: 5, planches: 30, pierres: 30, poissons: 12, viande: 8, charbon: 0, fer: 0, lingots: 0, outils: 0 }, // étape 7 : le charbon ; étape 8 : le fer, les lingots, les outils
+  depart: { troncs: 5, planches: 30, pierres: 30, poissons: 12, viande: 8, charbon: 0, fer: 0, lingots: 0, outils: 0, ble: 0, farine: 0, pain: 0, or: 0, bijoux: 0 }, // étape 7 : le charbon ; étape 8 : le fer, les lingots, les outils
 
   // Étape 8 : la fiche de chaque ressource (son emoji et son nom). Tous les panneaux la lisent ici.
   ressources: {
@@ -71,10 +71,16 @@ Village.CONFIG = {
     pierres: { emoji: "🪨", nom: "pierres" },
     poissons: { emoji: "🐟", nom: "poissons" },
     viande: { emoji: "🍖", nom: "viande" },
-    charbon: { emoji: "⚫", nom: "charbon" },
-    fer: { emoji: "🟤", nom: "minerai de fer" },
-    lingots: { emoji: "🔩", nom: "lingots" },
-    outils: { emoji: "🔨", nom: "outils" },
+    charbon: { emoji: "⚫", nom: "charbon", age: 1 }, // age : l'âge où cette ressource apparaît (étape 11)
+    fer: { emoji: "🟤", nom: "minerai de fer", age: 2 },
+    lingots: { emoji: "🔩", nom: "lingots", age: 2 },
+    outils: { emoji: "🔨", nom: "outils", age: 2 },
+    // Étape 11 : le bourg
+    ble: { emoji: "🌾", nom: "blé", age: 3 },
+    farine: { emoji: "⚪", nom: "farine", age: 3 },
+    pain: { emoji: "🍞", nom: "pain", age: 3 },
+    or: { emoji: "🟡", nom: "pépites d'or", age: 3 },
+    bijoux: { emoji: "💍", nom: "bijoux", age: 3 },
   },
 
   // Étape 2 : les bâtiments. Depuis l'étape 3, le coût est RÉSERVÉ quand on pose le chantier,
@@ -97,6 +103,12 @@ Village.CONFIG = {
     fonderie: { cout: { planches: 8, pierres: 12 }, construction: 15 },
     forge: { cout: { planches: 8, pierres: 6, lingots: 2 }, construction: 15 },
     marche: { cout: { planches: 15, pierres: 10 }, construction: 15 },
+    // Étape 11 : le bourg
+    ferme: { cout: { planches: 10, pierres: 4, outils: 1 }, construction: 14 },
+    moulin: { cout: { planches: 16, pierres: 12, outils: 2 }, construction: 20 },
+    boulangerie: { cout: { planches: 12, pierres: 14, outils: 2 }, construction: 18 },
+    mineOr: { cout: { planches: 10, pierres: 8, outils: 3 }, construction: 16 },
+    orfevre: { cout: { planches: 12, pierres: 16, lingots: 4, outils: 2 }, construction: 20 },
   },
 
   // Étape 8 : les ATELIERS transforment ce que les porteurs leur apportent (les RECETTES).
@@ -106,11 +118,17 @@ Village.CONFIG = {
     scierie: { entrees: { troncs: 1 }, sorties: { planches: 2 }, duree: 6, bonus: "scier" },
     fonderie: { entrees: { fer: 1, charbon: 1 }, sorties: { lingots: 1 }, duree: 10, bonus: "fondre" }, // ✍️ 1A : simple
     forge: { entrees: { lingots: 1, planches: 1 }, sorties: { outils: 1 }, duree: 12, bonus: "forger" },
+    // Étape 11 : le pain et l'or. La ferme n'a besoin de rien… sauf qu'il ne fasse pas l'hiver !
+    ferme: { entrees: {}, sorties: { ble: 2 }, duree: 14, bonus: "cultiver", pasEnHiver: true },
+    moulin: { entrees: { ble: 2 }, sorties: { farine: 1 }, duree: 8, bonus: "moudre" },
+    boulangerie: { entrees: { farine: 1, troncs: 1 }, sorties: { pain: 2 }, duree: 10, bonus: "cuire" }, // le tronc chauffe le four
+    orfevre: { entrees: { or: 2, charbon: 1 }, sorties: { bijoux: 1 }, duree: 20, bonus: "orfevrerie" },
   },
   // Étape 8 : les MINES. Chacune creuse le filon de sa sorte, juste à côté d'elle.
   mines: {
     mineCharbon: { filon: "charbon" },
     mineFer: { filon: "fer" },
+    mineOr: { filon: "or" }, // étape 11
   },
 
   // Étape 8 : ✍️ 2B, chaque ouvrier a besoin d'une PLACE pour dormir. Le campement (les tentes autour de
@@ -122,7 +140,7 @@ Village.CONFIG = {
   //   quand tu vends beaucoup, le prix baisse (les acheteurs en ont assez) ;
   //   quand tu achètes beaucoup, il monte ; puis il revient tout doucement vers le prix de base.
   marche: {
-    prix: { troncs: 1, planches: 2, pierres: 2, poissons: 2, viande: 2, charbon: 3, fer: 4, lingots: 10, outils: 22 },
+    prix: { troncs: 1, planches: 2, pierres: 2, poissons: 2, viande: 2, charbon: 3, fer: 4, lingots: 10, outils: 22, ble: 1, farine: 3, pain: 4, or: 12, bijoux: 70 },
     lot: 5, // on vend et on achète par paquets de 5
     marge: 1.5, // acheter coûte 1,5 fois le prix de vente (le marchand doit gagner sa vie)
     baisse: 0.02, // chaque objet vendu fait baisser le prix de 2 % (un paquet de 5 : 10 %)
@@ -263,10 +281,13 @@ Village.CONFIG = {
     //   pieces : 🪙 qu'il faut avoir ; habitants : ouvriers logés.
     { id: "village", nom: "Le village", emoji: "🏡", debloque: ["mineFer", "fonderie", "forge", "maison", "marche"],
       objectifs: { batiments: 18, habitants: 16, recherches: 7, stock: { lingots: 10, outils: 10 }, pieces: 150 } },
-    { id: "bourg", nom: "Le bourg", emoji: "🏰", debloque: [], objectifs: null,
-      aVenir: "⛏️ mines d'or et d'argent, 💍 orfèvre, 🍞 moulin et boulangerie, 📦 commandes de la capitale" },
+    // Étape 11 : ✍️ le bourg, et c'est de plus en plus dur ! (chaque âge demande environ 2 fois plus)
+    //   Le bourg ajoute 3 nouvelles choses à penser : le PAIN (les habitants en veulent), l'ENTRETIEN
+    //   (les bâtiments s'usent) et des HIVERS plus durs (il faut du bois de chauffage).
+    { id: "bourg", nom: "Le bourg", emoji: "🏰", debloque: ["ferme", "moulin", "boulangerie", "mineOr", "orfevre"],
+      objectifs: { batiments: 32, habitants: 34, recherches: 13, stock: { pain: 60, bijoux: 8, outils: 25 }, pieces: 600 } },
     { id: "ville", nom: "La ville", emoji: "🏙️", debloque: [], objectifs: null,
-      aVenir: "🏛️ grands monuments, 🎭 fêtes, 🚢 port" },
+      aVenir: "⛏️ mines d'argent, 🏛️ grands monuments, 🎭 fêtes, 🚢 port" },
   ],
   gemmesParAge: 3, // étape 7 : 💎 offertes à chaque nouvel âge
 
@@ -289,6 +310,14 @@ Village.CONFIG = {
     { id: "outilsFer", nom: "Outils en fer", emoji: "🔨", age: 2, cout: { outils: 8 }, duree: 150, effet: { couper: 0.8, tailler: 0.8, planter: 0.8, miner: 0.8 }, texte: "Bûcheron, forestier, carrier et mineurs : 20 % plus vite" },
     { id: "commerce", nom: "Commerce", emoji: "⚖️", age: 2, cout: { planches: 30, lingots: 5 }, duree: 120, effet: { vente: 1.2 }, texte: "Le marché te paie 20 % plus cher" },
     { id: "charrettes", nom: "Ânes et charrettes", emoji: "🫏", age: 2, cout: { planches: 40, lingots: 4, outils: 4 }, duree: 150, effet: { chargement: 3 }, texte: "Chaque porteur part avec un âne et sa charrette : 3 objets par voyage" }, // étape 9
+    // Étape 11 : les recherches du bourg
+    { id: "meules", nom: "Meules en granit", emoji: "🪨", age: 3, cout: { pierres: 60, outils: 6 }, duree: 150, effet: { moudre: 0.7 }, texte: "Le moulin va 30 % plus vite" },
+    { id: "fours", nom: "Fours en briques", emoji: "🧱", age: 3, cout: { pierres: 50, charbon: 30, outils: 4 }, duree: 150, effet: { cuire: 0.7 }, texte: "La boulangerie va 30 % plus vite" },
+    { id: "charrues", nom: "Charrues", emoji: "🚜", age: 3, cout: { lingots: 10, planches: 40 }, duree: 180, effet: { cultiver: 0.7 }, texte: "La ferme va 30 % plus vite" },
+    { id: "entretien", nom: "Bon entretien", emoji: "🧰", age: 3, cout: { outils: 12, planches: 40 }, duree: 180, effet: { usure: 0.6 }, texte: "Les bâtiments s'usent 40 % moins vite" },
+    { id: "poeles", nom: "Poêles en fonte", emoji: "🔥", age: 3, cout: { lingots: 12, pierres: 40 }, duree: 180, effet: { chauffage: 0.6 }, texte: "L'hiver, on brûle 40 % de bois en moins" },
+    { id: "orfevrerie", nom: "Orfèvrerie fine", emoji: "💍", age: 3, cout: { or: 10, outils: 6 }, duree: 200, effet: { orfevrerie: 0.7 }, texte: "L'orfèvre va 30 % plus vite" },
+    { id: "filonsOr", nom: "Filons d'or", emoji: "🧭", age: 3, cout: { outils: 8, pain: 20 }, duree: 200, effet: { filonsOr: true }, texte: "Le géologue peut aussi trouver des filons d'or" },
     { id: "filonsFer", nom: "Filons de fer", emoji: "🧭", age: 2, cout: { charbon: 20, outils: 3 }, duree: 120, effet: { filonsFer: true }, texte: "Le géologue peut aussi trouver des filons de fer" },
   ],
 
@@ -309,6 +338,11 @@ Village.CONFIG = {
       { id: "bucherons", age: 2, qui: "Odile, la cheffe des bûcherons", emoji: "👩‍🌾", histoire: "Nos haches sont émoussées et la forêt avance moins vite que l'hiver. Il nous faut des outils neufs !", demande: { outils: 6 }, duree: 600, recompense: { pieces: 80, gemmes: 3 } },
       { id: "caravane", age: 2, qui: "Le capitaine de la caravane", emoji: "🐪", histoire: "Ma caravane repart vers la capitale. Je paie bien le minerai et le charbon, mais je ne peux pas attendre longtemps.", demande: { fer: 20, charbon: 20 }, duree: 480, recompense: { pieces: 70, gemmes: 2 } },
       { id: "banquet", age: 2, qui: "Le maire du village", emoji: "🎩", histoire: "Le village a grandi : il est temps de fêter ça ! Un grand banquet pour tous les habitants.", demande: { poissons: 30, viande: 30 }, duree: 720, recompense: { pieces: 50, gemmes: 3 } },
+      // Étape 11 : les missions du bourg (et les grosses commandes de la capitale)
+      { id: "boulanger", age: 3, qui: "Margot, la boulangère", emoji: "👩‍🍳", histoire: "Le bourg a faim de bon pain ! Aide-moi à remplir les étals avant le marché du dimanche.", demande: { pain: 40 }, duree: 900, recompense: { pieces: 150, gemmes: 3 } },
+      { id: "couronne", age: 3, qui: "Le seigneur du château", emoji: "🤴", histoire: "Ma fille se marie. Il me faut des bijoux dignes d'une princesse, et vite !", demande: { bijoux: 4 }, duree: 900, recompense: { pieces: 300, gemmes: 5 } },
+      { id: "capitale1", age: 3, qui: "Commande de la capitale", emoji: "📦", histoire: "La capitale construit une cathédrale. Elle achète en gros : outils, lingots et planches.", demande: { outils: 20, lingots: 20, planches: 150 }, duree: 1500, recompense: { pieces: 450, gemmes: 6 } },
+      { id: "disette", age: 3, qui: "Le village voisin", emoji: "🧑‍🌾", histoire: "Nos récoltes ont gelé. Peux-tu nous envoyer de la farine et du poisson pour passer l'hiver ?", demande: { farine: 30, poissons: 60 }, duree: 1200, recompense: { pieces: 200, gemmes: 4 } },
       { id: "halle", age: 2, qui: "Les maçons", emoji: "👷‍♂️", histoire: "On veut bâtir une grande halle couverte pour le marché. Il nous faut du bois, de la pierre et de bons outils.", demande: { planches: 60, pierres: 60, outils: 4 }, duree: 900, recompense: { pieces: 120, gemmes: 4 } },
     ],
   },
@@ -326,6 +360,46 @@ Village.CONFIG = {
   porteursMax: 8,
 
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
+
+  // Étape 11 : ✍️ la RÉSERVE (le silo de l'entrepôt). Quand tu n'es pas là, le village continue de
+  // travailler, et ce qu'il produit est rangé dans la réserve… jusqu'à ce qu'elle soit pleine.
+  // Plus elle est grande, plus le village continue longtemps sans toi. L'agrandir coûte TRÈS cher.
+  //   capacité au niveau n = capacite × facteurCapacite^(n − 1)   (150, 270, 486, 875… objets)
+  //   prix pour passer du niveau n au n + 1 = prix × facteurPrix^(n − 1)   (ou des 💎)
+  reserve: {
+    capacite: 150, facteurCapacite: 1.8,
+    prix: { planches: 40, pierres: 30 }, prixPieces: 60, facteurPrix: 2.2, // les 🪙 seulement à partir du village
+    gemmes: 4, gemmesEnPlus: 3, // 💎 au niveau 1, puis + 3 à chaque niveau
+    absenceMax: 12 * 3600, // s : au-delà de 12 heures d'absence, on ne compte plus
+    rythmeMin: 2, // min : il faut avoir joué au moins 2 minutes pour mesurer le rythme du village
+  },
+
+  // Étape 11 : 📺 les PUBS (pour l'instant de FAUSSES pubs : rien n'est encore branché).
+  // ✍️ Une proposition apparaît au hasard pendant le jeu. Pour ne pas rendre le jeu trop facile :
+  //   - la récompense vaut quelques minutes de production du village (pas plus) ;
+  //   - chaque pub regardée le même jour vaut un peu moins que la précédente (× 0,88), jusqu'à 35 % ;
+  //   - elle ne dépasse jamais le quart de ce qui manque pour l'âge suivant.
+  pub: {
+    attenteMin: 240, attenteMax: 540, // s de jeu entre deux propositions (au hasard entre les deux)
+    expire: 25, // s : sans réponse, la proposition disparaît
+    duree: 5, // s : la fausse pub (une vraie pub dure 15 à 30 s)
+    minutes: 4, // la récompense en ressources = 4 minutes de production du village
+    minimumValeur: 24, // … mais au moins l'équivalent de 24 🪙 au marché (ex. 12 🟫, ou 1 💍 seulement : un bijou vaut cher !)
+    baisse: 0.88, plancher: 0.35, // la valeur baisse à chaque pub du même jour, jusqu'à 35 %
+    partObjectif: 0.25, // pas plus du quart de ce qui manque pour l'objectif de l'âge
+    accelere: 0.5, // une pub fait gagner la moitié du temps qui reste d'un chantier ou d'une recherche
+    chanceGemme: 0.08, // 8 % des propositions offrent 1 💎
+  },
+
+  // Étape 11 : les règles plus dures du bourg
+  bourg: {
+    ageDesRegles: 3, // à partir de quel âge (3 = le bourg)
+    usure: 1800, // s pour qu'un bâtiment s'use complètement (30 min de jeu) ; usé = 2 fois moins vite
+    reparer: 0.6, // à 60 % d'usure, un porteur apporte 1 🔨 outil pour réparer
+    chauffage: 60, // s : en hiver, toutes les minutes, chaque logement brûle 1 🪵 tronc
+    froid: 0.8, // sans bois de chauffage : tout le monde va 20 % moins vite
+    sansPain: 0.8, // un habitant du bourg qui n'a pas eu de pain : 20 % moins vite
+  },
 
   animation: {
     vent: 1.4, // vitesse du balancement des arbres (tours par seconde, à peu près)

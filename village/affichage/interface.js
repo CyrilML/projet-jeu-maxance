@@ -58,6 +58,12 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("batiment-deplace", (d) => afficher("↔️ " + d.nom + " a déménagé" + (d.relie ? " !" : " : pense à la route !")));
   Village.Evenements.ecouter("gisement-trouve", (d) => afficher("🔍 Le géologue a trouvé un gisement : " + d.pierres + " 🪨 !"));
   Village.Evenements.ecouter("affame", () => afficher("🍽️ Plus rien à manger : on travaille 2 fois moins vite !"));
+  // Étape 11
+  Village.Evenements.ecouter("batiment-use", (d) => afficher("🔧 " + d.nom + " est usé : il travaille 2 fois moins vite. Il faut des 🔨 outils !"));
+  Village.Evenements.ecouter("froid", () => afficher("🥶 Plus de bois de chauffage : tout le monde a froid (20 % moins vite) !"));
+  Village.Evenements.ecouter("reserve-agrandie", (d) => afficher("📦 Réserve agrandie : niveau " + d.niveau + ", " + d.capacite + " places !"));
+  Village.Evenements.ecouter("reserve-impossible", (d) => afficher("🚫 Réserve : " + d.raison));
+  Village.Evenements.ecouter("pub-regardee", (d) => afficher("🎁 Merci ! " + (d.sorte === "ressource" ? "+" + d.quantite + " " + EMO(d.quoi) : d.sorte === "gemmes" ? "+" + d.quantite + " 💎" : "La recherche « " + d.nom + " » avance d'un coup !")));
   function afficher(texte) { message = { texte, jusqua: performance.now() + 3500 }; }
 
   function bulle(ctx, x, y, l, h, couleur) {
@@ -161,6 +167,7 @@ Village.Interface = (function () {
   }
 
   const coutTexte = (c) => Object.entries(c).map(([r, n]) => n + " " + EMO(r)).join("  ");
+  const visible = (monde, r) => (monde.age || 0) >= (C.ressources[r].age || 0) || monde.stock[r] > 0; // étape 11
   const nomRessource = (r) => (r === "pieces" ? "🪙 pièces" : r === "gemmes" ? "💎" : Village.Batiments.NOMS_RESSOURCES[r]);
   const minutes = (s) => Math.floor(s / 60) + " min " + String(Math.floor(s % 60)).padStart(2, "0");
   const croix = (ctx, x, y, l, action) => { texte(ctx, "✖", x + l - 16, y + 17, 14, "#a08a6a", true, "center"); zone(x + l - 38, y, 38, 34, action); };
@@ -259,7 +266,7 @@ Village.Interface = (function () {
   // 🏪 Étape 8 : le panneau du marché. Une ligne par ressource : le stock, le prix (et s'il monte ou baisse),
   // et deux boutons : vendre 5, acheter 5.
   function panneauMarche(ctx, monde, W, He, petit) {
-    const M = Village.Marche, liste = Object.keys(C.marche.prix), lot = C.marche.lot;
+    const M = Village.Marche, liste = Object.keys(C.marche.prix).filter((r) => visible(monde, r)), lot = C.marche.lot;
     const l = Math.min(W - 20, 500), hl = petit ? 30 : 34, x = (W - l) / 2, y = basDuStock + 4;
     const h = 58 + liste.length * hl + 22;
     bulle(ctx, x, y, l, h, "rgba(255, 250, 235, .98)");
@@ -291,7 +298,7 @@ Village.Interface = (function () {
   // 📊 Étape 8 : le panneau des statistiques (choix 3A). Pour chaque ressource : le stock, sa petite
   // courbe (les 5 dernières minutes), ce qui entre et ce qui sort par minute, et le bilan.
   function panneauStats(ctx, monde, W, He, petit) {
-    const St = Village.Statistiques, liste = Object.keys(C.ressources).filter((r) => monde.stock[r] > 0 || St.parMinute(monde, r).entrees > 0 || St.parMinute(monde, r).sorties > 0 || ["troncs", "planches", "pierres", "poissons", "viande"].includes(r));
+    const St = Village.Statistiques, liste = Object.keys(C.ressources).filter((r) => visible(monde, r) || St.parMinute(monde, r).entrees > 0);
     const l = Math.min(W - 20, 520), hl = petit ? 24 : 26, x = (W - l) / 2, y = basDuStock + 4;
     const h = 74 + liste.length * hl + 44;
     bulle(ctx, x, y, l, h, "rgba(255, 250, 235, .98)");
@@ -355,9 +362,8 @@ Village.Interface = (function () {
 
     // ---- En haut à gauche : le village et le stock
     const s = monde.stock;
-    const ressources = [["🪵", s.troncs], ["🟫", s.planches], ["🪨", s.pierres], ["🐟", s.poissons], ["🍖", s.viande]];
-    if (monde.age >= 1 || s.charbon > 0) ressources.push(["⚫", s.charbon]); // étape 7 : le charbon, à partir du hameau
-    for (const r of ["fer", "lingots", "outils"]) if (monde.age >= 2 || s[r] > 0) ressources.push([EMO(r), s[r]]); // étape 8
+    // Étape 11 : chaque ressource apparaît à son âge (config.js, « ressources » : age), ou dès qu'on en a.
+    const ressources = Object.keys(C.ressources).filter((r) => (monde.age || 0) >= (C.ressources[r].age || 0) || s[r] > 0).map((r) => [EMO(r), s[r]]);
     if (monde.age >= 2 || monde.pieces > 0) ressources.push(["🪙", monde.pieces]);
     // Étape 8 : s'il y a trop de ressources pour la largeur, la bulle passe sur 2 lignes.
     const pas = petit ? 46 : 62, parLigne = Math.max(3, Math.min(ressources.length, Math.floor((W - 70 - 24) / pas)));
@@ -407,11 +413,11 @@ Village.Interface = (function () {
     // Toucher un groupe ouvre un tiroir, juste au-dessus, avec ses bâtiments.
     const groupes = [
       { id: "bois", emoji: "🪵", nom: "Bois", batiments: ["bucheron", "forestier", "scierie"] },
-      { id: "pierre", emoji: "⛏️", nom: "Mines", batiments: ["carriere", "geologue", "mineCharbon", "mineFer"] },
-      { id: "nourriture", emoji: "🍖", nom: "Nourriture", batiments: ["pecheur", "chasseur"] },
+      { id: "pierre", emoji: "⛏️", nom: "Mines", batiments: ["carriere", "geologue", "mineCharbon", "mineFer", "mineOr"] },
+      { id: "nourriture", emoji: "🍖", nom: "Nourriture", batiments: ["pecheur", "chasseur", "ferme", "moulin", "boulangerie"] }, // étape 11 : le pain
       // Étape 8 : les logements, et les artisans (fonderie, forge, marché, université)
       { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "maison"] },
-      { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "marche", "universite"] },
+      { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "marche", "universite"] },
       // Étape 7 : le chemin de terre, et la route en pierre (débloquée par la recherche « Routes pavées »)
       { id: "route", nom: "Routes", outils: [
         { id: "route", icone: "terre", nom: "Chemin", touche: "R", cout: "gratuit" },
@@ -479,6 +485,14 @@ Village.Interface = (function () {
       }
     }
 
+    // Étape 11 : le froid de l'hiver au bourg
+    if (monde.froid && !(message && maintenant < message.jusqua) && Math.sin(maintenant / 300) > -0.3) {
+      const txt = "🥶 Plus de bois de chauffage : tout le monde a froid ! Il faut des 🪵 troncs.";
+      ctx.font = "bold " + (petit ? 11 : 13) + "px " + POLICE;
+      const l = Math.min(W - 20, ctx.measureText(txt).width + 24), y = basDuStock + 40;
+      bulle(ctx, (W - l) / 2, y, l, 28, "rgba(220, 235, 255, .95)");
+      texte(ctx, txt, W / 2, y + 14, petit ? 11 : 13, "#2f569c", true, "center");
+    }
     // Étape 4 : il n'y a plus rien à manger !
     if (Village.Repas.nourritureEnStock(monde) <= 0 && !(message && maintenant < message.jusqua) && Math.sin(maintenant / 300) > -0.3) {
       const txt = "🍽️ Plus rien à manger : tout le monde travaille 2 fois moins vite ! Pêcheur ou chasseur ?";
@@ -498,6 +512,9 @@ Village.Interface = (function () {
     else if (panneau === "boutique") panneauBoutique(ctx, monde, W, He, petit);
     else if (panneau === "stats") panneauStats(ctx, monde, W, He, petit); // étape 8
     else if (panneau === "marche") panneauMarche(ctx, monde, W, He, petit);
+    // Étape 11 : le résumé de l'absence, et la pub (par-dessus tout le reste)
+    if (monde.absence) panneauAbsence(ctx, monde, W, He, petit);
+    else if (monde.pub.offre) panneauPub(ctx, monde, W, He, petit);
 
     if (options.pause) {
       bulle(ctx, W / 2 - 70, 12, 140, 36);
@@ -546,6 +563,11 @@ Village.Interface = (function () {
       if (monde.partis) lignes.push("😢 " + monde.partis + " habitant(s) parti(s) (trop faim)");
       lignes.push("📋 File d'attente : " + monde.file.length + " livraison(s)");
       lignes.push("🛏️ Logement : " + Village.Logement.habitants(monde) + " habitants / " + Village.Logement.capacite(monde) + " places"); // étape 8
+      // Étape 11 : la réserve (le silo)
+      const Re = Village.Reserve, mn = Re.minutesAvantPlein(monde);
+      lignes.push("📦 Réserve niveau " + Re.niveau(monde) + " : " + Re.capacite(monde) + " places");
+      lignes.push(mn === Infinity ? "   (on mesure encore le rythme du village)" : "   ≈ " + (mn >= 60 ? Math.floor(mn / 60) + " h " + String(Math.round(mn % 60)).padStart(2, "0") : Math.round(mn) + " min") + " d'absence avant qu'elle soit pleine");
+      boutonsReserve = true;
     } else if (C.logement[b.type]) {
       // Étape 8 : une hutte ou une maison
       const Lg = Village.Logement;
@@ -588,15 +610,77 @@ Village.Interface = (function () {
         lignes.push("🍽️ A FAIM : travaille 2 fois moins vite !");
         lignes.push("Il faut du 🐟 ou de la 🍖 dans l'entrepôt.");
       } else lignes.push("😋 Prochain repas dans " + Math.max(0, Math.ceil(C.repas.intervalle - o.faim)) + " s (à l'entrepôt)");
+      // Étape 11 : le bourg
+      if (o.mecontent) lignes.push("🍞 Mécontent : pas de pain au dernier repas (−20 %)");
+      if (o.froid) lignes.push("🥶 A froid : plus de bois de chauffage (−20 %)");
     }
-    const h = 34 + lignes.length * (petit ? 17 : 19) + 8;
+    if (b.usure > 0 && b.etat === "pret") lignes.push((b.usure >= 1 ? "🔧 USÉ : 2 fois moins vite ! " : "🔧 Usure : " + Math.round(b.usure * 100) + " % · ") + (b.enRoute.outils > 0 ? "un 🔨 arrive" : b.usure >= C.bourg.reparer ? "il attend 1 🔨" : "réparé à " + Math.round(C.bourg.reparer * 100) + " %"));
+    const hb = boutonsReserve ? 40 : 0;
+    const h = 34 + lignes.length * (petit ? 17 : 19) + 8 + hb;
     bulle(ctx, x, y, l, h);
+    zone(x, y, l, h, "rien"); // (avant les boutons, pour qu'ils restent au-dessus)
     texte(ctx, type.emoji + " " + type.nom, x + 12, y + 18, petit ? 13 : 15, "#3b2614", true);
     lignes.forEach((t, n) => texte(ctx, t, x + 12, y + 38 + n * (petit ? 17 : 19), petit ? 11 : 13, "#5a4220"));
+    if (boutonsReserve) {
+      // Étape 11 : agrandir la réserve, avec des ressources (très cher) ou des 💎
+      const Re = Village.Reserve, p = Re.prix(monde), by = y + h - 40, lb2 = (l - 30) / 2;
+      bouton(ctx, x + 10, by, lb2 + 14, 32, "📦 " + Object.entries(p.ressources).map(([r, n]) => n + EMO(r)).join(" ") + (p.pieces ? " " + p.pieces + "🪙" : ""), "reserve", "ressources", !Re.raison(monde, "ressources"), "#d98a1f");
+      bouton(ctx, x + 30 + lb2, by, lb2 - 10, 32, "📦 " + p.gemmes + " 💎", "reserve", "gemmes", !Re.raison(monde, "gemmes"), "#3e7bff");
+      boutonsReserve = false;
+    }
     // Le ✖ pour fermer
     texte(ctx, "✖", x + l - 16, y + 17, 14, "#a08a6a", true, "center");
     zone(x + l - 34, y, 34, 34, "fermer");
-    zone(x, y, l, h, "rien"); // toucher le panneau ne doit pas toucher la carte en dessous
+  }
+  let boutonsReserve = false;
+
+  // 🌙 Étape 11 : le résumé de ton absence (« Pendant ton absence… »)
+  function panneauAbsence(ctx, monde, W, He, petit) {
+    const a = monde.absence, gains = Object.entries(a.gains), pertes = Object.entries(a.pertes);
+    const l = Math.min(W - 20, 420), x = (W - l) / 2, y = basDuStock + 8;
+    const lignes = Math.ceil(gains.length / 3) + (pertes.length ? 1 + Math.ceil(pertes.length / 3) : 0);
+    const h = 70 + lignes * 22 + (a.plein ? 40 : 0) + 50;
+    bulle(ctx, x, y, l, h, "rgba(255, 250, 235, .98)");
+    zone(x, y, l, h, "rien");
+    const duree = a.secondes >= 3600 ? Math.floor(a.secondes / 3600) + " h " + String(Math.floor((a.secondes % 3600) / 60)).padStart(2, "0") : Math.max(1, Math.round(a.secondes / 60)) + " min";
+    texte(ctx, "🌙 Pendant ton absence (" + duree + ")", x + 14, y + 22, petit ? 13 : 15, "#3b2614", true);
+    texte(ctx, "Le village a continué de travailler, et a rangé tout ça dans la réserve :", x + 14, y + 44, petit ? 9 : 11, "#7a5a30");
+    let yy = y + 68;
+    const grille = (liste, signe, couleur) => liste.forEach(([r, n], k) => { texte(ctx, signe + n + " " + EMO(r), x + 18 + (k % 3) * ((l - 30) / 3), yy + Math.floor(k / 3) * 22, petit ? 13 : 15, couleur, true); });
+    grille(gains, "+", "#2e8a3a"); yy += Math.ceil(gains.length / 3) * 22;
+    if (pertes.length) { texte(ctx, "Ce qui a été mangé ou brûlé :", x + 14, yy, 11, "#7a5a30"); yy += 22; grille(pertes, "−", "#c0392b"); yy += Math.ceil(pertes.length / 3) * 22; }
+    if (a.plein) {
+      texte(ctx, "📦 Ta réserve (" + a.capacite + " places) était pleine au bout de " + (a.minutesPlein >= 60 ? Math.floor(a.minutesPlein / 60) + " h " + String(a.minutesPlein % 60).padStart(2, "0") : a.minutesPlein + " min") + " !", x + 14, yy + 4, petit ? 10 : 12, "#c0392b", true);
+      texte(ctx, "Agrandis-la à l'entrepôt pour que le village travaille plus longtemps.", x + 14, yy + 22, petit ? 9 : 11, "#7a5a30");
+      yy += 40;
+    }
+    bouton(ctx, x + l - 130, y + h - 46, 116, 34, "👍 Super !", "absenceVue", true, true);
+  }
+
+  // 📺 Étape 11 : la proposition de pub (au hasard), puis la (fausse) pub elle-même
+  function panneauPub(ctx, monde, W, He, petit) {
+    const o = monde.pub.offre;
+    if (o.etat === "regarde") {
+      // La « pub » : tout l'écran, on ne peut rien toucher pendant ce temps
+      ctx.fillStyle = "rgba(10, 14, 30, .88)"; ctx.fillRect(0, 0, W, He);
+      zone(0, 0, W, He, "rien");
+      texte(ctx, "📺 Publicité", W / 2, He / 2 - 40, 22, "#ffffff", true, "center");
+      texte(ctx, "(pour l'instant, une fausse : ici passera une vraie pub de 15 à 30 secondes)", W / 2, He / 2 - 12, petit ? 10 : 12, "#c9d1ff", false, "center");
+      const lb = Math.min(260, W - 60), p = 1 - o.reste / C.pub.duree;
+      ctx.fillStyle = "rgba(255,255,255,.2)"; ctx.fillRect((W - lb) / 2, He / 2 + 10, lb, 10);
+      ctx.fillStyle = "#ffe27a"; ctx.fillRect((W - lb) / 2, He / 2 + 10, lb * p, 10);
+      texte(ctx, Math.ceil(o.reste) + " s", W / 2, He / 2 + 38, 14, "#ffffff", true, "center");
+      return;
+    }
+    const l = Math.min(W - 20, 380), x = (W - l) / 2, y = basDuStock + 8, h = 92;
+    bulle(ctx, x, y, l, h, "rgba(255, 245, 210, .98)");
+    zone(x, y, l, h, "rien");
+    const cadeau = o.sorte === "ressource" ? "+" + o.quantite + " " + nomRessource(o.quoi) : o.sorte === "gemmes" ? "+" + o.quantite + " 💎" : "la recherche « " + o.nom + " » avance de moitié";
+    texte(ctx, "📺 Un cadeau t'attend !", x + 14, y + 20, petit ? 13 : 15, "#3b2614", true);
+    texte(ctx, "Regarde une courte pub et reçois : " + cadeau, x + 14, y + 42, petit ? 10 : 12, "#5a4220", true);
+    texte(ctx, "⏱️ " + Math.ceil(o.reste) + " s", x + 14, y + 70, 11, "#a08a6a", true);
+    bouton(ctx, x + l - 232, y + 54, 124, 30, "📺 Regarder", "pub", "regarder", true, "#3e7bff");
+    bouton(ctx, x + l - 100, y + 54, 86, 30, "Non merci", "pub", "refuser", true, "#a08a6a");
   }
 
   // La mini-carte, avec un cadre qui montre ce que l'écran regarde. Toucher la mini-carte = y aller.

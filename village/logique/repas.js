@@ -13,27 +13,39 @@
 // Chaque habitant a 2 compteurs :
 //   faim : secondes depuis son dernier repas (à 150, il doit manger) ;
 //   ventreVide : secondes passées affamé (à 600, il part).
+//
+// Étape 11 : ✍️ au BOURG, c'est plus dur :
+//   - les habitants veulent du 🍞 PAIN. On en mange d'abord s'il y en a ; un repas sans pain rend
+//     l'habitant MÉCONTENT (20 % moins vite) jusqu'à son prochain repas avec du pain ;
+//   - en HIVER, il faut chauffer les logements : toutes les minutes, chaque logement brûle 1 🪵 tronc.
+//     S'il n'y a plus de bois, tout le monde a FROID (20 % moins vite).
 
 window.Village = window.Village || {};
 
 Village.Repas = (function () {
   const C = Village.CONFIG;
   const radio = Village.Evenements;
-  const NOURRITURE = ["poissons", "viande"];
+  const NOURRITURE = ["poissons", "viande", "pain"];
 
-  const nourritureEnStock = (monde) => monde.stock.poissons + monde.stock.viande;
+  const nourritureEnStock = (monde) => monde.stock.poissons + monde.stock.viande + (monde.stock.pain || 0);
+  const auBourg = (monde) => (monde.age || 0) >= C.bourg.ageDesRegles;
 
-  // Ce qu'on mange : ce dont il y a le plus.
+  // Ce qu'on mange : du pain d'abord (étape 11), sinon ce dont il y a le plus.
   function choisir(stock) {
+    if (stock.pain > 0) return "pain";
     if (stock.poissons <= 0 && stock.viande <= 0) return null;
     return stock.poissons >= stock.viande ? "poissons" : "viande";
   }
 
   // Manger à la cantine (l'entrepôt). Vrai si c'est fait.
-  function mangerALaCantine(monde, qui) {
+  function mangerALaCantine(monde, qui, h) {
     const quoi = choisir(monde.stock);
     if (!quoi) return false;
     monde.stock[quoi]--;
+    // Étape 11 : au bourg, un repas sans pain rend mécontent
+    const mecontent = auBourg(monde) && quoi !== "pain";
+    if (mecontent && !h.mecontent) radio.emettre("sans-pain", { qui });
+    h.mecontent = mecontent;
     radio.emettre("repas", { qui, quoi, reste: nourritureEnStock(monde) });
     return true;
   }
@@ -42,7 +54,7 @@ Village.Repas = (function () {
   function avoirFaim(monde, h, dt, qui) {
     h.faim = (h.faim || 0) + dt;
     if (h.faim < C.repas.intervalle * Village.Recherches.bonus(monde, "repas")) return null; // étape 7 : le fumoir
-    if (mangerALaCantine(monde, qui)) {
+    if (mangerALaCantine(monde, qui, h)) {
       if (h.affame) radio.emettre("plus-faim", { qui });
       h.faim = 0; h.affame = false; h.ventreVide = 0;
       return null;
@@ -53,10 +65,41 @@ Village.Repas = (function () {
   }
 
   // Le ventre vide ralentit tout : 1 = normal, 0,5 = 2 fois moins vite.
-  const vitesse = (h) => (h && h.affame ? 1 / C.ouvriers.lentSiFaim : 1);
+  // Étape 11 : on MULTIPLIE les ralentissements : affamé × mécontent × froid × bâtiment usé.
+  //   ex. mécontent et froid : 0,8 × 0,8 = 0,64 (36 % moins vite)
+  function vitesse(h) {
+    if (!h) return 1;
+    let v = h.affame ? 1 / C.ouvriers.lentSiFaim : 1;
+    if (h.mecontent) v *= C.bourg.sansPain;
+    if (h.froid) v *= C.bourg.froid;
+    if (h.usee) v *= 0.5;
+    return v;
+  }
+
+  // Étape 11 : le chauffage, en hiver au bourg. Chaque logement (et les tentes de l'entrepôt) brûle 1 tronc par minute.
+  function chauffer(monde, dt) {
+    if (!auBourg(monde) || !(monde.saison && monde.saison.hiver)) { monde.froid = false; monde.chauffage = 0; return; }
+    monde.chauffage = (monde.chauffage || 0) + dt;
+    if (monde.chauffage < C.bourg.chauffage) return;
+    monde.chauffage = 0;
+    const logements = 1 + monde.batiments.filter((b) => b.etat === "pret" && (b.type === "hutte" || b.type === "maison")).length;
+    const bois = Math.max(1, Math.ceil(logements * Village.Recherches.bonus(monde, "chauffage")));
+    if (monde.stock.troncs >= bois) {
+      monde.stock.troncs -= bois;
+      if (monde.froid) radio.emettre("plus-froid", {});
+      monde.froid = false;
+      radio.emettre("chauffage", { bois, logements, reste: monde.stock.troncs });
+    } else {
+      if (!monde.froid) radio.emettre("froid", { bois, troncs: monde.stock.troncs });
+      monde.froid = true;
+    }
+  }
 
   function etape(monde, dt) {
     const B = Village.Batiments;
+    chauffer(monde, dt);
+    for (const b of monde.batiments) if (b.ouvrier) b.ouvrier.froid = !!monde.froid;
+    for (const p of monde.porteurs) p.froid = !!monde.froid;
     for (const b of monde.batiments) {
       const o = b.ouvrier;
       if (o) {

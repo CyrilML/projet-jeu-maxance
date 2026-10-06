@@ -268,7 +268,9 @@ Village.Ouvriers = (function () {
       }
       o.proie = null;
     } else if (b.type === "geologue") {
-      const minerai = Village.Recherches.a(monde, "filonsFer") && Math.random() < 0.5 ? "fer" : "charbon"; // étape 8
+      // Étape 8 et 11 : quel filon peut-il trouver ? Le charbon, et le fer et l'or avec les bonnes recherches.
+      const possibles = ["charbon"].concat(Village.Recherches.a(monde, "filonsFer") ? ["fer"] : [], Village.Recherches.a(monde, "filonsOr") ? ["or"] : []);
+      const minerai = possibles[Math.floor(Math.random() * possibles.length)];
       // Étape 5 : 1 chance sur 2 de trouver un gisement de pierre (un nouveau rocher)
       if (carte.objet[i] === O.rien && !monde.occupees.has(i) && !monde.route[i] && Math.random() < C.ouvriers.chanceDeTrouver) {
         carte.reste[i] = C.nature.pierresGisement;

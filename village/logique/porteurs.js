@@ -70,6 +70,12 @@ Village.Porteurs = (function () {
           }
         }
       }
+      // Étape 11 : un bâtiment usé à 60 % reçoit 1 🔨 outil pour être réparé
+      const recetteOutils = C.ateliers[b.type] && C.ateliers[b.type].entrees.outils;
+      if (b.etat === "pret" && b.usure >= C.bourg.reparer && !recetteOutils && !(b.enFile.outils > 0) && !(b.enRoute.outils > 0) && disponible(monde, "outils") >= 1) {
+        b.enFile.outils = 1;
+        ajouter(monde, { sorte: "apporter", quoi: "outils", batiment: b });
+      }
       // Apporter ses ingrédients à un atelier (étape 8 : chaque ingrédient de sa recette, 2 de chaque au plus)
       const recette = C.ateliers[b.type];
       if (recette && b.etat === "pret") {
@@ -157,8 +163,11 @@ Village.Porteurs = (function () {
           }
           if (papier.sorte === "apporter") {
             // On prend les objets dans l'entrepôt, et ils ne sont plus « promis ».
+            // (Étape 11 : pour un chantier, c'est TON choix : le compteur des statistiques ne le compte pas
+            // comme le travail du village.)
             const n = p.nombre;
-            monde.stock[papier.quoi] -= n;
+            if (b.etat === "chantier") Village.Statistiques.horsCompte(monde, () => { monde.stock[papier.quoi] -= n; });
+            else monde.stock[papier.quoi] -= n;
             b.enFile[papier.quoi] -= n;
             if (b.etat === "chantier") b.attendu[papier.quoi] -= n;
             else b.enRoute[papier.quoi] = (b.enRoute[papier.quoi] || 0) + n;
@@ -178,6 +187,7 @@ Village.Porteurs = (function () {
           if (existe(monde, b)) {
             const n = p.nombre || 1;
             if (b.etat === "chantier") b.livre[papier.quoi] = (b.livre[papier.quoi] || 0) + n;
+            else if (papier.quoi === "outils" && !(C.ateliers[b.type] && C.ateliers[b.type].entrees.outils)) { b.enRoute.outils -= n; Village.Batiments.reparer(monde, b); } // étape 11 : une réparation
             else { b.entrees[papier.quoi] = (b.entrees[papier.quoi] || 0) + n; b.enRoute[papier.quoi] -= n; }
             radio.emettre("porteur-livre", { porteur: p.numero, quoi: papier.quoi, nombre: n, nom: Village.Batiments.TYPES[b.type].nom, batiment: b.numero });
             p.porte = null;

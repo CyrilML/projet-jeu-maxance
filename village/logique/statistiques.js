@@ -13,13 +13,18 @@
 // enveloppé dans un « Proxy » : un objet-espion qui ressemble au stock, mais qui est prévenu chaque fois
 // qu'on écrit dedans (stock.planches = 12). C'est comme une porte qui compte ceux qui la traversent.
 // Les statistiques ne sont pas sauvegardées : elles recommencent à zéro à chaque partie.
+//
+// Étape 11 : le gardien met une petite étoile ★ à côté des traits qui viennent de TOI (vendre, acheter,
+// livrer une mission, payer une recherche ou un chantier, une pub…). Sans les étoiles, il reste le
+// TRAVAIL du village : c'est ce rythme-là qui continue quand tu n'es pas là (voir logique/reserve.js).
 
 window.Village = window.Village || {};
 
 Village.Statistiques = (function () {
   const C = Village.CONFIG, S = C.statistiques;
 
-  const page = (stock) => ({ entrees: {}, sorties: {}, stock: Object.assign({}, stock), duree: 0 });
+  const page = (stock) => ({ entrees: {}, sorties: {}, entreesT: {}, sortiesT: {}, stock: Object.assign({}, stock), duree: 0 });
+  let parLeJoueur = 0; // > 0 pendant une action du joueur
 
   // Mettre le gardien à la porte : le stock du monde devient un Proxy qui compte tout.
   function surveiller(monde) {
@@ -32,6 +37,7 @@ Village.Statistiques = (function () {
         if (ecart && typeof ecart === "number") {
           const p = monde.stats.pages[monde.stats.pages.length - 1], colonne = ecart > 0 ? p.entrees : p.sorties;
           colonne[r] = (colonne[r] || 0) + Math.abs(ecart);
+          if (!parLeJoueur) { const t = ecart > 0 ? p.entreesT : p.sortiesT; t[r] = (t[r] || 0) + Math.abs(ecart); } // le travail du village
         }
         return true;
       },
@@ -49,10 +55,14 @@ Village.Statistiques = (function () {
     if (st.pages.length > S.tranches) st.pages.shift();
   }
 
+  // Étape 11 : faire quelque chose « de la part du joueur » (le compteur met une étoile).
+  function horsCompte(monde, faire) { parLeJoueur++; try { return faire(); } finally { parLeJoueur--; } }
+
   // Par minute, sur les pages gardées : { entrees, sorties, net } pour une ressource.
-  function parMinute(monde, r) {
+  // travail = true : seulement le travail du village (sans les actions du joueur).
+  function parMinute(monde, r, travail) {
     let e = 0, s = 0, duree = 0;
-    for (const p of monde.stats.pages) { e += p.entrees[r] || 0; s += p.sorties[r] || 0; duree += p.duree; }
+    for (const p of monde.stats.pages) { e += (travail ? p.entreesT : p.entrees)[r] || 0; s += (travail ? p.sortiesT : p.sorties)[r] || 0; duree += p.duree; }
     const minutes = Math.max(duree, 1) / 60;
     return { entrees: e / minutes, sorties: s / minutes, net: (e - s) / minutes, minutes: duree / 60 };
   }
@@ -63,5 +73,5 @@ Village.Statistiques = (function () {
     return pages.slice(0, -1).map((p) => p.stock[r] || 0).concat([monde.stock[r] || 0]);
   }
 
-  return { surveiller, etape, parMinute, courbe };
+  return { surveiller, etape, parMinute, courbe, horsCompte };
 })();

@@ -162,7 +162,8 @@ Village.RayonsX = (function () {
       let t = null;
       if (R) t = Object.entries(R.entrees).map(([r, n]) => (bat.entrees[r] || 0) + "/" + n + EMO(r)).join(" + ") + " → " + Object.values(R.sorties)[0] + EMO(bat.sortieQuoi);
       else if (C.logement[bat.type] && bat.type !== "entrepot") t = "🛏️ +" + C.logement[bat.type] + " places";
-      else if (bat.type === "entrepot") t = "🛏️ " + Village.Logement.habitants(monde) + " / " + Village.Logement.capacite(monde) + " places";
+      else if (bat.type === "entrepot") t = "🛏️ " + Village.Logement.habitants(monde) + " / " + Village.Logement.capacite(monde) + " places · 📦 " + Village.Reserve.capacite(monde);
+      if (bat.usure > 0) t = (t ? t + " · " : "") + "🔧 " + Math.round(bat.usure * 100) + " %"; // étape 11
       if (!t) continue;
       ctx.fillStyle = "#9ff0ff"; ctx.textAlign = "center";
       ctx.fillText(t, p.x, p.y + 30 / Math.min(z, 1.4));

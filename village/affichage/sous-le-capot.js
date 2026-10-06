@@ -57,6 +57,21 @@ Village.SousLeCapot = (function () {
     "porteur-livre": (d) => "🤲 Porteur " + d.porteur + " a livré " + emo(d.quoi) + " à " + d.nom + " n° " + d.batiment,
     "arrivee-entrepot": (d) => "🏠 Porteur " + d.porteur + " range " + (d.quantite > 1 ? d.quantite + " " + d.quoi : emo(d.quoi)) + " dans l'entrepôt → " + d.stock + " en stock",
     // Étape 4
+    // Étape 11 : le bourg, la réserve et les pubs
+    "batiment-use": (d) => "🔧 " + d.nom + " n° " + d.numero + " est complètement usé : son ouvrier va 2 fois moins vite",
+    reparation: (d) => "🔨 " + d.nom + " n° " + d.numero + " réparé avec 1 outil (il était usé à " + d.avant + " %)",
+    chauffage: (d) => "🔥 Chauffage : " + d.logements + " logement(s) brûlent " + d.bois + " 🪵 (il reste " + d.reste + " troncs)",
+    froid: (d) => "🥶 Pas assez de bois pour chauffer (" + d.bois + " troncs nécessaires, " + d.troncs + " en stock) : tout le monde va 20 % moins vite",
+    "plus-froid": () => "🔥 Les logements sont de nouveau chauffés",
+    "sans-pain": (d) => "🍞 " + d.qui + " n'a pas eu de pain : il est mécontent (20 % moins vite jusqu'à son prochain repas avec du pain)",
+    absence: (d) => "🌙 Absence de " + Math.round(d.secondes / 60) + " min : réserve → " + (Object.entries(d.gains).map(([r, n]) => "+" + n + " " + r).join(", ") || "rien") + (Object.keys(d.pertes).length ? " · mangé : " + Object.entries(d.pertes).map(([r, n]) => n + " " + r).join(", ") : "") + (d.plein ? " · réserve pleine au bout de " + d.minutesPlein + " min" : ""),
+    "reserve-agrandie": (d) => "📦 Réserve au niveau " + d.niveau + " : " + d.capacite + " places (payé avec " + (d.avec === "gemmes" ? d.prix.gemmes + " 💎" : "des ressources") + ")",
+    "reserve-impossible": (d) => "🚫 Réserve : " + d.raison,
+    "pub-proposee": (d) => "📺 Proposition de pub : " + (d.sorte === "ressource" ? d.quantite + " " + d.quoi + " (valeur " + d.valeur + " %)" : d.sorte === "gemmes" ? "1 💎" : "la recherche " + d.nom + " avance de moitié"),
+    "pub-lancee": (d) => "📺 La (fausse) pub commence : " + d.duree + " s",
+    "pub-regardee": (d) => "🎁 Pub regardée (n° " + d.vues + ", " + d.vuesDuJour + " aujourd'hui) : récompense donnée · la prochaine vaudra " + d.prochaineValeur + " %",
+    "pub-refusee": () => "📺 Pub refusée : une autre proposition viendra plus tard",
+    "pub-expiree": () => "📺 La proposition de pub a expiré",
     moment: (d) => d.emoji + " " + ({ aube: "L'aube : le jour se lève (jour " + d.jour + ")", jour: "Plein jour", crepuscule: "Le crépuscule : le ciel devient orange", nuit: "La nuit tombe : les fenêtres et les lanternes s'allument" }[d.cle]), // étape 9
     saison: (d) => d.emoji + " Nouvelle saison : " + d.nom + " (année " + d.annee + ")" + (d.hiver ? " · les lacs gèlent, rien ne pousse, aucun animal ne naît" : ""),
     "poisson-peche": (d) => "🎣 " + ({ sardine: "Une sardine pêchée", truite: "Une truite pêchée", thon: "Un thon pêché" }[d.espece] || "Un poisson pêché") + " en (" + d.colonne + ", " + d.ligne + ") : " + d.quantite + " 🐟" + (d.glace ? " · par un trou dans la glace ❄️" : ""),
@@ -191,6 +206,17 @@ Village.SousLeCapot = (function () {
     const mi = monde.missions.actuelle;
     h += ligne("mission", mi ? mi.id + " · " + mi.etat + (mi.etat === "encours" ? " · encore " + Math.ceil(mi.reste) + " s" : "") : "prochaine dans " + Math.ceil(monde.missions.attente) + " s");
     h += ligne("missions réussies", monde.missions.reussies.length);
+    // Étape 11 : la réserve, les pubs et les règles du bourg
+    const Re = Village.Reserve, ry = Re.rythme(monde), mnp = Re.minutesAvantPlein(monde);
+    h += groupe("📦 La réserve · 📺 les pubs · 🏰 le bourg");
+    h += ligne("réserve : niveau · places", Re.niveau(monde) + " · " + Re.capacite(monde));
+    h += ligne("rythme du village (par minute)", Object.entries(ry).map(([r, n]) => (n > 0 ? "+" : "") + virgule(n, 1) + " " + (Village.CONFIG.ressources[r] || {}).emoji).join(" ") || "pas encore mesuré");
+    h += ligne("pleine au bout de (si tu pars)", mnp === Infinity ? "—" : Math.round(mnp) + " min");
+    const po = monde.pub.offre;
+    h += ligne("pub", po ? po.etat + " · encore " + Math.ceil(po.reste) + " s" : "prochaine proposition dans " + Math.ceil(monde.pub.attente) + " s");
+    h += ligne("pubs regardées (en tout · aujourd'hui)", monde.pub.vues + " · " + monde.pub.vuesDuJour + " → valeur " + Math.round(Village.Publicite.valeur(monde) * 100) + " %");
+    h += ligne("🥶 froid · bois de chauffage", (monde.froid ? "oui" : "non") + (monde.saison && monde.saison.hiver && (monde.age || 0) >= 3 ? " · prochain dans " + Math.ceil(Village.CONFIG.bourg.chauffage - (monde.chauffage || 0)) + " s" : ""));
+    h += ligne("🔧 bâtiments usés (≥ 100 %) · à réparer (≥ 60 %)", monde.batiments.filter((b) => b.usure >= 1).length + " · " + monde.batiments.filter((b) => b.usure >= Village.CONFIG.bourg.reparer).length);
     // Étape 9 : le jour et la nuit, et les figurants
     const mo = monde.moment, Vi = Village.Vie.stats;
     if (mo) {
@@ -251,6 +277,7 @@ Village.SousLeCapot = (function () {
       const T = Village.Batiments.TYPES[b.type];
       let etatB = b.etat === "chantier" ? "chantier " + Math.round(b.progres * 100) + " %" : Village.CONFIG.ateliers[b.type] ? (b.travail ? "fabrique (" + virgule(b.travail.reste, 1) + " s)" : b.attend || "prêt") + " · réserve " + JSON.stringify(b.entrees) : Village.CONFIG.mines[b.type] ? (b.epuise ? "filon épuisé" : b.travail ? "creuse (" + virgule(b.travail.reste, 1) + " s)" : "prêt") : b.ouvrier ? b.ouvrier.etat + (b.ouvrier.minuteur > 0 ? " " + virgule(b.ouvrier.minuteur, 1) + " s" : "") : "prêt";
       if (b.ouvrier && b.ouvrier.porte) etatB += " · porte des " + b.ouvrier.porte;
+      if (b.usure > 0) etatB += " · usure " + Math.round(b.usure * 100) + " %"; // étape 11
       if (b.etat === "chantier") { const m = Village.Batiments.materiaux(b); etatB += " · " + m.arrives + "/" + m.total + " arrivés"; }
       if (b.sortie) etatB += " · " + b.sortie + " devant";
       if (b.ouvrier && b.etat === "pret") etatB += " · faim " + Math.floor(b.ouvrier.faim || 0) + " s" + (b.ouvrier.affame ? " 🍽️" : "");

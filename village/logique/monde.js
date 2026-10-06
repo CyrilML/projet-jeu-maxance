@@ -54,6 +54,13 @@ Village.Monde = (function () {
       marche: { facteurs: {}, ventes: 0, achats: 0 }, // 🏪 les prix qui bougent (1 = prix normal), et les totaux
       logementBonus: 0, // 🛏️ places offertes à une partie commencée avant l'étape 8
       stats: null, // 📊 le carnet du compteur de l'entrepôt (logique/statistiques.js)
+      // Étape 11
+      reserve: { niveau: 1 }, // 📦 le silo de l'entrepôt (logique/reserve.js)
+      rythme: {}, // ce que le village gagne ou perd par minute (gardé dans la sauvegarde)
+      absence: null, // le résumé de la dernière absence (affiché au retour)
+      derniereVue: Date.now(), // l'heure (vraie) de la dernière image du jeu
+      pub: { attente: Village.Publicite.attente(), offre: null, vues: 0, jour: null, vuesDuJour: 0 }, // 📺
+      froid: false, chauffage: 0, // 🥶 l'hiver au bourg
       // Étape 4
       horloge: 0, // secondes depuis le début de LA PARTIE (sauvegardé) : c'est lui qui fait les saisons
       saison: null, // { nom, emoji, annee, avancement… } (voir logique/saisons.js)
@@ -106,6 +113,10 @@ Village.Monde = (function () {
     monde.drapeau = partie.drapeau || 0;
     monde.pieces = partie.pieces || 0; // étape 8
     monde.logementBonus = partie.logementBonus || 0;
+    if (partie.reserve) monde.reserve = { niveau: Math.max(1, partie.reserve.niveau || 1) }; // étape 11
+    monde.rythme = Object.assign({}, partie.rythme);
+    if (partie.derniereVue) monde.derniereVue = partie.derniereVue;
+    if (partie.pub) Object.assign(monde.pub, { vues: partie.pub.vues || 0, jour: partie.pub.jour || null, vuesDuJour: partie.pub.vuesDuJour || 0 });
     if (partie.marche) monde.marche = { facteurs: Object.assign({}, partie.marche.facteurs), ventes: partie.marche.ventes || 0, achats: partie.marche.achats || 0 };
     if (partie.recherches) monde.recherches = { faites: (partie.recherches.faites || []).slice(), enCours: partie.recherches.enCours || null };
     if (partie.missions) Object.assign(monde.missions, partie.missions);
@@ -169,6 +180,7 @@ Village.Monde = (function () {
     Village.Missions.etape(monde, dt); // étape 7
     Village.Marche.etape(monde, dt); // étape 8 : les prix reviennent vers la normale
     Village.Statistiques.etape(monde, dt); // étape 8 : le compteur tourne la page toutes les 10 s
+    Village.Publicite.etape(monde, dt); // étape 11 : une proposition de pub, de temps en temps
     nature(monde, dt);
   }
 
@@ -216,8 +228,15 @@ Village.Monde = (function () {
     }
   }
 
-  function joueur(monde, intentions) {
+  // Étape 11 : tout ce que fait le joueur est marqué d'une étoile ★ par le compteur des statistiques.
+  function joueur(monde, intentions) { Village.Statistiques.horsCompte(monde, () => joueurSansCompte(monde, intentions)); }
+  function joueurSansCompte(monde, intentions) {
     const s = intentions.souris, B = Village.Batiments;
+    // Étape 11 : la réserve, les pubs, le résumé de l'absence
+    if (intentions.reserve) Village.Reserve.agrandir(monde, intentions.reserve);
+    if (intentions.pub === "regarder") Village.Publicite.regarder(monde);
+    else if (intentions.pub === "refuser") Village.Publicite.refuser(monde);
+    if (intentions.absenceVue) monde.absence = null;
     if (intentions.construire) {
       // Appuyer 2 fois sur le même bouton = annuler.
       monde.construction = monde.construction === intentions.construire ? null : intentions.construire;

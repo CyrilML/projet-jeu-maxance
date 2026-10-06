@@ -40,9 +40,15 @@ Village.Batiments = (function () {
     fonderie: { nom: "Fonderie", court: "Fonderie", emoji: "🔥", metier: "fondeur" },
     forge: { nom: "Forge", court: "Forge", emoji: "⚒️", metier: "forgeron" },
     marche: { nom: "Marché", court: "Marché", emoji: "🏪", metier: "marchand" },
+    // Étape 11 : le bourg
+    ferme: { nom: "Ferme", court: "Ferme", emoji: "🌾", metier: "fermier" },
+    moulin: { nom: "Moulin", court: "Moulin", emoji: "🌬️", metier: "meunier" },
+    boulangerie: { nom: "Boulangerie", court: "Boulangerie", emoji: "🍞", metier: "boulanger" },
+    mineOr: { nom: "Mine d'or", court: "Mine d'or", emoji: "🟡", metier: "mineur" },
+    orfevre: { nom: "Atelier de l'orfèvre", court: "Orfèvre", emoji: "💍", metier: "orfèvre" },
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche"];
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre"];
   // « 🪵 troncs », « 🔩 lingots »… (étape 8 : fabriqué à partir de config.js, « ressources »)
   const NOMS_RESSOURCES = {};
   for (const [r, f] of Object.entries(C.ressources)) NOMS_RESSOURCES[r] = f.emoji + " " + f.nom;
@@ -159,6 +165,7 @@ Village.Batiments = (function () {
       enFile: {}, // les livraisons « apporter » écrites dans la file pour ce bâtiment
       livre: Object.assign({}, etat.livre), // le chantier : les matériaux arrivés
       attendu: Object.assign({}, etat.attendu), // le chantier : les matériaux réservés, pas encore partis de l'entrepôt
+      usure: etat.usure || 0, // étape 11 : de 0 (tout neuf) à 1 (usé : 2 fois moins vite). Un 🔨 outil le répare.
     };
     const i = l * monde.carte.colonnes + c;
     monde.batiments.push(b);
@@ -252,6 +259,7 @@ Village.Batiments = (function () {
         }
         continue;
       }
+      user(monde, b, dt); // étape 11 : au bourg, les bâtiments s'usent
       if (C.ateliers[b.type]) { if (b.relie) fabriquer(monde, b, dt); } // étape 8 : scierie, fonderie, forge
       else if (C.mines[b.type]) { if (b.relie) miner(monde, b, dt); } // étape 7 ; étape 8 : charbon ou fer
       else if (b.type === "universite" || b.type === "marche") continue; // étape 7 : Village.Recherches ; étape 8 : Village.Marche
@@ -266,6 +274,11 @@ Village.Batiments = (function () {
   function fabriquer(monde, b, dt) {
     const recette = C.ateliers[b.type];
     if (!b.ouvrier) return; // pas d'ouvrier (il est parti, ou pas encore de logement)
+    // Étape 11 : la ferme ne travaille pas en hiver (le blé ne pousse pas sous la neige)
+    if (recette.pasEnHiver && monde.saison && monde.saison.hiver) {
+      if (b.attend !== "hiver") { b.attend = "hiver"; radio.emettre("atelier-attend", { nom: TYPES[b.type].nom, numero: b.numero, raison: "c'est l'hiver, le blé ne pousse pas" }); }
+      return;
+    }
     if (!b.travail) {
       const manque = Object.entries(recette.entrees).filter(([r, n]) => (b.entrees[r] || 0) < n).map(([r]) => r);
       if (manque.length) {
@@ -290,6 +303,24 @@ Village.Batiments = (function () {
       b.produits += combien;
       radio.emettre("fabrication-finie", { nom: TYPES[b.type].nom, numero: b.numero, quoi, quantite: combien, devant: b.sortie });
     }
+  }
+
+  // Étape 11 : ✍️ l'ENTRETIEN. À partir du bourg, chaque bâtiment qui a un ouvrier s'use petit à petit
+  // (complètement en 30 minutes de jeu). Usé, son ouvrier travaille 2 fois moins vite. À 60 % d'usure,
+  // un porteur lui apporte 1 🔨 outil, et il redevient tout neuf (voir logique/porteurs.js).
+  function user(monde, b, dt) {
+    if ((monde.age || 0) < C.bourg.ageDesRegles || b.etat !== "pret" || !TYPES[b.type].metier) return;
+    const avant = b.usure;
+    b.usure = Math.min(1, b.usure + dt / (C.bourg.usure / Village.Recherches.bonus(monde, "usure")));
+    if (avant < 1 && b.usure >= 1) radio.emettre("batiment-use", { nom: TYPES[b.type].nom, numero: b.numero });
+    if (b.ouvrier) b.ouvrier.usee = b.usure >= 1;
+  }
+  // Réparer : l'outil est arrivé.
+  function reparer(monde, b) {
+    const avant = Math.round(b.usure * 100);
+    b.usure = 0;
+    if (b.ouvrier) b.ouvrier.usee = false;
+    radio.emettre("reparation", { nom: TYPES[b.type].nom, numero: b.numero, avant });
   }
 
   // Étape 7 : la mine. Le mineur creuse dans le filon voisin ; chaque morceau attend devant
@@ -318,5 +349,5 @@ Village.Batiments = (function () {
     radio.emettre("minerai-extrait", { numero: b.numero, nom: TYPES[b.type].nom, quoi: sorte, reste: k.reste[i], devant: b.sortie });
   }
 
-  return { TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
+  return { reparer, TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
 })();

@@ -26,6 +26,9 @@
     ? Village.Monde.creer(sauvees.graine, sauvees.partie, sauvees.camera)
     : Village.Monde.creer(nouvelleGraine(), null, null);
   let debutDuMonde = monde.temps, derniereSauvegarde = monde.temps;
+  // Étape 11 : le village a-t-il travaillé pendant ton absence ? (la réserve)
+  const absent = (monde.derniereVue ? (Date.now() - monde.derniereVue) / 1000 : 0);
+  if (sauvees.partie && absent > 30) Village.Reserve.absence(monde, absent);
   // Pour les curieux : tape « Village.monde » dans la console du navigateur (F12) pour fouiller le monde.
   Village.monde = monde;
 
@@ -71,6 +74,12 @@
   // Quand on ferme la page ou qu'on change d'onglet (ou d'application sur un téléphone) : on sauvegarde.
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") sauver("la page se cache ou se ferme");
+    else {
+      // Étape 11 : de retour après un moment (le téléphone était en veille, ou un autre onglet) ?
+      const absent = (Date.now() - monde.derniereVue) / 1000;
+      if (absent > 30) Village.Reserve.absence(monde, absent);
+      monde.derniereVue = Date.now();
+    }
   });
   // Étape 7 : plus de sécurité. « pagehide » arrive aussi quand un téléphone ferme la page d'un coup,
   // et on sauvegarde toutes les 15 vraies secondes (même en pause).
@@ -93,6 +102,7 @@
       outil: E.consommer("route") ? "route" : E.consommer("routePierre") ? "routePierre" : E.consommer("demolir") ? "demolir" : E.consommer("deplacer") ? "deplacer" : null,
       recherche: null, mission: null, achat: null, // étape 7
       marche: null, // étape 8 : { sens: "vendre" ou "acheter", quoi: "planches" }
+      reserve: null, pub: null, absenceVue: false, // étape 11
       annuler: false,
       allerA: null,
       souris,
@@ -109,6 +119,9 @@
         else if (z.action === "mission") i.mission = z.valeur;
         else if (z.action === "achat") i.achat = z.valeur;
         else if (z.action === "marche") i.marche = z.valeur; // étape 8
+        else if (z.action === "reserve") i.reserve = z.valeur; // étape 11
+        else if (z.action === "pub") i.pub = z.valeur;
+        else if (z.action === "absenceVue") i.absenceVue = true;
         else if (z.action === "construire") { i.construire = z.valeur; Village.Interface.fermerMenu(); }
         else if (z.action === "outil") { i.outil = z.valeur; Village.Interface.fermerMenu(); }
         else if (z.action === "annuler" || z.action === "fermer") i.annuler = true;
@@ -173,6 +186,7 @@
       // Les pas suivants de la même image : plus de clic, de glissé ni de zoom (déjà faits).
       intentions = Object.assign({}, intentions, {
         zoom: 0, village: false, construire: null, outil: null, annuler: false, allerA: null, recherche: null, mission: null, achat: null,
+        marche: null, reserve: null, pub: null, absenceVue: false, // étape 11 : sinon, une vente se faisait 2 fois !
         souris: Object.assign({}, intentions.souris, { glisseX: 0, glisseY: 0, molette: 0, pince: 1, centrePince: null, clic: null }),
       });
       pas++;
@@ -192,6 +206,7 @@
     }
 
 
+    if (document.visibilityState !== "hidden") monde.derniereVue = Date.now(); // étape 11 : le jeu tourne
     Village.Peintre.dessiner(monde, options);
     Village.SousLeCapot.mettreAJour(maintenant);
 

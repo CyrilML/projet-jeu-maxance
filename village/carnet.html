@@ -134,6 +134,7 @@
       <a href="#etape8">Étape 8</a>
       <a href="#etape9">Étape 9</a>
       <a href="#etape10">Étape 10</a>
+      <a href="#etape11">Étape 11</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -892,6 +893,76 @@ angle :  0,9  ──────────────────────
       <details class="question"><summary>Pourquoi les visages ne sont-ils dessinés que de près ?</summary><p>De loin, un œil ferait moins d'un pixel : on ne le verrait pas, et ça ralentirait le jeu pour rien (le niveau de détail de l'étape 9).</p></details>
     </section>
 
+    <section id="etape11">
+      <h2>🏰 Étape 11 : le bourg, la réserve et les pubs <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Pour donner envie de revenir : le village travaille pendant ton absence (la réserve), des cadeaux arrivent contre une pub, et le bourg est plus difficile : il faut du pain, entretenir les bâtiments et chauffer les maisons l'hiver. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/12-bourg-reserve-pubs.md</code>.</p>
+          <ul>
+            <li>✍️ De plus en plus difficile de passer d'un âge à l'autre.</li>
+            <li>✍️ Une réserve (un silo) qui fait continuer le village quand on n'est pas là, très chère à agrandir, ou avec des 💎.</li>
+            <li>✍️ Des pubs qui apparaissent au hasard, sans limite, mais pas trop faciles.</li>
+            <li>✍️ 1A : tout le bourg.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Ferme le jeu 10 minutes, rouvre-le : « 🌙 Pendant ton absence… ».</li>
+            <li>☐ Touche l'entrepôt : la réserve, et ses 2 boutons pour l'agrandir. Le silo grandit à côté !</li>
+            <li>☐ Joue un moment : « 📺 Un cadeau t'attend ! ». Regarde la (fausse) pub, reçois le cadeau.</li>
+            <li>☐ Au bourg : ferme → moulin → boulangerie, et le pain arrive.</li>
+            <li>☐ Les bâtiments s'usent (fissures, bulle 🔧) ; un porteur apporte un 🔨 pour les réparer.</li>
+            <li>☐ En hiver, sans bois : 🥶 tout le monde a froid.</li>
+            <li>Vérifie « version 12 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>📦 La réserve : un calcul au retour</h3>
+      <p>Quand la page est fermée, le jeu ne tourne pas du tout ! Alors, au retour, on <strong>calcule</strong> ce qui se serait passé, avec le <strong>rythme</strong> du village (mesuré par le compteur de l'entrepôt de l'étape 8) :</p>
+      <pre style="white-space: pre-wrap">gain = rythme par minute × minutes d'absence
+ex. : 6 🟫 par minute × 60 minutes = 360 🟫… mais la réserve n'a que 150 places !
+→ on garde 150, et le jeu te dit « réserve pleine au bout de 25 minutes »</pre>
+      <p>Pour mesurer un rythme juste, le compteur met maintenant une étoile ★ à côté de ce que TU fais (vendre, acheter, payer un chantier) : ça ne compte pas comme le travail du village.</p>
+      <p>Agrandir la réserve coûte de plus en plus cher : c'est une <strong>courbe exponentielle</strong>. Chaque niveau coûte 2,2 fois le précédent : 40, 88, 194, 426, 937 planches…</p>
+
+      <h3>📺 Une pub juste, pas trop facile</h3>
+      <pre style="white-space: pre-wrap">cadeau = 4 minutes de production   (au moins l'équivalent de 24 🪙)
+1re pub du jour : 100 % · 2e : 88 % · 3e : 77 % · … jusqu'à 35 %
+et jamais plus du quart de ce qui te manque pour l'âge suivant</pre>
+      <p>Comme ça, regarder des pubs aide à avancer, sans tout donner : il faut quand même bien gérer son village. C'est un <strong>rendement décroissant</strong> : chaque fois vaut un peu moins que la précédente.</p>
+      <p class="petit">Pour l'instant, la pub est fausse (5 secondes d'attente). Les vraies pubs ne marchent que dans une application sur les stores, avec un compte au nom d'un adulte.</p>
+
+      <h3>🏰 Le bourg : 3 nouvelles choses à penser</h3>
+      <pre style="white-space: pre-wrap">🌾 ferme ─blé─► 🌬️ moulin ─farine─┐
+🪵 troncs ────────────────────────┴─► 🍞 boulangerie ─pain─► les repas
+🟡 mine d'or ─or─┐
+⚫ charbon ──────┴─► 💍 orfèvre ─bijoux─► le marché (70 🪙 !)</pre>
+      <ul>
+        <li><strong>Le pain</strong> : au bourg, un repas sans pain rend mécontent (20 % moins vite).</li>
+        <li><strong>L'entretien</strong> : les bâtiments s'usent ; un 🔨 outil les répare. Usé, on va 2 fois moins vite.</li>
+        <li><strong>L'hiver</strong> : il faut brûler du bois dans chaque maison. Et la ferme ne produit rien sous la neige !</li>
+      </ul>
+      <p>Les ralentissements se <strong>multiplient</strong> : mécontent ET froid, c'est 0,8 × 0,8 = 0,64, donc 36 % moins vite.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, trouve « 📦 La réserve · 📺 les pubs » : quel est le rythme de ton village ?</li>
+        <li>Regarde 3 pubs dans la journée : la valeur passe de 100 % à 88 %, puis à 77 %…</li>
+        <li>Combien de bois faut-il chaque minute en hiver avec 4 huttes et 3 maisons ?</li>
+        <li>Dans <code>config.js</code>, trouve <code>reserve</code> : et si la réserve grandissait de × 2 à chaque niveau ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Ton village fait 5 objets par minute, et la réserve a 150 places. Combien de temps avant qu'elle soit pleine ?</summary><p>150 ÷ 5 = 30 minutes.</p></details>
+      <details class="question"><summary>Agrandir la réserve coûte 40 planches, puis × 2,2 à chaque niveau. Combien pour le 3e agrandissement ?</summary><p>40 × 2,2 × 2,2 ≈ 194 planches.</p></details>
+      <details class="question"><summary>Un habitant a faim (× 0,5) et froid (× 0,8). À quelle vitesse travaille-t-il ?</summary><p>0,5 × 0,8 = 0,4, donc à 40 % de sa vitesse normale.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -957,14 +1028,20 @@ angle :  0,9  ──────────────────────
           <p>Un bonhomme qu'on habille : des visages, chacun sa tête, l'habit et le chapeau de chaque métier, de vrais gestes, et les ouvriers des ateliers qui travaillent devant leur bâtiment.</p>
           <p class="apprend"><b>Tu apprends :</b> l'animation image par image, découper un geste en étapes. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">11</div>
-          <h4>🏰 Le bourg : l'or, l'argent et le pain <span class="etiquette">⏭️ prochaine étape</span></h4>
-          <p>Mines d'or et d'argent, orfèvre (bijoux qui se vendent cher), moulin et boulangerie (une nourriture qui nourrit mieux), et de grosses commandes de la capitale.</p>
-          <p class="apprend"><b>Tu apprends :</b> les produits de luxe, une nourriture transformée, des objectifs longs. <b>Durée :</b> 3 séances.</p>
+          <h4>🏰 Le bourg, la réserve et les pubs <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>La réserve qui fait travailler le village pendant ton absence, les pubs qui arrivent au hasard (pas trop faciles), le pain, l'or et les bijoux, l'entretien et les hivers durs.</p>
+          <p class="apprend"><b>Tu apprends :</b> calculer au lieu de simuler, une courbe exponentielle, un rendement décroissant, des ralentissements qui se multiplient. <b>Durée :</b> 3 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">12</div>
+          <h4>👆 Poser, déplacer, et de belles routes <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <p>✍️ Le bâtiment transparent suit le doigt, avec ✅ pour poser et ❌ pour annuler ; un appui long pour déplacer ; des routes plus jolies et plus simples à tracer, sans quadrillage autour des bâtiments.</p>
+          <p class="apprend"><b>Tu apprends :</b> l'appui long, l'aperçu avant de valider, le tracé d'un chemin. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">12</div>
+          <div class="num">13</div>
           <h4>🏙️ La ville : monuments, fêtes et port</h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -1061,6 +1138,14 @@ angle :  0,9  ──────────────────────
         <textarea class="journal" id="village-appris-10" data-cle="village-appris-10" placeholder="Ex. : J'ai appris qu'un geste est un angle qui change avec le temps…"></textarea>
         <label for="village-idees-10"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-10" data-cle="village-idees-10" placeholder="Ex. : Que les habitants se parlent avec des bulles…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 11 · le bourg, la réserve et les pubs <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la réserve et le calcul de l'absence (<code>logique/reserve.js</code>), les fausses pubs (<code>logique/publicite.js</code>), le compteur qui reconnaît tes actions, le bourg (ferme, moulin, boulangerie, mine d'or, orfèvre), le pain, l'entretien, le chauffage en hiver, 7 recherches, 4 missions, les objectifs de la ville, la base de données en version 9.</p>
+        <label for="village-appris-11"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-11" data-cle="village-appris-11" placeholder="Ex. : J'ai appris qu'on peut calculer ce qui s'est passé pendant l'absence…"></textarea>
+        <label for="village-idees-11"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-11" data-cle="village-idees-11" placeholder="Ex. : Une réserve de nourriture séparée…"></textarea>
       </div>
     </section>
   </main>

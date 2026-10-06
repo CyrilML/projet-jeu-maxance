@@ -40,12 +40,16 @@
 //                  (entrees : { troncs: 2 }). Avant, la scierie avait seulement « entree » (des troncs) : on la
 //                  convertit. Une partie plus ancienne reçoit une place offerte pour chacun de ses bâtiments :
 //                  la nouvelle règle des logements ne fait partir personne.
+//   9 (étape 11) : le niveau de la réserve (reserve), le rythme du village (rythme : ce qu'il gagne par minute),
+//                  l'heure de la dernière image (derniereVue, pour calculer l'absence), les pubs regardées (pub),
+//                  l'usure de chaque bâtiment (usure), et les ressources du bourg (blé, farine, pain, or, bijoux).
+//                  Une partie plus ancienne commence avec une réserve au niveau 1 et un rythme vide.
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 8;
+  const VERSION = 9;
   const radio = Village.Evenements;
 
   function vide() {
@@ -168,6 +172,7 @@ Village.Sauvegarde = (function () {
         const d = { type: b.type, colonne: b.colonne, ligne: b.ligne, progres: b.progres >= 1 ? 1 : Math.floor(b.progres * 100) / 100, produits: b.produits };
         if (b.sortie) { d.sortie = b.sortie; if (b.lots.some((q) => q !== 1)) d.lots = b.lots; }
         if (Object.values(b.entrees).some((n) => n > 0)) d.entrees = b.entrees; // étape 8
+        if (b.usure > 0) d.usure = Math.round(b.usure * 1000) / 1000; // étape 11
         if (b.etat === "chantier") { d.livre = b.livre; d.attendu = ajout(b.attendu, enCours.attendu.get(b)); }
         const o = b.ouvrier;
         if (o && o.faim) { d.faim = Math.round(o.faim); if (o.affame) { d.affame = true; d.ventreVide = Math.round(o.ventreVide); } }
@@ -181,6 +186,10 @@ Village.Sauvegarde = (function () {
       gemmes: monde.gemmes,
       drapeau: monde.drapeau,
       pieces: monde.pieces, // étape 8
+      reserve: monde.reserve, // étape 11
+      rythme: Village.Reserve.rythme(monde),
+      derniereVue: monde.derniereVue,
+      pub: { vues: monde.pub.vues, jour: monde.pub.jour, vuesDuJour: monde.pub.vuesDuJour },
       logementBonus: monde.logementBonus,
       marche: { facteurs: Object.fromEntries(Object.entries(monde.marche.facteurs).map(([r, f]) => [r, Math.round(f * 1000) / 1000])), ventes: monde.marche.ventes, achats: monde.marche.achats },
       recherches: { faites: monde.recherches.faites, enCours: monde.recherches.enCours && { id: monde.recherches.enCours.id, reste: Math.round(monde.recherches.enCours.reste) } },
