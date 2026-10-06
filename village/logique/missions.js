@@ -79,11 +79,12 @@ Village.Missions = (function () {
     for (const [r, n] of Object.entries(m.demande)) monde.stock[r] -= n;
     for (const [r, n] of Object.entries(m.recompense)) {
       if (r === "gemmes") monde.gemmes += n;
+      else if (r === "pieces") monde.pieces += n; // étape 8 : des pièces 🪙 pour le marché
       else monde.stock[r] += n;
     }
     monde.missions.reussies.push(m.id);
     terminer(monde);
-    radio.emettre("mission-reussie", { qui: m.qui, emoji: m.emoji, recompense: m.recompense, gemmes: monde.gemmes });
+    radio.emettre("mission-reussie", { qui: m.qui, emoji: m.emoji, recompense: m.recompense, gemmes: monde.gemmes, pieces: monde.pieces });
   }
 
   return { trouver, assez, etape, accepter, plusTard, livrer };

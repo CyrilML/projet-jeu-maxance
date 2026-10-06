@@ -63,8 +63,9 @@ Village.Repas = (function () {
         const qui = "le " + B.TYPES[b.type].metier + " (" + B.TYPES[b.type].nom + " n° " + b.numero + ")";
         if (avoirFaim(monde, o, dt, qui) === "part") partir(monde, b, qui);
       } else if (b.etat === "pret" && B.TYPES[b.type].metier) {
-        // Une cabane vide : un nouvel habitant arrive s'il y a de quoi manger.
-        if (nourritureEnStock(monde) >= 2) {
+        // Une cabane vide : un nouvel habitant arrive s'il y a de quoi manger
+        // (étape 8 : ✍️ et une place pour dormir, dans une hutte ou une maison).
+        if (nourritureEnStock(monde) >= 2 && Village.Logement.placeLibre(monde)) {
           b.attenteHabitant = (b.attenteHabitant || 0) + dt;
           if (b.attenteHabitant >= C.repas.retour) {
             b.attenteHabitant = 0;

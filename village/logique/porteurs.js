@@ -4,7 +4,7 @@
 //   - « ramener » : aller chercher ce qui attend devant un bâtiment (un tronc, une pierre, une planche)
 //     et le rapporter à l'entrepôt ;
 //   - « apporter » : prendre un objet dans l'entrepôt et l'apporter à un bâtiment
-//     (des planches pour un chantier, des troncs pour la scierie).
+//     (des planches pour un chantier, des troncs pour la scierie, du fer et du charbon pour la fonderie…).
 //
 // Le chef regarde tous les bâtiments reliés et écrit chaque livraison à faire sur un papier qu'il met
 // au bout de la FILE D'ATTENTE. Un porteur libre prend toujours le papier du DÉBUT de la file :
@@ -21,7 +21,7 @@ window.Village = window.Village || {};
 Village.Porteurs = (function () {
   const C = Village.CONFIG;
   const radio = Village.Evenements;
-  const RESSOURCES = ["troncs", "planches", "pierres", "poissons", "viande"];
+  const RESSOURCES = Object.keys(C.ressources); // étape 8 : toutes les ressources de config.js
 
   function creerTous(monde, nombre) {
     monde.porteurs = [];
@@ -68,11 +68,14 @@ Village.Porteurs = (function () {
           }
         }
       }
-      // Apporter des troncs à la scierie
-      if (b.type === "scierie" && b.etat === "pret") {
-        while (b.entree + (b.enFile.troncs || 0) + (b.enRoute || 0) < C.entreeMax && disponible(monde, "troncs") >= 1) {
-          b.enFile.troncs = (b.enFile.troncs || 0) + 1;
-          ajouter(monde, { sorte: "apporter", quoi: "troncs", batiment: b });
+      // Apporter ses ingrédients à un atelier (étape 8 : chaque ingrédient de sa recette, 2 de chaque au plus)
+      const recette = C.ateliers[b.type];
+      if (recette && b.etat === "pret") {
+        for (const r of Object.keys(recette.entrees)) {
+          while ((b.entrees[r] || 0) + (b.enFile[r] || 0) + (b.enRoute[r] || 0) < C.entreeMax && disponible(monde, r) >= 1) {
+            b.enFile[r] = (b.enFile[r] || 0) + 1;
+            ajouter(monde, { sorte: "apporter", quoi: r, batiment: b });
+          }
         }
       }
     }
@@ -145,7 +148,7 @@ Village.Porteurs = (function () {
             monde.stock[papier.quoi]--;
             b.enFile[papier.quoi]--;
             if (b.etat === "chantier") b.attendu[papier.quoi]--;
-            else b.enRoute = (b.enRoute || 0) + 1;
+            else b.enRoute[papier.quoi] = (b.enRoute[papier.quoi] || 0) + 1;
             p.porte = papier.quoi;
           }
           radio.emettre("porteur-part", { porteur: p.numero, sorte: papier.sorte, quoi: papier.quoi, nom: Village.Batiments.TYPES[b.type].nom, batiment: b.numero, pas: chemin.length - 1, file: monde.file.length });
@@ -161,7 +164,7 @@ Village.Porteurs = (function () {
         if (papier.sorte === "apporter") {
           if (existe(monde, b)) {
             if (b.etat === "chantier") b.livre[papier.quoi] = (b.livre[papier.quoi] || 0) + 1;
-            else { b.entree++; b.enRoute--; }
+            else { b.entrees[papier.quoi] = (b.entrees[papier.quoi] || 0) + 1; b.enRoute[papier.quoi]--; }
             radio.emettre("porteur-livre", { porteur: p.numero, quoi: papier.quoi, nom: Village.Batiments.TYPES[b.type].nom, batiment: b.numero });
             p.porte = null;
           }
@@ -193,10 +196,10 @@ Village.Porteurs = (function () {
   // Pour la sauvegarde : ce que les porteurs ont dans les bras retourne là d'où il vient.
   // (On ne sauvegarde ni les porteurs ni la file : ils recommencent au rechargement.)
   function enCours(monde) {
-    const retour = { stock: { troncs: 0, planches: 0, pierres: 0, poissons: 0, viande: 0 }, attendu: new Map() };
+    const retour = { stock: {}, attendu: new Map() };
     for (const p of monde.porteurs) {
       if (!p.porte) continue;
-      retour.stock[p.porte] += p.travail.sorte === "ramener" ? (p.quantite || 1) : 1;
+      retour.stock[p.porte] = (retour.stock[p.porte] || 0) + (p.travail.sorte === "ramener" ? (p.quantite || 1) : 1);
       const b = p.travail.batiment;
       if (p.travail.sorte === "apporter" && p.etat === "aller" && b.etat === "chantier") {
         const a = retour.attendu.get(b) || {};

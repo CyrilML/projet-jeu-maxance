@@ -51,6 +51,8 @@ séparée de celle du carnet principal. Une demande pour le village se range et 
 Le contenu du village (âges, recherches, missions, boutique) est rangé comme des données dans
 `village/config.js`. ✍️ Maxance tient à garder sa partie : ne jamais casser la sauvegarde
 (`village/donnees/sauvegarde.js`) ; chaque changement de format augmente `VERSION` et convertit l'ancienne.
+✍️ Public du village (décision n° 8) : **surtout les adultes**. Style dessin animé conservé, mais une gestion
+plus riche (chiffres, statistiques, marché, objectifs longs). Le carnet reste écrit pour Maxance.
 
 Règles :
 - Pas d'étape de compilation, pas de dépendances : de simples fichiers `<script>` chargés dans

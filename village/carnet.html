@@ -131,6 +131,7 @@
       <a href="#etape5">Étape 5</a>
       <a href="#etape6">Étape 6</a>
       <a href="#etape7">Étape 7</a>
+      <a href="#etape8">Étape 8</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -671,6 +672,98 @@ avec les haches affûtées :  4 s × 0,6 = 2,4 s   (40 % plus vite)</pre>
       <details class="question"><summary>Tu as 5 💎. Peux-tu acheter un porteur et un coffre ?</summary><p>Non : 4 + 2 = 6 💎. Il t'en manque une.</p></details>
     </section>
 
+    <section id="etape8">
+      <h2>🏡 Étape 8 : le village, le fer, les maisons et le marché <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">L'âge du village est arrivé : une vraie chaîne du métal (mine de fer → fonderie → forge), des huttes et des maisons pour loger les habitants, un marché où les prix bougent, des statistiques, 6 recherches et 5 missions. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/09-le-village-fer-marche.md</code>.</p>
+          <ul>
+            <li>✍️ 1A : la fonderie, simple : 1 🟤 fer + 1 ⚫ charbon → 1 🔩 lingot.</li>
+            <li>✍️ 2B : chaque ouvrier a besoin d'une place pour dormir.</li>
+            <li>✍️ 3A : des statistiques 📊 tout de suite.</li>
+            <li>✍️ Et le marché 🏪, et de nouvelles missions.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Au campement : construis 7 cabanes. La 7e reste vide, avec une bulle 🛏️.</li>
+            <li>☐ 🛖 Maisons → Hutte : 30 s après, l'ouvrier arrive.</li>
+            <li>☐ Au village : ⛏️ Mines → 🟤 Mine de fer, collée à un filon orange.</li>
+            <li>☐ ⚒️ Artisans → 🔥 Fonderie puis ⚒️ Forge : des 🔨 arrivent à l'entrepôt.</li>
+            <li>☐ 🏪 Marché : vends 5 🟫, le prix baisse… puis il remonte tout seul.</li>
+            <li>☐ 📊 en haut à droite : combien de planches par minute ?</li>
+            <li>☐ Ta partie d'avant est toujours là, avec tous ses ouvriers.</li>
+            <li>☐ 🐞 Réparé : sur téléphone, toucher une carte du tiroir (ex. Bois → Bûcheron) ne faisait rien.</li>
+            <li>Vérifie « version 9 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🐞 Le bug du toucher qui passait à côté</h3>
+      <p>✍️ Maxance a remarqué que sur téléphone, Bois → Bûcheron ne faisait rien. La raison : l'écran se souvient des <strong>zones</strong> où sont les boutons, et quand on touche, il prend la zone dessinée <strong>en dernier</strong> (celle du dessus). Sous les cartes du tiroir, il y a une zone invisible « rien » (pour que toucher entre deux cartes ne touche pas la carte du monde)… mais elle était notée <em>après</em> les cartes, donc <em>au-dessus</em> d'elles : elle mangeait tous les touchers ! Maintenant, elle est notée avant. Comme des feuilles empilées : on voit celle du dessus.</p>
+
+      <h3>⛓️ Une chaîne à 3 étages</h3>
+      <pre style="white-space: pre-wrap">🟤 mine de fer ────── fer ──────┐
+⚫ mine de charbon ── charbon ──┴──► 🔥 fonderie ── 🔩 lingot ──┐
+🪚 scierie ────────── 🟫 planche ───────────────────────────────┴──► ⚒️ forge ── 🔨 outil ──► missions, recherches, marché</pre>
+      <p>Chaque flèche, c'est un <strong>porteur</strong> qui passe par l'entrepôt. La fonderie attend d'avoir <strong>les deux</strong> ingrédients : s'il manque le charbon, elle s'arrête, même avec plein de fer. C'est ce qu'on appelle un <strong>goulot d'étranglement</strong> : le morceau le plus lent de la chaîne décide de la vitesse de toute la chaîne (comme le goulot d'une bouteille).</p>
+
+      <h3>📜 Un atelier suit une recette</h3>
+      <p>Avant, la scierie avait son propre code. Maintenant, la scierie, la fonderie et la forge sont des <strong>ateliers</strong> : le même code les fait marcher, et chacun suit sa <strong>recette</strong>, rangée comme une donnée dans <code>config.js</code> :</p>
+      <pre style="white-space: pre-wrap">scierie :  { entrees: { troncs: 1 },              sorties: { planches: 2 }, duree: 6 }
+fonderie : { entrees: { fer: 1, charbon: 1 },     sorties: { lingots: 1 },  duree: 10 }
+forge :    { entrees: { lingots: 1, planches: 1 }, sorties: { outils: 1 },   duree: 12 }</pre>
+      <p>Comme une cuisine qui suit des fiches : pour un nouvel atelier (un moulin, une boulangerie…), il suffira d'écrire une nouvelle fiche !</p>
+
+      <h3>🛏️ Compter les lits</h3>
+      <pre style="white-space: pre-wrap">places    = 6 (tentes du campement) + 3 × huttes + 6 × maisons
+habitants = les ouvriers des bâtiments (les porteurs dorment à l'entrepôt)
+un nouvel ouvrier arrive si : habitants &lt; places  ET  il y a à manger</pre>
+      <p>Les ouvriers ne partent pas si tu démolis une maison : seulement, personne de nouveau n'arrive. Ta partie d'avant a reçu des places offertes, pour que la nouvelle règle ne fasse partir personne.</p>
+
+      <h3>⚖️ L'offre et la demande</h3>
+      <p>Au marché, chaque ressource a un <strong>facteur</strong> (1 = le prix normal). Vendre fait baisser le facteur (« encore des planches ? on en a plein ! »), acheter le fait monter. Puis il revient doucement vers 1.</p>
+      <pre style="white-space: pre-wrap">prix de vente d'un paquet = prix de base × 5 × facteur
+vendre 5 planches :  facteur × (1 − 0,02 × 5) = facteur × 0,9   (10 % moins cher la fois suivante)
+acheter coûte 1,5 fois plus cher que vendre (le marchand doit gagner sa vie)</pre>
+      <p>Astuce de gestionnaire : vends un peu de tout plutôt que beaucoup d'une seule chose !</p>
+
+      <h3>📊 Le compteur à la porte de l'entrepôt</h3>
+      <p>Imagine un gardien assis à la porte de l'entrepôt avec un carnet : un trait pour chaque objet qui entre, un trait pour chaque objet qui sort. Toutes les 10 secondes, il tourne la page, et il garde les 30 dernières pages (5 minutes).</p>
+      <pre style="white-space: pre-wrap">par minute = traits des pages gardées ÷ minutes que couvrent ces pages
+bilan      = entrées − sorties   (vert : le stock monte · rouge : il baisse)</pre>
+      <p>Comment le gardien voit-il tout passer ? Le stock est enveloppé dans un <strong>Proxy</strong> : un objet-espion qui ressemble au stock, mais qui est prévenu chaque fois qu'on écrit dedans. C'est comme une porte qui compte ceux qui la traversent.</p>
+
+      <h3>🗺️ Le plan des âges</h3>
+      <div class="tableau-defile"><table class="fichiers">
+        <tr><th>Âge</th><th>Débloque</th><th>Pour passer au suivant</th></tr>
+        <tr><td>🏕️ Campement</td><td>bûcheron, forestier, scierie, carrière, pêcheur, chasseur, 🛖 hutte</td><td>6 bâtiments, 40 🟫, 20 🪨, 30 🐟+🍖</td></tr>
+        <tr><td>🛖 Hameau</td><td>🔍 géologue, 🎓 université, ⚫ mine de charbon</td><td>10 bâtiments, 3 recherches, 80 🟫, 20 ⚫, 60 🐟+🍖</td></tr>
+        <tr><td>🏡 Village ✅</td><td>🟤 mine de fer, 🔥 fonderie, ⚒️ forge, 🏠 maison, 🏪 marché, 6 recherches</td><td>18 bâtiments, 16 habitants, 7 recherches, 10 🔩, 10 🔨, 150 🪙</td></tr>
+        <tr><td>🏰 Bourg</td><td>⛏️ or et argent, 💍 orfèvre, 🍞 moulin et boulangerie, 📦 commandes de la capitale</td><td>à construire</td></tr>
+        <tr><td>🏙️ Ville</td><td>🏛️ monuments, 🎭 fêtes, 🚢 port</td><td>à construire</td></tr>
+      </table></div>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, trouve « 📊 Le compteur de l'entrepôt ». Quelle ressource a le bilan le plus rouge ?</li>
+        <li>Aux rayons X, regarde la fonderie : « 1/1🟤 + 0/1⚫ → 1🔩 ». Qu'est-ce qui manque ?</li>
+        <li>Vends 3 paquets de pierres d'affilée. Regarde « ▼ % » au marché, puis attends 3 minutes.</li>
+        <li>Dans <code>config.js</code>, trouve <code>ateliers</code> : invente la recette d'un moulin (blé → farine) !</li>
+        <li>Construis 2 fonderies et une seule mine de fer. La 2e fonderie travaille-t-elle ? Pourquoi ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Tu as 2 huttes et 1 maison. Combien de places ?</summary><p>6 + 2 × 3 + 6 = 18 places.</p></details>
+      <details class="question"><summary>La fonderie fait 1 lingot en 10 s. Combien de lingots en 1 minute ? Et avec les soufflets (× 0,7) ?</summary><p>60 ÷ 10 = 6 lingots. Avec les soufflets : 10 × 0,7 = 7 s, donc 60 ÷ 7 ≈ 8,5 lingots.</p></details>
+      <details class="question"><summary>Une mine de fer sort 1 fer toutes les 8 s, et la fonderie en veut 1 toutes les 10 s. Qui est le goulot ?</summary><p>La fonderie : la mine produit 7,5 fers par minute, la fonderie n'en utilise que 6. Le fer s'entasse à l'entrepôt (le bilan est vert dans 📊).</p></details>
+      <details class="question"><summary>Le prix des planches est à 100 %. Tu vends 5 planches, deux fois de suite. À combien est le facteur ?</summary><p>1 × 0,9 × 0,9 = 0,81, soit 81 % du prix normal.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -718,17 +811,17 @@ avec les haches affûtées :  4 s × 0,6 = 2,4 s   (40 % plus vite)</pre>
           <p>Le grand plan sur 5 âges, l'université et 8 recherches, la mine de charbon, la route en pierre, 7 missions avec leur histoire, les 💎 et la boutique, une sauvegarde plus solide.</p>
           <p class="apprend"><b>Tu apprends :</b> un plan de jeu écrit comme des données, des multiplicateurs, une mission en machine à états, protéger une sauvegarde. <b>Durée :</b> 3 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">8</div>
-          <h4>🏡 Le village : le fer, la fonderie et la forge <span class="etiquette">⏭️ prochaine étape</span></h4>
-          <p>La mine de fer, la fonderie (fer + charbon → lingots), la forge (outils), des maisons pour plus d'habitants, de nouvelles recherches et de nouvelles missions.</p>
-          <p class="apprend"><b>Tu apprends :</b> une chaîne à 3 étages, un bâtiment qui a besoin de 2 ingrédients. <b>Durée :</b> 3 séances.</p>
+          <h4>🏡 Le village : le fer, les maisons et le marché <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Mine de fer, fonderie (fer + charbon → lingots), forge (outils), huttes et maisons pour loger les ouvriers, un marché aux prix qui bougent, les statistiques 📊, 6 recherches et 5 missions payées en pièces.</p>
+          <p class="apprend"><b>Tu apprends :</b> une chaîne à 3 étages et son goulot d'étranglement, une recette rangée comme une donnée, compter des places, l'offre et la demande, un compteur (Proxy). <b>Durée :</b> 3 séances.</p>
         </div>
-        <div class="carte">
+        <div class="carte prochain">
           <div class="num">9</div>
-          <h4>🏰 Le bourg : l'or, l'argent et le marché</h4>
-          <p>Mines d'or et d'argent, orfèvre, et un marché pour vendre ses surplus contre des pièces.</p>
-          <p class="apprend"><b>Tu apprends :</b> les prix, l'offre et la demande. <b>Durée :</b> 3 séances.</p>
+          <h4>🏰 Le bourg : l'or, l'argent et le pain <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <p>Mines d'or et d'argent, orfèvre (bijoux qui se vendent cher), moulin et boulangerie (une nourriture qui nourrit mieux), et de grosses commandes de la capitale.</p>
+          <p class="apprend"><b>Tu apprends :</b> les produits de luxe, une nourriture transformée, des objectifs longs. <b>Durée :</b> 3 séances.</p>
         </div>
         <div class="carte">
           <div class="num">10</div>
@@ -804,6 +897,14 @@ avec les haches affûtées :  4 s × 0,6 = 2,4 s   (40 % plus vite)</pre>
         <textarea class="journal" id="village-appris-7" data-cle="village-appris-7" placeholder="Ex. : J'ai appris qu'une recherche est un multiplicateur…"></textarea>
         <label for="village-idees-7"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-7" data-cle="village-idees-7" placeholder="Ex. : Une mission avec un dragon qui veut de l'or…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 8 · le village, le fer, les maisons et le marché <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les ateliers et leurs recettes (scierie, fonderie, forge), la mine de fer, les huttes et les maisons (<code>logique/logement.js</code>), le marché et ses prix qui bougent (<code>logique/marche.js</code>), le compteur de l'entrepôt et le panneau 📊 (<code>logique/statistiques.js</code>), 6 recherches, 5 missions payées en 🪙, les objectifs du bourg, un menu à 6 groupes, la base de données en version 8.</p>
+        <label for="village-appris-8"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-8" data-cle="village-appris-8" placeholder="Ex. : J'ai appris ce qu'est un goulot d'étranglement…"></textarea>
+        <label for="village-idees-8"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-8" data-cle="village-idees-8" placeholder="Ex. : Un moulin qui fait de la farine pour la boulangerie…"></textarea>
       </div>
     </section>
   </main>

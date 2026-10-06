@@ -47,13 +47,13 @@
     #journal .temps { display: inline-block; min-width: 58px; color: var(--doux); font-family: ui-monospace, Menlo, Consolas, monospace; }
     #journal li[data-evenement="carte-inventee"], #journal li[data-evenement="sauvegarde"] { color: var(--accent); }
     #journal li[data-evenement="case-choisie"] { color: #7dffa0; }
-    #journal li[data-evenement="construction-impossible"], #journal li[data-evenement="rien-a-faire"], #journal li[data-evenement="scierie-attend"] { color: #ff9b9b; }
+    #journal li[data-evenement="construction-impossible"], #journal li[data-evenement="rien-a-faire"], #journal li[data-evenement="atelier-attend"], #journal li[data-evenement="pas-de-logement"] { color: #ff9b9b; }
     #journal li[data-evenement="route-impossible"], #journal li[data-evenement="ouvrier-bloque"], #journal li[data-evenement="batiment-coupe"] { color: #ff9b9b; }
     #journal li[data-evenement="porteur-part"], #journal li[data-evenement="livraison-demandee"] { color: #c9b8ff; }
     #journal li[data-evenement="route-construite"], #journal li[data-evenement="batiment-relie"], #journal li[data-evenement="arrivee-entrepot"] { color: #7dffa0; }
     #journal li[data-evenement="affame"], #journal li[data-evenement="habitant-part"] { color: #ff6b6b; font-weight: bold; }
     #journal li[data-evenement="saison"], #journal li[data-evenement="habitant-arrive"] { color: var(--accent); font-weight: bold; }
-    #journal li[data-evenement="chantier-fini"], #journal li[data-evenement="livraison"], #journal li[data-evenement="planches-sciees"] { color: #ffd34d; }
+    #journal li[data-evenement="chantier-fini"], #journal li[data-evenement="livraison"], #journal li[data-evenement="fabrication-finie"], #journal li[data-evenement="marche-vente"] { color: #ffd34d; }
     #journal li[data-evenement="zoom"], #journal li[data-evenement="retour-village"] { color: #9cc4ff; }
     pre { margin: 0; background: #0b1020; border-radius: 8px; padding: 8px; font-size: .78rem; overflow: auto; max-height: 420px; color: #b9f5c9; }
     code { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--accent); }
@@ -64,7 +64,7 @@
   <div class="page">
     <header class="entete">
       <h1>🏘️ Le village de Maxance · un jeu de gestion</h1>
-      <span><span id="version" class="version"></span> <a href="carnet.html#etape7">📓 Ouvrir le carnet du village</a></span>
+      <span><span id="version" class="version"></span> <a href="carnet.html#etape8">📓 Ouvrir le carnet du village</a></span>
     </header>
 
     <div class="cadre-ecran">
@@ -91,7 +91,7 @@
       <button data-action="pasSuivant">⏭ Un pas <kbd>N</kbd></button>
       <button data-action="ralenti" data-option="ralenti" aria-pressed="false">🐢 Ralenti <kbd>L</kbd></button>
     </div>
-    <p class="commandes">Se déplacer : <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> ou <kbd>Z</kbd> <kbd>Q</kbd> <kbd>S</kbd> <kbd>D</kbd>, ou tirer la carte · Zoomer : molette, <kbd>+</kbd> <kbd>−</kbd>, ou pincer avec 2 doigts · Construire : <kbd>1</kbd> à <kbd>7</kbd> ou le menu en bas (🪵 Bois, 🪨 Pierre, 🍖 Nourriture) ou les boutons en bas de l'écran, puis une case · Route : <kbd>R</kbd>, touche le départ puis l'arrivée · Déplacer : <kbd>M</kbd> · Démolir : <kbd>Suppr</kbd> · <kbd>Échap</kbd> annuler · Toucher un bâtiment : voir ce qu'il fait</p>
+    <p class="commandes">Se déplacer : <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> ou <kbd>Z</kbd> <kbd>Q</kbd> <kbd>S</kbd> <kbd>D</kbd>, ou tirer la carte · Zoomer : molette, <kbd>+</kbd> <kbd>−</kbd>, ou pincer avec 2 doigts · Construire : <kbd>1</kbd> à <kbd>7</kbd> ou le menu en bas (🪵 Bois, 🪨 Pierre, 🍖 Nourriture) ou les boutons en bas de l'écran, puis une case · Route : <kbd>R</kbd>, touche le départ puis l'arrivée · Déplacer : <kbd>M</kbd> · Démolir : <kbd>Suppr</kbd> · <kbd>Échap</kbd> annuler · Toucher un bâtiment : voir ce qu'il fait · En haut à droite : 📜 missions, 💎 boutique, 📊 statistiques, 🏪 marché</p>
 
     <section class="capot" aria-label="Sous le capot">
       <div class="bloc">
@@ -116,34 +116,37 @@
   </div>
 
   <!-- L'ordre compte : chaque fichier peut utiliser ceux chargés AVANT lui.
-       Le « ?v=8 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
-  <script src="config.js?v=8"></script>
-  <script src="moteur/evenements.js?v=8"></script>
-  <script src="moteur/ecran.js?v=8"></script>
-  <script src="moteur/entrees.js?v=8"></script>
-  <script src="moteur/hasard.js?v=8"></script>
-  <script src="moteur/iso.js?v=8"></script>
-  <script src="moteur/chemins.js?v=8"></script>
-  <script src="logique/carte.js?v=8"></script>
-  <script src="logique/ouvriers.js?v=8"></script>
-  <script src="logique/batiments.js?v=8"></script>
-  <script src="logique/routes.js?v=8"></script>
-  <script src="logique/porteurs.js?v=8"></script>
-  <script src="logique/saisons.js?v=8"></script>
-  <script src="logique/animaux.js?v=8"></script>
-  <script src="logique/repas.js?v=8"></script>
-  <script src="logique/ages.js?v=8"></script>
-  <script src="logique/recherches.js?v=8"></script>
-  <script src="logique/missions.js?v=8"></script>
-  <script src="logique/boutique.js?v=8"></script>
-  <script src="logique/monde.js?v=8"></script>
-  <script src="donnees/sauvegarde.js?v=8"></script>
-  <script src="affichage/effets.js?v=8"></script>
-  <script src="affichage/batisses.js?v=8"></script>
-  <script src="affichage/interface.js?v=8"></script>
-  <script src="affichage/peintre.js?v=8"></script>
-  <script src="affichage/rayons-x.js?v=8"></script>
-  <script src="affichage/sous-le-capot.js?v=8"></script>
-  <script src="main.js?v=8"></script>
+       Le « ?v=9 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
+  <script src="config.js?v=9"></script>
+  <script src="moteur/evenements.js?v=9"></script>
+  <script src="moteur/ecran.js?v=9"></script>
+  <script src="moteur/entrees.js?v=9"></script>
+  <script src="moteur/hasard.js?v=9"></script>
+  <script src="moteur/iso.js?v=9"></script>
+  <script src="moteur/chemins.js?v=9"></script>
+  <script src="logique/carte.js?v=9"></script>
+  <script src="logique/ouvriers.js?v=9"></script>
+  <script src="logique/batiments.js?v=9"></script>
+  <script src="logique/routes.js?v=9"></script>
+  <script src="logique/porteurs.js?v=9"></script>
+  <script src="logique/saisons.js?v=9"></script>
+  <script src="logique/animaux.js?v=9"></script>
+  <script src="logique/repas.js?v=9"></script>
+  <script src="logique/ages.js?v=9"></script>
+  <script src="logique/recherches.js?v=9"></script>
+  <script src="logique/missions.js?v=9"></script>
+  <script src="logique/boutique.js?v=9"></script>
+  <script src="logique/logement.js?v=9"></script>
+  <script src="logique/marche.js?v=9"></script>
+  <script src="logique/statistiques.js?v=9"></script>
+  <script src="logique/monde.js?v=9"></script>
+  <script src="donnees/sauvegarde.js?v=9"></script>
+  <script src="affichage/effets.js?v=9"></script>
+  <script src="affichage/batisses.js?v=9"></script>
+  <script src="affichage/interface.js?v=9"></script>
+  <script src="affichage/peintre.js?v=9"></script>
+  <script src="affichage/rayons-x.js?v=9"></script>
+  <script src="affichage/sous-le-capot.js?v=9"></script>
+  <script src="main.js?v=9"></script>
 </body>
 </html>

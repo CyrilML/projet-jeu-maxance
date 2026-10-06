@@ -35,12 +35,17 @@
 //   7 (étape 7)  : les 💎 gemmes, les recherches (faites et en cours), les missions, la couleur du drapeau,
 //                  le nombre de porteurs, les filons découverts (4e nombre de chaque « modif »),
 //                  et les routes en pierre (routesPierre).
+//   8 (étape 8)  : les 🪙 pièces, les prix du marché (marche.facteurs), les nouvelles ressources (fer, lingots,
+//                  outils), les places offertes (logementBonus), et pour chaque atelier ses ingrédients en réserve
+//                  (entrees : { troncs: 2 }). Avant, la scierie avait seulement « entree » (des troncs) : on la
+//                  convertit. Une partie plus ancienne reçoit une place offerte pour chacun de ses bâtiments :
+//                  la nouvelle règle des logements ne fait partir personne.
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 7;
+  const VERSION = 8;
   const radio = Village.Evenements;
 
   function vide() {
@@ -54,7 +59,7 @@ Village.Sauvegarde = (function () {
       tempsDeJeu: 0, // secondes passées sur toutes les cartes
       // Depuis la version 2 : la partie en cours sur cette carte.
       //   stock : { troncs, planches, pierres }
-      //   batiments : [{ type, colonne, ligne, progres, produits, sortie, entree, livre, attendu }]
+      //   batiments : [{ type, colonne, ligne, progres, produits, sortie, entrees, livre, attendu }]
       //   routes : [numéro de case, …] (depuis la version 3)
       //   modifs : [[numéro de case, objet, pierres restantes], …]
       //   pousses : [[numéro de case, âge en s], …]
@@ -68,6 +73,13 @@ Village.Sauvegarde = (function () {
     const d = Object.assign(vide(), lues);
     // Version 1 → 2 : il n'y avait pas encore de partie. On garde la carte (la graine) et la caméra.
     // Version 2 → 3 : pas encore de routes ; les chantiers avaient déjà payé tous leurs matériaux.
+    if ((lues.version || 1) < 8 && d.partie) {
+      const batiments = d.partie.batiments || [];
+      for (const b of batiments) if (b.entree) { b.entrees = { troncs: b.entree }; delete b.entree; }
+      // Une place offerte pour chaque bâtiment au-delà des 6 places du campement (même les chantiers).
+      const avecOuvrier = batiments.filter((b) => b.type !== "entrepot").length;
+      d.partie.logementBonus = Math.max(0, avecOuvrier - Village.CONFIG.logement.entrepot);
+    }
     if ((lues.version || 1) < 6 && d.partie && d.partie.age === undefined) {
       d.partie.age = (d.partie.batiments || []).some((b) => b.type === "geologue") ? 1 : 0;
     }
@@ -155,7 +167,7 @@ Village.Sauvegarde = (function () {
       batiments: monde.batiments.map((b) => {
         const d = { type: b.type, colonne: b.colonne, ligne: b.ligne, progres: b.progres >= 1 ? 1 : Math.floor(b.progres * 100) / 100, produits: b.produits };
         if (b.sortie) { d.sortie = b.sortie; if (b.lots.some((q) => q !== 1)) d.lots = b.lots; }
-        if (b.entree) d.entree = b.entree;
+        if (Object.values(b.entrees).some((n) => n > 0)) d.entrees = b.entrees; // étape 8
         if (b.etat === "chantier") { d.livre = b.livre; d.attendu = ajout(b.attendu, enCours.attendu.get(b)); }
         const o = b.ouvrier;
         if (o && o.faim) { d.faim = Math.round(o.faim); if (o.affame) { d.affame = true; d.ventreVide = Math.round(o.ventreVide); } }
@@ -168,6 +180,9 @@ Village.Sauvegarde = (function () {
       age: monde.age,
       gemmes: monde.gemmes,
       drapeau: monde.drapeau,
+      pieces: monde.pieces, // étape 8
+      logementBonus: monde.logementBonus,
+      marche: { facteurs: Object.fromEntries(Object.entries(monde.marche.facteurs).map(([r, f]) => [r, Math.round(f * 1000) / 1000])), ventes: monde.marche.ventes, achats: monde.marche.achats },
       recherches: { faites: monde.recherches.faites, enCours: monde.recherches.enCours && { id: monde.recherches.enCours.id, reste: Math.round(monde.recherches.enCours.reste) } },
       missions: { actuelle: monde.missions.actuelle && Object.assign({}, monde.missions.actuelle, { reste: Math.round(monde.missions.actuelle.reste) }), attente: Math.round(monde.missions.attente), derniere: monde.missions.derniere, reussies: monde.missions.reussies },
       partis: monde.partis,

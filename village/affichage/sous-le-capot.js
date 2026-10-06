@@ -29,7 +29,7 @@ Village.SousLeCapot = (function () {
     "construction-annulee": (d) => "↩️ Construction annulée (" + d.nom + ")",
     "construction-impossible": (d) => "🚫 Pas de " + d.nom + " en (" + d.colonne + ", " + d.ligne + ") : " + d.raison,
     "batiment-pose": (d) => "🏗️ Chantier n° " + d.numero + " : " + d.nom + " en (" + d.colonne + ", " + d.ligne + "), " + cout(d.cout) + " réservé(s) dans l'entrepôt : les porteurs vont les apporter" + (d.relie ? "" : " (il faut une route !)"),
-    "chantier-fini": (d) => "🎉 " + d.nom + " n° " + d.numero + " construit(e)" + (d.metier ? " : le " + d.metier + " arrive" : ""),
+    "chantier-fini": (d) => "🎉 " + d.nom + " n° " + d.numero + " construit(e)" + (d.metier ? " : le " + d.metier + " arrive (s'il a une place pour dormir)" : "") + (d.places ? " · +" + d.places + " places pour dormir" : ""),
     "ouvrier-part": (d) => "🚶 Le " + d.metier + " (n° " + d.numero + ") part vers " + d.quoi + " en (" + d.colonne + ", " + d.ligne + ") : " + d.pas + " pas · la tache d'encre a regardé " + d.visitees + " cases",
     "rien-a-faire": (d) => "😴 " + d.nom + " n° " + d.numero + " : pas de " + d.quoi.replace(/^une? /, "") + " à moins de " + d.rayon + " pas (" + d.visitees + " cases regardées). On réessaie dans " + Village.CONFIG.ouvriers.attente + " s",
     "arbre-coupe": (d) => "🪓 Arbre coupé en (" + d.colonne + ", " + d.ligne + ") · il reste " + nombre(d.arbres) + " arbres sur la carte",
@@ -37,9 +37,10 @@ Village.SousLeCapot = (function () {
     "arbre-pousse": (d) => "🌳 La pousse en (" + d.colonne + ", " + d.ligne + ") est devenue un " + d.sorte + " · " + nombre(d.arbres) + " arbres sur la carte",
     "pierre-taillee": (d) => "⛏️ Pierre taillée en (" + d.colonne + ", " + d.ligne + ")" + (d.vide ? " · le rocher est vide, il disparaît" : " · il reste " + d.reste + " pierre(s) dans ce rocher"),
     depose: (d) => "📦 " + (d.quantite > 1 ? d.quantite + " " + d.quoi : emo(d.quoi)) + " posé(e)s devant la porte du bâtiment n° " + d.numero + " (" + d.devant + " qui attendent un porteur)",
-    "scierie-attend": (d) => "⏳ Scierie n° " + d.numero + " : plus de tronc en réserve, elle attend un porteur",
-    "sciage-debut": (d) => "🪚 Scierie n° " + d.numero + " : scie 1 tronc (il en reste " + d.reserve + " en réserve)",
-    "planches-sciees": (d) => "🟫 Scierie n° " + d.numero + " : +" + d.planches + " planches devant la porte (" + d.devant + ")",
+    // Étape 8 : la scierie, la fonderie et la forge sont des ateliers qui suivent leur recette
+    "atelier-attend": (d) => "⏳ " + d.nom + " n° " + d.numero + " : " + d.raison + ", il attend un porteur",
+    "fabrication-debut": (d) => "⚙️ " + d.nom + " n° " + d.numero + " commence : utilise " + cout(d.entrees) + " · " + d.duree + " s (réserve : " + (cout(d.reserve) === "gratuit" ? "vide" : cout(d.reserve)) + ")",
+    "fabrication-finie": (d) => "✨ " + d.nom + " n° " + d.numero + " : +" + d.quantite + " " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " devant la porte (" + d.devant + ")",
     // Étape 3
     "choix-outil": (d) => (d.outil === "route" ? "🛤️ Outil route : touche le départ, puis l'arrivée" : d.outil === "demolir" ? "🧹 Outil démolir : touche une route ou un bâtiment" : "↩️ Outil rangé"),
     "route-depart": (d) => "🚩 Départ de la route en (" + d.colonne + ", " + d.ligne + ")",
@@ -71,13 +72,18 @@ Village.SousLeCapot = (function () {
     "mission-acceptee": (d) => "📜 Mission acceptée : il faut " + cout(d.demande) + " en " + Math.round(d.duree / 60) + " min",
     "mission-refusee": (d) => "📜 Mission remise à plus tard (" + d.qui + ")",
     "mission-pas-assez": (d) => "📜 Pas encore assez pour " + d.qui,
-    "mission-reussie": (d) => "🎉 Mission réussie pour " + d.qui + " ! Récompense : " + Object.entries(d.recompense).map(([r, n]) => n + " " + (r === "gemmes" ? "💎" : r)).join(", ") + " · " + d.gemmes + " 💎 en tout",
+    "mission-reussie": (d) => "🎉 Mission réussie pour " + d.qui + " ! Récompense : " + Object.entries(d.recompense).map(([r, n]) => n + " " + (r === "gemmes" ? "💎" : r === "pieces" ? "🪙" : r)).join(", ") + " · " + d.gemmes + " 💎 et " + d.pieces + " 🪙 en tout",
     "mission-ratee": (d) => "⌛ Mission ratée : le temps est écoulé (" + d.qui + "). Rien de grave !",
     achat: (d) => "💎 Achat : " + d.emoji + " " + d.nom + " pour " + d.prix + " 💎 (il en reste " + d.gemmes + ")",
     "achat-impossible": (d) => "🚫 Achat impossible (" + d.nom + ") : " + d.raison,
-    "charbon-extrait": (d) => "⚫ Mine n° " + d.numero + " : 1 charbon extrait · il reste " + d.reste + " dans le filon · " + d.devant + " devant la porte",
-    "filon-epuise": (d) => "⚫ " + d.nom + " n° " + d.numero + " : plus de charbon dans les filons voisins",
-    "filon-trouve": (d) => "🔍 Filon de " + d.minerai + " trouvé près de (" + d.colonne + ", " + d.ligne + ") : " + d.reserve + " morceaux",
+    "minerai-extrait": (d) => "⛏️ " + d.nom + " n° " + d.numero + " : +1 " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " · il reste " + d.reste + " dans le filon · " + d.devant + " devant la porte",
+    "filon-epuise": (d) => "⛏️ " + d.nom + " n° " + d.numero + " : plus de " + d.minerai + " dans les filons voisins",
+    "filon-trouve": (d) => "🔍 Filon de " + d.nom + " " + d.emoji + " trouvé près de (" + d.colonne + ", " + d.ligne + ") : " + d.reserve + " morceaux",
+    // Étape 8 : le logement et le marché
+    "pas-de-logement": (d) => "🛏️ " + d.nom + " n° " + d.numero + " : pas de place pour loger le " + d.metier + " (" + d.places + " places, toutes prises). Il faut une hutte ou une maison",
+    "marche-vente": (d) => "🏪 Vente : " + d.quantite + " " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " = +" + d.gain + " 🪙 · le paquet suivant se vend " + d.nouveauPrix + " 🪙 · tu as " + d.pieces + " 🪙",
+    "marche-achat": (d) => "🏪 Achat : " + d.quantite + " " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " = −" + d.depense + " 🪙 · le paquet suivant coûte " + d.nouveauPrix + " 🪙 · il te reste " + d.pieces + " 🪙",
+    "marche-impossible": (d) => "🚫 Marché (" + (d.sens === "vendre" ? "vendre " : "acheter ") + d.quoi + ") : " + d.raison,
     // Étape 6
     "nouvel-age": (d) => "🎉 " + d.emoji + " NOUVEL ÂGE : " + d.nom + " (n° " + d.numero + ")" + (d.debloque.length ? " · débloqué : " + d.debloque.join(", ") : "") + (d.gemmes ? " · +" + d.gemmes + " 💎" : ""),
     // Étape 5
@@ -95,7 +101,7 @@ Village.SousLeCapot = (function () {
     "partie-importee": (d) => "📥 Partie chargée (carte n° " + d.graine + ", version " + d.version + ") : la page va se recharger",
   };
 
-  const emo = (r) => ({ troncs: "🪵 1 tronc", planches: "🟫 1 planche", pierres: "🪨 1 pierre", poissons: "🐟 1 poisson", viande: "🍖 1 morceau de viande" }[r] || r);
+  const emo = (r) => ({ troncs: "🪵 1 tronc", planches: "🟫 1 planche", pierres: "🪨 1 pierre", poissons: "🐟 1 poisson", viande: "🍖 1 morceau de viande", charbon: "⚫ 1 charbon", fer: "🟤 1 minerai de fer", lingots: "🔩 1 lingot", outils: "🔨 1 outil" }[r] || r);
   const cout = (c) => Object.entries(c).map(([r, n]) => n + " " + Village.Batiments.NOMS_RESSOURCES[r]).join(" + ") || "gratuit";
 
   let monde = null, mesures = null, journal, etat, base, cle;
@@ -180,7 +186,7 @@ Village.SousLeCapot = (function () {
     h += ligne("recherches faites", monde.recherches.faites.length ? monde.recherches.faites.join(", ") : "aucune");
     const rc = monde.recherches.enCours;
     h += ligne("recherche en cours", rc ? rc.id + " · encore " + Math.ceil(rc.reste) + " s" : "aucune");
-    for (const cle of ["couper", "pecher", "chasser", "tailler", "miner", "porteurs", "repas"]) { const x = Village.Recherches.bonus(monde, cle); if (x !== 1) h += ligne("bonus « " + cle + " »", "× " + virgule(x, 2)); }
+    for (const cle of ["couper", "planter", "pecher", "chasser", "tailler", "miner", "porteurs", "repas", "scier", "fondre", "forger", "vente"]) { const x = Village.Recherches.bonus(monde, cle); if (x !== 1) h += ligne("bonus « " + cle + " »", "× " + virgule(x, 2)); }
     const mi = monde.missions.actuelle;
     h += ligne("mission", mi ? mi.id + " · " + mi.etat + (mi.etat === "encours" ? " · encore " + Math.ceil(mi.reste) + " s" : "") : "prochaine dans " + Math.ceil(monde.missions.attente) + " s");
     h += ligne("missions réussies", monde.missions.reussies.length);
@@ -200,7 +206,27 @@ Village.SousLeCapot = (function () {
     h += ligne("habitants · affamés · partis", habitants + " · " + affames + " · " + monde.partis);
     h += ligne("repas mangés par minute (environ)", virgule((habitants * 60) / Village.CONFIG.repas.intervalle, 1));
     for (const [sorte, n] of Object.entries(Village.Animaux.NOMS)) h += ligne(n.emoji + " " + n.nom.replace(/^une? /, "") + "s (" + Village.CONFIG.prises[sorte] + " 🍖 chacun)", monde.animaux.filter((a) => a.sorte === sorte).length);
+    // Étape 8
+    const Lg = Village.Logement;
+    h += groupe("🛏️ Le logement");
+    h += ligne("places = " + Village.CONFIG.logement.entrepot + " (campement) + huttes × 3 + maisons × 6" + (monde.logementBonus ? " + " + monde.logementBonus + " offertes" : ""), Lg.capacite(monde));
+    h += ligne("habitants (ouvriers logés)", Lg.habitants(monde));
+    h += ligne("place libre ?", Lg.placeLibre(monde) ? "oui" : "non : les cabanes vides attendent");
+    h += groupe("🏪 Le marché · 🪙 " + monde.pieces + " pièces");
+    const Ma = Village.Marche;
+    for (const r of Object.keys(Village.CONFIG.marche.prix)) {
+      const f = Ma.facteur(monde, r);
+      if (f !== 1) h += ligne(Village.Batiments.NOMS_RESSOURCES[r] + " · facteur " + virgule(f, 2), "vente " + Ma.prixVente(monde, r) + " 🪙 · achat " + Ma.prixAchat(monde, r) + " 🪙");
+    }
+    h += ligne("ventes · achats depuis le début", monde.marche.ventes + " 🪙 · " + monde.marche.achats + " 🪙");
+    h += groupe("📊 Le compteur de l'entrepôt (par minute)");
+    h += ligne("pages gardées (10 s chacune)", monde.stats.pages.length + " / " + Village.CONFIG.statistiques.tranches);
+    for (const r of Object.keys(Village.CONFIG.ressources)) {
+      const m = Village.Statistiques.parMinute(monde, r);
+      if (m.entrees || m.sorties) h += ligne(Village.Batiments.NOMS_RESSOURCES[r], "+" + virgule(m.entrees, 1) + " · −" + virgule(m.sorties, 1) + " = " + (m.net >= 0 ? "+" : "") + virgule(m.net, 1));
+    }
     h += groupe("📦 Le stock de l'entrepôt");
+    h += ligne("⚫ charbon · 🟤 fer · 🔩 lingots · 🔨 outils", monde.stock.charbon + " · " + monde.stock.fer + " · " + monde.stock.lingots + " · " + monde.stock.outils);
     h += ligne("🪵 troncs · 🟫 planches · 🪨 pierres", monde.stock.troncs + " · " + monde.stock.planches + " · " + monde.stock.pierres);
     const Po = Village.Porteurs;
     h += ligne("promis (réservés)", Po.promis(monde, "troncs") + " · " + Po.promis(monde, "planches") + " · " + Po.promis(monde, "pierres"));
@@ -208,12 +234,13 @@ Village.SousLeCapot = (function () {
     h += groupe("🏠 Les bâtiments et leurs ouvriers");
     for (const b of monde.batiments) {
       const T = Village.Batiments.TYPES[b.type];
-      let etatB = b.etat === "chantier" ? "chantier " + Math.round(b.progres * 100) + " %" : b.type === "scierie" ? (b.travail ? "scie (" + virgule(b.travail.reste, 1) + " s)" : "attend un tronc") : b.ouvrier ? b.ouvrier.etat + (b.ouvrier.minuteur > 0 ? " " + virgule(b.ouvrier.minuteur, 1) + " s" : "") : "prêt";
+      let etatB = b.etat === "chantier" ? "chantier " + Math.round(b.progres * 100) + " %" : Village.CONFIG.ateliers[b.type] ? (b.travail ? "fabrique (" + virgule(b.travail.reste, 1) + " s)" : b.attend || "prêt") + " · réserve " + JSON.stringify(b.entrees) : Village.CONFIG.mines[b.type] ? (b.epuise ? "filon épuisé" : b.travail ? "creuse (" + virgule(b.travail.reste, 1) + " s)" : "prêt") : b.ouvrier ? b.ouvrier.etat + (b.ouvrier.minuteur > 0 ? " " + virgule(b.ouvrier.minuteur, 1) + " s" : "") : "prêt";
       if (b.ouvrier && b.ouvrier.porte) etatB += " · porte des " + b.ouvrier.porte;
       if (b.etat === "chantier") { const m = Village.Batiments.materiaux(b); etatB += " · " + m.arrives + "/" + m.total + " arrivés"; }
       if (b.sortie) etatB += " · " + b.sortie + " devant";
       if (b.ouvrier && b.etat === "pret") etatB += " · faim " + Math.floor(b.ouvrier.faim || 0) + " s" + (b.ouvrier.affame ? " 🍽️" : "");
-      else if (b.etat === "pret" && Village.Batiments.TYPES[b.type].metier) etatB += " · 😢 vide";
+      else if (b.etat === "pret" && Village.Batiments.TYPES[b.type].metier) etatB += Lg.placeLibre(monde) ? " · 😢 vide" : " · 🛏️ vide : pas de logement";
+      if (Village.CONFIG.logement[b.type] && b.type !== "entrepot" && b.etat === "pret") etatB = "🛏️ " + Village.CONFIG.logement[b.type] + " places";
       h += ligne(T.emoji + " n° " + b.numero + " (" + b.colonne + ", " + b.ligne + ")" + (b.relie ? "" : " 🛤️❌"), etatB);
     }
     h += groupe("🚚 Les porteurs et la file d'attente");

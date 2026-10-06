@@ -216,14 +216,15 @@ Village.Ouvriers = (function () {
 
   // Étape 7 : avec la recherche « Prospection », le géologue peut découvrir un filon de charbon dans une
   // case de montagne voisine (qui n'en avait pas, ou dont le filon était épuisé).
-  function trouverFilon(monde, c, l) {
+  // Étape 8 : avec « Filons de fer », 1 fois sur 2 c'est un filon de fer.
+  function trouverFilon(monde, c, l, sorte) {
     const k = monde.carte;
     for (const [dc, dl] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]) {
       const nc = c + dc, nl = l + dl;
       if (nc < 0 || nl < 0 || nc >= k.colonnes || nl >= k.lignes) continue;
       const i = nl * k.colonnes + nc;
       if (k.terrain[i] !== T.montagne || (k.filon[i] && k.reste[i] > 0)) continue;
-      k.filon[i] = K.FILON.charbon;
+      k.filon[i] = K.FILON[sorte];
       k.reste[i] = C.nature.reserveFilon;
       Village.Monde.changerObjet(monde, i, k.objet[i]);
       return true;
@@ -267,15 +268,16 @@ Village.Ouvriers = (function () {
       }
       o.proie = null;
     } else if (b.type === "geologue") {
+      const minerai = Village.Recherches.a(monde, "filonsFer") && Math.random() < 0.5 ? "fer" : "charbon"; // étape 8
       // Étape 5 : 1 chance sur 2 de trouver un gisement de pierre (un nouveau rocher)
       if (carte.objet[i] === O.rien && !monde.occupees.has(i) && !monde.route[i] && Math.random() < C.ouvriers.chanceDeTrouver) {
         carte.reste[i] = C.nature.pierresGisement;
         Village.Monde.changerObjet(monde, i, O.rocher);
         b.produits++;
         radio.emettre("gisement-trouve", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, pierres: carte.reste[i] });
-      } else if (Village.Recherches.a(monde, "filons") && Math.random() < 0.5 && trouverFilon(monde, o.cible.colonne, o.cible.ligne)) {
+      } else if (Village.Recherches.a(monde, "filons") && Math.random() < 0.5 && trouverFilon(monde, o.cible.colonne, o.cible.ligne, minerai)) {
         b.produits++;
-        radio.emettre("filon-trouve", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, minerai: "charbon", reserve: C.nature.reserveFilon });
+        radio.emettre("filon-trouve", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, minerai, nom: C.ressources[minerai].nom, emoji: C.ressources[minerai].emoji, reserve: C.nature.reserveFilon });
       } else radio.emettre("gisement-rate", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne });
     } else if (b.type === "carriere") {
       if (carte.objet[i] === O.rocher && carte.reste[i] > 0) {
