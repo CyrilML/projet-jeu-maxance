@@ -10,6 +10,7 @@
 //      libre) et que son obus est rechargé (3,2 s : plus lent que toi) ;
 //   4. touché, il fait un ÉCART sur le côté pendant 2,5 s ;
 //   5. s'il ne VOIT plus sa cible depuis 3 s (une maison entre eux), il la CONTOURNE par le côté.
+// (Étape 62 : les bateaux sont aussi des cibles ; le lac le repousse, comme un grand aimant.)
 
 window.Tanks = window.Tanks || {};
 
@@ -93,7 +94,14 @@ Tanks.IA = (function () {
     };
     for (const b of T.boites) if (Math.abs(b.x - c.x) < 30 && Math.abs(b.z - c.z) < 30) repousse(b.x, b.z, Math.max(b.demiL, b.demiP) + I.regardObstacles * 0.6, 60);
     for (const a of T.arbres) if (!a.ecrase && Math.abs(a.x - c.x) < 10 && Math.abs(a.z - c.z) < 10) repousse(a.x, a.z, 8, 15);
-    for (const o of tous) if (o !== c) repousse(o.x, o.z, 14, 40);
+    for (const o of tous) if (o !== c && o.genre !== "bateau") repousse(o.x, o.z, 14, 40);
+    // (étape 62) le lac aussi repousse : un tank ne sait pas nager ! (il s'arrête sur la rive et tire sur les bateaux)
+    const dl = T.distLac(c.x, c.z);
+    if (dl < 1.3) {
+      const ex = (c.x - C.lac.x) / C.lac.rayonX, ez = (c.z - C.lac.z) / C.lac.rayonZ, e = Math.hypot(ex, ez) || 1;
+      rx += (ex / e) * 80 * (1.3 - dl) / 0.3;
+      rz += (ez / e) * 80 * (1.3 - dl) / 0.3;
+    }
     const vx = gx + rx, vz = gz + rz, envie = Math.hypot(vx, vz);
     const intentions = {};
     if (envie > 8) {

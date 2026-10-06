@@ -40,7 +40,7 @@ Tanks.Troupes = (function () {
       // 1. la cible : un soldat ennemi (ou toi à pied) ; pour un lance-roquettes, un tank ou le 4x4
       let meilleur = null;
       const roquettes = s.arme === "roquettes";
-      const candidats = roquettes ? monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep")).filter((c) => !c.detruit && c.equipe !== s.equipe) : monde.soldats.filter((o) => !o.mort && !o.dansUnEngin && o.equipe !== s.equipe);
+      const candidats = roquettes ? monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || (e.sorte === "bateau" && e.pilote)), monde.bateaux).filter((c) => !c.detruit && c.equipe !== s.equipe) : monde.soldats.filter((o) => !o.mort && !o.dansUnEngin && o.equipe !== s.equipe);
       for (const o of candidats) {
         const d = Math.hypot(o.x - s.x, o.z - s.z);
         if (d > (roquettes ? 120 : S.vue) || (meilleur && d > meilleur.d)) continue;

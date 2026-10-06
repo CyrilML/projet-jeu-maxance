@@ -183,6 +183,7 @@
       <a href="#etape59">Étape 59</a>
       <a href="#etape60">Étape 60</a>
       <a href="#etape61">Étape 61</a>
+      <a href="#etape62">Étape 62</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3699,6 +3700,51 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Pourquoi le missile tourne tout seul en vol ?</summary><p>Il est « guidé » : à chaque petit pas (1/120 s), il tourne un peu (1,6 radian par seconde au plus) vers le tank qu'il a choisi.</p></details>
     </section>
 
+    <section id="etape62">
+      <h2>🌀 Étape 62 : des bateaux et des portails <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Un lac avec ta vedette de combat et 2 patrouilleurs ennemis, et 2 paires de portails pour traverser la carte d'un coup. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/62-bateaux-et-portails.md</code>.</p>
+          <ul>
+            <li>✍️ Dans le jeu de tanks.</li>
+            <li>✍️ Ton bateau ET des bateaux ennemis.</li>
+            <li>Les portails : tu n'as pas choisi, alors j'ai pris 2 paires, ouvertes à tout ce qui roule ou marche.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Le lac est à l'est (en bleu sur la petite carte), avec 2 patrouilleurs ⚓ qui tirent.</li>
+            <li>☐ Sors du tank (<kbd>E</kbd>), marche jusqu'à la vedette au bord du lac, <kbd>E</kbd> : tu montes. <kbd>Q</kbd> <kbd>D</kbd> pour le canon, <kbd>Espace</kbd> pour tirer.</li>
+            <li>☐ Coule un patrouilleur (3 obus) : il s'enfonce sous l'eau.</li>
+            <li>☐ Fonce dans le portail bleu (dans ton camp, les ronds de couleur sur la carte) : tu ressors au portail orange !</li>
+            <li>Vérifie « version 3 » en haut de la page du jeu.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🥚 Le lac, un cercle étiré</h3>
+      <p>Le lac est une <strong>ellipse</strong> : un cercle étiré, 80 m de rayon dans un sens et 185 m dans l'autre. Pour savoir si un point est dans l'eau, le jeu calcule un seul nombre, <code>dl</code> = √((dx ÷ 80)² + (dz ÷ 185)²), où dx et dz sont l'écart au centre du lac. Si <code>dl</code> est plus petit que 1, on est dans l'eau ; égal à 1, sur la rive. Un tank qui entre dans l'eau est ramené sur la rive ; un bateau qui va trop près du bord (<code>dl</code> plus grand que 0,96) s'échoue. Regarde « toi et le lac » sous le capot en marchant vers l'eau.</p>
+      <h3>🌀 Comment marche un portail</h3>
+      <ul>
+        <li>Chaque portail connaît son <strong>jumeau</strong>.</li>
+        <li>À chaque petit pas, le jeu mesure la distance entre chaque voyageur (tank, soldat, 4x4…) et chaque portail.</li>
+        <li>À moins de 2,6 m, il le « téléporte » : il change juste son x et son z, un peu devant le jumeau, dans le même sens.</li>
+        <li>Il note l'heure : pendant 2 s, ce voyageur ne peut pas repasser (sinon il ferait des allers-retours sans fin !).</li>
+      </ul>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>tanks/config.js</code>, mets <code>nombre: 6</code> pour les patrouilleurs ennemis : une vraie flotte !</li>
+        <li>Change <code>rayonX: 80</code> en <code>rayonX: 150</code> : le lac devient énorme.</li>
+        <li>Mets <code>attente: 0</code> dans <code>portails</code>, puis arrête-toi devant un portail : que se passe-t-il ?</li>
+        <li>Change les coordonnées <code>a</code> et <code>b</code> d'une paire pour mettre un portail où tu veux.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi on ressort un peu DEVANT le portail de sortie, et pas au milieu ?</summary><p>Au milieu, on serait déjà à moins de 2,6 m du portail : il nous renverrait aussitôt de l'autre côté !</p></details>
+      <details class="question"><summary>Pourquoi un bateau tourne mal quand il est arrêté ?</summary><p>C'est l'eau qui pousse sur le gouvernail : sans vitesse, l'eau ne pousse pas. Le jeu fait tourner le bateau plus vite quand il va vite.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4029,8 +4075,8 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         </div>
         <div class="carte fait">
           <div class="num">⚔️</div>
-          <h4>Les tanks : soldats, 4x4, hélico, avion <span class="etiquette">✅ fait · à valider</span></h4>
-          <p>Un nouveau jeu de bataille (étape 60), puis sortir du tank, 24 soldats, un 4x4 à mitrailleuse, un hélico, un avion de chasse et un drone (étape 61).</p>
+          <h4>Les tanks : soldats, engins, bateaux, portails <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Un nouveau jeu de bataille (étape 60), puis sortir du tank, 24 soldats, un 4x4 à mitrailleuse, un hélico, un avion de chasse et un drone (étape 61), puis un lac avec des bateaux et des portails (étape 62).</p>
           <p class="apprend"><b>Tu apprends :</b> les modes du joueur, la balle instantanée, les projectiles guidés, faire réfléchir l'ordinateur moins souvent. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
@@ -4597,6 +4643,15 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-61" data-cle="appris-61" placeholder="Ex. : J'ai appris qu'une balle ne vole pas vraiment dans le jeu…"></textarea>
         <label for="idees-61"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-61" data-cle="idees-61" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 62 · des bateaux et des portails <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le lac (<code>logique/terrain.js</code>, <code>affichage/decor.js</code>), les bateaux (<code>logique/bateaux.js</code>, la vedette dans <code>logique/engins.js</code>), les portails (<code>logique/portails.js</code>), leurs dessins (<code>affichage/engins3d.js</code>), la gerbe d'eau et le sillage (<code>affichage/effets.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : dans les tanks, ton bateau et des bateaux ennemis.</p>
+        <label for="appris-62"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-62" data-cle="appris-62" placeholder="Ex. : J'ai appris qu'un portail change juste le x et le z…"></textarea>
+        <label for="idees-62"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-62" data-cle="idees-62" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

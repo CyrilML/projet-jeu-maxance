@@ -9,7 +9,9 @@
 //   - la POUSSIÈRE derrière les chenilles quand un tank roule vite ;
 //   - (étape 61) les BALLES : un trait jaune très court entre l'arme et là où elle arrive ; un petit nuage rouge
 //     quand un soldat est touché ; les explosions des BOMBES et des MISSILES, bien plus grosses que celle d'un obus ;
-//     la fumée de la ROQUETTE et du MISSILE en vol.
+//     la fumée de la ROQUETTE et du MISSILE en vol ;
+//   - (étape 62) la GERBE D'EAU quand un obus tombe dans le lac, l'écume du SILLAGE derrière les bateaux, et un ÉCLAIR
+//     de la couleur du portail à l'entrée et à la sortie quand quelqu'un passe un portail.
 // Ce sont des « particules » : des petites images toujours tournées vers la caméra (des sprites), qui naissent,
 // grossissent, montent, s'effacent et meurent. On en a 300, qu'on réutilise sans arrêt.
 // Il écoute la radio (tir, impact, touche, detruit) pour savoir quand faire des effets.
@@ -58,6 +60,18 @@ Tanks.Effets = (function () {
     lumiere = new THREE.PointLight(0xffa040, 0, 40, 2);
     scene.add(lumiere);
     const radio = Tanks.Evenements;
+    radio.ecouter("tir-bateau", (d) => { // (étape 62) le coup de canon d'un bateau
+      for (let k = 0; k < 5; k++) particule(d.x, d.y, d.z, d.dir.x * 5 + alea(2), d.dir.y * 5 + alea(1), d.dir.z * 5 + alea(2), 0.25, 1.2, 3, 0.9, [1, 0.75, 0.35], true);
+      for (let k = 0; k < 6; k++) particule(d.x + alea(1), d.y, d.z + alea(1), alea(2), 0.8, alea(2), 1.6, 2, 6, 0.4, [0.8, 0.8, 0.78]);
+      flash(d.x, d.y, d.z, 20);
+    });
+    radio.ecouter("portail", (d) => {
+      for (const [p, c] of [[d, d.couleur], [d.sortie, d.couleurSortie]]) {
+        const col = new THREE.Color(c);
+        for (let k = 0; k < 18; k++) particule(p.x + alea(2), p.y + 1 + Math.random() * 7, p.z + alea(2), alea(4), alea(3), alea(4), 0.7, 0.6, 2.5, 1, [col.r, col.g, col.b], true);
+      }
+      flash(d.sortie.x, d.sortie.y + 4, d.sortie.z, 40);
+    });
     radio.ecouter("tir", (d) => {
       for (let k = 0; k < 6; k++) particule(d.x, d.y, d.z, d.dir.x * 6 + alea(2), d.dir.y * 6 + alea(1), d.dir.z * 6 + alea(2), 0.25, 1.5, 4, 0.9, [1, 0.75, 0.35], true);
       for (let k = 0; k < 10; k++) particule(d.x + alea(2), d.y - 1, d.z + alea(2), alea(3), 1 + Math.random(), alea(3), 1.8, 3, 8, 0.45, [0.75, 0.72, 0.65]);
@@ -65,6 +79,11 @@ Tanks.Effets = (function () {
     });
     radio.ecouter("impact", (d) => {
       const terre = d.sur === "sol", pierre = d.sur === "maison" || d.sur === "muret", g = GROS[d.sorte] || 1;
+      if (d.sur === "eau") { // (étape 62) une gerbe d'eau : de l'écume blanche qui monte haut et retombe
+        for (let k = 0; k < 22 * g; k++) particule(d.x + alea(g), d.y + 0.2, d.z + alea(g), alea(2.5 * g), 6 + Math.random() * 9 * g, alea(2.5 * g), 1.2 + Math.random() * 0.6, 0.8, 3 * g, 0.9, [0.92, 0.96, 1], false, 9.8);
+        for (let k = 0; k < 6; k++) particule(d.x, d.y + 0.3, d.z, alea(3), 0.3, alea(3), 2, 2, 7 * g, 0.5, [0.85, 0.9, 0.92]);
+        return;
+      }
       const couleur = terre ? [0.42, 0.33, 0.22] : pierre ? [0.7, 0.66, 0.58] : [1, 0.8, 0.4];
       for (let k = 0; k < 14 * g; k++) particule(d.x, d.y + 0.3, d.z, alea(5 * g), 3 + Math.random() * 6 * g, alea(5 * g), 1.1 + Math.random(), 1, 4.5 * g, 0.85, couleur, !terre && !pierre, terre ? 9.8 : 0);
       for (let k = 0; k < 5 * g; k++) particule(d.x, d.y + 0.5, d.z, alea(g), 1.5, alea(g), 2.2, 2, 6 * g, 0.4, [0.6, 0.58, 0.54]);
@@ -202,9 +221,13 @@ Tanks.Effets = (function () {
       else b++;
     }
     bilan.balles = b;
-    // la poussière derrière le 4x4, et le souffle du rotor de l'hélico près du sol
-    for (const e of monde.engins) {
+    // la poussière derrière le 4x4, le souffle du rotor de l'hélico près du sol, et l'écume derrière les bateaux
+    for (const e of monde.engins.concat(monde.bateaux || [])) {
       if (e.detruit) continue;
+      if (e.sorte === "bateau" && Math.abs(e.vitesse) > 2 && Math.random() < dt * 25) {
+        const ar = -4.6, ca = Math.cos(e.angle), sa = Math.sin(e.angle);
+        particule(e.x + ca * ar + alea(0.8), e.y + 0.15, e.z + sa * ar + alea(0.8), -ca * 1.5 + alea(0.6), 0.2, -sa * 1.5 + alea(0.6), 2.2, 1, 4.5, 0.55, [0.93, 0.96, 1]);
+      }
       if (e.sorte === "jeep" && Math.abs(e.vitesse) > 6 && Math.random() < dt * 14) particule(e.x - Math.cos(e.angle) * 2.5, e.y + 0.4, e.z - Math.sin(e.angle) * 2.5, alea(0.6), 0.5, alea(0.6), 1.4, 1, 4, 0.3, [0.62, 0.56, 0.44]);
       if (e.sorte === "helico" && e.pilote && e.y - T.hauteur(e.x, e.z) < 18 && Math.random() < dt * 12) {
         const a = Math.random() * Math.PI * 2, sol = T.hauteur(e.x, e.z);

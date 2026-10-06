@@ -8,7 +8,10 @@
 //     le grand rotor (4 pales) et le petit rotor de queue ;
 //   - l'AVION DE CHASSE RAFALE : une aile en triangle (« delta »), des petits plans devant (les « canards »), une dérive,
 //     un cockpit en bulle, les missiles sous les ailes ;
-//   - le DRONE : une croix à 4 hélices.
+//   - le DRONE : une croix à 4 hélices ;
+//   - (étape 62) le BATEAU DE GUERRE : une coque pointue à l'avant (une forme dessinée vue de dessus, puis « tirée » vers
+//     le haut), un pont, une cabine avec ses vitres, un mât avec un radar, et un canon sur tourelle à l'avant ;
+//   - (étape 62) le PORTAIL : un grand anneau lumineux posé sur un socle de pierre, avec un tourbillon dedans.
 // Tout est construit « nez vers x+ », posé au sol (y = 0). Ce fichier ne connaît pas les règles du jeu.
 
 window.Tanks = window.Tanks || {};
@@ -287,8 +290,97 @@ Tanks.Engins3D = (function () {
     return { g, caisse, helices };
   }
 
+  function bateau(equipe) {
+    const m = mats(), g = new THREE.Group(), caisse = new THREE.Group(), E = Tanks.CONFIG.equipes[equipe];
+    const coqueCouleur = new THREE.MeshStandardMaterial({ color: equipe === "bleus" ? 0x5d6870 : 0x7a7466, roughness: 0.55, metalness: 0.35 });
+    const pont = new THREE.MeshStandardMaterial({ color: 0x4a4d50, roughness: 0.8 });
+    g.add(caisse);
+    // la coque : vue de dessus, une forme pointue à l'avant (x+), carrée à l'arrière
+    const L = 10, l = 3.4;
+    const forme = new THREE.Shape();
+    forme.moveTo(-L / 2, -l / 2);
+    forme.lineTo(L * 0.1, -l / 2);
+    forme.quadraticCurveTo(L * 0.4, -l / 2, L / 2, 0);
+    forme.quadraticCurveTo(L * 0.4, l / 2, L * 0.1, l / 2);
+    forme.lineTo(-L / 2, l / 2);
+    forme.closePath();
+    const coque = new THREE.Mesh(new THREE.ExtrudeGeometry(forme, { depth: 1.6, bevelEnabled: true, bevelThickness: 0.12, bevelSize: 0.12, bevelSegments: 2 }), coqueCouleur);
+    coque.rotation.x = -Math.PI / 2; // (la forme est dessinée « à plat », on la couche sur l'eau)
+    coque.position.y = -0.6;
+    coque.castShadow = true;
+    caisse.add(coque);
+    const dessus = new THREE.Mesh(new THREE.ShapeGeometry(forme), pont);
+    dessus.rotation.x = -Math.PI / 2;
+    dessus.position.y = 1.03;
+    caisse.add(dessus);
+    // une bande de la couleur de l'équipe, et le numéro de coque
+    caisse.add(boite(L * 0.55, 0.18, l + 0.26, new THREE.MeshStandardMaterial({ color: E.marque, roughness: 0.6 }), -L * 0.2, 0.75, 0));
+    // la cabine, ses vitres, le mât et le radar
+    caisse.add(boite(3.2, 1.6, 2.4, coqueCouleur, -1.2, 1.85, 0));
+    caisse.add(boite(0.06, 0.55, 2.0, m.verre, 0.42, 2.2, 0));
+    for (const z of [-1.21, 1.21]) caisse.add(boite(2.4, 0.5, 0.06, m.verre, -1.1, 2.2, z));
+    const mat = cyl(0.07, 0.09, 2.6, m.metal, 6);
+    mat.position.set(-1.8, 3.9, 0);
+    caisse.add(mat, boite(0.15, 0.15, 1.4, m.noir, -1.8, 4.6, 0));
+    const radar = boite(0.08, 0.35, 1.3, m.gris, -1.8, 5.0, 0);
+    caisse.add(radar);
+    caisse.add(boite(1.2, 0.5, 2.2, pont, -4.2, 1.3, 0)); // (le moteur, à l'arrière)
+    for (const z of [-1.55, 1.55]) caisse.add(boite(6, 0.05, 0.05, m.metal, -1, 1.6, z)); // le garde-corps
+    // le canon sur sa tourelle, à l'avant
+    const tourelle = new THREE.Group();
+    tourelle.position.set(2.4, 1.05, 0);
+    caisse.add(tourelle);
+    tourelle.add(cyl(0.7, 0.8, 0.5, coqueCouleur, 14).translateY(0.25));
+    tourelle.add(boite(1.2, 0.7, 1.1, coqueCouleur, 0, 0.8, 0));
+    const canon = cyl(0.1, 0.12, 2.2, m.noir, 10);
+    canon.rotation.z = Math.PI / 2;
+    canon.position.set(1.6, 0.85, 0);
+    tourelle.add(canon);
+    return { g, caisse, tourelle, radar };
+  }
+
+  // Le portail : un anneau qui brille, un tourbillon (un disque avec une spirale dessinée, qui tourne) et un socle.
+  function portail(couleur, rayon) {
+    const g = new THREE.Group(), c = new THREE.Color(couleur);
+    const anneau = new THREE.Mesh(new THREE.TorusGeometry(rayon, 0.38, 14, 48), new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 1.6, roughness: 0.3, metalness: 0.4 }));
+    anneau.position.y = rayon + 0.3;
+    g.add(anneau);
+    const toile = document.createElement("canvas");
+    toile.width = toile.height = 256;
+    const ctx = toile.getContext("2d");
+    const fond = ctx.createRadialGradient(128, 128, 5, 128, 128, 128);
+    fond.addColorStop(0, "rgba(255,255,255,0.95)");
+    fond.addColorStop(0.4, couleur);
+    fond.addColorStop(1, "rgba(0,0,0,0.15)");
+    ctx.fillStyle = fond;
+    ctx.fillRect(0, 0, 256, 256);
+    ctx.strokeStyle = "rgba(255,255,255,0.55)";
+    ctx.lineWidth = 6;
+    for (let bras = 0; bras < 4; bras++) { // la spirale (4 bras)
+      ctx.beginPath();
+      for (let k = 0; k < 60; k++) {
+        const a = bras * (Math.PI / 2) + k * 0.09, r = k * 2.1;
+        ctx.lineTo(128 + Math.cos(a) * r, 128 + Math.sin(a) * r);
+      }
+      ctx.stroke();
+    }
+    const tex = new THREE.CanvasTexture(toile);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const tourbillon = new THREE.Mesh(new THREE.CircleGeometry(rayon - 0.2, 40), new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false }));
+    tourbillon.rotation.y = Math.PI / 2; // (le disque face à x+ : on passe à travers en allant le long de x)
+    tourbillon.position.y = rayon + 0.3;
+    g.add(tourbillon);
+    anneau.rotation.y = Math.PI / 2;
+    const pierre = new THREE.MeshStandardMaterial({ color: 0x8a8578, roughness: 0.95 });
+    for (const z of [-rayon - 0.3, rayon + 0.3]) g.add(boite(1.4, 1.2, 1.4, pierre, 0, 0.3, z));
+    const lumiere = new THREE.PointLight(c, 6, 18, 2);
+    lumiere.position.y = rayon + 0.3;
+    g.add(lumiere);
+    return { g, tourbillon, anneau };
+  }
+
   function fabriquer(sorte, equipe) {
-    return { jeep, helico, avion, drone }[sorte](equipe);
+    return { jeep, helico, avion, drone, bateau }[sorte](equipe);
   }
   function bruler(o) {
     const m = mats();
@@ -297,5 +389,5 @@ Tanks.Engins3D = (function () {
     });
   }
 
-  return { soldat, fabriquer, bruler };
+  return { soldat, fabriquer, bruler, portail };
 })();

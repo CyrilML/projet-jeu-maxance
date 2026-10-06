@@ -8,6 +8,8 @@
 //   - le SOL (il est plus bas que la colline sous lui), une MAISON ou un muret.
 // Le MISSILE est « guidé » : il tourne un peu vers sa cible à chaque pas (1,6 radian par seconde au plus).
 // Quand il explose, son SOUFFLE met à terre les soldats ennemis tout près (et une bombe abîme aussi les tanks à 4 m).
+// Étape 62 : les BATEAUX peuvent être touchés aussi (ta vedette et les patrouilleurs), et un projectile qui tombe dans
+// le LAC fait une gerbe d'eau (impact « eau »).
 // ✍️ 4 obus détruisent un tank. Un projectile ne fait pas de mal à sa propre équipe.
 // Ce fichier ne dessine rien : il renvoie des événements (« touche », « detruit », « impact », « soldat-touche »…).
 
@@ -48,10 +50,11 @@ Tanks.Obus = (function () {
     const angle = Math.abs(Tanks.Char.angleEntre(Math.atan2(-vz, -vx) - cible.angle));
     const cote = angle < 0.8 ? "de face" : angle > 2.3 ? "par l'arrière" : "sur le flanc";
     const distance = Math.round(Math.hypot(x - (tireur ? tireur.x : x), z - (tireur ? tireur.z : z)));
-    ev.push(["touche", { x, y, z, tireur, cible, vie: cible.vie, cote, distance }]);
+    const vieMax = (cible.fiche && cible.fiche.vie) || C.char.vie, bateau = cible.genre === "bateau";
+    ev.push(["touche", { x, y, z, tireur, cible, vie: cible.vie, vieMax, cote, distance, bateau }]);
     if (cible.vie <= 0) {
       cible.detruit = true;
-      ev.push(["detruit", { x: cible.x, y: cible.y, z: cible.z, tireur, cible, distance }]);
+      ev.push(["detruit", { x: cible.x, y: cible.y, z: cible.z, tireur, cible, distance, bateau }]);
     }
   }
 
@@ -70,8 +73,8 @@ Tanks.Obus = (function () {
       }
     }
   }
-  // Tous les véhicules qu'un projectile peut toucher : les tanks, et le 4x4 (étape 61).
-  const vehicules = (monde) => monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep"));
+  // Tous les véhicules qu'un projectile peut toucher : les tanks, le 4x4 (étape 61), et les bateaux (étape 62).
+  const vehicules = (monde) => monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || e.sorte === "bateau"), monde.bateaux || []);
 
   function avancer(liste, monde, dt) {
     const ev = [];
@@ -112,6 +115,8 @@ Tanks.Obus = (function () {
         fini = ["impact", { x: p.x, y: p.y, z: p.z, sur: "char", sorte: p.sorte }];
         break;
       }
+      // l'eau du lac ? (étape 62)
+      if (!fini && p.y < C.lac.niveau && T.dansLEau(p.x, p.z)) fini = ["impact", { x: p.x, y: C.lac.niveau, z: p.z, sur: "eau", sorte: p.sorte }];
       // le sol ?
       if (!fini && p.y < T.hauteur(p.x, p.z)) fini = ["impact", { x: p.x, y: T.hauteur(p.x, p.z), z: p.z, sur: "sol", sorte: p.sorte }];
       // une maison, un muret ?

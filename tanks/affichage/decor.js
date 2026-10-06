@@ -58,6 +58,8 @@ Tanks.Decor = (function () {
       const b = Tanks.Bruit.fractal(bruit, x / 60, z / 60, 3), village = Math.max(0, 1 - Math.hypot(x, z) / (C.monde.village.rayon * 1.3));
       let r = 0.36 + b * 0.06, g = 0.47 + b * 0.08, bl = 0.24 + b * 0.04; // l'herbe
       r += village * 0.18; g += village * 0.02; bl += village * 0.08; // la terre battue du village
+      const rive = Math.max(0, 1 - Math.abs(T.distLac(x, z) - 1) / 0.1); // (étape 62) le sable de la rive
+      r += rive * 0.2; g += rive * 0.1; bl += rive * 0.05;
       couleurs.push(r, g, bl);
       uv.setXY(i, x / 6, z / 6);
     }
@@ -213,13 +215,45 @@ Tanks.Decor = (function () {
     if (change) for (const m of [arbresTroncs, arbresFeuilles, sapins]) m.instanceMatrix.needsUpdate = true;
   }
 
+  // (étape 62) L'eau du lac : une ellipse plate et lisse, un peu transparente, qui reflète le ciel. On lui donne de
+  // petites vagues avec une « carte de bosses » (normalMap) qu'on fait glisser doucement (voir majEau).
+  let vagues = null;
+  function lac(groupe) {
+    const L = C.lac, n = 128;
+    const bosses = document.createElement("canvas");
+    bosses.width = bosses.height = n;
+    const ctx = bosses.getContext("2d"), img = ctx.createImageData(n, n);
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      const a = Math.sin((x / n) * Math.PI * 8 + Math.sin((y / n) * Math.PI * 4) * 1.5), b = Math.sin((y / n) * Math.PI * 10 + Math.cos((x / n) * Math.PI * 6));
+      const i = (y * n + x) * 4;
+      img.data[i] = 128 + a * 40;
+      img.data[i + 1] = 128 + b * 40;
+      img.data[i + 2] = 255;
+      img.data[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    vagues = new THREE.CanvasTexture(bosses);
+    vagues.wrapS = vagues.wrapT = THREE.RepeatWrapping;
+    vagues.repeat.set(18, 40);
+    const eau = new THREE.Mesh(new THREE.CircleGeometry(1, 72), new THREE.MeshStandardMaterial({ color: 0x2b5763, roughness: 0.08, metalness: 0.25, transparent: true, opacity: 0.88, normalMap: vagues, normalScale: new THREE.Vector2(0.35, 0.35) }));
+    eau.rotation.x = -Math.PI / 2;
+    eau.scale.set(L.rayonX * 1.02, L.rayonZ * 1.02, 1);
+    eau.position.set(L.x, L.niveau, L.z);
+    eau.receiveShadow = true;
+    groupe.add(eau);
+  }
+  function majEau(dt) {
+    if (vagues) vagues.offset.x += dt * 0.02;
+  }
+
   function construire() {
     const g = new THREE.Group();
     sol(g);
+    lac(g);
     village(g);
     arbres(g);
     return g;
   }
 
-  return { construire, majArbres };
+  return { construire, majArbres, majEau };
 })();

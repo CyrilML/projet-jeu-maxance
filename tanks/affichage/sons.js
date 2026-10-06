@@ -42,6 +42,8 @@ Tanks.Sons = (function () {
     radio.ecouter("tir", (e) => boum(e.joueur ? 1 : attenuation(e.x, e.z) * 0.8, 0.5, 120));
     radio.ecouter("detruit", (e) => boum(attenuation(e.x, e.z), 1.6, 70));
     radio.ecouter("touche", (e) => clang(attenuation(e.x, e.z)));
+    radio.ecouter("tir-bateau", (e) => boum(e.joueur ? 0.8 : attenuation(e.x, e.z) * 0.7, 0.45, 140)); // (étape 62)
+    radio.ecouter("portail", (e) => e.quiToi && portail());
     radio.ecouter("impact", (e) => {
       if (e.sorte === "bombe" || e.sorte === "missile") boum(attenuation(e.x, e.z), 1.8, 60);
       else if (e.sorte === "grenade" || e.sorte === "roquette") boum(attenuation(e.x, e.z) * 0.7, 0.7, 90);
@@ -123,6 +125,19 @@ Tanks.Sons = (function () {
     b.start(t, Math.random());
     b.stop(t + 0.1);
   }
+  // (étape 62) Un portail : un « wiiiou » qui monte (une note qui glisse vers l'aigu).
+  function portail() {
+    if (!ctx || coupe) return;
+    const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(200, t);
+    o.frequency.exponentialRampToValueAtTime(1600, t + 0.5);
+    g.gain.setValueAtTime(0.25, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    o.connect(g).connect(sortie);
+    o.start(t);
+    o.stop(t + 0.65);
+  }
   // Une roquette qui part : « pschhh ».
   function pschh(force) {
     if (!ctx || coupe) return;
@@ -148,6 +163,9 @@ Tanks.Sons = (function () {
     } else if (toi.mode === "jeep") {
       const part = Math.min(1, Math.abs(e.vitesse) / C.engins.jeep.vitesseMax);
       (frequence = 55 + part * 90), (aigu = 400 + part * 900), (fort = e.detruit ? 0 : 0.12 + part * 0.1);
+    } else if (toi.mode === "bateau") { // (un moteur de bateau : grave, et le bruit de l'eau)
+      const part = Math.min(1, Math.abs(e.vitesse) / C.bateaux.joueur.vitesseMax);
+      (frequence = 40 + part * 50), (aigu = 300 + part * 500), (fort = e.detruit ? 0 : 0.12 + part * 0.1), (souffleFort = part * 0.08), (souffleAigu = 600);
     } else if (toi.mode === "helico" || toi.mode === "drone") {
       const tours = toi.mode === "helico" ? 5.5 : 30; // le « tchop-tchop » : le volume suit les tours du rotor
       souffleFort = (0.12 + 0.12 * Math.max(0, Math.sin(t * Math.PI * 2 * tours))) * (toi.mode === "drone" ? 0.5 : 1);

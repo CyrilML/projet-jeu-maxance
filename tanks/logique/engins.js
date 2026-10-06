@@ -10,6 +10,7 @@
 //     Espace tire un MISSILE guidé vers l'ennemi le plus en face. Il ne peut pas se poser : E = s'ÉJECTER, et tu
 //     redescends en parachute (l'avion revient à l'aérodrome) ;
 //   - le DRONE : petit et rapide, piloté comme l'hélico ; il lâche des GRENADES (contre les soldats).
+//   - (étape 62) la VEDETTE DE COMBAT, amarrée au bord du lac (logique/bateaux.js) : un petit canon sur tourelle.
 // Les engins volants ne peuvent pas être touchés (les tanks ne tirent pas en l'air).
 // Ce fichier ne dessine rien.
 
@@ -23,9 +24,20 @@ Tanks.Engins = (function () {
   // Les places de parking (derrière les Bleus) : le 4x4, puis l'aérodrome (l'hélico, l'avion, le drone).
   const PLACES = { jeep: [40, -12], helico: [-60, 0], avion: [-120, 0], drone: [-30, 4] };
   function creer() {
-    return Object.keys(PLACES).map((sorte) => garer({ sorte, fiche: Object.assign({ longueur: 4.8, largeur: 2.2, hauteur: 2 }, G[sorte]) }));
+    const liste = Object.keys(PLACES).map((sorte) => garer({ sorte, fiche: Object.assign({ longueur: 4.8, largeur: 2.2, hauteur: 2 }, G[sorte]) }));
+    liste.push(garer({ sorte: "bateau", fiche: Object.assign({}, C.bateaux.joueur) })); // (étape 62)
+    return liste;
   }
+  // (étape 62) La place de la vedette : au bord du lac, au sud-ouest (de ton côté), le nez vers le milieu du lac.
+  const QUAI = { t: 1.85, dl: 0.95 };
   function garer(e) {
+    if (e.sorte === "bateau") {
+      const p = Tanks.Bateaux.surLeLac(QUAI.t, QUAI.dl), R = C.bateaux.joueur;
+      return Object.assign(e, {
+        equipe: "bleus", genre: "bateau", nom: R.nom, x: p.x, z: p.z, y: C.lac.niveau, angle: Math.atan2(C.lac.z - p.z, C.lac.x - p.x),
+        vitesse: 0, tourelle: 0, vie: R.vie, detruit: false, touche: 9, recharge: 0, pilote: false, cible: null, tirs: 0, reussis: 0,
+      });
+    }
     const [x, dz] = PLACES[e.sorte];
     Object.assign(e, {
       equipe: "bleus", nom: G[e.sorte].nom, x, z: yCamp() + dz, y: T.hauteur(x, yCamp() + dz), angle: -Math.PI / 2,
@@ -41,7 +53,12 @@ Tanks.Engins = (function () {
     const ev = [], R = G[e.sorte];
     e.touche += dt;
     if (e.detruit) {
-      e.vitesse = 0;
+      if (e.sorte === "bateau") Tanks.Bateaux.couler(e, dt);
+      else e.vitesse = 0;
+      return ev;
+    }
+    if (e.sorte === "bateau") {
+      naviguer(e, intentions, dt, C.bateaux.joueur, monde, ev);
       return ev;
     }
     e.recharge = Math.max(0, e.recharge - dt);
@@ -83,6 +100,36 @@ Tanks.Engins = (function () {
       e.recharge = C.armes.mitrailleuse.cadence;
       const a = e.angle + e.tourelle;
       Tanks.Soldat.balle(e, e.x + Math.cos(a) * 1.2, e.y + 2.6, e.z + Math.sin(a) * 1.2, a, "mitrailleuse", monde.soldats, monde.chars, ev);
+    }
+  }
+
+  // (étape 62) La vedette : elle accélère doucement, et ne tourne bien que si elle avance (le gouvernail).
+  function naviguer(e, I, dt, R, monde, ev) {
+    e.recharge = Math.max(0, e.recharge - dt);
+    if (I.avancer) e.vitesse = Math.min(R.vitesseMax, e.vitesse + R.acceleration * dt);
+    else if (I.reculer) e.vitesse = Math.max(-4, e.vitesse - R.acceleration * dt);
+    else e.vitesse -= Math.sign(e.vitesse) * Math.min(Math.abs(e.vitesse), 1.5 * dt); // (l'eau freine)
+    const sens = (I.droite ? 1 : 0) - (I.gauche ? 1 : 0);
+    e.angle = angleEntre(e.angle + sens * R.virage * (0.25 + 0.75 * Math.min(1, Math.abs(e.vitesse) / 6)) * Math.sign(e.vitesse || 1) * dt);
+    e.x += Math.cos(e.angle) * e.vitesse * dt;
+    e.z += Math.sin(e.angle) * e.vitesse * dt;
+    if (Tanks.Bateaux.resterSurLEau(e) && Math.abs(e.vitesse) > 2 && !e.echoue) ev.push(["echoue", { nom: e.nom }]);
+    e.echoue = T.distLac(e.x, e.z) > 0.955;
+    e.y = C.lac.niveau;
+    e.tourelle = angleEntre(e.tourelle + ((I.tourelleDroite ? 1 : 0) - (I.tourelleGauche ? 1 : 0)) * R.tourelle * dt);
+    // la visée assistée, comme pour le tank : l'ennemi le plus proche dans le cône de 4° devant le canon
+    const a = e.angle + e.tourelle;
+    let meilleur = null;
+    for (const o of monde.chars.concat(monde.bateaux)) {
+      if (o.equipe === e.equipe || o.detruit) continue;
+      const d = Math.hypot(o.x - e.x, o.z - e.z), ecart = Math.abs(angleEntre(Math.atan2(o.z - e.z, o.x - e.x) - a));
+      if (d < C.obus.porteeAssistee && ecart < C.obus.viseeAssistee && (!meilleur || ecart < meilleur.ecart)) meilleur = { o, ecart };
+    }
+    e.cible = meilleur ? meilleur.o : null;
+    if (I.tirer && e.recharge === 0 && e.pilote) {
+      e.recharge = R.recharge;
+      e.tirs++;
+      Tanks.Bateaux.tirer(e, monde, e.cible, 0, ev, true);
     }
   }
 

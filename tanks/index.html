@@ -42,6 +42,8 @@
     #journal li[data-evenement="bataille"] { color: #7dffa0; }
     #journal li[data-evenement="sauvegarde"] { color: var(--doux); }
     #journal li[data-evenement="soldat-mort"] { color: #ffd59a; }
+    #journal li[data-evenement="portail"] { color: #d8b4ff; }
+    #journal li[data-evenement="tir-bateau"], #journal li[data-evenement="echoue"] { color: #8fd3ff; }
     #journal li[data-evenement="monter"], #journal li[data-evenement="sortir"], #journal li[data-evenement="ejection"] { color: #9cc4ff; }
     @media (max-width: 1000px) { .capot { grid-template-columns: 1fr; } #journal { height: 240px; } }
   </style>
@@ -49,8 +51,8 @@
 <body>
   <div class="page">
     <header class="entete">
-      <h1>🛡️ Les tanks de Maxance · bataille de tanks, soldats et engins</h1>
-      <span><span id="version" class="version"></span> <a href="../index.html#etape61">📓 Ouvrir le carnet (étapes 60 et 61)</a></span>
+      <h1>🛡️ Les tanks de Maxance · bataille de tanks, soldats, engins, bateaux et portails</h1>
+      <span><span id="version" class="version"></span> <a href="../index.html#etape62">📓 Ouvrir le carnet (étapes 60 à 62)</a></span>
     </header>
 
     <div class="cadre-ecran">
@@ -74,12 +76,12 @@
       <button data-appuyer="valider">Entrée</button>
       <button data-appuyer="camera">C caméra</button>
     </div>
-    <p class="commandes"><kbd>↑</kbd> <kbd>↓</kbd> avancer / reculer · <kbd>←</kbd> <kbd>→</kbd> tourner le tank · <kbd>Q</kbd> <kbd>D</kbd> tourner la tourelle · <kbd>Espace</kbd> tirer · <kbd>E</kbd> sortir du tank / monter dans un engin · à pied : <kbd>1</kbd> pistolet <kbd>2</kbd> mitrailleuse <kbd>3</kbd> lance-roquettes · hélico et drone : <kbd>Q</kbd> monter <kbd>D</kbd> descendre · avion : <kbd>↑</kbd> piquer <kbd>↓</kbd> cabrer, <kbd>E</kbd> s'éjecter · <kbd>C</kbd> caméra · <kbd>B</kbd> son · <kbd>R</kbd> recommencer · <kbd>Échap</kbd> pause · <kbd>⌫</kbd> garage</p>
+    <p class="commandes"><kbd>↑</kbd> <kbd>↓</kbd> avancer / reculer · <kbd>←</kbd> <kbd>→</kbd> tourner le tank · <kbd>Q</kbd> <kbd>D</kbd> tourner la tourelle · <kbd>Espace</kbd> tirer · <kbd>E</kbd> sortir du tank / monter dans un engin · à pied : <kbd>1</kbd> pistolet <kbd>2</kbd> mitrailleuse <kbd>3</kbd> lance-roquettes · hélico et drone : <kbd>Q</kbd> monter <kbd>D</kbd> descendre · avion : <kbd>↑</kbd> piquer <kbd>↓</kbd> cabrer, <kbd>E</kbd> s'éjecter · vedette (au bord du lac) : <kbd>Q</kbd> <kbd>D</kbd> canon · 🌀 entre dans un portail pour ressortir à l'autre bout · <kbd>C</kbd> caméra · <kbd>B</kbd> son · <kbd>R</kbd> recommencer · <kbd>Échap</kbd> pause · <kbd>⌫</kbd> garage</p>
 
     <section class="capot" aria-label="Sous le capot">
       <div class="bloc">
         <h2>🔧 Sous le capot : l'état en direct</h2>
-        <p class="aide">Où tu es (tank, à pied, engin), les engins de ton camp, les soldats, ton tank, et ce que pense chaque tank de l'ordinateur.</p>
+        <p class="aide">Où tu es (tank, à pied, engin, bateau), les engins de ton camp, les soldats, le lac, les bateaux, les portails, ton tank, et ce que pense chaque tank de l'ordinateur.</p>
         <table id="etat"></table>
       </div>
       <div class="bloc">
@@ -91,27 +93,29 @@
   </div>
 
   <script src="../circuit/vendor/three.min.js"></script>
-  <script src="config.js?v=2"></script>
-  <script src="moteur/evenements.js?v=2"></script>
-  <script src="moteur/bruit.js?v=2"></script>
-  <script src="moteur/entrees.js?v=2"></script>
-  <script src="logique/terrain.js?v=2"></script>
-  <script src="logique/char.js?v=2"></script>
-  <script src="logique/obus.js?v=2"></script>
-  <script src="logique/ia.js?v=2"></script>
-  <script src="logique/soldat.js?v=2"></script>
-  <script src="logique/troupes.js?v=2"></script>
-  <script src="logique/engins.js?v=2"></script>
-  <script src="donnees/sauvegarde.js?v=2"></script>
-  <script src="logique/monde.js?v=2"></script>
-  <script src="affichage/chars3d.js?v=2"></script>
-  <script src="affichage/engins3d.js?v=2"></script>
-  <script src="affichage/decor.js?v=2"></script>
-  <script src="affichage/effets.js?v=2"></script>
-  <script src="affichage/scene.js?v=2"></script>
-  <script src="affichage/tableau.js?v=2"></script>
-  <script src="affichage/sous-le-capot.js?v=2"></script>
-  <script src="affichage/sons.js?v=2"></script>
-  <script src="main.js?v=2"></script>
+  <script src="config.js?v=3"></script>
+  <script src="moteur/evenements.js?v=3"></script>
+  <script src="moteur/bruit.js?v=3"></script>
+  <script src="moteur/entrees.js?v=3"></script>
+  <script src="logique/terrain.js?v=3"></script>
+  <script src="logique/char.js?v=3"></script>
+  <script src="logique/obus.js?v=3"></script>
+  <script src="logique/ia.js?v=3"></script>
+  <script src="logique/soldat.js?v=3"></script>
+  <script src="logique/troupes.js?v=3"></script>
+  <script src="logique/bateaux.js?v=3"></script>
+  <script src="logique/portails.js?v=3"></script>
+  <script src="logique/engins.js?v=3"></script>
+  <script src="donnees/sauvegarde.js?v=3"></script>
+  <script src="logique/monde.js?v=3"></script>
+  <script src="affichage/chars3d.js?v=3"></script>
+  <script src="affichage/engins3d.js?v=3"></script>
+  <script src="affichage/decor.js?v=3"></script>
+  <script src="affichage/effets.js?v=3"></script>
+  <script src="affichage/scene.js?v=3"></script>
+  <script src="affichage/tableau.js?v=3"></script>
+  <script src="affichage/sous-le-capot.js?v=3"></script>
+  <script src="affichage/sons.js?v=3"></script>
+  <script src="main.js?v=3"></script>
 </body>
 </html>

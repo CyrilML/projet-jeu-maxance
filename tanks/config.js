@@ -8,7 +8,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 2,
+  version: 3,
   pasFixe: 1 / 120,
 
   monde: {
@@ -107,6 +107,29 @@ Tanks.CONFIG = {
     drone: { nom: "Drone", icone: "🛸", vitesseMax: 30, acceleration: 12, virage: 2, montee: 12, hauteurMax: 120, munitions: 6, recharge: 3, arme: "grenade" },
     distanceMonter: 6, // m : on peut monter dans un engin à moins de 6 m
     parachute: 4, // m/s : la vitesse de descente en parachute (on s'éjecte de l'avion avec E)
+  },
+
+  // ------------------------------------------------------------------ étape 62 : le lac, les bateaux et les portails
+  // ✍️ Un LAC à l'est du champ de bataille (une ellipse : un cercle étiré). Ton bateau de guerre est amarré au bord, de
+  // ton côté ; 2 patrouilleurs ennemis tournent sur le lac et tirent sur tout ce qui est bleu près de l'eau.
+  lac: { x: 215, z: 0, rayonX: 80, rayonZ: 185, niveau: -1, profondeur: 5 }, // m ; niveau = la hauteur de l'eau
+  bateaux: {
+    joueur: { nom: "Vedette de combat", icone: "🚤", longueur: 9, largeur: 3.2, hauteur: 2.4, vitesseMax: 15, acceleration: 5,
+      virage: 0.8, tourelle: 1.3, recharge: 2, vie: 3 }, // (un canon comme celui d'un tank, mais plus petit : 3 coups pour la couler)
+    ennemis: { nombre: 2, nom: "Patrouilleur", vitesse: 8, virage: 0.6, tourelle: 0.9, recharge: 4, vie: 3, portee: 260, erreur: 0.02 },
+  },
+  // ✍️ Des PORTAILS par paires : on entre dans l'un, on ressort par l'autre (à l'autre bout de la carte). Tout ce qui
+  // roule ou marche peut les prendre (les tanks, les soldats, le 4x4, toi) ; l'hélico et le drone aussi, s'ils volent
+  // très bas. Les bateaux et l'avion, non.
+  portails: {
+    paires: [
+      { nom: "bleu ↔ orange", couleurs: ["#3b9cff", "#ff9a2e"], a: [-200, 245], b: [-110, 35] }, // ton camp ↔ à l'ouest du village
+      { nom: "violet ↔ vert", couleurs: ["#b45cff", "#3dff8a"], a: [60, -255], b: [95, 70] }, // le camp ennemi ↔ entre le village et le lac
+    ],
+    rayon: 4, // m : la taille de l'anneau
+    entree: 2.6, // m : il faut passer à moins de 2,6 m du centre pour être aspiré
+    attente: 2, // s : après un passage, on ne peut pas repasser tout de suite (sinon on ferait des allers-retours)
+    hauteurMax: 7, // m au-dessus du sol (pour l'hélico et le drone)
   },
 
   camera: { distance: 15, hauteur: 6.5, regardDevant: 22, souplesse: 6, champ: 60 },

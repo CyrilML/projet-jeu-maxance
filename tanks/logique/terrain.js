@@ -6,6 +6,9 @@
 //     les arbres sont des CERCLES (un tank qui roule vite les ÉCRASE) ;
 //   - « est-ce que je vois ma cible ? » : on avance le long de la ligne droite entre les deux, par petits pas, et on
 //     regarde si on rentre dans une maison ou dans une colline (c'est la « ligne de vue »).
+// Étape 62 : le LAC. C'est une ellipse (un cercle étiré) : pour savoir si un point (x, z) est dans l'eau, on calcule
+// « dl » = √((dx ÷ rayonX)² + (dz ÷ rayonZ)²). Si dl < 1, on est dans l'eau. Au bord (dl = 1), le sol est juste à la
+// hauteur de l'eau ; plus on va vers le milieu, plus il est creux. Ce qui roule ou marche est repoussé hors de l'eau.
 // Ce fichier ne dessine rien.
 
 window.Tanks = window.Tanks || {};
@@ -15,7 +18,13 @@ Tanks.Terrain = (function () {
   const bruit = B.creer(W.graine);
   let etat = W.graine;
   const hasard = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
-  const demi = W.taille / 2, V = W.village;
+  const demi = W.taille / 2, V = W.village, LAC = C.lac;
+  // (étape 62) « dl » : 0 au milieu du lac, 1 sur la rive, plus de 1 en dehors
+  const distLac = (x, z) => Math.hypot((x - LAC.x) / LAC.rayonX, (z - LAC.z) / LAC.rayonZ);
+  const dansLEau = (x, z, marge) => distLac(x, z) < 1 + (marge || 0) / Math.min(LAC.rayonX, LAC.rayonZ);
+  // (et les portails : on ne met ni arbre ni maison tout près)
+  const PORTAILS = C.portails.paires.flatMap((p) => [p.a, p.b]);
+  const presDUnPortail = (x, z, d) => PORTAILS.some(([px, pz]) => Math.hypot(px - x, pz - z) < d);
 
   // ------------------------------------------------------------------ la hauteur du sol
   function hauteur(x, z) {
@@ -26,6 +35,13 @@ Tanks.Terrain = (function () {
     // au bord, le terrain remonte un peu (une cuvette : on voit que c'est la fin du champ de bataille)
     const bord = Math.max(Math.abs(x), Math.abs(z)) - (demi - 60);
     if (bord > 0) h += bord * bord * 0.012;
+    // le lac : au bord, le sol descend jusqu'à l'eau, puis il se creuse (pente de 12 m par « rayon »)
+    const dl = distLac(x, z);
+    if (dl < 1.35) {
+      const creux = Math.max(LAC.niveau - LAC.profondeur, LAC.niveau + (dl - 1) * 12);
+      const melange = Math.min(1, (1.35 - dl) / 0.35);
+      h = h + (creux - h) * melange;
+    }
     return h;
   }
   function normale(x, z) {
@@ -38,7 +54,7 @@ Tanks.Terrain = (function () {
   // ------------------------------------------------------------------ les obstacles
   const boites = []; // { x, z, demiL, demiP, angle, h, sorte: "maison" | "muret" | "ruine" }
   const arbres = []; // { x, z, r, taille, ecrase: false }
-  const loinDe = (x, z, d) => boites.every((b) => Math.hypot(b.x - x, b.z - z) > d + Math.max(b.demiL, b.demiP));
+  const loinDe = (x, z, d) => !dansLEau(x, z, d + 10) && !presDUnPortail(x, z, d + 12) && boites.every((b) => Math.hypot(b.x - x, b.z - z) > d + Math.max(b.demiL, b.demiP));
 
   // Le village : des maisons en ruines le long de deux rues en croix, des murets, des tas de gravats.
   for (let essai = 0, n = 0; n < V.maisons && essai < 600; essai++) {
@@ -81,7 +97,7 @@ Tanks.Terrain = (function () {
       x = (hasard() * 2 - 1) * (demi - 40);
       z = (hasard() * 2 - 1) * (demi - 40);
     }
-    if (Math.hypot(x - V.x, z - V.z) < V.rayon * 0.9 || !loinDe(x, z, 2) || Math.abs(z) > demi - 90 && Math.abs(x) < 120) continue; // (pas sur les départs)
+    if (Math.hypot(x - V.x, z - V.z) < V.rayon * 0.9 || !loinDe(x, z, 2) || dansLEau(x, z, 3) || presDUnPortail(x, z, 9) || Math.abs(z) > demi - 90 && Math.abs(x) < 120) continue; // (pas sur les départs)
     arbres.push({ x, z, r: 0.6, taille: 0.8 + hasard() * 0.6, ecrase: false, sorte: hasard() < 0.35 ? "sapin" : "feuillu", angleChute: 0 });
   }
 
@@ -115,8 +131,16 @@ Tanks.Terrain = (function () {
       o.z += (nu * s + nv * c) * pousse;
       touche = b;
     }
+    // (étape 62) l'eau : on ramène le point sur la rive (en agrandissant son écart au centre du lac)
+    if (!o.flotte && dansLEau(o.x, o.z, r)) {
+      const voulu = 1 + r / Math.min(LAC.rayonX, LAC.rayonZ), dl = distLac(o.x, o.z) || 0.01;
+      o.x = LAC.x + (o.x - LAC.x) * (voulu / dl);
+      o.z = LAC.z + (o.z - LAC.z) * (voulu / dl);
+      touche = touche || LAC_BOITE;
+    }
     return touche;
   }
+  const LAC_BOITE = { sorte: "eau" };
 
   // La ligne de vue entre deux points (à la hauteur y au-dessus du sol) : rien entre les deux ?
   // (Étape 61 : pour aller vite — 24 soldats et 8 tanks se posent la question sans arrêt —, on ne regarde que les
@@ -142,5 +166,5 @@ Tanks.Terrain = (function () {
     return liste;
   }
 
-  return { hauteur, normale, boites, arbres, dansBoite, repousser, vueLibre, departs, demi };
+  return { hauteur, normale, boites, arbres, dansBoite, repousser, vueLibre, departs, demi, distLac, dansLEau };
 })();

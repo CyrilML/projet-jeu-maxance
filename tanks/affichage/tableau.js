@@ -8,6 +8,8 @@
 // ENGIN : sa vie ou ses bombes et missiles, sa hauteur ; en hélico, une croix au sol montre où tombera la bombe ; en
 // avion, un carré rouge montre l'ennemi que le missile va suivre. « E : monter » apparaît quand un engin est tout près.
 // Sur la carte : les soldats (petits points) et les engins de ton camp.
+// Étape 62 : le LAC (en bleu) sur la carte, les BATEAUX, les PORTAILS (des ronds de leur couleur) ; au-dessus des
+// patrouilleurs ennemis, leur nom et leur vie ; dans ta vedette, son viseur, sa vie et son canon.
 // Il lit le monde, il ne le modifie jamais.
 
 window.Tanks = window.Tanks || {};
@@ -41,14 +43,29 @@ Tanks.Tableau = (function () {
       c.fillRect(-b.demiL * k, -Math.max(0.6, b.demiP * k), b.demiL * 2 * k, Math.max(1.2, b.demiP * 2 * k));
       c.restore();
     }
+    // (étape 62) le lac, et les portails
+    const LAC = C.lac;
+    c.fillStyle = "#3d6f86";
+    c.beginPath();
+    c.ellipse(n / 2 + LAC.x * k, n / 2 + LAC.z * k, LAC.rayonX * k, LAC.rayonZ * k, 0, 0, Math.PI * 2);
+    c.fill();
+    for (const paire of C.portails.paires) {
+      [paire.a, paire.b].forEach(([x, z], i) => {
+        c.strokeStyle = paire.couleurs[i];
+        c.lineWidth = 2;
+        c.beginPath();
+        c.arc(n / 2 + x * k, n / 2 + z * k, 3.5, 0, Math.PI * 2);
+        c.stroke();
+      });
+    }
     const radio = Tanks.Evenements;
     const dire = (texte, couleur, duree) => (message = { texte, couleur, jusqua: performance.now() + (duree || 1800) });
     radio.ecouter("touche", (d) => {
-      if (d.parToi) dire(d.vie > 0 ? "🎯 Touché ! " + d.cible + " (" + d.vie + "/" + C.char.vie + ")" : "", "#ffe27a");
-      else if (d.surToi) dire("💥 Tu es touché ! (" + d.vie + "/" + C.char.vie + ")", "#ff7a6a");
+      if (d.parToi) dire(d.vie > 0 ? "🎯 Touché ! " + d.cible + " (" + d.vie + "/" + d.vieMax + ")" : "", "#ffe27a");
+      else if (d.surToi) dire("💥 Tu es touché ! (" + d.vie + "/" + d.vieMax + ")", "#ff7a6a");
     });
     radio.ecouter("detruit", (d) => {
-      if (d.parToi) dire("💥 " + d.cible + " DÉTRUIT !", "#7dffa0", 2500);
+      if (d.parToi) dire((d.bateau ? "🌊 " + d.cible + " COULÉ !" : "💥 " + d.cible + " DÉTRUIT !"), "#7dffa0", 2500);
       else if (d.equipeCible === "bleus" && !d.surToi) dire("⚠️ " + d.cible + " (allié) est détruit", "#ffb37a");
       else if (d.equipeCible === "rouges") dire("✅ " + d.tireur + " a détruit " + d.cible, "#9cc4ff");
     });
@@ -64,6 +81,10 @@ Tanks.Tableau = (function () {
       if (d.parToi) dire("✖ " + d.cible + " à terre", "#7dffa0");
       else if (d.surToi) dire("💀 Tu es à terre…", "#ff7a6a", 2500);
     });
+    radio.ecouter("portail", (d) => {
+      if (d.quiToi) dire("🌀 Portail " + d.de + " → " + d.vers + " !", "#d8b4ff");
+    });
+    radio.ecouter("echoue", () => dire("⚓ Échoué sur la rive ! Recule (↓)", "#ffb37a"));
     radio.ecouter("soldat-touche", (d) => {
       if (d.surToi && d.vie > 0) dire("🩹 Tu es touché ! (" + d.vie + "/" + C.soldats.vieJoueur + ")", "#ff7a6a");
     });
@@ -139,9 +160,23 @@ Tanks.Tableau = (function () {
           if (d < dmin) (dmin = d), (proche = nom);
         };
         voir(monde.joueur, "ton tank", C.char.rayon);
-        for (const x of monde.engins) voir(x, C.engins[x.sorte].icone + " " + x.nom, 2);
+        for (const x of monde.engins) voir(x, (x.sorte === "bateau" ? C.bateaux.joueur.icone : C.engins[x.sorte].icone) + " " + x.nom, x.sorte === "bateau" ? 7 : 2);
         if (proche) texte("E : monter dans " + proche, L / 2, H - 120, 22, "#ffe27a", "center");
       }
+      return;
+    }
+    if (e.sorte === "bateau") {
+      const R = C.bateaux.joueur, a = e.angle + e.tourelle, dv = e.cible ? Math.hypot(e.cible.x - e.x, e.cible.z - e.z) : 150;
+      const v = Tanks.Scene.versEcran(e.x + Math.cos(a) * dv, e.cible ? e.cible.y + 1.4 : e.y + 1, e.z + Math.sin(a) * dv, L, H);
+      if (v) {
+        viseur(v, !!e.cible, 14);
+        if (e.cible) texte("🎯 " + e.cible.nom + " · " + Math.round(dv) + " m", v.x, v.y + 40, 14, "#ff7a6a", "center");
+      }
+      panneau(12, H - 98, 330, 86);
+      texte(R.icone + " " + R.nom, 24, H - 72, 17, "#ffe27a");
+      cases(24, H - 60, R.vie, e.vie);
+      texte("vie", 24 + R.vie * 30 + 4, H - 48, 13, "#ccc");
+      barre(24, H - 36, 200, 1 - e.recharge / R.recharge, e.recharge === 0, e.recharge === 0 ? "🔥 PRÊT (Espace)" : "recharge…");
       return;
     }
     const R = C.engins[e.sorte], haut = e.y - T.hauteur(e.x, e.z);
@@ -243,6 +278,20 @@ Tanks.Tableau = (function () {
         ctx.fillRect(e.x - 22 + k * 11, e.y - 2, 9, 4);
       }
     }
+    // (étape 62) Au-dessus des patrouilleurs ennemis : leur nom et leur vie.
+    for (const b of monde.bateaux) {
+      const e = Tanks.Scene.versEcran(b.x, b.y + 6, b.z, L, H), d = Math.hypot(b.x - ici.x, b.z - ici.z);
+      if (!e || e.x < -40 || e.x > L + 40 || d > 450) continue;
+      if (b.detruit) {
+        if (d < 200) texte("✖", e.x, e.y, 14, "#999", "center");
+        continue;
+      }
+      texte("⚓ " + b.nom + (d > 120 ? " · " + Math.round(d) + " m" : ""), e.x, e.y - 8, 13, E.rouges.marque, "center");
+      for (let k = 0; k < b.fiche.vie; k++) {
+        ctx.fillStyle = k < b.vie ? E.rouges.marque : "rgba(0,0,0,.45)";
+        ctx.fillRect(e.x - 16 + k * 11, e.y - 2, 9, 4);
+      }
+    }
     // Les soldats ennemis tout près (moins de 120 m) : un petit losange rouge au-dessus de leur tête.
     for (const o of monde.soldats) {
       if (o.mort || o.equipe !== "rouges" || Math.hypot(o.x - ici.x, o.z - ici.z) > 120) continue;
@@ -307,6 +356,16 @@ Tanks.Tableau = (function () {
       ctx.fillStyle = o.equipe === "bleus" ? "#9cc4ff" : "#ff9a8a";
       ctx.fillRect(x0 + tc / 2 + o.x * k - 1, y0 + tc / 2 + o.z * k - 1, 2, 2);
     }
+    for (const b of monde.bateaux) { // (étape 62) les patrouilleurs : un petit losange rouge
+      ctx.fillStyle = b.detruit ? "#555" : E.rouges.marque;
+      ctx.beginPath();
+      const bx = x0 + tc / 2 + b.x * k, bz = y0 + tc / 2 + b.z * k;
+      ctx.moveTo(bx, bz - 4);
+      ctx.lineTo(bx + 3, bz);
+      ctx.lineTo(bx, bz + 4);
+      ctx.lineTo(bx - 3, bz);
+      ctx.fill();
+    }
     for (const e of monde.engins) { // les engins de ton camp : un petit carré blanc
       if (e === t.engin) continue;
       ctx.fillStyle = e.detruit ? "#555" : "#fff";
@@ -341,7 +400,7 @@ Tanks.Tableau = (function () {
     if (monde.phase === "victoire" || monde.phase === "defaite") {
       const gagne = monde.phase === "victoire";
       panneau(L / 2 - 240, H / 2 - 90, 480, 170);
-      const perdu = t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : "💥 Ton tank est détruit…";
+      const perdu = t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : "💥 Ton tank est détruit…";
       texte(gagne ? "🏆 VICTOIRE !" : perdu, L / 2, H / 2 - 40, 38, gagne ? "#7dffa0" : "#ff7a6a", "center");
       texte(gagne ? "Tous les tanks rouges sont détruits" : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
       const S = Tanks.Sauvegarde.donnees;
@@ -355,6 +414,7 @@ Tanks.Tableau = (function () {
         helico: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · Espace bombe · E descendre (posé)",
         drone: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · Espace grenade · E descendre (posé)",
         avion: "↑ piquer · ↓ cabrer · ← → virer · Espace missile · E s'éjecter",
+        bateau: "↑ ↓ ← → naviguer · Q / D canon · Espace tirer · E descendre (près de la rive)",
       }[t.mode];
       texte(aide, L / 2, H - 14, 13, "rgba(255,255,255,.85)", "center");
     }
