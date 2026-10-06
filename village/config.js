@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 14,
+  version: 15,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -257,6 +257,9 @@ Village.CONFIG = {
   detail: {
     zoomFin: 0.8, // à partir de ce zoom : tous les détails
     zoomFigurants: 0.6, // à partir de ce zoom : les poules, les enfants, les papillons
+    // Étape 14 : ✍️ des bâtiments plus GROS, pour les reconnaître d'un coup d'œil (× la taille de l'étape 13)
+    echelleBatiments: 1.35,
+    echelleEntrepot: 1.15, // l'entrepôt était déjà grand (et il a sa cour et son silo)
   },
   // Étape 9 : les FIGURANTS (ils ne font que décorer : oiseaux, papillons, poules, enfants)
   figurants: {

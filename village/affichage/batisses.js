@@ -59,7 +59,20 @@ Village.Batisses = (function () {
     lumieres = [];
   }
   // Allumer une lumière (r : son rayon en px du monde ; force : de 0 à 1)
-  function lumiere(x, y, r, couleur, force) { if (vue.noirceur > 0.05) lumieres.push({ x, y, r, couleur, force: force === undefined ? 1 : force }); }
+  // Étape 14 : quand on dessine un bâtiment « à la loupe » (plus gros), ses lumières doivent suivre la loupe.
+  let loupe = null; // { x, y, s } : le centre et le grossissement en cours
+  function lumiere(x, y, r, couleur, force) {
+    if (vue.noirceur <= 0.05) return;
+    if (loupe) { x = loupe.x + (x - loupe.x) * loupe.s; y = loupe.y + (y - loupe.y) * loupe.s; r *= loupe.s; }
+    lumieres.push({ x, y, r, couleur, force: force === undefined ? 1 : force });
+  }
+  // Dessiner quelque chose « à la loupe » : grossi de s autour du point (x, y)
+  function aLaLoupe(ctx, x, y, s, dessiner) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(s, s); ctx.translate(-x, -y);
+    const avant = loupe; loupe = { x, y, s };
+    try { dessiner(); } finally { loupe = avant; ctx.restore(); }
+  }
+  const echelleDe = (type) => (type === "entrepot" ? C_.detail.echelleEntrepot : C_.detail.echelleBatiments);
 
   // Un point sur un mur : u va de 0 (début du mur) à 1 (fin), v de 0 (le sol) à 1 (le haut du mur).
   const surMur = (P, Q, h, u, v) => [P[0] + (Q[0] - P[0]) * u, P[1] + (Q[1] - P[1]) * u - v * h];
@@ -260,17 +273,21 @@ Village.Batisses = (function () {
     ctx.beginPath(); ctx.ellipse(x - 2, y - 0.6, 1, 0.5, 0.45, 0, TOUR); ctx.stroke();
   }
 
-  // Étape 7 : un morceau de charbon, noir et brillant
-  function charbon(ctx, x, y) {
-    forme(ctx, [[x - 3.5, y + 1], [x - 2, y - 2.5], [x + 1.5, y - 3], [x + 3.5, y - 0.5], [x + 2, y + 2], [x - 1.5, y + 2.2]], "#2b2b30");
-    ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.beginPath(); ctx.moveTo(x - 1.5, y - 2); ctx.lineTo(x + 1, y - 2.4); ctx.lineTo(x - 0.5, y - 0.8); ctx.closePath(); ctx.fill();
+  // Étape 14 : ✍️ les minerais en PÉPITES. Une pépite, c'est un caillou à facettes : une face claire (au soleil),
+  // une face foncée (à l'ombre), et un petit éclat qui brille. On en met 3 ensemble, un peu de travers.
+  function facettes(ctx, x, y, r, clair, moyen, fonce, eclat) {
+    const p = [[x - r, y + r * 0.3], [x - r * 0.55, y - r * 0.8], [x + r * 0.35, y - r], [x + r, y - r * 0.2], [x + r * 0.6, y + r * 0.7], [x - r * 0.35, y + r * 0.8]];
+    forme(ctx, p, moyen);
+    ctx.fillStyle = clair; ctx.beginPath(); ctx.moveTo(p[1][0], p[1][1]); ctx.lineTo(p[2][0], p[2][1]); ctx.lineTo(x + r * 0.1, y - r * 0.1); ctx.lineTo(p[0][0], p[0][1]); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = fonce; ctx.beginPath(); ctx.moveTo(x + r * 0.1, y - r * 0.1); ctx.lineTo(p[3][0], p[3][1]); ctx.lineTo(p[4][0], p[4][1]); ctx.lineTo(p[5][0], p[5][1]); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = CONTOUR; ctx.lineWidth = 0.9; ctx.beginPath(); p.forEach(([px, py], n) => (n ? ctx.lineTo(px, py) : ctx.moveTo(px, py))); ctx.closePath(); ctx.stroke();
+    if (eclat) { ctx.fillStyle = eclat; ctx.beginPath(); ctx.arc(x - r * 0.35, y - r * 0.45, r * 0.22, 0, TOUR); ctx.fill(); }
   }
-
-  // Étape 8 : un caillou de minerai de fer (brun-rouge, avec des points de rouille)
-  function minerai(ctx, x, y) {
-    forme(ctx, [[x - 3.5, y + 1.5], [x - 2.5, y - 2.5], [x + 1, y - 3.2], [x + 3.8, y - 0.8], [x + 2.6, y + 2.4], [x - 1, y + 2.8]], "#8e5a3c");
-    ctx.fillStyle = "#c98a5a"; ctx.beginPath(); ctx.arc(x - 1, y - 1, 0.9, 0, TOUR); ctx.arc(x + 1.6, y + 0.6, 0.7, 0, TOUR); ctx.fill();
-  }
+  const tas = (ctx, x, y, f) => { f(ctx, x - 2.4, y + 0.8, 2.4); f(ctx, x + 2.2, y + 1, 2.2); f(ctx, x, y - 1.6, 2.6); };
+  // Le charbon : des pépites noires, avec des reflets bleutés
+  function charbon(ctx, x, y) { tas(ctx, x, y, (c, a, b, r) => facettes(c, a, b, r, "#5a5f6e", "#2e3036", "#141518", "rgba(190, 210, 255, .8)")); }
+  // Le minerai de fer : des pépites brun-rouge, avec des taches de rouille
+  function minerai(ctx, x, y) { tas(ctx, x, y, (c, a, b, r) => { facettes(c, a, b, r, "#b8785a", "#8e5a3c", "#5e3a26", null); c.fillStyle = "#e09a5a"; c.beginPath(); c.arc(a + r * 0.3, b + r * 0.2, r * 0.18, 0, TOUR); c.fill(); }); }
   // Étape 8 : un lingot (une barre de fer en trapèze, brillante)
   function lingot(ctx, x, y) {
     forme(ctx, [[x - 6, y + 2], [x + 4, y + 2], [x + 6, y - 1], [x - 4, y - 1]], "#9aa3ad");
@@ -296,9 +313,10 @@ Village.Batisses = (function () {
     ctx.beginPath(); ctx.ellipse(x - 1, y + 0.5, 4, 3, -0.4, 0, TOUR); ctx.fillStyle = "#b4512e"; ctx.fill(); contour(ctx, 1);
   }
 
+  let trait = 1; // étape 14 : pour les icônes grossies, des traits plus fins (sinon tout devient noir)
   function contour(ctx, largeur) {
     ctx.strokeStyle = CONTOUR;
-    ctx.lineWidth = largeur || 2;
+    ctx.lineWidth = (largeur || 2) * trait;
     ctx.lineJoin = "round";
     ctx.stroke();
   }
@@ -453,10 +471,9 @@ Village.Batisses = (function () {
     for (let k = 0; k < nombre; k++) {
       const px = x + (k % 3) * 6 - (Math.floor(k / 3) % 2) * 3, py = y - Math.floor(k / 3) * 5;
       if (sorte === "rondin") {
-        // Le bout d'un rondin : le bois clair, les cernes, et l'écorce autour
-        rond(ctx, px, py, 3.2, "#8f5e2e");
-        ctx.beginPath(); ctx.arc(px, py, 2.3, 0, TOUR); ctx.fillStyle = "#e6be85"; ctx.fill();
-        ctx.strokeStyle = "rgba(140, 90, 40, .8)"; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.arc(px, py, 1.2, 0, TOUR); ctx.stroke();
+        // Étape 14 : ✍️ des bûches COUCHÉES et empilées (avant, on ne voyait que leurs bouts ronds : des « boulets » !)
+        const rang = Math.floor(k / 3), pos = k % 3;
+        ctx.save(); ctx.translate(x + pos * 1.5 + (rang % 2) * 1.2, y + pos * 3.4 - rang * 3.6); ctx.scale(0.62, 0.62); rondin(ctx, 0, 0, 0.42); ctx.restore();
       }
       else if (sorte === "poisson") poisson(ctx, px, py);
       else if (sorte === "viande") viande(ctx, px, py);
@@ -474,8 +491,11 @@ Village.Batisses = (function () {
   function dessinerBatiment(ctx, b, x, y, t) {
     const m = MODELES[b.type];
     const souleve = Village.monde && Village.monde.projet && Village.monde.projet.deplacer === b; // étape 12
-    if (souleve) { ctx.save(); ctx.globalAlpha = 0.4; dessinerBatimentDedans(ctx, b, x, y - 6, t, m); ctx.restore(); return; }
-    dessinerBatimentDedans(ctx, b, x, y, t, m);
+    const s = echelleDe(b.type);
+    if (souleve) { ctx.save(); ctx.globalAlpha = 0.4; aLaLoupe(ctx, x, y - 6, s, () => dessinerBatimentDedans(ctx, b, x, y - 6, t, m)); ctx.restore(); return; }
+    // Étape 14 : ✍️ le bâtiment est dessiné plus GROS (à la loupe) ; ses ouvriers restent à la taille des autres
+    aLaLoupe(ctx, x, y, s, () => dessinerBatimentDedans(ctx, b, x, y, t, m));
+    if (b.etat === "pret") ouvrierDevant(ctx, b, x, y, t, s);
   }
   function dessinerBatimentDedans(ctx, b, x, y, t, m) {
     ombre(ctx, x, y, m.a);
@@ -661,6 +681,7 @@ Village.Batisses = (function () {
       const bx = x + 4, by = y - m.h - 2;
       ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx - 6, by - 7); ctx.moveTo(bx - 3, by - 3.5); ctx.lineTo(bx - 7, by - 2); ctx.moveTo(bx, by); ctx.lineTo(bx + 6, by - 7); ctx.moveTo(bx + 3, by - 3.5); ctx.lineTo(bx + 7, by - 2); ctx.stroke();
     }
+    if (vue.fin) animations(ctx, b, x, y, t, m); // étape 14
     // Étape 11 : un bâtiment usé a des fissures et une planche de travers
     if (b.usure >= 0.5 && vue.fin) {
       ctx.strokeStyle = "rgba(40, 25, 10, " + (0.3 + b.usure * 0.4) + ")"; ctx.lineWidth = 1; ctx.beginPath();
@@ -668,8 +689,7 @@ Village.Batisses = (function () {
       if (b.usure >= 0.8) { ctx.moveTo(x - m.a * 0.2, y - m.h * 0.2); ctx.lineTo(x - m.a * 0.1, y - m.h * 0.5); }
       ctx.stroke();
     }
-    // Étape 10 : les ouvriers des ateliers travaillent devant leur bâtiment
-    ouvrierDevant(ctx, b, x, y, t);
+    // (Étape 10 : les ouvriers des ateliers travaillent devant leur bâtiment : voir dessinerBatiment)
     // Un petit panneau avec l'emoji du métier, au-dessus de la porte
     if (b.type !== "entrepot") enseigne(ctx, x - m.a * 0.45, y - 8 - m.h * 0.2, Village.Batiments.TYPES[b.type].emoji);
     // Étape 13 : une étoile dorée par amélioration, à côté de l'enseigne
@@ -686,6 +706,74 @@ Village.Batisses = (function () {
     if (Village.monde && Village.monde.projet && Village.monde.projet.deplacer === b) {
       ctx.strokeStyle = "rgba(255, 226, 122," + (0.5 + 0.5 * Math.sin(t * 8)) + ")"; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(x - m.a - 4, y); ctx.lineTo(x, y + m.a / 2 + 2); ctx.lineTo(x + m.a + 4, y); ctx.lineTo(x, y - m.a / 2 - 2); ctx.closePath(); ctx.stroke();
+    }
+  }
+
+  // ---------------------------------------------------------------- étape 14 : la vie devant les bâtiments
+  // ✍️ Maxance voulait plus d'animations devant chaque bâtiment. Chacune a sa petite scène, qui bouge avec
+  // l'heure (t) : pas besoin de mémoire, comme les figurants de l'étape 9.
+  function animations(ctx, b, x, y, t, m) {
+    const s = b.numero * 1.3, aLaMaison = b.ouvrier && !["aller", "travailler", "revenir"].includes(b.ouvrier.etat);
+    switch (b.type) {
+      case "scierie": {
+        // Le tas de sciure sous la lame, et un tronc qui avance vers la scie quand elle travaille
+        ctx.beginPath(); ctx.ellipse(x + 13, y + 3, 6, 2.4, 0, 0, TOUR); ctx.fillStyle = "#e8cf9a"; ctx.fill();
+        if (b.travail) {
+          const p = 1 - b.travail.reste / Math.max(0.1, b.travail.duree || 6);
+          ctx.save(); ctx.translate(x - 4 + p * 12, y - 5 + p * 2); ctx.scale(0.75, 0.75); rondin(ctx, 0, 0, 0.12); ctx.restore();
+          for (let k = 0; k < 8; k++) { const q = (t * 2.2 + k / 8) % 1; ctx.fillStyle = "rgba(240, 205, 140," + (1 - q) + ")"; ctx.beginPath(); ctx.arc(x + 14 + q * 16 * Math.cos(k), y - 6 + q * 12 - Math.sin(q * 3) * 10, 1.3, 0, TOUR); ctx.fill(); }
+        }
+        break;
+      }
+      case "bucheron": {
+        // ✍️ Le bûcheron, quand il est à la maison, fend une bûche sur le billot : les morceaux sautent
+        forme(ctx, [[x - 26, y + 14], [x - 18, y + 14], [x - 18, y + 9], [x - 26, y + 9]], "#a87443");
+        if (aLaMaison) {
+          const ph = (t * 0.8 + s) % 1;
+          if (ph < 0.5) { ctx.save(); ctx.translate(x - 22, y + 6); ctx.scale(0.5, 0.5); rondin(ctx, 0, 0, 1.4); ctx.restore(); }
+          else for (const c of [-1, 1]) { const q = (ph - 0.5) * 2; ctx.save(); ctx.translate(x - 22 + c * q * 7, y + 7 - Math.sin(q * Math.PI) * 6); ctx.rotate(c * q * 1.5); ctx.fillStyle = "#e6be85"; ctx.fillRect(-1.5, -3.5, 3, 7); ctx.strokeStyle = "#8f5e2e"; ctx.lineWidth = 0.8; ctx.strokeRect(-1.5, -3.5, 3, 7); ctx.restore(); }
+        }
+        ctx.fillStyle = "#e6be85"; for (const [dx, dy] of [[-30, 15], [-15, 16], [-28, 11]]) ctx.fillRect(x + dx, y + dy, 2, 1); // des copeaux
+        break;
+      }
+      case "pecheur": {
+        // Un séchoir à poissons : 3 poissons qui se balancent au vent
+        ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(x - 26, y + 12); ctx.lineTo(x - 26, y - 4); ctx.moveTo(x - 12, y + 16); ctx.lineTo(x - 12, y); ctx.moveTo(x - 26, y - 3); ctx.lineTo(x - 12, y + 1); ctx.stroke();
+        for (let k = 0; k < 3; k++) { const px = x - 23 + k * 4.5, py = y - 1.4 + k * 1.2, a = Math.sin(t * 2 + k + s) * 0.25; ctx.save(); ctx.translate(px, py); ctx.rotate(Math.PI / 2 + a); poisson(ctx, 3, 0); ctx.restore(); }
+        break;
+      }
+      case "chasseur": {
+        // Une peau tendue sur un cadre, et un petit feu qui fume
+        ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 1.3; ctx.strokeRect(x - 28, y - 4, 10, 12);
+        forme(ctx, [[x - 27, y - 3], [x - 19, y - 2], [x - 20, y + 7], [x - 26, y + 6]], "#b07a4a");
+        fumee(ctx, x + 22, y + 4, t + s);
+        break;
+      }
+      case "forestier": {
+        // Des jeunes pousses dans leurs pots, qui bougent au vent
+        for (let k = 0; k < 3; k++) { const px = x - 26 + k * 6, py = y + 12 + k * 1.5, a = Math.sin(t * 2.5 + k) * 0.15; forme(ctx, [[px - 2, py], [px + 2, py], [px + 1.6, py - 3], [px - 1.6, py - 3]], "#c4622f"); ctx.save(); ctx.translate(px, py - 3); ctx.rotate(a); ctx.fillStyle = "#4fb556"; ctx.beginPath(); ctx.ellipse(-1.5, -2.5, 1.8, 1, -0.6, 0, TOUR); ctx.ellipse(1.5, -3.2, 1.8, 1, 0.6, 0, TOUR); ctx.fill(); ctx.restore(); }
+        break;
+      }
+      case "carriere": {
+        // Un bloc de pierre en train d'être taillé : des éclats qui sautent
+        forme(ctx, [[x - 26, y + 10], [x - 20, y + 13], [x - 14, y + 10], [x - 14, y + 4], [x - 20, y + 1], [x - 26, y + 4]], "#b5b5b0");
+        if (aLaMaison && Math.sin(t * 6 + s) > 0.6) { ctx.fillStyle = "#e8e8e2"; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc(x - 20 + Math.cos(t * 20 + k) * 5, y + 1 - Math.abs(Math.sin(t * 20 + k)) * 5, 0.9, 0, TOUR); ctx.fill(); } }
+        break;
+      }
+      case "mineCharbon": case "mineFer": case "mineOr": {
+        // Le wagonnet roule sur les rails quand la mine travaille
+        if (b.travail) { const d = Math.sin(t * 1.4 + s) * 6; ctx.save(); ctx.translate(d, d * 0.5); forme(ctx, [[x + 2, y + 6], [x + 10, y + 10], [x + 10, y + 5], [x + 2, y + 1]], "#6c5036"); rond(ctx, x + 4, y + 7, 1.4, "#3b2614"); rond(ctx, x + 9, y + 9.5, 1.4, "#3b2614"); ctx.restore(); }
+        break;
+      }
+      case "fonderie": {
+        // Le métal en fusion coule du creuset, et des étincelles sautent
+        if (b.travail) {
+          ctx.strokeStyle = "rgba(255, " + Math.round(140 + 60 * Math.sin(t * 8)) + ", 40, .95)"; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(x + 14, y + 3); ctx.quadraticCurveTo(x + 17, y + 6, x + 16, y + 12); ctx.stroke();
+          ctx.fillStyle = "#ffcf2e"; for (let k = 0; k < 4; k++) { const q = (t * 3 + k / 4) % 1; ctx.beginPath(); ctx.arc(x + 16 + Math.cos(k * 2) * q * 8, y + 12 - Math.sin(q * Math.PI) * 8, 0.9, 0, TOUR); ctx.fill(); }
+          lumiere(x + 16, y + 10, 18, "orange", 0.9);
+        }
+        break;
+      }
     }
   }
 
@@ -725,13 +813,15 @@ Village.Batisses = (function () {
     ctx.restore();
   }
 
+  // Étape 14 : ✍️ une enseigne plus grande, pour reconnaître le bâtiment d'un coup d'œil
   function enseigne(ctx, x, y, emoji) {
+    ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x - 4, y - 15); ctx.lineTo(x - 4, y - 18); ctx.moveTo(x + 4, y - 15); ctx.lineTo(x + 4, y - 18); ctx.stroke();
     ctx.fillStyle = "#f6e7c4";
     ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(x - 7, y - 14, 14, 12, 3); else ctx.rect(x - 7, y - 14, 14, 12);
+    if (ctx.roundRect) ctx.roundRect(x - 8, y - 15, 16, 14, 3.5); else ctx.rect(x - 8, y - 15, 16, 14);
     ctx.fill(); contour(ctx, 1.2);
-    ctx.font = "9px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillText(emoji, x, y - 7.5);
+    ctx.font = "11px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(emoji, x, y - 7.8);
     ctx.textAlign = "left";
   }
 
@@ -1103,7 +1193,8 @@ Village.Batisses = (function () {
   // ---------------------------------------------------------------- les ouvriers des ateliers (étape 10)
   // Le scieur, le fondeur, le forgeron, le mineur, le savant et le marchand travaillent devant leur
   // bâtiment : on les dessine avec lui, à une place fixe, avec leur geste.
-  function ouvrierDevant(ctx, b, x, y, t) {
+  function ouvrierDevant(ctx, b, x, y, t, s) {
+    s = s || 1;
     const T = TENUES[b.type];
     if (!T || !b.ouvrier) return;
     const tr = traits(b.numero), actif = !!b.travail || (b.type === "universite" && Village.monde && Village.monde.recherches.enCours) || b.type === "marche";
@@ -1132,7 +1223,7 @@ Village.Batisses = (function () {
     } else if (b.type === "marche") { // il fait signe aux passants
       dx = 4; dy = 15; brasAvant = Math.sin(t * 2) > 0.3 ? 2.7 + Math.sin(t * 12) * 0.25 : 0.4; brasArriere = 0.3; outil = null;
     }
-    ctx.save(); ctx.translate(x + dx, y + dy); ctx.scale(dir, 1);
+    ctx.save(); ctx.translate(x + dx * s, y + dy * s); ctx.scale(dir, 1); // étape 14 : la place suit la loupe, pas la taille
     ctx.fillStyle = "rgba(20, 40, 10, .25)"; ctx.beginPath(); ctx.ellipse(0, 1, 5.5, 2.3, 0, 0, TOUR); ctx.fill();
     ctx.rotate(penche);
     bonhomme(ctx, { tenue: T, traits: tr, brasAvant, brasArriere, triste: b.ouvrier.affame, hiver: vue.hiver });
@@ -1343,13 +1434,28 @@ Village.Batisses = (function () {
     ctx.beginPath(); ctx.ellipse(x, y, 4.2, 2.6, 0, 0, TOUR); ctx.fillStyle = "#d9963a"; ctx.fill(); contour(ctx, 1);
     ctx.strokeStyle = "#f3d28a"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x - 2, y - 1.4); ctx.lineTo(x - 0.8, y + 0.6); ctx.moveTo(x, y - 1.8); ctx.lineTo(x + 1.2, y + 0.4); ctx.moveTo(x + 2, y - 1.4); ctx.lineTo(x + 3, y + 0.2); ctx.stroke();
   }
-  function pepite(ctx, x, y) {
-    forme(ctx, [[x - 3, y + 1], [x - 1.8, y - 2.2], [x + 1.4, y - 2.6], [x + 3.2, y], [x + 1, y + 2.2]], "#ffcf2e");
-    ctx.fillStyle = "rgba(255,255,255,.7)"; ctx.beginPath(); ctx.arc(x - 0.6, y - 1, 0.7, 0, TOUR); ctx.fill();
-  }
+  // L'or : des pépites dorées qui brillent
+  function pepite(ctx, x, y) { tas(ctx, x, y, (c, a, b, r) => facettes(c, a, b, r, "#fff1a0", "#f2c230", "#b8860b", "#ffffff")); }
   function bijou(ctx, x, y) { // une bague avec une pierre
     ctx.strokeStyle = "#ffcf2e"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(x, y + 0.5, 2.6, 0, TOUR); ctx.stroke();
     forme(ctx, [[x - 1.6, y - 2.2], [x, y - 4.2], [x + 1.6, y - 2.2], [x, y - 1]], "#e84aa6");
+  }
+
+  // Étape 14 : ✍️ l'ICÔNE d'une ressource, dessinée (pour la barre du stock, le marché, les statistiques) :
+  // de vraies planches, de vraies pépites… au lieu des emojis qui ne ressemblaient à rien.
+  function icone(ctx, r, x, y, taille) {
+    const e = (taille || 16) / 13, avant = trait;
+    ctx.save(); ctx.translate(x, y); ctx.scale(e, e); ctx.lineJoin = "round"; trait = 0.6 / e;
+    if (r === "troncs") { ctx.scale(0.62, 0.62); rondin(ctx, 0, 1, 0.42); }
+    else if (r === "planches") { planche(ctx, -0.4, 3, 11); planche(ctx, 0.5, 0.4, 11); planche(ctx, -0.3, -2.2, 11); }
+    else if (r === "pierres") { caillou(ctx, -2.3, 1.2, 0); caillou(ctx, 2.2, 1.4, 1); caillou(ctx, 0, -1.8, 2); }
+    else if (r === "poissons") poisson(ctx, -1.6, 0);
+    else if (r === "viande") viande(ctx, -0.5, 0.5);
+    else if (r === "lingots") { lingot(ctx, 0, 2); lingot(ctx, 0.8, -0.8); }
+    else if (r === "outils") outil(ctx, 0, 1.5);
+    else objetPorte(ctx, r, 0, 0); // charbon, fer, blé, farine, pain, or, bijoux
+    trait = avant;
+    ctx.restore();
   }
 
   // Les choses lourdes vont dans la brouette (étape 9, avec la recherche « Brouettes »)
@@ -1440,9 +1546,9 @@ Village.Batisses = (function () {
     ctx.fill();
     ctx.strokeStyle = possible ? "#c6ffd0" : "#ffd0cc"; ctx.lineWidth = 2; ctx.stroke();
     ctx.globalAlpha = 0.55 + 0.15 * Math.sin(t * 5);
-    boite(ctx, x, y, MODELES[type], 1, true);
+    aLaLoupe(ctx, x, y, echelleDe(type), () => boite(ctx, x, y, MODELES[type], 1, true)); // étape 14 : à la même taille que le vrai
     ctx.globalAlpha = 1;
   }
 
-  return { dessinerVillageois, bonhomme, traits, dessinerBatiment, dessinerOuvrier, dessinerPorteur, dessinerAnimal, dessinerPousse, dessinerFantome, iconeRoute, debutImage, lumiere, get lumieres() { return lumieres; }, vue }; // étape 9 : la vue et les lumières
+  return { icone, dessinerVillageois, bonhomme, traits, dessinerBatiment, dessinerOuvrier, dessinerPorteur, dessinerAnimal, dessinerPousse, dessinerFantome, iconeRoute, debutImage, lumiere, get lumieres() { return lumieres; }, vue }; // étape 9 : la vue et les lumières
 })();

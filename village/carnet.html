@@ -137,6 +137,7 @@
       <a href="#etape11">Étape 11</a>
       <a href="#etape12">Étape 12</a>
       <a href="#etape13">Étape 13</a>
+      <a href="#etape14">Étape 14</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1087,6 +1088,59 @@ bûcheron :         4 s         × 0,6 (Haches affûtées)        × 0,8 (Hache 
       <details class="question"><summary>Hache aiguisée (× 0,8) puis Hache en fer (× 0,7) : de combien le bûcheron est-il plus rapide ?</summary><p>0,8 × 0,7 = 0,56 : son travail prend 56 % du temps, donc 44 % plus rapide.</p></details>
     </section>
 
+    <section id="etape14">
+      <h2>🔍 Étape 14 : des bâtiments plus gros, plus d'animations, de vraies icônes <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les bâtiments sont dessinés plus gros pour qu'on les reconnaisse d'un coup d'œil, chacun a son animation devant la porte, et les stocks sont dessinés comme dans le jeu : de vraies planches, des bûches couchées, des pépites de charbon, de fer et d'or. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/15-animations-icones.md</code>.</p>
+          <ul>
+            <li>✍️ Plus d'animations devant chaque cabane (sciure, scie qui bouge…).</li>
+            <li>✍️ Plus de « boulets » devant le bûcheron, du charbon qui ressemble à du minerai.</li>
+            <li>✍️ Des cabanes plus grosses, reconnaissables en un coup d'œil.</li>
+            <li>✍️ De vraies planches et des pépites dans l'inventaire.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Les bâtiments sont plus gros (et l'enseigne aussi).</li>
+            <li>☐ En haut, les stocks : planches, bûches, pierres, pépites de charbon, de fer et d'or.</li>
+            <li>☐ Pareil dans le marché 🪙 et les statistiques 📊.</li>
+            <li>☐ Zoome sur la scierie : sciure et bûche qui avance. Sur le bûcheron : des bûches couchées et fendues.</li>
+            <li>☐ Regarde une mine (wagonnet), la fonderie (métal qui coule), le chasseur (fumée).</li>
+            <li>Vérifie « version 15 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔍 La loupe : grossir sans changer la carte</h3>
+      <pre style="white-space: pre-wrap">dessin normal ──► on pose une LOUPE au pied du bâtiment (× 1,35) ──► on dessine ──► on enlève la loupe
+la case, elle, ne change pas : le bâtiment occupe toujours 1 case</pre>
+      <p>Le peintre ne redessine pas chaque bâtiment en plus gros : il <strong>change d'échelle</strong> avant de dessiner (<code>ctx.scale</code>), comme si on regardait à travers une loupe. Le point fixe de la loupe est le pied du bâtiment, sinon il glisserait de sa case. Les lumières de la nuit suivent la même loupe. Le réglage est dans <code>config.js</code> : <code>detail.echelleBatiments</code>.</p>
+
+      <h3>💎 Une pépite, c'est des facettes</h3>
+      <p>Une pépite, c'est un petit polygone dont chaque face a sa couleur : la face éclairée est claire, celle à l'ombre est foncée. Avec 3 couleurs bien choisies, on reconnaît le charbon (noir brillant), le fer (gris-rouille) et l'or (jaune). Le même dessin sert sur la carte, dans la barre des stocks et dans le marché : <strong>une seule fonction</strong> (<code>Batisses.icone</code>), donc tout se ressemble.</p>
+
+      <h3>🎬 Une animation qui ne coûte presque rien</h3>
+      <p>Les animations ne sont pas « simulées » : elles sont <strong>calculées à partir de l'heure</strong>. La bûche de la scierie avance de <code>(temps × vitesse) modulo longueur</code> : quand elle arrive au bout, elle repart du début. Rien à sauvegarder, rien à mettre à jour : c'est pour ça que le jeu reste fluide (environ 3 ms par image).</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>config.js</code>, mets <code>echelleBatiments</code> à 1.8 : que se passe-t-il ? Remets 1.35 après !</li>
+        <li>Zoome et dézoome : à partir de quand les animations disparaissent-elles ? (indice : <code>zoomFin</code>)</li>
+        <li>Trouve dans <code>affichage/batisses.js</code> la fonction <code>facettes</code> : comment choisit-elle la couleur de chaque face ?</li>
+        <li>Invente l'animation de la boulangerie : que pourrait-on voir devant sa porte ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un bâtiment est dessiné × 1,35. Occupe-t-il plus de cases ?</summary><p>Non : seul le dessin grossit. Il occupe toujours 1 case, les règles du jeu ne changent pas.</p></details>
+      <details class="question"><summary>Imagine : la bûche avance de 8 px par seconde, la scie fait 24 px. Où est la bûche après 5 s ?</summary><p>5 × 8 = 40, et 40 modulo 24 = 16 : elle est à 16 px (elle a déjà fait un tour).</p></details>
+      <details class="question"><summary>Pourquoi une seule fonction pour dessiner les icônes partout ?</summary><p>Pour que les planches du stock ressemblent à celles du jeu, et qu'un changement se voie partout d'un coup.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1170,9 +1224,21 @@ bûcheron :         4 s         × 0,6 (Haches affûtées)        × 0,8 (Hache 
           <p>Des villageois qui viennent travailler à pied, des lits pour tout le monde, l'entrepôt qui s'agrandit, et 2 améliorations par bâtiment.</p>
           <p class="apprend"><b>Tu apprends :</b> une chaîne de dépendances, des multiplicateurs locaux et globaux. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">14</div>
-          <h4>🏙️ La ville : monuments, fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <h4>🔍 Des bâtiments plus gros, plus d'animations, de vraies icônes <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Des bâtiments × 1,35, une animation devant chaque cabane, des bûches couchées, des pépites de charbon, de fer et d'or, et des stocks dessinés comme dans le jeu.</p>
+          <p class="apprend"><b>Tu apprends :</b> changer d'échelle (la loupe), des facettes pour donner du relief, une animation calculée avec le modulo. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">15</div>
+          <h4>🐄 L'élevage et les nouvelles industries <span class="etiquette">⏭️ prochaine étape · à préciser</span></h4>
+          <p>Des animaux (vaches, moutons, cochons…), le lait, le beurre, le yaourt, et des chaînes de production plus longues, jusqu'à la grande ville.</p>
+          <p class="apprend"><b>Tu apprends :</b> des chaînes qui se croisent. <b>Durée :</b> plusieurs séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">16</div>
+          <h4>🏙️ La ville : monuments, fêtes et port</h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
         </div>
@@ -1292,6 +1358,14 @@ bûcheron :         4 s         × 0,6 (Haches affûtées)        × 0,8 (Hache 
         <textarea class="journal" id="village-appris-13" data-cle="village-appris-13" placeholder="Ex. : J'ai appris ce qu'est une chaîne de dépendances…"></textarea>
         <label for="village-idees-13"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-13" data-cle="village-idees-13" placeholder="Ex. : Une école pour former les villageois…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 14 · des bâtiments plus gros, plus d'animations, de vraies icônes <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la loupe qui grossit les bâtiments (<code>aLaLoupe</code> dans <code>affichage/batisses.js</code>), les pépites à facettes, les bûches couchées, les icônes dessinées (<code>Batisses.icone</code>) dans la barre des stocks, le marché et les statistiques, une animation devant chaque bâtiment, une enseigne plus grande. La base de données ne change pas (version 11).</p>
+        <label for="village-appris-14"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-14" data-cle="village-appris-14" placeholder="Ex. : J'ai appris qu'on peut grossir un dessin avec une loupe…"></textarea>
+        <label for="village-idees-14"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-14" data-cle="village-idees-14" placeholder="Ex. : Des vaches, du lait, du beurre…"></textarea>
       </div>
     </section>
   </main>

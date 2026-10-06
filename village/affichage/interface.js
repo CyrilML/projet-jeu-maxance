@@ -284,7 +284,8 @@ Village.Interface = (function () {
   // et deux boutons : vendre 5, acheter 5.
   function panneauMarche(ctx, monde, W, He, petit) {
     const M = Village.Marche, liste = Object.keys(C.marche.prix).filter((r) => visible(monde, r)), lot = C.marche.lot;
-    const l = Math.min(W - 20, 500), hl = petit ? 30 : 34, x = (W - l) / 2, y = basDuStock + 4;
+    const hl = Math.max(22, Math.min(petit ? 30 : 34, Math.floor((He - basDuStock - 100) / liste.length))); // étape 14 : tient dans l'écran
+    const l = Math.min(W - 20, 500), x = (W - l) / 2, y = basDuStock + 4;
     const h = 58 + liste.length * hl + 22;
     bulle(ctx, x, y, l, h, "rgba(255, 250, 235, .98)");
     zone(x, y, l, h, "rien");
@@ -301,7 +302,8 @@ Village.Interface = (function () {
     liste.forEach((r, n) => {
       const ry = y + 56 + n * hl, f = M.facteur(monde, r);
       if (n % 2) { ctx.fillStyle = "rgba(90, 66, 32, .06)"; ctx.fillRect(x + 6, ry, l - 12, hl); }
-      texte(ctx, EMO(r) + " " + (petit ? "" : C.ressources[r].nom.replace("minerai de ", "")), x + 12, ry + hl / 2, petit ? 14 : 12, "#3b2614", true);
+      Village.Batisses.icone(ctx, r, x + 21, ry + hl / 2, 18); // étape 14 : l'icône dessinée
+      if (!petit) texte(ctx, C.ressources[r].nom.replace("minerai de ", ""), x + 34, ry + hl / 2, 12, "#3b2614", true);
       texte(ctx, String(monde.stock[r]), x + (petit ? 96 : 120), ry + hl / 2, 12, "#3b2614", true, "right");
       // La tendance du prix : ▼ moins cher que d'habitude, ▲ plus cher
       const tendance = f < 0.97 ? "▼ " + Math.round(f * 100) + " %" : f > 1.03 ? "▲ " + Math.round(f * 100) + " %" : "";
@@ -316,7 +318,8 @@ Village.Interface = (function () {
   // courbe (les 5 dernières minutes), ce qui entre et ce qui sort par minute, et le bilan.
   function panneauStats(ctx, monde, W, He, petit) {
     const St = Village.Statistiques, liste = Object.keys(C.ressources).filter((r) => visible(monde, r) || St.parMinute(monde, r).entrees > 0);
-    const l = Math.min(W - 20, 520), hl = petit ? 24 : 26, x = (W - l) / 2, y = basDuStock + 4;
+    const x0 = basDuStock + 4, hl = Math.max(16, Math.min(petit ? 24 : 26, Math.floor((He - x0 - 130) / liste.length))); // étape 14 : la liste tient toujours dans l'écran
+    const l = Math.min(W - 20, 520), x = (W - l) / 2, y = x0;
     const h = 74 + liste.length * hl + 44;
     bulle(ctx, x, y, l, h, "rgba(255, 250, 235, .98)");
     zone(x, y, l, h, "rien");
@@ -337,7 +340,8 @@ Village.Interface = (function () {
     liste.forEach((r, n) => {
       const ry = y + 66 + n * hl, m = St.parMinute(monde, r), pts = St.courbe(monde, r);
       if (n % 2) { ctx.fillStyle = "rgba(90, 66, 32, .06)"; ctx.fillRect(x + 6, ry, l - 12, hl); }
-      texte(ctx, EMO(r) + (petit ? "" : " " + C.ressources[r].nom.replace("minerai de ", "")), x + 12, ry + hl / 2, petit ? 13 : 12, "#3b2614", true);
+      Village.Batisses.icone(ctx, r, x + 21, ry + hl / 2, 16); // étape 14 : l'icône dessinée
+      if (!petit) texte(ctx, C.ressources[r].nom.replace("minerai de ", ""), x + 34, ry + hl / 2, 12, "#3b2614", true);
       texte(ctx, String(monde.stock[r]), cStock, ry + hl / 2, 12, "#3b2614", true, "right");
       // La petite courbe du stock
       const max = Math.max(1, ...pts), bas = ry + hl - 5, haut = ry + 5;
@@ -380,8 +384,9 @@ Village.Interface = (function () {
     // ---- En haut à gauche : le village et le stock
     const s = monde.stock;
     // Étape 11 : chaque ressource apparaît à son âge (config.js, « ressources » : age), ou dès qu'on en a.
-    const ressources = Object.keys(C.ressources).filter((r) => (monde.age || 0) >= (C.ressources[r].age || 0) || s[r] > 0).map((r) => [EMO(r), s[r]]);
-    if (monde.age >= 2 || monde.pieces > 0) ressources.push(["🪙", monde.pieces]);
+    // Étape 14 : ✍️ chaque ressource a son icône DESSINÉE (de vraies planches, de vraies pépites)
+    const ressources = Object.keys(C.ressources).filter((r) => (monde.age || 0) >= (C.ressources[r].age || 0) || s[r] > 0).map((r) => [r, s[r]]);
+    if (monde.age >= 2 || monde.pieces > 0) ressources.push(["pieces", monde.pieces]);
     // Étape 8 : s'il y a trop de ressources pour la largeur, la bulle passe sur 2 lignes.
     const pas = petit ? 46 : 62, parLigne = Math.max(3, Math.min(ressources.length, Math.floor((W - 70 - 24) / pas)));
     const nLignes = Math.ceil(ressources.length / parLigne), hStock = (petit ? 54 : 62) + (nLignes - 1) * (petit ? 20 : 24);
@@ -398,7 +403,11 @@ Village.Interface = (function () {
     const Lg = Village.Logement, hab = Lg.habitants(monde), lits = Lg.capacite(monde);
     titre += "  👥 " + hab + "/" + lits + (hab >= lits ? " ⚠️" : "");
     texte(ctx, titre, 22, petit ? 25 : 28, petit ? 11 : 13, "#7a5a30", true);
-    ressources.forEach(([emoji, n], k) => texte(ctx, emoji + " " + n, 22 + (k % parLigne) * pas, (petit ? 47 : 51) + Math.floor(k / parLigne) * (petit ? 20 : 24), petit ? 13 : 17, n <= 0 && (k === 3 || k === 4) ? "#c0392b" : "#3b2614", true));
+    ressources.forEach(([r, n], k) => {
+      const rx = 22 + (k % parLigne) * pas, ry = (petit ? 47 : 51) + Math.floor(k / parLigne) * (petit ? 20 : 24), ti = petit ? 15 : 19;
+      if (r === "pieces") texte(ctx, "🪙", rx, ry, petit ? 13 : 16, null, false); else Village.Batisses.icone(ctx, r, rx + ti / 2, ry, ti);
+      texte(ctx, String(n), rx + ti + 3, ry, petit ? 13 : 17, n <= 0 && (r === "poissons" || r === "viande") ? "#c0392b" : "#3b2614", true);
+    });
     zone(10, 10, lb, hStock, "objectifs");
     if (objectifsOuverts) panneauObjectifs(ctx, monde, 10, basDuStock + 8, petit ? 250 : 290);
 
