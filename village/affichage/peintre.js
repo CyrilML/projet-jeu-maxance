@@ -211,7 +211,7 @@ Village.Peintre = (function () {
       ranger(b.colonne + b.ligne, { b });
       const dehors = (e) => e === "aller" || e === "travailler" || e === "revenir";
       if (b.ouvrier && dehors(b.ouvrier.etat)) {
-        ranger(Math.floor(b.ouvrier.x) + Math.floor(b.ouvrier.y), { o: b.ouvrier, type: b.type });
+        ranger(Math.floor(b.ouvrier.x) + Math.floor(b.ouvrier.y), { o: b.ouvrier, type: b.type, graine: b.numero });
       }
     }
     // Étape 3 : les porteurs dehors (ceux qui attendent sont dans l'entrepôt)
@@ -258,7 +258,7 @@ Village.Peintre = (function () {
           Village.Batisses.dessinerPorteur(ctx, chose.porteur, p.x, p.y + 2, t);
         } else {
           const p = Iso.versMonde(chose.o.x, chose.o.y, L, Hc);
-          Village.Batisses.dessinerOuvrier(ctx, chose.type, chose.o, p.x, p.y + 4, t, saison === 3);
+          Village.Batisses.dessinerOuvrier(ctx, chose.type, chose.o, p.x, p.y + 4, t, saison === 3, chose.graine); // étape 10 : chacun sa tête
         }
         stats.objetsDessines++;
       }

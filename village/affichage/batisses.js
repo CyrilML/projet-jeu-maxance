@@ -41,13 +41,14 @@ Village.Batisses = (function () {
   // Étape 9 : ce que le peintre nous dit au début de chaque image.
   //   fin : on est assez près pour dessiner les petits détails ; noirceur : 0 le jour, 1 à minuit ;
   //   lumieres : les points lumineux de l'image (fenêtres, lanternes…), que le peintre allume la nuit.
-  const vue = { fin: true, noirceur: 0, hiver: false, t: 0 };
+  const vue = { fin: true, noirceur: 0, hiver: false, t: 0, bonshommes: 0, dernierCompte: 0 };
   let lumieres = [];
   function debutImage(monde, t) {
     vue.fin = monde.camera.zoom >= C_.detail.zoomFin;
     vue.noirceur = monde.moment ? monde.moment.noirceur : 0;
     vue.hiver = !!(monde.saison && monde.saison.hiver);
     vue.t = t;
+    vue.dernierCompte = vue.bonshommes; vue.bonshommes = 0; // étape 10 : combien de bonshommes à l'image précédente
     lumieres = [];
   }
   // Allumer une lumière (r : son rayon en px du monde ; force : de 0 à 1)
@@ -531,8 +532,7 @@ Village.Batisses = (function () {
       // Étape 8 : l'enclume devant la porte. Quand le forgeron travaille, le marteau tape et des étincelles sautent.
       forme(ctx, [[x + 10, y + 12], [x + 20, y + 12], [x + 18, y + 8], [x + 22, y + 6], [x + 8, y + 6], [x + 12, y + 8]], "#4a4f57");
       if (b.travail) {
-        const coup = Math.sin(t * 10) > 0;
-        ctx.strokeStyle = "#7a4e22"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + 22, y - 2); ctx.lineTo(x + 15, coup ? y + 3 : y - 6); ctx.stroke();
+        const coup = Math.sin(t * 10) > 0; // étape 10 : c'est le forgeron qui tape (voir ouvrierDevant)
         if (coup) { ctx.fillStyle = "#ffcf2e"; for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.arc(x + 15 + Math.cos(t * 30 + k * 2) * 5, y + 3 - Math.abs(Math.sin(t * 30 + k)) * 6, 1, 0, TOUR); ctx.fill(); } }
       }
       fumee(ctx, x - 6, y - 40, t);
@@ -574,6 +574,8 @@ Village.Batisses = (function () {
       const bx = x + 4, by = y - m.h - 2;
       ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx - 6, by - 7); ctx.moveTo(bx - 3, by - 3.5); ctx.lineTo(bx - 7, by - 2); ctx.moveTo(bx, by); ctx.lineTo(bx + 6, by - 7); ctx.moveTo(bx + 3, by - 3.5); ctx.lineTo(bx + 7, by - 2); ctx.stroke();
     }
+    // Étape 10 : les ouvriers des ateliers travaillent devant leur bâtiment
+    ouvrierDevant(ctx, b, x, y, t);
     // Un petit panneau avec l'emoji du métier, au-dessus de la porte
     if (b.type !== "entrepot") enseigne(ctx, x - m.a * 0.45, y - 8 - m.h * 0.2, Village.Batiments.TYPES[b.type].emoji);
     if (travaille && b.type === "carriere") poussiere(ctx, x, y, t);
@@ -714,87 +716,281 @@ Village.Batisses = (function () {
     ctx.restore();
   }
 
-  // ---------------------------------------------------------------- un ouvrier
+  // ---------------------------------------------------------------- les bonshommes (étape 10)
+  // ✍️ Étape 10 : tous les personnages (ouvriers, porteurs, enfants) sont dessinés par le MÊME
+  // « bonhomme », comme une poupée qu'on habille : on lui donne une peau, des cheveux, des habits,
+  // un chapeau, et la POSE de ses bras et de ses jambes. Puis chaque métier l'anime à sa façon.
+  //
+  // Un bras, c'est un segment qui part de l'épaule, avec un ANGLE :
+  //   0 = le bras pend le long du corps ; π/2 (1,57) = tendu devant ; π (3,14) = levé au-dessus de la tête.
+  // Un geste (couper un arbre, taper sur l'enclume), c'est une suite d'angles qui changent avec le temps.
+  //
+  // Chaque habitant est un peu différent (peau, cheveux, barbe) : on tire ses traits au hasard avec
+  // une GRAINE (son numéro), toujours la même, pour qu'il garde sa tête toute sa vie !
+  const PEAUX = ["#f2c79b", "#e8b48a", "#d29a6c", "#a8714a", "#7d4f33", "#f6d8bd"];
+  const CHEVEUX = ["#2b1d12", "#5a3818", "#a0622d", "#d9a640", "#7d7d7d", "#1a1410", "#b04a2a"];
+  const EPAULE = [0, -14], LONG_BRAS = 6.5;
+  const hasard = (graine, k) => { const v = Math.sin(graine * 127.1 + k * 311.7) * 43758.5453; return v - Math.floor(v); };
+  function traits(graine) {
+    return { peau: PEAUX[Math.floor(hasard(graine, 1) * PEAUX.length)], cheveux: CHEVEUX[Math.floor(hasard(graine, 2) * CHEVEUX.length)], barbe: hasard(graine, 3) < 0.35, coupe: Math.floor(hasard(graine, 4) * 3), cligne: hasard(graine, 5) * 4 };
+  }
+  // Où est la main au bout d'un bras qui fait cet angle ?
+  const main = (angle, long) => [EPAULE[0] + Math.sin(angle) * (long || LONG_BRAS), EPAULE[1] + Math.cos(angle) * (long || LONG_BRAS)];
+
+  // Les habits de chaque métier : habit (le haut), pantalon, coiffe (et sa couleur), tablier, outil.
   const TENUES = {
-    bucheron: { habit: "#d8433a", chapeau: "#b52f27", outil: "hache" },
-    forestier: { habit: "#4f9e3e", chapeau: "#3a7a2c", outil: "pelle" },
-    carriere: { habit: "#5a7bb5", chapeau: "#f2c230", outil: "pioche" },
-    pecheur: { habit: "#f2c230", chapeau: "#e0a81e", outil: "canne" }, // le ciré jaune du pêcheur
-    chasseur: { habit: "#7a5a2e", chapeau: "#4f6b2a", outil: "arc" },
-    geologue: { habit: "#8a5ab0", chapeau: "#e0a81e", outil: "marteau" }, // étape 5 : le petit marteau du géologue
+    bucheron: { habit: "#d8433a", carreaux: true, pantalon: "#4a3a2a", coiffe: "bonnet", coiffeCouleur: "#b52f27", outil: "hache" },
+    forestier: { habit: "#4f9e3e", pantalon: "#5a4630", coiffe: "feutre", coiffeCouleur: "#3a6a2c", outil: "pelle" },
+    carriere: { habit: "#5a7bb5", pantalon: "#3b3f5a", coiffe: "casque", coiffeCouleur: "#f2c230", outil: "pioche" },
+    pecheur: { habit: "#f2c230", pantalon: "#2f4f7a", coiffe: "suroit", coiffeCouleur: "#e0a81e", outil: "canne" }, // le ciré jaune du pêcheur
+    chasseur: { habit: "#7a5a2e", pantalon: "#4a3a20", coiffe: "capuche", coiffeCouleur: "#4f6b2a", outil: "arc" },
+    geologue: { habit: "#8a5ab0", pantalon: "#4a3a5a", coiffe: "explorateur", coiffeCouleur: "#d8c49a", outil: "marteau" }, // étape 5
+    scierie: { habit: "#d9c9a3", pantalon: "#5a4630", coiffe: "calot", coiffeCouleur: "#7a5a30", tablier: "#8a5a2b", outil: "scie" },
+    mineCharbon: { habit: "#6b6f78", pantalon: "#3b3f4a", coiffe: "mineur", coiffeCouleur: "#b8862e", outil: "pioche", suie: true },
+    mineFer: { habit: "#7a6658", pantalon: "#3b3f4a", coiffe: "mineur", coiffeCouleur: "#b8862e", outil: "pioche", suie: true },
+    fonderie: { habit: "#c9b48f", pantalon: "#3b3330", coiffe: "calot", coiffeCouleur: "#5a4a40", tablier: "#6b4423", outil: "ringard", suie: true },
+    forge: { habit: "#e8dcc4", pantalon: "#3b3330", coiffe: null, tablier: "#5a3818", outil: "marteauForge", barbe: true },
+    universite: { habit: "#3f6fc4", pantalon: "#2f3a5a", coiffe: "savant", coiffeCouleur: "#2f569c", outil: "livre", robe: true },
+    marche: { habit: "#b5523a", pantalon: "#4a3a2a", coiffe: "feutre", coiffeCouleur: "#6b4423", tablier: "#f1e3c4", outil: null },
+    porteur: { habit: "#4a90d9", pantalon: "#5a3a20", coiffe: "bonnet", coiffeCouleur: "#2f6db5", outil: null },
   };
 
-  function dessinerOuvrier(ctx, type, o, x, y, t, hiver) {
-    const tenue = TENUES[type];
+  // Le bonhomme lui-même, les pieds en (0, 0), regardant vers la droite.
+  //   p : { tenue, traits, pas (de −1 à 1 en marchant), brasArriere, brasAvant (des angles), accroupi (0 à 1),
+  //         triste, hiver, taille }
+  function bonhomme(ctx, p) {
+    const T = p.tenue, tr = p.traits, fin = vue.fin, pas = p.pas || 0, acc = p.accroupi || 0;
+    vue.bonshommes++;
+    ctx.save();
+    if (p.taille && p.taille !== 1) ctx.scale(p.taille, p.taille);
+    const bas = acc * 3; // accroupi : tout le haut du corps descend
+    ctx.translate(0, bas);
+    // Le bras de derrière (il passe derrière le corps)
+    brasDessin(ctx, p.brasArriere || 0, T, tr, true);
+    // Les jambes, avec des chaussures
+    ctx.lineCap = "round";
+    const genou = acc * 3;
+    ctx.strokeStyle = T.pantalon; ctx.lineWidth = 2.8;
+    ctx.beginPath();
+    ctx.moveTo(-2, -6); ctx.lineTo(-2 + pas * 1.4 + genou, -3 - bas / 2); ctx.lineTo(-2 + pas * 2.5, -bas);
+    ctx.moveTo(2, -6); ctx.lineTo(2 - pas * 1.4 + genou, -3 - bas / 2); ctx.lineTo(2 - pas * 2.5, -bas);
+    ctx.stroke();
+    ctx.fillStyle = "#3b2614";
+    for (const s of [1, -1]) { ctx.beginPath(); ctx.ellipse(s * 2 + s * pas * 2.5 + 0.8, -bas + 0.2, 1.8, 1, 0, 0, TOUR); ctx.fill(); }
+    // Le corps (un œuf), ou une robe pour le savant
+    if (T.robe) forme(ctx, [[-4.5, -16], [4.5, -16], [6, -4], [-6, -4]], T.habit);
+    else { ctx.beginPath(); ctx.ellipse(0, -10, 4.8, 6, 0, 0, TOUR); ctx.fillStyle = T.habit; ctx.fill(); contour(ctx, 1.4); }
+    if (fin) {
+      if (T.carreaux) { // la chemise à carreaux du bûcheron
+        ctx.save(); ctx.beginPath(); ctx.ellipse(0, -10, 4.6, 5.8, 0, 0, TOUR); ctx.clip();
+        ctx.strokeStyle = "rgba(40, 10, 10, .45)"; ctx.lineWidth = 0.8; ctx.beginPath();
+        for (let k = -4; k <= 4; k += 2.5) { ctx.moveTo(k, -17); ctx.lineTo(k, -3); ctx.moveTo(-6, -14 + k); ctx.lineTo(6, -14 + k); }
+        ctx.stroke(); ctx.restore();
+      }
+      ctx.fillStyle = "rgba(255,255,255,.18)"; ctx.beginPath(); ctx.ellipse(-1.6, -12, 1.5, 3, 0, 0, TOUR); ctx.fill(); // un reflet
+      ctx.fillStyle = "rgba(0,0,0,.12)"; ctx.beginPath(); ctx.ellipse(2.2, -9, 1.8, 4, 0, 0, TOUR); ctx.fill(); // une ombre
+    }
+    if (T.tablier) { forme(ctx, [[1, -13], [4.6, -12], [4.4, -5], [1.4, -4.2]], T.tablier); }
+    else if (!T.robe) { ctx.fillStyle = "#6b4423"; ctx.fillRect(-4.6, -9, 9.2, 1.8); } // la ceinture
+    // ❄️ En hiver, une écharpe rouge
+    if (p.hiver) { ctx.fillStyle = "#e8402e"; ctx.fillRect(-3.8, -15.6, 7.6, 2.4); ctx.fillRect(-3.6, -15, 2.4, 5.5); }
+    // La tête
+    const ht = p.triste ? 0.8 : 0; // la tête un peu baissée quand on a faim
+    ctx.translate(0, ht);
+    rond(ctx, 0, -19, 4.3, tr.peau);
+    // Les cheveux (3 coupes)
+    ctx.fillStyle = tr.cheveux;
+    ctx.beginPath();
+    if (tr.coupe === 0) { ctx.arc(-0.5, -20, 4.4, Math.PI * 0.85, Math.PI * 1.82); }
+    else if (tr.coupe === 1) { ctx.arc(-0.8, -20.3, 4.5, Math.PI * 0.6, Math.PI * 1.8); ctx.lineTo(-4.6, -16); }
+    else { ctx.ellipse(-1, -20.5, 4.5, 3.3, 0, Math.PI * 0.9, Math.PI * 1.82); ctx.arc(-3.8, -17, 1.6, 0, TOUR); }
+    ctx.fill();
+    if (tr.barbe || T.barbe) { ctx.beginPath(); ctx.ellipse(1.8, -16.2, 2.4, 1.8, 0.2, 0, Math.PI); ctx.fillStyle = tr.cheveux; ctx.fill(); }
+    // Le visage (de près seulement)
+    const cligne = (vue.t + tr.cligne) % 4 < 0.14; // il cligne des yeux de temps en temps
+    if (fin) {
+      ctx.fillStyle = "rgba(230, 110, 100, .35)"; ctx.beginPath(); ctx.arc(2.6, -17.6, 1, 0, TOUR); ctx.fill(); // la joue rose
+      ctx.strokeStyle = CONTOUR; ctx.lineWidth = 0.7; ctx.lineCap = "round";
+      if (cligne) { ctx.beginPath(); ctx.moveTo(1.2, -19.4); ctx.lineTo(2.6, -19.4); ctx.stroke(); }
+      else { ctx.fillStyle = CONTOUR; ctx.beginPath(); ctx.arc(2, -19.5, 0.75, 0, TOUR); ctx.fill(); ctx.fillStyle = "#ffffff"; ctx.fillRect(2.1, -20, 0.35, 0.35); }
+      ctx.beginPath(); ctx.moveTo(1, p.triste ? -21 : -21.3); ctx.lineTo(2.9, p.triste ? -20.6 : -21.4); ctx.stroke(); // le sourcil
+      ctx.beginPath(); ctx.moveTo(4.1, -19); ctx.quadraticCurveTo(5.1, -18.3, 4.2, -17.8); ctx.stroke(); // le nez
+      ctx.beginPath(); // la bouche : un sourire, ou triste quand on a faim
+      if (p.triste) { ctx.moveTo(1.6, -15.9); ctx.quadraticCurveTo(2.6, -16.7, 3.6, -16); }
+      else { ctx.moveTo(1.6, -16.6); ctx.quadraticCurveTo(2.7, -15.6, 3.7, -16.5); }
+      ctx.stroke();
+      if (T.suie) { ctx.fillStyle = "rgba(40,40,40,.35)"; ctx.beginPath(); ctx.arc(0.6, -17.4, 0.9, 0, TOUR); ctx.arc(3.3, -20.5, 0.6, 0, TOUR); ctx.fill(); } // des traces de suie
+    } else { ctx.fillStyle = CONTOUR; ctx.beginPath(); ctx.arc(1.8, -19.5, 0.8, 0, TOUR); ctx.fill(); }
+    coiffe(ctx, T);
+    ctx.translate(0, -ht);
+    // Le bras de devant
+    brasDessin(ctx, p.brasAvant || 0, T, tr, false);
+    ctx.restore();
+  }
+
+  function brasDessin(ctx, angle, T, tr, derriere) {
+    const [hx, hy] = main(angle);
+    ctx.strokeStyle = derriere ? assombrir(T.habit) : T.habit; ctx.lineWidth = 2.4; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(EPAULE[0], EPAULE[1]); ctx.lineTo(hx, hy); ctx.stroke();
+    ctx.beginPath(); ctx.arc(hx, hy, 1.3, 0, TOUR); ctx.fillStyle = tr.peau; ctx.fill(); // la main
+  }
+  // Une couleur un peu plus foncée (pour ce qui est derrière)
+  function assombrir(c) {
+    const n = parseInt(c.slice(1), 16), f = 0.75;
+    return "rgb(" + Math.round(((n >> 16) & 255) * f) + "," + Math.round(((n >> 8) & 255) * f) + "," + Math.round((n & 255) * f) + ")";
+  }
+
+  // Les chapeaux de chaque métier
+  function coiffe(ctx, T) {
+    const c = T.coiffeCouleur;
+    switch (T.coiffe) {
+      case "bonnet": ctx.beginPath(); ctx.arc(-0.2, -20.4, 4.5, Math.PI, 0); ctx.closePath(); ctx.fillStyle = c; ctx.fill(); contour(ctx, 1.1);
+        ctx.beginPath(); ctx.arc(-0.5, -25.2, 1.3, 0, TOUR); ctx.fillStyle = "#ffffff"; ctx.fill(); break; // le pompon
+      case "casque": ctx.beginPath(); ctx.ellipse(0, -21, 5.2, 3, 0, Math.PI, TOUR); ctx.fillStyle = c; ctx.fill(); contour(ctx, 1.1);
+        ctx.fillStyle = c; ctx.fillRect(-5.5, -21.3, 11, 1.4); break;
+      case "mineur": ctx.beginPath(); ctx.ellipse(0, -21, 5, 3, 0, Math.PI, TOUR); ctx.fillStyle = c; ctx.fill(); contour(ctx, 1.1);
+        ctx.fillStyle = "#fff6b0"; ctx.beginPath(); ctx.arc(3.6, -22.4, 1.3, 0, TOUR); ctx.fill(); contour(ctx, 0.7); break; // la lampe frontale
+      case "feutre": ctx.beginPath(); ctx.ellipse(0, -21.4, 6.5, 1.6, 0, 0, TOUR); ctx.fillStyle = c; ctx.fill(); contour(ctx, 1);
+        forme(ctx, [[-3.4, -21.6], [3.4, -21.6], [2.8, -25.5], [-2.8, -25.5]], c); break;
+      case "suroit": ctx.beginPath(); ctx.ellipse(-0.6, -21, 5.6, 3.4, -0.15, Math.PI, TOUR); ctx.fillStyle = c; ctx.fill(); contour(ctx, 1);
+        ctx.beginPath(); ctx.moveTo(-6, -20.2); ctx.lineTo(-7.5, -17.5); ctx.lineTo(-3.8, -19.5); ctx.closePath(); ctx.fill(); break; // le rabat dans le cou
+      case "capuche": ctx.beginPath(); ctx.arc(-0.6, -19.4, 5, Math.PI * 0.55, Math.PI * 1.9); ctx.lineTo(-1.5, -26); ctx.closePath(); ctx.fillStyle = c; ctx.fill(); contour(ctx, 1); break;
+      case "explorateur": ctx.beginPath(); ctx.ellipse(0, -21.6, 6.2, 1.8, 0, 0, TOUR); ctx.fillStyle = c; ctx.fill(); contour(ctx, 1);
+        ctx.beginPath(); ctx.arc(0, -22, 3.6, Math.PI, 0); ctx.fillStyle = c; ctx.fill(); contour(ctx, 1); ctx.fillStyle = "#6b4423"; ctx.fillRect(-3.5, -22.6, 7, 1); break;
+      case "calot": ctx.beginPath(); ctx.ellipse(-0.3, -22.2, 4.2, 2.2, -0.1, Math.PI, TOUR); ctx.fillStyle = c; ctx.fill(); contour(ctx, 1); break;
+      case "savant": forme(ctx, [[-4.6, -21.5], [4.6, -21.5], [0.5, -30]], c); ctx.fillStyle = "#ffcf2e"; ctx.beginPath(); ctx.arc(0.6, -26, 0.9, 0, TOUR); ctx.arc(-1.5, -23.4, 0.7, 0, TOUR); ctx.fill(); break; // le chapeau pointu étoilé
+    }
+  }
+
+  // Les outils, tenus dans la main (ma = la position de la main, angle = la direction de l'outil)
+  function outilEnMain(ctx, sorte, ma, angle) {
+    ctx.save(); ctx.translate(ma[0], ma[1]); ctx.rotate(-angle + Math.PI); // l'outil continue le bras
+    const manche = (l) => { ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 1.7; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(0, 3); ctx.lineTo(0, -l); ctx.stroke(); };
+    ctx.fillStyle = "#c9ccd1"; ctx.strokeStyle = CONTOUR; ctx.lineWidth = 1;
+    if (sorte === "hache") { manche(10); ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(4.8, -11.5); ctx.quadraticCurveTo(5.8, -8.5, 4.8, -6); ctx.lineTo(0, -7.5); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    else if (sorte === "pioche") { manche(10); ctx.beginPath(); ctx.moveTo(-4.2, -8.8); ctx.quadraticCurveTo(0, -12.2, 4.2, -8.8); ctx.lineTo(0, -10.4); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    else if (sorte === "pelle") { manche(9); ctx.beginPath(); ctx.moveTo(-2.6, -9); ctx.lineTo(2.6, -9); ctx.lineTo(1.8, -14.5); ctx.quadraticCurveTo(0, -16, -1.8, -14.5); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    else if (sorte === "marteau") { manche(6); ctx.fillRect(-2.6, -8.5, 5.2, 2.6); ctx.strokeRect(-2.6, -8.5, 5.2, 2.6); }
+    else if (sorte === "marteauForge") { manche(7); ctx.fillStyle = "#5a5f68"; ctx.fillRect(-3.2, -10, 6.4, 3.4); ctx.strokeRect(-3.2, -10, 6.4, 3.4); }
+    else if (sorte === "ringard") { ctx.strokeStyle = "#5a5f68"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(0, 4); ctx.lineTo(0, -16); ctx.stroke(); ctx.strokeStyle = "#ff8a1f"; ctx.beginPath(); ctx.moveTo(0, -14); ctx.lineTo(0, -16.5); ctx.stroke(); }
+    else if (sorte === "scie") { ctx.fillStyle = "#d8dce2"; ctx.beginPath(); ctx.moveTo(-1, 0); ctx.lineTo(-1, -12); ctx.lineTo(2.5, -12); ctx.lineTo(2.5, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#8a5a2b"; ctx.fillRect(-1.8, 0, 5, 3); }
+    ctx.restore();
+  }
+
+  // ---------------------------------------------------------------- un ouvrier qui marche ou travaille dehors
+  // `graine` : le numéro du bâtiment (chaque ouvrier garde sa tête). Les gestes de travail :
+  //   bûcheron et carrier : lever l'outil (lentement), frapper (vite), revenir ;
+  //   forestier : enfoncer la pelle, soulever la terre, puis s'accroupir pour planter ;
+  //   pêcheur : la canne tenue à 2 mains, et une petite secousse de temps en temps ;
+  //   chasseur : tendre l'arc (le bras recule), puis lâcher ; géologue : accroupi, il tape sur la roche.
+  function dessinerOuvrier(ctx, type, o, x, y, t, hiver, graine) {
+    const T = TENUES[type] || TENUES.porteur, tr = traits(graine || 1);
     const marche = o.etat === "aller" || o.etat === "revenir";
     const travaille = o.etat === "travailler";
-    const pas = marche ? Math.sin(t * 14) : 0;
-    const saut = marche ? Math.abs(Math.sin(t * 14)) * 1.5 : 0;
+    const cycle = t * 14, pas = marche ? Math.sin(cycle) : 0;
+    const saut = marche ? Math.abs(Math.sin(cycle)) * 1.4 : 0;
+    let brasAvant = marche ? 0.15 + pas * 0.55 : 0.2, brasArriere = marche ? 0.15 - pas * 0.55 : 0.1, penche = 0, accroupi = 0;
+    let outil = T.outil, angleOutil = null; // angleOutil null : l'outil suit le bras de devant
+    if (travaille) {
+      if (outil === "hache" || outil === "pioche") {
+        // Lever (60 % du temps), frapper (15 %), revenir
+        const ph = (t * 1.5) % 1;
+        const a = ph < 0.6 ? 0.9 + (ph / 0.6) * 2.1 : ph < 0.75 ? 3 - ((ph - 0.6) / 0.15) * 2 : 1 + ((ph - 0.75) / 0.25) * -0.1;
+        brasAvant = a; brasArriere = a - 0.15; penche = ph >= 0.6 && ph < 0.85 ? 0.18 : -0.05;
+      } else if (outil === "pelle") {
+        const ph = (t * 0.8) % 1;
+        if (ph < 0.7) { const d = Math.sin(ph / 0.7 * Math.PI); brasAvant = 0.8 + d * 0.7; brasArriere = 1.1 + d * 0.5; penche = 0.25 - d * 0.2; }
+        else { accroupi = 1; brasAvant = 0.9 + Math.sin(t * 8) * 0.2; brasArriere = 0.5; outil = null; } // il plante la pousse avec les mains
+      } else if (outil === "canne") {
+        const secousse = Math.sin(t * 1.3) > 0.95 ? 0.25 : 0;
+        brasAvant = 1.45 + secousse; brasArriere = 1.25 + secousse; angleOutil = 2.35 + secousse;
+      } else if (outil === "marteau") {
+        accroupi = 1; brasAvant = 1.0 + Math.abs(Math.sin(t * 9)) * 0.6; brasArriere = 0.7; penche = 0.15;
+      }
+    } else if (marche && outil && !o.porte && outil !== "arc" && outil !== "canne") { brasAvant = 0.35 + pas * 0.3; } // l'outil sur l'épaule
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(o.direction, 1); // il regarde à gauche ou à droite
-    // L'ombre
     ctx.fillStyle = "rgba(20, 40, 10, .25)";
     ctx.beginPath(); ctx.ellipse(0, 1, 6, 2.5, 0, 0, TOUR); ctx.fill();
     ctx.translate(0, -saut);
-    // Les jambes
-    ctx.strokeStyle = "#3b3f5a"; ctx.lineWidth = 2.6; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(-2, -6); ctx.lineTo(-2 + pas * 2.5, 0); ctx.moveTo(2, -6); ctx.lineTo(2 - pas * 2.5, 0); ctx.stroke();
-    // Le corps (un œuf) et la tête
-    ctx.beginPath(); ctx.ellipse(0, -10, 4.8, 6, 0, 0, TOUR); ctx.fillStyle = tenue.habit; ctx.fill(); contour(ctx, 1.5);
-    rond(ctx, 0, -19, 4.3, "#f2c79b");
-    ctx.fillStyle = CONTOUR; ctx.beginPath(); ctx.arc(1.8, -19.5, 0.8, 0, TOUR); ctx.fill(); // l'œil
-    // Le chapeau (un casque jaune pour le carrier)
-    ctx.beginPath(); ctx.ellipse(0, -21.5, 4.8, 2.6, 0, Math.PI, TOUR); ctx.fillStyle = tenue.chapeau; ctx.fill(); contour(ctx, 1.2);
-    // ❄️ En hiver, une écharpe rouge
-    if (hiver) { ctx.fillStyle = "#e8402e"; ctx.fillRect(-4, -15.5, 8, 2.5); ctx.fillRect(-4, -15, 2.5, 6); }
-    if (tenue.outil === "canne" || tenue.outil === "arc") {
-      // La canne à pêche (tendue vers l'eau quand il pêche) ou l'arc
-      ctx.save(); ctx.translate(3, -12);
-      if (tenue.outil === "canne") {
-        ctx.rotate(travaille ? 0.9 : 0.3);
-        ctx.strokeStyle = "#8a5a2b"; ctx.lineWidth = 1.6;
-        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -16); ctx.stroke();
-      } else {
-        // Étape 5 : il tend l'arc pendant 3 s (la corde recule), puis il lâche la flèche.
-        const m = o.minuteur, tir = travaille && m > 1 ? Math.min(1, (C_.ouvriers.chasser - m) / 2.5) : 0;
-        const vibre = travaille && m <= 1 && m > 0.7 ? Math.sin(t * 60) * 0.8 : 0; // la corde vibre après le tir
-        ctx.rotate(travaille ? -0.15 : 0.4);
-        ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(4, -3, 7.5, -1.25 - tir * 0.15, 1.25 + tir * 0.15); ctx.stroke(); // le bois de l'arc (il se plie)
-        const hx = 4 + Math.cos(-1.25) * 7.5, hy = -3 + Math.sin(-1.25) * 7.5, bx = 4 + Math.cos(1.25) * 7.5, by = -3 + Math.sin(1.25) * 7.5;
-        const cx = (hx + bx) / 2 - tir * 6 + vibre;
-        ctx.strokeStyle = "#f3ead8"; ctx.lineWidth = 0.9;
-        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(cx, -3); ctx.lineTo(bx, by); ctx.stroke(); // la corde
-        if (travaille && m > 1) {
-          // La flèche encochée, prête à partir
-          ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 1.2;
-          ctx.beginPath(); ctx.moveTo(cx, -3); ctx.lineTo(cx + 15, -3); ctx.stroke();
-          ctx.fillStyle = "#c9ccd1"; ctx.beginPath(); ctx.moveTo(cx + 17, -3); ctx.lineTo(cx + 14, -4.6); ctx.lineTo(cx + 14, -1.4); ctx.closePath(); ctx.fill();
-          ctx.fillStyle = "#e8402e"; ctx.beginPath(); ctx.moveTo(cx, -3); ctx.lineTo(cx - 2, -5); ctx.lineTo(cx + 2, -3); ctx.lineTo(cx - 2, -1); ctx.closePath(); ctx.fill();
-        }
-      }
-      ctx.restore();
-    } else {
-    // L'outil, qui frappe quand il travaille
-    const angle = travaille ? -1.2 + Math.abs(Math.sin(t * 6)) * 1.8 : 0.5;
-    ctx.save(); ctx.translate(3, -11); ctx.rotate(angle);
-    ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 1.8;
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -11); ctx.stroke();
-    ctx.fillStyle = "#c9ccd1"; ctx.strokeStyle = CONTOUR; ctx.lineWidth = 1;
-    ctx.beginPath();
-    if (tenue.outil === "hache") { ctx.moveTo(0, -11); ctx.lineTo(4.5, -12); ctx.lineTo(4.5, -7); ctx.lineTo(0, -8); }
-    else if (tenue.outil === "marteau") { ctx.moveTo(-3, -11); ctx.lineTo(3, -11); ctx.lineTo(3, -14); ctx.lineTo(-3, -14); }
-    else if (tenue.outil === "pelle") { ctx.moveTo(-2.5, -11); ctx.lineTo(2.5, -11); ctx.lineTo(1.5, -16); ctx.lineTo(-1.5, -16); }
-    else { ctx.moveTo(-5, -10); ctx.quadraticCurveTo(0, -14, 5, -10); ctx.lineTo(0, -12); }
-    ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.restore();
+    if (outil === "arc") { ctx.fillStyle = "#6b4423"; ctx.fillRect(-6, -18, 2.5, 9); ctx.strokeStyle = "#e8402e"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-5, -18); ctx.lineTo(-6.5, -21); ctx.moveTo(-4, -18); ctx.lineTo(-4, -21.5); ctx.stroke(); } // le carquois
+    // Ce qu'il rapporte : comme les porteurs (sur l'épaule, ou dans une hotte sur le dos)
+    const facon = o.porte ? FACON[o.porte] || "hotte" : null;
+    if (facon === "hotte") { forme(ctx, [[-8, -20], [-2, -20], [-3, -9], [-7, -9]], "#b98a55"); objetPorte(ctx, o.porte, -5.5, -22); }
+    if (facon === "epaule") { brasAvant = 2.7; outil = null; }
+    else if (facon === "hotte") { brasArriere = -2.6; }
+    let tir = 0;
+    if (outil === "arc") {
+      const m = o.minuteur;
+      tir = travaille && m > 1 ? Math.min(1, (C_.ouvriers.chasser - m) / 2.5) : 0;
+      if (travaille) { brasAvant = 1.57; brasArriere = 1.57; }
     }
-    // Ce qu'il rapporte, sur l'épaule
-    if (o.porte === "troncs") rondin(ctx, -1, -17, 0.35); else if (o.porte === "pierres") {
-      rond(ctx, -1, -24.5, 3.6, "#a3a8ad");
-    } else if (o.porte === "poissons") poisson(ctx, -4, -12);
-    else if (o.porte === "viande") viande(ctx, -4, -12);
+    ctx.rotate(penche);
+    bonhomme(ctx, { tenue: T, traits: tr, pas, brasArriere, brasAvant, accroupi, triste: o.affame, hiver });
+    if (accroupi) ctx.translate(0, 3);
+    // L'outil dans la main de devant
+    if (outil === "arc") arcEnMain(ctx, o, t, travaille, tir);
+    else if (outil === "canne") { const ma = main(brasAvant); ctx.strokeStyle = "#8a5a2b"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(ma[0] - 2, ma[1] + 2); ctx.lineTo(travaille ? 12 : ma[0] + 3, travaille ? -22 : ma[1] - 15); ctx.stroke(); }
+    else if (outil) outilEnMain(ctx, outil, main(brasAvant), angleOutil === null ? brasAvant : angleOutil);
+    if (facon === "epaule") {
+      if (o.porte === "troncs") { ctx.save(); ctx.translate(1, -23); ctx.rotate(-0.3); rondin(ctx, 0, 0, 0); ctx.restore(); }
+      else objetPorte(ctx, o.porte, 2, -23);
+    }
+    ctx.restore();
+    if (vue.noirceur > 0.3 && T.coiffe === "mineur") lumiere(x + 3.6 * o.direction, y - 22 - saut, 18, "jaune", 0.8);
+  }
+
+  // L'arc du chasseur : il le tend pendant 2,5 s (la corde recule avec la main), puis il lâche la flèche.
+  function arcEnMain(ctx, o, t, travaille, tir) {
+    const m = o.minuteur, vibre = travaille && m <= 1 && m > 0.7 ? Math.sin(t * 60) * 0.8 : 0;
+    const ma = main(travaille ? 1.57 : 0.4);
+    ctx.save(); ctx.translate(ma[0] + 1, ma[1]); ctx.rotate(travaille ? 0 : 0.5);
+    ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(-3, 0, 7.5, -1.25 - tir * 0.15, 1.25 + tir * 0.15); ctx.stroke(); // le bois de l'arc (il se plie)
+    const hx = -3 + Math.cos(-1.25) * 7.5, hy = Math.sin(-1.25) * 7.5, bx = -3 + Math.cos(1.25) * 7.5, by = Math.sin(1.25) * 7.5;
+    const cx = (hx + bx) / 2 - tir * 6 + vibre;
+    ctx.strokeStyle = "#f3ead8"; ctx.lineWidth = 0.9;
+    ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(cx, 0); ctx.lineTo(bx, by); ctx.stroke(); // la corde
+    if (travaille && m > 1) {
+      ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx + 15, 0); ctx.stroke();
+      ctx.fillStyle = "#c9ccd1"; ctx.beginPath(); ctx.moveTo(cx + 17, 0); ctx.lineTo(cx + 14, -1.6); ctx.lineTo(cx + 14, 1.6); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#e8402e"; ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx - 2, -2); ctx.lineTo(cx + 2, 0); ctx.lineTo(cx - 2, 2); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, 0, 1.3, 0, TOUR); ctx.fillStyle = "#f2c79b"; ctx.fill(); // la main qui tire la corde
+    }
+    ctx.restore();
+  }
+
+  // ---------------------------------------------------------------- les ouvriers des ateliers (étape 10)
+  // Le scieur, le fondeur, le forgeron, le mineur, le savant et le marchand travaillent devant leur
+  // bâtiment : on les dessine avec lui, à une place fixe, avec leur geste.
+  function ouvrierDevant(ctx, b, x, y, t) {
+    const T = TENUES[b.type];
+    if (!T || !b.ouvrier) return;
+    const tr = traits(b.numero), actif = !!b.travail || (b.type === "universite" && Village.monde && Village.monde.recherches.enCours) || b.type === "marche";
+    if (!actif || (b.type === "marche" && vue.noirceur > 0.5)) return; // le marchand rentre le soir
+    let dx = 0, dy = 0, dir = 1, brasAvant = 0.3, brasArriere = 0.2, penche = 0, outil = T.outil, angle = null;
+    if (b.type === "scierie") { // il pousse et tire la scie
+      dx = -2; dy = 14; const va = Math.sin(t * 7); brasAvant = 1.3 + va * 0.3; brasArriere = 1.2 + va * 0.3; penche = 0.1 + va * 0.05; angle = 1.57;
+    } else if (b.type === "forge") { // il tape sur l'enclume, en même temps que les étincelles
+      dx = 22; dy = 10; dir = -1; const coup = Math.sin(t * 10); brasAvant = coup > 0 ? 1.2 : 2.6; brasArriere = 1.0; penche = coup > 0 ? 0.15 : -0.05;
+    } else if (b.type === "fonderie") { // il remue le four avec une longue barre
+      dx = -4; dy = 14; const va = Math.sin(t * 3); brasAvant = 1.3 + va * 0.2; brasArriere = 1.4 + va * 0.2; angle = 1.9 + va * 0.15; penche = 0.12;
+    } else if (b.type === "mineCharbon" || b.type === "mineFer") { // il creuse à l'entrée de la mine
+      dx = -16; dy = 6; const ph = (t * 1.2) % 1; brasAvant = ph < 0.6 ? 0.9 + ph * 3.5 : 3 - (ph - 0.6) * 5; brasArriere = brasAvant - 0.2; penche = ph > 0.6 ? 0.18 : 0;
+    } else if (b.type === "universite") { // il lit un gros livre, et tourne les pages
+      dx = 10; dy = 14; brasAvant = 1.2; brasArriere = 1.1;
+    } else if (b.type === "marche") { // il fait signe aux passants
+      dx = 4; dy = 15; brasAvant = Math.sin(t * 2) > 0.3 ? 2.7 + Math.sin(t * 12) * 0.25 : 0.4; brasArriere = 0.3; outil = null;
+    }
+    ctx.save(); ctx.translate(x + dx, y + dy); ctx.scale(dir, 1);
+    ctx.fillStyle = "rgba(20, 40, 10, .25)"; ctx.beginPath(); ctx.ellipse(0, 1, 5.5, 2.3, 0, 0, TOUR); ctx.fill();
+    ctx.rotate(penche);
+    bonhomme(ctx, { tenue: T, traits: tr, brasAvant, brasArriere, triste: b.ouvrier.affame, hiver: vue.hiver });
+    if (outil === "livre") { const ma = main(brasAvant); forme(ctx, [[ma[0] - 3, ma[1] - 3], [ma[0] + 3, ma[1] - 4], [ma[0] + 3, ma[1] + 1], [ma[0] - 3, ma[1] + 2]], Math.sin(t * 0.8) > 0.9 ? "#f6ead2" : "#a24b3a"); }
+    else if (outil) outilEnMain(ctx, outil, main(brasAvant), angle === null ? brasAvant : angle);
     ctx.restore();
   }
 
@@ -1006,7 +1202,7 @@ Village.Batisses = (function () {
     }
     ctx.fillStyle = "rgba(20, 40, 10, .25)";
     ctx.beginPath(); ctx.ellipse(0, 1, 6, 2.5, 0, 0, TOUR); ctx.fill();
-    if (avecBrouette) brouette(ctx, 9, 0, t, p.porte, true);
+    if (avecBrouette) brouette(ctx, 14, 0, t, p.porte, true);
     ctx.translate(0, -saut);
     const facon = avecAne || avecBrouette || !p.porte ? null : FACON[p.porte] || "hotte";
     // La hotte (ou le sac) se voit derrière le dos
@@ -1018,24 +1214,14 @@ Village.Batisses = (function () {
       ctx.beginPath(); ctx.ellipse(-5, -15, 4.2, 5.5, -0.2, 0, TOUR); ctx.fillStyle = "#c9b58a"; ctx.fill(); contour(ctx, 1.2);
       ctx.strokeStyle = "#7a5a30"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-6.5, -20); ctx.lineTo(-3, -20.5); ctx.stroke();
     }
-    ctx.strokeStyle = "#5a3a20"; ctx.lineWidth = 2.6; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(-2, -6); ctx.lineTo(-2 + pas * 2.5, 0); ctx.moveTo(2, -6); ctx.lineTo(2 - pas * 2.5, 0); ctx.stroke();
-    ctx.beginPath(); ctx.ellipse(0, -10, 4.8, 6, 0, 0, TOUR); ctx.fillStyle = "#4a90d9"; ctx.fill(); contour(ctx, 1.5);
-    ctx.fillStyle = "#c98b4f"; ctx.fillRect(-4.5, -9, 9, 2); // la ceinture
-    if (vue.fin) { ctx.fillStyle = "rgba(255,255,255,.18)"; ctx.beginPath(); ctx.ellipse(-1.5, -12, 1.6, 3, 0, 0, TOUR); ctx.fill(); } // un reflet sur la tunique
-    rond(ctx, 0, -19, 4.3, "#f2c79b");
-    // Un bonnet
-    ctx.beginPath(); ctx.arc(0, -20, 4.4, Math.PI, 0); ctx.closePath(); ctx.fillStyle = "#2f6db5"; ctx.fill(); contour(ctx, 1.2);
-    ctx.fillStyle = CONTOUR; ctx.beginPath(); ctx.arc(1.8, -19, 0.8, 0, TOUR); ctx.fill();
-    // Les bras
-    ctx.strokeStyle = "#f2c79b"; ctx.lineWidth = 2;
-    ctx.beginPath();
-    if (facon === "epaule") { ctx.moveTo(3, -13); ctx.lineTo(4, -21); ctx.moveTo(-3, -13); ctx.lineTo(-4 - pas, -7); }
-    else if (facon === "bras") { ctx.moveTo(-3, -13); ctx.lineTo(4, -11); ctx.moveTo(3, -13); ctx.lineTo(6, -11); }
-    else if (avecBrouette) { ctx.moveTo(-1, -13); ctx.lineTo(4, -9); ctx.moveTo(2, -13); ctx.lineTo(5, -9); }
-    else if (facon === "hotte" || facon === "sac") { ctx.moveTo(-3, -13); ctx.lineTo(-3.5, -17); ctx.moveTo(3, -13); ctx.lineTo(4 + pas, -7); } // une main tient la sangle
-    else { ctx.moveTo(-4, -12); ctx.lineTo(-5 - pas, -6); ctx.moveTo(4, -12); ctx.lineTo(avecAne ? 6 : 5 + pas, avecAne ? -14 : -6); }
-    ctx.stroke();
+    // Étape 10 : le porteur est un bonhomme comme les autres (avec sa tête à lui), en tunique bleue.
+    let brasAvant = 0.15 + pas * 0.55, brasArriere = 0.15 - pas * 0.55;
+    if (facon === "epaule") brasAvant = 2.7;
+    else if (facon === "bras") { brasAvant = 1.35; brasArriere = 1.25; }
+    else if (avecBrouette) { brasAvant = 1.05; brasArriere = 0.95; }
+    else if (facon === "hotte" || facon === "sac") brasArriere = -2.6; // une main tient la sangle
+    else if (avecAne) brasAvant = 1.5; // il tient la longe
+    bonhomme(ctx, { tenue: TENUES.porteur, traits: traits(p.numero * 7 + 3), pas, brasAvant, brasArriere, triste: p.affame, hiver: vue.hiver });
     if (facon === "epaule") { // une longue chose posée en travers de l'épaule
       if (p.porte === "planches") { ctx.save(); ctx.translate(2, -23); ctx.rotate(-0.35); planche(ctx, 0, 0, 24); planche(ctx, 1, -2, 24); ctx.restore(); }
       else if (p.porte === "troncs") { ctx.save(); ctx.translate(1, -23); ctx.rotate(-0.3); rondin(ctx, 0, 0, 0); ctx.restore(); }
@@ -1043,7 +1229,7 @@ Village.Batisses = (function () {
     } else if (facon === "bras") { lingot(ctx, 5, -12); lingot(ctx, 5, -14); }
     // La nuit : une lanterne au bout du bras
     if (vue.noirceur > 0.25 && !avecBrouette) {
-      const lx = facon === "epaule" ? -5 : 6, ly = facon === "epaule" ? -5 : -6;
+      const ma = main(facon === "epaule" || facon === "hotte" || facon === "sac" ? (facon === "epaule" ? brasArriere : brasAvant) : brasAvant), lx = ma[0], ly = ma[1] + 1;
       forme(ctx, [[lx - 1.8, ly], [lx + 1.8, ly], [lx + 1.5, ly + 4.5], [lx - 1.5, ly + 4.5]], "#ffd04a");
       lumiere(x + lx * dir, y - saut + ly + 2, 26, "orange", 0.9);
     }
@@ -1081,5 +1267,5 @@ Village.Batisses = (function () {
     ctx.globalAlpha = 1;
   }
 
-  return { dessinerBatiment, dessinerOuvrier, dessinerPorteur, dessinerAnimal, dessinerPousse, dessinerFantome, iconeRoute, debutImage, lumiere, get lumieres() { return lumieres; }, vue }; // étape 9 : la vue et les lumières
+  return { bonhomme, traits, dessinerBatiment, dessinerOuvrier, dessinerPorteur, dessinerAnimal, dessinerPousse, dessinerFantome, iconeRoute, debutImage, lumiere, get lumieres() { return lumieres; }, vue }; // étape 9 : la vue et les lumières
 })();

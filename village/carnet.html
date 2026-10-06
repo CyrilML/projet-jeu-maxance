@@ -133,6 +133,7 @@
       <a href="#etape7">Étape 7</a>
       <a href="#etape8">Étape 8</a>
       <a href="#etape9">Étape 9</a>
+      <a href="#etape10">Étape 10</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -835,6 +836,62 @@ plus loin    : des formes simples, on ne verrait pas les détails de toute faço
       <details class="question"><summary>Tu as 10 habitants. Combien d'enfants jouent autour du feu ?</summary><p>10 ÷ 4 = 2,5 → 2 enfants (on enlève les virgules).</p></details>
     </section>
 
+    <section id="etape10">
+      <h2>🧑‍🌾 Étape 10 : les bonshommes <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">La 2e partie de ton choix 1C. Zoome de près : chaque habitant a son visage, ses cheveux, l'habit et le chapeau de son métier, et de vrais gestes de travail. Même les ouvriers des ateliers sortent travailler devant leur bâtiment. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/11-les-bonshommes.md</code>.</p>
+          <ul>
+            <li>✍️ « Passe aux bonshommes » : des visages, des habits selon le métier, de vrais gestes.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Zoome à fond : des yeux qui clignent, des sourires, des barbes, des coupes de cheveux.</li>
+            <li>☐ Reconnais chaque métier : bonnet à pompon, casque jaune, ciré, capuche, chapeau pointu…</li>
+            <li>☐ Le bûcheron lève sa hache… et frappe ! Le forestier creuse, puis s'accroupit pour planter.</li>
+            <li>☐ Devant la forge, le forgeron tape sur l'enclume ; devant la scierie, le scieur scie.</li>
+            <li>☐ Au marché, le marchand fait signe aux passants.</li>
+            <li>☐ Sans nourriture, les visages deviennent tristes.</li>
+            <li>Vérifie « version 11 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🪆 Une poupée qu'on habille</h3>
+      <p>Tous les personnages sont dessinés par la <strong>même fonction</strong> : <code>bonhomme</code>. On lui donne une « fiche » : la peau, les cheveux, l'habit, le chapeau, et la pose des bras et des jambes. Pour un nouveau métier, il suffit d'écrire une nouvelle fiche dans <code>TENUES</code> (dans <code>affichage/batisses.js</code>) : comme les recettes des ateliers, c'est rangé comme des <strong>données</strong>.</p>
+
+      <h3>📐 Un bras, c'est un angle</h3>
+      <pre style="white-space: pre-wrap">angle 0     : le bras pend le long du corps
+angle 1,57  : le bras est tendu devant          (1,57 = π ÷ 2, un quart de tour)
+angle 3,14  : le bras est levé au-dessus de la tête   (3,14 = π, un demi-tour)
+main = épaule + (sinus de l'angle × 6,5 ; cosinus de l'angle × 6,5)</pre>
+      <p>Un <strong>geste</strong>, c'est un angle qui change avec le temps. Le coup de hache du bûcheron dure 0,67 s, coupé en 3 morceaux :</p>
+      <pre style="white-space: pre-wrap">0 % ──── lever la hache, lentement ──── 60 % ── FRAPPER, vite ── 75 % ── revenir ── 100 %
+angle :  0,9  ───────────────────────►  3,0   ──────────────►  1,0   ─────────►  0,9</pre>
+      <p>Lentement pour lever, vite pour frapper : c'est ce qui donne de la force au geste. Les animateurs des dessins animés font pareil !</p>
+
+      <h3>🎲 Chacun sa tête</h3>
+      <p>Chaque habitant tire au hasard sa couleur de peau, ses cheveux, sa coupe et sa barbe, avec une <strong>graine</strong> : le numéro de son bâtiment. Comme la graine de la carte, elle donne toujours le même résultat : ton bûcheron garde sa tête toute sa vie, même après avoir rechargé la partie.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, trouve « 🧑 bonshommes peints ». Combien y en a-t-il quand tu zoomes de près ? Et de loin ?</li>
+        <li>Combien de temps le chasseur met-il pour tendre son arc ? Regarde bien la corde reculer.</li>
+        <li>Dans <code>affichage/batisses.js</code>, trouve <code>TENUES</code> : change la couleur du bonnet du bûcheron !</li>
+        <li>Mets le jeu en pause (P) pendant un coup de hache, puis avance pas à pas (N).</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un bras à l'angle 1,57 : où est la main ?</summary><p>Tendue devant (un quart de tour). sinus(1,57) = 1 et cosinus(1,57) = 0 : la main est 6,5 points devant l'épaule, à la même hauteur.</p></details>
+      <details class="question"><summary>Pourquoi le bûcheron lève-t-il sa hache lentement et frappe-t-il vite ?</summary><p>Pour que le coup ait l'air fort : le contraste entre lent et rapide donne de l'énergie au mouvement.</p></details>
+      <details class="question"><summary>Pourquoi les visages ne sont-ils dessinés que de près ?</summary><p>De loin, un œil ferait moins d'un pixel : on ne le verrait pas, et ça ralentirait le jeu pour rien (le niveau de détail de l'étape 9).</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -894,15 +951,15 @@ plus loin    : des formes simples, on ne verrait pas les détails de toute faço
           <p>Des murs et des toits en vraie matière, des fenêtres et des cheminées, la cour de l'entrepôt, de meilleurs transports (épaule, hotte, brouette, âne et charrette), le jour et la nuit, et des figurants.</p>
           <p class="apprend"><b>Tu apprends :</b> le niveau de détail, multiplier et ajouter de la lumière, des figurants calculés à partir de l'heure. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">10</div>
-          <h4>🧑‍🌾 Les bonshommes <span class="etiquette">⏭️ prochaine étape</span></h4>
-          <p>La 2e partie de ton choix 1C : des visages, des habits selon le métier, et de vrais gestes de travail (scier, marteler, pêcher, porter).</p>
+          <h4>🧑‍🌾 Les bonshommes <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Un bonhomme qu'on habille : des visages, chacun sa tête, l'habit et le chapeau de chaque métier, de vrais gestes, et les ouvriers des ateliers qui travaillent devant leur bâtiment.</p>
           <p class="apprend"><b>Tu apprends :</b> l'animation image par image, découper un geste en étapes. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte">
+        <div class="carte prochain">
           <div class="num">11</div>
-          <h4>🏰 Le bourg : l'or, l'argent et le pain</h4>
+          <h4>🏰 Le bourg : l'or, l'argent et le pain <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Mines d'or et d'argent, orfèvre (bijoux qui se vendent cher), moulin et boulangerie (une nourriture qui nourrit mieux), et de grosses commandes de la capitale.</p>
           <p class="apprend"><b>Tu apprends :</b> les produits de luxe, une nourriture transformée, des objectifs longs. <b>Durée :</b> 3 séances.</p>
         </div>
@@ -996,6 +1053,14 @@ plus loin    : des formes simples, on ne verrait pas les détails de toute faço
         <textarea class="journal" id="village-appris-9" data-cle="village-appris-9" placeholder="Ex. : J'ai appris ce qu'est le niveau de détail…"></textarea>
         <label for="village-idees-9"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-9" data-cle="village-idees-9" placeholder="Ex. : Un chien qui suit le chasseur…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 10 · les bonshommes <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le bonhomme commun à tous (<code>bonhomme</code> dans <code>affichage/batisses.js</code>), les visages, chacun sa tête (une graine), les tenues de 13 métiers, les gestes (hache, pioche, pelle, canne, arc, marteau, scie, enclume, ringard, livre), les ouvriers des ateliers devant leur bâtiment, la lampe frontale du mineur, les enfants en petits bonshommes.</p>
+        <label for="village-appris-10"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-10" data-cle="village-appris-10" placeholder="Ex. : J'ai appris qu'un geste est un angle qui change avec le temps…"></textarea>
+        <label for="village-idees-10"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-10" data-cle="village-idees-10" placeholder="Ex. : Que les habitants se parlent avec des bulles…"></textarea>
       </div>
     </section>
   </main>

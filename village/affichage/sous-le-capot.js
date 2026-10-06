@@ -202,6 +202,7 @@ Village.SousLeCapot = (function () {
       h += ligne("🐔 poules · 🧒 enfants · 🐦 oiseaux", Vi.poules + " · " + Vi.enfants + " · " + Vi.oiseaux);
       h += ligne("🦋 papillons · ✨ lucioles", Vi.papillons + " · " + Vi.lucioles);
       h += ligne("détails fins (zoom ≥ " + Math.round(Village.CONFIG.detail.zoomFin * 100) + " %)", Village.Batisses.vue.fin ? "oui" : "non (pour aller plus vite)");
+      h += ligne("🧑 bonshommes peints (étape 10)", Village.Batisses.vue.dernierCompte + (Village.Batisses.vue.fin ? " · avec leur visage" : " · sans visage (de loin)"));
       h += ligne("🫏 objets par voyage (charrette)", Math.round(Village.Recherches.bonus(monde, "chargement")));
     }
     const sa = monde.saison;

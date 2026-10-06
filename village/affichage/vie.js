@@ -77,19 +77,14 @@ Village.Vie = (function () {
   }
 
   const HABITS = ["#e8402e", "#ffcf2e", "#4fc25a", "#a24bd6", "#ff8a1f", "#3e7bff"];
+  // Étape 10 : les enfants sont de petits bonshommes (70 %), les bras en l'air : on joue !
   function enfant(ctx, x, y, t, f) {
     const pas = Math.sin(t * 16 + f.k * 2), saut = Math.abs(pas) * 2;
     ctx.save(); ctx.translate(x, y); ctx.scale(f.droite ? 1 : -1, 1);
     ctx.fillStyle = "rgba(20, 40, 10, .22)"; ctx.beginPath(); ctx.ellipse(0, 0.5, 4, 1.6, 0, 0, TOUR); ctx.fill();
     ctx.translate(0, -saut);
-    ctx.strokeStyle = "#5a3a20"; ctx.lineWidth = 1.8; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(-1.2, -4); ctx.lineTo(-1.2 + pas * 2.2, 0); ctx.moveTo(1.2, -4); ctx.lineTo(1.2 - pas * 2.2, 0); ctx.stroke();
-    ctx.beginPath(); ctx.ellipse(0, -7, 3.2, 4, 0, 0, TOUR); ctx.fillStyle = f.hiver ? "#b5523a" : HABITS[f.k % HABITS.length]; ctx.fill(); ctx.strokeStyle = CONTOUR; ctx.lineWidth = 1; ctx.stroke();
-    ctx.strokeStyle = "#f2c79b"; ctx.lineWidth = 1.5; // les bras, en l'air : on joue !
-    ctx.beginPath(); ctx.moveTo(-2, -8.5); ctx.lineTo(-4, -12 - pas); ctx.moveTo(2, -8.5); ctx.lineTo(4, -12 + pas); ctx.stroke();
-    ctx.beginPath(); ctx.arc(0, -13, 3, 0, TOUR); ctx.fillStyle = "#f2c79b"; ctx.fill(); ctx.strokeStyle = CONTOUR; ctx.lineWidth = 1; ctx.stroke();
-    ctx.beginPath(); ctx.arc(0, -14, 3, Math.PI * 1.05, Math.PI * 1.95); ctx.fillStyle = ["#5a3818", "#e0b040", "#2b1d12"][f.k % 3]; ctx.fill(); // les cheveux
-    ctx.fillStyle = CONTOUR; ctx.beginPath(); ctx.arc(1.3, -13, 0.5, 0, TOUR); ctx.fill();
+    const tenue = { habit: f.hiver ? "#b5523a" : HABITS[f.k % HABITS.length], pantalon: "#4a5a7a", coiffe: f.hiver ? "bonnet" : null, coiffeCouleur: "#e8402e" };
+    Village.Batisses.bonhomme(ctx, { tenue, traits: Object.assign(Village.Batisses.traits(f.k * 13 + 5), { barbe: false }), pas, brasAvant: 2.7 + pas * 0.3, brasArriere: 2.6 - pas * 0.3, taille: 0.7, hiver: false });
     ctx.restore();
   }
 
