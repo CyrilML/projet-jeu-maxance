@@ -16,28 +16,30 @@ Village.Batisses = (function () {
 
   // Les couleurs et la taille de chaque bâtiment.
   //   a : demi-largeur du losange au sol (px) ; h : hauteur des murs ; toit : hauteur du toit.
+  // Étape 17 : ✍️ « les bâtiments ne sont pas assez distincts ». Certains sont maintenant LONGS (a2 : la moitié
+  //   de la longueur du mur de droite) : la scierie, la ferme, l'étable, la bergerie, le marché…
   // Étape 9 : chaque bâtiment a aussi sa MATIÈRE (mur : rondins, planches, pierre, enduit, colombage),
   // son toit (bardeaux, tuiles, paille, ardoise), ses fenêtres, sa cheminée et sa lanterne.
   const MODELES = {
     entrepot: { a: 27, h: 20, toit: 18, murG: "#d39a5e", murD: "#b07740", toitA: "#d9553b", toitB: "#b8432c", mur: "planches", toitSorte: "tuiles", fenetres: 2, cheminee: 0.3, lanterne: true },
     bucheron: { a: 19, h: 14, toit: 14, murG: "#a87443", murD: "#865a31", toitA: "#7a9a3a", toitB: "#5f7d2b", mur: "rondins", toitSorte: "bardeaux", fenetres: 1, cheminee: 0.7 },
     forestier: { a: 19, h: 14, toit: 15, murG: "#efdcb4", murD: "#cfb68a", toitA: "#4fb556", toitB: "#3a8e3e", mur: "colombage", toitSorte: "bardeaux", fenetres: 1, volets: "#3a8e3e", jardiniere: true },
-    scierie: { a: 22, h: 16, toit: 15, murG: "#c48f5d", murD: "#a2703f", toitA: "#6f86b3", toitB: "#556b94", mur: "planches", toitSorte: "ardoise", fenetres: 1 },
+    scierie: { a: 20, a2: 31, h: 15, toit: 15, murG: "#c48f5d", murD: "#a2703f", toitA: "#6f86b3", toitB: "#556b94", mur: "planches", toitSorte: "ardoise", fenetres: 1 },
     carriere: { a: 19, h: 13, toit: 13, murG: "#b5b5b0", murD: "#90908b", toitA: "#9a6a3c", toitB: "#7c522b", mur: "pierre", toitSorte: "bardeaux", fenetres: 1 },
     pecheur: { a: 18, h: 13, toit: 14, murG: "#e3c896", murD: "#c2a46f", toitA: "#3fa7b5", toitB: "#2d8592", mur: "planches", toitSorte: "bardeaux", fenetres: 1, lanterne: true }, // étape 4
     chasseur: { a: 18, h: 13, toit: 14, murG: "#8e6038", murD: "#6f4826", toitA: "#6f8a3a", toitB: "#56702c", mur: "rondins", toitSorte: "bardeaux", fenetres: 1, cheminee: 0.65 },
     geologue: { a: 18, h: 13, toit: 14, murG: "#c9c2b4", murD: "#a59d8e", toitA: "#8a5ab0", toitB: "#6c428c", mur: "pierre", toitSorte: "ardoise", fenetres: 1 }, // étape 5
-    universite: { a: 25, h: 22, toit: 16, murG: "#e8e2d4", murD: "#c7bfae", toitA: "#3f6fc4", toitB: "#2f569c", mur: "pierre", toitSorte: "ardoise", fenetres: 2, lanterne: true }, // étape 7
+    universite: { a: 22, a2: 32, h: 28, toit: 16, murG: "#e8e2d4", murD: "#c7bfae", toitA: "#3f6fc4", toitB: "#2f569c", mur: "pierre", toitSorte: "ardoise", fenetres: 2, lanterne: true }, // étape 7
     mineCharbon: { a: 18, h: 12, toit: 10, murG: "#8a6a48", murD: "#6c5036", toitA: "#555a60", toitB: "#43474c", mur: "rondins", toitSorte: "bardeaux", fenetres: 0, lanterne: true }, // étape 7
     // Étape 8
     hutte: { a: 15, h: 9, toit: 15, murG: "#b98a55", murD: "#97693b", toitA: "#d8b65a", toitB: "#b8963f", mur: "rondins", toitSorte: "paille", fenetres: 0, linge: true }, // un toit de paille
     maison: { a: 20, h: 16, toit: 15, murG: "#f1e3c4", murD: "#d2c09a", toitA: "#c8503a", toitB: "#a43e2b", mur: "colombage", toitSorte: "tuiles", fenetres: 2, volets: "#3f7a4a", cheminee: 0.25, jardiniere: true, lanterne: true, linge: true },
     mineFer: { a: 18, h: 12, toit: 10, murG: "#8a6a48", murD: "#6c5036", toitA: "#9a5a3a", toitB: "#7c472c", mur: "rondins", toitSorte: "bardeaux", fenetres: 0, lanterne: true },
-    fonderie: { a: 22, h: 16, toit: 12, murG: "#a9a39a", murD: "#878177", toitA: "#5d4a3e", toitB: "#4a3a30", mur: "pierre", toitSorte: "ardoise", fenetres: 1, feu: true },
+    fonderie: { a: 20, a2: 28, h: 16, toit: 12, murG: "#a9a39a", murD: "#878177", toitA: "#5d4a3e", toitB: "#4a3a30", mur: "pierre", toitSorte: "ardoise", fenetres: 1, feu: true },
     forge: { a: 20, h: 14, toit: 13, murG: "#8b8f96", murD: "#6d7178", toitA: "#3f4a5a", toitB: "#2f3846", mur: "pierre", toitSorte: "ardoise", fenetres: 1, feu: true, cheminee: 0.7 },
-    marche: { a: 24, h: 10, toit: 12, murG: "#d9b07a", murD: "#b88e5a", toitA: "#e8c64a", toitB: "#c9a636", mur: "planches", toitSorte: "bardeaux", fenetres: 0, lanterne: true },
+    marche: { a: 20, a2: 34, h: 10, toit: 12, murG: "#d9b07a", murD: "#b88e5a", toitA: "#e8c64a", toitB: "#c9a636", mur: "planches", toitSorte: "bardeaux", fenetres: 0, lanterne: true },
     // Étape 11 : le bourg
-    ferme: { a: 20, h: 13, toit: 15, murG: "#c8503a", murD: "#a43e2b", toitA: "#8a6a48", toitB: "#6c5036", mur: "planches", toitSorte: "bardeaux", fenetres: 1, cheminee: 0.3 }, // une grange rouge
+    ferme: { a: 19, a2: 32, h: 13, toit: 15, murG: "#c8503a", murD: "#a43e2b", toitA: "#8a6a48", toitB: "#6c5036", mur: "planches", toitSorte: "bardeaux", fenetres: 1, cheminee: 0.3 }, // une grange rouge
     moulin: { a: 15, h: 26, toit: 12, murG: "#e8e2d4", murD: "#c7bfae", toitA: "#8a5a3a", toitB: "#6c442c", mur: "pierre", toitSorte: "bardeaux", fenetres: 1 },
     boulangerie: { a: 20, h: 15, toit: 14, murG: "#f1e3c4", murD: "#d2c09a", toitA: "#c8503a", toitB: "#a43e2b", mur: "colombage", toitSorte: "tuiles", fenetres: 1, volets: "#a43e2b", cheminee: 0.7, lanterne: true, feu: true },
     mineOr: { a: 18, h: 12, toit: 10, murG: "#8a6a48", murD: "#6c5036", toitA: "#c9a636", toitB: "#a8892a", mur: "rondins", toitSorte: "bardeaux", fenetres: 0, lanterne: true },
@@ -46,18 +48,20 @@ Village.Batisses = (function () {
     // Étape 15 : l'élevage. Chacun a sa couleur de toit, pour le reconnaître d'un coup d'œil.
     puits: { a: 16, h: 11, toit: 12, murG: "#c9c2b4", murD: "#a59d8e", toitA: "#3f7ac4", toitB: "#2f5c9c", mur: "pierre", toitSorte: "ardoise", fenetres: 1 },
     faneur: { a: 19, h: 13, toit: 16, murG: "#c49a5a", murD: "#a27a3e", toitA: "#d8b65a", toitB: "#b8963f", mur: "planches", toitSorte: "paille", fenetres: 0 },
-    etable: { a: 21, h: 13, toit: 15, murG: "#f1ede4", murD: "#d2cbbd", toitA: "#5f7d2b", toitB: "#4a6322", mur: "colombage", toitSorte: "bardeaux", fenetres: 1, volets: "#4a6322" },
+    etable: { a: 19, a2: 32, h: 13, toit: 15, murG: "#f1ede4", murD: "#d2cbbd", toitA: "#5f7d2b", toitB: "#4a6322", mur: "colombage", toitSorte: "bardeaux", fenetres: 1, volets: "#4a6322" },
     laiterie: { a: 19, h: 14, toit: 14, murG: "#f6f2e8", murD: "#d9d2c2", toitA: "#5fa8d9", toitB: "#4a8ab8", mur: "pierre", toitSorte: "tuiles", fenetres: 1, volets: "#4a8ab8" },
     veterinaire: { a: 18, h: 14, toit: 14, murG: "#f1e3c4", murD: "#d2c09a", toitA: "#4f9e3e", toitB: "#3a7a2e", mur: "colombage", toitSorte: "tuiles", fenetres: 1, volets: "#3a7a2e", lanterne: true },
     fromagerie: { a: 20, h: 15, toit: 14, murG: "#e8d9a8", murD: "#c9b884", toitA: "#c8503a", toitB: "#a43e2b", mur: "pierre", toitSorte: "tuiles", fenetres: 1, volets: "#e0a81e", cheminee: 0.7 },
     cremerie: { a: 18, h: 14, toit: 14, murG: "#fbf6ee", murD: "#ddd5c6", toitA: "#d96aa0", toitB: "#b8508a", mur: "colombage", toitSorte: "tuiles", fenetres: 1, volets: "#d96aa0" },
     // Étape 16
     poulailler: { a: 15, h: 10, toit: 12, murG: "#d9a066", murD: "#b8834a", toitA: "#c8503a", toitB: "#a43e2b", mur: "planches", toitSorte: "bardeaux", fenetres: 0 },
-    bergerie: { a: 21, h: 12, toit: 15, murG: "#c9c2b4", murD: "#a59d8e", toitA: "#d8b65a", toitB: "#b8963f", mur: "pierre", toitSorte: "paille", fenetres: 1 },
-    porcherie: { a: 19, h: 11, toit: 13, murG: "#a87443", murD: "#865a31", toitA: "#d97a8a", toitB: "#b85a6a", mur: "rondins", toitSorte: "bardeaux", fenetres: 0 },
+    bergerie: { a: 19, a2: 30, h: 12, toit: 15, murG: "#c9c2b4", murD: "#a59d8e", toitA: "#d8b65a", toitB: "#b8963f", mur: "pierre", toitSorte: "paille", fenetres: 1 },
+    porcherie: { a: 17, a2: 27, h: 11, toit: 13, murG: "#a87443", murD: "#865a31", toitA: "#d97a8a", toitB: "#b85a6a", mur: "rondins", toitSorte: "bardeaux", fenetres: 0 },
     tisserand: { a: 19, h: 15, toit: 14, murG: "#f1e3c4", murD: "#d2c09a", toitA: "#7a5ab0", toitB: "#5c428c", mur: "colombage", toitSorte: "ardoise", fenetres: 2, volets: "#7a5ab0" },
     tailleur: { a: 18, h: 16, toit: 14, murG: "#e8e2d4", murD: "#c7bfae", toitA: "#3f8a8a", toitB: "#2f6a6a", mur: "pierre", toitSorte: "tuiles", fenetres: 1, volets: "#3f8a8a", lanterne: true },
     charcuterie: { a: 20, h: 14, toit: 14, murG: "#f1e3c4", murD: "#d2c09a", toitA: "#8a3a2a", toitB: "#6a2a1e", mur: "colombage", toitSorte: "tuiles", fenetres: 1, volets: "#8a3a2a", cheminee: 0.6 },
+    // Étape 17 : l'entrepôt secondaire (long, avec un toit bleu)
+    depot: { a: 22, a2: 32, h: 18, toit: 16, murG: "#c9a26a", murD: "#a8834a", toitA: "#3f6fc4", toitB: "#2f569c", mur: "planches", toitSorte: "tuiles", fenetres: 2, lanterne: true },
   };
 
   // Étape 9 : ce que le peintre nous dit au début de chaque image.
@@ -67,6 +71,8 @@ Village.Batisses = (function () {
   let lumieres = [];
   function debutImage(monde, t) {
     vue.fin = monde.camera.zoom >= C_.detail.zoomFin;
+    vue.anim = monde.camera.zoom >= C_.detail.zoomAnimations; // étape 17 : ✍️ les animations se voient de plus loin
+    vue.fer = Village.Recherches.faite(monde, "outilsFer"); // étape 17 : la recherche « Outils en fer » se VOIT
     vue.noirceur = monde.moment ? monde.moment.noirceur : 0;
     vue.hiver = !!(monde.saison && monde.saison.hiver);
     vue.t = t;
@@ -87,7 +93,7 @@ Village.Batisses = (function () {
     const avant = loupe; loupe = { x, y, s };
     try { dessiner(); } finally { loupe = avant; ctx.restore(); }
   }
-  const echelleDe = (type) => (type === "entrepot" ? C_.detail.echelleEntrepot : C_.detail.echelleBatiments);
+  const echelleDe = (type) => (type === "entrepot" || type === "depot" ? C_.detail.echelleEntrepot : C_.detail.echelleBatiments);
 
   // Un point sur un mur : u va de 0 (début du mur) à 1 (fin), v de 0 (le sol) à 1 (le haut du mur).
   const surMur = (P, Q, h, u, v) => [P[0] + (Q[0] - P[0]) * u, P[1] + (Q[1] - P[1]) * u - v * h];
@@ -183,8 +189,8 @@ Village.Batisses = (function () {
 
   // La boîte : (x, y) est le milieu du losange au sol. `murs` de 0 à 1 (pour un chantier qui monte).
   function boite(ctx, x, y, m, murs, avecToit) {
-    const a = m.a, b = a / 2, h = m.h * murs;
-    const G = [x - a, y], B = [x, y + b], D = [x + a, y], H = [x, y - b];
+    const a = m.a, a2 = m.a2 || a, b = a / 2, h = m.h * murs;
+    const G = [x - a, y], B = [x, y + b], D = [x + a2, y + b - a2 / 2], H = [x - a + a2, y - a2 / 2]; // étape 17 : a2, un bâtiment long
     const up = ([px, py], dh) => [px, py - dh];
     const fin = vue.fin;
     // Les 2 murs qu'on voit
@@ -322,10 +328,14 @@ Village.Batisses = (function () {
     forme(ctx, [[x + 4, y], [x + 7.5, y - 2.5], [x + 7.5, y + 2.5]], "#5a9cc8");
     ctx.fillStyle = CONTOUR; ctx.beginPath(); ctx.arc(x - 2.5, y - 0.5, 0.7, 0, TOUR); ctx.fill();
   }
+  // Étape 17 : ✍️ la viande ne se reconnaissait pas : c'est maintenant un gros pilon, avec son os blanc
   function viande(ctx, x, y) {
-    ctx.strokeStyle = "#f3ead8"; ctx.lineWidth = 2.2; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(x + 2, y); ctx.lineTo(x + 6.5, y - 2.5); ctx.stroke();
-    ctx.beginPath(); ctx.ellipse(x - 1, y + 0.5, 4, 3, -0.4, 0, TOUR); ctx.fillStyle = "#b4512e"; ctx.fill(); contour(ctx, 1);
+    ctx.strokeStyle = "#f6efe0"; ctx.lineWidth = 2; ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(x + 1, y - 0.5); ctx.lineTo(x + 5, y - 3.6); ctx.stroke();
+    for (const [ox, oy] of [[5.2, -4.8], [6.4, -3.4]]) { ctx.beginPath(); ctx.arc(x + ox, y + oy, 1.2, 0, TOUR); ctx.fillStyle = "#f6efe0"; ctx.fill(); contour(ctx, 0.7); }
+    ctx.beginPath(); ctx.moveTo(x + 2, y - 1.4); ctx.quadraticCurveTo(x - 1, y - 4.4, x - 4, y - 1.6); ctx.quadraticCurveTo(x - 5.6, y + 2.4, x - 2, y + 3.6); ctx.quadraticCurveTo(x + 1.6, y + 3.4, x + 2, y - 1.4); ctx.closePath();
+    ctx.fillStyle = "#a8432a"; ctx.fill(); contour(ctx, 0.9);
+    ctx.fillStyle = "rgba(255, 190, 150, .55)"; ctx.beginPath(); ctx.ellipse(x - 2.4, y - 0.8, 1.4, 0.8, -0.5, 0, TOUR); ctx.fill();
   }
 
   let trait = 1; // étape 14 : pour les icônes grossies, des traits plus fins (sinon tout devient noir)
@@ -733,7 +743,7 @@ Village.Batisses = (function () {
       if (etudie) bulleDePensee(ctx, x - 10, y - m.h - m.toit - 20, t, Village.Recherches.trouver(etudie.id).emoji);
     } else if (b.type === "moulin") {
       // Étape 11 : les 4 grandes ailes du moulin, qui tournent quand il moud
-      const cx = x + 6, cy = y - m.h - 6, an = b.travail ? t * 1.6 : 0.4;
+      const cx = x + 6, cy = y - m.h - 6, an = t * (b.travail ? 1.6 : 0.3) + b.numero; // étape 17 : le vent les fait toujours tourner un peu
       ctx.save(); ctx.translate(cx, cy);
       for (let k = 0; k < 4; k++) {
         ctx.save(); ctx.rotate(an + (k * Math.PI) / 2);
@@ -837,6 +847,11 @@ Village.Batisses = (function () {
       if (b.travail) { ctx.strokeStyle = "#8a5a2b"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x + 4, y + 2); ctx.lineTo(x + 4 + Math.cos(t * 6) * 3, y - 6 + Math.sin(t * 6)); ctx.stroke(); }
       pile(ctx, x - 22, y + 12, "lait", b.entrees.lait || 0);
       pile(ctx, x + 4, y + 17, "yaourt", b.sortie);
+    } else if (b.type === "depot") {
+      // Étape 17 : des caisses, des tonneaux et le drapeau du village
+      for (const [cx, cy, c] of [[x + 16, y + 10, "#b07740"], [x + 22, y + 7, "#9a6a3c"], [x + 19, y + 3, "#c48f5d"]]) forme(ctx, [[cx - 4, cy], [cx, cy + 2], [cx + 4, cy], [cx + 4, cy - 5], [cx, cy - 7], [cx - 4, cy - 5]], c);
+      ctx.beginPath(); ctx.ellipse(x - 20, y + 12, 3, 1.4, 0, 0, TOUR); ctx.fillStyle = "#8a5a2b"; ctx.fill(); contour(ctx, 0.8);
+      drapeau(ctx, x + 2, y - m.h - m.toit - 10, t, Village.Boutique.COULEURS_DRAPEAU[(Village.monde && Village.monde.drapeau) || 0]);
     } else if (b.type === "tisserand") {
       // Étape 16 : le métier à tisser, avec ses fils, et la navette qui va et vient
       const mx = x + 14, my = y + 10;
@@ -926,7 +941,7 @@ Village.Batisses = (function () {
       const bx = x + 4, by = y - m.h - 2;
       ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx - 6, by - 7); ctx.moveTo(bx - 3, by - 3.5); ctx.lineTo(bx - 7, by - 2); ctx.moveTo(bx, by); ctx.lineTo(bx + 6, by - 7); ctx.moveTo(bx + 3, by - 3.5); ctx.lineTo(bx + 7, by - 2); ctx.stroke();
     }
-    if (vue.fin) animations(ctx, b, x, y, t, m); // étape 14
+    if (vue.anim) animations(ctx, b, x, y, t, m); // étape 14 ; étape 17 : de plus loin
     // Étape 11 : un bâtiment usé a des fissures et une planche de travers
     if (b.usure >= 0.5 && vue.fin) {
       ctx.strokeStyle = "rgba(40, 25, 10, " + (0.3 + b.usure * 0.4) + ")"; ctx.lineWidth = 1; ctx.beginPath();
@@ -1009,6 +1024,90 @@ Village.Batisses = (function () {
       case "mineCharbon": case "mineFer": case "mineOr": {
         // Le wagonnet roule sur les rails quand la mine travaille
         if (b.travail) { const d = Math.sin(t * 1.4 + s) * 6; ctx.save(); ctx.translate(d, d * 0.5); forme(ctx, [[x + 2, y + 6], [x + 10, y + 10], [x + 10, y + 5], [x + 2, y + 1]], "#6c5036"); rond(ctx, x + 4, y + 7, 1.4, "#3b2614"); rond(ctx, x + 9, y + 9.5, 1.4, "#3b2614"); ctx.restore(); }
+        break;
+      }
+      // ---- Étape 17 : ✍️ une animation pour CHAQUE bâtiment (avant, beaucoup n'en avaient pas)
+      case "universite": {
+        // La lunette du savant tourne sur le toit ; pendant une recherche, des feuilles s'envolent
+        ctx.save(); ctx.translate(x + 10, y - m.h - m.toit + 4); ctx.rotate(-0.7 + Math.sin(t * 0.4 + s) * 0.5);
+        forme(ctx, [[0, -1.6], [12, -2.6], [12, 2.6], [0, 1.6]], "#c9a636"); ctx.restore();
+        if (Village.monde && Village.monde.recherches.enCours) for (let k = 0; k < 3; k++) { const q = (t * 0.5 + k / 3) % 1; ctx.save(); ctx.globalAlpha = 1 - q; ctx.translate(x - 6 + Math.sin(q * 6 + k) * 6, y - 4 - q * 30); ctx.rotate(q * 4); ctx.fillStyle = "#fbf6ee"; ctx.fillRect(-2.5, -3, 5, 6); ctx.restore(); }
+        break;
+      }
+      case "forge": {
+        // Les braises du foyer rougeoient toujours
+        const f = 0.5 + 0.5 * Math.sin(t * 5 + s);
+        ctx.beginPath(); ctx.ellipse(x - 2, y + 9, 5, 2.2, 0, 0, TOUR); ctx.fillStyle = "#3b2614"; ctx.fill();
+        ctx.fillStyle = "rgba(255, " + Math.round(110 + 80 * f) + ", 30, .95)"; for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.arc(x - 4 + k * 2, y + 9 - (k % 2), 1.1 + f * 0.4, 0, TOUR); ctx.fill(); }
+        lumiere(x - 2, y + 8, 14, "orange", 0.7);
+        break;
+      }
+      case "marche": {
+        // Des fanions de toutes les couleurs, qui flottent au vent
+        const couleurs = ["#e8402e", "#ffcf2e", "#4fc25a", "#3e7bff", "#ff8a1f", "#a24bd6"];
+        ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(x - 20, y - 16); ctx.quadraticCurveTo(x + 4, y - 8, x + 30, y - 26); ctx.stroke();
+        for (let k = 0; k < 6; k++) { const u = (k + 0.5) / 6, px = x - 20 + u * 50, py = y - 16 + u * (1 - u) * 16 - u * 10, bal = Math.sin(t * 3 + k) * 1.5; forme(ctx, [[px - 2.5, py], [px + 2.5, py], [px + bal, py + 5]], couleurs[k]); }
+        break;
+      }
+      case "ferme": {
+        // Un épouvantail qui agite les bras, et des corbeaux qui tournent au-dessus des champs
+        const ex = x - 32, ey = y + 4, bras = Math.sin(t * 2 + s) * 0.3;
+        ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(ex, ey - 14); ctx.moveTo(ex - 6, ey - 10 + bras * 6); ctx.lineTo(ex + 6, ey - 10 - bras * 6); ctx.stroke();
+        forme(ctx, [[ex - 3, ey - 11], [ex + 3, ey - 11], [ex + 2.4, ey - 5], [ex - 2.4, ey - 5]], "#c8503a");
+        rond(ctx, ex, ey - 14, 2.2, "#e8c64a");
+        ctx.strokeStyle = "#2b2b2b"; ctx.lineWidth = 1; ctx.beginPath();
+        for (let k = 0; k < 2; k++) { const a = t * 0.8 + k * 3 + s, cx = ex + 20 + Math.cos(a) * 14, cy = ey - 26 + Math.sin(a) * 4, ail = Math.sin(t * 8 + k) * 1.5; ctx.moveTo(cx - 3, cy - ail); ctx.lineTo(cx, cy); ctx.lineTo(cx + 3, cy - ail); }
+        ctx.stroke();
+        break;
+      }
+      case "boulangerie": {
+        // La bonne odeur du pain chaud : de la vapeur qui monte de l'étal
+        ctx.strokeStyle = "rgba(255, 255, 255, .75)"; ctx.lineWidth = 1; ctx.beginPath();
+        for (let k = 0; k < 3; k++) { const q = (t * 0.6 + k / 3) % 1, px = x + 18 + k * 3, py = y + 4 - q * 14; ctx.moveTo(px, py + 4); ctx.quadraticCurveTo(px + 2 * Math.sin(t * 3 + k), py + 2, px, py); }
+        ctx.stroke();
+        break;
+      }
+      case "orfevre": {
+        // La pierre de la bague brille et scintille
+        const sc = 0.5 + 0.5 * Math.sin(t * 3 + s);
+        ctx.save(); ctx.translate(x + 12, y - m.h - 6); ctx.rotate(t * 1.5); ctx.strokeStyle = "rgba(255, 246, 176, " + sc + ")"; ctx.lineWidth = 1.2; ctx.beginPath(); for (let k = 0; k < 4; k++) { ctx.moveTo(0, 0); ctx.lineTo(Math.cos(k * Math.PI / 2) * (4 + sc * 3), Math.sin(k * Math.PI / 2) * (4 + sc * 3)); } ctx.stroke(); ctx.restore();
+        break;
+      }
+      case "macon": {
+        // La truelle qui gâche le mortier dans le seau
+        const a = t * 3 + s; ctx.strokeStyle = "#8b9099"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x - 3.5, y + 11); ctx.lineTo(x - 3.5 + Math.cos(a) * 3, y + 7 + Math.sin(a)); ctx.stroke();
+        break;
+      }
+      case "hutte": {
+        // Un petit feu de camp devant la hutte, avec ses flammes qui dansent
+        const fx = x + 16, fy = y + 12;
+        ronds(ctx, [[fx - 3, fy + 1, 1.3, "#8b9099"], [fx + 3, fy + 1, 1.3, "#8b9099"], [fx, fy + 2, 1.3, "#8b9099"]]);
+        for (let k = 0; k < 3; k++) { const h = 4 + Math.sin(t * 9 + k * 2) * 1.6; forme(ctx, [[fx - 2 + k * 1.6, fy], [fx - 1 + k * 1.6, fy - h], [fx + k * 1.6, fy]], k === 1 ? "#ffcf2e" : "#ff8a1f"); }
+        lumiere(fx, fy - 2, 16, "orange", 0.8);
+        break;
+      }
+      case "maison": {
+        // Un chat sur le pas de la porte, qui remue la queue
+        const cx = x - m.a * 0.45 + 9, cy = y + m.a * 0.28 + 6, q = Math.sin(t * 2 + s) * 2;
+        ctx.beginPath(); ctx.ellipse(cx, cy - 2, 2.6, 1.8, 0, 0, TOUR); ctx.fillStyle = s % 2 > 1 ? "#d9822b" : "#3b3b3b"; ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 2.4, cy - 3.6, 1.4, 0, TOUR); ctx.fill();
+        forme(ctx, [[cx + 1.6, cy - 4.6], [cx + 2, cy - 6], [cx + 2.6, cy - 4.8]], ctx.fillStyle);
+        ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx - 2.4, cy - 2); ctx.quadraticCurveTo(cx - 5, cy - 3, cx - 4 + q * 0.5, cy - 6); ctx.stroke();
+        break;
+      }
+      case "geologue": {
+        // Il tamise des cailloux : le tamis se secoue, et quelquefois une pépite brille
+        const sx = x + 16 + Math.sin(t * 8 + s) * 1.2;
+        ctx.beginPath(); ctx.ellipse(sx, y + 10, 4.5, 2, 0, 0, TOUR); ctx.fillStyle = "#9a6a3c"; ctx.fill(); contour(ctx, 0.8);
+        ronds(ctx, [[sx - 1.5, y + 9.6, 0.9, "#a3a8ad"], [sx + 1.2, y + 10.2, 0.8, "#8b9099"]]);
+        break;
+      }
+      case "entrepot": case "depot": {
+        // Une caisse hissée par une poulie, qui monte et redescend
+        const q = (Math.sin(t * 0.9 + s) + 1) / 2, px = x - 10, py = y - m.h - 2;
+        ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px - 8, py - 2); ctx.stroke();
+        ctx.strokeStyle = "#c9a26a"; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(px - 8, py - 2); ctx.lineTo(px - 8, py + 4 + q * 14); ctx.stroke();
+        forme(ctx, [[px - 11, py + 4 + q * 14], [px - 5, py + 4 + q * 14], [px - 5, py + 9 + q * 14], [px - 11, py + 9 + q * 14]], "#b07740");
         break;
       }
       case "fonderie": {
@@ -1333,7 +1432,8 @@ Village.Batisses = (function () {
   function outilEnMain(ctx, sorte, ma, angle) {
     ctx.save(); ctx.translate(ma[0], ma[1]); ctx.rotate(-angle + Math.PI); // l'outil continue le bras
     const manche = (l) => { ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 1.7; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(0, 3); ctx.lineTo(0, -l); ctx.stroke(); };
-    ctx.fillStyle = "#c9ccd1"; ctx.strokeStyle = CONTOUR; ctx.lineWidth = 1;
+    // Étape 17 : des outils en PIERRE (gris-brun), puis en FER (gris clair et brillant) après la recherche
+    ctx.fillStyle = vue.fer ? "#c9ccd1" : "#a39a8c"; ctx.strokeStyle = CONTOUR; ctx.lineWidth = 1;
     if (sorte === "hache") { manche(10); ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(4.8, -11.5); ctx.quadraticCurveTo(5.8, -8.5, 4.8, -6); ctx.lineTo(0, -7.5); ctx.closePath(); ctx.fill(); ctx.stroke(); }
     else if (sorte === "pioche") { manche(10); ctx.beginPath(); ctx.moveTo(-4.2, -8.8); ctx.quadraticCurveTo(0, -12.2, 4.2, -8.8); ctx.lineTo(0, -10.4); ctx.closePath(); ctx.fill(); ctx.stroke(); }
     else if (sorte === "pelle") { manche(9); ctx.beginPath(); ctx.moveTo(-2.6, -9); ctx.lineTo(2.6, -9); ctx.lineTo(1.8, -14.5); ctx.quadraticCurveTo(0, -16, -1.8, -14.5); ctx.closePath(); ctx.fill(); ctx.stroke(); }
@@ -1501,6 +1601,11 @@ Village.Batisses = (function () {
       dx = 4; dy = 17; accroupi = 1; brasAvant = 1.3 + Math.sin(t * 10) * 0.15; brasArriere = 1.2;
     } else if (b.type === "porcherie") { // il remplit l'auge avec sa fourche
       dx = 4; dy = 15; const va = Math.sin(t * 3); brasAvant = 1.1 + va * 0.4; brasArriere = 0.9 + va * 0.3; penche = 0.1 + va * 0.08;
+    } else if (b.type === "depot") {
+      // Étape 17 : des caisses, des tonneaux et le drapeau du village
+      for (const [cx, cy, c] of [[x + 16, y + 10, "#b07740"], [x + 22, y + 7, "#9a6a3c"], [x + 19, y + 3, "#c48f5d"]]) forme(ctx, [[cx - 4, cy], [cx, cy + 2], [cx + 4, cy], [cx + 4, cy - 5], [cx, cy - 7], [cx - 4, cy - 5]], c);
+      ctx.beginPath(); ctx.ellipse(x - 20, y + 12, 3, 1.4, 0, 0, TOUR); ctx.fillStyle = "#8a5a2b"; ctx.fill(); contour(ctx, 0.8);
+      drapeau(ctx, x + 2, y - m.h - m.toit - 10, t, Village.Boutique.COULEURS_DRAPEAU[(Village.monde && Village.monde.drapeau) || 0]);
     } else if (b.type === "tisserand") { // il lance la navette d'une main à l'autre
       dx = 4; dy = 15; brasAvant = 1.5 + Math.sin(t * 4) * 0.3; brasArriere = 1.5 - Math.sin(t * 4) * 0.3;
     } else if (b.type === "tailleur") { // il coupe le tissu à petits coups de ciseaux

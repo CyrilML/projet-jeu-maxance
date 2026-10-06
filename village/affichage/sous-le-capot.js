@@ -66,6 +66,7 @@ Village.SousLeCapot = (function () {
     "amelioration-impossible": (d) => "🚫 Amélioration « " + d.nom + " » impossible : " + d.raison,
     // Étape 15 : l'élevage et le bonheur
     "vaches-malades": (d) => "🤒 " + d.nom + " : " + d.animaux + " sont malades" + (d.contagion ? " (attrapé d'un troupeau voisin !)" : "") + " · plus rien ne sort · " + (d.veterinaire ? "le vétérinaire 🩺 va venir" : "pas de vétérinaire : ils guériront seuls en " + Math.round(Village.CONFIG.elevage.guerirSeule / 60) + " min"),
+    "routes-pavees": (d) => "🧱 Routes pavées : " + d.cases + " cases de chemin deviennent des routes en pierre (× 1,6 plus rapide)", // étape 17
     habits: (d) => "👕 Habits neufs : " + d.pris + " habitant(s) sur " + d.besoin + " (il reste " + d.reste + " vêtements)", // étape 16
     "vaches-gueries": (d) => "💚 " + d.nom + " : " + d.animaux + " sont guéris (" + d.parQui + ", après " + d.duree + " s)",
     "bonheur-change": (d) => d.emoji + " Le village est maintenant " + d.humeur + " (bonheur " + d.valeur + " %) : vitesse × " + String(d.vitesse).replace(".", ",") + " · arrivées × " + String(d.arrivee).replace(".", ","),
@@ -230,6 +231,7 @@ Village.SousLeCapot = (function () {
     h += ligne("villageois : se promènent · vont au travail", Vi13.filter((v) => v.etat !== "travail").length + " · " + Vi13.filter((v) => v.etat === "travail").length);
     h += ligne("cabanes vides (qui attendent quelqu'un)", monde.batiments.filter((b) => b.etat === "pret" && Village.Batiments.TYPES[b.type].metier && !b.ouvrier).length);
     h += ligne("entrepôt : niveau · places de porteur", Village.Ameliorations.niveau(monde) + " · " + Village.Ameliorations.placesPorteurs(monde) + (monde.porteursBonus ? " (dont " + monde.porteursBonus + " achetées)" : ""));
+    for (const e of Village.Porteurs.entrepots(monde)) h += ligne("🏬 " + Village.Batiments.TYPES[e.type].court + " n° " + e.numero + " : porteurs · bâtiments servis", monde.porteurs.filter((p) => !p.parti && Village.Porteurs.maisonDe(monde, p) === e).length + " / " + Village.Ameliorations.placesDe(monde, e) + " · " + monde.batiments.filter((x) => x !== e && x.entrepotProche === e).length); // étape 17
     h += ligne("vitesse des porteurs (écurie)", "× " + virgule(Village.Ameliorations.vitessePorteurs(monde), 2));
     // Étape 15 : le bonheur et l'élevage
     const Bh = Village.Bonheur, note = Bh.calculer(monde), C15 = Village.CONFIG;

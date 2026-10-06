@@ -41,7 +41,10 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("recherche-finie", (d) => afficher("🎓 Recherche finie : " + d.emoji + " " + d.nom + " ! " + d.texte));
   Village.Evenements.ecouter("recherche-impossible", (d) => afficher("🚫 " + d.nom + " : " + d.raison));
   Village.Evenements.ecouter("mission-proposee", (d) => afficher("📜 " + d.emoji + " " + d.qui + " a besoin de toi ! Touche 📜"));
-  Village.Evenements.ecouter("mission-reussie", (d) => afficher("🎉 Mission réussie ! Merci de la part de " + d.qui + " " + d.emoji));
+  Village.Evenements.ecouter("mission-reussie", (d) => { afficher("🎉 Mission réussie ! Merci de la part de " + d.qui + " " + d.emoji); gagner("🎉 Mission réussie !", Object.entries(d.recompense)); }); // étape 17 : ✍️ on VOIT ce qu'on gagne
+  Village.Evenements.ecouter("pub-regardee", (d) => { if (d.sorte === "ressource") gagner("📺 Merci !", [[d.quoi, d.quantite]]); else if (d.sorte === "gemmes") gagner("📺 Merci !", [["gemmes", d.quantite]]); });
+  Village.Evenements.ecouter("nouvel-age", (d) => gagner(d.emoji + " " + d.nom + " !", [["gemmes", d.gemmes]]));
+  Village.Evenements.ecouter("routes-pavees", (d) => afficher("🧱 Routes pavées : tes " + d.cases + " cases de chemin sont maintenant pavées (× 1,6 plus vite) !")); // étape 17
   Village.Evenements.ecouter("mission-ratee", (d) => afficher("⌛ Trop tard pour " + d.qui + "… Une autre mission viendra !"));
   Village.Evenements.ecouter("mission-pas-assez", () => afficher("🚫 Il manque encore des ressources pour livrer"));
   Village.Evenements.ecouter("achat", (d) => afficher(d.emoji + " " + d.nom + " : c'est fait ! (" + d.gemmes + " 💎 restantes)"));
@@ -72,6 +75,38 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("pub-regardee", (d) => afficher("🎁 Merci ! " + (d.sorte === "ressource" ? "+" + d.quantite + " " + EMO(d.quoi) : d.sorte === "gemmes" ? "+" + d.quantite + " 💎" : "La recherche « " + d.nom + " » avance d'un coup !")));
   function afficher(texte) { message = { texte, jusqua: performance.now() + 3500 }; }
 
+  // Étape 17 : ✍️ ce qu'on GAGNE (mission réussie, pub, nouvel âge) apparaît au milieu de l'écran, puis
+  // chaque récompense s'envole vers la barre du stock. Une file d'attente : une récompense après l'autre.
+  const gains = [];
+  function gagner(titre, objets) { if (objets.length) gains.push({ titre, objets, debut: null }); }
+  function dessinerGains(ctx, W, He) {
+    const g = gains[0];
+    if (!g) return;
+    const maintenant = performance.now();
+    if (g.debut === null) g.debut = maintenant;
+    const t = (maintenant - g.debut) / 1000, DUREE = 3.2;
+    if (t > DUREE) { gains.shift(); return; }
+    const cx = W / 2, cy = He * 0.38, apparait = Math.min(1, t / 0.35), part = Math.max(0, (t - 1.6) / 1.4); // part : de 0 à 1 pendant l'envol
+    const pasX = 70, x0 = cx - ((g.objets.length - 1) * pasX) / 2;
+    if (part < 1) {
+      ctx.save(); ctx.globalAlpha = 1 - part;
+      const l = Math.max(220, g.objets.length * pasX + 40), h = 104, s = 0.6 + 0.4 * apparait + Math.sin(Math.min(1, t / 0.5) * Math.PI) * 0.06;
+      ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy);
+      bulle(ctx, cx - l / 2, cy - h / 2, l, h, "rgba(255, 250, 235, .96)");
+      texte(ctx, g.titre, cx, cy - 30, 16, "#3b2614", true, "center");
+      ctx.restore();
+    }
+    g.objets.forEach(([r, q], k) => {
+      // Chaque objet s'envole (un peu après l'autre) vers le coin du stock, en rapetissant
+      const p = Math.min(1, Math.max(0, part * 1.2 - k * 0.08)), x = x0 + k * pasX + (34 - (x0 + k * pasX)) * p * p, y = cy + 12 + (26 - cy - 12) * p * p - Math.sin(p * Math.PI) * 40;
+      const taille = 28 * (1 - p * 0.5) * (0.6 + 0.4 * apparait);
+      ctx.save(); ctx.globalAlpha = p < 0.85 ? 1 : (1 - p) / 0.15;
+      if (C.ressources[r]) Village.Batisses.icone(ctx, r, x - 10, y, taille); else texte(ctx, r === "pieces" ? "🪙" : "💎", x - 10, y, taille * 0.8, null, false, "center");
+      texte(ctx, "+" + q, x + taille * 0.35, y, 15 * (1 - p * 0.4), "#2e8a3a", true, "left");
+      ctx.restore();
+    });
+  }
+
   function bulle(ctx, x, y, l, h, couleur) {
     ctx.fillStyle = couleur || "rgba(255, 250, 235, .94)";
     ctx.strokeStyle = "#5a4220";
@@ -97,7 +132,7 @@ Village.Interface = (function () {
     const B = Village.Batiments;
     const elements = (g.batiments || []).map((type) => ({
           action: "construire", valeur: type, emoji: B.TYPES[type].emoji, nom: B.TYPES[type].court, touche: B.A_CONSTRUIRE.indexOf(type) < 7 ? String(B.A_CONSTRUIRE.indexOf(type) + 1) : "",
-          cout: B.offert(monde, type) ? "🎁 offert" : Object.entries(B.coutPour(monde, type)).map(([r, n]) => n + EMO(r)).join(" "), // étape 12 : le coup de pouce
+          cout: B.offert(monde, type) ? "🎁 offert" : B.coutPour(monde, type), // étape 12 : le coup de pouce ; étape 17 : un prix dessiné
           choisi: monde.construction === type, possible: B.assezPour(monde, type) && Village.Ages.debloque(monde, type),
           verrou: Village.Ages.debloque(monde, type) ? null : "🔒 " + C.ages[Village.Ages.ageDe(type)].emoji + " " + C.ages[Village.Ages.ageDe(type)].nom.replace(/^(Le|La) /, ""), // étape 6
         })).concat((g.outils || []).map((o) => ({ action: "outil", valeur: o.id, emoji: o.emoji, icone: o.icone, nom: o.nom, touche: o.touche, cout: o.cout || "", choisi: monde.outil === o.id, possible: !o.verrou, verrou: o.verrou || null })));
@@ -119,6 +154,7 @@ Village.Interface = (function () {
       else texte(ctx, el.emoji, x + lc / 2, y0 + hc * 0.3, petit ? 24 : 28, null, false, "center");
       texte(ctx, el.nom, x + lc / 2, y0 + hc * 0.62, petit ? 11 : 12, "#3b2614", true, "center");
       if (el.verrou) texte(ctx, el.verrou, x + lc / 2, y0 + hc * 0.84, petit ? 9 : 10, "#8a7a60", true, "center");
+      else if (el.cout && typeof el.cout === "object") { if (Object.keys(el.cout).length > 3) dessinerCout(ctx, Object.fromEntries(Object.entries(el.cout).slice(0, 2)), x + lc / 2, y0 + hc * 0.8, petit ? 11 : 12, el.possible ? "#7a5a30" : "#c0392b"), dessinerCout(ctx, Object.fromEntries(Object.entries(el.cout).slice(2)), x + lc / 2, y0 + hc * 0.93, petit ? 11 : 12, el.possible ? "#7a5a30" : "#c0392b"); else dessinerCout(ctx, el.cout, x + lc / 2, y0 + hc * 0.84, petit ? 11 : 12, el.possible ? "#7a5a30" : "#c0392b"); }
       else if (el.cout) texte(ctx, el.cout, x + lc / 2, y0 + hc * 0.84, petit ? 10 : 11, el.possible ? "#7a5a30" : "#c0392b", true, "center");
       if (!petit) texte(ctx, el.touche, x + 7, y0 + 10, 10, "#a08a6a", true, "left");
       zone(x, y0, lc, hc, el.action, el.valeur);
@@ -157,6 +193,7 @@ Village.Interface = (function () {
     zone(x, y, l, h, "objectifs");
   }
   function basculerObjectifs() { objectifsOuverts = !objectifsOuverts; }
+  function info(t) { afficher(t); } // étape 17 : toucher un bouton grisé dit pourquoi
   function basculerPanneau(nom) { panneau = panneau === nom ? null : nom; objectifsOuverts = false; }
   function fermerPanneau() { panneau = null; }
 
@@ -174,12 +211,32 @@ Village.Interface = (function () {
     return lignes.length;
   }
 
+  // Étape 17 : ✍️ un PRIX dessiné avec les vraies icônes (« 8 [planches] 6 [pierres] »), centré en cx.
+  //   avant : un texte devant (« ⬆️ Améliorer · ») ; le prix peut contenir des 🪙 (pieces).
+  function dessinerCout(ctx, cout, cx, cy, taille, couleur, avant) {
+    const t = taille || 14, morceaux = Object.entries(cout);
+    ctx.font = "bold " + (t - 2) + "px " + POLICE;
+    const largeurs = morceaux.map(([r, n]) => ctx.measureText(String(n)).width + 2 + t + 6);
+    const lAvant = avant ? ctx.measureText(avant + " ").width : 0;
+    let x = cx - (lAvant + largeurs.reduce((a, b) => a + b, 0) - 6) / 2;
+    if (avant) { texte(ctx, avant, x, cy, t - 2, couleur, true); x += lAvant; }
+    morceaux.forEach(([r, n], k) => {
+      texte(ctx, String(n), x, cy, t - 2, couleur, true);
+      const xi = x + ctx.measureText(String(n)).width + 2;
+      if (C.ressources[r]) { ctx.save(); ctx.fillStyle = "rgba(255, 250, 235, .9)"; ctx.beginPath(); ctx.arc(xi + t / 2, cy, t / 2 + 1, 0, Math.PI * 2); ctx.fill(); ctx.restore(); Village.Batisses.icone(ctx, r, xi + t / 2, cy, t); }
+      else texte(ctx, r === "pieces" ? "🪙" : r === "gemmes" ? "💎" : r, xi, cy, t - 3, null, false);
+      x += largeurs[k];
+    });
+  }
+
   // Un bouton dessiné dans un panneau (il ne répond que s'il est actif)
+  // Étape 17 : le texte peut être un prix ({ cout, avant }) : il est alors dessiné avec les vraies icônes.
   function bouton(ctx, x, y, l, h, t, action, valeur, actif, couleur) {
     ctx.fillStyle = !actif ? "#e4dccd" : couleur || "#4fc25a"; ctx.strokeStyle = !actif ? "#c9b48f" : "#5a4220"; ctx.lineWidth = 2;
     ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, l, h, 10); else ctx.rect(x, y, l, h);
     ctx.fill(); ctx.stroke();
-    texte(ctx, t, x + l / 2, y + h / 2 + 1, 12, actif ? "#ffffff" : "#8a7a60", true, "center");
+    if (t && typeof t === "object") dessinerCout(ctx, t.cout, x + l / 2, y + h / 2 + 1, 15, actif ? "#ffffff" : "#8a7a60", t.avant);
+    else texte(ctx, t, x + l / 2, y + h / 2 + 1, 12, actif ? "#ffffff" : "#8a7a60", true, "center");
     if (actif) zone(x, y, l, h, action, valeur);
   }
 
@@ -209,7 +266,10 @@ Village.Interface = (function () {
       const lb = petit ? 108 : 128, bx = x + l - lb - 10, by = ry + 5, bh = hl - 10;
       texte(ctx, r.emoji + " " + r.nom, x + 12, ry + hl * 0.32, petit ? 11 : 13, "#3b2614", true);
       ctx.save(); ctx.beginPath(); ctx.rect(x + 8, ry, bx - x - 12, hl); ctx.clip(); // le texte ne déborde pas sur le bouton
-      texte(ctx, r.texte, x + 12, ry + hl * 0.74, petit ? 9 : 10, "#7a5a30");
+      // Étape 17 : ✍️ ce qui MANQUE, en rouge, avec les vraies icônes (à la place de la description)
+      const manque = !fait && !enCours && r.age <= (monde.age || 0) ? R.manques(monde, r.cout) : [];
+      if (manque.length) { texte(ctx, "il manque", x + 12, ry + hl * 0.74, petit ? 9 : 10, "#c0392b", true); ctx.font = "bold " + (petit ? 9 : 10) + "px " + POLICE; const lm = ctx.measureText("il manque").width; dessinerCout(ctx, Object.fromEntries(manque), x + 12 + lm + 6 + 60, ry + hl * 0.74, petit ? 12 : 13, "#c0392b"); }
+      else texte(ctx, r.texte, x + 12, ry + hl * 0.74, petit ? 9 : 10, "#7a5a30");
       ctx.restore();
       if (fait) texte(ctx, "✅ faite", bx + lb / 2, ry + hl / 2, 12, "#2e8a3a", true, "center");
       else if (enCours) {
@@ -218,7 +278,7 @@ Village.Interface = (function () {
         ctx.fillStyle = "#4fc25a"; ctx.fillRect(bx, by + bh / 2 - 5, lb * p, 10);
         texte(ctx, Math.round(p * 100) + " %", bx + lb / 2, by - 1, 9, "#2e8a3a", true, "center");
       } else if (r.age > (monde.age || 0)) texte(ctx, "🔒 " + C.ages[r.age].emoji + " " + C.ages[r.age].nom.replace(/^(Le|La) /, ""), bx + lb / 2, ry + hl / 2, 11, "#8a7a60", true, "center");
-      else bouton(ctx, bx, by, lb, bh, coutTexte(r.cout), "recherche", r.id, !pourquoi);
+      else { bouton(ctx, bx, by, lb, bh, { cout: r.cout }, "recherche", r.id, !pourquoi); if (pourquoi) zone(bx, by, lb, bh, "info", "🎓 " + r.nom + " : " + pourquoi); } // étape 17 : toucher dit pourquoi
     });
   }
 
@@ -414,14 +474,14 @@ Village.Interface = (function () {
     const s = monde.stock;
     // Étape 11 : chaque ressource apparaît à son âge (config.js, « ressources » : age), ou dès qu'on en a.
     // Étape 14 : ✍️ chaque ressource a son icône DESSINÉE (de vraies planches, de vraies pépites)
-    const ressources = Object.keys(C.ressources).filter((r) => (monde.age || 0) >= (C.ressources[r].age || 0) || s[r] > 0).map((r) => [r, s[r]]);
+    // Étape 17 : ✍️ la barre prenait trop de place. Elle est plus petite, presque transparente, et ne montre
+    // que les ressources de base et celles qu'on a (le marché et les statistiques montrent tout).
+    const BASE = ["troncs", "planches", "pierres", "poissons", "viande"];
+    const ressources = Object.keys(C.ressources).filter((r) => BASE.includes(r) || s[r] > 0).map((r) => [r, s[r]]);
     if (monde.age >= 2 || monde.pieces > 0) ressources.push(["pieces", monde.pieces]);
     // Étape 8 : s'il y a trop de ressources pour la largeur, la bulle passe sur 2 lignes.
-    const pas = petit ? 46 : 62, parLigne = Math.max(3, Math.min(ressources.length, Math.floor((W - 70 - 24) / pas)));
-    const nLignes = Math.ceil(ressources.length / parLigne), hStock = (petit ? 54 : 62) + (nLignes - 1) * (petit ? 20 : 24);
-    const lb = 24 + Math.min(ressources.length, parLigne) * pas;
-    basDuStock = 10 + hStock;
-    bulle(ctx, 10, 10, lb, hStock);
+    const pas = petit ? 38 : 50, haut = petit ? 17 : 20, parLigne = Math.max(3, Math.min(ressources.length, Math.floor((W - 70 - 20) / pas)));
+    const nLignes = Math.ceil(ressources.length / parLigne), hStock = (petit ? 40 : 46) + (nLignes - 1) * haut;
     // Étape 6 : l'âge du village et, à côté, où on en est des objectifs pour passer au suivant.
     // (La barre de la saison a été enlevée : ✍️ elle ne servait à rien.) Toucher : voir les objectifs.
     const age = Village.Ages.actuel(monde), prochain = Village.Ages.suivant(monde), obj = Village.Ages.objectifs(monde);
@@ -432,11 +492,16 @@ Village.Interface = (function () {
     const Lg = Village.Logement, hab = Lg.habitants(monde), lits = Lg.capacite(monde);
     titre += "  👥 " + hab + "/" + lits + (hab >= lits ? " ⚠️" : "");
     if (monde.bonheur.valeur !== null && !petit) titre += "  " + Village.Bonheur.emoji(monde) + " " + Math.round(monde.bonheur.valeur) + " %"; // étape 15
-    texte(ctx, titre, 22, petit ? 25 : 28, petit ? 11 : 13, "#7a5a30", true);
+    ctx.font = "bold " + (petit ? 10 : 12) + "px " + POLICE;
+    const lb = Math.min(W - 70, Math.max(20 + Math.min(ressources.length, parLigne) * pas, ctx.measureText(titre).width + 24));
+    basDuStock = 10 + hStock;
+    ctx.fillStyle = "rgba(255, 250, 235, .55)"; ctx.strokeStyle = "rgba(90, 66, 32, .35)"; ctx.lineWidth = 1.2;
+    ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(10, 10, lb, hStock, 10); else ctx.rect(10, 10, lb, hStock); ctx.fill(); ctx.stroke();
+    texte(ctx, titre, 20, petit ? 21 : 23, petit ? 10 : 12, "#5a4220", true);
     ressources.forEach(([r, n], k) => {
-      const rx = 22 + (k % parLigne) * pas, ry = (petit ? 47 : 51) + Math.floor(k / parLigne) * (petit ? 20 : 24), ti = petit ? 15 : 19;
-      if (r === "pieces") texte(ctx, "🪙", rx, ry, petit ? 13 : 16, null, false); else Village.Batisses.icone(ctx, r, rx + ti / 2, ry, ti);
-      texte(ctx, String(n), rx + ti + 3, ry, petit ? 13 : 17, n <= 0 && (r === "poissons" || r === "viande") ? "#c0392b" : "#3b2614", true);
+      const rx = 20 + (k % parLigne) * pas, ry = (petit ? 38 : 42) + Math.floor(k / parLigne) * haut, ti = petit ? 13 : 16;
+      if (r === "pieces") texte(ctx, "🪙", rx, ry, petit ? 11 : 13, null, false); else Village.Batisses.icone(ctx, r, rx + ti / 2, ry, ti);
+      texte(ctx, String(n), rx + ti + 2, ry, petit ? 11 : 13, n <= 0 && (r === "poissons" || r === "viande") ? "#c0392b" : "#3b2614", true);
     });
     zone(10, 10, lb, hStock, "objectifs");
     if (objectifsOuverts) panneauObjectifs(ctx, monde, 10, basDuStock + 8, petit ? 250 : 290);
@@ -485,11 +550,11 @@ Village.Interface = (function () {
       { id: "elevage", emoji: "🐄", nom: "Élevage", batiments: ["puits", "faneur", "etable", "poulailler", "bergerie", "porcherie", "veterinaire"] }, // étape 15 et 16
       // Étape 8 : les logements, et les artisans (fonderie, forge, marché, université)
       { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "maison", "macon"] }, // étape 12 : le maçon-couvreur
-      { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite"] }, // étape 16 : la laine et les habits
+      { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite", "depot"] }, // étape 16 : la laine et les habits ; étape 17 : le 2e entrepôt
       // Étape 7 : le chemin de terre, et la route en pierre (débloquée par la recherche « Routes pavées »)
       { id: "route", nom: "Routes", outils: [
-        { id: "route", icone: "terre", nom: "Chemin", touche: "R", cout: "gratuit" },
-        { id: "routePierre", icone: "pierre", nom: "Pavée ×1,6", touche: "T", cout: C.routes.coutPierre.pierres + "🪨/case", verrou: Village.Recherches.a(monde, "routePierre") ? null : "🔒 recherche 🧱" },
+        // Étape 17 : ✍️ une seule route. Après « Routes pavées », elle est pavée (et les anciennes aussi, d'un coup).
+        Village.Recherches.a(monde, "routePierre") ? { id: "route", icone: "pierre", nom: "Route pavée", touche: "R", cout: C.routes.coutPierre.pierres + "🪨/case" } : { id: "route", icone: "terre", nom: "Chemin", touche: "R", cout: "gratuit" },
         { id: "deplacer", emoji: "↔️", nom: "Déplacer", touche: "M" }, { id: "demolir", emoji: "🧹", nom: "Démolir", touche: "Suppr" },
       ] },
     ];
@@ -593,6 +658,7 @@ Village.Interface = (function () {
     else if (panneau === "stats") panneauStats(ctx, monde, W, He, petit); // étape 8
     else if (panneau === "marche") panneauMarche(ctx, monde, W, He, petit);
     else if (panneau === "bonheur") panneauBonheur(ctx, monde, W, He, petit); // étape 15
+    dessinerGains(ctx, W, He); // étape 17
     // Étape 11 : le résumé de l'absence, et la pub (par-dessus tout le reste)
     if (monde.absence) panneauAbsence(ctx, monde, W, He, petit);
     else if (monde.pub.offre) panneauPub(ctx, monde, W, He, petit);
@@ -688,12 +754,21 @@ Village.Interface = (function () {
       lignes.push("👥 " + monde.villageois.length + " villageois sans travail · " + Village.Logement.habitants(monde) + " habitants / " + Village.Logement.capacite(monde) + " lits");
       if (monde.partis) lignes.push("😢 " + monde.partis + " habitant(s) parti(s) (trop faim)");
       lignes.push("📋 File d'attente : " + monde.file.length + " livraison(s)");
+      const depots = monde.batiments.filter((x) => x.type === "depot").length; // étape 17
+      lignes.push(depots ? "🏬 " + depots + " entrepôt(s) secondaire(s) : chacun livre son coin du village" : "🏬 Le village s'étale ? Construis un entrepôt secondaire (dès le village) !");
       lignes.push("🛏️ Logement : " + Village.Logement.habitants(monde) + " habitants / " + Village.Logement.capacite(monde) + " places"); // étape 8
       // Étape 11 : la réserve (le silo)
       const Re = Village.Reserve, mn = Re.minutesAvantPlein(monde);
       lignes.push("📦 Réserve niveau " + Re.niveau(monde) + " : " + Re.capacite(monde) + " places");
       lignes.push(mn === Infinity ? "   (on mesure encore le rythme du village)" : "   ≈ " + (mn >= 60 ? Math.floor(mn / 60) + " h " + String(Math.round(mn % 60)).padStart(2, "0") : Math.round(mn) + " min") + " d'absence avant qu'elle soit pleine");
       boutonsReserve = true;
+    } else if (b.type === "depot") {
+      // Étape 17 : un entrepôt secondaire
+      const ici = monde.porteurs.filter((p) => !p.parti && Village.Porteurs.maisonDe(monde, p) === b), dehors = ici.filter((p) => p.etat !== "attend").length;
+      lignes.push("🚚 " + ici.length + " / " + C.depot.porteurs + " manutentionnaires habitent ici : " + dehors + " au travail");
+      lignes.push("📍 Il livre " + monde.batiments.filter((x) => x !== b && x.entrepotProche === b).length + " bâtiment(s) : ceux dont il est l'entrepôt le plus proche par la route.");
+      lignes.push("📦 Le stock est partagé avec l'entrepôt principal.");
+      lignes.push("🛏️ " + C.logement.depot + " lits pour ses manutentionnaires.");
     } else if (C.logement[b.type]) {
       // Étape 8 : une hutte ou une maison
       const Lg = Village.Logement;
@@ -781,8 +856,8 @@ Village.Interface = (function () {
     lignes.forEach((t, n) => texte(ctx, t, x + 12, y + 38 + n * (petit ? 17 : 19), petit ? 11 : 13, "#5a4220"));
     rangees.forEach((sorte, n) => {
       const by = y + h - hb + n * 40;
-      if (sorte === "agrandir") { const p = Am.prixAgrandir(monde); bouton(ctx, x + 10, by, l - 20, 32, "🏗️ Agrandir · " + prixTexte(p.ressources, p.pieces), "agrandirEntrepot", true, !Am.raisonAgrandir(monde), "#d98a1f"); }
-      if (sorte === "ameliorer") { const bloque = (monde.age || 0) < prochaine.age; bouton(ctx, x + 10, by, l - 20, 32, bloque ? "🔒 " + C.ages[prochaine.age].emoji + " " + C.ages[prochaine.age].nom : "⬆️ Améliorer · " + prixTexte(prochaine.cout), "ameliorer", b.numero, !Am.raison(monde, b), "#8a5ab0"); }
+      if (sorte === "agrandir") { const p = Am.prixAgrandir(monde); bouton(ctx, x + 10, by, l - 20, 32, { avant: "🏗️ Agrandir ·", cout: Object.assign({}, p.ressources, p.pieces ? { pieces: p.pieces } : {}) }, "agrandirEntrepot", true, !Am.raisonAgrandir(monde), "#d98a1f"); }
+      if (sorte === "ameliorer") { const bloque = (monde.age || 0) < prochaine.age; bouton(ctx, x + 10, by, l - 20, 32, bloque ? "🔒 " + C.ages[prochaine.age].emoji + " " + C.ages[prochaine.age].nom : { avant: "⬆️ Améliorer ·", cout: prochaine.cout }, "ameliorer", b.numero, !Am.raison(monde, b), "#8a5ab0"); }
     });
     if (boutonsReserve) {
       // Étape 11 : agrandir la réserve, avec des ressources (très cher) ou des 💎
@@ -868,5 +943,5 @@ Village.Interface = (function () {
     zones.push({ x: mx, y: my, l: mw, h: mh, action: "miniCarte", versMonde: (x, y) => ({ x: ((x - mx) / echelle - carte.lignes) * (L / 2), y: ((y - my) / echelle) * Hc }) });
   }
 
-  return { dessiner, zoneSous, basculerMenu, fermerMenu, basculerObjectifs, basculerPanneau, fermerPanneau, get menuOuvert() { return menuOuvert; } };
+  return { dessiner, zoneSous, info, basculerMenu, fermerMenu, basculerObjectifs, basculerPanneau, fermerPanneau, get menuOuvert() { return menuOuvert; } };
 })();

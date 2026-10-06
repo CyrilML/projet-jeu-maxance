@@ -89,11 +89,12 @@ Village.Monde = (function () {
       Village.Batiments.creer(monde, "entrepot", v.colonne + 2, v.ligne - 1, 1);
     }
     const porteursSauves = partie && partie.porteurs ? partie.porteurs.filter((d) => !d.parti) : null;
-    if (porteursSauves) { monde.porteurs = []; for (const d of porteursSauves) { Village.Porteurs.ajouterPorteur(monde); Object.assign(monde.porteurs[monde.porteurs.length - 1], { faim: d.faim || 0, affame: !!d.affame, ventreVide: d.ventreVide || 0 }); } }
+    if (porteursSauves) { monde.porteurs = []; for (const d of porteursSauves) { const m = d.m !== undefined && monde.batiments[d.m] && monde.batiments[d.m].type === "depot" ? monde.batiments[d.m] : null; Village.Porteurs.ajouterPorteur(monde, null, m); Object.assign(monde.porteurs[monde.porteurs.length - 1], { faim: d.faim || 0, affame: !!d.affame, ventreVide: d.ventreVide || 0 }); } }
     else Village.Porteurs.creerTous(monde);
     // Étape 13 : les villageois sans travail
     if (partie && partie.villageois) for (const [x, y, faim] of partie.villageois) Village.Villageois.creer(monde, x, y, faim);
     else if (!partie) Village.Villageois.peupler(monde);
+    if (partie && Village.Recherches.a(monde, "routePierre")) Village.Routes.paver(monde, true); // étape 17 : une partie qui avait déjà « Routes pavées »
     Village.Routes.recalculerReseau(monde);
     monde.saison = Village.Saisons.lire(monde.horloge);
     monde.moment = Village.Saisons.lireJour(monde.horloge);

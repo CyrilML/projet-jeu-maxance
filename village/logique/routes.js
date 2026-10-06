@@ -141,36 +141,44 @@ Village.Routes = (function () {
   }
 
   // La tache d'encre du réseau : toutes les routes qu'on peut atteindre depuis l'entrepôt.
+  // Étape 17 : depuis TOUS les entrepôts en même temps. Chaque case de route retient l'entrepôt le plus proche
+  // (celui dont l'encre est arrivée en premier) : monde.zone. C'est lui qui fera les livraisons de ce coin.
+  const estEntrepot = (b) => b.type === "entrepot" || (b.type === "depot" && b.etat === "pret");
   function recalculerReseau(monde) {
-    const k = monde.carte, reseau = new Set();
-    const e = monde.batiments.find((b) => b.type === "entrepot");
-    if (e) {
-      let file = [];
+    const k = monde.carte, reseau = new Set(), zone = new Map();
+    let file = [];
+    for (const e of monde.batiments) {
+      if (!estEntrepot(e)) continue;
       for (const [dc, dl] of VOISINS) {
         const c = e.colonne + dc, l = e.ligne + dl, i = l * k.colonnes + c;
-        if (c >= 0 && l >= 0 && c < k.colonnes && l < k.lignes && monde.route[i]) { reseau.add(i); file.push(i); }
-      }
-      while (file.length) {
-        const suivante = [];
-        for (const i of file) {
-          const c = i % k.colonnes, l = Math.floor(i / k.colonnes);
-          for (const [dc, dl] of VOISINS) {
-            const nc = c + dc, nl = l + dl, j = nl * k.colonnes + nc;
-            if (nc < 0 || nl < 0 || nc >= k.colonnes || nl >= k.lignes || reseau.has(j) || !monde.route[j]) continue;
-            reseau.add(j);
-            suivante.push(j);
-          }
-        }
-        file = suivante;
+        if (c >= 0 && l >= 0 && c < k.colonnes && l < k.lignes && monde.route[i] && !reseau.has(i)) { reseau.add(i); zone.set(i, e); file.push(i); }
       }
     }
+    while (file.length) {
+      const suivante = [];
+      for (const i of file) {
+        const c = i % k.colonnes, l = Math.floor(i / k.colonnes);
+        for (const [dc, dl] of VOISINS) {
+          const nc = c + dc, nl = l + dl, j = nl * k.colonnes + nc;
+          if (nc < 0 || nl < 0 || nc >= k.colonnes || nl >= k.lignes || reseau.has(j) || !monde.route[j]) continue;
+          reseau.add(j);
+          zone.set(j, zone.get(i));
+          suivante.push(j);
+        }
+      }
+      file = suivante;
+    }
     monde.reseau = reseau;
+    monde.zone = zone;
     // Qui est relié ? On prévient la radio quand ça change.
     for (const b of monde.batiments) {
-      const relie = b.type === "entrepot" || VOISINS.some(([dc, dl]) => {
-        const c = b.colonne + dc, l = b.ligne + dl;
-        return c >= 0 && l >= 0 && c < k.colonnes && l < k.lignes && reseau.has(l * k.colonnes + c);
+      let pres = null; // étape 17 : l'entrepôt de ce bâtiment (celui de sa route)
+      const relie = estEntrepot(b) || VOISINS.some(([dc, dl]) => {
+        const c = b.colonne + dc, l = b.ligne + dl, i = l * k.colonnes + c;
+        if (c >= 0 && l >= 0 && c < k.colonnes && l < k.lignes && reseau.has(i)) { pres = pres || zone.get(i); return true; }
+        return false;
       });
+      b.entrepotProche = estEntrepot(b) ? b : pres;
       if (relie !== b.relie && b.type !== "entrepot" && b.relie !== undefined) {
         radio.emettre(relie ? "batiment-relie" : "batiment-coupe", { nom: Village.Batiments.TYPES[b.type].nom, numero: b.numero });
       }
@@ -186,5 +194,14 @@ Village.Routes = (function () {
     return r === 2 ? C.sols.pierre : r === 1 ? C.sols.terre : C.sols.horsRoute;
   }
 
-  return { routable, trajet, construire, evaluerCases, construireCases, porte, demolir, recalculerReseau, compter, vitesseDuSol, VOISINS };
+  // Étape 17 : ✍️ la recherche « Routes pavées » est finie : TOUTES les routes deviennent pavées, d'un coup.
+  function paver(monde, sansMessage) {
+    let n = 0;
+    for (let i = 0; i < monde.route.length; i++) if (monde.route[i] === 1) { monde.route[i] = 2; n++; }
+    if (n) monde.changements++;
+    if (n && !sansMessage) radio.emettre("routes-pavees", { cases: n });
+    return n;
+  }
+
+  return { paver, estEntrepot, routable, trajet, construire, evaluerCases, construireCases, porte, demolir, recalculerReseau, compter, vitesseDuSol, VOISINS };
 })();

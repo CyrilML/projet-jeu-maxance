@@ -7,6 +7,8 @@
 // La liste des recherches est rangée comme des données dans config.js (« recherches »).
 //
 // Une seule recherche à la fois. Il faut une université construite, reliée par une route, avec son savant.
+// Étape 17 : ✍️ une recherche finie doit SE VOIR tout de suite. « Routes pavées » pave toutes les routes
+// du village d'un coup ; « Outils en fer » change les outils de pierre des ouvriers en outils de fer.
 
 window.Village = window.Village || {};
 
@@ -39,8 +41,16 @@ Village.Recherches = (function () {
     if ((monde.age || 0) < r.age) return "pas encore : il faut " + C.ages[r.age].nom.toLowerCase();
     if (!universite(monde)) return "il faut d'abord construire l'université";
     if (monde.recherches.enCours) return "une recherche est déjà en cours";
-    for (const [res, n] of Object.entries(r.cout)) if (Village.Porteurs.disponible(monde, res) < n) return "il manque " + (n - Village.Porteurs.disponible(monde, res)) + " " + Village.Batiments.NOMS_RESSOURCES[res];
+    const manque = manques(monde, r.cout); // étape 17 : ✍️ TOUT ce qui manque, pas seulement le premier
+    if (manque.length) return "il manque " + manque.map(([res, n]) => n + " " + Village.Batiments.NOMS_RESSOURCES[res]).join(" et ");
     return null;
+  }
+
+  // Ce qui manque pour payer un prix : [[ressource, combien], …]
+  function manques(monde, cout) {
+    const liste = [];
+    for (const [res, n] of Object.entries(cout)) { const d = Village.Porteurs.disponible(monde, res); if (d < n) liste.push([res, n - d]); }
+    return liste;
   }
 
   function lancer(monde, id) {
@@ -65,7 +75,8 @@ Village.Recherches = (function () {
     monde.recherches.enCours = null;
     u.produits++;
     radio.emettre("recherche-finie", { nom: r.nom, emoji: r.emoji, texte: r.texte, total: monde.recherches.faites.length });
+    if (r.effet.routePierre) Village.Routes.paver(monde); // étape 17 : toutes les routes deviennent pavées
   }
 
-  return { trouver, faite, bonus, a, raison, lancer, etape, universite };
+  return { trouver, faite, bonus, a, raison, manques, lancer, etape, universite };
 })();

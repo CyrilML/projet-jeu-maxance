@@ -96,7 +96,8 @@ Village.Placement = (function () {
   function annuler(monde) { monde.projet = null; monde.construction = null; monde.trace = null; monde.prise = null; }
 
   // ---------------------------------------------------------------- les routes
-  const sorteDe = (monde) => (monde.outil === "routePierre" ? 2 : 1);
+  // Étape 17 : ✍️ après « Routes pavées », l'outil route construit directement des routes pavées
+  const sorteDe = (monde) => (monde.outil === "routePierre" || Village.Recherches.a(monde, "routePierre") ? 2 : 1);
   function trace(monde) { if (!monde.trace) monde.trace = { depart: null, cases: [], pret: false }; return monde.trace; }
 
   // Glisser : la route suit le doigt. Si le doigt saute des cases, on comble le trou (en ligne droite).

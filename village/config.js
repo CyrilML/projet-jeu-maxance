@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 17,
+  version: 18,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -105,14 +105,15 @@ Village.CONFIG = {
   // Étape 2 : les bâtiments. Depuis l'étape 3, le coût est RÉSERVÉ quand on pose le chantier,
   // puis les porteurs apportent les matériaux un par un.
   //   construction : durée du chantier (s) ; rayon : jusqu'où l'ouvrier va travailler (en cases).
+  // Étape 17 : ✍️ Maxance trouvait le périmètre trop petit : les rayons sont doublés (bûcheron 6 → 12…).
   batiments: {
-    bucheron: { cout: { planches: 3 }, construction: 8, rayon: 6 },
-    forestier: { cout: { planches: 3 }, construction: 8, rayon: 5 },
+    bucheron: { cout: { planches: 3 }, construction: 8, rayon: 12 },
+    forestier: { cout: { planches: 3 }, construction: 8, rayon: 9 },
     scierie: { cout: { planches: 4, pierres: 2 }, construction: 12 },
-    carriere: { cout: { planches: 3 }, construction: 8, rayon: 6 },
-    pecheur: { cout: { planches: 3 }, construction: 8, rayon: 6 }, // étape 4
-    chasseur: { cout: { planches: 3 }, construction: 8, rayon: 8 }, // étape 4
-    geologue: { cout: { planches: 3, pierres: 1 }, construction: 8, rayon: 8 }, // étape 5
+    carriere: { cout: { planches: 3 }, construction: 8, rayon: 12 },
+    pecheur: { cout: { planches: 3 }, construction: 8, rayon: 10 }, // étape 4
+    chasseur: { cout: { planches: 3 }, construction: 8, rayon: 14 }, // étape 4
+    geologue: { cout: { planches: 3, pierres: 1 }, construction: 8, rayon: 14 }, // étape 5
     universite: { cout: { planches: 12, pierres: 10 }, construction: 15 }, // étape 7 : les recherches
     mineCharbon: { cout: { planches: 6, pierres: 3 }, construction: 12 }, // étape 7 : au pied d'un filon de charbon
     // Étape 8
@@ -144,7 +145,14 @@ Village.CONFIG = {
     tisserand: { cout: { planches: 10, pierres: 6, outils: 1 }, construction: 15 },
     tailleur: { cout: { planches: 12, pierres: 10, outils: 2 }, construction: 16 },
     charcuterie: { cout: { planches: 12, pierres: 14, outils: 2 }, construction: 16 },
+    // Étape 17 : ✍️ un 2e (et un 3e) ENTREPÔT, très cher : c'est un bâtiment stratégique
+    depot: { cout: { planches: 120, pierres: 90, lingots: 6, outils: 8 }, construction: 40 },
   },
+  // Étape 17 : ✍️ les ENTREPÔTS SECONDAIRES. Le village s'étale vite : un 2e entrepôt, loin du premier,
+  // a ses propres manutentionnaires (3 places, et 4 lits). Le stock est partagé (c'est le même village),
+  // mais chaque livraison est faite par les porteurs de l'entrepôt le plus proche par la route.
+  // Si ces porteurs sont tous occupés depuis plus de 15 s, ceux d'un autre entrepôt viennent aider.
+  depot: { porteurs: 3, max: 2, aide: 15 },
 
   // Étape 8 : les ATELIERS transforment ce que les porteurs leur apportent (les RECETTES).
   //   entrees : ce qu'il faut pour UNE fabrication ; sorties : ce qui sort ; duree : en s ;
@@ -230,7 +238,7 @@ Village.CONFIG = {
   // (Les porteurs, eux, dorment à l'entrepôt : ils ne comptent pas.)
   // Étape 13 : ✍️ les porteurs (manutentionnaires) et les villageois sans travail dorment aussi quelque part :
   // le campement passe à 10 places.
-  logement: { entrepot: 10, hutte: 3, maison: 6 },
+  logement: { entrepot: 10, hutte: 3, maison: 6, depot: 4 }, // étape 17 : 4 lits dans chaque entrepôt secondaire
 
   // Étape 13 : ✍️ (1B) les VILLAGEOIS. Ils arrivent au village quand il y a un lit libre et à manger,
   // se promènent près du feu, et vont travailler là où on a besoin d'eux : chaque cabane en prend un,
@@ -366,6 +374,7 @@ Village.CONFIG = {
   detail: {
     zoomFin: 0.8, // à partir de ce zoom : tous les détails
     zoomFigurants: 0.6, // à partir de ce zoom : les poules, les enfants, les papillons
+    zoomAnimations: 0.45, // étape 17 : ✍️ les animations devant les bâtiments se voient aussi de plus loin
     // Étape 14 : ✍️ des bâtiments plus GROS, pour les reconnaître d'un coup d'œil (× la taille de l'étape 13)
     echelleBatiments: 1.35,
     echelleEntrepot: 1.15, // l'entrepôt était déjà grand (et il a sa cour et son silo)
@@ -437,7 +446,7 @@ Village.CONFIG = {
     // La suite (prévue, pas encore construite) : ce que chaque âge débloquera.
     // Étape 8 : le village débloque le fer, la fonderie, la forge, les maisons et le marché.
     //   pieces : 🪙 qu'il faut avoir ; habitants : ouvriers logés.
-    { id: "village", nom: "Le village", emoji: "🏡", debloque: ["mineFer", "fonderie", "forge", "maison", "marche", "laiterie", "veterinaire", "bergerie", "porcherie", "tisserand"], // étape 15 : le beurre et le vétérinaire ; étape 16 : la laine et les cochons
+    { id: "village", nom: "Le village", emoji: "🏡", debloque: ["mineFer", "fonderie", "forge", "maison", "marche", "laiterie", "veterinaire", "bergerie", "porcherie", "tisserand", "depot"], // étape 17 : le 2e entrepôt // étape 15 : le beurre et le vétérinaire ; étape 16 : la laine et les cochons
       objectifs: { batiments: 18, habitants: 16, recherches: 7, stock: { lingots: 10, outils: 10 }, pieces: 150 } },
     // Étape 11 : ✍️ le bourg, et c'est de plus en plus dur ! (chaque âge demande environ 2 fois plus)
     //   Le bourg ajoute 3 nouvelles choses à penser : le PAIN (les habitants en veulent), l'ENTRETIEN
@@ -459,7 +468,7 @@ Village.CONFIG = {
     { id: "arcs", nom: "Arcs en if", emoji: "🏹", age: 1, cout: { planches: 15, viande: 10 }, duree: 60, effet: { chasser: 0.6 }, texte: "Le chasseur chasse 40 % plus vite" },
     { id: "pics", nom: "Pics de pierre", emoji: "⛏️", age: 1, cout: { planches: 20, pierres: 15 }, duree: 75, effet: { tailler: 0.6, miner: 0.75 }, texte: "Le carrier et le mineur vont plus vite" },
     { id: "brouettes", nom: "Brouettes", emoji: "🛒", age: 1, cout: { planches: 30, pierres: 10 }, duree: 90, effet: { porteurs: 1.3, brouette: true }, texte: "Les porteurs vont 30 % plus vite (et poussent une brouette pour le lourd)" },
-    { id: "paves", nom: "Routes pavées", emoji: "🧱", age: 1, cout: { pierres: 30, charbon: 5 }, duree: 90, effet: { routePierre: true }, texte: "Débloque la route en pierre (× 1,6 plus rapide)" },
+    { id: "paves", nom: "Routes pavées", emoji: "🧱", age: 1, cout: { pierres: 30, charbon: 5 }, duree: 90, effet: { routePierre: true }, texte: "Toutes les routes deviennent pavées (× 1,6 plus rapide)" }, // étape 17 : ✍️ automatiquement
     { id: "fumoir", nom: "Le fumoir", emoji: "🔥", age: 1, cout: { planches: 20, charbon: 10 }, duree: 90, effet: { repas: 1.5 }, texte: "La nourriture dure plus longtemps : un repas toutes les 3 min 45" },
     { id: "prospection", nom: "Prospection", emoji: "🔍", age: 1, cout: { planches: 20, charbon: 10 }, duree: 90, effet: { filons: true }, texte: "Le géologue peut aussi trouver des filons de charbon" },
     // Étape 8 : les recherches du village
