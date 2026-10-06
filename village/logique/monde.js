@@ -94,6 +94,7 @@ Village.Monde = (function () {
     // Étape 13 : les villageois sans travail
     if (partie && partie.villageois) for (const [x, y, faim] of partie.villageois) Village.Villageois.creer(monde, x, y, faim);
     else if (!partie) Village.Villageois.peupler(monde);
+    if (partie) Village.Batiments.ranger(monde); // étape 23 : de la place pour les champs et les enclos
     if (partie && Village.Recherches.a(monde, "routePierre")) Village.Routes.paver(monde, true); // étape 17 : une partie qui avait déjà « Routes pavées »
     Village.Routes.recalculerReseau(monde);
     monde.saison = Village.Saisons.lire(monde.horloge);

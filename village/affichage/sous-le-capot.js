@@ -69,6 +69,7 @@ Village.SousLeCapot = (function () {
     "logement-evolue": (d) => "⬆️ " + d.avant + " n° " + d.numero + " devient « " + d.apres + " » (" + d.lits + " lits) : des " + d.emoji + " " + d.classe.toLowerCase() + " s'installent · coût " + cout(d.cout), // étape 18
     "logement-attend": (d) => "⏳ " + d.nom + " n° " + d.numero + " pourrait évoluer, mais il manque " + d.manque,
     impots: (d) => "🪙 Impôts : +" + d.total + " pièces (" + d.artisans + " artisans × 1 + " + d.bourgeois + " bourgeois × 3)",
+    "batiments-ranges": (d) => "🧹 " + d.nombre + " bâtiment(s) déplacé(s) pour avoir la place de leurs champs ou de leurs enclos (avec une route)", // étape 23
     "routes-pavees": (d) => "🧱 Routes pavées : " + d.cases + " cases de chemin deviennent des routes en pierre (× 1,6 plus rapide)", // étape 17
     habits: (d) => "👕 Habits neufs : " + d.pris + " habitant(s) sur " + d.besoin + " (il reste " + d.reste + " vêtements)", // étape 16
     "vaches-gueries": (d) => "💚 " + d.nom + " : " + d.animaux + " sont guéris (" + d.parQui + ", après " + d.duree + " s)",

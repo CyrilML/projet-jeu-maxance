@@ -215,6 +215,12 @@ Village.Batisses = (function () {
       }
       ctx.stroke();
     }
+    if (m.socle) { // étape 23 : le socle en pierre d'un bâtiment amélioré
+      const hs = Math.min(5, h * 0.22);
+      forme(ctx, [G, B, up(B, hs), up(G, hs)], "#a39d92");
+      forme(ctx, [B, D, up(D, hs), up(B, hs)], "#857f75");
+      if (fin) { ctx.strokeStyle = "rgba(40, 30, 20, .35)"; ctx.lineWidth = 0.7; ctx.beginPath(); for (let k = 1; k < 6; k++) { const A = entre(G, B, k / 6), Q = entre(B, D, k / 6); ctx.moveTo(A[0], A[1]); ctx.lineTo(A[0], A[1] - hs); ctx.moveTo(Q[0], Q[1]); ctx.lineTo(Q[0], Q[1] - hs); } ctx.stroke(); }
+    }
     if (!avecToit) {
       // Pas de toit (chantier) : on voit le haut des murs.
       forme(ctx, [up(G, h), up(B, h), up(D, h), up(H, h)], "rgba(120, 85, 50, .6)");
@@ -256,6 +262,13 @@ Village.Batisses = (function () {
     // Un trait clair sur le faîte
     ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(F1[0] + 2, F1[1] + 2); ctx.lineTo(F2[0] - 2, F2[1] + 2); ctx.stroke();
+    if (m.girouette) { // étape 23 : la girouette dorée d'un bâtiment au niveau 2, qui tourne au vent
+      const g = entre(F1, F2, 0.5), an = Math.sin(vue.t * 0.7) * 0.9;
+      ctx.strokeStyle = "#5a4630"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(g[0], g[1]); ctx.lineTo(g[0], g[1] - 12); ctx.stroke();
+      ctx.save(); ctx.translate(g[0], g[1] - 11); ctx.scale(Math.cos(an), 1);
+      forme(ctx, [[-6, 0], [4, -1.6], [6, 0], [4, 1.6]], "#e8b830"); ctx.restore();
+      rond(ctx, g[0], g[1] - 12, 1.3, "#e8b830");
+    }
   }
 
   // Étape 5 : un beau rondin, avec son écorce et les cernes du bois au bout, un peu penché.
@@ -696,13 +709,25 @@ Village.Batisses = (function () {
   function dessinerBatiment(ctx, b, x, y, t) {
     const m = MODELES[b.type];
     const souleve = Village.monde && Village.monde.projet && Village.monde.projet.deplacer === b; // étape 12
-    const s = echelleDe(b.type);
+    const s = echelleDe(b.type) * (1 + 0.07 * niveauDe(b)); // étape 23 : un bâtiment amélioré est un peu plus grand
     if (souleve) { ctx.save(); ctx.globalAlpha = 0.4; aLaLoupe(ctx, x, y - 6, s, () => dessinerBatimentDedans(ctx, b, x, y - 6, t, m)); ctx.restore(); return; }
     // Étape 14 : ✍️ le bâtiment est dessiné plus GROS (à la loupe) ; ses ouvriers restent à la taille des autres
     aLaLoupe(ctx, x, y, s, () => dessinerBatimentDedans(ctx, b, x, y, t, m));
     if (b.etat === "pret") ouvrierDevant(ctx, b, x, y, t, s);
   }
+  // Étape 23 : ✍️ « le bâtiment change en fonction de son niveau, pour qu'on repère ceux qu'on a oublié d'améliorer ».
+  //   niveau 1 (1 amélioration) : un socle en pierre, des volets et une lanterne ;
+  //   niveau 2 (2 améliorations) : en plus, des murs plus hauts, un plus beau toit et une girouette.
+  // (Pour l'entrepôt, c'est son agrandissement qui compte.)
+  const niveauDe = (b) => Math.min(2, b.type === "entrepot" ? (b.niveau || 1) - 1 : b.ameliorations || 0);
+  function modeleNiveau(m, n) {
+    if (!n) return m;
+    const v = Object.assign({}, m, { socle: true, lanterne: true, volets: m.volets || "#3f7a4a" });
+    if (n >= 2) Object.assign(v, { girouette: true, h: m.h * 1.12, toitSorte: m.toitSorte === "paille" ? "bardeaux" : m.toitSorte === "bardeaux" ? "tuiles" : m.toitSorte, cheminee: m.cheminee || 0.7 });
+    return v;
+  }
   function dessinerBatimentDedans(ctx, b, x, y, t, m) {
+    if (b.etat === "pret") m = modeleNiveau(m, niveauDe(b));
     ombre(ctx, x, y, m.a);
     if (b.etat === "chantier") return chantier(ctx, b, x, y, m, t);
     if (b.type === "entrepot") { cour(ctx, x, y, (Village.monde && Village.monde.stock) || {}); silo(ctx, x - 24, y - 12, Village.monde ? Village.monde.reserve.niveau : 1); } // étape 9 : la cour ; étape 11 : le silo
@@ -1004,11 +1029,9 @@ Village.Batisses = (function () {
     // Étape 18 : ✍️ « tous doivent être reconnaissables de loin ». Quand on dézoome, chaque bâtiment (sauf les
     // logements, qu'on reconnaît à leur forme) montre un REPÈRE : son emoji dans un rond, toujours de la même
     // taille à l'écran, comme les icônes d'une carte.
-    if (!vue.fin && b.etat === "pret" && !["hutte", "maison", "manoir"].includes(b.type) && Village.monde) repere(ctx, x, y - m.h - m.toit * 0.55, Village.Batiments.TYPES[b.type].emoji, 20 / (Village.monde.camera.zoom * echelleDe(b.type)));
-    // Un petit panneau avec l'emoji du métier, au-dessus de la porte
-    if (b.type !== "entrepot" && vue.fin && !["hutte", "maison", "manoir"].includes(b.type)) enseigne(ctx, x - m.a * 0.45, y - 8 - m.h * 0.2, Village.Batiments.TYPES[b.type].emoji);
-    // Étape 13 : une étoile dorée par amélioration, à côté de l'enseigne
-    for (let k = 0; k < (b.ameliorations || 0); k++) etoile(ctx, x - m.a * 0.45 + 10 + k * 7, y - 22 - m.h * 0.2);
+    // Étape 23 : ✍️ « des icônes sur chaque bâtiment, j'aime pas trop ça ». Plus de repère, plus d'enseigne, plus
+    // d'étoiles : chaque bâtiment se reconnaît à sa FORME, ses couleurs et ce qu'il y a devant lui, et son niveau se
+    // voit à son socle, son toit et sa girouette (voir modeleNiveau).
     if (travaille && b.type === "carriere") poussiere(ctx, x, y, t);
     if (!b.relie) panneauSansRoute(ctx, x, y - m.h - m.toit - 16, t);
     // Étape 4 : l'ouvrier a trop faim, ou il est parti (la cabane est vide)

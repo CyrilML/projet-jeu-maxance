@@ -427,5 +427,35 @@ Village.Batiments = (function () {
     radio.emettre("minerai-extrait", { numero: b.numero, nom: TYPES[b.type].nom, quoi: sorte, reste: k.reste[i], devant: b.sortie });
   }
 
-  return { empriseDe, casesDe, liberer, occuper, entreesDe, reparer, TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, coutPour, offert, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
+  // Étape 23 : ✍️ « sur ma partie, tu peux séparer les bâtiments pour qu'ils aient la place ». Au chargement, une ferme
+  // ou un élevage qui n'a pas toutes ses cases (ses champs, ses enclos) est DÉPLACÉ à la place libre la plus proche,
+  // et on lui fait une route jusqu'au réseau. Renvoie le nombre de bâtiments déplacés.
+  function ranger(monde) {
+    let n = 0;
+    for (const b of monde.batiments.slice()) {
+      const voulu = empriseDe(b.type);
+      if (!voulu.length || (b.emprise || []).length === voulu.length) continue;
+      liberer(monde, b);
+      let place = null;
+      for (let r = 0; r <= 12 && !place; r++) for (let dl = -r; dl <= r && !place; dl++) for (let dc = -r; dc <= r && !place; dc++) {
+        if (Math.max(Math.abs(dc), Math.abs(dl)) !== r) continue;
+        if (!raisonInterdite(monde, b.type, b.colonne + dc, b.ligne + dl)) place = [b.colonne + dc, b.ligne + dl];
+      }
+      occuper(monde, b);
+      if (!place) continue;
+      if (place[0] === b.colonne && place[1] === b.ligne) { liberer(monde, b); b.emprise = voulu.slice(); occuper(monde, b); }
+      else if (!deplacer(monde, b, place[0], place[1])) continue;
+      n++;
+      if (!b.relie) { // une route jusqu'au réseau (gratuite : c'est nous qui avons déplacé le bâtiment)
+        const route = Village.Placement.routeProposee(monde, b.colonne, b.ligne, b, b.type) || [];
+        const sorte = Village.Recherches.a(monde, "routePierre") ? 2 : 1;
+        for (const q of route) monde.route[q.ligne * monde.carte.colonnes + q.colonne] = sorte;
+        if (route.length) { monde.changements++; Village.Routes.recalculerReseau(monde); }
+      }
+    }
+    if (n) radio.emettre("batiments-ranges", { nombre: n });
+    return n;
+  }
+
+  return { ranger, empriseDe, casesDe, liberer, occuper, entreesDe, reparer, TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, coutPour, offert, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
 })();

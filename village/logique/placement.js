@@ -140,5 +140,5 @@ Village.Placement = (function () {
   }
   function annulerRoute(monde) { monde.trace = null; }
 
-  return { commencer, commencerDeplacement, placer, valider, annuler, debutGlisse, ajouterCase, finGlisse, toucher, apercu, validerRoute, annulerRoute };
+  return { routeProposee, commencer, commencerDeplacement, placer, valider, annuler, debutGlisse, ajouterCase, finGlisse, toucher, apercu, validerRoute, annulerRoute };
 })();

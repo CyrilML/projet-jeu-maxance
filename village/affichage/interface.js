@@ -46,6 +46,7 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("nouvel-age", (d) => gagner(d.emoji + " " + d.nom + " !", [["gemmes", d.gemmes]]));
   Village.Evenements.ecouter("logement-evolue", (d) => afficher("⬆️ " + d.avant + " n° " + d.numero + " devient « " + d.apres + " » : des " + d.emoji + " " + d.classe.toLowerCase() + " s'installent !")); // étape 18
   Village.Evenements.ecouter("impots", (d) => afficher("🪙 Impôts : +" + d.total + " pièces (artisans et bourgeois)"));
+  Village.Evenements.ecouter("batiments-ranges", (d) => afficher("🧹 " + d.nombre + " bâtiment(s) déplacé(s) pour la place de leurs champs et enclos")); // étape 23
   Village.Evenements.ecouter("routes-pavees", (d) => afficher("🧱 Routes pavées : tes " + d.cases + " cases de chemin sont maintenant pavées (× 1,6 plus vite) !")); // étape 17
   Village.Evenements.ecouter("mission-ratee", (d) => afficher("⌛ Trop tard pour " + d.qui + "… Une autre mission viendra !"));
   Village.Evenements.ecouter("mission-pas-assez", () => afficher("🚫 Il manque encore des ressources pour livrer"));

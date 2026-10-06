@@ -146,6 +146,7 @@
       <a href="#etape20">Étape 20</a>
       <a href="#etape21">Étape 21</a>
       <a href="#etape22">Étape 22</a>
+      <a href="#etape23">Étape 23</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1516,6 +1517,44 @@ maintenant : min(3,4 ; 2,2 × 1,6 × 1,3 × 1,25) = min(3,4 ; 5,7) = 3,4 cases p
       <details class="question"><summary>Pourquoi une seule étiquette 🍞 au lieu d'une bulle par maison ?</summary><p>Le pain manque à TOUT le village : le dire une fois suffit, et l'écran reste lisible.</p></details>
     </section>
 
+    <section id="etape23">
+      <h2>🏚️➡️🏛️ Étape 23 : le niveau se voit, sans icônes <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Plus d'icônes sur les bâtiments : on les reconnaît à leur forme. Un bâtiment amélioré change d'aspect : socle en pierre, puis toit plus beau, murs plus hauts et girouette. Et dans ta partie, les fermes et les élevages trop serrés sont déplacés tout seuls pour avoir leurs champs et leurs enclos. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/24-niveaux-visibles.md</code>.</p>
+          <ul>
+            <li>✍️ Dans ma partie : déplace les bâtiments pour qu'ils aient leur place.</li>
+            <li>✍️ Pas d'icônes sur les bâtiments : les distinguer d'un coup d'œil.</li>
+            <li>✍️ Le bâtiment change avec son niveau, pour voir ceux qu'on a oublié d'améliorer.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ En ouvrant ta partie : « 🧹 N bâtiment(s) déplacé(s) » et des champs autour des fermes.</li>
+            <li>☐ Plus de ronds, d'enseignes ni d'étoiles sur les bâtiments.</li>
+            <li>☐ Améliore un bûcheron : socle en pierre et lanterne. Encore une fois : plus haut, girouette.</li>
+            <li>Vérifie « version 24 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🏗️ Le niveau dans le dessin</h3>
+      <pre style="white-space: pre-wrap">niveau 1 (rien)   : le bâtiment de base
+niveau 2 (★)      : + un socle en pierre, des volets, une lanterne · un peu plus grand
+niveau 3 (★★)     : + des murs plus hauts, un plus beau toit (paille → bardeaux → tuiles), une girouette dorée</pre>
+      <p>Le même dessin sert pour tous les bâtiments : on fabrique une <strong>copie du modèle</strong> avec quelques réglages changés (<code>modeleNiveau</code>). Un bâtiment sans socle, c'est un bâtiment que tu n'as pas encore amélioré !</p>
+
+      <h3>🧹 Ranger un village</h3>
+      <p>Au chargement, le jeu cherche les fermes et les élevages qui n'ont pas toutes leurs cases. Pour chacun, il cherche la place libre la plus proche, en tournant autour en carrés de plus en plus grands, puis il le déplace et lui fait une route.</p>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un bâtiment a un socle en pierre mais pas de girouette. À quel niveau est-il ?</summary><p>Niveau 2 : il a une amélioration, il lui en reste une.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1653,8 +1692,14 @@ maintenant : min(3,4 ; 2,2 × 1,6 × 1,3 × 1,25) = min(3,4 ; 5,7) = 3,4 cases p
           <p>Des bâtiments sur plusieurs cases (champs, enclos), plus gros, des alertes uniques, un panneau en 3 parties, des attelages qui suivent la route.</p>
           <p class="apprend"><b>Tu apprends :</b> un bâtiment sur plusieurs cases, suivre une direction avec un vecteur. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">23</div>
+          <h4>🏛️ Le niveau se voit, sans icônes <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Plus d'icônes ; le socle, le toit et la girouette montrent le niveau ; les fermes et élevages serrés rangés tout seuls.</p>
+          <p class="apprend"><b>Tu apprends :</b> une copie de modèle, chercher une place en spirale. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">24</div>
           <h4>🏙️ La ville : monuments, fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -1847,6 +1892,14 @@ maintenant : min(3,4 ; 2,2 × 1,6 × 1,3 × 1,25) = min(3,4 ; 5,7) = 3,4 cases p
         <textarea class="journal" id="village-appris-22" data-cle="village-appris-22" placeholder="Ex. : J'ai appris qu'un bâtiment peut prendre plusieurs cases…"></textarea>
         <label for="village-idees-22"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-22" data-cle="village-idees-22" placeholder="Ex. : Des vergers avec des pommiers…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 23 · le niveau se voit, sans icônes <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le dessin qui change avec le niveau (<code>modeleNiveau</code>, le socle, la girouette), plus de repères ni d'enseignes ni d'étoiles, le rangement des fermes et élevages au chargement (<code>Batiments.ranger</code>).</p>
+        <label for="village-appris-23"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-23" data-cle="village-appris-23" placeholder="Ex. : J'ai appris à copier un modèle et à changer quelques réglages…"></textarea>
+        <label for="village-idees-23"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-23" data-cle="village-idees-23" placeholder="Ex. : Un 4e niveau avec un drapeau…"></textarea>
       </div>
     </section>
   </main>
