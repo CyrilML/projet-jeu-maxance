@@ -483,7 +483,9 @@ Village.Interface = (function () {
     // Étape 17 : ✍️ la barre prenait trop de place. Elle est plus petite, presque transparente, et ne montre
     // que les ressources de base et celles qu'on a (le marché et les statistiques montrent tout).
     const BASE = ["troncs", "planches", "pierres", "poissons", "viande"];
-    const ressources = Object.keys(C.ressources).filter((r) => BASE.includes(r) || s[r] > 0).map((r) => [r, s[r]]);
+    // Étape 20 : ✍️ on montre ce qui est DISPONIBLE : ce qui est déjà promis à un chantier ou à un atelier n'est plus compté
+    // (avant, on voyait le stock, et on ne comprenait pas pourquoi on ne pouvait pas construire).
+    const ressources = Object.keys(C.ressources).filter((r) => BASE.includes(r) || s[r] > 0).map((r) => [r, Math.max(0, Village.Porteurs.disponible(monde, r))]);
     if (monde.age >= 2 || monde.pieces > 0) ressources.push(["pieces", monde.pieces]);
     // Étape 8 : s'il y a trop de ressources pour la largeur, la bulle passe sur 2 lignes.
     const pas = petit ? 38 : 50, haut = petit ? 17 : 20, parLigne = Math.max(3, Math.min(ressources.length, Math.floor((W - (W >= 520 ? 290 : 70) - 20) / pas))) // étape 18 : sans passer sous la mini-carte;
@@ -619,14 +621,21 @@ Village.Interface = (function () {
     } else if (monde.survol) aide = decrire(monde, monde.survol);
     else if (monde.choisie && !monde.selection) aide = decrire(monde, monde.choisie); // au doigt : la case touchée
     if (aide) {
-      // Le texte doit tenir dans l'écran (avec la place du ✖) : sinon, on l'écrit plus petit.
-      const place = W - 20 - (monde.construction || monde.outil ? 38 : 0);
+      // Le texte doit tenir dans l'écran (avec la place du ✖) : sinon, on l'écrit un peu plus petit.
+      // Étape 20 : ✍️ les messages dépassaient du cadre. S'il est encore trop long : sur 2 lignes, puis coupé avec « … ».
+      const place = Math.min(W - 20, 640) - (monde.construction || monde.outil ? 38 : 0);
       let taille = petit ? 12 : 14;
-      ctx.font = "bold " + taille + "px " + POLICE;
-      while (taille > 8 && ctx.measureText(aide).width + 24 > place) { taille -= 0.5; ctx.font = "bold " + taille + "px " + POLICE; }
-      const l = Math.min(place, ctx.measureText(aide).width + 24), y = y0 - (petit ? 36 : 42);
-      bulle(ctx, (W - l) / 2 - (monde.construction || monde.outil ? 19 : 0), y, l, petit ? 28 : 32);
-      texte(ctx, aide, W / 2 - (monde.construction || monde.outil ? 19 : 0), y + (petit ? 14 : 16), taille, "#3b2614", true, "center");
+      const mini = petit ? 10 : 11, largeur = (t) => { ctx.font = "bold " + taille + "px " + POLICE; return ctx.measureText(t).width + 24; };
+      while (taille > mini && largeur(aide) > place) taille -= 0.5;
+      let lignes = [aide];
+      if (largeur(aide) > place) {
+        const mots = aide.split(" "); lignes = [""];
+        for (const mot of mots) { const essai = lignes[lignes.length - 1] ? lignes[lignes.length - 1] + " " + mot : mot; if (largeur(essai) > place && lignes[lignes.length - 1]) lignes.push(mot); else lignes[lignes.length - 1] = essai; }
+        if (lignes.length > 2) { lignes = lignes.slice(0, 2); while (lignes[1].length > 1 && largeur(lignes[1] + " …") > place) lignes[1] = lignes[1].slice(0, -1); lignes[1] += " …"; }
+      }
+      const hb = (petit ? 28 : 32) + (lignes.length - 1) * (taille + 4), l = Math.min(place, Math.max(...lignes.map(largeur))), y = y0 - (petit ? 36 : 42) - (lignes.length - 1) * (taille + 4);
+      bulle(ctx, (W - l) / 2 - (monde.construction || monde.outil ? 19 : 0), y, l, hb);
+      lignes.forEach((li, k) => texte(ctx, li, W / 2 - (monde.construction || monde.outil ? 19 : 0), y + (petit ? 14 : 16) + k * (taille + 4), taille, "#3b2614", true, "center"));
       if ((monde.construction || monde.outil) && !(message && maintenant < message.jusqua)) {
         // Le petit ✖ pour annuler
         const ax = (W + l) / 2 - 19 + 6;
@@ -760,7 +769,7 @@ Village.Interface = (function () {
       lignes.push("🚚 " + actifs.length + " / " + Village.Ameliorations.placesPorteurs(monde) + " manutentionnaires (entrepôt niveau " + Village.Ameliorations.niveau(monde) + ") : " + dehors + " au travail" + (actifs.some((p) => p.affame) ? " · 🍽️ certains ont faim !" : "")); // étape 13
       lignes.push("👥 " + monde.villageois.length + " villageois sans travail · " + Village.Logement.habitants(monde) + " habitants / " + Village.Logement.capacite(monde) + " lits");
       if (monde.partis) lignes.push("😢 " + monde.partis + " habitant(s) parti(s) (trop faim)");
-      lignes.push("📋 File d'attente : " + monde.file.length + " livraison(s)");
+      lignes.push("📋 File d'attente : " + monde.file.length + " livraison(s)" + (monde.file.length > 40 ? " ⚠️ il manque des porteurs : agrandis l'entrepôt, ou construis un entrepôt 2 !" : "")); // étape 20
       const depots = monde.batiments.filter((x) => x.type === "depot").length; // étape 17
       lignes.push(depots ? "🏬 " + depots + " entrepôt(s) secondaire(s) : chacun livre son coin du village" : "🏬 Le village s'étale ? Construis un entrepôt secondaire (dès le village) !");
       lignes.push("🛏️ Logement : " + Village.Logement.habitants(monde) + " habitants / " + Village.Logement.capacite(monde) + " places"); // étape 8

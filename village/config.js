@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 20,
+  version: 21,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -258,7 +258,7 @@ Village.CONFIG = {
   // (Les porteurs, eux, dorment à l'entrepôt : ils ne comptent pas.)
   // Étape 13 : ✍️ les porteurs (manutentionnaires) et les villageois sans travail dorment aussi quelque part :
   // le campement passe à 10 places.
-  logement: { entrepot: 10, hutte: 3, maison: 6, depot: 4, manoir: 10 }, // étape 18 : la maison bourgeoise // étape 17 : 4 lits dans chaque entrepôt secondaire
+  logement: { entrepot: 11, hutte: 3, maison: 6, depot: 4, manoir: 10 }, // étape 18 : la maison bourgeoise ; étape 20 : 11 au campement (pour le 4e porteur) // étape 17 : 4 lits dans chaque entrepôt secondaire
 
   // Étape 13 : ✍️ (1B) les VILLAGEOIS. Ils arrivent au village quand il y a un lit libre et à manger,
   // se promènent près du feu, et vont travailler là où on a besoin d'eux : chaque cabane en prend un,
@@ -277,7 +277,8 @@ Village.CONFIG = {
   // Étape 13 : ✍️ (2B) l'ENTREPÔT s'agrandit pour accueillir plus de manutentionnaires (les porteurs).
   //   places = 3 + 2 × (niveau − 1) + celles achetées à la boutique ; niveau 5 au plus.
   //   prix pour passer au niveau suivant = prix × facteurPrix^(niveau − 1)
-  entrepot: { porteurs: 3, parNiveau: 2, niveauMax: 5, prix: { planches: 30, pierres: 20 }, prixPieces: 40, facteurPrix: 2 },
+  // Étape 20 : ✍️ 294 livraisons en retard chez Maxance ! 4 places au départ (3 avant), + 3 par niveau (2 avant).
+  entrepot: { porteurs: 4, parNiveau: 3, niveauMax: 5, prix: { planches: 30, pierres: 20 }, prixPieces: 40, facteurPrix: 2 },
 
   // Étape 13 : ✍️ les AMÉLIORATIONS de chaque bâtiment (2 niveaux au plus), payées tout de suite avec le stock.
   //   effet : le temps de travail de CE bâtiment est multiplié par ce nombre (0,8 = 20 % plus rapide).
@@ -372,10 +373,12 @@ Village.CONFIG = {
     pierre: 1.6, // sur une route en pierre (plus tard)
   },
   porteurs: {
-    nombre: 3, // les porteurs qui habitent l'entrepôt
-    vitesse: 2.2, // cases par seconde
+    nombre: 4, // les porteurs qui habitent l'entrepôt (étape 20 : 4)
+    partChantiers: 0.5, // étape 20 : ✍️ la moitié des porteurs au plus livre les chantiers (les autres font tourner les ateliers)
+    charge: 3, // étape 20 : objets par voyage (s'ils vont au même bâtiment) ; × 2 avec « Ânes et charrettes »
+    vitesse: 2.8, // cases par seconde (étape 20 : 2,8 ; 2,2 avant)
   },
-  sortieMax: 4, // objets qui peuvent attendre devant un bâtiment (au-delà, l'ouvrier attend)
+  sortieMax: 8, // objets qui peuvent attendre devant un bâtiment (au-delà, l'ouvrier attend) · étape 20 : ✍️ 8 (4 avant), l'idée de Maxance
   entreeMax: 2, // de chaque ingrédient en réserve dans un atelier (scierie, fonderie, forge)
 
   // Étape 4 : ✍️ une année dure 10 minutes. 4 saisons de 2 min 30 : printemps, été, automne, hiver.
@@ -501,7 +504,7 @@ Village.CONFIG = {
     { id: "scies", nom: "Scies en fer", emoji: "🪚", age: 2, cout: { outils: 4, planches: 20 }, duree: 120, effet: { scier: 0.6 }, texte: "La scierie scie 40 % plus vite" },
     { id: "outilsFer", nom: "Outils en fer", emoji: "🔨", age: 2, cout: { outils: 8 }, duree: 150, effet: { couper: 0.8, tailler: 0.8, planter: 0.8, miner: 0.8 }, texte: "Bûcheron, forestier, carrier et mineurs : 20 % plus vite" },
     { id: "commerce", nom: "Commerce", emoji: "⚖️", age: 2, cout: { planches: 30, lingots: 5 }, duree: 120, effet: { vente: 1.2 }, texte: "Le marché te paie 20 % plus cher" },
-    { id: "charrettes", nom: "Ânes et charrettes", emoji: "🫏", age: 2, cout: { planches: 40, lingots: 4, outils: 4 }, duree: 150, effet: { chargement: 3 }, texte: "Chaque porteur part avec un âne et sa charrette : 3 objets par voyage" }, // étape 9
+    { id: "charrettes", nom: "Ânes et charrettes", emoji: "🫏", age: 2, cout: { planches: 40, lingots: 4, outils: 4 }, duree: 150, effet: { chargement: 2 }, texte: "Chaque porteur part avec un âne et sa charrette : 6 objets par voyage (3 avant)" }, // étape 9 ; étape 20 : × 2
     // Étape 11 : les recherches du bourg
     { id: "meules", nom: "Meules en granit", emoji: "🪨", age: 3, cout: { pierres: 60, outils: 6 }, duree: 150, effet: { moudre: 0.7 }, texte: "Le moulin va 30 % plus vite" },
     { id: "fours", nom: "Fours en briques", emoji: "🧱", age: 3, cout: { pierres: 50, charbon: 30, outils: 4 }, duree: 150, effet: { cuire: 0.7 }, texte: "La boulangerie va 30 % plus vite" },

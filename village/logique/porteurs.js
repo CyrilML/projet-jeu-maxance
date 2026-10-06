@@ -13,6 +13,9 @@
 // Les porteurs marchent seulement sur les routes. Ils portent un seul objet à la fois.
 // Étape 9 : avec la recherche « Ânes et charrettes », un porteur part avec un âne : il prend jusqu'à
 // 3 papiers d'un coup, s'ils vont au même bâtiment, pour la même chose (« 3 planches pour la forge »).
+// Étape 20 : ✍️ « quand on construit, tous les porteurs vont au chantier et laissent tomber le reste ». Maintenant,
+// la moitié des porteurs au plus livre les chantiers : les autres continuent d'apporter et de ramener pour les ateliers.
+// Étape 20 : ✍️ trop de livraisons en retard. Même sans âne, un porteur prend 3 papiers pareils (6 avec l'âne), et il marche plus vite.
 //
 // Étape 17 : ✍️ il peut y avoir plusieurs ENTREPÔTS. Chaque porteur a sa maison (p.maison) : il part de là
 // et y revient. Chaque livraison est faite par les porteurs de l'entrepôt le plus proche du bâtiment
@@ -158,9 +161,12 @@ Village.Porteurs = (function () {
         // Étape 17 : seulement ceux de SON coin (son entrepôt est le plus proche), sauf s'ils attendent depuis longtemps.
         const maison = maisonDe(monde, p);
         if (maison && (Math.abs(p.x - maison.colonne - 0.5) > 0.01 || Math.abs(p.y - maison.ligne - 0.5) > 0.01)) { p.x = maison.colonne + 0.5; p.y = maison.ligne + 0.5; } // (si son entrepôt a bougé)
+        const auxChantiers = monde.porteurs.filter((q) => q !== p && !q.parti && q.travail && q.travail.batiment.etat === "chantier").length;
+        const chantiersPleins = auxChantiers >= Math.max(1, Math.ceil(actifs(monde).length * C.porteurs.partChantiers)); // étape 20
         for (let n = 0; n < monde.file.length; n++) {
           const papier = monde.file[n];
           const b = papier.batiment;
+          if (chantiersPleins && b.etat === "chantier") continue; // étape 20 : assez de porteurs sur les chantiers
           if (!existe(monde, b) || !b.relie || (papier.sorte === "apporter" && monde.stock[papier.quoi] < 1)) { monde.file.splice(n--, 1); annuler(papier); continue; }
           const proche = b.entrepotProche;
           if (proche && proche !== maison && monde.temps - (papier.depuis || 0) < C.depot.aide && monde.porteurs.some((q) => !q.parti && q.maison === proche)) continue; // c'est le travail des porteurs de l'autre entrepôt
@@ -173,7 +179,7 @@ Village.Porteurs = (function () {
           p.etat = "aller";
           // Étape 9 : avec une charrette, on prend aussi les papiers pareils (même bâtiment, même chose).
           p.nombre = 1;
-          const place = Math.round(Village.Recherches.bonus(monde, "chargement"));
+          const place = Math.round(C.porteurs.charge * Village.Recherches.bonus(monde, "chargement")); // étape 20 : 3 objets (6 avec la charrette)
           for (let k = 0; k < monde.file.length && p.nombre < place; k++) {
             const t = monde.file[k];
             if (t.batiment !== b || t.sorte !== papier.sorte || t.quoi !== papier.quoi) continue;

@@ -143,6 +143,7 @@
       <a href="#etape17">Étape 17</a>
       <a href="#etape18">Étape 18</a>
       <a href="#etape19">Étape 19</a>
+      <a href="#etape20">Étape 20</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1390,6 +1391,48 @@ après :  14 habitants (3 sans travail)  ·  4 repas mangés par minute · 18 ra
       <details class="question"><summary>Un pêcheur rapporte 6 poissons par minute, et chacun mange 1 repas toutes les 200 s. Combien d'habitants nourrit-il ?</summary><p>Un habitant mange 60 ÷ 200 = 0,3 repas par minute. 6 ÷ 0,3 = 20 habitants.</p></details>
     </section>
 
+    <section id="etape20">
+      <h2>🚚 Étape 20 : les livraisons qui ne traînent plus <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">294 livraisons en retard, c'était trop ! Les porteurs portent plus, marchent plus vite, ne partent plus tous au chantier, et les cabanes gardent plus de choses devant leur porte. La barre du stock montre ce qui est vraiment disponible, et les messages tiennent dans leur cadre. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/21-livraisons.md</code>.</p>
+          <ul>
+            <li>✍️ 294 livraisons en retard : ça ralentit trop le jeu.</li>
+            <li>✍️ Plus de place devant les cabanes, pour ne pas arrêter la production.</li>
+            <li>✍️ Le stock affiché ne baisse que quand le porteur prend la ressource.</li>
+            <li>✍️ Quand on construit, tous les porteurs vont au chantier.</li>
+            <li>✍️ Les messages dépassent du cadre.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Touche l'entrepôt : la file d'attente reste petite.</li>
+            <li>☐ Pose un chantier : le stock en haut baisse tout de suite.</li>
+            <li>☐ Pendant un chantier, les ateliers continuent d'être livrés.</li>
+            <li>☐ Devant une cabane, jusqu'à 8 objets attendent.</li>
+            <li>☐ Les longs messages passent sur 2 lignes.</li>
+            <li>Vérifie « version 21 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>📏 Le goulot d'étranglement</h3>
+      <p>Une file d'attente qui grandit, c'est un <strong>goulot d'étranglement</strong> : il arrive plus de travail que ce qu'on peut faire. Pour le faire sauter, il y a 3 façons : plus de porteurs (4 au départ, + 3 par niveau d'entrepôt), des voyages plus rapides (2,8 cases par seconde), et plus d'objets par voyage (3, ou 6 avec la charrette). L'expérience, sur un village de 26 bâtiments posés d'un coup :</p>
+      <pre style="white-space: pre-wrap">avant : 8 minutes pour finir les chantiers · file de 197 → 42
+après : 4 minutes pour finir les chantiers · file de 167 → 23, et les ateliers continuent pendant ce temps</pre>
+
+      <h3>🔒 Disponible = stock − promis</h3>
+      <p>Quand tu poses un chantier, ses matériaux restent dans l'entrepôt jusqu'à ce qu'un porteur les emporte, mais ils sont <strong>promis</strong>. La barre du haut montre maintenant ce qui est <strong>disponible</strong> : le stock moins ce qui est promis. Les statistiques 📊 montrent toujours le vrai stock.</p>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>30 planches dans l'entrepôt, un chantier en attend 20. Que montre la barre ?</summary><p>30 − 20 = 10 planches disponibles.</p></details>
+      <details class="question"><summary>Tu as 6 porteurs. Combien au plus vont aux chantiers ?</summary><p>La moitié : 3. Les 3 autres continuent pour les ateliers.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1509,8 +1552,14 @@ après :  14 habitants (3 sans travail)  ·  4 repas mangés par minute · 18 ra
           <p>Des villageois seulement s'il y a du travail, des repas moins souvent, le bilan de la nourriture dans les statistiques, l'entrepôt 2 dès le hameau.</p>
           <p class="apprend"><b>Tu apprends :</b> mesurer avant de corriger. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">20</div>
+          <h4>🚚 Les livraisons qui ne traînent plus <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Plus de porteurs, plus rapides, qui portent plus ; la moitié au plus aux chantiers ; 8 places devant les cabanes ; le stock disponible ; des messages qui tiennent.</p>
+          <p class="apprend"><b>Tu apprends :</b> le goulot d'étranglement, disponible = stock − promis. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">21</div>
           <h4>🏙️ La ville : monuments, fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -1679,6 +1728,14 @@ après :  14 habitants (3 sans travail)  ·  4 repas mangés par minute · 18 ra
         <textarea class="journal" id="village-appris-19" data-cle="village-appris-19" placeholder="Ex. : J'ai appris qu'il faut mesurer avant de corriger…"></textarea>
         <label for="village-idees-19"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-19" data-cle="village-idees-19" placeholder="Ex. : Un grenier pour la nourriture…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 20 · les livraisons qui ne traînent plus <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> 3 objets par voyage, des porteurs plus rapides, 4 places de porteur au départ et 3 par niveau, la moitié des porteurs au plus aux chantiers (<code>logique/porteurs.js</code>), 8 places devant chaque cabane, la barre du stock qui montre le disponible, les messages sur 2 lignes, 11 lits au campement.</p>
+        <label for="village-appris-20"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-20" data-cle="village-appris-20" placeholder="Ex. : J'ai appris ce qu'est un goulot d'étranglement…"></textarea>
+        <label for="village-idees-20"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-20" data-cle="village-idees-20" placeholder="Ex. : Des porteurs à cheval…"></textarea>
       </div>
     </section>
   </main>
