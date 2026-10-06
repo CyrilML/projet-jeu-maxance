@@ -33,7 +33,7 @@ Village.Boutique = (function () {
     else if (id === "express") {
       // Tous les matériaux arrivent d'un coup, et le chantier se termine au prochain pas.
       const b = monde.selection;
-      b.livre = Object.assign({}, Village.Batiments.cout(b.type));
+      b.livre = Object.assign({}, b.prix);
       b.attendu = {};
       b.enFile = {};
       monde.file = monde.file.filter((t) => t.batiment !== b);

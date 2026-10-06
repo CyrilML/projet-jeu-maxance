@@ -103,11 +103,15 @@
       recherche: null, mission: null, achat: null, // étape 7
       marche: null, // étape 8 : { sens: "vendre" ou "acheter", quoi: "planches" }
       reserve: null, pub: null, absenceVue: false, // étape 11
+      valider: E.consommer("valider"), annulerProjet: false, // étape 12 : ✅ et ❌
       annuler: false,
       allerA: null,
       souris,
     };
     for (const type of Village.Batiments.A_CONSTRUIRE) if (E.consommer(type)) i.construire = type;
+    // Étape 12 : un appui qui commence sur un bouton ne doit pas attraper la carte
+    if (souris && souris.debutAppui && Village.Interface.zoneSous(souris.debutAppui.x, souris.debutAppui.y)) i.souris = souris = Object.assign({}, souris, { debutAppui: null });
+    if (souris && souris.appuiLong && Village.Interface.zoneSous(souris.appuiLong.x, souris.appuiLong.y)) i.souris = souris = Object.assign({}, souris, { appuiLong: null });
     if (souris && souris.clic) {
       const z = Village.Interface.zoneSous(souris.clic.x, souris.clic.y);
       if (z) {
@@ -122,6 +126,8 @@
         else if (z.action === "reserve") i.reserve = z.valeur; // étape 11
         else if (z.action === "pub") i.pub = z.valeur;
         else if (z.action === "absenceVue") i.absenceVue = true;
+        else if (z.action === "valider") i.valider = true; // étape 12
+        else if (z.action === "annulerProjet") i.annulerProjet = true;
         else if (z.action === "construire") { i.construire = z.valeur; Village.Interface.fermerMenu(); }
         else if (z.action === "outil") { i.outil = z.valeur; Village.Interface.fermerMenu(); }
         else if (z.action === "annuler" || z.action === "fermer") i.annuler = true;
@@ -148,7 +154,7 @@
     // Échap : d'abord annuler ce qu'on est en train de faire ; s'il n'y a rien à annuler, pause.
     let annuler = false;
     if (E.consommer("annuler")) {
-      if (monde.construction || monde.selection || monde.outil) annuler = true;
+      if (monde.construction || monde.selection || monde.outil || monde.projet) annuler = true;
       else options.pause = !options.pause;
     }
     if (E.consommer("nouvelleCarte")) {
@@ -187,7 +193,8 @@
       intentions = Object.assign({}, intentions, {
         zoom: 0, village: false, construire: null, outil: null, annuler: false, allerA: null, recherche: null, mission: null, achat: null,
         marche: null, reserve: null, pub: null, absenceVue: false, // étape 11 : sinon, une vente se faisait 2 fois !
-        souris: Object.assign({}, intentions.souris, { glisseX: 0, glisseY: 0, molette: 0, pince: 1, centrePince: null, clic: null }),
+        valider: false, annulerProjet: false,
+        souris: Object.assign({}, intentions.souris, { glisseX: 0, glisseY: 0, molette: 0, pince: 1, centrePince: null, clic: null, debutAppui: null, leve: null, appuiLong: null }),
       });
       pas++;
     };

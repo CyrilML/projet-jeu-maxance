@@ -264,13 +264,6 @@ Village.Peintre = (function () {
       }
     }
 
-    // Le fantôme du bâtiment qu'on veut poser, sous la souris
-    if (monde.construction && monde.survol) {
-      const k = monde.survol, p = milieu(k.colonne, k.ligne);
-      const possible = !Village.Batiments.raisonInterdite(monde, monde.construction, k.colonne, k.ligne) && Village.Batiments.assezPour(monde, monde.construction);
-      Village.Batisses.dessinerFantome(ctx, monde.construction, p.x, p.y, possible, t, L, Hc);
-    }
-
     // Les outils route et démolir
     if (monde.outil) dessinerOutil(monde, t, z);
 
@@ -306,6 +299,21 @@ Village.Peintre = (function () {
 
     // 4. Les nuages
     dessinerNuages(carte, t, z);
+    // (Étape 12 : l'aperçu est dessiné APRÈS les nuages et la nuit, pour qu'on le voie toujours bien)
+    // Étape 12 : l'APERÇU du bâtiment qu'on pose ou qu'on déplace, et la route proposée jusqu'à sa porte
+    if (monde.projet) {
+      const pr = monde.projet;
+      for (const q of pr.route || []) apercuCase(q, true, t);
+      const p = milieu(pr.colonne, pr.ligne);
+      Village.Batisses.dessinerFantome(ctx, pr.type, p.x, p.y, pr.possible, t, L, Hc);
+    }
+    // Étape 12 : l'aperçu de la route qu'on trace
+    if (monde.trace) {
+      const ap = Village.Placement.apercu(monde);
+      if (ap) { for (const q of ap.cases) apercuCase(q, true, t); for (const q of ap.mauvaises) apercuCase(q, false, t); }
+      if (monde.trace.depart) fanion(milieu(monde.trace.depart.colonne, monde.trace.depart.ligne), t);
+    }
+
 
     if (options.rayonsX) Village.RayonsX.dessinerDansLeMonde(ctx, monde, { cMin, cMax, lMin, lMax });
 
@@ -374,42 +382,65 @@ Village.Peintre = (function () {
   // Astuce : on dessine dans un monde « pas écrasé » (y × 2), puis on écrase tout de moitié en hauteur :
   // les bandes ont l'air couchées sur le sol, en vue de biais.
   const VERS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  // Étape 12 : ✍️ des routes plus jolies, sans quadrillage.
+  //   - une route se relie seulement aux routes qui la continuent (un trait d'un milieu de case à l'autre) ;
+  //   - elle ne rentre dans un bâtiment que par sa PORTE (avant, elle rentrait par tous les côtés : ça faisait
+  //     des quadrillages autour des maisons) ;
+  //   - quand 4 cases de route font un carré, on remplit le milieu : ça fait une petite PLACE au lieu d'un trou ;
+  //   - les bouts et les virages sont arrondis, et le chemin de terre a 2 ornières (les traces des roues).
   function dessinerRoutes(monde, cMin, cMax, lMin, lMax, vue, t) {
-    // Étape 7 : deux sortes de routes. Le chemin de terre (1) est beige ; la route en pierre (2) est grise,
-    // avec des pavés. On range leurs morceaux dans deux listes.
-    const k = monde.carte, terre = [], pierre = [];
-    for (let l = lMin; l <= lMax; l++) for (let c = cMin; c <= cMax; c++) {
-      const i = l * k.colonnes + c;
-      if (!monde.route[i]) continue;
+    const k = monde.carte, R = monde.route, terre = { traits: [], places: [], points: [] }, pierre = { traits: [], places: [], points: [] };
+    const route = (c, l) => c >= 0 && l >= 0 && c < k.colonnes && l < k.lignes && R[l * k.colonnes + c] > 0;
+    const sorte = (c, l) => (R[l * k.colonnes + c] === 2 ? pierre : terre);
+    for (let l = lMin - 1; l <= lMax; l++) for (let c = cMin - 1; c <= cMax; c++) {
+      if (!route(c, l)) continue;
       const p = milieu(c, l);
-      if (p.x < vue.x0 || p.x > vue.x1 || p.y < vue.y0 || p.y > vue.y1) continue;
-      const segments = monde.route[i] === 2 ? pierre : terre;
-      segments.push([p.x, p.y, p.x, p.y]);
-      for (const [dc, dl] of VERS) {
-        const nc = c + dc, nl = l + dl;
-        if (nc < 0 || nl < 0 || nc >= k.colonnes || nl >= k.lignes) continue;
-        const j = nl * k.colonnes + nc;
-        if (!monde.route[j] && !monde.occupees.has(j)) continue;
-        const q = milieu(nc, nl);
-        segments.push([p.x, p.y, (p.x + q.x) / 2, (p.y + q.y) / 2]);
+      if (p.x < vue.x0 - L || p.x > vue.x1 + L || p.y < vue.y0 - Hc || p.y > vue.y1 + Hc) continue;
+      let liens = 0;
+      for (const [dc, dl] of [[1, 0], [0, 1]]) { // chaque lien une seule fois (vers la droite et vers le bas de la grille)
+        if (!route(c + dc, l + dl)) continue;
+        const q = milieu(c + dc, l + dl);
+        // Un lien entre une terre et une pierre est dessiné en terre
+        (R[l * k.colonnes + c] === 2 && R[(l + dl) * k.colonnes + c + dc] === 2 ? pierre : terre).traits.push([p.x, p.y, q.x, q.y]);
+        liens++;
+      }
+      if (route(c - 1, l) || route(c, l - 1)) liens++;
+      if (!liens) sorte(c, l).points.push([p.x, p.y]);
+      // La petite place : 4 routes en carré
+      if (route(c + 1, l) && route(c, l + 1) && route(c + 1, l + 1)) {
+        sorte(c, l).places.push([p, milieu(c + 1, l), milieu(c + 1, l + 1), milieu(c, l + 1)]);
       }
     }
-    if (!terre.length && !pierre.length) return;
+    // Les bâtiments : un seul lien, par la porte (ou, si la porte n'a pas de route, par un autre côté)
+    for (const b of monde.batiments) {
+      if (b.colonne < cMin - 1 || b.colonne > cMax + 1 || b.ligne < lMin - 1 || b.ligne > lMax + 1) continue;
+      for (const [dc, dl] of [[0, 1], [-1, 0], [1, 0], [0, -1]]) {
+        if (!route(b.colonne + dc, b.ligne + dl)) continue;
+        const p = milieu(b.colonne + dc, b.ligne + dl), q = milieu(b.colonne, b.ligne);
+        sorte(b.colonne + dc, b.ligne + dl).traits.push([p.x, p.y, (p.x + q.x) / 2, (p.y + q.y) / 2]);
+        break;
+      }
+    }
+    if (!terre.traits.length && !terre.points.length && !pierre.traits.length && !pierre.points.length) return;
     ctx.save();
     ctx.scale(1, 0.5);
-    ctx.lineCap = "round";
-    const passe = (segments, largeur, couleur, tirets) => {
-      if (!segments.length) return;
-      ctx.lineWidth = largeur; ctx.strokeStyle = couleur;
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    const passe = (g, largeur, couleur, tirets) => {
+      ctx.lineWidth = largeur; ctx.strokeStyle = couleur; ctx.fillStyle = couleur;
       if (tirets) ctx.setLineDash(tirets);
       ctx.beginPath();
-      for (const [x1, y1, x2, y2] of segments) { ctx.moveTo(x1, y1 * 2); ctx.lineTo(x2 + 0.01, y2 * 2); }
+      for (const [x1, y1, x2, y2] of g.traits) { ctx.moveTo(x1, y1 * 2); ctx.lineTo(x2 + 0.01, y2 * 2); }
+      for (const [x, y] of g.points) { ctx.moveTo(x, y * 2); ctx.lineTo(x + 0.01, y * 2); }
       ctx.stroke();
       ctx.setLineDash([]);
+      if (!tirets) for (const pl of g.places) { // la petite place : le losange entre les 4 milieux
+        ctx.beginPath(); pl.forEach((m, n) => (n ? ctx.lineTo(m.x, m.y * 2) : ctx.moveTo(m.x, m.y * 2))); ctx.closePath(); ctx.fill(); ctx.stroke();
+      }
     };
     passe(terre, 26, "#9b7440");
-    passe(terre, 20, "#e2c38c");
-    passe(terre, 6, "rgba(255, 245, 220, .35)");
+    passe(terre, 21, "#e2c38c");
+    if (Village.Batisses.vue.fin) { passe(terre, 11, "rgba(160, 120, 70, .35)"); passe(terre, 6, "#e2c38c"); } // les 2 ornières
+    passe(terre, 3, "rgba(255, 245, 220, .35)");
     passe(pierre, 28, "#5e6268");
     passe(pierre, 22, "#a9adb3");
     passe(pierre, 14, "#c3c6cb", [5, 4]); // les pavés
@@ -417,48 +448,31 @@ Village.Peintre = (function () {
     ctx.restore();
   }
 
-  // L'aperçu de la route qu'on trace, ou la case qu'on va démolir
+  // Étape 12 : une case de route en aperçu (transparente et qui « respire »), ou rouge si c'est impossible
+  function apercuCase(q, ok, t) {
+    const m = milieu(q.colonne, q.ligne);
+    losange(m.x, m.y, 4);
+    ctx.fillStyle = ok ? "rgba(226, 195, 140, " + (0.55 + 0.15 * Math.sin(t * 5)) + ")" : "rgba(255, 70, 60, .6)";
+    ctx.fill();
+    ctx.setLineDash([4, 3]); ctx.lineWidth = 1.5; ctx.strokeStyle = ok ? "#9b7440" : "#a02818"; ctx.stroke(); ctx.setLineDash([]);
+  }
+  // Un petit piquet avec un fanion jaune : le départ de la route
+  function fanion(m, t) {
+    ctx.strokeStyle = "#3b2614"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.x, m.y - 26); ctx.stroke();
+    ctx.fillStyle = "#ffd23f";
+    ctx.beginPath(); ctx.moveTo(m.x, m.y - 26); ctx.lineTo(m.x + 13, m.y - 22 + Math.sin(t * 6)); ctx.lineTo(m.x, m.y - 17); ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+
+  // La case qu'on va démolir (étape 12 : l'aperçu des routes est dessiné plus haut)
   function dessinerOutil(monde, t, z) {
     const k = monde.survol;
-    if (monde.outil === "route") {
-      if (monde.routeDepart && k) {
-        const tr = Village.Routes.trajet(monde, monde.routeDepart, { colonne: k.colonne, ligne: k.ligne });
-        const assez = tr && tr.cout <= Village.Porteurs.disponible(monde, "pierres");
-        for (const p of tr ? tr.cases : []) {
-          const m = milieu(p.colonne, p.ligne);
-          losange(m.x, m.y, 0);
-          ctx.fillStyle = assez ? "rgba(255, 226, 122, .75)" : "rgba(255, 80, 60, .7)";
-          ctx.fill();
-          ctx.lineWidth = 1.5 / z; ctx.strokeStyle = assez ? "#b8860b" : "#a02818"; ctx.stroke();
-        }
-        if (tr) {
-          const m = milieu(k.colonne, k.ligne);
-          // Le prix, dans une petite bulle
-          const f = 1 / Math.min(z, 1.3);
-          ctx.font = "bold " + 14 * f + "px 'Trebuchet MS', sans-serif";
-          const texte = tr.cout ? tr.cout + " 🪨" : tr.nouvelles + " case(s) · gratuit", lt = ctx.measureText(texte).width + 14 * f;
-          ctx.fillStyle = assez ? "rgba(255, 250, 235, .95)" : "rgba(255, 225, 220, .95)";
-          ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(m.x - lt / 2, m.y - 40 * f, lt, 22 * f, 8 * f); else ctx.rect(m.x - lt / 2, m.y - 40 * f, lt, 22 * f);
-          ctx.fill(); ctx.lineWidth = 2 * f; ctx.strokeStyle = "#5a4220"; ctx.stroke();
-          ctx.textAlign = "center"; ctx.textBaseline = "middle";
-          ctx.fillStyle = "#3b2614";
-          ctx.fillText(texte, m.x, m.y - 29 * f);
-          ctx.textAlign = "left";
-        }
-      }
-      if (monde.routeDepart) {
-        // Un petit piquet avec un fanion jaune : le départ de la route
-        const m = milieu(monde.routeDepart.colonne, monde.routeDepart.ligne);
-        ctx.strokeStyle = "#3b2614"; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.x, m.y - 26); ctx.stroke();
-        ctx.fillStyle = "#ffd23f";
-        ctx.beginPath(); ctx.moveTo(m.x, m.y - 26); ctx.lineTo(m.x + 13, m.y - 22 + Math.sin(t * 6)); ctx.lineTo(m.x, m.y - 17); ctx.closePath(); ctx.fill(); ctx.stroke();
-      } else if (k) {
-        const m = milieu(k.colonne, k.ligne);
-        losange(m.x, m.y, 0);
-        ctx.lineWidth = 2.5 / z; ctx.strokeStyle = "rgba(255, 226, 122, .95)"; ctx.stroke();
-      }
-    } else if (monde.outil === "demolir" && k) {
+    if ((monde.outil === "route" || monde.outil === "routePierre") && k && !(monde.trace && (monde.trace.pret || monde.trace.cases.length))) {
+      const m = milieu(k.colonne, k.ligne);
+      losange(m.x, m.y, 0);
+      ctx.lineWidth = 2.5 / z; ctx.strokeStyle = "rgba(255, 226, 122, .95)"; ctx.stroke();
+    }
+    if (monde.outil === "demolir" && k) {
       const m = milieu(k.colonne, k.ligne);
       losange(m.x, m.y, 0);
       ctx.fillStyle = "rgba(255, 70, 60, .35)"; ctx.fill();

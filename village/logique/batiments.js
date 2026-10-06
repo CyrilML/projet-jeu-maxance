@@ -46,9 +46,10 @@ Village.Batiments = (function () {
     boulangerie: { nom: "Boulangerie", court: "Boulangerie", emoji: "🍞", metier: "boulanger" },
     mineOr: { nom: "Mine d'or", court: "Mine d'or", emoji: "🟡", metier: "mineur" },
     orfevre: { nom: "Atelier de l'orfèvre", court: "Orfèvre", emoji: "💍", metier: "orfèvre" },
+    macon: { nom: "Atelier du maçon-couvreur", court: "Maçon", emoji: "🪜", metier: "maçon-couvreur" }, // étape 12
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre"];
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon"];
   // « 🪵 troncs », « 🔩 lingots »… (étape 8 : fabriqué à partir de config.js, « ressources »)
   const NOMS_RESSOURCES = {};
   for (const [r, f] of Object.entries(C.ressources)) NOMS_RESSOURCES[r] = f.emoji + " " + f.nom;
@@ -60,8 +61,16 @@ Village.Batiments = (function () {
   let prochainNumero = 1;
 
   const cout = (type) => (C.batiments[type] && C.batiments[type].cout) || {};
+  // Étape 12 : ✍️ le COUP DE POUCE. Maxance s'est retrouvé bloqué : plus de scierie, et plus de planches pour
+  // en construire une ! Pour que ça n'arrive plus : si le village n'a AUCUN bâtiment de ce type (même en
+  // chantier) et pas assez de matériaux pour le construire, il est OFFERT. Ça marche pour les bâtiments
+  // sans lesquels on ne peut plus rien faire : le bûcheron et la scierie (les planches).
+  const ESSENTIELS = ["bucheron", "scierie"];
+  const assez = (monde, prix) => Object.entries(prix).every(([r, n]) => Village.Porteurs.disponible(monde, r) >= n);
+  const offert = (monde, type) => ESSENTIELS.includes(type) && !monde.batiments.some((b) => b.type === type) && !assez(monde, cout(type));
+  const coutPour = (monde, type) => (offert(monde, type) ? {} : cout(type));
   // Assez de matériaux DISPONIBLES (pas déjà promis à un autre chantier) ?
-  const assezPour = (monde, type) => Object.entries(cout(type)).every(([r, n]) => Village.Porteurs.disponible(monde, r) >= n);
+  const assezPour = (monde, type) => assez(monde, coutPour(monde, type));
 
   // Pourquoi ne peut-on pas construire ici ? (null = on peut)
   function raisonInterdite(monde, type, c, l) {
@@ -165,6 +174,7 @@ Village.Batiments = (function () {
       enFile: {}, // les livraisons « apporter » écrites dans la file pour ce bâtiment
       livre: Object.assign({}, etat.livre), // le chantier : les matériaux arrivés
       attendu: Object.assign({}, etat.attendu), // le chantier : les matériaux réservés, pas encore partis de l'entrepôt
+      prix: Object.assign({}, etat.prix || cout(type)), // étape 12 : ce que ce chantier coûte vraiment (0 s'il est offert)
       usure: etat.usure || 0, // étape 11 : de 0 (tout neuf) à 1 (usé : 2 fois moins vite). Un 🔨 outil le répare.
     };
     const i = l * monde.carte.colonnes + c;
@@ -200,8 +210,10 @@ Village.Batiments = (function () {
       return false;
     }
     // Les matériaux sont réservés : ils restent dans l'entrepôt jusqu'à ce qu'un porteur les prenne.
-    const b = creer(monde, type, c, l, 0, { attendu: cout(type) });
-    radio.emettre("batiment-pose", { nom, numero: b.numero, colonne: c, ligne: l, cout: cout(type), duree: C.batiments[type].construction, relie: b.relie });
+    const prix = coutPour(monde, type);
+    if (offert(monde, type)) radio.emettre("coup-de-pouce", { nom, cout: cout(type) }); // étape 12
+    const b = creer(monde, type, c, l, 0, { attendu: prix, prix });
+    radio.emettre("batiment-pose", { nom, numero: b.numero, colonne: c, ligne: l, cout: prix, duree: C.batiments[type].construction, relie: b.relie });
     return true;
   }
 
@@ -227,7 +239,7 @@ Village.Batiments = (function () {
 
   // Combien de matériaux le chantier a déjà reçus, sur combien ?
   function materiaux(b) {
-    const total = Object.values(cout(b.type)).reduce((a, n) => a + n, 0);
+    const total = Object.values(b.prix).reduce((a, n) => a + n, 0); // étape 12 : le prix de CE chantier
     const arrives = Object.values(b.livre).reduce((a, n) => a + n, 0);
     return { arrives, total };
   }
@@ -306,8 +318,9 @@ Village.Batiments = (function () {
   }
 
   // Étape 11 : ✍️ l'ENTRETIEN. À partir du bourg, chaque bâtiment qui a un ouvrier s'use petit à petit
-  // (complètement en 30 minutes de jeu). Usé, son ouvrier travaille 2 fois moins vite. À 60 % d'usure,
-  // un porteur lui apporte 1 🔨 outil, et il redevient tout neuf (voir logique/porteurs.js).
+  // (complètement en 30 minutes de jeu). Usé, son ouvrier travaille 2 fois moins vite.
+  // Étape 12 : ✍️ c'est le MAÇON-COUVREUR qui répare : à 60 % d'usure, il vient avec 1 🔨 outil, monte sur
+  // le toit, et le bâtiment redevient tout neuf (voir logique/ouvriers.js). Sans maçon, rien n'est réparé !
   function user(monde, b, dt) {
     if ((monde.age || 0) < C.bourg.ageDesRegles || b.etat !== "pret" || !TYPES[b.type].metier) return;
     const avant = b.usure;
@@ -349,5 +362,5 @@ Village.Batiments = (function () {
     radio.emettre("minerai-extrait", { numero: b.numero, nom: TYPES[b.type].nom, quoi: sorte, reste: k.reste[i], devant: b.sortie });
   }
 
-  return { reparer, TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
+  return { reparer, TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, coutPour, offert, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
 })();

@@ -135,6 +135,7 @@
       <a href="#etape9">Étape 9</a>
       <a href="#etape10">Étape 10</a>
       <a href="#etape11">Étape 11</a>
+      <a href="#etape12">Étape 12</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -944,7 +945,7 @@ et jamais plus du quart de ce qui te manque pour l'âge suivant</pre>
 ⚫ charbon ──────┴─► 💍 orfèvre ─bijoux─► le marché (70 🪙 !)</pre>
       <ul>
         <li><strong>Le pain</strong> : au bourg, un repas sans pain rend mécontent (20 % moins vite).</li>
-        <li><strong>L'entretien</strong> : les bâtiments s'usent ; un 🔨 outil les répare. Usé, on va 2 fois moins vite.</li>
+        <li><strong>L'entretien</strong> : les bâtiments s'usent ; un 🔨 outil les répare (depuis l'étape 12, c'est le maçon-couvreur qui l'apporte). Usé, on va 2 fois moins vite.</li>
         <li><strong>L'hiver</strong> : il faut brûler du bois dans chaque maison. Et la ferme ne produit rien sous la neige !</li>
       </ul>
       <p>Les ralentissements se <strong>multiplient</strong> : mécontent ET froid, c'est 0,8 × 0,8 = 0,64, donc 36 % moins vite.</p>
@@ -961,6 +962,73 @@ et jamais plus du quart de ce qui te manque pour l'âge suivant</pre>
       <details class="question"><summary>Ton village fait 5 objets par minute, et la réserve a 150 places. Combien de temps avant qu'elle soit pleine ?</summary><p>150 ÷ 5 = 30 minutes.</p></details>
       <details class="question"><summary>Agrandir la réserve coûte 40 planches, puis × 2,2 à chaque niveau. Combien pour le 3e agrandissement ?</summary><p>40 × 2,2 × 2,2 ≈ 194 planches.</p></details>
       <details class="question"><summary>Un habitant a faim (× 0,5) et froid (× 0,8). À quelle vitesse travaille-t-il ?</summary><p>0,5 × 0,8 = 0,4, donc à 40 % de sa vitesse normale.</p></details>
+    </section>
+
+    <section id="etape12">
+      <h2>👆 Étape 12 : poser, déplacer, de belles routes <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">On voit enfin ce qu'on fait avant de le faire : le bâtiment transparent suit ton doigt, avec ✅ et ❌. On déplace un bâtiment en restant appuyé dessus, les routes se dessinent au doigt et ne font plus de quadrillage, et un maçon-couvreur répare le bourg. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/13-placement-routes-macon.md</code>.</p>
+          <ul>
+            <li>✍️ 1B : un aperçu transparent qui suit le doigt, ✅ ou ❌, et une route proposée.</li>
+            <li>✍️ Un appui long pour déplacer.</li>
+            <li>✍️ 2C et 3B : glisser ou 2 touchers ; des routes reliées par la porte, arrondies.</li>
+            <li>✍️ Un maçon-couvreur pour réparer.</li>
+            <li>✍️ Ne plus rester bloqué sans scierie ; ne montrer que ce qui est débloqué ; pas de texte qui dépasse.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Bois → Bûcheron : glisse l'aperçu, regarde la bulle (prix, route proposée), puis ✅.</li>
+            <li>☐ Reste appuyé sur un bâtiment : il se soulève. Pose-le ailleurs avec ✅.</li>
+            <li>☐ Routes → Chemin : glisse le doigt pour dessiner, puis ✅. Essaie aussi départ + arrivée.</li>
+            <li>☐ Regarde les routes autour des maisons : elles arrivent à la porte.</li>
+            <li>☐ Au bourg : construis le maçon-couvreur 🪜 et regarde-le réparer.</li>
+            <li>☐ Ta partie sans scierie : la scierie est 🎁 offerte !</li>
+            <li>Vérifie « version 13 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>👀 L'aperçu avant de valider</h3>
+      <pre style="white-space: pre-wrap">choisir ──► aperçu (vert ou rouge) ──[glisser / toucher]──► aperçu ailleurs
+                    │                                         │
+                    ├──[✅]──► le bâtiment ET sa route sont construits
+                    └──[❌]──► rien ne change</pre>
+      <p>C'est une règle d'or des applications : <strong>montrer avant de faire</strong>, et toujours laisser un moyen d'annuler. Avant, un toucher posait le bâtiment tout de suite : une erreur, et c'était raté !</p>
+
+      <h3>⏱️ L'appui long</h3>
+      <p>Comment le jeu sait-il que ton doigt reste appuyé ? Il note l'heure où le doigt se pose, et il regarde à chaque image : si 0,55 seconde est passée et que le doigt a bougé de moins de 14 points, c'est un <strong>appui long</strong>. S'il a bougé, c'est un glissé ; s'il s'est levé vite, c'est un toucher.</p>
+
+      <h3>🛣️ Des routes sans quadrillage</h3>
+      <p>Avant, chaque case de route se reliait à TOUT ce qui la touchait : la route d'à côté, et chaque bâtiment voisin. Résultat : des grilles autour des maisons. Maintenant :</p>
+      <ul>
+        <li>une route ne se relie à un bâtiment que par sa <strong>porte</strong> (la case devant son mur de gauche) ;</li>
+        <li>la route proposée arrive justement devant la porte ;</li>
+        <li>4 routes en carré : on remplit le milieu, ça fait une petite <strong>place</strong> ;</li>
+        <li>des traits arrondis d'un milieu de case à l'autre, et 2 ornières sur les chemins de terre.</li>
+      </ul>
+      <p>Pour combler les trous quand le doigt glisse vite : le jeu avance case par case vers le doigt, d'abord dans la direction où il y a le plus de chemin à faire.</p>
+
+      <h3>🎁 Le coup de pouce</h3>
+      <p>✍️ Tu t'étais retrouvé bloqué : plus de scierie, et plus de planches pour en construire une ! Un bon jeu ne doit jamais bloquer le joueur pour toujours. Maintenant, si le village n'a <strong>aucun</strong> bûcheron (ou aucune scierie) et pas de quoi en payer un, il est offert. Les jeux appellent ça une <strong>soupape de sécurité</strong>.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Pose un bâtiment loin des routes : combien de cases de chemin le jeu propose-t-il ?</li>
+        <li>Dessine une route qui passe sur l'eau : que devient l'aperçu ?</li>
+        <li>Dans <code>logique/placement.js</code>, trouve <code>LONGUEUR_ROUTE</code> : à quoi sert-elle ?</li>
+        <li>Au journal, trouve « Coup de pouce » et « Le maçon-couvreur a réparé ».</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Ton doigt reste posé 0,3 s sans bouger, puis se lève. Qu'est-ce que c'est ?</summary><p>Un toucher (un clic) : il faut 0,55 s pour un appui long.</p></details>
+      <details class="question"><summary>Pourquoi le jeu montre-t-il un aperçu avant de construire ?</summary><p>Pour que tu voies le résultat (la place, la route, le prix) et que tu puisses annuler avant de dépenser tes planches.</p></details>
+      <details class="question"><summary>Tu as 0 planche et aucune scierie. Combien coûte une scierie ?</summary><p>Rien : elle est offerte (le coup de pouce), pour que tu ne restes pas bloqué.</p></details>
     </section>
 
     <!-- ============ FEUILLE DE ROUTE ============ -->
@@ -1034,15 +1102,15 @@ et jamais plus du quart de ce qui te manque pour l'âge suivant</pre>
           <p>La réserve qui fait travailler le village pendant ton absence, les pubs qui arrivent au hasard (pas trop faciles), le pain, l'or et les bijoux, l'entretien et les hivers durs.</p>
           <p class="apprend"><b>Tu apprends :</b> calculer au lieu de simuler, une courbe exponentielle, un rendement décroissant, des ralentissements qui se multiplient. <b>Durée :</b> 3 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">12</div>
-          <h4>👆 Poser, déplacer, et de belles routes <span class="etiquette">⏭️ prochaine étape</span></h4>
-          <p>✍️ Le bâtiment transparent suit le doigt, avec ✅ pour poser et ❌ pour annuler ; un appui long pour déplacer ; des routes plus jolies et plus simples à tracer, sans quadrillage autour des bâtiments.</p>
+          <h4>👆 Poser, déplacer, et de belles routes <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>L'aperçu transparent avec ✅ et ❌ et sa route proposée, l'appui long pour déplacer, les routes au doigt sans quadrillage, le maçon-couvreur, le coup de pouce, un menu sans ce qui n'est pas débloqué.</p>
           <p class="apprend"><b>Tu apprends :</b> l'appui long, l'aperçu avant de valider, le tracé d'un chemin. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte">
+        <div class="carte prochain">
           <div class="num">13</div>
-          <h4>🏙️ La ville : monuments, fêtes et port</h4>
+          <h4>🏙️ La ville : monuments, fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
         </div>
@@ -1146,6 +1214,14 @@ et jamais plus du quart de ce qui te manque pour l'âge suivant</pre>
         <textarea class="journal" id="village-appris-11" data-cle="village-appris-11" placeholder="Ex. : J'ai appris qu'on peut calculer ce qui s'est passé pendant l'absence…"></textarea>
         <label for="village-idees-11"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-11" data-cle="village-idees-11" placeholder="Ex. : Une réserve de nourriture séparée…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 12 · poser, déplacer, de belles routes <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> l'aperçu avant de valider (<code>logique/placement.js</code>), ✅ et ❌, la route proposée jusqu'à la porte, l'appui long (<code>moteur/entrees.js</code>), les routes au doigt ou en 2 touchers, les routes reliées par la porte et les petites places, le maçon-couvreur, le coup de pouce, un menu qui cache ce qui n'est pas débloqué, la base de données en version 10.</p>
+        <label for="village-appris-12"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-12" data-cle="village-appris-12" placeholder="Ex. : J'ai appris qu'il faut montrer avant de faire…"></textarea>
+        <label for="village-idees-12"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-12" data-cle="village-idees-12" placeholder="Ex. : Des ponts pour traverser les rivières…"></textarea>
       </div>
     </section>
   </main>

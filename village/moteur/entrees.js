@@ -36,6 +36,7 @@ Village.Entrees = (function () {
     route: ["KeyR"],
     routePierre: ["KeyT"], // étape 7 : la route en pierre
     demolir: ["Delete", "Backspace"],
+    valider: ["Enter", "NumpadEnter"], // étape 12 : ✅ poser le bâtiment ou la route
   };
 
   const actionsDeLaTouche = {};
@@ -51,7 +52,9 @@ Village.Entrees = (function () {
   //   - glisser (un doigt ou la souris enfoncée) → la carte suit ;
   //   - pincer (deux doigts) → zoomer : si les doigts s'écartent 2 fois plus, on zoome 2 fois plus ;
   //   - toucher sans bouger → un CLIC.
-  const souris = { x: 0, y: 0, dessus: false, enfoncee: false, glisseX: 0, glisseY: 0, molette: 0, pince: 1, centrePince: null, clic: null, doigt: false };
+  const souris = { x: 0, y: 0, dessus: false, enfoncee: false, glisseX: 0, glisseY: 0, molette: 0, pince: 1, centrePince: null, clic: null, doigt: false, debutAppui: null, leve: null };
+  // Étape 12 : un APPUI LONG = le doigt reste 0,55 s presque sans bouger (pour soulever un bâtiment).
+  const APPUI_LONG = 550;
   const pointeurs = new Map(); // les doigts posés sur l'écran (ou la souris enfoncée)
   let depart = null; // où le premier doigt s'est posé (pour savoir si c'est un clic ou un glissé)
   let pinceAvant = null; // écart et centre des 2 doigts à l'image d'avant
@@ -86,7 +89,7 @@ Village.Entrees = (function () {
       souris.doigt = e.pointerType === "touch";
       souris.x = p.x; souris.y = p.y; souris.dessus = true;
       souris.enfoncee = true;
-      if (pointeurs.size === 1) depart = { x: p.x, y: p.y, deplace: 0 };
+      if (pointeurs.size === 1) { depart = { x: p.x, y: p.y, deplace: 0, t: performance.now(), long: false }; souris.debutAppui = { x: p.x, y: p.y }; } // étape 12 : un appui commence
       else { depart = null; pinceAvant = ecartEtCentre(); } // 2 doigts : ce n'est plus un clic
       try { toile.setPointerCapture(e.pointerId); } catch (err) {}
     });
@@ -113,7 +116,8 @@ Village.Entrees = (function () {
     const lever = (e, annule) => {
       const p = position(e);
       // Si le doigt (ou la souris) a très peu bougé, c'est un CLIC. Un doigt bouge plus qu'une souris.
-      if (!annule && depart && pointeurs.size === 1 && depart.deplace < (souris.doigt ? 14 : 6)) souris.clic = { x: p.x, y: p.y };
+      if (!annule && depart && !depart.long && pointeurs.size === 1 && depart.deplace < (souris.doigt ? 14 : 6)) souris.clic = { x: p.x, y: p.y };
+      if (pointeurs.size === 1) souris.leve = { x: p.x, y: p.y }; // étape 12 : le doigt se lève
       pointeurs.delete(e.pointerId);
       if (pointeurs.size < 2) pinceAvant = null;
       if (pointeurs.size === 0) {
@@ -154,7 +158,12 @@ Village.Entrees = (function () {
       x: souris.x, y: souris.y, dessus: souris.dessus, doigt: souris.doigt,
       glisseX: souris.glisseX, glisseY: souris.glisseY, molette: souris.molette,
       pince: souris.pince, centrePince: souris.centrePince, clic: souris.clic,
+      // Étape 12 : pour poser, déplacer et tracer au doigt
+      enfoncee: souris.enfoncee && pointeurs.size === 1, doigts: pointeurs.size,
+      debutAppui: souris.debutAppui, leve: souris.leve, appuiLong: null,
     };
+    if (depart && !depart.long && depart.deplace < (souris.doigt ? 14 : 6) && performance.now() - depart.t > APPUI_LONG) { depart.long = true; r.appuiLong = { x: depart.x, y: depart.y }; }
+    souris.debutAppui = null; souris.leve = null;
     souris.glisseX = souris.glisseY = souris.molette = 0;
     souris.pince = 1;
     souris.centrePince = null;
@@ -170,6 +179,9 @@ Village.Entrees = (function () {
     souris.pince *= r.pince;
     if (r.centrePince && !souris.centrePince) souris.centrePince = r.centrePince;
     if (r.clic && !souris.clic) souris.clic = r.clic;
+    if (r.debutAppui && !souris.debutAppui) souris.debutAppui = r.debutAppui; // étape 12
+    if (r.leve && !souris.leve) souris.leve = r.leve;
+    if (r.appuiLong && depart) depart.long = false; // il sera redonné à l'image suivante
   }
 
   // Vrai si on joue au doigt (le dernier appui était un toucher sur l'écran).

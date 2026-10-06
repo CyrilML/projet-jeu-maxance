@@ -41,6 +41,7 @@ Village.Batisses = (function () {
     moulin: { a: 15, h: 26, toit: 12, murG: "#e8e2d4", murD: "#c7bfae", toitA: "#8a5a3a", toitB: "#6c442c", mur: "pierre", toitSorte: "bardeaux", fenetres: 1 },
     boulangerie: { a: 20, h: 15, toit: 14, murG: "#f1e3c4", murD: "#d2c09a", toitA: "#c8503a", toitB: "#a43e2b", mur: "colombage", toitSorte: "tuiles", fenetres: 1, volets: "#a43e2b", cheminee: 0.7, lanterne: true, feu: true },
     mineOr: { a: 18, h: 12, toit: 10, murG: "#8a6a48", murD: "#6c5036", toitA: "#c9a636", toitB: "#a8892a", mur: "rondins", toitSorte: "bardeaux", fenetres: 0, lanterne: true },
+    macon: { a: 19, h: 13, toit: 14, murG: "#c9c2b4", murD: "#a59d8e", toitA: "#c8503a", toitB: "#a43e2b", mur: "pierre", toitSorte: "tuiles", fenetres: 1 }, // étape 12
     orfevre: { a: 19, h: 16, toit: 14, murG: "#e8e2d4", murD: "#c7bfae", toitA: "#6b3fa0", toitB: "#52307c", mur: "pierre", toitSorte: "ardoise", fenetres: 2, volets: "#6b3fa0", lanterne: true },
   };
 
@@ -472,6 +473,11 @@ Village.Batisses = (function () {
   // ---------------------------------------------------------------- un bâtiment
   function dessinerBatiment(ctx, b, x, y, t) {
     const m = MODELES[b.type];
+    const souleve = Village.monde && Village.monde.projet && Village.monde.projet.deplacer === b; // étape 12
+    if (souleve) { ctx.save(); ctx.globalAlpha = 0.4; dessinerBatimentDedans(ctx, b, x, y - 6, t, m); ctx.restore(); return; }
+    dessinerBatimentDedans(ctx, b, x, y, t, m);
+  }
+  function dessinerBatimentDedans(ctx, b, x, y, t, m) {
     ombre(ctx, x, y, m.a);
     if (b.etat === "chantier") return chantier(ctx, b, x, y, m, t);
     if (b.type === "entrepot") { cour(ctx, x, y, (Village.monde && Village.monde.stock) || {}); silo(ctx, x - 24, y - 12, Village.monde ? Village.monde.reserve.niveau : 1); } // étape 9 : la cour ; étape 11 : le silo
@@ -580,6 +586,15 @@ Village.Batisses = (function () {
       pile(ctx, x - 22, y + 12, "or", b.entrees.or || 0);
       pile(ctx, x - 14, y + 16, "charbon", b.entrees.charbon || 0);
       pile(ctx, x + 14, y + 10, "bijoux", b.sortie);
+    } else if (b.type === "macon") {
+      // Étape 12 : une échelle contre le mur, une pile de tuiles et un seau de mortier
+      ctx.strokeStyle = "#8a5a2b"; ctx.lineWidth = 1.4; ctx.beginPath();
+      ctx.moveTo(x + 13, y + 6); ctx.lineTo(x + 17, y - 22); ctx.moveTo(x + 18, y + 8); ctx.lineTo(x + 22, y - 20);
+      for (let k = 1; k < 7; k++) { const yy = y + 6 - k * 4.2; ctx.moveTo(x + 13 + k * 0.57, yy); ctx.lineTo(x + 18 + k * 0.57, yy + 2); }
+      ctx.stroke();
+      for (let k = 0; k < 3; k++) forme(ctx, [[x - 24, y + 12 - k * 2], [x - 18, y + 15 - k * 2], [x - 12, y + 12 - k * 2], [x - 18, y + 9 - k * 2]], "#c8503a");
+      forme(ctx, [[x - 6, y + 16], [x - 1, y + 16], [x, y + 11], [x - 7, y + 11]], "#8b9099");
+      pile(ctx, x + 2, y + 18, "outils", b.entrees.outils || 0);
     } else if (b.type === "ferme") {
       pile(ctx, x + 2, y + 16, "ble", b.sortie);
       // une meule de foin
@@ -665,8 +680,8 @@ Village.Batisses = (function () {
     else if (b.ouvrier && b.ouvrier.froid) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "🥶");
     else if (b.ouvrier && b.ouvrier.mecontent) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "🍞");
     else if (!b.ouvrier && Village.Batiments.TYPES[b.type].metier) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, Village.monde && !Village.Logement.placeLibre(Village.monde) ? "🛏️" : "vide"); // étape 8 : 🛏️ pas de logement
-    // Étape 5 : le bâtiment qu'on est en train de déplacer clignote
-    if (Village.monde && Village.monde.aDeplacer === b) {
+    // Étape 12 : le bâtiment qu'on déplace est « soulevé » : transparent, avec un cadre qui clignote
+    if (Village.monde && Village.monde.projet && Village.monde.projet.deplacer === b) {
       ctx.strokeStyle = "rgba(255, 226, 122," + (0.5 + 0.5 * Math.sin(t * 8)) + ")"; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(x - m.a - 4, y); ctx.lineTo(x, y + m.a / 2 + 2); ctx.lineTo(x + m.a + 4, y); ctx.lineTo(x, y - m.a / 2 - 2); ctx.closePath(); ctx.stroke();
     }
@@ -840,6 +855,7 @@ Village.Batisses = (function () {
     boulangerie: { habit: "#ffffff", pantalon: "#6b6058", coiffe: "toque", coiffeCouleur: "#ffffff", tablier: "#f1e3c4", outil: "pelleAPain" },
     mineOr: { habit: "#7a6a40", pantalon: "#3b3f4a", coiffe: "mineur", coiffeCouleur: "#b8862e", outil: "pioche", suie: true },
     orfevre: { habit: "#6b3fa0", pantalon: "#2f2a3a", coiffe: "calot", coiffeCouleur: "#3b2a5a", tablier: "#c9b48f", outil: "marteau" },
+    macon: { habit: "#d9c9a3", pantalon: "#6b6058", coiffe: "calot", coiffeCouleur: "#f6f2e8", tablier: "#8a7a60", outil: "marteauForge", suie: false }, // étape 12 : le maçon-couvreur
     porteur: { habit: "#4a90d9", pantalon: "#5a3a20", coiffe: "bonnet", coiffeCouleur: "#2f6db5", outil: null },
   };
 
@@ -999,6 +1015,8 @@ Village.Batisses = (function () {
       } else if (outil === "canne") {
         const secousse = Math.sin(t * 1.3) > 0.95 ? 0.25 : 0;
         brasAvant = 1.45 + secousse; brasArriere = 1.25 + secousse; angleOutil = 2.35 + secousse;
+      } else if (outil === "marteauForge") { // étape 12 : le maçon tape sur le mur et le toit
+        const coup = Math.sin(t * 9) > 0; brasAvant = coup ? 1.6 : 2.8; brasArriere = 2.2; penche = coup ? 0.12 : -0.05;
       } else if (outil === "marteau") {
         accroupi = 1; brasAvant = 1.0 + Math.abs(Math.sin(t * 9)) * 0.6; brasArriere = 0.7; penche = 0.15;
       }

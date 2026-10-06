@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 12,
+  version: 13,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -109,6 +109,7 @@ Village.CONFIG = {
     boulangerie: { cout: { planches: 12, pierres: 14, outils: 2 }, construction: 18 },
     mineOr: { cout: { planches: 10, pierres: 8, outils: 3 }, construction: 16 },
     orfevre: { cout: { planches: 12, pierres: 16, lingots: 4, outils: 2 }, construction: 20 },
+    macon: { cout: { planches: 10, pierres: 12 }, construction: 14, rayon: 14 }, // étape 12 : le maçon-couvreur
   },
 
   // Étape 8 : les ATELIERS transforment ce que les porteurs leur apportent (les RECETTES).
@@ -167,6 +168,7 @@ Village.CONFIG = {
     prospecter: 6, // s pour qu'un géologue cherche un gisement (étape 5)
     miner: 8, // s pour qu'un mineur sorte 1 morceau de charbon (étape 7)
     chanceDeTrouver: 0.5, // étape 5 : 1 chance sur 2 de trouver un gisement à chaque recherche
+    reparer: 6, // étape 12 : s pour que le maçon-couvreur répare un bâtiment
     lentSiFaim: 2, // étape 5 : ✍️ le ventre vide, on travaille et on marche 2 fois moins vite
     attente: 3, // s avant de chercher à nouveau quand il n'y a rien à faire
   },
@@ -284,7 +286,7 @@ Village.CONFIG = {
     // Étape 11 : ✍️ le bourg, et c'est de plus en plus dur ! (chaque âge demande environ 2 fois plus)
     //   Le bourg ajoute 3 nouvelles choses à penser : le PAIN (les habitants en veulent), l'ENTRETIEN
     //   (les bâtiments s'usent) et des HIVERS plus durs (il faut du bois de chauffage).
-    { id: "bourg", nom: "Le bourg", emoji: "🏰", debloque: ["ferme", "moulin", "boulangerie", "mineOr", "orfevre"],
+    { id: "bourg", nom: "Le bourg", emoji: "🏰", debloque: ["ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon"],
       objectifs: { batiments: 32, habitants: 34, recherches: 13, stock: { pain: 60, bijoux: 8, outils: 25 }, pieces: 600 } },
     { id: "ville", nom: "La ville", emoji: "🏙️", debloque: [], objectifs: null,
       aVenir: "⛏️ mines d'argent, 🏛️ grands monuments, 🎭 fêtes, 🚢 port" },
@@ -395,7 +397,7 @@ Village.CONFIG = {
   bourg: {
     ageDesRegles: 3, // à partir de quel âge (3 = le bourg)
     usure: 1800, // s pour qu'un bâtiment s'use complètement (30 min de jeu) ; usé = 2 fois moins vite
-    reparer: 0.6, // à 60 % d'usure, un porteur apporte 1 🔨 outil pour réparer
+    reparer: 0.6, // étape 12 : à 60 % d'usure, le maçon-couvreur vient le réparer (avec 1 🔨 outil)
     chauffage: 60, // s : en hiver, toutes les minutes, chaque logement brûle 1 🪵 tronc
     froid: 0.8, // sans bois de chauffage : tout le monde va 20 % moins vite
     sansPain: 0.8, // un habitant du bourg qui n'a pas eu de pain : 20 % moins vite

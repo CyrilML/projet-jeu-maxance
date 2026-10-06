@@ -44,12 +44,14 @@
 //                  l'heure de la dernière image (derniereVue, pour calculer l'absence), les pubs regardées (pub),
 //                  l'usure de chaque bâtiment (usure), et les ressources du bourg (blé, farine, pain, or, bijoux).
 //                  Une partie plus ancienne commence avec une réserve au niveau 1 et un rythme vide.
+//  10 (étape 12) : le prix de chaque chantier (prix), car un bâtiment peut être offert (le coup de pouce).
+//                  Un chantier plus ancien garde le prix normal de son bâtiment.
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 9;
+  const VERSION = 10;
   const radio = Village.Evenements;
 
   function vide() {
@@ -173,7 +175,7 @@ Village.Sauvegarde = (function () {
         if (b.sortie) { d.sortie = b.sortie; if (b.lots.some((q) => q !== 1)) d.lots = b.lots; }
         if (Object.values(b.entrees).some((n) => n > 0)) d.entrees = b.entrees; // étape 8
         if (b.usure > 0) d.usure = Math.round(b.usure * 1000) / 1000; // étape 11
-        if (b.etat === "chantier") { d.livre = b.livre; d.attendu = ajout(b.attendu, enCours.attendu.get(b)); }
+        if (b.etat === "chantier") { d.prix = b.prix; d.livre = b.livre; d.attendu = ajout(b.attendu, enCours.attendu.get(b)); } // étape 12 : le prix du chantier (il peut être offert)
         const o = b.ouvrier;
         if (o && o.faim) { d.faim = Math.round(o.faim); if (o.affame) { d.affame = true; d.ventreVide = Math.round(o.ventreVide); } }
         if (b.etat === "pret" && Village.Batiments.TYPES[b.type].metier && !o) d.vide = true; // l'habitant est parti

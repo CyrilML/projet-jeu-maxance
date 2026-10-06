@@ -81,6 +81,48 @@ Village.Routes = (function () {
     return true;
   }
 
+  // Étape 12 : construire une route sur une LISTE de cases (le tracé au doigt, ou la route proposée
+  // jusqu'à la porte d'un bâtiment). Les cases déjà en route ou les bâtiments sont sautés.
+  //   Renvoie vrai si c'est fait. `raison` (si on la demande) dit ce qui ne va pas.
+  function evaluerCases(monde, cases, sorte) {
+    const k = monde.carte, vues = new Set(), ok = [], mauvaises = [];
+    for (const p of cases) {
+      const i = p.ligne * k.colonnes + p.colonne;
+      if (vues.has(i)) continue;
+      vues.add(i);
+      if (monde.occupees.has(i)) continue; // on passe « à travers » un bâtiment : pas de route dessus
+      if ((monde.route[i] || 0) >= sorte) { ok.push(p); continue; }
+      if (routable(monde, p.colonne, p.ligne)) ok.push(p); else mauvaises.push(p);
+    }
+    const nouvelles = ok.filter((p) => (monde.route[p.ligne * k.colonnes + p.colonne] || 0) < sorte).length;
+    return { cases: ok, mauvaises, nouvelles, cout: sorte === 2 ? nouvelles * C.routes.coutPierre.pierres : coutDe(nouvelles) };
+  }
+  function construireCases(monde, cases, sorte) {
+    sorte = sorte || 1;
+    if (sorte === 2 && !Village.Recherches.a(monde, "routePierre")) { radio.emettre("route-impossible", { raison: "il faut d'abord la recherche « Routes pavées » 🧱" }); return false; }
+    const e = evaluerCases(monde, cases, sorte);
+    if (e.mauvaises.length) { radio.emettre("route-impossible", { raison: "la route passe sur " + e.mauvaises.length + " case(s) impossible(s) (eau, arbre, rocher…)" }); return false; }
+    if (!e.nouvelles) return true;
+    const dispo = Village.Porteurs.disponible(monde, "pierres");
+    if (e.cout > dispo) { radio.emettre("route-impossible", { raison: "il faut " + e.cout + " pierre(s), tu en as " + dispo + " de libre(s)" }); return false; }
+    const k = monde.carte;
+    for (const p of e.cases) {
+      const i = p.ligne * k.colonnes + p.colonne;
+      if (k.objet[i]) Village.Monde.changerObjet(monde, i, Village.Carte.OBJET.rien);
+      monde.route[i] = Math.max(monde.route[i], sorte);
+    }
+    monde.stock.pierres -= e.cout;
+    monde.changements++;
+    recalculerReseau(monde);
+    radio.emettre("route-construite", { sorte, cases: e.cases.length, nouvelles: e.nouvelles, cout: e.cout, total: compter(monde), pierres: monde.stock.pierres });
+    return true;
+  }
+
+  // Étape 12 : la PORTE d'un bâtiment est sur son mur de gauche (en bas à gauche à l'écran) : la case
+  // juste devant est (colonne, ligne + 1). La route proposée arrive là, et le dessin ne relie un
+  // bâtiment à la route que par sa porte (plus de quadrillage tout autour !).
+  const porte = (b) => ({ colonne: b.colonne, ligne: b.ligne + 1 });
+
   function demolir(monde, i) {
     if (!monde.route[i]) return false;
     const rendu = monde.route[i] === 2 ? C.routes.coutPierre.pierres : C.routes.cout.pierres || 0;
@@ -144,5 +186,5 @@ Village.Routes = (function () {
     return r === 2 ? C.sols.pierre : r === 1 ? C.sols.terre : C.sols.horsRoute;
   }
 
-  return { routable, trajet, construire, demolir, recalculerReseau, compter, vitesseDuSol };
+  return { routable, trajet, construire, evaluerCases, construireCases, porte, demolir, recalculerReseau, compter, vitesseDuSol, VOISINS };
 })();

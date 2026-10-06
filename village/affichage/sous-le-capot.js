@@ -59,7 +59,11 @@ Village.SousLeCapot = (function () {
     // Étape 4
     // Étape 11 : le bourg, la réserve et les pubs
     "batiment-use": (d) => "🔧 " + d.nom + " n° " + d.numero + " est complètement usé : son ouvrier va 2 fois moins vite",
-    reparation: (d) => "🔨 " + d.nom + " n° " + d.numero + " réparé avec 1 outil (il était usé à " + d.avant + " %)",
+    reparation: (d) => "🪜 Le maçon-couvreur a réparé " + d.nom + " n° " + d.numero + " avec 1 🔨 (il était usé à " + d.avant + " %)",
+    "macon-attend": (d) => "🪜 Maçon n° " + d.numero + " : pas de 🔨 outil, il attend qu'un porteur lui en apporte",
+    // Étape 12 : le placement et le coup de pouce
+    "route-apercu": (d) => "👆 Aperçu d'une route de " + d.cases + " case(s) (" + d.facon + ") : ✅ pour construire, ❌ pour effacer",
+    "coup-de-pouce": (d) => "🎁 Coup de pouce : " + d.nom + " est offert, car le village n'en a aucun et n'a plus de quoi le payer",
     chauffage: (d) => "🔥 Chauffage : " + d.logements + " logement(s) brûlent " + d.bois + " 🪵 (il reste " + d.reste + " troncs)",
     froid: (d) => "🥶 Pas assez de bois pour chauffer (" + d.bois + " troncs nécessaires, " + d.troncs + " en stock) : tout le monde va 20 % moins vite",
     "plus-froid": () => "🔥 Les logements sont de nouveau chauffés",

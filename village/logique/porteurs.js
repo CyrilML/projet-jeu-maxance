@@ -70,11 +70,12 @@ Village.Porteurs = (function () {
           }
         }
       }
-      // Étape 11 : un bâtiment usé à 60 % reçoit 1 🔨 outil pour être réparé
-      const recetteOutils = C.ateliers[b.type] && C.ateliers[b.type].entrees.outils;
-      if (b.etat === "pret" && b.usure >= C.bourg.reparer && !recetteOutils && !(b.enFile.outils > 0) && !(b.enRoute.outils > 0) && disponible(monde, "outils") >= 1) {
-        b.enFile.outils = 1;
-        ajouter(monde, { sorte: "apporter", quoi: "outils", batiment: b });
+      // Étape 12 : des 🔨 outils pour l'atelier du maçon-couvreur (2 en réserve au plus)
+      if (b.type === "macon" && b.etat === "pret") {
+        while ((b.entrees.outils || 0) + (b.enFile.outils || 0) + (b.enRoute.outils || 0) < C.entreeMax && disponible(monde, "outils") >= 1) {
+          b.enFile.outils = (b.enFile.outils || 0) + 1;
+          ajouter(monde, { sorte: "apporter", quoi: "outils", batiment: b });
+        }
       }
       // Apporter ses ingrédients à un atelier (étape 8 : chaque ingrédient de sa recette, 2 de chaque au plus)
       const recette = C.ateliers[b.type];
@@ -187,7 +188,6 @@ Village.Porteurs = (function () {
           if (existe(monde, b)) {
             const n = p.nombre || 1;
             if (b.etat === "chantier") b.livre[papier.quoi] = (b.livre[papier.quoi] || 0) + n;
-            else if (papier.quoi === "outils" && !(C.ateliers[b.type] && C.ateliers[b.type].entrees.outils)) { b.enRoute.outils -= n; Village.Batiments.reparer(monde, b); } // étape 11 : une réparation
             else { b.entrees[papier.quoi] = (b.entrees[papier.quoi] || 0) + n; b.enRoute[papier.quoi] -= n; }
             radio.emettre("porteur-livre", { porteur: p.numero, quoi: papier.quoi, nombre: n, nom: Village.Batiments.TYPES[b.type].nom, batiment: b.numero });
             p.porte = null;

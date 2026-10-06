@@ -85,6 +85,16 @@ Village.Ouvriers = (function () {
     },
   };
 
+  // Étape 12 : le maçon-couvreur cherche un bâtiment usé (à 60 % ou plus), pas déjà visé par un autre maçon.
+  METIERS.macon = {
+    duree: (monde) => C.ouvriers.reparer * Village.Recherches.bonus(monde, "reparer"),
+    cherche: (monde, i, o) => {
+      const b = monde.occupees.get(i);
+      return !!b && i !== o.maison && b.etat === "pret" && b.usure >= C.bourg.reparer && !monde.reservees.has(i);
+    },
+    quoi: "un bâtiment à réparer",
+  };
+
   const NOMS_ETATS = {
     chercher: "cherche du travail",
     aller: "marche vers son travail",
@@ -143,10 +153,17 @@ Village.Ouvriers = (function () {
         // ✍️ Pas relié à l'entrepôt : on ne travaille pas.
         if (!b.relie) { if (o.etat !== "bloque") radio.emettre("ouvrier-bloque", { numero: b.numero, nom: Village.Batiments.TYPES[b.type].nom }); changer(o, "bloque", 0.5); return; }
         if (b.sortieQuoi && b.sortie >= C.sortieMax) { changer(o, "plein", 0.5); return; }
+        // Étape 12 : le maçon a besoin d'un 🔨 outil (les porteurs lui en apportent)
+        if (b.type === "macon" && !((b.entrees.outils || 0) >= 1)) {
+          if (!o.sansOutil) radio.emettre("macon-attend", { numero: b.numero });
+          o.sansOutil = true; changer(o, "attendre", 2); return;
+        }
+        o.sansOutil = false;
         changer(o, "chercher");
         return;
 
       case "chercher": {
+        o.maison = b.ligne * carte.colonnes + b.colonne; // (le maçon ne répare pas sa propre maison… pas tout de suite)
         const r = Village.Chemins.chercher(
           carte.colonnes, carte.lignes, { colonne: b.colonne, ligne: b.ligne },
           (c, l) => K.praticable(carte, c, l),
@@ -163,6 +180,7 @@ Village.Ouvriers = (function () {
         }
         o.dejaPrevenu = false;
         const fin = r.chemin[r.chemin.length - 1];
+        if (b.type === "macon") { b.entrees.outils--; o.porte = "outils"; } // étape 12 : il part avec son outil
         o.cible = fin;
         if (b.type === "chasseur") {
           // L'animal visé ne bouge plus.
@@ -281,6 +299,11 @@ Village.Ouvriers = (function () {
         b.produits++;
         radio.emettre("filon-trouve", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, minerai, nom: C.ressources[minerai].nom, emoji: C.ressources[minerai].emoji, reserve: C.nature.reserveFilon });
       } else radio.emettre("gisement-rate", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne });
+    } else if (b.type === "macon") {
+      // Étape 12 : le bâtiment est réparé, et l'outil est usé
+      const abime = monde.occupees.get(i);
+      if (abime && abime.usure > 0) { Village.Batiments.reparer(monde, abime); b.produits++; }
+      o.porte = null;
     } else if (b.type === "carriere") {
       if (carte.objet[i] === O.rocher && carte.reste[i] > 0) {
         carte.reste[i]--;

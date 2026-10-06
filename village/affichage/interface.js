@@ -29,7 +29,7 @@ Village.Interface = (function () {
   // Les messages importants de la radio s'affichent aussi dans le jeu (sur téléphone, on ne voit pas le journal).
   Village.Evenements.ecouter("construction-impossible", (d) => afficher("🚫 " + d.nom + " : " + d.raison));
   Village.Evenements.ecouter("chantier-fini", (d) => afficher("🎉 " + d.nom + " est construit" + (d.metier ? " : le " + d.metier + " se met au travail !" : " !")));
-  Village.Evenements.ecouter("rien-a-faire", (d) => afficher("😴 " + d.nom + " : pas de " + d.quoi.replace(/^une? /, "") + " à moins de " + d.rayon + " pas"));
+  Village.Evenements.ecouter("rien-a-faire", (d) => /maçon/.test(d.nom) || afficher("😴 " + d.nom + " : pas de " + d.quoi.replace(/^une? /, "") + " à moins de " + d.rayon + " pas"));
   Village.Evenements.ecouter("route-impossible", (d) => afficher("🚫 Route : " + d.raison));
   Village.Evenements.ecouter("demolition-impossible", (d) => afficher("🚫 " + d.raison));
   Village.Evenements.ecouter("batiment-relie", (d) => afficher("✅ " + d.nom + " est relié à l'entrepôt !"));
@@ -60,6 +60,7 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("affame", () => afficher("🍽️ Plus rien à manger : on travaille 2 fois moins vite !"));
   // Étape 11
   Village.Evenements.ecouter("batiment-use", (d) => afficher("🔧 " + d.nom + " est usé : il travaille 2 fois moins vite. Il faut des 🔨 outils !"));
+  Village.Evenements.ecouter("coup-de-pouce", (d) => afficher("🎁 Coup de pouce : " + d.nom + " est offert, pour que le village ne reste pas bloqué !")); // étape 12
   Village.Evenements.ecouter("froid", () => afficher("🥶 Plus de bois de chauffage : tout le monde a froid (20 % moins vite) !"));
   Village.Evenements.ecouter("reserve-agrandie", (d) => afficher("📦 Réserve agrandie : niveau " + d.niveau + ", " + d.capacite + " places !"));
   Village.Evenements.ecouter("reserve-impossible", (d) => afficher("🚫 Réserve : " + d.raison));
@@ -91,7 +92,7 @@ Village.Interface = (function () {
     const B = Village.Batiments;
     const elements = (g.batiments || []).map((type) => ({
           action: "construire", valeur: type, emoji: B.TYPES[type].emoji, nom: B.TYPES[type].court, touche: B.A_CONSTRUIRE.indexOf(type) < 7 ? String(B.A_CONSTRUIRE.indexOf(type) + 1) : "",
-          cout: Object.entries(B.cout(type)).map(([r, n]) => n + EMO(r)).join(" "),
+          cout: B.offert(monde, type) ? "🎁 offert" : Object.entries(B.coutPour(monde, type)).map(([r, n]) => n + EMO(r)).join(" "), // étape 12 : le coup de pouce
           choisi: monde.construction === type, possible: B.assezPour(monde, type) && Village.Ages.debloque(monde, type),
           verrou: Village.Ages.debloque(monde, type) ? null : "🔒 " + C.ages[Village.Ages.ageDe(type)].emoji + " " + C.ages[Village.Ages.ageDe(type)].nom.replace(/^(Le|La) /, ""), // étape 6
         })).concat((g.outils || []).map((o) => ({ action: "outil", valeur: o.id, emoji: o.emoji, icone: o.icone, nom: o.nom, touche: o.touche, cout: o.cout || "", choisi: monde.outil === o.id, possible: !o.verrou, verrou: o.verrou || null })));
@@ -134,9 +135,20 @@ Village.Interface = (function () {
       lignes.push([age.emoji + " " + age.nom + " : la suite arrive bientôt !", "#3b2614", true]);
       if (prochain && prochain.aVenir) lignes.push([prochain.emoji + " " + prochain.nom + " : " + prochain.aVenir, "#7a5a30", false]);
     }
-    const h = 16 + lignes.length * (petit ? 18 : 20);
+    // Étape 12 : ✍️ un texte trop long passe à la ligne (avant, il dépassait du cadre)
+    const taille = petit ? 11 : 13, pas = petit ? 18 : 20, coupees = [];
+    for (const [t, c, g] of lignes) {
+      ctx.font = (g ? "bold " : "") + taille + "px " + POLICE;
+      let ligne = "";
+      for (const mot of t.split(" ")) {
+        const essai = ligne ? ligne + " " + mot : mot;
+        if (ctx.measureText(essai).width > l - 24 && ligne) { coupees.push([ligne, c, g]); ligne = "   " + mot; } else ligne = essai;
+      }
+      coupees.push([ligne, c, g]);
+    }
+    const h = 16 + coupees.length * pas;
     bulle(ctx, x, y, l, h);
-    lignes.forEach(([t, c, g], n) => texte(ctx, t, x + 12, y + 16 + n * (petit ? 18 : 20), petit ? 11 : 13, c, g));
+    coupees.forEach(([t, c, g], n) => texte(ctx, t, x + 12, y + 16 + n * pas, taille, c, g));
     zone(x, y, l, h, "objectifs");
   }
   function basculerObjectifs() { objectifsOuverts = !objectifsOuverts; }
@@ -411,12 +423,12 @@ Village.Interface = (function () {
     // ---- En bas : le MENU (étape 5). ✍️ Moins de boutons toujours affichés, regroupés par ressource :
     //   🪵 Bois · 🪨 Pierre · 🍖 Nourriture · la Route · 🔧 Outils.
     // Toucher un groupe ouvre un tiroir, juste au-dessus, avec ses bâtiments.
-    const groupes = [
+    const tousLesGroupes = [
       { id: "bois", emoji: "🪵", nom: "Bois", batiments: ["bucheron", "forestier", "scierie"] },
       { id: "pierre", emoji: "⛏️", nom: "Mines", batiments: ["carriere", "geologue", "mineCharbon", "mineFer", "mineOr"] },
       { id: "nourriture", emoji: "🍖", nom: "Nourriture", batiments: ["pecheur", "chasseur", "ferme", "moulin", "boulangerie"] }, // étape 11 : le pain
       // Étape 8 : les logements, et les artisans (fonderie, forge, marché, université)
-      { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "maison"] },
+      { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "maison", "macon"] }, // étape 12 : le maçon-couvreur
       { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "marche", "universite"] },
       // Étape 7 : le chemin de terre, et la route en pierre (débloquée par la recherche « Routes pavées »)
       { id: "route", nom: "Routes", outils: [
@@ -425,6 +437,13 @@ Village.Interface = (function () {
         { id: "deplacer", emoji: "↔️", nom: "Déplacer", touche: "M" }, { id: "demolir", emoji: "🧹", nom: "Démolir", touche: "Suppr" },
       ] },
     ];
+    // Étape 12 : ✍️ on ne montre que ce qui est débloqué à notre âge (sinon ça fait brouillon).
+    // Un groupe qui n'a encore rien de disponible disparaît du menu.
+    for (const g of tousLesGroupes) {
+      if (g.batiments) g.batiments = g.batiments.filter((t) => Village.Ages.debloque(monde, t));
+      if (g.outils) g.outils = g.outils.filter((o) => !o.verrou);
+    }
+    const groupes = tousLesGroupes.filter((g) => (g.batiments && g.batiments.length) || (g.outils && g.outils.length));
     // Le groupe du bâtiment ou de l'outil choisi reste allumé
     const actif = (g) => (g.batiments && g.batiments.includes(monde.construction)) || (g.outil && monde.outil === g.outil) || (g.outils && g.outils.some((o) => o.id === monde.outil));
     const ecart = petit ? 4 : 6, hb = petit ? 54 : 60;
@@ -459,14 +478,16 @@ Village.Interface = (function () {
     let aide = null;
     const maintenant = performance.now();
     if (message && maintenant < message.jusqua) aide = message.texte;
-    else if (monde.construction) {
-      aide = (Village.Entrees.toucheRecente() ? "Touche" : "Clique sur") + " une case pour poser : " + B.TYPES[monde.construction].nom;
-    } else if (monde.outil === "route") {
-      aide = monde.routeDepart ? "Maintenant, touche l'arrivée du chemin" : "Touche le départ du chemin de terre (gratuit)";
+    else if (monde.projet) {
+      // Étape 12 : l'aperçu
+      aide = "Glisse " + (monde.projet.deplacer ? "le bâtiment" : "le " + B.TYPES[monde.projet.type].court.toLowerCase()) + " à sa place (ou touche une case), puis ✅";
+    } else if (monde.outil === "route" || monde.outil === "routePierre") {
+      const tr = monde.trace;
+      aide = tr && tr.pret ? "✅ pour construire la route, ❌ pour l'effacer" : tr && tr.depart ? "Touche l'arrivée : le jeu trouve le chemin" : "Glisse le doigt pour dessiner la route, ou touche le départ puis l'arrivée";
     } else if (monde.outil === "demolir") {
       aide = "Touche une route ou un bâtiment à démolir";
     } else if (monde.outil === "deplacer") {
-      aide = monde.aDeplacer ? "Touche la nouvelle place de : " + B.TYPES[monde.aDeplacer.type].nom : "Touche le bâtiment à déplacer";
+      aide = "Touche le bâtiment à déplacer (astuce : reste appuyé dessus, sans outil)";
     } else if (monde.survol) aide = decrire(monde, monde.survol);
     else if (monde.choisie && !monde.selection) aide = decrire(monde, monde.choisie); // au doigt : la case touchée
     if (aide) {
@@ -484,6 +505,9 @@ Village.Interface = (function () {
         if (ax + 30 < W) { bulle(ctx, ax, y, 30, petit ? 28 : 32); texte(ctx, "✖", ax + 15, y + (petit ? 14 : 16), 14, "#c0392b", true, "center"); zone(ax, y, 30, petit ? 28 : 32, "annuler"); }
       }
     }
+
+    // Étape 12 : ✅ et ❌ à côté de l'aperçu (un bâtiment, ou la route tracée)
+    validerAnnuler(ctx, monde, W, He, petit);
 
     // Étape 11 : le froid de l'hiver au bourg
     if (monde.froid && !(message && maintenant < message.jusqua) && Math.sin(maintenant / 300) > -0.3) {
@@ -520,6 +544,48 @@ Village.Interface = (function () {
       bulle(ctx, W / 2 - 70, 12, 140, 36);
       texte(ctx, "⏸ PAUSE", W / 2, 30, 17, "#3b2614", true, "center");
     }
+  }
+
+  // Étape 12 : les gros boutons ✅ (valider) et ❌ (annuler), juste au-dessus de l'aperçu, avec une bulle :
+  // le prix, la route proposée, ou pourquoi c'est impossible.
+  function validerAnnuler(ctx, monde, W, He, petit) {
+    const cam = monde.camera, z = cam.zoom;
+    let c, l, possible, texteBulle;
+    if (monde.projet) {
+      const p = monde.projet, B = Village.Batiments;
+      c = p.colonne; l = p.ligne; possible = p.possible;
+      if (!possible) texteBulle = "🚫 " + p.raison;
+      else {
+        const prix = p.deplacer ? "déménagement gratuit" : B.offert(monde, p.type) ? "🎁 offert (coup de pouce)" : Object.entries(B.coutPour(monde, p.type)).map(([r, n]) => n + " " + EMO(r)).join(" ") || "gratuit";
+        texteBulle = (p.deplacer ? "↔️ " : B.TYPES[p.type].emoji + " ") + prix + (p.route === null ? " · ⚠️ pas de chemin possible" : p.route.length ? " · +" + p.route.length + " case(s) de chemin" : "");
+      }
+    } else if (monde.trace && monde.trace.pret && monde.trace.cases.length) {
+      const fin = monde.trace.cases[monde.trace.cases.length - 1], ap = Village.Placement.apercu(monde);
+      c = fin.colonne; l = fin.ligne; possible = ap && !ap.mauvaises.length && ap.cout <= Village.Porteurs.disponible(monde, "pierres");
+      texteBulle = ap.mauvaises.length ? "🚫 " + ap.mauvaises.length + " case(s) impossible(s)" : ap.nouvelles + " case(s) · " + (ap.cout ? ap.cout + " 🪨" : "gratuit");
+    } else return;
+    const w = Village.Iso.versMonde(c + 0.5, l + 0.5, L, Hc);
+    const sx = (w.x - cam.x) * z + W / 2, sy = (w.y - cam.y) * z + He / 2;
+    const r = petit ? 23 : 21, ecart = 30;
+    let by = sy - (monde.projet ? 70 : 34) * Math.min(z, 1.4) - r;
+    by = Math.max(basDuStock + 40 + r, Math.min(He - 110, by));
+    const bx = Math.max(ecart + r + 10, Math.min(W - ecart - r - 10, sx));
+    // La bulle d'information
+    ctx.font = "bold " + (petit ? 11 : 12) + "px " + POLICE;
+    const lt = Math.min(W - 20, ctx.measureText(texteBulle).width + 20), tx = Math.max(10, Math.min(W - 10 - lt, bx - lt / 2)), ty = by - r - 34;
+    bulle(ctx, tx, ty, lt, 26, possible ? "rgba(255, 250, 235, .96)" : "rgba(255, 225, 220, .96)");
+    texte(ctx, texteBulle, tx + lt / 2, ty + 13, petit ? 11 : 12, possible ? "#3b2614" : "#c0392b", true, "center");
+    zone(tx, ty, lt, 26, "rien");
+    // Les 2 boutons ronds
+    const rondBouton = (x, y, fond, signe, action, actif) => {
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = actif ? fond : "#cfc6b6"; ctx.fill();
+      ctx.lineWidth = 3; ctx.strokeStyle = "#ffffff"; ctx.stroke(); ctx.lineWidth = 1.5; ctx.strokeStyle = "#3b2614"; ctx.beginPath(); ctx.arc(x, y, r + 1.5, 0, Math.PI * 2); ctx.stroke();
+      texte(ctx, signe, x, y + 1, 20, "#ffffff", true, "center");
+      if (actif) zone(x - r - 4, y - r - 4, 2 * r + 8, 2 * r + 8, action);
+      else zone(x - r - 4, y - r - 4, 2 * r + 8, 2 * r + 8, "rien");
+    };
+    rondBouton(bx - ecart, by, "#e8402e", "✖", "annulerProjet", true);
+    rondBouton(bx + ecart, by, "#2fb34a", "✔", "valider", possible);
   }
 
   // Étape 5 : ✍️ ce qu'il y a sous la souris, sans la position (elle reste sous le capot) :
@@ -587,6 +653,12 @@ Village.Interface = (function () {
       lignes.push(b.travail ? "⚙️ Fabrique… " + Math.ceil(b.travail.reste) + " s" : b.attend ? "😴 " + b.attend.charAt(0).toUpperCase() + b.attend.slice(1) : "Prêt à travailler");
       lignes.push("Réserve : " + Object.keys(R.entrees).map((r) => (b.entrees[r] || 0) + " " + EMO(r)).join(" · ") + " · devant : " + b.sortie + " " + EMO(b.sortieQuoi));
       lignes.push("A fabriqué " + b.produits + " " + C.ressources[b.sortieQuoi].nom);
+    } else if (b.type === "macon") {
+      // Étape 12 : le maçon-couvreur
+      const o = b.ouvrier, abimes = monde.batiments.filter((x) => x.usure >= C.bourg.reparer).length;
+      lignes.push("👷 Le maçon-couvreur " + Village.Ouvriers.NOMS_ETATS[o.etat] + (o.sansOutil ? " (il attend un 🔨)" : ""));
+      lignes.push("Réserve : " + (b.entrees.outils || 0) + " 🔨 · " + abimes + " bâtiment(s) à réparer");
+      lignes.push("A réparé " + b.produits + " bâtiment(s)");
     } else if (C.mines[b.type]) {
       // Étape 7 et 8 : une mine
       const sorte = C.mines[b.type].filon, k = monde.carte;
@@ -614,7 +686,19 @@ Village.Interface = (function () {
       if (o.mecontent) lignes.push("🍞 Mécontent : pas de pain au dernier repas (−20 %)");
       if (o.froid) lignes.push("🥶 A froid : plus de bois de chauffage (−20 %)");
     }
-    if (b.usure > 0 && b.etat === "pret") lignes.push((b.usure >= 1 ? "🔧 USÉ : 2 fois moins vite ! " : "🔧 Usure : " + Math.round(b.usure * 100) + " % · ") + (b.enRoute.outils > 0 ? "un 🔨 arrive" : b.usure >= C.bourg.reparer ? "il attend 1 🔨" : "réparé à " + Math.round(C.bourg.reparer * 100) + " %"));
+    if (b.usure > 0 && b.etat === "pret") lignes.push((b.usure >= 1 ? "🔧 USÉ : 2 fois moins vite ! " : "🔧 Usure : " + Math.round(b.usure * 100) + " % · ") + (b.usure < C.bourg.reparer ? "réparé à " + Math.round(C.bourg.reparer * 100) + " %" : monde.batiments.some((x) => x.type === "macon" && x.etat === "pret") ? "le maçon-couvreur va venir 🪜" : "il faut un maçon-couvreur 🪜 !"));
+    // Étape 12 : une ligne trop longue passe à la ligne (elle ne dépasse plus du cadre)
+    ctx.font = (petit ? 11 : 13) + "px " + POLICE;
+    const coupees = [];
+    for (const t of lignes) {
+      let ligne = "";
+      for (const mot of t.split(" ")) {
+        const essai = ligne ? ligne + " " + mot : mot;
+        if (ctx.measureText(essai).width > l - 24 && ligne) { coupees.push(ligne); ligne = "   " + mot; } else ligne = essai;
+      }
+      coupees.push(ligne);
+    }
+    lignes.length = 0; lignes.push(...coupees);
     const hb = boutonsReserve ? 40 : 0;
     const h = 34 + lignes.length * (petit ? 17 : 19) + 8 + hb;
     bulle(ctx, x, y, l, h);

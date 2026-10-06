@@ -41,8 +41,10 @@ Village.Monde = (function () {
       porteurs: [],
       file: [], // la file d'attente des livraisons
       outil: null, // "route" ou "demolir" quand on utilise un de ces outils
-      routeDepart: null, // la première case touchée pour tracer une route
-      aDeplacer: null, // étape 5 : le bâtiment qu'on est en train de déplacer
+      // Étape 12 : l'aperçu avant de valider (logique/placement.js)
+      projet: null, // le bâtiment transparent qu'on place ou qu'on déplace
+      trace: null, // la route qu'on trace : { depart, cases, pret }
+      prise: null, // ce que le doigt tient : "projet" ou "trace"
       age: 0, // étape 6 : le numéro de l'âge (0 = le campement)
       // Étape 7
       gemmes: 0, // 💎 gagnées en jouant (missions, nouveaux âges)
@@ -194,7 +196,7 @@ Village.Monde = (function () {
     const cam = monde.camera, s = intentions.souris;
     cam.x += (intentions.dx * C.camera.vitesse * dt) / cam.zoom;
     cam.y += (intentions.dy * C.camera.vitesse * dt) / cam.zoom;
-    if (s) {
+    if (s && !(monde.prise && s.doigts <= 1)) { // étape 12 : quand le doigt tient l'aperçu, la carte ne bouge pas
       cam.x -= s.glisseX / cam.zoom;
       cam.y -= s.glisseY / cam.zoom;
     }
@@ -237,22 +239,27 @@ Village.Monde = (function () {
     if (intentions.pub === "regarder") Village.Publicite.regarder(monde);
     else if (intentions.pub === "refuser") Village.Publicite.refuser(monde);
     if (intentions.absenceVue) monde.absence = null;
+    const Pl = Village.Placement;
     if (intentions.construire) {
       // Appuyer 2 fois sur le même bouton = annuler.
       monde.construction = monde.construction === intentions.construire ? null : intentions.construire;
-      monde.outil = null;
+      monde.outil = null; monde.trace = null;
       monde.selection = null;
       radio.emettre(monde.construction ? "choix-construction" : "construction-annulee", { nom: B.TYPES[intentions.construire].nom, cout: B.cout(intentions.construire) });
+      // Étape 12 : l'aperçu apparaît au milieu de l'écran ; on le déplace au doigt, puis ✅
+      if (monde.construction) { const k = caseSous(monde, E.largeur / 2, E.hauteur / 2).k; Pl.commencer(monde, monde.construction, k ? k.colonne : monde.carte.village.colonne, k ? k.ligne : monde.carte.village.ligne); }
+      else monde.projet = null;
     }
     if (intentions.outil) {
-      // Étape 3 : les outils 🛤️ route et 🧹 démolir.
+      // Étape 3 : les outils 🛤️ route et 🧹 démolir (étape 12 : et ↔️ déplacer, qui attend un toucher sur un bâtiment).
       monde.outil = monde.outil === intentions.outil ? null : intentions.outil;
-      monde.construction = null;
+      monde.construction = null; monde.projet = null; monde.trace = null;
       monde.selection = null;
-      monde.routeDepart = null;
-      monde.aDeplacer = null;
       radio.emettre("choix-outil", { outil: monde.outil });
     }
+    // Étape 12 : ✅ et ❌ (et la touche Entrée)
+    if (intentions.valider) { if (monde.projet) Pl.valider(monde); else if (monde.trace && monde.trace.pret) Pl.validerRoute(monde); }
+    if (intentions.annulerProjet) { if (monde.trace && (monde.trace.pret || monde.trace.depart)) Pl.annulerRoute(monde); else Pl.annuler(monde); }
     // Étape 7 : les recherches, les missions et la boutique (des boutons dans l'écran)
     if (intentions.recherche) Village.Recherches.lancer(monde, intentions.recherche);
     if (intentions.mission === "accepter") Village.Missions.accepter(monde);
@@ -263,32 +270,49 @@ Village.Monde = (function () {
     if (intentions.marche) { if (intentions.marche.sens === "vendre") Village.Marche.vendre(monde, intentions.marche.quoi); else Village.Marche.acheter(monde, intentions.marche.quoi); }
     if (intentions.annuler) {
       if (monde.construction) radio.emettre("construction-annulee", { nom: B.TYPES[monde.construction].nom });
-      if (monde.outil && monde.routeDepart) monde.routeDepart = null; // d'abord : oublier le départ de la route
-      else if (monde.outil && monde.aDeplacer) monde.aDeplacer = null; // ou le bâtiment qu'on allait déplacer
+      if (monde.trace && (monde.trace.pret || monde.trace.depart)) monde.trace = null; // d'abord : oublier la route en cours
+      else if (monde.projet && monde.projet.deplacer) monde.projet = null; // ou le bâtiment qu'on déplaçait
       else monde.outil = null;
-      monde.construction = null;
+      monde.construction = null; monde.projet = null;
       monde.selection = null;
     }
-    if (!s || !s.clic) return;
+    if (!s) return;
+    // Étape 12 : le doigt (ou la souris) sur la carte
+    const versCase = (pt) => caseSous(monde, pt.x, pt.y).k;
+    const routeOutil = monde.outil === "route" || monde.outil === "routePierre";
+    if (s.debutAppui) {
+      const k = versCase(s.debutAppui), p = monde.projet;
+      // On attrape l'aperçu (à 1 case près : un doigt n'est pas précis) : il suivra le doigt.
+      if (k && p && Math.abs(k.colonne - p.colonne) <= 1 && Math.abs(k.ligne - p.ligne) <= 1) monde.prise = "projet";
+      else if (k && routeOutil && !(monde.trace && monde.trace.pret)) { monde.prise = "trace"; Pl.debutGlisse(monde, k); }
+    }
+    if (monde.prise && s.doigts > 1) { monde.prise = null; if (monde.trace) monde.trace.cases = []; } // 2 doigts : on zoome
+    if (monde.prise && s.enfoncee && s.dessus) {
+      const k = versCase(s);
+      if (k && monde.prise === "projet" && (k.colonne !== monde.projet.colonne || k.ligne !== monde.projet.ligne)) Pl.placer(monde, k.colonne, k.ligne);
+      else if (k && monde.prise === "trace") Pl.ajouterCase(monde, k);
+    }
+    if (s.leve && monde.prise) { if (monde.prise === "trace") Pl.finGlisse(monde); monde.prise = null; }
+    // ✍️ L'appui long sur un bâtiment : on le soulève pour le déplacer
+    if (s.appuiLong && !monde.construction && !monde.outil && !monde.projet) {
+      const k = versCase(s.appuiLong), b = k && monde.occupees.get(k.numero);
+      if (b && b.type === "entrepot") radio.emettre("deplacement-impossible", { nom: "L'entrepôt", raison: "il reste au cœur du village" });
+      else if (b) Pl.commencerDeplacement(monde, b);
+    }
+    if (!s.clic) return;
     const k = caseSous(monde, s.clic.x, s.clic.y).k;
     if (!k) return;
-    if (monde.construction) {
-      // On pose le chantier. Raté (pas la place, pas assez de planches) : on reste en mode construction.
-      if (B.poser(monde, monde.construction, k.colonne, k.ligne)) monde.construction = null;
+    if (monde.projet) {
+      // Un toucher ailleurs : l'aperçu va là
+      Pl.placer(monde, k.colonne, k.ligne);
       return;
     }
-    if (monde.outil === "route" || monde.outil === "routePierre") return tracerRoute(monde, k);
+    if (routeOutil) { Pl.toucher(monde, k); return; }
     if (monde.outil === "deplacer") {
-      // Étape 5 : 1er toucher = le bâtiment, 2e toucher = sa nouvelle place.
-      if (!monde.aDeplacer) {
-        const b = monde.occupees.get(k.numero);
-        if (!b) { radio.emettre("deplacement-impossible", { nom: "Rien", raison: "touche d'abord un bâtiment" }); return; }
-        if (b.type === "entrepot") { radio.emettre("deplacement-impossible", { nom: "L'entrepôt", raison: "il reste au cœur du village" }); return; }
-        monde.aDeplacer = b;
-        radio.emettre("deplacement-choisi", { nom: B.TYPES[b.type].nom, numero: b.numero });
-        return;
-      }
-      if (B.deplacer(monde, monde.aDeplacer, k.colonne, k.ligne)) monde.aDeplacer = null;
+      const b = monde.occupees.get(k.numero);
+      if (!b) { radio.emettre("deplacement-impossible", { nom: "Rien", raison: "touche d'abord un bâtiment (ou reste appuyé dessus)" }); return; }
+      if (b.type === "entrepot") { radio.emettre("deplacement-impossible", { nom: "L'entrepôt", raison: "il reste au cœur du village" }); return; }
+      Pl.commencerDeplacement(monde, b);
       return;
     }
     if (monde.outil === "demolir") {
@@ -300,23 +324,6 @@ Village.Monde = (function () {
     monde.choisie = k;
     monde.selection = monde.occupees.get(k.numero) || null;
     radio.emettre("case-choisie", Object.assign({ batiment: monde.selection ? B.TYPES[monde.selection.type].nom : null }, k));
-  }
-
-  // Tracer une route : 1er toucher = le départ, 2e toucher = l'arrivée. Puis on peut continuer
-  // depuis l'arrivée (elle devient le nouveau départ).
-  function tracerRoute(monde, k) {
-    const ok = monde.occupees.has(k.numero) || monde.route[k.numero] || Village.Routes.routable(monde, k.colonne, k.ligne);
-    if (!monde.routeDepart) {
-      if (!ok) { radio.emettre("route-impossible", { raison: "on ne peut pas commencer une route ici (" + k.nomTerrain + (k.objet ? ", " + k.nomObjet : "") + ")" }); return; }
-      monde.routeDepart = { colonne: k.colonne, ligne: k.ligne };
-      radio.emettre("route-depart", { colonne: k.colonne, ligne: k.ligne });
-      return;
-    }
-    if (k.colonne === monde.routeDepart.colonne && k.ligne === monde.routeDepart.ligne) { monde.routeDepart = null; return; }
-    if (Village.Routes.construire(monde, monde.routeDepart, { colonne: k.colonne, ligne: k.ligne }, monde.outil === "routePierre" ? 2 : 1)) {
-      // Si on est arrivé sur un bâtiment, on s'arrête là. Sinon, on peut continuer depuis l'arrivée.
-      monde.routeDepart = monde.occupees.has(k.numero) ? null : { colonne: k.colonne, ligne: k.ligne };
-    }
   }
 
   // Les pousses grandissent. Au bout de 60 s, elles deviennent de vrais arbres.
