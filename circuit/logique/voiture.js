@@ -124,8 +124,8 @@ Circuit.Voiture = (function () {
     const efficacite = Math.min(1, Math.abs(v) / 10) * Math.sign(v);
     // Étape 53 : le DRIFT. Vite (plus de 70 % de la vitesse max) et en tournant à fond : l'arrière décroche, la voiture
     // pivote plus vite que là où elle va (elle avance « en crabe »). On sort du drift en redressant, ou en ralentissant.
-    const relative = v / voiture.vitesseMax;
-    if (!voiture.drift && sol !== "herbe" && relative > D.entree && Math.abs(voiture.volant) > D.volant && direction !== 0) {
+    const relative = v / voiture.vitesseMax; // (étape 58 : les pilotes de la course, eux, ne driftent jamais : sansDrift)
+    if (!voiture.drift && !voiture.sansDrift && sol !== "herbe" && relative > D.entree && Math.abs(voiture.volant) > D.volant && direction !== 0) {
       voiture.drift = { duree: 0, angleMax: 0 };
       if (estLeJoueur(voiture)) radio().emettre("drift-debut", { vitesse: v });
     } else if (voiture.drift) {

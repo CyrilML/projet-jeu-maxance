@@ -29,7 +29,7 @@ Circuit.Scene3D = (function () {
   let carteDessinee = null;
   let rayonsFixes = null, rayonsMobiles = null;
   const vehicules = {}; // un exemplaire de chaque modèle de voiture
-  let adversaire = null;
+  const concurrents3d = []; // étape 58 : le dessin de chaque adversaire (même modèle que toi, sa couleur à lui)
   const cartonsPool = [];
   let piecesInstances = null; // étape 56 : les pièces (une seule forme, dessinée 100 fois d'un coup)
   const flotte = {}; // étape 39 : les voitures garées et celles de la circulation (une réserve par modèle)
@@ -115,8 +115,6 @@ Circuit.Scene3D = (function () {
     Circuit.Meteo3D.initialiser({ ciel, soleil, hemi, rendu, scene }); // étape 47 : la pluie, la neige, les éclairs
     Circuit.Fumee.initialiser(scene); // étape 53 : la fumée et les traces des pneus
 
-    adversaire = Circuit.Modeles.fabriquer("classique", [0.12, 0.38, 0.92], [0.07, 0.22, 0.6]);
-    scene.add(adversaire.g);
     rayonsMobiles = Circuit.RayonsX.mobiles({ voiture: { x: 0, z: 0, angle: 0, vitesse: 0 }, carte: "", pieces: [] });
     sceneX.add(rayonsMobiles);
     return true;
@@ -313,7 +311,7 @@ Circuit.Scene3D = (function () {
   function dessinerBoulots(monde) {
     if (!boulots3d) {
       const g = new THREE.Group();
-      const couleurs = { pizzas: 0xff8a1a, taxi: 0xffd21a, poubelles: 0x2ecc71 };
+      const couleurs = { pizzas: 0xff8a1a, taxi: 0xffd21a, poubelles: 0x2ecc71, policier: 0x2f6bff };
       const ronds = [];
       for (const d of Circuit.Boulots.departs) {
         const c = couleurs[d.sorte];
@@ -521,8 +519,19 @@ Circuit.Scene3D = (function () {
     for (const objet of Object.values(vehicules)) objet.g.visible = objet === joueur;
     joueur.g.visible = camera.mode !== "capot" || monde.phase === "garage" || monde.phase === "cartes" || !!monde.pieton;
     placerVoiture(joueur, v);
-    adversaire.g.visible = !!monde.adversaire;
-    if (monde.adversaire) placerVoiture(adversaire, monde.adversaire.voiture);
+    // Étape 58 : les 11 adversaires. Chacun a son dessin ; on le refait seulement si le modèle a changé.
+    const advs = monde.adversaires || [];
+    advs.forEach((a, i) => {
+      const cle = a.voiture.modele + "|" + a.couleurs[0].join(",");
+      if (!concurrents3d[i] || concurrents3d[i].cle !== cle) {
+        if (concurrents3d[i]) scene.remove(concurrents3d[i].g);
+        concurrents3d[i] = Object.assign(Circuit.Modeles.fabriquer(a.voiture.modele, a.couleurs[0], a.couleurs[1]), { cle });
+        scene.add(concurrents3d[i].g);
+      }
+      concurrents3d[i].g.visible = true;
+      placerVoiture(concurrents3d[i], a.voiture);
+    });
+    for (let i = advs.length; i < concurrents3d.length; i++) concurrents3d[i].g.visible = false;
 
     // Étape 40 : les flammes du nitro (elles tremblent un peu), et le gyrophare de la police.
     flamme.visible = v.nitro > 0 && !monde.pieton && joueur.g.visible;
@@ -574,6 +583,7 @@ Circuit.Scene3D = (function () {
     const police = monde.carte === "ville" && monde.phase === "ville" ? monde.police : null;
     for (const pv of (police && police.voitures) || []) montrer(pv.voiture);
     if (police && police.helico) montrer(police.helico);
+    if (monde.boulot && monde.boulot.fuyard) montrer(monde.boulot.fuyard.voiture); // étape 58 : la voiture en fuite
     dessinerProjecteur(police && police.helico, monde.pieton || v);
     for (const [modele, reserve] of Object.entries(flotte)) for (let k = compte[modele] || 0; k < reserve.length; k++) reserve[k].g.visible = false;
     if (monde.pieton) {

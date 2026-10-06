@@ -79,9 +79,12 @@ Circuit.TableauDeBord = (function () {
     texte("Dernier tour : " + chrono(dernier), 24, 94, 15, "#cfd6ff");
     texte("Record du tour : " + chrono(sauvegarde.meilleurTour), 24, 114, 15, "#cfd6ff");
     // Étape 34 : la position et l'adversaire
-    const adv = monde.adversaire;
-    texte(monde.position === 1 ? "🥇 1er / 2" : "🥈 2e / 2", 24, 142, 22, monde.position === 1 ? "#7dffa0" : "#ffb37a");
-    texte("🔵 Adversaire : tour " + Math.min(adv.tour, C.course.tours) + " / " + C.course.tours, 24, 164, 15, "#9cc4ff");
+    // (Étape 58 : 12 voitures : ta place sur 12, et qui est en tête.)
+    const total = (monde.adversaires || []).length + 1, place = monde.position;
+    const medaille = place === 1 ? "🥇" : place === 2 ? "🥈" : place === 3 ? "🥉" : "🏁";
+    texte(medaille + " " + place + (place === 1 ? "er" : "e") + " / " + total, 24, 142, 22, place === 1 ? "#7dffa0" : place <= 3 ? "#ffe27a" : "#ffb37a");
+    const tete = Circuit.Course.enTete(monde);
+    if (tete) texte(place === 1 ? "Derrière toi : " + tete.nom : "En tête : " + tete.nom + " (tour " + Math.min(tete.tour, C.course.tours) + ")", 24, 164, 15, "#9cc4ff");
 
     // En bas à droite : le compteur de vitesse
     const kmh = Math.round(Math.abs(v.vitesse) * 3.6);
@@ -117,15 +120,15 @@ Circuit.TableauDeBord = (function () {
       panneau(W / 2 - 230, H / 2 - 135, 460, 260);
       texte("🏁 Gagné ! Tu es 1er !", W / 2, H / 2 - 93, 38, "#ffe27a", "center");
       texte("Temps total : " + chrono(monde.chronoCourse), W / 2, H / 2 - 54, 24, "#fff", "center");
-      if (monde.resultat) texte("La voiture bleue était à " + monde.resultat.avance.toLocaleString("fr-FR") + " m derrière toi", W / 2, H / 2 - 26, 17, "#9cc4ff", "center");
+      if (monde.resultat) texte("Le 2e était à " + monde.resultat.avance.toLocaleString("fr-FR") + " m derrière toi", W / 2, H / 2 - 26, 17, "#9cc4ff", "center");
       monde.tempsDesTours.forEach((t, i) => texte("Tour " + (i + 1) + " : " + chrono(t), W / 2, H / 2 + 2 + i * 22, 17, "#cfd6ff", "center"));
       if (Circuit.Sauvegarde.recordDerniereCourse) texte("🏆 Nouveau record !", W / 2, H / 2 + 80, 22, "#7dffa0", "center");
       texte("🪙 +" + monde.piecesCourse + " pièces · Entrée : choisir une carte", W / 2, H / 2 + 108, 18, "#ffd34d", "center");
     } else if (monde.phase === "perdu") {
       panneau(W / 2 - 230, H / 2 - 110, 460, 200);
       texte("😢 Perdu !", W / 2, H / 2 - 64, 42, "#ff8a7a", "center");
-      texte("La voiture bleue a fini ses " + C.course.tours + " tours avant toi", W / 2, H / 2 - 24, 20, "#fff", "center");
-      texte("(en " + chrono(monde.chronoCourse) + ")", W / 2, H / 2 + 2, 17, "#9cc4ff", "center");
+      texte((monde.vainqueur || "Un adversaire").replace(/^la/, "La") + " a gagné (en " + chrono(monde.chronoCourse) + ")", W / 2, H / 2 - 24, 20, "#fff", "center");
+      texte("Tu étais " + monde.position + "e sur " + ((monde.adversaires || []).length + 1) + " · il faut finir 1er pour gagner", W / 2, H / 2 + 2, 17, "#9cc4ff", "center");
       if (monde.resultat) texte("Il te restait " + monde.resultat.retard.toLocaleString("fr-FR") + " m à faire", W / 2, H / 2 + 30, 18, "#cfd6ff", "center");
       texte("🪙 +" + monde.piecesCourse + " pièces gardées quand même !", W / 2, H / 2 + 58, 18, "#ffd34d", "center");
       texte("Entrée : choisir une carte, puis la revanche !", W / 2, H / 2 + 82, 18, "#7dffa0", "center");
@@ -432,7 +435,8 @@ Circuit.TableauDeBord = (function () {
     texte(p ? "↑ ↓ ← → marcher · E : monter · R : départ · ⌫ : cartes" : aide, 24, H - 22, 14, "#cfd6ff");
     if (fiche.vol && !p) dessinerVol(monde, v, fiche); // étape 44
     dessinerEtoiles(monde); // étape 45
-    if (monde.sirene && fiche.sirene && !p) texte("🚨 Sirène", 300, 70, 20, Math.floor(monde.temps * 4) % 2 ? "#ff5a4a" : "#5a8aff");
+    if (monde.sirene && fiche.sirene && !p) texte("🚨 Sirène", 300, monde.boulot ? 172 : 70, 20, // (étape 58 : plus bas pendant un boulot, sous le panneau)
+       Math.floor(monde.temps * 4) % 2 ? "#ff5a4a" : "#5a8aff");
     if (options.pause) texte("⏸ Pause", W / 2, H - 30, 28, "#fff", "center");
     if (options.ralenti) texte("🐢 Ralenti", 300, 40, 18, "#cfd6ff");
   }
@@ -585,9 +589,10 @@ Circuit.TableauDeBord = (function () {
     if (!b) return;
     const qui = monde.pieton || monde.voiture;
     panneau(W / 2 - 170, 12, 340, 96);
-    const titres = { pizzas: "🍕 Livreur de pizzas", taxi: "🚕 Chauffeur de taxi", poubelles: "🗑️ Ramassage des poubelles" };
+    const titres = { pizzas: "🍕 Livreur de pizzas", taxi: "🚕 Chauffeur de taxi", poubelles: "🗑️ Ramassage des poubelles", policier: "👮 Policier" };
     texte(titres[b.sorte], W / 2 - 156, 38, 19, "#ffe27a");
-    texte((b.sorte === "taxi" && b.etape === "chercher" ? "client n° " + (b.faits + 1) : "fait : " + b.faits) + " / " + b.total + " · 🪙 " + b.gains, W / 2 - 156, 62, 15, "#ffd34d");
+    const avancement = b.sorte === "policier" ? "🚨 " + b.numero + " / " + b.total + " · 👮 " + b.faits : (b.sorte === "taxi" && b.etape === "chercher" ? "client n° " + (b.faits + 1) : "fait : " + b.faits) + " / " + b.total;
+    texte(avancement + " · 🪙 " + b.gains, W / 2 - 156, 62, 15, "#ffd34d");
     if (b.chrono > 0) {
       const part = Math.max(0, b.chrono / b.tempsMax);
       ctx.fillStyle = "rgba(255,255,255,.15)";
@@ -751,15 +756,16 @@ Circuit.TableauDeBord = (function () {
     // les pièces pas encore prises : de petits points dorés
     ctx.fillStyle = "#ffd34d";
     for (const p of monde.pieces) if (!p.prise) ctx.fillRect(cx + p.x * echelle - 1, cz + p.z * echelle - 1, 2, 2);
-    // les voitures : l'adversaire en bleu, toi en rouge (dessinée en dernier, par-dessus)
-    for (const [v, couleur] of [[monde.adversaire.voiture, "#2f6bff"], [monde.voiture, "#ff3b30"]]) {
+    // les voitures : chaque adversaire de sa couleur (petit point), toi plus gros, avec un contour jaune, par-dessus
+    const rgb = (k) => "rgb(" + k.map((x) => Math.round(x * 255)).join(",") + ")";
+    for (const [v, couleur, gros] of (monde.adversaires || []).map((a) => [a.voiture, rgb(a.couleurs[0]), false]).concat([[monde.voiture, "#ff3b30", true]])) {
       ctx.beginPath();
       const px = Math.max(-70, Math.min(70, v.x * echelle)), pz = Math.max(-40, Math.min(40, v.z * echelle));
-      ctx.arc(cx + px, cz + pz, 4, 0, Math.PI * 2);
+      ctx.arc(cx + px, cz + pz, gros ? 4.5 : 3, 0, Math.PI * 2);
       ctx.fillStyle = couleur;
       ctx.fill();
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = gros ? "#ffe27a" : "#fff";
+      ctx.lineWidth = gros ? 2 : 1;
       ctx.stroke();
     }
   }
@@ -783,12 +789,12 @@ Circuit.TableauDeBord = (function () {
       );
     }
     // Étape 34 : ce que pense le pilote adverse.
-    const adv = monde.adversaire;
-    const ea = Circuit.Maths3D.versEcran(vp, adv.voiture.x, 2.6, adv.voiture.z, W, H);
+    const adv = Circuit.Course.plusProche(monde); // (étape 58 : le pilote le plus proche de toi)
+    const ea = adv && Circuit.Maths3D.versEcran(vp, adv.voiture.x, 2.6, adv.voiture.z, W, H);
     if (ea) {
       const degres = Math.round((adv.difference * 180) / Math.PI);
       const decision = Math.abs(adv.difference) <= 0.02 ? "tout droit" : adv.difference < 0 ? "à gauche" : "à droite";
-      texte("🤖 cible à " + degres + "° → " + decision + " · voie " + (adv.voie > 0 ? "extérieure" : "intérieure"), ea.x, ea.y, 14, "#9cc4ff", "center");
+      texte("🤖 cible à " + degres + "° → " + decision + " · voie " + (adv.voie > 0 ? "extérieure" : adv.voie < 0 ? "intérieure" : "du milieu") + (adv.voiture.vitesse > adv.vitesseSure ? " · ralentit (virage)" : ""), ea.x, ea.y, 14, "#9cc4ff", "center");
     }
   }
 

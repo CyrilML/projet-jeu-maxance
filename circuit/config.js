@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 25,
+  version: 26,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -325,6 +325,18 @@ Circuit.CONFIG = {
     taxi: { clients: 3, paieParMetre: 0.04, paieMin: 8, vitesseArret: 2, tempsParMetre: 0.12, tempsMin: 30, doublePaieEnTaxi: true },
     vendeur: { clients: 8, temps: 6, paie: 3 }, // temps (s) pour servir chaque client
     poubelles: { nombre: 8, temps: 150, paie: 3, bonus: 15, rayon: 5, vitesseMax: 9, vehicules: ["camion", "camionnette"] },
+    // Étape 58 : ✍️ POLICIER. Au commissariat, J : tu montes dans une voiture de police et tu poursuis 5 voitures en fuite.
+    // ✍️ Elles vont aussi vite que ta voiture de police (en ligne droite) ; ✍️ tu les touches = attrapées, 20 pièces chacune.
+    policier: {
+      voitures: 5, paie: 20,
+      temps: 90, // s pour attraper chaque voiture (après, elle s'est échappée)
+      distanceFuite: 320, // m : plus loin que ça, elle s'est échappée aussi
+      depart: [70, 140], // m : elle apparaît entre 70 et 140 m de toi
+      vitesseVirage: 12, // m/s : pour tourner à un carrefour, elle doit ralentir à 43 km/h : c'est là que tu la rattrapes !
+      freinage: 12, acceleration: 9, // m/s²
+      ruse: 0.75, // 3 fois sur 4, elle tourne du côté qui l'éloigne le plus de toi ; sinon, au hasard
+      modeles: ["basse", "suv", "classique", "citadine", "porsche911", "aventador"],
+    },
   },
 
   // Étape 39 : le PERSONNAGE. ✍️ Il descend de la voiture pour en prendre une autre (touche E).
@@ -431,6 +443,12 @@ Circuit.CONFIG = {
     voie: 3.5, // m : elle roule à 3,5 m du milieu de la route (côté intérieur au départ)
     regardDevant: 18, // m : le pilote vise un point 18 m devant lui sur sa voie
     distanceDepassement: 22, // m : si tu es devant elle, sur sa voie, à moins de 22 m, elle change de voie
+    // Étape 58 : ✍️ 11 adversaires « tous différents » : chacun a son allure (× la vitesse max de ta voiture).
+    allure: [0.85, 0.97], // (le plus rapide va à 97 % : avec la même voiture, tu peux gagner si tu conduis parfaitement)
+    voies: [-4, 0, 4], // m : les 3 voies où un pilote peut rouler (intérieur, milieu, extérieur)
+    // Avant un virage, le pilote lève le pied pour ne pas finir dans l'herbe : au plus vitesseVirage × √(rayon du virage).
+    vitesseVirage: 5.2, // (les virages du circuit font 120 m de rayon : √120 × 5,2 ≈ 57 m/s ≈ 205 km/h)
+    regardVirage: 45, // m : il regarde 45 m devant lui pour savoir si un virage arrive
   },
 
   // Étape 34 : les chocs entre les voitures. Chaque voiture est vue comme 2 cercles (l'avant et l'arrière).
@@ -454,6 +472,17 @@ Circuit.CONFIG = {
     tours: 3, // nombre de tours pour finir la course
     decompte: 3, // secondes de feu rouge avant le départ
     portes: 4, // le circuit est coupé en 4 « portes » à passer dans l'ordre (anti-triche)
+    // Étape 58 : ✍️ 12 voitures (11 adversaires + toi), toutes du même modèle que la tienne, chacune de sa couleur.
+    concurrents: 11,
+    placeJoueur: 6, // ta place sur la grille (0 = la pole position ; 6 = au milieu, 4e rangée)
+    ecartGrille: 9, // m entre deux rangées de la grille
+    couleur2: [0.08, 0.08, 0.09], // la 2e couleur de tous les adversaires (toit, détails)
+    couleurs: [
+      { nom: "rouge", rgb: [0.85, 0.08, 0.06] }, { nom: "bleue", rgb: [0.1, 0.3, 0.85] }, { nom: "jaune", rgb: [0.98, 0.8, 0.08] },
+      { nom: "verte", rgb: [0.1, 0.6, 0.25] }, { nom: "orange", rgb: [0.98, 0.45, 0.05] }, { nom: "blanche", rgb: [0.94, 0.94, 0.95] },
+      { nom: "noire", rgb: [0.06, 0.06, 0.07] }, { nom: "violette", rgb: [0.45, 0.15, 0.7] }, { nom: "rose", rgb: [0.95, 0.35, 0.6] },
+      { nom: "turquoise", rgb: [0.1, 0.7, 0.75] }, { nom: "grise", rgb: [0.5, 0.52, 0.55] },
+    ],
   },
 
   // Étape 57 : ✍️ la TAILLE des véhicules (1 = la vraie taille). Maxance les trouvait trop petits.

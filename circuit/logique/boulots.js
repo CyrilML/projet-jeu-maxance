@@ -10,6 +10,10 @@
 //      avec ← → et on le donne avec Entrée, avant qu'ils perdent patience (6 s).
 //   🗑️ RAMASSER LES POUBELLES : au dépôt, avec le camion (ou la camionnette). 8 poubelles sont marquées dans
 //      la ville : on passe tout près, doucement, pour les vider, avant la fin du chrono.
+//   👮 POLICIER (étape 58) : au commissariat, J : tu montes dans une voiture de police, sirène allumée. ✍️ 5 voitures
+//      en fuite, l'une après l'autre. ✍️ Elles vont aussi vite que toi en ligne droite, mais doivent ralentir pour
+//      tourner aux carrefours : c'est là que tu les rattrapes. ✍️ Tu la touches = attrapée (20 pièces). Si elle
+//      t'échappe (90 s, ou plus de 320 m), on passe à la suivante.
 //
 // Chaque boulot est une petite MACHINE À ÉTATS : il est dans une « étape » (aller chercher, aller déposer…),
 // et un événement le fait passer à l'étape suivante. Le patron annonce tout à la radio : la sauvegarde
@@ -31,7 +35,9 @@ Circuit.Boulots = (function () {
   const pizzeria = Object.assign({ sorte: "pizzas", nom: "la pizzeria", icone: "🍕" }, AR.porteImmeuble(Ville.immeubles[B.pizzas.immeuble]));
   const stationTaxi = { sorte: "taxi", nom: "la station de taxis", icone: "🚕", x: (Ville.rue(1) + Ville.rue(2)) / 2, z: Ville.rue(3) + V.voie, angle: 0 };
   const depot = { sorte: "poubelles", nom: "le dépôt des poubelles", icone: "🗑️", x: (Ville.rue(3) + Ville.rue(4)) / 2, z: Ville.rue(1) + V.voie, angle: 0 };
-  const departs = [pizzeria, stationTaxi, depot];
+  // Étape 58 : le commissariat (le rond est devant la porte).
+  const commissariat = Object.assign({ sorte: "policier", nom: "le commissariat", icone: "👮" }, AR.porteImmeuble(Ville.immeubles[C.police.commissariat]));
+  const departs = [pizzeria, stationTaxi, depot, commissariat];
 
   // Le camion poubelle attend à côté du dépôt (on peut le prendre avec E).
   const camionDuDepot = { x: depot.x - 16, z: depot.z, angle: 0, modele: "camion" };
@@ -96,7 +102,21 @@ Circuit.Boulots = (function () {
       message(monde, "🗑️ Prends le camion garé juste à côté du dépôt (E) !");
       return;
     }
-    if (d.sorte === "pizzas") {
+    if (d.sorte === "policier") {
+      Object.assign(base, { total: B.policier.voitures, etape: "poursuivre", numero: 0 });
+      // ✍️ On te donne une voiture de police (ta voiture reste garée là, tu pourras la reprendre avec E).
+      // (Elle t'attend dans la rue, à 10 m de la porte, le long du trottoir : pas le nez contre le mur !)
+      if (modele(monde) !== "police") {
+        if (!monde.pieton) monde.garees.push(monde.voiture);
+        const c = commissariat;
+        monde.voiture = Circuit.Voiture.creer(c.x + Math.cos(c.angle) * 10, c.z + Math.sin(c.angle) * 10, c.angle + Math.PI / 2, Circuit.Garage.ficheDe("police"));
+        monde.pieton = null;
+      }
+      monde.sirene = true;
+      radio.emettre("sirene", { allumee: true });
+      monde.boulot = base;
+      nouveauFuyard(monde);
+    } else if (d.sorte === "pizzas") {
       Object.assign(base, { total: B.pizzas.livraisons, etape: "livrer" });
       monde.boulot = base;
       prochainePizza(monde);
@@ -110,7 +130,73 @@ Circuit.Boulots = (function () {
       base.cible = Object.assign({ nom: "la poubelle la plus proche" }, base.poubelles[0]);
     }
     radio.emettre("boulot-debut", { sorte: d.sorte, nom: d.nom, total: monde.boulot.total });
-    message(monde, d.icone + " C'est parti : " + { pizzas: "livre les pizzas !", taxi: "va chercher le client !", poubelles: "vide les 8 poubelles !" }[d.sorte], 3);
+    message(monde, d.icone + " C'est parti : " + { pizzas: "livre les pizzas !", taxi: "va chercher le client !", poubelles: "vide les 8 poubelles !", policier: "attrape la voiture en fuite !" }[d.sorte], 3);
+  }
+
+  // ---------------------------------------------------------------- étape 58 : la voiture en fuite
+  // Elle roule sur les rues de la ville comme la circulation (logique/circulation.js), mais sur la ligne du milieu,
+  // sans s'arrêter aux feux. À chaque nouveau morceau de rue, elle décide déjà où elle tournera au carrefour suivant :
+  // si c'est un virage, elle freine juste ce qu'il faut pour y arriver à 12 m/s.
+  function nouveauFuyard(monde) {
+    const b = monde.boulot, o = qui(monde), P = B.policier;
+    b.numero++;
+    let meilleur = null;
+    for (let essai = 0; essai < 60; essai++) {
+      const i = Math.floor(Math.random() * Ville.n), j = Math.floor(Math.random() * Ville.n);
+      const choix = Ville.voisins(i, j);
+      const [di, dj] = choix[Math.floor(Math.random() * choix.length)];
+      const x = Ville.rue(i) + di * 30, z = Ville.rue(j) + dj * 30;
+      const loin = Math.hypot(x - o.x, z - o.z);
+      // (elle doit partir en s'éloignant de toi)
+      const fuit = (x - o.x) * di + (z - o.z) * dj > 0;
+      if (loin > P.depart[0] && loin < P.depart[1] && fuit) { meilleur = { i, j, di, dj }; break; }
+      if (!meilleur) meilleur = { i, j, di, dj };
+    }
+    const m = P.modeles[Math.floor(Math.random() * P.modeles.length)];
+    const fiche = Circuit.Garage.ficheDe(m) || {};
+    const f = { de: [meilleur.i, meilleur.j], vers: [meilleur.i + meilleur.di, meilleur.j + meilleur.dj], d: [meilleur.di, meilleur.dj], etat: "droit", s: 10, voie: 0, vitesse: 15, modele: m };
+    f.voiture = { x: 0, z: 0, angle: 0, vitesse: 15, volant: 0, rotationRoues: 0, modele: m, y: 0, couleurs: fiche.couleurs, nom: fiche.nom };
+    decider(monde, f);
+    Circuit.Circulation.placer(f);
+    b.fuyard = f;
+    b.chrono = b.tempsMax = P.temps;
+    radio.emettre("fuyard", { numero: b.numero, total: b.total, nom: fiche.nom, distance: Math.round(Math.hypot(f.voiture.x - o.x, f.voiture.z - o.z)) });
+    message(monde, "🚨 Voiture en fuite n° " + b.numero + " : " + (fiche.nom || m) + " !", 2.5);
+  }
+  // Où tourner au prochain carrefour ? ✍️ Le plus souvent, du côté qui l'éloigne le plus de toi.
+  function decider(monde, f) {
+    const o = qui(monde), [i, j] = f.vers;
+    const possibles = Ville.voisins(i, j).filter(([di, dj]) => !(di === -f.d[0] && dj === -f.d[1]));
+    if (!possibles.length) return;
+    const loin = ([di, dj]) => Math.hypot(Ville.rue(i + di) - o.x, Ville.rue(j + dj) - o.z);
+    f.suiteChoisie = Math.random() < B.policier.ruse ? possibles.reduce((a, b) => (loin(b) > loin(a) ? b : a)) : possibles[Math.floor(Math.random() * possibles.length)];
+  }
+  function avancerFuyard(monde, f, dt) {
+    const P = B.policier, max = monde.voiture.vitesseMax; // ✍️ aussi vite que ta voiture de police
+    let voulue = max;
+    if (f.etat === "droit") {
+      const tourne = f.suiteChoisie && (f.suiteChoisie[0] !== f.d[0] || f.suiteChoisie[1] !== f.d[1]);
+      const reste = Circuit.Circulation.longueurDroite() - f.s;
+      if (tourne) voulue = Math.min(max, Math.sqrt(P.vitesseVirage * P.vitesseVirage + 2 * P.freinage * Math.max(0, reste)));
+    } else if (f.suite && (f.suite[0] !== f.d[0] || f.suite[1] !== f.d[1])) voulue = P.vitesseVirage;
+    f.vitesse += Math.max(-P.freinage * dt, Math.min(P.acceleration * dt, voulue - f.vitesse));
+    f.voiture.vitesse = f.vitesse;
+    f.voiture.rotationRoues += (f.vitesse * dt) / 0.36;
+    if (f.etat === "droit") {
+      f.s += f.vitesse * dt;
+      if (f.s >= Circuit.Circulation.longueurDroite()) Circuit.Circulation.choisirLaSuite(f, Math.random);
+    } else {
+      f.t += (f.vitesse * dt) / f.longueurCourbe;
+      if (f.t >= 1) {
+        f.de = f.vers;
+        f.d = f.suite;
+        f.vers = [f.de[0] + f.d[0], f.de[1] + f.d[1]];
+        f.etat = "droit";
+        f.s = 0;
+        decider(monde, f);
+      }
+    }
+    Circuit.Circulation.placer(f);
   }
 
   function prochainePizza(monde) {
@@ -146,10 +232,35 @@ Circuit.Boulots = (function () {
     }
     if (b.chrono > 0) {
       b.chrono -= dt;
+      if (b.chrono <= 0 && b.sorte === "policier") {
+        // (étape 58 : une voiture en fuite qu'on n'a pas attrapée à temps : on passe à la suivante)
+        radio.emettre("fuyard-echappe", { numero: b.numero, nom: b.fuyard.voiture.nom, raison: "le temps est écoulé" });
+        message(monde, "💨 Elle s'est échappée : temps écoulé !", 2.5);
+        suite(monde);
+        return;
+      }
       if (b.chrono <= 0) {
         finir(monde, false, "Trop tard !");
         return;
       }
+    }
+    if (b.sorte === "policier") {
+      const f = b.fuyard;
+      avancerFuyard(monde, f, dt);
+      b.cible = { x: f.voiture.x, z: f.voiture.z, nom: "la voiture en fuite" };
+      const distance = Math.hypot(f.voiture.x - o.x, f.voiture.z - o.z);
+      b.distance = distance;
+      // ✍️ Tu la touches avec ta voiture : attrapée !
+      if (!monde.pieton && distance < 8 && Circuit.Chocs.resoudre(monde.voiture, Object.assign({}, f.voiture), C.chocs).touche) {
+        payer(monde, B.policier.paie, "Voiture n° " + b.numero + " attrapée (" + f.voiture.nom + ")");
+        radio.emettre("fuyard-attrape", { numero: b.numero, nom: f.voiture.nom, temps: Math.round(b.tempsMax - b.chrono) });
+        suite(monde);
+      } else if (distance > B.policier.distanceFuite) {
+        radio.emettre("fuyard-echappe", { numero: b.numero, nom: f.voiture.nom, raison: "trop loin (" + Math.round(distance) + " m)" });
+        message(monde, "💨 Elle s'est échappée : trop loin !", 2.5);
+        suite(monde);
+      }
+      return;
     }
     if (b.sorte === "pizzas") {
       if (!pres(o, b.cible)) return;
@@ -197,6 +308,17 @@ Circuit.Boulots = (function () {
       for (const p of b.poubelles) if (!p.prise && (!meilleure || Math.hypot(p.x - o.x, p.z - o.z) < Math.hypot(meilleure.x - o.x, meilleure.z - o.z))) meilleure = p;
       b.cible = Object.assign({ nom: "la poubelle la plus proche" }, meilleure);
     }
+  }
+
+  // Étape 58 : après une voiture (attrapée ou échappée), la suivante ; après la 5e, le boulot est fini.
+  function suite(monde) {
+    const b = monde.boulot;
+    if (b.numero >= b.total) {
+      b.fuyard = null;
+      finir(monde, b.faits > 0, b.faits > 0 ? "" : "Aucune voiture attrapée");
+      return;
+    }
+    nouveauFuyard(monde);
   }
 
   // ---------------------------------------------------------------- le vendeur (dans un magasin)
@@ -257,5 +379,5 @@ Circuit.Boulots = (function () {
     nouveauClient(m);
   }
 
-  return { departs, pizzeria, stationTaxi, depot, camionDuDepot, etape, auMagasin };
+  return { departs, pizzeria, stationTaxi, depot, commissariat, camionDuDepot, etape, auMagasin };
 })();

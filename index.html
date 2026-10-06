@@ -179,6 +179,7 @@
       <a href="#etape55">Étape 55</a>
       <a href="#etape56">Étape 56</a>
       <a href="#etape57">Étape 57</a>
+      <a href="#etape58">Étape 58</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3511,6 +3512,54 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Si la voiture était centrée en hauteur au lieu d'être posée au sol, que se passerait-il en l'agrandissant ?</summary><p>Elle grandirait vers le bas aussi : ses roues s'enfonceraient dans la route.</p></details>
     </section>
 
+    <section id="etape58">
+      <h2>🏎️ Étape 58 : la course à 12 et le métier de policier <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Sur le circuit, tu cours contre 11 adversaires qui ont tous la même voiture que toi, chacun de sa couleur. En ville, tu peux devenir policier et poursuivre des voitures en fuite. <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/58-course-a-12-et-policier.md</code>.</p>
+          <ul>
+            <li>✍️ 12 voitures, toutes du même modèle que la tienne, de couleurs différentes.</li>
+            <li>✍️ Gagné seulement si tu finis 1er.</li>
+            <li>✍️ Des adversaires tous différents (85 % à 97 % de la vitesse).</li>
+            <li>✍️ Policier : 5 voitures en fuite, aussi rapides que toi ; tu les touches = attrapées ; 20 pièces chacune.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Circuit : prends la F1 (ou la Porsche…) : les 11 autres ont la même, de 11 couleurs.</li>
+            <li>☐ En haut à gauche : ta place (« 7e / 12 » au départ) et qui est en tête.</li>
+            <li>☐ La petite carte montre les 12 voitures.</li>
+            <li>☐ Ville : va au rond bleu du commissariat, <kbd>J</kbd>. Suis la flèche jaune et touche la voiture en fuite !</li>
+            <li>☐ Sous le capot : « Les 11 adversaires » et « voiture en fuite ».</li>
+            <li>Vérifie « version 26 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🏁 Qui est 1er ?</h3>
+      <p>Pour chaque voiture, le jeu calcule sa <strong>progression</strong> : combien de mètres elle a parcourus depuis le départ, en comptant les tours (tour × 1 474 m + où elle est sur le tour). Ta place, c'est 1 + le nombre d'adversaires qui ont une plus grande progression que toi. Simple !</p>
+      <h3>🤖 Comment pensent les 11 pilotes</h3>
+      <ul>
+        <li><strong>La carotte</strong> : chacun vise un point 18 m devant lui, sur sa voie (intérieur, milieu ou extérieur).</li>
+        <li><strong>Doubler</strong> : si une voiture lui bouche sa voie juste devant, il prend la voie libre la plus proche.</li>
+        <li><strong>Les virages</strong> : il regarde 45 m devant ; si la route tourne trop pour sa vitesse, il lève le pied.</li>
+        <li><strong>L'allure</strong> : chacun a son nombre entre 0,85 et 0,97, qui multiplie la vitesse max. Le plus rapide va à 97 % : avec la même voiture, tu peux le battre… si tu ne fais aucune erreur !</li>
+      </ul>
+      <h3>🚓 La voiture en fuite</h3>
+      <p>Elle va aussi vite que toi en ligne droite. Mais à chaque carrefour où elle tourne, elle doit freiner jusqu'à 43 km/h : c'est là que tu gagnes du terrain. Pour freiner juste ce qu'il faut, elle utilise une formule de physique : la vitesse qu'on peut avoir à une distance d avant le virage, c'est √(43² + 2 × freinage × d). Et pour s'échapper, 3 fois sur 4, elle tourne du côté qui l'éloigne le plus de toi.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>circuit/config.js</code>, trouve <code>allure</code> et mets <code>[0.6, 0.7]</code> : tu gagnes facilement !</li>
+        <li>Toujours là, dans <code>course</code>, change <code>placeJoueur: 0</code> : tu pars en pole position.</li>
+        <li>Dans <code>policier</code>, mets <code>ruse: 0</code> : la voiture en fuite tourne au hasard. Est-ce plus facile ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi les adversaires vont au plus à 97 % et pas 100 % ?</summary><p>Avec la même voiture qu'eux, si le plus rapide allait aussi vite que toi, tu ne pourrais jamais le rattraper : tu pars 7e !</p></details>
+      <details class="question"><summary>Où rattrape-t-on le mieux la voiture en fuite ?</summary><p>Dans les virages des carrefours : elle descend à 43 km/h.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4368,6 +4417,15 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-57" data-cle="appris-57" placeholder="Ex. : J'ai appris la différence entre une peinture et du métal…"></textarea>
         <label for="idees-57"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-57" data-cle="idees-57" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 58 · la course à 12 et le policier <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les 11 adversaires (<code>logique/course.js</code>, <code>logique/pilote.js</code>), leur dessin (<code>affichage/scene3d.js</code>), la place sur 12 (<code>affichage/tableau-de-bord.js</code>), le métier de policier et la voiture en fuite (<code>logique/boulots.js</code>, <code>logique/circulation.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : gagné si 1er, adversaires tous différents, voiture en fuite aussi rapide que toi, voiture de police donnée, 20 pièces par voiture.</p>
+        <label for="appris-58"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-58" data-cle="appris-58" placeholder="Ex. : J'ai appris comment le jeu calcule ma place…"></textarea>
+        <label for="idees-58"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-58" data-cle="idees-58" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

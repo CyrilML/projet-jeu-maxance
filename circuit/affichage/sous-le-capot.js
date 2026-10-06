@@ -29,15 +29,15 @@ Circuit.SousLeCapot = (function () {
     "nouveau-record": (d) =>
       "🏆 Nouveau record " + (d.quoi === "tour" ? "du tour" : d.quoi === "rampes" ? "des méga-rampes" : "de la course") + " : " + chrono(d.temps) + (d.ancien !== null ? " (avant : " + chrono(d.ancien) + ")" : " (le premier !)"),
     arrivee: (d) =>
-      "🏁 GAGNÉ ! Arrivée en " + chrono(d.temps) + ", " + d.avance.toLocaleString("fr-FR") + " m devant la voiture bleue · meilleur tour " + chrono(d.meilleurTour) + " · " + d.sorties + " sortie(s) de piste",
+      "🏁 GAGNÉ ! 1er sur 12, arrivée en " + chrono(d.temps) + ", " + d.avance.toLocaleString("fr-FR") + " m devant le 2e · meilleur tour " + chrono(d.meilleurTour) + " · " + d.sorties + " sortie(s) de piste",
     perdu: (d) =>
-      "😢 PERDU : la voiture bleue a fini ses tours en " + chrono(d.temps) + ". Tu étais au tour " + d.tourJoueur + ", il te restait " + d.retard.toLocaleString("fr-FR") + " m",
-    "tour-adversaire": (d) => "🔵 La voiture bleue a fini son tour n° " + d.numero + " en " + chrono(d.temps),
+      "😢 PERDU : " + (d.vainqueur || "un adversaire") + " a fini ses tours en " + chrono(d.temps) + ". Tu étais " + d.position + "e, au tour " + d.tourJoueur + ", il te restait " + d.retard.toLocaleString("fr-FR") + " m",
+    "tour-adversaire": (d) => "🏎️ En tête, " + (d.nom || "la voiture bleue") + " a fini son tour n° " + d.numero + " en " + chrono(d.temps),
     choc: (d) =>
-      "💥 Choc " + (d.contre === "mur" ? "contre un mur" : d.contre === "voiture" ? "contre une voiture" : d.contre === "vehicule" ? "contre " + d.nom : d.contre === "eau" ? "contre le bord de l'eau (pas de voiture dans la mer !)" : "avec la voiture bleue") + " ! Vitesse du choc : " + virgule(d.force, 1) + " m/s. Ta vitesse après : " + Math.round(d.vitesse * 3.6) + " km/h",
-    depassement: (d) => (d.position === 1 ? "🥇 Tu doubles la voiture bleue : tu es 1er" : "🥈 La voiture bleue te double : tu es 2e") + " (tour " + d.tour + ")",
+      "💥 Choc " + (d.contre === "mur" ? "contre un mur" : d.contre === "voiture" ? "contre une voiture" : d.contre === "vehicule" ? "contre " + d.nom : d.contre === "eau" ? "contre le bord de l'eau (pas de voiture dans la mer !)" : "avec " + (d.contre || "un adversaire")) + " ! Vitesse du choc : " + virgule(d.force, 1) + " m/s. Ta vitesse après : " + Math.round(d.vitesse * 3.6) + " km/h",
+    depassement: (d) => (d.gagne ? "⬆️ Tu doubles : tu es " : "⬇️ On te double : tu es ") + d.position + (d.position === 1 ? "er" : "e") + " sur " + (d.total || 2) + " (tour " + d.tour + ")",
     "adversaire-change-de-voie": (d) =>
-      "🤖 Tu bouches le passage (" + Math.round(d.avance) + " m devant) : la voiture bleue passe sur la voie " + (d.voie > 0 ? "extérieure" : "intérieure"),
+      "🤖 Passage bouché (" + Math.round(d.avance) + " m devant) : " + (d.nom || "la voiture bleue") + " passe sur la voie " + (d.voie > 0 ? "extérieure" : d.voie < 0 ? "intérieure" : "du milieu"),
     "sortie-de-piste": (d) =>
       "🌱 Sortie de piste à " + Math.round(d.vitesse * 3.6) + " km/h, côté " + (d.ecart > 0 ? "extérieur" : "intérieur") + " : l'herbe limite la vitesse",
     "retour-sur-la-piste": () => "🛣️ Retour sur la route",
@@ -75,7 +75,10 @@ Circuit.SousLeCapot = (function () {
     missile: (d) => "🚀 Missile tiré, il vise : " + d.cible,
     "cible-touchee": (d) => "🎯 " + (d.sorte === "ballon" ? "Ballon" : "Cible au sol") + " touché(e) " + (d.arme === "missile" ? "au missile" : "à la mitrailleuse") + " : +" + d.montant + " pièces",
     explosion: (d) => (d.sorte === "voiture" ? "🔥 " + d.nom + " explose !" : "💥 Explosion (" + d.nom + ")"),
-    "boulot-debut": (d) => "💼 Nouveau boulot : " + { pizzas: "livreur de pizzas", taxi: "chauffeur de taxi", vendeur: "vendeur", poubelles: "ramassage des poubelles" }[d.sorte] + " (" + d.nom + ", " + d.total + " à faire)",
+    "boulot-debut": (d) => "💼 Nouveau boulot : " + { pizzas: "livreur de pizzas", taxi: "chauffeur de taxi", vendeur: "vendeur", poubelles: "ramassage des poubelles", policier: "policier" }[d.sorte] + " (" + d.nom + ", " + d.total + " à faire)",
+    fuyard: (d) => "🚨 Voiture en fuite n° " + d.numero + " / " + d.total + " : " + d.nom + ", à " + d.distance + " m de toi",
+    "fuyard-attrape": (d) => "👮 Attrapée ! " + d.nom + " (n° " + d.numero + ") en " + d.temps + " s de poursuite",
+    "fuyard-echappe": (d) => "💨 " + d.nom + " (n° " + d.numero + ") s'est échappée : " + d.raison,
     "boulot-etape": (d) => (d.montant ? "🪙 +" + d.montant + " · " : "➡️ ") + d.texte,
     "boulot-fin": (d) => (d.reussi ? "🏆 Boulot réussi" : "⏹️ " + d.raison) + " : " + d.faits + " / " + d.total + ", " + d.gains + " pièce(s) gagnée(s)",
     "magasin-entree": (d) => "🛍️ Tu entres dans " + d.nom + " (← → pour choisir, Entrée pour acheter)",
@@ -158,7 +161,7 @@ Circuit.SousLeCapot = (function () {
     const monde = lireMonde();
     const v = monde.voiture;
     const r = monde.reperage;
-    const adv = monde.adversaire;
+    const adv = monde.adversaires && monde.adversaires.length ? Circuit.Course.plusProche(monde) : null; // étape 58 : le pilote le plus proche
     const mesures = lireMesures();
     const compteur = Circuit.Scene3D.compteur; // étape 38 : compté par Three.js
     const degres = Math.round((v.angle * 180) / Math.PI);
@@ -244,6 +247,10 @@ Circuit.SousLeCapot = (function () {
         ["Le petit boulot (étape 43)"],
         ["boulot", monde.boulot ? monde.boulot.nom + " · étape « " + monde.boulot.etape + " »" : monde.magasin && monde.magasin.vendeur ? "vendeur dans " + monde.magasin.nom : monde.boulotProche ? "devant " + monde.boulotProche + " (J)" : "aucun"],
         ["fait / à faire", monde.boulot ? monde.boulot.faits + " / " + monde.boulot.total : "—"],
+        ["voiture en fuite (étape 58)", monde.boulot && monde.boulot.fuyard ? (function () {
+          const f = monde.boulot.fuyard;
+          return f.voiture.nom + " · " + Math.round(monde.boulot.distance || 0) + " m · " + Math.round(f.vitesse * 3.6) + " km/h (toi : max " + Math.round(monde.voiture.vitesseMax * 3.6) + ") · " + (f.etat === "virage" ? "elle tourne : elle ralentit à " + Math.round(Circuit.CONFIG.boulots.policier.vitesseVirage * 3.6) + " km/h !" : f.suiteChoisie && (f.suiteChoisie[0] !== f.d[0] || f.suiteChoisie[1] !== f.d[1]) ? "va tourner au prochain carrefour" : "tout droit");
+        })() : "—"],
         ["chrono", monde.boulot && monde.boulot.chrono > 0 ? virgule(monde.boulot.chrono, 1) + " s sur " + Math.round(monde.boulot.tempsMax) : "—"],
         ["cible", monde.boulot && monde.boulot.cible ? monde.boulot.cible.nom + " à " + Math.round(Math.hypot(monde.boulot.cible.x - qui.x, monde.boulot.cible.z - qui.z)) + " m" : "—"],
         ["pièces gagnées au travail", Circuit.Sauvegarde.donnees.piecesGagneesAuTravail || 0],
@@ -344,11 +351,16 @@ Circuit.SousLeCapot = (function () {
       ]);
       if (adv) {
         lignes = lignes.concat([
-          ["La voiture bleue (le pilote)"],
-          ["tour", Math.min(adv.tour, Circuit.CONFIG.course.tours) + " / " + Circuit.CONFIG.course.tours],
+          ["Les 11 adversaires (étape 58)"],
+          ["ta place", monde.position + " sur " + (monde.adversaires.length + 1) + " · en tête : " + (Circuit.Course.enTete(monde) || {}).nom],
+          ["même voiture que toi", (Circuit.Garage.ficheDe(monde.voiture.modele) || {}).nom + " pour tout le monde"],
+          ["Le plus proche : " + adv.nom],
+          ["place, tour", Circuit.Course.placeAdv(monde, adv) + "e · tour " + Math.min(adv.tour, Circuit.CONFIG.course.tours) + " / " + Circuit.CONFIG.course.tours],
+          ["allure", Math.round(adv.allure * 100) + " % de la vitesse max (" + Math.round(adv.voiture.vitesseMax * 3.6) + " km/h)"],
+          ["virage devant", adv.vitesseSure < 200 ? "vitesse sûre " + Math.round(adv.vitesseSure * 3.6) + " km/h" + (adv.voiture.vitesse > adv.vitesseSure ? " → il lève le pied" : "") : "tout droit"],
           ["x, z", virgule(adv.voiture.x, 1) + " ; " + virgule(adv.voiture.z, 1) + " m"],
           ["vitesse", virgule(adv.voiture.vitesse, 1) + " m/s = " + Math.round(Math.abs(adv.voiture.vitesse) * 3.6) + " km/h"],
-          ["voie visée", (adv.voie > 0 ? "extérieure (+" : "intérieure (") + virgule(adv.voie, 1) + " m)"],
+          ["voie visée", (adv.voie > 0 ? "extérieure (+" : adv.voie < 0 ? "intérieure (" : "du milieu (") + virgule(adv.voie, 1) + " m)"],
           ["cible", Math.round((adv.difference * 180) / Math.PI) + "° → " + (Math.abs(adv.difference) <= 0.02 ? "tout droit" : adv.difference < 0 ? "tourne à gauche" : "tourne à droite")],
           ["avance sur toi", Math.round(Circuit.Course.progression(adv) - Circuit.Course.progression(monde)) + " m"],
         ]);

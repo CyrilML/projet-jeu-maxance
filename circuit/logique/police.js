@@ -64,6 +64,7 @@ Circuit.Police = (function () {
     const monde = Circuit.monde;
     if (!monde || monde.phase !== "ville" || d.contre !== "voiture") return;
     if (monde.police && monde.temps - monde.police.pousse < 0.8) return; // poussé par la police : ce n'est pas ta faute
+    if (monde.boulot && monde.boulot.sorte === "policier") return; // (étape 58 : tu ES la police, en pleine poursuite)
     monter(monde, etoilesPour(d.force), "voiture emboutie à " + Math.round(d.force * 3.6) + " km/h");
   });
   radio.ecouter("explosion", (d) => {

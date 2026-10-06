@@ -128,17 +128,18 @@ Circuit.Sons = (function () {
     enDirect.volume = volume;
 
     // 2. Le moteur de la voiture bleue : plus elle est loin, moins on l'entend.
-    if (!monde.adversaire) {
+    const proche = monde.adversaires && monde.adversaires.length ? Circuit.Course.plusProche(monde) : null; // étape 58 : on entend le plus proche
+    if (!proche) {
       // Pas de voiture bleue (le parcours) : son moteur se tait.
       Son.reglerMoteur(moteurAdversaire, 50, 0, 0, 0);
       enDirect.volumeAdversaire = 0;
       enDirect.distance = 0;
     } else {
-    const a = monde.adversaire.voiture;
+    const a = proche.voiture;
     const dx = a.x - v.x, dz = a.z - v.z;
     const distance = Math.hypot(dx, dz);
-    const proche = Math.max(0, 1 - distance / S.adversaire.distanceMax);
-    const volumeAdv = silence ? 0 : S.adversaire.volume * proche * proche;
+    const pres = Math.max(0, 1 - distance / S.adversaire.distanceMax);
+    const volumeAdv = silence ? 0 : S.adversaire.volume * pres * pres;
     // Gauche ou droite ? On compare la direction de la voiture bleue avec la droite de ta voiture.
     const droiteX = -Math.sin(v.angle), droiteZ = Math.cos(v.angle);
     const cote = distance > 0.1 ? (dx * droiteX + dz * droiteZ) / distance : 0;
