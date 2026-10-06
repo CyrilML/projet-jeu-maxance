@@ -61,6 +61,11 @@ Village.Interface = (function () {
   // Étape 11
   Village.Evenements.ecouter("batiment-use", (d) => afficher("🔧 " + d.nom + " est usé : il travaille 2 fois moins vite. Il faut des 🔨 outils !"));
   Village.Evenements.ecouter("coup-de-pouce", (d) => afficher("🎁 Coup de pouce : " + d.nom + " est offert, pour que le village ne reste pas bloqué !")); // étape 12
+  // Étape 13
+  Village.Evenements.ecouter("cabane-attend", (d) => afficher("👥 " + d.nom + " : personne pour y travailler. " + (Village.monde && !Village.Logement.placeLibre(Village.monde) ? "Il faut des lits (🛖 hutte, 🏠 maison) !" : "Un villageois va arriver.")));
+  Village.Evenements.ecouter("amelioration", (d) => afficher("⬆️ " + d.batiment + " : " + d.emoji + " " + d.nom + " ! (" + d.bonus + " % plus rapide)"));
+  Village.Evenements.ecouter("amelioration-impossible", (d) => afficher("🚫 " + d.nom + " : " + d.raison));
+  Village.Evenements.ecouter("entrepot-agrandi", (d) => afficher("🏗️ Entrepôt agrandi : " + d.places + " places de manutentionnaire !"));
   Village.Evenements.ecouter("froid", () => afficher("🥶 Plus de bois de chauffage : tout le monde a froid (20 % moins vite) !"));
   Village.Evenements.ecouter("reserve-agrandie", (d) => afficher("📦 Réserve agrandie : niveau " + d.niveau + ", " + d.capacite + " places !"));
   Village.Evenements.ecouter("reserve-impossible", (d) => afficher("🚫 Réserve : " + d.raison));
@@ -389,6 +394,9 @@ Village.Interface = (function () {
     let titre = age.emoji + " " + age.nom;
     if (obj && prochain) titre += " · " + prochain.emoji + " " + obj.filter((x) => x.fait).length + "/" + obj.length + " 🎯";
     if (monde.moment) titre += "  " + monde.moment.emoji; // étape 9 : le moment de la journée
+    // Étape 13 : ✍️ les habitants et les lits, toujours visibles (⚠️ quand il n'y a plus de lit)
+    const Lg = Village.Logement, hab = Lg.habitants(monde), lits = Lg.capacite(monde);
+    titre += "  👥 " + hab + "/" + lits + (hab >= lits ? " ⚠️" : "");
     texte(ctx, titre, 22, petit ? 25 : 28, petit ? 11 : 13, "#7a5a30", true);
     ressources.forEach(([emoji, n], k) => texte(ctx, emoji + " " + n, 22 + (k % parLigne) * pas, (petit ? 47 : 51) + Math.floor(k / parLigne) * (petit ? 20 : 24), petit ? 13 : 17, n <= 0 && (k === 3 || k === 4) ? "#c0392b" : "#3b2614", true));
     zone(10, 10, lb, hStock, "objectifs");
@@ -558,6 +566,8 @@ Village.Interface = (function () {
       else {
         const prix = p.deplacer ? "déménagement gratuit" : B.offert(monde, p.type) ? "🎁 offert (coup de pouce)" : Object.entries(B.coutPour(monde, p.type)).map(([r, n]) => n + " " + EMO(r)).join(" ") || "gratuit";
         texteBulle = (p.deplacer ? "↔️ " : B.TYPES[p.type].emoji + " ") + prix + (p.route === null ? " · ⚠️ pas de chemin possible" : p.route.length ? " · +" + p.route.length + " case(s) de chemin" : "");
+        // Étape 13 : ✍️ y aura-t-il quelqu'un pour y travailler ?
+        if (!p.deplacer && B.TYPES[p.type].metier && !Village.Villageois.libres(monde).length) texteBulle += Village.Logement.placeLibre(monde) ? " · 👥 pas de villageois libre (il en arrive)" : " · 🛏️ plus de lit : personne pour y travailler !";
       }
     } else if (monde.trace && monde.trace.pret && monde.trace.cases.length) {
       const fin = monde.trace.cases[monde.trace.cases.length - 1], ap = Village.Placement.apercu(monde);
@@ -625,7 +635,8 @@ Village.Interface = (function () {
       lignes.push("libres : 🪵 " + d("troncs") + "   🟫 " + d("planches") + "   🪨 " + d("pierres"));
       lignes.push("🐟 " + monde.stock.poissons + "   🍖 " + monde.stock.viande + "   (libres : " + d("poissons") + " · " + d("viande") + ")");
       const actifs = Village.Porteurs.actifs(monde), dehors = actifs.filter((p) => p.etat !== "attend").length;
-      lignes.push("🚚 " + actifs.length + " porteurs : " + dehors + " au travail" + (actifs.some((p) => p.affame) ? " · 🍽️ certains ont faim !" : ""));
+      lignes.push("🚚 " + actifs.length + " / " + Village.Ameliorations.placesPorteurs(monde) + " manutentionnaires (entrepôt niveau " + Village.Ameliorations.niveau(monde) + ") : " + dehors + " au travail" + (actifs.some((p) => p.affame) ? " · 🍽️ certains ont faim !" : "")); // étape 13
+      lignes.push("👥 " + monde.villageois.length + " villageois sans travail · " + Village.Logement.habitants(monde) + " habitants / " + Village.Logement.capacite(monde) + " lits");
       if (monde.partis) lignes.push("😢 " + monde.partis + " habitant(s) parti(s) (trop faim)");
       lignes.push("📋 File d'attente : " + monde.file.length + " livraison(s)");
       lignes.push("🛏️ Logement : " + Village.Logement.habitants(monde) + " habitants / " + Village.Logement.capacite(monde) + " places"); // étape 8
@@ -639,13 +650,13 @@ Village.Interface = (function () {
       const Lg = Village.Logement;
       lignes.push("🛏️ " + C.logement[b.type] + " places pour dormir");
       lignes.push("Tout le village : " + Lg.habitants(monde) + " habitants / " + Lg.capacite(monde) + " places");
-    } else if (!b.ouvrier && !Village.Logement.placeLibre(monde)) {
-      // Étape 8 : ✍️ pas de place pour loger son ouvrier
-      lignes.push("🛏️ Personne n'habite ici : pas de place pour loger");
-      lignes.push("le " + type.metier + ". Construis une 🛖 hutte ou une 🏠 maison !");
     } else if (!b.ouvrier) {
-      lignes.push(b.produits ? "😢 L'habitant est parti : il avait trop faim." : "🙋 Un habitant va bientôt s'installer.");
-      lignes.push(Village.Repas.nourritureEnStock(monde) >= 2 ? "Un nouvel habitant arrive dans " + Math.ceil(C.repas.retour - (b.attenteHabitant || 0)) + " s" : "Il faut de la nourriture dans l'entrepôt.");
+      // Étape 13 : ✍️ un villageois doit venir travailler ici
+      if (Village.Villageois.versLeTravail(monde, b)) lignes.push("🚶 Un villageois arrive pour travailler ici !");
+      else {
+        lignes.push("👥 Personne ne travaille ici : aucun villageois libre.");
+        lignes.push(!Village.Logement.placeLibre(monde) ? "🛏️ Plus de lit libre : construis une 🛖 hutte ou une 🏠 maison !" : Village.Repas.nourritureEnStock(monde) < 2 ? "🍽️ Il faut à manger pour qu'un villageois arrive." : "Un villageois arrive toutes les " + C.villageois.arrivee + " s.");
+      }
     } else if (C.ateliers[b.type]) {
       // Étape 8 : un atelier (scierie, fonderie, forge) et sa recette
       const R = C.ateliers[b.type], q = (obj) => Object.entries(obj).map(([r, n]) => n + " " + EMO(r)).join(" + ");
@@ -687,6 +698,14 @@ Village.Interface = (function () {
       if (o.froid) lignes.push("🥶 A froid : plus de bois de chauffage (−20 %)");
     }
     if (b.usure > 0 && b.etat === "pret") lignes.push((b.usure >= 1 ? "🔧 USÉ : 2 fois moins vite ! " : "🔧 Usure : " + Math.round(b.usure * 100) + " % · ") + (b.usure < C.bourg.reparer ? "réparé à " + Math.round(C.bourg.reparer * 100) + " %" : monde.batiments.some((x) => x.type === "macon" && x.etat === "pret") ? "le maçon-couvreur va venir 🪜" : "il faut un maçon-couvreur 🪜 !"));
+    // Étape 13 : les boutons du bas (agrandir l'entrepôt, améliorer le bâtiment)
+    const Am = Village.Ameliorations, prochaine = b.etat === "pret" ? Am.suivante(b) : null, faites = b.ameliorations || 0, total = Am.liste(b).length;
+    const prixTexte = (prix, pieces) => Object.entries(prix).map(([r, n]) => n + EMO(r)).join(" ") + (pieces ? " " + pieces + "🪙" : "");
+    if (b.type === "entrepot" && b.etat === "pret") lignes.push("🏗️ Agrandir : +" + C.entrepot.parNiveau + " places de manutentionnaire (niveau " + Am.niveau(monde) + " / " + C.entrepot.niveauMax + ")");
+    if (total && b.etat === "pret") {
+      if (prochaine) { const e = prochaine.effet, gain = typeof e === "number" ? "−" + Math.round((1 - e) * 100) + " % de temps" : "porteurs +" + Math.round((e.porteurs - 1) * 100) + " % plus rapides"; lignes.push("⬆️ " + "★".repeat(faites) + "☆".repeat(total - faites) + " Prochaine : " + prochaine.emoji + " " + prochaine.nom + " (" + gain + ")"); }
+      else lignes.push("⬆️ " + "★".repeat(faites) + " Toutes les améliorations sont faites !");
+    }
     // Étape 12 : une ligne trop longue passe à la ligne (elle ne dépasse plus du cadre)
     ctx.font = (petit ? 11 : 13) + "px " + POLICE;
     const coupees = [];
@@ -699,15 +718,24 @@ Village.Interface = (function () {
       coupees.push(ligne);
     }
     lignes.length = 0; lignes.push(...coupees);
-    const hb = boutonsReserve ? 40 : 0;
+    const rangees = [];
+    if (boutonsReserve) rangees.push("reserve");
+    if (b.type === "entrepot" && b.etat === "pret" && Am.niveau(monde) < C.entrepot.niveauMax) rangees.push("agrandir");
+    if (prochaine) rangees.push("ameliorer");
+    const hb = rangees.length * 40;
     const h = 34 + lignes.length * (petit ? 17 : 19) + 8 + hb;
     bulle(ctx, x, y, l, h);
     zone(x, y, l, h, "rien"); // (avant les boutons, pour qu'ils restent au-dessus)
     texte(ctx, type.emoji + " " + type.nom, x + 12, y + 18, petit ? 13 : 15, "#3b2614", true);
     lignes.forEach((t, n) => texte(ctx, t, x + 12, y + 38 + n * (petit ? 17 : 19), petit ? 11 : 13, "#5a4220"));
+    rangees.forEach((sorte, n) => {
+      const by = y + h - hb + n * 40;
+      if (sorte === "agrandir") { const p = Am.prixAgrandir(monde); bouton(ctx, x + 10, by, l - 20, 32, "🏗️ Agrandir · " + prixTexte(p.ressources, p.pieces), "agrandirEntrepot", true, !Am.raisonAgrandir(monde), "#d98a1f"); }
+      if (sorte === "ameliorer") { const bloque = (monde.age || 0) < prochaine.age; bouton(ctx, x + 10, by, l - 20, 32, bloque ? "🔒 " + C.ages[prochaine.age].emoji + " " + C.ages[prochaine.age].nom : "⬆️ Améliorer · " + prixTexte(prochaine.cout), "ameliorer", b.numero, !Am.raison(monde, b), "#8a5ab0"); }
+    });
     if (boutonsReserve) {
       // Étape 11 : agrandir la réserve, avec des ressources (très cher) ou des 💎
-      const Re = Village.Reserve, p = Re.prix(monde), by = y + h - 40, lb2 = (l - 30) / 2;
+      const Re = Village.Reserve, p = Re.prix(monde), by = y + h - hb, lb2 = (l - 30) / 2;
       bouton(ctx, x + 10, by, lb2 + 14, 32, "📦 " + Object.entries(p.ressources).map(([r, n]) => n + EMO(r)).join(" ") + (p.pieces ? " " + p.pieces + "🪙" : ""), "reserve", "ressources", !Re.raison(monde, "ressources"), "#d98a1f");
       bouton(ctx, x + 30 + lb2, by, lb2 - 10, 32, "📦 " + p.gemmes + " 💎", "reserve", "gemmes", !Re.raison(monde, "gemmes"), "#3e7bff");
       boutonsReserve = false;

@@ -30,11 +30,15 @@ Village.Porteurs = (function () {
     for (let n = 0; n < (nombre || C.porteurs.nombre); n++) ajouterPorteur(monde);
   }
 
-  // Étape 7 : un porteur de plus (acheté à la boutique 💎).
-  function ajouterPorteur(monde) {
+  // Un porteur de plus. Étape 13 : c'est un villageois qui arrive à l'entrepôt (il garde sa faim).
+  let prochainPorteur = 1;
+  function ajouterPorteur(monde, villageois) {
     const e = entrepot(monde);
     if (!e) return;
-    monde.porteurs.push({ numero: monde.porteurs.length + 1, x: e.colonne + 0.5, y: e.ligne + 0.5, etat: "attend", travail: null, chemin: null, pas: 0, porte: null, direction: 1 });
+    prochainPorteur = Math.max(prochainPorteur, monde.porteurs.reduce((m, p) => Math.max(m, p.numero + 1), 1));
+    const p = { numero: prochainPorteur++, x: e.colonne + 0.5, y: e.ligne + 0.5, etat: "attend", travail: null, chemin: null, pas: 0, porte: null, direction: 1 };
+    if (villageois) Object.assign(p, { faim: villageois.faim || 0, affame: !!villageois.affame, ventreVide: villageois.ventreVide || 0 });
+    monde.porteurs.push(p);
   }
 
   const entrepot = (monde) => monde.batiments.find((b) => b.type === "entrepot");
@@ -121,7 +125,7 @@ Village.Porteurs = (function () {
 
   function marcher(p, dt, monde) {
     // Ventre vide : 2 fois moins vite. Étape 6 : la vitesse dépend du sol (terre ou pierre).
-    let reste = C.porteurs.vitesse * Village.Repas.vitesse(p) * Village.Routes.vitesseDuSol(monde, p.x, p.y) * Village.Recherches.bonus(monde, "porteurs") * dt; // étape 7 : les brouettes
+    let reste = C.porteurs.vitesse * Village.Repas.vitesse(p) * Village.Routes.vitesseDuSol(monde, p.x, p.y) * Village.Recherches.bonus(monde, "porteurs") * Village.Ameliorations.vitessePorteurs(monde) * dt; // étape 7 : les brouettes ; étape 13 : l'écurie
     while (reste > 0 && p.pas < p.chemin.length) {
       const cible = p.chemin[p.pas];
       const dx = cible.x - p.x, dy = cible.y - p.y, d = Math.hypot(dx, dy);

@@ -57,6 +57,14 @@ Village.SousLeCapot = (function () {
     "porteur-livre": (d) => "🤲 Porteur " + d.porteur + " a livré " + emo(d.quoi) + " à " + d.nom + " n° " + d.batiment,
     "arrivee-entrepot": (d) => "🏠 Porteur " + d.porteur + " range " + (d.quantite > 1 ? d.quantite + " " + d.quoi : emo(d.quoi)) + " dans l'entrepôt → " + d.stock + " en stock",
     // Étape 4
+    // Étape 13 : les villageois et les améliorations
+    "villageois-arrive": (d) => "👥 Un villageois (n° " + d.numero + ") arrive au village : il y a un lit libre et à manger (" + d.habitants + " habitants / " + d.places + " lits)",
+    "villageois-envoye": (d) => "🚶 Le villageois n° " + d.numero + " part " + (d.porteur ? "devenir manutentionnaire à l'entrepôt" : "travailler à : " + d.nom + " n° " + d.batiment) + " (" + d.pas + " pas)",
+    "villageois-embauche": (d) => "👷 Le villageois n° " + d.numero + " devient " + d.metier + " (" + d.nom + ")",
+    "cabane-attend": (d) => "👥 " + d.nom + " n° " + d.numero + " : aucun villageois libre pour y travailler",
+    amelioration: (d) => "⬆️ " + d.batiment + " n° " + d.numero + " : " + d.emoji + " " + d.nom + " (amélioration " + d.niveau + ") · son travail est " + d.bonus + " % plus rapide",
+    "amelioration-impossible": (d) => "🚫 Amélioration « " + d.nom + " » impossible : " + d.raison,
+    "entrepot-agrandi": (d) => "🏗️ Entrepôt au niveau " + d.niveau + " : " + d.places + " places de manutentionnaire",
     // Étape 11 : le bourg, la réserve et les pubs
     "batiment-use": (d) => "🔧 " + d.nom + " n° " + d.numero + " est complètement usé : son ouvrier va 2 fois moins vite",
     reparation: (d) => "🪜 Le maçon-couvreur a réparé " + d.nom + " n° " + d.numero + " avec 1 🔨 (il était usé à " + d.avant + " %)",
@@ -210,6 +218,14 @@ Village.SousLeCapot = (function () {
     const mi = monde.missions.actuelle;
     h += ligne("mission", mi ? mi.id + " · " + mi.etat + (mi.etat === "encours" ? " · encore " + Math.ceil(mi.reste) + " s" : "") : "prochaine dans " + Math.ceil(monde.missions.attente) + " s");
     h += ligne("missions réussies", monde.missions.reussies.length);
+    // Étape 13 : les villageois et l'entrepôt
+    h += groupe("👥 Les villageois · 🏗️ l'entrepôt");
+    const Vi13 = monde.villageois;
+    h += ligne("habitants = ouvriers + porteurs + villageois", Village.Logement.habitants(monde) + " = " + monde.batiments.filter((b) => b.ouvrier).length + " + " + monde.porteurs.length + " + " + Vi13.length + " (lits : " + Village.Logement.capacite(monde) + ")");
+    h += ligne("villageois : se promènent · vont au travail", Vi13.filter((v) => v.etat !== "travail").length + " · " + Vi13.filter((v) => v.etat === "travail").length);
+    h += ligne("cabanes vides (qui attendent quelqu'un)", monde.batiments.filter((b) => b.etat === "pret" && Village.Batiments.TYPES[b.type].metier && !b.ouvrier).length);
+    h += ligne("entrepôt : niveau · places de porteur", Village.Ameliorations.niveau(monde) + " · " + Village.Ameliorations.placesPorteurs(monde) + (monde.porteursBonus ? " (dont " + monde.porteursBonus + " achetées)" : ""));
+    h += ligne("vitesse des porteurs (écurie)", "× " + virgule(Village.Ameliorations.vitessePorteurs(monde), 2));
     // Étape 11 : la réserve, les pubs et les règles du bourg
     const Re = Village.Reserve, ry = Re.rythme(monde), mnp = Re.minutesAvantPlein(monde);
     h += groupe("📦 La réserve · 📺 les pubs · 🏰 le bourg");
@@ -282,6 +298,7 @@ Village.SousLeCapot = (function () {
       let etatB = b.etat === "chantier" ? "chantier " + Math.round(b.progres * 100) + " %" : Village.CONFIG.ateliers[b.type] ? (b.travail ? "fabrique (" + virgule(b.travail.reste, 1) + " s)" : b.attend || "prêt") + " · réserve " + JSON.stringify(b.entrees) : Village.CONFIG.mines[b.type] ? (b.epuise ? "filon épuisé" : b.travail ? "creuse (" + virgule(b.travail.reste, 1) + " s)" : "prêt") : b.ouvrier ? b.ouvrier.etat + (b.ouvrier.minuteur > 0 ? " " + virgule(b.ouvrier.minuteur, 1) + " s" : "") : "prêt";
       if (b.ouvrier && b.ouvrier.porte) etatB += " · porte des " + b.ouvrier.porte;
       if (b.usure > 0) etatB += " · usure " + Math.round(b.usure * 100) + " %"; // étape 11
+      if (b.ameliorations) etatB += " · " + "★".repeat(b.ameliorations) + " × " + virgule(Village.Ameliorations.bonus(b), 2); // étape 13
       if (b.etat === "chantier") { const m = Village.Batiments.materiaux(b); etatB += " · " + m.arrives + "/" + m.total + " arrivés"; }
       if (b.sortie) etatB += " · " + b.sortie + " devant";
       if (b.ouvrier && b.etat === "pret") etatB += " · faim " + Math.floor(b.ouvrier.faim || 0) + " s" + (b.ouvrier.affame ? " 🍽️" : "");

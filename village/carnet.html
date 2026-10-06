@@ -136,6 +136,7 @@
       <a href="#etape10">Étape 10</a>
       <a href="#etape11">Étape 11</a>
       <a href="#etape12">Étape 12</a>
+      <a href="#etape13">Étape 13</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1031,6 +1032,61 @@ et jamais plus du quart de ce qui te manque pour l'âge suivant</pre>
       <details class="question"><summary>Tu as 0 planche et aucune scierie. Combien coûte une scierie ?</summary><p>Rien : elle est offerte (le coup de pouce), pour que tu ne restes pas bloqué.</p></details>
     </section>
 
+    <section id="etape13">
+      <h2>👥 Étape 13 : les villageois, les manutentionnaires et les améliorations <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">On voit maintenant que tout dépend des maisons : des villageois se promènent en attendant du travail, et chaque nouvelle cabane en appelle un. L'entrepôt s'agrandit pour avoir plus de manutentionnaires, et chaque bâtiment peut être amélioré (hache aiguisée, scie à cadre, écurie…). <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/14-villageois-ameliorations.md</code>.</p>
+          <ul>
+            <li>✍️ Comprendre que la production dépend des maisons (1B : des villageois qui vont travailler).</li>
+            <li>✍️ Des manutentionnaires à l'entrepôt (2B : on l'agrandit).</li>
+            <li>✍️ Améliorer chaque cabane et l'entrepôt.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ En haut : 👥 habitants / lits.</li>
+            <li>☐ Construis une cabane : un villageois y va à pied (bulle avec l'emoji de la cabane).</li>
+            <li>☐ Plus de lit (⚠️) : la nouvelle cabane reste vide. Construis une hutte !</li>
+            <li>☐ Touche l'entrepôt : « 🏗️ Agrandir », puis regarde des villageois devenir porteurs.</li>
+            <li>☐ Touche un bûcheron : « ⬆️ Améliorer », et une étoile ★ apparaît sur l'enseigne.</li>
+            <li>Vérifie « version 14 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>👥 D'où viennent les travailleurs ?</h3>
+      <pre style="white-space: pre-wrap">lits libres ET à manger ──(toutes les 20 s)──► un villageois arrive
+villageois libre ──(une cabane l'appelle)──► il y va à pied ──► il devient bûcheron, pêcheur… ou porteur
+habitants = ouvriers + porteurs + villageois sans travail   (jamais plus que les lits !)</pre>
+      <p>C'est une <strong>chaîne de dépendances</strong> : pour produire plus, il faut des cabanes ; pour les faire marcher, il faut des villageois ; pour avoir des villageois, il faut des lits ET de la nourriture. Si un maillon manque, tout s'arrête : c'est ça, gérer un village !</p>
+
+      <h3>🏗️ Les manutentionnaires de l'entrepôt</h3>
+      <p>L'entrepôt a des places de porteur : 3 au début, +2 à chaque agrandissement (5 niveaux). Une place libre appelle un villageois, comme une cabane. Plus de porteurs, c'est moins d'attente dans la file des livraisons (sous le capot : « File d'attente »).</p>
+
+      <h3>⬆️ Améliorer, ou faire une recherche ?</h3>
+      <pre style="white-space: pre-wrap">temps de travail = temps normal × recherches (TOUT le village) × améliorations (CE bâtiment)
+bûcheron :         4 s         × 0,6 (Haches affûtées)        × 0,8 (Hache aiguisée)   = 1,92 s</pre>
+      <p>Une recherche de l'université marche pour tous les bâtiments, mais elle est chère et lente. Une amélioration est immédiate et moins chère, mais seulement pour UN bâtiment : avec 4 bûcherons, il faut en payer 4. À toi de choisir : améliorer, ou construire une cabane de plus (qui demandera un villageois… et un lit) ?</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, trouve « 👥 Les villageois » : combien se promènent, combien vont au travail ?</li>
+        <li>Remplis tous les lits : est-ce qu'un villageois arrive encore ? Que dit le journal ?</li>
+        <li>Améliore un bûcheron 2 fois : sous le capot, sa ligne montre « ★★ × 0,56 ». Pourquoi 0,56 ?</li>
+        <li>Dans <code>config.js</code>, trouve <code>ameliorations</code> : invente une amélioration pour le pêcheur !</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Tu as 10 lits, 6 ouvriers, 3 porteurs et 1 villageois libre. Un nouveau villageois peut-il arriver ?</summary><p>Non : 6 + 3 + 1 = 10 habitants, tous les lits sont pris. Il faut une hutte ou une maison.</p></details>
+      <details class="question"><summary>L'entrepôt est au niveau 3. Combien de places de porteur ?</summary><p>3 + 2 × (3 − 1) = 7 places.</p></details>
+      <details class="question"><summary>Hache aiguisée (× 0,8) puis Hache en fer (× 0,7) : de combien le bûcheron est-il plus rapide ?</summary><p>0,8 × 0,7 = 0,56 : son travail prend 56 % du temps, donc 44 % plus rapide.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1108,8 +1164,14 @@ et jamais plus du quart de ce qui te manque pour l'âge suivant</pre>
           <p>L'aperçu transparent avec ✅ et ❌ et sa route proposée, l'appui long pour déplacer, les routes au doigt sans quadrillage, le maçon-couvreur, le coup de pouce, un menu sans ce qui n'est pas débloqué.</p>
           <p class="apprend"><b>Tu apprends :</b> l'appui long, l'aperçu avant de valider, le tracé d'un chemin. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">13</div>
+          <h4>👥 Les villageois, les manutentionnaires et les améliorations <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Des villageois qui viennent travailler à pied, des lits pour tout le monde, l'entrepôt qui s'agrandit, et 2 améliorations par bâtiment.</p>
+          <p class="apprend"><b>Tu apprends :</b> une chaîne de dépendances, des multiplicateurs locaux et globaux. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">14</div>
           <h4>🏙️ La ville : monuments, fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -1222,6 +1284,14 @@ et jamais plus du quart de ce qui te manque pour l'âge suivant</pre>
         <textarea class="journal" id="village-appris-12" data-cle="village-appris-12" placeholder="Ex. : J'ai appris qu'il faut montrer avant de faire…"></textarea>
         <label for="village-idees-12"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-12" data-cle="village-idees-12" placeholder="Ex. : Des ponts pour traverser les rivières…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 13 · les villageois, les manutentionnaires et les améliorations <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les villageois (<code>logique/villageois.js</code>), les lits pour tous (ouvriers, porteurs, villageois), l'entrepôt qui s'agrandit et les améliorations (<code>logique/ameliorations.js</code>), le compteur 👥 en haut, les étoiles sur les enseignes, la base de données en version 11.</p>
+        <label for="village-appris-13"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-13" data-cle="village-appris-13" placeholder="Ex. : J'ai appris ce qu'est une chaîne de dépendances…"></textarea>
+        <label for="village-idees-13"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-13" data-cle="village-idees-13" placeholder="Ex. : Une école pour former les villageois…"></textarea>
       </div>
     </section>
   </main>

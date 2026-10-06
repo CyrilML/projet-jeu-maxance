@@ -104,6 +104,7 @@
       marche: null, // étape 8 : { sens: "vendre" ou "acheter", quoi: "planches" }
       reserve: null, pub: null, absenceVue: false, // étape 11
       valider: E.consommer("valider"), annulerProjet: false, // étape 12 : ✅ et ❌
+      ameliorer: null, agrandirEntrepot: false, // étape 13
       annuler: false,
       allerA: null,
       souris,
@@ -128,6 +129,8 @@
         else if (z.action === "absenceVue") i.absenceVue = true;
         else if (z.action === "valider") i.valider = true; // étape 12
         else if (z.action === "annulerProjet") i.annulerProjet = true;
+        else if (z.action === "ameliorer") i.ameliorer = z.valeur; // étape 13
+        else if (z.action === "agrandirEntrepot") i.agrandirEntrepot = true;
         else if (z.action === "construire") { i.construire = z.valeur; Village.Interface.fermerMenu(); }
         else if (z.action === "outil") { i.outil = z.valeur; Village.Interface.fermerMenu(); }
         else if (z.action === "annuler" || z.action === "fermer") i.annuler = true;
@@ -193,7 +196,7 @@
       intentions = Object.assign({}, intentions, {
         zoom: 0, village: false, construire: null, outil: null, annuler: false, allerA: null, recherche: null, mission: null, achat: null,
         marche: null, reserve: null, pub: null, absenceVue: false, // étape 11 : sinon, une vente se faisait 2 fois !
-        valider: false, annulerProjet: false,
+        valider: false, annulerProjet: false, ameliorer: null, agrandirEntrepot: false,
         souris: Object.assign({}, intentions.souris, { glisseX: 0, glisseY: 0, molette: 0, pince: 1, centrePince: null, clic: null, debutAppui: null, leve: null, appuiLong: null }),
       });
       pas++;

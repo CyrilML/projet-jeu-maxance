@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 13,
+  version: 14,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -135,7 +135,50 @@ Village.CONFIG = {
   // Étape 8 : ✍️ 2B, chaque ouvrier a besoin d'une PLACE pour dormir. Le campement (les tentes autour de
   // l'entrepôt) loge 6 ouvriers ; chaque hutte en loge 3 de plus, chaque maison 6.
   // (Les porteurs, eux, dorment à l'entrepôt : ils ne comptent pas.)
-  logement: { entrepot: 6, hutte: 3, maison: 6 },
+  // Étape 13 : ✍️ les porteurs (manutentionnaires) et les villageois sans travail dorment aussi quelque part :
+  // le campement passe à 10 places.
+  logement: { entrepot: 10, hutte: 3, maison: 6 },
+
+  // Étape 13 : ✍️ (1B) les VILLAGEOIS. Ils arrivent au village quand il y a un lit libre et à manger,
+  // se promènent près du feu, et vont travailler là où on a besoin d'eux : chaque cabane en prend un,
+  // et l'entrepôt en prend comme manutentionnaires (ses places dépendent de son niveau).
+  villageois: {
+    depart: 3, // villageois sans travail au début d'une partie (en plus des 3 manutentionnaires)
+    arrivee: 20, // s entre deux arrivées (s'il y a un lit libre et au moins 2 repas en stock)
+    vitesse: 1.2, // cases par seconde quand ils vont au travail (0,6 en se promenant)
+    promenade: 3, // cases autour du feu de camp
+  },
+
+  // Étape 13 : ✍️ (2B) l'ENTREPÔT s'agrandit pour accueillir plus de manutentionnaires (les porteurs).
+  //   places = 3 + 2 × (niveau − 1) + celles achetées à la boutique ; niveau 5 au plus.
+  //   prix pour passer au niveau suivant = prix × facteurPrix^(niveau − 1)
+  entrepot: { porteurs: 3, parNiveau: 2, niveauMax: 5, prix: { planches: 30, pierres: 20 }, prixPieces: 40, facteurPrix: 2 },
+
+  // Étape 13 : ✍️ les AMÉLIORATIONS de chaque bâtiment (2 niveaux au plus), payées tout de suite avec le stock.
+  //   effet : le temps de travail de CE bâtiment est multiplié par ce nombre (0,8 = 20 % plus rapide).
+  //   Pour l'entrepôt, l'effet « porteurs » multiplie la vitesse des porteurs.
+  //   La différence avec l'université : une recherche marche pour TOUT le village ; une amélioration,
+  //   seulement pour le bâtiment qu'on améliore (4 bûcherons = 4 améliorations à payer).
+  ameliorations: {
+    bucheron: [{ nom: "Hache aiguisée", emoji: "🪓", age: 0, cout: { planches: 6, pierres: 4 }, effet: 0.8 }, { nom: "Hache en fer", emoji: "⚒️", age: 2, cout: { planches: 10, outils: 2 }, effet: 0.7 }],
+    forestier: [{ nom: "Arrosoir", emoji: "🪣", age: 0, cout: { planches: 6, pierres: 2 }, effet: 0.8 }, { nom: "Pelle en fer", emoji: "⚒️", age: 2, cout: { planches: 8, outils: 2 }, effet: 0.7 }],
+    carriere: [{ nom: "Masse et coins", emoji: "🔨", age: 0, cout: { planches: 8 }, effet: 0.8 }, { nom: "Pic en acier", emoji: "⛏️", age: 2, cout: { planches: 6, outils: 3 }, effet: 0.7 }],
+    pecheur: [{ nom: "Barque", emoji: "🛶", age: 0, cout: { planches: 10 }, effet: 0.8 }, { nom: "Grand filet", emoji: "🥅", age: 1, cout: { planches: 12, pierres: 4 }, effet: 0.7 }],
+    chasseur: [{ nom: "Arc long", emoji: "🏹", age: 0, cout: { planches: 8 }, effet: 0.8 }, { nom: "Chien de chasse", emoji: "🐕", age: 1, cout: { planches: 6, viande: 10 }, effet: 0.7 }],
+    geologue: [{ nom: "Loupe", emoji: "🔍", age: 1, cout: { planches: 6, pierres: 6 }, effet: 0.8 }, { nom: "Carte des roches", emoji: "🗺️", age: 2, cout: { planches: 10, outils: 1 }, effet: 0.7 }],
+    scierie: [{ nom: "Scie à cadre", emoji: "🪚", age: 0, cout: { planches: 8, pierres: 4 }, effet: 0.8 }, { nom: "Roue à eau", emoji: "💧", age: 2, cout: { planches: 20, pierres: 10, outils: 2 }, effet: 0.65 }],
+    mineCharbon: [{ nom: "Wagonnet", emoji: "🛒", age: 1, cout: { planches: 10, pierres: 6 }, effet: 0.8 }, { nom: "Étais solides", emoji: "🪵", age: 2, cout: { planches: 16, outils: 2 }, effet: 0.7 }],
+    mineFer: [{ nom: "Wagonnet", emoji: "🛒", age: 2, cout: { planches: 10, pierres: 6 }, effet: 0.8 }, { nom: "Étais solides", emoji: "🪵", age: 2, cout: { planches: 16, outils: 2 }, effet: 0.7 }],
+    mineOr: [{ nom: "Wagonnet", emoji: "🛒", age: 3, cout: { planches: 12, pierres: 8 }, effet: 0.8 }, { nom: "Étais solides", emoji: "🪵", age: 3, cout: { planches: 20, outils: 3 }, effet: 0.7 }],
+    fonderie: [{ nom: "Grand creuset", emoji: "🫕", age: 2, cout: { pierres: 20, lingots: 2 }, effet: 0.8 }, { nom: "Soufflerie", emoji: "🌬️", age: 3, cout: { lingots: 6, outils: 2 }, effet: 0.7 }],
+    forge: [{ nom: "Grande enclume", emoji: "⚒️", age: 2, cout: { pierres: 10, lingots: 4 }, effet: 0.8 }, { nom: "Marteau-pilon", emoji: "🔨", age: 3, cout: { lingots: 8, outils: 4 }, effet: 0.7 }],
+    ferme: [{ nom: "Faux", emoji: "🌾", age: 3, cout: { planches: 10, outils: 2 }, effet: 0.8 }, { nom: "Bœufs de labour", emoji: "🐂", age: 3, cout: { planches: 20, pain: 10 }, effet: 0.7 }],
+    moulin: [{ nom: "Ailes en toile", emoji: "🌬️", age: 3, cout: { planches: 16 }, effet: 0.8 }, { nom: "Meule double", emoji: "🪨", age: 3, cout: { pierres: 30, outils: 2 }, effet: 0.7 }],
+    boulangerie: [{ nom: "Pétrin", emoji: "🥣", age: 3, cout: { planches: 12 }, effet: 0.8 }, { nom: "Grand four", emoji: "🔥", age: 3, cout: { pierres: 30, charbon: 10 }, effet: 0.7 }],
+    orfevre: [{ nom: "Loupe d'orfèvre", emoji: "🔍", age: 3, cout: { lingots: 4 }, effet: 0.8 }, { nom: "Établi fin", emoji: "🪑", age: 3, cout: { or: 6, outils: 3 }, effet: 0.7 }],
+    macon: [{ nom: "Échafaudage", emoji: "🪜", age: 3, cout: { planches: 20 }, effet: 0.8 }],
+    entrepot: [{ nom: "Écurie et chevaux", emoji: "🐴", age: 2, cout: { planches: 40, pierres: 20, outils: 4 }, effet: { porteurs: 1.25 } }],
+  },
 
   // Étape 8 : 🏪 le MARCHÉ. Chaque ressource a un prix de base en pièces 🪙 (pour 1 objet). Le prix BOUGE :
   //   quand tu vends beaucoup, le prix baisse (les acheteurs en ont assez) ;
@@ -352,14 +395,14 @@ Village.CONFIG = {
   // Étape 7 : 💎 la BOUTIQUE. Les gemmes se gagnent seulement en jouant (missions, nouveaux âges) :
   // aucun vrai argent. Elles achètent des améliorations ou des décorations.
   boutique: [
-    { id: "porteur", nom: "Un porteur de plus", emoji: "🚚", prix: 4, texte: "+1 porteur à l'entrepôt (8 maximum)" },
+    { id: "porteur", nom: "Une place de manutentionnaire", emoji: "🚚", prix: 4, texte: "+1 place de porteur à l'entrepôt (5 au plus)" }, // étape 13
     { id: "express", nom: "Chantier express", emoji: "⏩", prix: 1, texte: "Termine tout de suite le chantier choisi" },
     { id: "coffre", nom: "Coffre de matériaux", emoji: "🧰", prix: 2, texte: "+20 🟫 et +10 🪨" },
     { id: "festin", nom: "Panier de nourriture", emoji: "🧺", prix: 2, texte: "+15 🐟 et +10 🍖" },
     { id: "bourse", nom: "Bourse de pièces", emoji: "🪙", prix: 2, texte: "+40 🪙 pour le marché (à partir du village)" }, // étape 8
     { id: "drapeau", nom: "Nouvelle couleur de drapeau", emoji: "🚩", prix: 1, texte: "Change la couleur du drapeau du village" },
   ],
-  porteursMax: 8,
+  porteursMax: 5, // étape 13 : places de porteur achetées à la boutique, au plus
 
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 

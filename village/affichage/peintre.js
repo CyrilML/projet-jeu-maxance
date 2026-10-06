@@ -218,6 +218,8 @@ Village.Peintre = (function () {
     for (const porteur of monde.porteurs) {
       if (porteur.etat !== "attend" && !porteur.parti) ranger(Math.floor(porteur.x) + Math.floor(porteur.y), { porteur });
     }
+    // Étape 13 : les villageois sans travail (ils se promènent, ou vont au travail)
+    for (const v of monde.villageois) ranger(Math.floor(v.x) + Math.floor(v.y), { villageois: v });
     // Étape 9 : les figurants (poules, enfants)
     Village.Vie.ranger(monde, t, ranger);
     // Étape 4 : le gibier
@@ -246,6 +248,9 @@ Village.Peintre = (function () {
         if (chose.b) {
           const p = milieu(chose.b.colonne, chose.b.ligne);
           Village.Batisses.dessinerBatiment(ctx, chose.b, p.x, p.y, t);
+        } else if (chose.villageois) {
+          const p = Iso.versMonde(chose.villageois.x, chose.villageois.y, L, Hc);
+          Village.Batisses.dessinerVillageois(ctx, chose.villageois, p.x, p.y + 3, t); // étape 13
         } else if (chose.figurant) {
           Village.Vie.dessinerFigurant(ctx, chose.figurant, t); // étape 9
         } else if (chose.effet) {

@@ -175,7 +175,9 @@ Village.Batiments = (function () {
       livre: Object.assign({}, etat.livre), // le chantier : les matériaux arrivés
       attendu: Object.assign({}, etat.attendu), // le chantier : les matériaux réservés, pas encore partis de l'entrepôt
       prix: Object.assign({}, etat.prix || cout(type)), // étape 12 : ce que ce chantier coûte vraiment (0 s'il est offert)
-      usure: etat.usure || 0, // étape 11 : de 0 (tout neuf) à 1 (usé : 2 fois moins vite). Un 🔨 outil le répare.
+      usure: etat.usure || 0, // étape 11
+      ameliorations: etat.ameliorations || 0, // étape 13 : combien d'améliorations faites (0, 1 ou 2)
+      niveau: etat.niveau || 1, // étape 13 : l'entrepôt qui s'agrandit : de 0 (tout neuf) à 1 (usé : 2 fois moins vite). Un 🔨 outil le répare.
     };
     const i = l * monde.carte.colonnes + c;
     monde.batiments.push(b);
@@ -246,12 +248,10 @@ Village.Batiments = (function () {
 
   // Le bâtiment est prêt : son ouvrier arrive (il apparaît devant la porte).
   // Étape 8 : ✍️ seulement s'il y a une place pour dormir (sinon, il attendra qu'on construise un logement).
+  // Étape 13 : ✍️ sauf au rechargement, l'ouvrier ne sort plus de nulle part : c'est un VILLAGEOIS qui vient
+  // à pied (voir logique/villageois.js). Pas de villageois libre ? La cabane attend, vide.
   function embaucher(monde, b, sansVerifier) {
-    if (!TYPES[b.type].metier) return;
-    if (!sansVerifier && !Village.Logement.placeLibre(monde)) {
-      radio.emettre("pas-de-logement", { nom: TYPES[b.type].nom, numero: b.numero, metier: TYPES[b.type].metier, places: Village.Logement.capacite(monde) });
-      return;
-    }
+    if (!TYPES[b.type].metier || !sansVerifier) return;
     b.ouvrier = Village.Ouvriers.creer(b);
   }
 
@@ -302,7 +302,8 @@ Village.Batiments = (function () {
       if (b.sortie + combien > C.sortieMax) return; // devant la porte, c'est plein
       b.attend = null;
       for (const [r, n] of Object.entries(recette.entrees)) b.entrees[r] -= n;
-      b.travail = { reste: recette.duree * Village.Recherches.bonus(monde, recette.bonus), duree: recette.duree * Village.Recherches.bonus(monde, recette.bonus) };
+      const duree = recette.duree * Village.Recherches.bonus(monde, recette.bonus) * Village.Ameliorations.bonus(b); // étape 13 : × les améliorations
+      b.travail = { reste: duree, duree };
       radio.emettre("fabrication-debut", { nom: TYPES[b.type].nom, numero: b.numero, entrees: recette.entrees, reserve: Object.assign({}, b.entrees), duree: Math.round(b.travail.reste * 10) / 10 });
       return;
     }
@@ -349,7 +350,7 @@ Village.Batiments = (function () {
     }
     b.epuise = false;
     if (b.sortie >= C.sortieMax) return; // devant la porte, c'est plein
-    if (!b.travail) { b.travail = { reste: C.ouvriers.miner * Village.Recherches.bonus(monde, "miner") }; return; }
+    if (!b.travail) { b.travail = { reste: C.ouvriers.miner * Village.Recherches.bonus(monde, "miner") * Village.Ameliorations.bonus(b) }; return; }
     b.travail.reste -= dt * Village.Repas.vitesse(b.ouvrier);
     if (b.travail.reste > 0) return;
     b.travail = null;

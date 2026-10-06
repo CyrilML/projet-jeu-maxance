@@ -105,38 +105,22 @@ Village.Repas = (function () {
       if (o) {
         const qui = "le " + B.TYPES[b.type].metier + " (" + B.TYPES[b.type].nom + " n° " + b.numero + ")";
         if (avoirFaim(monde, o, dt, qui) === "part") partir(monde, b, qui);
-      } else if (b.etat === "pret" && B.TYPES[b.type].metier) {
-        // Une cabane vide : un nouvel habitant arrive s'il y a de quoi manger
-        // (étape 8 : ✍️ et une place pour dormir, dans une hutte ou une maison).
-        if (nourritureEnStock(monde) >= 2 && Village.Logement.placeLibre(monde)) {
-          b.attenteHabitant = (b.attenteHabitant || 0) + dt;
-          if (b.attenteHabitant >= C.repas.retour) {
-            b.attenteHabitant = 0;
-            b.ouvrier = Village.Ouvriers.creer(b);
-            monde.partis = Math.max(0, monde.partis - 1);
-            radio.emettre("habitant-arrive", { qui: "un nouveau " + B.TYPES[b.type].metier, nom: B.TYPES[b.type].nom, numero: b.numero });
-          }
-        } else b.attenteHabitant = 0;
       }
+      // (Étape 13 : une cabane vide ne fait plus venir son habitant toute seule : ce sont les VILLAGEOIS
+      // qui viennent y travailler, voir logique/villageois.js.)
     }
-    for (const p of monde.porteurs) {
-      if (p.parti) {
-        if (nourritureEnStock(monde) >= 2) {
-          p.attenteRetour = (p.attenteRetour || 0) + dt;
-          if (p.attenteRetour >= C.repas.retour) {
-            p.parti = false; p.attenteRetour = 0; p.faim = 0; p.affame = false; p.ventreVide = 0;
-            monde.partis = Math.max(0, monde.partis - 1);
-            radio.emettre("habitant-arrive", { qui: "un nouveau porteur", nom: "Entrepôt", numero: 1 });
-          }
-        }
-        continue;
-      }
+    for (const p of monde.porteurs.slice()) {
       const qui = "le porteur " + p.numero;
       if (avoirFaim(monde, p, dt, qui) === "part" && p.etat === "attend") {
-        p.parti = true;
+        monde.porteurs.splice(monde.porteurs.indexOf(p), 1); // étape 13 : sa place à l'entrepôt est libre
         monde.partis++;
         radio.emettre("habitant-part", { qui });
       }
+    }
+    // Étape 13 : les villageois sans travail mangent aussi
+    for (const v of monde.villageois.slice()) {
+      const qui = "le villageois " + v.numero;
+      if (v.etat !== "travail" && avoirFaim(monde, v, dt, qui) === "part") { Village.Villageois.partir(monde, v); radio.emettre("habitant-part", { qui }); }
     }
   }
 

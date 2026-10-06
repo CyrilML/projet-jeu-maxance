@@ -15,7 +15,7 @@ Village.Boutique = (function () {
     const o = C.boutique.find((x) => x.id === id);
     if (!o) return "objet inconnu";
     if (monde.gemmes < o.prix) return "il manque " + (o.prix - monde.gemmes) + " 💎";
-    if (id === "porteur" && monde.porteurs.length >= C.porteursMax) return "il y a déjà " + C.porteursMax + " porteurs";
+    if (id === "porteur" && (monde.porteursBonus || 0) >= C.porteursMax) return "déjà " + C.porteursMax + " places achetées";
     if (id === "bourse" && (monde.age || 0) < 2) return "pas encore : les pièces arrivent avec le village 🏡";
     if (id === "express" && !(monde.selection && monde.selection.etat === "chantier")) return "touche d'abord un chantier";
     return null;
@@ -25,7 +25,7 @@ Village.Boutique = (function () {
     const o = C.boutique.find((x) => x.id === id), pourquoi = raison(monde, id);
     if (pourquoi) { radio.emettre("achat-impossible", { nom: o ? o.nom : id, raison: pourquoi }); return false; }
     monde.gemmes -= o.prix;
-    if (id === "porteur") Village.Porteurs.ajouterPorteur(monde);
+    if (id === "porteur") monde.porteursBonus = (monde.porteursBonus || 0) + 1; // étape 13 : une place (un villageois viendra)
     else if (id === "coffre") { monde.stock.planches += 20; monde.stock.pierres += 10; }
     else if (id === "festin") { monde.stock.poissons += 15; monde.stock.viande += 10; }
     else if (id === "bourse") monde.pieces += 40; // étape 8

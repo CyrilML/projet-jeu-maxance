@@ -672,6 +672,8 @@ Village.Batisses = (function () {
     ouvrierDevant(ctx, b, x, y, t);
     // Un petit panneau avec l'emoji du métier, au-dessus de la porte
     if (b.type !== "entrepot") enseigne(ctx, x - m.a * 0.45, y - 8 - m.h * 0.2, Village.Batiments.TYPES[b.type].emoji);
+    // Étape 13 : une étoile dorée par amélioration, à côté de l'enseigne
+    for (let k = 0; k < (b.ameliorations || 0); k++) etoile(ctx, x - m.a * 0.45 + 10 + k * 7, y - 22 - m.h * 0.2);
     if (travaille && b.type === "carriere") poussiere(ctx, x, y, t);
     if (!b.relie) panneauSansRoute(ctx, x, y - m.h - m.toit - 16, t);
     // Étape 4 : l'ouvrier a trop faim, ou il est parti (la cabane est vide)
@@ -731,6 +733,12 @@ Village.Batisses = (function () {
     ctx.font = "9px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.fillText(emoji, x, y - 7.5);
     ctx.textAlign = "left";
+  }
+
+  function etoile(ctx, x, y) {
+    ctx.beginPath();
+    for (let k = 0; k < 10; k++) { const r = k % 2 ? 1.6 : 3.6, a = -Math.PI / 2 + (k * Math.PI) / 5; k ? ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r) : ctx.moveTo(x + Math.cos(a) * r, y + Math.sin(a) * r); }
+    ctx.closePath(); ctx.fillStyle = "#ffcf2e"; ctx.fill(); contour(ctx, 0.9);
   }
 
   function drapeau(ctx, x, y, t, couleur) {
@@ -1052,6 +1060,23 @@ Village.Batisses = (function () {
     }
     ctx.restore();
     if (vue.noirceur > 0.3 && T.coiffe === "mineur") lumiere(x + 3.6 * o.direction, y - 22 - saut, 18, "jaune", 0.8);
+  }
+
+  // ---------------------------------------------------------------- un villageois sans travail (étape 13)
+  // Habits simples (une tunique de couleur), pas d'outil. Quand il va au travail, une bulle montre où :
+  // l'emoji du bâtiment qui l'attend.
+  const TUNIQUES = ["#c9b48f", "#a8b8c9", "#c99a8f", "#a9c49a", "#c4b6d6", "#d6c48f"];
+  function dessinerVillageois(ctx, v, x, y, t) {
+    const marche = !!v.chemin && v.pas < (v.chemin ? v.chemin.length : 0);
+    const pas = marche ? Math.sin(t * (v.etat === "travail" ? 14 : 9) + v.numero) : 0;
+    const tenue = { habit: TUNIQUES[v.numero % TUNIQUES.length], pantalon: "#6b5a48", coiffe: null };
+    ctx.save(); ctx.translate(x, y); ctx.scale(v.direction || 1, 1);
+    ctx.fillStyle = "rgba(20, 40, 10, .22)"; ctx.beginPath(); ctx.ellipse(0, 1, 5.5, 2.3, 0, 0, TOUR); ctx.fill();
+    ctx.translate(0, marche ? -Math.abs(pas) * 1.2 : 0);
+    bonhomme(ctx, { tenue, traits: traits(v.numero * 11 + 7), pas, brasAvant: marche ? 0.15 + pas * 0.5 : 0.1, brasArriere: marche ? 0.15 - pas * 0.5 : 0.05, triste: v.affame, hiver: vue.hiver });
+    ctx.restore();
+    if (v.etat === "travail" && v.vers) bulleDePensee(ctx, x + 3, y - 38, t, Village.Batiments.TYPES[v.vers.type].emoji);
+    else if (!marche && vue.fin && Math.sin(t * 0.7 + v.numero) > 0.8) bulleDePensee(ctx, x + 3, y - 38, t, "💭"); // il attend du travail
   }
 
   // L'arc du chasseur : il le tend pendant 2,5 s (la corde recule avec la main), puis il lâche la flèche.
@@ -1419,5 +1444,5 @@ Village.Batisses = (function () {
     ctx.globalAlpha = 1;
   }
 
-  return { bonhomme, traits, dessinerBatiment, dessinerOuvrier, dessinerPorteur, dessinerAnimal, dessinerPousse, dessinerFantome, iconeRoute, debutImage, lumiere, get lumieres() { return lumieres; }, vue }; // étape 9 : la vue et les lumières
+  return { dessinerVillageois, bonhomme, traits, dessinerBatiment, dessinerOuvrier, dessinerPorteur, dessinerAnimal, dessinerPousse, dessinerFantome, iconeRoute, debutImage, lumiere, get lumieres() { return lumieres; }, vue }; // étape 9 : la vue et les lumières
 })();

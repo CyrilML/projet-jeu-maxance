@@ -44,6 +44,10 @@
 //                  l'heure de la dernière image (derniereVue, pour calculer l'absence), les pubs regardées (pub),
 //                  l'usure de chaque bâtiment (usure), et les ressources du bourg (blé, farine, pain, or, bijoux).
 //                  Une partie plus ancienne commence avec une réserve au niveau 1 et un rythme vide.
+//  11 (étape 13) : les villageois sans travail (villageois : [x, y, faim]), les places de porteur achetées
+//                  (porteursBonus), et pour chaque bâtiment ses améliorations (ameliorations) et son niveau (niveau,
+//                  pour l'entrepôt). Les porteurs dorment maintenant dans les lits : une partie plus ancienne reçoit
+//                  une place offerte par porteur, et ses porteurs achetés deviennent des places achetées.
 //  10 (étape 12) : le prix de chaque chantier (prix), car un bâtiment peut être offert (le coup de pouce).
 //                  Un chantier plus ancien garde le prix normal de son bâtiment.
 
@@ -51,7 +55,7 @@ window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 10;
+  const VERSION = 11;
   const radio = Village.Evenements;
 
   function vide() {
@@ -82,9 +86,15 @@ Village.Sauvegarde = (function () {
     if ((lues.version || 1) < 8 && d.partie) {
       const batiments = d.partie.batiments || [];
       for (const b of batiments) if (b.entree) { b.entrees = { troncs: b.entree }; delete b.entree; }
-      // Une place offerte pour chaque bâtiment au-delà des 6 places du campement (même les chantiers).
+      // Une place offerte pour chaque bâtiment au-delà des places du campement (même les chantiers).
       const avecOuvrier = batiments.filter((b) => b.type !== "entrepot").length;
       d.partie.logementBonus = Math.max(0, avecOuvrier - Village.CONFIG.logement.entrepot);
+    }
+    // (Après la conversion 7 → 8, qui calcule les places offertes aux ouvriers.)
+    if ((lues.version || 1) < 11 && d.partie) {
+      const porteurs = (d.partie.porteurs || []).filter((p) => !p.parti).length;
+      d.partie.porteursBonus = Math.max(0, (d.partie.porteurs || []).length - Village.CONFIG.entrepot.porteurs);
+      d.partie.logementBonus = (d.partie.logementBonus || 0) + porteurs;
     }
     if ((lues.version || 1) < 6 && d.partie && d.partie.age === undefined) {
       d.partie.age = (d.partie.batiments || []).some((b) => b.type === "geologue") ? 1 : 0;
@@ -175,6 +185,8 @@ Village.Sauvegarde = (function () {
         if (b.sortie) { d.sortie = b.sortie; if (b.lots.some((q) => q !== 1)) d.lots = b.lots; }
         if (Object.values(b.entrees).some((n) => n > 0)) d.entrees = b.entrees; // étape 8
         if (b.usure > 0) d.usure = Math.round(b.usure * 1000) / 1000; // étape 11
+        if (b.ameliorations) d.ameliorations = b.ameliorations; // étape 13
+        if (b.niveau > 1) d.niveau = b.niveau;
         if (b.etat === "chantier") { d.prix = b.prix; d.livre = b.livre; d.attendu = ajout(b.attendu, enCours.attendu.get(b)); } // étape 12 : le prix du chantier (il peut être offert)
         const o = b.ouvrier;
         if (o && o.faim) { d.faim = Math.round(o.faim); if (o.affame) { d.affame = true; d.ventreVide = Math.round(o.ventreVide); } }
@@ -189,6 +201,8 @@ Village.Sauvegarde = (function () {
       drapeau: monde.drapeau,
       pieces: monde.pieces, // étape 8
       reserve: monde.reserve, // étape 11
+      villageois: monde.villageois.map((v) => [Math.round(v.x * 10) / 10, Math.round(v.y * 10) / 10, Math.round(v.faim || 0)]), // étape 13
+      porteursBonus: monde.porteursBonus,
       rythme: Village.Reserve.rythme(monde),
       derniereVue: monde.derniereVue,
       pub: { vues: monde.pub.vues, jour: monde.pub.jour, vuesDuJour: monde.pub.vuesDuJour },

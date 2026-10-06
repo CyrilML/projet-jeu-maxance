@@ -63,6 +63,9 @@ Village.Monde = (function () {
       derniereVue: Date.now(), // l'heure (vraie) de la dernière image du jeu
       pub: { attente: Village.Publicite.attente(), offre: null, vues: 0, jour: null, vuesDuJour: 0 }, // 📺
       froid: false, chauffage: 0, // 🥶 l'hiver au bourg
+      // Étape 13
+      villageois: [], // 👥 les villageois sans travail (logique/villageois.js)
+      porteursBonus: 0, // places de manutentionnaire achetées à la boutique
       // Étape 4
       horloge: 0, // secondes depuis le début de LA PARTIE (sauvegardé) : c'est lui qui fait les saisons
       saison: null, // { nom, emoji, annee, avancement… } (voir logique/saisons.js)
@@ -81,8 +84,12 @@ Village.Monde = (function () {
       const v = carte.village;
       Village.Batiments.creer(monde, "entrepot", v.colonne + 2, v.ligne - 1, 1);
     }
-    Village.Porteurs.creerTous(monde, partie && partie.porteurs ? partie.porteurs.length : 0);
-    if (partie && partie.porteurs) partie.porteurs.forEach((d, n) => { if (monde.porteurs[n]) Object.assign(monde.porteurs[n], d); });
+    const porteursSauves = partie && partie.porteurs ? partie.porteurs.filter((d) => !d.parti) : null;
+    if (porteursSauves) { monde.porteurs = []; for (const d of porteursSauves) { Village.Porteurs.ajouterPorteur(monde); Object.assign(monde.porteurs[monde.porteurs.length - 1], { faim: d.faim || 0, affame: !!d.affame, ventreVide: d.ventreVide || 0 }); } }
+    else Village.Porteurs.creerTous(monde);
+    // Étape 13 : les villageois sans travail
+    if (partie && partie.villageois) for (const [x, y, faim] of partie.villageois) Village.Villageois.creer(monde, x, y, faim);
+    else if (!partie) Village.Villageois.peupler(monde);
     Village.Routes.recalculerReseau(monde);
     monde.saison = Village.Saisons.lire(monde.horloge);
     monde.moment = Village.Saisons.lireJour(monde.horloge);
@@ -115,6 +122,7 @@ Village.Monde = (function () {
     monde.drapeau = partie.drapeau || 0;
     monde.pieces = partie.pieces || 0; // étape 8
     monde.logementBonus = partie.logementBonus || 0;
+    monde.porteursBonus = partie.porteursBonus || 0; // étape 13
     if (partie.reserve) monde.reserve = { niveau: Math.max(1, partie.reserve.niveau || 1) }; // étape 11
     monde.rythme = Object.assign({}, partie.rythme);
     if (partie.derniereVue) monde.derniereVue = partie.derniereVue;
@@ -183,6 +191,7 @@ Village.Monde = (function () {
     Village.Marche.etape(monde, dt); // étape 8 : les prix reviennent vers la normale
     Village.Statistiques.etape(monde, dt); // étape 8 : le compteur tourne la page toutes les 10 s
     Village.Publicite.etape(monde, dt); // étape 11 : une proposition de pub, de temps en temps
+    Village.Villageois.etape(monde, dt); // étape 13 : les villageois arrivent et vont travailler
     nature(monde, dt);
   }
 
@@ -239,6 +248,9 @@ Village.Monde = (function () {
     if (intentions.pub === "regarder") Village.Publicite.regarder(monde);
     else if (intentions.pub === "refuser") Village.Publicite.refuser(monde);
     if (intentions.absenceVue) monde.absence = null;
+    // Étape 13 : améliorer un bâtiment, agrandir l'entrepôt
+    if (intentions.ameliorer) { const b = monde.batiments.find((x) => x.numero === intentions.ameliorer); if (b) Village.Ameliorations.ameliorer(monde, b); }
+    if (intentions.agrandirEntrepot) Village.Ameliorations.agrandir(monde);
     const Pl = Village.Placement;
     if (intentions.construire) {
       // Appuyer 2 fois sur le même bouton = annuler.
