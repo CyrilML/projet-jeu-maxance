@@ -8,6 +8,7 @@
 // D'où viennent les villageois ? Toutes les 20 secondes, un nouveau arrive au village… s'il y a un LIT
 // libre (huttes, maisons) et au moins 2 repas à l'entrepôt. Pas de lit, pas de villageois ; pas de
 // villageois, la cabane reste vide !
+// Étape 15 : le BONHEUR compte aussi : un village triste n'attire personne, un village ravi attire 2 fois plus.
 //
 // Chaque villageois est une petite MACHINE À ÉTATS :
 //   arrive ──► se promène ⇄ se repose ──[on a besoin de lui]──► va au travail ──► devient ouvrier (ou porteur)
@@ -67,7 +68,7 @@ Village.Villageois = (function () {
   function etape(monde, dt) {
     const B = Village.Batiments, Lg = Village.Logement;
     // 1. Un nouveau villageois arrive (un lit libre, et de quoi manger)
-    minuteurArrivee += dt;
+    minuteurArrivee += dt * Village.Bonheur.arrivee(monde); // étape 15 : 😢 personne n'arrive · 😊 × 1,5 · 😄 × 2
     if (minuteurArrivee >= V.arrivee) {
       minuteurArrivee = 0;
       if (Lg.placeLibre(monde) && Village.Repas.nourritureEnStock(monde) >= 2) {

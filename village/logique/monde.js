@@ -66,6 +66,9 @@ Village.Monde = (function () {
       // Étape 13
       villageois: [], // 👥 les villageois sans travail (logique/villageois.js)
       porteursBonus: 0, // places de manutentionnaire achetées à la boutique
+      // Étape 15
+      bonheur: { valeur: null, cible: null, humeur: null }, // 😊 la jauge (logique/bonheur.js) ; null = pas encore calculée
+      gouts: { poissons: 0, viande: 0 }, // aliment → horloge du dernier repas où on en a mangé (au début : le repas d'hier soir)
       // Étape 4
       horloge: 0, // secondes depuis le début de LA PARTIE (sauvegardé) : c'est lui qui fait les saisons
       saison: null, // { nom, emoji, annee, avancement… } (voir logique/saisons.js)
@@ -131,6 +134,8 @@ Village.Monde = (function () {
     if (partie.recherches) monde.recherches = { faites: (partie.recherches.faites || []).slice(), enCours: partie.recherches.enCours || null };
     if (partie.missions) Object.assign(monde.missions, partie.missions);
     monde.partis = partie.partis || 0;
+    if (partie.bonheur !== undefined) monde.bonheur.valeur = partie.bonheur; // étape 15
+    monde.gouts = partie.gouts ? Object.assign({}, partie.gouts) : { poissons: monde.horloge, viande: monde.horloge }; // une partie plus ancienne : ils viennent de manger
     for (const [x, y, sorte] of partie.animaux || []) Village.Animaux.creer(monde, x, y, sorte);
     for (const b of partie.batiments || []) {
       const nouveau = Village.Batiments.creer(monde, b.type, b.colonne, b.ligne, b.progres, b);
@@ -182,9 +187,11 @@ Village.Monde = (function () {
     camera(monde, dt, intentions);
     joueur(monde, intentions);
     Village.Batiments.etape(monde, dt);
+    Village.Elevage.etape(monde, dt); // étape 15 : la santé des troupeaux
     Village.Porteurs.etape(monde, dt);
     Village.Animaux.etape(monde, dt);
     Village.Repas.etape(monde, dt);
+    Village.Bonheur.etape(monde, dt); // étape 15 : le moral des habitants
     Village.Ages.etape(monde, dt);
     Village.Recherches.etape(monde, dt); // étape 7
     Village.Missions.etape(monde, dt); // étape 7

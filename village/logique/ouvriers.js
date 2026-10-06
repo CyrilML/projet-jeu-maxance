@@ -95,6 +95,16 @@ Village.Ouvriers = (function () {
     quoi: "un bâtiment à réparer",
   };
 
+  // Étape 15 : le vétérinaire cherche une étable aux vaches malades, pas déjà visée par un autre vétérinaire.
+  METIERS.veterinaire = {
+    duree: (monde) => C.ouvriers.soigner * Village.Recherches.bonus(monde, "soigner"),
+    cherche: (monde, i) => {
+      const b = monde.occupees.get(i);
+      return !!b && !!b.malade && !monde.reservees.has(i);
+    },
+    quoi: "des vaches malades",
+  };
+
   const NOMS_ETATS = {
     chercher: "cherche du travail",
     aller: "marche vers son travail",
@@ -304,6 +314,10 @@ Village.Ouvriers = (function () {
       const abime = monde.occupees.get(i);
       if (abime && abime.usure > 0) { Village.Batiments.reparer(monde, abime); b.produits++; }
       o.porte = null;
+    } else if (b.type === "veterinaire") {
+      // Étape 15 : les vaches sont soignées
+      const etable = monde.occupees.get(i);
+      if (etable && Village.Elevage.soigner(monde, etable, "le vétérinaire n° " + b.numero)) b.produits++;
     } else if (b.type === "carriere") {
       if (carte.objet[i] === O.rocher && carte.reste[i] > 0) {
         carte.reste[i]--;

@@ -64,6 +64,10 @@ Village.SousLeCapot = (function () {
     "cabane-attend": (d) => "👥 " + d.nom + " n° " + d.numero + " : aucun villageois libre pour y travailler",
     amelioration: (d) => "⬆️ " + d.batiment + " n° " + d.numero + " : " + d.emoji + " " + d.nom + " (amélioration " + d.niveau + ") · son travail est " + d.bonus + " % plus rapide",
     "amelioration-impossible": (d) => "🚫 Amélioration « " + d.nom + " » impossible : " + d.raison,
+    // Étape 15 : l'élevage et le bonheur
+    "vaches-malades": (d) => "🤒 " + d.nom + " : les vaches sont malades" + (d.contagion ? " (attrapé d'une étable voisine !)" : "") + " · plus de lait · " + (d.veterinaire ? "le vétérinaire 🩺 va venir" : "pas de vétérinaire : elles guériront seules en " + Math.round(Village.CONFIG.elevage.guerirSeule / 60) + " min"),
+    "vaches-gueries": (d) => "💚 " + d.nom + " : les vaches sont guéries (" + d.parQui + ", après " + d.duree + " s)",
+    "bonheur-change": (d) => d.emoji + " Le village est maintenant " + d.humeur + " (bonheur " + d.valeur + " %) : vitesse × " + String(d.vitesse).replace(".", ",") + " · arrivées × " + String(d.arrivee).replace(".", ","),
     "entrepot-agrandi": (d) => "🏗️ Entrepôt au niveau " + d.niveau + " : " + d.places + " places de manutentionnaire",
     // Étape 11 : le bourg, la réserve et les pubs
     "batiment-use": (d) => "🔧 " + d.nom + " n° " + d.numero + " est complètement usé : son ouvrier va 2 fois moins vite",
@@ -89,7 +93,7 @@ Village.SousLeCapot = (function () {
     "poisson-peche": (d) => "🎣 " + ({ sardine: "Une sardine pêchée", truite: "Une truite pêchée", thon: "Un thon pêché" }[d.espece] || "Un poisson pêché") + " en (" + d.colonne + ", " + d.ligne + ") : " + d.quantite + " 🐟" + (d.glace ? " · par un trou dans la glace ❄️" : ""),
     "gibier-chasse": (d) => "🏹 " + Village.Animaux.NOMS[d.sorte].emoji + " " + Village.Animaux.NOMS[d.sorte].nom.replace(/^une? /, "") + " chassé en (" + d.colonne + ", " + d.ligne + ") : " + Village.CONFIG.prises[d.sorte] + " 🍖" + (d.neige ? " dans la neige ❄️" : "") + " · il reste " + d.animaux + " animaux",
     "animal-ne": (d) => Village.Animaux.NOMS[d.sorte].emoji + " " + Village.Animaux.NOMS[d.sorte].petit.replace(/^u/, "U") + " est né en (" + d.colonne + ", " + d.ligne + ") · " + d.total + " animaux",
-    repas: (d) => "😋 " + d.qui + " mange " + emo(d.quoi) + " à l'entrepôt (il reste " + d.reste + " repas)",
+    repas: (d) => "😋 " + d.qui + " mange " + emo(d.quoi) + (d.douceur ? " + " + emo(d.douceur) : "") + " à l'entrepôt (il reste " + d.reste + " repas)", // étape 15 : + une douceur
     affame: (d) => "🍽️ " + d.qui + " a faim et il n'y a rien à manger : il travaille 2 fois moins vite !",
     "plus-faim": (d) => "😊 " + d.qui + " a enfin mangé : il retrouve toute sa vitesse",
     // Étape 7
@@ -129,7 +133,7 @@ Village.SousLeCapot = (function () {
     "partie-importee": (d) => "📥 Partie chargée (carte n° " + d.graine + ", version " + d.version + ") : la page va se recharger",
   };
 
-  const emo = (r) => ({ troncs: "🪵 1 tronc", planches: "🟫 1 planche", pierres: "🪨 1 pierre", poissons: "🐟 1 poisson", viande: "🍖 1 morceau de viande", charbon: "⚫ 1 charbon", fer: "🟤 1 minerai de fer", lingots: "🔩 1 lingot", outils: "🔨 1 outil" }[r] || r);
+  const emo = (r) => ({ troncs: "🪵 1 tronc", planches: "🟫 1 planche", pierres: "🪨 1 pierre", poissons: "🐟 1 poisson", viande: "🍖 1 morceau de viande", charbon: "⚫ 1 charbon", fer: "🟤 1 minerai de fer", lingots: "🔩 1 lingot", outils: "🔨 1 outil", pain: "🍞 du pain", lait: "🥛 du lait", beurre: "🧈 du beurre", fromage: "🧀 du fromage", yaourt: "🍶 un yaourt" }[r] || r);
   const cout = (c) => Object.entries(c).map(([r, n]) => n + " " + Village.Batiments.NOMS_RESSOURCES[r]).join(" + ") || "gratuit";
 
   let monde = null, mesures = null, journal, etat, base, cle;
@@ -214,7 +218,7 @@ Village.SousLeCapot = (function () {
     h += ligne("recherches faites", monde.recherches.faites.length ? monde.recherches.faites.join(", ") : "aucune");
     const rc = monde.recherches.enCours;
     h += ligne("recherche en cours", rc ? rc.id + " · encore " + Math.ceil(rc.reste) + " s" : "aucune");
-    for (const cle of ["couper", "planter", "pecher", "chasser", "tailler", "miner", "porteurs", "repas", "scier", "fondre", "forger", "vente"]) { const x = Village.Recherches.bonus(monde, cle); if (x !== 1) h += ligne("bonus « " + cle + " »", "× " + virgule(x, 2)); }
+    for (const cle of ["couper", "planter", "pecher", "chasser", "tailler", "miner", "porteurs", "repas", "scier", "fondre", "forger", "vente", "traire", "baratter", "affiner", "puiser", "faner", "soigner", "maladie"]) { const x = Village.Recherches.bonus(monde, cle); if (x !== 1) h += ligne("bonus « " + cle + " »", "× " + virgule(x, 2)); }
     const mi = monde.missions.actuelle;
     h += ligne("mission", mi ? mi.id + " · " + mi.etat + (mi.etat === "encours" ? " · encore " + Math.ceil(mi.reste) + " s" : "") : "prochaine dans " + Math.ceil(monde.missions.attente) + " s");
     h += ligne("missions réussies", monde.missions.reussies.length);
@@ -226,6 +230,17 @@ Village.SousLeCapot = (function () {
     h += ligne("cabanes vides (qui attendent quelqu'un)", monde.batiments.filter((b) => b.etat === "pret" && Village.Batiments.TYPES[b.type].metier && !b.ouvrier).length);
     h += ligne("entrepôt : niveau · places de porteur", Village.Ameliorations.niveau(monde) + " · " + Village.Ameliorations.placesPorteurs(monde) + (monde.porteursBonus ? " (dont " + monde.porteursBonus + " achetées)" : ""));
     h += ligne("vitesse des porteurs (écurie)", "× " + virgule(Village.Ameliorations.vitessePorteurs(monde), 2));
+    // Étape 15 : le bonheur et l'élevage
+    const Bh = Village.Bonheur, note = Bh.calculer(monde), C15 = Village.CONFIG;
+    h += groupe("😊 Le bonheur · 🐄 l'élevage");
+    h += ligne("bonheur : jauge → note", virgule(monde.bonheur.valeur || 0, 1) + " → " + virgule(note.total, 1) + " (" + Bh.emoji(monde) + " " + Bh.humeur(monde) + ")");
+    for (const p of note.parts) h += ligne("   " + p.nom, (p.points >= 0 ? "+" : "") + virgule(p.points, 1) + (p.max ? " / " + p.max : ""));
+    h += ligne("effet : vitesse · arrivées", "× " + virgule(Bh.vitesse(monde), 2) + " · × " + virgule(Bh.arrivee(monde), 1));
+    h += ligne("🥛 lait · 🧈 beurre · 🧀 fromage · 🍶 yaourt", monde.stock.lait + " · " + monde.stock.beurre + " · " + monde.stock.fromage + " · " + monde.stock.yaourt);
+    h += ligne("💧 eau · 🌿 foin", monde.stock.eau + " · " + monde.stock.foin);
+    const Et = Village.Elevage.etables(monde);
+    h += ligne("🐄 étables · malades", Et.length + " · " + Et.filter((b) => b.malade).length + ((monde.age || 0) < C15.elevage.ageMaladies ? " (pas de maladies avant le village)" : ""));
+    for (const b of Et.slice(0, 6)) { const r = Village.Elevage.risque(monde, b); h += ligne("   étable n° " + b.numero, b.malade ? "🤒 malade depuis " + Math.round(b.malade.depuis) + " s" : "risque " + virgule(r.chance * 100, 1) + " %/min" + (Village.Elevage.affaiblies(b) ? " (affaiblies !)" : "") + (r.voisines ? " · " + r.voisines + " voisine(s) malade(s)" : "")); }
     // Étape 11 : la réserve, les pubs et les règles du bourg
     const Re = Village.Reserve, ry = Re.rythme(monde), mnp = Re.minutesAvantPlein(monde);
     h += groupe("📦 La réserve · 📺 les pubs · 🏰 le bourg");

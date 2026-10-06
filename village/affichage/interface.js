@@ -280,6 +280,35 @@ Village.Interface = (function () {
     });
   }
 
+  // 😊 Étape 15 : le panneau du bonheur. Chaque partie de la note, avec sa barre, et ce que ça change.
+  function panneauBonheur(ctx, monde, W, He, petit) {
+    const Bh = Village.Bonheur, note = Bh.calculer(monde), H = C.bonheur, v = monde.bonheur.valeur || 0;
+    const hl = petit ? 30 : 34, l = Math.min(W - 20, 460), x = (W - l) / 2, y = basDuStock + 4;
+    const h = 92 + note.parts.length * hl + 62;
+    bulle(ctx, x, y, l, h, "rgba(255, 250, 235, .98)");
+    zone(x, y, l, h, "rien");
+    texte(ctx, Bh.emoji(monde) + " Le bonheur des habitants : " + Math.round(v) + " % (" + Bh.humeur(monde) + ")", x + 14, y + 20, petit ? 13 : 15, "#3b2614", true);
+    croix(ctx, x, y, l, "fermerPanneau");
+    // La grande jauge, avec ses 3 seuils
+    const jx = x + 14, jl = l - 28, jy = y + 36;
+    ctx.fillStyle = "#eadfc6"; ctx.fillRect(jx, jy, jl, 12);
+    ctx.fillStyle = v >= H.content ? "#2e8a3a" : v < H.triste ? "#c0392b" : "#e0a81e"; ctx.fillRect(jx, jy, jl * v / 100, 12);
+    ctx.fillStyle = "rgba(59, 38, 20, .6)"; ctx.fillRect(jx + jl * note.total / 100 - 1, jy - 3, 2, 18); // la note : la jauge y va doucement
+    for (const [s, e] of [[H.triste, "😢"], [H.content, "😊"], [H.ravi, "😄"]]) { ctx.fillStyle = "#3b2614"; ctx.fillRect(jx + jl * s / 100, jy + 12, 1, 4); texte(ctx, e + s, jx + jl * s / 100, jy + 24, 9, "#7a5a30", false, "center"); }
+    texte(ctx, "La jauge va doucement vers la note (" + Math.round(note.total) + " %) : le trait foncé.", x + 14, y + 76, petit ? 9 : 10, "#7a5a30");
+    note.parts.forEach((p, k) => {
+      const ry = y + 90 + k * hl;
+      texte(ctx, p.nom, x + 14, ry + 8, petit ? 10 : 11, "#3b2614", true);
+      if (p.max > 0) { ctx.fillStyle = "#eadfc6"; ctx.fillRect(x + 14, ry + 17, l - 90, 6); ctx.fillStyle = "#e0a81e"; ctx.fillRect(x + 14, ry + 17, (l - 90) * Math.max(0, p.points) / p.max, 6); }
+      texte(ctx, (p.points >= 0 ? "+" : "−") + Math.round(Math.abs(p.points)) + (p.max ? " / " + p.max : ""), x + l - 14, ry + 14, 12, p.points >= 0 ? "#2e8a3a" : "#c0392b", true, "right");
+    });
+    const yb = y + 90 + note.parts.length * hl + 8;
+    texte(ctx, "Effet : travail × " + String(Bh.vitesse(monde)).replace(".", ",") + " · arrivée des villageois × " + String(Bh.arrivee(monde)).replace(".", ","), x + 14, yb, petit ? 10 : 11, "#5a4220", true);
+    const manque = C.douceurs.concat(Village.Repas.NOURRITURE).filter((a) => !note.gouts.includes(a) && (monde.age || 0) >= (C.ressources[a].age || 0));
+    texte(ctx, manque.length ? "💡 Pour plus de goûts : " + manque.map((a) => C.ressources[a].emoji).join(" ") : "💡 Tous les goûts sont là : bravo !", x + 14, yb + 20, petit ? 10 : 11, "#5a4220");
+    texte(ctx, "🏠 Des maisons (pas des huttes) donnent du confort.", x + 14, yb + 38, petit ? 10 : 11, "#5a4220");
+  }
+
   // 🏪 Étape 8 : le panneau du marché. Une ligne par ressource : le stock, le prix (et s'il monte ou baisse),
   // et deux boutons : vendre 5, acheter 5.
   function panneauMarche(ctx, monde, W, He, petit) {
@@ -402,6 +431,7 @@ Village.Interface = (function () {
     // Étape 13 : ✍️ les habitants et les lits, toujours visibles (⚠️ quand il n'y a plus de lit)
     const Lg = Village.Logement, hab = Lg.habitants(monde), lits = Lg.capacite(monde);
     titre += "  👥 " + hab + "/" + lits + (hab >= lits ? " ⚠️" : "");
+    if (monde.bonheur.valeur !== null && !petit) titre += "  " + Village.Bonheur.emoji(monde) + " " + Math.round(monde.bonheur.valeur) + " %"; // étape 15
     texte(ctx, titre, 22, petit ? 25 : 28, petit ? 11 : 13, "#7a5a30", true);
     ressources.forEach(([r, n], k) => {
       const rx = 22 + (k % parLigne) * pas, ry = (petit ? 47 : 51) + Math.floor(k / parLigne) * (petit ? 20 : 24), ti = petit ? 15 : 19;
@@ -435,6 +465,14 @@ Village.Interface = (function () {
       texte(ctx, "🏪", W - 10 - tp / 2, 194 + tp / 2 + 1, 20, null, false, "center");
       zone(W - tp - 10, 194, tp, tp, "panneau", "marche");
     }
+    // Étape 15 : 😊 le bonheur des habitants (la jauge se remplit dans le bouton)
+    const yb15 = Village.Marche.leMarche(monde) ? 240 : 194, v15 = monde.bonheur.valeur || 0;
+    bulle(ctx, W - tp - 10, yb15, tp, tp, panneau === "bonheur" ? "rgba(255, 226, 122, .98)" : null);
+    ctx.fillStyle = v15 >= C.bonheur.content ? "rgba(46, 138, 58, .35)" : v15 < C.bonheur.triste ? "rgba(192, 57, 43, .35)" : "rgba(242, 194, 48, .4)";
+    ctx.fillRect(W - tp - 6, yb15 + tp - 4 - (tp - 8) * v15 / 100, tp - 8, (tp - 8) * v15 / 100);
+    texte(ctx, Village.Bonheur.emoji(monde), W - 10 - tp / 2, yb15 + 15, 17, null, false, "center");
+    texte(ctx, Math.round(v15) + "%", W - 10 - tp / 2, yb15 + 32, 10, "#3b2614", true, "center");
+    zone(W - tp - 10, yb15, tp, tp, "panneau", "bonheur");
     if (W >= 520) dessinerMini(ctx, monde, mini, W - 10 - tp - 10, 10, petit ? 1 : 1.5);
 
     // ---- En bas : le MENU (étape 5). ✍️ Moins de boutons toujours affichés, regroupés par ressource :
@@ -444,6 +482,7 @@ Village.Interface = (function () {
       { id: "bois", emoji: "🪵", nom: "Bois", batiments: ["bucheron", "forestier", "scierie"] },
       { id: "pierre", emoji: "⛏️", nom: "Mines", batiments: ["carriere", "geologue", "mineCharbon", "mineFer", "mineOr"] },
       { id: "nourriture", emoji: "🍖", nom: "Nourriture", batiments: ["pecheur", "chasseur", "ferme", "moulin", "boulangerie"] }, // étape 11 : le pain
+      { id: "elevage", emoji: "🐄", nom: "Élevage", batiments: ["puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie"] }, // étape 15
       // Étape 8 : les logements, et les artisans (fonderie, forge, marché, université)
       { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "maison", "macon"] }, // étape 12 : le maçon-couvreur
       { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "marche", "universite"] },
@@ -553,6 +592,7 @@ Village.Interface = (function () {
     else if (panneau === "boutique") panneauBoutique(ctx, monde, W, He, petit);
     else if (panneau === "stats") panneauStats(ctx, monde, W, He, petit); // étape 8
     else if (panneau === "marche") panneauMarche(ctx, monde, W, He, petit);
+    else if (panneau === "bonheur") panneauBonheur(ctx, monde, W, He, petit); // étape 15
     // Étape 11 : le résumé de l'absence, et la pub (par-dessus tout le reste)
     if (monde.absence) panneauAbsence(ctx, monde, W, He, petit);
     else if (monde.pub.offre) panneauPub(ctx, monde, W, He, petit);
@@ -669,9 +709,10 @@ Village.Interface = (function () {
     } else if (C.ateliers[b.type]) {
       // Étape 8 : un atelier (scierie, fonderie, forge) et sa recette
       const R = C.ateliers[b.type], q = (obj) => Object.entries(obj).map(([r, n]) => n + " " + EMO(r)).join(" + ");
-      lignes.push("📜 Recette : " + q(R.entrees) + " → " + q(R.sorties));
+      lignes.push("📜 Recette : " + (q(R.entrees) || "rien") + " → " + q(R.sorties) + (R.hiver ? " · ❄️ en hiver : + " + q(R.hiver) : ""));
       lignes.push(b.travail ? "⚙️ Fabrique… " + Math.ceil(b.travail.reste) + " s" : b.attend ? "😴 " + b.attend.charAt(0).toUpperCase() + b.attend.slice(1) : "Prêt à travailler");
-      lignes.push("Réserve : " + Object.keys(R.entrees).map((r) => (b.entrees[r] || 0) + " " + EMO(r)).join(" · ") + " · devant : " + b.sortie + " " + EMO(b.sortieQuoi));
+      if (b.malade) lignes.push("🤒 Les vaches sont MALADES : plus de lait. " + (monde.batiments.some((x) => x.type === "veterinaire" && x.ouvrier) ? "Le vétérinaire 🩺 va venir." : "Sans vétérinaire 🩺, elles guérissent seules en " + Math.ceil(Math.max(0, C.elevage.guerirSeule - b.malade.depuis) / 60) + " min.")); // étape 15
+      lignes.push("Réserve : " + Object.keys(B.entreesDe(monde, b)).map((r) => (b.entrees[r] || 0) + " " + EMO(r)).join(" · ") + " · devant : " + b.sortie + " " + EMO(b.sortieQuoi));
       lignes.push("A fabriqué " + b.produits + " " + C.ressources[b.sortieQuoi].nom);
     } else if (b.type === "macon") {
       // Étape 12 : le maçon-couvreur
@@ -693,7 +734,8 @@ Village.Interface = (function () {
       lignes.push("👷 Le " + type.metier + " " + Village.Ouvriers.NOMS_ETATS[o.etat]);
       if (o.etat === "travailler") lignes.push("encore " + Math.ceil(o.minuteur) + " s");
       if (b.sortieQuoi) lignes.push("Devant la porte : " + b.sortie + " / " + C.sortieMax + " " + EMO(b.sortieQuoi));
-      lignes.push((b.type === "forestier" ? "A planté " : "A rapporté ") + b.produits + ({ bucheron: " troncs", forestier: " pousses", carriere: " pierres", pecheur: " poissons", chasseur: " gibiers", geologue: " découvertes" }[b.type] || ""));
+      if (b.type === "veterinaire") lignes.push("🐄 " + monde.batiments.filter((x) => x.malade).length + " étable(s) malade(s) au village"); // étape 15
+      lignes.push((b.type === "forestier" ? "A planté " : b.type === "veterinaire" ? "A soigné " : "A rapporté ") + b.produits + ({ bucheron: " troncs", forestier: " pousses", carriere: " pierres", pecheur: " poissons", chasseur: " gibiers", geologue: " découvertes", veterinaire: " étable(s)" }[b.type] || ""));
     }
     // Étape 4 : le repas de l'ouvrier
     const o = b.ouvrier;

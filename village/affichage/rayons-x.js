@@ -160,7 +160,7 @@ Village.RayonsX = (function () {
       if (bat.etat !== "pret") continue;
       const p = point(bat.colonne + 0.5, bat.ligne + 0.5), R = C.ateliers[bat.type];
       let t = null;
-      if (R) t = Object.entries(R.entrees).map(([r, n]) => (bat.entrees[r] || 0) + "/" + n + EMO(r)).join(" + ") + " → " + Object.values(R.sorties)[0] + EMO(bat.sortieQuoi);
+      if (R) t = Object.entries(Village.Batiments.entreesDe(Village.monde, bat)).map(([r, n]) => (bat.entrees[r] || 0) + "/" + n + EMO(r)).join(" + ") + " → " + Object.values(R.sorties)[0] + EMO(bat.sortieQuoi);
       else if (C.logement[bat.type] && bat.type !== "entrepot") t = "🛏️ +" + C.logement[bat.type] + " places";
       else if (bat.type === "entrepot") t = "🛏️ " + Village.Logement.habitants(monde) + " / " + Village.Logement.capacite(monde) + " places · 📦 " + Village.Reserve.capacite(monde);
       if (bat.usure > 0) t = (t ? t + " · " : "") + "🔧 " + Math.round(bat.usure * 100) + " %"; // étape 11

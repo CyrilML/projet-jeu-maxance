@@ -50,12 +50,16 @@
 //                  une place offerte par porteur, et ses porteurs achetés deviennent des places achetées.
 //  10 (étape 12) : le prix de chaque chantier (prix), car un bâtiment peut être offert (le coup de pouce).
 //                  Un chantier plus ancien garde le prix normal de son bâtiment.
+//  12 (étape 15) : le bonheur (la jauge, de 0 à 100), les goûts (gouts : aliment → horloge du dernier repas),
+//                  les étables malades (malade : depuis combien de secondes) et les ressources de l'élevage (eau,
+//                  foin, lait, beurre, fromage, yaourt). Rien à convertir : une partie plus ancienne commence à 0
+//                  de chaque nouvelle ressource, et sa jauge part de sa note au premier calcul.
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 11;
+  const VERSION = 12;
   const radio = Village.Evenements;
 
   function vide() {
@@ -187,6 +191,7 @@ Village.Sauvegarde = (function () {
         if (b.usure > 0) d.usure = Math.round(b.usure * 1000) / 1000; // étape 11
         if (b.ameliorations) d.ameliorations = b.ameliorations; // étape 13
         if (b.niveau > 1) d.niveau = b.niveau;
+        if (b.malade) d.malade = Math.round(b.malade.depuis) || 1; // étape 15 : depuis combien de secondes
         if (b.etat === "chantier") { d.prix = b.prix; d.livre = b.livre; d.attendu = ajout(b.attendu, enCours.attendu.get(b)); } // étape 12 : le prix du chantier (il peut être offert)
         const o = b.ouvrier;
         if (o && o.faim) { d.faim = Math.round(o.faim); if (o.affame) { d.affame = true; d.ventreVide = Math.round(o.ventreVide); } }
@@ -211,6 +216,8 @@ Village.Sauvegarde = (function () {
       recherches: { faites: monde.recherches.faites, enCours: monde.recherches.enCours && { id: monde.recherches.enCours.id, reste: Math.round(monde.recherches.enCours.reste) } },
       missions: { actuelle: monde.missions.actuelle && Object.assign({}, monde.missions.actuelle, { reste: Math.round(monde.missions.actuelle.reste) }), attente: Math.round(monde.missions.attente), derniere: monde.missions.derniere, reussies: monde.missions.reussies },
       partis: monde.partis,
+      bonheur: monde.bonheur.valeur === null ? undefined : Math.round(monde.bonheur.valeur * 10) / 10, // étape 15
+      gouts: monde.gouts,
       porteurs: monde.porteurs.map((p) => ({ faim: Math.round(p.faim || 0), affame: !!p.affame, ventreVide: Math.round(p.ventreVide || 0), parti: !!p.parti })),
       animaux: monde.animaux.map((a) => [Math.round(a.x * 10) / 10, Math.round(a.y * 10) / 10, a.sorte]),
       modifs: [...monde.modifs].map(([i, m]) => (m.f ? [i, m.o, m.r, m.f] : [i, m.o, m.r])),

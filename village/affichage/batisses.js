@@ -43,6 +43,14 @@ Village.Batisses = (function () {
     mineOr: { a: 18, h: 12, toit: 10, murG: "#8a6a48", murD: "#6c5036", toitA: "#c9a636", toitB: "#a8892a", mur: "rondins", toitSorte: "bardeaux", fenetres: 0, lanterne: true },
     macon: { a: 19, h: 13, toit: 14, murG: "#c9c2b4", murD: "#a59d8e", toitA: "#c8503a", toitB: "#a43e2b", mur: "pierre", toitSorte: "tuiles", fenetres: 1 }, // étape 12
     orfevre: { a: 19, h: 16, toit: 14, murG: "#e8e2d4", murD: "#c7bfae", toitA: "#6b3fa0", toitB: "#52307c", mur: "pierre", toitSorte: "ardoise", fenetres: 2, volets: "#6b3fa0", lanterne: true },
+    // Étape 15 : l'élevage. Chacun a sa couleur de toit, pour le reconnaître d'un coup d'œil.
+    puits: { a: 16, h: 11, toit: 12, murG: "#c9c2b4", murD: "#a59d8e", toitA: "#3f7ac4", toitB: "#2f5c9c", mur: "pierre", toitSorte: "ardoise", fenetres: 1 },
+    faneur: { a: 19, h: 13, toit: 16, murG: "#c49a5a", murD: "#a27a3e", toitA: "#d8b65a", toitB: "#b8963f", mur: "planches", toitSorte: "paille", fenetres: 0 },
+    etable: { a: 21, h: 13, toit: 15, murG: "#f1ede4", murD: "#d2cbbd", toitA: "#5f7d2b", toitB: "#4a6322", mur: "colombage", toitSorte: "bardeaux", fenetres: 1, volets: "#4a6322" },
+    laiterie: { a: 19, h: 14, toit: 14, murG: "#f6f2e8", murD: "#d9d2c2", toitA: "#5fa8d9", toitB: "#4a8ab8", mur: "pierre", toitSorte: "tuiles", fenetres: 1, volets: "#4a8ab8" },
+    veterinaire: { a: 18, h: 14, toit: 14, murG: "#f1e3c4", murD: "#d2c09a", toitA: "#4f9e3e", toitB: "#3a7a2e", mur: "colombage", toitSorte: "tuiles", fenetres: 1, volets: "#3a7a2e", lanterne: true },
+    fromagerie: { a: 20, h: 15, toit: 14, murG: "#e8d9a8", murD: "#c9b884", toitA: "#c8503a", toitB: "#a43e2b", mur: "pierre", toitSorte: "tuiles", fenetres: 1, volets: "#e0a81e", cheminee: 0.7 },
+    cremerie: { a: 18, h: 14, toit: 14, murG: "#fbf6ee", murD: "#ddd5c6", toitA: "#d96aa0", toitB: "#b8508a", mur: "colombage", toitSorte: "tuiles", fenetres: 1, volets: "#d96aa0" },
   };
 
   // Étape 9 : ce que le peintre nous dit au début de chaque image.
@@ -482,9 +490,81 @@ Village.Batisses = (function () {
       else if (sorte === "lingots") lingot(ctx, px + 1, py + 1);
       else if (sorte === "outils") outil(ctx, px, py);
       else if (sorte === "ble" || sorte === "farine" || sorte === "pain" || sorte === "or" || sorte === "bijoux") objetPorte(ctx, sorte, px, py); // étape 11
+      else if (sorte === "eau" || sorte === "foin" || sorte === "lait" || sorte === "beurre" || sorte === "fromage" || sorte === "yaourt") objetPorte(ctx, sorte, px, py); // étape 15
       else if (sorte === "planche") planche(ctx, x + (k % 2 ? 2.5 : -1), y - k * 2.6, 24); // étape 6 : une pile de longues planches, un peu décalées
       else caillou(ctx, px, py, k); // étape 9 : de vraies pierres taillées
     }
+  }
+
+  // ---------------------------------------------------------------- étape 15 : l'élevage
+  // L'enclos : un losange d'herbe broutée, entouré d'une barrière en bois
+  function enclos(ctx, x, y, a, b) {
+    const P = [[x - a, y], [x, y + b], [x + a, y], [x, y - b]];
+    ctx.beginPath(); P.forEach(([px, py], n) => (n ? ctx.lineTo(px, py) : ctx.moveTo(px, py))); ctx.closePath();
+    ctx.fillStyle = vue.hiver ? "rgba(255, 255, 255, .5)" : "rgba(120, 150, 60, .55)"; ctx.fill();
+    ctx.strokeStyle = "#8a5a2b"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let k = 0; k < 4; k++) {
+      const A = P[k], B = P[(k + 1) % 4];
+      ctx.moveTo(A[0], A[1] - 3); ctx.lineTo(B[0], B[1] - 3); // la barre du haut
+      for (let j = 0; j <= 3; j++) { const px = A[0] + (B[0] - A[0]) * j / 3, py = A[1] + (B[1] - A[1]) * j / 3; ctx.moveTo(px, py); ctx.lineTo(px, py - 4); } // les piquets
+    }
+    ctx.stroke();
+  }
+  // Une vache (les pieds en x, y), qui broute, remue la queue… ou qui se couche quand elle est malade
+  function vache(ctx, x, y, t, dir, graine, malade) {
+    const rousse = graine % 3 === 1, robe = malade ? "#dfe8cf" : rousse ? "#b8743a" : "#f6f2e8", taches = rousse ? "#f6f2e8" : "#2b2b2b";
+    ctx.save(); ctx.translate(x, y); ctx.scale(dir * 1.4, 1.4); // un peu plus grosses que les bonshommes : ce sont des vaches !
+    ctx.fillStyle = "rgba(20, 40, 10, .25)"; ctx.beginPath(); ctx.ellipse(0, 0.5, 5, 1.6, 0, 0, TOUR); ctx.fill();
+    const couchee = malade ? 2.2 : 0, broute = !malade && Math.sin(t * 0.7) > 0.2 ? 1 : 0;
+    if (!couchee) { // les 4 pattes
+      ctx.strokeStyle = "#5a4630"; ctx.lineWidth = 1.1;
+      ctx.beginPath(); for (const px of [-3, -1.6, 2, 3.2]) { ctx.moveTo(px, -3); ctx.lineTo(px, 0); } ctx.stroke();
+    }
+    // La queue qui balaie les mouches
+    const q = Math.sin(t * 3) * 0.6;
+    ctx.strokeStyle = robe === "#f6f2e8" ? "#8a8070" : "#7a4a20"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(-4.4, -4.6 + couchee); ctx.quadraticCurveTo(-5.5, -3 + couchee, -5 + q, -1.5 + couchee); ctx.stroke();
+    // Le corps, et ses taches
+    ctx.beginPath(); ctx.ellipse(0, -4.6 + couchee, 4.6, 2.5, 0, 0, TOUR); ctx.fillStyle = robe; ctx.fill(); contour(ctx, 0.9);
+    if (vue.fin) { ctx.fillStyle = taches; ctx.beginPath(); ctx.ellipse(-1.6, -5.2 + couchee, 1.3, 0.9, 0.4, 0, TOUR); ctx.ellipse(1.8, -4 + couchee, 1, 0.8, -0.3, 0, TOUR); ctx.fill(); }
+    // La tête (baissée quand elle broute), le museau rose et les cornes
+    const hx = 4.8, hy = -5.6 + couchee + broute * 3;
+    ctx.beginPath(); ctx.ellipse(hx, hy, 1.7, 1.5, 0, 0, TOUR); ctx.fillStyle = robe; ctx.fill(); contour(ctx, 0.8);
+    ctx.beginPath(); ctx.ellipse(hx + 1.2, hy + 0.7, 1, 0.8, 0, 0, TOUR); ctx.fillStyle = "#f2a9a0"; ctx.fill();
+    if (vue.fin) { ctx.strokeStyle = "#efe6c8"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(hx - 0.6, hy - 1.3); ctx.lineTo(hx - 1.2, hy - 2.4); ctx.moveTo(hx + 0.6, hy - 1.3); ctx.lineTo(hx + 1, hy - 2.5); ctx.stroke(); }
+    ctx.restore();
+    if (malade && vue.fin) { ctx.strokeStyle = "rgba(90, 160, 60, .8)"; ctx.lineWidth = 0.8; ctx.beginPath(); for (let k = 0; k < 2; k++) { const fy = y - 8 - k * 3 - ((t * 4) % 3); ctx.moveTo(x - 1 + k * 2, fy); ctx.quadraticCurveTo(x + k * 2, fy - 1.5, x + 1 + k * 2, fy); } ctx.stroke(); } // les petites spirales vertes
+  }
+  // Les objets de l'élevage
+  function seau(ctx, x, y) {
+    forme(ctx, [[x - 3, y - 2.6], [x + 3, y - 2.6], [x + 2.2, y + 3], [x - 2.2, y + 3]], "#9a6a3c");
+    ctx.beginPath(); ctx.ellipse(x, y - 2.6, 3, 1.1, 0, 0, TOUR); ctx.fillStyle = "#5fb4e8"; ctx.fill(); contour(ctx, 0.8);
+    ctx.strokeStyle = "#5a5f68"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(x - 2.7, y); ctx.lineTo(x + 2.7, y); ctx.stroke();
+  }
+  function botte(ctx, x, y) { // une botte de foin, avec ses 2 liens
+    forme(ctx, [[x - 4, y - 2.4], [x + 4, y - 2.4], [x + 4, y + 2.6], [x - 4, y + 2.6]], "#d9c35a");
+    ctx.strokeStyle = "rgba(140, 110, 30, .55)"; ctx.lineWidth = 0.6; ctx.beginPath(); for (let k = -1; k <= 1; k++) { ctx.moveTo(x - 3.6, y + k * 1.4); ctx.lineTo(x + 3.6, y + k * 1.4 + 0.3); } ctx.stroke();
+    ctx.fillStyle = "#8a5a2b"; ctx.fillRect(x - 2, y - 2.4, 0.9, 5); ctx.fillRect(x + 1.2, y - 2.4, 0.9, 5);
+  }
+  function bidon(ctx, x, y) { // un bidon de lait en fer-blanc
+    forme(ctx, [[x - 2.6, y + 3.4], [x + 2.6, y + 3.4], [x + 2.6, y - 1], [x + 1.3, y - 2.4], [x + 1.3, y - 3.8], [x - 1.3, y - 3.8], [x - 1.3, y - 2.4], [x - 2.6, y - 1]], "#e6eaee");
+    ctx.fillStyle = "#9aa3ad"; ctx.fillRect(x - 2.6, y + 0.6, 5.2, 1);
+    ctx.fillStyle = "rgba(255, 255, 255, .8)"; ctx.fillRect(x - 1.8, y - 0.6, 0.8, 3.4);
+  }
+  function motte(ctx, x, y) { // une motte de beurre dans son papier
+    forme(ctx, [[x - 3.6, y], [x, y + 1.8], [x + 3.6, y], [x, y - 1.8]], "#ffe27a");
+    forme(ctx, [[x - 3.6, y], [x, y + 1.8], [x, y + 4], [x - 3.6, y + 2.2]], "#f2c230");
+    forme(ctx, [[x, y + 1.8], [x + 3.6, y], [x + 3.6, y + 2.2], [x, y + 4]], "#d9a820");
+  }
+  function fromage(ctx, x, y) { // une part de fromage, avec ses trous
+    forme(ctx, [[x - 4, y + 1], [x + 3.6, y - 1.6], [x + 3.6, y - 4], [x - 4, y - 1.4]], "#ffd75a");
+    forme(ctx, [[x - 4, y + 1], [x + 3.6, y - 1.6], [x + 3.6, y + 1.2], [x - 4, y + 3.6]], "#f2c230");
+    ctx.fillStyle = "#d9a820"; ctx.beginPath(); ctx.arc(x - 1.4, y + 1.6, 0.7, 0, TOUR); ctx.arc(x + 1.6, y + 0.4, 0.55, 0, TOUR); ctx.arc(x + 0.2, y - 2, 0.5, 0, TOUR); ctx.fill();
+  }
+  function pot(ctx, x, y) { // un pot de yaourt, avec son couvercle
+    forme(ctx, [[x - 2.2, y - 2], [x + 2.2, y - 2], [x + 1.8, y + 2.6], [x - 1.8, y + 2.6]], "#fbf6ee");
+    ctx.beginPath(); ctx.ellipse(x, y - 2, 2.4, 0.9, 0, 0, TOUR); ctx.fillStyle = "#d96aa0"; ctx.fill(); contour(ctx, 0.7);
+    ctx.fillStyle = "#5fa8d9"; ctx.fillRect(x - 2, y, 4, 0.8);
   }
 
   // ---------------------------------------------------------------- un bâtiment
@@ -619,6 +699,67 @@ Village.Batisses = (function () {
       pile(ctx, x + 2, y + 16, "ble", b.sortie);
       // une meule de foin
       ctx.beginPath(); ctx.ellipse(x - 20, y + 2, 6, 5, 0, Math.PI, 0); ctx.lineTo(x - 14, y + 4); ctx.lineTo(x - 26, y + 4); ctx.closePath(); ctx.fillStyle = vue.hiver ? "#f4f8ff" : "#e8c64a"; ctx.fill(); contour(ctx, 1.2);
+    } else if (b.type === "puits") {
+      // Étape 15 : un vrai puits en pierre, avec son petit toit, sa manivelle et son seau qui monte et descend
+      const px = x + 14, py = y + 8;
+      ctx.beginPath(); ctx.ellipse(px, py, 6, 3, 0, 0, Math.PI); ctx.lineTo(px - 6, py - 5); ctx.ellipse(px, py - 5, 6, 3, 0, Math.PI, 0, true); ctx.closePath(); ctx.fillStyle = "#a3a8ad"; ctx.fill(); contour(ctx, 1.2);
+      ctx.beginPath(); ctx.ellipse(px, py - 5, 6, 3, 0, 0, TOUR); ctx.fillStyle = "#b8bcc0"; ctx.fill(); contour(ctx, 1.2);
+      ctx.beginPath(); ctx.ellipse(px, py - 5, 4.2, 2, 0, 0, TOUR); ctx.fillStyle = vue.hiver ? "#cfe3f2" : "#2f5c8c"; ctx.fill();
+      ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(px - 6, py - 5); ctx.lineTo(px - 6, py - 18); ctx.moveTo(px + 6, py - 5); ctx.lineTo(px + 6, py - 18); ctx.stroke();
+      forme(ctx, [[px - 9, py - 17], [px, py - 23], [px + 9, py - 17], [px, py - 14]], "#3f7ac4"); // le petit toit
+      const monte = b.travail ? (Math.sin(t * 2.4) + 1) / 2 : 1, sy = py - 7 - monte * 8;
+      ctx.strokeStyle = "#c9a26a"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(px, py - 15); ctx.lineTo(px, sy - 2); ctx.stroke();
+      if (vue.fin) objetPorte(ctx, "eau", px, sy);
+      ctx.strokeStyle = "#5a5f68"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(px + 6, py - 15); ctx.lineTo(px + 6 + Math.cos(t * 2.4 * (b.travail ? 1 : 0)) * 3, py - 15 + Math.sin(t * 2.4 * (b.travail ? 1 : 0)) * 3); ctx.stroke(); // la manivelle
+      pile(ctx, x - 22, y + 12, "eau", b.sortie);
+    } else if (b.type === "faneur") {
+      // Étape 15 : deux meules de foin, un râteau, et les bottes qui attendent un porteur
+      for (const [mx, my, r] of [[x + 16, y + 6, 6], [x + 23, y + 11, 4.5]]) {
+        ctx.beginPath(); ctx.ellipse(mx, my, r, r * 0.9, 0, Math.PI, 0); ctx.lineTo(mx + r, my + 2); ctx.lineTo(mx - r, my + 2); ctx.closePath(); ctx.fillStyle = vue.hiver ? "#f4f8ff" : "#d9c35a"; ctx.fill(); contour(ctx, 1.2);
+        if (vue.fin && !vue.hiver) { ctx.strokeStyle = "rgba(140, 110, 30, .5)"; ctx.lineWidth = 0.8; ctx.beginPath(); for (let k = -1; k <= 1; k++) { ctx.moveTo(mx + k * r * 0.5, my - r * 0.6); ctx.lineTo(mx + k * r * 0.7, my + 1); } ctx.stroke(); }
+      }
+      ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(x - 18, y + 10); ctx.lineTo(x - 13, y - 6); ctx.stroke();
+      ctx.strokeStyle = "#8b9099"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x - 16, y - 7); ctx.lineTo(x - 10, y - 5); for (let k = 0; k < 4; k++) { ctx.moveTo(x - 15.5 + k * 1.8, y - 6.8 + k * 0.6); ctx.lineTo(x - 15.5 + k * 1.8, y - 4 + k * 0.6); } ctx.stroke();
+      pile(ctx, x - 24, y + 14, "foin", b.sortie);
+    } else if (b.type === "etable") {
+      // Étape 15 : ✍️ l'enclos, avec ses vaches qui broutent (et qui se couchent quand elles sont malades)
+      enclos(ctx, x + 17, y + 13, 14, 7);
+      const E = C_.elevage;
+      const places = [[x + 10, y + 12, 1], [x + 23, y + 13, -1], [x + 16, y + 17, 1]];
+      for (let k = 0; k < Math.min(E.vaches, places.length); k++) vache(ctx, places[k][0], places[k][1], t + k * 1.7 + b.numero, places[k][2], k + b.numero, !!b.malade);
+      pile(ctx, x - 22, y + 12, "lait", b.sortie);
+      pile(ctx, x - 14, y + 16, "eau", b.entrees.eau || 0);
+      pile(ctx, x - 5, y + 18, "foin", b.entrees.foin || 0);
+    } else if (b.type === "laiterie") {
+      // Étape 15 : la baratte ! Le bâton monte et descend quand le laitier fait le beurre
+      const bx = x + 12, by = y + 10, haut = b.travail ? Math.abs(Math.sin(t * 5)) * 4 : 0;
+      ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(bx, by - 11 - haut); ctx.lineTo(bx, by - 20 - haut); ctx.stroke();
+      forme(ctx, [[bx - 3.5, by], [bx + 3.5, by], [bx + 2.6, by - 11], [bx - 2.6, by - 11]], "#b07740");
+      ctx.strokeStyle = "#5a5f68"; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(bx - 3.3, by - 3); ctx.lineTo(bx + 3.3, by - 3); ctx.moveTo(bx - 2.9, by - 8); ctx.lineTo(bx + 2.9, by - 8); ctx.stroke();
+      if (b.travail && Math.sin(t * 5) > 0.8) { ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(bx - 2, by - 12, 0.9, 0, TOUR); ctx.arc(bx + 2.4, by - 13, 0.7, 0, TOUR); ctx.fill(); } // des éclaboussures de crème
+      pile(ctx, x - 22, y + 12, "lait", b.entrees.lait || 0);
+      pile(ctx, x + 18, y + 14, "beurre", b.sortie);
+    } else if (b.type === "veterinaire") {
+      // Étape 15 : la croix verte au-dessus de la porte, et une sacoche de soins
+      const cx = x + 10, cy = y - m.h - 2;
+      ctx.fillStyle = "#ffffff"; ctx.fillRect(cx - 5, cy - 5, 10, 10); ctx.strokeStyle = CONTOUR; ctx.lineWidth = 1 * trait; ctx.strokeRect(cx - 5, cy - 5, 10, 10);
+      ctx.fillStyle = "#2e9a4a"; ctx.fillRect(cx - 1.5, cy - 4, 3, 8); ctx.fillRect(cx - 4, cy - 1.5, 8, 3);
+      forme(ctx, [[x + 14, y + 12], [x + 22, y + 12], [x + 22, y + 7], [x + 14, y + 7]], "#7a4a2a");
+      ctx.strokeStyle = "#5a3818"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x + 18, y + 7, 2.2, Math.PI, 0); ctx.stroke();
+      ctx.fillStyle = "#ffffff"; ctx.fillRect(x + 17.3, y + 8.2, 1.4, 3); ctx.fillRect(x + 16.5, y + 9, 3, 1.4);
+    } else if (b.type === "fromagerie") {
+      // Étape 15 : une étagère de meules de fromage qui s'affinent
+      forme(ctx, [[x + 10, y + 12], [x + 26, y + 4], [x + 26, y + 2], [x + 10, y + 10]], "#8a5a2b");
+      for (let k = 0; k < 3; k++) { const fx = x + 13 + k * 5, fy = y + 8 - k * 2.5; ctx.beginPath(); ctx.ellipse(fx, fy, 2.6, 1.3, 0, 0, TOUR); ctx.fillStyle = "#f2c230"; ctx.fill(); contour(ctx, 0.9); ctx.fillStyle = "#e0a81e"; ctx.fillRect(fx - 2.6, fy, 5.2, 1.6); }
+      pile(ctx, x - 22, y + 12, "lait", b.entrees.lait || 0);
+      pile(ctx, x + 4, y + 17, "fromage", b.sortie);
+    } else if (b.type === "cremerie") {
+      // Étape 15 : une table avec des pots de yaourt, et une grande cuillère qui tourne quand le crémier travaille
+      forme(ctx, [[x + 10, y + 12], [x + 24, y + 5], [x + 24, y + 3], [x + 10, y + 10]], "#c9965a");
+      for (let k = 0; k < 4; k++) objetPorte(ctx, "yaourt", x + 12 + k * 3.5, y + 8 - k * 1.8);
+      if (b.travail) { ctx.strokeStyle = "#8a5a2b"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x + 4, y + 2); ctx.lineTo(x + 4 + Math.cos(t * 6) * 3, y - 6 + Math.sin(t * 6)); ctx.stroke(); }
+      pile(ctx, x - 22, y + 12, "lait", b.entrees.lait || 0);
+      pile(ctx, x + 4, y + 17, "yaourt", b.sortie);
     } else if (b.type === "hutte") {
       // Étape 8 : une hutte ronde en paille, avec un petit feu devant
       ctx.strokeStyle = "rgba(120, 90, 30, .5)"; ctx.lineWidth = 1;
@@ -697,6 +838,7 @@ Village.Batisses = (function () {
     if (travaille && b.type === "carriere") poussiere(ctx, x, y, t);
     if (!b.relie) panneauSansRoute(ctx, x, y - m.h - m.toit - 16, t);
     // Étape 4 : l'ouvrier a trop faim, ou il est parti (la cabane est vide)
+    else if (b.malade) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "🤒"); // étape 15 : les vaches sont malades
     else if (b.ouvrier && b.ouvrier.affame) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "🍽️");
     else if (b.usure >= 1) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "🔧"); // étape 11 : usé !
     else if (b.ouvrier && b.ouvrier.froid) bulleDePensee(ctx, x, y - m.h - m.toit - 18, t, "🥶");
@@ -954,6 +1096,14 @@ Village.Batisses = (function () {
     mineOr: { habit: "#7a6a40", pantalon: "#3b3f4a", coiffe: "mineur", coiffeCouleur: "#b8862e", outil: "pioche", suie: true },
     orfevre: { habit: "#6b3fa0", pantalon: "#2f2a3a", coiffe: "calot", coiffeCouleur: "#3b2a5a", tablier: "#c9b48f", outil: "marteau" },
     macon: { habit: "#d9c9a3", pantalon: "#6b6058", coiffe: "calot", coiffeCouleur: "#f6f2e8", tablier: "#8a7a60", outil: "marteauForge", suie: false }, // étape 12 : le maçon-couvreur
+    // Étape 15 : l'élevage
+    puits: { habit: "#5a7bb5", pantalon: "#5a4630", coiffe: "feutre", coiffeCouleur: "#3b4a6a", outil: null },
+    faneur: { habit: "#c9a24a", pantalon: "#5a4630", coiffe: "paille", coiffeCouleur: "#e8c64a", outil: "fourche" },
+    etable: { habit: "#7a9a4a", pantalon: "#3b4a6a", coiffe: "bonnet", coiffeCouleur: "#8a5a2b", tablier: "#c9b48f", outil: null },
+    laiterie: { habit: "#ffffff", pantalon: "#5a6a8a", coiffe: "calot", coiffeCouleur: "#5fa8d9", tablier: "#dfe8f0", outil: null },
+    veterinaire: { habit: "#f6f2e8", pantalon: "#3b4a3a", coiffe: "feutre", coiffeCouleur: "#4f9e3e", outil: null, soigne: true },
+    fromagerie: { habit: "#e8d9a8", pantalon: "#6b6058", coiffe: "calot", coiffeCouleur: "#ffffff", tablier: "#ffffff", outil: null },
+    cremerie: { habit: "#f6d8e8", pantalon: "#6b6058", coiffe: "calot", coiffeCouleur: "#ffffff", tablier: "#ffffff", outil: null },
     porteur: { habit: "#4a90d9", pantalon: "#5a3a20", coiffe: "bonnet", coiffeCouleur: "#2f6db5", outil: null },
   };
 
@@ -1115,6 +1265,8 @@ Village.Batisses = (function () {
         brasAvant = 1.45 + secousse; brasArriere = 1.25 + secousse; angleOutil = 2.35 + secousse;
       } else if (outil === "marteauForge") { // étape 12 : le maçon tape sur le mur et le toit
         const coup = Math.sin(t * 9) > 0; brasAvant = coup ? 1.6 : 2.8; brasArriere = 2.2; penche = coup ? 0.12 : -0.05;
+      } else if (T.soigne) { // étape 15 : le vétérinaire, accroupi, soigne la vache
+        accroupi = 1; brasAvant = 1.2 + Math.sin(t * 5) * 0.3; brasArriere = 0.9; penche = 0.1;
       } else if (outil === "marteau") {
         accroupi = 1; brasAvant = 1.0 + Math.abs(Math.sin(t * 9)) * 0.6; brasArriere = 0.7; penche = 0.15;
       }
@@ -1199,7 +1351,7 @@ Village.Batisses = (function () {
     if (!T || !b.ouvrier) return;
     const tr = traits(b.numero), actif = !!b.travail || (b.type === "universite" && Village.monde && Village.monde.recherches.enCours) || b.type === "marche";
     if (!actif || (b.type === "marche" && vue.noirceur > 0.5)) return; // le marchand rentre le soir
-    let dx = 0, dy = 0, dir = 1, brasAvant = 0.3, brasArriere = 0.2, penche = 0, outil = T.outil, angle = null;
+    let dx = 0, dy = 0, dir = 1, brasAvant = 0.3, brasArriere = 0.2, penche = 0, outil = T.outil, angle = null, accroupi = 0;
     if (b.type === "scierie") { // il pousse et tire la scie
       dx = -2; dy = 14; const va = Math.sin(t * 7); brasAvant = 1.3 + va * 0.3; brasArriere = 1.2 + va * 0.3; penche = 0.1 + va * 0.05; angle = 1.57;
     } else if (b.type === "forge") { // il tape sur l'enclume, en même temps que les étincelles
@@ -1220,13 +1372,25 @@ Village.Batisses = (function () {
       dx = -16; dy = 6; const ph = (t * 1.2) % 1; brasAvant = ph < 0.6 ? 0.9 + ph * 3.5 : 3 - (ph - 0.6) * 5; brasArriere = brasAvant - 0.2; penche = ph > 0.6 ? 0.18 : 0;
     } else if (b.type === "orfevre") { // de tout petits coups de marteau, très précis
       dx = 12; dy = 13; brasAvant = 1.3 + Math.abs(Math.sin(t * 12)) * 0.25; brasArriere = 1.1;
+    } else if (b.type === "puits") { // étape 15 : il tourne la manivelle
+      dx = 22; dy = 6; dir = -1; brasAvant = 1.5 + Math.sin(t * 2.4) * 0.5; brasArriere = 1.3 + Math.cos(t * 2.4) * 0.4;
+    } else if (b.type === "faneur") { // il retourne le foin avec sa fourche
+      dx = 6; dy = 14; const va = Math.sin(t * 3); brasAvant = 1.1 + va * 0.4; brasArriere = 0.9 + va * 0.3; penche = 0.1 + va * 0.08;
+    } else if (b.type === "etable") { // il trait une vache, accroupi sur son tabouret
+      dx = 4; dy = 17; accroupi = 1; brasAvant = 1.5 + Math.sin(t * 9) * 0.2; brasArriere = 1.4 - Math.sin(t * 9) * 0.2;
+    } else if (b.type === "laiterie") { // il baratte : les bras montent et descendent avec le bâton
+      dx = 6; dy = 14; brasAvant = 2 + Math.abs(Math.sin(t * 5)) * 0.5; brasArriere = 1.9 + Math.abs(Math.sin(t * 5)) * 0.5;
+    } else if (b.type === "fromagerie") { // il retourne les fromages, un par un
+      dx = 10; dy = 14; brasAvant = 1.3 + Math.sin(t * 1.5) * 0.3; brasArriere = 1.2 + Math.sin(t * 1.5) * 0.3;
+    } else if (b.type === "cremerie") { // il remue le lait avec sa grande cuillère
+      dx = 2; dy = 13; brasAvant = 1.4 + Math.sin(t * 6) * 0.2; brasArriere = 1.1;
     } else if (b.type === "marche") { // il fait signe aux passants
       dx = 4; dy = 15; brasAvant = Math.sin(t * 2) > 0.3 ? 2.7 + Math.sin(t * 12) * 0.25 : 0.4; brasArriere = 0.3; outil = null;
     }
     ctx.save(); ctx.translate(x + dx * s, y + dy * s); ctx.scale(dir, 1); // étape 14 : la place suit la loupe, pas la taille
     ctx.fillStyle = "rgba(20, 40, 10, .25)"; ctx.beginPath(); ctx.ellipse(0, 1, 5.5, 2.3, 0, 0, TOUR); ctx.fill();
     ctx.rotate(penche);
-    bonhomme(ctx, { tenue: T, traits: tr, brasAvant, brasArriere, triste: b.ouvrier.affame, hiver: vue.hiver });
+    bonhomme(ctx, { tenue: T, traits: tr, brasAvant, brasArriere, accroupi, triste: b.ouvrier.affame, hiver: vue.hiver });
     if (b.type === "moulin") objetPorte(ctx, "farine", 3, -23);
     if (outil === "livre") { const ma = main(brasAvant); forme(ctx, [[ma[0] - 3, ma[1] - 3], [ma[0] + 3, ma[1] - 4], [ma[0] + 3, ma[1] + 1], [ma[0] - 3, ma[1] + 2]], Math.sin(t * 0.8) > 0.9 ? "#f6ead2" : "#a24b3a"); }
     else if (outil) outilEnMain(ctx, outil, main(brasAvant), angle === null ? brasAvant : angle);
@@ -1410,6 +1574,12 @@ Village.Batisses = (function () {
     else if (quoi === "pain") miche(ctx, x, y);
     else if (quoi === "or") pepite(ctx, x, y);
     else if (quoi === "bijoux") bijou(ctx, x, y);
+    else if (quoi === "eau") seau(ctx, x, y); // étape 15
+    else if (quoi === "foin") botte(ctx, x, y);
+    else if (quoi === "lait") bidon(ctx, x, y);
+    else if (quoi === "beurre") motte(ctx, x, y);
+    else if (quoi === "fromage") fromage(ctx, x, y);
+    else if (quoi === "yaourt") pot(ctx, x, y);
     else caillou(ctx, x, y);
   }
   // Étape 9 : une pierre taillée, grise avec un reflet
@@ -1459,9 +1629,9 @@ Village.Batisses = (function () {
   }
 
   // Les choses lourdes vont dans la brouette (étape 9, avec la recherche « Brouettes »)
-  const LOURD = { pierres: true, charbon: true, fer: true, lingots: true, farine: true, or: true };
+  const LOURD = { pierres: true, charbon: true, fer: true, lingots: true, farine: true, or: true, eau: true, lait: true };
   // Comment on porte chaque chose sans brouette ni charrette : sur l'épaule, dans une hotte sur le dos, ou dans les bras
-  const FACON = { troncs: "epaule", planches: "epaule", outils: "epaule", poissons: "hotte", viande: "hotte", pierres: "hotte", charbon: "sac", fer: "sac", lingots: "bras", ble: "epaule", farine: "sac", pain: "hotte", or: "sac", bijoux: "bras" };
+  const FACON = { troncs: "epaule", planches: "epaule", outils: "epaule", poissons: "hotte", viande: "hotte", pierres: "hotte", charbon: "sac", fer: "sac", lingots: "bras", ble: "epaule", farine: "sac", pain: "hotte", or: "sac", bijoux: "bras", eau: "bras", foin: "epaule", lait: "bras", beurre: "hotte", fromage: "hotte", yaourt: "hotte" }; // étape 15
 
   // Un petit bonhomme en tunique bleue : le porteur.
   // Étape 9 : ✍️ il porte mieux ! Les longues choses sur l'épaule, le reste dans une hotte ou un sac sur
