@@ -94,7 +94,7 @@ Circuit.Course = (function () {
 
   function creer() {
     const monde = {
-      phase: "cartes", // cartes, garage, decompte, course, arrivee (tu as gagné), perdu, balade (le parcours)
+      phase: "cartes", // cartes, meteo (étape 59), garage, decompte, course, arrivee (tu as gagné), perdu, balade (le parcours)
       carte: "course", // étape 37 : la carte choisie
       choixCarte: 0, // étape 37 : la carte regardée dans le menu
       messageCarte: null,
@@ -208,6 +208,27 @@ Circuit.Course = (function () {
       }
       monde.carte = carte.id;
       radio.emettre("choix-carte", { id: carte.id, nom: carte.nom });
+      // Étape 59 : ✍️ ensuite, on choisit sa météo.
+      monde.phase = "meteo";
+      monde.choixMeteo = Math.max(0, C.meteo.choix.indexOf(monde.meteoChoisie || "soleil"));
+      Circuit.Meteo.choisir(C.meteo.choix[monde.choixMeteo]); // (derrière le menu, on voit déjà cette météo)
+      return;
+    }
+    if (monde.phase === "meteo") {
+      const n = C.meteo.choix.length;
+      if (intentions.retour) {
+        ouvrirCartes(monde);
+        return;
+      }
+      const avant = monde.choixMeteo;
+      if (intentions.gaucheAppui || intentions.droiteAppui) monde.choixMeteo = (monde.choixMeteo + (intentions.droiteAppui ? 1 : -1) + n) % n;
+      for (let i = 0; i < n; i++) if (intentions["carte" + (i + 1)]) monde.choixMeteo = i;
+      if (monde.choixMeteo !== avant) Circuit.Meteo.choisir(C.meteo.choix[monde.choixMeteo]); // (on la voit tout de suite)
+      if (!intentions.valider) return;
+      const nom = C.meteo.choix[monde.choixMeteo];
+      monde.meteoChoisie = nom;
+      Circuit.Meteo.fixer(nom);
+      radio.emettre("meteo-choisie", { nom: C.meteo.temps[nom].nom, icone: C.meteo.temps[nom].icone });
       ouvrirGarage(monde);
       return;
     }

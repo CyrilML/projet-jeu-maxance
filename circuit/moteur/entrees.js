@@ -28,6 +28,7 @@ Circuit.Entrees = (function () {
     carte3: ["Digit3", "Numpad3"],
     carte4: ["Digit4", "Numpad4"], // étape 40 : le grand parcours
     carte5: ["Digit5", "Numpad5"], // étape 41 : les méga-rampes
+    carte6: ["Digit6", "Numpad6"], // étape 59 : la 6e météo (le blizzard)
     retour: ["Backspace"],
     monter: ["KeyE"], // étape 39 : descendre de la voiture, ou monter dans une voiture (en ville)
     sirene: ["KeyH"], // étape 40 : la sirène de la voiture de police

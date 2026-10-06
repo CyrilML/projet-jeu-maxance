@@ -22,6 +22,9 @@
 //   - wl (la demi-largeur du BAS) : le flanc rentre vers le bas (le bas de caisse est plus étroit que les épaules),
 //     en suivant une courbe : la carrosserie est « galbée », comme une vraie.
 //
+// Étape 59 : les AILES BOMBÉES. Au-dessus de chaque roue, la carrosserie gonfle un peu vers l'extérieur (ailes de
+// quelques cm, plus large au milieu de la roue, en « cloche ») : c'est ce qui donne aux voitures leur air musclé.
+//
 // Toutes les coques sont « nez vers x+ », posées sur y = 0, centrées en z = 0. Ce fichier ne connaît aucune voiture.
 
 window.Circuit = window.Circuit || {};
@@ -123,6 +126,15 @@ Circuit.Coque = (function () {
       if (x < xMin || x > xMax || (tranches.length && x - tranches[tranches.length - 1].x < 0.004)) continue;
       const s = interpoler(cles, x);
       s.ya = s.yb;
+      // (étape 59 : l'aile bombée au-dessus de chaque roue, en forme de cloche : e^(−(écart ÷ largeur)²))
+      if (options.ailes) {
+        for (const a of arches) {
+          const g = Math.exp(-Math.pow((x - a.x) / (a.r * 1.6), 2)) * options.ailes;
+          s.w += g;
+          if (s.wl !== undefined) s.wl += g * 0.7;
+          if (s.wb !== undefined) s.wb += g * 0.7;
+        }
+      }
       for (const a of arches) {
         const dx = x - a.x;
         if (Math.abs(dx) < a.r) {

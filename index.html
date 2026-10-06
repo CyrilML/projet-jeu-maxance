@@ -180,6 +180,7 @@
       <a href="#etape56">Étape 56</a>
       <a href="#etape57">Étape 57</a>
       <a href="#etape58">Étape 58</a>
+      <a href="#etape59">Étape 59</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3560,6 +3561,43 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Où rattrape-t-on le mieux la voiture en fuite ?</summary><p>Dans les virages des carrefours : elle descend à 43 km/h.</p></details>
     </section>
 
+    <section id="etape59">
+      <h2>🌦️ Étape 59 : des voitures encore plus vraies, et choisir sa météo <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">On voit le conducteur à travers les vitres, les ailes sont bombées, la peinture reflète l'horizon. Et avant de rouler, tu choisis ta météo. <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/59-voitures-vraies-et-choix-meteo.md</code>.</p>
+          <ul>
+            <li>✍️ Améliorer la forme, l'intérieur, les roues, la peinture et les reflets.</li>
+            <li>✍️ Choisir sa météo avant de rouler (soleil, vent, pluie, orage, neige, blizzard), et qu'elle reste.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Après la carte : « Choisis ta météo » (<kbd>←</kbd> <kbd>→</kbd> ou <kbd>1</kbd> à <kbd>6</kbd>, puis <kbd>Entrée</kbd>).</li>
+            <li>☐ En bas à gauche : ta météo « (choisie) » ; elle ne change plus.</li>
+            <li>☐ Au garage : le conducteur, le volant, les sièges à travers les vitres.</li>
+            <li>☐ Les ailes bombées au-dessus des roues, l'horizon qui se reflète sur les portières.</li>
+            <li>Vérifie « version 27 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🪞 Pourquoi les reflets changent tout</h3>
+      <p>Une voiture brillante est un <strong>miroir un peu flou</strong>. Si elle ne reflète qu'un ciel tout gris, elle a l'air en plastique. Maintenant, on fabrique un petit monde rien que pour les reflets : le ciel en haut, une ligne d'horizon, le sol sombre en bas, des immeubles au loin et le soleil. Three.js le transforme en « carte des reflets ». Résultat : le haut des portières est clair (le ciel), le bas est sombre (le sol), et on voit la forme de la voiture.</p>
+      <h3>🔔 La cloche des ailes</h3>
+      <p>Au-dessus de chaque roue, la carrosserie gonfle de 4,5 cm. Pour que ce soit doux, on utilise une courbe en forme de cloche : e<sup>−(écart ÷ largeur)²</sup>. Au milieu de la roue, ça vaut 1 (tout le gonflement) ; en s'éloignant, ça descend doucement vers 0.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>circuit/config.js</code>, mets <code>vitres: { opacite: 1 }</code> : les vitres redeviennent noires. Laquelle tu préfères ?</li>
+        <li>Mets <code>formes: { ailes: 0.15 }</code> : des ailes énormes, comme un monster truck !</li>
+        <li>Dans <code>meteo.choix</code>, ajoute <code>"brouillard"</code> : un 7e choix apparaît.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi le bas des portières est plus sombre que le haut ?</summary><p>Parce qu'il reflète le sol (sombre), et le haut reflète le ciel (clair).</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4426,6 +4464,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-58" data-cle="appris-58" placeholder="Ex. : J'ai appris comment le jeu calcule ma place…"></textarea>
         <label for="idees-58"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-58" data-cle="idees-58" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 59 · des voitures plus vraies et le choix de la météo <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> l'écran de météo (<code>logique/course.js</code>, <code>logique/meteo.js</code>, <code>affichage/tableau-de-bord.js</code>), l'intérieur et les vitres (<code>affichage/voitures-marques.js</code>), les ailes bombées (<code>affichage/coque.js</code>), les reflets (<code>affichage/modeles.js</code>), les jantes (<code>affichage/roues.js</code>).</p>
+        <label for="appris-59"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-59" data-cle="appris-59" placeholder="Ex. : J'ai appris qu'une voiture brillante est un miroir…"></textarea>
+        <label for="idees-59"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-59" data-cle="idees-59" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

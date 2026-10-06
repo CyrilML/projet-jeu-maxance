@@ -53,6 +53,10 @@ Circuit.TableauDeBord = (function () {
       dessinerCartes(monde);
       return;
     }
+    if (monde.phase === "meteo") {
+      dessinerChoixMeteo(monde);
+      return;
+    }
     if (monde.phase === "garage") {
       dessinerGarage(monde, sauvegarde);
       if (options.rayonsX && monde.carte === "course") dessinerEtiquettesRayonsX(monde);
@@ -223,6 +227,31 @@ Circuit.TableauDeBord = (function () {
     if (monde.messageCarte) texte(monde.messageCarte, W / 2, 400, 20, "#ffb37a", "center");
     panneau(W / 2 - 250, H - 80, 500, 50);
     texte("← → ou 1 à " + n + " pour choisir · Entrée pour aller au garage", W / 2, H - 48, 18, "#cfd6ff", "center");
+  }
+
+  // Étape 59 : ✍️ « Choisis ta météo » : 6 cartes, avec ce que ça change pour la conduite (l'adhérence, le vent).
+  // Derrière, la 3D montre déjà la météo regardée (la pluie tombe, la neige vole…).
+  function dessinerChoixMeteo(monde) {
+    panneau(W / 2 - 230, 30, 460, 56);
+    texte("🌦️ Choisis ta météo", W / 2, 70, 32, "#ffe27a", "center");
+    const liste = C.meteo.choix, n = liste.length, ecart = 12;
+    const largeur = (W - 60 - (n - 1) * ecart) / n, gauche = W / 2 - (n * largeur + (n - 1) * ecart) / 2;
+    liste.forEach((nom, i) => {
+      const t = C.meteo.temps[nom], x = gauche + i * (largeur + ecart), y = 130;
+      const ici = i === monde.choixMeteo;
+      ctx.fillStyle = ici ? "rgba(255,226,122,.92)" : "rgba(10,14,30,.72)";
+      ctx.beginPath();
+      ctx.roundRect(x, y, largeur, 230, 14);
+      ctx.fill();
+      const couleur = ici ? "#1a1a1a" : "#fff", doux = ici ? "#333" : "#cfd6ff";
+      texte(t.icone, x + largeur / 2, y + 75, 54, couleur, "center", ici);
+      texte((i + 1) + ". " + t.nom, x + largeur / 2, y + 122, 18, couleur, "center", ici);
+      texte("adhérence " + Math.round(t.adherence * 100) + " %", x + largeur / 2, y + 152, 12, doux, "center", ici);
+      texte("vent " + Math.round(t.vent * 3.6) + " km/h", x + largeur / 2, y + 170, 12, doux, "center", ici);
+      texte(C.meteo.textes[nom], x + largeur / 2, y + 200, 11, doux, "center", ici);
+    });
+    panneau(W / 2 - 280, H - 80, 560, 50);
+    texte("← → ou 1 à " + n + " pour choisir · Entrée : au garage · ⌫ : retour aux cartes", W / 2, H - 48, 17, "#cfd6ff", "center");
   }
 
   // Étape 37 : pendant la balade sur le parcours.
@@ -801,11 +830,11 @@ Circuit.TableauDeBord = (function () {
   // Étape 47 : la météo, en bas à gauche au-dessus de l'aide, sur toutes les cartes (pas dans les menus).
   function dessiner(monde, options, sauvegarde) {
     dessinerEcran(monde, options, sauvegarde);
-    if (monde.phase === "cartes" || monde.phase === "garage" || monde.magasin) return;
+    if (monde.phase === "cartes" || monde.phase === "meteo" || monde.phase === "garage" || monde.magasin) return;
     const M = Circuit.Meteo, v = M.etat.valeurs, prochain = C.meteo.temps[M.suivant()];
     const reste = Math.max(0, Math.ceil(C.meteo.duree - M.etat.depuis));
     panneau(12, H - 74, 300, 30);
-    texte(v.icone + " " + v.nom + (M.etat.melange > 0 ? " → " + prochain.icone + " " + prochain.nom : " · " + prochain.icone + " dans " + reste + " s"), 22, H - 53, 15, "#e8f0ff");
+    texte(v.icone + " " + v.nom + (M.etat.fixe ? " (choisie)" : M.etat.melange > 0 ? " → " + prochain.icone + " " + prochain.nom : " · " + prochain.icone + " dans " + reste + " s"), 22, H - 53, 15, "#e8f0ff");
     if (v.adherence < 0.75 && !monde.pieton) texte("⚠️ Route glissante !", 324, H - 53, 15, "#ffb37a");
     // Étape 53 : DRIFT ! (en gros, avec l'angle de la glissade), et la fumée quand une sportive patine.
     const vo = monde.voiture;

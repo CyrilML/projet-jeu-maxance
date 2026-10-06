@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 26,
+  version: 27,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -284,6 +284,9 @@ Circuit.CONFIG = {
     duree: 120, // ✍️ s : chaque météo dure 2 minutes…
     transition: 12, // s : … et on passe doucement à la suivante en 12 secondes
     ordre: ["soleil", "vent", "brouillard", "pluie", "orage", "neige", "blizzard"],
+    // Étape 59 : ✍️ avant de rouler, on CHOISIT sa météo parmi ces 6, et elle ne change plus pendant la partie.
+    choix: ["soleil", "vent", "pluie", "orage", "neige", "blizzard"],
+    textes: { soleil: "Route sèche", vent: "Rafales de côté", pluie: "Route mouillée", orage: "Éclairs, ça glisse", neige: "Très glissant", blizzard: "On n'y voit rien !" },
     temps: {
       soleil: { nom: "Soleil", icone: "☀️", adherence: 1, vent: 0, visibilite: 1100, nuages: 0.15, pluie: 0, neige: 0, lumiere: 1, eclairs: 0 },
       vent: { nom: "Vent", icone: "🌬️", adherence: 1, vent: 9, visibilite: 1000, nuages: 0.45, pluie: 0, neige: 0, lumiere: 0.85, eclairs: 0 },
@@ -487,7 +490,9 @@ Circuit.CONFIG = {
 
   // Étape 57 : ✍️ la TAILLE des véhicules (1 = la vraie taille). Maxance les trouvait trop petits.
   taille: { voitures: 1.15, moto: 1.5 },
-  phares: { taille: 0.7 }, // les blocs de phares font 70 % de leur taille d'avant (ils étaient trop gros)
+  phares: { taille: 0.7 },
+  vitres: { opacite: 0.6 },
+  formes: { ailes: 0.045 }, // étape 59 : m : de combien les ailes gonflent au-dessus des roues // étape 59 : 0 = pas de vitre du tout, 1 = vitre noire (on ne voit pas l'intérieur) // les blocs de phares font 70 % de leur taille d'avant (ils étaient trop gros)
   // Étape 57 : la peinture. metal : 0 = pas du tout métallique, 1 = un miroir de métal (elle était à 0,55 : trop doré).
   peinture: { metal: 0.12, rugosite: 0.35 },
 

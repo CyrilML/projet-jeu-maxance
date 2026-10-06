@@ -110,6 +110,7 @@ Circuit.SousLeCapot = (function () {
     "son-allume": (d) => "🔊 Synthétiseur allumé (" + d.frequenceEchantillons.toLocaleString("fr-FR") + " échantillons de son par seconde)",
     son: (d) => (d.allume ? "🔊 Son remis (B)" : "🔇 Son coupé (B)"),
     camera: (d) => "🎥 Caméra : " + d.mode,
+    "meteo-choisie": (d) => "🌦️ Tu as choisi la météo : " + d.icone + " " + d.nom + " (elle ne changera pas pendant la partie)",
     qualite: (d) => (d.plus ? "🔼 Ça va vite (" : "🔽 Ça rame (") + Math.round(d.ms) + " ms par image) : qualité automatique à " + Math.round(d.pixels * 100) + " %" + (d.plus ? ", l'image redevient plus fine" : ", on peint moins de pixels"),
   };
 
@@ -375,7 +376,7 @@ Circuit.SousLeCapot = (function () {
     lignes = lignes.concat([
       ["La météo (étape 47)"],
       ["temps", Circuit.Meteo.etat.valeurs.icone + " " + Circuit.Meteo.etat.valeurs.nom + (Circuit.Meteo.etat.melange > 0 ? " (transition : " + Math.round(Circuit.Meteo.etat.melange * 100) + " %)" : "")],
-      ["prochain dans", Math.max(0, Math.ceil(Circuit.CONFIG.meteo.duree - Circuit.Meteo.etat.depuis)) + " s (" + Circuit.CONFIG.meteo.temps[Circuit.Meteo.suivant()].nom + ")"],
+      ["prochain dans", Circuit.Meteo.etat.fixe ? "jamais : tu as choisi cette météo (étape 59)" : Math.max(0, Math.ceil(Circuit.CONFIG.meteo.duree - Circuit.Meteo.etat.depuis)) + " s (" + Circuit.CONFIG.meteo.temps[Circuit.Meteo.suivant()].nom + ")"],
       ["adhérence", Math.round(Circuit.Meteo.etat.valeurs.adherence * 100) + " %" + (v.derapage ? " · dérapage " + Math.round((v.derapage * 180) / Math.PI) + "°" : "")],
       ["vent", virgule(Circuit.Meteo.vent().force, 1) + " m/s, vers " + Math.round((Circuit.Meteo.etat.directionVent * 180) / Math.PI) + "°"],
       ["visibilité", Math.round(Circuit.Meteo.etat.valeurs.visibilite) + " m"],
