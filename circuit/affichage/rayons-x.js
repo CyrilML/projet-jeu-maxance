@@ -196,14 +196,16 @@ Circuit.RayonsX = (function () {
       }
     }
     // La « carotte » du pilote adverse (le point qu'il vise).
-    const adv = monde.adversaire;
-    if (adv && adv.cible) {
+    // (Étape 58 : il y a 11 pilotes : chacun a sa carotte.)
+    const advs = monde.adversaires || [];
+    for (const adv of advs) {
+      if (!adv.cible) continue;
       c.ligne([adv.voiture.x, 1.2, adv.voiture.z], [adv.cible.x, 1.2, adv.cible.z], COULEURS.carotte);
       c.ligne([adv.cible.x, 0, adv.cible.z], [adv.cible.x, 3, adv.cible.z], COULEURS.carotte);
     }
     // Les cercles de choc (voir moteur/chocs.js).
     const r = C.chocs.rayon;
-    for (const voiture of adv ? [v, adv.voiture] : [v]) {
+    for (const voiture of [v].concat(advs.map((a) => a.voiture))) {
       for (const centre of Circuit.Chocs.cercles(voiture, r)) {
         for (let i = 0; i < 16; i++) {
           const a1 = (i / 16) * Math.PI * 2, a2 = ((i + 1) / 16) * Math.PI * 2;

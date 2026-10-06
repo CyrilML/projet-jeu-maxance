@@ -8,6 +8,9 @@
 // Les FEUX : chaque carrefour a des feux. Pendant 8 s, la rue est-ouest a le vert ; puis orange 2 s ;
 // puis c'est au tour de la rue nord-sud. Une voiture qui arrive au feu rouge (ou orange) s'arrête.
 //
+// Étape 58 : la voiture en fuite (le boulot de policier) se sert des mêmes routes et des mêmes virages, mais elle
+// roule sur la ligne du milieu (voie = 0), et c'est elle qui choisit où tourner (pour s'éloigner de toi).
+//
 // LES DISTANCES DE SÉCURITÉ : une voiture ralentit et s'arrête si une autre voiture (ou toi, ou ton
 // personnage) est juste devant elle. Pas de carambolage !
 
@@ -51,12 +54,12 @@ Circuit.Circulation = (function () {
 
   // Met à jour la position (x, z, angle) d'une voiture de la circulation d'après son état.
   function placer(c) {
-    const v = c.voiture;
+    const v = c.voiture, voie = c.voie === undefined ? V.voie : c.voie;
     if (c.etat === "droit") {
       const r = droite(c.d);
       const x0 = Ville.rue(c.de[0]) + c.d[0] * coin, z0 = Ville.rue(c.de[1]) + c.d[1] * coin;
-      v.x = x0 + c.d[0] * c.s + r[0] * V.voie;
-      v.z = z0 + c.d[1] * c.s + r[1] * V.voie;
+      v.x = x0 + c.d[0] * c.s + r[0] * voie;
+      v.z = z0 + c.d[1] * c.s + r[1] * voie;
       v.angle = Math.atan2(c.d[1], c.d[0]);
     } else {
       // Le virage : une courbe de Bézier P0 → P2, tirée vers le coin P1.
@@ -69,14 +72,16 @@ Circuit.Circulation = (function () {
   }
 
   // Arrivée au carrefour : on choisit la suite et on prépare la courbe du virage.
-  function choisirLaSuite(c, hasard) {
-    const [i, j] = c.vers;
+  // (choix, facultatif : une fonction qui choisit parmi les directions possibles ; sinon, au hasard)
+  function choisirLaSuite(c, hasard, choix) {
+    const [i, j] = c.vers, voie = c.voie === undefined ? V.voie : c.voie;
     const possibles = Ville.voisins(i, j).filter(([di, dj]) => !(di === -c.d[0] && dj === -c.d[1])); // pas de demi-tour
-    const d2 = possibles.length ? possibles[Math.floor(hasard() * possibles.length)] : [-c.d[0], -c.d[1]];
+    const d2 = c.suiteChoisie || (possibles.length ? (choix ? choix(possibles) : possibles[Math.floor(hasard() * possibles.length)]) : [-c.d[0], -c.d[1]]);
+    c.suiteChoisie = null;
     const r1 = droite(c.d), r2 = droite(d2);
     const cx = Ville.rue(i), cz = Ville.rue(j);
-    const p0 = [cx - c.d[0] * coin + r1[0] * V.voie, cz - c.d[1] * coin + r1[1] * V.voie];
-    const p2 = [cx + d2[0] * coin + r2[0] * V.voie, cz + d2[1] * coin + r2[1] * V.voie];
+    const p0 = [cx - c.d[0] * coin + r1[0] * voie, cz - c.d[1] * coin + r1[1] * voie];
+    const p2 = [cx + d2[0] * coin + r2[0] * voie, cz + d2[1] * coin + r2[1] * voie];
     // Le coin : là où la voie d'arrivée et la voie de départ se croisent.
     const p1 = c.d[0] !== 0 ? [p2[0], p0[1]] : [p0[0], p2[1]];
     if (d2[0] === c.d[0] && d2[1] === c.d[1]) p1[0] = (p0[0] + p2[0]) / 2, p1[1] = (p0[1] + p2[1]) / 2; // tout droit
@@ -135,5 +140,5 @@ Circuit.Circulation = (function () {
     }
   }
 
-  return { feu, creer, avancer };
+  return { feu, creer, avancer, placer, choisirLaSuite, longueurDroite };
 })();

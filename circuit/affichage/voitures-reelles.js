@@ -49,10 +49,10 @@ Circuit.VoituresReelles = (function () {
       const z0 = cote * (p.Wtoit / 2) * largeurIci(p, x, y, true);
       const z = cote * (bord(p, x, p.hCeinture - 0.1) + 0.04 * t);
       g.add(tube([x, y - 0.04, z0], [x - 0.04, y, z - cote * 0.04], 0.025, materiau));
-      const coque = boite(0.13 * t, 0.12 * t, 0.2 * t, materiau, x - 0.06, y + 0.03, z);
+      const coque = boite(0.09 * t, 0.08 * t, 0.15 * t, materiau, x - 0.06, y + 0.03, z); // (étape 57 : plus petits)
       coque.rotation.y = cote * 0.15;
       g.add(coque);
-      g.add(boite(0.01, 0.09 * t, 0.16 * t, M.chrome, x - 0.13 * t, y + 0.03, z));
+      g.add(boite(0.01, 0.06 * t, 0.12 * t, M.chrome, x - 0.11 * t, y + 0.03, z));
     }
   }
   // Un casque intégral pour le pilote (à la place de la casquette), de la couleur donnée, avec sa visière fumée.
@@ -231,7 +231,7 @@ Circuit.VoituresReelles = (function () {
     for (const z of [-0.5, 0.5]) g.add(boite(0.15, 0.2, 0.04, M.noir, -2.08, 1.02, z));
     retroviseurs(g, p, peinture(k1), 0.85);
     portieres(g, p, [0.85, -0.45], 0.28, 0.78, []);
-    return { g, roues: ajouterRoues(g, [[1.45, true], [-1.42, false]], 0.86, 0.36, 0.32, peinture([0.12, 0.12, 0.13]), { rayons: 5, etrier: [0.95, 0.8, 0.1] }), yCapot: 1.05 };
+    return { g, roues: ajouterRoues(g, [[1.45, true], [-1.42, false]], 0.86, 0.36, 0.32, peinture([0.12, 0.12, 0.13]), { rayons: 5, etrier: [0.75, 0.08, 0.08] }), yCapot: 1.05 };
   }
 
   // ---------------------------------------------------------------- 🇯🇵 la Honda NSX (la voiture basse)
@@ -396,7 +396,7 @@ Circuit.VoituresReelles = (function () {
     pot.position.set(-0.45, 0.48, 0.2);
     g.add(pot);
     // La fourche dorée, le bras oscillant, le guidon (bracelets) et les rétroviseurs.
-    const or = peinture([0.85, 0.62, 0.12]);
+    const or = M.chrome; // (étape 57 : plus de doré)
     for (const z of [-0.09, 0.09]) g.add(tube([0.86, 0.31, z], [0.68, 1.02, z], 0.03, or));
     for (const z of [-0.12, 0.12]) g.add(tube([-0.86, 0.31, z], [-0.05, 0.5, z], 0.03, M.disque));
     for (const z of [-0.2, 0.2]) {
@@ -416,7 +416,7 @@ Circuit.VoituresReelles = (function () {
     // Deux roues (une devant qui braque, une derrière), centrées sur la moto.
     const roues = [];
     for (const [x, avant, epaisseur] of [[0.86, true, 0.12], [-0.86, false, 0.18]]) {
-      const r = O.roue(0.31, epaisseur, peinture([0.1, 0.1, 0.11]), { rayons: 3, etrier: avant ? [0.85, 0.62, 0.12] : undefined });
+      const r = O.roue(0.31, epaisseur, peinture([0.1, 0.1, 0.11]), { rayons: 3, etrier: avant ? [0.75, 0.08, 0.08] : undefined });
       r.pivot.position.set(x, 0.31, 0);
       g.add(r.pivot);
       roues.push(Object.assign(r, { avant }));

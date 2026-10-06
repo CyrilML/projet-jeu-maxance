@@ -16,6 +16,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.Modeles = (function () {
   const M = {}; // les matériaux, fabriqués une fois
+  const C = Circuit.CONFIG;
 
   function materiaux() {
     if (M.pneu) return M;
@@ -24,7 +25,7 @@ Circuit.Modeles = (function () {
     M.pneu = new THREE.MeshStandardMaterial({ color: 0x18181a, roughness: 0.95 });
     M.chrome = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 1, roughness: 0.18 });
     M.jante = new THREE.MeshStandardMaterial({ color: 0xb9bcc2, metalness: 0.9, roughness: 0.3 });
-    M.phare = new THREE.MeshStandardMaterial({ color: 0xfff6d8, emissive: 0xfff2c0, emissiveIntensity: 1.6, roughness: 0.2 });
+    M.phare = new THREE.MeshStandardMaterial({ color: 0xf2f4f6, emissive: 0xf4f6ff, emissiveIntensity: 0.9, roughness: 0.2 }); // (étape 57 : blanc, moins éblouissant)
     M.feu = new THREE.MeshStandardMaterial({ color: 0xaa0000, emissive: 0xff1010, emissiveIntensity: 1.2, roughness: 0.3 });
     M.casque = new THREE.MeshPhysicalMaterial({ color: 0xffd21a, roughness: 0.25, clearcoat: 1 });
     M.siege = new THREE.MeshStandardMaterial({ color: 0x222226, roughness: 0.8 });
@@ -35,7 +36,7 @@ Circuit.Modeles = (function () {
     // Étape 55 : les blocs optiques (un boîtier chromé foncé, des LED qui brillent, une lentille de verre par-dessus).
     M.boitier = new THREE.MeshStandardMaterial({ color: 0x15171a, metalness: 0.85, roughness: 0.32 });
     M.lentille = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.02, clearcoat: 1, transparent: true, opacity: 0.22, depthWrite: false });
-    M.led = new THREE.MeshStandardMaterial({ color: 0xdfe8f2, emissive: 0xe8f0ff, emissiveIntensity: 1.4, roughness: 0.15, metalness: 0.3 });
+    M.led = new THREE.MeshStandardMaterial({ color: 0xdfe8f2, emissive: 0xe8f0ff, emissiveIntensity: 0.9, roughness: 0.15, metalness: 0.3 });
     M.feuLed = new THREE.MeshStandardMaterial({ color: 0xff2020, emissive: 0xff1208, emissiveIntensity: 2.4, roughness: 0.3 });
     M.feuVerre = new THREE.MeshPhysicalMaterial({ color: 0x6a0606, metalness: 0.1, roughness: 0.05, clearcoat: 1, emissive: 0x400000, emissiveIntensity: 0.6 });
     M.vitreFumee = new THREE.MeshPhysicalMaterial({ color: 0x202830, metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.7, clearcoat: 1 });
@@ -49,7 +50,9 @@ Circuit.Modeles = (function () {
     if (!peintures[cle]) {
       peintures[cle] = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color(rgb[0], rgb[1], rgb[2]).convertSRGBToLinear(),
-        metalness: 0.55, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.08,
+        // (Étape 57 : une vraie peinture de voiture n'est presque pas du métal : c'est une couleur sous un vernis.
+        // Avec beaucoup de « métal », elle prenait la couleur chaude du soleil et du ciel : les voitures avaient l'air dorées.)
+        metalness: C.peinture.metal, roughness: C.peinture.rugosite, clearcoat: 1, clearcoatRoughness: 0.05,
       });
     }
     return peintures[cle];
@@ -890,6 +893,7 @@ Circuit.Modeles = (function () {
     }
     const objet = ombrer(FABRIQUES[modele](couleur1, couleur2), modele);
     recoller(objet);
+    agrandir(objet, modele);
     return objet;
   }
 
@@ -958,6 +962,16 @@ Circuit.Modeles = (function () {
     bougent.delete(objet.g);
     // Chaque « racine » (le véhicule, ou une pièce qui bouge) recolle ses pièces, sans entrer dans les autres racines.
     for (const racine of [objet.g].concat([...bougent])) fusionner(racine, bougent);
+  }
+
+  // Étape 57 : ✍️ Maxance veut des véhicules plus grands : les voitures × 1,15, la moto × 1,5 (config.js : taille).
+  // On agrandit tout le dessin d'un coup (il est posé au sol en y = 0, donc il grandit vers le haut).
+  function agrandir(objet, modele) {
+    if (VOLANTS.includes(modele)) return;
+    const k = C.taille[modele] || C.taille.voitures;
+    objet.g.scale.setScalar(k);
+    objet.taille = k;
+    if (objet.yCapot) objet.yCapot *= k;
   }
 
   // Étape 55 : l'OMBRE DOUCE sous la voiture. Là où la voiture touche presque le sol, la lumière du ciel n'arrive

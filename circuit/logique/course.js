@@ -8,6 +8,9 @@
 //   - la sortie de piste (dans l'herbe) et la clôture tout autour ;
 //   - depuis l'étape 34 : la voiture ADVERSE, les chocs, la position (1er ou 2e).
 //     ✍️ Règle de Maxance : si l'adversaire finit ses 3 tours avant toi, c'est « Perdu ! » tout de suite.
+//   - ✍️ depuis l'étape 58 : 11 ADVERSAIRES (12 voitures avec toi), tous avec LA MÊME voiture que toi (si tu prends
+//     une F1, tout le monde a une F1), chacun de sa couleur, et chacun avec son « allure » (de 85 % à 100 % de la
+//     vitesse de la voiture ; 97 % au plus, sinon on ne pourrait jamais les doubler). ✍️ Gagné seulement si tu finis 1er : si un adversaire finit avant toi, c'est perdu.
 //   - depuis l'étape 36 : le GARAGE au début (logique/garage.js) et les PIÈCES à ramasser (logique/pieces.js).
 //   - depuis l'étape 37 : le MENU DES CARTES avant le garage. Le circuit garde ses règles ici ;
 //     le parcours (balade libre) a les siennes dans logique/balade.js (le grand parcours aussi, depuis l'étape 40),
@@ -15,7 +18,7 @@
 //
 // Un « concurrent » = une voiture + où elle en est dans la course (tour, porte, chrono…).
 // Le joueur, ce sont les champs du monde lui-même (monde.voiture, monde.tour…) ;
-// l'adversaire a exactement les mêmes champs, rangés dans monde.adversaire.
+// chaque adversaire a exactement les mêmes champs, rangés dans la liste monde.adversaires.
 //
 // L'arbitre annonce tout à la radio (Circuit.Evenements) : la sauvegarde et le journal écoutent.
 
@@ -26,10 +29,13 @@ Circuit.Course = (function () {
   const radio = Circuit.Evenements;
   const LIMITE = C.piste.tailleHerbe / 2 - 3; // la clôture, à 3 m du bord du terrain
 
-  // La grille de départ : 12 m derrière la ligne, nez vers x+.
-  // Toi à l'extérieur (+3,5 m), l'adversaire à l'intérieur (−3,5 m).
-  function placeDeDepart(decalage, reglages) {
-    const p = Circuit.Piste.pointDecale(-12, decalage);
+  // La grille de départ : 12 m derrière la ligne, nez vers x+, 2 voitures par rangée (à ±3,5 m du milieu).
+  // Étape 58 : 12 places ; la place n° k est dans la rangée k ÷ 2, une rangée tous les 9 m.
+  function placeSurLaGrille(k) {
+    return { decalage: (k % 2 ? -1 : 1) * C.adversaire.voie, recul: 12 + Math.floor(k / 2) * C.course.ecartGrille };
+  }
+  function placeDeDepart(decalage, reglages, recul) {
+    const p = Circuit.Piste.pointDecale(-(recul || 12), decalage);
     return Circuit.Voiture.creer(p.x, p.z, 0, reglages);
   }
 
@@ -45,10 +51,27 @@ Circuit.Course = (function () {
     c.tempsDesTours = []; // les temps de chaque tour fini
   }
 
-  function creerAdversaire() {
-    const adversaire = { voie: -C.adversaire.voie, cible: null, difference: 0 };
-    preparer(adversaire, placeDeDepart(-C.adversaire.voie, C.adversaire));
-    return adversaire;
+  // Étape 58 : les 11 adversaires. ✍️ Ils ont tous la voiture du joueur (sa fiche du garage), chacun sa couleur
+  // (config.js : course.couleurs) et son allure : un nombre au hasard entre 0,85 et 1 qui multiplie la vitesse max.
+  let graine = 58;
+  const hasard = () => ((graine = (graine * 1664525 + 1013904223) >>> 0) / 4294967296);
+  function creerAdversaires(fiche) {
+    const liste = [];
+    const n = C.course.concurrents;
+    for (let k = 0, i = 0; k <= n; k++) {
+      if (k === C.course.placeJoueur) continue; // (ta place sur la grille)
+      const couleur = C.course.couleurs[i % C.course.couleurs.length];
+      const [a, b] = C.adversaire.allure;
+      const allure = a + hasard() * (b - a);
+      const reglages = Object.assign({}, fiche, { vitesseMax: fiche.vitesseMax * allure, acceleration: fiche.acceleration * (0.9 + 0.1 * allure) });
+      const place = placeSurLaGrille(k);
+      const adversaire = { numero: i + 2, nom: "la voiture " + couleur.nom, couleurs: [couleur.rgb, C.course.couleur2], allure, voie: place.decalage, cible: null, difference: 0 };
+      preparer(adversaire, placeDeDepart(place.decalage, reglages, place.recul));
+      adversaire.voiture.sansDrift = true; // (un pilote prudent : il ne part jamais en glissade)
+      liste.push(adversaire);
+      i++;
+    }
+    return liste;
   }
 
   // La voiture du joueur : celle qui est regardée au garage (numéro `index` dans la liste du garage).
@@ -65,7 +88,8 @@ Circuit.Course = (function () {
       const d = Circuit.Ville.depart();
       return Circuit.Voiture.creer(d.x, d.z, d.angle, fiche);
     }
-    return placeDeDepart(C.adversaire.voie, fiche);
+    const place = placeSurLaGrille(C.course.placeJoueur); // étape 58 : ta place au milieu de la grille
+    return placeDeDepart(place.decalage, fiche, place.recul);
   }
 
   function creer() {
@@ -88,9 +112,9 @@ Circuit.Course = (function () {
       chocs: 0, // nombre de chocs avec l'adversaire dans la course
       enContact: false, // les deux voitures se touchent-elles en ce moment ?
       dernierChoc: -1, // à quel moment (monde.temps) a eu lieu le dernier choc
-      position: 1, // 1 = tu es devant, 2 = l'adversaire est devant
+      position: 1, // étape 58 : ta place dans la course (1 = en tête, 12 = dernier)
       resultat: null, // à la fin : { gagne, avance } ou { gagne: false, retard } (en mètres)
-      adversaire: creerAdversaire(),
+      adversaires: [], // étape 58 : les 11 adversaires (créés au départ de la course)
     };
     preparer(monde, voitureDuJoueur(0));
     return monde;
@@ -116,7 +140,7 @@ Circuit.Course = (function () {
     monde.garage.index = Circuit.Garage.trouver(Circuit.Sauvegarde.donnees.voituresChoisies[monde.carte]);
     monde.garage.message = null;
     preparer(monde, voitureDuJoueur(monde.garage.index));
-    monde.adversaire = monde.carte === "course" ? creerAdversaire() : null;
+    monde.adversaires = []; // (étape 58 : ils arrivent au départ, avec la même voiture que toi)
     monde.pieces = [];
     monde.cartons = [];
     monde.pieton = null; // étape 39
@@ -132,13 +156,13 @@ Circuit.Course = (function () {
     preparer(monde, voitureDuJoueur(monde.garage.index));
     monde.pieces = Circuit.Pieces.placer();
     monde.piecesCourse = 0;
-    monde.adversaire = creerAdversaire();
+    monde.adversaires = creerAdversaires(Circuit.Garage.voitureNumero(monde.garage.index));
     monde.chronoCourse = 0;
     monde.sortiesDePiste = 0;
     monde.chocs = 0;
     monde.enContact = false;
     monde.dernierChoc = -1;
-    monde.position = 1;
+    monde.position = C.course.placeJoueur + 1;
     monde.resultat = null;
     monde.phase = "decompte";
     monde.decompte = C.course.decompte;
@@ -160,7 +184,7 @@ Circuit.Course = (function () {
     monde.temps += dt;
     Circuit.Meteo.etape(dt); // étape 47 : la météo change toute seule
     if (monde.voiture) Circuit.Ressorts.etape(monde.voiture, dt); // étape 49 : les ressorts du monster truck
-    const adv = monde.adversaire;
+    const advs = monde.adversaires || [];
     // Étape 40 : H allume ou éteint la sirène (et le gyrophare) de la voiture de police.
     if (intentions.sirene) {
       const fiche = Circuit.Garage.ficheDe(monde.voiture.modele) || {};
@@ -235,7 +259,7 @@ Circuit.Course = (function () {
       }
       // Après la course, ta voiture finit en roue libre, et l'adversaire continue de rouler.
       rouler(monde, monde, dt, {});
-      rouler(monde, adv, dt, Circuit.Pilote.decider(adv, null));
+      for (const adv of advs) rouler(monde, adv, dt, Circuit.Pilote.decider(adv, devantDe(monde, adv)));
       cogner(monde);
       return;
     }
@@ -260,32 +284,50 @@ Circuit.Course = (function () {
       return;
     }
 
-    // Phase « course » : les deux voitures roulent.
+    // Phase « course » : toutes les voitures roulent.
     monde.chronoCourse += dt;
     monde.chronoTour += dt;
-    adv.chronoTour += dt;
-    const avantJoueur = monde.reperage.s, avantAdv = adv.reperage.s;
+    for (const adv of advs) adv.chronoTour += dt;
+    const avantJoueur = monde.reperage.s, avants = advs.map((a) => a.reperage.s);
 
     rouler(monde, monde, dt, intentions);
-    const intentionsAdv = Circuit.Pilote.decider(adv, {
-      avance: progression(monde) - progression(adv),
-      ecart: monde.reperage.ecart,
-    });
-    rouler(monde, adv, dt, intentionsAdv);
+    for (const adv of advs) rouler(monde, adv, dt, Circuit.Pilote.decider(adv, devantDe(monde, adv)));
     cogner(monde);
     Circuit.Pieces.ramasser(monde);
 
     verifierPortes(monde, monde, avantJoueur, monde.reperage.s);
     if (monde.phase !== "course") return;
-    verifierPortes(monde, adv, avantAdv, adv.reperage.s);
-    if (monde.phase !== "course") return;
-
-    // Qui est devant ?
-    const position = progression(monde) >= progression(adv) ? 1 : 2;
-    if (position !== monde.position) {
-      monde.position = position;
-      radio.emettre("depassement", { position, tour: monde.tour });
+    for (let i = 0; i < advs.length; i++) {
+      verifierPortes(monde, advs[i], avants[i], advs[i].reperage.s);
+      if (monde.phase !== "course") return;
     }
+
+    // Ta place : 1 + le nombre d'adversaires qui ont parcouru plus de chemin que toi.
+    const position = placeDe(monde);
+    if (position !== monde.position) {
+      const gagne = position < monde.position;
+      monde.position = position;
+      radio.emettre("depassement", { position, tour: monde.tour, gagne, total: advs.length + 1 });
+    }
+  }
+
+  // Étape 58 : ta place dans la course (et celle de chaque adversaire, pour le tableau).
+  function placeDe(monde) {
+    const moi = progression(monde);
+    return 1 + (monde.adversaires || []).filter((a) => progression(a) > moi).length;
+  }
+
+  // Étape 58 : pour le pilote d'un adversaire, la voiture la plus proche JUSTE DEVANT lui (toi ou un autre),
+  // à moins de 40 m : { avance (m), ecart (son décalage sur la route) }. Il s'en sert pour changer de voie.
+  function devantDe(monde, adv) {
+    const p = progression(adv);
+    let meilleur = null;
+    for (const c of [monde].concat(monde.adversaires)) {
+      if (c === adv) continue;
+      const avance = progression(c) - p;
+      if (avance > 0 && avance < 40 && (!meilleur || avance < meilleur.avance)) meilleur = { avance, ecart: c.reperage.ecart };
+    }
+    return meilleur;
   }
 
   // Fait avancer la voiture d'un concurrent, puis regarde où elle est.
@@ -314,21 +356,31 @@ Circuit.Course = (function () {
     c.sol = sol;
   }
 
-  // Les deux voitures se touchent-elles ? (voir moteur/chocs.js)
+  // Les voitures se touchent-elles ? (voir moteur/chocs.js) Étape 58 : on teste toutes les paires de voitures
+  // (12 voitures → 66 paires), mais seulement celles qui sont à moins de 8 m l'une de l'autre.
   function cogner(monde) {
-    const resultat = Circuit.Chocs.resoudre(monde.voiture, monde.adversaire.voiture, C.chocs);
-    // Un vrai choc = les voitures se rapprochaient (force > 0,5 m/s), et pas déjà un choc dans la dernière demi-seconde.
-    if (resultat.touche && resultat.force > 0.5 && monde.temps - monde.dernierChoc > 0.5 && monde.phase === "course") {
-      monde.dernierChoc = monde.temps;
-      monde.chocs++;
-      radio.emettre("choc", { force: resultat.force, vitesse: monde.voiture.vitesse });
+    const tous = [monde].concat(monde.adversaires || []);
+    let contact = false;
+    for (let i = 0; i < tous.length; i++) {
+      for (let j = i + 1; j < tous.length; j++) {
+        const a = tous[i], b = tous[j];
+        if (Math.abs(a.voiture.x - b.voiture.x) > 8 || Math.abs(a.voiture.z - b.voiture.z) > 8) continue;
+        const resultat = Circuit.Chocs.resoudre(a.voiture, b.voiture, C.chocs);
+        if (!resultat.touche) continue;
+        // Les voitures ont été poussées : on recalcule où elles sont.
+        a.reperage = Circuit.Piste.reperer(a.voiture.x, a.voiture.z);
+        b.reperage = Circuit.Piste.reperer(b.voiture.x, b.voiture.z);
+        if (a !== monde) continue;
+        contact = true;
+        // Un vrai choc = les voitures se rapprochaient (force > 0,5 m/s), et pas déjà un choc dans la dernière demi-seconde.
+        if (resultat.force > 0.5 && monde.temps - monde.dernierChoc > 0.5 && monde.phase === "course") {
+          monde.dernierChoc = monde.temps;
+          monde.chocs++;
+          radio.emettre("choc", { force: resultat.force, vitesse: monde.voiture.vitesse, contre: b.nom });
+        }
+      }
     }
-    monde.enContact = resultat.touche;
-    if (resultat.touche) {
-      // Les voitures ont été poussées : on recalcule où elles sont.
-      monde.reperage = Circuit.Piste.reperer(monde.voiture.x, monde.voiture.z);
-      monde.adversaire.reperage = Circuit.Piste.reperer(monde.adversaire.voiture.x, monde.adversaire.voiture.z);
-    }
+    monde.enContact = contact;
   }
 
   // A-t-on passé la prochaine porte entre la progression `avant` et `apres` ?
@@ -369,15 +421,14 @@ Circuit.Course = (function () {
     c.tempsDesTours.push(temps);
     c.chronoTour = 0;
     const dernier = c.tour >= C.course.tours;
-    const adv = monde.adversaire;
-
     if (c !== monde) {
-      // L'adversaire
-      radio.emettre("tour-adversaire", { numero: c.tour, temps });
+      // Un adversaire (étape 58 : on annonce seulement les tours de celui qui est en tête, sinon le journal déborde)
+      if (placeAdv(monde, c) === 1) radio.emettre("tour-adversaire", { numero: c.tour, temps, nom: c.nom });
       if (dernier) {
-        // ✍️ Règle de Maxance : l'adversaire a fini avant toi → perdu tout de suite.
+        // ✍️ Règle de Maxance : un adversaire a fini avant toi → perdu tout de suite.
         monde.phase = "perdu";
-        monde.position = 2;
+        monde.position = placeDe(monde);
+        monde.vainqueur = c.nom;
         monde.resultat = { gagne: false, retard: Math.round(C.course.tours * Circuit.Piste.longueurTour - progression(monde)) };
         radio.emettre("perdu", {
           temps: monde.chronoCourse,
@@ -386,6 +437,8 @@ Circuit.Course = (function () {
           sorties: monde.sortiesDePiste,
           pieces: monde.piecesCourse,
           voiture: monde.voiture.modele,
+          vainqueur: c.nom,
+          position: monde.position,
         });
       } else {
         c.tour++;
@@ -398,13 +451,14 @@ Circuit.Course = (function () {
     if (dernier) {
       monde.phase = "arrivee";
       monde.position = 1;
-      monde.resultat = { gagne: true, avance: Math.round(C.course.tours * Circuit.Piste.longueurTour - progression(adv)) };
+      const deuxieme = Math.max(...monde.adversaires.map(progression));
+      monde.resultat = { gagne: true, avance: Math.round(C.course.tours * Circuit.Piste.longueurTour - deuxieme) };
       radio.emettre("arrivee", {
         temps: monde.chronoCourse,
         meilleurTour: Math.min(...monde.tempsDesTours),
         tours: monde.tempsDesTours.slice(),
         sorties: monde.sortiesDePiste,
-        avance: monde.resultat.avance, // m d'avance sur l'adversaire
+        avance: monde.resultat.avance, // m d'avance sur le 2e
         pieces: monde.piecesCourse,
         voiture: monde.voiture.modele,
       });
@@ -413,5 +467,27 @@ Circuit.Course = (function () {
     }
   }
 
-  return { creer, lancer, ouvrirGarage, ouvrirCartes, etape, progression };
+  // La place d'un adversaire dans la course (1 = en tête).
+  function placeAdv(monde, adv) {
+    const p = progression(adv);
+    return 1 + [monde].concat(monde.adversaires).filter((c) => c !== adv && progression(c) > p).length;
+  }
+
+  // L'adversaire le plus proche de toi (pour le son de son moteur, et « sous le capot »).
+  function plusProche(monde) {
+    let meilleur = null, d = Infinity;
+    for (const a of monde.adversaires || []) {
+      const e = Math.hypot(a.voiture.x - monde.voiture.x, a.voiture.z - monde.voiture.z);
+      if (e < d) (d = e), (meilleur = a);
+    }
+    return meilleur;
+  }
+  // Celui qui est en tête parmi les adversaires.
+  function enTete(monde) {
+    let meilleur = null;
+    for (const a of monde.adversaires || []) if (!meilleur || progression(a) > progression(meilleur)) meilleur = a;
+    return meilleur;
+  }
+
+  return { creer, lancer, ouvrirGarage, ouvrirCartes, etape, progression, placeDe, placeAdv, plusProche, enTete };
 })();
