@@ -18,7 +18,7 @@ window.Circuit = window.Circuit || {};
 Circuit.VoituresMarques = (function () {
   const O = Circuit.Modeles.outils;
   const { M, peinture, boite, cylindre, tube, personnage, fusionner } = O;
-  const Coque = Circuit.Coque;
+  const Coque = Circuit.Coque, C = Circuit.CONFIG;
 
   // ---------------------------------------------------------------- les outils du bureau de design
 
@@ -94,16 +94,17 @@ Circuit.VoituresMarques = (function () {
     return b;
   }
   // Les rétroviseurs : sur la portière, juste derrière le pare-brise.
+  // (Étape 57 : plus petits, comme les vrais : une coque de 22 cm × 12 cm au bout d'un bras court.)
   function retros(caisse, x, y, zCabine, zCaisse, materiau, t) {
-    const k = t || 1;
+    const k = (t || 1) * 0.62;
     for (const cote of [-1, 1]) {
-      caisse.add(tube([x, y - 0.03, cote * zCabine], [x - 0.04, y + 0.01, cote * (zCaisse + 0.02)], 0.02, materiau));
+      caisse.add(tube([x, y - 0.03, cote * zCabine], [x - 0.03, y, cote * (zCaisse - 0.01)], 0.014, materiau));
       const coqueR = new THREE.Mesh(new THREE.SphereGeometry(0.1 * k, 14, 10), materiau);
-      coqueR.scale.set(0.8, 0.62, 1.15);
-      coqueR.position.set(x - 0.05, y + 0.04, cote * (zCaisse + 0.1 * k));
+      coqueR.scale.set(0.75, 0.62, 1.2);
+      coqueR.position.set(x - 0.04, y + 0.03, cote * (zCaisse + 0.07 * k));
       coqueR.castShadow = true;
       caisse.add(coqueR);
-      caisse.add(boite(0.01, 0.1 * k, 0.17 * k, M.chrome, x - 0.13 * k, y + 0.04, cote * (zCaisse + 0.1 * k)));
+      caisse.add(boite(0.008, 0.09 * k, 0.17 * k, M.chrome, x - 0.04 - 0.075 * k, y + 0.03, cote * (zCaisse + 0.07 * k)));
     }
   }
   // Une ligne de portière (un fin trait sombre, avec la poignée).
@@ -179,6 +180,7 @@ Circuit.VoituresMarques = (function () {
       o.add(led);
     }
     if (feu) return o; // (un feu : son verre rouge suffit)
+    o.scale.set(C.phares.taille, 1, C.phares.taille); // (étape 57 : ✍️ les phares étaient énormes : on les rétrécit)
     const verre = plat(l, h, M.lentille, 0.006);
     verre.position.y = 0.032;
     o.add(verre);
@@ -390,7 +392,7 @@ Circuit.VoituresMarques = (function () {
     }, peinture(k1));
     // Les phares RONDS sur le haut des ailes, un peu redressés vers l'avant.
     for (const cote of [-1, 1]) {
-      const lampe = surLeDessus(phareRond(0.12), c, 1.98, cote * 0.6, 0.012);
+      const lampe = surLeDessus(phareRond(0.12 * C.phares.taille), c, 1.98, cote * 0.6, 0.012);
       lampe.rotateZ(-0.35);
       caisse.add(lampe);
       grille(caisse, c, true, 0.3, cote * 0.4, 0.13, 0.36, M.plastique); // les entrées d'air
@@ -470,7 +472,7 @@ Circuit.VoituresMarques = (function () {
     for (const z of [-0.5, 0.5]) caisse.add(boite(0.14, 0.2, 0.035, M.noir, -2.08, 1.0, z));
     retros(caisse, 0.78, 0.82, 0.62, 0.98, peinture(k1), 0.85);
     portiere(caisse, c, 0.88, -0.45, 0.28, 0.76, false);
-    const roues = quatreRoues(g, R, 0.85, { style: "y", etrier: [0.95, 0.8, 0.1], metal: peinture([0.16, 0.16, 0.17]) });
+    const roues = quatreRoues(g, R, 0.85, { style: "y", etrier: [0.75, 0.08, 0.08], metal: peinture([0.16, 0.16, 0.17]) });
     return voiture(g, caisse, roues, 1.05);
   }
 
@@ -699,7 +701,7 @@ Circuit.VoituresMarques = (function () {
     caisse.add(pot);
     caisse.add(tube([-0.86, 0.31, -0.1], [0.05, 0.38, -0.1], 0.012, M.noir)); // la chaîne
     // La fourche dorée (à l'envers, comme sur les motos de course), le bras oscillant, les bracelets, les rétros.
-    const or = peinture([0.85, 0.62, 0.12]);
+    const or = M.chrome; // (étape 57 : la fourche n'est plus dorée)
     for (const z of [-0.08, 0.08]) {
       g.add(tube([0.86, 0.31, z], [0.75, 0.62, z], 0.035, M.chrome));
       caisse.add(tube([0.75, 0.62, z], [0.66, 1.0, z], 0.04, or));
@@ -715,9 +717,17 @@ Circuit.VoituresMarques = (function () {
     pilote.g.scale.setScalar(0.85);
     pilote.g.position.set(-0.42, 0.05, 0);
     pilote.g.rotation.z = -0.55;
-    for (const j of pilote.jambes) j.rotation.z = 1.2;
+    for (const j of pilote.jambes) { j.rotation.z = 0.8; j.scale.y = 0.75; } // (étape 57 : les pieds sur les repose-pieds)
     for (const b of pilote.bras) b.rotation.z = 1.35;
     pilote.casquette.visible = pilote.visiere.visible = false;
+    // (Étape 57 : une vraie combinaison de cuir de course : noire, avec le haut du buste vert, et des gants noirs.)
+    const cuir = new THREE.MeshStandardMaterial({ color: 0x141518, roughness: 0.45, metalness: 0.1 });
+    const cuirVert = new THREE.MeshStandardMaterial({ color: new THREE.Color(k1[0], k1[1], k1[2]).convertSRGBToLinear(), roughness: 0.45 });
+    pilote.g.traverse((m) => {
+      if (!m.isMesh || m === pilote.casquette || m === pilote.visiere) return;
+      m.material = m.geometry.type === "CapsuleGeometry" && m.geometry.parameters.radius > 0.2 ? cuirVert : cuir;
+      if (m.material === cuirVert) m.scale.set(0.85, 1, 0.85); // (un buste un peu moins gros)
+    });
     const casque = new THREE.Mesh(new THREE.SphereGeometry(0.25, 18, 14), vert);
     casque.position.y = 1.95;
     pilote.g.add(casque);
@@ -726,7 +736,7 @@ Circuit.VoituresMarques = (function () {
     // Les roues de moto : 17 pouces, 3 branches, 2 disques devant.
     const roues = [];
     for (const [x, avant, l] of [[0.86, true, 0.12], [-0.86, false, 0.18]]) {
-      const w = Circuit.Roues.fabriquer({ rayon: 0.31, largeur: l, jante: 0.22, style: "moto", metal: noir, etrier: avant ? [0.85, 0.62, 0.12] : [0.2, 0.2, 0.22], cote: 1 });
+      const w = Circuit.Roues.fabriquer({ rayon: 0.31, largeur: l, jante: 0.22, style: "moto", metal: noir, etrier: avant ? [0.75, 0.08, 0.08] : [0.2, 0.2, 0.22], cote: 1 });
       w.pivot.position.set(x, 0.31, 0);
       g.add(w.pivot);
       roues.push(Object.assign(w, { avant }));

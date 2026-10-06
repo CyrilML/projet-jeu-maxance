@@ -178,6 +178,7 @@
       <a href="#etape54">Étape 54</a>
       <a href="#etape55">Étape 55</a>
       <a href="#etape56">Étape 56</a>
+      <a href="#etape57">Étape 57</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3473,6 +3474,43 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Combien de millisecondes pour avoir 60 images par seconde ?</summary><p>1 000 ÷ 60 ≈ 16,7 ms par image.</p></details>
     </section>
 
+    <section id="etape57">
+      <h2>🚗 Étape 57 : des voitures plus grandes, plus vraies, et plus dorées <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les voitures grandissent de 15 %, la moto de 50 %. Les phares et les rétros rétrécissent, et la peinture n'est plus dorée. <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/57-voitures-plus-grandes-et-vraies.md</code>.</p>
+          <ul>
+            <li>✍️ Voitures un peu plus grandes (+15 %).</li>
+            <li>✍️ Moto bien plus grande (+50 %).</li>
+            <li>✍️ Plus de véhicules dorés, des phares et des rétros moins énormes.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Au garage, les voitures sont plus grandes, et la Kawasaki Ninja bien plus grande.</li>
+            <li>☐ La peinture n'a plus de reflet doré (regarde la Porsche blanche ou la Bugatti bleue).</li>
+            <li>☐ Les phares et les rétroviseurs ont une taille normale.</li>
+            <li>☐ Le pilote de la moto a une combinaison de cuir.</li>
+            <li>Vérifie « version 25 ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>✨ Pourquoi les voitures avaient l'air dorées</h3>
+      <p>Une surface en <strong>métal</strong> reflète la lumière avec sa propre couleur, une surface en peinture la reflète blanche. Notre peinture était réglée à 55 % de métal : elle prenait la couleur chaude du soleil (un peu orange) et avait l'air dorée. Une vraie peinture de voiture, c'est une couleur sous un vernis transparent : presque pas de métal. On est passé à 12 %.</p>
+      <h3>📏 Agrandir sans tout refaire</h3>
+      <p>Chaque voiture est un groupe de pièces. Pour l'agrandir, on ne refait pas chaque pièce : on dit au groupe « × 1,15 », et toutes les pièces grandissent ensemble. Comme la voiture est posée au sol (en y = 0), elle grandit vers le haut et reste sur la route.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>circuit/config.js</code>, trouve <code>peinture</code> et mets <code>metal: 0.9</code> : tes voitures redeviennent dorées !</li>
+        <li>Toujours là, change <code>taille</code> : <code>moto: 2</code>. Elle est énorme !</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Si la voiture était centrée en hauteur au lieu d'être posée au sol, que se passerait-il en l'agrandissant ?</summary><p>Elle grandirait vers le bas aussi : ses roues s'enfonceraient dans la route.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4322,6 +4360,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-56" data-cle="appris-56" placeholder="Ex. : J'ai appris qu'il faut mesurer avant de réparer…"></textarea>
         <label for="idees-56"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-56" data-cle="idees-56" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 57 · des voitures plus grandes et plus vraies <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la taille des véhicules et la peinture moins métallique (<code>affichage/modeles.js</code>, <code>config.js</code>), des phares et des rétros plus petits, le pilote en cuir (<code>affichage/voitures-marques.js</code>).</p>
+        <label for="appris-57"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-57" data-cle="appris-57" placeholder="Ex. : J'ai appris la différence entre une peinture et du métal…"></textarea>
+        <label for="idees-57"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-57" data-cle="idees-57" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

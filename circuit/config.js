@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 24,
+  version: 25,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -455,6 +455,12 @@ Circuit.CONFIG = {
     decompte: 3, // secondes de feu rouge avant le départ
     portes: 4, // le circuit est coupé en 4 « portes » à passer dans l'ordre (anti-triche)
   },
+
+  // Étape 57 : ✍️ la TAILLE des véhicules (1 = la vraie taille). Maxance les trouvait trop petits.
+  taille: { voitures: 1.15, moto: 1.5 },
+  phares: { taille: 0.7 }, // les blocs de phares font 70 % de leur taille d'avant (ils étaient trop gros)
+  // Étape 57 : la peinture. metal : 0 = pas du tout métallique, 1 = un miroir de métal (elle était à 0,55 : trop doré).
+  peinture: { metal: 0.12, rugosite: 0.35 },
 
   // Étape 56 : la QUALITÉ AUTOMATIQUE (pour que le jeu ne rame pas). Si une image met trop longtemps à se dessiner,
   // le jeu dessine un peu moins de pixels ; si tout va vite, il remet de la finesse.
