@@ -63,6 +63,7 @@ Village.Batiments = (function () {
     tailleur: { nom: "Atelier du tailleur", court: "Tailleur", emoji: "✂️", metier: "tailleur" },
     charcuterie: { nom: "Charcuterie", court: "Charcuterie", emoji: "🥓", metier: "charcutier" },
     depot: { nom: "Entrepôt secondaire", court: "Entrepôt 2", emoji: "🏬", metier: null }, // étape 17
+    manoir: { nom: "Maison bourgeoise", court: "Manoir", emoji: "🏡", metier: null }, // étape 18 : une maison qui a évolué
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
   const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot"];
@@ -194,7 +195,8 @@ Village.Batiments = (function () {
       usure: etat.usure || 0, // étape 11
       ameliorations: etat.ameliorations || 0, // étape 13 : combien d'améliorations faites (0, 1 ou 2)
       malade: etat.malade ? { depuis: etat.malade } : null, // étape 15 : une étable aux vaches malades { depuis (s) }
-      niveau: etat.niveau || 1, // étape 13 : l'entrepôt qui s'agrandit : de 0 (tout neuf) à 1 (usé : 2 fois moins vite). Un 🔨 outil le répare.
+      niveau: etat.niveau || 1,
+      evolution: etat.evo || 0, // étape 18 : depuis combien de secondes les besoins de la classe suivante sont remplis // étape 13 : l'entrepôt qui s'agrandit : de 0 (tout neuf) à 1 (usé : 2 fois moins vite). Un 🔨 outil le répare.
     };
     const i = l * monde.carte.colonnes + c;
     monde.batiments.push(b);

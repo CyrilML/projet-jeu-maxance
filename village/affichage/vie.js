@@ -28,8 +28,8 @@ Village.Vie = (function () {
     if (nuit > 0.5 || monde.camera.zoom < C.detail.zoomFigurants) return;
     const hiver = monde.saison && monde.saison.hiver;
     for (const b of monde.batiments) {
-      if (b.etat !== "pret" || (b.type !== "hutte" && b.type !== "maison")) continue;
-      const n = b.type === "maison" ? F.poulesParHutte + 1 : F.poulesParHutte;
+      if (b.etat !== "pret" || (b.type !== "hutte" && b.type !== "maison" && b.type !== "manoir")) continue;
+      const n = b.type === "hutte" ? F.poulesParHutte : F.poulesParHutte + 1;
       for (let k = 0; k < n; k++) {
         // Chaque poule tourne doucement autour de sa maison, en s'arrêtant pour picorer.
         const s = b.numero * 1.7 + k * 2.3, sens = k % 2 ? 1 : -1;

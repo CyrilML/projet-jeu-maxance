@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 18,
+  version: 19,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -147,6 +147,25 @@ Village.CONFIG = {
     charcuterie: { cout: { planches: 12, pierres: 14, outils: 2 }, construction: 16 },
     // Étape 17 : ✍️ un 2e (et un 3e) ENTREPÔT, très cher : c'est un bâtiment stratégique
     depot: { cout: { planches: 120, pierres: 90, lingots: 6, outils: 8 }, construction: 40 },
+    manoir: { cout: { planches: 12, pierres: 16, outils: 2 }, construction: 20 }, // étape 18 : on ne la construit pas, une maison le DEVIENT
+  },
+  // Étape 18 : ✍️ les CLASSES D'HABITANTS suivent leur logement (voir logique/classes.js).
+  //   evolution : ce que devient chaque logement, à partir de quel âge, et avec quels matériaux.
+  //   Il faut que les besoins de la classe suivante soient remplis pendant « delai » secondes.
+  classes: {
+    liste: [
+      { id: "paysans", nom: "Paysans", emoji: "👨‍🌾", logements: ["entrepot", "hutte", "depot"], impot: 0 },
+      { id: "artisans", nom: "Artisans", emoji: "👷", logements: ["maison"], impot: 1 },
+      { id: "bourgeois", nom: "Bourgeois", emoji: "🎩", logements: ["manoir"], impot: 3 },
+    ],
+    evolution: {
+      hutte: { vers: "maison", age: 2, cout: { planches: 6, pierres: 6 } },
+      maison: { vers: "manoir", age: 3, cout: { planches: 12, pierres: 16, outils: 2 } },
+    },
+    delai: 60, // s : les besoins doivent être remplis pendant 1 minute
+    verification: 5, // s entre deux vérifications
+    impots: 60, // s : les impôts tombent toutes les minutes (1 🪙 par artisan, 3 🪙 par bourgeois)
+    bonheurBourgeois: 60, // % de bonheur qu'il faut pour des bourgeois
   },
   // Étape 17 : ✍️ les ENTREPÔTS SECONDAIRES. Le village s'étale vite : un 2e entrepôt, loin du premier,
   // a ses propres manutentionnaires (3 places, et 4 lits). Le stock est partagé (c'est le même village),
@@ -217,6 +236,7 @@ Village.CONFIG = {
   //   85 % et plus : 😄 ravi (20 % plus vite, ils arrivent 2 fois plus souvent).
   bonheur: {
     base: 15, ventre: 30, parGout: 8, goutsMax: 5, memoire: 600, confort: 10, froid: 15, sansPain: 15,
+    classes: 10, // étape 18 : 10 points × la part des habitants dont la classe a tous ses besoins
     lissage: 0.5, // points par seconde
     triste: 45, content: 70, ravi: 85,
     vitesse: { triste: 0.85, normal: 1, content: 1.1, ravi: 1.2 },
@@ -238,7 +258,7 @@ Village.CONFIG = {
   // (Les porteurs, eux, dorment à l'entrepôt : ils ne comptent pas.)
   // Étape 13 : ✍️ les porteurs (manutentionnaires) et les villageois sans travail dorment aussi quelque part :
   // le campement passe à 10 places.
-  logement: { entrepot: 10, hutte: 3, maison: 6, depot: 4 }, // étape 17 : 4 lits dans chaque entrepôt secondaire
+  logement: { entrepot: 10, hutte: 3, maison: 6, depot: 4, manoir: 10 }, // étape 18 : la maison bourgeoise // étape 17 : 4 lits dans chaque entrepôt secondaire
 
   // Étape 13 : ✍️ (1B) les VILLAGEOIS. Ils arrivent au village quand il y a un lit libre et à manger,
   // se promènent près du feu, et vont travailler là où on a besoin d'eux : chaque cabane en prend un,

@@ -44,6 +44,8 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("mission-reussie", (d) => { afficher("🎉 Mission réussie ! Merci de la part de " + d.qui + " " + d.emoji); gagner("🎉 Mission réussie !", Object.entries(d.recompense)); }); // étape 17 : ✍️ on VOIT ce qu'on gagne
   Village.Evenements.ecouter("pub-regardee", (d) => { if (d.sorte === "ressource") gagner("📺 Merci !", [[d.quoi, d.quantite]]); else if (d.sorte === "gemmes") gagner("📺 Merci !", [["gemmes", d.quantite]]); });
   Village.Evenements.ecouter("nouvel-age", (d) => gagner(d.emoji + " " + d.nom + " !", [["gemmes", d.gemmes]]));
+  Village.Evenements.ecouter("logement-evolue", (d) => afficher("⬆️ " + d.avant + " n° " + d.numero + " devient « " + d.apres + " » : des " + d.emoji + " " + d.classe.toLowerCase() + " s'installent !")); // étape 18
+  Village.Evenements.ecouter("impots", (d) => afficher("🪙 Impôts : +" + d.total + " pièces (artisans et bourgeois)"));
   Village.Evenements.ecouter("routes-pavees", (d) => afficher("🧱 Routes pavées : tes " + d.cases + " cases de chemin sont maintenant pavées (× 1,6 plus vite) !")); // étape 17
   Village.Evenements.ecouter("mission-ratee", (d) => afficher("⌛ Trop tard pour " + d.qui + "… Une autre mission viendra !"));
   Village.Evenements.ecouter("mission-pas-assez", () => afficher("🚫 Il manque encore des ressources pour livrer"));
@@ -480,7 +482,7 @@ Village.Interface = (function () {
     const ressources = Object.keys(C.ressources).filter((r) => BASE.includes(r) || s[r] > 0).map((r) => [r, s[r]]);
     if (monde.age >= 2 || monde.pieces > 0) ressources.push(["pieces", monde.pieces]);
     // Étape 8 : s'il y a trop de ressources pour la largeur, la bulle passe sur 2 lignes.
-    const pas = petit ? 38 : 50, haut = petit ? 17 : 20, parLigne = Math.max(3, Math.min(ressources.length, Math.floor((W - 70 - 20) / pas)));
+    const pas = petit ? 38 : 50, haut = petit ? 17 : 20, parLigne = Math.max(3, Math.min(ressources.length, Math.floor((W - (W >= 520 ? 290 : 70) - 20) / pas))) // étape 18 : sans passer sous la mini-carte;
     const nLignes = Math.ceil(ressources.length / parLigne), hStock = (petit ? 40 : 46) + (nLignes - 1) * haut;
     // Étape 6 : l'âge du village et, à côté, où on en est des objectifs pour passer au suivant.
     // (La barre de la saison a été enlevée : ✍️ elle ne servait à rien.) Toucher : voir les objectifs.
@@ -493,7 +495,7 @@ Village.Interface = (function () {
     titre += "  👥 " + hab + "/" + lits + (hab >= lits ? " ⚠️" : "");
     if (monde.bonheur.valeur !== null && !petit) titre += "  " + Village.Bonheur.emoji(monde) + " " + Math.round(monde.bonheur.valeur) + " %"; // étape 15
     ctx.font = "bold " + (petit ? 10 : 12) + "px " + POLICE;
-    const lb = Math.min(W - 70, Math.max(20 + Math.min(ressources.length, parLigne) * pas, ctx.measureText(titre).width + 24));
+    const lb = Math.min(W - (W >= 520 ? 290 : 70), Math.max(20 + Math.min(ressources.length, parLigne) * pas, ctx.measureText(titre).width + 24));
     basDuStock = 10 + hStock;
     ctx.fillStyle = "rgba(255, 250, 235, .55)"; ctx.strokeStyle = "rgba(90, 66, 32, .35)"; ctx.lineWidth = 1.2;
     ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(10, 10, lb, hStock, 10); else ctx.rect(10, 10, lb, hStock); ctx.fill(); ctx.stroke();
@@ -771,9 +773,18 @@ Village.Interface = (function () {
       lignes.push("🛏️ " + C.logement.depot + " lits pour ses manutentionnaires.");
     } else if (C.logement[b.type]) {
       // Étape 8 : une hutte ou une maison
-      const Lg = Village.Logement;
-      lignes.push("🛏️ " + C.logement[b.type] + " places pour dormir");
+      const Lg = Village.Logement, Cl = Village.Classes, cl = Cl.fiche(Cl.classeDe(b.type));
+      lignes.push("🛏️ " + C.logement[b.type] + " places pour dormir · " + cl.emoji + " " + cl.nom + (cl.impot ? " (" + cl.impot + " 🪙 d'impôt par minute chacun)" : ""));
       lignes.push("Tout le village : " + Lg.habitants(monde) + " habitants / " + Lg.capacite(monde) + " places");
+      // Étape 18 : ✍️ les classes suivent leur logement. Ce qu'il faut pour évoluer, et où on en est.
+      const ev = C.classes.evolution[b.type];
+      if (ev) {
+        const suivante = Cl.fiche(Cl.classeDe(ev.vers)), pourquoi = Cl.raison(monde, b);
+        lignes.push("⬆️ Devient « " + B.TYPES[ev.vers].nom + " » (" + suivante.emoji + " " + suivante.nom.toLowerCase() + ", " + C.logement[ev.vers] + " lits) quand :");
+        if ((monde.age || 0) < ev.age) lignes.push("   🔒 " + C.ages[ev.age].emoji + " " + C.ages[ev.age].nom);
+        else for (const x of Cl.besoins(monde, suivante.id)) lignes.push("   " + (x.ok ? "✅ " : "⬜ ") + x.nom);
+        lignes.push(pourquoi ? "   (puis il faudra " + Object.entries(ev.cout).map(([r, n]) => n + " " + EMO(r)).join(" ") + ")" : b.attendMateriaux ? "   ⏳ Il manque des matériaux : " + Object.entries(ev.cout).map(([r, n]) => n + " " + EMO(r)).join(" ") : "   ⏳ Évolution : " + Math.min(100, Math.round((b.evolution / C.classes.delai) * 100)) + " %");
+      } else lignes.push("🏆 Le plus beau logement du village !");
     } else if (!b.ouvrier) {
       // Étape 13 : ✍️ un villageois doit venir travailler ici
       if (Village.Villageois.versLeTravail(monde, b)) lignes.push("🚶 Un villageois arrive pour travailler ici !");

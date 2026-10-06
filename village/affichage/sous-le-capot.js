@@ -66,6 +66,9 @@ Village.SousLeCapot = (function () {
     "amelioration-impossible": (d) => "🚫 Amélioration « " + d.nom + " » impossible : " + d.raison,
     // Étape 15 : l'élevage et le bonheur
     "vaches-malades": (d) => "🤒 " + d.nom + " : " + d.animaux + " sont malades" + (d.contagion ? " (attrapé d'un troupeau voisin !)" : "") + " · plus rien ne sort · " + (d.veterinaire ? "le vétérinaire 🩺 va venir" : "pas de vétérinaire : ils guériront seuls en " + Math.round(Village.CONFIG.elevage.guerirSeule / 60) + " min"),
+    "logement-evolue": (d) => "⬆️ " + d.avant + " n° " + d.numero + " devient « " + d.apres + " » (" + d.lits + " lits) : des " + d.emoji + " " + d.classe.toLowerCase() + " s'installent · coût " + cout(d.cout), // étape 18
+    "logement-attend": (d) => "⏳ " + d.nom + " n° " + d.numero + " pourrait évoluer, mais il manque " + d.manque,
+    impots: (d) => "🪙 Impôts : +" + d.total + " pièces (" + d.artisans + " artisans × 1 + " + d.bourgeois + " bourgeois × 3)",
     "routes-pavees": (d) => "🧱 Routes pavées : " + d.cases + " cases de chemin deviennent des routes en pierre (× 1,6 plus rapide)", // étape 17
     habits: (d) => "👕 Habits neufs : " + d.pris + " habitant(s) sur " + d.besoin + " (il reste " + d.reste + " vêtements)", // étape 16
     "vaches-gueries": (d) => "💚 " + d.nom + " : " + d.animaux + " sont guéris (" + d.parQui + ", après " + d.duree + " s)",
@@ -246,6 +249,11 @@ Village.SousLeCapot = (function () {
     const Et = Village.Elevage.etables(monde);
     h += ligne("🐄 troupeaux · malades", Et.length + " · " + Et.filter((b) => b.malade).length + ((monde.age || 0) < C15.elevage.ageMaladies ? " (pas de maladies avant le village)" : ""));
     for (const b of Et.slice(0, 6)) { const r = Village.Elevage.risque(monde, b); h += ligne("   " + Village.Batiments.TYPES[b.type].court + " n° " + b.numero, b.malade ? "🤒 malade depuis " + Math.round(b.malade.depuis) + " s" : "risque " + virgule(r.chance * 100, 1) + " %/min" + (Village.Elevage.affaiblies(b) ? " (affaiblies !)" : "") + (r.voisines ? " · " + r.voisines + " voisine(s) malade(s)" : "")); }
+    // Étape 18 : les classes d'habitants
+    const Cl = Village.Classes, pop18 = Cl.population(monde);
+    h += groupe("🎩 Les classes d'habitants (elles suivent leur logement)");
+    for (const c of C15.classes.liste) h += ligne(c.emoji + " " + c.nom + " : habitants / lits · besoins", pop18.pop[c.id] + " / " + pop18.lits[c.id] + " · " + (Cl.contents(monde, c.id) ? "✅ tous remplis" : "⬜ " + Cl.besoins(monde, c.id).filter((x) => !x.ok).map((x) => x.nom).join(", ")));
+    for (const b of monde.batiments.filter((x) => C15.classes.evolution[x.type] && x.etat === "pret").slice(0, 6)) h += ligne("   " + Village.Batiments.TYPES[b.type].court + " n° " + b.numero + " → " + Village.Batiments.TYPES[C15.classes.evolution[b.type].vers].court, Cl.raison(monde, b) || (b.attendMateriaux ? "attend des matériaux" : Math.round(b.evolution) + " / " + C15.classes.delai + " s"));
     // Étape 11 : la réserve, les pubs et les règles du bourg
     const Re = Village.Reserve, ry = Re.rythme(monde), mnp = Re.minutesAvantPlein(monde);
     h += groupe("📦 La réserve · 📺 les pubs · 🏰 le bourg");

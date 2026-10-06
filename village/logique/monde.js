@@ -195,6 +195,7 @@ Village.Monde = (function () {
     Village.Animaux.etape(monde, dt);
     Village.Repas.etape(monde, dt);
     Village.Bonheur.etape(monde, dt); // étape 15 : le moral des habitants
+    Village.Classes.etape(monde, dt); // étape 18 : les logements évoluent, les impôts
     Village.Ages.etape(monde, dt);
     Village.Recherches.etape(monde, dt); // étape 7
     Village.Missions.etape(monde, dt); // étape 7

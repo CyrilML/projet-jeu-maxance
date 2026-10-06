@@ -60,12 +60,14 @@
 //  14 (étape 17) : pour chaque porteur d'un entrepôt secondaire, la place de son entrepôt (m). Une partie plus
 //                  ancienne n'en a pas : tous ses porteurs habitent l'entrepôt principal. Si « Routes pavées » était
 //                  déjà faite, toutes ses routes deviennent pavées au chargement.
+//  15 (étape 18) : la jauge d'évolution de chaque logement (evo, en secondes), et un nouveau type de logement
+//                  (manoir : la maison bourgeoise). Rien à convertir : les huttes et les maisons partent de 0.
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 14;
+  const VERSION = 15;
   const radio = Village.Evenements;
 
   function vide() {
@@ -197,6 +199,7 @@ Village.Sauvegarde = (function () {
         if (b.usure > 0) d.usure = Math.round(b.usure * 1000) / 1000; // étape 11
         if (b.ameliorations) d.ameliorations = b.ameliorations; // étape 13
         if (b.niveau > 1) d.niveau = b.niveau;
+        if (b.evolution) d.evo = Math.round(b.evolution); // étape 18
         if (b.malade) d.malade = Math.round(b.malade.depuis) || 1; // étape 15 : depuis combien de secondes
         if (b.etat === "chantier") { d.prix = b.prix; d.livre = b.livre; d.attendu = ajout(b.attendu, enCours.attendu.get(b)); } // étape 12 : le prix du chantier (il peut être offert)
         const o = b.ouvrier;

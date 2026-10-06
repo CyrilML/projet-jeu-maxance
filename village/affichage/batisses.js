@@ -61,6 +61,8 @@ Village.Batisses = (function () {
     tailleur: { a: 18, h: 16, toit: 14, murG: "#e8e2d4", murD: "#c7bfae", toitA: "#3f8a8a", toitB: "#2f6a6a", mur: "pierre", toitSorte: "tuiles", fenetres: 1, volets: "#3f8a8a", lanterne: true },
     charcuterie: { a: 20, h: 14, toit: 14, murG: "#f1e3c4", murD: "#d2c09a", toitA: "#8a3a2a", toitB: "#6a2a1e", mur: "colombage", toitSorte: "tuiles", fenetres: 1, volets: "#8a3a2a", cheminee: 0.6 },
     // Étape 17 : l'entrepôt secondaire (long, avec un toit bleu)
+    // Étape 18 : la maison bourgeoise (2 étages, en pierre, avec un toit d'ardoise)
+    manoir: { a: 21, a2: 27, h: 26, toit: 16, murG: "#efe6d2", murD: "#cfc4ac", toitA: "#4a5a7a", toitB: "#38465f", mur: "pierre", toitSorte: "ardoise", fenetres: 2, volets: "#2f6a4a", cheminee: 0.3, jardiniere: true, lanterne: true },
     depot: { a: 22, a2: 32, h: 18, toit: 16, murG: "#c9a26a", murD: "#a8834a", toitA: "#3f6fc4", toitB: "#2f569c", mur: "planches", toitSorte: "tuiles", fenetres: 2, lanterne: true },
   };
 
@@ -847,6 +849,14 @@ Village.Batisses = (function () {
       if (b.travail) { ctx.strokeStyle = "#8a5a2b"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x + 4, y + 2); ctx.lineTo(x + 4 + Math.cos(t * 6) * 3, y - 6 + Math.sin(t * 6)); ctx.stroke(); }
       pile(ctx, x - 22, y + 12, "lait", b.entrees.lait || 0);
       pile(ctx, x + 4, y + 17, "yaourt", b.sortie);
+    } else if (b.type === "manoir") {
+      // Étape 18 : une corniche entre les 2 étages, une haie taillée et un arbre en boule
+      ctx.strokeStyle = "rgba(255, 255, 255, .75)"; ctx.lineWidth = 1.6; ctx.beginPath();
+      ctx.moveTo(x - m.a, y - m.h * 0.5); ctx.lineTo(x, y + m.a / 2 - m.h * 0.5); ctx.lineTo(x + m.a2, y + m.a / 2 - m.a2 / 2 - m.h * 0.5); ctx.stroke();
+      for (let k = 0; k < 4; k++) rond(ctx, x + 10 + k * 4.5, y + 14 - k * 2.2, 2.6, vue.hiver ? "#e8eef5" : "#3f8a3a");
+      ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(x - 25, y + 10); ctx.lineTo(x - 25, y + 3); ctx.stroke();
+      rond(ctx, x - 25, y + 1, 4.5, vue.hiver ? "#e8eef5" : "#4fa84a");
+      if (!vue.hiver && vue.fin) { ctx.fillStyle = "#ff7ab6"; for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.arc(x + 10 + k * 4.5, y + 12 - k * 2.2, 0.9, 0, TOUR); ctx.fill(); } }
     } else if (b.type === "depot") {
       // Étape 17 : des caisses, des tonneaux et le drapeau du village
       for (const [cx, cy, c] of [[x + 16, y + 10, "#b07740"], [x + 22, y + 7, "#9a6a3c"], [x + 19, y + 3, "#c48f5d"]]) forme(ctx, [[cx - 4, cy], [cx, cy + 2], [cx + 4, cy], [cx + 4, cy - 5], [cx, cy - 7], [cx - 4, cy - 5]], c);
@@ -950,8 +960,12 @@ Village.Batisses = (function () {
       ctx.stroke();
     }
     // (Étape 10 : les ouvriers des ateliers travaillent devant leur bâtiment : voir dessinerBatiment)
+    // Étape 18 : ✍️ « tous doivent être reconnaissables de loin ». Quand on dézoome, chaque bâtiment (sauf les
+    // logements, qu'on reconnaît à leur forme) montre un REPÈRE : son emoji dans un rond, toujours de la même
+    // taille à l'écran, comme les icônes d'une carte.
+    if (!vue.fin && b.etat === "pret" && !["hutte", "maison", "manoir"].includes(b.type) && Village.monde) repere(ctx, x, y - m.h - m.toit * 0.55, Village.Batiments.TYPES[b.type].emoji, 20 / (Village.monde.camera.zoom * echelleDe(b.type)));
     // Un petit panneau avec l'emoji du métier, au-dessus de la porte
-    if (b.type !== "entrepot") enseigne(ctx, x - m.a * 0.45, y - 8 - m.h * 0.2, Village.Batiments.TYPES[b.type].emoji);
+    if (b.type !== "entrepot" && vue.fin) enseigne(ctx, x - m.a * 0.45, y - 8 - m.h * 0.2, Village.Batiments.TYPES[b.type].emoji);
     // Étape 13 : une étoile dorée par amélioration, à côté de l'enseigne
     for (let k = 0; k < (b.ameliorations || 0); k++) etoile(ctx, x - m.a * 0.45 + 10 + k * 7, y - 22 - m.h * 0.2);
     if (travaille && b.type === "carriere") poussiere(ctx, x, y, t);
@@ -1159,6 +1173,13 @@ Village.Batisses = (function () {
   }
 
   // Étape 14 : ✍️ une enseigne plus grande, pour reconnaître le bâtiment d'un coup d'œil
+  function repere(ctx, x, y, emoji, taille) {
+    ctx.beginPath(); ctx.arc(x, y, taille * 0.72, 0, TOUR); ctx.fillStyle = "rgba(255, 250, 235, .93)"; ctx.fill();
+    ctx.lineWidth = taille * 0.09; ctx.strokeStyle = "#5a4220"; ctx.stroke();
+    ctx.font = Math.round(taille) + "px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(emoji, x, y + taille * 0.06);
+    ctx.textAlign = "left";
+  }
   function enseigne(ctx, x, y, emoji) {
     ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x - 4, y - 15); ctx.lineTo(x - 4, y - 18); ctx.moveTo(x + 4, y - 15); ctx.lineTo(x + 4, y - 18); ctx.stroke();
     ctx.fillStyle = "#f6e7c4";
@@ -1601,6 +1622,14 @@ Village.Batisses = (function () {
       dx = 4; dy = 17; accroupi = 1; brasAvant = 1.3 + Math.sin(t * 10) * 0.15; brasArriere = 1.2;
     } else if (b.type === "porcherie") { // il remplit l'auge avec sa fourche
       dx = 4; dy = 15; const va = Math.sin(t * 3); brasAvant = 1.1 + va * 0.4; brasArriere = 0.9 + va * 0.3; penche = 0.1 + va * 0.08;
+    } else if (b.type === "manoir") {
+      // Étape 18 : une corniche entre les 2 étages, une haie taillée et un arbre en boule
+      ctx.strokeStyle = "rgba(255, 255, 255, .75)"; ctx.lineWidth = 1.6; ctx.beginPath();
+      ctx.moveTo(x - m.a, y - m.h * 0.5); ctx.lineTo(x, y + m.a / 2 - m.h * 0.5); ctx.lineTo(x + m.a2, y + m.a / 2 - m.a2 / 2 - m.h * 0.5); ctx.stroke();
+      for (let k = 0; k < 4; k++) rond(ctx, x + 10 + k * 4.5, y + 14 - k * 2.2, 2.6, vue.hiver ? "#e8eef5" : "#3f8a3a");
+      ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(x - 25, y + 10); ctx.lineTo(x - 25, y + 3); ctx.stroke();
+      rond(ctx, x - 25, y + 1, 4.5, vue.hiver ? "#e8eef5" : "#4fa84a");
+      if (!vue.hiver && vue.fin) { ctx.fillStyle = "#ff7ab6"; for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.arc(x + 10 + k * 4.5, y + 12 - k * 2.2, 0.9, 0, TOUR); ctx.fill(); } }
     } else if (b.type === "depot") {
       // Étape 17 : des caisses, des tonneaux et le drapeau du village
       for (const [cx, cy, c] of [[x + 16, y + 10, "#b07740"], [x + 22, y + 7, "#9a6a3c"], [x + 19, y + 3, "#c48f5d"]]) forme(ctx, [[cx - 4, cy], [cx, cy + 2], [cx + 4, cy], [cx + 4, cy - 5], [cx, cy - 7], [cx - 4, cy - 5]], c);

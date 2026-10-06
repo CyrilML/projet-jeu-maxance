@@ -141,6 +141,7 @@
       <a href="#etape15">Étape 15</a>
       <a href="#etape16">Étape 16</a>
       <a href="#etape17">Étape 17</a>
+      <a href="#etape18">Étape 18</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1303,6 +1304,57 @@ la case, elle, ne change pas : le bâtiment occupe toujours 1 case</pre>
       <details class="question"><summary>Les porteurs de l'entrepôt 2 sont tous occupés depuis 20 s. Que se passe-t-il ?</summary><p>Après 15 s d'attente, un porteur d'un autre entrepôt peut prendre la livraison (s'il y a une route).</p></details>
     </section>
 
+    <section id="etape18">
+      <h2>🎩 Étape 18 : les classes d'habitants, et des bâtiments reconnaissables de loin <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les huttes deviennent des maisons, les maisons des maisons bourgeoises, quand leurs habitants ont ce qu'ils veulent. Paysans, artisans et bourgeois n'ont pas les mêmes besoins, et les plus riches paient des impôts. De loin, chaque bâtiment montre son repère. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/19-classes-reperes.md</code>.</p>
+          <ul>
+            <li>✍️ « Tous doivent être reconnaissables de loin. »</li>
+            <li>✍️ « Les classes d'habitants doivent suivre l'évolution de leur habitation. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Dézoome : chaque bâtiment a son repère rond, avec son emoji.</li>
+            <li>☐ Touche une hutte : ce que veulent les artisans, et la jauge d'évolution.</li>
+            <li>☐ Au village, avec du lait ou des œufs et 3 goûts : la hutte devient une maison.</li>
+            <li>☐ Au bourg : une maison devient une maison bourgeoise (2 étages, une haie).</li>
+            <li>☐ Les impôts 🪙 arrivent chaque minute.</li>
+            <li>Vérifie « version 19 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🪜 L'échelle des logements</h3>
+      <pre style="white-space: pre-wrap">🛖 hutte (3 lits)          👨‍🌾 paysans   : à manger
+   │ au village, 1 minute avec : 3 goûts + 🥛 ou 🥚 · puis 6 🟫 6 🪨
+   ▼
+🏠 maison (6 lits)         👷 artisans  : + 1 🪙 d'impôt par minute chacun
+   │ au bourg, 1 minute avec : 5 goûts + 🧀 ou 🥓 + 👕 + 😊 60 % · puis 12 🟫 16 🪨 2 🔨
+   ▼
+🏡 maison bourgeoise (10)  🎩 bourgeois : + 3 🪙 d'impôt par minute chacun</pre>
+      <p>Un logement évolue <strong>tout seul</strong> quand les besoins de la classe suivante sont remplis pendant une minute entière. C'est comme une <strong>récompense</strong> : tu soignes tes chaînes de production, et ton village s'embellit, gagne des lits et paie plus d'impôts. Mais si une classe n'a plus ce qu'elle veut, le bonheur baisse (la nouvelle ligne « 🎩 Besoins des classes »).</p>
+
+      <h3>📍 Un repère à taille fixe</h3>
+      <p>Quand on dézoome, tout rapetisse… sauf les repères ! Leur taille est <code>20 ÷ zoom</code> : à 50 % de zoom, on les dessine 2 fois plus gros, donc à l'écran ils gardent toujours la même taille. C'est ce que font les cartes routières avec leurs icônes.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, trouve « 🎩 Les classes d'habitants » : combien de paysans, d'artisans, de bourgeois ?</li>
+        <li>Dans le journal, cherche « Impôts » : combien de pièces par minute ?</li>
+        <li>Dans <code>config.js</code>, trouve <code>classes</code> : que se passe-t-il si <code>delai</code> vaut 20 ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>10 artisans et 4 bourgeois : combien d'impôts par minute ?</summary><p>10 × 1 + 4 × 3 = 22 🪙 par minute.</p></details>
+      <details class="question"><summary>À 25 % de zoom, de combien dessine-t-on le repère ?</summary><p>20 ÷ 0,25 = 80 : 4 fois plus gros dans le monde, mais la même taille à l'écran.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1410,15 +1462,15 @@ la case, elle, ne change pas : le bâtiment occupe toujours 1 case</pre>
           <p>Routes pavées automatiques, bâtiments longs et animés, entrepôt secondaire, ouvriers qui vont 2 fois plus loin, barre de stock discrète, ce qui manque en rouge, récompenses qui s'envolent.</p>
           <p class="apprend"><b>Tu apprends :</b> une recherche en largeur à plusieurs départs. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">18</div>
-          <h4>🎩 Les classes d'habitants <span class="etiquette">⏭️ prochaine étape</span></h4>
-          <p>✍️ 2C, partie B : paysans, artisans, bourgeois… chacun ses besoins, et des maisons qui montent de niveau.</p>
-          <p class="apprend"><b>Tu apprends :</b> des besoins par paliers. <b>Durée :</b> plusieurs séances.</p>
+          <h4>🎩 Les classes d'habitants et les repères <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Paysans, artisans et bourgeois ; des logements qui évoluent tout seuls ; des impôts ; un repère pour chaque bâtiment, vu de loin.</p>
+          <p class="apprend"><b>Tu apprends :</b> des besoins par paliers, une taille fixe à l'écran. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte">
+        <div class="carte prochain">
           <div class="num">19</div>
-          <h4>🏙️ La ville : monuments, fêtes et port</h4>
+          <h4>🏙️ La ville : monuments, fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
         </div>
@@ -1570,6 +1622,14 @@ la case, elle, ne change pas : le bâtiment occupe toujours 1 case</pre>
         <textarea class="journal" id="village-appris-17" data-cle="village-appris-17" placeholder="Ex. : J'ai appris qu'une recherche peut partir de plusieurs endroits…"></textarea>
         <label for="village-idees-17"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-17" data-cle="village-idees-17" placeholder="Ex. : Des ponts sur les rivières…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 18 · les classes d'habitants et les repères <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les classes d'habitants et l'évolution des logements (<code>logique/classes.js</code>), la maison bourgeoise, les impôts, la ligne « besoins des classes » du bonheur, les repères vus de loin (<code>repere</code> dans <code>affichage/batisses.js</code>), la base de données en version 15.</p>
+        <label for="village-appris-18"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-18" data-cle="village-appris-18" placeholder="Ex. : J'ai appris ce qu'est un besoin par paliers…"></textarea>
+        <label for="village-idees-18"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-18" data-cle="village-idees-18" placeholder="Ex. : Une école pour les enfants des artisans…"></textarea>
       </div>
     </section>
   </main>
