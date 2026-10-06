@@ -11,6 +11,8 @@
 // premier arrivé, premier servi (comme la file à la boulangerie).
 //
 // Les porteurs marchent seulement sur les routes. Ils portent un seul objet à la fois.
+// Étape 9 : avec la recherche « Ânes et charrettes », un porteur part avec un âne : il prend jusqu'à
+// 3 papiers d'un coup, s'ils vont au même bâtiment, pour la même chose (« 3 planches pour la forge »).
 //
 // Un mot important : RÉSERVÉ. Quand on pose un chantier, ses planches restent dans l'entrepôt,
 // mais elles lui sont promises : on ne peut plus les utiliser pour autre chose.
@@ -143,15 +145,26 @@ Village.Porteurs = (function () {
           p.chemin = chemin;
           p.pas = 1;
           p.etat = "aller";
+          // Étape 9 : avec une charrette, on prend aussi les papiers pareils (même bâtiment, même chose).
+          p.nombre = 1;
+          const place = Math.round(Village.Recherches.bonus(monde, "chargement"));
+          for (let k = 0; k < monde.file.length && p.nombre < place; k++) {
+            const t = monde.file[k];
+            if (t.batiment !== b || t.sorte !== papier.sorte || t.quoi !== papier.quoi) continue;
+            if (papier.sorte === "apporter" && monde.stock[papier.quoi] < p.nombre + 1) break;
+            monde.file.splice(k--, 1);
+            p.nombre++;
+          }
           if (papier.sorte === "apporter") {
-            // On prend l'objet dans l'entrepôt, et il n'est plus « promis ».
-            monde.stock[papier.quoi]--;
-            b.enFile[papier.quoi]--;
-            if (b.etat === "chantier") b.attendu[papier.quoi]--;
-            else b.enRoute[papier.quoi] = (b.enRoute[papier.quoi] || 0) + 1;
+            // On prend les objets dans l'entrepôt, et ils ne sont plus « promis ».
+            const n = p.nombre;
+            monde.stock[papier.quoi] -= n;
+            b.enFile[papier.quoi] -= n;
+            if (b.etat === "chantier") b.attendu[papier.quoi] -= n;
+            else b.enRoute[papier.quoi] = (b.enRoute[papier.quoi] || 0) + n;
             p.porte = papier.quoi;
           }
-          radio.emettre("porteur-part", { porteur: p.numero, sorte: papier.sorte, quoi: papier.quoi, nom: Village.Batiments.TYPES[b.type].nom, batiment: b.numero, pas: chemin.length - 1, file: monde.file.length });
+          radio.emettre("porteur-part", { porteur: p.numero, sorte: papier.sorte, quoi: papier.quoi, nombre: p.nombre, nom: Village.Batiments.TYPES[b.type].nom, batiment: b.numero, pas: chemin.length - 1, file: monde.file.length });
           break;
         }
         continue;
@@ -163,16 +176,23 @@ Village.Porteurs = (function () {
         // Arrivé au bâtiment
         if (papier.sorte === "apporter") {
           if (existe(monde, b)) {
-            if (b.etat === "chantier") b.livre[papier.quoi] = (b.livre[papier.quoi] || 0) + 1;
-            else { b.entrees[papier.quoi] = (b.entrees[papier.quoi] || 0) + 1; b.enRoute[papier.quoi]--; }
-            radio.emettre("porteur-livre", { porteur: p.numero, quoi: papier.quoi, nom: Village.Batiments.TYPES[b.type].nom, batiment: b.numero });
+            const n = p.nombre || 1;
+            if (b.etat === "chantier") b.livre[papier.quoi] = (b.livre[papier.quoi] || 0) + n;
+            else { b.entrees[papier.quoi] = (b.entrees[papier.quoi] || 0) + n; b.enRoute[papier.quoi] -= n; }
+            radio.emettre("porteur-livre", { porteur: p.numero, quoi: papier.quoi, nombre: n, nom: Village.Batiments.TYPES[b.type].nom, batiment: b.numero });
             p.porte = null;
           }
-        } else if (existe(monde, b) && b.sortie > 0) {
-          b.sortie--;
-          b.ramassage--;
-          p.porte = papier.quoi;
-          p.quantite = b.lots.length ? b.lots.shift() : 1; // étape 5 : un cerf vaut 4 viandes
+        } else if (existe(monde, b)) {
+          // Ramasser ce qui attend devant la porte (étape 9 : jusqu'à 3 objets avec la charrette)
+          let q = 0, pris = 0;
+          for (let k = 0; k < (p.nombre || 1); k++) {
+            b.ramassage = Math.max(0, b.ramassage - 1);
+            if (b.sortie <= 0) continue;
+            b.sortie--;
+            q += b.lots.length ? b.lots.shift() : 1; // étape 5 : un cerf vaut 4 viandes
+            pris++;
+          }
+          if (pris) { p.porte = papier.quoi; p.quantite = q; p.nombre = pris; }
         }
         p.chemin = p.chemin.slice().reverse();
         p.pas = 1;
@@ -186,6 +206,7 @@ Village.Porteurs = (function () {
           p.porte = null;
           p.quantite = 1;
         }
+        p.nombre = 1;
         p.travail = null;
         p.chemin = null;
         p.etat = "attend";
@@ -199,11 +220,11 @@ Village.Porteurs = (function () {
     const retour = { stock: {}, attendu: new Map() };
     for (const p of monde.porteurs) {
       if (!p.porte) continue;
-      retour.stock[p.porte] = (retour.stock[p.porte] || 0) + (p.travail.sorte === "ramener" ? (p.quantite || 1) : 1);
+      retour.stock[p.porte] = (retour.stock[p.porte] || 0) + (p.travail.sorte === "ramener" ? (p.quantite || 1) : (p.nombre || 1));
       const b = p.travail.batiment;
       if (p.travail.sorte === "apporter" && p.etat === "aller" && b.etat === "chantier") {
         const a = retour.attendu.get(b) || {};
-        a[p.porte] = (a[p.porte] || 0) + 1;
+        a[p.porte] = (a[p.porte] || 0) + (p.nombre || 1);
         retour.attendu.set(b, a);
       }
     }

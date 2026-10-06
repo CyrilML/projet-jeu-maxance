@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 9,
+  version: 10,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -178,6 +178,32 @@ Village.CONFIG = {
   saisons: {
     dureeAnnee: 1200, // s : ✍️ étape 6, 20 minutes (5 min par saison). 10 minutes avant.
   },
+  // Étape 9 : ✍️ le JOUR et la NUIT (seulement pour les yeux : personne ne dort, le travail continue).
+  // Une journée dure 6 minutes. Les parts de la journée (de 0 à 1) :
+  //   0 → aube (le ciel rosit) → jour → crépuscule (le ciel orange) → nuit → retour à 0.
+  jour: {
+    duree: 360, // s pour une journée entière
+    aube: 0.08, // jusqu'à cette part : l'aube
+    crepuscule: 0.62, // à partir de cette part : le crépuscule
+    nuit: 0.72, // à partir de cette part : la nuit (jusqu'à 0,96, puis l'aube revient)
+    finNuit: 0.96,
+    noirceur: 0.6, // à minuit, l'écran prend 60 % de bleu nuit au plus (pour toujours bien voir)
+  },
+  // Étape 9 : ✍️ les petits détails (fenêtres, tuiles, papillons…) ne se dessinent que de près,
+  // pour que le jeu reste fluide sur un téléphone.
+  detail: {
+    zoomFin: 0.8, // à partir de ce zoom : tous les détails
+    zoomFigurants: 0.6, // à partir de ce zoom : les poules, les enfants, les papillons
+  },
+  // Étape 9 : les FIGURANTS (ils ne font que décorer : oiseaux, papillons, poules, enfants)
+  figurants: {
+    poulesParHutte: 2, // et 3 par maison
+    habitantsParEnfant: 4, // 1 enfant qui joue près du feu pour 4 habitants (6 au plus)
+    enfantsMax: 6,
+    volsDOiseaux: 2, // groupes d'oiseaux en même temps dans le ciel (le jour)
+    papillons: 0.18, // chance qu'une case de fleurs ait un papillon (printemps et été)
+    lucioles: 0.06, // chance qu'une case de forêt ait des lucioles (nuits d'été)
+  },
 
   // Étape 4 : les repas. Chaque ouvrier et chaque porteur mange 1 poisson ou 1 morceau de viande.
   // Étape 5 : ✍️ c'était trop. Maintenant : 1 repas par saison, pris directement à l'entrepôt (la cantine),
@@ -252,7 +278,7 @@ Village.CONFIG = {
     { id: "filets", nom: "Filets de pêche", emoji: "🥅", age: 1, cout: { planches: 15, poissons: 10 }, duree: 60, effet: { pecher: 0.6 }, texte: "Le pêcheur pêche 40 % plus vite" },
     { id: "arcs", nom: "Arcs en if", emoji: "🏹", age: 1, cout: { planches: 15, viande: 10 }, duree: 60, effet: { chasser: 0.6 }, texte: "Le chasseur chasse 40 % plus vite" },
     { id: "pics", nom: "Pics de pierre", emoji: "⛏️", age: 1, cout: { planches: 20, pierres: 15 }, duree: 75, effet: { tailler: 0.6, miner: 0.75 }, texte: "Le carrier et le mineur vont plus vite" },
-    { id: "brouettes", nom: "Brouettes", emoji: "🛒", age: 1, cout: { planches: 30, pierres: 10 }, duree: 90, effet: { porteurs: 1.3 }, texte: "Les porteurs vont 30 % plus vite" },
+    { id: "brouettes", nom: "Brouettes", emoji: "🛒", age: 1, cout: { planches: 30, pierres: 10 }, duree: 90, effet: { porteurs: 1.3, brouette: true }, texte: "Les porteurs vont 30 % plus vite (et poussent une brouette pour le lourd)" },
     { id: "paves", nom: "Routes pavées", emoji: "🧱", age: 1, cout: { pierres: 30, charbon: 5 }, duree: 90, effet: { routePierre: true }, texte: "Débloque la route en pierre (× 1,6 plus rapide)" },
     { id: "fumoir", nom: "Le fumoir", emoji: "🔥", age: 1, cout: { planches: 20, charbon: 10 }, duree: 90, effet: { repas: 1.5 }, texte: "La nourriture dure plus longtemps : un repas toutes les 3 min 45" },
     { id: "prospection", nom: "Prospection", emoji: "🔍", age: 1, cout: { planches: 20, charbon: 10 }, duree: 90, effet: { filons: true }, texte: "Le géologue peut aussi trouver des filons de charbon" },
@@ -262,6 +288,7 @@ Village.CONFIG = {
     { id: "scies", nom: "Scies en fer", emoji: "🪚", age: 2, cout: { outils: 4, planches: 20 }, duree: 120, effet: { scier: 0.6 }, texte: "La scierie scie 40 % plus vite" },
     { id: "outilsFer", nom: "Outils en fer", emoji: "🔨", age: 2, cout: { outils: 8 }, duree: 150, effet: { couper: 0.8, tailler: 0.8, planter: 0.8, miner: 0.8 }, texte: "Bûcheron, forestier, carrier et mineurs : 20 % plus vite" },
     { id: "commerce", nom: "Commerce", emoji: "⚖️", age: 2, cout: { planches: 30, lingots: 5 }, duree: 120, effet: { vente: 1.2 }, texte: "Le marché te paie 20 % plus cher" },
+    { id: "charrettes", nom: "Ânes et charrettes", emoji: "🫏", age: 2, cout: { planches: 40, lingots: 4, outils: 4 }, duree: 150, effet: { chargement: 3 }, texte: "Chaque porteur part avec un âne et sa charrette : 3 objets par voyage" }, // étape 9
     { id: "filonsFer", nom: "Filons de fer", emoji: "🧭", age: 2, cout: { charbon: 20, outils: 3 }, duree: 120, effet: { filonsFer: true }, texte: "Le géologue peut aussi trouver des filons de fer" },
   ],
 

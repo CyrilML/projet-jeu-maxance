@@ -132,6 +132,7 @@
       <a href="#etape6">Étape 6</a>
       <a href="#etape7">Étape 7</a>
       <a href="#etape8">Étape 8</a>
+      <a href="#etape9">Étape 9</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -764,6 +765,76 @@ bilan      = entrées − sorties   (vert : le stock monte · rouge : il baisse)
       <details class="question"><summary>Le prix des planches est à 100 %. Tu vends 5 planches, deux fois de suite. À combien est le facteur ?</summary><p>1 × 0,9 × 0,9 = 0,81, soit 81 % du prix normal.</p></details>
     </section>
 
+    <section id="etape9">
+      <h2>✨ Étape 9 : un village plus beau, plus fin et plus vivant <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Zoome de près : les maisons ont maintenant des murs en vraie matière, des tuiles, des fenêtres et des cheminées qui fument. Les porteurs portent mieux (épaule, hotte, brouette, âne et charrette), le jour laisse place à la nuit, et des poules, des enfants, des oiseaux et des papillons font vivre le village. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/10-plus-beau-plus-vivant.md</code>.</p>
+          <ul>
+            <li>✍️ 1C : un peu de tout, en 2 étapes : d'abord les bâtiments et les matériaux (ici), puis les bonshommes (étape 10).</li>
+            <li>✍️ 2 A + B + C : mieux porté, des brouettes, des ânes et des charrettes.</li>
+            <li>✍️ 3C : le jour et la nuit, et les petites vies.</li>
+            <li>✍️ Garder la fluidité.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Zoome à fond sur l'entrepôt : tuiles, planches, fenêtres, lanterne, la cour avec ses piles.</li>
+            <li>☐ Regarde passer les porteurs : planches sur l'épaule, poissons dans la hotte, charbon dans un sac.</li>
+            <li>☐ Fais la recherche « Brouettes » : une brouette pour les pierres et le charbon.</li>
+            <li>☐ Au village, fais « 🫏 Ânes et charrettes » : 3 objets par voyage !</li>
+            <li>☐ Attends le soir (en haut, ☀️ devient 🌇 puis 🌙) : les fenêtres s'allument.</li>
+            <li>☐ Trouve les poules, les enfants qui jouent autour du feu, le linge qui sèche, un papillon.</li>
+            <li>☐ En hiver : de la neige sur les toits.</li>
+            <li>Vérifie « version 10 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔍 Le niveau de détail</h3>
+      <p>Dessiner une tuile, c'est un petit trait. Mais 30 maisons × 40 tuiles × 60 images par seconde, ça fait 72 000 traits par seconde ! Alors le jeu fait comme les vrais jeux vidéo : il regarde le <strong>zoom</strong>.</p>
+      <pre style="white-space: pre-wrap">zoom ≥ 80 % : tous les détails (tuiles, planches, fenêtres, poignées, jardinières)
+zoom ≥ 60 % : les figurants (poules, enfants, papillons)
+plus loin    : des formes simples, on ne verrait pas les détails de toute façon</pre>
+      <p>On appelle ça le <strong>niveau de détail</strong>. Sous le capot, « détails fins » dit oui ou non, et « temps pour peindre une image » montre combien de millisecondes il faut (moins de 16 ms = 60 images par seconde).</p>
+
+      <h3>🌗 Le jour et la nuit, avec le modulo</h3>
+      <pre style="white-space: pre-wrap">part de la journée = (horloge % 360) ÷ 360       (de 0 à 1)
+0 ──aube── 0,08 ────────── jour ────────── 0,62 ─crépuscule─ 0,72 ──── nuit ──── 0,96 ─aube─ 1</pre>
+      <p>C'est le même calcul que pour les saisons, avec un nombre plus petit : une journée dure 6 minutes, une année 20 minutes. La nuit ne change rien aux règles : elle est juste pour les yeux.</p>
+
+      <h3>🌙 Comment on fait la nuit</h3>
+      <p>Deux couches, comme avec des calques :</p>
+      <ol>
+        <li>on <strong>multiplie</strong> toute l'image par un bleu foncé : c'est comme poser une vitre teintée devant l'écran ;</li>
+        <li>puis on <strong>ajoute</strong> de la lumière là où il y en a. Chaque lumière est un <strong>halo</strong> (un rond qui s'efface sur les bords), dessiné une seule fois au début, puis recopié à chaque fenêtre, chaque lanterne, au feu de camp, aux lucioles.</li>
+      </ol>
+      <p>Pour savoir où mettre les lumières, chaque bâtiment, en se dessinant, note « ici, une fenêtre » dans une liste. Le peintre les allume toutes à la fin.</p>
+
+      <h3>🐔 Des figurants sans mémoire</h3>
+      <p>Les poules et les enfants ne se souviennent pas de leur place : elle est <strong>calculée à partir de l'heure</strong>, avec un sinus et un cosinus (un point qui tourne en rond). Comme une ronde : si tu sais l'heure, tu sais où est chaque enfant ! Le hasard de chaque case (toujours le même) décide où il y a un papillon. Seuls les oiseaux ont une mémoire : leur place et leur vitesse.</p>
+
+      <h3>🫏 La charrette : 3 papiers d'un coup</h3>
+      <p>Avant, un porteur prenait UN papier dans la file. Avec un âne et une charrette, il regarde aussi les papiers suivants : s'ils vont au <strong>même bâtiment</strong> pour la <strong>même chose</strong>, il les prend avec lui (3 au plus). Le journal le dit : « prend 3 papiers d'un coup ».</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, trouve « 🌗 Le jour et la nuit ». Combien de lumières sont allumées à minuit ?</li>
+        <li>Zoome de près puis de loin : regarde « temps pour peindre une image » changer.</li>
+        <li>Dans <code>config.js</code>, trouve <code>jour</code> : et si la nuit durait plus longtemps ?</li>
+        <li>Construis 2 maisons : combien de poules ? Et combien d'enfants avec 12 habitants ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Une journée dure 360 s. Combien de journées dans une année de 1 200 s ?</summary><p>1 200 ÷ 360 ≈ 3,3 journées par année.</p></details>
+      <details class="question"><summary>La forge veut 3 lingots. Combien de voyages sans charrette ? Avec ?</summary><p>Sans : 3 voyages. Avec la charrette : 1 seul voyage (3 objets d'un coup).</p></details>
+      <details class="question"><summary>Tu as 10 habitants. Combien d'enfants jouent autour du feu ?</summary><p>10 ÷ 4 = 2,5 → 2 enfants (on enlève les virgules).</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -817,14 +888,26 @@ bilan      = entrées − sorties   (vert : le stock monte · rouge : il baisse)
           <p>Mine de fer, fonderie (fer + charbon → lingots), forge (outils), huttes et maisons pour loger les ouvriers, un marché aux prix qui bougent, les statistiques 📊, 6 recherches et 5 missions payées en pièces.</p>
           <p class="apprend"><b>Tu apprends :</b> une chaîne à 3 étages et son goulot d'étranglement, une recette rangée comme une donnée, compter des places, l'offre et la demande, un compteur (Proxy). <b>Durée :</b> 3 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">9</div>
-          <h4>🏰 Le bourg : l'or, l'argent et le pain <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <h4>✨ Un village plus beau et plus vivant <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Des murs et des toits en vraie matière, des fenêtres et des cheminées, la cour de l'entrepôt, de meilleurs transports (épaule, hotte, brouette, âne et charrette), le jour et la nuit, et des figurants.</p>
+          <p class="apprend"><b>Tu apprends :</b> le niveau de détail, multiplier et ajouter de la lumière, des figurants calculés à partir de l'heure. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">10</div>
+          <h4>🧑‍🌾 Les bonshommes <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <p>La 2e partie de ton choix 1C : des visages, des habits selon le métier, et de vrais gestes de travail (scier, marteler, pêcher, porter).</p>
+          <p class="apprend"><b>Tu apprends :</b> l'animation image par image, découper un geste en étapes. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte">
+          <div class="num">11</div>
+          <h4>🏰 Le bourg : l'or, l'argent et le pain</h4>
           <p>Mines d'or et d'argent, orfèvre (bijoux qui se vendent cher), moulin et boulangerie (une nourriture qui nourrit mieux), et de grosses commandes de la capitale.</p>
           <p class="apprend"><b>Tu apprends :</b> les produits de luxe, une nourriture transformée, des objectifs longs. <b>Durée :</b> 3 séances.</p>
         </div>
         <div class="carte">
-          <div class="num">10</div>
+          <div class="num">12</div>
           <h4>🏙️ La ville : monuments, fêtes et port</h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -905,6 +988,14 @@ bilan      = entrées − sorties   (vert : le stock monte · rouge : il baisse)
         <textarea class="journal" id="village-appris-8" data-cle="village-appris-8" placeholder="Ex. : J'ai appris ce qu'est un goulot d'étranglement…"></textarea>
         <label for="village-idees-8"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-8" data-cle="village-idees-8" placeholder="Ex. : Un moulin qui fait de la farine pour la boulangerie…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 9 · un village plus beau, plus fin et plus vivant <span class="petit">· 6 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la matière des murs et des toits, les fenêtres, les cheminées, la neige sur les toits, la cour de l'entrepôt, l'échafaudage des chantiers, les porteurs (épaule, hotte, sac, brouette, âne et charrette), la recherche « Ânes et charrettes » (3 objets par voyage), le jour et la nuit (<code>logique/saisons.js</code>), les lumières, et les figurants (<code>affichage/vie.js</code>).</p>
+        <label for="village-appris-9"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-9" data-cle="village-appris-9" placeholder="Ex. : J'ai appris ce qu'est le niveau de détail…"></textarea>
+        <label for="village-idees-9"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-9" data-cle="village-idees-9" placeholder="Ex. : Un chien qui suit le chasseur…"></textarea>
       </div>
     </section>
   </main>

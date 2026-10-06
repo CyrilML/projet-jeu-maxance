@@ -26,7 +26,7 @@ Village.Peintre = (function () {
   const TOUR = Math.PI * 2;
 
   // Ce que le peintre a fait à la dernière image (lu par « sous le capot »).
-  const stats = { casesDessinees: 0, objetsDessines: 0, ms: 0 };
+  const stats = { casesDessinees: 0, objetsDessines: 0, ms: 0, lumieres: 0 };
 
   let ctx = null;
   let cache = null; // ce qui est préparé une seule fois par carte : les couleurs et la mini-carte
@@ -144,6 +144,8 @@ Village.Peintre = (function () {
     preparer(monde);
     saison = monde.saison ? monde.saison.numero : 0;
     couleursSol = couleursDeLaSaison(saison);
+    Village.Batisses.debutImage(monde, t); // étape 9 : le niveau de détail, la nuit, les lumières
+    Village.Vie.debutImage();
 
     // 1. La mer tout autour
     ctx.setTransform(d, 0, 0, d, 0, 0);
@@ -216,6 +218,8 @@ Village.Peintre = (function () {
     for (const porteur of monde.porteurs) {
       if (porteur.etat !== "attend" && !porteur.parti) ranger(Math.floor(porteur.x) + Math.floor(porteur.y), { porteur });
     }
+    // Étape 9 : les figurants (poules, enfants)
+    Village.Vie.ranger(monde, t, ranger);
     // Étape 4 : le gibier
     for (const a of monde.animaux) ranger(Math.floor(a.x) + Math.floor(a.y), { animal: a });
     // Étape 5 : les effets (arbre qui tombe, souche, animal qui tombe…)
@@ -232,6 +236,8 @@ Village.Peintre = (function () {
         if (!o) continue;
         const p = milieu(c, l);
         if (p.x < vue.x0 || p.x > vue.x1 || p.y < vue.y0 || p.y > vue.y1) continue;
+        if (o === O.fleurs) Village.Vie.surLaCase(monde, "fleurs", i, p.x, p.y); // étape 9 : un papillon ?
+        else if (o === O.arbre || o === O.sapin) Village.Vie.surLaCase(monde, "foret", i, p.x, p.y); // des lucioles ?
         if (o === O.pousse) Village.Batisses.dessinerPousse(ctx, p.x, p.y, (monde.pousses.get(i) || 0) / C.nature.croissance, t);
         else dessinerObjet(o, p.x, p.y, cache.variante[i], t, carte.reste[i] > 0 ? carte.filon[i] : 0, z, i); // étape 7 : un filon épuisé n'a plus de cristaux
         stats.objetsDessines++;
@@ -240,6 +246,8 @@ Village.Peintre = (function () {
         if (chose.b) {
           const p = milieu(chose.b.colonne, chose.b.ligne);
           Village.Batisses.dessinerBatiment(ctx, chose.b, p.x, p.y, t);
+        } else if (chose.figurant) {
+          Village.Vie.dessinerFigurant(ctx, chose.figurant, t); // étape 9
         } else if (chose.effet) {
           dessinerEffet(chose.effet, t);
         } else if (chose.animal) {
@@ -291,6 +299,10 @@ Village.Peintre = (function () {
 
     // Étape 5 : les copeaux de bois, la flèche du chasseur, les poissons qui sautent, les étincelles
     dessinerPetitsEffets(monde, carte, t, vue, z);
+    // Étape 9 : les papillons, les lucioles et les oiseaux, puis la nuit et ses lumières
+    Village.Vie.dessinerPetits(ctx, t);
+    Village.Vie.oiseaux(ctx, monde, t, vue);
+    dessinerNuit(monde, W, He, d, z, cam);
 
     // 4. Les nuages
     dessinerNuages(carte, t, z);
@@ -304,6 +316,55 @@ Village.Peintre = (function () {
     if (options.rayonsX) Village.RayonsX.dessinerSurLEcran(ctx, monde);
 
     stats.ms = performance.now() - debut;
+  }
+
+  // ---------------------------------------------------------------- la nuit (étape 9)
+  // ✍️ Le soir, le ciel devient orange, puis bleu nuit. Comment on fait ?
+  //   1. on « multiplie » toute l'image par un bleu foncé (comme poser une vitre teintée devant l'écran) ;
+  //   2. puis on « ajoute » de la lumière là où il y en a : fenêtres, lanternes, feu de camp, lucioles.
+  //      Chaque lumière est un HALO (un rond qui s'efface sur les bords), dessiné une seule fois puis réutilisé.
+  const TEINTES = { jaune: [255, 210, 110], orange: [255, 165, 70], feu: [255, 135, 40], luciole: [200, 255, 120] };
+  const halos = {};
+  function halo(nom) {
+    if (halos[nom]) return halos[nom];
+    const c = document.createElement("canvas"); c.width = c.height = 64;
+    const g = c.getContext("2d"), [r, v, b] = TEINTES[nom] || TEINTES.jaune;
+    const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, "rgba(" + r + "," + v + "," + b + ",0.85)");
+    gr.addColorStop(0.3, "rgba(" + r + "," + v + "," + b + ",0.35)");
+    gr.addColorStop(1, "rgba(" + r + "," + v + "," + b + ",0)");
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+    return (halos[nom] = c);
+  }
+  function dessinerNuit(monde, W, He, d, z, cam) {
+    const m = monde.moment;
+    stats.lumieres = 0;
+    if (!m) return;
+    const n = m.noirceur, monde_ = () => ctx.setTransform(z * d, 0, 0, z * d, d * (W / 2 - cam.x * z), d * (He / 2 - cam.y * z));
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    // L'aube rose et le crépuscule orange : une légère couleur sur tout l'écran
+    if (m.teinte) {
+      const f = 4 * Math.max(0.15, n) * (1 - n) * 0.2;
+      ctx.fillStyle = m.teinte === "aube" ? "rgba(255, 150, 170," + f + ")" : "rgba(255, 125, 50," + f + ")";
+      ctx.fillRect(0, 0, W, He);
+    }
+    if (n > 0.02) {
+      const D = n * C.jour.noirceur, bleu = [45, 65, 160];
+      const canal = (k) => Math.round(255 * (1 - D) + bleu[k] * D);
+      ctx.globalCompositeOperation = "multiply";
+      ctx.fillStyle = "rgb(" + canal(0) + "," + canal(1) + "," + canal(2) + ")";
+      ctx.fillRect(0, 0, W, He);
+      ctx.globalCompositeOperation = "lighter";
+      monde_();
+      for (const l of Village.Batisses.lumieres) {
+        ctx.globalAlpha = Math.min(1, l.force * n);
+        ctx.drawImage(halo(l.couleur), l.x - l.r, l.y - l.r, l.r * 2, l.r * 2);
+        stats.lumieres++;
+      }
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+    }
+    monde_();
   }
 
   // ---------------------------------------------------------------- les routes
@@ -668,6 +729,7 @@ Village.Peintre = (function () {
   }
 
   function feuDeCamp(x, y, t) {
+    Village.Batisses.lumiere(x, y - 6, 80, "feu", 0.9 + 0.1 * Math.sin(t * 9)); // étape 9 : la nuit, le feu éclaire la place
     // La lumière du feu, qui tremble
     const lueur = 0.22 + 0.06 * Math.sin(t * 9) + 0.04 * Math.sin(t * 23);
     const g = ctx.createRadialGradient(x, y - 4, 2, x, y - 4, 46);

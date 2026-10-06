@@ -53,10 +53,11 @@ Village.SousLeCapot = (function () {
     "batiment-coupe": (d) => "✂️ " + d.nom + " n° " + d.numero + " n'est plus relié(e) à l'entrepôt",
     "ouvrier-bloque": (d) => "🛤️❌ " + d.nom + " n° " + d.numero + " : pas de route jusqu'à l'entrepôt, l'ouvrier ne travaille pas",
     "livraison-demandee": (d) => "📋 Papier n° " + d.numero + " dans la file : " + (d.sorte === "ramener" ? "ramener " + emo(d.quoi) + " de " : "apporter " + emo(d.quoi) + " à ") + d.nom + " n° " + d.batiment + " (" + d.file + " dans la file)",
-    "porteur-part": (d) => "🚚 Porteur " + d.porteur + " prend le papier : " + (d.sorte === "ramener" ? "va chercher " + emo(d.quoi) + " chez " : "apporte " + emo(d.quoi) + " à ") + d.nom + " n° " + d.batiment + " (" + d.pas + " pas de route) · encore " + d.file + " dans la file",
+    "porteur-part": (d) => "🚚 Porteur " + d.porteur + " prend " + (d.nombre > 1 ? d.nombre + " papiers d'un coup (🫏 la charrette)" : "le papier") + " : " + (d.sorte === "ramener" ? "va chercher " + emo(d.quoi) + " chez " : "apporte " + emo(d.quoi) + " à ") + d.nom + " n° " + d.batiment + " (" + d.pas + " pas de route) · encore " + d.file + " dans la file",
     "porteur-livre": (d) => "🤲 Porteur " + d.porteur + " a livré " + emo(d.quoi) + " à " + d.nom + " n° " + d.batiment,
     "arrivee-entrepot": (d) => "🏠 Porteur " + d.porteur + " range " + (d.quantite > 1 ? d.quantite + " " + d.quoi : emo(d.quoi)) + " dans l'entrepôt → " + d.stock + " en stock",
     // Étape 4
+    moment: (d) => d.emoji + " " + ({ aube: "L'aube : le jour se lève (jour " + d.jour + ")", jour: "Plein jour", crepuscule: "Le crépuscule : le ciel devient orange", nuit: "La nuit tombe : les fenêtres et les lanternes s'allument" }[d.cle]), // étape 9
     saison: (d) => d.emoji + " Nouvelle saison : " + d.nom + " (année " + d.annee + ")" + (d.hiver ? " · les lacs gèlent, rien ne pousse, aucun animal ne naît" : ""),
     "poisson-peche": (d) => "🎣 " + ({ sardine: "Une sardine pêchée", truite: "Une truite pêchée", thon: "Un thon pêché" }[d.espece] || "Un poisson pêché") + " en (" + d.colonne + ", " + d.ligne + ") : " + d.quantite + " 🐟" + (d.glace ? " · par un trou dans la glace ❄️" : ""),
     "gibier-chasse": (d) => "🏹 " + Village.Animaux.NOMS[d.sorte].emoji + " " + Village.Animaux.NOMS[d.sorte].nom.replace(/^une? /, "") + " chassé en (" + d.colonne + ", " + d.ligne + ") : " + Village.CONFIG.prises[d.sorte] + " 🍖" + (d.neige ? " dans la neige ❄️" : "") + " · il reste " + d.animaux + " animaux",
@@ -190,6 +191,19 @@ Village.SousLeCapot = (function () {
     const mi = monde.missions.actuelle;
     h += ligne("mission", mi ? mi.id + " · " + mi.etat + (mi.etat === "encours" ? " · encore " + Math.ceil(mi.reste) + " s" : "") : "prochaine dans " + Math.ceil(monde.missions.attente) + " s");
     h += ligne("missions réussies", monde.missions.reussies.length);
+    // Étape 9 : le jour et la nuit, et les figurants
+    const mo = monde.moment, Vi = Village.Vie.stats;
+    if (mo) {
+      h += groupe("🌗 Le jour et la nuit (une journée = " + Village.CONFIG.jour.duree + " s)");
+      h += ligne("part de la journée = (horloge % " + Village.CONFIG.jour.duree + ") ÷ " + Village.CONFIG.jour.duree, virgule(mo.part, 2) + " · vers " + mo.heure + " h");
+      h += ligne("moment", mo.emoji + " " + mo.nom + " · jour n° " + mo.jour);
+      h += ligne("noirceur (0 = plein jour, 1 = minuit)", virgule(mo.noirceur, 2));
+      h += ligne("lumières allumées", P.lumieres);
+      h += ligne("🐔 poules · 🧒 enfants · 🐦 oiseaux", Vi.poules + " · " + Vi.enfants + " · " + Vi.oiseaux);
+      h += ligne("🦋 papillons · ✨ lucioles", Vi.papillons + " · " + Vi.lucioles);
+      h += ligne("détails fins (zoom ≥ " + Math.round(Village.CONFIG.detail.zoomFin * 100) + " %)", Village.Batisses.vue.fin ? "oui" : "non (pour aller plus vite)");
+      h += ligne("🫏 objets par voyage (charrette)", Math.round(Village.Recherches.bonus(monde, "chargement")));
+    }
     const sa = monde.saison;
     if (sa) {
       h += groupe("🗓️ Les saisons (une année = " + Village.CONFIG.saisons.dureeAnnee + " s)");

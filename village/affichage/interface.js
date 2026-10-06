@@ -370,6 +370,7 @@ Village.Interface = (function () {
     const age = Village.Ages.actuel(monde), prochain = Village.Ages.suivant(monde), obj = Village.Ages.objectifs(monde);
     let titre = age.emoji + " " + age.nom;
     if (obj && prochain) titre += " · " + prochain.emoji + " " + obj.filter((x) => x.fait).length + "/" + obj.length + " 🎯";
+    if (monde.moment) titre += "  " + monde.moment.emoji; // étape 9 : le moment de la journée
     texte(ctx, titre, 22, petit ? 25 : 28, petit ? 11 : 13, "#7a5a30", true);
     ressources.forEach(([emoji, n], k) => texte(ctx, emoji + " " + n, 22 + (k % parLigne) * pas, (petit ? 47 : 51) + Math.floor(k / parLigne) * (petit ? 20 : 24), petit ? 13 : 17, n <= 0 && (k === 3 || k === 4) ? "#c0392b" : "#3b2614", true));
     zone(10, 10, lb, hStock, "objectifs");

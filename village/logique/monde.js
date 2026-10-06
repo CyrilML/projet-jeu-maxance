@@ -57,6 +57,7 @@ Village.Monde = (function () {
       // Étape 4
       horloge: 0, // secondes depuis le début de LA PARTIE (sauvegardé) : c'est lui qui fait les saisons
       saison: null, // { nom, emoji, annee, avancement… } (voir logique/saisons.js)
+      moment: null, // étape 9 : le moment de la journée { nom, noirceur, heure… } (seulement pour les yeux)
       animaux: [], // le gibier
       partis: 0, // les habitants qui ont quitté le village (trop faim)
     };
@@ -75,6 +76,7 @@ Village.Monde = (function () {
     if (partie && partie.porteurs) partie.porteurs.forEach((d, n) => { if (monde.porteurs[n]) Object.assign(monde.porteurs[n], d); });
     Village.Routes.recalculerReseau(monde);
     monde.saison = Village.Saisons.lire(monde.horloge);
+    monde.moment = Village.Saisons.lireJour(monde.horloge);
     Village.Statistiques.surveiller(monde); // étape 8 : le compteur se met à la porte de l'entrepôt
     radio.emettre("carte-inventee", {
       graine, colonnes: carte.colonnes, lignes: carte.lignes, compte: carte.compte, village: carte.village, rivieres: carte.rivieres.length,
