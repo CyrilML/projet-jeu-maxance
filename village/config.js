@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 8,
+  version: 9,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -62,7 +62,20 @@ Village.CONFIG = {
 
   // Étape 2 : ✍️ le stock de départ, rangé dans l'entrepôt.
   // Étape 5 : ✍️ plus de stock au départ, pour ne pas frustrer le joueur (avant : 0, 20, 10, 6, 4).
-  depart: { troncs: 5, planches: 30, pierres: 30, poissons: 12, viande: 8, charbon: 0 }, // étape 7 : le charbon
+  depart: { troncs: 5, planches: 30, pierres: 30, poissons: 12, viande: 8, charbon: 0, fer: 0, lingots: 0, outils: 0 }, // étape 7 : le charbon ; étape 8 : le fer, les lingots, les outils
+
+  // Étape 8 : la fiche de chaque ressource (son emoji et son nom). Tous les panneaux la lisent ici.
+  ressources: {
+    troncs: { emoji: "🪵", nom: "troncs" },
+    planches: { emoji: "🟫", nom: "planches" },
+    pierres: { emoji: "🪨", nom: "pierres" },
+    poissons: { emoji: "🐟", nom: "poissons" },
+    viande: { emoji: "🍖", nom: "viande" },
+    charbon: { emoji: "⚫", nom: "charbon" },
+    fer: { emoji: "🟤", nom: "minerai de fer" },
+    lingots: { emoji: "🔩", nom: "lingots" },
+    outils: { emoji: "🔨", nom: "outils" },
+  },
 
   // Étape 2 : les bâtiments. Depuis l'étape 3, le coût est RÉSERVÉ quand on pose le chantier,
   // puis les porteurs apportent les matériaux un par un.
@@ -77,7 +90,51 @@ Village.CONFIG = {
     geologue: { cout: { planches: 3, pierres: 1 }, construction: 8, rayon: 8 }, // étape 5
     universite: { cout: { planches: 12, pierres: 10 }, construction: 15 }, // étape 7 : les recherches
     mineCharbon: { cout: { planches: 6, pierres: 3 }, construction: 12 }, // étape 7 : au pied d'un filon de charbon
+    // Étape 8
+    hutte: { cout: { planches: 4 }, construction: 8 }, // 🛖 un logement (3 places)
+    maison: { cout: { planches: 6, pierres: 6 }, construction: 14 }, // 🏠 un logement plus grand (6 places)
+    mineFer: { cout: { planches: 6, pierres: 4 }, construction: 12 }, // au pied d'un filon de fer
+    fonderie: { cout: { planches: 8, pierres: 12 }, construction: 15 },
+    forge: { cout: { planches: 8, pierres: 6, lingots: 2 }, construction: 15 },
+    marche: { cout: { planches: 15, pierres: 10 }, construction: 15 },
   },
+
+  // Étape 8 : les ATELIERS transforment ce que les porteurs leur apportent (les RECETTES).
+  //   entrees : ce qu'il faut pour UNE fabrication ; sorties : ce qui sort ; duree : en s ;
+  //   bonus : la clé des recherches qui accélèrent cet atelier.
+  ateliers: {
+    scierie: { entrees: { troncs: 1 }, sorties: { planches: 2 }, duree: 6, bonus: "scier" },
+    fonderie: { entrees: { fer: 1, charbon: 1 }, sorties: { lingots: 1 }, duree: 10, bonus: "fondre" }, // ✍️ 1A : simple
+    forge: { entrees: { lingots: 1, planches: 1 }, sorties: { outils: 1 }, duree: 12, bonus: "forger" },
+  },
+  // Étape 8 : les MINES. Chacune creuse le filon de sa sorte, juste à côté d'elle.
+  mines: {
+    mineCharbon: { filon: "charbon" },
+    mineFer: { filon: "fer" },
+  },
+
+  // Étape 8 : ✍️ 2B, chaque ouvrier a besoin d'une PLACE pour dormir. Le campement (les tentes autour de
+  // l'entrepôt) loge 6 ouvriers ; chaque hutte en loge 3 de plus, chaque maison 6.
+  // (Les porteurs, eux, dorment à l'entrepôt : ils ne comptent pas.)
+  logement: { entrepot: 6, hutte: 3, maison: 6 },
+
+  // Étape 8 : 🏪 le MARCHÉ. Chaque ressource a un prix de base en pièces 🪙 (pour 1 objet). Le prix BOUGE :
+  //   quand tu vends beaucoup, le prix baisse (les acheteurs en ont assez) ;
+  //   quand tu achètes beaucoup, il monte ; puis il revient tout doucement vers le prix de base.
+  marche: {
+    prix: { troncs: 1, planches: 2, pierres: 2, poissons: 2, viande: 2, charbon: 3, fer: 4, lingots: 10, outils: 22 },
+    lot: 5, // on vend et on achète par paquets de 5
+    marge: 1.5, // acheter coûte 1,5 fois le prix de vente (le marchand doit gagner sa vie)
+    baisse: 0.02, // chaque objet vendu fait baisser le prix de 2 % (un paquet de 5 : 10 %)
+    hausse: 0.02, // chaque objet acheté le fait monter de 2 %
+    min: 0.4, // le prix ne descend pas sous 40 % du prix de base
+    max: 2.5, // ni ne monte au-dessus de 250 %
+    retour: 180, // s : en 3 minutes, le prix a fait à peu près les 2/3 du chemin vers le prix de base
+  },
+
+  // Étape 8 : 📊 les STATISTIQUES. Le compteur de l'entrepôt range ce qui entre et sort par tranches de 10 s,
+  // et garde les 5 dernières minutes.
+  statistiques: { tranche: 10, tranches: 30 },
   // Étape 5 : ✍️ la cabane du pêcheur doit être au bord de l'eau (de l'eau à 3 cases maximum).
   bordDeLEau: 3,
 
@@ -87,14 +144,12 @@ Village.CONFIG = {
     planter: 3, // s pour planter une pousse
     tailler: 5, // s pour tailler une pierre
     repos: 2, // s de pause entre deux voyages
-    scier: 6, // s pour scier 1 tronc
     pecher: 6, // s pour pêcher 1 poisson (étape 4 ; 8 s avant l'étape 5)
     chasser: 4, // s pour chasser 1 gibier (étape 4) : 3 s pour tendre l'arc, puis la flèche part
     prospecter: 6, // s pour qu'un géologue cherche un gisement (étape 5)
     miner: 8, // s pour qu'un mineur sorte 1 morceau de charbon (étape 7)
     chanceDeTrouver: 0.5, // étape 5 : 1 chance sur 2 de trouver un gisement à chaque recherche
     lentSiFaim: 2, // étape 5 : ✍️ le ventre vide, on travaille et on marche 2 fois moins vite
-    planchesParTronc: 2, // la scierie fait 2 planches avec 1 tronc
     attente: 3, // s avant de chercher à nouveau quand il n'y a rien à faire
   },
 
@@ -117,7 +172,7 @@ Village.CONFIG = {
     vitesse: 2.2, // cases par seconde
   },
   sortieMax: 4, // objets qui peuvent attendre devant un bâtiment (au-delà, l'ouvrier attend)
-  entreeMax: 2, // troncs en réserve à la scierie
+  entreeMax: 2, // de chaque ingrédient en réserve dans un atelier (scierie, fonderie, forge)
 
   // Étape 4 : ✍️ une année dure 10 minutes. 4 saisons de 2 min 30 : printemps, été, automne, hiver.
   saisons: {
@@ -172,16 +227,18 @@ Village.CONFIG = {
   //   batiments : construits (prêts) en plus de l'entrepôt ; stock : ce qu'il faut dans l'entrepôt ;
   //   nourriture : 🐟 + 🍖 dans l'entrepôt.
   ages: [
-    { id: "campement", nom: "Le campement", emoji: "🏕️", debloque: ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur"],
+    { id: "campement", nom: "Le campement", emoji: "🏕️", debloque: ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "hutte"],
       objectifs: { batiments: 6, stock: { planches: 40, pierres: 20 }, nourriture: 30 } },
     // Étape 7 : le hameau débloque l'université (les recherches), la mine de charbon et le géologue.
     { id: "hameau", nom: "Le hameau", emoji: "🛖", debloque: ["geologue", "universite", "mineCharbon"],
       objectifs: { batiments: 10, recherches: 3, stock: { planches: 80, charbon: 20 }, nourriture: 60 } },
     // La suite (prévue, pas encore construite) : ce que chaque âge débloquera.
-    { id: "village", nom: "Le village", emoji: "🏡", debloque: [], objectifs: null,
-      aVenir: "⛏️ mine de fer, 🔥 fonderie (fer + charbon → lingots), ⚒️ forge (outils), 🏠 maisons" },
+    // Étape 8 : le village débloque le fer, la fonderie, la forge, les maisons et le marché.
+    //   pieces : 🪙 qu'il faut avoir ; habitants : ouvriers logés.
+    { id: "village", nom: "Le village", emoji: "🏡", debloque: ["mineFer", "fonderie", "forge", "maison", "marche"],
+      objectifs: { batiments: 18, habitants: 16, recherches: 7, stock: { lingots: 10, outils: 10 }, pieces: 150 } },
     { id: "bourg", nom: "Le bourg", emoji: "🏰", debloque: [], objectifs: null,
-      aVenir: "⛏️ mines d'or et d'argent, 💍 orfèvre, 🏪 marché (vendre contre des pièces)" },
+      aVenir: "⛏️ mines d'or et d'argent, 💍 orfèvre, 🍞 moulin et boulangerie, 📦 commandes de la capitale" },
     { id: "ville", nom: "La ville", emoji: "🏙️", debloque: [], objectifs: null,
       aVenir: "🏛️ grands monuments, 🎭 fêtes, 🚢 port" },
   ],
@@ -199,6 +256,13 @@ Village.CONFIG = {
     { id: "paves", nom: "Routes pavées", emoji: "🧱", age: 1, cout: { pierres: 30, charbon: 5 }, duree: 90, effet: { routePierre: true }, texte: "Débloque la route en pierre (× 1,6 plus rapide)" },
     { id: "fumoir", nom: "Le fumoir", emoji: "🔥", age: 1, cout: { planches: 20, charbon: 10 }, duree: 90, effet: { repas: 1.5 }, texte: "La nourriture dure plus longtemps : un repas toutes les 3 min 45" },
     { id: "prospection", nom: "Prospection", emoji: "🔍", age: 1, cout: { planches: 20, charbon: 10 }, duree: 90, effet: { filons: true }, texte: "Le géologue peut aussi trouver des filons de charbon" },
+    // Étape 8 : les recherches du village
+    { id: "soufflets", nom: "Soufflets", emoji: "🌬️", age: 2, cout: { planches: 30, charbon: 20 }, duree: 90, effet: { fondre: 0.7 }, texte: "La fonderie va 30 % plus vite" },
+    { id: "enclumes", nom: "Enclumes", emoji: "⚒️", age: 2, cout: { lingots: 8, pierres: 20 }, duree: 120, effet: { forger: 0.7 }, texte: "La forge va 30 % plus vite" },
+    { id: "scies", nom: "Scies en fer", emoji: "🪚", age: 2, cout: { outils: 4, planches: 20 }, duree: 120, effet: { scier: 0.6 }, texte: "La scierie scie 40 % plus vite" },
+    { id: "outilsFer", nom: "Outils en fer", emoji: "🔨", age: 2, cout: { outils: 8 }, duree: 150, effet: { couper: 0.8, tailler: 0.8, planter: 0.8, miner: 0.8 }, texte: "Bûcheron, forestier, carrier et mineurs : 20 % plus vite" },
+    { id: "commerce", nom: "Commerce", emoji: "⚖️", age: 2, cout: { planches: 30, lingots: 5 }, duree: 120, effet: { vente: 1.2 }, texte: "Le marché te paie 20 % plus cher" },
+    { id: "filonsFer", nom: "Filons de fer", emoji: "🧭", age: 2, cout: { charbon: 20, outils: 3 }, duree: 120, effet: { filonsFer: true }, texte: "Le géologue peut aussi trouver des filons de fer" },
   ],
 
   // Étape 7 : 📜 les MISSIONS. Un personnage raconte une petite histoire et demande des ressources
@@ -213,6 +277,12 @@ Village.CONFIG = {
       { id: "forge", age: 1, qui: "Gaspard, le forgeron voyageur", emoji: "🧔", histoire: "J'ai entendu parler de ton hameau ! Si tu me trouves du charbon, je t'apprendrai mes secrets.", demande: { charbon: 15 }, duree: 420, recompense: { gemmes: 3, planches: 20 } },
       { id: "sages", age: 1, qui: "Les sages de l'université", emoji: "🧙", histoire: "Nos livres ont besoin d'étagères, et nos savants de bons repas pour réfléchir.", demande: { planches: 40, poissons: 20 }, duree: 480, recompense: { gemmes: 4 } },
       { id: "marchand", age: 1, qui: "Lina, la marchande", emoji: "👩‍🦰", histoire: "Ma caravane traverse les montagnes. J'achète tes pierres, si tu en as beaucoup !", demande: { pierres: 50 }, duree: 480, recompense: { gemmes: 4, viande: 15 } },
+      // Étape 8 : les missions du village. Elles paient aussi en pièces 🪙.
+      { id: "pont", age: 2, qui: "Armand, le ferronnier", emoji: "🧑‍🏭", histoire: "Le vieux pont du moulin est tout rouillé. Avec de bons lingots, je le remets à neuf avant les pluies.", demande: { lingots: 10 }, duree: 600, recompense: { pieces: 60, gemmes: 2 } },
+      { id: "bucherons", age: 2, qui: "Odile, la cheffe des bûcherons", emoji: "👩‍🌾", histoire: "Nos haches sont émoussées et la forêt avance moins vite que l'hiver. Il nous faut des outils neufs !", demande: { outils: 6 }, duree: 600, recompense: { pieces: 80, gemmes: 3 } },
+      { id: "caravane", age: 2, qui: "Le capitaine de la caravane", emoji: "🐪", histoire: "Ma caravane repart vers la capitale. Je paie bien le minerai et le charbon, mais je ne peux pas attendre longtemps.", demande: { fer: 20, charbon: 20 }, duree: 480, recompense: { pieces: 70, gemmes: 2 } },
+      { id: "banquet", age: 2, qui: "Le maire du village", emoji: "🎩", histoire: "Le village a grandi : il est temps de fêter ça ! Un grand banquet pour tous les habitants.", demande: { poissons: 30, viande: 30 }, duree: 720, recompense: { pieces: 50, gemmes: 3 } },
+      { id: "halle", age: 2, qui: "Les maçons", emoji: "👷‍♂️", histoire: "On veut bâtir une grande halle couverte pour le marché. Il nous faut du bois, de la pierre et de bons outils.", demande: { planches: 60, pierres: 60, outils: 4 }, duree: 900, recompense: { pieces: 120, gemmes: 4 } },
     ],
   },
 
@@ -223,6 +293,7 @@ Village.CONFIG = {
     { id: "express", nom: "Chantier express", emoji: "⏩", prix: 1, texte: "Termine tout de suite le chantier choisi" },
     { id: "coffre", nom: "Coffre de matériaux", emoji: "🧰", prix: 2, texte: "+20 🟫 et +10 🪨" },
     { id: "festin", nom: "Panier de nourriture", emoji: "🧺", prix: 2, texte: "+15 🐟 et +10 🍖" },
+    { id: "bourse", nom: "Bourse de pièces", emoji: "🪙", prix: 2, texte: "+40 🪙 pour le marché (à partir du village)" }, // étape 8
     { id: "drapeau", nom: "Nouvelle couleur de drapeau", emoji: "🚩", prix: 1, texte: "Change la couleur du drapeau du village" },
   ],
   porteursMax: 8,

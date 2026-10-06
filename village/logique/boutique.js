@@ -16,6 +16,7 @@ Village.Boutique = (function () {
     if (!o) return "objet inconnu";
     if (monde.gemmes < o.prix) return "il manque " + (o.prix - monde.gemmes) + " 💎";
     if (id === "porteur" && monde.porteurs.length >= C.porteursMax) return "il y a déjà " + C.porteursMax + " porteurs";
+    if (id === "bourse" && (monde.age || 0) < 2) return "pas encore : les pièces arrivent avec le village 🏡";
     if (id === "express" && !(monde.selection && monde.selection.etat === "chantier")) return "touche d'abord un chantier";
     return null;
   }
@@ -27,6 +28,7 @@ Village.Boutique = (function () {
     if (id === "porteur") Village.Porteurs.ajouterPorteur(monde);
     else if (id === "coffre") { monde.stock.planches += 20; monde.stock.pierres += 10; }
     else if (id === "festin") { monde.stock.poissons += 15; monde.stock.viande += 10; }
+    else if (id === "bourse") monde.pieces += 40; // étape 8
     else if (id === "drapeau") monde.drapeau = ((monde.drapeau || 0) + 1) % COULEURS_DRAPEAU.length;
     else if (id === "express") {
       // Tous les matériaux arrivent d'un coup, et le chantier se termine au prochain pas.

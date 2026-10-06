@@ -11,7 +11,8 @@
 //     son état (sa case dans la machine à états), et les cases réservées (croix rouges) ;
 //   - (étape 3) les routes : un point vert si elle est reliée à l'entrepôt, rouge sinon ;
 //     et le chemin de chaque porteur, en violet ;
-//   - (étape 4) le gibier et son état (rouge = visé par un chasseur), la faim de chaque ouvrier.
+//   - (étape 4) le gibier et son état (rouge = visé par un chasseur), la faim de chaque ouvrier ;
+//   - (étape 8) la recette de chaque atelier et ses réserves, et les places de chaque logement.
 
 window.Village = window.Village || {};
 
@@ -151,6 +152,20 @@ Village.RayonsX = (function () {
       const p = point(bat.colonne + 0.5, bat.ligne + 0.5);
       ctx.fillStyle = bat.ouvrier.affame ? "#ff6b5b" : "#ffd98a"; ctx.textAlign = "center";
       ctx.fillText("faim " + Math.floor(bat.ouvrier.faim || 0) + " / " + C.repas.intervalle + " s", p.x, p.y + 18 / Math.min(z, 1.4));
+      ctx.textAlign = "left";
+    }
+    // Étape 8 : les ateliers (recette et réserves) et les logements (places)
+    const EMO = (r) => C.ressources[r].emoji;
+    for (const bat of monde.batiments) {
+      if (bat.etat !== "pret") continue;
+      const p = point(bat.colonne + 0.5, bat.ligne + 0.5), R = C.ateliers[bat.type];
+      let t = null;
+      if (R) t = Object.entries(R.entrees).map(([r, n]) => (bat.entrees[r] || 0) + "/" + n + EMO(r)).join(" + ") + " → " + Object.values(R.sorties)[0] + EMO(bat.sortieQuoi);
+      else if (C.logement[bat.type] && bat.type !== "entrepot") t = "🛏️ +" + C.logement[bat.type] + " places";
+      else if (bat.type === "entrepot") t = "🛏️ " + Village.Logement.habitants(monde) + " / " + Village.Logement.capacite(monde) + " places";
+      if (!t) continue;
+      ctx.fillStyle = "#9ff0ff"; ctx.textAlign = "center";
+      ctx.fillText(t, p.x, p.y + 30 / Math.min(z, 1.4));
       ctx.textAlign = "left";
     }
     for (const i of monde.reservees) {

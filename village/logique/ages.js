@@ -14,7 +14,6 @@ window.Village = window.Village || {};
 Village.Ages = (function () {
   const C = Village.CONFIG;
   const radio = Village.Evenements;
-  const NOMS = { planches: "🟫 planches", pierres: "🪨 pierres", troncs: "🪵 troncs", charbon: "⚫ charbon" };
 
   const actuel = (monde) => C.ages[monde.age || 0];
   const suivant = (monde) => C.ages[(monde.age || 0) + 1] || null;
@@ -35,8 +34,11 @@ Village.Ages = (function () {
       const n = monde.batiments.filter((b) => b.type !== "entrepot" && b.etat === "pret").length;
       liste.push({ texte: "Bâtiments construits", valeur: n, cible: o.batiments });
     }
+    // Étape 8 : les habitants logés, et les pièces 🪙
+    if (o.habitants) liste.push({ texte: "🛏️ Habitants logés", valeur: Village.Logement.habitants(monde), cible: o.habitants });
     if (o.recherches) liste.push({ texte: "🎓 Recherches faites", valeur: monde.recherches.faites.length, cible: o.recherches });
-    for (const [r, cible] of Object.entries(o.stock || {})) liste.push({ texte: NOMS[r] + " dans l'entrepôt", valeur: monde.stock[r], cible });
+    for (const [r, cible] of Object.entries(o.stock || {})) liste.push({ texte: Village.Batiments.NOMS_RESSOURCES[r] + " dans l'entrepôt", valeur: monde.stock[r], cible });
+    if (o.pieces) liste.push({ texte: "🪙 Pièces", valeur: monde.pieces, cible: o.pieces });
     if (o.nourriture) liste.push({ texte: "🐟 + 🍖 dans l'entrepôt", valeur: monde.stock.poissons + monde.stock.viande, cible: o.nourriture });
     for (const x of liste) x.fait = x.valeur >= x.cible;
     return liste;

@@ -92,6 +92,7 @@
       construire: null,
       outil: E.consommer("route") ? "route" : E.consommer("routePierre") ? "routePierre" : E.consommer("demolir") ? "demolir" : E.consommer("deplacer") ? "deplacer" : null,
       recherche: null, mission: null, achat: null, // étape 7
+      marche: null, // étape 8 : { sens: "vendre" ou "acheter", quoi: "planches" }
       annuler: false,
       allerA: null,
       souris,
@@ -107,6 +108,7 @@
         else if (z.action === "recherche") i.recherche = z.valeur;
         else if (z.action === "mission") i.mission = z.valeur;
         else if (z.action === "achat") i.achat = z.valeur;
+        else if (z.action === "marche") i.marche = z.valeur; // étape 8
         else if (z.action === "construire") { i.construire = z.valeur; Village.Interface.fermerMenu(); }
         else if (z.action === "outil") { i.outil = z.valeur; Village.Interface.fermerMenu(); }
         else if (z.action === "annuler" || z.action === "fermer") i.annuler = true;

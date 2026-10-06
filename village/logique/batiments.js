@@ -11,6 +11,9 @@
 //
 // La scierie est un bâtiment « transformateur » : elle prend 1 tronc (apporté par un porteur) et le
 // transforme en 2 planches, qui attendent devant la porte qu'un porteur les ramène à l'entrepôt.
+// Étape 8 : la scierie, la fonderie et la forge sont toutes des ATELIERS. Un atelier suit une RECETTE
+// (dans config.js, « ateliers ») : « 1 fer + 1 charbon → 1 lingot ». Le même code les fait toutes marcher,
+// comme une cuisine qui suit des fiches de recettes différentes.
 
 window.Village = window.Village || {};
 
@@ -30,10 +33,23 @@ Village.Batiments = (function () {
     geologue: { nom: "Cabane du géologue", court: "Géologue", emoji: "🔍", metier: "géologue" }, // étape 5
     universite: { nom: "Université", court: "Université", emoji: "🎓", metier: "savant" }, // étape 7
     mineCharbon: { nom: "Mine de charbon", court: "Mine charbon", emoji: "⚫", metier: "mineur" }, // étape 7
+    // Étape 8
+    hutte: { nom: "Hutte", court: "Hutte", emoji: "🛖", metier: null }, // un logement
+    maison: { nom: "Maison", court: "Maison", emoji: "🏠", metier: null }, // un logement
+    mineFer: { nom: "Mine de fer", court: "Mine fer", emoji: "🟤", metier: "mineur" },
+    fonderie: { nom: "Fonderie", court: "Fonderie", emoji: "🔥", metier: "fondeur" },
+    forge: { nom: "Forge", court: "Forge", emoji: "⚒️", metier: "forgeron" },
+    marche: { nom: "Marché", court: "Marché", emoji: "🏪", metier: "marchand" },
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon"];
-  const NOMS_RESSOURCES = { troncs: "🪵 troncs", planches: "🟫 planches", pierres: "🪨 pierres", poissons: "🐟 poissons", viande: "🍖 viande", charbon: "⚫ charbon" };
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche"];
+  // « 🪵 troncs », « 🔩 lingots »… (étape 8 : fabriqué à partir de config.js, « ressources »)
+  const NOMS_RESSOURCES = {};
+  for (const [r, f] of Object.entries(C.ressources)) NOMS_RESSOURCES[r] = f.emoji + " " + f.nom;
+  // Ce que chaque bâtiment met devant sa porte
+  const SORTIES = { bucheron: "troncs", carriere: "pierres", pecheur: "poissons", chasseur: "viande" };
+  for (const [type, a] of Object.entries(C.ateliers)) SORTIES[type] = Object.keys(a.sorties)[0];
+  for (const [type, m] of Object.entries(C.mines)) SORTIES[type] = m.filon;
 
   let prochainNumero = 1;
 
@@ -58,8 +74,9 @@ Village.Batiments = (function () {
     if (monde.reservees.has(i)) return "un ouvrier va travailler sur cette case";
     // Étape 5 : ✍️ le pêcheur doit habiter au bord de l'eau.
     if (type === "pecheur" && !presDeLEau(carte, c, l, C.bordDeLEau)) return "trop loin de l'eau (il faut de l'eau à " + C.bordDeLEau + " cases maximum)";
-    // Étape 7 : la mine se construit collée à une montagne qui a un filon de charbon.
-    if (type === "mineCharbon" && !filonsVoisins(carte, c, l, Village.Carte.FILON.charbon).length) return "il faut un filon de charbon ⚫ juste à côté (au pied d'une montagne)";
+    // Étape 7 : la mine se construit collée à une montagne qui a un filon (de charbon, ou de fer à l'étape 8).
+    const mine = C.mines[type];
+    if (mine && !filonsVoisins(carte, c, l, Village.Carte.FILON[mine.filon]).length) return "il faut un filon de " + C.ressources[mine.filon].nom.replace("minerai de ", "") + " " + C.ressources[mine.filon].emoji + " juste à côté (au pied d'une montagne)";
     return null;
   }
 
@@ -129,16 +146,16 @@ Village.Batiments = (function () {
       etat: progres >= 1 ? "pret" : "chantier",
       progres: Math.min(1, progres), // de 0 (chantier vide) à 1 (fini)
       ouvrier: null,
-      travail: null, // la scierie : { reste } quand elle scie
+      travail: null, // un atelier ou une mine : { reste } quand il travaille
       produits: 0, // combien d'objets ce bâtiment a produits depuis le début
       // Étape 3
       relie: undefined, // relié à l'entrepôt par une route ?
       sortie: etat.sortie || 0, // objets qui attendent devant la porte qu'un porteur les ramène
-      sortieQuoi: { bucheron: "troncs", carriere: "pierres", scierie: "planches", pecheur: "poissons", chasseur: "viande", mineCharbon: "charbon" }[type] || null,
+      sortieQuoi: SORTIES[type] || null,
       ramassage: 0, // combien de ces objets sont déjà sur un papier de la file
       lots: (etat.lots || []).slice(), // étape 5 : combien vaut chaque objet qui attend (un cerf = 4 viandes)
-      entree: etat.entree || 0, // la scierie : les troncs en réserve
-      enRoute: 0, // la scierie : les troncs qu'un porteur est en train d'apporter
+      entrees: Object.assign({}, etat.entrees), // étape 8 : un atelier : ses ingrédients en réserve ({ fer: 2, charbon: 1 })
+      enRoute: {}, // un atelier : les ingrédients qu'un porteur est en train d'apporter
       enFile: {}, // les livraisons « apporter » écrites dans la file pour ce bâtiment
       livre: Object.assign({}, etat.livre), // le chantier : les matériaux arrivés
       attendu: Object.assign({}, etat.attendu), // le chantier : les matériaux réservés, pas encore partis de l'entrepôt
@@ -148,7 +165,8 @@ Village.Batiments = (function () {
     monde.occupees.set(i, b);
     // Les fleurs et les buissons sont enlevés pour faire de la place.
     if (monde.carte.objet[i]) Village.Monde.changerObjet(monde, i, Village.Carte.OBJET.rien);
-    if (b.etat === "pret" && !etat.vide) embaucher(monde, b);
+    // Au rechargement (etat.type existe), l'ouvrier revient sans vérifier le logement : il avait déjà sa place.
+    if (b.etat === "pret" && !etat.vide) embaucher(monde, b, !!etat.type);
     if (b.ouvrier && etat.faim) { b.ouvrier.faim = etat.faim; b.ouvrier.ventreVide = etat.ventreVide || 0; b.ouvrier.affame = !!etat.affame; }
     Village.Routes.recalculerReseau(monde);
     return b;
@@ -208,8 +226,13 @@ Village.Batiments = (function () {
   }
 
   // Le bâtiment est prêt : son ouvrier arrive (il apparaît devant la porte).
-  function embaucher(monde, b) {
+  // Étape 8 : ✍️ seulement s'il y a une place pour dormir (sinon, il attendra qu'on construise un logement).
+  function embaucher(monde, b, sansVerifier) {
     if (!TYPES[b.type].metier) return;
+    if (!sansVerifier && !Village.Logement.placeLibre(monde)) {
+      radio.emettre("pas-de-logement", { nom: TYPES[b.type].nom, numero: b.numero, metier: TYPES[b.type].metier, places: Village.Logement.capacite(monde) });
+      return;
+    }
     b.ouvrier = Village.Ouvriers.creer(b);
   }
 
@@ -224,52 +247,60 @@ Village.Batiments = (function () {
         if (b.progres >= 1) {
           b.progres = 1;
           b.etat = "pret";
+          radio.emettre("chantier-fini", { nom: TYPES[b.type].nom, numero: b.numero, colonne: b.colonne, ligne: b.ligne, metier: TYPES[b.type].metier, places: C.logement[b.type] || 0 });
           embaucher(monde, b);
-          radio.emettre("chantier-fini", { nom: TYPES[b.type].nom, numero: b.numero, colonne: b.colonne, ligne: b.ligne, metier: TYPES[b.type].metier });
         }
         continue;
       }
-      if (b.type === "scierie") { if (b.relie) scier(monde, b, dt); }
-      else if (b.type === "mineCharbon") { if (b.relie) miner(monde, b, dt); } // étape 7
-      else if (b.type === "universite") continue; // étape 7 : c'est Village.Recherches qui le fait travailler
+      if (C.ateliers[b.type]) { if (b.relie) fabriquer(monde, b, dt); } // étape 8 : scierie, fonderie, forge
+      else if (C.mines[b.type]) { if (b.relie) miner(monde, b, dt); } // étape 7 ; étape 8 : charbon ou fer
+      else if (b.type === "universite" || b.type === "marche") continue; // étape 7 : Village.Recherches ; étape 8 : Village.Marche
       else if (b.ouvrier) Village.Ouvriers.etape(monde, b, dt);
     }
   }
 
-  // La scierie : 1 tronc → 2 planches. Les troncs arrivent par les porteurs (b.entree),
-  // les planches attendent devant la porte (b.sortie).
-  function scier(monde, b, dt) {
-    const O = C.ouvriers;
-    if (!b.ouvrier) return; // pas de scieur (il est parti)
+  // Étape 8 : UN ATELIER (scierie, fonderie, forge) suit sa recette. Les ingrédients arrivent par les
+  // porteurs (b.entrees), ce qui est fabriqué attend devant la porte (b.sortie).
+  //   1. il a tous les ingrédients ? il les prend et commence (b.travail) ;
+  //   2. quand le minuteur arrive à 0, ce qui est fabriqué sort devant la porte.
+  function fabriquer(monde, b, dt) {
+    const recette = C.ateliers[b.type];
+    if (!b.ouvrier) return; // pas d'ouvrier (il est parti, ou pas encore de logement)
     if (!b.travail) {
-      if (b.entree < 1) {
-        if (!b.attendTronc) { b.attendTronc = true; radio.emettre("scierie-attend", { numero: b.numero, raison: "pas de tronc" }); }
+      const manque = Object.entries(recette.entrees).filter(([r, n]) => (b.entrees[r] || 0) < n).map(([r]) => r);
+      if (manque.length) {
+        const raison = "il manque " + manque.map((r) => NOMS_RESSOURCES[r]).join(" et ");
+        if (b.attend !== raison) { b.attend = raison; radio.emettre("atelier-attend", { nom: TYPES[b.type].nom, numero: b.numero, raison }); }
         return;
       }
-      if (b.sortie + O.planchesParTronc > C.sortieMax) return; // devant la porte, c'est plein
-      b.attendTronc = false;
-      b.entree--;
-      b.travail = { reste: O.scier };
-      radio.emettre("sciage-debut", { numero: b.numero, reserve: b.entree });
+      const quoi = b.sortieQuoi, combien = recette.sorties[quoi];
+      if (b.sortie + combien > C.sortieMax) return; // devant la porte, c'est plein
+      b.attend = null;
+      for (const [r, n] of Object.entries(recette.entrees)) b.entrees[r] -= n;
+      b.travail = { reste: recette.duree * Village.Recherches.bonus(monde, recette.bonus), duree: recette.duree * Village.Recherches.bonus(monde, recette.bonus) };
+      radio.emettre("fabrication-debut", { nom: TYPES[b.type].nom, numero: b.numero, entrees: recette.entrees, reserve: Object.assign({}, b.entrees), duree: Math.round(b.travail.reste * 10) / 10 });
       return;
     }
     b.travail.reste -= dt * Village.Repas.vitesse(b.ouvrier); // étape 5 : ventre vide = 2 fois moins vite
     if (b.travail.reste <= 0) {
+      const quoi = b.sortieQuoi, combien = recette.sorties[quoi];
       b.travail = null;
-      b.sortie += O.planchesParTronc;
-      for (let k = 0; k < O.planchesParTronc; k++) b.lots.push(1);
-      b.produits += O.planchesParTronc;
-      radio.emettre("planches-sciees", { numero: b.numero, planches: O.planchesParTronc, devant: b.sortie });
+      b.sortie += combien;
+      for (let k = 0; k < combien; k++) b.lots.push(1);
+      b.produits += combien;
+      radio.emettre("fabrication-finie", { nom: TYPES[b.type].nom, numero: b.numero, quoi, quantite: combien, devant: b.sortie });
     }
   }
 
-  // Étape 7 : la mine. Le mineur creuse dans le filon voisin ; chaque morceau de charbon attend devant
+  // Étape 7 : la mine. Le mineur creuse dans le filon voisin ; chaque morceau attend devant
   // la porte qu'un porteur le ramène. Le filon s'épuise (60 morceaux) : le géologue en trouvera d'autres.
+  // Étape 8 : la même règle pour la mine de charbon et la mine de fer (config.js, « mines »).
   function miner(monde, b, dt) {
     if (!b.ouvrier) return;
-    const k = monde.carte, filons = filonsVoisins(k, b.colonne, b.ligne, Village.Carte.FILON.charbon);
+    const sorte = C.mines[b.type].filon;
+    const k = monde.carte, filons = filonsVoisins(k, b.colonne, b.ligne, Village.Carte.FILON[sorte]);
     if (!filons.length) {
-      if (!b.epuise) { b.epuise = true; radio.emettre("filon-epuise", { numero: b.numero, nom: TYPES[b.type].nom }); }
+      if (!b.epuise) { b.epuise = true; radio.emettre("filon-epuise", { numero: b.numero, nom: TYPES[b.type].nom, minerai: C.ressources[sorte].nom }); }
       return;
     }
     b.epuise = false;
@@ -284,8 +315,8 @@ Village.Batiments = (function () {
     b.sortie++;
     b.lots.push(1);
     b.produits++;
-    radio.emettre("charbon-extrait", { numero: b.numero, reste: k.reste[i], devant: b.sortie });
+    radio.emettre("minerai-extrait", { numero: b.numero, nom: TYPES[b.type].nom, quoi: sorte, reste: k.reste[i], devant: b.sortie });
   }
 
-  return { TYPES, A_CONSTRUIRE, filonsVoisins, NOMS_RESSOURCES, cout, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
+  return { TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
 })();

@@ -5,7 +5,8 @@
 //   - en haut à gauche : le nom du village et le STOCK de l'entrepôt (🪵 troncs, 🟫 planches, 🪨 pierres) ;
 //   - en haut à droite : le bouton plein écran ⛶ et la mini-carte ;
 //   - en bas : les gros BOUTONS de construction (assez gros pour un doigt : au moins 56 points) ;
-//   - le panneau du bâtiment touché, et les messages d'aide.
+//   - le panneau du bâtiment touché, et les messages d'aide ;
+//   - (étape 8) le marché 🏪 et les statistiques 📊.
 //
 // Il se souvient de l'endroit où il a dessiné chaque bouton (les ZONES). Quand on touche l'écran,
 // main.js lui demande « y a-t-il un bouton ici ? » avant de donner le clic à la carte.
@@ -20,7 +21,9 @@ Village.Interface = (function () {
   let zones = [];
   let menuOuvert = null;
   let objectifsOuverts = false;
-  let panneau = null; // étape 7 : le grand panneau ouvert au milieu : "mission", "boutique" ou null // étape 6 : le panneau des objectifs pour passer à l'âge suivant // étape 5 : le groupe du menu ouvert ("bois", "pierre", "nourriture", "outils") ou null
+  let panneau = null; // étape 7 : le grand panneau ouvert au milieu : "mission", "boutique" (étape 8 : "stats", "marche") ou null
+  let basDuStock = 64; // étape 8 : le bas de la bulle du stock (elle peut avoir 2 lignes) : les panneaux s'ouvrent dessous
+  const EMO = (r) => (C.ressources[r] ? C.ressources[r].emoji : r === "pieces" ? "🪙" : r === "gemmes" ? "💎" : r); // étape 8
   let message = null; // { texte, jusqua } : un message qui s'affiche quelques secondes
 
   // Les messages importants de la radio s'affichent aussi dans le jeu (sur téléphone, on ne voit pas le journal).
@@ -43,8 +46,13 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("mission-pas-assez", () => afficher("🚫 Il manque encore des ressources pour livrer"));
   Village.Evenements.ecouter("achat", (d) => afficher(d.emoji + " " + d.nom + " : c'est fait ! (" + d.gemmes + " 💎 restantes)"));
   Village.Evenements.ecouter("achat-impossible", (d) => afficher("🚫 " + d.nom + " : " + d.raison));
-  Village.Evenements.ecouter("filon-trouve", () => afficher("🔍 Le géologue a trouvé un filon de charbon ⚫ !"));
-  Village.Evenements.ecouter("filon-epuise", (d) => afficher("⚫ " + d.nom + " : le filon est épuisé. Le géologue en trouvera peut-être un autre."));
+  Village.Evenements.ecouter("filon-trouve", (d) => afficher("🔍 Le géologue a trouvé un filon de " + d.nom.replace("minerai de ", "") + " " + d.emoji + " !"));
+  Village.Evenements.ecouter("filon-epuise", (d) => afficher("⛏️ " + d.nom + " : le filon est épuisé. Le géologue en trouvera peut-être un autre."));
+  // Étape 8
+  Village.Evenements.ecouter("pas-de-logement", (d) => afficher("🛏️ " + d.nom + " : pas de place pour loger le " + d.metier + " ! Construis une 🛖 hutte ou une 🏠 maison."));
+  Village.Evenements.ecouter("marche-vente", (d) => afficher("🏪 Vendu " + d.quantite + " " + EMO(d.quoi) + " : +" + d.gain + " 🪙 (tu as " + d.pieces + " 🪙)"));
+  Village.Evenements.ecouter("marche-achat", (d) => afficher("🏪 Acheté " + d.quantite + " " + EMO(d.quoi) + " : −" + d.depense + " 🪙 (il te reste " + d.pieces + " 🪙)"));
+  Village.Evenements.ecouter("marche-impossible", (d) => afficher("🚫 Marché : " + d.raison));
   Village.Evenements.ecouter("nouvel-age", (d) => afficher("🎉 " + d.emoji + " Bienvenue au " + d.nom.replace(/^(Le|La) /, "").toLowerCase() + " !" + (d.debloque.length ? " Nouveau : " + d.debloque.join(", ") : "")));
   Village.Evenements.ecouter("deplacement-impossible", (d) => afficher("🚫 " + d.nom + " : " + d.raison));
   Village.Evenements.ecouter("batiment-deplace", (d) => afficher("↔️ " + d.nom + " a déménagé" + (d.relie ? " !" : " : pense à la route !")));
@@ -76,17 +84,22 @@ Village.Interface = (function () {
   function tiroir(ctx, monde, g, bas, W, petit) {
     const B = Village.Batiments;
     const elements = (g.batiments || []).map((type) => ({
-          action: "construire", valeur: type, emoji: B.TYPES[type].emoji, nom: B.TYPES[type].court, touche: String(B.A_CONSTRUIRE.indexOf(type) + 1),
-          cout: Object.entries(B.cout(type)).map(([r, n]) => n + ({ planches: "🟫", pierres: "🪨", troncs: "🪵" }[r])).join(" "),
+          action: "construire", valeur: type, emoji: B.TYPES[type].emoji, nom: B.TYPES[type].court, touche: B.A_CONSTRUIRE.indexOf(type) < 7 ? String(B.A_CONSTRUIRE.indexOf(type) + 1) : "",
+          cout: Object.entries(B.cout(type)).map(([r, n]) => n + EMO(r)).join(" "),
           choisi: monde.construction === type, possible: B.assezPour(monde, type) && Village.Ages.debloque(monde, type),
           verrou: Village.Ages.debloque(monde, type) ? null : "🔒 " + C.ages[Village.Ages.ageDe(type)].emoji + " " + C.ages[Village.Ages.ageDe(type)].nom.replace(/^(Le|La) /, ""), // étape 6
         })).concat((g.outils || []).map((o) => ({ action: "outil", valeur: o.id, emoji: o.emoji, icone: o.icone, nom: o.nom, touche: o.touche, cout: o.cout || "", choisi: monde.outil === o.id, possible: !o.verrou, verrou: o.verrou || null })));
     const lc = petit ? 74 : 84, hc = petit ? 74 : 84, ec = 8;
-    const total = elements.length * lc + (elements.length - 1) * ec + 16;
-    const x0 = Math.max(10, Math.min(W - total - 10, (W - total) / 2)), y0 = bas - hc - 8;
-    bulle(ctx, x0, y0 - 8, total, hc + 16, "rgba(255, 250, 235, .97)");
-    elements.forEach((el, k) => {
-      const x = x0 + 8 + k * (lc + ec);
+    // Étape 8 : trop de cartes pour la largeur de l'écran ? On les range sur 2 rangées.
+    const parRangee = Math.max(1, Math.min(elements.length, Math.floor((W - 20 - 16 + ec) / (lc + ec)))), rangees = Math.ceil(elements.length / parRangee);
+    const total = parRangee * lc + (parRangee - 1) * ec + 16, hauteur = rangees * hc + (rangees - 1) * ec;
+    const x0 = Math.max(10, Math.min(W - total - 10, (W - total) / 2)), y0 = bas - hauteur - 8;
+    hautDuTiroir = y0 - 8;
+    bulle(ctx, x0, y0 - 8, total, hauteur + 16, "rgba(255, 250, 235, .97)");
+    zone(x0, y0 - 8, total, hauteur + 16, "rien"); // toucher entre les cartes ne touche pas la carte du monde
+    elements.forEach((el, n) => {
+      const k = n % parRangee, x = x0 + 8 + k * (lc + ec);
+      const y0 = bas - hauteur - 8 + Math.floor(n / parRangee) * (hc + ec);
       ctx.fillStyle = el.choisi ? "#ffe27a" : el.possible ? "#fffaf0" : "#e4dccd"; ctx.strokeStyle = el.choisi ? "#ff8a1f" : "#c9b48f"; ctx.lineWidth = el.choisi ? 3 : 1.5;
       ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y0, lc, hc, 12); else ctx.rect(x, y0, lc, hc);
       ctx.fill(); ctx.stroke();
@@ -98,8 +111,8 @@ Village.Interface = (function () {
       if (!petit) texte(ctx, el.touche, x + 7, y0 + 10, 10, "#a08a6a", true, "left");
       zone(x, y0, lc, hc, el.action, el.valeur);
     });
-    zone(x0, y0 - 8, total, hc + 16, "rien"); // toucher entre les cartes ne touche pas la carte du monde
   }
+  let hautDuTiroir = 0;
 
   // Étape 6 : le panneau des objectifs de l'âge
   function panneauObjectifs(ctx, monde, x, y, l) {
@@ -147,14 +160,15 @@ Village.Interface = (function () {
     if (actif) zone(x, y, l, h, action, valeur);
   }
 
-  const coutTexte = (c) => Object.entries(c).map(([r, n]) => n + " " + ({ planches: "🟫", pierres: "🪨", troncs: "🪵", poissons: "🐟", viande: "🍖", charbon: "⚫" }[r])).join("  ");
+  const coutTexte = (c) => Object.entries(c).map(([r, n]) => n + " " + EMO(r)).join("  ");
+  const nomRessource = (r) => (r === "pieces" ? "🪙 pièces" : r === "gemmes" ? "💎" : Village.Batiments.NOMS_RESSOURCES[r]);
   const minutes = (s) => Math.floor(s / 60) + " min " + String(Math.floor(s % 60)).padStart(2, "0");
   const croix = (ctx, x, y, l, action) => { texte(ctx, "✖", x + l - 16, y + 17, 14, "#a08a6a", true, "center"); zone(x + l - 38, y, 38, 34, action); };
 
   // 🎓 Le panneau de l'université : les recherches de notre âge (et celles de l'âge suivant, 🔒)
   function panneauUniversite(ctx, monde, W, He, petit) {
     const R = Village.Recherches, liste = C.recherches.filter((r) => r.age <= (monde.age || 0) + 1);
-    const l = Math.min(W - 20, 470), hl = petit ? 38 : 40, x = (W - l) / 2, y = petit ? 66 : 74;
+    const l = Math.min(W - 20, 470), hl = petit ? 38 : 40, x = (W - l) / 2, y = basDuStock + 4;
     const h = 46 + liste.length * hl + 8;
     bulle(ctx, x, y, l, h, "rgba(255, 250, 235, .98)");
     zone(x, y, l, h, "rien");
@@ -186,7 +200,7 @@ Village.Interface = (function () {
 
   // 📜 Le panneau de la mission
   function panneauMission(ctx, monde, W, He, petit) {
-    const a = monde.missions.actuelle, l = Math.min(W - 20, 420), x = (W - l) / 2, y = petit ? 66 : 74;
+    const a = monde.missions.actuelle, l = Math.min(W - 20, 420), x = (W - l) / 2, y = basDuStock + 4;
     if (!a) {
       bulle(ctx, x, y, l, 70, "rgba(255, 250, 235, .98)");
       zone(x, y, l, 70, "rien");
@@ -214,7 +228,7 @@ Village.Interface = (function () {
       texte(ctx, (ok ? "✅ " : "⬜ ") + q + " " + Village.Batiments.NOMS_RESSOURCES[r] + "  (tu en as " + monde.stock[r] + ")", x + 22, yy, 12, ok ? "#2e8a3a" : "#5a4220");
       yy += 18;
     }
-    texte(ctx, "🎁 Récompense : " + Object.entries(m.recompense).map(([r, q]) => q + " " + (r === "gemmes" ? "💎" : Village.Batiments.NOMS_RESSOURCES[r])).join(", "), x + 14, yy + 2, 12, "#7a5a30", true);
+    texte(ctx, "🎁 Récompense : " + Object.entries(m.recompense).map(([r, q]) => q + " " + nomRessource(r)).join(", "), x + 14, yy + 2, 12, "#7a5a30", true);
     yy += 24;
     if (a.etat === "proposee") {
       texte(ctx, "⏱️ Tu auras " + minutes(m.duree) + ".", x + 14, yy + 4, 12, "#5a4220");
@@ -228,7 +242,7 @@ Village.Interface = (function () {
 
   // 💎 Le panneau de la boutique
   function panneauBoutique(ctx, monde, W, He, petit) {
-    const l = Math.min(W - 20, 420), hl = 42, x = (W - l) / 2, y = petit ? 66 : 74, h = 64 + C.boutique.length * hl;
+    const l = Math.min(W - 20, 420), hl = 42, x = (W - l) / 2, y = basDuStock + 4, h = 64 + C.boutique.length * hl;
     bulle(ctx, x, y, l, h, "rgba(255, 250, 235, .98)");
     zone(x, y, l, h, "rien");
     texte(ctx, "💎 La boutique · tu as " + monde.gemmes + " gemme(s)", x + 14, y + 20, petit ? 13 : 15, "#3b2614", true);
@@ -242,6 +256,84 @@ Village.Interface = (function () {
     });
   }
 
+  // 🏪 Étape 8 : le panneau du marché. Une ligne par ressource : le stock, le prix (et s'il monte ou baisse),
+  // et deux boutons : vendre 5, acheter 5.
+  function panneauMarche(ctx, monde, W, He, petit) {
+    const M = Village.Marche, liste = Object.keys(C.marche.prix), lot = C.marche.lot;
+    const l = Math.min(W - 20, 500), hl = petit ? 30 : 34, x = (W - l) / 2, y = basDuStock + 4;
+    const h = 58 + liste.length * hl + 22;
+    bulle(ctx, x, y, l, h, "rgba(255, 250, 235, .98)");
+    zone(x, y, l, h, "rien");
+    const b = M.leMarche(monde);
+    let tete = "🏪 Marché · tu as " + monde.pieces + " 🪙";
+    if (!b) tete = "🏪 Marché · il faut d'abord construire le marché";
+    else if (!b.relie) tete = "🏪 Marché · ❌ pas de route jusqu'à l'entrepôt";
+    else if (!b.ouvrier) tete = "🏪 Marché · 🛏️ pas de marchand (il faut un logement)";
+    texte(ctx, tete, x + 12, y + 18, petit ? 12 : 14, "#3b2614", true);
+    texte(ctx, "Par paquets de " + lot + ". Vendre beaucoup fait baisser le prix ; il remonte avec le temps.", x + 12, y + 36, petit ? 9 : 10, "#7a5a30");
+    croix(ctx, x, y, l, panneau === "marche" ? "fermerPanneau" : "fermer");
+    const lb = petit ? 84 : 104, xv = x + l - 2 * lb - 18, xa = x + l - lb - 10;
+    texte(ctx, "en stock", x + (petit ? 96 : 120), y + 50, 9, "#a08a6a", true, "right");
+    liste.forEach((r, n) => {
+      const ry = y + 56 + n * hl, f = M.facteur(monde, r);
+      if (n % 2) { ctx.fillStyle = "rgba(90, 66, 32, .06)"; ctx.fillRect(x + 6, ry, l - 12, hl); }
+      texte(ctx, EMO(r) + " " + (petit ? "" : C.ressources[r].nom.replace("minerai de ", "")), x + 12, ry + hl / 2, petit ? 14 : 12, "#3b2614", true);
+      texte(ctx, String(monde.stock[r]), x + (petit ? 96 : 120), ry + hl / 2, 12, "#3b2614", true, "right");
+      // La tendance du prix : ▼ moins cher que d'habitude, ▲ plus cher
+      const tendance = f < 0.97 ? "▼ " + Math.round(f * 100) + " %" : f > 1.03 ? "▲ " + Math.round(f * 100) + " %" : "";
+      if (tendance && xv - (x + (petit ? 100 : 126)) > 40) texte(ctx, tendance, x + (petit ? 102 : 128), ry + hl / 2, 9, f < 1 ? "#c0392b" : "#2e8a3a", true);
+      bouton(ctx, xv, ry + 3, lb, hl - 6, "Vendre +" + M.prixVente(monde, r) + "🪙", "marche", { sens: "vendre", quoi: r }, !M.raison(monde, "vendre", r), "#d98a1f");
+      bouton(ctx, xa, ry + 3, lb, hl - 6, "Acheter −" + M.prixAchat(monde, r) + "🪙", "marche", { sens: "acheter", quoi: r }, !M.raison(monde, "acheter", r), "#3e7bff");
+    });
+    texte(ctx, "Depuis le début : vendu pour " + monde.marche.ventes + " 🪙 · acheté pour " + monde.marche.achats + " 🪙", x + 12, y + h - 13, petit ? 9 : 10, "#7a5a30");
+  }
+
+  // 📊 Étape 8 : le panneau des statistiques (choix 3A). Pour chaque ressource : le stock, sa petite
+  // courbe (les 5 dernières minutes), ce qui entre et ce qui sort par minute, et le bilan.
+  function panneauStats(ctx, monde, W, He, petit) {
+    const St = Village.Statistiques, liste = Object.keys(C.ressources).filter((r) => monde.stock[r] > 0 || St.parMinute(monde, r).entrees > 0 || St.parMinute(monde, r).sorties > 0 || ["troncs", "planches", "pierres", "poissons", "viande"].includes(r));
+    const l = Math.min(W - 20, 520), hl = petit ? 24 : 26, x = (W - l) / 2, y = basDuStock + 4;
+    const h = 74 + liste.length * hl + 44;
+    bulle(ctx, x, y, l, h, "rgba(255, 250, 235, .98)");
+    zone(x, y, l, h, "rien");
+    const duree = St.parMinute(monde, "troncs").minutes;
+    const depuis = duree < 4.9 ? Math.max(1, Math.round(duree * 60)) + (petit ? " s" : " dernières secondes") : petit ? "5 min" : "5 dernières minutes";
+    texte(ctx, "📊 " + (petit ? "Par minute, sur " : "Statistiques · par minute, sur les ") + depuis, x + 12, y + 18, petit ? 12 : 14, "#3b2614", true);
+    texte(ctx, "Le compteur de l'entrepôt note tout ce qui entre et tout ce qui sort.", x + 12, y + 36, petit ? 9 : 10, "#7a5a30");
+    croix(ctx, x, y, l, "fermerPanneau");
+    // Les colonnes
+    const cStock = x + (petit ? 70 : 120), cCourbe = cStock + 8, lCourbe = petit ? 60 : 90, cE = cCourbe + lCourbe + (petit ? 44 : 56), cS = cE + (petit ? 46 : 60), cN = Math.min(x + l - 12, cS + (petit ? 52 : 70));
+    const yt = y + 56;
+    texte(ctx, "stock", cStock, yt, 9, "#a08a6a", true, "right");
+    texte(ctx, "5 min", cCourbe, yt, 9, "#a08a6a", true);
+    texte(ctx, "entre", cE, yt, 9, "#a08a6a", true, "right");
+    texte(ctx, "sort", cS, yt, 9, "#a08a6a", true, "right");
+    texte(ctx, "bilan", cN, yt, 9, "#a08a6a", true, "right");
+    const chiffre = (v) => (v >= 10 ? Math.round(v) : Math.round(v * 10) / 10).toString().replace(".", ",");
+    liste.forEach((r, n) => {
+      const ry = y + 66 + n * hl, m = St.parMinute(monde, r), pts = St.courbe(monde, r);
+      if (n % 2) { ctx.fillStyle = "rgba(90, 66, 32, .06)"; ctx.fillRect(x + 6, ry, l - 12, hl); }
+      texte(ctx, EMO(r) + (petit ? "" : " " + C.ressources[r].nom.replace("minerai de ", "")), x + 12, ry + hl / 2, petit ? 13 : 12, "#3b2614", true);
+      texte(ctx, String(monde.stock[r]), cStock, ry + hl / 2, 12, "#3b2614", true, "right");
+      // La petite courbe du stock
+      const max = Math.max(1, ...pts), bas = ry + hl - 5, haut = ry + 5;
+      ctx.strokeStyle = "rgba(90, 66, 32, .2)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cCourbe, bas); ctx.lineTo(cCourbe + lCourbe, bas); ctx.stroke();
+      if (pts.length > 1) {
+        ctx.strokeStyle = m.net < -0.05 ? "#c0392b" : "#2e8a3a"; ctx.lineWidth = 1.6; ctx.beginPath();
+        pts.forEach((v, k) => { const px = cCourbe + (k / (C.statistiques.tranches)) * lCourbe, py = bas - (v / max) * (bas - haut); k ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+        ctx.stroke();
+      }
+      texte(ctx, m.entrees ? "+" + chiffre(m.entrees) : "·", cE, ry + hl / 2, 11, "#2e8a3a", true, "right");
+      texte(ctx, m.sorties ? "−" + chiffre(m.sorties) : "·", cS, ry + hl / 2, 11, "#c0392b", true, "right");
+      const net = m.net;
+      texte(ctx, Math.abs(net) < 0.05 ? "=" : (net > 0 ? "+" : "−") + chiffre(Math.abs(net)), cN, ry + hl / 2, 12, Math.abs(net) < 0.05 ? "#7a5a30" : net > 0 ? "#2e8a3a" : "#c0392b", true, "right");
+    });
+    // En dessous : les habitants, les porteurs, l'argent
+    const Lg = Village.Logement, actifs = Village.Porteurs.actifs(monde), dehors = actifs.filter((p) => p.etat !== "attend").length;
+    const yb = y + 66 + liste.length * hl + 14;
+    texte(ctx, "🛏️ Habitants " + Lg.habitants(monde) + " / " + Lg.capacite(monde) + " places · 🚚 porteurs au travail " + dehors + " / " + actifs.length + " · 📋 file " + monde.file.length, x + 12, yb, petit ? 10 : 11, "#5a4220", true);
+    texte(ctx, "🪙 " + monde.pieces + " pièces · 💎 " + monde.gemmes + " gemmes · " + monde.batiments.filter((b) => b.etat === "pret").length + " bâtiments", x + 12, yb + 18, petit ? 10 : 11, "#5a4220", true);
+  }
 
   // Ouvrir ou fermer un groupe du menu (appelé par main.js quand on touche un groupe)
   function basculerMenu(id) { menuOuvert = menuOuvert === id ? null : id; }
@@ -265,17 +357,23 @@ Village.Interface = (function () {
     const s = monde.stock;
     const ressources = [["🪵", s.troncs], ["🟫", s.planches], ["🪨", s.pierres], ["🐟", s.poissons], ["🍖", s.viande]];
     if (monde.age >= 1 || s.charbon > 0) ressources.push(["⚫", s.charbon]); // étape 7 : le charbon, à partir du hameau
-    const pas = petit ? (ressources.length > 5 ? 44 : 50) : 62, lb = 24 + ressources.length * pas;
-    bulle(ctx, 10, 10, lb, petit ? 54 : 62);
+    for (const r of ["fer", "lingots", "outils"]) if (monde.age >= 2 || s[r] > 0) ressources.push([EMO(r), s[r]]); // étape 8
+    if (monde.age >= 2 || monde.pieces > 0) ressources.push(["🪙", monde.pieces]);
+    // Étape 8 : s'il y a trop de ressources pour la largeur, la bulle passe sur 2 lignes.
+    const pas = petit ? 46 : 62, parLigne = Math.max(3, Math.min(ressources.length, Math.floor((W - 70 - 24) / pas)));
+    const nLignes = Math.ceil(ressources.length / parLigne), hStock = (petit ? 54 : 62) + (nLignes - 1) * (petit ? 20 : 24);
+    const lb = 24 + Math.min(ressources.length, parLigne) * pas;
+    basDuStock = 10 + hStock;
+    bulle(ctx, 10, 10, lb, hStock);
     // Étape 6 : l'âge du village et, à côté, où on en est des objectifs pour passer au suivant.
     // (La barre de la saison a été enlevée : ✍️ elle ne servait à rien.) Toucher : voir les objectifs.
     const age = Village.Ages.actuel(monde), prochain = Village.Ages.suivant(monde), obj = Village.Ages.objectifs(monde);
     let titre = age.emoji + " " + age.nom;
     if (obj && prochain) titre += " · " + prochain.emoji + " " + obj.filter((x) => x.fait).length + "/" + obj.length + " 🎯";
     texte(ctx, titre, 22, petit ? 25 : 28, petit ? 11 : 13, "#7a5a30", true);
-    ressources.forEach(([emoji, n], k) => texte(ctx, emoji + " " + n, 22 + k * pas, petit ? 47 : 51, petit ? (ressources.length > 5 ? 13 : 14) : 17, n <= 0 && (k === 3 || k === 4) ? "#c0392b" : "#3b2614", true));
-    zone(10, 10, lb, petit ? 54 : 62, "objectifs");
-    if (objectifsOuverts) panneauObjectifs(ctx, monde, 10, petit ? 72 : 80, petit ? 250 : 290);
+    ressources.forEach(([emoji, n], k) => texte(ctx, emoji + " " + n, 22 + (k % parLigne) * pas, (petit ? 47 : 51) + Math.floor(k / parLigne) * (petit ? 20 : 24), petit ? 13 : 17, n <= 0 && (k === 3 || k === 4) ? "#c0392b" : "#3b2614", true));
+    zone(10, 10, lb, hStock, "objectifs");
+    if (objectifsOuverts) panneauObjectifs(ctx, monde, 10, basDuStock + 8, petit ? 250 : 290);
 
     // ---- En haut à droite : plein écran, puis la mini-carte
     const tp = 40;
@@ -292,6 +390,15 @@ Village.Interface = (function () {
     texte(ctx, "💎", W - 10 - tp / 2, 102 + 15, 17, null, false, "center");
     texte(ctx, String(monde.gemmes), W - 10 - tp / 2, 102 + 32, 11, "#3b2614", true, "center");
     zone(W - tp - 10, 102, tp, tp, "panneau", "boutique");
+    // Étape 8 : 📊 les statistiques, et 🏪 le marché (quand il est construit)
+    bulle(ctx, W - tp - 10, 148, tp, tp, panneau === "stats" ? "rgba(255, 226, 122, .98)" : null);
+    texte(ctx, "📊", W - 10 - tp / 2, 148 + tp / 2 + 1, 20, null, false, "center");
+    zone(W - tp - 10, 148, tp, tp, "panneau", "stats");
+    if (Village.Marche.leMarche(monde)) {
+      bulle(ctx, W - tp - 10, 194, tp, tp, panneau === "marche" ? "rgba(255, 226, 122, .98)" : null);
+      texte(ctx, "🏪", W - 10 - tp / 2, 194 + tp / 2 + 1, 20, null, false, "center");
+      zone(W - tp - 10, 194, tp, tp, "panneau", "marche");
+    }
     if (W >= 520) dessinerMini(ctx, monde, mini, W - 10 - tp - 10, 10, petit ? 1 : 1.5);
 
     // ---- En bas : le MENU (étape 5). ✍️ Moins de boutons toujours affichés, regroupés par ressource :
@@ -299,18 +406,22 @@ Village.Interface = (function () {
     // Toucher un groupe ouvre un tiroir, juste au-dessus, avec ses bâtiments.
     const groupes = [
       { id: "bois", emoji: "🪵", nom: "Bois", batiments: ["bucheron", "forestier", "scierie"] },
-      { id: "pierre", emoji: "⛏️", nom: "Mines", batiments: ["carriere", "geologue", "mineCharbon"] },
+      { id: "pierre", emoji: "⛏️", nom: "Mines", batiments: ["carriere", "geologue", "mineCharbon", "mineFer"] },
       { id: "nourriture", emoji: "🍖", nom: "Nourriture", batiments: ["pecheur", "chasseur"] },
+      // Étape 8 : les logements, et les artisans (fonderie, forge, marché, université)
+      { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "maison"] },
+      { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "marche", "universite"] },
       // Étape 7 : le chemin de terre, et la route en pierre (débloquée par la recherche « Routes pavées »)
       { id: "route", nom: "Routes", outils: [
         { id: "route", icone: "terre", nom: "Chemin", touche: "R", cout: "gratuit" },
         { id: "routePierre", icone: "pierre", nom: "Pavée ×1,6", touche: "T", cout: C.routes.coutPierre.pierres + "🪨/case", verrou: Village.Recherches.a(monde, "routePierre") ? null : "🔒 recherche 🧱" },
+        { id: "deplacer", emoji: "↔️", nom: "Déplacer", touche: "M" }, { id: "demolir", emoji: "🧹", nom: "Démolir", touche: "Suppr" },
       ] },
-      { id: "outils", emoji: "🔧", nom: "Outils", batiments: ["universite"], outils: [{ id: "deplacer", emoji: "↔️", nom: "Déplacer", touche: "M" }, { id: "demolir", emoji: "🧹", nom: "Démolir", touche: "Suppr" }] },
     ];
     // Le groupe du bâtiment ou de l'outil choisi reste allumé
     const actif = (g) => (g.batiments && g.batiments.includes(monde.construction)) || (g.outil && monde.outil === g.outil) || (g.outils && g.outils.some((o) => o.id === monde.outil));
-    const lm = petit ? 62 : 70, hb = petit ? 54 : 60, ecart = petit ? 4 : 6;
+    const ecart = petit ? 4 : 6, hb = petit ? 54 : 60;
+    const lm = Math.min(70, Math.floor((W - 20 - 16 - (groupes.length - 1) * ecart) / groupes.length)); // étape 8 : 6 groupes, même sur un téléphone
     const dockL = groupes.length * lm + (groupes.length - 1) * ecart + 16, dockX = (W - dockL) / 2, dockY = He - hb - 18;
     // Le socle du menu : une planche de bois arrondie
     ctx.fillStyle = "rgba(90, 60, 30, .88)"; ctx.strokeStyle = "#3b2614"; ctx.lineWidth = 2.5;
@@ -325,7 +436,9 @@ Village.Interface = (function () {
       ctx.fill(); ctx.stroke();
       if (g.emoji) texte(ctx, g.emoji, x + lm / 2, dockY + hb * 0.38, petit ? 21 : 24, null, false, "center");
       else Village.Batisses.iconeRoute(ctx, x + lm / 2, dockY + hb * 0.38, petit ? 0.75 : 0.85);
-      texte(ctx, g.nom, x + lm / 2, dockY + hb * 0.8, petit ? 10 : 11, "#3b2614", true, "center");
+      let tn = petit ? 10 : 11; ctx.font = "bold " + tn + "px " + POLICE;
+      while (tn > 8 && ctx.measureText(g.nom).width > lm - 4) { tn -= 0.5; ctx.font = "bold " + tn + "px " + POLICE; }
+      texte(ctx, g.nom, x + lm / 2, dockY + hb * 0.8, tn, "#3b2614", true, "center");
       if (g.batiments || g.outils) { // un petit triangle : « ça s'ouvre »
         ctx.fillStyle = "#a08a6a"; ctx.beginPath(); ctx.moveTo(x + lm - 12, dockY + 9); ctx.lineTo(x + lm - 6, dockY + 9); ctx.lineTo(x + lm - 9, dockY + 5); ctx.closePath(); ctx.fill();
       }
@@ -333,7 +446,7 @@ Village.Interface = (function () {
       // Le tiroir du groupe ouvert
       if (ouvert) tiroir(ctx, monde, g, dockY - 16, W, petit);
     });
-    const y0 = (menuOuvert ? dockY - 16 - (petit ? 82 : 92) : dockY - 8); // le haut de ce qui est dessiné en bas
+    const y0 = (menuOuvert ? hautDuTiroir : dockY - 8); // le haut de ce qui est dessiné en bas
 
     // ---- Juste au-dessus des boutons : l'aide pour construire, un message, ou la case sous la souris
     let aide = null;
@@ -378,9 +491,12 @@ Village.Interface = (function () {
     // ---- Le panneau du bâtiment touché
     // Étape 7 : l'université a son grand panneau (la liste des recherches) ; les missions et la boutique aussi.
     if (monde.selection && monde.selection.type === "universite" && monde.selection.etat === "pret" && !panneau) panneauUniversite(ctx, monde, W, He, petit);
-    else if (monde.selection && !objectifsOuverts && !panneau) panneauBatiment(ctx, monde, monde.selection, 10, petit ? 72 : 82, petit ? 230 : 270);
+    else if (monde.selection && monde.selection.type === "marche" && monde.selection.etat === "pret" && !panneau) panneauMarche(ctx, monde, W, He, petit); // étape 8
+    else if (monde.selection && !objectifsOuverts && !panneau) panneauBatiment(ctx, monde, monde.selection, 10, basDuStock + 8, petit ? 230 : 270);
     if (panneau === "mission") panneauMission(ctx, monde, W, He, petit);
     else if (panneau === "boutique") panneauBoutique(ctx, monde, W, He, petit);
+    else if (panneau === "stats") panneauStats(ctx, monde, W, He, petit); // étape 8
+    else if (panneau === "marche") panneauMarche(ctx, monde, W, He, petit);
 
     if (options.pause) {
       bulle(ctx, W / 2 - 70, 12, 140, 36);
@@ -428,19 +544,41 @@ Village.Interface = (function () {
       lignes.push("🚚 " + actifs.length + " porteurs : " + dehors + " au travail" + (actifs.some((p) => p.affame) ? " · 🍽️ certains ont faim !" : ""));
       if (monde.partis) lignes.push("😢 " + monde.partis + " habitant(s) parti(s) (trop faim)");
       lignes.push("📋 File d'attente : " + monde.file.length + " livraison(s)");
-    } else if (b.type === "scierie") {
-      lignes.push(b.travail ? "🪚 Scie un tronc… " + Math.ceil(b.travail.reste) + " s" : b.entree ? "Prête à scier" : "😴 Attend des troncs");
-      lignes.push("Réserve : " + b.entree + " 🪵 · devant la porte : " + b.sortie + " 🟫");
-      lignes.push("A fait " + b.produits + " planches");
+      lignes.push("🛏️ Logement : " + Village.Logement.habitants(monde) + " habitants / " + Village.Logement.capacite(monde) + " places"); // étape 8
+    } else if (C.logement[b.type]) {
+      // Étape 8 : une hutte ou une maison
+      const Lg = Village.Logement;
+      lignes.push("🛏️ " + C.logement[b.type] + " places pour dormir");
+      lignes.push("Tout le village : " + Lg.habitants(monde) + " habitants / " + Lg.capacite(monde) + " places");
+    } else if (!b.ouvrier && !Village.Logement.placeLibre(monde)) {
+      // Étape 8 : ✍️ pas de place pour loger son ouvrier
+      lignes.push("🛏️ Personne n'habite ici : pas de place pour loger");
+      lignes.push("le " + type.metier + ". Construis une 🛖 hutte ou une 🏠 maison !");
     } else if (!b.ouvrier) {
-      lignes.push("😢 L'habitant est parti : il avait trop faim.");
+      lignes.push(b.produits ? "😢 L'habitant est parti : il avait trop faim." : "🙋 Un habitant va bientôt s'installer.");
       lignes.push(Village.Repas.nourritureEnStock(monde) >= 2 ? "Un nouvel habitant arrive dans " + Math.ceil(C.repas.retour - (b.attenteHabitant || 0)) + " s" : "Il faut de la nourriture dans l'entrepôt.");
+    } else if (C.ateliers[b.type]) {
+      // Étape 8 : un atelier (scierie, fonderie, forge) et sa recette
+      const R = C.ateliers[b.type], q = (obj) => Object.entries(obj).map(([r, n]) => n + " " + EMO(r)).join(" + ");
+      lignes.push("📜 Recette : " + q(R.entrees) + " → " + q(R.sorties));
+      lignes.push(b.travail ? "⚙️ Fabrique… " + Math.ceil(b.travail.reste) + " s" : b.attend ? "😴 " + b.attend.charAt(0).toUpperCase() + b.attend.slice(1) : "Prêt à travailler");
+      lignes.push("Réserve : " + Object.keys(R.entrees).map((r) => (b.entrees[r] || 0) + " " + EMO(r)).join(" · ") + " · devant : " + b.sortie + " " + EMO(b.sortieQuoi));
+      lignes.push("A fabriqué " + b.produits + " " + C.ressources[b.sortieQuoi].nom);
+    } else if (C.mines[b.type]) {
+      // Étape 7 et 8 : une mine
+      const sorte = C.mines[b.type].filon, k = monde.carte;
+      const reste = B.filonsVoisins(k, b.colonne, b.ligne, Village.Carte.FILON[sorte]).reduce((a, i) => a + k.reste[i], 0);
+      lignes.push(b.epuise ? "⛏️ Filon épuisé : il faut en trouver un autre" : b.travail ? "⛏️ Creuse… " + Math.ceil(b.travail.reste) + " s" : b.sortie >= C.sortieMax ? "⏳ Devant la porte, c'est plein" : "⛏️ Au travail");
+      lignes.push("Dans le filon : encore " + reste + " " + EMO(sorte));
+      lignes.push("Devant la porte : " + b.sortie + " / " + C.sortieMax + " " + EMO(sorte) + " · a extrait " + b.produits);
+    } else if (b.type === "marche") {
+      lignes.push("🏪 Touche le bâtiment pour vendre et acheter");
     } else {
       const o = b.ouvrier;
       lignes.push("👷 Le " + type.metier + " " + Village.Ouvriers.NOMS_ETATS[o.etat]);
       if (o.etat === "travailler") lignes.push("encore " + Math.ceil(o.minuteur) + " s");
-      if (b.sortieQuoi) lignes.push("Devant la porte : " + b.sortie + " / " + C.sortieMax + " " + ({ troncs: "🪵", pierres: "🪨", poissons: "🐟", viande: "🍖" }[b.sortieQuoi]));
-      lignes.push((b.type === "forestier" ? "A planté " : "A rapporté ") + b.produits + ({ bucheron: " troncs", forestier: " pousses", carriere: " pierres", pecheur: " poissons", chasseur: " gibiers" }[b.type]));
+      if (b.sortieQuoi) lignes.push("Devant la porte : " + b.sortie + " / " + C.sortieMax + " " + EMO(b.sortieQuoi));
+      lignes.push((b.type === "forestier" ? "A planté " : "A rapporté ") + b.produits + ({ bucheron: " troncs", forestier: " pousses", carriere: " pierres", pecheur: " poissons", chasseur: " gibiers", geologue: " découvertes" }[b.type] || ""));
     }
     // Étape 4 : le repas de l'ouvrier
     const o = b.ouvrier;

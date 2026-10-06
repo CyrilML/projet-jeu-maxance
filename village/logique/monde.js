@@ -49,6 +49,11 @@ Village.Monde = (function () {
       recherches: { faites: [], enCours: null }, // 🎓 les recherches de l'université
       missions: { actuelle: null, attente: 45, derniere: null, reussies: [] }, // 📜 la première arrive après 45 s
       drapeau: 0, // la couleur du drapeau du village (achetée à la boutique)
+      // Étape 8
+      pieces: 0, // 🪙 la monnaie du marché (ventes, missions du village)
+      marche: { facteurs: {}, ventes: 0, achats: 0 }, // 🏪 les prix qui bougent (1 = prix normal), et les totaux
+      logementBonus: 0, // 🛏️ places offertes à une partie commencée avant l'étape 8
+      stats: null, // 📊 le carnet du compteur de l'entrepôt (logique/statistiques.js)
       // Étape 4
       horloge: 0, // secondes depuis le début de LA PARTIE (sauvegardé) : c'est lui qui fait les saisons
       saison: null, // { nom, emoji, annee, avancement… } (voir logique/saisons.js)
@@ -70,6 +75,7 @@ Village.Monde = (function () {
     if (partie && partie.porteurs) partie.porteurs.forEach((d, n) => { if (monde.porteurs[n]) Object.assign(monde.porteurs[n], d); });
     Village.Routes.recalculerReseau(monde);
     monde.saison = Village.Saisons.lire(monde.horloge);
+    Village.Statistiques.surveiller(monde); // étape 8 : le compteur se met à la porte de l'entrepôt
     radio.emettre("carte-inventee", {
       graine, colonnes: carte.colonnes, lignes: carte.lignes, compte: carte.compte, village: carte.village, rivieres: carte.rivieres.length,
       reprise: !!partie, batiments: monde.batiments.length, modifs: monde.modifs.size, routes: Village.Routes.compter(monde),
@@ -96,6 +102,9 @@ Village.Monde = (function () {
     monde.age = partie.age || 0;
     monde.gemmes = partie.gemmes || 0;
     monde.drapeau = partie.drapeau || 0;
+    monde.pieces = partie.pieces || 0; // étape 8
+    monde.logementBonus = partie.logementBonus || 0;
+    if (partie.marche) monde.marche = { facteurs: Object.assign({}, partie.marche.facteurs), ventes: partie.marche.ventes || 0, achats: partie.marche.achats || 0 };
     if (partie.recherches) monde.recherches = { faites: (partie.recherches.faites || []).slice(), enCours: partie.recherches.enCours || null };
     if (partie.missions) Object.assign(monde.missions, partie.missions);
     monde.partis = partie.partis || 0;
@@ -156,6 +165,8 @@ Village.Monde = (function () {
     Village.Ages.etape(monde, dt);
     Village.Recherches.etape(monde, dt); // étape 7
     Village.Missions.etape(monde, dt); // étape 7
+    Village.Marche.etape(monde, dt); // étape 8 : les prix reviennent vers la normale
+    Village.Statistiques.etape(monde, dt); // étape 8 : le compteur tourne la page toutes les 10 s
     nature(monde, dt);
   }
 
@@ -227,6 +238,8 @@ Village.Monde = (function () {
     else if (intentions.mission === "plusTard") Village.Missions.plusTard(monde);
     else if (intentions.mission === "livrer") Village.Missions.livrer(monde);
     if (intentions.achat) Village.Boutique.acheter(monde, intentions.achat);
+    // Étape 8 : vendre ou acheter au marché ({ sens: "vendre", quoi: "planches" })
+    if (intentions.marche) { if (intentions.marche.sens === "vendre") Village.Marche.vendre(monde, intentions.marche.quoi); else Village.Marche.acheter(monde, intentions.marche.quoi); }
     if (intentions.annuler) {
       if (monde.construction) radio.emettre("construction-annulee", { nom: B.TYPES[monde.construction].nom });
       if (monde.outil && monde.routeDepart) monde.routeDepart = null; // d'abord : oublier le départ de la route
