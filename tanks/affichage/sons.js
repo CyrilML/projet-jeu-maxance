@@ -50,6 +50,9 @@ Tanks.Sons = (function () {
     radio.ecouter("impact", (e) => e.sur === "air" && boum(attenuation(e.x, e.z) * 0.35, 0.3, 160));
     radio.ecouter("abattu", (e) => boum(attenuation(e.x, e.z) * 0.8, 1, 90));
     radio.ecouter("crash", (e) => boum(attenuation(e.x, e.z), 1.8, 50));
+    // (étape 65) la radio : « bip-bip » quand un ordre est compris, « bouuu » quand il ne l'est pas
+    radio.ecouter("ordre", () => (bip(880, 0), bip(1320, 0.12)));
+    radio.ecouter("ordre-incompris", () => bip(220, 0, 0.35));
     radio.ecouter("torpille", (e) => pschh(e.joueur ? 0.5 : attenuation(e.x, e.z) * 0.4)); // (étape 63)
     radio.ecouter("impact", (e) => {
       if (e.sorte === "bombe" || e.sorte === "missile") boum(attenuation(e.x, e.z), 1.8, 60);
@@ -144,6 +147,18 @@ Tanks.Sons = (function () {
     o.connect(g).connect(sortie);
     o.start(t);
     o.stop(t + 0.65);
+  }
+  // (étape 65) Un bip de radio.
+  function bip(frequence, retard, duree) {
+    if (!ctx || coupe) return;
+    const t = ctx.currentTime + retard, o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "square";
+    o.frequency.value = frequence;
+    g.gain.setValueAtTime(0.06, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + (duree || 0.1));
+    o.connect(g).connect(sortie);
+    o.start(t);
+    o.stop(t + (duree || 0.1) + 0.02);
   }
   // (étape 63) Le sonar : « ping » (une note aiguë qui résonne longtemps).
   function ping() {

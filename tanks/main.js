@@ -17,6 +17,7 @@ window.Tanks = window.Tanks || {};
   Tanks.monde = monde; // pour explorer depuis la console (F12)
   Tanks.Scene.initialiser(toile3d);
   Tanks.Tableau.initialiser(toile2d);
+  Tanks.BarreOrdres.initialiser(); // (étape 65)
   toile2d.focus();
 
   const reveil = () => Tanks.Sons.demarrer();
@@ -29,13 +30,15 @@ window.Tanks = window.Tanks || {};
   });
   document.querySelectorAll("[data-appuyer]").forEach((b) => b.addEventListener("click", () => { E.appuyer(b.dataset.appuyer); toile2d.focus(); }));
 
-  let enPause = false, reste = 0, avant = performance.now();
+  let enPause = false, reste = 0, avant = performance.now(), ordre = null;
   function boucle(maintenant) {
     const dt = Math.min(0.1, (maintenant - avant) / 1000);
     avant = maintenant;
     if (E.consommer("pause")) enPause = !enPause;
     if (E.consommer("camera")) Tanks.Scene.changerCamera();
     if (E.consommer("son")) Tanks.Sons.basculer();
+    if (E.consommer("ordre") && monde.phase === "bataille") Tanks.BarreOrdres.ouvrir(); // (étape 65 : touche T)
+    ordre = ordre || Tanks.BarreOrdres.prendre(); // (la phrase écrite dans la barre, s'il y en a une ; elle attend le prochain pas)
     if (!enPause) {
       reste += dt;
       while (reste >= C.pasFixe) {
@@ -48,8 +51,10 @@ window.Tanks = window.Tanks || {};
           tirer: E.estEnfoncee("tirer"),
           gaucheAppui: E.consommer("gauche"), droiteAppui: E.consommer("droite"),
           valider: E.consommer("valider"), recommencer: E.consommer("recommencer"), retour: E.consommer("retour"),
+          ordre: ordre, // (étape 65 : donné à un seul petit pas)
           monter: E.consommer("monter"), arme1: E.consommer("arme1"), arme2: E.consommer("arme2"), arme3: E.consommer("arme3"), // (étape 61)
         });
+        ordre = null;
       }
     }
     // (étape 63) où en est-on entre deux pas ? 0 = juste après le dernier pas, presque 1 = juste avant le prochain

@@ -186,6 +186,7 @@
       <a href="#etape62">Étape 62</a>
       <a href="#etape63">Étape 63</a>
       <a href="#etape64">Étape 64</a>
+      <a href="#etape65">Étape 65</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3841,6 +3842,59 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Pourquoi abattre l'avion de transport ennemi est malin ?</summary><p>S'il tombe avant le largage, ses 6 parachutistes ne sautent pas : pas de renforts pour les Rouges !</p></details>
     </section>
 
+    <section id="etape65">
+      <h2>📢 Étape 65 : donner des ordres en les écrivant <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Touche T : une barre s'ouvre tout en haut, tu écris ton ordre, et tout ton camp obéit. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/65-donner-des-ordres.md</code>.</p>
+          <ul>
+            <li>✍️ Une barre tout en haut, ouverte avec la touche T, où tu écris tes ordres toi-même.</li>
+            <li>✍️ Tout ton camp obéit (ou un groupe, ou un tank par son nom).</li>
+            <li>✍️ Attaque, suis-moi, aller quelque part, viser une cible, formation et tir.</li>
+            <li>✍️ Les fautes de frappe sont devinées ; sinon, le jeu te le dit.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ <kbd>T</kbd>, écris « les tanks, allez au village », <kbd>Entrée</kbd> : les 3 tanks y vont.</li>
+            <li>☐ « suivez-moi », puis roule : tout le monde te suit. Puis « en ligne ».</li>
+            <li>☐ « Bravo, attaquez Faucon » ; « cessez le feu » ; « feu à volonté ».</li>
+            <li>☐ Fais exprès une faute : « alez au vilage ». Puis écris « bonjour » : il ne comprend pas.</li>
+            <li>☐ <kbd>T</kbd> puis <kbd>↑</kbd> : ton dernier ordre revient.</li>
+            <li>Vérifie « version 6 » en haut de la page du jeu.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>📖 Comment le jeu « lit » ta phrase</h3>
+      <p>Un ordinateur ne comprend pas le français comme toi. Le jeu fait 3 choses simples :</p>
+      <ol>
+        <li><strong>Nettoyer</strong> : « Les TANKS, allez au village ! » devient <code>les tanks allez au village</code> (minuscules, sans accents ni ponctuation), puis il coupe la phrase en mots.</li>
+        <li><strong>Chercher chaque mot dans un dictionnaire</strong> (<code>ordres.mots</code> dans <code>config.js</code>). « tanks » est un QUI, « allez » est un ORDRE, « village » est un ENDROIT. Les mots qu'il ne connaît pas (« les », « au ») sont simplement ignorés.</li>
+        <li><strong>Ranger</strong> : un groupe écrit AVANT l'ordre dit qui obéit (« les soldats, attaquez »). Écrit APRÈS « attaquez » ou « visez », il dit quoi viser (« attaquez les soldats »).</li>
+      </ol>
+      <h3>🔤 Deviner les fautes : la distance de Levenshtein</h3>
+      <p>Pour savoir si « vilage » ressemble à « village », le jeu compte combien de lettres il faut <em>ajouter</em>, <em>enlever</em> ou <em>changer</em> pour passer de l'un à l'autre. Ce nombre s'appelle la <strong>distance de Levenshtein</strong>. « vilage » → « village » : il manque un « l », donc la distance vaut 1. Si la distance est de 1 lettre (ou 2 pour les mots de 7 lettres et plus), il devine. Les tout petits mots (« vous », « les »…) ne sont jamais devinés : sinon « vous » deviendrait « tous » ! Regarde le journal : il écrit les mots devinés.</p>
+      <h3>🎖️ Comment ils obéissent</h3>
+      <ul>
+        <li>Chaque tank et chaque soldat garde son ordre dans une petite fiche : <code>ordre</code> (où aller), <code>ordreCible</code> (quoi viser), <code>feuLibre</code> (tirer ou pas).</li>
+        <li>Leur cerveau (<code>logique/ia.js</code> et <code>logique/troupes.js</code>) regarde d'abord ton ordre : « va là » remplace l'endroit où il voulait aller.</li>
+        <li>Pour « suivez-moi » et « en ligne », la place de chacun est calculée DERRIÈRE toi, à chaque instant. Chacun a un numéro (son « rang ») : le n° 1 à droite, le n° 2 à gauche, le n° 3 plus à droite…</li>
+      </ul>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>tanks/config.js</code>, ajoute ton propre mot dans <code>attaque</code> (par exemple <code>"bastonnez"</code>). Est-ce qu'ils obéissent ?</li>
+        <li>Ajoute un endroit dans <code>lieux</code> : <code>maison: [0, 285]</code>, puis écris « allez à la maison ».</li>
+        <li>Mets <code>fautes: 0</code> : le jeu ne devine plus aucune faute. Essaie « atake ».</li>
+        <li>Mets <code>ecartTanks: 40</code> et dis « en ligne » : une très longue ligne de tanks.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Quelle est la distance de Levenshtein entre « tank » et « tanks » ?</summary><p>1 : il suffit d'ajouter un « s ».</p></details>
+      <details class="question"><summary>Pourquoi « les soldats, attaquez les tanks » et « attaquez les soldats » ne veulent pas dire la même chose ?</summary><p>Le jeu regarde la PLACE du mot. Avant l'ordre, « les soldats » dit QUI obéit. Après « attaquez », « les soldats » dit QUOI attaquer.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4171,8 +4225,8 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         </div>
         <div class="carte fait">
           <div class="num">⚔️</div>
-          <h4>Les tanks : soldats, engins, bateaux, sous-marins, avions, portails <span class="etiquette">✅ fait · à valider</span></h4>
-          <p>Un nouveau jeu de bataille (étape 60), puis sortir du tank, 24 soldats, un 4x4 à mitrailleuse, un hélico, un avion de chasse et un drone (étape 61), puis un lac avec des bateaux et des portails (étape 62), puis des îles, des sous-marins et un soldat avec un vrai squelette (étape 63), puis des avions ennemis, une DCA et des parachutistes (étape 64).</p>
+          <h4>Les tanks : soldats, engins, bateaux, sous-marins, avions, portails, ordres <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Un nouveau jeu de bataille (étape 60), puis sortir du tank, 24 soldats, un 4x4 à mitrailleuse, un hélico, un avion de chasse et un drone (étape 61), puis un lac avec des bateaux et des portails (étape 62), puis des îles, des sous-marins et un soldat avec un vrai squelette (étape 63), puis des avions ennemis, une DCA et des parachutistes (étape 64), puis des ordres écrits à ton camp (étape 65).</p>
           <p class="apprend"><b>Tu apprends :</b> les modes du joueur, la balle instantanée, les projectiles guidés, faire réfléchir l'ordinateur moins souvent. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
@@ -4766,6 +4820,15 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-64" data-cle="appris-64" placeholder="Ex. : J'ai appris qu'il faut viser devant un avion…"></textarea>
         <label for="idees-64"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-64" data-cle="idees-64" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 65 · donner des ordres en les écrivant <span class="petit">· 7 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la barre des ordres (<code>affichage/barre-ordres.js</code>), le lecteur d'ordres avec son dictionnaire et la distance de Levenshtein (<code>logique/ordres.js</code>, <code>config.js</code>), l'obéissance des tanks et des soldats (<code>logique/ia.js</code>, <code>logique/troupes.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : touche T, tout le camp obéit, 4 familles d'ordres, deviner les fautes et sinon le dire.</p>
+        <label for="appris-65"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-65" data-cle="appris-65" placeholder="Ex. : J'ai appris que le jeu cherche des mots dans un dictionnaire…"></textarea>
+        <label for="idees-65"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-65" data-cle="idees-65" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

@@ -9,6 +9,7 @@
 // Étape 61 : ✍️ TOI, tu peux être dans ton tank, à pied (touche E pour sortir), ou dans un engin de ton camp (le 4x4,
 // l'hélico, l'avion de chasse, le drone). « monde.toi » dit où tu es.
 // Étape 62 : ✍️ le LAC avec ta vedette et 2 patrouilleurs ennemis (monde.bateaux), et les PORTAILS (monde.portails).
+// Étape 65 : TES ORDRES (la phrase que tu écris dans la barre arrive ici, dans « intentions.ordre »).
 // Étape 64 : les AVIONS (monde.avions : les chasseurs ennemis et les avions de transport) et les PARACHUTISTES.
 // Étape 63 : les SOUS-MARINS (le tien dans monde.engins, 2 ennemis dans monde.sousMarins) et les îles.
 // Il annonce tout à la radio : le journal, les sons, les effets et la sauvegarde écoutent.
@@ -203,12 +204,22 @@ Tanks.Monde = (function () {
         }
       }
     }
+    // (étape 65) un ordre écrit dans la barre ?
+    if (enJeu && intentions.ordre) {
+      const r = Tanks.Ordres.comprendre(intentions.ordre, monde);
+      if (!r.compris) radio.emettre("ordre-incompris", { texte: intentions.ordre, devines: r.devines, exemples: C.ordres.exemples });
+      else {
+        const bilan = Tanks.Ordres.donner(monde, r);
+        S.donnees.ordres++;
+        radio.emettre("ordre", Object.assign({ texte: intentions.ordre, devines: r.devines, reponse: C.ordres.reponses[Math.floor(monde.temps * 7) % C.ordres.reponses.length] }, bilan));
+      }
+    }
     const pourToi = (mode) => (enJeu && t.mode === mode ? intentions : {});
     // 1. Les tanks : le tien (si tu es dedans), les autres (l'ordinateur).
     const evenements = [];
     const visibles = cibles(monde);
     for (const c of monde.chars) {
-      const ints = c === monde.joueur ? pourToi("char") : Tanks.IA.decider(c, visibles, dt);
+      const ints = c === monde.joueur ? pourToi("char") : Tanks.IA.decider(c, visibles, dt, monde);
       for (const e of Tanks.Char.avancer(c, ints, dt, visibles)) evenements.push(e);
     }
     Tanks.Char.chocs(monde.chars);

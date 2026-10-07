@@ -8,7 +8,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 5,
+  version: 6,
   pasFixe: 1 / 120,
 
   monde: {
@@ -180,6 +180,50 @@ Tanks.CONFIG = {
     largage: { bleus: [0, 110], rouges: [0, -110] }, // [x, z] : au-dessus de quoi on saute
     maxParEquipe: 30, // (pas plus de 30 soldats debout par équipe : sinon le jeu ralentit)
     transport: { nom: "Avion de transport", vitesse: 70, vie: 4 },
+  },
+
+  // ------------------------------------------------------------------ étape 65 : les ORDRES
+  // ✍️ Touche T : une barre s'ouvre tout en haut ; tu écris ton ordre toi-même, Entrée l'envoie, Échap annule (le jeu
+  // continue pendant ce temps). ✍️ Tout ton camp obéit (tes 3 tanks et tes soldats bleus), ou seulement un groupe
+  // (« les tanks… », « les soldats… ») ou un tank par son nom (« Bravo… »).
+  // Le jeu ne « lit » pas vraiment : il cherche dans ta phrase des MOTS QU'IL CONNAÎT (ce dictionnaire). ✍️ S'il trouve
+  // un mot presque pareil (une faute de frappe), il le devine ; s'il ne trouve vraiment rien, il te le dit.
+  // Tu peux ajouter tes propres mots dans les listes !
+  ordres: {
+    fautes: 1, fautesLongs: 2, // lettres de différence acceptées (2 pour les mots de 7 lettres et plus)
+    arrive: 12, // m : un tank est « arrivé » à moins de 12 m de là où on l'envoie (un soldat : 6 m)
+    ecartTanks: 16, ecartSoldats: 5, // m entre deux tanks (ou deux soldats) en ligne
+    disperse: 45, // m : « dispersez-vous » : chacun part au hasard jusqu'à 45 m
+    mots: {
+      // les QUI
+      tous: ["tous", "tout", "toutes", "monde", "equipe", "everyone", "groupe"],
+      tanks: ["tanks", "tank", "chars", "char", "blindes", "blinde"],
+      soldats: ["soldats", "soldat", "troupes", "troupe", "infanterie", "fantassins", "paras", "parachutistes", "hommes", "gars"],
+      // les ORDRES (le mouvement)
+      attaque: ["attaque", "attaquez", "attaquer", "attaquons", "chargez", "charge", "foncez", "fonce", "assaut", "detruisez", "detruis", "tuez", "tue", "eliminez", "degommez", "allez-y"],
+      suis: ["suivez", "suis", "suivre", "suivez-moi", "venez", "viens", "rejoignez", "rejoins", "escorte", "escortez", "couvrez", "protegez"],
+      reste: ["restez", "reste", "rester", "defendez", "defends", "defense", "gardez", "garde", "tenez", "stop", "arretez", "arrete", "halte", "bougez", "attendez", "attends"],
+      recule: ["reculez", "recule", "reculer", "repli", "repliez", "retraite", "fuyez", "fuis", "rentrez", "rentre", "base"],
+      va: ["allez", "va", "vas", "aller", "partez", "pars", "direction", "rendez-vous", "avancez", "avance", "go", "bougez-vous"],
+      disperse: ["dispersez", "disperse", "ecartez", "ecarte", "eparpillez", "eparpille", "dispersion"],
+      ligne: ["ligne", "alignez", "aligne", "formation", "rang", "rangs"],
+      // les ordres de TIR
+      cessez: ["cessez", "cesse", "cessez-le-feu"],
+      feu: ["feu", "tirez", "tire", "volonte", "ouvrez"],
+      vise: ["visez", "vise", "ciblez", "cible", "sur"],
+    },
+    // ✍️ Les ENDROITS où on peut envoyer ses troupes : [x, z] (les portails, on les trouve tout seuls par leur couleur)
+    lieux: {
+      village: [0, 0], lac: [118, 10], camp: [0, 285], base: [0, 285], aerodrome: [-90, 300], ennemi: [0, -250], ennemis: [0, -250],
+      nord: [0, -180], sud: [0, 180], est: [110, 0], ouest: [-220, 0], centre: [0, 0], dca: [80, 270],
+    },
+    // les CIBLES qu'on peut viser par catégorie
+    cibles: {
+      tanks: ["tanks", "tank", "chars", "char", "blindes"], soldats: ["soldats", "soldat", "troupes", "fantassins", "parachutistes", "paras"],
+      bateaux: ["bateaux", "bateau", "patrouilleurs", "patrouilleur", "navires"], sousMarins: ["sous-marins", "sous-marin", "submersibles"],
+    },
+    reponses: ["Bien reçu !", "À vos ordres !", "C'est parti !", "Compris, chef !", "On y va !", "Affirmatif !"],
+    exemples: ["attaquez", "suivez-moi", "les tanks, allez au village", "Bravo, reste ici", "visez les bateaux", "dispersez-vous", "en ligne", "cessez le feu", "allez au portail vert"],
   },
 
   camera: { distance: 15, hauteur: 6.5, regardDevant: 22, souplesse: 6, champ: 60 },

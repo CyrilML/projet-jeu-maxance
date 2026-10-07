@@ -11,6 +11,8 @@
 //   4. touché, il fait un ÉCART sur le côté pendant 2,5 s ;
 //   5. s'il ne VOIT plus sa cible depuis 3 s (une maison entre eux), il la CONTOURNE par le côté.
 // (Étape 62 : les bateaux sont aussi des cibles ; le lac le repousse, comme un grand aimant.)
+// (Étape 65 : TES ORDRES passent avant tout : « va là » remplace l'endroit où il voulait aller, « vise … » choisit sa
+// cible, « cessez le feu » l'empêche de tirer. Voir logique/ordres.js.)
 
 window.Tanks = window.Tanks || {};
 
@@ -37,12 +39,14 @@ Tanks.IA = (function () {
   }
 
   // Les intentions de ce tank pour ce pas de temps.
-  function decider(c, tous, dt) {
+  function decider(c, tous, dt, monde) {
     const ia = c.ia;
     if (c.detruit) return {};
     ia.prochainChoix -= dt;
-    if (!ia.cible || ia.cible.detruit || ia.prochainChoix <= 0) {
-      ia.cible = choisirCible(c, tous);
+    if (c.ordreCible !== ia.ordreCibleVu) (ia.ordreCibleVu = c.ordreCible), (ia.prochainChoix = 0); // (un nouvel ordre « vise … »)
+    if (!ia.cible || ia.cible.detruit || ia.cible.mort || ia.prochainChoix <= 0) {
+      const permises = monde && Tanks.Ordres.ciblesPermises(c, monde);
+      ia.cible = choisirCible(c, permises && permises.length ? permises : tous);
       ia.prochainChoix = I.changeDeCible;
       ia.erreur = (hasard() * 2 - 1) * I.erreur * 2;
     }
@@ -53,16 +57,24 @@ Tanks.IA = (function () {
     }
     ia.vieAvant = c.vie;
     if (ia.esquive > 0) ia.esquive -= dt;
-    const cible = ia.cible;
-    if (!cible) {
+    const cible = ia.cible && !ia.cible.mort ? ia.cible : null;
+    const but = monde ? Tanks.Ordres.but(c, monde) : null; // (étape 65 : ton ordre de mouvement)
+    if (!cible && !but) {
       ia.etat = "attend";
       return {};
     }
-    const dx = cible.x - c.x, dz = cible.z - c.z, d = Math.hypot(dx, dz);
+    const dx = cible ? cible.x - c.x : 0, dz = cible ? cible.z - c.z : 0, d = Math.hypot(dx, dz);
     const versCible = Math.atan2(dz, dx);
     // 1. Où aller ? Un point à 110 m de la cible (ou un écart sur le côté, si on vient d'être touché).
     let gx, gz;
-    if (ia.esquive > 0) {
+    if (but) {
+      // TON ORDRE : il va là où tu l'envoies (et s'arrête quand il y est)
+      gx = but.x - c.x;
+      gz = but.z - c.z;
+      const reste = Math.hypot(gx, gz);
+      if (reste < but.rayon) gx = gz = 0;
+      ia.etat = "📢 " + Tanks.Ordres.enMots(c) + (reste < but.rayon ? " (en place)" : " (" + Math.round(reste) + " m)");
+    } else if (ia.esquive > 0) {
       gx = Math.cos(c.angle + ia.sensEsquive * Math.PI / 2) * 30;
       gz = Math.sin(c.angle + ia.sensEsquive * Math.PI / 2) * 30;
       ia.etat = "esquive";
@@ -112,6 +124,7 @@ Tanks.IA = (function () {
       if (Math.abs(diff) < 1.2) intentions.avancer = true;
       else if (Math.abs(diff) > 2.6 && envie < 40) intentions.reculer = true;
     }
+    if (!cible) return intentions; // (il obéit à ton ordre, sans personne à viser)
     // 2. La tourelle vers la cible (avec la petite erreur de visée)
     intentions.viseAngle = versCible + ia.erreur;
     intentions.cible = cible;
@@ -125,7 +138,7 @@ Tanks.IA = (function () {
       ia.voit = d < I.portee && T.vueLibre(c.x, c.y + 2.4, c.z, cible.x, cible.y + 1.5, cible.z);
     }
     ia.sansVue = ia.voit ? 0 : ia.sansVue + dt;
-    if (aligne && ia.voit && c.recharge === 0) {
+    if (aligne && ia.voit && c.recharge === 0 && c.feuLibre !== false) { // (sauf si tu as dit « cessez le feu »)
       intentions.tirer = true;
       ia.etat = "tire !";
       ia.erreur = (hasard() * 2 - 1) * I.erreur * 2; // (le prochain tir aura une autre petite erreur)

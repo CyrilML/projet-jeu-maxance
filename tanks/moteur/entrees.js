@@ -21,6 +21,7 @@ Tanks.Entrees = (function () {
     recommencer: ["KeyR"],
     retour: ["Backspace"],
     camera: ["KeyC"],
+    ordre: [], // étape 65 : le bouton « 📢 Ordre » (la touche T, elle, est écoutée directement par la barre : affichage/barre-ordres.js)
     son: ["KeyB"],
     pause: ["Escape", "KeyP"],
   };
@@ -31,6 +32,8 @@ Tanks.Entrees = (function () {
 
   function initialiser(cible) {
     cible.addEventListener("keydown", (e) => {
+      // (étape 65) quand tu écris dans la barre des ordres, les touches sont pour la barre, pas pour le jeu
+      if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
       const actions = actionsDeLaTouche[e.code];
       if (!actions) return;
       e.preventDefault(); // sinon les flèches et Espace font défiler la page

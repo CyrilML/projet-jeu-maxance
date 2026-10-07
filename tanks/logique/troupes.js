@@ -8,6 +8,8 @@
 //   3. sinon, il AVANCE vers le village puis vers le camp ennemi, chacun dans son couloir (sa place dans la ligne),
 //      en contournant les murs (ils le repoussent) et sans se coller aux autres.
 // Il fabrique les mêmes intentions que toi (avancer, tourner, tirer), avec le même soldat (logique/soldat.js).
+// (Étape 65 : TES ORDRES passent avant tout. « Va là » : il y court sans s'arrêter pour tirer, puis il défend sa place ;
+// « vise … » : il choisit sa cible dans ce que tu as dit ; « cessez le feu » : il ne tire plus.)
 
 window.Tanks = window.Tanks || {};
 
@@ -53,7 +55,10 @@ Tanks.Troupes = (function () {
       // 1. la cible : un soldat ennemi (ou toi à pied) ; pour un lance-roquettes, un tank ou le 4x4
       let meilleur = null;
       const roquettes = s.arme === "roquettes";
-      const candidats = roquettes ? monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || (e.sorte === "bateau" && e.pilote)), monde.bateaux).filter((c) => !c.detruit && c.equipe !== s.equipe) : monde.soldats.filter((o) => !o.mort && !o.dansUnEngin && o.equipe !== s.equipe);
+      // (étape 65 : « visez les tanks / les soldats / Faucon… » — seulement ce que son arme peut toucher)
+      const permises = Tanks.Ordres.ciblesPermises(s, monde);
+      const utiles = permises && permises.filter((o) => (roquettes ? o.genre !== "soldat" : o.genre === "soldat"));
+      const candidats = utiles && utiles.length ? utiles : roquettes ? monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || (e.sorte === "bateau" && e.pilote)), monde.bateaux).filter((c) => !c.detruit && c.equipe !== s.equipe) : monde.soldats.filter((o) => !o.mort && !o.dansUnEngin && o.equipe !== s.equipe);
       for (const o of candidats) {
         const d = Math.hypot(o.x - s.x, o.z - s.z);
         if (d > (roquettes ? 120 : S.vue) || (meilleur && d > meilleur.d)) continue;
@@ -63,7 +68,24 @@ Tanks.Troupes = (function () {
       ia.erreur = (Math.random() - 0.5) * 0.06;
     }
     const intentions = {};
-    const cible = ia.cible && !ia.cible.mort && !ia.cible.detruit ? ia.cible : null;
+    let cible = ia.cible && !ia.cible.mort && !ia.cible.detruit ? ia.cible : null;
+    // (étape 65) TON ORDRE de mouvement : il y va d'abord ; arrivé, il se bat sur place (sans repartir en avant)
+    const but = Tanks.Ordres.but(s, monde);
+    if (but) {
+      const gx = but.x - s.x, gz = but.z - s.z, reste = Math.hypot(gx, gz);
+      if (reste > but.rayon) {
+        ia.etat = "📢 " + Tanks.Ordres.enMots(s) + " (" + Math.round(reste) + " m)";
+        intentions.versAngle = Math.atan2(gz, gx);
+        intentions.avancer = Math.abs(angleEntre(intentions.versAngle - s.angle)) < 1;
+        return intentions;
+      }
+      if (!cible || s.feuLibre === false) {
+        ia.etat = "📢 " + Tanks.Ordres.enMots(s) + " (en place)";
+        if (s.ordre.action === "suis" || s.ordre.action === "ligne") intentions.versAngle = Tanks.Ordres.ici(monde).angle; // (il regarde où tu regardes)
+        return intentions;
+      }
+    }
+    if (cible && s.feuLibre === false) cible = null; // (« cessez le feu » : il ne vise plus personne)
     if (cible) {
       // 2. il vise et il tire
       ia.etat = "tire";

@@ -7,6 +7,7 @@
 // (leur vitesse, leur hauteur, leurs munitions) et les soldats (combien sont encore debout, ce qu'ils font).
 // Étape 62 : le lac (où tu es par rapport à la rive : « dl »), les patrouilleurs ennemis (ce qu'ils font), et les
 // portails (combien de passages).
+// Étape 65 : chaque ordre donné (ce que le jeu a compris, les mots devinés), et l'ordre de chaque tank et soldat allié.
 // Étape 64 : chaque avion (ce qu'il fait : approche, bombarde, dégage, duel ; sa hauteur, sa vitesse, sa vie), la DCA
 // (où elle vise, l'avion qu'elle suit), les parachutistes en l'air.
 // Étape 63 : les sous-marins (leur PROFONDEUR, s'ils sont sous l'eau), les îles, si tu nages, et le dessin « entre deux
@@ -33,6 +34,9 @@ Tanks.SousLeCapot = (function () {
     victoire: (d) => "🏆 VICTOIRE en " + Math.round(d.temps) + " s ! Il te reste " + d.vie + " / " + C.char.vie + " de vie et " + d.allies + " allié(s)",
     defaite: (d) => "💀 Défaite après " + Math.round(d.temps) + " s : il restait " + d.ennemis + " ennemi(s)",
     sauvegarde: (d) => "💾 Livret militaire écrit (" + d.raison + ")",
+    // étape 65
+    ordre: (d) => "📢 Ordre « " + d.texte + " » → compris : " + (d.quoi || "?") + " · obéissent : " + (d.noms.length ? d.noms.join(", ") : "aucun tank") + (d.soldats ? " + " + d.soldats + " soldats" : "") + (d.devines.length ? " · mots devinés : " + d.devines.map(([a, b]) => a + " → " + b).join(", ") : ""),
+    "ordre-incompris": (d) => "❓ Ordre « " + d.texte + " » pas compris : aucun mot connu" + (d.devines.length ? " (même en devinant)" : "") + ". Exemples : " + d.exemples.slice(0, 4).join(" · "),
     // étape 64
     "avion-arrive": (d) => "✈️ " + d.nom + " arrive au-dessus du champ de bataille",
     bombardement: (d) => "💣 " + d.nom + " lâche " + C.avionsEnnemis.bombes + " bombes sur " + d.cible + " (il les lâche AVANT d'être au-dessus : elles gardent sa vitesse)",
@@ -129,6 +133,14 @@ Tanks.SousLeCapot = (function () {
       l.push(["toi et le lac", "dl = " + virgule(dl, 2) + (dl < 1 ? " : dans l'eau" : dl < 1.1 ? " : sur la rive" : " : loin de l'eau") + " (dl = √((dx ÷ " + C.lac.rayonX + ")² + (dz ÷ " + C.lac.rayonZ + ")²))"]);
       for (const b of monde.bateaux) l.push(["⚓ " + b.nom, b.detruit ? "coulé ✖" : b.ia.etat + " · vie " + b.vie + " / " + b.fiche.vie + " · " + Math.round(b.vitesse * 3.6) + " km/h"]);
       for (const m of monde.sousMarins) l.push(["🐋 " + m.nom, m.detruit ? "coulé ✖" : m.ia.etat + " · profondeur " + virgule(m.profondeur, 1) + " m · vie " + m.vie + " / " + m.fiche.vie + " · prochaine " + (m.ia.plonge ? "remontée" : "plongée") + " dans " + virgule((m.ia.plonge ? m.fiche.sousLEau : m.fiche.aLaSurface) - m.ia.chrono, 0) + " s"]);
+      l.push(["Tes ordres (étape 65)"]);
+      const soldatsBleus = monde.soldats.filter((o) => o.equipe === "bleus" && !o.joueur && !o.mort);
+      const parOrdre = {};
+      for (const o of soldatsBleus) {
+        const t = Tanks.Ordres.enMots(o) || "pas d'ordre (ils se battent tout seuls)";
+        parOrdre[t] = (parOrdre[t] || 0) + 1;
+      }
+      for (const [t, n] of Object.entries(parOrdre)) l.push(["🪖 " + n + " soldat" + (n > 1 ? "s" : ""), t]);
       l.push(["Le ciel (étape 64)"]);
       for (const a of monde.avions) {
         const haut = Math.round(a.y - Tanks.Terrain.hauteur(a.x, a.z));
@@ -164,7 +176,7 @@ Tanks.SousLeCapot = (function () {
     }
     l.push(["Le dessin"], ["particules", Tanks.Effets.bilan.vivantes + " · épaves qui fument : " + Tanks.Effets.bilan.epaves + " · traits de balles : " + Tanks.Effets.bilan.balles], ["projectiles en vol", monde.obus.length ? Object.entries(monde.obus.reduce((n, p) => ((n[p.sorte] = (n[p.sorte] || 0) + 1), n), {})).map(([k, v]) => v + " " + k).join(", ") : "aucun"], ["entre deux pas", "le dessin est à " + Math.round(Tanks.Scene.entreDeuxPas() * 100) + " % entre l'avant-dernier pas et le dernier (interpolation)"], ["dessins", Tanks.Scene.dessins().soldats + " soldats, " + Tanks.Scene.dessins().engins + " engins"], ["la carte graphique", (Tanks.Scene.infos.triangles || 0).toLocaleString("fr-FR") + " triangles, " + (Tanks.Scene.infos.calls || 0) + " dessins par image"]);
     const S = Tanks.Sauvegarde.donnees;
-    l.push(["Le livret militaire (sauvegarde)"], ["victoires · défaites", S.victoires + " · " + S.defaites], ["tanks détruits", S.detruits], ["bateaux · sous-marins coulés", S.bateaux + " · " + S.sousMarins], ["passages de portail", S.portails], ["avions abattus", S.avions], ["obus tirés · au but", S.tirs + " · " + S.touches]);
+    l.push(["Le livret militaire (sauvegarde)"], ["victoires · défaites", S.victoires + " · " + S.defaites], ["tanks détruits", S.detruits], ["bateaux · sous-marins coulés", S.bateaux + " · " + S.sousMarins], ["passages de portail", S.portails], ["avions abattus", S.avions], ["ordres donnés", S.ordres], ["obus tirés · au but", S.tirs + " · " + S.touches]);
     return l;
   }
 

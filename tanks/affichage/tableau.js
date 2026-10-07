@@ -10,6 +10,8 @@
 // Sur la carte : les soldats (petits points) et les engins de ton camp.
 // Étape 62 : le LAC (en bleu) sur la carte, les BATEAUX, les PORTAILS (des ronds de leur couleur) ; au-dessus des
 // patrouilleurs ennemis, leur nom et leur vie ; dans ta vedette, son viseur, sa vie et son canon.
+// Étape 65 : quand tu donnes un ORDRE, la radio te répond (« 📻 Bravo : Bien reçu ! ») et rappelle ce qui a été
+// compris ; s'il n'a pas compris, des exemples ; l'ordre en cours reste écrit en haut, et au-dessus de chaque tank allié.
 // Étape 64 : les AVIONS (nom, distance, vie au-dessus de chacun ; un petit triangle sur la carte), les alertes
 // (« avions ennemis ! », « parachutistes ! ») ; dans la DCA, le viseur, le carré rouge sur l'avion visé et le petit rond
 // « tire ici » DEVANT l'avion (là où il sera quand l'obus arrivera).
@@ -21,7 +23,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.Tableau = (function () {
   const C = Tanks.CONFIG, T = Tanks.Terrain, E = C.equipes;
-  let ctx, L, H, carte = null, message = null;
+  let ctx, L, H, carte = null, message = null, reponse = null, ordreEnCours = null;
 
   function initialiser(toile) {
     ctx = toile.getContext("2d");
@@ -99,6 +101,17 @@ Tanks.Tableau = (function () {
     radio.ecouter("plongee", (d) => dire(d.toi ? "🐋 Plongée ! Les obus ne te touchent plus" : "🫧 " + d.nom + " plonge…", "#8fd3ff"));
     radio.ecouter("surface", (d) => dire(d.toi ? "🐋 Surface !" : "⚠️ " + d.nom + " fait surface : tire-lui dessus !", "#ffe27a"));
     radio.ecouter("torpille", (d) => d.surToi && dire("⚠️ TORPILLE ! Bouge !", "#ff7a6a"));
+    radio.ecouter("ordre", (d) => {
+      const qui = d.noms.length && !d.soldats ? d.noms.join(", ") : [d.tanks ? d.tanks + " tank" + (d.tanks > 1 ? "s" : "") : "", d.soldats ? d.soldats + " soldat" + (d.soldats > 1 ? "s" : "") : ""].filter(Boolean).join(" + ") || "personne";
+      ordreEnCours = { texte: "📢 « " + d.texte + " » → " + qui + (d.quoi ? " : " + d.quoi : ""), jusqua: performance.now() + 30000 };
+      dire(d.tanks + d.soldats ? "📢 " + qui + (d.quoi ? " " + d.quoi : "") : "📢 Personne pour obéir (ils sont tous tombés…)", "#ffe27a", 3500);
+      const parleur = d.noms[0] || "Radio";
+      reponse = { texte: "📻 " + parleur + " : " + d.reponse + (d.devines.length ? "  (j'ai compris " + d.devines.map(([a, b]) => "« " + b + " » pour « " + a + " »").join(", ") + ")" : ""), jusqua: performance.now() + 3500 };
+    });
+    radio.ecouter("ordre-incompris", (d) => {
+      dire("❓ Je n'ai pas compris « " + d.texte + " »", "#ffb37a", 5000);
+      reponse = { texte: "Essaie : " + d.exemples.slice(0, 5).join(" · "), jusqua: performance.now() + 5000 };
+    });
     radio.ecouter("avion-arrive", () => dire("✈️ Avion ennemi en approche !", "#ff9a8a"));
     radio.ecouter("bombardement", (d) => dire(d.cible === "toi" ? "💣 Un avion ennemi te bombarde ! BOUGE !" : "💣 Bombardement sur " + d.cible + " !", "#ff7a6a"));
     radio.ecouter("duel", () => dire("⚔️ Un chasseur ennemi te prend en chasse !", "#ff7a6a"));
@@ -357,6 +370,8 @@ Tanks.Tableau = (function () {
         continue;
       }
       texte((c.equipe === "bleus" ? "▼ " : "◆ ") + (c === j ? "ton tank" : c.nom) + (d > 120 ? " · " + Math.round(d) + " m" : ""), e.x, e.y - 8, 13, couleur, "center");
+      const ordre = c.equipe === "bleus" && c !== j ? Tanks.Ordres.enMots(c) : ""; // (étape 65 : son ordre)
+      if (ordre) texte("📢 " + ordre, e.x, e.y - 24, 11, "#ffe27a", "center");
       for (let k = 0; k < C.char.vie; k++) {
         ctx.fillStyle = k < c.vie ? couleur : "rgba(0,0,0,.45)";
         ctx.fillRect(e.x - 22 + k * 11, e.y - 2, 9, 4);
@@ -508,6 +523,10 @@ Tanks.Tableau = (function () {
     }
     // Les messages (touché, détruit…)
     if (message && performance.now() < message.jusqua && message.texte) texte(message.texte, L / 2, 110, 26, message.couleur, "center");
+    // (étape 65) la réponse de la radio, et l'ordre en cours (sous le compteur des soldats)
+    if (reponse && performance.now() < reponse.jusqua) texte(reponse.texte, L / 2, 140, 16, "#e8f0ff", "center");
+    const grandMessage = message && performance.now() < message.jusqua && message.texte;
+    if (ordreEnCours && performance.now() < ordreEnCours.jusqua && !Tanks.BarreOrdres.ouverte && !grandMessage) texte(ordreEnCours.texte, L / 2, 88, 13, "rgba(255,226,122,.9)", "center");
     // La fin de la bataille
     if (monde.phase === "victoire" || monde.phase === "defaite") {
       const gagne = monde.phase === "victoire";
@@ -520,7 +539,7 @@ Tanks.Tableau = (function () {
       texte("Entrée : garage · R : rejouer", L / 2, H / 2 + 56, 17, "#ffe27a", "center");
     } else {
       const aide = {
-        char: "↑ ↓ ← → rouler · Q / D tourelle · Espace tirer · E sortir · C caméra · R recommencer",
+        char: "↑ ↓ ← → rouler · Q / D tourelle · Espace tirer · E sortir · T ordre · C caméra · R recommencer",
         pied: t.soldat && t.soldat.nage ? "↑ ↓ nager · ← → tourner · (pas de tir dans l'eau)" : "↑ ↓ marcher · ← → tourner · Espace tirer · 1 2 3 armes · E monter",
         jeep: "↑ ↓ ← → rouler · Q / D mitrailleuse · Espace tirer · E descendre (arrêté)",
         helico: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · Espace bombe · E descendre (posé)",

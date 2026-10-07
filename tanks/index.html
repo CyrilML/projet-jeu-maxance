@@ -20,6 +20,12 @@
     #ecran2d { outline: none; touch-action: none; }
     #pause { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 2.4rem; font-weight: bold; background: rgba(0,0,0,.35); pointer-events: none; }
     #pause[hidden] { display: none; }
+    #barre-ordres { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: min(760px, 94%); background: rgba(14,18,12,.88); border: 2px solid var(--accent); border-radius: 12px; padding: 8px 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; z-index: 5; }
+    #barre-ordres[hidden] { display: none; }
+    #barre-ordres label { font-weight: bold; color: var(--accent); }
+    #barre-ordres input { flex: 1; min-width: 200px; font: inherit; font-size: 1.05rem; color: var(--texte); background: #0c100a; border: 1px solid var(--bord); border-radius: 8px; padding: 6px 10px; outline: none; }
+    #exemples-ordres { width: 100%; display: flex; flex-wrap: wrap; gap: 5px; }
+    #exemples-ordres button { font-size: .75rem; font-weight: normal; padding: 2px 8px; border-radius: 14px; background: #2c3a24; }
     .tactile { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0 6px; }
     button { font: inherit; font-weight: bold; color: var(--texte); background: #3a2d1d; border: 1px solid var(--bord); border-radius: 10px; padding: 8px 14px; cursor: pointer; -webkit-user-select: none; user-select: none; touch-action: none; }
     button:hover { filter: brightness(1.2); }
@@ -46,6 +52,8 @@
     #journal li[data-evenement="abattu"] { color: var(--accent); font-weight: bold; }
     #journal li[data-evenement="bombardement"], #journal li[data-evenement="missile-ennemi"], #journal li[data-evenement="duel"] { color: #ff9b9b; }
     #journal li[data-evenement="parachutistes"] { color: #c9e4ff; }
+    #journal li[data-evenement="ordre"] { color: var(--accent); }
+    #journal li[data-evenement="ordre-incompris"] { color: #ffb37a; }
     #journal li[data-evenement="plongee"], #journal li[data-evenement="surface"], #journal li[data-evenement="torpille"], #journal li[data-evenement="nage"] { color: #8fd3ff; }
     #journal li[data-evenement="tir-bateau"], #journal li[data-evenement="echoue"] { color: #8fd3ff; }
     #journal li[data-evenement="monter"], #journal li[data-evenement="sortir"], #journal li[data-evenement="ejection"] { color: #9cc4ff; }
@@ -56,12 +64,17 @@
   <div class="page">
     <header class="entete">
       <h1>🛡️ Les tanks de Maxance · bataille de tanks, soldats, engins, bateaux, sous-marins, avions et portails</h1>
-      <span><span id="version" class="version"></span> <a href="../index.html#etape64">📓 Ouvrir le carnet (étapes 60 à 64)</a></span>
+      <span><span id="version" class="version"></span> <a href="../index.html#etape65">📓 Ouvrir le carnet (étapes 60 à 65)</a></span>
     </header>
 
     <div class="cadre-ecran">
       <canvas id="ecran3d" width="1280" height="720" aria-hidden="true"></canvas>
       <canvas id="ecran2d" width="1280" height="720" tabindex="0" aria-label="Écran de jeu : le champ de bataille et ton tank"></canvas>
+      <div id="barre-ordres" hidden>
+        <label for="ordre">📢 Ton ordre :</label>
+        <input id="ordre" type="text" autocomplete="off" spellcheck="false" maxlength="120" placeholder="Écris ton ordre… (Entrée : envoyer · Échap : annuler · ↑ : le dernier)">
+        <div id="exemples-ordres" aria-label="Exemples d'ordres"></div>
+      </div>
       <div id="pause" hidden>⏸️ Pause (Échap pour reprendre)</div>
     </div>
 
@@ -73,6 +86,7 @@
       <button data-tenir="tourelleGauche">↺ tourelle</button>
       <button data-tenir="tirer">🔥 TIRER</button>
       <button data-tenir="tourelleDroite">tourelle ↻</button>
+      <button data-appuyer="ordre">📢 T ordre</button>
       <button data-appuyer="monter">E monter / sortir</button>
       <button data-appuyer="arme1">1 🔫</button>
       <button data-appuyer="arme2">2 🔫🔫</button>
@@ -80,7 +94,7 @@
       <button data-appuyer="valider">Entrée</button>
       <button data-appuyer="camera">C caméra</button>
     </div>
-    <p class="commandes"><kbd>↑</kbd> <kbd>↓</kbd> avancer / reculer · <kbd>←</kbd> <kbd>→</kbd> tourner le tank · <kbd>Q</kbd> <kbd>D</kbd> tourner la tourelle · <kbd>Espace</kbd> tirer · <kbd>E</kbd> sortir du tank / monter dans un engin · à pied : <kbd>1</kbd> pistolet <kbd>2</kbd> mitrailleuse <kbd>3</kbd> lance-roquettes · hélico et drone : <kbd>Q</kbd> monter <kbd>D</kbd> descendre · avion : <kbd>↑</kbd> piquer <kbd>↓</kbd> cabrer, <kbd>E</kbd> s'éjecter · vedette (au bord du lac) : <kbd>Q</kbd> <kbd>D</kbd> canon · DCA : <kbd>←</kbd> <kbd>→</kbd> tourner, <kbd>↑</kbd> <kbd>↓</kbd> lever, <kbd>Espace</kbd> tirer · sous-marin : <kbd>D</kbd> plonger <kbd>Q</kbd> remonter, <kbd>Espace</kbd> torpille · 🌀 entre dans un portail pour ressortir à l'autre bout · <kbd>C</kbd> caméra · <kbd>B</kbd> son · <kbd>R</kbd> recommencer · <kbd>Échap</kbd> pause · <kbd>⌫</kbd> garage</p>
+    <p class="commandes"><kbd>↑</kbd> <kbd>↓</kbd> avancer / reculer · <kbd>←</kbd> <kbd>→</kbd> tourner le tank · <kbd>Q</kbd> <kbd>D</kbd> tourner la tourelle · <kbd>Espace</kbd> tirer · <kbd>T</kbd> 📢 écrire un ordre à ton camp · <kbd>E</kbd> sortir du tank / monter dans un engin · à pied : <kbd>1</kbd> pistolet <kbd>2</kbd> mitrailleuse <kbd>3</kbd> lance-roquettes · hélico et drone : <kbd>Q</kbd> monter <kbd>D</kbd> descendre · avion : <kbd>↑</kbd> piquer <kbd>↓</kbd> cabrer, <kbd>E</kbd> s'éjecter · vedette (au bord du lac) : <kbd>Q</kbd> <kbd>D</kbd> canon · DCA : <kbd>←</kbd> <kbd>→</kbd> tourner, <kbd>↑</kbd> <kbd>↓</kbd> lever, <kbd>Espace</kbd> tirer · sous-marin : <kbd>D</kbd> plonger <kbd>Q</kbd> remonter, <kbd>Espace</kbd> torpille · 🌀 entre dans un portail pour ressortir à l'autre bout · <kbd>C</kbd> caméra · <kbd>B</kbd> son · <kbd>R</kbd> recommencer · <kbd>Échap</kbd> pause · <kbd>⌫</kbd> garage</p>
 
     <section class="capot" aria-label="Sous le capot">
       <div class="bloc">
@@ -97,31 +111,33 @@
   </div>
 
   <script src="../circuit/vendor/three.min.js"></script>
-  <script src="config.js?v=5"></script>
-  <script src="moteur/evenements.js?v=5"></script>
-  <script src="moteur/bruit.js?v=5"></script>
-  <script src="moteur/entrees.js?v=5"></script>
-  <script src="logique/terrain.js?v=5"></script>
-  <script src="logique/char.js?v=5"></script>
-  <script src="logique/obus.js?v=5"></script>
-  <script src="logique/ia.js?v=5"></script>
-  <script src="logique/soldat.js?v=5"></script>
-  <script src="logique/troupes.js?v=5"></script>
-  <script src="logique/bateaux.js?v=5"></script>
-  <script src="logique/portails.js?v=5"></script>
-  <script src="logique/sousmarins.js?v=5"></script>
-  <script src="logique/avions.js?v=5"></script>
-  <script src="logique/engins.js?v=5"></script>
-  <script src="donnees/sauvegarde.js?v=5"></script>
-  <script src="logique/monde.js?v=5"></script>
-  <script src="affichage/chars3d.js?v=5"></script>
-  <script src="affichage/engins3d.js?v=5"></script>
-  <script src="affichage/decor.js?v=5"></script>
-  <script src="affichage/effets.js?v=5"></script>
-  <script src="affichage/scene.js?v=5"></script>
-  <script src="affichage/tableau.js?v=5"></script>
-  <script src="affichage/sous-le-capot.js?v=5"></script>
-  <script src="affichage/sons.js?v=5"></script>
-  <script src="main.js?v=5"></script>
+  <script src="config.js?v=6"></script>
+  <script src="moteur/evenements.js?v=6"></script>
+  <script src="moteur/bruit.js?v=6"></script>
+  <script src="moteur/entrees.js?v=6"></script>
+  <script src="logique/terrain.js?v=6"></script>
+  <script src="logique/char.js?v=6"></script>
+  <script src="logique/obus.js?v=6"></script>
+  <script src="logique/ia.js?v=6"></script>
+  <script src="logique/soldat.js?v=6"></script>
+  <script src="logique/troupes.js?v=6"></script>
+  <script src="logique/bateaux.js?v=6"></script>
+  <script src="logique/portails.js?v=6"></script>
+  <script src="logique/sousmarins.js?v=6"></script>
+  <script src="logique/avions.js?v=6"></script>
+  <script src="logique/ordres.js?v=6"></script>
+  <script src="logique/engins.js?v=6"></script>
+  <script src="donnees/sauvegarde.js?v=6"></script>
+  <script src="logique/monde.js?v=6"></script>
+  <script src="affichage/chars3d.js?v=6"></script>
+  <script src="affichage/engins3d.js?v=6"></script>
+  <script src="affichage/decor.js?v=6"></script>
+  <script src="affichage/effets.js?v=6"></script>
+  <script src="affichage/scene.js?v=6"></script>
+  <script src="affichage/tableau.js?v=6"></script>
+  <script src="affichage/sous-le-capot.js?v=6"></script>
+  <script src="affichage/sons.js?v=6"></script>
+  <script src="affichage/barre-ordres.js?v=6"></script>
+  <script src="main.js?v=6"></script>
 </body>
 </html>
