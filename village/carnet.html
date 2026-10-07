@@ -148,6 +148,7 @@
       <a href="#etape22">Étape 22</a>
       <a href="#etape23">Étape 23</a>
       <a href="#etape24">Étape 24</a>
+      <a href="#etape25">Étape 25</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1596,6 +1597,53 @@ ex. l'entrepôt principal (4 places) qui livre 18 bâtiments : 4 + 18 ÷ 4 = 4 +
       <details class="question"><summary>Une ferme (bloc de 2 × 2 + 2 cases de champs) : combien de cases en tout ?</summary><p>4 + 2 = 6 cases.</p></details>
     </section>
 
+    <section id="etape25">
+      <h2>🎨 Étape 25 : une silhouette par métier, et l'inventaire 🎒 <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les bâtiments n'étaient que des boîtes avec un toit à deux pentes : seules les couleurs changeaient. Maintenant, chaque métier a sa <strong>forme</strong> : une tour, une colline, une tente, une grue, un dôme… Et la barre du stock est redevenue petite : tout le reste est dans l'inventaire, en pleine page. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/26-silhouettes-inventaire.md</code>.</p>
+          <ul>
+            <li>✍️ « La forme des bâtiments reste toujours pareille : difficile de les distinguer. Tu peux mieux faire. »</li>
+            <li>✍️ « L'inventaire est trop large : une touche inventaire, en pleine page, et quand on clique sur une icône, ça dit ce que c'est. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Dézoome : reconnais-tu chaque bâtiment à sa forme ?</li>
+            <li>☐ La barre du haut : 5 ressources, 🪙 et le bouton 🎒.</li>
+            <li>☐ Touche <kbd>I</kbd> (ou 🎒) : l'inventaire en pleine page ; <kbd>I</kbd> ou <kbd>Échap</kbd> le ferme.</li>
+            <li>☐ Touche une icône : sa fiche (ce que c'est, qui la fabrique, à quoi elle sert).</li>
+            <li>Vérifie « version 26 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>👀 La silhouette : ce qu'on voit de loin</h3>
+      <p>Quand on est loin, on ne voit plus les détails (les fenêtres, les outils devant la porte) : on voit seulement le <strong>contour</strong> du bâtiment, sa silhouette. Si toutes les silhouettes sont les mêmes, l'œil ne peut pas les trier. Les dessinateurs de jeux font ce test : ils remplissent chaque bâtiment en noir et regardent si on le reconnaît encore.</p>
+      <pre style="white-space: pre-wrap">avant :  🏠 🏠 🏠 🏠 🏠   (la même boîte, 5 couleurs)
+après :  ⛺ tipi   🗼 tour du moulin   ⛰️ colline de la mine   🏗️ grue   🕌 dôme   🏭 cheminée d'usine</pre>
+      <p>Il y a maintenant <strong>6 formes de toit</strong> : à deux pentes, en pavillon (4 pentes, sans pignon), de grange (cassé en deux), en appentis (une seule pente), en voûte (arrondi) et plat. Et de grands morceaux qui dépassent. Chaque modèle de bâtiment a un réglage <code>toitForme</code> ; un seul dessinateur, <code>structure</code>, choisit la forme.</p>
+
+      <h3>🎒 L'inventaire : une fiche calculée</h3>
+      <p>Pour chaque ressource, la fiche dit qui la fabrique et à quoi elle sert. Ces lignes ne sont pas écrites à la main : le jeu les <strong>calcule</strong> en lisant ses propres règles (les recettes des ateliers, les prix des bâtiments, le marché). Si on ajoute un atelier demain, sa fiche sera juste toute seule. Seule la phrase « ce que c'est » est écrite (le réglage <code>info</code> de chaque ressource dans <code>config.js</code>).</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+        <li>Ouvre l'inventaire et touche 🥛 le lait : combien de bâtiments s'en servent ?</li>
+        <li>Touche une ressource avec un 🔒 : à quel âge la découvriras-tu ?</li>
+        <li>Construis un moulin et une mine : à quelle distance de zoom les reconnais-tu encore ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi les couleurs ne suffisaient-elles pas pour reconnaître les bâtiments ?</summary><p>De loin, on voit surtout le contour (la silhouette). Deux boîtes de couleurs différentes ont le même contour.</p></details>
+      <details class="question"><summary>Un toit en appentis, c'est combien de pentes ?</summary><p>Une seule (comme une cabane appuyée contre un mur).</p></details>
+      <details class="question"><summary>Si on ajoute un nouvel atelier qui utilise du lait, faut-il changer la fiche du lait ?</summary><p>Non : la fiche est calculée à partir des recettes. Elle se met à jour toute seule.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1745,8 +1793,14 @@ ex. l'entrepôt principal (4 places) qui livre 18 bâtiments : 4 + 18 ÷ 4 = 4 +
           <p>Des bâtiments sur 2 × 2 cases, une carte de 96 × 96, 1 porteur en plus pour 4 bâtiments livrés, 4 entrepôts secondaires.</p>
           <p class="apprend"><b>Tu apprends :</b> une règle qui s'adapte, un bloc de cases. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">25</div>
+          <h4>🎨 Une silhouette par métier, et l'inventaire 🎒 <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>6 formes de toit, des tours, une colline, une grue, un dôme… et l'inventaire en pleine page avec la fiche de chaque ressource.</p>
+          <p class="apprend"><b>Tu apprends :</b> la silhouette, une fiche calculée à partir des règles. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">26</div>
           <h4>🏙️ La ville : monuments, fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -1955,6 +2009,14 @@ ex. l'entrepôt principal (4 places) qui livre 18 bâtiments : 4 + 18 ÷ 4 = 4 +
         <textarea class="journal" id="village-appris-24" data-cle="village-appris-24" placeholder="Ex. : J'ai appris qu'une règle peut s'adapter à la taille du village…"></textarea>
         <label for="village-idees-24"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-24" data-cle="village-idees-24" placeholder="Ex. : Des chevaux pour les porteurs…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 25 · une silhouette par métier, et l'inventaire <span class="petit">· 7 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> l'architecte (<code>structure</code>, <code>toitVariante</code>, <code>tourRonde</code> dans batisses.js) avec 6 formes de toit et une silhouette par métier ; la barre du stock réduite aux ressources de base ; l'inventaire 🎒 en pleine page (touche I) avec la fiche calculée de chaque ressource (<code>ficheRessource</code>) et son texte <code>info</code>.</p>
+        <label for="village-appris-25"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-25" data-cle="village-appris-25" placeholder="Ex. : J'ai appris qu'on reconnaît un bâtiment de loin à sa silhouette…"></textarea>
+        <label for="village-idees-25"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-25" data-cle="village-idees-25" placeholder="Ex. : Une silhouette spéciale pour les monuments…"></textarea>
       </div>
     </section>
   </main>

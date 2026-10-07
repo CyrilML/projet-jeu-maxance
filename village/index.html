@@ -64,7 +64,7 @@
   <div class="page">
     <header class="entete">
       <h1>🏘️ Le village de Maxance · un jeu de gestion</h1>
-      <span><span id="version" class="version"></span> <a href="carnet.html#etape24">📓 Ouvrir le carnet du village</a></span>
+      <span><span id="version" class="version"></span> <a href="carnet.html#etape25">📓 Ouvrir le carnet du village</a></span>
     </header>
 
     <div class="cadre-ecran">
@@ -83,6 +83,7 @@
       <button data-action="route">〰️ Chemin <kbd>R</kbd></button>
       <button data-action="demolir">🧹 Démolir <kbd>Suppr</kbd></button>
       <button data-action="village">🏠 Le village <kbd>H</kbd></button>
+      <button data-action="inventaire">🎒 Inventaire <kbd>I</kbd></button>
       <button data-action="zoomPlus">➕ Zoom <kbd>+</kbd></button>
       <button data-action="zoomMoins">➖ Zoom <kbd>−</kbd></button>
       <button data-action="nouvelleCarte">🎲 Nouvelle carte <kbd>G</kbd></button>
@@ -91,7 +92,7 @@
       <button data-action="pasSuivant">⏭ Un pas <kbd>N</kbd></button>
       <button data-action="ralenti" data-option="ralenti" aria-pressed="false">🐢 Ralenti <kbd>L</kbd></button>
     </div>
-    <p class="commandes">Se déplacer : <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> ou <kbd>Z</kbd> <kbd>Q</kbd> <kbd>S</kbd> <kbd>D</kbd>, ou tirer la carte · Zoomer : molette, <kbd>+</kbd> <kbd>−</kbd>, ou pincer avec 2 doigts · Construire : <kbd>1</kbd> à <kbd>7</kbd> ou le menu en bas (🪵 Bois, 🪨 Pierre, 🍖 Nourriture) ou les boutons en bas de l'écran, puis une case · Route : <kbd>R</kbd>, touche le départ puis l'arrivée · Déplacer : <kbd>M</kbd> · Démolir : <kbd>Suppr</kbd> · <kbd>Échap</kbd> annuler · Toucher un bâtiment : voir ce qu'il fait · En haut à droite : 📜 missions, 💎 boutique, 📊 statistiques, 🏪 marché</p>
+    <p class="commandes">Se déplacer : <kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd> ou <kbd>Z</kbd> <kbd>Q</kbd> <kbd>S</kbd> <kbd>D</kbd>, ou tirer la carte · Zoomer : molette, <kbd>+</kbd> <kbd>−</kbd>, ou pincer avec 2 doigts · Construire : <kbd>1</kbd> à <kbd>7</kbd> ou le menu en bas (🪵 Bois, 🪨 Pierre, 🍖 Nourriture) ou les boutons en bas de l'écran, puis une case · Route : <kbd>R</kbd>, touche le départ puis l'arrivée · Déplacer : <kbd>M</kbd> · Démolir : <kbd>Suppr</kbd> · <kbd>Échap</kbd> annuler · 🎒 Inventaire : <kbd>I</kbd> · Toucher un bâtiment : voir ce qu'il fait · En haut à droite : 📜 missions, 💎 boutique, 📊 statistiques, 🏪 marché</p>
 
     <section class="capot" aria-label="Sous le capot">
       <div class="bloc">
@@ -117,45 +118,45 @@
 
   <!-- L'ordre compte : chaque fichier peut utiliser ceux chargés AVANT lui.
        Le « ?v=15 » est le numéro de version : on l'augmente à chaque livraison (ici ET dans config.js). -->
-  <script src="config.js?v=25"></script>
-  <script src="moteur/evenements.js?v=25"></script>
-  <script src="moteur/ecran.js?v=25"></script>
-  <script src="moteur/entrees.js?v=25"></script>
-  <script src="moteur/hasard.js?v=25"></script>
-  <script src="moteur/iso.js?v=25"></script>
-  <script src="moteur/chemins.js?v=25"></script>
-  <script src="logique/carte.js?v=25"></script>
-  <script src="logique/ouvriers.js?v=25"></script>
-  <script src="logique/batiments.js?v=25"></script>
-  <script src="logique/routes.js?v=25"></script>
-  <script src="logique/porteurs.js?v=25"></script>
-  <script src="logique/saisons.js?v=25"></script>
-  <script src="logique/animaux.js?v=25"></script>
-  <script src="logique/repas.js?v=25"></script>
-  <script src="logique/ages.js?v=25"></script>
-  <script src="logique/recherches.js?v=25"></script>
-  <script src="logique/missions.js?v=25"></script>
-  <script src="logique/boutique.js?v=25"></script>
-  <script src="logique/logement.js?v=25"></script>
-  <script src="logique/marche.js?v=25"></script>
-  <script src="logique/statistiques.js?v=25"></script>
-  <script src="logique/reserve.js?v=25"></script>
-  <script src="logique/publicite.js?v=25"></script>
-  <script src="logique/placement.js?v=25"></script>
-  <script src="logique/ameliorations.js?v=25"></script>
-  <script src="logique/villageois.js?v=25"></script>
-  <script src="logique/elevage.js?v=25"></script>
-  <script src="logique/bonheur.js?v=25"></script>
-  <script src="logique/classes.js?v=25"></script>
-  <script src="logique/monde.js?v=25"></script>
-  <script src="donnees/sauvegarde.js?v=25"></script>
-  <script src="affichage/effets.js?v=25"></script>
-  <script src="affichage/batisses.js?v=25"></script>
-  <script src="affichage/vie.js?v=25"></script>
-  <script src="affichage/interface.js?v=25"></script>
-  <script src="affichage/peintre.js?v=25"></script>
-  <script src="affichage/rayons-x.js?v=25"></script>
-  <script src="affichage/sous-le-capot.js?v=25"></script>
-  <script src="main.js?v=25"></script>
+  <script src="config.js?v=26"></script>
+  <script src="moteur/evenements.js?v=26"></script>
+  <script src="moteur/ecran.js?v=26"></script>
+  <script src="moteur/entrees.js?v=26"></script>
+  <script src="moteur/hasard.js?v=26"></script>
+  <script src="moteur/iso.js?v=26"></script>
+  <script src="moteur/chemins.js?v=26"></script>
+  <script src="logique/carte.js?v=26"></script>
+  <script src="logique/ouvriers.js?v=26"></script>
+  <script src="logique/batiments.js?v=26"></script>
+  <script src="logique/routes.js?v=26"></script>
+  <script src="logique/porteurs.js?v=26"></script>
+  <script src="logique/saisons.js?v=26"></script>
+  <script src="logique/animaux.js?v=26"></script>
+  <script src="logique/repas.js?v=26"></script>
+  <script src="logique/ages.js?v=26"></script>
+  <script src="logique/recherches.js?v=26"></script>
+  <script src="logique/missions.js?v=26"></script>
+  <script src="logique/boutique.js?v=26"></script>
+  <script src="logique/logement.js?v=26"></script>
+  <script src="logique/marche.js?v=26"></script>
+  <script src="logique/statistiques.js?v=26"></script>
+  <script src="logique/reserve.js?v=26"></script>
+  <script src="logique/publicite.js?v=26"></script>
+  <script src="logique/placement.js?v=26"></script>
+  <script src="logique/ameliorations.js?v=26"></script>
+  <script src="logique/villageois.js?v=26"></script>
+  <script src="logique/elevage.js?v=26"></script>
+  <script src="logique/bonheur.js?v=26"></script>
+  <script src="logique/classes.js?v=26"></script>
+  <script src="logique/monde.js?v=26"></script>
+  <script src="donnees/sauvegarde.js?v=26"></script>
+  <script src="affichage/effets.js?v=26"></script>
+  <script src="affichage/batisses.js?v=26"></script>
+  <script src="affichage/vie.js?v=26"></script>
+  <script src="affichage/interface.js?v=26"></script>
+  <script src="affichage/peintre.js?v=26"></script>
+  <script src="affichage/rayons-x.js?v=26"></script>
+  <script src="affichage/sous-le-capot.js?v=26"></script>
+  <script src="main.js?v=26"></script>
 </body>
 </html>

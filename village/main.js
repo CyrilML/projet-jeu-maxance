@@ -120,6 +120,7 @@
         else if (z.action === "objectifs") Village.Interface.basculerObjectifs(); // étape 6 : les objectifs de l'âge
         else if (z.action === "panneau") Village.Interface.basculerPanneau(z.valeur); // étape 7 : missions, boutique
         else if (z.action === "fermerPanneau") Village.Interface.fermerPanneau();
+        else if (z.action === "inventaire") Village.Interface.choisirInventaire(z.valeur); // étape 25 : ce que c'est
         else if (z.action === "recherche") i.recherche = z.valeur;
         else if (z.action === "info") Village.Interface.info(z.valeur); // étape 17 : ce qui manque
         else if (z.action === "pageUniversite") Village.Interface.changerPage(z.valeur); // étape 21 : les pages de l'université
@@ -156,10 +157,12 @@
     if (E.consommer("rayonsX")) options.rayonsX = !options.rayonsX;
     if (E.consommer("pause")) options.pause = !options.pause;
     if (E.consommer("ralenti")) options.ralenti = !options.ralenti;
+    if (E.consommer("inventaire")) Village.Interface.basculerPanneau("inventaire"); // étape 25
     // Échap : d'abord annuler ce qu'on est en train de faire ; s'il n'y a rien à annuler, pause.
     let annuler = false;
     if (E.consommer("annuler")) {
-      if (monde.construction || monde.selection || monde.outil || monde.projet) annuler = true;
+      if (Village.Interface.panneauOuvert) Village.Interface.fermerPanneau(); // étape 25 : Échap ferme d'abord le panneau (l'inventaire…)
+      else if (monde.construction || monde.selection || monde.outil || monde.projet) annuler = true;
       else options.pause = !options.pause;
     }
     if (E.consommer("nouvelleCarte")) {

@@ -6,7 +6,8 @@
 //   - en haut à droite : le bouton plein écran ⛶ et la mini-carte ;
 //   - en bas : les gros BOUTONS de construction (assez gros pour un doigt : au moins 56 points) ;
 //   - le panneau du bâtiment touché, et les messages d'aide ;
-//   - (étape 8) le marché 🏪 et les statistiques 📊.
+//   - (étape 8) le marché 🏪 et les statistiques 📊 ;
+//   - (étape 25) l'inventaire 🎒 en pleine page.
 //
 // Il se souvient de l'endroit où il a dessiné chaque bouton (les ZONES). Quand on touche l'écran,
 // main.js lui demande « y a-t-il un bouton ici ? » avant de donner le clic à la carte.
@@ -29,7 +30,7 @@ Village.Interface = (function () {
   // Les messages importants de la radio s'affichent aussi dans le jeu (sur téléphone, on ne voit pas le journal).
   Village.Evenements.ecouter("construction-impossible", (d) => afficher("🚫 " + d.nom + " : " + d.raison));
   Village.Evenements.ecouter("chantier-fini", (d) => afficher("🎉 " + d.nom + " est construit" + (d.metier ? " : le " + d.metier + " se met au travail !" : " !")));
-  Village.Evenements.ecouter("rien-a-faire", (d) => /maçon/.test(d.nom) || afficher("😴 " + d.nom + " : pas de " + d.quoi.replace(/^une? /, "") + " à moins de " + d.rayon + " pas"));
+  Village.Evenements.ecouter("rien-a-faire", (d) => /maçon/.test(d.nom) || afficher("😴 " + d.nom + " : pas de " + d.quoi.replace(/^(une?|des) /, "") + " à moins de " + d.rayon + " pas"));
   Village.Evenements.ecouter("route-impossible", (d) => afficher("🚫 Route : " + d.raison));
   Village.Evenements.ecouter("demolition-impossible", (d) => afficher("🚫 " + d.raison));
   // (Étape 22 : ✍️ plus de message « relié à l'entrepôt » : c'est normal, ça ne sert à rien de le dire. On prévient seulement quand c'est coupé.)
@@ -199,6 +200,96 @@ Village.Interface = (function () {
   function info(t) { afficher(t); } // étape 17 : toucher un bouton grisé dit pourquoi
   function basculerPanneau(nom) { panneau = panneau === nom ? null : nom; objectifsOuverts = false; }
   function fermerPanneau() { panneau = null; }
+
+  // 🎒 Étape 25 : ✍️ « une touche inventaire où il s'ouvre en pleine page, et quand on clique sur une icône, ça nous
+  // dit ce que c'est ». Les ressources sont rangées par familles (config.js : « inventaire »). Toucher une case la
+  // choisit : en bas, sa fiche (ce que c'est, qui la fabrique, à quoi elle sert). Les ressources d'un âge pas encore
+  // atteint sont grisées, avec un cadenas : on voit ce qui nous attend.
+  let choixInventaire = null;
+  function choisirInventaire(r) { choixInventaire = choixInventaire === r ? null : r; }
+  function ficheRessource(monde, r) { // les lignes de la fiche, calculées à partir des règles du jeu (config.js)
+    const B = Village.Batiments, nom = (t) => B.TYPES[t].emoji + " " + B.TYPES[t].court, lignes = [];
+    const par = Object.entries(B.SORTIES).filter(([, q]) => q === r).map(([t]) => nom(t));
+    if (par.length) lignes.push("🏭 Fabriqué par : " + par.join(", "));
+    const ateliers = Object.entries(C.ateliers).filter(([, a]) => a.entrees[r]).map(([t]) => nom(t));
+    if (ateliers.length) lignes.push("🔧 Sert à : " + ateliers.join(", "));
+    const chantiers = Object.keys(C.batiments).filter((t) => B.TYPES[t] && (C.batiments[t].cout || {})[r]);
+    if (chantiers.length) lignes.push("🏗️ Pour construire " + chantiers.length + " bâtiment(s) : " + chantiers.slice(0, 5).map(nom).join(", ") + (chantiers.length > 5 ? "…" : ""));
+    const plus = [];
+    if (Village.Repas.NOURRITURE.includes(r)) plus.push("🍽️ se mange aux repas");
+    if (C.douceurs.includes(r)) plus.push("😊 un goût de plus pour le bonheur");
+    if (r === "vetements") plus.push("👕 les habitants s'en habillent (bonheur)");
+    if (C.marche.prix[r]) plus.push("🏪 se vend " + C.marche.prix[r] + " 🪙 environ au marché");
+    if (plus.length) lignes.push(plus.join(" · "));
+    return lignes;
+  }
+  function panneauInventaire(ctx, monde, W, He, petit) {
+    const x = 10, y = 10, l = W - 20, h = He - 20;
+    bulle(ctx, x, y, l, h, "rgba(255, 250, 235, .985)");
+    zone(x, y, l, h, "rien");
+    texte(ctx, "🎒 Inventaire", x + 14, y + 22, petit ? 16 : 19, "#3b2614", true);
+    texte(ctx, "🪙 " + monde.pieces + "   💎 " + monde.gemmes, x + l - 46, y + 22, petit ? 12 : 14, "#3b2614", true, "right");
+    croix(ctx, x, y, l, "fermerPanneau");
+    texte(ctx, l < 600 ? "Touche une icône : ce que c'est." : "Touche une icône pour savoir ce que c'est.  ·  Le chiffre : ce qui est libre (pas encore promis à un chantier).  ·  Touche I pour fermer.", x + 14, y + 42, petit ? 10 : 11, "#7a5a30");
+    // Les cases : aussi grandes que possible. Sur un grand écran, le nom de la famille est à gauche de sa rangée ;
+    // sur un téléphone, il est au-dessus.
+    const familles = C.inventaire.familles, ec = 6, aGauche = l >= 640, lNom = aGauche ? 150 : 0, l0 = l - 28 - lNom, place = h - 56 - 10;
+    let lc = 96, parRangee = 1;
+    const hauteur = (c) => { parRangee = Math.max(1, Math.floor((l0 + ec) / (c + ec))); return familles.reduce((tot, f) => tot + (aGauche ? 0 : 20) + Math.ceil(f.ressources.length / parRangee) * (c * 0.9 + ec) + 6, 0); };
+    while (lc > 38 && hauteur(lc) > place) lc -= 2;
+    hauteur(lc);
+    const hc = lc * 0.9;
+    let cy = y + 56, caseChoisie = null;
+    for (const f of familles) {
+      if (aGauche) texteLong(ctx, f.nom, x + 14, cy + hc / 2 - 8, lNom - 14, 13, "#5a4220", 16);
+      else { texte(ctx, f.nom, x + 14, cy + 8, petit ? 11 : 13, "#5a4220", true); cy += 20; }
+      f.ressources.forEach((r, n) => {
+        const cx = x + 14 + lNom + (n % parRangee) * (lc + ec), ry = cy + Math.floor(n / parRangee) * (hc + ec);
+        const vu = visible(monde, r), choisi = choixInventaire === r;
+        if (choisi) caseChoisie = ry + hc / 2;
+        ctx.fillStyle = choisi ? "#ffe27a" : vu ? "#fffaf0" : "#e9e1d2"; ctx.strokeStyle = choisi ? "#ff8a1f" : "#c9b48f"; ctx.lineWidth = choisi ? 3 : 1.5;
+        ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(cx, ry, lc, hc, 10); else ctx.rect(cx, ry, lc, hc); ctx.fill(); ctx.stroke();
+        const avecNom = lc >= 64;
+        if (vu) {
+          Village.Batisses.icone(ctx, r, cx + lc / 2, ry + hc * (avecNom ? 0.3 : 0.36), lc * 0.36);
+          const libre = Math.max(0, Village.Porteurs.disponible(monde, r));
+          texte(ctx, String(libre), cx + lc / 2, ry + hc * (avecNom ? 0.64 : 0.76), Math.max(11, lc * 0.17), libre > 0 ? "#3b2614" : "#a08a6a", true, "center");
+          if (avecNom) texte(ctx, C.ressources[r].nom.replace("minerai de ", "").replace(/^(seaux|bottes|bidons|mottes|pots|pelotes|rouleaux) d(e |')/, ""), cx + lc / 2, ry + hc * 0.86, 10, "#7a5a30", false, "center");
+        } else {
+          const age = C.ages[C.ressources[r].age || 0];
+          texte(ctx, "🔒", cx + lc / 2, ry + hc * 0.38, lc * 0.24, null, false, "center");
+          texte(ctx, age.emoji, cx + lc / 2, ry + hc * 0.74, lc * 0.17, null, false, "center");
+        }
+        zone(cx, ry, lc, hc, "inventaire", r);
+      });
+      cy += Math.ceil(f.ressources.length / parRangee) * (hc + ec) + 6;
+    }
+    // La fiche de la ressource choisie : par-dessus les cases, en bas (ou en haut si la case choisie est en bas)
+    const r = choixInventaire;
+    if (!r) return;
+    const R = C.ressources[r], lf = Math.min(l - 20, 620), hFiche = petit ? 150 : 130, xf = x + (l - lf) / 2;
+    const yFiche = caseChoisie !== null && caseChoisie > y + h * 0.55 ? y + 50 : y + h - hFiche - 10;
+    bulle(ctx, xf, yFiche, lf, hFiche, "rgba(255, 246, 222, .99)");
+    zone(xf, yFiche, lf, hFiche, "inventaire", r); // toucher la fiche la ferme
+    texte(ctx, "✖", xf + lf - 16, yFiche + 16, 13, "#a08a6a", true, "center");
+    const tx = xf + 58, lt = lf - 76;
+    Village.Batisses.icone(ctx, r, xf + 30, yFiche + 30, 34);
+    if (!visible(monde, r)) {
+      const age = C.ages[R.age || 0];
+      texte(ctx, R.nom.charAt(0).toUpperCase() + R.nom.slice(1) + " · 🔒 " + age.emoji + " " + age.nom, tx, yFiche + 18, petit ? 13 : 15, "#3b2614", true);
+      texteLong(ctx, (R.info || "") + " Tu la découvriras plus tard.", tx, yFiche + 40, lt, petit ? 11 : 12, "#5a4220", petit ? 14 : 16);
+      return;
+    }
+    const libre = Math.max(0, Village.Porteurs.disponible(monde, r)), promis = Math.max(0, monde.stock[r] - libre);
+    texte(ctx, R.nom.charAt(0).toUpperCase() + R.nom.slice(1) + " · tu en as " + monde.stock[r] + (promis ? " (" + promis + " promis)" : ""), tx, yFiche + 18, petit ? 13 : 15, "#3b2614", true);
+    let yy = yFiche + 38;
+    yy += texteLong(ctx, R.info || "", tx, yy, lt, petit ? 11 : 12, "#5a4220", petit ? 14 : 16) * (petit ? 14 : 16) + 2;
+    for (const ligne of ficheRessource(monde, r)) {
+      if (yy > yFiche + hFiche - 8) break;
+      yy += texteLong(ctx, ligne, tx, yy, lt, petit ? 10 : 11, "#7a5a30", petit ? 13 : 15) * (petit ? 13 : 15);
+    }
+  }
+
 
   // Écrire un texte sur plusieurs lignes, sans dépasser la largeur `l`. Renvoie le nombre de lignes.
   function texteLong(ctx, t, x, y, l, taille, couleur, interligne) {
@@ -497,11 +588,14 @@ Village.Interface = (function () {
     // Étape 14 : ✍️ chaque ressource a son icône DESSINÉE (de vraies planches, de vraies pépites)
     // Étape 17 : ✍️ la barre prenait trop de place. Elle est plus petite, presque transparente, et ne montre
     // que les ressources de base et celles qu'on a (le marché et les statistiques montrent tout).
-    const BASE = ["troncs", "planches", "pierres", "poissons", "viande"];
+    // Étape 25 : ✍️ « trop large pour tout afficher en permanence ». La barre ne montre plus QUE les ressources de base ;
+    // tout le reste est dans l'inventaire 🎒 (le dernier bouton de la barre, ou la touche I).
+    const BASE = C.inventaire.barre;
     // Étape 20 : ✍️ on montre ce qui est DISPONIBLE : ce qui est déjà promis à un chantier ou à un atelier n'est plus compté
     // (avant, on voyait le stock, et on ne comprenait pas pourquoi on ne pouvait pas construire).
-    const ressources = Object.keys(C.ressources).filter((r) => BASE.includes(r) || s[r] > 0).map((r) => [r, Math.max(0, Village.Porteurs.disponible(monde, r))]);
+    const ressources = BASE.map((r) => [r, Math.max(0, Village.Porteurs.disponible(monde, r))]);
     if (monde.age >= 2 || monde.pieces > 0) ressources.push(["pieces", monde.pieces]);
+    ressources.push(["inventaire", null]); // étape 25 : le bouton 🎒
     // Étape 8 : s'il y a trop de ressources pour la largeur, la bulle passe sur 2 lignes.
     const pas = petit ? 38 : 50, haut = petit ? 17 : 20, parLigne = Math.max(3, Math.min(ressources.length, Math.floor((W - (W >= 520 ? 290 : 70) - 20) / pas))) // étape 18 : sans passer sous la mini-carte;
     const nLignes = Math.ceil(ressources.length / parLigne), hStock = (petit ? 40 : 46) + (nLignes - 1) * haut;
@@ -521,12 +615,22 @@ Village.Interface = (function () {
     ctx.fillStyle = "rgba(255, 250, 235, .55)"; ctx.strokeStyle = "rgba(90, 66, 32, .35)"; ctx.lineWidth = 1.2;
     ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(10, 10, lb, hStock, 10); else ctx.rect(10, 10, lb, hStock); ctx.fill(); ctx.stroke();
     texte(ctx, titre, 20, petit ? 21 : 23, petit ? 10 : 12, "#5a4220", true);
+    let sac = null;
     ressources.forEach(([r, n], k) => {
       const rx = 20 + (k % parLigne) * pas, ry = (petit ? 38 : 42) + Math.floor(k / parLigne) * haut, ti = petit ? 13 : 16;
+      if (r === "inventaire") { // étape 25 : le bouton de l'inventaire, avec le nombre de sortes de ressources qu'on a
+        sac = [rx - 4, ry - ti / 2 - 3, pas - 4, ti + 6];
+        ctx.fillStyle = panneau === "inventaire" ? "#ffe27a" : "rgba(255, 226, 122, .8)"; ctx.strokeStyle = "#5a4220"; ctx.lineWidth = 1.2;
+        ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(sac[0], sac[1], sac[2], sac[3], 6); else ctx.rect(sac[0], sac[1], sac[2], sac[3]); ctx.fill(); ctx.stroke();
+        texte(ctx, "🎒", rx, ry, petit ? 11 : 13, null, false);
+        texte(ctx, String(Object.keys(C.ressources).filter((q) => s[q] > 0).length), rx + ti + 2, ry, petit ? 10 : 12, "#3b2614", true);
+        return;
+      }
       if (r === "pieces") texte(ctx, "🪙", rx, ry, petit ? 11 : 13, null, false); else Village.Batisses.icone(ctx, r, rx + ti / 2, ry, ti);
       texte(ctx, String(n), rx + ti + 2, ry, petit ? 11 : 13, n <= 0 && (r === "poissons" || r === "viande") ? "#c0392b" : "#3b2614", true);
     });
     zone(10, 10, lb, hStock, "objectifs");
+    if (sac) zone(sac[0] - 5, sac[1] - 6, sac[2] + 10, sac[3] + 12, "panneau", "inventaire"); // (après la barre : il est au-dessus ; un peu plus grand pour le doigt)
     if (objectifsOuverts) panneauObjectifs(ctx, monde, 10, basDuStock + 8, petit ? 250 : 290);
 
     // ---- En haut à droite : plein écran, puis la mini-carte
@@ -687,6 +791,7 @@ Village.Interface = (function () {
     else if (panneau === "stats") panneauStats(ctx, monde, W, He, petit); // étape 8
     else if (panneau === "marche") panneauMarche(ctx, monde, W, He, petit);
     else if (panneau === "bonheur") panneauBonheur(ctx, monde, W, He, petit); // étape 15
+    if (panneau === "inventaire") panneauInventaire(ctx, monde, W, He, petit); // étape 25 : en pleine page, par-dessus le reste
     dessinerGains(ctx, W, He); // étape 17
     // Étape 11 : le résumé de l'absence, et la pub (par-dessus tout le reste)
     if (monde.absence) panneauAbsence(ctx, monde, W, He, petit);
@@ -984,5 +1089,5 @@ Village.Interface = (function () {
     zones.push({ x: mx, y: my, l: mw, h: mh, action: "miniCarte", versMonde: (x, y) => ({ x: ((x - mx) / echelle - carte.lignes) * (L / 2), y: ((y - my) / echelle) * Hc }) });
   }
 
-  return { dessiner, zoneSous, info, changerPage, basculerMenu, fermerMenu, basculerObjectifs, basculerPanneau, fermerPanneau, get menuOuvert() { return menuOuvert; } };
+  return { dessiner, zoneSous, info, changerPage, basculerMenu, fermerMenu, basculerObjectifs, basculerPanneau, fermerPanneau, choisirInventaire, ficheRessource, get menuOuvert() { return menuOuvert; }, get panneauOuvert() { return panneau; } };
 })();

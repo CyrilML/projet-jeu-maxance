@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 25,
+  version: 26,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -69,40 +69,53 @@ Village.CONFIG = {
 
   // Étape 8 : la fiche de chaque ressource (son emoji et son nom). Tous les panneaux la lisent ici.
   ressources: {
-    troncs: { emoji: "🪵", nom: "troncs" },
-    planches: { emoji: "🟫", nom: "planches" },
-    pierres: { emoji: "🪨", nom: "pierres" },
-    poissons: { emoji: "🐟", nom: "poissons" },
-    viande: { emoji: "🍖", nom: "viande" },
-    charbon: { emoji: "⚫", nom: "charbon", age: 1 }, // age : l'âge où cette ressource apparaît (étape 11)
-    fer: { emoji: "🟤", nom: "minerai de fer", age: 2 },
-    lingots: { emoji: "🔩", nom: "lingots", age: 2 },
-    outils: { emoji: "🔨", nom: "outils", age: 2 },
+    troncs: { emoji: "🪵", nom: "troncs", info: "Du bois brut, coupé dans la forêt. La scierie en fait des planches, et il chauffe les maisons en hiver." },
+    planches: { emoji: "🟫", nom: "planches", info: "Le matériau de base : presque tout se construit avec. La scierie les fait avec des troncs." },
+    pierres: { emoji: "🪨", nom: "pierres", info: "Des pierres taillées à la carrière, pour les bâtiments solides." },
+    poissons: { emoji: "🐟", nom: "poissons", info: "Pêchés au bord de l'eau. Une des nourritures de base des habitants." },
+    viande: { emoji: "🍖", nom: "viande", info: "Rapportée par le chasseur ou la porcherie. Une des nourritures de base des habitants." },
+    charbon: { emoji: "⚫", nom: "charbon", age: 1, info: "Creusé dans une mine, au pied d'un filon noir. Il fait chauffer les fourneaux." }, // age : l'âge où cette ressource apparaît (étape 11)
+    fer: { emoji: "🟤", nom: "minerai de fer", age: 2, info: "Le minerai brut, tel qu'il sort de la mine de fer. Il faut le fondre pour s'en servir." },
+    lingots: { emoji: "🔩", nom: "lingots", age: 2, info: "Du fer fondu à la fonderie, prêt à être travaillé." },
+    outils: { emoji: "🔨", nom: "outils", age: 2, info: "Fabriqués à la forge. Les bâtiments les plus avancés en demandent." },
     // Étape 11 : le bourg
-    ble: { emoji: "🌾", nom: "blé", age: 3 },
-    farine: { emoji: "⚪", nom: "farine", age: 3 },
-    pain: { emoji: "🍞", nom: "pain", age: 3 },
-    or: { emoji: "🟡", nom: "pépites d'or", age: 3 },
-    bijoux: { emoji: "💍", nom: "bijoux", age: 3 },
+    ble: { emoji: "🌾", nom: "blé", age: 3, info: "Cultivé dans les champs de la ferme (pas en hiver)." },
+    farine: { emoji: "⚪", nom: "farine", age: 3, info: "Le blé écrasé par le moulin. La boulangerie en fait du pain." },
+    pain: { emoji: "🍞", nom: "pain", age: 3, info: "Cuit à la boulangerie. Au bourg, les habitants en veulent à chaque repas." },
+    or: { emoji: "🟡", nom: "pépites d'or", age: 3, info: "Des pépites creusées dans une mine d'or. L'orfèvre en fait des bijoux." },
+    bijoux: { emoji: "💍", nom: "bijoux", age: 3, info: "Fabriqués par l'orfèvre. Ils valent très cher au marché." },
     // Étape 15 : ✍️ l'élevage et la laiterie. La chaîne s'agrandit à chaque âge (✍️ « au fil des niveaux ») :
     //   🛖 hameau : 💧 eau + 🌿 foin → 🐄 étable → 🥛 lait
     //   🏡 village : 🥛 → 🧈 beurre (la laiterie), et le vétérinaire 🩺 (les vaches peuvent tomber malades)
     //   🏰 bourg : 🥛 → 🧀 fromage (la fromagerie) et 🍶 yaourt (la crèmerie)
-    eau: { emoji: "💧", nom: "seaux d'eau", age: 1 },
-    foin: { emoji: "🌿", nom: "bottes de foin", age: 1 },
-    lait: { emoji: "🥛", nom: "bidons de lait", age: 1 },
-    beurre: { emoji: "🧈", nom: "mottes de beurre", age: 2 },
-    fromage: { emoji: "🧀", nom: "fromages", age: 3 },
-    yaourt: { emoji: "🍶", nom: "pots de yaourt", age: 3 },
+    eau: { emoji: "💧", nom: "seaux d'eau", age: 1, info: "Puisée au puits. Les animaux en boivent." },
+    foin: { emoji: "🌿", nom: "bottes de foin", age: 1, info: "De l'herbe séchée par le faneur, à faire avant l'hiver. Les animaux le mangent." },
+    lait: { emoji: "🥛", nom: "bidons de lait", age: 1, info: "Donné par les vaches de l'étable. La base du beurre, du fromage et du yaourt." },
+    beurre: { emoji: "🧈", nom: "mottes de beurre", age: 2, info: "Baratté à la laiterie avec du lait." },
+    fromage: { emoji: "🧀", nom: "fromages", age: 3, info: "Affiné à la fromagerie avec du lait." },
+    yaourt: { emoji: "🍶", nom: "pots de yaourt", age: 3, info: "Préparé à la crèmerie avec du lait." },
     // Étape 16 : ✍️ la suite de l'élevage (1C, partie B), elle aussi âge par âge :
     //   🛖 hameau : 🐔 poulailler → 🥚 œufs
     //   🏡 village : 🐑 bergerie → 🧶 laine → 🧵 tisserand → tissu ; 🐖 porcherie → 🍖 viande
     //   🏰 bourg : 🧵 tissu → ✂️ tailleur → 👕 vêtements ; 🍖 viande + ⚫ charbon → 🥓 charcuterie → jambon
-    oeufs: { emoji: "🥚", nom: "œufs", age: 1 },
-    laine: { emoji: "🧶", nom: "pelotes de laine", age: 2 },
-    tissu: { emoji: "🧵", nom: "rouleaux de tissu", age: 2 },
-    vetements: { emoji: "👕", nom: "vêtements", age: 3 },
-    jambon: { emoji: "🥓", nom: "jambons", age: 3 },
+    oeufs: { emoji: "🥚", nom: "œufs", age: 1, info: "Pondus par les poules du poulailler." },
+    laine: { emoji: "🧶", nom: "pelotes de laine", age: 2, info: "Tondue sur les moutons de la bergerie. Le tisserand en fait du tissu." },
+    tissu: { emoji: "🧵", nom: "rouleaux de tissu", age: 2, info: "Tissé avec la laine. Le tailleur en fait des vêtements." },
+    vetements: { emoji: "👕", nom: "vêtements", age: 3, info: "Cousus par le tailleur. Au bourg, les habitants usent leurs habits et en prennent des neufs." },
+    jambon: { emoji: "🥓", nom: "jambons", age: 3, info: "Fumé à la charcuterie, avec de la viande et du charbon." },
+  },
+
+  // Étape 25 : ✍️ l'INVENTAIRE en pleine page (touche I, ou 🎒 dans la barre du stock). Les ressources y sont rangées
+  // par familles ; toucher une icône dit ce que c'est (son « info », plus haut), qui la fabrique et à quoi elle sert.
+  // La barre du haut ne montre plus que les ressources de base (« barre »).
+  inventaire: {
+    barre: ["troncs", "planches", "pierres", "poissons", "viande"],
+    familles: [
+      { nom: "🪵 Construction", ressources: ["troncs", "planches", "pierres"] },
+      { nom: "🍽️ Nourriture et douceurs", ressources: ["poissons", "viande", "pain", "oeufs", "lait", "beurre", "fromage", "yaourt", "jambon"] },
+      { nom: "⛏️ Mines et métal", ressources: ["charbon", "fer", "lingots", "outils", "or", "bijoux"] },
+      { nom: "🌾 Champs, élevage et habits", ressources: ["ble", "farine", "eau", "foin", "laine", "tissu", "vetements"] },
+    ],
   },
 
   // Étape 2 : les bâtiments. Depuis l'étape 3, le coût est RÉSERVÉ quand on pose le chantier,

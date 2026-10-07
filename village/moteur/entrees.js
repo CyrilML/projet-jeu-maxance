@@ -17,6 +17,7 @@ Village.Entrees = (function () {
     zoomPlus: ["Equal", "NumpadAdd"], // Equal : la touche « = + »
     zoomMoins: ["Minus", "NumpadSubtract"],
     village: ["KeyH"], // revenir à la place du village
+    inventaire: ["KeyI"], // étape 25 : 🎒 l'inventaire en pleine page
     nouvelleCarte: ["KeyG"],
     pause: ["KeyP"],
     annuler: ["Escape"], // annuler la construction en cours de choix (sinon : pause)
