@@ -13,7 +13,9 @@
 //   - (étape 62) la GERBE D'EAU quand un obus tombe dans le lac, l'écume du SILLAGE derrière les bateaux, et un ÉCLAIR
 //     de la couleur du portail à l'entrée et à la sortie quand quelqu'un passe un portail ;
 //   - (étape 63) les BULLES d'un sous-marin qui avance sous l'eau (c'est comme ça qu'on le repère !), la traînée de
-//     bulles d'une torpille, et la grosse vague quand un sous-marin remonte à la surface.
+//     bulles d'une torpille, et la grosse vague quand un sous-marin remonte à la surface ;
+//   - (étape 64) les petits nuages NOIRS des obus de DCA qui éclatent dans le ciel, la boule de feu d'un avion abattu, sa
+//     traînée de fumée pendant qu'il tombe, et le grand « boum » quand il s'écrase.
 // Ce sont des « particules » : des petites images toujours tournées vers la caméra (des sprites), qui naissent,
 // grossissent, montent, s'effacent et meurent. On en a 300, qu'on réutilise sans arrêt.
 // Il écoute la radio (tir, impact, touche, detruit) pour savoir quand faire des effets.
@@ -67,6 +69,16 @@ Tanks.Effets = (function () {
       for (let k = 0; k < 6; k++) particule(d.x + alea(1), d.y, d.z + alea(1), alea(2), 0.8, alea(2), 1.6, 2, 6, 0.4, [0.8, 0.8, 0.78]);
       flash(d.x, d.y, d.z, 20);
     });
+    radio.ecouter("abattu", (d) => {
+      for (let k = 0; k < 24; k++) particule(d.x, d.y, d.z, alea(10), alea(8), alea(10), 0.8 + Math.random() * 0.5, 3, 12, 1, [1, 0.6, 0.2], true);
+      flash(d.x, d.y, d.z, 120);
+    });
+    radio.ecouter("crash", (d) => {
+      for (let k = 0; k < 30; k++) particule(d.x, d.y + 2, d.z, alea(9), 5 + Math.random() * 10, alea(9), 1 + Math.random() * 0.6, 4, 14, 1, d.dansLEau ? [0.92, 0.96, 1] : [1, 0.6, 0.2], !d.dansLEau, 4);
+      for (let k = 0; k < 20; k++) particule(d.x, d.y + 1, d.z, alea(5), 3, alea(5), 3.5, 5, 16, 0.6, [0.15, 0.14, 0.13]);
+      flash(d.x, d.y + 3, d.z, 100);
+      if (!d.dansLEau) epaves.push({ x: d.x, y: d.y - 1.5, z: d.z, age: 15, reste: 0 }); // (l'épave fume un peu)
+    });
     radio.ecouter("surface", (d) => { // (étape 63) un sous-marin crève la surface
       for (let k = 0; k < 30; k++) particule(d.x + alea(6), C.lac.niveau + 0.3, d.z + alea(6), alea(2), 2 + Math.random() * 3, alea(2), 1.4, 1, 4, 0.7, [0.92, 0.96, 1], false, 9.8);
     });
@@ -84,6 +96,11 @@ Tanks.Effets = (function () {
     });
     radio.ecouter("impact", (d) => {
       const terre = d.sur === "sol", pierre = d.sur === "maison" || d.sur === "muret", g = GROS[d.sorte] || 1;
+      if (d.sur === "air") { // (étape 64) un obus de DCA éclate : un petit nuage noir, et un éclair
+        for (let k = 0; k < 5; k++) particule(d.x + alea(1.5), d.y + alea(1.5), d.z + alea(1.5), alea(1), alea(1), alea(1), 2.5, 2, 6, 0.75, [0.12, 0.12, 0.12]);
+        particule(d.x, d.y, d.z, 0, 0, 0, 0.15, 1.5, 4, 1, [1, 0.8, 0.4], true);
+        return;
+      }
       if (d.sur === "eau") { // (étape 62) une gerbe d'eau : de l'écume blanche qui monte haut et retombe
         for (let k = 0; k < 22 * g; k++) particule(d.x + alea(g), d.y + 0.2, d.z + alea(g), alea(2.5 * g), 6 + Math.random() * 9 * g, alea(2.5 * g), 1.2 + Math.random() * 0.6, 0.8, 3 * g, 0.9, [0.92, 0.96, 1], false, 9.8);
         for (let k = 0; k < 6; k++) particule(d.x, d.y + 0.3, d.z, alea(3), 0.3, alea(3), 2, 2, 7 * g, 0.5, [0.85, 0.9, 0.92]);
@@ -231,6 +248,11 @@ Tanks.Effets = (function () {
     }
     bilan.balles = b;
     // la poussière derrière le 4x4, le souffle du rotor de l'hélico près du sol, et l'écume derrière les bateaux
+    // (étape 64) un avion abattu laisse une traînée de fumée noire en tombant
+    for (const a of monde.avions || []) {
+      if (!a.detruit || a.etat === "parti" || Math.random() > dt * 40) continue;
+      particule(a.x + alea(1), a.y, a.z + alea(1), alea(1), 1, alea(1), 3, 2, 8, 0.7, Math.random() < 0.3 ? [1, 0.5, 0.15] : [0.13, 0.12, 0.12], false);
+    }
     for (const e of monde.engins.concat(monde.bateaux || [], monde.sousMarins || [])) {
       if (e.detruit) continue;
       if (e.sorte === "sousmarin" && Math.abs(e.vitesse) > 1) {

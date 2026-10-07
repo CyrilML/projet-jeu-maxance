@@ -86,7 +86,7 @@ Tanks.Bateaux = (function () {
   function ciblesPossibles(monde) {
     const l = monde.chars.filter((c) => c.equipe === "bleus" && !c.detruit);
     for (const e of monde.engins) if ((e.sorte === "bateau" || e.sorte === "jeep") && e.pilote && !e.detruit) l.push(e);
-    for (const s of monde.soldats) if (s.equipe === "bleus" && !s.mort && !s.dansUnEngin) l.push(s);
+    for (const s of monde.soldats) if (s.equipe === "bleus" && !s.mort && !s.dansUnEngin && !s.parachute) l.push(s);
     return l;
   }
 

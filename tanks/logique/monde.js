@@ -9,6 +9,7 @@
 // Étape 61 : ✍️ TOI, tu peux être dans ton tank, à pied (touche E pour sortir), ou dans un engin de ton camp (le 4x4,
 // l'hélico, l'avion de chasse, le drone). « monde.toi » dit où tu es.
 // Étape 62 : ✍️ le LAC avec ta vedette et 2 patrouilleurs ennemis (monde.bateaux), et les PORTAILS (monde.portails).
+// Étape 64 : les AVIONS (monde.avions : les chasseurs ennemis et les avions de transport) et les PARACHUTISTES.
 // Étape 63 : les SOUS-MARINS (le tien dans monde.engins, 2 ennemis dans monde.sousMarins) et les îles.
 // Il annonce tout à la radio : le journal, les sons, les effets et la sauvegarde écoutent.
 
@@ -21,7 +22,7 @@ Tanks.Monde = (function () {
   function creer() {
     const d = S.lire();
     const choix = Math.max(0, C.chars.findIndex((f) => f.id === d.char));
-    const monde = { phase: "garage", temps: 0, choix, chars: [], obus: [], soldats: [], engins: [], bateaux: [], sousMarins: [], portails: Tanks.Portails.creer(), joueur: null, toi: null, chrono: 0 };
+    const monde = { phase: "garage", temps: 0, choix, chars: [], obus: [], soldats: [], engins: [], bateaux: [], sousMarins: [], avions: [], portails: Tanks.Portails.creer(), joueur: null, toi: null, chrono: 0 };
     preparerGarage(monde);
     return monde;
   }
@@ -36,6 +37,7 @@ Tanks.Monde = (function () {
     monde.engins = [];
     monde.bateaux = [];
     monde.sousMarins = [];
+    monde.avions = [];
     monde.toi = { mode: "char", engin: null, soldat: null };
   }
 
@@ -69,6 +71,8 @@ Tanks.Monde = (function () {
     monde.engins = Tanks.Engins.creer();
     monde.bateaux = Tanks.Bateaux.creer(); // (étape 62) les patrouilleurs ennemis
     monde.sousMarins = Tanks.SousMarins.creer(); // (étape 63) les sous-marins ennemis
+    monde.avions = Tanks.Avions.creer(); // (étape 64) les chasseurs ennemis (les transports arrivent pendant la bataille)
+    monde.chronoParas = undefined;
     monde.portails = Tanks.Portails.creer();
     for (const p of monde.portails) p.passages = 0;
     monde.toi = { mode: "char", engin: monde.joueur, soldat: toi };
@@ -79,7 +83,7 @@ Tanks.Monde = (function () {
   const soldatsVivants = (monde, equipe) => monde.soldats.filter((s) => s.equipe === equipe && !s.mort && !s.joueur).length;
   // Ce que voient et visent les tanks de l'ordinateur : les tanks, et ton 4x4 quand tu es dedans.
   // (étape 62 : et les bateaux : les patrouilleurs ennemis, et ta vedette quand tu es dedans)
-  const cibles = (monde) => monde.chars.concat(monde.engins.filter((e) => (e.sorte === "jeep" || e.sorte === "bateau" || (e.sorte === "sousmarin" && !Tanks.SousMarins.sousLEau(e))) && e.pilote && !e.detruit), monde.bateaux.filter((b) => !b.detruit), monde.sousMarins.filter((m) => !m.detruit && !Tanks.SousMarins.sousLEau(m))); // (étape 63 : un sous-marin, seulement à la surface)
+  const cibles = (monde) => monde.chars.concat(monde.engins.filter((e) => (e.sorte === "jeep" || e.sorte === "dca" || e.sorte === "bateau" || (e.sorte === "sousmarin" && !Tanks.SousMarins.sousLEau(e))) && e.pilote && !e.detruit), monde.bateaux.filter((b) => !b.detruit), monde.sousMarins.filter((m) => !m.detruit && !Tanks.SousMarins.sousLEau(m))); // (étape 63 : un sous-marin, seulement à la surface)
 
   // ✍️ Touche E : sortir de l'engin où tu es, ou monter dans le plus proche.
   function sortirOuMonter(monde) {
@@ -213,23 +217,31 @@ Tanks.Monde = (function () {
     // 2 bis. (étape 62) Les patrouilleurs ennemis sur le lac.
     for (const b of monde.bateaux) for (const x of Tanks.Bateaux.avancer(b, monde, dt)) evenements.push(x);
     for (const m of monde.sousMarins) for (const x of Tanks.SousMarins.avancer(m, monde, dt)) evenements.push(x); // (étape 63)
+    for (const x of Tanks.Avions.avancer(monde, dt)) evenements.push(x); // (étape 64) les avions
     Tanks.Bateaux.chocs(monde.bateaux.concat(monde.sousMarins, monde.engins.filter((e) => e.sorte === "bateau" || e.sorte === "sousmarin")));
     // 3. Les soldats : toi (à pied, ou en parachute), et les 24 de l'ordinateur.
     for (const s of monde.soldats) {
-      if (s === toi) {
-        if (s.parachute) {
-          s.y -= G.parachute * dt;
+      // (étapes 61 et 64) en parachute : toi, ou un parachutiste ; il descend en glissant un peu vers l'avant
+      if (s.parachute) {
+        const vitesse = s.mort ? 12 : s === toi ? G.parachute : C.parachutistes.descente; // (touché en l'air : il tombe)
+        s.y -= vitesse * dt;
+        if (!s.mort) {
           s.x += Math.cos(s.angle) * 3 * dt;
           s.z += Math.sin(s.angle) * 3 * dt;
-          // (étape 63) au-dessus du lac, on se pose sur l'eau (et on nage), pas au fond !
-          const sol = T.dansLEau(s.x, s.z) ? C.lac.niveau - 1.25 : T.hauteur(s.x, s.z);
-          if (s.y <= sol) {
-            s.y = sol;
-            s.parachute = false;
-            radio.emettre("atterrissage", {});
-          }
-          continue;
         }
+        // (étape 63) au-dessus du lac, on se pose sur l'eau (et on nage), pas au fond !
+        const sol = T.dansLEau(s.x, s.z) ? C.lac.niveau - 1.25 : T.hauteur(s.x, s.z);
+        if (s.y <= sol) {
+          s.y = sol;
+          s.parachute = false;
+          T.repousser(s, 0.5); // (pas dans un mur)
+          if (s === toi) radio.emettre("atterrissage", {});
+          else if (s.ia) s.ia.etat = "avance";
+        }
+        if (s.mort) s.depuisMort += dt;
+        continue;
+      }
+      if (s === toi) {
         if (s.dansUnEngin) {
           Object.assign(s, { x: s.dansUnEngin.x, z: s.dansUnEngin.z, y: s.dansUnEngin.y });
           continue;
@@ -260,6 +272,7 @@ Tanks.Monde = (function () {
         else S.donnees.detruits++;
       }
       if (nom === "portail" && parToi(d.qui)) S.donnees.portails++;
+      if (nom === "abattu" && deToi && d.cible.equipe !== "bleus") S.donnees.avions++; // (étape 64)
     };
     for (const [nom, d] of evenements) {
       if (nom === "tir") {
@@ -271,14 +284,25 @@ Tanks.Monde = (function () {
       } else annoncer(nom, d);
     }
     for (const [nom, d] of Tanks.Obus.avancer(monde.obus, monde, dt)) annoncer(nom, d);
+    // (étape 64) ton Rafale est abattu : tu t'éjectes tout seul (et un autre Rafale t'attend à l'aérodrome)
+    if (enJeu && t.mode === "avion" && t.engin.detruit) {
+      Object.assign(toi, { x: t.engin.x, z: t.engin.z, y: t.engin.y, parachute: true, dansUnEngin: null });
+      radio.emettre("ejection", { hauteur: Math.round(toi.y - T.hauteur(toi.x, toi.z)), abattu: true });
+      t.engin.pilote = false;
+      Tanks.Engins.garer(t.engin);
+      t.mode = "pied";
+      t.engin = null;
+    }
+    // (étape 64) on enlève les soldats tombés depuis plus de 25 s (sinon, avec les parachutistes, la liste grandit sans fin)
+    if (monde.soldats.length > 40) monde.soldats = monde.soldats.filter((o) => o.joueur || !o.mort || o.depuisMort < 25);
     // 5. La fin de la bataille ?
     if (enJeu) {
-      const horsDeCombat = (t.mode === "char" && monde.joueur.detruit) || (toi && toi.mort) || ((t.mode === "jeep" || t.mode === "bateau" || t.mode === "sousmarin") && t.engin.detruit);
+      const horsDeCombat = (t.mode === "char" && monde.joueur.detruit) || (toi && toi.mort) || ((t.mode === "jeep" || t.mode === "bateau" || t.mode === "sousmarin" || t.mode === "dca") && t.engin.detruit);
       if (horsDeCombat) {
         monde.phase = "defaite";
         S.donnees.defaites++;
         S.ecrire("défaite");
-        radio.emettre("defaite", { temps: monde.chrono, allies: vivants(monde, "bleus"), ennemis: vivants(monde, "rouges"), comment: toi && toi.mort ? "ton soldat est à terre" : t.mode === "jeep" ? "ton 4x4 est détruit" : t.mode === "bateau" ? "ta vedette est coulée" : t.mode === "sousmarin" ? "ton sous-marin est coulé" : "ton tank est détruit" });
+        radio.emettre("defaite", { temps: monde.chrono, allies: vivants(monde, "bleus"), ennemis: vivants(monde, "rouges"), comment: toi && toi.mort ? "ton soldat est à terre" : t.mode === "jeep" ? "ton 4x4 est détruit" : t.mode === "bateau" ? "ta vedette est coulée" : t.mode === "sousmarin" ? "ton sous-marin est coulé" : t.mode === "dca" ? "ta DCA est détruite" : "ton tank est détruit" });
       } else if (vivants(monde, "rouges") === 0) {
         monde.phase = "victoire";
         S.donnees.victoires++;
@@ -291,7 +315,7 @@ Tanks.Monde = (function () {
   // (étape 63) Avant chaque pas, chacun note où il était (« av » = avant). Le dessin pourra ainsi placer chaque objet
   // ENTRE sa position d'avant et sa position de maintenant, pile au bon moment entre deux pas : plus de petits sauts.
   function memoriser(monde) {
-    for (const liste of [monde.chars, monde.soldats, monde.engins, monde.bateaux, monde.sousMarins]) {
+    for (const liste of [monde.chars, monde.soldats, monde.engins, monde.bateaux, monde.sousMarins, monde.avions]) {
       for (const o of liste) {
         const a = o.av || (o.av = {});
         (a.x = o.x), (a.y = o.y), (a.z = o.z), (a.angle = o.angle), (a.tourelle = o.tourelle || 0);

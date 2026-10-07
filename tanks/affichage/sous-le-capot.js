@@ -7,6 +7,8 @@
 // (leur vitesse, leur hauteur, leurs munitions) et les soldats (combien sont encore debout, ce qu'ils font).
 // Étape 62 : le lac (où tu es par rapport à la rive : « dl »), les patrouilleurs ennemis (ce qu'ils font), et les
 // portails (combien de passages).
+// Étape 64 : chaque avion (ce qu'il fait : approche, bombarde, dégage, duel ; sa hauteur, sa vitesse, sa vie), la DCA
+// (où elle vise, l'avion qu'elle suit), les parachutistes en l'air.
 // Étape 63 : les sous-marins (leur PROFONDEUR, s'ils sont sous l'eau), les îles, si tu nages, et le dessin « entre deux
 // pas » (l'interpolation qui empêche ton personnage de faire de petits sauts).
 
@@ -31,6 +33,15 @@ Tanks.SousLeCapot = (function () {
     victoire: (d) => "🏆 VICTOIRE en " + Math.round(d.temps) + " s ! Il te reste " + d.vie + " / " + C.char.vie + " de vie et " + d.allies + " allié(s)",
     defaite: (d) => "💀 Défaite après " + Math.round(d.temps) + " s : il restait " + d.ennemis + " ennemi(s)",
     sauvegarde: (d) => "💾 Livret militaire écrit (" + d.raison + ")",
+    // étape 64
+    "avion-arrive": (d) => "✈️ " + d.nom + " arrive au-dessus du champ de bataille",
+    bombardement: (d) => "💣 " + d.nom + " lâche " + C.avionsEnnemis.bombes + " bombes sur " + d.cible + " (il les lâche AVANT d'être au-dessus : elles gardent sa vitesse)",
+    duel: (d) => "⚔️ " + d.nom + " voit ton Rafale à moins de " + C.avionsEnnemis.duel + " m : il te prend en chasse",
+    "missile-ennemi": (d) => "🚨 " + d.tireur + " tire un missile sur ton Rafale",
+    abattu: (d) => "🔥 " + d.cible + " est ABATTU par " + d.tireur,
+    crash: (d) => "💥 " + d.nom + " s'écrase " + (d.dansLEau ? "dans le lac" : "au sol"),
+    parachutistes: (d) => "🪂 " + d.nombre + " parachutistes " + (d.equipe === "bleus" ? "bleus" : "rouges") + " sautent de l'avion de transport (" + Math.round(d.x) + " ; " + Math.round(d.z) + ")",
+    flak: (d) => "🎯 La DCA tire" + (d.assiste ? " (visée assistée : devant l'avion)" : ""),
     // étape 63
     plongee: (d) => "🫧 " + (d.toi ? "Ton sous-marin plonge" : d.nom + " plonge") + " : à plus de " + virgule(C.sousMarins.sousLEau, 1) + " m, seule une torpille peut le toucher",
     surface: (d) => "🐋 " + (d.toi ? "Ton sous-marin remonte" : d.nom + " remonte") + " à la surface",
@@ -42,8 +53,8 @@ Tanks.SousLeCapot = (function () {
     portail: (d) => "🌀 " + d.qui + " entre dans le portail " + d.de + " et ressort par le portail " + d.vers,
     // étape 61
     sortir: (d) => "🚪 Tu sors de " + d.de + " : te voilà à pied (E pour remonter)",
-    monter: (d) => "🪜 Tu montes dans " + d.dans + ({ jeep: " : ↑ ↓ ← → conduire, Q / D la mitrailleuse, Espace tirer", helico: " : Q monter, D descendre, Espace lâcher une bombe", avion: " : ↑ piquer, ↓ cabrer, Espace un missile, E s'éjecter", drone: " : Q monter, D descendre, Espace lâcher une grenade" }[d.mode] || ""),
-    ejection: (d) => "🪂 Éjection à " + d.hauteur + " m de haut ! Tu redescends en parachute à " + C.engins.parachute + " m/s",
+    monter: (d) => "🪜 Tu montes dans " + d.dans + ({ dca: " : ← → tourner, ↑ ↓ lever les canons, Espace tirer en l'air", jeep: " : ↑ ↓ ← → conduire, Q / D la mitrailleuse, Espace tirer", helico: " : Q monter, D descendre, Espace lâcher une bombe", avion: " : ↑ piquer, ↓ cabrer, Espace un missile, E s'éjecter", drone: " : Q monter, D descendre, Espace lâcher une grenade" }[d.mode] || ""),
+    ejection: (d) => (d.abattu ? "🔥 Ton Rafale est abattu ! " : "") + "🪂 Éjection à " + d.hauteur + " m de haut ! Tu redescends en parachute à " + C.engins.parachute + " m/s",
     atterrissage: () => "🪂 Tu touches le sol : te voilà à pied",
     impossible: (d) => "✋ Impossible : " + d.raison,
     arme: (d) => "🎒 Tu prends : " + d.icone + " " + d.nom,
@@ -70,6 +81,7 @@ Tanks.SousLeCapot = (function () {
       if (nom === "balle" && !(d.parToi && (d.touche || d.ricochet))) return;
       if (nom === "soldat-touche" && !d.parToi && !d.surToi) return;
       if (nom === "roquette" && !d.parToi) return;
+      if (nom === "flak") return; // (la DCA tire 8 obus par seconde : on ne les écrit pas tous ; ils sont comptés sous le capot)
       if (nom === "portail" && !d.quiToi && d.qui.startsWith("soldat")) return; // (les soldats de l'ordinateur : pas dans le journal)
       const li = document.createElement("li");
       li.dataset.evenement = nom;
@@ -84,12 +96,16 @@ Tanks.SousLeCapot = (function () {
     const j = monde.joueur, f = j.fiche, t = monde.toi || {}, s = t.soldat;
     const l = [["Où tu es (étape 61)"], ["phase", monde.phase]];
     if (s) {
-      const ou = { sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];
+      const ou = { dca: "à la DCA 🎯", sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];
       l.push(["mode", t.mode + " = " + ou]);
       l.push(["ton soldat", "vie " + s.vie + " / " + C.soldats.vieJoueur + " · arme " + C.armes[s.arme].icone + " " + C.armes[s.arme].nom + (s.recharge > 0 ? " (recharge " + virgule(s.recharge, 2) + " s)" : "")]);
       if (t.mode === "pied") l.push(["à pied", "x, z " + virgule(s.x, 1) + " ; " + virgule(s.z, 1) + " · " + virgule(s.vitesse, 1) + " m/s · cap " + degres(s.angle)]);
       l.push(["Les engins de ton camp"]);
       for (const e of monde.engins) {
+        if (e.sorte === "dca") {
+          l.push([C.engins.dca.icone + " " + e.nom, e.detruit ? "détruite ✖" : (e.pilote ? "👤 tu tires · " : "personne · ") + "canons à " + degres(e.angle + e.tourelle) + ", levés de " + degres(e.hausse) + " · vie " + e.vie + " / " + C.engins.dca.vie + (e.cible ? " · suit " + e.cible.nom : "")]);
+          continue;
+        }
         if (e.sorte === "sousmarin") {
           const R = C.sousMarins.joueur;
           l.push([R.icone + " " + e.nom, e.detruit ? "coulé ✖" : (e.pilote ? "👤 piloté · " : "amarré · ") + Math.round(Math.abs(e.vitesse) * 3.6) + " km/h · profondeur " + virgule(e.profondeur, 1) + " m (voulue " + virgule(e.voulue || 0, 1) + ", possible ici " + virgule(Tanks.SousMarins.profondeurPossible(e), 1) + ")" + (Tanks.SousMarins.sousLEau(e) ? " · sous l'eau 🫧" : "") + " · vie " + e.vie + " / " + R.vie]);
@@ -113,6 +129,13 @@ Tanks.SousLeCapot = (function () {
       l.push(["toi et le lac", "dl = " + virgule(dl, 2) + (dl < 1 ? " : dans l'eau" : dl < 1.1 ? " : sur la rive" : " : loin de l'eau") + " (dl = √((dx ÷ " + C.lac.rayonX + ")² + (dz ÷ " + C.lac.rayonZ + ")²))"]);
       for (const b of monde.bateaux) l.push(["⚓ " + b.nom, b.detruit ? "coulé ✖" : b.ia.etat + " · vie " + b.vie + " / " + b.fiche.vie + " · " + Math.round(b.vitesse * 3.6) + " km/h"]);
       for (const m of monde.sousMarins) l.push(["🐋 " + m.nom, m.detruit ? "coulé ✖" : m.ia.etat + " · profondeur " + virgule(m.profondeur, 1) + " m · vie " + m.vie + " / " + m.fiche.vie + " · prochaine " + (m.ia.plonge ? "remontée" : "plongée") + " dans " + virgule((m.ia.plonge ? m.fiche.sousLEau : m.fiche.aLaSurface) - m.ia.chrono, 0) + " s"]);
+      l.push(["Le ciel (étape 64)"]);
+      for (const a of monde.avions) {
+        const haut = Math.round(a.y - Tanks.Terrain.hauteur(a.x, a.z));
+        l.push(["✈️ " + a.nom, a.etat === "attend" || a.etat === "parti" ? "pas encore là (arrive dans " + Math.max(0, Math.round(a.attente)) + " s)" : a.detruit ? "abattu : il tombe 🔥" : a.etat + " · " + haut + " m de haut · " + Math.round(a.vitesse * 3.6) + " km/h · vie " + a.vie + " / " + a.fiche.vie + (a.sorte === "transport" ? " · " + a.restent + " parachutistes à bord" : "") + (a.etat === "approche" && a.distanceLarguage ? " · largage dans " + Math.round(a.distanceLarguage) + " m" : "")]);
+      }
+      const enLAir = monde.soldats.filter((o) => o.parachute && !o.joueur);
+      l.push(["parachutistes", enLAir.length + " en l'air (🔵 " + enLAir.filter((o) => o.equipe === "bleus").length + ", 🔴 " + enLAir.filter((o) => o.equipe === "rouges").length + ") · prochain avion de transport dans " + Math.max(0, Math.round(C.parachutistes.toutesLes - (monde.chronoParas || 0))) + " s"]);
       const ile = Tanks.Terrain.ileProche(s.x, s.z, 2);
       l.push(["les îles", C.lac.iles.map((i) => i.nom + " (" + i.rayon + " m)").join(", ") + (ile ? " · tu es sur " + ile.nom + " !" : "")]);
       for (const p of monde.portails) l.push(["🌀 portail " + p.nom, "en (" + p.x + " ; " + p.z + ") → sort par le " + p.jumeau.nom + " · " + p.passages + " passage(s)"]);
@@ -141,7 +164,7 @@ Tanks.SousLeCapot = (function () {
     }
     l.push(["Le dessin"], ["particules", Tanks.Effets.bilan.vivantes + " · épaves qui fument : " + Tanks.Effets.bilan.epaves + " · traits de balles : " + Tanks.Effets.bilan.balles], ["projectiles en vol", monde.obus.length ? Object.entries(monde.obus.reduce((n, p) => ((n[p.sorte] = (n[p.sorte] || 0) + 1), n), {})).map(([k, v]) => v + " " + k).join(", ") : "aucun"], ["entre deux pas", "le dessin est à " + Math.round(Tanks.Scene.entreDeuxPas() * 100) + " % entre l'avant-dernier pas et le dernier (interpolation)"], ["dessins", Tanks.Scene.dessins().soldats + " soldats, " + Tanks.Scene.dessins().engins + " engins"], ["la carte graphique", (Tanks.Scene.infos.triangles || 0).toLocaleString("fr-FR") + " triangles, " + (Tanks.Scene.infos.calls || 0) + " dessins par image"]);
     const S = Tanks.Sauvegarde.donnees;
-    l.push(["Le livret militaire (sauvegarde)"], ["victoires · défaites", S.victoires + " · " + S.defaites], ["tanks détruits", S.detruits], ["bateaux · sous-marins coulés", S.bateaux + " · " + S.sousMarins], ["passages de portail", S.portails], ["obus tirés · au but", S.tirs + " · " + S.touches]);
+    l.push(["Le livret militaire (sauvegarde)"], ["victoires · défaites", S.victoires + " · " + S.defaites], ["tanks détruits", S.detruits], ["bateaux · sous-marins coulés", S.bateaux + " · " + S.sousMarins], ["passages de portail", S.portails], ["avions abattus", S.avions], ["obus tirés · au but", S.tirs + " · " + S.touches]);
     return l;
   }
 

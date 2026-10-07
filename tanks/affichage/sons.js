@@ -45,6 +45,11 @@ Tanks.Sons = (function () {
     radio.ecouter("touche", (e) => clang(attenuation(e.x, e.z)));
     radio.ecouter("tir-bateau", (e) => boum(e.joueur ? 0.8 : attenuation(e.x, e.z) * 0.7, 0.45, 140)); // (étape 62)
     radio.ecouter("portail", (e) => e.quiToi && portail());
+    // (étape 64) la DCA (un « tac » grave), les obus qui éclatent en l'air, un avion abattu, un crash
+    radio.ecouter("flak", (e) => tac(0.9));
+    radio.ecouter("impact", (e) => e.sur === "air" && boum(attenuation(e.x, e.z) * 0.35, 0.3, 160));
+    radio.ecouter("abattu", (e) => boum(attenuation(e.x, e.z) * 0.8, 1, 90));
+    radio.ecouter("crash", (e) => boum(attenuation(e.x, e.z), 1.8, 50));
     radio.ecouter("torpille", (e) => pschh(e.joueur ? 0.5 : attenuation(e.x, e.z) * 0.4)); // (étape 63)
     radio.ecouter("impact", (e) => {
       if (e.sorte === "bombe" || e.sorte === "missile") boum(attenuation(e.x, e.z), 1.8, 60);
@@ -193,6 +198,13 @@ Tanks.Sons = (function () {
     } else if (toi.mode === "avion") (souffleFort = 0.35), (souffleAigu = 1800);
     if (frequence) osc.frequency.setTargetAtTime(frequence, t, 0.1);
     if (aigu) filtre.frequency.setTargetAtTime(aigu, t, 0.1);
+    // (étape 64) un avion qui passe tout près : un grand souffle (plus il est près, plus c'est fort)
+    for (const a of m.avions || []) {
+      if (a.etat === "attend" || a.etat === "parti") continue;
+      const ici = m.toi && m.toi.soldat && m.toi.mode !== "char" ? m.toi.soldat : m.joueur;
+      const d = Math.hypot(a.x - ici.x, a.y - ici.y, a.z - ici.z);
+      if (d < 500 && (1 - d / 500) * 0.4 > souffleFort) (souffleFort = (1 - d / 500) * 0.4), (souffleAigu = 1200);
+    }
     const silence = coupe || m.phase === "garage";
     volume.gain.setTargetAtTime(silence ? 0 : fort, t, 0.15);
     filtreSouffle.frequency.setTargetAtTime(souffleAigu, t, 0.2);

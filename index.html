@@ -185,6 +185,7 @@
       <a href="#etape61">Étape 61</a>
       <a href="#etape62">Étape 62</a>
       <a href="#etape63">Étape 63</a>
+      <a href="#etape64">Étape 64</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3793,6 +3794,53 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Pourquoi on ne voit un sous-marin ennemi sur la carte que lorsqu'il est à la surface ?</summary><p>Parce que sous l'eau, il est caché ! Ses bulles, à la surface, peuvent quand même le trahir…</p></details>
     </section>
 
+    <section id="etape64">
+      <h2>✈️ Étape 64 : des avions ennemis et des parachutistes <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Des chasseurs ennemis qui bombardent et qui t'attaquent dans le ciel, une DCA pour les abattre, et des parachutistes pour les deux camps. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/64-avions-ennemis-et-parachutistes.md</code>.</p>
+          <ul>
+            <li>✍️ Les avions ennemis bombardent ET font des duels avec ton Rafale.</li>
+            <li>✍️ On les abat avec une DCA.</li>
+            <li>✍️ Des parachutistes pour les deux camps : 6 toutes les 60 s.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Au bout de 35 s : « ✈️ Avion ennemi en approche ! », puis des bombes sur tes tanks.</li>
+            <li>☐ La DCA est dans ton camp (le carré blanc sur la carte, devant l'aérodrome) : <kbd>E</kbd> pour monter, <kbd>←</kbd> <kbd>→</kbd> tourner, <kbd>↑</kbd> <kbd>↓</kbd> lever les canons, <kbd>Espace</kbd> tirer. Vise le petit rond jaune « tire ! ».</li>
+            <li>☐ Un chasseur abattu tombe en fumant et s'écrase.</li>
+            <li>☐ Décolle avec ton Rafale : les chasseurs te prennent en chasse !</li>
+            <li>☐ Toutes les 60 s, des parachutistes bleus et rouges descendent.</li>
+            <li>Vérifie « version 5 » en haut de la page du jeu.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🦆 Viser devant l'avion</h3>
+      <p>Un chasseur vole à 378 km/h. Si tu tires là où il EST, ton obus arrive… là où il ÉTAIT ! Il faut viser là où il SERA quand l'obus arrivera, comme un chasseur de canards. La visée assistée calcule : temps = distance ÷ vitesse de l'obus (300 m/s), puis position future = position + vitesse de l'avion × temps. Elle recommence une deuxième fois pour être plus précise, et le petit rond jaune montre ce point. En plus, l'obus de DCA éclate tout seul s'il passe à moins de 9 m d'un avion : c'est une « fusée de proximité ».</p>
+      <h3>💣 Le bombardier aussi calcule</h3>
+      <p>Une bombe garde la vitesse de l'avion. Le chasseur ennemi doit donc la lâcher AVANT d'être au-dessus de sa cible : à une distance égale à sa vitesse × le temps de chute, avec temps de chute = √(2 × hauteur ÷ 9,8). Il vise aussi là où ton tank SERA s'il roule. Regarde « largage dans … m » sous le capot. Pour l'éviter : <strong>bouge</strong> quand tu vois « 💣 Bombardement ! »</p>
+      <h3>🪂 Les parachutistes</h3>
+      <ul>
+        <li>Toutes les 60 s, un avion de transport par équipe traverse la carte à 110 m de haut.</li>
+        <li>Au-dessus de la zone de combat de son camp, il lâche ses 6 parachutistes, un toutes les 0,7 s.</li>
+        <li>Ils descendent à 5,5 m/s. Touchés en l'air, ils tombent. Au sol, ils deviennent des soldats comme les autres.</li>
+      </ul>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>tanks/config.js</code>, mets <code>nombre: 5</code> dans <code>avionsEnnemis</code> : une escadrille !</li>
+        <li>Mets <code>toutesLes: 20</code> dans <code>parachutistes</code> : une pluie de parachutistes.</li>
+        <li>Mets <code>fusee: 30</code> pour le <code>flak</code> : la DCA devient (presque) imbattable.</li>
+        <li>Mets <code>erreurBombe: 0</code> : les bombardiers deviennent très précis (attention à toi !).</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi la visée assistée fait le calcul deux fois ?</summary><p>La première fois, on calcule le temps avec la distance d'AUJOURD'HUI. Mais l'avion bouge, donc la distance change un peu. On refait le calcul avec la nouvelle position : c'est plus juste.</p></details>
+      <details class="question"><summary>Pourquoi abattre l'avion de transport ennemi est malin ?</summary><p>S'il tombe avant le largage, ses 6 parachutistes ne sautent pas : pas de renforts pour les Rouges !</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4123,8 +4171,8 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         </div>
         <div class="carte fait">
           <div class="num">⚔️</div>
-          <h4>Les tanks : soldats, engins, bateaux, sous-marins, portails <span class="etiquette">✅ fait · à valider</span></h4>
-          <p>Un nouveau jeu de bataille (étape 60), puis sortir du tank, 24 soldats, un 4x4 à mitrailleuse, un hélico, un avion de chasse et un drone (étape 61), puis un lac avec des bateaux et des portails (étape 62), puis des îles, des sous-marins et un soldat avec un vrai squelette (étape 63).</p>
+          <h4>Les tanks : soldats, engins, bateaux, sous-marins, avions, portails <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Un nouveau jeu de bataille (étape 60), puis sortir du tank, 24 soldats, un 4x4 à mitrailleuse, un hélico, un avion de chasse et un drone (étape 61), puis un lac avec des bateaux et des portails (étape 62), puis des îles, des sous-marins et un soldat avec un vrai squelette (étape 63), puis des avions ennemis, une DCA et des parachutistes (étape 64).</p>
           <p class="apprend"><b>Tu apprends :</b> les modes du joueur, la balle instantanée, les projectiles guidés, faire réfléchir l'ordinateur moins souvent. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
@@ -4709,6 +4757,15 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-63" data-cle="appris-63" placeholder="Ex. : J'ai appris que le soldat a un squelette…"></textarea>
         <label for="idees-63"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-63" data-cle="idees-63" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 64 · avions ennemis et parachutistes <span class="petit">· 7 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les chasseurs ennemis et les avions de transport (<code>logique/avions.js</code>), les parachutistes (<code>logique/troupes.js</code>, <code>logique/monde.js</code>), la DCA et son obus à fusée de proximité (<code>logique/engins.js</code>, <code>logique/obus.js</code>), leurs dessins (<code>affichage/engins3d.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : les avions bombardent et font des duels, une DCA pour les abattre, des parachutistes pour les deux camps, 6 toutes les 60 s.</p>
+        <label for="appris-64"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-64" data-cle="appris-64" placeholder="Ex. : J'ai appris qu'il faut viser devant un avion…"></textarea>
+        <label for="idees-64"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-64" data-cle="idees-64" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

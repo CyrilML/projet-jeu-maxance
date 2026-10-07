@@ -30,10 +30,23 @@ Tanks.Troupes = (function () {
     return liste;
   }
 
+  // (étape 64) Un PARACHUTISTE : un soldat qui saute d'un avion de transport (le n° 3 de chaque groupe a un
+  // lance-roquettes). Il descend en parachute ; au sol, il fait comme les autres.
+  function parachutiste(equipe, x, y, z, n) {
+    const sens = equipe === "bleus" ? -1 : 1;
+    const s = Tanks.Soldat.creer(equipe, x, z, sens > 0 ? Math.PI / 2 : -Math.PI / 2, "parachutiste " + (equipe === "bleus" ? "bleu" : "rouge") + " n° " + n);
+    s.y = y;
+    s.parachute = true;
+    s.para = true;
+    if (n === 3) s.arme = "roquettes";
+    s.ia = { pense: (n / 6) * S.pense, cible: null, voit: false, couloir: x * 1.4, etat: "descend", erreur: 0 };
+    return s;
+  }
+
   // Les intentions d'un soldat de l'ordinateur pour ce pas.
   function decider(s, monde, dt) {
     const ia = s.ia;
-    if (s.mort) return {};
+    if (s.mort || s.parachute) return {};
     ia.pense -= dt;
     if (ia.pense <= 0) {
       ia.pense = S.pense;
@@ -83,5 +96,5 @@ Tanks.Troupes = (function () {
     return intentions;
   }
 
-  return { creer, decider };
+  return { creer, decider, parachutiste };
 })();

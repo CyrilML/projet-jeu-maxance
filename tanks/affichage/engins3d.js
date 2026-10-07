@@ -279,9 +279,9 @@ Tanks.Engins3D = (function () {
     const detail = squelette(equipe, joueur, true), simple = squelette(equipe, joueur, false);
     g.add(detail.corps, simple.corps);
     simple.corps.visible = false;
-    // le parachute (pour toi, quand tu t'éjectes de l'avion)
+    // le parachute (pour toi, quand tu t'éjectes de l'avion ; et, étape 64, pour les parachutistes)
     let parachute = null;
-    if (joueur) {
+    {
       const m = mats();
       parachute = new THREE.Group();
       const voile = new THREE.Mesh(new THREE.SphereGeometry(3.2, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.35), new THREE.MeshStandardMaterial({ color: 0x8a9a5a, roughness: 0.9, side: THREE.DoubleSide }));
@@ -445,7 +445,8 @@ Tanks.Engins3D = (function () {
 
   function avion(equipe) {
     const m = mats(), g = new THREE.Group(), caisse = new THREE.Group();
-    const gris = new THREE.MeshStandardMaterial({ color: 0x8c949c, roughness: 0.45, metalness: 0.5 });
+    // (étape 64 : le chasseur ENNEMI est le même avion, mais gris-vert foncé, avec des cocardes rouges)
+    const gris = new THREE.MeshStandardMaterial({ color: equipe === "rouges" ? 0x5c6352 : 0x8c949c, roughness: 0.45, metalness: 0.5 });
     g.add(caisse);
     const fuselage = new THREE.Mesh(new THREE.CapsuleGeometry(0.75, 11, 6, 14), gris);
     fuselage.rotation.z = Math.PI / 2;
@@ -493,16 +494,24 @@ Tanks.Engins3D = (function () {
       caisse.add(mi);
     }
     // le train d'atterrissage, et la cocarde bleu-blanc-rouge sur les ailes
-    for (const [x, z] of [[4, 0], [-1.5, 1.4], [-1.5, -1.4]]) caisse.add(boite(0.1, 1.3, 0.1, m.noir, x, 0.9, z), cyl(0.28, 0.28, 0.18, m.pneu, 10).rotateX(Math.PI / 2).translateY(0).translateX(0));
+    const train = new THREE.Group(); // (rentré en vol)
+    caisse.add(train);
+    for (const [x, z] of [[4, 0], [-1.5, 1.4], [-1.5, -1.4]]) {
+      const roue = cyl(0.28, 0.28, 0.18, m.pneu, 10);
+      roue.rotation.x = Math.PI / 2;
+      roue.position.set(x, 0.28, z);
+      train.add(boite(0.1, 1.3, 0.1, m.noir, x, 0.9, z), roue);
+    }
+    const couleurs = equipe === "rouges" ? [[0.7, 0xd21f1f], [0.47, 0xffffff], [0.24, 0xd21f1f]] : [[0.7, 0x1d3f9a], [0.47, 0xffffff], [0.24, 0xd21f1f]];
     for (const z of [-3.8, 3.8]) {
-      for (const [r, c] of [[0.7, 0x1d3f9a], [0.47, 0xffffff], [0.24, 0xd21f1f]]) {
+      for (const [r, c] of couleurs) {
         const rond = new THREE.Mesh(new THREE.CircleGeometry(r, 20), new THREE.MeshStandardMaterial({ color: c, roughness: 0.6 }));
         rond.rotation.x = -Math.PI / 2;
         rond.position.set(-3.2, 2.06 + (0.7 - r) * 0.01, z);
         caisse.add(rond);
       }
     }
-    return { g, caisse, flamme };
+    return { g, caisse, flamme, train };
   }
 
   function drone(equipe) {
@@ -615,6 +624,80 @@ Tanks.Engins3D = (function () {
     return { g, caisse, helice };
   }
 
+  // (étape 64) L'AVION DE TRANSPORT (comme un A400M) : un gros fuselage, les ailes en haut, 4 hélices, une queue en T,
+  // et une porte à l'arrière d'où sautent les parachutistes.
+  function transport(equipe) {
+    const m = mats(), g = new THREE.Group(), caisse = new THREE.Group(), E = Tanks.CONFIG.equipes[equipe];
+    const peau = new THREE.MeshStandardMaterial({ color: equipe === "bleus" ? 0x6b7461 : 0x7a6f5a, roughness: 0.6, metalness: 0.3 });
+    g.add(caisse);
+    const fuselage = new THREE.Mesh(new THREE.CapsuleGeometry(2.1, 18, 6, 16), peau);
+    fuselage.rotation.z = Math.PI / 2;
+    fuselage.position.y = 3;
+    caisse.add(fuselage);
+    const ailes = boite(4, 0.35, 30, peau, 1, 5, 0);
+    caisse.add(ailes, boite(3.5, 4, 0.25, peau, -11, 7, 0), boite(2.6, 0.25, 9, peau, -12, 9, 0)); // les ailes, la dérive, le plan en T
+    caisse.add(boite(0.6, 0.8, 4.3, new THREE.MeshStandardMaterial({ color: 0x1b2a33, roughness: 0.1 }), 10.2, 3.9, 0)); // le cockpit
+    for (const z of [-1, 1]) caisse.add(boite(3, 0.6, 0.05, new THREE.MeshStandardMaterial({ color: E.marque }), -3, 3.5, z * 2.12)); // la bande
+    const helices = [];
+    for (const z of [-10.5, -5.5, 5.5, 10.5]) {
+      const moteur = cyl(0.7, 0.6, 3.2, peau, 12);
+      moteur.rotation.z = Math.PI / 2;
+      moteur.position.set(2.8, 4.6, z);
+      caisse.add(moteur);
+      const h = new THREE.Group();
+      h.position.set(4.5, 4.6, z);
+      for (let k = 0; k < 4; k++) {
+        const bras = new THREE.Group();
+        bras.rotation.x = (k * Math.PI) / 2;
+        bras.add(boite(0.08, 2.2, 0.3, m.noir, 0, 1.1, 0));
+        h.add(bras);
+      }
+      caisse.add(h);
+      helices.push(h);
+    }
+    return { g, caisse, helices };
+  }
+
+  // (étape 64) LA DCA : un socle, une tourelle qui tourne, un bouclier, un siège, et 2 longs canons qui se lèvent.
+  function dca(equipe) {
+    const m = mats(), p = peinture(equipe), g = new THREE.Group(), caisse = new THREE.Group();
+    g.add(caisse);
+    caisse.add(cyl(1.7, 1.9, 0.5, p, 18).translateY(0.25)); // le socle
+    for (let k = 0; k < 4; k++) { // les 4 pieds
+      const pied = boite(2.6, 0.2, 0.35, p, 1.3, 0.12, 0);
+      const bras = new THREE.Group();
+      bras.rotation.y = (k * Math.PI) / 2 + Math.PI / 4;
+      bras.add(pied);
+      caisse.add(bras);
+    }
+    const tourelle = new THREE.Group();
+    tourelle.position.y = 0.6;
+    caisse.add(tourelle);
+    tourelle.add(cyl(1, 1.1, 0.7, p, 14).translateY(0.35), boite(1.2, 0.5, 0.6, m.noir, -0.6, 1.0, 0)); // le corps, le siège
+    tourelle.add(boite(0.15, 1.1, 2, p, 0.5, 1.4, 0)); // le bouclier
+    const canons = new THREE.Group();
+    canons.position.set(0.3, 1.6, 0);
+    tourelle.add(canons);
+    for (const z of [-0.35, 0.35]) {
+      const c = cyl(0.07, 0.09, 3.2, m.noir, 10);
+      c.rotation.z = -Math.PI / 2;
+      c.position.set(1.6, 0, z);
+      const bout = cyl(0.12, 0.12, 0.3, m.noir, 8); // le cache-flamme
+      bout.rotation.z = -Math.PI / 2;
+      bout.position.set(3.2, 0, z);
+      canons.add(c, boite(0.9, 0.35, 0.3, m.metal, 0.2, 0, z), bout);
+    }
+    const flammes = [];
+    for (const z of [-0.35, 0.35]) {
+      const f = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffc860 }));
+      f.position.set(3.4, 0, z);
+      f.visible = false;
+      canons.add(f);
+      flammes.push(f);
+    }
+    return { g, caisse, tourelle, canons, flammes };
+  }
+
   // Le portail : un anneau qui brille, un tourbillon (un disque avec une spirale dessinée, qui tourne) et un socle.
   function portail(couleur, rayon) {
     const g = new THREE.Group(), c = new THREE.Color(couleur);
@@ -656,7 +739,7 @@ Tanks.Engins3D = (function () {
   }
 
   function fabriquer(sorte, equipe) {
-    return { jeep, helico, avion, drone, bateau, sousmarin }[sorte](equipe);
+    return { jeep, helico, avion, drone, bateau, sousmarin, dca, transport, chasseur: avion }[sorte](equipe);
   }
   function bruler(o) {
     const m = mats();

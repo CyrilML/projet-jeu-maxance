@@ -12,6 +12,8 @@
 // le LAC fait une gerbe d'eau (impact « eau »).
 // Étape 63 : la TORPILLE file sous l'eau (elle reste toujours sous la surface) ; un SOUS-MARIN plongé (à plus de 1,5 m)
 // ne peut être touché QUE par une torpille (les obus et les roquettes explosent à la surface).
+// Étape 64 : les AVIONS peuvent être touchés (les chasseurs et les transports ennemis, et ton Rafale) : par un missile,
+// ou par l'obus de la DCA (le « flak »), qui éclate tout seul quand il passe à moins de 9 m d'un avion ennemi.
 // ✍️ 4 obus détruisent un tank. Un projectile ne fait pas de mal à sa propre équipe.
 // Ce fichier ne dessine rien : il renvoie des événements (« touche », « detruit », « impact », « soldat-touche »…).
 
@@ -57,7 +59,8 @@ Tanks.Obus = (function () {
     ev.push(["touche", { x, y, z, tireur, cible, vie: cible.vie, vieMax, cote, distance, bateau }]);
     if (cible.vie <= 0) {
       cible.detruit = true;
-      ev.push(["detruit", { x: cible.x, y: cible.y, z: cible.z, tireur, cible, distance, bateau }]);
+      // (étape 64) un avion n'est pas une épave qui fume au sol : il est « abattu », et il tombe
+      ev.push([cible.genre === "avion" ? "abattu" : "detruit", { x: cible.x, y: cible.y, z: cible.z, tireur, cible, distance, bateau }]);
     }
   }
 
@@ -77,8 +80,8 @@ Tanks.Obus = (function () {
     }
   }
   // Tous les véhicules qu'un projectile peut toucher : les tanks, le 4x4 (étape 61), et les bateaux (étape 62).
-  // (étape 63 : et les sous-marins)
-  const vehicules = (monde) => monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || e.sorte === "bateau" || e.sorte === "sousmarin"), monde.bateaux || [], monde.sousMarins || []);
+  // (étape 63 : et les sous-marins ; étape 64 : et la DCA)
+  const vehicules = (monde) => monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || e.sorte === "dca" || e.sorte === "bateau" || e.sorte === "sousmarin"), monde.bateaux || [], monde.sousMarins || []);
   const cache = (c, sorte) => c.genre === "sousmarin" && sorte !== "torpille" && Tanks.SousMarins.sousLEau(c); // (sous l'eau)
 
   function avancer(liste, monde, dt) {
@@ -127,6 +130,18 @@ Tanks.Obus = (function () {
         fini = ["impact", { x: p.x, y: p.y, z: p.z, sur: "char", sorte: p.sorte }];
         break;
       }
+      // un avion ? (étape 64) le missile le touche à moins de 5 m ; le flak éclate à moins de 9 m
+      if (!fini && (p.sorte === "missile" || p.sorte === "flak") && p.y > T.hauteur(p.x, p.z) + 8) {
+        for (const a of Tanks.Avions.enLAir(monde)) {
+          if (a.equipe === p.tireur.equipe) continue;
+          const d = Math.hypot(a.x - p.x, a.y - p.y, a.z - p.z);
+          if (d < (p.sorte === "flak" ? R.fusee : 5)) {
+            abimer(a, p.sorte === "flak" ? R.degatsAvion : 1, p.tireur, p.x, p.y, p.z, p.vx, p.vz, ev);
+            fini = ["impact", { x: p.x, y: p.y, z: p.z, sur: "air", sorte: p.sorte }];
+            break;
+          }
+        }
+      }
       // l'eau du lac ? (étape 62)
       if (!fini && p.sorte !== "torpille" && p.y < C.lac.niveau && T.dansLEau(p.x, p.z)) fini = ["impact", { x: p.x, y: C.lac.niveau, z: p.z, sur: "eau", sorte: p.sorte }];
       // le sol ?
@@ -144,7 +159,7 @@ Tanks.Obus = (function () {
         }
       }
       if (fini && fini[1].sur !== "char") souffle(monde, p, R, fini[1].x, fini[1].y, fini[1].z, ev, null);
-      if (!fini && p.age > (R.vieMax || O.vieMax + (p.sorte === "bombe" || p.sorte === "grenade" ? 20 : 0))) fini = ["perdu", {}];
+      if (!fini && p.age > (R.vieMax || O.vieMax + (p.sorte === "bombe" || p.sorte === "grenade" ? 20 : 0))) fini = p.sorte === "flak" ? ["impact", { x: p.x, y: p.y, z: p.z, sur: "air", sorte: "flak" }] : ["perdu", {}];
       if (fini) {
         if (fini[0] !== "perdu") ev.push(fini);
         liste.splice(i, 1);

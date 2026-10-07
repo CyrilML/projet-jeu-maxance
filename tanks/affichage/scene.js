@@ -11,6 +11,8 @@
 // MISSILES en vol, et une caméra pour chaque façon de jouer : derrière ton épaule à pied, derrière l'engin en l'air.
 // Étape 62 : les BATEAUX (ils se balancent sur les vagues : un petit roulis et un petit tangage qui suivent des
 // « sinus »), les PORTAILS (le tourbillon tourne), et la caméra qui SAUTE d'un coup quand tu passes un portail.
+// Étape 64 : les AVIONS ennemis et de transport (ils penchent dans les virages ; abattus, ils tombent en fumant), la DCA
+// (sa tourelle tourne, ses canons se lèvent), et la caméra de la DCA qui regarde vers le ciel, là où visent les canons.
 // Étape 63 : chaque objet est dessiné ENTRE sa position d'avant et celle de maintenant (« interpolation ») : le jeu
 // calcule 120 pas par seconde, mais l'écran n'affiche pas toujours ses images pile entre deux pas ; sans ça, ton
 // personnage faisait de tout petits sauts. Et la caméra ne passe plus à travers les murs : elle s'avance devant.
@@ -171,6 +173,7 @@ Tanks.Scene = (function () {
     return o;
   }
   function placerEngin(o, e, dt, original) {
+    o.g.visible = e.etat !== "attend" && e.etat !== "parti";
     o.g.position.set(e.x, e.y, e.z);
     o.g.rotation.set(e.roulis || 0, -e.angle, e.tangage || 0, "YXZ");
     if (e.sorte === "sousmarin") {
@@ -210,7 +213,14 @@ Tanks.Scene = (function () {
       o.rotorQueue.rotation.z = e.rotor * 1.7;
     } else if (e.sorte === "drone") {
       o.helices.forEach((h, i) => (h.rotation.y = e.rotor * (i % 2 ? 2 : -2)));
-    } else if (e.sorte === "avion") {
+    } else if (e.sorte === "dca") {
+      o.tourelle.rotation.y = -e.tourelle;
+      o.canons.rotation.z = e.hausse;
+      o.flammes.forEach((f, i) => (f.visible = e.recharge > C.engins.dca.cadence * 0.5 && e.canon === i));
+    } else if (e.sorte === "transport") {
+      for (const h of o.helices) h.rotation.x += dt * 30;
+    } else if (e.sorte === "avion" || e.sorte === "chasseur") {
+      if (o.train) o.train.visible = !e.enVol;
       o.flamme.visible = e.pilote;
       o.flamme.scale.set(1, 0.8 + Math.random() * 0.4, 1);
     }
@@ -231,7 +241,7 @@ Tanks.Scene = (function () {
     }
     return projectiles3d[i];
   }
-  const TAILLES = { roquette: 1, bombe: 1.6, missile: 1.5, grenade: 0.5, torpille: 1.8 };
+  const TAILLES = { roquette: 1, bombe: 1.6, missile: 1.5, grenade: 0.5, torpille: 1.8, flak: 0.35 };
   function placerProjectiles(monde) {
     let n = 0;
     for (const p of monde.obus) {
@@ -241,7 +251,7 @@ Tanks.Scene = (function () {
       g.position.set(p.x, p.y, p.z);
       g.rotation.set(0, -Math.atan2(p.vz, p.vx), Math.atan2(p.vy, Math.hypot(p.vx, p.vz)), "YZX");
       g.scale.setScalar(TAILLES[p.sorte] || 1);
-      g.feu.visible = p.sorte === "roquette" || p.sorte === "missile"; // (les bombes tombent sans moteur ; la torpille fait des bulles)
+      g.feu.visible = p.sorte === "roquette" || p.sorte === "missile" || p.sorte === "flak"; // (les bombes tombent sans moteur ; la torpille fait des bulles)
     }
     for (let i = n; i < projectiles3d.length; i++) projectiles3d[i].visible = false;
   }
@@ -259,6 +269,7 @@ Tanks.Scene = (function () {
       return { x: s.x, y: s.y, z: s.z, angle: s.angle, distance: 0.33, hauteur: 0.38, devant: 0.6, regardY: 1.6, cote: 0.9 };
     }
     const e = vue(t.engin);
+    if (e.sorte === "dca") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle, distance: 0.5, hauteur: 0.4, devant: 1, regardY: 1.5 + Math.tan(Math.min(1.2, e.hausse)) * C.camera.regardDevant * 0.7 };
     if (e.sorte === "sousmarin") return { x: e.x, y: Math.max(e.y, C.lac.niveau - 1.3), z: e.z, angle: e.angle, distance: 1.5, hauteur: 0.75, devant: 1, regardY: 1.5 };
     if (e.sorte === "jeep") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle * 0.7, distance: 0.75, hauteur: 0.7, devant: 1, regardY: 2 };
     if (e.sorte === "bateau") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle, distance: 1.1, hauteur: 0.8, devant: 1, regardY: 2 };
@@ -291,11 +302,11 @@ Tanks.Scene = (function () {
     if (monde.phase === "garage" && objets.size === 1) Tanks.Effets.effacer();
     for (const c of monde.chars) placer(objetDe(c), vue(c), dt);
     // étape 61 : les soldats, les engins, les projectiles (on enlève les dessins de ceux qui n'existent plus)
-    const presents = new Set(monde.soldats.concat(monde.engins, monde.bateaux, monde.sousMarins));
+    const presents = new Set(monde.soldats.concat(monde.engins, monde.bateaux, monde.sousMarins, monde.avions));
     for (const [x, o] of dessinsSoldats) if (!presents.has(x)) (scene.remove(o.g), dessinsSoldats.delete(x));
     for (const [x, o] of dessinsEngins) if (!presents.has(x)) (scene.remove(o.g), dessinsEngins.delete(x));
     horloge += dt;
-    for (const e of monde.engins.concat(monde.bateaux, monde.sousMarins)) placerEngin(engin3d(e), vue(e), dt, e);
+    for (const e of monde.engins.concat(monde.bateaux, monde.sousMarins, monde.avions)) placerEngin(engin3d(e), vue(e), dt, e);
     // (étape 62) les portails : le tourbillon tourne, l'anneau brille plus fort quand quelqu'un vient de passer
     for (const p of monde.portails) {
       let o = dessinsPortails.get(p);

@@ -8,7 +8,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 4,
+  version: 5,
   pasFixe: 1 / 120,
 
   monde: {
@@ -98,8 +98,9 @@ Tanks.CONFIG = {
     obus: { degatsChar: 1, souffle: 5 }, // (sa vitesse et sa gravité sont plus haut, dans « obus »)
     roquette: { vitesse: 75, gravite: 0.6, degatsChar: 1, souffle: 5 },
     bombe: { vitesse: 0, gravite: 9.8, degatsChar: 2, souffle: 11 },
-    missile: { vitesse: 110, gravite: 0, degatsChar: 2, souffle: 7, guide: 1.6 }, // (il tourne vers sa cible : 1,6 rad/s)
+    missile: { vitesse: 110, gravite: 0, degatsChar: 2, souffle: 7, guide: 1.6, vieMax: 7 }, // (il tourne vers sa cible : 1,6 rad/s)
     grenade: { vitesse: 0, gravite: 9.8, degatsChar: 0, souffle: 7 },
+    flak: { vitesse: 300, gravite: 4.9, degatsChar: 0, souffle: 0, vieMax: 3, fusee: 9, degatsAvion: 1 }, // (étape 64) l'obus de la DCA : il éclate à 9 m d'un avion
     torpille: { vitesse: 26, gravite: 0, degatsChar: 2, souffle: 5, guide: 0.5, vieMax: 14 }, // (étape 63) elle file sous l'eau
   },
   // ✍️ Les engins garés dans ton camp (seulement toi les conduis) : le 4x4 à mitrailleuse, l'hélico qui lâche des
@@ -107,7 +108,10 @@ Tanks.CONFIG = {
   engins: {
     jeep: { nom: "4x4 à mitrailleuse", icone: "🚙", vitesseMax: 26, acceleration: 7, virage: 1.4, vie: 2, tourelle: 1.6, arme: "mitrailleuse" },
     helico: { nom: "Hélicoptère Tigre", icone: "🚁", vitesseMax: 45, acceleration: 9, virage: 1, montee: 9, hauteurMax: 150, munitions: 8, recharge: 5, arme: "bombe" },
-    avion: { nom: "Avion de chasse Rafale", icone: "✈️", vitesse: 95, virage: 0.9, tangage: 0.8, hauteurMin: 25, hauteurMax: 400, munitions: 6, recharge: 2.5, arme: "missile", ejection: true },
+    avion: { nom: "Avion de chasse Rafale", icone: "✈️", vitesse: 95, virage: 0.9, tangage: 0.8, hauteurMin: 25, hauteurMax: 400, munitions: 6, recharge: 2.5, arme: "missile", ejection: true, vie: 3 }, // (étape 64 : 3 missiles ennemis l'abattent)
+    // (étape 64) ✍️ La DCA (« défense contre les avions ») : un canon double anti-aérien, dans ton camp.
+    // ← → tourner, ↑ ↓ lever / baisser les canons, Espace tirer. Ses obus explosent tout seuls près d'un avion.
+    dca: { nom: "DCA (canon anti-aérien)", icone: "🎯", longueur: 3.2, largeur: 3.2, hauteur: 2.4, vie: 3, rotation: 1.2, levee: 0.8, cadence: 0.12 },
     drone: { nom: "Drone", icone: "🛸", vitesseMax: 30, acceleration: 12, virage: 2, montee: 12, hauteurMax: 120, munitions: 6, recharge: 3, arme: "grenade" },
     distanceMonter: 6, // m : on peut monter dans un engin à moins de 6 m
     parachute: 4, // m/s : la vitesse de descente en parachute (on s'éjecte de l'avion avec E)
@@ -154,6 +158,28 @@ Tanks.CONFIG = {
     entree: 2.6, // m : il faut passer à moins de 2,6 m du centre pour être aspiré
     attente: 2, // s : après un passage, on ne peut pas repasser tout de suite (sinon on ferait des allers-retours)
     hauteurMax: 7, // m au-dessus du sol (pour l'hélico et le drone)
+  },
+
+  // ------------------------------------------------------------------ étape 64 : les avions ennemis et les parachutistes
+  // ✍️ Les avions ennemis font « les deux » : ils BOMBARDENT le sol (ils visent un de tes tanks, ou toi, et lâchent 2 bombes
+  // un peu avant d'être au-dessus : la bombe garde leur vitesse), et si tu voles avec ton Rafale, ils t'attaquent avec
+  // des missiles (un DUEL dans le ciel). ✍️ On les abat avec la DCA (et avec les missiles de ton Rafale).
+  avionsEnnemis: {
+    nombre: 2, nom: "Chasseur ennemi", vitesse: 105, virage: 0.55, altitude: 95, vie: 3, bombes: 2,
+    premierPassage: 35, // s : ils arrivent 35 s après le début de la bataille
+    retour: 45, // s : un avion abattu est remplacé 45 s plus tard
+    duel: 900, // m : s'il voit ton Rafale à moins de 900 m, il le prend en chasse
+    missile: { portee: 600, recharge: 6, cone: 0.35 },
+    erreurBombe: 8, // m : ses bombes tombent à ± 8 m de là où il vise
+  },
+  // ✍️ Les PARACHUTISTES : pour CHAQUE équipe, un avion de transport passe toutes les 60 s et lâche 6 soldats au-dessus
+  // de la zone de combat de son camp. L'avion de transport ennemi peut être abattu (avant le largage : pas de renforts !).
+  parachutistes: {
+    nombre: 6, toutesLes: 60, premier: 25, // s
+    altitude: 110, descente: 5.5, // m, m/s (toi : 4 m/s)
+    largage: { bleus: [0, 110], rouges: [0, -110] }, // [x, z] : au-dessus de quoi on saute
+    maxParEquipe: 30, // (pas plus de 30 soldats debout par équipe : sinon le jeu ralentit)
+    transport: { nom: "Avion de transport", vitesse: 70, vie: 4 },
   },
 
   camera: { distance: 15, hauteur: 6.5, regardDevant: 22, souplesse: 6, champ: 60 },
