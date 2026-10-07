@@ -95,7 +95,12 @@ Village.Batisses = (function () {
     const avant = loupe; loupe = { x, y, s };
     try { dessiner(); } finally { loupe = avant; ctx.restore(); }
   }
-  const echelleDe = (type) => (type === "entrepot" || type === "depot" ? C_.detail.echelleEntrepot : C_.detail.echelleBatiments);
+  // Étape 24 : ✍️ presque tous les bâtiments prennent 2 × 2 cases : ils sont dessinés au MILIEU de leur bloc, bien plus gros
+  const grand = (type) => !C_.petits.includes(type);
+  const echelleDe = (type) => (type === "entrepot" || type === "depot" ? C_.detail.echelleEntrepot : grand(type) ? C_.detail.echelleGrands : C_.detail.echelleBatiments);
+  const decalageBloc = (type) => (grand(type) ? C_.carte.largeurCase / 2 : 0); // le milieu du bloc est une demi-case à droite
+  // Un bâtiment qui n'a pas pu avoir tout son bloc (dans une vieille partie, sans place autour) reste à l'ancienne taille
+  const aSonBloc = (b) => !grand(b.type) || C_.bloc.every(([a, c]) => (b.emprise || []).some(([x, y]) => x === a && y === c));
 
   // Un point sur un mur : u va de 0 (début du mur) à 1 (fin), v de 0 (le sol) à 1 (le haut du mur).
   const surMur = (P, Q, h, u, v) => [P[0] + (Q[0] - P[0]) * u, P[1] + (Q[1] - P[1]) * u - v * h];
@@ -531,12 +536,15 @@ Village.Batisses = (function () {
   // ---------------------------------------------------------------- étape 22 : les grands champs et les enclos
   // ✍️ « on ne devrait pas avoir besoin de cliquer : on devrait le voir ». La ferme a de vrais champs, et les élevages de
   // vrais enclos pleins d'animaux, sur les cases à côté du bâtiment (config.js : « emprises »).
+  // Étape 24 : seulement les cases des champs (config.js : « champs »), pas celles du bloc du bâtiment ; à la vraie taille.
+  const estChamp = (b, dc, dl) => (C_.champs[b.type] || []).some(([a, c]) => a === dc && c === dl);
+  const aDesChamps = (b) => !!(b.emprise && b.emprise.some(([dc, dl]) => estChamp(b, dc, dl)));
   function empriseDessin(ctx, b, x, y, t) {
-    const s = echelleDe(b.type), L = C_.carte.largeurCase / 2 / s, H = C_.carte.hauteurCase / 2 / s; // (on est « à la loupe »)
+    const L = C_.carte.largeurCase / 2, H = C_.carte.hauteurCase / 2;
     const tr = C_.elevage.troupeaux[b.type];
     let n = 0;
     for (const [dc, dl] of b.emprise) {
-      if (dc <= 0) continue; // [0, -1] est sous le bâtiment lui-même
+      if (!estChamp(b, dc, dl)) continue; // le bloc du bâtiment lui-même
       const cx = x + (dc - dl) * L, cy = y + (dc + dl) * H;
       const P = [[cx - L * 0.92, cy], [cx, cy + H * 0.92], [cx + L * 0.92, cy], [cx, cy - H * 0.92]];
       if (b.type === "ferme") {
@@ -709,8 +717,11 @@ Village.Batisses = (function () {
   function dessinerBatiment(ctx, b, x, y, t) {
     const m = MODELES[b.type];
     const souleve = Village.monde && Village.monde.projet && Village.monde.projet.deplacer === b; // étape 12
-    const s = echelleDe(b.type) * (1 + 0.07 * niveauDe(b)); // étape 23 : un bâtiment amélioré est un peu plus grand
+    const s = (aSonBloc(b) ? echelleDe(b.type) : 1.5) * (1 + 0.07 * niveauDe(b)); // étape 23 : un bâtiment amélioré est un peu plus grand
+    const x0 = x; if (aSonBloc(b)) x += decalageBloc(b.type); // étape 24 : le milieu du bloc de 2 × 2 cases
     if (souleve) { ctx.save(); ctx.globalAlpha = 0.4; aLaLoupe(ctx, x, y - 6, s, () => dessinerBatimentDedans(ctx, b, x, y - 6, t, m)); ctx.restore(); return; }
+    // Étape 22 et 24 : les champs et les enclos, sur le sol, à la taille des cases (pas à la loupe)
+    if (b.etat === "pret" && b.emprise && b.emprise.length) empriseDessin(ctx, b, x0, y, t);
     // Étape 14 : ✍️ le bâtiment est dessiné plus GROS (à la loupe) ; ses ouvriers restent à la taille des autres
     aLaLoupe(ctx, x, y, s, () => dessinerBatimentDedans(ctx, b, x, y, t, m));
     if (b.etat === "pret") ouvrierDevant(ctx, b, x, y, t, s);
@@ -732,8 +743,8 @@ Village.Batisses = (function () {
     if (b.etat === "chantier") return chantier(ctx, b, x, y, m, t);
     if (b.type === "entrepot") { cour(ctx, x, y, (Village.monde && Village.monde.stock) || {}); silo(ctx, x - 24, y - 12, Village.monde ? Village.monde.reserve.niveau : 1); } // étape 9 : la cour ; étape 11 : le silo
     if (m.linge && vue.fin && !vue.hiver) linge(ctx, x - m.a - 12, y - 2, t); // étape 9
-    if (b.type === "ferme" && !(b.emprise && b.emprise.length)) champs(ctx, x, y, t); // étape 11 (une ferme sans place pour ses champs)
-    if (b.emprise && b.emprise.length && b.etat === "pret") empriseDessin(ctx, b, x, y, t); // étape 22 : les grands champs et les enclos
+    if (b.type === "ferme" && !aDesChamps(b)) champs(ctx, x, y, t); // étape 11 (une ferme sans place pour ses champs)
+    // (Étape 24 : les champs et les enclos sont dessinés avant, dans dessinerBatiment.)
     boite(ctx, x, y, m, 1, true);
     porte(ctx, x, y, m);
     const travaille = b.ouvrier && b.ouvrier.etat === "travailler";
@@ -876,7 +887,7 @@ Village.Batisses = (function () {
       // Étape 15 : ✍️ l'enclos, avec ses vaches qui broutent (et qui se couchent quand elles sont malades)
       // Étape 16 : pareil pour les poules, les moutons et les cochons (qui ont leur mare de boue !)
       const tr = C_.elevage.troupeaux[b.type];
-      if (!(b.emprise && b.emprise.some(([dc]) => dc > 0))) { // étape 22 : sans place à côté, le petit enclos devant
+      if (!aDesChamps(b)) { // étape 22 : sans place à côté, le petit enclos devant
         if (b.type === "porcherie") { ctx.beginPath(); ctx.ellipse(x + 18, y + 14, 6, 2.6, 0, 0, TOUR); ctx.fillStyle = vue.hiver ? "#cfd8e0" : "#7a5a3a"; ctx.fill(); }
         enclos(ctx, x + 17, y + 13, 14, 7);
         const places = [[x + 10, y + 12, 1], [x + 23, y + 13, -1], [x + 16, y + 17, 1], [x + 18, y + 9, -1]];
@@ -1202,6 +1213,7 @@ Village.Batisses = (function () {
 
   // Une bulle de pensée, comme dans les bandes dessinées
   function bulleDePensee(ctx, x, y, t, contenu) {
+    if (loupe && loupe.s > 1.6) { const k = 1.6 / loupe.s, l0 = loupe; ctx.save(); ctx.translate(x, y + 18); ctx.scale(k, k); ctx.translate(-x, -y - 18); loupe = null; bulleDePensee(ctx, x, y, t, contenu); loupe = l0; ctx.restore(); return; } // étape 24
     const s = Math.sin(t * 2) * 1.5;
     ctx.fillStyle = "#ffffff"; ctx.strokeStyle = "#5a4220"; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(x - 5, y + 13, 2, 0, TOUR); ctx.fill(); ctx.stroke();
@@ -1215,6 +1227,7 @@ Village.Batisses = (function () {
 
   // ✍️ Pas de route jusqu'à l'entrepôt : un panneau qui saute, au-dessus du toit (un chemin barré).
   function panneauSansRoute(ctx, x, y, t) {
+    if (loupe && loupe.s > 1.6) { const k = 1.6 / loupe.s, l0 = loupe; ctx.save(); ctx.translate(x, y + 16); ctx.scale(k, k); ctx.translate(-x, -y - 16); loupe = null; panneauSansRoute(ctx, x, y, t); loupe = l0; ctx.restore(); return; } // étape 24
     const saut = Math.abs(Math.sin(t * 3)) * 4;
     ctx.fillStyle = "#fff4f0";
     ctx.beginPath();
@@ -2057,7 +2070,8 @@ Village.Batisses = (function () {
     ctx.fill();
     ctx.strokeStyle = possible ? "#c6ffd0" : "#ffd0cc"; ctx.lineWidth = 2; ctx.stroke();
     ctx.globalAlpha = 0.55 + 0.15 * Math.sin(t * 5);
-    aLaLoupe(ctx, x, y, echelleDe(type), () => boite(ctx, x, y, MODELES[type], 1, true)); // étape 14 : à la même taille que le vrai
+    const xb = x + decalageBloc(type); // étape 24 : au milieu de son bloc
+    aLaLoupe(ctx, xb, y, echelleDe(type), () => boite(ctx, xb, y, MODELES[type], 1, true)); // étape 14 : à la même taille que le vrai
     ctx.globalAlpha = 1;
   }
 

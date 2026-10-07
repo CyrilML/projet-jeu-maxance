@@ -64,7 +64,10 @@ Village.Ameliorations = (function () {
   const niveau = (monde) => (entrepot(monde) && entrepot(monde).niveau) || 1;
   const placesPrincipal = (monde) => E.porteurs + E.parNiveau * (niveau(monde) - 1) + (monde.porteursBonus || 0);
   // Étape 17 : chaque entrepôt secondaire fini a ses propres places
-  const placesDe = (monde, e) => (e.type === "depot" ? C.depot.porteurs : placesPrincipal(monde));
+  // Étape 24 : ✍️ + 1 place pour 4 bâtiments livrés par cet entrepôt (le travail fait venir des porteurs)
+  const servis = (monde, e) => monde.batiments.filter((b) => b !== e && b.entrepotProche === e && b.etat === "pret" && (Village.Batiments.TYPES[b.type].metier || C.ateliers[b.type])).length;
+  const placesEnPlus = (monde, e) => Math.floor(servis(monde, e) / C.depot.parBatiments);
+  const placesDe = (monde, e) => (e.type === "depot" ? C.depot.porteurs : placesPrincipal(monde)) + placesEnPlus(monde, e);
   const placesPorteurs = (monde) => monde.batiments.filter((b) => Village.Routes.estEntrepot(b)).reduce((n, e) => n + placesDe(monde, e), 0);
   function prixAgrandir(monde) {
     const f = Math.pow(E.facteurPrix, niveau(monde) - 1), ressources = {};
@@ -86,5 +89,5 @@ Village.Ameliorations = (function () {
     return true;
   }
 
-  return { liste, suivante, bonus, vitessePorteurs, raison, ameliorer, niveau, placesPorteurs, placesDe, placesPrincipal, prixAgrandir, raisonAgrandir, agrandir };
+  return { servis, placesEnPlus, liste, suivante, bonus, vitessePorteurs, raison, ameliorer, niveau, placesPorteurs, placesDe, placesPrincipal, prixAgrandir, raisonAgrandir, agrandir };
 })();

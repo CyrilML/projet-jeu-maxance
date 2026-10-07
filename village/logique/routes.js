@@ -147,12 +147,11 @@ Village.Routes = (function () {
   function recalculerReseau(monde) {
     const k = monde.carte, reseau = new Set(), zone = new Map();
     let file = [];
+    // Étape 24 : les voisines de TOUTES les cases d'un bâtiment (il peut prendre 2 × 2 cases)
+    const voisines = (b) => { const liste = []; for (const j of Village.Batiments.casesDe(b, k)) { const c0 = j % k.colonnes, l0 = Math.floor(j / k.colonnes); for (const [dc, dl] of VOISINS) { const c = c0 + dc, l = l0 + dl; if (c >= 0 && l >= 0 && c < k.colonnes && l < k.lignes) liste.push(l * k.colonnes + c); } } return liste; };
     for (const e of monde.batiments) {
       if (!estEntrepot(e)) continue;
-      for (const [dc, dl] of VOISINS) {
-        const c = e.colonne + dc, l = e.ligne + dl, i = l * k.colonnes + c;
-        if (c >= 0 && l >= 0 && c < k.colonnes && l < k.lignes && monde.route[i] && !reseau.has(i)) { reseau.add(i); zone.set(i, e); file.push(i); }
-      }
+      for (const i of voisines(e)) if (monde.route[i] && !reseau.has(i)) { reseau.add(i); zone.set(i, e); file.push(i); }
     }
     while (file.length) {
       const suivante = [];
@@ -173,11 +172,7 @@ Village.Routes = (function () {
     // Qui est relié ? On prévient la radio quand ça change.
     for (const b of monde.batiments) {
       let pres = null; // étape 17 : l'entrepôt de ce bâtiment (celui de sa route)
-      const relie = estEntrepot(b) || VOISINS.some(([dc, dl]) => {
-        const c = b.colonne + dc, l = b.ligne + dl, i = l * k.colonnes + c;
-        if (c >= 0 && l >= 0 && c < k.colonnes && l < k.lignes && reseau.has(i)) { pres = pres || zone.get(i); return true; }
-        return false;
-      });
+      const relie = estEntrepot(b) || voisines(b).some((i) => { if (reseau.has(i)) { pres = pres || zone.get(i); return true; } return false; }); // étape 24 : par n'importe quelle case
       b.entrepotProche = estEntrepot(b) ? b : pres;
       if (relie !== b.relie && b.type !== "entrepot" && b.relie !== undefined) {
         radio.emettre(relie ? "batiment-relie" : "batiment-coupe", { nom: Village.Batiments.TYPES[b.type].nom, numero: b.numero });

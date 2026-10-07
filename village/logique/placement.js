@@ -63,8 +63,9 @@ Village.Placement = (function () {
     const auReseau = (i) => monde.reseau.has(i);
     const e = monde.batiments.find((x) => x.type === "entrepot");
     const touche = (cc, ll) => Ro.VOISINS.some(([dc, dl]) => auReseau((ll + dl) * k.colonnes + cc + dc));
-    if (touche(c, l)) return []; // déjà au bord d'une route du réseau
-    const pres = (cc, ll) => e && Math.abs(cc - e.colonne) + Math.abs(ll - e.ligne) === 1; // à côté de l'entrepôt
+    if (touche(c, l) || B().empriseDe(type).some(([dc, dl]) => touche(c + dc, l + dl))) return []; // déjà au bord d'une route du réseau (étape 24 : par n'importe quelle case)
+    // À côté de l'entrepôt (étape 24 : de n'importe quelle case de son bloc, sur une case libre)
+    const pres = (cc, ll) => e && !monde.occupees.has(ll * k.colonnes + cc) && Ro.VOISINS.some(([dc, dl]) => monde.occupees.get((ll + dl) * k.colonnes + cc + dc) === e);
     const libre = (cc, ll) => {
       if (cc < 0 || ll < 0 || cc >= k.colonnes || ll >= k.lignes) return false;
       const i = ll * k.colonnes + cc;

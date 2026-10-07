@@ -62,12 +62,14 @@
 //                  déjà faite, toutes ses routes deviennent pavées au chargement.
 //  15 (étape 18) : la jauge d'évolution de chaque logement (evo, en secondes), et un nouveau type de logement
 //                  (manoir : la maison bourgeoise). Rien à convertir : les huttes et les maisons partent de 0.
+//  16 (étape 24) : la taille de la carte (taille). Une partie plus ancienne n'en a pas : elle garde sa carte de 64 × 64.
+//                  Ses bâtiments, qui prennent maintenant 2 × 2 cases, sont déplacés au chargement s'ils manquent de place.
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 15;
+  const VERSION = 16;
   const radio = Village.Evenements;
 
   function vide() {
@@ -192,6 +194,7 @@ Village.Sauvegarde = (function () {
     const ajout = (a, b) => { const r = Object.assign({}, a); for (const k in b || {}) r[k] = (r[k] || 0) + b[k]; return r; };
     donnees.partie = {
       stock,
+      taille: monde.carte.colonnes, // étape 24 : la taille de la carte (64 avant l'étape 24, 96 depuis)
       batiments: monde.batiments.map((b) => {
         const d = { type: b.type, colonne: b.colonne, ligne: b.ligne, progres: b.progres >= 1 ? 1 : Math.floor(b.progres * 100) / 100, produits: b.produits };
         if (b.sortie) { d.sortie = b.sortie; if (b.lots.some((q) => q !== 1)) d.lots = b.lots; }

@@ -795,13 +795,16 @@ Village.Interface = (function () {
       titre("🏠 Le cœur du village");
       info("🚚 " + actifs.length + " / " + Village.Ameliorations.placesPorteurs(monde) + " porteurs · " + dehors + " au travail");
       info("📋 " + monde.file.length + " livraison(s) en attente", monde.file.length > 40 ? "#c0392b" : null);
-      if (monde.file.length > 40) pb("⚠️ Il manque des porteurs : agrandis l'entrepôt, ou construis un 🏬 entrepôt 2.");
+      // Étape 24 : ✍️ le conseil dépend de ce que tu as déjà (avant : « construis un entrepôt 2 », même quand tu l'avais !)
+      const nDepots = monde.batiments.filter((x) => x.type === "depot").length;
+      if (monde.file.length > 40) pb("⚠️ Il manque des porteurs : " + (Village.Ages.debloque(monde, "depot") && nDepots < C.depot.max ? "construis un 🏬 entrepôt de plus (tu en as " + nDepots + " / " + C.depot.max + ")" : "agrandis l'entrepôt") + ", et des huttes pour les loger.");
+      if (Village.Ameliorations.placesEnPlus(monde, b)) info("➕ " + Village.Ameliorations.placesEnPlus(monde, b) + " place(s) en plus : 1 pour " + C.depot.parBatiments + " bâtiments livrés");
       info("📦 Réserve : " + Re.capacite(monde) + " places" + (mn === Infinity ? "" : " · pleine en ≈ " + (mn >= 60 ? Math.floor(mn / 60) + " h " + String(Math.round(mn % 60)).padStart(2, "0") : Math.round(mn) + " min") + " si tu pars"));
       boutonsReserve = true;
     } else if (b.type === "depot") {
       const ici = monde.porteurs.filter((p) => !p.parti && Village.Porteurs.maisonDe(monde, p) === b);
       titre("🏬 Un 2e point de départ pour les porteurs");
-      info("🚚 " + ici.length + " / " + C.depot.porteurs + " porteurs habitent ici");
+      info("🚚 " + ici.length + " / " + Village.Ameliorations.placesDe(monde, b) + " porteurs habitent ici" + (Village.Ameliorations.placesEnPlus(monde, b) ? " (dont " + Village.Ameliorations.placesEnPlus(monde, b) + " grâce aux bâtiments livrés)" : ""));
       info("📍 Il livre " + monde.batiments.filter((x) => x !== b && x.entrepotProche === b).length + " bâtiment(s) autour de lui");
     } else if (C.logement[b.type]) {
       const Cl = Village.Classes, cl = Cl.fiche(Cl.classeDe(b.type)), ev = C.classes.evolution[b.type];

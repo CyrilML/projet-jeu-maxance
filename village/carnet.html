@@ -147,6 +147,7 @@
       <a href="#etape21">Étape 21</a>
       <a href="#etape22">Étape 22</a>
       <a href="#etape23">Étape 23</a>
+      <a href="#etape24">Étape 24</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1555,6 +1556,46 @@ niveau 3 (★★)     : + des murs plus hauts, un plus beau toit (paille → bar
       <details class="question"><summary>Un bâtiment a un socle en pierre mais pas de girouette. À quel niveau est-il ?</summary><p>Niveau 2 : il a une amélioration, il lui en reste une.</p></details>
     </section>
 
+    <section id="etape24">
+      <h2>🏘️ Étape 24 : des bâtiments sur 2 × 2 cases, une grande carte, des porteurs qui suivent <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Presque tous les bâtiments prennent maintenant 4 cases, et sont dessinés bien plus gros. Une nouvelle partie a une carte de 96 × 96 cases. Chaque entrepôt gagne des porteurs quand il a beaucoup de bâtiments à livrer, et on peut avoir 4 entrepôts secondaires. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/25-grands-batiments-porteurs.md</code>.</p>
+          <ul>
+            <li>✍️ Même avec 2 entrepôts, pas assez de porteurs : trouver une parade.</li>
+            <li>✍️ Le conseil « construis un 2e entrepôt » alors que je l'ai déjà.</li>
+            <li>✍️ Le 3e entrepôt accepté, puis refusé au moment de valider.</li>
+            <li>✍️ Des bâtiments beaucoup plus grands, quitte à agrandir la carte ; voir travailler les gens dehors.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Dans ta partie : les bâtiments plus gros, déplacés s'il le fallait, tous reliés.</li>
+            <li>☐ Touche l'entrepôt : « ➕ N place(s) en plus » grâce aux bâtiments livrés.</li>
+            <li>☐ L'aperçu d'un 5e entrepôt secondaire est rouge tout de suite.</li>
+            <li>☐ Une nouvelle partie : une carte bien plus grande.</li>
+            <li>Vérifie « version 25 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🚚 Le travail fait venir des porteurs</h3>
+      <pre style="white-space: pre-wrap">places d'un entrepôt = ses places de base + 1 pour 4 bâtiments qu'il livre
+ex. l'entrepôt principal (4 places) qui livre 18 bâtiments : 4 + 18 ÷ 4 = 4 + 4 = 8 porteurs</pre>
+      <p>C'est une <strong>règle qui s'adapte</strong> : plus le village grandit, plus il y a de porteurs, sans rien faire. L'expérience, sur un village de 26 bâtiments : les porteurs passent tout seuls de 4 à 8, et la file d'attente descend à 18. (Il faut toujours des villageois et des lits pour eux !)</p>
+
+      <h3>🧱 Un bloc de 2 × 2 cases</h3>
+      <p>Un grand bâtiment prend sa case, plus 3 autres : [0, −1], [1, 0] et [1, −1]. On le dessine au <strong>milieu du bloc</strong>, une demi-case à droite de sa case. Les routes peuvent toucher n'importe laquelle de ses cases. Les champs et les enclos sont sur la colonne d'après.</p>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un entrepôt secondaire (3 places) livre 10 bâtiments. Combien de porteurs peut-il avoir ?</summary><p>3 + 10 ÷ 4 = 3 + 2 (on arrondit en dessous) = 5 porteurs.</p></details>
+      <details class="question"><summary>Une ferme (bloc de 2 × 2 + 2 cases de champs) : combien de cases en tout ?</summary><p>4 + 2 = 6 cases.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1698,8 +1739,14 @@ niveau 3 (★★)     : + des murs plus hauts, un plus beau toit (paille → bar
           <p>Plus d'icônes ; le socle, le toit et la girouette montrent le niveau ; les fermes et élevages serrés rangés tout seuls.</p>
           <p class="apprend"><b>Tu apprends :</b> une copie de modèle, chercher une place en spirale. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">24</div>
+          <h4>🏘️ Grands bâtiments, grande carte, porteurs qui suivent <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Des bâtiments sur 2 × 2 cases, une carte de 96 × 96, 1 porteur en plus pour 4 bâtiments livrés, 4 entrepôts secondaires.</p>
+          <p class="apprend"><b>Tu apprends :</b> une règle qui s'adapte, un bloc de cases. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">25</div>
           <h4>🏙️ La ville : monuments, fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -1900,6 +1947,14 @@ niveau 3 (★★)     : + des murs plus hauts, un plus beau toit (paille → bar
         <textarea class="journal" id="village-appris-23" data-cle="village-appris-23" placeholder="Ex. : J'ai appris à copier un modèle et à changer quelques réglages…"></textarea>
         <label for="village-idees-23"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-23" data-cle="village-idees-23" placeholder="Ex. : Un 4e niveau avec un drapeau…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 24 · grands bâtiments, grande carte, porteurs qui suivent <span class="petit">· 7 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le bloc de 2 × 2 cases (<code>petits</code>, <code>bloc</code>, <code>champs</code> dans config.js), les grands dessins au milieu du bloc, la carte de 96 × 96 (une partie ancienne garde la sienne), les routes qui touchent n'importe quelle case, 1 porteur en plus pour 4 bâtiments livrés, 4 entrepôts secondaires de plus en plus chers, le maximum vérifié dès l'aperçu, la base de données en version 16.</p>
+        <label for="village-appris-24"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-24" data-cle="village-appris-24" placeholder="Ex. : J'ai appris qu'une règle peut s'adapter à la taille du village…"></textarea>
+        <label for="village-idees-24"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-24" data-cle="village-idees-24" placeholder="Ex. : Des chevaux pour les porteurs…"></textarea>
       </div>
     </section>
   </main>

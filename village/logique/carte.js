@@ -30,9 +30,10 @@ Village.Carte = (function () {
   const FILON = { aucun: 0, charbon: 1, fer: 2, or: 3 };
   const NOMS_FILONS = ["aucun", "charbon", "fer", "or"];
 
-  function inventer(graine) {
+  // Étape 24 : la taille peut être donnée (une partie commencée avant garde sa carte de 64 × 64)
+  function inventer(graine, taille) {
     const G = C.generation;
-    const colonnes = C.carte.colonnes, lignes = C.carte.lignes, n = colonnes * lignes;
+    const colonnes = taille || C.carte.colonnes, lignes = taille || C.carte.lignes, n = colonnes * lignes;
     const de = H.creer(graine);
     const carte = {
       graine, colonnes, lignes,

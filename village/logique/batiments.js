@@ -85,16 +85,23 @@ Village.Batiments = (function () {
   const ESSENTIELS = ["bucheron", "scierie"];
   const assez = (monde, prix) => Object.entries(prix).every(([r, n]) => Village.Porteurs.disponible(monde, r) >= n);
   const offert = (monde, type) => ESSENTIELS.includes(type) && !monde.batiments.some((b) => b.type === type) && !assez(monde, cout(type));
-  const coutPour = (monde, type) => (offert(monde, type) ? {} : cout(type));
+  // Étape 24 : chaque entrepôt secondaire coûte 1,5 fois plus que le précédent
+  function coutDepot(monde) {
+    const f = Math.pow(C.depot.prixEnPlus, monde.batiments.filter((b) => b.type === "depot").length), prix = {};
+    for (const [r, n] of Object.entries(cout("depot"))) prix[r] = Math.round(n * f);
+    return prix;
+  }
+  const coutPour = (monde, type) => (offert(monde, type) ? {} : type === "depot" ? coutDepot(monde) : cout(type));
   // Assez de matériaux DISPONIBLES (pas déjà promis à un autre chantier) ?
   const assezPour = (monde, type) => assez(monde, coutPour(monde, type));
 
   // Étape 22 : ✍️ certains bâtiments prennent PLUSIEURS cases (la ferme et ses champs, les enclos des animaux).
   //   emprise : les cases EN PLUS de la sienne, en décalage [colonne, ligne] (config.js : « emprises »).
-  const empriseDe = (type) => C.emprises[type] || [];
-  const casesDe = (b) => [[0, 0]].concat(b.emprise || []).map(([dc, dl]) => (b.ligne + dl) * Village.CONFIG.carte.colonnes + b.colonne + dc);
-  function liberer(monde, b) { for (const i of casesDe(b)) if (monde.occupees.get(i) === b) monde.occupees.delete(i); }
-  function occuper(monde, b) { for (const i of casesDe(b)) monde.occupees.set(i, b); }
+  // Étape 24 : le bloc de 2 × 2 cases (sauf les petits), puis les champs et les enclos à droite
+  const empriseDe = (type) => (C.petits.includes(type) ? [] : C.bloc).concat(C.champs[type] || []);
+  const casesDe = (b, k) => [[0, 0]].concat(b.emprise || []).map(([dc, dl]) => (b.ligne + dl) * (k || Village.monde.carte).colonnes + b.colonne + dc);
+  function liberer(monde, b) { for (const i of casesDe(b, monde.carte)) if (monde.occupees.get(i) === b) monde.occupees.delete(i); }
+  function occuper(monde, b) { for (const i of casesDe(b, monde.carte)) monde.occupees.set(i, b); }
   // Une case est-elle libre pour construire ? (null = oui)
   function raisonCase(monde, c, l) {
     const carte = monde.carte;
@@ -115,6 +122,8 @@ Village.Batiments = (function () {
     if (c < 0 || l < 0 || c >= carte.colonnes || l >= carte.lignes) return "hors de la carte";
     const i = l * carte.colonnes + c;
     if (monde.occupees.has(i)) return "il y a déjà un bâtiment";
+    // Étape 24 : ✍️ le maximum des entrepôts secondaires est vérifié dès l'aperçu (avant : seulement en validant !)
+    if (type === "depot" && monde.batiments.filter((b) => b.type === "depot").length >= C.depot.max && !(monde.projet && monde.projet.deplacer && monde.projet.deplacer.type === "depot")) return "pas plus de " + C.depot.max + " entrepôts secondaires";
     // Étape 22 : les cases des champs et des enclos doivent être libres aussi
     for (const [dc, dl] of empriseDe(type)) { const r = raisonCase(monde, c + dc, l + dl); if (r) return "pas assez de place : il faut " + (1 + empriseDe(type).length) + " cases libres (" + r + ")"; }
     if (monde.route[i]) return "il y a une route (construis à côté)";
@@ -173,7 +182,7 @@ Village.Batiments = (function () {
     }
     const de = { colonne: b.colonne, ligne: b.ligne };
     b.colonne = c; b.ligne = l; b.emprise = empriseDe(b.type).slice();
-    for (const j of casesDe(b)) if (k.objet[j]) Village.Monde.changerObjet(monde, j, Village.Carte.OBJET.rien);
+    for (const j of casesDe(b, k)) if (k.objet[j]) Village.Monde.changerObjet(monde, j, Village.Carte.OBJET.rien);
     occuper(monde, b);
     // L'ouvrier rentre dans sa nouvelle maison et recommence sa fiche de travail.
     const o = b.ouvrier;
@@ -226,7 +235,7 @@ Village.Batiments = (function () {
     b.emprise = empriseDe(type).filter(([dc, dl]) => !etat.type || !raisonCase(monde, c + dc, l + dl));
     occuper(monde, b);
     // Les fleurs et les buissons sont enlevés pour faire de la place.
-    for (const i of casesDe(b)) if (monde.carte.objet[i]) Village.Monde.changerObjet(monde, i, Village.Carte.OBJET.rien);
+    for (const i of casesDe(b, monde.carte)) if (monde.carte.objet[i]) Village.Monde.changerObjet(monde, i, Village.Carte.OBJET.rien);
     // Au rechargement (etat.type existe), l'ouvrier revient sans vérifier le logement : il avait déjà sa place.
     if (b.etat === "pret" && !etat.vide) embaucher(monde, b, !!etat.type);
     if (b.ouvrier && etat.faim) { b.ouvrier.faim = etat.faim; b.ouvrier.ventreVide = etat.ventreVide || 0; b.ouvrier.affame = !!etat.affame; }
@@ -248,11 +257,7 @@ Village.Batiments = (function () {
       radio.emettre("construction-impossible", { nom, colonne: c, ligne: l, raison });
       return false;
     }
-    // Étape 17 : 2 entrepôts secondaires au plus
-    if (type === "depot" && monde.batiments.filter((b) => b.type === "depot").length >= C.depot.max) {
-      radio.emettre("construction-impossible", { nom, colonne: c, ligne: l, raison: "pas plus de " + C.depot.max + " entrepôts secondaires" });
-      return false;
-    }
+    // (Étape 24 : le maximum des entrepôts secondaires est dans raisonInterdite.)
     if (!assezPour(monde, type)) {
       const dispo = (r) => Village.Porteurs.disponible(monde, r);
       const manque = Object.entries(cout(type)).filter(([r, n]) => dispo(r) < n).map(([r, n]) => n - dispo(r) + " " + NOMS_RESSOURCES[r]);
@@ -434,12 +439,12 @@ Village.Batiments = (function () {
     let n = 0;
     for (const b of monde.batiments.slice()) {
       const voulu = empriseDe(b.type);
-      if (!voulu.length || (b.emprise || []).length === voulu.length) continue;
+      if (!voulu.length || (b.emprise || []).length === voulu.length || b.type === "entrepot") continue; // (l'entrepôt ne bouge pas)
       liberer(monde, b);
       let place = null;
-      for (let r = 0; r <= 12 && !place; r++) for (let dl = -r; dl <= r && !place; dl++) for (let dc = -r; dc <= r && !place; dc++) {
+      for (let r = 0; r <= 20 && !place; r++) for (let dl = -r; dl <= r && !place; dl++) for (let dc = -r; dc <= r && !place; dc++) {
         if (Math.max(Math.abs(dc), Math.abs(dl)) !== r) continue;
-        if (!raisonInterdite(monde, b.type, b.colonne + dc, b.ligne + dl)) place = [b.colonne + dc, b.ligne + dl];
+        if (!raisonInterdite(monde, b.type, b.colonne + dc, b.ligne + dl) && Village.Placement.routeProposee(monde, b.colonne + dc, b.ligne + dl, b, b.type) !== null) place = [b.colonne + dc, b.ligne + dl]; // (et une route doit pouvoir y arriver)
       }
       occuper(monde, b);
       if (!place) continue;

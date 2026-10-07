@@ -120,8 +120,8 @@ Village.Porteurs = (function () {
     const k = monde.carte;
     const r = Village.Chemins.chercher(
       k.colonnes, k.lignes, { colonne: e.colonne, ligne: e.ligne },
-      (c, l) => monde.route[l * k.colonnes + c] > 0, // terre (1) ou pierre (2)
-      (c, l) => c === b.colonne && l === b.ligne,
+      (c, l) => monde.route[l * k.colonnes + c] > 0 || monde.occupees.get(l * k.colonnes + c) === e, // terre (1) ou pierre (2) ; étape 24 : et les cases de son entrepôt
+      (c, l) => monde.occupees.get(l * k.colonnes + c) === b, // étape 24 : n'importe quelle case du bâtiment (2 × 2)
       400
     );
     return r.chemin ? r.chemin.map((p) => ({ x: p.colonne + 0.5, y: p.ligne + 0.5 })) : null;

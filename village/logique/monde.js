@@ -17,7 +17,7 @@ Village.Monde = (function () {
 
   // `partie` vient de la sauvegarde (null pour une carte toute neuve).
   function creer(graine, partie, cameraSauvee) {
-    const carte = Village.Carte.inventer(graine);
+    const carte = Village.Carte.inventer(graine, partie ? partie.taille || C.carte.tailleAncienne : null); // étape 24
     const monde = {
       carte,
       temps: 0, // secondes depuis le début de la partie

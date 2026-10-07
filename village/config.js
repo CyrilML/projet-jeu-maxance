@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 24,
+  version: 25,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -22,8 +22,11 @@ Village.CONFIG = {
   pasFixe: 1 / 120,
 
   carte: {
-    colonnes: 64,
-    lignes: 64,
+    // Étape 24 : ✍️ « quitte à agrandir la map » : 96 × 96 cases pour une nouvelle partie (64 × 64 avant).
+    // Une partie déjà commencée garde sa carte (sinon tout son terrain changerait !).
+    colonnes: 96,
+    lignes: 96,
+    tailleAncienne: 64, // la taille des cartes des parties commencées avant l'étape 24
     // Un losange : 2 fois plus large que haut. C'est ce qui donne l'impression de regarder « de biais ».
     largeurCase: 64, // px (au zoom 100 %)
     hauteurCase: 32, // px
@@ -49,14 +52,14 @@ Village.CONFIG = {
     // Les filons des montagnes : chance qu'une case de montagne en ait un.
     filons: { charbon: 0.16, fer: 0.1, or: 0.04 },
     rayonDuVillage: 4, // en cases : autour de la place du village, toujours de l'herbe
-    rivieres: 2, // nombre de rivières qui descendent des montagnes
+    rivieres: 3, // nombre de rivières qui descendent des montagnes (étape 24 : 3, la carte est plus grande)
   },
 
   camera: {
     vitesse: 700, // px/s quand on tient une flèche (au zoom 100 %)
     zoomMin: 0.35,
     zoomMax: 2,
-    zoomDepart: 1,
+    zoomDepart: 0.8, // étape 24 : un peu plus loin (les bâtiments sont plus gros)
     pasDeZoom: 1.15, // un cran de molette multiplie (ou divise) le zoom par 1,15
   },
 
@@ -171,7 +174,10 @@ Village.CONFIG = {
   // a ses propres manutentionnaires (3 places, et 4 lits). Le stock est partagé (c'est le même village),
   // mais chaque livraison est faite par les porteurs de l'entrepôt le plus proche par la route.
   // Si ces porteurs sont tous occupés depuis plus de 15 s, ceux d'un autre entrepôt viennent aider.
-  depot: { porteurs: 3, max: 2, aide: 15 },
+  // Étape 24 : ✍️ « même avec un 2e entrepôt, ça ne suffit pas ». La parade : chaque entrepôt gagne 1 place de porteur
+  // pour 4 bâtiments qu'il livre (le travail fait venir des porteurs). Et 4 entrepôts secondaires au plus, chacun
+  // 1,5 fois plus cher que le précédent.
+  depot: { porteurs: 3, max: 4, aide: 15, parBatiments: 4, prixEnPlus: 1.5 },
 
   // Étape 8 : les ATELIERS transforment ce que les porteurs leur apportent (les RECETTES).
   //   entrees : ce qu'il faut pour UNE fabrication ; sorties : ce qui sort ; duree : en s ;
@@ -250,12 +256,17 @@ Village.CONFIG = {
   // Étape 22 : ✍️ « la ferme doit être plus grande, avec un champ ; idem pour les animaux ». Ces bâtiments prennent
   // PLUSIEURS cases : en plus de la leur, les cases voisines (en colonnes et lignes de décalage) pour les champs et
   // les enclos. [0, -1] est sous le long bâtiment ; [1, 0] et [1, -1] sont les champs ou les enclos, à sa droite.
-  emprises: {
-    ferme: [[0, -1], [1, 0], [1, -1]],
-    etable: [[0, -1], [1, 0], [1, -1]],
-    bergerie: [[0, -1], [1, 0], [1, -1]],
-    porcherie: [[0, -1], [1, 0], [1, -1]],
-    poulailler: [[1, 0]],
+  // Étape 24 : ✍️ « les bâtiments doivent être beaucoup plus grands ». Presque tous prennent un BLOC de 2 × 2 cases
+  // (leur case, plus [0, −1], [1, 0] et [1, −1]) ; seuls les petits restent sur 1 case. Les champs et les enclos
+  // sont EN PLUS, sur la colonne à droite du bloc ([2, 0] et [2, −1]).
+  petits: ["hutte", "maison", "manoir", "puits"],
+  bloc: [[0, -1], [1, 0], [1, -1]],
+  champs: {
+    ferme: [[2, 0], [2, -1]],
+    etable: [[2, 0], [2, -1]],
+    bergerie: [[2, 0], [2, -1]],
+    porcherie: [[2, 0], [2, -1]],
+    poulailler: [[2, 0]],
   },
   // Étape 21 : ✍️ « les mines sont trop éloignées » : la cabane du mineur peut être à 4 cases du filon (1 avant).
   rayonMine: 4,
@@ -417,8 +428,9 @@ Village.CONFIG = {
     zoomFigurants: 0.6, // à partir de ce zoom : les poules, les enfants, les papillons
     zoomAnimations: 0.45, // étape 17 : ✍️ les animations devant les bâtiments se voient aussi de plus loin
     // Étape 14 : ✍️ des bâtiments plus GROS, pour les reconnaître d'un coup d'œil (× la taille de l'étape 13)
-    echelleBatiments: 1.5, // étape 22 : ✍️ encore plus gros (1,35 avant)
-    echelleEntrepot: 1.15, // l'entrepôt était déjà grand (et il a sa cour et son silo)
+    echelleBatiments: 1.6, // les petits bâtiments (huttes, maisons, puits) · étape 22 : 1,5 ; étape 24 : 1,6
+    echelleGrands: 2.3, // étape 24 : ✍️ les bâtiments sur 2 × 2 cases sont dessinés × 2,3
+    echelleEntrepot: 1.9, // étape 24 : sur 2 × 2 cases (1,15 avant) // l'entrepôt était déjà grand (et il a sa cour et son silo)
   },
   // Étape 9 : les FIGURANTS (ils ne font que décorer : oiseaux, papillons, poules, enfants)
   figurants: {
