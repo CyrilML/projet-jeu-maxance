@@ -10,7 +10,8 @@
 //     Espace tire un MISSILE guidé vers l'ennemi le plus en face. Il ne peut pas se poser : E = s'ÉJECTER, et tu
 //     redescends en parachute (l'avion revient à l'aérodrome) ;
 //   - le DRONE : petit et rapide, piloté comme l'hélico ; il lâche des GRENADES (contre les soldats).
-//   - (étape 62) la VEDETTE DE COMBAT, amarrée au bord du lac (logique/bateaux.js) : un petit canon sur tourelle.
+//   - (étape 62) la VEDETTE DE COMBAT, amarrée au bord du lac (logique/bateaux.js) : un petit canon sur tourelle ;
+//   - (étape 63) le SOUS-MARIN, amarré à côté (logique/sousmarins.js) : D plonger, Q remonter, Espace une torpille.
 // Les engins volants ne peuvent pas être touchés (les tanks ne tirent pas en l'air).
 // Ce fichier ne dessine rien.
 
@@ -26,11 +27,22 @@ Tanks.Engins = (function () {
   function creer() {
     const liste = Object.keys(PLACES).map((sorte) => garer({ sorte, fiche: Object.assign({ longueur: 4.8, largeur: 2.2, hauteur: 2 }, G[sorte]) }));
     liste.push(garer({ sorte: "bateau", fiche: Object.assign({}, C.bateaux.joueur) })); // (étape 62)
+    liste.push(garer({ sorte: "sousmarin", fiche: Object.assign({}, C.sousMarins.joueur) })); // (étape 63)
     return liste;
   }
   // (étape 62) La place de la vedette : au bord du lac, au sud-ouest (de ton côté), le nez vers le milieu du lac.
   const QUAI = { t: 1.85, dl: 0.95 };
+  const QUAI_SOUSMARIN = { t: 2.02, dl: 0.92 };
   function garer(e) {
+    if (e.sorte === "sousmarin") {
+      const p = Tanks.Bateaux.surLeLac(QUAI_SOUSMARIN.t, QUAI_SOUSMARIN.dl), R = C.sousMarins.joueur;
+      Object.assign(e, {
+        equipe: "bleus", genre: "sousmarin", nom: R.nom, x: p.x, z: p.z, angle: Math.atan2(C.lac.z - p.z, C.lac.x - p.x),
+        vitesse: 0, profondeur: 0, vie: R.vie, detruit: false, touche: 9, recharge: 0, pilote: false, cible: null, tirs: 0, reussis: 0,
+      });
+      e.y = Tanks.SousMarins.hauteurDe(e);
+      return e;
+    }
     if (e.sorte === "bateau") {
       const p = Tanks.Bateaux.surLeLac(QUAI.t, QUAI.dl), R = C.bateaux.joueur;
       return Object.assign(e, {
@@ -54,7 +66,15 @@ Tanks.Engins = (function () {
     e.touche += dt;
     if (e.detruit) {
       if (e.sorte === "bateau") Tanks.Bateaux.couler(e, dt);
-      else e.vitesse = 0;
+      else if (e.sorte === "sousmarin") {
+        e.vitesse *= 1 - dt;
+        e.profondeur += 0.4 * dt;
+        e.y = Tanks.SousMarins.hauteurDe(e);
+      } else e.vitesse = 0;
+      return ev;
+    }
+    if (e.sorte === "sousmarin") {
+      plonger(e, intentions, dt, C.sousMarins.joueur, monde, ev);
       return ev;
     }
     if (e.sorte === "bateau") {
@@ -120,7 +140,7 @@ Tanks.Engins = (function () {
     // la visée assistée, comme pour le tank : l'ennemi le plus proche dans le cône de 4° devant le canon
     const a = e.angle + e.tourelle;
     let meilleur = null;
-    for (const o of monde.chars.concat(monde.bateaux)) {
+    for (const o of monde.chars.concat(monde.bateaux, monde.sousMarins.filter((m) => !Tanks.SousMarins.sousLEau(m)))) {
       if (o.equipe === e.equipe || o.detruit) continue;
       const d = Math.hypot(o.x - e.x, o.z - e.z), ecart = Math.abs(angleEntre(Math.atan2(o.z - e.z, o.x - e.x) - a));
       if (d < C.obus.porteeAssistee && ecart < C.obus.viseeAssistee && (!meilleur || ecart < meilleur.ecart)) meilleur = { o, ecart };
@@ -130,6 +150,37 @@ Tanks.Engins = (function () {
       e.recharge = R.recharge;
       e.tirs++;
       Tanks.Bateaux.tirer(e, monde, e.cible, 0, ev, true);
+    }
+  }
+
+  // (étape 63) Le sous-marin : il navigue comme la vedette (en plus lent), D le fait plonger, Q le fait remonter.
+  function plonger(e, I, dt, R, monde, ev) {
+    e.recharge = Math.max(0, e.recharge - dt);
+    if (I.avancer) e.vitesse = Math.min(R.vitesseMax, e.vitesse + R.acceleration * dt);
+    else if (I.reculer) e.vitesse = Math.max(-3, e.vitesse - R.acceleration * dt);
+    else e.vitesse -= Math.sign(e.vitesse) * Math.min(Math.abs(e.vitesse), 1 * dt);
+    const sens = (I.droite ? 1 : 0) - (I.gauche ? 1 : 0);
+    e.angle = angleEntre(e.angle + sens * R.virage * (0.25 + 0.75 * Math.min(1, Math.abs(e.vitesse) / 4)) * Math.sign(e.vitesse || 1) * dt);
+    const avant = e.profondeur;
+    // (on garde la profondeur voulue : D la fait descendre, Q la fait remonter)
+    e.voulue = Math.max(0, Math.min(R.profondeurMax, (e.voulue || 0) + ((I.tourelleDroite ? 1 : 0) - (I.tourelleGauche ? 1 : 0)) * R.plongee * dt));
+    if (Tanks.SousMarins.naviguer(e, e.voulue, dt) && Math.abs(e.vitesse) > 1.5 && !e.echoue) ev.push(["echoue", { nom: e.nom }]);
+    e.echoue = Math.abs(e.vitesse) < 0.5 && e.echoue;
+    const S = C.sousMarins.sousLEau;
+    if (avant <= S && e.profondeur > S) ev.push(["plongee", { nom: e.nom, toi: true, x: e.x, z: e.z }]);
+    if (avant > S && e.profondeur <= S) ev.push(["surface", { nom: e.nom, toi: true, x: e.x, z: e.z }]);
+    // la cible de la torpille : le bateau ou sous-marin ennemi le plus en face (dans un cône de 20°)
+    let meilleur = null;
+    for (const o of monde.bateaux.concat(monde.sousMarins)) {
+      if (o.detruit) continue;
+      const d = Math.hypot(o.x - e.x, o.z - e.z), ecart = Math.abs(angleEntre(Math.atan2(o.z - e.z, o.x - e.x) - e.angle));
+      if (d < 300 && ecart < 0.35 && (!meilleur || ecart < meilleur.ecart)) meilleur = { o, ecart };
+    }
+    e.cible = meilleur ? meilleur.o : null;
+    if (I.tirer && e.recharge === 0 && e.pilote) {
+      e.recharge = R.recharge;
+      e.tirs++;
+      Tanks.SousMarins.torpille(e, monde, e.cible, ev, true);
     }
   }
 

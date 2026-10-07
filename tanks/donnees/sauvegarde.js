@@ -8,16 +8,17 @@
 //   1 (étape 60) : char, victoires, defaites, detruits, tirs, touches.
 //   2 (étape 62) : + bateaux (les bateaux ennemis que tu as coulés), portails (tes passages dans un portail).
 //     Pour convertir une sauvegarde de version 1 : on garde tout, et on met ces deux compteurs à 0.
+//   3 (étape 63) : + sousMarins (les sous-marins ennemis que tu as coulés). Une version 1 ou 2 garde tout, avec 0.
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 2;
+  const VERSION = 3;
   const radio = Tanks.Evenements;
 
   function vide() {
-    return { version: VERSION, char: "leclerc", victoires: 0, defaites: 0, detruits: 0, tirs: 0, touches: 0, bateaux: 0, portails: 0 };
+    return { version: VERSION, char: "leclerc", victoires: 0, defaites: 0, detruits: 0, tirs: 0, touches: 0, bateaux: 0, portails: 0, sousMarins: 0 };
   }
 
   let donnees = vide();

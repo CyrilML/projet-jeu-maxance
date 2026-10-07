@@ -11,7 +11,9 @@
 //     quand un soldat est touché ; les explosions des BOMBES et des MISSILES, bien plus grosses que celle d'un obus ;
 //     la fumée de la ROQUETTE et du MISSILE en vol ;
 //   - (étape 62) la GERBE D'EAU quand un obus tombe dans le lac, l'écume du SILLAGE derrière les bateaux, et un ÉCLAIR
-//     de la couleur du portail à l'entrée et à la sortie quand quelqu'un passe un portail.
+//     de la couleur du portail à l'entrée et à la sortie quand quelqu'un passe un portail ;
+//   - (étape 63) les BULLES d'un sous-marin qui avance sous l'eau (c'est comme ça qu'on le repère !), la traînée de
+//     bulles d'une torpille, et la grosse vague quand un sous-marin remonte à la surface.
 // Ce sont des « particules » : des petites images toujours tournées vers la caméra (des sprites), qui naissent,
 // grossissent, montent, s'effacent et meurent. On en a 300, qu'on réutilise sans arrêt.
 // Il écoute la radio (tir, impact, touche, detruit) pour savoir quand faire des effets.
@@ -24,7 +26,7 @@ Tanks.Effets = (function () {
   const balles = []; // (étape 61) les traits des balles : { ligne, reste }
   const epaves = []; // les tanks qui brûlent (la fumée sort de là)
   const bilan = { vivantes: 0, traceurs: 0, epaves: 0, balles: 0 };
-  const GROS = { obus: 1, roquette: 1, grenade: 1.2, missile: 2, bombe: 2.8 }; // la taille de l'explosion
+  const GROS = { obus: 1, roquette: 1, grenade: 1.2, missile: 2, bombe: 2.8, torpille: 2.2 }; // la taille de l'explosion
 
   function image(couleurCentre) {
     const c = document.createElement("canvas");
@@ -64,6 +66,9 @@ Tanks.Effets = (function () {
       for (let k = 0; k < 5; k++) particule(d.x, d.y, d.z, d.dir.x * 5 + alea(2), d.dir.y * 5 + alea(1), d.dir.z * 5 + alea(2), 0.25, 1.2, 3, 0.9, [1, 0.75, 0.35], true);
       for (let k = 0; k < 6; k++) particule(d.x + alea(1), d.y, d.z + alea(1), alea(2), 0.8, alea(2), 1.6, 2, 6, 0.4, [0.8, 0.8, 0.78]);
       flash(d.x, d.y, d.z, 20);
+    });
+    radio.ecouter("surface", (d) => { // (étape 63) un sous-marin crève la surface
+      for (let k = 0; k < 30; k++) particule(d.x + alea(6), C.lac.niveau + 0.3, d.z + alea(6), alea(2), 2 + Math.random() * 3, alea(2), 1.4, 1, 4, 0.7, [0.92, 0.96, 1], false, 9.8);
     });
     radio.ecouter("portail", (d) => {
       for (const [p, c] of [[d, d.couleur], [d.sortie, d.couleurSortie]]) {
@@ -201,6 +206,10 @@ Tanks.Effets = (function () {
     // les traceurs des obus en vol (les roquettes et les missiles laissent une traînée de fumée)
     let n = 0;
     for (const o of monde.obus) {
+      if (o.sorte === "torpille") { // des bulles qui remontent
+        if (Math.random() < dt * 30) particule(o.x + alea(0.4), C.lac.niveau + 0.05, o.z + alea(0.4), alea(0.3), 0.3, alea(0.3), 1.5, 0.4, 1.4, 0.6, [0.9, 0.95, 1]);
+        continue;
+      }
       if (o.sorte === "roquette" || o.sorte === "missile") {
         if (Math.random() < dt * 40) particule(o.x, o.y, o.z, alea(0.3), alea(0.3), alea(0.3), 1.2, 0.4, 2, 0.45, [0.85, 0.85, 0.82]);
         continue;
@@ -222,8 +231,15 @@ Tanks.Effets = (function () {
     }
     bilan.balles = b;
     // la poussière derrière le 4x4, le souffle du rotor de l'hélico près du sol, et l'écume derrière les bateaux
-    for (const e of monde.engins.concat(monde.bateaux || [])) {
+    for (const e of monde.engins.concat(monde.bateaux || [], monde.sousMarins || [])) {
       if (e.detruit) continue;
+      if (e.sorte === "sousmarin" && Math.abs(e.vitesse) > 1) {
+        if (e.profondeur > 1.5 ? Math.random() < dt * 10 : Math.random() < dt * 20) {
+          const ar = -6.5, ca = Math.cos(e.angle), sa = Math.sin(e.angle);
+          particule(e.x + ca * ar + alea(0.8), C.lac.niveau + 0.1, e.z + sa * ar + alea(0.8), alea(0.4), 0.2, alea(0.4), 2, 0.8, e.profondeur > 1.5 ? 2.5 : 4, 0.5, [0.93, 0.96, 1]);
+        }
+        continue;
+      }
       if (e.sorte === "bateau" && Math.abs(e.vitesse) > 2 && Math.random() < dt * 25) {
         const ar = -4.6, ca = Math.cos(e.angle), sa = Math.sin(e.angle);
         particule(e.x + ca * ar + alea(0.8), e.y + 0.15, e.z + sa * ar + alea(0.8), -ca * 1.5 + alea(0.6), 0.2, -sa * 1.5 + alea(0.6), 2.2, 1, 4.5, 0.55, [0.93, 0.96, 1]);

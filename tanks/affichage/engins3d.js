@@ -43,66 +43,246 @@ Tanks.Engins3D = (function () {
   };
   const peinture = (equipe) => new THREE.MeshStandardMaterial({ map: Tanks.Chars3D.camouflage(Tanks.CONFIG.equipes[equipe].camouflage), roughness: 0.85, metalness: 0.1 });
 
-  // ------------------------------------------------------------------ le soldat
+  // ------------------------------------------------------------------ le soldat (refait à l'étape 63)
+  // Un vrai petit squelette, comme dans les jeux : chaque morceau du corps est accroché à une ARTICULATION (un groupe
+  // qui peut tourner) : les hanches et les genoux, les épaules et les coudes, le dos, le cou. Pour marcher, on fait
+  // tourner les hanches et plier les genoux ; pour tenir le fusil, on calcule où mettre les coudes pour que les mains
+  // tombent pile sur l'arme (c'est la « cinématique inverse » : on part de la main et on remonte jusqu'à l'épaule).
+  // Deux versions : en DÉTAIL (visage, gilet à poches, genouillères, gants, fusil avec chargeur et lunette) quand il
+  // est près de la caméra, et en SIMPLE quand il est loin (on ne verrait pas la différence, et ça va plus vite).
+  const matsEquipe = {};
+  function matsSoldat(equipe) {
+    if (matsEquipe[equipe]) return matsEquipe[equipe];
+    const E = Tanks.CONFIG.equipes[equipe], camo = Tanks.Chars3D.camouflage(E.camouflage).clone();
+    camo.needsUpdate = true;
+    camo.repeat.set(1.6, 1.6); // (des taches plus petites que sur un tank)
+    return (matsEquipe[equipe] = {
+      tenue: new THREE.MeshStandardMaterial({ map: camo, roughness: 0.92 }),
+      gilet: new THREE.MeshStandardMaterial({ color: equipe === "bleus" ? 0x5f6a4a : 0x8a7a56, roughness: 0.85 }),
+      sangle: new THREE.MeshStandardMaterial({ color: 0x3d3a2e, roughness: 0.9 }),
+      peau: new THREE.MeshStandardMaterial({ color: 0xc8956c, roughness: 0.65 }),
+      bottes: new THREE.MeshStandardMaterial({ color: 0x3a2c20, roughness: 0.8 }),
+      gants: new THREE.MeshStandardMaterial({ color: 0x1e1e1c, roughness: 0.8 }),
+      arme: new THREE.MeshStandardMaterial({ color: 0x23252a, roughness: 0.45, metalness: 0.6 }),
+      lunette: new THREE.MeshStandardMaterial({ color: 0x0c1418, roughness: 0.1, metalness: 0.5 }),
+      yeux: new THREE.MeshStandardMaterial({ color: 0x1b1410, roughness: 0.3 }),
+      marque: new THREE.MeshStandardMaterial({ color: E.marque, emissive: E.marque, emissiveIntensity: 0.35 }),
+      marqueToi: new THREE.MeshStandardMaterial({ color: E.marque, emissive: E.marque, emissiveIntensity: 0.8 }),
+      roquettes: new THREE.MeshStandardMaterial({ color: 0x4b5a34, roughness: 0.8 }),
+    });
+  }
+  // « Souder » : tous les morceaux d'une même matière, dans un même groupe, deviennent un seul objet à dessiner
+  // (la carte graphique préfère dessiner 1 gros objet que 10 petits).
+  function souder(groupe) {
+    const parMatiere = new Map();
+    for (const enfant of [...groupe.children]) {
+      if (!enfant.isMesh || enfant.userData.garder) continue;
+      enfant.updateMatrix();
+      const g = (enfant.geometry.index ? enfant.geometry.toNonIndexed() : enfant.geometry.clone()).applyMatrix4(enfant.matrix);
+      if (!g.attributes.uv) g.setAttribute("uv", new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+      if (!parMatiere.has(enfant.material)) parMatiere.set(enfant.material, []);
+      parMatiere.get(enfant.material).push(g);
+      groupe.remove(enfant);
+    }
+    for (const [matiere, geos] of parMatiere) {
+      const tout = {};
+      for (const nom of ["position", "normal", "uv"]) {
+        const n = geos.reduce((t, g) => t + g.attributes[nom].array.length, 0), tab = new Float32Array(n);
+        let k = 0;
+        for (const g of geos) (tab.set(g.attributes[nom].array, k), (k += g.attributes[nom].array.length));
+        tout[nom] = new THREE.BufferAttribute(tab, nom === "uv" ? 2 : 3);
+      }
+      const geo = new THREE.BufferGeometry();
+      for (const nom in tout) geo.setAttribute(nom, tout[nom]);
+      const m = new THREE.Mesh(geo, matiere);
+      m.castShadow = true;
+      groupe.add(m);
+    }
+  }
+  const morceau = (geo, mat, x, y, z) => {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x || 0, y || 0, z || 0);
+    m.castShadow = true;
+    return m;
+  };
+  const capsule = (r, l, mat, x, y, z) => morceau(new THREE.CapsuleGeometry(r, l, 3, 8), mat, x, y, z);
+  const cube = (lx, ly, lz, mat, x, y, z) => morceau(new THREE.BoxGeometry(lx, ly, lz), mat, x, y, z);
+  const boule = (r, mat, x, y, z) => morceau(new THREE.SphereGeometry(r, 10, 8), mat, x, y, z);
+  const tube = (r1, r2, l, mat) => {
+    const c = new THREE.Mesh(new THREE.CylinderGeometry(r1, r2, l, 10), mat);
+    c.castShadow = true;
+    return c;
+  };
+
+  // Les longueurs (en m) : un soldat de 1,80 m.
+  const OS = { hanche: 0.92, cuisse: 0.44, tibia: 0.44, bras: 0.29, avantBras: 0.27, ecartHanches: 0.1, ecartEpaules: 0.2, dos: 0.98, epaules: 0.44 };
+
+  // Les armes, dans les mains (dans le repère du dos : x devant, y en haut, z à droite).
+  function armes(M, detail) {
+    const fusil = new THREE.Group();
+    fusil.add(cube(0.24, 0.09, 0.05, M.arme, -0.02, -0.01, 0)); // la crosse
+    fusil.add(cube(0.32, 0.1, 0.055, M.arme, 0.26, 0.01, 0)); // le boîtier
+    fusil.add(cube(0.22, 0.07, 0.06, M.arme, 0.52, 0.0, 0)); // le garde-main
+    const canon = tube(0.014, 0.014, 0.32, M.arme);
+    canon.rotation.z = Math.PI / 2;
+    canon.position.set(0.78, 0.01, 0);
+    fusil.add(canon);
+    if (detail) {
+      const chargeur = cube(0.06, 0.17, 0.035, M.arme, 0.33, -0.11, 0);
+      chargeur.rotation.z = 0.25;
+      fusil.add(chargeur);
+      fusil.add(cube(0.05, 0.1, 0.035, M.arme, 0.18, -0.08, 0)); // la poignée
+      const lunette = tube(0.022, 0.022, 0.16, M.lunette);
+      lunette.rotation.z = Math.PI / 2;
+      lunette.position.set(0.28, 0.09, 0);
+      fusil.add(lunette, cube(0.03, 0.04, 0.03, M.arme, 0.28, 0.06, 0));
+    }
+    fusil.position.set(0.2, 0.28, 0.1); // (la crosse contre l'épaule droite)
+    const pistolet = new THREE.Group();
+    pistolet.add(cube(0.17, 0.045, 0.03, M.arme, 0.04, 0.02, 0), cube(0.045, 0.1, 0.03, M.arme, -0.02, -0.04, 0));
+    pistolet.position.set(0.48, 0.3, 0.03);
+    const roquettes = new THREE.Group();
+    const lance = tube(0.07, 0.07, 1.1, M.roquettes);
+    lance.rotation.z = Math.PI / 2;
+    roquettes.add(lance, cube(0.06, 0.12, 0.04, M.arme, 0.1, -0.1, 0));
+    roquettes.position.set(0.15, 0.5, 0.15); // (sur l'épaule)
+    for (const g of [fusil, pistolet, roquettes]) souder(g);
+    return { fusil, pistolet, roquettes };
+  }
+  // Où vont les mains pour chaque arme (dans le repère du dos).
+  const MAINS = {
+    fusil: { droite: [0.36, 0.22, 0.1], gauche: [0.6, 0.26, 0.06] },
+    pistolet: { droite: [0.44, 0.27, 0.05], gauche: [0.43, 0.25, -0.01] },
+    roquettes: { droite: [0.3, 0.41, 0.15], gauche: [0.55, 0.42, 0.12] },
+  };
+
+  // Le squelette avec sa peau. detail = true : la belle version ; false : la version simple.
+  function squelette(equipe, joueur, detail) {
+    const M = matsSoldat(equipe);
+    const corps = new THREE.Group();
+    const jambes = [], genoux = [], epaules = [], coudes = [];
+    // les jambes
+    for (const z of [-OS.ecartHanches, OS.ecartHanches]) {
+      const hanche = new THREE.Group();
+      hanche.position.set(0, OS.hanche, z);
+      hanche.add(capsule(detail ? 0.085 : 0.08, OS.cuisse - 0.12, M.tenue, 0, -OS.cuisse / 2, 0));
+      if (detail) hanche.add(cube(0.08, 0.14, 0.05, M.gilet, 0.0, -0.22, z > 0 ? 0.08 : -0.08)); // la poche de jambe
+      const genou = new THREE.Group();
+      genou.position.y = -OS.cuisse;
+      genou.add(capsule(0.065, OS.tibia - 0.1, M.tenue, 0, -OS.tibia / 2, 0));
+      genou.add(cube(0.28, 0.12, 0.12, M.bottes, 0.05, -OS.tibia + 0.02, 0)); // la botte
+      if (detail) genou.add(cube(0.05, 0.11, 0.1, M.sangle, 0.06, -0.03, 0), cube(0.29, 0.03, 0.13, M.sangle, 0.05, -OS.tibia - 0.03, 0)); // genouillère, semelle
+      souder(genou);
+      souder(hanche);
+      hanche.add(genou);
+      corps.add(hanche);
+      jambes.push(hanche);
+      genoux.push(genou);
+    }
+    // le dos (tout le haut du corps tourne autour de lui)
+    const dos = new THREE.Group();
+    dos.position.y = OS.dos;
+    corps.add(dos);
+    const torse = capsule(0.16, 0.26, M.tenue, 0, 0.23, 0);
+    torse.scale.set(0.82, 1, 1.25);
+    dos.add(torse);
+    dos.add(cube(0.24, 0.16, 0.32, M.tenue, 0, -0.04, 0)); // le bassin
+    dos.add(cube(0.27, 0.06, 0.35, M.sangle, 0, 0.0, 0)); // la ceinture
+    dos.add(cube(0.3, 0.36, 0.38, M.gilet, 0.01, 0.25, 0)); // le gilet pare-balles
+    dos.add(cube(0.2, 0.34, 0.28, M.gilet, -0.21, 0.26, 0)); // le sac à dos
+    if (detail) {
+      for (const z of [-0.11, 0, 0.11]) dos.add(cube(0.06, 0.1, 0.085, M.gilet, 0.18, 0.15, z)); // les poches à chargeurs
+      dos.add(cube(0.05, 0.08, 0.1, M.gilet, 0.17, 0.33, 0.1), cube(0.03, 0.035, 0.035, M.arme, 0.2, 0.33, -0.1)); // poche radio, lampe
+      for (const z of [-0.12, 0.12]) dos.add(cube(0.33, 0.4, 0.03, M.sangle, 0.0, 0.26, z)); // les bretelles
+      const rouleau = tube(0.06, 0.06, 0.3, M.sangle);
+      rouleau.rotation.x = Math.PI / 2;
+      rouleau.position.set(-0.2, 0.47, 0);
+      dos.add(rouleau); // le duvet roulé sur le sac
+      dos.add(cube(0.035, 0.04, 0.04, M.sangle, -0.04, 0.0, 0.17)); // la gourde
+    }
+    // la tête
+    const cou = new THREE.Group();
+    cou.position.y = 0.5;
+    dos.add(cou);
+    cou.add(morceau(new THREE.CylinderGeometry(0.05, 0.055, 0.1, 8), M.peau, 0, 0.02, 0));
+    const tete = boule(0.105, M.peau, 0.01, 0.13, 0);
+    tete.scale.set(1.0, 1.18, 0.92);
+    cou.add(tete);
+    const casque = morceau(new THREE.SphereGeometry(0.135, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.52), M.tenue, -0.005, 0.17, 0);
+    casque.scale.set(1.08, 0.95, 1.04);
+    cou.add(casque);
+    if (detail) {
+      cou.add(cube(0.035, 0.035, 0.03, M.peau, 0.105, 0.12, 0)); // le nez
+      for (const z of [-0.035, 0.035]) cou.add(boule(0.012, M.yeux, 0.092, 0.145, z)); // les yeux
+      for (const z of [-0.098, 0.098]) cou.add(cube(0.03, 0.05, 0.02, M.peau, 0.0, 0.13, z)); // les oreilles
+      cou.add(cube(0.04, 0.012, 0.09, M.yeux, 0.095, 0.172, 0)); // les sourcils
+      cou.add(cube(0.05, 0.05, 0.19, M.lunette, 0.11, 0.24, 0)); // les lunettes de protection, sur le casque
+      cou.add(cube(0.02, 0.1, 0.012, M.sangle, 0.04, 0.08, 0.1), cube(0.02, 0.1, 0.012, M.sangle, 0.04, 0.08, -0.1)); // la jugulaire
+    }
+    souder(cou);
+    // les bras (épaule → coude → main)
+    for (const z of [OS.ecartEpaules, -OS.ecartEpaules]) {
+      const epaule = new THREE.Group();
+      epaule.position.set(0, OS.epaules, z);
+      epaule.add(capsule(0.06, OS.bras - 0.1, M.tenue, 0, -OS.bras / 2, 0));
+      epaule.add(cube(0.12, 0.08, 0.13, z > 0 && joueur ? M.marqueToi : M.marque, 0, -0.09, 0)); // le brassard de l'équipe
+      const coude = new THREE.Group();
+      coude.position.y = -OS.bras;
+      coude.add(capsule(0.05, OS.avantBras - 0.09, M.tenue, 0, -OS.avantBras / 2, 0));
+      coude.add(boule(0.045, M.gants, 0, -OS.avantBras - 0.01, 0)); // la main (gantée)
+      if (detail) coude.add(cube(0.08, 0.07, 0.11, M.sangle, 0, -0.02, 0)); // la coudière
+      souder(coude);
+      souder(epaule);
+      epaule.add(coude);
+      dos.add(epaule);
+      epaules.push(epaule);
+      coudes.push(coude);
+    }
+    const canons = armes(M, detail);
+    for (const c of Object.values(canons)) dos.add(c);
+    const flamme = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffc860 }));
+    flamme.userData.garder = true;
+    flamme.position.set(0.98, 0.29, 0.1);
+    dos.add(flamme);
+    souder(dos);
+    return { corps, dos, cou, jambes, genoux, epaules, coudes, canons, flamme, pose: null };
+  }
+
+  // La « cinématique inverse » à 2 os : l'épaule S, la main voulue M ; on cherche le coude.
+  // (Le triangle épaule-coude-main a deux côtés connus, le bras et l'avant-bras, et le troisième côté, c'est la
+  // distance de l'épaule à la main : la loi des cosinus donne l'angle à l'épaule.)
+  const BAS = new THREE.Vector3(0, -1, 0), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion();
+  function poserBras(epaule, coude, cible, pole) {
+    const S = epaule.position, a = OS.bras, b = OS.avantBras + 0.01;
+    const vers = new THREE.Vector3().fromArray(cible).sub(S), d = Math.min(a + b - 0.001, Math.max(0.05, vers.length()));
+    vers.normalize();
+    const cosA = (a * a + d * d - b * b) / (2 * a * d), sinA = Math.sqrt(Math.max(0, 1 - cosA * cosA));
+    const p = pole.clone().sub(vers.clone().multiplyScalar(pole.dot(vers))).normalize();
+    const coudeEn = vers.clone().multiplyScalar(a * cosA).add(p.multiplyScalar(a * sinA));
+    const main = vers.clone().multiplyScalar(d);
+    q1.setFromUnitVectors(BAS, coudeEn.clone().normalize());
+    epaule.quaternion.copy(q1);
+    q2.setFromUnitVectors(BAS, main.sub(coudeEn).normalize());
+    coude.quaternion.copy(q1.clone().invert().multiply(q2));
+  }
+  const POLES = [new THREE.Vector3(-0.3, -1, 0.8), new THREE.Vector3(-0.3, -1, -0.8)]; // (les coudes vont en bas et vers l'extérieur)
+  function tenir(r, arme) {
+    if (r.pose === arme) return;
+    r.pose = arme;
+    const m = MAINS[arme];
+    poserBras(r.epaules[0], r.coudes[0], m.droite, POLES[0]);
+    poserBras(r.epaules[1], r.coudes[1], m.gauche, POLES[1]);
+  }
+
   function soldat(equipe, joueur) {
-    const m = mats(), E = Tanks.CONFIG.equipes[equipe];
-    const tenue = new THREE.MeshStandardMaterial({ map: Tanks.Chars3D.camouflage(E.camouflage), roughness: 0.9 });
-    const brassard = new THREE.MeshStandardMaterial({ color: E.marque, emissive: E.marque, emissiveIntensity: joueur ? 0.6 : 0.3 });
-    const g = new THREE.Group(), corps = new THREE.Group();
-    g.add(corps);
-    // les jambes (elles pivotent à la hanche)
-    const jambes = [];
-    for (const z of [-0.12, 0.12]) {
-      const j = new THREE.Group();
-      j.position.set(0, 0.9, z);
-      const cuisse = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.62, 4, 8), tenue);
-      cuisse.position.y = -0.42;
-      cuisse.castShadow = true;
-      j.add(cuisse, boite(0.24, 0.12, 0.13, m.noir, 0.05, -0.85, 0)); // et la chaussure
-      corps.add(j);
-      jambes.push(j);
-    }
-    const buste = new THREE.Mesh(new THREE.CapsuleGeometry(0.19, 0.38, 4, 10), tenue);
-    buste.position.y = 1.2;
-    buste.castShadow = true;
-    corps.add(buste);
-    corps.add(boite(0.3, 0.42, 0.42, new THREE.MeshStandardMaterial({ color: 0x3d4430, roughness: 0.9 }), 0.02, 1.22, 0)); // le gilet
-    corps.add(boite(0.22, 0.38, 0.32, new THREE.MeshStandardMaterial({ color: 0x3a4128, roughness: 0.95 }), -0.22, 1.25, 0)); // le sac à dos
-    const tete = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), m.peau);
-    tete.position.y = 1.6;
-    corps.add(tete);
-    const casque = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), tenue);
-    casque.position.y = 1.62;
-    casque.castShadow = true;
-    corps.add(casque);
-    for (const z of [-0.24, 0.24]) {
-      const b = boite(0.12, 0.1, 0.05, brassard, 0, 1.32, z);
-      corps.add(b);
-    }
-    // les bras tendus vers l'arme
-    for (const z of [-0.2, 0.2]) {
-      const bras = new THREE.Mesh(new THREE.CapsuleGeometry(0.065, 0.42, 4, 8), tenue);
-      bras.position.set(0.22, 1.28, z * 0.6);
-      bras.rotation.z = Math.PI / 2 - 0.25;
-      corps.add(bras);
-    }
-    const arme = new THREE.Group();
-    arme.position.set(0.45, 1.3, 0.05);
-    corps.add(arme);
-    const canons = {
-      fusil: boite(0.85, 0.09, 0.06, m.noir, 0.1, 0, 0),
-      pistolet: boite(0.25, 0.12, 0.05, m.noir, -0.05, 0, 0),
-      roquettes: cyl(0.08, 0.08, 1.1, new THREE.MeshStandardMaterial({ color: 0x4b5a34, roughness: 0.8 }), 12),
-    };
-    canons.roquettes.rotation.z = Math.PI / 2;
-    canons.roquettes.position.set(0, 0.08, 0);
-    for (const c of Object.values(canons)) arme.add(c);
-    const flamme = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffc860 }));
-    flamme.position.x = 0.6;
-    arme.add(flamme);
+    const g = new THREE.Group();
+    const detail = squelette(equipe, joueur, true), simple = squelette(equipe, joueur, false);
+    g.add(detail.corps, simple.corps);
+    simple.corps.visible = false;
     // le parachute (pour toi, quand tu t'éjectes de l'avion)
     let parachute = null;
     if (joueur) {
+      const m = mats();
       parachute = new THREE.Group();
       const voile = new THREE.Mesh(new THREE.SphereGeometry(3.2, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.35), new THREE.MeshStandardMaterial({ color: 0x8a9a5a, roughness: 0.9, side: THREE.DoubleSide }));
       voile.position.y = 2.2;
@@ -118,10 +298,63 @@ Tanks.Engins3D = (function () {
       parachute.visible = false;
       g.add(parachute);
     }
-    return { g, corps, jambes, arme, canons, flamme, parachute };
+    return { g, detail, simple, parachute };
   }
 
-  // ------------------------------------------------------------------ les engins
+  // L'animation : marcher, courir, tourner sur place, nager, tomber. t = l'horloge (s).
+  function animer(o, s, t, tourne, pres) {
+    const r = pres ? o.detail : o.simple;
+    o.detail.corps.visible = pres;
+    o.simple.corps.visible = !pres;
+    const arme = s.arme === "pistolet" ? "pistolet" : s.arme === "roquettes" || s.roquettesIA ? "roquettes" : "fusil";
+    for (const n in r.canons) r.canons[n].visible = n === arme && !s.nage && !s.mort;
+    r.flamme.visible = s.tir > 0 && arme !== "roquettes" && !s.mort;
+    if (r.flamme.visible) r.flamme.position.x = arme === "pistolet" ? 0.62 : 0.98;
+    const c = r.corps;
+    if (s.mort) {
+      // il tombe sur le dos en une demi-seconde, les bras ouverts
+      const k = Math.min(1, s.depuisMort * 2);
+      c.rotation.set(0, 0, k * (Math.PI / 2));
+      c.position.set(0, 0.12 * k, 0);
+      r.pose = null;
+      for (const e of r.epaules) e.quaternion.identity(), e.rotation.set(0, 0, 0.6 * k);
+      for (const g of r.genoux) g.rotation.z = -0.3 * k;
+      return;
+    }
+    if (s.nage) {
+      // à plat ventre dans l'eau, la tête dehors ; les bras font la brasse et les jambes battent
+      c.rotation.set(0, 0, -1.35);
+      c.position.set(-0.2, 1.12, 0);
+      r.pose = null;
+      const brasse = t * 3;
+      for (let i = 0; i < 2; i++) {
+        r.epaules[i].quaternion.identity();
+        r.epaules[i].rotation.set((i ? -1 : 1) * (0.4 + Math.sin(brasse) * 0.6), 0, 2.6 + Math.cos(brasse) * 0.5);
+        r.coudes[i].quaternion.identity();
+        r.coudes[i].rotation.z = 0.4;
+        r.jambes[i].rotation.z = Math.sin(t * 7 + i * Math.PI) * 0.25;
+        r.genoux[i].rotation.z = -0.3;
+      }
+      return;
+    }
+    c.rotation.set(0, 0, 0);
+    tenir(r, arme);
+    // les jambes : la hanche se balance, le genou plie quand la jambe revient vers l'arrière
+    const v = Math.abs(s.vitesse), ampleur = Math.max(Math.min(1, v / 3.5), tourne ? 0.35 : 0);
+    const phase = s.pas * 2.6 + (tourne && v < 0.5 ? t * 7 : 0);
+    for (let i = 0; i < 2; i++) {
+      const p = phase + i * Math.PI, sens = s.vitesse < -0.1 ? -1 : 1;
+      r.jambes[i].rotation.z = Math.sin(p) * 0.55 * ampleur * sens;
+      r.genoux[i].rotation.z = -Math.max(0, Math.sin(p + 1.3)) * 0.95 * ampleur;
+    }
+    // le corps monte et descend un peu à chaque pas, et se penche en avant quand il court ; il respire au repos
+    c.position.set(0, -Math.abs(Math.cos(phase)) * 0.045 * ampleur, 0);
+    r.dos.rotation.z = -0.13 * Math.min(1, v / 4) + (s.tir > 0 && arme !== "roquettes" ? 0.025 : 0); // (le recul du tir)
+    r.dos.scale.y = 1 + Math.sin(t * 2.2) * 0.008 * (1 - ampleur);
+    r.cou.rotation.z = 0.08 * Math.min(1, v / 4); // (il garde la tête droite en courant)
+  }
+
+    // ------------------------------------------------------------------ les engins
   function jeep(equipe) {
     const m = mats(), p = peinture(equipe), g = new THREE.Group(), caisse = new THREE.Group();
     g.add(caisse);
@@ -339,6 +572,49 @@ Tanks.Engins3D = (function () {
     return { g, caisse, tourelle, radar };
   }
 
+  // (étape 63) Le sous-marin : une longue coque ronde (un « cigare »), le kiosque au milieu avec ses ailerons (les
+  // « barres de plongée »), le périscope, la croix de gouvernails à l'arrière et l'hélice. Construit « nez vers x+ »,
+  // avec le bas de la coque en y = 0.
+  function sousmarin(equipe) {
+    const m = mats(), g = new THREE.Group(), caisse = new THREE.Group(), E = Tanks.CONFIG.equipes[equipe];
+    const coque = new THREE.MeshStandardMaterial({ color: equipe === "bleus" ? 0x2b3136 : 0x3a3530, roughness: 0.5, metalness: 0.45 });
+    const marque = new THREE.MeshStandardMaterial({ color: E.marque, roughness: 0.6 });
+    g.add(caisse);
+    const corps = new THREE.Mesh(new THREE.CapsuleGeometry(1.25, 11.2, 8, 18), coque);
+    corps.rotation.z = Math.PI / 2;
+    corps.position.y = 1.3;
+    corps.scale.set(1, 1, 1);
+    corps.castShadow = true;
+    caisse.add(corps);
+    caisse.add(boite(9, 0.08, 1.1, coque, 0.5, 2.52, 0)); // le pont, sur le dessus
+    // le kiosque
+    const kiosque = new THREE.Mesh(new THREE.CapsuleGeometry(0.55, 1.6, 4, 12), coque);
+    kiosque.rotation.z = Math.PI / 2;
+    kiosque.scale.set(1.6, 1, 0.7);
+    kiosque.position.set(1.2, 3.1, 0);
+    caisse.add(kiosque);
+    caisse.add(boite(2.4, 0.9, 0.9, coque, 1.2, 3.0, 0));
+    for (const z of [-0.47, 0.47]) caisse.add(boite(1.2, 0.25, 0.02, marque, 1.2, 3.2, z)); // la bande de l'équipe
+    for (const z of [-1, 1]) caisse.add(boite(0.7, 0.06, 0.9, coque, 1.4, 3.1, z * 0.85)); // les barres de plongée
+    const periscope = cyl(0.06, 0.06, 1.6, m.metal, 8);
+    periscope.position.set(1.5, 4.1, 0);
+    caisse.add(periscope, boite(0.22, 0.1, 0.1, m.metal, 1.58, 4.9, 0));
+    caisse.add(cyl(0.04, 0.04, 1.2, m.noir, 6).translateX(0.9).translateY(3.9)); // l'antenne
+    // la croix de gouvernails et l'hélice, à l'arrière
+    caisse.add(boite(1.4, 1.9, 0.08, coque, -6.4, 1.3, 0), boite(1.4, 0.08, 2.6, coque, -6.4, 1.3, 0));
+    const helice = new THREE.Group();
+    helice.position.set(-7.3, 1.3, 0);
+    for (let k = 0; k < 5; k++) {
+      const pale = boite(0.06, 0.7, 0.18, m.metal, 0, 0.35, 0);
+      const bras = new THREE.Group();
+      bras.rotation.x = (k * Math.PI * 2) / 5;
+      bras.add(pale);
+      helice.add(bras);
+    }
+    caisse.add(helice);
+    return { g, caisse, helice };
+  }
+
   // Le portail : un anneau qui brille, un tourbillon (un disque avec une spirale dessinée, qui tourne) et un socle.
   function portail(couleur, rayon) {
     const g = new THREE.Group(), c = new THREE.Color(couleur);
@@ -380,7 +656,7 @@ Tanks.Engins3D = (function () {
   }
 
   function fabriquer(sorte, equipe) {
-    return { jeep, helico, avion, drone, bateau }[sorte](equipe);
+    return { jeep, helico, avion, drone, bateau, sousmarin }[sorte](equipe);
   }
   function bruler(o) {
     const m = mats();
@@ -389,5 +665,5 @@ Tanks.Engins3D = (function () {
     });
   }
 
-  return { soldat, fabriquer, bruler, portail };
+  return { soldat, animer, fabriquer, bruler, portail };
 })();

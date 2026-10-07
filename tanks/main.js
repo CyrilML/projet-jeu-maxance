@@ -40,6 +40,7 @@ window.Tanks = window.Tanks || {};
       reste += dt;
       while (reste >= C.pasFixe) {
         reste -= C.pasFixe;
+        Tanks.Monde.memoriser(monde); // (étape 63 : pour dessiner sans à-coups)
         Tanks.Monde.etape(monde, C.pasFixe, {
           avancer: E.estEnfoncee("avancer"), reculer: E.estEnfoncee("reculer"),
           gauche: E.estEnfoncee("gauche"), droite: E.estEnfoncee("droite"),
@@ -51,7 +52,8 @@ window.Tanks = window.Tanks || {};
         });
       }
     }
-    Tanks.Scene.dessiner(monde, enPause ? 0 : dt);
+    // (étape 63) où en est-on entre deux pas ? 0 = juste après le dernier pas, presque 1 = juste avant le prochain
+    Tanks.Scene.dessiner(monde, enPause ? 0 : dt, Math.min(1, reste / C.pasFixe));
     Tanks.Tableau.dessiner(monde);
     document.getElementById("pause").hidden = !enPause;
     Tanks.SousLeCapot.maj();

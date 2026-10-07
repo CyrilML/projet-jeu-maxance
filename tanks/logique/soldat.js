@@ -8,7 +8,9 @@
 // cherche l'ennemi le plus proche dans un petit cône devant l'arme (7°), qu'on VOIT (aucun mur entre les deux), et on
 // tire au sort : la chance de toucher, c'est la précision de l'arme, un peu moins quand il est loin.
 // Les balles rebondissent sur les tanks (« ricochet »). ✍️ 3 balles = un soldat à terre (toi : 5).
-// Ce fichier ne dessine rien : il renvoie des événements (« balle », « soldat-touche », « soldat-mort »).
+// Étape 63 : dans l'eau, un soldat NAGE (lentement, la tête hors de l'eau, sans pouvoir tirer). Et il ne traverse plus
+// les arbres (avant, il passait au travers : un petit bug).
+// Ce fichier ne dessine rien : il renvoie des événements (« balle », « soldat-touche », « soldat-mort », « nage »).
 
 window.Tanks = window.Tanks || {};
 
@@ -89,7 +91,8 @@ Tanks.Soldat = (function () {
       const diff = angleEntre(intentions.versAngle - s.angle);
       s.angle = angleEntre(s.angle + Math.max(-S.rotation * dt, Math.min(S.rotation * dt, diff)));
     } else s.angle = angleEntre(s.angle + ((intentions.droite ? 1 : 0) - (intentions.gauche ? 1 : 0)) * S.rotation * 0.8 * dt);
-    const voulue = intentions.avancer ? S.vitesse * (intentions.lent ? 0.5 : 1) : intentions.reculer ? -S.recul : 0;
+    const vMax = s.nage ? S.nage : S.vitesse;
+    const voulue = intentions.avancer ? vMax * (intentions.lent ? 0.5 : 1) : intentions.reculer ? -Math.min(S.recul, vMax) : 0;
     s.vitesse += Math.max(-20 * dt, Math.min(20 * dt, voulue - s.vitesse));
     const dir = intentions.direction !== undefined ? intentions.direction : s.angle;
     s.x += Math.cos(dir) * s.vitesse * dt;
@@ -99,6 +102,15 @@ Tanks.Soldat = (function () {
     s.x = Math.max(-lim, Math.min(lim, s.x));
     s.z = Math.max(-lim, Math.min(lim, s.z));
     T.repousser(s, 0.5);
+    // les arbres (encore debout) sont des poteaux : on en fait le tour
+    for (const a of T.arbres) {
+      if (a.ecrase || Math.abs(a.x - s.x) > 1.2 || Math.abs(a.z - s.z) > 1.2) continue;
+      const d = Math.hypot(s.x - a.x, s.z - a.z), min = a.r + 0.35;
+      if (d < min && d > 0.001) {
+        s.x = a.x + ((s.x - a.x) / d) * min;
+        s.z = a.z + ((s.z - a.z) / d) * min;
+      }
+    }
     // on ne traverse pas les tanks ni les épaves
     for (const c of monde.chars) {
       const d = Math.hypot(c.x - s.x, c.z - s.z), min = C.char.rayon * 0.85;
@@ -107,10 +119,14 @@ Tanks.Soldat = (function () {
         s.z += ((s.z - c.z) / d) * (min - d);
       }
     }
-    s.y = T.hauteur(s.x, s.z);
-    // tirer
+    // dans l'eau ? on nage (la tête juste hors de l'eau)
+    const nageait = s.nage;
+    s.nage = T.dansLEau(s.x, s.z) && T.hauteur(s.x, s.z) < C.lac.niveau - 1.1;
+    s.y = s.nage ? C.lac.niveau - 1.25 : T.hauteur(s.x, s.z);
+    if (s.nage !== nageait && s.joueur) ev.push(["nage", { nom: s.nom, nage: s.nage }]);
+    // tirer (pas en nageant !)
     s.recharge = Math.max(0, s.recharge - dt);
-    if (intentions.tirer && s.recharge === 0) {
+    if (intentions.tirer && s.recharge === 0 && !s.nage) {
       const R = A[s.arme];
       s.recharge = R.cadence;
       s.tir = 0.08;

@@ -14,6 +14,7 @@ Tanks.Sons = (function () {
   const C = Tanks.CONFIG;
   let ctx = null, sortie, osc, filtre, volume, tampon, coupe = false, monde = null;
   let souffle, filtreSouffle, volumeSouffle; // (étape 61)
+  let dernierPing = 0; // (étape 63)
 
   function demarrer() {
     if (ctx) return;
@@ -44,6 +45,7 @@ Tanks.Sons = (function () {
     radio.ecouter("touche", (e) => clang(attenuation(e.x, e.z)));
     radio.ecouter("tir-bateau", (e) => boum(e.joueur ? 0.8 : attenuation(e.x, e.z) * 0.7, 0.45, 140)); // (étape 62)
     radio.ecouter("portail", (e) => e.quiToi && portail());
+    radio.ecouter("torpille", (e) => pschh(e.joueur ? 0.5 : attenuation(e.x, e.z) * 0.4)); // (étape 63)
     radio.ecouter("impact", (e) => {
       if (e.sorte === "bombe" || e.sorte === "missile") boum(attenuation(e.x, e.z), 1.8, 60);
       else if (e.sorte === "grenade" || e.sorte === "roquette") boum(attenuation(e.x, e.z) * 0.7, 0.7, 90);
@@ -138,6 +140,17 @@ Tanks.Sons = (function () {
     o.start(t);
     o.stop(t + 0.65);
   }
+  // (étape 63) Le sonar : « ping » (une note aiguë qui résonne longtemps).
+  function ping() {
+    if (!ctx || coupe) return;
+    const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = 1450;
+    g.gain.setValueAtTime(0.12, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 1.4);
+    o.connect(g).connect(sortie);
+    o.start(t);
+    o.stop(t + 1.5);
+  }
   // Une roquette qui part : « pschhh ».
   function pschh(force) {
     if (!ctx || coupe) return;
@@ -163,6 +176,13 @@ Tanks.Sons = (function () {
     } else if (toi.mode === "jeep") {
       const part = Math.min(1, Math.abs(e.vitesse) / C.engins.jeep.vitesseMax);
       (frequence = 55 + part * 90), (aigu = 400 + part * 900), (fort = e.detruit ? 0 : 0.12 + part * 0.1);
+    } else if (toi.mode === "sousmarin") { // (étape 63) un moteur électrique, grave et doux, et le « ping » du sonar
+      const part = Math.min(1, Math.abs(e.vitesse) / C.sousMarins.joueur.vitesseMax);
+      (frequence = 30 + part * 25), (aigu = 160 + part * 200), (fort = e.detruit ? 0 : 0.1 + part * 0.06), (souffleFort = 0.03), (souffleAigu = 250);
+      if (t - dernierPing > 3) {
+        dernierPing = t;
+        ping();
+      }
     } else if (toi.mode === "bateau") { // (un moteur de bateau : grave, et le bruit de l'eau)
       const part = Math.min(1, Math.abs(e.vitesse) / C.bateaux.joueur.vitesseMax);
       (frequence = 40 + part * 50), (aigu = 300 + part * 500), (fort = e.detruit ? 0 : 0.12 + part * 0.1), (souffleFort = part * 0.08), (souffleAigu = 600);

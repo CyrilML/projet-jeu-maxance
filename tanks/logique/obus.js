@@ -10,6 +10,8 @@
 // Quand il explose, son SOUFFLE met à terre les soldats ennemis tout près (et une bombe abîme aussi les tanks à 4 m).
 // Étape 62 : les BATEAUX peuvent être touchés aussi (ta vedette et les patrouilleurs), et un projectile qui tombe dans
 // le LAC fait une gerbe d'eau (impact « eau »).
+// Étape 63 : la TORPILLE file sous l'eau (elle reste toujours sous la surface) ; un SOUS-MARIN plongé (à plus de 1,5 m)
+// ne peut être touché QUE par une torpille (les obus et les roquettes explosent à la surface).
 // ✍️ 4 obus détruisent un tank. Un projectile ne fait pas de mal à sa propre équipe.
 // Ce fichier ne dessine rien : il renvoie des événements (« touche », « detruit », « impact », « soldat-touche »…).
 
@@ -38,7 +40,8 @@ Tanks.Obus = (function () {
   function dansLeChar(c, x, y, z) {
     const f = c.fiche, ca = Math.cos(c.angle), sa = Math.sin(c.angle), dx = x - c.x, dz = z - c.z;
     const u = dx * ca + dz * sa, v = -dx * sa + dz * ca;
-    return Math.abs(u) < f.longueur / 2 + 0.2 && Math.abs(v) < f.largeur / 2 + 0.2 && y > c.y - 0.3 && y < c.y + f.hauteur + 0.3;
+    const bas = c.genre === "bateau" ? 1.6 : 0.3; // (la coque d'un bateau descend sous l'eau : une torpille la touche)
+    return Math.abs(u) < f.longueur / 2 + 0.2 && Math.abs(v) < f.largeur / 2 + 0.2 && y > c.y - bas && y < c.y + f.hauteur + 0.3;
   }
 
   // Abîmer un véhicule (un tank, ou le 4x4) : renvoie les événements « touche » et peut-être « detruit ».
@@ -50,7 +53,7 @@ Tanks.Obus = (function () {
     const angle = Math.abs(Tanks.Char.angleEntre(Math.atan2(-vz, -vx) - cible.angle));
     const cote = angle < 0.8 ? "de face" : angle > 2.3 ? "par l'arrière" : "sur le flanc";
     const distance = Math.round(Math.hypot(x - (tireur ? tireur.x : x), z - (tireur ? tireur.z : z)));
-    const vieMax = (cible.fiche && cible.fiche.vie) || C.char.vie, bateau = cible.genre === "bateau";
+    const vieMax = (cible.fiche && cible.fiche.vie) || C.char.vie, bateau = cible.genre === "bateau" || cible.genre === "sousmarin";
     ev.push(["touche", { x, y, z, tireur, cible, vie: cible.vie, vieMax, cote, distance, bateau }]);
     if (cible.vie <= 0) {
       cible.detruit = true;
@@ -68,13 +71,15 @@ Tanks.Obus = (function () {
     // (une bombe ou un missile abîme aussi un tank qui est tout près, même sans le toucher)
     if (R.degatsChar >= 2) {
       for (const c of vehicules(monde)) {
-        if (c === dejaTouche || c.detruit || c.equipe === p.tireur.equipe) continue;
+        if (c === dejaTouche || c.detruit || c.equipe === p.tireur.equipe || cache(c, p.sorte)) continue;
         if (Math.hypot(c.x - x, c.z - z) < 4.5 && Math.abs(c.y - y) < 5) abimer(c, 1, p.tireur, x, y, z, p.vx, p.vz, ev);
       }
     }
   }
   // Tous les véhicules qu'un projectile peut toucher : les tanks, le 4x4 (étape 61), et les bateaux (étape 62).
-  const vehicules = (monde) => monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || e.sorte === "bateau"), monde.bateaux || []);
+  // (étape 63 : et les sous-marins)
+  const vehicules = (monde) => monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || e.sorte === "bateau" || e.sorte === "sousmarin"), monde.bateaux || [], monde.sousMarins || []);
+  const cache = (c, sorte) => c.genre === "sousmarin" && sorte !== "torpille" && Tanks.SousMarins.sousLEau(c); // (sous l'eau)
 
   function avancer(liste, monde, dt) {
     const ev = [];
@@ -98,10 +103,17 @@ Tanks.Obus = (function () {
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       p.z += p.vz * dt;
+      let fondTorpille = null;
+      if (p.sorte === "torpille") {
+        // une torpille ne sort jamais de l'eau, et elle remonte au-dessus du fond quand il remonte (près des rives) ;
+        // elle n'explose sur le « sol » que si elle arrive vraiment sur une rive ou une île
+        fondTorpille = T.hauteur(p.x, p.z);
+        p.y = Math.max(fondTorpille + 0.4, Math.min(p.y, C.lac.niveau - 0.6));
+      }
       let fini = null;
       // un véhicule ?
       for (const c of cibles) {
-        if (c === p.tireur || !dansLeChar(c, p.x, p.y, p.z)) continue;
+        if (c === p.tireur || cache(c, p.sorte) || !dansLeChar(c, p.x, p.y, p.z)) continue;
         if (c.detruit) {
           fini = ["impact", { x: p.x, y: p.y, z: p.z, sur: "epave", sorte: p.sorte }];
           break;
@@ -116,9 +128,11 @@ Tanks.Obus = (function () {
         break;
       }
       // l'eau du lac ? (étape 62)
-      if (!fini && p.y < C.lac.niveau && T.dansLEau(p.x, p.z)) fini = ["impact", { x: p.x, y: C.lac.niveau, z: p.z, sur: "eau", sorte: p.sorte }];
+      if (!fini && p.sorte !== "torpille" && p.y < C.lac.niveau && T.dansLEau(p.x, p.z)) fini = ["impact", { x: p.x, y: C.lac.niveau, z: p.z, sur: "eau", sorte: p.sorte }];
       // le sol ?
-      if (!fini && p.y < T.hauteur(p.x, p.z)) fini = ["impact", { x: p.x, y: T.hauteur(p.x, p.z), z: p.z, sur: "sol", sorte: p.sorte }];
+      if (!fini && fondTorpille !== null) {
+        if (fondTorpille > C.lac.niveau - 0.9) fini = ["impact", { x: p.x, y: C.lac.niveau, z: p.z, sur: "sol", sorte: p.sorte }];
+      } else if (!fini && p.y < T.hauteur(p.x, p.z)) fini = ["impact", { x: p.x, y: T.hauteur(p.x, p.z), z: p.z, sur: "sol", sorte: p.sorte }];
       // une maison, un muret ?
       if (!fini) {
         for (const b of T.boites) {
@@ -130,7 +144,7 @@ Tanks.Obus = (function () {
         }
       }
       if (fini && fini[1].sur !== "char") souffle(monde, p, R, fini[1].x, fini[1].y, fini[1].z, ev, null);
-      if (!fini && p.age > O.vieMax + (p.sorte === "bombe" || p.sorte === "grenade" ? 20 : 0)) fini = ["perdu", {}];
+      if (!fini && p.age > (R.vieMax || O.vieMax + (p.sorte === "bombe" || p.sorte === "grenade" ? 20 : 0))) fini = ["perdu", {}];
       if (fini) {
         if (fini[0] !== "perdu") ev.push(fini);
         liste.splice(i, 1);

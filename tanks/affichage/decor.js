@@ -58,7 +58,8 @@ Tanks.Decor = (function () {
       const b = Tanks.Bruit.fractal(bruit, x / 60, z / 60, 3), village = Math.max(0, 1 - Math.hypot(x, z) / (C.monde.village.rayon * 1.3));
       let r = 0.36 + b * 0.06, g = 0.47 + b * 0.08, bl = 0.24 + b * 0.04; // l'herbe
       r += village * 0.18; g += village * 0.02; bl += village * 0.08; // la terre battue du village
-      const rive = Math.max(0, 1 - Math.abs(T.distLac(x, z) - 1) / 0.1); // (étape 62) le sable de la rive
+      let rive = Math.max(0, 1 - Math.abs(T.distLac(x, z) - 1) / 0.1); // (étape 62) le sable de la rive
+      for (const i of T.iles) rive = Math.max(rive, 1 - Math.abs(Math.hypot(x - i.x, z - i.z) - i.rayon) / 6); // (étape 63) et des îles
       r += rive * 0.2; g += rive * 0.1; bl += rive * 0.05;
       couleurs.push(r, g, bl);
       uv.setXY(i, x / 6, z / 6);
@@ -235,7 +236,7 @@ Tanks.Decor = (function () {
     vagues = new THREE.CanvasTexture(bosses);
     vagues.wrapS = vagues.wrapT = THREE.RepeatWrapping;
     vagues.repeat.set(18, 40);
-    const eau = new THREE.Mesh(new THREE.CircleGeometry(1, 72), new THREE.MeshStandardMaterial({ color: 0x2b5763, roughness: 0.08, metalness: 0.25, transparent: true, opacity: 0.88, normalMap: vagues, normalScale: new THREE.Vector2(0.35, 0.35) }));
+    const eau = new THREE.Mesh(new THREE.CircleGeometry(1, 72), new THREE.MeshStandardMaterial({ color: 0x2b5763, roughness: 0.2, metalness: 0.25, transparent: true, opacity: 0.88, normalMap: vagues, normalScale: new THREE.Vector2(0.35, 0.35) }));
     eau.rotation.x = -Math.PI / 2;
     eau.scale.set(L.rayonX * 1.02, L.rayonZ * 1.02, 1);
     eau.position.set(L.x, L.niveau, L.z);

@@ -7,8 +7,8 @@
 //   - 2 PATROUILLEURS ENNEMIS : ils se promènent sur le lac (ils choisissent un point au hasard sur l'eau, y vont, puis en
 //     choisissent un autre) et ils tirent sur tout ce qui est bleu et qu'ils VOIENT à moins de 260 m (tes tanks au bord
 //     de l'eau, tes soldats, ta vedette).
-// Un bateau ne peut pas sortir de l'eau : s'il touche la rive, il s'échoue (il s'arrête net). Coulé, il s'enfonce
-// doucement sous l'eau.
+// Un bateau ne peut pas sortir de l'eau : s'il touche la rive (ou une île, étape 63), il s'échoue (il s'arrête net).
+// Coulé, il s'enfonce doucement sous l'eau.
 // Ce fichier ne dessine rien.
 
 window.Tanks = window.Tanks || {};
@@ -37,14 +37,33 @@ Tanks.Bateaux = (function () {
     return liste;
   }
 
-  // Garder un bateau sur l'eau : au-delà de dl = 0,96, il touche le fond près de la rive et s'échoue.
+  // Garder un bateau sur l'eau : au-delà de dl = 0,96, il touche le fond près de la rive et s'échoue ; (étape 63) et
+  // il ne s'approche pas à moins de 6 m d'une île.
   function resterSurLEau(b) {
+    let echoue = false;
+    for (const i of T.iles) {
+      const d = Math.hypot(b.x - i.x, b.z - i.z), min = i.rayon + B.margeIles;
+      if (d >= min) continue;
+      b.x = i.x + ((b.x - i.x) / (d || 1)) * min;
+      b.z = i.z + ((b.z - i.z) / (d || 1)) * min;
+      echoue = true;
+    }
     const dl = T.distLac(b.x, b.z), max = 0.96;
-    if (dl <= max) return false;
-    b.x = L.x + (b.x - L.x) * (max / dl);
-    b.z = L.z + (b.z - L.z) * (max / dl);
-    b.vitesse *= 0.3;
-    return true;
+    if (dl > max) {
+      b.x = L.x + (b.x - L.x) * (max / dl);
+      b.z = L.z + (b.z - L.z) * (max / dl);
+      echoue = true;
+    }
+    if (echoue) b.vitesse *= 0.3;
+    return echoue;
+  }
+  // Un point au hasard sur l'eau libre (pas sur une île, ni trop près).
+  function pointSurLEau() {
+    for (let essai = 0; essai < 30; essai++) {
+      const p = surLeLac(hasard() * Math.PI * 2, 0.15 + hasard() * 0.65);
+      if (!T.ileProche(p.x, p.z, B.margeIles + 8)) return p;
+    }
+    return surLeLac(0, 0.7);
   }
   // Coulé : il s'enfonce (jusqu'à 3 m sous l'eau).
   function couler(b, dt) {
@@ -96,7 +115,7 @@ Tanks.Bateaux = (function () {
     }
     const cible = ia.cible && !ia.cible.detruit && !ia.cible.mort ? ia.cible : null;
     // 2. Naviguer vers son point (et en choisir un autre quand il y est).
-    if (!ia.point || Math.hypot(ia.point.x - b.x, ia.point.z - b.z) < 15) ia.point = surLeLac(hasard() * Math.PI * 2, 0.15 + hasard() * 0.65);
+    if (!ia.point || Math.hypot(ia.point.x - b.x, ia.point.z - b.z) < 15) ia.point = pointSurLEau();
     const voulu = Math.atan2(ia.point.z - b.z, ia.point.x - b.x), diff = angleEntre(voulu - b.angle);
     b.angle = angleEntre(b.angle + Math.max(-R.virage * dt, Math.min(R.virage * dt, diff)));
     const vitesseVoulue = R.vitesse * (Math.abs(diff) > 1 ? 0.5 : 1);
@@ -135,5 +154,5 @@ Tanks.Bateaux = (function () {
     }
   }
 
-  return { creer, avancer, chocs, tirer, resterSurLEau, couler, surLeLac, DIMENSIONS };
+  return { creer, avancer, chocs, tirer, resterSurLEau, couler, surLeLac, pointSurLEau, DIMENSIONS };
 })();

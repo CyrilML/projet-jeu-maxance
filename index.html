@@ -184,6 +184,7 @@
       <a href="#etape60">Étape 60</a>
       <a href="#etape61">Étape 61</a>
       <a href="#etape62">Étape 62</a>
+      <a href="#etape63">Étape 63</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3745,6 +3746,53 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Pourquoi un bateau tourne mal quand il est arrêté ?</summary><p>C'est l'eau qui pousse sur le gouvernail : sans vitesse, l'eau ne pousse pas. Le jeu fait tourner le bateau plus vite quand il va vite.</p></details>
     </section>
 
+    <section id="etape63">
+      <h2>🐋 Étape 63 : sous-marins, îles, un soldat plus réaliste (et ses bugs corrigés) <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">3 îles sur le lac, ton sous-marin et 2 sous-marins ennemis, et un soldat refait avec un vrai squelette. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/63-sous-marins-iles-et-soldat.md</code>.</p>
+          <ul>
+            <li>✍️ Des sous-marins et des îles sur le lac.</li>
+            <li>✍️ Un personnage plus réaliste.</li>
+            <li>✍️ Corriger les petits bugs du personnage, « sans me poser de questions ».</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ 3 îles sur le lac. Le portail jaune (près du lac) t'emmène sur la grande île.</li>
+            <li>☐ Ton sous-marin est à côté de la vedette : <kbd>E</kbd> pour monter, <kbd>D</kbd> plonger, <kbd>Q</kbd> remonter, <kbd>Espace</kbd> torpille. Regarde la jauge de profondeur à droite.</li>
+            <li>☐ Quand un sous-marin ennemi « fait surface », tire-lui dessus ! Sous l'eau, seule une torpille le touche.</li>
+            <li>☐ Ton soldat a des genoux, des coudes, un visage ; il tient son fusil à deux mains ; il nage dans le lac.</li>
+            <li>☐ Il ne fait plus de petits sauts ; en sortant du tank, la caméra reste dehors.</li>
+            <li>Vérifie « version 4 » en haut de la page du jeu.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🦴 Un squelette dans le soldat</h3>
+      <p>Comme dans les vrais jeux, le soldat a un <strong>squelette</strong> : des articulations (hanches, genoux, épaules, coudes, cou) qui tournent, et chaque morceau du corps est accroché à une articulation. Pour marcher, on balance les hanches et on plie les genoux. Pour tenir le fusil, c'est l'inverse : on sait où doivent aller les <strong>mains</strong>, et on calcule où mettre les coudes. Ça s'appelle la <strong>cinématique inverse</strong>. Le bras et l'avant-bras forment un triangle avec la ligne épaule → main ; on connaît ses 3 côtés, donc on peut trouver l'angle à l'épaule.</p>
+      <h3>🎞️ Le bug des petits sauts : l'interpolation</h3>
+      <p>Le jeu calcule 120 pas par seconde, mais ton écran affiche souvent 60 images par seconde (ou 144…), et pas toujours pile au moment d'un pas. Avant, on dessinait le soldat là où il était au dernier pas : parfois un peu en retard, parfois pas, et ça faisait de tout petits sauts. Maintenant, avant chaque pas, chacun note sa position (« avant »). On dessine alors le soldat <em>entre</em> sa position d'avant et celle de maintenant, au bon pourcentage. Regarde « entre deux pas » sous le capot : c'est ce pourcentage.</p>
+      <h3>🫧 Le sous-marin et la torpille</h3>
+      <ul>
+        <li>Sa <strong>profondeur</strong> va de 0 (à la surface) à 4,5 m. Il ne descend jamais plus bas que le fond moins 1 m : près des rives et des îles, il remonte tout seul.</li>
+        <li>Sous l'eau (plus de 1,5 m), les obus explosent à la surface de l'eau avant de l'atteindre. Seule la <strong>torpille</strong> le touche : elle file sous l'eau à 94 km/h, tourne doucement vers sa cible et remonte quand le fond remonte.</li>
+        <li>Les sous-marins ennemis entendent ta vedette et ton sous-marin au <strong>sonar</strong> : ils n'ont pas besoin de te voir !</li>
+      </ul>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>tanks/config.js</code>, ajoute une île dans <code>iles</code> (un nom, x, z, un rayon, une hauteur).</li>
+        <li>Mets <code>sousLEau: 60</code> pour les sous-marins ennemis : ils restent cachés une minute entière.</li>
+        <li>Mets <code>nage: 5</code> dans <code>soldats</code> : ton soldat nage comme un champion.</li>
+        <li>Mets <code>detail: 200</code> dans <code>soldats</code> : tous les soldats sont dessinés en détail. Regarde le nombre de « dessins par image » sous le capot !</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi les soldats lointains sont dessinés plus simplement ?</summary><p>De loin, on ne verrait pas leurs yeux ni leurs poches. Les dessiner en simple, c'est beaucoup moins de travail pour la carte graphique : le jeu reste fluide.</p></details>
+      <details class="question"><summary>Pourquoi on ne voit un sous-marin ennemi sur la carte que lorsqu'il est à la surface ?</summary><p>Parce que sous l'eau, il est caché ! Ses bulles, à la surface, peuvent quand même le trahir…</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4075,8 +4123,8 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         </div>
         <div class="carte fait">
           <div class="num">⚔️</div>
-          <h4>Les tanks : soldats, engins, bateaux, portails <span class="etiquette">✅ fait · à valider</span></h4>
-          <p>Un nouveau jeu de bataille (étape 60), puis sortir du tank, 24 soldats, un 4x4 à mitrailleuse, un hélico, un avion de chasse et un drone (étape 61), puis un lac avec des bateaux et des portails (étape 62).</p>
+          <h4>Les tanks : soldats, engins, bateaux, sous-marins, portails <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Un nouveau jeu de bataille (étape 60), puis sortir du tank, 24 soldats, un 4x4 à mitrailleuse, un hélico, un avion de chasse et un drone (étape 61), puis un lac avec des bateaux et des portails (étape 62), puis des îles, des sous-marins et un soldat avec un vrai squelette (étape 63).</p>
           <p class="apprend"><b>Tu apprends :</b> les modes du joueur, la balle instantanée, les projectiles guidés, faire réfléchir l'ordinateur moins souvent. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte">
@@ -4652,6 +4700,15 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-62" data-cle="appris-62" placeholder="Ex. : J'ai appris qu'un portail change juste le x et le z…"></textarea>
         <label for="idees-62"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-62" data-cle="idees-62" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 63 · sous-marins, îles, soldat réaliste <span class="petit">· 7 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les îles (<code>logique/terrain.js</code>), les sous-marins et la torpille (<code>logique/sousmarins.js</code>, <code>logique/obus.js</code>), le soldat avec son squelette et la nage (<code>affichage/engins3d.js</code>, <code>logique/soldat.js</code>), l'interpolation et la caméra qui évite les murs (<code>logique/monde.js</code>, <code>affichage/scene.js</code>).</p>
+        <p class="petit">✍️ Maxance a dit : des sous-marins, des îles, un personnage plus réaliste, et réparer ses petits bugs sans poser de questions.</p>
+        <label for="appris-63"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-63" data-cle="appris-63" placeholder="Ex. : J'ai appris que le soldat a un squelette…"></textarea>
+        <label for="idees-63"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-63" data-cle="idees-63" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

@@ -11,6 +11,9 @@
 // MISSILES en vol, et une caméra pour chaque façon de jouer : derrière ton épaule à pied, derrière l'engin en l'air.
 // Étape 62 : les BATEAUX (ils se balancent sur les vagues : un petit roulis et un petit tangage qui suivent des
 // « sinus »), les PORTAILS (le tourbillon tourne), et la caméra qui SAUTE d'un coup quand tu passes un portail.
+// Étape 63 : chaque objet est dessiné ENTRE sa position d'avant et celle de maintenant (« interpolation ») : le jeu
+// calcule 120 pas par seconde, mais l'écran n'affiche pas toujours ses images pile entre deux pas ; sans ça, ton
+// personnage faisait de tout petits sauts. Et la caméra ne passe plus à travers les murs : elle s'avance devant.
 // Comme tout l'affichage, ce fichier lit le monde et ne le modifie jamais.
 
 window.Tanks = window.Tanks || {};
@@ -21,7 +24,20 @@ Tanks.Scene = (function () {
   const objets = new Map(); // tank du monde → son dessin
   const dessinsSoldats = new Map(), dessinsEngins = new Map(); // (étape 61) soldat → dessin, engin → dessin
   const dessinsPortails = new Map(); // (étape 62)
-  let horloge = 0, dernierSuivi = null;
+  let horloge = 0, dernierSuivi = null, alpha = 1;
+  // La « vue » d'un objet : le même objet, mais avec x, y, z, angle (et tourelle) pris entre l'avant et maintenant.
+  const melange = (a, b) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * alpha;
+  function vue(o) {
+    const a = o.av;
+    if (!a || Math.abs(o.x - a.x) + Math.abs(o.z - a.z) > 20) return o; // (un portail : pas d'entre-deux)
+    const v = Object.create(o);
+    v.x = a.x + (o.x - a.x) * alpha;
+    v.y = a.y + (o.y - a.y) * alpha;
+    v.z = a.z + (o.z - a.z) * alpha;
+    v.angle = melange(a.angle, o.angle);
+    if (o.tourelle !== undefined) v.tourelle = melange(a.tourelle, o.tourelle);
+    return v;
+  }
   const camera = { angle: 0, pret: false, mode: 0 };
   const SOLEIL = new THREE.Vector3(0.5, 0.75, 0.35).normalize();
 
@@ -131,28 +147,17 @@ Tanks.Scene = (function () {
     }
     return o;
   }
-  function placerSoldat(o, s, cam) {
+  function placerSoldat(o, s, cam, dt) {
     // loin de la caméra (plus de 250 m), on ne le dessine pas : il serait plus petit qu'un point
-    const loin = Math.hypot(s.x - cam.position.x, s.z - cam.position.z) > 250;
-    o.g.visible = !s.dansUnEngin && !loin && !(s.mort && s.depuisMort > 20);
+    const d = Math.hypot(s.x - cam.position.x, s.z - cam.position.z);
+    o.g.visible = !s.dansUnEngin && d < 250 && !(s.mort && s.depuisMort > 20);
     if (!o.g.visible) return;
     o.g.position.set(s.x, s.y, s.z);
     o.g.rotation.set(0, -s.angle, 0);
-    if (s.mort) {
-      // il tombe sur le dos (en une demi-seconde), puis il reste allongé
-      o.corps.rotation.z = Math.min(1, s.depuisMort * 2) * (Math.PI / 2);
-      o.corps.position.y = 0.15 * Math.min(1, s.depuisMort * 2);
-      o.flamme.visible = false;
-      return;
-    }
-    o.corps.rotation.z = 0;
-    o.corps.position.y = 0;
-    const balance = Math.sin(s.pas * 2.6) * Math.min(1, Math.abs(s.vitesse) / 2) * 0.6;
-    o.jambes[0].rotation.z = balance;
-    o.jambes[1].rotation.z = -balance;
-    const arme = s.arme === "pistolet" ? "pistolet" : s.arme === "roquettes" || s.roquettesIA ? "roquettes" : "fusil";
-    for (const n in o.canons) o.canons[n].visible = n === arme;
-    o.flamme.visible = s.tir > 0 && arme !== "roquettes";
+    // tourne-t-il sur place ? (alors ses pieds bougent un peu : avant, il glissait sur le sol en pivotant)
+    const tourne = o.angleAvant !== undefined && dt > 0 && Math.abs(Math.atan2(Math.sin(s.angle - o.angleAvant), Math.cos(s.angle - o.angleAvant))) / dt > 0.6;
+    o.angleAvant = s.angle;
+    Tanks.Engins3D.animer(o, s, horloge, tourne, s.joueur || d < C.soldats.detail);
     if (o.parachute) o.parachute.visible = !!s.parachute;
   }
   function engin3d(e) {
@@ -165,10 +170,16 @@ Tanks.Scene = (function () {
     }
     return o;
   }
-  function placerEngin(o, e, dt) {
+  function placerEngin(o, e, dt, original) {
     o.g.position.set(e.x, e.y, e.z);
     o.g.rotation.set(e.roulis || 0, -e.angle, e.tangage || 0, "YXZ");
-    if (e.sorte === "bateau") {
+    if (e.sorte === "sousmarin") {
+      // à la surface, il se balance un peu ; sous l'eau, il est calme (et penche le nez quand il plonge)
+      const p = e.x * 0.1 + e.z * 0.07, surface = Math.max(0, 1 - e.profondeur / 1.5);
+      o.g.rotation.set(Math.sin(horloge * 1.1 + p) * 0.02 * surface, -e.angle, (e.plongeVers || 0) * 0.06, "YXZ");
+      o.g.position.y = e.y + Math.sin(horloge * 1.5 + p) * 0.06 * surface;
+      o.helice.rotation.x += e.vitesse * dt * 2;
+    } else if (e.sorte === "bateau") {
       // il se balance sur les vagues (et il penche en arrière quand il accélère : il « lève le nez »)
       const p = e.x * 0.1 + e.z * 0.07;
       o.g.rotation.set(Math.sin(horloge * 1.3 + p) * 0.035, -e.angle, Math.sin(horloge * 0.9 + p) * 0.025 + Math.min(1, Math.abs(e.vitesse) / 15) * 0.05, "YXZ");
@@ -186,7 +197,7 @@ Tanks.Scene = (function () {
     }
     if (o.brule) { // (un engin remis à neuf : on refait son dessin)
       scene.remove(o.g);
-      dessinsEngins.delete(e);
+      dessinsEngins.delete(original || e);
       return;
     }
     if (e.sorte === "bateau") o.tourelle.rotation.y = -e.tourelle;
@@ -220,7 +231,7 @@ Tanks.Scene = (function () {
     }
     return projectiles3d[i];
   }
-  const TAILLES = { roquette: 1, bombe: 1.6, missile: 1.5, grenade: 0.5 };
+  const TAILLES = { roquette: 1, bombe: 1.6, missile: 1.5, grenade: 0.5, torpille: 1.8 };
   function placerProjectiles(monde) {
     let n = 0;
     for (const p of monde.obus) {
@@ -230,7 +241,7 @@ Tanks.Scene = (function () {
       g.position.set(p.x, p.y, p.z);
       g.rotation.set(0, -Math.atan2(p.vz, p.vx), Math.atan2(p.vy, Math.hypot(p.vx, p.vz)), "YZX");
       g.scale.setScalar(TAILLES[p.sorte] || 1);
-      g.feu.visible = p.sorte === "roquette" || p.sorte === "missile"; // (les bombes tombent sans moteur)
+      g.feu.visible = p.sorte === "roquette" || p.sorte === "missile"; // (les bombes tombent sans moteur ; la torpille fait des bulles)
     }
     for (let i = n; i < projectiles3d.length; i++) projectiles3d[i].visible = false;
   }
@@ -238,12 +249,17 @@ Tanks.Scene = (function () {
   // La caméra suit… ce que tu conduis (ou toi à pied).
   function suivi(monde) {
     const t = monde.toi;
-    if (!t || t.mode === "char") return { x: monde.joueur.x, y: monde.joueur.y, z: monde.joueur.z, angle: monde.joueur.angle + monde.joueur.tourelle, distance: 1, hauteur: 1, devant: 1, regardY: 2.5 };
+    if (!t || t.mode === "char") {
+      const j = vue(monde.joueur);
+      return { x: j.x, y: j.y, z: j.z, angle: j.angle + j.tourelle, distance: 1, hauteur: 1, devant: 1, regardY: 2.5 };
+    }
     if (t.mode === "pied") {
-      const s = t.soldat;
+      const s = vue(t.soldat);
+      if (s.nage) return { x: s.x, y: s.y, z: s.z, angle: s.angle, distance: 0.4, hauteur: 0.35, devant: 0.6, regardY: 1.3, cote: 0.6 };
       return { x: s.x, y: s.y, z: s.z, angle: s.angle, distance: 0.33, hauteur: 0.38, devant: 0.6, regardY: 1.6, cote: 0.9 };
     }
-    const e = t.engin;
+    const e = vue(t.engin);
+    if (e.sorte === "sousmarin") return { x: e.x, y: Math.max(e.y, C.lac.niveau - 1.3), z: e.z, angle: e.angle, distance: 1.5, hauteur: 0.75, devant: 1, regardY: 1.5 };
     if (e.sorte === "jeep") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle * 0.7, distance: 0.75, hauteur: 0.7, devant: 1, regardY: 2 };
     if (e.sorte === "bateau") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle, distance: 1.1, hauteur: 0.8, devant: 1, regardY: 2 };
     if (e.sorte === "avion") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 1.9, hauteur: 0.9, devant: 2, regardY: 2, sansSol: true, tangage: e.tangage };
@@ -251,18 +267,35 @@ Tanks.Scene = (function () {
     return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 1.4, hauteur: 1.1, devant: 1.2, regardY: -1 };
   }
 
-  function dessiner(monde, dt) {
+  // (étape 63) La caméra ne doit pas passer derrière un mur : on regarde le long de la ligne entre toi et elle ; si
+  // elle rentre dans une maison ou un muret, on l'avance jusque devant.
+  // (Et pas non plus dans un tank ou un engin : quand tu sortais de ton tank, la caméra se retrouvait DANS le blindage.)
+  function devantLesMurs(depart, oeil, monde, moi) {
+    const proches = T.boites.filter((b) => Math.abs(b.x - oeil.x) < b.rayon + 20 && Math.abs(b.z - oeil.z) < b.rayon + 20);
+    const vehicules = monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || e.sorte === "helico" || !e.enVol)).filter((c) => c !== moi && c.fiche && Math.hypot(c.x - oeil.x, c.z - oeil.z) < 25);
+    if (!proches.length && !vehicules.length) return oeil;
+    for (let k = 1; k <= 16; k++) {
+      const t = k / 16, x = depart.x + (oeil.x - depart.x) * t, y = depart.y + (oeil.y - depart.y) * t, z = depart.z + (oeil.z - depart.z) * t;
+      const mur = proches.some((b) => y < b.sol + b.h + 0.3 && T.dansBoite(b, x, z, 0.4));
+      const blinde = vehicules.some((c) => Tanks.Obus.dansLeChar(c, x, y - 0.4, z) || Tanks.Obus.dansLeChar(c, x, y + 0.4, z));
+      if (mur || blinde) return depart.clone().lerp(oeil, Math.max(0.08, (k - 1.5) / 16));
+    }
+    return oeil;
+  }
+
+  function dessiner(monde, dt, entreDeuxPas) {
+    alpha = entreDeuxPas === undefined ? 1 : entreDeuxPas;
     // on enlève les dessins des tanks qui n'existent plus (nouvelle bataille)
     const vivants = new Set(monde.chars);
     for (const [c, o] of objets) if (!vivants.has(c)) (scene.remove(o.g), objets.delete(c));
     if (monde.phase === "garage" && objets.size === 1) Tanks.Effets.effacer();
-    for (const c of monde.chars) placer(objetDe(c), c, dt);
+    for (const c of monde.chars) placer(objetDe(c), vue(c), dt);
     // étape 61 : les soldats, les engins, les projectiles (on enlève les dessins de ceux qui n'existent plus)
-    const presents = new Set(monde.soldats.concat(monde.engins, monde.bateaux));
+    const presents = new Set(monde.soldats.concat(monde.engins, monde.bateaux, monde.sousMarins));
     for (const [x, o] of dessinsSoldats) if (!presents.has(x)) (scene.remove(o.g), dessinsSoldats.delete(x));
     for (const [x, o] of dessinsEngins) if (!presents.has(x)) (scene.remove(o.g), dessinsEngins.delete(x));
     horloge += dt;
-    for (const e of monde.engins.concat(monde.bateaux)) placerEngin(engin3d(e), e, dt);
+    for (const e of monde.engins.concat(monde.bateaux, monde.sousMarins)) placerEngin(engin3d(e), vue(e), dt, e);
     // (étape 62) les portails : le tourbillon tourne, l'anneau brille plus fort quand quelqu'un vient de passer
     for (const p of monde.portails) {
       let o = dessinsPortails.get(p);
@@ -280,7 +313,7 @@ Tanks.Scene = (function () {
       o.eclat = Math.max(0, o.eclat - dt);
       o.anneau.material.emissiveIntensity = 1.4 + Math.sin(horloge * 4) * 0.3 + o.eclat * 4;
     }
-    for (const s of monde.soldats) placerSoldat(soldat3d(s), s, cam);
+    for (const s of monde.soldats) placerSoldat(soldat3d(s), vue(s), cam, dt);
     placerProjectiles(monde);
     // la caméra
     const j = monde.joueur, R = C.camera;
@@ -302,7 +335,9 @@ Tanks.Scene = (function () {
       const k = camera.mode === 1 ? 1.8 : 1, cx = Math.cos(camera.angle), cz = Math.sin(camera.angle);
       const cote = v.cote || 0; // (à pied, la caméra est un peu à droite : on voit par-dessus ton épaule)
       oeil = new THREE.Vector3(v.x - cx * R.distance * v.distance * k - cz * cote, v.y + R.hauteur * v.hauteur * k + (v.tangage ? -Math.sin(v.tangage) * 20 : 0), v.z - cz * R.distance * v.distance * k + cx * cote);
-      oeil.y = Math.max(oeil.y, T.hauteur(oeil.x, oeil.z) + (v.distance < 0.5 ? 1 : 2));
+      oeil.y = Math.max(oeil.y, T.hauteur(oeil.x, oeil.z) + (v.distance < 0.5 ? 1 : 2), T.distLac(oeil.x, oeil.z) < 1.1 ? C.lac.niveau + 1 : -1e9); // (jamais sous l'eau)
+      const moi = !monde.toi || monde.toi.mode === "char" ? monde.joueur : monde.toi.engin;
+      oeil = devantLesMurs(new THREE.Vector3(v.x, v.y + 1.6, v.z), oeil, monde, moi);
       cible = new THREE.Vector3(v.x + cx * R.regardDevant * v.devant, v.y + v.regardY + (v.tangage ? Math.sin(v.tangage) * 40 : 0), v.z + cz * R.regardDevant * v.devant);
     }
     cam.position.lerp(oeil, monde.phase === "garage" || camera.saut ? 1 : Math.min(1, dt * 14));
@@ -326,5 +361,5 @@ Tanks.Scene = (function () {
     return { x: (v.x * 0.5 + 0.5) * L, y: (-v.y * 0.5 + 0.5) * H };
   }
 
-  return { initialiser, dessiner, versEcran, changerCamera: () => (camera.mode = (camera.mode + 1) % 2), get infos() { return rendu ? rendu.info.render : {}; }, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
+  return { initialiser, dessiner, versEcran, changerCamera: () => (camera.mode = (camera.mode + 1) % 2), get infos() { return rendu ? rendu.info.render : {}; }, entreDeuxPas: () => alpha, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
 })();

@@ -8,7 +8,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 3,
+  version: 4,
   pasFixe: 1 / 120,
 
   monde: {
@@ -81,6 +81,9 @@ Tanks.CONFIG = {
     vue: 140, // m : un soldat voit et tire jusqu'à 140 m
     pense: 0.25, // s : un soldat de l'ordinateur réfléchit 4 fois par seconde (pas plus : ils sont 24 !)
     ecrase: 3, // m/s : un tank ou un 4x4 ennemi qui roule plus vite écrase un soldat
+    // (étape 63) un soldat qui tombe à l'eau NAGE (lentement, sans tirer), la tête hors de l'eau
+    nage: 1.6, // m/s
+    detail: 45, // m : plus près que ça, on dessine le soldat en détail (genoux, coudes, visage…) ; plus loin, en simple
   },
   // ✍️ Les armes à pied : le pistolet, la mitrailleuse et le lance-roquettes (touches 1, 2, 3).
   // Une balle va tout de suite où on vise (pas de vol) : la chance de toucher baisse avec la distance.
@@ -97,6 +100,7 @@ Tanks.CONFIG = {
     bombe: { vitesse: 0, gravite: 9.8, degatsChar: 2, souffle: 11 },
     missile: { vitesse: 110, gravite: 0, degatsChar: 2, souffle: 7, guide: 1.6 }, // (il tourne vers sa cible : 1,6 rad/s)
     grenade: { vitesse: 0, gravite: 9.8, degatsChar: 0, souffle: 7 },
+    torpille: { vitesse: 26, gravite: 0, degatsChar: 2, souffle: 5, guide: 0.5, vieMax: 14 }, // (étape 63) elle file sous l'eau
   },
   // ✍️ Les engins garés dans ton camp (seulement toi les conduis) : le 4x4 à mitrailleuse, l'hélico qui lâche des
   // bombes, l'avion de chasse, et le drone. Touche E : monter ou descendre.
@@ -112,11 +116,30 @@ Tanks.CONFIG = {
   // ------------------------------------------------------------------ étape 62 : le lac, les bateaux et les portails
   // ✍️ Un LAC à l'est du champ de bataille (une ellipse : un cercle étiré). Ton bateau de guerre est amarré au bord, de
   // ton côté ; 2 patrouilleurs ennemis tournent sur le lac et tirent sur tout ce qui est bleu près de l'eau.
-  lac: { x: 215, z: 0, rayonX: 80, rayonZ: 185, niveau: -1, profondeur: 5 }, // m ; niveau = la hauteur de l'eau
+  lac: { x: 215, z: 0, rayonX: 80, rayonZ: 185, niveau: -1, profondeur: 8, // m ; niveau = la hauteur de l'eau
+    // (étape 63) 3 ÎLES : des collines rondes qui sortent de l'eau (rayon = là où la terre touche l'eau). On n'y va
+    // qu'en bateau… ou par le portail jaune !
+    iles: [
+      { nom: "la grande île", x: 222, z: -15, rayon: 30, hauteur: 5 },
+      { nom: "l'île aux pins", x: 185, z: 95, rayon: 15, hauteur: 3.5 },
+      { nom: "l'île du rocher", x: 178, z: -130, rayon: 16, hauteur: 4 },
+    ],
+  },
   bateaux: {
     joueur: { nom: "Vedette de combat", icone: "🚤", longueur: 9, largeur: 3.2, hauteur: 2.4, vitesseMax: 15, acceleration: 5,
       virage: 0.8, tourelle: 1.3, recharge: 2, vie: 3 }, // (un canon comme celui d'un tank, mais plus petit : 3 coups pour la couler)
     ennemis: { nombre: 2, nom: "Patrouilleur", vitesse: 8, virage: 0.6, tourelle: 0.9, recharge: 4, vie: 3, portee: 260, erreur: 0.02 },
+    margeIles: 6, // m : un bateau ne s'approche pas à moins de 6 m d'une île (le fond remonte)
+  },
+  // (étape 63) Les SOUS-MARINS : ton sous-marin est amarré à côté de ta vedette ; 2 sous-marins ennemis plongent
+  // pendant 20 s, puis remontent à la surface pendant 8 s (pour respirer !). Sous l'eau (à plus de 1,5 m), les obus
+  // et les roquettes ne peuvent pas les toucher : seule une TORPILLE le peut.
+  sousMarins: {
+    joueur: { nom: "Sous-marin", icone: "🐋", longueur: 14, largeur: 2.6, hauteur: 2.8, vitesseMax: 9, acceleration: 2.5,
+      virage: 0.5, plongee: 1.2, profondeurMax: 4.5, recharge: 4, vie: 3 }, // plongee en m/s ; Q remonter, D plonger
+    ennemis: { nombre: 2, nom: "Sous-marin ennemi", vitesse: 6, virage: 0.45, recharge: 7, vie: 3, portee: 220,
+      sousLEau: 20, aLaSurface: 8 }, // s
+    sousLEau: 1.5, // m : à partir de cette profondeur, un sous-marin est « sous l'eau » (les obus ne le touchent plus)
   },
   // ✍️ Des PORTAILS par paires : on entre dans l'un, on ressort par l'autre (à l'autre bout de la carte). Tout ce qui
   // roule ou marche peut les prendre (les tanks, les soldats, le 4x4, toi) ; l'hélico et le drone aussi, s'ils volent
@@ -125,6 +148,7 @@ Tanks.CONFIG = {
     paires: [
       { nom: "bleu ↔ orange", couleurs: ["#3b9cff", "#ff9a2e"], a: [-200, 245], b: [-110, 35] }, // ton camp ↔ à l'ouest du village
       { nom: "violet ↔ vert", couleurs: ["#b45cff", "#3dff8a"], a: [60, -255], b: [95, 70] }, // le camp ennemi ↔ entre le village et le lac
+      { nom: "jaune ↔ rose", couleurs: ["#ffe14a", "#ff6fc8"], a: [105, 215], b: [214, -10] }, // (étape 63) près du lac ↔ la grande île
     ],
     rayon: 4, // m : la taille de l'anneau
     entree: 2.6, // m : il faut passer à moins de 2,6 m du centre pour être aspiré

@@ -10,6 +10,8 @@
 // Sur la carte : les soldats (petits points) et les engins de ton camp.
 // Étape 62 : le LAC (en bleu) sur la carte, les BATEAUX, les PORTAILS (des ronds de leur couleur) ; au-dessus des
 // patrouilleurs ennemis, leur nom et leur vie ; dans ta vedette, son viseur, sa vie et son canon.
+// Étape 63 : les ÎLES sur la carte ; les sous-marins ennemis (seulement quand ils sont à la surface : sous l'eau, on ne
+// les voit pas !) ; dans ton sous-marin, sa PROFONDEUR (une jauge qui descend) et la cible de ta torpille.
 // Il lit le monde, il ne le modifie jamais.
 
 window.Tanks = window.Tanks || {};
@@ -49,6 +51,12 @@ Tanks.Tableau = (function () {
     c.beginPath();
     c.ellipse(n / 2 + LAC.x * k, n / 2 + LAC.z * k, LAC.rayonX * k, LAC.rayonZ * k, 0, 0, Math.PI * 2);
     c.fill();
+    c.fillStyle = "#6e7d4c"; // (étape 63) les îles
+    for (const i of LAC.iles) {
+      c.beginPath();
+      c.arc(n / 2 + i.x * k, n / 2 + i.z * k, Math.max(1.5, i.rayon * k), 0, Math.PI * 2);
+      c.fill();
+    }
     for (const paire of C.portails.paires) {
       [paire.a, paire.b].forEach(([x, z], i) => {
         c.strokeStyle = paire.couleurs[i];
@@ -84,7 +92,11 @@ Tanks.Tableau = (function () {
     radio.ecouter("portail", (d) => {
       if (d.quiToi) dire("🌀 Portail " + d.de + " → " + d.vers + " !", "#d8b4ff");
     });
-    radio.ecouter("echoue", () => dire("⚓ Échoué sur la rive ! Recule (↓)", "#ffb37a"));
+    radio.ecouter("echoue", () => dire("⚓ Échoué ! Recule (↓)", "#ffb37a"));
+    radio.ecouter("plongee", (d) => dire(d.toi ? "🐋 Plongée ! Les obus ne te touchent plus" : "🫧 " + d.nom + " plonge…", "#8fd3ff"));
+    radio.ecouter("surface", (d) => dire(d.toi ? "🐋 Surface !" : "⚠️ " + d.nom + " fait surface : tire-lui dessus !", "#ffe27a"));
+    radio.ecouter("torpille", (d) => d.surToi && dire("⚠️ TORPILLE ! Bouge !", "#ff7a6a"));
+    radio.ecouter("nage", (d) => dire(d.nage ? "🏊 Tu nages (pas de tir dans l'eau)" : "🦶 Pied à terre", "#8fd3ff"));
     radio.ecouter("soldat-touche", (d) => {
       if (d.surToi && d.vie > 0) dire("🩹 Tu es touché ! (" + d.vie + "/" + C.soldats.vieJoueur + ")", "#ff7a6a");
     });
@@ -160,9 +172,40 @@ Tanks.Tableau = (function () {
           if (d < dmin) (dmin = d), (proche = nom);
         };
         voir(monde.joueur, "ton tank", C.char.rayon);
-        for (const x of monde.engins) voir(x, (x.sorte === "bateau" ? C.bateaux.joueur.icone : C.engins[x.sorte].icone) + " " + x.nom, x.sorte === "bateau" ? 7 : 2);
+        for (const x of monde.engins) voir(x, x.fiche.icone + " " + x.nom, x.sorte === "bateau" ? 7 : x.sorte === "sousmarin" ? 11 : 2);
         if (proche) texte("E : monter dans " + proche, L / 2, H - 120, 22, "#ffe27a", "center");
       }
+      return;
+    }
+    if (e.sorte === "sousmarin") {
+      const R = C.sousMarins.joueur;
+      if (e.cible) {
+        const v = Tanks.Scene.versEcran(e.cible.x, C.lac.niveau + 1, e.cible.z, L, H);
+        if (v) {
+          ctx.strokeStyle = "#ff4a3d";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(v.x - 18, v.y - 18, 36, 36);
+          texte("🐟 torpille → " + e.cible.nom + " · " + Math.round(Math.hypot(e.cible.x - e.x, e.cible.z - e.z)) + " m", v.x, v.y + 34, 13, "#ff7a6a", "center");
+        }
+      }
+      panneau(12, H - 98, 330, 86);
+      texte(R.icone + " " + R.nom + (Tanks.SousMarins.sousLEau(e) ? " · sous l'eau 🫧" : " · à la surface"), 24, H - 72, 17, "#ffe27a");
+      cases(24, H - 60, R.vie, e.vie);
+      texte("vie", 24 + R.vie * 30 + 4, H - 48, 13, "#ccc");
+      barre(24, H - 36, 200, 1 - e.recharge / R.recharge, e.recharge === 0, e.recharge === 0 ? "🐟 torpille prête" : "recharge…");
+      // la jauge de profondeur (à droite)
+      panneau(L - 80, H - 250, 68, 170);
+      texte("prof.", L - 46, H - 232, 12, "#ccc", "center");
+      ctx.fillStyle = "rgba(60,130,170,.35)";
+      ctx.fillRect(L - 58, H - 222, 24, 120);
+      const k = e.profondeur / R.profondeurMax, kv = (e.voulue || 0) / R.profondeurMax;
+      ctx.fillStyle = "#8fd3ff";
+      ctx.fillRect(L - 58, H - 222, 24, 120 * k);
+      ctx.fillStyle = "#ffe27a";
+      ctx.fillRect(L - 62, H - 222 + 120 * kv - 1, 32, 2);
+      texte(e.profondeur.toFixed(1).replace(".", ",") + " m", L - 46, H - 88, 14, "#fff", "center");
+      ctx.fillStyle = "#ff7a6a";
+      ctx.fillRect(L - 62, H - 222 + 120 * (C.sousMarins.sousLEau / R.profondeurMax), 32, 1);
       return;
     }
     if (e.sorte === "bateau") {
@@ -279,14 +322,14 @@ Tanks.Tableau = (function () {
       }
     }
     // (étape 62) Au-dessus des patrouilleurs ennemis : leur nom et leur vie.
-    for (const b of monde.bateaux) {
+    for (const b of monde.bateaux.concat(monde.sousMarins.filter((m) => !Tanks.SousMarins.sousLEau(m)))) {
       const e = Tanks.Scene.versEcran(b.x, b.y + 6, b.z, L, H), d = Math.hypot(b.x - ici.x, b.z - ici.z);
       if (!e || e.x < -40 || e.x > L + 40 || d > 450) continue;
       if (b.detruit) {
         if (d < 200) texte("✖", e.x, e.y, 14, "#999", "center");
         continue;
       }
-      texte("⚓ " + b.nom + (d > 120 ? " · " + Math.round(d) + " m" : ""), e.x, e.y - 8, 13, E.rouges.marque, "center");
+      texte((b.genre === "sousmarin" ? "🐋 " : "⚓ ") + b.nom + (d > 120 ? " · " + Math.round(d) + " m" : ""), e.x, e.y - 8, 13, E.rouges.marque, "center");
       for (let k = 0; k < b.fiche.vie; k++) {
         ctx.fillStyle = k < b.vie ? E.rouges.marque : "rgba(0,0,0,.45)";
         ctx.fillRect(e.x - 16 + k * 11, e.y - 2, 9, 4);
@@ -356,7 +399,7 @@ Tanks.Tableau = (function () {
       ctx.fillStyle = o.equipe === "bleus" ? "#9cc4ff" : "#ff9a8a";
       ctx.fillRect(x0 + tc / 2 + o.x * k - 1, y0 + tc / 2 + o.z * k - 1, 2, 2);
     }
-    for (const b of monde.bateaux) { // (étape 62) les patrouilleurs : un petit losange rouge
+    for (const b of monde.bateaux.concat(monde.sousMarins.filter((m) => !Tanks.SousMarins.sousLEau(m)))) { // (étape 62) les patrouilleurs (et les sous-marins à la surface) : un petit losange rouge
       ctx.fillStyle = b.detruit ? "#555" : E.rouges.marque;
       ctx.beginPath();
       const bx = x0 + tc / 2 + b.x * k, bz = y0 + tc / 2 + b.z * k;
@@ -400,7 +443,7 @@ Tanks.Tableau = (function () {
     if (monde.phase === "victoire" || monde.phase === "defaite") {
       const gagne = monde.phase === "victoire";
       panneau(L / 2 - 240, H / 2 - 90, 480, 170);
-      const perdu = t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : "💥 Ton tank est détruit…";
+      const perdu = t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : t.mode === "sousmarin" ? "🌊 Ton sous-marin est coulé…" : "💥 Ton tank est détruit…";
       texte(gagne ? "🏆 VICTOIRE !" : perdu, L / 2, H / 2 - 40, 38, gagne ? "#7dffa0" : "#ff7a6a", "center");
       texte(gagne ? "Tous les tanks rouges sont détruits" : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
       const S = Tanks.Sauvegarde.donnees;
@@ -409,12 +452,13 @@ Tanks.Tableau = (function () {
     } else {
       const aide = {
         char: "↑ ↓ ← → rouler · Q / D tourelle · Espace tirer · E sortir · C caméra · R recommencer",
-        pied: "↑ ↓ marcher · ← → tourner · Espace tirer · 1 2 3 armes · E monter",
+        pied: t.soldat && t.soldat.nage ? "↑ ↓ nager · ← → tourner · (pas de tir dans l'eau)" : "↑ ↓ marcher · ← → tourner · Espace tirer · 1 2 3 armes · E monter",
         jeep: "↑ ↓ ← → rouler · Q / D mitrailleuse · Espace tirer · E descendre (arrêté)",
         helico: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · Espace bombe · E descendre (posé)",
         drone: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · Espace grenade · E descendre (posé)",
         avion: "↑ piquer · ↓ cabrer · ← → virer · Espace missile · E s'éjecter",
         bateau: "↑ ↓ ← → naviguer · Q / D canon · Espace tirer · E descendre (près de la rive)",
+        sousmarin: "↑ ↓ ← → naviguer · D plonger · Q remonter · Espace torpille · E descendre (à la surface, près d'une rive)",
       }[t.mode];
       texte(aide, L / 2, H - 14, 13, "rgba(255,255,255,.85)", "center");
     }

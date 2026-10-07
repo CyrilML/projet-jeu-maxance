@@ -8,7 +8,10 @@
 //     regarde si on rentre dans une maison ou dans une colline (c'est la « ligne de vue »).
 // Étape 62 : le LAC. C'est une ellipse (un cercle étiré) : pour savoir si un point (x, z) est dans l'eau, on calcule
 // « dl » = √((dx ÷ rayonX)² + (dz ÷ rayonZ)²). Si dl < 1, on est dans l'eau. Au bord (dl = 1), le sol est juste à la
-// hauteur de l'eau ; plus on va vers le milieu, plus il est creux. Ce qui roule ou marche est repoussé hors de l'eau.
+// hauteur de l'eau ; plus on va vers le milieu, plus il est creux. Ce qui roule est repoussé hors de l'eau (sur la rive,
+// ou sur l'île la plus proche) ; un soldat, lui, NAGE (étape 63).
+// Étape 63 : les ÎLES sont des petites collines rondes posées dans le lac : à moins de « rayon » de leur centre, le sol
+// sort de l'eau. Un point est donc « dans l'eau » s'il est dans l'ellipse du lac ET sur aucune île.
 // Ce fichier ne dessine rien.
 
 window.Tanks = window.Tanks || {};
@@ -21,7 +24,13 @@ Tanks.Terrain = (function () {
   const demi = W.taille / 2, V = W.village, LAC = C.lac;
   // (étape 62) « dl » : 0 au milieu du lac, 1 sur la rive, plus de 1 en dehors
   const distLac = (x, z) => Math.hypot((x - LAC.x) / LAC.rayonX, (z - LAC.z) / LAC.rayonZ);
-  const dansLEau = (x, z, marge) => distLac(x, z) < 1 + (marge || 0) / Math.min(LAC.rayonX, LAC.rayonZ);
+  const ILES = LAC.iles || [];
+  // l'île sur laquelle (ou tout près de laquelle) on est, ou null
+  const ileProche = (x, z, plus) => ILES.find((i) => Math.hypot(x - i.x, z - i.z) < i.rayon + (plus || 0)) || null;
+  const dansLEau = (x, z, marge) => {
+    const m = marge || 0;
+    return distLac(x, z) < 1 + m / Math.min(LAC.rayonX, LAC.rayonZ) && !ILES.some((i) => Math.hypot(x - i.x, z - i.z) < i.rayon - m);
+  };
   // (et les portails : on ne met ni arbre ni maison tout près)
   const PORTAILS = C.portails.paires.flatMap((p) => [p.a, p.b]);
   const presDUnPortail = (x, z, d) => PORTAILS.some(([px, pz]) => Math.hypot(px - x, pz - z) < d);
@@ -41,6 +50,11 @@ Tanks.Terrain = (function () {
       const creux = Math.max(LAC.niveau - LAC.profondeur, LAC.niveau + (dl - 1) * 12);
       const melange = Math.min(1, (1.35 - dl) / 0.35);
       h = h + (creux - h) * melange;
+      // les îles : une colline ronde, juste à la hauteur de l'eau sur son bord, et un plateau au milieu
+      for (const i of ILES) {
+        const di = Math.hypot(x - i.x, z - i.z) / i.rayon;
+        if (di < 1.5) h = Math.max(h, LAC.niveau + Math.min(i.hauteur, (1 - di) * i.hauteur * 4));
+      }
     }
     return h;
   }
@@ -101,6 +115,17 @@ Tanks.Terrain = (function () {
     arbres.push({ x, z, r: 0.6, taille: 0.8 + hasard() * 0.6, ecrase: false, sorte: hasard() < 0.35 ? "sapin" : "feuillu", angleChute: 0 });
   }
 
+  // (étape 63) Sur les îles : des arbres (surtout des pins), et une vieille tour en ruines sur la grande île.
+  for (const ile of ILES) {
+    const n = Math.round(ile.rayon * 0.6);
+    for (let k = 0; k < n; k++) {
+      const a = hasard() * Math.PI * 2, r = Math.sqrt(hasard()) * ile.rayon * 0.75, x = ile.x + Math.cos(a) * r, z = ile.z + Math.sin(a) * r;
+      if (presDUnPortail(x, z, 9)) continue;
+      arbres.push({ x, z, r: 0.6, taille: 0.8 + hasard() * 0.5, ecrase: false, sorte: hasard() < 0.7 ? "sapin" : "feuillu", angleChute: 0 });
+    }
+  }
+  if (ILES[0]) boites.push({ x: ILES[0].x + 10, z: ILES[0].z + 12, demiL: 3.5, demiP: 3.5, angle: 0.4, h: 9, sorte: "maison", graine: 6301 });
+
   // Un point (x, z) dans une boîte ? (on le ramène dans le repère de la boîte : le long, et en travers)
   function dansBoite(b, x, z, marge) {
     const c = Math.cos(b.angle), s = Math.sin(b.angle), dx = x - b.x, dz = z - b.z;
@@ -131,11 +156,20 @@ Tanks.Terrain = (function () {
       o.z += (nu * s + nv * c) * pousse;
       touche = b;
     }
-    // (étape 62) l'eau : on ramène le point sur la rive (en agrandissant son écart au centre du lac)
-    if (!o.flotte && dansLEau(o.x, o.z, r)) {
-      const voulu = 1 + r / Math.min(LAC.rayonX, LAC.rayonZ), dl = distLac(o.x, o.z) || 0.01;
-      o.x = LAC.x + (o.x - LAC.x) * (voulu / dl);
-      o.z = LAC.z + (o.z - LAC.z) * (voulu / dl);
+    // (étape 62) l'eau : on ramène le point sur la rive (en agrandissant son écart au centre du lac)…
+    // (étape 63) …ou sur l'île d'où il vient, s'il est tout près d'une île (sinon un tank qui roule au bord d'une île
+    // se retrouvait d'un coup sur la rive du lac : un bug !). Un soldat, lui, n'est pas repoussé : il nage.
+    if (!o.flotte && o.genre !== "soldat" && dansLEau(o.x, o.z, r)) {
+      const ile = ileProche(o.x, o.z, r + 25);
+      if (ile) {
+        const d = Math.hypot(o.x - ile.x, o.z - ile.z) || 0.01, voulu = Math.max(0.5, ile.rayon - r - 0.01);
+        o.x = ile.x + (o.x - ile.x) * (voulu / d);
+        o.z = ile.z + (o.z - ile.z) * (voulu / d);
+      } else {
+        const voulu = 1 + r / Math.min(LAC.rayonX, LAC.rayonZ), dl = distLac(o.x, o.z) || 0.01;
+        o.x = LAC.x + (o.x - LAC.x) * (voulu / dl);
+        o.z = LAC.z + (o.z - LAC.z) * (voulu / dl);
+      }
       touche = touche || LAC_BOITE;
     }
     return touche;
@@ -166,5 +200,5 @@ Tanks.Terrain = (function () {
     return liste;
   }
 
-  return { hauteur, normale, boites, arbres, dansBoite, repousser, vueLibre, departs, demi, distLac, dansLEau };
+  return { hauteur, normale, boites, arbres, dansBoite, repousser, vueLibre, departs, demi, distLac, dansLEau, ileProche, iles: ILES };
 })();

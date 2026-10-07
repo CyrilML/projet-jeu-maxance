@@ -28,6 +28,7 @@ Tanks.IA = (function () {
     for (const o of tous) {
       if (o.equipe === c.equipe || o.detruit) continue;
       const d = Math.hypot(o.x - c.x, o.z - c.z);
+      if ((o.genre === "bateau" || o.genre === "sousmarin") && d > 150) continue; // (étape 63 : un bateau, seulement s'il est tout près)
       const voit = T.vueLibre(c.x, c.y + 2.4, c.z, o.x, o.y + 1.5, o.z);
       const s = d * (voit ? 1 : 1.8);
       if (s < score) (score = s), (meilleur = o);
@@ -97,7 +98,7 @@ Tanks.IA = (function () {
     for (const o of tous) if (o !== c && o.genre !== "bateau") repousse(o.x, o.z, 14, 40);
     // (étape 62) le lac aussi repousse : un tank ne sait pas nager ! (il s'arrête sur la rive et tire sur les bateaux)
     const dl = T.distLac(c.x, c.z);
-    if (dl < 1.3) {
+    if (dl < 1.3 && !T.ileProche(c.x, c.z, 4)) { // (sur une île, arrivé par le portail rose, on ne le repousse pas)
       const ex = (c.x - C.lac.x) / C.lac.rayonX, ez = (c.z - C.lac.z) / C.lac.rayonZ, e = Math.hypot(ex, ez) || 1;
       rx += (ex / e) * 80 * (1.3 - dl) / 0.3;
       rz += (ez / e) * 80 * (1.3 - dl) / 0.3;
