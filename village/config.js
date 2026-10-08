@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 33,
+  version: 34,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -668,6 +668,68 @@ Village.CONFIG = {
         { texte: "Pose la tour et le dôme doré", monument: 3, pourquoi: "Du tissu pour les bannières, des bijoux pour l'or du dôme." },
         { texte: "Fais la grande fête d'inauguration", monument: 4, pourquoi: "Du pain, du fromage, du jambon et des habits neufs pour tout le monde !" },
       ],
+    ],
+  },
+
+  // Étape 33 : 📖 l'ENCYCLOPÉDIE : ce que fait chaque bâtiment, en une phrase (le reste est calculé : sa recette, son prix,
+  // ce dont il a besoin). ✍️ « À chaque évolution, on explique quel bâtiment fait quoi et quel besoin il a. »
+  descriptions: {
+    entrepot: "Le cœur du village : tout ce qui est produit y est rangé, les porteurs en partent, les habitants y mangent.",
+    bucheron: "Le bûcheron coupe les arbres autour de lui et rapporte des troncs.",
+    forestier: "Le forestier replante des arbres, pour que la forêt ne disparaisse pas.",
+    scierie: "La scierie découpe les troncs en planches, le matériau de presque tous les bâtiments.",
+    carriere: "Le carrier taille les rochers autour de lui et rapporte des pierres.",
+    pecheur: "Le pêcheur pêche dans l'eau toute proche (même en hiver, dans un trou de la glace).",
+    chasseur: "Le chasseur chasse le gibier des environs et rapporte de la viande.",
+    geologue: "Le géologue explore le sol rocheux : il découvre les filons cachés (des paillettes) et parfois des rochers.",
+    universite: "Les savants y font des recherches qui rendent tout le village plus efficace.",
+    mineCharbon: "La mine creuse un puits dans un filon de charbon découvert.",
+    hutte: "Une petite maison de paille : 3 lits pour des paysans.",
+    maison: "Une vraie maison : 6 lits, et du confort pour les artisans.",
+    manoir: "La maison bourgeoise : 10 lits pour les bourgeois, qui paient de gros impôts.",
+    mineFer: "La mine creuse un puits dans un filon de fer découvert.",
+    fonderie: "La fonderie fond le minerai de fer avec du charbon : elle fait des lingots.",
+    forge: "Le forgeron transforme les lingots et les planches en outils.",
+    marche: "Le marchand vend ce que tu as en trop, et achète ce qui te manque, contre des pièces.",
+    ferme: "Le fermier cultive le blé dans ses champs (pas en hiver).",
+    moulin: "Le meunier écrase le blé en farine.",
+    boulangerie: "Le boulanger cuit le pain avec la farine et du bois.",
+    mineOr: "La mine creuse un puits dans un filon d'or découvert.",
+    orfevre: "L'orfèvre fait des bijoux avec l'or et le charbon : ils valent très cher.",
+    macon: "Le maçon-couvreur fait sa tournée et répare les bâtiments usés, avec des outils.",
+    puits: "Le puits donne de l'eau pour les animaux.",
+    faneur: "Le faneur fait sécher l'herbe en bottes de foin, à faire avant l'hiver.",
+    etable: "Les vaches boivent, mangent du foin, et donnent du lait.",
+    laiterie: "Le laitier baratte le lait en beurre.",
+    veterinaire: "Le vétérinaire fait sa tournée et soigne les troupeaux malades.",
+    fromagerie: "Le fromager affine le lait en fromages.",
+    cremerie: "Le crémier prépare des yaourts avec le lait.",
+    poulailler: "Les poules pondent des œufs.",
+    bergerie: "On tond la laine des moutons.",
+    porcherie: "Les cochons donnent de la viande.",
+    tisserand: "Le tisserand tisse la laine en tissu.",
+    tailleur: "Le tailleur coud le tissu en vêtements.",
+    charcuterie: "Le charcutier fume la viande avec du charbon : des jambons.",
+    depot: "Un 2e point de départ pour les porteurs, loin de l'entrepôt : les livraisons vont plus vite.",
+    monument: "Le grand chantier de la ville, en 4 paliers : la fierté de tous les habitants.",
+  },
+
+  // Étape 33 : 👥 la POPULATION et ses BESOINS, façon SimCity. Chaque besoin est noté de 0 à 100 % ; la PROSPÉRITÉ est la
+  // moyenne. ✍️ « Plus la ville prospère, plus les habitants se portent bien, plus la ville grandit » : les arrivées de
+  // nouveaux habitants vont × (0,5 + prospérité) : 0,5 fois plus vite dans une ville en crise, 1,5 fois dans une ville
+  // florissante. Les besoins des époques à venir (électricité, eau courante…) sont déjà montrés, avec un cadenas.
+  population: {
+    releve: 30, // s entre deux relevés de la population (pour la courbe)
+    releves: 40, // relevés gardés (20 min)
+    niveaux: [[0, "en crise", "📉"], [40, "fragile", "😐"], [60, "stable", "🙂"], [75, "prospère", "📈"], [90, "florissante", "🌟"]],
+    aVenir: [
+      { emoji: "⚡", nom: "Électricité", quand: "époque industrielle" },
+      { emoji: "🚰", nom: "Eau courante", quand: "époque industrielle" },
+      { emoji: "🚽", nom: "Égouts", quand: "époque industrielle" },
+      { emoji: "🚓", nom: "Sécurité (police)", quand: "époque moderne" },
+      { emoji: "🚒", nom: "Protection contre le feu (pompiers)", quand: "époque moderne" },
+      { emoji: "🏥", nom: "Santé (hôpital)", quand: "époque moderne" },
+      { emoji: "🎓", nom: "Éducation (école)", quand: "époque moderne" },
     ],
   },
 

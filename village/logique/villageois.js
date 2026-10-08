@@ -10,6 +10,7 @@
 // villageois, la cabane reste vide !
 // Étape 19 : ✍️ un villageois ne vient que s'il y a du travail pour lui (ou s'il y a moins de 2 villageois qui attendent).
 // Étape 15 : le BONHEUR compte aussi : un village triste n'attire personne, un village ravi attire 2 fois plus.
+// Étape 33 : et la PROSPÉRITÉ (logique/population.js) : × 0,5 dans une ville en crise, jusqu'à × 1,5 si elle est florissante.
 //
 // Chaque villageois est une petite MACHINE À ÉTATS :
 //   arrive ──► se promène ⇄ se repose ──[on a besoin de lui]──► va au travail ──► devient ouvrier (ou porteur)
@@ -77,7 +78,7 @@ Village.Villageois = (function () {
   function etape(monde, dt) {
     const B = Village.Batiments, Lg = Village.Logement;
     // 1. Un nouveau villageois arrive (un lit libre, et de quoi manger)
-    minuteurArrivee += dt * Village.Bonheur.arrivee(monde); // étape 15 : 😢 personne n'arrive · 😊 × 1,5 · 😄 × 2
+    minuteurArrivee += dt * Village.Bonheur.arrivee(monde) * Village.Population.facteurCroissance(monde); // étape 15 : 😢 personne n'arrive · 😊 × 1,5 · 😄 × 2 ; étape 33 : × (0,5 + prospérité)
     if (minuteurArrivee >= V.arrivee) {
       minuteurArrivee = 0;
       // Étape 19 : ✍️ et seulement s'il y a du TRAVAIL (une cabane vide, une place de porteur), ou peu de villageois qui attendent

@@ -51,6 +51,9 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("monument-palier", (d) => gagner(d.emoji + " " + d.nom + " : construit !", [["pieces", d.pieces], ["gemmes", d.gemmes]])); // étape 31
   Village.Evenements.ecouter("monument-rien", () => afficher("🏛️ Il n'y a rien de libre de ce que demande le monument"));
   Village.Evenements.ecouter("partie-remise-a-zero", () => setTimeout(() => afficher("🆕 Nouvelle partie : une carte immense de 256 × 256 cases !"), 800)); // étape 32
+  // Étape 33 : ✍️ « à chaque évolution, on explique quel bâtiment fait quoi » : l'encyclopédie s'ouvre sur les nouveautés
+  Village.Evenements.ecouter("nouvel-age", (d) => { const a = C.ages[d.numero]; if (a && a.debloque.length) { encyFiltre = { titre: "🎉 " + d.emoji + " " + d.nom + " : voici tes nouveaux bâtiments", types: a.debloque.slice() }; encyChoix = a.debloque[0]; panneau = "encyclopedie"; } });
+  Village.Evenements.ecouter("prosperite-change", (d) => afficher("👥 La ville est " + d.niveau + " " + d.emoji + " (prospérité " + d.prosperite + " %)"));
   Village.Evenements.ecouter("pub-regardee", (d) => { if (d.sorte === "ressource") gagner("📺 Merci !", [[d.quoi, d.quantite]]); else if (d.sorte === "gemmes") gagner("📺 Merci !", [["gemmes", d.quantite]]); });
   Village.Evenements.ecouter("nouvel-age", (d) => gagner(d.emoji + " " + d.nom + " !", [["gemmes", d.gemmes]]));
   Village.Evenements.ecouter("logement-evolue", (d) => afficher("⬆️ " + d.avant + " n° " + d.numero + " devient « " + d.apres + " » : des " + d.emoji + " " + d.classe.toLowerCase() + " s'installent !")); // étape 18
@@ -209,7 +212,7 @@ Village.Interface = (function () {
   function basculerObjectifs() { objectifsOuverts = !objectifsOuverts; }
   function info(t) { afficher(t); } // étape 17 : toucher un bouton grisé dit pourquoi
   function basculerPanneau(nom) { panneau = panneau === nom ? null : nom; objectifsOuverts = false; }
-  function fermerPanneau() { panneau = null; }
+  function fermerPanneau() { panneau = null; encyFiltre = null; }
 
   // 🎒 Étape 25 : ✍️ « une touche inventaire où il s'ouvre en pleine page, et quand on clique sur une icône, ça nous
   // dit ce que c'est ». Les ressources sont rangées par familles (config.js : « inventaire »). Toucher une case la
@@ -285,6 +288,120 @@ Village.Interface = (function () {
       if (!ok) zone(x + l - lb - 14, ry + 12, lb, hl - 30, "info", "📦 Il manque encore " + (c.nombre - a) + " " + C.ressources[c.quoi].nom);
     });
     texte(ctx, "📦 " + monde.commandes.livrees + " commande(s) livrée(s) depuis le début", x + 14, y + h - 16, petit ? 10 : 11, "#7a5a30");
+  }
+
+  // 👥 Étape 33 : la population et ses besoins (façon SimCity)
+  function panneauPopulation(ctx, monde, W, He, petit) {
+    const Po = Village.Population, x = 10, y = 10, l = W - 20, h = He - 20;
+    bulle(ctx, x, y, l, h, "rgba(250, 249, 246, .985)");
+    zone(x, y, l, h, "rien");
+    croix(ctx, x, y, l, "fermerPanneau");
+    const hab = Village.Logement.habitants(monde), r = monde.recensement || { releves: [], prosperite: Po.prosperite(monde) }, p = r.prosperite, nv = Po.niveau(p);
+    texte(ctx, "👥 " + hab + " habitants · ville " + nv[1] + " " + nv[2], x + 14, y + 22, petit ? 15 : 18, "#2a2a28", true);
+    // La jauge de prospérité
+    const jx = x + 14, jl = Math.min(l - 28, 520), jy = y + 40;
+    ctx.fillStyle = "#e4e2dc"; ctx.fillRect(jx, jy, jl, 10);
+    ctx.fillStyle = p >= 75 ? "#3d8a4a" : p < 40 ? "#b8443a" : "#c99a2e"; ctx.fillRect(jx, jy, (jl * p) / 100, 10);
+    texte(ctx, "Prospérité : " + p + " %  ·  les nouveaux habitants arrivent × " + String(Math.round(Po.facteurCroissance(monde) * 100) / 100).replace(".", ","), jx, jy + 22, petit ? 10 : 12, "#4a4a46", true);
+    const fr = Po.frein(monde);
+    texte(ctx, fr ? "⛔ Personne n'arrive : " + fr : "✅ De nouveaux habitants peuvent arriver (s'il y a du travail pour eux)", jx, jy + 40, petit ? 10 : 11, fr ? "#b8443a" : "#3d8a4a", true);
+    // La courbe de la population (20 dernières minutes)
+    let yy = jy + 54;
+    const cl = l < 600 ? l - 28 : Math.min(l - 28, 360), ch = petit ? 46 : 56, rel = r.releves.concat([hab]);
+    ctx.strokeStyle = "rgba(60, 58, 54, .25)"; ctx.lineWidth = 1; ctx.strokeRect(jx, yy, cl, ch);
+    if (rel.length > 1) {
+      const mx = Math.max(...rel, 1), mn = Math.min(...rel);
+      ctx.strokeStyle = "#3f6fc4"; ctx.lineWidth = 2; ctx.beginPath();
+      rel.forEach((v, k) => { const px = jx + (cl * k) / (rel.length - 1), py = yy + ch - 4 - ((v - mn) / Math.max(1, mx - mn)) * (ch - 8); k ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+      ctx.stroke();
+    }
+    const etroit = l < 600; // sur un téléphone : la légende et le bouton passent sous la courbe
+    texte(ctx, "📈 Population (les " + Math.round((rel.length - 1) * C.population.releve / 60) + " dernières minutes)", etroit ? jx : jx + cl + 10, etroit ? yy + ch + 10 : yy + 10, petit ? 9 : 10, "#6a6a64", false);
+    bouton(ctx, etroit ? jx + l - 28 - 130 : jx + cl + 10, etroit ? yy + ch + 2 : yy + 22, etroit ? 130 : 150, etroit ? 22 : 28, "😊 Détail du bonheur", "panneau", "bonheur", true, "#7a6a4a");
+    yy += ch + (etroit ? 34 : 14);
+    // Les besoins
+    texte(ctx, "🏘️ Les besoins des habitants", jx, yy, petit ? 12 : 14, "#2a2a28", true);
+    yy += 14;
+    const liste = Po.besoins(monde), hl = petit ? 30 : 32, bl = Math.min(220, l * 0.3);
+    for (const b of liste) {
+      texte(ctx, b.emoji + " " + b.nom, jx, yy + 9, petit ? 11 : 12, "#2a2a28", true);
+      const bx = jx + (petit ? 96 : 130);
+      ctx.fillStyle = "#e4e2dc"; ctx.fillRect(bx, yy + 4, bl, 8);
+      ctx.fillStyle = b.valeur >= 0.75 ? "#3d8a4a" : b.valeur < 0.4 ? "#b8443a" : "#c99a2e"; ctx.fillRect(bx, yy + 4, bl * b.valeur, 8);
+      texte(ctx, b.texte, bx + bl + 8, yy + 8, petit ? 9 : 11, "#4a4a46", false);
+      if (b.conseil) texte(ctx, "💡 " + b.conseil, bx, yy + 21, petit ? 9 : 10, "#8a6a2a", false);
+      yy += hl;
+    }
+    // Les besoins des époques à venir
+    yy += 4;
+    if (yy < y + h - 20) texteLong(ctx, "🔒 Bientôt : " + C.population.aVenir.map((a) => a.emoji + " " + a.nom + " (" + a.quand + ")").join(" · "), jx, yy, l - 28, petit ? 9 : 10, "#8a8a84", petit ? 12 : 14);
+  }
+
+  // 📖 Étape 33 : l'encyclopédie. Chaque bâtiment : ce qu'il fait, et ce dont il a besoin. Elle s'ouvre toute seule au
+  // passage à un nouvel âge, sur les nouveaux bâtiments.
+  let encyChoix = null, encyFiltre = null;
+  const GROUPES_ENCY = [
+    ["🏠 Le cœur et les maisons", ["entrepot", "depot", "hutte", "maison", "manoir", "macon"]],
+    ["🪵 Le bois et la pierre", ["bucheron", "forestier", "scierie", "carriere"]],
+    ["⛏️ Les mines", ["geologue", "mineCharbon", "mineFer", "mineOr"]],
+    ["🍖 La nourriture", ["pecheur", "chasseur", "ferme", "moulin", "boulangerie", "laiterie", "fromagerie", "cremerie", "charcuterie"]],
+    ["🐄 L'élevage", ["puits", "faneur", "etable", "poulailler", "bergerie", "porcherie", "veterinaire"]],
+    ["⚒️ Les artisans et la ville", ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite", "monument"]],
+  ];
+  function choisirEncy(t) { encyChoix = t; }
+  function panneauEncyclopedie(ctx, monde, W, He, petit) {
+    const B = Village.Batiments, x = 10, y = 10, l = W - 20, h = He - 20;
+    bulle(ctx, x, y, l, h, "rgba(250, 249, 246, .985)");
+    zone(x, y, l, h, "rien");
+    croix(ctx, x, y, l, "fermerPanneau");
+    texte(ctx, encyFiltre ? encyFiltre.titre : "📖 L'encyclopédie : qui fait quoi ?", x + 14, y + 22, petit ? 13 : 17, "#2a2a28", true);
+    const groupes = encyFiltre ? [["✨ Nouveaux", encyFiltre.types]] : GROUPES_ENCY;
+    if (encyFiltre) bouton(ctx, x + l - (petit ? 150 : 200), y + 34, petit ? 110 : 150, 24, "📖 Tout voir", "encyTout", null, true, "#7a6a4a");
+    // Les cases des bâtiments (en haut), la fiche du bâtiment choisi (en bas)
+    const hFiche = petit ? 210 : 190, yFiche = y + h - hFiche - 8, lc = petit ? 40 : 46, ec = 5;
+    let cy = y + (encyFiltre ? 64 : 42);
+    for (const [nomG, types] of groupes) {
+      if (cy + lc > yFiche - 4) break;
+      texte(ctx, nomG, x + 14, cy + 6, petit ? 10 : 12, "#5a5a54", true);
+      cy += 14;
+      const parRangee = Math.max(1, Math.floor((l - 28 + ec) / (lc + ec)));
+      types.forEach((t, n) => {
+        const cx = x + 14 + (n % parRangee) * (lc + ec), ry = cy + Math.floor(n / parRangee) * (lc + ec), ouvert = Village.Ages.debloque(monde, t) || t === "entrepot" || t === "manoir";
+        ctx.fillStyle = encyChoix === t ? "#ffe9a8" : ouvert ? "#ffffff" : "#e8e6e0"; ctx.strokeStyle = encyChoix === t ? "#c98a2e" : "rgba(60, 58, 54, .3)"; ctx.lineWidth = encyChoix === t ? 2 : 1;
+        ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(cx, ry, lc, lc, 6); else ctx.rect(cx, ry, lc, lc); ctx.fill(); ctx.stroke();
+        texte(ctx, B.TYPES[t].emoji, cx + lc / 2, ry + lc / 2 + 1, lc * 0.5, null, false, "center");
+        if (!ouvert) texte(ctx, "🔒", cx + lc - 8, ry + 8, 9, null, false, "center");
+        zone(cx, ry, lc, lc, "ency", t);
+      });
+      cy += Math.ceil(types.length / parRangee) * (lc + ec) + 4;
+    }
+    // La fiche
+    const t = encyChoix;
+    ctx.fillStyle = "rgba(234, 231, 222, .7)"; ctx.fillRect(x + 8, yFiche, l - 16, hFiche);
+    if (!t) { texte(ctx, "👆 Touche un bâtiment pour savoir ce qu'il fait et ce dont il a besoin.", x + l / 2, yFiche + hFiche / 2, petit ? 11 : 13, "#6a6a64", true, "center"); return; }
+    const T = B.TYPES[t], n = B.tailleVoulue(t), ag = C.ages[Village.Ages.ageDe(t)] || C.ages[0];
+    texte(ctx, T.emoji + " " + T.nom + "  ·  " + n + " × " + n + " case" + (n > 1 ? "s" : "") + (Village.Ages.debloque(monde, t) || t === "entrepot" ? "" : "  ·  🔒 " + ag.emoji + " " + ag.nom), x + 18, yFiche + 16, petit ? 12 : 14, "#2a2a28", true);
+    let yy = yFiche + 34;
+    const lt = l - 40, pas = petit ? 14 : 16;
+    yy += texteLong(ctx, C.descriptions[t] || "", x + 18, yy, lt, petit ? 11 : 12, "#3a3a36", pas) * pas + 2;
+    // Ce qu'il fait
+    const R = C.ateliers[t], sortie = B.SORTIES[t];
+    if (R) { texte(ctx, "⚙️ Ce qu'il fait :", x + 18, yy + 4, petit ? 10 : 11, "#2a2a28", true); const e = Object.keys(R.entrees).length ? R.entrees : null; if (e) dessinerCout(ctx, e, x + 170, yy + 4, 15, "#3a3a36"); texte(ctx, e ? "→" : "rien →", x + (e ? 230 : 210), yy + 4, 12, "#3a3a36", true, "center"); dessinerCout(ctx, R.sorties, x + 280, yy + 4, 15, "#3a3a36"); yy += pas + 4; }
+    else if (sortie) { texte(ctx, "⚙️ Il rapporte :", x + 18, yy + 4, petit ? 10 : 11, "#2a2a28", true); dessinerCout(ctx, { [sortie]: 1 }, x + 170, yy + 4, 15, "#3a3a36"); yy += pas + 4; }
+    else if (C.logement[t]) { texte(ctx, "🛏️ " + C.logement[t] + " lits", x + 18, yy + 4, petit ? 10 : 11, "#2a2a28", true); yy += pas + 2; }
+    // Ce dont il a besoin
+    const besoins = [];
+    const prix = (C.batiments[t] || {}).cout;
+    if (prix) { texte(ctx, "🏗️ Pour le construire :", x + 18, yy + 4, petit ? 10 : 11, "#2a2a28", true); dessinerCout(ctx, prix, x + 230, yy + 4, 15, "#3a3a36"); yy += pas + 4; }
+    if (T.metier) besoins.push("👷 un " + T.metier + " (un habitant, donc un lit libre)");
+    if (t !== "entrepot") besoins.push("🛣️ une route jusqu'à un entrepôt");
+    if (t === "pecheur") besoins.push("🌊 de l'eau à " + C.bordDeLEau + " cases au plus");
+    if (C.mines[t]) besoins.push("💎 un filon de " + C.mines[t].filon + " découvert (des paillettes), sous la mine ou à " + C.rayonPoseMine + " cases");
+    if (R && R.pasEnHiver) besoins.push("❄️ " + R.raisonHiver);
+    if (C.elevage.troupeaux[t]) besoins.push("🩺 un vétérinaire près de lui (les animaux peuvent tomber malades)");
+    if ((monde.age || 0) >= C.bourg.ageDesRegles && t !== "entrepot") besoins.push("🔧 un maçon-couvreur (au bourg, les bâtiments s'usent)");
+    texte(ctx, "📋 Ce dont il a besoin :", x + 18, yy + 4, petit ? 10 : 11, "#2a2a28", true); yy += pas;
+    for (const b of besoins) { if (yy > yFiche + hFiche - 6) break; yy += texteLong(ctx, "• " + b, x + 26, yy + 4, lt - 10, petit ? 10 : 11, "#3a3a36", pas) * pas; }
   }
 
   let choixInventaire = null;
@@ -752,12 +869,14 @@ Village.Interface = (function () {
     }
     // Étape 15 : 😊 le bonheur des habitants (la jauge se remplit dans le bouton)
     const yb15 = Village.Marche.leMarche(monde) ? 240 : 194, v15 = monde.bonheur.valeur || 0;
-    bulle(ctx, W - tp - 10, yb15, tp, tp, panneau === "bonheur" ? "rgba(255, 226, 122, .98)" : null);
-    ctx.fillStyle = v15 >= C.bonheur.content ? "rgba(46, 138, 58, .35)" : v15 < C.bonheur.triste ? "rgba(192, 57, 43, .35)" : "rgba(242, 194, 48, .4)";
-    ctx.fillRect(W - tp - 6, yb15 + tp - 4 - (tp - 8) * v15 / 100, tp - 8, (tp - 8) * v15 / 100);
-    texte(ctx, Village.Bonheur.emoji(monde), W - 10 - tp / 2, yb15 + 15, 17, null, false, "center");
-    texte(ctx, Math.round(v15) + "%", W - 10 - tp / 2, yb15 + 32, 10, "#3b2614", true, "center");
-    zone(W - tp - 10, yb15, tp, tp, "panneau", "bonheur");
+    // Étape 33 : ce bouton devient 👥 la POPULATION (avec la jauge de prospérité) ; le bonheur est dedans
+    const pr15 = monde.recensement ? monde.recensement.prosperite : v15;
+    bulle(ctx, W - tp - 10, yb15, tp, tp, panneau === "population" || panneau === "bonheur" ? "rgba(255, 226, 122, .98)" : null);
+    ctx.fillStyle = pr15 >= 75 ? "rgba(46, 138, 58, .35)" : pr15 < 40 ? "rgba(192, 57, 43, .35)" : "rgba(242, 194, 48, .4)";
+    ctx.fillRect(W - tp - 6, yb15 + tp - 4 - (tp - 8) * pr15 / 100, tp - 8, (tp - 8) * pr15 / 100);
+    texte(ctx, "👥", W - 10 - tp / 2, yb15 + 15, 17, null, false, "center");
+    texte(ctx, String(Village.Logement.habitants(monde)), W - 10 - tp / 2, yb15 + 32, 10, "#3b2614", true, "center");
+    zone(W - tp - 10, yb15, tp, tp, "panneau", "population");
     // Étape 29 : 🧭 le conseiller (un point rouge quand il a un conseil urgent)
     const yc = yb15 + 46, urgent = (monde.conseils || []).some((c) => c.urgence >= 3);
     bulle(ctx, W - tp - 10, yc, tp, tp, panneau === "conseiller" ? "rgba(255, 226, 122, .98)" : null);
@@ -770,6 +889,11 @@ Village.Interface = (function () {
     texte(ctx, "📦", W - 10 - tp / 2, yk + tp / 2 + 1, 20, null, false, "center");
     if (monde.commandes.liste.length) { ctx.fillStyle = prets ? "#2e8a3a" : "#a08a6a"; ctx.beginPath(); ctx.arc(W - 14, yk + 4, 8, 0, Math.PI * 2); ctx.fill(); texte(ctx, String(prets || monde.commandes.liste.length), W - 14, yk + 4.5, 10, "#ffffff", true, "center"); }
     zone(W - tp - 10, yk, tp, tp, "panneau", "commandes");
+    // Étape 33 : 📖 l'encyclopédie (qui fait quoi)
+    const ye = yk + 46;
+    bulle(ctx, W - tp - 10, ye, tp, tp, panneau === "encyclopedie" ? "rgba(255, 226, 122, .98)" : null);
+    texte(ctx, "📖", W - 10 - tp / 2, ye + tp / 2 + 1, 20, null, false, "center");
+    zone(W - tp - 10, ye, tp, tp, "panneau", "encyclopedie");
     if (W >= 520) dessinerMini(ctx, monde, mini, W - 10 - tp - 10, 10, Math.min(petit ? 1 : 1.5, (petit ? 200 : 280) / mini.width)); // étape 32 : une carte immense tient dans le même cadre
 
     // ---- En bas : le MENU (étape 5). ✍️ Moins de boutons toujours affichés, regroupés par ressource :
@@ -921,7 +1045,9 @@ Village.Interface = (function () {
     else if (panneau === "bonheur") panneauBonheur(ctx, monde, W, He, petit); // étape 15
     if (panneau === "inventaire") panneauInventaire(ctx, monde, W, He, petit);
     else if (panneau === "conseiller") panneauConseiller(ctx, monde, W, He, petit); // étape 29
-    else if (panneau === "commandes") panneauCommandes(ctx, monde, W, He, petit); // étape 30 // étape 25 : en pleine page, par-dessus le reste
+    else if (panneau === "commandes") panneauCommandes(ctx, monde, W, He, petit); // étape 30
+    else if (panneau === "population") panneauPopulation(ctx, monde, W, He, petit); // étape 33
+    else if (panneau === "encyclopedie") panneauEncyclopedie(ctx, monde, W, He, petit); // étape 25 : en pleine page, par-dessus le reste
     dessinerGains(ctx, W, He); // étape 17
     // Étape 11 : le résumé de l'absence, et la pub (par-dessus tout le reste)
     if (monde.absence) panneauAbsence(ctx, monde, W, He, petit);
@@ -1238,5 +1364,6 @@ Village.Interface = (function () {
     zones.push({ x: mx, y: my, l: mw, h: mh, action: "miniCarte", versMonde: (x, y) => ({ x: ((x - mx) / echelle - carte.lignes) * (L / 2), y: ((y - my) / echelle) * Hc }) });
   }
 
-  return { dessiner, zoneSous, info, changerPage, basculerMenu, fermerMenu, basculerObjectifs, basculerPanneau, fermerPanneau, choisirInventaire, ficheRessource, get menuOuvert() { return menuOuvert; }, get panneauOuvert() { return panneau; } };
+  function encyTout() { encyFiltre = null; } // étape 33
+  return { choisirEncy, encyTout, dessiner, zoneSous, info, changerPage, basculerMenu, fermerMenu, basculerObjectifs, basculerPanneau, fermerPanneau, choisirInventaire, ficheRessource, get menuOuvert() { return menuOuvert; }, get panneauOuvert() { return panneau; } };
 })();

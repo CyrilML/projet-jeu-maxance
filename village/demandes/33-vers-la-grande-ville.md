@@ -1,7 +1,7 @@
 # Village · demande n° 33 : vers la grande ville (le grand changement)
 
-> Demandée par Maxance (via Cyril) le 08/10/2026. Statut : 🚧 en cours, en plusieurs étapes (la 1re, l'étape 32, est
-> livrée le 08/10/2026).
+> Demandée par Maxance (via Cyril) le 08/10/2026. Statut : 🚧 en cours, en plusieurs étapes (étapes 32 et 33 livrées le
+> 08/10/2026).
 
 ## 🎯 Ce que Maxance a demandé (ses mots)
 - « Faire un design moins enfantin, car notre cible est plutôt des adultes. »
@@ -22,7 +22,7 @@
 
 ## 🗺️ Le plan (une étape à la fois)
 1. Étape 32 ✅ : la nouvelle base. Partie remise à zéro, carte de 256 × 256, style plus réaliste, routes plus larges.
-2. Étape 33 : les besoins des habitants et la population (façon SimCity), et l'encyclopédie (« qui fait quoi »).
+2. Étape 33 ✅ : les besoins des habitants et la population (façon SimCity), et l'encyclopédie (« qui fait quoi »).
 3. Étape 34 : l'époque industrielle et l'électricité (centrale, lignes, consommation).
 4. Étape 35 : l'eau courante et les égouts.
 5. Étape 36 : les routes goudronnées, les voitures et les camions.
@@ -42,3 +42,22 @@
 - [ ] Le jeu fait plus « adulte » : couleurs naturelles, traits fins.
 - [ ] Les routes sont larges.
 - [ ] Le jeu reste fluide (version 33 en haut).
+
+## 📏 Les règles de l'étape 33
+- 👥 Le bouton 😊 devient 👥 la POPULATION (le bonheur est dedans, bouton « Détail du bonheur »).
+- Chaque besoin est noté de 0 à 100 % : 🛏️ logement (quelques lits libres), 🍽️ nourriture (10 min de réserve = 100 %),
+  💼 emploi (des habitants sans travail font baisser), 😊 bonheur ; au bourg : 🔥 chauffage, 🍞 pain, 👕 habits.
+- La PROSPÉRITÉ est la moyenne des besoins. Niveaux : en crise (< 40 %), fragile, stable (60 %), prospère (75 %),
+  florissante (90 %). Les nouveaux habitants arrivent × (0,5 + prospérité) : de × 0,5 à × 1,5.
+- La courbe de la population (un relevé toutes les 30 s, 20 dernières minutes).
+- Les besoins des époques à venir sont déjà montrés avec un 🔒 (électricité, eau courante, égouts, police, pompiers,
+  santé, éducation).
+- 📖 L'encyclopédie : chaque bâtiment, sa taille, ce qu'il fait (sa recette), ce qu'il coûte et ce dont il a besoin
+  (un habitant, une route, de l'eau, un filon, pas l'hiver, un vétérinaire, un maçon…). Elle s'ouvre toute seule à
+  chaque nouvel âge, sur les nouveaux bâtiments.
+
+## ✅ Critères pour valider (étape 33)
+- [ ] Le bouton 👥 : la prospérité, la courbe, les besoins et un conseil pour chaque besoin faible.
+- [ ] Une ville prospère attire plus vite de nouveaux habitants.
+- [ ] Le bouton 📖 : je comprends ce que fait chaque bâtiment et ce dont il a besoin.
+- [ ] Au passage à un nouvel âge, l'encyclopédie m'explique les nouveaux bâtiments (version 34 en haut).

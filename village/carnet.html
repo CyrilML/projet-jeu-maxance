@@ -156,6 +156,7 @@
       <a href="#etape30">Étape 30</a>
       <a href="#etape31">Étape 31</a>
       <a href="#etape32">Étape 32</a>
+      <a href="#etape33">Étape 33</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1946,6 +1947,50 @@ après : 256 × 256 = 65 536 cases (7 fois plus)</pre>
       <details class="question"><summary>Une couleur adoucie, c'est quoi ?</summary><p>Une couleur mélangée avec du gris : moins vive, plus naturelle.</p></details>
     </section>
 
+    <section id="etape33">
+      <h2>👥 Étape 33 : les besoins des habitants, la prospérité, et l'encyclopédie <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Comme dans SimCity : un recenseur note chaque besoin des habitants, en tire la prospérité de la ville, et plus la ville prospère, plus elle grandit vite. Et l'encyclopédie 📖 explique ce que fait chaque bâtiment et ce dont il a besoin. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/33-vers-la-grande-ville.md</code>.</p>
+          <ul>
+            <li>✍️ « Mettre en avant les besoins des habitants et l'évolution de la population, comme dans SimCity. Plus la ville prospère, plus les habitants se portent bien, plus la ville grandit. »</li>
+            <li>✍️ « À chaque évolution, on explique quel bâtiment fait quoi et quel besoin il a. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Le bouton 👥 (avec le nombre d'habitants) : la prospérité, la courbe, les besoins.</li>
+            <li>☐ Un besoin faible a son 💡 conseil.</li>
+            <li>☐ Le bouton 📖 : touche un bâtiment, lis sa fiche.</li>
+            <li>☐ Au passage à l'âge suivant : l'encyclopédie s'ouvre sur les nouveautés.</li>
+            <li>Vérifie « version 34 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔁 Une boucle de croissance</h3>
+      <pre style="white-space: pre-wrap">besoins remplis → prospérité ↑ → plus d'habitants arrivent → plus d'ouvriers
+      ↑                                                              ↓
+      └──────────────── plus de production, plus de bâtiments ◄──────┘</pre>
+      <p>C'est une <strong>boucle</strong> : quand tout va bien, ça va de mieux en mieux. Mais elle marche aussi dans l'autre sens : s'il manque à manger, la prospérité baisse, moins d'habitants arrivent… Ton rôle de maire : garder chaque besoin au vert.</p>
+      <pre style="white-space: pre-wrap">prospérité = la moyenne des besoins (de 0 à 100 %)
+arrivées   × (0,5 + prospérité)   → 50 % : × 1 ; 90 % : × 1,4</pre>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+        <li>Quel besoin est le plus bas au début de la partie ? Pourquoi ?</li>
+        <li>Dans l'encyclopédie, quel bâtiment a besoin d'eau à côté de lui ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>4 besoins : 100 %, 80 %, 40 %, 60 %. Quelle prospérité ?</summary><p>(100 + 80 + 40 + 60) ÷ 4 = 70 %.</p></details>
+      <details class="question"><summary>Avec 70 % de prospérité, les arrivées vont combien de fois plus vite ?</summary><p>0,5 + 0,7 = × 1,2.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2143,15 +2188,15 @@ après : 256 × 256 = 65 536 cases (7 fois plus)</pre>
           <p>Nouvelle partie, carte de 256 × 256, style plus réaliste, routes larges.</p>
           <p class="apprend"><b>Tu apprends :</b> ne dessiner que ce qui se voit, adoucir une couleur. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">33</div>
-          <h4>👥 Les besoins des habitants et la population <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <h4>👥 Les besoins des habitants et la population <span class="etiquette">✅ fait · à valider</span></h4>
           <p>Façon SimCity : ce dont les habitants ont besoin, la ville qui grandit quand elle prospère, et l'encyclopédie « qui fait quoi ».</p>
           <p class="apprend"><b>Tu apprends :</b> une boucle de croissance. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte">
+        <div class="carte prochain">
           <div class="num">34-38</div>
-          <h4>⚡🚰🚗🚓🛍️ Les époques industrielle et moderne</h4>
+          <h4>⚡🚰🚗🚓🛍️ Les époques industrielle et moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Électricité, eau courante et égouts, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
         </div>
@@ -2423,6 +2468,14 @@ après : 256 × 256 = 65 536 cases (7 fois plus)</pre>
         <textarea class="journal" id="village-appris-32" data-cle="village-appris-32" placeholder="Ex. : J'ai appris qu'on ne dessine que ce qui se voit…"></textarea>
         <label for="village-idees-32"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-32" data-cle="village-idees-32" placeholder="Ex. : Des quartiers avec des noms…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 33 · les besoins, la prospérité et l'encyclopédie <span class="petit">· 8 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> <code>logique/population.js</code> (<code>besoins</code>, <code>prosperite</code>, <code>facteurCroissance</code>), le panneau 👥, l'encyclopédie 📖 (<code>descriptions</code> dans config.js), l'événement <code>prosperite-change</code>.</p>
+        <label for="village-appris-33"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-33" data-cle="village-appris-33" placeholder="Ex. : J'ai appris ce qu'est une boucle de croissance…"></textarea>
+        <label for="village-idees-33"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-33" data-cle="village-idees-33" placeholder="Ex. : Des habitants qui parlent de leurs besoins…"></textarea>
       </div>
     </section>
   </main>

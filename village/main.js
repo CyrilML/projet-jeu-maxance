@@ -121,6 +121,8 @@
         else if (z.action === "panneau") Village.Interface.basculerPanneau(z.valeur); // étape 7 : missions, boutique
         else if (z.action === "fermerPanneau") Village.Interface.fermerPanneau();
         else if (z.action === "inventaire") Village.Interface.choisirInventaire(z.valeur); // étape 25 : ce que c'est
+        else if (z.action === "ency") Village.Interface.choisirEncy(z.valeur); // étape 33 : l'encyclopédie
+        else if (z.action === "encyTout") Village.Interface.encyTout();
         else if (z.action === "recherche") i.recherche = z.valeur;
         else if (z.action === "info") Village.Interface.info(z.valeur); // étape 17 : ce qui manque
         else if (z.action === "pageUniversite") Village.Interface.changerPage(z.valeur); // étape 21 : les pages de l'université

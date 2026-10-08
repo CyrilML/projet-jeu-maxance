@@ -225,6 +225,7 @@ Village.Monde = (function () {
     Village.Villageois.etape(monde, dt); // étape 13 : les villageois arrivent et vont travailler
     Village.Commandes.etape(monde, dt); // étape 30 : les clients et leurs commandes
     Village.Guide.etape(monde, dt); // étape 30 : les objectifs pas à pas
+    Village.Population.etape(monde, dt); // étape 33 : le recenseur (besoins, prospérité, courbe)
     Village.Conseiller.etape(monde, dt); // étape 29 : le conseiller relit le village
     nature(monde, dt);
   }
