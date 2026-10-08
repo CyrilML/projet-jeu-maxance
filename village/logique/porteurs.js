@@ -86,7 +86,7 @@ Village.Porteurs = (function () {
       }
       // Étape 12 : des 🔨 outils pour l'atelier du maçon-couvreur (2 en réserve au plus)
       if (b.type === "macon" && b.etat === "pret") {
-        while ((b.entrees.outils || 0) + (b.enFile.outils || 0) + (b.enRoute.outils || 0) < C.entreeMax && disponible(monde, "outils") >= 1) {
+        while ((b.entrees.outils || 0) + (b.enFile.outils || 0) + (b.enRoute.outils || 0) < Math.max(C.entreeMax, C.tournee.outilsMacon) && disponible(monde, "outils") >= 1) { // étape 27 : 3 pour sa tournée
           b.enFile.outils = (b.enFile.outils || 0) + 1;
           ajouter(monde, { sorte: "apporter", quoi: "outils", batiment: b });
         }

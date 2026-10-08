@@ -30,7 +30,7 @@ Village.Interface = (function () {
   // Les messages importants de la radio s'affichent aussi dans le jeu (sur téléphone, on ne voit pas le journal).
   Village.Evenements.ecouter("construction-impossible", (d) => afficher("🚫 " + d.nom + " : " + d.raison));
   Village.Evenements.ecouter("chantier-fini", (d) => afficher("🎉 " + d.nom + " est construit" + (d.metier ? " : le " + d.metier + " se met au travail !" : " !")));
-  Village.Evenements.ecouter("rien-a-faire", (d) => /maçon/.test(d.nom) || afficher("😴 " + d.nom + " : pas de " + d.quoi.replace(/^(une?|des) /, "") + " à moins de " + d.rayon + " pas"));
+  Village.Evenements.ecouter("rien-a-faire", (d) => /maçon/.test(d.nom) || /vétérinaire/.test(d.nom) || afficher("😴 " + d.nom + " : pas de " + d.quoi.replace(/^(une?|des) /, "") + (d.partout ? " sur toute la carte" : " à moins de " + d.rayon + " pas")));
   Village.Evenements.ecouter("route-impossible", (d) => afficher("🚫 Route : " + d.raison));
   Village.Evenements.ecouter("demolition-impossible", (d) => afficher("🚫 " + d.raison));
   // (Étape 22 : ✍️ plus de message « relié à l'entrepôt » : c'est normal, ça ne sert à rien de le dire. On prévient seulement quand c'est coupé.)
@@ -945,14 +945,16 @@ Village.Interface = (function () {
     } else if (b.type === "macon") {
       titre("🪜 Il répare les bâtiments usés");
       info(monde.batiments.filter((x) => x.usure >= C.bourg.reparer).length + " bâtiment(s) à réparer · " + (b.entrees.outils || 0) + " 🔨 en réserve");
+      if (o && o.tournee) info("🧭 En tournée : travail n° " + o.tournee + " · " + (o.outils || 0) + " 🔨 sur lui"); // étape 27
     } else if (b.type === "veterinaire") {
       titre("🩺 Il soigne les troupeaux malades");
       info(monde.batiments.filter((x) => x.malade).length + " troupeau(x) malade(s) au village");
+      if (o && o.tournee) info("🧭 En tournée : soin n° " + o.tournee + ", partout sur la carte"); // étape 27
     } else if (o) {
       titre("👷 Ce qu'il rapporte");
       if (b.sortieQuoi) lignes.push({ cout: { [b.sortieQuoi]: 1 }, avant: "→" });
       else if (b.type === "forestier") info("🌱 Il plante des arbres");
-      else if (b.type === "geologue") info("🔍 Il cherche des pierres et des filons");
+      else if (b.type === "geologue") info("🔍 Il cherche des pierres et des filons, partout sur la carte" + (o.tournee ? " · 🧭 tournée : n° " + o.tournee : "")); // étape 27
       info("Le " + type.metier + " " + Village.Ouvriers.NOMS_ETATS[o.etat], "#7a5a30");
       if (o.etat === "travailler") lignes.push({ barre: 1 - o.minuteur / Math.max(0.1, o.dureeTravail || o.minuteur + 0.01), t: "au travail" });
     }

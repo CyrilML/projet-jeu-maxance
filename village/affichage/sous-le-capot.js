@@ -31,7 +31,9 @@ Village.SousLeCapot = (function () {
     "batiment-pose": (d) => "🏗️ Chantier n° " + d.numero + " : " + d.nom + " en (" + d.colonne + ", " + d.ligne + "), " + cout(d.cout) + " réservé(s) dans l'entrepôt : les porteurs vont les apporter" + (d.relie ? "" : " (il faut une route !)"),
     "chantier-fini": (d) => "🎉 " + d.nom + " n° " + d.numero + " construit(e)" + (d.metier ? " : le " + d.metier + " arrive (s'il a une place pour dormir)" : "") + (d.places ? " · +" + d.places + " places pour dormir" : ""),
     "ouvrier-part": (d) => "🚶 Le " + d.metier + " (n° " + d.numero + ") part vers " + d.quoi + " en (" + d.colonne + ", " + d.ligne + ") : " + d.pas + " pas · la tache d'encre a regardé " + d.visitees + " cases",
-    "rien-a-faire": (d) => "😴 " + d.nom + " n° " + d.numero + " : pas de " + d.quoi.replace(/^(une?|des) /, "") + " à moins de " + d.rayon + " pas (" + d.visitees + " cases regardées). On réessaie dans " + Village.CONFIG.ouvriers.attente + " s",
+    "rien-a-faire": (d) => "😴 " + d.nom + " n° " + d.numero + " : pas de " + d.quoi.replace(/^(une?|des) /, "") + (d.partout ? " sur toute la carte" : " à moins de " + d.rayon + " pas") + " (" + d.visitees + " cases regardées). On réessaie dans " + Village.CONFIG.ouvriers.attente + " s",
+    "tournee-suite": (d) => "🧭 " + d.nom + " n° " + d.numero + " : sans rentrer, il part vers son travail n° " + d.travaux + " de la tournée" + (d.outils !== null ? " (" + d.outils + " 🔨 sur lui)" : ""), // étape 27
+    "tournee-finie": (d) => "🏠 " + d.nom + " n° " + d.numero + " : fin de la tournée après " + d.travaux + " travaux (" + d.raison + "), il rentre",
     "arbre-coupe": (d) => "🪓 Arbre coupé en (" + d.colonne + ", " + d.ligne + ") · il reste " + nombre(d.arbres) + " arbres sur la carte",
     "pousse-plantee": (d) => "🌱 Pousse plantée en (" + d.colonne + ", " + d.ligne + ") · " + d.pousses + " pousse(s) en train de grandir",
     "arbre-pousse": (d) => "🌳 La pousse en (" + d.colonne + ", " + d.ligne + ") est devenue un " + d.sorte + " · " + nombre(d.arbres) + " arbres sur la carte",

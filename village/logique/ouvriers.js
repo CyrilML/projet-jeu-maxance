@@ -18,6 +18,11 @@
 // Le forestier et le carrier suivent exactement la même fiche, avec une autre « chose à chercher ».
 //
 // Une case visée est RÉSERVÉE : deux bûcherons ne vont pas couper le même arbre.
+//
+// Étape 27 : la TOURNÉE (géologue, maçon, vétérinaire). Après « travailler », au lieu de « revenir », ils cherchent le
+// travail suivant depuis l'endroit où ils sont, sur toute la carte :
+//   chercher ──► aller ──► travailler ──► (encore du travail ?) ── oui ──► aller…
+//                                               └── non (ou plus d'outils) ──► revenir ──► se reposer
 
 window.Village = window.Village || {};
 
@@ -150,6 +155,45 @@ Village.Ouvriers = (function () {
     return o.pas >= o.chemin.length;
   }
 
+  // Étape 27 : la tournée
+  const enTournee = (b) => C.tournee.metiers.includes(b.type);
+  const rayonDe = (monde, b) => (enTournee(b) ? monde.carte.colonnes + monde.carte.lignes : C.batiments[b.type].rayon); // toute la carte
+  // Transformer un chemin de cases en points à suivre (le dernier s'arrête un peu AVANT le milieu de la case visée)
+  function points(chemin) {
+    const p = chemin.map((k) => ({ x: k.colonne + 0.5, y: k.ligne + 0.5 }));
+    if (p.length >= 2) { const a = p[p.length - 2], z = p[p.length - 1]; p[p.length - 1] = { x: a.x + (z.x - a.x) * 0.55, y: a.y + (z.y - a.y) * 0.55 }; }
+    return p;
+  }
+  // Chercher le travail le plus proche en partant de `depart` ; s'il y en a, on y va. Renvoie vrai si on part.
+  function partir(monde, b, o, depart, r) {
+    const metier = METIERS[b.type], carte = monde.carte;
+    const fin = r.chemin[r.chemin.length - 1];
+    o.cible = fin;
+    if (b.type === "chasseur") {
+      // L'animal visé ne bouge plus.
+      o.proie = Village.Animaux.surLaCase(monde, fin.colonne, fin.ligne);
+      o.proie.vise = true;
+    } else monde.reservees.add(fin.ligne * carte.colonnes + fin.colonne);
+    o.chemin = points(r.chemin);
+    o.pas = 1;
+    changer(o, "aller");
+    radio.emettre("ouvrier-part", { numero: b.numero, metier: Village.Batiments.TYPES[b.type].metier, quoi: metier.quoi, colonne: fin.colonne, ligne: fin.ligne, pas: r.chemin.length - 1, visitees: r.visitees });
+    return true;
+  }
+  function chercherDepuis(monde, b, o, depart) {
+    const metier = METIERS[b.type], carte = monde.carte;
+    return Village.Chemins.chercher(carte.colonnes, carte.lignes, depart, (c, l) => K.praticable(carte, c, l), (c, l) => metier.cherche(monde, l * carte.colonnes + c, o), rayonDe(monde, b));
+  }
+  // Rentrer à la maison depuis l'endroit où l'on est (la tache d'encre cherche une case du bâtiment)
+  function rentrer(monde, b, o) {
+    const carte = monde.carte, ici = { colonne: Math.floor(o.x), ligne: Math.floor(o.y) };
+    const r = Village.Chemins.chercher(carte.colonnes, carte.lignes, ici, (c, l) => K.praticable(carte, c, l), (c, l) => monde.occupees.get(l * carte.colonnes + c) === b, carte.colonnes + carte.lignes);
+    if (r.chemin) { o.chemin = points(r.chemin); o.pas = 1; }
+    else { o.chemin = o.chemin.slice().reverse(); o.pas = 1; } // (au cas où : par le même chemin qu'à l'aller)
+    if (o.tournee > 1) radio.emettre("tournee-finie", { numero: b.numero, nom: Village.Batiments.TYPES[b.type].nom, travaux: o.tournee, raison: b.type === "macon" && !o.outils ? "plus d'outils" : "plus rien à faire" });
+    changer(o, "revenir");
+  }
+
   function etape(monde, b, dt) {
     const o = b.ouvrier, metier = METIERS[b.type], carte = monde.carte;
     switch (o.etat) {
@@ -174,40 +218,22 @@ Village.Ouvriers = (function () {
 
       case "chercher": {
         o.maison = b.ligne * carte.colonnes + b.colonne; // (le maçon ne répare pas sa propre maison… pas tout de suite)
-        const r = Village.Chemins.chercher(
-          carte.colonnes, carte.lignes, { colonne: b.colonne, ligne: b.ligne },
-          (c, l) => K.praticable(carte, c, l),
-          (c, l) => metier.cherche(monde, l * carte.colonnes + c, o),
-          C.batiments[b.type].rayon
-        );
+        const r = chercherDepuis(monde, b, o, { colonne: b.colonne, ligne: b.ligne });
         o.derniereRecherche = { visitees: r.visitees, longueur: r.chemin ? r.chemin.length - 1 : null };
         o.recherches = (o.recherches || 0) + 1; // le géologue change de graine à chaque recherche
         if (!r.chemin) {
-          if (!o.dejaPrevenu) radio.emettre("rien-a-faire", { numero: b.numero, nom: Village.Batiments.TYPES[b.type].nom, quoi: metier.quoi, rayon: C.batiments[b.type].rayon, visitees: r.visitees });
+          if (!o.dejaPrevenu) radio.emettre("rien-a-faire", { numero: b.numero, nom: Village.Batiments.TYPES[b.type].nom, quoi: metier.quoi, rayon: C.batiments[b.type].rayon, partout: enTournee(b), visitees: r.visitees });
           o.dejaPrevenu = true;
           changer(o, "attendre", C.ouvriers.attente);
           return;
         }
         o.dejaPrevenu = false;
-        const fin = r.chemin[r.chemin.length - 1];
-        if (b.type === "macon") { b.entrees.outils--; o.porte = "outils"; } // étape 12 : il part avec son outil
-        o.cible = fin;
-        if (b.type === "chasseur") {
-          // L'animal visé ne bouge plus.
-          o.proie = Village.Animaux.surLaCase(monde, fin.colonne, fin.ligne);
-          o.proie.vise = true;
-        } else monde.reservees.add(fin.ligne * carte.colonnes + fin.colonne);
-        // Les points du chemin = le milieu de chaque case. Le dernier point s'arrête un peu AVANT
-        // le milieu de la case visée : on ne se met pas dans le tronc de l'arbre !
-        const points = r.chemin.map((k) => ({ x: k.colonne + 0.5, y: k.ligne + 0.5 }));
-        if (points.length >= 2) {
-          const a = points[points.length - 2], z = points[points.length - 1];
-          points[points.length - 1] = { x: a.x + (z.x - a.x) * 0.55, y: a.y + (z.y - a.y) * 0.55 };
+        o.tournee = 1; // étape 27 : le 1er travail de la tournée
+        if (b.type === "macon") { // étape 12 : il part avec son outil ; étape 27 : jusqu'à 3
+          o.outils = Math.min(C.tournee.outilsMacon, b.entrees.outils);
+          b.entrees.outils -= o.outils; o.porte = "outils";
         }
-        o.chemin = points;
-        o.pas = 1;
-        changer(o, "aller");
-        radio.emettre("ouvrier-part", { numero: b.numero, metier: Village.Batiments.TYPES[b.type].metier, quoi: metier.quoi, colonne: fin.colonne, ligne: fin.ligne, pas: r.chemin.length - 1, visitees: r.visitees });
+        partir(monde, b, o, null, r);
         return;
       }
 
@@ -219,6 +245,21 @@ Village.Ouvriers = (function () {
         o.minuteur -= dt * Village.Repas.vitesse(o); // étape 5 : ventre vide = 2 fois moins vite
         if (o.minuteur > 0) return;
         finirLeTravail(monde, b, o);
+        if (enTournee(b)) { // étape 27 : la tournée continue-t-elle ?
+          if (b.type === "macon") { o.outils = Math.max(0, (o.outils || 1) - 1); o.porte = o.outils ? "outils" : null; }
+          if (b.type !== "macon" || o.outils > 0) {
+            o.recherches = (o.recherches || 0) + 1;
+            const r = chercherDepuis(monde, b, o, { colonne: Math.floor(o.x), ligne: Math.floor(o.y) });
+            if (r.chemin) {
+              o.tournee = (o.tournee || 1) + 1;
+              radio.emettre("tournee-suite", { numero: b.numero, nom: Village.Batiments.TYPES[b.type].nom, travaux: o.tournee, outils: b.type === "macon" ? o.outils : null });
+              partir(monde, b, o, null, r);
+              return;
+            }
+          }
+          rentrer(monde, b, o);
+          return;
+        }
         o.chemin = o.chemin.slice().reverse();
         o.pas = 1;
         changer(o, "revenir");
@@ -226,6 +267,8 @@ Village.Ouvriers = (function () {
 
       case "revenir":
         if (!marcher(o, dt, monde)) return;
+        if (b.type === "macon") { b.entrees.outils = (b.entrees.outils || 0) + (o.outils || 0); o.outils = 0; o.porte = null; } // étape 27 : il range ses outils
+        o.tournee = 0;
         if (o.porte) {
           // Il pose ce qu'il rapporte devant sa porte. Un porteur viendra le chercher.
           // Étape 5 : un « lot » peut valoir plus qu'un (un cerf = 4 viandes). On le garde dans b.lots.
@@ -310,10 +353,9 @@ Village.Ouvriers = (function () {
         radio.emettre("filon-trouve", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, minerai, nom: C.ressources[minerai].nom, emoji: C.ressources[minerai].emoji, reserve: C.nature.reserveFilon });
       } else radio.emettre("gisement-rate", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne });
     } else if (b.type === "macon") {
-      // Étape 12 : le bâtiment est réparé, et l'outil est usé
+      // Étape 12 : le bâtiment est réparé, et l'outil est usé (étape 27 : on compte ses outils dans etape)
       const abime = monde.occupees.get(i);
       if (abime && abime.usure > 0) { Village.Batiments.reparer(monde, abime); b.produits++; }
-      o.porte = null;
     } else if (b.type === "veterinaire") {
       // Étape 15 : les vaches sont soignées
       const etable = monde.occupees.get(i);
@@ -329,5 +371,5 @@ Village.Ouvriers = (function () {
     }
   }
 
-  return { creer, etape, NOMS_ETATS };
+  return { creer, etape, NOMS_ETATS, enTournee };
 })();

@@ -150,6 +150,7 @@
       <a href="#etape24">Étape 24</a>
       <a href="#etape25">Étape 25</a>
       <a href="#etape26">Étape 26</a>
+      <a href="#etape27">Étape 27</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1685,6 +1686,49 @@ pêcheur 10 → 15 · chasseur 14 → 21 · géologue 14 → 21 · mine 4 → 12
       <details class="question"><summary>Le chasseur avait 14 cases. + 50 %, ça fait combien ?</summary><p>14 + 7 = 21 cases.</p></details>
     </section>
 
+    <section id="etape27">
+      <h2>🧭 Étape 27 : la tournée du géologue, du maçon et du vétérinaire <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Ces trois-là ne rentrent plus chez eux après chaque travail : ils vont du suivant au suivant, partout sur la carte. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/28-tournee.md</code>.</p>
+          <ul>
+            <li>✍️ « Le géologue et le maçon devraient pouvoir aller partout sur la carte, sans rentrer chez eux à chaque fois. »</li>
+            <li>Tes choix : le maçon part avec <strong>3 outils</strong> ; ils rentrent <strong>quand il n'y a plus rien à faire</strong> ; le <strong>vétérinaire</strong> aussi.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Suis le géologue : il enchaîne les explorations sans rentrer.</li>
+            <li>☐ Le maçon répare 3 bâtiments à la suite, puis rentre chercher des outils.</li>
+            <li>☐ Touche leur bâtiment : « 🧭 En tournée : travail n° … ».</li>
+            <li>☐ Le journal (sous le capot) : « 🧭 sans rentrer… » et « 🏠 fin de la tournée… ».</li>
+            <li>Vérifie « version 28 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔁 La machine à états change</h3>
+      <pre style="white-space: pre-wrap">avant :  chercher → aller → travailler → revenir → se reposer → chercher…
+après :  chercher → aller → travailler → encore du travail ? ─ oui → aller → travailler → …
+                                                       └─ non (ou plus d'outils) → revenir → se reposer</pre>
+      <p>Une seule flèche a changé, et ça change toute la vie de ces ouvriers ! La tache d'encre (la recherche du plus proche) part maintenant de <strong>l'endroit où il est</strong>, pas de sa maison. Pour rentrer, une autre tache d'encre cherche le chemin vers sa maison.</p>
+      <p>C'est le problème du <strong>voyageur de commerce</strong> : un facteur qui doit passer chez beaucoup de gens. Aller à chaque fois au plus proche de là où on est, c'est une méthode simple (et souvent assez bonne), qu'on appelle « le plus proche voisin ».</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+        <li>Combien de travaux d'affilée ton géologue fait-il avant de rentrer ?</li>
+        <li>Que fait le maçon quand il n'a plus d'outils dans sa cabane ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Le maçon a 3 outils et il y a 5 bâtiments usés. Combien de tournées faut-il ?</summary><p>2 tournées : 3 réparations, il rentre chercher des outils, puis 2 réparations.</p></details>
+      <details class="question"><summary>D'où part la tache d'encre après une réparation ?</summary><p>De l'endroit où est le maçon, pas de sa cabane.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1846,8 +1890,14 @@ pêcheur 10 → 15 · chasseur 14 → 21 · géologue 14 → 21 · mine 4 → 12
           <p>Les mines voient les filons à 12 cases et le mineur y marche ; les autres ouvriers + 50 %.</p>
           <p class="apprend"><b>Tu apprends :</b> un compromis (loin mais lent), l'interpolation. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">27</div>
+          <h4>🧭 La tournée <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Géologue, maçon et vétérinaire vont d'un travail à l'autre partout sur la carte, sans rentrer.</p>
+          <p class="apprend"><b>Tu apprends :</b> changer une flèche de la machine à états, le plus proche voisin. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">28</div>
           <h4>🏙️ La ville : monuments, fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -2072,6 +2122,14 @@ pêcheur 10 → 15 · chasseur 14 → 21 · géologue 14 → 21 · mine 4 → 12
         <textarea class="journal" id="village-appris-26" data-cle="village-appris-26" placeholder="Ex. : J'ai appris qu'aller plus loin coûte du temps…"></textarea>
         <label for="village-idees-26"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-26" data-cle="village-idees-26" placeholder="Ex. : Un wagonnet sur des rails jusqu'au filon…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 27 · la tournée <span class="petit">· 8 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le réglage <code>tournee</code> (config.js), la recherche depuis l'endroit où est l'ouvrier (<code>chercherDepuis</code>), le retour par une tache d'encre (<code>rentrer</code>), les 3 outils du maçon, les événements <code>tournee-suite</code> et <code>tournee-finie</code>.</p>
+        <label for="village-appris-27"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-27" data-cle="village-appris-27" placeholder="Ex. : J'ai appris qu'une seule flèche change tout…"></textarea>
+        <label for="village-idees-27"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-27" data-cle="village-idees-27" placeholder="Ex. : Un cheval pour le géologue…"></textarea>
       </div>
     </section>
   </main>

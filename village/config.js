@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 27,
+  version: 28,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -422,6 +422,11 @@ Village.CONFIG = {
   },
   sortieMax: 8, // objets qui peuvent attendre devant un bâtiment (au-delà, l'ouvrier attend) · étape 20 : ✍️ 8 (4 avant), l'idée de Maxance
   entreeMax: 2, // de chaque ingrédient en réserve dans un atelier (scierie, fonderie, forge)
+  // Étape 27 : ✍️ « le géologue et le maçon devraient pouvoir aller partout sur la carte, sans rentrer chez eux à chaque
+  // fois ». Ces métiers font une TOURNÉE : ils cherchent sur toute la carte, et après un travail ils cherchent le suivant
+  // depuis l'endroit où ils sont. Ils ne rentrent que quand il n'y a plus rien à faire (choix de Maxance), et le maçon
+  // aussi quand il n'a plus d'outils : il part avec 3 🔨 au plus (1 par réparation).
+  tournee: { metiers: ["geologue", "macon", "veterinaire"], outilsMacon: 3 },
 
   // Étape 4 : ✍️ une année dure 10 minutes. 4 saisons de 2 min 30 : printemps, été, automne, hiver.
   saisons: {
