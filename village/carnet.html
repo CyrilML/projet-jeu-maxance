@@ -152,6 +152,7 @@
       <a href="#etape26">Étape 26</a>
       <a href="#etape27">Étape 27</a>
       <a href="#etape28">Étape 28</a>
+      <a href="#etape29">Étape 29</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1772,6 +1773,51 @@ après :  chercher → aller → travailler → encore du travail ? ─ oui → 
       <details class="question"><summary>Un bâtiment de 4 × 4 cases : combien de cases au sol ?</summary><p>16 cases.</p></details>
     </section>
 
+    <section id="etape29">
+      <h2>🧭 Étape 29 : le conseiller et le bilan <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Un conseiller relit tout le village toutes les 2 secondes et te dit quoi faire, et pourquoi. L'inventaire montre ce qui monte ▲ et ce qui baisse ▼. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/30-bilan-conseiller.md</code>.</p>
+          <ul>
+            <li>✍️ « Le jeu est assez brouillon : on ne sait pas vraiment quoi produire et pourquoi. »</li>
+            <li>Tes choix : les 4 idées. Ici : le conseiller et le bilan. (Les commandes et les objectifs pas à pas : étape 30.)</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Sous la barre du haut : « 🧭 … » le conseil du moment (touche-le).</li>
+            <li>☐ Le bouton 🧭 à droite (un point rouge = urgent).</li>
+            <li>☐ Le bouton « Construire » du conseiller pose le bon bâtiment.</li>
+            <li>☐ Les chaînes : ce qui manque est entouré de rouge.</li>
+            <li>☐ L'inventaire : ▲ ▼ sur chaque case, et « 📈 Par minute » dans la fiche.</li>
+            <li>Vérifie « version 30 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🧠 Des règles qui deviennent des conseils</h3>
+      <pre style="white-space: pre-wrap">SI la nourriture baisse ET il reste moins de 5 minutes      → 🔴 « construis un pêcheur »
+SI un atelier attend un ingrédient ET il n'y en a plus      → 🟠 « construis celui qui le fabrique »
+SI il n'y a plus de lit                                    → 🟠 « construis une hutte »
+SI un objectif de l'âge n'est pas atteint                  → 🔵 « voici ce qui t'aiderait »</pre>
+      <p>C'est un <strong>système expert</strong> : une liste de règles « SI … ALORS … », rangées par urgence. Le conseiller ne triche pas : il lit les mêmes chiffres que toi (le compteur de l'entrepôt, les lits, les ateliers). Il ne change rien au village, il conseille.</p>
+      <p>Le <strong>goulot d'étranglement</strong>, c'est l'endroit où la chaîne coince. Exemple : une forge sans lingots, parce que la fonderie n'a pas de fer, parce qu'aucune mine n'en creuse. Le conseiller remonte la chaîne et te montre le premier maillon cassé.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+        <li>Laisse la nourriture baisser : quand le conseil devient-il rouge ?</li>
+        <li>Construis une forge sans fonderie : que dit le conseiller ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Il reste 20 poissons, et on en perd 5 par minute. Dans combien de temps n'y en aura-t-il plus ?</summary><p>20 ÷ 5 = 4 minutes : le conseil devient rouge (moins de 5 minutes).</p></details>
+      <details class="question"><summary>Le conseiller change-t-il quelque chose dans le village ?</summary><p>Non : il lit et il conseille. C'est toi qui décides.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1945,8 +1991,20 @@ après :  chercher → aller → travailler → encore du travail ? ─ oui → 
           <p>Plus de montagnes, des filons cachés et leurs paillettes, des mines en puits, des tailles de 1 × 1 à 4 × 4, de grandes icônes.</p>
           <p class="apprend"><b>Tu apprends :</b> une information cachée (le brouillard), une taille rangée comme une donnée. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">29</div>
+          <h4>🧭 Le conseiller et le bilan <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Des conseils rangés par urgence, les chaînes et leurs goulots, ▲ ▼ dans l'inventaire.</p>
+          <p class="apprend"><b>Tu apprends :</b> un système expert (des règles SI… ALORS…), le goulot d'étranglement. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte">
+          <div class="num">30</div>
+          <h4>📦 Les commandes et les objectifs pas à pas <span class="etiquette">⏭️ juste après</span></h4>
+          <p>Des commandes claires avec une récompense, et des objectifs en petites étapes guidées.</p>
+          <p class="apprend"><b>Tu apprends :</b> une file de tâches, une récompense qui motive. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">31</div>
           <h4>🏙️ La ville : monuments, fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -2187,6 +2245,14 @@ après :  chercher → aller → travailler → encore du travail ? ─ oui → 
         <textarea class="journal" id="village-appris-28" data-cle="village-appris-28" placeholder="Ex. : J'ai appris qu'une chose peut exister sans être montrée…"></textarea>
         <label for="village-idees-28"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-28" data-cle="village-idees-28" placeholder="Ex. : Des pierres précieuses à découvrir…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 29 · le conseiller et le bilan <span class="petit">· 8 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> <code>logique/conseiller.js</code> (<code>conseils</code>, <code>chaines</code>), le panneau 🧭, le conseil sous la barre, le bilan par minute dans l'inventaire, l'événement <code>conseil</code>.</p>
+        <label for="village-appris-29"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-29" data-cle="village-appris-29" placeholder="Ex. : J'ai appris ce qu'est un goulot d'étranglement…"></textarea>
+        <label for="village-idees-29"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-29" data-cle="village-idees-29" placeholder="Ex. : Un conseiller qui parle avec une bulle…"></textarea>
       </div>
     </section>
   </main>

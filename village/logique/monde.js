@@ -218,6 +218,7 @@ Village.Monde = (function () {
     Village.Statistiques.etape(monde, dt); // étape 8 : le compteur tourne la page toutes les 10 s
     Village.Publicite.etape(monde, dt); // étape 11 : une proposition de pub, de temps en temps
     Village.Villageois.etape(monde, dt); // étape 13 : les villageois arrivent et vont travailler
+    Village.Conseiller.etape(monde, dt); // étape 29 : le conseiller relit le village
     nature(monde, dt);
   }
 

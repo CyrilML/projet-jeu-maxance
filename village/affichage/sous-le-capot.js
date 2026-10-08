@@ -118,6 +118,7 @@ Village.SousLeCapot = (function () {
     "achat-impossible": (d) => "🚫 Achat impossible (" + d.nom + ") : " + d.raison,
     "minerai-extrait": (d) => "⛏️ " + d.nom + " n° " + d.numero + " : +1 " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " · il reste " + d.reste + " dans le filon · " + d.devant + " devant la porte",
     "filon-epuise": (d) => "⛏️ " + d.nom + " n° " + d.numero + " : plus de " + d.minerai + " dans les filons voisins",
+    "conseil": (d) => "🧭 Le conseiller : " + d.texte + (d.type ? " → construis " + Village.Batiments.TYPES[d.type].emoji + " " + Village.Batiments.TYPES[d.type].court : "") + " (" + d.pourquoi + ")", // étape 29
     "filon-trouve": (d) => "🔍 Filon de " + d.nom + " " + d.emoji + " trouvé près de (" + d.colonne + ", " + d.ligne + ")" + (d.cases > 1 ? " : " + d.cases + " cases de paillettes" : "") + " · " + d.reserve + " morceaux", // étape 28
     // Étape 8 : le logement et le marché
     "pas-de-logement": (d) => "🛏️ " + d.nom + " n° " + d.numero + " : pas de place pour loger le " + d.metier + " (" + d.places + " places, toutes prises). Il faut une hutte ou une maison",
