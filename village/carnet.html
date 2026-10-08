@@ -154,6 +154,7 @@
       <a href="#etape28">Étape 28</a>
       <a href="#etape29">Étape 29</a>
       <a href="#etape30">Étape 30</a>
+      <a href="#etape31">Étape 31</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1857,6 +1858,43 @@ récompense = 1,5 × la valeur = 60 🪙</pre>
       <details class="question"><summary>Combien de planches (prix 2) pour une commande de 80 pièces ?</summary><p>80 ÷ 2 = 40 planches.</p></details>
     </section>
 
+    <section id="etape31">
+      <h2>🏛️ Étape 31 : le Grand Beffroi, le monument de la ville <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">À la ville, un énorme chantier de 5 × 5 cases : le Grand Beffroi. Il se construit en 4 paliers, chacun avec des ressources de toutes les chaînes et une grosse récompense. Il grandit sous tes yeux. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/32-grand-monument.md</code>.</p>
+          <ul>
+            <li>✍️ « Je suis arrivé à la ville mais il n'y a rien de nouveau. »</li>
+            <li>Ton choix : un grand monument d'abord.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Menu Artisans : 🏛️ Monument (à la ville).</li>
+            <li>☐ Touche-le : les barres du palier, et « Donner ce que j'ai ».</li>
+            <li>☐ Un palier fini : 🪙 et 💎 s'envolent, le monument grandit.</li>
+            <li>☐ Le bonheur : une ligne « 🏛️ Le Grand Beffroi ».</li>
+            <li>Vérifie « version 32 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🧱 Les 4 paliers</h3>
+      <pre style="white-space: pre-wrap">1. 🧱 Fondations sculptées : pierres, planches, outils             → +300 🪙  +3 💎  +4 😊
+2. 🏛️ Grands murs : pierres, lingots, planches, charbon           → +500 🪙  +4 💎  +5 😊
+3. 🕌 Tour et dôme doré : tissus, bijoux, outils, lingots          → +800 🪙  +6 💎  +6 😊
+4. 🎉 Fête d'inauguration : pain, fromage, jambon, vêtements, yaourt → +1500 🪙 +10 💎 +10 😊</pre>
+      <p>Chaque palier demande des choses de chaînes <strong>différentes</strong> : pour finir le monument, il faut que tout le village marche. C'est un <strong>objectif à long terme</strong>, et tu peux donner petit à petit. Le jeu se souvient de tout ce que tu as déjà donné (la sauvegarde garde les « dons »).</p>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Il faut 200 pierres. Tu en donnes 150, puis 100. Combien en reste-t-il dans l'entrepôt après le 2e don ?</summary><p>Le monument ne prend que les 50 qui manquent : il en reste 50.</p></details>
+      <details class="question"><summary>Combien de bonheur le monument fini donne-t-il en tout ?</summary><p>4 + 5 + 6 + 10 = 25 points, pour toujours.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2042,10 +2080,16 @@ récompense = 1,5 × la valeur = 60 🪙</pre>
           <p>Des commandes claires avec une récompense, et des objectifs en petites étapes guidées.</p>
           <p class="apprend"><b>Tu apprends :</b> une file de tâches, une récompense qui motive. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">31</div>
-          <h4>🏙️ La ville : monuments, fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
-          <p>Les grands chantiers de fin de jeu.</p>
+          <h4>🏛️ Le Grand Beffroi <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Le monument de la ville : 5 × 5 cases, 4 paliers, de grosses récompenses.</p>
+          <p class="apprend"><b>Tu apprends :</b> un objectif à long terme, garder ce qui est déjà donné. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">32</div>
+          <h4>🎭 La ville : fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <p>Les fêtes (beaucoup de bonheur pour un temps) et un port pour commercer au loin.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
         </div>
         <div class="carte">
@@ -2300,6 +2344,14 @@ récompense = 1,5 × la valeur = 60 🪙</pre>
         <textarea class="journal" id="village-appris-30" data-cle="village-appris-30" placeholder="Ex. : J'ai appris à découper un gros but en petites étapes…"></textarea>
         <label for="village-idees-30"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-30" data-cle="village-idees-30" placeholder="Ex. : Des clients pressés qui paient plus…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 31 · le Grand Beffroi <span class="petit">· 8 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> <code>logique/monument.js</code> (<code>donner</code>, <code>reste</code>, <code>bonheur</code>), les données <code>monument</code>, son dessin en 5 étapes, son panneau, les étapes guidées de la ville, la base de données en version 19.</p>
+        <label for="village-appris-31"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-31" data-cle="village-appris-31" placeholder="Ex. : J'ai appris à faire un grand objectif en plusieurs paliers…"></textarea>
+        <label for="village-idees-31"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-31" data-cle="village-idees-31" placeholder="Ex. : D'autres monuments : un pont, un château…"></textarea>
       </div>
     </section>
   </main>

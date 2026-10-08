@@ -21,6 +21,7 @@ Village.Guide = (function () {
     if (e.filons) return { valeur: monde.carte.compte.vus || 0, cible: e.filons };
     if (e.commandes) return { valeur: monde.commandes.livrees, cible: e.commandes };
     if (e.pieces) return { valeur: monde.pieces, cible: e.pieces };
+    if (e.monument) return { valeur: Village.Monument.paliersFaits(monde), cible: e.monument }; // étape 31
     if (e.bonheur) return { valeur: Math.round(monde.bonheur.valeur || 0), cible: e.bonheur };
     return { valeur: 0, cible: 1 };
   }

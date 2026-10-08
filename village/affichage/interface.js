@@ -48,6 +48,8 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("commande-arrivee", (d) => afficher("📦 " + d.emoji + " " + d.qui + " a besoin de " + d.nombre + " " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " (touche 📦)"));
   Village.Evenements.ecouter("commande-pas-assez", (d) => afficher("📦 Il manque encore " + d.manque + " " + Village.Batiments.NOMS_RESSOURCES[d.quoi]));
   Village.Evenements.ecouter("guide-etape", (d) => gagner("👣 Étape réussie : " + d.texte, [["pieces", d.pieces]]));
+  Village.Evenements.ecouter("monument-palier", (d) => gagner(d.emoji + " " + d.nom + " : construit !", [["pieces", d.pieces], ["gemmes", d.gemmes]])); // étape 31
+  Village.Evenements.ecouter("monument-rien", () => afficher("🏛️ Il n'y a rien de libre de ce que demande le monument"));
   Village.Evenements.ecouter("pub-regardee", (d) => { if (d.sorte === "ressource") gagner("📺 Merci !", [[d.quoi, d.quantite]]); else if (d.sorte === "gemmes") gagner("📺 Merci !", [["gemmes", d.quantite]]); });
   Village.Evenements.ecouter("nouvel-age", (d) => gagner(d.emoji + " " + d.nom + " !", [["gemmes", d.gemmes]]));
   Village.Evenements.ecouter("logement-evolue", (d) => afficher("⬆️ " + d.avant + " n° " + d.numero + " devient « " + d.apres + " » : des " + d.emoji + " " + d.classe.toLowerCase() + " s'installent !")); // étape 18
@@ -779,7 +781,7 @@ Village.Interface = (function () {
       { id: "elevage", emoji: "🐄", nom: "Élevage", batiments: ["puits", "faneur", "etable", "poulailler", "bergerie", "porcherie", "veterinaire"] }, // étape 15 et 16
       // Étape 8 : les logements, et les artisans (fonderie, forge, marché, université)
       { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "maison", "macon"] }, // étape 12 : le maçon-couvreur
-      { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite"] }, // étape 16 : la laine et les habits
+      { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite", "monument"] }, // étape 31 : le monument // étape 16 : la laine et les habits
       // Étape 7 : le chemin de terre, et la route en pierre (débloquée par la recherche « Routes pavées »)
       // Étape 19 : ✍️ l'entrepôt secondaire est rangé avec les routes (le transport), dès le hameau
       { id: "route", nom: "Routes", batiments: ["depot"], outils: [
@@ -1003,7 +1005,9 @@ Village.Interface = (function () {
   //   2. ce que le bâtiment FAIT (sa recette en icônes, ce qu'il fait en ce moment, une barre de progression) ;
   //   3. son NIVEAU et ses améliorations (les boutons).
   // Une ligne : { t (texte), c (couleur), g (gras) } ; ou { titre } ; ou { barre (0 à 1), t } ; ou { recette, hiver }.
+  let monumentBouton = null; // étape 31
   function panneauBatiment(ctx, monde, b, x, y, l) {
+    monumentBouton = null;
     const B = Village.Batiments, type = B.TYPES[b.type], petit = Ec.petit;
     const lignes = [], pb = (t) => lignes.push({ t, c: "#c0392b", g: true }), info = (t, c) => lignes.push({ t, c: c || "#5a4220" }), titre = (t) => lignes.push({ titre: t });
     const o = b.ouvrier, pret = b.etat === "pret";
@@ -1033,6 +1037,15 @@ Village.Interface = (function () {
       if (Village.Ameliorations.placesEnPlus(monde, b)) info("➕ " + Village.Ameliorations.placesEnPlus(monde, b) + " place(s) en plus : 1 pour " + C.depot.parBatiments + " bâtiments livrés");
       info("📦 Réserve : " + Re.capacite(monde) + " places" + (mn === Infinity ? "" : " · pleine en ≈ " + (mn >= 60 ? Math.floor(mn / 60) + " h " + String(Math.round(mn % 60)).padStart(2, "0") : Math.round(mn) + " min") + " si tu pars"));
       boutonsReserve = true;
+    } else if (b.type === "monument") {
+      // Étape 31 : le palier en cours, et une barre par ressource demandée
+      const Mo = Village.Monument, p = Mo.palierDe(b), n = C.monument.paliers.length;
+      titre("🏛️ Palier " + Math.min(n, (b.palier || 0) + 1) + " / " + n + (p ? " : " + p.emoji + " " + p.nom : " : terminé !"));
+      if (p) {
+        for (const [r, besoin] of Object.entries(p.besoins)) { const d = b.dons[r] || 0; lignes.push({ barre: d / besoin, t: C.ressources[r].emoji + " " + C.ressources[r].nom + " : " + d + " / " + besoin + " (libres : " + Math.max(0, Village.Porteurs.disponible(monde, r)) + ")" }); }
+        info("🎁 Récompense : +" + p.pieces + " 🪙, +" + p.gemmes + " 💎, +" + p.bonheur + " de bonheur pour toujours", "#2e8a3a");
+        monumentBouton = b;
+      } else info("🎉 Le Grand Beffroi est fini : la fierté de la ville ! (+" + Mo.bonheur(monde) + " de bonheur)", "#2e8a3a");
     } else if (b.type === "depot") {
       const ici = monde.porteurs.filter((p) => !p.parti && Village.Porteurs.maisonDe(monde, p) === b);
       titre("🏬 Un 2e point de départ pour les porteurs");
@@ -1109,6 +1122,7 @@ Village.Interface = (function () {
     if (boutonsReserve) rangees.push("reserve");
     if (b.type === "entrepot" && pret && Am.niveau(monde) < C.entrepot.niveauMax) rangees.push("agrandir");
     if (prochaine) rangees.push("ameliorer");
+    if (monumentBouton) rangees.push("monument"); // étape 31
     const hb = rangees.length * 40;
     const h = 36 + finales.reduce((a, li) => a + hauteur(li), 0) + 8 + hb;
     bulle(ctx, x, y, l, h);
@@ -1135,6 +1149,7 @@ Village.Interface = (function () {
     }
     rangees.forEach((sorte, n) => {
       const by = y + h - hb + n * 40;
+      if (sorte === "monument") bouton(ctx, x + 10, by, l - 20, 32, "🏛️ Donner ce que j'ai", "monument", b.numero, true, "#d98a1f"); // étape 31
       if (sorte === "agrandir") { const p = Am.prixAgrandir(monde); bouton(ctx, x + 10, by, l - 20, 32, { avant: "🏗️ Agrandir ·", cout: Object.assign({}, p.ressources, p.pieces ? { pieces: p.pieces } : {}) }, "agrandirEntrepot", true, !Am.raisonAgrandir(monde), "#d98a1f"); }
       if (sorte === "ameliorer") { const bloque = (monde.age || 0) < prochaine.age; bouton(ctx, x + 10, by, l - 20, 32, bloque ? "🔒 " + C.ages[prochaine.age].emoji + " " + C.ages[prochaine.age].nom : { avant: "⬆️ " + prochaine.nom + " ·", cout: prochaine.cout }, "ameliorer", b.numero, !Am.raison(monde, b), "#8a5ab0"); }
     });

@@ -63,10 +63,11 @@ Village.Batiments = (function () {
     tailleur: { nom: "Atelier du tailleur", court: "Tailleur", emoji: "✂️", metier: "tailleur" },
     charcuterie: { nom: "Charcuterie", court: "Charcuterie", emoji: "🥓", metier: "charcutier" },
     depot: { nom: "Entrepôt secondaire", court: "Entrepôt 2", emoji: "🏬", metier: null }, // étape 17
+    monument: { nom: "Le Grand Beffroi", court: "Monument", emoji: "🏛️", metier: null }, // étape 31
     manoir: { nom: "Maison bourgeoise", court: "Manoir", emoji: "🏡", metier: null }, // étape 18 : une maison qui a évolué
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot"];
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot", "monument"];
   // « 🪵 troncs », « 🔩 lingots »… (étape 8 : fabriqué à partir de config.js, « ressources »)
   const NOMS_RESSOURCES = {};
   for (const [r, f] of Object.entries(C.ressources)) NOMS_RESSOURCES[r] = f.emoji + " " + f.nom;
@@ -136,6 +137,7 @@ Village.Batiments = (function () {
     const i = l * carte.colonnes + c;
     if (monde.occupees.has(i)) return "il y a déjà un bâtiment";
     // Étape 24 : ✍️ le maximum des entrepôts secondaires est vérifié dès l'aperçu (avant : seulement en validant !)
+    if (type === "monument" && monde.batiments.some((b) => b.type === "monument") && !(monde.projet && monde.projet.deplacer && monde.projet.deplacer.type === "monument")) return "la ville n'a qu'un seul grand monument"; // étape 31
     if (type === "depot" && monde.batiments.filter((b) => b.type === "depot").length >= C.depot.max && !(monde.projet && monde.projet.deplacer && monde.projet.deplacer.type === "depot")) return "pas plus de " + C.depot.max + " entrepôts secondaires";
     // Étape 22 : les cases des champs et des enclos doivent être libres aussi
     for (const [dc, dl] of empriseDe(type)) { const r = raisonCase(monde, c + dc, l + dl); if (r) return "pas assez de place : il faut " + (1 + empriseDe(type).length) + " cases libres (" + r + ")"; }
@@ -241,6 +243,7 @@ Village.Batiments = (function () {
       ameliorations: etat.ameliorations || 0, // étape 13 : combien d'améliorations faites (0, 1 ou 2)
       malade: etat.malade ? { depuis: etat.malade } : null, // étape 15 : une étable aux vaches malades { depuis (s) }
       niveau: etat.niveau || 1,
+      palier: etat.palier || 0, dons: Object.assign({}, etat.dons), // étape 31 : le monument (paliers construits, ce qu'on a déjà donné)
       evolution: etat.evo || 0, // étape 18 : depuis combien de secondes les besoins de la classe suivante sont remplis // étape 13 : l'entrepôt qui s'agrandit : de 0 (tout neuf) à 1 (usé : 2 fois moins vite). Un 🔨 outil le répare.
     };
     monde.batiments.push(b);

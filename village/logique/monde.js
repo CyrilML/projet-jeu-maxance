@@ -309,6 +309,7 @@ Village.Monde = (function () {
     // Étape 7 : les recherches, les missions et la boutique (des boutons dans l'écran)
     if (intentions.recherche) Village.Recherches.lancer(monde, intentions.recherche);
     if (intentions.commande !== null && intentions.commande !== undefined) Village.Commandes.livrer(monde, intentions.commande); // étape 30
+    if (intentions.monument) { const b = monde.batiments.find((x) => x.numero === intentions.monument); if (b) Village.Monument.donner(monde, b); } // étape 31
     if (intentions.mission === "accepter") Village.Missions.accepter(monde);
     else if (intentions.mission === "plusTard") Village.Missions.plusTard(monde);
     else if (intentions.mission === "livrer") Village.Missions.livrer(monde);

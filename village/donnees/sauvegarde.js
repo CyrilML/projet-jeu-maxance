@@ -69,12 +69,13 @@
 //                  mines et ceux trouvés par un géologue ; les autres sont à découvrir.
 //  18 (étape 30) : les commandes (commandes : la liste, l'attente, combien de livrées) et l'étape guidée (guide).
 //                  Rien à convertir : une partie plus ancienne commence sans commande, à la 1re étape guidée de son âge.
+//  19 (étape 31) : pour le monument, ses paliers construits (palier) et ce qu'on a déjà donné (dons). Rien à convertir.
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 18;
+  const VERSION = 19;
   const radio = Village.Evenements;
 
   function vide() {
@@ -208,6 +209,8 @@ Village.Sauvegarde = (function () {
         if (b.ameliorations) d.ameliorations = b.ameliorations; // étape 13
         if (b.niveau > 1) d.niveau = b.niveau;
         if (b.evolution) d.evo = Math.round(b.evolution); // étape 18
+        if (b.palier) d.palier = b.palier; // étape 31 : le monument
+        if (b.dons && Object.keys(b.dons).length) d.dons = b.dons;
         if (b.malade) d.malade = Math.round(b.malade.depuis) || 1; // étape 15 : depuis combien de secondes
         if (b.etat === "chantier") { d.prix = b.prix; d.livre = b.livre; d.attendu = ajout(b.attendu, enCours.attendu.get(b)); } // étape 12 : le prix du chantier (il peut être offert)
         const o = b.ouvrier;

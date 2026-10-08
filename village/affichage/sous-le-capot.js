@@ -123,6 +123,9 @@ Village.SousLeCapot = (function () {
     "commande-partie": (d) => "📦⌛ " + d.emoji + " " + d.qui + " n'a pas pu attendre ses " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " : il repart",
     "commande-pas-assez": (d) => "📦 Pas assez de " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " pour " + d.qui + " : il en manque " + d.manque,
     "guide-etape": (d) => "👣 Étape guidée " + d.numero + "/" + d.total + " réussie : " + d.texte + " (+" + d.pieces + " 🪙)" + (d.suivante ? " · suivante : " + d.suivante : " · toutes faites pour cet âge !"),
+    "monument-don": (d) => "🏛️ Don au monument (" + d.palier + ") : " + Object.entries(d.donne).map(([r, n]) => n + " " + Village.Batiments.NOMS_RESSOURCES[r]).join(", ") + (Object.keys(d.reste).length ? " · il manque encore " + Object.entries(d.reste).map(([r, n]) => n + " " + Village.Batiments.NOMS_RESSOURCES[r]).join(", ") : ""), // étape 31
+    "monument-rien": (d) => "🏛️ Rien à donner au monument (" + d.palier + ") : il n'y a rien de libre de ce qu'il demande",
+    "monument-palier": (d) => "🏛️🎉 Palier " + d.numero + "/" + d.total + " du monument construit : " + d.emoji + " " + d.nom + " ! +" + d.pieces + " 🪙, +" + d.gemmes + " 💎, +" + d.bonheur + " points de bonheur pour toujours" + (d.fini ? " · LE GRAND BEFFROI EST FINI !" : ""),
     "conseil": (d) => "🧭 Le conseiller : " + d.texte + (d.type ? " → construis " + Village.Batiments.TYPES[d.type].emoji + " " + Village.Batiments.TYPES[d.type].court : "") + " (" + d.pourquoi + ")", // étape 29
     "filon-trouve": (d) => "🔍 Filon de " + d.nom + " " + d.emoji + " trouvé près de (" + d.colonne + ", " + d.ligne + ")" + (d.cases > 1 ? " : " + d.cases + " cases de paillettes" : "") + " · " + d.reserve + " morceaux", // étape 28
     // Étape 8 : le logement et le marché

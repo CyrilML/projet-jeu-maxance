@@ -82,6 +82,16 @@ Village.Conseiller = (function () {
       else if (o.texte.startsWith("🐟")) ajouter(1, "🎯", "Objectif : " + o.cible + " 🐟 + 🍖 en réserve (" + o.valeur + ")", "Plus de pêcheurs et de chasseurs.", "pecheur");
       else ajouter(1, "🎯", "Objectif : " + o.texte.toLowerCase() + " : " + o.valeur + " / " + o.cible, "Chaque nouveau bâtiment compte.", null);
     }
+    // 6. Étape 31 : le grand monument de la ville
+    if (Village.Ages.debloque(monde, "monument")) {
+      const mo = monde.batiments.find((b) => b.type === "monument");
+      if (!mo) ajouter(1, "🏛️", "Construis le Grand Beffroi", "C'est le grand chantier de la ville : 4 paliers, chacun avec une grosse récompense.", "monument");
+      else if (mo.etat === "pret") for (const [r, n] of Object.entries(Village.Monument.reste(mo))) {
+        if (disponible(monde, r) > 0) { ajouter(1, "🏛️", "Le monument attend tes dons", "Il y a du " + res(r) + " libre : touche le monument et « Donner ce que j'ai ».", null); break; }
+        const p = producteur(monde, r);
+        if (p) ajouter(1, "🏛️", "Le monument attend " + n + " " + res(r), (combien(monde, p) ? "Un " + nom(p) + " de plus irait plus vite." : "Il te faut un " + nom(p) + "."), p);
+      }
+    }
     liste.sort((a, b) => b.urgence - a.urgence);
     return liste;
   }

@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 31,
+  version: 32,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -163,7 +163,8 @@ Village.CONFIG = {
     tailleur: { cout: { planches: 12, pierres: 10, outils: 2 }, construction: 16 },
     charcuterie: { cout: { planches: 12, pierres: 14, outils: 2 }, construction: 16 },
     // Étape 17 : ✍️ un 2e (et un 3e) ENTREPÔT, très cher : c'est un bâtiment stratégique
-    depot: { cout: { planches: 120, pierres: 90, charbon: 20 }, construction: 40 }, // étape 19 : dès le hameau (sans lingots ni outils)
+    depot: { cout: { planches: 120, pierres: 90, charbon: 20 }, construction: 40 },
+    monument: { cout: { planches: 80, pierres: 80, outils: 5 }, construction: 40 }, // étape 31 : ses fondations (puis 4 paliers) // étape 19 : dès le hameau (sans lingots ni outils)
     manoir: { cout: { planches: 12, pierres: 16, outils: 2 }, construction: 20 }, // étape 18 : on ne la construit pas, une maison le DEVIENT
   },
   // Étape 18 : ✍️ les CLASSES D'HABITANTS suivent leur logement (voir logique/classes.js).
@@ -282,6 +283,7 @@ Village.CONFIG = {
     hutte: 1, maison: 1, puits: 1,
     manoir: 2, bucheron: 2, forestier: 2, pecheur: 2, chasseur: 2, geologue: 2, poulailler: 2, veterinaire: 2,
     entrepot: 4, depot: 4, universite: 4, moulin: 4, marche: 4, fonderie: 4, ferme: 4,
+    monument: 5, // étape 31 : ✍️ « même 5 × 5 »
   },
   tailleParDefaut: 3,
   champs: {
@@ -545,7 +547,7 @@ Village.CONFIG = {
     // Étape 15 : le bourg débloque aussi le fromage et le yaourt ; pour passer à la ville, il faut des habitants HEUREUX.
     { id: "bourg", nom: "Le bourg", emoji: "🏰", debloque: ["ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "fromagerie", "cremerie", "tailleur", "charcuterie"], // étape 16 : les vêtements et le jambon
       objectifs: { batiments: 32, habitants: 34, recherches: 13, stock: { pain: 60, bijoux: 8, outils: 25, fromage: 15 }, pieces: 600, bonheur: 70 } },
-    { id: "ville", nom: "La ville", emoji: "🏙️", debloque: [], objectifs: null,
+    { id: "ville", nom: "La ville", emoji: "🏙️", debloque: ["monument"], objectifs: null, // étape 31 : le grand monument
       aVenir: "🎩 classes d'habitants, ⛏️ mines d'argent, 🏛️ grands monuments, 🎭 fêtes, 🚢 port" },
   ],
   gemmesParAge: 3, // étape 7 : 💎 offertes à chaque nouvel âge
@@ -657,7 +659,26 @@ Village.CONFIG = {
         { texte: "Construis un 💍 orfèvre", batiment: "orfevre", nombre: 1, pourquoi: "Or + charbon → bijoux, qui valent très cher." },
         { texte: "Bonheur à 70 %", bonheur: 70, pourquoi: "Des goûts variés, des maisons, du pain, des habits : touche 😊." },
       ],
-      [], // 🏙️ la ville : le grand monument (étape 31)
+      [ // 🏙️ la ville : le grand monument (étape 31)
+        { texte: "Construis le 🏛️ Grand Beffroi", batiment: "monument", nombre: 1, pourquoi: "Le grand chantier de la ville (5 × 5 cases) : menu Artisans." },
+        { texte: "Finis les fondations sculptées", monument: 1, pourquoi: "Touche le monument et « Donner ce que j'ai » : pierres, planches, outils." },
+        { texte: "Monte les grands murs", monument: 2, pourquoi: "Il faut du métal (lingots) et beaucoup de pierres." },
+        { texte: "Pose la tour et le dôme doré", monument: 3, pourquoi: "Du tissu pour les bannières, des bijoux pour l'or du dôme." },
+        { texte: "Fais la grande fête d'inauguration", monument: 4, pourquoi: "Du pain, du fromage, du jambon et des habits neufs pour tout le monde !" },
+      ],
+    ],
+  },
+
+  // Étape 31 : 🏛️ le GRAND MONUMENT de la ville, en 4 paliers. Chaque palier demande des ressources de toutes les
+  // chaînes ; on les donne quand on veut, petit à petit. Récompense de chaque palier : des 🪙, des 💎, et des points
+  // de bonheur gagnés POUR TOUJOURS (bonheur).
+  monument: {
+    nom: "Le Grand Beffroi",
+    paliers: [
+      { nom: "Les fondations sculptées", emoji: "🧱", besoins: { pierres: 200, planches: 120, outils: 15 }, pieces: 300, gemmes: 3, bonheur: 4 },
+      { nom: "Les grands murs", emoji: "🏛️", besoins: { pierres: 300, lingots: 40, planches: 100, charbon: 60 }, pieces: 500, gemmes: 4, bonheur: 5 },
+      { nom: "La tour et le dôme doré", emoji: "🕌", besoins: { tissu: 40, bijoux: 15, outils: 30, lingots: 30 }, pieces: 800, gemmes: 6, bonheur: 6 },
+      { nom: "La fête d'inauguration", emoji: "🎉", besoins: { pain: 80, fromage: 30, jambon: 30, vetements: 40, yaourt: 20 }, pieces: 1500, gemmes: 10, bonheur: 10 },
     ],
   },
 

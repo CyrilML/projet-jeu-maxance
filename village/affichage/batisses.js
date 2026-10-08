@@ -64,6 +64,7 @@ Village.Batisses = (function () {
     // Étape 17 : l'entrepôt secondaire (long, avec un toit bleu)
     // Étape 18 : la maison bourgeoise (2 étages, en pierre, avec un toit d'ardoise)
     manoir: { a: 21, a2: 27, h: 26, toit: 16, murG: "#efe6d2", murD: "#cfc4ac", toitA: "#4a5a7a", toitB: "#38465f", mur: "pierre", toitSorte: "ardoise", fenetres: 2, volets: "#2f6a4a", cheminee: 0.3, jardiniere: true, lanterne: true, toitForme: "pavillon" },
+    monument: { a: 20, a2: 26, h: 20, toit: 14, murG: "#f2ede2", murD: "#d4ccbc", toitA: "#3f6fc4", toitB: "#2f569c", mur: "pierre", toitSorte: "ardoise", fenetres: 2, lanterne: true }, // étape 31
     depot: { a: 22, a2: 32, h: 18, toit: 20, murG: "#c9a26a", murD: "#a8834a", toitA: "#3f6fc4", toitB: "#2f569c", mur: "planches", toitSorte: "tuiles", fenetres: 2, lanterne: true, toitForme: "mansarde" },
   };
 
@@ -989,6 +990,49 @@ Village.Batisses = (function () {
         ctx.strokeStyle = "#5a3818"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x - 1, y + 14); ctx.lineTo(x - 1, y + 4); ctx.moveTo(x - 7, y + 4 + p); ctx.lineTo(x + 5, y + 4 - p); ctx.stroke();
         ctx.fillStyle = "#ffcf2e"; ctx.beginPath(); ctx.arc(x - 7, y + 6 + p, 2, 0, Math.PI); ctx.arc(x + 5, y + 6 - p, 2, 0, Math.PI); ctx.fill();
         return [x - 2, y - 32];
+      }
+      case "monument": {
+        // Étape 31 : 🏛️ le Grand Beffroi grandit à chaque palier (b.palier : 0 à 4 ; l'aperçu le montre fini)
+        const p = b ? b.palier || 0 : 4;
+        const echafaudage = (P, h, l) => { for (const dx of [-l, 0, l]) poteau(ctx, [P[0] + dx, P[1] + Math.abs(dx) * 0.2], h, 1.3); for (let v = 0.3; v < 1; v += 0.33) poutre(ctx, [P[0] - l, P[1] + l * 0.2 - h * v], [P[0] + l, P[1] + l * 0.2 - h * v], 1.4, "#c9965a"); };
+        // le socle en pierre (toujours) : 3 marches
+        bloc(ctx, x, y + 2, 27, 3, "#d8d2c6", "#b8b2a6", "#99938a", false);
+        bloc(ctx, x, y - 1, 23, 3, "#e2ddd2", "#c4beb2", "#a6a094", false);
+        if (p === 0) { // les fondations : des pierres taillées empilées et des échafaudages
+          bloc(ctx, x - 8, y - 4, 7, 6, "#e8e5de", "#c4c0b6", "#a5a197", true); bloc(ctx, x + 9, y - 2, 6, 5, "#e8e5de", "#c4c0b6", "#a5a197", true);
+          echafaudage([x + 2, y - 4], 26, 9);
+          return [x, y - 34];
+        }
+        // la tour, derrière (palier 2 : à moitié, avec échafaudage ; 3 et plus : finie, avec son dôme doré)
+        if (p >= 2) {
+          const s = tourRonde(ctx, x + 4, y - 14, { r: 9, h: p >= 3 ? 52 : 28, ht: 14, clair: "#f4efe4", fonce: "#bdb5a5", pierre: true, toit: p >= 3 ? "dome" : null, toitA: "#ffe27a", toitB: "#c99a1e", dessus: "#cfc8ba" });
+          if (p >= 3) { // la flèche et le drapeau
+            ctx.strokeStyle = "#8a6a2a"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(s[0], s[1]); ctx.lineTo(s[0], s[1] - 12); ctx.stroke();
+            drapeau(ctx, s[0], s[1] - 12, t, Village.Boutique.COULEURS_DRAPEAU[(Village.monde && Village.monde.drapeau) || 0]);
+            // l'horloge du beffroi
+            ctx.beginPath(); ctx.arc(x + 1, y - 46, 4.5, 0, TOUR); ctx.fillStyle = "#fbf6ee"; ctx.fill(); contour(ctx, 1.2);
+            ctx.strokeStyle = "#3b2614"; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(x + 1, y - 46); ctx.lineTo(x + 1 + Math.cos(t * 0.5) * 3, y - 46 + Math.sin(t * 0.5) * 3); ctx.moveTo(x + 1, y - 46); ctx.lineTo(x + 1, y - 49); ctx.stroke();
+          } else echafaudage([x + 4, y - 14], 40, 8);
+        }
+        // la grande salle, devant
+        const m2 = Object.assign({}, m, { h: p >= 2 ? 20 : 12, toitForme: p >= 3 ? "pavillon" : "plat", toitA: p >= 3 ? "#3f6fc4" : "#cfc8ba", toitB: p >= 3 ? "#2f569c" : "#b8b0a0", fenetres: p >= 2 ? 2 : 0 });
+        const sommet = boite(ctx, x - 3, y + 1, m2, 1, true);
+        const c = coins(x - 3, y + 1, m2);
+        if (p >= 2) { // les colonnes et le fronton, sur la façade de gauche
+          for (let k = 0; k < 5; k++) { const P = surMur(c.G, c.B, m2.h, 0.1 + k * 0.2, 0), Q = [P[0] - 5, P[1] + 2.5]; ctx.strokeStyle = CONTOUR; ctx.lineWidth = 4.4; ctx.beginPath(); ctx.moveTo(Q[0], Q[1]); ctx.lineTo(Q[0], Q[1] - m2.h * 0.85); ctx.stroke(); ctx.strokeStyle = "#fbf8f0"; ctx.lineWidth = 3; ctx.stroke(); }
+          const P0 = surMur(c.G, c.B, m2.h, 0.02, 0.85), P1 = surMur(c.G, c.B, m2.h, 0.98, 0.85);
+          forme(ctx, [[P0[0] - 6, P0[1] + 3], [P1[0] - 4, P1[1] + 4], [(P0[0] + P1[0]) / 2 - 5, (P0[1] + P1[1]) / 2 - 8]], "#efe9dc");
+          if (p >= 3) forme(ctx, [[(P0[0] + P1[0]) / 2 - 5, (P0[1] + P1[1]) / 2 - 4.5], [(P0[0] + P1[0]) / 2 - 2, (P0[1] + P1[1]) / 2 - 2], [(P0[0] + P1[0]) / 2 - 5, (P0[1] + P1[1]) / 2 + 0.5], [(P0[0] + P1[0]) / 2 - 8, (P0[1] + P1[1]) / 2 - 2]], "#ffcf2e"); // l'étoile d'or
+        } else echafaudage([x - 3, y], 22, 12);
+        porte(ctx, x - 3, y + 1, m2, "#7a4a2a");
+        if (p >= 4) { // la fête : une statue, des bannières, et des feux d'artifice de temps en temps
+          bloc(ctx, x + 16, y + 9, 3.5, 4, "#d8d2c6", "#b8b2a6", "#99938a", false);
+          ctx.fillStyle = "#c9a636"; ctx.beginPath(); ctx.ellipse(x + 16, y + 1, 1.8, 4, 0, 0, TOUR); ctx.fill(); contour(ctx, 0.8); rond(ctx, x + 16, y - 4, 1.7, "#c9a636");
+          ["#d9553b", "#3f6fc4", "#e8b830", "#4fc25a"].forEach((col, k) => { const P = surMur(c.B, c.D, m2.h, 0.15 + k * 0.23, 0.95), o = Math.sin(t * 2 + k) * 0.8; forme(ctx, [[P[0] - 1.6, P[1]], [P[0] + 1.6, P[1] - 0.8], [P[0] + 1.6 + o, P[1] + 8], [P[0] + o, P[1] + 10], [P[0] - 1.6 + o, P[1] + 8.8]], col); });
+          const ph = (t * 0.4 + num * 0.13) % 1;
+          if (ph < 0.35) { const r = ph * 40, fx = x + (num % 2 ? 10 : -12), fy = y - 70 - ph * 20; ["#ff6b6b", "#ffd84a", "#7fd6ff", "#b98ae8"].forEach((col, k) => { ctx.fillStyle = col; for (let j = 0; j < 6; j++) { const a = (j / 6) * TOUR + k * 0.4; ctx.globalAlpha = 1 - ph * 2.5; ctx.beginPath(); ctx.arc(fx + Math.cos(a) * r * (0.6 + k * 0.15), fy + Math.sin(a) * r * (0.6 + k * 0.15), 1.4, 0, TOUR); ctx.fill(); } }); ctx.globalAlpha = 1; }
+        }
+        return p >= 3 ? [x + 4, y - 96] : sommet;
       }
       case "faneur": { // un grand hangar OUVERT, plein de foin, avec un toit de grange
         bloc(ctx, x, y, 16, 11, vue.hiver ? "#e8eef5" : "#e8c64a", "#d9b23a", "#b8962e", false);
