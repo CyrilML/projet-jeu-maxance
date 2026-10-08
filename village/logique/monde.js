@@ -76,6 +76,9 @@ Village.Monde = (function () {
       moment: null, // étape 9 : le moment de la journée { nom, noirceur, heure… } (seulement pour les yeux)
       animaux: [], // le gibier
       partis: 0, // les habitants qui ont quitté le village (trop faim)
+      // Étape 30
+      commandes: { liste: [], attente: 30, livrees: 0 }, // 📦 les commandes des clients (logique/commandes.js)
+      guide: { age: 0, numero: 0 }, // 👣 l'étape guidée en cours (logique/guide.js)
     };
     if (cameraSauvee) Object.assign(monde.camera, cameraSauvee);
     else centrerSurLeVillage(monde);
@@ -153,6 +156,8 @@ Village.Monde = (function () {
     monde.partis = partie.partis || 0;
     if (partie.bonheur !== undefined) monde.bonheur.valeur = partie.bonheur; // étape 15
     if (partie.habits) monde.habits = { minuteur: partie.habits[0], part: partie.habits[1] }; // étape 16
+    if (partie.commandes) monde.commandes = { liste: partie.commandes.liste || [], attente: partie.commandes.attente || 20, livrees: partie.commandes.livrees || 0 }; // étape 30
+    if (partie.guide) monde.guide = { age: partie.guide.age || 0, numero: partie.guide.numero || 0 };
     monde.gouts = partie.gouts ? Object.assign({}, partie.gouts) : { poissons: monde.horloge, viande: monde.horloge }; // une partie plus ancienne : ils viennent de manger
     for (const [x, y, sorte] of partie.animaux || []) Village.Animaux.creer(monde, x, y, sorte);
     for (const b of partie.batiments || []) {
@@ -218,6 +223,8 @@ Village.Monde = (function () {
     Village.Statistiques.etape(monde, dt); // étape 8 : le compteur tourne la page toutes les 10 s
     Village.Publicite.etape(monde, dt); // étape 11 : une proposition de pub, de temps en temps
     Village.Villageois.etape(monde, dt); // étape 13 : les villageois arrivent et vont travailler
+    Village.Commandes.etape(monde, dt); // étape 30 : les clients et leurs commandes
+    Village.Guide.etape(monde, dt); // étape 30 : les objectifs pas à pas
     Village.Conseiller.etape(monde, dt); // étape 29 : le conseiller relit le village
     nature(monde, dt);
   }
@@ -301,6 +308,7 @@ Village.Monde = (function () {
     if (intentions.annulerProjet) { if (monde.trace && (monde.trace.pret || monde.trace.depart)) Pl.annulerRoute(monde); else Pl.annuler(monde); }
     // Étape 7 : les recherches, les missions et la boutique (des boutons dans l'écran)
     if (intentions.recherche) Village.Recherches.lancer(monde, intentions.recherche);
+    if (intentions.commande !== null && intentions.commande !== undefined) Village.Commandes.livrer(monde, intentions.commande); // étape 30
     if (intentions.mission === "accepter") Village.Missions.accepter(monde);
     else if (intentions.mission === "plusTard") Village.Missions.plusTard(monde);
     else if (intentions.mission === "livrer") Village.Missions.livrer(monde);

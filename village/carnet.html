@@ -153,6 +153,7 @@
       <a href="#etape27">Étape 27</a>
       <a href="#etape28">Étape 28</a>
       <a href="#etape29">Étape 29</a>
+      <a href="#etape30">Étape 30</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1818,6 +1819,44 @@ SI un objectif de l'âge n'est pas atteint                  → 🔵 « voici ce
       <details class="question"><summary>Le conseiller change-t-il quelque chose dans le village ?</summary><p>Non : il lit et il conseille. C'est toi qui décides.</p></details>
     </section>
 
+    <section id="etape30">
+      <h2>📦 Étape 30 : les commandes et les objectifs pas à pas <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Des clients passent des commandes claires, avec une récompense. Et chaque âge est découpé en 8 petites étapes guidées, une à la fois, avec leur raison. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/31-commandes-guide.md</code>.</p>
+          <ul>
+            <li>✍️ « On ne sait pas vraiment quoi produire et pourquoi. »</li>
+            <li>Tes choix : les commandes et les objectifs pas à pas.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Sous la barre : « 👣 1/8 · … » ; touche-le pour savoir pourquoi.</li>
+            <li>☐ Une étape réussie : des 🪙 s'envolent, et la suivante s'affiche.</li>
+            <li>☐ Le bouton 📦 : 3 commandes, une barre, « Livrer ».</li>
+            <li>☐ Le chiffre vert sur 📦 : les commandes que tu peux livrer tout de suite.</li>
+            <li>Vérifie « version 31 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>⚖️ Une commande qui vaut toujours à peu près pareil</h3>
+      <pre style="white-space: pre-wrap">valeur d'une commande = 40 × (âge + 1) pièces
+quantité = valeur ÷ prix au marché       (arrondi à un nombre pair)
+au campement : 40 🪙 → 40 ÷ 1 = 40 troncs, ou 40 ÷ 2 = 20 planches
+récompense = 1,5 × la valeur = 60 🪙</pre>
+      <p>Grâce au prix du marché, une commande de bijoux (chers) demande peu de bijoux, et une commande de troncs (pas chers) en demande beaucoup : c'est <strong>équitable</strong>. Et la commande ne demande que ce que le village sait déjà fabriquer : elle est toujours possible.</p>
+      <p>Les objectifs pas à pas, c'est le même but qu'avant, mais <strong>découpé</strong> : un gros problème devient une suite de petits problèmes faciles. C'est une des idées les plus importantes en programmation !</p>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Au hameau (âge 1), une commande vaut combien de pièces ?</summary><p>40 × (1 + 1) = 80 pièces. La récompense : 1,5 × 80 = 120 🪙.</p></details>
+      <details class="question"><summary>Combien de planches (prix 2) pour une commande de 80 pièces ?</summary><p>80 ÷ 2 = 40 planches.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1997,9 +2036,9 @@ SI un objectif de l'âge n'est pas atteint                  → 🔵 « voici ce
           <p>Des conseils rangés par urgence, les chaînes et leurs goulots, ▲ ▼ dans l'inventaire.</p>
           <p class="apprend"><b>Tu apprends :</b> un système expert (des règles SI… ALORS…), le goulot d'étranglement. <b>Durée :</b> 1 séance.</p>
         </div>
-        <div class="carte">
+        <div class="carte fait">
           <div class="num">30</div>
-          <h4>📦 Les commandes et les objectifs pas à pas <span class="etiquette">⏭️ juste après</span></h4>
+          <h4>📦 Les commandes et les objectifs pas à pas <span class="etiquette">✅ fait · à valider</span></h4>
           <p>Des commandes claires avec une récompense, et des objectifs en petites étapes guidées.</p>
           <p class="apprend"><b>Tu apprends :</b> une file de tâches, une récompense qui motive. <b>Durée :</b> 1 séance.</p>
         </div>
@@ -2253,6 +2292,14 @@ SI un objectif de l'âge n'est pas atteint                  → 🔵 « voici ce
         <textarea class="journal" id="village-appris-29" data-cle="village-appris-29" placeholder="Ex. : J'ai appris ce qu'est un goulot d'étranglement…"></textarea>
         <label for="village-idees-29"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-29" data-cle="village-idees-29" placeholder="Ex. : Un conseiller qui parle avec une bulle…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 30 · les commandes et les objectifs pas à pas <span class="petit">· 8 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> <code>logique/commandes.js</code>, <code>logique/guide.js</code>, les données <code>commandes</code> et <code>guide</code> dans config.js, le panneau 📦, l'étiquette 👣, la base de données en version 18.</p>
+        <label for="village-appris-30"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-30" data-cle="village-appris-30" placeholder="Ex. : J'ai appris à découper un gros but en petites étapes…"></textarea>
+        <label for="village-idees-30"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-30" data-cle="village-idees-30" placeholder="Ex. : Des clients pressés qui paient plus…"></textarea>
       </div>
     </section>
   </main>

@@ -43,6 +43,11 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("recherche-impossible", (d) => afficher("🚫 " + d.nom + " : " + d.raison));
   Village.Evenements.ecouter("mission-proposee", (d) => afficher("📜 " + d.emoji + " " + d.qui + " a besoin de toi ! Touche 📜"));
   Village.Evenements.ecouter("mission-reussie", (d) => { afficher("🎉 Mission réussie ! Merci de la part de " + d.qui + " " + d.emoji); gagner("🎉 Mission réussie !", Object.entries(d.recompense)); }); // étape 17 : ✍️ on VOIT ce qu'on gagne
+  // Étape 30 : les commandes et le guide
+  Village.Evenements.ecouter("commande-livree", (d) => gagner("📦 Merci de la part de " + d.qui + " !", [["pieces", d.pieces]].concat(d.gemmes ? [["gemmes", d.gemmes]] : [])));
+  Village.Evenements.ecouter("commande-arrivee", (d) => afficher("📦 " + d.emoji + " " + d.qui + " a besoin de " + d.nombre + " " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " (touche 📦)"));
+  Village.Evenements.ecouter("commande-pas-assez", (d) => afficher("📦 Il manque encore " + d.manque + " " + Village.Batiments.NOMS_RESSOURCES[d.quoi]));
+  Village.Evenements.ecouter("guide-etape", (d) => gagner("👣 Étape réussie : " + d.texte, [["pieces", d.pieces]]));
   Village.Evenements.ecouter("pub-regardee", (d) => { if (d.sorte === "ressource") gagner("📺 Merci !", [[d.quoi, d.quantite]]); else if (d.sorte === "gemmes") gagner("📺 Merci !", [["gemmes", d.quantite]]); });
   Village.Evenements.ecouter("nouvel-age", (d) => gagner(d.emoji + " " + d.nom + " !", [["gemmes", d.gemmes]]));
   Village.Evenements.ecouter("logement-evolue", (d) => afficher("⬆️ " + d.avant + " n° " + d.numero + " devient « " + d.apres + " » : des " + d.emoji + " " + d.classe.toLowerCase() + " s'installent !")); // étape 18
@@ -170,6 +175,8 @@ Village.Interface = (function () {
   function panneauObjectifs(ctx, monde, x, y, l) {
     const petit = Ec.petit, age = Village.Ages.actuel(monde), prochain = Village.Ages.suivant(monde), obj = Village.Ages.objectifs(monde);
     const lignes = [];
+    const g = Village.Guide.actuelle(monde); // étape 30 : l'étape guidée d'abord
+    if (g) { lignes.push(["👣 Étape " + (g.numero + 1) + "/" + g.total + " : " + g.texte + " (" + Math.min(g.valeur, g.cible) + "/" + g.cible + ")", "#2e6a3a", true]); lignes.push(["   " + g.pourquoi, "#5a4220", false]); }
     if (obj && prochain) {
       lignes.push(["Pour passer au " + prochain.nom.replace(/^(Le|La) /, "").toLowerCase() + " " + prochain.emoji + " :", "#3b2614", true]);
       for (const o of obj) lignes.push([(o.fait ? "✅ " : "⬜ ") + o.texte + " : " + Math.min(o.valeur, o.cible) + " / " + o.cible, o.fait ? "#2e8a3a" : "#5a4220", false]);
@@ -247,6 +254,34 @@ Village.Interface = (function () {
       Village.Batisses.icone(ctx, c.sortie, px + 8, cy + 9, 15); px += 20;
       texte(ctx, bloque ? "⛔ manque " + Object.keys(c.manque).map((r) => C.ressources[r].emoji).join(" ") : c.actifs + "/" + c.nombre + " au travail", px, cy + 9, petit ? 9 : 10, bloque ? "#c0392b" : "#2e8a3a", true);
     });
+  }
+
+  // 📦 Étape 30 : le tableau des commandes
+  function panneauCommandes(ctx, monde, W, He, petit) {
+    const liste = monde.commandes.liste, hl = petit ? 74 : 66, l = Math.min(W - 20, 520), x = (W - l) / 2, y = basDuStock + 4;
+    const h = 64 + Math.max(1, liste.length) * hl + 34;
+    bulle(ctx, x, y, l, h, "rgba(255, 250, 235, .985)");
+    zone(x, y, l, h, "rien");
+    texte(ctx, "📦 Les commandes", x + 14, y + 20, petit ? 15 : 17, "#3b2614", true);
+    croix(ctx, x, y, l, "fermerPanneau");
+    texte(ctx, "Livre ce qu'ils demandent : tu gagnes des 🪙 (et parfois une 💎).", x + 14, y + 42, petit ? 10 : 11, "#7a5a30");
+    if (!liste.length) texte(ctx, "⏳ Un client va bientôt arriver… (il faut d'abord que le village fabrique quelque chose)", x + 14, y + 74, petit ? 10 : 12, "#7a5a30");
+    liste.forEach((c, k) => {
+      const ry = y + 58 + k * hl, ok = Village.Commandes.peutLivrer(monde, c), a = monde.stock[c.quoi] || 0;
+      ctx.fillStyle = ok ? "rgba(79, 194, 90, .12)" : "rgba(90, 66, 32, .06)"; ctx.fillRect(x + 8, ry, l - 16, hl - 6);
+      texte(ctx, c.emoji, x + 26, ry + 20, 22, null, false, "center");
+      texte(ctx, c.qui, x + 46, ry + 12, petit ? 11 : 12, "#3b2614", true);
+      Village.Batisses.icone(ctx, c.quoi, x + 58, ry + 36, 22);
+      texte(ctx, c.nombre + " " + C.ressources[c.quoi].nom, x + 74, ry + 36, petit ? 12 : 14, "#3b2614", true);
+      // la barre : combien on en a déjà
+      const bl = petit ? 90 : 140, bx = x + 74, by = ry + 50;
+      ctx.fillStyle = "#eadfc6"; ctx.fillRect(bx, by, bl, 6); ctx.fillStyle = ok ? "#2e8a3a" : "#e0a81e"; ctx.fillRect(bx, by, bl * Math.min(1, a / c.nombre), 6);
+      texte(ctx, Math.min(a, c.nombre) + "/" + c.nombre + " · ⌛ " + Math.ceil(c.reste / 60) + " min", bx + bl + 6, by + 3, 9, "#7a5a30", true);
+      const lb = petit ? 88 : 120;
+      bouton(ctx, x + l - lb - 14, ry + 12, lb, hl - 30, (ok ? "Livrer " : "") + "+" + c.pieces + "🪙" + (c.gemmes ? " +💎" : ""), "commande", k, ok, "#2e8a3a");
+      if (!ok) zone(x + l - lb - 14, ry + 12, lb, hl - 30, "info", "📦 Il manque encore " + (c.nombre - a) + " " + C.ressources[c.quoi].nom);
+    });
+    texte(ctx, "📦 " + monde.commandes.livrees + " commande(s) livrée(s) depuis le début", x + 14, y + h - 16, petit ? 10 : 11, "#7a5a30");
   }
 
   let choixInventaire = null;
@@ -726,6 +761,12 @@ Village.Interface = (function () {
     texte(ctx, "🧭", W - 10 - tp / 2, yc + tp / 2 + 1, 20, null, false, "center");
     if (urgent) { ctx.fillStyle = "#e8402e"; ctx.beginPath(); ctx.arc(W - 14, yc + 4, 6, 0, Math.PI * 2); ctx.fill(); }
     zone(W - tp - 10, yc, tp, tp, "panneau", "conseiller");
+    // Étape 30 : 📦 les commandes (un rond vert avec le nombre de celles qu'on peut livrer tout de suite)
+    const yk = yc + 46, prets = monde.commandes.liste.filter((c) => Village.Commandes.peutLivrer(monde, c)).length;
+    bulle(ctx, W - tp - 10, yk, tp, tp, panneau === "commandes" ? "rgba(255, 226, 122, .98)" : null);
+    texte(ctx, "📦", W - 10 - tp / 2, yk + tp / 2 + 1, 20, null, false, "center");
+    if (monde.commandes.liste.length) { ctx.fillStyle = prets ? "#2e8a3a" : "#a08a6a"; ctx.beginPath(); ctx.arc(W - 14, yk + 4, 8, 0, Math.PI * 2); ctx.fill(); texte(ctx, String(prets || monde.commandes.liste.length), W - 14, yk + 4.5, 10, "#ffffff", true, "center"); }
+    zone(W - tp - 10, yk, tp, tp, "panneau", "commandes");
     if (W >= 520) dessinerMini(ctx, monde, mini, W - 10 - tp - 10, 10, petit ? 1 : 1.5);
 
     // ---- En bas : le MENU (étape 5). ✍️ Moins de boutons toujours affichés, regroupés par ressource :
@@ -835,7 +876,17 @@ Village.Interface = (function () {
     // Étape 29 : le conseil n° 1 du conseiller, toujours visible (le toucher ouvre le conseiller)
     const c1 = (monde.conseils || [])[0];
     let ax = 10, ay = basDuStock + 6;
-    if (c1 && !panneau) {
+    const g1 = Village.Guide.actuelle(monde);
+    if (g1 && !panneau) { // étape 30 : 👣 l'étape guidée en cours
+      const txt = "👣 " + (g1.numero + 1) + "/" + g1.total + " · " + g1.texte + " (" + Math.min(g1.valeur, g1.cible) + "/" + g1.cible + ")";
+      ctx.font = "bold " + (petit ? 10 : 11) + "px " + POLICE;
+      const lw = Math.min(W - 80, ctx.measureText(txt).width + 18);
+      bulle(ctx, ax, ay, lw, 22, "rgba(226, 244, 230, .94)");
+      ctx.save(); ctx.beginPath(); ctx.rect(ax + 4, ay, lw - 8, 22); ctx.clip(); texte(ctx, txt, ax + 9, ay + 11, petit ? 10 : 11, "#2e6a3a", true); ctx.restore();
+      zone(ax, ay, lw, 22, "info", "👣 " + g1.texte + " : " + g1.pourquoi);
+      ay += 26;
+    }
+    if (c1 && !panneau && (c1.urgence >= 2 || !g1)) {
       const txt = "🧭 " + c1.texte + (c1.type ? " → " + Village.Batiments.TYPES[c1.type].emoji + " " + Village.Batiments.TYPES[c1.type].court : "");
       ctx.font = "bold " + (petit ? 10 : 11) + "px " + POLICE;
       const lw = Math.min(W - 80, ctx.measureText(txt).width + 18);
@@ -866,7 +917,8 @@ Village.Interface = (function () {
     else if (panneau === "marche") panneauMarche(ctx, monde, W, He, petit);
     else if (panneau === "bonheur") panneauBonheur(ctx, monde, W, He, petit); // étape 15
     if (panneau === "inventaire") panneauInventaire(ctx, monde, W, He, petit);
-    else if (panneau === "conseiller") panneauConseiller(ctx, monde, W, He, petit); // étape 29 // étape 25 : en pleine page, par-dessus le reste
+    else if (panneau === "conseiller") panneauConseiller(ctx, monde, W, He, petit); // étape 29
+    else if (panneau === "commandes") panneauCommandes(ctx, monde, W, He, petit); // étape 30 // étape 25 : en pleine page, par-dessus le reste
     dessinerGains(ctx, W, He); // étape 17
     // Étape 11 : le résumé de l'absence, et la pub (par-dessus tout le reste)
     if (monde.absence) panneauAbsence(ctx, monde, W, He, petit);

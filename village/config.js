@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 30,
+  version: 31,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -594,6 +594,73 @@ Village.CONFIG = {
 
   // Étape 7 : 📜 les MISSIONS. Un personnage raconte une petite histoire et demande des ressources
   // avant la fin du temps. Réussie : une récompense et des 💎. Ratée : rien de grave, une autre viendra.
+  // Étape 30 : ✍️ (idées choisies par Maxance) 📦 les COMMANDES : 3 demandes claires à la fois, avec une récompense.
+  // Elles demandent ce que le village sait fabriquer à son âge ; la quantité dépend du prix au marché (une commande vaut
+  // environ « valeur × (âge + 1) » pièces), et elle rapporte 1,5 fois ce qu'elle vaut (et parfois 💎).
+  commandes: {
+    nombre: 3, // commandes en même temps
+    duree: 600, // s pour la livrer (10 min) ; après, le client repart (rien de grave)
+    attente: 20, // s avant qu'un nouveau client arrive
+    valeur: 40, // 🪙 que vaut une commande, × (âge + 1)
+    gain: 1.5, // la récompense = 1,5 × ce que vaut la commande
+    chanceGemme: 0.2, // 1 chance sur 5 d'avoir aussi 1 💎
+    clients: [
+      { qui: "La cuisinière", emoji: "👩‍🍳" }, { qui: "Le marchand ambulant", emoji: "🧳" }, { qui: "Le capitaine", emoji: "💂" },
+      { qui: "La grand-mère", emoji: "👵" }, { qui: "Le charpentier", emoji: "🧑‍🔧" }, { qui: "Le seigneur", emoji: "🤴" },
+      { qui: "La couturière", emoji: "🧵" }, { qui: "Le voyageur", emoji: "🧭" },
+    ],
+  },
+  // Étape 30 : 👣 les OBJECTIFS PAS À PAS. Pour chaque âge, une suite de petites étapes guidées, avec POURQUOI.
+  // Une étape est réussie quand : un bâtiment est construit (batiment), une ressource est dans l'entrepôt (stock), assez
+  // de recherches (recherches), d'habitants (habitants), de filons découverts (filons), de commandes livrées (commandes),
+  // de pièces (pieces) ou de bonheur (bonheur). Chaque étape réussie rapporte quelques 🪙.
+  guide: {
+    recompense: 10, // 🪙 × (âge + 1) par étape réussie
+    ages: [
+      [ // 🏕️ le campement
+        { texte: "Construis un 🪓 bûcheron", batiment: "bucheron", nombre: 1, pourquoi: "Il coupe les arbres : les troncs sont le début de tout." },
+        { texte: "Construis une 🪚 scierie", batiment: "scierie", nombre: 1, pourquoi: "Elle transforme les troncs en planches : presque tout se construit avec." },
+        { texte: "Construis un 🎣 pêcheur", batiment: "pecheur", nombre: 1, pourquoi: "Les habitants mangent : sans nourriture, ils partent." },
+        { texte: "Construis une 🛖 hutte", batiment: "hutte", nombre: 1, pourquoi: "Chaque ouvrier a besoin d'un lit. Plus de lits = plus d'habitants." },
+        { texte: "Construis une ⛏️ carrière", batiment: "carriere", nombre: 1, pourquoi: "Les pierres servent aux bâtiments plus solides." },
+        { texte: "Construis un 🏹 chasseur", batiment: "chasseur", nombre: 1, pourquoi: "Deux sortes de nourriture, c'est plus sûr (et les habitants aiment varier)." },
+        { texte: "Aie 40 planches", stock: "planches", nombre: 40, pourquoi: "C'est un des objectifs pour passer au hameau." },
+        { texte: "Livre une commande 📦", commandes: 1, pourquoi: "Les commandes rapportent des pièces 🪙 : touche 📦 à droite." },
+      ],
+      [ // 🛖 le hameau
+        { texte: "Construis une 🎓 université", batiment: "universite", nombre: 1, pourquoi: "Les recherches rendent tout le monde plus rapide." },
+        { texte: "Fais une recherche", recherches: 1, pourquoi: "Touche l'université et choisis une recherche." },
+        { texte: "Construis un 🔍 géologue", batiment: "geologue", nombre: 1, pourquoi: "Les filons sont cachés sous le sol rocheux : lui seul les trouve." },
+        { texte: "Découvre un filon (des paillettes)", filons: 1, pourquoi: "Suis le géologue : il explore le sol rocheux gris." },
+        { texte: "Construis une ⚫ mine de charbon", batiment: "mineCharbon", nombre: 1, pourquoi: "Pose-la sur des paillettes noires : elle creuse un puits." },
+        { texte: "Construis une 🐄 étable", batiment: "etable", nombre: 1, pourquoi: "Le lait est une douceur : les habitants seront plus heureux." },
+        { texte: "Aie 20 charbon", stock: "charbon", nombre: 20, pourquoi: "C'est un des objectifs pour passer au village." },
+        { texte: "Fais 3 recherches", recherches: 3, pourquoi: "C'est un des objectifs pour passer au village." },
+      ],
+      [ // 🏡 le village
+        { texte: "Construis une 🟤 mine de fer", batiment: "mineFer", nombre: 1, pourquoi: "Sur des paillettes rousses. Le fer, c'est le début des outils." },
+        { texte: "Construis une 🔥 fonderie", batiment: "fonderie", nombre: 1, pourquoi: "Fer + charbon → lingots." },
+        { texte: "Construis une ⚒️ forge", batiment: "forge", nombre: 1, pourquoi: "Lingots + planches → outils : les bâtiments du bourg en demandent." },
+        { texte: "Construis une 🏠 maison", batiment: "maison", nombre: 1, pourquoi: "Une maison loge 6 personnes, et donne du confort." },
+        { texte: "Construis un 🏪 marché", batiment: "marche", nombre: 1, pourquoi: "Pour vendre ce que tu as en trop, contre des pièces 🪙." },
+        { texte: "Aie 10 outils", stock: "outils", nombre: 10, pourquoi: "C'est un des objectifs pour passer au bourg." },
+        { texte: "Aie 16 habitants", habitants: 16, pourquoi: "Des maisons et des huttes." },
+        { texte: "Aie 150 🪙", pieces: 150, pourquoi: "Commandes 📦 et marché 🏪." },
+      ],
+      [ // 🏰 le bourg
+        { texte: "Construis une 🌾 ferme", batiment: "ferme", nombre: 1, pourquoi: "Le blé : le début du pain (pas en hiver !)." },
+        { texte: "Construis un 🌬️ moulin", batiment: "moulin", nombre: 1, pourquoi: "Blé → farine." },
+        { texte: "Construis une 🍞 boulangerie", batiment: "boulangerie", nombre: 1, pourquoi: "Farine + bois → pain. Au bourg, les habitants en veulent." },
+        { texte: "Aie 30 pains", stock: "pain", nombre: 30, pourquoi: "Sans pain, les habitants du bourg travaillent moins bien." },
+        { texte: "Construis un 🪜 maçon-couvreur", batiment: "macon", nombre: 1, pourquoi: "Au bourg, les bâtiments s'usent : il les répare." },
+        { texte: "Construis une 🟡 mine d'or", batiment: "mineOr", nombre: 1, pourquoi: "Sur des paillettes dorées." },
+        { texte: "Construis un 💍 orfèvre", batiment: "orfevre", nombre: 1, pourquoi: "Or + charbon → bijoux, qui valent très cher." },
+        { texte: "Bonheur à 70 %", bonheur: 70, pourquoi: "Des goûts variés, des maisons, du pain, des habits : touche 😊." },
+      ],
+      [], // 🏙️ la ville : le grand monument (étape 31)
+    ],
+  },
+
   missions: {
     attente: 60, // s entre la fin d'une mission et la proposition suivante
     liste: [

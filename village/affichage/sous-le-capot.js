@@ -118,6 +118,11 @@ Village.SousLeCapot = (function () {
     "achat-impossible": (d) => "🚫 Achat impossible (" + d.nom + ") : " + d.raison,
     "minerai-extrait": (d) => "⛏️ " + d.nom + " n° " + d.numero + " : +1 " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " · il reste " + d.reste + " dans le filon · " + d.devant + " devant la porte",
     "filon-epuise": (d) => "⛏️ " + d.nom + " n° " + d.numero + " : plus de " + d.minerai + " dans les filons voisins",
+    "commande-arrivee": (d) => "📦 " + d.emoji + " " + d.qui + " commande " + d.nombre + " " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " (récompense : " + d.pieces + " 🪙)", // étape 30
+    "commande-livree": (d) => "📦✅ Commande livrée à " + d.qui + " : −" + d.nombre + " " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + ", +" + d.pieces + " 🪙" + (d.gemmes ? " +" + d.gemmes + " 💎" : "") + " · " + d.livrees + " livrée(s) en tout",
+    "commande-partie": (d) => "📦⌛ " + d.emoji + " " + d.qui + " n'a pas pu attendre ses " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " : il repart",
+    "commande-pas-assez": (d) => "📦 Pas assez de " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " pour " + d.qui + " : il en manque " + d.manque,
+    "guide-etape": (d) => "👣 Étape guidée " + d.numero + "/" + d.total + " réussie : " + d.texte + " (+" + d.pieces + " 🪙)" + (d.suivante ? " · suivante : " + d.suivante : " · toutes faites pour cet âge !"),
     "conseil": (d) => "🧭 Le conseiller : " + d.texte + (d.type ? " → construis " + Village.Batiments.TYPES[d.type].emoji + " " + Village.Batiments.TYPES[d.type].court : "") + " (" + d.pourquoi + ")", // étape 29
     "filon-trouve": (d) => "🔍 Filon de " + d.nom + " " + d.emoji + " trouvé près de (" + d.colonne + ", " + d.ligne + ")" + (d.cases > 1 ? " : " + d.cases + " cases de paillettes" : "") + " · " + d.reserve + " morceaux", // étape 28
     // Étape 8 : le logement et le marché

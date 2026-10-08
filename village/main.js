@@ -100,7 +100,7 @@
       village: E.consommer("village"),
       construire: null,
       outil: E.consommer("route") ? "route" : E.consommer("routePierre") ? "routePierre" : E.consommer("demolir") ? "demolir" : E.consommer("deplacer") ? "deplacer" : null,
-      recherche: null, mission: null, achat: null, // étape 7
+      recherche: null, mission: null, commande: null, achat: null, // étape 7 ; étape 30 : commande
       marche: null, // étape 8 : { sens: "vendre" ou "acheter", quoi: "planches" }
       reserve: null, pub: null, absenceVue: false, // étape 11
       valider: E.consommer("valider"), annulerProjet: false, // étape 12 : ✅ et ❌
@@ -125,6 +125,7 @@
         else if (z.action === "info") Village.Interface.info(z.valeur); // étape 17 : ce qui manque
         else if (z.action === "pageUniversite") Village.Interface.changerPage(z.valeur); // étape 21 : les pages de l'université
         else if (z.action === "mission") i.mission = z.valeur;
+        else if (z.action === "commande") i.commande = z.valeur; // étape 30 : livrer une commande
         else if (z.action === "achat") i.achat = z.valeur;
         else if (z.action === "marche") i.marche = z.valeur; // étape 8
         else if (z.action === "reserve") i.reserve = z.valeur; // étape 11
@@ -200,7 +201,7 @@
       Village.Monde.etape(monde, dt, intentions);
       // Les pas suivants de la même image : plus de clic, de glissé ni de zoom (déjà faits).
       intentions = Object.assign({}, intentions, {
-        zoom: 0, village: false, construire: null, outil: null, annuler: false, allerA: null, recherche: null, mission: null, achat: null,
+        zoom: 0, village: false, construire: null, outil: null, annuler: false, allerA: null, recherche: null, mission: null, commande: null, achat: null,
         marche: null, reserve: null, pub: null, absenceVue: false, // étape 11 : sinon, une vente se faisait 2 fois !
         valider: false, annulerProjet: false, ameliorer: null, agrandirEntrepot: false,
         souris: Object.assign({}, intentions.souris, { glisseX: 0, glisseY: 0, molette: 0, pince: 1, centrePince: null, clic: null, debutAppui: null, leve: null, appuiLong: null }),
