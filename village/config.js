@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 34,
+  version: 35,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -166,7 +166,10 @@ Village.CONFIG = {
     charcuterie: { cout: { planches: 12, pierres: 14, outils: 2 }, construction: 16 },
     // Étape 17 : ✍️ un 2e (et un 3e) ENTREPÔT, très cher : c'est un bâtiment stratégique
     depot: { cout: { planches: 120, pierres: 90, charbon: 20 }, construction: 40 },
-    monument: { cout: { planches: 80, pierres: 80, outils: 5 }, construction: 40 }, // étape 31 : ses fondations (puis 4 paliers) // étape 19 : dès le hameau (sans lingots ni outils)
+    monument: { cout: { planches: 80, pierres: 80, outils: 5 }, construction: 40 }, // étape 31 : ses fondations (puis 4 paliers)
+    centrale: { cout: { pierres: 200, lingots: 40, outils: 20 }, construction: 60 }, // étape 34
+    acierie: { cout: { planches: 100, pierres: 150, lingots: 30, outils: 15 }, construction: 50 },
+    filature: { cout: { planches: 120, pierres: 80, lingots: 20, outils: 10 }, construction: 45 }, // étape 19 : dès le hameau (sans lingots ni outils)
     manoir: { cout: { planches: 12, pierres: 16, outils: 2 }, construction: 20 }, // étape 18 : on ne la construit pas, une maison le DEVIENT
   },
   // Étape 18 : ✍️ les CLASSES D'HABITANTS suivent leur logement (voir logique/classes.js).
@@ -202,6 +205,11 @@ Village.CONFIG = {
   ateliers: {
     scierie: { entrees: { troncs: 1 }, sorties: { planches: 2 }, duree: 6, bonus: "scier" },
     fonderie: { entrees: { fer: 1, charbon: 1 }, sorties: { lingots: 1 }, duree: 10, bonus: "fondre" }, // ✍️ 1A : simple
+    // Étape 34 : l'époque industrielle. La centrale brûle du charbon (elle ne fabrique rien : elle fait de l'électricité).
+    // « electrique » : une usine qui ne marche PAS sans électricité.
+    centrale: { entrees: { charbon: 1 }, sorties: {}, duree: 15, bonus: "fondre" },
+    acierie: { entrees: { fer: 2, charbon: 1 }, sorties: { lingots: 4 }, duree: 12, bonus: "fondre", electrique: true },
+    filature: { entrees: { laine: 2 }, sorties: { tissu: 3 }, duree: 10, bonus: "tisser", electrique: true },
     forge: { entrees: { lingots: 1, planches: 1 }, sorties: { outils: 1 }, duree: 12, bonus: "forger" },
     // Étape 11 : le pain et l'or. La ferme n'a besoin de rien… sauf qu'il ne fasse pas l'hiver !
     ferme: { entrees: {}, sorties: { ble: 2 }, duree: 14, bonus: "cultiver", pasEnHiver: true, raisonHiver: "c'est l'hiver, le blé ne pousse pas" },
@@ -286,6 +294,7 @@ Village.CONFIG = {
     manoir: 2, bucheron: 2, forestier: 2, pecheur: 2, chasseur: 2, geologue: 2, poulailler: 2, veterinaire: 2,
     entrepot: 4, depot: 4, universite: 4, moulin: 4, marche: 4, fonderie: 4, ferme: 4,
     monument: 5, // étape 31 : ✍️ « même 5 × 5 »
+    centrale: 4, acierie: 4, filature: 4, // étape 34 : les usines
   },
   tailleParDefaut: 3,
   champs: {
@@ -549,8 +558,12 @@ Village.CONFIG = {
     // Étape 15 : le bourg débloque aussi le fromage et le yaourt ; pour passer à la ville, il faut des habitants HEUREUX.
     { id: "bourg", nom: "Le bourg", emoji: "🏰", debloque: ["ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "fromagerie", "cremerie", "tailleur", "charcuterie"], // étape 16 : les vêtements et le jambon
       objectifs: { batiments: 32, habitants: 34, recherches: 13, stock: { pain: 60, bijoux: 8, outils: 25, fromage: 15 }, pieces: 600, bonheur: 70 } },
-    { id: "ville", nom: "La ville", emoji: "🏙️", debloque: ["monument"], objectifs: null, // étape 31 : le grand monument
-      aVenir: "🎩 classes d'habitants, ⛏️ mines d'argent, 🏛️ grands monuments, 🎭 fêtes, 🚢 port" },
+    { id: "ville", nom: "La ville", emoji: "🏙️", debloque: ["monument"], // étape 31 : le grand monument
+      // Étape 34 : ✍️ (choix de Maxance) pour l'époque industrielle : le Grand Beffroi fini, 80 habitants, 3 000 🪙
+      objectifs: { monument: 4, habitants: 80, pieces: 3000 } },
+    // Étape 34 : 🏭 l'ÉPOQUE INDUSTRIELLE : l'électricité, et les premières usines
+    { id: "industrie", nom: "L'époque industrielle", emoji: "🏭", debloque: ["centrale", "acierie", "filature"], objectifs: null,
+      aVenir: "🚰 eau courante et égouts, 🚗 routes goudronnées et voitures" },
   ],
   gemmesParAge: 3, // étape 7 : 💎 offertes à chaque nouvel âge
 
@@ -661,12 +674,21 @@ Village.CONFIG = {
         { texte: "Construis un 💍 orfèvre", batiment: "orfevre", nombre: 1, pourquoi: "Or + charbon → bijoux, qui valent très cher." },
         { texte: "Bonheur à 70 %", bonheur: 70, pourquoi: "Des goûts variés, des maisons, du pain, des habits : touche 😊." },
       ],
-      [ // 🏙️ la ville : le grand monument (étape 31)
+      [ // 🏙️ la ville : le grand monument (étape 31) ; étape 34 : puis l'époque industrielle
         { texte: "Construis le 🏛️ Grand Beffroi", batiment: "monument", nombre: 1, pourquoi: "Le grand chantier de la ville (5 × 5 cases) : menu Artisans." },
         { texte: "Finis les fondations sculptées", monument: 1, pourquoi: "Touche le monument et « Donner ce que j'ai » : pierres, planches, outils." },
         { texte: "Monte les grands murs", monument: 2, pourquoi: "Il faut du métal (lingots) et beaucoup de pierres." },
         { texte: "Pose la tour et le dôme doré", monument: 3, pourquoi: "Du tissu pour les bannières, des bijoux pour l'or du dôme." },
         { texte: "Fais la grande fête d'inauguration", monument: 4, pourquoi: "Du pain, du fromage, du jambon et des habits neufs pour tout le monde !" },
+        { texte: "Aie 80 habitants", habitants: 80, pourquoi: "Pour passer à l'époque industrielle (avec 3 000 🪙)." },
+        { texte: "Aie 3 000 🪙", pieces: 3000, pourquoi: "Pour passer à l'époque industrielle." },
+      ],
+      [ // 🏭 l'époque industrielle (étape 34)
+        { texte: "Construis une ⚡ centrale à charbon", batiment: "centrale", nombre: 1, pourquoi: "Elle fait de l'électricité en brûlant du charbon : il faut des mines de charbon !" },
+        { texte: "Alimente 10 bâtiments en électricité", courant: 10, pourquoi: "Le courant suit les routes : relie tes bâtiments à la centrale par la route." },
+        { texte: "Construis une 🏭 aciérie", batiment: "acierie", nombre: 1, pourquoi: "Une usine électrique : beaucoup de lingots d'un coup." },
+        { texte: "Construis une 🧵 filature", batiment: "filature", nombre: 1, pourquoi: "Une usine électrique : la laine devient du tissu à la machine." },
+        { texte: "Alimente toutes les maisons (90 %)", logementsCourant: 90, pourquoi: "L'électricité est un nouveau besoin des habitants (⚡ dans 👥)." },
       ],
     ],
   },
@@ -712,6 +734,19 @@ Village.CONFIG = {
     charcuterie: "Le charcutier fume la viande avec du charbon : des jambons.",
     depot: "Un 2e point de départ pour les porteurs, loin de l'entrepôt : les livraisons vont plus vite.",
     monument: "Le grand chantier de la ville, en 4 paliers : la fierté de tous les habitants.",
+    centrale: "La centrale brûle du charbon et fait de l'électricité. Le courant suit les routes, jusqu'à " + 40 + " unités par centrale.",
+    acierie: "L'aciérie (électrique) fond le fer en grande quantité : 2 fer + 1 charbon → 4 lingots.",
+    filature: "La filature (électrique) file la laine à la machine : 2 laines → 3 tissus.",
+  },
+
+  // Étape 34 : ⚡ l'ÉLECTRICITÉ (logique/electricite.js). Une centrale qui brûle du charbon fournit 40 unités ; le courant
+  // suit les routes, et sert d'abord les bâtiments les plus proches. Ce que chacun consomme :
+  electricite: {
+    age: 5, // l'époque industrielle
+    parCentrale: 40, // unités par centrale qui tourne
+    logement: 1, atelier: 2, usine: 8, // consommation (unités)
+    consommation: { entrepot: 3, depot: 2, universite: 4, marche: 2, monument: 4 },
+    vitesse: 1.5, // un atelier alimenté travaille 1,5 fois plus vite
   },
 
   // Étape 33 : 👥 la POPULATION et ses BESOINS, façon SimCity. Chaque besoin est noté de 0 à 100 % ; la PROSPÉRITÉ est la
@@ -723,7 +758,6 @@ Village.CONFIG = {
     releves: 40, // relevés gardés (20 min)
     niveaux: [[0, "en crise", "📉"], [40, "fragile", "😐"], [60, "stable", "🙂"], [75, "prospère", "📈"], [90, "florissante", "🌟"]],
     aVenir: [
-      { emoji: "⚡", nom: "Électricité", quand: "époque industrielle" },
       { emoji: "🚰", nom: "Eau courante", quand: "époque industrielle" },
       { emoji: "🚽", nom: "Égouts", quand: "époque industrielle" },
       { emoji: "🚓", nom: "Sécurité (police)", quand: "époque moderne" },

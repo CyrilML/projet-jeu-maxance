@@ -64,6 +64,10 @@ Village.Batisses = (function () {
     // Étape 17 : l'entrepôt secondaire (long, avec un toit bleu)
     // Étape 18 : la maison bourgeoise (2 étages, en pierre, avec un toit d'ardoise)
     manoir: { a: 21, a2: 27, h: 26, toit: 16, murG: "#efe6d2", murD: "#cfc4ac", toitA: "#4a5a7a", toitB: "#38465f", mur: "pierre", toitSorte: "ardoise", fenetres: 2, volets: "#2f6a4a", cheminee: 0.3, jardiniere: true, lanterne: true, toitForme: "pavillon" },
+    // Étape 34 : l'époque industrielle : de la brique, de l'acier et du verre
+    centrale: { a: 18, a2: 24, h: 18, toit: 6, murG: "#9a5a44", murD: "#7a4434", toitA: "#4a4c50", toitB: "#3a3c40", mur: "pierre", toitSorte: null, fenetres: 2, toitForme: "plat" },
+    acierie: { a: 16, a2: 30, h: 16, toit: 9, murG: "#8a8e94", murD: "#6c7076", toitA: "#5a6068", toitB: "#454a52", mur: "planches", toitSorte: null, fenetres: 0, toitForme: "plat" },
+    filature: { a: 14, a2: 28, h: 26, toit: 10, murG: "#a8604a", murD: "#86483a", toitA: "#4a5058", toitB: "#3a4048", mur: "pierre", toitSorte: "ardoise", fenetres: 2, toitForme: "pavillon" },
     monument: { a: 20, a2: 26, h: 20, toit: 14, murG: "#f2ede2", murD: "#d4ccbc", toitA: "#3f6fc4", toitB: "#2f569c", mur: "pierre", toitSorte: "ardoise", fenetres: 2, lanterne: true }, // étape 31
     depot: { a: 22, a2: 32, h: 18, toit: 20, murG: "#c9a26a", murD: "#a8834a", toitA: "#3f6fc4", toitB: "#2f569c", mur: "planches", toitSorte: "tuiles", fenetres: 2, lanterne: true, toitForme: "mansarde" },
   };
@@ -897,6 +901,16 @@ Village.Batisses = (function () {
     }
     if (Math.sin(t * 3) > 0.5) { ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x - 6, y - 26); ctx.lineTo(x, y - 26); ctx.moveTo(x - 3, y - 29); ctx.lineTo(x - 3, y - 23); ctx.stroke(); }
   }
+  // Étape 34 : un toit en dents de scie (les usines) : des pans de toit inclinés et des vitres, posés sur le toit plat
+  function dentsDeScie(ctx, x, y, m, n, th, couleur, verre) {
+    const { G, B, D, H } = coins(x, y, m), Gt = haut(G, m.h), Bt = haut(B, m.h), Dt = haut(D, m.h), Ht = haut(H, m.h);
+    for (let i = n - 1; i >= 0; i--) {
+      const a0 = entre(Bt, Dt, i / n), a1 = entre(Bt, Dt, (i + 1) / n), g0 = entre(Gt, Ht, i / n), g1 = entre(Gt, Ht, (i + 1) / n);
+      forme(ctx, [g1, a1, haut(a1, th), haut(g1, th)], verre); // la vitre, bien droite
+      forme(ctx, [g0, a0, haut(a1, th), haut(g1, th)], couleur); // le pan de toit incliné
+      forme(ctx, [a0, a1, haut(a1, th)], m.murD); // le bout, en triangle
+    }
+  }
   // Une pile de bûches rangées (le bûcheron) : on voit le bout rond des bûches
   function tasDeBuches(ctx, x, y, n) {
     forme(ctx, [[x, y], [x + 22, y - 11], [x + 22, y - 11 - 13], [x + 14, y - 11 - 16], [x - 3, y - 7.5], [x - 3, y - 4]], "#7a5030");
@@ -1044,6 +1058,45 @@ Village.Batisses = (function () {
           if (ph < 0.35) { const r = ph * 40, fx = x + (num % 2 ? 10 : -12), fy = y - 70 - ph * 20; ["#ff6b6b", "#ffd84a", "#7fd6ff", "#b98ae8"].forEach((col, k) => { ctx.fillStyle = col; for (let j = 0; j < 6; j++) { const a = (j / 6) * TOUR + k * 0.4; ctx.globalAlpha = 1 - ph * 2.5; ctx.beginPath(); ctx.arc(fx + Math.cos(a) * r * (0.6 + k * 0.15), fy + Math.sin(a) * r * (0.6 + k * 0.15), 1.4, 0, TOUR); ctx.fill(); } }); ctx.globalAlpha = 1; }
         }
         return p >= 3 ? [x + 4, y - 96] : sommet;
+      }
+      case "centrale": { // Étape 34 : ⚡ la centrale à charbon : 2 hautes cheminées, un tas de charbon, un transformateur
+        const marche = !!(b && b.travail);
+        for (const [dx, dy] of [[-6, -14], [7, -18]]) {
+          const s = tourRonde(ctx, x + dx, y + dy, { r: 4.8, rh: 3.6, h: 58, clair: "#b0705a", fonce: "#7a4434", bandes: "rgba(240, 236, 228, .8)", dessus: "#3a2a24" });
+          if (marche) fumee(ctx, s[0], s[1] - 4, t + 20 + dx); // (t reste positif)
+        }
+        const sommet = boite(ctx, x, y, m, 1, true);
+        porte(ctx, x, y, m, "#4a3a30");
+        // le tas de charbon
+        ctx.beginPath(); ctx.ellipse(x - 20, y + 8, 8, 4, 0, Math.PI, 0); ctx.lineTo(x - 12, y + 9); ctx.ellipse(x - 20, y + 9, 8, 2.5, 0, 0, Math.PI); ctx.closePath(); ctx.fillStyle = "#2a2a2e"; ctx.fill(); contour(ctx, 1);
+        // le transformateur et son pylône
+        const tx = x + 20, ty = y + 8;
+        bloc(ctx, tx, ty, 4, 6, "#9aa0a6", "#7a8086", "#60666c", false);
+        for (const s of [-1, 1]) poutre(ctx, [tx + s * 3, ty - 6], [tx, ty - 26], 1, "#5a5e64");
+        poutre(ctx, [tx - 5, ty - 20], [tx + 5, ty - 21], 1, "#5a5e64");
+        if (marche && Math.sin(t * 7) > 0.85) { ctx.strokeStyle = "#fff36b"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(tx - 2, ty - 22); ctx.lineTo(tx + 1, ty - 18); ctx.lineTo(tx - 1, ty - 17); ctx.lineTo(tx + 2, ty - 13); ctx.stroke(); lumiere(tx, ty - 18, 16, "jaune", 0.8); }
+        return [x, y - 80];
+      }
+      case "acierie": { // Étape 34 : 🏭 l'aciérie : un long hangar au toit en dents de scie, une cheminée, la gueule du four
+        const marche = !!(b && b.travail);
+        const s = tourRonde(ctx, x - 14, y - 10, { r: 4.5, rh: 3.4, h: 52, clair: "#9a9ea4", fonce: "#5c6066", bandes: "rgba(180, 60, 40, .7)", dessus: "#2a2a2a" });
+        if (marche) fumee(ctx, s[0], s[1] - 4, t);
+        boite(ctx, x, y, m, 1, true);
+        dentsDeScie(ctx, x, y, m, 5, 9, "#7a8088", "rgba(170, 210, 230, .8)");
+        const lueur = marche ? 0.6 + 0.4 * Math.sin(t * 9) : 0.15, c = coins(x, y, m), P = surMur(c.G, c.B, m.h, 0.5, 0);
+        forme(ctx, [[P[0] - 5, P[1] - 2.5], [P[0] + 5, P[1] + 2.5], [P[0] + 5, P[1] - 9], [P[0] - 5, P[1] - 14]], "rgba(255, " + Math.round(110 + 70 * lueur) + ", 40, " + (0.35 + lueur * 0.65) + ")");
+        if (marche) { lumiere(P[0], P[1] - 6, 30, "orange", lueur); for (let k = 0; k < 4; k++) { ctx.fillStyle = "#ffcf2e"; ctx.beginPath(); ctx.arc(P[0] - 8 + ((t * 40 + k * 17) % 16), P[1] + 2 - Math.abs(Math.sin(t * 9 + k)) * 6, 0.9, 0, TOUR); ctx.fill(); } }
+        return [x, y - 64];
+      }
+      case "filature": { // Étape 34 : 🧵 la filature : un grand bâtiment de brique à étages, plein de fenêtres, et sa cheminée
+        const marche = !!(b && b.travail);
+        const s = tourRonde(ctx, x + 12, y - 16, { r: 3.8, rh: 3, h: 50, clair: "#b0705a", fonce: "#7a4434", dessus: "#3a2a24" });
+        if (marche) fumee(ctx, s[0], s[1] - 4, t + 3);
+        const sommet = boite(ctx, x, y, m, 1, true);
+        porte(ctx, x, y, m, "#4a3a30");
+        const c = coins(x, y, m);
+        for (const v of [0.12, 0.62]) for (let k = 0; k < 6; k++) { const u = 0.08 + k * 0.155, p1 = surMur(c.B, c.D, m.h, u, v), p2 = surMur(c.B, c.D, m.h, u + 0.09, v), p3 = surMur(c.B, c.D, m.h, u + 0.09, v + 0.22), p4 = surMur(c.B, c.D, m.h, u, v + 0.22); forme(ctx, [p1, p2, p3, p4], vue.noirceur > 0.15 && marche ? "#ffd866" : "#8fb0c4"); if (marche) lumiere((p1[0] + p3[0]) / 2, (p1[1] + p3[1]) / 2, 9, "jaune", 0.6); }
+        return sommet;
       }
       case "faneur": { // un grand hangar OUVERT, plein de foin, avec un toit de grange
         bloc(ctx, x, y, 16, 11, vue.hiver ? "#e8eef5" : "#e8c64a", "#d9b23a", "#b8962e", false);
@@ -1435,6 +1488,7 @@ Village.Batisses = (function () {
     // Étape 4 : l'ouvrier a trop faim, ou il est parti (la cabane est vide)
     else if (b.malade) bulleDePensee(ctx, x, yBulle, t, "🤒"); // étape 15 : les vaches sont malades
     else if (b.ouvrier && b.ouvrier.affame) bulleDePensee(ctx, x, yBulle, t, "🍽️");
+    else if (C_.ateliers[b.type] && C_.ateliers[b.type].electrique && b.etat === "pret" && !b.courant) bulleDePensee(ctx, x, yBulle, t, "⚡"); // étape 34 : pas de courant
     else if (b.usure >= 1) bulleDePensee(ctx, x, yBulle, t, "🔧"); // étape 11 : usé !
     // (Étape 22 : ✍️ plus de bulle 🍞 ni 🥶 au-dessus de chaque bâtiment : ça devenait illisible. Le pain et le froid
     // concernent tout le village : ils sont montrés une seule fois, en bas de l'écran.)

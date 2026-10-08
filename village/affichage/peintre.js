@@ -471,6 +471,21 @@ Village.Peintre = (function () {
     passe(pierre, 30, "#adafae", [6, 4]); // les pavés
     passe(pierre, 2, "rgba(255, 255, 255, .18)");
     ctx.restore();
+    // Étape 34 : ⚡ les poteaux électriques le long des routes alimentées (une case sur 3)
+    const el = monde.electricite;
+    if (el && el.routes && el.routes.size && Village.Batisses.vue.anim) {
+      ctx.lineCap = "round";
+      for (const i of el.routes) {
+        const c = i % k.colonnes, l = Math.floor(i / k.colonnes);
+        if (c < cMin - 1 || c > cMax || l < lMin - 1 || l > lMax || (c * 2 + l) % 3) continue;
+        const p = milieu(c, l), px = p.x + L * 0.3, py = p.y - Hc * 0.05;
+        ctx.strokeStyle = "rgba(40, 32, 26, .55)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py - 30); ctx.stroke();
+        ctx.strokeStyle = "#7a6248"; ctx.lineWidth = 2; ctx.stroke();
+        ctx.strokeStyle = "#5a4a3a"; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(px - 7, py - 27); ctx.lineTo(px + 7, py - 27); ctx.stroke();
+        ctx.fillStyle = "#d8d4c8"; for (const dx of [-6, 6]) { ctx.beginPath(); ctx.arc(px + dx, py - 28.5, 1.2, 0, TOUR); ctx.fill(); }
+      }
+      ctx.lineCap = "butt";
+    }
   }
 
   // Étape 12 : une case de route en aperçu (transparente et qui « respire »), ou rouge si c'est impossible

@@ -1,6 +1,6 @@
 # Village · demande n° 33 : vers la grande ville (le grand changement)
 
-> Demandée par Maxance (via Cyril) le 08/10/2026. Statut : 🚧 en cours, en plusieurs étapes (étapes 32 et 33 livrées le
+> Demandée par Maxance (via Cyril) le 08/10/2026. Statut : 🚧 en cours, en plusieurs étapes (étapes 32, 33 et 34 livrées le
 > 08/10/2026).
 
 ## 🎯 Ce que Maxance a demandé (ses mots)
@@ -23,7 +23,7 @@
 ## 🗺️ Le plan (une étape à la fois)
 1. Étape 32 ✅ : la nouvelle base. Partie remise à zéro, carte de 256 × 256, style plus réaliste, routes plus larges.
 2. Étape 33 ✅ : les besoins des habitants et la population (façon SimCity), et l'encyclopédie (« qui fait quoi »).
-3. Étape 34 : l'époque industrielle et l'électricité (centrale, lignes, consommation).
+3. Étape 34 ✅ : l'époque industrielle et l'électricité (centrale, réseau le long des routes, consommation).
 4. Étape 35 : l'eau courante et les égouts.
 5. Étape 36 : les routes goudronnées, les voitures et les camions.
 6. Étape 37 : les services (police, pompiers, hôpital, école).
@@ -61,3 +61,26 @@
 - [ ] Une ville prospère attire plus vite de nouveaux habitants.
 - [ ] Le bouton 📖 : je comprends ce que fait chaque bâtiment et ce dont il a besoin.
 - [ ] Au passage à un nouvel âge, l'encyclopédie m'explique les nouveaux bâtiments (version 34 en haut).
+
+## ❓ Les questions de l'étape 34, et les choix de Maxance
+- Comment passer à l'époque industrielle ? → **le Grand Beffroi fini + 80 habitants** (et 3 000 🪙).
+- Comment l'électricité arrive-t-elle ? → **le long des routes**.
+- Qu'est-ce qu'elle change ? → **les 3** : un besoin des habitants, des usines qui ne marchent pas sans, des ateliers 1,5 fois
+  plus rapides.
+
+## 📏 Les règles de l'étape 34 (config.js : `electricite`)
+- Nouvel âge 🏭 « L'époque industrielle » : il faut les 4 paliers du monument, 80 habitants et 3 000 🪙.
+- ⚡ Centrale à charbon (4 × 4) : elle brûle 1 charbon toutes les 15 s ; tant qu'elle tourne, elle fournit 40 unités.
+- Le courant suit les routes (des poteaux apparaissent le long des routes alimentées). Le réseau sert d'abord les
+  bâtiments les plus proches de la centrale (par la route) ; s'il n'y a pas assez, les plus loin sont coupés (pénurie).
+- Consommation : logement 1, atelier 2, usine 8, entrepôt 3, entrepôt secondaire 2, université 4, marché 2, monument 4.
+- Un atelier alimenté travaille 1,5 fois plus vite. Les usines (🏭 aciérie : 2 fer + 1 charbon → 4 lingots ;
+  🧵 filature : 2 laines → 3 tissus) ne marchent pas sans électricité.
+- ⚡ devient un besoin des habitants (la part des lits qui ont le courant). Le conseiller prévient d'une pénurie ou d'une
+  centrale sans charbon. Nouveau groupe « Industrie » dans le menu.
+
+## ✅ Critères pour valider (étape 34)
+- [ ] Au passage à l'époque industrielle, l'encyclopédie présente la centrale et les usines.
+- [ ] Une centrale avec du charbon alimente les bâtiments reliés par la route (poteaux, « ⚡ Alimenté »).
+- [ ] Trop de bâtiments : pénurie, les plus loin sont coupés.
+- [ ] Version 35 en haut.

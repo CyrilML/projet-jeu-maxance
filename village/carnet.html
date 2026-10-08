@@ -157,6 +157,7 @@
       <a href="#etape31">Étape 31</a>
       <a href="#etape32">Étape 32</a>
       <a href="#etape33">Étape 33</a>
+      <a href="#etape34">Étape 34</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1991,6 +1992,46 @@ arrivées   × (0,5 + prospérité)   → 50 % : × 1 ; 90 % : × 1,4</pre>
       <details class="question"><summary>Avec 70 % de prospérité, les arrivées vont combien de fois plus vite ?</summary><p>0,5 + 0,7 = × 1,2.</p></details>
     </section>
 
+    <section id="etape34">
+      <h2>⚡ Étape 34 : l'époque industrielle et l'électricité <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Après la ville : 🏭 l'époque industrielle. Une centrale à charbon fait de l'électricité, qui suit les routes. Les ateliers alimentés vont plus vite, les nouvelles usines ne marchent pas sans courant, et les habitants le veulent. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/33-vers-la-grande-ville.md</code>.</p>
+          <ul>
+            <li>✍️ « Ajouter la gestion de l'énergie électrique, au fil des avancées dans le temps. »</li>
+            <li>Tes choix : le monument fini + 80 habitants ; le courant le long des routes ; les 3 effets.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Les objectifs de la ville : les 4 paliers du monument, 80 habitants, 3 000 🪙.</li>
+            <li>☐ La centrale (menu 🏭 Industrie) : ses 2 cheminées fument quand elle a du charbon.</li>
+            <li>☐ Des poteaux électriques le long des routes alimentées.</li>
+            <li>☐ Touche un atelier : « ⚡ Alimenté : il va 1,5 fois plus vite ».</li>
+            <li>☐ Trop de bâtiments pour une centrale : la pénurie (le conseiller te prévient).</li>
+            <li>Vérifie « version 35 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔌 Un réseau, une puissance limitée</h3>
+      <pre style="white-space: pre-wrap">1 centrale qui tourne = 40 unités
+maison 1 · atelier 2 · usine 8 · entrepôt 3
+
+le réseau sert les plus PROCHES d'abord (en cases de route) :
+  maison (2 cases) ✅ · scierie (5) ✅ · aciérie (9) ✅ · … · le 41e point ❌ coupé</pre>
+      <p>Pour savoir qui est le plus proche, on refait une <strong>tache d'encre</strong>, mais seulement sur les cases de route, en partant de la centrale. C'est un <strong>réseau</strong> : comme pour les porteurs, ce qui n'est pas relié par la route ne reçoit rien.</p>
+      <p>L'<strong>offre</strong> (ce que fournissent les centrales) doit être plus grande que la <strong>demande</strong> (ce que tout le monde consomme). Sinon : pénurie !</p>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>2 centrales qui tournent, 30 maisons et 8 ateliers : est-ce assez ?</summary><p>Offre : 2 × 40 = 80. Demande : 30 × 1 + 8 × 2 = 46. Oui, il en reste 34.</p></details>
+      <details class="question"><summary>La centrale n'a plus de charbon : que se passe-t-il ?</summary><p>Elle s'arrête : plus d'électricité, les usines s'arrêtent aussi. Il faut des mines de charbon !</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2194,9 +2235,15 @@ arrivées   × (0,5 + prospérité)   → 50 % : × 1 ; 90 % : × 1,4</pre>
           <p>Façon SimCity : ce dont les habitants ont besoin, la ville qui grandit quand elle prospère, et l'encyclopédie « qui fait quoi ».</p>
           <p class="apprend"><b>Tu apprends :</b> une boucle de croissance. <b>Durée :</b> 2 séances.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">34</div>
+          <h4>⚡ L'époque industrielle et l'électricité <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>La centrale à charbon, le courant le long des routes, l'aciérie et la filature.</p>
+          <p class="apprend"><b>Tu apprends :</b> un réseau, l'offre et la demande d'énergie. <b>Durée :</b> 2 séances.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">34-38</div>
-          <h4>⚡🚰🚗🚓🛍️ Les époques industrielle et moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <div class="num">35-38</div>
+          <h4>🚰🚗🚓🛍️ L'eau, les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Électricité, eau courante et égouts, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
         </div>
@@ -2476,6 +2523,14 @@ arrivées   × (0,5 + prospérité)   → 50 % : × 1 ; 90 % : × 1,4</pre>
         <textarea class="journal" id="village-appris-33" data-cle="village-appris-33" placeholder="Ex. : J'ai appris ce qu'est une boucle de croissance…"></textarea>
         <label for="village-idees-33"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-33" data-cle="village-idees-33" placeholder="Ex. : Des habitants qui parlent de leurs besoins…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 34 · l'époque industrielle et l'électricité <span class="petit">· 8 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> <code>logique/electricite.js</code> (le réseau le long des routes, les plus proches d'abord), l'âge 🏭, la centrale, l'aciérie et la filature (dessins avec cheminées et toits en dents de scie), les poteaux, le besoin ⚡, les conseils, les événements <code>electricite-penurie</code> et <code>electricite-ok</code>.</p>
+        <label for="village-appris-34"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-34" data-cle="village-appris-34" placeholder="Ex. : J'ai appris ce que sont l'offre et la demande d'énergie…"></textarea>
+        <label for="village-idees-34"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-34" data-cle="village-idees-34" placeholder="Ex. : Des éoliennes et des panneaux solaires…"></textarea>
       </div>
     </section>
   </main>

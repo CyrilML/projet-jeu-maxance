@@ -64,10 +64,13 @@ Village.Batiments = (function () {
     charcuterie: { nom: "Charcuterie", court: "Charcuterie", emoji: "🥓", metier: "charcutier" },
     depot: { nom: "Entrepôt secondaire", court: "Entrepôt 2", emoji: "🏬", metier: null }, // étape 17
     monument: { nom: "Le Grand Beffroi", court: "Monument", emoji: "🏛️", metier: null }, // étape 31
+    centrale: { nom: "Centrale à charbon", court: "Centrale", emoji: "⚡", metier: "électricien" }, // étape 34
+    acierie: { nom: "Aciérie", court: "Aciérie", emoji: "🏭", metier: "métallurgiste" },
+    filature: { nom: "Filature", court: "Filature", emoji: "🧵", metier: "fileur" },
     manoir: { nom: "Maison bourgeoise", court: "Manoir", emoji: "🏡", metier: null }, // étape 18 : une maison qui a évolué
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot", "monument"];
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot", "monument", "centrale", "acierie", "filature"];
   // « 🪵 troncs », « 🔩 lingots »… (étape 8 : fabriqué à partir de config.js, « ressources »)
   const NOMS_RESSOURCES = {};
   for (const [r, f] of Object.entries(C.ressources)) NOMS_RESSOURCES[r] = f.emoji + " " + f.nom;
@@ -376,6 +379,8 @@ Village.Batiments = (function () {
     }
     // Étape 15 : des vaches malades ne donnent pas de lait (voir logique/elevage.js)
     if (b.malade) { b.attend = ((C.elevage.troupeaux[b.type] || {}).noms || "les animaux") + " sont malades 🤒"; return; }
+    // Étape 34 : une usine électrique ne marche pas sans courant
+    if (recette.electrique && !b.courant) { const raison = "pas d'électricité ⚡ (relie-la par la route à une centrale)"; if (b.attend !== raison) { b.attend = raison; radio.emettre("atelier-attend", { nom: TYPES[b.type].nom, numero: b.numero, raison }); } return; }
     const entrees = entreesDe(monde, b);
     if (!b.travail) {
       const manque = Object.entries(entrees).filter(([r, n]) => (b.entrees[r] || 0) < n).map(([r]) => r);
@@ -384,11 +389,12 @@ Village.Batiments = (function () {
         if (b.attend !== raison) { b.attend = raison; radio.emettre("atelier-attend", { nom: TYPES[b.type].nom, numero: b.numero, raison }); }
         return;
       }
-      const quoi = b.sortieQuoi, combien = recette.sorties[quoi];
-      if (b.sortie + combien > C.sortieMax) return; // devant la porte, c'est plein
+      const quoi = b.sortieQuoi, combien = quoi ? recette.sorties[quoi] : 0; // (étape 34 : la centrale ne fabrique rien)
+      if (quoi && b.sortie + combien > C.sortieMax) return; // devant la porte, c'est plein
       b.attend = null;
       for (const [r, n] of Object.entries(entrees)) b.entrees[r] -= n;
-      const duree = recette.duree * Village.Recherches.bonus(monde, recette.bonus) * Village.Ameliorations.bonus(b); // étape 13 : × les améliorations
+      const machines = b.courant && !recette.electrique && quoi ? 1 / C.electricite.vitesse : 1; // étape 34 : ⚡ un atelier alimenté va 1,5 fois plus vite
+      const duree = recette.duree * Village.Recherches.bonus(monde, recette.bonus) * Village.Ameliorations.bonus(b) * machines; // étape 13 : × les améliorations
       b.travail = { reste: duree, duree };
       radio.emettre("fabrication-debut", { nom: TYPES[b.type].nom, numero: b.numero, entrees, reserve: Object.assign({}, b.entrees), duree: Math.round(b.travail.reste * 10) / 10 });
       return;
@@ -396,6 +402,7 @@ Village.Batiments = (function () {
     b.travail.reste -= dt * Village.Repas.vitesse(b.ouvrier); // étape 5 : ventre vide = 2 fois moins vite
     if (b.travail.reste <= 0) {
       const quoi = b.sortieQuoi, combien = recette.sorties[quoi];
+      if (!quoi) { b.travail = null; b.produits++; return; } // étape 34 : la centrale a brûlé son charbon
       b.travail = null;
       b.sortie += combien;
       for (let k = 0; k < combien; k++) b.lots.push(1);

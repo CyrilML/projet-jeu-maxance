@@ -128,6 +128,8 @@ Village.SousLeCapot = (function () {
     "monument-palier": (d) => "🏛️🎉 Palier " + d.numero + "/" + d.total + " du monument construit : " + d.emoji + " " + d.nom + " ! +" + d.pieces + " 🪙, +" + d.gemmes + " 💎, +" + d.bonheur + " points de bonheur pour toujours" + (d.fini ? " · LE GRAND BEFFROI EST FINI !" : ""),
     "partie-remise-a-zero": (d) => "🆕 Le jeu a beaucoup changé : la partie (version " + d.depuis + ") est remise à zéro, une nouvelle carte de 256 × 256 commence (version " + d.vers + ")", // étape 32
     "prosperite-change": (d) => "👥 La ville est maintenant " + d.niveau + " " + d.emoji + " (prospérité " + d.prosperite + " %, " + d.habitants + " habitants) : les arrivées vont × " + String(0.5 + d.prosperite / 100).replace(".", ","), // étape 33
+    "electricite-penurie": (d) => "⚡❌ Pénurie d'électricité : " + d.coupes + " bâtiment(s) coupé(s) · offre " + d.offre + " < demande " + d.demande + " (" + d.centrales + " centrale(s) qui tournent)", // étape 34
+    "electricite-ok": (d) => "⚡✅ Assez d'électricité pour tout le réseau : offre " + d.offre + ", demande " + d.demande,
     "conseil": (d) => "🧭 Le conseiller : " + d.texte + (d.type ? " → construis " + Village.Batiments.TYPES[d.type].emoji + " " + Village.Batiments.TYPES[d.type].court : "") + " (" + d.pourquoi + ")", // étape 29
     "filon-trouve": (d) => "🔍 Filon de " + d.nom + " " + d.emoji + " trouvé près de (" + d.colonne + ", " + d.ligne + ")" + (d.cases > 1 ? " : " + d.cases + " cases de paillettes" : "") + " · " + d.reserve + " morceaux", // étape 28
     // Étape 8 : le logement et le marché

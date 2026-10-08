@@ -40,6 +40,7 @@ Village.Ages = (function () {
     for (const [r, cible] of Object.entries(o.stock || {})) liste.push({ texte: Village.Batiments.NOMS_RESSOURCES[r] + " dans l'entrepôt", valeur: monde.stock[r], cible });
     if (o.pieces) liste.push({ texte: "🪙 Pièces", valeur: monde.pieces, cible: o.pieces });
     if (o.bonheur) liste.push({ texte: "😊 Bonheur des habitants (%)", valeur: Math.round(monde.bonheur.valeur || 0), cible: o.bonheur }); // étape 15
+    if (o.monument) liste.push({ texte: "🏛️ Paliers du Grand Beffroi", valeur: Village.Monument.paliersFaits(monde), cible: o.monument }); // étape 34
     if (o.nourriture) liste.push({ texte: "🐟 + 🍖 dans l'entrepôt", valeur: monde.stock.poissons + monde.stock.viande, cible: o.nourriture });
     for (const x of liste) x.fait = x.valeur >= x.cible;
     return liste;

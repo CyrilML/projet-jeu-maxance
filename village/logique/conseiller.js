@@ -82,6 +82,14 @@ Village.Conseiller = (function () {
       else if (o.texte.startsWith("🐟")) ajouter(1, "🎯", "Objectif : " + o.cible + " 🐟 + 🍖 en réserve (" + o.valeur + ")", "Plus de pêcheurs et de chasseurs.", "pecheur");
       else ajouter(1, "🎯", "Objectif : " + o.texte.toLowerCase() + " : " + o.valeur + " / " + o.cible, "Chaque nouveau bâtiment compte.", null);
     }
+    // 7. Étape 34 : ⚡ l'électricité
+    if (Village.Electricite.active(monde)) {
+      const el = monde.electricite || {}, centrales = monde.batiments.filter((b) => b.type === "centrale" && b.etat === "pret");
+      if (!centrales.length) ajouter(2, "⚡", "Construis une centrale à charbon", "L'époque industrielle commence : l'électricité fait aller les ateliers 1,5 fois plus vite, et les habitants la veulent.", "centrale");
+      else if (!centrales.some(Village.Electricite.centraleEnMarche) && !centrales.some((b) => (b.entrees.charbon || 0) > 0)) ajouter(3, "⚫", "La centrale n'a plus de charbon", "Sans charbon, plus d'électricité : des mines de charbon !", producteur(monde, "charbon"));
+      else if (el.penurie) ajouter(3, "⚡", "Pénurie d'électricité : " + el.coupes + " bâtiment(s) coupé(s)", "La demande (" + el.demande + ") dépasse ce que fournissent tes centrales (" + el.offre + ").", "centrale");
+      else if (el.horsReseau) ajouter(1, "🔌", el.horsReseau + " bâtiment(s) loin du réseau", "Le courant suit les routes : relie-les par la route à une centrale.", null);
+    }
     // 6. Étape 31 : le grand monument de la ville
     if (Village.Ages.debloque(monde, "monument")) {
       const mo = monde.batiments.find((b) => b.type === "monument");

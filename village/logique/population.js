@@ -37,6 +37,8 @@ Village.Population = (function () {
       const sansPain = monde.batiments.filter((x) => x.ouvrier && x.ouvrier.mecontent).length + monde.porteurs.filter((q) => q.mecontent).length;
       ajouter("pain", "🍞", "Pain", 1 - sansPain / Math.max(1, hab), sansPain ? sansPain + " habitant(s) sans pain" : "Tout le monde a du pain", "Une ferme, un moulin et une boulangerie.");
     }
+    // Étape 34 : ⚡ l'électricité, à l'époque industrielle
+    if (Village.Electricite.active(monde)) { const p = Village.Electricite.partLogements(monde); ajouter("electricite", "⚡", "Électricité", p, Math.round(p * 100) + " % des lits ont le courant", (monde.electricite && monde.electricite.penurie) ? "Pénurie : construis une centrale de plus." : "Relie les maisons à une centrale par la route."); }
     if ((monde.age || 0) >= C.habits.age) ajouter("habits", "👕", "Habits", monde.habits.part, Math.round(monde.habits.part * 100) + " % bien habillés", "Bergerie → tisserand → tailleur.");
     return liste;
   }
