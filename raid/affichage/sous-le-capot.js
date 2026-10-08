@@ -12,6 +12,8 @@ Raid.SousLeCapot = (function () {
   let table, journal, monde;
 
   const MESSAGES = {
+    "son-endormi": (d) => "🔇 Le son s'endort : " + d.raison,
+    "son-reveille": () => "🔊 Tu es revenu : le son se réveille",
     monde: (d) => "🌍 Le désert est prêt : " + d.pilotes + " autres pilotes, une piste de " + virgule(d.piste / 1000, 1) + " km, " + (d.gues ? "un gué dans la rivière" : "pas de gué"),
     garage: (d) => "🏠 Au garage, tu regardes : " + d.nom,
     depart: (d) => "🏁 C'est parti avec " + d.nom + " ! Balade libre : va où tu veux",

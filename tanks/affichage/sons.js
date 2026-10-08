@@ -7,6 +7,8 @@
 // Étape 61 : les BALLES (un « tac » sec et court : un tout petit souffle de bruit aigu), les ROQUETTES et MISSILES
 // (un « pschhh »), et le moteur change selon ce que tu conduis : le 4x4 ronronne plus aigu, l'hélico fait
 // « tchop-tchop » (le volume monte et descend à chaque tour de pale), l'avion siffle (un souffle aigu et fort).
+// Quand tu QUITTES le jeu (un autre onglet, une autre application, une autre fenêtre devant), le son « s'endort » :
+// on met le synthétiseur en pause (ctx.suspend). Il se réveille quand tu reviens.
 
 window.Tanks = window.Tanks || {};
 
@@ -16,8 +18,25 @@ Tanks.Sons = (function () {
   let souffle, filtreSouffle, volumeSouffle; // (étape 61)
   let dernierPing = 0; // (étape 63)
 
+  // Le jeu est-il caché ou derrière une autre fenêtre ? Alors le son dort.
+  let endormi = false;
+  function verifierLaFenetre() {
+    const doitDormir = document.hidden || !document.hasFocus();
+    if (doitDormir === endormi) return;
+    endormi = doitDormir;
+    if (ctx) endormi ? ctx.suspend() : ctx.resume();
+    Tanks.Evenements.emettre(endormi ? "son-endormi" : "son-reveille", { raison: document.hidden ? "tu as quitté la page" : "une autre fenêtre est devant le jeu" });
+  }
+  document.addEventListener("visibilitychange", verifierLaFenetre);
+  window.addEventListener("blur", verifierLaFenetre);
+  window.addEventListener("focus", verifierLaFenetre);
+  window.addEventListener("pagehide", () => ctx && ctx.suspend()); // (la page se ferme : silence tout de suite)
+
   function demarrer() {
-    if (ctx) return;
+    if (ctx) {
+      if (ctx.state === "suspended" && !endormi) ctx.resume();
+      return;
+    }
     try {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
     } catch (e) {
@@ -228,5 +247,5 @@ Tanks.Sons = (function () {
   function basculer() {
     coupe = !coupe;
   }
-  return { demarrer, maj, basculer };
+  return { demarrer, maj, basculer, etat: () => (ctx ? (ctx.state === "running" ? "allumé 🔊" : "endormi 🔇") : "pas encore allumé (appuie sur une touche)") };
 })();

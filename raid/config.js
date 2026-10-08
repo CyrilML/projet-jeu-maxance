@@ -9,7 +9,7 @@ window.Raid = window.Raid || {};
 
 Raid.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans raid/index.html.
-  version: 1,
+  version: 2,
 
   pasFixe: 1 / 120, // la boucle de jeu avance par petits pas de 1/120 s
   gravite: 9.8, // m/s²

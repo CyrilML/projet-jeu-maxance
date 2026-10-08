@@ -187,6 +187,7 @@
       <a href="#etape63">Étape 63</a>
       <a href="#etape64">Étape 64</a>
       <a href="#etape65">Étape 65</a>
+      <a href="#etape66">Étape 66</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3895,6 +3896,30 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Pourquoi « les soldats, attaquez les tanks » et « attaquez les soldats » ne veulent pas dire la même chose ?</summary><p>Le jeu regarde la PLACE du mot. Avant l'ordre, « les soldats » dit QUI obéit. Après « attaquez », « les soldats » dit QUOI attaquer.</p></details>
     </section>
 
+    <section id="etape66">
+      <h2>🔇 Étape 66 : plus de son quand tu quittes le jeu <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Tu changes d'onglet ou d'application : les tanks et le rallye-raid se taisent, et le son revient quand tu reviens.</p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/66-plus-de-son-quand-on-quitte.md</code>.</p>
+          <ul><li>✍️ « Quand je quitte le site, je ne veux plus qu'il y ait de son. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Dans les tanks, avec le son : change d'onglet → silence. Reviens → le son repart.</li>
+            <li>☐ Pareil dans le rallye-raid.</li>
+            <li>☐ Sous le capot des tanks : la ligne « le son » et, dans le journal, « 🔇 Le son s'endort ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>👀 Comment le jeu sait que tu es parti</h3>
+      <p>Le navigateur prévient la page. <code>visibilitychange</code> dit « on ne te voit plus » (autre onglet, autre application). <code>blur</code> dit « une autre fenêtre est devant », et <code>focus</code> dit « tu es revenu ». Le jeu <em>écoute</em> ces messages, comme il écoute le clavier. Quand tu pars, il met son synthétiseur en pause (<code>suspend</code>) ; quand tu reviens, il le relance (<code>resume</code>). Le circuit et le premier jeu le faisaient déjà depuis l'étape 29 : les tanks et le rallye avaient été oubliés !</p>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi le son ne s'arrêtait pas tout seul ?</summary><p>Parce que le synthétiseur du navigateur continue de jouer tant qu'on ne lui dit pas d'arrêter, même si la page est cachée.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4829,6 +4854,14 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-65" data-cle="appris-65" placeholder="Ex. : J'ai appris que le jeu cherche des mots dans un dictionnaire…"></textarea>
         <label for="idees-65"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-65" data-cle="idees-65" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 66 · plus de son quand on quitte le jeu <span class="petit">· 8 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le son des tanks (<code>tanks/affichage/sons.js</code>) et du rallye-raid (<code>raid/affichage/sons.js</code>) s'endort quand la page est cachée ou derrière une autre fenêtre.</p>
+        <label for="appris-66"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-66" data-cle="appris-66" placeholder="Ex. : J'ai appris que le navigateur prévient la page quand on change d'onglet…"></textarea>
+        <label for="idees-66"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-66" data-cle="idees-66" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

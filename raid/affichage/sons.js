@@ -5,14 +5,33 @@
 // Le camion gronde dans les graves, les motos crient dans les aigus. Un « chhhh » (du bruit filtré) suit le terrain :
 // plus fort dans les cailloux et le gravier, un « splash » dans l'eau. Et un « boum » à chaque atterrissage.
 // Le son ne démarre qu'après une touche (les navigateurs l'exigent). B : couper ou remettre le son.
+// Quand tu QUITTES le jeu (un autre onglet, une autre application, une autre fenêtre devant), le son « s'endort » :
+// on met le synthétiseur en pause (ctx.suspend). Il se réveille quand tu reviens.
 
 window.Raid = window.Raid || {};
 
 Raid.Sons = (function () {
   let ctx = null, osc, filtre, volume, bruit, filtreBruit, volumeBruit, coupe = false;
 
+  // Le jeu est-il caché ou derrière une autre fenêtre ? Alors le son dort.
+  let endormi = false;
+  function verifierLaFenetre() {
+    const doitDormir = document.hidden || !document.hasFocus();
+    if (doitDormir === endormi) return;
+    endormi = doitDormir;
+    if (ctx) endormi ? ctx.suspend() : ctx.resume();
+    Raid.Evenements.emettre(endormi ? "son-endormi" : "son-reveille", { raison: document.hidden ? "tu as quitté la page" : "une autre fenêtre est devant le jeu" });
+  }
+  document.addEventListener("visibilitychange", verifierLaFenetre);
+  window.addEventListener("blur", verifierLaFenetre);
+  window.addEventListener("focus", verifierLaFenetre);
+  window.addEventListener("pagehide", () => ctx && ctx.suspend()); // (la page se ferme : silence tout de suite)
+
   function demarrer() {
-    if (ctx) return;
+    if (ctx) {
+      if (ctx.state === "suspended" && !endormi) ctx.resume();
+      return;
+    }
     try {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
     } catch (e) {
@@ -76,5 +95,5 @@ Raid.Sons = (function () {
     return !coupe;
   }
 
-  return { demarrer, maj, basculer };
+  return { demarrer, maj, basculer, etat: () => (ctx ? (ctx.state === "running" ? "allumé 🔊" : "endormi 🔇") : "pas encore allumé (appuie sur une touche)") };
 })();
