@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 26,
+  version: 27,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -122,14 +122,15 @@ Village.CONFIG = {
   // puis les porteurs apportent les matériaux un par un.
   //   construction : durée du chantier (s) ; rayon : jusqu'où l'ouvrier va travailler (en cases).
   // Étape 17 : ✍️ Maxance trouvait le périmètre trop petit : les rayons sont doublés (bûcheron 6 → 12…).
+  // Étape 26 : ✍️ « ils ne vont pas assez loin » : encore + 50 % pour tous (choix de Maxance).
   batiments: {
-    bucheron: { cout: { planches: 3 }, construction: 8, rayon: 12 },
-    forestier: { cout: { planches: 3 }, construction: 8, rayon: 9 },
+    bucheron: { cout: { planches: 3 }, construction: 8, rayon: 18 },
+    forestier: { cout: { planches: 3 }, construction: 8, rayon: 14 },
     scierie: { cout: { planches: 4, pierres: 2 }, construction: 12 },
-    carriere: { cout: { planches: 3 }, construction: 8, rayon: 12 },
-    pecheur: { cout: { planches: 3 }, construction: 8, rayon: 10 }, // étape 4
-    chasseur: { cout: { planches: 3 }, construction: 8, rayon: 14 }, // étape 4
-    geologue: { cout: { planches: 3, pierres: 1 }, construction: 8, rayon: 14 }, // étape 5
+    carriere: { cout: { planches: 3 }, construction: 8, rayon: 18 },
+    pecheur: { cout: { planches: 3 }, construction: 8, rayon: 15 }, // étape 4
+    chasseur: { cout: { planches: 3 }, construction: 8, rayon: 21 }, // étape 4
+    geologue: { cout: { planches: 3, pierres: 1 }, construction: 8, rayon: 21 }, // étape 5
     universite: { cout: { planches: 12, pierres: 10 }, construction: 15 }, // étape 7 : les recherches
     mineCharbon: { cout: { planches: 6, pierres: 3 }, construction: 12 }, // étape 7 : au pied d'un filon de charbon
     // Étape 8
@@ -282,7 +283,10 @@ Village.CONFIG = {
     poulailler: [[2, 0]],
   },
   // Étape 21 : ✍️ « les mines sont trop éloignées » : la cabane du mineur peut être à 4 cases du filon (1 avant).
-  rayonMine: 4,
+  // Étape 26 : ✍️ « les mineurs ne voient pas les filons des montagnes un peu plus loin » : 12 cases (choix de Maxance).
+  // Mais le mineur MARCHE jusqu'au filon et revient avec son morceau : plus le filon est loin, plus c'est long
+  // (aller-retour à la vitesse des ouvriers). Il creuse toujours le filon le plus proche d'abord.
+  rayonMine: 12,
   mines: {
     mineCharbon: { filon: "charbon" },
     mineFer: { filon: "fer" },

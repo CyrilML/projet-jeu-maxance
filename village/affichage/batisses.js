@@ -1998,6 +1998,7 @@ Village.Batisses = (function () {
       dx = -4; dy = 14; const va = Math.sin(t * 3); brasAvant = 1.3 + va * 0.2; brasArriere = 1.4 + va * 0.2; angle = 1.9 + va * 0.15; penche = 0.12;
     } else if (b.type === "mineCharbon" || b.type === "mineFer" || b.type === "mineOr") { // il creuse à l'entrée de la mine
       dx = -16; dy = 6; const ph = (t * 1.2) % 1; brasAvant = ph < 0.6 ? 0.9 + ph * 3.5 : 3 - (ph - 0.6) * 5; brasArriere = brasAvant - 0.2; penche = ph > 0.6 ? 0.18 : 0;
+      if (b.ouvrier && ["aller", "travailler", "revenir"].includes(b.ouvrier.etat)) return; // étape 26 : il est parti au filon (dessiné à sa place, sur la carte)
     } else if (b.type === "universite") { // il lit un gros livre, et tourne les pages
       dx = 10; dy = 14; brasAvant = 1.2; brasArriere = 1.1;
     } else if (b.type === "ferme") { // il remue la paille avec sa fourche

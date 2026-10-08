@@ -144,7 +144,7 @@ Village.Batiments = (function () {
   }
 
   // Étape 7 : les cases de montagne voisines (8 autour) qui ont un filon de cette sorte, pas épuisé.
-  // Étape 21 : ✍️ jusqu'à 4 cases (config.js : rayonMine), le plus proche d'abord.
+  // Étape 21 : ✍️ jusqu'à 4 cases (config.js : rayonMine), le plus proche d'abord. Étape 26 : 12 cases.
   function filonsVoisins(carte, c, l, sorte) {
     const liste = [], R = C.rayonMine || 1;
     for (let dl = -R; dl <= R; dl++) for (let dc = -R; dc <= R; dc++) {
@@ -409,8 +409,27 @@ Village.Batiments = (function () {
   // Étape 7 : la mine. Le mineur creuse dans le filon voisin ; chaque morceau attend devant
   // la porte qu'un porteur le ramène. Le filon s'épuise (60 morceaux) : le géologue en trouvera d'autres.
   // Étape 8 : la même règle pour la mine de charbon et la mine de fer (config.js, « mines »).
+  // Étape 26 : ✍️ le filon peut être à 12 cases. Le mineur y MARCHE (en ligne droite, à la vitesse des ouvriers), creuse
+  // là-bas, puis rapporte son morceau. On calcule où il est à partir du temps passé : pas besoin de chemin.
+  function placerMineur(monde, b) {
+    const o = b.ouvrier, w = b.travail, k = monde.carte;
+    if (!w || !(w.marche > 0)) {
+      if (["aller", "travailler", "revenir"].includes(o.etat)) { o.etat = "repos"; o.porte = null; o.x = b.colonne + 0.5; o.y = b.ligne + 0.5; }
+      return;
+    }
+    const fx = (w.filon % k.colonnes) + 0.5 - (b.colonne + 0.5), fy = Math.floor(w.filon / k.colonnes) + 0.5 - (b.ligne + 0.5);
+    const d = Math.hypot(fx, fy), arret = d > 1 ? (d - 0.9) / d : 0; // il s'arrête juste devant le filon
+    const passe = w.duree - w.reste, demi = w.marche / 2;
+    let q = arret, etat = "travailler";
+    if (passe < demi) { q = (passe / demi) * arret; etat = "aller"; }
+    else if (passe > w.duree - demi) { q = ((w.duree - passe) / demi) * arret; etat = "revenir"; }
+    o.etat = etat; o.porte = etat === "revenir" ? C.mines[b.type].filon : null;
+    o.x = b.colonne + 0.5 + fx * q; o.y = b.ligne + 0.5 + fy * q;
+    if (Math.abs(fx - fy) > 0.01) o.direction = (fx - fy > 0 ? 1 : -1) * (etat === "revenir" ? -1 : 1);
+  }
   function miner(monde, b, dt) {
     if (!b.ouvrier) return;
+    placerMineur(monde, b);
     const sorte = C.mines[b.type].filon;
     const k = monde.carte, filons = filonsVoisins(k, b.colonne, b.ligne, Village.Carte.FILON[sorte]);
     if (!filons.length) {
@@ -419,11 +438,18 @@ Village.Batiments = (function () {
     }
     b.epuise = false;
     if (b.sortie >= C.sortieMax) return; // devant la porte, c'est plein
-    if (!b.travail) { b.travail = { reste: C.ouvriers.miner * Village.Recherches.bonus(monde, "miner") * Village.Ameliorations.bonus(b) }; return; }
+    if (!b.travail) {
+      // Étape 26 : le temps de creuser, plus l'aller-retour jusqu'au filon (à pied)
+      const i = filons[0], dist = Math.max(Math.abs((i % k.colonnes) - b.colonne), Math.abs(Math.floor(i / k.colonnes) - b.ligne));
+      const marche = (2 * Math.max(0, dist - 1)) / C.ouvriers.vitesse, creuser = C.ouvriers.miner * Village.Recherches.bonus(monde, "miner") * Village.Ameliorations.bonus(b);
+      b.travail = { reste: creuser + marche, duree: creuser + marche, marche, filon: i, distance: dist };
+      return;
+    }
     b.travail.reste -= dt * Village.Repas.vitesse(b.ouvrier);
     if (b.travail.reste > 0) return;
+    const i = b.travail.filon !== undefined && k.reste[b.travail.filon] > 0 ? b.travail.filon : filons[0]; // étape 26 : le filon où il est allé
     b.travail = null;
-    const i = filons[0];
+    placerMineur(monde, b);
     k.reste[i]--;
     Village.Monde.changerObjet(monde, i, k.objet[i]); // on note ce qui reste dans le filon (sauvegarde)
     b.sortie++;

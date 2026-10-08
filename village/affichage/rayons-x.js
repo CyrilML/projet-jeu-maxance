@@ -106,7 +106,7 @@ Village.RayonsX = (function () {
         });
         ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
       }
-      // Étape 21 : une mine et le filon qu'elle creuse (jusqu'à 4 cases plus loin)
+      // Étape 21 : une mine et le filon qu'elle creuse (jusqu'à 4 cases plus loin ; étape 26 : 12)
       if (C.mines[bat.type] && bat.etat === "pret") {
         const f = Village.Batiments.filonsVoisins(monde.carte, bat.colonne, bat.ligne, Village.Carte.FILON[C.mines[bat.type].filon])[0];
         if (f !== undefined) {

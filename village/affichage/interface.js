@@ -934,8 +934,12 @@ Village.Interface = (function () {
       const reste = B.filonsVoisins(k, b.colonne, b.ligne, Village.Carte.FILON[sorte]).reduce((a, i) => a + k.reste[i], 0);
       titre("⛏️ Ce qu'elle extrait");
       lignes.push({ cout: { [sorte]: 1 }, avant: "→" });
-      if (b.travail) lignes.push({ barre: 1 - b.travail.reste / (C.ouvriers.miner * Village.Recherches.bonus(monde, "miner") * Village.Ameliorations.bonus(b)), t: "⛏️ creuse…" });
-      info("Encore " + reste + " dans le filon");
+      if (b.travail) { // étape 26 : il marche jusqu'au filon, creuse, puis revient
+        const w = b.travail, passe = (w.duree || 1) - w.reste, demi = (w.marche || 0) / 2;
+        lignes.push({ barre: passe / Math.max(0.1, w.duree || 1), t: passe < demi ? "🚶 va au filon…" : passe > (w.duree || 1) - demi ? "🚶 rapporte son morceau…" : "⛏️ creuse…" });
+        if (w.distance > 1) info("🚶 Le filon est à " + w.distance + " cases : " + Math.round(w.marche) + " s de marche (aller-retour)");
+      }
+      info("Encore " + reste + " dans les filons (jusqu'à " + C.rayonMine + " cases)");
     } else if (b.type === "marche") {
       titre("🏪 Touche le marché pour vendre et acheter");
     } else if (b.type === "macon") {

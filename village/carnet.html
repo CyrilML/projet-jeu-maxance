@@ -149,6 +149,7 @@
       <a href="#etape23">Étape 23</a>
       <a href="#etape24">Étape 24</a>
       <a href="#etape25">Étape 25</a>
+      <a href="#etape26">Étape 26</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -1644,6 +1645,46 @@ après :  ⛺ tipi   🗼 tour du moulin   ⛰️ colline de la mine   🏗️ g
       <details class="question"><summary>Si on ajoute un nouvel atelier qui utilise du lait, faut-il changer la fiche du lait ?</summary><p>Non : la fiche est calculée à partir des recettes. Elle se met à jour toute seule.</p></details>
     </section>
 
+    <section id="etape26">
+      <h2>🚶 Étape 26 : les ouvriers vont plus loin <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les mines voient les filons jusqu'à 12 cases, et le mineur y va à pied. Tous les autres ouvriers cherchent du travail 50 % plus loin. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/27-plus-loin.md</code>.</p>
+          <ul>
+            <li>✍️ « Les mineurs ne vont pas assez loin, ils ne voient pas les filons des montagnes plus éloignées. Peut-être aussi les bûcherons, les chasseurs… »</li>
+            <li>Tes choix : <strong>12 cases</strong> pour la mine, <strong>+ 50 %</strong> pour les autres.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Construis une mine à une dizaine de cases d'un filon : elle est acceptée.</li>
+            <li>☐ Touche la mine : « 🚶 va au filon… », « ⛏️ creuse… », « 🚶 rapporte son morceau… ».</li>
+            <li>☐ Regarde le mineur partir et revenir avec son morceau.</li>
+            <li>Vérifie « version 27 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>⚖️ Plus loin, mais plus long</h3>
+      <pre style="white-space: pre-wrap">temps pour 1 morceau = creuser + marcher (aller et retour)
+filon à 2 cases  : 8 s + 2 × 1 ÷ 1,6 ≈ 8 + 1   = 9 s
+filon à 12 cases : 8 s + 2 × 11 ÷ 1,6 ≈ 8 + 14 = 22 s</pre>
+      <p>C'est un <strong>compromis</strong> : aller loin permet de trouver des filons, mais un mineur près de son filon produit plus de 2 fois plus vite. Le bon joueur construit sa mine le plus près possible ! (Le mineur creuse toujours le filon le plus proche d'abord.)</p>
+      <p>Pour savoir où dessiner le mineur, le jeu n'a pas besoin de chemin : il regarde le <strong>temps passé</strong>. Pendant la première moitié de la marche, il avance vers le filon ; à la fin, il revient. C'est une <strong>interpolation</strong> : une position calculée entre deux points, selon une fraction de 0 à 1.</p>
+
+      <h3>📏 Les nouveaux rayons (en cases)</h3>
+      <pre style="white-space: pre-wrap">bûcheron 12 → 18 · forestier 9 → 14 · carrière 12 → 18
+pêcheur 10 → 15 · chasseur 14 → 21 · géologue 14 → 21 · mine 4 → 12</pre>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un filon à 9 cases : combien de secondes de marche (aller-retour) ?</summary><p>2 × (9 − 1) ÷ 1,6 = 10 secondes.</p></details>
+      <details class="question"><summary>Le chasseur avait 14 cases. + 50 %, ça fait combien ?</summary><p>14 + 7 = 21 cases.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -1799,8 +1840,14 @@ après :  ⛺ tipi   🗼 tour du moulin   ⛰️ colline de la mine   🏗️ g
           <p>6 formes de toit, des tours, une colline, une grue, un dôme… et l'inventaire en pleine page avec la fiche de chaque ressource.</p>
           <p class="apprend"><b>Tu apprends :</b> la silhouette, une fiche calculée à partir des règles. <b>Durée :</b> 2 séances.</p>
         </div>
-        <div class="carte prochain">
+        <div class="carte fait">
           <div class="num">26</div>
+          <h4>🚶 Les ouvriers vont plus loin <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Les mines voient les filons à 12 cases et le mineur y marche ; les autres ouvriers + 50 %.</p>
+          <p class="apprend"><b>Tu apprends :</b> un compromis (loin mais lent), l'interpolation. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte prochain">
+          <div class="num">27</div>
           <h4>🏙️ La ville : monuments, fêtes et port <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Les grands chantiers de fin de jeu.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -2017,6 +2064,14 @@ après :  ⛺ tipi   🗼 tour du moulin   ⛰️ colline de la mine   🏗️ g
         <textarea class="journal" id="village-appris-25" data-cle="village-appris-25" placeholder="Ex. : J'ai appris qu'on reconnaît un bâtiment de loin à sa silhouette…"></textarea>
         <label for="village-idees-25"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-25" data-cle="village-idees-25" placeholder="Ex. : Une silhouette spéciale pour les monuments…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 26 · les ouvriers vont plus loin <span class="petit">· 8 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> <code>rayonMine</code> à 12, les rayons de travail + 50 %, le temps de marche du mineur (<code>b.travail.marche</code>) et sa position calculée (<code>placerMineur</code>), la fiche de la mine qui dit où il en est.</p>
+        <label for="village-appris-26"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-26" data-cle="village-appris-26" placeholder="Ex. : J'ai appris qu'aller plus loin coûte du temps…"></textarea>
+        <label for="village-idees-26"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-26" data-cle="village-idees-26" placeholder="Ex. : Un wagonnet sur des rails jusqu'au filon…"></textarea>
       </div>
     </section>
   </main>
