@@ -118,7 +118,7 @@ Village.Peintre = (function () {
       for (let c = 0; c < carte.colonnes; c++) {
         const i = l * carte.colonnes + c, o = carte.objet[i];
         m.fillStyle = o === O.arbre || o === O.sapin ? "#3d8a2e" : o === O.montagne ? "#7a6a58" : o === O.rocher ? "#9b9480" : couleurs[i];
-        if (carte.filon[i]) m.fillStyle = FILONS[carte.filon[i]][0];
+        if (carte.filon[i] && carte.revele[i] && carte.reste[i] > 0) m.fillStyle = FILONS[carte.filon[i]][0]; // étape 28 : seulement les filons découverts
         if (monde.route[i]) m.fillStyle = "#e2c38c";
         if (o === O.feuDeCamp || o === O.tente || monde.occupees.has(i)) m.fillStyle = "#ff4b3e";
         m.fillRect(c - l + carte.lignes - 1, (c + l) / 2, 2, 1);
@@ -235,7 +235,10 @@ Village.Peintre = (function () {
     for (let diag = cMin + lMin; diag <= cMax + lMax; diag++) {
       for (let c = Math.max(cMin, diag - lMax); c <= Math.min(cMax, diag - lMin); c++) {
         const l = diag - c, i = l * carte.colonnes + c, o = carte.objet[i];
-        if (!o) continue;
+        if (!o) { // étape 28 : un filon découvert : des paillettes à la surface
+          if (carte.filon[i] && carte.revele[i] && carte.reste[i] > 0 && !monde.occupees.has(i)) { const p = milieu(c, l); if (p.x >= vue.x0 && p.x <= vue.x1 && p.y >= vue.y0 && p.y <= vue.y1) paillettes(p.x, p.y, carte.filon[i], carte.reste[i] / C.nature.reserveFilon, cache.variante[i], t); }
+          continue;
+        }
         const p = milieu(c, l);
         if (p.x < vue.x0 || p.x > vue.x1 || p.y < vue.y0 || p.y > vue.y1) continue;
         if (o === O.fleurs) Village.Vie.surLaCase(monde, "fleurs", i, p.x, p.y); // étape 9 : un papillon ?
@@ -689,6 +692,29 @@ Village.Peintre = (function () {
       ctx.fill(); ctx.stroke();
       ctx.fillStyle = "rgba(255,255,255,.35)";
       ctx.beginPath(); ctx.moveTo(px - r * 0.6, py - r * 0.6); ctx.lineTo(px + r * 0.1, py - r * 0.95); ctx.lineTo(px - r * 0.1, py - r * 0.45); ctx.closePath(); ctx.fill();
+    }
+  }
+
+  // Étape 28 : ✍️ « les filons représentés avec des paillettes à la surface ». Un filon découvert : la terre un peu
+  // plus sombre, des éclats de sa couleur (noirs et brillants, roux, dorés), et quelques étincelles qui scintillent.
+  // Plus le filon est vidé, moins il y a de paillettes.
+  function paillettes(x, y, filon, plein, v, t) {
+    const [fonce, clair] = FILONS[filon], n = 4 + Math.round(10 * Math.max(0.15, plein));
+    ctx.fillStyle = filon === F.charbon ? "rgba(30, 28, 32, .32)" : filon === F.fer ? "rgba(120, 50, 20, .25)" : "rgba(160, 120, 20, .22)";
+    ctx.beginPath(); ctx.ellipse(x, y, L * 0.36, Hc * 0.34, 0, 0, Math.PI * 2); ctx.fill();
+    for (let k = 0; k < n; k++) {
+      const a = (v * 97 + k * 2.399) % (Math.PI * 2), r = Math.sqrt(((v * 13 + k * 0.37) % 1)) * 0.9;
+      const px = x + Math.cos(a) * r * L * 0.34, py = y + Math.sin(a) * r * Hc * 0.32, s = 2.2 + ((k * 7 + v * 5) % 3) * 0.8;
+      ctx.fillStyle = k % 3 ? fonce : clair;
+      ctx.beginPath(); ctx.moveTo(px, py - s); ctx.lineTo(px + s * 0.8, py); ctx.lineTo(px, py + s * 0.6); ctx.lineTo(px - s * 0.8, py); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = "rgba(20, 15, 10, .5)"; ctx.lineWidth = 0.6; ctx.stroke();
+    }
+    for (let k = 0; k < 3; k++) { // les étincelles ✨
+      const eclat = Math.sin(t * 2.5 + v * 31 + k * 2.1);
+      if (eclat < 0.55) continue;
+      const a = (v * 53 + k * 2.1) % (Math.PI * 2), px = x + Math.cos(a) * L * 0.2, py = y + Math.sin(a) * Hc * 0.2 - 2, r = (eclat - 0.55) * 14;
+      ctx.strokeStyle = filon === F.charbon ? "#cfe0ff" : "#fffbe0"; ctx.lineWidth = 1.3;
+      ctx.beginPath(); ctx.moveTo(px - r, py); ctx.lineTo(px + r, py); ctx.moveTo(px, py - r); ctx.lineTo(px, py + r); ctx.stroke();
     }
   }
 

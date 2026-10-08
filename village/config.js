@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 28,
+  version: 29,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -74,15 +74,15 @@ Village.CONFIG = {
     pierres: { emoji: "🪨", nom: "pierres", info: "Des pierres taillées à la carrière, pour les bâtiments solides." },
     poissons: { emoji: "🐟", nom: "poissons", info: "Pêchés au bord de l'eau. Une des nourritures de base des habitants." },
     viande: { emoji: "🍖", nom: "viande", info: "Rapportée par le chasseur ou la porcherie. Une des nourritures de base des habitants." },
-    charbon: { emoji: "⚫", nom: "charbon", age: 1, info: "Creusé dans une mine, au pied d'un filon noir. Il fait chauffer les fourneaux." }, // age : l'âge où cette ressource apparaît (étape 11)
-    fer: { emoji: "🟤", nom: "minerai de fer", age: 2, info: "Le minerai brut, tel qu'il sort de la mine de fer. Il faut le fondre pour s'en servir." },
+    charbon: { emoji: "⚫", nom: "charbon", age: 1, info: "Creusé par une mine posée sur un filon noir (des paillettes noires que le géologue a trouvées). Il fait chauffer les fourneaux." }, // age : l'âge où cette ressource apparaît (étape 11)
+    fer: { emoji: "🟤", nom: "minerai de fer", age: 2, info: "Le minerai brut, tel qu'il sort de la mine de fer (sur des paillettes rousses). Il faut le fondre pour s'en servir." },
     lingots: { emoji: "🔩", nom: "lingots", age: 2, info: "Du fer fondu à la fonderie, prêt à être travaillé." },
     outils: { emoji: "🔨", nom: "outils", age: 2, info: "Fabriqués à la forge. Les bâtiments les plus avancés en demandent." },
     // Étape 11 : le bourg
     ble: { emoji: "🌾", nom: "blé", age: 3, info: "Cultivé dans les champs de la ferme (pas en hiver)." },
     farine: { emoji: "⚪", nom: "farine", age: 3, info: "Le blé écrasé par le moulin. La boulangerie en fait du pain." },
     pain: { emoji: "🍞", nom: "pain", age: 3, info: "Cuit à la boulangerie. Au bourg, les habitants en veulent à chaque repas." },
-    or: { emoji: "🟡", nom: "pépites d'or", age: 3, info: "Des pépites creusées dans une mine d'or. L'orfèvre en fait des bijoux." },
+    or: { emoji: "🟡", nom: "pépites d'or", age: 3, info: "Des pépites creusées dans une mine d'or (sur des paillettes dorées). L'orfèvre en fait des bijoux." },
     bijoux: { emoji: "💍", nom: "bijoux", age: 3, info: "Fabriqués par l'orfèvre. Ils valent très cher au marché." },
     // Étape 15 : ✍️ l'élevage et la laiterie. La chaîne s'agrandit à chaque âge (✍️ « au fil des niveaux ») :
     //   🛖 hameau : 💧 eau + 🌿 foin → 🐄 étable → 🥛 lait
@@ -273,8 +273,17 @@ Village.CONFIG = {
   // Étape 24 : ✍️ « les bâtiments doivent être beaucoup plus grands ». Presque tous prennent un BLOC de 2 × 2 cases
   // (leur case, plus [0, −1], [1, 0] et [1, −1]) ; seuls les petits restent sur 1 case. Les champs et les enclos
   // sont EN PLUS, sur la colonne à droite du bloc ([2, 0] et [2, −1]).
-  petits: ["hutte", "maison", "manoir", "puits"],
-  bloc: [[0, -1], [1, 0], [1, -1]],
+  // Étape 28 : ✍️ « encore une fois trop petits… les tailles peuvent varier, même 5 × 5 ». Chaque bâtiment a la taille
+  // de son BLOC (en cases de côté) : 3 × 3 par défaut, 4 × 4 pour les grands, 2 × 2 pour les cabanes, 1 × 1 pour les
+  // logements et le puits. Les champs et les enclos sont la colonne juste à droite du bloc.
+  // (Une partie commencée avant : ses bâtiments sont agrandis sur place, ou déplacés ; s'il n'y a vraiment pas la
+  // place, ils gardent la plus grande taille possible.)
+  tailles: {
+    hutte: 1, maison: 1, puits: 1,
+    manoir: 2, bucheron: 2, forestier: 2, pecheur: 2, chasseur: 2, geologue: 2, poulailler: 2, veterinaire: 2,
+    entrepot: 4, depot: 4, universite: 4, moulin: 4, marche: 4, fonderie: 4, ferme: 4,
+  },
+  tailleParDefaut: 3,
   champs: {
     ferme: [[2, 0], [2, -1]],
     etable: [[2, 0], [2, -1]],
@@ -287,6 +296,12 @@ Village.CONFIG = {
   // Mais le mineur MARCHE jusqu'au filon et revient avec son morceau : plus le filon est loin, plus c'est long
   // (aller-retour à la vitesse des ouvriers). Il creuse toujours le filon le plus proche d'abord.
   rayonMine: 12,
+  // Étape 28 : ✍️ « plus de montagnes : des filons que le géologue trouve, et une mine qui creuse dans le sol ».
+  // Les filons sont CACHÉS sous le sol rocheux (là où étaient les montagnes). Le géologue les révèle (des paillettes
+  // apparaissent) : tous les filons à 3 cases au plus de l'endroit qu'il explore. La mine se pose SUR un filon
+  // découvert, ou à 3 cases au plus de son bloc (rayonPoseMine).
+  rayonPoseMine: 3,
+  rayonRevele: 3,
   mines: {
     mineCharbon: { filon: "charbon" },
     mineFer: { filon: "fer" },
@@ -450,7 +465,8 @@ Village.CONFIG = {
     zoomFigurants: 0.6, // à partir de ce zoom : les poules, les enfants, les papillons
     zoomAnimations: 0.45, // étape 17 : ✍️ les animations devant les bâtiments se voient aussi de plus loin
     // Étape 14 : ✍️ des bâtiments plus GROS, pour les reconnaître d'un coup d'œil (× la taille de l'étape 13)
-    echelleBatiments: 1.6, // les petits bâtiments (huttes, maisons, puits) · étape 22 : 1,5 ; étape 24 : 1,6
+    echelleBatiments: 1.8, // les bâtiments sur 1 case (huttes, maisons, puits) · étape 22 : 1,5 ; étape 24 : 1,6 ; étape 28 : 1,8
+    echelleParCase: 1, // étape 28 : un bloc de N × N cases est dessiné × (N + 0,3) : 2 × 2 → 2,3 ; 3 × 3 → 3,3 ; 4 × 4 → 4,3
     echelleGrands: 2.3, // étape 24 : ✍️ les bâtiments sur 2 × 2 cases sont dessinés × 2,3
     echelleEntrepot: 1.9, // étape 24 : sur 2 × 2 cases (1,15 avant) // l'entrepôt était déjà grand (et il a sa cour et son silo)
   },

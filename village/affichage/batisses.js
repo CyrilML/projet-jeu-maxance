@@ -97,11 +97,11 @@ Village.Batisses = (function () {
     try { dessiner(); } finally { loupe = avant; ctx.restore(); }
   }
   // Étape 24 : ✍️ presque tous les bâtiments prennent 2 × 2 cases : ils sont dessinés au MILIEU de leur bloc, bien plus gros
-  const grand = (type) => !C_.petits.includes(type);
-  const echelleDe = (type) => (type === "entrepot" || type === "depot" ? C_.detail.echelleEntrepot : grand(type) ? C_.detail.echelleGrands : C_.detail.echelleBatiments);
-  const decalageBloc = (type) => (grand(type) ? C_.carte.largeurCase / 2 : 0); // le milieu du bloc est une demi-case à droite
-  // Un bâtiment qui n'a pas pu avoir tout son bloc (dans une vieille partie, sans place autour) reste à l'ancienne taille
-  const aSonBloc = (b) => !grand(b.type) || C_.bloc.every(([a, c]) => (b.emprise || []).some(([x, y]) => x === a && y === c));
+  // Étape 28 : ✍️ la taille varie (config.js : « tailles ») : un bloc de N × N cases est dessiné × (N + 0,3), son milieu
+  // est (N − 1) demi-cases à droite de sa case. L'entrepôt (déjà large, avec sa cour) un peu moins.
+  const Bt = () => Village.Batiments;
+  const echelleTaille = (type, n) => (n <= 1 ? C_.detail.echelleBatiments : (n + 0.3) * C_.detail.echelleParCase * (type === "entrepot" || type === "depot" ? 0.83 : type === "universite" ? 0.88 : 1));
+  const decalageTaille = (n) => ((n - 1) * C_.carte.largeurCase) / 2;
 
   // Un point sur un mur : u va de 0 (début du mur) à 1 (fin), v de 0 (le sol) à 1 (le haut du mur).
   const surMur = (P, Q, h, u, v) => [P[0] + (Q[0] - P[0]) * u, P[1] + (Q[1] - P[1]) * u - v * h];
@@ -549,7 +549,7 @@ Village.Batisses = (function () {
   // ✍️ « on ne devrait pas avoir besoin de cliquer : on devrait le voir ». La ferme a de vrais champs, et les élevages de
   // vrais enclos pleins d'animaux, sur les cases à côté du bâtiment (config.js : « emprises »).
   // Étape 24 : seulement les cases des champs (config.js : « champs »), pas celles du bloc du bâtiment ; à la vraie taille.
-  const estChamp = (b, dc, dl) => (C_.champs[b.type] || []).some(([a, c]) => a === dc && c === dl);
+  const estChamp = (b, dc, dl) => Bt().champsDe(b.type, Bt().tailleDe(b)).some(([a, c]) => a === dc && c === dl); // étape 28 : selon sa taille
   const aDesChamps = (b) => !!(b.emprise && b.emprise.some(([dc, dl]) => estChamp(b, dc, dl)));
   function empriseDessin(ctx, b, x, y, t) {
     const L = C_.carte.largeurCase / 2, H = C_.carte.hauteurCase / 2;
@@ -947,28 +947,30 @@ Village.Batisses = (function () {
         bloc(ctx, bx + 1, cy, 4.5, 5, "#e8e5de", "#c4c0b6", "#a5a197", false);
         return [px, py - hm - 4];
       }
-      case "mineCharbon": case "mineFer": case "mineOr": { // une colline de roche, l'entrée en poutres, et le chevalement
-        const roc = type === "mineCharbon" ? ["#6b6560", "#46423e", "#2a2724"] : type === "mineFer" ? ["#b07a5a", "#8a5a40", "#5e3a28"] : ["#b9ab80", "#958660", "#6c5f40"];
-        // le chevalement : une tour en bois avec une grande roue tout en haut (derrière la colline)
-        const cx = x + 10, cy = y - 8, hc = 50;
-        poutre(ctx, [cx - 8, cy], [cx - 1, cy - hc], 2.4); poutre(ctx, [cx + 8, cy + 2], [cx + 1, cy - hc], 2.4);
-        poutre(ctx, [cx - 6, cy - hc * 0.35], [cx + 6, cy - hc * 0.35 + 1], 1.6); poutre(ctx, [cx - 4, cy - hc * 0.7], [cx + 4, cy - hc * 0.7 + 1], 1.6);
-        poutre(ctx, [cx + 18, cy + 8], [cx + 1, cy - hc * 0.8], 1.8);
-        roue(ctx, cx, cy - hc - 2, 8, travail ? t * 4 : 0, "#5a5f68", 6, false);
-        ctx.beginPath(); ctx.moveTo(x - 30, y + 6);
-        for (const [dx, dy] of [[-27, -6], [-19, -16], [-9, -24], [2, -26], [13, -20], [23, -10], [29, 2]]) ctx.lineTo(x + dx, y + dy);
-        ctx.quadraticCurveTo(x + 4, y + 22, x - 30, y + 6); ctx.closePath();
-        const g = ctx.createLinearGradient(x - 28, y - 26, x + 26, y + 6); g.addColorStop(0, roc[0]); g.addColorStop(0.6, roc[1]); g.addColorStop(1, roc[2]); ctx.fillStyle = g; ctx.fill(); contour(ctx, 2);
-        if (!vue.hiver) { ctx.fillStyle = "rgba(90, 140, 60, .55)"; for (const [dx, dy, r] of [[-20, -12, 4], [-6, -21, 3.5], [15, -14, 3]]) { ctx.beginPath(); ctx.ellipse(x + dx, y + dy, r * 1.4, r * 0.6, 0, 0, TOUR); ctx.fill(); } }
-        else { ctx.fillStyle = "#f4f8ff"; ctx.beginPath(); ctx.moveTo(x - 19, y - 16); ctx.lineTo(x - 9, y - 24); ctx.lineTo(x + 2, y - 26); ctx.lineTo(x + 13, y - 20); ctx.lineTo(x + 6, y - 17); ctx.lineTo(x - 4, y - 20); ctx.closePath(); ctx.fill(); }
-        for (const [dx, dy, r] of [[-14, -4, 3], [12, -6, 2.5], [20, 0, 2], [-4, -14, 2.2]]) { ctx.beginPath(); ctx.ellipse(x + dx, y + dy, r * 1.3, r * 0.8, 0.3, 0, TOUR); ctx.fillStyle = roc[2]; ctx.fill(); }
-        if (type === "mineOr" || type === "mineFer") { ctx.fillStyle = type === "mineOr" ? "#ffd84a" : "#e09a5a"; for (const [dx, dy] of [[-16, -8], [8, -12], [16, -4], [-2, -18], [-22, -2]]) { ctx.beginPath(); ctx.arc(x + dx, y + dy, 1.3, 0, TOUR); ctx.fill(); } }
-        // l'entrée de la galerie
-        const ex = x - 8, ey = y + 8;
-        forme(ctx, [[ex - 8, ey - 2], [ex + 6, ey + 4], [ex + 6, ey - 12], [ex - 8, ey - 18]], "#141210");
-        poutre(ctx, [ex - 9, ey - 1], [ex - 9, ey - 19], 2.6); poutre(ctx, [ex + 7, ey + 5], [ex + 7, ey - 13], 2.6); poutre(ctx, [ex - 11, ey - 20], [ex + 9, ey - 11], 2.8);
-        if (travail && Math.sin(t * 10) > 0.6) { ctx.fillStyle = "#ffcf2e"; ctx.beginPath(); ctx.arc(ex - 1, ey - 8, 1.6, 0, TOUR); ctx.fill(); lumiere(ex - 1, ey - 8, 14, "orange", 0.8); } // la lampe du mineur
-        return [cx, cy - hc - 10];
+      case "mineCharbon": case "mineFer": case "mineOr": {
+        // Étape 28 : ✍️ « la mine doit creuser dans le sol » : plus de colline. Un PUITS carré creusé dans la terre, bordé
+        // de pierres et de planches, le chevalement (la tour en bois et sa roue) juste au-dessus, la cabane du mineur, et
+        // le tas de minerai sorti du trou.
+        const roc = type === "mineCharbon" ? ["#4a4e5a", "#25272d", "#0d0e10"] : type === "mineFer" ? ["#c97a50", "#a8603e", "#6e3a22"] : ["#fff1a0", "#f2c230", "#b8860b"];
+        boite(ctx, x - 15, y - 9, { a: 9, h: 10, toit: 9, murG: "#a87443", murD: "#865a31", toitA: type === "mineOr" ? "#c9a636" : type === "mineFer" ? "#9a5a3a" : "#555a60", toitB: "#43474c", mur: "rondins", toitSorte: "bardeaux", fenetres: 1, cheminee: 0.6 }, 1, true);
+        const px = x - 2, py = y + 3; // le puits
+        forme(ctx, [[px - 13, py], [px, py + 6.5], [px + 13, py], [px, py - 6.5]], "#8d8579"); // le bord en pierre
+        forme(ctx, [[px - 9, py], [px, py + 4.5], [px + 9, py], [px, py - 4.5]], "#120f0c"); // le trou, tout noir
+        forme(ctx, [[px - 9, py], [px, py - 4.5], [px + 9, py], [px + 9, py + 2.5], [px, py - 2], [px - 9, py + 2.5]], "#2a221b"); // la paroi du fond
+        ctx.strokeStyle = "#8a5a2b"; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(px - 13, py); ctx.lineTo(px, py + 6.5); ctx.lineTo(px + 13, py); ctx.stroke(); // les planches du bord
+        // le chevalement, à cheval sur le puits
+        const hc = 46, haut = [px, py - hc];
+        poutre(ctx, [px - 11, py + 1], [px - 1, py - hc], 2.6); poutre(ctx, [px + 11, py + 1], [px + 1, py - hc], 2.6);
+        poutre(ctx, [px - 7.5, py - hc * 0.35], [px + 7.5, py - hc * 0.35], 1.6); poutre(ctx, [px - 4, py - hc * 0.7], [px + 4, py - hc * 0.7], 1.6);
+        poutre(ctx, [px + 22, py + 6], [px + 1, py - hc * 0.85], 1.8);
+        const tourne = travail ? t * 4 : 0;
+        ctx.strokeStyle = "#3b2614"; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(px + 3, haut[1] - 2); ctx.lineTo(px + 3, py - 1 - (travail ? (Math.sin(t * 1.5) + 1) * 6 : 0)); ctx.stroke(); // le câble qui descend
+        roue(ctx, haut[0], haut[1] - 2, 8, tourne, "#5a5f68", 6, false);
+        // le tas de minerai sorti du trou
+        ctx.beginPath(); ctx.ellipse(x + 17, y + 6, 10, 5, 0, Math.PI, 0); ctx.lineTo(x + 27, y + 7); ctx.ellipse(x + 17, y + 7, 10, 3, 0, 0, Math.PI); ctx.closePath(); ctx.fillStyle = "#7a6a58"; ctx.fill(); contour(ctx, 1.4);
+        for (const [dx, dy, r] of [[-5, 3, 2.6], [1, 1, 3], [6, 4, 2.4], [-1, 5, 2.2], [3, -1.5, 2]]) facettes(ctx, x + 17 + dx, y + dy, r, roc[0], roc[1], roc[2], type === "mineCharbon" ? "rgba(190, 210, 255, .9)" : null);
+        if (travail && Math.sin(t * 10) > 0.6) { ctx.fillStyle = "#ffcf2e"; ctx.beginPath(); ctx.arc(px, py, 1.6, 0, TOUR); ctx.fill(); lumiere(px, py, 14, "orange", 0.8); } // la lampe du mineur, au fond
+        return [haut[0], haut[1] - 12];
       }
       case "marche": { // 3 étals avec des toiles rayées de couleurs différentes : pas de maison
         const etal = (ex, ey, c1, c2, fruits) => {
@@ -1082,8 +1084,9 @@ Village.Batisses = (function () {
   function dessinerBatiment(ctx, b, x, y, t) {
     const m = MODELES[b.type];
     const souleve = Village.monde && Village.monde.projet && Village.monde.projet.deplacer === b; // étape 12
-    const s = (aSonBloc(b) ? echelleDe(b.type) : 1.5) * (1 + 0.07 * niveauDe(b)); // étape 23 : un bâtiment amélioré est un peu plus grand
-    const x0 = x; if (aSonBloc(b)) x += decalageBloc(b.type); // étape 24 : le milieu du bloc de 2 × 2 cases
+    const n = Bt().tailleDe(b); // étape 28 : la taille de son bloc
+    const s = echelleTaille(b.type, n) * (1 + 0.07 * niveauDe(b)); // étape 23 : un bâtiment amélioré est un peu plus grand
+    const x0 = x; x += decalageTaille(n); // étape 24 : le milieu du bloc
     if (souleve) { ctx.save(); ctx.globalAlpha = 0.4; aLaLoupe(ctx, x, y - 6, s, () => dessinerBatimentDedans(ctx, b, x, y - 6, t, m)); ctx.restore(); return; }
     // Étape 22 et 24 : les champs et les enclos, sur le sol, à la taille des cases (pas à la loupe)
     if (b.etat === "pret" && b.emprise && b.emprise.length) empriseDessin(ctx, b, x0, y, t);
@@ -1343,10 +1346,10 @@ Village.Batisses = (function () {
     } else if (b.type === "mineCharbon" || b.type === "mineFer" || b.type === "mineOr") {
       // Étape 7 : des rails et un wagonnet ; étape 25 : la colline, l'entrée et le chevalement sont dans structure
       ctx.strokeStyle = "#7d8187"; ctx.lineWidth = 1.2;
-      ctx.beginPath(); ctx.moveTo(x - 6, y + 6); ctx.lineTo(x + 14, y + 16); ctx.moveTo(x - 9, y + 8); ctx.lineTo(x + 11, y + 18); ctx.stroke();
-      forme(ctx, [[x + 2, y + 6], [x + 10, y + 10], [x + 10, y + 5], [x + 2, y + 1]], "#6c5036");
-      if (b.type === "mineFer") minerai(ctx, x + 6, y + 3); else if (b.type === "mineOr") pepite(ctx, x + 6, y + 3); else charbon(ctx, x + 6, y + 3);
-      pile(ctx, x + 14, y + 4, b.type === "mineFer" ? "fer" : b.type === "mineOr" ? "or" : "charbon", b.sortie);
+      ctx.beginPath(); ctx.moveTo(x + 2, y + 9); ctx.lineTo(x - 18, y + 19); ctx.moveTo(x + 5, y + 11); ctx.lineTo(x - 15, y + 21); ctx.stroke(); // (étape 28 : du puits vers l'avant)
+      forme(ctx, [[x - 14, y + 16], [x - 6, y + 12], [x - 6, y + 7], [x - 14, y + 11]], "#6c5036");
+      if (b.type === "mineFer") minerai(ctx, x - 10, y + 9); else if (b.type === "mineOr") pepite(ctx, x - 10, y + 9); else charbon(ctx, x - 10, y + 9);
+      pile(ctx, x + 6, y + 17, b.type === "mineFer" ? "fer" : b.type === "mineOr" ? "or" : "charbon", b.sortie);
     } else if (b.type === "geologue") {
       // Une loupe géante accrochée au mur, et un caillou brillant
       ctx.strokeStyle = "#6b4520"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + 10, y - 2); ctx.lineTo(x + 14, y + 4); ctx.stroke();
@@ -2282,7 +2285,153 @@ Village.Batisses = (function () {
 
   // Étape 14 : ✍️ l'ICÔNE d'une ressource, dessinée (pour la barre du stock, le marché, les statistiques) :
   // de vraies planches, de vraies pépites… au lieu des emojis qui ne ressemblaient à rien.
+  // Étape 28 : ✍️ « certains objets ne sont pas ressemblants dans l'inventaire, il faut mieux les distinguer ». Chaque
+  // ressource a maintenant sa GRANDE icône, dessinée dans une boîte de 24 × 24 (de −12 à +12), toutes à la même taille,
+  // avec une forme bien à elle (pas seulement une couleur). Les petits objets portés par les bonshommes restent ceux
+  // d'avant (objetPorte).
+  const ell = (ctx, x, y, rx, ry, couleur, sans) => { ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, TOUR); ctx.fillStyle = couleur; ctx.fill(); if (!sans) contour(ctx, 1.2); };
+  const trace = (ctx, couleur, l, f) => { ctx.strokeStyle = couleur; ctx.lineWidth = l; ctx.lineCap = "round"; ctx.beginPath(); f(); ctx.stroke(); ctx.lineCap = "butt"; };
+  const ICONES = {
+    troncs: (c) => { // 3 bûches empilées, on voit les cernes
+      for (const [x, y] of [[-5, 5], [5, 5], [0, -3.5]]) {
+        forme(c, [[x - 1, y - 5], [x + 9, y - 8], [x + 9, y + 0.5], [x - 1, y + 4.5]], "#8a5a30");
+        ell(c, x - 1, y - 0.3, 4.6, 4.8, "#e0b47a");
+        trace(c, "rgba(110, 70, 30, .7)", 0.8, () => { c.ellipse(x - 1, y - 0.3, 2.6, 2.8, 0, 0, TOUR); c.moveTo(x - 0.4, y - 0.3); c.arc(x - 1, y - 0.3, 0.6, 0, TOUR); });
+      }
+    },
+    planches: (c) => { planche(c, -1, 7, 22); planche(c, 1, 1.5, 22); planche(c, -0.5, -4, 22); },
+    pierres: (c) => { c.save(); c.scale(1.9, 1.9); caillou(c, -2.6, 1.4, 0); caillou(c, 2.6, 1.6, 1); caillou(c, 0, -2, 2); c.restore(); },
+    poissons: (c) => {
+      forme(c, [[-12, 0], [-6, -6], [4, -6], [9, -1], [9, 1], [4, 6], [-6, 6]], "#7fb3d9");
+      forme(c, [[8, 0], [13, -6], [12, 0], [13, 6]], "#5a93c0");
+      forme(c, [[-3, -6], [1, -10], [4, -6]], "#5a93c0");
+      trace(c, "rgba(40, 80, 120, .6)", 1, () => { for (const x of [-2, 1.5, 5]) { c.moveTo(x, -4.5); c.quadraticCurveTo(x + 1.5, 0, x, 4.5); } });
+      ell(c, -8, -1.5, 1.6, 1.6, "#ffffff"); ell(c, -7.8, -1.5, 0.8, 0.8, "#1b2430", true);
+    },
+    viande: (c) => { // un gros pilon
+      trace(c, "#3b2614", 5.5, () => { c.moveTo(3, 3); c.lineTo(10, 10); }); trace(c, "#f4ecd8", 3.6, () => { c.moveTo(3, 3); c.lineTo(10, 10); });
+      ell(c, 10.5, 9, 2.4, 2.4, "#f4ecd8"); ell(c, 9, 11, 2.4, 2.4, "#f4ecd8");
+      c.beginPath(); c.ellipse(-2, -2, 9.5, 8, -0.7, 0, TOUR); c.fillStyle = "#b5462e"; c.fill(); contour(c, 1.4);
+      c.beginPath(); c.ellipse(-4, -4.5, 4, 2.2, -0.7, 0, TOUR); c.fillStyle = "rgba(255, 190, 150, .55)"; c.fill();
+    },
+    charbon: (c) => { // un tas de gros morceaux NOIRS, mats, avec des reflets bleutés
+      for (const [x, y, r] of [[-6, 4, 5.5], [5, 4.5, 5.5], [0, -3, 6.5], [-1, 7, 4]]) facettes(c, x, y, r, "#4a4e5a", "#25272d", "#0d0e10", "rgba(190, 210, 255, .9)");
+      trace(c, "rgba(60, 60, 70, .6)", 1, () => { c.moveTo(-11, 10); c.lineTo(11, 10); });
+    },
+    fer: (c) => { // une grosse pierre ROUSSE, avec des veines grises de métal
+      forme(c, [[-11, 5], [-9, -5], [-2, -10], [7, -8], [11, -1], [9, 7], [0, 10], [-7, 9]], "#a8603e");
+      forme(c, [[-2, -10], [7, -8], [11, -1], [3, -2]], "#c97a50");
+      trace(c, "#c9ccd2", 2.2, () => { c.moveTo(-8, 2); c.quadraticCurveTo(-2, -3, 6, 1); c.moveTo(-4, 7); c.quadraticCurveTo(1, 4, 7, 6); });
+      trace(c, "#ffffff", 0.8, () => { c.moveTo(-6, 0.6); c.lineTo(-3, -1.2); });
+    },
+    lingots: (c) => { c.save(); c.scale(1.7, 1.7); lingot(c, -1.2, 3); lingot(c, 1.6, 2.6); lingot(c, 0.2, -0.6); c.restore(); },
+    outils: (c) => { // un marteau et une pioche croisés
+      trace(c, "#3b2614", 4, () => { c.moveTo(-9, 10); c.lineTo(8, -8); c.moveTo(9, 10); c.lineTo(-8, -8); });
+      trace(c, "#a8743f", 2.4, () => { c.moveTo(-9, 10); c.lineTo(8, -8); c.moveTo(9, 10); c.lineTo(-8, -8); });
+      forme(c, [[4, -12], [12, -4], [9, -1], [1, -9]], "#8d939b"); // la tête du marteau
+      c.beginPath(); c.moveTo(-13, -3); c.quadraticCurveTo(-9, -12, 0, -12); c.quadraticCurveTo(-7, -9, -9.5, -1.5); c.closePath(); c.fillStyle = "#b9bdc4"; c.fill(); contour(c, 1.2); // la pioche
+    },
+    ble: (c) => { // une gerbe d'épis, avec son lien
+      for (let k = -3; k <= 3; k++) { const a = k * 0.14; trace(c, "#c9a02e", 1.2, () => { c.moveTo(0, 11); c.lineTo(Math.sin(a) * 18, 11 - Math.cos(a) * 18); }); c.save(); c.translate(Math.sin(a) * 15, 11 - Math.cos(a) * 15); c.rotate(a); ell(c, 0, 0, 1.8, 4.2, "#ecc24a"); c.restore(); }
+      forme(c, [[-4, 3], [4, 3], [4, 6], [-4, 6]], "#8a5a2b");
+    },
+    farine: (c) => { // un sac de toile ficelé, avec un épi imprimé et de la farine qui déborde
+      forme(c, [[-8, -6], [8, -6], [10, 10], [-10, 10]], "#efe6d2");
+      forme(c, [[-8, -6], [-4, -10], [0, -7], [4, -10], [8, -6]], "#e2d6bb");
+      trace(c, "#8a5a2b", 1.6, () => { c.moveTo(-7, -6.5); c.lineTo(7, -6.5); });
+      trace(c, "#d0a640", 1.3, () => { c.moveTo(0, 7); c.lineTo(0, -1); for (let k = 0; k < 3; k++) { c.moveTo(0, 5 - k * 2.5); c.lineTo(-2.5, 3 - k * 2.5); c.moveTo(0, 5 - k * 2.5); c.lineTo(2.5, 3 - k * 2.5); } });
+      ell(c, 8, 11, 4, 1.5, "#ffffff", true);
+    },
+    pain: (c) => { // une grosse miche dorée, avec ses entailles
+      c.beginPath(); c.ellipse(0, 2, 12, 8.5, 0, 0, TOUR); c.fillStyle = "#c98a3a"; c.fill(); contour(c, 1.4);
+      c.beginPath(); c.ellipse(-1, 0, 9, 5.5, 0, Math.PI, 0); c.fillStyle = "rgba(255, 220, 150, .5)"; c.fill();
+      trace(c, "#f2d49a", 1.8, () => { for (const x of [-5, 0, 5]) { c.moveTo(x - 2, 4); c.lineTo(x + 2, -2); } });
+    },
+    or: (c) => { // des pépites dorées qui brillent
+      for (const [x, y, r] of [[-5, 4, 5], [5, 5, 4.5], [0, -3, 6]]) facettes(c, x, y, r, "#fff1a0", "#f2c230", "#b8860b", "#ffffff");
+      trace(c, "#fffbe0", 1.2, () => { c.moveTo(8, -9); c.lineTo(8, -3); c.moveTo(5, -6); c.lineTo(11, -6); });
+    },
+    bijoux: (c) => { // une grosse bague dorée à pierre rose, et un collier de perles
+      trace(c, "#c9a636", 1.4, () => { c.arc(0, -6, 11, 0.12 * Math.PI, 0.88 * Math.PI); });
+      for (let k = 0; k <= 8; k++) { const a = (0.12 + (0.76 * k) / 8) * Math.PI; ell(c, Math.cos(a) * 11, -6 + Math.sin(a) * 11, 1.9, 1.9, "#fbf6ee"); }
+      c.beginPath(); c.arc(0, 3, 6.5, 0, TOUR); c.strokeStyle = "#3b2614"; c.lineWidth = 4.6; c.stroke(); c.strokeStyle = "#f2c230"; c.lineWidth = 3; c.stroke();
+      forme(c, [[0, -9], [4.5, -5], [0, -2], [-4.5, -5]], "#e8508a");
+      forme(c, [[0, -9], [-4.5, -5], [-1.5, -5]], "#ff9ac0");
+    },
+    eau: (c) => { // un seau en bois plein d'eau, et une goutte
+      forme(c, [[-9, -4], [9, -4], [7, 11], [-7, 11]], "#9a6a3c");
+      trace(c, "#5a5f68", 1.6, () => { c.moveTo(-8.5, 0); c.lineTo(8.5, 0); c.moveTo(-7.5, 7); c.lineTo(7.5, 7); });
+      ell(c, 0, -4, 9, 2.6, "#4f9be0");
+      trace(c, "#5a5f68", 1.3, () => { c.moveTo(-9, -4); c.quadraticCurveTo(0, -15, 9, -4); });
+      c.beginPath(); c.moveTo(10, -12); c.quadraticCurveTo(13, -7, 10, -6); c.quadraticCurveTo(7, -7, 10, -12); c.fillStyle = "#7fc0f0"; c.fill(); contour(c, 1);
+    },
+    foin: (c) => { // une grosse botte RONDE, roulée
+      forme(c, [[-6, -8], [8, -8], [8, 8], [-6, 8]], "#d8b84a");
+      ell(c, -6, 0, 5, 8, "#e8cf6a");
+      trace(c, "rgba(140, 110, 30, .7)", 0.9, () => { c.ellipse(-6, 0, 3, 5, 0, 0, TOUR); c.moveTo(-5.4, 0); c.arc(-6, 0, 0.8, 0, TOUR); for (const y of [-4, 0, 4]) { c.moveTo(0, y); c.lineTo(8, y); } });
+    },
+    lait: (c) => { // un bidon de lait en fer-blanc, avec son couvercle et ses poignées
+      forme(c, [[-6, -4], [6, -4], [8, 11], [-8, 11]], "#d5dbe0");
+      forme(c, [[-4, -10], [4, -10], [6, -4], [-6, -4]], "#c3cad0");
+      ell(c, 0, -10, 4, 1.4, "#8d969e");
+      trace(c, "#5a5f68", 1.5, () => { c.moveTo(-7.5, 1); c.lineTo(-10, 0); c.lineTo(-10, 4); c.lineTo(-8, 4); c.moveTo(7.5, 1); c.lineTo(10, 0); c.lineTo(10, 4); c.lineTo(8, 4); });
+      forme(c, [[-7, 3], [7, 3], [7.5, 7], [-7.5, 7]], "#4a8ab8"); // la bande bleue
+      ell(c, -3, 0, 1.4, 4, "rgba(255, 255, 255, .7)", true);
+    },
+    beurre: (c) => { // une motte jaune sur une planchette, avec un couteau
+      forme(c, [[-12, 6], [0, 11], [12, 6], [0, 1]], "#a8743f");
+      forme(c, [[-8, 2], [0, 6], [0, -2], [-8, -6]], "#f6d24a"); forme(c, [[0, 6], [8, 2], [8, -6], [0, -2]], "#e8bc2e"); forme(c, [[-8, -6], [0, -2], [8, -6], [0, -10]], "#ffe680");
+      trace(c, "#c9ccd2", 2, () => { c.moveTo(2, -8); c.lineTo(11, -13); });
+    },
+    fromage: (c) => { // une meule entamée, avec ses trous
+      c.beginPath(); c.moveTo(-11, -2); c.lineTo(-11, 5); c.ellipse(0, 5, 11, 5, 0, Math.PI, 0, true); c.lineTo(11, -2); c.ellipse(0, -2, 11, 5, 0, 0, Math.PI); c.closePath(); c.fillStyle = "#e0a81e"; c.fill(); contour(c, 1.3);
+      c.beginPath(); c.ellipse(0, -2, 11, 5, 0, 0, TOUR); c.fillStyle = "#f6cf4a"; c.fill(); contour(c, 1.3);
+      forme(c, [[0, -2], [11, -2], [11, 5], [0, 5]], "#fbe07a"); // la part qui manque montre l'intérieur
+      for (const [x, y, r] of [[4, 0.5, 1.4], [8, 3, 1], [-5, -3, 1.3], [5, -4, 0.9]]) ell(c, x, y, r, r * 0.8, "#c98c10", true);
+    },
+    yaourt: (c) => { // un pot avec son couvercle rose et une cuillère
+      forme(c, [[-8, -5], [8, -5], [6.5, 11], [-6.5, 11]], "#fbf6ee");
+      ell(c, 0, -5, 8, 2.6, "#d96aa0");
+      forme(c, [[-7.5, 1], [7.5, 1], [7.2, 4], [-7.2, 4]], "#5fa8d9");
+      trace(c, "#c9ccd2", 1.8, () => { c.moveTo(3, -6); c.lineTo(9, -13); }); ell(c, 10, -13.5, 2, 1.4, "#c9ccd2");
+    },
+    oeufs: (c) => { // 3 œufs dans un nid de paille
+      for (const [x, y, col] of [[-5, -1, "#f6ead8"], [4, -2, "#e9c9a4"], [0, -4, "#fbf6ee"]]) { c.beginPath(); c.ellipse(x, y, 4, 5.4, 0, 0, TOUR); c.fillStyle = col; c.fill(); contour(c, 1.1); }
+      c.beginPath(); c.ellipse(0, 4, 12, 6, 0, 0, Math.PI); c.lineTo(-12, 2); c.ellipse(0, 2, 12, 3, 0, Math.PI, 0, true); c.closePath(); c.fillStyle = "#c9a04a"; c.fill(); contour(c, 1.2);
+      trace(c, "rgba(120, 90, 30, .7)", 0.8, () => { for (let k = -9; k <= 9; k += 3) { c.moveTo(k, 3); c.lineTo(k + 2, 8); } });
+    },
+    laine: (c) => { // une pelote avec 2 aiguilles à tricoter
+      trace(c, "#8a5a2b", 1.6, () => { c.moveTo(-10, -11); c.lineTo(6, 8); c.moveTo(10, -11); c.lineTo(-6, 8); });
+      ell(c, 0, 2, 9, 9, "#efe6f6");
+      trace(c, "#b8a6d6", 1.2, () => { c.ellipse(0, 2, 6.5, 8.5, 0.6, 0, TOUR); c.moveTo(-8, -1); c.quadraticCurveTo(0, 4, 8, -1); c.moveTo(-6, 7); c.quadraticCurveTo(0, 2, 7, 8); });
+      trace(c, "#b8a6d6", 1.2, () => { c.moveTo(8, 6); c.quadraticCurveTo(12, 10, 9, 12); });
+    },
+    tissu: (c) => { // une pile de 3 tissus pliés, de 3 couleurs
+      for (const [y, col, rayure] of [[6, "#3f8a8a", "#7fc4c4"], [0, "#d9553b", "#f6a08a"], [-6, "#7a5ab0", "#c4b0e6"]]) {
+        forme(c, [[-11, y], [11, y], [11, y + 5], [-11, y + 5]], col);
+        trace(c, rayure, 1.1, () => { for (let x = -8; x < 11; x += 5) { c.moveTo(x, y + 0.8); c.lineTo(x, y + 4.2); } });
+      }
+    },
+    vetements: (c) => { // une chemise avec son col et ses boutons
+      forme(c, [[-5, -10], [5, -10], [12, -5], [9, 0], [6, -2], [6, 11], [-6, 11], [-6, -2], [-9, 0], [-12, -5]], "#3f8a8a");
+      forme(c, [[-5, -10], [0, -5], [5, -10], [3, -10], [0, -7.5], [-3, -10]], "#f4efe4");
+      trace(c, "rgba(20, 50, 50, .6)", 1, () => { c.moveTo(0, -5); c.lineTo(0, 11); });
+      for (const y of [-2, 2.5, 7]) ell(c, 1.6, y, 0.9, 0.9, "#ffcf2e", true);
+    },
+    jambon: (c) => { // un jambon fumé, ficelé, avec son os
+      trace(c, "#3b2614", 5, () => { c.moveTo(6, -6); c.lineTo(11, -11); }); trace(c, "#f4ecd8", 3.2, () => { c.moveTo(6, -6); c.lineTo(11, -11); });
+      c.beginPath(); c.moveTo(7, -6); c.bezierCurveTo(14, 4, 2, 13, -6, 11); c.bezierCurveTo(-13, 9, -12, -1, -4, -5); c.closePath(); c.fillStyle = "#a8432c"; c.fill(); contour(c, 1.4);
+      c.beginPath(); c.ellipse(-3, 4, 5, 4, -0.5, 0, TOUR); c.fillStyle = "#e88a7a"; c.fill();
+      trace(c, "#f4ecd8", 1, () => { c.moveTo(-9, 0); c.lineTo(5, 7); c.moveTo(-6, -3); c.lineTo(8, 3); });
+    },
+  };
   function icone(ctx, r, x, y, taille) {
+    if (ICONES[r]) { // étape 28 : la grande icône
+      const e = (taille || 16) / 24, avant = trait;
+      ctx.save(); ctx.translate(x, y); ctx.scale(e, e); ctx.lineJoin = "round"; trait = 0.55 / e;
+      try { ICONES[r](ctx); } finally { trait = avant; ctx.restore(); }
+      return;
+    }
     const e = (taille || 16) / 13, avant = trait;
     ctx.save(); ctx.translate(x, y); ctx.scale(e, e); ctx.lineJoin = "round"; trait = 0.6 / e;
     if (r === "troncs") { ctx.scale(0.62, 0.62); rondin(ctx, 0, 1, 0.42); }
@@ -2400,8 +2549,8 @@ Village.Batisses = (function () {
     ctx.fill();
     ctx.strokeStyle = possible ? "#c6ffd0" : "#ffd0cc"; ctx.lineWidth = 2; ctx.stroke();
     ctx.globalAlpha = 0.55 + 0.15 * Math.sin(t * 5);
-    const xb = x + decalageBloc(type); // étape 24 : au milieu de son bloc
-    aLaLoupe(ctx, xb, y, echelleDe(type), () => structure(ctx, type, xb, y, MODELES[type], t, null)); // étape 25 : sa vraie forme // étape 14 : à la même taille que le vrai
+    const n = Bt().tailleVoulue(type), xb = x + decalageTaille(n); // étape 24 : au milieu de son bloc (étape 28 : selon sa taille)
+    aLaLoupe(ctx, xb, y, echelleTaille(type, n), () => structure(ctx, type, xb, y, MODELES[type], t, null)); // étape 25 : sa vraie forme // étape 14 : à la même taille que le vrai
     ctx.globalAlpha = 1;
   }
 

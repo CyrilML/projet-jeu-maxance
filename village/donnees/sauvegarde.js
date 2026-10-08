@@ -64,12 +64,15 @@
 //                  (manoir : la maison bourgeoise). Rien à convertir : les huttes et les maisons partent de 0.
 //  16 (étape 24) : la taille de la carte (taille). Une partie plus ancienne n'en a pas : elle garde sa carte de 64 × 64.
 //                  Ses bâtiments, qui prennent maintenant 2 × 2 cases, sont déplacés au chargement s'ils manquent de place.
+//  17 (étape 28) : les filons découverts (filonsVus : la liste des cases). Il n'y a plus de montagnes : elles deviennent
+//                  un sol rocheux, et leurs filons sont cachés. Une partie plus ancienne voit les filons près de ses
+//                  mines et ceux trouvés par un géologue ; les autres sont à découvrir.
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 16;
+  const VERSION = 17;
   const radio = Village.Evenements;
 
   function vide() {
@@ -235,6 +238,7 @@ Village.Sauvegarde = (function () {
       animaux: monde.animaux.map((a) => [Math.round(a.x * 10) / 10, Math.round(a.y * 10) / 10, a.sorte]),
       modifs: [...monde.modifs].map(([i, m]) => (m.f ? [i, m.o, m.r, m.f] : [i, m.o, m.r])),
       pousses: [...monde.pousses].map(([i, age]) => [i, Math.round(age)]),
+      filonsVus: monde.carte.revele.reduce((liste, v, i) => (v ? (liste.push(i), liste) : liste), []), // étape 28
     };
     ecrire(raison);
   }

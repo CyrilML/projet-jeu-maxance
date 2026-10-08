@@ -65,22 +65,19 @@ Village.Ouvriers = (function () {
       },
       quoi: "de l'eau",
     },
-    // Étape 5 : le géologue cherche un endroit où il pourrait y avoir de la pierre : une case de rochers,
-    // ou une case libre au pied d'une montagne. Pour qu'il n'aille pas toujours au même endroit, chaque
-    // recherche ne regarde qu'une case sur 4, tirée au hasard (avec une graine qui change à chaque fois).
+    // Étape 5 : le géologue cherche un endroit où il pourrait y avoir de la pierre. Pour qu'il n'aille pas toujours au
+    // même endroit, chaque recherche ne regarde qu'une case sur 4, tirée au hasard (avec une graine qui change à chaque fois).
+    // Étape 28 : ✍️ plus de montagnes : il explore le SOL ROCHEUX (là où étaient les montagnes), où les filons sont cachés.
     geologue: {
       duree: (monde) => C.ouvriers.prospecter * Village.Recherches.bonus(monde, "prospecter"), // étape 7 : × le bonus des recherches
       cherche: (monde, i, o) => {
         const k = monde.carte, c = i % k.colonnes, l = Math.floor(i / k.colonnes);
         if (k.objet[i] !== O.rien || monde.occupees.has(i) || monde.route[i] || monde.reservees.has(i)) return false;
-        if (!K.praticable(k, c, l)) return false;
-        const piedDeMontagne = k.terrain[i] === T.rochers || [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dc, dl]) => {
-          const nc = c + dc, nl = l + dl;
-          return nc >= 0 && nl >= 0 && nc < k.colonnes && nl < k.lignes && k.terrain[nl * k.colonnes + nc] === T.montagne;
-        });
-        return piedDeMontagne && Village.Hasard.pourCase(o.recherches || 0, c, l) < 0.25;
+        if (!K.praticable(k, c, l) || k.terrain[i] !== T.rochers) return false;
+        if (k.revele[i] && k.filon[i]) return false; // déjà découvert
+        return Village.Hasard.pourCase(o.recherches || 0, c, l) < 0.25;
       },
-      quoi: "un endroit à explorer (rochers ou pied de montagne)",
+      quoi: "un sol rocheux à explorer",
     },
     // Étape 4 : le chasseur cherche une case où il y a un animal qui n'est pas déjà visé.
     chasseur: {
@@ -285,22 +282,33 @@ Village.Ouvriers = (function () {
     }
   }
 
-  // Étape 7 : avec la recherche « Prospection », le géologue peut découvrir un filon de charbon dans une
-  // case de montagne voisine (qui n'en avait pas, ou dont le filon était épuisé).
+  // Étape 7 : avec la recherche « Prospection », le géologue peut faire apparaître un NOUVEAU filon.
   // Étape 8 : avec « Filons de fer », 1 fois sur 2 c'est un filon de fer.
+  // Étape 28 : sur la case qu'il explore (plus de montagnes) ; le nouveau filon est tout de suite découvert.
   function trouverFilon(monde, c, l, sorte) {
-    const k = monde.carte;
-    for (const [dc, dl] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]) {
+    const k = monde.carte, i = l * k.colonnes + c;
+    if (k.objet[i] !== O.rien || monde.occupees.has(i) || (k.filon[i] && k.reste[i] > 0)) return false;
+    k.filon[i] = K.FILON[sorte];
+    k.reste[i] = C.nature.reserveFilon;
+    k.revele[i] = 1;
+    Village.Monde.changerObjet(monde, i, k.objet[i]);
+    return true;
+  }
+  // Étape 28 : ✍️ les filons sont cachés sous le sol. Le géologue révèle tous ceux qui sont à 3 cases au plus
+  // (config.js : rayonRevele). Renvoie le nombre de cases découvertes de chaque sorte.
+  function revelerFilons(monde, c, l) {
+    const k = monde.carte, R = C.rayonRevele, trouves = {};
+    for (let dl = -R; dl <= R; dl++) for (let dc = -R; dc <= R; dc++) {
       const nc = c + dc, nl = l + dl;
       if (nc < 0 || nl < 0 || nc >= k.colonnes || nl >= k.lignes) continue;
-      const i = nl * k.colonnes + nc;
-      if (k.terrain[i] !== T.montagne || (k.filon[i] && k.reste[i] > 0)) continue;
-      k.filon[i] = K.FILON[sorte];
-      k.reste[i] = C.nature.reserveFilon;
-      Village.Monde.changerObjet(monde, i, k.objet[i]);
-      return true;
+      const j = nl * k.colonnes + nc;
+      if (!k.filon[j] || k.revele[j] || !(k.reste[j] > 0)) continue;
+      k.revele[j] = 1;
+      const nom = K.NOMS_FILONS[k.filon[j]];
+      trouves[nom] = (trouves[nom] || 0) + 1;
     }
-    return false;
+    if (Object.keys(trouves).length) { monde.changements++; K.compter(k); }
+    return trouves;
   }
 
   function finirLeTravail(monde, b, o) {
@@ -342,8 +350,14 @@ Village.Ouvriers = (function () {
       // Étape 8 et 11 : quel filon peut-il trouver ? Le charbon, et le fer et l'or avec les bonnes recherches.
       const possibles = ["charbon"].concat(Village.Recherches.a(monde, "filonsFer") ? ["fer"] : [], Village.Recherches.a(monde, "filonsOr") ? ["or"] : []);
       const minerai = possibles[Math.floor(Math.random() * possibles.length)];
+      // Étape 28 : d'abord, les filons cachés autour de lui
+      const trouves = revelerFilons(monde, o.cible.colonne, o.cible.ligne);
+      if (Object.keys(trouves).length) {
+        b.produits++;
+        for (const [minerai, cases] of Object.entries(trouves)) radio.emettre("filon-trouve", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, minerai, cases, nom: C.ressources[minerai].nom, emoji: C.ressources[minerai].emoji, reserve: C.nature.reserveFilon * cases });
+      }
       // Étape 5 : 1 chance sur 2 de trouver un gisement de pierre (un nouveau rocher)
-      if (carte.objet[i] === O.rien && !monde.occupees.has(i) && !monde.route[i] && Math.random() < C.ouvriers.chanceDeTrouver) {
+      else if (carte.objet[i] === O.rien && !monde.occupees.has(i) && !monde.route[i] && Math.random() < C.ouvriers.chanceDeTrouver) {
         carte.reste[i] = C.nature.pierresGisement;
         Village.Monde.changerObjet(monde, i, O.rocher);
         b.produits++;

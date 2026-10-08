@@ -249,12 +249,12 @@ Village.Interface = (function () {
         if (choisi) caseChoisie = ry + hc / 2;
         ctx.fillStyle = choisi ? "#ffe27a" : vu ? "#fffaf0" : "#e9e1d2"; ctx.strokeStyle = choisi ? "#ff8a1f" : "#c9b48f"; ctx.lineWidth = choisi ? 3 : 1.5;
         ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(cx, ry, lc, hc, 10); else ctx.rect(cx, ry, lc, hc); ctx.fill(); ctx.stroke();
-        const avecNom = lc >= 64;
+        const avecNom = true; // étape 28 : ✍️ le nom est toujours écrit sous l'icône
         if (vu) {
           Village.Batisses.icone(ctx, r, cx + lc / 2, ry + hc * (avecNom ? 0.3 : 0.36), lc * 0.36);
           const libre = Math.max(0, Village.Porteurs.disponible(monde, r));
           texte(ctx, String(libre), cx + lc / 2, ry + hc * (avecNom ? 0.64 : 0.76), Math.max(11, lc * 0.17), libre > 0 ? "#3b2614" : "#a08a6a", true, "center");
-          if (avecNom) texte(ctx, C.ressources[r].nom.replace("minerai de ", "").replace(/^(seaux|bottes|bidons|mottes|pots|pelotes|rouleaux) d(e |')/, ""), cx + lc / 2, ry + hc * 0.86, 10, "#7a5a30", false, "center");
+          if (avecNom) { const nom = C.ressources[r].nom.replace("minerai de ", "").replace(/^(seaux|bottes|bidons|mottes|pots|pelotes|rouleaux) d(e |')/, ""); let tn = Math.max(8, Math.min(11, lc * 0.15)); ctx.font = tn + "px " + POLICE; while (tn > 7 && ctx.measureText(nom).width > lc - 4) { tn -= 0.5; ctx.font = tn + "px " + POLICE; } texte(ctx, nom, cx + lc / 2, ry + hc * 0.87, tn, "#7a5a30", false, "center"); }
         } else {
           const age = C.ages[C.ressources[r].age || 0];
           texte(ctx, "🔒", cx + lc / 2, ry + hc * 0.38, lc * 0.24, null, false, "center");
@@ -616,6 +616,7 @@ Village.Interface = (function () {
     ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(10, 10, lb, hStock, 10); else ctx.rect(10, 10, lb, hStock); ctx.fill(); ctx.stroke();
     texte(ctx, titre, 20, petit ? 21 : 23, petit ? 10 : 12, "#5a4220", true);
     let sac = null;
+    const noms = []; // étape 28 : les zones des icônes (pour dire leur nom)
     ressources.forEach(([r, n], k) => {
       const rx = 20 + (k % parLigne) * pas, ry = (petit ? 38 : 42) + Math.floor(k / parLigne) * haut, ti = petit ? 13 : 16;
       if (r === "inventaire") { // étape 25 : le bouton de l'inventaire, avec le nombre de sortes de ressources qu'on a
@@ -627,9 +628,12 @@ Village.Interface = (function () {
         return;
       }
       if (r === "pieces") texte(ctx, "🪙", rx, ry, petit ? 11 : 13, null, false); else Village.Batisses.icone(ctx, r, rx + ti / 2, ry, ti);
+      // Étape 28 : ✍️ toucher une icône dit son nom
+      noms.push([rx - 3, ry - ti / 2 - 3, pas - 4, ti + 6, r === "pieces" ? "🪙 Pièces : " + monde.pieces + " (pour le marché et les améliorations)" : C.ressources[r].emoji + " " + C.ressources[r].nom.charAt(0).toUpperCase() + C.ressources[r].nom.slice(1) + " : " + n + " libres (" + monde.stock[r] + " dans l'entrepôt)"]);
       texte(ctx, String(n), rx + ti + 2, ry, petit ? 11 : 13, n <= 0 && (r === "poissons" || r === "viande") ? "#c0392b" : "#3b2614", true);
     });
     zone(10, 10, lb, hStock, "objectifs");
+    for (const [zx, zy, zl, zh, t] of noms) zone(zx, zy, zl, zh, "info", t); // étape 28 : toucher une icône = son nom
     if (sac) zone(sac[0] - 5, sac[1] - 6, sac[2] + 10, sac[3] + 12, "panneau", "inventaire"); // (après la barre : il est au-dessus ; un peu plus grand pour le doigt)
     if (objectifsOuverts) panneauObjectifs(ctx, monde, 10, basDuStock + 8, petit ? 250 : 290);
 

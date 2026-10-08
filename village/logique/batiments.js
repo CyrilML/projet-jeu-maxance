@@ -98,7 +98,20 @@ Village.Batiments = (function () {
   // Étape 22 : ✍️ certains bâtiments prennent PLUSIEURS cases (la ferme et ses champs, les enclos des animaux).
   //   emprise : les cases EN PLUS de la sienne, en décalage [colonne, ligne] (config.js : « emprises »).
   // Étape 24 : le bloc de 2 × 2 cases (sauf les petits), puis les champs et les enclos à droite
-  const empriseDe = (type) => (C.petits.includes(type) ? [] : C.bloc).concat(C.champs[type] || []);
+  // Étape 28 : la taille du bloc dépend du bâtiment (config.js : « tailles »), de 1 × 1 à 4 × 4 (et plus)
+  let forcee = null; // { type, taille } : pendant le rangement, on peut essayer une taille plus petite
+  const tailleVoulue = (type) => (forcee && forcee.type === type ? forcee.taille : C.tailles[type] || C.tailleParDefaut);
+  function blocDe(n) { const l = []; for (let dc = 0; dc < n; dc++) for (let dl = 0; dl > -n; dl--) if (dc || dl) l.push([dc, dl]); return l; }
+  // Les champs et les enclos : la colonne juste à droite du bloc (le poulailler : une seule case)
+  function champsDe(type, n) { if (!C.champs[type]) return []; const l = []; for (let k = 0; k < Math.min(n, C.champs[type].length === 1 ? 1 : n); k++) l.push([n, -k]); return l; }
+  const empriseDe = (type) => blocDe(tailleVoulue(type)).concat(champsDe(type, tailleVoulue(type)));
+  // La taille qu'un bâtiment a VRAIMENT (une partie ancienne : peut-être plus petite que voulue, faute de place)
+  function tailleDe(b) {
+    const e = b.emprise || [];
+    for (let n = C.tailles[b.type] || C.tailleParDefaut; n > 1; n--) if (blocDe(n).every(([a, c]) => e.some(([x, y]) => x === a && y === c))) return n;
+    return 1;
+  }
+  let rangement = false; // étape 28 : pendant le rangement d'une partie ancienne, une mine peut rester où elle est
   const casesDe = (b, k) => [[0, 0]].concat(b.emprise || []).map(([dc, dl]) => (b.ligne + dl) * (k || Village.monde.carte).colonnes + b.colonne + dc);
   function liberer(monde, b) { for (const i of casesDe(b, monde.carte)) if (monde.occupees.get(i) === b) monde.occupees.delete(i); }
   function occuper(monde, b) { for (const i of casesDe(b, monde.carte)) monde.occupees.set(i, b); }
@@ -129,7 +142,7 @@ Village.Batiments = (function () {
     if (monde.route[i]) return "il y a une route (construis à côté)";
     const t = carte.terrain[i], o = carte.objet[i], T = Village.Carte.TERRAIN, O = Village.Carte.OBJET;
     if (t === T.eau || t === T.eauProfonde) return "on ne construit pas sur l'eau";
-    if (t === T.montagne) return "on ne construit pas sur une montagne (pas encore !)";
+    if (t === T.montagne) return "on ne construit pas sur une montagne";
     if (o === O.arbre || o === O.sapin) return "il y a un arbre (il faut d'abord le couper)";
     if (o === O.pousse) return "il y a une jeune pousse";
     if (o === O.rocher) return "il y a un rocher";
@@ -139,19 +152,20 @@ Village.Batiments = (function () {
     if (type === "pecheur" && !presDeLEau(carte, c, l, C.bordDeLEau)) return "trop loin de l'eau (il faut de l'eau à " + C.bordDeLEau + " cases maximum)";
     // Étape 7 : la mine se construit collée à une montagne qui a un filon (de charbon, ou de fer à l'étape 8).
     const mine = C.mines[type];
-    if (mine && !filonsVoisins(carte, c, l, Village.Carte.FILON[mine.filon]).length) return "il faut un filon de " + C.ressources[mine.filon].nom.replace("minerai de ", "") + " " + C.ressources[mine.filon].emoji + " à " + C.rayonMine + " cases maximum (dans la montagne)"; // étape 21 : plus loin
+    // Étape 28 : sur un filon DÉCOUVERT (des paillettes), ou à 3 cases au plus de son bloc
+    if (mine && !rangement && !filonsVoisins(carte, c, l, Village.Carte.FILON[mine.filon], C.rayonPoseMine + tailleVoulue(type) - 1).length) return "il faut un filon de " + C.ressources[mine.filon].nom.replace("minerai de ", "") + " " + C.ressources[mine.filon].emoji + " découvert par le géologue (des paillettes), sous la mine ou à " + C.rayonPoseMine + " cases"; // étape 21 : plus loin
     return null;
   }
 
   // Étape 7 : les cases de montagne voisines (8 autour) qui ont un filon de cette sorte, pas épuisé.
   // Étape 21 : ✍️ jusqu'à 4 cases (config.js : rayonMine), le plus proche d'abord. Étape 26 : 12 cases.
-  function filonsVoisins(carte, c, l, sorte) {
-    const liste = [], R = C.rayonMine || 1;
+  function filonsVoisins(carte, c, l, sorte, rayon) {
+    const liste = [], R = rayon || C.rayonMine || 1; // étape 28 : sa propre case compte (la mine est posée dessus)
     for (let dl = -R; dl <= R; dl++) for (let dc = -R; dc <= R; dc++) {
       const nc = c + dc, nl = l + dl;
-      if ((!dc && !dl) || nc < 0 || nl < 0 || nc >= carte.colonnes || nl >= carte.lignes) continue;
+      if (nc < 0 || nl < 0 || nc >= carte.colonnes || nl >= carte.lignes) continue;
       const i = nl * carte.colonnes + nc;
-      if (carte.filon[i] === sorte && carte.reste[i] > 0) liste.push([i, Math.max(Math.abs(dc), Math.abs(dl))]);
+      if (carte.filon[i] === sorte && carte.reste[i] > 0 && carte.revele[i]) liste.push([i, Math.max(Math.abs(dc), Math.abs(dl))]);
     }
     return liste.sort((a, b) => a[1] - b[1]).map((x) => x[0]);
   }
@@ -461,22 +475,38 @@ Village.Batiments = (function () {
   // Étape 23 : ✍️ « sur ma partie, tu peux séparer les bâtiments pour qu'ils aient la place ». Au chargement, une ferme
   // ou un élevage qui n'a pas toutes ses cases (ses champs, ses enclos) est DÉPLACÉ à la place libre la plus proche,
   // et on lui fait une route jusqu'au réseau. Renvoie le nombre de bâtiments déplacés.
+  // Étape 28 : la même chose pour la taille : un bâtiment qui n'a pas son bloc entier est agrandi sur place, ou déplacé
+  // (jusqu'à 25 cases) ; sinon il garde la plus grande taille qui tient. L'entrepôt ne bouge jamais.
   function ranger(monde) {
     let n = 0;
+    rangement = true;
     for (const b of monde.batiments.slice()) {
-      const voulu = empriseDe(b.type);
-      if (!voulu.length || (b.emprise || []).length === voulu.length || b.type === "entrepot") continue; // (l'entrepôt ne bouge pas)
+      if (b.etat !== "pret" && b.etat !== "chantier") continue;
+      const voulu = empriseDe(b.type), e = b.emprise || [];
+      if (voulu.length === e.length && voulu.every(([a, c]) => e.some(([x, y]) => x === a && y === c))) continue;
       liberer(monde, b);
       let place = null;
-      for (let r = 0; r <= 20 && !place; r++) for (let dl = -r; dl <= r && !place; dl++) for (let dc = -r; dc <= r && !place; dc++) {
+      const R = b.type === "entrepot" ? 0 : 25;
+      for (let r = 0; r <= R && !place; r++) for (let dl = -r; dl <= r && !place; dl++) for (let dc = -r; dc <= r && !place; dc++) {
         if (Math.max(Math.abs(dc), Math.abs(dl)) !== r) continue;
         if (!raisonInterdite(monde, b.type, b.colonne + dc, b.ligne + dl) && Village.Placement.routeProposee(monde, b.colonne + dc, b.ligne + dl, b, b.type) !== null) place = [b.colonne + dc, b.ligne + dl]; // (et une route doit pouvoir y arriver)
       }
+      if (!place) { // pas de place pour la taille voulue : la plus grande qui tient, sur place
+        let fait = false;
+        for (let t = tailleVoulue(b.type) - 1; t > tailleDe(b) && !fait; t--) { // (jamais plus petit qu'avant)
+          forcee = { type: b.type, taille: t };
+          if (!raisonInterdite(monde, b.type, b.colonne, b.ligne)) { b.emprise = empriseDe(b.type).slice(); fait = true; }
+          forcee = null;
+        }
+        occuper(monde, b);
+        if (fait) { for (const i of casesDe(b, monde.carte)) if (monde.carte.objet[i]) Village.Monde.changerObjet(monde, i, Village.Carte.OBJET.rien); n++; }
+        continue;
+      }
       occuper(monde, b);
-      if (!place) continue;
-      if (place[0] === b.colonne && place[1] === b.ligne) { liberer(monde, b); b.emprise = voulu.slice(); occuper(monde, b); }
+      if (place[0] === b.colonne && place[1] === b.ligne) { liberer(monde, b); b.emprise = voulu.slice(); occuper(monde, b); for (const i of casesDe(b, monde.carte)) if (monde.carte.objet[i]) Village.Monde.changerObjet(monde, i, Village.Carte.OBJET.rien); }
       else if (!deplacer(monde, b, place[0], place[1])) continue;
       n++;
+      Village.Routes.recalculerReseau(monde);
       if (!b.relie) { // une route jusqu'au réseau (gratuite : c'est nous qui avons déplacé le bâtiment)
         const route = Village.Placement.routeProposee(monde, b.colonne, b.ligne, b, b.type) || [];
         const sorte = Village.Recherches.a(monde, "routePierre") ? 2 : 1;
@@ -484,9 +514,10 @@ Village.Batiments = (function () {
         if (route.length) { monde.changements++; Village.Routes.recalculerReseau(monde); }
       }
     }
+    rangement = false;
     if (n) radio.emettre("batiments-ranges", { nombre: n });
     return n;
   }
 
-  return { ranger, empriseDe, casesDe, liberer, occuper, entreesDe, reparer, TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, coutPour, offert, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
+  return { tailleVoulue, tailleDe, blocDe, champsDe, ranger, empriseDe, casesDe, liberer, occuper, entreesDe, reparer, TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, coutPour, offert, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
 })();

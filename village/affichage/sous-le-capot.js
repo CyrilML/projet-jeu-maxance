@@ -118,7 +118,7 @@ Village.SousLeCapot = (function () {
     "achat-impossible": (d) => "🚫 Achat impossible (" + d.nom + ") : " + d.raison,
     "minerai-extrait": (d) => "⛏️ " + d.nom + " n° " + d.numero + " : +1 " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " · il reste " + d.reste + " dans le filon · " + d.devant + " devant la porte",
     "filon-epuise": (d) => "⛏️ " + d.nom + " n° " + d.numero + " : plus de " + d.minerai + " dans les filons voisins",
-    "filon-trouve": (d) => "🔍 Filon de " + d.nom + " " + d.emoji + " trouvé près de (" + d.colonne + ", " + d.ligne + ") : " + d.reserve + " morceaux",
+    "filon-trouve": (d) => "🔍 Filon de " + d.nom + " " + d.emoji + " trouvé près de (" + d.colonne + ", " + d.ligne + ")" + (d.cases > 1 ? " : " + d.cases + " cases de paillettes" : "") + " · " + d.reserve + " morceaux", // étape 28
     // Étape 8 : le logement et le marché
     "pas-de-logement": (d) => "🛏️ " + d.nom + " n° " + d.numero + " : pas de place pour loger le " + d.metier + " (" + d.places + " places, toutes prises). Il faut une hutte ou une maison",
     "marche-vente": (d) => "🏪 Vente : " + d.quantite + " " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " = +" + d.gain + " 🪙 · le paquet suivant se vend " + d.nouveauPrix + " 🪙 · tu as " + d.pieces + " 🪙",
@@ -215,6 +215,7 @@ Village.SousLeCapot = (function () {
     h += ligne("arbres", nombre(k.compte.arbres));
     h += ligne("rochers · montagnes", k.compte.rochers + " · " + k.compte.montagnes);
     h += ligne("filons ⚫ charbon · 🟠 fer · 🟡 or", k.compte.charbon + " · " + k.compte.fer + " · " + k.compte.or);
+    h += ligne("filons découverts (cases)", (k.compte.vus || 0) + " · les autres sont cachés sous le sol rocheux"); // étape 28
     h += ligne("place du village", "(" + k.village.colonne + ", " + k.village.ligne + ")");
     const ag = Village.Ages.actuel(monde), objs = Village.Ages.objectifs(monde);
     h += groupe("⏳ L'âge du village");

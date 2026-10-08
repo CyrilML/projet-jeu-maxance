@@ -179,6 +179,11 @@ Village.Carte = (function () {
       carte.reste[j] = C.nature.reserveFilon;
     }
 
+    // Étape 28 : ✍️ « les montagnes ne me conviennent pas ». Elles deviennent un sol rocheux, tout plat ; leurs filons
+    // restent, CACHÉS dessous (carte.revele : 1 = le géologue l'a trouvé, on voit ses paillettes). On le fait à la fin,
+    // sans tirer de hasard : une partie déjà commencée retrouve exactement sa carte (sans montagnes).
+    aplanir(carte);
+
     // 6 : la place du village : le feu de camp au milieu, la tente du chef juste à côté.
     carte.objet[ici(meilleur.c, meilleur.l)] = OBJET.feuDeCamp;
     carte.objet[ici(meilleur.c - 1, meilleur.l - 1)] = OBJET.tente;
@@ -187,9 +192,17 @@ Village.Carte = (function () {
     return carte;
   }
 
+  function aplanir(carte) {
+    if (!carte.revele) carte.revele = new Uint8Array(carte.colonnes * carte.lignes);
+    for (let i = 0; i < carte.terrain.length; i++) {
+      if (carte.terrain[i] === TERRAIN.montagne) carte.terrain[i] = TERRAIN.rochers;
+      if (carte.objet[i] === OBJET.montagne) carte.objet[i] = OBJET.rien;
+    }
+  }
+
   // Combien de cases de chaque sorte ? (affiché sous le capot et annoncé à la radio)
   function compter(carte) {
-    const k = { eau: 0, terre: 0, arbres: 0, rochers: 0, montagnes: 0, charbon: 0, fer: 0, or: 0 };
+    const k = { eau: 0, terre: 0, arbres: 0, rochers: 0, montagnes: 0, charbon: 0, fer: 0, or: 0, vus: 0 };
     for (let i = 0; i < carte.terrain.length; i++) {
       if (carte.terrain[i] <= TERRAIN.eau) k.eau++; else k.terre++;
       const o = carte.objet[i];
@@ -197,6 +210,7 @@ Village.Carte = (function () {
       else if (o === OBJET.rocher) k.rochers++;
       else if (o === OBJET.montagne) k.montagnes++;
       if (carte.filon[i]) k[NOMS_FILONS[carte.filon[i]]]++;
+      if (carte.filon[i] && carte.revele && carte.revele[i]) k.vus = (k.vus || 0) + 1; // étape 28 : découverts
     }
     carte.compte = k;
   }
@@ -230,5 +244,5 @@ Village.Carte = (function () {
     };
   }
 
-  return { inventer, compter, lireCase, praticable, constructible, TERRAIN, OBJET, FILON, NOMS_TERRAINS, NOMS_OBJETS, NOMS_FILONS };
+  return { aplanir, inventer, compter, lireCase, praticable, constructible, TERRAIN, OBJET, FILON, NOMS_TERRAINS, NOMS_OBJETS, NOMS_FILONS };
 })();

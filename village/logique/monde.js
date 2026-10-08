@@ -94,6 +94,17 @@ Village.Monde = (function () {
     // Étape 13 : les villageois sans travail
     if (partie && partie.villageois) for (const [x, y, faim] of partie.villageois) Village.Villageois.creer(monde, x, y, faim);
     else if (!partie) Village.Villageois.peupler(monde);
+    // Étape 28 : une partie d'avant (sans « filonsVus ») : on révèle les filons près de ses mines (pour qu'elles
+    // continuent de creuser) et ceux qu'un géologue avait déjà trouvés.
+    if (partie && !partie.filonsVus) {
+      const k = carte, R = C.rayonMine + 2;
+      for (const b of monde.batiments) if (C.mines[b.type]) for (let dl = -R; dl <= R; dl++) for (let dc = -R; dc <= R; dc++) {
+        const c = b.colonne + dc, l = b.ligne + dl;
+        if (c >= 0 && l >= 0 && c < k.colonnes && l < k.lignes && k.filon[l * k.colonnes + c]) k.revele[l * k.colonnes + c] = 1;
+      }
+      for (const [i, m] of monde.modifs) if (m.f) k.revele[i] = 1;
+      Village.Carte.compter(k);
+    }
     if (partie) Village.Batiments.ranger(monde); // étape 23 : de la place pour les champs et les enclos
     if (partie && Village.Recherches.a(monde, "routePierre")) Village.Routes.paver(monde, true); // étape 17 : une partie qui avait déjà « Routes pavées »
     Village.Routes.recalculerReseau(monde);
@@ -117,6 +128,9 @@ Village.Monde = (function () {
       if (f !== undefined) k.filon[i] = f; // étape 7 : les filons découverts par le géologue
       monde.modifs.set(i, { o, r, f: k.filon[i] });
     }
+    // Étape 28 : plus de montagnes, même dans les changements gardés ; et les filons déjà découverts
+    for (const [i, m] of monde.modifs) if (k.objet[i] === Village.Carte.OBJET.montagne) { k.objet[i] = Village.Carte.OBJET.rien; m.o = k.objet[i]; }
+    for (const i of partie.filonsVus || []) k.revele[i] = 1;
     for (const [i, age] of partie.pousses || []) if (k.objet[i] === Village.Carte.OBJET.pousse) monde.pousses.set(i, age);
     Village.Carte.compter(k);
     if (partie.stock) Object.assign(monde.stock, partie.stock);
