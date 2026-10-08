@@ -70,12 +70,15 @@
 //  18 (étape 30) : les commandes (commandes : la liste, l'attente, combien de livrées) et l'étape guidée (guide).
 //                  Rien à convertir : une partie plus ancienne commence sans commande, à la 1re étape guidée de son âge.
 //  19 (étape 31) : pour le monument, ses paliers construits (palier) et ce qu'on a déjà donné (dons). Rien à convertir.
+//  20 (étape 32) : ✍️ « tu peux reset la partie que j'ai en cours pour tout recommencer ». Le jeu change beaucoup (une
+//                  carte de 256 × 256, les époques qui arrivent) : une partie plus ancienne n'est PAS convertie, on
+//                  recommence une nouvelle partie (décision de Maxance, une seule fois).
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 19;
+  const VERSION = 20;
   const radio = Village.Evenements;
 
   function vide() {
@@ -100,6 +103,13 @@ Village.Sauvegarde = (function () {
   let donnees = vide();
 
   function convertir(lues) {
+    // Étape 32 : une partie d'avant la version 20 : on recommence tout (choix de Maxance)
+    if ((lues.version || 1) < 20) {
+      const d = vide();
+      d.cartesInventees = lues.cartesInventees || 0; d.casesChoisies = lues.casesChoisies || 0; d.batimentsConstruits = lues.batimentsConstruits || 0; d.tempsDeJeu = lues.tempsDeJeu || 0;
+      remiseAZero = lues.version || 1;
+      return d;
+    }
     const d = Object.assign(vide(), lues);
     // Version 1 → 2 : il n'y avait pas encore de partie. On garde la carte (la graine) et la caméra.
     // Version 2 → 3 : pas encore de routes ; les chantiers avaient déjà payé tous leurs matériaux.
@@ -141,6 +151,7 @@ Village.Sauvegarde = (function () {
     return d;
   }
 
+  let remiseAZero = 0; // étape 32 : la version de la partie qu'on vient de remettre à zéro
   function lire() {
     let trouve = false, converti = false, lueVersion = null;
     try {
@@ -156,6 +167,7 @@ Village.Sauvegarde = (function () {
       donnees = vide();
     }
     radio.emettre("lecture", { trouve, converti, depuis: converti ? lueVersion : null, vers: VERSION, graine: donnees.graine });
+    if (remiseAZero) radio.emettre("partie-remise-a-zero", { depuis: remiseAZero, vers: VERSION });
     return donnees;
   }
 

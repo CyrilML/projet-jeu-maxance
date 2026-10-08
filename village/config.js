@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 32,
+  version: 33,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -24,8 +24,9 @@ Village.CONFIG = {
   carte: {
     // Étape 24 : ✍️ « quitte à agrandir la map » : 96 × 96 cases pour une nouvelle partie (64 × 64 avant).
     // Une partie déjà commencée garde sa carte (sinon tout son terrain changerait !).
-    colonnes: 96,
-    lignes: 96,
+    // Étape 32 : ✍️ « les maps doivent être immenses » : 256 × 256 cases (7 fois plus que 96 × 96).
+    colonnes: 256,
+    lignes: 256,
     tailleAncienne: 64, // la taille des cartes des parties commencées avant l'étape 24
     // Un losange : 2 fois plus large que haut. C'est ce qui donne l'impression de regarder « de biais ».
     largeurCase: 64, // px (au zoom 100 %)
@@ -38,8 +39,8 @@ Village.CONFIG = {
   //   les 18 % les plus basses = eau profonde, jusqu'à 30 % = eau, jusqu'à 35 % = sable…
   // Comme ça, chaque carte a toujours à peu près autant d'eau et de montagnes.
   generation: {
-    tailleDesCollines: 14, // en cases : plus c'est grand, plus les zones (lacs, forêts) sont grandes
-    tailleDesForets: 9, // en cases
+    tailleDesCollines: 26, // étape 32 : la carte est immense : des lacs et des collines plus grands (14 avant) // en cases : plus c'est grand, plus les zones (lacs, forêts) sont grandes
+    tailleDesForets: 14, // en cases (9 avant l'étape 32)
     eauProfonde: 0.18, // part des cases (les plus basses) en eau profonde
     eau: 0.3, // jusqu'à cette part : eau
     sable: 0.35, // jusqu'à cette part : plage de sable
@@ -52,7 +53,8 @@ Village.CONFIG = {
     // Les filons des montagnes : chance qu'une case de montagne en ait un.
     filons: { charbon: 0.16, fer: 0.1, or: 0.04 },
     rayonDuVillage: 4, // en cases : autour de la place du village, toujours de l'herbe
-    rivieres: 3, // nombre de rivières qui descendent des montagnes (étape 24 : 3, la carte est plus grande)
+    massifs: 9, // étape 32 : les zones rocheuses où dorment les filons (2 avant)
+    rivieres: 8, // (étape 32 : 8, la carte est immense) // nombre de rivières qui descendent des montagnes (étape 24 : 3, la carte est plus grande)
   },
 
   camera: {
@@ -502,8 +504,8 @@ Village.CONFIG = {
     bouquetin: { part: 0.1, vitesse: 1.1, habitat: "rochers" },
   },
   animaux: {
-    depart: 40, // au début de la partie (24 avant l'étape 5)
-    maximum: 70, // (40 avant l'étape 5)
+    depart: 160, // au début de la partie (24 avant l'étape 5 ; 40 avant l'étape 32)
+    maximum: 280, // (40 avant l'étape 5 ; 70 avant l'étape 32)
     naissance: 12, // s entre deux naissances (pas en hiver) (20 avant l'étape 5)
     vitesse: 0.7, // cases par seconde
   },

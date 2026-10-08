@@ -18,7 +18,7 @@ Village.Interface = (function () {
   const C = Village.CONFIG;
   const Ec = Village.Ecran;
   const L = C.carte.largeurCase, Hc = C.carte.hauteurCase;
-  const POLICE = "'Trebuchet MS', sans-serif";
+  const POLICE = "'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"; // étape 32 : plus sobre (Trebuchet avant)
   let zones = [];
   let menuOuvert = null;
   let objectifsOuverts = false;
@@ -50,6 +50,7 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("guide-etape", (d) => gagner("👣 Étape réussie : " + d.texte, [["pieces", d.pieces]]));
   Village.Evenements.ecouter("monument-palier", (d) => gagner(d.emoji + " " + d.nom + " : construit !", [["pieces", d.pieces], ["gemmes", d.gemmes]])); // étape 31
   Village.Evenements.ecouter("monument-rien", () => afficher("🏛️ Il n'y a rien de libre de ce que demande le monument"));
+  Village.Evenements.ecouter("partie-remise-a-zero", () => setTimeout(() => afficher("🆕 Nouvelle partie : une carte immense de 256 × 256 cases !"), 800)); // étape 32
   Village.Evenements.ecouter("pub-regardee", (d) => { if (d.sorte === "ressource") gagner("📺 Merci !", [[d.quoi, d.quantite]]); else if (d.sorte === "gemmes") gagner("📺 Merci !", [["gemmes", d.quantite]]); });
   Village.Evenements.ecouter("nouvel-age", (d) => gagner(d.emoji + " " + d.nom + " !", [["gemmes", d.gemmes]]));
   Village.Evenements.ecouter("logement-evolue", (d) => afficher("⬆️ " + d.avant + " n° " + d.numero + " devient « " + d.apres + " » : des " + d.emoji + " " + d.classe.toLowerCase() + " s'installent !")); // étape 18
@@ -119,11 +120,11 @@ Village.Interface = (function () {
   }
 
   function bulle(ctx, x, y, l, h, couleur) {
-    ctx.fillStyle = couleur || "rgba(255, 250, 235, .94)";
-    ctx.strokeStyle = "#5a4220";
-    ctx.lineWidth = 2.5;
+    ctx.fillStyle = couleur || "rgba(248, 247, 244, .95)"; // étape 32 : plus sobre (crème et gros bord marron avant)
+    ctx.strokeStyle = "rgba(60, 58, 54, .55)";
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(x, y, l, h, 12); else ctx.rect(x, y, l, h);
+    if (ctx.roundRect) ctx.roundRect(x, y, l, h, 8); else ctx.rect(x, y, l, h);
     ctx.fill(); ctx.stroke();
   }
 
@@ -769,7 +770,7 @@ Village.Interface = (function () {
     texte(ctx, "📦", W - 10 - tp / 2, yk + tp / 2 + 1, 20, null, false, "center");
     if (monde.commandes.liste.length) { ctx.fillStyle = prets ? "#2e8a3a" : "#a08a6a"; ctx.beginPath(); ctx.arc(W - 14, yk + 4, 8, 0, Math.PI * 2); ctx.fill(); texte(ctx, String(prets || monde.commandes.liste.length), W - 14, yk + 4.5, 10, "#ffffff", true, "center"); }
     zone(W - tp - 10, yk, tp, tp, "panneau", "commandes");
-    if (W >= 520) dessinerMini(ctx, monde, mini, W - 10 - tp - 10, 10, petit ? 1 : 1.5);
+    if (W >= 520) dessinerMini(ctx, monde, mini, W - 10 - tp - 10, 10, Math.min(petit ? 1 : 1.5, (petit ? 200 : 280) / mini.width)); // étape 32 : une carte immense tient dans le même cadre
 
     // ---- En bas : le MENU (étape 5). ✍️ Moins de boutons toujours affichés, regroupés par ressource :
     //   🪵 Bois · 🪨 Pierre · 🍖 Nourriture · la Route · 🔧 Outils.

@@ -53,8 +53,8 @@ Village.Carte = (function () {
 
     // Deux massifs de montagnes, pas trop loin du village : il faut des mines à portée !
     const massifs = [];
-    for (let i = 0; i < 2; i++) {
-      const angle = de.entre(0, Math.PI * 2), distance = de.entre(12, 22);
+    for (let i = 0; i < (G.massifs || 2); i++) { // étape 32 : plus de massifs, de plus en plus loin du village
+      const angle = de.entre(0, Math.PI * 2), distance = i < 2 ? de.entre(12, 22) : de.entre(25, Math.min(colonnes, lignes) * 0.4);
       massifs.push({ c: milieuC + Math.cos(angle) * distance, l: milieuL + Math.sin(angle) * distance, rayon: de.entre(3, 5) });
     }
 

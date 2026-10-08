@@ -12,7 +12,7 @@ window.Village = window.Village || {};
 
 Village.Batisses = (function () {
   const TOUR = Math.PI * 2;
-  const CONTOUR = "#3b2614";
+  const CONTOUR = "rgba(38, 30, 24, .72)"; // étape 32 : ✍️ « moins enfantin » : un trait plus fin et moins noir
   const C_ = Village.CONFIG;
 
   // Les couleurs et la taille de chaque bâtiment.
@@ -67,6 +67,17 @@ Village.Batisses = (function () {
     monument: { a: 20, a2: 26, h: 20, toit: 14, murG: "#f2ede2", murD: "#d4ccbc", toitA: "#3f6fc4", toitB: "#2f569c", mur: "pierre", toitSorte: "ardoise", fenetres: 2, lanterne: true }, // étape 31
     depot: { a: 22, a2: 32, h: 18, toit: 20, murG: "#c9a26a", murD: "#a8834a", toitA: "#3f6fc4", toitB: "#2f569c", mur: "planches", toitSorte: "tuiles", fenetres: 2, lanterne: true, toitForme: "mansarde" },
   };
+
+  // Étape 32 : ✍️ « moins enfantin » : toutes les couleurs des modèles sont adoucies (moins vives, un peu plus sombres),
+  // comme de vrais matériaux : tuiles, ardoise, bois, pierre.
+  function adoucir(h) {
+    if (typeof h !== "string" || h[0] !== "#" || h.length !== 7) return h;
+    let [r, g, b] = [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16));
+    const gris = (r + g + b) / 3, f = 0.62; // garde 62 % de la couleur, le reste en gris
+    [r, g, b] = [r, g, b].map((v) => Math.round((gris + (v - gris) * f) * 0.93));
+    return "#" + [r, g, b].map((v) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, "0")).join("");
+  }
+  for (const m of Object.values(MODELES)) for (const k of ["murG", "murD", "toitA", "toitB", "volets"]) if (m[k]) m[k] = adoucir(m[k]);
 
   // Étape 9 : ce que le peintre nous dit au début de chaque image.
   //   fin : on est assez près pour dessiner les petits détails ; noirceur : 0 le jour, 1 à minuit ;
@@ -371,7 +382,7 @@ Village.Batisses = (function () {
     ctx.fillStyle = "rgba(255, 190, 150, .55)"; ctx.beginPath(); ctx.ellipse(x - 2.4, y - 0.8, 1.4, 0.8, -0.5, 0, TOUR); ctx.fill();
   }
 
-  let trait = 1; // étape 14 : pour les icônes grossies, des traits plus fins (sinon tout devient noir)
+  let trait = 0.55; // étape 14 : pour les icônes grossies, des traits plus fins (sinon tout devient noir) ; étape 32 : 0,55 partout (1 avant)
   function contour(ctx, largeur) {
     ctx.strokeStyle = CONTOUR;
     ctx.lineWidth = (largeur || 2) * trait;
