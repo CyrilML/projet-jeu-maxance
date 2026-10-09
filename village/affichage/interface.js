@@ -55,10 +55,12 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("nouvel-age", (d) => { const a = C.ages[d.numero]; if (a && a.debloque.length) { encyFiltre = { titre: "🎉 " + d.emoji + " " + d.nom + " : voici tes nouveaux bâtiments", types: a.debloque.slice() }; encyChoix = a.debloque[0]; panneau = "encyclopedie"; } });
   Village.Evenements.ecouter("prosperite-change", (d) => afficher("👥 La ville est " + d.niveau + " " + d.emoji + " (prospérité " + d.prosperite + " %)"));
   Village.Evenements.ecouter("electricite-penurie", (d) => afficher("⚡❌ Pénurie d'électricité : " + d.coupes + " bâtiment(s) coupé(s). Il faut une centrale de plus !")); // étape 34
+  Village.Evenements.ecouter("eau-penurie", (d) => afficher("🚰❌ Pénurie d'eau : " + d.coupes + " bâtiment(s) sans eau. Il faut une station de pompage de plus !")); // étape 35
+  Village.Evenements.ecouter("egouts-penurie", (d) => afficher("🚽❌ Les égouts débordent : " + d.coupes + " bâtiment(s) sans égouts. Il faut une station d'épuration de plus !"));
   Village.Evenements.ecouter("pub-regardee", (d) => { if (d.sorte === "ressource") gagner("📺 Merci !", [[d.quoi, d.quantite]]); else if (d.sorte === "gemmes") gagner("📺 Merci !", [["gemmes", d.quantite]]); });
   Village.Evenements.ecouter("nouvel-age", (d) => gagner(d.emoji + " " + d.nom + " !", [["gemmes", d.gemmes]]));
   Village.Evenements.ecouter("logement-evolue", (d) => afficher("⬆️ " + d.avant + " n° " + d.numero + " devient « " + d.apres + " » : des " + d.emoji + " " + d.classe.toLowerCase() + " s'installent !")); // étape 18
-  Village.Evenements.ecouter("impots", (d) => afficher("🪙 Impôts : +" + d.total + " pièces (artisans et bourgeois)"));
+  Village.Evenements.ecouter("impots", (d) => afficher("🪙 Impôts : +" + d.total + " pièces (artisans, bourgeois et citadins)"));
   Village.Evenements.ecouter("batiments-ranges", (d) => afficher("🧹 " + d.nombre + " bâtiment(s) déplacé(s) pour la place de leurs champs et enclos")); // étape 23
   Village.Evenements.ecouter("routes-pavees", (d) => afficher("🧱 Routes pavées : tes " + d.cases + " cases de chemin sont maintenant pavées (× 1,6 plus vite) !")); // étape 17
   Village.Evenements.ecouter("mission-ratee", (d) => afficher("⌛ Trop tard pour " + d.qui + "… Une autre mission viendra !"));
@@ -72,7 +74,7 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("marche-vente", (d) => afficher("🏪 Vendu " + d.quantite + " " + EMO(d.quoi) + " : +" + d.gain + " 🪙 (tu as " + d.pieces + " 🪙)"));
   Village.Evenements.ecouter("marche-achat", (d) => afficher("🏪 Acheté " + d.quantite + " " + EMO(d.quoi) + " : −" + d.depense + " 🪙 (il te reste " + d.pieces + " 🪙)"));
   Village.Evenements.ecouter("marche-impossible", (d) => afficher("🚫 Marché : " + d.raison));
-  Village.Evenements.ecouter("nouvel-age", (d) => afficher("🎉 " + d.emoji + " Bienvenue au " + d.nom.replace(/^(Le|La) /, "").toLowerCase() + " !" + (d.debloque.length ? " Nouveau : " + d.debloque.join(", ") : "")));
+  Village.Evenements.ecouter("nouvel-age", (d) => afficher("🎉 " + d.emoji + " Bienvenue " + d.nom.replace(/^Le /, "au ").replace(/^La /, "à la ").replace(/^L'/, "à l'").toLowerCase() + " !" + (d.debloque.length ? " Nouveau : " + d.debloque.join(", ") : "")));
   Village.Evenements.ecouter("deplacement-impossible", (d) => afficher("🚫 " + d.nom + " : " + d.raison));
   Village.Evenements.ecouter("batiment-deplace", (d) => afficher("↔️ " + d.nom + " a déménagé" + (d.relie ? " !" : " : pense à la route !")));
   Village.Evenements.ecouter("gisement-trouve", (d) => afficher("🔍 Le géologue a trouvé un gisement : " + d.pierres + " 🪨 !"));
@@ -342,13 +344,13 @@ Village.Interface = (function () {
   // passage à un nouvel âge, sur les nouveaux bâtiments.
   let encyChoix = null, encyFiltre = null;
   const GROUPES_ENCY = [
-    ["🏠 Le cœur et les maisons", ["entrepot", "depot", "hutte", "maison", "manoir", "macon"]],
+    ["🏠 Le cœur et les maisons", ["entrepot", "depot", "hutte", "maison", "manoir", "immeuble", "macon"]], // étape 35 : l'immeuble
     ["🪵 Le bois et la pierre", ["bucheron", "forestier", "scierie", "carriere"]],
     ["⛏️ Les mines", ["geologue", "mineCharbon", "mineFer", "mineOr"]],
     ["🍖 La nourriture", ["pecheur", "chasseur", "ferme", "moulin", "boulangerie", "laiterie", "fromagerie", "cremerie", "charcuterie"]],
     ["🐄 L'élevage", ["puits", "faneur", "etable", "poulailler", "bergerie", "porcherie", "veterinaire"]],
     ["⚒️ Les artisans et la ville", ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite", "monument"]],
-    ["🏭 L'industrie", ["centrale", "acierie", "filature"]], // étape 34
+    ["🏭 L'industrie", ["centrale", "acierie", "filature", "pompage", "epuration"]], // étape 34 ; étape 35 : l'eau et les égouts
   ];
   function choisirEncy(t) { encyChoix = t; }
   function panneauEncyclopedie(ctx, monde, W, He, petit) {
@@ -368,7 +370,7 @@ Village.Interface = (function () {
       cy += 14;
       const parRangee = Math.max(1, Math.floor((l - 28 + ec) / (lc + ec)));
       types.forEach((t, n) => {
-        const cx = x + 14 + (n % parRangee) * (lc + ec), ry = cy + Math.floor(n / parRangee) * (lc + ec), ouvert = Village.Ages.debloque(monde, t) || t === "entrepot" || t === "manoir";
+        const cx = x + 14 + (n % parRangee) * (lc + ec), ry = cy + Math.floor(n / parRangee) * (lc + ec), ouvert = Village.Ages.debloque(monde, t) || t === "entrepot" || t === "manoir" || t === "immeuble";
         ctx.fillStyle = encyChoix === t ? "#ffe9a8" : ouvert ? "#ffffff" : "#e8e6e0"; ctx.strokeStyle = encyChoix === t ? "#c98a2e" : "rgba(60, 58, 54, .3)"; ctx.lineWidth = encyChoix === t ? 2 : 1;
         ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(cx, ry, lc, lc, 6); else ctx.rect(cx, ry, lc, lc); ctx.fill(); ctx.stroke();
         texte(ctx, B.TYPES[t].emoji, cx + lc / 2, ry + lc / 2 + 1, lc * 0.5, null, false, "center");
@@ -401,6 +403,10 @@ Village.Interface = (function () {
     if (C.mines[t]) besoins.push("💎 un filon de " + C.mines[t].filon + " découvert (des paillettes), sous la mine ou à " + C.rayonPoseMine + " cases");
     if (R && R.pasEnHiver) besoins.push("❄️ " + R.raisonHiver);
     if (C.ateliers[t] && C.ateliers[t].electrique) besoins.push("⚡ de l'électricité (une route jusqu'à une centrale qui tourne)"); // étape 34
+    if (t === "pompage") besoins.push("🌊 de l'eau à " + C.bordDeLEau + " cases au plus (il pompe dans la rivière ou le lac)"); // étape 35
+    if (t === "pompage" || t === "epuration") besoins.push("⚡ de l'électricité (une route jusqu'à une centrale qui tourne)");
+    if (t === "immeuble") besoins.push("⚡ l'électricité, 🚰 l'eau courante et 🚽 les égouts dans la maison bourgeoise, à l'époque industrielle");
+    if (C.elevage.troupeaux[t] && C.ateliers[t].entrees.eau) besoins.push("💧 de l'eau du puits… ou 🚰 l'eau courante à l'époque industrielle (alors plus besoin du puits)");
     if (t === "centrale") besoins.push("⚫ du charbon (1 toutes les 15 s), apporté par les porteurs");
     if (C.elevage.troupeaux[t]) besoins.push("🩺 un vétérinaire près de lui (les animaux peuvent tomber malades)");
     if ((monde.age || 0) >= C.bourg.ageDesRegles && t !== "entrepot") besoins.push("🔧 un maçon-couvreur (au bourg, les bâtiments s'usent)");
@@ -910,7 +916,7 @@ Village.Interface = (function () {
       { id: "elevage", emoji: "🐄", nom: "Élevage", batiments: ["puits", "faneur", "etable", "poulailler", "bergerie", "porcherie", "veterinaire"] }, // étape 15 et 16
       // Étape 8 : les logements, et les artisans (fonderie, forge, marché, université)
       { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "maison", "macon"] }, // étape 12 : le maçon-couvreur
-      { id: "industrie", emoji: "🏭", nom: "Industrie", batiments: ["centrale", "acierie", "filature"] }, // étape 34
+      { id: "industrie", emoji: "🏭", nom: "Industrie", batiments: ["centrale", "acierie", "filature", "pompage", "epuration"] }, // étape 34 ; étape 35
       { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite", "monument"] }, // étape 31 : le monument // étape 16 : la laine et les habits
       // Étape 7 : le chemin de terre, et la route en pierre (débloquée par la recherche « Routes pavées »)
       // Étape 19 : ✍️ l'entrepôt secondaire est rangé avec les routes (le transport), dès le hameau
@@ -1157,7 +1163,17 @@ Village.Interface = (function () {
       const cons = Village.Electricite.consommation(b), ea = C.ateliers[b.type];
       if (ea && ea.electrique && !b.courant) problemes.push("⚡ Pas d'électricité : cette usine est arrêtée. Relie-la par la route à une centrale.");
       else if (b.type === "centrale") { const el = monde.electricite || {}; info(b.travail ? "⚡ En marche : fournit " + C.electricite.parCentrale + " unités" : "⚡ À l'arrêt : il lui faut du charbon !", b.travail ? "#3d8a4a" : "#b8443a"); info("🔌 Réseau : " + (el.utilise || 0) + " / " + (el.offre || 0) + " unités utilisées · demande " + (el.demande || 0) + (el.coupes ? " · ⚠️ " + el.coupes + " coupé(s)" : ""), el.coupes ? "#b8443a" : null); }
-      else if (cons) info(b.courant ? "⚡ Alimenté (" + cons + " unité" + (cons > 1 ? "s" : "") + ")" + (ea && !ea.electrique ? " : il va 1,5 fois plus vite" : "") : "⚡ Pas de courant (" + cons + " unité" + (cons > 1 ? "s" : "") + " demandée" + (cons > 1 ? "s" : "") + ")", b.courant ? "#3d8a4a" : "#b8443a");
+      else if (b.type === "pompage" || b.type === "epuration") { // étape 35
+        const reseau = b.type === "pompage" ? monde.eau || {} : monde.egouts || {}, marche = Village.Electricite.stationEnMarche(b.type)(b);
+        if (!b.courant) problemes.push("⚡ Pas d'électricité : la station est arrêtée. Relie-la par la route à une centrale.");
+        info(marche ? (b.type === "pompage" ? "🚰 En marche : fournit " : "🚽 En marche : traite ") + C.eau.parStation + " unités" : "⏸️ À l'arrêt", marche ? "#3d8a4a" : "#b8443a");
+        info("🔧 Tuyaux : " + (reseau.utilise || 0) + " / " + (reseau.offre || 0) + " unités utilisées · demande " + (reseau.demande || 0) + (reseau.coupes ? " · ⚠️ " + reseau.coupes + " sans " + (b.type === "pompage" ? "eau" : "égouts") : ""), reseau.coupes ? "#b8443a" : null);
+      }
+      if (b.type !== "centrale" && b.type !== "pompage" && b.type !== "epuration") {
+        const e = Village.Electricite.consoEau(b), g = Village.Electricite.consoEgout(b);
+        if (e || g) info((e ? (b.eau ? "🚰 Eau courante ✅" : "🚰 Pas d'eau courante") : "") + (e && g ? " · " : "") + (g ? (b.egout ? "🚽 Égouts ✅" : "🚽 Pas d'égouts") : "") + (b.eau && C.ateliers[b.type] && C.ateliers[b.type].entrees.eau ? " : plus besoin du puits !" : ""), (e && !b.eau) || (g && !b.egout) ? "#b8443a" : "#3d8a4a");
+      }
+      if (cons && b.type !== "pompage" && b.type !== "epuration" && !(ea && ea.electrique && !b.courant)) info(b.courant ? "⚡ Alimenté (" + cons + " unité" + (cons > 1 ? "s" : "") + ")" + (ea && !ea.electrique ? " : il va 1,5 fois plus vite" : "") : "⚡ Pas de courant (" + cons + " unité" + (cons > 1 ? "s" : "") + " demandée" + (cons > 1 ? "s" : "") + ")", b.courant ? "#3d8a4a" : "#b8443a");
     }
     for (const p of problemes) pb(p);
     // ---- 2. Ce qu'il fait
@@ -1229,6 +1245,9 @@ Village.Interface = (function () {
       titre("🩺 Il soigne les troupeaux malades");
       info(monde.batiments.filter((x) => x.malade).length + " troupeau(x) malade(s) au village");
       if (o && o.tournee) info("🧭 En tournée : soin n° " + o.tournee + ", partout sur la carte"); // étape 27
+    } else if (b.type === "pompage" || b.type === "epuration") { // étape 35
+      titre(b.type === "pompage" ? "🚰 Il pompe l'eau et l'envoie dans les tuyaux" : "🚽 Il nettoie les eaux usées des égouts");
+      if (o) info("Le " + type.metier + " " + (b.courant ? "surveille les machines" : "attend l'électricité"), "#7a5a30");
     } else if (o) {
       titre("👷 Ce qu'il rapporte");
       if (b.sortieQuoi) lignes.push({ cout: { [b.sortieQuoi]: 1 }, avant: "→" });

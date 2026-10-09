@@ -70,7 +70,7 @@ Village.SousLeCapot = (function () {
     "vaches-malades": (d) => "🤒 " + d.nom + " : " + d.animaux + " sont malades" + (d.contagion ? " (attrapé d'un troupeau voisin !)" : "") + " · plus rien ne sort · " + (d.veterinaire ? "le vétérinaire 🩺 va venir" : "pas de vétérinaire : ils guériront seuls en " + Math.round(Village.CONFIG.elevage.guerirSeule / 60) + " min"),
     "logement-evolue": (d) => "⬆️ " + d.avant + " n° " + d.numero + " devient « " + d.apres + " » (" + d.lits + " lits) : des " + d.emoji + " " + d.classe.toLowerCase() + " s'installent · coût " + cout(d.cout), // étape 18
     "logement-attend": (d) => "⏳ " + d.nom + " n° " + d.numero + " pourrait évoluer, mais il manque " + d.manque,
-    impots: (d) => "🪙 Impôts : +" + d.total + " pièces (" + d.artisans + " artisans × 1 + " + d.bourgeois + " bourgeois × 3)",
+    impots: (d) => "🪙 Impôts : +" + d.total + " pièces (" + d.artisans + " artisans × 1 + " + d.bourgeois + " bourgeois × 3" + (d.citadins ? " + " + d.citadins + " citadins × 4" : "") + ")",
     "batiments-ranges": (d) => "🧹 " + d.nombre + " bâtiment(s) déplacé(s) pour avoir la place de leurs champs ou de leurs enclos (avec une route)", // étape 23
     "routes-pavees": (d) => "🧱 Routes pavées : " + d.cases + " cases de chemin deviennent des routes en pierre (× 1,6 plus rapide)", // étape 17
     habits: (d) => "👕 Habits neufs : " + d.pris + " habitant(s) sur " + d.besoin + " (il reste " + d.reste + " vêtements)", // étape 16
@@ -130,6 +130,10 @@ Village.SousLeCapot = (function () {
     "prosperite-change": (d) => "👥 La ville est maintenant " + d.niveau + " " + d.emoji + " (prospérité " + d.prosperite + " %, " + d.habitants + " habitants) : les arrivées vont × " + String(0.5 + d.prosperite / 100).replace(".", ","), // étape 33
     "electricite-penurie": (d) => "⚡❌ Pénurie d'électricité : " + d.coupes + " bâtiment(s) coupé(s) · offre " + d.offre + " < demande " + d.demande + " (" + d.centrales + " centrale(s) qui tournent)", // étape 34
     "electricite-ok": (d) => "⚡✅ Assez d'électricité pour tout le réseau : offre " + d.offre + ", demande " + d.demande,
+    "eau-penurie": (d) => "🚰❌ Pénurie d'eau : " + d.coupes + " bâtiment(s) sans eau · offre " + d.offre + " < demande " + d.demande + " (" + d.sources + " station(s) de pompage qui tournent)", // étape 35
+    "eau-ok": (d) => "🚰✅ Assez d'eau pour tout le réseau : offre " + d.offre + ", demande " + d.demande,
+    "egouts-penurie": (d) => "🚽❌ Les égouts débordent : " + d.coupes + " bâtiment(s) sans égouts · offre " + d.offre + " < demande " + d.demande + " (" + d.sources + " station(s) d'épuration qui tournent)",
+    "egouts-ok": (d) => "🚽✅ Les égouts suffisent : offre " + d.offre + ", demande " + d.demande,
     "conseil": (d) => "🧭 Le conseiller : " + d.texte + (d.type ? " → construis " + Village.Batiments.TYPES[d.type].emoji + " " + Village.Batiments.TYPES[d.type].court : "") + " (" + d.pourquoi + ")", // étape 29
     "filon-trouve": (d) => "🔍 Filon de " + d.nom + " " + d.emoji + " trouvé près de (" + d.colonne + ", " + d.ligne + ")" + (d.cases > 1 ? " : " + d.cases + " cases de paillettes" : "") + " · " + d.reserve + " morceaux", // étape 28
     // Étape 8 : le logement et le marché
@@ -271,6 +275,15 @@ Village.SousLeCapot = (function () {
     h += groupe("🎩 Les classes d'habitants (elles suivent leur logement)");
     for (const c of C15.classes.liste) h += ligne(c.emoji + " " + c.nom + " : habitants / lits · besoins", pop18.pop[c.id] + " / " + pop18.lits[c.id] + " · " + (Cl.contents(monde, c.id) ? "✅ tous remplis" : "⬜ " + Cl.besoins(monde, c.id).filter((x) => !x.ok).map((x) => x.nom).join(", ")));
     for (const b of monde.batiments.filter((x) => C15.classes.evolution[x.type] && x.etat === "pret").slice(0, 6)) h += ligne("   " + Village.Batiments.TYPES[b.type].court + " n° " + b.numero + " → " + Village.Batiments.TYPES[C15.classes.evolution[b.type].vers].court, Cl.raison(monde, b) || (b.attendMateriaux ? "attend des matériaux" : Math.round(b.evolution) + " / " + C15.classes.delai + " s"));
+    // Étape 34 et 35 : les 3 réseaux qui suivent les routes
+    if (Village.Electricite.active(monde)) {
+      h += groupe("⚡🚰🚽 Les réseaux (ils suivent les routes, les plus proches d'abord)");
+      for (const [nom, emoji, titreR] of [["electricite", "⚡", "électricité"], ["eau", "🚰", "eau courante"], ["egouts", "🚽", "égouts"]]) {
+        const r = monde[nom] || {};
+        h += ligne(emoji + " " + titreR + " : utilisé / offre · demande", (r.utilise || 0) + " / " + (r.offre || 0) + " · " + (r.demande || 0) + (r.penurie ? " ⚠️ pénurie" : ""));
+        h += ligne("   servis · coupés · loin du réseau · cases de route", (r.alimentes || 0) + " · " + (r.coupes || 0) + " · " + (r.horsReseau || 0) + " · " + (r.routes ? r.routes.size : 0));
+      }
+    }
     // Étape 11 : la réserve, les pubs et les règles du bourg
     const Re = Village.Reserve, ry = Re.rythme(monde), mnp = Re.minutesAvantPlein(monde);
     h += groupe("📦 La réserve · 📺 les pubs · 🏰 le bourg");

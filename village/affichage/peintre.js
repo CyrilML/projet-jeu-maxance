@@ -486,6 +486,18 @@ Village.Peintre = (function () {
       }
       ctx.lineCap = "butt";
     }
+    // Étape 35 : 🚰 les bouches d'eau (bleues) et 🚽 les plaques d'égout (grises) sur les routes où passent les tuyaux
+    for (const [reseau, decal, couleur] of [[monde.eau, 0, "#4f7fa8"], [monde.egouts, 1, "#55585c"]]) {
+      if (!reseau || !reseau.routes || !reseau.routes.size || !Village.Batisses.vue.fin) continue;
+      for (const i of reseau.routes) {
+        const c = i % k.colonnes, l = Math.floor(i / k.colonnes);
+        if (c < cMin - 1 || c > cMax || l < lMin - 1 || l > lMax || (c + l * 2 + decal) % 4) continue;
+        const p = milieu(c, l), px = p.x - L * 0.12 + decal * L * 0.24, py = p.y + Hc * 0.06;
+        ctx.beginPath(); ctx.ellipse(px, py, 4.5, 2.3, 0, 0, TOUR); ctx.fillStyle = couleur; ctx.fill();
+        ctx.strokeStyle = "rgba(20, 20, 20, .5)"; ctx.lineWidth = 0.8; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(px - 2.6, py); ctx.lineTo(px + 2.6, py); ctx.stroke();
+      }
+    }
   }
 
   // Étape 12 : une case de route en aperçu (transparente et qui « respire »), ou rouge si c'est impossible

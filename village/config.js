@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 35,
+  version: 36,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -170,6 +170,8 @@ Village.CONFIG = {
     centrale: { cout: { pierres: 200, lingots: 40, outils: 20 }, construction: 60 }, // étape 34
     acierie: { cout: { planches: 100, pierres: 150, lingots: 30, outils: 15 }, construction: 50 },
     filature: { cout: { planches: 120, pierres: 80, lingots: 20, outils: 10 }, construction: 45 }, // étape 19 : dès le hameau (sans lingots ni outils)
+    pompage: { cout: { pierres: 120, lingots: 25, outils: 10 }, construction: 40 }, // étape 35
+    epuration: { cout: { pierres: 140, lingots: 20, outils: 10 }, construction: 40 },
     manoir: { cout: { planches: 12, pierres: 16, outils: 2 }, construction: 20 }, // étape 18 : on ne la construit pas, une maison le DEVIENT
   },
   // Étape 18 : ✍️ les CLASSES D'HABITANTS suivent leur logement (voir logique/classes.js).
@@ -180,10 +182,13 @@ Village.CONFIG = {
       { id: "paysans", nom: "Paysans", emoji: "👨‍🌾", logements: ["entrepot", "hutte", "depot"], impot: 0 },
       { id: "artisans", nom: "Artisans", emoji: "👷", logements: ["maison"], impot: 1 },
       { id: "bourgeois", nom: "Bourgeois", emoji: "🎩", logements: ["manoir"], impot: 3 },
+      { id: "citadins", nom: "Citadins", emoji: "🧑‍💼", logements: ["immeuble"], impot: 4 }, // étape 35
     ],
     evolution: {
       hutte: { vers: "maison", age: 2, cout: { planches: 6, pierres: 6 } },
       maison: { vers: "manoir", age: 3, cout: { planches: 12, pierres: 16, outils: 2 } },
+      // Étape 35 : ✍️ « des maisons plus grandes » : avec ⚡ + 🚰 + 🚽, la maison bourgeoise monte en IMMEUBLE (20 lits)
+      manoir: { vers: "immeuble", age: 5, cout: { pierres: 30, lingots: 6, planches: 10 }, reseaux: true },
     },
     delai: 60, // s : les besoins doivent être remplis pendant 1 minute
     verification: 5, // s entre deux vérifications
@@ -295,6 +300,7 @@ Village.CONFIG = {
     entrepot: 4, depot: 4, universite: 4, moulin: 4, marche: 4, fonderie: 4, ferme: 4,
     monument: 5, // étape 31 : ✍️ « même 5 × 5 »
     centrale: 4, acierie: 4, filature: 4, // étape 34 : les usines
+    pompage: 3, epuration: 3, immeuble: 2, // étape 35
   },
   tailleParDefaut: 3,
   champs: {
@@ -326,7 +332,7 @@ Village.CONFIG = {
   // (Les porteurs, eux, dorment à l'entrepôt : ils ne comptent pas.)
   // Étape 13 : ✍️ les porteurs (manutentionnaires) et les villageois sans travail dorment aussi quelque part :
   // le campement passe à 10 places.
-  logement: { entrepot: 11, hutte: 3, maison: 6, depot: 4, manoir: 10 }, // étape 18 : la maison bourgeoise ; étape 20 : 11 au campement (pour le 4e porteur) // étape 17 : 4 lits dans chaque entrepôt secondaire
+  logement: { entrepot: 11, hutte: 3, maison: 6, depot: 4, manoir: 10, immeuble: 20 }, // étape 18 : la maison bourgeoise ; étape 20 : 11 au campement (pour le 4e porteur) // étape 17 : 4 lits dans chaque entrepôt secondaire
 
   // Étape 13 : ✍️ (1B) les VILLAGEOIS. Ils arrivent au village quand il y a un lit libre et à manger,
   // se promènent près du feu, et vont travailler là où on a besoin d'eux : chaque cabane en prend un,
@@ -562,8 +568,8 @@ Village.CONFIG = {
       // Étape 34 : ✍️ (choix de Maxance) pour l'époque industrielle : le Grand Beffroi fini, 80 habitants, 3 000 🪙
       objectifs: { monument: 4, habitants: 80, pieces: 3000 } },
     // Étape 34 : 🏭 l'ÉPOQUE INDUSTRIELLE : l'électricité, et les premières usines
-    { id: "industrie", nom: "L'époque industrielle", emoji: "🏭", debloque: ["centrale", "acierie", "filature"], objectifs: null,
-      aVenir: "🚰 eau courante et égouts, 🚗 routes goudronnées et voitures" },
+    { id: "industrie", nom: "L'époque industrielle", emoji: "🏭", debloque: ["centrale", "acierie", "filature", "pompage", "epuration"], objectifs: null, // étape 35 : l'eau et les égouts
+      aVenir: "🚗 routes goudronnées et voitures, 🚓 police et 🚒 pompiers" },
   ],
   gemmesParAge: 3, // étape 7 : 💎 offertes à chaque nouvel âge
 
@@ -689,6 +695,11 @@ Village.CONFIG = {
         { texte: "Construis une 🏭 aciérie", batiment: "acierie", nombre: 1, pourquoi: "Une usine électrique : beaucoup de lingots d'un coup." },
         { texte: "Construis une 🧵 filature", batiment: "filature", nombre: 1, pourquoi: "Une usine électrique : la laine devient du tissu à la machine." },
         { texte: "Alimente toutes les maisons (90 %)", logementsCourant: 90, pourquoi: "L'électricité est un nouveau besoin des habitants (⚡ dans 👥)." },
+        // Étape 35 : l'eau courante et les égouts
+        { texte: "Construis une 🚰 station de pompage", batiment: "pompage", nombre: 1, pourquoi: "Au bord de l'eau, avec l'électricité : l'eau part dans des tuyaux sous les routes." },
+        { texte: "Construis une 🚽 station d'épuration", batiment: "epuration", nombre: 1, pourquoi: "Elle nettoie les eaux usées : les égouts suivent aussi les routes." },
+        { texte: "Donne l'eau à 90 % des lits", logementsEau: 90, pourquoi: "L'eau courante est un besoin des habitants (🚰 dans 👥)." },
+        { texte: "Fais monter un 🏢 immeuble", batiment: "immeuble", nombre: 1, pourquoi: "Une maison bourgeoise avec ⚡ + 🚰 + 🚽 devient un immeuble de 20 lits." },
       ],
     ],
   },
@@ -737,6 +748,9 @@ Village.CONFIG = {
     centrale: "La centrale brûle du charbon et fait de l'électricité. Le courant suit les routes, jusqu'à " + 40 + " unités par centrale.",
     acierie: "L'aciérie (électrique) fond le fer en grande quantité : 2 fer + 1 charbon → 4 lingots.",
     filature: "La filature (électrique) file la laine à la machine : 2 laines → 3 tissus.",
+    pompage: "La station de pompage (au bord de l'eau, électrique) envoie l'eau courante dans des tuyaux sous les routes, jusqu'à " + 40 + " unités.",
+    epuration: "La station d'épuration (électrique) nettoie les eaux usées qui arrivent par les égouts, sous les routes, jusqu'à " + 40 + " unités.",
+    immeuble: "Un immeuble de 4 étages : 20 lits pour des citadins. Une maison bourgeoise le devient quand elle a l'électricité, l'eau et les égouts.",
   },
 
   // Étape 34 : ⚡ l'ÉLECTRICITÉ (logique/electricite.js). Une centrale qui brûle du charbon fournit 40 unités ; le courant
@@ -745,8 +759,21 @@ Village.CONFIG = {
     age: 5, // l'époque industrielle
     parCentrale: 40, // unités par centrale qui tourne
     logement: 1, atelier: 2, usine: 8, // consommation (unités)
-    consommation: { entrepot: 3, depot: 2, universite: 4, marche: 2, monument: 4 },
+    consommation: { entrepot: 3, depot: 2, universite: 4, marche: 2, monument: 4, pompage: 4, epuration: 4, immeuble: 3 },
     vitesse: 1.5, // un atelier alimenté travaille 1,5 fois plus vite
+  },
+
+  // Étape 35 : 🚰 l'EAU COURANTE et 🚽 les ÉGOUTS (logique/electricite.js). ✍️ Choix de Maxance : « comme l'électricité ».
+  // Une station (qui a l'électricité et son ouvrier) fournit 40 unités ; les tuyaux suivent les routes, les plus proches
+  // d'abord. La station de pompage doit être au bord de l'eau (à 3 cases au plus).
+  // Ce que ça change : un besoin des habitants, les maisons bourgeoises deviennent des immeubles, et les élevages
+  // qui ont l'eau courante n'ont plus besoin de l'eau du puits.
+  eau: {
+    parStation: 40, // unités par station qui tourne
+    logement: 1, // un logement consomme 1 (et un immeuble 3)
+    elevage: 2, // un élevage boit 2 (eau seulement)
+    usine: 2, // une usine électrique rejette 2 aux égouts
+    consommation: { immeuble: 3 },
   },
 
   // Étape 33 : 👥 la POPULATION et ses BESOINS, façon SimCity. Chaque besoin est noté de 0 à 100 % ; la PROSPÉRITÉ est la
@@ -758,8 +785,6 @@ Village.CONFIG = {
     releves: 40, // relevés gardés (20 min)
     niveaux: [[0, "en crise", "📉"], [40, "fragile", "😐"], [60, "stable", "🙂"], [75, "prospère", "📈"], [90, "florissante", "🌟"]],
     aVenir: [
-      { emoji: "🚰", nom: "Eau courante", quand: "époque industrielle" },
-      { emoji: "🚽", nom: "Égouts", quand: "époque industrielle" },
       { emoji: "🚓", nom: "Sécurité (police)", quand: "époque moderne" },
       { emoji: "🚒", nom: "Protection contre le feu (pompiers)", quand: "époque moderne" },
       { emoji: "🏥", nom: "Santé (hôpital)", quand: "époque moderne" },

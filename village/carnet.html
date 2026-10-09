@@ -158,6 +158,7 @@
       <a href="#etape32">Étape 32</a>
       <a href="#etape33">Étape 33</a>
       <a href="#etape34">Étape 34</a>
+      <a href="#etape35">Étape 35</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2032,6 +2033,55 @@ le réseau sert les plus PROCHES d'abord (en cases de route) :
       <details class="question"><summary>La centrale n'a plus de charbon : que se passe-t-il ?</summary><p>Elle s'arrête : plus d'électricité, les usines s'arrêtent aussi. Il faut des mines de charbon !</p></details>
     </section>
 
+    <section id="etape35">
+      <h2>🚰 Étape 35 : l'eau courante, les égouts et les immeubles <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">L'eau et les égouts marchent comme l'électricité : des stations, des tuyaux sous les routes, une puissance limitée. Les maisons bourgeoises qui ont les 3 réseaux deviennent des immeubles de 20 lits. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/33-vers-la-grande-ville.md</code>.</p>
+          <ul>
+            <li>✍️ « Ajouter la gestion de l'eau, des égouts, au fil des avancées dans le temps. »</li>
+            <li>Tes choix : « comme l'électricité » ; une station d'épuration ; un besoin des habitants, des maisons plus grandes, des élevages sans puits.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Menu 🏭 Industrie : la 🚰 station de pompage ne se pose qu'au bord de l'eau.</li>
+            <li>☐ Sans électricité, la station s'arrête (bulle ⚡ au-dessus).</li>
+            <li>☐ Des bouches d'eau bleues et des plaques d'égout grises sur les routes servies.</li>
+            <li>☐ Touche une maison : « 🚰 Eau courante ✅ · 🚽 Égouts ✅ ». Une étable servie : « plus besoin du puits ! ».</li>
+            <li>☐ Une maison bourgeoise avec ⚡ + 🚰 + 🚽 devient un 🏢 immeuble (20 lits, des 🧑‍💼 citadins).</li>
+            <li>☐ Le bouton 👥 montre 🚰 et 🚽 ; « sous le capot », le groupe « Les réseaux ».</li>
+            <li>Vérifie « version 36 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🧰 Un seul outil pour 3 réseaux</h3>
+      <pre style="white-space: pre-wrap">distribuer(réseau, sources, puissance, consommation, drapeau)
+
+⚡ électricité : centrales  · 40 chacune · maison 1, usine 8…    → b.courant
+🚰 eau         : pompages   · 40 chacune · maison 1, élevage 2…  → b.eau
+🚽 égouts      : épurations · 40 chacune · maison 1, usine 2…    → b.egout</pre>
+      <p>Au lieu d'écrire 3 fois le même code, on a écrit <strong>une fonction</strong> qui sait distribuer « quelque chose » le long des routes. On lui donne juste <em>qui fournit</em>, <em>combien</em> et <em>qui consomme</em>. C'est ce qu'on appelle <strong>réutiliser</strong> du code : si on trouve une erreur, on la corrige une seule fois pour les 3 réseaux.</p>
+      <p>Et les réseaux dépendent les uns des autres : une station sans électricité s'arrête. On calcule donc l'électricité <strong>d'abord</strong>, puis l'eau et les égouts. C'est une <strong>chaîne de dépendances</strong>, comme celle des ateliers.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+        <li>Ouvre « sous le capot » : compare l'offre et la demande des 3 réseaux.</li>
+        <li>Construis plein de maisons loin de la station : lesquelles n'ont pas d'eau ? Pourquoi celles-là ?</li>
+        <li>Laisse la centrale sans charbon : regarde ce qui arrive à l'eau et aux égouts dans le journal.</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>1 station de pompage, 20 maisons, 2 immeubles et 4 étables : est-ce assez ?</summary><p>Offre : 40. Demande : 20 × 1 + 2 × 3 + 4 × 2 = 34. Oui, il en reste 6.</p></details>
+      <details class="question"><summary>Pourquoi l'eau s'arrête-t-elle quand la centrale n'a plus de charbon ?</summary><p>La station de pompage a besoin d'électricité pour faire tourner ses pompes : pas de courant, pas d'eau !</p></details>
+      <details class="question"><summary>Qu'est-ce qu'il faut pour qu'une maison bourgeoise devienne un immeuble ?</summary><p>L'électricité, l'eau courante et les égouts dans CETTE maison, les besoins des bourgeois remplis pendant 1 minute, et 30 pierres, 6 lingots et 10 planches.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2241,10 +2291,16 @@ le réseau sert les plus PROCHES d'abord (en cases de route) :
           <p>La centrale à charbon, le courant le long des routes, l'aciérie et la filature.</p>
           <p class="apprend"><b>Tu apprends :</b> un réseau, l'offre et la demande d'énergie. <b>Durée :</b> 2 séances.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">35</div>
+          <h4>🚰 L'eau courante, les égouts et les immeubles <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>La station de pompage, la station d'épuration, les tuyaux sous les routes, l'immeuble de 20 lits, les élevages sans puits.</p>
+          <p class="apprend"><b>Tu apprends :</b> réutiliser une fonction, une chaîne de dépendances. <b>Durée :</b> 2 séances.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">35-38</div>
-          <h4>🚰🚗🚓🛍️ L'eau, les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
-          <p>Électricité, eau courante et égouts, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
+          <div class="num">36-38</div>
+          <h4>🚗🚓🛍️ Les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <p>Routes goudronnées, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
         </div>
         <div class="carte">
@@ -2531,6 +2587,14 @@ le réseau sert les plus PROCHES d'abord (en cases de route) :
         <textarea class="journal" id="village-appris-34" data-cle="village-appris-34" placeholder="Ex. : J'ai appris ce que sont l'offre et la demande d'énergie…"></textarea>
         <label for="village-idees-34"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-34" data-cle="village-idees-34" placeholder="Ex. : Des éoliennes et des panneaux solaires…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 35 · l'eau courante, les égouts et les immeubles <span class="petit">· 9 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la fonction <code>distribuer</code> dans <code>logique/electricite.js</code> (une seule pour les 3 réseaux), la station de pompage et la station d'épuration (dessins avec château d'eau et bassins), l'immeuble et les citadins, les bouches d'eau et plaques d'égout, les besoins 🚰 et 🚽, les élevages sans puits, les conseils, les événements <code>eau-penurie</code>, <code>eau-ok</code>, <code>egouts-penurie</code> et <code>egouts-ok</code>.</p>
+        <label for="village-appris-35"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-35" data-cle="village-appris-35" placeholder="Ex. : J'ai appris qu'une fonction peut servir pour plusieurs choses…"></textarea>
+        <label for="village-idees-35"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-35" data-cle="village-idees-35" placeholder="Ex. : Un château d'eau à construire soi-même…"></textarea>
       </div>
     </section>
   </main>

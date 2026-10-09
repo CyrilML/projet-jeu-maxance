@@ -23,6 +23,7 @@ Village.Guide = (function () {
     if (e.pieces) return { valeur: monde.pieces, cible: e.pieces };
     if (e.courant) return { valeur: monde.batiments.filter((b) => b.courant).length, cible: e.courant }; // étape 34
     if (e.logementsCourant) return { valeur: Math.round(Village.Electricite.partLogements(monde) * 100), cible: e.logementsCourant };
+    if (e.logementsEau) return { valeur: Math.round(Village.Electricite.partLogements(monde, "eau") * 100), cible: e.logementsEau }; // étape 35
     if (e.monument) return { valeur: Village.Monument.paliersFaits(monde), cible: e.monument }; // étape 31
     if (e.bonheur) return { valeur: Math.round(monde.bonheur.valeur || 0), cible: e.bonheur };
     return { valeur: 0, cible: 1 };

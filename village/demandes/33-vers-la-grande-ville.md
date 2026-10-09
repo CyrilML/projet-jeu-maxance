@@ -84,3 +84,27 @@
 - [ ] Une centrale avec du charbon alimente les bâtiments reliés par la route (poteaux, « ⚡ Alimenté »).
 - [ ] Trop de bâtiments : pénurie, les plus loin sont coupés.
 - [ ] Version 35 en haut.
+
+## ❓ Les questions de l'étape 35, et les choix de Maxance
+- Comment marche l'eau courante ? → **comme l'électricité** : une station de pompage au bord de l'eau (qui a besoin du
+  courant), des tuyaux sous les routes, une puissance limitée, les plus proches d'abord.
+- Et les égouts ? → **une station d'épuration**, qui marche pareil.
+- Qu'est-ce que ça change ? → **un besoin des habitants**, **des maisons plus grandes** et **les élevages sans puits**.
+
+## 📏 Les règles de l'étape 35 (config.js : `eau`)
+- 🚰 Station de pompage (3 × 3, menu 🏭 Industrie) : à 3 cases de l'eau au plus. Avec l'électricité et son fontainier,
+  elle fournit 40 unités d'eau. 🚽 Station d'épuration (3 × 3) : avec l'électricité et son égoutier, elle traite 40 unités.
+- Les tuyaux suivent les routes (des bouches d'eau bleues et des plaques d'égout grises apparaissent sur les routes servies).
+  Les plus proches d'abord ; s'il n'y a pas assez, les plus loin n'ont rien (pénurie). Une station à l'arrêt = pénurie.
+- Eau : logement 1, immeuble 3, élevage 2. Égouts : logement 1, immeuble 3, usine électrique 2.
+- 🚰 et 🚽 deviennent des besoins des habitants (dès qu'il y a une centrale).
+- 🏢 Une maison bourgeoise qui a ⚡ + 🚰 + 🚽 (et les besoins des bourgeois remplis pendant 1 minute) devient un IMMEUBLE :
+  20 lits pour des 🧑‍💼 citadins, qui paient 4 🪙 par minute chacun. Coût : 30 pierres, 6 lingots, 10 planches.
+- Un élevage (étable, poulailler, bergerie, porcherie) qui a l'eau courante n'a plus besoin de l'eau du puits.
+
+## ✅ Critères pour valider (étape 35)
+- [ ] La station de pompage ne se pose qu'au bord de l'eau ; sans électricité, elle s'arrête (bulle ⚡).
+- [ ] Des bouches d'eau et des plaques d'égout sur les routes servies.
+- [ ] Touche une maison : « 🚰 Eau courante ✅ · 🚽 Égouts ✅ ». Touche une étable servie : « plus besoin du puits ! ».
+- [ ] Une maison bourgeoise avec les 3 réseaux devient un immeuble de 20 lits.
+- [ ] Le bouton 👥 montre 🚰 et 🚽 ; « sous le capot », les 3 réseaux ; version 36 en haut.

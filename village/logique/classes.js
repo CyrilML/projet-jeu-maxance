@@ -10,6 +10,8 @@
 //   3. l'âge le permet (les maisons au village, les maisons bourgeoises au bourg) ;
 //   4. et il y a les matériaux pour l'agrandir (ils sont pris dans l'entrepôt).
 // Alors la hutte devient une maison (6 lits au lieu de 3), la maison une maison bourgeoise (10 lits).
+// Étape 35 : ✍️ « des maisons plus grandes » : à l'époque industrielle, une maison bourgeoise qui a l'électricité ⚡,
+// l'eau courante 🚰 et les égouts 🚽 monte en IMMEUBLE (20 lits) : des 🧑‍💼 citadins, qui paient 4 🪙 chacun.
 //
 // Pourquoi c'est utile ? Plus de lits, du confort (le bonheur), et des IMPÔTS : chaque minute, chaque artisan
 // paie 1 🪙 et chaque bourgeois 3 🪙. Mais attention : une classe dont les besoins ne sont plus remplis
@@ -34,7 +36,7 @@ Village.Classes = (function () {
       liste.push({ nom: "😋 " + n + " goûts différents (" + gouts.length + ")", ok: gouts.length >= n });
       liste.push({ nom: "🥛 Du lait ou des 🥚 œufs", ok: a("lait") || a("oeufs") });
     }
-    if (id === "bourgeois") {
+    if (id === "bourgeois" || id === "citadins") {
       liste.push({ nom: "🧀 Du fromage ou du 🥓 jambon", ok: a("fromage") || a("jambon") });
       liste.push({ nom: "👕 Bien habillés (la moitié au moins)", ok: monde.habits.part >= 0.5 });
       liste.push({ nom: "😊 Bonheur de " + K.bonheurBourgeois + " % au moins", ok: (monde.bonheur.valeur || 0) >= K.bonheurBourgeois });
@@ -45,7 +47,8 @@ Village.Classes = (function () {
 
   // Combien d'habitants de chaque classe ? On compte les lits de chaque sorte, remplis comme le village.
   function population(monde) {
-    const lits = { paysans: C.logement.entrepot + (monde.logementBonus || 0), artisans: 0, bourgeois: 0 };
+    const lits = { paysans: C.logement.entrepot + (monde.logementBonus || 0) };
+    for (const c of K.liste) if (!lits[c.id]) lits[c.id] = 0;
     for (const b of monde.batiments) if (b.etat === "pret" && C.logement[b.type] && b.type !== "entrepot") lits[classeDe(b.type)] += C.logement[b.type];
     const total = Object.values(lits).reduce((x, y) => x + y, 0), habitants = Village.Logement.habitants(monde), remplis = total ? Math.min(1, habitants / total) : 0;
     const pop = {};
@@ -67,6 +70,8 @@ Village.Classes = (function () {
     const ev = K.evolution[b.type];
     if (!ev) return "c'est déjà le plus beau logement";
     if ((monde.age || 0) < ev.age) return "pas encore : " + C.ages[ev.age].emoji + " " + C.ages[ev.age].nom.toLowerCase();
+    // Étape 35 : l'immeuble a besoin des 3 réseaux, dans CE bâtiment
+    if (ev.reseaux) { const sans = [["courant", "⚡ électricité"], ["eau", "🚰 eau courante"], ["egout", "🚽 égouts"]].filter(([k]) => !b[k]).map(([, n]) => n); if (sans.length) return "il lui faut : " + sans.join(", "); }
     const suivante = classeDe(ev.vers), manque = besoins(monde, suivante).filter((x) => !x.ok);
     if (manque.length) return "les " + fiche(suivante).nom.toLowerCase() + " veulent : " + manque.map((x) => x.nom).join(", ");
     return null;
@@ -99,7 +104,7 @@ Village.Classes = (function () {
       const { pop } = population(monde);
       let total = 0;
       for (const c of K.liste) total += pop[c.id] * c.impot;
-      if (total > 0) { monde.pieces += total; radio.emettre("impots", { total, artisans: pop.artisans, bourgeois: pop.bourgeois }); }
+      if (total > 0) { monde.pieces += total; radio.emettre("impots", { total, artisans: pop.artisans, bourgeois: pop.bourgeois, citadins: pop.citadins || 0 }); }
     }
   }
 

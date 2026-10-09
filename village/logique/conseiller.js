@@ -90,6 +90,15 @@ Village.Conseiller = (function () {
       else if (el.penurie) ajouter(3, "⚡", "Pénurie d'électricité : " + el.coupes + " bâtiment(s) coupé(s)", "La demande (" + el.demande + ") dépasse ce que fournissent tes centrales (" + el.offre + ").", "centrale");
       else if (el.horsReseau) ajouter(1, "🔌", el.horsReseau + " bâtiment(s) loin du réseau", "Le courant suit les routes : relie-les par la route à une centrale.", null);
     }
+    // 8. Étape 35 : 🚰 l'eau courante et 🚽 les égouts (seulement quand il y a déjà une centrale)
+    if (Village.Electricite.active(monde) && monde.batiments.some((b) => b.type === "centrale" && b.etat === "pret")) {
+      for (const [type, nomR, emoji, quoi] of [["pompage", "eau", "🚰", "l'eau courante"], ["epuration", "egouts", "🚽", "les égouts"]]) {
+        const st = monde.batiments.filter((b) => b.type === type && b.etat === "pret"), r = monde[nomR] || {};
+        if (!st.length) ajouter(1, emoji, "Construis une " + B().TYPES[type].nom.toLowerCase(), "Les habitants veulent " + quoi + " (" + emoji + " dans 👥), et les maisons bourgeoises qui l'ont deviennent des immeubles de 20 lits.", type);
+        else if (!st.some((b) => b.courant)) ajouter(3, emoji, B().TYPES[type].nom + " sans électricité", "Une station ne marche pas sans courant : relie-la par la route à une centrale.", null);
+        else if (r.penurie) ajouter(2, emoji, "Pas assez pour " + quoi + " : " + r.coupes + " bâtiment(s) privé(s)", "La demande (" + r.demande + ") dépasse ce que fournissent tes stations (" + r.offre + ").", type);
+      }
+    }
     // 6. Étape 31 : le grand monument de la ville
     if (Village.Ages.debloque(monde, "monument")) {
       const mo = monde.batiments.find((b) => b.type === "monument");

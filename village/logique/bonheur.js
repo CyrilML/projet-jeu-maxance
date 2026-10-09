@@ -46,7 +46,7 @@ Village.Bonheur = (function () {
     const tous = habitants(monde), n = Math.max(1, tous.length);
     const nourris = tous.filter((h) => !h.affame).length / n;
     const gouts = goutsRecents(monde);
-    const lits = monde.batiments.filter((b) => (b.type === "maison" || b.type === "manoir") && b.etat === "pret").reduce((n, b) => n + C.logement[b.type], 0); // étape 18 : + les maisons bourgeoises
+    const lits = monde.batiments.filter((b) => (b.type === "maison" || b.type === "manoir" || b.type === "immeuble") && b.etat === "pret").reduce((n, b) => n + C.logement[b.type], 0); // étape 18 : + les maisons bourgeoises
     const confort = Math.min(1, lits / n);
     const mecontents = tous.filter((h) => h.mecontent).length / n;
     const parts = [

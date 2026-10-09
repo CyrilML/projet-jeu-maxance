@@ -68,6 +68,10 @@ Village.Batisses = (function () {
     centrale: { a: 18, a2: 24, h: 18, toit: 6, murG: "#9a5a44", murD: "#7a4434", toitA: "#4a4c50", toitB: "#3a3c40", mur: "pierre", toitSorte: null, fenetres: 2, toitForme: "plat" },
     acierie: { a: 16, a2: 30, h: 16, toit: 9, murG: "#8a8e94", murD: "#6c7076", toitA: "#5a6068", toitB: "#454a52", mur: "planches", toitSorte: null, fenetres: 0, toitForme: "plat" },
     filature: { a: 14, a2: 28, h: 26, toit: 10, murG: "#a8604a", murD: "#86483a", toitA: "#4a5058", toitB: "#3a4048", mur: "pierre", toitSorte: "ardoise", fenetres: 2, toitForme: "pavillon" },
+    // Étape 35 : l'eau courante et les égouts ; l'immeuble (4 étages de brique, un toit plat)
+    pompage: { a: 15, a2: 20, h: 15, toit: 8, murG: "#a8604a", murD: "#86483a", toitA: "#4a5058", toitB: "#3a4048", mur: "pierre", toitSorte: "ardoise", fenetres: 1, toitForme: "pavillon" },
+    epuration: { a: 12, a2: 14, h: 12, toit: 5, murG: "#c8c2b4", murD: "#a49e90", toitA: "#5a6068", toitB: "#454a52", mur: "pierre", toitSorte: null, fenetres: 1, toitForme: "plat" },
+    immeuble: { a: 18, a2: 22, h: 48, toit: 4, murG: "#b8705a", murD: "#945644", toitA: "#5a5c60", toitB: "#47494d", mur: "pierre", toitSorte: null, fenetres: 0, toitForme: "plat" },
     monument: { a: 20, a2: 26, h: 20, toit: 14, murG: "#f2ede2", murD: "#d4ccbc", toitA: "#3f6fc4", toitB: "#2f569c", mur: "pierre", toitSorte: "ardoise", fenetres: 2, lanterne: true }, // étape 31
     depot: { a: 22, a2: 32, h: 18, toit: 20, murG: "#c9a26a", murD: "#a8834a", toitA: "#3f6fc4", toitB: "#2f569c", mur: "planches", toitSorte: "tuiles", fenetres: 2, lanterne: true, toitForme: "mansarde" },
   };
@@ -1098,6 +1102,45 @@ Village.Batisses = (function () {
         for (const v of [0.12, 0.62]) for (let k = 0; k < 6; k++) { const u = 0.08 + k * 0.155, p1 = surMur(c.B, c.D, m.h, u, v), p2 = surMur(c.B, c.D, m.h, u + 0.09, v), p3 = surMur(c.B, c.D, m.h, u + 0.09, v + 0.22), p4 = surMur(c.B, c.D, m.h, u, v + 0.22); forme(ctx, [p1, p2, p3, p4], vue.noirceur > 0.15 && marche ? "#ffd866" : "#8fb0c4"); if (marche) lumiere((p1[0] + p3[0]) / 2, (p1[1] + p3[1]) / 2, 9, "jaune", 0.6); }
         return sommet;
       }
+      case "pompage": { // Étape 35 : 🚰 la station de pompage : une maison des machines en brique, un château d'eau, un tuyau vers la rivière
+        const marche = !!(b && b.courant && b.ouvrier);
+        tourRonde(ctx, x + 14, y - 14, { r: 3, h: 30, clair: "#8a8e94", fonce: "#5c6066", dessus: "#4a4e54" }); // le pied du château d'eau
+        const cuve = tourRonde(ctx, x + 14, y - 44, { r: 9, rh: 9, h: 12, ht: 5, clair: "#9ab4c4", fonce: "#5a7484", toit: "dome", toitA: "#7a8e9a", toitB: "#4f6270", bandes: "rgba(40, 60, 70, .5)" });
+        const sommet = boite(ctx, x - 4, y + 2, m, 1, true);
+        porte(ctx, x - 4, y + 2, m, "#3a4a5a");
+        // le gros tuyau qui part vers l'eau, et sa vanne
+        poutre(ctx, [x - 24, y + 12], [x - 12, y + 6], 3.2, "#5a6a74");
+        rond(ctx, x - 18, y + 9, 2.6, "#b8443a");
+        if (marche) { lumiere(x - 4, y - 6, 14, "jaune", 0.4); ctx.fillStyle = "rgba(140, 200, 240, .8)"; for (let k = 0; k < 3; k++) { const ph = (t * 1.5 + k / 3) % 1; ctx.beginPath(); ctx.arc(x - 24 + ph * 12, y + 12 - ph * 6 - 3, 1, 0, TOUR); ctx.fill(); } }
+        return cuve[1] < sommet[1] ? cuve : sommet;
+      }
+      case "epuration": { // Étape 35 : 🚽 la station d'épuration : 2 grands bassins ronds, un pont qui tourne, un petit bâtiment
+        const marche = !!(b && b.courant && b.ouvrier);
+        for (const [bx, by] of [[x - 12, y - 6], [x + 12, y + 4]]) {
+          ctx.beginPath(); ctx.ellipse(bx, by, 13, 6.5, 0, 0, TOUR); ctx.fillStyle = "#b8b2a4"; ctx.fill(); contour(ctx, 1.4);
+          ctx.beginPath(); ctx.ellipse(bx, by - 1, 11, 5.5, 0, 0, TOUR); ctx.fillStyle = marche ? "#6a8a72" : "#7a7a62"; ctx.fill();
+          const an = marche ? t * 0.6 : 0; // le pont racleur qui tourne
+          poutre(ctx, [bx - Math.cos(an) * 11, by - 1 - Math.sin(an) * 5.5], [bx + Math.cos(an) * 11, by - 1 + Math.sin(an) * 5.5], 1.4, "#d8d4c8");
+          rond(ctx, bx, by - 1, 1.6, "#5a5e64");
+        }
+        const sommet = boite(ctx, x + 14, y - 14, m, 1, true);
+        porte(ctx, x + 14, y - 14, m, "#4a4a4a");
+        return sommet;
+      }
+      case "immeuble": { // Étape 35 : 🏢 l'immeuble : 4 étages de brique, plein de fenêtres, un château d'eau sur le toit
+        const sommet = boite(ctx, x, y, m, 1, true);
+        const c = coins(x, y, m), nuit = vue.noirceur > 0.15;
+        for (const [P, Q, n] of [[c.G, c.B, 3], [c.B, c.D, 4]]) for (let e = 0; e < 4; e++) for (let k = 0; k < n; k++) {
+          const u = 0.1 + k * (0.85 / n), v = 0.08 + e * 0.23, p1 = surMur(P, Q, m.h, u, v), p2 = surMur(P, Q, m.h, u + 0.5 / n, v), p3 = surMur(P, Q, m.h, u + 0.5 / n, v + 0.13), p4 = surMur(P, Q, m.h, u, v + 0.13);
+          const allume = nuit && (num * 7 + e * 3 + k) % 3 !== 0;
+          forme(ctx, [p1, p2, p3, p4], allume ? "#ffd866" : "#8fb0c4");
+        }
+        // les corniches blanches entre les étages
+        if (vue.fin) { ctx.strokeStyle = "rgba(240, 236, 228, .7)"; ctx.lineWidth = 1; ctx.beginPath(); for (let e = 1; e < 4; e++) { const v = e * 0.24 + 0.02, a1 = surMur(c.G, c.B, m.h, 0, v), a2 = surMur(c.G, c.B, m.h, 1, v), a3 = surMur(c.B, c.D, m.h, 1, v); ctx.moveTo(a1[0], a1[1]); ctx.lineTo(a2[0], a2[1]); ctx.lineTo(a3[0], a3[1]); } ctx.stroke(); }
+        porte(ctx, x, y, Object.assign({}, m, { h: 14 }), "#3a2a20");
+        const cuve = tourRonde(ctx, x + 6, sommet[1] + 2, { r: 4, h: 7, ht: 3, clair: "#a88a6a", fonce: "#7a5e44", toit: "cone", toitA: "#5a4a3a", toitB: "#3a2e24" });
+        return cuve;
+      }
       case "faneur": { // un grand hangar OUVERT, plein de foin, avec un toit de grange
         bloc(ctx, x, y, 16, 11, vue.hiver ? "#e8eef5" : "#e8c64a", "#d9b23a", "#b8962e", false);
         if (vue.fin) { ctx.strokeStyle = "rgba(140, 110, 30, .5)"; ctx.lineWidth = 0.8; ctx.beginPath(); for (let k = 1; k < 4; k++) { const A = surMur([x - 16, y], [x, y + 8], 11, k / 4, 0), C = surMur([x, y + 8], [x + 16, y], 11, k / 4, 0); ctx.moveTo(A[0], A[1] - 1); ctx.lineTo(A[0], A[1] - 10); ctx.moveTo(C[0], C[1] - 1); ctx.lineTo(C[0], C[1] - 10); } ctx.stroke(); }
@@ -1489,6 +1532,7 @@ Village.Batisses = (function () {
     else if (b.malade) bulleDePensee(ctx, x, yBulle, t, "🤒"); // étape 15 : les vaches sont malades
     else if (b.ouvrier && b.ouvrier.affame) bulleDePensee(ctx, x, yBulle, t, "🍽️");
     else if (C_.ateliers[b.type] && C_.ateliers[b.type].electrique && b.etat === "pret" && !b.courant) bulleDePensee(ctx, x, yBulle, t, "⚡"); // étape 34 : pas de courant
+    else if ((b.type === "pompage" || b.type === "epuration") && b.etat === "pret" && !b.courant) bulleDePensee(ctx, x, yBulle, t, "⚡"); // étape 35
     else if (b.usure >= 1) bulleDePensee(ctx, x, yBulle, t, "🔧"); // étape 11 : usé !
     // (Étape 22 : ✍️ plus de bulle 🍞 ni 🥶 au-dessus de chaque bâtiment : ça devenait illisible. Le pain et le froid
     // concernent tout le village : ils sont montrés une seule fois, en bas de l'écran.)
