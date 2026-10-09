@@ -36,7 +36,7 @@ Village.Monde = (function () {
       construction: null, // le bâtiment qu'on est en train de placer (ex. "scierie"), ou null
       selection: null, // le bâtiment touché (son panneau s'affiche)
       // Étape 3
-      route: new Uint8Array(carte.colonnes * carte.lignes), // 1 = une route sur cette case
+      route: (carte.routes = new Uint8Array(carte.colonnes * carte.lignes)), // 1 = une route sur cette case (étape 36 : la carte la connaît aussi, pour les ponts)
       reseau: new Set(), // les routes reliées à l'entrepôt
       porteurs: [],
       file: [], // la file d'attente des livraisons

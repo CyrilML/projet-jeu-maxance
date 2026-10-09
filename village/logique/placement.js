@@ -70,14 +70,19 @@ Village.Placement = (function () {
       if (cc < 0 || ll < 0 || cc >= k.colonnes || ll >= k.lignes) return false;
       const i = ll * k.colonnes + cc;
       if (i === ici || champs.has(i)) return false; // pas sur le bâtiment lui-même (ni sur ses champs, étape 22)
-      return monde.route[i] > 0 || (Ro.routable(monde, cc, ll) && !(deplace && i === deplace.ligne * k.colonnes + deplace.colonne));
+      return monde.route[i] > 0 || (Ro.routable(monde, cc, ll, sansDegager) && !(deplace && i === deplace.ligne * k.colonnes + deplace.colonne));
     };
     const cotes = [[0, 1], [-1, 0], [1, 0], [0, -1]]; // la porte d'abord
-    for (const [dc, dl] of cotes) {
-      const d = { colonne: c + dc, ligne: l + dl };
-      if (!libre(d.colonne, d.ligne)) continue;
-      const r = Village.Chemins.chercher(k.colonnes, k.lignes, d, libre, (cc, ll) => auReseau(ll * k.colonnes + cc) || pres(cc, ll), LONGUEUR_ROUTE);
-      if (r.chemin) return r.chemin.filter((q) => !monde.route[q.ligne * k.colonnes + q.colonne]);
+    // Étape 36 : d'abord en contournant les arbres, les rochers et l'eau ; sinon, tout droit (la route dégage tout)
+    let sansDegager = true;
+    for (const passe of [1, 2]) {
+      sansDegager = passe === 1;
+      for (const [dc, dl] of cotes) {
+        const d = { colonne: c + dc, ligne: l + dl };
+        if (!libre(d.colonne, d.ligne)) continue;
+        const r = Village.Chemins.chercher(k.colonnes, k.lignes, d, libre, (cc, ll) => auReseau(ll * k.colonnes + cc) || pres(cc, ll), LONGUEUR_ROUTE);
+        if (r.chemin) return r.chemin.filter((q) => !monde.route[q.ligne * k.colonnes + q.colonne]);
+      }
     }
     return null; // aucune route possible
   }
@@ -126,7 +131,7 @@ Village.Placement = (function () {
     if (!tr.depart) { tr.depart = { colonne: k.colonne, ligne: k.ligne }; radio.emettre("route-depart", { colonne: k.colonne, ligne: k.ligne }); return; }
     if (tr.depart.colonne === k.colonne && tr.depart.ligne === k.ligne) { tr.depart = null; return; }
     const t = R().trajet(monde, tr.depart, { colonne: k.colonne, ligne: k.ligne }, sorteDe(monde));
-    if (!t || !t.cases.length) { radio.emettre("route-impossible", { raison: "pas de chemin possible (eau, montagne, arbre, rocher, ou plus de " + C.routes.longueurMax + " cases)" }); return; }
+    if (!t || !t.cases.length) { radio.emettre("route-impossible", { raison: "pas de chemin possible (des bâtiments tout autour, ou plus de " + C.routes.longueurMax + " cases)" }); return; }
     tr.cases = t.cases; tr.pret = true;
     radio.emettre("route-apercu", { cases: t.cases.length, facon: "deux touchers" });
   }

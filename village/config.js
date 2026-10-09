@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 36,
+  version: 37,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -439,6 +439,11 @@ Village.CONFIG = {
     cout: {}, // gratuit (étape 3 : 1 pierre par case)
     coutPierre: { pierres: 1 }, // étape 7 : la route en pierre (débloquée par une recherche), par case
     longueurMax: 40, // en cases : on ne trace pas une route plus longue d'un seul coup
+    // Étape 36 : ✍️ « il faut qu'une route puisse toujours passer ». La route dégage ce qui la gêne :
+    troncsParArbre: 1, // 🪓 un arbre abattu par la route donne 1 tronc (comme pour le bûcheron)
+    // ⛏️ un rocher cassé donne ses pierres (8 au plus, voir nature.pierresParRocher)
+    pont: { planches: 2 }, // 🌉 une case de route sur l'eau (même profonde) : un pont, 2 planches
+    detourMax: 2, // on contourne les obstacles si le détour fait au plus 2 fois le trajet tout droit
   },
   // Étape 6 : la vitesse de marche selon le sol (× la vitesse normale)
   sols: {

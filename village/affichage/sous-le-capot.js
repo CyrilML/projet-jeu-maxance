@@ -46,7 +46,8 @@ Village.SousLeCapot = (function () {
     // Étape 3
     "choix-outil": (d) => (d.outil === "route" ? "🛤️ Outil route : touche le départ, puis l'arrivée" : d.outil === "demolir" ? "🧹 Outil démolir : touche une route ou un bâtiment" : "↩️ Outil rangé"),
     "route-depart": (d) => "🚩 Départ de la route en (" + d.colonne + ", " + d.ligne + ")",
-    "route-construite": (d) => "🛤️ Chemin tracé : " + d.cases + " case(s), dont " + d.nouvelles + " nouvelle(s) → " + (d.cout ? d.cout + " 🪨" : "gratuit (chemin de terre)") + " · " + d.total + " cases de chemin en tout",
+    "route-construite": (d) => "🛤️ Chemin tracé : " + d.cases + " case(s), dont " + d.nouvelles + " nouvelle(s) → " + ((d.cout || d.planches) ? [d.cout ? d.cout + " 🪨" : "", d.planches ? d.planches + " 🪵 planches (" + d.ponts + " case(s) de pont 🌉)" : ""].filter(Boolean).join(" + ") : "gratuit (chemin de terre)") + " · " + d.total + " cases de chemin en tout",
+    "route-degagee": (d) => "🚜 La route a dégagé son passage : " + [d.arbres ? d.arbres + " arbre(s) abattu(s) → +" + d.troncs + " 🪵 troncs" : "", d.rochers ? d.rochers + " rocher(s) cassé(s) → +" + d.pierres + " 🪨" : "", d.pousses ? d.pousses + " jeune(s) pousse(s) arrachée(s)" : ""].filter(Boolean).join(" · ") + " (rangé à l'entrepôt)", // étape 36
     "route-impossible": (d) => "🚫 Route impossible : " + d.raison,
     "route-demolie": (d) => "🧹 Chemin démoli en (" + d.colonne + ", " + d.ligne + ")" + (d.rendu ? " : " + d.rendu + " 🪨 rendue(s)" : ""),
     "batiment-demoli": (d) => "🧹 " + d.nom + " n° " + d.numero + " démoli(e)",

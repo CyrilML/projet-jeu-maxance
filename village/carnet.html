@@ -159,6 +159,7 @@
       <a href="#etape33">Étape 33</a>
       <a href="#etape34">Étape 34</a>
       <a href="#etape35">Étape 35</a>
+      <a href="#etape36">Étape 36</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2082,6 +2083,52 @@ le réseau sert les plus PROCHES d'abord (en cases de route) :
       <details class="question"><summary>Qu'est-ce qu'il faut pour qu'une maison bourgeoise devienne un immeuble ?</summary><p>L'électricité, l'eau courante et les égouts dans CETTE maison, les besoins des bourgeois remplis pendant 1 minute, et 30 pierres, 6 lingots et 10 planches.</p></details>
     </section>
 
+    <section id="etape36">
+      <h2>🚜 Étape 36 : une route passe toujours (et les ponts) <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Fini les routes bloquées ! La route abat les arbres et casse les rochers qui la gênent (ce qu'ils donnent va à l'entrepôt), et elle fait des ponts sur l'eau. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/34-routes-partout.md</code>.</p>
+          <ul>
+            <li>✍️ « Il y a beaucoup d'endroits où les routes ne peuvent pas passer (rochers, arbres…). Évite ce genre de problème afin qu'il y ait toujours une route qui puisse passer. »</li>
+            <li>Tes choix : dégager et garder ce qu'on récupère ; des ponts partout.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Trace une route à travers une forêt : les arbres tombent, +1 🪵 par arbre.</li>
+            <li>☐ À travers des rochers : +8 🪨 au plus par rocher.</li>
+            <li>☐ Sur une rivière : un pont en bois, 2 planches par case (l'aperçu montre « 🌉 »).</li>
+            <li>☐ Construis de l'autre côté : les porteurs traversent le pont.</li>
+            <li>☐ Le journal « sous le capot » : « 🚜 La route a dégagé son passage ».</li>
+            <li>Vérifie « version 37 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🧭 Contourner d'abord, foncer ensuite</h3>
+      <pre style="white-space: pre-wrap">1er essai : la tache d'encre évite les arbres, les rochers et l'eau
+   → un chemin pas trop long (au plus 2 fois le trajet tout droit) ? on le prend, c'est gratuit !
+2e essai : la tache d'encre passe partout (sauf sur les bâtiments)
+   → la route dégage son passage : 🪓 arbres, ⛏️ rochers, 🌉 ponts</pre>
+      <p>Le jeu fait <strong>2 essais</strong> : un « gentil » (on garde la forêt pour le bûcheron) et un « bulldozer ». C'est une idée qu'on retrouve partout en programmation : essayer la solution la moins chère, et seulement si elle échoue, la solution plus forte.</p>
+      <p>Pour que les ouvriers marchent sur les ponts, la carte connaît maintenant les routes : une case d'eau avec une route est <strong>praticable</strong>.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+        <li>Trace une route en 2 touchers de chaque côté d'un petit bois : passe-t-elle autour ou à travers ? Et pour un très grand bois ?</li>
+        <li>Démolis une case de pont (🧹) : combien de planches reviennent ?</li>
+        <li>Regarde le stock de troncs avant et après une route à travers la forêt.</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Une route traverse 5 arbres, 2 rochers et 3 cases d'eau : qu'est-ce que tu gagnes et paies ?</summary><p>Tu gagnes 5 troncs et jusqu'à 16 pierres. Tu paies 3 × 2 = 6 planches pour le pont.</p></details>
+      <details class="question"><summary>Pourquoi le jeu essaie-t-il d'abord de contourner ?</summary><p>Pour ne pas abattre la forêt du bûcheron ni payer un pont quand un petit détour suffit.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2297,8 +2344,14 @@ le réseau sert les plus PROCHES d'abord (en cases de route) :
           <p>La station de pompage, la station d'épuration, les tuyaux sous les routes, l'immeuble de 20 lits, les élevages sans puits.</p>
           <p class="apprend"><b>Tu apprends :</b> réutiliser une fonction, une chaîne de dépendances. <b>Durée :</b> 2 séances.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">36</div>
+          <h4>🚜 Une route passe toujours, et les ponts <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>La route abat les arbres, casse les rochers (on garde le bois et les pierres) et fait des ponts sur l'eau.</p>
+          <p class="apprend"><b>Tu apprends :</b> essayer la solution douce avant la solution forte. <b>Durée :</b> 1 séance.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">36-38</div>
+          <div class="num">37-39</div>
           <h4>🚗🚓🛍️ Les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Routes goudronnées, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -2595,6 +2648,14 @@ le réseau sert les plus PROCHES d'abord (en cases de route) :
         <textarea class="journal" id="village-appris-35" data-cle="village-appris-35" placeholder="Ex. : J'ai appris qu'une fonction peut servir pour plusieurs choses…"></textarea>
         <label for="village-idees-35"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-35" data-cle="village-idees-35" placeholder="Ex. : Un château d'eau à construire soi-même…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 36 · une route passe toujours <span class="petit">· 9 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> dans <code>logique/routes.js</code>, la route qui dégage son passage (arbres, rochers, pousses) et les ponts sur l'eau (2 planches par case), les 2 essais (contourner, puis tout droit), les ponts dessinés avec pieux et garde-corps, la carte qui laisse marcher sur les ponts, l'événement <code>route-degagee</code>.</p>
+        <label for="village-appris-36"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-36" data-cle="village-appris-36" placeholder="Ex. : J'ai appris à essayer la solution douce avant la solution forte…"></textarea>
+        <label for="village-idees-36"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-36" data-cle="village-idees-36" placeholder="Ex. : Des ponts en pierre, des tunnels…"></textarea>
       </div>
     </section>
   </main>

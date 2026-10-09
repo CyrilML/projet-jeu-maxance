@@ -218,7 +218,8 @@ Village.Carte = (function () {
   // Étape 2 : peut-on marcher sur cette case ? (pas dans l'eau, pas dans la montagne)
   function praticable(carte, c, l) {
     if (c < 0 || l < 0 || c >= carte.colonnes || l >= carte.lignes) return false;
-    const t = carte.terrain[l * carte.colonnes + c];
+    const i = l * carte.colonnes + c, t = carte.terrain[i];
+    if (carte.routes && carte.routes[i]) return true; // étape 36 : une route (un pont sur l'eau) se traverse à pied
     return t !== TERRAIN.eau && t !== TERRAIN.eauProfonde && t !== TERRAIN.montagne;
   }
 

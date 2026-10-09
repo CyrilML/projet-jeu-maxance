@@ -446,6 +446,14 @@ Village.Peintre = (function () {
       }
     }
     if (!terre.traits.length && !terre.points.length && !pierre.traits.length && !pierre.points.length) return;
+    // Étape 36 : 🌉 les PONTS : sur l'eau, un tablier de planches posé sur des pieux (la route passe dessus)
+    const T = Village.Carte.TERRAIN, ponts = [];
+    for (let l = lMin - 1; l <= lMax; l++) for (let c = cMin - 1; c <= cMax; c++) { if (!route(c, l)) continue; const tt = k.terrain[l * k.colonnes + c]; if (tt === T.eau || tt === T.eauProfonde) ponts.push(milieu(c, l)); }
+    for (const p of ponts) { // les pieux, dans l'eau
+      ctx.fillStyle = "#4a3422";
+      for (const [dx, dy] of [[-L * 0.3, 0], [L * 0.3, 0], [0, -Hc * 0.3], [0, Hc * 0.3]]) ctx.fillRect(p.x + dx - 1.5, p.y + dy - 2, 3, 9);
+    }
+    for (const p of ponts) { losange(p.x, p.y, -10); ctx.fillStyle = "#7a5a3a"; ctx.fill(); ctx.strokeStyle = "rgba(40, 26, 14, .6)"; ctx.lineWidth = 1.5; ctx.stroke(); }
     ctx.save();
     ctx.scale(1, 0.5);
     ctx.lineCap = "round"; ctx.lineJoin = "round";
@@ -471,6 +479,20 @@ Village.Peintre = (function () {
     passe(pierre, 30, "#adafae", [6, 4]); // les pavés
     passe(pierre, 2, "rgba(255, 255, 255, .18)");
     ctx.restore();
+    // Étape 36 : 🌉 les garde-corps en bois des ponts, des 2 côtés de la route
+    for (let l = lMin - 1; l <= lMax; l++) for (let c = cMin - 1; c <= cMax; c++) {
+      if (!route(c, l)) continue;
+      const tt = k.terrain[l * k.colonnes + c];
+      if (tt !== T.eau && tt !== T.eauProfonde) continue;
+      const p = milieu(c, l), lelongC = route(c - 1, l) || route(c + 1, l) || !(route(c, l - 1) || route(c, l + 1));
+      const sens = lelongC ? [L / 2, Hc / 2] : [-L / 2, Hc / 2], cote = lelongC ? [-L / 2, Hc / 2] : [L / 2, Hc / 2];
+      for (const s of [-0.42, 0.42]) {
+        const ax = p.x + cote[0] * s - sens[0] * 0.5, ay = p.y + cote[1] * s - sens[1] * 0.5, bx = ax + sens[0], by = ay + sens[1];
+        ctx.strokeStyle = "#4a3422"; ctx.lineWidth = 1.6;
+        ctx.beginPath(); for (const u of [0.1, 0.5, 0.9]) { const x = ax + (bx - ax) * u, y = ay + (by - ay) * u; ctx.moveTo(x, y); ctx.lineTo(x, y - 6); } ctx.stroke();
+        ctx.strokeStyle = "#8a6440"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ax, ay - 6); ctx.lineTo(bx, by - 6); ctx.stroke();
+      }
+    }
     // Étape 34 : ⚡ les poteaux électriques le long des routes alimentées (une case sur 3)
     const el = monde.electricite;
     if (el && el.routes && el.routes.size && Village.Batisses.vue.anim) {

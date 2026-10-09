@@ -32,6 +32,7 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("chantier-fini", (d) => afficher("🎉 " + d.nom + " est construit" + (d.metier ? " : le " + d.metier + " se met au travail !" : " !")));
   Village.Evenements.ecouter("rien-a-faire", (d) => /maçon/.test(d.nom) || /vétérinaire/.test(d.nom) || afficher("😴 " + d.nom + " : pas de " + d.quoi.replace(/^(une?|des) /, "") + (d.partout ? " sur toute la carte" : " à moins de " + d.rayon + " pas")));
   Village.Evenements.ecouter("route-impossible", (d) => afficher("🚫 Route : " + d.raison));
+  Village.Evenements.ecouter("route-degagee", (d) => afficher("🚜 Passage dégagé" + (d.troncs ? " · +" + d.troncs + " 🪵" : "") + (d.pierres ? " · +" + d.pierres + " 🪨" : ""))); // étape 36
   Village.Evenements.ecouter("demolition-impossible", (d) => afficher("🚫 " + d.raison));
   // (Étape 22 : ✍️ plus de message « relié à l'entrepôt » : c'est normal, ça ne sert à rien de le dire. On prévient seulement quand c'est coupé.)
   Village.Evenements.ecouter("batiment-pose", (d) => { if (!d.relie) afficher("Pense à relier " + d.nom + " à l'entrepôt avec une route !"); });
@@ -1081,14 +1082,17 @@ Village.Interface = (function () {
       if (!possible) texteBulle = "🚫 " + p.raison;
       else {
         const prix = p.deplacer ? "déménagement gratuit" : B.offert(monde, p.type) ? "🎁 offert (coup de pouce)" : Object.entries(B.coutPour(monde, p.type)).map(([r, n]) => n + " " + EMO(r)).join(" ") || "gratuit";
-        texteBulle = (p.deplacer ? "↔️ " : B.TYPES[p.type].emoji + " ") + prix + (p.route === null ? " · ⚠️ pas de chemin possible" : p.route.length ? " · +" + p.route.length + " case(s) de chemin" : "");
+        texteBulle = (p.deplacer ? "↔️ " : B.TYPES[p.type].emoji + " ") + prix + (p.route === null ? " · ⚠️ pas de chemin possible" : p.route.length ? " · +" + p.route.length + " case(s) de chemin" + ((n) => (n ? " (🌉 " + n + " pont : " + n * C.routes.pont.planches + " 🪵)" : ""))(Village.Routes.bilanDegagement(monde, p.route).ponts) : "");
         // Étape 13 : ✍️ y aura-t-il quelqu'un pour y travailler ?
         if (!p.deplacer && B.TYPES[p.type].metier && !Village.Villageois.libres(monde).length) texteBulle += Village.Logement.placeLibre(monde) ? " · 👥 pas de villageois libre (il en arrive)" : " · 🛏️ plus de lit : personne pour y travailler !";
       }
     } else if (monde.trace && monde.trace.pret && monde.trace.cases.length) {
       const fin = monde.trace.cases[monde.trace.cases.length - 1], ap = Village.Placement.apercu(monde);
-      c = fin.colonne; l = fin.ligne; possible = ap && !ap.mauvaises.length && ap.cout <= Village.Porteurs.disponible(monde, "pierres");
-      texteBulle = ap.mauvaises.length ? "🚫 " + ap.mauvaises.length + " case(s) impossible(s)" : ap.nouvelles + " case(s) · " + (ap.cout ? ap.cout + " 🪨" : "gratuit");
+      c = fin.colonne; l = fin.ligne; possible = ap && !ap.mauvaises.length && ap.cout <= Village.Porteurs.disponible(monde, "pierres") && ap.planches <= Village.Porteurs.disponible(monde, "planches");
+      const dg = ap.degagement, prixRoute = [ap.cout ? ap.cout + " 🪨" : "", ap.planches ? ap.planches + " 🪵" : ""].filter(Boolean).join(" + ") || "gratuit";
+      // Étape 36 : ce que la route va dégager (et rapporter), et les ponts
+      const bonus = [dg.ponts ? "🌉 " + dg.ponts + " pont" : "", dg.arbres ? "🪓 " + dg.arbres : "", dg.rochers ? "⛏️ " + dg.rochers : ""].filter(Boolean).join(" ");
+      texteBulle = ap.mauvaises.length ? "🚫 " + ap.mauvaises.length + " case(s) impossible(s)" : ap.nouvelles + " case(s) · " + prixRoute + (bonus ? " · " + bonus : "");
     } else return;
     const w = Village.Iso.versMonde(c + 0.5, l + 0.5, L, Hc);
     const sx = (w.x - cam.x) * z + W / 2, sy = (w.y - cam.y) * z + He / 2;
