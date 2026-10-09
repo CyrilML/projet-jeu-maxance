@@ -10,6 +10,7 @@
 // Sur la carte : les soldats (petits points) et les engins de ton camp.
 // Étape 62 : le LAC (en bleu) sur la carte, les BATEAUX, les PORTAILS (des ronds de leur couleur) ; au-dessus des
 // patrouilleurs ennemis, leur nom et leur vie ; dans ta vedette, son viseur, sa vie et son canon.
+// Étape 67 : ta vie (soldat : 20 balles, tank : 16 obus) est une BARRE avec le nombre écrit ; « ➕ » quand elle remonte.
 // Étape 65 : quand tu donnes un ORDRE, la radio te répond (« 📻 Bravo : Bien reçu ! ») et rappelle ce qui a été
 // compris ; s'il n'a pas compris, des exemples ; l'ordre en cours reste écrit en haut, et au-dessus de chaque tank allié.
 // Étape 64 : les AVIONS (nom, distance, vie au-dessus de chacun ; un petit triangle sur la carte), les alertes
@@ -122,6 +123,7 @@ Tanks.Tableau = (function () {
     radio.ecouter("soldat-touche", (d) => {
       if (d.surToi && d.vie > 0) dire("🩹 Tu es touché ! (" + d.vie + "/" + C.soldats.vieJoueur + ")", "#ff7a6a");
     });
+    radio.ecouter("soin-fini", (d) => dire("💚 " + (d.qui === "ton tank" ? "Ton tank est" : "Tu es") + " de nouveau en pleine forme !", "#7dffa0", 2000));
   }
 
   function texte(t, x, y, taille, couleur, align) {
@@ -159,6 +161,23 @@ Tanks.Tableau = (function () {
       ctx.fillRect(x + k * 30, y, 26, 14);
     }
   }
+  // (étape 67) La barre de vie : verte, orange sous la moitié, rouge sous le quart ; « ➕ soin » quand elle remonte.
+  function barreVie(x, y, l, o) {
+    const part = Math.max(0, o.vie / o.vieMax);
+    ctx.fillStyle = "rgba(255,255,255,.12)";
+    ctx.fillRect(x, y, l, 14);
+    ctx.fillStyle = part <= 0.25 ? "#ff5a4a" : part <= 0.5 ? "#ffb347" : "#7dffa0";
+    ctx.fillRect(x, y, l * part, 14);
+    ctx.strokeStyle = "rgba(0,0,0,.35)";
+    ctx.lineWidth = 1;
+    for (let k = 1; k < o.vieMax; k++) { // (un petit trait par balle ou par obus : on peut encore les compter)
+      ctx.beginPath();
+      ctx.moveTo(x + (l * k) / o.vieMax, y);
+      ctx.lineTo(x + (l * k) / o.vieMax, y + 14);
+      ctx.stroke();
+    }
+    texte(o.vie + " / " + o.vieMax + (o.seSoigne ? "  ➕ soin" : ""), x + l + 8, y + 12, 13, o.seSoigne ? "#7dffa0" : "#ccc");
+  }
   function barre(x, y, l, part, pret, texteBarre) {
     ctx.fillStyle = "rgba(255,255,255,.12)";
     ctx.fillRect(x, y, l, 10);
@@ -176,8 +195,7 @@ Tanks.Tableau = (function () {
       if (v && !s.parachute) viseur(v, false, 10);
       panneau(12, H - 118, 330, 106);
       texte(s.parachute ? "🪂 En parachute…" : "🪖 À pied", 24, H - 92, 17, "#ffe27a");
-      cases(24, H - 80, C.soldats.vieJoueur, s.vie);
-      texte("vie", 24 + C.soldats.vieJoueur * 30 + 4, H - 68, 13, "#ccc");
+      barreVie(24, H - 80, 200, s);
       ["pistolet", "mitrailleuse", "roquettes"].forEach((a, i) => {
         const x = 24 + i * 104, choisi = s.arme === a;
         ctx.fillStyle = choisi ? "rgba(255,207,90,.3)" : "rgba(255,255,255,.08)";
@@ -372,10 +390,10 @@ Tanks.Tableau = (function () {
       texte((c.equipe === "bleus" ? "▼ " : "◆ ") + (c === j ? "ton tank" : c.nom) + (d > 120 ? " · " + Math.round(d) + " m" : ""), e.x, e.y - 8, 13, couleur, "center");
       const ordre = c.equipe === "bleus" && c !== j ? Tanks.Ordres.enMots(c) : ""; // (étape 65 : son ordre)
       if (ordre) texte("📢 " + ordre, e.x, e.y - 24, 11, "#ffe27a", "center");
-      for (let k = 0; k < C.char.vie; k++) {
-        ctx.fillStyle = k < c.vie ? couleur : "rgba(0,0,0,.45)";
-        ctx.fillRect(e.x - 22 + k * 11, e.y - 2, 9, 4);
-      }
+      ctx.fillStyle = "rgba(0,0,0,.45)"; // (sa vie : une petite barre)
+      ctx.fillRect(e.x - 22, e.y - 2, 44, 4);
+      ctx.fillStyle = couleur;
+      ctx.fillRect(e.x - 22, e.y - 2, 44 * Math.max(0, c.vie / (c.vieMax || C.char.vie)), 4);
     }
     // (étape 62) Au-dessus des patrouilleurs ennemis : leur nom et leur vie.
     for (const b of monde.bateaux.concat(monde.sousMarins.filter((m) => !Tanks.SousMarins.sousLEau(m)))) {
@@ -439,11 +457,7 @@ Tanks.Tableau = (function () {
     if (dansLeTank) {
     panneau(12, H - 98, 280, 86);
     texte(f.drapeau + " " + f.nom, 24, H - 72, 17, "#ffe27a");
-    for (let k = 0; k < C.char.vie; k++) {
-      ctx.fillStyle = k < j.vie ? (j.vie <= 1 ? "#ff5a4a" : "#7dffa0") : "rgba(255,255,255,.12)";
-      ctx.fillRect(24 + k * 34, H - 60, 30, 14);
-    }
-    texte("vie", 24 + C.char.vie * 34 + 4, H - 48, 13, "#ccc");
+    barreVie(24, H - 60, 170, j);
     const pret = j.recharge === 0;
     ctx.fillStyle = "rgba(255,255,255,.12)";
     ctx.fillRect(24, H - 36, 200, 10);

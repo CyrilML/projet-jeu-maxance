@@ -7,6 +7,7 @@
 // (leur vitesse, leur hauteur, leurs munitions) et les soldats (combien sont encore debout, ce qu'ils font).
 // Étape 62 : le lac (où tu es par rapport à la rive : « dl »), les patrouilleurs ennemis (ce qu'ils font), et les
 // portails (combien de passages).
+// Étape 67 : ta vie (et quand elle remonte : « soin »).
 // Étape 65 : chaque ordre donné (ce que le jeu a compris, les mots devinés), et l'ordre de chaque tank et soldat allié.
 // Étape 64 : chaque avion (ce qu'il fait : approche, bombarde, dégage, duel ; sa hauteur, sa vitesse, sa vie), la DCA
 // (où elle vise, l'avion qu'elle suit), les parachutistes en l'air.
@@ -33,9 +34,12 @@ Tanks.SousLeCapot = (function () {
     impact: (d) => (d.sur === "eau" ? "🌊 " : "💨 ") + ({ roquette: "Une roquette", bombe: "Une bombe", missile: "Un missile", grenade: "Une grenade" }[d.sorte] || "Un obus") + " tombe sur " + { sol: "le sol", maison: "une maison", muret: "un muret", char: "un tank", epave: "une épave", eau: "l'eau du lac (une gerbe d'eau !)" }[d.sur],
     "tir-ami": (d) => "⛔ " + d.tireur + " a touché un allié (" + d.sur + ") : pas de dégâts",
     "arbre-ecrase": (d) => "🌳 " + (d.nom === "toi" ? "Tu écrases" : d.nom + " écrase") + " un arbre à " + Math.round(Math.abs(d.vitesse) * 3.6) + " km/h",
-    victoire: (d) => "🏆 VICTOIRE en " + Math.round(d.temps) + " s ! Il te reste " + d.vie + " / " + C.char.vie + " de vie et " + d.allies + " allié(s)",
+    victoire: (d) => "🏆 VICTOIRE en " + Math.round(d.temps) + " s ! Il te reste " + d.vie + " / " + (d.vieMax || C.char.vie) + " de vie et " + d.allies + " allié(s)",
     defaite: (d) => "💀 Défaite après " + Math.round(d.temps) + " s : il restait " + d.ennemis + " ennemi(s)",
     sauvegarde: (d) => "💾 Livret militaire écrit (" + d.raison + ")",
+    // étape 67
+    soin: (d) => "➕ Pas touché depuis " + C.soins.attente + " s : " + d.qui + " se soigne (" + d.vie + " / " + d.vieMax + ", +" + virgule(d.qui === "ton tank" ? C.soins.tank : C.soins.soldat, 1) + " par seconde)",
+    "soin-fini": (d) => "💚 " + d.qui + " est de nouveau en pleine forme (" + d.vie + ")",
     // étape 65
     ordre: (d) => "📢 Ordre « " + d.texte + " » → compris : " + (d.quoi || "?") + " · obéissent : " + (d.noms.length ? d.noms.join(", ") : "aucun tank") + (d.soldats ? " + " + d.soldats + " soldats" : "") + (d.devines.length ? " · mots devinés : " + d.devines.map(([a, b]) => a + " → " + b).join(", ") : ""),
     "ordre-incompris": (d) => "❓ Ordre « " + d.texte + " » pas compris : aucun mot connu" + (d.devines.length ? " (même en devinant)" : "") + ". Exemples : " + d.exemples.slice(0, 4).join(" · "),
@@ -104,7 +108,7 @@ Tanks.SousLeCapot = (function () {
     if (s) {
       const ou = { dca: "à la DCA 🎯", sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];
       l.push(["mode", t.mode + " = " + ou]);
-      l.push(["ton soldat", "vie " + s.vie + " / " + C.soldats.vieJoueur + " · arme " + C.armes[s.arme].icone + " " + C.armes[s.arme].nom + (s.recharge > 0 ? " (recharge " + virgule(s.recharge, 2) + " s)" : "")]);
+      l.push(["ton soldat", "vie " + s.vie + " / " + s.vieMax + (s.seSoigne ? " ➕ (se soigne)" : s.vie < s.vieMax ? " (soin dans " + virgule(Math.max(0, C.soins.attente - s.touche), 1) + " s)" : "") + " · arme " + C.armes[s.arme].icone + " " + C.armes[s.arme].nom + (s.recharge > 0 ? " (recharge " + virgule(s.recharge, 2) + " s)" : "")]);
       if (t.mode === "pied") l.push(["à pied", "x, z " + virgule(s.x, 1) + " ; " + virgule(s.z, 1) + " · " + virgule(s.vitesse, 1) + " m/s · cap " + degres(s.angle)]);
       l.push(["Les engins de ton camp"]);
       for (const e of monde.engins) {
@@ -166,7 +170,7 @@ Tanks.SousLeCapot = (function () {
       ["canon (hausse)", degres(j.hausse) + " vers le haut"],
       ["visée assistée", j.cible ? "🎯 " + j.cible.nom + " à " + Math.round(Math.hypot(j.cible.x - j.x, j.cible.z - j.z)) + " m : hausse = ½ × arcsin(g × d ÷ v²)" : "aucun ennemi dans le cône de " + degres(C.obus.viseeAssistee)],
       ["recharge", j.recharge > 0 ? virgule(j.recharge, 1) + " s" : "prêt ✅"],
-      ["vie", j.vie + " / " + C.char.vie],
+      ["vie", j.vie + " / " + j.vieMax + (j.seSoigne ? " ➕ (se soigne)" : j.vie < j.vieMax ? " (soin dans " + virgule(Math.max(0, C.soins.attente - j.touche), 1) + " s)" : "")],
       ["obus en vol", monde.obus.length + " (vitesse " + C.obus.vitesse + " m/s, ils retombent de " + C.obus.gravite + " m/s²)"],
       ["tes tirs", j.tirs + " tirés, " + j.reussis + " au but" + (j.tirs ? " (" + Math.round((j.reussis / j.tirs) * 100) + " %)" : "")],
       ["Les tanks de l'ordinateur"],

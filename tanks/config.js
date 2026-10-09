@@ -8,7 +8,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 7,
+  version: 8,
   pasFixe: 1 / 120,
 
   monde: {
@@ -41,7 +41,8 @@ Tanks.CONFIG = {
   ],
 
   char: {
-    vie: 4, // ✍️ 4 obus pour détruire un tank
+    vie: 4, // ✍️ 4 obus pour détruire un tank (ceux de l'ordinateur)
+    vieJoueur: 16, // ✍️ (étape 67) TON tank : 4 fois plus solide, 16 obus
     freinage: 9, ralentissement: 2.5, marcheArriere: 6, // m/s², m/s², m/s
     rayon: 3.6, // m : un tank est vu comme un cercle de ce rayon pour les chocs
     hausseMax: 0.3, hausseMin: -0.12, // rad : le canon monte de 17° et descend de 7°
@@ -76,7 +77,7 @@ Tanks.CONFIG = {
   // lance-roquettes (ils visent les tanks). ✍️ 3 balles = un soldat à terre.
   soldats: {
     parEquipe: 12, lanceRoquettes: 2,
-    vie: 3, vieJoueur: 5, // (toi, tu tiens 5 balles)
+    vie: 3, vieJoueur: 20, // ✍️ (étape 67) toi, tu tiens 20 balles (avant : 5)
     vitesse: 4.2, recul: 2.2, rotation: 2.6, // m/s, m/s, rad/s
     vue: 140, // m : un soldat voit et tire jusqu'à 140 m
     pense: 0.25, // s : un soldat de l'ordinateur réfléchit 4 fois par seconde (pas plus : ils sont 24 !)
@@ -225,6 +226,10 @@ Tanks.CONFIG = {
     reponses: ["Bien reçu !", "À vos ordres !", "C'est parti !", "Compris, chef !", "On y va !", "Affirmatif !"],
     exemples: ["attaquez", "suivez-moi", "les tanks, allez au village", "Bravo, reste ici", "visez les bateaux", "dispersez-vous", "en ligne", "cessez le feu", "allez au portail vert"],
   },
+
+  // ✍️ (étape 67) Ta vie REMONTE toute seule : si tu n'es pas touché pendant 5 s, ton soldat regagne 2 balles par
+  // seconde et ton tank 1 obus toutes les 2 s (vie / s), jusqu'à être tout neuf.
+  soins: { attente: 5, soldat: 2, tank: 0.5 },
 
   camera: { distance: 15, hauteur: 6.5, regardDevant: 22, souplesse: 6, champ: 60 },
   effets: { particules: 300, debris: 60 },

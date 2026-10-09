@@ -9,6 +9,8 @@
 // Étape 61 : ✍️ TOI, tu peux être dans ton tank, à pied (touche E pour sortir), ou dans un engin de ton camp (le 4x4,
 // l'hélico, l'avion de chasse, le drone). « monde.toi » dit où tu es.
 // Étape 62 : ✍️ le LAC avec ta vedette et 2 patrouilleurs ennemis (monde.bateaux), et les PORTAILS (monde.portails).
+// Étape 67 : ✍️ TOI, tu as plus de vie (ton soldat 20 balles, ton tank 16 obus), et ta vie remonte toute seule si tu
+// n'es pas touché pendant 5 s (« soigner »).
 // Étape 65 : TES ORDRES (la phrase que tu écris dans la barre arrive ici, dans « intentions.ordre »).
 // Étape 64 : les AVIONS (monde.avions : les chasseurs ennemis et les avions de transport) et les PARACHUTISTES.
 // Étape 63 : les SOUS-MARINS (le tien dans monde.engins, 2 ennemis dans monde.sousMarins) et les îles.
@@ -51,6 +53,7 @@ Tanks.Monde = (function () {
     const bleus = T.departs("bleus", E.allies + 1), rouges = T.departs("rouges", E.ennemis);
     const milieu = Math.floor(bleus.length / 2);
     monde.joueur = Tanks.Char.creer(C.chars[monde.choix], "bleus", bleus[milieu], "toi");
+    monde.joueur.vie = monde.joueur.vieMax = C.char.vieJoueur; // (étape 67 : ton tank est plus solide)
     monde.chars = [monde.joueur];
     let k = 0;
     bleus.forEach((p, i) => {
@@ -295,6 +298,27 @@ Tanks.Monde = (function () {
       } else annoncer(nom, d);
     }
     for (const [nom, d] of Tanks.Obus.avancer(monde.obus, monde, dt)) annoncer(nom, d);
+    // (étape 67) TA VIE REMONTE : pas touché depuis 5 s ? Ton soldat et ton tank se soignent doucement.
+    if (enJeu) {
+      if (toi && (toi.dansUnEngin || toi.parachute)) toi.touche += dt; // (dans un engin, le temps passe aussi pour lui)
+      for (const [o, vitesse, qui] of [[toi, C.soins.soldat, "ton soldat"], [monde.joueur, C.soins.tank, "ton tank"]]) {
+        if (!o) continue;
+        if (o.mort || o.detruit || o.vie >= o.vieMax || o.touche < C.soins.attente) {
+          (o.soin = 0), (o.seSoigne = false);
+          continue;
+        }
+        if (!o.seSoigne) {
+          o.seSoigne = true;
+          radio.emettre("soin", { qui, vie: o.vie, vieMax: o.vieMax });
+        }
+        o.soin += vitesse * dt;
+        while (o.soin >= 1 && o.vie < o.vieMax) {
+          o.vie++;
+          o.soin -= 1;
+        }
+        if (o.vie >= o.vieMax) radio.emettre("soin-fini", { qui, vie: o.vie });
+      }
+    }
     // (étape 64) ton Rafale est abattu : tu t'éjectes tout seul (et un autre Rafale t'attend à l'aérodrome)
     if (enJeu && t.mode === "avion" && t.engin.detruit) {
       Object.assign(toi, { x: t.engin.x, z: t.engin.z, y: t.engin.y, parachute: true, dansUnEngin: null });
@@ -318,7 +342,7 @@ Tanks.Monde = (function () {
         monde.phase = "victoire";
         S.donnees.victoires++;
         S.ecrire("victoire");
-        radio.emettre("victoire", { temps: monde.chrono, allies: vivants(monde, "bleus") - (monde.joueur.detruit ? 0 : 1), vie: monde.joueur.vie });
+        radio.emettre("victoire", { temps: monde.chrono, allies: vivants(monde, "bleus") - (monde.joueur.detruit ? 0 : 1), vie: monde.joueur.vie, vieMax: monde.joueur.vieMax });
       }
     }
   }

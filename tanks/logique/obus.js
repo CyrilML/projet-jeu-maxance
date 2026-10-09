@@ -55,7 +55,7 @@ Tanks.Obus = (function () {
     const angle = Math.abs(Tanks.Char.angleEntre(Math.atan2(-vz, -vx) - cible.angle));
     const cote = angle < 0.8 ? "de face" : angle > 2.3 ? "par l'arrière" : "sur le flanc";
     const distance = Math.round(Math.hypot(x - (tireur ? tireur.x : x), z - (tireur ? tireur.z : z)));
-    const vieMax = (cible.fiche && cible.fiche.vie) || C.char.vie, bateau = cible.genre === "bateau" || cible.genre === "sousmarin";
+    const vieMax = cible.vieMax || (cible.fiche && cible.fiche.vie) || C.char.vie, bateau = cible.genre === "bateau" || cible.genre === "sousmarin";
     ev.push(["touche", { x, y, z, tireur, cible, vie: cible.vie, vieMax, cote, distance, bateau }]);
     if (cible.vie <= 0) {
       cible.detruit = true;
