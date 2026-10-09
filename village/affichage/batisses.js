@@ -120,7 +120,10 @@ Village.Batisses = (function () {
   // Étape 28 : ✍️ la taille varie (config.js : « tailles ») : un bloc de N × N cases est dessiné × (N + 0,3), son milieu
   // est (N − 1) demi-cases à droite de sa case. L'entrepôt (déjà large, avec sa cour) un peu moins.
   const Bt = () => Village.Batiments;
-  const echelleTaille = (type, n) => (n <= 1 ? C_.detail.echelleBatiments : (n + 0.3) * C_.detail.echelleParCase * (type === "entrepot" || type === "depot" ? 0.83 : type === "universite" ? 0.88 : 1));
+  // Étape 37 : ✍️ « tu les as juste agrandis, ils ne vont plus avec le paysage » : le bâtiment redevient de taille normale
+  // (1,8 pour 1 case, puis + 0,3 par case de côté), posé au fond de sa place ; le reste est sa COUR (affichage/cours.js).
+  // Seul le Grand Beffroi garde sa grande taille.
+  const echelleTaille = (type, n) => (n <= 1 ? C_.detail.echelleBatiments : type === "monument" ? (n + 0.3) * C_.detail.echelleParCase : C_.detail.echelleBatiments + C_.detail.echelleParCaseEnPlus * (n - 1));
   const decalageTaille = (n) => ((n - 1) * C_.carte.largeurCase) / 2;
 
   // Un point sur un mur : u va de 0 (début du mur) à 1 (fin), v de 0 (le sol) à 1 (le haut du mur).
@@ -1238,11 +1241,20 @@ Village.Batisses = (function () {
     const n = Bt().tailleDe(b); // étape 28 : la taille de son bloc
     const s = echelleTaille(b.type, n) * (1 + 0.07 * niveauDe(b)); // étape 23 : un bâtiment amélioré est un peu plus grand
     const x0 = x; x += decalageTaille(n); // étape 24 : le milieu du bloc
+    // Étape 37 : la cour. Le bâtiment est posé au fond de sa place (son « ancre »), la cour remplit le reste.
+    const Co = Village.Cours, cour = Co.aUneCour(b.type, n) ? Co.plan(b.type, n, s, m) : null;
+    const xc = x, yc = y;
+    if (cour) { const p = cour.pA, q = cour.qA; x = xc + (p + q) * 32; y = yc + (p - q) * 16; }
     if (souleve) { ctx.save(); ctx.globalAlpha = 0.4; aLaLoupe(ctx, x, y - 6, s, () => dessinerBatimentDedans(ctx, b, x, y - 6, t, m)); ctx.restore(); return; }
     // Étape 22 et 24 : les champs et les enclos, sur le sol, à la taille des cases (pas à la loupe)
-    if (b.etat === "pret" && b.emprise && b.emprise.length) empriseDessin(ctx, b, x0, y, t);
+    if (b.etat === "pret" && b.emprise && b.emprise.length) empriseDessin(ctx, b, x0, yc, t);
+    if (cour) { Co.dessiner(ctx, b, "sol", xc, yc, n, cour, t); Co.dessiner(ctx, b, "arriere", xc, yc, n, cour, t); }
     // Étape 14 : ✍️ le bâtiment est dessiné plus GROS (à la loupe) ; ses ouvriers restent à la taille des autres
     aLaLoupe(ctx, x, y, s, () => dessinerBatimentDedans(ctx, b, x, y, t, m));
+    if (cour) {
+      Co.dessiner(ctx, b, "avant", xc, yc, n, cour, t);
+      if (b.etat === "pret") Co.enseigne(ctx, b, x - m.a * s - 4, y + 4); // à gauche de la porte
+    }
     if (b.etat === "pret") ouvrierDevant(ctx, b, x, y, t, s);
   }
   // Étape 23 : ✍️ « le bâtiment change en fonction de son niveau, pour qu'on repère ceux qu'on a oublié d'améliorer ».
@@ -1260,7 +1272,7 @@ Village.Batisses = (function () {
     if (b.etat === "pret") m = modeleNiveau(m, niveauDe(b));
     ombre(ctx, x, y, m.a);
     if (b.etat === "chantier") return chantier(ctx, b, x, y, m, t);
-    if (b.type === "entrepot") { cour(ctx, x, y, (Village.monde && Village.monde.stock) || {}); silo(ctx, x - 24, y - 12, Village.monde ? Village.monde.reserve.niveau : 1); } // étape 9 : la cour ; étape 11 : le silo
+    if (b.type === "entrepot") { silo(ctx, x - 24, y - 12, Village.monde ? Village.monde.reserve.niveau : 1); } // étape 9 : la cour ; étape 11 : le silo
     if (m.linge && vue.fin && !vue.hiver) linge(ctx, x - m.a - 12, y - 2, t); // étape 9
     if (b.type === "ferme" && !aDesChamps(b)) champs(ctx, x, y, t); // étape 11 (une ferme sans place pour ses champs)
     // (Étape 24 : les champs et les enclos sont dessinés avant, dans dessinerBatiment.)
@@ -2702,10 +2714,13 @@ Village.Batisses = (function () {
     ctx.fill();
     ctx.strokeStyle = possible ? "#c6ffd0" : "#ffd0cc"; ctx.lineWidth = 2; ctx.stroke();
     ctx.globalAlpha = 0.55 + 0.15 * Math.sin(t * 5);
-    const n = Bt().tailleVoulue(type), xb = x + decalageTaille(n); // étape 24 : au milieu de son bloc (étape 28 : selon sa taille)
-    aLaLoupe(ctx, xb, y, echelleTaille(type, n), () => structure(ctx, type, xb, y, MODELES[type], t, null)); // étape 25 : sa vraie forme // étape 14 : à la même taille que le vrai
+    const n = Bt().tailleVoulue(type), s = echelleTaille(type, n); let xb = x + decalageTaille(n), yb = y; // étape 24 : au milieu de son bloc (étape 28 : selon sa taille)
+    if (Village.Cours.aUneCour(type, n)) { const p = Village.Cours.plan(type, n, s, MODELES[type]); xb += (p.pA + p.qA) * 32; yb += (p.pA - p.qA) * 16; } // étape 37 : au fond de sa place
+    aLaLoupe(ctx, xb, yb, s, () => structure(ctx, type, xb, yb, MODELES[type], t, null)); // étape 25 : sa vraie forme // étape 14 : à la même taille que le vrai
     ctx.globalAlpha = 1;
   }
 
-  return { icone, dessinerVillageois, bonhomme, traits, dessinerBatiment, dessinerOuvrier, dessinerPorteur, dessinerAnimal, dessinerPousse, dessinerFantome, iconeRoute, debutImage, lumiere, get lumieres() { return lumieres; }, vue }; // étape 9 : la vue et les lumières
+  // Étape 37 : les pinceaux que le décorateur des cours (affichage/cours.js) emprunte
+  const outils = { poutre, poteau, rond, roue, lumiere, tourRonde, fumee, poisson, jambon, seau, bidon, miche, tasDeBuches, cour };
+  return { outils, icone, dessinerVillageois, bonhomme, traits, dessinerBatiment, dessinerOuvrier, dessinerPorteur, dessinerAnimal, dessinerPousse, dessinerFantome, iconeRoute, debutImage, lumiere, get lumieres() { return lumieres; }, vue }; // étape 9 : la vue et les lumières
 })();

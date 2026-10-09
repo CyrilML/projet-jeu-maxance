@@ -160,6 +160,7 @@
       <a href="#etape34">Étape 34</a>
       <a href="#etape35">Étape 35</a>
       <a href="#etape36">Étape 36</a>
+      <a href="#etape37">Étape 37</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2129,6 +2130,52 @@ le réseau sert les plus PROCHES d'abord (en cases de route) :
       <details class="question"><summary>Pourquoi le jeu essaie-t-il d'abord de contourner ?</summary><p>Pour ne pas abattre la forêt du bûcheron ni payer un pont quand un petit détour suffit.</p></details>
     </section>
 
+    <section id="etape37">
+      <h2>🧺 Étape 37 : des bâtiments qu'on reconnaît de loin (leur cour) <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les bâtiments ne sont plus géants : ils reprennent une taille normale, au fond de leur place. Devant, une cour remplie des objets de leur métier, et une enseigne au-dessus de la porte. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/35-batiments-reconnaissables.md</code>.</p>
+          <ul>
+            <li>✍️ « Ce n'est pas juste le fait de les rendre plus grands qui va les rendre reconnaissables de loin. Il faut qu'ils aient vraiment des spécificités. Un entrepôt doit avoir des piles de cartons ou de matériaux dehors, sur des étagères… »</li>
+            <li>Tes choix : un bâtiment de taille normale + une cour ; une enseigne discrète.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Les bâtiments vont avec le paysage (ils ne sont plus énormes).</li>
+            <li>☐ L'entrepôt : 2 grandes étagères pleines de caisses et de sacs, une palette de cartons.</li>
+            <li>☐ La scierie : des grumes et des piles de planches ; la carrière : des blocs et une grue.</li>
+            <li>☐ Le marché : 3 étals colorés ; la forge : l'enclume ; le tisserand : des draps qui sèchent.</li>
+            <li>☐ Dézoome : reconnais-tu encore chaque bâtiment ?</li>
+            <li>☐ De près : une enseigne au-dessus de chaque porte.</li>
+            <li>Vérifie « version 38 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🎭 Un décor de théâtre, en 3 couches</h3>
+      <pre style="white-space: pre-wrap">1. le sol de la cour et la clôture du fond   (le plus loin de toi)
+2. le bâtiment, posé au fond de sa place
+3. les objets de devant, la clôture de devant et l'enseigne   (le plus près de toi)</pre>
+      <p>Ce qui est loin est peint d'abord, ce qui est près en dernier : c'est la même règle que pour toute la carte (« peindre du fond vers l'avant »). Les objets sont rangés comme des <strong>données</strong> : pour chaque bâtiment, une liste « dans quel coin, quel objet ». Ajouter un objet, c'est ajouter une ligne dans <code>affichage/cours.js</code>.</p>
+      <p>Et pourquoi on reconnaît mieux de loin ? Parce que l'œil repère d'abord les <strong>formes</strong> et les <strong>couleurs</strong> : un tas noir (charbon), des toiles rayées (marché), des draps colorés (tisserand), une grue (carrière)… pas la taille.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+        <li>Dézoome au maximum : quels bâtiments reconnais-tu encore ? Lesquels se ressemblent trop ?</li>
+        <li>Remplis l'entrepôt : les piles de sa cour grandissent avec le stock.</li>
+        <li>Invente un objet pour un bâtiment qui n'en a pas assez à ton goût (écris-le dans « mes idées »).</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi dessine-t-on la clôture du fond AVANT le bâtiment, et celle de devant APRÈS ?</summary><p>Parce que le bâtiment doit cacher la clôture du fond, et la clôture de devant doit passer devant lui : on peint du fond vers l'avant.</p></details>
+      <details class="question"><summary>Une place de 3 × 3 cases : le bâtiment est dessiné combien de fois plus gros qu'avant l'étape 37 ?</summary><p>2,4 au lieu de 3,3 : environ 1,4 fois plus petit. La place libre devient la cour.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2350,8 +2397,14 @@ le réseau sert les plus PROCHES d'abord (en cases de route) :
           <p>La route abat les arbres, casse les rochers (on garde le bois et les pierres) et fait des ponts sur l'eau.</p>
           <p class="apprend"><b>Tu apprends :</b> essayer la solution douce avant la solution forte. <b>Durée :</b> 1 séance.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">37</div>
+          <h4>🧺 Des bâtiments reconnaissables : leur cour <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Les bâtiments reprennent une taille normale ; devant, une cour avec les objets de leur métier, et une enseigne.</p>
+          <p class="apprend"><b>Tu apprends :</b> peindre en couches, un décor rangé comme des données. <b>Durée :</b> 2 séances.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">37-39</div>
+          <div class="num">38-40</div>
           <h4>🚗🚓🛍️ Les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Routes goudronnées, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -2656,6 +2709,14 @@ le réseau sert les plus PROCHES d'abord (en cases de route) :
         <textarea class="journal" id="village-appris-36" data-cle="village-appris-36" placeholder="Ex. : J'ai appris à essayer la solution douce avant la solution forte…"></textarea>
         <label for="village-idees-36"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-36" data-cle="village-idees-36" placeholder="Ex. : Des ponts en pierre, des tunnels…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 37 · des bâtiments reconnaissables de loin <span class="petit">· 9 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> <code>affichage/cours.js</code> (le décorateur : les sols, les clôtures, une quarantaine d'objets — étagères, grumes, étals, four à pain, grue, wagonnet, séchoirs, mannequins, tas de charbon, poste électrique… — et l'enseigne), les bâtiments ramenés à une taille normale et posés au fond de leur place.</p>
+        <label for="village-appris-37"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-37" data-cle="village-appris-37" placeholder="Ex. : J'ai appris qu'on reconnaît les choses à leur forme et à leur couleur…"></textarea>
+        <label for="village-idees-37"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-37" data-cle="village-idees-37" placeholder="Ex. : Des ouvriers qui rangent les caisses sur les étagères…"></textarea>
       </div>
     </section>
   </main>
