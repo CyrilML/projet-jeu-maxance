@@ -12,6 +12,11 @@
 //   - en 2 TOUCHERS (le départ, puis l'arrivée) : le jeu trouve le chemin le plus court.
 // Dans les 2 cas, on voit l'aperçu (et son prix), puis ✅ ou ❌.
 //
+// Étape 38 : ✍️ « le placement n'est pas très agréable, difficile de les aligner pour faire un village propre ».
+//   - le doigt tient le bâtiment par son MILIEU (avant : par un coin), et on voit toute sa place ;
+//   - l'AIMANT : près d'une route, le bâtiment se colle tout seul le long d'elle, bien aligné (choix de Maxance) ;
+//   - le peintre montre une grille et des lignes guides quand il est aligné avec ses voisins.
+//
 // Ce fichier ne dessine rien : il prépare monde.projet et monde.trace, que le peintre montre.
 
 window.Village = window.Village || {};
@@ -26,7 +31,40 @@ Village.Placement = (function () {
   // ---------------------------------------------------------------- les bâtiments
   function commencer(monde, type, c, l) {
     monde.projet = { type, deplacer: null, colonne: c, ligne: l, possible: false, raison: null, route: [] };
-    placer(monde, c, l);
+    placerAuDoigt(monde, c, l);
+  }
+
+  // Étape 38 : le milieu du bâtiment est sous le doigt. Sa case de départ (en bas à gauche de sa place) est à côté.
+  const demi = (type) => Math.floor((B().tailleVoulue(type) - 1) / 2);
+  function placerAuDoigt(monde, c, l) {
+    const p = monde.projet;
+    if (!p) return;
+    const h = demi(p.type), base = [c - h, l + h], aimant = aimanter(monde, p, base[0], base[1]);
+    placer(monde, aimant ? aimant[0] : base[0], aimant ? aimant[1] : base[1]);
+    p.aimant = !!aimant && p.possible;
+  }
+  // L'AIMANT : parmi les places à 2 cases au plus, celle qui a une route TOUT le long d'un de ses côtés (la porte d'abord).
+  // Renvoie [colonne, ligne], ou null s'il n'y a pas de route à coller.
+  function aimanter(monde, p, c0, l0) {
+    const k = monde.carte, n = B().tailleVoulue(p.type), R = C.placement.aimant, route = (c, l) => c >= 0 && l >= 0 && c < k.colonnes && l < k.lignes && monde.route[l * k.colonnes + c] > 0;
+    const aDesChamps = B().champsDe(p.type, n).length > 0;
+    const cotes = (c, l) => {
+      let porte = 0, gauche = 0, droite = 0, fond = 0;
+      for (let i = 0; i < n; i++) { if (route(c + i, l + 1)) porte++; if (route(c + i, l - n)) fond++; if (route(c - 1, l - i)) gauche++; if (!aDesChamps && route(c + n, l - i)) droite++; }
+      return Math.max(porte === n ? 3 : 0, gauche === n || droite === n || fond === n ? 2 : 0);
+    };
+    const b = p.deplacer;
+    if (b) B().liberer(monde, b);
+    let meilleur = null;
+    for (let dl = -R; dl <= R; dl++) for (let dc = -R; dc <= R; dc++) {
+      const c = c0 + dc, l = l0 + dl, note = cotes(c, l);
+      if (!note) continue;
+      if (B().raisonInterdite(monde, p.type, c, l) && !(b && c === b.colonne && l === b.ligne)) continue;
+      const score = note * 10 - Math.abs(dc) - Math.abs(dl);
+      if (!meilleur || score > meilleur.score) meilleur = { c, l, score };
+    }
+    if (b) B().occuper(monde, b);
+    return meilleur ? [meilleur.c, meilleur.l] : null;
   }
   function commencerDeplacement(monde, b) {
     monde.construction = null; monde.outil = null; monde.selection = null; monde.trace = null;
@@ -146,5 +184,5 @@ Village.Placement = (function () {
   }
   function annulerRoute(monde) { monde.trace = null; }
 
-  return { routeProposee, commencer, commencerDeplacement, placer, valider, annuler, debutGlisse, ajouterCase, finGlisse, toucher, apercu, validerRoute, annulerRoute };
+  return { routeProposee, placerAuDoigt, demi, commencer, commencerDeplacement, placer, valider, annuler, debutGlisse, ajouterCase, finGlisse, toucher, apercu, validerRoute, annulerRoute };
 })();

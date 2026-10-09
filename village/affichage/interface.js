@@ -69,7 +69,7 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("achat", (d) => afficher(d.emoji + " " + d.nom + " : c'est fait ! (" + d.gemmes + " 💎 restantes)"));
   Village.Evenements.ecouter("achat-impossible", (d) => afficher("🚫 " + d.nom + " : " + d.raison));
   Village.Evenements.ecouter("filon-trouve", (d) => afficher("🔍 Le géologue a trouvé un filon de " + d.nom.replace("minerai de ", "") + " " + d.emoji + " !"));
-  Village.Evenements.ecouter("filon-epuise", (d) => afficher("⛏️ " + d.nom + " : le filon est épuisé. Le géologue en trouvera peut-être un autre."));
+  Village.Evenements.ecouter("filon-epuise", (d) => afficher("⛏️ " + d.nom + " : le filon est épuisé. Le géologue 🔍 viendra trouver une nouvelle veine."));
   // Étape 8
   Village.Evenements.ecouter("pas-de-logement", (d) => afficher("🛏️ " + d.nom + " : pas de place pour loger le " + d.metier + " ! Construis une 🛖 hutte ou une 🏠 maison."));
   Village.Evenements.ecouter("marche-vente", (d) => afficher("🏪 Vendu " + d.quantite + " " + EMO(d.quoi) + " : +" + d.gain + " 🪙 (tu as " + d.pieces + " 🪙)"));
@@ -78,6 +78,7 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("nouvel-age", (d) => afficher("🎉 " + d.emoji + " Bienvenue " + d.nom.replace(/^Le /, "au ").replace(/^La /, "à la ").replace(/^L'/, "à l'").toLowerCase() + " !" + (d.debloque.length ? " Nouveau : " + d.debloque.join(", ") : "")));
   Village.Evenements.ecouter("deplacement-impossible", (d) => afficher("🚫 " + d.nom + " : " + d.raison));
   Village.Evenements.ecouter("batiment-deplace", (d) => afficher("↔️ " + d.nom + " a déménagé" + (d.relie ? " !" : " : pense à la route !")));
+  Village.Evenements.ecouter("mine-rechargee", (d) => afficher("⛏️ " + d.nom + " repart : une nouvelle veine " + d.emoji + " (+" + d.quantite + ") !")); // étape 38
   Village.Evenements.ecouter("gisement-trouve", (d) => afficher("🔍 Le géologue a trouvé un gisement : " + d.pierres + " 🪨 !"));
   Village.Evenements.ecouter("affame", () => afficher("🍽️ Plus rien à manger : on travaille 2 fois moins vite !"));
   // Étape 11
@@ -1078,11 +1079,13 @@ Village.Interface = (function () {
     let c, l, possible, texteBulle;
     if (monde.projet) {
       const p = monde.projet, B = Village.Batiments;
-      c = p.colonne; l = p.ligne; possible = p.possible;
+      const nP = B.tailleVoulue(p.type); c = p.colonne + (nP - 1) / 2; l = p.ligne - (nP - 1) / 2; possible = p.possible; // étape 38 : au-dessus de son milieu
       if (!possible) texteBulle = "🚫 " + p.raison;
       else {
         const prix = p.deplacer ? "déménagement gratuit" : B.offert(monde, p.type) ? "🎁 offert (coup de pouce)" : Object.entries(B.coutPour(monde, p.type)).map(([r, n]) => n + " " + EMO(r)).join(" ") || "gratuit";
         texteBulle = (p.deplacer ? "↔️ " : B.TYPES[p.type].emoji + " ") + prix + (p.route === null ? " · ⚠️ pas de chemin possible" : p.route.length ? " · +" + p.route.length + " case(s) de chemin" + ((n) => (n ? " (🌉 " + n + " pont : " + n * C.routes.pont.planches + " 🪵)" : ""))(Village.Routes.bilanDegagement(monde, p.route).ponts) : "");
+        if (p.aimant) texteBulle += " · 🧲 collé à la route"; // étape 38
+        if (p.alignes) texteBulle += " · 📏 aligné";
         // Étape 13 : ✍️ y aura-t-il quelqu'un pour y travailler ?
         if (!p.deplacer && B.TYPES[p.type].metier && !Village.Villageois.libres(monde).length) texteBulle += Village.Logement.placeLibre(monde) ? " · 👥 pas de villageois libre (il en arrive)" : " · 🛏️ plus de lit : personne pour y travailler !";
       }
@@ -1160,7 +1163,7 @@ Village.Interface = (function () {
     if (o && o.affame) problemes.push("🍽️ L'ouvrier a faim : 2 fois moins vite !");
     if (b.malade) problemes.push("🤒 " + C.elevage.troupeaux[b.type].noms.replace(/^l/, "L") + " sont malades : " + (monde.batiments.some((x) => x.type === "veterinaire" && x.ouvrier) ? "le vétérinaire 🩺 arrive." : "construis un vétérinaire 🩺 !"));
     if (b.usure >= C.bourg.reparer && pret) problemes.push("🔧 Usé à " + Math.round(b.usure * 100) + " % : " + (monde.batiments.some((x) => x.type === "macon" && x.etat === "pret") ? "le maçon-couvreur 🪜 va venir." : "il faut un maçon-couvreur 🪜 !"));
-    if (b.epuise) problemes.push("⛏️ Le filon est épuisé : le géologue 🔍 doit en trouver un autre.");
+    if (b.epuise) problemes.push("⛏️ Le filon est épuisé : " + (monde.batiments.some((x) => x.type === "geologue" && x.ouvrier) ? "le géologue 🔍 va venir trouver une nouvelle veine." : "construis un géologue 🔍, il trouvera une nouvelle veine dessous !"));
     if (pret && b.sortieQuoi && b.sortie >= C.sortieMax) problemes.push("📦 Devant la porte, c'est plein : il faut plus de porteurs.");
     // Étape 34 : ⚡ l'électricité
     if (Village.Electricite.active(monde) && pret) {

@@ -250,7 +250,7 @@ Village.Peintre = (function () {
       for (let c = Math.max(cMin, diag - lMax); c <= Math.min(cMax, diag - lMin); c++) {
         const l = diag - c, i = l * carte.colonnes + c, o = carte.objet[i];
         if (!o) { // étape 28 : un filon découvert : des paillettes à la surface
-          if (carte.filon[i] && carte.revele[i] && carte.reste[i] > 0 && !monde.occupees.has(i)) { const p = milieu(c, l); if (p.x >= vue.x0 && p.x <= vue.x1 && p.y >= vue.y0 && p.y <= vue.y1) paillettes(p.x, p.y, carte.filon[i], carte.reste[i] / C.nature.reserveFilon, cache.variante[i], t); }
+          if (carte.filon[i] && carte.revele[i] && carte.reste[i] > 0 && !monde.occupees.has(i) && !monde.route[i]) { /* étape 38 : pas de paillettes sur une route */ const p = milieu(c, l); if (p.x >= vue.x0 && p.x <= vue.x1 && p.y >= vue.y0 && p.y <= vue.y1) paillettes(p.x, p.y, carte.filon[i], carte.reste[i] / C.nature.reserveFilon, cache.variante[i], t); }
           continue;
         }
         const p = milieu(c, l);
@@ -325,9 +325,10 @@ Village.Peintre = (function () {
     // Étape 12 : l'APERÇU du bâtiment qu'on pose ou qu'on déplace, et la route proposée jusqu'à sa porte
     if (monde.projet) {
       const pr = monde.projet;
+      grilleEtGuides(monde, pr, t); // étape 38
       for (const q of pr.route || []) apercuCase(q, true, t);
       // Étape 22 : les cases en plus (les champs, les enclos) : vertes si c'est possible, rouges sinon
-      for (const [dc, dl] of Village.Batiments.empriseDe(pr.type)) { const m = milieu(pr.colonne + dc, pr.ligne + dl); losange(m.x, m.y, 4); ctx.fillStyle = pr.possible ? "rgba(90, 200, 90, .4)" : "rgba(255, 70, 60, .45)"; ctx.fill(); }
+      for (const [dc, dl] of Village.Batiments.champsDe(pr.type, Village.Batiments.tailleVoulue(pr.type))) { /* étape 38 : le bloc a son grand losange */ const m = milieu(pr.colonne + dc, pr.ligne + dl); losange(m.x, m.y, 4); ctx.fillStyle = pr.possible ? "rgba(90, 200, 90, .4)" : "rgba(255, 70, 60, .45)"; ctx.fill(); }
       const p = milieu(pr.colonne, pr.ligne);
       Village.Batisses.dessinerFantome(ctx, pr.type, p.x, p.y, pr.possible, t, L, Hc);
     }
@@ -520,6 +521,56 @@ Village.Peintre = (function () {
         ctx.beginPath(); ctx.moveTo(px - 2.6, py); ctx.lineTo(px + 2.6, py); ctx.stroke();
       }
     }
+  }
+
+  // Étape 38 : ✍️ « difficile de les aligner pour faire un village propre ». Pendant le placement :
+  //   - une GRILLE légère autour du bâtiment (chaque case) ;
+  //   - le CONTOUR de toute sa place (le grand losange) ;
+  //   - des LIGNES GUIDES bleues quand un de ses côtés est dans le prolongement du côté d'un voisin (même rangée, même colonne).
+  const sommetsCase = (c, l) => { const m = milieu(c, l); return { haut: [m.x, m.y - Hc / 2], droite: [m.x + L / 2, m.y], bas: [m.x, m.y + Hc / 2], gauche: [m.x - L / 2, m.y] }; };
+  // Les 4 côtés d'une place (colonne c, ligne l = sa case en bas à gauche, n cases de côté) : [nom, rangée ou colonne, point 1, point 2]
+  function cotesDe(c, l, n) {
+    const l0 = l - n + 1, c1 = c + n - 1;
+    return [
+      ["devant", l, sommetsCase(c, l).gauche, sommetsCase(c1, l).bas],
+      ["fond", l0, sommetsCase(c, l0).haut, sommetsCase(c1, l0).droite],
+      ["gauche", c, sommetsCase(c, l).gauche, sommetsCase(c, l0).haut],
+      ["droite", c1, sommetsCase(c1, l).bas, sommetsCase(c1, l0).droite],
+    ];
+  }
+  function grilleEtGuides(monde, pr, t) {
+    const B = Village.Batiments, n = B.tailleVoulue(pr.type), P = C.placement, k = monde.carte;
+    const cc = pr.colonne + (n - 1) / 2, lc = pr.ligne - (n - 1) / 2, R = P.grille;
+    // la grille
+    ctx.strokeStyle = "rgba(255, 255, 255, .16)"; ctx.lineWidth = 1; ctx.beginPath();
+    for (let l = Math.floor(lc - R); l <= lc + R; l++) for (let c = Math.floor(cc - R); c <= cc + R; c++) {
+      if (c < 0 || l < 0 || c >= k.colonnes || l >= k.lignes || Math.abs(c - cc) + Math.abs(l - lc) > R * 1.3) continue;
+      const s = sommetsCase(c, l); ctx.moveTo(s.gauche[0], s.gauche[1]); ctx.lineTo(s.haut[0], s.haut[1]); ctx.lineTo(s.droite[0], s.droite[1]);
+    }
+    ctx.stroke();
+    // les lignes guides : un côté du projet dans le prolongement d'un côté d'un voisin
+    const miens = cotesDe(pr.colonne, pr.ligne, n);
+    ctx.setLineDash([7, 5]); ctx.lineWidth = 2.2; ctx.strokeStyle = "rgba(90, 200, 255, " + (0.75 + 0.2 * Math.sin(t * 4)) + ")";
+    let alignes = 0;
+    for (const b of monde.batiments) {
+      if (b === pr.deplacer || Math.abs(b.colonne - pr.colonne) + Math.abs(b.ligne - pr.ligne) > P.guides) continue;
+      const nb = B.tailleDe(b);
+      for (const [nom, v, A, Bp] of cotesDe(b.colonne, b.ligne, nb)) for (const [nom2, v2, A2, B2] of miens) {
+        const memeSens = (nom === "devant" || nom === "fond") === (nom2 === "devant" || nom2 === "fond");
+        if (!memeSens || v !== v2) continue;
+        // la ligne va du bout le plus loin d'un côté au bout le plus loin de l'autre
+        const pts = [A, Bp, A2, B2].sort((p, q) => p[0] - q[0]);
+        ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); ctx.lineTo(pts[3][0], pts[3][1]); ctx.stroke();
+        alignes++;
+      }
+    }
+    ctx.setLineDash([]);
+    pr.alignes = alignes;
+    // le contour de toute la place
+    const s1 = sommetsCase(pr.colonne, pr.ligne).gauche, s2 = sommetsCase(pr.colonne, pr.ligne - n + 1).haut, s3 = sommetsCase(pr.colonne + n - 1, pr.ligne - n + 1).droite, s4 = sommetsCase(pr.colonne + n - 1, pr.ligne).bas;
+    ctx.beginPath(); ctx.moveTo(s1[0], s1[1]); ctx.lineTo(s2[0], s2[1]); ctx.lineTo(s3[0], s3[1]); ctx.lineTo(s4[0], s4[1]); ctx.closePath();
+    ctx.fillStyle = pr.possible ? "rgba(80, 230, 100, .22)" : "rgba(255, 70, 60, .28)"; ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = pr.possible ? (pr.aimant ? "#ffe066" : "#c6ffd0") : "#ffb0a8"; ctx.stroke();
   }
 
   // Étape 12 : une case de route en aperçu (transparente et qui « respire »), ou rouge si c'est impossible

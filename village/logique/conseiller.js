@@ -60,9 +60,10 @@ Village.Conseiller = (function () {
       if (disponible(monde, r) > 0) continue; // il y en a : les porteurs arrivent
       const p = producteur(monde, r);
       const deja = p ? combien(monde, p) : 0;
-      if (p === "geologue" || C.mines[p]) { // une mine : il faut d'abord un filon découvert
-        const vus = monde.carte.compte.vus || 0;
-        ajouter(2, "⛏️", nom(ch.type) + " attend du " + res(r), deja ? "Ta mine creuse moins vite que ce qu'on utilise : une mine de plus, sur des paillettes." : vus ? "Pose une mine sur les paillettes (un filon découvert)." : "Il faut d'abord qu'un 🔍 géologue trouve un filon (des paillettes).", vus || deja ? p : "geologue");
+      if (p === "geologue" || C.mines[p]) { // une mine : sur un grand gisement (étape 38 : ils sont visibles dès le début)
+        const epuisees = monde.batiments.filter((b) => b.type === p && b.epuise).length;
+        if (epuisees && !combien(monde, "geologue")) ajouter(2, "⛏️", nom(ch.type) + " attend du " + res(r), "Ta mine est épuisée : un 🔍 géologue trouvera une nouvelle veine dessous.", "geologue");
+        else ajouter(2, "⛏️", nom(ch.type) + " attend du " + res(r), deja ? (epuisees ? "Le géologue va recharger ta mine épuisée ; une mine de plus irait plus vite." : "Ta mine creuse moins vite que ce qu'on utilise : une mine de plus, sur le gisement.") : "Pose une mine sur un gisement de paillettes (on les voit aussi sur la mini-carte).", p);
       } else if (p) ajouter(2, "🔗", nom(ch.type) + " attend : " + res(r), (n > 1 ? n + " ateliers sont arrêtés" : "L'atelier est arrêté") + " : " + (deja ? "un " + nom(p) + " de plus pour en faire assez." : "personne ne fabrique ça. Construis un " + nom(p) + "."), p);
     }
 

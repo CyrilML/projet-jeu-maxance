@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 38,
+  version: 39,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -50,8 +50,6 @@ Village.CONFIG = {
     prairie: 0.3, // humidité en dessous : prairie fleurie
     densiteArbres: 0.75, // dans une forêt, chance qu'une case ait un arbre
     arbresIsoles: 0.03, // dans l'herbe, chance d'un arbre tout seul
-    // Les filons des montagnes : chance qu'une case de montagne en ait un.
-    filons: { charbon: 0.16, fer: 0.1, or: 0.04 },
     rayonDuVillage: 4, // en cases : autour de la place du village, toujours de l'herbe
     massifs: 9, // étape 32 : les zones rocheuses où dorment les filons (2 avant)
     rivieres: 8, // (étape 32 : 8, la carte est immense) // nombre de rivières qui descendent des montagnes (étape 24 : 3, la carte est plus grande)
@@ -314,6 +312,22 @@ Village.CONFIG = {
   // Étape 26 : ✍️ « les mineurs ne voient pas les filons des montagnes un peu plus loin » : 12 cases (choix de Maxance).
   // Mais le mineur MARCHE jusqu'au filon et revient avec son morceau : plus le filon est loin, plus c'est long
   // (aller-retour à la vitesse des ouvriers). Il creuse toujours le filon le plus proche d'abord.
+  // Étape 38 : ✍️ les GRANDS GISEMENTS de minerai, visibles dès le début (logique/carte.js). Pour chaque minerai : combien,
+  // leur rayon (en cases), et à quelle distance du village est le premier (pour pouvoir commencer).
+  gisements: {
+    minerais: {
+      charbon: { nombre: 7, rayon: 2.4, premier: [12, 26] },
+      fer: { nombre: 6, rayon: 2.2, premier: [18, 34] },
+      or: { nombre: 3, rayon: 1.8, premier: [28, 48] },
+    },
+    ecart: 22, // jamais deux gisements à moins de 22 cases
+    loinMin: 30, // les autres : à 30 cases du village au moins
+  },
+  // Étape 38 : ✍️ le placement des bâtiments : l'aimant colle à une route à 2 cases au plus ; la grille fait 9 cases autour,
+  // et les lignes guides montrent les voisins alignés jusqu'à 30 cases.
+  placement: { aimant: 2, grille: 9, guides: 30 },
+  // Étape 38 : quand une mine est épuisée, le géologue vient trouver une nouvelle veine dessous
+  recharge: { quantite: 60, duree: 20 }, // 60 morceaux de minerai, 20 s de travail
   rayonMine: 12,
   // Étape 28 : ✍️ « plus de montagnes : des filons que le géologue trouve, et une mine qui creuse dans le sol ».
   // Les filons sont CACHÉS sous le sol rocheux (là où étaient les montagnes). Le géologue les révèle (des paillettes
@@ -590,7 +604,7 @@ Village.CONFIG = {
     { id: "brouettes", nom: "Brouettes", emoji: "🛒", age: 1, cout: { planches: 30, pierres: 10 }, duree: 90, effet: { porteurs: 1.3, brouette: true }, texte: "Les porteurs vont 30 % plus vite (et poussent une brouette pour le lourd)" },
     { id: "paves", nom: "Routes pavées", emoji: "🧱", age: 1, cout: { pierres: 30, charbon: 5 }, duree: 90, effet: { routePierre: true }, texte: "Toutes les routes deviennent pavées (× 1,6 plus rapide)" }, // étape 17 : ✍️ automatiquement
     { id: "fumoir", nom: "Le fumoir", emoji: "🔥", age: 1, cout: { planches: 20, charbon: 10 }, duree: 90, effet: { repas: 1.5 }, texte: "La nourriture dure plus longtemps : un repas toutes les 3 min 45" },
-    { id: "prospection", nom: "Prospection", emoji: "🔍", age: 1, cout: { planches: 20, charbon: 10 }, duree: 90, effet: { filons: true }, texte: "Le géologue peut aussi trouver des filons de charbon" },
+    { id: "prospection", nom: "Prospection", emoji: "🔍", age: 1, cout: { planches: 20, charbon: 10 }, duree: 90, effet: { filons: true }, texte: "Le géologue trouve des veines 2 fois plus riches (étape 38)" },
     // Étape 8 : les recherches du village
     { id: "soufflets", nom: "Soufflets", emoji: "🌬️", age: 2, cout: { planches: 30, charbon: 20 }, duree: 90, effet: { fondre: 0.7 }, texte: "La fonderie va 30 % plus vite" },
     { id: "enclumes", nom: "Enclumes", emoji: "⚒️", age: 2, cout: { lingots: 8, pierres: 20 }, duree: 120, effet: { forger: 0.7 }, texte: "La forge va 30 % plus vite" },
@@ -605,7 +619,7 @@ Village.CONFIG = {
     { id: "entretien", nom: "Bon entretien", emoji: "🧰", age: 3, cout: { outils: 12, planches: 40 }, duree: 180, effet: { usure: 0.6 }, texte: "Les bâtiments s'usent 40 % moins vite" },
     { id: "poeles", nom: "Poêles en fonte", emoji: "🔥", age: 3, cout: { lingots: 12, pierres: 40 }, duree: 180, effet: { chauffage: 0.6 }, texte: "L'hiver, on brûle 40 % de bois en moins" },
     { id: "orfevrerie", nom: "Orfèvrerie fine", emoji: "💍", age: 3, cout: { or: 10, outils: 6 }, duree: 200, effet: { orfevrerie: 0.7 }, texte: "L'orfèvre va 30 % plus vite" },
-    { id: "filonsOr", nom: "Filons d'or", emoji: "🧭", age: 3, cout: { outils: 8, pain: 20 }, duree: 200, effet: { filonsOr: true }, texte: "Le géologue peut aussi trouver des filons d'or" },
+    { id: "filonsOr", nom: "Sondes profondes", emoji: "🧭", age: 3, cout: { outils: 8, pain: 20 }, duree: 200, effet: { prospecter: 0.7 }, texte: "Le géologue recharge les mines 30 % plus vite" }, // étape 38 (avant : les filons d'or)
     // Étape 15 : les recherches de l'élevage
     { id: "races", nom: "Vaches laitières", emoji: "🐄", age: 1, cout: { planches: 20, foin: 10 }, duree: 90, effet: { traire: 0.7 }, texte: "Les étables donnent du lait 30 % plus vite" },
     { id: "barattes", nom: "Barattes", emoji: "🧈", age: 2, cout: { planches: 30, outils: 2 }, duree: 120, effet: { baratter: 0.7 }, texte: "La laiterie fait le beurre 30 % plus vite" },
@@ -618,7 +632,7 @@ Village.CONFIG = {
     { id: "metiers", nom: "Métiers à tisser", emoji: "🪡", age: 2, cout: { planches: 40, outils: 3 }, duree: 150, effet: { tisser: 0.7 }, texte: "Le tisserand va 30 % plus vite" },
     { id: "aiguilles", nom: "Aiguilles en acier", emoji: "🪡", age: 3, cout: { lingots: 6, tissu: 10 }, duree: 180, effet: { coudre: 0.7 }, texte: "Le tailleur va 30 % plus vite" },
     { id: "fumage", nom: "Fumage", emoji: "🔥", age: 3, cout: { charbon: 30, pierres: 30 }, duree: 180, effet: { fumer: 0.7 }, texte: "La charcuterie va 30 % plus vite" },
-    { id: "filonsFer", nom: "Filons de fer", emoji: "🧭", age: 2, cout: { charbon: 20, outils: 3 }, duree: 120, effet: { filonsFer: true }, texte: "Le géologue peut aussi trouver des filons de fer" },
+    { id: "filonsFer", nom: "Carte des veines", emoji: "🧭", age: 2, cout: { charbon: 20, outils: 3 }, duree: 120, effet: { prospecter: 0.7 }, texte: "Le géologue recharge les mines 30 % plus vite" }, // étape 38 (avant : les filons de fer)
   ],
 
   // Étape 7 : 📜 les MISSIONS. Un personnage raconte une petite histoire et demande des ressources
@@ -659,9 +673,8 @@ Village.CONFIG = {
       [ // 🛖 le hameau
         { texte: "Construis une 🎓 université", batiment: "universite", nombre: 1, pourquoi: "Les recherches rendent tout le monde plus rapide." },
         { texte: "Fais une recherche", recherches: 1, pourquoi: "Touche l'université et choisis une recherche." },
-        { texte: "Construis un 🔍 géologue", batiment: "geologue", nombre: 1, pourquoi: "Les filons sont cachés sous le sol rocheux : lui seul les trouve." },
-        { texte: "Découvre un filon (des paillettes)", filons: 1, pourquoi: "Suis le géologue : il explore le sol rocheux gris." },
-        { texte: "Construis une ⚫ mine de charbon", batiment: "mineCharbon", nombre: 1, pourquoi: "Pose-la sur des paillettes noires : elle creuse un puits." },
+        { texte: "Construis une ⚫ mine de charbon", batiment: "mineCharbon", nombre: 1, pourquoi: "Pose-la sur un gisement de paillettes noires (on les voit aussi sur la mini-carte)." },
+        { texte: "Construis un 🔍 géologue", batiment: "geologue", nombre: 1, pourquoi: "Quand une mine est épuisée, il trouve une nouvelle veine dessous." },
         { texte: "Construis une 🐄 étable", batiment: "etable", nombre: 1, pourquoi: "Le lait est une douceur : les habitants seront plus heureux." },
         { texte: "Aie 20 charbon", stock: "charbon", nombre: 20, pourquoi: "C'est un des objectifs pour passer au village." },
         { texte: "Fais 3 recherches", recherches: 3, pourquoi: "C'est un des objectifs pour passer au village." },
@@ -720,7 +733,7 @@ Village.CONFIG = {
     carriere: "Le carrier taille les rochers autour de lui et rapporte des pierres.",
     pecheur: "Le pêcheur pêche dans l'eau toute proche (même en hiver, dans un trou de la glace).",
     chasseur: "Le chasseur chasse le gibier des environs et rapporte de la viande.",
-    geologue: "Le géologue explore le sol rocheux : il découvre les filons cachés (des paillettes) et parfois des rochers.",
+    geologue: "Le géologue fait le tour des mines : quand l'une est épuisée, il trouve une nouvelle veine sous elle, et elle repart.",
     universite: "Les savants y font des recherches qui rendent tout le village plus efficace.",
     mineCharbon: "La mine creuse un puits dans un filon de charbon découvert.",
     hutte: "Une petite maison de paille : 3 lits pour des paysans.",

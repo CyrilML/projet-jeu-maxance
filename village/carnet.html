@@ -161,6 +161,7 @@
       <a href="#etape35">Étape 35</a>
       <a href="#etape36">Étape 36</a>
       <a href="#etape37">Étape 37</a>
+      <a href="#etape38">Étape 38</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2176,6 +2177,58 @@ le réseau sert les plus PROCHES d'abord (en cases de route) :
       <details class="question"><summary>Une place de 3 × 3 cases : le bâtiment est dessiné combien de fois plus gros qu'avant l'étape 37 ?</summary><p>2,4 au lieu de 3,3 : environ 1,4 fois plus petit. La place libre devient la cour.</p></details>
     </section>
 
+    <section id="etape38">
+      <h2>🧲 Étape 38 : un village propre (ciseaux, gisements, aimant) <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les bâtiments ne débordent plus sur la route ; la carte a de grands gisements visibles dès le début ; le géologue recharge les mines épuisées ; et un aimant aide à aligner les bâtiments le long des routes. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/36-placement-et-gisements.md</code>.</p>
+          <ul>
+            <li>✍️ « Certains bâtiments débordent sur la route. »</li>
+            <li>✍️ « Le géologue trouve des filons sur la route, et énormément… que la carte contienne de base plusieurs emplacements de différents minerais. »</li>
+            <li>✍️ « Difficile de les aligner pour faire un village propre. »</li>
+            <li>Tes choix : gisements visibles, le géologue recharge, voir toute la place + aimant + grille et guides.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Aucun bâtiment ne déborde sur une route.</li>
+            <li>☐ Des gisements noirs (charbon), roux (fer) et dorés (or) dès le début, aussi sur la mini-carte.</li>
+            <li>☐ Une mine épuisée : le géologue vient, et « la mine repart ».</li>
+            <li>☐ Place un bâtiment près d'une route : il s'y colle (contour jaune, « 🧲 collé à la route »).</li>
+            <li>☐ Des lignes bleues pointillées quand il est aligné avec un voisin (« 📏 aligné »).</li>
+            <li>Vérifie « version 39 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>✂️ Les ciseaux du peintre</h3>
+      <p>Pour qu'un bâtiment ne déborde jamais, le peintre pose un <strong>masque</strong> (on dit « clip » en anglais) : une forme en dehors de laquelle il ne peut plus rien peindre. Ici, c'est le losange de la place, prolongé vers le haut (un bâtiment haut a le droit de cacher ce qui est derrière lui).</p>
+      <h3>🧲 L'aimant</h3>
+      <pre style="white-space: pre-wrap">pour chaque place à 2 cases au plus du doigt :
+   une route TOUT le long de la porte ?   → 3 points
+   une route tout le long d'un autre côté ? → 2 points
+   moins 1 point par case d'écart avec le doigt
+on garde la place qui a le plus de points</pre>
+      <p>C'est une <strong>note</strong> donnée à chaque possibilité, puis on choisit la meilleure : beaucoup de jeux (et d'ordinateurs qui jouent aux échecs) font comme ça.</p>
+      <h3>⛏️ Les gisements</h3>
+      <p>La carte pose ses gisements avec un dé à graine : le premier de chaque minerai assez près du village, les autres loin, et jamais deux collés (22 cases au moins). Quand une mine a tout creusé, le géologue trouve une nouvelle veine dessous.</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+        <li>Regarde la mini-carte : combien de gisements de chaque couleur trouves-tu ?</li>
+        <li>Place une scierie à 1 case d'une route, puis à 3 cases : quand l'aimant la colle-t-il ?</li>
+        <li>Ouvre « sous le capot » : combien de grands gisements et de mines épuisées ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Une place a une route tout le long de sa porte, et elle est à 1 case du doigt : combien de points ?</summary><p>3 × 10 − 1 = 29 points (le jeu multiplie la note des côtés par 10, puis enlève les cases d'écart).</p></details>
+      <details class="question"><summary>Avec « Prospection », combien de minerai donne une nouvelle veine ?</summary><p>120 morceaux au lieu de 60.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2403,8 +2456,14 @@ le réseau sert les plus PROCHES d'abord (en cases de route) :
           <p>Les bâtiments reprennent une taille normale ; devant, une cour avec les objets de leur métier, et une enseigne.</p>
           <p class="apprend"><b>Tu apprends :</b> peindre en couches, un décor rangé comme des données. <b>Durée :</b> 2 séances.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">38</div>
+          <h4>🧲 Un village propre : ciseaux, gisements, aimant <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Plus de débordement sur les routes, de grands gisements visibles, le géologue qui recharge les mines, l'aimant, la grille et les lignes guides.</p>
+          <p class="apprend"><b>Tu apprends :</b> un masque de dessin, noter des possibilités pour choisir la meilleure. <b>Durée :</b> 2 séances.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">38-40</div>
+          <div class="num">39-41</div>
           <h4>🚗🚓🛍️ Les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Routes goudronnées, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -2717,6 +2776,14 @@ le réseau sert les plus PROCHES d'abord (en cases de route) :
         <textarea class="journal" id="village-appris-37" data-cle="village-appris-37" placeholder="Ex. : J'ai appris qu'on reconnaît les choses à leur forme et à leur couleur…"></textarea>
         <label for="village-idees-37"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-37" data-cle="village-idees-37" placeholder="Ex. : Des ouvriers qui rangent les caisses sur les étagères…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 38 · un village propre <span class="petit">· 9 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le masque qui empêche les bâtiments de déborder, les grands gisements de la carte (<code>logique/carte.js</code>), le géologue qui recharge les mines épuisées (événement <code>mine-rechargee</code>), l'aimant à la route (<code>logique/placement.js</code>), la grille et les lignes guides, la sauvegarde version 21.</p>
+        <label for="village-appris-38"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-38" data-cle="village-appris-38" placeholder="Ex. : J'ai appris qu'on peut noter des choix pour garder le meilleur…"></textarea>
+        <label for="village-idees-38"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-38" data-cle="village-idees-38" placeholder="Ex. : Poser plusieurs maisons d'un coup le long d'une rue…"></textarea>
       </div>
     </section>
   </main>

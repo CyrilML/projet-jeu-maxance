@@ -123,7 +123,9 @@ Village.Batisses = (function () {
   // Étape 37 : ✍️ « tu les as juste agrandis, ils ne vont plus avec le paysage » : le bâtiment redevient de taille normale
   // (1,8 pour 1 case, puis + 0,3 par case de côté), posé au fond de sa place ; le reste est sa COUR (affichage/cours.js).
   // Seul le Grand Beffroi garde sa grande taille.
-  const echelleTaille = (type, n) => (n <= 1 ? C_.detail.echelleBatiments : type === "monument" ? (n + 0.3) * C_.detail.echelleParCase : C_.detail.echelleBatiments + C_.detail.echelleParCaseEnPlus * (n - 1));
+  // Étape 38 : les logements d'une case (huttes, maisons, puits) ne sont plus plus larges que leur case ; le monument un peu
+  // plus petit (il débordait devant lui).
+  const echelleTaille = (type, n) => (n <= 1 ? Math.min(C_.detail.echelleBatiments, 27 / MODELES[type].a) : type === "monument" ? 3.8 : C_.detail.echelleBatiments + C_.detail.echelleParCaseEnPlus * (n - 1));
   const decalageTaille = (n) => ((n - 1) * C_.carte.largeurCase) / 2;
 
   // Un point sur un mur : u va de 0 (début du mur) à 1 (fin), v de 0 (le sol) à 1 (le haut du mur).
@@ -1248,6 +1250,10 @@ Village.Batisses = (function () {
     if (souleve) { ctx.save(); ctx.globalAlpha = 0.4; aLaLoupe(ctx, x, y - 6, s, () => dessinerBatimentDedans(ctx, b, x, y - 6, t, m)); ctx.restore(); return; }
     // Étape 22 et 24 : les champs et les enclos, sur le sol, à la taille des cases (pas à la loupe)
     if (b.etat === "pret" && b.emprise && b.emprise.length) empriseDessin(ctx, b, x0, yc, t);
+    // Étape 38 : ✍️ « certains bâtiments débordent sur la route ». Comme avec des ciseaux, on ne dessine rien à gauche, à
+    // droite ni devant le losange de sa place (vers le haut, si : un bâtiment haut cache ce qui est derrière lui).
+    const A = n * 32, Hm = n * 16;
+    ctx.save(); ctx.beginPath(); ctx.moveTo(xc - A, yc - 4000); ctx.lineTo(xc - A, yc); ctx.lineTo(xc, yc + Hm); ctx.lineTo(xc + A, yc); ctx.lineTo(xc + A, yc - 4000); ctx.closePath(); ctx.clip();
     if (cour) { Co.dessiner(ctx, b, "sol", xc, yc, n, cour, t); Co.dessiner(ctx, b, "arriere", xc, yc, n, cour, t); }
     // Étape 14 : ✍️ le bâtiment est dessiné plus GROS (à la loupe) ; ses ouvriers restent à la taille des autres
     aLaLoupe(ctx, x, y, s, () => dessinerBatimentDedans(ctx, b, x, y, t, m));
@@ -1255,6 +1261,7 @@ Village.Batisses = (function () {
       Co.dessiner(ctx, b, "avant", xc, yc, n, cour, t);
       if (b.etat === "pret") Co.enseigne(ctx, b, x - m.a * s - 4, y + 4); // à gauche de la porte
     }
+    ctx.restore(); // (fin des ciseaux)
     if (b.etat === "pret") ouvrierDevant(ctx, b, x, y, t, s);
   }
   // Étape 23 : ✍️ « le bâtiment change en fonction de son niveau, pour qu'on repère ceux qu'on a oublié d'améliorer ».
@@ -2708,11 +2715,7 @@ Village.Batisses = (function () {
   // ---------------------------------------------------------------- le fantôme
   // Pendant qu'on choisit où construire : le bâtiment transparent, sur un losange vert (oui) ou rouge (non).
   function dessinerFantome(ctx, type, x, y, possible, t, L, Hc) {
-    ctx.beginPath();
-    ctx.moveTo(x, y - Hc / 2); ctx.lineTo(x + L / 2, y); ctx.lineTo(x, y + Hc / 2); ctx.lineTo(x - L / 2, y); ctx.closePath();
-    ctx.fillStyle = possible ? "rgba(80, 230, 100, .45)" : "rgba(255, 70, 60, .45)";
-    ctx.fill();
-    ctx.strokeStyle = possible ? "#c6ffd0" : "#ffd0cc"; ctx.lineWidth = 2; ctx.stroke();
+    // (étape 38 : le losange de toute sa place est dessiné par le peintre, avec la grille et les lignes guides)
     ctx.globalAlpha = 0.55 + 0.15 * Math.sin(t * 5);
     const n = Bt().tailleVoulue(type), s = echelleTaille(type, n); let xb = x + decalageTaille(n), yb = y; // étape 24 : au milieu de son bloc (étape 28 : selon sa taille)
     if (Village.Cours.aUneCour(type, n)) { const p = Village.Cours.plan(type, n, s, MODELES[type]); xb += (p.pA + p.qA) * 32; yb += (p.pA - p.qA) * 16; } // étape 37 : au fond de sa place

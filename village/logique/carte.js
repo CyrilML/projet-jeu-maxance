@@ -162,21 +162,10 @@ Village.Carte = (function () {
           if (v < 0.45) { carte.objet[i] = OBJET.rocher; carte.reste[i] = C.nature.pierresParRocher; }
         } else if (t === TERRAIN.montagne) {
           carte.objet[i] = OBJET.montagne;
-          const f = de.suivant(), F = G.filons;
-          if (f < F.or) carte.filon[i] = FILON.or;
-          else if (f < F.or + F.fer) carte.filon[i] = FILON.fer;
-          else if (f < F.or + F.fer + F.charbon) carte.filon[i] = FILON.charbon;
-          if (carte.filon[i]) carte.reste[i] = C.nature.reserveFilon; // étape 7 : ce que le filon peut donner
+          de.suivant(); // (étape 38 : plus de petits filons éparpillés ; on tire quand même le dé, pour que le reste de la
+          // carte d'une partie déjà commencée ne change pas)
         }
       }
-    }
-    // Chaque sorte de filon doit exister au moins une fois (sinon, pas de mine d'or possible !).
-    const casesMontagne = montagnes.filter((i) => carte.terrain[i] === TERRAIN.montagne);
-    for (const sorte of [FILON.charbon, FILON.fer, FILON.or]) {
-      if (!casesMontagne.length || carte.filon.includes(sorte)) continue;
-      const j = casesMontagne[Math.floor(de.suivant() * casesMontagne.length)];
-      carte.filon[j] = sorte;
-      carte.reste[j] = C.nature.reserveFilon;
     }
 
     // Étape 28 : ✍️ « les montagnes ne me conviennent pas ». Elles deviennent un sol rocheux, tout plat ; leurs filons
@@ -184,12 +173,51 @@ Village.Carte = (function () {
     // sans tirer de hasard : une partie déjà commencée retrouve exactement sa carte (sans montagnes).
     aplanir(carte);
 
+    // Étape 38 : ✍️ « le géologue trouve des filons énormément, et sur la route… Il faut que la carte contienne de base
+    // plusieurs emplacements de différents minerais ». La carte a maintenant quelques GRANDS GISEMENTS, visibles dès le
+    // début (des paillettes sur un sol rocheux), bien écartés les uns des autres (config.js : « gisements »).
+    gisements(carte, H.creer(graine + 4242), dansLaPlace);
+
     // 6 : la place du village : le feu de camp au milieu, la tente du chef juste à côté.
     carte.objet[ici(meilleur.c, meilleur.l)] = OBJET.feuDeCamp;
     carte.objet[ici(meilleur.c - 1, meilleur.l - 1)] = OBJET.tente;
 
     compter(carte);
     return carte;
+  }
+
+  // Les grands gisements : pour chaque minerai, quelques taches rondes de paillettes. Le premier de chaque sorte est assez
+  // près du village (pour commencer), les autres plus loin, et jamais deux gisements collés.
+  function gisements(carte, de, dansLaPlace) {
+    const Gi = C.gisements, col = carte.colonnes, lig = carte.lignes, v = carte.village, poses = [];
+    carte.gisements = [];
+    for (const [nom, g] of Object.entries(Gi.minerais)) {
+      for (let n = 0; n < g.nombre; n++) {
+        const [dmin, dmax] = n === 0 ? g.premier : [Gi.loinMin, Math.min(col, lig) * 0.48];
+        for (let essai = 0; essai < 600; essai++) {
+          const a = de.entre(0, Math.PI * 2), d = de.entre(dmin, dmax), c = Math.round(v.colonne + Math.cos(a) * d), l = Math.round(v.ligne + Math.sin(a) * d);
+          if (c < 4 || l < 4 || c >= col - 4 || l >= lig - 4) continue;
+          if (poses.some((p) => Math.hypot(p.c - c, p.l - l) < Gi.ecart)) continue;
+          // assez de terre ferme dessous ?
+          let terre = 0, total = 0;
+          for (let dl = -3; dl <= 3; dl++) for (let dc = -3; dc <= 3; dc++) { if (Math.hypot(dc, dl) > g.rayon) continue; total++; if (carte.terrain[(l + dl) * col + c + dc] > TERRAIN.eau && !dansLaPlace(c + dc, l + dl)) terre++; }
+          if (terre < total * 0.85) continue;
+          for (let dl = -3; dl <= 3; dl++) for (let dc = -3; dc <= 3; dc++) {
+            if (Math.hypot(dc, dl) > g.rayon) continue;
+            const i = (l + dl) * col + c + dc;
+            if (carte.terrain[i] <= TERRAIN.eau || dansLaPlace(c + dc, l + dl)) continue;
+            carte.terrain[i] = TERRAIN.rochers;
+            carte.objet[i] = OBJET.rien;
+            carte.filon[i] = FILON[nom];
+            carte.reste[i] = C.nature.reserveFilon;
+            carte.revele[i] = 1; // visible dès le début
+          }
+          poses.push({ c, l });
+          carte.gisements.push({ minerai: nom, colonne: c, ligne: l });
+          break;
+        }
+      }
+    }
   }
 
   function aplanir(carte) {

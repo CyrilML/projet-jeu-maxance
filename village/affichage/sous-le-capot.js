@@ -148,6 +148,7 @@ Village.SousLeCapot = (function () {
     "deplacement-choisi": (d) => "↔️ Déplacer : " + d.nom + " n° " + d.numero + ". Choisis sa nouvelle place",
     "deplacement-impossible": (d) => "🚫 Déplacement impossible (" + d.nom + ") : " + d.raison,
     "batiment-deplace": (d) => "↔️ " + d.nom + " n° " + d.numero + " déménage de (" + d.de.colonne + ", " + d.de.ligne + ") à (" + d.vers.colonne + ", " + d.vers.ligne + ")" + (d.relie ? "" : " : il n'est plus relié par une route"),
+    "mine-rechargee": (d) => "⛏️ " + d.nom + " n° " + d.numero + " rechargée par " + d.qui + " : une nouvelle veine de " + d.minerai + " " + d.emoji + " (+" + d.quantite + " morceaux)", // étape 38
     "gisement-trouve": (d) => "🔍 Gisement trouvé en (" + d.colonne + ", " + d.ligne + ") : un rocher de " + d.pierres + " 🪨",
     "gisement-rate": (d) => "🔍 Rien trouvé en (" + d.colonne + ", " + d.ligne + ") (1 chance sur 2) : le géologue cherchera ailleurs",
     "habitant-part": (d) => "😢 " + d.qui + " quitte le village : il avait trop faim depuis " + Village.CONFIG.repas.tropFaim + " s",
@@ -233,7 +234,8 @@ Village.SousLeCapot = (function () {
     h += ligne("arbres", nombre(k.compte.arbres));
     h += ligne("rochers · montagnes", k.compte.rochers + " · " + k.compte.montagnes);
     h += ligne("filons ⚫ charbon · 🟠 fer · 🟡 or", k.compte.charbon + " · " + k.compte.fer + " · " + k.compte.or);
-    h += ligne("filons découverts (cases)", (k.compte.vus || 0) + " · les autres sont cachés sous le sol rocheux"); // étape 28
+    h += ligne("cases de gisement (⚫ charbon · 🟤 fer · 🟡 or)", (k.compte.charbon || 0) + " · " + (k.compte.fer || 0) + " · " + (k.compte.or || 0)); // étape 38
+    h += ligne("grands gisements sur la carte", (k.gisements || []).length + " · mines épuisées : " + monde.batiments.filter((b) => b.epuise).length);
     h += ligne("place du village", "(" + k.village.colonne + ", " + k.village.ligne + ")");
     const ag = Village.Ages.actuel(monde), objs = Village.Ages.objectifs(monde);
     h += groupe("⏳ L'âge du village");

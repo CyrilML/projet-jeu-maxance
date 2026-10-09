@@ -65,19 +65,17 @@ Village.Ouvriers = (function () {
       },
       quoi: "de l'eau",
     },
-    // Étape 5 : le géologue cherche un endroit où il pourrait y avoir de la pierre. Pour qu'il n'aille pas toujours au
-    // même endroit, chaque recherche ne regarde qu'une case sur 4, tirée au hasard (avec une graine qui change à chaque fois).
-    // Étape 28 : ✍️ plus de montagnes : il explore le SOL ROCHEUX (là où étaient les montagnes), où les filons sont cachés.
+    // Étape 5 : le géologue cherchait de la pierre ; étape 28 : des filons cachés.
+    // Étape 38 : ✍️ « il trouve énormément de filons, et sur la route : il faut juste qu'il trouve de nouveaux filons dans
+    // les mines existantes ». Les gisements sont visibles dès le début ; le géologue fait le tour des MINES ÉPUISÉES et
+    // trouve une nouvelle veine dessous (config.js : « recharge »).
     geologue: {
-      duree: (monde) => C.ouvriers.prospecter * Village.Recherches.bonus(monde, "prospecter"), // étape 7 : × le bonus des recherches
-      cherche: (monde, i, o) => {
-        const k = monde.carte, c = i % k.colonnes, l = Math.floor(i / k.colonnes);
-        if (k.objet[i] !== O.rien || monde.occupees.has(i) || monde.route[i] || monde.reservees.has(i)) return false;
-        if (!K.praticable(k, c, l) || k.terrain[i] !== T.rochers) return false;
-        if (k.revele[i] && k.filon[i]) return false; // déjà découvert
-        return Village.Hasard.pourCase(o.recherches || 0, c, l) < 0.25;
+      duree: (monde) => C.recharge.duree * Village.Recherches.bonus(monde, "prospecter"),
+      cherche: (monde, i) => {
+        const b = monde.occupees.get(i);
+        return !!b && !!C.mines[b.type] && b.etat === "pret" && !!b.epuise && i === b.ligne * monde.carte.colonnes + b.colonne && !monde.reservees.has(i);
       },
-      quoi: "un sol rocheux à explorer",
+      quoi: "une mine épuisée",
     },
     // Étape 4 : le chasseur cherche une case où il y a un animal qui n'est pas déjà visé.
     chasseur: {
@@ -282,33 +280,17 @@ Village.Ouvriers = (function () {
     }
   }
 
-  // Étape 7 : avec la recherche « Prospection », le géologue peut faire apparaître un NOUVEAU filon.
-  // Étape 8 : avec « Filons de fer », 1 fois sur 2 c'est un filon de fer.
-  // Étape 28 : sur la case qu'il explore (plus de montagnes) ; le nouveau filon est tout de suite découvert.
-  function trouverFilon(monde, c, l, sorte) {
-    const k = monde.carte, i = l * k.colonnes + c;
-    if (k.objet[i] !== O.rien || monde.occupees.has(i) || (k.filon[i] && k.reste[i] > 0)) return false;
+  // Étape 38 : RECHARGER une mine épuisée : une nouvelle veine apparaît sous elle (sur sa propre case). Avec la recherche
+  // « Prospection », la veine est 2 fois plus riche.
+  function recharger(monde, mine, qui) {
+    const k = monde.carte, i = mine.ligne * k.colonnes + mine.colonne, sorte = C.mines[mine.type].filon;
+    const quantite = Math.min(250, C.recharge.quantite * (Village.Recherches.a(monde, "filons") ? 2 : 1));
     k.filon[i] = K.FILON[sorte];
-    k.reste[i] = C.nature.reserveFilon;
+    k.reste[i] = quantite;
     k.revele[i] = 1;
-    Village.Monde.changerObjet(monde, i, k.objet[i]);
-    return true;
-  }
-  // Étape 28 : ✍️ les filons sont cachés sous le sol. Le géologue révèle tous ceux qui sont à 3 cases au plus
-  // (config.js : rayonRevele). Renvoie le nombre de cases découvertes de chaque sorte.
-  function revelerFilons(monde, c, l) {
-    const k = monde.carte, R = C.rayonRevele, trouves = {};
-    for (let dl = -R; dl <= R; dl++) for (let dc = -R; dc <= R; dc++) {
-      const nc = c + dc, nl = l + dl;
-      if (nc < 0 || nl < 0 || nc >= k.colonnes || nl >= k.lignes) continue;
-      const j = nl * k.colonnes + nc;
-      if (!k.filon[j] || k.revele[j] || !(k.reste[j] > 0)) continue;
-      k.revele[j] = 1;
-      const nom = K.NOMS_FILONS[k.filon[j]];
-      trouves[nom] = (trouves[nom] || 0) + 1;
-    }
-    if (Object.keys(trouves).length) { monde.changements++; K.compter(k); }
-    return trouves;
+    Village.Monde.changerObjet(monde, i, k.objet[i]); // (pour la sauvegarde)
+    mine.epuise = false;
+    radio.emettre("mine-rechargee", { numero: mine.numero, nom: Village.Batiments.TYPES[mine.type].nom, minerai: C.ressources[sorte].nom, emoji: C.ressources[sorte].emoji, quantite, qui });
   }
 
   function finirLeTravail(monde, b, o) {
@@ -347,25 +329,9 @@ Village.Ouvriers = (function () {
       }
       o.proie = null;
     } else if (b.type === "geologue") {
-      // Étape 8 et 11 : quel filon peut-il trouver ? Le charbon, et le fer et l'or avec les bonnes recherches.
-      const possibles = ["charbon"].concat(Village.Recherches.a(monde, "filonsFer") ? ["fer"] : [], Village.Recherches.a(monde, "filonsOr") ? ["or"] : []);
-      const minerai = possibles[Math.floor(Math.random() * possibles.length)];
-      // Étape 28 : d'abord, les filons cachés autour de lui
-      const trouves = revelerFilons(monde, o.cible.colonne, o.cible.ligne);
-      if (Object.keys(trouves).length) {
-        b.produits++;
-        for (const [minerai, cases] of Object.entries(trouves)) radio.emettre("filon-trouve", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, minerai, cases, nom: C.ressources[minerai].nom, emoji: C.ressources[minerai].emoji, reserve: C.nature.reserveFilon * cases });
-      }
-      // Étape 5 : 1 chance sur 2 de trouver un gisement de pierre (un nouveau rocher)
-      else if (carte.objet[i] === O.rien && !monde.occupees.has(i) && !monde.route[i] && Math.random() < C.ouvriers.chanceDeTrouver) {
-        carte.reste[i] = C.nature.pierresGisement;
-        Village.Monde.changerObjet(monde, i, O.rocher);
-        b.produits++;
-        radio.emettre("gisement-trouve", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, pierres: carte.reste[i] });
-      } else if (Village.Recherches.a(monde, "filons") && Math.random() < 0.5 && trouverFilon(monde, o.cible.colonne, o.cible.ligne, minerai)) {
-        b.produits++;
-        radio.emettre("filon-trouve", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, minerai, nom: C.ressources[minerai].nom, emoji: C.ressources[minerai].emoji, reserve: C.nature.reserveFilon });
-      } else radio.emettre("gisement-rate", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne });
+      // Étape 38 : une nouvelle veine sous la mine épuisée
+      const mine = monde.occupees.get(i);
+      if (mine && C.mines[mine.type] && mine.epuise) { recharger(monde, mine, "le géologue n° " + b.numero); b.produits++; }
     } else if (b.type === "macon") {
       // Étape 12 : le bâtiment est réparé, et l'outil est usé (étape 27 : on compte ses outils dans etape)
       const abime = monde.occupees.get(i);
@@ -385,5 +351,5 @@ Village.Ouvriers = (function () {
     }
   }
 
-  return { creer, etape, NOMS_ETATS, enTournee };
+  return { creer, etape, NOMS_ETATS, enTournee, recharger };
 })();

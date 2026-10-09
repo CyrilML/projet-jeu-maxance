@@ -73,12 +73,15 @@
 //  20 (étape 32) : ✍️ « tu peux reset la partie que j'ai en cours pour tout recommencer ». Le jeu change beaucoup (une
 //                  carte de 256 × 256, les époques qui arrivent) : une partie plus ancienne n'est PAS convertie, on
 //                  recommence une nouvelle partie (décision de Maxance, une seule fois).
+//  21 (étape 38) : les grands gisements visibles dès le début (gisements : 1). Une partie plus ancienne garde ses mines :
+//                  au chargement, une mine qui n'a plus de filon autour d'elle reçoit une veine sous elle (comme si le
+//                  géologue était passé), pour qu'elle continue de creuser.
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 20;
+  const VERSION = 21;
   const radio = Village.Evenements;
 
   function vide() {
@@ -137,6 +140,7 @@ Village.Sauvegarde = (function () {
         delete b.repas;
       }
     }
+    if ((lues.version || 1) < 21 && d.partie) d.partie.gisements = 0; // étape 38 : les mines seront rechargées au chargement
     if ((lues.version || 1) < 4 && d.partie && d.partie.stock) {
       d.partie.stock.poissons = d.partie.stock.poissons || Village.CONFIG.depart.poissons;
       d.partie.stock.viande = d.partie.stock.viande || Village.CONFIG.depart.viande;
@@ -258,6 +262,7 @@ Village.Sauvegarde = (function () {
       commandes: { liste: monde.commandes.liste.map((c) => Object.assign({}, c, { reste: Math.round(c.reste) })), attente: Math.round(monde.commandes.attente), livrees: monde.commandes.livrees }, // étape 30
       guide: monde.guide,
       filonsVus: monde.carte.revele.reduce((liste, v, i) => (v ? (liste.push(i), liste) : liste), []), // étape 28
+      gisements: 1, // étape 38
     };
     ecrire(raison);
   }

@@ -108,6 +108,8 @@ Village.Monde = (function () {
       for (const [i, m] of monde.modifs) if (m.f) k.revele[i] = 1;
       Village.Carte.compter(k);
     }
+    // Étape 38 : une partie d'avant les grands gisements : ses mines sans filon autour reçoivent une veine sous elles
+    if (partie && !partie.gisements) for (const b of monde.batiments) if (C.mines[b.type] && b.etat === "pret" && !Village.Batiments.filonsVoisins(carte, b.colonne, b.ligne, Village.Carte.FILON[C.mines[b.type].filon]).length) Village.Ouvriers.recharger(monde, b, "la conversion de la sauvegarde");
     if (partie) Village.Batiments.ranger(monde); // étape 23 : de la place pour les champs et les enclos
     if (partie && Village.Recherches.a(monde, "routePierre")) Village.Routes.paver(monde, true); // étape 17 : une partie qui avait déjà « Routes pavées »
     Village.Routes.recalculerReseau(monde);
@@ -333,13 +335,14 @@ Village.Monde = (function () {
     if (s.debutAppui) {
       const k = versCase(s.debutAppui), p = monde.projet;
       // On attrape l'aperçu (à 1 case près : un doigt n'est pas précis) : il suivra le doigt.
-      if (k && p && Math.abs(k.colonne - p.colonne) <= 1 && Math.abs(k.ligne - p.ligne) <= 1) monde.prise = "projet";
+      const h = p ? Pl.demi(p.type) : 0, r = p ? Math.ceil(Village.Batiments.tailleVoulue(p.type) / 2) : 1; // étape 38 : on l'attrape par son milieu
+      if (k && p && Math.abs(k.colonne - (p.colonne + h)) <= r && Math.abs(k.ligne - (p.ligne - h)) <= r) monde.prise = "projet";
       else if (k && routeOutil && !(monde.trace && monde.trace.pret)) { monde.prise = "trace"; Pl.debutGlisse(monde, k); }
     }
     if (monde.prise && s.doigts > 1) { monde.prise = null; if (monde.trace) monde.trace.cases = []; } // 2 doigts : on zoome
     if (monde.prise && s.enfoncee && s.dessus) {
       const k = versCase(s);
-      if (k && monde.prise === "projet" && (k.colonne !== monde.projet.colonne || k.ligne !== monde.projet.ligne)) Pl.placer(monde, k.colonne, k.ligne);
+      if (k && monde.prise === "projet" && (k.colonne !== monde.projet.doigtC || k.ligne !== monde.projet.doigtL)) { monde.projet.doigtC = k.colonne; monde.projet.doigtL = k.ligne; Pl.placerAuDoigt(monde, k.colonne, k.ligne); }
       else if (k && monde.prise === "trace") Pl.ajouterCase(monde, k);
     }
     if (s.leve && monde.prise) { if (monde.prise === "trace") Pl.finGlisse(monde); monde.prise = null; }
@@ -353,8 +356,8 @@ Village.Monde = (function () {
     const k = caseSous(monde, s.clic.x, s.clic.y).k;
     if (!k) return;
     if (monde.projet) {
-      // Un toucher ailleurs : l'aperçu va là
-      Pl.placer(monde, k.colonne, k.ligne);
+      // Un toucher ailleurs : l'aperçu va là (étape 38 : son milieu sous le doigt, et l'aimant à la route)
+      Pl.placerAuDoigt(monde, k.colonne, k.ligne);
       return;
     }
     if (routeOutil) { Pl.toucher(monde, k); return; }
