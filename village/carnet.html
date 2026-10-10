@@ -163,6 +163,7 @@
       <a href="#etape37">Étape 37</a>
       <a href="#etape38">Étape 38</a>
       <a href="#etape39">Étape 39</a>
+      <a href="#etape40">Étape 40</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2279,6 +2280,46 @@ le porteur ramasse 3 troncs ; la scierie a de la place pour 2 :
       <details class="question"><summary>Pourquoi a-t-il suffi d'une ligne pour que la carrière marche comme une mine ?</summary><p>Parce que les mines sont décrites comme des données : le code des mines lit la liste et marche pour chaque bâtiment qui y est.</p></details>
     </section>
 
+    <section id="etape40">
+      <h2>🦌 Étape 40 : gibier, université unique, entrepôts 2, un seul logement <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Le gibier se renouvelle tout seul, l'université et le marché ne se construisent qu'une fois, chaque entrepôt secondaire s'agrandit, et on ne construit plus qu'un seul logement. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/38-gibier-uniques-depots-logement.md</code>.</p>
+          <ul>
+            <li>✍️ « Le chasseur ne devrait jamais être en rupture de gibier. »</li>
+            <li>✍️ « Une seule université… grisée dans les constructions. Idem pour le marché. »</li>
+            <li>✍️ « Le deuxième entrepôt… il faut pouvoir l'améliorer. »</li>
+            <li>✍️ « Il n'y a pas 2 sortes d'habitation. »</li>
+            <li>Tes choix : des naissances partout ; un bouton dans chaque entrepôt ; la hutte qui devient maison quand les besoins sont remplis.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Le gibier ne disparaît jamais (sous le capot : « 🍼 naissances par minute »).</li>
+            <li>☐ Après ta 1re université, sa carte est grise : « ✅ déjà construit ». Pareil pour le marché.</li>
+            <li>☐ Touche un entrepôt secondaire : « 🏗️ +2 porteurs ».</li>
+            <li>☐ Menu 🛖 Maisons : seulement la hutte (et le maçon).</li>
+            <li>Vérifie « version 41 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🍼 Une croissance qui dépend du nombre</h3>
+      <pre style="white-space: pre-wrap">naissances par minute = nombre d'animaux × 20 %
+  100 animaux → 20 naissances par minute
+   30 animaux →  6 naissances par minute
+et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
+      <p>C'est comme une vraie population : plus il y a de parents, plus il y a de petits. Mais si les chasseurs tuent plus vite qu'il n'en naît, la population baisse… sauf que la règle des « 6 au moins » l'empêche de disparaître. Il y a aussi un plafond (280), pour que la carte ne soit pas envahie.</p>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>50 animaux en été : combien de naissances par minute ? Et en hiver ?</summary><p>50 × 20 % = 10 en été ; 50 × 6 % = 3 en hiver.</p></details>
+      <details class="question"><summary>Comment fait-on une maison maintenant ?</summary><p>On construit une hutte : au village, elle devient une maison toute seule quand les artisans ont ce qu'ils veulent pendant 1 minute.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2518,8 +2559,14 @@ le porteur ramasse 3 troncs ; la scierie a de la place pour 2 :
           <p>Les porteurs vont tout droit aux ateliers et chantiers ; l'entrepôt explique ses 3 améliorations ; 10 gisements de pierre.</p>
           <p class="apprend"><b>Tu apprends :</b> une optimisation, une règle ajoutée en une ligne de données. <b>Durée :</b> 2 séances.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">40</div>
+          <h4>🦌 Gibier, université unique, entrepôts 2, un seul logement <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Le gibier se renouvelle, les bâtiments uniques sont grisés, chaque entrepôt secondaire s'agrandit, la hutte est le seul logement à construire.</p>
+          <p class="apprend"><b>Tu apprends :</b> une croissance qui dépend du nombre, un plafond et un plancher. <b>Durée :</b> 1 séance.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">40-42</div>
+          <div class="num">41-43</div>
           <h4>🚗🚓🛍️ Les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Routes goudronnées, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -2848,6 +2895,14 @@ le porteur ramasse 3 troncs ; la scierie a de la place pour 2 :
         <textarea class="journal" id="village-appris-39" data-cle="village-appris-39" placeholder="Ex. : J'ai appris ce qu'est une optimisation…"></textarea>
         <label for="village-idees-39"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-39" data-cle="village-idees-39" placeholder="Ex. : Des porteurs qui enchaînent plusieurs livraisons…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 40 · gibier, université unique, entrepôts 2, un seul logement <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les naissances proportionnelles au nombre d'animaux et l'arrivée d'animaux pour une espèce presque disparue (événement <code>gibier-arrive</code>), la liste des bâtiments uniques (grisés dans le menu), l'agrandissement de chaque entrepôt secondaire (événement <code>depot-agrandi</code>), la hutte comme seul logement à construire.</p>
+        <label for="village-appris-40"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-40" data-cle="village-appris-40" placeholder="Ex. : J'ai appris qu'une population grandit plus vite quand elle est nombreuse…"></textarea>
+        <label for="village-idees-40"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-40" data-cle="village-idees-40" placeholder="Ex. : Une réserve de chasse protégée…"></textarea>
       </div>
     </section>
   </main>

@@ -10,6 +10,9 @@
 //
 // De temps en temps (toutes les 20 s, sauf en hiver), un nouvel animal naît dans une forêt,
 // tant qu'il y en a moins de 40 sur la carte.
+// Étape 40 : ✍️ « le chasseur ne devrait jamais être en rupture de gibier, il doit se renouveler seul ». Choix de Maxance :
+// des naissances PARTOUT, et plus il y a d'animaux, plus il en naît (chaque animal a 20 % de chances par minute d'avoir
+// un petit, 6 % en hiver). Et si une espèce n'a presque plus d'animaux, de nouveaux arrivent dans son habitat.
 
 window.Village = window.Village || {};
 
@@ -105,17 +108,34 @@ Village.Animaux = (function () {
       }
     }
 
-    // Les naissances (pas en hiver)
-    if (monde.saison && monde.saison.hiver) return;
+    // Les naissances (étape 40 : partout, et plus il y a d'animaux, plus il en naît)
+    const A = C.animaux, hiver = monde.saison && monde.saison.hiver;
+    monde.naissancesAVenir = (monde.naissancesAVenir || 0) + (dt / 60) * monde.animaux.length * (hiver ? A.feconditeHiver : A.fecondite);
+    while (monde.naissancesAVenir >= 1) {
+      monde.naissancesAVenir--;
+      if (monde.animaux.length >= A.maximum || !monde.animaux.length) break;
+      // Un petit naît à côté d'un animal de la même sorte (il faut des parents !)
+      const parent = monde.animaux[Math.floor(Math.random() * monde.animaux.length)];
+      const petit = creer(monde, parent.x + (Math.random() - 0.5), parent.y + (Math.random() - 0.5), parent.sorte);
+      if (!bonneCase(monde, Math.floor(petit.x), Math.floor(petit.y), petit.sorte)) { petit.x = parent.x; petit.y = parent.y; }
+      radio.emettre("animal-ne", { sorte: parent.sorte, colonne: Math.floor(petit.x), ligne: Math.floor(petit.y), total: monde.animaux.length });
+    }
+    // Une espèce presque disparue : de nouveaux animaux arrivent (toutes les 20 s au plus)
     minuteurNaissance -= dt;
-    if (minuteurNaissance > 0 || monde.animaux.length >= C.animaux.maximum) return;
-    minuteurNaissance = C.animaux.naissance;
-    // Un petit naît à côté d'un animal de la même sorte (il faut des parents !)
-    if (!monde.animaux.length) return;
-    const parent = monde.animaux[Math.floor(Math.random() * monde.animaux.length)];
-    const petit = creer(monde, parent.x + (Math.random() - 0.5), parent.y + (Math.random() - 0.5), parent.sorte);
-    if (!bonneCase(monde, Math.floor(petit.x), Math.floor(petit.y), petit.sorte)) { petit.x = parent.x; petit.y = parent.y; }
-    radio.emettre("animal-ne", { sorte: parent.sorte, colonne: Math.floor(petit.x), ligne: Math.floor(petit.y), total: monde.animaux.length });
+    if (minuteurNaissance > 0) return;
+    minuteurNaissance = 20;
+    const k = monde.carte;
+    for (const sorte of Object.keys(C.especes)) {
+      const n = monde.animaux.filter((a) => a.sorte === sorte).length;
+      if (n >= A.minimumEspece || monde.animaux.length >= A.maximum) continue;
+      let venus = 0;
+      for (let essai = 0; essai < 400 && venus < A.minimumEspece - n; essai++) {
+        const c = Math.floor(Math.random() * k.colonnes), l = Math.floor(Math.random() * k.lignes);
+        if (Math.hypot(c - k.village.colonne, l - k.village.ligne) < 6 || !bonBerceau(monde, c, l, sorte)) continue;
+        creer(monde, c + 0.5, l + 0.5, sorte); venus++;
+      }
+      if (venus) radio.emettre("gibier-arrive", { sorte, nombre: venus, total: monde.animaux.length });
+    }
   }
 
   // Le chasseur cherche : quel animal (pas encore visé) est sur cette case ?

@@ -88,6 +88,7 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("cabane-attend", (d) => afficher("👥 " + d.nom + " : personne pour y travailler. " + (Village.monde && !Village.Logement.placeLibre(Village.monde) ? "Il faut des lits (🛖 hutte, 🏠 maison) !" : "Un villageois va arriver.")));
   Village.Evenements.ecouter("amelioration", (d) => afficher("⬆️ " + d.batiment + " : " + d.emoji + " " + d.nom + " ! (" + d.bonus + " % plus rapide)"));
   Village.Evenements.ecouter("amelioration-impossible", (d) => afficher("🚫 " + d.nom + " : " + d.raison));
+  Village.Evenements.ecouter("depot-agrandi", (d) => afficher("🏗️ Entrepôt secondaire agrandi : " + d.places + " porteurs !")); // étape 40
   Village.Evenements.ecouter("entrepot-agrandi", (d) => afficher("🏗️ Entrepôt agrandi : " + d.places + " places de manutentionnaire !"));
   Village.Evenements.ecouter("froid", () => afficher("🥶 Plus de bois de chauffage : tout le monde a froid (20 % moins vite) !"));
   Village.Evenements.ecouter("reserve-agrandie", (d) => afficher("📦 Réserve agrandie : niveau " + d.niveau + ", " + d.capacite + " places !"));
@@ -153,8 +154,9 @@ Village.Interface = (function () {
     const elements = (g.batiments || []).map((type) => ({
           action: "construire", valeur: type, emoji: B.TYPES[type].emoji, nom: B.TYPES[type].court, touche: B.A_CONSTRUIRE.indexOf(type) < 7 ? String(B.A_CONSTRUIRE.indexOf(type) + 1) : "",
           cout: B.offert(monde, type) ? "🎁 offert" : B.coutPour(monde, type), // étape 12 : le coup de pouce ; étape 17 : un prix dessiné
-          choisi: monde.construction === type, possible: B.assezPour(monde, type) && Village.Ages.debloque(monde, type),
-          verrou: Village.Ages.debloque(monde, type) ? null : "🔒 " + C.ages[Village.Ages.ageDe(type)].emoji + " " + C.ages[Village.Ages.ageDe(type)].nom.replace(/^(Le|La) /, ""), // étape 6
+          choisi: monde.construction === type, possible: B.assezPour(monde, type) && Village.Ages.debloque(monde, type) && !B.limiteAtteinte(monde, type),
+          // Étape 40 : ✍️ une seule université, un seul marché : une fois construit, il est grisé
+          verrou: B.limiteAtteinte(monde, type) && Village.Ages.debloque(monde, type) ? (type === "depot" ? "✅ " + C.depot.max + " / " + C.depot.max : "✅ déjà construit") : Village.Ages.debloque(monde, type) ? null : "🔒 " + C.ages[Village.Ages.ageDe(type)].emoji + " " + C.ages[Village.Ages.ageDe(type)].nom.replace(/^(Le|La) /, ""), // étape 6
         })).concat((g.outils || []).map((o) => ({ action: "outil", valeur: o.id, emoji: o.emoji, icone: o.icone, nom: o.nom, touche: o.touche, cout: o.cout || "", choisi: monde.outil === o.id, possible: !o.verrou, verrou: o.verrou || null })));
     const lc = petit ? 74 : 84, hc = petit ? 74 : 84, ec = 8;
     // Étape 8 : trop de cartes pour la largeur de l'écran ? On les range sur 2 rangées.
@@ -917,7 +919,7 @@ Village.Interface = (function () {
       { id: "nourriture", emoji: "🍖", nom: "Nourriture", batiments: ["pecheur", "chasseur", "ferme", "moulin", "boulangerie", "laiterie", "fromagerie", "cremerie", "charcuterie"] }, // étape 15 et 16 : les produits de l'élevage // étape 11 : le pain
       { id: "elevage", emoji: "🐄", nom: "Élevage", batiments: ["puits", "faneur", "etable", "poulailler", "bergerie", "porcherie", "veterinaire"] }, // étape 15 et 16
       // Étape 8 : les logements, et les artisans (fonderie, forge, marché, université)
-      { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "maison", "macon"] }, // étape 12 : le maçon-couvreur
+      { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "macon"] }, // étape 12 : le maçon-couvreur ; étape 40 : ✍️ un seul logement (la hutte devient maison toute seule)
       { id: "industrie", emoji: "🏭", nom: "Industrie", batiments: ["centrale", "acierie", "filature", "pompage", "epuration"] }, // étape 34 ; étape 35
       { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite", "monument"] }, // étape 31 : le monument // étape 16 : la laine et les habits
       // Étape 7 : le chemin de terre, et la route en pierre (débloquée par la recherche « Routes pavées »)
@@ -1151,8 +1153,9 @@ Village.Interface = (function () {
   //   3. son NIVEAU et ses améliorations (les boutons).
   // Une ligne : { t (texte), c (couleur), g (gras) } ; ou { titre } ; ou { barre (0 à 1), t } ; ou { recette, hiver }.
   let monumentBouton = null; // étape 31
+  let depotBouton = null; // étape 40
   function panneauBatiment(ctx, monde, b, x, y, l) {
-    monumentBouton = null;
+    monumentBouton = null; depotBouton = null;
     const B = Village.Batiments, type = B.TYPES[b.type], petit = Ec.petit;
     const lignes = [], pb = (t) => lignes.push({ t, c: "#c0392b", g: true }), info = (t, c) => lignes.push({ t, c: c || "#5a4220" }), titre = (t) => lignes.push({ titre: t });
     const o = b.ouvrier, pret = b.etat === "pret";
@@ -1222,6 +1225,11 @@ Village.Interface = (function () {
       titre("🏬 Un 2e point de départ pour les porteurs");
       info("🚚 " + ici.length + " / " + Village.Ameliorations.placesDe(monde, b) + " porteurs habitent ici" + (Village.Ameliorations.placesEnPlus(monde, b) ? " (dont " + Village.Ameliorations.placesEnPlus(monde, b) + " grâce aux bâtiments livrés)" : ""));
       info("📍 Il livre " + monde.batiments.filter((x) => x !== b && x.entrepotProche === b).length + " bâtiment(s) autour de lui");
+      // Étape 40 : son propre agrandissement
+      const nv = b.niveau || 1;
+      titre("⬆️ Ce que tu peux améliorer");
+      if (nv < C.depot.niveauMax) { info("🏗️ Agrandir cet entrepôt (niveau " + nv + " → " + (nv + 1) + " sur " + C.depot.niveauMax + ") : " + Village.Ameliorations.placesDe(monde, b) + " → " + (Village.Ameliorations.placesDe(monde, b) + C.depot.parNiveau) + " porteurs", "#7a4a10"); depotBouton = b; }
+      else info("🏗️ Cet entrepôt est au plus grand (niveau " + nv + ")", "#2e8a3a");
     } else if (C.logement[b.type]) {
       const Cl = Village.Classes, cl = Cl.fiche(Cl.classeDe(b.type)), ev = C.classes.evolution[b.type];
       titre(cl.emoji + " " + C.logement[b.type] + " " + cl.nom.toLowerCase() + " habitent ici" + (cl.impot ? " · " + cl.impot + " 🪙/min chacun" : ""));
@@ -1296,6 +1304,7 @@ Village.Interface = (function () {
     if (b.type === "entrepot" && pret && Am.niveau(monde) < C.entrepot.niveauMax) rangees.push("agrandir");
     if (prochaine) rangees.push("ameliorer");
     if (monumentBouton) rangees.push("monument"); // étape 31
+    if (depotBouton) rangees.push("depot"); // étape 40
     const hb = rangees.length * 40;
     const h = 36 + finales.reduce((a, li) => a + hauteur(li), 0) + 8 + hb;
     bulle(ctx, x, y, l, h);
@@ -1323,6 +1332,7 @@ Village.Interface = (function () {
     rangees.forEach((sorte, n) => {
       const by = y + h - hb + n * 40;
       if (sorte === "monument") bouton(ctx, x + 10, by, l - 20, 32, "🏛️ Donner ce que j'ai", "monument", b.numero, true, "#d98a1f"); // étape 31
+      if (sorte === "depot") { const p = Village.Ameliorations.prixAgrandirDepot(monde, b); bouton(ctx, x + 10, by, l - 20, 32, { avant: "🏗️ +" + C.depot.parNiveau + " porteurs ·", cout: Object.assign({}, p.ressources, p.pieces ? { pieces: p.pieces } : {}) }, "agrandirEntrepot", b.numero, !Village.Ameliorations.raisonAgrandirDepot(monde, b), "#d98a1f"); }
       if (sorte === "agrandir") { const p = Am.prixAgrandir(monde); bouton(ctx, x + 10, by, l - 20, 32, { avant: "2️⃣ 🏗️ +" + C.entrepot.parNiveau + " porteurs ·", cout: Object.assign({}, p.ressources, p.pieces ? { pieces: p.pieces } : {}) }, "agrandirEntrepot", true, !Am.raisonAgrandir(monde), "#d98a1f"); }
       if (sorte === "ameliorer") { const bloque = (monde.age || 0) < prochaine.age; bouton(ctx, x + 10, by, l - 20, 32, bloque ? "🔒 " + C.ages[prochaine.age].emoji + " " + C.ages[prochaine.age].nom : { avant: (b.type === "entrepot" ? "3️⃣ " + prochaine.emoji + " " : "⬆️ ") + prochaine.nom + " ·", cout: prochaine.cout }, "ameliorer", b.numero, !Am.raison(monde, b), "#8a5ab0"); }
     });

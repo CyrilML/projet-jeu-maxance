@@ -67,7 +67,8 @@ Village.Ameliorations = (function () {
   // Étape 24 : ✍️ + 1 place pour 4 bâtiments livrés par cet entrepôt (le travail fait venir des porteurs)
   const servis = (monde, e) => monde.batiments.filter((b) => b !== e && b.entrepotProche === e && b.etat === "pret" && (Village.Batiments.TYPES[b.type].metier || C.ateliers[b.type])).length;
   const placesEnPlus = (monde, e) => Math.floor(servis(monde, e) / C.depot.parBatiments);
-  const placesDe = (monde, e) => (e.type === "depot" ? C.depot.porteurs : placesPrincipal(monde)) + placesEnPlus(monde, e);
+  // Étape 40 : un entrepôt secondaire agrandi a C.depot.parNiveau places de plus par niveau
+  const placesDe = (monde, e) => (e.type === "depot" ? C.depot.porteurs + C.depot.parNiveau * ((e.niveau || 1) - 1) : placesPrincipal(monde)) + placesEnPlus(monde, e);
   const placesPorteurs = (monde) => monde.batiments.filter((b) => Village.Routes.estEntrepot(b)).reduce((n, e) => n + placesDe(monde, e), 0);
   function prixAgrandir(monde) {
     const f = Math.pow(E.facteurPrix, niveau(monde) - 1), ressources = {};
@@ -89,5 +90,29 @@ Village.Ameliorations = (function () {
     return true;
   }
 
-  return { servis, placesEnPlus, liste, suivante, bonus, vitessePorteurs, raison, ameliorer, niveau, placesPorteurs, placesDe, placesPrincipal, prixAgrandir, raisonAgrandir, agrandir };
+  // Étape 40 : ✍️ « le 2e entrepôt s'améliore-t-il en même temps que le premier ? Sinon, il faut pouvoir l'améliorer ».
+  // Choix de Maxance : un bouton « Agrandir » dans CHAQUE entrepôt secondaire, avec son propre prix.
+  const D = C.depot;
+  function prixAgrandirDepot(monde, b) {
+    const f = Math.pow(D.facteurPrix, (b.niveau || 1) - 1), ressources = {};
+    for (const [r, n] of Object.entries(D.prix)) ressources[r] = Math.round(n * f);
+    return { ressources, pieces: (monde.age || 0) >= 2 ? Math.round(D.prixPieces * f) : 0 };
+  }
+  function raisonAgrandirDepot(monde, b) {
+    if (b.etat !== "pret") return "il n'est pas fini";
+    if ((b.niveau || 1) >= D.niveauMax) return "cet entrepôt est au plus grand";
+    const p = prixAgrandirDepot(monde, b);
+    return manque(monde, p.ressources, p.pieces);
+  }
+  function agrandirDepot(monde, b) {
+    const pourquoi = raisonAgrandirDepot(monde, b);
+    if (pourquoi) { radio.emettre("amelioration-impossible", { nom: "Agrandir l'entrepôt secondaire", raison: pourquoi }); return false; }
+    const p = prixAgrandirDepot(monde, b);
+    payer(monde, p.ressources, p.pieces);
+    b.niveau = (b.niveau || 1) + 1;
+    radio.emettre("depot-agrandi", { numero: b.numero, niveau: b.niveau, places: placesDe(monde, b), cout: p.ressources, pieces: p.pieces });
+    return true;
+  }
+
+  return { prixAgrandirDepot, raisonAgrandirDepot, agrandirDepot, servis, placesEnPlus, liste, suivante, bonus, vitessePorteurs, raison, ameliorer, niveau, placesPorteurs, placesDe, placesPrincipal, prixAgrandir, raisonAgrandir, agrandir };
 })();

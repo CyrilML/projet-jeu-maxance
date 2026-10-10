@@ -53,7 +53,7 @@ Village.Conseiller = (function () {
 
     // 2. Les lits : sans lit, pas de nouvel ouvrier
     const hab = Village.Logement.habitants(monde), lits = Village.Logement.capacite(monde);
-    if (hab >= lits) ajouter(2, "🛏️", "Plus un seul lit libre", "Un nouveau bâtiment n'aura pas d'ouvrier tant qu'il n'y a pas de place pour dormir.", Village.Ages.debloque(monde, "maison") && disponible(monde, "pierres") >= 6 ? "maison" : "hutte");
+    if (hab >= lits) ajouter(2, "🛏️", "Plus un seul lit libre", "Un nouveau bâtiment n'aura pas d'ouvrier tant qu'il n'y a pas de place pour dormir.", "hutte"); // étape 40 : un seul logement à construire
 
     // 3. Les ateliers qui attendent un ingrédient que personne ne fabrique assez
     for (const ch of chaines(monde)) for (const [r, n] of Object.entries(ch.manque)) {
@@ -77,7 +77,7 @@ Village.Conseiller = (function () {
       const r = Object.keys(C.ressources).find((q) => o.texte.startsWith(B().NOMS_RESSOURCES[q] + " dans"));
       if (r) { const p = producteur(monde, r); ajouter(1, "🎯", "Objectif : " + o.cible + " " + res(r) + " (tu en as " + o.valeur + ")", p ? (combien(monde, p) ? "Un " + nom(p) + " de plus irait plus vite." : "Il te faut un " + nom(p) + ".") : "", p); }
       else if (o.texte.startsWith("🎓")) ajouter(1, "🎯", "Objectif : " + o.cible + " recherches (" + o.valeur + " faites)", combien(monde, "universite") ? "Touche l'université et lance une recherche." : "Il te faut une université.", combien(monde, "universite") ? null : "universite");
-      else if (o.texte.startsWith("🛏️")) ajouter(1, "🎯", "Objectif : " + o.cible + " habitants (" + o.valeur + ")", "Des lits : des maisons ou des huttes.", Village.Ages.debloque(monde, "maison") ? "maison" : "hutte");
+      else if (o.texte.startsWith("🛏️")) ajouter(1, "🎯", "Objectif : " + o.cible + " habitants (" + o.valeur + ")", "Des lits : des huttes (elles deviennent des maisons toutes seules).", "hutte");
       else if (o.texte.startsWith("🪙")) ajouter(1, "🎯", "Objectif : " + o.cible + " 🪙 (" + o.valeur + ")", combien(monde, "marche") ? "Vends ce que tu as en trop au marché (bijoux, outils…)." : "Construis un marché pour vendre.", combien(monde, "marche") ? null : "marche");
       else if (o.texte.startsWith("😊")) ajouter(1, "🎯", "Objectif : bonheur à " + o.cible + " % (" + o.valeur + " %)", "Des goûts variés (douceurs), des maisons, du pain, des habits : touche 😊 pour le détail.", null);
       else if (o.texte.startsWith("🐟")) ajouter(1, "🎯", "Objectif : " + o.cible + " 🐟 + 🍖 en réserve (" + o.valeur + ")", "Plus de pêcheurs et de chasseurs.", "pecheur");

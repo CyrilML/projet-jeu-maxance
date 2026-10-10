@@ -137,7 +137,7 @@
         else if (z.action === "valider") i.valider = true; // étape 12
         else if (z.action === "annulerProjet") i.annulerProjet = true;
         else if (z.action === "ameliorer") i.ameliorer = z.valeur; // étape 13
-        else if (z.action === "agrandirEntrepot") i.agrandirEntrepot = true;
+        else if (z.action === "agrandirEntrepot") i.agrandirEntrepot = z.valeur || true; // étape 40 : le numéro d'un entrepôt secondaire
         else if (z.action === "construire") { i.construire = z.valeur; Village.Interface.fermerMenu(); }
         else if (z.action === "construireConseil") { i.construire = z.valeur; Village.Interface.fermerPanneau(); Village.Interface.fermerMenu(); } // étape 29 : depuis le conseiller
         else if (z.action === "outil") { i.outil = z.valeur; Village.Interface.fermerMenu(); }

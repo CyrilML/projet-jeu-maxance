@@ -289,7 +289,7 @@ Village.Monde = (function () {
     if (intentions.absenceVue) monde.absence = null;
     // Étape 13 : améliorer un bâtiment, agrandir l'entrepôt
     if (intentions.ameliorer) { const b = monde.batiments.find((x) => x.numero === intentions.ameliorer); if (b) Village.Ameliorations.ameliorer(monde, b); }
-    if (intentions.agrandirEntrepot) Village.Ameliorations.agrandir(monde);
+    if (intentions.agrandirEntrepot) { const d = typeof intentions.agrandirEntrepot === "number" && monde.batiments.find((b) => b.numero === intentions.agrandirEntrepot && b.type === "depot"); if (d) Village.Ameliorations.agrandirDepot(monde, d); else Village.Ameliorations.agrandir(monde); } // étape 40 : un entrepôt secondaire
     const Pl = Village.Placement;
     if (intentions.construire) {
       // Appuyer 2 fois sur le même bouton = annuler.

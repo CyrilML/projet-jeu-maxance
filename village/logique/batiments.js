@@ -73,7 +73,7 @@ Village.Batiments = (function () {
     immeuble: { nom: "Immeuble", court: "Immeuble", emoji: "🏢", metier: null }, // étape 35 : une maison bourgeoise qui a évolué
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "maison", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot", "monument", "centrale", "acierie", "filature", "pompage", "epuration"];
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot", "monument", "centrale", "acierie", "filature", "pompage", "epuration"];
   // « 🪵 troncs », « 🔩 lingots »… (étape 8 : fabriqué à partir de config.js, « ressources »)
   const NOMS_RESSOURCES = {};
   for (const [r, f] of Object.entries(C.ressources)) NOMS_RESSOURCES[r] = f.emoji + " " + f.nom;
@@ -122,6 +122,13 @@ Village.Batiments = (function () {
   const casesDe = (b, k) => [[0, 0]].concat(b.emprise || []).map(([dc, dl]) => (b.ligne + dl) * (k || Village.monde.carte).colonnes + b.colonne + dc);
   function liberer(monde, b) { for (const i of casesDe(b, monde.carte)) if (monde.occupees.get(i) === b) monde.occupees.delete(i); }
   function occuper(monde, b) { for (const i of casesDe(b, monde.carte)) monde.occupees.set(i, b); }
+  // Étape 40 : peut-on encore en construire un ? (null = oui ; sinon la raison). Le monument, l'université et le marché :
+  // un seul par village (config.js : « uniques ») ; les entrepôts secondaires : 4 au plus.
+  function limiteAtteinte(monde, type) {
+    if (C.uniques.includes(type) && monde.batiments.some((b) => b.type === type)) return type === "monument" ? "la ville n'a qu'un seul grand monument" : (type === "universite" ? "une seule université par village (elle est déjà construite)" : "un seul marché par village (il est déjà construit)");
+    if (type === "depot" && monde.batiments.filter((b) => b.type === "depot").length >= C.depot.max) return "pas plus de " + C.depot.max + " entrepôts secondaires";
+    return null;
+  }
   // Une case est-elle libre pour construire ? (null = oui)
   function raisonCase(monde, c, l) {
     const carte = monde.carte;
@@ -143,8 +150,8 @@ Village.Batiments = (function () {
     const i = l * carte.colonnes + c;
     if (monde.occupees.has(i)) return "il y a déjà un bâtiment";
     // Étape 24 : ✍️ le maximum des entrepôts secondaires est vérifié dès l'aperçu (avant : seulement en validant !)
-    if (type === "monument" && monde.batiments.some((b) => b.type === "monument") && !(monde.projet && monde.projet.deplacer && monde.projet.deplacer.type === "monument")) return "la ville n'a qu'un seul grand monument"; // étape 31
-    if (type === "depot" && monde.batiments.filter((b) => b.type === "depot").length >= C.depot.max && !(monde.projet && monde.projet.deplacer && monde.projet.deplacer.type === "depot")) return "pas plus de " + C.depot.max + " entrepôts secondaires";
+    const limite = limiteAtteinte(monde, type);
+    if (limite && !(monde.projet && monde.projet.deplacer && monde.projet.deplacer.type === type)) return limite; // étape 31 et 40
     // Étape 22 : les cases des champs et des enclos doivent être libres aussi
     for (const [dc, dl] of empriseDe(type)) { const r = raisonCase(monde, c + dc, l + dl); if (r) return "pas assez de place : il faut " + (1 + empriseDe(type).length) + " cases libres (" + r + ")"; }
     if (monde.route[i]) return "il y a une route (construis à côté)";
@@ -537,5 +544,5 @@ Village.Batiments = (function () {
     return n;
   }
 
-  return { tailleVoulue, tailleDe, blocDe, champsDe, ranger, empriseDe, casesDe, liberer, occuper, entreesDe, reparer, TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, coutPour, offert, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
+  return { limiteAtteinte, tailleVoulue, tailleDe, blocDe, champsDe, ranger, empriseDe, casesDe, liberer, occuper, entreesDe, reparer, TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, coutPour, offert, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
 })();

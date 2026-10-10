@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 40,
+  version: 41,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -200,7 +200,11 @@ Village.CONFIG = {
   // Étape 24 : ✍️ « même avec un 2e entrepôt, ça ne suffit pas ». La parade : chaque entrepôt gagne 1 place de porteur
   // pour 4 bâtiments qu'il livre (le travail fait venir des porteurs). Et 4 entrepôts secondaires au plus, chacun
   // 1,5 fois plus cher que le précédent.
-  depot: { porteurs: 3, max: 4, aide: 15, parBatiments: 4, prixEnPlus: 1.5 },
+  depot: { porteurs: 3, max: 4, aide: 15, parBatiments: 4, prixEnPlus: 1.5,
+    // Étape 40 : ✍️ chaque entrepôt secondaire a son bouton « Agrandir » : +2 porteurs par niveau, 4 niveaux au plus
+    parNiveau: 2, niveauMax: 4, prix: { planches: 40, pierres: 30 }, prixPieces: 40, facteurPrix: 2 },
+  // Étape 40 : ✍️ « une seule université peut être construite ; une fois faite, elle est grisée. Idem pour le marché. »
+  uniques: ["universite", "marche", "monument"],
 
   // Étape 8 : les ATELIERS transforment ce que les porteurs leur apportent (les RECETTES).
   //   entrees : ce qu'il faut pour UNE fabrication ; sorties : ce qui sort ; duree : en s ;
@@ -545,7 +549,11 @@ Village.CONFIG = {
   animaux: {
     depart: 160, // au début de la partie (24 avant l'étape 5 ; 40 avant l'étape 32)
     maximum: 280, // (40 avant l'étape 5 ; 70 avant l'étape 32)
-    naissance: 12, // s entre deux naissances (pas en hiver) (20 avant l'étape 5)
+    naissance: 12, // (avant l'étape 40 : s entre deux naissances)
+    // Étape 40 : ✍️ « le chasseur ne devrait jamais être en rupture de gibier ». Choix de Maxance : des naissances PARTOUT,
+    // et plus il y a d'animaux, plus il en naît : chaque animal a 20 % de chances par minute d'avoir un petit (6 % en
+    // hiver). Une espèce qui n'a presque plus d'animaux (moins de 6) en voit arriver de nouveaux dans son habitat.
+    fecondite: 0.2, feconditeHiver: 0.06, minimumEspece: 6,
     vitesse: 0.7, // cases par seconde
   },
 
@@ -580,7 +588,7 @@ Village.CONFIG = {
     // La suite (prévue, pas encore construite) : ce que chaque âge débloquera.
     // Étape 8 : le village débloque le fer, la fonderie, la forge, les maisons et le marché.
     //   pieces : 🪙 qu'il faut avoir ; habitants : ouvriers logés.
-    { id: "village", nom: "Le village", emoji: "🏡", debloque: ["mineFer", "fonderie", "forge", "maison", "marche", "laiterie", "veterinaire", "bergerie", "porcherie", "tisserand"], // étape 17 : le 2e entrepôt // étape 15 : le beurre et le vétérinaire ; étape 16 : la laine et les cochons
+    { id: "village", nom: "Le village", emoji: "🏡", debloque: ["mineFer", "fonderie", "forge", "marche", "laiterie", "veterinaire", "bergerie", "porcherie", "tisserand"], // étape 17 : le 2e entrepôt // étape 15 : le beurre et le vétérinaire ; étape 16 : la laine et les cochons
       objectifs: { batiments: 18, habitants: 16, recherches: 7, stock: { lingots: 10, outils: 10 }, pieces: 150 } },
     // Étape 11 : ✍️ le bourg, et c'est de plus en plus dur ! (chaque âge demande environ 2 fois plus)
     //   Le bourg ajoute 3 nouvelles choses à penser : le PAIN (les habitants en veulent), l'ENTRETIEN
@@ -687,7 +695,7 @@ Village.CONFIG = {
         { texte: "Construis une 🟤 mine de fer", batiment: "mineFer", nombre: 1, pourquoi: "Sur des paillettes rousses. Le fer, c'est le début des outils." },
         { texte: "Construis une 🔥 fonderie", batiment: "fonderie", nombre: 1, pourquoi: "Fer + charbon → lingots." },
         { texte: "Construis une ⚒️ forge", batiment: "forge", nombre: 1, pourquoi: "Lingots + planches → outils : les bâtiments du bourg en demandent." },
-        { texte: "Construis une 🏠 maison", batiment: "maison", nombre: 1, pourquoi: "Une maison loge 6 personnes, et donne du confort." },
+        { texte: "Fais devenir une 🛖 hutte une 🏠 maison", batiment: "maison", nombre: 1, pourquoi: "Une hutte devient une maison toute seule quand les artisans ont ce qu'ils veulent (3 goûts, du lait ou des œufs)." },
         { texte: "Construis un 🏪 marché", batiment: "marche", nombre: 1, pourquoi: "Pour vendre ce que tu as en trop, contre des pièces 🪙." },
         { texte: "Aie 10 outils", stock: "outils", nombre: 10, pourquoi: "C'est un des objectifs pour passer au bourg." },
         { texte: "Aie 16 habitants", habitants: 16, pourquoi: "Des maisons et des huttes." },
@@ -740,8 +748,8 @@ Village.CONFIG = {
     geologue: "Le géologue fait le tour des mines : quand l'une est épuisée, il trouve une nouvelle veine sous elle, et elle repart.",
     universite: "Les savants y font des recherches qui rendent tout le village plus efficace.",
     mineCharbon: "La mine creuse un puits dans un filon de charbon découvert.",
-    hutte: "Une petite maison de paille : 3 lits pour des paysans.",
-    maison: "Une vraie maison : 6 lits, et du confort pour les artisans.",
+    hutte: "Le logement qu'on construit : 3 lits pour des paysans. Au village, il devient tout seul une maison quand les artisans ont ce qu'ils veulent.",
+    maison: "Une hutte qui a grandi : 6 lits, et du confort pour les artisans. Elle deviendra une maison bourgeoise.",
     manoir: "La maison bourgeoise : 10 lits pour les bourgeois, qui paient de gros impôts.",
     mineFer: "La mine creuse un puits dans un filon de fer découvert.",
     fonderie: "La fonderie fond le minerai de fer avec du charbon : elle fait des lingots.",

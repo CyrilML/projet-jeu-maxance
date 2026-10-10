@@ -78,6 +78,8 @@ Village.SousLeCapot = (function () {
     habits: (d) => "👕 Habits neufs : " + d.pris + " habitant(s) sur " + d.besoin + " (il reste " + d.reste + " vêtements)", // étape 16
     "vaches-gueries": (d) => "💚 " + d.nom + " : " + d.animaux + " sont guéris (" + d.parQui + ", après " + d.duree + " s)",
     "bonheur-change": (d) => d.emoji + " Le village est maintenant " + d.humeur + " (bonheur " + d.valeur + " %) : vitesse × " + String(d.vitesse).replace(".", ",") + " · arrivées × " + String(d.arrivee).replace(".", ","),
+    "depot-agrandi": (d) => "🏗️ Entrepôt secondaire n° " + d.numero + " au niveau " + d.niveau + " : " + d.places + " places de porteurs", // étape 40
+    "gibier-arrive": (d) => Village.Animaux.NOMS[d.sorte].emoji + " Il ne restait presque plus de « " + d.sorte + " » : " + d.nombre + " arrivent dans leur habitat (" + d.total + " animaux en tout)", // étape 40
     "entrepot-agrandi": (d) => "🏗️ Entrepôt au niveau " + d.niveau + " : " + d.places + " places de manutentionnaire",
     // Étape 11 : le bourg, la réserve et les pubs
     "batiment-use": (d) => "🔧 " + d.nom + " n° " + d.numero + " est complètement usé : son ouvrier va 2 fois moins vite",
@@ -328,6 +330,7 @@ Village.SousLeCapot = (function () {
     for (const p of monde.porteurs) if (!p.parti) { habitants++; if (p.affame) affames++; }
     h += ligne("habitants · affamés · partis", habitants + " · " + affames + " · " + monde.partis);
     h += ligne("repas mangés par minute (environ)", virgule((habitants * 60) / Village.CONFIG.repas.intervalle, 1));
+    { const A = Village.CONFIG.animaux, hv = monde.saison && monde.saison.hiver; h += ligne("🍼 naissances par minute (" + Math.round((hv ? A.feconditeHiver : A.fecondite) * 100) + " % par animal" + (hv ? ", hiver" : "") + ")", virgule(monde.animaux.length * (hv ? A.feconditeHiver : A.fecondite), 1) + " · max " + A.maximum); } // étape 40
     for (const [sorte, n] of Object.entries(Village.Animaux.NOMS)) h += ligne(n.emoji + " " + n.nom.replace(/^une? /, "") + "s (" + Village.CONFIG.prises[sorte] + " 🍖 chacun)", monde.animaux.filter((a) => a.sorte === sorte).length);
     // Étape 8
     const Lg = Village.Logement;
