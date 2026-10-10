@@ -25,7 +25,7 @@ Tanks.Char = (function () {
       vitesse: 0, rotation: 0, // m/s, rad/s
       tourelle: 0, // l'angle de la tourelle PAR RAPPORT à la caisse
       hausse: 0, // l'angle du canon vers le haut
-      vie: K.vie, recharge: 0, detruit: false, depuisDetruit: 0,
+      vie: K.vie, vieMax: K.vie, soin: 0, recharge: 0, detruit: false, depuisDetruit: 0,
       chenilles: { gauche: 0, droite: 0 }, // m parcourus par chaque chenille (pour les faire défiler à l'écran)
       cible: null, // l'ennemi visé par la visée assistée (ou par l'ordinateur)
       touche: 0, // s depuis le dernier obus reçu (pour faire clignoter la barre de vie)

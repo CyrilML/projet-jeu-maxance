@@ -22,7 +22,7 @@ Tanks.Soldat = (function () {
     return {
       genre: "soldat", equipe, nom, joueur: !!joueur,
       x, z, y: T.hauteur(x, z), angle, vitesse: 0,
-      vie: joueur ? S.vieJoueur : S.vie, mort: false, depuisMort: 0,
+      vie: joueur ? S.vieJoueur : S.vie, vieMax: joueur ? S.vieJoueur : S.vie, soin: 0, mort: false, depuisMort: 0,
       arme: joueur ? "mitrailleuse" : "soldat", roquettes: false, recharge: 0, tir: 0, pas: 0, touche: 9,
       dansUnEngin: null,
     };

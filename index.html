@@ -188,6 +188,7 @@
       <a href="#etape64">Étape 64</a>
       <a href="#etape65">Étape 65</a>
       <a href="#etape66">Étape 66</a>
+      <a href="#etape67">Étape 67</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3920,6 +3921,40 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Pourquoi le son ne s'arrêtait pas tout seul ?</summary><p>Parce que le synthétiseur du navigateur continue de jouer tant qu'on ne lui dit pas d'arrêter, même si la page est cachée.</p></details>
     </section>
 
+    <section id="etape67">
+      <h2>💚 Étape 67 : plus de vie, et elle remonte toute seule <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Ton soldat tient 20 balles, ton tank 16 obus, et ta vie remonte si tu te mets à l'abri 5 secondes. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/67-plus-de-vie.md</code>.</p>
+          <ul>
+            <li>✍️ Plus de vie pour ton soldat ET ton tank.</li>
+            <li>✍️ 20 balles pour ton soldat (ton tank : 4 fois plus, 16 obus).</li>
+            <li>✍️ La vie remonte toute seule.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ En bas à gauche : une barre « 16 / 16 » pour ton tank, « 20 / 20 » pour ton soldat.</li>
+            <li>☐ Fais-toi toucher, puis cache-toi 5 s : « ➕ soin » apparaît et la barre remonte.</li>
+            <li>Vérifie « version 8 » en haut de la page du jeu.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>⏱️ Comment la vie remonte</h3>
+      <p>Chaque soldat et chaque tank a un petit chronomètre, <code>touche</code> : le temps depuis la dernière fois qu'il a été touché. Une balle le remet à 0. Quand il dépasse 5 s, le jeu remplit une petite réserve, <code>soin</code> : +2 par seconde pour ton soldat, +0,5 pour ton tank. Chaque fois que la réserve atteint 1, il la vide et te rend une balle (ou un obus). Une nouvelle balle remet le chronomètre à 0, et tout s'arrête. Regarde sous le capot : « soin dans … s ».</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>tanks/config.js</code>, mets <code>attente: 1</code> dans <code>soins</code> : tu te soignes presque tout de suite.</li>
+        <li>Mets <code>soldat: 10</code> : ton soldat se soigne à toute vitesse.</li>
+        <li>Mets <code>vieJoueur: 100</code> dans <code>soldats</code> : regarde les petits traits de la barre !</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de temps faut-il à ton soldat pour passer de 10 à 20 balles, s'il n'est pas touché ?</summary><p>5 s d'attente, puis 10 balles à 2 par seconde = 5 s. En tout : 10 secondes.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4862,6 +4897,15 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-66" data-cle="appris-66" placeholder="Ex. : J'ai appris que le navigateur prévient la page quand on change d'onglet…"></textarea>
         <label for="idees-66"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-66" data-cle="idees-66" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 67 · plus de vie, et elle remonte <span class="petit">· 9 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la vie de ton soldat et de ton tank (<code>config.js</code>), le soin automatique (<code>logique/monde.js</code>), les barres de vie (<code>affichage/tableau.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : soldat + tank, 20 balles, la vie remonte toute seule.</p>
+        <label for="appris-67"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-67" data-cle="appris-67" placeholder="Ex. : J'ai appris qu'un chronomètre décide quand la vie remonte…"></textarea>
+        <label for="idees-67"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-67" data-cle="idees-67" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
