@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 54,
+  version: 55,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -164,7 +164,13 @@ Village.CONFIG = {
     charcuterie: { cout: { planches: 12, pierres: 14, outils: 2 }, construction: 16 },
     // Étape 17 : ✍️ un 2e (et un 3e) ENTREPÔT, très cher : c'est un bâtiment stratégique
     depot: { cout: { planches: 120, pierres: 90, charbon: 20 }, construction: 40 },
-    monument: { cout: { planches: 80, pierres: 80, outils: 5 }, construction: 40 }, // étape 31 : ses fondations (puis 4 paliers)
+    monument: { cout: { planches: 80, pierres: 80, outils: 5 }, construction: 40 },
+    // Étape 58 : les GRANDS CHANTIERS de chaque âge (leurs fondations ; puis leurs paliers, voir « grandsChantiers »)
+    chefferie: { cout: { planches: 15, pierres: 10 }, construction: 20 },
+    chapelle: { cout: { planches: 40, pierres: 40 }, construction: 30 },
+    donjon: { cout: { planches: 60, pierres: 100, charbon: 10 }, construction: 40 },
+    cathedrale: { cout: { planches: 120, pierres: 200, outils: 10 }, construction: 60 },
+    gare: { cout: { planches: 200, pierres: 300, lingots: 40, outils: 20 }, construction: 80 }, // étape 31 : ses fondations (puis 4 paliers)
     centrale: { cout: { pierres: 200, lingots: 40, outils: 20 }, construction: 60 }, // étape 34
     acierie: { cout: { planches: 100, pierres: 150, lingots: 30, outils: 15 }, construction: 50 },
     filature: { cout: { planches: 120, pierres: 80, lingots: 20, outils: 10 }, construction: 45 }, // étape 19 : dès le hameau (sans lingots ni outils)
@@ -221,7 +227,7 @@ Village.CONFIG = {
     // Étape 40 : ✍️ chaque entrepôt secondaire a son bouton « Agrandir » : +2 porteurs par niveau, 4 niveaux au plus
     parNiveau: 2, niveauMax: 4, prix: { planches: 40, pierres: 30 }, prixPieces: 40, facteurPrix: 2 },
   // Étape 40 : ✍️ « une seule université peut être construite ; une fois faite, elle est grisée. Idem pour le marché. »
-  uniques: ["universite", "marche", "monument", "aeroport", "merveille", "stade", "spatial"], // étape 52 et 53 : un seul aéroport, une seule Grande Tour
+  uniques: ["universite", "marche", "monument", "aeroport", "merveille", "stade", "spatial", "chefferie", "chapelle", "donjon", "cathedrale", "gare"], // étape 58 : les grands chantiers // étape 52 et 53 : un seul aéroport, une seule Grande Tour
 
   // Étape 8 : les ATELIERS transforment ce que les porteurs leur apportent (les RECETTES).
   //   entrees : ce qu'il faut pour UNE fabrication ; sorties : ce qui sort ; duree : en s ;
@@ -320,6 +326,7 @@ Village.CONFIG = {
     monument: 5, // étape 31 : ✍️ « même 5 × 5 »
     centrale: 4, acierie: 4, filature: 4, // étape 34 : les usines
     pompage: 3, epuration: 3, immeuble: 2, gratteciel: 2, // étape 35 ; étape 55
+    chefferie: 3, chapelle: 3, donjon: 4, cathedrale: 5, gare: 5, // étape 58 : les grands chantiers
     commerce: 4, aeroport: 6, merveille: 6, // étape 52 et 53 : les très grands
     port: 5, stade: 5, spatial: 6, // étape 56 et 57
   },
@@ -619,31 +626,32 @@ Village.CONFIG = {
   //   batiments : construits (prêts) en plus de l'entrepôt ; stock : ce qu'il faut dans l'entrepôt ;
   //   nourriture : 🐟 + 🍖 dans l'entrepôt.
   ages: [
-    { id: "campement", nom: "Le campement", emoji: "🏕️", debloque: ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "hutte"],
-      objectifs: { batiments: 6, stock: { planches: 40, pierres: 20 }, nourriture: 30 } },
+    { id: "campement", nom: "Le campement", emoji: "🏕️", debloque: ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "hutte", "chefferie"],
+      // Étape 58 : ✍️ « pour passer chaque étape, un bâtiment difficile à construire, de plus en plus long » : chantier
+      objectifs: { batiments: 6, stock: { planches: 40, pierres: 20 }, nourriture: 30, chantier: "chefferie" } },
     // Étape 7 : le hameau débloque l'université (les recherches), la mine de charbon et le géologue.
     // Étape 15 : le hameau débloque aussi le début de l'élevage (le puits, le faneur et l'étable).
-    { id: "hameau", nom: "Le hameau", emoji: "🛖", debloque: ["geologue", "universite", "mineCharbon", "puits", "faneur", "etable", "poulailler", "depot"], // étape 19 : ✍️ l'entrepôt secondaire dès le hameau // étape 16 : le poulailler
-      objectifs: { batiments: 10, recherches: 3, stock: { planches: 80, charbon: 20 }, nourriture: 60 } },
+    { id: "hameau", nom: "Le hameau", emoji: "🛖", debloque: ["chapelle", "geologue", "universite", "mineCharbon", "puits", "faneur", "etable", "poulailler", "depot"], // étape 19 : ✍️ l'entrepôt secondaire dès le hameau // étape 16 : le poulailler
+      objectifs: { batiments: 10, recherches: 3, stock: { planches: 80, charbon: 20 }, nourriture: 60, chantier: "chapelle" } },
     // La suite (prévue, pas encore construite) : ce que chaque âge débloquera.
     // Étape 8 : le village débloque le fer, la fonderie, la forge, les maisons et le marché.
     //   pieces : 🪙 qu'il faut avoir ; habitants : ouvriers logés.
-    { id: "village", nom: "Le village", emoji: "🏡", debloque: ["mineFer", "fonderie", "forge", "marche", "laiterie", "veterinaire", "bergerie", "porcherie", "tisserand"], // étape 17 : le 2e entrepôt // étape 15 : le beurre et le vétérinaire ; étape 16 : la laine et les cochons
-      objectifs: { batiments: 18, habitants: 16, recherches: 7, stock: { lingots: 10, outils: 10 }, pieces: 150 } },
+    { id: "village", nom: "Le village", emoji: "🏡", debloque: ["donjon", "mineFer", "fonderie", "forge", "marche", "laiterie", "veterinaire", "bergerie", "porcherie", "tisserand"], // étape 17 : le 2e entrepôt // étape 15 : le beurre et le vétérinaire ; étape 16 : la laine et les cochons
+      objectifs: { batiments: 18, habitants: 16, recherches: 7, stock: { lingots: 10, outils: 10 }, pieces: 150, chantier: "donjon" } },
     // Étape 11 : ✍️ le bourg, et c'est de plus en plus dur ! (chaque âge demande environ 2 fois plus)
     //   Le bourg ajoute 3 nouvelles choses à penser : le PAIN (les habitants en veulent), l'ENTRETIEN
     //   (les bâtiments s'usent) et des HIVERS plus durs (il faut du bois de chauffage).
     // Étape 15 : le bourg débloque aussi le fromage et le yaourt ; pour passer à la ville, il faut des habitants HEUREUX.
-    { id: "bourg", nom: "Le bourg", emoji: "🏰", debloque: ["ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "fromagerie", "cremerie", "tailleur", "charcuterie"], // étape 16 : les vêtements et le jambon
-      objectifs: { batiments: 32, habitants: 34, recherches: 13, stock: { pain: 60, bijoux: 8, outils: 25, fromage: 15 }, pieces: 600, bonheur: 70 } },
+    { id: "bourg", nom: "Le bourg", emoji: "🏰", debloque: ["cathedrale", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "fromagerie", "cremerie", "tailleur", "charcuterie"], // étape 16 : les vêtements et le jambon
+      objectifs: { batiments: 32, habitants: 34, recherches: 13, stock: { pain: 60, bijoux: 8, outils: 25, fromage: 15 }, pieces: 600, bonheur: 70, chantier: "cathedrale" } },
     { id: "ville", nom: "La ville", emoji: "🏙️", debloque: ["monument"], // étape 31 : le grand monument
       // Étape 34 : ✍️ (choix de Maxance) pour l'époque industrielle : le Grand Beffroi fini, 80 habitants, 3 000 🪙
       objectifs: { monument: 4, habitants: 80, pieces: 3000 } },
     // Étape 34 : 🏭 l'ÉPOQUE INDUSTRIELLE : l'électricité, et les premières usines
-    { id: "industrie", nom: "L'époque industrielle", emoji: "🏭", debloque: ["centrale", "acierie", "filature", "pompage", "epuration"], // étape 35 : l'eau et les égouts
+    { id: "industrie", nom: "L'époque industrielle", emoji: "🏭", debloque: ["centrale", "acierie", "filature", "pompage", "epuration", "gare"], // étape 35 : l'eau et les égouts
       // Étape 48 : pour passer à l'époque moderne : une grande ville, riche, où presque tous les lits ont les 3 réseaux
       //   reseaux : % des lits qui ont ⚡ + 🚰 + 🚽 à la fois ; immeubles : immeubles debout
-      objectifs: { habitants: 150, pieces: 6000, reseaux: 90, immeubles: 2 } },
+      objectifs: { habitants: 150, pieces: 6000, reseaux: 90, immeubles: 2, chantier: "gare" } },
     // Étape 48 : 🌆 l'ÉPOQUE MODERNE : les services publics (l'école, l'hôpital, les pompiers, la police)
     { id: "moderne", nom: "L'époque moderne", emoji: "🌆", debloque: ["ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille"], // étape 52 et 53
       // Étape 53 : ✍️ l'objectif très long : la Grande Tour finie (6 paliers), un aéroport, 250 habitants, 20 000 🪙
@@ -735,6 +743,8 @@ Village.CONFIG = {
         { texte: "Construis un 🏹 chasseur", batiment: "chasseur", nombre: 1, pourquoi: "Deux sortes de nourriture, c'est plus sûr (et les habitants aiment varier)." },
         { texte: "Aie 40 planches", stock: "planches", nombre: 40, pourquoi: "C'est un des objectifs pour passer au hameau." },
         { texte: "Livre une commande 📦", commandes: 1, pourquoi: "Les commandes rapportent des pièces 🪙 : touche 📦 à droite." },
+        { texte: "Construis la 🛖 Grande Hutte du chef", batiment: "chefferie", nombre: 1, pourquoi: "Le grand chantier de cet âge : il faut le finir pour passer au suivant (menu 🏆 Chantiers)." }, // étape 58
+        { texte: "Finis la 🛖 Grande Hutte du chef (2 paliers)", chantier: "chefferie", pourquoi: "Touche-le et « Donner ce que j'ai » ; après chaque palier, les ouvriers ont des travaux à faire." },
       ],
       [ // 🛖 le hameau
         { texte: "Construis une 🎓 université", batiment: "universite", nombre: 1, pourquoi: "Les recherches rendent tout le monde plus rapide." },
@@ -744,6 +754,8 @@ Village.CONFIG = {
         { texte: "Construis une 🐄 étable", batiment: "etable", nombre: 1, pourquoi: "Le lait est une douceur : les habitants seront plus heureux." },
         { texte: "Aie 20 charbon", stock: "charbon", nombre: 20, pourquoi: "C'est un des objectifs pour passer au village." },
         { texte: "Fais 3 recherches", recherches: 3, pourquoi: "C'est un des objectifs pour passer au village." },
+        { texte: "Construis la 🔔 Chapelle", batiment: "chapelle", nombre: 1, pourquoi: "Le grand chantier de cet âge : il faut le finir pour passer au suivant (menu 🏆 Chantiers)." }, // étape 58
+        { texte: "Finis la 🔔 Chapelle (3 paliers)", chantier: "chapelle", pourquoi: "Touche-le et « Donner ce que j'ai » ; après chaque palier, les ouvriers ont des travaux à faire." },
       ],
       [ // 🏡 le village
         { texte: "Construis une 🟤 mine de fer", batiment: "mineFer", nombre: 1, pourquoi: "Sur des paillettes rousses. Le fer, c'est le début des outils." },
@@ -754,6 +766,8 @@ Village.CONFIG = {
         { texte: "Aie 10 outils", stock: "outils", nombre: 10, pourquoi: "C'est un des objectifs pour passer au bourg." },
         { texte: "Aie 16 habitants", habitants: 16, pourquoi: "Des maisons et des huttes." },
         { texte: "Aie 150 🪙", pieces: 150, pourquoi: "Commandes 📦 et marché 🏪." },
+        { texte: "Construis le 🏯 Donjon", batiment: "donjon", nombre: 1, pourquoi: "Le grand chantier de cet âge : il faut le finir pour passer au suivant (menu 🏆 Chantiers)." }, // étape 58
+        { texte: "Finis le 🏯 Donjon (3 paliers)", chantier: "donjon", pourquoi: "Touche-le et « Donner ce que j'ai » ; après chaque palier, les ouvriers ont des travaux à faire." },
       ],
       [ // 🏰 le bourg
         { texte: "Construis une 🌾 ferme", batiment: "ferme", nombre: 1, pourquoi: "Le blé : le début du pain (pas en hiver !)." },
@@ -764,6 +778,8 @@ Village.CONFIG = {
         { texte: "Construis une 🟡 mine d'or", batiment: "mineOr", nombre: 1, pourquoi: "Sur des paillettes dorées." },
         { texte: "Construis un 💍 orfèvre", batiment: "orfevre", nombre: 1, pourquoi: "Or + charbon → bijoux, qui valent très cher." },
         { texte: "Bonheur à 70 %", bonheur: 70, pourquoi: "Des goûts variés, des maisons, du pain, des habits : touche 😊." },
+        { texte: "Construis la ⛪ Cathédrale", batiment: "cathedrale", nombre: 1, pourquoi: "Le grand chantier de cet âge : il faut le finir pour passer au suivant (menu 🏆 Chantiers)." }, // étape 58
+        { texte: "Finis la ⛪ Cathédrale (4 paliers)", chantier: "cathedrale", pourquoi: "Touche-le et « Donner ce que j'ai » ; après chaque palier, les ouvriers ont des travaux à faire." },
       ],
       [ // 🏙️ la ville : le grand monument (étape 31) ; étape 34 : puis l'époque industrielle
         { texte: "Construis le 🏛️ Grand Beffroi", batiment: "monument", nombre: 1, pourquoi: "Le grand chantier de la ville (5 × 5 cases) : menu Artisans." },
@@ -790,6 +806,8 @@ Village.CONFIG = {
         { texte: "Fais monter 2 🏢 immeubles", batiment: "immeuble", nombre: 2, pourquoi: "Pour l'époque moderne." },
         { texte: "Aie 150 habitants", habitants: 150, pourquoi: "Pour l'époque moderne (avec 6 000 🪙)." },
         { texte: "Aie 6 000 🪙", pieces: 6000, pourquoi: "Pour l'époque moderne." },
+        { texte: "Construis la 🚉 Grande Gare", batiment: "gare", nombre: 1, pourquoi: "Le grand chantier de cet âge : il faut le finir pour passer au suivant (menu 🏆 Chantiers)." }, // étape 58
+        { texte: "Finis la 🚉 Grande Gare (5 paliers)", chantier: "gare", pourquoi: "Touche-le et « Donner ce que j'ai » ; après chaque palier, les ouvriers ont des travaux à faire." },
       ],
       [ // 🌆 l'époque moderne (étape 48) : les services publics
         { texte: "Fais la recherche 🛣️ Goudron et camions", recherche: "goudron", pourquoi: "À l'université : toutes les routes deviennent goudronnées, et les porteurs deviennent des camions." }, // étape 51
@@ -875,6 +893,11 @@ Village.CONFIG = {
     filature: "La filature (électrique) file la laine à la machine : 2 laines → 3 tissus.",
     pompage: "La station de pompage (au bord de l'eau, électrique) envoie l'eau courante dans des tuyaux sous les routes, jusqu'à " + 40 + " unités.",
     epuration: "La station d'épuration (électrique) nettoie les eaux usées qui arrivent par les égouts, sous les routes, jusqu'à " + 40 + " unités.",
+    chefferie: "La Grande Hutte du chef : le grand chantier du campement. 2 paliers ; il faut la finir pour passer au hameau.", // étape 58
+    chapelle: "La Chapelle : le grand chantier du hameau. 3 paliers ; il faut la finir pour passer au village.",
+    donjon: "Le Donjon : le grand chantier du village. 3 paliers ; il faut le finir pour passer au bourg.",
+    cathedrale: "La Cathédrale : le grand chantier du bourg. 4 paliers ; il faut la finir pour passer à la ville.",
+    gare: "La Grande Gare : le grand chantier de l'époque industrielle. 5 paliers ; il faut la finir pour passer à l'époque moderne.",
     port: "Le port (au bord de l'eau, électrique) : toutes les 90 s, un cargo vient acheter 30 de tes produits les plus abondants, 1,6 fois plus cher qu'au marché.", // étape 56
     stade: "Le stade (électrique) : un match toutes les 3 minutes. Des billets vendus (🪙), et du bonheur pour toute la ville pendant et après le match.",
     spatial: "Le centre spatial : le dernier grand chantier. 4 paliers pour construire une fusée… et la lancer dans l'espace !", // étape 57
@@ -946,6 +969,7 @@ Village.CONFIG = {
   // Étape 57 : 🚀 la FUSÉE : le centre spatial se construit comme un monument, en 4 paliers. Au dernier : le lancement !
   fusee: {
     nom: "La fusée",
+    durees: [600, 720, 900, 1200], // étape 58 : s de travaux après chaque palier donné
     compteARebours: 10, // s avant le décollage
     paliers: [
       { nom: "Le pas de tir", emoji: "🏗️", besoins: { pierres: 2000, lingots: 400, outils: 200 }, pieces: 5000, gemmes: 15, bonheur: 3 },
@@ -955,10 +979,46 @@ Village.CONFIG = {
     ],
   },
 
+  // Étape 58 : 🏆 les GRANDS CHANTIERS : un par âge, qu'il faut finir pour passer au suivant. Chacun se construit comme
+  // le Grand Beffroi (on donne, palier par palier), mais après chaque palier donné, les ouvriers ont « durees[n] »
+  // secondes de travaux. Chaque chantier est plus cher, a plus de paliers, et des travaux plus longs que le précédent.
+  //   🛖 la Grande Hutte du chef (campement) → 🔔 la Chapelle (hameau) → 🏯 le Donjon (village) → ⛪ la Cathédrale (bourg)
+  //   → 🏛️ le Grand Beffroi (ville) → 🚉 la Grande Gare (industrie) → 🗼 la Grande Tour (moderne) → 🚀 la fusée (métropole)
+  grandsChantiers: {
+    chefferie: { nom: "La Grande Hutte du chef", durees: [45, 75], paliers: [
+      { nom: "Les poteaux sculptés", emoji: "🪵", besoins: { troncs: 30, planches: 20 }, pieces: 0, gemmes: 2, bonheur: 1 },
+      { nom: "Le toit de chaume et le festin", emoji: "🍖", besoins: { planches: 30, pierres: 20, poissons: 15, viande: 15 }, pieces: 0, gemmes: 3, bonheur: 2 },
+    ] },
+    chapelle: { nom: "La Chapelle", durees: [90, 120, 150], paliers: [
+      { nom: "Les murs de pierre", emoji: "🧱", besoins: { pierres: 80, planches: 40 }, pieces: 0, gemmes: 3, bonheur: 1 },
+      { nom: "Le clocher", emoji: "🔔", besoins: { planches: 80, charbon: 30, pierres: 40 }, pieces: 0, gemmes: 3, bonheur: 2 },
+      { nom: "La fête du hameau", emoji: "🎉", besoins: { poissons: 40, viande: 40, planches: 40 }, pieces: 0, gemmes: 4, bonheur: 2 },
+    ] },
+    donjon: { nom: "Le Donjon", durees: [150, 200, 250], paliers: [
+      { nom: "Les fondations", emoji: "🧱", besoins: { pierres: 200, planches: 100 }, pieces: 100, gemmes: 4, bonheur: 2 },
+      { nom: "La grande tour carrée", emoji: "🏯", besoins: { pierres: 250, lingots: 30, outils: 15 }, pieces: 150, gemmes: 4, bonheur: 2 },
+      { nom: "Les bannières", emoji: "🚩", besoins: { tissu: 30, planches: 100, outils: 10 }, pieces: 200, gemmes: 5, bonheur: 3 },
+    ] },
+    cathedrale: { nom: "La Cathédrale", durees: [240, 300, 360, 420], paliers: [
+      { nom: "La nef", emoji: "🧱", besoins: { pierres: 400, planches: 200 }, pieces: 200, gemmes: 5, bonheur: 2 },
+      { nom: "Les deux tours", emoji: "⛪", besoins: { pierres: 400, lingots: 60, outils: 30 }, pieces: 300, gemmes: 5, bonheur: 3 },
+      { nom: "Les vitraux et la rosace", emoji: "🌈", besoins: { tissu: 60, bijoux: 15, lingots: 40 }, pieces: 400, gemmes: 6, bonheur: 3 },
+      { nom: "La grande messe", emoji: "🔔", besoins: { pain: 120, fromage: 30, vetements: 40 }, pieces: 600, gemmes: 8, bonheur: 4 },
+    ] },
+    gare: { nom: "La Grande Gare", durees: [360, 420, 480, 540, 600], paliers: [
+      { nom: "Les quais", emoji: "🧱", besoins: { pierres: 600, planches: 300 }, pieces: 500, gemmes: 6, bonheur: 2 },
+      { nom: "La grande verrière", emoji: "🪟", besoins: { lingots: 250, charbon: 200 }, pieces: 700, gemmes: 6, bonheur: 2 },
+      { nom: "L'horloge", emoji: "🕰️", besoins: { lingots: 100, outils: 80, bijoux: 20 }, pieces: 900, gemmes: 8, bonheur: 3 },
+      { nom: "La locomotive", emoji: "🚂", besoins: { lingots: 300, charbon: 400, outils: 60 }, pieces: 1200, gemmes: 10, bonheur: 3 },
+      { nom: "Le premier voyage", emoji: "🎫", besoins: { pain: 300, vetements: 120, jambon: 80 }, pieces: 1500, gemmes: 12, bonheur: 4 },
+    ] },
+  },
+
   // Étape 53 : 🗼 la GRANDE TOUR, la merveille de l'époque moderne (même règle que le Grand Beffroi : on donne quand on
   // veut, palier par palier). Des milliers de ressources : c'est l'objectif le plus long du jeu.
   merveille: {
     nom: "La Grande Tour",
+    durees: [600, 660, 720, 780, 840, 900], // étape 58
     paliers: [
       { nom: "Les fondations géantes", emoji: "🧱", besoins: { pierres: 1500, planches: 800, outils: 100 }, pieces: 2000, gemmes: 10, bonheur: 3 },
       { nom: "La charpente d'acier", emoji: "🏗️", besoins: { lingots: 600, charbon: 500, outils: 150 }, pieces: 3000, gemmes: 12, bonheur: 4 },
@@ -1002,6 +1062,7 @@ Village.CONFIG = {
   // de bonheur gagnés POUR TOUJOURS (bonheur).
   monument: {
     nom: "Le Grand Beffroi",
+    durees: [300, 360, 420, 480], // étape 58
     paliers: [
       { nom: "Les fondations sculptées", emoji: "🧱", besoins: { pierres: 200, planches: 120, outils: 15 }, pieces: 300, gemmes: 3, bonheur: 4 },
       { nom: "Les grands murs", emoji: "🏛️", besoins: { pierres: 300, lingots: 40, planches: 100, charbon: 60 }, pieces: 500, gemmes: 4, bonheur: 5 },

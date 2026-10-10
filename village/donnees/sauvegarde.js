@@ -80,12 +80,14 @@
 //                  reçoivent une veine de pierre sous elles.
 
 //  23 (étape 54) : les arbres coupés pas encore replantés (aReplanter). Une partie plus ancienne commence à 0.
+//  24 (étape 58) : pour chaque grand chantier, les secondes de travaux qui restent sur son palier (travaux). Une partie
+//                  plus ancienne n'a pas de travaux en cours : rien à convertir.
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 23;
+  const VERSION = 24;
   const radio = Village.Evenements;
 
   function vide() {
@@ -232,6 +234,7 @@ Village.Sauvegarde = (function () {
         if (b.evolution) d.evo = Math.round(b.evolution); // étape 18
         if (b.palier) d.palier = b.palier; // étape 31 : le monument
         if (b.dons && Object.keys(b.dons).length) d.dons = b.dons;
+        if (b.travaux > 0) d.travaux = Math.ceil(b.travaux); // étape 58
         if (b.malade) d.malade = Math.round(b.malade.depuis) || 1; // étape 15 : depuis combien de secondes
         if (b.etat === "chantier") { d.prix = b.prix; d.livre = b.livre; d.attendu = ajout(b.attendu, enCours.attendu.get(b)); } // étape 12 : le prix du chantier (il peut être offert)
         const o = b.ouvrier;

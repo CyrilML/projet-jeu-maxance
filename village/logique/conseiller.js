@@ -117,6 +117,18 @@ Village.Conseiller = (function () {
         if (p) ajouter(1, "🏛️", "Le monument attend " + n + " " + res(r), (combien(monde, p) ? "Un " + nom(p) + " de plus irait plus vite." : "Il te faut un " + nom(p) + "."), p);
       }
     }
+    // 11. Étape 58 : le grand chantier de l'âge en cours (il faut le finir pour passer au suivant)
+    const ch = (Village.Ages.actuel(monde).objectifs || {}).chantier;
+    if (ch) {
+      const T = B().TYPES[ch], f = Village.Monument.fiches()[ch], gc = monde.batiments.find((b) => b.type === ch);
+      if (!gc) ajouter(2, T.emoji, "Construis " + f.nom.charAt(0).toLowerCase() + f.nom.slice(1), "Le grand chantier de cet âge (" + f.paliers.length + " paliers) : il faut le finir pour passer à l'âge suivant.", ch);
+      else if (gc.etat === "pret" && Village.Monument.enTravaux(gc)) { if (!gc.relie) ajouter(3, T.emoji, f.nom + " : travaux en pause", "Pas de route : les ouvriers ne peuvent pas y aller.", null); }
+      else if (gc.etat === "pret" && Village.Monument.palierDe(gc)) for (const [r, n] of Object.entries(Village.Monument.reste(gc))) {
+        if (disponible(monde, r) > 0) { ajouter(2, T.emoji, f.nom + " attend tes dons", "Il y a du " + res(r) + " libre : touche-le et « Donner ce que j'ai ».", null); break; }
+        const p = producteur(monde, r);
+        if (p) { ajouter(1, T.emoji, f.nom + " attend " + n + " " + res(r), (combien(monde, p) ? "Un " + nom(p) + " de plus irait plus vite." : "Il te faut un " + nom(p) + "."), p); break; }
+      }
+    }
     // 10. Étape 52 et 53 : l'aéroport et la Grande Tour (à l'époque moderne)
     if (Village.Ages.debloque(monde, "merveille")) {
       const ae = monde.batiments.find((b) => b.type === "aeroport");

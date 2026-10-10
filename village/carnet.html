@@ -181,6 +181,7 @@
       <a href="#etape55">Étape 55</a>
       <a href="#etape56">Étape 56</a>
       <a href="#etape57">Étape 57</a>
+      <a href="#etape58">Étape 58</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2849,6 +2850,48 @@ après :  [ 📦 Merci de la part de la boulangère ]
       
     </section>
 
+    <section id="etape58">
+      <h2>🏆 Étape 58 : un grand chantier pour passer chaque âge <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Chaque âge a son bâtiment immense, de plus en plus long à construire : il faut le finir pour passer à l'âge suivant. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/56-grands-chantiers.md</code>.</p>
+          <ul><li>✍️ « Pour passer chaque étape, il faudrait construire un bâtiment difficile à construire et de plus en plus long. Cela augmentera la rétention du jeu. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ 📜 : le grand chantier de ton âge fait partie des objectifs.</li>
+            <li>☐ Le menu « 🏆 Chantiers » : les 8 grands chantiers, un par âge.</li>
+            <li>☐ Donne tout un palier : la barre « 🔨 Les ouvriers construisent ce palier » avance.</li>
+            <li>☐ Le bâtiment sort de terre palier par palier, avec des échafaudages.</li>
+            <li>Vérifie « version 55 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔧 Sous le capot : la rétention</h3>
+      <p>« Rétention », c'est le mot des créateurs de jeux pour dire : <strong>est-ce que le joueur revient ?</strong> Un objectif long, qu'on voit avancer petit à petit, donne envie de revenir voir où il en est. C'est pour ça que les travaux durent de plus en plus longtemps :</p>
+      <pre style="white-space: pre-wrap">🛖 Grande Hutte  ▓░            2 paliers · 45 s → 75 s
+🔔 Chapelle      ▓▓░           3 paliers · 1 min 30 → 2 min 30
+🏯 Donjon        ▓▓░           3 paliers · 2 min 30 → 4 min
+⛪ Cathédrale    ▓▓▓░          4 paliers · 4 → 7 min
+🏛️ Beffroi       ▓▓▓░          4 paliers · 5 → 8 min
+🚉 Grande Gare   ▓▓▓▓░         5 paliers · 6 → 10 min
+🗼 Grande Tour   ▓▓▓▓▓░        6 paliers · 10 → 15 min
+🚀 La fusée      ▓▓▓░          4 paliers · 10 → 20 min</pre>
+      <p>Pour le dessin, une astuce : on dessine le bâtiment <strong>fini</strong>, mais avec des ciseaux qui coupent tout ce qui est au-dessus de la hauteur déjà construite (<code>grandir</code>, dans <code>affichage/batisses.js</code>). Un seul dessin par bâtiment, et il « pousse » tout seul !</p>
+      <p>Les secondes de travaux qui restent sont <strong>sauvegardées</strong> : la sauvegarde passe en version 24.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Additionne les travaux de la Grande Tour : combien de minutes en tout ?</li>
+        <li>Coupe la route d'un chantier en travaux : que dit son panneau ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un palier de 7 minutes : la barre est à moitié. Combien de temps reste-t-il ?</summary><p>3 minutes et 30 secondes.</p></details>
+      <details class="question"><summary>Pourquoi les travaux s'arrêtent-ils sans route ?</summary><p>Parce que les ouvriers ne peuvent pas y aller : c'est la même règle que pour les ateliers.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -3178,8 +3221,14 @@ après :  [ 📦 Merci de la part de la boulangère ]
           <p>Le forestier replante selon les coupes ; 1 000 habitants et des gratte-ciel ; des cargos, des matchs, et une fusée dans l'espace.</p>
           <p class="apprend"><b>Tu apprends :</b> un compteur sauvegardé, une évolution de plus, trier une liste, une accélération. <b>Durée :</b> 2 séances.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">58</div>
+          <h4>🏆 Un grand chantier pour passer chaque âge <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>8 grands chantiers (un par âge), des paliers de plus en plus chers et des travaux de plus en plus longs.</p>
+          <p class="apprend"><b>Tu apprends :</b> la rétention, dessiner un bâtiment qui pousse. <b>Durée :</b> 1 séance.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">58…</div>
+          <div class="num">59…</div>
           <h4>🌌 Après la fusée : à toi d'imaginer <span class="etiquette">⏭️ à décider</span></h4>
           <p>Le camion de pompiers qui éteint le feu, des feux rouges, une base sur la Lune… Dis-moi !</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -3652,6 +3701,14 @@ après :  [ 📦 Merci de la part de la boulangère ]
         <textarea class="journal" id="village-appris-57" data-cle="village-appris-57" placeholder="Ex. : J'ai appris qu'au carré, ça accélère…"></textarea>
         <label for="village-idees-57"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-57" data-cle="village-idees-57" placeholder="Ex. : Une base sur la Lune…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 58 · un grand chantier pour passer chaque âge <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> 5 nouveaux grands chantiers (Grande Hutte, Chapelle, Donjon, Cathédrale, Grande Gare), les travaux après chaque palier (aussi pour le Beffroi, la Tour et la fusée), <code>grandir</code> pour le dessin, la sauvegarde en version 24.</p>
+        <label for="village-appris-58"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-58" data-cle="village-appris-58" placeholder="Ex. : J'ai appris ce qu'est la rétention…"></textarea>
+        <label for="village-idees-58"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-58" data-cle="village-idees-58" placeholder="Ex. : Accélérer les travaux avec des gemmes…"></textarea>
       </div>
     </section>
   </main>

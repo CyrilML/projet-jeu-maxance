@@ -77,6 +77,11 @@ Village.Batiments = (function () {
     aeroport: { nom: "Aéroport", court: "Aéroport", emoji: "✈️", metier: "contrôleur aérien" },
     merveille: { nom: "La Grande Tour", court: "Grande Tour", emoji: "🗼", metier: null }, // étape 53
     port: { nom: "Port", court: "Port", emoji: "⚓", metier: "docker" }, // étape 56
+    chefferie: { nom: "La Grande Hutte du chef", court: "Grande Hutte", emoji: "🛖", metier: null }, // étape 58 : les grands chantiers
+    chapelle: { nom: "La Chapelle", court: "Chapelle", emoji: "🔔", metier: null },
+    donjon: { nom: "Le Donjon", court: "Donjon", emoji: "🏯", metier: null },
+    cathedrale: { nom: "La Cathédrale", court: "Cathédrale", emoji: "⛪", metier: null },
+    gare: { nom: "La Grande Gare", court: "Gare", emoji: "🚉", metier: null },
     stade: { nom: "Stade", court: "Stade", emoji: "🏟️", metier: "gardien du stade" },
     spatial: { nom: "Centre spatial", court: "Spatial", emoji: "🚀", metier: null }, // étape 57
     manoir: { nom: "Maison bourgeoise", court: "Manoir", emoji: "🏡", metier: null }, // étape 18 : une maison qui a évolué
@@ -84,7 +89,7 @@ Village.Batiments = (function () {
     gratteciel: { nom: "Gratte-ciel", court: "Gratte-ciel", emoji: "🏙️", metier: null }, // étape 55 : un immeuble qui a évolué
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot", "monument", "centrale", "acierie", "filature", "pompage", "epuration", "ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille", "port", "stade", "spatial"];
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot", "monument", "centrale", "acierie", "filature", "pompage", "epuration", "ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille", "port", "stade", "spatial", "chefferie", "chapelle", "donjon", "cathedrale", "gare"];
   // « 🪵 troncs », « 🔩 lingots »… (étape 8 : fabriqué à partir de config.js, « ressources »)
   const NOMS_RESSOURCES = {};
   for (const [r, f] of Object.entries(C.ressources)) NOMS_RESSOURCES[r] = f.emoji + " " + f.nom;
@@ -136,7 +141,7 @@ Village.Batiments = (function () {
   // Étape 40 : peut-on encore en construire un ? (null = oui ; sinon la raison). Le monument, l'université et le marché :
   // un seul par village (config.js : « uniques ») ; les entrepôts secondaires : 4 au plus.
   function limiteAtteinte(monde, type) {
-    if (C.uniques.includes(type) && monde.batiments.some((b) => b.type === type)) return type === "monument" ? "la ville n'a qu'un seul grand monument" : type === "merveille" ? "il n'y a qu'une seule Grande Tour" : type === "aeroport" ? "un seul aéroport par ville (il est déjà construit)" : type === "stade" ? "un seul stade par ville" : type === "spatial" ? "un seul centre spatial" : (type === "universite" ? "une seule université par village (elle est déjà construite)" : "un seul marché par village (il est déjà construit)");
+    if (C.uniques.includes(type) && monde.batiments.some((b) => b.type === type)) return type === "monument" ? "la ville n'a qu'un seul grand monument" : type === "merveille" ? "il n'y a qu'une seule Grande Tour" : type === "aeroport" ? "un seul aéroport par ville (il est déjà construit)" : type === "stade" ? "un seul stade par ville" : type === "spatial" ? "un seul centre spatial" : Village.Monument.estChantier(type) ? "un seul grand chantier de ce type (il est déjà commencé)" : (type === "universite" ? "une seule université par village (elle est déjà construite)" : "un seul marché par village (il est déjà construit)");
     if (type === "depot" && monde.batiments.filter((b) => b.type === "depot").length >= C.depot.max) return "pas plus de " + C.depot.max + " entrepôts secondaires";
     return null;
   }
@@ -270,7 +275,7 @@ Village.Batiments = (function () {
       ameliorations: etat.ameliorations || 0, // étape 13 : combien d'améliorations faites (0, 1 ou 2)
       malade: etat.malade ? { depuis: etat.malade } : null, // étape 15 : une étable aux vaches malades { depuis (s) }
       niveau: etat.niveau || 1,
-      palier: etat.palier || 0, dons: Object.assign({}, etat.dons), // étape 31 : le monument (paliers construits, ce qu'on a déjà donné)
+      palier: etat.palier || 0, dons: Object.assign({}, etat.dons), travaux: etat.travaux || 0, // étape 58 : les travaux du palier en cours // étape 31 : le monument (paliers construits, ce qu'on a déjà donné)
       evolution: etat.evo || 0, // étape 18 : depuis combien de secondes les besoins de la classe suivante sont remplis // étape 13 : l'entrepôt qui s'agrandit : de 0 (tout neuf) à 1 (usé : 2 fois moins vite). Un 🔨 outil le répare.
     };
     monde.batiments.push(b);

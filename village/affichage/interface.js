@@ -49,7 +49,8 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("commande-arrivee", (d) => afficher("📦 " + d.emoji + " " + d.qui + " a besoin de " + d.nombre + " " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " (touche 📦)"));
   Village.Evenements.ecouter("commande-pas-assez", (d) => afficher("📦 Il manque encore " + d.manque + " " + Village.Batiments.NOMS_RESSOURCES[d.quoi]));
   Village.Evenements.ecouter("guide-etape", (d) => gagner("👣 Étape réussie : " + d.texte, [["pieces", d.pieces]]));
-  Village.Evenements.ecouter("monument-palier", (d) => gagner(d.emoji + " " + d.nom + " : construit !", [["pieces", d.pieces], ["gemmes", d.gemmes]])); // étape 31
+  Village.Evenements.ecouter("monument-palier", (d) => gagner(d.emoji + " " + d.nom + " : construit !", [["pieces", d.pieces], ["gemmes", d.gemmes]].filter(([, q]) => q > 0))); // étape 31
+  Village.Evenements.ecouter("palier-travaux", (d) => afficher("🔨 " + d.monument + " : tout est donné ! Les ouvriers construisent « " + d.nom + " » (" + (d.duree >= 60 ? Math.round(d.duree / 60) + " min" : d.duree + " s") + ")")); // étape 58
   Village.Evenements.ecouter("monument-rien", (d) => afficher((d.monument === C.merveille.nom ? "🗼" : "🏛️") + " Il n'y a rien de libre de ce que demande " + (d.monument === C.merveille.nom ? "la Grande Tour" : "le monument")));
   Village.Evenements.ecouter("cargo", (d) => afficher("⚓ Un cargo a acheté " + d.quantite + " " + EMO(d.quoi) + " : +" + d.gain + " 🪙")); // étape 56
   Village.Evenements.ecouter("match", (d) => afficher("🏟️ Coup d'envoi ! " + d.spectateurs + " spectateurs : +" + d.gain + " 🪙 de billets"));
@@ -386,10 +387,11 @@ Village.Interface = (function () {
     ["⛏️ Les mines", ["geologue", "mineCharbon", "mineFer", "mineOr"]],
     ["🍖 La nourriture", ["pecheur", "chasseur", "ferme", "moulin", "boulangerie", "laiterie", "fromagerie", "cremerie", "charcuterie"]],
     ["🐄 L'élevage", ["puits", "faneur", "etable", "poulailler", "bergerie", "porcherie", "veterinaire"]],
-    ["⚒️ Les artisans et la ville", ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite", "monument"]],
+    ["⚒️ Les artisans et la ville", ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite"]],
+    ["🏆 Les grands chantiers (un par âge)", ["chefferie", "chapelle", "donjon", "cathedrale", "monument", "gare", "merveille", "spatial"]], // étape 58
     ["🏭 L'industrie", ["centrale", "acierie", "filature", "pompage", "epuration"]], // étape 34 ; étape 35 : l'eau et les égouts
-    ["🌃 La métropole", ["port", "stade", "spatial"]], // étape 56 et 57
-    ["🌆 Les services publics", ["ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille"]], // étape 48 ; étape 52 et 53
+    ["🌃 La métropole", ["port", "stade"]], // étape 56 et 57
+    ["🌆 Les services publics", ["ecole", "hopital", "pompiers", "police", "commerce", "aeroport"]], // étape 48 ; étape 52 et 53
   ];
   function choisirEncy(t) { encyChoix = t; }
   function panneauEncyclopedie(ctx, monde, W, He, petit) {
@@ -958,9 +960,10 @@ Village.Interface = (function () {
       // Étape 8 : les logements, et les artisans (fonderie, forge, marché, université)
       { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "macon"] }, // étape 12 : le maçon-couvreur ; étape 40 : ✍️ un seul logement (la hutte devient maison toute seule)
       { id: "industrie", emoji: "🏭", nom: "Industrie", batiments: ["centrale", "acierie", "filature", "pompage", "epuration"] }, // étape 34 ; étape 35
-      { id: "metropole", emoji: "🌃", nom: "Métropole", batiments: ["port", "stade", "spatial"] }, // étape 56 et 57
-      { id: "services", emoji: "🌆", nom: "Services", batiments: ["ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille"] }, // étape 48 : l'époque moderne ; étape 52 et 53
-      { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite", "monument"] }, // étape 31 : le monument // étape 16 : la laine et les habits
+      { id: "metropole", emoji: "🌃", nom: "Métropole", batiments: ["port", "stade"] }, // étape 56 et 57
+      { id: "services", emoji: "🌆", nom: "Services", batiments: ["ecole", "hopital", "pompiers", "police", "commerce", "aeroport"] }, // étape 48 : l'époque moderne ; étape 52 et 53
+      { id: "chantiers", emoji: "🏆", nom: "Chantiers", batiments: ["chefferie", "chapelle", "donjon", "cathedrale", "monument", "gare", "merveille", "spatial"] }, // étape 58 : les grands chantiers
+      { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite"] }, // étape 31 : le monument // étape 16 : la laine et les habits
       // Étape 7 : le chemin de terre, et la route en pierre (débloquée par la recherche « Routes pavées »)
       // Étape 19 : ✍️ l'entrepôt secondaire est rangé avec les routes (le transport), dès le hameau
       { id: "route", nom: "Routes", batiments: ["depot"], outils: [
@@ -1282,16 +1285,23 @@ Village.Interface = (function () {
       if (ecurie) info("3️⃣ " + ecurie.emoji + " " + ecurie.nom +  " : les porteurs vont " + Math.round((ecurie.effet.porteurs - 1) * 100) + " % plus vite" + (ecurie.effet.charge ? " et portent " + Math.round((ecurie.effet.charge - 1) * 100) + " % de plus" : "") + ((monde.age || 0) < ecurie.age ? " (🔒 " + C.ages[ecurie.age].nom.toLowerCase() + ")" : ""), "#5a3a80");
       else if (Am2.liste(b).length) info("3️⃣ 🐴 L'écurie est construite : porteurs plus rapides ✅", "#2e8a3a");
       boutonsReserve = true;
-    } else if (b.type === "monument" || b.type === "merveille" || b.type === "spatial") { // étape 53 : la Grande Tour aussi ; étape 57 : la fusée
+    } else if (Village.Monument.estChantier(b.type)) { // étape 53 : la Grande Tour aussi ; étape 57 : la fusée ; étape 58 : tous les grands chantiers
       // Étape 31 : le palier en cours, et une barre par ressource demandée
-      const Mo = Village.Monument, Cm = b.type === "merveille" ? C.merveille : b.type === "spatial" ? C.fusee : C.monument, p = Mo.palierDe(b), n = Cm.paliers.length;
+      const Mo = Village.Monument, Cm = Mo.fiche(b), p = Mo.palierDe(b), n = Cm.paliers.length;
+      const age = C.ages.findIndex((a) => a.objectifs && (a.objectifs.chantier === b.type || (b.type === "monument" && a.objectifs.monument) || (b.type === "merveille" && a.objectifs.merveille)));
+      if (age >= 0 && age + 1 < C.ages.length) { const nm = C.ages[age + 1].nom; info("🏆 À finir pour passer " + (nm.startsWith("Le ") ? "au " + nm.slice(3) : nm.startsWith("La ") ? "à la " + nm.slice(3) : nm.startsWith("L'") ? "à l'" + nm.slice(2) : "à " + nm) + " " + C.ages[age + 1].emoji, "#5a3a80"); } // étape 58
       if (b.type === "spatial" && !p) info(b.partie || b.lanceA === undefined ? "🌌 La fusée est partie dans l'espace : tu as fini le jeu, bravo !" : "🚀 Décollage dans " + Math.max(0, Math.ceil(C.fusee.compteARebours - (monde.horloge - b.lanceA))) + " s…", "#2e8a3a");
-      titre((b.type === "merveille" ? "🗼" : b.type === "spatial" ? "🚀" : "🏛️") + " Palier " + Math.min(n, (b.palier || 0) + 1) + " / " + n + (p ? " : " + p.emoji + " " + p.nom : " : terminé !"));
-      if (p) {
+      titre(Village.Batiments.TYPES[b.type].emoji + " Palier " + Math.min(n, (b.palier || 0) + 1) + " / " + n + (p ? " : " + p.emoji + " " + p.nom : " : terminé !"));
+      if (p && Mo.enTravaux(b)) { // étape 58 : tout est donné, les ouvriers construisent
+        const duree = Mo.dureeDe(b);
+        lignes.push({ barre: 1 - b.travaux / duree, t: "🔨 Les ouvriers construisent ce palier : encore " + (b.travaux >= 60 ? Math.floor(b.travaux / 60) + " min " + Math.ceil(b.travaux % 60) + " s" : Math.ceil(b.travaux) + " s") + (b.relie ? "" : " (⚠️ en pause : pas de route !)") });
+        info("🎁 À la fin : " + (p.pieces ? "+" + p.pieces + " 🪙, " : "") + "+" + p.gemmes + " 💎, +" + p.bonheur + " de bonheur pour toujours", "#2e8a3a");
+      } else if (p) {
+        if (Mo.dureeDe(b)) info("⏳ Quand tout sera donné : " + (Mo.dureeDe(b) >= 60 ? Math.round(Mo.dureeDe(b) / 60) + " min" : Mo.dureeDe(b) + " s") + " de travaux", "#7a5a30"); // étape 58
         for (const [r, besoin] of Object.entries(p.besoins)) { const d = b.dons[r] || 0; lignes.push({ barre: d / besoin, t: C.ressources[r].emoji + " " + C.ressources[r].nom + " : " + d + " / " + besoin + " (libres : " + Math.max(0, Village.Porteurs.disponible(monde, r)) + ")" }); }
-        info("🎁 Récompense : +" + p.pieces + " 🪙, +" + p.gemmes + " 💎, +" + p.bonheur + " de bonheur pour toujours", "#2e8a3a");
+        info("🎁 Récompense : " + (p.pieces ? "+" + p.pieces + " 🪙, " : "") + "+" + p.gemmes + " 💎, +" + p.bonheur + " de bonheur pour toujours", "#2e8a3a");
         monumentBouton = b;
-      } else info("🎉 " + Cm.nom + " est fini" + (b.type === "merveille" ? "e : la merveille du monde !" : " : la fierté de la ville !") + " (+" + Mo.bonheur(monde, b.type) + " de bonheur)", "#2e8a3a");
+      } else info("🎉 " + Cm.nom + " : terminé" + (b.type === "merveille" ? ", la merveille du monde !" : ", la fierté de la ville !") + " (+" + Mo.bonheur(monde, b.type) + " de bonheur)", "#2e8a3a");
     } else if (b.type === "depot") {
       const ici = monde.porteurs.filter((p) => !p.parti && Village.Porteurs.maisonDe(monde, p) === b);
       titre("🏬 Un 2e point de départ pour les porteurs");
@@ -1408,7 +1418,7 @@ Village.Interface = (function () {
     }
     rangees.forEach((sorte, n) => {
       const by = y + h - hb + n * 40;
-      if (sorte === "monument") bouton(ctx, x + 10, by, l - 20, 32, (b.type === "merveille" ? "🗼" : "🏛️") + " Donner ce que j'ai", "monument", b.numero, true, "#d98a1f"); // étape 31
+      if (sorte === "monument") bouton(ctx, x + 10, by, l - 20, 32, Village.Batiments.TYPES[b.type].emoji + " Donner ce que j'ai", "monument", b.numero, true, "#d98a1f"); // étape 31
       if (sorte === "depot") { const p = Village.Ameliorations.prixAgrandirDepot(monde, b); bouton(ctx, x + 10, by, l - 20, 32, { avant: "🏗️ +" + C.depot.parNiveau + " porteurs ·", cout: Object.assign({}, p.ressources, p.pieces ? { pieces: p.pieces } : {}) }, "agrandirEntrepot", b.numero, !Village.Ameliorations.raisonAgrandirDepot(monde, b), "#d98a1f"); }
       if (sorte === "agrandir") { const p = Am.prixAgrandir(monde); bouton(ctx, x + 10, by, l - 20, 32, { avant: "2️⃣ 🏗️ +" + C.entrepot.parNiveau + " porteurs ·", cout: Object.assign({}, p.ressources, p.pieces ? { pieces: p.pieces } : {}) }, "agrandirEntrepot", true, !Am.raisonAgrandir(monde), "#d98a1f"); }
       if (sorte === "ameliorer") { const bloque = (monde.age || 0) < prochaine.age; bouton(ctx, x + 10, by, l - 20, 32, bloque ? "🔒 " + C.ages[prochaine.age].emoji + " " + C.ages[prochaine.age].nom : { avant: (b.type === "entrepot" ? "3️⃣ " + prochaine.emoji + " " : "⬆️ ") + prochaine.nom + " ·", cout: prochaine.cout }, "ameliorer", b.numero, !Am.raison(monde, b), "#8a5ab0"); }

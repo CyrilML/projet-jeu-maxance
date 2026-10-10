@@ -27,6 +27,7 @@ Village.Guide = (function () {
     if (e.logementsEau) return { valeur: Math.round(Village.Electricite.partLogements(monde, "eau") * 100), cible: e.logementsEau }; // étape 35
     if (e.logementsReseaux) return { valeur: Math.round(Village.Electricite.partLogements(monde, ["courant", "eau", "egout"]) * 100), cible: e.logementsReseaux }; // étape 48
     if (e.logementsService) return { valeur: Math.round(Village.Services.part(monde, e.logementsService) * 100), cible: e.cible };
+    if (e.chantier) return { valeur: Village.Monument.paliersFaits(monde, e.chantier), cible: e.paliers || Village.Monument.fiches()[e.chantier].paliers.length }; // étape 58
     if (e.fusee) return { valeur: Village.Monument.paliersFaits(monde, "spatial"), cible: e.fusee }; // étape 57
     if (e.merveille) return { valeur: Village.Monument.paliersFaits(monde, "merveille"), cible: e.merveille }; // étape 53
     if (e.monument) return { valeur: Village.Monument.paliersFaits(monde), cible: e.monument }; // étape 31
