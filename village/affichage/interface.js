@@ -51,6 +51,11 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("guide-etape", (d) => gagner("👣 Étape réussie : " + d.texte, [["pieces", d.pieces]]));
   Village.Evenements.ecouter("monument-palier", (d) => gagner(d.emoji + " " + d.nom + " : construit !", [["pieces", d.pieces], ["gemmes", d.gemmes]])); // étape 31
   Village.Evenements.ecouter("monument-rien", (d) => afficher((d.monument === C.merveille.nom ? "🗼" : "🏛️") + " Il n'y a rien de libre de ce que demande " + (d.monument === C.merveille.nom ? "la Grande Tour" : "le monument")));
+  Village.Evenements.ecouter("cargo", (d) => afficher("⚓ Un cargo a acheté " + d.quantite + " " + EMO(d.quoi) + " : +" + d.gain + " 🪙")); // étape 56
+  Village.Evenements.ecouter("match", (d) => afficher("🏟️ Coup d'envoi ! " + d.spectateurs + " spectateurs : +" + d.gain + " 🪙 de billets"));
+  Village.Evenements.ecouter("match-fini", (d) => afficher("🏟️ Fin du match : " + d.score[0] + " à " + d.score[1] + (d.score[0] > d.score[1] ? ", la ville gagne ! 🎉" : d.score[0] === d.score[1] ? ", match nul" : ", perdu… la prochaine fois !")));
+  Village.Evenements.ecouter("fusee-compte", (d) => afficher("🚀 Compte à rebours : " + d.secondes + "… 9… 8… regarde le centre spatial !")); // étape 57
+  Village.Evenements.ecouter("fusee-lancee", () => { message = { texte: "🚀🌌 La fusée est partie dans l'espace ! Bravo, ta ville a réussi l'impossible !", jusqua: performance.now() + 12000 }; });
   Village.Evenements.ecouter("touristes", (d) => afficher("✈️ Des touristes sont arrivés en avion : +" + d.gain + " 🪙")); // étape 52
   Village.Evenements.ecouter("partie-remise-a-zero", () => setTimeout(() => afficher("🆕 Nouvelle partie : une carte immense de 256 × 256 cases !"), 800)); // étape 32
   // Étape 33 : ✍️ « à chaque évolution, on explique quel bâtiment fait quoi » : l'encyclopédie s'ouvre sur les nouveautés
@@ -376,13 +381,14 @@ Village.Interface = (function () {
   // passage à un nouvel âge, sur les nouveaux bâtiments.
   let encyChoix = null, encyFiltre = null;
   const GROUPES_ENCY = [
-    ["🏠 Le cœur et les maisons", ["entrepot", "depot", "hutte", "maison", "manoir", "immeuble", "macon"]], // étape 35 : l'immeuble
+    ["🏠 Le cœur et les maisons", ["entrepot", "depot", "hutte", "maison", "manoir", "immeuble", "gratteciel", "macon"]], // étape 35 : l'immeuble
     ["🪵 Le bois et la pierre", ["bucheron", "forestier", "scierie", "carriere"]],
     ["⛏️ Les mines", ["geologue", "mineCharbon", "mineFer", "mineOr"]],
     ["🍖 La nourriture", ["pecheur", "chasseur", "ferme", "moulin", "boulangerie", "laiterie", "fromagerie", "cremerie", "charcuterie"]],
     ["🐄 L'élevage", ["puits", "faneur", "etable", "poulailler", "bergerie", "porcherie", "veterinaire"]],
     ["⚒️ Les artisans et la ville", ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite", "monument"]],
     ["🏭 L'industrie", ["centrale", "acierie", "filature", "pompage", "epuration"]], // étape 34 ; étape 35 : l'eau et les égouts
+    ["🌃 La métropole", ["port", "stade", "spatial"]], // étape 56 et 57
     ["🌆 Les services publics", ["ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille"]], // étape 48 ; étape 52 et 53
   ];
   function choisirEncy(t) { encyChoix = t; }
@@ -439,6 +445,7 @@ Village.Interface = (function () {
     if (t === "pompage") besoins.push("🌊 de l'eau à " + C.bordDeLEau + " cases au plus (il pompe dans la rivière ou le lac)"); // étape 35
     if (t === "pompage" || t === "epuration" || C.services.liste[t]) besoins.push("⚡ de l'électricité (une route jusqu'à une centrale qui tourne)"); // étape 48 : les services aussi
     if (C.services.liste[t]) besoins.push("🛣️ des logements reliés par la route : il en sert " + C.services.liste[t].lits + " lits, les plus proches d'abord");
+    if (t === "gratteciel") besoins.push("⚡ 🚰 🚽 et les 5 services (🎓 🏥 🚒 🚓 🛍️) dans l'immeuble, à l'époque moderne"); // étape 55
     if (t === "immeuble") besoins.push("⚡ l'électricité, 🚰 l'eau courante et 🚽 les égouts dans la maison bourgeoise, à l'époque industrielle");
     if (C.elevage.troupeaux[t] && C.ateliers[t].entrees.eau) besoins.push("💧 de l'eau du puits… ou 🚰 l'eau courante à l'époque industrielle (alors plus besoin du puits)");
     if (t === "centrale") besoins.push("⚫ du charbon (1 toutes les 15 s), apporté par les porteurs");
@@ -951,6 +958,7 @@ Village.Interface = (function () {
       // Étape 8 : les logements, et les artisans (fonderie, forge, marché, université)
       { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "macon"] }, // étape 12 : le maçon-couvreur ; étape 40 : ✍️ un seul logement (la hutte devient maison toute seule)
       { id: "industrie", emoji: "🏭", nom: "Industrie", batiments: ["centrale", "acierie", "filature", "pompage", "epuration"] }, // étape 34 ; étape 35
+      { id: "metropole", emoji: "🌃", nom: "Métropole", batiments: ["port", "stade", "spatial"] }, // étape 56 et 57
       { id: "services", emoji: "🌆", nom: "Services", batiments: ["ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille"] }, // étape 48 : l'époque moderne ; étape 52 et 53
       { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite", "monument"] }, // étape 31 : le monument // étape 16 : la laine et les habits
       // Étape 7 : le chemin de terre, et la route en pierre (débloquée par la recherche « Routes pavées »)
@@ -1211,6 +1219,18 @@ Village.Interface = (function () {
         info(marche ? (b.type === "pompage" ? "🚰 En marche : fournit " : "🚽 En marche : traite ") + C.eau.parStation + " unités" : "⏸️ À l'arrêt", marche ? "#3d8a4a" : "#b8443a");
         info("🔧 Tuyaux : " + (reseau.utilise || 0) + " / " + (reseau.offre || 0) + " unités utilisées · demande " + (reseau.demande || 0) + (reseau.coupes ? " · ⚠️ " + reseau.coupes + " sans " + (b.type === "pompage" ? "eau" : "égouts") : ""), reseau.coupes ? "#b8443a" : null);
       }
+      else if (b.type === "port" || b.type === "stade") { // étape 56
+        const mt = monde.metropole || {}, marche = b.courant && b.ouvrier;
+        if (!b.courant) problemes.push("⚡ Pas d'électricité : " + (b.type === "port" ? "les grues ne marchent pas." : "pas de match sans projecteurs."));
+        if (b.type === "port") {
+          info(b.bateau > 0 ? "🚢 Un cargo est à quai : il charge " + C.port.lot + " " + EMO(b.cargaison) : "🌊 Prochain cargo dans " + Math.ceil(b.prochain || 0) + " s : il achètera " + C.port.lot + " objets de ton produit le plus abondant (× " + String(C.port.prime).replace(".", ",") + ")", marche ? "#3d8a4a" : "#b8443a");
+          info("📦 Cargos : " + (mt.cargos || 0) + " · gagné : " + (mt.gainPort || 0) + " 🪙 · dernier : " + (mt.derniere || "aucun"));
+          if (b.attend) problemes.push("⚓ " + b.attend.charAt(0).toUpperCase() + b.attend.slice(1));
+        } else {
+          info(b.match > 0 ? "⚽ Match en cours ! " + b.score[0] + " - " + b.score[1] : "⏳ Prochain match dans " + Math.ceil(b.prochain || 0) + " s · billets : ≈ " + Math.round(C.stade.parHabitant * Village.Logement.habitants(monde)) + " 🪙", marche ? "#3d8a4a" : "#b8443a");
+          info("😊 Bonheur : +" + Village.Metropole.bonheur(monde) + " (+" + C.stade.bonheur + " toujours, +" + C.stade.bonheurMatch + " les jours de match) · matchs : " + (mt.matchs || 0));
+        }
+      }
       else if (b.type === "aeroport") { // étape 52
         const v = monde.ventes || {};
         if (!b.courant) problemes.push("⚡ Pas d'électricité : aucun avion ne peut atterrir.");
@@ -1262,10 +1282,11 @@ Village.Interface = (function () {
       if (ecurie) info("3️⃣ " + ecurie.emoji + " " + ecurie.nom +  " : les porteurs vont " + Math.round((ecurie.effet.porteurs - 1) * 100) + " % plus vite" + (ecurie.effet.charge ? " et portent " + Math.round((ecurie.effet.charge - 1) * 100) + " % de plus" : "") + ((monde.age || 0) < ecurie.age ? " (🔒 " + C.ages[ecurie.age].nom.toLowerCase() + ")" : ""), "#5a3a80");
       else if (Am2.liste(b).length) info("3️⃣ 🐴 L'écurie est construite : porteurs plus rapides ✅", "#2e8a3a");
       boutonsReserve = true;
-    } else if (b.type === "monument" || b.type === "merveille") { // étape 53 : la Grande Tour aussi
+    } else if (b.type === "monument" || b.type === "merveille" || b.type === "spatial") { // étape 53 : la Grande Tour aussi ; étape 57 : la fusée
       // Étape 31 : le palier en cours, et une barre par ressource demandée
-      const Mo = Village.Monument, Cm = b.type === "merveille" ? C.merveille : C.monument, p = Mo.palierDe(b), n = Cm.paliers.length;
-      titre((b.type === "merveille" ? "🗼" : "🏛️") + " Palier " + Math.min(n, (b.palier || 0) + 1) + " / " + n + (p ? " : " + p.emoji + " " + p.nom : " : terminé !"));
+      const Mo = Village.Monument, Cm = b.type === "merveille" ? C.merveille : b.type === "spatial" ? C.fusee : C.monument, p = Mo.palierDe(b), n = Cm.paliers.length;
+      if (b.type === "spatial" && !p) info(b.partie || b.lanceA === undefined ? "🌌 La fusée est partie dans l'espace : tu as fini le jeu, bravo !" : "🚀 Décollage dans " + Math.max(0, Math.ceil(C.fusee.compteARebours - (monde.horloge - b.lanceA))) + " s…", "#2e8a3a");
+      titre((b.type === "merveille" ? "🗼" : b.type === "spatial" ? "🚀" : "🏛️") + " Palier " + Math.min(n, (b.palier || 0) + 1) + " / " + n + (p ? " : " + p.emoji + " " + p.nom : " : terminé !"));
       if (p) {
         for (const [r, besoin] of Object.entries(p.besoins)) { const d = b.dons[r] || 0; lignes.push({ barre: d / besoin, t: C.ressources[r].emoji + " " + C.ressources[r].nom + " : " + d + " / " + besoin + " (libres : " + Math.max(0, Village.Porteurs.disponible(monde, r)) + ")" }); }
         info("🎁 Récompense : +" + p.pieces + " 🪙, +" + p.gemmes + " 💎, +" + p.bonheur + " de bonheur pour toujours", "#2e8a3a");
@@ -1331,7 +1352,7 @@ Village.Interface = (function () {
     } else if (o) {
       titre("👷 Ce qu'il rapporte");
       if (b.sortieQuoi) lignes.push({ cout: { [b.sortieQuoi]: 1 }, avant: "→" });
-      else if (b.type === "forestier") info("🌱 Il plante des arbres");
+      else if (b.type === "forestier") { info("🌱 Il plante des arbres : jusqu'à " + C.ouvriers.plantsParVoyage + " par voyage quand on en a coupé"); info("🪓 Arbres coupés à replanter : " + Math.round(monde.aReplanter || 0), monde.aReplanter > 20 ? "#b8443a" : null); } // étape 54
       else if (b.type === "geologue") info("🔍 Il cherche des pierres et des filons, partout sur la carte" + (o.tournee ? " · 🧭 tournée : n° " + o.tournee : "")); // étape 27
       info("Le " + type.metier + " " + Village.Ouvriers.NOMS_ETATS[o.etat], "#7a5a30");
       if (o.etat === "travailler") lignes.push({ barre: 1 - o.minuteur / Math.max(0.1, o.dureeTravail || o.minuteur + 0.01), t: "au travail" });

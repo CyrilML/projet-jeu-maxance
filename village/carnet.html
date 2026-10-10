@@ -177,6 +177,10 @@
       <a href="#etape51">Étape 51</a>
       <a href="#etape52">Étape 52</a>
       <a href="#etape53">Étape 53</a>
+      <a href="#etape54">Étape 54</a>
+      <a href="#etape55">Étape 55</a>
+      <a href="#etape56">Étape 56</a>
+      <a href="#etape57">Étape 57</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2734,6 +2738,117 @@ après :  [ 📦 Merci de la part de la boulangère ]
       <details class="question"><summary>Combien de 🪙 rapportent les 6 paliers en tout ?</summary><p>2 000 + 3 000 + 4 000 + 5 000 + 7 000 + 10 000 = 31 000 🪙.</p></details>
     </section>
 
+    <section id="etape54">
+      <h2>🌱 Étape 54 : le forestier replante selon les coupes <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Chaque arbre coupé est noté : le forestier en replante jusqu'à 5 par voyage, sans se reposer. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/52-forestier-replante.md</code>.</p>
+          <ul><li>✍️ « La maison du forestier doit replanter beaucoup plus d'arbres, en fonction du nombre de coupes. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Le panneau du forestier : « 🪓 Arbres coupés à replanter : N ».</li>
+            <li>☐ Après une grosse coupe (ou une longue route dans la forêt), il plante plusieurs pousses à la fois.</li>
+            <li>☐ Sous le capot : « 🌱 arbres coupés à replanter » baisse quand il plante.</li>
+            <li>Vérifie « version 54 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔧 Sous le capot</h3>
+      <p>Le jeu tient un <strong>compteur</strong> (<code>monde.aReplanter</code>) : +1 à chaque arbre abattu, −1 à chaque pousse plantée. Le forestier lit ce compteur pour savoir combien en planter. C'est comme une dette : le village « doit » des arbres à la forêt.</p>
+      <pre style="white-space: pre-wrap">pousses par voyage = le plus petit entre 5 et les arbres à replanter (au moins 1)
+   12 à replanter → 5, puis 5, puis 2 → 0 : il redevient normal</pre>
+      <p>Ce compteur est <strong>sauvegardé</strong> : la sauvegarde passe en version 23 (une ancienne partie commence à 0).</p>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Le bûcheron a coupé 8 arbres. Combien de voyages faut-il au forestier ?</summary><p>5 au premier voyage, puis 3 au deuxième : 2 voyages.</p></details>
+      
+    </section>
+
+    <section id="etape55">
+      <h2>🏙️ Étape 55 : une vraie métropole et les gratte-ciel <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">1 000 habitants pour la métropole, et des gratte-ciel de 60 lits pour les loger. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/53-metropole-gratte-ciel.md</code>.</p>
+          <ul><li>✍️ « 250 habitants, c'est peu pour une métropole. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ 📜 à l'époque moderne : 1 000 habitants et 10 gratte-ciel.</li>
+            <li>☐ Un immeuble qui a ⚡ 🚰 🚽 et les 5 services devient une tour de verre (son antenne clignote la nuit).</li>
+            <li>☐ Une nouvelle classe : les 🏙️ métropolitains (6 🪙 d'impôt).</li>
+            <li>Vérifie « version 54 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔧 Sous le capot</h3>
+      <p>Le gratte-ciel est une <strong>évolution</strong>, comme la hutte qui devient une maison : <code>config.js</code> dit « immeuble → gratte-ciel, à l'époque moderne, avec les réseaux ET les services ». La fonction qui dit pourquoi un logement n'évolue pas a juste une règle de plus : elle vérifie les 5 drapeaux des services (<code>aEcole</code>, <code>aHopital</code>…) sur ce bâtiment.</p>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de gratte-ciel pour loger 1 000 habitants ?</summary><p>1 000 ÷ 60 ≈ 16,7 : il en faut 17 (ou des immeubles et des maisons en plus).</p></details>
+      <details class="question"><summary>Combien d'impôts paient 10 gratte-ciel pleins ?</summary><p>10 × 60 × 6 = 3 600 🪙 par minute !</p></details>
+      
+    </section>
+
+    <section id="etape56">
+      <h2>⚓🏟️ Étape 56 : le port et le stade <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Des cargos viennent acheter de grosses cargaisons ; un match toutes les 3 minutes rend la ville heureuse. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/54-port-stade.md</code>.</p>
+          <ul><li>✍️ « Oui, développe le port, la fusée, le stade… »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Le port (au bord de l'eau) : un cargo accoste toutes les 90 s et achète 30 de tes produits.</li>
+            <li>☐ Le stade : « 🏟️ Coup d'envoi ! », la foule saute, puis le score.</li>
+            <li>☐ Le bonheur 😊 monte pendant les matchs (touche 😊 pour le détail).</li>
+            <li>Vérifie « version 54 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔧 Sous le capot</h3>
+      <p>Un nouveau fichier, <code>logique/metropole.js</code> (« le maire de la métropole »), compte les secondes jusqu'au prochain cargo et au prochain match. Le cargo choisit ton produit <strong>le plus abondant</strong> : il trie la liste des produits du plus nombreux au moins nombreux, et prend le premier.</p>
+      <pre style="white-space: pre-wrap">un cargo = prix du marché × 30 × 1,6      ex. 30 🔨 à 22 🪙 : 22 × 30 × 1,6 = 1 056 🪙</pre>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi le cargo prend-il le produit le plus abondant ?</summary><p>Pour ne pas vider un produit dont tu as peu (et dont tu as peut-être besoin) : il prend là où il y a le plus.</p></details>
+      
+    </section>
+
+    <section id="etape57">
+      <h2>🚀 Étape 57 : la fusée <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Le dernier grand chantier : construire une fusée palier par palier… et la lancer dans l'espace ! <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/55-fusee.md</code>.</p>
+          <ul><li>✍️ « … la fusée … »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Le centre spatial (6 × 6) : le pas de tir, la tour de service, puis la fusée, palier par palier.</li>
+            <li>☐ Au dernier palier : 10 secondes de compte à rebours, puis le décollage dans le feu et la fumée.</li>
+            <li>☐ Le message de victoire : la fusée est partie dans l'espace !</li>
+            <li>Vérifie « version 54 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔧 Sous le capot</h3>
+      <p>La fusée réutilise encore <code>logique/monument.js</code> : c'est le 3e monument du jeu (le Beffroi, la Tour, la fusée). Quand le dernier palier est donné, le jeu note l'heure (<code>lanceA</code>). Le dessin calcule depuis combien de secondes elle est lancée, et la fait monter de plus en plus vite :</p>
+      <pre style="white-space: pre-wrap">hauteur = (secondes depuis le décollage)² × 2,2
+   1 s → 2 px · 5 s → 55 px · 10 s → 220 px · 20 s → 880 px : elle accélère !</pre>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi la hauteur est-elle « au carré » et pas juste « × 2,2 » ?</summary><p>Parce qu'une vraie fusée accélère : au carré, elle va de plus en plus vite. Avec « × 2,2 », elle monterait toujours à la même vitesse.</p></details>
+      
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -3057,10 +3172,16 @@ après :  [ 📦 Merci de la part de la boulangère ]
           <p>Un monument immense en 6 paliers, et le dernier âge.</p>
           <p class="apprend"><b>Tu apprends :</b> réutiliser un module avec d'autres données. <b>Durée :</b> 1 séance.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">54-57</div>
+          <h4>🌱🏙️⚓🏟️🚀 Le forestier, la métropole, le port, le stade, la fusée <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Le forestier replante selon les coupes ; 1 000 habitants et des gratte-ciel ; des cargos, des matchs, et une fusée dans l'espace.</p>
+          <p class="apprend"><b>Tu apprends :</b> un compteur sauvegardé, une évolution de plus, trier une liste, une accélération. <b>Durée :</b> 2 séances.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">54…</div>
-          <h4>🌃 Après la métropole : à toi d'imaginer <span class="etiquette">⏭️ à décider</span></h4>
-          <p>Le camion de pompiers qui vient éteindre le feu, des feux rouges, un port, un stade, l'espace… Dis-moi !</p>
+          <div class="num">58…</div>
+          <h4>🌌 Après la fusée : à toi d'imaginer <span class="etiquette">⏭️ à décider</span></h4>
+          <p>Le camion de pompiers qui éteint le feu, des feux rouges, une base sur la Lune… Dis-moi !</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
         </div>
         <div class="carte">
@@ -3499,6 +3620,38 @@ après :  [ 📦 Merci de la part de la boulangère ]
         <textarea class="journal" id="village-appris-53" data-cle="village-appris-53" placeholder="Ex. : J'ai appris qu'un même code peut servir pour 2 monuments…"></textarea>
         <label for="village-idees-53"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-53" data-cle="village-idees-53" placeholder="Ex. : Une fusée pour aller dans l'espace…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 54 · le forestier replante selon les coupes <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le compteur <code>aReplanter</code> (sauvegardé), jusqu'à 5 pousses par voyage, plus de pause tant qu'il en reste.</p>
+        <label for="village-appris-54"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-54" data-cle="village-appris-54" placeholder="Ex. : J'ai appris ce qu'est un compteur…"></textarea>
+        <label for="village-idees-54"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-54" data-cle="village-idees-54" placeholder="Ex. : Des forêts protégées où on ne coupe pas…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 55 · une vraie métropole et les gratte-ciel <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> 1 000 habitants, l'évolution immeuble → gratte-ciel (60 lits), la classe des métropolitains.</p>
+        <label for="village-appris-55"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-55" data-cle="village-appris-55" placeholder="Ex. : J'ai appris qu'une évolution peut avoir plusieurs conditions…"></textarea>
+        <label for="village-idees-55"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-55" data-cle="village-idees-55" placeholder="Ex. : Des tours encore plus hautes…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 56 · le port et le stade <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> <code>logique/metropole.js</code> (les cargos et les matchs), le bassin et le cargo, le stade et sa foule.</p>
+        <label for="village-appris-56"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-56" data-cle="village-appris-56" placeholder="Ex. : J'ai appris à trier une liste…"></textarea>
+        <label for="village-idees-56"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-56" data-cle="village-idees-56" placeholder="Ex. : Des équipes rivales, un championnat…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 57 · la fusée <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le centre spatial (un 3e monument), le compte à rebours et le décollage qui accélère.</p>
+        <label for="village-appris-57"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-57" data-cle="village-appris-57" placeholder="Ex. : J'ai appris qu'au carré, ça accélère…"></textarea>
+        <label for="village-idees-57"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-57" data-cle="village-idees-57" placeholder="Ex. : Une base sur la Lune…"></textarea>
       </div>
     </section>
   </main>

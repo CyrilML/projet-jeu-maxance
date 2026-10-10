@@ -15,7 +15,8 @@ window.Village = window.Village || {};
 Village.Monument = (function () {
   const C = Village.CONFIG;
   const radio = Village.Evenements;
-  const M = (b) => (b && b.type === "merveille" ? C.merveille : C.monument);
+  // Étape 57 : le centre spatial (« spatial ») construit la fusée de la même façon
+  const M = (b) => (b && b.type === "merveille" ? C.merveille : b && b.type === "spatial" ? C.fusee : C.monument);
 
   const palierDe = (b) => M(b).paliers[b.palier || 0] || null; // null : le monument est fini
   const leMonument = (monde, type) => monde.batiments.find((b) => b.type === (type || "monument") && b.etat === "pret") || null;
@@ -48,6 +49,7 @@ Village.Monument = (function () {
       b.dons = {};
       monde.pieces += p.pieces;
       monde.gemmes += p.gemmes;
+      if (b.type === "spatial" && !palierDe(b)) { b.lanceA = monde.horloge; radio.emettre("fusee-compte", { secondes: C.fusee.compteARebours }); } // étape 57 : 10, 9, 8…
       radio.emettre("monument-palier", { monument: M(b).nom, nom: p.nom, emoji: p.emoji, numero: b.palier, total: M(b).paliers.length, pieces: p.pieces, gemmes: p.gemmes, bonheur: p.bonheur, fini: !palierDe(b) });
     }
     return donne;

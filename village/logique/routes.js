@@ -74,6 +74,7 @@ Village.Routes = (function () {
     }
     monde.stock.troncs += b.troncs;
     monde.stock.pierres += b.pierres;
+    monde.aReplanter = (monde.aReplanter || 0) + (b.arbres || 0); // étape 54 : les arbres abattus sont à replanter
     if (b.arbres || b.rochers || b.pousses) radio.emettre("route-degagee", Object.assign({ qui: qui || "la route" }, b));
     return b;
   }

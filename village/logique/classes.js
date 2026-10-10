@@ -36,7 +36,7 @@ Village.Classes = (function () {
       liste.push({ nom: "😋 " + n + " goûts différents (" + gouts.length + ")", ok: gouts.length >= n });
       liste.push({ nom: "🥛 Du lait ou des 🥚 œufs", ok: a("lait") || a("oeufs") });
     }
-    if (id === "bourgeois" || id === "citadins") {
+    if (id === "bourgeois" || id === "citadins" || id === "metropolitains") { // étape 55
       liste.push({ nom: "🧀 Du fromage ou du 🥓 jambon", ok: a("fromage") || a("jambon") });
       liste.push({ nom: "👕 Bien habillés (la moitié au moins)", ok: monde.habits.part >= 0.5 });
       liste.push({ nom: "😊 Bonheur de " + K.bonheurBourgeois + " % au moins", ok: (monde.bonheur.valeur || 0) >= K.bonheurBourgeois });
@@ -72,6 +72,8 @@ Village.Classes = (function () {
     if ((monde.age || 0) < ev.age) return "pas encore : " + C.ages[ev.age].emoji + " " + C.ages[ev.age].nom.toLowerCase();
     // Étape 35 : l'immeuble a besoin des 3 réseaux, dans CE bâtiment
     if (ev.reseaux) { const sans = [["courant", "⚡ électricité"], ["eau", "🚰 eau courante"], ["egout", "🚽 égouts"]].filter(([k]) => !b[k]).map(([, n]) => n); if (sans.length) return "il lui faut : " + sans.join(", "); }
+    // Étape 55 : le gratte-ciel a besoin des 5 services, dans CE bâtiment
+    if (ev.services) { const sans = Village.Services.TYPES.filter((t) => !b[C.services.liste[t].champ]).map((t) => C.services.liste[t].emoji + " " + C.services.liste[t].quoi); if (sans.length) return "il lui faut : " + sans.join(", "); }
     const suivante = classeDe(ev.vers), manque = besoins(monde, suivante).filter((x) => !x.ok);
     if (manque.length) return "les " + fiche(suivante).nom.toLowerCase() + " veulent : " + manque.map((x) => x.nom).join(", ");
     return null;

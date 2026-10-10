@@ -147,6 +147,7 @@ Village.Monde = (function () {
     monde.gemmes = partie.gemmes || 0;
     monde.drapeau = partie.drapeau || 0;
     monde.pieces = partie.pieces || 0; // étape 8
+    monde.aReplanter = partie.aReplanter || 0; // étape 54 : les arbres coupés à replanter
     monde.logementBonus = partie.logementBonus || 0;
     monde.porteursBonus = partie.porteursBonus || 0; // étape 13
     if (partie.reserve) monde.reserve = { niveau: Math.max(1, partie.reserve.niveau || 1) }; // étape 11
@@ -230,6 +231,7 @@ Village.Monde = (function () {
     Village.Guide.etape(monde, dt); // étape 30 : les objectifs pas à pas
     Village.Electricite.etape(monde, dt); // étape 34 : le réseau électrique
     Village.Services.etape(monde, dt); // étape 48 : l'école, l'hôpital, les pompiers et la police
+    Village.Metropole.etape(monde, dt); // étape 56 : le port, le stade et la fusée
     Village.Incidents.etape(monde, dt); // étape 50 : les incendies, les vols et les maladies
     Village.Population.etape(monde, dt); // étape 33 : le recenseur (besoins, prospérité, courbe)
     Village.Conseiller.etape(monde, dt); // étape 29 : le conseiller relit le village

@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 53,
+  version: 54,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -179,6 +179,10 @@ Village.CONFIG = {
     commerce: { cout: { planches: 150, pierres: 150, lingots: 30, outils: 15, tissu: 20 }, construction: 60 },
     aeroport: { cout: { planches: 200, pierres: 600, lingots: 150, outils: 60 }, construction: 120 },
     merveille: { cout: { planches: 300, pierres: 400, lingots: 60, outils: 30 }, construction: 90 },
+    // Étape 56 : ⚓ le port et 🏟️ le stade ; étape 57 : 🚀 le centre spatial (son pas de tir, puis 4 paliers)
+    port: { cout: { planches: 400, pierres: 500, lingots: 120, outils: 50 }, construction: 90 },
+    stade: { cout: { planches: 300, pierres: 800, lingots: 100, outils: 40, tissu: 60 }, construction: 100 },
+    spatial: { cout: { pierres: 600, lingots: 200, outils: 80 }, construction: 100 },
     manoir: { cout: { planches: 12, pierres: 16, outils: 2 }, construction: 20 }, // étape 18 : on ne la construit pas, une maison le DEVIENT
   },
   // Étape 18 : ✍️ les CLASSES D'HABITANTS suivent leur logement (voir logique/classes.js).
@@ -190,12 +194,16 @@ Village.CONFIG = {
       { id: "artisans", nom: "Artisans", emoji: "👷", logements: ["maison"], impot: 1 },
       { id: "bourgeois", nom: "Bourgeois", emoji: "🎩", logements: ["manoir"], impot: 3 },
       { id: "citadins", nom: "Citadins", emoji: "🧑‍💼", logements: ["immeuble"], impot: 4 }, // étape 35
+      { id: "metropolitains", nom: "Métropolitains", emoji: "🏙️", logements: ["gratteciel"], impot: 6 }, // étape 55
     ],
     evolution: {
       hutte: { vers: "maison", age: 2, cout: { planches: 6, pierres: 6 } },
       maison: { vers: "manoir", age: 3, cout: { planches: 12, pierres: 16, outils: 2 } },
       // Étape 35 : ✍️ « des maisons plus grandes » : avec ⚡ + 🚰 + 🚽, la maison bourgeoise monte en IMMEUBLE (20 lits)
       manoir: { vers: "immeuble", age: 5, cout: { pierres: 30, lingots: 6, planches: 10 }, reseaux: true },
+      // Étape 55 : ✍️ « 250 habitants, c'est peu pour une métropole » : un immeuble qui a les 3 réseaux ET les 5 services
+      // (école, hôpital, pompiers, police, magasins) monte en GRATTE-CIEL de 60 lits
+      immeuble: { vers: "gratteciel", age: 6, cout: { pierres: 80, lingots: 30, outils: 10 }, reseaux: true, services: true },
     },
     delai: 60, // s : les besoins doivent être remplis pendant 1 minute
     verification: 5, // s entre deux vérifications
@@ -213,7 +221,7 @@ Village.CONFIG = {
     // Étape 40 : ✍️ chaque entrepôt secondaire a son bouton « Agrandir » : +2 porteurs par niveau, 4 niveaux au plus
     parNiveau: 2, niveauMax: 4, prix: { planches: 40, pierres: 30 }, prixPieces: 40, facteurPrix: 2 },
   // Étape 40 : ✍️ « une seule université peut être construite ; une fois faite, elle est grisée. Idem pour le marché. »
-  uniques: ["universite", "marche", "monument", "aeroport", "merveille"], // étape 52 et 53 : un seul aéroport, une seule Grande Tour
+  uniques: ["universite", "marche", "monument", "aeroport", "merveille", "stade", "spatial"], // étape 52 et 53 : un seul aéroport, une seule Grande Tour
 
   // Étape 8 : les ATELIERS transforment ce que les porteurs leur apportent (les RECETTES).
   //   entrees : ce qu'il faut pour UNE fabrication ; sorties : ce qui sort ; duree : en s ;
@@ -311,8 +319,9 @@ Village.CONFIG = {
     entrepot: 4, depot: 4, universite: 4, moulin: 4, marche: 4, fonderie: 4, ferme: 4,
     monument: 5, // étape 31 : ✍️ « même 5 × 5 »
     centrale: 4, acierie: 4, filature: 4, // étape 34 : les usines
-    pompage: 3, epuration: 3, immeuble: 2, // étape 35
+    pompage: 3, epuration: 3, immeuble: 2, gratteciel: 2, // étape 35 ; étape 55
     commerce: 4, aeroport: 6, merveille: 6, // étape 52 et 53 : les très grands
+    port: 5, stade: 5, spatial: 6, // étape 56 et 57
   },
   tailleParDefaut: 3,
   champs: {
@@ -364,7 +373,7 @@ Village.CONFIG = {
   // (Les porteurs, eux, dorment à l'entrepôt : ils ne comptent pas.)
   // Étape 13 : ✍️ les porteurs (manutentionnaires) et les villageois sans travail dorment aussi quelque part :
   // le campement passe à 10 places.
-  logement: { entrepot: 11, hutte: 3, maison: 6, depot: 4, manoir: 10, immeuble: 20 }, // étape 18 : la maison bourgeoise ; étape 20 : 11 au campement (pour le 4e porteur) // étape 17 : 4 lits dans chaque entrepôt secondaire
+  logement: { entrepot: 11, hutte: 3, maison: 6, depot: 4, manoir: 10, immeuble: 20, gratteciel: 60 }, // étape 55 : le gratte-ciel // étape 18 : la maison bourgeoise ; étape 20 : 11 au campement (pour le 4e porteur) // étape 17 : 4 lits dans chaque entrepôt secondaire
 
   // Étape 13 : ✍️ (1B) les VILLAGEOIS. Ils arrivent au village quand il y a un lit libre et à manger,
   // se promènent près du feu, et vont travailler là où on a besoin d'eux : chaque cabane en prend un,
@@ -452,6 +461,11 @@ Village.CONFIG = {
     vitesse: 1.6, // cases par seconde
     couper: 4, // s pour couper un arbre
     planter: 3, // s pour planter une pousse
+    // Étape 54 : ✍️ « le forestier doit replanter beaucoup plus d'arbres, en fonction du nombre de coupes ». Chaque arbre
+    // abattu (par le bûcheron, une route ou un chantier) est noté « à replanter ». Le forestier en plante alors jusqu'à
+    // « plantsParVoyage » par voyage (autour de sa case), et ne se repose plus tant qu'il en reste.
+    plantsParVoyage: 5,
+    rayonPlantation: 2, // cases autour de la première pousse
     tailler: 5, // s pour tailler une pierre
     repos: 2, // s de pause entre deux voyages
     pecher: 6, // s pour pêcher 1 poisson (étape 4 ; 8 s avant l'étape 5)
@@ -634,9 +648,11 @@ Village.CONFIG = {
     { id: "moderne", nom: "L'époque moderne", emoji: "🌆", debloque: ["ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille"], // étape 52 et 53
       // Étape 53 : ✍️ l'objectif très long : la Grande Tour finie (6 paliers), un aéroport, 250 habitants, 20 000 🪙
       //   construits : { type: combien } de bâtiments prêts ; merveille : paliers de la Grande Tour
-      objectifs: { merveille: 6, construits: { aeroport: 1, commerce: 2 }, habitants: 250, pieces: 20000 } },
+      // Étape 55 : ✍️ « 250 habitants, c'est peu pour une métropole » : 1 000 habitants et 10 gratte-ciel
+      objectifs: { merveille: 6, construits: { aeroport: 1, commerce: 2, gratteciel: 10 }, habitants: 1000, pieces: 20000 } },
     // Étape 53 : 🌃 la MÉTROPOLE : le dernier âge (pour l'instant !)
-    { id: "metropole", nom: "La métropole", emoji: "🌃", debloque: [], objectifs: null,
+    // Étape 56 et 57 : ✍️ « développe le port, la fusée, le stade » : le but final, lancer une fusée dans l'espace
+    { id: "metropole", nom: "La métropole", emoji: "🌃", debloque: ["port", "stade", "spatial"], objectifs: null,
       aVenir: "la suite… à toi de l'imaginer, Maxance !" },
   ],
   gemmesParAge: 3, // étape 7 : 💎 offertes à chaque nouvel âge
@@ -796,8 +812,19 @@ Village.CONFIG = {
         { texte: "Dresse la flèche dorée", merveille: 5, pourquoi: "Des bijoux et de l'or : des mines d'or et des orfèvres." },
         { texte: "Fais la fête du siècle", merveille: 6, pourquoi: "Un festin pour toute la ville : pain, fromage, jambon, yaourt, habits neufs." },
         { texte: "Aie 2 🛍️ centres commerciaux", batiment: "commerce", nombre: 2, pourquoi: "Pour la métropole." },
-        { texte: "Aie 250 habitants", habitants: 250, pourquoi: "Pour la métropole (avec 20 000 🪙)." },
+        { texte: "Fais monter un 🏙️ gratte-ciel", batiment: "gratteciel", nombre: 1, pourquoi: "Un immeuble avec ⚡ 🚰 🚽 et les 5 services (🎓 🏥 🚒 🚓 🛍️) devient un gratte-ciel de 60 lits." }, // étape 55
+        { texte: "Fais monter 10 🏙️ gratte-ciel", batiment: "gratteciel", nombre: 10, pourquoi: "Pour la métropole : il faut loger 1 000 habitants !" },
+        { texte: "Aie 1 000 habitants", habitants: 1000, pourquoi: "Pour la métropole (avec 20 000 🪙)." },
         { texte: "Aie 20 000 🪙", pieces: 20000, pourquoi: "Pour la métropole." },
+      ],
+      [ // 🌃 la métropole (étape 56 et 57) : le port, le stade, et la fusée
+        { texte: "Construis un ⚓ port", batiment: "port", nombre: 1, pourquoi: "Au bord de l'eau : des cargos viennent acheter de grosses cargaisons de tes produits." },
+        { texte: "Construis le 🏟️ stade", batiment: "stade", nombre: 1, pourquoi: "Un match toutes les 3 minutes : des billets vendus, et toute la ville est plus heureuse." },
+        { texte: "Construis le 🚀 centre spatial", batiment: "spatial", nombre: 1, pourquoi: "Le dernier grand chantier : construire une fusée et l'envoyer dans l'espace !" },
+        { texte: "Bâtis le pas de tir", fusee: 1, pourquoi: "Touche le centre spatial et « Donner ce que j'ai »." },
+        { texte: "Fabrique les moteurs", fusee: 2, pourquoi: "Énormément de lingots et de charbon." },
+        { texte: "Assemble la fusée", fusee: 3, pourquoi: "Des lingots, du tissu pour les combinaisons, de l'or pour les circuits." },
+        { texte: "Lance la fusée !", fusee: 4, pourquoi: "Le carburant et les repas des astronautes… puis 10, 9, 8… décollage !" },
       ],
     ],
   },
@@ -848,6 +875,10 @@ Village.CONFIG = {
     filature: "La filature (électrique) file la laine à la machine : 2 laines → 3 tissus.",
     pompage: "La station de pompage (au bord de l'eau, électrique) envoie l'eau courante dans des tuyaux sous les routes, jusqu'à " + 40 + " unités.",
     epuration: "La station d'épuration (électrique) nettoie les eaux usées qui arrivent par les égouts, sous les routes, jusqu'à " + 40 + " unités.",
+    port: "Le port (au bord de l'eau, électrique) : toutes les 90 s, un cargo vient acheter 30 de tes produits les plus abondants, 1,6 fois plus cher qu'au marché.", // étape 56
+    stade: "Le stade (électrique) : un match toutes les 3 minutes. Des billets vendus (🪙), et du bonheur pour toute la ville pendant et après le match.",
+    spatial: "Le centre spatial : le dernier grand chantier. 4 paliers pour construire une fusée… et la lancer dans l'espace !", // étape 57
+    gratteciel: "Un gratte-ciel de 60 lits pour des métropolitains (6 🪙 d'impôt chacun). Un immeuble le devient quand il a l'électricité, l'eau, les égouts et les 5 services.", // étape 55
     commerce: "Le centre commercial (électrique) : les habitants de 100 lits y font leurs courses (le besoin 🛍️). Toutes les 20 s, il vend un paquet de tes produits (habits, pain, fromage…) et te rapporte des 🪙.", // étape 52
     aeroport: "L'aéroport (électrique, 6 × 6 cases) : des avions amènent des touristes, qui dépensent des 🪙 chaque minute (plus la ville est grande et prospère, plus ils dépensent).",
     merveille: "La Grande Tour : la merveille de la ville. 6 paliers, qui demandent des milliers de ressources de toutes les chaînes. Chaque palier donne une énorme récompense.",
@@ -864,7 +895,7 @@ Village.CONFIG = {
     age: 5, // l'époque industrielle
     parCentrale: 40, // unités par centrale qui tourne
     logement: 1, atelier: 2, usine: 8, // consommation (unités)
-    consommation: { entrepot: 3, depot: 2, universite: 4, marche: 2, monument: 4, pompage: 4, epuration: 4, immeuble: 3, ecole: 3, hopital: 4, pompiers: 3, police: 3, commerce: 6, aeroport: 10, merveille: 6 }, // étape 48 : les services ; étape 52 et 53
+    consommation: { entrepot: 3, depot: 2, universite: 4, marche: 2, monument: 4, pompage: 4, epuration: 4, immeuble: 3, ecole: 3, hopital: 4, pompiers: 3, police: 3, commerce: 6, aeroport: 10, merveille: 6, gratteciel: 8, port: 8, stade: 10, spatial: 12 }, // étape 48 : les services ; étape 52 et 53
     vitesse: 1.5, // un atelier alimenté travaille 1,5 fois plus vite
   },
 
@@ -878,7 +909,7 @@ Village.CONFIG = {
     logement: 1, // un logement consomme 1 (et un immeuble 3)
     elevage: 2, // un élevage boit 2 (eau seulement)
     usine: 2, // une usine électrique rejette 2 aux égouts
-    consommation: { immeuble: 3 },
+    consommation: { immeuble: 3, gratteciel: 8 }, // étape 55
   },
 
   // Étape 48 : 🌆 les SERVICES PUBLICS de l'époque moderne (logique/services.js). Ils marchent comme l'eau courante :
@@ -904,6 +935,25 @@ Village.CONFIG = {
   },
   // Étape 52 : ✈️ les TOURISTES de l'aéroport : chaque minute, des 🪙 = parHabitant × habitants × (0,5 + prospérité)
   aeroport: { intervalle: 60, parHabitant: 0.8 },
+
+  // Étape 56 : ⚓ le PORT : toutes les « intervalle » secondes, un cargo achète un gros « lot » du produit le plus abondant
+  // (parmi « produits »), à « prime » fois le prix du marché. Il reste « aQuai » secondes (on le voit à quai).
+  port: { intervalle: 90, aQuai: 20, lot: 30, prime: 1.6,
+    produits: ["planches", "pierres", "lingots", "outils", "tissu", "vetements", "pain", "fromage", "jambon", "bijoux", "charbon", "yaourt", "beurre"] },
+  // Étape 56 : 🏟️ le STADE : un match toutes les « intervalle » s, qui dure « duree » s. Billets : parHabitant × habitants.
+  // Bonheur : + « bonheurMatch » pendant le match et « apres » s après ; + « bonheur » pour toujours (l'équipe de la ville).
+  stade: { intervalle: 180, duree: 40, apres: 60, parHabitant: 0.5, bonheurMatch: 8, bonheur: 4 },
+  // Étape 57 : 🚀 la FUSÉE : le centre spatial se construit comme un monument, en 4 paliers. Au dernier : le lancement !
+  fusee: {
+    nom: "La fusée",
+    compteARebours: 10, // s avant le décollage
+    paliers: [
+      { nom: "Le pas de tir", emoji: "🏗️", besoins: { pierres: 2000, lingots: 400, outils: 200 }, pieces: 5000, gemmes: 15, bonheur: 3 },
+      { nom: "Les moteurs", emoji: "🔥", besoins: { lingots: 800, charbon: 1000, outils: 300 }, pieces: 8000, gemmes: 20, bonheur: 4 },
+      { nom: "La fusée", emoji: "🚀", besoins: { lingots: 1000, tissu: 300, or: 200, bijoux: 100 }, pieces: 12000, gemmes: 30, bonheur: 5 },
+      { nom: "Le carburant et le décollage", emoji: "🌌", besoins: { charbon: 2000, eau: 500, pain: 500, jambon: 200 }, pieces: 30000, gemmes: 100, bonheur: 20 },
+    ],
+  },
 
   // Étape 53 : 🗼 la GRANDE TOUR, la merveille de l'époque moderne (même règle que le Grand Beffroi : on donne quand on
   // veut, palier par palier). Des milliers de ressources : c'est l'objectif le plus long du jeu.

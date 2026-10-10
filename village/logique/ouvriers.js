@@ -283,7 +283,7 @@ Village.Ouvriers = (function () {
           o.porte = null;
           o.quantite = 1;
         }
-        changer(o, "repos", C.ouvriers.repos);
+        changer(o, "repos", b.type === "forestier" && monde.aReplanter > 0 ? 0.3 : C.ouvriers.repos); // étape 54 : des arbres à replanter : pas de pause
         return;
     }
   }
@@ -311,14 +311,23 @@ Village.Ouvriers = (function () {
         o.porte = "troncs";
         // L'arbre tombe du côté opposé au bûcheron (pour le dessin).
         const sens = o.x - (o.cible.colonne + 0.5) - (o.y - (o.cible.ligne + 0.5)) > 0 ? -1 : 1;
+        monde.aReplanter = (monde.aReplanter || 0) + 1; // étape 54 : un arbre de plus à replanter
         radio.emettre("arbre-coupe", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, arbres: carte.compte.arbres, sorte, v: Village.Hasard.pourCase(carte.graine, o.cible.colonne, o.cible.ligne), sens });
       }
     } else if (b.type === "forestier") {
-      if (carte.objet[i] === O.rien || carte.objet[i] === O.fleurs) {
-        Village.Monde.changerObjet(monde, i, O.pousse);
-        monde.pousses.set(i, 0);
-        b.produits++;
-        radio.emettre("pousse-plantee", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, pousses: monde.pousses.size });
+      // Étape 54 : autant de pousses que d'arbres coupés à replanter (jusqu'à 5 par voyage), autour de la première
+      const voulu = Math.max(1, Math.min(C.ouvriers.plantsParVoyage, Math.ceil(monde.aReplanter || 0)));
+      const places = [i], R = C.ouvriers.rayonPlantation, libre = (j) => (carte.objet[j] === O.rien || carte.objet[j] === O.fleurs) && METIERS.forestier.cherche(monde, j);
+      for (let r = 1; r <= R && places.length < voulu; r++) for (let dl = -r; dl <= r && places.length < voulu; dl++) for (let dc = -r; dc <= r && places.length < voulu; dc++) {
+        const c = o.cible.colonne + dc, l = o.cible.ligne + dl, j = l * carte.colonnes + c;
+        if (Math.max(Math.abs(dc), Math.abs(dl)) === r && c >= 0 && l >= 0 && c < carte.colonnes && l < carte.lignes && libre(j)) places.push(j);
+      }
+      let plantees = 0;
+      for (const j of places) if (carte.objet[j] === O.rien || carte.objet[j] === O.fleurs) { Village.Monde.changerObjet(monde, j, O.pousse); monde.pousses.set(j, 0); plantees++; }
+      if (plantees) {
+        b.produits += plantees;
+        monde.aReplanter = Math.max(0, (monde.aReplanter || 0) - plantees);
+        radio.emettre("pousse-plantee", { numero: b.numero, colonne: o.cible.colonne, ligne: o.cible.ligne, pousses: monde.pousses.size, plantees, reste: monde.aReplanter });
       }
     } else if (b.type === "pecheur") {
       // Étape 5 : quel poisson ? Ça dépend de l'eau (le thon ne vit qu'en eau profonde).

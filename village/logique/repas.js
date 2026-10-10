@@ -107,7 +107,7 @@ Village.Repas = (function () {
     monde.chauffage = (monde.chauffage || 0) + dt;
     if (monde.chauffage < C.bourg.chauffage) return;
     monde.chauffage = 0;
-    const logements = 1 + monde.batiments.filter((b) => b.etat === "pret" && (b.type === "hutte" || b.type === "maison" || b.type === "manoir" || b.type === "immeuble")).length; // étape 18 : + les maisons bourgeoises
+    const logements = 1 + monde.batiments.filter((b) => b.etat === "pret" && (b.type === "hutte" || b.type === "maison" || b.type === "manoir" || b.type === "immeuble" || b.type === "gratteciel")).length; // étape 18 : + les maisons bourgeoises
     const bois = Math.max(1, Math.ceil(logements * Village.Recherches.bonus(monde, "chauffage")));
     if (monde.stock.troncs >= bois) {
       monde.stock.troncs -= bois;

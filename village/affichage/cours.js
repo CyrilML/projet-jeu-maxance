@@ -477,6 +477,33 @@ Village.Cours = (function () {
     ctx.strokeStyle = "rgba(250, 250, 245, .9)"; ctx.lineWidth = 1.4; ctx.setLineDash([8, 7]); ctx.beginPath(); ctx.moveTo(...iso(x, y, 0, -L + 0.2)); ctx.lineTo(...iso(x, y, 0, L - 0.2)); ctx.stroke(); ctx.setLineDash([]);
   }
 
+  // Étape 56 : ⚓ des conteneurs empilés (de toutes les couleurs)
+  function conteneurs(ctx, x, y, k) {
+    const c = ["#c8443a", "#3f6fc4", "#e8b830", "#3f8a4a", "#d97a2a", "#7a5ab0"];
+    let n = 0; for (let j = 0; j < 3; j++) for (const [p, q] of [[-0.18, -0.28], [0.18, -0.28], [-0.18, 0.28], [0.18, 0.28]]) { if (j === 2 && p > 0) continue; boite(ctx, ...iso(x, y - j * 7 * k, p * k, q * k), 0.32 * k, 0.52 * k, 7 * k, c[(n++ * 5 + j) % c.length]); }
+  }
+  // Le bassin du port, et le cargo à quai (quand il y en a un)
+  function bassin(ctx, x, y, k, b, t) {
+    face(ctx, [iso(x, y, -0.55 * k, -1.1 * k), iso(x, y, 0.55 * k, -1.1 * k), iso(x, y, 0.55 * k, 1.1 * k), iso(x, y, -0.55 * k, 1.1 * k)], Village.Batisses.vue.hiver ? "#c8dce8" : "#3f7aa8");
+    if (Village.Batisses.vue.fin) { ctx.strokeStyle = "rgba(220, 240, 255, .6)"; ctx.lineWidth = 0.8; ctx.beginPath(); for (let i = 0; i < 4; i++) { const [wx, wy] = iso(x, y, (i % 2 - 0.5) * 0.6 * k, (i - 1.5) * 0.5 * k); const o = Math.sin((t || 0) * 2 + i) * 2; ctx.moveTo(wx - 5 + o, wy); ctx.quadraticCurveTo(wx + o, wy - 2, wx + 5 + o, wy); } ctx.stroke(); }
+    if (!(b && b.bateau > 0)) return;
+    const arrive = Math.min(1, (Village.CONFIG.port.aQuai - b.bateau) / 3), part = b.bateau < 3 ? (3 - b.bateau) / 3 : 0, dq = (1 - arrive) * 1.6 + part * 1.6; // il glisse en arrivant et en partant
+    const P = (p, q, h) => { const [a, c] = iso(x, y, p * k, (q + dq) * k); return [a, c - h * k]; };
+    face(ctx, [P(-0.3, -0.9, 0), P(0.3, -0.9, 0), P(0.3, 0.75, 0), P(0, 1, 0), P(-0.3, 0.75, 0)], "#7a2a24"); // la coque
+    face(ctx, [P(-0.3, -0.9, 6), P(0.3, -0.9, 6), P(0.3, 0.75, 6), P(0, 1, 6), P(-0.3, 0.75, 6)], "#5a5e64"); // le pont
+    for (const [a1, a2] of [[P(0.3, -0.9, 0), P(0.3, 0.75, 0)]]) face(ctx, [a1, a2, [a2[0], a2[1] - 6 * k], [a1[0], a1[1] - 6 * k]], "#9a3a2e");
+    const cs = ["#c8443a", "#3f6fc4", "#e8b830", "#3f8a4a"];
+    for (let i = 0; i < 4; i++) boite(ctx, ...P(0, -0.35 + i * 0.28, 6), 0.4 * k, 0.24 * k, 6 * k, cs[i]); // les conteneurs sur le pont
+    boite(ctx, ...P(0, -0.72, 6), 0.4 * k, 0.24 * k, 14 * k, "#f2f2ee"); // la passerelle du capitaine, à l'arrière
+  }
+  // Une grande grue de port (un portique bleu)
+  function portique(ctx, x, y, k) {
+    const h = 36 * k, A = iso(x, y, -0.25 * k, -0.3 * k), B = iso(x, y, -0.25 * k, 0.3 * k), Cc = iso(x, y, 0.25 * k, -0.3 * k), D = iso(x, y, 0.25 * k, 0.3 * k);
+    for (const P of [A, B, Cc, D]) O().poutre(ctx, P, [P[0], P[1] - h], 1.8 * k, "#3f6fc4");
+    O().poutre(ctx, [A[0], A[1] - h], [B[0], B[1] - h], 2 * k, "#2f569c"); O().poutre(ctx, [Cc[0], Cc[1] - h], [D[0], D[1] - h], 2 * k, "#2f569c");
+    const F = iso(x, y, 1.1 * k, 0); O().poutre(ctx, [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2 - h], [F[0], F[1] - h], 2 * k, "#2f569c"); // le bras, au-dessus du bassin
+  }
+
   // ---------------------------------------------------------------- les sols et les clôtures
   const SOLS = { asphalte: ["#5a5d62", "#4c4f54"], terre: ["#b49a72", "#9a8260"], gravier: ["#aaa69c", "#8e8a80"], paves: ["#a8a29a", "#8a847c"], pelouse: ["#7aa25a", "#6a9050"], scierie: ["#c4a878", "#a88c5e"], charbon: ["#5a5650", "#4a4640"], sable: ["#cdb88a", "#b8a074"] };
   const CLOTURES = { bois: "#8a6440", fer: "#3a3e44", pierre: "#a8a296", haie: "#4a8a42", aucune: null };
@@ -677,6 +704,11 @@ Village.Cours = (function () {
       ["G", (c, x, y, k) => massif(c, x, y, k)],
       ["Dr", (c, x, y, k) => arbreBoule(c, x, y, k)],
     ] },
+    gratteciel: { sol: "paves", cloture: "fer", objets: [ // étape 55 : la cour du gratte-ciel (comme l'immeuble)
+      ["D", (c, x, y, k) => { banc(c, x, y, k); lampadaire(c, ...iso(x, y, 0.3, -0.3), k); }],
+      ["G", (c, x, y, k) => arbreBoule(c, x, y, k)],
+      ["Dr", (c, x, y, k) => fontaine(c, x, y, k * 0.8, 0)],
+    ] },
     immeuble: { sol: "paves", cloture: "fer", objets: [
       ["D", (c, x, y, k, b) => { banc(c, x, y, k); lampadaire(c, ...iso(x, y, 0.3, -0.3), k); }],
       ["G", (c, x, y, k) => poubelles(c, x, y, k)],
@@ -708,6 +740,12 @@ Village.Cours = (function () {
       ["D", (c, x, y, k) => parking(c, x, y, k, 6)],
       ["G", (c, x, y, k) => caddie(c, x, y, k)],
       ["Dr", (c, x, y, k) => lampadaire(c, x, y, k)],
+    ] },
+    // Étape 56 : ⚓ le quai du port : le bassin (et le cargo), les conteneurs, la grande grue
+    port: { sol: "paves", cloture: "aucune", objets: [
+      ["D", (c, x, y, k, b, t) => bassin(c, x, y, k, b, t)],
+      ["G", (c, x, y, k) => conteneurs(c, x, y, k)],
+      ["Dr", (c, x, y, k) => portique(c, x, y, k)],
     ] },
     aeroport: { sol: "asphalte", cloture: "fer", objets: [
       ["D", (c, x, y, k, b, t) => { piste(c, x, y, k); const ph = ((t || 0) / 22 + ((b && b.numero) || 0) * 0.37) % 1, vol = b && b.ouvert && ph > 0.55; if (!vol) avion(c, ...iso(x, y, 0, -0.6 * k), k * 0.9, "#3f6fc4"); else { const u = (ph - 0.55) / 0.45; avion(c, ...iso(x, y, 0, (-0.6 + u * 3.5) * k), k * 0.9, "#3f6fc4", u * u * 140 * k); } }],

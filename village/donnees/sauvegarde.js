@@ -79,11 +79,13 @@
 //  22 (étape 39) : les gisements de pierre (gisements : 2). Une partie plus ancienne : ses carrières loin d'un gisement
 //                  reçoivent une veine de pierre sous elles.
 
+//  23 (étape 54) : les arbres coupés pas encore replantés (aReplanter). Une partie plus ancienne commence à 0.
+
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 22;
+  const VERSION = 23;
   const radio = Village.Evenements;
 
   function vide() {
@@ -142,6 +144,7 @@ Village.Sauvegarde = (function () {
         delete b.repas;
       }
     }
+    if ((lues.version || 1) < 23 && d.partie) d.partie.aReplanter = d.partie.aReplanter || 0; // étape 54 : rien à replanter au début
     if ((lues.version || 1) < 21 && d.partie) d.partie.gisements = 0; // étape 38 : les mines seront rechargées au chargement
     if ((lues.version || 1) < 4 && d.partie && d.partie.stock) {
       d.partie.stock.poissons = d.partie.stock.poissons || Village.CONFIG.depart.poissons;
@@ -243,6 +246,7 @@ Village.Sauvegarde = (function () {
       gemmes: monde.gemmes,
       drapeau: monde.drapeau,
       pieces: monde.pieces, // étape 8
+      aReplanter: Math.round(monde.aReplanter || 0), // étape 54
       reserve: monde.reserve, // étape 11
       villageois: monde.villageois.map((v) => [Math.round(v.x * 10) / 10, Math.round(v.y * 10) / 10, Math.round(v.faim || 0)]), // étape 13
       porteursBonus: monde.porteursBonus,
