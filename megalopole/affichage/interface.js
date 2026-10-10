@@ -6,6 +6,7 @@
 //   - en bas, les OUTILS du maire, rangés par groupes (routes, zones, énergie, eau, services, loisirs, transports) ;
 //   - à droite, le PANNEAU : les réclamations 📢, les besoins 😊, le budget 🧾, et ce qu'il y a sur la case touchée 🔎 ;
 //     (étape 2) le budget 🧾 est un vrai tableau de bord : un impôt par zone, un curseur par service, la banque ;
+//   - (étape 3) la bulle du GUIDE 🎓 (une mission à la fois), et la barre ✅ / ❌ pour construire un tracé fait au doigt ;
 //   - au tout début, le CHOIX DE LA DIFFICULTÉ ; et si la caisse reste vide trop longtemps, l'écran « maire renvoyé » ;
 //   - les CALQUES 🗺️ : voir le courant, l'eau, la valeur du terrain, la pollution, le trafic, les services…
 // L'interface ne change jamais le monde elle-même : elle range ce que veut le joueur dans « demandes », que main.js
@@ -18,7 +19,8 @@ Megalopole.Interface = (function () {
   const radio = Megalopole.Evenements;
   const $ = (id) => document.getElementById(id);
   const fr = (n) => Math.round(n).toLocaleString("fr-FR");
-  const demandes = { outil: undefined, taux: [], postes: [], pret: null, vitesse: null, calque: undefined, difficulte: null };
+  const demandes = { outil: undefined, taux: [], postes: [], pret: null, vitesse: null, calque: undefined, difficulte: null, guide: null, confirmer: false, annulerTrace: false };
+  const auDoigt = () => window.matchMedia && matchMedia("(pointer: coarse)").matches; // (un téléphone, une tablette)
   let groupeOuvert = null, onglet = "reclamations", monde = null;
 
   const prix = (base) => fr(Megalopole.Budget.prix(monde, base)); // (étape 2 : × la difficulté)
@@ -50,6 +52,19 @@ Megalopole.Interface = (function () {
     }
     // les onglets du panneau
     for (const b of document.querySelectorAll("[data-onglet]")) b.addEventListener("click", () => { fermerTiroir(); onglet = onglet === b.dataset.onglet && $("panneau").classList.contains("ouvert") ? null : b.dataset.onglet; $("panneau").classList.toggle("ouvert", !!onglet); rafraichir(true); });
+    // 🎓 le guide et ✅ / ❌ (les boutons sont redessinés : on écoute leur parent)
+    $("guide").addEventListener("click", (e) => {
+      const bt = e.target.closest("[data-guide]");
+      if (!bt) return;
+      const quoi = bt.dataset.guide;
+      if (quoi === "montrer-moi") { const p = Megalopole.Guide.progres(monde); if (p && p.mission.groupe) { $("panneau").classList.remove("ouvert"); onglet = null; ouvrirTiroir(p.mission.groupe); } }
+      else demandes.guide = quoi;
+      dernierGuide = "";
+    });
+    $("confirmer").addEventListener("click", (e) => {
+      if (e.target.closest("[data-oui]")) demandes.confirmer = true;
+      if (e.target.closest("[data-non]")) demandes.annulerTrace = true;
+    });
     // ✖ fermer le panneau (et la touche Échap)
     $("fermer-panneau").addEventListener("click", fermerPanneau);
     // les calques
@@ -105,7 +120,10 @@ Megalopole.Interface = (function () {
   }
   function fermerPanneau() { onglet = null; $("panneau").classList.remove("ouvert"); rafraichir(true); }
   function fermerTiroir() { groupeOuvert = null; $("tiroir").classList.remove("ouvert"); marquerGroupes(); }
-  function marquerGroupes() { for (const b of document.querySelectorAll(".groupe")) b.classList.toggle("actif", b.dataset.groupe === groupeOuvert); }
+  function marquerGroupes() {
+    const p = monde && Megalopole.Guide.progres(monde), montre = p && !monde.guide.cache && !monde.outil && !groupeOuvert ? p.mission.groupe : null;
+    for (const b of document.querySelectorAll(".groupe")) { b.classList.toggle("actif", b.dataset.groupe === groupeOuvert); b.classList.toggle("clignote", b.dataset.groupe === montre); }
+  }
 
   // Les messages (en bas de l'écran, pendant 4 s)
   let minuteurMessage = null;
@@ -128,6 +146,8 @@ Megalopole.Interface = (function () {
     "pret-refuse": (d) => "🏦❌ Prêt refusé : " + d.raison,
     "pret-rembourse": (d) => "🏦✅ Le prêt de " + fr(d.montant) + " 🪙 est remboursé !",
     "routes-abimees": (d) => "🛣️⚠️ Les routes s'abîment (" + d.etat + " %) : augmente leur budget dans 🧾",
+    "mission-reussie": (d) => "🎓✅ Mission " + d.numero + " réussie : " + d.emoji + " " + d.titre + " !",
+    "guide-fini": () => "🎓🎉 Bravo, tu as fini le guide ! Maintenant, écoute ce que réclament les habitants (📢).",
     "caisse-vide": (d) => "🧾⚠️ La caisse est vide depuis " + d.mois + " mois ! Encore " + d.reste + " mois et le maire est renvoyé (🏦 un prêt ? moins de dépenses ?)",
   };
 
@@ -154,16 +174,34 @@ Megalopole.Interface = (function () {
     }
     for (const b of document.querySelectorAll("[data-vitesse]")) b.classList.toggle("actif", +b.dataset.vitesse === Megalopole.vitesse);
     $("bouton-calques").textContent = "🗺️ " + (Megalopole.calque ? Megalopole.Peintre.CALQUES[Megalopole.calque].nom : "Calques");
-    // l'outil en cours
-    const o = m.outil;
-    $("outil-en-cours").textContent = o ? "🖌️ " + nomOutil(o) + " · touche (ou glisse) la carte · Échap pour arrêter" : "";
-    $("outil-en-cours").classList.toggle("visible", !!o);
+    // l'outil en cours (au doigt : 1 doigt bouge la carte, on TOUCHE le départ puis l'arrivée)
+    const o = m.outil, tr = m.trace && m.trace.doigt ? m.trace : null, trace = o && o.sorte !== "batiment";
+    $("outil-en-cours").textContent = !o ? "" : auDoigt() ? "🖌️ " + nomOutil(o) + (o.sorte === "batiment" ? " · touche la carte" : " · touche le départ") + " · ✋ = arrêter" : "🖌️ " + nomOutil(o) + " · touche (ou glisse) la carte · Échap pour arrêter";
+    $("outil-en-cours").classList.toggle("visible", !!o && !tr);
+    // ✅ / ❌ : le tracé fait au doigt attend qu'on confirme
+    let hc = "";
+    if (tr && trace) {
+      const cases = Megalopole.Monde.casesDuTrace(o, tr);
+      const e = o.sorte === "route" ? Megalopole.Construction.evaluerRoute(m, cases, o.valeur) : o.sorte === "zone" ? Megalopole.Construction.evaluerZone(m, cases, o.valeur) : null;
+      hc = tr.pret ? "<span>" + nomOutil(o) + " · " + cases.length + " case(s)" + (e ? " · <b>" + fr(e.prix) + " 🪙</b>" : "") + "<br><small>retouche pour changer l'arrivée</small></span><button data-oui='1' class='oui'>✅ " + (o.sorte === "demolir" ? "Démolir" : o.sorte === "dezoner" ? "Effacer" : "Construire") + "</button>"
+        : "<span>👆 Touche maintenant l'<b>arrivée</b><br><small>(1 doigt pour bouger la carte)</small></span>";
+      hc += "<button data-non='1' class='non'>❌</button>";
+    }
+    if (hc !== dernierConfirmer) { $("confirmer").innerHTML = hc; dernierConfirmer = hc; }
+    $("confirmer").classList.toggle("visible", !!hc);
+    // 🎓 la bulle du guide
+    const g = Megalopole.Guide.progres(m);
+    let hg = "";
+    if (g && m.guide.cache) hg = "<button data-guide='montrer' class='petit-guide'>🎓 Le guide</button>";
+    else if (g) hg = "<div class='bulle'><div class='tete'><b>🎓 Mission " + g.numero + " / " + g.total + " : " + g.mission.emoji + " " + g.mission.titre + "</b><button data-guide='cacher' class='fermer' title='Cacher le guide'>✖</button></div><p>" + g.mission.texte + "</p>" + barreHTML(g.fait, "#7a5ab0") + "<div class='pied'><small>" + g.detail + "</small>" + (g.mission.groupe ? "<button data-guide='montrer-moi'>👉 Montre-moi</button>" : "") + "<button data-guide='passer' class='passer'>Passer ⏭️</button></div></div>";
+    if (hg !== dernierGuide) { $("guide").innerHTML = hg; dernierGuide = hg; marquerGroupes(); }
+    $("guide").classList.toggle("compact", !!o); // (un outil en main : la bulle se fait toute petite, pour laisser voir la carte)
     // la case touchée ouvre l'onglet 🔎
     if (m.selection && m.selection !== dejaVue) { dejaVue = m.selection; onglet = "case"; $("panneau").classList.add("ouvert"); }
     for (const b of document.querySelectorAll("[data-onglet]")) b.classList.toggle("actif", b.dataset.onglet === onglet && $("panneau").classList.contains("ouvert"));
     if ($("panneau").classList.contains("ouvert")) { const html = contenu(onglet); if (html !== dernierHTML) { $("contenu-panneau").innerHTML = html; dernierHTML = html; } } // (seulement s'il a changé : sinon un bouton disparaît sous le doigt)
   }
-  let dejaVue = null, dernierHTML = "";
+  let dejaVue = null, dernierHTML = "", dernierGuide = "", dernierConfirmer = "";
   function nomOutil(o) {
     if (o.sorte === "route") return C.routes[o.valeur].nom;
     if (o.sorte === "zone") return "Zone " + C.zones[o.valeur].nom.toLowerCase();
@@ -269,7 +307,7 @@ Megalopole.Interface = (function () {
   }
 
   // Ce que l'interface a reçu du joueur depuis la dernière fois (et on remet à zéro)
-  function consommer() { const d = Object.assign({}, demandes); demandes.outil = undefined; demandes.taux = []; demandes.postes = []; demandes.pret = null; demandes.vitesse = null; demandes.calque = undefined; demandes.difficulte = null; return d; }
+  function consommer() { const d = Object.assign({}, demandes); demandes.outil = undefined; demandes.taux = []; demandes.postes = []; demandes.pret = null; demandes.vitesse = null; demandes.calque = undefined; demandes.difficulte = null; demandes.guide = null; demandes.confirmer = false; demandes.annulerTrace = false; return d; }
 
   return { initialiser, changerMonde, rafraichir, consommer, afficher, fermerTiroir, fermerPanneau, ouvrirTiroir, choisirDifficulte, renvoye, demandes };
 })();

@@ -196,6 +196,13 @@ Megalopole.Peintre = (function () {
     ctx.globalAlpha = 0.45; ctx.fillStyle = couleur; ctx.beginPath();
     for (const q of cases) { const p = milieu(q.colonne, q.ligne); ctx.moveTo(p.x - L / 2, p.y); ctx.lineTo(p.x, p.y - Hc / 2); ctx.lineTo(p.x + L / 2, p.y); ctx.lineTo(p.x, p.y + Hc / 2); }
     ctx.fill(); ctx.globalAlpha = 1;
+    if (monde.trace) { ctx.strokeStyle = "rgba(20, 20, 30, .7)"; ctx.lineWidth = 1.5 / Math.max(0.5, monde.camera.zoom); ctx.stroke(); } // (un bord foncé : le tracé se voit bien)
+    if (monde.trace && monde.trace.doigt) { // 👆 au doigt : un drapeau au départ, et à l'arrivée quand elle est posée
+      ctx.font = "22px sans-serif"; ctx.textAlign = "center";
+      const d = milieu(trace.depart.colonne, trace.depart.ligne); ctx.fillText("📍", d.x, d.y - 4);
+      if (monde.trace.pret) { const a = milieu(trace.arrivee.colonne, trace.arrivee.ligne); ctx.fillText("🏁", a.x, a.y - 4); }
+      ctx.textAlign = "left";
+    }
     if (monde.trace) { // le prix, au bout du tracé
       const e = o.sorte === "route" ? Co.evaluerRoute(monde, cases, o.valeur) : o.sorte === "zone" ? Co.evaluerZone(monde, cases, o.valeur) : null, p = milieu(trace.arrivee.colonne, trace.arrivee.ligne);
       if (e) { const texte = (e.prix || 0) + " 🪙" + (e.impossibles ? " · " + e.impossibles + " ❌" : ""); ctx.font = "bold 13px sans-serif"; const w = ctx.measureText(texte).width + 12; ctx.fillStyle = e.prix > monde.argent ? "rgba(200, 50, 40, .9)" : "rgba(30, 30, 30, .8)"; ctx.fillRect(p.x - w / 2, p.y - 40, w, 20); ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.fillText(texte, p.x, p.y - 26); ctx.textAlign = "left"; }

@@ -65,12 +65,12 @@
       dx: (E.estEnfoncee("droite") ? 1 : 0) - (E.estEnfoncee("gauche") ? 1 : 0),
       dy: (E.estEnfoncee("bas") ? 1 : 0) - (E.estEnfoncee("haut") ? 1 : 0),
       zoom: souris.molette + (E.consommer("zoomPlus") ? 1 : 0) - (E.consommer("zoomMoins") ? 1 : 0),
-      outil: ui.outil, taux: ui.taux, postes: ui.postes, pret: ui.pret, annuler: E.consommer("annuler"), souris,
+      outil: ui.outil, taux: ui.taux, postes: ui.postes, pret: ui.pret, annuler: E.consommer("annuler") || ui.annulerTrace, confirmer: ui.confirmer, guide: ui.guide, souris,
     };
     if (E.consommer("route")) i.outil = { sorte: "route", valeur: "route" };
     if (E.consommer("demolir")) i.outil = { sorte: "demolir", valeur: null };
     for (const z of C.ordreZones) if (E.consommer("zone" + z)) i.outil = { sorte: "zone", valeur: z };
-    if (i.annuler) { Megalopole.Interface.fermerTiroir(); if (!monde.outil) Megalopole.Interface.fermerPanneau(); } // Échap : ferme le tiroir, puis le panneau
+    if (i.annuler && !ui.annulerTrace) { Megalopole.Interface.fermerTiroir(); if (!monde.outil) Megalopole.Interface.fermerPanneau(); } // Échap : ferme le tiroir, puis le panneau
     if (ui.difficulte) fonder(ui.difficulte);
     if (ui.vitesse !== null) Megalopole.vitesse = ui.vitesse;
     if (E.consommer("pause")) Megalopole.vitesse = Megalopole.vitesse ? 0 : 1;
@@ -89,7 +89,7 @@
     i.dtCamera = ecoule;
     // 1 pas « sans temps » pour la caméra et les outils, puis les pas de la ville
     Megalopole.Monde.etape(monde, 0, i);
-    const sansGestes = Object.assign({}, i, { zoom: 0, outil: undefined, taux: [], postes: [], pret: null, annuler: false, dx: 0, dy: 0, dtCamera: 0, souris: null });
+    const sansGestes = Object.assign({}, i, { zoom: 0, outil: undefined, taux: [], postes: [], pret: null, annuler: false, confirmer: false, guide: null, dx: 0, dy: 0, dtCamera: 0, souris: null });
     reserve += attendDifficulte || monde.renvoye ? 0 : ecoule * Megalopole.vitesse;
     let n = 0;
     while (reserve >= C.pasFixe && n < 120) { Megalopole.Monde.etape(monde, C.pasFixe, sansGestes); reserve -= C.pasFixe; n++; pas++; }

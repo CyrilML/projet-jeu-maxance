@@ -13,12 +13,14 @@
 //   2 (étape 2) : la difficulté, un taux d'impôt par zone (taux : { R, C, I, A }), le budget de chaque poste (postes),
 //                 les prêts, l'état des routes et les mois dans le rouge. Une ville de la version 1 : le même taux pour
 //                 les 4 zones, tous les postes à 100 %, pas de prêt, difficulté « Normal ».
+//   3 (étape 3) : le guide (guide : { etape, fini, cache }). Une ville plus ancienne : le guide saute tout seul,
+//                 sans rien dire, les missions qu'elle a déjà réussies.
 
 window.Megalopole = window.Megalopole || {};
 
 Megalopole.Sauvegarde = (function () {
   const CLE = "megalopole:sauvegarde";
-  const VERSION = 2;
+  const VERSION = 3;
   const radio = Megalopole.Evenements;
 
   function encoder(tab) {
@@ -46,6 +48,7 @@ Megalopole.Sauvegarde = (function () {
       temps: Math.round(monde.temps), mois: monde.mois, compteMois: Math.round(monde.compteMois),
       argent: Math.round(monde.argent), taux: monde.taux, palier: monde.palier,
       difficulte: monde.difficulte, postes: monde.postes, prets: monde.prets, etatRoutes: Math.round(monde.etatRoutes * 1000) / 1000, moisDansLeRouge: monde.moisDansLeRouge, renvoye: monde.renvoye, // étape 2
+      guide: { etape: monde.guide.etape, fini: monde.guide.fini, cache: monde.guide.cache }, // étape 3
       routes: encoder(monde.route), zones: encoder(monde.zone), niveaux: encoder(monde.niveau), arbres: encoder(monde.carte.arbre),
       batiments: monde.batiments.map((b) => ({ type: b.type, colonne: b.colonne, ligne: b.ligne })),
       historique: monde.historique,
@@ -58,6 +61,7 @@ Megalopole.Sauvegarde = (function () {
     monde.taux = typeof p.taux === "number" ? { R: p.taux, C: p.taux, I: p.taux, A: p.taux } : Object.assign({}, monde.taux, p.taux);
     monde.difficulte = p.difficulte || "normal"; monde.postes = p.postes || {}; monde.prets = p.prets || [];
     monde.etatRoutes = p.etatRoutes === undefined ? 1 : p.etatRoutes; monde.moisDansLeRouge = p.moisDansLeRouge || 0; monde.renvoye = !!p.renvoye;
+    monde.guide = p.guide ? Object.assign({ etape: 0, fini: false, cache: false }, p.guide) : { etape: 0, fini: false, cache: false, rattraper: true }; // étape 3
     decoder(p.routes, monde.route); decoder(p.zones, monde.zone); decoder(p.niveaux, monde.niveau);
     if (p.arbres) decoder(p.arbres, monde.carte.arbre);
     for (const b of p.batiments || []) Megalopole.Construction.remettre(monde, b);

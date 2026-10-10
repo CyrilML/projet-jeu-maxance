@@ -82,6 +82,28 @@
     .banque button { display: flex; flex-direction: column; align-items: center; border: 1px solid #c8bca0; border-radius: 9px; background: #fff; padding: 5px 3px; color: #2a2620; }
     .banque button small { font-size: 0.68rem; color: #7a6a4a; }
     .banque button.verrou { opacity: .5; }
+    /* le guide (étape 3) */
+    #guide { top: 116px; left: 8px; width: min(330px, calc(100% - 420px)); min-width: 250px; }
+    #guide .bulle { background: rgba(250, 248, 240, .97); color: #2a2620; border: 3px solid #7a5ab0; border-radius: 12px; padding: 7px 10px; box-shadow: 0 4px 14px rgba(0,0,0,.35); font-size: 0.85rem; }
+    #guide .tete { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
+    #guide .tete .fermer { width: 28px; height: 28px; font-size: 0.8rem; }
+    #guide p { margin: 4px 0 6px; line-height: 1.35; }
+    #guide .pied { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+    #guide .pied small { margin-right: auto; color: #5a4a7a; font-weight: 700; }
+    #guide .pied button { border: 0; border-radius: 9px; background: #7a5ab0; color: #fff; padding: 6px 10px; font-weight: 700; }
+    #guide .pied button.passer { background: #e4e0d6; color: #4a3a2a; }
+    #guide.compact p, #guide.compact .barre, #guide.compact .pied button, #guide.compact .tete .fermer { display: none; }
+    #guide.compact .bulle { padding: 4px 9px; } #guide.compact .pied { margin-top: 0; }
+    .petit-guide { border: 0; border-radius: 10px; background: #7a5ab0; color: #fff; padding: 6px 10px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+    .groupe.clignote { animation: clignote 1s ease-in-out infinite; }
+    @keyframes clignote { 50% { background: #c9b4f0; box-shadow: 0 0 0 3px #7a5ab0; } }
+    /* ✅ / ❌ : confirmer un tracé fait au doigt */
+    #confirmer { bottom: 78px; left: 50%; transform: translateX(-50%); display: none; align-items: center; gap: 8px; background: rgba(250, 248, 240, .97); color: #2a2620; padding: 6px 8px 6px 12px; border-radius: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.35); font-size: 0.85rem; width: max-content; max-width: calc(100% - 16px); }
+    #confirmer.visible { display: flex; }
+    #confirmer small { color: #7a6a4a; }
+    #confirmer button { border: 0; border-radius: 10px; padding: 10px 12px; font-weight: 700; font-size: 1rem; white-space: nowrap; }
+    #confirmer .oui { background: #3d8a4a; color: #fff; }
+    #confirmer .non { background: #e4e0d6; }
     /* le voile : la difficulté, le maire renvoyé */
     #voile { inset: 0; z-index: 5; display: none; place-items: center; background: rgba(16, 22, 42, .72); padding: 12px; overflow-y: auto; }
     #voile.ouvert { display: grid; }
@@ -121,6 +143,13 @@
       .pastille { font-size: 0.78rem; padding: 4px 7px; }
       #rci { height: 46px; }
       #calques, #onglets, #panneau { top: 122px; }
+      #guide { top: 168px; width: calc(100% - 76px); min-width: 0; }
+      #guide .bulle { font-size: 0.78rem; padding: 6px 8px; } #guide .pied button { padding: 5px 8px; }
+      #panneau.ouvert ~ #guide, #tiroir.ouvert ~ #guide { display: none; } /* (petit écran : un seul panneau à la fois) */
+      #outil-en-cours { white-space: normal; text-align: center; width: max-content; max-width: calc(100% - 16px); font-size: 0.78rem; }
+      #confirmer { bottom: 72px; font-size: 0.75rem; padding: 4px 5px 4px 9px; gap: 5px; }
+      #confirmer small { display: none; } #confirmer br { display: none; }
+      #confirmer button { padding: 7px 9px; font-size: 0.85rem; }
       #panneau { max-height: calc(100% - 210px); }
       .carte-outil { width: 82px; } .carte-outil b { font-size: 0.66rem; } .carte-outil .emoji { width: 32px; height: 32px; font-size: 1.3rem; }
       #tiroir { bottom: 70px; }
@@ -133,7 +162,7 @@
 <body>
   <header>
     <h1>🌐 La Mégalopole</h1>
-    <span><span id="version" class="version"></span> <a href="carnet.html#etape2">📓 Le carnet de la Mégalopole</a> · <a href="../index.html">🏠 Accueil</a></span>
+    <span><span id="version" class="version"></span> <a href="carnet.html#etape3">📓 Le carnet de la Mégalopole</a> · <a href="../index.html">🏠 Accueil</a></span>
   </header>
 
   <div id="jeu">
@@ -166,6 +195,8 @@
     <div id="outil-en-cours" class="flottant"></div>
     <div id="outils" class="flottant"></div>
     <div id="message" class="flottant"></div>
+    <div id="guide" class="flottant"></div>
+    <div id="confirmer" class="flottant"></div>
     <div id="voile" class="flottant"></div>
   </div>
   <p class="aide">
@@ -180,25 +211,26 @@
     <section><h2>💾 Base de données <button id="effacer-base">Effacer</button></h2><pre id="base"></pre></section>
   </div>
 
-  <script src="config.js?v=3"></script>
-  <script src="moteur/evenements.js?v=3"></script>
-  <script src="moteur/ecran.js?v=3"></script>
-  <script src="moteur/entrees.js?v=3"></script>
-  <script src="moteur/hasard.js?v=3"></script>
-  <script src="moteur/iso.js?v=3"></script>
-  <script src="logique/carte.js?v=3"></script>
-  <script src="logique/construction.js?v=3"></script>
-  <script src="logique/reseaux.js?v=3"></script>
-  <script src="logique/services.js?v=3"></script>
-  <script src="logique/zones.js?v=3"></script>
-  <script src="logique/population.js?v=3"></script>
-  <script src="logique/budget.js?v=3"></script>
-  <script src="donnees/sauvegarde.js?v=3"></script>
-  <script src="logique/monde.js?v=3"></script>
-  <script src="affichage/maquettes.js?v=3"></script>
-  <script src="affichage/peintre.js?v=3"></script>
-  <script src="affichage/interface.js?v=3"></script>
-  <script src="affichage/sous-le-capot.js?v=3"></script>
-  <script src="main.js?v=3"></script>
+  <script src="config.js?v=4"></script>
+  <script src="moteur/evenements.js?v=4"></script>
+  <script src="moteur/ecran.js?v=4"></script>
+  <script src="moteur/entrees.js?v=4"></script>
+  <script src="moteur/hasard.js?v=4"></script>
+  <script src="moteur/iso.js?v=4"></script>
+  <script src="logique/carte.js?v=4"></script>
+  <script src="logique/construction.js?v=4"></script>
+  <script src="logique/reseaux.js?v=4"></script>
+  <script src="logique/services.js?v=4"></script>
+  <script src="logique/zones.js?v=4"></script>
+  <script src="logique/population.js?v=4"></script>
+  <script src="logique/budget.js?v=4"></script>
+  <script src="logique/guide.js?v=4"></script>
+  <script src="donnees/sauvegarde.js?v=4"></script>
+  <script src="logique/monde.js?v=4"></script>
+  <script src="affichage/maquettes.js?v=4"></script>
+  <script src="affichage/peintre.js?v=4"></script>
+  <script src="affichage/interface.js?v=4"></script>
+  <script src="affichage/sous-le-capot.js?v=4"></script>
+  <script src="main.js?v=4"></script>
 </body>
 </html>

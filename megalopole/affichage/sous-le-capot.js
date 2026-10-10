@@ -41,6 +41,9 @@ Megalopole.SousLeCapot = (function () {
     "pret-rembourse": (d) => "🏦✅ Prêt de " + fr(d.montant) + " 🪙 entièrement remboursé",
     "routes-abimees": (d) => "🛣️⚠️ Routes abîmées (" + d.etat + " %) : moins de voitures passent, le terrain perd de la valeur",
     "caisse-vide": (d) => "🧾⚠️ Caisse sous zéro (" + fr(d.argent) + " 🪙) depuis " + d.mois + " mois · renvoi du maire dans " + d.reste + " mois",
+    "mission-reussie": (d) => "🎓✅ Guide : mission " + d.numero + " / " + d.total + " réussie (" + d.emoji + " " + d.titre + ") → la suivante",
+    "mission-passee": (d) => "🎓⏭️ Guide : mission " + d.numero + " / " + d.total + " passée (" + d.emoji + " " + d.titre + ")",
+    "guide-fini": (d) => "🎓🎉 Guide terminé : les " + d.missions + " missions sont faites",
     "maire-renvoye": (d) => "🧾❌ " + d.mois + " mois dans le rouge (" + fr(d.argent) + " 🪙) : le conseil municipal renvoie le maire. Fin de la partie.",
     "sauvegarde": (d) => "💾 Sauvegarde (" + d.raison + ") : " + fr(d.taille) + " lettres",
     "sauvegarde-ratee": (d) => "💾❌ La sauvegarde a raté : " + d.erreur,
@@ -108,6 +111,11 @@ Megalopole.SousLeCapot = (function () {
     h += ligne("= solde prévu (recettes − dépenses)", (p.solde >= 0 ? "+" : "") + fr(p.solde));
     h += ligne("mois de suite dans le rouge (renvoi à " + C.prets.moisDansLeRouge + ")", m.moisDansLeRouge + (m.renvoye ? " · ❌ renvoyé" : ""));
     if (m.dernierBudget) h += ligne("dernier mois : recettes − dépenses", fr(m.dernierBudget.recettes) + " − " + fr(m.dernierBudget.depenses) + " = " + fr(m.dernierBudget.solde));
+    // 🎓 le professeur (étape 3) : la mission en cours et ce qu'il vérifie
+    const gp = Megalopole.Guide.progres(m);
+    h += groupe("🎓 Le guide (le professeur vérifie 2 fois par seconde)");
+    h += ligne(gp ? "mission " + gp.numero + " / " + gp.total + " : " + gp.mission.emoji + " " + gp.mission.titre + " · test « " + gp.mission.test + " »" + (m.guide.cache ? " · caché" : "") : "guide", gp ? gp.detail + " · " + Math.round(gp.fait * 100) + " %" : "✅ terminé");
+    if (m.trace && m.trace.doigt) h += ligne("👆 tracé au doigt : départ → arrivée", "(" + m.trace.depart.colonne + ", " + m.trace.depart.ligne + ") → (" + m.trace.arrivee.colonne + ", " + m.trace.arrivee.ligne + ")" + (m.trace.pret ? " · attend ✅" : " · attend l'arrivée"));
     h += groupe("🎨 Le peintre");
     h += ligne("images par seconde · pas de calcul par seconde", mesures.ips + " · " + mesures.majParSeconde);
     h += ligne("cases · objets · voitures dessinés · temps de dessin", P.cases + " · " + P.objets + " · " + P.voitures + " · " + virgule(P.ms, 1) + " ms");

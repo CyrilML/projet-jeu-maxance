@@ -13,7 +13,7 @@ window.Megalopole = window.Megalopole || {};
 
 Megalopole.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 3,
+  version: 4,
   pasFixe: 1 / 120, // s : la boucle avance par petits pas fixes
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 
@@ -202,4 +202,23 @@ Megalopole.CONFIG = {
     { batiment: "stade", habitants: 8000, texte: "Un stade, pour voir les matchs !" },
     { batiment: "attractions", habitants: 40000, texte: "Un parc d'attractions !" },
   ],
+
+  // 🎓 Le GUIDE du début (étape 3, demande de Maxance) : une mission à la fois. Le professeur (logique/guide.js) vérifie
+  // chaque mission dans la ville : quand c'est fait, il passe à la suivante. « groupe » : le menu que montre 👉.
+  //   test : « routes » (cases de route), « courant » / « eau » (ce que produit la ville), « zone » (cases peintes),
+  //          « batiment » (combien de ce bâtiment), « habitants »
+  guide: {
+    missions: [
+      { emoji: "🛣️", titre: "Trace une route", texte: "Tout commence par une route : sans elle, rien ne se construit. Ouvre 🛣️ Routes, choisis Route, puis trace une longue ligne droite.", groupe: "routes", test: "routes", nombre: 15 },
+      { emoji: "⚡", titre: "L'électricité", texte: "Pose une ⚡ centrale à charbon (ou 3 🌬️ éoliennes) qui TOUCHE la route : le courant voyage le long des routes.", groupe: "energie", test: "courant", nombre: 40 },
+      { emoji: "💧", titre: "L'eau", texte: "Pose un 🗼 château d'eau qui touche la route (ou une 🚰 pompe au bord d'un lac). Il lui faut aussi le courant !", groupe: "eau", test: "eau", nombre: 50 },
+      { emoji: "🏠", titre: "Des maisons", texte: "Peins une zone 🏠 habitation le long de la route (pas plus loin que 2 cases). Ce sont les habitants qui viendront construire.", groupe: "zones", test: "zone", zone: "R", nombre: 16 },
+      { emoji: "🏭", titre: "Du travail", texte: "Les habitants veulent travailler : peins une zone 🏭 industrie (un peu loin des maisons, elle pollue) et une zone 🛍️ commerce.", groupe: "zones", test: "zone", zone: "I", nombre: 8, zone2: "C", nombre2: 6 },
+      { emoji: "⏩", titre: "Regarde la ville pousser", texte: "Maintenant, attends (⏩ pour aller plus vite) : les maisons, les usines et les boutiques poussent toutes seules. Regarde la barre R C I A en haut : elle dit ce que la ville réclame.", groupe: null, test: "habitants", nombre: 60 },
+      { emoji: "🏫", titre: "Une école", texte: "Pour que les maisons deviennent plus grandes, il faut des services. Pose une 🏫 école près des maisons (elle aussi doit toucher la route).", groupe: "services", test: "batiment", type: "ecole", nombre: 1 },
+      { emoji: "🌳", titre: "Des parcs", texte: "Les parcs rendent le terrain plus cher 💎 et les gens plus heureux. Plante 3 🌳 parcs entre les maisons.", groupe: "loisirs", test: "batiment", type: "parc", nombre: 3 },
+      { emoji: "🏘️", titre: "Deviens un village", texte: "Atteins 400 habitants. Si ça bloque : regarde 📢 (ce que réclament les habitants) et touche une maison avec 🔎 (ce qui lui manque). Et surveille ton argent dans 🧾 !", groupe: null, test: "habitants", nombre: 400 },
+    ],
+    intervalle: 0.5, // s : le professeur vérifie 2 fois par seconde
+  },
 };

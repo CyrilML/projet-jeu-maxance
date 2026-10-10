@@ -30,6 +30,7 @@ Megalopole.Monde = (function () {
       difficulte: difficulte || "normal", argent: C.difficultes[difficulte || "normal"].argent, palier: 0, bonheur: 60,
       taux: { R: C.budget.tauxDepart, C: C.budget.tauxDepart, I: C.budget.tauxDepart, A: C.budget.tauxDepart },
       postes: {}, prets: [], etatRoutes: 1, moisDansLeRouge: 0, renvoye: false,
+      guide: { etape: 0, fini: false, cache: false }, // étape 3 : la mission du guide en cours
       demande: { R: 0.5, C: 0.3, I: 0.3, A: 0.2 }, besoins: {}, stats: { habitants: 0, emplois: 0, commerce: 0, industrie: 0, agriculture: 0, actifs: 0, chomeurs: 0 },
       reclamations: [], historique: [], dernierBudget: null, compteurs: { grandis: 0, baisses: 0 },
       camera: camera || null, outil: null, trace: null, survol: null, selection: null, changements: 0,
@@ -76,6 +77,7 @@ Megalopole.Monde = (function () {
     cam.x = Math.max((-n * L) / 2, Math.min((n * L) / 2, cam.x)); cam.y = Math.max(0, Math.min(n * Hc, cam.y));
   }
 
+  // (un tracé au doigt : monde.trace = { depart, arrivee, doigt: true, pret } ; « pret » quand l'arrivée est posée)
   function choisirOutil(monde, outil) {
     monde.outil = outil; monde.trace = null;
     if (outil) monde.selection = null;
@@ -93,6 +95,14 @@ Megalopole.Monde = (function () {
       if (s.clic) { const p = caseSous(monde, s.clic.x, s.clic.y), t = C.batiments[o.valeur].taille; Co.poserBatiment(monde, o.valeur, p.colonne - (t >> 1), p.ligne - (t >> 1)); }
       return;
     }
+    // 👆 au doigt : toucher le départ, puis l'arrivée (on peut retoucher pour changer l'arrivée), puis ✅ ou ❌
+    if (s.clic && s.clic.doigt) {
+      const p = caseSous(monde, s.clic.x, s.clic.y);
+      if (!monde.trace || !monde.trace.doigt) monde.trace = { depart: p, arrivee: p, doigt: true, pret: false };
+      else { monde.trace.arrivee = p; monde.trace.pret = true; }
+      return;
+    }
+    if (monde.trace && monde.trace.doigt) return; // (le tracé au doigt attend ✅)
     if (s.annuleTrace) monde.trace = null; // un 2e doigt s'est posé : c'était un pincement, pas un tracé
     if (s.appui) monde.trace = { depart: caseSous(monde, s.appui.x, s.appui.y), arrivee: caseSous(monde, s.appui.x, s.appui.y) };
     if (monde.trace && s.enfoncee) monde.trace.arrivee = caseSous(monde, s.x, s.y);
@@ -121,11 +131,17 @@ Megalopole.Monde = (function () {
     camera(monde, dt, i);
     if (i.outil !== undefined) choisirOutil(monde, i.outil);
     if (i.annuler) { if (monde.trace) monde.trace = null; else choisirOutil(monde, null); monde.selection = null; }
+    // ✅ construire le tracé fait au doigt
+    if (i.confirmer && monde.trace && monde.outil && monde.outil.sorte !== "batiment") { appliquer(monde, monde.outil, monde.trace); monde.trace = null; }
     // étape 2 : les curseurs du budget, et les prêts
     for (const t of i.taux || []) Megalopole.Budget.changerTaux(monde, t.zone, t.d);
     for (const p of i.postes || []) Megalopole.Budget.changerPoste(monde, p.id, p.d);
     if (i.pret) Megalopole.Budget.emprunter(monde, i.pret);
+    // étape 3 : le guide (passer une mission, le cacher, le remontrer)
+    if (i.guide === "passer") Megalopole.Guide.passer(monde);
+    if (i.guide === "cacher" || i.guide === "montrer") Megalopole.Guide.cacher(monde, i.guide === "cacher");
     outil(monde, i.souris);
+    if (!monde.renvoye) Megalopole.Guide.etape(monde, dt || i.dtCamera || 0);
     if (!dt || monde.renvoye) return; // (le maire renvoyé : la ville s'arrête)
     monde.temps += dt;
     minuteurReseaux -= dt;

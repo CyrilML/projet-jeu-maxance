@@ -126,6 +126,7 @@
       <a href="#fichiers">Les fichiers</a>
       <a href="#etape1">Étape 1</a>
       <a href="#etape2">Étape 2</a>
+      <a href="#etape3">Étape 3</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="index.html">▶ Jouer</a>
@@ -276,7 +277,7 @@
             <li>☐ 🏦 Emprunte 5 000 🪙 : la mensualité apparaît dans les dépenses.</li>
             <li>☐ Mets tous les impôts à 0 % et attends : avertissements… puis « Le maire est renvoyé ! ».</li>
             <li>☐ 📱 Correctif : le panneau de droite et le tiroir des outils ont un bouton <strong>✖</strong> pour se fermer (et <kbd>Échap</kbd> sur ordinateur).</li>
-            <li>Vérifie « version 3 » en haut de la page.</li>
+            <li>(La version a avancé depuis : vérifie le numéro de l'étape 3.)</li>
           </ul>
         </div>
       </div>
@@ -316,6 +317,60 @@
       <details class="question"><summary>En difficile, une école coûte 1 500 🪙 de base. Combien la paies-tu ?</summary><p>1 500 × 1,3 = 1 950 🪙. Et son entretien : 100 × 1,3 = 130 🪙 par mois.</p></details>
     </section>
 
+    <section id="etape3">
+      <h2>🎓 Étape 3 : un guide au début, et tracer au doigt <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Des missions pas à pas pour bien commencer, et sur téléphone : 1 doigt bouge la carte, on touche le départ, l'arrivée, puis ✅ (tes choix). <a href="index.html"><strong>▶ la Mégalopole</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>megalopole/demandes/03-guide-et-doigts.md</code>.</p>
+          <ul>
+            <li>✍️ « Il faut un guide au début pour expliquer ce qu'il faut placer en premier. »</li>
+            <li>✍️ « Quand on pose des routes, on ne peut pas se déplacer sur l'écran sur mobile, sinon ça place des routes n'importe où. »</li>
+            <li>Tes choix : <strong>des missions pas à pas</strong>, et <strong>1 doigt bouge la carte, on confirme</strong>.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Une nouvelle ville : la bulle violette « Mission 1 / 9 » apparaît. « 👉 Montre-moi » ouvre le bon menu, qui clignote.</li>
+            <li>☐ Sur téléphone, avec l'outil Route : glisse 1 doigt, la carte bouge, et aucune route n'est posée.</li>
+            <li>☐ Touche le 📍 départ, puis le 🏁 arrivée : le tracé et son prix s'affichent. ✅ construit, ❌ annule.</li>
+            <li>☐ Chaque mission réussie : « 🎓✅ Mission réussie ! », et la suivante arrive.</li>
+            <li>☐ « Passer ⏭️ », ✖ pour cacher, « 🎓 Le guide » pour le faire revenir.</li>
+            <li>Vérifie « version 4 » en haut de la page.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔧 Sous le capot n° 1 : un professeur qui regarde la ville</h3>
+      <p>Le guide ne sait pas sur quels boutons tu appuies. Il fait mieux : il <strong>regarde le résultat</strong>. Deux fois par seconde, le professeur (<code>logique/guide.js</code>) compte ce qu'il y a dans la ville :</p>
+      <pre style="white-space: pre-wrap">  mission « Trace une route »  →  compter les cases de route  →  15 ou plus ?  ✅ suivante !
+  mission « L'électricité »    →  ce que produisent les centrales  →  40 ou plus ?
+  mission « Des maisons »      →  compter les cases 🏠  →  16 ou plus ?</pre>
+      <p>Comme ça, peu importe <em>comment</em> tu fais (avec la souris, au doigt, au clavier) : si c'est fait, c'est réussi. Les missions sont rangées comme des <strong>données</strong> dans <code>config.js</code> (« guide ») : on peut en ajouter sans toucher au professeur !</p>
+
+      <h3>🔧 Sous le capot n° 2 : un « toucher » ou un « glisser » ?</h3>
+      <p>Les oreilles du jeu (<code>moteur/entrees.js</code>) mesurent de combien le doigt a bougé entre le moment où il se pose et le moment où il se lève :</p>
+      <div class="comparaison">
+        <div class="carte"><h4>👆 moins de 14 pixels</h4><p>C'est un <strong>toucher</strong> : il pose le 📍 départ, puis le 🏁 arrivée (ou un bâtiment).</p></div>
+        <div class="carte"><h4>👉 plus de 14 pixels</h4><p>C'est un <strong>glisser</strong> : la carte bouge, et rien n'est construit.</p></div>
+      </div>
+      <p>Le tracé attend ensuite dans <code>monde.trace</code> (tu le vois sous le capot) jusqu'à ce que tu appuies sur ✅. À la souris, rien ne change : on glisse pour tracer, parce qu'une souris ne tremble pas comme un doigt.</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>config.js</code>, cherche <code>guide</code> : change le nombre de la mission 1 (15) en 40. La mission devient-elle plus dure ?</li>
+        <li>Invente une 10ᵉ mission (par exemple « Pose une mairie ») en copiant une ligne de la liste.</li>
+        <li>Sous le capot, regarde la ligne « 🎓 Le guide » pendant que tu peins des maisons : le compteur monte.</li>
+        <li>Sur téléphone, touche le départ, puis 3 arrivées différentes avant ✅ : que se passe-t-il ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi le guide vérifie-t-il la ville, et pas les boutons sur lesquels tu appuies ?</summary><p>Parce que ce qui compte, c'est le résultat. On peut poser une route de plein de façons (souris, doigt, touche R) : en regardant la ville, le professeur ne se trompe jamais.</p></details>
+      <details class="question"><summary>Ton doigt bouge de 5 pixels en touchant la carte : c'est un toucher ou un glisser ?</summary><p>Un toucher (moins de 14 pixels) : il pose un point du tracé.</p></details>
+      <details class="question"><summary>Une vieille ville a déjà des routes et une centrale. Par quelle mission le guide commence-t-il ?</summary><p>Il saute en silence les missions déjà réussies : il commence à la mission 3, l'eau (si elle n'est pas encore faite).</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route de la Mégalopole</h2>
@@ -323,10 +378,11 @@
       <div class="route">
         <div class="carte fait"><div class="num">1</div><h4>🌐 Une ville qui pousse toute seule <span class="etiquette">✅ fait · à valider</span></h4><p>Routes, 4 zones et 6 niveaux, énergie, eau, services, loisirs, transports, demande R C I A, bonheur, réclamations, budget, paliers jusqu'à la mégalopole.</p><p class="apprend"><b>Tu apprends :</b> une simulation, une balance, une carte de valeurs. <b>Durée :</b> 2 séances.</p></div>
         <div class="carte fait"><div class="num">2</div><h4>🧾 Les impôts et les coûts <span class="etiquette">✅ fait · à valider</span></h4><p>Un impôt par zone, un budget par service (0 à 150 %), le carburant des centrales, la banque, la caisse vide et le maire renvoyé, 3 difficultés.</p><p class="apprend"><b>Tu apprends :</b> un budget, un compromis, les intérêts d'un prêt. <b>Durée :</b> 1 séance.</p></div>
-        <div class="carte prochain"><div class="num">3</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
-        <div class="carte"><div class="num">4</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
-        <div class="carte"><div class="num">5</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
-        <div class="carte"><div class="num">6</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
+        <div class="carte fait"><div class="num">3</div><h4>🎓 Un guide, et tracer au doigt <span class="etiquette">✅ fait · à valider</span></h4><p>9 missions pas à pas pour bien commencer ; sur téléphone, 1 doigt bouge la carte, on touche le départ et l'arrivée, puis ✅.</p><p class="apprend"><b>Tu apprends :</b> vérifier un résultat, distinguer un toucher d'un glisser. <b>Durée :</b> 1 séance.</p></div>
+        <div class="carte prochain"><div class="num">4</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
+        <div class="carte"><div class="num">5</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
+        <div class="carte"><div class="num">6</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
+        <div class="carte"><div class="num">7</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
       </div>
     </section>
 
@@ -349,6 +405,14 @@
         <textarea class="journal" id="megalopole-appris-2" data-cle="megalopole-appris-2" placeholder="Ex. : J'ai appris qu'un prêt coûte plus cher que ce qu'on emprunte…"></textarea>
         <label for="megalopole-idees-2"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="megalopole-idees-2" data-cle="megalopole-idees-2" placeholder="Ex. : Des ordonnances (interdire de fumer, recycler…) qui coûtent mais rendent heureux…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 3 · un guide, et tracer au doigt <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le professeur (<code>logique/guide.js</code>) et ses 9 missions, la bulle violette avec « Montre-moi », « Passer » et ✖ ; sur téléphone, 1 doigt bouge toujours la carte, et on trace avec 📍 départ, 🏁 arrivée, ✅ ou ❌ ; la sauvegarde en version 3. Avant, à l'étape 2 bis : un bouton ✖ pour fermer le panneau et le tiroir.</p>
+        <label for="megalopole-appris-3"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="megalopole-appris-3" data-cle="megalopole-appris-3" placeholder="Ex. : J'ai appris que le jeu mesure de combien mon doigt bouge pour savoir si je touche ou si je glisse…"></textarea>
+        <label for="megalopole-idees-3"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="megalopole-idees-3" data-cle="megalopole-idees-3" placeholder="Ex. : D'autres missions plus tard (une mairie, un stade…) avec une récompense…"></textarea>
       </div>
     </section>
   </main>

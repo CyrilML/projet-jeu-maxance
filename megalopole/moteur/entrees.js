@@ -3,11 +3,13 @@
 // Ce fichier écoute le clavier, la souris et les doigts, et les traduit en INTENTIONS : « glisser la carte »,
 // « zoomer », « commencer un tracé ici », « finir le tracé là »… Le reste du jeu ne parle jamais de touches.
 //
-// Un doigt (ou le clic gauche) fait deux choses différentes selon l'outil :
+// À la SOURIS, le clic gauche fait deux choses différentes selon l'outil :
 //   - sans outil ✋ : il fait GLISSER la carte ;
 //   - avec un outil (route, zone, démolir…) : il TRACE (une route, un rectangle de zone).
-// Deux doigts, eux, font toujours glisser et zoomer (on pince). À la souris : le clic droit fait toujours glisser,
-// et la molette zoome.
+//   Le clic droit fait toujours glisser, et la molette zoome.
+// Au DOIGT (téléphone, tablette) : 1 doigt fait TOUJOURS glisser la carte, même avec un outil (demande de Maxance :
+// sinon on pose des routes n'importe où). Un petit TOUCHER (le doigt ne bouge presque pas) est un « clic » : la
+// logique s'en sert pour poser le départ puis l'arrivée d'un tracé, qu'on confirme avec ✅. Deux doigts : on pince.
 
 window.Megalopole = window.Megalopole || {};
 
@@ -52,7 +54,7 @@ Megalopole.Entrees = (function () {
       pointeurs.set(e.pointerId, p);
       souris.x = p.x; souris.y = p.y; souris.dessus = true;
       if (pointeurs.size === 1) {
-        depart = { x: p.x, y: p.y, deplace: 0, doigt: e.pointerType === "touch", glisse: e.button === 2 || e.button === 1 || !etat.outilActif };
+        depart = { x: p.x, y: p.y, deplace: 0, doigt: e.pointerType === "touch", glisse: e.button === 2 || e.button === 1 || !etat.outilActif || e.pointerType === "touch" };
         trace = !depart.glisse;
         if (trace) { souris.appui = { x: p.x, y: p.y }; souris.enfoncee = true; }
       } else { // un 2e doigt : on annule le tracé, on pince
@@ -83,7 +85,7 @@ Megalopole.Entrees = (function () {
       const p = position(e);
       if (pointeurs.size === 1 && depart) {
         const petit = depart.deplace < (depart.doigt ? 14 : 6);
-        if (!annule && petit) souris.clic = { x: p.x, y: p.y };
+        if (!annule && petit) souris.clic = { x: p.x, y: p.y, doigt: depart.doigt };
         if (trace) { if (annule) souris.annuleTrace = true; else souris.leve = { x: p.x, y: p.y }; }
       }
       trace = false; souris.enfoncee = false;
