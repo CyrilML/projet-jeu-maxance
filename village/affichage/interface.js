@@ -1097,6 +1097,7 @@ Village.Interface = (function () {
       else {
         const prix = p.deplacer ? "déménagement gratuit" : B.offert(monde, p.type) ? "🎁 offert (coup de pouce)" : Object.entries(B.coutPour(monde, p.type)).map(([r, n]) => n + " " + EMO(r)).join(" ") || "gratuit";
         texteBulle = (p.deplacer ? "↔️ " : B.TYPES[p.type].emoji + " ") + prix + (p.route === null ? " · ⚠️ pas de chemin possible" : p.route.length ? " · +" + p.route.length + " case(s) de " + (Village.Recherches.a(monde, "routePierre") ? "route pavée" + (p.coutRoute ? " (" + p.coutRoute + " 🪨)" : "") : "chemin") + ((n) => (n ? " (🌉 " + n + " pont : " + n * C.routes.pont.planches + " 🪵)" : ""))(Village.Routes.bilanDegagement(monde, p.route).ponts) : "");
+        { const dg = Village.Routes.bilanDegagement(monde, B.casesDePlace(p.type, p.colonne, p.ligne)); if (dg.arbres || dg.rochers) texteBulle += " · 🚜 " + [dg.arbres ? dg.arbres + " 🌳 → +" + dg.troncs + " 🪵" : "", dg.rochers ? dg.rochers + " 🪨 → +" + dg.pierres + " 🪨" : ""].filter(Boolean).join(", "); } // étape 45 : ce que le chantier dégage
         if (p.aimant) texteBulle += " · 🧲 collé à la route"; // étape 38
         if (p.alignes) texteBulle += " · 📏 aligné";
         // Étape 13 : ✍️ y aura-t-il quelqu'un pour y travailler ?

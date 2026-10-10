@@ -168,6 +168,7 @@
       <a href="#etape42">Étape 42</a>
       <a href="#etape43">Étape 43</a>
       <a href="#etape44">Étape 44</a>
+      <a href="#etape45">Étape 45</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2433,6 +2434,31 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
       <details class="question"><summary>Une forge améliorée 1 fois : combien de lingots peut-elle garder ?</summary><p>6 + 3 = 9.</p></details>
     </section>
 
+    <section id="etape45">
+      <h2>🚜 Étape 45 : construire même sur les arbres <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les bâtiments, comme les routes, dégagent leur place : les arbres et les rochers disparaissent, et ce qu'ils donnent va à l'entrepôt. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/43-construire-sur-les-obstacles.md</code>.</p>
+          <ul><li>✍️ « On doit pouvoir construire un bâtiment ou une route même s'il y a des arbres ou des obstacles. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Pose une scierie en pleine forêt : la place devient verte.</li>
+            <li>☐ La bulle dit « 🚜 … 🌳 → +… 🪵 » avant de valider.</li>
+            <li>☐ Après ✅, les arbres ont disparu et les troncs sont à l'entrepôt.</li>
+            <li>Vérifie « version 46 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>♻️ Réutiliser ce qui existe</h3>
+      <p>La route savait déjà dégager son passage (étape 36) avec une fonction, <code>degager</code>. Pour les bâtiments, on n'a pas réécrit la même chose : on a donné à cette fonction la liste des cases du bâtiment. Une fonction, deux usages !</p>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Une scierie 3 × 3 sur 6 arbres et 1 rocher plein : combien de troncs et de pierres ?</summary><p>6 troncs et 8 pierres.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2702,8 +2728,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
           <p>Réserves des ateliers 6 → 12, devant la porte 16 → 32, porteurs 4 → 18 objets avec les améliorations.</p>
           <p class="apprend"><b>Tu apprends :</b> multiplier ou additionner, des multiplicateurs qui s'enchaînent. <b>Durée :</b> 1 séance.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">45</div>
+          <h4>🚜 Construire même sur les arbres <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Les bâtiments dégagent leur place comme les routes, et la bulle dit ce qu'on gagne.</p>
+          <p class="apprend"><b>Tu apprends :</b> réutiliser une fonction. <b>Durée :</b> 1 séance.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">45-47</div>
+          <div class="num">46-48</div>
           <h4>🚗🚓🛍️ Les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Routes goudronnées, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -3072,6 +3104,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
         <textarea class="journal" id="village-appris-44" data-cle="village-appris-44" placeholder="Ex. : J'ai appris que des multiplicateurs s'enchaînent…"></textarea>
         <label for="village-idees-44"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-44" data-cle="village-idees-44" placeholder="Ex. : Des camions qui portent encore plus…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 45 · construire même sur les arbres <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> <code>degagerPlace</code> dans <code>logique/batiments.js</code> (qui réutilise <code>Routes.degager</code>), les arbres et rochers qui ne bloquent plus un bâtiment, la bulle qui dit ce qui sera dégagé.</p>
+        <label for="village-appris-45"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-45" data-cle="village-appris-45" placeholder="Ex. : J'ai appris à réutiliser une fonction…"></textarea>
+        <label for="village-idees-45"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-45" data-cle="village-idees-45" placeholder="Ex. : Replanter des arbres autour du village…"></textarea>
       </div>
     </section>
   </main>

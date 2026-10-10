@@ -129,6 +129,9 @@ Village.Batiments = (function () {
     if (type === "depot" && monde.batiments.filter((b) => b.type === "depot").length >= C.depot.max) return "pas plus de " + C.depot.max + " entrepôts secondaires";
     return null;
   }
+  // Étape 45 : dégager la place d'un bâtiment (ses cases, ses champs) : arbres → troncs, rochers → pierres, à l'entrepôt
+  const casesDePlace = (type, c, l) => [[0, 0]].concat(empriseDe(type)).map(([dc, dl]) => ({ colonne: c + dc, ligne: l + dl }));
+  const degagerPlace = (monde, type, c, l, nom) => Village.Routes.degager(monde, casesDePlace(type, c, l), "le chantier « " + nom + " »");
   // Une case est-elle libre pour construire ? (null = oui)
   function raisonCase(monde, c, l) {
     const carte = monde.carte;
@@ -138,8 +141,9 @@ Village.Batiments = (function () {
     if (monde.route[i]) return "il y a une route";
     const t = carte.terrain[i], o = carte.objet[i], T = Village.Carte.TERRAIN, O = Village.Carte.OBJET;
     if (t === T.eau || t === T.eauProfonde || t === T.montagne) return "il y a de l'eau ou une montagne";
-    if (o !== O.rien && o !== O.fleurs && o !== O.buisson) return "il y a un arbre ou un rocher";
-    if (monde.reservees.has(i)) return "un ouvrier va travailler sur cette case";
+    // Étape 45 : ✍️ « on doit pouvoir construire un bâtiment même s'il y a des arbres ou des obstacles » : les arbres, les
+    // rochers et les jeunes pousses sont dégagés au moment de construire (comme pour les routes, étape 36)
+    if (o === O.feuDeCamp || o === O.tente) return "il y a le feu de camp du chef";
     return null;
   }
 
@@ -158,11 +162,7 @@ Village.Batiments = (function () {
     const t = carte.terrain[i], o = carte.objet[i], T = Village.Carte.TERRAIN, O = Village.Carte.OBJET;
     if (t === T.eau || t === T.eauProfonde) return "on ne construit pas sur l'eau";
     if (t === T.montagne) return "on ne construit pas sur une montagne";
-    if (o === O.arbre || o === O.sapin) return "il y a un arbre (il faut d'abord le couper)";
-    if (o === O.pousse) return "il y a une jeune pousse";
-    if (o === O.rocher) return "il y a un rocher";
-    if (o !== O.rien && o !== O.fleurs && o !== O.buisson) return "la place est prise";
-    if (monde.reservees.has(i)) return "un ouvrier va travailler sur cette case";
+    if (o === O.feuDeCamp || o === O.tente) return "il y a le feu de camp du chef"; // étape 45 : le reste se dégage
     // Étape 5 : ✍️ le pêcheur doit habiter au bord de l'eau.
     if (type === "pompage" && !presDeLEau(carte, c, l, C.bordDeLEau)) return "trop loin de l'eau (la station pompe dans une rivière ou un lac à " + C.bordDeLEau + " cases maximum)"; // étape 35
     if (type === "pecheur" && !presDeLEau(carte, c, l, C.bordDeLEau)) return "trop loin de l'eau (il faut de l'eau à " + C.bordDeLEau + " cases maximum)";
@@ -211,6 +211,7 @@ Village.Batiments = (function () {
       return false;
     }
     const de = { colonne: b.colonne, ligne: b.ligne };
+    degagerPlace(monde, b.type, c, l, TYPES[b.type].nom); // étape 45
     b.colonne = c; b.ligne = l; b.emprise = empriseDe(b.type).slice();
     for (const j of casesDe(b, k)) if (k.objet[j]) Village.Monde.changerObjet(monde, j, Village.Carte.OBJET.rien);
     occuper(monde, b);
@@ -298,6 +299,7 @@ Village.Batiments = (function () {
     // Les matériaux sont réservés : ils restent dans l'entrepôt jusqu'à ce qu'un porteur les prenne.
     const prix = coutPour(monde, type);
     if (offert(monde, type)) radio.emettre("coup-de-pouce", { nom, cout: cout(type) }); // étape 12
+    degagerPlace(monde, type, c, l, nom); // étape 45 : les arbres et les rochers de sa place
     const b = creer(monde, type, c, l, 0, { attendu: prix, prix });
     radio.emettre("batiment-pose", { nom, numero: b.numero, colonne: c, ligne: l, cout: prix, duree: C.batiments[type].construction, relie: b.relie });
     return true;
@@ -544,5 +546,5 @@ Village.Batiments = (function () {
     return n;
   }
 
-  return { limiteAtteinte, tailleVoulue, tailleDe, blocDe, champsDe, ranger, empriseDe, casesDe, liberer, occuper, entreesDe, reparer, TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, coutPour, offert, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
+  return { casesDePlace, limiteAtteinte, tailleVoulue, tailleDe, blocDe, champsDe, ranger, empriseDe, casesDe, liberer, occuper, entreesDe, reparer, TYPES, A_CONSTRUIRE, SORTIES, filonsVoisins, NOMS_RESSOURCES, cout, coutPour, offert, assezPour, raisonInterdite, creer, poser, demolir, deplacer, materiaux, etape };
 })();

@@ -61,7 +61,7 @@ Village.Routes = (function () {
     return b;
   }
   // Dégager vraiment (au moment de construire), et ranger ce qu'on récupère à l'entrepôt
-  function degager(monde, cases) {
+  function degager(monde, cases, qui) { // (étape 45 : qui = la route, ou le chantier d'un bâtiment)
     const k = monde.carte, O = Village.Carte.OBJET, b = bilanDegagement(monde, cases);
     for (const p of cases) {
       const i = p.ligne * k.colonnes + p.colonne, ob = obstacle(monde, i);
@@ -74,7 +74,7 @@ Village.Routes = (function () {
     }
     monde.stock.troncs += b.troncs;
     monde.stock.pierres += b.pierres;
-    if (b.arbres || b.rochers || b.pousses) radio.emettre("route-degagee", b);
+    if (b.arbres || b.rochers || b.pousses) radio.emettre("route-degagee", Object.assign({ qui: qui || "la route" }, b));
     return b;
   }
 
@@ -265,5 +265,5 @@ Village.Routes = (function () {
     return n;
   }
 
-  return { sorteDe, obstacle, bilanDegagement, paver, estEntrepot, routable, trajet, construire, evaluerCases, construireCases, porte, demolir, recalculerReseau, compter, vitesseDuSol, VOISINS };
+  return { degager, sorteDe, obstacle, bilanDegagement, paver, estEntrepot, routable, trajet, construire, evaluerCases, construireCases, porte, demolir, recalculerReseau, compter, vitesseDuSol, VOISINS };
 })();
