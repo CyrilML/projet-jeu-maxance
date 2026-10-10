@@ -253,7 +253,7 @@ Village.Routes = (function () {
     const k = monde.carte, c = Math.floor(x), l = Math.floor(y);
     if (c < 0 || l < 0 || c >= k.colonnes || l >= k.lignes) return C.sols.horsRoute;
     const r = monde.route[l * k.colonnes + c];
-    return r === 2 ? C.sols.pierre : r === 1 ? C.sols.terre : C.sols.horsRoute;
+    return r === 2 ? (Village.Recherches.a(monde, "goudron") ? C.sols.goudron : C.sols.pierre) : r === 1 ? C.sols.terre : C.sols.horsRoute;
   }
 
   // Étape 17 : ✍️ la recherche « Routes pavées » est finie : TOUTES les routes deviennent pavées, d'un coup.

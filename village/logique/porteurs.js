@@ -188,7 +188,9 @@ Village.Porteurs = (function () {
     // Étape 21 : ✍️ les bonus se multipliaient (× 1,6 × 1,3 × 1,25…) et les porteurs filaient à plus de 7 cases par seconde :
     // c'était désagréable à regarder. Maintenant, la vitesse a un PLAFOND.
     const charrette = Village.Recherches.faite(monde, "charrettes"); // étape 22 (étape 44 : les brouettes aussi augmentent la charge) : l'âne tire une charrette : plus lent
-    const vitesse = Math.min(charrette ? C.porteurs.vitesseMaxCharrette : C.porteurs.vitesseMax, (charrette ? 0.8 : 1) * C.porteurs.vitesse * Village.Repas.vitesse(p) * Village.Routes.vitesseDuSol(monde, p.x, p.y) * Village.Recherches.bonus(monde, "porteurs") * Village.Ameliorations.vitessePorteurs(monde)); // étape 7 : les brouettes ; étape 13 : l'écurie
+    // Étape 51 : avec le goudron, le porteur est un CAMION : plus de lenteur de l'âne, et un plafond bien plus haut
+    const camion = Village.Recherches.a(monde, "goudron");
+    const vitesse = Math.min(camion ? C.porteurs.vitesseMaxCamion : charrette ? C.porteurs.vitesseMaxCharrette : C.porteurs.vitesseMax, (charrette && !camion ? 0.8 : 1) * C.porteurs.vitesse * Village.Repas.vitesse(p) * Village.Routes.vitesseDuSol(monde, p.x, p.y) * Village.Recherches.bonus(monde, "porteurs") * Village.Ameliorations.vitessePorteurs(monde)); // étape 7 : les brouettes ; étape 13 : l'écurie
     let reste = vitesse * dt;
     while (reste > 0 && p.pas < p.chemin.length) {
       const cible = p.chemin[p.pas];

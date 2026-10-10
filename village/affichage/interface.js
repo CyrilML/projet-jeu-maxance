@@ -58,6 +58,10 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("electricite-penurie", (d) => afficher("⚡❌ Pénurie d'électricité : " + d.coupes + " bâtiment(s) coupé(s). Il faut une centrale de plus !")); // étape 34
   Village.Evenements.ecouter("eau-penurie", (d) => afficher("🚰❌ Pénurie d'eau : " + d.coupes + " bâtiment(s) sans eau. Il faut une station de pompage de plus !")); // étape 35
   Village.Evenements.ecouter("service-manque", (d) => afficher(d.emoji + "❌ Pas assez de places pour " + d.quoi + " : " + d.coupes + " logement(s) sans. Il en faut un(e) de plus !")); // étape 48
+  Village.Evenements.ecouter("routes-goudronnees", (d) => afficher("🛣️ " + d.cases + " cases de route goudronnées : les porteurs sont maintenant des camions 🚚 !")); // étape 51
+  Village.Evenements.ecouter("incendie", (d) => afficher("🔥 Au feu ! " + d.nom + " n° " + d.numero + " brûle : il n'y a pas de pompiers près d'ici !")); // étape 50
+  Village.Evenements.ecouter("vol", (d) => afficher("🦹 Un voleur a pris " + d.pieces + " 🪙 : il n'y a pas de police près d'ici !"));
+  Village.Evenements.ecouter("maladie", (d) => afficher("🤒 Le " + d.metier + " est malade (pas d'hôpital) : il ne travaille plus pendant " + d.duree + " s"));
   Village.Evenements.ecouter("egouts-penurie", (d) => afficher("🚽❌ Les égouts débordent : " + d.coupes + " bâtiment(s) sans égouts. Il faut une station d'épuration de plus !"));
   Village.Evenements.ecouter("pub-regardee", (d) => { if (d.sorte === "ressource") gagner("📺 Merci !", [[d.quoi, d.quantite]]); else if (d.sorte === "gemmes") gagner("📺 Merci !", [["gemmes", d.quantite]]); });
   Village.Evenements.ecouter("nouvel-age", (d) => gagner(d.emoji + " " + d.nom + " !", [["gemmes", d.gemmes]]));
@@ -952,7 +956,7 @@ Village.Interface = (function () {
       // Étape 19 : ✍️ l'entrepôt secondaire est rangé avec les routes (le transport), dès le hameau
       { id: "route", nom: "Routes", batiments: ["depot"], outils: [
         // Étape 17 : ✍️ une seule route. Après « Routes pavées », elle est pavée (et les anciennes aussi, d'un coup).
-        Village.Recherches.a(monde, "routePierre") ? { id: "route", icone: "pierre", nom: "Route pavée", touche: "R", cout: C.routes.coutPierre.pierres + "🪨/case" } : { id: "route", icone: "terre", nom: "Chemin", touche: "R", cout: "gratuit" },
+        Village.Recherches.a(monde, "routePierre") ? { id: "route", icone: "pierre", nom: Village.Recherches.a(monde, "goudron") ? "Route goudronnée" : "Route pavée", touche: "R", cout: C.routes.coutPierre.pierres + "🪨/case" } : { id: "route", icone: "terre", nom: "Chemin", touche: "R", cout: "gratuit" },
         { id: "deplacer", emoji: "↔️", nom: "Déplacer", touche: "M" }, { id: "demolir", emoji: "🧹", nom: "Démolir", touche: "Suppr" },
       ] },
     ];
@@ -1162,7 +1166,7 @@ Village.Interface = (function () {
     }
     const bat = monde.occupees.get(k.numero);
     if (bat) return B.TYPES[bat.type].emoji + " " + B.TYPES[bat.type].nom + (bat.relie || bat.type === "entrepot" ? "" : " · pas de route jusqu'à l'entrepôt !");
-    if (monde.route[k.numero]) return (monde.route[k.numero] === 2 ? "Route en pierre" : "Chemin de terre") + (monde.reseau.has(k.numero) ? "" : " · pas relié à l'entrepôt");
+    if (monde.route[k.numero]) return (monde.route[k.numero] === 2 ? (Village.Recherches.a(monde, "goudron") ? "Route goudronnée" : "Route en pierre") : "Chemin de terre") + (monde.reseau.has(k.numero) ? "" : " · pas relié à l'entrepôt");
     let t = majuscule(k.nomTerrain);
     if (k.terrain === T.eau) t = (monde.saison && monde.saison.hiver ? "Glace (le pêcheur la perce)" : "Eau") + " · sardines (" + P.sardine + " 🐟) et truites (" + P.truite + " 🐟)";
     else if (k.terrain === T.eauProfonde) t = "Eau profonde · sardines, truites et thons (" + P.thon + " 🐟)";
@@ -1212,6 +1216,10 @@ Village.Interface = (function () {
         info(marche ? s.emoji + " Ouvert : sert " + s.lits + " lits" : "⏸️ Fermé" + (b.courant ? " (il attend son " + Village.Batiments.TYPES[b.type].metier + ")" : ""), marche ? "#3d8a4a" : "#b8443a");
         info("🛏️ " + s.pluriel + " : " + (r.utilise || 0) + " / " + (r.offre || 0) + " places utilisées · " + (r.demande || 0) + " lits" + (r.coupes ? " · ⚠️ " + r.coupes + " logement(s) sans" : ""), r.coupes ? "#b8443a" : null);
       }
+      // Étape 50 : les incidents
+      if (b.feu > 0) problemes.push("🔥 Au feu ! Encore " + Math.ceil(b.feu) + " s : il n'y a pas de pompiers près d'ici.");
+      else if (b.brulee) problemes.push("🏚️ Brûlé(e) par un incendie (pas de pompiers près d'ici).");
+      if (b.ouvrier && b.ouvrier.malade > 0) problemes.push("🤒 Le " + Village.Batiments.TYPES[b.type].metier + " est malade : il reprend dans " + Math.ceil(b.ouvrier.malade) + " s (un hôpital l'aurait évité).");
       // Étape 48 : un logement : quels services l'ont ?
       if (Village.Services.active(monde) && C.logement[b.type] && b.type !== "entrepot") info(Village.Services.TYPES.map((ty) => C.services.liste[ty].emoji + (b[C.services.liste[ty].champ] ? "✅" : "❌")).join("  "), Village.Services.TYPES.every((ty) => b[C.services.liste[ty].champ]) ? "#3d8a4a" : "#b8443a");
       if (b.type !== "centrale" && b.type !== "pompage" && b.type !== "epuration" && !Village.Services.estService(b.type)) {

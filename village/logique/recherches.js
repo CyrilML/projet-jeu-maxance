@@ -76,6 +76,7 @@ Village.Recherches = (function () {
     u.produits++;
     radio.emettre("recherche-finie", { nom: r.nom, emoji: r.emoji, texte: r.texte, total: monde.recherches.faites.length });
     if (r.effet.routePierre) Village.Routes.paver(monde); // étape 17 : toutes les routes deviennent pavées
+    if (r.effet.goudron) { Village.Routes.paver(monde, true); radio.emettre("routes-goudronnees", { cases: monde.route.filter((v) => v > 0).length, porteurs: monde.porteurs.length }); } // étape 51 : le goudron se pose sur les pavés
   }
 
   return { trouver, faite, bonus, a, raison, manques, lancer, etape, universite };

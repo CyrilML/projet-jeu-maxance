@@ -230,6 +230,7 @@ Village.Monde = (function () {
     Village.Guide.etape(monde, dt); // étape 30 : les objectifs pas à pas
     Village.Electricite.etape(monde, dt); // étape 34 : le réseau électrique
     Village.Services.etape(monde, dt); // étape 48 : l'école, l'hôpital, les pompiers et la police
+    Village.Incidents.etape(monde, dt); // étape 50 : les incendies, les vols et les maladies
     Village.Population.etape(monde, dt); // étape 33 : le recenseur (besoins, prospérité, courbe)
     Village.Conseiller.etape(monde, dt); // étape 29 : le conseiller relit le village
     nature(monde, dt);

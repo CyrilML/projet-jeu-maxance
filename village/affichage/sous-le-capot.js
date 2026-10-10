@@ -138,6 +138,12 @@ Village.SousLeCapot = (function () {
     "eau-ok": (d) => "🚰✅ Assez d'eau pour tout le réseau : offre " + d.offre + ", demande " + d.demande,
     "egouts-penurie": (d) => "🚽❌ Les égouts débordent : " + d.coupes + " bâtiment(s) sans égouts · offre " + d.offre + " < demande " + d.demande + " (" + d.sources + " station(s) d'épuration qui tournent)",
     "service-manque": (d) => d.emoji + "❌ Pas assez de places pour " + d.quoi + " : " + d.coupes + " logement(s) sans · places " + d.offre + " < lits " + d.demande + " (" + d.sources + " bâtiment(s) qui travaillent)", // étape 48
+    "routes-goudronnees": (d) => "🛣️ Goudron : " + d.cases + " cases de route goudronnées (× " + String(Village.CONFIG.sols.goudron).replace(".", ",") + " plus vite) · les " + d.porteurs + " porteurs deviennent des camions 🚚 (3 fois plus chargés)", // étape 51
+    "incendie": (d) => "🔥 Au feu ! " + d.nom + " n° " + d.numero + " (" + d.colonne + ", " + d.ligne + ") brûle pendant " + d.duree + " s · pas de pompiers ici (" + d.sansPompiers + " logement(s) sans pompiers)", // étape 50
+    "incendie-fini": (d) => "🏚️ Le feu est éteint : " + d.nom + " n° " + d.numero + " est abîmé(e) (usure 100 %), le maçon-couvreur doit le réparer",
+    "vol": (d) => "🦹 Un voleur chez " + d.nom + " n° " + d.numero + " (pas de police) : −" + d.pieces + " 🪙 · il reste " + d.reste + " 🪙",
+    "maladie": (d) => "🤒 Un habitant de " + d.maison + " n° " + d.numeroMaison + " tombe malade (pas d'hôpital) : le " + d.metier + " de " + d.nom + " n° " + d.numero + " ne travaille plus pendant " + d.duree + " s",
+    "gueri": (d) => "💪 Le " + d.metier + " de " + d.nom + " n° " + d.numero + " est guéri : il reprend le travail",
     "service-ok": (d) => d.emoji + "✅ Assez de places pour " + d.quoi + " : " + d.offre + " places pour " + d.demande + " lits",
     "egouts-ok": (d) => "🚽✅ Les égouts suffisent : offre " + d.offre + ", demande " + d.demande,
     "conseil": (d) => "🧭 Le conseiller : " + d.texte + (d.type ? " → construis " + Village.Batiments.TYPES[d.type].emoji + " " + Village.Batiments.TYPES[d.type].court : "") + " (" + d.pourquoi + ")", // étape 29
@@ -314,6 +320,18 @@ Village.SousLeCapot = (function () {
         h += ligne("   logements servis · sans · loin de la route", (r.alimentes || 0) + " · " + (r.coupes || 0) + " · " + (r.horsReseau || 0));
       }
     }
+    // Étape 50 : les incidents (le dé de la ville)
+    const ch = Village.Incidents.chances(monde), inc = monde.incidents;
+    if (ch && inc) {
+      const pc = (v) => virgule(v * 100, 1) + " %";
+      h += groupe("🎲 Les incidents (un dé toutes les " + Village.CONFIG.incidents.intervalle + " s)");
+      h += ligne("chance au prochain dé : 🔥 feu · 🦹 vol · 🤒 maladie", pc(ch.feu) + " · " + pc(ch.vol) + " · " + pc(ch.maladie));
+      h += ligne("prochain dé dans", Math.ceil(inc.minuteur) + " s");
+      h += ligne("depuis le début : incendies · vols (🪙 volées) · malades", inc.incendies + " · " + inc.vols + " (" + inc.pieces + ") · " + inc.malades);
+      h += ligne("en feu maintenant · brûlées à réparer · ouvriers malades", monde.batiments.filter((b) => b.feu > 0).length + " · " + monde.batiments.filter((b) => b.brulee).length + " · " + monde.batiments.filter((b) => b.ouvrier && b.ouvrier.malade > 0).length);
+      h += ligne("🎓 vitesse des ouvriers (école)", "× " + virgule(Village.Incidents.vitesseEcole(), 2));
+      h += ligne("dernier incident", inc.dernier || "aucun");
+    }
     // Étape 11 : la réserve, les pubs et les règles du bourg
     const Re = Village.Reserve, ry = Re.rythme(monde), mnp = Re.minutesAvantPlein(monde);
     h += groupe("📦 La réserve · 📺 les pubs · 🏰 le bourg");
@@ -333,11 +351,12 @@ Village.SousLeCapot = (function () {
       h += ligne("moment", mo.emoji + " " + mo.nom + " · jour n° " + mo.jour);
       h += ligne("noirceur (0 = plein jour, 1 = minuit)", virgule(mo.noirceur, 2));
       h += ligne("lumières allumées", P.lumieres);
-      h += ligne("🐔 poules · 🧒 enfants · 🐦 oiseaux", Vi.poules + " · " + Vi.enfants + " · " + Vi.oiseaux);
+      h += ligne("🐔 poules · 🧒 enfants · 🐦 oiseaux · 🚗 voitures", Vi.poules + " · " + Vi.enfants + " · " + Vi.oiseaux + " · " + Vi.voitures); // étape 51 : les voitures
       h += ligne("🦋 papillons · ✨ lucioles", Vi.papillons + " · " + Vi.lucioles);
       h += ligne("détails fins (zoom ≥ " + Math.round(Village.CONFIG.detail.zoomFin * 100) + " %)", Village.Batisses.vue.fin ? "oui" : "non (pour aller plus vite)");
       h += ligne("🧑 bonshommes peints (étape 10)", Village.Batisses.vue.dernierCompte + (Village.Batisses.vue.fin ? " · avec leur visage" : " · sans visage (de loin)"));
-      h += ligne("🫏 objets par voyage (4 · × 1,5 brouettes · × 2 charrettes · × 1,5 écurie)", Village.Ameliorations.chargePorteurs(monde)); // étape 44
+      h += ligne("🫏 objets par voyage (4 · × 1,5 brouettes · × 2 charrettes · × 1,5 écurie · × 3 camions)", Village.Ameliorations.chargePorteurs(monde)); // étape 44 ; étape 51 : les camions
+      if (Village.Recherches.a(monde, "goudron")) h += ligne("🚚 camions : vitesse max · sur le goudron", virgule(Village.CONFIG.porteurs.vitesseMaxCamion, 1) + " cases/s · × " + virgule(Village.CONFIG.sols.goudron, 1)); // étape 51
     }
     const sa = monde.saison;
     if (sa) {

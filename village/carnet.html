@@ -173,6 +173,8 @@
       <a href="#etape47">Étape 47</a>
       <a href="#etape48">Étape 48</a>
       <a href="#etape49">Étape 49</a>
+      <a href="#etape50">Étape 50</a>
+      <a href="#etape51">Étape 51</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2595,6 +2597,78 @@ après :  [ 📦 Merci de la part de la boulangère ]
       <details class="question"><summary>Pourquoi ne pas simplement faire une bulle très large tout le temps ?</summary><p>Sur un téléphone, elle sortirait de l'écran. Et pour un titre court, ce serait vide et moche. Mesurer, c'est s'adapter à chaque texte.</p></details>
     </section>
 
+    <section id="etape50">
+      <h2>🎲 Étape 50 : incendies, voleurs et malades <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les services publics servent vraiment à quelque chose : sans eux, des incidents arrivent aux maisons. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/48-incidents-sans-services.md</code>.</p>
+          <ul>
+            <li>✍️ « Fais-moi des propositions » : je t'en ai fait 3, et tu as choisi <strong>des événements</strong>.</li>
+            <li>🔥 sans pompiers : un incendie · 🦹 sans police : un vol · 🤒 sans hôpital : un malade · 🎓 sans école : des ouvriers plus lents.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Une maison sans pompiers prend feu de temps en temps : flammes, fumée, bulle 🔥. Après, elle est noircie et le maçon la répare.</li>
+            <li>☐ Sans police : « 🦹 Un voleur a pris… », et tes 🪙 baissent.</li>
+            <li>☐ Sans hôpital : un ouvrier a la bulle 🤒 et s'arrête 60 s.</li>
+            <li>☐ Quand tous les lits ont les 4 services : plus aucun incident.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔧 Sous le capot : un dé qui dépend de ta ville</h3>
+      <p>Toutes les 15 secondes, le jeu lance un dé pour chaque service (<code>logique/incidents.js</code>, « le dé de la ville »). La chance n'est pas fixe : elle dépend de la part de lits <strong>sans</strong> le service.</p>
+      <pre style="white-space: pre-wrap">chance d'incendie = 12 % × part des lits sans pompiers
+
+   aucun lit protégé    → 12 % × 100 % = 12 %   (un feu toutes les 2 min environ)
+   la moitié protégée   → 12 % ×  50 % =  6 %
+   tout protégé         → 12 % ×   0 % =  0 %   (plus jamais de feu !)</pre>
+      <p>Le tirage utilise <code>Math.random()</code> : un nombre au hasard entre 0 et 1. S'il est plus petit que la chance, l'incident arrive. Dans « 🎲 Les incidents », sous le capot, tu vois les chances du prochain dé, et tout ce qui est arrivé depuis le début.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, note la chance d'incendie. Construis une caserne : de combien baisse-t-elle ?</li>
+        <li>Dans <code>config.js</code>, cherche <code>incidents</code> : que se passerait-il avec <code>taux: 1</code> pour le feu ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un vol prend 10 🪙 + 4 % de la caisse. Tu as 1 000 🪙 : combien te vole-t-on ?</summary><p>10 + 4 % de 1 000 = 10 + 40 = 50 🪙.</p></details>
+      <details class="question"><summary>Pourquoi les incendies arrivent-ils surtout dans les maisons loin du centre ?</summary><p>Parce que la caserne sert d'abord les maisons les plus proches. Quand elle n'a plus de places, ce sont les maisons les plus loin qui ne sont pas protégées, et la victime est tirée parmi elles.</p></details>
+    </section>
+
+    <section id="etape51">
+      <h2>🛣️ Étape 51 : le goudron, les camions et les voitures <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Une recherche goudronne toutes les routes, les porteurs deviennent des camions et des voitures font vivre la ville. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/49-goudron-camions.md</code>.</p>
+          <ul>
+            <li>✍️ « Oui, attaque la suite. »</li>
+            <li>Tes choix : <strong>les camions sont les porteurs</strong>, et <strong>une recherche goudronne tout d'un coup</strong>.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ À l'université (époque moderne) : la recherche « 🛣️ Goudron et camions ».</li>
+            <li>☐ Après la recherche : les routes sont gris foncé, avec des pointillés blancs.</li>
+            <li>☐ Les porteurs sont des camions 🚚 : plus rapides, et ils portent 3 fois plus (sous le capot : « objets par voyage »).</li>
+            <li>☐ Des voitures de toutes les couleurs roulent à droite et tournent aux carrefours.</li>
+            <li>Vérifie « version 52 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔧 Sous le capot : un dessin qui suit la route</h3>
+      <p>Un camion ne se dessine pas comme un bonhomme : il doit être tourné dans le sens de la route. Le jeu regarde la prochaine case du chemin (une colonne de plus, ou une ligne de plus), calcule les 4 coins du dessous du camion dans ce sens, puis peint seulement les côtés tournés vers toi, et le dessus.</p>
+      <p>Les voitures sont des <strong>figurants</strong>, comme les poules et les enfants : elles ne transportent rien et ne changent pas les règles. Chacune retient sa case et sa direction. Au bout de la case, elle choisit au hasard une route voisine, sans faire demi-tour, sauf dans une impasse.</p>
+      <p>Pour la sauvegarde, rien ne change : une route goudronnée est une route pavée (le nombre 2), qu'on dessine et qu'on parcourt autrement quand la recherche est faite. Pas de nouveau format, donc aucun risque pour ta partie.</p>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un porteur portait 18 objets. Combien porte son camion ?</summary><p>18 × 3 = 54 objets.</p></details>
+      <details class="question"><summary>Combien de voitures pour 100 habitants ?</summary><p>100 ÷ 8 = 12,5 : on arrondit en dessous, donc 12 voitures.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2894,10 +2968,22 @@ après :  [ 📦 Merci de la part de la boulangère ]
           <p>La bulle « gagné » prend la largeur de son titre, et passe à la ligne si besoin.</p>
           <p class="apprend"><b>Tu apprends :</b> mesurer un texte avant de le dessiner. <b>Durée :</b> 1 petite séance.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">50</div>
+          <h4>🎲 Incendies, voleurs et malades <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Sans service, un dé fait arriver des incidents ; avec les services, la ville est protégée.</p>
+          <p class="apprend"><b>Tu apprends :</b> le hasard réglé par une probabilité. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">51</div>
+          <h4>🛣️ Le goudron, les camions et les voitures <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Une recherche goudronne tout, les porteurs deviennent des camions, des voitures roulent en ville.</p>
+          <p class="apprend"><b>Tu apprends :</b> dessiner un objet dans le sens où il roule. <b>Durée :</b> 1 séance.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">50-51</div>
-          <h4>🚗🛍️ Les voitures, puis les commerces <span class="etiquette">⏭️ prochaine étape</span></h4>
-          <p>Ce qui arrive sans service (incendies ? vols ?), routes goudronnées, voitures et camions, centres commerciaux, aéroport.</p>
+          <div class="num">52-53</div>
+          <h4>🛍️✈️ Les commerces et l'aéroport <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <p>Des centres commerciaux, un aéroport, et de nouveaux objectifs à long terme pour l'époque moderne.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
         </div>
         <div class="carte">
@@ -3304,6 +3390,22 @@ après :  [ 📦 Merci de la part de la boulangère ]
         <textarea class="journal" id="village-appris-49" data-cle="village-appris-49" placeholder="Ex. : J'ai appris qu'on peut mesurer un texte en pixels…"></textarea>
         <label for="village-idees-49"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-49" data-cle="village-idees-49" placeholder="Ex. : D'autres endroits où le texte est trop serré…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 50 · incendies, voleurs et malades <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> <code>logique/incidents.js</code> (le dé de la ville), les flammes et la maison noircie, la bulle 🤒, les messages, et le groupe « 🎲 Les incidents » sous le capot.</p>
+        <label for="village-appris-50"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-50" data-cle="village-appris-50" placeholder="Ex. : J'ai appris qu'une chance peut dépendre de ce que je construis…"></textarea>
+        <label for="village-idees-50"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-50" data-cle="village-idees-50" placeholder="Ex. : Le camion de pompiers qui vient éteindre le feu…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 51 · le goudron, les camions et les voitures <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la recherche « Goudron et camions », le dessin du goudron, <code>vehiculeIso</code> (un véhicule dans le sens de la route), les camions des porteurs, et les voitures des habitants.</p>
+        <label for="village-appris-51"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-51" data-cle="village-appris-51" placeholder="Ex. : J'ai appris qu'on peint seulement les côtés qu'on voit…"></textarea>
+        <label for="village-idees-51"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-51" data-cle="village-idees-51" placeholder="Ex. : Des feux rouges aux carrefours…"></textarea>
       </div>
     </section>
   </main>

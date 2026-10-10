@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 50,
+  version: 52,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -478,6 +478,7 @@ Village.CONFIG = {
     horsRoute: 0.85, // à travers champs
     terre: 1, // sur un chemin de terre
     pierre: 1.6, // sur une route en pierre (plus tard)
+    goudron: 2.5, // étape 51 : sur le goudron (les camions)
   },
   porteurs: {
     nombre: 4, // les porteurs qui habitent l'entrepôt (étape 20 : 4)
@@ -488,6 +489,7 @@ Village.CONFIG = {
     vitesse: 2.2, // cases par seconde (étape 21 : ✍️ de nouveau 2,2 : à 2,8, ils couraient beaucoup trop vite)
     vitesseMaxCharrette: 2.6, // étape 22 : ✍️ avec l'âne et la charrette, on va moins vite (× 0,8, et 2,6 au plus)
     vitesseMax: 3.4, // étape 21 : même avec la route pavée, les brouettes et l'écurie, jamais plus de 3,4 cases par seconde
+    vitesseMaxCamion: 7, // étape 51 : un camion sur le goudron : 7 cases par seconde au plus (2,6 avec l'âne)
   },
   // Étape 44 : ✍️ « les ateliers doivent pouvoir stocker plus de ressources pour fabriquer, et plus de produits fabriqués ».
   sortieMax: 16, // objets qui peuvent attendre devant un bâtiment (au-delà, l'ouvrier attend) · étape 20 : 8 ; étape 44 : 16
@@ -532,6 +534,8 @@ Village.CONFIG = {
   },
   // Étape 9 : les FIGURANTS (ils ne font que décorer : oiseaux, papillons, poules, enfants)
   figurants: {
+    voituresParHabitants: 8, // étape 51 : 1 voiture qui roule sur le goudron pour 8 habitants
+    voituresMax: 24,
     poulesParHutte: 2, // et 3 par maison
     habitantsParEnfant: 4, // 1 enfant qui joue près du feu pour 4 habitants (6 au plus)
     enfantsMax: 6,
@@ -636,6 +640,8 @@ Village.CONFIG = {
     { id: "arcs", nom: "Arcs en if", emoji: "🏹", age: 1, cout: { planches: 15, viande: 10 }, duree: 60, effet: { chasser: 0.6 }, texte: "Le chasseur chasse 40 % plus vite" },
     { id: "pics", nom: "Pics de pierre", emoji: "⛏️", age: 1, cout: { planches: 20, pierres: 15 }, duree: 75, effet: { tailler: 0.6, miner: 0.75 }, texte: "Le carrier et le mineur vont plus vite" },
     { id: "brouettes", nom: "Brouettes", emoji: "🛒", age: 1, cout: { planches: 30, pierres: 10 }, duree: 90, effet: { porteurs: 1.3, brouette: true, chargement: 1.5 }, texte: "Les porteurs vont 30 % plus vite et portent 1,5 fois plus (une brouette)" }, // étape 44 : + la charge
+    // Étape 51 : 🛣️ le goudron, à l'époque moderne : toutes les routes d'un coup, et les porteurs deviennent des camions
+    { id: "goudron", nom: "Goudron et camions", emoji: "🛣️", age: 6, cout: { pierres: 250, charbon: 100, lingots: 50, outils: 20 }, duree: 180, effet: { goudron: true, chargement: 3 }, texte: "Toutes les routes deviennent goudronnées, et les porteurs deviennent des camions : 3 fois plus rapides et 3 fois plus chargés" },
     { id: "paves", nom: "Routes pavées", emoji: "🧱", age: 1, cout: { pierres: 30, charbon: 5 }, duree: 90, effet: { routePierre: true }, texte: "Toutes les routes deviennent pavées (× 1,6 plus rapide)" }, // étape 17 : ✍️ automatiquement
     { id: "fumoir", nom: "Le fumoir", emoji: "🔥", age: 1, cout: { planches: 20, charbon: 10 }, duree: 90, effet: { repas: 1.5 }, texte: "La nourriture dure plus longtemps : un repas toutes les 3 min 45" },
     { id: "prospection", nom: "Prospection", emoji: "🔍", age: 1, cout: { planches: 20, charbon: 10 }, duree: 90, effet: { filons: true }, texte: "Le géologue trouve des veines 2 fois plus riches (étape 38)" },
@@ -760,6 +766,7 @@ Village.CONFIG = {
         { texte: "Aie 6 000 🪙", pieces: 6000, pourquoi: "Pour l'époque moderne." },
       ],
       [ // 🌆 l'époque moderne (étape 48) : les services publics
+        { texte: "Fais la recherche 🛣️ Goudron et camions", recherche: "goudron", pourquoi: "À l'université : toutes les routes deviennent goudronnées, et les porteurs deviennent des camions." }, // étape 51
         { texte: "Construis une 🏫 école", batiment: "ecole", nombre: 1, pourquoi: "L'éducation est un besoin des habitants (🎓 dans 👥). Elle a besoin de l'électricité." },
         { texte: "Construis un 🏥 hôpital", batiment: "hopital", nombre: 1, pourquoi: "La santé : un besoin des habitants (🏥 dans 👥)." },
         { texte: "Construis une 🚒 caserne de pompiers", batiment: "pompiers", nombre: 1, pourquoi: "La protection contre le feu : un besoin des habitants (🚒 dans 👥)." },
@@ -860,6 +867,16 @@ Village.CONFIG = {
       pompiers: { lits: 80, champ: "aPompiers", emoji: "🚒", besoin: "Protection contre le feu", quoi: "les pompiers", pluriel: "Toutes les casernes" },
       police: { lits: 80, champ: "aPolice", emoji: "🚓", besoin: "Sécurité", quoi: "la police", pluriel: "Tous les commissariats" },
     },
+  },
+
+  // Étape 50 : 🎲 les INCIDENTS des maisons sans services (logique/incidents.js). ✍️ Choix de Maxance : « des événements ».
+  // Toutes les « intervalle » secondes, un dé par service : chance = taux × part des lits sans ce service.
+  incidents: {
+    intervalle: 15, // s entre deux tirages
+    feu: { taux: 0.12, duree: 25 }, // 🔥 sans pompiers : la maison brûle 25 s, puis le maçon doit la réparer
+    vol: { taux: 0.15, minimum: 10, part: 0.04, max: 400 }, // 🦹 sans police : 10 🪙 + 4 % de la caisse (400 au plus)
+    maladie: { taux: 0.15, duree: 60 }, // 🤒 sans hôpital : un ouvrier malade ne travaille plus pendant 60 s
+    ecole: { lenteurMax: 0.2 }, // 🎓 sans école : les ouvriers jusqu'à 20 % plus lents (0 % des lits avec l'école)
   },
 
   // Étape 33 : 👥 la POPULATION et ses BESOINS, façon SimCity. Chaque besoin est noté de 0 à 100 % ; la PROSPÉRITÉ est la

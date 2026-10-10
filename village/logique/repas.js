@@ -96,6 +96,8 @@ Village.Repas = (function () {
     if (h.froid) v *= C.bourg.froid;
     if (h.usee) v *= 0.5;
     if (h.humeur) v *= h.humeur; // étape 15 : 😢 triste × 0,85 · 😊 content × 1,1 · 😄 ravi × 1,2
+    if (h.malade > 0) return 0; // étape 50 : 🤒 malade (pas d'hôpital) : il ne travaille plus
+    if (Village.Incidents) v *= Village.Incidents.vitesseEcole(); // étape 50 : 🎓 sans école, un peu moins vite
     return v;
   }
 

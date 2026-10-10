@@ -475,10 +475,17 @@ Village.Peintre = (function () {
     passe(terre, 40, "rgba(110, 88, 58, .55)");
     passe(terre, 36, "#bba27a");
     if (Village.Batisses.vue.fin) { passe(terre, 16, "rgba(130, 100, 64, .3)"); passe(terre, 9, "#bba27a"); } // les 2 ornières
+    if (Village.Recherches.a(monde, "goudron")) { // étape 51 : 🛣️ le goudron : un asphalte gris foncé et une ligne blanche au milieu
+      passe(pierre, 44, "#2e3034");
+      passe(pierre, 40, "#4f5257");
+      if (Village.Batisses.vue.fin) passe(pierre, 34, "rgba(90, 94, 100, .5)", [2, 7]); // le grain du goudron
+      passe(pierre, 2.2, "rgba(245, 242, 230, .85)", [10, 12]); // les pointillés blancs
+    } else {
     passe(pierre, 44, "#5a5d60");
     passe(pierre, 40, "#9a9c9c");
     passe(pierre, 30, "#adafae", [6, 4]); // les pavés
     passe(pierre, 2, "rgba(255, 255, 255, .18)");
+    }
     ctx.restore();
     // Étape 36 : 🌉 les garde-corps en bois des ponts, des 2 côtés de la route
     for (let l = lMin - 1; l <= lMax; l++) for (let c = cMin - 1; c <= cMax; c++) {

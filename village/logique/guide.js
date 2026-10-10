@@ -16,6 +16,7 @@ Village.Guide = (function () {
   function avancement(monde, e) {
     if (e.batiment) return { valeur: monde.batiments.filter((b) => b.type === e.batiment && b.etat === "pret").length, cible: e.nombre };
     if (e.stock) return { valeur: monde.stock[e.stock] || 0, cible: e.nombre };
+    if (e.recherche) return { valeur: monde.recherches.faites.includes(e.recherche) ? 1 : 0, cible: 1 }; // étape 51
     if (e.recherches) return { valeur: monde.recherches.faites.length, cible: e.recherches };
     if (e.habitants) return { valeur: Village.Logement.habitants(monde), cible: e.habitants };
     if (e.filons) return { valeur: monde.carte.compte.vus || 0, cible: e.filons };

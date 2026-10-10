@@ -1581,6 +1581,9 @@ Village.Batisses = (function () {
       if (b.usure >= 0.8) { ctx.moveTo(x - m.a * 0.2, y - m.h * 0.2); ctx.lineTo(x - m.a * 0.1, y - m.h * 0.5); }
       ctx.stroke();
     }
+    // Étape 50 : 🏚️ une maison brûlée est noircie (jusqu'à ce que le maçon la répare), 🔥 une maison en feu a des flammes
+    if (b.brulee || b.feu > 0) { ctx.fillStyle = "rgba(30, 22, 18, " + (b.brulee ? 0.45 : 0.25) + ")"; ctx.beginPath(); ctx.ellipse(x, y - m.h * 0.6, m.a * 0.9, m.h * 0.7, 0, 0, TOUR); ctx.fill(); }
+    if (b.feu > 0) flammes(ctx, x, y - m.h - m.toit * 0.4, m.a, t + b.numero);
     // (Étape 10 : les ouvriers des ateliers travaillent devant leur bâtiment : voir dessinerBatiment)
     // Étape 18 : ✍️ « tous doivent être reconnaissables de loin ». Quand on dézoome, chaque bâtiment (sauf les
     // logements, qu'on reconnaît à leur forme) montre un REPÈRE : son emoji dans un rond, toujours de la même
@@ -1591,7 +1594,8 @@ Village.Batisses = (function () {
     if (travaille && b.type === "carriere") poussiere(ctx, x, y, t);
     if (!b.relie) panneauSansRoute(ctx, x, yBulle + 2, t);
     // Étape 4 : l'ouvrier a trop faim, ou il est parti (la cabane est vide)
-    else if (b.malade) bulleDePensee(ctx, x, yBulle, t, "🤒"); // étape 15 : les vaches sont malades
+    else if (b.feu > 0) bulleDePensee(ctx, x, yBulle - 26, t, "🔥"); // étape 50 : au feu !
+    else if (b.malade || (b.ouvrier && b.ouvrier.malade > 0)) bulleDePensee(ctx, x, yBulle, t, "🤒"); // étape 15 : les vaches sont malades ; étape 50 : l'ouvrier est malade
     else if (b.ouvrier && b.ouvrier.affame) bulleDePensee(ctx, x, yBulle, t, "🍽️");
     else if (C_.ateliers[b.type] && C_.ateliers[b.type].electrique && b.etat === "pret" && !b.courant) bulleDePensee(ctx, x, yBulle, t, "⚡"); // étape 34 : pas de courant
     else if ((b.type === "pompage" || b.type === "epuration" || Village.Services.estService(b.type)) && b.etat === "pret" && !b.courant) bulleDePensee(ctx, x, yBulle, t, "⚡"); // étape 35
@@ -1839,6 +1843,15 @@ Village.Batisses = (function () {
   }
 
   // Étape 8 : de la fumée qui monte d'une cheminée (des ronds gris qui grossissent et s'effacent)
+  // Étape 50 : 🔥 des flammes qui dansent sur le toit, une grosse fumée noire et une lueur orange
+  function flammes(ctx, x, y, a, t) {
+    for (let k = 0; k < 5; k++) {
+      const fx = x + (k - 2) * a * 0.32, h = 12 + Math.sin(t * 9 + k * 1.7) * 4 + (k % 2) * 4;
+      for (const [c, f] of [["#e8502a", 1], ["#ffb02e", 0.6], ["#fff2a0", 0.3]]) { ctx.beginPath(); ctx.moveTo(fx - 5 * f, y + 2); ctx.quadraticCurveTo(fx - 4 * f, y - h * f * 0.6, fx + Math.sin(t * 7 + k) * 2, y - h * f - 4); ctx.quadraticCurveTo(fx + 4 * f, y - h * f * 0.6, fx + 5 * f, y + 2); ctx.closePath(); ctx.fillStyle = c; ctx.fill(); }
+    }
+    for (let k = 0; k < 6; k++) { const p = (t * 0.4 + k / 6) % 1; ctx.fillStyle = "rgba(50, 46, 44," + 0.6 * (1 - p) + ")"; ctx.beginPath(); ctx.arc(x + Math.sin(p * 3 + k) * 6 + p * 14, y - 18 - p * 40, 4 + p * 9, 0, TOUR); ctx.fill(); }
+    lumiere(x, y, 40, "feu", 1);
+  }
   function fumee(ctx, x, y, t) {
     for (let k = 0; k < 4; k++) {
       const p = (t * 0.5 + k / 4) % 1;
@@ -2686,8 +2699,51 @@ Village.Batisses = (function () {
     morceau(15, () => ane(ctx, 0, 0, t, marche));
     ctx.strokeStyle = "#6b4423"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x - ux * 15 + d * 8, y - uy * 15 - 12); ctx.lineTo(x + d * 4, y - 12); ctx.stroke(); // la longe
   }
+  // Étape 51 : 🚚 un VÉHICULE vu de biais, posé dans le sens de la route. (dx, dy) : vers où il roule, en cases
+  // (le long des colonnes ou des lignes). On calcule les 4 coins du dessous de chaque boîte, puis on peint les côtés
+  // tournés vers nous (ceux qui sont plus bas sur l'écran que le milieu), et le dessus.
+  //   o : { long, large (en cases), caisse : [hauteur, couleur] (l'arrière), cabine : [hauteur, couleur] (l'avant),
+  //         part (la part de la longueur pour la cabine), charge (ce qui est dans la benne) }
+  function vehiculeIso(ctx, x, y, dx, dy, o) {
+    const le = Math.abs(dx) >= Math.abs(dy), sx = le ? Math.sign(dx) || 1 : 0, sy = le ? 0 : Math.sign(dy) || 1;
+    const F = [(sx - sy) * 32, (sx + sy) * 16], Sd = le ? [-32, 16] : [32, 16]; // devant, et le côté
+    const pt = (f, s, h) => [x + F[0] * f + Sd[0] * s, y + F[1] * f + Sd[1] * s - h];
+    const L = o.long / 2, W = o.large / 2;
+    ctx.fillStyle = "rgba(20, 30, 10, .25)"; ctx.beginPath(); const om = [pt(-L, -W, 0), pt(L, -W, 0), pt(L, W, 0), pt(-L, W, 0)]; om.forEach((q, k) => (k ? ctx.lineTo(q[0] + 2, q[1] + 1) : ctx.moveTo(q[0] + 2, q[1] + 1))); ctx.fill();
+    for (const f of [-L * 0.62, L * 0.62]) for (const s of [-W, W]) { const q = pt(f, s, 1.6); ctx.beginPath(); ctx.ellipse(q[0], q[1], 2.4, 2, 0, 0, TOUR); ctx.fillStyle = "#222428"; ctx.fill(); }
+    const boiteV = (f0, f1, h0, h1, couleur, vitres) => {
+      const bas = [pt(f0, -W, h0), pt(f1, -W, h0), pt(f1, W, h0), pt(f0, W, h0)], haut2 = bas.map((q) => [q[0], q[1] - (h1 - h0)]);
+      const cy = (bas[0][1] + bas[2][1]) / 2;
+      for (let k = 0; k < 4; k++) {
+        const a = bas[k], b = bas[(k + 1) % 4];
+        if ((a[1] + b[1]) / 2 <= cy) continue; // ce côté est de dos
+        forme(ctx, [a, b, haut2[(k + 1) % 4], haut2[k]], adoucirCouleur(couleur, k % 2 ? 0.78 : 0.9));
+        if (vitres && k === 1 && sx + sy > 0 || vitres && k === 3 && sx + sy < 0) forme(ctx, [entre(a, haut2[k], 0.45), entre(b, haut2[(k + 1) % 4], 0.45), entre(b, haut2[(k + 1) % 4], 0.9), entre(a, haut2[k], 0.9)], "#9ac0d8");
+        else if (vitres && k % 2 === 0) { const a2 = entre(a, b, 0.15), b2 = entre(a, b, 0.85), ha = entre(haut2[k], haut2[(k + 1) % 4], 0.15), hb = entre(haut2[k], haut2[(k + 1) % 4], 0.85); forme(ctx, [entre(a2, ha, 0.5), entre(b2, hb, 0.5), entre(b2, hb, 0.9), entre(a2, ha, 0.9)], "#9ac0d8"); } // les vitres de côté
+      }
+      forme(ctx, haut2, couleur);
+      return haut2;
+    };
+    // de l'arrière vers l'avant si on roule vers nous ; sinon l'inverse (le plus loin d'abord)
+    const vers = F[1] > 0 ? 1 : -1, part = o.part || 0.35, coupe = L - o.long * part;
+    const caisse = () => { const d = boiteV(-L, coupe, 1, o.caisse[0], o.caisse[1]); if (o.charge) { const m = [(d[0][0] + d[2][0]) / 2, (d[0][1] + d[2][1]) / 2]; objetPorte(ctx, o.charge, m[0] - 3, m[1]); objetPorte(ctx, o.charge, m[0] + 3, m[1] - 1); } return d; };
+    const cabine = () => boiteV(coupe, L, 1, o.cabine[0], o.cabine[1], true);
+    let toit;
+    if (vers > 0) { caisse(); toit = cabine(); } else { toit = cabine(); caisse(); }
+    if (o.phares && vue.noirceur > 0.2) { const q = pt(L, 0, 4); lumiere(q[0], q[1], 16, "jaune", 0.8); }
+    return toit;
+  }
+  function adoucirCouleur(hex, f) { const n = parseInt(hex.slice(1), 16), c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(v * f)); return "rgb(" + c.join(",") + ")"; }
+
   function dessinerPorteur(ctx, p, x, y, t) {
     const monde = Village.monde, R = Village.Recherches;
+    // Étape 51 : ✍️ avec le goudron, les porteurs deviennent des CAMIONS (3 fois plus rapides, 3 fois plus chargés)
+    if (monde && R.a(monde, "goudron")) {
+      let dx = p.direction || 1, dy = 0;
+      if (p.chemin && p.pas < p.chemin.length) { const q = p.chemin[p.pas]; dx = q.x - p.x; dy = q.y - p.y; p.dernierSens = [dx, dy]; } else if (p.dernierSens) [dx, dy] = p.dernierSens;
+      vehiculeIso(ctx, x, y, dx, dy, { long: 0.62, large: 0.26, caisse: [11, "#c8a060"], cabine: [9, "#3f6fc4"], part: 0.32, charge: p.porte, phares: true });
+      return;
+    }
     const avecAne = monde && R.faite(monde, "charrettes"); // (étape 44 : les brouettes augmentent aussi la charge)
     // Étape 22 : l'attelage qui est DERRIÈRE le porteur à l'écran (quand il descend vers nous) est dessiné avant lui ; sinon, après
     let attelageDerriere = true;
@@ -2767,6 +2823,6 @@ Village.Batisses = (function () {
   }
 
   // Étape 37 : les pinceaux que le décorateur des cours (affichage/cours.js) emprunte
-  const outils = { poutre, poteau, rond, roue, lumiere, tourRonde, fumee, poisson, jambon, seau, bidon, miche, tasDeBuches, cour };
+  const outils = { vehiculeIso, poutre, poteau, rond, roue, lumiere, tourRonde, fumee, poisson, jambon, seau, bidon, miche, tasDeBuches, cour };
   return { outils, icone, dessinerVillageois, bonhomme, traits, dessinerBatiment, dessinerOuvrier, dessinerPorteur, dessinerAnimal, dessinerPousse, dessinerFantome, iconeRoute, debutImage, lumiere, get lumieres() { return lumieres; }, vue }; // étape 9 : la vue et les lumières
 })();

@@ -17,13 +17,14 @@ Village.Vie = (function () {
   const C = Village.CONFIG, F = C.figurants;
   const TOUR = Math.PI * 2, CONTOUR = "#3b2614";
   const L = C.carte.largeurCase, Hc = C.carte.hauteurCase;
-  const stats = { poules: 0, enfants: 0, oiseaux: 0, papillons: 0, lucioles: 0 };
+  const stats = { poules: 0, enfants: 0, oiseaux: 0, papillons: 0, lucioles: 0, voitures: 0 }; // étape 51 : les voitures
 
   // ---------------------------------------------------------------- les poules et les enfants
   // Ils sont rangés avec les bâtiments (par diagonale), pour passer devant ou derrière au bon moment.
   // `ranger(diagonale, chose)` vient du peintre.
   function ranger(monde, t, rangerDans) {
     stats.poules = 0; stats.enfants = 0;
+    voituresRanger(monde, t, rangerDans); // étape 51 : les voitures roulent même la nuit
     const nuit = monde.moment ? monde.moment.noirceur : 0;
     if (nuit > 0.5 || monde.camera.zoom < C.detail.zoomFigurants) return;
     const hiver = monde.saison && monde.saison.hiver;
@@ -55,8 +56,42 @@ Village.Vie = (function () {
     }
   }
 
+  // ---------------------------------------------------------------- étape 51 : les voitures des habitants
+  // ✍️ « des voitures d'habitants qui roulent pour faire vivre la ville ». Avec le goudron, des voitures roulent de case
+  // en case sur les routes : à chaque carrefour, elles tournent au hasard (sans faire demi-tour, sauf dans une impasse).
+  // Ce sont des figurants : elles ne transportent rien et ne gênent personne. Elles ont une petite mémoire (où elles
+  // sont, où elles vont), rangée ici et pas dans le monde : on ne les sauvegarde pas.
+  const voitures = [];
+  const COULEURS_VOITURES = ["#c8443a", "#3f6fc4", "#e8b830", "#f2f2ee", "#3f8a4a", "#2a2c30", "#9a5ab0"];
+  let dernierT = null;
+  function routeEn(monde, c, l) { const k = monde.carte; return c >= 0 && l >= 0 && c < k.colonnes && l < k.lignes && monde.route[l * k.colonnes + c] > 0; }
+  function prochaine(monde, v) {
+    const choix = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dc, dl]) => routeEn(monde, v.c + dc, v.l + dl) && !(dc === -v.dc && dl === -v.dl));
+    const [dc, dl] = choix.length ? choix[Math.floor(Math.random() * choix.length)] : [-v.dc, -v.dl]; // une impasse : demi-tour
+    v.dc = dc; v.dl = dl; v.u = 0;
+  }
+  function voituresRanger(monde, t, rangerDans) {
+    const dt = dernierT === null ? 0 : Math.min(0.1, Math.max(0, t - dernierT)); dernierT = t;
+    stats.voitures = 0;
+    if (!Village.Recherches.a(monde, "goudron") || !(monde.reseau && monde.reseau.size > 3)) { voitures.length = 0; return; }
+    const voulu = Math.min(F.voituresMax, Math.floor(Village.Logement.habitants(monde) / F.voituresParHabitants));
+    const cases = voitures.length < voulu ? [...monde.reseau] : null;
+    while (voitures.length < voulu && cases.length) { const i = cases[Math.floor(Math.random() * cases.length)], k = monde.carte; const v = { c: i % k.colonnes, l: Math.floor(i / k.colonnes), dc: 1, dl: 0, u: 0, couleur: COULEURS_VOITURES[voitures.length % COULEURS_VOITURES.length], vitesse: 1.6 + Math.random() * 0.8 }; prochaine(monde, v); voitures.push(v); }
+    voitures.length = Math.min(voitures.length, voulu);
+    for (const v of voitures) {
+      if (!routeEn(monde, v.c, v.l)) { prochaine(monde, v); if (!routeEn(monde, v.c + v.dc, v.l + v.dl)) continue; } // sa route a été démolie
+      v.u += v.vitesse * dt;
+      if (v.u >= 1) { v.c += v.dc; v.l += v.dl; prochaine(monde, v); }
+      // on roule à droite : un petit décalage sur le côté de la route
+      const x = v.c + 0.5 + v.dc * v.u - v.dl * 0.18, y = v.l + 0.5 + v.dl * v.u + v.dc * 0.18;
+      if (monde.camera.zoom >= C.detail.zoomFigurants) rangerDans(Math.floor(x) + Math.floor(y), { figurant: { sorte: "voiture", x, y, v } });
+      stats.voitures++;
+    }
+  }
+
   function dessinerFigurant(ctx, f, t) {
     const p = Village.Iso.versMonde(f.x, f.y, L, Hc);
+    if (f.sorte === "voiture") { Village.Batisses.outils.vehiculeIso(ctx, p.x, p.y + 2, f.v.dc, f.v.dl, { long: 0.5, large: 0.26, caisse: [6, f.v.couleur], cabine: [11, f.v.couleur], part: 0.6, phares: true }); return; } // étape 51
     if (f.sorte === "poule") poule(ctx, p.x, p.y, t, f);
     else enfant(ctx, p.x, p.y, t, f);
   }
