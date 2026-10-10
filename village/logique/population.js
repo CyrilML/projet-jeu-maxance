@@ -45,6 +45,11 @@ Village.Population = (function () {
       ajouter("eau", "🚰", "Eau courante", pe, Math.round(pe * 100) + " % des lits ont l'eau", (monde.eau && monde.eau.penurie) ? "Pénurie : une station de pompage de plus." : "Une station de pompage au bord de l'eau, reliée par la route.");
       ajouter("egouts", "🚽", "Égouts", pg, Math.round(pg * 100) + " % des lits ont les égouts", (monde.egouts && monde.egouts.penurie) ? "Pénurie : une station d'épuration de plus." : "Une station d'épuration, reliée par la route.");
     }
+    // Étape 48 : 🌆 les services publics de l'époque moderne
+    if (Village.Services.active(monde)) for (const type of Village.Services.TYPES) {
+      const s = C.services.liste[type], p = Village.Services.part(monde, type), et = Village.Services.etat(monde, type), T = Village.Batiments.TYPES[type];
+      ajouter(type, s.emoji, s.besoin, p, Math.round(p * 100) + " % des lits ont " + s.quoi, et.penurie ? "Pas assez de places : un(e) " + T.nom.toLowerCase() + " de plus." : "Construis un(e) " + T.nom.toLowerCase() + " (avec l'électricité), relié(e) par la route.");
+    }
     if ((monde.age || 0) >= C.habits.age) ajouter("habits", "👕", "Habits", monde.habits.part, Math.round(monde.habits.part * 100) + " % bien habillés", "Bergerie → tisserand → tailleur.");
     return liste;
   }

@@ -72,6 +72,11 @@ Village.Batisses = (function () {
     pompage: { a: 15, a2: 20, h: 15, toit: 8, murG: "#a8604a", murD: "#86483a", toitA: "#4a5058", toitB: "#3a4048", mur: "pierre", toitSorte: "ardoise", fenetres: 1, toitForme: "pavillon" },
     epuration: { a: 12, a2: 14, h: 12, toit: 5, murG: "#c8c2b4", murD: "#a49e90", toitA: "#5a6068", toitB: "#454a52", mur: "pierre", toitSorte: null, fenetres: 1, toitForme: "plat" },
     immeuble: { a: 18, a2: 22, h: 48, toit: 4, murG: "#b8705a", murD: "#945644", toitA: "#5a5c60", toitB: "#47494d", mur: "pierre", toitSorte: null, fenetres: 0, toitForme: "plat" },
+    // Étape 48 : 🌆 les services publics de l'époque moderne
+    ecole: { a: 18, a2: 28, h: 17, toit: 13, murG: "#ecdcbc", murD: "#ccbc9c", toitA: "#b8503a", toitB: "#94402e", mur: "pierre", toitSorte: "tuiles", fenetres: 2, volets: "#3f6fc4" },
+    hopital: { a: 18, a2: 26, h: 30, toit: 4, murG: "#f4f2ec", murD: "#d6d2c8", toitA: "#8a8e94", toitB: "#6c7076", mur: "pierre", toitSorte: null, fenetres: 0, toitForme: "plat" },
+    pompiers: { a: 18, a2: 24, h: 18, toit: 6, murG: "#b8584a", murD: "#944438", toitA: "#4a4c50", toitB: "#3a3c40", mur: "pierre", toitSorte: null, fenetres: 1, toitForme: "plat", porteGrange: "#c8302a" },
+    police: { a: 17, a2: 24, h: 19, toit: 5, murG: "#c8ccd4", murD: "#a4a8b0", toitA: "#3a4a6a", toitB: "#2a3854", mur: "pierre", toitSorte: null, fenetres: 2, toitForme: "plat", volets: "#2f5aa8" },
     monument: { a: 20, a2: 26, h: 20, toit: 14, murG: "#f2ede2", murD: "#d4ccbc", toitA: "#3f6fc4", toitB: "#2f569c", mur: "pierre", toitSorte: "ardoise", fenetres: 2, lanterne: true }, // étape 31
     depot: { a: 22, a2: 32, h: 18, toit: 20, murG: "#c9a26a", murD: "#a8834a", toitA: "#3f6fc4", toitB: "#2f569c", mur: "planches", toitSorte: "tuiles", fenetres: 2, lanterne: true, toitForme: "mansarde" },
   };
@@ -1205,6 +1210,41 @@ Village.Batisses = (function () {
       },
       scierie: () => { ctx.fillStyle = "rgba(80, 150, 210, .75)"; forme(ctx, [[c.G[0] - 14, c.G[1] + 9], [c.G[0] - 4, c.G[1] + 14], [c.G[0] + 2, c.G[1] + 11], [c.G[0] - 8, c.G[1] + 6]], "rgba(90, 160, 220, .85)"); roue(ctx, c.G[0] - 3, c.G[1] - 4, 15, travail ? -t * 2 : 0, "#6b4423", 8, true); },
       bucheron: () => tasDeBuches(ctx, c.B[0] + 3, c.B[1] + 3, 0),
+      // Étape 48 : 🌆 les services publics
+      ecole: () => { // un clocheton avec sa cloche sur le toit, et une horloge
+        const s0 = sommet || [x, y - m.h - m.toit];
+        const s2 = tourRonde(ctx, s0[0], s0[1] + 5, { r: 4, h: 8, ht: 7, clair: "#ecdcbc", fonce: "#b8a888", toit: "cone", toitA: "#b8503a", toitB: "#94402e" });
+        rond(ctx, s0[0], s0[1] + 1, 1.8, "#c9a040");
+        const P = surMur(c.B, c.D, m.h, 0.5, 0.78); rond(ctx, P[0], P[1], 3, "#f4efe4");
+        ctx.strokeStyle = "#2a2a28"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(P[0], P[1]); ctx.lineTo(P[0], P[1] - 2.2); ctx.moveTo(P[0], P[1]); ctx.lineTo(P[0] + 1.6, P[1]); ctx.stroke();
+        return s2;
+      },
+      hopital: () => { // 3 étages de fenêtres et une grande croix rouge
+        const nuit = vue.noirceur > 0.15;
+        for (const [P, Q, n] of [[c.G, c.B, 3], [c.B, c.D, 4]]) for (let e = 0; e < 3; e++) for (let k = 0; k < n; k++) {
+          if (P === c.B && e > 0 && k >= 1 && k <= 2) continue; // la place de la croix
+          const u = 0.1 + k * (0.85 / n), v = 0.12 + e * 0.29, p1 = surMur(P, Q, m.h, u, v), p2 = surMur(P, Q, m.h, u + 0.5 / n, v), p3 = surMur(P, Q, m.h, u + 0.5 / n, v + 0.15), p4 = surMur(P, Q, m.h, u, v + 0.15);
+          forme(ctx, [p1, p2, p3, p4], nuit && (num + e + k) % 3 ? "#ffd866" : "#9ac0d8");
+        }
+        const M = surMur(c.B, c.D, m.h, 0.5, 0.62), bx = 2.2, by = 7;
+        forme(ctx, [[M[0] - bx, M[1] - by], [M[0] + bx, M[1] - by + 1.2], [M[0] + bx, M[1] + by + 1.2], [M[0] - bx, M[1] + by]], "#d0302a");
+        forme(ctx, [[M[0] - by, M[1] - bx - 1.6], [M[0] + by, M[1] - bx + 2], [M[0] + by, M[1] + bx + 2], [M[0] - by, M[1] + bx - 1.6]], "#d0302a");
+        if (nuit) lumiere(M[0], M[1], 14, "orange", 0.6);
+      },
+      pompiers: () => { // la tour de séchage des tuyaux, rouge, avec une sirène
+        const tx = c.D[0] - 4, ty = c.D[1] + 1;
+        bloc(ctx, tx, ty, 6, 38, "#5a4c48", "#b8584a", "#944438", true);
+        rond(ctx, tx, ty - 39, 2.2, "#d8dce2");
+        return [tx, ty - 42];
+      },
+      police: () => { // un bandeau bleu « POLICE », et un gyrophare bleu sur le toit qui clignote
+        const A = surMur(c.B, c.D, m.h, 0.04, 0.9), B2 = surMur(c.B, c.D, m.h, 0.96, 0.9);
+        forme(ctx, [A, B2, [B2[0], B2[1] + 4], [A[0], A[1] + 4]], "#2f5aa8");
+        if (vue.fin) { ctx.fillStyle = "#f2f2ee"; for (let k = 0; k < 6; k++) { const P = surMur(c.B, c.D, m.h, 0.2 + k * 0.12, 0.85); ctx.fillRect(P[0] - 1, P[1] - 1, 2, 2); } }
+        const s0 = sommet || [x, y - m.h], allume = Math.floor(t * 3 + num) % 2 === 0;
+        rond(ctx, s0[0], s0[1] + 2, 2.4, allume ? "#3a8aff" : "#4a5a7a");
+        if (allume) lumiere(s0[0], s0[1] + 2, 16, "bleu", 0.9);
+      },
       ferme: null,
       etable: () => { const s = sommet || [x, y - m.h - m.toit]; boite(ctx, s[0], s[1] + 4, { a: 5, h: 6, toit: 7, murG: "#f4efe4", murD: "#d2cbbd", toitA: m.toitA, toitB: m.toitB, toitForme: "pavillon", fenetres: 0 }, 1, true); },
       boulangerie: () => { // le grand four à pain, rond, en briques
@@ -1554,7 +1594,7 @@ Village.Batisses = (function () {
     else if (b.malade) bulleDePensee(ctx, x, yBulle, t, "🤒"); // étape 15 : les vaches sont malades
     else if (b.ouvrier && b.ouvrier.affame) bulleDePensee(ctx, x, yBulle, t, "🍽️");
     else if (C_.ateliers[b.type] && C_.ateliers[b.type].electrique && b.etat === "pret" && !b.courant) bulleDePensee(ctx, x, yBulle, t, "⚡"); // étape 34 : pas de courant
-    else if ((b.type === "pompage" || b.type === "epuration") && b.etat === "pret" && !b.courant) bulleDePensee(ctx, x, yBulle, t, "⚡"); // étape 35
+    else if ((b.type === "pompage" || b.type === "epuration" || Village.Services.estService(b.type)) && b.etat === "pret" && !b.courant) bulleDePensee(ctx, x, yBulle, t, "⚡"); // étape 35
     else if (b.usure >= 1) bulleDePensee(ctx, x, yBulle, t, "🔧"); // étape 11 : usé !
     // (Étape 22 : ✍️ plus de bulle 🍞 ni 🥶 au-dessus de chaque bâtiment : ça devenait illisible. Le pain et le froid
     // concernent tout le village : ils sont montrés une seule fois, en bas de l'écran.)

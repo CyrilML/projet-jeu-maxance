@@ -171,6 +171,7 @@
       <a href="#etape45">Étape 45</a>
       <a href="#etape46">Étape 46</a>
       <a href="#etape47">Étape 47</a>
+      <a href="#etape48">Étape 48</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2520,6 +2521,52 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
       <details class="question"><summary>Un trajet de 150 cases : combien de temps marche le villageois ?</summary><p>150 ÷ 25 = 6 cases par seconde (le maximum) : 25 secondes.</p></details>
     </section>
 
+    <section id="etape48">
+      <h2>🌆 Étape 48 : l'époque moderne et les services publics <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">La suite après l'époque industrielle : une école, un hôpital, des pompiers et la police, qui servent les maisons les plus proches par la route. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/46-epoque-moderne-services.md</code>.</p>
+          <ul>
+            <li>✍️ « Après le bourg, tu as fait la suite ? »</li>
+            <li>✍️ « Vas-y, commence à faire la suite. »</li>
+            <li>J'ai commencé par les <strong>services publics</strong> : le panneau 👥 les annonçait déjà avec un 🔒.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ À l'époque industrielle, 📜 montre 4 objectifs : 150 habitants, 6 000 🪙, 90 % des lits avec ⚡ + 🚰 + 🚽, 2 immeubles.</li>
+            <li>☐ À l'époque moderne, le menu « 🌆 Services » contient 🏫 🏥 🚒 🚓.</li>
+            <li>☐ Touche un service : il dit combien de lits il sert. Touche une maison : 🎓 🏥 🚒 🚓 avec ✅ ou ❌.</li>
+            <li>☐ Le panneau 👥 a 4 nouveaux besoins.</li>
+            <li>☐ Regarde les cours : la balançoire, l'ambulance, le camion de pompiers, la voiture de police et son gyrophare.</li>
+            <li>Vérifie « version 49 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔧 Sous le capot : un service, c'est comme l'eau courante</h3>
+      <p>Je n'ai pas écrit de nouvel outil. L'école utilise <strong>la même fonction</strong> que l'électricité et l'eau (<code>distribuer</code>, dans <code>logique/electricite.js</code>). Elle fait une « tache d'encre » le long des routes, à partir de l'école, puis elle sert les maisons les plus proches d'abord, jusqu'à ce qu'il n'y ait plus de places.</p>
+      <pre style="white-space: pre-wrap">🏫 école (60 places)
+ │ route
+ ├── 🏠 6 lits  ✅  (reste 54)
+ ├── 🏢 20 lits ✅  (reste 34)
+ ├── 🏢 20 lits ✅  (reste 14)
+ └── 🏢 20 lits ❌  pas assez de places : il faut une 2e école !</pre>
+      <p>Ce qui change d'un service à l'autre est rangé comme des <strong>données</strong> dans <code>config.js</code> (« services ») : le nombre de lits, le drapeau posé sur la maison (<code>aEcole</code>, <code>aHopital</code>…), le nom du besoin. Le nouveau fichier <code>logique/services.js</code> (« la mairie ») ne fait que passer ces données à la fonction.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, dans « 🌆 Les services publics » : combien de lits sont servis, et combien de logements sont « sans » ?</li>
+        <li>Construis une école loin des maisons, puis une près : laquelle sert les maisons en premier ?</li>
+        <li>Dans <code>config.js</code>, cherche <code>services</code> : combien de lits sert un hôpital ? Que se passerait-il avec 200 ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Une école de 60 places, et 3 immeubles de 20 lits. Combien d'immeubles ont l'école ?</summary><p>3 × 20 = 60 : les 3 l'ont, tout juste. Un 4e immeuble n'aurait plus de place.</p></details>
+      <details class="question"><summary>L'école n'a plus d'électricité. Que se passe-t-il ?</summary><p>Elle ferme : plus aucune maison n'a l'école, et le besoin 🎓 tombe à 0 %.</p></details>
+      <details class="question"><summary>Pourquoi j'ai réutilisé la fonction de l'eau au lieu d'en écrire une nouvelle ?</summary><p>Parce que c'est exactement la même règle (les plus proches d'abord, jusqu'à ce qu'il n'y ait plus de place). Une seule fonction, c'est moins de code et moins de bugs.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2807,10 +2854,16 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
           <p>Les villageois vont partout ; le plus ancien bâtiment vide est servi d'abord ; le panneau dit pourquoi.</p>
           <p class="apprend"><b>Tu apprends :</b> un bug qui n'apparaît que dans une vraie partie. <b>Durée :</b> 1 séance.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">48</div>
+          <h4>🌆 L'époque moderne et les services publics <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Un nouvel âge ; l'école, l'hôpital, les pompiers et la police servent les maisons proches ; 4 nouveaux besoins.</p>
+          <p class="apprend"><b>Tu apprends :</b> réutiliser une fonction avec d'autres données. <b>Durée :</b> 1 séance.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">48-50</div>
-          <h4>🚗🚓🛍️ Les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
-          <p>Routes goudronnées, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
+          <div class="num">49-50</div>
+          <h4>🚗🛍️ Les voitures, puis les commerces <span class="etiquette">⏭️ prochaine étape</span></h4>
+          <p>Ce qui arrive sans service (incendies ? vols ?), routes goudronnées, voitures et camions, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
         </div>
         <div class="carte">
@@ -3201,6 +3254,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
         <textarea class="journal" id="village-appris-47" data-cle="village-appris-47" placeholder="Ex. : J'ai appris qu'une capture d'écran aide à trouver un bug…"></textarea>
         <label for="village-idees-47"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-47" data-cle="village-idees-47" placeholder="Ex. : Une charrette pour emmener les ouvriers loin…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 48 · l'époque moderne et les services publics <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> un nouvel âge (🌆), <code>logique/services.js</code> (la mairie), 4 bâtiments et leurs cours (balançoire, ambulance, camion de pompiers, voiture de police), 4 besoins, le guide et le conseiller.</p>
+        <label for="village-appris-48"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-48" data-cle="village-appris-48" placeholder="Ex. : J'ai appris qu'une même fonction peut servir pour l'eau et pour l'école…"></textarea>
+        <label for="village-idees-48"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-48" data-cle="village-idees-48" placeholder="Ex. : Des incendies quand il n'y a pas de pompiers…"></textarea>
       </div>
     </section>
   </main>

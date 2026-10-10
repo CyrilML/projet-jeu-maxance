@@ -100,6 +100,13 @@ Village.Conseiller = (function () {
         else if (r.penurie) ajouter(2, emoji, "Pas assez pour " + quoi + " : " + r.coupes + " bâtiment(s) privé(s)", "La demande (" + r.demande + ") dépasse ce que fournissent tes stations (" + r.offre + ").", type);
       }
     }
+    // 9. Étape 48 : 🌆 les services publics de l'époque moderne
+    if (Village.Services.active(monde)) for (const type of Village.Services.TYPES) {
+      const s = C.services.liste[type], T = B().TYPES[type], st = monde.batiments.filter((b) => b.type === type && b.etat === "pret"), et = Village.Services.etat(monde, type);
+      if (!st.length) ajouter(1, T.emoji, "Construis un(e) " + T.nom.toLowerCase(), "Les habitants veulent " + s.quoi + " (" + s.emoji + " " + s.besoin + " dans 👥) : chaque bâtiment sert " + s.lits + " lits.", type);
+      else if (!st.some((b) => b.courant)) ajouter(3, T.emoji, T.nom + " sans électricité", "Un service ne marche pas sans courant : relie-le par la route à une centrale.", null);
+      else if (et.penurie) ajouter(2, T.emoji, "Pas assez de places pour " + s.quoi + " : " + et.coupes + " logement(s) sans", "Il faut " + et.demande + " places, tes bâtiments en ont " + et.offre + " : un(e) " + T.nom.toLowerCase() + " de plus.", type);
+    }
     // 6. Étape 31 : le grand monument de la ville
     if (Village.Ages.debloque(monde, "monument")) {
       const mo = monde.batiments.find((b) => b.type === "monument");

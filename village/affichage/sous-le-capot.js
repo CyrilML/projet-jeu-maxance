@@ -137,6 +137,8 @@ Village.SousLeCapot = (function () {
     "eau-penurie": (d) => "🚰❌ Pénurie d'eau : " + d.coupes + " bâtiment(s) sans eau · offre " + d.offre + " < demande " + d.demande + " (" + d.sources + " station(s) de pompage qui tournent)", // étape 35
     "eau-ok": (d) => "🚰✅ Assez d'eau pour tout le réseau : offre " + d.offre + ", demande " + d.demande,
     "egouts-penurie": (d) => "🚽❌ Les égouts débordent : " + d.coupes + " bâtiment(s) sans égouts · offre " + d.offre + " < demande " + d.demande + " (" + d.sources + " station(s) d'épuration qui tournent)",
+    "service-manque": (d) => d.emoji + "❌ Pas assez de places pour " + d.quoi + " : " + d.coupes + " logement(s) sans · places " + d.offre + " < lits " + d.demande + " (" + d.sources + " bâtiment(s) qui travaillent)", // étape 48
+    "service-ok": (d) => d.emoji + "✅ Assez de places pour " + d.quoi + " : " + d.offre + " places pour " + d.demande + " lits",
     "egouts-ok": (d) => "🚽✅ Les égouts suffisent : offre " + d.offre + ", demande " + d.demande,
     "conseil": (d) => "🧭 Le conseiller : " + d.texte + (d.type ? " → construis " + Village.Batiments.TYPES[d.type].emoji + " " + Village.Batiments.TYPES[d.type].court : "") + " (" + d.pourquoi + ")", // étape 29
     "filon-trouve": (d) => "🔍 Filon de " + d.nom + " " + d.emoji + " trouvé près de (" + d.colonne + ", " + d.ligne + ")" + (d.cases > 1 ? " : " + d.cases + " cases de paillettes" : "") + " · " + d.reserve + " morceaux", // étape 28
@@ -301,6 +303,15 @@ Village.SousLeCapot = (function () {
         const r = monde[nom] || {};
         h += ligne(emoji + " " + titreR + " : utilisé / offre · demande", (r.utilise || 0) + " / " + (r.offre || 0) + " · " + (r.demande || 0) + (r.penurie ? " ⚠️ pénurie" : ""));
         h += ligne("   servis · coupés · loin du réseau · cases de route", (r.alimentes || 0) + " · " + (r.coupes || 0) + " · " + (r.horsReseau || 0) + " · " + (r.routes ? r.routes.size : 0));
+      }
+    }
+    // Étape 48 : les services publics de l'époque moderne (ils servent des LITS, les plus proches par la route d'abord)
+    if (Village.Services.active(monde)) {
+      h += groupe("🌆 Les services publics (ils servent des lits, les plus proches par la route d'abord)");
+      for (const type of Village.Services.TYPES) {
+        const s = Village.CONFIG.services.liste[type], r = Village.Services.etat(monde, type);
+        h += ligne(s.emoji + " " + s.quoi + " : lits servis / places · lits à servir", (r.utilise || 0) + " / " + (r.offre || 0) + " · " + (r.demande || 0) + (r.penurie ? " ⚠️ pas assez" : "") + " · " + Math.round(Village.Services.part(monde, type) * 100) + " %");
+        h += ligne("   logements servis · sans · loin de la route", (r.alimentes || 0) + " · " + (r.coupes || 0) + " · " + (r.horsReseau || 0));
       }
     }
     // Étape 11 : la réserve, les pubs et les règles du bourg

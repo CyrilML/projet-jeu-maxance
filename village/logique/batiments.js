@@ -69,11 +69,15 @@ Village.Batiments = (function () {
     filature: { nom: "Filature", court: "Filature", emoji: "🧵", metier: "fileur" },
     pompage: { nom: "Station de pompage", court: "Pompage", emoji: "🚰", metier: "fontainier" }, // étape 35
     epuration: { nom: "Station d'épuration", court: "Épuration", emoji: "🚽", metier: "égoutier" },
+    ecole: { nom: "École", court: "École", emoji: "🏫", metier: "instituteur" }, // étape 48 : les services publics
+    hopital: { nom: "Hôpital", court: "Hôpital", emoji: "🏥", metier: "médecin" },
+    pompiers: { nom: "Caserne de pompiers", court: "Pompiers", emoji: "🚒", metier: "pompier" },
+    police: { nom: "Commissariat", court: "Police", emoji: "🚓", metier: "policier" },
     manoir: { nom: "Maison bourgeoise", court: "Manoir", emoji: "🏡", metier: null }, // étape 18 : une maison qui a évolué
     immeuble: { nom: "Immeuble", court: "Immeuble", emoji: "🏢", metier: null }, // étape 35 : une maison bourgeoise qui a évolué
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot", "monument", "centrale", "acierie", "filature", "pompage", "epuration"];
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot", "monument", "centrale", "acierie", "filature", "pompage", "epuration", "ecole", "hopital", "pompiers", "police"];
   // « 🪵 troncs », « 🔩 lingots »… (étape 8 : fabriqué à partir de config.js, « ressources »)
   const NOMS_RESSOURCES = {};
   for (const [r, f] of Object.entries(C.ressources)) NOMS_RESSOURCES[r] = f.emoji + " " + f.nom;
@@ -362,7 +366,7 @@ Village.Batiments = (function () {
       user(monde, b, dt); // étape 11 : au bourg, les bâtiments s'usent
       if (C.ateliers[b.type]) { if (b.relie) fabriquer(monde, b, dt); } // étape 8 : scierie, fonderie, forge
       else if (C.mines[b.type]) { if (b.relie) miner(monde, b, dt); } // étape 7 ; étape 8 : charbon ou fer
-      else if (b.type === "universite" || b.type === "marche" || b.type === "pompage" || b.type === "epuration") continue; // étape 35 : les stations : Village.Electricite // étape 7 : Village.Recherches ; étape 8 : Village.Marche
+      else if (b.type === "universite" || b.type === "marche" || b.type === "pompage" || b.type === "epuration" || Village.Services.estService(b.type)) continue; // étape 48 : les services : Village.Services // étape 35 : les stations : Village.Electricite // étape 7 : Village.Recherches ; étape 8 : Village.Marche
       else if (b.ouvrier) Village.Ouvriers.etape(monde, b, dt);
     }
   }

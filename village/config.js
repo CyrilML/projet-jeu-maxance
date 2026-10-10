@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 48,
+  version: 49,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -170,6 +170,11 @@ Village.CONFIG = {
     filature: { cout: { planches: 120, pierres: 80, lingots: 20, outils: 10 }, construction: 45 }, // étape 19 : dès le hameau (sans lingots ni outils)
     pompage: { cout: { pierres: 120, lingots: 25, outils: 10 }, construction: 40 }, // étape 35
     epuration: { cout: { pierres: 140, lingots: 20, outils: 10 }, construction: 40 },
+    // Étape 48 : 🌆 les services publics de l'époque moderne
+    ecole: { cout: { planches: 120, pierres: 100, lingots: 20, outils: 10 }, construction: 45 },
+    hopital: { cout: { pierres: 180, lingots: 30, outils: 15, tissu: 20 }, construction: 60 },
+    pompiers: { cout: { planches: 60, pierres: 120, lingots: 35, outils: 15 }, construction: 50 },
+    police: { cout: { pierres: 140, lingots: 25, outils: 15 }, construction: 50 },
     manoir: { cout: { planches: 12, pierres: 16, outils: 2 }, construction: 20 }, // étape 18 : on ne la construit pas, une maison le DEVIENT
   },
   // Étape 18 : ✍️ les CLASSES D'HABITANTS suivent leur logement (voir logique/classes.js).
@@ -612,8 +617,13 @@ Village.CONFIG = {
       // Étape 34 : ✍️ (choix de Maxance) pour l'époque industrielle : le Grand Beffroi fini, 80 habitants, 3 000 🪙
       objectifs: { monument: 4, habitants: 80, pieces: 3000 } },
     // Étape 34 : 🏭 l'ÉPOQUE INDUSTRIELLE : l'électricité, et les premières usines
-    { id: "industrie", nom: "L'époque industrielle", emoji: "🏭", debloque: ["centrale", "acierie", "filature", "pompage", "epuration"], objectifs: null, // étape 35 : l'eau et les égouts
-      aVenir: "🚗 routes goudronnées et voitures, 🚓 police et 🚒 pompiers" },
+    { id: "industrie", nom: "L'époque industrielle", emoji: "🏭", debloque: ["centrale", "acierie", "filature", "pompage", "epuration"], // étape 35 : l'eau et les égouts
+      // Étape 48 : pour passer à l'époque moderne : une grande ville, riche, où presque tous les lits ont les 3 réseaux
+      //   reseaux : % des lits qui ont ⚡ + 🚰 + 🚽 à la fois ; immeubles : immeubles debout
+      objectifs: { habitants: 150, pieces: 6000, reseaux: 90, immeubles: 2 } },
+    // Étape 48 : 🌆 l'ÉPOQUE MODERNE : les services publics (l'école, l'hôpital, les pompiers, la police)
+    { id: "moderne", nom: "L'époque moderne", emoji: "🌆", debloque: ["ecole", "hopital", "pompiers", "police"], objectifs: null,
+      aVenir: "🚗 routes goudronnées, voitures et camions ; puis 🛍️ centres commerciaux et ✈️ aéroport" },
   ],
   gemmesParAge: 3, // étape 7 : 💎 offertes à chaque nouvel âge
 
@@ -743,6 +753,21 @@ Village.CONFIG = {
         { texte: "Construis une 🚽 station d'épuration", batiment: "epuration", nombre: 1, pourquoi: "Elle nettoie les eaux usées : les égouts suivent aussi les routes." },
         { texte: "Donne l'eau à 90 % des lits", logementsEau: 90, pourquoi: "L'eau courante est un besoin des habitants (🚰 dans 👥)." },
         { texte: "Fais monter un 🏢 immeuble", batiment: "immeuble", nombre: 1, pourquoi: "Une maison bourgeoise avec ⚡ + 🚰 + 🚽 devient un immeuble de 20 lits." },
+        // Étape 48 : vers l'époque moderne
+        { texte: "Donne ⚡ + 🚰 + 🚽 à 90 % des lits", logementsReseaux: 90, pourquoi: "Pour l'époque moderne : presque toutes les maisons doivent avoir les 3 réseaux." },
+        { texte: "Fais monter 2 🏢 immeubles", batiment: "immeuble", nombre: 2, pourquoi: "Pour l'époque moderne." },
+        { texte: "Aie 150 habitants", habitants: 150, pourquoi: "Pour l'époque moderne (avec 6 000 🪙)." },
+        { texte: "Aie 6 000 🪙", pieces: 6000, pourquoi: "Pour l'époque moderne." },
+      ],
+      [ // 🌆 l'époque moderne (étape 48) : les services publics
+        { texte: "Construis une 🏫 école", batiment: "ecole", nombre: 1, pourquoi: "L'éducation est un besoin des habitants (🎓 dans 👥). Elle a besoin de l'électricité." },
+        { texte: "Construis un 🏥 hôpital", batiment: "hopital", nombre: 1, pourquoi: "La santé : un besoin des habitants (🏥 dans 👥)." },
+        { texte: "Construis une 🚒 caserne de pompiers", batiment: "pompiers", nombre: 1, pourquoi: "La protection contre le feu : un besoin des habitants (🚒 dans 👥)." },
+        { texte: "Construis un 🚓 commissariat", batiment: "police", nombre: 1, pourquoi: "La sécurité : un besoin des habitants (🚓 dans 👥)." },
+        { texte: "Mets 90 % des lits près d'une école", logementsService: "ecole", cible: 90, pourquoi: "Chaque école accueille les enfants de 60 lits, les plus proches par la route d'abord." },
+        { texte: "Mets 90 % des lits près d'un hôpital", logementsService: "hopital", cible: 90, pourquoi: "Chaque hôpital soigne 80 lits." },
+        { texte: "Protège 90 % des lits contre le feu", logementsService: "pompiers", cible: 90, pourquoi: "Chaque caserne protège 80 lits." },
+        { texte: "Protège 90 % des lits avec la police", logementsService: "police", cible: 90, pourquoi: "Chaque commissariat protège 80 lits." },
       ],
     ],
   },
@@ -793,6 +818,10 @@ Village.CONFIG = {
     filature: "La filature (électrique) file la laine à la machine : 2 laines → 3 tissus.",
     pompage: "La station de pompage (au bord de l'eau, électrique) envoie l'eau courante dans des tuyaux sous les routes, jusqu'à " + 40 + " unités.",
     epuration: "La station d'épuration (électrique) nettoie les eaux usées qui arrivent par les égouts, sous les routes, jusqu'à " + 40 + " unités.",
+    ecole: "L'école (électrique) accueille les enfants de 60 lits, les plus proches par la route d'abord : c'est le besoin 🎓 Éducation.", // étape 48
+    hopital: "L'hôpital (électrique) soigne les habitants de 80 lits, les plus proches par la route d'abord : c'est le besoin 🏥 Santé.",
+    pompiers: "La caserne de pompiers (électrique) protège 80 lits contre le feu, les plus proches par la route d'abord : c'est le besoin 🚒.",
+    police: "Le commissariat (électrique) veille sur 80 lits, les plus proches par la route d'abord : c'est le besoin 🚓 Sécurité.",
     immeuble: "Un immeuble de 4 étages : 20 lits pour des citadins. Une maison bourgeoise le devient quand elle a l'électricité, l'eau et les égouts.",
   },
 
@@ -802,7 +831,7 @@ Village.CONFIG = {
     age: 5, // l'époque industrielle
     parCentrale: 40, // unités par centrale qui tourne
     logement: 1, atelier: 2, usine: 8, // consommation (unités)
-    consommation: { entrepot: 3, depot: 2, universite: 4, marche: 2, monument: 4, pompage: 4, epuration: 4, immeuble: 3 },
+    consommation: { entrepot: 3, depot: 2, universite: 4, marche: 2, monument: 4, pompage: 4, epuration: 4, immeuble: 3, ecole: 3, hopital: 4, pompiers: 3, police: 3 }, // étape 48 : les services
     vitesse: 1.5, // un atelier alimenté travaille 1,5 fois plus vite
   },
 
@@ -819,6 +848,20 @@ Village.CONFIG = {
     consommation: { immeuble: 3 },
   },
 
+  // Étape 48 : 🌆 les SERVICES PUBLICS de l'époque moderne (logique/services.js). Ils marchent comme l'eau courante :
+  // un service (avec l'électricité et son employé) sert un certain nombre de LITS, les plus proches par la route d'abord.
+  //   lits : combien de lits un bâtiment sert ; champ : le drapeau posé sur chaque logement servi ;
+  //   besoin : le nom du besoin des habitants (panneau 👥).
+  services: {
+    age: 6, // l'époque moderne
+    liste: {
+      ecole: { lits: 60, champ: "aEcole", emoji: "🎓", besoin: "Éducation", quoi: "l'école", pluriel: "Toutes les écoles" },
+      hopital: { lits: 80, champ: "aHopital", emoji: "🏥", besoin: "Santé", quoi: "l'hôpital", pluriel: "Tous les hôpitaux" },
+      pompiers: { lits: 80, champ: "aPompiers", emoji: "🚒", besoin: "Protection contre le feu", quoi: "les pompiers", pluriel: "Toutes les casernes" },
+      police: { lits: 80, champ: "aPolice", emoji: "🚓", besoin: "Sécurité", quoi: "la police", pluriel: "Tous les commissariats" },
+    },
+  },
+
   // Étape 33 : 👥 la POPULATION et ses BESOINS, façon SimCity. Chaque besoin est noté de 0 à 100 % ; la PROSPÉRITÉ est la
   // moyenne. ✍️ « Plus la ville prospère, plus les habitants se portent bien, plus la ville grandit » : les arrivées de
   // nouveaux habitants vont × (0,5 + prospérité) : 0,5 fois plus vite dans une ville en crise, 1,5 fois dans une ville
@@ -828,10 +871,12 @@ Village.CONFIG = {
     releves: 40, // relevés gardés (20 min)
     niveaux: [[0, "en crise", "📉"], [40, "fragile", "😐"], [60, "stable", "🙂"], [75, "prospère", "📈"], [90, "florissante", "🌟"]],
     aVenir: [
-      { emoji: "🚓", nom: "Sécurité (police)", quand: "époque moderne" },
-      { emoji: "🚒", nom: "Protection contre le feu (pompiers)", quand: "époque moderne" },
-      { emoji: "🏥", nom: "Santé (hôpital)", quand: "époque moderne" },
-      { emoji: "🎓", nom: "Éducation (école)", quand: "époque moderne" },
+      { emoji: "🚓", nom: "Sécurité (police)", quand: "époque moderne", age: 6 }, // étape 48 : age : quand il devient un vrai besoin
+      { emoji: "🚒", nom: "Protection contre le feu (pompiers)", quand: "époque moderne", age: 6 },
+      { emoji: "🏥", nom: "Santé (hôpital)", quand: "époque moderne", age: 6 },
+      { emoji: "🎓", nom: "Éducation (école)", quand: "époque moderne", age: 6 },
+      { emoji: "🚗", nom: "Transports (voitures et bus)", quand: "plus tard", age: 99 },
+      { emoji: "🛍️", nom: "Commerces (centres commerciaux)", quand: "plus tard", age: 99 },
     ],
   },
 

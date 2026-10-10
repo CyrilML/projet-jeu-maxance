@@ -41,6 +41,8 @@ Village.Ages = (function () {
     if (o.pieces) liste.push({ texte: "🪙 Pièces", valeur: monde.pieces, cible: o.pieces });
     if (o.bonheur) liste.push({ texte: "😊 Bonheur des habitants (%)", valeur: Math.round(monde.bonheur.valeur || 0), cible: o.bonheur }); // étape 15
     if (o.monument) liste.push({ texte: "🏛️ Paliers du Grand Beffroi", valeur: Village.Monument.paliersFaits(monde), cible: o.monument }); // étape 34
+    if (o.reseaux) liste.push({ texte: "🔌 Lits avec ⚡ + 🚰 + 🚽 (%)", valeur: Math.round(Village.Electricite.partLogements(monde, ["courant", "eau", "egout"]) * 100), cible: o.reseaux }); // étape 48
+    if (o.immeubles) liste.push({ texte: "🏢 Immeubles", valeur: monde.batiments.filter((b) => b.type === "immeuble" && b.etat === "pret").length, cible: o.immeubles });
     if (o.nourriture) liste.push({ texte: "🐟 + 🍖 dans l'entrepôt", valeur: monde.stock.poissons + monde.stock.viande, cible: o.nourriture });
     for (const x of liste) x.fait = x.valeur >= x.cible;
     return liste;

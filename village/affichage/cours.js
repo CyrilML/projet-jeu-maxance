@@ -388,6 +388,62 @@ Village.Cours = (function () {
   function trepied(ctx, x, y, k) { for (const s of [-1, 0, 1]) O().poutre(ctx, [x + s * 5 * k, y + (s ? 0 : 2 * k)], [x, y - 14 * k], 0.9 * k, "#8a6a3a"); boite(ctx, x, y - 14 * k, 0.12 * k, 0.18 * k, 4 * k, "#c9a636"); }
   // Une poubelle et un vélo (la cour de l'immeuble)
   function poubelles(ctx, x, y, k) { for (const [q, c] of [[-0.12, "#3f6a4a"], [0.12, "#4a5a6a"]]) { const [px, py] = iso(x, y, 0, q * k); boite(ctx, px, py, 0.2 * k, 0.2 * k, 9 * k, c); } }
+  // Étape 48 : 🌆 les objets des services publics
+  // Un véhicule à moteur (l'ambulance, le camion de pompiers, la voiture de police), posé le long de q.
+  //   o.long : sa longueur (cases) ; o.haut : sa hauteur (px) ; o.signe : "croix", "echelle" ou "gyro" ; t : pour le gyrophare
+  function vehicule(ctx, x, y, k, couleur, o, t) {
+    const L = (o.long || 0.7) * k, H = (o.haut || 9) * k;
+    ombreSol(ctx, x, y, 13 * k);
+    for (const q of [-L * 0.32, L * 0.32]) O().rond(ctx, ...iso(x, y - 2.2 * k, -0.17 * k, q), 2.6 * k, "#26282c"); // les roues de derrière (en partie cachées)
+    const d = boite(ctx, x, y - 2.2 * k, 0.3 * k, L, H, couleur);
+    // les vitres (de côté) et le pare-brise
+    const V = (u, v) => [d[1][0] + (d[2][0] - d[1][0]) * u, d[1][1] + (d[2][1] - d[1][1]) * u + H * v]; // un point du côté droit : u le long, v vers le bas
+    face(ctx, [V(0.62, 0.18), V(0.9, 0.18), V(0.9, 0.5), V(0.62, 0.5)], "#9ac0d8");
+    face(ctx, [V(0.12, 0.2), V(0.5, 0.2), V(0.5, 0.48), V(0.12, 0.48)], o.signe === "croix" ? "#f2f2ee" : "#9ac0d8");
+    if (o.bande) { ctx.strokeStyle = o.bande; ctx.lineWidth = 1.6 * k; ctx.beginPath(); ctx.moveTo(...V(0.02, 0.7)); ctx.lineTo(...V(0.98, 0.7)); ctx.stroke(); }
+    const c = [(d[0][0] + d[2][0]) / 2, (d[0][1] + d[2][1]) / 2];
+    if (o.signe === "croix") { ctx.fillStyle = "#d0302a"; const m = V(0.3, 0.34); ctx.fillRect(m[0] - 1 * k, m[1] - 3 * k, 2 * k, 6 * k); ctx.fillRect(m[0] - 3 * k, m[1] - 1 * k, 6 * k, 2 * k); }
+    if (o.signe === "echelle") { // la grande échelle couchée sur le toit
+      ctx.strokeStyle = "#d8dce2"; ctx.lineWidth = 1 * k; ctx.beginPath(); const A = entre(d[0], d[3], 0.1), B = entre(d[1], d[2], 0.95);
+      for (const dx of [-1.6, 1.6]) { ctx.moveTo(A[0] + dx * k, A[1] - 2 * k); ctx.lineTo(B[0] + dx * k, B[1] - 2 * k); }
+      for (let i = 1; i < 8; i++) { const P = entre(A, B, i / 8); ctx.moveTo(P[0] - 1.6 * k, P[1] - 2 * k); ctx.lineTo(P[0] + 1.6 * k, P[1] - 2 * k); } ctx.stroke();
+    }
+    // le gyrophare (bleu ; il clignote de près)
+    const allume = o.gyro && (t === undefined || Math.floor(t * 3) % 2 === 0);
+    if (o.gyro) { O().rond(ctx, c[0] + 4 * k, c[1] - 1.5 * k, 1.8 * k, allume ? o.gyro : "#5a6a7a"); if (allume && t !== undefined) O().lumiere(c[0] + 4 * k, c[1] - 1.5 * k, 12 * k, "bleu", 0.7); }
+    for (const q of [-L * 0.32, L * 0.32]) O().rond(ctx, ...iso(x, y + 0.5 * k, 0.15 * k, q), 2.6 * k, "#26282c"); // les roues de devant
+  }
+  // Une balançoire (la cour de l'école)
+  function balancoire(ctx, x, y, k, t) {
+    const P = iso(x, y, 0, -0.4 * k), Q = iso(x, y, 0, 0.4 * k), h = 20 * k;
+    for (const B of [P, Q]) { O().poutre(ctx, [B[0] - 4 * k, B[1]], [B[0], B[1] - h], 1.2 * k, "#c8443a"); O().poutre(ctx, [B[0] + 4 * k, B[1]], [B[0], B[1] - h], 1.2 * k, "#c8443a"); }
+    O().poutre(ctx, [P[0], P[1] - h], [Q[0], Q[1] - h], 1.4 * k, "#3f6fc4");
+    const a = Math.sin((t || 0) * 2.2) * 0.35;
+    for (const u of [0.33, 0.66]) { const A = entre([P[0], P[1] - h], [Q[0], Q[1] - h], u), B = [A[0] + Math.sin(a) * 13 * k, A[1] + Math.cos(a) * 13 * k]; ctx.strokeStyle = "#3a3028"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(A[0] - 2 * k, A[1]); ctx.lineTo(B[0] - 2 * k, B[1]); ctx.moveTo(A[0] + 2 * k, A[1]); ctx.lineTo(B[0] + 2 * k, B[1]); ctx.stroke(); face(ctx, [[B[0] - 3 * k, B[1]], [B[0] + 3 * k, B[1]], [B[0] + 3 * k, B[1] + 1.4 * k], [B[0] - 3 * k, B[1] + 1.4 * k]], "#e8b830"); }
+  }
+  // Une marelle dessinée à la craie sur le sol
+  function marelle(ctx, x, y, k) {
+    ctx.strokeStyle = "rgba(250, 250, 245, .85)"; ctx.lineWidth = 0.9; ctx.beginPath();
+    for (let i = 0; i < 5; i++) { const pts = [iso(x, y, -0.09 * k, (i - 2.5) * 0.17 * k), iso(x, y, 0.09 * k, (i - 2.5) * 0.17 * k), iso(x, y, 0.09 * k, (i - 1.5) * 0.17 * k), iso(x, y, -0.09 * k, (i - 1.5) * 0.17 * k)]; ctx.moveTo(...pts[0]); for (const P of pts.slice(1)) ctx.lineTo(...P); ctx.closePath(); }
+    ctx.stroke();
+  }
+  // Une bouche d'incendie rouge
+  function boucheIncendie(ctx, x, y, k) { O().tourRonde(ctx, x, y, { r: 2.2 * k, h: 7 * k, ht: 2 * k, clair: "#e0483a", fonce: "#9a2a22", toit: "dome", toitA: "#e0483a", toitB: "#9a2a22" }); O().rond(ctx, x - 2.4 * k, y - 4 * k, 1.1 * k, "#c8b040"); }
+  // Des tuyaux d'incendie enroulés (des disques rouges)
+  function tuyauxEnroules(ctx, x, y, k) { for (const [p, q, j] of [[0, -0.15, 0], [0, 0.15, 0], [0, 0, 1]]) { const [cx, cy] = iso(x, y - j * 4 * k, p * k, q * k); ctx.beginPath(); ctx.ellipse(cx, cy - 2 * k, 5.5 * k, 2.8 * k, 0, 0, TOUR); ctx.fillStyle = "#b8302a"; ctx.fill(); ctx.strokeStyle = TRAIT; ctx.lineWidth = 0.8; ctx.stroke(); ctx.beginPath(); ctx.ellipse(cx, cy - 2.3 * k, 1.8 * k, 0.9 * k, 0, 0, TOUR); ctx.fillStyle = "#5a1a14"; ctx.fill(); } }
+  // Des barrières de police, rayées bleu et blanc
+  function barrieres(ctx, x, y, k) {
+    for (const q of [-0.3, 0.1]) {
+      const A = iso(x, y, 0, q * k), B = iso(x, y, 0, (q + 0.3) * k);
+      O().poteau(ctx, A, 7 * k, 0.9 * k); O().poteau(ctx, B, 7 * k, 0.9 * k);
+      for (let i = 0; i < 4; i++) { const P = entre([A[0], A[1] - 6 * k], [B[0], B[1] - 6 * k], i / 4), Q = entre([A[0], A[1] - 6 * k], [B[0], B[1] - 6 * k], (i + 1) / 4); face(ctx, [P, Q, [Q[0], Q[1] + 2.4 * k], [P[0], P[1] + 2.4 * k]], i % 2 ? "#f2f2ee" : "#2f5aa8"); }
+    }
+  }
+  // Une hélisurface (un grand H dans un cercle)
+  function heliport(ctx, x, y, k) {
+    ctx.beginPath(); ctx.ellipse(x, y, 14 * k, 7 * k, 0, 0, TOUR); ctx.fillStyle = "#6a6e74"; ctx.fill(); ctx.strokeStyle = "rgba(250, 250, 245, .9)"; ctx.lineWidth = 1; ctx.stroke();
+    ctx.beginPath(); for (const s of [-1, 1]) { ctx.moveTo(...iso(x, y, s * 0.1 * k, -0.12 * k)); ctx.lineTo(...iso(x, y, s * 0.1 * k, 0.12 * k)); } ctx.moveTo(...iso(x, y, -0.1 * k, 0)); ctx.lineTo(...iso(x, y, 0.1 * k, 0)); ctx.lineWidth = 1.6 * k; ctx.stroke();
+  }
 
   // ---------------------------------------------------------------- les sols et les clôtures
   const SOLS = { terre: ["#b49a72", "#9a8260"], gravier: ["#aaa69c", "#8e8a80"], paves: ["#a8a29a", "#8a847c"], pelouse: ["#7aa25a", "#6a9050"], scierie: ["#c4a878", "#a88c5e"], charbon: ["#5a5650", "#4a4640"], sable: ["#cdb88a", "#b8a074"] };
@@ -593,6 +649,27 @@ Village.Cours = (function () {
       ["D", (c, x, y, k, b) => { banc(c, x, y, k); lampadaire(c, ...iso(x, y, 0.3, -0.3), k); }],
       ["G", (c, x, y, k) => poubelles(c, x, y, k)],
       ["Dr", (c, x, y, k) => arbreBoule(c, x, y, k)],
+    ] },
+    // Étape 48 : 🌆 les services publics
+    ecole: { sol: "pelouse", cloture: "fer", objets: [
+      ["D", (c, x, y, k) => { marelle(c, ...iso(x, y, 0.15, 0.2), k); banc(c, ...iso(x, y, -0.25, -0.3), k); }],
+      ["G", (c, x, y, k, b, t) => balancoire(c, x, y, k, t)],
+      ["Dr", (c, x, y, k) => arbreBoule(c, x, y, k)],
+    ] },
+    hopital: { sol: "paves", cloture: "haie", objets: [
+      ["D", (c, x, y, k) => vehicule(c, x, y, k, "#f2f2ee", { long: 0.75, haut: 10, signe: "croix", bande: "#d0302a" })],
+      ["G", (c, x, y, k) => heliport(c, x, y, k)],
+      ["Dr", (c, x, y, k) => { arbreBoule(c, x, y, k); banc(c, ...iso(x, y, 0.3, 0), k); }],
+    ] },
+    pompiers: { sol: "paves", cloture: "aucune", objets: [
+      ["D", (c, x, y, k) => vehicule(c, x, y, k, "#c8302a", { long: 1.0, haut: 10, signe: "echelle", bande: "#e8d040" })],
+      ["G", (c, x, y, k) => tuyauxEnroules(c, x, y, k)],
+      ["Dr", (c, x, y, k) => boucheIncendie(c, x, y, k)],
+    ] },
+    police: { sol: "paves", cloture: "fer", objets: [
+      ["D", (c, x, y, k, b, t) => vehicule(c, x, y, k, "#f2f2ee", { long: 0.65, haut: 7, bande: "#2f5aa8", gyro: "#3a8aff" }, t)],
+      ["G", (c, x, y, k) => barrieres(c, x, y, k)],
+      ["Dr", (c, x, y, k) => lampadaire(c, x, y, k)],
     ] },
   };
   const aUneCour = (type, n) => n >= 2 && !!DECORS[type];

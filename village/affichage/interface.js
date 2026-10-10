@@ -57,6 +57,7 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("prosperite-change", (d) => afficher("👥 La ville est " + d.niveau + " " + d.emoji + " (prospérité " + d.prosperite + " %)"));
   Village.Evenements.ecouter("electricite-penurie", (d) => afficher("⚡❌ Pénurie d'électricité : " + d.coupes + " bâtiment(s) coupé(s). Il faut une centrale de plus !")); // étape 34
   Village.Evenements.ecouter("eau-penurie", (d) => afficher("🚰❌ Pénurie d'eau : " + d.coupes + " bâtiment(s) sans eau. Il faut une station de pompage de plus !")); // étape 35
+  Village.Evenements.ecouter("service-manque", (d) => afficher(d.emoji + "❌ Pas assez de places pour " + d.quoi + " : " + d.coupes + " logement(s) sans. Il en faut un(e) de plus !")); // étape 48
   Village.Evenements.ecouter("egouts-penurie", (d) => afficher("🚽❌ Les égouts débordent : " + d.coupes + " bâtiment(s) sans égouts. Il faut une station d'épuration de plus !"));
   Village.Evenements.ecouter("pub-regardee", (d) => { if (d.sorte === "ressource") gagner("📺 Merci !", [[d.quoi, d.quantite]]); else if (d.sorte === "gemmes") gagner("📺 Merci !", [["gemmes", d.quantite]]); });
   Village.Evenements.ecouter("nouvel-age", (d) => gagner(d.emoji + " " + d.nom + " !", [["gemmes", d.gemmes]]));
@@ -352,7 +353,7 @@ Village.Interface = (function () {
     }
     // Les besoins des époques à venir
     yy += 4;
-    if (yy < y + h - 20) texteLong(ctx, "🔒 Bientôt : " + C.population.aVenir.map((a) => a.emoji + " " + a.nom + " (" + a.quand + ")").join(" · "), jx, yy, l - 28, petit ? 9 : 10, "#8a8a84", petit ? 12 : 14);
+    if (yy < y + h - 20) texteLong(ctx, "🔒 Bientôt : " + C.population.aVenir.filter((a) => (monde.age || 0) < a.age).map((a) => a.emoji + " " + a.nom + " (" + a.quand + ")").join(" · "), jx, yy, l - 28, petit ? 9 : 10, "#8a8a84", petit ? 12 : 14);
   }
 
   // 📖 Étape 33 : l'encyclopédie. Chaque bâtiment : ce qu'il fait, et ce dont il a besoin. Elle s'ouvre toute seule au
@@ -366,6 +367,7 @@ Village.Interface = (function () {
     ["🐄 L'élevage", ["puits", "faneur", "etable", "poulailler", "bergerie", "porcherie", "veterinaire"]],
     ["⚒️ Les artisans et la ville", ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite", "monument"]],
     ["🏭 L'industrie", ["centrale", "acierie", "filature", "pompage", "epuration"]], // étape 34 ; étape 35 : l'eau et les égouts
+    ["🌆 Les services publics", ["ecole", "hopital", "pompiers", "police"]], // étape 48
   ];
   function choisirEncy(t) { encyChoix = t; }
   function panneauEncyclopedie(ctx, monde, W, He, petit) {
@@ -419,7 +421,8 @@ Village.Interface = (function () {
     if (R && R.pasEnHiver) besoins.push("❄️ " + R.raisonHiver);
     if (C.ateliers[t] && C.ateliers[t].electrique) besoins.push("⚡ de l'électricité (une route jusqu'à une centrale qui tourne)"); // étape 34
     if (t === "pompage") besoins.push("🌊 de l'eau à " + C.bordDeLEau + " cases au plus (il pompe dans la rivière ou le lac)"); // étape 35
-    if (t === "pompage" || t === "epuration") besoins.push("⚡ de l'électricité (une route jusqu'à une centrale qui tourne)");
+    if (t === "pompage" || t === "epuration" || C.services.liste[t]) besoins.push("⚡ de l'électricité (une route jusqu'à une centrale qui tourne)"); // étape 48 : les services aussi
+    if (C.services.liste[t]) besoins.push("🛣️ des logements reliés par la route : il en sert " + C.services.liste[t].lits + " lits, les plus proches d'abord");
     if (t === "immeuble") besoins.push("⚡ l'électricité, 🚰 l'eau courante et 🚽 les égouts dans la maison bourgeoise, à l'époque industrielle");
     if (C.elevage.troupeaux[t] && C.ateliers[t].entrees.eau) besoins.push("💧 de l'eau du puits… ou 🚰 l'eau courante à l'époque industrielle (alors plus besoin du puits)");
     if (t === "centrale") besoins.push("⚫ du charbon (1 toutes les 15 s), apporté par les porteurs");
@@ -932,6 +935,7 @@ Village.Interface = (function () {
       // Étape 8 : les logements, et les artisans (fonderie, forge, marché, université)
       { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "macon"] }, // étape 12 : le maçon-couvreur ; étape 40 : ✍️ un seul logement (la hutte devient maison toute seule)
       { id: "industrie", emoji: "🏭", nom: "Industrie", batiments: ["centrale", "acierie", "filature", "pompage", "epuration"] }, // étape 34 ; étape 35
+      { id: "services", emoji: "🌆", nom: "Services", batiments: ["ecole", "hopital", "pompiers", "police"] }, // étape 48 : l'époque moderne
       { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite", "monument"] }, // étape 31 : le monument // étape 16 : la laine et les habits
       // Étape 7 : le chemin de terre, et la route en pierre (débloquée par la recherche « Routes pavées »)
       // Étape 19 : ✍️ l'entrepôt secondaire est rangé avec les routes (le transport), dès le hameau
@@ -1191,7 +1195,15 @@ Village.Interface = (function () {
         info(marche ? (b.type === "pompage" ? "🚰 En marche : fournit " : "🚽 En marche : traite ") + C.eau.parStation + " unités" : "⏸️ À l'arrêt", marche ? "#3d8a4a" : "#b8443a");
         info("🔧 Tuyaux : " + (reseau.utilise || 0) + " / " + (reseau.offre || 0) + " unités utilisées · demande " + (reseau.demande || 0) + (reseau.coupes ? " · ⚠️ " + reseau.coupes + " sans " + (b.type === "pompage" ? "eau" : "égouts") : ""), reseau.coupes ? "#b8443a" : null);
       }
-      if (b.type !== "centrale" && b.type !== "pompage" && b.type !== "epuration") {
+      else if (Village.Services.estService(b.type)) { // étape 48
+        const s = C.services.liste[b.type], r = Village.Services.etat(monde, b.type), marche = Village.Services.enMarche(b);
+        if (!b.courant) problemes.push("⚡ Pas d'électricité : " + s.quoi + " est fermé(e). Relie-le par la route à une centrale.");
+        info(marche ? s.emoji + " Ouvert : sert " + s.lits + " lits" : "⏸️ Fermé" + (b.courant ? " (il attend son " + Village.Batiments.TYPES[b.type].metier + ")" : ""), marche ? "#3d8a4a" : "#b8443a");
+        info("🛏️ " + s.pluriel + " : " + (r.utilise || 0) + " / " + (r.offre || 0) + " places utilisées · " + (r.demande || 0) + " lits" + (r.coupes ? " · ⚠️ " + r.coupes + " logement(s) sans" : ""), r.coupes ? "#b8443a" : null);
+      }
+      // Étape 48 : un logement : quels services l'ont ?
+      if (Village.Services.active(monde) && C.logement[b.type] && b.type !== "entrepot") info(Village.Services.TYPES.map((ty) => C.services.liste[ty].emoji + (b[C.services.liste[ty].champ] ? "✅" : "❌")).join("  "), Village.Services.TYPES.every((ty) => b[C.services.liste[ty].champ]) ? "#3d8a4a" : "#b8443a");
+      if (b.type !== "centrale" && b.type !== "pompage" && b.type !== "epuration" && !Village.Services.estService(b.type)) {
         const e = Village.Electricite.consoEau(b), g = Village.Electricite.consoEgout(b);
         if (e || g) info((e ? (b.eau ? "🚰 Eau courante ✅" : "🚰 Pas d'eau courante") : "") + (e && g ? " · " : "") + (g ? (b.egout ? "🚽 Égouts ✅" : "🚽 Pas d'égouts") : "") + (b.eau && C.ateliers[b.type] && C.ateliers[b.type].entrees.eau ? " : plus besoin du puits !" : ""), (e && !b.eau) || (g && !b.egout) ? "#b8443a" : "#3d8a4a");
       }
@@ -1283,6 +1295,9 @@ Village.Interface = (function () {
       titre("🩺 Il soigne les troupeaux malades");
       info(monde.batiments.filter((x) => x.malade).length + " troupeau(x) malade(s) au village");
       if (o && o.tournee) info("🧭 En tournée : soin n° " + o.tournee + ", partout sur la carte"); // étape 27
+    } else if (Village.Services.estService(b.type)) { // étape 48
+      titre({ ecole: "🏫 L'instituteur fait la classe aux enfants", hopital: "🏥 Le médecin soigne les habitants", pompiers: "🚒 Les pompiers veillent contre le feu", police: "🚓 Le policier veille sur la ville" }[b.type]);
+      if (o) info("Le " + type.metier + " " + (b.courant ? "est au travail" : "attend l'électricité"), "#7a5a30");
     } else if (b.type === "pompage" || b.type === "epuration") { // étape 35
       titre(b.type === "pompage" ? "🚰 Il pompe l'eau et l'envoie dans les tuyaux" : "🚽 Il nettoie les eaux usées des égouts");
       if (o) info("Le " + type.metier + " " + (b.courant ? "surveille les machines" : "attend l'électricité"), "#7a5a30");

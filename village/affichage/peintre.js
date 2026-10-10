@@ -356,7 +356,7 @@ Village.Peintre = (function () {
   //   1. on « multiplie » toute l'image par un bleu foncé (comme poser une vitre teintée devant l'écran) ;
   //   2. puis on « ajoute » de la lumière là où il y en a : fenêtres, lanternes, feu de camp, lucioles.
   //      Chaque lumière est un HALO (un rond qui s'efface sur les bords), dessiné une seule fois puis réutilisé.
-  const TEINTES = { jaune: [255, 210, 110], orange: [255, 165, 70], feu: [255, 135, 40], luciole: [200, 255, 120] };
+  const TEINTES = { jaune: [255, 210, 110], orange: [255, 165, 70], feu: [255, 135, 40], luciole: [200, 255, 120], bleu: [90, 150, 255] }; // étape 48 : le gyrophare
   const halos = {};
   function halo(nom) {
     if (halos[nom]) return halos[nom];

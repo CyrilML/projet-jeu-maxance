@@ -82,7 +82,7 @@ Village.Electricite = (function () {
     let utilise = 0, alimentes = 0, coupes = 0;
     for (const [, besoin, b] of clients) { if (utilise + besoin <= offre) { utilise += besoin; b[champ] = true; alimentes++; } else coupes++; }
     const demande = clients.reduce((s, c) => s + c[1], 0), penurie = coupes > 0;
-    if (penurie !== etat.penurie && evenements) radio.emettre(penurie ? evenements[0] : evenements[1], { offre, demande, coupes, sources: sources.length, centrales: sources.length });
+    if (penurie !== etat.penurie && evenements) radio.emettre(penurie ? evenements[0] : evenements[1], Object.assign({ offre, demande, coupes, sources: sources.length, centrales: sources.length }, evenements[2] || {})); // étape 48 : evenements[2], des détails en plus
     Object.assign(etat, { offre, demande, utilise, alimentes, coupes, horsReseau, penurie, routes: new Set(dist.keys()) });
     return etat;
   }
@@ -102,11 +102,13 @@ Village.Electricite = (function () {
   }
 
   // La part des lits qui ont l'électricité (ou l'eau, ou les égouts) : pour les besoins des habitants
+  // Étape 48 : champ peut être une liste (["courant", "eau", "egout"] : les lits qui ont les 3 à la fois)
   function partLogements(monde, champ) {
     let lits = 0, avec = 0;
-    for (const b of monde.batiments) if (C.logement[b.type] && b.type !== "entrepot" && b.etat === "pret") { lits += C.logement[b.type]; if (b[champ || "courant"]) avec += C.logement[b.type]; }
+    const champs = Array.isArray(champ) ? champ : [champ || "courant"];
+    for (const b of monde.batiments) if (C.logement[b.type] && b.type !== "entrepot" && b.etat === "pret") { lits += C.logement[b.type]; if (champs.every((ch) => b[ch])) avec += C.logement[b.type]; }
     return lits ? avec / lits : 1;
   }
 
-  return { active, consommation, consoEau, consoEgout, calculer, etape, partLogements, centraleEnMarche, stationEnMarche };
+  return { active, distribuer, consommation, consoEau, consoEgout, calculer, etape, partLogements, centraleEnMarche, stationEnMarche };
 })();
