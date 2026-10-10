@@ -76,12 +76,14 @@
 //  21 (étape 38) : les grands gisements visibles dès le début (gisements : 1). Une partie plus ancienne garde ses mines :
 //                  au chargement, une mine qui n'a plus de filon autour d'elle reçoit une veine sous elle (comme si le
 //                  géologue était passé), pour qu'elle continue de creuser.
+//  22 (étape 39) : les gisements de pierre (gisements : 2). Une partie plus ancienne : ses carrières loin d'un gisement
+//                  reçoivent une veine de pierre sous elles.
 
 window.Village = window.Village || {};
 
 Village.Sauvegarde = (function () {
   const CLE = "village-maxance:sauvegarde";
-  const VERSION = 21;
+  const VERSION = 22;
   const radio = Village.Evenements;
 
   function vide() {
@@ -262,7 +264,7 @@ Village.Sauvegarde = (function () {
       commandes: { liste: monde.commandes.liste.map((c) => Object.assign({}, c, { reste: Math.round(c.reste) })), attente: Math.round(monde.commandes.attente), livrees: monde.commandes.livrees }, // étape 30
       guide: monde.guide,
       filonsVus: monde.carte.revele.reduce((liste, v, i) => (v ? (liste.push(i), liste) : liste), []), // étape 28
-      gisements: 1, // étape 38
+      gisements: 2, // étape 38 ; étape 39 : 2 = avec les gisements de pierre
     };
     ecrire(raison);
   }

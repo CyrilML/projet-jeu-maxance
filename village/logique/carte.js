@@ -27,8 +27,8 @@ Village.Carte = (function () {
   const NOMS_OBJETS = ["rien", "arbre (feuillu)", "sapin", "rocher", "montagne", "fleurs", "buisson", "feu de camp", "tente du chef", "jeune pousse"];
 
   // Les filons cachés dans les montagnes (pour les futures mines).
-  const FILON = { aucun: 0, charbon: 1, fer: 2, or: 3 };
-  const NOMS_FILONS = ["aucun", "charbon", "fer", "or"];
+  const FILON = { aucun: 0, charbon: 1, fer: 2, or: 3, pierres: 4 }; // étape 39 : les gisements de pierre (pour les carrières)
+  const NOMS_FILONS = ["aucun", "charbon", "fer", "or", "pierres"];
 
   // Étape 24 : la taille peut être donnée (une partie commencée avant garde sa carte de 64 × 64)
   function inventer(graine, taille) {
@@ -197,7 +197,7 @@ Village.Carte = (function () {
         for (let essai = 0; essai < 600; essai++) {
           const a = de.entre(0, Math.PI * 2), d = de.entre(dmin, dmax), c = Math.round(v.colonne + Math.cos(a) * d), l = Math.round(v.ligne + Math.sin(a) * d);
           if (c < 4 || l < 4 || c >= col - 4 || l >= lig - 4) continue;
-          if (poses.some((p) => Math.hypot(p.c - c, p.l - l) < Gi.ecart)) continue;
+          if (poses.some((p) => Math.hypot(p.c - c, p.l - l) < (g.ecart || Gi.ecart) * (essai > 400 ? 0.5 : 1))) continue; // (étape 39 : chaque minerai peut avoir son écart ; on se fait moins exigeant si on ne trouve pas)
           // assez de terre ferme dessous ?
           let terre = 0, total = 0;
           for (let dl = -3; dl <= 3; dl++) for (let dc = -3; dc <= 3; dc++) { if (Math.hypot(dc, dl) > g.rayon) continue; total++; if (carte.terrain[(l + dl) * col + c + dc] > TERRAIN.eau && !dansLaPlace(c + dc, l + dl)) terre++; }
@@ -230,7 +230,7 @@ Village.Carte = (function () {
 
   // Combien de cases de chaque sorte ? (affiché sous le capot et annoncé à la radio)
   function compter(carte) {
-    const k = { eau: 0, terre: 0, arbres: 0, rochers: 0, montagnes: 0, charbon: 0, fer: 0, or: 0, vus: 0 };
+    const k = { eau: 0, terre: 0, arbres: 0, rochers: 0, montagnes: 0, charbon: 0, fer: 0, or: 0, pierres: 0, vus: 0 };
     for (let i = 0; i < carte.terrain.length; i++) {
       if (carte.terrain[i] <= TERRAIN.eau) k.eau++; else k.terre++;
       const o = carte.objet[i];

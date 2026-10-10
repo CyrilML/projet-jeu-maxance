@@ -56,6 +56,7 @@ Village.SousLeCapot = (function () {
     "batiment-coupe": (d) => "✂️ " + d.nom + " n° " + d.numero + " n'est plus relié(e) à l'entrepôt",
     "ouvrier-bloque": (d) => "🛤️❌ " + d.nom + " n° " + d.numero + " : pas de route jusqu'à l'entrepôt, l'ouvrier ne travaille pas",
     "livraison-demandee": (d) => "📋 Papier n° " + d.numero + " dans la file : " + (d.sorte === "ramener" ? "ramener " + emo(d.quoi) + " de " : "apporter " + emo(d.quoi) + " à ") + d.nom + " n° " + d.batiment + " (" + d.file + " dans la file)",
+    "livraison-directe": (d) => "🎯 Livraison directe : le porteur " + d.porteur + " ramasse " + emo(d.quoi) + " chez " + d.de + " et va tout droit à " + d.vers + " n° " + d.batiment + " (" + d.nombre + " · " + d.pas + " pas) sans repasser par l'entrepôt · " + d.total + " en tout", // étape 39
     "porteur-part": (d) => "🚚 Porteur " + d.porteur + " prend " + (d.nombre > 1 ? d.nombre + " papiers d'un coup (🫏 la charrette)" : "le papier") + " : " + (d.sorte === "ramener" ? "va chercher " + emo(d.quoi) + " chez " : "apporte " + emo(d.quoi) + " à ") + d.nom + " n° " + d.batiment + " (" + d.pas + " pas de route) · encore " + d.file + " dans la file",
     "porteur-livre": (d) => "🤲 Porteur " + d.porteur + " a livré " + emo(d.quoi) + " à " + d.nom + " n° " + d.batiment,
     "arrivee-entrepot": (d) => "🏠 Porteur " + d.porteur + " range " + (d.quantite > 1 ? d.quantite + " " + d.quoi : emo(d.quoi)) + " dans l'entrepôt → " + d.stock + " en stock",
@@ -369,10 +370,11 @@ Village.SousLeCapot = (function () {
     }
     h += groupe("🚚 Les porteurs et la file d'attente");
     h += ligne("cases de route · reliées à l'entrepôt", Village.Routes.compter(monde) + " · " + monde.reseau.size);
+    h += ligne("🎯 livraisons directes (sans repasser par l'entrepôt)", monde.livraisonsDirectes || 0); // étape 39
     for (const p of monde.porteurs) {
       const t = p.travail;
       if (p.parti) { h += ligne("porteur " + p.numero, "😢 parti (trop faim)"); continue; }
-      h += ligne("porteur " + p.numero + " · faim " + Math.floor(p.faim || 0) + " s" + (p.affame ? " 🍽️" : ""), p.etat === "attend" ? (p.affame ? "a trop faim pour travailler" : "attend à l'entrepôt") : (p.etat === "aller" ? "va " : "revient ") + (t.sorte === "ramener" ? "(ramener " : "(apporter ") + t.quoi + ")" + (p.porte ? " · porte des " + p.porte : ""));
+      h += ligne("porteur " + p.numero + " · faim " + Math.floor(p.faim || 0) + " s" + (p.affame ? " 🍽️" : ""), p.etat === "attend" ? (p.affame ? "a trop faim pour travailler" : "attend à l'entrepôt") : (p.etat === "direct" ? "🎯 livraison directe → " + Village.Batiments.TYPES[p.direct.cible.type].court + " (" + p.direct.n + " " + p.porte + ")" : (p.etat === "aller" ? "va " : "revient ") + (t.sorte === "ramener" ? "(ramener " : "(apporter ") + t.quoi + ")" + (p.porte ? " · porte des " + p.porte : "")));
     }
     h += ligne("papiers dans la file", monde.file.length);
     monde.file.slice(0, 5).forEach((t, n) => {

@@ -109,7 +109,8 @@ Village.Monde = (function () {
       Village.Carte.compter(k);
     }
     // Étape 38 : une partie d'avant les grands gisements : ses mines sans filon autour reçoivent une veine sous elles
-    if (partie && !partie.gisements) for (const b of monde.batiments) if (C.mines[b.type] && b.etat === "pret" && !Village.Batiments.filonsVoisins(carte, b.colonne, b.ligne, Village.Carte.FILON[C.mines[b.type].filon]).length) Village.Ouvriers.recharger(monde, b, "la conversion de la sauvegarde");
+    // (étape 39 : pareil pour les carrières, qui creusent maintenant des gisements de pierre)
+    if (partie && (partie.gisements || 0) < 2) for (const b of monde.batiments) if (C.mines[b.type] && b.etat === "pret" && !Village.Batiments.filonsVoisins(carte, b.colonne, b.ligne, Village.Carte.FILON[C.mines[b.type].filon]).length) Village.Ouvriers.recharger(monde, b, "la conversion de la sauvegarde");
     if (partie) Village.Batiments.ranger(monde); // étape 23 : de la place pour les champs et les enclos
     if (partie && Village.Recherches.a(monde, "routePierre")) Village.Routes.paver(monde, true); // étape 17 : une partie qui avait déjà « Routes pavées »
     Village.Routes.recalculerReseau(monde);

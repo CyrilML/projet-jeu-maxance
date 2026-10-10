@@ -1198,6 +1198,15 @@ Village.Interface = (function () {
       if (monde.file.length > 40) pb("⚠️ Il manque des porteurs : " + (Village.Ages.debloque(monde, "depot") && nDepots < C.depot.max ? "construis un 🏬 entrepôt de plus (tu en as " + nDepots + " / " + C.depot.max + ")" : "agrandis l'entrepôt") + ", et des huttes pour les loger.");
       if (Village.Ameliorations.placesEnPlus(monde, b)) info("➕ " + Village.Ameliorations.placesEnPlus(monde, b) + " place(s) en plus : 1 pour " + C.depot.parBatiments + " bâtiments livrés");
       info("📦 Réserve : " + Re.capacite(monde) + " places" + (mn === Infinity ? "" : " · pleine en ≈ " + (mn >= 60 ? Math.floor(mn / 60) + " h " + String(Math.round(mn % 60)).padStart(2, "0") : Math.round(mn) + " min") + " si tu pars"));
+      // Étape 39 : ✍️ « dans l'entrepôt, on distingue mal ce qu'on va améliorer ». Les 3 améliorations, chacune avec ce
+      // qu'elle donne MAINTENANT → APRÈS, dans le même ordre que les boutons en dessous.
+      const Am2 = Village.Ameliorations, ecurie = Am2.suivante(b), niv = Am2.niveau(monde), capApres = Math.round(C.reserve.capacite * Math.pow(C.reserve.facteurCapacite, Re.niveau(monde)));
+      titre("⬆️ Ce que tu peux améliorer");
+      info("1️⃣ 📦 Le silo (réserve) : " + Re.capacite(monde) + " → " + capApres + " places · pour que le village continue quand tu n'es pas là", "#7a4a10");
+      if (niv < C.entrepot.niveauMax) info("2️⃣ 🏗️ Agrandir l'entrepôt (niveau " + niv + " → " + (niv + 1) + " sur " + C.entrepot.niveauMax + ") : " + Am2.placesPrincipal(monde) + " → " + (Am2.placesPrincipal(monde) + C.entrepot.parNiveau) + " porteurs", "#7a4a10");
+      else info("2️⃣ 🏗️ L'entrepôt est au plus grand (niveau " + niv + ")", "#2e8a3a");
+      if (ecurie) info("3️⃣ " + ecurie.emoji + " " + ecurie.nom + " : les porteurs vont " + Math.round((ecurie.effet.porteurs - 1) * 100) + " % plus vite" + ((monde.age || 0) < ecurie.age ? " (🔒 " + C.ages[ecurie.age].nom.toLowerCase() + ")" : ""), "#5a3a80");
+      else if (Am2.liste(b).length) info("3️⃣ 🐴 L'écurie est construite : porteurs plus rapides ✅", "#2e8a3a");
       boutonsReserve = true;
     } else if (b.type === "monument") {
       // Étape 31 : le palier en cours, et une barre par ressource demandée
@@ -1266,12 +1275,11 @@ Village.Interface = (function () {
     if (pret && b.sortieQuoi && b.sortie > 0 && b.sortie < C.sortieMax) info("Devant la porte : " + b.sortie + " / " + C.sortieMax, "#7a5a30");
     // ---- 3. Le niveau et les améliorations
     const Am = Village.Ameliorations, prochaine = pret ? Am.suivante(b) : null, faites = b.ameliorations || 0, total = Am.liste(b).length;
-    if (total && pret) {
+    if (total && pret && b.type !== "entrepot") { // (étape 39 : l'entrepôt a sa propre liste, plus claire)
       titre("⭐ Niveau " + (faites + 1) + " / " + (total + 1) + "  " + "★".repeat(faites) + "☆".repeat(total - faites));
       if (prochaine) { const e = prochaine.effet, gain = typeof e === "number" ? "−" + Math.round((1 - e) * 100) + " % de temps" : "porteurs +" + Math.round((e.porteurs - 1) * 100) + " %"; info("Prochaine : " + prochaine.emoji + " " + prochaine.nom + " (" + gain + ")"); }
       else info("Toutes les améliorations sont faites !", "#2e8a3a");
     }
-    if (b.type === "entrepot" && pret) titre("🏗️ Niveau " + Am.niveau(monde) + " / " + C.entrepot.niveauMax + " (+" + C.entrepot.parNiveau + " porteurs par niveau)");
     // Une ligne de texte trop longue passe à la ligne (elle ne dépasse plus du cadre)
     const taille = petit ? 11 : 13, interligne = petit ? 17 : 19;
     const finales = [];
@@ -1315,14 +1323,14 @@ Village.Interface = (function () {
     rangees.forEach((sorte, n) => {
       const by = y + h - hb + n * 40;
       if (sorte === "monument") bouton(ctx, x + 10, by, l - 20, 32, "🏛️ Donner ce que j'ai", "monument", b.numero, true, "#d98a1f"); // étape 31
-      if (sorte === "agrandir") { const p = Am.prixAgrandir(monde); bouton(ctx, x + 10, by, l - 20, 32, { avant: "🏗️ Agrandir ·", cout: Object.assign({}, p.ressources, p.pieces ? { pieces: p.pieces } : {}) }, "agrandirEntrepot", true, !Am.raisonAgrandir(monde), "#d98a1f"); }
-      if (sorte === "ameliorer") { const bloque = (monde.age || 0) < prochaine.age; bouton(ctx, x + 10, by, l - 20, 32, bloque ? "🔒 " + C.ages[prochaine.age].emoji + " " + C.ages[prochaine.age].nom : { avant: "⬆️ " + prochaine.nom + " ·", cout: prochaine.cout }, "ameliorer", b.numero, !Am.raison(monde, b), "#8a5ab0"); }
+      if (sorte === "agrandir") { const p = Am.prixAgrandir(monde); bouton(ctx, x + 10, by, l - 20, 32, { avant: "2️⃣ 🏗️ +" + C.entrepot.parNiveau + " porteurs ·", cout: Object.assign({}, p.ressources, p.pieces ? { pieces: p.pieces } : {}) }, "agrandirEntrepot", true, !Am.raisonAgrandir(monde), "#d98a1f"); }
+      if (sorte === "ameliorer") { const bloque = (monde.age || 0) < prochaine.age; bouton(ctx, x + 10, by, l - 20, 32, bloque ? "🔒 " + C.ages[prochaine.age].emoji + " " + C.ages[prochaine.age].nom : { avant: (b.type === "entrepot" ? "3️⃣ " + prochaine.emoji + " " : "⬆️ ") + prochaine.nom + " ·", cout: prochaine.cout }, "ameliorer", b.numero, !Am.raison(monde, b), "#8a5ab0"); }
     });
     if (boutonsReserve) {
       // Étape 11 : agrandir la réserve, avec des ressources (très cher) ou des 💎
       const Re = Village.Reserve, p = Re.prix(monde), by = y + h - hb, lb2 = (l - 30) / 2;
-      bouton(ctx, x + 10, by, lb2 + 14, 32, { avant: "📦", cout: Object.assign({}, p.ressources, p.pieces ? { pieces: p.pieces } : {}) }, "reserve", "ressources", !Re.raison(monde, "ressources"), "#d98a1f");
-      bouton(ctx, x + 30 + lb2, by, lb2 - 10, 32, "📦 " + p.gemmes + " 💎", "reserve", "gemmes", !Re.raison(monde, "gemmes"), "#3e7bff");
+      bouton(ctx, x + 10, by, lb2 + 14, 32, { avant: "1️⃣ 📦", cout: Object.assign({}, p.ressources, p.pieces ? { pieces: p.pieces } : {}) }, "reserve", "ressources", !Re.raison(monde, "ressources"), "#d98a1f");
+      bouton(ctx, x + 30 + lb2, by, lb2 - 10, 32, "1️⃣ 📦 " + p.gemmes + " 💎", "reserve", "gemmes", !Re.raison(monde, "gemmes"), "#3e7bff");
       boutonsReserve = false;
     }
     // Le ✖ pour fermer

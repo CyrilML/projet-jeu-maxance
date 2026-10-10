@@ -21,6 +21,12 @@
 // et y revient. Chaque livraison est faite par les porteurs de l'entrepôt le plus proche du bâtiment
 // (b.entrepotProche, calculé avec les routes). Si personne n'y est libre depuis 15 s, un autre vient aider.
 //
+// Étape 39 : ✍️ « est-il possible que le porteur ne retourne pas à l'entrepôt : s'il porte du bois et que la scierie est en
+// demande de bois, il va direct à la scierie ? ». Oui : la LIVRAISON DIRECTE. Quand un porteur ramasse quelque chose devant
+// un bâtiment, il regarde dans la file s'il y a un papier « apporter » de la même chose pour un atelier ou un chantier
+// (choix de Maxance) relié par la route. Si oui, il prend ces papiers et y va tout droit ; ce qui reste dans ses bras
+// (s'il en a plus) rentre ensuite à l'entrepôt avec lui. Moins de pas, et l'atelier est servi plus vite !
+//
 // Un mot important : RÉSERVÉ. Quand on pose un chantier, ses planches restent dans l'entrepôt,
 // mais elles lui sont promises : on ne peut plus les utiliser pour autre chose.
 //   disponible = dans l'entrepôt − déjà promis
@@ -113,6 +119,49 @@ Village.Porteurs = (function () {
     papier.depuis = monde.temps; // étape 17 : depuis quand il attend
     monde.file.push(papier);
     radio.emettre("livraison-demandee", { numero: papier.numero, sorte: papier.sorte, quoi: papier.quoi, nom: Village.Batiments.TYPES[papier.batiment.type].nom, batiment: papier.batiment.numero, file: monde.file.length });
+  }
+
+  // Étape 39 : la livraison directe. p vient de ramasser chez b : y a-t-il un atelier ou un chantier qui attend ça ?
+  // Renvoie true s'il part tout droit (les papiers sont pris dans la file).
+  function livraisonDirecte(monde, p, b) {
+    const quoi = p.porte, aPorter = p.quantite || 1;
+    if (!quoi) return false;
+    const papiers = (c) => monde.file.filter((t) => t.sorte === "apporter" && t.quoi === quoi && t.batiment === c).length;
+    // Combien ce bâtiment peut-il prendre ? Un atelier : jusqu'à sa réserve pleine (même si l'entrepôt est vide et
+    // qu'aucun papier n'est écrit) ; un chantier : ce qu'il attend encore dans la file.
+    const besoin = (c) => {
+      if (c === b || !c.relie) return 0;
+      if (c.etat === "chantier") return papiers(c);
+      if (c.etat !== "pret" || !C.ateliers[c.type] || !(quoi in Village.Batiments.entreesDe(monde, c))) return 0;
+      return Math.max(0, C.entreeMax - (c.entrees[quoi] || 0) - (c.enRoute[quoi] || 0));
+    };
+    let meilleur = null;
+    for (const c of monde.batiments) {
+      const n = besoin(c);
+      if (!n) continue;
+      const d = Math.abs(c.colonne - b.colonne) + Math.abs(c.ligne - b.ligne);
+      if (!meilleur || d < meilleur.d) meilleur = { c, d, n };
+    }
+    if (!meilleur) return false;
+    const cible = meilleur.c, chemin = cheminVers(monde, cible, b);
+    if (!chemin) return false;
+    const n = Math.min(aPorter, meilleur.n);
+    // On prend ses papiers dans la file (s'il y en a), pour que personne d'autre n'apporte la même chose
+    let pris = 0;
+    for (let k = 0; k < monde.file.length && pris < n; k++) {
+      const t = monde.file[k];
+      if (t.sorte !== "apporter" || t.quoi !== quoi || t.batiment !== cible) continue;
+      monde.file.splice(k--, 1);
+      pris++;
+    }
+    cible.enFile[quoi] = Math.max(0, (cible.enFile[quoi] || 0) - pris);
+    if (cible.etat === "chantier") cible.attendu[quoi] = Math.max(0, (cible.attendu[quoi] || 0) - n);
+    else cible.enRoute[quoi] = (cible.enRoute[quoi] || 0) + n;
+    p.direct = { cible, n, depuis: b };
+    p.chemin = chemin; p.pas = 1; p.etat = "direct";
+    monde.livraisonsDirectes = (monde.livraisonsDirectes || 0) + 1;
+    radio.emettre("livraison-directe", { porteur: p.numero, quoi, nombre: n, de: Village.Batiments.TYPES[b.type].nom, vers: Village.Batiments.TYPES[cible.type].nom, batiment: cible.numero, pas: chemin.length - 1, total: monde.livraisonsDirectes });
+    return true;
   }
 
   // Le chemin d'un porteur : de son entrepôt au bâtiment, seulement sur les routes.
@@ -211,6 +260,24 @@ Village.Porteurs = (function () {
 
       if (!marcher(p, dt, monde)) continue;
       const papier = p.travail, b = papier.batiment;
+      if (p.etat === "direct") {
+        // Étape 39 : arrivé à l'atelier ou au chantier, en direct
+        const { cible, n } = p.direct;
+        if (existe(monde, cible)) {
+          // Pour les statistiques, c'est comme s'il était passé par l'entrepôt : produit (+n), puis utilisé (−n)
+          monde.stock[p.porte] += n;
+          if (cible.etat === "chantier") { Village.Statistiques.horsCompte(monde, () => { monde.stock[p.porte] -= n; }); cible.livre[p.porte] = (cible.livre[p.porte] || 0) + n; }
+          else { monde.stock[p.porte] -= n; cible.entrees[p.porte] = (cible.entrees[p.porte] || 0) + n; cible.enRoute[p.porte] = Math.max(0, (cible.enRoute[p.porte] || 0) - n); }
+          radio.emettre("porteur-livre", { porteur: p.numero, quoi: p.porte, nombre: n, nom: Village.Batiments.TYPES[cible.type].nom, batiment: cible.numero });
+          p.quantite = (p.quantite || 1) - n;
+        }
+        if (!(p.quantite > 0)) { p.porte = null; p.quantite = 1; }
+        const maison = maisonDe(monde, p), retour = maison && cheminVers(monde, cible, maison);
+        p.direct = null;
+        if (retour) { p.chemin = retour.reverse(); p.pas = 1; p.etat = "revenir"; }
+        else { p.chemin = [{ x: p.x, y: p.y }]; p.pas = 1; p.etat = "revenir"; } // (plus de route : il rentre d'un coup)
+        continue;
+      }
       if (p.etat === "aller") {
         // Arrivé au bâtiment
         if (papier.sorte === "apporter") {
@@ -232,6 +299,7 @@ Village.Porteurs = (function () {
             pris++;
           }
           if (pris) { p.porte = papier.quoi; p.quantite = q; p.nombre = pris; }
+          if (pris && livraisonDirecte(monde, p, b)) continue; // étape 39 : tout droit à l'atelier qui en a besoin
         }
         p.chemin = p.chemin.slice().reverse();
         p.pas = 1;
@@ -261,8 +329,9 @@ Village.Porteurs = (function () {
     for (const p of monde.porteurs) {
       if (!p.porte) continue;
       retour.stock[p.porte] = (retour.stock[p.porte] || 0) + (p.travail.sorte === "ramener" ? (p.quantite || 1) : (p.nombre || 1));
-      const b = p.travail.batiment;
-      if (p.travail.sorte === "apporter" && p.etat === "aller" && b.etat === "chantier") {
+      const b = p.direct ? p.direct.cible : p.travail.batiment;
+      if (p.direct && b.etat === "chantier") { const a = retour.attendu.get(b) || {}; a[p.porte] = (a[p.porte] || 0) + p.direct.n; retour.attendu.set(b, a); } // étape 39
+      else if (p.travail.sorte === "apporter" && p.etat === "aller" && b.etat === "chantier") {
         const a = retour.attendu.get(b) || {};
         a[p.porte] = (a[p.porte] || 0) + (p.nombre || 1);
         retour.attendu.set(b, a);

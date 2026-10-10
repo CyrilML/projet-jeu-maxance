@@ -162,7 +162,7 @@ Village.Batiments = (function () {
     // Étape 7 : la mine se construit collée à une montagne qui a un filon (de charbon, ou de fer à l'étape 8).
     const mine = C.mines[type];
     // Étape 28 : sur un filon DÉCOUVERT (des paillettes), ou à 3 cases au plus de son bloc
-    if (mine && !rangement && !filonsVoisins(carte, c, l, Village.Carte.FILON[mine.filon], C.rayonPoseMine + tailleVoulue(type) - 1).length) return "il faut un filon de " + C.ressources[mine.filon].nom.replace("minerai de ", "") + " " + C.ressources[mine.filon].emoji + " découvert par le géologue (des paillettes), sous la mine ou à " + C.rayonPoseMine + " cases"; // étape 21 : plus loin
+    if (mine && !rangement && !filonsVoisins(carte, c, l, Village.Carte.FILON[mine.filon], C.rayonPoseMine + tailleVoulue(type) - 1).length) return "il faut un gisement de " + C.ressources[mine.filon].nom.replace("minerai de ", "") + " " + C.ressources[mine.filon].emoji + " (des paillettes), sous " + (type === "carriere" ? "la carrière" : "la mine") + " ou à " + C.rayonPoseMine + " cases"; // étape 38 : les gisements sont visibles dès le début // étape 21 : plus loin
     return null;
   }
 

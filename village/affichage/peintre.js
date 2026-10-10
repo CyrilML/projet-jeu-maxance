@@ -50,7 +50,7 @@ Village.Peintre = (function () {
   // Les « familles » de terrain : on trace un trait foncé entre deux familles différentes (effet dessin animé).
   const FAMILLE = [0, 0, 1, 2, 2, 2, 3, 4];
   const FLEURS = ["#ff6fa8", "#fff36b", "#ffffff", "#c48bff", "#ff9a3c"];
-  const FILONS = { 1: ["#2b2b30", "#6a6a75"], 2: ["#c4622f", "#f0a070"], 3: ["#ffcf2e", "#fff6b0"] };
+  const FILONS = { 1: ["#2b2b30", "#6a6a75"], 2: ["#c4622f", "#f0a070"], 3: ["#ffcf2e", "#fff6b0"], 4: ["#9a958a", "#f2eee4"] }; // étape 39 : 4 = la pierre
 
   function initialiser(toile) {
     ctx = toile.getContext("2d");

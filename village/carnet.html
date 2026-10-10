@@ -162,6 +162,7 @@
       <a href="#etape36">Étape 36</a>
       <a href="#etape37">Étape 37</a>
       <a href="#etape38">Étape 38</a>
+      <a href="#etape39">Étape 39</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2229,6 +2230,55 @@ on garde la place qui a le plus de points</pre>
       <details class="question"><summary>Avec « Prospection », combien de minerai donne une nouvelle veine ?</summary><p>120 morceaux au lieu de 60.</p></details>
     </section>
 
+    <section id="etape39">
+      <h2>🎯 Étape 39 : livraison directe, entrepôt clair, carrières sur gisement <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les porteurs vont tout droit à l'atelier qui attend ce qu'ils portent ; le panneau de l'entrepôt explique ses 3 améliorations ; et la pierre se trouve dans des gisements, comme les minerais. <a href="index.html"><strong>▶ le village</strong></a></p>
+
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/37-entrepot-livraison-carrieres.md</code>.</p>
+          <ul>
+            <li>✍️ « Dans l'entrepôt, on distingue mal ce qu'on va améliorer. »</li>
+            <li>✍️ « S'il porte du bois et que la scierie est en demande de bois, il va direct à la scierie ? »</li>
+            <li>✍️ « Que les carrières de pierre soient comme les filons, et que le géologue trouve de nouvelles veines. »</li>
+            <li>Tes choix : 10 gisements de pierre (les rochers restent un décor) ; la livraison directe vers les ateliers et les chantiers.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Touche l'entrepôt : « ⬆️ Ce que tu peux améliorer » 1️⃣ 2️⃣ 3️⃣, avec maintenant → après, et les mêmes numéros sur les boutons.</li>
+            <li>☐ Un bûcheron et une scierie reliés : le porteur va direct à la scierie (journal : « 🎯 Livraison directe »).</li>
+            <li>☐ Des gisements de pierre gris clair près du village ; la carrière se pose dessus.</li>
+            <li>☐ Une carrière épuisée : le géologue y trouve une nouvelle veine.</li>
+            <li>Vérifie « version 40 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🎯 Le raccourci du porteur</h3>
+      <pre style="white-space: pre-wrap">AVANT : bûcheron → entrepôt → scierie   (2 voyages)
+APRÈS : bûcheron → scierie → entrepôt   (la scierie est servie tout de suite)
+
+le porteur ramasse 3 troncs ; la scierie a de la place pour 2 :
+   2 troncs → scierie, et le 3e rentre avec lui à l'entrepôt</pre>
+      <p>C'est une <strong>optimisation</strong> : on obtient le même résultat avec moins de travail. Le jeu calcule « qui a besoin de ce que je porte, le plus près de moi ? ». Et pour que les statistiques restent justes, il compte comme si les troncs étaient passés par l'entrepôt.</p>
+      <h3>⛏️ La carrière devient une mine</h3>
+      <p>Dans <code>config.js</code>, la carrière a rejoint la liste des <code>mines</code> : <code>carriere: { filon: "pierres" }</code>. Une seule ligne, et elle se comporte comme les mines de charbon, de fer et d'or (poser sur un gisement, creuser, être rechargée par le géologue). C'est la force des règles rangées comme des données !</p>
+
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+        <li>Ouvre « sous le capot » : combien de livraisons directes depuis le début ?</li>
+        <li>Suis un porteur qui part de chez le bûcheron : va-t-il à l'entrepôt ou à la scierie ? Pourquoi ?</li>
+        <li>Regarde la mini-carte : trouves-tu les 10 gisements de pierre ?</li>
+      </ul>
+
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un porteur ramasse 3 troncs ; la scierie en a déjà 1 et peut en garder 2. Combien en livre-t-il ?</summary><p>1 seulement (2 − 1). Les 2 autres rentrent à l'entrepôt avec lui.</p></details>
+      <details class="question"><summary>Pourquoi a-t-il suffi d'une ligne pour que la carrière marche comme une mine ?</summary><p>Parce que les mines sont décrites comme des données : le code des mines lit la liste et marche pour chaque bâtiment qui y est.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2462,8 +2512,14 @@ on garde la place qui a le plus de points</pre>
           <p>Plus de débordement sur les routes, de grands gisements visibles, le géologue qui recharge les mines, l'aimant, la grille et les lignes guides.</p>
           <p class="apprend"><b>Tu apprends :</b> un masque de dessin, noter des possibilités pour choisir la meilleure. <b>Durée :</b> 2 séances.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">39</div>
+          <h4>🎯 Livraison directe, entrepôt clair, carrières sur gisement <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Les porteurs vont tout droit aux ateliers et chantiers ; l'entrepôt explique ses 3 améliorations ; 10 gisements de pierre.</p>
+          <p class="apprend"><b>Tu apprends :</b> une optimisation, une règle ajoutée en une ligne de données. <b>Durée :</b> 2 séances.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">39-41</div>
+          <div class="num">40-42</div>
           <h4>🚗🚓🛍️ Les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Routes goudronnées, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -2784,6 +2840,14 @@ on garde la place qui a le plus de points</pre>
         <textarea class="journal" id="village-appris-38" data-cle="village-appris-38" placeholder="Ex. : J'ai appris qu'on peut noter des choix pour garder le meilleur…"></textarea>
         <label for="village-idees-38"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-38" data-cle="village-idees-38" placeholder="Ex. : Poser plusieurs maisons d'un coup le long d'une rue…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 39 · livraison directe, entrepôt clair, carrières <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la livraison directe des porteurs (événement <code>livraison-directe</code>), le panneau de l'entrepôt avec ses 3 améliorations numérotées, les 10 gisements de pierre et la carrière qui devient une mine (rechargée par le géologue), la sauvegarde version 22.</p>
+        <label for="village-appris-39"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-39" data-cle="village-appris-39" placeholder="Ex. : J'ai appris ce qu'est une optimisation…"></textarea>
+        <label for="village-idees-39"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-39" data-cle="village-idees-39" placeholder="Ex. : Des porteurs qui enchaînent plusieurs livraisons…"></textarea>
       </div>
     </section>
   </main>

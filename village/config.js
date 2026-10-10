@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 39,
+  version: 40,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -319,6 +319,9 @@ Village.CONFIG = {
       charbon: { nombre: 7, rayon: 2.4, premier: [12, 26] },
       fer: { nombre: 6, rayon: 2.2, premier: [18, 34] },
       or: { nombre: 3, rayon: 1.8, premier: [28, 48] },
+      // Étape 39 : ✍️ « que les carrières de pierre soient comme les filons, juste à certains endroits » (ajoutés en dernier :
+      // les autres gisements d'une partie commencée restent à leur place)
+      pierres: { nombre: 10, rayon: 2.2, premier: [8, 16], ecart: 12 },
     },
     ecart: 22, // jamais deux gisements à moins de 22 cases
     loinMin: 30, // les autres : à 30 cases du village au moins
@@ -339,6 +342,7 @@ Village.CONFIG = {
     mineCharbon: { filon: "charbon" },
     mineFer: { filon: "fer" },
     mineOr: { filon: "or" }, // étape 11
+    carriere: { filon: "pierres" }, // étape 39 : la carrière creuse un gisement de pierre, comme une mine
   },
 
   // Étape 8 : ✍️ 2B, chaque ouvrier a besoin d'une PLACE pour dormir. Le campement (les tentes autour de
@@ -665,7 +669,7 @@ Village.CONFIG = {
         { texte: "Construis une 🪚 scierie", batiment: "scierie", nombre: 1, pourquoi: "Elle transforme les troncs en planches : presque tout se construit avec." },
         { texte: "Construis un 🎣 pêcheur", batiment: "pecheur", nombre: 1, pourquoi: "Les habitants mangent : sans nourriture, ils partent." },
         { texte: "Construis une 🛖 hutte", batiment: "hutte", nombre: 1, pourquoi: "Chaque ouvrier a besoin d'un lit. Plus de lits = plus d'habitants." },
-        { texte: "Construis une ⛏️ carrière", batiment: "carriere", nombre: 1, pourquoi: "Les pierres servent aux bâtiments plus solides." },
+        { texte: "Construis une ⛏️ carrière", batiment: "carriere", nombre: 1, pourquoi: "Sur un gisement de pierre (des éclats gris clair, tout près du village) : les pierres servent aux bâtiments solides." },
         { texte: "Construis un 🏹 chasseur", batiment: "chasseur", nombre: 1, pourquoi: "Deux sortes de nourriture, c'est plus sûr (et les habitants aiment varier)." },
         { texte: "Aie 40 planches", stock: "planches", nombre: 40, pourquoi: "C'est un des objectifs pour passer au hameau." },
         { texte: "Livre une commande 📦", commandes: 1, pourquoi: "Les commandes rapportent des pièces 🪙 : touche 📦 à droite." },
@@ -730,7 +734,7 @@ Village.CONFIG = {
     bucheron: "Le bûcheron coupe les arbres autour de lui et rapporte des troncs.",
     forestier: "Le forestier replante des arbres, pour que la forêt ne disparaisse pas.",
     scierie: "La scierie découpe les troncs en planches, le matériau de presque tous les bâtiments.",
-    carriere: "Le carrier taille les rochers autour de lui et rapporte des pierres.",
+    carriere: "La carrière se pose sur un gisement de pierre et le taille en blocs. Épuisée, le géologue y trouve une nouvelle veine.",
     pecheur: "Le pêcheur pêche dans l'eau toute proche (même en hiver, dans un trou de la glace).",
     chasseur: "Le chasseur chasse le gibier des environs et rapporte de la viande.",
     geologue: "Le géologue fait le tour des mines : quand l'une est épuisée, il trouve une nouvelle veine sous elle, et elle repart.",
