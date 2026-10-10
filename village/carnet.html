@@ -172,6 +172,7 @@
       <a href="#etape46">Étape 46</a>
       <a href="#etape47">Étape 47</a>
       <a href="#etape48">Étape 48</a>
+      <a href="#etape49">Étape 49</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2567,6 +2568,33 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
       <details class="question"><summary>Pourquoi j'ai réutilisé la fonction de l'eau au lieu d'en écrire une nouvelle ?</summary><p>Parce que c'est exactement la même règle (les plus proches d'abord, jusqu'à ce qu'il n'y ait plus de place). Une seule fonction, c'est moins de code et moins de bugs.</p></details>
     </section>
 
+    <section id="etape49">
+      <h2>📏 Étape 49 : le texte reste dans la bulle <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Quand tu livres une commande (ou que tu gagnes quelque chose), le titre ne dépasse plus de la bulle. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/47-texte-qui-depasse.md</code>.</p>
+          <ul><li>✍️ « Quand tu fais une livraison, le texte dépasse. Arrange ça. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Livre une commande : « 📦 Merci de la part de… » reste dans la bulle.</li>
+            <li>☐ Pareil sur téléphone (le titre passe sur 2 ou 3 lignes).</li>
+            <li>Vérifie « version 50 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔧 Sous le capot : mesurer avant de dessiner</h3>
+      <p>Avant, la bulle faisait toujours 220 pixels de large, quel que soit le texte. Maintenant, le jeu demande au navigateur « combien de pixels fait ce texte ? » (<code>measureText</code>). La bulle prend cette largeur. Si c'est plus large que l'écran, on coupe le titre entre deux mots, et la bulle grandit vers le haut.</p>
+      <pre style="white-space: pre-wrap">avant :  [ 📦 Merci de la part de la bou]langère…   ← ça dépasse
+après :  [ 📦 Merci de la part de la boulangère ]
+         [        du village voisin !          ]</pre>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi ne pas simplement faire une bulle très large tout le temps ?</summary><p>Sur un téléphone, elle sortirait de l'écran. Et pour un titre court, ce serait vide et moche. Mesurer, c'est s'adapter à chaque texte.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2860,8 +2888,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
           <p>Un nouvel âge ; l'école, l'hôpital, les pompiers et la police servent les maisons proches ; 4 nouveaux besoins.</p>
           <p class="apprend"><b>Tu apprends :</b> réutiliser une fonction avec d'autres données. <b>Durée :</b> 1 séance.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">49</div>
+          <h4>📏 Le texte reste dans la bulle <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>La bulle « gagné » prend la largeur de son titre, et passe à la ligne si besoin.</p>
+          <p class="apprend"><b>Tu apprends :</b> mesurer un texte avant de le dessiner. <b>Durée :</b> 1 petite séance.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">49-50</div>
+          <div class="num">50-51</div>
           <h4>🚗🛍️ Les voitures, puis les commerces <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Ce qui arrive sans service (incendies ? vols ?), routes goudronnées, voitures et camions, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -3262,6 +3296,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
         <textarea class="journal" id="village-appris-48" data-cle="village-appris-48" placeholder="Ex. : J'ai appris qu'une même fonction peut servir pour l'eau et pour l'école…"></textarea>
         <label for="village-idees-48"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-48" data-cle="village-idees-48" placeholder="Ex. : Des incendies quand il n'y a pas de pompiers…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 49 · le texte reste dans la bulle <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> dans <code>affichage/interface.js</code>, la bulle « gagné » mesure son titre, s'élargit, et passe à la ligne quand il est trop long.</p>
+        <label for="village-appris-49"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-49" data-cle="village-appris-49" placeholder="Ex. : J'ai appris qu'on peut mesurer un texte en pixels…"></textarea>
+        <label for="village-idees-49"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-49" data-cle="village-idees-49" placeholder="Ex. : D'autres endroits où le texte est trop serré…"></textarea>
       </div>
     </section>
   </main>

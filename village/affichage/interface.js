@@ -110,12 +110,23 @@ Village.Interface = (function () {
     if (t > DUREE) { gains.shift(); return; }
     const cx = W / 2, cy = He * 0.38, apparait = Math.min(1, t / 0.35), part = Math.max(0, (t - 1.6) / 1.4); // part : de 0 à 1 pendant l'envol
     const pasX = 70, x0 = cx - ((g.objets.length - 1) * pasX) / 2;
+    // Étape 49 : ✍️ « quand tu fais une livraison, le texte dépasse ». La bulle prend la largeur du titre ; s'il est trop
+    // long pour l'écran, il passe à la ligne (et la bulle grandit vers le haut).
+    if (!g.lignes) {
+      ctx.font = "bold 16px " + POLICE;
+      const largeurMax = Math.min(460, W - 40), mots = String(g.titre).split(" ");
+      g.lignes = [];
+      let ligne = "";
+      for (const m of mots) { const essai = ligne ? ligne + " " + m : m; if (ctx.measureText(essai).width > largeurMax - 32 && ligne) { g.lignes.push(ligne); ligne = m; } else ligne = essai; }
+      if (ligne) g.lignes.push(ligne);
+      g.largeur = Math.min(largeurMax, Math.max(220, g.objets.length * pasX + 40, ...g.lignes.map((li) => ctx.measureText(li).width + 32)));
+    }
     if (part < 1) {
       ctx.save(); ctx.globalAlpha = 1 - part;
-      const l = Math.max(220, g.objets.length * pasX + 40), h = 104, s = 0.6 + 0.4 * apparait + Math.sin(Math.min(1, t / 0.5) * Math.PI) * 0.06;
+      const enPlus = (g.lignes.length - 1) * 20, l = g.largeur, h = 104 + enPlus, s = 0.6 + 0.4 * apparait + Math.sin(Math.min(1, t / 0.5) * Math.PI) * 0.06;
       ctx.translate(cx, cy); ctx.scale(s, s); ctx.translate(-cx, -cy);
-      bulle(ctx, cx - l / 2, cy - h / 2, l, h, "rgba(255, 250, 235, .96)");
-      texte(ctx, g.titre, cx, cy - 30, 16, "#3b2614", true, "center");
+      bulle(ctx, cx - l / 2, cy - h / 2 - enPlus / 2, l, h, "rgba(255, 250, 235, .96)");
+      g.lignes.forEach((li, n) => texte(ctx, li, cx, cy - 30 - enPlus + n * 20, 16, "#3b2614", true, "center"));
       ctx.restore();
     }
     g.objets.forEach(([r, q], k) => {
