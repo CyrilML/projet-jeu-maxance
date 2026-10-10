@@ -13,7 +13,7 @@ window.Megalopole = window.Megalopole || {};
 
 Megalopole.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 1,
+  version: 2,
   pasFixe: 1 / 120, // s : la boucle avance par petits pas fixes
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 
@@ -25,13 +25,13 @@ Megalopole.CONFIG = {
   },
   camera: { vitesse: 700, zoomMin: 0.25, zoomMax: 2.5, zoomDepart: 0.9 },
 
-  argentDepart: 20000,
+  argentDepart: 20000, // (étape 2 : selon la difficulté, voir « difficultes »)
   moisDuree: 20, // s : la ville fait ses comptes et son recensement tous les « mois »
 
   // 🛣️ Les routes. Une avenue (2 voies et un terre-plein) laisse passer 2,5 fois plus de voitures.
   routes: {
-    route: { prix: 10, entretien: 0.1, capacite: 40, nom: "Route", emoji: "🛣️" },
-    avenue: { prix: 30, entretien: 0.25, capacite: 100, nom: "Avenue", emoji: "🛤️" },
+    route: { prix: 10, entretien: 0.5, capacite: 40, nom: "Route", emoji: "🛣️" }, // étape 2 : entretien en 🪙 par case et par mois
+    avenue: { prix: 30, entretien: 1.2, capacite: 100, nom: "Avenue", emoji: "🛤️" },
     accesMax: 2, // un terrain doit être à 2 cases au plus d'une route pour qu'on y construise
   },
 
@@ -78,31 +78,31 @@ Megalopole.CONFIG = {
   //   valeur : ce qu'il ajoute à la valeur du terrain autour ; pollution : ce qu'il salit autour.
   batiments: {
     // ⚡ l'énergie
-    centrale: { nom: "Centrale à charbon", emoji: "⚡", groupe: "energie", taille: 3, prix: 3000, entretien: 60, palier: 0, courant: 400, pollution: 0.9 },
-    eolienne: { nom: "Éolienne", emoji: "🌬️", groupe: "energie", taille: 1, prix: 600, entretien: 8, palier: 0, courant: 40, vent: true },
-    solaire: { nom: "Panneaux solaires", emoji: "☀️", groupe: "energie", taille: 2, prix: 1800, entretien: 15, palier: 2, courant: 120, soleil: true },
-    nucleaire: { nom: "Centrale nucléaire", emoji: "☢️", groupe: "energie", taille: 4, prix: 25000, entretien: 400, palier: 4, courant: 4000 },
+    centrale: { nom: "Centrale à charbon", emoji: "⚡", groupe: "energie", taille: 3, prix: 3000, entretien: 150, palier: 0, courant: 400, pollution: 0.9 },
+    eolienne: { nom: "Éolienne", emoji: "🌬️", groupe: "energie", taille: 1, prix: 600, entretien: 15, palier: 0, courant: 40, vent: true },
+    solaire: { nom: "Panneaux solaires", emoji: "☀️", groupe: "energie", taille: 2, prix: 1800, entretien: 40, palier: 2, courant: 120, soleil: true },
+    nucleaire: { nom: "Centrale nucléaire", emoji: "☢️", groupe: "energie", taille: 4, prix: 25000, entretien: 1500, palier: 4, courant: 4000 },
     // 💧 l'eau
-    pompe: { nom: "Station de pompage", emoji: "🚰", groupe: "eau", taille: 2, prix: 1200, entretien: 20, palier: 0, eau: 300, bordDeLEau: 3 },
-    chateauEau: { nom: "Château d'eau", emoji: "🗼", groupe: "eau", taille: 1, prix: 600, entretien: 8, palier: 0, eau: 80 },
-    usineEau: { nom: "Usine des eaux", emoji: "🏭", groupe: "eau", taille: 3, prix: 9000, entretien: 120, palier: 3, eau: 2500, bordDeLEau: 3 },
+    pompe: { nom: "Station de pompage", emoji: "🚰", groupe: "eau", taille: 2, prix: 1200, entretien: 60, palier: 0, eau: 300, bordDeLEau: 3 },
+    chateauEau: { nom: "Château d'eau", emoji: "🗼", groupe: "eau", taille: 1, prix: 600, entretien: 25, palier: 0, eau: 80 },
+    usineEau: { nom: "Usine des eaux", emoji: "🏭", groupe: "eau", taille: 3, prix: 9000, entretien: 450, palier: 3, eau: 2500, bordDeLEau: 3 },
     // 🏛️ les services
-    ecole: { nom: "École", emoji: "🏫", groupe: "services", taille: 2, prix: 1500, entretien: 25, palier: 0, rayon: 11, service: "education", valeur: 0.05 },
-    lycee: { nom: "Lycée", emoji: "🎓", groupe: "services", taille: 3, prix: 5000, entretien: 70, palier: 2, rayon: 18, service: "education", valeur: 0.08 },
-    police: { nom: "Commissariat", emoji: "🚓", groupe: "services", taille: 2, prix: 1500, entretien: 25, palier: 1, rayon: 13, service: "securite", valeur: 0.04 },
-    pompiers: { nom: "Caserne de pompiers", emoji: "🚒", groupe: "services", taille: 2, prix: 1500, entretien: 25, palier: 1, rayon: 13, service: "feu", valeur: 0.03 },
-    clinique: { nom: "Clinique", emoji: "🏥", groupe: "services", taille: 2, prix: 2000, entretien: 35, palier: 1, rayon: 11, service: "sante", valeur: 0.04 },
-    hopital: { nom: "Hôpital", emoji: "🏨", groupe: "services", taille: 3, prix: 7000, entretien: 100, palier: 3, rayon: 20, service: "sante", valeur: 0.08 },
+    ecole: { nom: "École", emoji: "🏫", groupe: "services", taille: 2, prix: 1500, entretien: 100, poste: "education", palier: 0, rayon: 11, service: "education", valeur: 0.05 },
+    lycee: { nom: "Lycée", emoji: "🎓", groupe: "services", taille: 3, prix: 5000, entretien: 300, poste: "education", palier: 2, rayon: 18, service: "education", valeur: 0.08 },
+    police: { nom: "Commissariat", emoji: "🚓", groupe: "services", taille: 2, prix: 1500, entretien: 120, poste: "securite", palier: 1, rayon: 13, service: "securite", valeur: 0.04 },
+    pompiers: { nom: "Caserne de pompiers", emoji: "🚒", groupe: "services", taille: 2, prix: 1500, entretien: 120, poste: "feu", palier: 1, rayon: 13, service: "feu", valeur: 0.03 },
+    clinique: { nom: "Clinique", emoji: "🏥", groupe: "services", taille: 2, prix: 2000, entretien: 150, poste: "sante", palier: 1, rayon: 11, service: "sante", valeur: 0.04 },
+    hopital: { nom: "Hôpital", emoji: "🏨", groupe: "services", taille: 3, prix: 7000, entretien: 450, poste: "sante", palier: 3, rayon: 20, service: "sante", valeur: 0.08 },
     // 🎡 les loisirs (la distraction)
-    parc: { nom: "Parc", emoji: "🌳", groupe: "loisirs", taille: 1, prix: 150, entretien: 2, palier: 0, rayon: 5, service: "loisirs", valeur: 0.12 },
-    grandParc: { nom: "Grand parc", emoji: "⛲", groupe: "loisirs", taille: 3, prix: 1500, entretien: 15, palier: 1, rayon: 10, service: "loisirs", valeur: 0.18 },
-    stade: { nom: "Stade", emoji: "🏟️", groupe: "loisirs", taille: 4, prix: 12000, entretien: 120, palier: 3, rayon: 40, service: "loisirs", valeur: 0.05, joie: 6 },
-    attractions: { nom: "Parc d'attractions", emoji: "🎢", groupe: "loisirs", taille: 5, prix: 30000, entretien: 250, palier: 4, rayon: 60, service: "loisirs", valeur: 0.06, joie: 10, touristes: 4 },
+    parc: { nom: "Parc", emoji: "🌳", groupe: "loisirs", taille: 1, prix: 150, entretien: 10, poste: "loisirs", palier: 0, rayon: 5, service: "loisirs", valeur: 0.12 },
+    grandParc: { nom: "Grand parc", emoji: "⛲", groupe: "loisirs", taille: 3, prix: 1500, entretien: 60, poste: "loisirs", palier: 1, rayon: 10, service: "loisirs", valeur: 0.18 },
+    stade: { nom: "Stade", emoji: "🏟️", groupe: "loisirs", taille: 4, prix: 12000, entretien: 600, poste: "loisirs", palier: 3, rayon: 40, service: "loisirs", valeur: 0.05, joie: 6 },
+    attractions: { nom: "Parc d'attractions", emoji: "🎢", groupe: "loisirs", taille: 5, prix: 30000, entretien: 1200, poste: "loisirs", palier: 4, rayon: 60, service: "loisirs", valeur: 0.06, joie: 10, touristes: 4 },
     // 🚌 les transports
-    bus: { nom: "Arrêt de bus", emoji: "🚌", groupe: "transports", taille: 1, prix: 300, entretien: 5, palier: 1, rayon: 8, service: "transport", trafic: 0.4 },
-    metro: { nom: "Station de métro", emoji: "🚇", groupe: "transports", taille: 2, prix: 6000, entretien: 60, palier: 3, rayon: 16, service: "transport", trafic: 0.65 },
+    bus: { nom: "Arrêt de bus", emoji: "🚌", groupe: "transports", taille: 1, prix: 300, entretien: 30, poste: "transport", palier: 1, rayon: 8, service: "transport", trafic: 0.4 },
+    metro: { nom: "Station de métro", emoji: "🚇", groupe: "transports", taille: 2, prix: 6000, entretien: 400, poste: "transport", palier: 3, rayon: 16, service: "transport", trafic: 0.65 },
     // 🏛️ la mairie (une seule) : elle donne un peu de valeur autour, et fait plaisir
-    mairie: { nom: "Mairie", emoji: "🏛️", groupe: "services", taille: 2, prix: 2500, entretien: 20, palier: 1, rayon: 12, valeur: 0.08, unique: true, joie: 3 },
+    mairie: { nom: "Mairie", emoji: "🏛️", groupe: "services", taille: 2, prix: 2500, entretien: 80, palier: 1, rayon: 12, valeur: 0.08, unique: true, joie: 3 },
   },
   groupes: [
     { id: "routes", nom: "Routes", emoji: "🛣️" },
@@ -132,10 +132,53 @@ Megalopole.CONFIG = {
     commerceParHabitant: 0.15, industrieParHabitant: 0.2, agricultureParHabitant: 0.1,
     attirance: 1.15, // des emplois libres attirent des habitants : la ville en veut un peu plus que d'actifs (× 1,15)
     base: { R: 40, C: 10, I: 15, A: 8 }, // une petite envie au début, même sans habitants
-    parPointDImpot: 0.05, // chaque point d'impôt au-dessus de 9 % fait baisser la demande de 5 %
+    // (étape 2 : l'effet des impôts est dans « budget » : un taux par zone)
   },
-  // 🧾 le budget : chaque mois, les impôts (en % de ce que gagnent les gens) et l'entretien des bâtiments
-  budget: { tauxDepart: 9, tauxMin: 0, tauxMax: 20, parHabitant: 0.2, parEmploi: 0.25 },
+  // 🧾 Étape 2 : ✍️ « la gestion des impôts et des coûts sera importante : il faut bien réfléchir et paramétrer le système ».
+  // LE BUDGET (logique/budget.js). Chaque mois :
+  //   ➕ les IMPÔTS : chaque zone a son taux (choix de Maxance). Ce qu'elle paie = ses gens × leur revenu × son taux.
+  //      Plus un bâtiment est grand, plus ses gens gagnent : un gratte-ciel rapporte bien plus que 125 maisons !
+  //   ➖ l'ENTRETIEN des routes et des bâtiments, × le budget de leur poste (de 0 à 150 %, réglable) ;
+  //   ➖ le CARBURANT des centrales et des pompes, selon ce qu'elles produisent vraiment ;
+  //   ➖ le remboursement des PRÊTS.
+  budget: {
+    tauxDepart: 9, tauxMin: 0, tauxMax: 20,
+    // le revenu d'une personne par mois, selon le niveau de son bâtiment (en 🪙)
+    revenus: { R: [0, 10, 11, 12, 14, 17, 20], C: [0, 14, 15, 16, 18, 21, 24], I: [0, 12, 13, 14, 15, 18, 18], A: [0, 8, 9, 10, 12, 14, 14] },
+    // l'effet des impôts sur la demande de la zone : au-dessus de 9 %, −0,05 par point ; en dessous, +0,03 par point
+    tauxNeutre: 9, malusParPoint: 0.05, bonusParPoint: 0.03,
+    // les habitants râlent quand l'impôt des habitations dépasse 7 % (le besoin 🧾 tombe à 0 à 20 %)
+    impotSupportable: 7,
+    // les POSTES du budget : chaque service a son curseur (de 0 à 150 %, par 10 %)
+    postes: [
+      { id: "routes", emoji: "🛣️", nom: "Routes" },
+      { id: "education", emoji: "🎓", nom: "Éducation" },
+      { id: "sante", emoji: "🏥", nom: "Santé" },
+      { id: "securite", emoji: "🚓", nom: "Police" },
+      { id: "feu", emoji: "🚒", nom: "Pompiers" },
+      { id: "loisirs", emoji: "🎡", nom: "Loisirs" },
+      { id: "transport", emoji: "🚌", nom: "Transports" },
+    ],
+    posteMin: 0, posteMax: 1.5, postePas: 0.1,
+    // un service financé à f (0 à 1,5) couvre un cercle de rayon × (0,4 + 0,6 × f) ; à 0 %, il est fermé
+    rayonMin: 0.4,
+    // les routes s'abîment si leur budget est sous 100 % (et se réparent au-dessus) : leur état va de 0 à 1
+    usureRoutes: 0.1, // par mois, à 0 % de budget
+    // le carburant : ce que coûte 1 unité vraiment utilisée, par mois
+    carburant: { centrale: 0.3, nucleaire: 0.12, pompe: 0.08, usineEau: 0.06 },
+  },
+  // 🏦 Les PRÊTS : on rembourse en `mois` mensualités ; on rend `interet` fois la somme empruntée
+  prets: {
+    offres: [{ montant: 5000, palier: 0 }, { montant: 20000, palier: 1 }, { montant: 100000, palier: 3 }, { montant: 500000, palier: 5 }],
+    mois: 24, interet: 1.2, max: 3,
+    moisDansLeRouge: 12, // 12 mois de suite sous zéro : le conseil municipal renvoie le maire
+  },
+  // 🎚️ Les DIFFICULTÉS (on choisit en créant une ville)
+  difficultes: {
+    facile: { nom: "Facile", emoji: "🟢", argent: 50000, couts: 0.75, bonheur: 5 },
+    normal: { nom: "Normal", emoji: "🟡", argent: 20000, couts: 1, bonheur: 0 },
+    difficile: { nom: "Difficile", emoji: "🔴", argent: 10000, couts: 1.3, bonheur: -6 },
+  },
 
   // 😊 le BONHEUR : chaque besoin des habitants, et son poids dans la note
   besoins: [

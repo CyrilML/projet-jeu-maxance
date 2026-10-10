@@ -2,7 +2,7 @@
 //
 // Ce panneau n'existe pas dans un jeu du commerce : c'est un outil pour COMPRENDRE. Trois colonnes :
 //   📊 l'état en direct : les nombres que le jeu calcule en ce moment (habitants, demande R C I A et sa formule,
-//      réseaux, trafic, budget, ce que fait le jardinier des zones…) ;
+//      réseaux, trafic, ce que fait le jardinier des zones, et le trésorier ligne par ligne…) ;
 //   📻 le journal : tout ce qui est annoncé à la radio du jeu (chaque événement a sa phrase) ;
 //   💾 la base de données : ce qui est rangé dans le navigateur, et la taille que ça prend.
 
@@ -33,12 +33,19 @@ Megalopole.SousLeCapot = (function () {
     "eau-penurie": (d) => "💧❌ Pénurie d'eau : offre " + fr(d.offre) + " < demande " + fr(d.demande) + " · " + d.coupes + " bâtiment(s) sans eau",
     "eau-ok": (d) => "💧✅ Assez d'eau : offre " + fr(d.offre) + ", demande " + fr(d.demande),
     "reclamation": (d) => "📢 Réclamation n° 1 des habitants : " + d.emoji + " " + d.texte + " → " + d.conseil,
-    "budget-mois": (d) => "🧾 Mois " + d.mois + " : impôts +" + fr(d.recettes) + (d.touristes ? ", touristes +" + fr(d.touristes) : "") + ", routes −" + fr(d.routes) + ", bâtiments −" + fr(d.batiments) + " = " + (d.solde >= 0 ? "+" : "") + fr(d.solde) + " 🪙 · caisse : " + fr(d.argent) + " 🪙 (impôts à " + d.taux + " %)",
-    "impots-changes": (d) => "🧾 Les impôts passent à " + d.taux + " %",
+    "budget-mois": (d) => "🧾 Mois " + d.mois + " : recettes +" + fr(d.recettes) + " (impôts 🏠 " + fr(d.impots.R) + " · 🛍️ " + fr(d.impots.C) + " · 🏭 " + fr(d.impots.I) + " · 🌾 " + fr(d.impots.A) + "), dépenses −" + fr(d.depenses) + " (dont carburant " + fr(d.carburant) + ", prêts " + fr(d.prets) + ") = " + (d.solde >= 0 ? "+" : "") + fr(d.solde) + " 🪙 · caisse : " + fr(d.argent) + " 🪙",
+    "impots-changes": (d) => "🧾 Impôts " + d.emoji + " " + d.zone.toLowerCase() + " : " + d.taux + " % → envie de venir " + (d.effet >= 0 ? "+" : "") + virgule(d.effet, 2),
+    "budget-poste": (d) => "🧾 Budget « " + d.poste + " » : " + d.budget + " % (entretien × " + virgule(d.budget / 100, 1) + ")",
+    "pret": (d) => "🏦 Prêt de " + fr(d.montant) + " 🪙 : " + d.mois + " mensualités de " + fr(d.mensualite) + " 🪙 (total " + fr(d.total) + " 🪙) · caisse : " + fr(d.argent) + " 🪙",
+    "pret-refuse": (d) => "🏦❌ Prêt de " + fr(d.montant) + " 🪙 refusé : " + d.raison,
+    "pret-rembourse": (d) => "🏦✅ Prêt de " + fr(d.montant) + " 🪙 entièrement remboursé",
+    "routes-abimees": (d) => "🛣️⚠️ Routes abîmées (" + d.etat + " %) : moins de voitures passent, le terrain perd de la valeur",
+    "caisse-vide": (d) => "🧾⚠️ Caisse sous zéro (" + fr(d.argent) + " 🪙) depuis " + d.mois + " mois · renvoi du maire dans " + d.reste + " mois",
+    "maire-renvoye": (d) => "🧾❌ " + d.mois + " mois dans le rouge (" + fr(d.argent) + " 🪙) : le conseil municipal renvoie le maire. Fin de la partie.",
     "sauvegarde": (d) => "💾 Sauvegarde (" + d.raison + ") : " + fr(d.taille) + " lettres",
     "sauvegarde-ratee": (d) => "💾❌ La sauvegarde a raté : " + d.erreur,
     "lecture": (d) => (d.trouve ? "💾 Partie retrouvée (version " + d.version + ", carte n° " + d.graine + ", " + fr(d.taille) + " lettres)" : "💾 Pas de partie lisible : " + (d.erreur || "")),
-    "nouvelle-ville": (d) => "🆕 Nouvelle ville sur la carte n° " + d.graine,
+    "nouvelle-ville": (d) => "🆕 Nouvelle ville sur la carte n° " + d.graine + (d.difficulte ? " · difficulté : " + d.difficulte : ""),
   };
 
   function initialiser(m, mes) {
@@ -76,7 +83,8 @@ Megalopole.SousLeCapot = (function () {
     h += ligne("🛍️ C = (habitants × " + virgule(D.commerceParHabitant, 2) + " − emplois C + " + D.base.C + ") ÷ besoin", virgule(m.demande.C, 2));
     h += ligne("🏭 I = (habitants × " + virgule(D.industrieParHabitant, 2) + " − emplois I + " + D.base.I + ") ÷ besoin", virgule(m.demande.I, 2));
     h += ligne("🌾 A = (habitants × " + virgule(D.agricultureParHabitant, 2) + " − emplois A + " + D.base.A + ") ÷ besoin", virgule(m.demande.A, 2));
-    h += ligne("🧾 impôts au-dessus de 9 % : −" + virgule(D.parPointDImpot, 2) + " par point", m.taux + " %");
+    const Bu = C.budget, Bd = Megalopole.Budget;
+    h += ligne("🧾 effet des impôts : au-dessus de " + Bu.tauxNeutre + " % −" + virgule(Bu.malusParPoint, 2) + "/point, en dessous +" + virgule(Bu.bonusParPoint, 2) + "/point", C.ordreZones.map((z) => C.zones[z].emoji + " " + (Bd.effetTaux(m.taux[z]) >= 0 ? "+" : "") + virgule(Bd.effetTaux(m.taux[z]), 2)).join(" "));
     h += groupe("😊 Les besoins (de 0 à 1)");
     for (const x of C.besoins) h += ligne(x.emoji + " " + x.nom + " (poids " + virgule(x.poids, 1) + ")" + ((x.palier || 0) > m.palier ? " 🔒" : ""), virgule(m.besoins[x.id] || 0, 2));
     h += groupe("🔌 Les réseaux (ils suivent les routes, les plus proches d'abord)");
@@ -87,9 +95,19 @@ Megalopole.SousLeCapot = (function () {
     h += ligne("cases de route · bouchons (trafic > 100 %) · trafic moyen", T.routes + " · " + T.bouchons + " · " + Math.round(T.moyen * 100) + " %");
     h += ligne("terrains peints · gros bâtiments", fr(m.zonees.length) + " · " + m.batiments.length);
     h += ligne("🌱 le jardinier : bâtiments grandis · baissés (depuis le début)", fr(m.compteurs.grandis) + " · " + fr(m.compteurs.baisses));
-    h += groupe("🧾 Le budget");
-    h += ligne("caisse · impôts · prochain bilan dans", fr(m.argent) + " 🪙 · " + m.taux + " % · " + Math.ceil(C.moisDuree - m.compteMois) + " s");
-    if (m.dernierBudget) h += ligne("dernier mois : recettes − dépenses", fr(m.dernierBudget.recettes + m.dernierBudget.touristes) + " − " + fr(m.dernierBudget.routes + m.dernierBudget.batiments) + " = " + fr(m.dernierBudget.solde));
+    // 🧾 le trésorier (étape 2) : la prévision du mois, ligne par ligne, avec ses formules
+    const p = Bd.prevision(m), Df = Bd.difficulte(m);
+    h += groupe("🧾 Le trésorier (prévision du mois en cours)");
+    h += ligne("difficulté · coûts × · caisse · prochain bilan dans", Df.emoji + " " + Df.nom + " · " + virgule(Df.couts, 2) + " · " + fr(m.argent) + " 🪙 · " + Math.ceil(C.moisDuree - m.compteMois) + " s");
+    for (const z of C.ordreZones) h += ligne(C.zones[z].emoji + " impôt = revenus (gens × revenu du niveau) " + fr(p.assiette[z]) + " × " + m.taux[z] + " %", "+" + fr(p.impots[z]));
+    if (p.touristes) h += ligne("🎢 touristes", "+" + fr(p.touristes));
+    for (const q of Bu.postes) h += ligne(q.emoji + " " + q.nom + " = entretien × " + Math.round(Bd.poste(m, q.id) * 100) + " % × " + virgule(Df.couts, 2) + (q.id === "routes" ? " · état des routes " + Math.round(m.etatRoutes * 100) + " %" : " · cercle × " + virgule(Bd.facteurRayon(m, { poste: q.id }), 2)), "−" + fr(q.id === "routes" ? p.routes : p.postes[q.id]));
+    h += ligne("⚡ centrales · 💧 eau · 🏛️ mairie (entretien)", "−" + fr(p.autres.energie) + " · −" + fr(p.autres.eau) + " · −" + fr(p.autres.mairie));
+    h += ligne("🔥 carburant = production utilisée × prix par unité", "−" + fr(p.carburant));
+    h += ligne("🏦 prêts : " + m.prets.length + " en cours (" + m.prets.map((x) => x.reste + " mois").join(", ") + ")", "−" + fr(p.prets));
+    h += ligne("= solde prévu (recettes − dépenses)", (p.solde >= 0 ? "+" : "") + fr(p.solde));
+    h += ligne("mois de suite dans le rouge (renvoi à " + C.prets.moisDansLeRouge + ")", m.moisDansLeRouge + (m.renvoye ? " · ❌ renvoyé" : ""));
+    if (m.dernierBudget) h += ligne("dernier mois : recettes − dépenses", fr(m.dernierBudget.recettes) + " − " + fr(m.dernierBudget.depenses) + " = " + fr(m.dernierBudget.solde));
     h += groupe("🎨 Le peintre");
     h += ligne("images par seconde · pas de calcul par seconde", mesures.ips + " · " + mesures.majParSeconde);
     h += ligne("cases · objets · voitures dessinés · temps de dessin", P.cases + " · " + P.objets + " · " + P.voitures + " · " + virgule(P.ms, 1) + " ms");

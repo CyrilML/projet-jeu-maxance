@@ -5,6 +5,8 @@
 //     R C I A (4 petites barres : vers le haut = la ville en veut, vers le bas = il y en a trop) ;
 //   - en bas, les OUTILS du maire, rangés par groupes (routes, zones, énergie, eau, services, loisirs, transports) ;
 //   - à droite, le PANNEAU : les réclamations 📢, les besoins 😊, le budget 🧾, et ce qu'il y a sur la case touchée 🔎 ;
+//     (étape 2) le budget 🧾 est un vrai tableau de bord : un impôt par zone, un curseur par service, la banque ;
+//   - au tout début, le CHOIX DE LA DIFFICULTÉ ; et si la caisse reste vide trop longtemps, l'écran « maire renvoyé » ;
 //   - les CALQUES 🗺️ : voir le courant, l'eau, la valeur du terrain, la pollution, le trafic, les services…
 // L'interface ne change jamais le monde elle-même : elle range ce que veut le joueur dans « demandes », que main.js
 // donne au monde au pas suivant.
@@ -16,19 +18,20 @@ Megalopole.Interface = (function () {
   const radio = Megalopole.Evenements;
   const $ = (id) => document.getElementById(id);
   const fr = (n) => Math.round(n).toLocaleString("fr-FR");
-  const demandes = { outil: undefined, taux: 0, vitesse: null, calque: undefined };
+  const demandes = { outil: undefined, taux: [], postes: [], pret: null, vitesse: null, calque: undefined, difficulte: null };
   let groupeOuvert = null, onglet = "reclamations", monde = null;
 
+  const prix = (base) => fr(Megalopole.Budget.prix(monde, base)); // (étape 2 : × la difficulté)
   // Les outils de chaque groupe : { sorte, valeur, emoji, nom, prix }
   function outilsDu(groupe) {
     if (groupe === "routes") return [
-      { sorte: "route", valeur: "route", emoji: "🛣️", nom: "Route", prix: C.routes.route.prix + " 🪙/case", touche: "R" },
-      { sorte: "route", valeur: "avenue", emoji: "🛤️", nom: "Avenue (2 fois et demie plus de voitures)", prix: C.routes.avenue.prix + " 🪙/case" },
-      { sorte: "demolir", valeur: null, emoji: "🧨", nom: "Démolir", prix: "5 🪙/case", touche: "B" },
+      { sorte: "route", valeur: "route", emoji: "🛣️", nom: "Route", prix: prix(C.routes.route.prix) + " 🪙/case", touche: "R" },
+      { sorte: "route", valeur: "avenue", emoji: "🛤️", nom: "Avenue (2 fois et demie plus de voitures)", prix: prix(C.routes.avenue.prix) + " 🪙/case" },
+      { sorte: "demolir", valeur: null, emoji: "🧨", nom: "Démolir", prix: prix(5) + " 🪙/case", touche: "B" },
     ];
-    if (groupe === "zones") return C.ordreZones.map((z, k) => ({ sorte: "zone", valeur: z, emoji: C.zones[z].emoji, nom: "Zone " + C.zones[z].nom.toLowerCase(), prix: C.zones[z].prix + " 🪙/case", touche: String(k + 1), couleur: C.zones[z].couleur }))
+    if (groupe === "zones") return C.ordreZones.map((z, k) => ({ sorte: "zone", valeur: z, emoji: C.zones[z].emoji, nom: "Zone " + C.zones[z].nom.toLowerCase(), prix: prix(C.zones[z].prix) + " 🪙/case", touche: String(k + 1), couleur: C.zones[z].couleur }))
       .concat([{ sorte: "dezoner", valeur: null, emoji: "🧽", nom: "Effacer la zone", prix: "gratuit" }]);
-    return Object.entries(C.batiments).filter(([, B]) => B.groupe === groupe).map(([t, B]) => ({ sorte: "batiment", valeur: t, emoji: B.emoji, nom: B.nom, prix: fr(B.prix) + " 🪙", palier: B.palier }));
+    return Object.entries(C.batiments).filter(([, B]) => B.groupe === groupe).map(([t, B]) => ({ sorte: "batiment", valeur: t, emoji: B.emoji, nom: B.nom, prix: prix(B.prix) + " 🪙 · " + prix(B.entretien) + "/mois", palier: B.palier }));
   }
 
   function initialiser(m) {
@@ -52,13 +55,34 @@ Megalopole.Interface = (function () {
     const aucun = document.createElement("button"); aucun.textContent = "🌍 Aucun"; aucun.addEventListener("click", () => { demandes.calque = null; lc.classList.remove("ouvert"); }); lc.appendChild(aucun);
     for (const [id, cq] of Object.entries(Megalopole.Peintre.CALQUES)) { const b = document.createElement("button"); b.textContent = cq.nom; b.addEventListener("click", () => { demandes.calque = id; lc.classList.remove("ouvert"); }); lc.appendChild(b); }
     $("bouton-calques").addEventListener("click", () => lc.classList.toggle("ouvert"));
-    // (les boutons des impôts sont redessinés 4 fois par seconde : on écoute leur parent, qui, lui, reste)
-    $("contenu-panneau").addEventListener("click", (e) => { const bt = e.target.closest("[data-taux]"); if (bt) { demandes.taux += +bt.dataset.taux; } });
+    // (les boutons du budget sont redessinés 4 fois par seconde : on écoute leur parent, qui, lui, reste)
+    $("contenu-panneau").addEventListener("click", (e) => {
+      const bt = e.target.closest("[data-taux],[data-poste],[data-pret]");
+      if (!bt) return;
+      if (bt.dataset.taux) { const [zone, d] = bt.dataset.taux.split(":"); demandes.taux.push({ zone, d: +d }); }
+      if (bt.dataset.poste) { const [id, d] = bt.dataset.poste.split(":"); demandes.postes.push({ id, d: +d }); }
+      if (bt.dataset.pret) demandes.pret = +bt.dataset.pret;
+      setTimeout(() => rafraichir(true), 30);
+    });
+    // le choix de la difficulté et l'écran « maire renvoyé »
+    $("voile").addEventListener("click", (e) => { const bt = e.target.closest("[data-difficulte]"); if (bt) { demandes.difficulte = bt.dataset.difficulte; fermerVoile(); } if (e.target.closest("[data-annuler]")) fermerVoile(); });
     for (const b of document.querySelectorAll("[data-vitesse]")) b.addEventListener("click", () => (demandes.vitesse = +b.dataset.vitesse));
     // les messages
     for (const [nom, f] of Object.entries(MESSAGES)) radio.ecouter(nom, (d) => afficher(f(d)));
   }
-  function changerMonde(m) { monde = m; }
+  function changerMonde(m) { monde = m; dernierHTML = ""; }
+
+  // 🎚️ Le voile : un grand panneau au milieu de l'écran (la difficulté, ou le maire renvoyé)
+  function choisirDifficulte(titre, texte, annulable) {
+    let h = "<div class='fenetre'><h2>" + titre + "</h2><p>" + texte + "</p><div class='choix'>";
+    for (const [id, D] of Object.entries(C.difficultes)) h += "<button data-difficulte='" + id + "'><b>" + D.emoji + " " + D.nom + "</b><small>" + fr(D.argent) + " 🪙 au départ<br>coûts × " + String(D.couts).replace(".", ",") + "<br>" + (D.bonheur > 0 ? "habitants faciles à contenter (+" + D.bonheur + " 😊)" : D.bonheur < 0 ? "habitants exigeants (" + D.bonheur + " 😊)" : "habitants normaux") + "</small></button>";
+    $("voile").innerHTML = h + "</div>" + (annulable ? "<p style='text-align:center;margin:10px 0 0'><button data-annuler='1' class='annuler'>↩️ Non, je garde ma ville</button></p>" : "") + "</div>";
+    $("voile").classList.add("ouvert");
+  }
+  function fermerVoile() { $("voile").classList.remove("ouvert"); }
+  function renvoye(m) {
+    choisirDifficulte("🧾 Le maire est renvoyé !", "La caisse est restée vide pendant " + C.prets.moisDansLeRouge + " mois de suite (" + fr(m.argent) + " 🪙). Le conseil municipal a choisi un autre maire… Ta ville comptait " + fr(m.stats.habitants) + " habitants. Retente ta chance : surveille le solde du mois dans 🧾, et emprunte à la banque avant qu'il soit trop tard !");
+  }
 
   function ouvrirTiroir(g) {
     groupeOuvert = g;
@@ -93,7 +117,13 @@ Megalopole.Interface = (function () {
     "eau-penurie": (d) => "💧❌ Pénurie d'eau : " + d.coupes + " bâtiment(s) sans eau. Une station de pompage de plus !",
     "reclamation": (d) => "📢 Les habitants réclament : " + d.emoji + " " + d.texte,
     "budget-mois": (d) => (d.solde < 0 ? "🧾 Ce mois-ci, la ville a perdu " + fr(-d.solde) + " 🪙 !" : null),
-    "impots-changes": (d) => "🧾 Impôts : " + d.taux + " %",
+    "impots-changes": (d) => "🧾 Impôts " + d.emoji + " " + d.zone.toLowerCase() + " : " + d.taux + " % (" + (d.effet >= 0 ? "envie +" : "envie ") + d.effet.toFixed(2).replace(".", ",") + ")",
+    "budget-poste": (d) => "🧾 Budget " + d.poste.toLowerCase() + " : " + d.budget + " %",
+    "pret": (d) => "🏦 La banque te prête " + fr(d.montant) + " 🪙 : tu rembourseras " + fr(d.mensualite) + " 🪙 par mois pendant " + d.mois + " mois",
+    "pret-refuse": (d) => "🏦❌ Prêt refusé : " + d.raison,
+    "pret-rembourse": (d) => "🏦✅ Le prêt de " + fr(d.montant) + " 🪙 est remboursé !",
+    "routes-abimees": (d) => "🛣️⚠️ Les routes s'abîment (" + d.etat + " %) : augmente leur budget dans 🧾",
+    "caisse-vide": (d) => "🧾⚠️ La caisse est vide depuis " + d.mois + " mois ! Encore " + d.reste + " mois et le maire est renvoyé (🏦 un prêt ? moins de dépenses ?)",
   };
 
   // ---------------------------------------------------------------- le rafraîchissement (4 fois par seconde)
@@ -153,15 +183,7 @@ Megalopole.Interface = (function () {
       if (suivant) h += "<p>Prochain palier : " + suivant.emoji + " " + suivant.nom + " à " + fr(suivant.habitants) + " habitants" + barreHTML(s.habitants / suivant.habitants, "#7a5ab0") + "</p>";
       return h;
     }
-    if (o === "budget") {
-      const b = m.dernierBudget;
-      let h = "<h3>🧾 Le budget de la ville</h3><div class='impots'>Impôts : <button data-taux='-1'>−</button> <b>" + m.taux + " %</b> <button data-taux='1'>+</button></div>";
-      h += "<p><small>Plus d'impôts = plus d'argent, mais moins d'envie de venir (au-dessus de 9 %) et des habitants moins contents.</small></p>";
-      if (b) h += "<p>Le mois dernier :<br>➕ impôts : " + fr(b.recettes) + " 🪙" + (b.touristes ? "<br>➕ touristes : " + fr(b.touristes) + " 🪙" : "") + "<br>➖ routes : " + fr(b.routes) + " 🪙<br>➖ bâtiments : " + fr(b.batiments) + " 🪙<br><b>= " + (b.solde >= 0 ? "+" : "") + fr(b.solde) + " 🪙</b></p>";
-      else h += "<p>Le premier bilan arrive à la fin du mois (" + Math.ceil(C.moisDuree - m.compteMois) + " s).</p>";
-      if (m.historique.length > 1) h += graphique(m.historique);
-      return h;
-    }
+    if (o === "budget") return budgetHTML(m);
     // 🔎 la case touchée
     const sel = m.selection;
     if (!sel) return "<h3>🔎 Une case</h3><p>Choisis ✋, puis touche une case de la carte pour voir ce qu'il y a.</p>";
@@ -175,7 +197,8 @@ Megalopole.Interface = (function () {
       if (B.rayon) h += "<p>🎯 Sert un cercle de " + B.rayon + " cases" + (b.marche === false && B.service !== "loisirs" ? " — ⚠️ <b>pas d'électricité</b> : il ne marche pas !" : "") + "</p>";
       if (B.trafic) h += "<p>🚗 Enlève " + Math.round(B.trafic * 100) + " % du trafic autour</p>";
       if (B.joie) h += "<p>😊 +" + B.joie + " de bonheur pour toute la ville</p>";
-      h += "<p>🔧 Entretien : " + B.entretien + " 🪙 par mois</p>";
+      if (b.rayon !== undefined && b.rayon !== B.rayon) h += "<p>🧾 Budget " + C.budget.postes.find((q) => q.id === B.poste).nom.toLowerCase() + " à " + Math.round(Megalopole.Budget.poste(m, B.poste) * 100) + " % : cercle de " + b.rayon.toFixed(1).replace(".", ",") + " cases</p>";
+      h += "<p>🔧 Entretien : " + fr(Megalopole.Budget.prix(m, B.entretien) * (B.poste ? Megalopole.Budget.poste(m, B.poste) : 1)) + " 🪙 par mois</p>";
       return h;
     }
     const z = Z.lettre(m, i), ter = m.carte.terrain[i];
@@ -193,15 +216,55 @@ Megalopole.Interface = (function () {
     h += "<p>" + Megalopole.Services.TYPES.map((t) => ({ education: "🎓", sante: "🏥", securite: "🚓", feu: "🚒", loisirs: "🎡", transport: "🚌" }[t] + (m.couverture[t][i] ? "✅" : "❌"))).join(" ") + "</p>";
     return h;
   }
-  // Une petite courbe des habitants (les derniers mois)
+  // 🧾 Le tableau de bord du budget : la PRÉVISION du mois en cours (recalculée à chaque fois)
+  function budgetHTML(m) {
+    const Bu = C.budget, Bd = Megalopole.Budget, p = Bd.prevision(m), D = Bd.difficulte(m);
+    const signe = (n) => (n >= 0 ? "+" : "−") + fr(Math.abs(n));
+    const pm = (attr, moins, plus, milieu) => "<button data-" + attr + "='" + moins + "'>−</button><b>" + milieu + "</b><button data-" + attr + "='" + plus + "'>+</button>";
+    let h = "<h3>🧾 Le budget · " + D.emoji + " " + D.nom + "</h3>";
+    if (m.moisDansLeRouge > 0) h += "<div class='recl rouge'><b>⚠️ Caisse vide depuis " + m.moisDansLeRouge + " mois !</b><br><small>Encore " + (C.prets.moisDansLeRouge - m.moisDansLeRouge) + " mois sous zéro et le conseil renvoie le maire. Emprunte, baisse des budgets ou monte les impôts.</small></div>";
+    h += "<div class='solde " + (p.solde >= 0 ? "vert" : "rouge") + "'>Solde prévu ce mois-ci : <b>" + signe(p.solde) + " 🪙</b><small>bilan dans " + Math.ceil(C.moisDuree - m.compteMois) + " s</small></div>";
+    // ➕ les recettes : un impôt par zone
+    h += "<h4>➕ Les impôts (de " + Bu.tauxMin + " à " + Bu.tauxMax + " %)</h4>";
+    for (const z of C.ordreZones) {
+      const t = m.taux[z], e = Bd.effetTaux(t);
+      h += "<div class='bud'><span>" + C.zones[z].emoji + " " + C.zones[z].nom + "</span><span class='pm'>" + pm("taux", z + ":-1", z + ":1", t + " %") + "</span><small class='" + (e < 0 ? "mal" : "bien") + "'>envie " + (e >= 0 ? "+" : "") + e.toFixed(2).replace(".", ",") + "</small><span class='somme'>+" + fr(p.impots[z]) + "</span></div>";
+    }
+    if (p.touristes) h += "<div class='bud'><span>🎢 Touristes</span><span></span><span></span><span class='somme'>+" + fr(p.touristes) + "</span></div>";
+    h += "<p><small>Au-dessus de " + Bu.tauxNeutre + " %, les gens ont moins envie de venir dans cette zone (et les habitants râlent au-dessus de " + Bu.impotSupportable + " % 🏠). En dessous, ils en ont plus envie… mais la caisse se remplit moins vite.</small></p>";
+    // ➖ les dépenses : un budget par poste
+    h += "<h4>➖ Les services (de 0 à 150 %)</h4>";
+    for (const q of Bu.postes) {
+      const f = Bd.poste(m, q.id), cout = q.id === "routes" ? p.routes : p.postes[q.id];
+      h += "<div class='bud'><span>" + q.emoji + " " + q.nom + "</span><span class='pm'>" + pm("poste", q.id + ":-" + Bu.postePas, q.id + ":" + Bu.postePas, Math.round(f * 100) + " %") + "</span><small class='" + (f < 1 ? "mal" : "bien") + "'>" + (q.id === "routes" ? "état " + Math.round(m.etatRoutes * 100) + " %" : f <= 0 ? "fermé !" : "cercle × " + (Bu.rayonMin + (1 - Bu.rayonMin) * f).toFixed(2).replace(".", ",")) + "</small><span class='somme'>−" + fr(cout) + "</span></div>";
+    }
+    h += "<p><small>Moins d'argent = un plus petit cercle autour de chaque bâtiment (à 0 %, il ferme). Des routes mal payées s'abîment : bouchons et terrain moins cher. Au-dessus de 100 %, elles se réparent.</small></p>";
+    h += "<h4>➖ Le reste</h4>";
+    for (const [nom, v] of [["⚡ Centrales (entretien)", p.autres.energie], ["🔥 Carburant des centrales et pompes", p.carburant], ["💧 Eau (entretien)", p.autres.eau], ["🏛️ Mairie", p.autres.mairie], ["🏦 Prêts (mensualités)", p.prets]]) if (v) h += "<div class='bud'><span>" + nom + "</span><span></span><span></span><span class='somme'>−" + fr(v) + "</span></div>";
+    h += "<div class='bud total'><span>= " + fr(p.recettes) + " − " + fr(p.depenses) + "</span><span></span><span></span><span class='somme'>" + signe(p.solde) + "</span></div>";
+    if (m.dernierBudget) h += "<p><small>Le mois dernier : " + signe(m.dernierBudget.solde) + " 🪙</small></p>";
+    // 🏦 la banque
+    h += "<h4>🏦 La banque (" + m.prets.length + " / " + C.prets.max + " prêts)</h4><div class='banque'>";
+    for (const o of C.prets.offres) {
+      const r = Bd.raisonPret(m, o.montant), mens = Math.round((o.montant * C.prets.interet) / C.prets.mois);
+      h += "<button data-pret='" + o.montant + "'" + (r ? " class='verrou' title='" + r.replace(/'/g, "’") + "'" : "") + "><b>" + (r ? "🔒 " : "") + fr(o.montant) + " 🪙</b><small>" + fr(mens) + " 🪙/mois × " + C.prets.mois + "</small></button>";
+    }
+    h += "</div><p><small>Tu rembourses " + Math.round((C.prets.interet - 1) * 100) + " % de plus que ce qu'on t'a prêté (les intérêts). Les gros prêts arrivent avec une plus grande ville.</small></p>";
+    for (const pr of m.prets) h += "<div class='bud'><span>🏦 " + fr(pr.montant) + " 🪙</span><span></span><small>encore " + pr.reste + " mois</small><span class='somme'>−" + fr(pr.mensualite) + "</span></div>";
+    if (m.historique.length > 1) h += graphique(m.historique);
+    return h;
+  }
+  // Deux petites courbes : les habitants (bleu) et la caisse (or), mois après mois
   function graphique(hist) {
-    const W = 260, Hh = 70, max = Math.max(1, ...hist.map((x) => x.habitants));
-    const pts = hist.map((x, k) => (k / (hist.length - 1)) * W + "," + (Hh - (x.habitants / max) * (Hh - 6) - 3)).join(" ");
-    return "<p><small>👥 Les habitants, mois après mois :</small></p><svg width='" + W + "' height='" + Hh + "' style='background:#f4f1e8;border-radius:6px'><polyline points='" + pts + "' fill='none' stroke='#3f6fc4' stroke-width='2'/></svg>";
+    const W = 290, Hh = 80, courbe = (cle, couleur) => {
+      const vals = hist.map((x) => x[cle] || 0), max = Math.max(1, ...vals), min = Math.min(0, ...vals);
+      return "<polyline points='" + vals.map((v, k) => ((k / (hist.length - 1)) * W).toFixed(1) + "," + (Hh - 3 - ((v - min) / (max - min || 1)) * (Hh - 6)).toFixed(1)).join(" ") + "' fill='none' stroke='" + couleur + "' stroke-width='2'/>";
+    };
+    return "<p><small>Mois après mois : <b style='color:#3f6fc4'>👥 habitants</b> · <b style='color:#b8860b'>🪙 caisse</b></small></p><svg width='100%' viewBox='0 0 " + W + " " + Hh + "' style='background:#f4f1e8;border-radius:6px'>" + courbe("habitants", "#3f6fc4") + courbe("argent", "#b8860b") + "</svg>";
   }
 
   // Ce que l'interface a reçu du joueur depuis la dernière fois (et on remet à zéro)
-  function consommer() { const d = Object.assign({}, demandes); demandes.outil = undefined; demandes.taux = 0; demandes.vitesse = null; demandes.calque = undefined; return d; }
+  function consommer() { const d = Object.assign({}, demandes); demandes.outil = undefined; demandes.taux = []; demandes.postes = []; demandes.pret = null; demandes.vitesse = null; demandes.calque = undefined; demandes.difficulte = null; return d; }
 
-  return { initialiser, changerMonde, rafraichir, consommer, afficher, fermerTiroir, ouvrirTiroir, demandes };
+  return { initialiser, changerMonde, rafraichir, consommer, afficher, fermerTiroir, ouvrirTiroir, choisirDifficulte, renvoye, demandes };
 })();

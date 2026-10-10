@@ -51,7 +51,7 @@
     #onglets { top: 70px; right: 8px; display: flex; flex-direction: column; gap: 5px; }
     #onglets button { width: 42px; height: 42px; border: 0; border-radius: 10px; background: rgba(250, 248, 240, .94); font-size: 1.25rem; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
     #onglets button.actif { background: #ffd866; }
-    #panneau { top: 70px; right: 58px; width: min(330px, calc(100% - 76px)); max-height: calc(100% - 160px); overflow-y: auto; background: rgba(250, 248, 240, .97); color: #2a2620; border-radius: 12px; padding: 4px 12px 10px; box-shadow: 0 4px 14px rgba(0,0,0,.35); display: none; font-size: 0.85rem; }
+    #panneau { top: 70px; right: 58px; width: min(360px, calc(100% - 76px)); max-height: calc(100% - 160px); overflow-y: auto; background: rgba(250, 248, 240, .97); color: #2a2620; border-radius: 12px; padding: 4px 12px 10px; box-shadow: 0 4px 14px rgba(0,0,0,.35); display: none; font-size: 0.85rem; }
     #panneau.ouvert { display: block; }
     #panneau h3 { margin: 8px 0 4px; font-size: 1rem; }
     #panneau p { margin: 5px 0; }
@@ -59,7 +59,37 @@
     .ligne { display: grid; grid-template-columns: 1fr 90px 38px; gap: 6px; align-items: center; margin: 3px 0; }
     .barre { display: block; height: 8px; background: #e4e0d6; border-radius: 4px; overflow: hidden; }
     .barre span { display: block; height: 100%; }
-    .impots button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid #c8bca0; background: #fff; font-weight: 700; }
+    /* le budget (étape 2) */
+    #panneau h4 { margin: 10px 0 2px; font-size: 0.88rem; color: #5a4a2a; }
+    .bud { display: grid; grid-template-columns: minmax(0, 1fr) auto 62px 58px; gap: 4px; align-items: center; padding: 2px 0; border-bottom: 1px solid #ece6d6; }
+    .bud > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bud .pm { display: flex; align-items: center; gap: 2px; }
+    .bud .pm b { min-width: 40px; text-align: center; }
+    .bud button, .impots button { width: 28px; height: 28px; border-radius: 8px; border: 1px solid #c8bca0; background: #fff; font-weight: 700; padding: 0; }
+    .bud small { text-align: right; font-size: 0.7rem; }
+    .bud .somme { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .bud.total { border-bottom: 0; border-top: 2px solid #2a2620; font-weight: 700; }
+    .bien { color: #3d8a4a; } .mal { color: #c8443a; }
+    .solde { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px; padding: 6px 8px; border-radius: 8px; margin: 4px 0; }
+    .solde.vert { background: #e3f2df; } .solde.rouge { background: #f8dcd8; }
+    .solde small { color: #6a5a3a; }
+    .recl.rouge { background: #f8dcd8; border-left-color: #c8443a; }
+    .banque { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .banque button { display: flex; flex-direction: column; align-items: center; border: 1px solid #c8bca0; border-radius: 9px; background: #fff; padding: 5px 3px; color: #2a2620; }
+    .banque button small { font-size: 0.68rem; color: #7a6a4a; }
+    .banque button.verrou { opacity: .5; }
+    /* le voile : la difficulté, le maire renvoyé */
+    #voile { inset: 0; z-index: 5; display: none; place-items: center; background: rgba(16, 22, 42, .72); padding: 12px; overflow-y: auto; }
+    #voile.ouvert { display: grid; }
+    .fenetre { background: #faf8f0; color: #2a2620; border-radius: 16px; padding: 14px 18px; max-width: 560px; width: 100%; box-shadow: 0 8px 30px rgba(0,0,0,.5); }
+    .fenetre h2 { margin: 4px 0 8px; font-size: 1.25rem; }
+    .fenetre p { margin: 0 0 10px; font-size: 0.9rem; }
+    .choix { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+    .choix button { display: flex; flex-direction: column; gap: 4px; align-items: center; border: 2px solid #d8cfb8; border-radius: 12px; background: #fff; padding: 10px 6px; color: #2a2620; }
+    .choix button:hover { border-color: #e0a030; }
+    .choix button b { font-size: 1.05rem; }
+    .annuler { border: 1px solid #c8bca0; border-radius: 9px; background: #fff; padding: 6px 12px; }
+    .choix button small { font-size: 0.75rem; color: #6a5a3a; line-height: 1.35; }
     /* les calques et les messages */
     #calques { top: 70px; left: 8px; }
     #bouton-calques { border: 0; border-radius: 10px; background: rgba(250, 248, 240, .94); padding: 6px 10px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
@@ -90,13 +120,16 @@
       #panneau { max-height: calc(100% - 210px); }
       .carte-outil { width: 82px; } .carte-outil b { font-size: 0.66rem; } .carte-outil .emoji { width: 32px; height: 32px; font-size: 1.3rem; }
       #tiroir { bottom: 70px; }
+      .bud { grid-template-columns: auto 62px minmax(0, 1fr); }
+      .bud > span:first-child { grid-column: 1 / -1; }
+      .bud > span:nth-child(2):empty, .bud > span:nth-child(3):empty { display: none; }
     }
   </style>
 </head>
 <body>
   <header>
     <h1>🌐 La Mégalopole</h1>
-    <span><span id="version" class="version"></span> <a href="carnet.html#etape1">📓 Le carnet de la Mégalopole</a> · <a href="../index.html">🏠 Accueil</a></span>
+    <span><span id="version" class="version"></span> <a href="carnet.html#etape2">📓 Le carnet de la Mégalopole</a> · <a href="../index.html">🏠 Accueil</a></span>
   </header>
 
   <div id="jeu">
@@ -129,6 +162,7 @@
     <div id="outil-en-cours" class="flottant"></div>
     <div id="outils" class="flottant"></div>
     <div id="message" class="flottant"></div>
+    <div id="voile" class="flottant"></div>
   </div>
   <p class="aide">
     Glisser la carte : ✋ puis glisser (ou 2 doigts, ou clic droit, ou les flèches) · Zoomer : molette, pincer, <kbd>+</kbd> <kbd>−</kbd> ·
@@ -142,24 +176,25 @@
     <section><h2>💾 Base de données <button id="effacer-base">Effacer</button></h2><pre id="base"></pre></section>
   </div>
 
-  <script src="config.js?v=1"></script>
-  <script src="moteur/evenements.js?v=1"></script>
-  <script src="moteur/ecran.js?v=1"></script>
-  <script src="moteur/entrees.js?v=1"></script>
-  <script src="moteur/hasard.js?v=1"></script>
-  <script src="moteur/iso.js?v=1"></script>
-  <script src="logique/carte.js?v=1"></script>
-  <script src="logique/construction.js?v=1"></script>
-  <script src="logique/reseaux.js?v=1"></script>
-  <script src="logique/services.js?v=1"></script>
-  <script src="logique/zones.js?v=1"></script>
-  <script src="logique/population.js?v=1"></script>
-  <script src="donnees/sauvegarde.js?v=1"></script>
-  <script src="logique/monde.js?v=1"></script>
-  <script src="affichage/maquettes.js?v=1"></script>
-  <script src="affichage/peintre.js?v=1"></script>
-  <script src="affichage/interface.js?v=1"></script>
-  <script src="affichage/sous-le-capot.js?v=1"></script>
-  <script src="main.js?v=1"></script>
+  <script src="config.js?v=2"></script>
+  <script src="moteur/evenements.js?v=2"></script>
+  <script src="moteur/ecran.js?v=2"></script>
+  <script src="moteur/entrees.js?v=2"></script>
+  <script src="moteur/hasard.js?v=2"></script>
+  <script src="moteur/iso.js?v=2"></script>
+  <script src="logique/carte.js?v=2"></script>
+  <script src="logique/construction.js?v=2"></script>
+  <script src="logique/reseaux.js?v=2"></script>
+  <script src="logique/services.js?v=2"></script>
+  <script src="logique/zones.js?v=2"></script>
+  <script src="logique/population.js?v=2"></script>
+  <script src="logique/budget.js?v=2"></script>
+  <script src="donnees/sauvegarde.js?v=2"></script>
+  <script src="logique/monde.js?v=2"></script>
+  <script src="affichage/maquettes.js?v=2"></script>
+  <script src="affichage/peintre.js?v=2"></script>
+  <script src="affichage/interface.js?v=2"></script>
+  <script src="affichage/sous-le-capot.js?v=2"></script>
+  <script src="main.js?v=2"></script>
 </body>
 </html>

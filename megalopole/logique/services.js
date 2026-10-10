@@ -34,7 +34,9 @@ Megalopole.Services = (function () {
       if (!B.rayon) continue;
       b.marche = monde.reseaux.courantDe ? monde.reseaux.courantDe(b) : false;
       if (!b.marche && B.service !== "loisirs") continue; // (un parc n'a pas besoin de courant)
-      cercle(monde, b, B.rayon, (i, part) => {
+      b.rayon = B.rayon * Megalopole.Budget.facteurRayon(monde, B); // étape 2 : selon le budget de son poste
+      if (b.rayon <= 0) continue; // budget à 0 % : le service est fermé
+      cercle(monde, b, b.rayon, (i, part) => {
         if (B.service) monde.couverture[B.service][i] = 1;
         if (B.valeur) bonus[i] += B.valeur * (1 - part * 0.6);
       });
@@ -54,7 +56,7 @@ Megalopole.Services = (function () {
     let bouchons = 0, routes = 0, total = 0;
     for (let i = 0; i < N; i++) {
       if (!monde.route[i]) { T[i] = 0; continue; }
-      const c = i % n, l = (i / n) | 0, cap = monde.route[i] === 2 ? C.routes.avenue.capacite : C.routes.route.capacite;
+      const c = i % n, l = (i / n) | 0, cap = (monde.route[i] === 2 ? C.routes.avenue.capacite : C.routes.route.capacite) * (0.6 + 0.4 * monde.etatRoutes); // étape 2 : une route abîmée laisse passer moins de voitures
       // le nombre de routes autour : le trafic se partage entre elles
       let voisines = 0; for (let dl = -r; dl <= r; dl += r) for (let dc = -r; dc <= r; dc += r) { const cc = c + dc, ll = l + dl; if (cc >= 0 && ll >= 0 && cc < n && ll < n && monde.route[ll * n + cc]) voisines++; }
       let t = (somme(c - r, l - r, c + r, l + r) * C.trafic.parGens) / Math.max(1, voisines) / cap;
@@ -65,7 +67,7 @@ Megalopole.Services = (function () {
     // 4. La valeur du terrain
     const V = monde.valeur, Vb = C.valeur;
     for (let i = 0; i < N; i++) {
-      let v = Vb.base + bonus[i] + (monde.bordDeLEau[i] ? Vb.bordDeLEau : 0) - P[i] * Vb.parPollution;
+      let v = Vb.base - (1 - monde.etatRoutes) * 0.1 + bonus[i] + (monde.bordDeLEau[i] ? Vb.bordDeLEau : 0) - P[i] * Vb.parPollution;
       const rp = monde.routeProche[i];
       if (rp >= 0) v -= Math.max(0, T[rp] - 0.6) * Vb.parTrafic;
       V[i] = Math.max(0, Math.min(1, v));
@@ -75,7 +77,7 @@ Megalopole.Services = (function () {
   function meilleurTransport(monde, i) {
     let m = 0;
     const n = monde.carte.colonnes, c = i % n, l = (i / n) | 0;
-    for (const b of monde.batiments) { const B = C.batiments[b.type]; if (B.trafic && b.marche && Math.hypot(c - b.colonne - b.taille / 2, l - b.ligne - b.taille / 2) <= B.rayon) m = Math.max(m, B.trafic); }
+    for (const b of monde.batiments) { const B = C.batiments[b.type]; if (B.trafic && b.marche && Math.hypot(c - b.colonne - b.taille / 2, l - b.ligne - b.taille / 2) <= (b.rayon || 0)) m = Math.max(m, B.trafic); }
     return m;
   }
 

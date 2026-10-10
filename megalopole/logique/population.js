@@ -25,7 +25,7 @@ Megalopole.Population = (function () {
     emploi: "Peins des zones 🛍️ commerce et 🏭 industrie.", courant: "Une centrale ⚡ (ou des éoliennes), reliée par la route.", eau: "Une station de pompage 🚰 au bord de l'eau, reliée par la route.",
     nourriture: "Peins des zones 🌾 agriculture, loin des usines.", biens: "Des zones 🏭 industrie (qui fabriquent) et 🛍️ commerce (qui vendent).",
     education: "Une école 🏫 près des maisons.", sante: "Une clinique 🏥 près des maisons.", securite: "Un commissariat 🚓.", feu: "Une caserne de pompiers 🚒.",
-    loisirs: "Des parcs 🌳 entre les maisons.", transport: "Des arrêts de bus 🚌, ou des avenues 🛤️ à la place des routes chargées.", air: "Éloigne les usines 🏭 et la centrale des maisons ; plante des parcs.", impots: "Baisse les impôts 🧾.",
+    loisirs: "Des parcs 🌳 entre les maisons.", transport: "Des arrêts de bus 🚌, ou des avenues 🛤️ à la place des routes chargées.", air: "Éloigne les usines 🏭 et la centrale des maisons ; plante des parcs.", impots: "Baisse l'impôt des habitations 🏠 (🧾 Budget).",
   };
 
   function recenser(monde) {
@@ -66,21 +66,21 @@ Megalopole.Population = (function () {
       loisirs: borne(part(avec.loisirs) + joieBatiments(monde) / 20, 0, 1),
       transport: H ? borne(1 - bouchonsH / H, 0, 1) : 1,
       air: H ? borne(1 - (pollutionH / H) * 1.6, 0, 1) : 1,
-      impots: borne(1 - Math.max(0, monde.taux - 7) / 13, 0, 1),
+      impots: borne(1 - Math.max(0, monde.taux.R - C.budget.impotSupportable) / (C.budget.tauxMax - C.budget.impotSupportable), 0, 1), // étape 2 : l'impôt des habitants
     };
     monde.besoins = b;
     // Le bonheur : la moyenne pondérée des besoins de ce palier
     let total = 0, poids = 0;
     for (const x of C.besoins) { if ((x.palier || 0) > palier(monde)) continue; total += b[x.id] * x.poids; poids += x.poids; }
-    monde.bonheur = Math.round(borne((poids ? total / poids : 1) * 100 + joieBatiments(monde), 0, 100));
+    monde.bonheur = Math.round(borne((poids ? total / poids : 1) * 100 + joieBatiments(monde) + Megalopole.Budget.difficulte(monde).bonheur, 0, 100)); // étape 2 : + la difficulté
     // La demande R C I A
-    const impot = -Math.max(0, monde.taux - 9) * D.parPointDImpot, contents = 0.5 + monde.bonheur / 100;
+    const impot = (z) => Megalopole.Budget.effetTaux(monde.taux[z]), contents = 0.5 + monde.bonheur / 100; // étape 2 : un taux par zone
     const besoinC = H * D.commerceParHabitant, besoinI = H * D.industrieParHabitant, besoinA = H * D.agricultureParHabitant;
     monde.demande = {
-      R: borne(((E * D.attirance - actifs + D.base.R) / Math.max(D.base.R, actifs)) * contents + impot, -1, 1),
-      C: borne((besoinC - Ec + D.base.C) / Math.max(D.base.C, besoinC) + impot, -1, 1),
-      I: borne((besoinI - Ei + D.base.I) / Math.max(D.base.I, besoinI) + impot, -1, 1),
-      A: borne((besoinA - Ea + D.base.A) / Math.max(D.base.A, besoinA) + impot, -1, 1),
+      R: borne(((E * D.attirance - actifs + D.base.R) / Math.max(D.base.R, actifs)) * contents + impot("R"), -1, 1),
+      C: borne((besoinC - Ec + D.base.C) / Math.max(D.base.C, besoinC) + impot("C"), -1, 1),
+      I: borne((besoinI - Ei + D.base.I) / Math.max(D.base.I, besoinI) + impot("I"), -1, 1),
+      A: borne((besoinA - Ea + D.base.A) / Math.max(D.base.A, besoinA) + impot("A"), -1, 1),
     };
     monde.stats = { habitants: H, emplois: E, commerce: Ec, industrie: Ei, agriculture: Ea, actifs: Math.round(actifs), chomeurs: Math.max(0, Math.round(actifs - E)) };
     // Le palier (on ne redescend jamais : le titre est gagné pour toujours)
@@ -114,32 +114,13 @@ Megalopole.Population = (function () {
     return liste;
   }
 
-  // 🧾 Le budget du mois
-  function mois(monde) {
-    const s = monde.stats, B = C.budget, f = monde.taux / 10;
-    const recettes = Math.round(s.habitants * B.parHabitant * f + s.emplois * B.parEmploi * f);
-    let routes = 0;
-    for (let i = 0; i < monde.route.length; i++) if (monde.route[i]) routes += monde.route[i] === 2 ? C.routes.avenue.entretien : C.routes.route.entretien;
-    const batiments = monde.batiments.reduce((t, b) => t + C.batiments[b.type].entretien, 0);
-    const touristes = Math.round(monde.batiments.reduce((t, b) => t + (C.batiments[b.type].touristes || 0), 0) * s.habitants * 0.01);
-    const depenses = Math.round(routes + batiments);
-    monde.argent += recettes + touristes - depenses;
-    monde.mois++;
-    monde.dernierBudget = { recettes, touristes, routes: Math.round(routes), batiments, solde: recettes + touristes - depenses };
-    monde.historique.push({ habitants: s.habitants, argent: Math.round(monde.argent), bonheur: monde.bonheur });
-    if (monde.historique.length > 60) monde.historique.shift();
-    radio.emettre("budget-mois", Object.assign({ mois: monde.mois, argent: Math.round(monde.argent), taux: monde.taux }, monde.dernierBudget));
-  }
-
   let minuteur = 0;
   function etape(monde, dt) {
     minuteur -= dt;
-    monde.compteMois += dt;
-    if (monde.compteMois >= C.moisDuree) { monde.compteMois -= C.moisDuree; mois(monde); }
     if (minuteur > 0) return;
     minuteur = 1;
     recenser(monde);
   }
 
-  return { palier, recenser, mois, etape, CONSEILS };
+  return { palier, recenser, etape, CONSEILS };
 })();

@@ -125,6 +125,7 @@
       <a href="#comment">Comment jouer</a>
       <a href="#fichiers">Les fichiers</a>
       <a href="#etape1">Étape 1</a>
+      <a href="#etape2">Étape 2</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="index.html">▶ Jouer</a>
@@ -199,7 +200,7 @@
             <li>☐ 🔎 : touche un bâtiment, il dit jusqu'où il peut monter, et ce qui lui manque.</li>
             <li>☐ Les paliers : 🏘️ Village à 400 habitants, 🏰 Bourg à 2 000, 🏙️ Ville à 10 000… jusqu'à 🌐 Mégalopole à 1 million !</li>
             <li>☐ 🗺️ Calques : l'électricité, l'eau, la valeur du terrain, la pollution, le trafic, chaque service.</li>
-            <li>☐ 🧾 Le budget : les impôts (−/+), les recettes et les dépenses de chaque mois.</li>
+            <li>☐ 🧾 Le budget : les impôts (−/+), les recettes et les dépenses de chaque mois (devenu bien plus riche à l'étape 2).</li>
             <li>☐ Le jour et la nuit (les fenêtres s'allument, le solaire s'arrête), les voitures sur les routes.</li>
             <li>Vérifie « version 1 » en haut de la page.</li>
           </ul>
@@ -243,7 +244,7 @@
       <h3>🔎 Missions d'exploration</h3>
       <ul>
         <li>Mets une usine à côté des maisons. Que devient la pollution 🌫️ (calque), et la valeur du terrain ?</li>
-        <li>Monte les impôts à 15 % : que fait la barre R C I A ? Et le budget ?</li>
+        <li>Monte l'impôt 🏠 à 15 % : que fait la barre R C I A ? Et le budget ?</li>
         <li>Construis des panneaux solaires seuls : que se passe-t-il la nuit ?</li>
         <li>Dans <code>config.js</code>, cherche <code>paliers</code> : combien d'habitants pour une métropole ?</li>
       </ul>
@@ -253,16 +254,78 @@
       <details class="question"><summary>Une centrale de 400 et 500 maisons qui consomment 1 chacune : que se passe-t-il ?</summary><p>Les 400 plus proches par la route ont le courant ; les 100 plus loin sont dans le noir. C'est une pénurie : il faut une centrale de plus.</p></details>
     </section>
 
+    <section id="etape2">
+      <h2>🧾 Étape 2 : les impôts et les coûts <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Un vrai budget de maire : un impôt par zone, un curseur par service, la banque, et 3 difficultés (tes choix). <a href="index.html"><strong>▶ la Mégalopole</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>megalopole/demandes/02-impots-et-couts.md</code>.</p>
+          <ul>
+            <li>✍️ « La gestion des impôts et des coûts sera importante, il faut bien réfléchir et paramétrer le système. »</li>
+            <li>Tes choix : <strong>un taux par zone</strong>, <strong>un budget par service</strong> (avec le carburant des centrales), <strong>des prêts à la banque</strong> (12 mois sous zéro : le maire est renvoyé), <strong>3 difficultés</strong>.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ 🆕 Nouvelle ville : on choisit 🟢 Facile, 🟡 Normal ou 🔴 Difficile. Les prix du menu changent.</li>
+            <li>☐ 🧾 : monte l'impôt 🏭 à 15 % : la zone rapporte plus, mais sa barre R C I A baisse.</li>
+            <li>☐ 🧾 : baisse 🎓 Éducation à 50 %, puis touche une école avec 🔎 : son cercle a rapetissé.</li>
+            <li>☐ Le « solde prévu » change dès que tu bouges un curseur.</li>
+            <li>☐ 🏦 Emprunte 5 000 🪙 : la mensualité apparaît dans les dépenses.</li>
+            <li>☐ Mets tous les impôts à 0 % et attends : avertissements… puis « Le maire est renvoyé ! ».</li>
+            <li>Vérifie « version 2 » en haut de la page.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔧 Sous le capot n° 1 : la feuille de calcul du trésorier</h3>
+      <p>Chaque mois (20 s), le trésorier (<code>logique/budget.js</code>) fait les comptes, comme un tableur :</p>
+      <pre style="white-space: pre-wrap">  ➕ impôt d'une zone = ses gens × leur revenu × son taux
+  ➖ un service       = l'entretien de ses bâtiments × son curseur (de 0 à 150 %)
+  ➖ le reste          = centrales, eau, mairie + le CARBURANT + les prêts
+  ────────────────────────────────────────────
+  = le SOLDE du mois → ajouté à la caisse 🪙</pre>
+      <p>Exemple : 1 000 habitants dans des maisons jumelles (niveau 2) gagnent 1 000 × 11 = 11 000 🪙. À 9 %, ils paient 990 🪙 par mois. Un gratte-ciel (500 habitants × 20) rapporte 900 🪙 tout seul ! C'est pour ça qu'une ville riche a des grands bâtiments.</p>
+
+      <h3>🔧 Sous le capot n° 2 : chaque curseur a un prix… et un effet</h3>
+      <div class="comparaison">
+        <div class="carte"><h4>📉 Un impôt plus haut</h4><p>Plus d'argent, mais moins d'envie de venir : −0,05 par point au-dessus de 9 %. À 9 %, rien ne change ; à 5 %, la zone attire plus (+0,12).</p></div>
+        <div class="carte"><h4>✂️ Un service moins payé</h4><p>Il coûte moins, mais son cercle rapetisse : rayon × (0,4 + 0,6 × curseur). À 0 %, il ferme. Des routes mal payées s'abîment : bouchons !</p></div>
+      </div>
+      <p>C'est un <strong>compromis</strong> : il n'y a pas de bonne réponse unique. Le bon maire trouve l'équilibre.</p>
+
+      <h3>🔧 Sous le capot n° 3 : un prêt, ça coûte</h3>
+      <pre style="white-space: pre-wrap">  emprunter 20 000 🪙  →  rendre 20 000 × 1,2 = 24 000 🪙
+                          en 24 mois = 1 000 🪙 par mois</pre>
+      <p>Les 4 000 🪙 de plus, ce sont les <strong>intérêts</strong> : le prix pour avoir l'argent tout de suite. Un prêt sert à construire ce qui rapportera plus tard (une centrale, des services pour que les maisons montent).</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Quel impôt rapporte le plus dans ta ville ? Pourquoi ? (regarde les niveaux des bâtiments)</li>
+        <li>Trouve le taux le plus haut pour 🏠 qui garde la barre R au-dessus de zéro.</li>
+        <li>Compare une centrale à charbon et des éoliennes : regarde la ligne 🔥 Carburant.</li>
+        <li>Dans <code>config.js</code>, change <code>moisDansLeRouge: 12</code> en 3 : le maire est-il renvoyé plus vite ?</li>
+        <li>Sous le capot, lis les lignes du trésorier : retrouve le calcul de l'impôt 🛍️.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un service à 50 % : son cercle fait combien de fois sa taille normale ?</summary><p>0,4 + 0,6 × 0,5 = 0,7. Une école de 11 cases n'en couvre plus que 7,7.</p></details>
+      <details class="question"><summary>Tu empruntes 5 000 🪙. Combien rends-tu en tout ?</summary><p>5 000 × 1,2 = 6 000 🪙, en 24 mensualités de 250 🪙.</p></details>
+      <details class="question"><summary>En difficile, une école coûte 1 500 🪙 de base. Combien la paies-tu ?</summary><p>1 500 × 1,3 = 1 950 🪙. Et son entretien : 100 × 1,3 = 130 🪙 par mois.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route de la Mégalopole</h2>
       <p class="chapeau">Des idées pour la suite. Maxance choisit l'ordre, ou en ajoute.</p>
       <div class="route">
         <div class="carte fait"><div class="num">1</div><h4>🌐 Une ville qui pousse toute seule <span class="etiquette">✅ fait · à valider</span></h4><p>Routes, 4 zones et 6 niveaux, énergie, eau, services, loisirs, transports, demande R C I A, bonheur, réclamations, budget, paliers jusqu'à la mégalopole.</p><p class="apprend"><b>Tu apprends :</b> une simulation, une balance, une carte de valeurs. <b>Durée :</b> 2 séances.</p></div>
-        <div class="carte prochain"><div class="num">2</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
-        <div class="carte"><div class="num">3</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
-        <div class="carte"><div class="num">4</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
-        <div class="carte"><div class="num">5</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
+        <div class="carte fait"><div class="num">2</div><h4>🧾 Les impôts et les coûts <span class="etiquette">✅ fait · à valider</span></h4><p>Un impôt par zone, un budget par service (0 à 150 %), le carburant des centrales, la banque, la caisse vide et le maire renvoyé, 3 difficultés.</p><p class="apprend"><b>Tu apprends :</b> un budget, un compromis, les intérêts d'un prêt. <b>Durée :</b> 1 séance.</p></div>
+        <div class="carte prochain"><div class="num">3</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
+        <div class="carte"><div class="num">4</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
+        <div class="carte"><div class="num">5</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
+        <div class="carte"><div class="num">6</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
       </div>
     </section>
 
@@ -277,6 +340,14 @@
         <textarea class="journal" id="megalopole-appris-1" data-cle="megalopole-appris-1" placeholder="Ex. : J'ai appris que la ville est une balance entre habitants et emplois…"></textarea>
         <label for="megalopole-idees-1"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="megalopole-idees-1" data-cle="megalopole-idees-1" placeholder="Ex. : Des incendies quand il n'y a pas de pompiers…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 2 · les impôts et les coûts <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le trésorier (<code>logique/budget.js</code>), 4 impôts, 7 curseurs de services qui changent leur cercle, l'usure des routes, le carburant, la banque, la caisse vide et le maire renvoyé, le choix de la difficulté, le nouveau panneau 🧾, et la sauvegarde en version 2 (les anciennes villes sont converties).</p>
+        <label for="megalopole-appris-2"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="megalopole-appris-2" data-cle="megalopole-appris-2" placeholder="Ex. : J'ai appris qu'un prêt coûte plus cher que ce qu'on emprunte…"></textarea>
+        <label for="megalopole-idees-2"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="megalopole-idees-2" data-cle="megalopole-idees-2" placeholder="Ex. : Des ordonnances (interdire de fumer, recycler…) qui coûtent mais rendent heureux…"></textarea>
       </div>
     </section>
   </main>

@@ -46,7 +46,7 @@ Megalopole.Construction = (function () {
       nouvelles++;
       prix += R.prix * (k.terrain[i] === K.TERRAIN.eau ? FACTEUR_PONT : 1) + (k.arbre[i] ? PRIX_ARBRE : 0) - (actuelle === 1 ? C.routes.route.prix : 0);
     }
-    return { prix: Math.max(0, prix), nouvelles, impossibles };
+    return { prix: Megalopole.Budget.prix(monde, Math.max(0, prix)), nouvelles, impossibles }; // étape 2 : × la difficulté
   }
   function poserRoute(monde, cases, sorte) {
     const e = evaluerRoute(monde, cases, sorte);
@@ -76,7 +76,7 @@ Megalopole.Construction = (function () {
       if (id && monde.niveau[i] > 0) continue; // on ne repeint pas un terrain où un bâtiment a poussé (il faut le démolir)
       n++; prix += id ? C.zones[z].prix + (k.arbre[i] ? PRIX_ARBRE : 0) : 0;
     }
-    return { prix, cases: n };
+    return { prix: Megalopole.Budget.prix(monde, prix), cases: n };
   }
   function zoner(monde, cases, z) {
     const e = evaluerZone(monde, cases, z), id = z ? C.zones[z].id : 0;
@@ -110,7 +110,7 @@ Megalopole.Construction = (function () {
       if (monde.niveau[i] > 0) return "un bâtiment a poussé ici (démolis-le d'abord)";
     }
     if (B.bordDeLEau && !K.presDeLEau(k, c + (B.taille >> 1), l + (B.taille >> 1), B.bordDeLEau + (B.taille >> 1))) return "trop loin de l'eau (il pompe dans une rivière ou un lac)";
-    if (B.prix > monde.argent) return "pas assez d'argent (" + B.prix + " 🪙)";
+    if (Megalopole.Budget.prix(monde, B.prix) > monde.argent) return "pas assez d'argent (" + Megalopole.Budget.prix(monde, B.prix).toLocaleString("fr-FR") + " 🪙)" + (monde.argent < 0 ? " : la caisse est vide (🧾 un prêt ?)" : "");
     return null;
   }
   function poserBatiment(monde, type, c, l) {
@@ -119,9 +119,10 @@ Megalopole.Construction = (function () {
     const b = { id: monde.prochainId++, type, colonne: c, ligne: l, taille: B.taille };
     for (const p of casesDe(type, c, l)) { const i = index(monde, p.colonne, p.ligne); monde.occupe[i] = b.id; monde.zone[i] = 0; monde.carte.arbre[i] = 0; }
     monde.batiments.push(b);
-    monde.argent -= B.prix;
+    const cout = Megalopole.Budget.prix(monde, B.prix);
+    monde.argent -= cout;
     monde.changements++;
-    radio.emettre("batiment-pose", { nom: B.nom, emoji: B.emoji, colonne: c, ligne: l, prix: B.prix, argent: monde.argent });
+    radio.emettre("batiment-pose", { nom: B.nom, emoji: B.emoji, colonne: c, ligne: l, prix: cout, argent: monde.argent });
     return b;
   }
   // Remettre un bâtiment chargé depuis la sauvegarde
@@ -153,6 +154,7 @@ Megalopole.Construction = (function () {
       else if (monde.carte.arbre[i]) { monde.carte.arbre[i] = 0; n++; prix += PRIX_ARBRE; }
     }
     if (!n) return false;
+    prix = Megalopole.Budget.prix(monde, prix);
     monde.argent -= prix;
     monde.changements++;
     radio.emettre("demolition", { cases: n, prix, argent: monde.argent });

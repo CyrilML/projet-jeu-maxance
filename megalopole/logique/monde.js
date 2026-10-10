@@ -17,7 +17,7 @@ Megalopole.Monde = (function () {
   const radio = Megalopole.Evenements;
   const L = C.carte.largeurCase, Hc = C.carte.hauteurCase;
 
-  function creer(graine, partie, camera) {
+  function creer(graine, partie, camera, difficulte) {
     const carte = K.inventer(graine), n = carte.colonnes, N = n * n;
     const monde = {
       carte, temps: 0, mois: 0, compteMois: 0,
@@ -26,7 +26,10 @@ Megalopole.Monde = (function () {
       valeur: new Float32Array(N), pollution: new Float32Array(N), trafic: new Float32Array(N), bordDeLEau: new Uint8Array(N),
       couverture: {}, reseaux: { courant: {}, eau: {} },
       batiments: [], prochainId: 1, zonees: [],
-      argent: C.argentDepart, taux: C.budget.tauxDepart, palier: 0, bonheur: 60,
+      // étape 2 : la difficulté, un taux d'impôt par zone, un budget par poste, les prêts, l'état des routes
+      difficulte: difficulte || "normal", argent: C.difficultes[difficulte || "normal"].argent, palier: 0, bonheur: 60,
+      taux: { R: C.budget.tauxDepart, C: C.budget.tauxDepart, I: C.budget.tauxDepart, A: C.budget.tauxDepart },
+      postes: {}, prets: [], etatRoutes: 1, moisDansLeRouge: 0, renvoye: false,
       demande: { R: 0.5, C: 0.3, I: 0.3, A: 0.2 }, besoins: {}, stats: { habitants: 0, emplois: 0, commerce: 0, industrie: 0, agriculture: 0, actifs: 0, chomeurs: 0 },
       reclamations: [], historique: [], dernierBudget: null, compteurs: { grandis: 0, baisses: 0 },
       camera: camera || null, outil: null, trace: null, survol: null, selection: null, changements: 0,
@@ -118,9 +121,12 @@ Megalopole.Monde = (function () {
     camera(monde, dt, i);
     if (i.outil !== undefined) choisirOutil(monde, i.outil);
     if (i.annuler) { if (monde.trace) monde.trace = null; else choisirOutil(monde, null); monde.selection = null; }
-    if (i.taux) { monde.taux = Math.max(C.budget.tauxMin, Math.min(C.budget.tauxMax, monde.taux + i.taux)); radio.emettre("impots-changes", { taux: monde.taux }); }
+    // étape 2 : les curseurs du budget, et les prêts
+    for (const t of i.taux || []) Megalopole.Budget.changerTaux(monde, t.zone, t.d);
+    for (const p of i.postes || []) Megalopole.Budget.changerPoste(monde, p.id, p.d);
+    if (i.pret) Megalopole.Budget.emprunter(monde, i.pret);
     outil(monde, i.souris);
-    if (!dt) return;
+    if (!dt || monde.renvoye) return; // (le maire renvoyé : la ville s'arrête)
     monde.temps += dt;
     minuteurReseaux -= dt;
     if (minuteurReseaux <= 0) { minuteurReseaux = 1; Megalopole.Reseaux.calculer(monde); }
@@ -128,6 +134,7 @@ Megalopole.Monde = (function () {
     if (minuteurCartes <= 0) { minuteurCartes = 2; Megalopole.Services.calculer(monde); }
     Megalopole.Zones.etape(monde, dt);
     Megalopole.Population.etape(monde, dt);
+    Megalopole.Budget.etape(monde, dt);
   }
 
   return { creer, etape, caseSous, choisirOutil, casesDuTrace, toutCalculer };
