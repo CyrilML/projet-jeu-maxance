@@ -40,6 +40,8 @@ Village.Ages = (function () {
     for (const [r, cible] of Object.entries(o.stock || {})) liste.push({ texte: Village.Batiments.NOMS_RESSOURCES[r] + " dans l'entrepôt", valeur: monde.stock[r], cible });
     if (o.pieces) liste.push({ texte: "🪙 Pièces", valeur: monde.pieces, cible: o.pieces });
     if (o.bonheur) liste.push({ texte: "😊 Bonheur des habitants (%)", valeur: Math.round(monde.bonheur.valeur || 0), cible: o.bonheur }); // étape 15
+    if (o.merveille) liste.push({ texte: "🗼 Paliers de la Grande Tour", valeur: Village.Monument.paliersFaits(monde, "merveille"), cible: o.merveille }); // étape 53
+    for (const [t, n] of Object.entries(o.construits || {})) liste.push({ texte: Village.Batiments.TYPES[t].emoji + " " + Village.Batiments.TYPES[t].nom + (n > 1 ? " (" + n + ")" : ""), valeur: monde.batiments.filter((b) => b.type === t && b.etat === "pret").length, cible: n });
     if (o.monument) liste.push({ texte: "🏛️ Paliers du Grand Beffroi", valeur: Village.Monument.paliersFaits(monde), cible: o.monument }); // étape 34
     if (o.reseaux) liste.push({ texte: "🔌 Lits avec ⚡ + 🚰 + 🚽 (%)", valeur: Math.round(Village.Electricite.partLogements(monde, ["courant", "eau", "egout"]) * 100), cible: o.reseaux }); // étape 48
     if (o.immeubles) liste.push({ texte: "🏢 Immeubles", valeur: monde.batiments.filter((b) => b.type === "immeuble" && b.etat === "pret").length, cible: o.immeubles });

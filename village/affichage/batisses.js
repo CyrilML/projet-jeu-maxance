@@ -77,6 +77,10 @@ Village.Batisses = (function () {
     hopital: { a: 18, a2: 26, h: 30, toit: 4, murG: "#f4f2ec", murD: "#d6d2c8", toitA: "#8a8e94", toitB: "#6c7076", mur: "pierre", toitSorte: null, fenetres: 0, toitForme: "plat" },
     pompiers: { a: 18, a2: 24, h: 18, toit: 6, murG: "#b8584a", murD: "#944438", toitA: "#4a4c50", toitB: "#3a3c40", mur: "pierre", toitSorte: null, fenetres: 1, toitForme: "plat", porteGrange: "#c8302a" },
     police: { a: 17, a2: 24, h: 19, toit: 5, murG: "#c8ccd4", murD: "#a4a8b0", toitA: "#3a4a6a", toitB: "#2a3854", mur: "pierre", toitSorte: null, fenetres: 2, toitForme: "plat", volets: "#2f5aa8" },
+    // Étape 52 : 🛍️ le centre commercial (verre et béton) et ✈️ l'aérogare ; étape 53 : 🗼 la Grande Tour
+    commerce: { a: 20, a2: 30, h: 20, toit: 4, murG: "#e8e4dc", murD: "#c8c4bc", toitA: "#8a8e94", toitB: "#6c7076", mur: "verre", toitSorte: null, fenetres: 0, toitForme: "plat" },
+    aeroport: { a: 20, a2: 34, h: 16, toit: 5, murG: "#dfe6ec", murD: "#b8c2ca", toitA: "#9aa4ae", toitB: "#7a848e", mur: "verre", toitSorte: null, fenetres: 0, toitForme: "plat" },
+    merveille: { a: 30, h: 10, toit: 0, murG: "#e2ddd2", murD: "#c4beb2", toitA: "#d8d2c6", toitB: "#b8b2a6", mur: "pierre", toitSorte: null, fenetres: 0, toitForme: "plat" },
     monument: { a: 20, a2: 26, h: 20, toit: 14, murG: "#f2ede2", murD: "#d4ccbc", toitA: "#3f6fc4", toitB: "#2f569c", mur: "pierre", toitSorte: "ardoise", fenetres: 2, lanterne: true }, // étape 31
     depot: { a: 22, a2: 32, h: 18, toit: 20, murG: "#c9a26a", murD: "#a8834a", toitA: "#3f6fc4", toitB: "#2f569c", mur: "planches", toitSorte: "tuiles", fenetres: 2, lanterne: true, toitForme: "mansarde" },
   };
@@ -130,7 +134,7 @@ Village.Batisses = (function () {
   // Seul le Grand Beffroi garde sa grande taille.
   // Étape 38 : les logements d'une case (huttes, maisons, puits) ne sont plus plus larges que leur case ; le monument un peu
   // plus petit (il débordait devant lui).
-  const echelleTaille = (type, n) => (n <= 1 ? Math.min(C_.detail.echelleBatiments, 27 / MODELES[type].a) : type === "monument" ? 3.8 : C_.detail.echelleBatiments + C_.detail.echelleParCaseEnPlus * (n - 1));
+  const echelleTaille = (type, n) => (n <= 1 ? Math.min(C_.detail.echelleBatiments, 27 / MODELES[type].a) : type === "monument" ? 3.8 : type === "merveille" ? 2.6 : C_.detail.echelleBatiments + C_.detail.echelleParCaseEnPlus * (n - 1));
   const decalageTaille = (n) => ((n - 1) * C_.carte.largeurCase) / 2;
 
   // Un point sur un mur : u va de 0 (début du mur) à 1 (fin), v de 0 (le sol) à 1 (le haut du mur).
@@ -1031,6 +1035,47 @@ Village.Batisses = (function () {
         ctx.fillStyle = "#ffcf2e"; ctx.beginPath(); ctx.arc(x - 7, y + 6 + p, 2, 0, Math.PI); ctx.arc(x + 5, y + 6 - p, 2, 0, Math.PI); ctx.fill();
         return [x - 2, y - 32];
       }
+      case "merveille": { // Étape 53 : 🗼 la Grande Tour grandit à chaque palier (b.palier : 0 à 6 ; l'aperçu la montre finie)
+        const p = b ? b.palier || 0 : 6;
+        bloc(ctx, x, y + 3, 34, 4, "#d8d2c6", "#b8b2a6", "#99938a", false); // la grande esplanade
+        bloc(ctx, x, y - 1, 28, 3, "#e2ddd2", "#c4beb2", "#a6a094", false);
+        const etages = [[22, 34], [18, 32], [14, 30], [10, 26], [7, 22]]; // [demi-largeur, hauteur] de chaque étage, de bas en haut
+        const montres = p === 0 ? 0 : p === 1 ? 2 : 5;
+        let yy = y - 4, sommet = [x, yy];
+        if (!montres) { // les fondations : des blocs et 2 grues
+          bloc(ctx, x - 10, yy, 8, 6, "#e8e5de", "#c4c0b6", "#a5a197", true); bloc(ctx, x + 10, yy + 2, 7, 5, "#e8e5de", "#c4c0b6", "#a5a197", true);
+        }
+        etages.slice(0, montres).forEach(([a, h], k) => {
+          if (p >= 3) { // les étages de verre (des bandes de fenêtres qui s'allument la nuit)
+            bloc(ctx, x, yy, a, h, "#5a7a94", "rgba(120, 170, 205, .95)", "rgba(80, 130, 170, .95)", false);
+            const nuit = vue.noirceur > 0.15, G = [x - a, yy], B = [x, yy + a / 2], D = [x + a, yy];
+            ctx.strokeStyle = nuit ? "rgba(255, 220, 120, .8)" : "rgba(235, 245, 255, .6)"; ctx.lineWidth = 0.8; ctx.beginPath();
+            for (let e = 1; e < 5; e++) { const v = e / 5; for (const [P, Q] of [[G, B], [B, D]]) { const A1 = surMur(P, Q, h, 0, v), A2 = surMur(P, Q, h, 1, v); ctx.moveTo(A1[0], A1[1]); ctx.lineTo(A2[0], A2[1]); } }
+            ctx.stroke();
+          }
+          charpente(ctx, x, yy, a, h, p >= 3 ? 0.55 : 1);
+          if (p >= 4) for (const [dx, dy] of [[-a, 0], [a, 0], [0, a / 2]]) { rond(ctx, x + dx * 0.92, yy + dy * 0.92 - h - 2, 3.4, vue.hiver ? "#e8eef5" : "#4a8a42"); rond(ctx, x + dx * 0.8, yy + dy * 0.8 - h - 4, 2.4, vue.hiver ? "#f4f8ff" : "#5aa04e"); } // les jardins suspendus
+          yy -= h; sommet = [x, yy];
+        });
+        if (p >= 5) { // la flèche dorée
+          forme(ctx, [[x - 5, yy], [x + 5, yy + 1], [x + 0.5, yy - 46]], "#e8c040"); forme(ctx, [[x, yy + 1.5], [x + 5, yy + 1], [x + 0.5, yy - 46]], "#b8901e");
+          rond(ctx, x + 0.5, yy - 47, 2.4, "#fff2a0"); lumiere(x + 0.5, yy - 47, 34, "jaune", 1);
+          sommet = [x, yy - 50];
+        }
+        if (p >= 6 && vue.anim) for (let k = 0; k < 4; k++) { // la fête du siècle : un feu d'artifice qui ne s'arrête jamais
+          const ph = (t * 0.45 + k / 4) % 1, cx = x + (k - 1.5) * 34, cy = sommet[1] + 30 - ph * 60, r = ph * 22, c = ["#ff6a5a", "#ffd84a", "#6ad0ff", "#c88aff"][k];
+          if (ph > 0.35) { ctx.strokeStyle = c; ctx.globalAlpha = 1 - ph; ctx.lineWidth = 1.4; ctx.beginPath(); for (let j = 0; j < 10; j++) { const an = j * TOUR / 10; ctx.moveTo(cx + Math.cos(an) * r * 0.4, cy + Math.sin(an) * r * 0.4); ctx.lineTo(cx + Math.cos(an) * r, cy + Math.sin(an) * r); } ctx.stroke(); ctx.globalAlpha = 1; lumiere(cx, cy, 30, "jaune", 0.6); }
+        }
+        if (p <= 2) { // les grues du chantier
+          for (const [gx, gy, hh, s] of [[x - 30, y + 2, 90 + p * 40, 1], [x + 30, y + 4, 70 + p * 40, -1]]) {
+            ctx.strokeStyle = "#e8b830"; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx, gy - hh); ctx.moveTo(gx - 10 * s, gy - hh); ctx.lineTo(gx + 34 * s, gy - hh); ctx.stroke();
+            ctx.strokeStyle = "#3a3028"; ctx.lineWidth = 0.8; ctx.beginPath(); const cx = gx + (14 + Math.sin(t * 0.4 + s) * 10) * s; ctx.moveTo(cx, gy - hh); ctx.lineTo(cx, gy - hh + 26); ctx.stroke();
+            bloc(ctx, cx, gy - hh + 30, 3, 4, "#9aa0a8", "#7a8088", "#5a6068", false);
+          }
+          if (p === 0) return [x, y - 120];
+        }
+        return sommet;
+      }
       case "monument": {
         // Étape 31 : 🏛️ le Grand Beffroi grandit à chaque palier (b.palier : 0 à 4 ; l'aperçu le montre fini)
         const p = b ? b.palier || 0 : 4;
@@ -1210,6 +1255,23 @@ Village.Batisses = (function () {
       },
       scierie: () => { ctx.fillStyle = "rgba(80, 150, 210, .75)"; forme(ctx, [[c.G[0] - 14, c.G[1] + 9], [c.G[0] - 4, c.G[1] + 14], [c.G[0] + 2, c.G[1] + 11], [c.G[0] - 8, c.G[1] + 6]], "rgba(90, 160, 220, .85)"); roue(ctx, c.G[0] - 3, c.G[1] - 4, 15, travail ? -t * 2 : 0, "#6b4423", 8, true); },
       bucheron: () => tasDeBuches(ctx, c.B[0] + 3, c.B[1] + 3, 0),
+      // Étape 52 : 🛍️ le centre commercial : des auvents de couleur, et une grande enseigne sur le toit
+      commerce: () => {
+        auventRaye(ctx, c.G, c.B, m.h, 0.08, 0.48, "#d9553b", "#f2ece0"); auventRaye(ctx, c.G, c.B, m.h, 0.55, 0.95, "#3f6fc4", "#f2ece0");
+        const s0 = sommet || [x, y - m.h], P = [s0[0] - 16, s0[1] + 2], Q = [s0[0] + 10, s0[1] + 15];
+        forme(ctx, [P, Q, [Q[0], Q[1] - 11], [P[0], P[1] - 11]], "#c8443a");
+        ctx.fillStyle = "#fff6e0"; for (let k = 0; k < 5; k++) { const u = 0.12 + k * 0.18, A = entre(P, Q, u); ctx.fillRect(A[0] - 1.5, A[1] - 8, 3, 5); }
+        if (vue.noirceur > 0.15) lumiere((P[0] + Q[0]) / 2, (P[1] + Q[1]) / 2 - 6, 26, "orange", 0.8);
+        return [s0[0], s0[1] - 14];
+      },
+      // Étape 52 : ✈️ l'aérogare : la tour de contrôle, ronde, avec sa cabine de verre et son radar qui tourne
+      aeroport: () => {
+        const s = tourRonde(ctx, c.D[0] - 8, c.D[1] - 4, { r: 5, rh: 4, h: 44, clair: "#e8ecf0", fonce: "#a8b0b8", dessus: "#c8d0d8" });
+        const cab = tourRonde(ctx, s[0], s[1] + 3, { r: 8, h: 7, ht: 3, clair: "#9ac0d8", fonce: "#5a809a", toit: "dome", toitA: "#d8dce2", toitB: "#9aa0a8" });
+        const an = t * 2; ctx.strokeStyle = "#3a3e44"; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(cab[0] - Math.cos(an) * 5, cab[1] - 3); ctx.lineTo(cab[0] + Math.cos(an) * 5, cab[1] - 3 - Math.sin(an) * 1.5); ctx.stroke();
+        if (vue.noirceur > 0.15) lumiere(cab[0], cab[1] + 4, 20, Math.floor(t * 2) % 2 ? "jaune" : "orange", 0.9);
+        return [cab[0], cab[1] - 6];
+      },
       // Étape 48 : 🌆 les services publics
       ecole: () => { // un clocheton avec sa cloche sur le toit, et une horloge
         const s0 = sommet || [x, y - m.h - m.toit];
@@ -1598,7 +1660,7 @@ Village.Batisses = (function () {
     else if (b.malade || (b.ouvrier && b.ouvrier.malade > 0)) bulleDePensee(ctx, x, yBulle, t, "🤒"); // étape 15 : les vaches sont malades ; étape 50 : l'ouvrier est malade
     else if (b.ouvrier && b.ouvrier.affame) bulleDePensee(ctx, x, yBulle, t, "🍽️");
     else if (C_.ateliers[b.type] && C_.ateliers[b.type].electrique && b.etat === "pret" && !b.courant) bulleDePensee(ctx, x, yBulle, t, "⚡"); // étape 34 : pas de courant
-    else if ((b.type === "pompage" || b.type === "epuration" || Village.Services.estService(b.type)) && b.etat === "pret" && !b.courant) bulleDePensee(ctx, x, yBulle, t, "⚡"); // étape 35
+    else if ((b.type === "pompage" || b.type === "epuration" || Village.Services.estService(b.type) || b.type === "aeroport") && b.etat === "pret" && !b.courant) bulleDePensee(ctx, x, yBulle, t, "⚡"); // étape 35
     else if (b.usure >= 1) bulleDePensee(ctx, x, yBulle, t, "🔧"); // étape 11 : usé !
     // (Étape 22 : ✍️ plus de bulle 🍞 ni 🥶 au-dessus de chaque bâtiment : ça devenait illisible. Le pain et le froid
     // concernent tout le village : ils sont montrés une seule fois, en bas de l'écran.)
@@ -1851,6 +1913,15 @@ Village.Batisses = (function () {
     }
     for (let k = 0; k < 6; k++) { const p = (t * 0.4 + k / 6) % 1; ctx.fillStyle = "rgba(50, 46, 44," + 0.6 * (1 - p) + ")"; ctx.beginPath(); ctx.arc(x + Math.sin(p * 3 + k) * 6 + p * 14, y - 18 - p * 40, 4 + p * 9, 0, TOUR); ctx.fill(); }
     lumiere(x, y, 40, "feu", 1);
+  }
+  // Étape 53 : une charpente d'acier (les poutres d'un étage : les 4 montants, les 2 anneaux et des croix sur les 2 faces)
+  function charpente(ctx, x, y, a, h, force) {
+    const G = [x - a, y], B = [x, y + a / 2], D = [x + a, y], H = [x, y - a / 2];
+    ctx.strokeStyle = "rgba(90, 98, 110, " + force + ")"; ctx.lineWidth = 1.6; ctx.beginPath();
+    for (const P of [G, B, D, H]) { ctx.moveTo(P[0], P[1]); ctx.lineTo(P[0], P[1] - h); }
+    for (const dh of [0, h]) { ctx.moveTo(G[0], G[1] - dh); ctx.lineTo(B[0], B[1] - dh); ctx.lineTo(D[0], D[1] - dh); ctx.lineTo(H[0], H[1] - dh); ctx.closePath(); }
+    for (const [P, Q] of [[G, B], [B, D]]) { ctx.moveTo(P[0], P[1]); ctx.lineTo(Q[0], Q[1] - h); ctx.moveTo(Q[0], Q[1]); ctx.lineTo(P[0], P[1] - h); }
+    ctx.stroke();
   }
   function fumee(ctx, x, y, t) {
     for (let k = 0; k < 4; k++) {

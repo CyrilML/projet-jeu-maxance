@@ -50,7 +50,8 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("commande-pas-assez", (d) => afficher("📦 Il manque encore " + d.manque + " " + Village.Batiments.NOMS_RESSOURCES[d.quoi]));
   Village.Evenements.ecouter("guide-etape", (d) => gagner("👣 Étape réussie : " + d.texte, [["pieces", d.pieces]]));
   Village.Evenements.ecouter("monument-palier", (d) => gagner(d.emoji + " " + d.nom + " : construit !", [["pieces", d.pieces], ["gemmes", d.gemmes]])); // étape 31
-  Village.Evenements.ecouter("monument-rien", () => afficher("🏛️ Il n'y a rien de libre de ce que demande le monument"));
+  Village.Evenements.ecouter("monument-rien", (d) => afficher((d.monument === C.merveille.nom ? "🗼" : "🏛️") + " Il n'y a rien de libre de ce que demande " + (d.monument === C.merveille.nom ? "la Grande Tour" : "le monument")));
+  Village.Evenements.ecouter("touristes", (d) => afficher("✈️ Des touristes sont arrivés en avion : +" + d.gain + " 🪙")); // étape 52
   Village.Evenements.ecouter("partie-remise-a-zero", () => setTimeout(() => afficher("🆕 Nouvelle partie : une carte immense de 256 × 256 cases !"), 800)); // étape 32
   // Étape 33 : ✍️ « à chaque évolution, on explique quel bâtiment fait quoi » : l'encyclopédie s'ouvre sur les nouveautés
   Village.Evenements.ecouter("nouvel-age", (d) => { const a = C.ages[d.numero]; if (a && a.debloque.length) { encyFiltre = { titre: "🎉 " + d.emoji + " " + d.nom + " : voici tes nouveaux bâtiments", types: a.debloque.slice() }; encyChoix = a.debloque[0]; panneau = "encyclopedie"; } });
@@ -382,7 +383,7 @@ Village.Interface = (function () {
     ["🐄 L'élevage", ["puits", "faneur", "etable", "poulailler", "bergerie", "porcherie", "veterinaire"]],
     ["⚒️ Les artisans et la ville", ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite", "monument"]],
     ["🏭 L'industrie", ["centrale", "acierie", "filature", "pompage", "epuration"]], // étape 34 ; étape 35 : l'eau et les égouts
-    ["🌆 Les services publics", ["ecole", "hopital", "pompiers", "police"]], // étape 48
+    ["🌆 Les services publics", ["ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille"]], // étape 48 ; étape 52 et 53
   ];
   function choisirEncy(t) { encyChoix = t; }
   function panneauEncyclopedie(ctx, monde, W, He, petit) {
@@ -950,7 +951,7 @@ Village.Interface = (function () {
       // Étape 8 : les logements, et les artisans (fonderie, forge, marché, université)
       { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "macon"] }, // étape 12 : le maçon-couvreur ; étape 40 : ✍️ un seul logement (la hutte devient maison toute seule)
       { id: "industrie", emoji: "🏭", nom: "Industrie", batiments: ["centrale", "acierie", "filature", "pompage", "epuration"] }, // étape 34 ; étape 35
-      { id: "services", emoji: "🌆", nom: "Services", batiments: ["ecole", "hopital", "pompiers", "police"] }, // étape 48 : l'époque moderne
+      { id: "services", emoji: "🌆", nom: "Services", batiments: ["ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille"] }, // étape 48 : l'époque moderne ; étape 52 et 53
       { id: "artisans", emoji: "⚒️", nom: "Artisans", batiments: ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite", "monument"] }, // étape 31 : le monument // étape 16 : la laine et les habits
       // Étape 7 : le chemin de terre, et la route en pierre (débloquée par la recherche « Routes pavées »)
       // Étape 19 : ✍️ l'entrepôt secondaire est rangé avec les routes (le transport), dès le hameau
@@ -1210,10 +1211,17 @@ Village.Interface = (function () {
         info(marche ? (b.type === "pompage" ? "🚰 En marche : fournit " : "🚽 En marche : traite ") + C.eau.parStation + " unités" : "⏸️ À l'arrêt", marche ? "#3d8a4a" : "#b8443a");
         info("🔧 Tuyaux : " + (reseau.utilise || 0) + " / " + (reseau.offre || 0) + " unités utilisées · demande " + (reseau.demande || 0) + (reseau.coupes ? " · ⚠️ " + reseau.coupes + " sans " + (b.type === "pompage" ? "eau" : "égouts") : ""), reseau.coupes ? "#b8443a" : null);
       }
+      else if (b.type === "aeroport") { // étape 52
+        const v = monde.ventes || {};
+        if (!b.courant) problemes.push("⚡ Pas d'électricité : aucun avion ne peut atterrir.");
+        info(b.courant && b.ouvrier ? "✈️ Ouvert : des touristes arrivent toutes les " + C.aeroport.intervalle + " s" : "⏸️ Fermé" + (b.courant ? " (il attend son contrôleur aérien)" : ""), b.courant && b.ouvrier ? "#3d8a4a" : "#b8443a");
+        info("🧳 Prochains touristes : ≈ " + Math.round(C.aeroport.parHabitant * Village.Logement.habitants(monde) * Village.Population.facteurCroissance(monde)) + " 🪙 (" + C.aeroport.parHabitant.toString().replace(".", ",") + " × habitants × prospérité) · déjà gagné : " + (v.touristesGagne || 0) + " 🪙");
+      }
       else if (Village.Services.estService(b.type)) { // étape 48
         const s = C.services.liste[b.type], r = Village.Services.etat(monde, b.type), marche = Village.Services.enMarche(b);
         if (!b.courant) problemes.push("⚡ Pas d'électricité : " + s.quoi + " est fermé(e). Relie-le par la route à une centrale.");
         info(marche ? s.emoji + " Ouvert : sert " + s.lits + " lits" : "⏸️ Fermé" + (b.courant ? " (il attend son " + Village.Batiments.TYPES[b.type].metier + ")" : ""), marche ? "#3d8a4a" : "#b8443a");
+ if (b.type === "commerce") { const v = monde.ventes || {}; info("💰 Toutes les " + C.commerces.intervalle + " s : il vend " + C.commerces.lot + " de tes produits (" + C.commerces.produits.map((r) => C.ressources[r].emoji).join("") + ") · dernière vente : " + (v.derniere || "aucune"), b.attend ? "#b8443a" : null); if (b.attend) problemes.push("🛍️ " + b.attend.charAt(0).toUpperCase() + b.attend.slice(1)); }
         info("🛏️ " + s.pluriel + " : " + (r.utilise || 0) + " / " + (r.offre || 0) + " places utilisées · " + (r.demande || 0) + " lits" + (r.coupes ? " · ⚠️ " + r.coupes + " logement(s) sans" : ""), r.coupes ? "#b8443a" : null);
       }
       // Étape 50 : les incidents
@@ -1254,15 +1262,15 @@ Village.Interface = (function () {
       if (ecurie) info("3️⃣ " + ecurie.emoji + " " + ecurie.nom +  " : les porteurs vont " + Math.round((ecurie.effet.porteurs - 1) * 100) + " % plus vite" + (ecurie.effet.charge ? " et portent " + Math.round((ecurie.effet.charge - 1) * 100) + " % de plus" : "") + ((monde.age || 0) < ecurie.age ? " (🔒 " + C.ages[ecurie.age].nom.toLowerCase() + ")" : ""), "#5a3a80");
       else if (Am2.liste(b).length) info("3️⃣ 🐴 L'écurie est construite : porteurs plus rapides ✅", "#2e8a3a");
       boutonsReserve = true;
-    } else if (b.type === "monument") {
+    } else if (b.type === "monument" || b.type === "merveille") { // étape 53 : la Grande Tour aussi
       // Étape 31 : le palier en cours, et une barre par ressource demandée
-      const Mo = Village.Monument, p = Mo.palierDe(b), n = C.monument.paliers.length;
-      titre("🏛️ Palier " + Math.min(n, (b.palier || 0) + 1) + " / " + n + (p ? " : " + p.emoji + " " + p.nom : " : terminé !"));
+      const Mo = Village.Monument, Cm = b.type === "merveille" ? C.merveille : C.monument, p = Mo.palierDe(b), n = Cm.paliers.length;
+      titre((b.type === "merveille" ? "🗼" : "🏛️") + " Palier " + Math.min(n, (b.palier || 0) + 1) + " / " + n + (p ? " : " + p.emoji + " " + p.nom : " : terminé !"));
       if (p) {
         for (const [r, besoin] of Object.entries(p.besoins)) { const d = b.dons[r] || 0; lignes.push({ barre: d / besoin, t: C.ressources[r].emoji + " " + C.ressources[r].nom + " : " + d + " / " + besoin + " (libres : " + Math.max(0, Village.Porteurs.disponible(monde, r)) + ")" }); }
         info("🎁 Récompense : +" + p.pieces + " 🪙, +" + p.gemmes + " 💎, +" + p.bonheur + " de bonheur pour toujours", "#2e8a3a");
         monumentBouton = b;
-      } else info("🎉 Le Grand Beffroi est fini : la fierté de la ville ! (+" + Mo.bonheur(monde) + " de bonheur)", "#2e8a3a");
+      } else info("🎉 " + Cm.nom + " est fini" + (b.type === "merveille" ? "e : la merveille du monde !" : " : la fierté de la ville !") + " (+" + Mo.bonheur(monde, b.type) + " de bonheur)", "#2e8a3a");
     } else if (b.type === "depot") {
       const ici = monde.porteurs.filter((p) => !p.parti && Village.Porteurs.maisonDe(monde, p) === b);
       titre("🏬 Un 2e point de départ pour les porteurs");
@@ -1379,7 +1387,7 @@ Village.Interface = (function () {
     }
     rangees.forEach((sorte, n) => {
       const by = y + h - hb + n * 40;
-      if (sorte === "monument") bouton(ctx, x + 10, by, l - 20, 32, "🏛️ Donner ce que j'ai", "monument", b.numero, true, "#d98a1f"); // étape 31
+      if (sorte === "monument") bouton(ctx, x + 10, by, l - 20, 32, (b.type === "merveille" ? "🗼" : "🏛️") + " Donner ce que j'ai", "monument", b.numero, true, "#d98a1f"); // étape 31
       if (sorte === "depot") { const p = Village.Ameliorations.prixAgrandirDepot(monde, b); bouton(ctx, x + 10, by, l - 20, 32, { avant: "🏗️ +" + C.depot.parNiveau + " porteurs ·", cout: Object.assign({}, p.ressources, p.pieces ? { pieces: p.pieces } : {}) }, "agrandirEntrepot", b.numero, !Village.Ameliorations.raisonAgrandirDepot(monde, b), "#d98a1f"); }
       if (sorte === "agrandir") { const p = Am.prixAgrandir(monde); bouton(ctx, x + 10, by, l - 20, 32, { avant: "2️⃣ 🏗️ +" + C.entrepot.parNiveau + " porteurs ·", cout: Object.assign({}, p.ressources, p.pieces ? { pieces: p.pieces } : {}) }, "agrandirEntrepot", true, !Am.raisonAgrandir(monde), "#d98a1f"); }
       if (sorte === "ameliorer") { const bloque = (monde.age || 0) < prochaine.age; bouton(ctx, x + 10, by, l - 20, 32, bloque ? "🔒 " + C.ages[prochaine.age].emoji + " " + C.ages[prochaine.age].nom : { avant: (b.type === "entrepot" ? "3️⃣ " + prochaine.emoji + " " : "⬆️ ") + prochaine.nom + " ·", cout: prochaine.cout }, "ameliorer", b.numero, !Am.raison(monde, b), "#8a5ab0"); }

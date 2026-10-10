@@ -58,6 +58,7 @@ Village.Bonheur = (function () {
     if ((monde.age || 0) >= C.habits.age) parts.push({ nom: "👕 Bien habillés (" + Math.round(monde.habits.part * 100) + " % des habitants)", points: C.habits.points * monde.habits.part, max: C.habits.points }); // étape 16
     if ((monde.age || 0) >= 1) { const ok = Village.Classes.partContents(monde); parts.push({ nom: "🎩 Besoins des classes (" + Math.round(ok * 100) + " % des habitants servis)", points: H.classes * ok, max: H.classes }); } // étape 18
     if (Village.Monument.leMonument(monde)) parts.push({ nom: "🏛️ Le Grand Beffroi (" + Village.Monument.paliersFaits(monde) + "/" + C.monument.paliers.length + " paliers)", points: Village.Monument.bonheur(monde), max: C.monument.paliers.reduce((s, p) => s + p.bonheur, 0) }); // étape 31
+    if (Village.Monument.leMonument(monde, "merveille")) parts.push({ nom: "🗼 La Grande Tour (" + Village.Monument.paliersFaits(monde, "merveille") + "/" + C.merveille.paliers.length + " paliers)", points: Village.Monument.bonheur(monde, "merveille"), max: C.merveille.paliers.reduce((s, p) => s + p.bonheur, 0) }); // étape 53
     if (monde.froid) parts.push({ nom: "🥶 Froid : plus de bois de chauffage", points: -H.froid, max: 0 });
     if (mecontents > 0) parts.push({ nom: "🍞 Pas de pain (" + Math.round(mecontents * 100) + " % mécontents)", points: -H.sansPain * mecontents, max: 0 });
     const total = Math.max(0, Math.min(100, parts.reduce((a, p) => a + p.points, 0)));

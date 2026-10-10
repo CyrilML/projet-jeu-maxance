@@ -445,8 +445,40 @@ Village.Cours = (function () {
     ctx.beginPath(); for (const s of [-1, 1]) { ctx.moveTo(...iso(x, y, s * 0.1 * k, -0.12 * k)); ctx.lineTo(...iso(x, y, s * 0.1 * k, 0.12 * k)); } ctx.moveTo(...iso(x, y, -0.1 * k, 0)); ctx.lineTo(...iso(x, y, 0.1 * k, 0)); ctx.lineWidth = 1.6 * k; ctx.stroke();
   }
 
+  // Étape 52 : 🛍️ un parking (des places tracées en blanc et des voitures garées)
+  function parking(ctx, x, y, k, n) {
+    ctx.strokeStyle = "rgba(245, 242, 230, .8)"; ctx.lineWidth = 0.9; ctx.beginPath();
+    for (let i = 0; i <= n; i++) { const A = iso(x, y, -0.3 * k, (i - n / 2) * 0.3 * k), B = iso(x, y, 0.3 * k, (i - n / 2) * 0.3 * k); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); }
+    ctx.stroke();
+    const couleurs = ["#c8443a", "#3f6fc4", "#f2f2ee", "#e8b830", "#3f8a4a", "#2a2c30"];
+    for (let i = 0; i < n; i++) if ((i * 7 + 3) % 5 !== 0) { const [px, py] = iso(x, y, 0, (i - n / 2 + 0.5) * 0.3 * k); O().vehiculeIso(ctx, px, py, 1, 0, { long: 0.42 * k, large: 0.22 * k, caisse: [5 * k, couleurs[i % couleurs.length]], cabine: [9 * k, couleurs[i % couleurs.length]], part: 0.6 }); }
+  }
+  // Un chariot de supermarché
+  function caddie(ctx, x, y, k) { ctx.strokeStyle = "#8a9098"; ctx.lineWidth = 1 * k; for (let i = 0; i < 3; i++) { const [cx, cy] = iso(x, y, 0, (i - 1) * 0.12 * k); ctx.beginPath(); ctx.moveTo(cx - 4 * k, cy - 8 * k); ctx.lineTo(cx + 3 * k, cy - 8 * k); ctx.lineTo(cx + 2 * k, cy - 3 * k); ctx.lineTo(cx - 3 * k, cy - 3 * k); ctx.closePath(); ctx.moveTo(cx - 4 * k, cy - 8 * k); ctx.lineTo(cx - 6 * k, cy - 10 * k); ctx.stroke(); O().rond(ctx, cx - 2 * k, cy - 1 * k, 0.9 * k, "#2a2c30"); O().rond(ctx, cx + 2 * k, cy - 1 * k, 0.9 * k, "#2a2c30"); } }
+  // ✈️ Un avion de ligne, garé (ou en vol : il s'élève et s'éloigne), le nez vers q
+  function avion(ctx, x, y, k, couleur, hauteur) {
+    const z = hauteur || 0, P = (p, q, h) => { const [a, b] = iso(x, y, p * k, q * k); return [a, b - (h || 0) * k - z]; };
+    if (!z) ombreSol(ctx, x, y, 30 * k); else { ctx.fillStyle = "rgba(20, 30, 10, .15)"; ctx.beginPath(); ctx.ellipse(x, y, 30 * k, 12 * k, 0, 0, TOUR); ctx.fill(); }
+    face(ctx, [P(-0.9, 0.05, 6), P(0.9, 0.05, 6), P(0.9, -0.15, 6), P(-0.9, -0.15, 6)], "#c8ccd2"); // les ailes
+    ctx.lineCap = "round"; const A = P(0, -0.85, 8), B = P(0, 0.9, 8);
+    ctx.strokeStyle = TRAIT; ctx.lineWidth = 9 * k + 1.4; ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.stroke();
+    ctx.strokeStyle = "#f4f6f8"; ctx.lineWidth = 9 * k; ctx.stroke();
+    ctx.strokeStyle = couleur; ctx.lineWidth = 2 * k; ctx.beginPath(); ctx.moveTo(A[0], A[1] + 2 * k); ctx.lineTo(B[0], B[1] + 2 * k); ctx.stroke(); ctx.lineCap = "butt";
+    ctx.fillStyle = "#3a4a5a"; for (let i = 0; i < 9; i++) { const W = P(0, -0.6 + i * 0.15, 9.5); ctx.fillRect(W[0] - 0.8, W[1] - 0.8, 1.6, 1.6); } // les hublots
+    const T0 = P(0, -0.8, 9), T1 = P(0, -0.6, 9); face(ctx, [T0, T1, [T1[0], T1[1] - 4 * k], [T0[0], T0[1] - 13 * k]], couleur); // la dérive (la queue)
+    face(ctx, [P(-0.3, -0.75, 9), P(0.3, -0.75, 9), P(0.3, -0.85, 9), P(-0.3, -0.85, 9)], "#c8ccd2"); // les petites ailes de la queue
+  }
+  // Une manche à air (rayée rouge et blanc)
+  function mancheAir(ctx, x, y, k, t) { O().poteau(ctx, [x, y], 20 * k, 1 * k); const v = Math.sin(t * 1.3) * 0.15; for (let i = 0; i < 4; i++) face(ctx, [[x + i * 3 * k, y - 20 * k + i * v * 3 * k], [x + (i + 1) * 3 * k, y - 20 * k + (i + 1) * v * 3 * k], [x + (i + 1) * 3 * k, y - 16.5 * k + (i + 1) * (v * 3 + 0.4) * k], [x + i * 3 * k, y - 16 * k + i * (v * 3 + 0.4) * k]], i % 2 ? "#f2f2ee" : "#d9553b"); }
+  // La piste : une bande d'asphalte foncé, avec des pointillés blancs au milieu
+  function piste(ctx, x, y, k) {
+    const L = 2 * k, W = 0.35 * k;
+    face(ctx, [iso(x, y, -W, -L), iso(x, y, W, -L), iso(x, y, W, L), iso(x, y, -W, L)], "#3a3c40");
+    ctx.strokeStyle = "rgba(250, 250, 245, .9)"; ctx.lineWidth = 1.4; ctx.setLineDash([8, 7]); ctx.beginPath(); ctx.moveTo(...iso(x, y, 0, -L + 0.2)); ctx.lineTo(...iso(x, y, 0, L - 0.2)); ctx.stroke(); ctx.setLineDash([]);
+  }
+
   // ---------------------------------------------------------------- les sols et les clôtures
-  const SOLS = { terre: ["#b49a72", "#9a8260"], gravier: ["#aaa69c", "#8e8a80"], paves: ["#a8a29a", "#8a847c"], pelouse: ["#7aa25a", "#6a9050"], scierie: ["#c4a878", "#a88c5e"], charbon: ["#5a5650", "#4a4640"], sable: ["#cdb88a", "#b8a074"] };
+  const SOLS = { asphalte: ["#5a5d62", "#4c4f54"], terre: ["#b49a72", "#9a8260"], gravier: ["#aaa69c", "#8e8a80"], paves: ["#a8a29a", "#8a847c"], pelouse: ["#7aa25a", "#6a9050"], scierie: ["#c4a878", "#a88c5e"], charbon: ["#5a5650", "#4a4640"], sable: ["#cdb88a", "#b8a074"] };
   const CLOTURES = { bois: "#8a6440", fer: "#3a3e44", pierre: "#a8a296", haie: "#4a8a42", aucune: null };
 
   // Le décor de chaque bâtiment. sol, cloture, puis la liste des objets : [où, dessin(ctx, x, y, k, b, t)]
@@ -670,6 +702,17 @@ Village.Cours = (function () {
       ["D", (c, x, y, k, b, t) => vehicule(c, x, y, k, "#f2f2ee", { long: 0.65, haut: 7, bande: "#2f5aa8", gyro: "#3a8aff" }, t)],
       ["G", (c, x, y, k) => barrieres(c, x, y, k)],
       ["Dr", (c, x, y, k) => lampadaire(c, x, y, k)],
+    ] },
+    // Étape 52 : 🛍️ le parking du centre commercial ; ✈️ la piste et les avions de l'aéroport
+    commerce: { sol: "asphalte", cloture: "aucune", objets: [
+      ["D", (c, x, y, k) => parking(c, x, y, k, 6)],
+      ["G", (c, x, y, k) => caddie(c, x, y, k)],
+      ["Dr", (c, x, y, k) => lampadaire(c, x, y, k)],
+    ] },
+    aeroport: { sol: "asphalte", cloture: "fer", objets: [
+      ["D", (c, x, y, k, b, t) => { piste(c, x, y, k); const ph = ((t || 0) / 22 + ((b && b.numero) || 0) * 0.37) % 1, vol = b && b.ouvert && ph > 0.55; if (!vol) avion(c, ...iso(x, y, 0, -0.6 * k), k * 0.9, "#3f6fc4"); else { const u = (ph - 0.55) / 0.45; avion(c, ...iso(x, y, 0, (-0.6 + u * 3.5) * k), k * 0.9, "#3f6fc4", u * u * 140 * k); } }],
+      ["G", (c, x, y, k) => avion(c, x, y, k * 0.7, "#c8443a")],
+      ["Dr", (c, x, y, k, b, t) => mancheAir(c, x, y, k, t || 0)],
     ] },
   };
   const aUneCour = (type, n) => n >= 2 && !!DECORS[type];

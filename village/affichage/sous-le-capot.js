@@ -127,9 +127,9 @@ Village.SousLeCapot = (function () {
     "commande-partie": (d) => "📦⌛ " + d.emoji + " " + d.qui + " n'a pas pu attendre ses " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " : il repart",
     "commande-pas-assez": (d) => "📦 Pas assez de " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " pour " + d.qui + " : il en manque " + d.manque,
     "guide-etape": (d) => "👣 Étape guidée " + d.numero + "/" + d.total + " réussie : " + d.texte + " (+" + d.pieces + " 🪙)" + (d.suivante ? " · suivante : " + d.suivante : " · toutes faites pour cet âge !"),
-    "monument-don": (d) => "🏛️ Don au monument (" + d.palier + ") : " + Object.entries(d.donne).map(([r, n]) => n + " " + Village.Batiments.NOMS_RESSOURCES[r]).join(", ") + (Object.keys(d.reste).length ? " · il manque encore " + Object.entries(d.reste).map(([r, n]) => n + " " + Village.Batiments.NOMS_RESSOURCES[r]).join(", ") : ""), // étape 31
+    "monument-don": (d) => "🏛️ Don à " + (d.monument || "le monument") + " (" + d.palier + ") : " + Object.entries(d.donne).map(([r, n]) => n + " " + Village.Batiments.NOMS_RESSOURCES[r]).join(", ") + (Object.keys(d.reste).length ? " · il manque encore " + Object.entries(d.reste).map(([r, n]) => n + " " + Village.Batiments.NOMS_RESSOURCES[r]).join(", ") : ""), // étape 31
     "monument-rien": (d) => "🏛️ Rien à donner au monument (" + d.palier + ") : il n'y a rien de libre de ce qu'il demande",
-    "monument-palier": (d) => "🏛️🎉 Palier " + d.numero + "/" + d.total + " du monument construit : " + d.emoji + " " + d.nom + " ! +" + d.pieces + " 🪙, +" + d.gemmes + " 💎, +" + d.bonheur + " points de bonheur pour toujours" + (d.fini ? " · LE GRAND BEFFROI EST FINI !" : ""),
+    "monument-palier": (d) => "🏛️🎉 Palier " + d.numero + "/" + d.total + " construit (" + (d.monument || "le monument") + ") : " + d.emoji + " " + d.nom + " ! +" + d.pieces + " 🪙, +" + d.gemmes + " 💎, +" + d.bonheur + " points de bonheur pour toujours" + (d.fini ? " · LE GRAND BEFFROI EST FINI !" : ""),
     "partie-remise-a-zero": (d) => "🆕 Le jeu a beaucoup changé : la partie (version " + d.depuis + ") est remise à zéro, une nouvelle carte de 256 × 256 commence (version " + d.vers + ")", // étape 32
     "prosperite-change": (d) => "👥 La ville est maintenant " + d.niveau + " " + d.emoji + " (prospérité " + d.prosperite + " %, " + d.habitants + " habitants) : les arrivées vont × " + String(0.5 + d.prosperite / 100).replace(".", ","), // étape 33
     "electricite-penurie": (d) => "⚡❌ Pénurie d'électricité : " + d.coupes + " bâtiment(s) coupé(s) · offre " + d.offre + " < demande " + d.demande + " (" + d.centrales + " centrale(s) qui tournent)", // étape 34
@@ -139,6 +139,8 @@ Village.SousLeCapot = (function () {
     "egouts-penurie": (d) => "🚽❌ Les égouts débordent : " + d.coupes + " bâtiment(s) sans égouts · offre " + d.offre + " < demande " + d.demande + " (" + d.sources + " station(s) d'épuration qui tournent)",
     "service-manque": (d) => d.emoji + "❌ Pas assez de places pour " + d.quoi + " : " + d.coupes + " logement(s) sans · places " + d.offre + " < lits " + d.demande + " (" + d.sources + " bâtiment(s) qui travaillent)", // étape 48
     "routes-goudronnees": (d) => "🛣️ Goudron : " + d.cases + " cases de route goudronnées (× " + String(Village.CONFIG.sols.goudron).replace(".", ",") + " plus vite) · les " + d.porteurs + " porteurs deviennent des camions 🚚 (3 fois plus chargés)", // étape 51
+    "commerce-vente": (d) => "🛍️ Centre commercial n° " + d.numero + " : " + d.quantite + " " + Village.Batiments.NOMS_RESSOURCES[d.quoi] + " vendus = +" + d.gain + " 🪙 · tu as " + d.pieces + " 🪙", // étape 52
+    "touristes": (d) => "✈️ Des touristes arrivent : +" + d.gain + " 🪙 (" + String(Village.CONFIG.aeroport.parHabitant).replace(".", ",") + " × " + d.habitants + " habitants × (0,5 + " + d.prosperite + " %)) · tu as " + d.pieces + " 🪙",
     "incendie": (d) => "🔥 Au feu ! " + d.nom + " n° " + d.numero + " (" + d.colonne + ", " + d.ligne + ") brûle pendant " + d.duree + " s · pas de pompiers ici (" + d.sansPompiers + " logement(s) sans pompiers)", // étape 50
     "incendie-fini": (d) => "🏚️ Le feu est éteint : " + d.nom + " n° " + d.numero + " est abîmé(e) (usure 100 %), le maçon-couvreur doit le réparer",
     "vol": (d) => "🦹 Un voleur chez " + d.nom + " n° " + d.numero + " (pas de police) : −" + d.pieces + " 🪙 · il reste " + d.reste + " 🪙",
@@ -319,6 +321,14 @@ Village.SousLeCapot = (function () {
         h += ligne(s.emoji + " " + s.quoi + " : lits servis / places · lits à servir", (r.utilise || 0) + " / " + (r.offre || 0) + " · " + (r.demande || 0) + (r.penurie ? " ⚠️ pas assez" : "") + " · " + Math.round(Village.Services.part(monde, type) * 100) + " %");
         h += ligne("   logements servis · sans · loin de la route", (r.alimentes || 0) + " · " + (r.coupes || 0) + " · " + (r.horsReseau || 0));
       }
+    }
+    // Étape 52 : les ventes et les touristes
+    if (monde.ventes) {
+      const v = monde.ventes;
+      h += groupe("🛍️✈️ Les commerces et l'aéroport");
+      h += ligne("prochaine vente dans · gagné par les centres", Math.ceil(v.minuteur) + " s · " + v.gagne + " 🪙");
+      h += ligne("dernière vente", v.derniere || "aucune");
+      h += ligne("prochains touristes dans · gagné par l'aéroport", Math.ceil(v.touristes) + " s · " + v.touristesGagne + " 🪙");
     }
     // Étape 50 : les incidents (le dé de la ville)
     const ch = Village.Incidents.chances(monde), inc = monde.incidents;

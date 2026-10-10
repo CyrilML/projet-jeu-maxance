@@ -73,11 +73,14 @@ Village.Batiments = (function () {
     hopital: { nom: "Hôpital", court: "Hôpital", emoji: "🏥", metier: "médecin" },
     pompiers: { nom: "Caserne de pompiers", court: "Pompiers", emoji: "🚒", metier: "pompier" },
     police: { nom: "Commissariat", court: "Police", emoji: "🚓", metier: "policier" },
+    commerce: { nom: "Centre commercial", court: "Commerces", emoji: "🛍️", metier: "vendeur" }, // étape 52
+    aeroport: { nom: "Aéroport", court: "Aéroport", emoji: "✈️", metier: "contrôleur aérien" },
+    merveille: { nom: "La Grande Tour", court: "Grande Tour", emoji: "🗼", metier: null }, // étape 53
     manoir: { nom: "Maison bourgeoise", court: "Manoir", emoji: "🏡", metier: null }, // étape 18 : une maison qui a évolué
     immeuble: { nom: "Immeuble", court: "Immeuble", emoji: "🏢", metier: null }, // étape 35 : une maison bourgeoise qui a évolué
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot", "monument", "centrale", "acierie", "filature", "pompage", "epuration", "ecole", "hopital", "pompiers", "police"];
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot", "monument", "centrale", "acierie", "filature", "pompage", "epuration", "ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille"];
   // « 🪵 troncs », « 🔩 lingots »… (étape 8 : fabriqué à partir de config.js, « ressources »)
   const NOMS_RESSOURCES = {};
   for (const [r, f] of Object.entries(C.ressources)) NOMS_RESSOURCES[r] = f.emoji + " " + f.nom;
@@ -129,7 +132,7 @@ Village.Batiments = (function () {
   // Étape 40 : peut-on encore en construire un ? (null = oui ; sinon la raison). Le monument, l'université et le marché :
   // un seul par village (config.js : « uniques ») ; les entrepôts secondaires : 4 au plus.
   function limiteAtteinte(monde, type) {
-    if (C.uniques.includes(type) && monde.batiments.some((b) => b.type === type)) return type === "monument" ? "la ville n'a qu'un seul grand monument" : (type === "universite" ? "une seule université par village (elle est déjà construite)" : "un seul marché par village (il est déjà construit)");
+    if (C.uniques.includes(type) && monde.batiments.some((b) => b.type === type)) return type === "monument" ? "la ville n'a qu'un seul grand monument" : type === "merveille" ? "il n'y a qu'une seule Grande Tour" : type === "aeroport" ? "un seul aéroport par ville (il est déjà construit)" : (type === "universite" ? "une seule université par village (elle est déjà construite)" : "un seul marché par village (il est déjà construit)");
     if (type === "depot" && monde.batiments.filter((b) => b.type === "depot").length >= C.depot.max) return "pas plus de " + C.depot.max + " entrepôts secondaires";
     return null;
   }
@@ -366,7 +369,7 @@ Village.Batiments = (function () {
       user(monde, b, dt); // étape 11 : au bourg, les bâtiments s'usent
       if (C.ateliers[b.type]) { if (b.relie) fabriquer(monde, b, dt); } // étape 8 : scierie, fonderie, forge
       else if (C.mines[b.type]) { if (b.relie) miner(monde, b, dt); } // étape 7 ; étape 8 : charbon ou fer
-      else if (b.type === "universite" || b.type === "marche" || b.type === "pompage" || b.type === "epuration" || Village.Services.estService(b.type)) continue; // étape 48 : les services : Village.Services // étape 35 : les stations : Village.Electricite // étape 7 : Village.Recherches ; étape 8 : Village.Marche
+      else if (b.type === "universite" || b.type === "marche" || b.type === "pompage" || b.type === "epuration" || Village.Services.estService(b.type) || b.type === "aeroport") continue; // étape 48 : les services : Village.Services (étape 52 : l'aéroport aussi) // étape 35 : les stations : Village.Electricite // étape 7 : Village.Recherches ; étape 8 : Village.Marche
       else if (b.ouvrier) Village.Ouvriers.etape(monde, b, dt);
     }
   }

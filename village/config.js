@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 52,
+  version: 53,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -175,6 +175,10 @@ Village.CONFIG = {
     hopital: { cout: { pierres: 180, lingots: 30, outils: 15, tissu: 20 }, construction: 60 },
     pompiers: { cout: { planches: 60, pierres: 120, lingots: 35, outils: 15 }, construction: 50 },
     police: { cout: { pierres: 140, lingots: 25, outils: 15 }, construction: 50 },
+    // Étape 52 : 🛍️ le centre commercial et ✈️ l'aéroport ; étape 53 : 🗼 la Grande Tour (ses fondations, puis 6 paliers)
+    commerce: { cout: { planches: 150, pierres: 150, lingots: 30, outils: 15, tissu: 20 }, construction: 60 },
+    aeroport: { cout: { planches: 200, pierres: 600, lingots: 150, outils: 60 }, construction: 120 },
+    merveille: { cout: { planches: 300, pierres: 400, lingots: 60, outils: 30 }, construction: 90 },
     manoir: { cout: { planches: 12, pierres: 16, outils: 2 }, construction: 20 }, // étape 18 : on ne la construit pas, une maison le DEVIENT
   },
   // Étape 18 : ✍️ les CLASSES D'HABITANTS suivent leur logement (voir logique/classes.js).
@@ -209,7 +213,7 @@ Village.CONFIG = {
     // Étape 40 : ✍️ chaque entrepôt secondaire a son bouton « Agrandir » : +2 porteurs par niveau, 4 niveaux au plus
     parNiveau: 2, niveauMax: 4, prix: { planches: 40, pierres: 30 }, prixPieces: 40, facteurPrix: 2 },
   // Étape 40 : ✍️ « une seule université peut être construite ; une fois faite, elle est grisée. Idem pour le marché. »
-  uniques: ["universite", "marche", "monument"],
+  uniques: ["universite", "marche", "monument", "aeroport", "merveille"], // étape 52 et 53 : un seul aéroport, une seule Grande Tour
 
   // Étape 8 : les ATELIERS transforment ce que les porteurs leur apportent (les RECETTES).
   //   entrees : ce qu'il faut pour UNE fabrication ; sorties : ce qui sort ; duree : en s ;
@@ -308,6 +312,7 @@ Village.CONFIG = {
     monument: 5, // étape 31 : ✍️ « même 5 × 5 »
     centrale: 4, acierie: 4, filature: 4, // étape 34 : les usines
     pompage: 3, epuration: 3, immeuble: 2, // étape 35
+    commerce: 4, aeroport: 6, merveille: 6, // étape 52 et 53 : les très grands
   },
   tailleParDefaut: 3,
   champs: {
@@ -626,8 +631,13 @@ Village.CONFIG = {
       //   reseaux : % des lits qui ont ⚡ + 🚰 + 🚽 à la fois ; immeubles : immeubles debout
       objectifs: { habitants: 150, pieces: 6000, reseaux: 90, immeubles: 2 } },
     // Étape 48 : 🌆 l'ÉPOQUE MODERNE : les services publics (l'école, l'hôpital, les pompiers, la police)
-    { id: "moderne", nom: "L'époque moderne", emoji: "🌆", debloque: ["ecole", "hopital", "pompiers", "police"], objectifs: null,
-      aVenir: "🚗 routes goudronnées, voitures et camions ; puis 🛍️ centres commerciaux et ✈️ aéroport" },
+    { id: "moderne", nom: "L'époque moderne", emoji: "🌆", debloque: ["ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille"], // étape 52 et 53
+      // Étape 53 : ✍️ l'objectif très long : la Grande Tour finie (6 paliers), un aéroport, 250 habitants, 20 000 🪙
+      //   construits : { type: combien } de bâtiments prêts ; merveille : paliers de la Grande Tour
+      objectifs: { merveille: 6, construits: { aeroport: 1, commerce: 2 }, habitants: 250, pieces: 20000 } },
+    // Étape 53 : 🌃 la MÉTROPOLE : le dernier âge (pour l'instant !)
+    { id: "metropole", nom: "La métropole", emoji: "🌃", debloque: [], objectifs: null,
+      aVenir: "la suite… à toi de l'imaginer, Maxance !" },
   ],
   gemmesParAge: 3, // étape 7 : 💎 offertes à chaque nouvel âge
 
@@ -775,6 +785,19 @@ Village.CONFIG = {
         { texte: "Mets 90 % des lits près d'un hôpital", logementsService: "hopital", cible: 90, pourquoi: "Chaque hôpital soigne 80 lits." },
         { texte: "Protège 90 % des lits contre le feu", logementsService: "pompiers", cible: 90, pourquoi: "Chaque caserne protège 80 lits." },
         { texte: "Protège 90 % des lits avec la police", logementsService: "police", cible: 90, pourquoi: "Chaque commissariat protège 80 lits." },
+        // Étape 52 et 53 : les commerces, l'aéroport, la Grande Tour
+        { texte: "Construis un 🛍️ centre commercial", batiment: "commerce", nombre: 1, pourquoi: "Les habitants y font leurs courses : il vend tes produits et te rapporte des 🪙." },
+        { texte: "Construis un ✈️ aéroport", batiment: "aeroport", nombre: 1, pourquoi: "Les avions amènent des touristes : des 🪙 chaque minute. Il est immense (6 × 6 cases) !" },
+        { texte: "Construis la 🗼 Grande Tour", batiment: "merveille", nombre: 1, pourquoi: "Le plus grand chantier du jeu : 6 paliers, des milliers de ressources." },
+        { texte: "Finis les fondations géantes", merveille: 1, pourquoi: "Touche la tour et « Donner ce que j'ai »." },
+        { texte: "Monte la charpente d'acier", merveille: 2, pourquoi: "Il faut énormément de lingots : des aciéries !" },
+        { texte: "Pose les étages de verre", merveille: 3, pourquoi: "Du tissu, des lingots et des pierres." },
+        { texte: "Plante les jardins suspendus", merveille: 4, pourquoi: "Des planches et des habits pour les jardiniers." },
+        { texte: "Dresse la flèche dorée", merveille: 5, pourquoi: "Des bijoux et de l'or : des mines d'or et des orfèvres." },
+        { texte: "Fais la fête du siècle", merveille: 6, pourquoi: "Un festin pour toute la ville : pain, fromage, jambon, yaourt, habits neufs." },
+        { texte: "Aie 2 🛍️ centres commerciaux", batiment: "commerce", nombre: 2, pourquoi: "Pour la métropole." },
+        { texte: "Aie 250 habitants", habitants: 250, pourquoi: "Pour la métropole (avec 20 000 🪙)." },
+        { texte: "Aie 20 000 🪙", pieces: 20000, pourquoi: "Pour la métropole." },
       ],
     ],
   },
@@ -825,6 +848,9 @@ Village.CONFIG = {
     filature: "La filature (électrique) file la laine à la machine : 2 laines → 3 tissus.",
     pompage: "La station de pompage (au bord de l'eau, électrique) envoie l'eau courante dans des tuyaux sous les routes, jusqu'à " + 40 + " unités.",
     epuration: "La station d'épuration (électrique) nettoie les eaux usées qui arrivent par les égouts, sous les routes, jusqu'à " + 40 + " unités.",
+    commerce: "Le centre commercial (électrique) : les habitants de 100 lits y font leurs courses (le besoin 🛍️). Toutes les 20 s, il vend un paquet de tes produits (habits, pain, fromage…) et te rapporte des 🪙.", // étape 52
+    aeroport: "L'aéroport (électrique, 6 × 6 cases) : des avions amènent des touristes, qui dépensent des 🪙 chaque minute (plus la ville est grande et prospère, plus ils dépensent).",
+    merveille: "La Grande Tour : la merveille de la ville. 6 paliers, qui demandent des milliers de ressources de toutes les chaînes. Chaque palier donne une énorme récompense.",
     ecole: "L'école (électrique) accueille les enfants de 60 lits, les plus proches par la route d'abord : c'est le besoin 🎓 Éducation.", // étape 48
     hopital: "L'hôpital (électrique) soigne les habitants de 80 lits, les plus proches par la route d'abord : c'est le besoin 🏥 Santé.",
     pompiers: "La caserne de pompiers (électrique) protège 80 lits contre le feu, les plus proches par la route d'abord : c'est le besoin 🚒.",
@@ -838,7 +864,7 @@ Village.CONFIG = {
     age: 5, // l'époque industrielle
     parCentrale: 40, // unités par centrale qui tourne
     logement: 1, atelier: 2, usine: 8, // consommation (unités)
-    consommation: { entrepot: 3, depot: 2, universite: 4, marche: 2, monument: 4, pompage: 4, epuration: 4, immeuble: 3, ecole: 3, hopital: 4, pompiers: 3, police: 3 }, // étape 48 : les services
+    consommation: { entrepot: 3, depot: 2, universite: 4, marche: 2, monument: 4, pompage: 4, epuration: 4, immeuble: 3, ecole: 3, hopital: 4, pompiers: 3, police: 3, commerce: 6, aeroport: 10, merveille: 6 }, // étape 48 : les services ; étape 52 et 53
     vitesse: 1.5, // un atelier alimenté travaille 1,5 fois plus vite
   },
 
@@ -866,7 +892,31 @@ Village.CONFIG = {
       hopital: { lits: 80, champ: "aHopital", emoji: "🏥", besoin: "Santé", quoi: "l'hôpital", pluriel: "Tous les hôpitaux" },
       pompiers: { lits: 80, champ: "aPompiers", emoji: "🚒", besoin: "Protection contre le feu", quoi: "les pompiers", pluriel: "Toutes les casernes" },
       police: { lits: 80, champ: "aPolice", emoji: "🚓", besoin: "Sécurité", quoi: "la police", pluriel: "Tous les commissariats" },
+      commerce: { lits: 100, champ: "aCommerce", emoji: "🛍️", besoin: "Commerces", quoi: "les magasins", pluriel: "Tous les centres commerciaux" }, // étape 52
     },
+  },
+
+  // Étape 52 : 🛍️ les VENTES du centre commercial (logique/services.js). Toutes les « intervalle » secondes, chaque centre
+  // qui travaille vend un paquet (« lot ») du produit le plus abondant de la liste, à « prime » fois le prix du marché.
+  commerces: {
+    intervalle: 20, lot: 4, prime: 1.3,
+    produits: ["vetements", "pain", "fromage", "jambon", "yaourt", "beurre", "bijoux", "oeufs"],
+  },
+  // Étape 52 : ✈️ les TOURISTES de l'aéroport : chaque minute, des 🪙 = parHabitant × habitants × (0,5 + prospérité)
+  aeroport: { intervalle: 60, parHabitant: 0.8 },
+
+  // Étape 53 : 🗼 la GRANDE TOUR, la merveille de l'époque moderne (même règle que le Grand Beffroi : on donne quand on
+  // veut, palier par palier). Des milliers de ressources : c'est l'objectif le plus long du jeu.
+  merveille: {
+    nom: "La Grande Tour",
+    paliers: [
+      { nom: "Les fondations géantes", emoji: "🧱", besoins: { pierres: 1500, planches: 800, outils: 100 }, pieces: 2000, gemmes: 10, bonheur: 3 },
+      { nom: "La charpente d'acier", emoji: "🏗️", besoins: { lingots: 600, charbon: 500, outils: 150 }, pieces: 3000, gemmes: 12, bonheur: 4 },
+      { nom: "Les étages de verre", emoji: "🪟", besoins: { pierres: 1200, tissu: 300, lingots: 400 }, pieces: 4000, gemmes: 15, bonheur: 5 },
+      { nom: "Les jardins suspendus", emoji: "🌳", besoins: { planches: 1200, pierres: 800, vetements: 200 }, pieces: 5000, gemmes: 18, bonheur: 5 },
+      { nom: "La flèche dorée", emoji: "✨", besoins: { bijoux: 150, or: 200, lingots: 300, outils: 200 }, pieces: 7000, gemmes: 22, bonheur: 6 },
+      { nom: "La fête du siècle", emoji: "🎆", besoins: { pain: 800, fromage: 300, jambon: 300, yaourt: 200, vetements: 300 }, pieces: 10000, gemmes: 30, bonheur: 10 },
+    ],
   },
 
   // Étape 50 : 🎲 les INCIDENTS des maisons sans services (logique/incidents.js). ✍️ Choix de Maxance : « des événements ».

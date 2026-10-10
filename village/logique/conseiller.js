@@ -117,6 +117,19 @@ Village.Conseiller = (function () {
         if (p) ajouter(1, "🏛️", "Le monument attend " + n + " " + res(r), (combien(monde, p) ? "Un " + nom(p) + " de plus irait plus vite." : "Il te faut un " + nom(p) + "."), p);
       }
     }
+    // 10. Étape 52 et 53 : l'aéroport et la Grande Tour (à l'époque moderne)
+    if (Village.Ages.debloque(monde, "merveille")) {
+      const ae = monde.batiments.find((b) => b.type === "aeroport");
+      if (!ae) ajouter(1, "✈️", "Construis un aéroport", "Des touristes arrivent par avion et dépensent des 🪙 chaque minute (6 × 6 cases : prévois la place).", "aeroport");
+      else if (ae.etat === "pret" && !ae.courant) ajouter(2, "✈️", "L'aéroport n'a pas d'électricité", "Sans courant, plus aucun avion : relie-le par la route à une centrale.", null);
+      const tour = monde.batiments.find((b) => b.type === "merveille");
+      if (!tour) ajouter(1, "🗼", "Construis la Grande Tour", "Le plus grand chantier du jeu : 6 paliers, chacun avec une énorme récompense.", "merveille");
+      else if (tour.etat === "pret") for (const [r, n] of Object.entries(Village.Monument.reste(tour))) {
+        if (disponible(monde, r) > 0) { ajouter(1, "🗼", "La Grande Tour attend tes dons", "Il y a du " + res(r) + " libre : touche la tour et « Donner ce que j'ai ».", null); break; }
+        const p = producteur(monde, r);
+        if (p) { ajouter(1, "🗼", "La Grande Tour attend " + n + " " + res(r), (combien(monde, p) ? "Un " + nom(p) + " de plus irait plus vite." : "Il te faut un " + nom(p) + "."), p); break; }
+      }
+    }
     liste.sort((a, b) => b.urgence - a.urgence);
     return liste;
   }
