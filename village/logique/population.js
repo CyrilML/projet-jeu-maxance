@@ -40,7 +40,7 @@ Village.Population = (function () {
     // Étape 34 : ⚡ l'électricité, à l'époque industrielle
     if (Village.Electricite.active(monde)) { const p = Village.Electricite.partLogements(monde); ajouter("electricite", "⚡", "Électricité", p, Math.round(p * 100) + " % des lits ont le courant", (monde.electricite && monde.electricite.penurie) ? "Pénurie : construis une centrale de plus." : "Relie les maisons à une centrale par la route."); }
     // Étape 35 : 🚰 l'eau courante et 🚽 les égouts, dès qu'il y a une centrale (les stations ont besoin du courant)
-    if (Village.Electricite.active(monde) && monde.batiments.some((x) => x.type === "centrale" && x.etat === "pret")) {
+    if (Village.Electricite.active(monde) && monde.batiments.some((x) => Village.Electricite.estSource(x.type) && x.etat === "pret")) { // étape 59 : n'importe quelle centrale
       const pe = Village.Electricite.partLogements(monde, "eau"), pg = Village.Electricite.partLogements(monde, "egout");
       ajouter("eau", "🚰", "Eau courante", pe, Math.round(pe * 100) + " % des lits ont l'eau", (monde.eau && monde.eau.penurie) ? "Pénurie : une station de pompage de plus." : "Une station de pompage au bord de l'eau, reliée par la route.");
       ajouter("egouts", "🚽", "Égouts", pg, Math.round(pg * 100) + " % des lits ont les égouts", (monde.egouts && monde.egouts.penurie) ? "Pénurie : une station d'épuration de plus." : "Une station d'épuration, reliée par la route.");

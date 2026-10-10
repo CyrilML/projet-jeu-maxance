@@ -63,6 +63,7 @@ Village.Interface = (function () {
   Village.Evenements.ecouter("nouvel-age", (d) => { const a = C.ages[d.numero]; if (a && a.debloque.length) { encyFiltre = { titre: "🎉 " + d.emoji + " " + d.nom + " : voici tes nouveaux bâtiments", types: a.debloque.slice() }; encyChoix = a.debloque[0]; panneau = "encyclopedie"; } });
   Village.Evenements.ecouter("prosperite-change", (d) => afficher("👥 La ville est " + d.niveau + " " + d.emoji + " (prospérité " + d.prosperite + " %)"));
   Village.Evenements.ecouter("electricite-penurie", (d) => afficher("⚡❌ Pénurie d'électricité : " + d.coupes + " bâtiment(s) coupé(s). Il faut une centrale de plus !")); // étape 34
+  Village.Evenements.ecouter("fonderie-remplacee", () => afficher("🏭 Une fonderie est devenue une aciérie : 4 fois plus de lingots !")); // étape 59
   Village.Evenements.ecouter("eau-penurie", (d) => afficher("🚰❌ Pénurie d'eau : " + d.coupes + " bâtiment(s) sans eau. Il faut une station de pompage de plus !")); // étape 35
   Village.Evenements.ecouter("service-manque", (d) => afficher(d.emoji + "❌ Pas assez de places pour " + d.quoi + " : " + d.coupes + " logement(s) sans. Il en faut un(e) de plus !")); // étape 48
   Village.Evenements.ecouter("routes-goudronnees", (d) => afficher("🛣️ " + d.cases + " cases de route goudronnées : les porteurs sont maintenant des camions 🚚 !")); // étape 51
@@ -190,7 +191,7 @@ Village.Interface = (function () {
           cout: B.offert(monde, type) ? "🎁 offert" : B.coutPour(monde, type), // étape 12 : le coup de pouce ; étape 17 : un prix dessiné
           choisi: monde.construction === type, possible: B.assezPour(monde, type) && Village.Ages.debloque(monde, type) && !B.limiteAtteinte(monde, type),
           // Étape 40 : ✍️ une seule université, un seul marché : une fois construit, il est grisé
-          verrou: B.limiteAtteinte(monde, type) && Village.Ages.debloque(monde, type) ? (type === "depot" ? "✅ " + C.depot.max + " / " + C.depot.max : "✅ déjà construit") : Village.Ages.debloque(monde, type) ? null : "🔒 " + C.ages[Village.Ages.ageDe(type)].emoji + " " + C.ages[Village.Ages.ageDe(type)].nom.replace(/^(Le|La) /, ""), // étape 6
+          verrou: B.limiteAtteinte(monde, type) && Village.Ages.debloque(monde, type) ? (type === "depot" ? "✅ " + C.depot.max + " / " + C.depot.max : type === "fonderie" ? "➡️ 🏭 aciérie" : "✅ déjà construit") : Village.Ages.debloque(monde, type) ? null : "🔒 " + C.ages[Village.Ages.ageDe(type)].emoji + " " + C.ages[Village.Ages.ageDe(type)].nom.replace(/^(Le|La) /, ""), // étape 6
         })).concat((g.outils || []).map((o) => ({ action: "outil", valeur: o.id, emoji: o.emoji, icone: o.icone, nom: o.nom, touche: o.touche, cout: o.cout || "", choisi: monde.outil === o.id, possible: !o.verrou, verrou: o.verrou || null })));
     const lc = petit ? 74 : 84, hc = petit ? 74 : 84, ec = 8;
     // Étape 8 : trop de cartes pour la largeur de l'écran ? On les range sur 2 rangées.
@@ -389,7 +390,7 @@ Village.Interface = (function () {
     ["🐄 L'élevage", ["puits", "faneur", "etable", "poulailler", "bergerie", "porcherie", "veterinaire"]],
     ["⚒️ Les artisans et la ville", ["fonderie", "forge", "orfevre", "tisserand", "tailleur", "marche", "universite"]],
     ["🏆 Les grands chantiers (un par âge)", ["chefferie", "chapelle", "donjon", "cathedrale", "monument", "gare", "merveille", "spatial"]], // étape 58
-    ["🏭 L'industrie", ["centrale", "acierie", "filature", "pompage", "epuration"]], // étape 34 ; étape 35 : l'eau et les égouts
+    ["🏭 L'industrie", ["centrale", "eolienne", "solaire", "nucleaire", "acierie", "filature", "pompage", "epuration"]], // étape 34 ; étape 35 : l'eau et les égouts
     ["🌃 La métropole", ["port", "stade"]], // étape 56 et 57
     ["🌆 Les services publics", ["ecole", "hopital", "pompiers", "police", "commerce", "aeroport"]], // étape 48 ; étape 52 et 53
   ];
@@ -450,7 +451,10 @@ Village.Interface = (function () {
     if (t === "gratteciel") besoins.push("⚡ 🚰 🚽 et les 5 services (🎓 🏥 🚒 🚓 🛍️) dans l'immeuble, à l'époque moderne"); // étape 55
     if (t === "immeuble") besoins.push("⚡ l'électricité, 🚰 l'eau courante et 🚽 les égouts dans la maison bourgeoise, à l'époque industrielle");
     if (C.elevage.troupeaux[t] && C.ateliers[t].entrees.eau) besoins.push("💧 de l'eau du puits… ou 🚰 l'eau courante à l'époque industrielle (alors plus besoin du puits)");
-    if (t === "centrale") besoins.push("⚫ du charbon (1 toutes les 15 s), apporté par les porteurs");
+    if (t === "centrale") besoins.push("⚫ du charbon (1 toutes les " + C.ateliers.centrale.duree + " s ; " + C.entreeMaxType.centrale + " en réserve), apporté par les porteurs"); // étape 59
+    if (t === "nucleaire") besoins.push("🔩 1 lingot de combustible par minute, et un ingénieur");
+    if (t === "eolienne" || t === "solaire") besoins.push(t === "eolienne" ? "🌬️ du vent (il change tout le temps) : rien d'autre !" : "☀️ du soleil : rien la nuit, moins en hiver");
+    if (C.electricite.production[t]) besoins.push("⚡ produit jusqu'à " + C.electricite.production[t] + " unités");
     if (C.elevage.troupeaux[t]) besoins.push("🩺 un vétérinaire près de lui (les animaux peuvent tomber malades)");
     if ((monde.age || 0) >= C.bourg.ageDesRegles && t !== "entrepot") besoins.push("🔧 un maçon-couvreur (au bourg, les bâtiments s'usent)");
     texte(ctx, "📋 Ce dont il a besoin :", x + 18, yy + 4, petit ? 10 : 11, "#2a2a28", true); yy += pas;
@@ -959,7 +963,7 @@ Village.Interface = (function () {
       { id: "elevage", emoji: "🐄", nom: "Élevage", batiments: ["puits", "faneur", "etable", "poulailler", "bergerie", "porcherie", "veterinaire"] }, // étape 15 et 16
       // Étape 8 : les logements, et les artisans (fonderie, forge, marché, université)
       { id: "maisons", emoji: "🛖", nom: "Maisons", batiments: ["hutte", "macon"] }, // étape 12 : le maçon-couvreur ; étape 40 : ✍️ un seul logement (la hutte devient maison toute seule)
-      { id: "industrie", emoji: "🏭", nom: "Industrie", batiments: ["centrale", "acierie", "filature", "pompage", "epuration"] }, // étape 34 ; étape 35
+      { id: "industrie", emoji: "🏭", nom: "Industrie", batiments: ["centrale", "eolienne", "solaire", "nucleaire", "acierie", "filature", "pompage", "epuration"] }, // étape 59 : les autres centrales // étape 34 ; étape 35
       { id: "metropole", emoji: "🌃", nom: "Métropole", batiments: ["port", "stade"] }, // étape 56 et 57
       { id: "services", emoji: "🌆", nom: "Services", batiments: ["ecole", "hopital", "pompiers", "police", "commerce", "aeroport"] }, // étape 48 : l'époque moderne ; étape 52 et 53
       { id: "chantiers", emoji: "🏆", nom: "Chantiers", batiments: ["chefferie", "chapelle", "donjon", "cathedrale", "monument", "gare", "merveille", "spatial"] }, // étape 58 : les grands chantiers
@@ -1215,7 +1219,9 @@ Village.Interface = (function () {
     if (Village.Electricite.active(monde) && pret) {
       const cons = Village.Electricite.consommation(b), ea = C.ateliers[b.type];
       if (ea && ea.electrique && !b.courant) problemes.push("⚡ Pas d'électricité : cette usine est arrêtée. Relie-la par la route à une centrale.");
-      else if (b.type === "centrale") { const el = monde.electricite || {}; info(b.travail ? "⚡ En marche : fournit " + C.electricite.parCentrale + " unités" : "⚡ À l'arrêt : il lui faut du charbon !", b.travail ? "#3d8a4a" : "#b8443a"); info("🔌 Réseau : " + (el.utilise || 0) + " / " + (el.offre || 0) + " unités utilisées · demande " + (el.demande || 0) + (el.coupes ? " · ⚠️ " + el.coupes + " coupé(s)" : ""), el.coupes ? "#b8443a" : null); }
+      else if (Village.Electricite.estSource(b.type)) { const el = monde.electricite || {}, pr = b.production || 0, mx = C.electricite.production[b.type]; // étape 59 : toutes les centrales
+        info(pr > 0 ? "⚡ En marche : fournit " + pr + " / " + mx + " unités" + (b.type === "eolienne" ? " (vent : " + Math.round(Village.Electricite.vent(monde, b) * 100) + " %)" : b.type === "solaire" ? " (soleil : " + Math.round(Village.Electricite.soleil(monde) * 100) + " %)" : "") : b.type === "solaire" ? "🌙 À l'arrêt : pas de soleil (la nuit)" : "⚡ À l'arrêt : il lui faut " + (b.type === "nucleaire" ? "du combustible (lingots) et son ingénieur !" : "du charbon !"), pr > 0 ? "#3d8a4a" : "#b8443a");
+        if (el.parSorte) info("🏭 Tout le réseau : " + Object.entries(el.parSorte).map(([t, n]) => Village.Batiments.TYPES[t].emoji + " " + n).join(" · ")); info("🔌 Réseau : " + (el.utilise || 0) + " / " + (el.offre || 0) + " unités utilisées · demande " + (el.demande || 0) + (el.coupes ? " · ⚠️ " + el.coupes + " coupé(s)" : ""), el.coupes ? "#b8443a" : null); }
       else if (b.type === "pompage" || b.type === "epuration") { // étape 35
         const reseau = b.type === "pompage" ? monde.eau || {} : monde.egouts || {}, marche = Village.Electricite.stationEnMarche(b.type)(b);
         if (!b.courant) problemes.push("⚡ Pas d'électricité : la station est arrêtée. Relie-la par la route à une centrale.");
@@ -1253,7 +1259,7 @@ Village.Interface = (function () {
       if (b.ouvrier && b.ouvrier.malade > 0) problemes.push("🤒 Le " + Village.Batiments.TYPES[b.type].metier + " est malade : il reprend dans " + Math.ceil(b.ouvrier.malade) + " s (un hôpital l'aurait évité).");
       // Étape 48 : un logement : quels services l'ont ?
       if (Village.Services.active(monde) && C.logement[b.type] && b.type !== "entrepot") info(Village.Services.TYPES.map((ty) => C.services.liste[ty].emoji + (b[C.services.liste[ty].champ] ? "✅" : "❌")).join("  "), Village.Services.TYPES.every((ty) => b[C.services.liste[ty].champ]) ? "#3d8a4a" : "#b8443a");
-      if (b.type !== "centrale" && b.type !== "pompage" && b.type !== "epuration" && !Village.Services.estService(b.type)) {
+      if (!Village.Electricite.estSource(b.type) && b.type !== "pompage" && b.type !== "epuration" && !Village.Services.estService(b.type)) {
         const e = Village.Electricite.consoEau(b), g = Village.Electricite.consoEgout(b);
         if (e || g) info((e ? (b.eau ? "🚰 Eau courante ✅" : "🚰 Pas d'eau courante") : "") + (e && g ? " · " : "") + (g ? (b.egout ? "🚽 Égouts ✅" : "🚽 Pas d'égouts") : "") + (b.eau && C.ateliers[b.type] && C.ateliers[b.type].entrees.eau ? " : plus besoin du puits !" : ""), (e && !b.eau) || (g && !b.egout) ? "#b8443a" : "#3d8a4a");
       }
@@ -1272,7 +1278,7 @@ Village.Interface = (function () {
       info("📋 " + monde.file.length + " livraison(s) en attente", monde.file.length > 40 ? "#c0392b" : null);
       // Étape 24 : ✍️ le conseil dépend de ce que tu as déjà (avant : « construis un entrepôt 2 », même quand tu l'avais !)
       const nDepots = monde.batiments.filter((x) => x.type === "depot").length;
-      if (monde.file.length > 40) pb("⚠️ Il manque des porteurs : " + (Village.Ages.debloque(monde, "depot") && nDepots < C.depot.max ? "construis un 🏬 entrepôt de plus (tu en as " + nDepots + " / " + C.depot.max + ")" : "agrandis l'entrepôt") + ", et des huttes pour les loger.");
+      if (monde.file.length > 40) pb("⚠️ Il manque des porteurs : " + (Village.Ages.debloque(monde, "depot") && (!C.depot.max || nDepots < C.depot.max) ? "construis un 🏬 entrepôt de plus (tu en as " + nDepots + ")" : "agrandis l'entrepôt") + ", et des huttes pour les loger.");
       if (Village.Ameliorations.placesEnPlus(monde, b)) info("➕ " + Village.Ameliorations.placesEnPlus(monde, b) + " place(s) en plus : 1 pour " + C.depot.parBatiments + " bâtiments livrés");
       info("📦 Réserve : " + Re.capacite(monde) + " places" + (mn === Infinity ? "" : " · pleine en ≈ " + (mn >= 60 ? Math.floor(mn / 60) + " h " + String(Math.round(mn % 60)).padStart(2, "0") : Math.round(mn) + " min") + " si tu pars"));
       // Étape 39 : ✍️ « dans l'entrepôt, on distingue mal ce qu'on va améliorer ». Les 3 améliorations, chacune avec ce

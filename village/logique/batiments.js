@@ -65,6 +65,9 @@ Village.Batiments = (function () {
     depot: { nom: "Entrepôt secondaire", court: "Entrepôt 2", emoji: "🏬", metier: null }, // étape 17
     monument: { nom: "Le Grand Beffroi", court: "Monument", emoji: "🏛️", metier: null }, // étape 31
     centrale: { nom: "Centrale à charbon", court: "Centrale", emoji: "⚡", metier: "électricien" }, // étape 34
+    eolienne: { nom: "Éolienne", court: "Éolienne", emoji: "🌬️", metier: null }, // étape 59
+    solaire: { nom: "Panneaux solaires", court: "Solaire", emoji: "☀️", metier: null },
+    nucleaire: { nom: "Centrale nucléaire", court: "Nucléaire", emoji: "☢️", metier: "ingénieur" },
     acierie: { nom: "Aciérie", court: "Aciérie", emoji: "🏭", metier: "métallurgiste" },
     filature: { nom: "Filature", court: "Filature", emoji: "🧵", metier: "fileur" },
     pompage: { nom: "Station de pompage", court: "Pompage", emoji: "🚰", metier: "fontainier" }, // étape 35
@@ -89,7 +92,7 @@ Village.Batiments = (function () {
     gratteciel: { nom: "Gratte-ciel", court: "Gratte-ciel", emoji: "🏙️", metier: null }, // étape 55 : un immeuble qui a évolué
   };
   // L'ordre des boutons de construction (touches 1, 2, 3, 4).
-  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot", "monument", "centrale", "acierie", "filature", "pompage", "epuration", "ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille", "port", "stade", "spatial", "chefferie", "chapelle", "donjon", "cathedrale", "gare"];
+  const A_CONSTRUIRE = ["bucheron", "forestier", "scierie", "carriere", "pecheur", "chasseur", "geologue", "universite", "mineCharbon", "hutte", "mineFer", "fonderie", "forge", "marche", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "puits", "faneur", "etable", "laiterie", "veterinaire", "fromagerie", "cremerie", "poulailler", "bergerie", "porcherie", "tisserand", "tailleur", "charcuterie", "depot", "monument", "centrale", "eolienne", "solaire", "nucleaire", "acierie", "filature", "pompage", "epuration", "ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille", "port", "stade", "spatial", "chefferie", "chapelle", "donjon", "cathedrale", "gare"];
   // « 🪵 troncs », « 🔩 lingots »… (étape 8 : fabriqué à partir de config.js, « ressources »)
   const NOMS_RESSOURCES = {};
   for (const [r, f] of Object.entries(C.ressources)) NOMS_RESSOURCES[r] = f.emoji + " " + f.nom;
@@ -110,7 +113,7 @@ Village.Batiments = (function () {
   const offert = (monde, type) => ESSENTIELS.includes(type) && !monde.batiments.some((b) => b.type === type) && !assez(monde, cout(type));
   // Étape 24 : chaque entrepôt secondaire coûte 1,5 fois plus que le précédent
   function coutDepot(monde) {
-    const f = Math.pow(C.depot.prixEnPlus, monde.batiments.filter((b) => b.type === "depot").length), prix = {};
+    const f = 1 + C.depot.prixEnPlus * monde.batiments.filter((b) => b.type === "depot").length, prix = {}; // étape 59 : + 50 % par entrepôt
     for (const [r, n] of Object.entries(cout("depot"))) prix[r] = Math.round(n * f);
     return prix;
   }
@@ -142,7 +145,8 @@ Village.Batiments = (function () {
   // un seul par village (config.js : « uniques ») ; les entrepôts secondaires : 4 au plus.
   function limiteAtteinte(monde, type) {
     if (C.uniques.includes(type) && monde.batiments.some((b) => b.type === type)) return type === "monument" ? "la ville n'a qu'un seul grand monument" : type === "merveille" ? "il n'y a qu'une seule Grande Tour" : type === "aeroport" ? "un seul aéroport par ville (il est déjà construit)" : type === "stade" ? "un seul stade par ville" : type === "spatial" ? "un seul centre spatial" : Village.Monument.estChantier(type) ? "un seul grand chantier de ce type (il est déjà commencé)" : (type === "universite" ? "une seule université par village (elle est déjà construite)" : "un seul marché par village (il est déjà construit)");
-    if (type === "depot" && monde.batiments.filter((b) => b.type === "depot").length >= C.depot.max) return "pas plus de " + C.depot.max + " entrepôts secondaires";
+    if (type === "fonderie" && C.electricite.remplacerFonderies && (monde.age || 0) >= C.electricite.age) return "remplacée par l'aciérie à l'époque industrielle"; // étape 59
+    if (type === "depot" && C.depot.max && monde.batiments.filter((b) => b.type === "depot").length >= C.depot.max) return "pas plus de " + C.depot.max + " entrepôts secondaires";
     return null;
   }
   // Étape 45 : dégager la place d'un bâtiment (ses cases, ses champs) : arbres → troncs, rochers → pierres, à l'entrepôt

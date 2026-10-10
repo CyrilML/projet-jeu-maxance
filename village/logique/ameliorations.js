@@ -34,7 +34,7 @@ Village.Ameliorations = (function () {
     return Math.round(x);
   }
   // Étape 44 : la place dans un atelier (de chaque ingrédient), et devant sa porte : plus grande à chaque amélioration ⭐
-  const entreeMaxDe = (b) => C.entreeMax + C.entreeParAmelioration * ((b && b.ameliorations) || 0);
+  const entreeMaxDe = (b) => (b && C.entreeMaxType[b.type]) || C.entreeMax + C.entreeParAmelioration * ((b && b.ameliorations) || 0); // étape 59 : la centrale garde plus de charbon
   const sortieMaxDe = (b) => C.sortieMax + C.sortieParAmelioration * ((b && b.type !== "entrepot" && b.ameliorations) || 0);
   function vitessePorteurs(monde) {
     const e = monde.batiments.find((b) => b.type === "entrepot");

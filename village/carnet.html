@@ -182,6 +182,7 @@
       <a href="#etape56">Étape 56</a>
       <a href="#etape57">Étape 57</a>
       <a href="#etape58">Étape 58</a>
+      <a href="#etape59">Étape 59</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2892,6 +2893,48 @@ après :  [ 📦 Merci de la part de la boulangère ]
       <details class="question"><summary>Pourquoi les travaux s'arrêtent-ils sans route ?</summary><p>Parce que les ouvriers ne peuvent pas y aller : c'est la même règle que pour les ateliers.</p></details>
     </section>
 
+    <section id="etape59">
+      <h2>🌬️ Étape 59 : plus d'entrepôts, les aciéries et le choix de l'énergie <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Autant d'entrepôts que tu veux, des fonderies qui deviennent des aciéries, une centrale moins gourmande, et 3 nouvelles façons de faire de l'électricité. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/57-entrepots-acieries-energies.md</code>.</p>
+          <ul>
+            <li>✍️ « La limite de 4 entrepôts doit sauter. »</li>
+            <li>✍️ « Les fonderies doivent être remplacées automatiquement par les aciéries. »</li>
+            <li>✍️ « La centrale à charbon consomme beaucoup trop, il faut augmenter son stockage. »</li>
+            <li>✍️ « Le choix : éoliennes, panneaux solaires, centrale nucléaire, avec des prix et des productions différents. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Plus de limite aux entrepôts secondaires (le prix monte doucement : 120, 180, 240… 🟫).</li>
+            <li>☐ Tes fonderies deviennent des aciéries dès qu'elles ont l'électricité.</li>
+            <li>☐ La centrale à charbon : 40 charbons en réserve, 1 brûlé toutes les 40 s.</li>
+            <li>☐ Dans « 🏭 Industrie » : 🌬️ l'éolienne ; à l'époque moderne : ☀️ le solaire et ☢️ le nucléaire.</li>
+            <li>Vérifie « version 56 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔧 Sous le capot : des sources qui changent</h3>
+      <pre style="white-space: pre-wrap">                 prix                          production
+⚡ charbon       200🪨 40🔩 20🔨                 40   (s'il a du charbon)
+🌬️ éolienne       40🟫 20🔩 10🔨                 12 × vent    (30 % → 100 %)
+☀️ solaire        40🪨 60🔩 30🔨                 30 × soleil  (0 la nuit !)
+☢️ nucléaire   1 000🪨 400🔩 200🔨               300  (1 lingot par minute)</pre>
+      <p>Le vent est calculé avec des <strong>sinus</strong> : il monte et descend tout seul, lentement. Le soleil suit la journée : à minuit, les panneaux ne font plus rien ! C'est le vrai casse-tête des ingénieurs : le vent et le soleil sont gratuits, mais pas toujours là. Il faut garder une source « sûre » (charbon ou nucléaire) pour la nuit. Sous le capot, la ligne « ⚡ production par sorte · 🌬️ vent · ☀️ soleil » te montre tout en direct.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Regarde la production de tes panneaux solaires le jour, puis la nuit.</li>
+        <li>Combien d'éoliennes faut-il pour faire autant qu'une centrale à charbon ? Et quand il y a peu de vent ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Avant, la centrale brûlait 1 charbon toutes les 15 s. Combien par heure ? Et maintenant ?</summary><p>Avant : 3 600 ÷ 15 = 240 charbons par heure. Maintenant : 3 600 ÷ 40 = 90. Presque 3 fois moins !</p></details>
+      <details class="question"><summary>Pourquoi le nucléaire est-il si cher ?</summary><p>Parce qu'il produit énormément (300, comme 7 centrales à charbon) : s'il n'était pas cher, plus personne ne construirait les autres.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -3227,8 +3270,14 @@ après :  [ 📦 Merci de la part de la boulangère ]
           <p>8 grands chantiers (un par âge), des paliers de plus en plus chers et des travaux de plus en plus longs.</p>
           <p class="apprend"><b>Tu apprends :</b> la rétention, dessiner un bâtiment qui pousse. <b>Durée :</b> 1 séance.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">59</div>
+          <h4>🌬️ Entrepôts, aciéries et énergies <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Plus de limite aux entrepôts, les fonderies deviennent des aciéries, la centrale consomme moins ; éolienne, solaire et nucléaire.</p>
+          <p class="apprend"><b>Tu apprends :</b> une production qui varie (le vent, le soleil). <b>Durée :</b> 1 séance.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">59…</div>
+          <div class="num">60…</div>
           <h4>🌌 Après la fusée : à toi d'imaginer <span class="etiquette">⏭️ à décider</span></h4>
           <p>Le camion de pompiers qui éteint le feu, des feux rouges, une base sur la Lune… Dis-moi !</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -3709,6 +3758,14 @@ après :  [ 📦 Merci de la part de la boulangère ]
         <textarea class="journal" id="village-appris-58" data-cle="village-appris-58" placeholder="Ex. : J'ai appris ce qu'est la rétention…"></textarea>
         <label for="village-idees-58"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-58" data-cle="village-idees-58" placeholder="Ex. : Accélérer les travaux avec des gemmes…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 59 · entrepôts, aciéries et énergies <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> plus de limite d'entrepôts (prix + 50 %), le remplacement des fonderies, la centrale moins gourmande (40 en réserve), l'éolienne, les panneaux solaires et la centrale nucléaire, chacun avec sa production.</p>
+        <label for="village-appris-59"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-59" data-cle="village-appris-59" placeholder="Ex. : J'ai appris que le soleil ne produit rien la nuit…"></textarea>
+        <label for="village-idees-59"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-59" data-cle="village-idees-59" placeholder="Ex. : Des batteries pour garder l'électricité du jour…"></textarea>
       </div>
     </section>
   </main>

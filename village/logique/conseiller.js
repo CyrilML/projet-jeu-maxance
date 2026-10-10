@@ -85,14 +85,14 @@ Village.Conseiller = (function () {
     }
     // 7. Étape 34 : ⚡ l'électricité
     if (Village.Electricite.active(monde)) {
-      const el = monde.electricite || {}, centrales = monde.batiments.filter((b) => b.type === "centrale" && b.etat === "pret");
-      if (!centrales.length) ajouter(2, "⚡", "Construis une centrale à charbon", "L'époque industrielle commence : l'électricité fait aller les ateliers 1,5 fois plus vite, et les habitants la veulent.", "centrale");
-      else if (!centrales.some(Village.Electricite.centraleEnMarche) && !centrales.some((b) => (b.entrees.charbon || 0) > 0)) ajouter(3, "⚫", "La centrale n'a plus de charbon", "Sans charbon, plus d'électricité : des mines de charbon !", producteur(monde, "charbon"));
-      else if (el.penurie) ajouter(3, "⚡", "Pénurie d'électricité : " + el.coupes + " bâtiment(s) coupé(s)", "La demande (" + el.demande + ") dépasse ce que fournissent tes centrales (" + el.offre + ").", "centrale");
+      const el = monde.electricite || {}, centrales = monde.batiments.filter((b) => b.type === "centrale" && b.etat === "pret"), sources = monde.batiments.filter((b) => Village.Electricite.estSource(b.type) && b.etat === "pret"); // étape 59
+      if (!sources.length) ajouter(2, "⚡", "Construis une centrale à charbon", "L'époque industrielle commence : l'électricité fait aller les ateliers 1,5 fois plus vite, et les habitants la veulent.", "centrale");
+      else if (centrales.length && !centrales.some(Village.Electricite.centraleEnMarche) && !centrales.some((b) => (b.entrees.charbon || 0) > 0)) ajouter(3, "⚫", "La centrale n'a plus de charbon", "Sans charbon, plus d'électricité : des mines de charbon !", producteur(monde, "charbon"));
+      else if (el.penurie) ajouter(3, "⚡", "Pénurie d'électricité : " + el.coupes + " bâtiment(s) coupé(s)", "La demande (" + el.demande + ") dépasse ce que fournissent tes centrales (" + el.offre + ")." + (sources.some((b) => b.type === "solaire" || b.type === "eolienne") ? " Le vent et le soleil ne sont pas toujours là : une centrale sûre (charbon, nucléaire) aide la nuit." : ""), Village.Ages.debloque(monde, "nucleaire") ? "nucleaire" : "centrale");
       else if (el.horsReseau) ajouter(1, "🔌", el.horsReseau + " bâtiment(s) loin du réseau", "Le courant suit les routes : relie-les par la route à une centrale.", null);
     }
     // 8. Étape 35 : 🚰 l'eau courante et 🚽 les égouts (seulement quand il y a déjà une centrale)
-    if (Village.Electricite.active(monde) && monde.batiments.some((b) => b.type === "centrale" && b.etat === "pret")) {
+    if (Village.Electricite.active(monde) && monde.batiments.some((b) => Village.Electricite.estSource(b.type) && b.etat === "pret")) { // étape 59 : n'importe quelle centrale
       for (const [type, nomR, emoji, quoi] of [["pompage", "eau", "🚰", "l'eau courante"], ["epuration", "egouts", "🚽", "les égouts"]]) {
         const st = monde.batiments.filter((b) => b.type === type && b.etat === "pret"), r = monde[nomR] || {};
         if (!st.length) ajouter(1, emoji, "Construis une " + B().TYPES[type].nom.toLowerCase(), "Les habitants veulent " + quoi + " (" + emoji + " dans 👥), et les maisons bourgeoises qui l'ont deviennent des immeubles de 20 lits.", type);

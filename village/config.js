@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 55,
+  version: 56,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -172,6 +172,10 @@ Village.CONFIG = {
     cathedrale: { cout: { planches: 120, pierres: 200, outils: 10 }, construction: 60 },
     gare: { cout: { planches: 200, pierres: 300, lingots: 40, outils: 20 }, construction: 80 }, // étape 31 : ses fondations (puis 4 paliers)
     centrale: { cout: { pierres: 200, lingots: 40, outils: 20 }, construction: 60 }, // étape 34
+    // Étape 59 : les autres façons de faire de l'électricité (des prix et des productions différents)
+    eolienne: { cout: { planches: 40, lingots: 20, outils: 10 }, construction: 30 },
+    solaire: { cout: { pierres: 40, lingots: 60, outils: 30 }, construction: 40 },
+    nucleaire: { cout: { pierres: 1000, lingots: 400, outils: 200 }, construction: 150 },
     acierie: { cout: { planches: 100, pierres: 150, lingots: 30, outils: 15 }, construction: 50 },
     filature: { cout: { planches: 120, pierres: 80, lingots: 20, outils: 10 }, construction: 45 }, // étape 19 : dès le hameau (sans lingots ni outils)
     pompage: { cout: { pierres: 120, lingots: 25, outils: 10 }, construction: 40 }, // étape 35
@@ -223,7 +227,9 @@ Village.CONFIG = {
   // Étape 24 : ✍️ « même avec un 2e entrepôt, ça ne suffit pas ». La parade : chaque entrepôt gagne 1 place de porteur
   // pour 4 bâtiments qu'il livre (le travail fait venir des porteurs). Et 4 entrepôts secondaires au plus, chacun
   // 1,5 fois plus cher que le précédent.
-  depot: { porteurs: 3, max: 4, aide: 15, parBatiments: 4, prixEnPlus: 1.5,
+  // Étape 59 : ✍️ « la limite de 4 entrepôts doit sauter » : plus de limite (max: null), et le prix monte moins vite :
+  // + 50 % du prix de départ par entrepôt déjà construit (avant : × 1,5 à chaque fois, qui montait beaucoup trop vite)
+  depot: { porteurs: 3, max: null, aide: 15, parBatiments: 4, prixEnPlus: 0.5,
     // Étape 40 : ✍️ chaque entrepôt secondaire a son bouton « Agrandir » : +2 porteurs par niveau, 4 niveaux au plus
     parNiveau: 2, niveauMax: 4, prix: { planches: 40, pierres: 30 }, prixPieces: 40, facteurPrix: 2 },
   // Étape 40 : ✍️ « une seule université peut être construite ; une fois faite, elle est grisée. Idem pour le marché. »
@@ -237,7 +243,8 @@ Village.CONFIG = {
     fonderie: { entrees: { fer: 1, charbon: 1 }, sorties: { lingots: 1 }, duree: 10, bonus: "fondre" }, // ✍️ 1A : simple
     // Étape 34 : l'époque industrielle. La centrale brûle du charbon (elle ne fabrique rien : elle fait de l'électricité).
     // « electrique » : une usine qui ne marche PAS sans électricité.
-    centrale: { entrees: { charbon: 1 }, sorties: {}, duree: 15, bonus: "fondre" },
+    centrale: { entrees: { charbon: 1 }, sorties: {}, duree: 40, bonus: "fondre" }, // étape 59 : ✍️ « elle consomme beaucoup trop » : 1 charbon toutes les 40 s (15 avant)
+    nucleaire: { entrees: { lingots: 1 }, sorties: {}, duree: 60, bonus: "fondre" }, // étape 59 : le combustible (1 barre de métal par minute)
     acierie: { entrees: { fer: 2, charbon: 1 }, sorties: { lingots: 4 }, duree: 12, bonus: "fondre", electrique: true },
     filature: { entrees: { laine: 2 }, sorties: { tissu: 3 }, duree: 10, bonus: "tisser", electrique: true },
     forge: { entrees: { lingots: 1, planches: 1 }, sorties: { outils: 1 }, duree: 12, bonus: "forger" },
@@ -325,6 +332,7 @@ Village.CONFIG = {
     entrepot: 4, depot: 4, universite: 4, moulin: 4, marche: 4, fonderie: 4, ferme: 4,
     monument: 5, // étape 31 : ✍️ « même 5 × 5 »
     centrale: 4, acierie: 4, filature: 4, // étape 34 : les usines
+    eolienne: 1, solaire: 3, nucleaire: 5, // étape 59
     pompage: 3, epuration: 3, immeuble: 2, gratteciel: 2, // étape 35 ; étape 55
     chefferie: 3, chapelle: 3, donjon: 4, cathedrale: 5, gare: 5, // étape 58 : les grands chantiers
     commerce: 4, aeroport: 6, merveille: 6, // étape 52 et 53 : les très grands
@@ -521,6 +529,7 @@ Village.CONFIG = {
   sortieMax: 16, // objets qui peuvent attendre devant un bâtiment (au-delà, l'ouvrier attend) · étape 20 : 8 ; étape 44 : 16
   sortieParAmelioration: 8, // étape 44 : + 8 par amélioration ⭐ du bâtiment (jusqu'à 32)
   entreeMax: 6, // de chaque ingrédient en réserve dans un atelier · étape 44 : 6 (2 avant)
+  entreeMaxType: { centrale: 40, nucleaire: 20 }, // étape 59 : ✍️ « il faut augmenter son stockage » : la centrale garde 40 charbons
   entreeParAmelioration: 3, // étape 44 : + 3 par amélioration ⭐ de l'atelier (jusqu'à 12)
   // Étape 27 : ✍️ « le géologue et le maçon devraient pouvoir aller partout sur la carte, sans rentrer chez eux à chaque
   // fois ». Ces métiers font une TOURNÉE : ils cherchent sur toute la carte, et après un travail ils cherchent le suivant
@@ -648,12 +657,12 @@ Village.CONFIG = {
       // Étape 34 : ✍️ (choix de Maxance) pour l'époque industrielle : le Grand Beffroi fini, 80 habitants, 3 000 🪙
       objectifs: { monument: 4, habitants: 80, pieces: 3000 } },
     // Étape 34 : 🏭 l'ÉPOQUE INDUSTRIELLE : l'électricité, et les premières usines
-    { id: "industrie", nom: "L'époque industrielle", emoji: "🏭", debloque: ["centrale", "acierie", "filature", "pompage", "epuration", "gare"], // étape 35 : l'eau et les égouts
+    { id: "industrie", nom: "L'époque industrielle", emoji: "🏭", debloque: ["centrale", "eolienne", "acierie", "filature", "pompage", "epuration", "gare"], // étape 59 : l'éolienne // étape 35 : l'eau et les égouts
       // Étape 48 : pour passer à l'époque moderne : une grande ville, riche, où presque tous les lits ont les 3 réseaux
       //   reseaux : % des lits qui ont ⚡ + 🚰 + 🚽 à la fois ; immeubles : immeubles debout
       objectifs: { habitants: 150, pieces: 6000, reseaux: 90, immeubles: 2, chantier: "gare" } },
     // Étape 48 : 🌆 l'ÉPOQUE MODERNE : les services publics (l'école, l'hôpital, les pompiers, la police)
-    { id: "moderne", nom: "L'époque moderne", emoji: "🌆", debloque: ["ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille"], // étape 52 et 53
+    { id: "moderne", nom: "L'époque moderne", emoji: "🌆", debloque: ["ecole", "hopital", "pompiers", "police", "commerce", "aeroport", "merveille", "solaire", "nucleaire"], // étape 59 : le solaire et le nucléaire // étape 52 et 53
       // Étape 53 : ✍️ l'objectif très long : la Grande Tour finie (6 paliers), un aéroport, 250 habitants, 20 000 🪙
       //   construits : { type: combien } de bâtiments prêts ; merveille : paliers de la Grande Tour
       // Étape 55 : ✍️ « 250 habitants, c'est peu pour une métropole » : 1 000 habitants et 10 gratte-ciel
@@ -888,6 +897,9 @@ Village.CONFIG = {
     charcuterie: "Le charcutier fume la viande avec du charbon : des jambons.",
     depot: "Un 2e point de départ pour les porteurs, loin de l'entrepôt : les livraisons vont plus vite.",
     monument: "Le grand chantier de la ville, en 4 paliers : la fierté de tous les habitants.",
+    eolienne: "L'éolienne fait de l'électricité avec le vent : jusqu'à 12 unités, ça dépend du vent. Pas de charbon, pas d'ouvrier.", // étape 59
+    solaire: "Les panneaux solaires font jusqu'à 30 unités en plein jour… et rien la nuit (60 % en hiver). Pas de charbon, pas d'ouvrier.",
+    nucleaire: "La centrale nucléaire fait 300 unités ! Très chère ; un ingénieur ; 1 lingot de combustible par minute.",
     centrale: "La centrale brûle du charbon et fait de l'électricité. Le courant suit les routes, jusqu'à " + 40 + " unités par centrale.",
     acierie: "L'aciérie (électrique) fond le fer en grande quantité : 2 fer + 1 charbon → 4 lingots.",
     filature: "La filature (électrique) file la laine à la machine : 2 laines → 3 tissus.",
@@ -917,6 +929,16 @@ Village.CONFIG = {
   electricite: {
     age: 5, // l'époque industrielle
     parCentrale: 40, // unités par centrale qui tourne
+    // Étape 59 : ✍️ « donner le choix : éoliennes, panneaux solaires, centrale nucléaire, avec des prix et des productions
+    // différents ». Ce que produit chaque source (au mieux) :
+    //   ⚡ centrale à charbon : 40, si elle a du charbon (1 toutes les 40 s) ;
+    //   🌬️ éolienne : 12 × le vent (de 30 % à 100 %, il change tout le temps) ; rien à brûler, pas d'ouvrier ;
+    //   ☀️ panneaux solaires : 30 × le soleil (rien la nuit, 60 % en hiver) ; rien à brûler, pas d'ouvrier ;
+    //   ☢️ centrale nucléaire : 300 ! mais très chère, un ingénieur, et 1 lingot de combustible par minute.
+    production: { centrale: 40, eolienne: 12, solaire: 30, nucleaire: 300 },
+    solaireHiver: 0.6,
+    sources: ["centrale", "eolienne", "solaire", "nucleaire"],
+    remplacerFonderies: true, // étape 59 : ✍️ « les fonderies doivent être remplacées automatiquement par les aciéries »
     logement: 1, atelier: 2, usine: 8, // consommation (unités)
     consommation: { entrepot: 3, depot: 2, universite: 4, marche: 2, monument: 4, pompage: 4, epuration: 4, immeuble: 3, ecole: 3, hopital: 4, pompiers: 3, police: 3, commerce: 6, aeroport: 10, merveille: 6, gratteciel: 8, port: 8, stade: 10, spatial: 12 }, // étape 48 : les services ; étape 52 et 53
     vitesse: 1.5, // un atelier alimenté travaille 1,5 fois plus vite

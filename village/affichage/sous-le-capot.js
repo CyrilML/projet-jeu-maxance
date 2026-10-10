@@ -134,6 +134,7 @@ Village.SousLeCapot = (function () {
     "partie-remise-a-zero": (d) => "🆕 Le jeu a beaucoup changé : la partie (version " + d.depuis + ") est remise à zéro, une nouvelle carte de 256 × 256 commence (version " + d.vers + ")", // étape 32
     "prosperite-change": (d) => "👥 La ville est maintenant " + d.niveau + " " + d.emoji + " (prospérité " + d.prosperite + " %, " + d.habitants + " habitants) : les arrivées vont × " + String(0.5 + d.prosperite / 100).replace(".", ","), // étape 33
     "electricite-penurie": (d) => "⚡❌ Pénurie d'électricité : " + d.coupes + " bâtiment(s) coupé(s) · offre " + d.offre + " < demande " + d.demande + " (" + d.centrales + " centrale(s) qui tournent)", // étape 34
+    "fonderie-remplacee": (d) => "🏭 La fonderie n° " + d.numero + " (" + d.colonne + ", " + d.ligne + ") a l'électricité : elle devient une aciérie (2 fer + 1 charbon → 4 lingots)", // étape 59
     "electricite-ok": (d) => "⚡✅ Assez d'électricité pour tout le réseau : offre " + d.offre + ", demande " + d.demande,
     "eau-penurie": (d) => "🚰❌ Pénurie d'eau : " + d.coupes + " bâtiment(s) sans eau · offre " + d.offre + " < demande " + d.demande + " (" + d.sources + " station(s) de pompage qui tournent)", // étape 35
     "eau-ok": (d) => "🚰✅ Assez d'eau pour tout le réseau : offre " + d.offre + ", demande " + d.demande,
@@ -313,6 +314,8 @@ Village.SousLeCapot = (function () {
     // Étape 34 et 35 : les 3 réseaux qui suivent les routes
     if (Village.Electricite.active(monde)) {
       h += groupe("⚡🚰🚽 Les réseaux (ils suivent les routes, les plus proches d'abord)");
+      const el59 = monde.electricite || {}; // étape 59 : les sortes de centrales
+      h += ligne("⚡ production par sorte · 🌬️ vent · ☀️ soleil", (Object.entries(el59.parSorte || {}).map(([t, n]) => Village.Batiments.TYPES[t].emoji + " " + n).join(" · ") || "aucune centrale") + " · " + Math.round(Village.Electricite.vent(monde) * 100) + " % · " + Math.round(Village.Electricite.soleil(monde) * 100) + " %");
       for (const [nom, emoji, titreR] of [["electricite", "⚡", "électricité"], ["eau", "🚰", "eau courante"], ["egouts", "🚽", "égouts"]]) {
         const r = monde[nom] || {};
         h += ligne(emoji + " " + titreR + " : utilisé / offre · demande", (r.utilise || 0) + " / " + (r.offre || 0) + " · " + (r.demande || 0) + (r.penurie ? " ⚠️ pénurie" : ""));

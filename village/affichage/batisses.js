@@ -85,6 +85,10 @@ Village.Batisses = (function () {
     port: { a: 18, a2: 30, h: 18, toit: 10, murG: "#3f6a8a", murD: "#2f5270", toitA: "#8a9098", toitB: "#6a7078", mur: "planches", toitSorte: null, fenetres: 1, toitForme: "pavillon" },
     stade: { a: 34, h: 14, toit: 0, murG: "#d8dce2", murD: "#b8bec6", toitA: "#d8dce2", toitB: "#b8bec6", mur: null, toitSorte: null, fenetres: 0, toitForme: "plat" },
     spatial: { a: 30, h: 6, toit: 0, murG: "#c8ccd2", murD: "#a8aeb6", toitA: "#c8ccd2", toitB: "#a8aeb6", mur: null, toitSorte: null, fenetres: 0, toitForme: "plat" },
+    // Étape 59 : 🌬️ l'éolienne, ☀️ les panneaux solaires, ☢️ la centrale nucléaire
+    eolienne: { a: 10, h: 4, toit: 0, murG: "#d8dce2", murD: "#b8bec6", toitA: "#d8dce2", toitB: "#b8bec6", mur: null, toitSorte: null, fenetres: 0, toitForme: "plat" },
+    solaire: { a: 22, h: 2, toit: 0, murG: "#9aa0a8", murD: "#7a8088", toitA: "#9aa0a8", toitB: "#7a8088", mur: null, toitSorte: null, fenetres: 0, toitForme: "plat" },
+    nucleaire: { a: 16, a2: 24, h: 16, toit: 4, murG: "#e8e4dc", murD: "#c8c4bc", toitA: "#8a8e94", toitB: "#6c7076", mur: "pierre", toitSorte: null, fenetres: 1, toitForme: "plat" },
     // Étape 58 : 🏆 les grands chantiers de chaque âge
     chefferie: { a: 20, h: 10, toit: 0, murG: "#c49a62", murD: "#8a6238", toitA: "#e2c46a", toitB: "#b0903a", mur: null, toitSorte: null, fenetres: 0, toitForme: "plat" },
     chapelle: { a: 15, a2: 24, h: 18, toit: 13, murG: "#ece4d2", murD: "#ccc2ae", toitA: "#a8503a", toitB: "#86402e", mur: "pierre", toitSorte: "tuiles", fenetres: 2 },
@@ -1045,6 +1049,39 @@ Village.Batisses = (function () {
         ctx.strokeStyle = "#5a3818"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x - 1, y + 14); ctx.lineTo(x - 1, y + 4); ctx.moveTo(x - 7, y + 4 + p); ctx.lineTo(x + 5, y + 4 - p); ctx.stroke();
         ctx.fillStyle = "#ffcf2e"; ctx.beginPath(); ctx.arc(x - 7, y + 6 + p, 2, 0, Math.PI); ctx.arc(x + 5, y + 6 - p, 2, 0, Math.PI); ctx.fill();
         return [x - 2, y - 32];
+      }
+      case "eolienne": { // Étape 59 : 🌬️ un grand mât blanc et 3 pales qui tournent plus ou moins vite selon le vent
+        const s = tourRonde(ctx, x, y + 2, { r: 2.6, rh: 1.4, h: 62, clair: "#f4f6f8", fonce: "#b8bec6", dessus: "#d8dce2" });
+        bloc(ctx, s[0] + 1, s[1] + 2, 3.5, 4, "#e8ecf0", "#d8dce2", "#b8bec6", false); // la nacelle
+        const v = Village.monde && b ? Village.Electricite.vent(Village.monde, b) : 0.7, an = t * (0.6 + v * 3) + num;
+        ctx.save(); ctx.translate(s[0] - 3, s[1] - 1);
+        for (let k = 0; k < 3; k++) { ctx.save(); ctx.rotate(an + (k * TOUR) / 3); forme(ctx, [[-1.4, 0], [1.4, 0], [0.8, -30], [-0.4, -31]], "#fbfcfd"); ctx.restore(); }
+        ctx.restore(); rond(ctx, s[0] - 3, s[1] - 1, 1.8, "#c8ccd2");
+        if (vue.noirceur > 0.2 && Math.floor(t * 1.2 + num) % 2) { rond(ctx, s[0] + 1, s[1] - 3, 1.2, "#ff4a3a"); lumiere(s[0] + 1, s[1] - 3, 10, "orange", 0.7); } // le feu rouge pour les avions
+        return [s[0], s[1] - 34];
+      }
+      case "solaire": { // Étape 59 : ☀️ 3 rangées de panneaux bleus, penchés vers le soleil (ils brillent quand il y en a)
+        bloc(ctx, x, y + 2, 22, 2, "#b8b2a4", "#9a948a", "#7a7468", false);
+        const so = Village.monde ? Village.Electricite.soleil(Village.monde) : 1;
+        for (let r = 0; r < 3; r++) for (let k = 0; k < 4; k++) {
+          const cx = x - 15 + k * 9 + r * 6, cy = y - 6 + r * 6 - k * 4.5;
+          ctx.strokeStyle = "#5a6068"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx, cy + 4); ctx.lineTo(cx, cy + 8); ctx.stroke();
+          const P = [[cx - 5, cy + 2], [cx + 3, cy - 2], [cx + 6, cy - 6], [cx - 2, cy - 2]];
+          forme(ctx, P, "#2a4a7a");
+          if (vue.fin) { ctx.strokeStyle = "rgba(160, 200, 240, .5)"; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo((P[0][0] + P[1][0]) / 2, (P[0][1] + P[1][1]) / 2); ctx.lineTo((P[3][0] + P[2][0]) / 2, (P[3][1] + P[2][1]) / 2); ctx.stroke(); }
+          if (so > 0.3) { ctx.fillStyle = "rgba(255, 255, 255, " + (0.25 * so * (0.6 + 0.4 * Math.sin(t * 1.5 + k + r))) + ")"; ctx.beginPath(); P.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); ctx.fill(); }
+        }
+        return [x, y - 26];
+      }
+      case "nucleaire": { // Étape 59 : ☢️ 2 grandes tours de refroidissement (qui fument de la vapeur), le dôme du réacteur
+        const marche = !!(b && b.travail);
+        const tours = [[x - 22, y - 8], [x - 4, y - 16]].map(([tx, ty]) => tourRonde(ctx, tx, ty, { r: 12, rh: 8, h: 40, clair: "#e8e8e4", fonce: "#a8a8a2", dessus: "#8a8a84" }));
+        if (marche && vue.anim) for (const s of tours) for (let k = 0; k < 4; k++) { const ph = (t * 0.25 + k / 4) % 1; ctx.fillStyle = "rgba(245, 245, 248," + 0.8 * (1 - ph) + ")"; ctx.beginPath(); ctx.arc(s[0] + ph * 14 + Math.sin(ph * 5 + k) * 3, s[1] - ph * 40, 6 + ph * 12, 0, TOUR); ctx.fill(); }
+        const sommet = boite(ctx, x + 10, y + 6, m, 1, true); porte(ctx, x + 10, y + 6, m, "#3a4a5a");
+        const dome = tourRonde(ctx, x + 22, y - 4, { r: 10, h: 14, ht: 10, clair: "#f0f0ec", fonce: "#b8b8b2", toit: "dome", toitA: "#e8e8e4", toitB: "#a8a8a2" });
+        rond(ctx, x + 18, y - 10, 3, "#e8c040"); ctx.fillStyle = "#2a2a28"; ctx.font = "bold 4px sans-serif"; ctx.textAlign = "center"; ctx.fillText("☢", x + 18, y - 8.5); ctx.textAlign = "left"; // le panneau jaune
+        if (marche && vue.noirceur > 0.15) lumiere(x + 22, y - 10, 24, "jaune", 0.6);
+        return tours[1][1] < dome[1] ? [tours[1][0], tours[1][1] - 10] : dome;
       }
       case "stade": { // Étape 56 : 🏟️ le stade : des gradins en ovale, une pelouse, 4 projecteurs ; les jours de match, la foule saute
         const match = !!(b && b.match > 0), R = 34, r = 17, H = 16;
