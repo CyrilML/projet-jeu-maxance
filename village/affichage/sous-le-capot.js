@@ -216,11 +216,20 @@ Village.SousLeCapot = (function () {
     const li = document.createElement("li");
     li.dataset.evenement = nom;
     li.innerHTML = '<span class="temps">' + virgule(temps, 1) + " s</span> ";
-    li.appendChild(document.createTextNode(texte));
+    // Étape 42 : le texte (sans HTML), avec le 🔩 remplacé par le dessin du lingot
+    const morceaux = String(texte).split("🔩");
+    morceaux.forEach((m, n) => { li.appendChild(document.createTextNode(m)); if (n < morceaux.length - 1) li.insertAdjacentHTML("beforeend", imageLingot()); });
     journal.prepend(li);
     while (journal.children.length > 150) journal.lastChild.remove();
   }
 
+  // Étape 42 : ✍️ le lingot dessiné (le même que dans le jeu), en petite image, à la place de l'emoji 🔩 (un boulon)
+  let urlLingot = null;
+  function imageLingot() {
+    if (!urlLingot) { const c = document.createElement("canvas"); c.width = c.height = 36; Village.Batisses.icone(c.getContext("2d"), "lingots", 18, 18, 30); urlLingot = c.toDataURL(); }
+    return '<img src="' + urlLingot + '" alt="lingot" style="height: 1.1em; vertical-align: -0.2em">';
+  }
+  const lingots = (h) => h.split("🔩").join(imageLingot());
   function ligne(nom, valeur) { return "<tr><td>" + nom + "</td><td>" + valeur + "</td></tr>"; }
   function groupe(nom) { return '<tr class="groupe"><th colspan="2">' + nom + "</th></tr>"; }
 
@@ -414,7 +423,7 @@ Village.SousLeCapot = (function () {
     h += ligne("images par seconde", mesures.ips);
     h += ligne("pas de calcul par seconde", mesures.majParSeconde);
     h += ligne("temps pour peindre une image", virgule(P.ms, 1) + " ms");
-    etat.innerHTML = h;
+    etat.innerHTML = lingots(h); // étape 42
     base.textContent = JSON.stringify(Village.Sauvegarde.donnees, null, 2);
   }
 

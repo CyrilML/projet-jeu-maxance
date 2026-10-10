@@ -137,13 +137,24 @@ Village.Interface = (function () {
     ctx.fill(); ctx.stroke();
   }
 
+  // Étape 42 : ✍️ « les lingots sont représentés parfois par des lingots, parfois par des boulons ». Il n'existe pas
+  // d'emoji « lingot » : le jeu écrivait 🔩 (un boulon) dans les textes, et dessinait un vrai lingot ailleurs. Maintenant,
+  // quand un texte contient 🔩, on DESSINE le lingot à sa place (le même que partout ailleurs).
+  const DESSINES = { "🔩": "lingots" };
   function texte(ctx, t, x, y, taille, couleur, gras, alignement) {
     ctx.font = (gras ? "bold " : "") + taille + "px " + POLICE;
     ctx.fillStyle = couleur || "#3b2614";
-    ctx.textAlign = alignement || "left";
     ctx.textBaseline = "middle";
-    ctx.fillText(t, x, y);
+    t = String(t);
+    if (!t.includes("🔩")) { ctx.textAlign = alignement || "left"; ctx.fillText(t, x, y); ctx.textAlign = "left"; return; }
+    const morceaux = t.split("🔩"), li = taille * 1.15;
     ctx.textAlign = "left";
+    const total = morceaux.reduce((s, m) => s + ctx.measureText(m).width, 0) + (morceaux.length - 1) * li;
+    let px = alignement === "center" ? x - total / 2 : alignement === "right" ? x - total : x;
+    morceaux.forEach((m, n) => {
+      ctx.fillText(m, px, y); px += ctx.measureText(m).width;
+      if (n < morceaux.length - 1) { Village.Batisses.icone(ctx, DESSINES["🔩"], px + li / 2, y, taille); px += li; ctx.font = (gras ? "bold " : "") + taille + "px " + POLICE; ctx.fillStyle = couleur || "#3b2614"; ctx.textBaseline = "middle"; ctx.textAlign = "left"; }
+    });
   }
 
   function zone(x, y, l, h, action, valeur) { zones.push({ x, y, l, h, action, valeur }); }

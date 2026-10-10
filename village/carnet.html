@@ -165,6 +165,7 @@
       <a href="#etape39">Étape 39</a>
       <a href="#etape40">Étape 40</a>
       <a href="#etape41">Étape 41</a>
+      <a href="#etape42">Étape 42</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -714,7 +715,7 @@ avec les haches affûtées :  4 s × 0,6 = 2,4 s   (40 % plus vite)</pre>
           <h4>📋 La demande</h4>
           <p class="petit">Le fichier complet est dans <code>village/demandes/09-le-village-fer-marche.md</code>.</p>
           <ul>
-            <li>✍️ 1A : la fonderie, simple : 1 🟤 fer + 1 ⚫ charbon → 1 🔩 lingot.</li>
+            <li>✍️ 1A : la fonderie, simple : 1 🟤 fer + 1 ⚫ charbon → 1 <svg class="lingot" viewBox="0 0 14 8" width="1.2em" height="0.75em" aria-label="lingot" style="vertical-align: -0.05em"><path d="M1 7.5 L10 7.5 L13 4.5 L4 4.5 Z" fill="#9aa3ad" stroke="#4a4038" stroke-width="0.6"/><path d="M4 4.5 L13 4.5 L11 1.5 L5.5 1.5 Z" fill="#c9d1da" stroke="#4a4038" stroke-width="0.6"/></svg> lingot.</li>
             <li>✍️ 2B : chaque ouvrier a besoin d'une place pour dormir.</li>
             <li>✍️ 3A : des statistiques 📊 tout de suite.</li>
             <li>✍️ Et le marché 🏪, et de nouvelles missions.</li>
@@ -741,7 +742,7 @@ avec les haches affûtées :  4 s × 0,6 = 2,4 s   (40 % plus vite)</pre>
 
       <h3>⛓️ Une chaîne à 3 étages</h3>
       <pre style="white-space: pre-wrap">🟤 mine de fer ────── fer ──────┐
-⚫ mine de charbon ── charbon ──┴──► 🔥 fonderie ── 🔩 lingot ──┐
+⚫ mine de charbon ── charbon ──┴──► 🔥 fonderie ── <svg class="lingot" viewBox="0 0 14 8" width="1.2em" height="0.75em" aria-label="lingot" style="vertical-align: -0.05em"><path d="M1 7.5 L10 7.5 L13 4.5 L4 4.5 Z" fill="#9aa3ad" stroke="#4a4038" stroke-width="0.6"/><path d="M4 4.5 L13 4.5 L11 1.5 L5.5 1.5 Z" fill="#c9d1da" stroke="#4a4038" stroke-width="0.6"/></svg> lingot ──┐
 🪚 scierie ────────── 🟫 planche ───────────────────────────────┴──► ⚒️ forge ── 🔨 outil ──► missions, recherches, marché</pre>
       <p>Chaque flèche, c'est un <strong>porteur</strong> qui passe par l'entrepôt. La fonderie attend d'avoir <strong>les deux</strong> ingrédients : s'il manque le charbon, elle s'arrête, même avec plein de fer. C'est ce qu'on appelle un <strong>goulot d'étranglement</strong> : le morceau le plus lent de la chaîne décide de la vitesse de toute la chaîne (comme le goulot d'une bouteille).</p>
 
@@ -776,7 +777,7 @@ bilan      = entrées − sorties   (vert : le stock monte · rouge : il baisse)
         <tr><th>Âge</th><th>Débloque</th><th>Pour passer au suivant</th></tr>
         <tr><td>🏕️ Campement</td><td>bûcheron, forestier, scierie, carrière, pêcheur, chasseur, 🛖 hutte</td><td>6 bâtiments, 40 🟫, 20 🪨, 30 🐟+🍖</td></tr>
         <tr><td>🛖 Hameau</td><td>🔍 géologue, 🎓 université, ⚫ mine de charbon</td><td>10 bâtiments, 3 recherches, 80 🟫, 20 ⚫, 60 🐟+🍖</td></tr>
-        <tr><td>🏡 Village ✅</td><td>🟤 mine de fer, 🔥 fonderie, ⚒️ forge, 🏠 maison, 🏪 marché, 6 recherches</td><td>18 bâtiments, 16 habitants, 7 recherches, 10 🔩, 10 🔨, 150 🪙</td></tr>
+        <tr><td>🏡 Village ✅</td><td>🟤 mine de fer, 🔥 fonderie, ⚒️ forge, 🏠 maison, 🏪 marché, 6 recherches</td><td>18 bâtiments, 16 habitants, 7 recherches, 10 <svg class="lingot" viewBox="0 0 14 8" width="1.2em" height="0.75em" aria-label="lingot" style="vertical-align: -0.05em"><path d="M1 7.5 L10 7.5 L13 4.5 L4 4.5 Z" fill="#9aa3ad" stroke="#4a4038" stroke-width="0.6"/><path d="M4 4.5 L13 4.5 L11 1.5 L5.5 1.5 Z" fill="#c9d1da" stroke="#4a4038" stroke-width="0.6"/></svg>, 10 🔨, 150 🪙</td></tr>
         <tr><td>🏰 Bourg</td><td>⛏️ or et argent, 💍 orfèvre, 🍞 moulin et boulangerie, 📦 commandes de la capitale</td><td>à construire</td></tr>
         <tr><td>🏙️ Ville</td><td>🏛️ monuments, 🎭 fêtes, 🚢 port</td><td>à construire</td></tr>
       </table></div>
@@ -784,7 +785,7 @@ bilan      = entrées − sorties   (vert : le stock monte · rouge : il baisse)
       <h3>🔎 Missions d'exploration</h3>
       <ul>
         <li>Sous le capot, trouve « 📊 Le compteur de l'entrepôt ». Quelle ressource a le bilan le plus rouge ?</li>
-        <li>Aux rayons X, regarde la fonderie : « 1/1🟤 + 0/1⚫ → 1🔩 ». Qu'est-ce qui manque ?</li>
+        <li>Aux rayons X, regarde la fonderie : « 1/1🟤 + 0/1⚫ → 1<svg class="lingot" viewBox="0 0 14 8" width="1.2em" height="0.75em" aria-label="lingot" style="vertical-align: -0.05em"><path d="M1 7.5 L10 7.5 L13 4.5 L4 4.5 Z" fill="#9aa3ad" stroke="#4a4038" stroke-width="0.6"/><path d="M4 4.5 L13 4.5 L11 1.5 L5.5 1.5 Z" fill="#c9d1da" stroke="#4a4038" stroke-width="0.6"/></svg> ». Qu'est-ce qui manque ?</li>
         <li>Vends 3 paquets de pierres d'affilée. Regarde « ▼ % » au marché, puis attends 3 minutes.</li>
         <li>Dans <code>config.js</code>, trouve <code>ateliers</code> : invente la recette d'un moulin (blé → farine) !</li>
         <li>Construis 2 fonderies et une seule mine de fer. La 2e fonderie travaille-t-elle ? Pourquoi ?</li>
@@ -2346,6 +2347,31 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
       <details class="question"><summary>Une route pavée de 12 cases jusqu'à un nouveau bâtiment : combien de pierres ?</summary><p>12 pierres (1 par case), en plus du prix du bâtiment.</p></details>
     </section>
 
+    <section id="etape42">
+      <h2><svg class="lingot" viewBox="0 0 14 8" width="1.2em" height="0.75em" aria-label="lingot" style="vertical-align: -0.05em"><path d="M1 7.5 L10 7.5 L13 4.5 L4 4.5 Z" fill="#9aa3ad" stroke="#4a4038" stroke-width="0.6"/><path d="M4 4.5 L13 4.5 L11 1.5 L5.5 1.5 Z" fill="#c9d1da" stroke="#4a4038" stroke-width="0.6"/></svg> Étape 42 : les lingots toujours pareils <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les lingots sont maintenant dessinés de la même façon partout : dans les messages, les panneaux, les bulles et le journal. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/40-lingots-coherents.md</code>.</p>
+          <ul><li>✍️ « Les lingots sont représentés parfois par des lingots, parfois par des boulons : cela n'est pas cohérent. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Touche une forge : la recette montre le lingot dessiné.</li>
+            <li>☐ Les messages qui parlent de lingots montrent le même dessin.</li>
+            <li>☐ Sous le capot, le journal aussi.</li>
+            <li>Vérifie « version 43 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔤 Les emojis, c'est du texte</h3>
+      <p>Un emoji est une <strong>lettre</strong> spéciale, comme « A » : c'est l'ordinateur qui choisit son dessin, et il n'existe pas d'emoji « lingot ». Le jeu écrivait donc le boulon dans ses textes. La solution : avant d'écrire un texte, le jeu cherche ce boulon et, à sa place, il <strong>dessine</strong> le lingot avec ses propres traits (deux trapèzes gris). C'est comme un remplacement de mots, mais avec un dessin.</p>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi le dessin est-il le même partout maintenant ?</summary><p>Parce que tous les endroits utilisent la même fonction de dessin du lingot (dans <code>affichage/batisses.js</code>) : un seul dessin, partout.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2597,8 +2623,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
           <p>Après la recherche, plus aucun chemin de terre, même jusqu'à la porte d'un nouveau bâtiment.</p>
           <p class="apprend"><b>Tu apprends :</b> trouver un bug, une règle à un seul endroit. <b>Durée :</b> 1 séance.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">42</div>
+          <h4>Les lingots toujours pareils <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Le boulon des textes est remplacé par le dessin du lingot, partout.</p>
+          <p class="apprend"><b>Tu apprends :</b> un emoji est une lettre ; remplacer un texte par un dessin. <b>Durée :</b> 1 séance.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">42-44</div>
+          <div class="num">43-45</div>
           <h4>🚗🚓🛍️ Les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Routes goudronnées, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -2943,6 +2975,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
         <textarea class="journal" id="village-appris-41" data-cle="village-appris-41" placeholder="Ex. : J'ai appris qu'une règle doit être écrite à un seul endroit…"></textarea>
         <label for="village-idees-41"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-41" data-cle="village-idees-41" placeholder="Ex. : Des routes goudronnées pour les voitures…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 42 · les lingots toujours pareils <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> dans <code>affichage/interface.js</code>, la fonction <code>texte</code> dessine le lingot à la place de l'emoji du boulon ; dans <code>affichage/sous-le-capot.js</code>, une petite image du même lingot.</p>
+        <label for="village-appris-42"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-42" data-cle="village-appris-42" placeholder="Ex. : J'ai appris qu'un emoji est une lettre…"></textarea>
+        <label for="village-idees-42"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-42" data-cle="village-idees-42" placeholder="Ex. : D'autres objets dessinés au lieu des emojis…"></textarea>
       </div>
     </section>
   </main>
