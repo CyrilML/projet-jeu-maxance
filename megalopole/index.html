@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>La Mégalopole</title>
+  <style>
+    :root { --fond: #10162a; --carte: #1c2440; --texte: #eef1f8; --doux: #9aa6c8; --or: #f2c94c; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--fond); color: var(--texte); font: 15px system-ui, "Segoe UI", Roboto, Arial, sans-serif; }
+    header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 16px; }
+    header h1 { margin: 0; font-size: 1.25rem; }
+    header a { color: var(--or); }
+    .version { color: var(--doux); font-size: 0.85rem; margin-right: 10px; }
+    #jeu { position: relative; margin: 0 auto; width: min(100%, 1200px); height: min(78vh, 760px); border: 2px solid #f2d78a; border-radius: 12px; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+    body.plein-ecran #jeu { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; border: 0; border-radius: 0; z-index: 10; }
+    #ecran { display: block; width: 100%; height: 100%; outline: none; touch-action: none; }
+    .flottant { position: absolute; z-index: 2; }
+    button { font: inherit; cursor: pointer; }
+    /* la barre du haut */
+    #barre { top: 8px; left: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; pointer-events: none; }
+    .pastille { pointer-events: auto; background: rgba(250, 248, 240, .94); color: #2a2620; border-radius: 10px; padding: 5px 9px; font-weight: 700; font-size: 0.9rem; box-shadow: 0 2px 6px rgba(0,0,0,.25); white-space: nowrap; }
+    .pastille.rouge { color: #c8443a; }
+    #rci { display: flex; gap: 3px; align-items: flex-end; height: 52px; padding: 4px 8px; position: relative; }
+    #rci .col { position: relative; width: 14px; height: 48px; }
+    #rci .col span.b { position: absolute; left: 1px; right: 1px; border-radius: 2px; }
+    #rci .col i { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-style: normal; font-size: 10px; }
+    #rci .col::after { content: ""; position: absolute; left: -2px; right: -2px; bottom: 25px; height: 1px; background: #8a8a84; }
+    #vitesses { display: flex; gap: 2px; }
+    #vitesses button { border: 0; background: transparent; padding: 0 3px; font-size: 1rem; opacity: .5; }
+    #vitesses button.actif { opacity: 1; }
+    .droite { margin-left: auto; display: flex; gap: 6px; }
+    .droite .pastille button { border: 0; background: transparent; padding: 0; }
+    /* les outils */
+    #outils { bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; background: rgba(60, 44, 28, .92); padding: 5px; border-radius: 14px; max-width: calc(100% - 16px); overflow-x: auto; }
+    .groupe { display: flex; flex-direction: column; align-items: center; min-width: 58px; border: 0; border-radius: 10px; background: #f6efe0; padding: 4px 5px; }
+    .groupe span { font-size: 1.35rem; line-height: 1.2; }
+    .groupe small { font-size: 0.68rem; color: #4a3a2a; font-weight: 700; }
+    .groupe.actif { background: #ffd866; }
+    #tiroir { bottom: 76px; left: 50%; transform: translateX(-50%); display: none; gap: 6px; background: rgba(250, 247, 238, .97); padding: 8px; border-radius: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.35); max-width: calc(100% - 16px); overflow-x: auto; }
+    #tiroir.ouvert { display: flex; }
+    .carte-outil { display: flex; flex-direction: column; align-items: center; width: 104px; border: 1px solid #d8cfb8; border-radius: 10px; background: #fff; padding: 6px 4px; color: #2a2620; }
+    .carte-outil .emoji { font-size: 1.6rem; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 9px; }
+    .carte-outil b { font-size: 0.72rem; text-align: center; line-height: 1.15; margin-top: 3px; }
+    .carte-outil small { font-size: 0.68rem; color: #7a6a4a; text-align: center; }
+    .carte-outil.verrou { opacity: .55; }
+    #outil-en-cours { bottom: 78px; left: 50%; transform: translateX(-50%); background: rgba(30, 30, 40, .85); color: #fff; padding: 5px 12px; border-radius: 10px; font-size: 0.85rem; display: none; white-space: nowrap; }
+    #outil-en-cours.visible { display: block; }
+    #tiroir.ouvert ~ #outil-en-cours { display: none; }
+    /* le panneau de droite */
+    #onglets { top: 70px; right: 8px; display: flex; flex-direction: column; gap: 5px; }
+    #onglets button { width: 42px; height: 42px; border: 0; border-radius: 10px; background: rgba(250, 248, 240, .94); font-size: 1.25rem; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+    #onglets button.actif { background: #ffd866; }
+    #panneau { top: 70px; right: 58px; width: min(330px, calc(100% - 76px)); max-height: calc(100% - 160px); overflow-y: auto; background: rgba(250, 248, 240, .97); color: #2a2620; border-radius: 12px; padding: 4px 12px 10px; box-shadow: 0 4px 14px rgba(0,0,0,.35); display: none; font-size: 0.85rem; }
+    #panneau.ouvert { display: block; }
+    #panneau h3 { margin: 8px 0 4px; font-size: 1rem; }
+    #panneau p { margin: 5px 0; }
+    .recl { background: #fff4e0; border-left: 4px solid #e0a030; border-radius: 6px; padding: 5px 8px; margin: 5px 0; }
+    .ligne { display: grid; grid-template-columns: 1fr 90px 38px; gap: 6px; align-items: center; margin: 3px 0; }
+    .barre { display: block; height: 8px; background: #e4e0d6; border-radius: 4px; overflow: hidden; }
+    .barre span { display: block; height: 100%; }
+    .impots button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid #c8bca0; background: #fff; font-weight: 700; }
+    /* les calques et les messages */
+    #calques { top: 70px; left: 8px; }
+    #bouton-calques { border: 0; border-radius: 10px; background: rgba(250, 248, 240, .94); padding: 6px 10px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+    #liste-calques { display: none; flex-direction: column; gap: 3px; margin-top: 5px; background: rgba(250, 248, 240, .97); padding: 6px; border-radius: 10px; }
+    #liste-calques.ouvert { display: flex; }
+    #liste-calques button { border: 0; background: #fff; border-radius: 7px; padding: 4px 8px; text-align: left; }
+    #message { bottom: 130px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 30px); background: rgba(250, 248, 240, .97); color: #2a2620; padding: 8px 14px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; box-shadow: 0 4px 14px rgba(0,0,0,.35); opacity: 0; transition: opacity .3s; pointer-events: none; text-align: center; }
+    #message.visible { opacity: 1; }
+    /* sous le capot */
+    .aide { color: var(--doux); text-align: center; font-size: 0.85rem; padding: 8px 16px; }
+    #sous-le-capot { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; padding: 12px 16px 30px; max-width: 1400px; margin: 0 auto; }
+    #sous-le-capot section { background: var(--carte); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+    #sous-le-capot h2 { font-size: 1rem; margin: 0 0 4px; display: flex; justify-content: space-between; align-items: center; }
+    #sous-le-capot h2 button { font-size: 0.8rem; border: 0; border-radius: 8px; padding: 3px 8px; background: #2e3a64; color: #fff; }
+    #etat table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    #etat th { text-align: left; color: var(--or); padding-top: 8px; }
+    #etat td { padding: 1px 4px; border-bottom: 1px solid #2a345a; vertical-align: top; }
+    #etat td:last-child { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    #journal { list-style: none; margin: 0; padding: 0; font-size: 0.78rem; max-height: 480px; overflow-y: auto; }
+    #journal li { padding: 2px 0; border-bottom: 1px solid #2a345a; }
+    #base { white-space: pre-wrap; word-break: break-all; font-size: 0.7rem; color: #c8d0e8; max-height: 480px; overflow-y: auto; margin: 0; }
+    @media (max-width: 640px) {
+      #jeu { height: 72vh; border-radius: 0; border-left: 0; border-right: 0; }
+      .groupe { min-width: 48px; } .groupe span { font-size: 1.15rem; } .groupe small { font-size: 0.6rem; }
+      .pastille { font-size: 0.78rem; padding: 4px 7px; }
+      #rci { height: 46px; }
+      #calques, #onglets, #panneau { top: 122px; }
+      #panneau { max-height: calc(100% - 210px); }
+      .carte-outil { width: 82px; } .carte-outil b { font-size: 0.66rem; } .carte-outil .emoji { width: 32px; height: 32px; font-size: 1.3rem; }
+      #tiroir { bottom: 70px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🌐 La Mégalopole</h1>
+    <span><span id="version" class="version"></span> <a href="carnet.html#etape1">📓 Le carnet de la Mégalopole</a> · <a href="../index.html">🏠 Accueil</a></span>
+  </header>
+
+  <div id="jeu">
+    <canvas id="ecran" tabindex="0" aria-label="La carte de la ville"></canvas>
+    <div id="barre" class="flottant">
+      <span id="argent" class="pastille">🪙</span>
+      <span class="pastille">👥 <span id="habitants">0</span></span>
+      <span id="palier" class="pastille"></span>
+      <span id="bonheur" class="pastille"></span>
+      <span class="pastille" id="rci" title="La demande : ce que la ville réclame (vers le haut = elle en veut)">
+        <span class="col"><span class="b" id="rci-R"></span><i>🏠</i></span>
+        <span class="col"><span class="b" id="rci-C"></span><i>🛍️</i></span>
+        <span class="col"><span class="b" id="rci-I"></span><i>🏭</i></span>
+        <span class="col"><span class="b" id="rci-A"></span><i>🌾</i></span>
+      </span>
+      <span class="droite">
+        <span class="pastille"><span id="date"></span> <span id="vitesses"><button data-vitesse="0" title="Pause (P)">⏸️</button><button data-vitesse="1" title="Normal">▶️</button><button data-vitesse="3" title="Rapide (V)">⏩</button></span></span>
+        <span class="pastille"><button id="plein-ecran" title="Plein écran">⛶</button></span>
+      </span>
+    </div>
+    <div id="calques" class="flottant"><button id="bouton-calques">🗺️ Calques</button><div id="liste-calques"></div></div>
+    <div id="onglets" class="flottant">
+      <button data-onglet="reclamations" title="Ce que réclament les habitants">📢</button>
+      <button data-onglet="besoins" title="Les besoins et le bonheur">😊</button>
+      <button data-onglet="budget" title="Le budget et les impôts">🧾</button>
+      <button data-onglet="case" title="La case touchée">🔎</button>
+    </div>
+    <div id="panneau" class="flottant"><div id="contenu-panneau"></div></div>
+    <div id="tiroir" class="flottant"></div>
+    <div id="outil-en-cours" class="flottant"></div>
+    <div id="outils" class="flottant"></div>
+    <div id="message" class="flottant"></div>
+  </div>
+  <p class="aide">
+    Glisser la carte : ✋ puis glisser (ou 2 doigts, ou clic droit, ou les flèches) · Zoomer : molette, pincer, <kbd>+</kbd> <kbd>−</kbd> ·
+    Outils : <kbd>R</kbd> route, <kbd>1</kbd>–<kbd>4</kbd> zones, <kbd>B</kbd> démolir, <kbd>Échap</kbd> arrêter · <kbd>P</kbd> pause, <kbd>V</kbd> vitesse, <kbd>C</kbd> calques ·
+    <button id="nouvelle-ville">🆕 Nouvelle ville</button>
+  </p>
+
+  <div id="sous-le-capot">
+    <section><h2>📊 État en direct</h2><div id="etat"></div></section>
+    <section><h2>📻 Journal des événements <button id="vider-journal">Vider</button></h2><ul id="journal"></ul></section>
+    <section><h2>💾 Base de données <button id="effacer-base">Effacer</button></h2><pre id="base"></pre></section>
+  </div>
+
+  <script src="config.js?v=1"></script>
+  <script src="moteur/evenements.js?v=1"></script>
+  <script src="moteur/ecran.js?v=1"></script>
+  <script src="moteur/entrees.js?v=1"></script>
+  <script src="moteur/hasard.js?v=1"></script>
+  <script src="moteur/iso.js?v=1"></script>
+  <script src="logique/carte.js?v=1"></script>
+  <script src="logique/construction.js?v=1"></script>
+  <script src="logique/reseaux.js?v=1"></script>
+  <script src="logique/services.js?v=1"></script>
+  <script src="logique/zones.js?v=1"></script>
+  <script src="logique/population.js?v=1"></script>
+  <script src="donnees/sauvegarde.js?v=1"></script>
+  <script src="logique/monde.js?v=1"></script>
+  <script src="affichage/maquettes.js?v=1"></script>
+  <script src="affichage/peintre.js?v=1"></script>
+  <script src="affichage/interface.js?v=1"></script>
+  <script src="affichage/sous-le-capot.js?v=1"></script>
+  <script src="main.js?v=1"></script>
+</body>
+</html>

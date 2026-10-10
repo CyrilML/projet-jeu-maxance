@@ -45,6 +45,12 @@ Les autres jeux suivent les mêmes familles et les mêmes règles, chacun dans s
 `Raid`, qui réutilise `circuit/vendor/three.min.js`) et `tanks/` (la bataille de tanks 3D de l'étape 60, objet global
 `Tanks`, qui réutilise aussi `circuit/vendor/three.min.js`).
 
+**La Mégalopole est un projet à part** (décidé par Maxance, comme le village) : `megalopole/` (le jeu de ville façon SimCity,
+objet global `Megalopole`), avec son propre carnet (`megalopole/carnet.html`), ses propres demandes
+(`megalopole/demandes/NN-titre.md`), sa propre numérotation d'étapes (1, 2, 3…), son `config.js`, sa version et sa
+sauvegarde (`megalopole/donnees/sauvegarde.js`, clé `megalopole:sauvegarde` ; chaque changement de format augmente
+`VERSION` et convertit l'ancienne). `index.html` (racine) garde seulement un lien vers la Mégalopole et son carnet.
+
 **Le village est un projet à part** (décidé par Maxance) : il a son propre carnet (`village/carnet.html`),
 ses propres demandes (`village/demandes/NN-titre.md`) et sa propre numérotation d'étapes (1, 2, 3…),
 séparée de celle du carnet principal. Une demande pour le village se range et s'explique là, pas dans

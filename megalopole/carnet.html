@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Carnet de la Mégalopole</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌐</text></svg>">
+  <style>
+    :root {
+      --fond: #0e1325; --panneau: #171e38; --panneau2: #1d2547; --bord: #2a3460;
+      --texte: #e8ecff; --doux: #9aa5d6; --accent: #ffe27a;
+      --moteur: #5b8cff; --logique: #3fc27a; --donnees: #f2b13c; --affichage: #b57bff;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+    body { margin: 0; background: var(--fond); color: var(--texte); font-family: "Trebuchet MS", system-ui, sans-serif; line-height: 1.55; }
+    a { color: var(--accent); }
+    code, kbd, pre { font-family: ui-monospace, Menlo, Consolas, monospace; }
+    code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 5px; font-size: .9em; color: #ffd98a; }
+    kbd { background: #27305a; border-radius: 4px; padding: 0 5px; font-size: .85em; }
+
+    nav.menu { position: sticky; top: 0; z-index: 5; background: rgba(14,19,37,.95); backdrop-filter: blur(6px); border-bottom: 1px solid var(--bord); }
+    nav.menu .dedans { max-width: 1100px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 6px 16px; flex-wrap: wrap; align-items: center; }
+    nav.menu strong { margin-right: auto; }
+    nav.menu a { text-decoration: none; color: var(--doux); font-weight: bold; font-size: .92rem; }
+    nav.menu a:hover { color: var(--texte); }
+    nav.menu a.jouer { background: #4f7cff; color: #fff; padding: 5px 12px; border-radius: 9px; }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 0 16px 60px; }
+    header.titre { text-align: center; padding: 36px 0 10px; }
+    header.titre h1 { font-size: 2.2rem; margin: 0; }
+    header.titre p { color: var(--doux); margin: 6px auto 0; max-width: 680px; }
+
+    section { margin-top: 44px; }
+    h2 { font-size: 1.6rem; margin: 0 0 6px; }
+    h2 + .chapeau { color: var(--doux); margin: 0 0 18px; }
+    h3 { font-size: 1.15rem; margin: 28px 0 8px; }
+    .carte { background: var(--panneau); border: 1px solid var(--bord); border-radius: 14px; padding: 16px 18px; }
+    .grille { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .carte h4 { margin: 0 0 6px; font-size: 1.05rem; }
+    .carte p, .carte ul, .carte ol { margin: 6px 0; }
+    .carte ul, .carte ol { padding-left: 20px; }
+    .petit { font-size: .88rem; color: var(--doux); }
+    .etiquette { display: inline-block; font-size: .75rem; font-weight: bold; padding: 1px 8px; border-radius: 99px; background: rgba(255,255,255,.1); color: var(--doux); vertical-align: middle; }
+
+    .cycle { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; counter-reset: cycle; }
+    .cycle div { background: var(--panneau2); border-radius: 12px; padding: 12px; position: relative; }
+    .cycle div::before { counter-increment: cycle; content: counter(cycle); position: absolute; top: -10px; left: -6px; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #222; font-weight: bold; display: grid; place-items: center; font-size: .85rem; }
+    .cycle b { display: block; }
+    .cycle span { font-size: .88rem; color: var(--doux); }
+
+    .comparaison { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .mauvais { border-left: 5px solid #ff6b6b; }
+    .bon { border-left: 5px solid var(--logique); }
+
+    form.fiche { display: grid; gap: 12px; }
+    form.fiche label { font-weight: bold; display: block; }
+    form.fiche label small { font-weight: normal; color: var(--doux); display: block; }
+    form.fiche input, form.fiche textarea { width: 100%; margin-top: 4px; font: inherit; color: var(--texte); background: #0b1020; border: 1px solid var(--bord); border-radius: 8px; padding: 8px 10px; }
+    form.fiche textarea { min-height: 70px; resize: vertical; }
+    .boutons { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    button { font: inherit; font-weight: bold; color: #fff; background: #4f7cff; border: none; border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+    button.secondaire { background: #27305a; }
+    button:hover { filter: brightness(1.12); }
+    pre.resultat { background: #0b1020; border: 1px solid var(--bord); border-radius: 10px; padding: 12px; white-space: pre-wrap; font-size: .85rem; max-height: 360px; overflow: auto; }
+
+    .schema { width: 100%; height: auto; display: block; }
+    .legende { display: flex; gap: 14px; flex-wrap: wrap; font-size: .88rem; margin-top: 8px; }
+    .legende span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+
+    table.fichiers { width: 100%; border-collapse: collapse; font-size: .92rem; }
+    table.fichiers th, table.fichiers td { text-align: left; padding: 8px; border-bottom: 1px solid var(--bord); vertical-align: top; }
+    table.fichiers th { color: var(--doux); font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+    table.fichiers td:first-child { white-space: nowrap; }
+    .pastille { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+    .tableau-defile { overflow-x: auto; }
+
+    .frise { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; }
+    .image { flex: 1 0 200px; background: var(--panneau2); border-radius: 10px; padding: 8px; }
+    .image b { font-size: .85rem; color: var(--doux); }
+    .image .etapes { display: flex; gap: 4px; margin-top: 6px; }
+    .image .etapes span { flex: 1; text-align: center; font-size: .78rem; border-radius: 6px; padding: 4px 2px; }
+    .maj { background: rgba(63,194,122,.25); }
+    .des { background: rgba(181,123,255,.3); }
+
+    ol.voyage { list-style: none; padding: 0; margin: 0; border-left: 3px solid var(--accent); }
+    ol.voyage li { position: relative; padding: 0 0 14px 20px; }
+    ol.voyage li::before { content: ""; position: absolute; left: -8px; top: 6px; width: 13px; height: 13px; border-radius: 50%; background: var(--accent); }
+    ol.voyage .quand { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--accent); font-size: .85rem; }
+
+    .simulateur { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .simulateur label { display: block; font-size: .9rem; margin-bottom: 10px; }
+    .simulateur input[type=range] { width: 100%; }
+    .simulateur canvas { width: 100%; background: #0b1020; border-radius: 10px; border: 1px solid var(--bord); }
+    .mesure { font-size: 1.05rem; margin: 4px 0; }
+    .mesure b { color: var(--accent); }
+
+    details.question { background: var(--panneau2); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
+    details.question summary { cursor: pointer; font-weight: bold; }
+    details.question p { margin: 8px 0 0; }
+
+    .route { display: grid; gap: 12px; }
+    .route .carte { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 14px; }
+    .route .num { grid-row: span 3; width: 48px; height: 48px; border-radius: 12px; display: grid; place-items: center; font-size: 1.4rem; font-weight: bold; background: var(--panneau2); }
+    .route .fait .num { background: var(--logique); }
+    .route .prochain { border-color: var(--accent); }
+    .route .prochain .num { background: var(--accent); color: #222; }
+    .route h4 { margin: 0; }
+    .route .apprend { font-size: .9rem; }
+    .route .apprend b { color: var(--doux); }
+
+    textarea.journal { width: 100%; min-height: 110px; font: inherit; color: var(--texte); background: #0b1020; border: 1px solid var(--bord); border-radius: 8px; padding: 10px; margin-top: 6px; }
+
+    @media (max-width: 760px) {
+      .comparaison, .simulateur { grid-template-columns: 1fr; }
+      header.titre h1 { font-size: 1.7rem; }
+      nav.menu strong { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="menu">
+    <div class="dedans">
+      <strong>🌐 Carnet de la Mégalopole</strong>
+      <a href="#comment">Comment jouer</a>
+      <a href="#fichiers">Les fichiers</a>
+      <a href="#etape1">Étape 1</a>
+      <a href="#route">Feuille de route</a>
+      <a href="#journal">Journal</a>
+      <a class="jouer" href="index.html">▶ Jouer</a>
+      <a href="../village/carnet.html">🏘️ Carnet du village</a>
+      <a href="../index.html">📓 Carnet principal</a>
+    </div>
+  </nav>
+
+  <main>
+    <header class="titre">
+      <h1>🌐 La Mégalopole</h1>
+      <p>Le jeu de ville de Maxance, façon SimCity, et poussé un peu plus loin. On est le MAIRE : on trace les routes, on peint des zones, et la ville pousse toute seule… quand ses habitants sont contents. Un projet à part, avec son propre carnet et ses propres étapes.</p>
+    </header>
+
+    <!-- ============ COMMENT JOUER ============ -->
+    <section id="comment">
+      <h2>🎮 Comment jouer</h2>
+      <p class="chapeau">Le maire ne construit pas les maisons : il prépare le terrain, et les gens viennent s'installer.</p>
+      <div class="cycle">
+        <div><b>🛣️ Trace une route</b><span>Menu Routes → Route, puis glisse le doigt d'une case à une autre.</span></div>
+        <div><b>⚡ Pose une centrale</b><span>Collée à la route : l'électricité suit les routes. Au début, une centrale à charbon ou des éoliennes.</span></div>
+        <div><b>💧 Pose de l'eau</b><span>Un château d'eau, ou une station de pompage au bord de l'eau (il lui faut le courant).</span></div>
+        <div><b>🏘️ Peins des zones</b><span>Le long de la route : 🏠 habitation, 🛍️ commerce, 🏭 industrie, 🌾 agriculture. Glisse pour faire un rectangle.</span></div>
+        <div><b>⏩ Regarde pousser</b><span>Les bâtiments arrivent tout seuls. La barre R C I A dit ce que la ville réclame.</span></div>
+        <div><b>📢 Écoute les habitants</b><span>Ils réclament une école, des parcs, la police… Les services font monter la valeur du terrain, et les bâtiments grandissent.</span></div>
+      </div>
+      <p class="petit">Au doigt : avec ✋, on glisse la carte ; avec un outil, on trace. Deux doigts : glisser et zoomer. À la souris : clic droit pour glisser, molette pour zoomer. Clavier : <kbd>R</kbd> route, <kbd>1</kbd>–<kbd>4</kbd> zones, <kbd>B</kbd> démolir, <kbd>Échap</kbd> arrêter, <kbd>P</kbd> pause, <kbd>V</kbd> vitesse, <kbd>C</kbd> calques.</p>
+    </section>
+
+    <!-- ============ LES FICHIERS ============ -->
+    <section id="fichiers">
+      <h2>🗂️ Les fichiers du jeu</h2>
+      <p class="chapeau">Les mêmes familles que le village : le moteur, la logique, les données, l'affichage.</p>
+      <div class="tableau-defile"><table class="fichiers">
+        <tr><th>Fichier</th><th>Son rôle</th></tr>
+        <tr><td><code>config.js</code></td><td>⚙️ Tous les nombres : les zones et leurs niveaux, les bâtiments (prix, rayon, production), les paliers, les besoins, la demande, le budget.</td></tr>
+        <tr><td><code>moteur/</code></td><td>🔧 Les outils génériques : la radio des événements, l'écran, les entrées (clavier, doigts), le hasard à graine, la vue de biais.</td></tr>
+        <tr><td><code>logique/carte.js</code></td><td>🗺️ Le terrain : l'herbe, l'eau, la rivière, les forêts.</td></tr>
+        <tr><td><code>logique/construction.js</code></td><td>🚜 Le bulldozer : tracer les routes, peindre les zones, poser et démolir.</td></tr>
+        <tr><td><code>logique/reseaux.js</code></td><td>🔌 L'accès aux routes, l'électricité et l'eau (les plus proches d'abord).</td></tr>
+        <tr><td><code>logique/services.js</code></td><td>🏛️ Les cartes invisibles : les services, la pollution, le trafic, la valeur du terrain.</td></tr>
+        <tr><td><code>logique/zones.js</code></td><td>🌱 Le jardinier : les bâtiments qui poussent et qui grandissent (ou qui baissent).</td></tr>
+        <tr><td><code>logique/population.js</code></td><td>👥 Le recenseur : les habitants, les besoins, le bonheur, la demande R C I A, les réclamations, le budget.</td></tr>
+        <tr><td><code>logique/monde.js</code></td><td>🌍 Le chef d'orchestre : les grands tableaux de la ville, la caméra, les outils du maire.</td></tr>
+        <tr><td><code>donnees/sauvegarde.js</code></td><td>💾 La mémoire : la ville rangée dans le navigateur (compressée).</td></tr>
+        <tr><td><code>affichage/</code></td><td>🎨 Le peintre (le sol, les calques, les voitures), les maquettes (les bâtiments), l'interface du maire, et « sous le capot ».</td></tr>
+      </table></div>
+    </section>
+
+    <!-- ============ ÉTAPE 1 ============ -->
+    <section id="etape1">
+      <h2>🌐 Étape 1 : une ville qui pousse toute seule <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Le cœur du jeu, les services et les loisirs, tout d'un coup (choix de Maxance). <a href="index.html"><strong>▶ la Mégalopole</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>megalopole/demandes/01-la-megalopole.md</code>.</p>
+          <ul>
+            <li>✍️ « C'est compliqué de gérer chaque chaîne de production. On devrait reprendre le système de SimCity et le pousser un peu plus. »</li>
+            <li>✍️ « Des endroits pour les habitations, les commerces, l'industrie… et d'autres pôles comme l'agriculture. »</li>
+            <li>✍️ « On gère l'énergie, les transports, les routes, l'eau, les biens, les services et la nourriture… avec des gros bâtiments. »</li>
+            <li>✍️ « Les habitants réclament au fur et à mesure. La population grandit toute seule quand tout le monde est content… jusqu'à devenir une mégalopole. »</li>
+            <li>Tes choix : <strong>un nouveau jeu à part</strong> (le village reste comme il est), <strong>peindre des zones</strong>, <strong>tout d'un coup</strong>.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Une route, une centrale (ou des éoliennes) et un château d'eau touchant la route, puis des zones : les maisons, les commerces, les usines et les champs poussent tout seuls.</li>
+            <li>☐ La barre R C I A monte et descend selon ce que la ville réclame.</li>
+            <li>☐ 📢 : les habitants réclament ce qui leur manque, avec un conseil.</li>
+            <li>☐ 🔎 : touche un bâtiment, il dit jusqu'où il peut monter, et ce qui lui manque.</li>
+            <li>☐ Les paliers : 🏘️ Village à 400 habitants, 🏰 Bourg à 2 000, 🏙️ Ville à 10 000… jusqu'à 🌐 Mégalopole à 1 million !</li>
+            <li>☐ 🗺️ Calques : l'électricité, l'eau, la valeur du terrain, la pollution, le trafic, chaque service.</li>
+            <li>☐ 🧾 Le budget : les impôts (−/+), les recettes et les dépenses de chaque mois.</li>
+            <li>☐ Le jour et la nuit (les fenêtres s'allument, le solaire s'arrête), les voitures sur les routes.</li>
+            <li>Vérifie « version 1 » en haut de la page.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🏘️ Les 4 zones, et leurs 6 niveaux</h3>
+      <div class="tableau-defile"><table class="fichiers">
+        <tr><th>Niveau</th><th>🏠 Habitation</th><th>🛍️ Commerce</th><th>🏭 Industrie</th><th>🌾 Agriculture</th></tr>
+        <tr><td>1</td><td>Maison (4)</td><td>Épicerie (4)</td><td>Atelier (6)</td><td>Champ (2)</td></tr>
+        <tr><td>2</td><td>Maisons jumelles (10)</td><td>Boutiques (12)</td><td>Usine (20)</td><td>Ferme (6)</td></tr>
+        <tr><td>3</td><td>Petit immeuble (30)</td><td>Supermarché (30)</td><td>Grande usine (50)</td><td>Grande ferme (12)</td></tr>
+        <tr><td>4</td><td>Immeuble (80)</td><td>Galerie marchande (80)</td><td>Zone industrielle (100)</td><td>Serres (25)</td></tr>
+        <tr><td>5</td><td>Tour d'habitation (200)</td><td>Tour de bureaux (200)</td><td>Usine robotisée (200)</td><td>Ferme verticale (60)</td></tr>
+        <tr><td>6</td><td>Gratte-ciel (500)</td><td>Gratte-ciel de bureaux (500)</td><td>—</td><td>—</td></tr>
+      </table></div>
+      <p class="petit">Entre parenthèses : les habitants (habitation) ou les emplois (les autres).</p>
+
+      <h3>🔧 Sous le capot n° 1 : la demande R C I A</h3>
+      <p>C'est le cœur de SimCity. La ville est une <strong>balance</strong> : les habitants veulent du travail, et les entreprises veulent des clients et des ouvriers.</p>
+      <pre style="white-space: pre-wrap">  🏠 habitants ──travaillent dans──► 🛍️ 🏭 🌾 emplois
+       ▲                                     │
+       └──── des emplois libres attirent ────┘ de nouveaux habitants
+
+  R (habitation) monte quand il y a plus d'emplois que d'habitants qui travaillent ;
+  C, I, A montent quand il n'y a pas assez de commerces, d'usines ou de fermes pour tous les habitants.</pre>
+      <p>Chaque nombre est dans <code>config.js</code> (« demande ») : 45 % des habitants travaillent ; il faut 0,15 emploi de commerce, 0,2 d'industrie et 0,1 d'agriculture par habitant. Sous le capot, tu vois la formule et le résultat en direct.</p>
+
+      <h3>🔧 Sous le capot n° 2 : comment un bâtiment grandit</h3>
+      <p>Deux fois par seconde, le jardinier (<code>logique/zones.js</code>) visite 160 terrains au hasard et se pose 2 questions :</p>
+      <div class="comparaison">
+        <div class="carte"><h4>1. Jusqu'où peut-il monter ?</h4><p>Il faut une route, le courant, l'eau dès le niveau 2, puis une belle <strong>valeur du terrain</strong> 💎 et des <strong>services</strong> : une maison ne devient pas un immeuble sans école, sans clinique, sans police… Et les gratte-ciel n'arrivent qu'avec une métropole.</p></div>
+        <div class="carte"><h4>2. Les gens ont-ils envie de venir ?</h4><p>La demande de la ville (R C I A), plus ce qui est bien ou mal autour (la valeur, la pollution), plus le <strong>bonheur</strong> 😊 des habitants. S'ils sont tristes, plus personne ne vient.</p></div>
+      </div>
+
+      <h3>🔧 Sous le capot n° 3 : la valeur du terrain</h3>
+      <pre style="white-space: pre-wrap">valeur = 0,34 (de base) + 0,12 au bord de l'eau + les parcs et les services autour
+         − la pollution × 0,6 − les bouchons de la route la plus proche</pre>
+      <p>Avec le calque 💎, tu la vois en couleur : rouge = elle vaut peu, vert = elle vaut cher. Plante des parcs entre les maisons, et regarde-la verdir !</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Mets une usine à côté des maisons. Que devient la pollution 🌫️ (calque), et la valeur du terrain ?</li>
+        <li>Monte les impôts à 15 % : que fait la barre R C I A ? Et le budget ?</li>
+        <li>Construis des panneaux solaires seuls : que se passe-t-il la nuit ?</li>
+        <li>Dans <code>config.js</code>, cherche <code>paliers</code> : combien d'habitants pour une métropole ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>1 000 habitants : combien travaillent ? Combien d'emplois de commerce faut-il ?</summary><p>45 % de 1 000 = 450 travaillent. Il faut 1 000 × 0,15 = 150 emplois de commerce.</p></details>
+      <details class="question"><summary>Pourquoi une maison ne monte-t-elle pas, alors que la ville réclame des habitations ?</summary><p>Touche-la avec 🔎 : il lui manque peut-être un service (une école…), l'eau, ou une meilleure valeur du terrain (des parcs !).</p></details>
+      <details class="question"><summary>Une centrale de 400 et 500 maisons qui consomment 1 chacune : que se passe-t-il ?</summary><p>Les 400 plus proches par la route ont le courant ; les 100 plus loin sont dans le noir. C'est une pénurie : il faut une centrale de plus.</p></details>
+    </section>
+
+    <!-- ============ FEUILLE DE ROUTE ============ -->
+    <section id="route">
+      <h2>🗺️ La feuille de route de la Mégalopole</h2>
+      <p class="chapeau">Des idées pour la suite. Maxance choisit l'ordre, ou en ajoute.</p>
+      <div class="route">
+        <div class="carte fait"><div class="num">1</div><h4>🌐 Une ville qui pousse toute seule <span class="etiquette">✅ fait · à valider</span></h4><p>Routes, 4 zones et 6 niveaux, énergie, eau, services, loisirs, transports, demande R C I A, bonheur, réclamations, budget, paliers jusqu'à la mégalopole.</p><p class="apprend"><b>Tu apprends :</b> une simulation, une balance, une carte de valeurs. <b>Durée :</b> 2 séances.</p></div>
+        <div class="carte prochain"><div class="num">2</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
+        <div class="carte"><div class="num">3</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
+        <div class="carte"><div class="num">4</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
+        <div class="carte"><div class="num">5</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
+      </div>
+    </section>
+
+    <!-- ============ JOURNAL ============ -->
+    <section id="journal">
+      <h2>📔 Journal de bord de la Mégalopole</h2>
+      <p class="chapeau">Après chaque étape : ce qui a été fait, et ce que Maxance a appris, avec ses mots à lui.</p>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 1 · une ville qui pousse toute seule <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> tout le jeu : la carte, les routes, les zones et le jardinier, les réseaux, les services, la pollution, le trafic, la valeur du terrain, le recenseur (besoins, bonheur, demande, réclamations), le budget, la sauvegarde, le peintre, les maquettes des bâtiments, l'interface du maire et sous le capot.</p>
+        <label for="megalopole-appris-1"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="megalopole-appris-1" data-cle="megalopole-appris-1" placeholder="Ex. : J'ai appris que la ville est une balance entre habitants et emplois…"></textarea>
+        <label for="megalopole-idees-1"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="megalopole-idees-1" data-cle="megalopole-idees-1" placeholder="Ex. : Des incendies quand il n'y a pas de pompiers…"></textarea>
+      </div>
+    </section>
+  </main>
+  <script>
+    // Le journal : ce que Maxance écrit est gardé dans ce navigateur.
+    const PREFIXE = "carnet-maxance:";
+    const lire = (cle) => { try { return localStorage.getItem(PREFIXE + cle); } catch (e) { return null; } };
+    const ecrire = (cle, valeur) => { try { localStorage.setItem(PREFIXE + cle, valeur); } catch (e) {} };
+    for (const zone of document.querySelectorAll("textarea[data-cle]")) {
+      zone.value = lire(zone.dataset.cle) || "";
+      zone.addEventListener("input", () => ecrire(zone.dataset.cle, zone.value));
+    }
+  </script>
+</body>
+</html>
