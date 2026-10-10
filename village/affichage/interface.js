@@ -1085,7 +1085,7 @@ Village.Interface = (function () {
       if (!possible) texteBulle = "🚫 " + p.raison;
       else {
         const prix = p.deplacer ? "déménagement gratuit" : B.offert(monde, p.type) ? "🎁 offert (coup de pouce)" : Object.entries(B.coutPour(monde, p.type)).map(([r, n]) => n + " " + EMO(r)).join(" ") || "gratuit";
-        texteBulle = (p.deplacer ? "↔️ " : B.TYPES[p.type].emoji + " ") + prix + (p.route === null ? " · ⚠️ pas de chemin possible" : p.route.length ? " · +" + p.route.length + " case(s) de chemin" + ((n) => (n ? " (🌉 " + n + " pont : " + n * C.routes.pont.planches + " 🪵)" : ""))(Village.Routes.bilanDegagement(monde, p.route).ponts) : "");
+        texteBulle = (p.deplacer ? "↔️ " : B.TYPES[p.type].emoji + " ") + prix + (p.route === null ? " · ⚠️ pas de chemin possible" : p.route.length ? " · +" + p.route.length + " case(s) de " + (Village.Recherches.a(monde, "routePierre") ? "route pavée" + (p.coutRoute ? " (" + p.coutRoute + " 🪨)" : "") : "chemin") + ((n) => (n ? " (🌉 " + n + " pont : " + n * C.routes.pont.planches + " 🪵)" : ""))(Village.Routes.bilanDegagement(monde, p.route).ponts) : "");
         if (p.aimant) texteBulle += " · 🧲 collé à la route"; // étape 38
         if (p.alignes) texteBulle += " · 📏 aligné";
         // Étape 13 : ✍️ y aura-t-il quelqu'un pour y travailler ?

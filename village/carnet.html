@@ -164,6 +164,7 @@
       <a href="#etape38">Étape 38</a>
       <a href="#etape39">Étape 39</a>
       <a href="#etape40">Étape 40</a>
+      <a href="#etape41">Étape 41</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2320,6 +2321,31 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
       <details class="question"><summary>Comment fait-on une maison maintenant ?</summary><p>On construit une hutte : au village, elle devient une maison toute seule quand les artisans ont ce qu'ils veulent pendant 1 minute.</p></details>
     </section>
 
+    <section id="etape41">
+      <h2>🧱 Étape 41 : toutes les routes pavées <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Après la recherche « Routes pavées », il n'y a plus jamais de chemin de terre : même la route proposée jusqu'à la porte d'un nouveau bâtiment est pavée. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/39-routes-toutes-pavees.md</code>.</p>
+          <ul><li>✍️ « Les routes doivent toutes être pavées à partir de l'amélioration : plus de chemin en terre possible. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Après « Routes pavées », pose un bâtiment loin d'une route : sa route est pavée.</li>
+            <li>☐ La bulle montre le prix de la route (« … case(s) de route pavée (N 🪨) »).</li>
+            <li>☐ Sans assez de pierres, la bulle le dit et on ne peut pas valider.</li>
+            <li>Vérifie « version 42 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔎 Le bug caché</h3>
+      <p>Les outils de route savaient déjà faire des routes pavées. Mais un autre bout de code, celui qui construit la route jusqu'à la porte d'un nouveau bâtiment, demandait toujours « de la terre » (sorte 1). C'est un <strong>bug</strong> : une règle écrite à un seul endroit, mais oubliée à un autre. La correction : une seule fonction, <code>sorteDe</code>, que TOUS les morceaux de code demandent avant de construire une route. Une règle, un seul endroit !</p>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Une route pavée de 12 cases jusqu'à un nouveau bâtiment : combien de pierres ?</summary><p>12 pierres (1 par case), en plus du prix du bâtiment.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2565,8 +2591,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
           <p>Le gibier se renouvelle, les bâtiments uniques sont grisés, chaque entrepôt secondaire s'agrandit, la hutte est le seul logement à construire.</p>
           <p class="apprend"><b>Tu apprends :</b> une croissance qui dépend du nombre, un plafond et un plancher. <b>Durée :</b> 1 séance.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">41</div>
+          <h4>🧱 Toutes les routes pavées <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Après la recherche, plus aucun chemin de terre, même jusqu'à la porte d'un nouveau bâtiment.</p>
+          <p class="apprend"><b>Tu apprends :</b> trouver un bug, une règle à un seul endroit. <b>Durée :</b> 1 séance.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">41-43</div>
+          <div class="num">42-44</div>
           <h4>🚗🚓🛍️ Les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Routes goudronnées, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -2903,6 +2935,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
         <textarea class="journal" id="village-appris-40" data-cle="village-appris-40" placeholder="Ex. : J'ai appris qu'une population grandit plus vite quand elle est nombreuse…"></textarea>
         <label for="village-idees-40"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-40" data-cle="village-idees-40" placeholder="Ex. : Une réserve de chasse protégée…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 41 · toutes les routes pavées <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la fonction <code>sorteDe</code> dans <code>logique/routes.js</code>, utilisée par toutes les constructions de route ; le prix de la route pavée dans la bulle du placement.</p>
+        <label for="village-appris-41"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-41" data-cle="village-appris-41" placeholder="Ex. : J'ai appris qu'une règle doit être écrite à un seul endroit…"></textarea>
+        <label for="village-idees-41"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-41" data-cle="village-idees-41" placeholder="Ex. : Des routes goudronnées pour les voitures…"></textarea>
       </div>
     </section>
   </main>

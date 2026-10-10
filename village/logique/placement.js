@@ -89,8 +89,14 @@ Village.Placement = (function () {
       raison = !Village.Ages.debloque(monde, p.type) ? "pas encore débloqué" : B().raisonInterdite(monde, p.type, c, l);
       if (!raison && !B().assezPour(monde, p.type)) raison = "pas assez de matériaux";
     }
-    p.raison = raison; p.possible = !raison;
     p.route = raison ? [] : routeProposee(monde, c, l, b, p.type);
+    // Étape 41 : une route pavée coûte des pierres : il faut pouvoir la payer, en plus du bâtiment
+    if (!raison && p.route && p.route.length) {
+      const e = R().evaluerCases(monde, p.route, 1), pierresBat = b ? 0 : (B().coutPour(monde, p.type).pierres || 0), libres = Village.Porteurs.disponible(monde, "pierres") - pierresBat;
+      p.coutRoute = e.cout;
+      if (e.cout > libres) raison = "il faut " + e.cout + " 🪨 pour la route pavée jusqu'à la porte (tu en as " + Math.max(0, libres) + " de libres)";
+    } else p.coutRoute = 0;
+    p.raison = raison; p.possible = !raison;
   }
 
   // ✍️ 1B : la route proposée, de la PORTE du bâtiment jusqu'au réseau (ou jusqu'à l'entrepôt).
@@ -131,7 +137,7 @@ Village.Placement = (function () {
     if (!p.possible) { radio.emettre(p.deplacer ? "deplacement-impossible" : "construction-impossible", { nom: B().TYPES[p.type].nom, colonne: p.colonne, ligne: p.ligne, raison: p.raison }); return false; }
     const ok = p.deplacer ? B().deplacer(monde, p.deplacer, p.colonne, p.ligne) || (p.colonne === p.deplacer.colonne && p.ligne === p.deplacer.ligne) : B().poser(monde, p.type, p.colonne, p.ligne);
     if (!ok) return false;
-    if (p.route && p.route.length) R().construireCases(monde, p.route, 1);
+    if (p.route && p.route.length) R().construireCases(monde, p.route, R().sorteDe(monde, 1)); // étape 41 : pavée après la recherche
     monde.projet = null;
     monde.construction = null;
     return true;

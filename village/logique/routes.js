@@ -78,6 +78,10 @@ Village.Routes = (function () {
     return b;
   }
 
+  // Étape 41 : ✍️ « les routes doivent toutes être pavées à partir de l'amélioration : plus de chemin en terre possible ».
+  // Après la recherche « Routes pavées », toute nouvelle route est pavée, quel que soit l'outil (même la route proposée
+  // jusqu'à la porte d'un nouveau bâtiment).
+  const sorteDe = (monde, sorte) => (Village.Recherches.a(monde, "routePierre") ? 2 : sorte || 1);
   // Étape 6 : au campement, le chemin de terre est gratuit (pas de pierre dans « cout »).
   function coutDe(n) { return n * (C.routes.cout.pierres || 0); }
   // Étape 36 : ce que coûtent les ponts (en planches)
@@ -94,7 +98,7 @@ Village.Routes = (function () {
   // Le chemin que prendrait la route entre deux cases (sans la construire). Sert aussi à l'aperçu.
   //   Le départ ou l'arrivée peuvent être un bâtiment : la route s'arrête alors juste à côté.
   function trajet(monde, depart, arrivee, sorte) {
-    sorte = sorte || 1;
+    sorte = sorteDe(monde, sorte);
     const k = monde.carte, iA = arrivee.ligne * k.colonnes + arrivee.colonne;
     const finBatiment = monde.occupees.has(iA);
     // Étape 36 : on essaie d'abord de CONTOURNER les obstacles (rien à abattre, pas de pont à payer) ; si c'est
@@ -116,7 +120,7 @@ Village.Routes = (function () {
 
   // Construire la route. Renvoie vrai si c'est fait.
   function construire(monde, depart, arrivee, sorte) {
-    sorte = sorte || 1;
+    sorte = sorteDe(monde, sorte);
     if (sorte === 2 && !Village.Recherches.a(monde, "routePierre")) { radio.emettre("route-impossible", { raison: "il faut d'abord la recherche « Routes pavées » 🧱" }); return false; }
     const t = trajet(monde, depart, arrivee, sorte);
     if (!t || !t.cases.length) {
@@ -143,6 +147,7 @@ Village.Routes = (function () {
   // jusqu'à la porte d'un bâtiment). Les cases déjà en route ou les bâtiments sont sautés.
   //   Renvoie vrai si c'est fait. `raison` (si on la demande) dit ce qui ne va pas.
   function evaluerCases(monde, cases, sorte) {
+    sorte = sorteDe(monde, sorte);
     const k = monde.carte, vues = new Set(), ok = [], mauvaises = [];
     for (const p of cases) {
       const i = p.ligne * k.colonnes + p.colonne;
@@ -157,7 +162,7 @@ Village.Routes = (function () {
     return { cases: ok, mauvaises, nouvelles, cout: sorte === 2 ? nouvelles * C.routes.coutPierre.pierres : coutDe(nouvelles), planches: planchesPour(degagement), degagement };
   }
   function construireCases(monde, cases, sorte) {
-    sorte = sorte || 1;
+    sorte = sorteDe(monde, sorte);
     if (sorte === 2 && !Village.Recherches.a(monde, "routePierre")) { radio.emettre("route-impossible", { raison: "il faut d'abord la recherche « Routes pavées » 🧱" }); return false; }
     const e = evaluerCases(monde, cases, sorte);
     if (e.mauvaises.length) { radio.emettre("route-impossible", { raison: "la route passe sur " + e.mauvaises.length + " case(s) impossible(s) (le feu de camp du chef)" }); return false; }
@@ -260,5 +265,5 @@ Village.Routes = (function () {
     return n;
   }
 
-  return { obstacle, bilanDegagement, paver, estEntrepot, routable, trajet, construire, evaluerCases, construireCases, porte, demolir, recalculerReseau, compter, vitesseDuSol, VOISINS };
+  return { sorteDe, obstacle, bilanDegagement, paver, estEntrepot, routable, trajet, construire, evaluerCases, construireCases, porte, demolir, recalculerReseau, compter, vitesseDuSol, VOISINS };
 })();
