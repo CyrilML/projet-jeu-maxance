@@ -70,7 +70,7 @@
     if (E.consommer("route")) i.outil = { sorte: "route", valeur: "route" };
     if (E.consommer("demolir")) i.outil = { sorte: "demolir", valeur: null };
     for (const z of C.ordreZones) if (E.consommer("zone" + z)) i.outil = { sorte: "zone", valeur: z };
-    if (i.annuler) Megalopole.Interface.fermerTiroir();
+    if (i.annuler) { Megalopole.Interface.fermerTiroir(); if (!monde.outil) Megalopole.Interface.fermerPanneau(); } // Échap : ferme le tiroir, puis le panneau
     if (ui.difficulte) fonder(ui.difficulte);
     if (ui.vitesse !== null) Megalopole.vitesse = ui.vitesse;
     if (E.consommer("pause")) Megalopole.vitesse = Megalopole.vitesse ? 0 : 1;

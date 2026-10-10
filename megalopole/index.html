@@ -53,6 +53,10 @@
     #onglets button.actif { background: #ffd866; }
     #panneau { top: 70px; right: 58px; width: min(360px, calc(100% - 76px)); max-height: calc(100% - 160px); overflow-y: auto; background: rgba(250, 248, 240, .97); color: #2a2620; border-radius: 12px; padding: 4px 12px 10px; box-shadow: 0 4px 14px rgba(0,0,0,.35); display: none; font-size: 0.85rem; }
     #panneau.ouvert { display: block; }
+    /* (étape 2 bis) un vrai bouton pour fermer : indispensable sur téléphone */
+    .fermer { width: 36px; height: 36px; border: 0; border-radius: 50%; background: #2a2620; color: #fff; font-size: 1rem; font-weight: 700; line-height: 1; padding: 0; box-shadow: 0 2px 6px rgba(0,0,0,.3); flex: none; }
+    #fermer-panneau { position: sticky; top: 6px; float: right; margin: 6px -4px 0 6px; z-index: 1; }
+    #tiroir .fermer { align-self: center; position: sticky; left: 0; z-index: 1; }
     #panneau h3 { margin: 8px 0 4px; font-size: 1rem; }
     #panneau p { margin: 5px 0; }
     .recl { background: #fff4e0; border-left: 4px solid #e0a030; border-radius: 6px; padding: 5px 8px; margin: 5px 0; }
@@ -157,7 +161,7 @@
       <button data-onglet="budget" title="Le budget et les impôts">🧾</button>
       <button data-onglet="case" title="La case touchée">🔎</button>
     </div>
-    <div id="panneau" class="flottant"><div id="contenu-panneau"></div></div>
+    <div id="panneau" class="flottant"><button id="fermer-panneau" class="fermer" title="Fermer (Échap)">✖</button><div id="contenu-panneau"></div></div>
     <div id="tiroir" class="flottant"></div>
     <div id="outil-en-cours" class="flottant"></div>
     <div id="outils" class="flottant"></div>
@@ -176,25 +180,25 @@
     <section><h2>💾 Base de données <button id="effacer-base">Effacer</button></h2><pre id="base"></pre></section>
   </div>
 
-  <script src="config.js?v=2"></script>
-  <script src="moteur/evenements.js?v=2"></script>
-  <script src="moteur/ecran.js?v=2"></script>
-  <script src="moteur/entrees.js?v=2"></script>
-  <script src="moteur/hasard.js?v=2"></script>
-  <script src="moteur/iso.js?v=2"></script>
-  <script src="logique/carte.js?v=2"></script>
-  <script src="logique/construction.js?v=2"></script>
-  <script src="logique/reseaux.js?v=2"></script>
-  <script src="logique/services.js?v=2"></script>
-  <script src="logique/zones.js?v=2"></script>
-  <script src="logique/population.js?v=2"></script>
-  <script src="logique/budget.js?v=2"></script>
-  <script src="donnees/sauvegarde.js?v=2"></script>
-  <script src="logique/monde.js?v=2"></script>
-  <script src="affichage/maquettes.js?v=2"></script>
-  <script src="affichage/peintre.js?v=2"></script>
-  <script src="affichage/interface.js?v=2"></script>
-  <script src="affichage/sous-le-capot.js?v=2"></script>
-  <script src="main.js?v=2"></script>
+  <script src="config.js?v=3"></script>
+  <script src="moteur/evenements.js?v=3"></script>
+  <script src="moteur/ecran.js?v=3"></script>
+  <script src="moteur/entrees.js?v=3"></script>
+  <script src="moteur/hasard.js?v=3"></script>
+  <script src="moteur/iso.js?v=3"></script>
+  <script src="logique/carte.js?v=3"></script>
+  <script src="logique/construction.js?v=3"></script>
+  <script src="logique/reseaux.js?v=3"></script>
+  <script src="logique/services.js?v=3"></script>
+  <script src="logique/zones.js?v=3"></script>
+  <script src="logique/population.js?v=3"></script>
+  <script src="logique/budget.js?v=3"></script>
+  <script src="donnees/sauvegarde.js?v=3"></script>
+  <script src="logique/monde.js?v=3"></script>
+  <script src="affichage/maquettes.js?v=3"></script>
+  <script src="affichage/peintre.js?v=3"></script>
+  <script src="affichage/interface.js?v=3"></script>
+  <script src="affichage/sous-le-capot.js?v=3"></script>
+  <script src="main.js?v=3"></script>
 </body>
 </html>

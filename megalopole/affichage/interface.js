@@ -50,6 +50,8 @@ Megalopole.Interface = (function () {
     }
     // les onglets du panneau
     for (const b of document.querySelectorAll("[data-onglet]")) b.addEventListener("click", () => { fermerTiroir(); onglet = onglet === b.dataset.onglet && $("panneau").classList.contains("ouvert") ? null : b.dataset.onglet; $("panneau").classList.toggle("ouvert", !!onglet); rafraichir(true); });
+    // ✖ fermer le panneau (et la touche Échap)
+    $("fermer-panneau").addEventListener("click", fermerPanneau);
     // les calques
     const lc = $("liste-calques");
     const aucun = document.createElement("button"); aucun.textContent = "🌍 Aucun"; aucun.addEventListener("click", () => { demandes.calque = null; lc.classList.remove("ouvert"); }); lc.appendChild(aucun);
@@ -96,9 +98,12 @@ Megalopole.Interface = (function () {
       b.addEventListener("click", () => { if (verrou) { afficher("🔒 " + o.nom + " : il faut d'abord être un(e) " + C.paliers[o.palier].nom.toLowerCase() + " (" + fr(C.paliers[o.palier].habitants) + " habitants)"); return; } demandes.outil = { sorte: o.sorte, valeur: o.valeur }; fermerTiroir(); });
       t.appendChild(b);
     }
+    const x = document.createElement("button"); x.className = "fermer"; x.textContent = "✖"; x.title = "Fermer";
+    x.addEventListener("click", fermerTiroir); t.prepend(x); // (en premier, et collé à gauche : toujours visible)
     t.classList.add("ouvert");
     marquerGroupes();
   }
+  function fermerPanneau() { onglet = null; $("panneau").classList.remove("ouvert"); rafraichir(true); }
   function fermerTiroir() { groupeOuvert = null; $("tiroir").classList.remove("ouvert"); marquerGroupes(); }
   function marquerGroupes() { for (const b of document.querySelectorAll(".groupe")) b.classList.toggle("actif", b.dataset.groupe === groupeOuvert); }
 
@@ -266,5 +271,5 @@ Megalopole.Interface = (function () {
   // Ce que l'interface a reçu du joueur depuis la dernière fois (et on remet à zéro)
   function consommer() { const d = Object.assign({}, demandes); demandes.outil = undefined; demandes.taux = []; demandes.postes = []; demandes.pret = null; demandes.vitesse = null; demandes.calque = undefined; demandes.difficulte = null; return d; }
 
-  return { initialiser, changerMonde, rafraichir, consommer, afficher, fermerTiroir, ouvrirTiroir, choisirDifficulte, renvoye, demandes };
+  return { initialiser, changerMonde, rafraichir, consommer, afficher, fermerTiroir, fermerPanneau, ouvrirTiroir, choisirDifficulte, renvoye, demandes };
 })();
