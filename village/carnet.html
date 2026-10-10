@@ -169,6 +169,7 @@
       <a href="#etape43">Étape 43</a>
       <a href="#etape44">Étape 44</a>
       <a href="#etape45">Étape 45</a>
+      <a href="#etape46">Étape 46</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2459,6 +2460,38 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
       <details class="question"><summary>Une scierie 3 × 3 sur 6 arbres et 1 rocher plein : combien de troncs et de pierres ?</summary><p>6 troncs et 8 pierres.</p></details>
     </section>
 
+    <section id="etape46">
+      <h2>⚡ Étape 46 : un jeu de nouveau fluide <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">On a mesuré ce qui ralentissait le jeu, et on a corrigé les 5 plus gros coupables. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/44-jeu-plus-fluide.md</code>.</p>
+          <ul><li>✍️ « Le jeu est beaucoup moins fluide, c'est beaucoup moins agréable à jouer. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Glisse la carte et zoome : c'est fluide.</li>
+            <li>☐ Les bâtiments et leurs cours n'ont pas changé.</li>
+            <li>☐ Sous le capot, les « images par seconde ».</li>
+            <li>Vérifie « version 47 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>⏱️ D'abord mesurer, ensuite corriger</h3>
+      <p>Un jeu doit dessiner environ 60 images par seconde : il a donc 16 millièmes de seconde par image pour TOUT faire. On a chronométré chaque morceau du jeu dans un grand village, et on a trouvé 5 coupables :</p>
+      <pre style="white-space: pre-wrap">🧺 les cours : 30 à 60 formes par bâtiment, à CHAQUE image    → un « autocollant » dessiné une fois
+✂️ les ciseaux : une zone de 4 000 px par bâtiment            → seulement ceux qui dépassent, sur leur hauteur
+⛏️ les mines : 625 cases regardées 120 fois par seconde        → seulement quand elles commencent un travail
+🔍 le géologue : toute la carte, même sans mine épuisée       → il vérifie d'abord qu'il y a du travail
+🔧 sous le capot : 10 fois par seconde, même caché             → 4 fois, et rien quand il est caché</pre>
+      <p>L'<strong>autocollant</strong> (on dit « sprite ») est une astuce de tous les jeux vidéo : ce qui ne bouge pas est dessiné une fois dans une image cachée, puis on recolle l'image. Recoller, c'est beaucoup plus rapide que redessiner 50 formes !</p>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>À 60 images par seconde, combien de temps a le jeu pour dessiner une image ?</summary><p>1 seconde ÷ 60 ≈ 16 millièmes de seconde.</p></details>
+      <details class="question"><summary>Pourquoi la fumée et la fontaine ne sont-elles pas dans l'autocollant (de près) ?</summary><p>Parce qu'elles bougent : un autocollant est une image figée.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2734,8 +2767,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
           <p>Les bâtiments dégagent leur place comme les routes, et la bulle dit ce qu'on gagne.</p>
           <p class="apprend"><b>Tu apprends :</b> réutiliser une fonction. <b>Durée :</b> 1 séance.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">46</div>
+          <h4>⚡ Un jeu de nouveau fluide <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Mesurer, puis corriger : autocollants, ciseaux plus petits, mines et géologue plus économes.</p>
+          <p class="apprend"><b>Tu apprends :</b> mesurer avant de corriger, les sprites. <b>Durée :</b> 1 séance.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">46-48</div>
+          <div class="num">47-49</div>
           <h4>🚗🚓🛍️ Les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Routes goudronnées, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -3112,6 +3151,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
         <textarea class="journal" id="village-appris-45" data-cle="village-appris-45" placeholder="Ex. : J'ai appris à réutiliser une fonction…"></textarea>
         <label for="village-idees-45"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-45" data-cle="village-idees-45" placeholder="Ex. : Replanter des arbres autour du village…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 46 · un jeu de nouveau fluide <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les autocollants des cours et des enseignes (<code>affichage/cours.js</code>), les ciseaux limités (<code>config.js</code> : <code>detail.deborde</code>), la mine qui ne cherche plus ses filons à chaque instant, les métiers « partout sur la carte » qui vérifient d'abord qu'il y a du travail, sous le capot plus économe.</p>
+        <label for="village-appris-46"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-46" data-cle="village-appris-46" placeholder="Ex. : J'ai appris qu'il faut mesurer avant de corriger…"></textarea>
+        <label for="village-idees-46"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-46" data-cle="village-idees-46" placeholder="Ex. : Un bouton pour voir les images par seconde…"></textarea>
       </div>
     </section>
   </main>

@@ -471,32 +471,38 @@ Village.Batiments = (function () {
   function miner(monde, b, dt) {
     if (!b.ouvrier) return;
     placerMineur(monde, b);
-    const sorte = C.mines[b.type].filon;
-    const k = monde.carte, filons = filonsVoisins(k, b.colonne, b.ligne, Village.Carte.FILON[sorte]);
+    const sorte = C.mines[b.type].filon, k = monde.carte, F = Village.Carte.FILON[sorte];
+    // Étape 46 : ✍️ « le jeu est beaucoup moins fluide ». Avant, la mine refaisait le tour de ses 625 cases voisines 120 fois
+    // par seconde ! Maintenant, pendant qu'il creuse, on ne cherche rien ; et une mine épuisée ne regarde qu'une fois par seconde.
+    if (b.travail) {
+      b.travail.reste -= dt * Village.Repas.vitesse(b.ouvrier);
+      if (b.travail.reste > 0) return;
+      let i = b.travail.filon;
+      if (i === undefined || !(k.reste[i] > 0)) i = filonsVoisins(k, b.colonne, b.ligne, F)[0]; // étape 26 : le filon où il est allé (sinon un autre)
+      b.travail = null;
+      placerMineur(monde, b);
+      if (i === undefined) return;
+      k.reste[i]--;
+      Village.Monde.changerObjet(monde, i, k.objet[i]); // on note ce qui reste dans le filon (sauvegarde)
+      b.sortie++;
+      b.lots.push(1);
+      b.produits++;
+      radio.emettre("minerai-extrait", { numero: b.numero, nom: TYPES[b.type].nom, quoi: sorte, reste: k.reste[i], devant: b.sortie });
+      return;
+    }
+    if (b.sortie >= Village.Ameliorations.sortieMaxDe(b)) return; // devant la porte, c'est plein (étape 44 : selon ses améliorations)
+    if (b.epuise && monde.temps < (b.revoir || 0)) return;
+    const filons = filonsVoisins(k, b.colonne, b.ligne, F);
     if (!filons.length) {
+      b.revoir = monde.temps + 1;
       if (!b.epuise) { b.epuise = true; radio.emettre("filon-epuise", { numero: b.numero, nom: TYPES[b.type].nom, minerai: C.ressources[sorte].nom }); }
       return;
     }
     b.epuise = false;
-    if (b.sortie >= Village.Ameliorations.sortieMaxDe(b)) return; // devant la porte, c'est plein (étape 44 : selon ses améliorations)
-    if (!b.travail) {
-      // Étape 26 : le temps de creuser, plus l'aller-retour jusqu'au filon (à pied)
-      const i = filons[0], dist = Math.max(Math.abs((i % k.colonnes) - b.colonne), Math.abs(Math.floor(i / k.colonnes) - b.ligne));
-      const marche = (2 * Math.max(0, dist - 1)) / C.ouvriers.vitesse, creuser = C.ouvriers.miner * Village.Recherches.bonus(monde, "miner") * Village.Ameliorations.bonus(b);
-      b.travail = { reste: creuser + marche, duree: creuser + marche, marche, filon: i, distance: dist };
-      return;
-    }
-    b.travail.reste -= dt * Village.Repas.vitesse(b.ouvrier);
-    if (b.travail.reste > 0) return;
-    const i = b.travail.filon !== undefined && k.reste[b.travail.filon] > 0 ? b.travail.filon : filons[0]; // étape 26 : le filon où il est allé
-    b.travail = null;
-    placerMineur(monde, b);
-    k.reste[i]--;
-    Village.Monde.changerObjet(monde, i, k.objet[i]); // on note ce qui reste dans le filon (sauvegarde)
-    b.sortie++;
-    b.lots.push(1);
-    b.produits++;
-    radio.emettre("minerai-extrait", { numero: b.numero, nom: TYPES[b.type].nom, quoi: sorte, reste: k.reste[i], devant: b.sortie });
+    // Étape 26 : le temps de creuser, plus l'aller-retour jusqu'au filon (à pied)
+    const i = filons[0], dist = Math.max(Math.abs((i % k.colonnes) - b.colonne), Math.abs(Math.floor(i / k.colonnes) - b.ligne));
+    const marche = (2 * Math.max(0, dist - 1)) / C.ouvriers.vitesse, creuser = C.ouvriers.miner * Village.Recherches.bonus(monde, "miner") * Village.Ameliorations.bonus(b);
+    b.travail = { reste: creuser + marche, duree: creuser + marche, marche, filon: i, distance: dist };
   }
 
   // Étape 23 : ✍️ « sur ma partie, tu peux séparer les bâtiments pour qu'ils aient la place ». Au chargement, une ferme

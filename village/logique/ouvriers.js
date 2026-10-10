@@ -76,6 +76,7 @@ Village.Ouvriers = (function () {
         return !!b && !!C.mines[b.type] && b.etat === "pret" && !!b.epuise && i === b.ligne * monde.carte.colonnes + b.colonne && !monde.reservees.has(i);
       },
       quoi: "une mine épuisée",
+      existe: (monde) => monde.batiments.some((b) => b.epuise && C.mines[b.type]), // étape 46
     },
     // Étape 4 : le chasseur cherche une case où il y a un animal qui n'est pas déjà visé.
     chasseur: {
@@ -93,6 +94,7 @@ Village.Ouvriers = (function () {
       return !!b && i !== o.maison && b.etat === "pret" && b.usure >= C.bourg.reparer && !monde.reservees.has(i);
     },
     quoi: "un bâtiment à réparer",
+    existe: (monde) => monde.batiments.some((b) => b.etat === "pret" && b.usure >= C.bourg.reparer), // étape 46
   };
 
   // Étape 15 : le vétérinaire cherche une étable aux vaches malades, pas déjà visée par un autre vétérinaire.
@@ -103,6 +105,7 @@ Village.Ouvriers = (function () {
       return !!b && !!b.malade && !monde.reservees.has(i);
     },
     quoi: "des vaches malades",
+    existe: (monde) => monde.batiments.some((b) => b.malade), // étape 46
   };
 
   const NOMS_ETATS = {
@@ -213,7 +216,10 @@ Village.Ouvriers = (function () {
 
       case "chercher": {
         o.maison = b.ligne * carte.colonnes + b.colonne; // (le maçon ne répare pas sa propre maison… pas tout de suite)
-        let r = chercherDepuis(monde, b, o, { colonne: b.colonne, ligne: b.ligne });
+        // Étape 46 : ✍️ « le jeu est beaucoup moins fluide ». Le géologue, le maçon et le vétérinaire cherchent sur TOUTE la
+        // carte (65 536 cases) : s'il n'y a rien à faire nulle part, on ne lance même pas la recherche.
+        const rien = metier.existe && !metier.existe(monde);
+        let r = rien ? { chemin: null, visitees: 0 } : chercherDepuis(monde, b, o, { colonne: b.colonne, ligne: b.ligne });
         // Étape 43 : un chasseur ne reste jamais sans gibier : s'il n'en trouve pas, du gibier arrive tout de suite, et il recherche
         if (!r.chemin && b.type === "chasseur") { Village.Animaux.autourDesChasseurs(monde, b); r = chercherDepuis(monde, b, o, { colonne: b.colonne, ligne: b.ligne }); }
         o.derniereRecherche = { visitees: r.visitees, longueur: r.chemin ? r.chemin.length - 1 : null };

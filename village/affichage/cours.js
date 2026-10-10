@@ -402,7 +402,7 @@ Village.Cours = (function () {
     entrepot: { sol: "terre", cloture: "bois", objets: [
       ["G", (c, x, y, k) => etagere(c, x, y, k, 1.2, ["#c8a06a", "sac", "#b88e58", "#7a8aa0", "#d2ae78", "tonneau"])],
       ["Dr", (c, x, y, k) => etagere(c, x, y, k, 1.2, ["#b88e58", "#c8a06a", "#8a6a4a", "sac", "#d2ae78"])],
-      ["D", (c, x, y, k) => { O().cour(c, x, y - 4, Village.monde ? Village.monde.stock : {}); palette(c, ...iso(x, y, 0.35, -0.35), k * 0.9); }],
+      ["D", (c, x, y, k, b) => { O().cour(c, x, y - 4, Village.monde ? Village.monde.stock : {}); palette(c, ...iso(x, y, 0.35, -0.35), k * 0.9); }], // (b : il change avec le stock)
     ] },
     depot: { sol: "terre", cloture: "bois", objets: [
       ["G", (c, x, y, k) => etagere(c, x, y, k, 1.1, ["#c8a06a", "#b88e58", "sac", "#d2ae78"])],
@@ -495,7 +495,7 @@ Village.Cours = (function () {
     ] },
     orfevre: { sol: "paves", cloture: "fer", objets: [
       ["D", (c, x, y, k) => { coffre(c, x - 5 * k, y, k); coffre(c, x + 6 * k, y + 2 * k, k * 0.8); }],
-      ["G", (c, x, y, k) => lampadaire(c, x, y, k)],
+      ["G", (c, x, y, k, b) => lampadaire(c, x, y, k)], // (b : il s'allume la nuit)
       ["Dr", (c, x, y, k) => massif(c, x, y, k * 0.8)],
     ] },
     macon: { sol: "gravier", cloture: "bois", objets: [
@@ -590,7 +590,7 @@ Village.Cours = (function () {
       ["Dr", (c, x, y, k) => arbreBoule(c, x, y, k)],
     ] },
     immeuble: { sol: "paves", cloture: "fer", objets: [
-      ["D", (c, x, y, k) => { banc(c, x, y, k); lampadaire(c, ...iso(x, y, 0.3, -0.3), k); }],
+      ["D", (c, x, y, k, b) => { banc(c, x, y, k); lampadaire(c, ...iso(x, y, 0.3, -0.3), k); }],
       ["G", (c, x, y, k) => poubelles(c, x, y, k)],
       ["Dr", (c, x, y, k) => arbreBoule(c, x, y, k)],
     ] },
@@ -620,18 +620,57 @@ Village.Cours = (function () {
   const echelleObjets = (w) => Math.max(0.8, Math.min(1.8, w * 1.3));
 
   // Dessiner la cour. couche : "sol", "arriere" ou "avant". (x, y) : le milieu de la place ; ancre : le point du bâtiment.
-  function dessiner(ctx, b, couche, x, y, n, pl, t) {
-    const d = DECORS[b.type];
-    if (!d) return;
-    if (couche === "sol") return sol(ctx, d, x, y, n, b, false);
-    if (b.etat !== "pret") { if (couche === "avant") sol(ctx, d, x, y, n, b, true); return; }
+  // Étape 46 : ✍️ « le jeu est beaucoup moins fluide ». Une cour, c'est 30 à 60 formes : les redessiner 60 fois par seconde,
+  // pour chaque bâtiment, coûtait presque la moitié du temps de dessin ! Maintenant, les objets qui ne bougent pas sont
+  // dessinés UNE fois dans une image à part (un « autocollant », on dit un sprite), qu'on recolle ensuite à chaque image.
+  // Les objets qui bougent ou qui changent (la fumée, la fontaine, le linge, le stock de l'entrepôt, les lampadaires la
+  // nuit) restent dessinés en direct : on les reconnaît à leur dessin qui reçoit le bâtiment (b) ou l'heure (t).
+  const anime = (f) => f.length >= 5;
+  function objets(ctx, d, x, y, n, pl, couche, b, t, quels) {
     const k = echelleObjets(pl.w), ancre = iso(x, y, pl.pA, pl.qA);
     for (const [ou, f] of d.objets) {
-      const c = pl.coins[ou]; if (!c) continue;
+      // (de loin, quand les détails sont cachés, même les objets qui bougent vont dans l'autocollant : on ne voit pas qu'ils bougent)
+      const c = pl.coins[ou]; if (!c || (anime(f) && vue().fin) !== (quels === "animes")) continue;
       const [ox, oy] = iso(x, y, c[0], c[1]), derriere = oy < ancre[1] - 4;
       if ((couche === "arriere") === derriere) f(ctx, ox, oy, k, b, t);
     }
-    if (couche === "avant") sol(ctx, d, x, y, n, b, true);
+  }
+  const sprites = new Map(), stats = { crees: 0, colles: 0 };
+  // Coller (ou fabriquer puis coller) l'autocollant d'une couche. dessin(c, X, Y) dessine la couche autour de (X, Y).
+  function autocollant(ctx, cle, x, y, n, dessin) {
+    const T = ctx.getTransform(), echelle = Math.hypot(T.a, T.b);
+    const q = Math.pow(1.15, Math.round(Math.log(Math.max(0.05, echelle)) / Math.log(1.15))); // par paliers (pas une image à chaque cran de zoom)
+    const mx = n * 32 + 30, my = n * 16 + 100, l = 2 * mx, h = my + n * 16 + 16; // la boîte autour de la place (en px du monde)
+    if (l * q * h * q > 2.5e6) return dessin(ctx, x, y); // trop gros (très près) : on dessine en direct
+    const k = cle + "|" + q.toFixed(3) + "|" + (Village.Batisses.vue.hiver ? 1 : 0) + (Village.Batisses.vue.fin ? 1 : 0);
+    let s = sprites.get(k);
+    if (!s) {
+      if (sprites.size > 160) sprites.clear();
+      const toile = document.createElement("canvas"); toile.width = Math.ceil(l * q); toile.height = Math.ceil(h * q);
+      const c = toile.getContext("2d"); c.setTransform(q, 0, 0, q, 0, 0);
+      dessin(c, mx, my);
+      // On découpe l'autocollant au plus près du dessin : coller du vide coûte aussi du temps
+      const W = toile.width, H = toile.height, px = c.getImageData(0, 0, W, H).data;
+      let x0 = W, y0 = H, x1 = -1, y1 = -1;
+      for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) if (px[(j * W + i) * 4 + 3] > 4) { if (i < x0) x0 = i; if (i > x1) x1 = i; if (j < y0) y0 = j; if (j > y1) y1 = j; }
+      if (x1 < 0) s = { vide: true };
+      else {
+        const t = document.createElement("canvas"); t.width = x1 - x0 + 1; t.height = y1 - y0 + 1;
+        t.getContext("2d").drawImage(toile, -x0, -y0);
+        s = { image: t, dx: x0 / q - mx, dy: y0 / q - my, l: t.width / q, h: t.height / q };
+      }
+      sprites.set(k, s); stats.crees++;
+    }
+    if (!s.vide) { ctx.drawImage(s.image, x + s.dx, y + s.dy, s.l, s.h); stats.colles++; }
+  }
+  function dessiner(ctx, b, couche, x, y, n, pl, t) {
+    const d = DECORS[b.type];
+    if (!d) return;
+    const pret = b.etat === "pret", cle = b.type + "|" + n + "|" + (pret ? "p" : "c");
+    if (couche === "sol") return autocollant(ctx, cle + "|sol", x, y, n, (c, X, Y) => { sol(c, d, X, Y, n, b, false); if (pret) objets(c, d, X, Y, n, pl, "arriere", b, t, "fixes"); });
+    if (couche === "arriere") { if (pret) objets(ctx, d, x, y, n, pl, "arriere", b, t, "animes"); return; }
+    autocollant(ctx, cle + "|avant", x, y, n, (c, X, Y) => { if (pret) objets(c, d, X, Y, n, pl, "avant", b, t, "fixes"); sol(c, d, X, Y, n, b, true); });
+    if (pret) objets(ctx, d, x, y, n, pl, "avant", b, t, "animes");
   }
   // Le sol de la cour (et la clôture : le fond d'abord, le devant à la fin)
   function sol(ctx, d, x, y, n, b, devant) {
@@ -668,7 +707,19 @@ Village.Cours = (function () {
   // L'enseigne : un panneau de bois suspendu à une potence, devant la porte, avec le dessin du métier
   function enseigne(ctx, b, x, y) {
     if (!vue().fin) return;
-    const T = Village.Batiments.TYPES[b.type];
+    // Étape 46 : l'enseigne (un emoji, lent à écrire) est dessinée une fois par sorte de bâtiment, puis recollée
+    const T = ctx.getTransform(), q = Math.pow(1.15, Math.round(Math.log(Math.max(0.05, Math.hypot(T.a, T.b))) / Math.log(1.15)));
+    const k = "enseigne|" + b.type + "|" + q.toFixed(3);
+    let s = sprites.get(k);
+    if (!s) {
+      const t = document.createElement("canvas"); t.width = Math.ceil(20 * q); t.height = Math.ceil(30 * q);
+      const c = t.getContext("2d"); c.setTransform(q, 0, 0, q, 0, 0); dessinEnseigne(c, b.type, 2, 28); s = { image: t }; sprites.set(k, s);
+    }
+    ctx.drawImage(s.image, x - 2, y - 28, 20, 30);
+  }
+  // L'enseigne : un panneau de bois suspendu à une potence, devant la porte, avec le dessin du métier
+  function dessinEnseigne(ctx, type, x, y) {
+    const T = Village.Batiments.TYPES[type];
     ctx.strokeStyle = TRAIT; ctx.lineWidth = 2.6; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - 26); ctx.lineTo(x + 11, y - 26); ctx.stroke();
     ctx.strokeStyle = "#5a3a1e"; ctx.lineWidth = 1.6; ctx.stroke();
     ctx.strokeStyle = "#3a2a1a"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(x + 4, y - 26); ctx.lineTo(x + 4, y - 23); ctx.moveTo(x + 11, y - 26); ctx.lineTo(x + 11, y - 23); ctx.stroke();
@@ -677,5 +728,5 @@ Village.Cours = (function () {
     ctx.font = "8px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(T.emoji, x + 7.5, y - 17.2); ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
   }
 
-  return { dessiner, enseigne, plan, aUneCour, DECORS };
+  return { dessiner, enseigne, plan, aUneCour, DECORS, stats, sprites };
 })();

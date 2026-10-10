@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 46,
+  version: 47,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -517,6 +517,8 @@ Village.CONFIG = {
     zoomAnimations: 0.45, // étape 17 : ✍️ les animations devant les bâtiments se voient aussi de plus loin
     // Étape 14 : ✍️ des bâtiments plus GROS, pour les reconnaître d'un coup d'œil (× la taille de l'étape 13)
     echelleBatiments: 1.8, // les bâtiments sur 1 case (huttes, maisons, puits) · étape 22 : 1,5 ; étape 24 : 1,6 ; étape 28 : 1,8
+    // Étape 46 : les bâtiments dont le dessin dépasse de leur place (mesuré) : seuls eux sont « coupés aux ciseaux »
+    deborde: ["entrepot", "bucheron", "forestier", "scierie", "pecheur", "geologue", "mineCharbon", "hutte", "maison", "mineFer", "ferme", "mineOr", "puits", "poulailler", "depot", "centrale", "acierie", "pompage", "manoir", "chasseur", "etable", "veterinaire", "fromagerie", "tisserand"],
     echelleParCaseEnPlus: 0.3, // étape 37 : le bâtiment lui-même : 1,8 + 0,3 par case de côté en plus (2 × 2 → 2,1 ; 3 × 3 → 2,4 ; 4 × 4 → 2,7) ; le reste est sa cour
     echelleParCase: 1, // étape 28 : un bloc de N × N cases est dessiné × (N + 0,3) : 2 × 2 → 2,3 ; 3 × 3 → 3,3 ; 4 × 4 → 4,3
     echelleGrands: 2.3, // étape 24 : ✍️ les bâtiments sur 2 × 2 cases sont dessinés × 2,3

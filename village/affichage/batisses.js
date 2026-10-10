@@ -1253,8 +1253,10 @@ Village.Batisses = (function () {
     if (b.etat === "pret" && b.emprise && b.emprise.length) empriseDessin(ctx, b, x0, yc, t);
     // Étape 38 : ✍️ « certains bâtiments débordent sur la route ». Comme avec des ciseaux, on ne dessine rien à gauche, à
     // droite ni devant le losange de sa place (vers le haut, si : un bâtiment haut cache ce qui est derrière lui).
-    const A = n * 32, Hm = n * 16;
-    ctx.save(); ctx.beginPath(); ctx.moveTo(xc - A, yc - 4000); ctx.lineTo(xc - A, yc); ctx.lineTo(xc, yc + Hm); ctx.lineTo(xc + A, yc); ctx.lineTo(xc + A, yc - 4000); ctx.closePath(); ctx.clip();
+    // Étape 46 : ✍️ « le jeu est moins fluide » : les ciseaux coûtent cher. On ne coupe que les bâtiments qui dépassent
+    // vraiment (mesuré : config.js « detail.deborde »), et seulement sur leur hauteur (avant : 4 000 px vers le haut !).
+    const A = n * 32, Hm = n * 16, ciseaux = C_.detail.deborde.includes(b.type), haut = yc - Hm - 260 * s / 2.4;
+    if (ciseaux) { ctx.save(); ctx.beginPath(); ctx.moveTo(xc - A, haut); ctx.lineTo(xc - A, yc); ctx.lineTo(xc, yc + Hm); ctx.lineTo(xc + A, yc); ctx.lineTo(xc + A, haut); ctx.closePath(); ctx.clip(); }
     if (cour) { Co.dessiner(ctx, b, "sol", xc, yc, n, cour, t); Co.dessiner(ctx, b, "arriere", xc, yc, n, cour, t); }
     // Étape 14 : ✍️ le bâtiment est dessiné plus GROS (à la loupe) ; ses ouvriers restent à la taille des autres
     aLaLoupe(ctx, x, y, s, () => dessinerBatimentDedans(ctx, b, x, y, t, m));
@@ -1262,7 +1264,7 @@ Village.Batisses = (function () {
       Co.dessiner(ctx, b, "avant", xc, yc, n, cour, t);
       if (b.etat === "pret") Co.enseigne(ctx, b, x - m.a * s - 4, y + 4); // à gauche de la porte
     }
-    ctx.restore(); // (fin des ciseaux)
+    if (ciseaux) ctx.restore(); // (fin des ciseaux)
     if (b.etat === "pret") ouvrierDevant(ctx, b, x, y, t, s);
   }
   // Étape 23 : ✍️ « le bâtiment change en fonction de son niveau, pour qu'on repère ceux qu'on a oublié d'améliorer ».

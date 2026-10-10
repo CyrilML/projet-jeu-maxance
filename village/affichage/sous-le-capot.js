@@ -174,6 +174,7 @@ Village.SousLeCapot = (function () {
     monde = m; mesures = mes;
     journal = document.getElementById("journal");
     etat = document.getElementById("etat");
+    if (window.IntersectionObserver) new IntersectionObserver((e) => { visible = e[0].isIntersecting; }).observe(etat); // étape 46
     base = document.getElementById("base");
     cle = document.getElementById("cle");
     cle.textContent = Village.Sauvegarde.CLE;
@@ -233,9 +234,12 @@ Village.SousLeCapot = (function () {
   function ligne(nom, valeur) { return "<tr><td>" + nom + "</td><td>" + valeur + "</td></tr>"; }
   function groupe(nom) { return '<tr class="groupe"><th colspan="2">' + nom + "</th></tr>"; }
 
+  let visible = true; // étape 46 : le tableau est-il à l'écran ?
   function mettreAJour(maintenant) {
     if (journal && enAttente.length) for (const e of enAttente.splice(0)) ajouter(...e);
-    if (maintenant - derniereMaj < 100) return; // 10 fois par seconde, c'est assez pour nos yeux
+    // Étape 46 : ✍️ « le jeu est moins fluide ». Ce tableau a des centaines de lignes : 4 fois par seconde suffisent (10 avant),
+    // et rien du tout quand il n'est pas à l'écran (quand on joue en plein écran, ou sans faire défiler la page).
+    if (maintenant - derniereMaj < 250 || !visible) return;
     derniereMaj = maintenant;
     const k = monde.carte, cam = monde.camera, s = monde.souris, P = Village.Peintre.stats;
     let h = "";
