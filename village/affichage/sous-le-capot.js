@@ -79,7 +79,7 @@ Village.SousLeCapot = (function () {
     "vaches-gueries": (d) => "💚 " + d.nom + " : " + d.animaux + " sont guéris (" + d.parQui + ", après " + d.duree + " s)",
     "bonheur-change": (d) => d.emoji + " Le village est maintenant " + d.humeur + " (bonheur " + d.valeur + " %) : vitesse × " + String(d.vitesse).replace(".", ",") + " · arrivées × " + String(d.arrivee).replace(".", ","),
     "depot-agrandi": (d) => "🏗️ Entrepôt secondaire n° " + d.numero + " au niveau " + d.niveau + " : " + d.places + " places de porteurs", // étape 40
-    "gibier-arrive": (d) => Village.Animaux.NOMS[d.sorte].emoji + " Il ne restait presque plus de « " + d.sorte + " » : " + d.nombre + " arrivent dans leur habitat (" + d.total + " animaux en tout)", // étape 40
+    "gibier-arrive": (d) => d.chasseur ? "🦌 Du gibier arrive près du chasseur n° " + d.chasseur + " : " + d.nombre + " animaux (il en a toujours au moins " + Village.CONFIG.animaux.minimumChasseur + " autour de lui) · " + d.total + " en tout" : Village.Animaux.NOMS[d.sorte].emoji + " Il ne restait presque plus de « " + d.sorte + " » : " + d.nombre + " arrivent dans leur habitat (" + d.total + " animaux en tout)", // étape 40
     "entrepot-agrandi": (d) => "🏗️ Entrepôt au niveau " + d.niveau + " : " + d.places + " places de manutentionnaire",
     // Étape 11 : le bourg, la réserve et les pubs
     "batiment-use": (d) => "🔧 " + d.nom + " n° " + d.numero + " est complètement usé : son ouvrier va 2 fois moins vite",

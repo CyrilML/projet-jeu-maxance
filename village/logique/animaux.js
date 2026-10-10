@@ -85,7 +85,26 @@ Village.Animaux = (function () {
     }
   }
 
-  let minuteurNaissance = 0;
+  let minuteurNaissance = 0, minuteurChasseurs = 0;
+  // Étape 43 : ✍️ « des chasseurs n'ont rien à faire ». Autour de chaque cabane de chasseur, dans son rayon de chasse, il y a
+  // toujours au moins C.animaux.minimumChasseur animaux libres (pas déjà visés) : s'il en manque, il en arrive de la forêt.
+  function autourDesChasseurs(monde, seul) {
+    const k = monde.carte, A = C.animaux, R = C.batiments.chasseur.rayon, especes = Object.keys(C.especes);
+    for (const b of monde.batiments) {
+      if (b.type !== "chasseur" || b.etat !== "pret" || (seul && b !== seul)) continue;
+      const libres = monde.animaux.filter((a) => !a.vise && Math.max(Math.abs(a.x - b.colonne), Math.abs(a.y - b.ligne)) <= R - 2).length;
+      let manque = A.minimumChasseur - libres, venus = 0;
+      for (let essai = 0; essai < 300 && manque > 0; essai++) {
+        const d = 4 + Math.random() * (R - 7), an = Math.random() * Math.PI * 2;
+        const c = Math.floor(b.colonne + Math.cos(an) * d), l = Math.floor(b.ligne + Math.sin(an) * d);
+        if (c < 0 || l < 0 || c >= k.colonnes || l >= k.lignes) continue;
+        const sorte = especes.find((s) => bonBerceau(monde, c, l, s)) || (bonneCase(monde, c, l, "lapin") ? "lapin" : null);
+        if (!sorte) continue;
+        creer(monde, c + 0.5, l + 0.5, sorte); manque--; venus++;
+      }
+      if (venus) radio.emettre("gibier-arrive", { sorte: "gibier", nombre: venus, total: monde.animaux.length, chasseur: b.numero });
+    }
+  }
   function etape(monde, dt) {
     for (const a of monde.animaux) {
       if (a.vise) continue;
@@ -120,6 +139,9 @@ Village.Animaux = (function () {
       if (!bonneCase(monde, Math.floor(petit.x), Math.floor(petit.y), petit.sorte)) { petit.x = parent.x; petit.y = parent.y; }
       radio.emettre("animal-ne", { sorte: parent.sorte, colonne: Math.floor(petit.x), ligne: Math.floor(petit.y), total: monde.animaux.length });
     }
+    // Étape 43 : toujours du gibier autour de chaque chasseur
+    minuteurChasseurs -= dt;
+    if (minuteurChasseurs <= 0) { minuteurChasseurs = A.verificationChasseur; autourDesChasseurs(monde); }
     // Une espèce presque disparue : de nouveaux animaux arrivent (toutes les 20 s au plus)
     minuteurNaissance -= dt;
     if (minuteurNaissance > 0) return;
@@ -148,5 +170,5 @@ Village.Animaux = (function () {
     if (n >= 0) monde.animaux.splice(n, 1);
   }
 
-  return { peupler, etape, surLaCase, retirer, creer, NOMS };
+  return { autourDesChasseurs, peupler, etape, surLaCase, retirer, creer, NOMS };
 })();

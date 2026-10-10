@@ -213,7 +213,9 @@ Village.Ouvriers = (function () {
 
       case "chercher": {
         o.maison = b.ligne * carte.colonnes + b.colonne; // (le maçon ne répare pas sa propre maison… pas tout de suite)
-        const r = chercherDepuis(monde, b, o, { colonne: b.colonne, ligne: b.ligne });
+        let r = chercherDepuis(monde, b, o, { colonne: b.colonne, ligne: b.ligne });
+        // Étape 43 : un chasseur ne reste jamais sans gibier : s'il n'en trouve pas, du gibier arrive tout de suite, et il recherche
+        if (!r.chemin && b.type === "chasseur") { Village.Animaux.autourDesChasseurs(monde, b); r = chercherDepuis(monde, b, o, { colonne: b.colonne, ligne: b.ligne }); }
         o.derniereRecherche = { visitees: r.visitees, longueur: r.chemin ? r.chemin.length - 1 : null };
         o.recherches = (o.recherches || 0) + 1; // le géologue change de graine à chaque recherche
         if (!r.chemin) {

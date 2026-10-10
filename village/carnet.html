@@ -166,6 +166,7 @@
       <a href="#etape40">Étape 40</a>
       <a href="#etape41">Étape 41</a>
       <a href="#etape42">Étape 42</a>
+      <a href="#etape43">Étape 43</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2372,6 +2373,31 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
       <details class="question"><summary>Pourquoi le dessin est-il le même partout maintenant ?</summary><p>Parce que tous les endroits utilisent la même fonction de dessin du lingot (dans <code>affichage/batisses.js</code>) : un seul dessin, partout.</p></details>
     </section>
 
+    <section id="etape43">
+      <h2>🏹 Étape 43 : un chasseur n'est jamais sans gibier <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Autour de chaque chasseur, il y a toujours au moins 6 animaux. S'il n'en trouve pas, il en arrive tout de suite. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/41-chasseurs-jamais-sans-gibier.md</code>.</p>
+          <ul><li>✍️ « Je vois que des chasseurs n'ont rien à faire : j'ai demandé à ce que cela n'arrive pas. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Plus jamais de bulle « rien à faire » au-dessus d'un chasseur.</li>
+            <li>☐ Sous le capot : « 🦌 Du gibier arrive près du chasseur n° … ».</li>
+            <li>Vérifie « version 44 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🌍 Partout, ce n'est pas « près de lui »</h3>
+      <p>À l'étape 40, il naissait beaucoup d'animaux, mais n'importe où sur une carte de 256 × 256 cases. Un chasseur pouvait avoir chassé tout son coin : les petits naissaient à 100 cases de là ! Ma règle était juste en <strong>total</strong>, mais fausse <strong>localement</strong>. La correction compte les animaux dans le rayon de CHAQUE chasseur.</p>
+      <p>Et une 2e sécurité : au moment exact où le chasseur cherche et ne trouve rien, du gibier arrive tout de suite. Comme ça, même entre deux vérifications, il n'attend jamais.</p>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Il y a 300 animaux sur la carte : un chasseur peut-il quand même n'avoir rien à chasser ? (avant cette étape)</summary><p>Oui, s'ils sont tous loin de lui. C'est pour ça qu'on compte maintenant autour de chaque chasseur.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2629,8 +2655,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
           <p>Le boulon des textes est remplacé par le dessin du lingot, partout.</p>
           <p class="apprend"><b>Tu apprends :</b> un emoji est une lettre ; remplacer un texte par un dessin. <b>Durée :</b> 1 séance.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">43</div>
+          <h4>🏹 Un chasseur n'est jamais sans gibier <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Toujours 6 animaux autour de chaque chasseur ; du gibier arrive dès qu'il cherche sans trouver.</p>
+          <p class="apprend"><b>Tu apprends :</b> une règle juste en total peut être fausse localement. <b>Durée :</b> 1 séance.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">43-45</div>
+          <div class="num">44-46</div>
           <h4>🚗🚓🛍️ Les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Routes goudronnées, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -2983,6 +3015,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
         <textarea class="journal" id="village-appris-42" data-cle="village-appris-42" placeholder="Ex. : J'ai appris qu'un emoji est une lettre…"></textarea>
         <label for="village-idees-42"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-42" data-cle="village-idees-42" placeholder="Ex. : D'autres objets dessinés au lieu des emojis…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 43 · un chasseur n'est jamais sans gibier <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> <code>autourDesChasseurs</code> dans <code>logique/animaux.js</code> (6 animaux libres au moins dans le rayon de chaque chasseur, vérifiés toutes les 5 s et au moment où il cherche).</p>
+        <label for="village-appris-43"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-43" data-cle="village-appris-43" placeholder="Ex. : J'ai appris qu'une règle peut marcher en total mais pas partout…"></textarea>
+        <label for="village-idees-43"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-43" data-cle="village-idees-43" placeholder="Ex. : Des pièges pour attraper des lapins…"></textarea>
       </div>
     </section>
   </main>

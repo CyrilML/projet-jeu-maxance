@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 43,
+  version: 44,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -554,6 +554,10 @@ Village.CONFIG = {
     // et plus il y a d'animaux, plus il en naît : chaque animal a 20 % de chances par minute d'avoir un petit (6 % en
     // hiver). Une espèce qui n'a presque plus d'animaux (moins de 6) en voit arriver de nouveaux dans son habitat.
     fecondite: 0.2, feconditeHiver: 0.06, minimumEspece: 6,
+    // Étape 43 : ✍️ « des chasseurs n'ont rien à faire, j'avais demandé que ça n'arrive pas ». Les naissances partout ne
+    // suffisaient pas : le gibier pouvait manquer AUTOUR d'un chasseur. Maintenant, autour de chaque cabane de chasseur
+    // (dans son rayon de chasse), il y a toujours au moins 6 animaux libres : il en arrive dès qu'il en manque (toutes les 5 s).
+    minimumChasseur: 6, verificationChasseur: 5,
     vitesse: 0.7, // cases par seconde
   },
 
