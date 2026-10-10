@@ -181,13 +181,20 @@ Megalopole.Peintre = (function () {
     const o = monde.outil;
     if (!o) return;
     const Co = Megalopole.Construction;
-    if (o.sorte === "batiment" && monde.survol) {
-      const t = C.batiments[o.valeur].taille, c = monde.survol.colonne - (t >> 1), l = monde.survol.ligne - (t >> 1);
-      const ok = !Co.raisonBatiment(monde, o.valeur, c, l), m = milieu(c + (t - 1) / 2, l + (t - 1) / 2);
-      ctx.globalAlpha = 0.35; ctx.fillStyle = ok ? "#5ad05a" : "#e04a3a"; ctx.beginPath(); ctx.moveTo(m.x - (L / 2) * t, m.y); ctx.lineTo(m.x, m.y - (Hc / 2) * t); ctx.lineTo(m.x + (L / 2) * t, m.y); ctx.lineTo(m.x, m.y + (Hc / 2) * t); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
-      ctx.globalAlpha = 0.6; Mq.gros(ctx, o.valeur, m.x, m.y, t, null, true); ctx.globalAlpha = 1;
-      const B = C.batiments[o.valeur];
-      if (B.rayon) { ctx.strokeStyle = "rgba(255, 255, 255, .6)"; ctx.setLineDash([6, 6]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(m.x, m.y, B.rayon * L / 2 * 1.41, B.rayon * Hc / 2 * 1.41, 0, 0, TOUR); ctx.stroke(); ctx.setLineDash([]); }
+    // 👻 étape 4 : le fantôme (un bâtiment ou un lot de zone), déjà collé à la route par l'aimant
+    const f = monde.fantome;
+    if (o.sorte === "batiment" || o.sorte === "zone") {
+      if (!f) return;
+      const t = f.taille, m = milieu(f.colonne + (t - 1) / 2, f.ligne + (t - 1) / 2), ok = !f.raison;
+      ctx.beginPath(); ctx.moveTo(m.x - (L / 2) * t, m.y); ctx.lineTo(m.x, m.y - (Hc / 2) * t); ctx.lineTo(m.x + (L / 2) * t, m.y); ctx.lineTo(m.x, m.y + (Hc / 2) * t); ctx.closePath();
+      ctx.globalAlpha = 0.45; ctx.fillStyle = !ok ? "#e04a3a" : f.sorte === "zone" ? C.zones[f.valeur].couleur : "#5ad05a"; ctx.fill(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = ok ? "rgba(20, 60, 20, .85)" : "rgba(150, 20, 10, .9)"; ctx.lineWidth = 2 / Math.max(0.5, monde.camera.zoom); ctx.stroke();
+      if (f.sorte === "batiment") {
+        ctx.globalAlpha = 0.6; Mq.gros(ctx, f.valeur, m.x, m.y, t, null, true); ctx.globalAlpha = 1;
+        const B = C.batiments[f.valeur];
+        if (B.rayon) { ctx.strokeStyle = "rgba(255, 255, 255, .6)"; ctx.setLineDash([6, 6]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(m.x, m.y, B.rayon * L / 2 * 1.41, B.rayon * Hc / 2 * 1.41, 0, 0, TOUR); ctx.stroke(); ctx.setLineDash([]); }
+      } else { ctx.font = "20px sans-serif"; ctx.textAlign = "center"; ctx.fillText(C.zones[f.valeur].emoji, m.x, m.y + 6); ctx.textAlign = "left"; }
+      if (f.collee) bulle(m.x + (L / 2) * t - 6, m.y - 4, "🧲"); // (collé à une route)
       return;
     }
     const trace = monde.trace || (monde.survol && { depart: monde.survol, arrivee: monde.survol });

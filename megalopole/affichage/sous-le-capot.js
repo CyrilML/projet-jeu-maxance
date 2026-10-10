@@ -115,6 +115,7 @@ Megalopole.SousLeCapot = (function () {
     const gp = Megalopole.Guide.progres(m);
     h += groupe("🎓 Le guide (le professeur vérifie 2 fois par seconde)");
     h += ligne(gp ? "mission " + gp.numero + " / " + gp.total + " : " + gp.mission.emoji + " " + gp.mission.titre + " · test « " + gp.mission.test + " »" + (m.guide.cache ? " · caché" : "") : "guide", gp ? gp.detail + " · " + Math.round(gp.fait * 100) + " %" : "✅ terminé");
+    if (m.fantome) h += ligne("👻 fantôme (l'aimant cherche à " + (m.fantome.sorte === "zone" ? C.placement.aimantZone : C.placement.aimant) + " cases) : place · collé à une route · possible", "(" + m.fantome.colonne + ", " + m.fantome.ligne + ") " + m.fantome.taille + "×" + m.fantome.taille + " · " + (m.fantome.collee ? "🧲 oui" : "non") + " · " + (m.fantome.raison ? "🚫 " + m.fantome.raison : "✅"));
     if (m.trace && m.trace.doigt) h += ligne("👆 tracé au doigt : départ → arrivée", "(" + m.trace.depart.colonne + ", " + m.trace.depart.ligne + ") → (" + m.trace.arrivee.colonne + ", " + m.trace.arrivee.ligne + ")" + (m.trace.pret ? " · attend ✅" : " · attend l'arrivée"));
     h += groupe("🎨 Le peintre");
     h += ligne("images par seconde · pas de calcul par seconde", mesures.ips + " · " + mesures.majParSeconde);

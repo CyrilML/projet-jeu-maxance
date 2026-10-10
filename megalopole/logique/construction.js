@@ -97,7 +97,7 @@ Megalopole.Construction = (function () {
   // ---------------------------------------------------------------- 🏛️ les gros bâtiments
   const casesDe = (type, c, l) => { const t = C.batiments[type].taille, r = []; for (let dl = 0; dl < t; dl++) for (let dc = 0; dc < t; dc++) r.push({ colonne: c + dc, ligne: l + dl }); return r; };
   // Peut-on poser ce bâtiment ici ? null = oui, sinon la raison
-  function raisonBatiment(monde, type, c, l) {
+  function raisonBatiment(monde, type, c, l, sansArgent) {
     const B = C.batiments[type], k = monde.carte;
     if (!B) return "bâtiment inconnu";
     if (Megalopole.Population.palier(monde) < B.palier) return "pas encore : il faut être un(e) " + C.paliers[B.palier].nom.toLowerCase() + " (" + C.paliers[B.palier].habitants.toLocaleString("fr-FR") + " habitants)";
@@ -110,7 +110,7 @@ Megalopole.Construction = (function () {
       if (monde.niveau[i] > 0) return "un bâtiment a poussé ici (démolis-le d'abord)";
     }
     if (B.bordDeLEau && !K.presDeLEau(k, c + (B.taille >> 1), l + (B.taille >> 1), B.bordDeLEau + (B.taille >> 1))) return "trop loin de l'eau (il pompe dans une rivière ou un lac)";
-    if (Megalopole.Budget.prix(monde, B.prix) > monde.argent) return "pas assez d'argent (" + Megalopole.Budget.prix(monde, B.prix).toLocaleString("fr-FR") + " 🪙)" + (monde.argent < 0 ? " : la caisse est vide (🧾 un prêt ?)" : "");
+    if (!sansArgent && Megalopole.Budget.prix(monde, B.prix) > monde.argent) return "pas assez d'argent (" + Megalopole.Budget.prix(monde, B.prix).toLocaleString("fr-FR") + " 🪙)" + (monde.argent < 0 ? " : la caisse est vide (🧾 un prêt ?)" : "");
     return null;
   }
   function poserBatiment(monde, type, c, l) {
@@ -125,6 +125,38 @@ Megalopole.Construction = (function () {
     radio.emettre("batiment-pose", { nom: B.nom, emoji: B.emoji, colonne: c, ligne: l, prix: cout, argent: monde.argent });
     return b;
   }
+  // ---------------------------------------------------------------- 👻 le fantôme et l'aimant (étape 4)
+  // Où poser ce bâtiment (ou ce lot de zone) quand on vise la case p ? On essaie toutes les places autour (jusqu'à
+  // « aimant » cases) et on garde la meilleure : possible, le plus près du doigt, et collée à une route.
+  //   note d'une place = distance² au doigt + 50 si elle ne touche pas de route
+  //                      (+ 4 par case qu'on ne peut pas peindre, ou déjà de cette zone : les lots se rangent côte à côte)
+  // Résultat : { colonne, ligne, taille, raison (null = possible), collee (touche une route), cases }
+  function toucheUneRoute(monde, c, l, t) {
+    const k = monde.carte;
+    for (let d = 0; d < t; d++) for (const [cc, ll] of [[c + d, l - 1], [c + d, l + t], [c - 1, l + d], [c + t, l + d]]) if (K.dans(k, cc, ll) && monde.route[index(monde, cc, ll)]) return true;
+    return false;
+  }
+  function aimanter(monde, o, p) {
+    const P = C.placement, zone = o.sorte === "zone", t = zone ? P.lot : C.batiments[o.valeur].taille, r = zone ? P.aimantZone : P.aimant;
+    const c0 = p.colonne - (t >> 1), l0 = p.ligne - (t >> 1);
+    const lot = (c, l) => { const cs = []; for (let dl = 0; dl < t; dl++) for (let dc = 0; dc < t; dc++) cs.push({ colonne: c + dc, ligne: l + dl }); return cs; };
+    let meilleure = null;
+    for (let dl = -r; dl <= r; dl++) for (let dc = -r; dc <= r; dc++) {
+      const c = c0 + dc, l = l0 + dl;
+      let bloquees = 0, deja = 0;
+      if (zone) {
+        for (const q of lot(c, l)) { if (!K.dans(monde.carte, q.colonne, q.ligne)) { bloquees = 99; break; } const i = index(monde, q.colonne, q.ligne); if (!K.constructible(monde.carte, q.colonne, q.ligne) || monde.route[i] || monde.occupe[i] || monde.niveau[i] > 0) bloquees++; else if (monde.zone[i] === C.zones[o.valeur].id) deja++; }
+        if (bloquees > 3) continue; // (au moins 6 cases sur 9 à peindre)
+      } else if (raisonBatiment(monde, o.valeur, c, l, true)) continue;
+      const note = dc * dc + dl * dl + (toucheUneRoute(monde, c, l, t) ? 0 : 50) + (bloquees + deja) * 4;
+      if (!meilleure || note < meilleure.note) meilleure = { colonne: c, ligne: l, note };
+    }
+    const c = meilleure ? meilleure.colonne : c0, l = meilleure ? meilleure.ligne : l0, cases = lot(c, l);
+    let raison = zone ? (meilleure ? null : "pas de place ici (de l'eau, une route ou des bâtiments)") : raisonBatiment(monde, o.valeur, c, l);
+    if (zone && !raison) { const e = evaluerZone(monde, cases, o.valeur); if (!e.cases) raison = "c'est déjà cette zone"; else if (e.prix > monde.argent) raison = "pas assez d'argent (" + e.prix.toLocaleString("fr-FR") + " 🪙)"; }
+    return { colonne: c, ligne: l, taille: t, raison, collee: toucheUneRoute(monde, c, l, t), cases, sorte: o.sorte, valeur: o.valeur };
+  }
+
   // Remettre un bâtiment chargé depuis la sauvegarde
   function remettre(monde, d) {
     const B = C.batiments[d.type];
@@ -161,5 +193,5 @@ Megalopole.Construction = (function () {
     return true;
   }
 
-  return { trajet, rectangle, evaluerRoute, poserRoute, evaluerZone, zoner, casesDe, raisonBatiment, poserBatiment, remettre, batimentSur, demolir };
+  return { trajet, rectangle, evaluerRoute, poserRoute, evaluerZone, zoner, casesDe, raisonBatiment, aimanter, toucheUneRoute, poserBatiment, remettre, batimentSur, demolir };
 })();

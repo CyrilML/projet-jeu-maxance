@@ -31,7 +31,7 @@ Megalopole.Interface = (function () {
       { sorte: "route", valeur: "avenue", emoji: "🛤️", nom: "Avenue (2 fois et demie plus de voitures)", prix: prix(C.routes.avenue.prix) + " 🪙/case" },
       { sorte: "demolir", valeur: null, emoji: "🧨", nom: "Démolir", prix: prix(5) + " 🪙/case", touche: "B" },
     ];
-    if (groupe === "zones") return C.ordreZones.map((z, k) => ({ sorte: "zone", valeur: z, emoji: C.zones[z].emoji, nom: "Zone " + C.zones[z].nom.toLowerCase(), prix: prix(C.zones[z].prix) + " 🪙/case", touche: String(k + 1), couleur: C.zones[z].couleur }))
+    if (groupe === "zones") return C.ordreZones.map((z, k) => ({ sorte: "zone", valeur: z, emoji: C.zones[z].emoji, nom: "Zone " + C.zones[z].nom.toLowerCase() + " (lot " + C.placement.lot + "×" + C.placement.lot + ")", prix: prix(C.zones[z].prix * C.placement.lot * C.placement.lot) + " 🪙/lot", touche: String(k + 1), couleur: C.zones[z].couleur }))
       .concat([{ sorte: "dezoner", valeur: null, emoji: "🧽", nom: "Effacer la zone", prix: "gratuit" }]);
     return Object.entries(C.batiments).filter(([, B]) => B.groupe === groupe).map(([t, B]) => ({ sorte: "batiment", valeur: t, emoji: B.emoji, nom: B.nom, prix: prix(B.prix) + " 🪙 · " + prix(B.entretien) + "/mois", palier: B.palier }));
   }
@@ -176,11 +176,15 @@ Megalopole.Interface = (function () {
     $("bouton-calques").textContent = "🗺️ " + (Megalopole.calque ? Megalopole.Peintre.CALQUES[Megalopole.calque].nom : "Calques");
     // l'outil en cours (au doigt : 1 doigt bouge la carte, on TOUCHE le départ puis l'arrivée)
     const o = m.outil, tr = m.trace && m.trace.doigt ? m.trace : null, trace = o && o.sorte !== "batiment";
-    $("outil-en-cours").textContent = !o ? "" : auDoigt() ? "🖌️ " + nomOutil(o) + (o.sorte === "batiment" ? " · touche la carte" : " · touche le départ") + " · ✋ = arrêter" : "🖌️ " + nomOutil(o) + " · touche (ou glisse) la carte · Échap pour arrêter";
-    $("outil-en-cours").classList.toggle("visible", !!o && !tr);
+    const fa = m.fantome && m.fantome.doigt ? m.fantome : null, aimant = o && (o.sorte === "batiment" || o.sorte === "zone");
+    $("outil-en-cours").textContent = !o ? "" : auDoigt() ? "🖌️ " + nomOutil(o) + (aimant ? " · touche près d'une route" : " · touche le départ") + " · ✋ = arrêter" : "🖌️ " + nomOutil(o) + (aimant ? " · clique près d'une route (il s'y colle 🧲)" : " · glisse sur la carte") + " · Échap pour arrêter";
+    $("outil-en-cours").classList.toggle("visible", !!o && !tr && !fa);
     // ✅ / ❌ : le tracé fait au doigt attend qu'on confirme
     let hc = "";
-    if (tr && trace) {
+    if (fa) { // 👻 le fantôme posé au doigt
+      const prix = fa.sorte === "batiment" ? Megalopole.Budget.prix(m, C.batiments[fa.valeur].prix) : Megalopole.Construction.evaluerZone(m, fa.cases, fa.valeur).prix;
+      hc = "<span>" + nomOutil(o) + (fa.sorte === "zone" ? " · lot " + fa.taille + "×" + fa.taille : "") + " · <b>" + fr(prix) + " 🪙</b>" + (fa.raison ? "<br><b class='mal'>🚫 " + fa.raison + "</b>" : "<br><small>" + (fa.collee ? "🧲 collé à la route · " : "⚠️ loin d'une route · ") + "retouche pour déplacer</small>") + "</span>" + (fa.raison ? "" : "<button data-oui='1' class='oui'>✅ Construire</button>") + "<button data-non='1' class='non'>❌</button>";
+    } else if (tr && trace) {
       const cases = Megalopole.Monde.casesDuTrace(o, tr);
       const e = o.sorte === "route" ? Megalopole.Construction.evaluerRoute(m, cases, o.valeur) : o.sorte === "zone" ? Megalopole.Construction.evaluerZone(m, cases, o.valeur) : null;
       hc = tr.pret ? "<span>" + nomOutil(o) + " · " + cases.length + " case(s)" + (e ? " · <b>" + fr(e.prix) + " 🪙</b>" : "") + "<br><small>retouche pour changer l'arrivée</small></span><button data-oui='1' class='oui'>✅ " + (o.sorte === "demolir" ? "Démolir" : o.sorte === "dezoner" ? "Effacer" : "Construire") + "</button>"

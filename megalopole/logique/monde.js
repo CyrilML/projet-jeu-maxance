@@ -33,7 +33,7 @@ Megalopole.Monde = (function () {
       guide: { etape: 0, fini: false, cache: false }, // étape 3 : la mission du guide en cours
       demande: { R: 0.5, C: 0.3, I: 0.3, A: 0.2 }, besoins: {}, stats: { habitants: 0, emplois: 0, commerce: 0, industrie: 0, agriculture: 0, actifs: 0, chomeurs: 0 },
       reclamations: [], historique: [], dernierBudget: null, compteurs: { grandis: 0, baisses: 0 },
-      camera: camera || null, outil: null, trace: null, survol: null, selection: null, changements: 0,
+      camera: camera || null, outil: null, trace: null, fantome: null, survol: null, selection: null, changements: 0,
     };
     for (const t of Megalopole.Services.TYPES) monde.couverture[t] = new Uint8Array(N);
     for (let l = 0; l < n; l++) for (let c = 0; c < n; c++) if (carte.terrain[l * n + c] !== K.TERRAIN.eau && K.presDeLEau(carte, c, l, 3)) monde.bordDeLEau[l * n + c] = 1;
@@ -79,7 +79,7 @@ Megalopole.Monde = (function () {
 
   // (un tracé au doigt : monde.trace = { depart, arrivee, doigt: true, pret } ; « pret » quand l'arrivée est posée)
   function choisirOutil(monde, outil) {
-    monde.outil = outil; monde.trace = null;
+    monde.outil = outil; monde.trace = null; monde.fantome = null;
     if (outil) monde.selection = null;
   }
   // L'outil du maire : un appui commence un tracé ; le doigt qui se lève le termine
@@ -91,8 +91,14 @@ Megalopole.Monde = (function () {
       if (s.clic) { const p = caseSous(monde, s.clic.x, s.clic.y); monde.selection = K.dans(monde.carte, p.colonne, p.ligne) ? p : null; }
       return;
     }
-    if (o.sorte === "batiment") {
-      if (s.clic) { const p = caseSous(monde, s.clic.x, s.clic.y), t = C.batiments[o.valeur].taille; Co.poserBatiment(monde, o.valeur, p.colonne - (t >> 1), p.ligne - (t >> 1)); }
+    // 👻 étape 4 : un bâtiment ou un lot de zone = un FANTÔME collé à la route
+    //   souris : le fantôme suit la souris, un clic le construit ;
+    //   doigt : un toucher pose le fantôme (retoucher le déplace), ✅ le construit
+    if (o.sorte === "batiment" || o.sorte === "zone") {
+      if (s.clic && s.clic.doigt) { monde.fantome = Co.aimanter(monde, o, caseSous(monde, s.clic.x, s.clic.y)); monde.fantome.doigt = true; return; }
+      if (monde.fantome && monde.fantome.doigt) return; // (le fantôme posé au doigt attend ✅ ; il ne suit pas la souris)
+      monde.fantome = monde.survol ? Co.aimanter(monde, o, monde.survol) : null;
+      if (s.clic && monde.fantome) construireFantome(monde);
       return;
     }
     // 👆 au doigt : toucher le départ, puis l'arrivée (on peut retoucher pour changer l'arrivée), puis ✅ ou ❌
@@ -112,6 +118,15 @@ Megalopole.Monde = (function () {
       monde.trace = null;
     }
   }
+  // Construire le fantôme (poserBatiment et zoner revérifient tout : l'argent a pu changer depuis)
+  function construireFantome(monde) {
+    const f = monde.fantome;
+    if (!f) return;
+    if (f.sorte === "batiment") { if (f.raison && !/argent/.test(f.raison)) radio.emettre("construction-impossible", { nom: C.batiments[f.valeur].nom, raison: f.raison }); else Co.poserBatiment(monde, f.valeur, f.colonne, f.ligne); }
+    else if (f.raison) radio.emettre("construction-impossible", { nom: "Zone " + C.zones[f.valeur].nom.toLowerCase(), raison: f.raison });
+    else { Co.zoner(monde, f.cases, f.valeur); Megalopole.Population.recenser(monde); Megalopole.Reseaux.calculer(monde); minuteurReseaux = 1; }
+    monde.fantome = null;
+  }
   const casesDuTrace = (o, t) => (o.sorte === "route" ? Co.trajet(t.depart, t.arrivee) : Co.rectangle(t.depart, t.arrivee));
   function appliquer(monde, o, t) {
     const cases = casesDuTrace(o, t);
@@ -130,9 +145,10 @@ Megalopole.Monde = (function () {
   function etape(monde, dt, i) {
     camera(monde, dt, i);
     if (i.outil !== undefined) choisirOutil(monde, i.outil);
-    if (i.annuler) { if (monde.trace) monde.trace = null; else choisirOutil(monde, null); monde.selection = null; }
+    if (i.annuler) { if (monde.fantome && monde.fantome.doigt) monde.fantome = null; else if (monde.trace) monde.trace = null; else choisirOutil(monde, null); monde.selection = null; }
     // ✅ construire le tracé fait au doigt
-    if (i.confirmer && monde.trace && monde.outil && monde.outil.sorte !== "batiment") { appliquer(monde, monde.outil, monde.trace); monde.trace = null; }
+    if (i.confirmer && monde.fantome && monde.fantome.doigt) construireFantome(monde);
+    else if (i.confirmer && monde.trace && monde.outil) { appliquer(monde, monde.outil, monde.trace); monde.trace = null; }
     // étape 2 : les curseurs du budget, et les prêts
     for (const t of i.taux || []) Megalopole.Budget.changerTaux(monde, t.zone, t.d);
     for (const p of i.postes || []) Megalopole.Budget.changerPoste(monde, p.id, p.d);

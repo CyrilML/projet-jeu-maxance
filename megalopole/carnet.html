@@ -127,6 +127,7 @@
       <a href="#etape1">Étape 1</a>
       <a href="#etape2">Étape 2</a>
       <a href="#etape3">Étape 3</a>
+      <a href="#etape4">Étape 4</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="index.html">▶ Jouer</a>
@@ -338,7 +339,7 @@
             <li>☐ Touche le 📍 départ, puis le 🏁 arrivée : le tracé et son prix s'affichent. ✅ construit, ❌ annule.</li>
             <li>☐ Chaque mission réussie : « 🎓✅ Mission réussie ! », et la suivante arrive.</li>
             <li>☐ « Passer ⏭️ », ✖ pour cacher, « 🎓 Le guide » pour le faire revenir.</li>
-            <li>Vérifie « version 4 » en haut de la page.</li>
+            <li>(La version a avancé depuis : vérifie le numéro de l'étape 4.)</li>
           </ul>
         </div>
       </div>
@@ -371,6 +372,55 @@
       <details class="question"><summary>Une vieille ville a déjà des routes et une centrale. Par quelle mission le guide commence-t-il ?</summary><p>Il saute en silence les missions déjà réussies : il commence à la mission 3, l'eau (si elle n'est pas encore faite).</p></details>
     </section>
 
+    <section id="etape4">
+      <h2>👻 Étape 4 : le fantôme et l'aimant <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Tout se pose de la même façon (« standardiser », ton idée) : un fantôme collé à la route, et ✅. Les zones se posent par lots carrés de 3 × 3. <a href="index.html"><strong>▶ la Mégalopole</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>megalopole/demandes/04-placement-fantome.md</code>.</p>
+          <ul>
+            <li>✍️ « Le placement des bâtiments, ça va pas du tout. Et pour les zones, peut-être travailler par carré de plusieurs cases. »</li>
+            <li>✍️ « Il faudrait peut-être standardiser, non ? »</li>
+            <li>Tes choix : <strong>fantôme + ✅</strong>, et des <strong>lots de 3 × 3</strong> pour les zones.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Choisis une centrale et touche la route elle-même : le fantôme se range à côté, avec 🧲.</li>
+            <li>☐ Touche ailleurs : le fantôme se déplace. ✅ construit, ❌ annule.</li>
+            <li>☐ Touche dans l'eau : le fantôme est rouge, et la barre dit pourquoi.</li>
+            <li>☐ Zone habitation : un toucher = un carré de 3 × 3. Touche juste à côté : le 2ᵉ lot se range contre le 1ᵉʳ.</li>
+            <li>☐ À l'ordinateur : le fantôme suit la souris, et un clic construit.</li>
+            <li>Vérifie « version 5 » en haut de la page.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔧 Sous le capot : comment l'aimant choisit la place</h3>
+      <p>Quand tu touches une case, l'aimant (<code>aimanter</code>, dans <code>logique/construction.js</code>) essaie <strong>toutes les places autour</strong> (7 × 7 = 49 places pour un bâtiment). Il donne une <strong>note</strong> à chacune (plus petite = meilleure), comme au golf ⛳ :</p>
+      <pre style="white-space: pre-wrap">  note = (distance au doigt)²
+       + 50 si la place ne touche aucune route
+       + 4 par case où l'on ne peut pas construire (ou déjà de cette zone)
+
+  exemple : 1 case à droite, collée à la route  → 1² + 0 = 1     ✅ gagnante
+            juste sous le doigt, loin de la route → 0 + 50 = 50</pre>
+      <p>Une place impossible (sur l'eau, sur un autre bâtiment) n'est même pas notée. C'est un petit <strong>algorithme de recherche</strong> : essayer toutes les solutions, et garder la meilleure. Les nombres sont dans <code>config.js</code> (« placement »).</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>config.js</code>, change <code>lot: 3</code> en 4 : tes lots font maintenant 16 cases !</li>
+        <li>Change <code>aimant: 3</code> en 0 : que se passe-t-il quand tu touches la route avec une école ?</li>
+        <li>Sous le capot, regarde la ligne « 👻 fantôme » pendant que tu bouges la souris.</li>
+        <li>Pose 4 lots de commerce en carré : combien de cases as-tu peintes ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Place A : 2 cases du doigt, collée à la route. Place B : sous le doigt, loin de la route. Laquelle gagne ?</summary><p>A : 2² + 0 = 4. B : 0 + 50 = 50. La plus petite note gagne : c'est A.</p></details>
+      <details class="question"><summary>Combien de cases dans 3 lots de zone ?</summary><p>3 × (3 × 3) = 27 cases.</p></details>
+      <details class="question"><summary>Pourquoi garder « départ → arrivée » pour les routes, et pas un fantôme ?</summary><p>Parce qu'une route est une longue ligne : il faut dire où elle commence et où elle finit. Un bâtiment ou un lot a une taille fixe : une seule place suffit.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route de la Mégalopole</h2>
@@ -379,10 +429,11 @@
         <div class="carte fait"><div class="num">1</div><h4>🌐 Une ville qui pousse toute seule <span class="etiquette">✅ fait · à valider</span></h4><p>Routes, 4 zones et 6 niveaux, énergie, eau, services, loisirs, transports, demande R C I A, bonheur, réclamations, budget, paliers jusqu'à la mégalopole.</p><p class="apprend"><b>Tu apprends :</b> une simulation, une balance, une carte de valeurs. <b>Durée :</b> 2 séances.</p></div>
         <div class="carte fait"><div class="num">2</div><h4>🧾 Les impôts et les coûts <span class="etiquette">✅ fait · à valider</span></h4><p>Un impôt par zone, un budget par service (0 à 150 %), le carburant des centrales, la banque, la caisse vide et le maire renvoyé, 3 difficultés.</p><p class="apprend"><b>Tu apprends :</b> un budget, un compromis, les intérêts d'un prêt. <b>Durée :</b> 1 séance.</p></div>
         <div class="carte fait"><div class="num">3</div><h4>🎓 Un guide, et tracer au doigt <span class="etiquette">✅ fait · à valider</span></h4><p>9 missions pas à pas pour bien commencer ; sur téléphone, 1 doigt bouge la carte, on touche le départ et l'arrivée, puis ✅.</p><p class="apprend"><b>Tu apprends :</b> vérifier un résultat, distinguer un toucher d'un glisser. <b>Durée :</b> 1 séance.</p></div>
-        <div class="carte prochain"><div class="num">4</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
-        <div class="carte"><div class="num">5</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
-        <div class="carte"><div class="num">6</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
-        <div class="carte"><div class="num">7</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
+        <div class="carte fait"><div class="num">4</div><h4>👻 Le fantôme et l'aimant <span class="etiquette">✅ fait · à valider</span></h4><p>Bâtiments et zones se posent pareil : un fantôme collé à la route, puis ✅ ; les zones par lots de 3 × 3.</p><p class="apprend"><b>Tu apprends :</b> un algorithme de recherche (essayer toutes les places, garder la meilleure note). <b>Durée :</b> 1 séance.</p></div>
+        <div class="carte prochain"><div class="num">5</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
+        <div class="carte"><div class="num">6</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
+        <div class="carte"><div class="num">7</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
+        <div class="carte"><div class="num">8</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
       </div>
     </section>
 
@@ -413,6 +464,14 @@
         <textarea class="journal" id="megalopole-appris-3" data-cle="megalopole-appris-3" placeholder="Ex. : J'ai appris que le jeu mesure de combien mon doigt bouge pour savoir si je touche ou si je glisse…"></textarea>
         <label for="megalopole-idees-3"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="megalopole-idees-3" data-cle="megalopole-idees-3" placeholder="Ex. : D'autres missions plus tard (une mairie, un stade…) avec une récompense…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 4 · le fantôme et l'aimant <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> l'aimant (<code>aimanter</code>) qui note les places autour et colle à la route, le fantôme vert ou rouge avec 🧲, la barre ✅ / ❌ pour les bâtiments et les zones, les lots de 3 × 3, et une ligne sous le capot.</p>
+        <label for="megalopole-appris-4"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="megalopole-appris-4" data-cle="megalopole-appris-4" placeholder="Ex. : J'ai appris que l'ordinateur essaie toutes les places et garde la meilleure note…"></textarea>
+        <label for="megalopole-idees-4"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="megalopole-idees-4" data-cle="megalopole-idees-4" placeholder="Ex. : Tourner un bâtiment, ou poser plusieurs lots d'un coup…"></textarea>
       </div>
     </section>
   </main>
