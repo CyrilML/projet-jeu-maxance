@@ -550,6 +550,7 @@ Village.Batisses = (function () {
 
   // Une pile de rondins ou de planches à côté du bâtiment
   function pile(ctx, x, y, sorte, nombre) {
+    nombre = Math.min(nombre, 12); // étape 44 : jusqu'à 32 objets devant la porte, mais une pile de 12 au plus (sinon c'est une tour !)
     for (let k = 0; k < nombre; k++) {
       const px = x + (k % 3) * 6 - (Math.floor(k / 3) % 2) * 3, py = y - Math.floor(k / 3) * 5;
       if (sorte === "rondin") {
@@ -1293,7 +1294,7 @@ Village.Batisses = (function () {
     switch (b.type) {
       case "entrepot":
         // Étape 9 : les ânes qui attendent à côté de l'entrepôt (avec la recherche « Ânes et charrettes »)
-        if (Village.monde && Village.Recherches.bonus(Village.monde, "chargement") > 1) {
+        if (Village.monde && Village.Recherches.faite(Village.monde, "charrettes")) {
           const auRepos = Village.monde.porteurs.filter((p) => p.etat === "attend" && !p.parti).length;
           for (let k = 0; k < Math.min(2, auRepos); k++) ane(ctx, x + 28 + k * 8, y - 8 + k * 7, t + k * 2, false);
         }
@@ -2645,7 +2646,7 @@ Village.Batisses = (function () {
   }
   function dessinerPorteur(ctx, p, x, y, t) {
     const monde = Village.monde, R = Village.Recherches;
-    const avecAne = monde && R.bonus(monde, "chargement") > 1;
+    const avecAne = monde && R.faite(monde, "charrettes"); // (étape 44 : les brouettes augmentent aussi la charge)
     // Étape 22 : l'attelage qui est DERRIÈRE le porteur à l'écran (quand il descend vers nous) est dessiné avant lui ; sinon, après
     let attelageDerriere = true;
     if (avecAne && p.chemin && p.pas < p.chemin.length) { const q = p.chemin[p.pas]; attelageDerriere = q.x - p.x + q.y - p.y > 0; }

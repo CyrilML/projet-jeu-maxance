@@ -201,7 +201,7 @@ Village.Ouvriers = (function () {
         if (o.minuteur > 0) return;
         // ✍️ Pas relié à l'entrepôt : on ne travaille pas.
         if (!b.relie) { if (o.etat !== "bloque") radio.emettre("ouvrier-bloque", { numero: b.numero, nom: Village.Batiments.TYPES[b.type].nom }); changer(o, "bloque", 0.5); return; }
-        if (b.sortieQuoi && b.sortie >= C.sortieMax) { changer(o, "plein", 0.5); return; }
+        if (b.sortieQuoi && b.sortie >= Village.Ameliorations.sortieMaxDe(b)) { changer(o, "plein", 0.5); return; }
         // Étape 12 : le maçon a besoin d'un 🔨 outil (les porteurs lui en apportent)
         if (b.type === "macon" && !((b.entrees.outils || 0) >= 1)) {
           if (!o.sansOutil) radio.emettre("macon-attend", { numero: b.numero });

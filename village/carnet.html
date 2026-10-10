@@ -167,6 +167,7 @@
       <a href="#etape41">Étape 41</a>
       <a href="#etape42">Étape 42</a>
       <a href="#etape43">Étape 43</a>
+      <a href="#etape44">Étape 44</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2398,6 +2399,40 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
       <details class="question"><summary>Il y a 300 animaux sur la carte : un chasseur peut-il quand même n'avoir rien à chasser ? (avant cette étape)</summary><p>Oui, s'ils sont tous loin de lui. C'est pour ça qu'on compte maintenant autour de chaque chasseur.</p></details>
     </section>
 
+    <section id="etape44">
+      <h2>📦 Étape 44 : des ateliers et des porteurs plus grands <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les ateliers gardent 3 fois plus d'ingrédients, 2 fois plus de produits attendent devant leur porte, et les porteurs portent de plus en plus avec les améliorations. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/42-ateliers-et-porteurs-plus-grands.md</code>.</p>
+          <ul>
+            <li>✍️ « Que les ateliers puissent stocker plus de ressources pour fabriquer et stocker plus de produits fabriqués. »</li>
+            <li>✍️ « Le porteur doit aussi en porter plus, surtout au fil des améliorations. »</li>
+            <li>Tes choix : 6 (+3 par ⭐) ; 16 (+8 par ⭐) ; 4 objets, puis plus à chaque recherche.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Touche une scierie : « 📦 En réserve : 🪵 … / 6 » et « Devant la porte : … / 16 ».</li>
+            <li>☐ Améliore-la : 9 et 24, puis 12 et 32.</li>
+            <li>☐ Sous le capot : « 🫏 objets par voyage » passe de 4 à 6, 12, 18.</li>
+            <li>Vérifie « version 45 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>✖️ Des multiplicateurs qui s'enchaînent</h3>
+      <pre style="white-space: pre-wrap">4 objets
+× 1,5 (brouettes)          =  6
+× 2   (ânes et charrettes)  = 12
+× 1,5 (écurie)              = 18</pre>
+      <p>Chaque amélioration <strong>multiplie</strong> ce qu'on avait déjà : c'est pour ça que la dernière rapporte le plus (+6 objets, alors que les brouettes en donnaient +2). Et pour les ateliers, c'est une <strong>addition</strong> : + 3 de réserve à chaque ⭐, toujours pareil.</p>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Avec seulement les ânes et l'écurie (sans les brouettes), combien d'objets par voyage ?</summary><p>4 × 2 × 1,5 = 12.</p></details>
+      <details class="question"><summary>Une forge améliorée 1 fois : combien de lingots peut-elle garder ?</summary><p>6 + 3 = 9.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2661,8 +2696,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
           <p>Toujours 6 animaux autour de chaque chasseur ; du gibier arrive dès qu'il cherche sans trouver.</p>
           <p class="apprend"><b>Tu apprends :</b> une règle juste en total peut être fausse localement. <b>Durée :</b> 1 séance.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">44</div>
+          <h4>📦 Des ateliers et des porteurs plus grands <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Réserves des ateliers 6 → 12, devant la porte 16 → 32, porteurs 4 → 18 objets avec les améliorations.</p>
+          <p class="apprend"><b>Tu apprends :</b> multiplier ou additionner, des multiplicateurs qui s'enchaînent. <b>Durée :</b> 1 séance.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">44-46</div>
+          <div class="num">45-47</div>
           <h4>🚗🚓🛍️ Les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Routes goudronnées, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -3023,6 +3064,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
         <textarea class="journal" id="village-appris-43" data-cle="village-appris-43" placeholder="Ex. : J'ai appris qu'une règle peut marcher en total mais pas partout…"></textarea>
         <label for="village-idees-43"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-43" data-cle="village-idees-43" placeholder="Ex. : Des pièges pour attraper des lapins…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 44 · des ateliers et des porteurs plus grands <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> <code>entreeMaxDe</code>, <code>sortieMaxDe</code> et <code>chargePorteurs</code> dans <code>logique/ameliorations.js</code> ; la réserve de l'atelier dans son panneau ; la charge des brouettes et de l'écurie.</p>
+        <label for="village-appris-44"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-44" data-cle="village-appris-44" placeholder="Ex. : J'ai appris que des multiplicateurs s'enchaînent…"></textarea>
+        <label for="village-idees-44"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-44" data-cle="village-idees-44" placeholder="Ex. : Des camions qui portent encore plus…"></textarea>
       </div>
     </section>
   </main>

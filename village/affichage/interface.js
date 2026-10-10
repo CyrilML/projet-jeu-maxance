@@ -1178,7 +1178,7 @@ Village.Interface = (function () {
     if (b.malade) problemes.push("🤒 " + C.elevage.troupeaux[b.type].noms.replace(/^l/, "L") + " sont malades : " + (monde.batiments.some((x) => x.type === "veterinaire" && x.ouvrier) ? "le vétérinaire 🩺 arrive." : "construis un vétérinaire 🩺 !"));
     if (b.usure >= C.bourg.reparer && pret) problemes.push("🔧 Usé à " + Math.round(b.usure * 100) + " % : " + (monde.batiments.some((x) => x.type === "macon" && x.etat === "pret") ? "le maçon-couvreur 🪜 va venir." : "il faut un maçon-couvreur 🪜 !"));
     if (b.epuise) problemes.push("⛏️ Le filon est épuisé : " + (monde.batiments.some((x) => x.type === "geologue" && x.ouvrier) ? "le géologue 🔍 va venir trouver une nouvelle veine." : "construis un géologue 🔍, il trouvera une nouvelle veine dessous !"));
-    if (pret && b.sortieQuoi && b.sortie >= C.sortieMax) problemes.push("📦 Devant la porte, c'est plein : il faut plus de porteurs.");
+    if (pret && b.sortieQuoi && b.sortie >= Village.Ameliorations.sortieMaxDe(b)) problemes.push("📦 Devant la porte, c'est plein : il faut plus de porteurs.");
     // Étape 34 : ⚡ l'électricité
     if (Village.Electricite.active(monde) && pret) {
       const cons = Village.Electricite.consommation(b), ea = C.ateliers[b.type];
@@ -1219,7 +1219,7 @@ Village.Interface = (function () {
       info("1️⃣ 📦 Le silo (réserve) : " + Re.capacite(monde) + " → " + capApres + " places · pour que le village continue quand tu n'es pas là", "#7a4a10");
       if (niv < C.entrepot.niveauMax) info("2️⃣ 🏗️ Agrandir l'entrepôt (niveau " + niv + " → " + (niv + 1) + " sur " + C.entrepot.niveauMax + ") : " + Am2.placesPrincipal(monde) + " → " + (Am2.placesPrincipal(monde) + C.entrepot.parNiveau) + " porteurs", "#7a4a10");
       else info("2️⃣ 🏗️ L'entrepôt est au plus grand (niveau " + niv + ")", "#2e8a3a");
-      if (ecurie) info("3️⃣ " + ecurie.emoji + " " + ecurie.nom + " : les porteurs vont " + Math.round((ecurie.effet.porteurs - 1) * 100) + " % plus vite" + ((monde.age || 0) < ecurie.age ? " (🔒 " + C.ages[ecurie.age].nom.toLowerCase() + ")" : ""), "#5a3a80");
+      if (ecurie) info("3️⃣ " + ecurie.emoji + " " + ecurie.nom +  " : les porteurs vont " + Math.round((ecurie.effet.porteurs - 1) * 100) + " % plus vite" + (ecurie.effet.charge ? " et portent " + Math.round((ecurie.effet.charge - 1) * 100) + " % de plus" : "") + ((monde.age || 0) < ecurie.age ? " (🔒 " + C.ages[ecurie.age].nom.toLowerCase() + ")" : ""), "#5a3a80");
       else if (Am2.liste(b).length) info("3️⃣ 🐴 L'écurie est construite : porteurs plus rapides ✅", "#2e8a3a");
       boutonsReserve = true;
     } else if (b.type === "monument") {
@@ -1258,6 +1258,8 @@ Village.Interface = (function () {
       const R = C.ateliers[b.type];
       titre("📜 Ce qu'il fabrique");
       lignes.push({ recette: R });
+      const ent = Object.keys(B.entreesDe(monde, b));
+      if (ent.length) info("📦 En réserve : " + ent.map((r) => C.ressources[r].emoji + " " + (b.entrees[r] || 0) + " / " + Village.Ameliorations.entreeMaxDe(b)).join(" · "), "#7a5a30"); // étape 44
       if (o) lignes.push(b.travail ? { barre: 1 - b.travail.reste / Math.max(0.1, b.travail.duree || 1), t: "⚙️ fabrique…" } : { t: b.attend ? "😴 " + b.attend.charAt(0).toUpperCase() + b.attend.slice(1) : "⏳ prêt", c: "#7a5a30" });
     } else if (C.mines[b.type]) {
       const sorte = C.mines[b.type].filon, k = monde.carte;
@@ -1291,12 +1293,12 @@ Village.Interface = (function () {
       info("Le " + type.metier + " " + Village.Ouvriers.NOMS_ETATS[o.etat], "#7a5a30");
       if (o.etat === "travailler") lignes.push({ barre: 1 - o.minuteur / Math.max(0.1, o.dureeTravail || o.minuteur + 0.01), t: "au travail" });
     }
-    if (pret && b.sortieQuoi && b.sortie > 0 && b.sortie < C.sortieMax) info("Devant la porte : " + b.sortie + " / " + C.sortieMax, "#7a5a30");
+    if (pret && b.sortieQuoi && b.sortie > 0 && b.sortie < Village.Ameliorations.sortieMaxDe(b)) info("Devant la porte : " + b.sortie + " / " + Village.Ameliorations.sortieMaxDe(b), "#7a5a30");
     // ---- 3. Le niveau et les améliorations
     const Am = Village.Ameliorations, prochaine = pret ? Am.suivante(b) : null, faites = b.ameliorations || 0, total = Am.liste(b).length;
     if (total && pret && b.type !== "entrepot") { // (étape 39 : l'entrepôt a sa propre liste, plus claire)
       titre("⭐ Niveau " + (faites + 1) + " / " + (total + 1) + "  " + "★".repeat(faites) + "☆".repeat(total - faites));
-      if (prochaine) { const e = prochaine.effet, gain = typeof e === "number" ? "−" + Math.round((1 - e) * 100) + " % de temps" : "porteurs +" + Math.round((e.porteurs - 1) * 100) + " %"; info("Prochaine : " + prochaine.emoji + " " + prochaine.nom + " (" + gain + ")"); }
+      if (prochaine) { const e = prochaine.effet, gain = typeof e === "number" ? "−" + Math.round((1 - e) * 100) + " % de temps" : "porteurs +" + Math.round((e.porteurs - 1) * 100) + " %"; info("Prochaine : " + prochaine.emoji + " " + prochaine.nom + " (" + gain + (C.ateliers[b.type] ? ", +" + C.entreeParAmelioration + " de réserve par ingrédient" : "") + (b.sortieQuoi ? ", +" + C.sortieParAmelioration + " places devant la porte" : "") + ")"); } // étape 44
       else info("Toutes les améliorations sont faites !", "#2e8a3a");
     }
     // Une ligne de texte trop longue passe à la ligne (elle ne dépasse plus du cadre)

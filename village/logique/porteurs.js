@@ -92,7 +92,7 @@ Village.Porteurs = (function () {
       }
       // Étape 12 : des 🔨 outils pour l'atelier du maçon-couvreur (2 en réserve au plus)
       if (b.type === "macon" && b.etat === "pret") {
-        while ((b.entrees.outils || 0) + (b.enFile.outils || 0) + (b.enRoute.outils || 0) < Math.max(C.entreeMax, C.tournee.outilsMacon) && disponible(monde, "outils") >= 1) { // étape 27 : 3 pour sa tournée
+        while ((b.entrees.outils || 0) + (b.enFile.outils || 0) + (b.enRoute.outils || 0) < Math.max(Village.Ameliorations.entreeMaxDe(b), C.tournee.outilsMacon) && disponible(monde, "outils") >= 1) { // étape 27 : 3 pour sa tournée
           b.enFile.outils = (b.enFile.outils || 0) + 1;
           ajouter(monde, { sorte: "apporter", quoi: "outils", batiment: b });
         }
@@ -101,7 +101,7 @@ Village.Porteurs = (function () {
       const recette = C.ateliers[b.type];
       if (recette && b.etat === "pret") {
         for (const r of Object.keys(Village.Batiments.entreesDe(monde, b))) { // étape 15 : + le foin de l'hiver
-          while ((b.entrees[r] || 0) + (b.enFile[r] || 0) + (b.enRoute[r] || 0) < C.entreeMax && disponible(monde, r) >= 1) {
+          while ((b.entrees[r] || 0) + (b.enFile[r] || 0) + (b.enRoute[r] || 0) < Village.Ameliorations.entreeMaxDe(b) && disponible(monde, r) >= 1) { // étape 44 : plus de place
             b.enFile[r] = (b.enFile[r] || 0) + 1;
             ajouter(monde, { sorte: "apporter", quoi: r, batiment: b });
           }
@@ -133,7 +133,7 @@ Village.Porteurs = (function () {
       if (c === b || !c.relie) return 0;
       if (c.etat === "chantier") return papiers(c);
       if (c.etat !== "pret" || !C.ateliers[c.type] || !(quoi in Village.Batiments.entreesDe(monde, c))) return 0;
-      return Math.max(0, C.entreeMax - (c.entrees[quoi] || 0) - (c.enRoute[quoi] || 0));
+      return Math.max(0, Village.Ameliorations.entreeMaxDe(c) - (c.entrees[quoi] || 0) - (c.enRoute[quoi] || 0));
     };
     let meilleur = null;
     for (const c of monde.batiments) {
@@ -187,7 +187,7 @@ Village.Porteurs = (function () {
     // Ventre vide : 2 fois moins vite. Étape 6 : la vitesse dépend du sol (terre ou pierre).
     // Étape 21 : ✍️ les bonus se multipliaient (× 1,6 × 1,3 × 1,25…) et les porteurs filaient à plus de 7 cases par seconde :
     // c'était désagréable à regarder. Maintenant, la vitesse a un PLAFOND.
-    const charrette = Village.Recherches.bonus(monde, "chargement") > 1; // étape 22 : l'âne tire une charrette : plus lent
+    const charrette = Village.Recherches.faite(monde, "charrettes"); // étape 22 (étape 44 : les brouettes aussi augmentent la charge) : l'âne tire une charrette : plus lent
     const vitesse = Math.min(charrette ? C.porteurs.vitesseMaxCharrette : C.porteurs.vitesseMax, (charrette ? 0.8 : 1) * C.porteurs.vitesse * Village.Repas.vitesse(p) * Village.Routes.vitesseDuSol(monde, p.x, p.y) * Village.Recherches.bonus(monde, "porteurs") * Village.Ameliorations.vitessePorteurs(monde)); // étape 7 : les brouettes ; étape 13 : l'écurie
     let reste = vitesse * dt;
     while (reste > 0 && p.pas < p.chemin.length) {
@@ -232,7 +232,7 @@ Village.Porteurs = (function () {
           p.etat = "aller";
           // Étape 9 : avec une charrette, on prend aussi les papiers pareils (même bâtiment, même chose).
           p.nombre = 1;
-          const place = Math.round(C.porteurs.charge * Village.Recherches.bonus(monde, "chargement")); // étape 20 : 3 objets (6 avec la charrette)
+          const place = Village.Ameliorations.chargePorteurs(monde); // étape 20 ; étape 44 : 4 → 6 → 12 → 18 objets
           for (let k = 0; k < monde.file.length && p.nombre < place; k++) {
             const t = monde.file[k];
             if (t.batiment !== b || t.sorte !== papier.sorte || t.quoi !== papier.quoi) continue;

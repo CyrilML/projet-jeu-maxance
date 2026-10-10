@@ -405,7 +405,7 @@ Village.Batiments = (function () {
         return;
       }
       const quoi = b.sortieQuoi, combien = quoi ? recette.sorties[quoi] : 0; // (étape 34 : la centrale ne fabrique rien)
-      if (quoi && b.sortie + combien > C.sortieMax) return; // devant la porte, c'est plein
+      if (quoi && b.sortie + combien > Village.Ameliorations.sortieMaxDe(b)) return; // devant la porte, c'est plein
       b.attend = null;
       for (const [r, n] of Object.entries(entrees)) b.entrees[r] -= n;
       const machines = b.courant && !recette.electrique && quoi ? 1 / C.electricite.vitesse : 1; // étape 34 : ⚡ un atelier alimenté va 1,5 fois plus vite
@@ -476,7 +476,7 @@ Village.Batiments = (function () {
       return;
     }
     b.epuise = false;
-    if (b.sortie >= C.sortieMax) return; // devant la porte, c'est plein
+    if (b.sortie >= Village.Ameliorations.sortieMaxDe(b)) return; // devant la porte, c'est plein (étape 44 : selon ses améliorations)
     if (!b.travail) {
       // Étape 26 : le temps de creuser, plus l'aller-retour jusqu'au filon (à pied)
       const i = filons[0], dist = Math.max(Math.abs((i % k.colonnes) - b.colonne), Math.abs(Math.floor(i / k.colonnes) - b.ligne));

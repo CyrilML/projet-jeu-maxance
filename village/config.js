@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 44,
+  version: 45,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -414,7 +414,7 @@ Village.CONFIG = {
     tisserand: [{ nom: "Rouet", emoji: "🧶", age: 2, cout: { planches: 12 }, effet: 0.8 }, { nom: "Grand métier", emoji: "🪡", age: 3, cout: { planches: 20, outils: 3 }, effet: 0.7 }],
     tailleur: [{ nom: "Ciseaux fins", emoji: "✂️", age: 3, cout: { lingots: 3 }, effet: 0.8 }, { nom: "Mannequins", emoji: "🧍", age: 3, cout: { planches: 16, tissu: 6 }, effet: 0.7 }],
     charcuterie: [{ nom: "Crochets", emoji: "🪝", age: 3, cout: { lingots: 3 }, effet: 0.8 }, { nom: "Grand fumoir", emoji: "🔥", age: 3, cout: { pierres: 30, charbon: 15 }, effet: 0.7 }],
-    entrepot: [{ nom: "Écurie et chevaux", emoji: "🐴", age: 2, cout: { planches: 40, pierres: 20, outils: 4 }, effet: { porteurs: 1.25 } }],
+    entrepot: [{ nom: "Écurie et chevaux", emoji: "🐴", age: 2, cout: { planches: 40, pierres: 20, outils: 4 }, effet: { porteurs: 1.25, charge: 1.5 } }], // étape 44 : + 50 % de charge
   },
 
   // Étape 8 : 🏪 le MARCHÉ. Chaque ressource a un prix de base en pièces 🪙 (pour 1 objet). Le prix BOUGE :
@@ -476,13 +476,18 @@ Village.CONFIG = {
   porteurs: {
     nombre: 4, // les porteurs qui habitent l'entrepôt (étape 20 : 4)
     partChantiers: 0.5, // étape 20 : ✍️ la moitié des porteurs au plus livre les chantiers (les autres font tourner les ateliers)
-    charge: 3, // étape 20 : objets par voyage (s'ils vont au même bâtiment) ; × 2 avec « Ânes et charrettes »
+    // Étape 44 : ✍️ « le porteur doit en porter plus, surtout au fil des améliorations » : 4 objets par voyage (3 avant),
+    // × 1,5 avec « Brouettes », × 2 avec « Ânes et charrettes », × 1,5 avec l'écurie de l'entrepôt : 4 → 6 → 12 → 18.
+    charge: 4,
     vitesse: 2.2, // cases par seconde (étape 21 : ✍️ de nouveau 2,2 : à 2,8, ils couraient beaucoup trop vite)
     vitesseMaxCharrette: 2.6, // étape 22 : ✍️ avec l'âne et la charrette, on va moins vite (× 0,8, et 2,6 au plus)
     vitesseMax: 3.4, // étape 21 : même avec la route pavée, les brouettes et l'écurie, jamais plus de 3,4 cases par seconde
   },
-  sortieMax: 8, // objets qui peuvent attendre devant un bâtiment (au-delà, l'ouvrier attend) · étape 20 : ✍️ 8 (4 avant), l'idée de Maxance
-  entreeMax: 2, // de chaque ingrédient en réserve dans un atelier (scierie, fonderie, forge)
+  // Étape 44 : ✍️ « les ateliers doivent pouvoir stocker plus de ressources pour fabriquer, et plus de produits fabriqués ».
+  sortieMax: 16, // objets qui peuvent attendre devant un bâtiment (au-delà, l'ouvrier attend) · étape 20 : 8 ; étape 44 : 16
+  sortieParAmelioration: 8, // étape 44 : + 8 par amélioration ⭐ du bâtiment (jusqu'à 32)
+  entreeMax: 6, // de chaque ingrédient en réserve dans un atelier · étape 44 : 6 (2 avant)
+  entreeParAmelioration: 3, // étape 44 : + 3 par amélioration ⭐ de l'atelier (jusqu'à 12)
   // Étape 27 : ✍️ « le géologue et le maçon devraient pouvoir aller partout sur la carte, sans rentrer chez eux à chaque
   // fois ». Ces métiers font une TOURNÉE : ils cherchent sur toute la carte, et après un travail ils cherchent le suivant
   // depuis l'endroit où ils sont. Ils ne rentrent que quand il n'y a plus rien à faire (choix de Maxance), et le maçon
@@ -617,7 +622,7 @@ Village.CONFIG = {
     { id: "filets", nom: "Filets de pêche", emoji: "🥅", age: 1, cout: { planches: 15, poissons: 10 }, duree: 60, effet: { pecher: 0.6 }, texte: "Le pêcheur pêche 40 % plus vite" },
     { id: "arcs", nom: "Arcs en if", emoji: "🏹", age: 1, cout: { planches: 15, viande: 10 }, duree: 60, effet: { chasser: 0.6 }, texte: "Le chasseur chasse 40 % plus vite" },
     { id: "pics", nom: "Pics de pierre", emoji: "⛏️", age: 1, cout: { planches: 20, pierres: 15 }, duree: 75, effet: { tailler: 0.6, miner: 0.75 }, texte: "Le carrier et le mineur vont plus vite" },
-    { id: "brouettes", nom: "Brouettes", emoji: "🛒", age: 1, cout: { planches: 30, pierres: 10 }, duree: 90, effet: { porteurs: 1.3, brouette: true }, texte: "Les porteurs vont 30 % plus vite (et poussent une brouette pour le lourd)" },
+    { id: "brouettes", nom: "Brouettes", emoji: "🛒", age: 1, cout: { planches: 30, pierres: 10 }, duree: 90, effet: { porteurs: 1.3, brouette: true, chargement: 1.5 }, texte: "Les porteurs vont 30 % plus vite et portent 1,5 fois plus (une brouette)" }, // étape 44 : + la charge
     { id: "paves", nom: "Routes pavées", emoji: "🧱", age: 1, cout: { pierres: 30, charbon: 5 }, duree: 90, effet: { routePierre: true }, texte: "Toutes les routes deviennent pavées (× 1,6 plus rapide)" }, // étape 17 : ✍️ automatiquement
     { id: "fumoir", nom: "Le fumoir", emoji: "🔥", age: 1, cout: { planches: 20, charbon: 10 }, duree: 90, effet: { repas: 1.5 }, texte: "La nourriture dure plus longtemps : un repas toutes les 3 min 45" },
     { id: "prospection", nom: "Prospection", emoji: "🔍", age: 1, cout: { planches: 20, charbon: 10 }, duree: 90, effet: { filons: true }, texte: "Le géologue trouve des veines 2 fois plus riches (étape 38)" },
@@ -627,7 +632,7 @@ Village.CONFIG = {
     { id: "scies", nom: "Scies en fer", emoji: "🪚", age: 2, cout: { outils: 4, planches: 20 }, duree: 120, effet: { scier: 0.6 }, texte: "La scierie scie 40 % plus vite" },
     { id: "outilsFer", nom: "Outils en fer", emoji: "🔨", age: 2, cout: { outils: 8 }, duree: 150, effet: { couper: 0.8, tailler: 0.8, planter: 0.8, miner: 0.8 }, texte: "Bûcheron, forestier, carrier et mineurs : 20 % plus vite" },
     { id: "commerce", nom: "Commerce", emoji: "⚖️", age: 2, cout: { planches: 30, lingots: 5 }, duree: 120, effet: { vente: 1.2 }, texte: "Le marché te paie 20 % plus cher" },
-    { id: "charrettes", nom: "Ânes et charrettes", emoji: "🫏", age: 2, cout: { planches: 40, lingots: 4, outils: 4 }, duree: 150, effet: { chargement: 2 }, texte: "Chaque porteur part avec un âne et sa charrette : 6 objets par voyage (3 avant)" }, // étape 9 ; étape 20 : × 2
+    { id: "charrettes", nom: "Ânes et charrettes", emoji: "🫏", age: 2, cout: { planches: 40, lingots: 4, outils: 4 }, duree: 150, effet: { chargement: 2 }, texte: "Chaque porteur part avec un âne et sa charrette : 2 fois plus d'objets par voyage" }, // étape 9 ; étape 20 : × 2
     // Étape 11 : les recherches du bourg
     { id: "meules", nom: "Meules en granit", emoji: "🪨", age: 3, cout: { pierres: 60, outils: 6 }, duree: 150, effet: { moudre: 0.7 }, texte: "Le moulin va 30 % plus vite" },
     { id: "fours", nom: "Fours en briques", emoji: "🧱", age: 3, cout: { pierres: 50, charbon: 30, outils: 4 }, duree: 150, effet: { cuire: 0.7 }, texte: "La boulangerie va 30 % plus vite" },

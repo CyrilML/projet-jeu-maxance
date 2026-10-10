@@ -26,6 +26,16 @@ Village.Ameliorations = (function () {
     return x;
   }
   // Les porteurs vont plus vite grâce à l'écurie de l'entrepôt
+  // Étape 44 : combien un porteur emporte en un voyage (la charge de base × les recherches × l'écurie)
+  function chargePorteurs(monde) {
+    const e = monde.batiments.find((b) => b.type === "entrepot");
+    let x = C.porteurs.charge * Village.Recherches.bonus(monde, "chargement");
+    if (e) for (let n = 0; n < (e.ameliorations || 0); n++) { const ef = liste(e)[n].effet; if (ef && ef.charge) x *= ef.charge; }
+    return Math.round(x);
+  }
+  // Étape 44 : la place dans un atelier (de chaque ingrédient), et devant sa porte : plus grande à chaque amélioration ⭐
+  const entreeMaxDe = (b) => C.entreeMax + C.entreeParAmelioration * ((b && b.ameliorations) || 0);
+  const sortieMaxDe = (b) => C.sortieMax + C.sortieParAmelioration * ((b && b.type !== "entrepot" && b.ameliorations) || 0);
   function vitessePorteurs(monde) {
     const e = monde.batiments.find((b) => b.type === "entrepot");
     let x = 1;
@@ -114,5 +124,5 @@ Village.Ameliorations = (function () {
     return true;
   }
 
-  return { prixAgrandirDepot, raisonAgrandirDepot, agrandirDepot, servis, placesEnPlus, liste, suivante, bonus, vitessePorteurs, raison, ameliorer, niveau, placesPorteurs, placesDe, placesPrincipal, prixAgrandir, raisonAgrandir, agrandir };
+  return { chargePorteurs, entreeMaxDe, sortieMaxDe, prixAgrandirDepot, raisonAgrandirDepot, agrandirDepot, servis, placesEnPlus, liste, suivante, bonus, vitessePorteurs, raison, ameliorer, niveau, placesPorteurs, placesDe, placesPrincipal, prixAgrandir, raisonAgrandir, agrandir };
 })();
