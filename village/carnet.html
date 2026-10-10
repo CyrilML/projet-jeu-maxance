@@ -170,6 +170,7 @@
       <a href="#etape44">Étape 44</a>
       <a href="#etape45">Étape 45</a>
       <a href="#etape46">Étape 46</a>
+      <a href="#etape47">Étape 47</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a href="../index.html">📓 Carnet principal</a>
@@ -2492,6 +2493,33 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
       <details class="question"><summary>Pourquoi la fumée et la fontaine ne sont-elles pas dans l'autocollant (de près) ?</summary><p>Parce qu'elles bougent : un autocollant est une image figée.</p></details>
     </section>
 
+    <section id="etape47">
+      <h2>🚶 Étape 47 : plus de limite pour aller au travail <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les villageois vont travailler partout sur la carte, même dans une mine très loin. Et le panneau dit pourquoi personne ne vient. <a href="index.html"><strong>▶ le village</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>village/demandes/45-mines-loin-sans-ouvrier.md</code>.</p>
+          <ul>
+            <li>✍️ « La mine d'or et la mine de pierre : personne n'y va travailler. Pourquoi ? »</li>
+            <li>✍️ « Il ne devrait pas y avoir de limite de déplacement. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Ta mine d'or et ta carrière reçoivent un ouvrier.</li>
+            <li>☐ Un bâtiment sans ouvrier : son panneau dit pourquoi, et dans combien de secondes quelqu'un arrive.</li>
+            <li>Vérifie « version 48 » en haut de la page du village.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🐛 Un bug que seule ta partie montrait</h3>
+      <p>La « tache d'encre » qui trouve le chemin d'un villageois s'arrêtait à 60 cases. Sur une petite carte, c'était assez. Mais avec la carte de 256 × 256 et les gisements d'or loin du village (étape 38), la mine était trop loin : le villageois ne trouvait aucun chemin, et ne partait jamais. Dans mes tests, je posais les mines plus près : je ne voyais pas le bug. C'est ta partie, avec un vrai village, qui l'a montré. Merci pour ta capture d'écran !</p>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Un trajet de 150 cases : combien de temps marche le villageois ?</summary><p>150 ÷ 25 = 6 cases par seconde (le maximum) : 25 secondes.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route du village</h2>
@@ -2773,8 +2801,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
           <p>Mesurer, puis corriger : autocollants, ciseaux plus petits, mines et géologue plus économes.</p>
           <p class="apprend"><b>Tu apprends :</b> mesurer avant de corriger, les sprites. <b>Durée :</b> 1 séance.</p>
         </div>
+        <div class="carte fait">
+          <div class="num">47</div>
+          <h4>🚶 Plus de limite pour aller au travail <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Les villageois vont partout ; le plus ancien bâtiment vide est servi d'abord ; le panneau dit pourquoi.</p>
+          <p class="apprend"><b>Tu apprends :</b> un bug qui n'apparaît que dans une vraie partie. <b>Durée :</b> 1 séance.</p>
+        </div>
         <div class="carte prochain">
-          <div class="num">47-49</div>
+          <div class="num">48-50</div>
           <h4>🚗🚓🛍️ Les voitures, les services, l'époque moderne <span class="etiquette">⏭️ prochaine étape</span></h4>
           <p>Routes goudronnées, voitures et camions, police, pompiers, hôpital, école, centres commerciaux, aéroport.</p>
           <p class="apprend"><b>Tu apprends :</b> des objectifs à long terme. <b>Durée :</b> plusieurs séances.</p>
@@ -3159,6 +3193,14 @@ et si une espèce tombe sous 6 animaux : de nouveaux arrivent de la forêt</pre>
         <textarea class="journal" id="village-appris-46" data-cle="village-appris-46" placeholder="Ex. : J'ai appris qu'il faut mesurer avant de corriger…"></textarea>
         <label for="village-idees-46"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="village-idees-46" data-cle="village-idees-46" placeholder="Ex. : Un bouton pour voir les images par seconde…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 47 · plus de limite pour aller au travail <span class="petit">· 10 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> dans <code>logique/villageois.js</code>, le chemin sans limite, la marche plus rapide pour les longs trajets, la file « le plus ancien d'abord », les arrivées plus rapides quand on manque d'ouvriers, et <code>raisonVide</code> pour le panneau.</p>
+        <label for="village-appris-47"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="village-appris-47" data-cle="village-appris-47" placeholder="Ex. : J'ai appris qu'une capture d'écran aide à trouver un bug…"></textarea>
+        <label for="village-idees-47"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="village-idees-47" data-cle="village-idees-47" placeholder="Ex. : Une charrette pour emmener les ouvriers loin…"></textarea>
       </div>
     </section>
   </main>

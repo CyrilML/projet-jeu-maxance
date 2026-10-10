@@ -1174,7 +1174,7 @@ Village.Interface = (function () {
     // ---- 1. Les problèmes
     const problemes = [];
     if (b.type !== "entrepot" && !b.relie) problemes.push("❌ Pas de route jusqu'à un entrepôt : rien n'arrive, rien ne part !");
-    if (pret && type.metier && !o) problemes.push(Village.Villageois.versLeTravail(monde, b) ? "🚶 Un villageois arrive pour travailler ici." : !Village.Logement.placeLibre(monde) ? "🛏️ Personne ne travaille ici : il faut des lits (🛖 hutte) !" : "👥 Personne ne travaille ici pour l'instant.");
+    if (pret && type.metier && !o) problemes.push(Village.Villageois.raisonVide(monde, b) || "🚶 Un villageois arrive pour travailler ici."); // étape 47 : la vraie raison
     if (o && o.affame) problemes.push("🍽️ L'ouvrier a faim : 2 fois moins vite !");
     if (b.malade) problemes.push("🤒 " + C.elevage.troupeaux[b.type].noms.replace(/^l/, "L") + " sont malades : " + (monde.batiments.some((x) => x.type === "veterinaire" && x.ouvrier) ? "le vétérinaire 🩺 arrive." : "construis un vétérinaire 🩺 !"));
     if (b.usure >= C.bourg.reparer && pret) problemes.push("🔧 Usé à " + Math.round(b.usure * 100) + " % : " + (monde.batiments.some((x) => x.type === "macon" && x.etat === "pret") ? "le maçon-couvreur 🪜 va venir." : "il faut un maçon-couvreur 🪜 !"));

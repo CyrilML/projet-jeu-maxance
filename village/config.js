@@ -13,7 +13,7 @@ window.Village = window.Village || {};
 
 Village.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 47,
+  version: 48,
 
   // La taille de l'écran du jeu n'est plus fixe depuis l'étape 2 : elle suit la fenêtre
   // (ordinateur, tablette, téléphone). Voir moteur/ecran.js.
@@ -362,6 +362,7 @@ Village.CONFIG = {
   villageois: {
     depart: 3, // villageois sans travail au début d'une partie (en plus des 3 manutentionnaires)
     arrivee: 20, // s entre deux arrivées (s'il y a un lit libre et au moins 2 repas en stock)
+    arriveeTravail: 7, // étape 47 : quand des bâtiments attendent un ouvrier, un villageois arrive toutes les 7 s
     vitesse: 1.2, // cases par seconde quand ils vont au travail (0,6 en se promenant)
     promenade: 3, // cases autour du feu de camp
     // Étape 19 : ✍️ Maxance trouvait qu'il fallait une ÉNORME quantité de nourriture. La mesure : sur 46 habitants,
