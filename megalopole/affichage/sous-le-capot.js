@@ -111,6 +111,7 @@ Megalopole.SousLeCapot = (function () {
     h += groupe("🚗 Le trafic et la ville");
     h += ligne("cases de route · bouchons (trafic > 100 %) · trafic moyen", T.routes + " · " + T.bouchons + " · " + Math.round(T.moyen * 100) + " %");
     h += ligne("terrains peints · gros bâtiments", fr(m.zonees.length) + " · " + m.batiments.length);
+    { const Q = C.croissance.quartier; h += ligne("🏘️ étape 15 : bonus de quartier moyen = niveau moyen des voisins (" + Q.rayon + " cases) × " + virgule(Q.parNiveau, 2) + " + services × " + virgule(Q.parService, 2) + " (≤ " + virgule(Q.maxServices, 1) + "), au plus +" + virgule(Q.max, 1), "+" + virgule(m.quartierMoyen || 0, 2)); }
     h += ligne("🌱 le jardinier : bâtiments grandis · baissés (depuis le début)", fr(m.compteurs.grandis) + " · " + fr(m.compteurs.baisses));
     { let attendent = 0; for (const i of m.zonees) if (m.depuis[i]) attendent++; h += ligne("⏳ étape 12 : terrains qui ont un problème (ils baissent seulement après " + C.croissance.patience + " s)", fr(attendent)); }
     // 🧾 le trésorier (étape 2) : la prévision du mois, ligne par ligne, avec ses formules

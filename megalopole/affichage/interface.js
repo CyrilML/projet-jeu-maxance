@@ -306,6 +306,7 @@ Megalopole.Interface = (function () {
       if (m.depuis[i]) h += "<p class='mal'><small>⏳ Il a un problème depuis " + Math.round(m.temps - m.depuis[i]) + " s : au bout de " + C.croissance.patience + " s, il perdra un niveau.</small></p>";
     } else h += "<h3>" + (ter === 1 ? "🌊 Eau" : m.carte.arbre[i] ? "🌳 Forêt" : ter === 2 ? "🏖️ Sable" : "🌱 Herbe") + "</h3>";
     h += "<div class='ligne'><span>💎 Valeur</span>" + barreHTML(m.valeur[i], "#3d8a4a") + "<small>" + m.valeur[i].toFixed(2).replace(".", ",") + "</small></div>";
+    if (z && m.quartier) h += "<div class='ligne'><span>🏘️ Quartier</span>" + barreHTML(m.quartier[i] / C.croissance.quartier.max, "#c87a3a") + "<small>+" + m.quartier[i].toFixed(2).replace(".", ",") + "</small></div>"; // (étape 15 : ce que le quartier ajoute à l'envie)
     h += "<div class='ligne'><span>🌫️ Pollution</span>" + barreHTML(m.pollution[i], "#8a6a4a") + "<small>" + Math.round(m.pollution[i] * 100) + " %</small></div>";
     if (!z) h += "<p>" + (m.routeProche[i] >= 0 ? "🛣️ près d'une route" : "🚫 trop loin d'une route") + "</p>"; // (un terrain bâti a sa liste « pour grandir » juste au-dessus)
     return h;

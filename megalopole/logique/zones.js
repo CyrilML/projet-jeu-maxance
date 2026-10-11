@@ -100,19 +100,22 @@ Megalopole.Zones = (function () {
       if (z === "A" && cible >= 2) ajoute(monde.pollution[i] <= 0.2, "🌫️ un air pur (pas d'usine à côté)");
       ajoute(cible <= palier.niveauMax, "🌆 le palier de la ville (niveau " + palier.niveauMax + " au plus pour un(e) " + palier.nom.toLowerCase() + ")");
     }
-    const e = envie(monde, i), d = monde.demande[z] || 0;
-    ajoute(e > C.croissance.seuil, "💗 l'envie de venir : " + e.toFixed(2).replace(".", ",") + " (il faut plus de " + String(C.croissance.seuil).replace(".", ",") + ")" + (e > C.croissance.seuil ? "" : d < 0.1 ? " — la ville a déjà assez " + { R: "de logements", C: "de commerces", I: "d'industries", A: "de fermes" }[z] + " (barre " + C.zones[z].emoji + " en bas) : il faut plus " + (z === "R" ? "d'emplois" : "d'habitants") : z === "A" && monde.pollution[i] > 0.05 ? " — trop de pollution" : ""));
+    const e = envie(monde, i), d = monde.demande[z] || 0, q = bonusQuartier(monde, i);
+    ajoute(e > C.croissance.seuil, "💗 l'envie de venir : " + e.toFixed(2).replace(".", ",") + " (il faut plus de " + String(C.croissance.seuil).replace(".", ",") + " ; dont 🏘️ bonus de quartier +" + q.toFixed(2).replace(".", ",") + ")" + (e > C.croissance.seuil ? "" : d < 0.1 ? " — la ville a déjà assez " + { R: "de logements", C: "de commerces", I: "d'industries", A: "de fermes" }[z] + " (barre " + C.zones[z].emoji + " en bas) : il faut plus " + (z === "R" ? "d'emplois" : "d'habitants") : z === "A" && monde.pollution[i] > 0.05 ? " — trop de pollution" : ""));
     return { cible, liste };
   }
 
+  // 🏘️ le bonus de quartier de la case (calculé toutes les 2 s par services.js)
+  const bonusQuartier = (monde, i) => (monde.quartier ? monde.quartier[i] : 0);
   // Les gens ont-ils envie de venir ? (de −1 à +1)
   function envie(monde, i) {
     const z = lettre(monde, i), d = monde.demande[z] || 0, v = monde.valeur[i], pol = monde.pollution[i];
     const joie = (monde.bonheur - 50) / 100; // un bonheur de 80 % donne + 0,3
-    if (z === "R") return d + (v - 0.4) * 0.8 - pol * 0.8 + joie;
-    if (z === "C") return d + 0.05 + joie * 0.5; // (étape 12 : un commerce n'a plus besoin d'un terrain cher)
-    if (z === "I") return d + 0.1 - (v > 0.75 ? 0.3 : 0);
-    return d + 0.1 - pol;
+    const q = bonusQuartier(monde, i); // 🏘️ étape 15 : un beau quartier attire, pour TOUTES les zones
+    if (z === "R") return d + (v - 0.4) * 0.8 - pol * 0.8 + joie + q;
+    if (z === "C") return d + 0.05 + joie * 0.5 + q; // (étape 12 : un commerce n'a plus besoin d'un terrain cher)
+    if (z === "I") return d + 0.1 - (v > 0.75 ? 0.3 : 0) + q;
+    return d + 0.1 - pol + q;
   }
 
   let minuteur = 0;
@@ -146,5 +149,5 @@ Megalopole.Zones = (function () {
     if (sens === "grandit" ? nv >= 3 : avant >= 2) radio.emettre(sens === "grandit" ? "batiment-grandit" : "batiment-baisse", { zone: Z[z].nom, emoji: Z[z].emoji, colonne: i % n, ligne: (i / n) | 0, avant: Z[z].niveaux[avant], apres: Z[z].niveaux[nv], niveau: nv, raison });
   }
 
-  return { lettre, gensDe, niveauMax, conditions, envie, etape, LETTRE };
+  return { lettre, gensDe, niveauMax, conditions, envie, bonusQuartier, etape, LETTRE };
 })();

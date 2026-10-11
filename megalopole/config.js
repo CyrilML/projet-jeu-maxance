@@ -13,7 +13,7 @@ window.Megalopole = window.Megalopole || {};
 
 Megalopole.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 15,
+  version: 16,
   pasFixe: 1 / 120, // s : la boucle avance par petits pas fixes
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 
@@ -72,6 +72,9 @@ Megalopole.CONFIG = {
     seuil: 0.15, // l'envie de construire doit dépasser ce seuil
     eauDesLeNiveau: 2, // sans eau courante, on ne dépasse pas le niveau 1
     patience: 25, // s (étape 12) : un bâtiment ne perd un niveau que si le problème dure (un coup de vent faible, la nuit…)
+    // 🏘️ étape 15 (✍️ Maxance : « plus le quartier grandit, plus il devrait être attirant ») : le BONUS DE QUARTIER,
+    // ajouté à l'envie de TOUTES les zones. rayon en cases ; parNiveau par niveau moyen des voisins ; parService par service reçu
+    quartier: { rayon: 4, parNiveau: 0.06, parService: 0.03, maxServices: 0.2, max: 0.4 },
   },
 
   // 🌆 Les PALIERS de la ville (selon les habitants). Chaque palier débloque des bâtiments et des niveaux plus hauts.
@@ -114,10 +117,14 @@ Megalopole.CONFIG = {
     recyclage: { nom: "Centre de recyclage", emoji: "♻️", groupe: "dechets", taille: 2, prix: 4000, entretien: 150, poste: "proprete", palier: 1, recyclage: 150 }, // −30 % de déchets (jusqu'à 150 de moins chacun)
     // 🏛️ les services (étape 14, demande de Maxance : plus de cercles ! chaque service a une CAPACITÉ, en habitants
     //  — « pour: "tous" » = habitants ET emplois : la police, les pompiers et les bus servent aussi les commerces et usines)
-    ecole: { nom: "École", emoji: "🏫", groupe: "services", taille: 2, prix: 1500, entretien: 100, poste: "education", palier: 0, capacite: 1500, pour: "habitants", service: "education" },
-    lycee: { nom: "Lycée", emoji: "🎓", groupe: "services", taille: 3, prix: 5000, entretien: 300, poste: "education", palier: 2, capacite: 5000, pour: "habitants", service: "education" },
-    police: { nom: "Commissariat", emoji: "🚓", groupe: "services", taille: 2, prix: 1500, entretien: 120, poste: "securite", palier: 1, capacite: 3000, pour: "tous", service: "securite" },
-    pompiers: { nom: "Caserne de pompiers", emoji: "🚒", groupe: "services", taille: 2, prix: 1500, entretien: 120, poste: "feu", palier: 1, capacite: 3000, pour: "tous", service: "feu" },
+    ecole: { nom: "École", emoji: "🏫", groupe: "services", taille: 2, prix: 1500, entretien: 100, poste: "education", palier: 0, capacite: 3000, pour: "habitants", service: "education" }, // (étape 16 : places doublées)
+    lycee: { nom: "Lycée", emoji: "🎓", groupe: "services", taille: 3, prix: 5000, entretien: 300, poste: "education", palier: 2, capacite: 10000, pour: "habitants", service: "education" },
+    // 🏛️ étape 16 (✍️ Maxance : « il faut des pompiers, des commissariats et une éducation plus gros, là il faut trop de bâtiments »)
+    universite: { nom: "Université", emoji: "🏛️", groupe: "services", taille: 4, prix: 15000, entretien: 900, poste: "education", palier: 3, capacite: 20000, pour: "habitants", service: "education" },
+    police: { nom: "Commissariat", emoji: "🚓", groupe: "services", taille: 2, prix: 1500, entretien: 120, poste: "securite", palier: 1, capacite: 6000, pour: "tous", service: "securite" },
+    hotelPolice: { nom: "Hôtel de police", emoji: "🚔", groupe: "services", taille: 3, prix: 6000, entretien: 400, poste: "securite", palier: 3, capacite: 12000, pour: "tous", service: "securite" },
+    pompiers: { nom: "Caserne de pompiers", emoji: "🚒", groupe: "services", taille: 2, prix: 1500, entretien: 120, poste: "feu", palier: 1, capacite: 6000, pour: "tous", service: "feu" },
+    grandeCaserne: { nom: "Grande caserne", emoji: "🚒", groupe: "services", taille: 3, prix: 6000, entretien: 400, poste: "feu", palier: 3, capacite: 12000, pour: "tous", service: "feu" },
     clinique: { nom: "Clinique", emoji: "🏥", groupe: "services", taille: 2, prix: 2000, entretien: 150, poste: "sante", palier: 1, capacite: 1500, pour: "habitants", service: "sante" },
     hopital: { nom: "Hôpital", emoji: "🏨", groupe: "services", taille: 3, prix: 7000, entretien: 450, poste: "sante", palier: 3, capacite: 8000, pour: "habitants", service: "sante" },
     // 🎡 les loisirs (la distraction)

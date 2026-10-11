@@ -138,6 +138,8 @@
       <a href="#etape12">Étape 12</a>
       <a href="#etape13">Étape 13</a>
       <a href="#etape14">Étape 14</a>
+      <a href="#etape15">Étape 15</a>
+      <a href="#etape16">Étape 16</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="index.html">▶ Jouer</a>
@@ -814,7 +816,7 @@
           <li>☐ Au placement : « 🎯 +1 500 places : la ville aura … / … », plus de cercle.</li>
           <li>☐ Touche une école : sa capacité, combien elle sert, et s'il en faut une autre.</li>
           <li>☐ Une maison sans école dit : « elles sont pleines : construis-en une autre ».</li>
-          <li>Vérifie « version 15 » en haut de la page.</li></ul></div>
+          <li>(La version a avancé depuis : vérifie le numéro de l'étape 16.)</li></ul></div>
       </div>
       <h3>🔧 Sous le capot : le même réseau que l'eau</h3>
       <pre style="white-space: pre-wrap">  AVANT :  🏫 ◯ un cercle de 11 cases  →  les maisons DANS le cercle ont l'école
@@ -826,6 +828,61 @@
       <h3>❓ Quiz</h3>
       <details class="question"><summary>La ville a 4 000 habitants. Combien d'écoles faut-il ?</summary><p>4 000 ÷ 1 500 = 2,67, arrondi au-dessus : 3 écoles (ou 1 lycée de 5 000 places).</p></details>
       <details class="question"><summary>Pourquoi la police compte-t-elle aussi les emplois ?</summary><p>Parce que les magasins et les usines doivent être protégés aussi, même si personne n'y habite.</p></details>
+    </section>
+
+    <section id="etape15">
+      <h2>🏘️ Étape 15 : un beau quartier attire <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Avant, l'envie de venir ne regardait pas le quartier : une maison au milieu de grands immeubles avec tous les services n'avait pas plus envie de grandir qu'une maison perdue. Maintenant, un quartier qui grandit attire. <a href="index.html"><strong>▶ la Mégalopole</strong></a></p>
+      <div class="grille">
+        <div class="carte"><h4>📋 La demande</h4><p class="petit">Le fichier complet est dans <code>megalopole/demandes/15-attirance-quartier.md</code>.</p><ul><li>✍️ « L'envie de venir ne monte pas malgré tous les besoins comblés. Plus le quartier grandit, plus il devrait être attirant. »</li><li>Tes choix : <strong>un bonus de quartier</strong> (jusqu'à +0,4), et <strong>pareil pour les commerces, les industries et les fermes</strong>.</li></ul></div>
+        <div class="carte"><h4>✅ Ce que tu peux vérifier</h4><ul>
+          <li>☐ Touche une maison : une barre « 🏘️ Quartier » avec son bonus (+0,15…).</li>
+          <li>☐ La ligne « 💗 l'envie de venir » dit « dont 🏘️ bonus de quartier +0,… ».</li>
+          <li>☐ Au milieu de grands bâtiments avec plein de services, le bonus est plus gros qu'au bord de la ville.</li>
+          <li>☐ Sous le capot : la ligne « 🏘️ étape 15 » donne le bonus moyen de la ville.</li>
+          <li>Vérifie « version 16 » en haut de la page.</li></ul></div>
+      </div>
+      <h3>🔧 Sous le capot : la recette de l'envie</h3>
+      <pre style="white-space: pre-wrap">  envie = demande de la ville + valeur − pollution + bonheur + 🏘️ bonus de quartier
+
+  🏘️ bonus = niveau MOYEN des voisins (dans 4 cases) × 0,06      ex. voisins niveau 3 → +0,18
+          + 0,03 par service reçu (au plus 0,2)                 ex. 6 services      → +0,18
+          (au plus +0,4 en tout)                                                      = +0,36</pre>
+      <p>Pour compter les voisins de chaque case sans tout recompter 81 fois, l'ordinateur utilise un <strong>tableau des sommes</strong> (le même truc que pour le trafic) : il additionne une fois toute la carte, puis la somme de n'importe quel carré se calcule avec 4 nombres seulement. On ne se compte pas soi-même : ce sont les <strong>voisins</strong> qui attirent.</p>
+      <p>⚠️ La demande compte toujours : si la ville a trop de maisons et pas assez d'emplois, la demande devient très négative et le quartier ne suffit plus. C'est voulu, sinon la ville grandirait sans fin.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul><li>Compare le bonus d'une maison au centre et d'une maison tout au bord de ta ville.</li><li>Pose une école près d'un quartier : de combien monte son bonus ? (+0,03)</li><li>Ouvre sous le capot : le bonus moyen monte-t-il quand la ville grandit ?</li></ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Les voisins sont au niveau 5 en moyenne, la case reçoit 4 services. Quel est le bonus ?</summary><p>5 × 0,06 = 0,30, plus 4 × 0,03 = 0,12 : 0,42… mais c'est au plus 0,4, donc +0,40.</p></details>
+      <details class="question"><summary>Pourquoi garder la demande de la ville dans la recette ?</summary><p>Pour que la ville reste équilibrée : des maisons sans emplois, ça ne marche pas, même dans un beau quartier.</p></details>
+    </section>
+
+    <section id="etape16">
+      <h2>🏛️ Étape 16 : des services plus gros <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Il fallait trop de casernes, de commissariats et d'écoles. Les petits ont maintenant deux fois plus de places, et trois grands bâtiments arrivent quand la ville devient une Ville. <a href="index.html"><strong>▶ la Mégalopole</strong></a></p>
+      <div class="grille">
+        <div class="carte"><h4>📋 La demande</h4><p class="petit">Le fichier complet est dans <code>megalopole/demandes/16-gros-services.md</code>.</p><ul><li>✍️ « Il faut des pompiers, commissariats et éducation plus gros pour combler plus d'habitants, car là il faut trop de bâtiments de chaque. »</li><li>Tes choix : <strong>les deux</strong> (petits doublés + nouveaux grands), débloqués au <strong>palier 3</strong> (Ville, 10 000 habitants).</li></ul></div>
+        <div class="carte"><h4>✅ Ce que tu peux vérifier</h4><ul>
+          <li>☐ Le tiroir 🏛️ Services : école 3 000, lycée 10 000, commissariat et caserne 6 000.</li>
+          <li>☐ Trois nouveaux : 🏛️ Université (20 000), 🚔 Hôtel de police (12 000), 🚒 Grande caserne (12 000), 🔒 jusqu'à 10 000 habitants.</li>
+          <li>☐ Ta ville a d'un coup plus de places : regarde 📊.</li>
+          <li>Vérifie « version 16 » en haut de la page.</li></ul></div>
+      </div>
+      <table class="petit"><tr><th>Bâtiment</th><th>Places</th><th>Prix</th><th>Taille</th></tr>
+        <tr><td>🏫 École</td><td>1 500 → <b>3 000</b></td><td>1 500</td><td>2 × 2</td></tr>
+        <tr><td>🎓 Lycée</td><td>5 000 → <b>10 000</b></td><td>5 000</td><td>3 × 3</td></tr>
+        <tr><td>🏛️ Université (nouveau)</td><td><b>20 000</b></td><td>15 000</td><td>4 × 4</td></tr>
+        <tr><td>🚓 Commissariat</td><td>3 000 → <b>6 000</b></td><td>1 500</td><td>2 × 2</td></tr>
+        <tr><td>🚔 Hôtel de police (nouveau)</td><td><b>12 000</b></td><td>6 000</td><td>3 × 3</td></tr>
+        <tr><td>🚒 Caserne</td><td>3 000 → <b>6 000</b></td><td>1 500</td><td>2 × 2</td></tr>
+        <tr><td>🚒 Grande caserne (nouveau)</td><td><b>12 000</b></td><td>6 000</td><td>3 × 3</td></tr></table>
+      <h3>🔧 Sous le capot : une ligne de données</h3>
+      <p>Un nouveau bâtiment, c'est surtout <strong>une ligne dans <code>config.js</code></strong> : son nom, sa taille, son prix, ses places, son service. Le réseau des services (étape 14) le sert automatiquement, sans changer une seule règle ! Seul le peintre a dû apprendre à le dessiner (la coupole de l'université, la tour de l'hôtel de police).</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul><li>Ta ville a 30 000 habitants + emplois : combien de commissariats faut-il ? Et d'hôtels de police ?</li><li>Lequel coûte le moins cher par place : 2 casernes ou 1 grande caserne ?</li></ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien d'écoles pour 9 000 habitants, maintenant ?</summary><p>9 000 ÷ 3 000 = 3 écoles (avant, il en fallait 6 !).</p></details>
+      <details class="question"><summary>Pourquoi les grands arrivent-ils seulement au palier 3 ?</summary><p>Pour qu'au début on apprenne avec les petits, et que les grands soient une récompense quand la ville grandit.</p></details>
     </section>
 
     <!-- ============ FEUILLE DE ROUTE ============ -->
@@ -847,10 +904,12 @@
         <div class="carte fait"><div class="num">12</div><h4>📋 Pourquoi ça ne grandit pas ? <span class="etiquette">✅ fait · à valider</span></h4><p>La liste « pour grandir » de chaque case, seulement avec ce qui compte ; la patience de 25 s.</p><p class="apprend"><b>Tu apprends :</b> un bug d'affichage, et une seule source de vérité. <b>Durée :</b> 1 séance.</p></div>
         <div class="carte fait"><div class="num">13</div><h4>🏭 La fiche « réseau » <span class="etiquette">✅ fait · à valider</span></h4><p>Capacité d'un bâtiment, de toute la ville, la demande, et le verdict (il en faut N de plus).</p><p class="apprend"><b>Tu apprends :</b> une marge, arrondir au-dessus. <b>Durée :</b> ½ séance.</p></div>
         <div class="carte fait"><div class="num">14</div><h4>👥 Des services en places <span class="etiquette">✅ fait · à valider</span></h4><p>Chaque service a des places, servies par la route ; plus de cercles ; la valeur selon les services reçus.</p><p class="apprend"><b>Tu apprends :</b> réutiliser un réseau, les morceaux de routes reliées. <b>Durée :</b> 1 séance.</p></div>
-        <div class="carte prochain"><div class="num">15</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
-        <div class="carte"><div class="num">16</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
-        <div class="carte"><div class="num">17</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
-        <div class="carte"><div class="num">18</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
+        <div class="carte fait"><div class="num">15</div><h4>🏘️ Un beau quartier attire <span class="etiquette">✅ fait · à valider</span></h4><p>Le bonus de quartier : les grands voisins et les services reçus donnent envie de venir, pour toutes les zones.</p><p class="apprend"><b>Tu apprends :</b> un tableau des sommes, une boucle qui s'auto-renforce. <b>Durée :</b> ½ séance.</p></div>
+        <div class="carte fait"><div class="num">16</div><h4>🏛️ Des services plus gros <span class="etiquette">✅ fait · à valider</span></h4><p>Places doublées pour les petits, et université, hôtel de police, grande caserne au palier 3.</p><p class="apprend"><b>Tu apprends :</b> un bâtiment = une ligne de données. <b>Durée :</b> ½ séance.</p></div>
+        <div class="carte prochain"><div class="num">17</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
+        <div class="carte"><div class="num">18</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
+        <div class="carte"><div class="num">19</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (quartier d'affaires).</p></div>
+        <div class="carte"><div class="num">20</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
       </div>
     </section>
 
@@ -969,6 +1028,22 @@
         <textarea class="journal" id="megalopole-appris-14" data-cle="megalopole-appris-14" placeholder="Ex. : J'ai appris que les services marchent comme l'eau…"></textarea>
         <label for="megalopole-idees-14"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="megalopole-idees-14" data-cle="megalopole-idees-14" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 15 · un beau quartier attire <span class="petit">· 11 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le bonus de quartier (<code>quartier()</code> dans <code>logique/services.js</code>) calculé toutes les 2 s avec un tableau des sommes, ajouté à l'envie des 4 zones ; la barre 🏘️ dans le panneau de la case, la ligne 💗 qui donne le bonus, et une ligne sous le capot.</p>
+        <label for="megalopole-appris-15"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="megalopole-appris-15" data-cle="megalopole-appris-15" placeholder="Ex. : J'ai appris qu'un quartier qui grandit attire encore plus de monde…"></textarea>
+        <label for="megalopole-idees-15"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="megalopole-idees-15" data-cle="megalopole-idees-15" placeholder="Ex. : Des quartiers avec un nom…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 16 · des services plus gros <span class="petit">· 11 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les places doublées de l'école, du lycée, du commissariat et de la caserne ; 3 nouveaux bâtiments (université, hôtel de police, grande caserne) au palier Ville, avec leurs dessins ; les conseils de 📢 mis à jour.</p>
+        <label for="megalopole-appris-16"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="megalopole-appris-16" data-cle="megalopole-appris-16" placeholder="Ex. : J'ai appris qu'ajouter un bâtiment, c'est surtout ajouter une ligne de données…"></textarea>
+        <label for="megalopole-idees-16"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="megalopole-idees-16" data-cle="megalopole-idees-16" placeholder="Ex. : Un grand hôpital, un aéroport…"></textarea>
       </div>
     </section>
   </main>

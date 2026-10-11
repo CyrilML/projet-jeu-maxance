@@ -24,7 +24,7 @@ Megalopole.Population = (function () {
   const CONSEILS = {
     emploi: "Peins des zones 🛍️ commerce et 🏭 industrie.", courant: "Une centrale ⚡ (ou des éoliennes), reliée par la route.", eau: "Une station de pompage 🚰 au bord de l'eau, reliée par la route.",
     nourriture: "Peins des zones 🌾 agriculture, loin des usines.", biens: "Des zones 🏭 industrie (qui fabriquent) et 🛍️ commerce (qui vendent).",
-    education: "Une école 🏫 de plus (1 500 places), reliée par la route.", sante: "Une clinique 🏥 de plus (1 500 places).", securite: "Un commissariat 🚓 de plus (3 000 places).", feu: "Une caserne de pompiers 🚒 de plus (3 000 places).",
+    education: "Une école 🏫 de plus (3 000 places), reliée par la route, ou une université 🏛️ (20 000).", sante: "Une clinique 🏥 de plus (1 500 places).", securite: "Un commissariat 🚓 de plus (6 000 places) ou un hôtel de police 🚔 (12 000).", feu: "Une caserne de pompiers 🚒 de plus (6 000 places) ou une grande caserne (12 000).",
     loisirs: "Des parcs 🌳 (400 places chacun) ou un grand parc ⛲ (2 500).", transport: "Des arrêts de bus 🚌, ou des avenues 🛤️ à la place des routes chargées.", air: "Éloigne les usines 🏭 et la centrale des maisons ; plante des parcs.", impots: "Baisse l'impôt des habitations 🏠 (🧾 Budget).",
     dechets: "Une décharge 🗑️ ou un incinérateur, relié par la route (menu « Déchets »).", epuration: "Une station d'épuration 🚽 (menu « Eau »).",
   };

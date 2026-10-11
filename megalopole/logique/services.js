@@ -26,11 +26,37 @@ Megalopole.Services = (function () {
     }
   }
 
+  // 🏘️ Étape 15 : le BONUS DE QUARTIER de chaque case (ajouté à l'envie de venir, voir zones.js)
+  //   les voisins : le niveau MOYEN des bâtiments construits à « rayon » cases autour × parNiveau
+  //   + les services : parService par service reçu (au plus maxServices) ; le tout au plus « max »
+  // (on compte les voisins avec un « tableau des sommes », comme pour le trafic : très rapide)
+  function quartier(monde) {
+    const n = monde.carte.colonnes, N = n * n, Q = C.croissance.quartier, W = n + 1, r = Q.rayon;
+    if (!monde.quartier || monde.quartier.length !== N) { monde.quartier = new Float32Array(N); monde.quartierVoisins = new Float32Array(N); monde.quartierServices = new Float32Array(N); }
+    const somNv = new Float32Array(W * W), somNb = new Float32Array(W * W);
+    for (let l = 0; l < n; l++) { let a = 0, b = 0; for (let c = 0; c < n; c++) { const i = l * n + c, bati = monde.zone[i] && monde.niveau[i]; a += bati ? monde.niveau[i] : 0; b += bati ? 1 : 0; const k = (l + 1) * W + c + 1; somNv[k] = somNv[k - W] + a; somNb[k] = somNb[k - W] + b; } }
+    const rect = (S, c0, l0, c1, l1) => S[(l1 + 1) * W + c1 + 1] - S[l0 * W + c1 + 1] - S[(l1 + 1) * W + c0] + S[l0 * W + c0];
+    let total = 0, nb = 0;
+    for (const i of monde.zonees) {
+      const c = i % n, l = (i / n) | 0, c0 = Math.max(0, c - r), l0 = Math.max(0, l - r), c1 = Math.min(n - 1, c + r), l1 = Math.min(n - 1, l + r);
+      const moi = monde.niveau[i] ? 1 : 0; // (on ne se compte pas soi-même : ce sont les VOISINS qui attirent)
+      const nbv = rect(somNb, c0, l0, c1, l1) - moi, nv = rect(somNv, c0, l0, c1, l1) - monde.niveau[i];
+      const voisins = nbv > 0 ? (nv / nbv) * Q.parNiveau : 0;
+      let s = 0; for (const t of TYPES) if (monde.couverture[t][i]) s++;
+      const services = Math.min(Q.maxServices, s * Q.parService);
+      monde.quartierVoisins[i] = voisins; monde.quartierServices[i] = services;
+      monde.quartier[i] = Math.min(Q.max, voisins + services);
+      total += monde.quartier[i]; nb++;
+    }
+    monde.quartierMoyen = nb ? total / nb : 0;
+  }
+
   function calculer(monde) {
     const k = monde.carte, n = k.colonnes, N = n * n;
     // 1. Les services : chacun sert un NOMBRE d'habitants (ou d'habitants + emplois), les plus proches par la route d'abord
     const bonus = new Float32Array(N);
     distribuer(monde);
+    quartier(monde);
     for (const t of TYPES) { const v = C.valeur.services[t] || 0, cv = monde.couverture[t]; for (let i = 0; i < N; i++) if (cv[i]) bonus[i] += v; } // (ce qu'un service reçu ajoute à la valeur)
     // (étape 11) une décharge salit le terrain autour d'elle
     for (const b of monde.batiments) { const S = C.batiments[b.type].salete; if (S) cercle(monde, b, S.rayon, (i, part) => (bonus[i] -= S.force * (1 - part * 0.6))); }
