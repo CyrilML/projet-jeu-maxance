@@ -286,8 +286,7 @@ Megalopole.Interface = (function () {
     if (b) {
       const B = C.batiments[b.type];
       h += "<h3>" + B.emoji + " " + B.nom + "</h3>";
-      if (B.courant) h += "<p>⚡ Produit " + (b.production || 0) + " / " + B.courant + " unités" + (B.vent ? " (le vent change)" : B.soleil ? " (rien la nuit !)" : "") + "</p><p>Réseau : " + fr(m.reseaux.courant.utilise || 0) + " / " + fr(m.reseaux.courant.offre || 0) + " utilisés · demande " + fr(m.reseaux.courant.demande || 0) + "</p>";
-      if (B.eau) h += "<p>💧 Pompe " + (b.productionEau || 0) + " / " + B.eau + " unités" + (b.productionEau ? "" : " (il lui faut l'électricité !)") + "</p><p>Réseau : " + fr(m.reseaux.eau.utilise || 0) + " / " + fr(m.reseaux.eau.offre || 0) + " · demande " + fr(m.reseaux.eau.demande || 0) + "</p>";
+      h += ficheReseau(m, b, B); // (étape 13 : capacité de ce bâtiment, de toute la ville, la demande, et le verdict)
       if (B.rayon) h += "<p>🎯 Sert un cercle de " + B.rayon + " cases" + (b.marche === false && B.service !== "loisirs" ? " — ⚠️ <b>pas d'électricité</b> : il ne marche pas !" : "") + "</p>";
       if (B.trafic) h += "<p>🚗 Enlève " + Math.round(B.trafic * 100) + " % du trafic autour</p>";
       if (B.joie) h += "<p>😊 +" + B.joie + " de bonheur pour toute la ville</p>";
@@ -312,6 +311,40 @@ Megalopole.Interface = (function () {
     h += "<div class='ligne'><span>🌫️ Pollution</span>" + barreHTML(m.pollution[i], "#8a6a4a") + "<small>" + Math.round(m.pollution[i] * 100) + " %</small></div>";
     if (!z) h += "<p>" + (m.routeProche[i] >= 0 ? "🛣️ près d'une route" : "🚫 trop loin d'une route") + "</p>"; // (un terrain bâti a sa liste « pour grandir » juste au-dessus)
     return h;
+  }
+  // 🏭 Étape 13 (✍️ Maxance : « quand je clique sur un incinérateur ou un traitement de l'eau, j'aimerais voir les capacités
+  // unitaire et totale, et la demande, pour savoir s'il faut en faire plus ») : une fiche par réseau que sert ce bâtiment
+  //   CE BÂTIMENT : sa capacité, et ce qu'il fait en ce moment
+  //   TOUTE LA VILLE : combien il y en a, la capacité totale, la demande
+  //   LE VERDICT : ✅ assez (+ la marge) · ⚠️ presque plein (moins de 10 % de marge) · ❌ il en faut N de plus
+  function ficheReseau(m, b, B) {
+    const meme = m.batiments.filter((x) => x.type === b.type).length, blocs = [];
+    const verdict = (offre, demande, unite, emoji) => {
+      if (!demande) return "<p class='bien'>✅ Personne n'en demande encore.</p>";
+      if (offre >= demande * 1.1) return "<p class='bien'>✅ Assez : il reste <b>" + fr(offre - demande) + " " + emoji + "</b> de marge (" + Math.round(((offre - demande) / demande) * 100) + " %).</p>";
+      if (offre >= demande) return "<p>⚠️ Presque plein : il ne reste que " + fr(offre - demande) + " " + emoji + ". Prévois-en un autre bientôt.</p>";
+      const n = Math.ceil((demande - offre) / unite);
+      return "<p class='mal'>❌ Il manque <b>" + fr(demande - offre) + " " + emoji + "</b> : il en faut <b>" + n + " de plus</b> comme celui-ci (ou un plus gros).</p>";
+    };
+    const bloc = (titre, ici, ville, v) => blocs.push("<div class='reseau'><h4>" + titre + "</h4><div class='deux'><div><small>CE BÂTIMENT</small>" + ici + "</div><div><small>TOUTE LA VILLE</small>" + ville + "</div></div>" + v + "</div>");
+    const el = m.reseaux.courant || {}, ea = m.reseaux.eau || {}, de = m.reseaux.dechets || {}, ep = m.reseaux.epuration || {};
+    const unite = B.courant || B.courantDechets || 0;
+    if (unite) bloc("⚡ L'électricité", "<p>Capacité : <b>" + fr(unite) + "</b>" + (B.vent ? " (× le vent)" : B.soleil ? " (rien la nuit)" : B.courantDechets ? " (selon ce qu'il brûle)" : "") + "</p><p>En ce moment : <b>" + fr(b.production || 0) + "</b></p>",
+      "<p>" + m.batiments.filter((x) => C.batiments[x.type].courant || C.batiments[x.type].courantDechets).length + " centrale(s)</p><p>Production : <b>" + fr(el.offre || 0) + "</b></p><p>Demande : <b>" + fr(el.demande || 0) + "</b></p>", verdict(el.offre || 0, el.demande || 0, unite, "⚡"));
+    if (B.consoCourant) bloc("⚡ Son électricité", "<p>Il consomme <b>" + fr(B.consoCourant) + "</b></p><p>" + (b.alimente ? "✅ alimenté" : "❌ pas alimenté : il ne produit rien !") + "</p>", "<p>Production : <b>" + fr(el.offre || 0) + "</b></p><p>Demande : <b>" + fr(el.demande || 0) + "</b></p>", verdict(el.offre || 0, el.demande || 0, B.consoCourant, "⚡"));
+    if (B.eau) bloc("💧 L'eau", "<p>Capacité : <b>" + fr(B.eau) + "</b></p><p>En ce moment : <b>" + fr(b.productionEau || 0) + "</b>" + (b.productionEau ? "" : " (il lui faut l'électricité !)") + "</p>",
+      "<p>" + m.batiments.filter((x) => C.batiments[x.type].eau).length + " station(s)</p><p>Production : <b>" + fr(ea.offre || 0) + "</b></p><p>Demande : <b>" + fr(ea.demandeBesoin || 0) + "</b>" + (ea.demande > ea.demandeBesoin ? " <small>(+ " + fr(ea.demande - ea.demandeBesoin) + " petites maisons, s'il en reste)</small>" : "") + "</p>", verdict(ea.offre || 0, ea.demandeBesoin || 0, B.eau, "💧"));
+    if (B.epuration) bloc("🚽 Les eaux usées", "<p>Capacité : <b>" + fr(B.epuration) + "</b></p><p>" + (m.reseaux.courantDe(b) ? "✅ en marche" : "❌ pas d'électricité : il ne nettoie rien") + "</p>",
+      "<p>" + m.batiments.filter((x) => C.batiments[x.type].epuration).length + " station(s)</p><p>Capacité : <b>" + fr(ep.capacite || 0) + "</b></p><p>Eaux usées : <b>" + fr(ep.eauxUsees || 0) + "</b></p>", verdict(ep.capacite || 0, ep.eauxUsees || 0, B.epuration, "🚽"));
+    if (B.dechets) {
+      const reste = B.contenance ? B.contenance - (b.rempli || 0) : 0, moisRestants = B.contenance && b.traite ? Math.floor(reste / b.traite) : null;
+      bloc("🗑️ Les déchets", "<p>Capacité : <b>" + fr(B.dechets) + "</b> par mois</p><p>En ce moment : <b>" + fr(b.traite || 0) + "</b></p>" + (B.contenance ? "<p>Rempli : <b>" + Math.round((100 * (b.rempli || 0)) / B.contenance) + " %</b> (" + fr(b.rempli || 0) + " / " + fr(B.contenance) + ")" + (moisRestants !== null ? "<br>⏳ plein dans ≈ " + moisRestants + " mois" : "") + "</p>" : ""),
+        "<p>" + m.batiments.filter((x) => C.batiments[x.type].dechets).length + " décharge(s) / incinérateur(s)</p><p>Place : <b>" + fr(de.offre || 0) + "</b></p><p>Déchets jetés : <b>" + fr(de.demande || 0) + "</b>" + (de.recycle ? " <small>(♻️ déjà −" + Math.round(de.recycle * 100) + " %)</small>" : "") + "</p>", verdict(de.offre || 0, de.demande || 0, B.dechets, "🗑️"));
+    }
+    if (B.recyclage) { const total = (de.demande || 0) / (1 - (de.recycle || 0)), cap = m.batiments.reduce((t, x) => t + (C.batiments[x.type].recyclage || 0), 0), utile = total * C.dechets.recyclage;
+      bloc("♻️ Le recyclage", "<p>Capacité : <b>" + fr(B.recyclage) + "</b> déchets en moins</p>", "<p>" + meme + " centre(s)</p><p>Recyclé : <b>" + Math.round((de.recycle || 0) * 100) + " %</b> (au plus 30 %)</p><p>Utile jusqu'à : <b>" + fr(utile) + "</b> · capacité " + fr(cap) + "</p>", cap >= utile ? "<p class='bien'>✅ Le recyclage est au maximum (30 %) : un centre de plus ne servirait à rien.</p>" : "<p>⚠️ Encore " + Math.ceil((utile - cap) / B.recyclage) + " centre(s) pour recycler 30 %.</p>"); }
+    if (B.courantDechets) blocs.reverse(); // (l'incinérateur : d'abord les déchets, son vrai métier)
+    return blocs.join("");
   }
   // 📊 Étape 8 (demande de Maxance) : les BESOINS de la ville face à ce qu'elle PRODUIT, ligne par ligne
   //   ✅ assez (100 % et plus) · ⚠️ presque (80 %) · ❌ pas assez — avec un conseil quand ça manque

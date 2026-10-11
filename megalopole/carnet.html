@@ -136,6 +136,7 @@
       <a href="#etape10">Étape 10</a>
       <a href="#etape11">Étape 11</a>
       <a href="#etape12">Étape 12</a>
+      <a href="#etape13">Étape 13</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="index.html">▶ Jouer</a>
@@ -759,7 +760,7 @@
             <li>☐ Touche une ferme : la liste « 📈 Pour passer au niveau… » ne parle ni d'école ni de parc.</li>
             <li>☐ Chaque ❌ dit pourquoi (pollution, la ville en a assez, route pas reliée…).</li>
             <li>☐ La nuit ou un vent faible ne fait plus baisser tes bâtiments (⏳ 25 s de patience).</li>
-            <li>Vérifie « version 13 » en haut de la page.</li>
+            <li>(La version a avancé depuis : vérifie le numéro de l'étape 13.)</li>
           </ul>
         </div>
       </div>
@@ -775,6 +776,31 @@
       <ul><li>Touche une ferme près d'une usine, puis une ferme loin : que change la liste ?</li><li>Sous le capot, regarde « ⏳ terrains qui ont un problème » la nuit, si tu as des panneaux solaires.</li><li>Dans <code>config.js</code>, change <code>patience: 25</code> en 5 : que se passe-t-il quand le vent faiblit ?</li></ul>
       <h3>❓ Quiz</h3>
       <details class="question"><summary>La barre 🌾 de R C I A est vers le bas. Les fermes vont-elles grandir ?</summary><p>Non : la ville a déjà assez de fermes. Il faut d'abord plus d'habitants (des maisons), qui mangeront plus.</p></details>
+    </section>
+
+    <section id="etape13">
+      <h2>🏭 Étape 13 : la fiche « réseau » de chaque bâtiment <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Touche une centrale, une station d'eau, une décharge ou un incinérateur : il te dit combien il fait, combien fait toute la ville, combien elle demande… et s'il en faut un autre. <a href="index.html"><strong>▶ la Mégalopole</strong></a></p>
+      <div class="grille">
+        <div class="carte"><h4>📋 La demande</h4><p class="petit">Le fichier complet est dans <code>megalopole/demandes/13-fiche-reseau.md</code>.</p><ul><li>✍️ « Sur les bâtiments comme l'incinérateur ou le traitement de l'eau, j'aimerais avoir les capacités unitaire et totale, et la demande, pour savoir s'il faut en faire plus ou pas. »</li></ul></div>
+        <div class="carte"><h4>✅ Ce que tu peux vérifier</h4><ul>
+          <li>☐ Touche un incinérateur : « CE BÂTIMENT » (600 par mois, ce qu'il brûle) et « TOUTE LA VILLE » (place, déchets jetés).</li>
+          <li>☐ Le verdict : ✅ assez (la marge), ⚠️ presque plein, ou ❌ « il en faut N de plus ».</li>
+          <li>☐ Une décharge dit : « ⏳ plein dans ≈ N mois ».</li>
+          <li>Vérifie « version 14 » en haut de la page.</li></ul></div>
+      </div>
+      <h3>🔧 Sous le capot : le calcul du verdict</h3>
+      <pre style="white-space: pre-wrap">  marge = capacité de toute la ville − demande
+  marge ≥ 10 % de la demande  →  ✅ assez
+  marge entre 0 et 10 %       →  ⚠️ presque plein : prévois-en un autre
+  marge négative (il manque)  →  ❌ il en faut  ⌈ ce qui manque ÷ capacité d'un bâtiment ⌉  de plus
+
+  exemple : il manque 250 🗑️, une décharge en prend 120  →  250 ÷ 120 = 2,08  →  il en faut 3</pre>
+      <p>Le signe ⌈ ⌉ veut dire « arrondi <strong>au-dessus</strong> » : avec 2 décharges, il manquerait encore 10 ! Et pour une décharge : ⏳ mois restants = (place qui reste) ÷ (ce qu'elle reçoit par mois).</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul><li>Touche ta centrale la plus grosse : quelle est la marge de ta ville en ⚡ ?</li><li>Laisse la ville grandir et retouche une décharge chaque mois : le « plein dans ≈ N mois » diminue-t-il ?</li><li>Touche un centre de recyclage : un deuxième servirait-il à quelque chose ?</li></ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Il manque 700 💧, un forage donne 150. Combien de forages faut-il ?</summary><p>700 ÷ 150 = 4,67, arrondi au-dessus : 5 forages (ou une grande station de pompage de 1 000 !).</p></details>
     </section>
 
     <!-- ============ FEUILLE DE ROUTE ============ -->
@@ -794,10 +820,11 @@
         <div class="carte fait"><div class="num">10</div><h4>🏭 Le travail n'a pas besoin d'école <span class="etiquette">✅ fait · à valider</span></h4><p>Commerces, industries et fermes : police, pompiers, et un bus pour les plus gros.</p><p class="apprend"><b>Tu apprends :</b> une règle de jeu = une ligne d'un tableau. <b>Durée :</b> ½ séance.</p></div>
         <div class="carte fait"><div class="num">11</div><h4>🗑️ Plus d'énergie, plus d'eau, et les déchets <span class="etiquette">✅ fait · à valider</span></h4><p>Gaz, barrage, géothermie, éoliennes en mer, forage, grande pompe, dessalement, épuration, décharge, incinérateur, recyclage ; les fiches du tiroir.</p><p class="apprend"><b>Tu apprends :</b> réutiliser un réseau à l'envers, des bâtiments qui dépendent les uns des autres. <b>Durée :</b> 2 séances.</p></div>
         <div class="carte fait"><div class="num">12</div><h4>📋 Pourquoi ça ne grandit pas ? <span class="etiquette">✅ fait · à valider</span></h4><p>La liste « pour grandir » de chaque case, seulement avec ce qui compte ; la patience de 25 s.</p><p class="apprend"><b>Tu apprends :</b> un bug d'affichage, et une seule source de vérité. <b>Durée :</b> 1 séance.</p></div>
-        <div class="carte prochain"><div class="num">13</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
-        <div class="carte"><div class="num">14</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
-        <div class="carte"><div class="num">15</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
-        <div class="carte"><div class="num">16</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
+        <div class="carte fait"><div class="num">13</div><h4>🏭 La fiche « réseau » <span class="etiquette">✅ fait · à valider</span></h4><p>Capacité d'un bâtiment, de toute la ville, la demande, et le verdict (il en faut N de plus).</p><p class="apprend"><b>Tu apprends :</b> une marge, arrondir au-dessus. <b>Durée :</b> ½ séance.</p></div>
+        <div class="carte prochain"><div class="num">14</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
+        <div class="carte"><div class="num">15</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
+        <div class="carte"><div class="num">16</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
+        <div class="carte"><div class="num">17</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
       </div>
     </section>
 
@@ -900,6 +927,14 @@
         <textarea class="journal" id="megalopole-appris-12" data-cle="megalopole-appris-12" placeholder="Ex. : J'ai appris qu'un jeu peut bien marcher mais mal l'afficher…"></textarea>
         <label for="megalopole-idees-12"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="megalopole-idees-12" data-cle="megalopole-idees-12" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 13 · la fiche « réseau » <span class="petit">· 11 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la fiche de chaque bâtiment de réseau (ce bâtiment / toute la ville / le verdict), le remplissage des décharges en mois.</p>
+        <label for="megalopole-appris-13"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="megalopole-appris-13" data-cle="megalopole-appris-13" placeholder="Ex. : J'ai appris à calculer une marge…"></textarea>
+        <label for="megalopole-idees-13"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="megalopole-idees-13" data-cle="megalopole-idees-13" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

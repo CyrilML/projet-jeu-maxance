@@ -13,7 +13,7 @@ window.Megalopole = window.Megalopole || {};
 
 Megalopole.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 13,
+  version: 14,
   pasFixe: 1 / 120, // s : la boucle avance par petits pas fixes
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 
