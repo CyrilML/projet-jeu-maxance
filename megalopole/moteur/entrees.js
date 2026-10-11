@@ -10,6 +10,8 @@
 // Au DOIGT (téléphone, tablette) : 1 doigt fait TOUJOURS glisser la carte, même avec un outil (demande de Maxance :
 // sinon on pose des routes n'importe où). Un petit TOUCHER (le doigt ne bouge presque pas) est un « clic » : la
 // logique s'en sert pour poser le départ puis l'arrivée d'un tracé, qu'on confirme avec ✅. Deux doigts : on pince.
+// Étape 5 : un MAINTIEN LONG (le doigt reste ½ seconde sans bouger) est encore autre chose : « souris.maintien ».
+// La logique s'en sert pour soulever un bâtiment et le déplacer. Le téléphone vibre un petit coup.
 
 window.Megalopole = window.Megalopole || {};
 
@@ -28,6 +30,7 @@ Megalopole.Entrees = (function () {
   const souris = { x: 0, y: 0, dessus: false, glisseX: 0, glisseY: 0, molette: 0, pince: 1, centrePince: null, clic: null, appui: null, leve: null, enfoncee: false };
   const pointeurs = new Map();
   let depart = null, pinceAvant = null, trace = false;
+  const DUREE_MAINTIEN = 500; // ms
   const etat = { outilActif: false }; // main.js dit si un outil est choisi
 
   const ecartEtCentre = () => { const [a, b] = [...pointeurs.values()]; return { ecart: Math.hypot(a.x - b.x, a.y - b.y), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
@@ -56,9 +59,11 @@ Megalopole.Entrees = (function () {
       if (pointeurs.size === 1) {
         depart = { x: p.x, y: p.y, deplace: 0, doigt: e.pointerType === "touch", glisse: e.button === 2 || e.button === 1 || !etat.outilActif || e.pointerType === "touch" };
         trace = !depart.glisse;
+        if (depart.doigt) { const d = depart; d.minuteur = setTimeout(() => { if (depart === d && pointeurs.size === 1 && d.deplace < 14) { d.maintenu = true; d.glisse = false; souris.maintien = { x: d.x, y: d.y }; try { if (navigator.vibrate) navigator.vibrate(30); } catch (err) {} } }, DUREE_MAINTIEN); }
         if (trace) { souris.appui = { x: p.x, y: p.y }; souris.enfoncee = true; }
       } else { // un 2e doigt : on annule le tracé, on pince
         if (trace) { trace = false; souris.enfoncee = false; souris.annuleTrace = true; }
+        if (depart) clearTimeout(depart.minuteur);
         depart = null; pinceAvant = ecartEtCentre();
       }
       try { toile.setPointerCapture(e.pointerId); } catch (err) {}
@@ -85,7 +90,8 @@ Megalopole.Entrees = (function () {
       const p = position(e);
       if (pointeurs.size === 1 && depart) {
         const petit = depart.deplace < (depart.doigt ? 14 : 6);
-        if (!annule && petit) souris.clic = { x: p.x, y: p.y, doigt: depart.doigt };
+        clearTimeout(depart.minuteur);
+        if (!annule && petit && !depart.maintenu) souris.clic = { x: p.x, y: p.y, doigt: depart.doigt };
         if (trace) { if (annule) souris.annuleTrace = true; else souris.leve = { x: p.x, y: p.y }; }
       }
       trace = false; souris.enfoncee = false;
@@ -108,7 +114,7 @@ Megalopole.Entrees = (function () {
   function consommerSouris() {
     const r = Object.assign({}, souris);
     souris.glisseX = souris.glisseY = souris.molette = 0; souris.pince = 1; souris.centrePince = null;
-    souris.clic = null; souris.appui = null; souris.leve = null; souris.annuleTrace = false;
+    souris.clic = null; souris.appui = null; souris.leve = null; souris.annuleTrace = false; souris.maintien = null;
     return r;
   }
 

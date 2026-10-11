@@ -97,11 +97,12 @@ Megalopole.Construction = (function () {
   // ---------------------------------------------------------------- 🏛️ les gros bâtiments
   const casesDe = (type, c, l) => { const t = C.batiments[type].taille, r = []; for (let dl = 0; dl < t; dl++) for (let dc = 0; dc < t; dc++) r.push({ colonne: c + dc, ligne: l + dl }); return r; };
   // Peut-on poser ce bâtiment ici ? null = oui, sinon la raison
-  function raisonBatiment(monde, type, c, l, sansArgent) {
+  // (sansArgent : on ne regarde pas la caisse ; demenagement : le bâtiment existe déjà, on le déplace gratuitement)
+  function raisonBatiment(monde, type, c, l, sansArgent, demenagement) {
     const B = C.batiments[type], k = monde.carte;
     if (!B) return "bâtiment inconnu";
-    if (Megalopole.Population.palier(monde) < B.palier) return "pas encore : il faut être un(e) " + C.paliers[B.palier].nom.toLowerCase() + " (" + C.paliers[B.palier].habitants.toLocaleString("fr-FR") + " habitants)";
-    if (B.unique && monde.batiments.some((b) => b.type === type)) return "la ville n'en a qu'un(e)";
+    if (!demenagement && Megalopole.Population.palier(monde) < B.palier) return "pas encore : il faut être un(e) " + C.paliers[B.palier].nom.toLowerCase() + " (" + C.paliers[B.palier].habitants.toLocaleString("fr-FR") + " habitants)";
+    if (!demenagement && B.unique && monde.batiments.some((b) => b.type === type)) return "la ville n'en a qu'un(e)";
     for (const p of casesDe(type, c, l)) {
       if (!K.constructible(k, p.colonne, p.ligne)) return "il faut un terrain sec (pas d'eau)";
       const i = index(monde, p.colonne, p.ligne);
@@ -110,7 +111,7 @@ Megalopole.Construction = (function () {
       if (monde.niveau[i] > 0) return "un bâtiment a poussé ici (démolis-le d'abord)";
     }
     if (B.bordDeLEau && !K.presDeLEau(k, c + (B.taille >> 1), l + (B.taille >> 1), B.bordDeLEau + (B.taille >> 1))) return "trop loin de l'eau (il pompe dans une rivière ou un lac)";
-    if (!sansArgent && Megalopole.Budget.prix(monde, B.prix) > monde.argent) return "pas assez d'argent (" + Megalopole.Budget.prix(monde, B.prix).toLocaleString("fr-FR") + " 🪙)" + (monde.argent < 0 ? " : la caisse est vide (🧾 un prêt ?)" : "");
+    if (!sansArgent && !demenagement && Megalopole.Budget.prix(monde, B.prix) > monde.argent) return "pas assez d'argent (" + Megalopole.Budget.prix(monde, B.prix).toLocaleString("fr-FR") + " 🪙)" + (monde.argent < 0 ? " : la caisse est vide (🧾 un prêt ?)" : "");
     return null;
   }
   function poserBatiment(monde, type, c, l) {
@@ -147,12 +148,12 @@ Megalopole.Construction = (function () {
       if (zone) {
         for (const q of lot(c, l)) { if (!K.dans(monde.carte, q.colonne, q.ligne)) { bloquees = 99; break; } const i = index(monde, q.colonne, q.ligne); if (!K.constructible(monde.carte, q.colonne, q.ligne) || monde.route[i] || monde.occupe[i] || monde.niveau[i] > 0) bloquees++; else if (monde.zone[i] === C.zones[o.valeur].id) deja++; }
         if (bloquees > 3) continue; // (au moins 6 cases sur 9 à peindre)
-      } else if (raisonBatiment(monde, o.valeur, c, l, true)) continue;
+      } else if (raisonBatiment(monde, o.valeur, c, l, true, o.deplacer)) continue;
       const note = dc * dc + dl * dl + (toucheUneRoute(monde, c, l, t) ? 0 : 50) + (bloquees + deja) * 4;
       if (!meilleure || note < meilleure.note) meilleure = { colonne: c, ligne: l, note };
     }
     const c = meilleure ? meilleure.colonne : c0, l = meilleure ? meilleure.ligne : l0, cases = lot(c, l);
-    let raison = zone ? (meilleure ? null : "pas de place ici (de l'eau, une route ou des bâtiments)") : raisonBatiment(monde, o.valeur, c, l);
+    let raison = zone ? (meilleure ? null : "pas de place ici (de l'eau, une route ou des bâtiments)") : raisonBatiment(monde, o.valeur, c, l, false, o.deplacer);
     if (zone && !raison) { const e = evaluerZone(monde, cases, o.valeur); if (!e.cases) raison = "c'est déjà cette zone"; else if (e.prix > monde.argent) raison = "pas assez d'argent (" + e.prix.toLocaleString("fr-FR") + " 🪙)"; }
     return { colonne: c, ligne: l, taille: t, raison, collee: toucheUneRoute(monde, c, l, t), cases, sorte: o.sorte, valeur: o.valeur };
   }

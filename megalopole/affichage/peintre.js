@@ -20,6 +20,7 @@ Megalopole.Peintre = (function () {
   const milieu = (c, l) => ({ x: (c - l) * (L / 2), y: (c + l + 1) * (Hc / 2) });
   function initialiser(t) { toile = t; ctx = t.getContext("2d"); }
 
+  const HERBE = [["#7cb35a", "#76ab55"], ["#84ba5e", "#7db358"], ["#8cc062", "#86b95e"]], HERBE_FORET = ["#5f9a48", "#5a9446", "#64a04c"];
   const COULEURS_ZONE = { 1: "#a8dc98", 2: "#a8c8f0", 3: "#ecd88a", 4: "#d8b880" };
   const SOL_BATI = { 1: "#c8c0b0", 2: "#b8b8b8", 3: "#a8a29a", 4: "#b89a60" };
   // Les couleurs des calques : de bleu (bas) à rouge (haut), ou vert → rouge
@@ -66,10 +67,10 @@ Megalopole.Peintre = (function () {
       nCases++;
       let couleur;
       if (monde.route[i]) couleur = ter === K.TERRAIN.eau ? "#7a7068" : "#5a5d62"; // (sur l'eau : un pont)
-      else if (ter === K.TERRAIN.eau) couleur = (c * 7 + l * 3) % 5 ? "#3f7fb8" : "#4a8ac0";
+      else if (ter === K.TERRAIN.eau) couleur = k.rivage[i] ? (k.mer[i] ? "#5aa6d4" : "#5a9ccc") : k.mer[i] ? ((c * 7 + l * 3) % 5 ? "#2c6aa6" : "#3172ad") : (c * 7 + l * 3) % 5 ? "#3f7fb8" : "#4a8ac0"; // (étape 5 : la mer plus profonde, le rivage plus clair)
       else if (monde.zone[i]) couleur = monde.niveau[i] ? SOL_BATI[monde.zone[i]] : COULEURS_ZONE[monde.zone[i]];
-      else if (ter === K.TERRAIN.sable) couleur = "#d8c690";
-      else couleur = (c * 13 + l * 7) % 3 ? "#7cb35a" : "#76ab55";
+      else if (ter === K.TERRAIN.sable) couleur = (c * 5 + l * 11) % 4 ? "#e4d29a" : "#dccb92";
+      else couleur = k.arbre[i] ? HERBE_FORET[k.teinte[i]] : HERBE[k.teinte[i]][(c * 13 + l * 7) % 3 ? 0 : 1];
       if (calque && ter !== K.TERRAIN.eau) { const cc = calque.couleur(monde, i); couleur = cc || "#5a6a5a"; }
       ajouter(couleur, p.x, p.y);
     }
@@ -77,6 +78,19 @@ Megalopole.Peintre = (function () {
       ctx.beginPath();
       for (let j = 0; j < l.length; j += 2) { const x = l[j], y = l[j + 1]; ctx.moveTo(x - L / 2 - 0.5, y); ctx.lineTo(x, y - Hc / 2 - 0.5); ctx.lineTo(x + L / 2 + 0.5, y); ctx.lineTo(x, y + Hc / 2 + 0.5); }
       ctx.fillStyle = couleur; ctx.fill();
+    }
+    // ✨ l'eau qui scintille (étape 5) : de petits reflets qui s'allument et s'éteignent
+    if (z >= 0.5 && !calque) {
+      ctx.strokeStyle = "rgba(235, 248, 255, .75)"; ctx.lineWidth = 1.2; ctx.beginPath();
+      for (let l = lMin; l <= lMax; l++) for (let c = cMin; c <= cMax; c++) {
+        const i = l * n + c;
+        if (k.terrain[i] !== K.TERRAIN.eau || monde.route[i]) continue;
+        const h = H.pourCase(k.graine + 9, c, l);
+        if (h > 0.22 || Math.sin(t * 1.6 + h * 60) < 0.55) continue;
+        const p = milieu(c, l), dx = (h * 97 % 1 - 0.5) * 22, dy = (h * 61 % 1 - 0.5) * 8;
+        ctx.moveTo(p.x + dx - 5, p.y + dy); ctx.lineTo(p.x + dx + 5, p.y + dy - 2);
+      }
+      ctx.stroke();
     }
     // les bords des zones (un trait léger), et les marquages des routes
     if (z >= 0.45 && !calque) {
@@ -100,7 +114,13 @@ Megalopole.Peintre = (function () {
         if (monde.occupe[i]) continue;
         const nv = monde.niveau[i];
         if (nv && monde.zone[i] && montrerBatiments) { Mq.lot(ctx, Megalopole.Zones.LETTRE[monde.zone[i]], nv, p.x, p.y, (H.pourCase(k.graine, c, l) * 1000) | 0); nObjets++; }
-        else if (k.arbre[i] && !calque) { Mq.arbre(ctx, p.x, p.y, (c * 7 + l * 13) % 11); nObjets++; }
+        else if (k.arbre[i] && !calque) { // 🌲🌳 étape 5 : 3 sortes d'arbres, et 2 arbres par case dans une forêt (de près)
+          const h = H.pourCase(k.graine + 21, c, l), e = k.espece[i];
+          Mq.arbre(ctx, p.x - 6 + h * 12, p.y - 2 + h * 5, (c * 7 + l * 13) % 11, 0.9 + h * 0.3, e);
+          if (Mq.vue.detail && h > 0.35) Mq.arbre(ctx, p.x + 9 - h * 6, p.y + 4 - h * 3, (c * 3 + l * 5) % 11, 0.75 + h * 0.2, h > 0.8 ? (e + 1) % 3 : e);
+          nObjets++;
+        }
+        else if (Mq.vue.detail && !calque && !monde.zone[i] && k.terrain[i] === K.TERRAIN.herbe) { const h = H.pourCase(k.graine + 33, c, l); if (h < 0.09) { Mq.deco(ctx, p.x + (h * 300 % 1 - 0.5) * 24, p.y + (h * 700 % 1 - 0.5) * 10, h); nObjets++; } } // 🌼 des fleurs et des buissons
       }
       for (const b of grosParDiag.get(dg) || []) {
         if (!montrerBatiments) continue;

@@ -128,6 +128,7 @@
       <a href="#etape2">Étape 2</a>
       <a href="#etape3">Étape 3</a>
       <a href="#etape4">Étape 4</a>
+      <a href="#etape5">Étape 5</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="index.html">▶ Jouer</a>
@@ -393,7 +394,7 @@
             <li>☐ Touche dans l'eau : le fantôme est rouge, et la barre dit pourquoi.</li>
             <li>☐ Zone habitation : un toucher = un carré de 3 × 3. Touche juste à côté : le 2ᵉ lot se range contre le 1ᵉʳ.</li>
             <li>☐ À l'ordinateur : le fantôme suit la souris, et un clic construit.</li>
-            <li>Vérifie « version 5 » en haut de la page.</li>
+            <li>(La version a avancé depuis : vérifie le numéro de l'étape 5.)</li>
           </ul>
         </div>
       </div>
@@ -421,6 +422,65 @@
       <details class="question"><summary>Pourquoi garder « départ → arrivée » pour les routes, et pas un fantôme ?</summary><p>Parce qu'une route est une longue ligne : il faut dire où elle commence et où elle finit. Un bâtiment ou un lot a une taille fixe : une seule place suffit.</p></details>
     </section>
 
+    <section id="etape5">
+      <h2>🏗️ Étape 5 : déplacer, de beaux bâtiments, une vraie carte <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Un maintien long pour déplacer un bâtiment, une architecture riche et variée, et une carte avec la mer, des rivières et de grandes forêts (tes choix). <a href="index.html"><strong>▶ la Mégalopole</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>megalopole/demandes/05-deplacer-beaux-batiments-carte.md</code>.</p>
+          <ul>
+            <li>✍️ « Un maintien long sur téléphone doit donner la possibilité de déplacer les bâtiments. »</li>
+            <li>✍️ « Au niveau architecture des bâtiments, tu ne t'es pas foulé : fais ça mieux. »</li>
+            <li>✍️ « Pour la map, il doit y avoir des arbres, des rivières… »</li>
+            <li>Tes choix : <strong>déplacer gratuitement les gros bâtiments</strong>, <strong>riche et varié</strong>, <strong>la mer et une plage, de grandes forêts, des rivières et des lacs</strong>.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Garde le doigt ½ seconde sur une centrale : elle se soulève (ça vibre). Touche sa nouvelle place, puis « ✅ Poser ici ». C'est gratuit.</li>
+            <li>☐ ❌ la remet à sa place. Sur une maison, un message explique qu'elle ne se déplace pas.</li>
+            <li>☐ Zoome sur tes quartiers : piscines, balcons, enseignes, parkings, silos, ombres… Chaque maison a son modèle.</li>
+            <li>☐ 🆕 Nouvelle ville : la mer et sa plage, une rivière et son affluent, des lacs, des forêts de sapins, de chênes et de bouleaux.</li>
+            <li>☐ Ton ancienne ville est retrouvée, avec sa carte.</li>
+            <li>Vérifie « version 6 » en haut de la page.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔧 Sous le capot n° 1 : soulever un bâtiment</h3>
+      <pre style="white-space: pre-wrap">  doigt posé ½ s sans bouger  →  « maintien »  →  le bâtiment QUITTE la carte (monde.enMain)
+       ↓ son fantôme suit tes touchers (avec l'aimant de l'étape 4)
+  ✅ Poser ici  →  il revient sur la carte, à la nouvelle place (gratuit)
+  ❌            →  il revient à son ancienne place</pre>
+      <p>Pendant qu'il est « en l'air », il ne sert plus sa zone : son école ne couvre plus personne ! Sous le capot, la ligne « 📦 bâtiment soulevé » le montre. Et si la page se ferme à ce moment-là, la sauvegarde le range à son ancienne place.</p>
+
+      <h3>🔧 Sous le capot n° 2 : plusieurs modèles, mais toujours le même</h3>
+      <p>Chaque terrain a sa <strong>graine</strong> : un nombre tiré de sa position (colonne, ligne). Le dessinateur s'en sert pour choisir le modèle (avec piscine, avec garage, en L…), la couleur et la hauteur. Comme la graine ne change jamais, ta maison garde toujours son modèle, même après avoir rechargé la page.</p>
+      <pre style="white-space: pre-wrap">  graine de la case  →  % 4 (le reste de la division par 4) : la couleur
+                     →  % 5 : le modèle (piscine, garage, jardin…)</pre>
+      <p>Les <strong>ombres</strong> sont des formes sombres et transparentes, poussées vers le bas à droite : le soleil est en haut à gauche. Plus un bâtiment est haut, plus son ombre est longue.</p>
+
+      <h3>🔧 Sous le capot n° 3 : comment on fabrique une rivière</h3>
+      <p>La rivière est une liste de <strong>points</strong> qui descendent jusqu'à la mer, en faisant des vagues (une fonction <em>sinus</em>, plus un peu de bruit). Pour chaque case, on mesure la distance au point le plus proche : si elle est plus petite que la largeur de la rivière, c'est de l'eau. La rivière s'élargit en approchant de la mer.</p>
+      <pre style="white-space: pre-wrap">  bord de la carte ·····~~~~~·····~~~~~·····  🌊 la mer
+                         ↑ l'affluent rejoint la grande rivière</pre>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Déplace ton école près d'un autre quartier : regarde le calque 🎓 changer.</li>
+        <li>Trouve une maison avec une piscine, puis un immeuble en L.</li>
+        <li>Dans <code>config.js</code>, change <code>mer: 12</code> en 25, puis crée une nouvelle ville : la mer est-elle plus grande ?</li>
+        <li>Change <code>forets: 0.56</code> en 0.45 : combien de forêts maintenant ?</li>
+        <li>La nuit, compte les fenêtres allumées d'un gratte-ciel.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi une ancienne ville garde-t-elle l'ancienne carte ?</summary><p>Parce que la carte se refabrique à partir de la graine. Avec le nouveau générateur, la même graine ferait de la mer là où tu as construit tes routes ! La sauvegarde retient donc le numéro de la carte (1 ou 2).</p></details>
+      <details class="question"><summary>Une case a la graine 13. Quel est le reste de 13 ÷ 4 ? Et de 13 ÷ 5 ?</summary><p>13 = 3 × 4 + 1, donc le reste est 1. 13 = 2 × 5 + 3, donc le reste est 3.</p></details>
+      <details class="question"><summary>Pourquoi les maisons ne se déplacent-elles pas ?</summary><p>Parce que ce ne sont pas les tiennes : ce sont les habitants qui les construisent sur tes zones. Toi, tu peux déplacer ce que la mairie a construit (les gros bâtiments).</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route de la Mégalopole</h2>
@@ -430,10 +490,11 @@
         <div class="carte fait"><div class="num">2</div><h4>🧾 Les impôts et les coûts <span class="etiquette">✅ fait · à valider</span></h4><p>Un impôt par zone, un budget par service (0 à 150 %), le carburant des centrales, la banque, la caisse vide et le maire renvoyé, 3 difficultés.</p><p class="apprend"><b>Tu apprends :</b> un budget, un compromis, les intérêts d'un prêt. <b>Durée :</b> 1 séance.</p></div>
         <div class="carte fait"><div class="num">3</div><h4>🎓 Un guide, et tracer au doigt <span class="etiquette">✅ fait · à valider</span></h4><p>9 missions pas à pas pour bien commencer ; sur téléphone, 1 doigt bouge la carte, on touche le départ et l'arrivée, puis ✅.</p><p class="apprend"><b>Tu apprends :</b> vérifier un résultat, distinguer un toucher d'un glisser. <b>Durée :</b> 1 séance.</p></div>
         <div class="carte fait"><div class="num">4</div><h4>👻 Le fantôme et l'aimant <span class="etiquette">✅ fait · à valider</span></h4><p>Bâtiments et zones se posent pareil : un fantôme collé à la route, puis ✅ ; les zones par lots de 3 × 3.</p><p class="apprend"><b>Tu apprends :</b> un algorithme de recherche (essayer toutes les places, garder la meilleure note). <b>Durée :</b> 1 séance.</p></div>
-        <div class="carte prochain"><div class="num">5</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
-        <div class="carte"><div class="num">6</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
-        <div class="carte"><div class="num">7</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
-        <div class="carte"><div class="num">8</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
+        <div class="carte fait"><div class="num">5</div><h4>🏗️ Déplacer, de beaux bâtiments, une vraie carte <span class="etiquette">✅ fait · à valider</span></h4><p>Un maintien long pour déplacer (gratuit), plusieurs modèles détaillés par niveau, des ombres, la mer, des rivières, des lacs et de grandes forêts.</p><p class="apprend"><b>Tu apprends :</b> une graine qui choisit un modèle, construire une rivière avec des points. <b>Durée :</b> 2 séances.</p></div>
+        <div class="carte prochain"><div class="num">6</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
+        <div class="carte"><div class="num">7</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
+        <div class="carte"><div class="num">8</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
+        <div class="carte"><div class="num">9</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
       </div>
     </section>
 
@@ -472,6 +533,14 @@
         <textarea class="journal" id="megalopole-appris-4" data-cle="megalopole-appris-4" placeholder="Ex. : J'ai appris que l'ordinateur essaie toutes les places et garde la meilleure note…"></textarea>
         <label for="megalopole-idees-4"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="megalopole-idees-4" data-cle="megalopole-idees-4" placeholder="Ex. : Tourner un bâtiment, ou poser plusieurs lots d'un coup…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 5 · déplacer, de beaux bâtiments, une vraie carte <span class="petit">· 11 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le maintien long et le bâtiment « en l'air », le bouton 📦 Déplacer, l'architecte (ombres, gradins, balcons, enseignes, piscines, silos…) avec plusieurs modèles par niveau, les gros bâtiments redessinés, la carte version 2 (mer, plage, rivière et affluent, lacs, forêts de 3 sortes d'arbres, fleurs) et la sauvegarde en version 4.</p>
+        <label for="megalopole-appris-5"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="megalopole-appris-5" data-cle="megalopole-appris-5" placeholder="Ex. : J'ai appris qu'une rivière, c'est une liste de points…"></textarea>
+        <label for="megalopole-idees-5"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="megalopole-idees-5" data-cle="megalopole-idees-5" placeholder="Ex. : Un port sur la mer, des bateaux…"></textarea>
       </div>
     </section>
   </main>

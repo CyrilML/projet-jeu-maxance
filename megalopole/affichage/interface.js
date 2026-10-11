@@ -19,7 +19,7 @@ Megalopole.Interface = (function () {
   const radio = Megalopole.Evenements;
   const $ = (id) => document.getElementById(id);
   const fr = (n) => Math.round(n).toLocaleString("fr-FR");
-  const demandes = { outil: undefined, taux: [], postes: [], pret: null, vitesse: null, calque: undefined, difficulte: null, guide: null, confirmer: false, annulerTrace: false };
+  const demandes = { outil: undefined, taux: [], postes: [], pret: null, vitesse: null, calque: undefined, difficulte: null, guide: null, confirmer: false, annulerTrace: false, deplacer: false };
   const auDoigt = () => window.matchMedia && matchMedia("(pointer: coarse)").matches; // (un téléphone, une tablette)
   let groupeOuvert = null, onglet = "reclamations", monde = null;
 
@@ -74,6 +74,7 @@ Megalopole.Interface = (function () {
     $("bouton-calques").addEventListener("click", () => lc.classList.toggle("ouvert"));
     // (les boutons du budget sont redessinés 4 fois par seconde : on écoute leur parent, qui, lui, reste)
     $("contenu-panneau").addEventListener("click", (e) => {
+      if (e.target.closest("[data-deplacer]")) { demandes.deplacer = true; fermerPanneau(); return; }
       const bt = e.target.closest("[data-taux],[data-poste],[data-pret]");
       if (!bt) return;
       if (bt.dataset.taux) { const [zone, d] = bt.dataset.taux.split(":"); demandes.taux.push({ zone, d: +d }); }
@@ -146,6 +147,9 @@ Megalopole.Interface = (function () {
     "pret-refuse": (d) => "🏦❌ Prêt refusé : " + d.raison,
     "pret-rembourse": (d) => "🏦✅ Le prêt de " + fr(d.montant) + " 🪙 est remboursé !",
     "routes-abimees": (d) => "🛣️⚠️ Les routes s'abîment (" + d.etat + " %) : augmente leur budget dans 🧾",
+    "batiment-souleve": (d) => "📦 " + d.emoji + " " + d.nom + " soulevé(e) : touche sa nouvelle place, puis ✅ (❌ pour le remettre)",
+    "batiment-deplace": (d) => "📦✅ " + d.emoji + " " + d.nom + " déplacé(e) !",
+    "deplacement-impossible": (d) => "📦🚫 " + d.raison,
     "mission-reussie": (d) => "🎓✅ Mission " + d.numero + " réussie : " + d.emoji + " " + d.titre + " !",
     "guide-fini": () => "🎓🎉 Bravo, tu as fini le guide ! Maintenant, écoute ce que réclament les habitants (📢).",
     "caisse-vide": (d) => "🧾⚠️ La caisse est vide depuis " + d.mois + " mois ! Encore " + d.reste + " mois et le maire est renvoyé (🏦 un prêt ? moins de dépenses ?)",
@@ -182,8 +186,8 @@ Megalopole.Interface = (function () {
     // ✅ / ❌ : le tracé fait au doigt attend qu'on confirme
     let hc = "";
     if (fa) { // 👻 le fantôme posé au doigt
-      const prix = fa.sorte === "batiment" ? Megalopole.Budget.prix(m, C.batiments[fa.valeur].prix) : Megalopole.Construction.evaluerZone(m, fa.cases, fa.valeur).prix;
-      hc = "<span>" + nomOutil(o) + (fa.sorte === "zone" ? " · lot " + fa.taille + "×" + fa.taille : "") + " · <b>" + fr(prix) + " 🪙</b>" + (fa.raison ? "<br><b class='mal'>🚫 " + fa.raison + "</b>" : "<br><small>" + (fa.collee ? "🧲 collé à la route · " : "⚠️ loin d'une route · ") + "retouche pour déplacer</small>") + "</span>" + (fa.raison ? "" : "<button data-oui='1' class='oui'>✅ Construire</button>") + "<button data-non='1' class='non'>❌</button>";
+      const prix = o.deplacer ? 0 : fa.sorte === "batiment" ? Megalopole.Budget.prix(m, C.batiments[fa.valeur].prix) : Megalopole.Construction.evaluerZone(m, fa.cases, fa.valeur).prix;
+      hc = "<span>" + (o.deplacer ? "📦 Déplacer : " : "") + nomOutil(o) + (o.deplacer ? " · <b>gratuit</b>" : "") + (fa.sorte === "zone" ? " · lot " + fa.taille + "×" + fa.taille : "") + (o.deplacer ? "" : " · <b>" + fr(prix) + " 🪙</b>") + (fa.raison ? "<br><b class='mal'>🚫 " + fa.raison + "</b>" : "<br><small>" + (fa.collee ? "🧲 collé à la route · " : "⚠️ loin d'une route · ") + "retouche pour déplacer</small>") + "</span>" + (fa.raison ? "" : "<button data-oui='1' class='oui'>✅ " + (o.deplacer ? "Poser ici" : "Construire") + "</button>") + "<button data-non='1' class='non'>❌</button>";
     } else if (tr && trace) {
       const cases = Megalopole.Monde.casesDuTrace(o, tr);
       const e = o.sorte === "route" ? Megalopole.Construction.evaluerRoute(m, cases, o.valeur) : o.sorte === "zone" ? Megalopole.Construction.evaluerZone(m, cases, o.valeur) : null;
@@ -245,6 +249,7 @@ Megalopole.Interface = (function () {
       if (B.trafic) h += "<p>🚗 Enlève " + Math.round(B.trafic * 100) + " % du trafic autour</p>";
       if (B.joie) h += "<p>😊 +" + B.joie + " de bonheur pour toute la ville</p>";
       if (b.rayon !== undefined && b.rayon !== B.rayon) h += "<p>🧾 Budget " + C.budget.postes.find((q) => q.id === B.poste).nom.toLowerCase() + " à " + Math.round(Megalopole.Budget.poste(m, B.poste) * 100) + " % : cercle de " + b.rayon.toFixed(1).replace(".", ",") + " cases</p>";
+      h += "<p><button data-deplacer='1' class='deplacer'>📦 Déplacer (gratuit)</button> <small>ou maintiens ton doigt dessus</small></p>";
       h += "<p>🔧 Entretien : " + fr(Megalopole.Budget.prix(m, B.entretien) * (B.poste ? Megalopole.Budget.poste(m, B.poste) : 1)) + " 🪙 par mois</p>";
       return h;
     }
@@ -311,7 +316,7 @@ Megalopole.Interface = (function () {
   }
 
   // Ce que l'interface a reçu du joueur depuis la dernière fois (et on remet à zéro)
-  function consommer() { const d = Object.assign({}, demandes); demandes.outil = undefined; demandes.taux = []; demandes.postes = []; demandes.pret = null; demandes.vitesse = null; demandes.calque = undefined; demandes.difficulte = null; demandes.guide = null; demandes.confirmer = false; demandes.annulerTrace = false; return d; }
+  function consommer() { const d = Object.assign({}, demandes); demandes.outil = undefined; demandes.taux = []; demandes.postes = []; demandes.pret = null; demandes.vitesse = null; demandes.calque = undefined; demandes.difficulte = null; demandes.guide = null; demandes.confirmer = false; demandes.annulerTrace = false; demandes.deplacer = false; return d; }
 
   return { initialiser, changerMonde, rafraichir, consommer, afficher, fermerTiroir, fermerPanneau, ouvrirTiroir, choisirDifficulte, renvoye, demandes };
 })();

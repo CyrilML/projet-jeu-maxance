@@ -65,7 +65,7 @@
       dx: (E.estEnfoncee("droite") ? 1 : 0) - (E.estEnfoncee("gauche") ? 1 : 0),
       dy: (E.estEnfoncee("bas") ? 1 : 0) - (E.estEnfoncee("haut") ? 1 : 0),
       zoom: souris.molette + (E.consommer("zoomPlus") ? 1 : 0) - (E.consommer("zoomMoins") ? 1 : 0),
-      outil: ui.outil, taux: ui.taux, postes: ui.postes, pret: ui.pret, annuler: E.consommer("annuler") || ui.annulerTrace, confirmer: ui.confirmer, guide: ui.guide, souris,
+      outil: ui.outil, taux: ui.taux, postes: ui.postes, pret: ui.pret, annuler: E.consommer("annuler") || ui.annulerTrace, confirmer: ui.confirmer, guide: ui.guide, deplacer: ui.deplacer, souris,
     };
     if (E.consommer("route")) i.outil = { sorte: "route", valeur: "route" };
     if (E.consommer("demolir")) i.outil = { sorte: "demolir", valeur: null };
@@ -89,7 +89,7 @@
     i.dtCamera = ecoule;
     // 1 pas « sans temps » pour la caméra et les outils, puis les pas de la ville
     Megalopole.Monde.etape(monde, 0, i);
-    const sansGestes = Object.assign({}, i, { zoom: 0, outil: undefined, taux: [], postes: [], pret: null, annuler: false, confirmer: false, guide: null, dx: 0, dy: 0, dtCamera: 0, souris: null });
+    const sansGestes = Object.assign({}, i, { zoom: 0, outil: undefined, taux: [], postes: [], pret: null, annuler: false, confirmer: false, guide: null, deplacer: false, dx: 0, dy: 0, dtCamera: 0, souris: null });
     reserve += attendDifficulte || monde.renvoye ? 0 : ecoule * Megalopole.vitesse;
     let n = 0;
     while (reserve >= C.pasFixe && n < 120) { Megalopole.Monde.etape(monde, C.pasFixe, sansGestes); reserve -= C.pasFixe; n++; pas++; }

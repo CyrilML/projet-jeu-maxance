@@ -15,12 +15,14 @@
 //                 les 4 zones, tous les postes à 100 %, pas de prêt, difficulté « Normal ».
 //   3 (étape 3) : le guide (guide : { etape, fini, cache }). Une ville plus ancienne : le guide saute tout seul,
 //                 sans rien dire, les missions qu'elle a déjà réussies.
+//   4 (étape 5) : le numéro de la carte (carte : 2 = avec la mer, les rivières et les forêts). Une ville plus ancienne
+//                 n'a pas ce numéro : elle garde la carte 1 (sinon ses routes tomberaient dans la mer !).
 
 window.Megalopole = window.Megalopole || {};
 
 Megalopole.Sauvegarde = (function () {
   const CLE = "megalopole:sauvegarde";
-  const VERSION = 3;
+  const VERSION = 4;
   const radio = Megalopole.Evenements;
 
   function encoder(tab) {
@@ -48,9 +50,10 @@ Megalopole.Sauvegarde = (function () {
       temps: Math.round(monde.temps), mois: monde.mois, compteMois: Math.round(monde.compteMois),
       argent: Math.round(monde.argent), taux: monde.taux, palier: monde.palier,
       difficulte: monde.difficulte, postes: monde.postes, prets: monde.prets, etatRoutes: Math.round(monde.etatRoutes * 1000) / 1000, moisDansLeRouge: monde.moisDansLeRouge, renvoye: monde.renvoye, // étape 2
+      carte: monde.carte.version, // étape 5
       guide: { etape: monde.guide.etape, fini: monde.guide.fini, cache: monde.guide.cache }, // étape 3
       routes: encoder(monde.route), zones: encoder(monde.zone), niveaux: encoder(monde.niveau), arbres: encoder(monde.carte.arbre),
-      batiments: monde.batiments.map((b) => ({ type: b.type, colonne: b.colonne, ligne: b.ligne })),
+      batiments: monde.batiments.concat(monde.enMain ? [monde.enMain.b] : []).map((b) => ({ type: b.type, colonne: b.colonne, ligne: b.ligne })),
       historique: monde.historique,
     };
   }

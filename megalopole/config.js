@@ -13,7 +13,7 @@ window.Megalopole = window.Megalopole || {};
 
 Megalopole.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 5,
+  version: 6,
   pasFixe: 1 / 120, // s : la boucle avance par petits pas fixes
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 
@@ -22,6 +22,10 @@ Megalopole.CONFIG = {
     largeurCase: 64, hauteurCase: 32, // px : un losange
     eau: 0.3, // part de la carte en dessous de laquelle c'est de l'eau (bruit)
     arbres: 0.62, // au-dessus : une forêt
+    // (étape 5 : la carte version 2)
+    mer: 12, // cases : la mer, depuis le bord (plus ou moins 7, ça ondule)
+    lacs: 0.27, // en dessous (bruit), un lac
+    forets: 0.56, // au-dessus (bruit), une forêt bien dense
   },
   camera: { vitesse: 700, zoomMin: 0.25, zoomMax: 2.5, zoomDepart: 0.9 },
 
