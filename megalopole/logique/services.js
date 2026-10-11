@@ -7,7 +7,7 @@
 //   - le TRAFIC 🚗 : chaque habitant et chaque emploi fait des trajets sur les routes proches. Une route trop chargée,
 //     c'est un bouchon ! Les bus et le métro en enlèvent une partie ; une avenue en laisse passer plus ;
 //   - la VALEUR DU TERRAIN 💎 : de 0 à 1. Elle monte au bord de l'eau, près des parcs et des services, et baisse avec
-//     la pollution et les bouchons. Les beaux bâtiments ne poussent que là où le terrain vaut cher !
+//     la pollution et les bouchons (étape 11 : et près d'une décharge, avec des poubelles pas ramassées, ou une eau sale). Les beaux bâtiments ne poussent que là où le terrain vaut cher !
 
 window.Megalopole = window.Megalopole || {};
 
@@ -41,6 +41,8 @@ Megalopole.Services = (function () {
         if (B.valeur) bonus[i] += B.valeur * (1 - part * 0.6);
       });
     }
+    // (étape 11) une décharge salit le terrain autour d'elle
+    for (const b of monde.batiments) { const S = C.batiments[b.type].salete; if (S) cercle(monde, b, S.rayon, (i, part) => (bonus[i] -= S.force * (1 - part * 0.6))); }
     // 2. La pollution : l'industrie (selon son niveau) et la centrale à charbon
     const P = monde.pollution;
     P.fill(0);
@@ -65,9 +67,10 @@ Megalopole.Services = (function () {
     }
     monde.statsTrafic = { routes, bouchons, moyen: routes ? total / routes : 0 };
     // 4. La valeur du terrain
-    const V = monde.valeur, Vb = C.valeur;
+    const V = monde.valeur, Vb = C.valeur, ratioEpure = monde.reseaux.epuration ? monde.reseaux.epuration.ratio : 1;
     for (let i = 0; i < N; i++) {
-      let v = Vb.base - (1 - monde.etatRoutes) * 0.1 + bonus[i] + (monde.bordDeLEau[i] ? Vb.bordDeLEau : 0) - P[i] * Vb.parPollution;
+      let v = Vb.base - (1 - monde.etatRoutes) * 0.1 + bonus[i] + (monde.bordDeLEau[i] ? Vb.bordDeLEau * (1 - 1.5 * (1 - ratioEpure)) : 0) - P[i] * Vb.parPollution; // (étape 11 : l'eau sale gâche le bord de l'eau)
+      if (monde.zone[i] && monde.niveau[i] && !monde.collecte[i]) v -= C.dechets.valeurSale; // (étape 11 : des poubelles pas ramassées)
       const rp = monde.routeProche[i];
       if (rp >= 0) v -= Math.max(0, T[rp] - 0.6) * Vb.parTrafic;
       V[i] = Math.max(0, Math.min(1, v));

@@ -30,6 +30,10 @@ Megalopole.SousLeCapot = (function () {
     "nouveau-palier": (d) => "🎉 " + d.emoji + " La ville devient un(e) " + d.nom + " (" + fr(d.habitants) + " habitants) · les bâtiments montent jusqu'au niveau " + d.niveauMax + (d.nouveaux.length ? " · débloqués : " + d.nouveaux.join(", ") : ""),
     "courant-penurie": (d) => "⚡❌ Pénurie d'électricité : offre " + fr(d.offre) + " < demande " + fr(d.demande) + " · " + d.coupes + " bâtiment(s) coupé(s) (les plus loin des centrales)",
     "courant-ok": (d) => "⚡✅ Assez d'électricité : offre " + fr(d.offre) + ", demande " + fr(d.demande),
+    "dechets-penurie": (d) => "🗑️❌ Ramassage insuffisant : place " + fr(d.offre) + " < déchets " + fr(d.demande) + " · " + d.coupes + " bâtiment(s) pas ramassé(s)",
+    "dechets-ok": (d) => "🗑️✅ Toutes les poubelles sont ramassées : place " + fr(d.offre) + ", déchets " + fr(d.demande),
+    "decharge-pleine": (d) => "🗑️⛔ La décharge en (" + d.colonne + ", " + d.ligne + ") est pleine (" + fr(d.contenance) + ") : elle ne prend plus rien",
+    "decharge-presque-pleine": (d) => "🗑️⚠️ La décharge en (" + d.colonne + ", " + d.ligne + ") est pleine à " + d.pourcent + " %",
     "eau-penurie": (d) => "💧❌ Pénurie d'eau : offre " + fr(d.offre) + " < demande " + fr(d.demande) + " · " + d.coupes + " bâtiment(s) sans eau",
     "eau-ok": (d) => "💧✅ Assez d'eau : offre " + fr(d.offre) + ", demande " + fr(d.demande),
     "reclamation": (d) => "📢 Réclamation n° 1 des habitants : " + d.emoji + " " + d.texte + " → " + d.conseil,
@@ -97,6 +101,10 @@ Megalopole.SousLeCapot = (function () {
     for (const x of C.besoins) h += ligne(x.emoji + " " + x.nom + " (poids " + virgule(x.poids, 1) + ")" + ((x.palier || 0) > m.palier ? " 🔒" : ""), virgule(m.besoins[x.id] || 0, 2));
     h += groupe("🔌 Les réseaux (ils suivent les routes, les plus proches d'abord)");
     for (const [q, e] of [["⚡ électricité", m.reseaux.courant], ["💧 eau", m.reseaux.eau]]) h += ligne(q + " : utilisé / offre · demande · coupés · loin du réseau", fr(e.utilise || 0) + " / " + fr(e.offre || 0) + " · " + fr(e.demande || 0) + " · " + (e.coupes || 0) + " · " + (e.horsReseau || 0));
+    { const d = m.reseaux.dechets || {}, ep = m.reseaux.epuration || {}; // étape 11
+      h += ligne("🗑️ déchets : traités / place · jetés · pas ramassés · recyclés", fr(d.utilise || 0) + " / " + fr(d.offre || 0) + " · " + fr(d.demande || 0) + " · " + (d.coupes || 0) + " · " + Math.round((d.recycle || 0) * 100) + " %");
+      const dech = m.batiments.filter((b) => C.batiments[b.type].contenance); if (dech.length) h += ligne("🗑️ décharges : remplies (chaque mois + ce qu'elles reçoivent)", dech.map((b) => Math.round(100 * (b.rempli || 0) / C.batiments[b.type].contenance) + " %").join(" · "));
+      h += ligne("🚽 eaux usées : nettoyées / utilisées (le bord de l'eau perd de la valeur si c'est sale)", fr(ep.capacite || 0) + " / " + fr(ep.eauxUsees || 0) + " · " + Math.round((ep.ratio || 0) * 100) + " %"); }
     h += ligne("💧 étape 9 : eau NÉCESSAIRE (niveau ≥ 2) · petites maisons non servies (elles ont un puits) · reste pour grandir", fr(m.reseaux.eau.demandeBesoin || 0) + " · " + (m.reseaux.eau.coupesSansBesoin || 0) + " · " + fr(m.reseaux.eau.reste || 0));
     h += ligne("🌬️ vent · ☀️ soleil · 🕐 heure du jour", virgule(Megalopole.Reseaux.vent(m), 2) + " · " + virgule(Megalopole.Reseaux.soleil(m), 2) + " · " + Math.floor(Megalopole.Reseaux.heure(m) * 24) + " h");
     const T = m.statsTrafic || { routes: 0, bouchons: 0, moyen: 0 };

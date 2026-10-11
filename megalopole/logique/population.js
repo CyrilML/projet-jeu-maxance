@@ -26,12 +26,13 @@ Megalopole.Population = (function () {
     nourriture: "Peins des zones 🌾 agriculture, loin des usines.", biens: "Des zones 🏭 industrie (qui fabriquent) et 🛍️ commerce (qui vendent).",
     education: "Une école 🏫 près des maisons.", sante: "Une clinique 🏥 près des maisons.", securite: "Un commissariat 🚓.", feu: "Une caserne de pompiers 🚒.",
     loisirs: "Des parcs 🌳 entre les maisons.", transport: "Des arrêts de bus 🚌, ou des avenues 🛤️ à la place des routes chargées.", air: "Éloigne les usines 🏭 et la centrale des maisons ; plante des parcs.", impots: "Baisse l'impôt des habitations 🏠 (🧾 Budget).",
+    dechets: "Une décharge 🗑️ ou un incinérateur, relié par la route (menu « Déchets »).", epuration: "Une station d'épuration 🚽 (menu « Eau »).",
   };
 
   function recenser(monde) {
     const N = monde.zone.length, Z = C.zones, cv = monde.couverture;
     let H = 0, Ec = 0, Ei = 0, Ea = 0;
-    const avec = { courant: 0, eau: 0, education: 0, sante: 0, securite: 0, feu: 0, loisirs: 0 };
+    const avec = { courant: 0, eau: 0, education: 0, sante: 0, securite: 0, feu: 0, loisirs: 0, dechets: 0 };
     let pollutionH = 0, bouchonsH = 0;
     const zonees = [];
     for (let i = 0; i < N; i++) {
@@ -46,6 +47,7 @@ Megalopole.Population = (function () {
         if (monde.courant[i]) avec.courant += g;
         if (monde.eau[i] || !Megalopole.Reseaux.aBesoinDEau(monde, i)) avec.eau += g; // une petite maison a un puits (étape 9 : elle ne se plaint plus)
         for (const t of ["education", "sante", "securite", "feu", "loisirs"]) if (cv[t][i]) avec[t] += g;
+        if (monde.collecte[i]) avec.dechets += g; // étape 11 : ses poubelles sont-elles ramassées ?
         pollutionH += monde.pollution[i] * g;
         const rp = monde.routeProche[i];
         if (rp >= 0) bouchonsH += Math.max(0, monde.trafic[rp] - 0.7) * g;
@@ -66,6 +68,7 @@ Megalopole.Population = (function () {
       loisirs: borne(part(avec.loisirs) + joieBatiments(monde) / 20, 0, 1),
       transport: H ? borne(1 - bouchonsH / H, 0, 1) : 1,
       air: H ? borne(1 - (pollutionH / H) * 1.6, 0, 1) : 1,
+      dechets: part(avec.dechets), epuration: monde.reseaux.epuration ? monde.reseaux.epuration.ratio : 1, // étape 11
       impots: borne(1 - Math.max(0, monde.taux.R - C.budget.impotSupportable) / (C.budget.tauxMax - C.budget.impotSupportable), 0, 1), // étape 2 : l'impôt des habitants
     };
     monde.besoins = b;

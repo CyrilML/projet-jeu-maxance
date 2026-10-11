@@ -25,7 +25,7 @@ Megalopole.Monde = (function () {
       route: new Uint8Array(N), zone: new Uint8Array(N), niveau: new Uint8Array(N), occupe: new Int32Array(N), attente: new Float32Array(N),
       routeProche: new Int32Array(N).fill(-1), courant: new Uint8Array(N), eau: new Uint8Array(N),
       valeur: new Float32Array(N), pollution: new Float32Array(N), trafic: new Float32Array(N), bordDeLEau: new Uint8Array(N),
-      couverture: {}, reseaux: { courant: {}, eau: {} },
+      couverture: {}, reseaux: { courant: {}, eau: {}, dechets: {}, epuration: { ratio: 1 } }, collecte: new Uint8Array(N), // (étape 11 : les déchets ramassés)
       batiments: [], prochainId: 1, zonees: [],
       // étape 2 : la difficulté, un taux d'impôt par zone, un budget par poste, les prêts, l'état des routes
       difficulte: difficulte || "normal", argent: C.difficultes[difficulte || "normal"].argent, palier: 0, bonheur: 60,

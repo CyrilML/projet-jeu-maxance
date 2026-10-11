@@ -96,6 +96,13 @@ Megalopole.Construction = (function () {
 
   // ---------------------------------------------------------------- 🏛️ les gros bâtiments
   const casesDe = (type, c, l) => { const t = C.batiments[type].taille, r = []; for (let dl = 0; dl < t; dl++) for (let dc = 0; dc < t; dc++) r.push({ colonne: c + dc, ligne: l + dl }); return r; };
+  // Y a-t-il, autour de l'emprise (à r cases), une case qui vérifie « test » ?
+  function autour(monde, c, l, t, r, test) {
+    const k = monde.carte;
+    for (let ll = l - r; ll < l + t + r; ll++) for (let cc = c - r; cc < c + t + r; cc++) if (K.dans(k, cc, ll) && test(index(monde, cc, ll))) return true;
+    return false;
+  }
+  const routeAPortee = (monde, c, l, t, r) => autour(monde, c, l, t, r, (i) => monde.route[i]);
   // Peut-on poser ce bâtiment ici ? null = oui, sinon la raison
   // (sansArgent : on ne regarde pas la caisse ; demenagement : le bâtiment existe déjà, on le déplace gratuitement)
   function raisonBatiment(monde, type, c, l, sansArgent, demenagement) {
@@ -103,6 +110,15 @@ Megalopole.Construction = (function () {
     if (!B) return "bâtiment inconnu";
     if (!demenagement && Megalopole.Population.palier(monde) < B.palier) return "pas encore : il faut être un(e) " + C.paliers[B.palier].nom.toLowerCase() + " (" + C.paliers[B.palier].habitants.toLocaleString("fr-FR") + " habitants)";
     if (!demenagement && B.unique && monde.batiments.some((b) => b.type === type)) return "la ville n'en a qu'un(e)";
+    // (étape 11) une éolienne en mer se pose DANS la mer ; un barrage contre une rivière ; le dessalement près de la mer
+    if (B.surMer) {
+      for (const p of casesDe(type, c, l)) { if (!K.dans(k, p.colonne, p.ligne) || !k.mer[index(monde, p.colonne, p.ligne)]) return "il faut la poser dans la mer 🌊"; if (monde.occupe[index(monde, p.colonne, p.ligne)]) return "un autre bâtiment est là"; }
+      if (!routeAPortee(monde, c, l, B.taille, C.dechets.cableMer)) return "trop loin d'une route : le câble sous la mer fait " + C.dechets.cableMer + " cases au plus";
+      if (!sansArgent && !demenagement && Megalopole.Budget.prix(monde, B.prix) > monde.argent) return "pas assez d'argent (" + Megalopole.Budget.prix(monde, B.prix).toLocaleString("fr-FR") + " 🪙)";
+      return null;
+    }
+    if (B.riviere && !autour(monde, c, l, B.taille, 1, (i) => k.terrain[i] === K.TERRAIN.eau && !k.mer[i])) return "il faut le poser contre une rivière ou un lac (pas la mer)";
+    if (B.bordDeMer && !autour(monde, c, l, B.taille, B.bordDeMer, (i) => k.mer[i])) return "trop loin de la mer (il lui faut de l'eau de mer)";
     for (const p of casesDe(type, c, l)) {
       if (!K.constructible(k, p.colonne, p.ligne)) return "il faut un terrain sec (pas d'eau)";
       const i = index(monde, p.colonne, p.ligne);
@@ -163,6 +179,7 @@ Megalopole.Construction = (function () {
     const B = C.batiments[d.type];
     if (!B) return null;
     const b = { id: monde.prochainId++, type: d.type, colonne: d.colonne, ligne: d.ligne, taille: B.taille };
+    if (d.rempli) b.rempli = d.rempli; // (étape 11 : une décharge se souvient de ce qu'elle contient)
     for (const p of casesDe(d.type, d.colonne, d.ligne)) if (K.dans(monde.carte, p.colonne, p.ligne)) monde.occupe[index(monde, p.colonne, p.ligne)] = b.id;
     monde.batiments.push(b);
     return b;
@@ -194,5 +211,5 @@ Megalopole.Construction = (function () {
     return true;
   }
 
-  return { trajet, rectangle, evaluerRoute, poserRoute, evaluerZone, zoner, casesDe, raisonBatiment, aimanter, toucheUneRoute, poserBatiment, remettre, batimentSur, demolir };
+  return { autour, routeAPortee, trajet, rectangle, evaluerRoute, poserRoute, evaluerZone, zoner, casesDe, raisonBatiment, aimanter, toucheUneRoute, poserBatiment, remettre, batimentSur, demolir };
 })();

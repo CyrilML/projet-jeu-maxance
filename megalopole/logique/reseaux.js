@@ -13,6 +13,15 @@
 //   - D'ABORD CEUX QUI EN ONT BESOIN : une petite maison (niveau 1) a un puits ; elle ne reçoit l'eau courante qu'avec
 //     ce qui reste. Avant, une petite maison proche de la station passait devant un immeuble plus loin, qui était coupé !
 //   - un terrain prend la route RELIÉE la plus proche (à « accesMax » cases), pas seulement la première route trouvée.
+//
+// Étape 11 (✍️ « gérer le ramassage des poubelles : incinérateur, enfouissement… ») : un 3e réseau, les DÉCHETS 🗑️.
+//   Ça marche comme l'eau, mais à l'envers : chaque bâtiment PRODUIT des déchets, et les camions les emportent par les
+//   routes jusqu'à une décharge ou un incinérateur (les plus proches d'abord), tant qu'il reste de la place.
+//   - la décharge se REMPLIT chaque mois (quand elle est pleine, il faut en construire une autre) ;
+//   - l'incinérateur fait un peu d'ÉLECTRICITÉ avec ce qu'il brûle ;
+//   - chaque centre de recyclage enlève 30 % des déchets (jusqu'à 150) avant le ramassage.
+// Et les EAUX USÉES : toute l'eau utilisée ressort sale ; les stations d'épuration la nettoient (sinon, l'eau des rivières
+// et de la plage est sale, et le terrain au bord de l'eau vaut moins).
 
 window.Megalopole = window.Megalopole || {};
 
@@ -29,8 +38,11 @@ Megalopole.Reseaux = (function () {
   // Ce que produit une source en ce moment
   function production(monde, b, quoi) {
     const B = C.batiments[b.type];
+    if (quoi === "courant" && B.courantDechets) return Math.round(B.courantDechets * Math.min(1, (b.traite || 0) / B.dechets)); // l'incinérateur
     if (!B[quoi]) return 0;
     if (quoi === "eau" && !monde.reseaux.courantDe(b)) return 0; // une pompe a besoin de courant pour pomper
+    if (B.consoCourant && !b.alimente) return 0; // (le dessalement : il lui faut SON électricité)
+    if (quoi === "dechets" && B.contenance && (b.rempli || 0) >= B.contenance) return 0; // une décharge pleine
     return Math.round(B[quoi] * (B.vent ? vent(monde) : 1) * (B.soleil ? soleil(monde) : 1));
   }
 
@@ -76,18 +88,19 @@ Megalopole.Reseaux = (function () {
 
   // 2. Un réseau (« courant » ou « eau ») : la tache d'encre depuis les sources, le long des routes
   function distribuer(monde, quoi) {
-    const k = monde.carte, n = k.colonnes, N = n * n, R = monde.route, servi = quoi === "courant" ? monde.courant : monde.eau;
+    const k = monde.carte, n = k.colonnes, N = n * n, R = monde.route, servi = quoi === "courant" ? monde.courant : quoi === "eau" ? monde.eau : monde.collecte;
     servi.fill(0);
-    const sources = monde.batiments.filter((b) => C.batiments[b.type][quoi]);
+    const sources = monde.batiments.filter((b) => C.batiments[b.type][quoi] || (quoi === "courant" && C.batiments[b.type].courantDechets));
     const dist = new Int32Array(N).fill(-1);
     let file = [], offre = 0;
     for (const b of sources) {
       const p = production(monde, b, quoi);
-      b[quoi === "courant" ? "production" : "productionEau"] = p;
+      b[quoi === "courant" ? "production" : quoi === "eau" ? "productionEau" : "capacite"] = p;
       offre += p;
       if (p <= 0) continue;
-      // la tache d'encre part des routes qui touchent la source
-      for (let dl = -1; dl <= b.taille; dl++) for (let dc = -1; dc <= b.taille; dc++) {
+      // la tache d'encre part des routes qui touchent la source (une éolienne en mer : la route la plus proche, par un câble)
+      const r = C.batiments[b.type].surMer ? C.dechets.cableMer : 1;
+      for (let dl = -r; dl < b.taille + r; dl++) for (let dc = -r; dc < b.taille + r; dc++) {
         const c = b.colonne + dc, l = b.ligne + dl;
         if (c < 0 || l < 0 || c >= n || l >= n) continue;
         const j = l * n + c;
@@ -111,7 +124,17 @@ Megalopole.Reseaux = (function () {
     // Les clients : les terrains bâtis (et les gros bâtiments), avec leur distance par la route
     const clients = [];
     let demande = 0, demandeBesoin = 0, horsReseau = 0;
-    const conso = C.consommation[quoi];
+    let conso = C.consommation[quoi];
+    // (étape 11) le recyclage : chaque centre enlève jusqu'à 150, sans dépasser 30 % de tous les déchets
+    let recycle = 0;
+    if (quoi === "dechets") {
+      let total = 0; for (let i = 0; i < N; i++) if (monde.niveau[i] && monde.zone[i]) total += conso[monde.niveau[i]];
+      const capacite = monde.batiments.reduce((t, b) => t + (C.batiments[b.type].recyclage || 0), 0);
+      recycle = total ? Math.min(C.dechets.recyclage, capacite / total) : 0;
+      conso = conso.map((x) => x * (1 - recycle));
+    }
+    // (étape 11) les gros bâtiments qui consomment de l'électricité (le dessalement) passent en premier
+    if (quoi === "courant") for (const b of monde.batiments) { const B = C.batiments[b.type]; if (!B.consoCourant) continue; b.alimente = false; }
     for (let i = 0; i < N; i++) {
       const nv = monde.niveau[i];
       if (!nv || !monde.zone[i]) continue;
@@ -124,17 +147,20 @@ Megalopole.Reseaux = (function () {
       const apres = quoi === "eau" && !aBesoinDEau(monde, i) ? 1e6 : 0; // (étape 9 : ceux qui n'en ont pas besoin passent après)
       clients.push(apres + d * 4 + (i & 3), conso[nv], i); // (le petit « i & 3 » mélange les égalités)
     }
+    if (quoi === "courant") monde.batiments.forEach((b, k3) => { const B = C.batiments[b.type]; if (!B.consoCourant) return; let relie = false; for (let dl = -1; dl <= b.taille && !relie; dl++) for (let dc = -1; dc <= b.taille; dc++) { const c = b.colonne + dc, l = b.ligne + dl; if (c >= 0 && l >= 0 && c < n && l < n && dist[l * n + c] >= 0) { relie = true; break; } } if (relie) { demande += B.consoCourant; demandeBesoin += B.consoCourant; clients.push(-1, B.consoCourant, -1 - k3); } else horsReseau++; });
     const ordre = [];
     for (let k2 = 0; k2 < clients.length; k2 += 3) ordre.push(k2);
     ordre.sort((a, b) => clients[a] - clients[b]);
     let utilise = 0, coupes = 0, coupesSansBesoin = 0, utiliseBesoin = 0;
     for (const k2 of ordre) {
       const besoin = clients[k2 + 1], sansBesoin = clients[k2] >= 1e6;
-      if (utilise + besoin <= offre) { utilise += besoin; if (!sansBesoin) utiliseBesoin += besoin; servi[clients[k2 + 2]] = 1; } else if (sansBesoin) coupesSansBesoin++; else coupes++;
+      if (utilise + besoin <= offre) { utilise += besoin; if (!sansBesoin) utiliseBesoin += besoin; const ici = clients[k2 + 2]; if (ici >= 0) servi[ici] = 1; else monde.batiments[-1 - ici].alimente = true; } else if (sansBesoin) coupesSansBesoin++; else coupes++;
     }
+    // (étape 11) ce que chaque source traite vraiment (pour remplir les décharges, et l'électricité de l'incinérateur)
+    for (const b of sources) { const p = b[quoi === "courant" ? "production" : quoi === "eau" ? "productionEau" : "capacite"] || 0; if (quoi === "dechets") b.traite = offre ? (p * utilise) / offre : 0; }
     const etat = monde.reseaux[quoi], avant = etat.penurie;
     // (le reste : ce que n'utilisent pas ceux qui en ont BESOIN ; les petites maisons servies « en plus » se pousseront)
-    Object.assign(etat, { offre, demande, demandeBesoin, utilise, coupes, coupesSansBesoin, horsReseau, penurie: coupes > 0, reste: Math.max(0, offre - utiliseBesoin), sources: sources.length, atteint: dist });
+    Object.assign(etat, { offre, demande, demandeBesoin, recycle, utilise, coupes, coupesSansBesoin, horsReseau, penurie: coupes > 0, reste: Math.max(0, offre - utiliseBesoin), sources: sources.length, atteint: dist });
     if (etat.penurie !== avant) radio.emettre(quoi + (etat.penurie ? "-penurie" : "-ok"), { offre, demande, coupes });
     return etat;
   }
@@ -149,8 +175,9 @@ Megalopole.Reseaux = (function () {
     const e = monde.reseaux[quoi];
     if (!e || !e.atteint) return "pas encore calculé";
     if (monde.routeProche[i] < 0) return "trop loin d'une route";
-    if (distanceAuReseau(monde, e.atteint, i) < 0) return "sa route n'est reliée à aucune " + (quoi === "eau" ? "station d'eau (en marche)" : "centrale");
+    if (distanceAuReseau(monde, e.atteint, i) < 0) return "sa route n'est reliée à aucune " + (quoi === "eau" ? "station d'eau (en marche)" : quoi === "dechets" ? "décharge ni aucun incinérateur" : "centrale");
     if (quoi === "eau" && !aBesoinDEau(monde, i)) return "pas besoin : une petite maison a un puits (l'eau courante va d'abord aux grands bâtiments)";
+    if (quoi === "dechets") return "pas assez de place : les décharges et incinérateurs traitent " + Math.round(e.offre) + ", la ville jette " + Math.round(e.demande) + " ; les plus loin ne sont pas ramassés";
     return "pénurie : la ville produit " + e.offre + " et en demande " + e.demande + " ; les plus loin " + (quoi === "eau" ? "des stations" : "des centrales") + " sont coupés";
   }
 
@@ -167,7 +194,22 @@ Megalopole.Reseaux = (function () {
     };
     distribuer(monde, "courant");
     distribuer(monde, "eau");
+    distribuer(monde, "dechets"); // étape 11
+    // 🚽 les eaux usées : l'eau utilisée ressort sale ; les stations d'épuration (avec du courant) la nettoient
+    const capacite = monde.batiments.reduce((t, b) => t + (C.batiments[b.type].epuration && monde.reseaux.courantDe(b) ? C.batiments[b.type].epuration : 0), 0), sale = monde.reseaux.eau.utilise || 0;
+    monde.reseaux.epuration = { capacite, eauxUsees: sale, ratio: sale ? Math.min(1, capacite / sale) : 1 };
+  }
+  // 🗑️ Chaque mois, les décharges se remplissent de ce qu'elles ont reçu (appelé par le bilan du mois)
+  function mois(monde) {
+    for (const b of monde.batiments) {
+      const B = C.batiments[b.type];
+      if (!B.contenance) continue;
+      const avant = b.rempli || 0;
+      b.rempli = Math.min(B.contenance, avant + (b.traite || 0));
+      if (avant < B.contenance && b.rempli >= B.contenance) radio.emettre("decharge-pleine", { colonne: b.colonne, ligne: b.ligne, contenance: B.contenance });
+      else if (avant < B.contenance * 0.8 && b.rempli >= B.contenance * 0.8) radio.emettre("decharge-presque-pleine", { colonne: b.colonne, ligne: b.ligne, pourcent: 80 });
+    }
   }
 
-  return { vent, soleil, heure, production, calculer, possible, pourquoiPas, aBesoinDEau };
+  return { vent, soleil, heure, production, calculer, possible, pourquoiPas, aBesoinDEau, mois };
 })();

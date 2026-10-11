@@ -79,6 +79,7 @@ Megalopole.Budget = (function () {
   function mois(monde) {
     const b = prevision(monde);
     monde.argent += b.solde;
+    Megalopole.Reseaux.mois(monde); // (étape 11 : les décharges se remplissent chaque mois)
     monde.mois++;
     monde.dernierBudget = b;
     // les prêts : une mensualité de moins

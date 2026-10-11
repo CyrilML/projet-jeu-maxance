@@ -17,12 +17,13 @@
 //                 sans rien dire, les missions qu'elle a déjà réussies.
 //   4 (étape 5) : le numéro de la carte (carte : 2 = avec la mer, les rivières et les forêts). Une ville plus ancienne
 //                 n'a pas ce numéro : elle garde la carte 1 (sinon ses routes tomberaient dans la mer !).
+//   5 (étape 11) : ce que contient chaque décharge (rempli). Une ville plus ancienne n'a pas de décharge : rien à convertir.
 
 window.Megalopole = window.Megalopole || {};
 
 Megalopole.Sauvegarde = (function () {
   const CLE = "megalopole:sauvegarde";
-  const VERSION = 4;
+  const VERSION = 5;
   const radio = Megalopole.Evenements;
 
   function encoder(tab) {
@@ -53,7 +54,7 @@ Megalopole.Sauvegarde = (function () {
       carte: monde.carte.version, // étape 5
       guide: { etape: monde.guide.etape, fini: monde.guide.fini, cache: monde.guide.cache }, // étape 3
       routes: encoder(monde.route), zones: encoder(monde.zone), niveaux: encoder(monde.niveau), arbres: encoder(monde.carte.arbre),
-      batiments: monde.batiments.concat(monde.enMain ? [monde.enMain.b] : []).map((b) => ({ type: b.type, colonne: b.colonne, ligne: b.ligne })),
+      batiments: monde.batiments.concat(monde.enMain ? [monde.enMain.b] : []).map((b) => Object.assign({ type: b.type, colonne: b.colonne, ligne: b.ligne }, b.rempli ? { rempli: Math.round(b.rempli) } : {})),
       historique: monde.historique,
     };
   }

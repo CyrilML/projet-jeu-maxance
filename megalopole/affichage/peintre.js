@@ -38,6 +38,7 @@ Megalopole.Peintre = (function () {
     feu: { nom: "🚒 Pompiers", couleur: (m, i) => (m.couverture.feu[i] ? "#e0704a" : null) },
     loisirs: { nom: "🎡 Loisirs", couleur: (m, i) => (m.couverture.loisirs[i] ? "#7ac85a" : null) },
     transport: { nom: "🚌 Transports", couleur: (m, i) => (m.couverture.transport[i] ? "#c8a040" : null) },
+    dechets: { nom: "🗑️ Poubelles", couleur: (m, i) => (m.zone[i] && m.niveau[i] ? (m.collecte[i] ? "#5ac85a" : "#d0302a") : m.route[i] && m.reseaux.dechets.atteint && m.reseaux.dechets.atteint[i] >= 0 ? "#8a7a5a" : null) }, // étape 11
   };
 
   function dessiner(monde, options) {
@@ -244,7 +245,8 @@ Megalopole.Peintre = (function () {
   // Un gros bâtiment est-il concerné par ce calque ? [couleur, emoji] ou null
   function pastilleGros(id, B, b) {
     if (id === "courant") return B.courant ? ["#f2d040", "⚡"] : b.marche === false && B.service !== "loisirs" && B.rayon ? ["#d0302a", "⚡"] : null;
-    if (id === "eau") return B.eau ? ["#3f8ae0", "💧"] : null;
+    if (id === "eau") return B.eau ? ["#3f8ae0", "💧"] : B.epuration ? ["#3f8ae0", "🚽"] : null;
+    if (id === "dechets") return B.dechets || B.recyclage ? ["#8a7a5a", B.emoji] : null;
     if (id === "pollution") return B.pollution ? ["#8a6a4a", "🌫️"] : null;
     if (id === "trafic") return B.trafic ? ["#c8a040", B.emoji] : null;
     if (B.service === id) return [CALQUES[id].couleur ? CALQUES[id].couleur({ couverture: { [id]: [1] } }, 0) : "#fff", B.emoji];

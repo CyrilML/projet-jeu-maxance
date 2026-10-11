@@ -13,7 +13,7 @@ window.Megalopole = window.Megalopole || {};
 
 Megalopole.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 11,
+  version: 12,
   pasFixe: 1 / 120, // s : la boucle avance par petits pas fixes
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 
@@ -57,7 +57,9 @@ Megalopole.CONFIG = {
       gens: [0, 2, 6, 12, 25, 60, 60] },
   },
   ordreZones: ["R", "C", "I", "A"],
-  consommation: { courant: [0, 1, 2, 4, 8, 16, 32], eau: [0, 1, 2, 4, 8, 16, 32] }, // par niveau
+  consommation: { courant: [0, 1, 2, 4, 8, 16, 32], eau: [0, 1, 2, 4, 8, 16, 32], dechets: [0, 1, 2, 3, 6, 10, 16] }, // par niveau (étape 11 : les déchets)
+  // 🗑️ les déchets (étape 11) : les camions passent par les routes, comme l'eau ; un terrain pas ramassé perd de la valeur
+  dechets: { recyclage: 0.3, valeurSale: 0.12, cableMer: 8 },
   // 👻 Le PLACEMENT (étape 4, demande de Maxance : « standardiser ») : bâtiments et zones se posent de la même façon.
   // Un FANTÔME suit la souris (ou le doigt) ; il se COLLE tout seul à la route la plus proche, en cherchant jusqu'à
   // « aimant » cases autour. Une zone se pose par LOT carré de « lot » × « lot » cases.
@@ -91,10 +93,24 @@ Megalopole.CONFIG = {
     eolienne: { nom: "Éolienne", emoji: "🌬️", groupe: "energie", taille: 1, prix: 600, entretien: 15, palier: 0, courant: 40, vent: true },
     solaire: { nom: "Panneaux solaires", emoji: "☀️", groupe: "energie", taille: 2, prix: 1800, entretien: 40, palier: 2, courant: 120, soleil: true },
     nucleaire: { nom: "Centrale nucléaire", emoji: "☢️", groupe: "energie", taille: 4, prix: 25000, entretien: 1500, palier: 4, courant: 4000 },
+    // (étape 11, demande de Maxance : plus de choix, chacun avec sa puissance)
+    gaz: { nom: "Centrale au gaz", emoji: "🔥", groupe: "energie", taille: 3, prix: 4000, entretien: 120, palier: 1, courant: 600, pollution: 0.4 },
+    barrage: { nom: "Barrage hydraulique", emoji: "🌊", groupe: "energie", taille: 3, prix: 15000, entretien: 300, palier: 3, courant: 1500, riviere: true }, // contre une rivière ou un lac (pas la mer)
+    geothermie: { nom: "Géothermie", emoji: "♨️", groupe: "energie", taille: 2, prix: 18000, entretien: 200, palier: 3, courant: 800 },
+    eolienneMer: { nom: "Éolienne en mer", emoji: "🌬️", groupe: "energie", taille: 1, prix: 2500, entretien: 40, palier: 2, courant: 250, vent: true, surMer: true }, // dans la mer, un câble jusqu'à la route (8 cases au plus)
     // 💧 l'eau
     pompe: { nom: "Station de pompage", emoji: "🚰", groupe: "eau", taille: 2, prix: 1200, entretien: 60, palier: 0, eau: 300, bordDeLEau: 3 },
     chateauEau: { nom: "Château d'eau", emoji: "🗼", groupe: "eau", taille: 1, prix: 600, entretien: 25, palier: 0, eau: 80 },
     usineEau: { nom: "Usine des eaux", emoji: "🏭", groupe: "eau", taille: 3, prix: 9000, entretien: 450, palier: 3, eau: 2500, bordDeLEau: 3 },
+    // (étape 11)
+    forage: { nom: "Forage", emoji: "🕳️", groupe: "eau", taille: 1, prix: 900, entretien: 30, palier: 0, eau: 150 }, // un puits profond : il marche loin de l'eau
+    grandePompe: { nom: "Grande station de pompage", emoji: "🚰", groupe: "eau", taille: 3, prix: 5000, entretien: 200, palier: 2, eau: 1000, bordDeLEau: 3 },
+    dessalement: { nom: "Usine de dessalement", emoji: "🧂", groupe: "eau", taille: 3, prix: 14000, entretien: 350, palier: 3, eau: 2000, bordDeMer: 3, consoCourant: 300 }, // l'eau de mer devient potable… avec beaucoup d'électricité
+    epuration: { nom: "Station d'épuration", emoji: "🚽", groupe: "eau", taille: 3, prix: 6000, entretien: 180, palier: 2, epuration: 1500 }, // nettoie les eaux usées (sinon elles salissent l'eau)
+    // 🗑️ les déchets (étape 11) : « dechets » = ce que le bâtiment peut traiter
+    decharge: { nom: "Décharge", emoji: "🗑️", groupe: "dechets", taille: 3, prix: 800, entretien: 40, poste: "proprete", palier: 0, dechets: 120, contenance: 4000, salete: { rayon: 7, force: 0.25 } }, // elle se remplit, et salit le terrain autour
+    incinerateur: { nom: "Incinérateur", emoji: "🔥", groupe: "dechets", taille: 3, prix: 9000, entretien: 300, poste: "proprete", palier: 2, dechets: 600, pollution: 0.6, courantDechets: 150 }, // brûler les déchets fait un peu d'électricité
+    recyclage: { nom: "Centre de recyclage", emoji: "♻️", groupe: "dechets", taille: 2, prix: 4000, entretien: 150, poste: "proprete", palier: 1, recyclage: 150 }, // −30 % de déchets (jusqu'à 150 de moins chacun)
     // 🏛️ les services
     ecole: { nom: "École", emoji: "🏫", groupe: "services", taille: 2, prix: 1500, entretien: 100, poste: "education", palier: 0, rayon: 11, service: "education", valeur: 0.05 },
     lycee: { nom: "Lycée", emoji: "🎓", groupe: "services", taille: 3, prix: 5000, entretien: 300, poste: "education", palier: 2, rayon: 18, service: "education", valeur: 0.08 },
@@ -121,6 +137,7 @@ Megalopole.CONFIG = {
     { id: "services", nom: "Services", emoji: "🏛️" },
     { id: "loisirs", nom: "Loisirs", emoji: "🎡" },
     { id: "transports", nom: "Transports", emoji: "🚌" },
+    { id: "dechets", nom: "Déchets", emoji: "🗑️" },
   ],
 
   // ⚡ le vent et le soleil (de 0 à 1)
@@ -167,6 +184,7 @@ Megalopole.CONFIG = {
       { id: "feu", emoji: "🚒", nom: "Pompiers" },
       { id: "loisirs", emoji: "🎡", nom: "Loisirs" },
       { id: "transport", emoji: "🚌", nom: "Transports" },
+      { id: "proprete", emoji: "🗑️", nom: "Propreté" },
     ],
     posteMin: 0, posteMax: 1.5, postePas: 0.1,
     // un service financé à f (0 à 1,5) couvre un cercle de rayon × (0,4 + 0,6 × f) ; à 0 %, il est fermé
@@ -174,7 +192,7 @@ Megalopole.CONFIG = {
     // les routes s'abîment si leur budget est sous 100 % (et se réparent au-dessus) : leur état va de 0 à 1
     usureRoutes: 0.1, // par mois, à 0 % de budget
     // le carburant : ce que coûte 1 unité vraiment utilisée, par mois
-    carburant: { centrale: 0.3, nucleaire: 0.12, pompe: 0.08, usineEau: 0.06 },
+    carburant: { centrale: 0.3, nucleaire: 0.12, pompe: 0.08, usineEau: 0.06, gaz: 0.35, grandePompe: 0.07, dessalement: 0.1, forage: 0.05 },
   },
   // 🏦 Les PRÊTS : on rembourse en `mois` mensualités ; on rend `interet` fois la somme empruntée
   prets: {
@@ -204,6 +222,8 @@ Megalopole.CONFIG = {
     { id: "transport", emoji: "🚌", nom: "Les transports (pas de bouchons)", poids: 1, palier: 2 },
     { id: "air", emoji: "🌫️", nom: "Un air pur (pas de pollution)", poids: 1 },
     { id: "impots", emoji: "🧾", nom: "Des impôts raisonnables", poids: 1 },
+    { id: "dechets", emoji: "🗑️", nom: "Le ramassage des poubelles", poids: 1.5, palier: 1 }, // étape 11
+    { id: "epuration", emoji: "🚽", nom: "Les eaux usées nettoyées", poids: 1, palier: 2 }, // étape 11
   ],
   // 📢 Les RÉCLAMATIONS : à partir de combien d'habitants on réclame un grand bâtiment (s'il n'y en a pas)
   reclamations: [

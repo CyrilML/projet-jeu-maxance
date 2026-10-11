@@ -26,6 +26,34 @@ Megalopole.Interface = (function () {
   let groupeOuvert = null, onglet = "reclamations", monde = null;
 
   const prix = (base) => fr(Megalopole.Budget.prix(monde, base)); // (étape 2 : × la difficulté)
+  // 📋 La fiche d'un bâtiment, sur sa carte du tiroir (étape 11 : « une puissance visible à l'achat ») :
+  //   ce qu'il produit (⚡ 💧 🗑️ 🚽), ce qu'il consomme, sa pollution (▮ = un peu, ▮▮▮▮▮ = beaucoup), et où le poser
+  function fiche(t, B) {
+    const f = [];
+    if (B.courant) f.push("⚡ " + fr(B.courant) + (B.vent ? " (selon le vent)" : B.soleil ? " (le jour)" : ""));
+    if (B.courantDechets) f.push("⚡ jusqu'à " + B.courantDechets);
+    if (B.eau) f.push("💧 " + fr(B.eau));
+    if (B.consoCourant) f.push("−⚡ " + B.consoCourant);
+    if (B.epuration) f.push("🚽 nettoie " + fr(B.epuration));
+    if (B.dechets) f.push("🗑️ " + B.dechets + (B.contenance ? " · tient " + fr(B.contenance) : ""));
+    if (B.recyclage) f.push("♻️ −30 % (jusqu'à " + B.recyclage + ")");
+    if (B.rayon && B.service) f.push("🎯 " + B.rayon + " cases");
+    if (B.pollution) f.push("🌫️ " + "▮".repeat(Math.max(1, Math.round(B.pollution * 5))));
+    else if (B.salete) f.push("🌫️ salit autour");
+    if (C.budget.carburant[t]) f.push("⛽ carburant");
+    const ou = B.surMer ? "🌊 dans la mer" : B.riviere ? "🏞️ contre une rivière" : B.bordDeMer ? "🌊 au bord de la mer" : B.bordDeLEau ? "💧 au bord de l'eau" : "";
+    if (ou) f.push(ou);
+    return f.join(" · ");
+  }
+  // Ce qu'un nouveau bâtiment ajouterait à son réseau : « +600 ⚡ : la ville aura 1 400 / 900 »
+  function gainReseau(m, B) {
+    for (const [cle, q, emoji] of [["courant", "courant", "⚡"], ["eau", "eau", "💧"], ["dechets", "dechets", "🗑️"]]) {
+      if (!B[cle]) continue;
+      const e = m.reseaux[q] || {}, plus = B[cle];
+      return "+" + fr(plus) + " " + emoji + " : la ville aura " + fr((e.offre || 0) + plus) + " / " + fr(q === "eau" ? e.demandeBesoin || 0 : e.demande || 0);
+    }
+    return null;
+  }
   // Les outils de chaque groupe : { sorte, valeur, emoji, nom, prix }
   function outilsDu(groupe) {
     if (groupe === "routes") return [
@@ -35,7 +63,7 @@ Megalopole.Interface = (function () {
     ];
     if (groupe === "zones") return C.ordreZones.map((z, k) => ({ sorte: "zone", valeur: z, emoji: C.zones[z].emoji, nom: "Zone " + C.zones[z].nom.toLowerCase() + " (lot " + C.placement.lot + "×" + C.placement.lot + ")", prix: prix(C.zones[z].prix * C.placement.lot * C.placement.lot) + " 🪙/lot", touche: String(k + 1), couleur: C.zones[z].couleur }))
       .concat([{ sorte: "dezoner", valeur: null, emoji: "🧽", nom: "Effacer la zone", prix: "gratuit" }]);
-    return Object.entries(C.batiments).filter(([, B]) => B.groupe === groupe).map(([t, B]) => ({ sorte: "batiment", valeur: t, emoji: B.emoji, nom: B.nom, prix: prix(B.prix) + " 🪙 · " + prix(B.entretien) + "/mois", palier: B.palier }));
+    return Object.entries(C.batiments).filter(([, B]) => B.groupe === groupe).map(([t, B]) => ({ sorte: "batiment", valeur: t, emoji: B.emoji, nom: B.nom, prix: prix(B.prix) + " 🪙 · " + prix(B.entretien) + "/mois", fiche: fiche(t, B), palier: B.palier }));
   }
 
   function initialiser(m) {
@@ -117,8 +145,8 @@ Megalopole.Interface = (function () {
     for (const o of outilsDu(g)) {
       const b = document.createElement("button"), verrou = o.palier !== undefined && Megalopole.Population.palier(monde) < o.palier;
       b.className = "carte-outil" + (verrou ? " verrou" : "");
-      b.innerHTML = "<span class='emoji'" + (o.couleur ? " style='background:" + o.couleur + "'" : "") + ">" + o.emoji + "</span><b>" + o.nom + "</b><small>" + (verrou ? "🔒 " + C.paliers[o.palier].emoji + " " + C.paliers[o.palier].nom + " (" + fr(C.paliers[o.palier].habitants) + " hab.)" : o.prix) + "</small>";
-      b.title = o.nom;
+      b.innerHTML = "<span class='emoji'" + (o.couleur ? " style='background:" + o.couleur + "'" : "") + ">" + o.emoji + "</span><b>" + o.nom + "</b><small>" + (verrou ? "🔒 " + C.paliers[o.palier].emoji + " " + C.paliers[o.palier].nom + " (" + fr(C.paliers[o.palier].habitants) + " hab.)" : o.prix) + "</small>" + (o.fiche ? "<small class='fiche'>" + o.fiche + "</small>" : "");
+      b.title = o.nom + (o.fiche ? " — " + o.fiche : "");
       b.addEventListener("click", () => { if (verrou) { afficher("🔒 " + o.nom + " : il faut d'abord être un(e) " + C.paliers[o.palier].nom.toLowerCase() + " (" + fr(C.paliers[o.palier].habitants) + " habitants)"); return; } demandes.outil = { sorte: o.sorte, valeur: o.valeur }; fermerTiroir(); });
       t.appendChild(b);
     }
@@ -149,6 +177,9 @@ Megalopole.Interface = (function () {
     "construction-impossible": (d) => "🚫 " + d.nom + " : " + d.raison,
     "nouveau-palier": (d) => "🎉 " + d.emoji + " Ta ville devient un(e) " + d.nom + " ! " + (d.nouveaux.length ? "Nouveau : " + d.nouveaux.join(", ") : "Les bâtiments peuvent monter jusqu'au niveau " + d.niveauMax),
     "courant-penurie": (d) => "⚡❌ Pénurie d'électricité : " + d.coupes + " bâtiment(s) dans le noir. Construis une centrale !",
+    "dechets-penurie": (d) => "🗑️❌ Les poubelles débordent : " + d.coupes + " bâtiment(s) pas ramassé(s). Une décharge ou un incinérateur de plus !",
+    "decharge-pleine": () => "🗑️⛔ Une décharge est pleine ! Construis-en une autre (ou un incinérateur).",
+    "decharge-presque-pleine": () => "🗑️⚠️ Une décharge est pleine à 80 % : prépare la suivante.",
     "eau-penurie": (d) => "💧❌ Pénurie d'eau : " + d.coupes + " bâtiment(s) sans eau. Une station de pompage de plus !",
     "reclamation": (d) => "📢 Les habitants réclament : " + d.emoji + " " + d.texte,
     "budget-mois": (d) => (d.solde < 0 ? "🧾 Ce mois-ci, la ville a perdu " + fr(-d.solde) + " 🪙 !" : null),
@@ -197,7 +228,7 @@ Megalopole.Interface = (function () {
     // l'outil en cours (au doigt : 1 doigt bouge la carte, on TOUCHE le départ puis l'arrivée)
     const o = m.outil, tr = m.trace && m.trace.doigt ? m.trace : null, trace = o && o.sorte !== "batiment";
     const fa = m.fantome && m.fantome.doigt ? m.fantome : null, aimant = o && (o.sorte === "batiment" || o.sorte === "zone");
-    const cvTexte = !auDoigt() && m.fantome ? couvertureNouvelle(m, m.fantome) : null;
+    const cvTexte = !auDoigt() && m.fantome ? couvertureNouvelle(m, m.fantome) || (m.fantome.sorte === "batiment" ? gainReseau(m, C.batiments[m.fantome.valeur]) : null) : null;
     const texteOutil = cvTexte ? "🖌️ " + nomOutil(o) + " · " + cvTexte + " · clic = construire" : !o ? "" : auDoigt() ? "🖌️ " + nomOutil(o) + (aimant ? " · touche près d'une route" : " · touche le départ") : "🖌️ " + nomOutil(o) + (aimant ? " · clique près d'une route (il s'y colle 🧲)" : " · glisse sur la carte") + " · Échap";
     html("outil-en-cours", texteOutil ? "<span>" + texteOutil + "</span><button data-lacher='1' title='Lâcher l'outil'>✖</button>" : "");
     $("outil-en-cours").classList.toggle("visible", !!o && !tr && !fa);
@@ -205,7 +236,7 @@ Megalopole.Interface = (function () {
     let hc = "";
     if (fa) { // 👻 le fantôme posé au doigt
       const prix = o.deplacer ? 0 : fa.sorte === "batiment" ? Megalopole.Budget.prix(m, C.batiments[fa.valeur].prix) : Megalopole.Construction.evaluerZone(m, fa.cases, fa.valeur).prix;
-      hc = "<span>" + (o.deplacer ? "📦 Déplacer : " : "") + nomOutil(o) + (o.deplacer ? " · <b>gratuit</b>" : "") + (fa.sorte === "zone" ? " · lot " + fa.taille + "×" + fa.taille : "") + (o.deplacer ? "" : " · <b>" + fr(prix) + " 🪙</b>") + (fa.raison ? "<br><b class='mal'>🚫 " + fa.raison + "</b>" : (couvertureNouvelle(m, fa) ? "<br><b class='bien'>" + couvertureNouvelle(m, fa) + "</b>" : "") + "<br><small>" + (fa.collee ? "🧲 collé à la route · " : "⚠️ loin d'une route · ") + "retouche pour déplacer</small>") + "</span>" + (fa.raison ? "" : "<button data-oui='1' class='oui'>✅ " + (o.deplacer ? "Poser ici" : "Construire") + "</button>") + "<button data-non='1' class='non'>❌</button>";
+      hc = "<span>" + (o.deplacer ? "📦 Déplacer : " : "") + nomOutil(o) + (o.deplacer ? " · <b>gratuit</b>" : "") + (fa.sorte === "zone" ? " · lot " + fa.taille + "×" + fa.taille : "") + (o.deplacer ? "" : " · <b>" + fr(prix) + " 🪙</b>") + (fa.raison ? "<br><b class='mal'>🚫 " + fa.raison + "</b>" : (fa.sorte === "batiment" && !o.deplacer && gainReseau(m, C.batiments[fa.valeur]) ? "<br><b class='bien'>" + gainReseau(m, C.batiments[fa.valeur]) + "</b>" : "") + (couvertureNouvelle(m, fa) ? "<br><b class='bien'>" + couvertureNouvelle(m, fa) + "</b>" : "") + "<br><small>" + (fa.collee ? "🧲 collé à la route · " : "⚠️ loin d'une route · ") + "retouche pour déplacer</small>") + "</span>" + (fa.raison ? "" : "<button data-oui='1' class='oui'>✅ " + (o.deplacer ? "Poser ici" : "Construire") + "</button>") + "<button data-non='1' class='non'>❌</button>";
     } else if (tr && trace) {
       const cases = Megalopole.Monde.casesDuTrace(o, tr);
       const e = o.sorte === "route" ? Megalopole.Construction.evaluerRoute(m, cases, o.valeur) : o.sorte === "zone" ? Megalopole.Construction.evaluerZone(m, cases, o.valeur) : null;
@@ -296,6 +327,9 @@ Megalopole.Interface = (function () {
     h += "<h4>🏭 Ce que la ville produit</h4>";
     h += ligne("⚡", "Électricité", el.offre || 0, el.demande || 0, "unités produites / demandées", CONS.courant);
     h += ligne("💧", "Eau", ea.offre || 0, ea.demandeBesoin || 0, "unités produites / nécessaires" + (ea.demande > ea.demandeBesoin ? " (+ " + fr(ea.demande - ea.demandeBesoin) + " pour les petites maisons, s'il en reste : elles ont un puits)" : "") + (ea.coupes ? " · ❌ " + ea.coupes + " bâtiment(s) coupé(s)" : ""), CONS.eau);
+    const de = m.reseaux.dechets || {}, ep = m.reseaux.epuration || {};
+    h += ligne("🗑️", "Déchets ramassés", de.offre || 0, de.demande || 0, "place pour traiter / déchets jetés" + (de.recycle ? " (♻️ déjà −" + Math.round(de.recycle * 100) + " %)" : ""), CONS.dechets);
+    if ((ep.eauxUsees || 0) > 0) h += ligne("🚽", "Eaux usées nettoyées", ep.capacite || 0, ep.eauxUsees || 0, "nettoyées / eau utilisée", CONS.epuration);
     h += ligne("💼", "Emplois", b.emplois, b.actifs, "emplois / habitants qui travaillent", CONS.emploi);
     h += ligne("🍞", "Nourriture", b.nourris, H, "habitants nourris / habitants", CONS.nourriture);
     h += ligne("🏭", "Biens fabriqués", b.fabriques, H, "habitants servis / habitants", "des zones 🏭 industrie");

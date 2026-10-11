@@ -134,6 +134,7 @@
       <a href="#etape8">Étape 8</a>
       <a href="#etape9">Étape 9</a>
       <a href="#etape10">Étape 10</a>
+      <a href="#etape11">Étape 11</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="index.html">▶ Jouer</a>
@@ -675,7 +676,7 @@
           <ul>
             <li>☐ Une zone 🛍️, 🏭 ou 🌾 grandit sans école, sans clinique et sans parc.</li>
             <li>☐ Touche un commerce bloqué : il ne demande que 🚓, 🚒 ou 🚌.</li>
-            <li>Vérifie « version 11 » en haut de la page.</li>
+            <li>(La version a avancé depuis : vérifie le numéro de l'étape 11.)</li>
           </ul>
         </div>
       </div>
@@ -695,6 +696,53 @@
       <details class="question"><summary>Une usine de niveau 3 veut passer au niveau 4. Que lui faut-il ?</summary><p>La police 🚓 (en plus de la route, du courant, de l'eau, et des pompiers déjà là pour le niveau 3).</p></details>
     </section>
 
+    <section id="etape11">
+      <h2>🗑️ Étape 11 : plus d'énergie, plus d'eau, et les déchets <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">4 nouvelles centrales, 4 bâtiments pour l'eau (dont l'épuration), et un 3e réseau : les poubelles ! Chaque bâtiment montre sa puissance dans le tiroir. <a href="index.html"><strong>▶ la Mégalopole</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>megalopole/demandes/11-energie-eau-dechets.md</code>.</p>
+          <ul>
+            <li>✍️ « Plus de choix sur les centrales et sur le réseau d'eau, avec une puissance visible à l'achat. »</li>
+            <li>✍️ « Gérer le ramassage des poubelles. Incinérateur. Enfouissement… »</li>
+            <li>Tes choix : gaz, barrage, géothermie, éolienne en mer ; forage, grande pompe, dessalement, épuration ; les déchets « comme l'eau » ; la fiche sur la carte du tiroir.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Le tiroir ⚡ : chaque carte montre ⚡, la pollution ▮, le carburant ⛽ et où la poser.</li>
+            <li>☐ Un barrage contre une rivière ; une éolienne dans la mer (près d'une route) ; le dessalement au bord de la mer.</li>
+            <li>☐ Menu 🗑️ Déchets : une décharge ramasse les poubelles ; elle se remplit (message à 80 %, puis « PLEINE »).</li>
+            <li>☐ 📊 : « 🗑️ Déchets ramassés » et « 🚽 Eaux usées nettoyées » ; calque 🗑️ Poubelles.</li>
+            <li>Vérifie « version 12 » en haut de la page.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔧 Sous le capot n° 1 : un réseau à l'envers</h3>
+      <pre style="white-space: pre-wrap">  EAU      :  🚰 station  ──routes──►  🏠 maisons      (la station DONNE)
+  DÉCHETS  :  🗑️ décharge ◄──routes──  🏠 maisons      (les maisons DONNENT, la décharge PREND)</pre>
+      <p>C'est le même code que l'eau (<code>logique/reseaux.js</code>), avec une autre liste : chaque bâtiment « consomme » de la place de ramassage. Les plus proches d'une décharge sont ramassés d'abord ; si la place manque, les plus loin gardent leurs poubelles. Réutiliser le même code pour une nouvelle mécanique, c'est une des forces d'un bon programme !</p>
+      <h3>🔧 Sous le capot n° 2 : des bâtiments qui se parlent</h3>
+      <ul>
+        <li>🔥 L'<strong>incinérateur</strong> brûle des déchets… et donne de l'<strong>électricité</strong> (jusqu'à 150) : le réseau des déchets aide le réseau électrique.</li>
+        <li>🧂 Le <strong>dessalement</strong> donne beaucoup d'eau, mais il lui faut <strong>300 d'électricité</strong> : sans courant, plus d'eau !</li>
+        <li>🗑️ La <strong>décharge</strong> a une mémoire : chaque mois, elle ajoute ce qu'elle a reçu (c'est sauvegardé). À 4 000, elle est pleine.</li>
+        <li>🚽 L'eau utilisée ressort sale : sans épuration, le bord de l'eau (et la plage) perd sa valeur.</li>
+      </ul>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Compare dans le tiroir : quelle centrale donne le plus d'électricité pour son prix ?</li>
+        <li>Sous le capot, regarde la ligne « 🗑️ décharges » mois après mois : combien de mois avant qu'elle soit pleine ?</li>
+        <li>Pose un centre de recyclage ♻️ : de combien baissent les déchets jetés (📊) ?</li>
+        <li>Calque 🗑️ Poubelles : trouve les maisons rouges (pas ramassées).</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Une décharge reçoit 100 déchets par mois et tient 4 000. Dans combien de mois est-elle pleine ?</summary><p>4 000 ÷ 100 = 40 mois.</p></details>
+      <details class="question"><summary>Pourquoi un barrage doit-il être contre une rivière ?</summary><p>Parce qu'il fait de l'électricité avec l'eau qui coule : sans rivière, pas de courant d'eau, pas d'électricité !</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route de la Mégalopole</h2>
@@ -710,10 +758,11 @@
         <div class="carte fait"><div class="num">8</div><h4>📱 Une interface plus légère, et le menu des besoins <span class="etiquette">✅ fait · à valider</span></h4><p>Petites icônes rondes, calques façon Google Maps, un seul bouton ⏯️, plus de « Regarder » ni de 🔎, le menu 📊 besoins / production.</p><p class="apprend"><b>Tu apprends :</b> une machine à états, comparer production et besoins. <b>Durée :</b> 1 séance.</p></div>
         <div class="carte fait"><div class="num">9</div><h4>💧 L'enquête de l'eau courante <span class="etiquette">✅ fait · à valider</span></h4><p>L'eau d'abord à ceux qui en ont besoin, grandir seulement s'il en reste, « stations pleines » dans 📢, le pourquoi sur chaque case.</p><p class="apprend"><b>Tu apprends :</b> une file d'attente avec priorité, enquêter sur un bug. <b>Durée :</b> 1 séance.</p></div>
         <div class="carte fait"><div class="num">10</div><h4>🏭 Le travail n'a pas besoin d'école <span class="etiquette">✅ fait · à valider</span></h4><p>Commerces, industries et fermes : police, pompiers, et un bus pour les plus gros.</p><p class="apprend"><b>Tu apprends :</b> une règle de jeu = une ligne d'un tableau. <b>Durée :</b> ½ séance.</p></div>
-        <div class="carte prochain"><div class="num">11</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
-        <div class="carte"><div class="num">12</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
-        <div class="carte"><div class="num">13</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
-        <div class="carte"><div class="num">14</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
+        <div class="carte fait"><div class="num">11</div><h4>🗑️ Plus d'énergie, plus d'eau, et les déchets <span class="etiquette">✅ fait · à valider</span></h4><p>Gaz, barrage, géothermie, éoliennes en mer, forage, grande pompe, dessalement, épuration, décharge, incinérateur, recyclage ; les fiches du tiroir.</p><p class="apprend"><b>Tu apprends :</b> réutiliser un réseau à l'envers, des bâtiments qui dépendent les uns des autres. <b>Durée :</b> 2 séances.</p></div>
+        <div class="carte prochain"><div class="num">12</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
+        <div class="carte"><div class="num">13</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
+        <div class="carte"><div class="num">14</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
+        <div class="carte"><div class="num">15</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
       </div>
     </section>
 
@@ -800,6 +849,14 @@
         <textarea class="journal" id="megalopole-appris-10" data-cle="megalopole-appris-10" placeholder="Ex. : J'ai appris qu'une règle du jeu peut être une ligne dans un tableau…"></textarea>
         <label for="megalopole-idees-10"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="megalopole-idees-10" data-cle="megalopole-idees-10" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 11 · plus d'énergie, plus d'eau, et les déchets <span class="petit">· 11 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> 11 nouveaux bâtiments (avec leurs dessins), le réseau des déchets, les décharges qui se remplissent, l'incinérateur électrique, le dessalement qui consomme, l'épuration, 2 nouveaux besoins, le poste « Propreté », les fiches du tiroir, le calque 🗑️ et la sauvegarde version 5.</p>
+        <label for="megalopole-appris-11"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="megalopole-appris-11" data-cle="megalopole-appris-11" placeholder="Ex. : J'ai appris que les déchets marchent comme l'eau, mais à l'envers…"></textarea>
+        <label for="megalopole-idees-11"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="megalopole-idees-11" data-cle="megalopole-idees-11" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
