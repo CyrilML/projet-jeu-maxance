@@ -13,7 +13,7 @@ window.Megalopole = window.Megalopole || {};
 
 Megalopole.Maquettes = (function () {
   const TOUR = Math.PI * 2, CONTOUR = "rgba(30, 28, 26, .55)";
-  const vue = { nuit: 0, detail: true, t: 0 }; // réglé par le peintre à chaque image
+  const vue = { nuit: 0, detail: true, fin: true, t: 0 }; // (detail : de près ; fin : de très près, avec les textures) // réglé par le peintre à chaque image
 
   // ---------------------------------------------------------------- les outils de dessin
   function nuance(hex, f) {
@@ -28,13 +28,41 @@ Megalopole.Maquettes = (function () {
   }
   // Une boîte posée au sol, au milieu (x, y). a : demi-largeur vers la gauche, b : vers la droite (en px), h : hauteur.
   // Renvoie les coins utiles : G (gauche), B (bas), D (droite), H (haut), et le dessus (haut des murs).
-  function boite(ctx, x, y, a, b, h, couleur, toit) {
+  // Étape 6 (« plus de design et de réalité ») : de près, chaque face reçoit la LUMIÈRE en dégradé (plus claire en haut,
+  // plus sombre au pied du mur), une arête éclairée, un trait d'ombre au sol, et la texture de sa MATIÈRE :
+  //   « brique » (des joints), « beton » (les dalles de chaque étage), « verre » (un reflet), « bardage » (des côtes)
+  function face(ctx, pts, couleur, f, h) {
+    if (!vue.detail || h < 4) { forme(ctx, pts, nuance(couleur, f)); return; }
+    const ys = pts.map((p) => p[1]), g = ctx.createLinearGradient(0, Math.min(...ys), 0, Math.max(...ys));
+    g.addColorStop(0, nuance(couleur, f * 1.08)); g.addColorStop(1, nuance(couleur, f * 0.84));
+    forme(ctx, pts, g);
+  }
+  function texture(ctx, P, Q, h, matiere) {
+    ctx.beginPath();
+    if (matiere === "brique") { ctx.strokeStyle = "rgba(60, 30, 20, .16)"; ctx.lineWidth = 0.6; for (let v = 2.6; v < h - 1; v += 2.6) { ctx.moveTo(P[0], P[1] - v); ctx.lineTo(Q[0], Q[1] - v); } }
+    else if (matiere === "beton") { ctx.strokeStyle = "rgba(40, 40, 40, .14)"; ctx.lineWidth = 0.7; for (let v = 9; v < h - 2; v += 9) { ctx.moveTo(P[0], P[1] - v); ctx.lineTo(Q[0], Q[1] - v); } }
+    else if (matiere === "bardage") { ctx.strokeStyle = "rgba(30, 30, 30, .16)"; ctx.lineWidth = 0.6; const nb = Math.round(Math.hypot(Q[0] - P[0], Q[1] - P[1]) / 3); for (let k = 1; k < nb; k++) { const A = entre(P, Q, k / nb); ctx.moveTo(A[0], A[1]); ctx.lineTo(A[0], A[1] - h); } }
+    ctx.stroke();
+    if (matiere === "verre") { // un reflet du ciel en biais
+      const A = entre(P, Q, 0.15), Bq = entre(P, Q, 0.42), C2 = entre(P, Q, 0.62);
+      forme(ctx, [[A[0], A[1] - h * 0.05], [Bq[0], Bq[1] - h * 0.05], [C2[0], C2[1] - h * 0.95], [entre(P, Q, 0.35)[0], entre(P, Q, 0.35)[1] - h * 0.95]], "rgba(255, 255, 255, " + (0.16 * (1 - vue.nuit)) + ")", false);
+    }
+  }
+  // Une boîte posée au sol, au milieu (x, y). a : demi-largeur vers la gauche, b : vers la droite (en px), h : hauteur.
+  // Renvoie les coins utiles : G (gauche), B (bas), D (droite), H (haut), et le dessus (haut des murs).
+  function boite(ctx, x, y, a, b, h, couleur, toit, matiere) {
     const G = [x - a, y], B = [x, y + a / 2], D = [x + b, y + a / 2 - b / 2], H = [x - a + b, y - b / 2];
     // (avec a = b, c'est un losange tout simple : G = (x − a, y), B = (x, y + a/2), D = (x + a, y), H = (x, y − a/2))
     const up = (P) => [P[0], P[1] - h];
-    forme(ctx, [G, B, up(B), up(G)], nuance(couleur, 0.86));
-    forme(ctx, [B, D, up(D), up(B)], nuance(couleur, 0.7));
+    face(ctx, [G, B, up(B), up(G)], couleur, 0.86, h);
+    face(ctx, [B, D, up(D), up(B)], couleur, 0.7, h);
     forme(ctx, [up(G), up(B), up(D), up(H)], toit || nuance(couleur, 1.08));
+    if (vue.detail && h >= 4) {
+      if (matiere && vue.fin) { texture(ctx, G, B, h, matiere); texture(ctx, B, D, h, matiere); }
+      ctx.strokeStyle = "rgba(255, 255, 255, .22)"; ctx.lineWidth = 0.9; ctx.beginPath(); ctx.moveTo(B[0], B[1] - 0.5); ctx.lineTo(B[0], B[1] - h + 0.5); ctx.stroke(); // l'arête au soleil
+      ctx.strokeStyle = "rgba(20, 20, 20, .3)"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(G[0], G[1]); ctx.lineTo(B[0], B[1]); ctx.lineTo(D[0], D[1]); ctx.stroke(); // le pied du mur
+      if (toit) { ctx.strokeStyle = "rgba(255, 255, 255, .3)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(up(G)[0], up(G)[1]); ctx.lineTo(up(B)[0], up(B)[1]); ctx.lineTo(up(D)[0], up(D)[1]); ctx.stroke(); } // le rebord du toit
+    }
     return { G, B, D, H, hG: up(G), hB: up(B), hD: up(D), hH: up(H) };
   }
   const entre = (P, Q, u) => [P[0] + (Q[0] - P[0]) * u, P[1] + (Q[1] - P[1]) * u];
@@ -49,6 +77,11 @@ Megalopole.Maquettes = (function () {
       const lumiere = allume && ((graine * 31 + e * 7 + k * 3 + k0) % 5) < 3;
       ctx.fillStyle = lumiere ? "#ffd866" : couleur || "rgba(150, 190, 215, .85)";
       ctx.beginPath(); ctx.moveTo(p[0][0], p[0][1]); for (let j = 1; j < 4; j++) ctx.lineTo(p[j][0], p[j][1]); ctx.closePath(); ctx.fill();
+      if (vue.fin) { // de près : le cadre clair, et l'appui de fenêtre (un trait sombre dessous)
+        ctx.strokeStyle = "rgba(250, 248, 240, .7)"; ctx.lineWidth = 0.5; ctx.stroke();
+        ctx.strokeStyle = "rgba(30, 30, 30, .35)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(p[0][0], p[0][1] + 0.6); ctx.lineTo(p[1][0], p[1][1] + 0.6); ctx.stroke();
+        if (lumiere) { ctx.fillStyle = "rgba(255, 216, 102, .18)"; ctx.beginPath(); ctx.arc((p[0][0] + p[2][0]) / 2, (p[0][1] + p[2][1]) / 2, 3, 0, TOUR); ctx.fill(); } // le halo de la lampe
+      }
     }
   }
   // Un toit à 2 pentes au-dessus d'une boîte
@@ -57,6 +90,12 @@ Megalopole.Maquettes = (function () {
     forme(ctx, [c.hG, c.hB, s2, s1], nuance(couleur, 0.95));
     forme(ctx, [c.hB, c.hD, c.hD, s2], nuance(couleur, 0.75));
     forme(ctx, [c.hD, c.hH, s1, s2], nuance(couleur, 0.85));
+    if (vue.fin) { // les rangées de tuiles, parallèles au bord du toit
+      ctx.strokeStyle = "rgba(40, 20, 15, .22)"; ctx.lineWidth = 0.6; ctx.beginPath();
+      for (let u = 0.2; u < 1; u += 0.2) { const A = entre(c.hG, s1, u), Bq = entre(c.hB, s2, u); ctx.moveTo(A[0], A[1]); ctx.lineTo(Bq[0], Bq[1]); }
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255, 240, 220, .35)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(s1[0], s1[1]); ctx.lineTo(s2[0], s2[1]); ctx.stroke(); // le faîte
+    }
   }
   function rond(ctx, x, y, r, couleur) { ctx.beginPath(); ctx.arc(x, y, r, 0, TOUR); ctx.fillStyle = couleur; ctx.fill(); }
   function fumee(ctx, x, y, t, sombre) {
@@ -154,7 +193,7 @@ Megalopole.Maquettes = (function () {
     let base = y + 2, haut = null;
     for (let e = 0; e < etapes; e++) {
       const fe = f * (1 - e * 0.22), he = H * (e === 0 ? 0.62 : 0.38 / (etapes - 1));
-      const c = boite(ctx, x, base, fe, fe, he, couleur, toit);
+      const c = boite(ctx, x, base, fe, fe, he, couleur, toit, verre ? "verre" : "beton");
       if (verre) poutres(ctx, c, he, 4);
       fenetres(ctx, c, he, Math.max(1, Math.round(he / 8)), 4, g + e, fen);
       base = c.hH[1] + fe / 2; haut = c;
@@ -181,7 +220,7 @@ Megalopole.Maquettes = (function () {
   // 🏠 Les habitations
   function maison(ctx, x, y, a, h, enduit, toit, g, cheminee) {
     ombre(ctx, x, y, a, a, h + 8);
-    const c = boite(ctx, x, y, a, a, h, enduit);
+    const c = boite(ctx, x, y, a, a, h, enduit, null, "enduit");
     fenetres(ctx, c, h, 1, 2, g, "rgba(120, 160, 190, .9)"); porte(ctx, c, 0.62, h * 0.6);
     toitPointu(ctx, c, a * 0.6, toit);
     if (cheminee && vue.detail) { const p = entre(c.hH, c.hD, 0.35); boite(ctx, p[0], p[1] - 2, 1.6, 1.6, 6, "#8a5a44"); }
@@ -206,12 +245,12 @@ Megalopole.Maquettes = (function () {
       sol(ctx, x, y, 0.95, "#a8b0a0");
       if (vue.detail && niveau === 4) { voiture(ctx, x + 18, y + 6, COULEURS_AUTO[g % 6]); voiture(ctx, x + 24, y + 3, COULEURS_AUTO[(g + 2) % 6]); }
       if (niveau === 4 && w >= 3) { // en L : deux ailes
-        ombre(ctx, x - 6, y - 3, 13, 13, H); const c1 = boite(ctx, x - 6, y - 3, 13, 13, H, col, "#8a8e94"); fenetres(ctx, c1, H, Math.round(H / 9), 2, g); balcons(ctx, c1, H, Math.round(H / 9));
-        ombre(ctx, x + 8, y + 6, 11, 11, H * 0.7); const c2 = boite(ctx, x + 8, y + 6, 11, 11, H * 0.7, nuance(col, 1.08), "#8a8e94"); fenetres(ctx, c2, H * 0.7, Math.round(H * 0.7 / 9), 2, g + 3); toitPlat(ctx, c2, g);
+        ombre(ctx, x - 6, y - 3, 13, 13, H); const c1 = boite(ctx, x - 6, y - 3, 13, 13, H, col, "#8a8e94", "brique"); fenetres(ctx, c1, H, Math.round(H / 9), 2, g); balcons(ctx, c1, H, Math.round(H / 9));
+        ombre(ctx, x + 8, y + 6, 11, 11, H * 0.7); const c2 = boite(ctx, x + 8, y + 6, 11, 11, H * 0.7, col, "#8a8e94", "brique"); fenetres(ctx, c2, H * 0.7, Math.round(H * 0.7 / 9), 2, g + 3); toitPlat(ctx, c2, g);
         return c1.hH;
       }
       ombre(ctx, x, y + 2, f, f, H);
-      const c = boite(ctx, x, y + 2, f, f, H, col, niveau === 4 ? "#8a8e94" : null);
+      const c = boite(ctx, x, y + 2, f, f, H, col, niveau === 4 ? "#8a8e94" : null, "brique");
       fenetres(ctx, c, H, Math.round(H / 9), 3, g); balcons(ctx, c, H, Math.round(H / 9)); porte(ctx, c, 0.5, 7, "#4a3a2a");
       if (niveau === 3 && w % 2 === 0) toitPointu(ctx, c, 7, TOITS[v]); else toitPlat(ctx, c, g);
       if (vue.detail && niveau === 4 && w === 1) { const p = entre(c.hG, c.hD, 0.5); cylindre(ctx, p[0] + 4, p[1] + 1, 3.5, 6, "#a8743a", "#7a5428", "#6a4a24"); } // un réservoir d'eau sur le toit
@@ -222,7 +261,7 @@ Megalopole.Maquettes = (function () {
       sol(ctx, x, y, 0.95, "#9aa898");
       ombre(ctx, x, y + 2, 19, 19, H);
       if (w === 3) { const c = gradins(ctx, x, y, 19, H, 2, col, "#7a8088", "rgba(200, 225, 240, .7)", g, true); return c.hH; }
-      const c = boite(ctx, x, y + 2, 19, 19, H, col, "#8a8e94");
+      const c = boite(ctx, x, y + 2, 19, 19, H, col, "#8a8e94", w === 0 ? "brique" : "beton");
       fenetres(ctx, c, H, Math.round(H / 9), 4, g); balcons(ctx, c, H, Math.round(H / 9), "rgba(255,255,255,.4)");
       if (vue.detail && w === 4) { const p = entre(c.hG, c.hD, 0.5); rond(ctx, p[0] - 4, p[1], 3, "#4f9a46"); rond(ctx, p[0] + 4, p[1] + 1, 2.6, "#5aa84a"); } // un jardin sur le toit
       else toitPlat(ctx, c, g);
@@ -261,7 +300,7 @@ Megalopole.Maquettes = (function () {
       sol(ctx, x, y, 0.97, "#8a8e92");
       if (vue.detail) { ctx.strokeStyle = "rgba(255,255,255,.7)"; ctx.lineWidth = 0.8; ctx.beginPath(); for (let k = 0; k < 4; k++) { ctx.moveTo(x + 6 + k * 5, y + 10 - k * 2.5); ctx.lineTo(x + 12 + k * 5, y + 13 - k * 2.5); } ctx.stroke(); for (let k = 0; k < 3; k++) voiture(ctx, x + 9 + k * 6, y + 9 - k * 3, COULEURS_AUTO[(g + k) % 6]); }
       ombre(ctx, x - 6, y - 2, 20, 16, 15);
-      const c = boite(ctx, x - 6, y - 2, 20, 16, 15, ["#e8e4dc", "#f0e8d0", "#dce4ec", "#ece0e0"][v], "#a8acb0");
+      const c = boite(ctx, x - 6, y - 2, 20, 16, 15, ["#e8e4dc", "#f0e8d0", "#dce4ec", "#ece0e0"][v], "#a8acb0", "beton");
       forme(ctx, [entre(c.G, c.B, 0.2), entre(c.G, c.B, 0.8), [entre(c.G, c.B, 0.8)[0], entre(c.G, c.B, 0.8)[1] - 7], [entre(c.G, c.B, 0.2)[0], entre(c.G, c.B, 0.2)[1] - 7]], "rgba(170, 210, 230, .9)", false);
       enseigne(ctx, entre(c.hG, c.hB, 0.15), entre(c.hG, c.hB, 0.85), 7, ENSEIGNES[(v + w) % 5]); toitPlat(ctx, c, g);
       return c.hH;
@@ -269,7 +308,7 @@ Megalopole.Maquettes = (function () {
     if (niveau === 4) { // 🏬 galerie marchande : du verre, des puits de lumière sur le toit, une entrée couverte
       sol(ctx, x, y, 0.97, "#a8a49c");
       ombre(ctx, x, y + 2, 25, 25, 34);
-      const c = boite(ctx, x, y + 2, 25, 25, 30 + (g % 3) * 3, w % 2 ? VERRES[v] : "#e8e4dc", "#c8ccd2");
+      const c = boite(ctx, x, y + 2, 25, 25, 30 + (g % 3) * 3, w % 2 ? VERRES[v] : "#e8e4dc", "#c8ccd2", w % 2 ? "verre" : "beton");
       fenetres(ctx, c, 30, 3, 5, g, "rgba(210, 230, 245, .8)");
       if (vue.detail) { for (let k = 0; k < 3; k++) { const p = entre(c.hG, c.hD, 0.3 + k * 0.2); forme(ctx, [[p[0] - 5, p[1]], [p[0], p[1] - 2.5], [p[0] + 5, p[1]], [p[0], p[1] + 2.5]], "rgba(150, 200, 230, .95)"); } enseigne(ctx, entre(c.G, c.B, 0.35), entre(c.G, c.B, 0.65), 10, ENSEIGNES[w % 5]); }
       return c.hH;
@@ -284,7 +323,7 @@ Megalopole.Maquettes = (function () {
       if (niveau === 6 && w % 2) { forme(ctx, [[s[0] - 7, s[1] + 3], [s[0] + 7, s[1] + 3], [s[0], s[1] - 22]], "#c8d0d8"); return [s[0], s[1] - 22]; } // une flèche
       return antenne(ctx, s, 16, g);
     }
-    const c = boite(ctx, x, y + 2, f, f, H, col, "#5a6068");
+    const c = boite(ctx, x, y + 2, f, f, H, col, "#5a6068", "verre");
     poutres(ctx, c, H, 5); fenetres(ctx, c, H, Math.round(H / 8), 4, g, "rgba(210, 230, 245, .75)");
     if (vue.detail) { const P = entre(c.hG, c.hB, 0.25), Q = entre(c.hG, c.hB, 0.75); enseigne(ctx, [P[0], P[1] + 8], [Q[0], Q[1] + 8], 6, ENSEIGNES[(g >> 3) % 5]); } // le logo de l'entreprise
     toitPlat(ctx, c, g);
@@ -296,7 +335,7 @@ Megalopole.Maquettes = (function () {
     sol(ctx, x, y, 0.97, niveau >= 5 ? "#b8c0b8" : "#9a948a");
     if (niveau >= 5) { // 🤖 usine robotisée : propre, des panneaux solaires sur le toit, pas de fumée
       ombre(ctx, x, y + 2, 25, 25, 26);
-      const c = boite(ctx, x, y + 2, 25, 25, 24, "#eef0f2", "#c8d0d8");
+      const c = boite(ctx, x, y + 2, 25, 25, 24, "#eef0f2", "#c8d0d8", "bardage");
       if (vue.detail) { forme(ctx, [[c.G[0], c.G[1] - 12], [c.B[0], c.B[1] - 12], [c.B[0], c.B[1] - 17], [c.G[0], c.G[1] - 17]], "rgba(80, 170, 220, .85)", false); forme(ctx, [[c.B[0], c.B[1] - 12], [c.D[0], c.D[1] - 12], [c.D[0], c.D[1] - 17], [c.B[0], c.B[1] - 17]], "rgba(60, 140, 190, .85)", false); for (let k = 0; k < 4; k++) { const p = entre(c.hG, c.hD, 0.2 + k * 0.2); forme(ctx, [[p[0] - 5, p[1] + 1], [p[0] + 1, p[1] - 2], [p[0] + 5, p[1] - 1], [p[0] - 1, p[1] + 2]], "#2a4a7a", false); } }
       return [x, y - 40];
     }
@@ -304,7 +343,7 @@ Megalopole.Maquettes = (function () {
     if (niveau >= 3 && vue.detail) { for (let k = 0; k < (niveau === 4 ? 3 : 2); k++) cylindre(ctx, x + 14 + k * 4, y + 6 - k * 7, 5, 12 + k * 2, "#e8ecf0", "#a8b0b8", "#c8ccd2"); } // les cuves
     if (niveau === 4 && vue.detail) { ctx.strokeStyle = "#e8b830"; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x - 22, y + 4); ctx.lineTo(x - 22, y - 30); ctx.lineTo(x - 4, y - 38); ctx.stroke(); } // une grue
     ombre(ctx, x - 3, y, f, f, H);
-    const c = boite(ctx, x - 3, y, f, f, H, col, "#6a7078");
+    const c = boite(ctx, x - 3, y, f, f, H, col, "#6a7078", "bardage");
     if (vue.detail) { // le toit en dents de scie, et la grande porte de chargement
       for (let k = 0; k < 3; k++) { const A = entre(c.hG, c.hH, k / 3 + 0.05), Bq = entre(c.hB, c.hD, k / 3 + 0.05), A2 = entre(c.hG, c.hH, k / 3 + 0.3), B2 = entre(c.hB, c.hD, k / 3 + 0.3); forme(ctx, [A, Bq, [B2[0], B2[1] - 6], [A2[0], A2[1] - 6]], "#7a8088"); forme(ctx, [Bq, [Bq[0], Bq[1] - 0.1], [B2[0], B2[1] - 6], [B2[0], B2[1] - 6]], "rgba(160, 200, 220, .8)", false); }
       porte(ctx, c, 0.5, H * 0.65, "#5a5e64");
@@ -335,7 +374,7 @@ Megalopole.Maquettes = (function () {
     // 🌿 la ferme verticale : une tour de verre pleine de plantes
     sol(ctx, x, y, 0.95, "#7aa860");
     ombre(ctx, x, y + 2, 18, 18, 72);
-    const c = boite(ctx, x, y + 2, 18, 18, 72, "#5aa070", "#4a8a5a"); fenetres(ctx, c, 72, 9, 3, g, "rgba(140, 220, 140, .85)"); balcons(ctx, c, 72, 9, "rgba(90, 170, 80, .9)");
+    const c = boite(ctx, x, y + 2, 18, 18, 72, "#5aa070", "#4a8a5a", "verre"); fenetres(ctx, c, 72, 9, 3, g, "rgba(140, 220, 140, .85)"); balcons(ctx, c, 72, 9, "rgba(90, 170, 80, .9)");
     if (vue.detail) { const p = entre(c.hG, c.hD, 0.5); rond(ctx, p[0] - 4, p[1], 3.5, "#4f9a46"); rond(ctx, p[0] + 4, p[1] + 1, 3, "#62ad55"); }
     return c.hH;
   }
@@ -346,7 +385,7 @@ Megalopole.Maquettes = (function () {
     const a = t * 32 * 0.82, ti = vue.t, s = t * 0.5 + 0.5;
     switch (type) {
       case "centrale": { sol(ctx, x, y, 0.95 * t, "#8a8278"); if (vue.detail) { forme(ctx, [[x + 14, y + 22], [x + 30, y + 12], [x + 40, y + 18], [x + 26, y + 28]], "#2a2622"); forme(ctx, [[x + 18, y + 20], [x + 29, y + 14], [x + 32, y + 9], [x + 22, y + 15]], "#3a3530"); } // le tas de charbon
-        ombre(ctx, x + 6, y + 6, a * 0.7, a * 0.7, 30); const c = boite(ctx, x + 6, y + 6, a * 0.7, a * 0.7, 22, "#9a5a44", "#4a4c50"); fenetres(ctx, c, 22, 2, 5, 3); porte(ctx, c, 0.5, 12, "#4a4c50");
+        ombre(ctx, x + 6, y + 6, a * 0.7, a * 0.7, 30); const c = boite(ctx, x + 6, y + 6, a * 0.7, a * 0.7, 22, "#9a5a44", "#4a4c50", "brique"); fenetres(ctx, c, 22, 2, 5, 3); porte(ctx, c, 0.5, 12, "#4a4c50");
         for (const dx of [-24, -6]) { const p = cylindre(ctx, x + dx, y - 10, 6, 54, "#b8705a", "#7a4434", "#3a2a20"); if (vue.detail) { ctx.fillStyle = "#e8e4dc"; ctx.fillRect(p[0] - 6, p[1] + 6, 12, 3); } if (marche) fumee(ctx, p[0], p[1] - 3, ti + dx, true); } return [x, y - 70]; }
       case "eolienne": { const p = cylindre(ctx, x, y + 4, 2, 58, "#f4f6f8", "#b8bec6"); const an = ti * (1 + 3 * Megalopole.Reseaux.vent(Megalopole.monde)); ctx.save(); ctx.translate(p[0], p[1]); for (let k = 0; k < 3; k++) { ctx.save(); ctx.rotate(an + (k * TOUR) / 3); forme(ctx, [[-1.3, 0], [1.3, 0], [0.6, -26], [-0.4, -27]], "#fbfcfd"); ctx.restore(); } ctx.restore(); rond(ctx, p[0], p[1], 2, "#c8ccd2"); return [p[0], p[1] - 30]; }
       case "solaire": { for (let r = 0; r < 3; r++) for (let k = 0; k < 4; k++) { const cx = x - 26 + k * 13 + r * 8, cy = y - 10 + r * 9 - k * 6.5; forme(ctx, [[cx - 7, cy + 3], [cx + 4, cy - 2], [cx + 8, cy - 8], [cx - 3, cy - 3]], "#2a4a7a"); } return [x, y - 26]; }
@@ -358,28 +397,40 @@ Megalopole.Maquettes = (function () {
         sol(ctx, x, y, 0.95 * t, "#c8bca0"); // la cour
         if (vue.detail) { forme(ctx, [[x + 2, y + 12], [x + 18, y + 4], [x + 30, y + 10], [x + 14, y + 18]], "#d8743a", false); ctx.strokeStyle = "#fff"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x + 10, y + 8); ctx.lineTo(x + 22, y + 14); ctx.stroke(); cylindre(ctx, x + 27, y + 9, 0.6, 9, "#5a5e64", "#3a3e44"); forme(ctx, [[x + 25, y - 1], [x + 29, y - 1], [x + 29, y + 2], [x + 25, y + 2]], "#fff"); } // le terrain de sport et le panier
         ombre(ctx, x - 6, y - 2, a * 0.6, a * 0.6, H);
-        const c = boite(ctx, x - 6, y - 2, a * 0.6, a * 0.6, H, L2 ? "#d8a07a" : "#c87a5a"); toitPointu(ctx, c, 8, L2 ? "#4a5a7a" : "#8a3a2e"); fenetres(ctx, c, H, L2 ? 3 : 2, 4, 2); porte(ctx, c, 0.5, 8, "#4a3a2a");
+        const c = boite(ctx, x - 6, y - 2, a * 0.6, a * 0.6, H, L2 ? "#d8a07a" : "#c87a5a", null, "brique"); toitPointu(ctx, c, 8, L2 ? "#4a5a7a" : "#8a3a2e"); fenetres(ctx, c, H, L2 ? 3 : 2, 4, 2); porte(ctx, c, 0.5, 8, "#4a3a2a");
         const p = entre(c.hG, c.hD, 0.5); forme(ctx, [[p[0] - 3, p[1] - 6], [p[0] + 3, p[1] - 6], [p[0] + 3, p[1] - 16], [p[0] - 3, p[1] - 16]], "#e8dcc8"); rond(ctx, p[0], p[1] - 12, 1.8, "#c9a040"); // l'horloge
         if (vue.detail) { ctx.strokeStyle = "#3a3e44"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x - 30, y + 6); ctx.lineTo(x - 30, y - 22); ctx.stroke(); forme(ctx, [[x - 30, y - 22], [x - 21, y - 20 + Math.sin(ti * 4)], [x - 30, y - 17]], ["#3f6fc4", "#f2f2f2", "#d0302a"][Math.floor(ti) % 3], false); } // le drapeau
         return [p[0], p[1] - 20]; }
-      case "police": { sol(ctx, x, y, 0.95 * t, "#9a9ea4"); ombre(ctx, x - 4, y, a * 0.62, a * 0.62, 22); const c = boite(ctx, x - 4, y, a * 0.62, a * 0.62, 18, "#c8ccd4", "#3a4a6a"); fenetres(ctx, c, 18, 2, 4, 4); porte(ctx, c, 0.5, 9, "#2f5aa8");
+      case "police": { sol(ctx, x, y, 0.95 * t, "#9a9ea4"); ombre(ctx, x - 4, y, a * 0.62, a * 0.62, 22); const c = boite(ctx, x - 4, y, a * 0.62, a * 0.62, 18, "#c8ccd4", "#3a4a6a", "beton"); fenetres(ctx, c, 18, 2, 4, 4); porte(ctx, c, 0.5, 9, "#2f5aa8");
         forme(ctx, [entre(c.hB, c.hD, 0.05), entre(c.hB, c.hD, 0.95), [entre(c.hB, c.hD, 0.95)[0], entre(c.hB, c.hD, 0.95)[1] + 4], [entre(c.hB, c.hD, 0.05)[0], entre(c.hB, c.hD, 0.05)[1] + 4]], "#2f5aa8");
         for (let k = 0; k < 2; k++) { voiture(ctx, x + 18 + k * 7, y + 10 - k * 3.5, "#f2f2f2"); if (vue.detail && Math.floor(ti * 3 + k) % 2) rond(ctx, x + 18 + k * 7, y + 8 - k * 3.5, 1, "#3a8aff"); }
         if (Math.floor(ti * 2) % 2) rond(ctx, c.hH[0], c.hH[1] + 4, 2.4, "#3a8aff"); return [x, y - 30]; }
-      case "pompiers": { sol(ctx, x, y, 0.95 * t, "#9a9ea4"); ombre(ctx, x, y + 4, a * 0.7, a * 0.7, 22); const c = boite(ctx, x, y + 4, a * 0.7, a * 0.7, 18, "#b8584a", "#4a4c50");
+      case "pompiers": { sol(ctx, x, y, 0.95 * t, "#9a9ea4"); ombre(ctx, x, y + 4, a * 0.7, a * 0.7, 22); const c = boite(ctx, x, y + 4, a * 0.7, a * 0.7, 18, "#b8584a", "#4a4c50", "brique");
         for (let k = 0; k < 2; k++) { const A = entre(c.G, c.B, 0.15 + k * 0.42), Bq = entre(c.G, c.B, 0.45 + k * 0.42); forme(ctx, [A, Bq, [Bq[0], Bq[1] - 12], [A[0], A[1] - 12]], "#e8e4dc"); if (vue.detail) { ctx.strokeStyle = "rgba(120,110,100,.6)"; ctx.lineWidth = 0.6; ctx.beginPath(); for (let r = 1; r < 4; r++) { ctx.moveTo(A[0], A[1] - r * 3); ctx.lineTo(Bq[0], Bq[1] - r * 3); } ctx.stroke(); } }
         if (vue.detail) { const P = entre(c.G, c.B, 0.3); forme(ctx, [[P[0] - 14, P[1] + 6], [P[0] - 2, P[1] + 12], [P[0] - 2, P[1] + 7], [P[0] - 14, P[1] + 1]], "#d0302a"); forme(ctx, [[P[0] - 14, P[1] + 1], [P[0] - 2, P[1] + 7], [P[0] + 1, P[1] + 5.5], [P[0] - 11, P[1] - 0.5]], "#e84a3a"); } // le camion
         boite(ctx, c.D[0] - 8, c.D[1] - 2, 5, 5, 36, "#b8584a"); return [x, y - 40]; }
       case "clinique": case "hopital": { const HO = type === "hopital", H = HO ? 34 : 18;
         sol(ctx, x, y, 0.95 * t, "#c8ccd0");
-        ombre(ctx, x, y + 4, a * 0.72, a * 0.72, H); const c = boite(ctx, x, y + 4, a * 0.72, a * 0.72, H, "#f4f2ec", "#c8ccd2"); fenetres(ctx, c, H, HO ? 4 : 2, 5, 6); porte(ctx, c, 0.5, 9, "rgba(150, 200, 230, .95)");
+        ombre(ctx, x, y + 4, a * 0.72, a * 0.72, H); const c = boite(ctx, x, y + 4, a * 0.72, a * 0.72, H, "#f4f2ec", "#c8ccd2", "beton"); fenetres(ctx, c, H, HO ? 4 : 2, 5, 6); porte(ctx, c, 0.5, 9, "rgba(150, 200, 230, .95)");
         const m = entre(c.B, c.D, 0.5); ctx.fillStyle = "#d0302a"; ctx.fillRect(m[0] - 2, m[1] - H * 0.75, 4, 12); ctx.fillRect(m[0] - 6, m[1] - H * 0.75 + 4, 12, 4);
         if (HO && vue.detail) { const s = entre(c.hG, c.hD, 0.5); forme(ctx, [[s[0] - 9, s[1]], [s[0], s[1] - 4.5], [s[0] + 9, s[1]], [s[0], s[1] + 4.5]], "#3a3e44", false); ctx.strokeStyle = "#f2d040"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.ellipse(s[0], s[1], 7, 3.5, 0, 0, TOUR); ctx.stroke(); ctx.fillStyle = "#fff"; ctx.font = "bold 5px sans-serif"; ctx.textAlign = "center"; ctx.fillText("H", s[0], s[1] + 2); ctx.textAlign = "left"; } // l'héliport
         if (vue.detail) { voiture(ctx, x - 22, y + 12, "#f2f2f2"); if (Math.floor(ti * 3) % 2) rond(ctx, x - 22, y + 10, 1, "#d0302a"); } // l'ambulance
         return [x, y - H - 8]; }
       case "parc": { forme(ctx, losangeDe(x, y, 0.95), "#5aa84a", false); if (vue.detail) { ctx.strokeStyle = "#d8c8a0"; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x - 24, y); ctx.quadraticCurveTo(x, y - 4, x + 24, y); ctx.stroke(); forme(ctx, [[x - 3, y + 6], [x + 3, y + 3], [x + 3, y + 1.5], [x - 3, y + 4.5]], "#8a5a3a"); for (let k = 0; k < 4; k++) rond(ctx, x - 18 + k * 11, y + 7 - (k % 2) * 12, 1, ["#f2e14a", "#e86a8a", "#f2f2f2", "#a87ae0"][k]); } arbre(ctx, x - 10, y - 2, 7, 1, 0); arbre(ctx, x + 11, y + 2, 4, 0.9, 2); return [x, y - 20]; }
       case "grandParc": { forme(ctx, losangeDe(x, y, 0.95 * t), "#5aa84a", false); if (vue.detail) { ctx.strokeStyle = "#d8c8a0"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x - 80, y); ctx.bezierCurveTo(x - 30, y + 20, x + 20, y - 25, x + 80, y); ctx.stroke(); } ctx.beginPath(); ctx.ellipse(x - 14, y + 8, 24, 12, 0, 0, TOUR); ctx.fillStyle = "#5a9ac8"; ctx.fill(); if (vue.detail) { ctx.beginPath(); ctx.ellipse(x - 14, y + 8, 24, 12, 0, 0, TOUR); ctx.strokeStyle = "#d8c8a0"; ctx.lineWidth = 1.5; ctx.stroke(); forme(ctx, [[x - 20, y + 10], [x - 14, y + 7], [x - 10, y + 9], [x - 16, y + 12]], "#f2f2f2"); } for (let k = 0; k < 9; k++) arbre(ctx, x - 44 + ((k * 23) % 88), y - 20 + ((k * 13) % 38), k + 2, 0.9 + (k % 3) * 0.15, k % 3); cylindre(ctx, x + 24, y + 12, 6, 4, "#c9c4ba", "#a8a296", "#7aa8d0"); if (vue.detail) { ctx.strokeStyle = "rgba(220,240,255,.85)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x + 24, y + 8); ctx.quadraticCurveTo(x + 24, y - 4 - Math.sin(ti * 5) * 2, x + 30, y + 8); ctx.stroke(); } return [x, y - 30]; }
-      case "stade": { const R = a * 0.85, r = R / 2, H = 22; ctx.beginPath(); ctx.moveTo(x - R, y); ctx.lineTo(x - R, y - H); ctx.ellipse(x, y - H, R, r, 0, Math.PI, 0, true); ctx.lineTo(x + R, y); ctx.ellipse(x, y, R, r, 0, 0, Math.PI); ctx.closePath(); ctx.fillStyle = "#d8dce2"; ctx.fill(); ctx.strokeStyle = CONTOUR; ctx.stroke(); for (const [f, c] of [[1, "#c8443a"], [0.85, "#3f6fc4"], [0.7, "#e8b830"]]) { ctx.beginPath(); ctx.ellipse(x, y - H, R * f, r * f, 0, 0, TOUR); ctx.fillStyle = c; ctx.fill(); } ctx.beginPath(); ctx.ellipse(x, y - H + 1, R * 0.55, r * 0.55, 0, 0, TOUR); ctx.fillStyle = "#4a9a42"; ctx.fill(); ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.beginPath(); ctx.moveTo(x, y - H + 1 - r * 0.5); ctx.lineTo(x, y - H + 1 + r * 0.5); ctx.stroke(); return [x, y - H - 20]; }
+      case "stade": { const R = a * 0.85, r = R / 2, H = 22; // étape 6 : des gradins, un toit, la pelouse rayée et 4 projecteurs
+        sol(ctx, x, y, 0.95 * t, "#a8a49a");
+        ctx.beginPath(); ctx.moveTo(x - R, y); ctx.lineTo(x - R, y - H); ctx.ellipse(x, y - H, R, r, 0, Math.PI, 0, true); ctx.lineTo(x + R, y); ctx.ellipse(x, y, R, r, 0, 0, Math.PI); ctx.closePath();
+        const gm = ctx.createLinearGradient(x - R, 0, x + R, 0); gm.addColorStop(0, "#e4e8ec"); gm.addColorStop(1, "#a8aeb6"); ctx.fillStyle = gm; ctx.fill(); ctx.strokeStyle = CONTOUR; ctx.stroke();
+        if (vue.detail) { ctx.strokeStyle = "rgba(60, 70, 90, .35)"; ctx.lineWidth = 0.8; ctx.beginPath(); for (let k = 1; k < 5; k++) { ctx.moveTo(x - R, y - k * 4.4); ctx.ellipse(x, y - k * 4.4, R, r, 0, Math.PI, 0, true); } ctx.stroke(); } // les étages
+        for (const [f, c] of [[1, "#c8443a"], [0.86, "#3f6fc4"], [0.72, "#c8443a"]]) { ctx.beginPath(); ctx.ellipse(x, y - H, R * f, r * f, 0, 0, TOUR); ctx.fillStyle = c; ctx.fill(); }
+        if (vue.detail) { ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 0.6; ctx.beginPath(); for (const f of [0.95, 0.9, 0.81, 0.77]) ctx.ellipse(x, y - H, R * f, r * f, 0, 0, TOUR); ctx.stroke(); } // les rangées de sièges
+        ctx.save(); ctx.beginPath(); ctx.ellipse(x, y - H + 1, R * 0.58, r * 0.58, 0, 0, TOUR); ctx.clip();
+        for (let k = -6; k <= 6; k++) { ctx.fillStyle = k % 2 ? "#4a9a42" : "#56a84c"; ctx.fillRect(x + k * R * 0.1 - R * 0.05, y - H - r, R * 0.1, r * 2); } ctx.restore(); // la pelouse rayée
+        ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x, y - H + 1 - r * 0.55); ctx.lineTo(x, y - H + 1 + r * 0.55); ctx.ellipse(x, y - H + 1, R * 0.1, r * 0.1, 0, 0, TOUR); ctx.stroke();
+        forme(ctx, [[x - R * 0.9, y - H - r * 0.25], [x - R * 0.5, y - H - r * 0.85], [x + R * 0.5, y - H - r * 0.85], [x + R * 0.9, y - H - r * 0.25], [x + R * 0.8, y - H - r * 0.05], [x - R * 0.8, y - H - r * 0.05]], "rgba(235, 238, 242, .75)"); // le toit de la tribune du fond
+        for (const [px, py] of [[-1, -0.3], [1, -0.3], [-0.55, -0.95], [0.55, -0.95]]) { const X = x + px * R * 1.02, Y = y - H + py * r; ctx.strokeStyle = "#5a5e64"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(X, Y + H); ctx.lineTo(X, Y - 26); ctx.stroke(); forme(ctx, [[X - 4, Y - 26], [X + 4, Y - 26], [X + 4, Y - 31], [X - 4, Y - 31]], vue.nuit > 0.35 ? "#fff8d0" : "#d8dce2"); if (vue.nuit > 0.35) { ctx.fillStyle = "rgba(255, 245, 200, .18)"; ctx.beginPath(); ctx.moveTo(X - 4, Y - 28); ctx.lineTo(x - R * 0.3, y - H + r * 0.3); ctx.lineTo(x + R * 0.3, y - H + r * 0.3); ctx.lineTo(X + 4, Y - 28); ctx.fill(); } } // les projecteurs
+        return [x, y - H - 34]; }
       case "attractions": { forme(ctx, losangeDe(x, y, 0.95 * t), "#a8c87a", false); // la grande roue, les montagnes russes et un manège
         const rx = x - 30, ry = y - 70, R = 46, an = ti * 0.3;
         ctx.strokeStyle = "#5a6068"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(rx - 20, y - 10); ctx.lineTo(rx, ry); ctx.lineTo(rx + 20, y - 10); ctx.stroke();

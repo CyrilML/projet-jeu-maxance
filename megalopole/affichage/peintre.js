@@ -18,6 +18,7 @@ Megalopole.Peintre = (function () {
   const stats = { cases: 0, objets: 0, voitures: 0, ms: 0 };
 
   const milieu = (c, l) => ({ x: (c - l) * (L / 2), y: (c + l + 1) * (Hc / 2) });
+  const losange = (x, y) => { ctx.moveTo(x - L / 2 - 0.5, y); ctx.lineTo(x, y - Hc / 2 - 0.5); ctx.lineTo(x + L / 2 + 0.5, y); ctx.lineTo(x, y + Hc / 2 + 0.5); };
   function initialiser(t) { toile = t; ctx = t.getContext("2d"); }
 
   const HERBE = [["#7cb35a", "#76ab55"], ["#84ba5e", "#7db358"], ["#8cc062", "#86b95e"]], HERBE_FORET = ["#5f9a48", "#5a9446", "#64a04c"];
@@ -44,7 +45,7 @@ Megalopole.Peintre = (function () {
     stats.voitures = 0;
     const E = Megalopole.Ecran, d = E.densite, cam = monde.camera, z = cam.zoom, k = monde.carte, n = k.colonnes, t = performance.now() / 1000;
     const nuit = 1 - Megalopole.Reseaux.soleil(monde);
-    Mq.vue.nuit = nuit; Mq.vue.detail = z >= 0.55; Mq.vue.t = t;
+    Mq.vue.nuit = nuit; Mq.vue.detail = z >= 0.55; Mq.vue.fin = z >= 0.95; Mq.vue.t = t;
     ctx.setTransform(d, 0, 0, d, 0, 0);
     ctx.fillStyle = "#2a5a3a"; ctx.fillRect(0, 0, E.largeur, E.hauteur);
     ctx.setTransform(d * z, 0, 0, d * z, d * (E.largeur / 2 - cam.x * z), d * (E.hauteur / 2 - cam.y * z));
@@ -59,6 +60,7 @@ Megalopole.Peintre = (function () {
     const parCouleur = new Map();
     const ajouter = (couleur, x, y) => { let l = parCouleur.get(couleur); if (!l) parCouleur.set(couleur, (l = [])); l.push(x, y); };
     const calque = options.calque ? CALQUES[options.calque] : null;
+    const voile = [], gris = [];
     let nCases = 0;
     for (let l = lMin; l <= lMax; l++) for (let c = cMin; c <= cMax; c++) {
       const p = milieu(c, l);
@@ -71,14 +73,24 @@ Megalopole.Peintre = (function () {
       else if (monde.zone[i]) couleur = monde.niveau[i] ? SOL_BATI[monde.zone[i]] : COULEURS_ZONE[monde.zone[i]];
       else if (ter === K.TERRAIN.sable) couleur = (c * 5 + l * 11) % 4 ? "#e4d29a" : "#dccb92";
       else couleur = k.arbre[i] ? HERBE_FORET[k.teinte[i]] : HERBE[k.teinte[i]][(c * 13 + l * 7) % 3 ? 0 : 1];
-      if (calque && ter !== K.TERRAIN.eau) { const cc = calque.couleur(monde, i); couleur = cc || "#5a6a5a"; }
       ajouter(couleur, p.x, p.y);
+      if (calque && ter !== K.TERRAIN.eau) { const cc = calque.couleur(monde, i); (cc ? voile : gris).push(cc, p.x, p.y); } // (étape 6 : le calque se pose PAR-DESSUS la ville)
     }
     for (const [couleur, l] of parCouleur) {
       ctx.beginPath();
       for (let j = 0; j < l.length; j += 2) { const x = l[j], y = l[j + 1]; ctx.moveTo(x - L / 2 - 0.5, y); ctx.lineTo(x, y - Hc / 2 - 0.5); ctx.lineTo(x + L / 2 + 0.5, y); ctx.lineTo(x, y + Hc / 2 + 0.5); }
       ctx.fillStyle = couleur; ctx.fill();
     }
+    // 🗺️ le calque (étape 6, demande de Maxance : « les calques doivent laisser la ville ») : un voile de couleur
+    // transparent sur les cases concernées, et un voile gris sur les autres. Les bâtiments restent dessinés.
+    if (calque) {
+      const parVoile = new Map();
+      for (let j = 0; j < voile.length; j += 3) { let l = parVoile.get(voile[j]); if (!l) parVoile.set(voile[j], (l = [])); l.push(voile[j + 1], voile[j + 2]); }
+      ctx.globalAlpha = 0.6;
+      for (const [couleur, l] of parVoile) { ctx.beginPath(); for (let j = 0; j < l.length; j += 2) losange(l[j], l[j + 1]); ctx.fillStyle = couleur; ctx.fill(); }
+      ctx.globalAlpha = 1; ctx.fillStyle = "rgba(40, 45, 50, .38)"; ctx.beginPath(); for (let j = 0; j < gris.length; j += 3) losange(gris[j + 1], gris[j + 2]); ctx.fill();
+    }
+    couvertureApercu(monde, cMin, cMax, lMin, lMax, visible);
     // ✨ l'eau qui scintille (étape 5) : de petits reflets qui s'allument et s'éteignent
     if (z >= 0.5 && !calque) {
       ctx.strokeStyle = "rgba(235, 248, 255, .75)"; ctx.lineWidth = 1.2; ctx.beginPath();
@@ -104,16 +116,15 @@ Megalopole.Peintre = (function () {
     let nObjets = 0;
     const grosParDiag = new Map();
     for (const b of monde.batiments) { const dg = b.colonne + b.ligne + 2 * (b.taille - 1); (grosParDiag.get(dg) || grosParDiag.set(dg, []).get(dg)).push(b); }
-    const montrerBatiments = !calque || options.calqueBatiments;
-    ctx.globalAlpha = calque ? 0.35 : 1;
+    const montrerBatiments = true, pastilles = []; // (étape 6 : avec un calque, les bâtiments restent, avec une pastille de couleur)
     for (let dg = cMin + lMin; dg <= cMax + lMax; dg++) {
       for (let c = Math.max(cMin, dg - lMax); c <= Math.min(cMax, dg - lMin); c++) {
         const l = dg - c, i = l * n + c, p = milieu(c, l);
         if (!visible(p)) continue;
-        if (monde.route[i]) { if (z >= 0.4 && !calque) nObjets += voitures(monde, i, c, l, p, t); continue; }
+        if (monde.route[i]) { if (z >= 0.4 && !calque) nObjets += voitures(monde, i, c, l, p, t); if (Mq.vue.detail && !calque) lampadaire(monde, i, c, l, p); continue; }
         if (monde.occupe[i]) continue;
         const nv = monde.niveau[i];
-        if (nv && monde.zone[i] && montrerBatiments) { Mq.lot(ctx, Megalopole.Zones.LETTRE[monde.zone[i]], nv, p.x, p.y, (H.pourCase(k.graine, c, l) * 1000) | 0); nObjets++; }
+        if (nv && monde.zone[i] && montrerBatiments) { const haut = Mq.lot(ctx, Megalopole.Zones.LETTRE[monde.zone[i]], nv, p.x, p.y, (H.pourCase(k.graine, c, l) * 1000) | 0); nObjets++; if (calque && haut) { const cc = calque.couleur(monde, i); if (cc) pastilles.push(haut[0], haut[1] - 4, cc, null); } }
         else if (k.arbre[i] && !calque) { // 🌲🌳 étape 5 : 3 sortes d'arbres, et 2 arbres par case dans une forêt (de près)
           const h = H.pourCase(k.graine + 21, c, l), e = k.espece[i];
           Mq.arbre(ctx, p.x - 6 + h * 12, p.y - 2 + h * 5, (c * 7 + l * 13) % 11, 0.9 + h * 0.3, e);
@@ -126,15 +137,17 @@ Megalopole.Peintre = (function () {
         if (!montrerBatiments) continue;
         const m = milieu(b.colonne + (b.taille - 1) / 2, b.ligne + (b.taille - 1) / 2);
         if (m.x < x0 - 200 || m.x > x1 + 200 || m.y < y0 - 50 || m.y > y1 + 50) continue;
-        Mq.gros(ctx, b.type, m.x, m.y, b.taille, b, b.type in { centrale: 1, nucleaire: 1 } ? (b.production || 0) > 0 : true);
+        const haut = Mq.gros(ctx, b.type, m.x, m.y, b.taille, b, b.type in { centrale: 1, nucleaire: 1 } ? (b.production || 0) > 0 : true);
+        if (calque && haut) { const B = C.batiments[b.type], q = pastilleGros(options.calque, B, b); if (q) pastilles.push(haut[0], haut[1] - 6, q[0], q[1]); }
         if (C.batiments[b.type].rayon && b.marche === false && C.batiments[b.type].service !== "loisirs" && z >= 0.4) bulle(m.x, m.y - 30 * b.taille, "⚡");
         nObjets++;
       }
     }
-    ctx.globalAlpha = 1;
+    // les pastilles du calque, par-dessus tout : on voit tout de suite quels bâtiments sont concernés
+    for (let j = 0; j < pastilles.length; j += 4) pastille(pastilles[j], pastilles[j + 1], pastilles[j + 2], pastilles[j + 3], z);
 
     // 4. Ce que fait le maire
-    apercu(monde);
+    apercu(monde, cMin, cMax, lMin, lMax, visible);
     if (monde.selection) { const p = milieu(monde.selection.colonne, monde.selection.ligne); contour(p.x, p.y, 1, "#ffffff", 2.4); }
 
     // 5. La nuit
@@ -160,11 +173,42 @@ Megalopole.Peintre = (function () {
         (R[i] === 2 && R[ll * n + cc] === 2 ? traits.terrePlein : traits.pointilles).push(p.x, p.y, q.x, q.y);
       }
     }
+    // 🚶 étape 6 : les TROTTOIRS (une bande claire là où la route touche autre chose qu'une route), avec leur bordure
+    if (z >= 0.55) {
+      const T = [], bord = [];
+      for (let l = lMin; l <= lMax; l++) for (let c = cMin; c <= cMax; c++) {
+        const i = l * n + c;
+        if (!R[i]) continue;
+        const p = milieu(c, l);
+        if (!visible(p)) continue;
+        const coin = { d: [p.x + L / 2, p.y], b: [p.x, p.y + Hc / 2], g: [p.x - L / 2, p.y], h: [p.x, p.y - Hc / 2] };
+        for (const [dc, dl, A, B] of [[1, 0, coin.d, coin.b], [0, 1, coin.b, coin.g], [-1, 0, coin.g, coin.h], [0, -1, coin.h, coin.d]]) {
+          const cc = c + dc, ll = l + dl;
+          if (cc < 0 || ll < 0 || cc >= n || ll >= n || R[ll * n + cc] || monde.carte.terrain[ll * n + cc] === K.TERRAIN.eau) continue;
+          const A2 = [A[0] + (p.x - A[0]) * 0.2, A[1] + (p.y - A[1]) * 0.2], B2 = [B[0] + (p.x - B[0]) * 0.2, B[1] + (p.y - B[1]) * 0.2];
+          T.push(A, B, B2, A2); bord.push(A2, B2);
+        }
+      }
+      ctx.fillStyle = "#c2beb4"; ctx.beginPath(); for (let j = 0; j < T.length; j += 4) { ctx.moveTo(T[j][0], T[j][1]); ctx.lineTo(T[j + 1][0], T[j + 1][1]); ctx.lineTo(T[j + 2][0], T[j + 2][1]); ctx.lineTo(T[j + 3][0], T[j + 3][1]); } ctx.fill();
+      ctx.strokeStyle = "rgba(90, 88, 84, .8)"; ctx.lineWidth = 0.8; ctx.beginPath(); for (let j = 0; j < bord.length; j += 2) { ctx.moveTo(bord[j][0], bord[j][1]); ctx.lineTo(bord[j + 1][0], bord[j + 1][1]); } ctx.stroke();
+    }
     if (traits.terrePlein.length) { ctx.strokeStyle = "#5a9a4a"; ctx.lineWidth = 4; ctx.beginPath(); for (let j = 0; j < traits.terrePlein.length; j += 4) { ctx.moveTo(traits.terrePlein[j], traits.terrePlein[j + 1]); ctx.lineTo(traits.terrePlein[j + 2], traits.terrePlein[j + 3]); } ctx.stroke(); }
     if (z >= 0.6) { ctx.strokeStyle = "rgba(245, 242, 230, .8)"; ctx.lineWidth = 1.2; ctx.setLineDash([6, 7]); ctx.beginPath(); for (let j = 0; j < traits.pointilles.length; j += 4) { ctx.moveTo(traits.pointilles[j], traits.pointilles[j + 1]); ctx.lineTo(traits.pointilles[j + 2], traits.pointilles[j + 3]); } ctx.stroke(); ctx.setLineDash([]); }
     ctx.lineCap = "butt";
   }
 
+  // 💡 Un lampadaire sur le trottoir, une case sur trois (il s'allume la nuit, avec un halo de lumière)
+  function lampadaire(monde, i, c, l, p) {
+    const n = monde.carte.colonnes, R = monde.route;
+    if ((c * 7 + l * 11) % 3) return;
+    let A = null;
+    if (c + 1 < n && !R[i + 1]) A = [p.x + L / 4 - 2, p.y + Hc / 4 - 1]; else if (l + 1 < n && !R[i + n]) A = [p.x - L / 4 + 2, p.y + Hc / 4 - 1]; else return;
+    if (monde.carte.terrain[i] === K.TERRAIN.eau) return; // (pas sur un pont)
+    const nuit = Mq.vue.nuit;
+    if (nuit > 0.35) { const g = ctx.createRadialGradient(A[0], A[1] + 1, 0, A[0], A[1] + 1, 14); g.addColorStop(0, "rgba(255, 225, 140, " + 0.5 * nuit + ")"); g.addColorStop(1, "rgba(255, 225, 140, 0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(A[0], A[1] + 1, 14, 7, 0, 0, TOUR); ctx.fill(); }
+    ctx.strokeStyle = "#4a4e54"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(A[0], A[1] - 13); ctx.lineTo(A[0] + 3, A[1] - 14); ctx.stroke();
+    ctx.fillStyle = nuit > 0.35 ? "#fff2b0" : "#6a6e74"; ctx.fillRect(A[0] + 2, A[1] - 14.5, 2.4, 1.6);
+  }
   // 🚗 Des voitures sur les routes : plus il y a de trafic, plus il y en a (et elles vont moins vite dans un bouchon)
   const COULEURS_AUTO = ["#c8443a", "#3f6fc4", "#e8b830", "#f2f2ee", "#3f8a4a", "#2a2c30"];
   function voitures(monde, i, c, l, p, t) {
@@ -191,13 +235,45 @@ Megalopole.Peintre = (function () {
     ctx.strokeStyle = couleur; ctx.lineWidth = epaisseur || 1.5; ctx.beginPath();
     ctx.moveTo(x - (L / 2) * taille, y); ctx.lineTo(x, y - (Hc / 2) * taille); ctx.lineTo(x + (L / 2) * taille, y); ctx.lineTo(x, y + (Hc / 2) * taille); ctx.closePath(); ctx.stroke();
   }
+  // La pastille d'un bâtiment sous un calque : un rond de la couleur du calque (et un emoji pour un gros bâtiment)
+  function pastille(x, y, couleur, emoji, z) {
+    const r = (emoji ? 8 : 4.5) / Math.max(0.45, Math.min(1.2, z));
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TOUR); ctx.fillStyle = couleur; ctx.fill(); ctx.strokeStyle = "rgba(255, 255, 255, .95)"; ctx.lineWidth = 1.5 / Math.max(0.45, z); ctx.stroke();
+    if (emoji) { ctx.font = Math.round(r * 1.2) + "px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#000"; ctx.fillText(emoji, x, y + 1); ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; }
+  }
+  // Un gros bâtiment est-il concerné par ce calque ? [couleur, emoji] ou null
+  function pastilleGros(id, B, b) {
+    if (id === "courant") return B.courant ? ["#f2d040", "⚡"] : b.marche === false && B.service !== "loisirs" && B.rayon ? ["#d0302a", "⚡"] : null;
+    if (id === "eau") return B.eau ? ["#3f8ae0", "💧"] : null;
+    if (id === "pollution") return B.pollution ? ["#8a6a4a", "🌫️"] : null;
+    if (id === "trafic") return B.trafic ? ["#c8a040", B.emoji] : null;
+    if (B.service === id) return [CALQUES[id].couleur ? CALQUES[id].couleur({ couverture: { [id]: [1] } }, 0) : "#fff", B.emoji];
+    return null;
+  }
   function bulle(x, y, texte) {
     ctx.fillStyle = "rgba(255, 255, 255, .92)"; ctx.beginPath(); ctx.arc(x, y, 9, 0, TOUR); ctx.fill(); ctx.strokeStyle = "rgba(60, 50, 40, .5)"; ctx.lineWidth = 1; ctx.stroke();
     ctx.font = "11px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#000"; ctx.fillText(texte, x, y + 1); ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
   }
 
+  // 🎯 Étape 6 (demande de Maxance) : en plaçant un service, on voit la zone DÉJÀ couverte par les autres (pâle) et celle
+  // que couvrirait le nouveau (vif). C'est dessiné SOUS les bâtiments, pour que la ville reste visible.
+  function couvertureApercu(monde, cMin, cMax, lMin, lMax, visible) {
+    const f = monde.fantome, Bs = f && f.sorte === "batiment" ? C.batiments[f.valeur] : null;
+    if (!Bs || !Bs.service || !Bs.rayon) return;
+    const t = f.taille, cv = monde.couverture[Bs.service], n = monde.carte.colonnes, coul = CALQUES[Bs.service].couleur({ couverture: { [Bs.service]: [1] } }, 0);
+    ctx.fillStyle = coul; ctx.globalAlpha = 0.32; ctx.beginPath();
+    for (let l = lMin; l <= lMax; l++) for (let c = cMin; c <= cMax; c++) if (cv[l * n + c]) { const p = milieu(c, l); if (visible(p)) losange(p.x, p.y); }
+    ctx.fill();
+    const r = Bs.rayon * Megalopole.Budget.facteurRayon(monde, Bs), nouvelles = [], deja = [];
+    Megalopole.Services.cercle(monde, { colonne: f.colonne, ligne: f.ligne, taille: t }, r, (i) => (cv[i] ? deja : nouvelles).push(i));
+    ctx.globalAlpha = 0.62; ctx.beginPath(); for (const i of nouvelles) { const p = milieu(i % n, (i / n) | 0); losange(p.x, p.y); } ctx.fill();
+    ctx.globalAlpha = 1;
+    const m = milieu(f.colonne + (t - 1) / 2, f.ligne + (t - 1) / 2); // le bord du cercle, bien net
+    ctx.strokeStyle = coul; ctx.lineWidth = 2.5 / Math.max(0.5, monde.camera.zoom); ctx.beginPath(); ctx.ellipse(m.x, m.y, r * L / 2 * 1.41, r * Hc / 2 * 1.41, 0, 0, TOUR); ctx.stroke();
+  }
+
   // 4. L'aperçu de l'outil : les cases du tracé (vert = possible, rouge = impossible), et le bâtiment à poser
-  function apercu(monde) {
+  function apercu(monde, cMin, cMax, lMin, lMax, visible) {
     const o = monde.outil;
     if (!o) return;
     const Co = Megalopole.Construction;
@@ -206,6 +282,7 @@ Megalopole.Peintre = (function () {
     if (o.sorte === "batiment" || o.sorte === "zone") {
       if (!f) return;
       const t = f.taille, m = milieu(f.colonne + (t - 1) / 2, f.ligne + (t - 1) / 2), ok = !f.raison;
+
       ctx.beginPath(); ctx.moveTo(m.x - (L / 2) * t, m.y); ctx.lineTo(m.x, m.y - (Hc / 2) * t); ctx.lineTo(m.x + (L / 2) * t, m.y); ctx.lineTo(m.x, m.y + (Hc / 2) * t); ctx.closePath();
       ctx.globalAlpha = 0.45; ctx.fillStyle = !ok ? "#e04a3a" : f.sorte === "zone" ? C.zones[f.valeur].couleur : "#5ad05a"; ctx.fill(); ctx.globalAlpha = 1;
       ctx.strokeStyle = ok ? "rgba(20, 60, 20, .85)" : "rgba(150, 20, 10, .9)"; ctx.lineWidth = 2 / Math.max(0.5, monde.camera.zoom); ctx.stroke();

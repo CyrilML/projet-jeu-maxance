@@ -83,18 +83,19 @@
     .banque button small { font-size: 0.68rem; color: #7a6a4a; }
     .banque button.verrou { opacity: .5; }
     /* le guide (étape 3) */
-    #guide { top: 116px; left: 8px; width: min(330px, calc(100% - 420px)); min-width: 250px; }
-    #guide .bulle { background: rgba(250, 248, 240, .97); color: #2a2620; border: 3px solid #7a5ab0; border-radius: 12px; padding: 7px 10px; box-shadow: 0 4px 14px rgba(0,0,0,.35); font-size: 0.85rem; }
-    #guide .tete { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
-    #guide .tete .fermer { width: 28px; height: 28px; font-size: 0.8rem; }
-    #guide p { margin: 4px 0 6px; line-height: 1.35; }
-    #guide .pied { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
-    #guide .pied small { margin-right: auto; color: #5a4a7a; font-weight: 700; }
-    #guide .pied button { border: 0; border-radius: 9px; background: #7a5ab0; color: #fff; padding: 6px 10px; font-weight: 700; }
-    #guide .pied button.passer { background: #e4e0d6; color: #4a3a2a; }
-    #guide.compact p, #guide.compact .barre, #guide.compact .pied button, #guide.compact .tete .fermer { display: none; }
-    #guide.compact .bulle { padding: 4px 9px; } #guide.compact .pied { margin-top: 0; }
-    .petit-guide { border: 0; border-radius: 10px; background: #7a5ab0; color: #fff; padding: 6px 10px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+    /* 🎓 l'icône des missions (étape 6) et la page du guide */
+    #onglets button { position: relative; }
+    .badge { position: absolute; right: -6px; bottom: -5px; background: #7a5ab0; color: #fff; font-size: 0.62rem; font-weight: 700; border-radius: 9px; padding: 1px 5px; line-height: 1.3; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+    .badge:empty { display: none; }
+    #onglets button.nouveau { animation: clignote 0.9s ease-in-out 6; }
+    .mission { background: #f2ecfb; border-left: 4px solid #7a5ab0; border-radius: 8px; padding: 6px 9px; margin: 6px 0; }
+    .mission .pied { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+    .mission .pied small { margin-right: auto; color: #5a4a7a; font-weight: 700; }
+    .mission .pied button { border: 0; border-radius: 9px; background: #7a5ab0; color: #fff; padding: 6px 10px; font-weight: 700; }
+    .mission .pied button.passer { background: #e4e0d6; color: #4a3a2a; }
+    .liste-missions { list-style: none; padding: 0; margin: 4px 0; }
+    .liste-missions li { padding: 3px 0; border-bottom: 1px solid #ece6d6; }
+    .liste-missions li.faite { color: #6a7a6a; } .liste-missions li.encours { font-weight: 700; color: #4a3a7a; }
     .groupe.clignote { animation: clignote 1s ease-in-out infinite; }
     @keyframes clignote { 50% { background: #c9b4f0; box-shadow: 0 0 0 3px #7a5ab0; } }
     /* ✅ / ❌ : confirmer un tracé fait au doigt */
@@ -144,9 +145,6 @@
       .pastille { font-size: 0.78rem; padding: 4px 7px; }
       #rci { height: 46px; }
       #calques, #onglets, #panneau { top: 122px; }
-      #guide { top: 168px; width: calc(100% - 76px); min-width: 0; }
-      #guide .bulle { font-size: 0.78rem; padding: 6px 8px; } #guide .pied button { padding: 5px 8px; }
-      #panneau.ouvert ~ #guide, #tiroir.ouvert ~ #guide { display: none; } /* (petit écran : un seul panneau à la fois) */
       #outil-en-cours { white-space: normal; text-align: center; width: max-content; max-width: calc(100% - 16px); font-size: 0.78rem; }
       #confirmer { bottom: 72px; font-size: 0.75rem; padding: 4px 5px 4px 9px; gap: 5px; }
       #confirmer small { display: none; } #confirmer br { display: none; }
@@ -163,7 +161,7 @@
 <body>
   <header>
     <h1>🌐 La Mégalopole</h1>
-    <span><span id="version" class="version"></span> <a href="carnet.html#etape5">📓 Le carnet de la Mégalopole</a> · <a href="../index.html">🏠 Accueil</a></span>
+    <span><span id="version" class="version"></span> <a href="carnet.html#etape6">📓 Le carnet de la Mégalopole</a> · <a href="../index.html">🏠 Accueil</a></span>
   </header>
 
   <div id="jeu">
@@ -186,6 +184,7 @@
     </div>
     <div id="calques" class="flottant"><button id="bouton-calques">🗺️ Calques</button><div id="liste-calques"></div></div>
     <div id="onglets" class="flottant">
+      <button data-onglet="guide" title="Les missions du guide">🎓<span id="badge-guide" class="badge"></span></button>
       <button data-onglet="reclamations" title="Ce que réclament les habitants">📢</button>
       <button data-onglet="besoins" title="Les besoins et le bonheur">😊</button>
       <button data-onglet="budget" title="Le budget et les impôts">🧾</button>
@@ -196,7 +195,6 @@
     <div id="outil-en-cours" class="flottant"></div>
     <div id="outils" class="flottant"></div>
     <div id="message" class="flottant"></div>
-    <div id="guide" class="flottant"></div>
     <div id="confirmer" class="flottant"></div>
     <div id="voile" class="flottant"></div>
   </div>
@@ -212,26 +210,26 @@
     <section><h2>💾 Base de données <button id="effacer-base">Effacer</button></h2><pre id="base"></pre></section>
   </div>
 
-  <script src="config.js?v=6"></script>
-  <script src="moteur/evenements.js?v=6"></script>
-  <script src="moteur/ecran.js?v=6"></script>
-  <script src="moteur/entrees.js?v=6"></script>
-  <script src="moteur/hasard.js?v=6"></script>
-  <script src="moteur/iso.js?v=6"></script>
-  <script src="logique/carte.js?v=6"></script>
-  <script src="logique/construction.js?v=6"></script>
-  <script src="logique/reseaux.js?v=6"></script>
-  <script src="logique/services.js?v=6"></script>
-  <script src="logique/zones.js?v=6"></script>
-  <script src="logique/population.js?v=6"></script>
-  <script src="logique/budget.js?v=6"></script>
-  <script src="logique/guide.js?v=6"></script>
-  <script src="donnees/sauvegarde.js?v=6"></script>
-  <script src="logique/monde.js?v=6"></script>
-  <script src="affichage/maquettes.js?v=6"></script>
-  <script src="affichage/peintre.js?v=6"></script>
-  <script src="affichage/interface.js?v=6"></script>
-  <script src="affichage/sous-le-capot.js?v=6"></script>
-  <script src="main.js?v=6"></script>
+  <script src="config.js?v=7"></script>
+  <script src="moteur/evenements.js?v=7"></script>
+  <script src="moteur/ecran.js?v=7"></script>
+  <script src="moteur/entrees.js?v=7"></script>
+  <script src="moteur/hasard.js?v=7"></script>
+  <script src="moteur/iso.js?v=7"></script>
+  <script src="logique/carte.js?v=7"></script>
+  <script src="logique/construction.js?v=7"></script>
+  <script src="logique/reseaux.js?v=7"></script>
+  <script src="logique/services.js?v=7"></script>
+  <script src="logique/zones.js?v=7"></script>
+  <script src="logique/population.js?v=7"></script>
+  <script src="logique/budget.js?v=7"></script>
+  <script src="logique/guide.js?v=7"></script>
+  <script src="donnees/sauvegarde.js?v=7"></script>
+  <script src="logique/monde.js?v=7"></script>
+  <script src="affichage/maquettes.js?v=7"></script>
+  <script src="affichage/peintre.js?v=7"></script>
+  <script src="affichage/interface.js?v=7"></script>
+  <script src="affichage/sous-le-capot.js?v=7"></script>
+  <script src="main.js?v=7"></script>
 </body>
 </html>

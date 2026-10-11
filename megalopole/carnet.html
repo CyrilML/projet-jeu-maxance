@@ -129,6 +129,7 @@
       <a href="#etape3">Étape 3</a>
       <a href="#etape4">Étape 4</a>
       <a href="#etape5">Étape 5</a>
+      <a href="#etape6">Étape 6</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="index.html">▶ Jouer</a>
@@ -444,7 +445,7 @@
             <li>☐ Zoome sur tes quartiers : piscines, balcons, enseignes, parkings, silos, ombres… Chaque maison a son modèle.</li>
             <li>☐ 🆕 Nouvelle ville : la mer et sa plage, une rivière et son affluent, des lacs, des forêts de sapins, de chênes et de bouleaux.</li>
             <li>☐ Ton ancienne ville est retrouvée, avec sa carte.</li>
-            <li>Vérifie « version 6 » en haut de la page.</li>
+            <li>(La version a avancé depuis : vérifie le numéro de l'étape 6.)</li>
           </ul>
         </div>
       </div>
@@ -481,6 +482,62 @@
       <details class="question"><summary>Pourquoi les maisons ne se déplacent-elles pas ?</summary><p>Parce que ce ne sont pas les tiennes : ce sont les habitants qui les construisent sur tes zones. Toi, tu peux déplacer ce que la mairie a construit (les gros bâtiments).</p></details>
     </section>
 
+    <section id="etape6">
+      <h2>🎯 Étape 6 : calques, missions, réalisme et couverture <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les calques laissent voir la ville, les missions ont leur icône 🎓, les bâtiments sont plus vrais (lumière, matières, trottoirs, lampadaires), et en posant un service on voit ce qu'il couvre. <a href="index.html"><strong>▶ la Mégalopole</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>megalopole/demandes/06-calques-missions-realisme.md</code>.</p>
+          <ul>
+            <li>✍️ « Les calques doivent laisser la ville, sinon on ne voit pas quels bâtiments sont concernés. »</li>
+            <li>✍️ « Les missions doivent apparaître dans une icône dédiée. »</li>
+            <li>✍️ « Les bâtiments restent très sommaires : tu peux faire mieux en termes de design et de réalité. »</li>
+            <li>✍️ « Quand on place un bâtiment, on devrait voir la zone qu'il couvre et la zone déjà couverte. »</li>
+            <li>Ton choix : <strong>la 2D très détaillée</strong>.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ 🗺️ Calque ⚡ : la ville reste visible ; les bâtiments sans courant ont une pastille rouge.</li>
+            <li>☐ 🎓 L'icône des missions (« 1/9 ») : la mission en cours et la liste des 9 missions.</li>
+            <li>☐ Choisis une école : le pâle = déjà couvert, le vif = ce qu'elle ajouterait (« 🎯 +N terrains »).</li>
+            <li>☐ Zoome très près : briques, reflets sur les vitres, tuiles, trottoirs, lampadaires. La nuit, ils s'allument.</li>
+            <li>☐ Le stade : gradins, pelouse rayée, projecteurs.</li>
+            <li>Vérifie « version 7 » en haut de la page.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>🔧 Sous le capot n° 1 : peindre par couches (les calques)</h3>
+      <p>Avant, un calque <em>remplaçait</em> le sol et rendait les bâtiments transparents. Maintenant, le peintre peint par <strong>couches</strong>, comme des feuilles de calque posées les unes sur les autres :</p>
+      <pre style="white-space: pre-wrap">  1. le sol normal (herbe, routes…)
+  2. un voile de couleur TRANSPARENT (60 %) sur les cases concernées, un voile gris sur les autres
+  3. les bâtiments, bien opaques
+  4. les pastilles, tout en haut : rouge = pas de courant, bleu = de l'eau…</pre>
+      <p>La transparence se règle avec <code>globalAlpha</code> : 1 = opaque, 0 = invisible, 0,6 = on voit encore un peu dessous.</p>
+
+      <h3>🔧 Sous le capot n° 2 : la lumière fait le réalisme</h3>
+      <p>Une face de bâtiment n'a plus <em>une</em> couleur, mais un <strong>dégradé</strong> : plus claire en haut (le soleil), plus sombre au pied du mur (l'ombre du sol). Ajoute une arête éclairée, un trait sombre au pied, et des petites lignes pour la matière (joints de briques, dalles de béton, reflet des vitres) : l'œil croit voir un vrai bâtiment !</p>
+      <p>Pour que le jeu reste rapide, les détails dépendent du zoom : de loin, des boîtes simples ; de près, la lumière ; de très près (zoom ≥ 0,95), les textures, les cadres de fenêtres et les tuiles. On appelle ça le <strong>niveau de détail</strong>.</p>
+
+      <h3>🔧 Sous le capot n° 3 : la couverture</h3>
+      <p>Chaque service a sa carte invisible (<code>couverture</code>) : 1 = couvert, 0 = pas couvert. En plaçant un service, le jeu regarde chaque case de son cercle : déjà à 1 ? Elle ne gagne rien. À 0 ? C'est une case <strong>nouvelle</strong>. Il compte les terrains nouveaux : c'est le « 🎯 +N ».</p>
+
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Calque 🎓 Éducation : quelles maisons n'ont pas de pastille bleue ? Pose une école pour elles.</li>
+        <li>Avec une école en main, cherche la place qui donne le plus grand « 🎯 +N ».</li>
+        <li>Baisse le budget 🎓 à 50 % (🧾), puis reprends une école : le cercle est-il plus petit ?</li>
+        <li>Zoome au maximum sur un immeuble en briques, puis sur une tour de verre : quelles différences ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi dessiner l'aperçu de couverture SOUS les bâtiments ?</summary><p>Pour que les bâtiments restent visibles : sinon le voile de couleur les cacherait, comme avant avec les calques.</p></details>
+      <details class="question"><summary>Une école couvre 80 terrains, dont 50 déjà couverts. Combien en ajoute-t-elle ?</summary><p>80 − 50 = 30 terrains nouveaux : « 🎯 +30 ».</p></details>
+      <details class="question"><summary>Pourquoi ne pas dessiner les briques quand on voit toute la ville de loin ?</summary><p>On ne les verrait pas (trop petites), et dessiner des milliers de lignes ralentirait le jeu. C'est le niveau de détail.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route de la Mégalopole</h2>
@@ -491,10 +548,11 @@
         <div class="carte fait"><div class="num">3</div><h4>🎓 Un guide, et tracer au doigt <span class="etiquette">✅ fait · à valider</span></h4><p>9 missions pas à pas pour bien commencer ; sur téléphone, 1 doigt bouge la carte, on touche le départ et l'arrivée, puis ✅.</p><p class="apprend"><b>Tu apprends :</b> vérifier un résultat, distinguer un toucher d'un glisser. <b>Durée :</b> 1 séance.</p></div>
         <div class="carte fait"><div class="num">4</div><h4>👻 Le fantôme et l'aimant <span class="etiquette">✅ fait · à valider</span></h4><p>Bâtiments et zones se posent pareil : un fantôme collé à la route, puis ✅ ; les zones par lots de 3 × 3.</p><p class="apprend"><b>Tu apprends :</b> un algorithme de recherche (essayer toutes les places, garder la meilleure note). <b>Durée :</b> 1 séance.</p></div>
         <div class="carte fait"><div class="num">5</div><h4>🏗️ Déplacer, de beaux bâtiments, une vraie carte <span class="etiquette">✅ fait · à valider</span></h4><p>Un maintien long pour déplacer (gratuit), plusieurs modèles détaillés par niveau, des ombres, la mer, des rivières, des lacs et de grandes forêts.</p><p class="apprend"><b>Tu apprends :</b> une graine qui choisit un modèle, construire une rivière avec des points. <b>Durée :</b> 2 séances.</p></div>
-        <div class="carte prochain"><div class="num">6</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
-        <div class="carte"><div class="num">7</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
-        <div class="carte"><div class="num">8</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
-        <div class="carte"><div class="num">9</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
+        <div class="carte fait"><div class="num">6</div><h4>🎯 Calques, missions, réalisme, couverture <span class="etiquette">✅ fait · à valider</span></h4><p>Les calques par-dessus la ville avec des pastilles, l'icône 🎓, la lumière et les matières, trottoirs et lampadaires, l'aperçu de couverture.</p><p class="apprend"><b>Tu apprends :</b> peindre par couches, la transparence, le niveau de détail. <b>Durée :</b> 1 à 2 séances.</p></div>
+        <div class="carte prochain"><div class="num">7</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
+        <div class="carte"><div class="num">8</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
+        <div class="carte"><div class="num">9</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
+        <div class="carte"><div class="num">10</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
       </div>
     </section>
 
@@ -541,6 +599,14 @@
         <textarea class="journal" id="megalopole-appris-5" data-cle="megalopole-appris-5" placeholder="Ex. : J'ai appris qu'une rivière, c'est une liste de points…"></textarea>
         <label for="megalopole-idees-5"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="megalopole-idees-5" data-cle="megalopole-idees-5" placeholder="Ex. : Un port sur la mer, des bateaux…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 6 · calques, missions, réalisme et couverture <span class="petit">· 11 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les calques en voile transparent avec des pastilles, l'icône 🎓 et sa page des missions, l'aperçu de couverture (pâle / vif, « 🎯 +N »), la lumière et les matières des façades, les fenêtres et les tuiles de près, les trottoirs et les lampadaires, le nouveau stade.</p>
+        <label for="megalopole-appris-6"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="megalopole-appris-6" data-cle="megalopole-appris-6" placeholder="Ex. : J'ai appris qu'un dégradé de lumière rend un dessin plus réel…"></textarea>
+        <label for="megalopole-idees-6"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="megalopole-idees-6" data-cle="megalopole-idees-6" placeholder="Ex. : Des gens qui marchent sur les trottoirs…"></textarea>
       </div>
     </section>
   </main>
