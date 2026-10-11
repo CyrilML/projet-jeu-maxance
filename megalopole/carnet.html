@@ -130,6 +130,7 @@
       <a href="#etape4">Étape 4</a>
       <a href="#etape5">Étape 5</a>
       <a href="#etape6">Étape 6</a>
+      <a href="#etape7">Étape 7</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="index.html">▶ Jouer</a>
@@ -505,7 +506,7 @@
             <li>☐ Choisis une école : le pâle = déjà couvert, le vif = ce qu'elle ajouterait (« 🎯 +N terrains »).</li>
             <li>☐ Zoome très près : briques, reflets sur les vitres, tuiles, trottoirs, lampadaires. La nuit, ils s'allument.</li>
             <li>☐ Le stade : gradins, pelouse rayée, projecteurs.</li>
-            <li>Vérifie « version 7 » en haut de la page.</li>
+            <li>(La version a avancé depuis : vérifie le numéro de l'étape 7.)</li>
           </ul>
         </div>
       </div>
@@ -538,6 +539,43 @@
       <details class="question"><summary>Pourquoi ne pas dessiner les briques quand on voit toute la ville de loin ?</summary><p>On ne les verrait pas (trop petites), et dessiner des milliers de lignes ralentirait le jeu. C'est le niveau de détail.</p></details>
     </section>
 
+    <section id="etape7">
+      <h2>🔧 Étape 7 : la 3ᵉ rangée des lots, et la croix <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Deux bugs trouvés par Maxance en testant : bravo, c'est exactement le travail d'un directeur de jeu ! <a href="index.html"><strong>▶ la Mégalopole</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>megalopole/demandes/07-lots-et-croix.md</code>.</p>
+          <ul>
+            <li>✍️ « Les zones font trois cases, mais la troisième, la plus éloignée de la route, ne construit pas. »</li>
+            <li>✍️ « Quand on clique sur la croix, cela continue de poser le bâtiment au clic sur la map. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Un lot 🏠 collé à une route (avec courant et eau) : les 3 rangées construisent.</li>
+            <li>☐ Avec un outil en main, ❌ (ou ✖ du tiroir) : toucher la carte ne pose plus rien.</li>
+            <li>☐ Après ✅, l'outil reste en main pour en poser un autre.</li>
+            <li>Vérifie « version 8 » en haut de la page.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔧 Sous le capot : deux nombres qui ne s'accordaient pas</h3>
+      <pre style="white-space: pre-wrap">  route  ═══════════════
+  rangée 1   🏠 🏠 🏠   ← à 1 case de la route  ✅
+  rangée 2   🏠 🏠 🏠   ← à 2 cases              ✅
+  rangée 3   🏠 🏠 🏠   ← à 3 cases  ❌ avant (accesMax = 2)  ✅ maintenant (accesMax = 3)</pre>
+      <p>Le lot (<code>placement.lot = 3</code>) et la distance d'accès (<code>routes.accesMax</code>) sont deux réglages de <code>config.js</code> qui doivent aller ensemble. Le bug venait de là : un réglage changé (le lot, à l'étape 4) sans changer l'autre. Les développeurs appellent ça une <strong>incohérence</strong> : chercher quels nombres dépendent l'un de l'autre, c'est un vrai travail de testeur.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>config.js</code>, remets <code>accesMax: 2</code> : la 3ᵉ rangée s'arrête-t-elle de pousser ?</li>
+        <li>Touche une maison de la 3ᵉ rangée avec 🔎 : regarde « près d'une route ».</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Si les lots faisaient 4 × 4, quelle valeur faudrait-il pour accesMax ?</summary><p>4 : la 4ᵉ rangée serait à 4 cases de la route.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route de la Mégalopole</h2>
@@ -549,10 +587,11 @@
         <div class="carte fait"><div class="num">4</div><h4>👻 Le fantôme et l'aimant <span class="etiquette">✅ fait · à valider</span></h4><p>Bâtiments et zones se posent pareil : un fantôme collé à la route, puis ✅ ; les zones par lots de 3 × 3.</p><p class="apprend"><b>Tu apprends :</b> un algorithme de recherche (essayer toutes les places, garder la meilleure note). <b>Durée :</b> 1 séance.</p></div>
         <div class="carte fait"><div class="num">5</div><h4>🏗️ Déplacer, de beaux bâtiments, une vraie carte <span class="etiquette">✅ fait · à valider</span></h4><p>Un maintien long pour déplacer (gratuit), plusieurs modèles détaillés par niveau, des ombres, la mer, des rivières, des lacs et de grandes forêts.</p><p class="apprend"><b>Tu apprends :</b> une graine qui choisit un modèle, construire une rivière avec des points. <b>Durée :</b> 2 séances.</p></div>
         <div class="carte fait"><div class="num">6</div><h4>🎯 Calques, missions, réalisme, couverture <span class="etiquette">✅ fait · à valider</span></h4><p>Les calques par-dessus la ville avec des pastilles, l'icône 🎓, la lumière et les matières, trottoirs et lampadaires, l'aperçu de couverture.</p><p class="apprend"><b>Tu apprends :</b> peindre par couches, la transparence, le niveau de détail. <b>Durée :</b> 1 à 2 séances.</p></div>
-        <div class="carte prochain"><div class="num">7</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
-        <div class="carte"><div class="num">8</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
-        <div class="carte"><div class="num">9</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
-        <div class="carte"><div class="num">10</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
+        <div class="carte fait"><div class="num">7</div><h4>🔧 La 3ᵉ rangée des lots, et la croix <span class="etiquette">✅ fait · à valider</span></h4><p>accesMax passe à 3 ; ❌ et ✖ lâchent l'outil.</p><p class="apprend"><b>Tu apprends :</b> deux réglages qui dépendent l'un de l'autre. <b>Durée :</b> ½ séance.</p></div>
+        <div class="carte prochain"><div class="num">8</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
+        <div class="carte"><div class="num">9</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
+        <div class="carte"><div class="num">10</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
+        <div class="carte"><div class="num">11</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
       </div>
     </section>
 
@@ -607,6 +646,14 @@
         <textarea class="journal" id="megalopole-appris-6" data-cle="megalopole-appris-6" placeholder="Ex. : J'ai appris qu'un dégradé de lumière rend un dessin plus réel…"></textarea>
         <label for="megalopole-idees-6"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="megalopole-idees-6" data-cle="megalopole-idees-6" placeholder="Ex. : Des gens qui marchent sur les trottoirs…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 7 · la 3ᵉ rangée des lots, et la croix <span class="petit">· 11 octobre 2026</span></h4>
+        <p><strong>Ce qui a été corrigé :</strong> la distance d'accès à la route (3 cases, comme un lot), et ❌ / ✖ qui lâchent maintenant l'outil.</p>
+        <label for="megalopole-appris-7"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="megalopole-appris-7" data-cle="megalopole-appris-7" placeholder="Ex. : J'ai appris qu'un bug peut venir de deux réglages qui ne vont pas ensemble…"></textarea>
+        <label for="megalopole-idees-7"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="megalopole-idees-7" data-cle="megalopole-idees-7" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

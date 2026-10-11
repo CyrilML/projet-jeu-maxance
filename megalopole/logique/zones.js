@@ -4,7 +4,7 @@
 // seconde, le jardinier visite 160 terrains peints, tirés au hasard, et se pose 2 questions pour chacun :
 //
 //   1. Jusqu'où ce terrain PEUT-il grandir ? (son niveau maximum)
-//        il lui faut une route à 2 cases ; l'électricité ; l'eau courante dès le niveau 2 ;
+//        il lui faut une route à 3 cases au plus ; l'électricité ; l'eau courante dès le niveau 2 ;
 //        puis une belle valeur du terrain 💎 et des services (une maison ne devient pas un immeuble sans école !) ;
 //        et le palier de la ville : les gratte-ciel n'arrivent qu'avec une métropole.
 //   2. Les gens ont-ils ENVIE d'y venir ? (son envie, de −1 à +1)
@@ -32,7 +32,7 @@ Megalopole.Zones = (function () {
   function niveauMax(monde, i) {
     const z = lettre(monde, i), v = monde.valeur[i], pol = monde.pollution[i], cv = monde.couverture, nv = monde.niveau[i];
     const palier = C.paliers[Megalopole.Population.palier(monde)];
-    if (monde.routeProche[i] < 0) return { max: 0, manque: "🛣️ une route à 2 cases au plus" };
+    if (monde.routeProche[i] < 0) return { max: 0, manque: "🛣️ une route à " + C.routes.accesMax + " cases au plus" };
     const courant = nv ? monde.courant[i] : Megalopole.Reseaux.possible(monde, i, "courant");
     if (!courant) return { max: 0, manque: "⚡ l'électricité" };
     const eau = nv ? monde.eau[i] : Megalopole.Reseaux.possible(monde, i, "eau");

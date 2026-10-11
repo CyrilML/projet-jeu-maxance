@@ -1,8 +1,8 @@
 // 🔌 LES RÉSEAUX : l'accès aux routes, l'électricité ⚡ et l'eau 💧
 //
-// 1. L'ACCÈS. Un terrain ne peut accueillir un bâtiment que s'il est à 2 cases au plus d'une route : c'est par la
+// 1. L'ACCÈS. Un terrain ne peut accueillir un bâtiment que s'il est à 3 cases au plus d'une route (« accesMax ») : c'est par la
 //    route qu'arrivent les camions de chantier, les habitants, et les tuyaux. On le calcule avec une « tache d'encre »
-//    (une recherche en largeur) qui part de toutes les routes à la fois et s'arrête à 2 cases.
+//    (une recherche en largeur) qui part de toutes les routes à la fois et s'arrête à 3 cases.
 // 2. L'ÉLECTRICITÉ et l'EAU suivent les routes (les câbles et les tuyaux sont sous la chaussée), comme dans le village :
 //    une seconde tache d'encre part des centrales (ou des pompes) le long des routes, et compte la distance. Les
 //    bâtiments les plus PROCHES sont servis d'abord ; quand la production est épuisée, les plus loin n'ont rien : c'est
@@ -29,7 +29,7 @@ Megalopole.Reseaux = (function () {
     return Math.round(B[quoi] * (B.vent ? vent(monde) : 1) * (B.soleil ? soleil(monde) : 1));
   }
 
-  // 1. L'accès : pour chaque case, la route la plus proche (à 2 cases au plus), ou -1
+  // 1. L'accès : pour chaque case, la route la plus proche (à « accesMax » cases au plus), ou -1
   function calculerAcces(monde) {
     const k = monde.carte, n = k.colonnes, N = n * n, proche = monde.routeProche, dist = new Uint8Array(N).fill(255);
     proche.fill(-1);

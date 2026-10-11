@@ -13,7 +13,7 @@ window.Megalopole = window.Megalopole || {};
 
 Megalopole.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 7,
+  version: 8,
   pasFixe: 1 / 120, // s : la boucle avance par petits pas fixes
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 
@@ -36,7 +36,7 @@ Megalopole.CONFIG = {
   routes: {
     route: { prix: 10, entretien: 0.5, capacite: 40, nom: "Route", emoji: "🛣️" }, // étape 2 : entretien en 🪙 par case et par mois
     avenue: { prix: 30, entretien: 1.2, capacite: 100, nom: "Avenue", emoji: "🛤️" },
-    accesMax: 2, // un terrain doit être à 2 cases au plus d'une route pour qu'on y construise
+    accesMax: 3, // un terrain doit être à 3 cases au plus d'une route pour qu'on y construise (étape 7 : 3, comme un lot de zone ; avant 2)
   },
 
   // 🏘️ Les ZONES. On les peint ; les bâtiments y poussent tout seuls, du niveau 1 au niveau max.

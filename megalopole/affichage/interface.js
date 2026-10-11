@@ -64,7 +64,7 @@ Megalopole.Interface = (function () {
     radio.ecouter("mission-reussie", () => { const b = document.querySelector("[data-onglet='guide']"); b.classList.remove("nouveau"); void b.offsetWidth; b.classList.add("nouveau"); });
     $("confirmer").addEventListener("click", (e) => {
       if (e.target.closest("[data-oui]")) demandes.confirmer = true;
-      if (e.target.closest("[data-non]")) demandes.annulerTrace = true;
+      if (e.target.closest("[data-non]")) { demandes.annulerTrace = true; demandes.outil = null; } // (étape 7 : ❌ annule ET lâche l'outil : un toucher sur la carte ne pose plus rien)
     });
     // ✖ fermer le panneau (et la touche Échap)
     $("fermer-panneau").addEventListener("click", fermerPanneau);
@@ -119,7 +119,8 @@ Megalopole.Interface = (function () {
       t.appendChild(b);
     }
     const x = document.createElement("button"); x.className = "fermer"; x.textContent = "✖"; x.title = "Fermer";
-    x.addEventListener("click", fermerTiroir); t.prepend(x); // (en premier, et collé à gauche : toujours visible)
+    x.addEventListener("click", () => { fermerTiroir(); demandes.outil = null; }); // (✖ : on ferme le tiroir et on lâche l'outil)
+    t.prepend(x); // (en premier, et collé à gauche : toujours visible)
     t.classList.add("ouvert");
     marquerGroupes();
   }
