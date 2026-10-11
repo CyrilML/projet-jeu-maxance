@@ -132,12 +132,10 @@ Megalopole.SousLeCapot = (function () {
     h += ligne(gp ? "mission " + gp.numero + " / " + gp.total + " : " + gp.mission.emoji + " " + gp.mission.titre + " · test « " + gp.mission.test + " »" + (m.guide.cache ? " · caché" : "") : "guide", gp ? gp.detail + " · " + Math.round(gp.fait * 100) + " %" : "✅ terminé");
     if (m.enMain) h += ligne("📦 bâtiment soulevé (maintien long) : il attend sa nouvelle place", C.batiments[m.enMain.b.type].emoji + " " + C.batiments[m.enMain.b.type].nom + " · venait de (" + m.enMain.b.colonne + ", " + m.enMain.b.ligne + ")");
     if (m.fantome) h += ligne("👻 fantôme (l'aimant cherche à " + (m.fantome.sorte === "zone" ? C.placement.aimantZone : C.placement.aimant) + " cases) : place · collé à une route · possible", "(" + m.fantome.colonne + ", " + m.fantome.ligne + ") " + m.fantome.taille + "×" + m.fantome.taille + " · " + (m.fantome.collee ? "🧲 oui" : "non") + " · " + (m.fantome.raison ? "🚫 " + m.fantome.raison : "✅"));
-    if (m.fantome && m.fantome.sorte === "batiment" && C.batiments[m.fantome.valeur].service && C.batiments[m.fantome.valeur].rayon) { // 🎯 étape 6
-      const B = C.batiments[m.fantome.valeur], cv = m.couverture[B.service], r = B.rayon * Megalopole.Budget.facteurRayon(m, B); let neufs = 0, deja = 0;
-      Megalopole.Services.cercle(m, { colonne: m.fantome.colonne, ligne: m.fantome.ligne, taille: m.fantome.taille }, r, (i) => { if (m.zone[i]) cv[i] ? deja++ : neufs++; });
-      h += ligne("🎯 aperçu : cercle de " + virgule(r, 1) + " cases · terrains nouveaux · déjà couverts (" + B.service + ")", neufs + " · " + deja);
-    }
     if (m.trace && m.trace.doigt) h += ligne("👆 tracé au doigt : départ → arrivée", "(" + m.trace.depart.colonne + ", " + m.trace.depart.ligne + ") → (" + m.trace.arrivee.colonne + ", " + m.trace.arrivee.ligne + ")" + (m.trace.pret ? " · attend ✅" : " · attend l'arrivée"));
+    // 🏛️ étape 14 : les services en capacité (servis par la route, les plus proches d'abord)
+    h += groupe("🏛️ Les services : places · demande · servis · terrains pas reliés");
+    for (const [t, e] of [["education", "🎓"], ["sante", "🏥"], ["securite", "🚓"], ["feu", "🚒"], ["loisirs", "🎡"], ["transport", "🚌"]]) { const S = (m.services || {})[t]; if (S) h += ligne(e + " " + t + (S.tous ? " (habitants + emplois)" : " (habitants)"), fr(S.capacite) + " · " + fr(S.demande) + " · " + fr(S.servis) + " · " + S.horsReseau); }
     h += groupe("🎨 Le peintre");
     h += ligne("images par seconde · pas de calcul par seconde", mesures.ips + " · " + mesures.majParSeconde);
     h += ligne("cases · objets · voitures dessinés · temps de dessin", P.cases + " · " + P.objets + " · " + P.voitures + " · " + virgule(P.ms, 1) + " ms");

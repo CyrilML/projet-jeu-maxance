@@ -71,6 +71,13 @@ Megalopole.Zones = (function () {
     return { max, manque };
   }
 
+  // (étape 14) pourquoi un terrain n'a pas ce service : il n'y en a pas, ils sont pleins, ou la route n'est pas reliée
+  function pourquoiPasService(monde, t) {
+    const S = (monde.services || {})[t];
+    if (!S || !S.batiments) return "il n'y en a pas encore dans la ville";
+    if (S.servis >= S.capacite - 30 || S.capacite < S.demande) return "ils sont pleins (" + Math.round(S.capacite).toLocaleString("fr-FR") + " places pour " + S.demande.toLocaleString("fr-FR") + ") : construis-en un autre, n'importe où sur une route";
+    return "sa route n'est reliée à aucun d'eux (ou ils n'ont pas d'électricité)";
+  }
   // 📋 Étape 12 : la liste « pour grandir » du panneau de la case : chaque condition du NIVEAU SUIVANT, avec ✅ ou ❌
   //   (seulement ce qui compte pour cette zone : une ferme ne demande ni école, ni parc)
   function conditions(monde, i) {
@@ -88,7 +95,7 @@ Megalopole.Zones = (function () {
         const [seuil, services] = regles[n2 - 2];
         if (seuil > 1) { ajoute(false, "c'est le plus haut niveau"); continue; }
         if (n2 === cible && seuil > 0) ajoute(monde.valeur[i] >= seuil, "💎 un terrain qui vaut " + seuil.toFixed(2).replace(".", ",") + " (il vaut " + monde.valeur[i].toFixed(2).replace(".", ",") + " : des parcs, des services…" + (!monde.collecte[i] ? " ; 🗑️ ses poubelles ne sont pas ramassées : −" + String(C.dechets.valeurSale).replace(".", ",") : "") + (monde.pollution[i] > 0.1 ? " ; 🌫️ trop de pollution" : "") + ")");
-        for (const t of services) if (!liste.some((x) => x.texte === S[t])) ajoute(cv[t][i] || (t === "transport" && z === "I" && monde.route[monde.routeProche[i]] === 2), S[t]);
+        for (const t of services) if (!liste.some((x) => x.texte.startsWith(S[t]))) { const ok = cv[t][i] || (t === "transport" && z === "I" && monde.route[monde.routeProche[i]] === 2); ajoute(ok, S[t] + (ok ? "" : " — " + pourquoiPasService(monde, t))); }
       }
       if (z === "A" && cible >= 2) ajoute(monde.pollution[i] <= 0.2, "🌫️ un air pur (pas d'usine à côté)");
       ajoute(cible <= palier.niveauMax, "🌆 le palier de la ville (niveau " + palier.niveauMax + " au plus pour un(e) " + palier.nom.toLowerCase() + ")");

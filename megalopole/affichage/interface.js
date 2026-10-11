@@ -37,7 +37,7 @@ Megalopole.Interface = (function () {
     if (B.epuration) f.push("🚽 nettoie " + fr(B.epuration));
     if (B.dechets) f.push("🗑️ " + B.dechets + (B.contenance ? " · tient " + fr(B.contenance) : ""));
     if (B.recyclage) f.push("♻️ −30 % (jusqu'à " + B.recyclage + ")");
-    if (B.rayon && B.service) f.push("🎯 " + B.rayon + " cases");
+    if (B.capacite) f.push("👥 " + fr(B.capacite) + (B.pour === "tous" ? " habitants + emplois" : " habitants")); // (étape 14 : une capacité, plus un cercle)
     if (B.pollution) f.push("🌫️ " + "▮".repeat(Math.max(1, Math.round(B.pollution * 5))));
     else if (B.salete) f.push("🌫️ salit autour");
     if (C.budget.carburant[t]) f.push("⛽ carburant");
@@ -287,10 +287,8 @@ Megalopole.Interface = (function () {
       const B = C.batiments[b.type];
       h += "<h3>" + B.emoji + " " + B.nom + "</h3>";
       h += ficheReseau(m, b, B); // (étape 13 : capacité de ce bâtiment, de toute la ville, la demande, et le verdict)
-      if (B.rayon) h += "<p>🎯 Sert un cercle de " + B.rayon + " cases" + (b.marche === false && B.service !== "loisirs" ? " — ⚠️ <b>pas d'électricité</b> : il ne marche pas !" : "") + "</p>";
       if (B.trafic) h += "<p>🚗 Enlève " + Math.round(B.trafic * 100) + " % du trafic autour</p>";
       if (B.joie) h += "<p>😊 +" + B.joie + " de bonheur pour toute la ville</p>";
-      if (b.rayon !== undefined && b.rayon !== B.rayon) h += "<p>🧾 Budget " + C.budget.postes.find((q) => q.id === B.poste).nom.toLowerCase() + " à " + Math.round(Megalopole.Budget.poste(m, B.poste) * 100) + " % : cercle de " + b.rayon.toFixed(1).replace(".", ",") + " cases</p>";
       h += "<p><button data-deplacer='1' class='deplacer'>📦 Déplacer (gratuit)</button> <small>ou maintiens ton doigt dessus</small></p>";
       h += "<p>🔧 Entretien : " + fr(Megalopole.Budget.prix(m, B.entretien) * (B.poste ? Megalopole.Budget.poste(m, B.poste) : 1)) + " 🪙 par mois</p>";
       return h;
@@ -343,6 +341,11 @@ Megalopole.Interface = (function () {
     }
     if (B.recyclage) { const total = (de.demande || 0) / (1 - (de.recycle || 0)), cap = m.batiments.reduce((t, x) => t + (C.batiments[x.type].recyclage || 0), 0), utile = total * C.dechets.recyclage;
       bloc("♻️ Le recyclage", "<p>Capacité : <b>" + fr(B.recyclage) + "</b> déchets en moins</p>", "<p>" + meme + " centre(s)</p><p>Recyclé : <b>" + Math.round((de.recycle || 0) * 100) + " %</b> (au plus 30 %)</p><p>Utile jusqu'à : <b>" + fr(utile) + "</b> · capacité " + fr(cap) + "</p>", cap >= utile ? "<p class='bien'>✅ Le recyclage est au maximum (30 %) : un centre de plus ne servirait à rien.</p>" : "<p>⚠️ Encore " + Math.ceil((utile - cap) / B.recyclage) + " centre(s) pour recycler 30 %.</p>"); }
+    if (B.capacite && B.service) { // 🏛️ étape 14 : un service a une capacité en habitants
+      const S = (m.services || {})[B.service] || {}, nom = { education: "🎓 L'éducation", sante: "🏥 La santé", securite: "🚓 La police", feu: "🚒 Les pompiers", loisirs: "🎡 Les loisirs", transport: "🚌 Les transports" }[B.service], qui = S.tous ? "habitants + emplois" : "habitants", f = Megalopole.Budget.poste(m, B.poste);
+      bloc(nom, "<p>Capacité : <b>" + fr(b.capaciteService || 0) + "</b> " + qui + (f !== 1 ? " <small>(budget à " + Math.round(f * 100) + " %)</small>" : "") + "</p><p>En ce moment : <b>" + fr(b.servis || 0) + "</b></p>" + (b.marche === false && B.service !== "loisirs" ? "<p class='mal'>⚠️ pas d'électricité : il est fermé !</p>" : !b.relie ? "<p class='mal'>⚠️ il ne touche pas de route : il ne sert personne</p>" : ""),
+        "<p>" + (S.batiments || 0) + " bâtiment(s)</p><p>Places : <b>" + fr(S.capacite || 0) + "</b></p><p>Demande : <b>" + fr(S.demande || 0) + "</b> " + qui + "</p>" + (S.horsReseau ? "<p><small>" + S.horsReseau + " terrain(s) pas reliés par la route</small></p>" : ""), verdict(S.capacite || 0, S.demande || 0, B.capacite, "👥"));
+    }
     if (B.courantDechets) blocs.reverse(); // (l'incinérateur : d'abord les déchets, son vrai métier)
     return blocs.join("");
   }
@@ -366,8 +369,8 @@ Megalopole.Interface = (function () {
     h += ligne("🍞", "Nourriture", b.nourris, H, "habitants nourris / habitants", CONS.nourriture);
     h += ligne("🏭", "Biens fabriqués", b.fabriques, H, "habitants servis / habitants", "des zones 🏭 industrie");
     h += ligne("🛍️", "Biens vendus", b.vendus, H, "habitants servis / habitants", "des zones 🛍️ commerce");
-    h += "<h4>🏛️ Les services (habitants couverts)</h4>";
-    for (const [id, emoji, nom] of [["education", "🎓", "Éducation"], ["sante", "🏥", "Santé"], ["securite", "🚓", "Police"], ["feu", "🚒", "Pompiers"], ["loisirs", "🎡", "Loisirs"]]) h += ligne(emoji, nom, b.couverts[id] || 0, H, "habitants couverts", CONS[id]);
+    h += "<h4>🏛️ Les services (des places, comme l'eau)</h4>";
+    for (const [id, emoji, nom] of [["education", "🎓", "Éducation"], ["sante", "🏥", "Santé"], ["securite", "🚓", "Police"], ["feu", "🚒", "Pompiers"], ["loisirs", "🎡", "Loisirs"], ["transport", "🚌", "Transports"]]) { const S = (m.services || {})[id] || { capacite: 0, demande: 0 }; h += ligne(emoji, nom, S.capacite, S.demande, "places / " + (S.tous ? "habitants + emplois" : "habitants") + (S.servis < S.demande && S.capacite >= S.demande ? " · ⚠️ " + fr(S.demande - S.servis) + " pas reliés par la route" : ""), CONS[id]); } // (étape 14 : des places, plus des cercles)
     h += "<h4>😊 Le bonheur : " + m.bonheur + " %</h4><p><small>La moyenne des besoins (avec leur poids). Une ville heureuse grandit vite.</small></p>";
     for (const x of C.besoins) { if ((x.palier || 0) > m.palier) continue; const v = m.besoins[x.id] || 0; h += "<div class='ligne'><span>" + x.emoji + " " + x.nom + "</span>" + barreHTML(v) + "<small>" + Math.round(v * 100) + " %</small></div>"; }
     const suivant = C.paliers[m.palier + 1];
@@ -375,13 +378,12 @@ Megalopole.Interface = (function () {
     if (suivant) h += "<p>Prochain palier : " + suivant.emoji + " " + suivant.nom + " à " + fr(suivant.habitants) + " habitants" + barreHTML(s.habitants / suivant.habitants, "#7a5ab0") + "</p>";
     return h;
   }
-  // 🎯 Ce que couvrirait ce service, en plus de ceux qui existent déjà : le nombre de terrains peints (habitations…)
+  // 🎯 Ce que ce service ajouterait à la ville (étape 14 : des places, plus un cercle) : « +1 500 places : 3 000 / 4 200 »
   function couvertureNouvelle(m, f) {
     const B = f && f.sorte === "batiment" ? C.batiments[f.valeur] : null;
-    if (!B || !B.service || !B.rayon) return null;
-    const cv = m.couverture[B.service]; let neufs = 0, deja = 0;
-    Megalopole.Services.cercle(m, { colonne: f.colonne, ligne: f.ligne, taille: f.taille }, B.rayon * Megalopole.Budget.facteurRayon(m, B), (i) => { if (m.zone[i]) cv[i] ? deja++ : neufs++; });
-    return "🎯 +" + neufs + " terrain(s) couvert(s)" + (deja ? " · " + deja + " déjà couvert(s)" : "");
+    if (!B || !B.service || !B.capacite || (m.enMain && m.enMain.b.type === f.valeur)) return null;
+    const S = (m.services || {})[B.service] || { capacite: 0, demande: 0 }, plus = Math.round(B.capacite * Megalopole.Budget.facteurRayon(m, B));
+    return "🎯 +" + fr(plus) + " places : la ville aura " + fr(S.capacite + plus) + " / " + fr(S.demande) + (S.tous ? " (habitants + emplois)" : " habitants");
   }
   // 🎓 La page des missions : la mission en cours (avec 👉 Montre-moi et Passer), puis la liste de toutes les missions
   function guideHTML(m) {
@@ -412,9 +414,9 @@ Megalopole.Interface = (function () {
     h += "<h4>➖ Les services (de 0 à 150 %)</h4>";
     for (const q of Bu.postes) {
       const f = Bd.poste(m, q.id), cout = q.id === "routes" ? p.routes : p.postes[q.id];
-      h += "<div class='bud'><span>" + q.emoji + " " + q.nom + "</span><span class='pm'>" + pm("poste", q.id + ":-" + Bu.postePas, q.id + ":" + Bu.postePas, Math.round(f * 100) + " %") + "</span><small class='" + (f < 1 ? "mal" : "bien") + "'>" + (q.id === "routes" ? "état " + Math.round(m.etatRoutes * 100) + " %" : f <= 0 ? "fermé !" : "cercle × " + (Bu.rayonMin + (1 - Bu.rayonMin) * f).toFixed(2).replace(".", ",")) + "</small><span class='somme'>−" + fr(cout) + "</span></div>";
+      h += "<div class='bud'><span>" + q.emoji + " " + q.nom + "</span><span class='pm'>" + pm("poste", q.id + ":-" + Bu.postePas, q.id + ":" + Bu.postePas, Math.round(f * 100) + " %") + "</span><small class='" + (f < 1 ? "mal" : "bien") + "'>" + (q.id === "routes" ? "état " + Math.round(m.etatRoutes * 100) + " %" : f <= 0 ? "fermé !" : "places × " + (Bu.rayonMin + (1 - Bu.rayonMin) * f).toFixed(2).replace(".", ",")) + "</small><span class='somme'>−" + fr(cout) + "</span></div>";
     }
-    h += "<p><small>Moins d'argent = un plus petit cercle autour de chaque bâtiment (à 0 %, il ferme). Des routes mal payées s'abîment : bouchons et terrain moins cher. Au-dessus de 100 %, elles se réparent.</small></p>";
+    h += "<p><small>Moins d'argent = moins de places dans chaque bâtiment (à 50 % : 70 % des places ; à 0 %, il ferme). Des routes mal payées s'abîment : bouchons et terrain moins cher. Au-dessus de 100 %, elles se réparent.</small></p>";
     h += "<h4>➖ Le reste</h4>";
     for (const [nom, v] of [["⚡ Centrales (entretien)", p.autres.energie], ["🔥 Carburant des centrales et pompes", p.carburant], ["💧 Eau (entretien)", p.autres.eau], ["🏛️ Mairie", p.autres.mairie], ["🏦 Prêts (mensualités)", p.prets]]) if (v) h += "<div class='bud'><span>" + nom + "</span><span></span><span></span><span class='somme'>−" + fr(v) + "</span></div>";
     h += "<div class='bud total'><span>= " + fr(p.recettes) + " − " + fr(p.depenses) + "</span><span></span><span></span><span class='somme'>" + signe(p.solde) + "</span></div>";

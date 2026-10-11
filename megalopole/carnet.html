@@ -137,6 +137,7 @@
       <a href="#etape11">Étape 11</a>
       <a href="#etape12">Étape 12</a>
       <a href="#etape13">Étape 13</a>
+      <a href="#etape14">Étape 14</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="index.html">▶ Jouer</a>
@@ -787,7 +788,7 @@
           <li>☐ Touche un incinérateur : « CE BÂTIMENT » (600 par mois, ce qu'il brûle) et « TOUTE LA VILLE » (place, déchets jetés).</li>
           <li>☐ Le verdict : ✅ assez (la marge), ⚠️ presque plein, ou ❌ « il en faut N de plus ».</li>
           <li>☐ Une décharge dit : « ⏳ plein dans ≈ N mois ».</li>
-          <li>Vérifie « version 14 » en haut de la page.</li></ul></div>
+          <li>(La version a avancé depuis : vérifie le numéro de l'étape 14.)</li></ul></div>
       </div>
       <h3>🔧 Sous le capot : le calcul du verdict</h3>
       <pre style="white-space: pre-wrap">  marge = capacité de toute la ville − demande
@@ -801,6 +802,30 @@
       <ul><li>Touche ta centrale la plus grosse : quelle est la marge de ta ville en ⚡ ?</li><li>Laisse la ville grandir et retouche une décharge chaque mois : le « plein dans ≈ N mois » diminue-t-il ?</li><li>Touche un centre de recyclage : un deuxième servirait-il à quelque chose ?</li></ul>
       <h3>❓ Quiz</h3>
       <details class="question"><summary>Il manque 700 💧, un forage donne 150. Combien de forages faut-il ?</summary><p>700 ÷ 150 = 4,67, arrondi au-dessus : 5 forages (ou une grande station de pompage de 1 000 !).</p></details>
+    </section>
+
+    <section id="etape14">
+      <h2>👥 Étape 14 : des services en places, plus des cercles <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Une école ne couvre plus un cercle : elle a 1 500 places, et sert les maisons les plus proches par la route. Peu importe où tu la poses, pourvu qu'elle touche une route de la ville ! <a href="index.html"><strong>▶ la Mégalopole</strong></a></p>
+      <div class="grille">
+        <div class="carte"><h4>📋 La demande</h4><p class="petit">Le fichier complet est dans <code>megalopole/demandes/14-services-en-places.md</code>.</p><ul><li>✍️ « Plutôt que des rayons d'action, on pourrait travailler au nombre d'habitants, comme pour le reste. Cela facilitera le placement. »</li><li>Tes choix : <strong>par les routes</strong>, <strong>les capacités proposées</strong>, <strong>plus d'effet de place sur la valeur</strong>.</li></ul></div>
+        <div class="carte"><h4>✅ Ce que tu peux vérifier</h4><ul>
+          <li>☐ Le tiroir des services : « 👥 1 500 habitants » au lieu d'un rayon.</li>
+          <li>☐ Au placement : « 🎯 +1 500 places : la ville aura … / … », plus de cercle.</li>
+          <li>☐ Touche une école : sa capacité, combien elle sert, et s'il en faut une autre.</li>
+          <li>☐ Une maison sans école dit : « elles sont pleines : construis-en une autre ».</li>
+          <li>Vérifie « version 15 » en haut de la page.</li></ul></div>
+      </div>
+      <h3>🔧 Sous le capot : le même réseau que l'eau</h3>
+      <pre style="white-space: pre-wrap">  AVANT :  🏫 ◯ un cercle de 11 cases  →  les maisons DANS le cercle ont l'école
+  APRÈS :  🏫 1 500 places  ──routes──►  🏠 🏠 🏠 … les plus proches d'abord, jusqu'à 1 500 habitants</pre>
+      <p>C'est le même principe que l'eau et les poubelles : une tache d'encre part des routes qui touchent les écoles, et chaque maison prend des places, la plus proche en premier. Les routes reliées entre elles forment un <strong>morceau</strong> ; chaque morceau a sa réserve de places (les écoles d'un quartier séparé ne servent pas l'autre quartier !).</p>
+      <p>Pour la police, les pompiers et les bus, les <strong>emplois comptent aussi</strong> : une usine a besoin des pompiers, même si personne n'y dort.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul><li>Pose une école tout au bout de ta ville : sert-elle quand même les maisons ? (touche-la)</li><li>Ouvre 📊 : quel service a le moins de places par rapport à la demande ?</li><li>Baisse le budget 🎓 à 50 % (🧾) : combien de places reste-t-il à une école ?</li></ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>La ville a 4 000 habitants. Combien d'écoles faut-il ?</summary><p>4 000 ÷ 1 500 = 2,67, arrondi au-dessus : 3 écoles (ou 1 lycée de 5 000 places).</p></details>
+      <details class="question"><summary>Pourquoi la police compte-t-elle aussi les emplois ?</summary><p>Parce que les magasins et les usines doivent être protégés aussi, même si personne n'y habite.</p></details>
     </section>
 
     <!-- ============ FEUILLE DE ROUTE ============ -->
@@ -821,10 +846,11 @@
         <div class="carte fait"><div class="num">11</div><h4>🗑️ Plus d'énergie, plus d'eau, et les déchets <span class="etiquette">✅ fait · à valider</span></h4><p>Gaz, barrage, géothermie, éoliennes en mer, forage, grande pompe, dessalement, épuration, décharge, incinérateur, recyclage ; les fiches du tiroir.</p><p class="apprend"><b>Tu apprends :</b> réutiliser un réseau à l'envers, des bâtiments qui dépendent les uns des autres. <b>Durée :</b> 2 séances.</p></div>
         <div class="carte fait"><div class="num">12</div><h4>📋 Pourquoi ça ne grandit pas ? <span class="etiquette">✅ fait · à valider</span></h4><p>La liste « pour grandir » de chaque case, seulement avec ce qui compte ; la patience de 25 s.</p><p class="apprend"><b>Tu apprends :</b> un bug d'affichage, et une seule source de vérité. <b>Durée :</b> 1 séance.</p></div>
         <div class="carte fait"><div class="num">13</div><h4>🏭 La fiche « réseau » <span class="etiquette">✅ fait · à valider</span></h4><p>Capacité d'un bâtiment, de toute la ville, la demande, et le verdict (il en faut N de plus).</p><p class="apprend"><b>Tu apprends :</b> une marge, arrondir au-dessus. <b>Durée :</b> ½ séance.</p></div>
-        <div class="carte prochain"><div class="num">14</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
-        <div class="carte"><div class="num">15</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
-        <div class="carte"><div class="num">16</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
-        <div class="carte"><div class="num">17</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
+        <div class="carte fait"><div class="num">14</div><h4>👥 Des services en places <span class="etiquette">✅ fait · à valider</span></h4><p>Chaque service a des places, servies par la route ; plus de cercles ; la valeur selon les services reçus.</p><p class="apprend"><b>Tu apprends :</b> réutiliser un réseau, les morceaux de routes reliées. <b>Durée :</b> 1 séance.</p></div>
+        <div class="carte prochain"><div class="num">15</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
+        <div class="carte"><div class="num">16</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
+        <div class="carte"><div class="num">17</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
+        <div class="carte"><div class="num">18</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
       </div>
     </section>
 
@@ -935,6 +961,14 @@
         <textarea class="journal" id="megalopole-appris-13" data-cle="megalopole-appris-13" placeholder="Ex. : J'ai appris à calculer une marge…"></textarea>
         <label for="megalopole-idees-13"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="megalopole-idees-13" data-cle="megalopole-idees-13" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 14 · des services en places <span class="petit">· 11 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la distribution des services par la route (places, morceaux de routes, les plus proches d'abord), la valeur du terrain selon les services reçus, le trafic réduit par les bus et le métro, et toutes les fiches mises à jour.</p>
+        <label for="megalopole-appris-14"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="megalopole-appris-14" data-cle="megalopole-appris-14" placeholder="Ex. : J'ai appris que les services marchent comme l'eau…"></textarea>
+        <label for="megalopole-idees-14"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="megalopole-idees-14" data-cle="megalopole-idees-14" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

@@ -140,7 +140,7 @@ Megalopole.Peintre = (function () {
         if (m.x < x0 - 200 || m.x > x1 + 200 || m.y < y0 - 50 || m.y > y1 + 50) continue;
         const haut = Mq.gros(ctx, b.type, m.x, m.y, b.taille, b, b.type in { centrale: 1, nucleaire: 1 } ? (b.production || 0) > 0 : true);
         if (calque && haut) { const B = C.batiments[b.type], q = pastilleGros(options.calque, B, b); if (q) pastilles.push(haut[0], haut[1] - 6, q[0], q[1]); }
-        if (C.batiments[b.type].rayon && b.marche === false && C.batiments[b.type].service !== "loisirs" && z >= 0.4) bulle(m.x, m.y - 30 * b.taille, "⚡");
+        if (C.batiments[b.type].service && b.marche === false && C.batiments[b.type].service !== "loisirs" && z >= 0.4) bulle(m.x, m.y - 30 * b.taille, "⚡");
         nObjets++;
       }
     }
@@ -244,7 +244,7 @@ Megalopole.Peintre = (function () {
   }
   // Un gros bâtiment est-il concerné par ce calque ? [couleur, emoji] ou null
   function pastilleGros(id, B, b) {
-    if (id === "courant") return B.courant ? ["#f2d040", "⚡"] : b.marche === false && B.service !== "loisirs" && B.rayon ? ["#d0302a", "⚡"] : null;
+    if (id === "courant") return B.courant ? ["#f2d040", "⚡"] : b.marche === false && B.service && B.service !== "loisirs" ? ["#d0302a", "⚡"] : null;
     if (id === "eau") return B.eau ? ["#3f8ae0", "💧"] : B.epuration ? ["#3f8ae0", "🚽"] : null;
     if (id === "dechets") return B.dechets || B.recyclage ? ["#8a7a5a", B.emoji] : null;
     if (id === "pollution") return B.pollution ? ["#8a6a4a", "🌫️"] : null;
@@ -257,21 +257,15 @@ Megalopole.Peintre = (function () {
     ctx.font = "11px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#000"; ctx.fillText(texte, x, y + 1); ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
   }
 
-  // 🎯 Étape 6 (demande de Maxance) : en plaçant un service, on voit la zone DÉJÀ couverte par les autres (pâle) et celle
-  // que couvrirait le nouveau (vif). C'est dessiné SOUS les bâtiments, pour que la ville reste visible.
+  // 🎯 Étape 6, puis 14 : en plaçant un service, on voit les terrains DÉJÀ servis par les autres (pâle). Plus de cercle :
+  // un service sert un nombre d'habitants, les plus proches par la route (la barre du bas dit combien de places il ajoute).
   function couvertureApercu(monde, cMin, cMax, lMin, lMax, visible) {
     const f = monde.fantome, Bs = f && f.sorte === "batiment" ? C.batiments[f.valeur] : null;
-    if (!Bs || !Bs.service || !Bs.rayon) return;
-    const t = f.taille, cv = monde.couverture[Bs.service], n = monde.carte.colonnes, coul = CALQUES[Bs.service].couleur({ couverture: { [Bs.service]: [1] } }, 0);
-    ctx.fillStyle = coul; ctx.globalAlpha = 0.32; ctx.beginPath();
+    if (!Bs || !Bs.service) return;
+    const cv = monde.couverture[Bs.service], n = monde.carte.colonnes, coul = CALQUES[Bs.service].couleur({ couverture: { [Bs.service]: [1] } }, 0);
+    ctx.fillStyle = coul; ctx.globalAlpha = 0.38; ctx.beginPath();
     for (let l = lMin; l <= lMax; l++) for (let c = cMin; c <= cMax; c++) if (cv[l * n + c]) { const p = milieu(c, l); if (visible(p)) losange(p.x, p.y); }
-    ctx.fill();
-    const r = Bs.rayon * Megalopole.Budget.facteurRayon(monde, Bs), nouvelles = [], deja = [];
-    Megalopole.Services.cercle(monde, { colonne: f.colonne, ligne: f.ligne, taille: t }, r, (i) => (cv[i] ? deja : nouvelles).push(i));
-    ctx.globalAlpha = 0.62; ctx.beginPath(); for (const i of nouvelles) { const p = milieu(i % n, (i / n) | 0); losange(p.x, p.y); } ctx.fill();
-    ctx.globalAlpha = 1;
-    const m = milieu(f.colonne + (t - 1) / 2, f.ligne + (t - 1) / 2); // le bord du cercle, bien net
-    ctx.strokeStyle = coul; ctx.lineWidth = 2.5 / Math.max(0.5, monde.camera.zoom); ctx.beginPath(); ctx.ellipse(m.x, m.y, r * L / 2 * 1.41, r * Hc / 2 * 1.41, 0, 0, TOUR); ctx.stroke();
+    ctx.fill(); ctx.globalAlpha = 1;
   }
 
   // 4. L'aperçu de l'outil : les cases du tracé (vert = possible, rouge = impossible), et le bâtiment à poser
@@ -291,7 +285,6 @@ Megalopole.Peintre = (function () {
       if (f.sorte === "batiment") {
         ctx.globalAlpha = 0.6; Mq.gros(ctx, f.valeur, m.x, m.y, t, null, true); ctx.globalAlpha = 1;
         const B = C.batiments[f.valeur];
-        if (B.rayon) { ctx.strokeStyle = "rgba(255, 255, 255, .6)"; ctx.setLineDash([6, 6]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(m.x, m.y, B.rayon * L / 2 * 1.41, B.rayon * Hc / 2 * 1.41, 0, 0, TOUR); ctx.stroke(); ctx.setLineDash([]); }
       } else { ctx.font = "20px sans-serif"; ctx.textAlign = "center"; ctx.fillText(C.zones[f.valeur].emoji, m.x, m.y + 6); ctx.textAlign = "left"; }
       if (f.collee) bulle(m.x + (L / 2) * t - 6, m.y - 4, "🧲"); // (collé à une route)
       return;
