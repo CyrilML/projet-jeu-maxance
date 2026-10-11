@@ -112,6 +112,7 @@ Megalopole.SousLeCapot = (function () {
     h += ligne("cases de route · bouchons (trafic > 100 %) · trafic moyen", T.routes + " · " + T.bouchons + " · " + Math.round(T.moyen * 100) + " %");
     h += ligne("terrains peints · gros bâtiments", fr(m.zonees.length) + " · " + m.batiments.length);
     h += ligne("🌱 le jardinier : bâtiments grandis · baissés (depuis le début)", fr(m.compteurs.grandis) + " · " + fr(m.compteurs.baisses));
+    { let attendent = 0; for (const i of m.zonees) if (m.depuis[i]) attendent++; h += ligne("⏳ étape 12 : terrains qui ont un problème (ils baissent seulement après " + C.croissance.patience + " s)", fr(attendent)); }
     // 🧾 le trésorier (étape 2) : la prévision du mois, ligne par ligne, avec ses formules
     const p = Bd.prevision(m), Df = Bd.difficulte(m);
     h += groupe("🧾 Le trésorier (prévision du mois en cours)");

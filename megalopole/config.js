@@ -13,7 +13,7 @@ window.Megalopole = window.Megalopole || {};
 
 Megalopole.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 12,
+  version: 13,
   pasFixe: 1 / 120, // s : la boucle avance par petits pas fixes
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 
@@ -71,6 +71,7 @@ Megalopole.CONFIG = {
     attente: 6, // s qu'un terrain attend après avoir changé de niveau
     seuil: 0.15, // l'envie de construire doit dépasser ce seuil
     eauDesLeNiveau: 2, // sans eau courante, on ne dépasse pas le niveau 1
+    patience: 25, // s (étape 12) : un bâtiment ne perd un niveau que si le problème dure (un coup de vent faible, la nuit…)
   },
 
   // 🌆 Les PALIERS de la ville (selon les habitants). Chaque palier débloque des bâtiments et des niveaux plus hauts.

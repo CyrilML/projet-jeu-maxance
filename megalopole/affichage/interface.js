@@ -302,16 +302,15 @@ Megalopole.Interface = (function () {
       const nv = m.niveau[i], Zc = C.zones[z], nm = Z.niveauMax(m, i), e = Z.envie(m, i);
       h += "<h3>" + Zc.emoji + " " + Zc.niveaux[nv] + " <small>(niveau " + nv + ")</small></h3>";
       h += "<p>" + (z === "R" ? "👥 " + Zc.gens[nv] + " habitants" : "💼 " + Zc.gens[nv] + " emplois") + "</p>";
-      h += "<p>📈 Peut monter jusqu'au niveau " + nm.max + (nm.manque && nm.max < 6 ? " — il lui faut : <b>" + nm.manque + "</b>" : "") + "</p>";
-      h += "<p>💗 Envie d'y venir : " + (e > C.croissance.seuil ? "oui" : e < -0.4 ? "non, les gens partent" : "pas assez") + " (" + e.toFixed(2).replace(".", ",") + ")</p>";
+      // 📋 étape 12 : la liste « pour grandir », avec seulement ce qui compte pour CETTE zone
+      const cd = Z.conditions(m, i), manque = cd.liste.filter((x) => !x.ok);
+      h += "<h4>" + (nv >= 6 || (z !== "R" && z !== "C" && nv >= 5) ? "🏆 C'est le plus haut niveau" : manque.length ? "📈 Pour passer au niveau " + cd.cible + " (" + Zc.niveaux[cd.cible] + ")" : "📈 Tout est prêt pour le niveau " + cd.cible + " : il va grandir") + "</h4>";
+      h += "<ul class='conditions'>" + cd.liste.map((x) => "<li class='" + (x.ok ? "bien" : "mal") + "'>" + (x.ok ? "✅ " : "❌ ") + x.texte + "</li>").join("") + "</ul>";
+      if (m.depuis[i]) h += "<p class='mal'><small>⏳ Il a un problème depuis " + Math.round(m.temps - m.depuis[i]) + " s : au bout de " + C.croissance.patience + " s, il perdra un niveau.</small></p>";
     } else h += "<h3>" + (ter === 1 ? "🌊 Eau" : m.carte.arbre[i] ? "🌳 Forêt" : ter === 2 ? "🏖️ Sable" : "🌱 Herbe") + "</h3>";
     h += "<div class='ligne'><span>💎 Valeur</span>" + barreHTML(m.valeur[i], "#3d8a4a") + "<small>" + m.valeur[i].toFixed(2).replace(".", ",") + "</small></div>";
     h += "<div class='ligne'><span>🌫️ Pollution</span>" + barreHTML(m.pollution[i], "#8a6a4a") + "<small>" + Math.round(m.pollution[i] * 100) + " %</small></div>";
-    h += "<p>" + (m.routeProche[i] >= 0 ? "🛣️ près d'une route" : "🚫 trop loin d'une route") + " · " + (m.courant[i] ? "⚡ ✅" : "⚡ ❌") + " · " + (m.eau[i] ? "💧 ✅" : "💧 ❌") + "</p>";
-    // (étape 9 : POURQUOI pas de courant ou d'eau, pour un terrain bâti)
-    if (z && m.niveau[i] && !m.courant[i]) h += "<p class='mal'><small>⚡ " + Megalopole.Reseaux.pourquoiPas(m, i, "courant") + "</small></p>";
-    if (z && m.niveau[i] && !m.eau[i] && !(z === "A" && m.niveau[i] < 2)) h += "<p class='" + (Megalopole.Reseaux.aBesoinDEau(m, i) ? "mal" : "") + "'><small>💧 " + Megalopole.Reseaux.pourquoiPas(m, i, "eau") + "</small></p>";
-    h += "<p>" + Megalopole.Services.TYPES.map((t) => ({ education: "🎓", sante: "🏥", securite: "🚓", feu: "🚒", loisirs: "🎡", transport: "🚌" }[t] + (m.couverture[t][i] ? "✅" : "❌"))).join(" ") + "</p>";
+    if (!z) h += "<p>" + (m.routeProche[i] >= 0 ? "🛣️ près d'une route" : "🚫 trop loin d'une route") + "</p>"; // (un terrain bâti a sa liste « pour grandir » juste au-dessus)
     return h;
   }
   // 📊 Étape 8 (demande de Maxance) : les BESOINS de la ville face à ce qu'elle PRODUIT, ligne par ligne
