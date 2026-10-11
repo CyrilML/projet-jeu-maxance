@@ -131,6 +131,7 @@
       <a href="#etape5">Étape 5</a>
       <a href="#etape6">Étape 6</a>
       <a href="#etape7">Étape 7</a>
+      <a href="#etape8">Étape 8</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="index.html">▶ Jouer</a>
@@ -557,7 +558,7 @@
             <li>☐ Un lot 🏠 collé à une route (avec courant et eau) : les 3 rangées construisent.</li>
             <li>☐ Avec un outil en main, ❌ (ou ✖ du tiroir) : toucher la carte ne pose plus rien.</li>
             <li>☐ Après ✅, l'outil reste en main pour en poser un autre.</li>
-            <li>Vérifie « version 8 » en haut de la page.</li>
+            <li>(La version a avancé depuis : vérifie le numéro de l'étape 8.)</li>
           </ul>
         </div>
       </div>
@@ -576,6 +577,51 @@
       <details class="question"><summary>Si les lots faisaient 4 × 4, quelle valeur faudrait-il pour accesMax ?</summary><p>4 : la 4ᵉ rangée serait à 4 cases de la route.</p></details>
     </section>
 
+    <section id="etape8">
+      <h2>📱 Étape 8 : une interface plus légère, et le menu des besoins <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Maxance a envoyé une capture de son téléphone et a dit tout ce qui gênait. Résultat : moins de boutons, plus de carte, et un menu 📊 pour comparer ce que la ville produit à ce dont elle a besoin. <a href="index.html"><strong>▶ la Mégalopole</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>megalopole/demandes/08-interface-allegee.md</code>.</p>
+          <ul>
+            <li>✍️ « Les icônes prennent trop de place. Le calque devrait être une icône comme sur Google Maps. »</li>
+            <li>✍️ « Un seul bouton qui change de pause à play puis avance rapide. Le plein écran plus discret. »</li>
+            <li>✍️ « Le bouton Regarder ne devrait pas exister. La loupe ne sert à rien. »</li>
+            <li>✍️ « On devrait avoir un menu avec les besoins par rapport à ce qu'on produit. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ 4 petites icônes rondes à droite (🎓 📢 📊 🧾) ; plus de ✋ « Regarder » ni de 🔎.</li>
+            <li>☐ Le bouton rond des calques (en bas à droite) ouvre une grille ; l'étiquette du haut enlève le calque.</li>
+            <li>☐ Un seul bouton ⏯️ : pause → lecture → rapide.</li>
+            <li>☐ 📊 : ⚡ 💧 💼 🍞 🏭 🛍️ et les services, chacun avec ✅ / ⚠️ / ❌.</li>
+            <li>☐ Avec un outil, le ✖ de l'étiquette noire le lâche.</li>
+            <li>Vérifie « version 9 » en haut de la page.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔧 Sous le capot n° 1 : un bouton à 3 états</h3>
+      <pre style="white-space: pre-wrap">  ⏸️ pause (0)  ──clic──►  ▶️ lecture (1)  ──clic──►  ⏩ rapide (3)  ──clic──►  ⏸️ …</pre>
+      <p>Le bouton garde un petit tableau : « après 0 vient 1, après 1 vient 3, après 3 vient 0 ». C'est une <strong>machine à états</strong> : un seul bouton, plusieurs états, et une règle pour passer au suivant. Les feux rouges marchent pareil !</p>
+      <h3>🔧 Sous le capot n° 2 : le bilan, une comparaison</h3>
+      <pre style="white-space: pre-wrap">  rapport = ce que la ville produit ÷ ce dont elle a besoin
+     1 ou plus  →  ✅ assez        0,8 à 1  →  ⚠️ presque        moins de 0,8  →  ❌ pas assez
+  exemple : nourriture = (emplois 🌾 × 22) ÷ habitants  →  un emploi agricole nourrit 22 habitants</pre>
+      <p>Ces chiffres existaient déjà dans le recenseur (<code>logique/population.js</code>), qui s'en servait pour le bonheur : maintenant il les range dans <code>monde.bilan</code>, et le menu 📊 les montre.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Ouvre 📊 : quelle ligne est en ❌ ? Corrige-la, et regarde-la passer en ✅.</li>
+        <li>Calcule : avec 10 emplois 🌾, combien d'habitants sont nourris ?</li>
+        <li>Appuie 3 fois sur ⏯️ en regardant l'icône : dans quel ordre change-t-elle ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>La ville produit 400 d'électricité et en demande 500. Que montre 📊 ?</summary><p>400 ÷ 500 = 0,8 : ⚠️ presque. Il faut une centrale de plus avant la pénurie.</p></details>
+      <details class="question"><summary>Pourquoi enlever des boutons rend-il le jeu plus facile ?</summary><p>Parce qu'on voit mieux la carte, et qu'on hésite moins : chaque bouton qui reste sert vraiment. C'est de l'ergonomie.</p></details>
+    </section>
+
     <!-- ============ FEUILLE DE ROUTE ============ -->
     <section id="route">
       <h2>🗺️ La feuille de route de la Mégalopole</h2>
@@ -588,10 +634,11 @@
         <div class="carte fait"><div class="num">5</div><h4>🏗️ Déplacer, de beaux bâtiments, une vraie carte <span class="etiquette">✅ fait · à valider</span></h4><p>Un maintien long pour déplacer (gratuit), plusieurs modèles détaillés par niveau, des ombres, la mer, des rivières, des lacs et de grandes forêts.</p><p class="apprend"><b>Tu apprends :</b> une graine qui choisit un modèle, construire une rivière avec des points. <b>Durée :</b> 2 séances.</p></div>
         <div class="carte fait"><div class="num">6</div><h4>🎯 Calques, missions, réalisme, couverture <span class="etiquette">✅ fait · à valider</span></h4><p>Les calques par-dessus la ville avec des pastilles, l'icône 🎓, la lumière et les matières, trottoirs et lampadaires, l'aperçu de couverture.</p><p class="apprend"><b>Tu apprends :</b> peindre par couches, la transparence, le niveau de détail. <b>Durée :</b> 1 à 2 séances.</p></div>
         <div class="carte fait"><div class="num">7</div><h4>🔧 La 3ᵉ rangée des lots, et la croix <span class="etiquette">✅ fait · à valider</span></h4><p>accesMax passe à 3 ; ❌ et ✖ lâchent l'outil.</p><p class="apprend"><b>Tu apprends :</b> deux réglages qui dépendent l'un de l'autre. <b>Durée :</b> ½ séance.</p></div>
-        <div class="carte prochain"><div class="num">8</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
-        <div class="carte"><div class="num">9</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
-        <div class="carte"><div class="num">10</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
-        <div class="carte"><div class="num">11</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
+        <div class="carte fait"><div class="num">8</div><h4>📱 Une interface plus légère, et le menu des besoins <span class="etiquette">✅ fait · à valider</span></h4><p>Petites icônes rondes, calques façon Google Maps, un seul bouton ⏯️, plus de « Regarder » ni de 🔎, le menu 📊 besoins / production.</p><p class="apprend"><b>Tu apprends :</b> une machine à états, comparer production et besoins. <b>Durée :</b> 1 séance.</p></div>
+        <div class="carte prochain"><div class="num">9</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
+        <div class="carte"><div class="num">10</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
+        <div class="carte"><div class="num">11</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (universités, quartier d'affaires).</p></div>
+        <div class="carte"><div class="num">12</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
       </div>
     </section>
 
@@ -654,6 +701,14 @@
         <textarea class="journal" id="megalopole-appris-7" data-cle="megalopole-appris-7" placeholder="Ex. : J'ai appris qu'un bug peut venir de deux réglages qui ne vont pas ensemble…"></textarea>
         <label for="megalopole-idees-7"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="megalopole-idees-7" data-cle="megalopole-idees-7" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 8 · une interface plus légère <span class="petit">· 11 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les icônes rondes, la barre du haut compacte, le bouton des calques et sa grille, l'étiquette du calque allumé, le bouton ⏯️ unique, le ✖ de l'outil en cours, le menu 📊 et le bilan du recenseur.</p>
+        <label for="megalopole-appris-8"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="megalopole-appris-8" data-cle="megalopole-appris-8" placeholder="Ex. : J'ai appris qu'un bouton peut avoir plusieurs états…"></textarea>
+        <label for="megalopole-idees-8"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="megalopole-idees-8" data-cle="megalopole-idees-8" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

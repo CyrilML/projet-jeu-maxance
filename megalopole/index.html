@@ -21,16 +21,17 @@
     #barre { top: 8px; left: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; pointer-events: none; }
     .pastille { pointer-events: auto; background: rgba(250, 248, 240, .94); color: #2a2620; border-radius: 10px; padding: 5px 9px; font-weight: 700; font-size: 0.9rem; box-shadow: 0 2px 6px rgba(0,0,0,.25); white-space: nowrap; }
     .pastille.rouge { color: #c8443a; }
-    #rci { display: flex; gap: 3px; align-items: flex-end; height: 52px; padding: 4px 8px; position: relative; }
-    #rci .col { position: relative; width: 14px; height: 48px; }
+    #rci { display: flex; gap: 3px; align-items: flex-end; height: 40px; padding: 3px 7px; position: relative; }
+    #rci .col { position: relative; width: 13px; height: 36px; }
     #rci .col span.b { position: absolute; left: 1px; right: 1px; border-radius: 2px; }
     #rci .col i { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; font-style: normal; font-size: 10px; }
-    #rci .col::after { content: ""; position: absolute; left: -2px; right: -2px; bottom: 25px; height: 1px; background: #8a8a84; }
-    #vitesses { display: flex; gap: 2px; }
-    #vitesses button { border: 0; background: transparent; padding: 0 3px; font-size: 1rem; opacity: .5; }
-    #vitesses button.actif { opacity: 1; }
-    .droite { margin-left: auto; display: flex; gap: 6px; }
-    .droite .pastille button { border: 0; background: transparent; padding: 0; }
+    #rci .col::after { content: ""; position: absolute; left: -2px; right: -2px; bottom: 19px; height: 1px; background: #8a8a84; }
+    /* étape 8 : un seul bouton pour le temps (pause → lecture → rapide), et un plein écran discret */
+    .droite { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+    .temps { display: flex; align-items: center; gap: 6px; padding-right: 4px; }
+    #vitesse { border: 0; border-radius: 8px; background: #ffd866; width: 30px; height: 26px; padding: 0; font-size: 0.95rem; }
+    #plein-ecran.discret { pointer-events: auto; border: 0; border-radius: 8px; background: rgba(250, 248, 240, .45); color: #2a2620; width: 26px; height: 26px; padding: 0; font-size: 0.9rem; opacity: .75; }
+    #palier .nom { font-weight: 700; }
     /* les outils */
     #outils { bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; background: rgba(60, 44, 28, .92); padding: 5px; border-radius: 14px; max-width: calc(100% - 16px); overflow-x: auto; }
     .groupe { display: flex; flex-direction: column; align-items: center; min-width: 58px; border: 0; border-radius: 10px; background: #f6efe0; padding: 4px 5px; }
@@ -44,14 +45,14 @@
     .carte-outil b { font-size: 0.72rem; text-align: center; line-height: 1.15; margin-top: 3px; }
     .carte-outil small { font-size: 0.68rem; color: #7a6a4a; text-align: center; }
     .carte-outil.verrou { opacity: .55; }
-    #outil-en-cours { bottom: 78px; left: 50%; transform: translateX(-50%); background: rgba(30, 30, 40, .85); color: #fff; padding: 5px 12px; border-radius: 10px; font-size: 0.85rem; display: none; white-space: nowrap; }
-    #outil-en-cours.visible { display: block; }
+    #outil-en-cours { bottom: 78px; left: 50%; transform: translateX(-50%); background: rgba(30, 30, 40, .85); color: #fff; padding: 4px 6px 4px 12px; border-radius: 10px; font-size: 0.85rem; display: none; white-space: nowrap; align-items: center; }
+    #outil-en-cours.visible { display: flex; }
     #tiroir.ouvert ~ #outil-en-cours { display: none; }
     /* le panneau de droite */
-    #onglets { top: 70px; right: 8px; display: flex; flex-direction: column; gap: 5px; }
-    #onglets button { width: 42px; height: 42px; border: 0; border-radius: 10px; background: rgba(250, 248, 240, .94); font-size: 1.25rem; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+    #onglets { top: 62px; right: 8px; display: flex; flex-direction: column; gap: 5px; }
+    #onglets button { width: 36px; height: 36px; border: 0; border-radius: 50%; background: rgba(250, 248, 240, .94); font-size: 1.05rem; box-shadow: 0 2px 6px rgba(0,0,0,.25); padding: 0; }
     #onglets button.actif { background: #ffd866; }
-    #panneau { top: 70px; right: 58px; width: min(360px, calc(100% - 76px)); max-height: calc(100% - 160px); overflow-y: auto; background: rgba(250, 248, 240, .97); color: #2a2620; border-radius: 12px; padding: 4px 12px 10px; box-shadow: 0 4px 14px rgba(0,0,0,.35); display: none; font-size: 0.85rem; }
+    #panneau { top: 62px; right: 52px; width: min(360px, calc(100% - 76px)); max-height: calc(100% - 160px); overflow-y: auto; background: rgba(250, 248, 240, .97); color: #2a2620; border-radius: 12px; padding: 4px 12px 10px; box-shadow: 0 4px 14px rgba(0,0,0,.35); display: none; font-size: 0.85rem; }
     #panneau.ouvert { display: block; }
     /* (étape 2 bis) un vrai bouton pour fermer : indispensable sur téléphone */
     .fermer { width: 36px; height: 36px; border: 0; border-radius: 50%; background: #2a2620; color: #fff; font-size: 1rem; font-weight: 700; line-height: 1; padding: 0; box-shadow: 0 2px 6px rgba(0,0,0,.3); flex: none; }
@@ -119,11 +120,22 @@
     .annuler { border: 1px solid #c8bca0; border-radius: 9px; background: #fff; padding: 6px 12px; }
     .choix button small { font-size: 0.75rem; color: #6a5a3a; line-height: 1.35; }
     /* les calques et les messages */
-    #calques { top: 70px; left: 8px; }
-    #bouton-calques { border: 0; border-radius: 10px; background: rgba(250, 248, 240, .94); padding: 6px 10px; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
-    #liste-calques { display: none; flex-direction: column; gap: 3px; margin-top: 5px; background: rgba(250, 248, 240, .97); padding: 6px; border-radius: 10px; }
-    #liste-calques.ouvert { display: flex; }
-    #liste-calques button { border: 0; background: #fff; border-radius: 7px; padding: 4px 8px; text-align: left; }
+    /* 🗺️ les calques, comme sur Google Maps : un bouton rond, et une grille de choix qui s'ouvre au-dessus */
+    #calques { bottom: 80px; right: 8px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    #bouton-calques { width: 44px; height: 44px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.35); display: grid; place-items: center; padding: 0; }
+    #bouton-calques.actif { box-shadow: 0 0 0 3px #3f6fc4, 0 2px 8px rgba(0,0,0,.35); }
+    #liste-calques { display: none; grid-template-columns: repeat(3, 76px); gap: 6px; background: rgba(250, 248, 240, .98); padding: 8px; border-radius: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+    #liste-calques.ouvert { display: grid; }
+    #liste-calques button { border: 2px solid transparent; background: #fff; border-radius: 10px; padding: 5px 2px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.66rem; color: #2a2620; }
+    #liste-calques button span { font-size: 1.3rem; }
+    #liste-calques button.actif { border-color: #3f6fc4; background: #e8eefa; }
+    #calque-actif { top: 62px; left: 50%; transform: translateX(-50%); display: none; }
+    #calque-actif.visible { display: block; }
+    #calque-actif button { border: 0; border-radius: 16px; background: #3f6fc4; color: #fff; font-weight: 700; padding: 5px 12px; box-shadow: 0 2px 6px rgba(0,0,0,.3); font-size: 0.85rem; }
+    /* 📊 les besoins et la production */
+    .bilan { display: grid; grid-template-columns: minmax(0, 1fr) 70px 22px; gap: 4px 6px; align-items: center; padding: 3px 0; border-bottom: 1px solid #ece6d6; }
+    .bilan small { grid-column: 1 / -1; color: #6a5a3a; }
+    #outil-en-cours button { border: 0; border-radius: 50%; background: #fff; color: #2a2620; width: 24px; height: 24px; margin-left: 8px; font-weight: 700; padding: 0; }
     #message { bottom: 130px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 30px); background: rgba(250, 248, 240, .97); color: #2a2620; padding: 8px 14px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; box-shadow: 0 4px 14px rgba(0,0,0,.35); opacity: 0; transition: opacity .3s; pointer-events: none; text-align: center; }
     #message.visible { opacity: 1; }
     /* sous le capot */
@@ -143,8 +155,12 @@
       #jeu { height: 72vh; border-radius: 0; border-left: 0; border-right: 0; }
       .groupe { min-width: 48px; } .groupe span { font-size: 1.15rem; } .groupe small { font-size: 0.6rem; }
       .pastille { font-size: 0.78rem; padding: 4px 7px; }
-      #rci { height: 46px; }
-      #calques, #onglets, #panneau { top: 122px; }
+      #onglets, #panneau { top: 104px; }
+      #calque-actif { top: 104px; }
+      #calques { bottom: 74px; }
+      #liste-calques { grid-template-columns: repeat(3, 70px); }
+      #palier .nom, .date-longue { display: none; }
+      #rci { height: 34px; } #rci .col { height: 30px; width: 11px; } #rci .col::after { bottom: 16px; }
       #outil-en-cours { white-space: normal; text-align: center; width: max-content; max-width: calc(100% - 16px); font-size: 0.78rem; }
       #confirmer { bottom: 72px; font-size: 0.75rem; padding: 4px 5px 4px 9px; gap: 5px; }
       #confirmer small { display: none; } #confirmer br { display: none; }
@@ -161,15 +177,14 @@
 <body>
   <header>
     <h1>🌐 La Mégalopole</h1>
-    <span><span id="version" class="version"></span> <a href="carnet.html#etape7">📓 Le carnet de la Mégalopole</a> · <a href="../index.html">🏠 Accueil</a></span>
+    <span><span id="version" class="version"></span> <a href="carnet.html#etape8">📓 Le carnet de la Mégalopole</a> · <a href="../index.html">🏠 Accueil</a></span>
   </header>
 
   <div id="jeu">
     <canvas id="ecran" tabindex="0" aria-label="La carte de la ville"></canvas>
     <div id="barre" class="flottant">
       <span id="argent" class="pastille">🪙</span>
-      <span class="pastille">👥 <span id="habitants">0</span></span>
-      <span id="palier" class="pastille"></span>
+      <span class="pastille">👥 <span id="habitants">0</span> <span id="palier"></span></span>
       <span id="bonheur" class="pastille"></span>
       <span class="pastille" id="rci" title="La demande : ce que la ville réclame (vers le haut = elle en veut)">
         <span class="col"><span class="b" id="rci-R"></span><i>🏠</i></span>
@@ -178,17 +193,20 @@
         <span class="col"><span class="b" id="rci-A"></span><i>🌾</i></span>
       </span>
       <span class="droite">
-        <span class="pastille"><span id="date"></span> <span id="vitesses"><button data-vitesse="0" title="Pause (P)">⏸️</button><button data-vitesse="1" title="Normal">▶️</button><button data-vitesse="3" title="Rapide (V)">⏩</button></span></span>
-        <span class="pastille"><button id="plein-ecran" title="Plein écran">⛶</button></span>
+        <span class="pastille temps"><span id="date"></span><button id="vitesse" title="Pause → lecture → rapide (P, V)">▶️</button></span>
+        <button id="plein-ecran" class="discret" title="Plein écran">⛶</button>
       </span>
     </div>
-    <div id="calques" class="flottant"><button id="bouton-calques">🗺️ Calques</button><div id="liste-calques"></div></div>
+    <div id="calque-actif" class="flottant"></div>
+    <div id="calques" class="flottant">
+      <div id="liste-calques"></div>
+      <button id="bouton-calques" title="Les calques (C)" aria-label="Les calques"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 3 2 8.5l10 5.5 10-5.5L12 3Z" fill="#3f6fc4"/><path d="m2 12.5 10 5.5 10-5.5-2.2-1.2L12 15.6l-7.8-4.3L2 12.5Z" fill="#5a8ad8"/><path d="m2 16.5 10 5.5 10-5.5-2.2-1.2L12 19.6l-7.8-4.3L2 16.5Z" fill="#8aaee8"/></svg></button>
+    </div>
     <div id="onglets" class="flottant">
       <button data-onglet="guide" title="Les missions du guide">🎓<span id="badge-guide" class="badge"></span></button>
       <button data-onglet="reclamations" title="Ce que réclament les habitants">📢</button>
-      <button data-onglet="besoins" title="Les besoins et le bonheur">😊</button>
+      <button data-onglet="besoins" title="Les besoins de la ville et ce qu'elle produit">📊</button>
       <button data-onglet="budget" title="Le budget et les impôts">🧾</button>
-      <button data-onglet="case" title="La case touchée">🔎</button>
     </div>
     <div id="panneau" class="flottant"><button id="fermer-panneau" class="fermer" title="Fermer (Échap)">✖</button><div id="contenu-panneau"></div></div>
     <div id="tiroir" class="flottant"></div>
@@ -199,7 +217,7 @@
     <div id="voile" class="flottant"></div>
   </div>
   <p class="aide">
-    Glisser la carte : ✋ puis glisser (ou 2 doigts, ou clic droit, ou les flèches) · Zoomer : molette, pincer, <kbd>+</kbd> <kbd>−</kbd> ·
+    Glisser la carte : 1 doigt (ou clic droit, ou les flèches) · Déplacer un bâtiment : garde le doigt dessus · Zoomer : molette, pincer, <kbd>+</kbd> <kbd>−</kbd> ·
     Outils : <kbd>R</kbd> route, <kbd>1</kbd>–<kbd>4</kbd> zones, <kbd>B</kbd> démolir, <kbd>Échap</kbd> arrêter · <kbd>P</kbd> pause, <kbd>V</kbd> vitesse, <kbd>C</kbd> calques ·
     <button id="nouvelle-ville">🆕 Nouvelle ville</button>
   </p>
@@ -210,26 +228,26 @@
     <section><h2>💾 Base de données <button id="effacer-base">Effacer</button></h2><pre id="base"></pre></section>
   </div>
 
-  <script src="config.js?v=8"></script>
-  <script src="moteur/evenements.js?v=8"></script>
-  <script src="moteur/ecran.js?v=8"></script>
-  <script src="moteur/entrees.js?v=8"></script>
-  <script src="moteur/hasard.js?v=8"></script>
-  <script src="moteur/iso.js?v=8"></script>
-  <script src="logique/carte.js?v=8"></script>
-  <script src="logique/construction.js?v=8"></script>
-  <script src="logique/reseaux.js?v=8"></script>
-  <script src="logique/services.js?v=8"></script>
-  <script src="logique/zones.js?v=8"></script>
-  <script src="logique/population.js?v=8"></script>
-  <script src="logique/budget.js?v=8"></script>
-  <script src="logique/guide.js?v=8"></script>
-  <script src="donnees/sauvegarde.js?v=8"></script>
-  <script src="logique/monde.js?v=8"></script>
-  <script src="affichage/maquettes.js?v=8"></script>
-  <script src="affichage/peintre.js?v=8"></script>
-  <script src="affichage/interface.js?v=8"></script>
-  <script src="affichage/sous-le-capot.js?v=8"></script>
-  <script src="main.js?v=8"></script>
+  <script src="config.js?v=9"></script>
+  <script src="moteur/evenements.js?v=9"></script>
+  <script src="moteur/ecran.js?v=9"></script>
+  <script src="moteur/entrees.js?v=9"></script>
+  <script src="moteur/hasard.js?v=9"></script>
+  <script src="moteur/iso.js?v=9"></script>
+  <script src="logique/carte.js?v=9"></script>
+  <script src="logique/construction.js?v=9"></script>
+  <script src="logique/reseaux.js?v=9"></script>
+  <script src="logique/services.js?v=9"></script>
+  <script src="logique/zones.js?v=9"></script>
+  <script src="logique/population.js?v=9"></script>
+  <script src="logique/budget.js?v=9"></script>
+  <script src="logique/guide.js?v=9"></script>
+  <script src="donnees/sauvegarde.js?v=9"></script>
+  <script src="logique/monde.js?v=9"></script>
+  <script src="affichage/maquettes.js?v=9"></script>
+  <script src="affichage/peintre.js?v=9"></script>
+  <script src="affichage/interface.js?v=9"></script>
+  <script src="affichage/sous-le-capot.js?v=9"></script>
+  <script src="main.js?v=9"></script>
 </body>
 </html>

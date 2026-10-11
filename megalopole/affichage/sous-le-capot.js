@@ -85,6 +85,7 @@ Megalopole.SousLeCapot = (function () {
     h += ligne("emplois : 🛍️ commerce · 🏭 industrie · 🌾 agriculture", fr(s.commerce) + " · " + fr(s.industrie) + " · " + fr(s.agriculture));
     h += ligne("palier · niveau max des bâtiments", C.paliers[m.palier].emoji + " " + C.paliers[m.palier].nom + " · " + C.paliers[m.palier].niveauMax);
     h += ligne("😊 bonheur", m.bonheur + " %");
+    if (m.bilan) h += ligne("📊 bilan (menu 📊) : habitants nourris (🌾 × 22) · servis en biens fabriqués (🏭 × 7) · vendus (🛍️ × 9)", fr(m.bilan.nourris) + " · " + fr(m.bilan.fabriques) + " · " + fr(m.bilan.vendus) + " / " + fr(m.bilan.habitants)); // étape 8
     h += groupe("📈 La demande R C I A (de −1 à +1)");
     h += ligne("🏠 R = (emplois × " + virgule(D.attirance, 2) + " − actifs + " + D.base.R + ") ÷ actifs × (0,5 + bonheur)", virgule(m.demande.R, 2));
     h += ligne("🛍️ C = (habitants × " + virgule(D.commerceParHabitant, 2) + " − emplois C + " + D.base.C + ") ÷ besoin", virgule(m.demande.C, 2));

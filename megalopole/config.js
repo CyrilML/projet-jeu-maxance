@@ -13,7 +13,7 @@ window.Megalopole = window.Megalopole || {};
 
 Megalopole.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 8,
+  version: 9,
   pasFixe: 1 / 120, // s : la boucle avance par petits pas fixes
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 
@@ -226,7 +226,7 @@ Megalopole.CONFIG = {
       { emoji: "⏩", titre: "Regarde la ville pousser", texte: "Maintenant, attends (⏩ pour aller plus vite) : les maisons, les usines et les boutiques poussent toutes seules. Regarde la barre R C I A en haut : elle dit ce que la ville réclame.", groupe: null, test: "habitants", nombre: 60 },
       { emoji: "🏫", titre: "Une école", texte: "Pour que les maisons deviennent plus grandes, il faut des services. Pose une 🏫 école près des maisons (elle aussi doit toucher la route).", groupe: "services", test: "batiment", type: "ecole", nombre: 1 },
       { emoji: "🌳", titre: "Des parcs", texte: "Les parcs rendent le terrain plus cher 💎 et les gens plus heureux. Plante 3 🌳 parcs entre les maisons.", groupe: "loisirs", test: "batiment", type: "parc", nombre: 3 },
-      { emoji: "🏘️", titre: "Deviens un village", texte: "Atteins 400 habitants. Si ça bloque : regarde 📢 (ce que réclament les habitants) et touche une maison avec 🔎 (ce qui lui manque). Et surveille ton argent dans 🧾 !", groupe: null, test: "habitants", nombre: 400 },
+      { emoji: "🏘️", titre: "Deviens un village", texte: "Atteins 400 habitants. Si ça bloque : regarde 📢 (ce que réclament les habitants) et touche une maison (ce qui lui manque). Et surveille ton argent dans 🧾 !", groupe: null, test: "habitants", nombre: 400 },
     ],
     intervalle: 0.5, // s : le professeur vérifie 2 fois par seconde
   },

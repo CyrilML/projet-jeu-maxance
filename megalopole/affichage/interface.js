@@ -4,7 +4,8 @@
 //   - en haut, la BARRE : l'argent 🪙, les habitants 👥, le palier de la ville, le bonheur 😊, la date, et la DEMANDE
 //     R C I A (4 petites barres : vers le haut = la ville en veut, vers le bas = il y en a trop) ;
 //   - en bas, les OUTILS du maire, rangés par groupes (routes, zones, énergie, eau, services, loisirs, transports) ;
-//   - à droite, le PANNEAU : les réclamations 📢, les besoins 😊, le budget 🧾, et ce qu'il y a sur la case touchée 🔎 ;
+//   - à droite, des ICÔNES RONDES : les missions 🎓, les réclamations 📢, les besoins et la production 📊, le budget 🧾 ;
+//     toucher une case de la carte (sans outil) ouvre ce qu'il y a dessus ; le bouton rond des calques est en bas à droite ;
 //     (étape 2) le budget 🧾 est un vrai tableau de bord : un impôt par zone, un curseur par service, la banque ;
 //   - (étape 3) le GUIDE 🎓 (une mission à la fois), et la barre ✅ / ❌ pour construire un tracé fait au doigt ;
 //     (étape 6) les missions ont leur propre ICÔNE 🎓 dans la colonne de droite (avec la mission en cours : « 3/9 ») ;
@@ -41,10 +42,7 @@ Megalopole.Interface = (function () {
     monde = m;
     // les groupes d'outils
     const barre = $("outils");
-    const main = document.createElement("button");
-    main.className = "groupe"; main.dataset.groupe = "main"; main.innerHTML = "<span>✋</span><small>Regarder</small>";
-    main.addEventListener("click", () => { demandes.outil = null; fermerTiroir(); });
-    barre.appendChild(main);
+    // (étape 8 : plus de bouton « Regarder » : sans outil, on regarde ; ✖ de l'outil en cours le lâche)
     for (const g of C.groupes) {
       const b = document.createElement("button");
       b.className = "groupe"; b.dataset.groupe = g.id; b.innerHTML = "<span>" + g.emoji + "</span><small>" + g.nom + "</small>";
@@ -70,9 +68,16 @@ Megalopole.Interface = (function () {
     $("fermer-panneau").addEventListener("click", fermerPanneau);
     // les calques
     const lc = $("liste-calques");
-    const aucun = document.createElement("button"); aucun.textContent = "🌍 Aucun"; aucun.addEventListener("click", () => { demandes.calque = null; lc.classList.remove("ouvert"); }); lc.appendChild(aucun);
-    for (const [id, cq] of Object.entries(Megalopole.Peintre.CALQUES)) { const b = document.createElement("button"); b.textContent = cq.nom; b.addEventListener("click", () => { demandes.calque = id; lc.classList.remove("ouvert"); }); lc.appendChild(b); }
-    $("bouton-calques").addEventListener("click", () => lc.classList.toggle("ouvert"));
+    // (étape 8 : comme sur Google Maps, une grille de petites tuiles : l'emoji en gros, le nom en dessous)
+    const tuile = (id, emoji, nom) => { const b = document.createElement("button"); b.dataset.calque = id || ""; b.innerHTML = "<span>" + emoji + "</span>" + nom; b.addEventListener("click", () => { demandes.calque = id; lc.classList.remove("ouvert"); }); lc.appendChild(b); };
+    tuile(null, "🌍", "Aucun");
+    for (const [id, cq] of Object.entries(Megalopole.Peintre.CALQUES)) { const [emoji, ...mots] = cq.nom.split(" "); tuile(id, emoji, mots.join(" ").replace("Valeur du terrain", "Valeur")); }
+    $("bouton-calques").addEventListener("click", () => { fermerTiroir(); lc.classList.toggle("ouvert"); });
+    $("calque-actif").addEventListener("click", () => (demandes.calque = null));
+    // ⏯️ un seul bouton pour le temps : pause → lecture → rapide → pause…
+    $("vitesse").addEventListener("click", () => (demandes.vitesse = { 0: 1, 1: 3, 3: 0 }[Megalopole.vitesse] ?? 1));
+    // ✖ dans l'outil en cours : on lâche l'outil
+    $("outil-en-cours").addEventListener("click", (e) => { if (e.target.closest("[data-lacher]")) { demandes.outil = null; fermerTiroir(); } });
     // (les boutons du budget sont redessinés 4 fois par seconde : on écoute leur parent, qui, lui, reste)
     $("contenu-panneau").addEventListener("click", (e) => {
       if (e.target.closest("[data-deplacer]")) { demandes.deplacer = true; fermerPanneau(); return; }
@@ -85,7 +90,6 @@ Megalopole.Interface = (function () {
     });
     // le choix de la difficulté et l'écran « maire renvoyé »
     $("voile").addEventListener("click", (e) => { const bt = e.target.closest("[data-difficulte]"); if (bt) { demandes.difficulte = bt.dataset.difficulte; fermerVoile(); } if (e.target.closest("[data-annuler]")) fermerVoile(); });
-    for (const b of document.querySelectorAll("[data-vitesse]")) b.addEventListener("click", () => (demandes.vitesse = +b.dataset.vitesse));
     ouvrirGuideSiNeuf();
     // les messages
     for (const [nom, f] of Object.entries(MESSAGES)) radio.ecouter(nom, (d) => afficher(f(d)));
@@ -173,23 +177,29 @@ Megalopole.Interface = (function () {
     $("argent").textContent = fr(m.argent) + " 🪙";
     $("argent").classList.toggle("rouge", m.argent < 0);
     $("habitants").textContent = fr(s.habitants);
-    $("palier").textContent = P.emoji + " " + P.nom;
+    html("palier", P.emoji + "<span class='nom'> " + P.nom + "</span>");
     $("bonheur").textContent = (m.bonheur >= 75 ? "😄" : m.bonheur >= 55 ? "🙂" : m.bonheur >= 40 ? "😐" : "😟") + " " + m.bonheur + " %";
     const an = Math.floor(m.mois / 12) + 1, mois = (m.mois % 12) + 1, soleil = Megalopole.Reseaux.soleil(m);
-    $("date").textContent = (soleil > 0.15 ? "☀️" : "🌙") + " mois " + mois + " · an " + an;
+    html("date", (soleil > 0.15 ? "☀️" : "🌙") + " <span class='date-longue'>mois </span>" + mois + " · <span class='date-longue'>an </span>" + an);
+    // (la ligne du zéro et la place des barres viennent du CSS : elles changent sur téléphone)
+    const col = $("rci-R").parentElement, hCol = col.clientHeight, zero = parseFloat(getComputedStyle(col, "::after").bottom) || hCol / 2;
     for (const z of C.ordreZones) {
-      const v = m.demande[z] || 0, barre = $("rci-" + z);
-      barre.style.height = Math.round(Math.abs(v) * 22) + "px";
-      barre.style.bottom = v >= 0 ? "26px" : 26 - Math.round(Math.abs(v) * 22) + "px";
+      const v = Math.max(-1, Math.min(1, m.demande[z] || 0)), barre = $("rci-" + z), haut = Math.round(Math.abs(v) * (v >= 0 ? hCol - zero - 1 : zero - 2)); // (une barre vers le bas passe derrière les petits emojis)
+      barre.style.height = haut + "px";
+      barre.style.bottom = (v >= 0 ? zero : zero - haut) + "px";
       barre.style.background = v >= 0 ? C.zones[z].couleur : "#c8443a";
     }
-    for (const b of document.querySelectorAll("[data-vitesse]")) b.classList.toggle("actif", +b.dataset.vitesse === Megalopole.vitesse);
-    $("bouton-calques").textContent = "🗺️ " + (Megalopole.calque ? Megalopole.Peintre.CALQUES[Megalopole.calque].nom : "Calques");
+    const icone = { 0: "⏸️", 1: "▶️", 3: "⏩" }[Megalopole.vitesse] || "▶️"; if ($("vitesse").textContent !== icone) $("vitesse").textContent = icone; // (l'icône montre où en est le temps)
+    $("bouton-calques").classList.toggle("actif", !!Megalopole.calque);
+    for (const b of document.querySelectorAll("[data-calque]")) b.classList.toggle("actif", (b.dataset.calque || null) === (Megalopole.calque || null));
+    html("calque-actif", Megalopole.calque ? "<button title='Enlever le calque'>" + Megalopole.Peintre.CALQUES[Megalopole.calque].nom + " ✖</button>" : "");
+    $("calque-actif").classList.toggle("visible", !!Megalopole.calque);
     // l'outil en cours (au doigt : 1 doigt bouge la carte, on TOUCHE le départ puis l'arrivée)
     const o = m.outil, tr = m.trace && m.trace.doigt ? m.trace : null, trace = o && o.sorte !== "batiment";
     const fa = m.fantome && m.fantome.doigt ? m.fantome : null, aimant = o && (o.sorte === "batiment" || o.sorte === "zone");
     const cvTexte = !auDoigt() && m.fantome ? couvertureNouvelle(m, m.fantome) : null;
-    $("outil-en-cours").textContent = cvTexte ? "🖌️ " + nomOutil(o) + " · " + cvTexte + " · clic = construire" : !o ? "" : auDoigt() ? "🖌️ " + nomOutil(o) + (aimant ? " · touche près d'une route" : " · touche le départ") + " · ✋ = arrêter" : "🖌️ " + nomOutil(o) + (aimant ? " · clique près d'une route (il s'y colle 🧲)" : " · glisse sur la carte") + " · Échap pour arrêter";
+    const texteOutil = cvTexte ? "🖌️ " + nomOutil(o) + " · " + cvTexte + " · clic = construire" : !o ? "" : auDoigt() ? "🖌️ " + nomOutil(o) + (aimant ? " · touche près d'une route" : " · touche le départ") : "🖌️ " + nomOutil(o) + (aimant ? " · clique près d'une route (il s'y colle 🧲)" : " · glisse sur la carte") + " · Échap";
+    html("outil-en-cours", texteOutil ? "<span>" + texteOutil + "</span><button data-lacher='1' title='Lâcher l'outil'>✖</button>" : "");
     $("outil-en-cours").classList.toggle("visible", !!o && !tr && !fa);
     // ✅ / ❌ : le tracé fait au doigt attend qu'on confirme
     let hc = "";
@@ -215,6 +225,9 @@ Megalopole.Interface = (function () {
     if ($("panneau").classList.contains("ouvert")) { const html = contenu(onglet); if (html !== dernierHTML) { $("contenu-panneau").innerHTML = html; dernierHTML = html; } } // (seulement s'il a changé : sinon un bouton disparaît sous le doigt)
   }
   let dejaVue = null, dernierHTML = "", dernierConfirmer = "";
+  // (on ne remplace le HTML d'un élément que s'il a changé : sinon un bouton disparaîtrait sous le doigt)
+  const dejaHTML = {};
+  function html(id, h) { if (dejaHTML[id] !== h) { $(id).innerHTML = h; dejaHTML[id] = h; } }
   function nomOutil(o) {
     if (o.sorte === "route") return C.routes[o.valeur].nom;
     if (o.sorte === "zone") return "Zone " + C.zones[o.valeur].nom.toLowerCase();
@@ -232,18 +245,11 @@ Megalopole.Interface = (function () {
       if (!m.reclamations.length) return h + "<p>😄 Tout le monde est content ! La ville grandit toute seule.</p>";
       return h + m.reclamations.slice(0, 7).map((r) => "<div class='recl'><b>" + r.emoji + " " + r.texte + "</b><br><small>💡 " + r.conseil + "</small></div>").join("");
     }
-    if (o === "besoins") {
-      let h = "<h3>😊 Le bonheur : " + m.bonheur + " %</h3><p><small>La moyenne des besoins (avec leur poids). Une ville heureuse grandit vite.</small></p>";
-      for (const x of C.besoins) { if ((x.palier || 0) > m.palier) continue; const v = m.besoins[x.id] || 0; h += "<div class='ligne'><span>" + x.emoji + " " + x.nom + "</span>" + barreHTML(v) + "<small>" + Math.round(v * 100) + " %</small></div>"; }
-      h += "<h3>👥 La population</h3><p>" + fr(s.habitants) + " habitants · " + fr(s.emplois) + " emplois (🛍️ " + fr(s.commerce) + " · 🏭 " + fr(s.industrie) + " · 🌾 " + fr(s.agriculture) + ") · " + fr(s.chomeurs) + " chômeurs</p>";
-      const suivant = C.paliers[m.palier + 1];
-      if (suivant) h += "<p>Prochain palier : " + suivant.emoji + " " + suivant.nom + " à " + fr(suivant.habitants) + " habitants" + barreHTML(s.habitants / suivant.habitants, "#7a5ab0") + "</p>";
-      return h;
-    }
+    if (o === "besoins") return bilanHTML(m);
     if (o === "budget") return budgetHTML(m);
     // 🔎 la case touchée
     const sel = m.selection;
-    if (!sel) return "<h3>🔎 Une case</h3><p>Choisis ✋, puis touche une case de la carte pour voir ce qu'il y a.</p>";
+    if (!sel) return "<h3>🔎 Une case</h3><p>Touche une case de la carte (sans outil en main) pour voir ce qu'il y a.</p>";
     const n = m.carte.colonnes, i = sel.ligne * n + sel.colonne, Z = Megalopole.Zones, b = Megalopole.Construction.batimentSur(m, i);
     let h = "";
     if (b) {
@@ -272,6 +278,32 @@ Megalopole.Interface = (function () {
     h += "<div class='ligne'><span>🌫️ Pollution</span>" + barreHTML(m.pollution[i], "#8a6a4a") + "<small>" + Math.round(m.pollution[i] * 100) + " %</small></div>";
     h += "<p>" + (m.routeProche[i] >= 0 ? "🛣️ près d'une route" : "🚫 trop loin d'une route") + " · " + (m.courant[i] ? "⚡ ✅" : "⚡ ❌") + " · " + (m.eau[i] ? "💧 ✅" : "💧 ❌") + "</p>";
     h += "<p>" + Megalopole.Services.TYPES.map((t) => ({ education: "🎓", sante: "🏥", securite: "🚓", feu: "🚒", loisirs: "🎡", transport: "🚌" }[t] + (m.couverture[t][i] ? "✅" : "❌"))).join(" ") + "</p>";
+    return h;
+  }
+  // 📊 Étape 8 (demande de Maxance) : les BESOINS de la ville face à ce qu'elle PRODUIT, ligne par ligne
+  //   ✅ assez (100 % et plus) · ⚠️ presque (80 %) · ❌ pas assez — avec un conseil quand ça manque
+  function bilanHTML(m) {
+    const s = m.stats, b = m.bilan || { habitants: 0, actifs: 0, emplois: 0, nourris: 0, fabriques: 0, vendus: 0, couverts: {} }, H = b.habitants, el = m.reseaux.courant, ea = m.reseaux.eau;
+    const CONS = Megalopole.Population.CONSEILS || {};
+    const ligne = (emoji, nom, produit, besoin, unite, conseil) => {
+      const r = besoin > 0 ? produit / besoin : 1, etat = r >= 1 ? "✅" : r >= 0.8 ? "⚠️" : "❌";
+      return "<div class='bilan'><span>" + emoji + " " + nom + "</span>" + barreHTML(r) + "<span>" + etat + "</span><small>" + fr(produit) + " / " + fr(besoin) + " " + unite + (r < 1 && conseil ? " · 💡 " + conseil : "") + "</small></div>";
+    };
+    let h = "<h3>📊 Les besoins et la production</h3><p><small>Ce que la ville produit, face à ce dont elle a besoin. ✅ assez · ⚠️ presque · ❌ pas assez.</small></p>";
+    h += "<h4>🏭 Ce que la ville produit</h4>";
+    h += ligne("⚡", "Électricité", el.offre || 0, el.demande || 0, "unités produites / demandées", CONS.courant);
+    h += ligne("💧", "Eau", ea.offre || 0, ea.demande || 0, "unités produites / demandées", CONS.eau);
+    h += ligne("💼", "Emplois", b.emplois, b.actifs, "emplois / habitants qui travaillent", CONS.emploi);
+    h += ligne("🍞", "Nourriture", b.nourris, H, "habitants nourris / habitants", CONS.nourriture);
+    h += ligne("🏭", "Biens fabriqués", b.fabriques, H, "habitants servis / habitants", "des zones 🏭 industrie");
+    h += ligne("🛍️", "Biens vendus", b.vendus, H, "habitants servis / habitants", "des zones 🛍️ commerce");
+    h += "<h4>🏛️ Les services (habitants couverts)</h4>";
+    for (const [id, emoji, nom] of [["education", "🎓", "Éducation"], ["sante", "🏥", "Santé"], ["securite", "🚓", "Police"], ["feu", "🚒", "Pompiers"], ["loisirs", "🎡", "Loisirs"]]) h += ligne(emoji, nom, b.couverts[id] || 0, H, "habitants couverts", CONS[id]);
+    h += "<h4>😊 Le bonheur : " + m.bonheur + " %</h4><p><small>La moyenne des besoins (avec leur poids). Une ville heureuse grandit vite.</small></p>";
+    for (const x of C.besoins) { if ((x.palier || 0) > m.palier) continue; const v = m.besoins[x.id] || 0; h += "<div class='ligne'><span>" + x.emoji + " " + x.nom + "</span>" + barreHTML(v) + "<small>" + Math.round(v * 100) + " %</small></div>"; }
+    const suivant = C.paliers[m.palier + 1];
+    h += "<h4>👥 La population</h4><p>" + fr(s.habitants) + " habitants · " + fr(s.emplois) + " emplois · " + fr(s.chomeurs) + " chômeurs</p>";
+    if (suivant) h += "<p>Prochain palier : " + suivant.emoji + " " + suivant.nom + " à " + fr(suivant.habitants) + " habitants" + barreHTML(s.habitants / suivant.habitants, "#7a5ab0") + "</p>";
     return h;
   }
   // 🎯 Ce que couvrirait ce service, en plus de ceux qui existent déjà : le nombre de terrains peints (habitations…)

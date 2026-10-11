@@ -69,6 +69,8 @@ Megalopole.Population = (function () {
       impots: borne(1 - Math.max(0, monde.taux.R - C.budget.impotSupportable) / (C.budget.tauxMax - C.budget.impotSupportable), 0, 1), // étape 2 : l'impôt des habitants
     };
     monde.besoins = b;
+    // étape 8 : le BILAN (ce que la ville produit, face à ce dont elle a besoin), pour le menu 📊
+    monde.bilan = { habitants: H, actifs, emplois: E, nourris: Ea * 22, fabriques: Ei * 7, vendus: Ec * 9, couverts: Object.assign({}, avec) };
     // Le bonheur : la moyenne pondérée des besoins de ce palier
     let total = 0, poids = 0;
     for (const x of C.besoins) { if ((x.palier || 0) > palier(monde)) continue; total += b[x.id] * x.poids; poids += x.poids; }
