@@ -44,7 +44,7 @@ Megalopole.Population = (function () {
         const g = Z.R.gens[nv];
         H += g;
         if (monde.courant[i]) avec.courant += g;
-        if (monde.eau[i]) avec.eau += g; else if (nv === 1) avec.eau += g * 0.5; // une petite maison a un puits
+        if (monde.eau[i] || !Megalopole.Reseaux.aBesoinDEau(monde, i)) avec.eau += g; // une petite maison a un puits (étape 9 : elle ne se plaint plus)
         for (const t of ["education", "sante", "securite", "feu", "loisirs"]) if (cv[t][i]) avec[t] += g;
         pollutionH += monde.pollution[i] * g;
         const rp = monde.routeProche[i];
@@ -107,6 +107,11 @@ Megalopole.Population = (function () {
       if ((x.palier || 0) > palier(monde)) continue;
       const v = monde.besoins[x.id];
       if (v < 0.75) liste.push({ id: x.id, emoji: x.emoji, texte: x.nom + " : " + Math.round(v * 100) + " %", conseil: CONSEILS[x.id], gravite: (1 - v) * x.poids });
+    }
+    // (étape 9) les centrales ou les stations d'eau PLEINES : tout le monde est servi, mais plus personne ne peut grandir
+    for (const [q, emoji, nom, quoi] of [["courant", "⚡", "Les centrales sont pleines", "Énergie » → une centrale (ou des éoliennes)"], ["eau", "💧", "Les stations d'eau sont pleines", "Eau » → une station de pompage ou un château d'eau"]]) {
+      const e = monde.reseaux[q];
+      if (e && e.offre > 0 && (e.reste || 0) < Math.max(8, e.offre * 0.04)) liste.push({ id: "plein-" + q, emoji, texte: nom + " (reste " + (e.reste || 0) + " sur " + e.offre + ") : les bâtiments ne peuvent plus grandir", conseil: "Menu « " + quoi + ".", gravite: 1.6 });
     }
     for (const r of C.reclamations) if (H >= r.habitants && !monde.batiments.some((b) => b.type === r.batiment)) liste.push({ id: r.batiment, emoji: C.batiments[r.batiment].emoji, texte: r.texte, conseil: "Menu « " + C.groupes.find((g) => g.id === C.batiments[r.batiment].groupe).nom + " » → " + C.batiments[r.batiment].nom + ".", gravite: 0.5 });
     liste.sort((a, b) => b.gravite - a.gravite);

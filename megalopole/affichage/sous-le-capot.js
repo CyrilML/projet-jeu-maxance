@@ -97,6 +97,7 @@ Megalopole.SousLeCapot = (function () {
     for (const x of C.besoins) h += ligne(x.emoji + " " + x.nom + " (poids " + virgule(x.poids, 1) + ")" + ((x.palier || 0) > m.palier ? " 🔒" : ""), virgule(m.besoins[x.id] || 0, 2));
     h += groupe("🔌 Les réseaux (ils suivent les routes, les plus proches d'abord)");
     for (const [q, e] of [["⚡ électricité", m.reseaux.courant], ["💧 eau", m.reseaux.eau]]) h += ligne(q + " : utilisé / offre · demande · coupés · loin du réseau", fr(e.utilise || 0) + " / " + fr(e.offre || 0) + " · " + fr(e.demande || 0) + " · " + (e.coupes || 0) + " · " + (e.horsReseau || 0));
+    h += ligne("💧 étape 9 : eau NÉCESSAIRE (niveau ≥ 2) · petites maisons non servies (elles ont un puits) · reste pour grandir", fr(m.reseaux.eau.demandeBesoin || 0) + " · " + (m.reseaux.eau.coupesSansBesoin || 0) + " · " + fr(m.reseaux.eau.reste || 0));
     h += ligne("🌬️ vent · ☀️ soleil · 🕐 heure du jour", virgule(Megalopole.Reseaux.vent(m), 2) + " · " + virgule(Megalopole.Reseaux.soleil(m), 2) + " · " + Math.floor(Megalopole.Reseaux.heure(m) * 24) + " h");
     const T = m.statsTrafic || { routes: 0, bouchons: 0, moyen: 0 };
     h += groupe("🚗 Le trafic et la ville");

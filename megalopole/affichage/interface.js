@@ -277,6 +277,9 @@ Megalopole.Interface = (function () {
     h += "<div class='ligne'><span>💎 Valeur</span>" + barreHTML(m.valeur[i], "#3d8a4a") + "<small>" + m.valeur[i].toFixed(2).replace(".", ",") + "</small></div>";
     h += "<div class='ligne'><span>🌫️ Pollution</span>" + barreHTML(m.pollution[i], "#8a6a4a") + "<small>" + Math.round(m.pollution[i] * 100) + " %</small></div>";
     h += "<p>" + (m.routeProche[i] >= 0 ? "🛣️ près d'une route" : "🚫 trop loin d'une route") + " · " + (m.courant[i] ? "⚡ ✅" : "⚡ ❌") + " · " + (m.eau[i] ? "💧 ✅" : "💧 ❌") + "</p>";
+    // (étape 9 : POURQUOI pas de courant ou d'eau, pour un terrain bâti)
+    if (z && m.niveau[i] && !m.courant[i]) h += "<p class='mal'><small>⚡ " + Megalopole.Reseaux.pourquoiPas(m, i, "courant") + "</small></p>";
+    if (z && m.niveau[i] && !m.eau[i] && !(z === "A" && m.niveau[i] < 2)) h += "<p class='" + (Megalopole.Reseaux.aBesoinDEau(m, i) ? "mal" : "") + "'><small>💧 " + Megalopole.Reseaux.pourquoiPas(m, i, "eau") + "</small></p>";
     h += "<p>" + Megalopole.Services.TYPES.map((t) => ({ education: "🎓", sante: "🏥", securite: "🚓", feu: "🚒", loisirs: "🎡", transport: "🚌" }[t] + (m.couverture[t][i] ? "✅" : "❌"))).join(" ") + "</p>";
     return h;
   }
@@ -292,7 +295,7 @@ Megalopole.Interface = (function () {
     let h = "<h3>📊 Les besoins et la production</h3><p><small>Ce que la ville produit, face à ce dont elle a besoin. ✅ assez · ⚠️ presque · ❌ pas assez.</small></p>";
     h += "<h4>🏭 Ce que la ville produit</h4>";
     h += ligne("⚡", "Électricité", el.offre || 0, el.demande || 0, "unités produites / demandées", CONS.courant);
-    h += ligne("💧", "Eau", ea.offre || 0, ea.demande || 0, "unités produites / demandées", CONS.eau);
+    h += ligne("💧", "Eau", ea.offre || 0, ea.demandeBesoin || 0, "unités produites / nécessaires" + (ea.demande > ea.demandeBesoin ? " (+ " + fr(ea.demande - ea.demandeBesoin) + " pour les petites maisons, s'il en reste : elles ont un puits)" : "") + (ea.coupes ? " · ❌ " + ea.coupes + " bâtiment(s) coupé(s)" : ""), CONS.eau);
     h += ligne("💼", "Emplois", b.emplois, b.actifs, "emplois / habitants qui travaillent", CONS.emploi);
     h += ligne("🍞", "Nourriture", b.nourris, H, "habitants nourris / habitants", CONS.nourriture);
     h += ligne("🏭", "Biens fabriqués", b.fabriques, H, "habitants servis / habitants", "des zones 🏭 industrie");

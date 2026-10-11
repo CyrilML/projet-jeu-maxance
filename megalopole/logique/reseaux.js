@@ -8,6 +8,11 @@
 //    bâtiments les plus PROCHES sont servis d'abord ; quand la production est épuisée, les plus loin n'ont rien : c'est
 //    une PÉNURIE, il faut une centrale (ou une pompe) de plus.
 // Les sources ne produisent pas toutes pareil : l'éolienne dépend du vent, le solaire du soleil (rien la nuit !).
+//
+// Étape 9 (✍️ « certaines maisons n'ont pas l'eau alors que j'ai assez de stations ») :
+//   - D'ABORD CEUX QUI EN ONT BESOIN : une petite maison (niveau 1) a un puits ; elle ne reçoit l'eau courante qu'avec
+//     ce qui reste. Avant, une petite maison proche de la station passait devant un immeuble plus loin, qui était coupé !
+//   - un terrain prend la route RELIÉE la plus proche (à « accesMax » cases), pas seulement la première route trouvée.
 
 window.Megalopole = window.Megalopole || {};
 
@@ -51,6 +56,24 @@ Megalopole.Reseaux = (function () {
     }
   }
 
+  // La distance d'un terrain au réseau : la meilleure route reliée à « accesMax » cases au plus (distance par la route
+  // + les cases à traverser), ou −1 si aucune route reliée n'est assez près
+  function distanceAuReseau(monde, dist, i) {
+    const n = monde.carte.colonnes, c = i % n, l = (i / n) | 0, A = C.routes.accesMax, R = monde.route;
+    let meilleure = -1;
+    for (let dl = -A; dl <= A; dl++) for (let dc = -A; dc <= A; dc++) {
+      const pas = Math.abs(dl) + Math.abs(dc), cc = c + dc, ll = l + dl;
+      if (pas > A || cc < 0 || ll < 0 || cc >= n || ll >= n) continue;
+      const j = ll * n + cc;
+      if (!R[j] || dist[j] < 0) continue;
+      const d = dist[j] + pas;
+      if (meilleure < 0 || d < meilleure) meilleure = d;
+    }
+    return meilleure;
+  }
+  // Ce terrain a-t-il VRAIMENT besoin de l'eau courante ? (une petite maison a un puits ; un champ ou une ferme non plus)
+  const aBesoinDEau = (monde, i) => monde.niveau[i] >= C.croissance.eauDesLeNiveau && !(monde.zone[i] === C.zones.A.id && monde.niveau[i] <= 2);
+
   // 2. Un réseau (« courant » ou « eau ») : la tache d'encre depuis les sources, le long des routes
   function distribuer(monde, quoi) {
     const k = monde.carte, n = k.colonnes, N = n * n, R = monde.route, servi = quoi === "courant" ? monde.courant : monde.eau;
@@ -87,35 +110,48 @@ Megalopole.Reseaux = (function () {
     }
     // Les clients : les terrains bâtis (et les gros bâtiments), avec leur distance par la route
     const clients = [];
-    let demande = 0, horsReseau = 0;
+    let demande = 0, demandeBesoin = 0, horsReseau = 0;
     const conso = C.consommation[quoi];
     for (let i = 0; i < N; i++) {
       const nv = monde.niveau[i];
       if (!nv || !monde.zone[i]) continue;
       if (quoi === "eau" && monde.zone[i] === C.zones.A.id && nv < 2) continue; // un champ n'a pas besoin de l'eau courante
-      const r = monde.routeProche[i], d = r >= 0 ? dist[r] : -1;
+      if (monde.routeProche[i] < 0) continue;
+      const d = distanceAuReseau(monde, dist, i);
       demande += conso[nv];
+      if (quoi !== "eau" || aBesoinDEau(monde, i)) demandeBesoin += conso[nv];
       if (d < 0) { horsReseau++; continue; }
-      clients.push(d * 4 + (i & 3), conso[nv], i); // (le petit « i & 3 » mélange les égalités)
+      const apres = quoi === "eau" && !aBesoinDEau(monde, i) ? 1e6 : 0; // (étape 9 : ceux qui n'en ont pas besoin passent après)
+      clients.push(apres + d * 4 + (i & 3), conso[nv], i); // (le petit « i & 3 » mélange les égalités)
     }
     const ordre = [];
     for (let k2 = 0; k2 < clients.length; k2 += 3) ordre.push(k2);
     ordre.sort((a, b) => clients[a] - clients[b]);
-    let utilise = 0, coupes = 0;
+    let utilise = 0, coupes = 0, coupesSansBesoin = 0, utiliseBesoin = 0;
     for (const k2 of ordre) {
-      const besoin = clients[k2 + 1];
-      if (utilise + besoin <= offre) { utilise += besoin; servi[clients[k2 + 2]] = 1; } else coupes++;
+      const besoin = clients[k2 + 1], sansBesoin = clients[k2] >= 1e6;
+      if (utilise + besoin <= offre) { utilise += besoin; if (!sansBesoin) utiliseBesoin += besoin; servi[clients[k2 + 2]] = 1; } else if (sansBesoin) coupesSansBesoin++; else coupes++;
     }
     const etat = monde.reseaux[quoi], avant = etat.penurie;
-    Object.assign(etat, { offre, demande, utilise, coupes, horsReseau, penurie: coupes > 0, reste: Math.max(0, offre - utilise), sources: sources.length, atteint: dist });
+    // (le reste : ce que n'utilisent pas ceux qui en ont BESOIN ; les petites maisons servies « en plus » se pousseront)
+    Object.assign(etat, { offre, demande, demandeBesoin, utilise, coupes, coupesSansBesoin, horsReseau, penurie: coupes > 0, reste: Math.max(0, offre - utiliseBesoin), sources: sources.length, atteint: dist });
     if (etat.penurie !== avant) radio.emettre(quoi + (etat.penurie ? "-penurie" : "-ok"), { offre, demande, coupes });
     return etat;
   }
 
   // Un terrain vide peut-il recevoir du courant (ou de l'eau) ? Oui si sa route est sur le réseau et qu'il en reste.
   function possible(monde, i, quoi) {
-    const e = monde.reseaux[quoi], r = monde.routeProche[i];
-    return !!(e && e.atteint && r >= 0 && e.atteint[r] >= 0 && e.reste > 0);
+    const e = monde.reseaux[quoi];
+    return !!(e && e.atteint && monde.routeProche[i] >= 0 && distanceAuReseau(monde, e.atteint, i) >= 0 && e.reste > 0);
+  }
+  // Pourquoi ce terrain n'a-t-il pas l'eau (ou le courant) ? (pour le panneau de la case)
+  function pourquoiPas(monde, i, quoi) {
+    const e = monde.reseaux[quoi];
+    if (!e || !e.atteint) return "pas encore calculé";
+    if (monde.routeProche[i] < 0) return "trop loin d'une route";
+    if (distanceAuReseau(monde, e.atteint, i) < 0) return "sa route n'est reliée à aucune " + (quoi === "eau" ? "station d'eau (en marche)" : "centrale");
+    if (quoi === "eau" && !aBesoinDEau(monde, i)) return "pas besoin : une petite maison a un puits (l'eau courante va d'abord aux grands bâtiments)";
+    return "pénurie : la ville produit " + e.offre + " et en demande " + e.demande + " ; les plus loin " + (quoi === "eau" ? "des stations" : "des centrales") + " sont coupés";
   }
 
   function calculer(monde) {
@@ -133,5 +169,5 @@ Megalopole.Reseaux = (function () {
     distribuer(monde, "eau");
   }
 
-  return { vent, soleil, heure, production, calculer, possible };
+  return { vent, soleil, heure, production, calculer, possible, pourquoiPas, aBesoinDEau };
 })();

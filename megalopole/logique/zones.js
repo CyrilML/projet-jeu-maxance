@@ -35,7 +35,8 @@ Megalopole.Zones = (function () {
     if (monde.routeProche[i] < 0) return { max: 0, manque: "🛣️ une route à " + C.routes.accesMax + " cases au plus" };
     const courant = nv ? monde.courant[i] : Megalopole.Reseaux.possible(monde, i, "courant");
     if (!courant) return { max: 0, manque: "⚡ l'électricité" };
-    const eau = nv ? monde.eau[i] : Megalopole.Reseaux.possible(monde, i, "eau");
+    // (étape 9 : un terrain qui a besoin de l'eau doit l'avoir ; une petite maison, qui a un puits, peut grandir s'il en RESTE sur sa route)
+    const eau = nv && Megalopole.Reseaux.aBesoinDEau(monde, i) ? monde.eau[i] : Megalopole.Reseaux.possible(monde, i, "eau");
     // les conditions de chaque niveau (2, 3, 4, 5, 6) : [la valeur du terrain qu'il faut, les services qu'il faut]
     //   (d'abord la valeur, puis les services : comme ça, le panneau dit exactement ce qui manque)
     const S = { education: "🎓 une école", sante: "🏥 la santé (clinique)", securite: "🚓 la police", feu: "🚒 les pompiers", loisirs: "🎡 des loisirs (un parc)", transport: "🚌 des transports (bus)" };
@@ -52,10 +53,14 @@ Megalopole.Zones = (function () {
       return sans.length ? [false, sans.map((t) => S[t]).join(" et ")] : [true, ""];
     });
     let max = 1, manque = null;
+    // (étape 9 : pour GRANDIR, il faut qu'il reste assez de courant et d'eau pour le niveau suivant ; sinon on attend)
+    const reste = (quoi, de, a) => { const e = monde.reseaux[quoi], cons = C.consommation[quoi]; return (e.reste || 0) >= cons[a] - cons[de]; };
     for (const [ok, pourquoi] of etapes) {
       if (max >= palier.niveauMax) { manque = manque || "🌆 une ville plus grande (palier « " + (C.paliers[Megalopole.Population.palier(monde) + 1] || palier).nom + " »)"; break; }
       if (max + 1 >= C.croissance.eauDesLeNiveau && !eau && !(z === "A" && max < 2)) { manque = "💧 l'eau courante"; break; }
       if (!ok) { manque = pourquoi; break; }
+      if (max + 1 > nv && nv > 0 && !reste("courant", Math.max(nv, max), max + 1)) { manque = "⚡ plus d'électricité (les centrales sont pleines : construis-en une autre)"; break; }
+      if (max + 1 > nv && nv > 0 && max + 1 >= C.croissance.eauDesLeNiveau && !(z === "A" && max < 2) && !reste("eau", Math.max(nv, max), max + 1)) { manque = "💧 plus d'eau (les stations sont pleines : construis-en une autre)"; break; }
       max++;
     }
     return { max, manque };
@@ -90,6 +95,7 @@ Megalopole.Zones = (function () {
 
   function changer(monde, i, nv, sens, raison) {
     const avant = monde.niveau[i], z = lettre(monde, i), n = monde.carte.colonnes;
+    if (nv > avant) for (const q of ["courant", "eau"]) { const e = monde.reseaux[q]; if (e) e.reste = Math.max(0, (e.reste || 0) - (C.consommation[q][nv] - C.consommation[q][avant])); } // (on réserve tout de suite ce qu'il va consommer)
     monde.niveau[i] = nv; monde.attente[i] = C.croissance.attente * (0.6 + Math.random() * 0.8); monde.carte.arbre[i] = 0;
     monde.changements++;
     monde.compteurs[sens === "grandit" ? "grandis" : "baisses"]++;
