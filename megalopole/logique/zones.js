@@ -5,7 +5,9 @@
 //
 //   1. Jusqu'où ce terrain PEUT-il grandir ? (son niveau maximum)
 //        il lui faut une route à 3 cases au plus ; l'électricité ; l'eau courante dès le niveau 2 ;
-//        puis une belle valeur du terrain 💎 et des services (une maison ne devient pas un immeuble sans école !) ;
+//        puis, pour les HABITATIONS, une belle valeur du terrain 💎 et des services (pas d'immeuble sans école !) ;
+//        pour les commerces, les industries et les fermes : seulement la police 🚓 et les pompiers 🚒 (et un bus pour
+//        les plus gros) — décision de Maxance à l'étape 10 ;
 //        et le palier de la ville : les gratte-ciel n'arrivent qu'avec une métropole.
 //   2. Les gens ont-ils ENVIE d'y venir ? (son envie, de −1 à +1)
 //        la DEMANDE de la ville pour cette zone (la barre R C I A), plus ce qui est bien ou mal autour :
@@ -42,9 +44,12 @@ Megalopole.Zones = (function () {
     const S = { education: "🎓 une école", sante: "🏥 la santé (clinique)", securite: "🚓 la police", feu: "🚒 les pompiers", loisirs: "🎡 des loisirs (un parc)", transport: "🚌 des transports (bus)" };
     let etapes;
     if (z === "R") etapes = [[0.3, []], [0.4, ["education"]], [0.5, ["sante"]], [0.6, ["securite", "loisirs"]], [0.7, ["transport"]]];
-    else if (z === "C") etapes = [[0.28, []], [0.38, ["securite"]], [0.5, ["transport"]], [0.6, []], [0.7, ["education"]]];
-    else if (z === "I") etapes = [[0, []], [0, ["feu"]], [0, ["transport"]], [0, ["education"]], [2, []]];
-    else etapes = [[0, []], [0.3, []], [0, ["education"]], [0, ["transport"]], [2, []]];
+    // (étape 10, ✍️ Maxance : « les fermes, les industries et les commerces n'ont pas besoin de parc, d'école ou de santé
+    //  pour évoluer, juste pompiers et police ») : plus de valeur du terrain ni d'école pour eux ; les très gros niveaux
+    //  (tours de bureaux, usines robotisées, fermes verticales) demandent aussi un arrêt de bus, pour les employés
+    else if (z === "C") etapes = [[0, []], [0, ["securite"]], [0, ["feu"]], [0, ["transport"]], [0, ["securite", "feu", "transport"]]];
+    else if (z === "I") etapes = [[0, []], [0, ["feu"]], [0, ["securite"]], [0, ["transport"]], [2, []]];
+    else etapes = [[0, []], [0, []], [0, ["feu"]], [0, ["transport"]], [2, []]];
     etapes = etapes.map(([seuil, services]) => {
       if (seuil > 1) return [false, "c'est le plus haut niveau"];
       if (z === "A" && pol > 0.2) return [false, "🌫️ un air plus pur (pas d'usines à côté)"];
