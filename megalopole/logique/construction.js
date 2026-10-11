@@ -180,6 +180,7 @@ Megalopole.Construction = (function () {
     if (!B) return null;
     const b = { id: monde.prochainId++, type: d.type, colonne: d.colonne, ligne: d.ligne, taille: B.taille };
     if (d.rempli) b.rempli = d.rempli; // (étape 11 : une décharge se souvient de ce qu'elle contient)
+    if (d.etoiles) b.etoiles = Math.min(C.ameliorations.max, d.etoiles); // (étape 17 : ses étoiles ⭐)
     for (const p of casesDe(d.type, d.colonne, d.ligne)) if (K.dans(monde.carte, p.colonne, p.ligne)) monde.occupe[index(monde, p.colonne, p.ligne)] = b.id;
     monde.batiments.push(b);
     return b;

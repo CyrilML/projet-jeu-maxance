@@ -21,7 +21,7 @@ Megalopole.Interface = (function () {
   const radio = Megalopole.Evenements;
   const $ = (id) => document.getElementById(id);
   const fr = (n) => Math.round(n).toLocaleString("fr-FR");
-  const demandes = { outil: undefined, taux: [], postes: [], pret: null, vitesse: null, calque: undefined, difficulte: null, guide: null, confirmer: false, annulerTrace: false, deplacer: false };
+  const demandes = { outil: undefined, taux: [], postes: [], pret: null, vitesse: null, calque: undefined, difficulte: null, guide: null, confirmer: false, annulerTrace: false, deplacer: false, ameliorer: false, rechercher: null };
   const auDoigt = () => window.matchMedia && matchMedia("(pointer: coarse)").matches; // (un téléphone, une tablette)
   let groupeOuvert = null, onglet = "reclamations", monde = null;
 
@@ -41,6 +41,7 @@ Megalopole.Interface = (function () {
     if (B.pollution) f.push("🌫️ " + "▮".repeat(Math.max(1, Math.round(B.pollution * 5))));
     else if (B.salete) f.push("🌫️ salit autour");
     if (C.budget.carburant[t]) f.push("⛽ carburant");
+    if (Megalopole.Ameliorations.ameliorable(t)) f.push("⭐ jusqu'à ★" + C.ameliorations.max); // (étape 17)
     const ou = B.surMer ? "🌊 dans la mer" : B.riviere ? "🏞️ contre une rivière" : B.bordDeMer ? "🌊 au bord de la mer" : B.bordDeLEau ? "💧 au bord de l'eau" : "";
     if (ou) f.push(ou);
     return f.join(" · ");
@@ -109,6 +110,8 @@ Megalopole.Interface = (function () {
     // (les boutons du budget sont redessinés 4 fois par seconde : on écoute leur parent, qui, lui, reste)
     $("contenu-panneau").addEventListener("click", (e) => {
       if (e.target.closest("[data-deplacer]")) { demandes.deplacer = true; fermerPanneau(); return; }
+      const am = e.target.closest("[data-ameliorer],[data-recherche]"); // (étape 17)
+      if (am) { if (am.dataset.ameliorer) demandes.ameliorer = true; else demandes.rechercher = am.dataset.recherche; setTimeout(() => rafraichir(true), 30); return; }
       const bt = e.target.closest("[data-taux],[data-poste],[data-pret]");
       if (!bt) return;
       if (bt.dataset.taux) { const [zone, d] = bt.dataset.taux.split(":"); demandes.taux.push({ zone, d: +d }); }
@@ -191,6 +194,9 @@ Megalopole.Interface = (function () {
     "routes-abimees": (d) => "🛣️⚠️ Les routes s'abîment (" + d.etat + " %) : augmente leur budget dans 🧾",
     "batiment-souleve": (d) => "📦 " + d.emoji + " " + d.nom + " soulevé(e) : touche sa nouvelle place, puis ✅ (❌ pour le remettre)",
     "batiment-deplace": (d) => "📦✅ " + d.emoji + " " + d.nom + " déplacé(e) !",
+    "batiment-ameliore": (d) => "⭐ " + d.emoji + " " + d.nom + " : ★" + d.etoiles + " ! (× " + String(d.facteur).replace(".", ",") + ")",
+    "recherche-commencee": (d) => "🔬 Le laboratoire cherche : " + d.emoji + " " + d.nom + "…",
+    "recherche-finie": (d) => "🔬✅ Trouvé : " + d.emoji + " " + d.nom + " ! " + d.texte,
     "deplacement-impossible": (d) => "📦🚫 " + d.raison,
     "mission-reussie": (d) => "🎓✅ Mission " + d.numero + " réussie : " + d.emoji + " " + d.titre + " !",
     "guide-fini": () => "🎓🎉 Bravo, tu as fini le guide ! Maintenant, écoute ce que réclament les habitants (📢).",
@@ -277,6 +283,7 @@ Megalopole.Interface = (function () {
       return h + m.reclamations.slice(0, 7).map((r) => "<div class='recl'><b>" + r.emoji + " " + r.texte + "</b><br><small>💡 " + r.conseil + "</small></div>").join("");
     }
     if (o === "besoins") return bilanHTML(m);
+    if (o === "labo") return laboHTML(m);
     if (o === "budget") return budgetHTML(m);
     // 🔎 la case touchée
     const sel = m.selection;
@@ -287,10 +294,11 @@ Megalopole.Interface = (function () {
       const B = C.batiments[b.type];
       h += "<h3>" + B.emoji + " " + B.nom + "</h3>";
       h += ficheReseau(m, b, B); // (étape 13 : capacité de ce bâtiment, de toute la ville, la demande, et le verdict)
+      h += atelierHTML(m, b, B); // (étape 17 : ⭐ l'améliorer)
       if (B.trafic) h += "<p>🚗 Enlève " + Math.round(B.trafic * 100) + " % du trafic autour</p>";
       if (B.joie) h += "<p>😊 +" + B.joie + " de bonheur pour toute la ville</p>";
       h += "<p><button data-deplacer='1' class='deplacer'>📦 Déplacer (gratuit)</button> <small>ou maintiens ton doigt dessus</small></p>";
-      h += "<p>🔧 Entretien : " + fr(Megalopole.Budget.prix(m, B.entretien) * (B.poste ? Megalopole.Budget.poste(m, B.poste) : 1)) + " 🪙 par mois</p>";
+      h += "<p>🔧 Entretien : " + fr(Megalopole.Budget.prix(m, B.entretien) * Megalopole.Ameliorations.facteurEntretien(b) * (B.poste ? Megalopole.Budget.poste(m, B.poste) : 1)) + " 🪙 par mois</p>";
       return h;
     }
     const z = Z.lettre(m, i), ter = m.carte.terrain[i];
@@ -327,28 +335,59 @@ Megalopole.Interface = (function () {
     };
     const bloc = (titre, ici, ville, v) => blocs.push("<div class='reseau'><h4>" + titre + "</h4><div class='deux'><div><small>CE BÂTIMENT</small>" + ici + "</div><div><small>TOUTE LA VILLE</small>" + ville + "</div></div>" + v + "</div>");
     const el = m.reseaux.courant || {}, ea = m.reseaux.eau || {}, de = m.reseaux.dechets || {}, ep = m.reseaux.epuration || {};
-    const unite = B.courant || B.courantDechets || 0;
+    // (étape 17 : la capacité de CE bâtiment compte ses étoiles ⭐, et la recherche des centrales 🔬)
+    const Am = Megalopole.Ameliorations, f = Am.facteur(b), fois = (x) => Math.round(x * f);
+    const unite = B.courant ? Math.round(B.courant * f * Am.effet(m, "production")) : B.courantDechets || 0;
     if (unite) bloc("⚡ L'électricité", "<p>Capacité : <b>" + fr(unite) + "</b>" + (B.vent ? " (× le vent)" : B.soleil ? " (rien la nuit)" : B.courantDechets ? " (selon ce qu'il brûle)" : "") + "</p><p>En ce moment : <b>" + fr(b.production || 0) + "</b></p>",
       "<p>" + m.batiments.filter((x) => C.batiments[x.type].courant || C.batiments[x.type].courantDechets).length + " centrale(s)</p><p>Production : <b>" + fr(el.offre || 0) + "</b></p><p>Demande : <b>" + fr(el.demande || 0) + "</b></p>", verdict(el.offre || 0, el.demande || 0, unite, "⚡"));
     if (B.consoCourant) bloc("⚡ Son électricité", "<p>Il consomme <b>" + fr(B.consoCourant) + "</b></p><p>" + (b.alimente ? "✅ alimenté" : "❌ pas alimenté : il ne produit rien !") + "</p>", "<p>Production : <b>" + fr(el.offre || 0) + "</b></p><p>Demande : <b>" + fr(el.demande || 0) + "</b></p>", verdict(el.offre || 0, el.demande || 0, B.consoCourant, "⚡"));
-    if (B.eau) bloc("💧 L'eau", "<p>Capacité : <b>" + fr(B.eau) + "</b></p><p>En ce moment : <b>" + fr(b.productionEau || 0) + "</b>" + (b.productionEau ? "" : " (il lui faut l'électricité !)") + "</p>",
-      "<p>" + m.batiments.filter((x) => C.batiments[x.type].eau).length + " station(s)</p><p>Production : <b>" + fr(ea.offre || 0) + "</b></p><p>Demande : <b>" + fr(ea.demandeBesoin || 0) + "</b>" + (ea.demande > ea.demandeBesoin ? " <small>(+ " + fr(ea.demande - ea.demandeBesoin) + " petites maisons, s'il en reste)</small>" : "") + "</p>", verdict(ea.offre || 0, ea.demandeBesoin || 0, B.eau, "💧"));
-    if (B.epuration) bloc("🚽 Les eaux usées", "<p>Capacité : <b>" + fr(B.epuration) + "</b></p><p>" + (m.reseaux.courantDe(b) ? "✅ en marche" : "❌ pas d'électricité : il ne nettoie rien") + "</p>",
-      "<p>" + m.batiments.filter((x) => C.batiments[x.type].epuration).length + " station(s)</p><p>Capacité : <b>" + fr(ep.capacite || 0) + "</b></p><p>Eaux usées : <b>" + fr(ep.eauxUsees || 0) + "</b></p>", verdict(ep.capacite || 0, ep.eauxUsees || 0, B.epuration, "🚽"));
+    if (B.eau) bloc("💧 L'eau", "<p>Capacité : <b>" + fr(fois(B.eau)) + "</b></p><p>En ce moment : <b>" + fr(b.productionEau || 0) + "</b>" + (b.productionEau ? "" : " (il lui faut l'électricité !)") + "</p>",
+      "<p>" + m.batiments.filter((x) => C.batiments[x.type].eau).length + " station(s)</p><p>Production : <b>" + fr(ea.offre || 0) + "</b></p><p>Demande : <b>" + fr(ea.demandeBesoin || 0) + "</b>" + (ea.demande > ea.demandeBesoin ? " <small>(+ " + fr(ea.demande - ea.demandeBesoin) + " petites maisons, s'il en reste)</small>" : "") + "</p>", verdict(ea.offre || 0, ea.demandeBesoin || 0, fois(B.eau), "💧"));
+    if (B.epuration) bloc("🚽 Les eaux usées", "<p>Capacité : <b>" + fr(Math.round(fois(B.epuration) * Am.effet(m, "epuration"))) + "</b></p><p>" + (m.reseaux.courantDe(b) ? "✅ en marche" : "❌ pas d'électricité : il ne nettoie rien") + "</p>",
+      "<p>" + m.batiments.filter((x) => C.batiments[x.type].epuration).length + " station(s)</p><p>Capacité : <b>" + fr(ep.capacite || 0) + "</b></p><p>Eaux usées : <b>" + fr(ep.eauxUsees || 0) + "</b></p>", verdict(ep.capacite || 0, ep.eauxUsees || 0, fois(B.epuration), "🚽"));
     if (B.dechets) {
       const reste = B.contenance ? B.contenance - (b.rempli || 0) : 0, moisRestants = B.contenance && b.traite ? Math.floor(reste / b.traite) : null;
-      bloc("🗑️ Les déchets", "<p>Capacité : <b>" + fr(B.dechets) + "</b> par mois</p><p>En ce moment : <b>" + fr(b.traite || 0) + "</b></p>" + (B.contenance ? "<p>Rempli : <b>" + Math.round((100 * (b.rempli || 0)) / B.contenance) + " %</b> (" + fr(b.rempli || 0) + " / " + fr(B.contenance) + ")" + (moisRestants !== null ? "<br>⏳ plein dans ≈ " + moisRestants + " mois" : "") + "</p>" : ""),
-        "<p>" + m.batiments.filter((x) => C.batiments[x.type].dechets).length + " décharge(s) / incinérateur(s)</p><p>Place : <b>" + fr(de.offre || 0) + "</b></p><p>Déchets jetés : <b>" + fr(de.demande || 0) + "</b>" + (de.recycle ? " <small>(♻️ déjà −" + Math.round(de.recycle * 100) + " %)</small>" : "") + "</p>", verdict(de.offre || 0, de.demande || 0, B.dechets, "🗑️"));
+      bloc("🗑️ Les déchets", "<p>Capacité : <b>" + fr(fois(B.dechets)) + "</b> par mois</p><p>En ce moment : <b>" + fr(b.traite || 0) + "</b></p>" + (B.contenance ? "<p>Rempli : <b>" + Math.round((100 * (b.rempli || 0)) / B.contenance) + " %</b> (" + fr(b.rempli || 0) + " / " + fr(B.contenance) + ")" + (moisRestants !== null ? "<br>⏳ plein dans ≈ " + moisRestants + " mois" : "") + "</p>" : ""),
+        "<p>" + m.batiments.filter((x) => C.batiments[x.type].dechets).length + " décharge(s) / incinérateur(s)</p><p>Place : <b>" + fr(de.offre || 0) + "</b></p><p>Déchets jetés : <b>" + fr(de.demande || 0) + "</b>" + (de.recycle ? " <small>(♻️ déjà −" + Math.round(de.recycle * 100) + " %)</small>" : "") + "</p>", verdict(de.offre || 0, de.demande || 0, fois(B.dechets), "🗑️"));
     }
-    if (B.recyclage) { const total = (de.demande || 0) / (1 - (de.recycle || 0)), cap = m.batiments.reduce((t, x) => t + (C.batiments[x.type].recyclage || 0), 0), utile = total * C.dechets.recyclage;
-      bloc("♻️ Le recyclage", "<p>Capacité : <b>" + fr(B.recyclage) + "</b> déchets en moins</p>", "<p>" + meme + " centre(s)</p><p>Recyclé : <b>" + Math.round((de.recycle || 0) * 100) + " %</b> (au plus 30 %)</p><p>Utile jusqu'à : <b>" + fr(utile) + "</b> · capacité " + fr(cap) + "</p>", cap >= utile ? "<p class='bien'>✅ Le recyclage est au maximum (30 %) : un centre de plus ne servirait à rien.</p>" : "<p>⚠️ Encore " + Math.ceil((utile - cap) / B.recyclage) + " centre(s) pour recycler 30 %.</p>"); }
+    if (B.recyclage) { const total = (de.demande || 0) / (1 - (de.recycle || 0)), cap = m.batiments.reduce((t, x) => t + (C.batiments[x.type].recyclage || 0) * Am.facteur(x), 0), utile = total * C.dechets.recyclage;
+      bloc("♻️ Le recyclage", "<p>Capacité : <b>" + fr(fois(B.recyclage)) + "</b> déchets en moins</p>", "<p>" + meme + " centre(s)</p><p>Recyclé : <b>" + Math.round((de.recycle || 0) * 100) + " %</b> (au plus 30 %)</p><p>Utile jusqu'à : <b>" + fr(utile) + "</b> · capacité " + fr(cap) + "</p>", cap >= utile ? "<p class='bien'>✅ Le recyclage est au maximum (30 %) : un centre de plus ne servirait à rien.</p>" : "<p>⚠️ Encore " + Math.ceil((utile - cap) / fois(B.recyclage)) + " centre(s) pour recycler 30 %.</p>"); }
     if (B.capacite && B.service) { // 🏛️ étape 14 : un service a une capacité en habitants
       const S = (m.services || {})[B.service] || {}, nom = { education: "🎓 L'éducation", sante: "🏥 La santé", securite: "🚓 La police", feu: "🚒 Les pompiers", loisirs: "🎡 Les loisirs", transport: "🚌 Les transports" }[B.service], qui = S.tous ? "habitants + emplois" : "habitants", f = Megalopole.Budget.poste(m, B.poste);
       bloc(nom, "<p>Capacité : <b>" + fr(b.capaciteService || 0) + "</b> " + qui + (f !== 1 ? " <small>(budget à " + Math.round(f * 100) + " %)</small>" : "") + "</p><p>En ce moment : <b>" + fr(b.servis || 0) + "</b></p>" + (b.marche === false && B.service !== "loisirs" ? "<p class='mal'>⚠️ pas d'électricité : il est fermé !</p>" : !b.relie ? "<p class='mal'>⚠️ il ne touche pas de route : il ne sert personne</p>" : ""),
-        "<p>" + (S.batiments || 0) + " bâtiment(s)</p><p>Places : <b>" + fr(S.capacite || 0) + "</b></p><p>Demande : <b>" + fr(S.demande || 0) + "</b> " + qui + "</p>" + (S.horsReseau ? "<p><small>" + S.horsReseau + " terrain(s) pas reliés par la route</small></p>" : ""), verdict(S.capacite || 0, S.demande || 0, B.capacite, "👥"));
+        "<p>" + (S.batiments || 0) + " bâtiment(s)</p><p>Places : <b>" + fr(S.capacite || 0) + "</b></p><p>Demande : <b>" + fr(S.demande || 0) + "</b> " + qui + "</p>" + (S.horsReseau ? "<p><small>" + S.horsReseau + " terrain(s) pas reliés par la route</small></p>" : ""), verdict(S.capacite || 0, S.demande || 0, fois(B.capacite), "👥"));
     }
     if (B.courantDechets) blocs.reverse(); // (l'incinérateur : d'abord les déchets, son vrai métier)
     return blocs.join("");
+  }
+  // ⭐ Étape 17 : l'ATELIER d'un bâtiment : ses étoiles, ce que donne la suivante, son prix, et le bouton
+  function atelierHTML(m, b, B) {
+    const Am = Megalopole.Ameliorations, A = C.ameliorations;
+    if (!Am.ameliorable(b.type)) return "";
+    const e = Am.etoiles(b), etoiles = "★".repeat(e) + "☆".repeat(A.max - e), quoi = B.capacite ? "places" : "production";
+    let h = "<div class='reseau atelier'><h4>⭐ Améliorer <span class='etoiles'>" + etoiles + "</span></h4>";
+    h += "<p>En ce moment : " + quoi + " × <b>" + String(Am.facteur(b)).replace(".", ",") + "</b> · entretien × " + String(Math.round(Am.facteurEntretien(b) * 10) / 10).replace(".", ",") + "</p>";
+    if (e >= A.max) return h + "<p class='bien'>🏆 3 étoiles : c'est le maximum !</p></div>";
+    const r = Am.raisonAmeliorer(m, b), prix = Am.prixAmelioration(m, b);
+    h += "<p>★" + (e + 1) + " : " + quoi + " × <b>" + String(1 + A.bonus * (e + 1)).replace(".", ",") + "</b> (+" + Math.round(A.bonus * 100) + " % de la base) · entretien +" + Math.round(A.entretien * 100) + " %</p>";
+    return h + "<button data-ameliorer='1'" + (r ? " class='verrou' title='" + r.replace(/'/g, "’") + "'" : "") + ">" + (r ? "🔒 " : "⬆️ ") + "Améliorer pour " + fr(prix) + " 🪙</button>" + (r ? "<p class='mal'><small>" + r + "</small></p>" : "") + "</div>";
+  }
+  // 🔬 Étape 17 : le LABORATOIRE (l'icône 🔬) : les recherches, par famille
+  function laboHTML(m) {
+    const Am = Megalopole.Ameliorations, R = m.recherches, e = R.enCours;
+    let h = "<h3>🔬 Le laboratoire</h3><p><small>Une recherche à la fois. Tu la paies, elle dure 2 minutes de jeu, puis son effet compte pour toujours.</small></p>";
+    if (e) { const r = Am.fiche(e.id); h += "<div class='mission'><b>⏳ En cours : " + r.emoji + " " + r.nom + "</b>" + barreHTML(1 - e.reste / r.duree, "#7a5ab0") + "<small>encore " + Math.ceil(e.reste) + " s de jeu</small></div>"; }
+    let famille = "";
+    for (const r of C.recherches) {
+      if (r.famille !== famille) { famille = r.famille; h += "<h4>" + famille + "</h4>"; }
+      const fait = Am.faite(m, r.id), raison = Am.raisonRechercher(m, r.id);
+      h += "<div class='recherche" + (fait ? " faite" : "") + "'><b>" + r.emoji + " " + r.nom + "</b><small>" + r.texte + "</small>";
+      if (fait) h += "<span class='bien'>✅ trouvée</span>";
+      else if (e && e.id === r.id) h += "<span>⏳ en cours…</span>";
+      else h += "<button data-recherche='" + r.id + "'" + (raison ? " class='verrou' title='" + raison.replace(/'/g, "’") + "'" : "") + ">" + (raison ? "🔒 " : "🔬 ") + fr(Megalopole.Budget.prix(m, r.prix)) + " 🪙</button>" + (raison && !/argent|autre/.test(raison) ? "<small class='mal'>" + raison + "</small>" : "");
+      h += "</div>";
+    }
+    return h;
   }
   // 📊 Étape 8 (demande de Maxance) : les BESOINS de la ville face à ce qu'elle PRODUIT, ligne par ligne
   //   ✅ assez (100 % et plus) · ⚠️ presque (80 %) · ❌ pas assez — avec un conseil quand ça manque
@@ -443,7 +482,7 @@ Megalopole.Interface = (function () {
   }
 
   // Ce que l'interface a reçu du joueur depuis la dernière fois (et on remet à zéro)
-  function consommer() { const d = Object.assign({}, demandes); demandes.outil = undefined; demandes.taux = []; demandes.postes = []; demandes.pret = null; demandes.vitesse = null; demandes.calque = undefined; demandes.difficulte = null; demandes.guide = null; demandes.confirmer = false; demandes.annulerTrace = false; demandes.deplacer = false; return d; }
+  function consommer() { const d = Object.assign({}, demandes); demandes.outil = undefined; demandes.taux = []; demandes.postes = []; demandes.pret = null; demandes.vitesse = null; demandes.calque = undefined; demandes.difficulte = null; demandes.guide = null; demandes.confirmer = false; demandes.annulerTrace = false; demandes.deplacer = false; demandes.ameliorer = false; demandes.rechercher = null; return d; }
 
   return { initialiser, changerMonde, rafraichir, consommer, afficher, fermerTiroir, fermerPanneau, ouvrirTiroir, choisirDifficulte, renvoye, demandes };
 })();

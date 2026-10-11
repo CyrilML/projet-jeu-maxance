@@ -139,6 +139,14 @@
     .reseau .deux { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .reseau .deux > div { background: #fff; border-radius: 8px; padding: 2px 7px; } .reseau .deux p { margin: 2px 0 !important; } .reseau .deux small { color: #7a6a4a; font-weight: 700; font-size: 0.65rem; }
     .conditions { list-style: none; padding: 0; margin: 4px 0; } .conditions li { padding: 2px 0; font-size: 0.82rem; } /* étape 12 */
     .bilan small { grid-column: 1 / -1; color: #6a5a3a; }
+    /* ⭐🔬 étape 17 : l'atelier et le laboratoire */
+    .atelier .etoiles { color: #e0a020; letter-spacing: 1px; }
+    .atelier button, .recherche button { margin-top: 4px; padding: 6px 10px; border-radius: 10px; border: 0; background: #3f6fc4; color: #fff; font-weight: bold; cursor: pointer; }
+    .atelier button.verrou, .recherche button.verrou { background: #b8b0a0; cursor: not-allowed; }
+    .recherche { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid #ece6d6; }
+    .recherche small { grid-column: 1; color: #6a5a3a; }
+    .recherche > button, .recherche > span { grid-column: 2; grid-row: 1 / span 2; }
+    .recherche.faite b { color: #3d8a4a; }
     #outil-en-cours button { border: 0; border-radius: 50%; background: #fff; color: #2a2620; width: 24px; height: 24px; margin-left: 8px; font-weight: 700; padding: 0; }
     #message { bottom: 130px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 30px); background: rgba(250, 248, 240, .97); color: #2a2620; padding: 8px 14px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; box-shadow: 0 4px 14px rgba(0,0,0,.35); opacity: 0; transition: opacity .3s; pointer-events: none; text-align: center; }
     #message.visible { opacity: 1; }
@@ -211,6 +219,7 @@
       <button data-onglet="reclamations" title="Ce que réclament les habitants">📢</button>
       <button data-onglet="besoins" title="Les besoins de la ville et ce qu'elle produit">📊</button>
       <button data-onglet="budget" title="Le budget et les impôts">🧾</button>
+      <button data-onglet="labo" title="Le laboratoire : les recherches">🔬</button>
     </div>
     <div id="panneau" class="flottant"><button id="fermer-panneau" class="fermer" title="Fermer (Échap)">✖</button><div id="contenu-panneau"></div></div>
     <div id="tiroir" class="flottant"></div>
@@ -232,26 +241,27 @@
     <section><h2>💾 Base de données <button id="effacer-base">Effacer</button></h2><pre id="base"></pre></section>
   </div>
 
-  <script src="config.js?v=16"></script>
-  <script src="moteur/evenements.js?v=16"></script>
-  <script src="moteur/ecran.js?v=16"></script>
-  <script src="moteur/entrees.js?v=16"></script>
-  <script src="moteur/hasard.js?v=16"></script>
-  <script src="moteur/iso.js?v=16"></script>
-  <script src="logique/carte.js?v=16"></script>
-  <script src="logique/construction.js?v=16"></script>
-  <script src="logique/reseaux.js?v=16"></script>
-  <script src="logique/services.js?v=16"></script>
-  <script src="logique/zones.js?v=16"></script>
-  <script src="logique/population.js?v=16"></script>
-  <script src="logique/budget.js?v=16"></script>
-  <script src="logique/guide.js?v=16"></script>
-  <script src="donnees/sauvegarde.js?v=16"></script>
-  <script src="logique/monde.js?v=16"></script>
-  <script src="affichage/maquettes.js?v=16"></script>
-  <script src="affichage/peintre.js?v=16"></script>
-  <script src="affichage/interface.js?v=16"></script>
-  <script src="affichage/sous-le-capot.js?v=16"></script>
-  <script src="main.js?v=16"></script>
+  <script src="config.js?v=17"></script>
+  <script src="moteur/evenements.js?v=17"></script>
+  <script src="moteur/ecran.js?v=17"></script>
+  <script src="moteur/entrees.js?v=17"></script>
+  <script src="moteur/hasard.js?v=17"></script>
+  <script src="moteur/iso.js?v=17"></script>
+  <script src="logique/carte.js?v=17"></script>
+  <script src="logique/construction.js?v=17"></script>
+  <script src="logique/reseaux.js?v=17"></script>
+  <script src="logique/services.js?v=17"></script>
+  <script src="logique/zones.js?v=17"></script>
+  <script src="logique/population.js?v=17"></script>
+  <script src="logique/budget.js?v=17"></script>
+  <script src="logique/guide.js?v=17"></script>
+  <script src="logique/ameliorations.js?v=17"></script>
+  <script src="donnees/sauvegarde.js?v=17"></script>
+  <script src="logique/monde.js?v=17"></script>
+  <script src="affichage/maquettes.js?v=17"></script>
+  <script src="affichage/peintre.js?v=17"></script>
+  <script src="affichage/interface.js?v=17"></script>
+  <script src="affichage/sous-le-capot.js?v=17"></script>
+  <script src="main.js?v=17"></script>
 </body>
 </html>

@@ -117,7 +117,7 @@ Megalopole.Peintre = (function () {
     let nObjets = 0;
     const grosParDiag = new Map();
     for (const b of monde.batiments) { const dg = b.colonne + b.ligne + 2 * (b.taille - 1); (grosParDiag.get(dg) || grosParDiag.set(dg, []).get(dg)).push(b); }
-    const montrerBatiments = true, pastilles = []; // (étape 6 : avec un calque, les bâtiments restent, avec une pastille de couleur)
+    const montrerBatiments = true, pastilles = [], etoilesAMontrer = []; // (étape 6 : avec un calque, les bâtiments restent, avec une pastille de couleur)
     for (let dg = cMin + lMin; dg <= cMax + lMax; dg++) {
       for (let c = Math.max(cMin, dg - lMax); c <= Math.min(cMax, dg - lMin); c++) {
         const l = dg - c, i = l * n + c, p = milieu(c, l);
@@ -140,12 +140,17 @@ Megalopole.Peintre = (function () {
         if (m.x < x0 - 200 || m.x > x1 + 200 || m.y < y0 - 50 || m.y > y1 + 50) continue;
         const haut = Mq.gros(ctx, b.type, m.x, m.y, b.taille, b, b.type in { centrale: 1, nucleaire: 1 } ? (b.production || 0) > 0 : true);
         if (calque && haut) { const B = C.batiments[b.type], q = pastilleGros(options.calque, B, b); if (q) pastilles.push(haut[0], haut[1] - 6, q[0], q[1]); }
+        if (b.etoiles && haut && z >= 0.35) etoilesAMontrer.push(haut[0], haut[1] - (calque ? 22 : 4), b.etoiles); // (étape 17 : ses étoiles ⭐)
         if (C.batiments[b.type].service && b.marche === false && C.batiments[b.type].service !== "loisirs" && z >= 0.4) bulle(m.x, m.y - 30 * b.taille, "⚡");
         nObjets++;
       }
     }
     // les pastilles du calque, par-dessus tout : on voit tout de suite quels bâtiments sont concernés
     for (let j = 0; j < pastilles.length; j += 4) pastille(pastilles[j], pastilles[j + 1], pastilles[j + 2], pastilles[j + 3], z);
+    // ⭐ étape 17 : les étoiles des bâtiments améliorés, en or au-dessus du toit
+    ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center"; ctx.lineJoin = "round";
+    for (let j = 0; j < etoilesAMontrer.length; j += 3) { const t = "★".repeat(etoilesAMontrer[j + 2]); ctx.lineWidth = 3; ctx.strokeStyle = "rgba(60, 40, 10, .85)"; ctx.strokeText(t, etoilesAMontrer[j], etoilesAMontrer[j + 1]); ctx.fillStyle = "#f2c230"; ctx.fillText(t, etoilesAMontrer[j], etoilesAMontrer[j + 1]); }
+    ctx.textAlign = "left";
 
     // 4. Ce que fait le maire
     apercu(monde, cMin, cMax, lMin, lMax, visible);

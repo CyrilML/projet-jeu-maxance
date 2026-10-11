@@ -43,7 +43,9 @@ Megalopole.Reseaux = (function () {
     if (quoi === "eau" && !monde.reseaux.courantDe(b)) return 0; // une pompe a besoin de courant pour pomper
     if (B.consoCourant && !b.alimente) return 0; // (le dessalement : il lui faut SON électricité)
     if (quoi === "dechets" && B.contenance && (b.rempli || 0) >= B.contenance) return 0; // une décharge pleine
-    return Math.round(B[quoi] * (B.vent ? vent(monde) : 1) * (B.soleil ? soleil(monde) : 1));
+    // (étape 17 : × les étoiles du bâtiment ⭐, et × la recherche « centrales efficaces » 🔬 pour le courant)
+    const Am = Megalopole.Ameliorations, rech = quoi === "courant" ? Am.effet(monde, "production") : 1;
+    return Math.round(B[quoi] * (B.vent ? vent(monde) : 1) * (B.soleil ? soleil(monde) : 1) * Am.facteur(b) * rech);
   }
 
   // 1. L'accès : pour chaque case, la route la plus proche (à « accesMax » cases au plus), ou -1
@@ -129,9 +131,9 @@ Megalopole.Reseaux = (function () {
     let recycle = 0;
     if (quoi === "dechets") {
       let total = 0; for (let i = 0; i < N; i++) if (monde.niveau[i] && monde.zone[i]) total += conso[monde.niveau[i]];
-      const capacite = monde.batiments.reduce((t, b) => t + (C.batiments[b.type].recyclage || 0), 0);
+      const capacite = monde.batiments.reduce((t, b) => t + (C.batiments[b.type].recyclage || 0) * Megalopole.Ameliorations.facteur(b), 0);
       recycle = total ? Math.min(C.dechets.recyclage, capacite / total) : 0;
-      conso = conso.map((x) => x * (1 - recycle));
+      conso = conso.map((x) => x * (1 - recycle) * Megalopole.Ameliorations.effet(monde, "dechets")); // (étape 17 : le tri sélectif 🔬)
     }
     // (étape 11) les gros bâtiments qui consomment de l'électricité (le dessalement) passent en premier
     if (quoi === "courant") for (const b of monde.batiments) { const B = C.batiments[b.type]; if (!B.consoCourant) continue; b.alimente = false; }
@@ -196,7 +198,8 @@ Megalopole.Reseaux = (function () {
     distribuer(monde, "eau");
     distribuer(monde, "dechets"); // étape 11
     // 🚽 les eaux usées : l'eau utilisée ressort sale ; les stations d'épuration (avec du courant) la nettoient
-    const capacite = monde.batiments.reduce((t, b) => t + (C.batiments[b.type].epuration && monde.reseaux.courantDe(b) ? C.batiments[b.type].epuration : 0), 0), sale = monde.reseaux.eau.utilise || 0;
+    const Am = Megalopole.Ameliorations; // (étape 17 : × les étoiles ⭐ et × l'épuration avancée 🔬)
+    const capacite = Math.round(monde.batiments.reduce((t, b) => t + (C.batiments[b.type].epuration && monde.reseaux.courantDe(b) ? C.batiments[b.type].epuration * Am.facteur(b) : 0), 0) * Am.effet(monde, "epuration")), sale = monde.reseaux.eau.utilise || 0;
     monde.reseaux.epuration = { capacite, eauxUsees: sale, ratio: sale ? Math.min(1, capacite / sale) : 1 };
   }
   // 🗑️ Chaque mois, les décharges se remplissent de ce qu'elles ont reçu (appelé par le bilan du mois)

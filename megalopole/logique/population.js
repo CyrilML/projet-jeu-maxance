@@ -59,10 +59,11 @@ Megalopole.Population = (function () {
     const E = Ec + Ei + Ea, actifs = H * D.actifs;
     // Les besoins (de 0 à 1)
     const part = (n) => (H ? n / H : 1);
+    const ferme = 22 * Megalopole.Ameliorations.effet(monde, "agriculture"); // un emploi agricole nourrit 22 habitants (étape 17 : + l'agriculture moderne 🔬)
     const b = {
       emploi: actifs ? borne(E / actifs, 0, 1) : 1,
       courant: part(avec.courant), eau: part(avec.eau),
-      nourriture: H ? borne((Ea * 22) / H, 0, 1) : 1, // un emploi agricole nourrit 22 habitants
+      nourriture: H ? borne((Ea * ferme) / H, 0, 1) : 1,
       biens: H ? Math.min(borne((Ei * 7) / H, 0, 1), borne((Ec * 9) / H, 0, 1)) : 1, // il faut fabriquer ET vendre
       education: part(avec.education), sante: part(avec.sante), securite: part(avec.securite), feu: part(avec.feu),
       loisirs: borne(part(avec.loisirs) + joieBatiments(monde) / 20, 0, 1),
@@ -73,14 +74,14 @@ Megalopole.Population = (function () {
     };
     monde.besoins = b;
     // étape 8 : le BILAN (ce que la ville produit, face à ce dont elle a besoin), pour le menu 📊
-    monde.bilan = { habitants: H, actifs, emplois: E, nourris: Ea * 22, fabriques: Ei * 7, vendus: Ec * 9, couverts: Object.assign({}, avec) };
+    monde.bilan = { habitants: H, actifs, emplois: E, nourris: Math.round(Ea * ferme), fabriques: Ei * 7, vendus: Ec * 9, couverts: Object.assign({}, avec) };
     // Le bonheur : la moyenne pondérée des besoins de ce palier
     let total = 0, poids = 0;
     for (const x of C.besoins) { if ((x.palier || 0) > palier(monde)) continue; total += b[x.id] * x.poids; poids += x.poids; }
     monde.bonheur = Math.round(borne((poids ? total / poids : 1) * 100 + joieBatiments(monde) + Megalopole.Budget.difficulte(monde).bonheur, 0, 100)); // étape 2 : + la difficulté
     // La demande R C I A
     const impot = (z) => Megalopole.Budget.effetTaux(monde.taux[z]), contents = 0.5 + monde.bonheur / 100; // étape 2 : un taux par zone
-    const besoinC = H * D.commerceParHabitant, besoinI = H * D.industrieParHabitant, besoinA = H * D.agricultureParHabitant;
+    const besoinC = H * D.commerceParHabitant, besoinI = H * D.industrieParHabitant, besoinA = (H * D.agricultureParHabitant * 22) / ferme; // (des fermes plus productives : il en faut moins)
     monde.demande = {
       R: borne(((E * D.attirance - actifs + D.base.R) / Math.max(D.base.R, actifs)) * contents + impot("R"), -1, 1),
       C: borne((besoinC - Ec + D.base.C) / Math.max(D.base.C, besoinC) + impot("C"), -1, 1),

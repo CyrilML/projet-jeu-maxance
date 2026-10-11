@@ -54,8 +54,9 @@ Megalopole.Budget = (function () {
     for (const p of Bu.postes) if (p.id !== "routes") postes[p.id] = 0;
     for (const b of monde.batiments) {
       const B = C.batiments[b.type];
-      if (B.poste) postes[B.poste] += B.entretien * poste(monde, B.poste) * k;
-      else autres[B.groupe === "energie" ? "energie" : B.groupe === "eau" ? "eau" : "mairie"] += B.entretien * k;
+      const et = Megalopole.Ameliorations.facteurEntretien(b); // (étape 17 : + 30 % par étoile ⭐)
+      if (B.poste) postes[B.poste] += B.entretien * et * poste(monde, B.poste) * k;
+      else autres[B.groupe === "energie" ? "energie" : B.groupe === "eau" ? "eau" : "mairie"] += B.entretien * et * k;
     }
     for (const id in postes) postes[id] = Math.round(postes[id]);
     // le carburant : la part de la production vraiment utilisée
@@ -66,7 +67,7 @@ Megalopole.Budget = (function () {
       if (!c) continue;
       carburant += (C.batiments[b.type].courant ? (b.production || 0) * partEl : (b.productionEau || 0) * partEa) * c * k;
     }
-    carburant = Math.round(carburant);
+    carburant = Math.round(carburant * Megalopole.Ameliorations.effet(monde, "carburant")); // (étape 17 : centrales efficaces 🔬)
     autres.energie = Math.round(autres.energie); autres.eau = Math.round(autres.eau); autres.mairie = Math.round(autres.mairie);
     const prets = monde.prets.reduce((s, p) => s + p.mensualite, 0);
     const touristes = Math.round(monde.batiments.reduce((t, b) => t + (C.batiments[b.type].touristes || 0), 0) * monde.stats.habitants * 0.02);

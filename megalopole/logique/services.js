@@ -64,7 +64,8 @@ Megalopole.Services = (function () {
     const P = monde.pollution;
     P.fill(0);
     const salir = (c0, l0, force, rayon) => { for (let l = Math.max(0, l0 - rayon); l <= Math.min(n - 1, l0 + rayon); l++) for (let c = Math.max(0, c0 - rayon); c <= Math.min(n - 1, c0 + rayon); c++) { const d = Math.hypot(c - c0, l - l0); if (d <= rayon) P[l * n + c] += force * (1 - d / (rayon + 1)); } };
-    for (let i = 0; i < N; i++) if (monde.zone[i] === C.zones.I.id && monde.niveau[i]) salir(i % n, (i / n) | 0, C.pollution.industrie * Math.min(4, monde.niveau[i]) / 2, C.pollution.rayon);
+    const propre = Megalopole.Ameliorations.effet(monde, "pollutionIndustrie"); // (étape 17 : les recherches 🔬 de l'industrie propre)
+    for (let i = 0; i < N; i++) if (monde.zone[i] === C.zones.I.id && monde.niveau[i]) salir(i % n, (i / n) | 0, C.pollution.industrie * propre * Math.min(4, monde.niveau[i]) / 2, C.pollution.rayon);
     for (const b of monde.batiments) { const B = C.batiments[b.type]; if (B.pollution) salir(b.colonne + (b.taille >> 1), b.ligne + (b.taille >> 1), B.pollution, C.pollution.centraleRayon); }
     for (let i = 0; i < N; i++) if (P[i] > 1) P[i] = 1;
     // 3. Le trafic : on fait la somme des gens autour de chaque route (avec un « tableau des sommes », très rapide)
@@ -123,7 +124,7 @@ Megalopole.Services = (function () {
       for (const b of sources) {
         const B = C.batiments[b.type];
         b.marche = monde.reseaux.courantDe ? monde.reseaux.courantDe(b) : false;
-        b.capaciteService = (b.marche || t === "loisirs" ? B.capacite : 0) * Megalopole.Budget.facteurRayon(monde, B); // (un parc n'a pas besoin de courant ; le budget change la capacité)
+        b.capaciteService = (b.marche || t === "loisirs" ? B.capacite : 0) * Megalopole.Budget.facteurRayon(monde, B) * Megalopole.Ameliorations.facteur(b); // (étape 17 : × ses étoiles ⭐) // (un parc n'a pas besoin de courant ; le budget change la capacité)
         b.relie = false; b.servis = 0;
         if (b.capaciteService <= 0) continue;
         for (let dl = -1; dl <= b.taille; dl++) for (let dc = -1; dc <= b.taille; dc++) {

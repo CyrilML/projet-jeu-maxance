@@ -13,7 +13,7 @@ window.Megalopole = window.Megalopole || {};
 
 Megalopole.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 16,
+  version: 17,
   pasFixe: 1 / 120, // s : la boucle avance par petits pas fixes
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 
@@ -76,6 +76,25 @@ Megalopole.CONFIG = {
     // ajouté à l'envie de TOUTES les zones. rayon en cases ; parNiveau par niveau moyen des voisins ; parService par service reçu
     quartier: { rayon: 4, parNiveau: 0.06, parService: 0.03, maxServices: 0.2, max: 0.4 },
   },
+
+  // ⭐ Les AMÉLIORATIONS (étape 17, ✍️ Maxance : « améliorer les bâtiments pour augmenter la production ou le service »)
+  // Chaque centrale, station d'eau, bâtiment de déchets ou service peut monter de ★1 à ★3.
+  //   chaque étoile : + « bonus » de production ou de places ; coûte « prix » × son prix d'achat ; + « entretien » d'entretien
+  ameliorations: { max: 3, bonus: 0.5, prix: 0.5, entretien: 0.3 },
+
+  // 🔬 Les RECHERCHES (étape 17, ✍️ Maxance : « des recherches payantes pour que l'industrie soit moins polluante »)
+  // Une seule à la fois ; elle dure « duree » secondes de jeu. effets : ce qu'elle ajoute (−0,25 = −25 %).
+  //   pollutionIndustrie : la pollution des usines · production : le courant des centrales · carburant : le carburant acheté
+  //   dechets : les poubelles de la ville · epuration : l'eau sale nettoyée · agriculture : ce que nourrit une ferme
+  recherches: [
+    { id: "filtres", famille: "🏭 Industrie propre", emoji: "🧪", nom: "Filtres sur les cheminées", prix: 5000, duree: 120, effets: { pollutionIndustrie: -0.25 }, texte: "Pollution des usines −25 %" },
+    { id: "usinesModernes", famille: "🏭 Industrie propre", emoji: "⚙️", nom: "Usines modernes", prix: 15000, duree: 120, avant: "filtres", effets: { pollutionIndustrie: -0.25 }, texte: "Encore −25 % de pollution des usines" },
+    { id: "industrieVerte", famille: "🏭 Industrie propre", emoji: "🌱", nom: "Industrie verte", prix: 40000, duree: 120, avant: "usinesModernes", effets: { pollutionIndustrie: -0.25 }, texte: "Encore −25 % (les usines ne polluent plus que 25 %)" },
+    { id: "centralesEfficaces", famille: "⚡ Énergie", emoji: "🔋", nom: "Centrales efficaces", prix: 20000, duree: 120, effets: { production: 0.2, carburant: -0.2 }, texte: "Centrales +20 % de courant, −20 % de carburant" },
+    { id: "triSelectif", famille: "💧 Eau et déchets", emoji: "♻️", nom: "Tri sélectif", prix: 8000, duree: 120, effets: { dechets: -0.2 }, texte: "−20 % de déchets dans toute la ville" },
+    { id: "epurationAvancee", famille: "💧 Eau et déchets", emoji: "🚿", nom: "Épuration avancée", prix: 10000, duree: 120, effets: { epuration: 0.5 }, texte: "Les stations d'épuration nettoient +50 %" },
+    { id: "agricultureModerne", famille: "🌾 Agriculture", emoji: "🚜", nom: "Agriculture moderne", prix: 10000, duree: 120, effets: { agriculture: 0.3 }, texte: "Chaque ferme nourrit +30 % d'habitants" },
+  ],
 
   // 🌆 Les PALIERS de la ville (selon les habitants). Chaque palier débloque des bâtiments et des niveaux plus hauts.
   paliers: [

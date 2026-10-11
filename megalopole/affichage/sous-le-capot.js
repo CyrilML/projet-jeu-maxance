@@ -46,6 +46,9 @@ Megalopole.SousLeCapot = (function () {
     "routes-abimees": (d) => "🛣️⚠️ Routes abîmées (" + d.etat + " %) : moins de voitures passent, le terrain perd de la valeur",
     "caisse-vide": (d) => "🧾⚠️ Caisse sous zéro (" + fr(d.argent) + " 🪙) depuis " + d.mois + " mois · renvoi du maire dans " + d.reste + " mois",
     "batiment-souleve": (d) => "📦 " + d.emoji + " " + d.nom + " soulevé(e) en (" + d.colonne + ", " + d.ligne + ") : il quitte la carte en attendant sa nouvelle place",
+    "batiment-ameliore": (d) => "⭐ " + d.emoji + " " + d.nom + " amélioré(e) : ★" + d.etoiles + " → production / places × " + virgule(d.facteur, 1) + " · −" + fr(d.prix) + " 🪙 · il reste " + fr(d.argent) + " 🪙", // étape 17
+    "recherche-commencee": (d) => "🔬 Recherche lancée : " + d.emoji + " " + d.nom + " (" + d.duree + " s de jeu) · −" + fr(d.prix) + " 🪙",
+    "recherche-finie": (d) => "🔬✅ Recherche trouvée : " + d.emoji + " " + d.nom + " → " + d.texte,
     "batiment-deplace": (d) => "📦✅ " + d.emoji + " " + d.nom + " déplacé(e) : (" + d.de.colonne + ", " + d.de.ligne + ") → (" + d.vers.colonne + ", " + d.vers.ligne + ") · gratuit",
     "deplacement-annule": (d) => "📦↩️ " + d.emoji + " " + d.nom + " remis(e) à sa place",
     "deplacement-impossible": (d) => "📦🚫 Déplacement impossible : " + d.raison,
@@ -112,6 +115,10 @@ Megalopole.SousLeCapot = (function () {
     h += ligne("cases de route · bouchons (trafic > 100 %) · trafic moyen", T.routes + " · " + T.bouchons + " · " + Math.round(T.moyen * 100) + " %");
     h += ligne("terrains peints · gros bâtiments", fr(m.zonees.length) + " · " + m.batiments.length);
     { const Q = C.croissance.quartier; h += ligne("🏘️ étape 15 : bonus de quartier moyen = niveau moyen des voisins (" + Q.rayon + " cases) × " + virgule(Q.parNiveau, 2) + " + services × " + virgule(Q.parService, 2) + " (≤ " + virgule(Q.maxServices, 1) + "), au plus +" + virgule(Q.max, 1), "+" + virgule(m.quartierMoyen || 0, 2)); }
+    { const Am = Megalopole.Ameliorations, et = m.batiments.filter((b) => b.etoiles), R = m.recherches; // étape 17
+      h += ligne("⭐ étape 17 : bâtiments améliorés (★1 · ★2 · ★3) · chaque étoile +" + Math.round(C.ameliorations.bonus * 100) + " % de la base, entretien +" + Math.round(C.ameliorations.entretien * 100) + " %", et.length + " (" + [1, 2, 3].map((k) => et.filter((b) => b.etoiles === k).length).join(" · ") + ")");
+      h += ligne("🔬 recherches trouvées · en cours", R.faites.length + " / " + C.recherches.length + " · " + (R.enCours ? Am.fiche(R.enCours.id).nom + " (encore " + Math.ceil(R.enCours.reste) + " s)" : "aucune"));
+      h += ligne("🔬 effets : 🏭 pollution des usines × · ⚡ courant × · 🔥 carburant × · 🗑️ déchets × · 🚽 épuration × · 🌾 fermes ×", ["pollutionIndustrie", "production", "carburant", "dechets", "epuration", "agriculture"].map((k) => virgule(Am.effet(m, k), 2)).join(" · ")); }
     h += ligne("🌱 le jardinier : bâtiments grandis · baissés (depuis le début)", fr(m.compteurs.grandis) + " · " + fr(m.compteurs.baisses));
     { let attendent = 0; for (const i of m.zonees) if (m.depuis[i]) attendent++; h += ligne("⏳ étape 12 : terrains qui ont un problème (ils baissent seulement après " + C.croissance.patience + " s)", fr(attendent)); }
     // 🧾 le trésorier (étape 2) : la prévision du mois, ligne par ligne, avec ses formules
