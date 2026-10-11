@@ -13,7 +13,7 @@ window.Megalopole = window.Megalopole || {};
 
 Megalopole.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 17,
+  version: 18,
   pasFixe: 1 / 120, // s : la boucle avance par petits pas fixes
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 
@@ -177,7 +177,12 @@ Megalopole.CONFIG = {
   // 💎 la valeur du terrain (de 0 à 1)
   valeur: { base: 0.34, bordDeLEau: 0.12, parPollution: 0.6, parTrafic: 0.25, arbres: 0.04,
     // (étape 14) ce que chaque service REÇU ajoute à la valeur du terrain (avant : selon la place des parcs ; choix de Maxance)
-    services: { loisirs: 0.16, education: 0.07, sante: 0.05, securite: 0.04, feu: 0.03, transport: 0.03 } },
+    services: { loisirs: 0.16, education: 0.07, sante: 0.05, securite: 0.04, feu: 0.03, transport: 0.03 },
+    // 🏘️ (étape 18, ✍️ Maxance : « la valeur du terrain pose encore problème ») : de grands immeubles autour rendent le
+    // terrain plus cher : + parNiveau par niveau MOYEN des voisins (dans croissance.quartier.rayon cases), au plus « max »
+    quartier: { parNiveau: 0.05, max: 0.25 },
+    // 💎 la valeur qu'il faut à une habitation pour passer aux niveaux 2, 3, 4, 5, 6 (étape 18 : avant 0,3 0,4 0,5 0,6 0,7)
+    seuilsR: [0.3, 0.35, 0.4, 0.5, 0.6] },
   // 🚗 le trafic : chaque habitant et chaque emploi fait des trajets sur les routes proches
   trafic: { parGens: 0.06, rayon: 3 },
 

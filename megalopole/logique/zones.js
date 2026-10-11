@@ -43,7 +43,8 @@ Megalopole.Zones = (function () {
     //   (d'abord la valeur, puis les services : comme ça, le panneau dit exactement ce qui manque)
     const S = { education: "🎓 une école", sante: "🏥 la santé (clinique)", securite: "🚓 la police", feu: "🚒 les pompiers", loisirs: "🎡 des loisirs (un parc)", transport: "🚌 des transports (bus)" };
     let etapes;
-    if (z === "R") etapes = [[0.3, []], [0.4, ["education"]], [0.5, ["sante"]], [0.6, ["securite", "loisirs"]], [0.7, ["transport"]]];
+    const sR = C.valeur.seuilsR; // (étape 18 : les seuils sont rangés dans config.js)
+    if (z === "R") etapes = [[sR[0], []], [sR[1], ["education"]], [sR[2], ["sante"]], [sR[3], ["securite", "loisirs"]], [sR[4], ["transport"]]];
     // (étape 10, ✍️ Maxance : « les fermes, les industries et les commerces n'ont pas besoin de parc, d'école ou de santé
     //  pour évoluer, juste pompiers et police ») : plus de valeur du terrain ni d'école pour eux ; les très gros niveaux
     //  (tours de bureaux, usines robotisées, fermes verticales) demandent aussi un arrêt de bus, pour les employés
@@ -53,7 +54,7 @@ Megalopole.Zones = (function () {
     etapes = etapes.map(([seuil, services]) => {
       if (seuil > 1) return [false, "c'est le plus haut niveau"];
       if (z === "A" && pol > 0.2) return [false, "🌫️ un air plus pur (pas d'usines à côté)"];
-      if (v < seuil) return [false, "💎 un terrain qui vaut au moins " + seuil.toFixed(2).replace(".", ",") + " (il vaut " + v.toFixed(2).replace(".", ",") + ") : des parcs, des services, pas de pollution ni de bouchons"];
+      if (v < seuil) return [false, "💎 un terrain qui vaut au moins " + seuil.toFixed(2).replace(".", ",") + " (il vaut " + v.toFixed(2).replace(".", ",") + ") : des parcs, des services, un beau quartier 🏘️, pas de pollution ni de bouchons"];
       const sans = services.filter((t) => !cv[t][i] && !(t === "transport" && z === "I" && monde.route[monde.routeProche[i]] === 2));
       return sans.length ? [false, sans.map((t) => S[t]).join(" et ")] : [true, ""];
     });
@@ -90,11 +91,12 @@ Megalopole.Zones = (function () {
     if (cible >= C.croissance.eauDesLeNiveau && !(z === "A" && cible <= 2)) { const eau = nv && R.aBesoinDEau(monde, i) ? monde.eau[i] : R.possible(monde, i, "eau"); ajoute(eau, "💧 l'eau courante" + (eau ? "" : " — " + R.pourquoiPas(monde, i, "eau"))); }
     if (cible > nv) {
       const S = { education: "🎓 une école", sante: "🏥 une clinique", securite: "🚓 la police", feu: "🚒 les pompiers", loisirs: "🎡 un parc", transport: "🚌 un arrêt de bus" };
-      const regles = { R: [[0.3, []], [0.4, ["education"]], [0.5, ["sante"]], [0.6, ["securite", "loisirs"]], [0.7, ["transport"]]], C: [[0, []], [0, ["securite"]], [0, ["feu"]], [0, ["transport"]], [0, ["securite", "feu", "transport"]]], I: [[0, []], [0, ["feu"]], [0, ["securite"]], [0, ["transport"]], [2, []]], A: [[0, []], [0, []], [0, ["feu"]], [0, ["transport"]], [2, []]] }[z];
+      const sR = C.valeur.seuilsR;
+      const regles = { R: [[sR[0], []], [sR[1], ["education"]], [sR[2], ["sante"]], [sR[3], ["securite", "loisirs"]], [sR[4], ["transport"]]], C: [[0, []], [0, ["securite"]], [0, ["feu"]], [0, ["transport"]], [0, ["securite", "feu", "transport"]]], I: [[0, []], [0, ["feu"]], [0, ["securite"]], [0, ["transport"]], [2, []]], A: [[0, []], [0, []], [0, ["feu"]], [0, ["transport"]], [2, []]] }[z];
       for (let n2 = 2; n2 <= cible; n2++) { // les conditions de TOUS les niveaux jusqu'au suivant (elles restent nécessaires)
         const [seuil, services] = regles[n2 - 2];
         if (seuil > 1) { ajoute(false, "c'est le plus haut niveau"); continue; }
-        if (n2 === cible && seuil > 0) ajoute(monde.valeur[i] >= seuil, "💎 un terrain qui vaut " + seuil.toFixed(2).replace(".", ",") + " (il vaut " + monde.valeur[i].toFixed(2).replace(".", ",") + " : des parcs, des services…" + (!monde.collecte[i] ? " ; 🗑️ ses poubelles ne sont pas ramassées : −" + String(C.dechets.valeurSale).replace(".", ",") : "") + (monde.pollution[i] > 0.1 ? " ; 🌫️ trop de pollution" : "") + ")");
+        if (n2 === cible && seuil > 0) ajoute(monde.valeur[i] >= seuil, "💎 un terrain qui vaut " + seuil.toFixed(2).replace(".", ",") + " (il vaut " + monde.valeur[i].toFixed(2).replace(".", ",") + " : des parcs, des services, un beau quartier 🏘️ +" + ((monde.quartierValeur && monde.quartierValeur[i]) || 0).toFixed(2).replace(".", ",") + "…" + (!monde.collecte[i] ? " ; 🗑️ ses poubelles ne sont pas ramassées : −" + String(C.dechets.valeurSale).replace(".", ",") : "") + (monde.pollution[i] > 0.1 ? " ; 🌫️ trop de pollution" : "") + ")");
         for (const t of services) if (!liste.some((x) => x.texte.startsWith(S[t]))) { const ok = cv[t][i] || (t === "transport" && z === "I" && monde.route[monde.routeProche[i]] === 2); ajoute(ok, S[t] + (ok ? "" : " — " + pourquoiPasService(monde, t))); }
       }
       if (z === "A" && cible >= 2) ajoute(monde.pollution[i] <= 0.2, "🌫️ un air pur (pas d'usine à côté)");
