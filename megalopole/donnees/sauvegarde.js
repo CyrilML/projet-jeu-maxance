@@ -22,12 +22,14 @@
 //                 Une ville plus ancienne : aucun bâtiment n'a d'étoile, aucune recherche n'est faite.
 //   7 (étape 19) : les objectifs réussis, les monuments débloqués et les défis mis de côté (objectifs : { faits, monuments, cote }).
 //                 Une ville plus ancienne : aucun objectif n'est encore réussi ; le tableau les validera tout seul s'ils sont déjà atteints.
+//   8 (étape 20) : l'interrupteur des problèmes (problemesCoupes). Une ville plus ancienne : les problèmes sont activés.
+//                 (Les problèmes en cours, eux, ne sont pas sauvegardés : un rechargement les efface.)
 
 window.Megalopole = window.Megalopole || {};
 
 Megalopole.Sauvegarde = (function () {
   const CLE = "megalopole:sauvegarde", C = Megalopole.CONFIG;
-  const VERSION = 7;
+  const VERSION = 8;
   const radio = Megalopole.Evenements;
 
   function encoder(tab) {
@@ -59,6 +61,7 @@ Megalopole.Sauvegarde = (function () {
       guide: { etape: monde.guide.etape, fini: monde.guide.fini, cache: monde.guide.cache }, // étape 3
       routes: encoder(monde.route), zones: encoder(monde.zone), niveaux: encoder(monde.niveau), arbres: encoder(monde.carte.arbre),
       batiments: monde.batiments.concat(monde.enMain ? [monde.enMain.b] : []).map((b) => Object.assign({ type: b.type, colonne: b.colonne, ligne: b.ligne }, b.rempli ? { rempli: Math.round(b.rempli) } : {}, b.etoiles ? { etoiles: b.etoiles } : {})),
+      problemesCoupes: !!(monde.problemes && monde.problemes.coupes), // étape 20
       objectifs: { faits: monde.objectifs.faits.slice(), monuments: monde.objectifs.monuments.slice(), cote: (monde.objectifs.cote || []).slice() }, // étape 19
       recherches: { faites: monde.recherches.faites.slice(), enCours: monde.recherches.enCours ? { id: monde.recherches.enCours.id, reste: Math.round(monde.recherches.enCours.reste) } : null }, // étape 17
       historique: monde.historique,
@@ -77,6 +80,7 @@ Megalopole.Sauvegarde = (function () {
     for (const b of p.batiments || []) Megalopole.Construction.remettre(monde, b);
     monde.historique = p.historique || [];
     // étape 17 : le laboratoire (une ville de la version 5 ou avant n'en a pas : rien n'est encore trouvé)
+    monde.problemes = { coupes: !!p.problemesCoupes, prochain: 0, feux: [], effets: [], greve: null }; // étape 20
     monde.objectifs = p.objectifs ? { faits: (p.objectifs.faits || []).filter((id) => C.objectifs.some((o) => o.id === id)), monuments: (p.objectifs.monuments || []).filter((t) => C.batiments[t]), cote: p.objectifs.cote || [] } : { faits: [], monuments: [], cote: [] }; // étape 19
     monde.recherches = p.recherches ? { faites: (p.recherches.faites || []).filter((id) => C.recherches.some((r) => r.id === id)), enCours: p.recherches.enCours || null } : { faites: [], enCours: null };
   }

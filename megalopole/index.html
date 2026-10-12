@@ -148,6 +148,14 @@
     .recherche > button, .recherche > span { grid-column: 2; grid-row: 1 / span 2; }
     .recherche.faite b { color: #3d8a4a; }
     /* 🏆 étape 19 : les objectifs */
+    /* 🔥 étape 20 : les problèmes */
+    .recl.alerte { background: #fde8e0; border-left: 4px solid #d0402a; border-radius: 8px; padding: 6px 9px; margin: 6px 0; }
+    .recl.alerte small { display: block; }
+    .recl.alerte button, [data-problemes] { margin-top: 4px; padding: 5px 9px; border: 0; border-radius: 9px; background: #d0402a; color: #fff; font-weight: bold; cursor: pointer; }
+    .recl.alerte button.verrou { background: #b8b0a0; }
+    [data-problemes] { background: #8a7a60; padding: 2px 8px; font-weight: normal; }
+    #onglets button.alerte { animation: alerte 0.8s infinite alternate; }
+    @keyframes alerte { from { box-shadow: 0 0 0 0 rgba(208, 64, 42, .9); } to { box-shadow: 0 0 0 7px rgba(208, 64, 42, 0); } }
     .objectif { background: #fbf4dc; border-left-color: #c89a20; }
     .objectif .rang { display: block; color: #6a5a3a; margin: 2px 0 4px; }
     .objectif .passer { float: right; margin: 3px 0 0 6px; padding: 2px 8px; border: 0; border-radius: 8px; background: #ece2c4; cursor: pointer; font-size: 12px; }
@@ -246,28 +254,29 @@
     <section><h2>💾 Base de données <button id="effacer-base">Effacer</button></h2><pre id="base"></pre></section>
   </div>
 
-  <script src="config.js?v=19"></script>
-  <script src="moteur/evenements.js?v=19"></script>
-  <script src="moteur/ecran.js?v=19"></script>
-  <script src="moteur/entrees.js?v=19"></script>
-  <script src="moteur/hasard.js?v=19"></script>
-  <script src="moteur/iso.js?v=19"></script>
-  <script src="logique/carte.js?v=19"></script>
-  <script src="logique/construction.js?v=19"></script>
-  <script src="logique/reseaux.js?v=19"></script>
-  <script src="logique/services.js?v=19"></script>
-  <script src="logique/zones.js?v=19"></script>
-  <script src="logique/population.js?v=19"></script>
-  <script src="logique/budget.js?v=19"></script>
-  <script src="logique/guide.js?v=19"></script>
-  <script src="logique/ameliorations.js?v=19"></script>
-  <script src="logique/objectifs.js?v=19"></script>
-  <script src="donnees/sauvegarde.js?v=19"></script>
-  <script src="logique/monde.js?v=19"></script>
-  <script src="affichage/maquettes.js?v=19"></script>
-  <script src="affichage/peintre.js?v=19"></script>
-  <script src="affichage/interface.js?v=19"></script>
-  <script src="affichage/sous-le-capot.js?v=19"></script>
-  <script src="main.js?v=19"></script>
+  <script src="config.js?v=20"></script>
+  <script src="moteur/evenements.js?v=20"></script>
+  <script src="moteur/ecran.js?v=20"></script>
+  <script src="moteur/entrees.js?v=20"></script>
+  <script src="moteur/hasard.js?v=20"></script>
+  <script src="moteur/iso.js?v=20"></script>
+  <script src="logique/carte.js?v=20"></script>
+  <script src="logique/construction.js?v=20"></script>
+  <script src="logique/reseaux.js?v=20"></script>
+  <script src="logique/services.js?v=20"></script>
+  <script src="logique/zones.js?v=20"></script>
+  <script src="logique/population.js?v=20"></script>
+  <script src="logique/budget.js?v=20"></script>
+  <script src="logique/guide.js?v=20"></script>
+  <script src="logique/ameliorations.js?v=20"></script>
+  <script src="logique/objectifs.js?v=20"></script>
+  <script src="logique/problemes.js?v=20"></script>
+  <script src="donnees/sauvegarde.js?v=20"></script>
+  <script src="logique/monde.js?v=20"></script>
+  <script src="affichage/maquettes.js?v=20"></script>
+  <script src="affichage/peintre.js?v=20"></script>
+  <script src="affichage/interface.js?v=20"></script>
+  <script src="affichage/sous-le-capot.js?v=20"></script>
+  <script src="main.js?v=20"></script>
 </body>
 </html>

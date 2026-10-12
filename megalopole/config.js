@@ -13,7 +13,7 @@ window.Megalopole = window.Megalopole || {};
 
 Megalopole.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 19,
+  version: 20,
   pasFixe: 1 / 120, // s : la boucle avance par petits pas fixes
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 
@@ -176,6 +176,23 @@ Megalopole.CONFIG = {
     { id: "dechets", nom: "Déchets", emoji: "🗑️" },
     { id: "monuments", nom: "Monuments", emoji: "🗽" }, // étape 19
   ],
+
+  // 🔥 Les PROBLÈMES (étape 20, ✍️ Maxance : des problèmes à régler, pour que le jeu ne soit plus lassant)
+  //   intervalle : s en moyenne entre deux problèmes, selon la difficulté (seulement quand quelque chose MANQUE)
+  //   habitantsMin : pas de problème dans une toute petite ville
+  problemes: {
+    intervalle: { facile: 360, normal: 120, difficile: 60 }, habitantsMin: 300,
+    // 🔥 un bâtiment SANS pompiers prend feu : le feu monte de « monte » par s ; à 1, le bâtiment brûle (il redevient un terrain vide).
+    //    Au-dessus de « etendre », il peut sauter chez un voisin (chance par s). Les pompiers qui servent le terrain l'éteignent
+    //    (« eteint » par s) ; sinon, le canadair 🚁 (prix) éteint tous les feux d'un coup.
+    feu: { monte: 0.04, etendre: 0.5, chanceVoisin: 0.06, eteint: 0.25, canadair: 500 },
+    // 🦹 un vol dans un quartier SANS police : la ville perd « part » de sa caisse (entre min et max), et le bonheur baisse pendant « duree » s
+    vol: { part: 0.03, min: 200, max: 3000, bonheur: -4, duree: 60 },
+    // ⚡ une centrale tombe en panne (elle s'arrête « duree » s) ; on peut la réparer tout de suite pour « reparation » × son prix
+    panne: { duree: 60, reparation: 0.2 },
+    // 🪧 une zone fait grève (elle ne paie plus d'impôt pendant « mois » mois) si son impôt dépasse « taux » % ou si le bonheur est sous « bonheur » %
+    greve: { taux: 12, bonheur: 45, mois: 1 },
+  },
 
   // 🏆 Les OBJECTIFS (étape 19, ✍️ Maxance : « le jeu devient vite lassant et sans but »)
   // On en montre toujours 3 : le prochain FACILE (rang 1), MOYEN (2) et DUR (3), dans l'ordre de la liste.

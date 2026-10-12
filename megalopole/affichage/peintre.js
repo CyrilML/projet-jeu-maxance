@@ -151,6 +151,23 @@ Megalopole.Peintre = (function () {
     ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center"; ctx.lineJoin = "round";
     for (let j = 0; j < etoilesAMontrer.length; j += 3) { const t = "★".repeat(etoilesAMontrer[j + 2]); ctx.lineWidth = 3; ctx.strokeStyle = "rgba(60, 40, 10, .85)"; ctx.strokeText(t, etoilesAMontrer[j], etoilesAMontrer[j + 1]); ctx.fillStyle = "#f2c230"; ctx.fillText(t, etoilesAMontrer[j], etoilesAMontrer[j + 1]); }
     ctx.textAlign = "left";
+    // 🔥 étape 20 : les incendies (des flammes qui dansent, plus hautes quand le feu est fort) et les vols récents 🦹
+    { const Pb = monde.problemes, n = monde.carte.colonnes, t = performance.now() / 1000;
+      if (Pb) {
+        for (const f of Pb.feux) {
+          const p = milieu(f.i % n, (f.i / n) | 0), h = 16 + 34 * f.force + monde.niveau[f.i] * 5;
+          for (let k = 0; k < 3; k++) {
+            const dx = (k - 1) * 9, dh = h * (0.7 + 0.3 * Math.sin(t * 9 + k * 2));
+            ctx.beginPath(); ctx.moveTo(p.x + dx - 6, p.y); ctx.quadraticCurveTo(p.x + dx - 7, p.y - dh * 0.5, p.x + dx + Math.sin(t * 7 + k) * 3, p.y - dh); ctx.quadraticCurveTo(p.x + dx + 7, p.y - dh * 0.5, p.x + dx + 6, p.y); ctx.closePath();
+            const g = ctx.createLinearGradient(0, p.y, 0, p.y - dh); g.addColorStop(0, "rgba(255, 210, 60, .95)"); g.addColorStop(0.5, "rgba(255, 120, 30, .9)"); g.addColorStop(1, "rgba(200, 40, 20, .6)"); ctx.fillStyle = g; ctx.fill();
+          }
+          ctx.fillStyle = "rgba(60, 50, 45, .35)"; ctx.beginPath(); ctx.arc(p.x + Math.sin(t) * 4, p.y - h - 10 - (t * 12) % 14, 6, 0, TOUR); ctx.fill(); // la fumée
+          if (z >= 0.3) bulle(p.x, p.y - h - 24, "🔥");
+        }
+        for (const e of Pb.effets) if (e.sorte === "vol" && e.fin - monde.temps > 30 && z >= 0.3) { const p = milieu(e.i % n, (e.i / n) | 0); bulle(p.x, p.y - 30, "🦹"); }
+      }
+      for (const b of monde.batiments) if (b.panne && z >= 0.3) { const p = milieu(b.colonne + (b.taille - 1) / 2, b.ligne + (b.taille - 1) / 2); bulle(p.x + 14, p.y - 30 * b.taille, "🔧"); }
+    }
 
     // 4. Ce que fait le maire
     apercu(monde, cMin, cMax, lMin, lMax, visible);

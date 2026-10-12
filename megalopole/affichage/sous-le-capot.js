@@ -47,6 +47,18 @@ Megalopole.SousLeCapot = (function () {
     "caisse-vide": (d) => "🧾⚠️ Caisse sous zéro (" + fr(d.argent) + " 🪙) depuis " + d.mois + " mois · renvoi du maire dans " + d.reste + " mois",
     "batiment-souleve": (d) => "📦 " + d.emoji + " " + d.nom + " soulevé(e) en (" + d.colonne + ", " + d.ligne + ") : il quitte la carte en attendant sa nouvelle place",
     "objectif-reussi": (d) => "🏆 Objectif réussi : " + d.emoji + " " + d.titre + " · +" + fr(d.recompense) + " 🪙 · " + d.faits + " / " + d.total, // étape 19
+    "incendie": (d) => "🔥 Incendie : " + d.nom + " (" + d.colonne + ", " + d.ligne + ") · pompiers : " + (d.pompiers ? "oui" : "non"), // étape 20
+    "incendie-etendu": (d) => "🔥➡️ Le feu saute chez le voisin : " + d.nom + " (" + d.colonne + ", " + d.ligne + ")",
+    "incendie-eteint": (d) => "🚒✅ Feu éteint par " + d.par + " : " + d.nom,
+    "batiment-brule": (d) => "🔥💥 Brûlé : " + d.nom + " (" + d.colonne + ", " + d.ligne + ") → niveau 0",
+    "canadair": (d) => "🚁 Canadair : " + d.feux + " feu(x) éteint(s) · −" + fr(d.prix) + " 🪙",
+    "vol": (d) => "🦹 Vol : " + d.nom + " (" + d.colonne + ", " + d.ligne + ") · −" + fr(d.somme) + " 🪙 · bonheur " + d.bonheur,
+    "panne": (d) => "⚡❌ Panne : " + d.emoji + " " + d.nom + " (" + d.duree + " s) · réparation " + fr(d.prix) + " 🪙",
+    "panne-reparee": (d) => "🔧✅ Réparée : " + d.emoji + " " + d.nom + " · −" + fr(d.prix) + " 🪙",
+    "panne-finie": (d) => "⚡✅ Fin de panne : " + d.emoji + " " + d.nom,
+    "greve": (d) => "🪧 Grève de la zone " + d.emoji + " " + d.zone + " (" + d.mois + " mois) : " + d.raison,
+    "greve-finie": (d) => "🪧✅ Fin de la grève " + d.emoji + " " + d.zone,
+    "problemes-coupes": (d) => d.coupes ? "😴 Problèmes coupés par le maire" : "🔥 Problèmes remis par le maire",
     "objectif-change": (d) => "⏭️ Défi mis de côté (il reviendra plus tard) : " + d.emoji + " " + d.titre,
     "monument-debloque": (d) => "🗽 Monument débloqué : " + d.emoji + " " + d.nom,
     "batiment-ameliore": (d) => "⭐ " + d.emoji + " " + d.nom + " amélioré(e) : ★" + d.etoiles + " → production / places × " + virgule(d.facteur, 1) + " · −" + fr(d.prix) + " 🪙 · il reste " + fr(d.argent) + " 🪙", // étape 17
@@ -118,6 +130,9 @@ Megalopole.SousLeCapot = (function () {
     h += ligne("cases de route · bouchons (trafic > 100 %) · trafic moyen", T.routes + " · " + T.bouchons + " · " + Math.round(T.moyen * 100) + " %");
     h += ligne("terrains peints · gros bâtiments", fr(m.zonees.length) + " · " + m.batiments.length);
     { const Q = C.croissance.quartier; h += ligne("🏘️ étape 15 : bonus de quartier moyen = niveau moyen des voisins (" + Q.rayon + " cases) × " + virgule(Q.parNiveau, 2) + " + services × " + virgule(Q.parService, 2) + " (≤ " + virgule(Q.maxServices, 1) + "), au plus +" + virgule(Q.max, 1), "+" + virgule(m.quartierMoyen || 0, 2)); }
+    { const Pr = Megalopole.Problemes, E = Pr.etat(m), Q = Pr.possibles(m); // étape 20
+      h += ligne("🎲 étape 20 : prochain tirage du destin dans · ce qui peut arriver (parce que quelque chose manque)", (E.coupes ? "coupé 😴" : E.prochain ? Math.max(0, Math.ceil(E.prochain - m.temps)) + " s" : "—") + " · " + (Q.map((x) => ({ feu: "🔥", vol: "🦹", panne: "⚡", greve: "🪧" })[x.sorte] + "×" + x.poids).join(" ") || "rien : la ville est bien gérée"));
+      h += ligne("🔥 feux (force) · 🦹 vols récents (bonheur) · ⚡ pannes · 🪧 grève", (E.feux.map((f) => Math.round(f.force * 100) + " %").join(", ") || "0") + " · " + E.effets.length + " (" + Pr.malusBonheur(m) + ") · " + m.batiments.filter((b) => b.panne).length + " · " + (E.greve ? C.zones[E.greve.zone].emoji : "non")); }
     { const O = Megalopole.Objectifs, A = O.actifs(m); // étape 19
       h += ligne("🏆 étape 19 : objectifs réussis · monuments débloqués · construits", m.objectifs.faits.length + " / " + C.objectifs.length + " · " + m.objectifs.monuments.length + " · " + m.batiments.filter((b) => C.batiments[b.type].monument).length);
       h += ligne("🏆 les 3 défis du moment : mesure / but (" + "✅ = réussi au prochain contrôle)", A.map((o) => o.emoji + " " + fr(O.mesurer(m, o)) + " / " + fr(o.but) + (O.reussi(m, o) ? " ✅" : "")).join(" · ") || "aucun"); }

@@ -78,7 +78,7 @@ Megalopole.Population = (function () {
     // Le bonheur : la moyenne pondérée des besoins de ce palier
     let total = 0, poids = 0;
     for (const x of C.besoins) { if ((x.palier || 0) > palier(monde)) continue; total += b[x.id] * x.poids; poids += x.poids; }
-    monde.bonheur = Math.round(borne((poids ? total / poids : 1) * 100 + joieBatiments(monde) + Megalopole.Budget.difficulte(monde).bonheur, 0, 100)); // étape 2 : + la difficulté
+    monde.bonheur = Math.round(borne((poids ? total / poids : 1) * 100 + joieBatiments(monde) + Megalopole.Budget.difficulte(monde).bonheur + Megalopole.Problemes.malusBonheur(monde), 0, 100)); // étape 2 : + la difficulté ; étape 20 : − les vols récents
     // La demande R C I A
     const impot = (z) => Megalopole.Budget.effetTaux(monde.taux[z]), contents = 0.5 + monde.bonheur / 100; // étape 2 : un taux par zone
     const besoinC = H * D.commerceParHabitant, besoinI = H * D.industrieParHabitant, besoinA = (H * D.agricultureParHabitant * 22) / ferme; // (des fermes plus productives : il en faut moins)
