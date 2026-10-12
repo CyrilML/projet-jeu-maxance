@@ -141,6 +141,7 @@
       <a href="#etape15">Étape 15</a>
       <a href="#etape16">Étape 16</a>
       <a href="#etape17">Étape 17</a>
+      <a href="#etape18">Étape 18</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="index.html">▶ Jouer</a>
@@ -899,7 +900,7 @@
           <li>☐ « Usines modernes » est 🔒 tant que les filtres ne sont pas trouvés.</li>
           <li>☐ Quand une recherche est finie, le calque 🌫️ pollution est plus clair autour des usines.</li>
           <li>☐ Recharge la page : les étoiles et les recherches sont toujours là.</li>
-          <li>Vérifie « version 17 » en haut de la page.</li></ul></div>
+          <li>(La version a avancé depuis : vérifie le numéro de l'étape 18.)</li></ul></div>
       </div>
       <h3>🔧 Sous le capot n° 1 : un multiplicateur</h3>
       <pre style="white-space: pre-wrap">  production = production de base × étoiles × recherches
@@ -918,6 +919,33 @@
       <details class="question"><summary>Une école (3 000 places) a ★3. Combien de places ?</summary><p>3 000 × 2,5 = 7 500 places.</p></details>
       <details class="question"><summary>Pourquoi ne peut-on lancer qu'une recherche à la fois ?</summary><p>Parce qu'il n'y a qu'un laboratoire : il faut choisir ce qui compte le plus pour ta ville en premier.</p></details>
       <details class="question"><summary>Après les filtres et les usines modernes, combien les usines polluent-elles ?</summary><p>100 % − 25 % − 25 % = 50 %.</p></details>
+    </section>
+
+    <section id="etape18">
+      <h2>💎 Étape 18 : une valeur du terrain qu'on peut atteindre <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les maisons restaient bloquées par la valeur du terrain. L'enquête a montré que le niveau 6 était presque impossible : même avec <em>tous</em> les services, un terrain valait au mieux 0,72, et il fallait 0,7 sans aucun défaut. <a href="index.html"><strong>▶ la Mégalopole</strong></a></p>
+      <div class="grille">
+        <div class="carte"><h4>📋 La demande</h4><p class="petit">Le fichier complet est dans <code>megalopole/demandes/18-valeur-du-terrain.md</code>.</p><ul><li>✍️ « La valeur du terrain pose encore problème pour améliorer les zones. »</li><li>Tes choix : <strong>des seuils plus bas + le quartier compte dans la valeur</strong>, et on <strong>garde −0,12</strong> pour les poubelles pas ramassées.</li></ul></div>
+        <div class="carte"><h4>✅ Ce que tu peux vérifier</h4><ul>
+          <li>☐ Touche une maison : la ligne 💎 dit « un beau quartier 🏘️ +0,… ».</li>
+          <li>☐ Les seuils sont 0,30 / 0,35 / 0,40 / 0,50 / 0,60 (avant 0,3 / 0,4 / 0,5 / 0,6 / 0,7).</li>
+          <li>☐ Le calque 💎 Valeur devient plus vert au milieu des quartiers de grands immeubles.</li>
+          <li>☐ Avec tous les services, tes maisons montent jusqu'aux tours.</li>
+          <li>Vérifie « version 18 » en haut de la page.</li></ul></div>
+      </div>
+      <h3>🔧 Sous le capot : l'enquête, avec des chiffres</h3>
+      <pre style="white-space: pre-wrap">  ville test de 16 000 habitants, la valeur moyenne d'une maison :
+     0,34 base  + 0,35 services  + 0,03 bord de l'eau  − 0,06 pollution  − 0,12 poubelles  = 0,53
+  le plus haut seuil : 0,7  →  AUCUNE maison n'y arrivait (0 sur 2 199)
+
+  APRÈS :  + 🏘️ quartier (niveau moyen des voisins × 0,05, au plus 0,25)  et un dernier seuil à 0,6
+  →  1 167 maisons au-dessus de 0,6 sur 2 139</pre>
+      <p>Pour trouver un bug d'équilibre, on <strong>mesure</strong> : on fait pousser une ville toute seule, puis on fait la moyenne de chaque morceau de la valeur. On voit tout de suite qui est trop petit ou trop gros. Le bonus de quartier ne compte que pour les <strong>habitations</strong> : une usine dans un terrain trop cher perdrait l'envie de rester !</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul><li>Ouvre sous le capot : quelle est la valeur moyenne des habitations, et la part du quartier ?</li><li>Ramasse les poubelles d'un quartier (une décharge) : de combien monte sa valeur ?</li></ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Les voisins sont au niveau 4 en moyenne. Combien ajoute le quartier à la valeur ?</summary><p>4 × 0,05 = 0,20.</p></details>
+      <details class="question"><summary>Pourquoi une valeur moyenne de 0,53 bloquait-elle le niveau 6 ?</summary><p>Parce qu'il fallait 0,7 : même la meilleure maison n'y arrivait pas. Une règle impossible, c'est comme pas de règle du tout : il faut toujours vérifier qu'on peut l'atteindre.</p></details>
     </section>
 
     <!-- ============ FEUILLE DE ROUTE ============ -->
@@ -942,10 +970,11 @@
         <div class="carte fait"><div class="num">15</div><h4>🏘️ Un beau quartier attire <span class="etiquette">✅ fait · à valider</span></h4><p>Le bonus de quartier : les grands voisins et les services reçus donnent envie de venir, pour toutes les zones.</p><p class="apprend"><b>Tu apprends :</b> un tableau des sommes, une boucle qui s'auto-renforce. <b>Durée :</b> ½ séance.</p></div>
         <div class="carte fait"><div class="num">16</div><h4>🏛️ Des services plus gros <span class="etiquette">✅ fait · à valider</span></h4><p>Places doublées pour les petits, et université, hôtel de police, grande caserne au palier 3.</p><p class="apprend"><b>Tu apprends :</b> un bâtiment = une ligne de données. <b>Durée :</b> ½ séance.</p></div>
         <div class="carte fait"><div class="num">17</div><h4>⭐ Améliorer, et le laboratoire 🔬 <span class="etiquette">✅ fait · à valider</span></h4><p>3 étoiles par bâtiment, 7 recherches (industrie propre, énergie, eau et déchets, agriculture).</p><p class="apprend"><b>Tu apprends :</b> un multiplicateur, un arbre des technologies. <b>Durée :</b> 1 séance.</p></div>
-        <div class="carte prochain"><div class="num">18</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
-        <div class="carte"><div class="num">19</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
-        <div class="carte"><div class="num">20</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (quartier d'affaires).</p></div>
-        <div class="carte"><div class="num">21</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
+        <div class="carte fait"><div class="num">18</div><h4>💎 Une valeur du terrain atteignable <span class="etiquette">✅ fait · à valider</span></h4><p>Seuils plus bas, et le quartier rend le terrain plus cher.</p><p class="apprend"><b>Tu apprends :</b> mesurer pour trouver un bug d'équilibre. <b>Durée :</b> ½ séance.</p></div>
+        <div class="carte prochain"><div class="num">19</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
+        <div class="carte"><div class="num">20</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
+        <div class="carte"><div class="num">21</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (quartier d'affaires).</p></div>
+        <div class="carte"><div class="num">22</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
       </div>
     </section>
 
@@ -1088,6 +1117,14 @@
         <textarea class="journal" id="megalopole-appris-17" data-cle="megalopole-appris-17" placeholder="Ex. : J'ai appris qu'un multiplicateur change tout d'un coup…"></textarea>
         <label for="megalopole-idees-17"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="megalopole-idees-17" data-cle="megalopole-idees-17" placeholder="Ex. : D'autres recherches (voitures électriques, médecine…)…"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 18 · une valeur du terrain atteignable <span class="petit">· 11 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> l'enquête sur une ville test, les seuils des habitations rangés dans <code>config.js</code> (0,30 / 0,35 / 0,40 / 0,50 / 0,60), le bonus de quartier dans la valeur des habitations (jusqu'à +0,25), la ligne 💎 qui le montre, et une ligne sous le capot.</p>
+        <label for="megalopole-appris-18"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="megalopole-appris-18" data-cle="megalopole-appris-18" placeholder="Ex. : J'ai appris qu'il faut mesurer pour trouver ce qui bloque…"></textarea>
+        <label for="megalopole-idees-18"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="megalopole-idees-18" data-cle="megalopole-idees-18" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

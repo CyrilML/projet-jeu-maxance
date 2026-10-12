@@ -32,7 +32,7 @@ Megalopole.Services = (function () {
   // (on compte les voisins avec un « tableau des sommes », comme pour le trafic : très rapide)
   function quartier(monde) {
     const n = monde.carte.colonnes, N = n * n, Q = C.croissance.quartier, W = n + 1, r = Q.rayon;
-    if (!monde.quartier || monde.quartier.length !== N) { monde.quartier = new Float32Array(N); monde.quartierVoisins = new Float32Array(N); monde.quartierServices = new Float32Array(N); }
+    if (!monde.quartier || monde.quartier.length !== N) { monde.quartier = new Float32Array(N); monde.quartierVoisins = new Float32Array(N); monde.quartierServices = new Float32Array(N); monde.quartierValeur = new Float32Array(N); }
     const somNv = new Float32Array(W * W), somNb = new Float32Array(W * W);
     for (let l = 0; l < n; l++) { let a = 0, b = 0; for (let c = 0; c < n; c++) { const i = l * n + c, bati = monde.zone[i] && monde.niveau[i]; a += bati ? monde.niveau[i] : 0; b += bati ? 1 : 0; const k = (l + 1) * W + c + 1; somNv[k] = somNv[k - W] + a; somNb[k] = somNb[k - W] + b; } }
     const rect = (S, c0, l0, c1, l1) => S[(l1 + 1) * W + c1 + 1] - S[l0 * W + c1 + 1] - S[(l1 + 1) * W + c0] + S[l0 * W + c0];
@@ -42,6 +42,7 @@ Megalopole.Services = (function () {
       const moi = monde.niveau[i] ? 1 : 0; // (on ne se compte pas soi-même : ce sont les VOISINS qui attirent)
       const nbv = rect(somNb, c0, l0, c1, l1) - moi, nv = rect(somNv, c0, l0, c1, l1) - monde.niveau[i];
       const voisins = nbv > 0 ? (nv / nbv) * Q.parNiveau : 0;
+      monde.quartierValeur[i] = nbv > 0 ? Math.min(C.valeur.quartier.max, (nv / nbv) * C.valeur.quartier.parNiveau) : 0; // (étape 18 : ce que le quartier ajoute à la VALEUR)
       let s = 0; for (const t of TYPES) if (monde.couverture[t][i]) s++;
       const services = Math.min(Q.maxServices, s * Q.parService);
       monde.quartierVoisins[i] = voisins; monde.quartierServices[i] = services;
@@ -87,7 +88,7 @@ Megalopole.Services = (function () {
     // 4. La valeur du terrain
     const V = monde.valeur, Vb = C.valeur, ratioEpure = monde.reseaux.epuration ? monde.reseaux.epuration.ratio : 1;
     for (let i = 0; i < N; i++) {
-      let v = Vb.base - (1 - monde.etatRoutes) * 0.1 + bonus[i] + (monde.bordDeLEau[i] ? Vb.bordDeLEau * (1 - 1.5 * (1 - ratioEpure)) : 0) - P[i] * Vb.parPollution; // (étape 11 : l'eau sale gâche le bord de l'eau)
+      let v = Vb.base - (1 - monde.etatRoutes) * 0.1 + bonus[i] + (monde.zone[i] === C.zones.R.id ? monde.quartierValeur[i] : 0) + /* (étape 18 : seulement les habitations) */  (monde.bordDeLEau[i] ? Vb.bordDeLEau * (1 - 1.5 * (1 - ratioEpure)) : 0) - P[i] * Vb.parPollution; // (étape 11 : l'eau sale gâche le bord de l'eau)
       if (monde.zone[i] && monde.niveau[i] && !monde.collecte[i]) v -= C.dechets.valeurSale; // (étape 11 : des poubelles pas ramassées)
       const rp = monde.routeProche[i];
       if (rp >= 0) v -= Math.max(0, T[rp] - 0.6) * Vb.parTrafic;
