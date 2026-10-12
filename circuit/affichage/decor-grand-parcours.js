@@ -47,27 +47,13 @@ Circuit.DecorGrandParcours = (function () {
     const g = new THREE.Group();
     const W = G.largeur / 2;
 
-    // 1. Le sol : 4 grands morceaux d'herbe autour du creux, et le creux lui-même (une grille creusée).
+    // 1. Le sol (étape 68) : les collines, la rivière et le creux, dessinés par le peintre (affichage/paysage.js).
     const K = GP.creux;
-    const x1 = K.x - K.longueur / 2, x2 = K.x + K.longueur / 2, z1 = K.z - K.largeur / 2, z2 = K.z + K.largeur / 2;
-    const B = G.taille;
-    for (const [ax, bx, az, bz] of [[-B, x1, -B, B], [x2, B, -B, B], [x1, x2, -B, z1], [x1, x2, z2, B]]) {
-      const l = bx - ax, p = bz - az;
-      const sol = new THREE.Mesh(new THREE.PlaneGeometry(l, p), mat({ map: repeter(T.herbe(), l / 12, p / 12) }));
-      sol.rotation.x = -Math.PI / 2;
-      sol.position.set((ax + bx) / 2, 0, (az + bz) / 2);
-      sol.receiveShadow = true;
-      g.add(sol);
-    }
-    const geoCreux = new THREE.PlaneGeometry(K.longueur, K.largeur, 60, 25);
-    geoCreux.rotateX(-Math.PI / 2);
-    const pos = geoCreux.attributes.position;
-    for (let i = 0; i < pos.count; i++) pos.setY(i, GP.solDeBase(K.x + pos.getX(i), K.z + pos.getZ(i)));
-    geoCreux.computeVertexNormals();
-    const creux = new THREE.Mesh(geoCreux, mat({ map: repeter(T.terre(), K.longueur / 10, K.largeur / 10) }));
-    creux.position.set(K.x, 0, K.z);
-    creux.receiveShadow = true;
-    g.add(creux);
+    const campagne = GP.campagne;
+    g.add(Circuit.Paysage.sol(campagne, { saut: 2, bord: 1600, hauteur: GP.solDeBase,
+      terre: (x, z) => Math.abs(x - K.x) < K.longueur / 2 && Math.abs(z - K.z) < K.largeur / 2 }));
+    g.add(Circuit.Paysage.riviere(campagne));
+    const surRiviere = (x, z) => campagne.distanceRiviere(x, z) < campagne.riviere.largeur / 2 + campagne.riviere.berge;
 
     // 2. La route. Pour que les tronçons se raccordent sans fente, chaque échantillon a une direction :
     // la moyenne des deux tronçons qui le touchent.
@@ -80,7 +66,8 @@ Circuit.DecorGrandParcours = (function () {
       uz /= l;
       return [a.ax - uz * w, y, a.az + ux * w];
     };
-    const dessous = (h, x, z) => (h - G.epaisseur < G.hauteurVoiture ? GP.solDeBase(x, z) - 0.1 : h - G.epaisseur);
+    // (au-dessus de la rivière, une route basse est un PONT : on ne la remplit pas jusqu'au fond de l'eau)
+    const dessous = (h, x, z) => (h - G.epaisseur < G.hauteurVoiture && !surRiviere(x, z) ? GP.solDeBase(x, z) - 0.1 : h - G.epaisseur);
     const goudron = { p: [], uv: [] }, tremplin = { p: [], uv: [] }, bordures = { p: [], uv: [] }, cotes = { p: [], uv: [] };
     const ech = GP.echantillons;
     for (let k = 0; k < n; k++) {
@@ -179,16 +166,19 @@ Circuit.DecorGrandParcours = (function () {
     // 6. Le portique du départ, et la ligne en damier.
     const ligne = new THREE.Mesh(new THREE.PlaneGeometry(3, 2 * W), mat({ map: repeter(T.damier(), 1, 4) }));
     ligne.rotation.x = -Math.PI / 2;
-    ligne.position.set(4, 0.05, 0);
+    const D0 = GP.depart, c0 = Math.cos(D0.angle), s0 = Math.sin(D0.angle);
+    const auDepart = (u, w) => [D0.x + c0 * u - s0 * w, D0.z + s0 * u + c0 * w]; // (étape 68 : le départ a bougé avec la route)
+    ligne.rotation.z = -D0.angle;
+    ligne.position.set(auDepart(4, 0)[0], 0.05, auDepart(4, 0)[1]);
     g.add(ligne);
     const rouge = mat({ color: 0xc81e1e, roughness: 0.5 });
     for (const z of [-W - 1, W + 1]) {
       const poteau = new THREE.Mesh(new THREE.BoxGeometry(0.6, 7, 0.6), rouge);
-      poteau.position.set(4, 3.5, z);
+      poteau.position.set(auDepart(4, z)[0], 3.5, auDepart(4, z)[1]);
       poteau.castShadow = true;
       g.add(poteau);
     }
-    g.add(panneau("GRAND PARCOURS", 4, 7.4, 0, -Math.PI / 2, 2 * W + 3, 2.2)); // tourné vers les voitures qui arrivent
+    g.add(panneau("GRAND PARCOURS", auDepart(4, 0)[0], 7.4, auDepart(4, 0)[1], -Math.PI / 2 - D0.angle, 2 * W + 3, 2.2)); // tourné vers les voitures qui arrivent
 
     // 7. Des panneaux pour prévenir.
     const iVide = GP.points.findIndex((p) => p[3] === "vide");
@@ -207,20 +197,6 @@ Circuit.DecorGrandParcours = (function () {
 
     // 8. La clôture et les arbres (loin de la route, des plateformes et du creux).
     for (const c of D.cloture(GP.limite + 2)) g.add(c);
-    let etat = G.graine;
-    const alea = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
-    const arbres = [];
-    let essais = 0;
-    while (arbres.length < 220 && essais < 6000) {
-      essais++;
-      const x = (alea() * 2 - 1) * (GP.limite - 8), z = (alea() * 2 - 1) * (GP.limite - 8);
-      if (GP.solDeBase(x, z) < 0 || Math.hypot(x - K.x, z - K.z) < 80) continue;
-      if (ech.some((e) => Math.abs(e.x - x) < W + 9 && Math.abs(e.z - z) < W + 9)) continue;
-      if (GP.plateformes.some((p) => Math.abs(p.x - x) < p.longueur / 2 + 8 && Math.abs(p.z - z) < p.largeur / 2 + 8)) continue;
-      arbres.push([x, z, 0.8 + alea() * 0.8]);
-    }
-    g.add(D.foret(arbres, "grand"));
-
     // Étape 48 : l'herbe en touffes, les fleurs et les rochers, loin de la route, des plateformes et du creux.
     // (Pour aller vite, on range les échantillons de la route dans une grille de cases de 20 m.)
     const grille = new Map(), CASE = 20;
@@ -230,30 +206,52 @@ Circuit.DecorGrandParcours = (function () {
       if (!grille.has(cle)) grille.set(cle, []);
       grille.get(cle).push(e);
     }
-    const presDeLaRoute = (x, z) => {
+    const presDeLaRoute = (x, z, marge) => {
       for (let i = -1; i <= 1; i++) {
         for (let j = -1; j <= 1; j++) {
           const liste = grille.get(cleDe(x + i * CASE, z + j * CASE));
-          if (liste && liste.some((e) => Math.abs(e.x - x) < W + 6 && Math.abs(e.z - z) < W + 6)) return true;
+          if (liste && liste.some((e) => Math.abs(e.x - x) < W + (marge || 6) && Math.abs(e.z - z) < W + (marge || 6))) return true;
         }
       }
       return false;
     };
+    // Étape 68 : des forêts sur les collines et des arbres dans les prés (affichage/paysage.js).
+    const Ag = Circuit.CONFIG.agrandir.grand;
+    const arbres = Circuit.Paysage.arbres(campagne, Ag.arbres, Ag.bosquets, (x, z) => {
+      if (Math.abs(x - K.x) < K.longueur / 2 + 20 && Math.abs(z - K.z) < K.largeur / 2 + 20) return false;
+      if (GP.plateformes.some((p) => Math.abs(p.x - x) < p.longueur / 2 + 8 && Math.abs(p.z - z) < p.largeur / 2 + 8)) return false;
+      return !presDeLaRoute(x, z, 9);
+    }, G.graine);
+    g.add(D.foret(arbres, "grand"));
+
+    const Ax = Circuit.CONFIG.agrandir.herbes, N = Circuit.CONFIG.nature;
     g.add(Circuit.Nature.tapis({
-      carte: "grand", graine: G.graine + 48,
+      carte: "grand", graine: G.graine + 48, herbes: N.herbes * Ax, fleurs: N.fleurs * Ax, rochers: N.rochers * Ax,
       candidat: (a) => {
-        if (a() < 0.5) return { x: (a() * 2 - 1) * (GP.limite - 4), z: (a() * 2 - 1) * (GP.limite - 4) };
-        const k = Math.floor(a() * ech.length), e = ech[k], c = (a() < 0.5 ? -1 : 1) * (W + 7 + a() * 30);
-        const suivant = ech[(k + 1) % ech.length], l = Math.hypot(suivant.x - e.x, suivant.z - e.z) || 1;
-        return { x: e.x - ((suivant.z - e.z) / l) * c, z: e.z + ((suivant.x - e.x) / l) * c };
+        let x, z;
+        if (a() < 0.5) {
+          x = (a() * 2 - 1) * (GP.limite - 4);
+          z = (a() * 2 - 1) * (GP.limite - 4);
+        } else {
+          const k = Math.floor(a() * ech.length), e = ech[k], c = (a() < 0.5 ? -1 : 1) * (W + 7 + a() * 30);
+          const suivant = ech[(k + 1) % ech.length], l = Math.hypot(suivant.x - e.x, suivant.z - e.z) || 1;
+          x = e.x - ((suivant.z - e.z) / l) * c;
+          z = e.z + ((suivant.x - e.x) / l) * c;
+        }
+        return { x, z, y: GP.solDeBase(x, z) };
       },
       libre: (x, z) => {
         if (Math.abs(x) > GP.limite - 3 || Math.abs(z) > GP.limite - 3) return false; // hors de la clôture
         if (Math.abs(x - K.x) < K.longueur / 2 + 3 && Math.abs(z - K.z) < K.largeur / 2 + 3) return false; // dans le creux
         if (GP.plateformes.some((p) => Math.abs(p.x - x) < p.longueur / 2 + 4 && Math.abs(p.z - z) < p.largeur / 2 + 4)) return false;
+        if (surRiviere(x, z)) return false; // pas d'herbe dans l'eau
         return !presDeLaRoute(x, z);
       },
     }));
+
+    // Étape 68 : les garde-fous des ponts (là où la route basse passe au-dessus de la rivière).
+    g.add(Circuit.Paysage.gardeFous(GP.routes.filter((t) => t.ya < 4 && surRiviere(t.x, t.z)).map((t) => ({
+      ax: t.ax, az: t.az, bx: t.ax + t.ux * t.longueur, bz: t.az + t.uz * t.longueur, y: (t.ya + t.yb) / 2, demiLargeur: W }))));
 
     // Chaque image : les plaques de nitro clignotent.
     function maj(temps) {

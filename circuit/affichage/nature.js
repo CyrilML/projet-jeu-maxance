@@ -343,7 +343,18 @@ Circuit.Nature = (function () {
       return mat;
     };
     // Une famille d'instances : `morceaux` = combien de morceaux par arbre, `placer(p, k)` → { x, y, z, s: [sx,sy,sz], couleur }.
-    function famille(liste, forme, materiau, morceaux, placer) {
+    // Étape 68 : les cartes sont 3 fois plus grandes, il y a des milliers d'arbres. On les range par CARRÉS de 700 m
+    // (un groupe d'instances par carré) : la carte graphique ne dessine que les carrés qui sont devant la caméra.
+    function famille(tous, forme, materiau, morceaux, placer) {
+      const carres = new Map();
+      for (const p of tous) {
+        const cle = Math.floor(p[0] / N.carreForet) + "," + Math.floor(p[1] / N.carreForet);
+        if (!carres.has(cle)) carres.set(cle, []);
+        carres.get(cle).push(p);
+      }
+      for (const liste of carres.values()) familleCarre(liste, forme, materiau, morceaux, placer);
+    }
+    function familleCarre(liste, forme, materiau, morceaux, placer) {
       if (!liste.length) return;
       const im = new THREE.InstancedMesh(forme, materiau, liste.length * morceaux);
       let i = 0;

@@ -22,6 +22,35 @@ Circuit.GrandParcours = (function () {
   const C = Circuit.CONFIG;
   const G = C.grandParcours;
   const MARCHE = C.parcours.marche;
+  const A = C.agrandir;
+
+  // Étape 68 : ✍️ la carte est 3 fois plus grande. La route est étirée comme un élastique (moteur/etirer.js) :
+  // les bouts de route normaux × 3, mais le tremplin, le creux à sauter et les plateformes gardent leur taille
+  // (ils sont seulement déplacés, avec leurs trous, leurs bosses et le creux). Puis tout est recentré sur la carte.
+  if (!G.etire) {
+    const origine = G.points;
+    const E = Circuit.Etirer.points(origine, A.facteur, (sorte) => A.figes.includes(sorte), true);
+    const xs = E.points.map((p) => p[0]), zs = E.points.map((p) => p[1]);
+    const cx = -Math.round((Math.min(...xs) + Math.max(...xs)) / 2), cz = -Math.round((Math.min(...zs) + Math.max(...zs)) / 2);
+    const deplacer = (o) => {
+      const d = Circuit.Etirer.deplacementPres(origine, E.deplacements, o.x, o.z);
+      return [d[0] + cx, d[1] + cz];
+    };
+    for (const p of G.plateformes) {
+      const [dx, dz] = deplacer(p);
+      p.decalage = [dx, dz]; // (pour les pièces posées dessus)
+      p.x += dx;
+      p.z += dz;
+      for (const o of p.trous.concat(p.bosses)) { o.x += dx; o.z += dz; }
+    }
+    const [kx, kz] = deplacer(G.creux);
+    G.creux.x += kx;
+    G.creux.z += kz;
+    G.points = E.points.map((p) => [p[0] + cx, p[1] + cz].concat(p.slice(2)));
+    G.taille *= A.facteur;
+    G.etire = true;
+  }
+
   // La route elle-même est fabriquée par le ruban (moteur/ruban.js) : courbe, échantillons, tronçons.
   const R = Circuit.Ruban.creer(G.points, { ferme: true, largeur: G.largeur });
   const { points, echantillons, troncons, routes, local, hauteurTroncon, loin, pointSurLaRoute } = R;
@@ -32,10 +61,20 @@ Circuit.GrandParcours = (function () {
 
   // Le CREUX : un grand trou dans le sol, avec des bords en pente (on peut en ressortir en roulant).
   const K = G.creux;
+  // Étape 68 : ✍️ des COLLINES et une RIVIÈRE (moteur/campagne.js). Le sol reste plat sous la route, les
+  // plateformes et le creux. Là où la route passe au-dessus de la rivière, c'est un PONT : la route ne descend pas.
+  const campagne = Circuit.Campagne.creer(Object.assign({}, A.grand, {
+    taille: G.taille,
+    riviere: Object.assign({}, A.riviere, { points: Circuit.Campagne.serpent(...A.grand.coursRiviere, A.grand.graine) }),
+    plats: echantillons.map((e) => [e.x, e.z, demiLargeur + 6])
+      .concat(G.plateformes.map((p) => [p.x, p.z, Math.hypot(p.longueur, p.largeur) / 2 + 4]))
+      .concat([[K.x, K.z, Math.hypot(K.longueur, K.largeur) / 2]]),
+  }));
   function solDeBase(x, z) {
+    const relief = campagne.hauteur(x, z);
     const bordX = K.longueur / 2 - Math.abs(x - K.x), bordZ = K.largeur / 2 - Math.abs(z - K.z);
-    if (bordX <= 0 || bordZ <= 0) return 0;
-    return -K.profondeur * Math.min(1, Math.min(bordX, bordZ) / K.pente);
+    if (bordX <= 0 || bordZ <= 0) return relief;
+    return relief - K.profondeur * Math.min(1, Math.min(bordX, bordZ) / K.pente);
   }
 
   // Les plateformes : un rectangle à la hauteur y, moins les trous, plus les bosses.
@@ -55,7 +94,7 @@ Circuit.GrandParcours = (function () {
   // Sur quoi roule-t-on en (x, z), pour une voiture à la hauteur y ? Renvoie { h, quoi }.
   function sous(x, z, y) {
     const base = solDeBase(x, z);
-    let meilleur = { h: base, quoi: base < -0.5 ? "le creux" : "l'herbe" };
+    let meilleur = { h: base, quoi: campagne.dansLEau(x, z, base) ? "la rivière" : base < -0.5 && dansRectangle(K, x, z) ? "le creux" : base > 2 ? "une colline" : "l'herbe" };
     const route = R.routeSous(x, z, y, MARCHE);
     if (route && route.h > meilleur.h) meilleur = { h: route.h, quoi: route.sorte === "tremplin" ? "le tremplin" : route.h > 0.5 ? "la route (en hauteur)" : "la route", troncon: route.troncon };
     for (const p of plateformes) {
@@ -174,7 +213,8 @@ Circuit.GrandParcours = (function () {
       ajouter(d.x + d.cos * x, d.y + pente * 50 * temps - 0.5 * C.parcours.gravite * temps * temps + 1, d.z + d.sin * x, "au-dessus du creux");
     }
     const A = plateformes[0], B = plateformes[1];
-    for (const [x, z] of [[-178, -160], [-178, -120], [-200, -150], [-213, -125], [-236, -140]]) ajouter(x, A.y + 1.2, z, A.nom);
+    const [ax, az] = A.decalage || [0, 0]; // étape 68 : la plateforme a été déplacée avec la route
+    for (const [x, z] of [[-178, -160], [-178, -120], [-200, -150], [-213, -125], [-236, -140]]) ajouter(x + ax, A.y + 1.2, z + az, A.nom);
     for (const [dx, dz] of [[-10, -10], [10, -10], [-10, 10], [10, 10]]) ajouter(B.x + dx, B.y + 1.2, B.z + dz, B.nom);
     for (const dx of [-35, 0, 35]) ajouter(K.x + dx, -K.profondeur + 1.2, K.z, "au fond du creux");
     return pieces;
@@ -183,10 +223,12 @@ Circuit.GrandParcours = (function () {
   return {
     points, echantillons, troncons, routes, plateformes, piliers, nitros, saut, longueurTour,
     loopings: [], // pas de looping ici (les règles de la balade les cherchent)
-    depart: { x: 0, z: 0, angle: 0 },
+    depart: { x: points[0][0], z: points[0][1], angle: pointSurLaRoute(0, 0).angle },
     limite: G.taille / 2 - 3,
     largeur: G.largeur,
     creux: K,
+    campagne, // étape 68 : les collines et la rivière
+    dansLEau: (x, z, y) => campagne.dansLEau(x, z, y),
     solDeBase, sous, hauteurSol, murs, plaqueSous, placerPieces, pointSurLaRoute, dessusPlateforme,
     placerCartons: () => [],
   };

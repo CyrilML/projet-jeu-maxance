@@ -1009,5 +1009,6 @@ Circuit.VoituresMarques = (function () {
   }
 
   Circuit.Modeles.ajouter({ chiron, porsche911, aventador, basse, suv, camionnette, moto, classique, citadine, taxi, police });
-  return {};
+  // (étape 68 : les outils du bureau de design sont prêtés à l'atelier des nouvelles voitures : affichage/voitures-nouvelles.js)
+  return { outils: { coque, regleVitres, arches, quatreRoues, surLeDessus, surLeFlanc, plat, auBout, retros, portiere, echappement, patchFlanc, ligneFlanc, optique, optiqueAuBout, grille, lettres, phareRond, plaque, lettresFlanc, voiture, berline } };
 })();

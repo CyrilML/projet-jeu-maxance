@@ -17,6 +17,13 @@ Circuit.MegaRampes = (function () {
   const C = Circuit.CONFIG;
   const M = C.rampes;
   const MARCHE = C.parcours.marche;
+  // Étape 68 : ✍️ 3 fois plus long ! Les bouts de piste sont étirés, mais les sauts (tremplin + vide) gardent
+  // exactement leur longueur : 25 m, 40 m et 60 m, comme avant (moteur/etirer.js).
+  if (!M.etire) {
+    const A = C.agrandir;
+    M.points = Circuit.Etirer.points(M.points, A.facteur, (sorte) => A.figes.includes(sorte), false).points;
+    M.etire = true;
+  }
   const R = Circuit.Ruban.creer(M.points, { ferme: false, largeur: M.largeur });
   const { points, echantillons, troncons, routes } = R;
   const VIDE = -100000; // la hauteur du « sol » quand il n'y a pas de piste : aucun !

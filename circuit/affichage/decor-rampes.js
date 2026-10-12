@@ -118,7 +118,7 @@ Circuit.DecorRampes = (function () {
     g.add(instances);
 
     // 3. La mer de nuages, et des nuages en 3D (chaque nuage = 5 boules blanches aplaties).
-    const mer = new THREE.Mesh(new THREE.PlaneGeometry(8000, 8000), new THREE.MeshStandardMaterial({ map: repeter(T.nuages(), 60, 60), color: 0xffffff, emissive: 0xc8d4e6, emissiveIntensity: 0.35, roughness: 1 }));
+    const mer = new THREE.Mesh(new THREE.PlaneGeometry(24000, 24000), new THREE.MeshStandardMaterial({ map: repeter(T.nuages(), 180, 180), color: 0xffffff, emissive: 0xc8d4e6, emissiveIntensity: 0.35, roughness: 1 }));
     mer.rotation.x = -Math.PI / 2;
     mer.position.y = M.nuages;
     mer.receiveShadow = true;
@@ -126,7 +126,7 @@ Circuit.DecorRampes = (function () {
     let etat = 41;
     const alea = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
     const boules = [];
-    for (let n = 0; n < 160; n++) {
+    for (let n = 0; n < 320; n++) { // étape 68 : la piste est 3 fois plus longue : 2 fois plus de nuages (160 avant)
       // Un nuage près d'un point de la piste (pas trop près), ou loin vers l'horizon.
       const e = ech[Math.floor(alea() * ech.length)];
       const angle = alea() * Math.PI * 2, distance = 40 + alea() * 500;

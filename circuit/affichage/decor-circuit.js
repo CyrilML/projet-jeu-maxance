@@ -101,7 +101,10 @@ Circuit.DecorCircuit = (function () {
     const g = new THREE.Group();
     const T = Circuit.Textures;
     const demi = C.piste.tailleHerbe / 2;
-    g.add(pelouse(C.piste.tailleHerbe + 800, T.herbe(), (C.piste.tailleHerbe + 800) / 12));
+    // Étape 68 : le sol avec les collines (au-delà de la clôture) et la rivière (affichage/paysage.js).
+    const campagne = Circuit.Course.campagne;
+    g.add(Circuit.Paysage.sol(campagne, { saut: 2, bord: 1600 }));
+    g.add(Circuit.Paysage.riviere(campagne));
 
     // La route, les bordures, la ligne blanche du milieu.
     const L = C.piste.largeur / 2, ext = L + C.piste.largeurBordure;
@@ -132,7 +135,25 @@ Circuit.DecorCircuit = (function () {
     const gomme = new THREE.MeshStandardMaterial({ map: texTraces, transparent: true, depthWrite: false, roughness: 0.7, polygonOffset: true, polygonOffsetFactor: -1 });
     for (const e of [-L * 0.55, L * 0.35]) g.add(ruban(e - 1.1, e + 1.1, 0.025, gomme, 40));
     const blanc = mat({ color: 0xf0f0f0, roughness: 0.6 });
-    for (let s = 0; s < Piste.longueurTour; s += 9) g.add(ruban(-0.15, 0.15, 0.03, blanc, 3, s, s + 3));
+    // (étape 68 : le tour fait 4,4 km, presque 500 tirets : on les colle tous dans UNE seule forme, un seul dessin)
+    const tirets = [];
+    for (let s = 0; s < Piste.longueurTour; s += 9) tirets.push(ruban(-0.15, 0.15, 0.03, blanc, 3, s, s + 3).geometry);
+    const positions = [], uvsTirets = [], indices = [];
+    for (const geo of tirets) {
+      const debut = positions.length / 3;
+      positions.push(...geo.attributes.position.array);
+      uvsTirets.push(...geo.attributes.uv.array);
+      for (const i of geo.index.array) indices.push(debut + i);
+      geo.dispose();
+    }
+    const geoTirets = new THREE.BufferGeometry();
+    geoTirets.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geoTirets.setAttribute("uv", new THREE.Float32BufferAttribute(uvsTirets, 2));
+    geoTirets.setIndex(indices);
+    geoTirets.computeVertexNormals();
+    const traitBlanc = new THREE.Mesh(geoTirets, blanc);
+    traitBlanc.receiveShadow = true;
+    g.add(traitBlanc);
     // La ligne d'arrivée en damier.
     const damier = T.damier().clone();
     damier.needsUpdate = true;
@@ -197,31 +218,39 @@ Circuit.DecorCircuit = (function () {
       g.add(pilier);
     }
 
-    // La clôture et les arbres (loin de la route, et pas sur la tribune).
-    for (const c of cloture(demi - 2)) g.add(c);
-    const arbres = [];
-    let essais = 0;
-    while (arbres.length < C.decor.arbres && essais < 6000) {
-      essais++;
-      const x = (alea() * 2 - 1) * (demi - 10), z = (alea() * 2 - 1) * (demi - 10);
-      if (Math.abs(Piste.reperer(x, z).ecart) < ext + 9) continue;
-      if (Math.abs(x) < 42 && z > zTribune - 3 && z < zTribune + 14) continue;
-      arbres.push([x, z, 0.8 + alea() * 0.6]);
+    // Étape 68 : les PONTS : là où la route passe au-dessus de la rivière, des garde-fous de chaque côté.
+    const R = campagne.riviere, morceaux = [];
+    for (let s = 0; s < Piste.longueurTour; s += 3) {
+      const a = Piste.pointA(s), b = Piste.pointA(s + 3);
+      if (campagne.distanceRiviere((a.x + b.x) / 2, (a.z + b.z) / 2) >= R.largeur / 2 + R.berge) continue;
+      morceaux.push({ ax: a.x, az: a.z, bx: b.x, bz: b.z, y: 0, demiLargeur: ext });
     }
+    g.add(Circuit.Paysage.gardeFous(morceaux));
+
+    // La clôture et les arbres (loin de la route, et pas sur la tribune). Étape 68 : des forêts sur les collines.
+    for (const c of cloture(demi - 2)) g.add(c);
+    const AC = C.agrandir.course;
+    const arbres = Circuit.Paysage.arbres(campagne, AC.arbres, AC.bosquets, (x, z) => {
+      if (Math.abs(x) > demi - 12 || Math.abs(z) > demi - 12) return Math.abs(x) > demi + 6 || Math.abs(z) > demi + 6; // (pas sur la clôture)
+      if (Math.abs(Piste.reperer(x, z).ecart) < ext + 9) return false;
+      return !(Math.abs(x) < 42 && z > zTribune - 3 && z < zTribune + 14);
+    }, C.decor.graine);
     g.add(foret(arbres, "course"));
 
     // Étape 48 : l'herbe en touffes, les fleurs et les rochers. La moitié est semée près de la route
     // (c'est là que la caméra passe), le reste partout. Jamais sur la route, la bordure ou la tribune.
+    const fois = C.agrandir.herbes;
     g.add(Circuit.Nature.tapis({
       carte: "course",
       graine: C.decor.graine,
+      herbes: C.nature.herbes * fois, fleurs: C.nature.fleurs * fois, rochers: C.nature.rochers * fois,
       candidat: (a) => {
         if (a() < 0.5) return { x: (a() * 2 - 1) * (demi - 4), z: (a() * 2 - 1) * (demi - 4) };
         const p = Piste.pointA(a() * Piste.longueurTour), e = (a() < 0.5 ? -1 : 1) * (ext + 3 + a() * 35);
         return { x: p.x + p.dz * e, z: p.z - p.dx * e };
       },
       libre: (x, z) => Math.abs(x) < demi - 3 && Math.abs(z) < demi - 3 && Math.abs(Piste.reperer(x, z).ecart) > ext + 3
-        && !(Math.abs(x) < 45 && z > zTribune - 5 && z < zTribune + 16),
+        && !(Math.abs(x) < 45 && z > zTribune - 5 && z < zTribune + 16) && campagne.distanceRiviere(x, z) > R.largeur / 2 + R.berge * 0.7,
     }));
     return g;
   }

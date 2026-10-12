@@ -17,6 +17,34 @@ window.Circuit = window.Circuit || {};
 
 Circuit.Parcours = (function () {
   const P = Circuit.CONFIG.parcours;
+  const A = Circuit.CONFIG.agrandir;
+  const AP = A.parcours;
+
+  // Étape 68 : ✍️ la carte est 3 fois plus grande. Le parcours d'avant devient une « TUILE » de 700 m, recopiée
+  // 9 fois (3 × 3, comme un carrelage), chaque copie TOURNÉE d'un quart de tour de plus : on ne retrouve jamais
+  // deux fois le même coin. Entre les tuiles : des collines, des forêts, et une rivière avec 3 ponts.
+  if (!P.agrandi) {
+    const ecart = AP.ecartTuiles;
+    const tuiles = [];
+    for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) tuiles.push({ ox: i * ecart, oz: j * ecart, quart: (i + 1 + (j + 1) * 3) % 4 });
+    const copier = (liste) => {
+      const nouvelle = [];
+      for (const t of tuiles) {
+        const a = (t.quart * Math.PI) / 2, c = Math.round(Math.cos(a)), sn = Math.round(Math.sin(a));
+        for (const o of liste) {
+          const copie = Object.assign({}, o, { x: t.ox + o.x * c - o.z * sn, z: t.oz + o.x * sn + o.z * c });
+          if (o.angle !== undefined) copie.angle = o.angle + a;
+          nouvelle.push(copie);
+        }
+      }
+      return nouvelle;
+    };
+    for (const cle of ["montees", "tremplins", "loopings", "tunnels", "cartons"]) P[cle] = copier(P[cle]);
+    P.taille = AP.taille;
+    P.piecesAuSol = AP.piecesAuSol;
+    P.agrandi = true;
+  }
+
   const formes = []; // tous les blocs et toutes les pentes
   const loopings = [];
   const tunnels = [];
@@ -46,6 +74,27 @@ Circuit.Parcours = (function () {
     loopings.push(Object.assign({ dx: Math.cos(l.angle), dz: Math.sin(l.angle), lx: -Math.sin(l.angle), lz: Math.cos(l.angle) }, l));
   }
 
+  // Étape 68 : les collines et la rivière (moteur/campagne.js). Le sol reste plat sous les formes, autour des
+  // loopings, des cartons, du départ et des ponts. La rivière passe entre deux colonnes de tuiles.
+  const coursRiviere = Circuit.Campagne.serpent(...AP.coursRiviere, AP.graine);
+  const ponts = AP.ponts.map((z) => {
+    // Le pont : là où la rivière croise cette ligne (z), un tablier de bois en travers de l'eau.
+    let mieux = coursRiviere[0];
+    for (const p of coursRiviere) if (Math.abs(p[1] - z) < Math.abs(mieux[1] - z)) mieux = p;
+    return { x: mieux[0], z, longueur: A.riviere.largeur + 2 * A.riviere.berge + 8, largeur: 12, y: 0.25 };
+  });
+  const campagne = Circuit.Campagne.creer(Object.assign({}, AP, {
+    taille: P.taille,
+    riviere: Object.assign({}, A.riviere, { points: coursRiviere }),
+    plats: formes.map((f) => [f.x, f.z, Math.hypot(f.demiLongueur, f.demiLargeur) + 6])
+      .concat(P.loopings.map((l) => [l.x, l.z, 26]))
+      .concat(P.cartons.map((c) => [c.x, c.z, 6]))
+      .concat(ponts.map((p) => [p.x, p.z, p.longueur / 2 + 20]))
+      .concat([[0, 0, 25]]),
+  }));
+  campagne.ponts = ponts;
+  const surPont = (x, z) => ponts.find((p) => Math.abs(x - p.x) <= p.longueur / 2 && Math.abs(z - p.z) <= p.largeur / 2);
+
   // Le point (x, z) vu depuis la forme : u le long, w en travers.
   function local(f, x, z) {
     const dx = x - f.x, dz = z - f.z;
@@ -61,7 +110,9 @@ Circuit.Parcours = (function () {
 
   // La hauteur du sol sous (x, z), pour une voiture à la hauteur y (on ne monte que sur les marches).
   function hauteurSol(x, z, y) {
-    let sol = 0;
+    let sol = campagne.hauteur(x, z); // étape 68 : les collines (et le lit de la rivière)
+    const pont = surPont(x, z);
+    if (pont && pont.y <= y + P.marche) sol = Math.max(sol, pont.y); // sur un pont, on ne tombe pas dans l'eau
     for (const f of formes) {
       const l = local(f, x, z);
       const h = dessus(f, l.u, l.w);
@@ -129,11 +180,13 @@ Circuit.Parcours = (function () {
     const alea = hasard(P.graine);
     let essais = 0, poses = 0;
     const bord = P.taille / 2 - 20;
-    while (poses < P.piecesAuSol && essais < 1000) {
+    while (poses < P.piecesAuSol && essais < 5000) {
       essais++;
       const x = (alea() * 2 - 1) * bord, z = (alea() * 2 - 1) * bord;
-      if (hauteurSol(x, z, 100) > 0 || Math.hypot(x, z) < 15) continue; // pas sur une forme, ni sur le départ
-      ajouterPiece(x, 1.2, z, "sol");
+      if (formes.some((f) => dessus(f, local(f, x, z).u, local(f, x, z).w) !== null) || Math.hypot(x, z) < 15) continue; // pas sur une forme, ni sur le départ
+      if (campagne.distanceRiviere(x, z) < A.riviere.largeur / 2 + A.riviere.berge) continue; // ni dans la rivière
+      const h = campagne.hauteur(x, z);
+      ajouterPiece(x, h + 1.2, z, h > 3 ? "colline" : "sol");
       poses++;
     }
     return pieces;
@@ -153,5 +206,9 @@ Circuit.Parcours = (function () {
     return cartons;
   }
 
-  return { formes, loopings, tunnels, hauteurSol, murs, pointLooping, placerPieces, placerCartons };
+  // Étape 68 : dans l'eau ? (pas sur un pont)
+  const dansLEau = (x, z, y) => !surPont(x, z) && campagne.dansLEau(x, z, y);
+
+  return { formes, loopings, tunnels, hauteurSol, murs, pointLooping, placerPieces, placerCartons, campagne, ponts, dansLEau,
+    limite: P.taille / 2 - 3 };
 })();
