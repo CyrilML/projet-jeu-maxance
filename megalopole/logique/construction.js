@@ -110,6 +110,7 @@ Megalopole.Construction = (function () {
     if (!B) return "bâtiment inconnu";
     if (!demenagement && Megalopole.Population.palier(monde) < B.palier) return "pas encore : il faut être un(e) " + C.paliers[B.palier].nom.toLowerCase() + " (" + C.paliers[B.palier].habitants.toLocaleString("fr-FR") + " habitants)";
     if (!demenagement && B.unique && monde.batiments.some((b) => b.type === type)) return "la ville n'en a qu'un(e)";
+    if (!demenagement && B.monument && !Megalopole.Objectifs.debloque(monde, type)) return "pas encore : réussis l'objectif 🏆 « " + Megalopole.Objectifs.objectifDuMonument(type).titre + " »"; // (étape 19)
     // (étape 11) une éolienne en mer se pose DANS la mer ; un barrage contre une rivière ; le dessalement près de la mer
     if (B.surMer) {
       for (const p of casesDe(type, c, l)) { if (!K.dans(k, p.colonne, p.ligne) || !k.mer[index(monde, p.colonne, p.ligne)]) return "il faut la poser dans la mer 🌊"; if (monde.occupe[index(monde, p.colonne, p.ligne)]) return "un autre bâtiment est là"; }

@@ -142,6 +142,7 @@
       <a href="#etape16">Étape 16</a>
       <a href="#etape17">Étape 17</a>
       <a href="#etape18">Étape 18</a>
+      <a href="#etape19">Étape 19</a>
       <a href="#route">Feuille de route</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="index.html">▶ Jouer</a>
@@ -931,7 +932,7 @@
           <li>☐ Les seuils sont 0,30 / 0,35 / 0,40 / 0,50 / 0,60 (avant 0,3 / 0,4 / 0,5 / 0,6 / 0,7).</li>
           <li>☐ Le calque 💎 Valeur devient plus vert au milieu des quartiers de grands immeubles.</li>
           <li>☐ Avec tous les services, tes maisons montent jusqu'aux tours.</li>
-          <li>Vérifie « version 18 » en haut de la page.</li></ul></div>
+          <li>(La version a avancé depuis : vérifie le numéro de l'étape 19.)</li></ul></div>
       </div>
       <h3>🔧 Sous le capot : l'enquête, avec des chiffres</h3>
       <pre style="white-space: pre-wrap">  ville test de 16 000 habitants, la valeur moyenne d'une maison :
@@ -946,6 +947,41 @@
       <h3>❓ Quiz</h3>
       <details class="question"><summary>Les voisins sont au niveau 4 en moyenne. Combien ajoute le quartier à la valeur ?</summary><p>4 × 0,05 = 0,20.</p></details>
       <details class="question"><summary>Pourquoi une valeur moyenne de 0,53 bloquait-elle le niveau 6 ?</summary><p>Parce qu'il fallait 0,7 : même la meilleure maison n'y arrivait pas. Une règle impossible, c'est comme pas de règle du tout : il faut toujours vérifier qu'on peut l'atteindre.</p></details>
+    </section>
+
+    <section id="etape19">
+      <h2>🏆 Étape 19 : des objectifs et des monuments <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">La ville avait besoin d'un <strong>but</strong>. Maintenant, un tableau te donne toujours 3 défis (facile, moyen, dur). Chaque réussite rapporte de l'argent, et certaines débloquent un <strong>monument</strong> qui rend toute la ville plus heureuse et attire des touristes. <a href="index.html"><strong>▶ la Mégalopole</strong></a></p>
+      <div class="grille">
+        <div class="carte"><h4>📋 La demande</h4><p class="petit">Le fichier complet est dans <code>megalopole/demandes/19-objectifs-monuments.md</code>.</p><ul><li>✍️ « Le jeu devient vite lassant et sans but, que proposes-tu ? »</li><li>Tes choix : <strong>3 objectifs en même temps</strong>, et des <strong>monuments avec un gros bonus</strong>.</li></ul></div>
+        <div class="carte"><h4>✅ Ce que tu peux vérifier</h4><ul>
+          <li>☐ L'icône 🏆 : 3 défis avec leur barre, leur récompense, et parfois un monument à gagner.</li>
+          <li>☐ À 500 habitants : « 🏆 Objectif réussi ! +1 000 🪙 » et « 🗽 Nouveau monument : 🗿 Statue du fondateur ».</li>
+          <li>☐ Le menu 🗽 Monuments en bas : les monuments 🔒 disent quel objectif il faut réussir.</li>
+          <li>☐ Pose un monument : le bonheur 😊 monte, des touristes rapportent de l'argent (🧾), le terrain autour devient plus cher (calque 💎).</li>
+          <li>☐ « ⏭️ Changer » met un défi de côté : un autre le remplace.</li>
+          <li>☐ Recharge la page : tes objectifs réussis sont toujours là.</li>
+          <li>Vérifie « version 19 » en haut de la page.</li></ul></div>
+      </div>
+      <h3>🔧 Sous le capot : un tableau qui regarde la ville</h3>
+      <pre style="white-space: pre-wrap">  29 objectifs rangés dans config.js, chacun avec : test · but · rang (1 🟢, 2 🟠, 3 🔴) · récompense · monument
+
+  chaque seconde, pour les 3 défis du moment :
+     mesurer(la ville)  ≥ but ?   (ou ≤ pour le chômage et les bouchons)
+        oui → + récompense 🪙, + monument 🗽, le suivant de ce rang arrive</pre>
+      <table class="petit"><tr><th>Monument</th><th>Débloqué par</th><th>Prix</th><th>😊</th><th>📸 touristes</th></tr>
+        <tr><td>🗿 Statue du fondateur</td><td>500 habitants</td><td>5 000</td><td>+5</td><td>×1</td></tr>
+        <tr><td>🎡 Grande roue</td><td>5 000 habitants</td><td>15 000</td><td>+6</td><td>×3</td></tr>
+        <tr><td>🗼 Tour panoramique</td><td>bonheur 80 % avec 5 000 habitants</td><td>30 000</td><td>+7</td><td>×5</td></tr>
+        <tr><td>⛪ Cathédrale</td><td>10 000 habitants</td><td>40 000</td><td>+8</td><td>×4</td></tr>
+        <tr><td>🎭 Opéra</td><td>25 000 habitants</td><td>60 000</td><td>+9</td><td>×6</td></tr>
+        <tr><td>🏙️ Gratte-ciel record</td><td>50 000 habitants</td><td>100 000</td><td>+10</td><td>×8</td></tr></table>
+      <p>La joie des bâtiments ordinaires reste plafonnée à +15 ; celle des monuments s'ajoute <strong>en plus</strong>. Des touristes : chaque mois, touristes × habitants × 0,02 🪙.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul><li>Ouvre sous le capot : la ligne « 🏆 les 3 défis du moment » montre la mesure et le but de chacun.</li><li>Combien rapportent les touristes de la grande roue avec 10 000 habitants ? (3 × 10 000 × 0,02)</li><li>Quel objectif dur te semble le plus difficile ? Pourquoi ?</li></ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien rapportent les touristes de la grande roue avec 10 000 habitants ?</summary><p>3 × 10 000 × 0,02 = 600 🪙 par mois.</p></details>
+      <details class="question"><summary>Pourquoi « le chômage » se teste-t-il avec ≤ et pas ≥ ?</summary><p>Parce qu'on veut MOINS de chômeurs : le défi est réussi quand on passe EN DESSOUS du but.</p></details>
     </section>
 
     <!-- ============ FEUILLE DE ROUTE ============ -->
@@ -971,10 +1007,10 @@
         <div class="carte fait"><div class="num">16</div><h4>🏛️ Des services plus gros <span class="etiquette">✅ fait · à valider</span></h4><p>Places doublées pour les petits, et université, hôtel de police, grande caserne au palier 3.</p><p class="apprend"><b>Tu apprends :</b> un bâtiment = une ligne de données. <b>Durée :</b> ½ séance.</p></div>
         <div class="carte fait"><div class="num">17</div><h4>⭐ Améliorer, et le laboratoire 🔬 <span class="etiquette">✅ fait · à valider</span></h4><p>3 étoiles par bâtiment, 7 recherches (industrie propre, énergie, eau et déchets, agriculture).</p><p class="apprend"><b>Tu apprends :</b> un multiplicateur, un arbre des technologies. <b>Durée :</b> 1 séance.</p></div>
         <div class="carte fait"><div class="num">18</div><h4>💎 Une valeur du terrain atteignable <span class="etiquette">✅ fait · à valider</span></h4><p>Seuils plus bas, et le quartier rend le terrain plus cher.</p><p class="apprend"><b>Tu apprends :</b> mesurer pour trouver un bug d'équilibre. <b>Durée :</b> ½ séance.</p></div>
-        <div class="carte prochain"><div class="num">19</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
-        <div class="carte"><div class="num">20</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
-        <div class="carte"><div class="num">21</div><h4>🏆 Les défis et les monuments</h4><p>Des objectifs (« 50 000 habitants heureux »), des monuments célèbres à débloquer, des quartiers spéciaux (quartier d'affaires).</p></div>
-        <div class="carte"><div class="num">22</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
+        <div class="carte fait"><div class="num">19</div><h4>🏆 Des objectifs et des monuments <span class="etiquette">✅ fait · à valider</span></h4><p>3 défis à la fois (29 en tout), des récompenses, 6 monuments à débloquer.</p><p class="apprend"><b>Tu apprends :</b> mesurer pour comparer à un but, des données qui décrivent des règles. <b>Durée :</b> 1 à 2 séances.</p></div>
+        <div class="carte prochain"><div class="num">20</div><h4>🔥 Les incendies et la criminalité <span class="etiquette">⏭️ à décider</span></h4><p>Sans pompiers, des incendies ; sans police, des vols ; le camion de pompiers qui vient éteindre le feu.</p></div>
+        <div class="carte"><div class="num">21</div><h4>🚆 Les grands transports</h4><p>Des lignes de métro et de train à tracer, des autoroutes, un port de commerce, un aéroport (et des touristes).</p></div>
+                <div class="carte"><div class="num">22</div><h4>🌪️ Les catastrophes</h4><p>Des tempêtes, des inondations… et un bouton pour les éteindre si on n'aime pas !</p></div>
       </div>
     </section>
 
@@ -1125,6 +1161,14 @@
         <textarea class="journal" id="megalopole-appris-18" data-cle="megalopole-appris-18" placeholder="Ex. : J'ai appris qu'il faut mesurer pour trouver ce qui bloque…"></textarea>
         <label for="megalopole-idees-18"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="megalopole-idees-18" data-cle="megalopole-idees-18" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 19 · des objectifs et des monuments <span class="petit">· 12 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le tableau des défis (<code>logique/objectifs.js</code>) et ses 29 objectifs dans <code>config.js</code>, l'icône 🏆, le bouton ⏭️ Changer, 6 monuments dessinés (statue, grande roue, tour, cathédrale, opéra, gratte-ciel) dans le nouveau menu 🗽, leur prestige autour d'eux, 3 nouveaux messages dans le journal, et la sauvegarde en version 7.</p>
+        <label for="megalopole-appris-19"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="megalopole-appris-19" data-cle="megalopole-appris-19" placeholder="Ex. : J'ai appris qu'un objectif, c'est une mesure comparée à un but…"></textarea>
+        <label for="megalopole-idees-19"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="megalopole-idees-19" data-cle="megalopole-idees-19" placeholder="Ex. : D'autres monuments, des trophées…"></textarea>
       </div>
     </section>
   </main>

@@ -33,6 +33,7 @@ Megalopole.Monde = (function () {
       postes: {}, prets: [], etatRoutes: 1, moisDansLeRouge: 0, renvoye: false,
       guide: { etape: 0, fini: false, cache: false }, // étape 3 : la mission du guide en cours
       recherches: { faites: [], enCours: null }, // étape 17 : le laboratoire 🔬
+      objectifs: { faits: [], monuments: [], cote: [] }, // étape 19 : les défis réussis et les monuments débloqués 🏆
       demande: { R: 0.5, C: 0.3, I: 0.3, A: 0.2 }, besoins: {}, stats: { habitants: 0, emplois: 0, commerce: 0, industrie: 0, agriculture: 0, actifs: 0, chomeurs: 0 },
       reclamations: [], historique: [], dernierBudget: null, compteurs: { grandis: 0, baisses: 0 },
       camera: camera || null, outil: null, trace: null, fantome: null, enMain: null, survol: null, selection: null, changements: 0,
@@ -192,6 +193,7 @@ Megalopole.Monde = (function () {
     // étape 17 : ⭐ améliorer le bâtiment touché, 🔬 lancer une recherche
     if (i.ameliorer && monde.selection) Megalopole.Ameliorations.ameliorer(monde, Co.batimentSur(monde, monde.selection.ligne * monde.carte.colonnes + monde.selection.colonne));
     if (i.rechercher) Megalopole.Ameliorations.rechercher(monde, i.rechercher);
+    if (i.changerObjectif) Megalopole.Objectifs.changer(monde, i.changerObjectif); // étape 19 : ⏭️
     // étape 3 : le guide (passer une mission, le cacher, le remontrer)
     // 📦 le bouton « Déplacer » du panneau 🔎 (pour la souris)
     if (i.deplacer && monde.selection && !monde.enMain) { const b = Co.batimentSur(monde, monde.selection.ligne * monde.carte.colonnes + monde.selection.colonne); if (b) soulever(monde, b); }
@@ -209,6 +211,7 @@ Megalopole.Monde = (function () {
     Megalopole.Population.etape(monde, dt);
     Megalopole.Budget.etape(monde, dt);
     Megalopole.Ameliorations.etape(monde, dt);
+    Megalopole.Objectifs.etape(monde, dt);
   }
 
   return { creer, etape, caseSous, choisirOutil, casesDuTrace, toutCalculer };

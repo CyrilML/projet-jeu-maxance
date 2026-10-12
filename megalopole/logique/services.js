@@ -61,6 +61,8 @@ Megalopole.Services = (function () {
     for (const t of TYPES) { const v = C.valeur.services[t] || 0, cv = monde.couverture[t]; for (let i = 0; i < N; i++) if (cv[i]) bonus[i] += v; } // (ce qu'un service reçu ajoute à la valeur)
     // (étape 11) une décharge salit le terrain autour d'elle
     for (const b of monde.batiments) { const S = C.batiments[b.type].salete; if (S) cercle(monde, b, S.rayon, (i, part) => (bonus[i] -= S.force * (1 - part * 0.6))); }
+    // (étape 19) un monument rend le terrain plus cher autour de lui (son prestige)
+    for (const b of monde.batiments) { const P = C.batiments[b.type].prestige; if (P) cercle(monde, b, P.rayon, (i, part) => (bonus[i] += P.force * (1 - part * 0.7))); }
     // 2. La pollution : l'industrie (selon son niveau) et la centrale à charbon
     const P = monde.pollution;
     P.fill(0);

@@ -46,6 +46,9 @@ Megalopole.SousLeCapot = (function () {
     "routes-abimees": (d) => "🛣️⚠️ Routes abîmées (" + d.etat + " %) : moins de voitures passent, le terrain perd de la valeur",
     "caisse-vide": (d) => "🧾⚠️ Caisse sous zéro (" + fr(d.argent) + " 🪙) depuis " + d.mois + " mois · renvoi du maire dans " + d.reste + " mois",
     "batiment-souleve": (d) => "📦 " + d.emoji + " " + d.nom + " soulevé(e) en (" + d.colonne + ", " + d.ligne + ") : il quitte la carte en attendant sa nouvelle place",
+    "objectif-reussi": (d) => "🏆 Objectif réussi : " + d.emoji + " " + d.titre + " · +" + fr(d.recompense) + " 🪙 · " + d.faits + " / " + d.total, // étape 19
+    "objectif-change": (d) => "⏭️ Défi mis de côté (il reviendra plus tard) : " + d.emoji + " " + d.titre,
+    "monument-debloque": (d) => "🗽 Monument débloqué : " + d.emoji + " " + d.nom,
     "batiment-ameliore": (d) => "⭐ " + d.emoji + " " + d.nom + " amélioré(e) : ★" + d.etoiles + " → production / places × " + virgule(d.facteur, 1) + " · −" + fr(d.prix) + " 🪙 · il reste " + fr(d.argent) + " 🪙", // étape 17
     "recherche-commencee": (d) => "🔬 Recherche lancée : " + d.emoji + " " + d.nom + " (" + d.duree + " s de jeu) · −" + fr(d.prix) + " 🪙",
     "recherche-finie": (d) => "🔬✅ Recherche trouvée : " + d.emoji + " " + d.nom + " → " + d.texte,
@@ -115,6 +118,9 @@ Megalopole.SousLeCapot = (function () {
     h += ligne("cases de route · bouchons (trafic > 100 %) · trafic moyen", T.routes + " · " + T.bouchons + " · " + Math.round(T.moyen * 100) + " %");
     h += ligne("terrains peints · gros bâtiments", fr(m.zonees.length) + " · " + m.batiments.length);
     { const Q = C.croissance.quartier; h += ligne("🏘️ étape 15 : bonus de quartier moyen = niveau moyen des voisins (" + Q.rayon + " cases) × " + virgule(Q.parNiveau, 2) + " + services × " + virgule(Q.parService, 2) + " (≤ " + virgule(Q.maxServices, 1) + "), au plus +" + virgule(Q.max, 1), "+" + virgule(m.quartierMoyen || 0, 2)); }
+    { const O = Megalopole.Objectifs, A = O.actifs(m); // étape 19
+      h += ligne("🏆 étape 19 : objectifs réussis · monuments débloqués · construits", m.objectifs.faits.length + " / " + C.objectifs.length + " · " + m.objectifs.monuments.length + " · " + m.batiments.filter((b) => C.batiments[b.type].monument).length);
+      h += ligne("🏆 les 3 défis du moment : mesure / but (" + "✅ = réussi au prochain contrôle)", A.map((o) => o.emoji + " " + fr(O.mesurer(m, o)) + " / " + fr(o.but) + (O.reussi(m, o) ? " ✅" : "")).join(" · ") || "aucun"); }
     { const Vb = C.valeur; let n = 0, q = 0, v = 0; for (const i of m.zonees) if (m.zone[i] === C.zones.R.id && m.niveau[i]) { n++; v += m.valeur[i]; q += m.quartierValeur ? m.quartierValeur[i] : 0; } // étape 18
       h += ligne("💎 étape 18 : valeur d'une habitation = " + virgule(Vb.base, 2) + " + services reçus + 🏘️ quartier (niveau moyen des voisins × " + virgule(Vb.quartier.parNiveau, 2) + ", ≤ " + virgule(Vb.quartier.max, 2) + ") − pollution − bouchons − poubelles · seuils " + Vb.seuilsR.map((x) => virgule(x, 2)).join(" / "), "moyenne " + virgule(n ? v / n : 0, 2) + " · dont quartier +" + virgule(n ? q / n : 0, 2)); }
     { const Am = Megalopole.Ameliorations, et = m.batiments.filter((b) => b.etoiles), R = m.recherches; // étape 17

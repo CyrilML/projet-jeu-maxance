@@ -13,7 +13,7 @@ window.Megalopole = window.Megalopole || {};
 
 Megalopole.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 18,
+  version: 19,
   pasFixe: 1 / 120, // s : la boucle avance par petits pas fixes
   sauvegardeAuto: 15, // s entre deux sauvegardes automatiques
 
@@ -156,6 +156,14 @@ Megalopole.CONFIG = {
     metro: { nom: "Station de métro", emoji: "🚇", groupe: "transports", taille: 2, prix: 6000, entretien: 400, poste: "transport", palier: 3, capacite: 8000, pour: "tous", service: "transport", trafic: 0.65 },
     // 🏛️ la mairie (une seule) : elle donne un peu de valeur autour, et fait plaisir
     mairie: { nom: "Mairie", emoji: "🏛️", groupe: "services", taille: 2, prix: 2500, entretien: 80, palier: 1, unique: true, joie: 3 },
+    // 🗽 Les MONUMENTS (étape 19) : chacun est débloqué par un objectif 🏆, unique, et donne du bonheur à toute la ville (joie),
+    // des touristes (de l'argent chaque mois) et de la valeur aux terrains autour (prestige : rayon en cases, force).
+    statue: { nom: "Statue du fondateur", emoji: "🗿", groupe: "monuments", taille: 2, prix: 5000, entretien: 50, palier: 0, unique: true, monument: true, joie: 5, touristes: 1, prestige: { rayon: 6, force: 0.1 } },
+    grandeRoue: { nom: "Grande roue", emoji: "🎡", groupe: "monuments", taille: 3, prix: 15000, entretien: 150, palier: 0, unique: true, monument: true, joie: 6, touristes: 3, prestige: { rayon: 7, force: 0.12 } },
+    tour: { nom: "Tour panoramique", emoji: "🗼", groupe: "monuments", taille: 3, prix: 30000, entretien: 250, palier: 0, unique: true, monument: true, joie: 7, touristes: 5, prestige: { rayon: 9, force: 0.14 } },
+    cathedrale: { nom: "Cathédrale", emoji: "⛪", groupe: "monuments", taille: 4, prix: 40000, entretien: 300, palier: 0, unique: true, monument: true, joie: 8, touristes: 4, prestige: { rayon: 9, force: 0.15 } },
+    opera: { nom: "Opéra", emoji: "🎭", groupe: "monuments", taille: 4, prix: 60000, entretien: 500, palier: 0, unique: true, monument: true, joie: 9, touristes: 6, prestige: { rayon: 10, force: 0.16 } },
+    gratteCiel: { nom: "Gratte-ciel record", emoji: "🏙️", groupe: "monuments", taille: 3, prix: 100000, entretien: 800, palier: 0, unique: true, monument: true, joie: 10, touristes: 8, prestige: { rayon: 11, force: 0.2 } },
   },
   groupes: [
     { id: "routes", nom: "Routes", emoji: "🛣️" },
@@ -166,6 +174,45 @@ Megalopole.CONFIG = {
     { id: "loisirs", nom: "Loisirs", emoji: "🎡" },
     { id: "transports", nom: "Transports", emoji: "🚌" },
     { id: "dechets", nom: "Déchets", emoji: "🗑️" },
+    { id: "monuments", nom: "Monuments", emoji: "🗽" }, // étape 19
+  ],
+
+  // 🏆 Les OBJECTIFS (étape 19, ✍️ Maxance : « le jeu devient vite lassant et sans but »)
+  // On en montre toujours 3 : le prochain FACILE (rang 1), MOYEN (2) et DUR (3), dans l'ordre de la liste.
+  // test : ce qu'on mesure (voir logique/objectifs.js) · but : le nombre à atteindre · recompense en 🪙 · monument débloqué
+  //   (avec : une condition en plus, par exemple au moins tant d'habitants)
+  objectifs: [
+    { id: "hab500", rang: 1, emoji: "👥", titre: "500 habitants", test: "habitants", but: 500, recompense: 1000, monument: "statue" },
+    { id: "ecole1", rang: 1, emoji: "🏫", titre: "Construis une école", test: "batiment", type: "ecole", but: 1, recompense: 1000 },
+    { id: "parc3", rang: 1, emoji: "🌳", titre: "3 parcs", test: "batiment", type: "parc", but: 3, recompense: 1000 },
+    { id: "hab2000", rang: 1, emoji: "👥", titre: "2 000 habitants", test: "habitants", but: 2000, recompense: 2000 },
+    { id: "emplois1000", rang: 1, emoji: "💼", titre: "1 000 emplois", test: "emplois", but: 1000, recompense: 2000 },
+    { id: "monument1", rang: 1, emoji: "🗿", titre: "Pose ton premier monument", test: "monuments", but: 1, recompense: 3000 },
+    { id: "etoile1", rang: 1, emoji: "⭐", titre: "Améliore un bâtiment", test: "etoiles", but: 1, recompense: 2000 },
+    { id: "recherche1", rang: 1, emoji: "🔬", titre: "Termine une recherche", test: "recherches", but: 1, recompense: 3000 },
+    { id: "heureux1000", rang: 1, emoji: "😊", titre: "Bonheur 70 % avec 1 000 habitants", test: "bonheur", but: 70, avec: 1000, recompense: 3000 },
+    { id: "caisse20k", rang: 1, emoji: "🪙", titre: "20 000 🪙 en caisse", test: "argent", but: 20000, recompense: 2000 },
+
+    { id: "hab5000", rang: 2, emoji: "👥", titre: "5 000 habitants", test: "habitants", but: 5000, recompense: 5000, monument: "grandeRoue" },
+    { id: "niveau4", rang: 2, emoji: "🏢", titre: "20 immeubles de niveau 4", test: "niveau", niveau: 4, but: 20, recompense: 5000 },
+    { id: "vert50", rang: 2, emoji: "🌬️", titre: "50 % d'électricité verte (2 000 ⚡ utilisés au moins)", test: "vert", but: 50, avec: 2000, recompense: 6000 },
+    { id: "airPur", rang: 2, emoji: "🌫️", titre: "Air pur à 90 % avec 5 000 habitants", test: "air", but: 90, avec: 5000, recompense: 6000 },
+    { id: "heureux5000", rang: 2, emoji: "😊", titre: "Bonheur 80 % avec 5 000 habitants", test: "bonheur", but: 80, avec: 5000, recompense: 8000, monument: "tour" },
+    { id: "chomage", rang: 2, emoji: "💼", titre: "Moins de 5 % de chômeurs avec 5 000 habitants", test: "chomage", but: 5, avec: 5000, recompense: 6000 },
+    { id: "bouchons0", rang: 2, emoji: "🚗", titre: "Aucun bouchon avec 8 000 habitants", test: "bouchons", but: 0, avec: 8000, recompense: 8000 },
+    { id: "etoiles5", rang: 2, emoji: "⭐", titre: "5 étoiles dans la ville", test: "etoiles", but: 5, recompense: 6000 },
+    { id: "recherches3", rang: 2, emoji: "🔬", titre: "3 recherches terminées", test: "recherches", but: 3, recompense: 8000 },
+    { id: "hab10000", rang: 2, emoji: "🏙️", titre: "10 000 habitants", test: "habitants", but: 10000, recompense: 10000, monument: "cathedrale" },
+
+    { id: "hab25000", rang: 3, emoji: "🏙️", titre: "25 000 habitants", test: "habitants", but: 25000, recompense: 20000, monument: "opera" },
+    { id: "niveau6", rang: 3, emoji: "🏬", titre: "10 tours (niveau 6)", test: "niveau", niveau: 6, but: 10, recompense: 20000 },
+    { id: "vert100", rang: 3, emoji: "🌱", titre: "100 % d'électricité verte (5 000 ⚡ utilisés au moins)", test: "vert", but: 100, avec: 5000, recompense: 25000 },
+    { id: "heureux20000", rang: 3, emoji: "😄", titre: "Bonheur 90 % avec 20 000 habitants", test: "bonheur", but: 90, avec: 20000, recompense: 25000 },
+    { id: "caisse200k", rang: 3, emoji: "💰", titre: "200 000 🪙 en caisse", test: "argent", but: 200000, recompense: 20000 },
+    { id: "recherches7", rang: 3, emoji: "🔬", titre: "Toutes les recherches", test: "recherches", but: 7, recompense: 30000 },
+    { id: "monuments5", rang: 3, emoji: "🗽", titre: "5 monuments", test: "monuments", but: 5, recompense: 30000 },
+    { id: "hab50000", rang: 3, emoji: "🌆", titre: "50 000 habitants", test: "habitants", but: 50000, recompense: 50000, monument: "gratteCiel" },
+    { id: "hab100000", rang: 3, emoji: "🌐", titre: "100 000 habitants : une vraie mégalopole !", test: "habitants", but: 100000, recompense: 50000 },
   ],
 
   // ⚡ le vent et le soleil (de 0 à 1)
