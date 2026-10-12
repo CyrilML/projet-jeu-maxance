@@ -84,6 +84,34 @@ Circuit.Archipel = (function () {
   // La route du pont monte en arc : hauteur = H × sin(π × u ÷ L). 0 aux deux bouts, H au milieu.
   const hauteurPont = (p, u) => p.hauteur * Math.sin((Math.PI * Math.max(0, Math.min(p.longueur, u))) / p.longueur);
 
+  // ---------------------------------------------------------------- la campagne (étape 68)
+  // ✍️ L'île de la ville est 3 fois plus grande : autour de la ville, de la CAMPAGNE (moteur/campagne.js) avec des
+  // collines, des forêts et une RIVIÈRE. Deux ROUTES vont de la ville aux grands ponts : elles passent sur la
+  // rivière (des ponts, eux aussi). On ne roule pas dans la rivière (comme dans la mer) : il faut prendre un pont !
+  const AV = C.agrandir.ville;
+  const bordVille = Circuit.Ville.taille / 2;
+  const routesCampagne = ponts.map((p) => {
+    const longueur = p.de[0] * p.ux + p.de[1] * p.uz - bordVille + 2; // de la ville jusqu'au début du grand pont
+    return { nom: "la route " + p.nom.replace(/^le /, "du "), de: [p.de[0] - p.ux * longueur, p.de[1] - p.uz * longueur], a: p.de, ux: p.ux, uz: p.uz, longueur, largeur: p.largeur - 2, angle: p.angle };
+  });
+  const plats = [];
+  for (const r of routesCampagne) for (let u = 0; u <= r.longueur; u += 6) plats.push([r.de[0] + r.ux * u, r.de[1] + r.uz * u, r.largeur / 2 + 4]);
+  const campagne = Circuit.Campagne.creer(Object.assign({}, AV, {
+    taille: 2 * A.ileVille,
+    riviere: Object.assign({}, C.agrandir.riviere, { points: AV.coursRiviere }),
+    plats,
+    horsCollines: (x, z) => Math.max(Math.abs(x), Math.abs(z)) < bordVille + 60,
+  }));
+  // Sur une route de la campagne ? (la route, ou null)
+  function surRouteCampagne(x, z) {
+    for (const r of routesCampagne) {
+      const dx = x - r.de[0], dz = z - r.de[1];
+      const u = dx * r.ux + dz * r.uz, w = -dx * r.uz + dz * r.ux;
+      if (u >= -2 && u <= r.longueur + 2 && Math.abs(w) <= r.largeur / 2 + 0.5) return r;
+    }
+    return null;
+  }
+
   // ---------------------------------------------------------------- la terre et la mer
   const surIleVille = (x, z) => Math.abs(x) <= A.ileVille && Math.abs(z) <= A.ileVille;
   function surIleAeroport(x, z) {
@@ -98,7 +126,15 @@ Circuit.Archipel = (function () {
   function lieu(x, z) {
     const p = surQuelPont(x, z);
     if (p) return { ou: p.pont.nom, h: hauteurPont(p.pont, p.u), terre: true, pont: p.pont };
-    if (surIleVille(x, z)) return { ou: "la ville", h: 0, terre: true };
+    if (surIleVille(x, z)) {
+      if (Math.max(Math.abs(x), Math.abs(z)) <= bordVille) return { ou: "la ville", h: 0, terre: true };
+      // Étape 68 : la campagne autour de la ville.
+      const route = surRouteCampagne(x, z);
+      if (route) return { ou: campagne.distanceRiviere(x, z) < C.agrandir.riviere.largeur / 2 + C.agrandir.riviere.berge ? "le pont sur la rivière" : route.nom, h: 0, terre: true };
+      const h = campagne.hauteur(x, z);
+      if (campagne.dansLEau(x, z, h)) return { ou: "la rivière", h: campagne.riviere.niveau, terre: false, riviere: true };
+      return { ou: h > 3 ? "les collines" : "la campagne", h, terre: true };
+    }
     const ap = surIleAeroport(x, z);
     if (ap) return { ou: "l'île de " + ap.nom, h: 0, terre: true, aeroport: ap };
     return { ou: "la mer", h: A.mer, terre: false };
@@ -228,7 +264,7 @@ Circuit.Archipel = (function () {
   }
 
   return {
-    aeroports, ponts, magasins, solides, plan: PLAN, versMonde, versLocal,
+    aeroports, ponts, magasins, solides, plan: PLAN, versMonde, versLocal, campagne, routesCampagne, surRouteCampagne,
     lieu, surQuelPont, hauteurPont, garderSurTerre, murs, magasinProche, placerGarees, placerPieces, porteImmeuble, surPiste, aeroportProche, placerAvions,
   };
 })();

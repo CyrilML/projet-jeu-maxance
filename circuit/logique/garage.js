@@ -29,6 +29,9 @@ Circuit.Garage = (function () {
     }
     return null;
   }).filter(Boolean);
+  // (Étape 68 : ça marche maintenant dans TOUS les garages. On remplace les noms par les fiches une fois pour toutes,
+  // dans les réglages aussi, pour que la circulation et les parkings trouvent les nouvelles voitures.)
+  for (const [carteId, cle] of [["course", "voitures"], ["parcours", "vehiculesParcours"], ["ville", "vehiculesVille"]]) LISTES[carteId] = C[cle] = fichesDe(C[cle]);
   LISTES.grand = fichesDe(C.vehiculesGrandParcours);
   LISTES.ciel = fichesDe(C.vehiculesCiel); // étape 41 : les méga-rampes (les voitures de course)
   LISTES.air = C.vehiculesAir; // étape 44 : ce qui vole (pas de garage : on les trouve dans les aéroports)

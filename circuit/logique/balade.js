@@ -53,6 +53,7 @@ Circuit.Balade = (function () {
     monde.plaque = -1; // la plaque de nitro sous la voiture (−1 = aucune)
     monde.chutes = 0;
     monde.surQuoi = null;
+    monde.dansLEau = false; // étape 68 : dans la rivière ?
     if (monde.carte === "ciel") radio.emettre("mega-rampes", { pieces: monde.pieces.length, nitros: T.nitros.length, longueur: T.longueur, drapeaux: T.drapeaux.length });
     else if (monde.carte === "grand") radio.emettre("grand-parcours", { pieces: monde.pieces.length, nitros: T.nitros.length, longueur: T.longueurTour });
     else radio.emettre("balade", { pieces: monde.pieces.length, cartons: monde.cartons.length });
@@ -95,6 +96,8 @@ Circuit.Balade = (function () {
       }
       // 3. Monter, descendre, sauter
       sauter(monde, v, dt, fiche, T);
+      // 3 bis (étape 68). La rivière : dans l'eau, on avance au pas.
+      if (T.dansLEau) riviere(monde, v, dt, T);
       // 4. Entrer dans un looping ?
       if (!v.enLAir) entrerDansUnLooping(monde, v, T);
       // 4 bis (étape 40). Une plaque de nitro sous les roues ?
@@ -151,6 +154,22 @@ Circuit.Balade = (function () {
         monde.saut = null;
       }
     }
+  }
+
+  // Étape 68 : ✍️ LA RIVIÈRE. Dans l'eau, les roues n'accrochent plus : la voiture ralentit vite jusqu'à
+  // C.agrandir.vitesseEau (18 km/h), et ne peut pas aller plus vite tant qu'elle n'est pas ressortie. Il faut
+  // trouver un PONT ! (On peut aussi traverser à gué, tout doucement, et remonter la berge.)
+  function riviere(monde, v, dt, T) {
+    const dedans = !v.enLAir && T.dansLEau(v.x, v.z, v.y);
+    if (dedans) {
+      const max = C.agrandir.vitesseEau;
+      if (Math.abs(v.vitesse) > max) v.vitesse = Math.sign(v.vitesse) * Math.max(max, Math.abs(v.vitesse) * (1 - 5 * dt));
+      if (!monde.dansLEau) {
+        message(monde, "💦 Plouf ! Cherche un pont.", 2.5);
+        radio.emettre("riviere", { vitesse: v.vitesse, x: v.x, z: v.z });
+      }
+    } else if (monde.dansLEau) radio.emettre("riviere-sortie", {});
+    monde.dansLEau = dedans;
   }
 
   // Étape 40 : LE NITRO. En roulant sur une plaque, la voiture reçoit une poussée de quelques secondes

@@ -179,11 +179,8 @@ Circuit.DecorVille = (function () {
       }
     }
     const bordVille = Ville.taille / 2 + 2, bordIle = A.ileVille - 3;
-    const surUnPont = (x, z) => AR.ponts.some((p) => {
-      // la distance au bout de route qui mène au pont (de 32 m avant son début à 4 m après)
-      const dx = x - p.de[0], dz = z - p.de[1], u = Math.max(-32, Math.min(4, dx * p.ux + dz * p.uz));
-      return Math.hypot(dx - p.ux * u, dz - p.uz * u) < p.largeur / 2 + 3;
-    });
+    // (étape 68 : les routes de la campagne, de la ville jusqu'aux grands ponts, et la rivière)
+    const surUnPont = (x, z) => !!AR.surRouteCampagne(x, z) || AR.lieu(x, z).riviere || AR.campagne.distanceRiviere(x, z) < AR.campagne.riviere.largeur / 2 + 4;
     g.add(Circuit.Nature.tapis({
       carte: "ville", graine: 4848,
       candidat: (a) => {
@@ -193,7 +190,9 @@ Circuit.DecorVille = (function () {
         }
         // le bord de l'île : un des 4 côtés
         const cote = Math.floor(a() * 4), le_long = (a() * 2 - 1) * bordIle, loin = bordVille + a() * (bordIle - bordVille);
-        return cote === 0 ? { x: loin, z: le_long } : cote === 1 ? { x: -loin, z: le_long } : cote === 2 ? { x: le_long, z: loin } : { x: le_long, z: -loin };
+        const p = cote === 0 ? { x: loin, z: le_long } : cote === 1 ? { x: -loin, z: le_long } : cote === 2 ? { x: le_long, z: loin } : { x: le_long, z: -loin };
+        p.y = AR.campagne.hauteur(p.x, p.z); // étape 68 : sur les collines
+        return p;
       },
       libre: (x, z) => {
         const p = parcs.find((q) => x > q.x0 && x < q.x0 + q.l && z > q.z0 && z < q.z0 + q.l);
@@ -201,7 +200,7 @@ Circuit.DecorVille = (function () {
         if (Math.max(Math.abs(x), Math.abs(z)) < bordVille || Math.max(Math.abs(x), Math.abs(z)) > bordIle) return false;
         return !surUnPont(x, z);
       },
-      herbes: Math.round(NA.herbes * 0.6), fleurs: Math.round(NA.fleurs * 0.6), rochers: Math.round(NA.rochers * 0.3),
+      herbes: Math.round(NA.herbes * 0.6 * Circuit.CONFIG.agrandir.herbes), fleurs: Math.round(NA.fleurs * 0.6 * Circuit.CONFIG.agrandir.herbes), rochers: Math.round(NA.rochers * Circuit.CONFIG.agrandir.herbes),
     }));
     g.add(Circuit.Nature.tapis({
       carte: "ville", graine: 4949, roseaux: true, fleurs: 0, rochers: 0, herbes: 140 * Ville.etangs.length,

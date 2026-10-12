@@ -270,7 +270,10 @@ Circuit.TableauDeBord = (function () {
     panneau(W - 190, H - 92, 178, 80);
     texte(Math.round(Math.abs(v.vitesse) * 3.6) + "", W - 70, H - 36, 46, "#fff", "right");
     texte("km/h", W - 62, H - 36, 18, "#cfd6ff");
-    if (v.y > 0.3) texte("↕ " + v.y.toFixed(1).replace(".", ",") + " m de haut", W - 101, H - 104, 18, "#7dffa0", "center");
+    // (étape 68 : la hauteur AU-DESSUS DU SOL, car le sol monte et descend avec les collines)
+    const terrain = grand ? Circuit.GrandParcours : Circuit.Parcours;
+    const auDessus = v.y - (terrain.solDeBase ? terrain.solDeBase(v.x, v.z) : terrain.campagne ? terrain.campagne.hauteur(v.x, v.z) : 0);
+    if (auDessus > 0.3) texte("↕ " + auDessus.toFixed(1).replace(".", ",") + " m de haut", W - 101, H - 104, 18, "#7dffa0", "center");
     jaugeNitro(v);
 
     if (grand) dessinerMiniCarteGrand(monde);
@@ -370,14 +373,32 @@ Circuit.TableauDeBord = (function () {
     ecrire("y = " + (v.y || 0).toFixed(1).replace(".", ",") + " m · " + Math.round(monde.progression) + " m", v.x, (v.y || 0) + 2.8, v.z, "#ffb37a");
   }
 
+  // Étape 68 : la rivière sur une mini-carte (un trait bleu, coupé au bord du cadre), et les ponts.
+  function riviereMini(campagne, cx, cz, echelle, taille) {
+    if (!campagne || !campagne.riviere) return;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(W - 12 - taille, 12, taille, taille);
+    ctx.clip();
+    ctx.strokeStyle = "#3d8fd6";
+    ctx.lineWidth = Math.max(2, campagne.riviere.largeur * echelle);
+    ctx.beginPath();
+    campagne.riviere.points.forEach(([x, z], i) => (i ? ctx.lineTo(cx + x * echelle, cz + z * echelle) : ctx.moveTo(cx + x * echelle, cz + z * echelle)));
+    ctx.stroke();
+    ctx.fillStyle = "#c79a5a";
+    for (const p of campagne.ponts || []) ctx.fillRect(cx + p.x * echelle - 3, cz + p.z * echelle - 3, 6, 6);
+    ctx.restore();
+  }
+
   // Étape 40 : la mini-carte du grand parcours : la route (plus claire quand elle est haute), les plateformes,
   // le creux, les nitros, les pièces et la voiture.
   function dessinerMiniCarteGrand(monde) {
     const GP = Circuit.GrandParcours;
     const taille = 136;
-    const echelle = taille / 640;
-    const cx = W - 12 - taille / 2 + 30 * echelle, cz = 12 + taille / 2 - 80 * echelle; // la route est un peu décalée vers −x et +z
+    const echelle = taille / 1320; // étape 68 : la route (étirée et recentrée) tient dans un carré de 1 320 m
+    const cx = W - 12 - taille / 2, cz = 12 + taille / 2;
     panneau(W - 12 - taille - 6, 6, taille + 12, taille + 12);
+    riviereMini(GP.campagne, cx, cz, echelle, taille);
     const K = GP.creux;
     ctx.fillStyle = "#6b5332";
     ctx.fillRect(cx + (K.x - K.longueur / 2) * echelle, cz + (K.z - K.largeur / 2) * echelle, K.longueur * echelle, K.largeur * echelle);
@@ -508,11 +529,11 @@ Circuit.TableauDeBord = (function () {
   }
 
   // La mini-carte de la ville. Étape 42 : la map est énorme, alors la mini-carte SUIT le joueur (il est au
-  // milieu) et montre 1 400 m autour de lui : la ville, la mer, les ponts, les îles et leurs aéroports.
+  // milieu) et montre 2 000 m autour de lui : la ville, la mer, les ponts, les îles et leurs aéroports.
   function dessinerMiniCarteVille(monde) {
     const Ville = Circuit.Ville, AR = Circuit.Archipel, A = C.archipel;
     const taille = 136;
-    const echelle = taille / 1400;
+    const echelle = taille / 2000; // (étape 68 : 2 000 m autour du joueur, au lieu de 1 400)
     const qui = monde.pieton || monde.voiture;
     const cx = W - 12 - taille / 2, cz = 12 + taille / 2;
     panneau(W - 12 - taille - 6, 6, taille + 12, taille + 12);
@@ -526,6 +547,21 @@ Circuit.TableauDeBord = (function () {
     ctx.scale(echelle, echelle);
     ctx.fillStyle = "#5f9a46";
     ctx.fillRect(-A.ileVille, -A.ileVille, 2 * A.ileVille, 2 * A.ileVille);
+    // Étape 68 : la rivière et les routes de la campagne.
+    const K = AR.campagne;
+    ctx.strokeStyle = "#3d8fd6";
+    ctx.lineWidth = K.riviere.largeur;
+    ctx.beginPath();
+    K.riviere.points.forEach(([x, z], i) => (i ? ctx.lineTo(x, z) : ctx.moveTo(x, z)));
+    ctx.stroke();
+    ctx.strokeStyle = "#8a8d93";
+    ctx.lineWidth = 16;
+    for (const r of AR.routesCampagne) {
+      ctx.beginPath();
+      ctx.moveTo(r.de[0], r.de[1]);
+      ctx.lineTo(r.a[0], r.a[1]);
+      ctx.stroke();
+    }
     ctx.fillStyle = "#8a8d93";
     for (let i = 0; i < C.ville.blocs; i++) for (let j = 0; j < C.ville.blocs; j++) {
       if (Ville.parc(i, j)) continue;
@@ -701,6 +737,7 @@ Circuit.TableauDeBord = (function () {
     const echelle = taille / C.parcours.taille;
     const cx = W - 12 - taille / 2, cz = 12 + taille / 2;
     panneau(W - 12 - taille - 6, 6, taille + 12, taille + 12);
+    riviereMini(Circuit.Parcours.campagne, cx, cz, echelle, taille);
     for (const f of Circuit.Parcours.formes) {
       ctx.fillStyle = f.nom === "mur de tunnel" ? "#9aa0a8" : f.type === "pente" ? "#f0a040" : "#c9a676";
       ctx.save();

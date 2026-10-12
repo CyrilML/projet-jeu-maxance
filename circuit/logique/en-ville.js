@@ -228,8 +228,9 @@ Circuit.EnVille = (function () {
     const avantX = v.x, avantZ = v.z;
     Circuit.Voiture.avancer(v, intentions, dt, "route", fiche.virage);
     // Étape 42 : pas dans la mer ! Et sur un pont, la route monte.
+    const riviere = !!Archipel.lieu(v.x, v.z).riviere; // étape 68 : la rivière de la campagne (il faut prendre un pont)
     const eau = Archipel.garderSurTerre(v, avantX, avantZ, dt);
-    if (eau > 2) radio.emettre("choc", { force: eau, vitesse: v.vitesse, contre: "eau" });
+    if (eau > 2) radio.emettre("choc", { force: eau, vitesse: v.vitesse, contre: riviere ? "riviere" : "eau" });
     const choc = Math.max(Circuit.Ville.murs(v, C.chocs.rayon), Archipel.murs(v, C.chocs.rayon));
     if (choc > 1) {
       v.vitesse = -v.vitesse * 0.25;

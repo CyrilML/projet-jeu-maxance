@@ -72,20 +72,37 @@ Circuit.DecorArchipel = (function () {
 
     // 1. La mer.
     // Étape 48 : une mer qui bouge (des vagues dessinées par une « carte des pentes » qui glisse, affichage/eau.js).
-    const mer = plat(16000, 16000, Circuit.Eau.materiau({ couleur: 0x1d5878, carte: repeter(T.mer(), 400, 400), repetition: 330, vitesse: 1 }), 0, A.mer, 0);
+    const mer = plat(48000, 48000, Circuit.Eau.materiau({ couleur: 0x1d5878, carte: repeter(T.mer(), 1200, 1200), repetition: 990, vitesse: 1 }), 0, A.mer, 0); // (étape 68 : 3 fois plus grande)
     g.add(mer);
 
     // 2. L'île de la ville (la ville est posée dessus), et les bouts de route jusqu'aux ponts.
-    const iv = ile(2 * A.ileVille, 2 * A.ileVille, mat);
-    iv.position.y = -0.05;
-    g.add(iv);
-    const goudron = mat({ map: repeter(T.goudron(), 4, 2), roughness: 0.85 });
-    for (const p of AR.ponts) {
-      const L = 30, cx = p.de[0] - p.ux * L / 2, cz = p.de[1] - p.uz * L / 2;
-      const route = plat(L + 2, p.largeur - 2, goudron, cx, 0.025, cz);
-      route.rotation.z = -p.angle;
+    // Étape 68 : l'île est 3 fois plus grande, avec la campagne autour de la ville. Le dessus de l'île est le sol des
+    // collines (affichage/paysage.js) ; autour, une plage de sable (4 longues boîtes qui font un cadre).
+    const campagne = AR.campagne, I = A.ileVille;
+    const sable = mat({ map: repeter(T.sable(), (2 * I + 24) / 10, 24 / 10) });
+    for (const [x, z, l, p] of [[0, -I - 6, 2 * I + 24, 12], [0, I + 6, 2 * I + 24, 12], [-I - 6, 0, 12, 2 * I], [I + 6, 0, 12, 2 * I]]) g.add(boite(l, 6, p, sable, x, -3.05, z));
+    g.add(Circuit.Paysage.sol(campagne, { saut: 2 }));
+    g.add(Circuit.Paysage.riviere(campagne));
+    // Les routes de la campagne (de la ville jusqu'aux grands ponts), avec des garde-fous là où elles passent sur la rivière.
+    const R = campagne.riviere, morceaux = [];
+    for (const r of AR.routesCampagne) {
+      const route = plat(r.longueur + 2, r.largeur, mat({ map: repeter(T.goudron(), r.longueur / 8, r.largeur / 8), roughness: 0.85 }), r.de[0] + r.ux * r.longueur / 2, 0.025, r.de[1] + r.uz * r.longueur / 2);
+      route.rotation.z = -r.angle;
       g.add(route);
+      for (let u = 0; u < r.longueur; u += 3) {
+        const x = r.de[0] + r.ux * (u + 1.5), z = r.de[1] + r.uz * (u + 1.5);
+        if (campagne.distanceRiviere(x, z) < R.largeur / 2 + R.berge) morceaux.push({ ax: r.de[0] + r.ux * u, az: r.de[1] + r.uz * u, bx: r.de[0] + r.ux * (u + 3), bz: r.de[1] + r.uz * (u + 3), y: 0, demiLargeur: r.largeur / 2 });
+      }
     }
+    g.add(Circuit.Paysage.gardeFous(morceaux));
+    // Les forêts de la campagne (pas en ville, pas sur les routes).
+    const AV = C.agrandir.ville, bordVille = Circuit.Ville.taille / 2;
+    g.add(Circuit.DecorCircuit.foret(Circuit.Paysage.arbres(campagne, AV.arbres, AV.bosquets, (x, z) =>
+      Math.max(Math.abs(x), Math.abs(z)) > bordVille + 25 && Math.max(Math.abs(x), Math.abs(z)) < I - 10
+      && !AR.routesCampagne.some((r) => {
+        const dx = x - r.de[0], dz = z - r.de[1], u = dx * r.ux + dz * r.uz;
+        return u > -10 && u < r.longueur + 10 && Math.abs(-dx * r.uz + dz * r.ux) < r.largeur / 2 + 8;
+      }), AV.graine), "ville"));
 
     // 3. Les ponts.
     for (const p of AR.ponts) g.add(pont(p, mat, T));

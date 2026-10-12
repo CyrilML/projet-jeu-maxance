@@ -189,6 +189,7 @@
       <a href="#etape65">Étape 65</a>
       <a href="#etape66">Étape 66</a>
       <a href="#etape67">Étape 67</a>
+      <a href="#etape68">Étape 68</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -3956,6 +3957,64 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Combien de temps faut-il à ton soldat pour passer de 10 à 20 balles, s'il n'est pas touché ?</summary><p>5 s d'attente, puis 10 balles à 2 par seconde = 5 s. En tout : 10 secondes.</p></details>
     </section>
 
+    <section id="etape68">
+      <h2>🌄 Étape 68 : des cartes 3 fois plus grandes, des collines, une rivière et 16 nouvelles voitures <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les 5 cartes du circuit 3D sont 3 fois plus grandes. Dans la nouvelle place : des collines, des forêts, une rivière avec des ponts, et de nouvelles voitures dans les garages. <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/68-agrandir-la-map.md</code>.</p>
+          <ul>
+            <li>✍️ Le circuit 3D, toutes les cartes, 3 fois plus grand, tout d'un coup.</li>
+            <li>✍️ Des forêts et des collines, une rivière avec des ponts.</li>
+            <li>✍️ De nouvelles voitures : plus de circulation ET de nouveaux modèles (allemandes, supercars, françaises, tout-terrain, voitures de rêve).</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 28 » en haut de la page du circuit.</li>
+            <li>☐ Le circuit : un tour fait 4,4 km, et la route passe 2 fois sur un pont au-dessus de la rivière.</li>
+            <li>☐ Le parcours : 9 fois plus de montées, tremplins, loopings et tunnels, et 3 ponts en bois.</li>
+            <li>☐ Le grand parcours : le saut du creux marche toujours (50 m).</li>
+            <li>☐ Les méga-rampes : la piste est 3 fois plus longue, les sauts ont la même taille.</li>
+            <li>☐ La ville : 7 × 7 pâtés, 45 voitures qui roulent, la campagne autour.</li>
+            <li>☐ Roule dans la rivière : « 💦 Plouf ! », tu avances au pas (en ville, on ne peut pas : prends un pont).</li>
+            <li>☐ Les 16 nouvelles voitures dans les garages (← →).</li>
+          </ul>
+        </div>
+      </div>
+      <h3>📏 L'élastique : agrandir sans casser les sauts</h3>
+      <p>Pour agrandir une route faite de points, on pourrait tout multiplier par 3. Mais alors le creux de 50 m deviendrait un creux de 150 m : impossible à sauter ! L'étireur (<code>circuit/moteur/etirer.js</code>) fait comme un <strong>élastique avec des morceaux en bois</strong> : les bouts de route normaux sont étirés × 3, mais les tremplins, les vides à sauter et les plateformes gardent leur taille. Ils sont seulement déplacés, avec leurs trous et leurs bosses. Le grand parcours fait une boucle : avec les morceaux en bois, elle ne se referme plus tout à fait. On répartit ce petit écart sur tous les bouts étirés, chacun selon sa longueur.</p>
+      <pre style="overflow-x: auto">  avant :  ──route──[tremplin][ vide 50 m ]──route──
+  après :  ────────route × 3────────[tremplin][ vide 50 m ]────────route × 3────────</pre>
+      <h3>🧩 Le carrelage : le parcours recopié 9 fois</h3>
+      <p>Le parcours de 700 m devient une <strong>tuile</strong>, recopiée 3 × 3 fois, comme un carrelage. Pour que les coins ne se ressemblent pas, chaque copie est <strong>tournée</strong> d'un quart de tour de plus. Pour tourner un point (x, z) d'un quart de tour : le nouveau x vaut −z, et le nouveau z vaut x. La direction d'une montée ou d'un tremplin tourne de 90° en même temps.</p>
+      <h3>⛰️ Les collines et la rivière (le sculpteur)</h3>
+      <p>Le sculpteur (<code>circuit/moteur/campagne.js</code>) fabrique le sol :</p>
+      <ul>
+        <li><strong>Une colline</strong> est une « cloche » : haute au milieu, elle descend en douceur jusqu'à son bord. On additionne toutes les cloches.</li>
+        <li><strong>Près de la route</strong>, le sol est aplati (sinon la route serait enterrée !). Plus on s'éloigne, plus la colline reprend sa hauteur : c'est un fondu, pas une marche.</li>
+        <li><strong>La rivière</strong> est une ligne qui serpente (des sinus). Dans sa largeur, le sol est creusé ; ses berges sont en pente douce.</li>
+        <li>Calculer tout ça à chaque pas de jeu (120 fois par seconde) serait trop lent. Alors on le calcule <strong>une seule fois</strong>, sur une grille (un point tous les 4 m). Ensuite, pour connaître la hauteur sous la voiture, on lit les 4 points de la grille autour d'elle et on les mélange : c'est une <strong>interpolation</strong>.</li>
+        <li><strong>Un pont</strong> est simple : la route reste à sa hauteur, même au-dessus du creux de la rivière. Le jeu garde toujours le sol le plus haut sous la voiture.</li>
+      </ul>
+      <h3>🌲 Des milliers d'arbres sans ralentir</h3>
+      <p>Il y a maintenant plus de 1 000 arbres par carte. Les arbres sont rangés par <strong>carrés de 700 m</strong>, un groupe d'« instances » par carré. La carte graphique ne dessine que les carrés qui sont devant la caméra. Les 500 tirets blancs du circuit sont collés dans une seule forme : un seul dessin au lieu de 500.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>circuit/config.js</code>, dans <code>agrandir</code>, mets <code>vitesseEau: 1</code> : dans la rivière, tu avances tout doucement.</li>
+        <li>Dans <code>agrandir.grand.collines</code>, mets <code>hauteur: [30, 60]</code> : de vraies montagnes ! (La route reste plate.)</li>
+        <li>Mets <code>facteur: 2</code> dans <code>agrandir</code> : la route du grand parcours et des méga-rampes n'est plus étirée que 2 fois.</li>
+        <li>Mets <code>largeur: 60</code> dans <code>agrandir.riviere</code> : un grand fleuve !</li>
+        <li>Ouvre « sous le capot » : regarde « La campagne (étape 68) », le relief sous ta voiture et la distance à la rivière.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi le saut du creux n'est-il pas devenu 3 fois plus long ?</summary><p>Parce que le tremplin et le vide sont des « morceaux en bois » de l'élastique : ils gardent leur taille, ils sont seulement déplacés.</p></details>
+      <details class="question"><summary>Le parcours est recopié 9 fois. Une tuile a 2 loopings : combien y en a-t-il en tout ?</summary><p>2 × 9 = 18 loopings.</p></details>
+      <details class="question"><summary>Pourquoi calcule-t-on la hauteur des collines sur une grille, une seule fois ?</summary><p>Parce que la calculer à chaque pas de jeu (120 fois par seconde, pour chaque voiture) serait trop lent. Lire 4 points d'une grille et les mélanger, c'est très rapide.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4299,6 +4358,12 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
           <h4>Voitures, routes et immeubles très réalistes <span class="etiquette">✅ fait · à valider</span></h4>
           <p>Phares à LED, feux, plaques, ombre douce, Peugeot 208, Clio, taxi Toyota, police 308 ; boutiques, balcons, corniches et toits détaillés (étape 55).</p>
           <p class="apprend"><b>Tu apprends :</b> l'ombre de contact, recoller les pièces, les instances. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">🌄</div>
+          <h4>Des cartes 3 fois plus grandes <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Les 5 cartes du circuit 3D 3 fois plus grandes, avec des collines, des forêts, une rivière et des ponts, et 16 nouvelles voitures (étape 68).</p>
+          <p class="apprend"><b>Tu apprends :</b> étirer une route comme un élastique, recopier une tuile en la tournant, un relief calculé une fois sur une grille, l'interpolation. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte fait">
           <div class="num">⚔️</div>
@@ -4923,6 +4988,15 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-67" data-cle="appris-67" placeholder="Ex. : J'ai appris qu'un chronomètre décide quand la vie remonte…"></textarea>
         <label for="idees-67"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-67" data-cle="idees-67" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 68 · des cartes 3 fois plus grandes <span class="petit">· 12 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> l'étireur de routes (<code>circuit/moteur/etirer.js</code>), le sculpteur de collines et de rivière (<code>circuit/moteur/campagne.js</code>), le peintre du paysage (<code>circuit/affichage/paysage.js</code>), le parcours en 9 tuiles, la ville en 7 × 7 avec sa campagne, et 16 nouvelles voitures (<code>circuit/affichage/voitures-nouvelles.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : le circuit 3D, toutes les cartes, 3 fois plus grand, forêts + collines + rivière avec des ponts + nouvelles voitures (allemandes, supercars, françaises, tout-terrain, voitures de rêve).</p>
+        <label for="appris-68"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-68" data-cle="appris-68" placeholder="Ex. : J'ai appris qu'on peut étirer une route sans changer la taille des sauts…"></textarea>
+        <label for="idees-68"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-68" data-cle="idees-68" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

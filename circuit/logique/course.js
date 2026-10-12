@@ -29,6 +29,17 @@ Circuit.Course = (function () {
   const radio = Circuit.Evenements;
   const LIMITE = C.piste.tailleHerbe / 2 - 3; // la clôture, à 3 m du bord du terrain
 
+  // Étape 68 : ✍️ la campagne autour du circuit (moteur/campagne.js) : des collines au-delà de la clôture, et une
+  // rivière peu profonde qui traverse le terrain. La route passe au-dessus sur des ponts.
+  const AC = C.agrandir.course;
+  const campagne = Circuit.Campagne.creer(Object.assign({}, AC, {
+    taille: C.piste.tailleHerbe + 2 * AC.bord,
+    riviere: Object.assign({}, AC.riviere, { points: Circuit.Campagne.serpent(...AC.coursRiviere, AC.graine) }),
+    horsCollines: (x, z) => Math.max(Math.abs(x), Math.abs(z)) < C.piste.tailleHerbe / 2 + AC.collines.rayon[1] + 20,
+  }));
+  // Un pont : là où la route passe au-dessus de la rivière.
+  const surUnPont = (x, z) => campagne.distanceRiviere(x, z) < AC.riviere.largeur / 2 + AC.riviere.berge;
+
   // La grille de départ : 12 m derrière la ligne, nez vers x+, 2 voitures par rangée (à ±3,5 m du milieu).
   // Étape 58 : 12 places ; la place n° k est dans la rangée k ÷ 2, une rangée tous les 9 m.
   function placeSurLaGrille(k) {
@@ -78,7 +89,11 @@ Circuit.Course = (function () {
   // Sur le parcours, elle attend au milieu de la map (x = 0, z = 0).
   function voitureDuJoueur(index) {
     const fiche = Circuit.Garage.voitureNumero(index);
-    if (Circuit.Garage.carte === "parcours" || Circuit.Garage.carte === "grand") return Circuit.Voiture.creer(0, 0, 0, fiche);
+    if (Circuit.Garage.carte === "parcours") return Circuit.Voiture.creer(0, 0, 0, fiche);
+    if (Circuit.Garage.carte === "grand") {
+      const d = Circuit.GrandParcours.depart; // étape 68 : le départ a bougé avec la route étirée
+      return Circuit.Voiture.creer(d.x, d.z, d.angle, fiche);
+    }
     if (Circuit.Garage.carte === "ciel") {
       // Étape 41 : sur la piste dans le ciel, au départ (à 20 m de haut).
       const d = Circuit.MegaRampes.depart;
@@ -365,7 +380,32 @@ Circuit.Course = (function () {
       v.vitesse = 0;
     }
 
+    const avant = c.reperage;
     c.reperage = Circuit.Piste.reperer(v.x, v.z);
+    // Étape 68 : ✍️ sur un PONT, des garde-fous de chaque côté : on ne tombe pas dans la rivière, on glisse contre eux.
+    const bordPont = C.piste.largeur / 2 + C.piste.largeurBordure;
+    if (avant && Math.abs(avant.ecart) <= bordPont + 0.05 && Math.abs(c.reperage.ecart) > bordPont && surUnPont(v.x, v.z)) {
+      const p = Circuit.Piste.pointDecale(c.reperage.s, Math.sign(c.reperage.ecart) * bordPont);
+      v.x = p.x;
+      v.z = p.z;
+      v.vitesse *= 0.85;
+      c.reperage = Circuit.Piste.reperer(v.x, v.z);
+      if (estLeJoueur && monde.temps - (monde.dernierGardeFou || -9) > 1) {
+        monde.dernierGardeFou = monde.temps;
+        radio.emettre("garde-fou", { vitesse: v.vitesse });
+      }
+    }
+    // Étape 68 : dans la rivière (hors de la route, qui passe sur un pont), on avance au pas.
+    const dansLEau = c.reperage.dansLHerbe && campagne.dansLEau(v.x, v.z);
+    if (dansLEau) {
+      const max = C.agrandir.vitesseEau;
+      if (Math.abs(v.vitesse) > max) v.vitesse = Math.sign(v.vitesse) * Math.max(max, Math.abs(v.vitesse) * (1 - 5 * dt));
+    }
+    if (estLeJoueur) {
+      if (dansLEau && !monde.dansLEau) radio.emettre("riviere", { vitesse: v.vitesse, x: v.x, z: v.z });
+      else if (!dansLEau && monde.dansLEau) radio.emettre("riviere-sortie", {});
+      monde.dansLEau = dansLEau;
+    }
     const sol = c.reperage.dansLHerbe ? "herbe" : c.reperage.surLaBordure ? "bordure" : "route";
     if (estLeJoueur && monde.phase === "course") {
       if (sol === "herbe" && c.sol !== "herbe") {
@@ -510,5 +550,5 @@ Circuit.Course = (function () {
     return meilleur;
   }
 
-  return { creer, lancer, ouvrirGarage, ouvrirCartes, etape, progression, placeDe, placeAdv, plusProche, enTete };
+  return { creer, lancer, ouvrirGarage, ouvrirCartes, etape, progression, placeDe, placeAdv, plusProche, enTete, campagne };
 })();

@@ -56,11 +56,11 @@ Circuit.Scene3D = (function () {
 
     scene = new THREE.Scene();
     sceneX = new THREE.Scene(); // les traits des rayons X, dessinés par-dessus
-    cam = new THREE.PerspectiveCamera(C.camera.champDeVision, canvas.width / canvas.height, 0.3, 3000);
+    cam = new THREE.PerspectiveCamera(C.camera.champDeVision, canvas.width / canvas.height, 0.3, 6000); // (étape 68 : on voit plus loin, les cartes sont 3 fois plus grandes)
 
     // Le ciel : une immense sphère, bleu foncé en haut, clair à l'horizon, avec le soleil.
     ciel = new THREE.Mesh(
-      new THREE.SphereGeometry(2000, 32, 16),
+      new THREE.SphereGeometry(4000, 32, 16),
       Circuit.Meteo3D.materiauCiel(SOLEIL) // étape 47 : le ciel avec de vrais nuages (affichage/meteo3d.js)
     );
     scene.add(ciel);
@@ -140,7 +140,7 @@ Circuit.Scene3D = (function () {
     carteDessinee = carte;
     Circuit.Fumee.effacer(); // (étape 53 : les traces de pneus de l'autre carte disparaissent)
     // Étape 42 : la map de la ville est énorme : le brouillard commence plus loin, pour voir les îles.
-    brouillardCarte = carte === "ville" ? 2400 : 1100; // (étape 47 : la météo peut voir moins loin, affichage/meteo3d.js)
+    brouillardCarte = carte === "ville" ? 3000 : 2200; // (étape 47 : la météo peut voir moins loin, affichage/meteo3d.js ; étape 68 : on voit plus loin, les cartes sont plus grandes)
   }
 
   // Étape 52 : quand une vraie maquette 3D est prête, on jette les voitures « provisoires » de ce modèle (dessinées en

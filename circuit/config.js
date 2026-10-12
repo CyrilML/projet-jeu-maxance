@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 27,
+  version: 28,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -22,11 +22,12 @@ Circuit.CONFIG = {
   // Deux lignes droites, reliées par deux demi-cercles.
   piste: {
     // Étape 33 : le circuit est 3 fois plus grand (avant : 120 m et 40 m). Un tour ≈ 1 474 m.
-    longueurDroite: 360, // longueur de chaque ligne droite (m)
-    rayon: 120, // rayon des virages, mesuré au milieu de la route (m)
+    // Étape 68 : ✍️ encore 3 fois plus grand ! Un tour ≈ 4 422 m.
+    longueurDroite: 1080, // longueur de chaque ligne droite (m) ; 360 avant l'étape 68
+    rayon: 360, // rayon des virages, mesuré au milieu de la route (m) ; 120 avant l'étape 68
     largeur: 14, // largeur de la route (m)
     largeurBordure: 1.2, // les bandes rouges et blanches sur les côtés (m)
-    tailleHerbe: 800, // le carré d'herbe autour du circuit (m de côté) ; 400 avant l'étape 33
+    tailleHerbe: 2400, // le carré d'herbe autour du circuit (m de côté) ; 400 avant l'étape 33, 800 avant l'étape 68
   },
 
   // La voiture
@@ -64,6 +65,15 @@ Circuit.CONFIG = {
     // Étape 40 : ✍️ la voiture de rallye (aileron et autocollants). Elle est aussi au garage du grand parcours.
     { id: "rallye", sportive: true, nom: "La voiture de rallye", modele: "rallye", prix: 300, vitesseMax: 48.6, acceleration: 18, virage: 2.2, saut: 1.1,
       couleurs: [[0.1, 0.3, 0.85], [1, 0.8, 0.1]], son: { ralenti: 75, max: 230 } },
+    // Étape 68 : ✍️ les SUPERCARS (Ferrari SF90, McLaren 720S, Bugatti Bolide), et des voitures des autres garages
+    // (un nom tout seul = la fiche de ce véhicule dans un autre garage).
+    { id: "ferrariSF90", sportive: true, nom: "La Ferrari SF90", modele: "ferrariSF90", prix: 450, vitesseMax: 52.8, acceleration: 19,
+      couleurs: [[0.8, 0.02, 0.02], [0.06, 0.06, 0.07]], son: { ralenti: 65, max: 210 } },
+    { id: "mcLaren720S", sportive: true, nom: "La McLaren 720S", modele: "mcLaren720S", prix: 400, vitesseMax: 51.4, acceleration: 18,
+      couleurs: [[0.98, 0.45, 0.02], [0.06, 0.06, 0.07]], son: { ralenti: 60, max: 200 } },
+    { id: "bolide", sportive: true, nom: "La Bugatti Bolide", modele: "bolide", prix: 600, vitesseMax: 55.6, acceleration: 20, virage: 2.2,
+      couleurs: [[0.08, 0.3, 0.75], [0.08, 0.08, 0.09]], son: { ralenti: 34, max: 95 } },
+    "audiR8", "taycan", "bmwM3", "delorean", "batmobile",
   ],
 
   // Étape 37 : LES CARTES. ✍️ On choisit la carte avant le garage, et chaque carte a son garage.
@@ -91,6 +101,14 @@ Circuit.CONFIG = {
     // Étape 40 : ✍️ le quad, léger : il saute très haut et tourne vite.
     { id: "quad", nom: "Le quad", modele: "quad", prix: 150, vitesseMax: 38.9, acceleration: 16, virage: 2.5, saut: 1.4,
       couleurs: [[0.95, 0.45, 0.05], [0.12, 0.12, 0.13]], son: { ralenti: 110, max: 330 } },
+    // Étape 68 : ✍️ les TOUT-TERRAIN (Land Rover Defender, Jeep Wrangler, Ford Raptor), et le Cybertruck.
+    { id: "defender", nom: "Le Land Rover Defender", modele: "defender", prix: 150, vitesseMax: 38.9, acceleration: 12, virage: 1.8, saut: 1.1,
+      couleurs: [[0.42, 0.5, 0.36], [0.95, 0.95, 0.95]], son: { ralenti: 40, max: 105 } },
+    { id: "wrangler", nom: "La Jeep Wrangler", modele: "wrangler", prix: 120, vitesseMax: 36.1, acceleration: 13, virage: 1.9, saut: 1.2,
+      couleurs: [[0.95, 0.75, 0.05], [0.1, 0.1, 0.11]], son: { ralenti: 42, max: 110 } },
+    { id: "raptor", nom: "Le Ford Raptor", modele: "raptor", prix: 250, vitesseMax: 41.7, acceleration: 14, virage: 1.6, saut: 1.3, ecrase: true,
+      couleurs: [[0.15, 0.32, 0.65], [0.1, 0.1, 0.11]], son: { ralenti: 35, max: 95 } },
+    "cybertruck",
   ],
 
   // Étape 39 : le garage de la ville. ✍️ Petite citadine, SUV, voiture basse, camionnette et camion.
@@ -115,6 +133,30 @@ Circuit.CONFIG = {
       couleurs: [[1, 0.78, 0.05], [0.1, 0.1, 0.11]], son: { ralenti: 48, max: 125 } },
     { id: "police", nom: "La Peugeot 308 de police", modele: "police", prix: 400, vitesseMax: 47.2, acceleration: 16, virage: 2.1, saut: 1, sirene: true,
       couleurs: [[0.95, 0.95, 0.97], [0.08, 0.15, 0.4]], son: { ralenti: 50, max: 150 } },
+    // Étape 68 : ✍️ les ALLEMANDES (Audi R8, Mercedes Classe G, BMW M3, Porsche Taycan)…
+    { id: "audiR8", sportive: true, nom: "L'Audi R8", modele: "audiR8", prix: 300, vitesseMax: 50, acceleration: 17,
+      couleurs: [[0.85, 0.86, 0.88], [0.12, 0.12, 0.13]], son: { ralenti: 60, max: 190 } },
+    { id: "mercedesG", nom: "La Mercedes Classe G", modele: "mercedesG", prix: 350, vitesseMax: 38.9, acceleration: 12, virage: 1.7, saut: 1.1,
+      couleurs: [[0.08, 0.08, 0.09], [0.2, 0.2, 0.22]], son: { ralenti: 38, max: 100 } },
+    { id: "bmwM3", sportive: true, nom: "La BMW M3", modele: "bmwM3", prix: 200, vitesseMax: 47.2, acceleration: 16,
+      couleurs: [[0.1, 0.45, 0.3], [0.08, 0.08, 0.09]], son: { ralenti: 55, max: 170 } },
+    { id: "taycan", sportive: true, nom: "La Porsche Taycan", modele: "taycan", prix: 350, vitesseMax: 50, acceleration: 20,
+      couleurs: [[0.55, 0.65, 0.8], [0.1, 0.1, 0.11]], son: { ralenti: 140, max: 380 } }, // électrique : un sifflement aigu
+    // … les FRANÇAISES (Alpine A110, Renault 5, Citroën 2CV)…
+    { id: "alpineA110", sportive: true, nom: "L'Alpine A110", modele: "alpineA110", prix: 150, vitesseMax: 44.4, acceleration: 16, virage: 2.3,
+      couleurs: [[0.1, 0.3, 0.75], [0.1, 0.1, 0.11]], son: { ralenti: 60, max: 170 } },
+    { id: "renault5", nom: "La Renault 5 électrique", modele: "renault5", prix: 80, vitesseMax: 38.9, acceleration: 14, virage: 2.2,
+      couleurs: [[0.95, 0.8, 0.1], [0.1, 0.1, 0.11]], son: { ralenti: 150, max: 360 } },
+    { id: "citroen2CV", nom: "La Citroën 2CV", modele: "citroen2CV", prix: 30, vitesseMax: 25, acceleration: 6, virage: 2.0,
+      couleurs: [[0.75, 0.12, 0.12], [0.1, 0.1, 0.11]], son: { ralenti: 70, max: 160 } }, // un petit moteur qui pétarade
+    // … et les VOITURES DE RÊVE (Tesla Cybertruck, Batmobile, DeLorean).
+    { id: "cybertruck", nom: "Le Tesla Cybertruck", modele: "cybertruck", prix: 400, vitesseMax: 47.2, acceleration: 18, virage: 1.7, saut: 1.2, ecrase: true,
+      couleurs: [[0.72, 0.74, 0.77], [0.2, 0.2, 0.22]], son: { ralenti: 130, max: 340 } },
+    { id: "batmobile", sportive: true, nom: "La Batmobile", modele: "batmobile", prix: 700, vitesseMax: 55.6, acceleration: 20, virage: 2.0,
+      couleurs: [[0.05, 0.05, 0.06], [0.05, 0.05, 0.06]], son: { ralenti: 40, max: 120 } },
+    { id: "delorean", sportive: true, nom: "La DeLorean", modele: "delorean", prix: 500, vitesseMax: 49, acceleration: 15,
+      couleurs: [[0.72, 0.74, 0.77], [0.3, 0.3, 0.32]], son: { ralenti: 50, max: 140 } },
+    "ferrariSF90", "mcLaren720S", "defender", "wrangler", "raptor",
   ],
 
   // Étape 40 : le garage du GRAND PARCOURS. ✍️ Le kart (offert), puis des véhicules qui sont aussi dans
@@ -125,10 +167,11 @@ Circuit.CONFIG = {
     "buggy",
     "quad",
     "rallye",
+    "defender", "wrangler", "raptor", "cybertruck", // étape 68
   ],
 
   // Étape 41 : le garage des MÉGA-RAMPES : les voitures de course (la piste est faite pour aller vite !).
-  vehiculesCiel: ["classique", "porsche911", "aventador", "chiron", "f1", "rallye"],
+  vehiculesCiel: ["classique", "porsche911", "aventador", "chiron", "f1", "rallye", "ferrariSF90", "mcLaren720S", "bolide", "audiR8", "taycan", "batmobile", "delorean"], // (étape 68 : + les nouvelles)
 
   // Étape 40 : LES NITROS. ✍️ Des plaques au sol : dès que tu passes dessus, ça te propulse.
   nitro: {
@@ -181,7 +224,7 @@ Circuit.CONFIG = {
 
   // Étape 39 : la VILLE. Une grille de rues (comme un damier) : entre les rues, des pâtés de maisons.
   ville: {
-    blocs: 5, // 5 × 5 pâtés de maisons
+    blocs: 7, // 7 × 7 pâtés de maisons (5 × 5 avant l'étape 68)
     tailleBloc: 72, // m : la taille d'un pâté (avec ses trottoirs)
     largeurRue: 16, // m : 2 voies de 4 m, plus de la place
     voie: 4, // m : on roule à 4 m à droite du milieu de la rue
@@ -189,18 +232,18 @@ Circuit.CONFIG = {
     ruelle: 6, // m : la petite rue qui coupe chaque pâté en 4 (on peut y passer, à pied ou en voiture)
     hauteurMin: 10, // m : les immeubles font entre 10 et 70 m de haut
     hauteurMax: 70,
-    parcs: [[1, 1], [3, 3]], // ✍️ les pâtés qui sont des parcs (numéro de colonne, numéro de ligne)
-    circulation: 16, // ✍️ le nombre de voitures qui circulent toutes seules
+    parcs: [[1, 1], [3, 3], [5, 1], [1, 5], [5, 5]], // ✍️ les pâtés qui sont des parcs (numéro de colonne, numéro de ligne)
+    circulation: 45, // ✍️ le nombre de voitures qui circulent toutes seules (16 avant l'étape 68)
     vitesseCirculation: 11, // m/s (40 km/h, on est en ville !)
     feuVert: 8, // s : chaque feu reste vert 8 s, puis orange 2 s, puis rouge pendant que l'autre rue passe
     feuOrange: 2,
-    garees: 14, // voitures garées le long des trottoirs (on peut les prendre !)
-    pieces: 50, // ✍️ des pièces cachées un peu partout
+    garees: 40, // voitures garées le long des trottoirs (on peut les prendre !) (14 avant l'étape 68)
+    pieces: 90, // ✍️ des pièces cachées un peu partout (50 avant l'étape 68)
     graine: 23,
     // Étape 50 : le nom des rues (on le voit sur les plaques aux carrefours, et en haut à gauche de l'écran).
     nomsRues: {
-      estOuest: ["avenue Maxance", "rue des Pilotes", "boulevard du Turbo", "rue des Nitros", "avenue des Champions", "rue du Klaxon"],
-      nordSud: ["rue Cyril", "boulevard de la Police", "rue des Pizzas", "avenue des Avions", "rue du Garage", "boulevard de la Mer"],
+      estOuest: ["avenue Maxance", "rue des Pilotes", "boulevard du Turbo", "rue des Nitros", "avenue des Champions", "rue du Klaxon", "rue des Collines", "avenue de la Rivière"],
+      nordSud: ["rue Cyril", "boulevard de la Police", "rue des Pizzas", "avenue des Avions", "rue du Garage", "boulevard de la Mer", "rue des Forêts", "avenue du Pont"],
     },
     limiteVitesse: 50, // km/h : ce qui est écrit sur les panneaux (ce n'est qu'un panneau : la police ne flashe pas !)
     fenetresAllumees: { minimum: 0.05, force: 1.3 }, // la lumière des fenêtres = minimum + force × (1 − lumière du soleil)
@@ -211,18 +254,19 @@ Circuit.CONFIG = {
   // Étape 42 : LA MAP ÉNORME. ✍️ La ville est sur une île au milieu de la mer. De grands ponts mènent à
   // d'autres îles, chacune avec un AÉROPORT. x, z en mètres ; angle = la direction de la piste d'atterrissage.
   archipel: {
-    ileVille: 250, // m : l'île de la ville va de −250 à +250 (la ville fait 456 m)
+    ileVille: 750, // m : l'île de la ville va de −750 à +750 (la ville fait 632 m) ; ✍️ étape 68 : 3 fois plus grande (250 avant),
+    // avec de la CAMPAGNE autour de la ville : des collines, des forêts, une rivière et 2 routes qui la traversent sur des ponts.
     mer: -1.5, // m : la hauteur de l'eau
     ponts: [
       // ✍️ « Fais un pont qui relie à l'aéroport » : le pont de l'Est part de la rue n° 3, vers l'aéroport n° 1.
-      { nom: "le pont de l'Est", de: [250, 44], a: [750, 44], largeur: 18, hauteur: 16 },
-      { nom: "le pont du Nord", de: [-44, -250], a: [-44, -750], largeur: 18, hauteur: 16 },
+      { nom: "le pont de l'Est", de: [750, 44], a: [1250, 44], largeur: 18, hauteur: 16 },
+      { nom: "le pont du Nord", de: [-44, -750], a: [-44, -1250], largeur: 18, hauteur: 16 },
     ],
     // Les îles avec un aéroport : leur centre, la direction de la piste, et si un pont y mène.
     aeroports: [
-      { nom: "l'aéroport de l'Est", numero: 1, x: 1200, z: 50, angle: 0 },
-      { nom: "l'aéroport du Nord", numero: 2, x: -38, z: -1200, angle: -Math.PI / 2 },
-      { nom: "l'aéroport de l'île lointaine", numero: 3, x: -1500, z: 1400, angle: Math.PI / 2 }, // pas de pont : en avion (étape 44) !
+      { nom: "l'aéroport de l'Est", numero: 1, x: 1700, z: 50, angle: 0 },
+      { nom: "l'aéroport du Nord", numero: 2, x: -38, z: -1700, angle: -Math.PI / 2 },
+      { nom: "l'aéroport de l'île lointaine", numero: 3, x: -2000, z: 1900, angle: Math.PI / 2 }, // pas de pont : en avion (étape 44) !
     ],
     // La forme d'une île-aéroport (en mètres, u = le long de la piste, w = en travers). Toutes les îles sont pareilles.
     ile: { u: [-450, 450], w: [-350, 400] },
@@ -288,8 +332,8 @@ Circuit.CONFIG = {
     choix: ["soleil", "vent", "pluie", "orage", "neige", "blizzard"],
     textes: { soleil: "Route sèche", vent: "Rafales de côté", pluie: "Route mouillée", orage: "Éclairs, ça glisse", neige: "Très glissant", blizzard: "On n'y voit rien !" },
     temps: {
-      soleil: { nom: "Soleil", icone: "☀️", adherence: 1, vent: 0, visibilite: 1100, nuages: 0.15, pluie: 0, neige: 0, lumiere: 1, eclairs: 0 },
-      vent: { nom: "Vent", icone: "🌬️", adherence: 1, vent: 9, visibilite: 1000, nuages: 0.45, pluie: 0, neige: 0, lumiere: 0.85, eclairs: 0 },
+      soleil: { nom: "Soleil", icone: "☀️", adherence: 1, vent: 0, visibilite: 2200, nuages: 0.15, pluie: 0, neige: 0, lumiere: 1, eclairs: 0 },
+      vent: { nom: "Vent", icone: "🌬️", adherence: 1, vent: 9, visibilite: 1800, nuages: 0.45, pluie: 0, neige: 0, lumiere: 0.85, eclairs: 0 },
       brouillard: { nom: "Brouillard", icone: "🌫️", adherence: 0.9, vent: 1, visibilite: 90, nuages: 0.9, pluie: 0, neige: 0, lumiere: 0.45, eclairs: 0 },
       pluie: { nom: "Pluie", icone: "🌧️", adherence: 0.7, vent: 3, visibilite: 450, nuages: 0.85, pluie: 1, neige: 0, lumiere: 0.45, eclairs: 0 },
       orage: { nom: "Orage", icone: "⛈️", adherence: 0.6, vent: 7, visibilite: 320, nuages: 1, pluie: 1.6, neige: 0, lumiere: 0.25, eclairs: 6 },
@@ -433,7 +477,7 @@ Circuit.CONFIG = {
 
   // Étape 36 : les pièces à ramasser pour acheter les voitures.
   pieces: {
-    nombre: 50, // ✍️ 50 pièces posées sur le circuit à chaque course (une pièce prise ne revient pas avant la course suivante)
+    nombre: 120, // ✍️ 120 pièces posées sur le circuit à chaque course (50 avant l'étape 68 : le tour est 3 fois plus long) (une pièce prise ne revient pas avant la course suivante)
     voies: [-4.5, 0, 4.5], // m : à gauche, au milieu ou à droite de la route
     rayonRamassage: 2.4, // m : la pièce est prise si le milieu de la voiture passe à moins de 2,4 m
     hauteur: 1.2, // m : les pièces flottent au-dessus de la route
@@ -450,7 +494,7 @@ Circuit.CONFIG = {
     allure: [0.85, 0.97], // (le plus rapide va à 97 % : avec la même voiture, tu peux gagner si tu conduis parfaitement)
     voies: [-4, 0, 4], // m : les 3 voies où un pilote peut rouler (intérieur, milieu, extérieur)
     // Avant un virage, le pilote lève le pied pour ne pas finir dans l'herbe : au plus vitesseVirage × √(rayon du virage).
-    vitesseVirage: 5.2, // (les virages du circuit font 120 m de rayon : √120 × 5,2 ≈ 57 m/s ≈ 205 km/h)
+    vitesseVirage: 5.2, // (les virages du circuit font 360 m de rayon depuis l'étape 68 : √360 × 5,2 ≈ 99 m/s : on peut les prendre à fond)
     regardVirage: 45, // m : il regarde 45 m devant lui pour savoir si un virage arrive
   },
 
@@ -536,6 +580,7 @@ camera: {
     distanceAffichage: 230, // m : … et on ne dessine que les carrés à moins de 230 m de la caméra
     flexion: 0.03, // m par m/s de vent : de combien le haut d'une touffe plie au vent
     especes: { feuillu: 0.45, sapin: 0.3, bouleau: 0.25 }, // la part de chaque espèce d'arbre
+    carreForet: 700, // m (étape 68) : les arbres sont rangés par carrés de 700 m (on ne dessine que ceux devant la caméra)
   },
   eau: {
     vitesseVagues: 0.012, // tours de texture par seconde (sans vent)
@@ -596,6 +641,34 @@ camera: {
   },
   fumee: { particules: 220, vie: 1.8, taille: [0.8, 4], montee: 0.8, parSeconde: 60, opacite: 0.8 }, // la fumée des pneus
   traces: { nombre: 700, largeur: 0.24, longueur: 0.5, ecart: 0.35 }, // les traces noires (m) ; ecart = tous les 35 cm
+
+  // Étape 68 : ✍️ « Agrandis la map » : toutes les cartes du circuit sont 3 fois plus grandes, avec des collines,
+  // des forêts, une rivière et des ponts (moteur/campagne.js), et plus de voitures.
+  agrandir: {
+    facteur: 3, // ✍️ 3 fois plus grand
+    figes: ["tremplin", "vide", "plateforme"], // ces morceaux de route gardent leur taille (moteur/etirer.js)
+    // La rivière : son lit (largeur, m), sa profondeur (m), ses berges en pente (m), et l'eau (m au-dessus du fond).
+    riviere: { largeur: 26, profondeur: 3, berge: 10, eau: 1.3 },
+    vitesseEau: 5, // m/s (18 km/h) : dans l'eau, la voiture avance au pas
+    // Le grand parcours : la rivière va de (x1, z1) à (x2, z2) en serpentant ; les collines ; les arbres.
+    grand: { pas: 4, graine: 68, marge: 45, bordPlat: 120, coursRiviere: [-1200, 320, 1200, -260, 110, 3],
+      collines: { nombre: 46, rayon: [100, 240], hauteur: [6, 26] }, arbres: 1400, bosquets: 40 },
+    parcours: { pas: 4, graine: 69, marge: 35, bordPlat: 100, coursRiviere: [375, -1100, 375, 1100, 14, 4],
+      taille: 2200, ecartTuiles: 750, // m : 9 tuiles de 700 m (le parcours d'avant), espacées de 750 m
+      collines: { nombre: 30, rayon: [70, 160], hauteur: [5, 18] }, arbres: 1200, bosquets: 30,
+      ponts: [-750, 0, 750], // z des 3 ponts sur la rivière (m)
+      piecesAuSol: 120 },
+    // Le circuit : les collines poussent seulement AU-DELÀ de la clôture (le terrain de course reste plat). La rivière
+    // y est peu profonde (un gué) : la route passe dessus sur 2 ponts.
+    course: { pas: 8, graine: 70, collines: { nombre: 70, rayon: [150, 380], hauteur: [25, 80] }, arbres: 2200, bosquets: 45,
+      bord: 1600, // m : la campagne s'étend jusqu'à 1 600 m au-delà de la clôture
+      coursRiviere: [300, -2000, 300, 2000, 40, 5], riviere: { largeur: 26, profondeur: 0.8, berge: 6, eau: 0.6 } },
+    // La campagne de l'île de la ville : la rivière (un tracé à la main, qui tourne autour de la ville), les collines.
+    ville: { pas: 4, graine: 71, marge: 40, bordPlat: 70, carrePlat: 340, // m : la ville (et 340 m autour du centre) reste plate
+      coursRiviere: [[-460, -760], [-300, -600], [-44, -540], [200, -530], [430, -430], [545, -220], [560, 44], [590, 260], [690, 430], [770, 520]],
+      collines: { nombre: 40, rayon: [70, 170], hauteur: [6, 24] }, arbres: 1500, bosquets: 30 },
+    herbes: 3, // l'herbe, les fleurs et les rochers : × 3 (la carte est plus grande)
+  },
 
   pasFixe: 1 / 120, // la boucle de jeu avance par petits pas de 1/120 s
 };

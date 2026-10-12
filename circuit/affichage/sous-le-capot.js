@@ -9,6 +9,13 @@ window.Circuit = window.Circuit || {};
 Circuit.SousLeCapot = (function () {
   const chrono = (t) => Circuit.TableauDeBord.chrono(t);
   const virgule = (n, chiffres) => n.toFixed(chiffres).replace(".", ",");
+  // Étape 68 : les lignes « campagne » de l'état en direct (les collines et la rivière, moteur/campagne.js).
+  const campagne = (K, v) => (K ? [
+    ["La campagne (étape 68)"],
+    ["carte", K.taille + " m × " + K.taille + " m, " + K.collines.length + " collines"],
+    ["relief sous la voiture", virgule(K.hauteur(v.x, v.z), 1) + " m"],
+    ["rivière", K.riviere ? (Circuit.Balade && v ? (K.dansLEau(v.x, v.z, v.y) ? "💦 DANS L'EAU (au pas)" : "à " + Math.round(Math.max(0, K.distanceRiviere(v.x, v.z) - K.riviere.largeur / 2)) + " m") : "—") : "—"],
+  ] : []);
 
   // Le message du journal pour chaque événement de la radio.
   const MESSAGES = {
@@ -34,7 +41,7 @@ Circuit.SousLeCapot = (function () {
       "😢 PERDU : " + (d.vainqueur || "un adversaire") + " a fini ses tours en " + chrono(d.temps) + ". Tu étais " + d.position + "e, au tour " + d.tourJoueur + ", il te restait " + d.retard.toLocaleString("fr-FR") + " m",
     "tour-adversaire": (d) => "🏎️ En tête, " + (d.nom || "la voiture bleue") + " a fini son tour n° " + d.numero + " en " + chrono(d.temps),
     choc: (d) =>
-      "💥 Choc " + (d.contre === "mur" ? "contre un mur" : d.contre === "voiture" ? "contre une voiture" : d.contre === "vehicule" ? "contre " + d.nom : d.contre === "eau" ? "contre le bord de l'eau (pas de voiture dans la mer !)" : "avec " + (d.contre || "un adversaire")) + " ! Vitesse du choc : " + virgule(d.force, 1) + " m/s. Ta vitesse après : " + Math.round(d.vitesse * 3.6) + " km/h",
+      "💥 Choc " + (d.contre === "mur" ? "contre un mur" : d.contre === "voiture" ? "contre une voiture" : d.contre === "vehicule" ? "contre " + d.nom : d.contre === "eau" ? "contre le bord de l'eau (pas de voiture dans la mer !)" : d.contre === "riviere" ? "contre le bord de la rivière (prends un pont !)" : "avec " + (d.contre || "un adversaire")) + " ! Vitesse du choc : " + virgule(d.force, 1) + " m/s. Ta vitesse après : " + Math.round(d.vitesse * 3.6) + " km/h",
     depassement: (d) => (d.gagne ? "⬆️ Tu doubles : tu es " : "⬇️ On te double : tu es ") + d.position + (d.position === 1 ? "er" : "e") + " sur " + (d.total || 2) + " (tour " + d.tour + ")",
     "adversaire-change-de-voie": (d) =>
       "🤖 Passage bouché (" + Math.round(d.avance) + " m devant) : " + (d.nom || "la voiture bleue") + " passe sur la voie " + (d.voie > 0 ? "extérieure" : d.voie < 0 ? "intérieure" : "du milieu"),
@@ -100,6 +107,9 @@ Circuit.SousLeCapot = (function () {
     sirene: (d) => (d.allumee ? "🚨 Sirène et gyrophare allumés (H)" : "🔕 Sirène éteinte (H)"),
     balade: (d) => "🎢 Balade sur le parcours : " + d.pieces + " pièces à trouver et " + d.cartons + " cartons à défoncer",
     "retour-depart": () => "↩️ Retour au départ (R)",
+    riviere: (d) => "💦 Plouf ! Dans la rivière : vitesse limitée à " + Math.round(Circuit.CONFIG.agrandir.vitesseEau * 3.6) + " km/h (cherche un pont)",
+    "garde-fou": (d) => "🌉 Contre le garde-fou du pont à " + Math.round(Math.abs(d.vitesse) * 3.6) + " km/h : tu restes sur la route",
+    "riviere-sortie": () => "🏞️ Sorti de l'eau : la voiture peut de nouveau accélérer",
     decollage: (d) => "🛫 Décollage à " + Math.round(Math.abs(d.vitesse) * 3.6) + " km/h, vitesse vers le haut " + virgule(d.vy, 1) + " m/s",
     atterrissage: (d) => "🛬 Atterrissage : " + Math.round(d.distance) + " m de saut, " + virgule(d.hauteurMax, 1) + " m de haut, " + virgule(d.duree, 2) + " s en l'air",
     "looping-debut": (d) => "🎢 Accroché au looping (rayon " + d.rayon + " m) à " + Math.round(d.vitesse * 3.6) + " km/h",
@@ -231,6 +241,7 @@ Circuit.SousLeCapot = (function () {
           return b ? b.morceaux + " morceaux (bandeaux, corniches, stores, machines…) · " + b.vitrines + " boutiques · " + b.balcons + " balcons" : "—";
         })()],
         ["hauteur du sol", virgule(Circuit.Archipel.lieu(qui.x, qui.z).h, 1) + " m" + (Circuit.Archipel.surQuelPont(qui.x, qui.z) ? " (le pont monte en arc : H × sin(π × u ÷ L))" : "")],
+        ["où (étape 68)", Circuit.Archipel.lieu(qui.x, qui.z).ou + " · rivière à " + Math.round(Math.max(0, Circuit.Archipel.campagne.distanceRiviere(qui.x, qui.z) - Circuit.Archipel.campagne.riviere.largeur / 2)) + " m · " + Circuit.Archipel.routesCampagne.length + " routes la traversent sur des ponts"],
         ["magasin", monde.magasin ? "🛍️ dans " + monde.magasin.nom : monde.magasinProche ? "devant " + monde.magasinProche + " (E)" : "—"],
         ["objets achetés", Object.keys(Circuit.Sauvegarde.donnees.objets || {}).join(", ") || "aucun"],
         ["La police (étape 45)"],
@@ -309,6 +320,7 @@ Circuit.SousLeCapot = (function () {
         ["dernier saut", saut ? Math.round(saut.distance) + " m de long, " + virgule(saut.hauteurMax, 1) + " m de haut, " + virgule(saut.duree, 2) + " s" : "—"],
         ["le creux", Math.round(GP.saut.longueur) + " m à sauter"],
         ["chutes", monde.chutes],
+        ...campagne(GP.campagne, v),
         ["route", Math.round(GP.longueurTour).toLocaleString("fr-FR") + " m en " + GP.troncons.length + " tronçons de 3 m"],
         ["saut du véhicule", "× " + virgule(fiche.saut || 1, 1)],
       ].concat(voiture, [
@@ -324,6 +336,7 @@ Circuit.SousLeCapot = (function () {
         ["phase", monde.phase],
         ["vitesse vers le haut (vy)", virgule(v.vy || 0, 1) + " m/s"],
         ["sol sous la voiture", virgule(Circuit.Parcours.hauteurSol(v.x, v.z, v.y || 0), 2) + " m"],
+        ...campagne(Circuit.Parcours.campagne, v),
         ["looping", monde.boucle ? "🎢 " + Math.round((monde.boucle.theta * 180) / Math.PI) + "° sur 360°" : "—"],
         ["dernier saut", saut ? Math.round(saut.distance) + " m de long, " + virgule(saut.hauteurMax, 1) + " m de haut, " + virgule(saut.duree, 2) + " s" : "—"],
         ["cartons défoncés", monde.cartonsCasses + " / " + monde.cartons.length],
@@ -344,6 +357,7 @@ Circuit.SousLeCapot = (function () {
         ["sorties de piste", monde.sortiesDePiste],
         ["position", monde.position === 1 ? "🥇 1er" : "🥈 2e"],
         ["chocs", monde.chocs + (monde.enContact ? " (💥 en contact)" : "")],
+        ...campagne(Circuit.Course.campagne, v),
       ].concat(voiture, [
         ["Sur le circuit"],
         ["sol sous la voiture", monde.sol === "herbe" ? "🌱 herbe" : monde.sol === "bordure" ? "🟥 bordure" : "🛣️ route"],
