@@ -25,13 +25,17 @@
 // Étape 59 : les AILES BOMBÉES. Au-dessus de chaque roue, la carrosserie gonfle un peu vers l'extérieur (ailes de
 // quelques cm, plus large au milieu de la roue, en « cloche ») : c'est ce qui donne aux voitures leur air musclé.
 //
+// Étape 69 : L'ÉPAULE (we, de). Sur une vraie voiture, la vitre de côté ne part pas du bord de la carrosserie : il y a
+// d'abord un petit rebord presque plat (de la largeur w jusqu'à we, en montant de « de »), puis la vitre monte, presque
+// droite, jusqu'au toit (wt). Sans épaule, la cabine ressemble à une pyramide ; avec, elle a l'air d'une vraie cabine.
+//
 // Toutes les coques sont « nez vers x+ », posées sur y = 0, centrées en z = 0. Ce fichier ne connaît aucune voiture.
 
 window.Circuit = window.Circuit || {};
 
 Circuit.Coque = (function () {
   const PAS = 0.04; // m : une tranche tous les 4 cm
-  const CHAMPS = ["yb", "yc", "yt", "w", "n", "wb", "wt", "wl", "rt"];
+  const CHAMPS = ["yb", "yc", "yt", "w", "n", "wb", "wt", "wl", "rt", "we", "de"];
 
   // Une valeur entre les tranches clés, en suivant une courbe douce (Catmull-Rom).
   function interpoler(cles, x) {
@@ -69,7 +73,18 @@ Circuit.Coque = (function () {
       pts.push([wb - r + Math.cos(a) * r + (wl - wb) * (k / 3), ya + r + Math.sin(a) * r]);
     }
     // le flanc, qui monte jusqu'aux épaules (en s'écartant doucement du bas de caisse jusqu'à la largeur w)
-    for (let k = 1; k <= 3; k++) pts.push([wl + (s.w - wl) * Math.sin((k / 3) * (Math.PI / 2)), ya + r + (s.yc - ya - r) * (k / 3)]);
+    // (étape 69 : au-dessus d'une roue, les points du flanc gardent leur hauteur habituelle s'ils sont au-dessus du passage
+    // de roue : seul le bas du flanc est « poussé » vers le haut. Sinon tout le flanc se tasse et on voit des stries.)
+    for (let k = 1; k <= 3; k++) {
+      const normal = s.yb + r + (s.yc - s.yb - r) * (k / 3), tasse = ya + r + (s.yc - ya - r) * (k / 3);
+      pts.push([wl + (s.w - wl) * Math.sin((k / 3) * (Math.PI / 2)), Math.min(s.yc - 0.002 * (3 - k), Math.max(normal, ya + r + 0.004 * k, tasse * 0.35 + normal * 0.65))]);
+    }
+    if (s.wt !== undefined && s.we !== undefined) {
+      // (étape 69) l'épaule : un petit rebord, puis le trapèze de la cabine part de son bord intérieur
+      const we = Math.max(Math.min(s.we, s.w), Math.min(s.wt, s.w)), de = s.de || 0;
+      pts.push([s.w + (we - s.w) * 0.5, s.yc + de * 0.75], [we, s.yc + de]);
+      return pts.concat(dessusTrapeze(Object.assign({}, s, { w: we, yc: s.yc + de })));
+    }
     if (s.wt !== undefined) return pts.concat(dessusTrapeze(s));
     // le dessus : un quart de « super-ellipse » des épaules (w, yc) au milieu (0, yt)
     const n = s.n || 2.5;
@@ -112,6 +127,7 @@ Circuit.Coque = (function () {
     // (étape 55 : si une tranche a un toit plat (wt), elles en ont toutes un, sinon la courbe entre elles serait cassée)
     if (cles.some((k) => k.wt !== undefined)) for (const k of cles) { if (k.wt === undefined) k.wt = k.w * 0.6; if (k.rt === undefined) k.rt = 0.1; }
     if (cles.some((k) => k.wl !== undefined)) for (const k of cles) if (k.wl === undefined) k.wl = k.w;
+    if (cles.some((k) => k.we !== undefined)) for (const k of cles) { if (k.we === undefined) k.we = k.w; if (k.de === undefined) k.de = 0; } // (étape 69)
     const xMin = cles[0].x, xMax = cles[cles.length - 1].x;
     const pas = options.pas || PAS;
     const arches = options.arches || [];
@@ -204,6 +220,16 @@ Circuit.Coque = (function () {
     // La hauteur du dessus de la coque en (x, z) (sur les flancs : la hauteur des épaules).
     function dessus(x, z) {
       const s = tranche(x), n = s.n || 2.5, q = Math.min(1, Math.abs(z) / s.w);
+      if (s.wt !== undefined && s.we !== undefined) {
+        // (étape 69) le toit (un peu bombé au milieu), la vitre penchée jusqu'à l'épaule, puis le rebord de l'épaule
+        const az = Math.abs(z), we = Math.max(Math.min(s.we, s.w), s.wt), ye = s.yc + (s.de || 0);
+        if (az <= s.wt) {
+          const wt = Math.max(0.02, Math.min(s.wt, s.w)), b0 = wt - Math.min(s.rt === undefined ? 0.1 : s.rt, wt * 0.45);
+          return az >= b0 ? s.yt : s.yt + Math.min(0.03, wt * 0.04) * Math.sin(((1 - az / b0) * Math.PI) / 2);
+        }
+        if (az <= we) return s.yt + (ye - s.yt) * Math.min(1, (az - s.wt) / Math.max(0.01, we - s.wt));
+        return ye + (s.yc - ye) * Math.min(1, (az - we) / Math.max(0.01, s.w - we));
+      }
       if (s.wt !== undefined) {
         const az = Math.abs(z);
         return az <= s.wt ? s.yt : s.yt + (s.yc - s.yt) * Math.min(1, (az - s.wt) / Math.max(0.01, s.w - s.wt));
