@@ -118,7 +118,7 @@ Tanks.SousLeCapot = (function () {
       ["pas jetés", M.abandonnes + " dans les 2 dernières s · " + M.abandonnesTotal + " en tout (jamais plus de " + C.boucle.pasMaxParImage + " pas par image)"],
       ["réglages du niveau", "pixels ×" + virgule(R.pixels, 1) + " · ombres " + (R.ombres ? R.ombres + (R.douces ? " douces" : "") : "aucune") + " · vue " + R.vue + " m · décor " + Math.min(R.decor, R.vue) + " m · effets " + R.effets + " m"],
       ["soldats dessinés", L.soldatsDetail + " en détail (< " + R.soldatDetail + " m) · " + L.soldatsSimples + " simples (< " + R.soldatSimple + " m) · " + L.silhouettes + " silhouettes (< " + R.soldatSilhouette + " m, 2 dessins pour toutes) · " + L.soldatsCaches + " cachés"],
-      ["tanks et engins", L.tanksRouesSoudees + " tank(s) loin (> " + R.roues + " m) : roues soudées · " + L.enginsCaches + " engin(s) au-delà de la vue, cachés"],
+      ["tanks et engins", L.tanksRouesSoudees + " tank(s) loin (> " + R.roues + " m) ou détruits : roues soudées en 1 pièce · " + L.enginsCaches + " engin(s) au-delà de la vue, cachés"],
       ["le décor", D.morceauxVus + " / " + D.morceaux + " morceaux dessinés · " + D.arbresVus + " / " + D.arbres + " arbres"],
       ["particules", Tanks.Effets.bilan.vivantes + " en vie (2 dessins pour toutes) · " + Tanks.Effets.bilan.tropLoin + " pas faites (trop loin)"],
       ["le quadrillage", "cases de " + C.grille.case + " m · " + Tanks.Terrain.grilles.arbres.objets + " arbres et " + Tanks.Terrain.grilles.boites.objets + " murs rangés une fois · " + (monde.grilleSoldats ? monde.grilleSoldats.objets : 0) + " soldats rangés à chaque pas"]);

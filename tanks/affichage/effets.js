@@ -278,7 +278,8 @@ Tanks.Effets = (function () {
     }
     for (const L of [lotFumee, lotFeu]) {
       L.geo.instanceCount = L.n;
-      L.objet.visible = L.n > 0;
+      L.objet.visible = L.n > 0 || !L.pret; // (la toute première image, on le montre vide : la carte graphique prépare son
+      L.pret = true; //                       « programme » de dessin tout de suite, et pas pendant la première explosion)
       if (L.n) L.centres.needsUpdate = L.tailles.needsUpdate = L.teintes.needsUpdate = true;
     }
     bilan.vivantes = vivantes;

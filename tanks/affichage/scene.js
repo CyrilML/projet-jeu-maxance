@@ -409,7 +409,8 @@ Tanks.Scene = (function () {
     for (const s of monde.soldats) placerSoldat(soldat3d(s), vue(s), cam, dt);
     for (const equipe in silhouettes) {
       const tous = silhouettes[equipe];
-      tous.visible = tous.count > 0;
+      tous.visible = tous.count > 0 || !tous.userData.pret; // (première image : montré vide, pour préparer son programme de dessin)
+      tous.userData.pret = true;
       if (tous.count) tous.instanceMatrix.needsUpdate = true;
     }
     placerProjectiles(monde);
