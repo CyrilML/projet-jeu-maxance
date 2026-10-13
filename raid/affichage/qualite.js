@@ -28,6 +28,7 @@ Raid.Qualite = (function () {
   };
   // La mesure en cours.
   let debut = null, images = 0, somme = 0, ignorer = 1;
+  let interdit = -1, jusqua = 0; // le niveau interdit (trop lent) et jusqu'à quand
   const cumul = { logique: 0, pas: 0, dessin: 0, tableau: 0, capot: 0 };
 
   const reglage = () => Q.niveaux[etat.niveau];
@@ -65,19 +66,27 @@ Raid.Qualite = (function () {
       return;
     }
     if (etat.force !== null) return; // niveau choisi à la main : le régulateur ne décide rien
-    if (ms > Q.descendreAuDessus && etat.niveau > 0) changer(etat.niveau - 1, "trop lent", ms);
-    else if (ms < Q.monterSous) {
+    // (pour ne pas faire le yo-yo, un niveau trop lent est INTERDIT pendant Q.attente secondes)
+    if (interdit >= 0 && maintenant > jusqua) interdit = -1;
+    if (ms > Q.descendreAuDessus && etat.niveau > 0) {
+      interdit = etat.niveau;
+      jusqua = maintenant + Q.attente * 1000;
+      changer(etat.niveau - 1, "trop lent", ms);
+    } else if (ms < Q.monterSous) {
       etat.rapides++;
-      if (etat.rapides >= Q.foisPourMonter && etat.niveau < N - 1) changer(etat.niveau + 1, "de la marge", ms);
+      if (etat.rapides >= Q.foisPourMonter && etat.niveau < N - 1 && (interdit < 0 || etat.niveau + 1 < interdit)) changer(etat.niveau + 1, "de la marge", ms);
     } else etat.rapides = 0;
   }
 
-  // Une image qui arrive très en retard (onglet caché, fenêtre réduite…) ne compte pas : on recommence la mesure.
+  // Quand le jeu s'est arrêté (onglet caché, fenêtre réduite…), cette attente ne compte pas : on recommence la mesure.
   function oublierLaMesure() {
     debut = null;
     images = 0;
     for (const k in cumul) cumul[k] = 0;
   }
+
+  // Quand on revient sur l'onglet du jeu (il était caché : plus d'images), on recommence la mesure à zéro.
+  document.addEventListener("visibilitychange", oublierLaMesure);
 
   // Touche G : auto → 0 → 1 → 2 → 3 → auto…
   function basculer() {
@@ -97,6 +106,6 @@ Raid.Qualite = (function () {
     etat, noter, oublierLaMesure, basculer, niveaux: N,
     get reglage() { return reglage(); },
     // Le petit mot du tableau de bord : « ⚙️ qualité 2/3 · 58 i/s ».
-    get etiquette() { return "⚙️ qualité " + etat.niveau + "/" + (N - 1) + (etat.force !== null ? " (G)" : "") + " · " + (etat.ips ? Math.round(etat.ips) : "…") + " i/s"; },
+    get etiquette() { return "⚙️ qualité " + etat.niveau + "/" + (N - 1) + (etat.force !== null ? " (G)" : "") + " · " + (etat.ips ? (etat.ips < 10 ? etat.ips.toFixed(1).replace(".", ",") : Math.round(etat.ips)) : "…") + " i/s"; },
   };
 })();

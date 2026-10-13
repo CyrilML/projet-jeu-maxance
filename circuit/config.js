@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 32,
+  version: 33,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -560,8 +560,8 @@ Circuit.CONFIG = {
   qualite: {
     depart: 1, // on commence au niveau « léger » (puis on monte si l'ordinateur est rapide)
     mesure: 2, // s : on fait la moyenne sur 2 secondes avant de décider
-    imageLente: 0.021, // s : plus de 21 ms par image (moins de 48 images par seconde) → on descend d'un niveau
-    imageRapide: 0.014, // s : moins de 14 ms par image (plus de 70 images par seconde), 2 fois de suite → on monte
+    imageLente: 0.025, // s : plus de 25 ms par image (moins de 40 images par seconde) → on descend d'un niveau
+    imageRapide: 0.0185, // s : moins de 18,5 ms par image (l'écran suit : 60 images par seconde ou plus), 2 fois de suite → on monte
     niveaux: [
       { nom: "très léger", pixels: 0.6, ombres: 0, carteOmbre: 0, vue: 650, herbe: 70, arbres: 550, vehicules: 160, vehiculesVille: 110, details: 14, detaillees: 2 },
       { nom: "léger", pixels: 0.8, ombres: 1, carteOmbre: 1024, vue: 1000, herbe: 130, arbres: 850, vehicules: 250, vehiculesVille: 140, details: 22, detaillees: 3 },

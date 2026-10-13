@@ -9,7 +9,7 @@ window.Raid = window.Raid || {};
 
 Raid.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans raid/index.html.
-  version: 4,
+  version: 5,
 
   pasFixe: 1 / 120, // la boucle de jeu avance par petits pas de 1/120 s
   // Étape 72 : ✍️ « ça rame ». Au plus 8 petits pas par image : si l'ordinateur a pris trop de retard, on OUBLIE le
@@ -97,8 +97,9 @@ Raid.CONFIG = {
   qualite: {
     depart: 1, // le niveau au démarrage
     fenetre: 2, // s : la durée d'une mesure
-    descendreAuDessus: 20, // ms par image
-    monterSous: 13, // ms par image
+    descendreAuDessus: 25, // ms par image (moins de 40 images par seconde)
+    monterSous: 18.5, // ms par image (l'écran suit : 60 images par seconde ou plus)
+    attente: 60, // s : un niveau trop lent est interdit pendant ce temps (pour ne pas faire le yo-yo)
     foisPourMonter: 2, // combien de mesures rapides de suite avant de remonter
     // pixels : la finesse de l'image (1 = un point de calcul par point de l'écran ; jamais plus que l'écran lui-même) ;
     // ombres : 0 = pas d'ombres, sinon la taille de la carte des ombres (en points) et si leurs bords sont doux ;

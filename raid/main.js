@@ -43,7 +43,7 @@ window.Raid = window.Raid || {};
     const ecart = maintenant - avant;
     const dt = Math.min(0.1, ecart / 1000);
     avant = maintenant;
-    if (ecart > 250) Raid.Qualite.oublierLaMesure(); // (onglet caché, fenêtre réduite : cette image ne compte pas)
+    if (ecart > 5000) Raid.Qualite.oublierLaMesure(); // (le jeu était arrêté, par exemple onglet caché : cette image ne compte pas)
     if (E.consommer("pause")) enPause = !enPause;
     if (E.consommer("camera")) Raid.Scene.changerCamera();
     if (E.consommer("son")) Raid.Sons.basculer();
