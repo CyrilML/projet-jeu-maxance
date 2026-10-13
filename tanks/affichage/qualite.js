@@ -4,10 +4,10 @@
 // Un thermostat regarde la température et allume ou éteint le chauffage. Le régulateur, lui, regarde le TEMPS QUE DURE
 // CHAQUE IMAGE (pour un jeu fluide : 60 images par seconde, donc 16,7 millisecondes par image) :
 //   - toutes les 2 s, il fait la moyenne ;
-//   - plus de 20 ms (moins de 50 images par seconde) : ça rame → il DESCEND d'un niveau (moins de pixels, des ombres
+//   - plus de 25 ms (moins de 40 images par seconde) : ça rame → il DESCEND d'un niveau (moins de pixels, des ombres
 //     plus simples ou pas d'ombres, une vue plus courte, des soldats plus simples de loin…) ;
-//   - moins de 13 ms deux fois de suite : il y a de la marge → il REMONTE d'un niveau (plus beau) ;
-//   - il ne remonte pas tout de suite à un niveau qui ramait (sinon il ferait le yo-yo : beau, lent, moche, rapide…).
+//   - moins de 18,5 ms deux fois de suite : l'écran suit (60 images/s) → il REMONTE d'un niveau (plus beau) ;
+//   - il ne remonte pas avant 60 s à un niveau qui ramait (sinon il ferait le yo-yo : beau, lent, moche, rapide…).
 // Les 4 niveaux (0 = très léger … 3 = beau) sont dans config.js (qualite.niveaux). Touche G : choisir soi-même.
 // Il mesure aussi combien de temps prend chaque partie d'une image : les RÈGLES (la logique), le DESSIN 3D, le
 // TABLEAU DE BORD et le panneau SOUS LE CAPOT. Tout ça se lit sous le capot.
@@ -83,12 +83,12 @@ Tanks.Qualite = (function () {
       }
       return;
     }
-    // « rapide » : moins de 13 ms ; ou (écran à 60 images/s) moins de 18 ms avec un calcul qui laisse de la marge
-    const rapide = ms < R.rapide || (ms < R.rapide60 && mesures.calcul < R.calculMax);
+    // « rapide » : moins de 18,5 ms (un écran à 60 images/s donne 16,7 ms : c'est le mieux possible)
+    const rapide = ms < R.rapide;
     rapides = rapide ? rapides + 1 : 0;
     if (rapides >= R.foisRapide && niveau < N.length - 1 && horloge >= interditJusqua[niveau + 1]) {
       rapides = 0;
-      changer(niveau + 1, "il y a de la marge : " + ms.toFixed(1).replace(".", ",") + " ms par image, calcul " + mesures.calcul.toFixed(1).replace(".", ",") + " ms");
+      changer(niveau + 1, "ça va vite : " + ms.toFixed(1).replace(".", ",") + " ms par image (moins de " + String(R.rapide).replace(".", ",") + ", deux fois de suite)");
     }
   }
 

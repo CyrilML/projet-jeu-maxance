@@ -243,17 +243,15 @@ Tanks.CONFIG = {
   // ------------------------------------------------------------------ étape 72 : le RÉGULATEUR DE QUALITÉ
   // ✍️ « Ça rame trop, le jeu a des lags. Arrange ça. » Le régulateur regarde combien de temps dure chaque image
   // (60 images par seconde = 16,7 ms par image). Toutes les 2 s, il fait la moyenne :
-  //   - plus de 20 ms (moins de 50 images/s) : ça rame → il descend d'un niveau (moins beau, plus rapide) ;
-  //   - moins de 13 ms deux fois de suite → il remonte d'un niveau (plus beau).
-  //     (Sur un écran à 60 images/s, une image dure toujours au moins 16,7 ms : alors il remonte aussi quand l'image
-  //     dure moins de 18 ms ET que le calcul du jeu prend moins de 8 ms : il reste de la marge.)
+  //   - plus de 25 ms (moins de 40 images/s) : ça rame → il descend d'un niveau (moins beau, plus rapide) ;
+  //   - moins de 18,5 ms deux fois de suite → il remonte d'un niveau (plus beau). (Pas moins : sur un écran à 60 images/s,
+  //     une image dure TOUJOURS au moins 16,7 ms, même si l'ordinateur a fini plus tôt.)
   //   - s'il a dû descendre d'un niveau, il n'y remonte pas avant 60 s (sinon il ferait le yo-yo).
   // Touche G : choisir le niveau soi-même (0, 1, 2, 3), puis revenir en automatique.
   qualite: {
     depart: 1, // ✍️ on commence au niveau 1
     intervalle: 2, // s entre deux décisions
-    lent: 20, rapide: 13, // ms
-    rapide60: 18, calculMax: 8, // ms (la règle des écrans à 60 images/s)
+    lent: 25, rapide: 18.5, // ms
     foisRapide: 2, // combien de fois de suite « rapide » avant de remonter
     punition: 60, // s : on ne remonte pas tout de suite au niveau qui ramait
     capot: 0.5, // s entre deux mises à jour du panneau « sous le capot » (il coûte cher à écrire)

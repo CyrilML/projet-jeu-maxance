@@ -113,7 +113,7 @@ Tanks.SousLeCapot = (function () {
     const Q = Tanks.Qualite, M = Q.mesures, R = Q.reglages, L = Tanks.Scene.lod, D = Tanks.Decor.bilan, ms = (x) => virgule(x, 1) + " ms";
     l.push(["La vitesse du jeu (étape 72)"],
       ["qualité", Q.niveau + " / " + (C.qualite.niveaux.length - 1) + " « " + R.nom + " » · " + (Q.auto ? "automatique (G : choisir)" : "choisie à la main ✋ (G : changer)") + " · dernier changement : " + (M.derniere || "—")],
-      ["images", Math.round(M.ips) + " i/s = " + ms(M.ms) + " par image (moyenne sur " + C.qualite.intervalle + " s) · descend si > " + C.qualite.lent + " ms, monte si < " + C.qualite.rapide + " ms"],
+      ["images", Math.round(M.ips) + " i/s = " + ms(M.ms) + " par image (moyenne sur " + C.qualite.intervalle + " s) · descend si > " + C.qualite.lent + " ms, monte si < " + virgule(C.qualite.rapide, 1) + " ms deux fois de suite (pas de retour avant " + C.qualite.punition + " s à un niveau qui ramait)"],
       ["une image, c'est", "règles " + ms(M.logique) + " (" + virgule(M.pasParImage, 1) + " pas) + dessin " + ms(M.dessin) + " + tableau de bord " + ms(M.tableau) + " + ce panneau " + ms(M.capot) + " = calcul " + ms(M.calcul)],
       ["pas jetés", M.abandonnes + " dans les 2 dernières s · " + M.abandonnesTotal + " en tout (jamais plus de " + C.boucle.pasMaxParImage + " pas par image)"],
       ["réglages du niveau", "pixels ×" + virgule(R.pixels, 1) + " · ombres " + (R.ombres ? R.ombres + (R.douces ? " douces" : "") : "aucune") + " · vue " + R.vue + " m · décor " + Math.min(R.decor, R.vue) + " m · effets " + R.effets + " m"],

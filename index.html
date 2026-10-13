@@ -4154,7 +4154,7 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
           <h4>✅ Ce que tu peux vérifier</h4>
           <ul>
             <li>☐ Circuit « version 33 », rallye-raid « version 5 », tanks « version 10 ».</li>
-            <li>☐ Dans le rallye-raid, la touche G choisit le niveau à la main (auto → 0 → 1 → 2 → 3 → auto).</li>
+            <li>☐ Dans le rallye-raid et les tanks, la touche G choisit le niveau à la main (auto → 0 → 1 → 2 → 3 → auto).</li>
             <li>☐ Dans le circuit, en bas à gauche : « ⚙️ qualité n/3 · X i/s » (images par seconde).</li>
             <li>☐ Sur la ville et le grand parcours, le jeu reste fluide.</li>
             <li>☐ Sous le capot : « qualité automatique (étape 72) », et dans le journal : « ⚙️ Qualité … » quand le niveau change.</li>
@@ -4174,7 +4174,7 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <h3>🔍 Moins de détails au loin</h3>
       <p>Une voiture à 300 m fait 3 pixels à l'écran : inutile de dessiner ses rétroviseurs et ses boulons ! Au loin, le jeu cache les petits détails et ne garde que la caisse et les roues. Seules les voitures les plus proches sont dessinées en détail, et la tienne l'est toujours.</p>
       <h3>🔥 Le soudeur</h3>
-      <p>Pour la carte graphique, chaque pièce est un dessin à faire. Le soudeur colle ensemble toutes les pièces du décor qui ne bougent pas et qui ont la même allure (même image, même couleur). En ville, cela fait environ 300 dessins par image au lieu de 850, et dans le rallye-raid 200 au lieu de 440.</p>
+      <p>Pour la carte graphique, chaque pièce est un dessin à faire. Le soudeur colle ensemble toutes les pièces du décor qui ne bougent pas et qui ont la même allure (même image, même couleur). En ville, cela fait environ 300 dessins par image au lieu de 850, dans le rallye-raid 200 au lieu de 440, et dans les tanks 250 au lieu de 860. Dans les tanks, les règles calculent aussi presque 4 fois plus vite : chaque soldat ne regarde plus les 400 arbres un par un, mais seulement ceux de sa case (le quadrillage, <code>tanks/moteur/grille.js</code>).</p>
       <pre style="white-space: pre-wrap">AVANT :  trottoir + trottoir + trottoir + … (500 pièces) → 500 dessins
 APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <h3>🔎 Missions d'exploration</h3>
