@@ -1,21 +1,37 @@
-// 🏭 LES CHARS EN 3D : l'usine de tanks (étape 60)
+// 🏭 LES CHARS EN 3D : l'usine de tanks (étape 60, refaite à l'étape 70)
 //
 // ✍️ Trois vrais tanks modernes, construits avec leurs vraies mesures (longueur, largeur, hauteur de la caisse,
 // longueur du canon) et leur « signature » :
-//   - le LECLERC (France) : une tourelle carrée et haute, un gros coffre à l'arrière (le chargeur automatique) ;
-//   - le M1 ABRAMS (États-Unis) : une tourelle large et plate, très longue, avec des faces avant inclinées ;
-//   - le LEOPARD 2A6 (Allemagne) : la tourelle en FLÈCHE (deux blindages en pointe à l'avant).
-// Chaque tank : des CHENILLES (une boucle de patins, qui défile), 7 galets de roulement, une roue dentée à l'arrière
-// (le barbotin, qui entraîne la chenille) et une roue folle à l'avant, des jupes de protection sur les côtés, la
-// caisse avec son glacis (la plaque inclinée de l'avant), la tourelle avec sa trappe, son périscope, ses lance-fumigènes,
-// sa mitrailleuse et ses antennes, et le canon avec son manchon thermique.
-// Le CAMOUFLAGE est une image peinte au hasard avec les 4 couleurs de l'équipe (vert OTAN ou sable).
+//   - le LECLERC (France) : une tourelle anguleuse et haute, un long coffre à l'arrière (le chargeur automatique),
+//     6 galets par côté, les lance-grenades GALIX (9 tubes de chaque côté), deux fûts de carburant à l'arrière ;
+//   - le M1 ABRAMS (États-Unis) : une tourelle large et plate aux joues très inclinées, le « panier » à l'arrière de la
+//     tourelle, la coupole du chef avec sa grosse mitrailleuse, 7 galets, la grille de la turbine à l'arrière ;
+//   - le LEOPARD 2A6 (Allemagne) : la tourelle en FLÈCHE (deux blindages en coin à l'avant), le très long canon L55
+//     avec son évacuateur de fumée (le renflement au milieu du tube), le périscope du chef sur un mât, 7 galets.
+//
+// Étape 70 : « plus réalistes ». Chaque tank est maintenant fait comme un vrai :
+//   - la CHENILLE fait le tour des roues comme une vraie (en bas sur les galets, elle remonte vers la roue folle à
+//     l'avant et vers le barbotin à l'arrière, puis revient par-dessus en s'appuyant sur les rouleaux) ; ses patins, avec
+//     leurs semelles en caoutchouc, défilent tout autour de la boucle ;
+//   - les GALETS ont leur pneu, leur flasque, leur moyeu et leurs boulons ; le BARBOTIN a ses dents ;
+//   - la CAISSE a deux étages, comme un vrai tank : le bas, étroit, entre les chenilles (avec le glacis du bas), et le
+//     haut, large, au-dessus des chenilles (avec le grand glacis incliné) ; dessus : la trappe du pilote et ses
+//     périscopes, les phares avec leur grille de protection, les grilles du moteur, les crochets de remorquage ;
+//   - les JUPES : de grandes plaques le long des côtés, plus épaisses à l'avant (le blindage) ;
+//   - la TOURELLE a des faces inclinées (une forme « lissée » entre le contour du bas et celui, plus petit, du haut) ;
+//     dessus : les viseurs avec leurs vitres, les trappes, le CHEF DE CHAR qui sort la tête, la mitrailleuse, les
+//     lance-fumigènes, les antennes ;
+//   - le CANON s'amincit vers le bout, avec ses manchons thermiques, leurs colliers et le capteur de bouche.
+// Toutes les pièces d'une même matière sont SOUDÉES en un seul objet (voir outils3d.js) : il y a beaucoup plus de
+// détails, mais la carte graphique a MOINS d'objets à dessiner qu'avant.
 //
 // Tout est construit « nez vers x+ », posé au sol (y = 0). Ce fichier ne connaît pas les règles du jeu.
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Chars3D = (function () {
+  const O = Tanks.Outils3D;
+  const { boite, cylindre, couche, tube, cable, profil, contourComplet, lisse, souder, geometrieTeintee } = O;
   const cache = {};
   function camouflage(couleurs) {
     const cle = couleurs.join(",");
@@ -49,216 +65,549 @@ Tanks.Chars3D = (function () {
     t.repeat.set(0.25, 0.25);
     return (cache[cle] = t);
   }
+
+  // Les patins de la chenille, dessinés sur une petite toile (4 patins de 16 cm : la toile fait 64 cm de chenille).
+  // En bas de la toile : la face qui touche le sol (les semelles en caoutchouc) ; au milieu : la face intérieure (les
+  // guides, au centre, qui passent entre les deux moitiés des galets) ; en haut : la tranche (les connecteurs).
+  const PAS_TOILE = 0.64;
   function texturePatins() {
     if (cache.patins) return cache.patins;
     const c = document.createElement("canvas");
     c.width = 256;
-    c.height = 32;
+    c.height = 128;
     const ctx = c.getContext("2d");
-    ctx.fillStyle = "#26272a";
-    ctx.fillRect(0, 0, 256, 32);
-    for (let x = 0; x < 256; x += 16) {
-      ctx.fillStyle = "#3a3c40";
-      ctx.fillRect(x + 1, 2, 12, 28);
-      ctx.fillStyle = "#151618";
-      ctx.fillRect(x + 13, 0, 3, 32);
+    const r = (couleur, x, y, l, h) => ((ctx.fillStyle = couleur), ctx.fillRect(x, y, l, h));
+    for (let i = 0; i < 4; i++) {
+      const x = i * 64;
+      // la face qui touche le sol (lignes 64 à 128)
+      r("#37352f", x, 64, 64, 64);
+      r("#181818", x + 5, 69, 50, 22); // la semelle de gauche
+      r("#181818", x + 5, 101, 50, 22); // la semelle de droite
+      r("#4f4c45", x, 64, 64, 4); // les connecteurs du bord
+      r("#4f4c45", x, 124, 64, 4);
+      r("#4f4c45", x + 18, 92, 26, 8); // le connecteur du milieu
+      r("#0d0d0d", x + 58, 64, 6, 64); // l'espace entre deux patins
+      // la face intérieure (lignes 19 à 64)
+      r("#3b3934", x, 19, 64, 45);
+      r("#64615a", x + 18, 35, 28, 13); // le guide
+      r("#26251f", x + 58, 19, 6, 45);
+      // la tranche (lignes 0 à 19)
+      r("#1e1d1a", x, 0, 64, 19);
+      r("#55524b", x + 6, 3, 50, 13);
+      r("#242320", x + 28, 6, 7, 7); // l'écrou
+    }
+    let etat = 3;
+    const h = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
+    for (let i = 0; i < 1500; i++) { // la terre collée et l'usure (le métal brille là où il frotte)
+      ctx.fillStyle = h() < 0.7 ? "rgba(105,86,58," + h() * 0.35 + ")" : "rgba(150,150,145," + h() * 0.2 + ")";
+      ctx.fillRect(h() * 256, h() * 128, 2 + h() * 3, 2);
     }
     const t = new THREE.CanvasTexture(c);
-    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.wrapS = THREE.RepeatWrapping;
     t.colorSpace = THREE.SRGBColorSpace;
     return (cache.patins = t);
   }
+
   const mats = {};
   function materiaux() {
-    if (mats.metal) return mats;
-    mats.metal = new THREE.MeshStandardMaterial({ color: 0x3a3d40, metalness: 0.6, roughness: 0.5 });
-    mats.noir = new THREE.MeshStandardMaterial({ color: 0x18191b, metalness: 0.3, roughness: 0.7 });
-    mats.caoutchouc = new THREE.MeshStandardMaterial({ color: 0x1d1e20, roughness: 0.95 });
-    mats.verre = new THREE.MeshStandardMaterial({ color: 0x2a5068, metalness: 0.8, roughness: 0.1, emissive: 0x0a1a28 });
+    if (mats.teinte) return mats;
+    // (une seule matière pour toutes les petites pièces : chacune garde sa couleur, écrite dans ses sommets)
+    mats.teinte = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.72, metalness: 0.35 });
+    mats.verre = new THREE.MeshStandardMaterial({ color: 0x1d3a4c, metalness: 0.85, roughness: 0.08, emissive: 0x08141c });
+    mats.phare = new THREE.MeshStandardMaterial({ color: 0xe8eef0, metalness: 0.4, roughness: 0.1, emissive: 0xb8c4c8, emissiveIntensity: 0.35 });
     mats.brule = new THREE.MeshStandardMaterial({ color: 0x1c1a18, roughness: 1, metalness: 0.1 });
     return mats;
   }
-
-  const boite = (lx, ly, lz, m, x, y, z) => {
-    const b = new THREE.Mesh(new THREE.BoxGeometry(lx, ly, lz), m);
-    b.position.set(x, y, z);
-    b.castShadow = b.receiveShadow = true;
-    return b;
-  };
-  const cylindre = (r, l, m, n) => {
-    const c = new THREE.Mesh(new THREE.CylinderGeometry(r, r, l, n || 20), m);
-    c.castShadow = true;
-    return c;
-  };
-  // Un profil (vu de côté, points [x, y]) extrudé sur une largeur, centré en z = 0.
-  function profilExtrude(points, largeur, m, biseau) {
-    const s = new THREE.Shape(points.map(([x, y]) => new THREE.Vector2(x, y)));
-    const b = biseau || 0.05;
-    const g = new THREE.ExtrudeGeometry(s, { depth: largeur - 2 * b, bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 2 });
-    g.translate(0, 0, -(largeur - 2 * b) / 2);
-    const mesh = new THREE.Mesh(g, m);
-    mesh.castShadow = mesh.receiveShadow = true;
-    return mesh;
-  }
-  // Un contour vu de dessus (points [x, z], la moitié z ≥ 0 de l'avant vers l'arrière ; on fait le reflet),
-  // extrudé vers le haut de y0 à y0 + hauteur, avec des bords biseautés.
-  function dessusExtrude(moitie, y0, hauteur, m) {
-    const pts = moitie.concat(moitie.slice().reverse().map(([x, z]) => [x, -z]));
-    const s = new THREE.Shape(pts.map(([x, z]) => new THREE.Vector2(x, -z)));
-    const b = 0.08;
-    const g = new THREE.ExtrudeGeometry(s, { depth: hauteur - 2 * b, bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 2 });
-    g.rotateX(-Math.PI / 2); // (le contour était dans le plan x-y : on le couche, et l'épaisseur devient la hauteur)
-    g.translate(0, y0 + b, 0);
-    const mesh = new THREE.Mesh(g, m);
-    mesh.castShadow = mesh.receiveShadow = true;
-    return mesh;
-  }
-
-  // Les formes de tourelle (vue de dessus, la moitié gauche, de l'avant vers l'arrière) et leur hauteur.
-  const TOURELLES = {
-    leclerc: { moitie: [[2.05, 0.55], [1.75, 1.15], [-1.4, 1.25], [-2.55, 1.05]], h: 0.9, x: -0.2, coffre: true },
-    abrams: { moitie: [[2.35, 0.5], [1.15, 1.55], [-1.6, 1.6], [-2.9, 1.25]], h: 0.78, x: -0.45 },
-    leopard: { moitie: [[2.75, 0.12], [1.35, 1.1], [0.9, 1.38], [-1.7, 1.42], [-2.5, 1.1]], h: 0.85, x: -0.25 },
-  };
-
-  function fabriquer(fiche, equipe) {
-    const m = materiaux(), E = Tanks.CONFIG.equipes[equipe];
+  // Les matières de chaque équipe : la peinture camouflage et la couleur de la marque.
+  const parEquipe = {};
+  function matsEquipe(equipe) {
+    if (parEquipe[equipe]) return parEquipe[equipe];
+    const E = Tanks.CONFIG.equipes[equipe];
     const peinture = new THREE.MeshStandardMaterial({ map: camouflage(E.camouflage), roughness: 0.85, metalness: 0.15 });
-    const L = fiche.longueur, W = fiche.largeur, H = fiche.hauteur, tw = 0.66, zc = W / 2 - tw / 2 - 0.05;
+    peinture.userData.camo = true;
+    const vert = new THREE.Color(E.camouflage[0]).multiplyScalar(0.8);
+    return (parEquipe[equipe] = {
+      peinture,
+      marque: new THREE.MeshStandardMaterial({ color: E.marque, emissive: E.marque, emissiveIntensity: 0.25, side: THREE.DoubleSide }),
+      vert, // (la couleur de fond, sans taches, pour les roues et les petites pièces peintes)
+      vertFonce: vert.clone().multiplyScalar(0.7),
+    });
+  }
+
+  // Les couleurs des petites pièces.
+  const C = {
+    acier: 0x45474a, noir: 0x1c1d1f, caoutchouc: 0x151515, olive: 0x3f4630, peau: 0xc8956c, tissu: 0x4d5536,
+    casque: 0x3a4229, rouge: 0x7a1010, orange: 0xb06a12, bois: 0x6b4a2b, toile: 0x6d6748, sable: 0x8c7c58, fut: 0x3c4a2e,
+  };
+
+  // ------------------------------------------------------------------ les roues (une géométrie, réutilisée)
+  // Chaque roue est fabriquée une fois (par taille, par équipe et par côté) puis réutilisée : c'est la même
+  // « forme » dessinée plusieurs fois. Elles sont construites l'axe vers le haut (y) : on les couche ensuite.
+  const roues = {};
+  function geoGalet(r, larg, E, cote, acierNu) {
+    const cle = ["galet", r, larg, E.vert.getHex(), cote, acierNu].join(":");
+    if (roues[cle]) return roues[cle];
+    const m = materiaux(), o = cote; // (o : de quel côté est la face extérieure de la roue)
+    const p = [];
+    p.push(cylindre(r, r, larg * 0.98, m.teinte, 14, acierNu ? C.acier : C.caoutchouc)); // le pneu (ou la jante d'acier)
+    p.push(cylindre(r - 0.065, r - 0.065, larg + 0.012, m.teinte, 14, E.vert)); // la flasque
+    const coupe = cylindre(o > 0 ? r * 0.42 : r * 0.6, o > 0 ? r * 0.6 : r * 0.42, 0.05, m.teinte, 10, E.vertFonce); // le creux
+    coupe.position.y = o * (larg / 2 + 0.03);
+    p.push(coupe);
+    const moyeu = cylindre(0.1, 0.12, 0.08, m.teinte, 8, C.noir);
+    moyeu.position.y = o * (larg / 2 + 0.08);
+    p.push(moyeu);
+    for (let k = 0; k < 5; k++) { // les boulons
+      const a = (k / 5) * Math.PI * 2;
+      p.push(boite(0.04, 0.03, 0.04, m.teinte, Math.cos(a) * r * 0.7, o * (larg / 2 + 0.015), Math.sin(a) * r * 0.7, C.acier));
+    }
+    return (roues[cle] = geometrieTeintee(p, m.teinte));
+  }
+  function geoBarbotin(r, larg, E, cote) {
+    const cle = ["barbotin", r, larg, E.vert.getHex(), cote].join(":");
+    if (roues[cle]) return roues[cle];
+    const m = materiaux(), o = cote, n = 12, dent = new THREE.Shape();
+    for (let k = 0; k < n; k++) { // une roue dentée : 12 dents
+      const a = (k / n) * Math.PI * 2, d = Math.PI / n;
+      const pt = (rr, aa) => [Math.cos(aa) * rr, Math.sin(aa) * rr];
+      const pts = [pt(r - 0.02, a - d * 0.9), pt(r + 0.07, a - d * 0.35), pt(r + 0.07, a + d * 0.35), pt(r - 0.02, a + d * 0.9)];
+      pts.forEach(([x, y], i) => (k === 0 && i === 0 ? dent.moveTo(x, y) : dent.lineTo(x, y)));
+    }
+    const p = [];
+    for (const s of [-1, 1]) {
+      const g = new THREE.ExtrudeGeometry(dent, { depth: 0.07, bevelEnabled: false });
+      g.translate(0, 0, -0.035);
+      g.rotateX(-Math.PI / 2);
+      const couronne = O.piece(g, m.teinte, 0, s * (larg / 2 - 0.06), 0, C.acier);
+      p.push(couronne);
+    }
+    p.push(cylindre(r - 0.06, r - 0.06, larg - 0.1, m.teinte, 16, E.vert));
+    const moyeu = cylindre(o > 0 ? 0.13 : 0.2, o > 0 ? 0.2 : 0.13, 0.12, m.teinte, 12, E.vertFonce);
+    moyeu.position.y = o * (larg / 2 + 0.02);
+    p.push(moyeu);
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2;
+      p.push(boite(0.035, 0.03, 0.035, m.teinte, Math.cos(a) * 0.24, o * (larg / 2 - 0.005), Math.sin(a) * 0.24, C.acier));
+    }
+    return (roues[cle] = geometrieTeintee(p, m.teinte));
+  }
+
+  // ------------------------------------------------------------------ la chenille
+  // La boucle : on prend les cercles des roues, et on « tend un élastique » autour (l'enveloppe convexe) ;
+  // c'est exactement ce que fait une chenille tendue. Puis on lui donne une épaisseur et une largeur.
+  function enveloppe(cercles) {
+    const pts = [];
+    for (const c of cercles) for (let k = 0; k < 36; k++) pts.push([c.x + Math.cos((k / 36) * Math.PI * 2) * c.r, c.y + Math.sin((k / 36) * Math.PI * 2) * c.r]);
+    pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const croix = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const bas = [], haut = [];
+    for (const p of pts) {
+      while (bas.length >= 2 && croix(bas[bas.length - 2], bas[bas.length - 1], p) <= 0) bas.pop();
+      bas.push(p);
+    }
+    for (let i = pts.length - 1; i >= 0; i--) {
+      const p = pts[i];
+      while (haut.length >= 2 && croix(haut[haut.length - 2], haut[haut.length - 1], p) <= 0) haut.pop();
+      haut.push(p);
+    }
+    return bas.slice(0, -1).concat(haut.slice(0, -1)); // (dans le sens inverse des aiguilles d'une montre : en bas, on va vers l'avant)
+  }
+  function geoChenille(cercles, ep, larg) {
+    const int = enveloppe(cercles), n = int.length;
+    const nrm = int.map((p, i) => {
+      const a = int[(i - 1 + n) % n], b = int[(i + 1) % n], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1;
+      return [dy / l, -dx / l]; // (vers l'extérieur de la boucle)
+    });
+    const ext = int.map((p, i) => [p[0] + nrm[i][0] * ep, p[1] + nrm[i][1] * ep]);
+    const s = [0];
+    for (let i = 1; i <= n; i++) s.push(s[i - 1] + Math.hypot(ext[i % n][0] - ext[i - 1][0], ext[i % n][1] - ext[i - 1][1]));
+    const pos = [], nor = [], uv = [], idx = [];
+    const bande = (A, B, nA, nB, vA, vB) => { // une bande de quadrilatères tout autour de la boucle
+      const d = pos.length / 3;
+      for (let i = 0; i <= n; i++) {
+        const k = i % n, u = s[i] / PAS_TOILE;
+        const a = A(k), b = B(k), na = nA(k), nb = nB(k);
+        pos.push(a[0], a[1], a[2], b[0], b[1], b[2]);
+        nor.push(na[0], na[1], na[2], nb[0], nb[1], nb[2]);
+        uv.push(u, vA, u, vB);
+      }
+      for (let i = 0; i < n; i++) {
+        const a = d + i * 2;
+        idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3);
+      }
+    };
+    const w = larg / 2;
+    bande((k) => [ext[k][0], ext[k][1], -w], (k) => [ext[k][0], ext[k][1], w], (k) => [nrm[k][0], nrm[k][1], 0], (k) => [nrm[k][0], nrm[k][1], 0], 0, 0.5); // dehors
+    bande((k) => [int[k][0], int[k][1], w], (k) => [int[k][0], int[k][1], -w], (k) => [-nrm[k][0], -nrm[k][1], 0], (k) => [-nrm[k][0], -nrm[k][1], 0], 0.5, 0.85); // dedans
+    bande((k) => [ext[k][0], ext[k][1], w], (k) => [int[k][0], int[k][1], w], () => [0, 0, 1], () => [0, 0, 1], 0.85, 1); // la tranche z+
+    bande((k) => [int[k][0], int[k][1], -w], (k) => [ext[k][0], ext[k][1], -w], () => [0, 0, -1], () => [0, 0, -1], 0.85, 1); // la tranche z-
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+    g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx);
+    return g;
+  }
+
+  // ------------------------------------------------------------------ les fiches de construction
+  // (en m ; x vers l'avant, z vers la droite ; la tourelle est décrite autour de son centre de rotation)
+  // tourelle.bas / tourelle.haut : la moitié du contour (z ≥ 0), vue de dessus, de l'avant vers l'arrière.
+  const TYPES = {
+    leclerc: {
+      galets: 6, rG: 0.36, rouleaux: 2, hT: 0.85, glacis: 1.5, nez: 1.24, xT: -0.15, pilote: -0.8, echappement: "gauche", futs: true,
+      tourelle: {
+        bas: [[1.55, 0], [1.55, 0.34], [2.02, 0.4], [1.97, 1.2], [1.62, 1.33], [-1.3, 1.33], [-1.5, 1.1], [-3.0, 1.05], [-3.1, 0.82], [-3.1, 0]],
+        haut: [[1.55, 0], [1.55, 0.34], [1.93, 0.4], [1.88, 1.12], [1.56, 1.25], [-1.28, 1.26], [-1.47, 1.04], [-2.94, 0.99], [-3.03, 0.77], [-3.03, 0]],
+        pivot: 1.58, yPivot: 0.43,
+      },
+    },
+    abrams: {
+      galets: 7, rG: 0.33, rouleaux: 3, hT: 0.78, glacis: 2.0, nez: 1.2, xT: -0.5, pilote: 0, echappement: "arriere",
+      tourelle: {
+        bas: [[1.78, 0], [1.78, 0.5], [2.6, 0.58], [1.3, 1.72], [-1.6, 1.76], [-1.9, 1.56], [-3.05, 1.5], [-3.1, 0]],
+        haut: [[1.78, 0], [1.78, 0.5], [2.18, 0.55], [1.12, 1.56], [-1.6, 1.62], [-1.86, 1.45], [-2.97, 1.4], [-3.02, 0]],
+        pivot: 1.8, yPivot: 0.4,
+      },
+    },
+    leopard: {
+      galets: 7, rG: 0.35, rouleaux: 4, hT: 0.86, glacis: 1.75, nez: 1.26, xT: -0.3, pilote: 0.8, echappement: "cotes",
+      tourelle: {
+        bas: [[1.5, 0], [1.5, 0.37], [2.8, 0.42], [1.15, 1.43], [-1.7, 1.46], [-2.0, 1.22], [-2.78, 1.16], [-2.84, 0]],
+        haut: [[1.5, 0], [1.5, 0.37], [1.78, 0.41], [0.86, 1.35], [-1.7, 1.38], [-1.95, 1.15], [-2.72, 1.1], [-2.78, 0]],
+        pivot: 1.52, yPivot: 0.44,
+      },
+    },
+  };
+  // (la largeur de la tourelle à une abscisse x, d'après son contour du bas : pour poser des pièces sur ses flancs)
+  function largeurA(moitie, x) {
+    for (let i = 0; i < moitie.length - 1; i++) {
+      const [x1, z1] = moitie[i], [x2, z2] = moitie[i + 1];
+      if ((x <= x1 && x >= x2) || (x >= x1 && x <= x2)) return x1 === x2 ? Math.max(z1, z2) : z1 + ((x - x1) / (x2 - x1)) * (z2 - z1);
+    }
+    return moitie[0][1];
+  }
+
+  // Le chef de char qui sort la tête par sa trappe (avec son casque et ses écouteurs), et le couvercle ouvert.
+  function chef(groupe, m, x, y, z) {
+    groupe.add(cylindre(0.36, 0.36, 0.1, m.teinte, 16, C.noir).translateX(x).translateY(y + 0.05).translateZ(z)); // l'anneau de la trappe
+    const corps = O.piece(new THREE.CapsuleGeometry(0.2, 0.25, 3, 10), m.teinte, x, y + 0.2, z, C.tissu);
+    corps.scale.set(0.8, 1, 1.15);
+    groupe.add(corps);
+    groupe.add(O.piece(new THREE.SphereGeometry(0.11, 10, 8), m.teinte, x + 0.01, y + 0.6, z, C.peau)); // la tête
+    const casque = O.piece(new THREE.SphereGeometry(0.135, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.55), m.teinte, x - 0.01, y + 0.64, z, C.casque);
+    casque.scale.set(1.08, 0.95, 1.05);
+    groupe.add(casque);
+    for (const s of [-1, 1]) groupe.add(boite(0.07, 0.08, 0.04, m.teinte, x, y + 0.6, z + s * 0.12, C.noir)); // les écouteurs
+    groupe.add(boite(0.03, 0.04, 0.16, m.teinte, x + 0.11, y + 0.68, z, C.noir)); // les jumelles de vision nocturne, relevées
+    for (const s of [-1, 1]) groupe.add(tube([x + 0.02, y + 0.38, z + s * 0.22], [x + 0.25, y + 0.14, z + s * 0.2], 0.05, m.teinte, 6, C.tissu)); // les bras, posés sur le bord
+    const couvercle = cylindre(0.36, 0.36, 0.06, m.teinte, 16, C.olive); // le couvercle, ouvert, debout derrière lui
+    couvercle.rotation.z = Math.PI / 2 - 0.25;
+    couvercle.position.set(x - 0.42, y + 0.36, z);
+    groupe.add(couvercle);
+  }
+  // Une trappe fermée (avec sa charnière et sa poignée).
+  function trappe(groupe, mat, m, x, y, z, r) {
+    groupe.add(cylindre(r + 0.04, r + 0.06, 0.08, m.teinte, 16, C.noir).translateX(x).translateY(y + 0.04).translateZ(z));
+    groupe.add(cylindre(r, r, 0.07, mat, 16).translateX(x).translateY(y + 0.1).translateZ(z));
+    groupe.add(boite(0.08, 0.06, r * 1.2, m.teinte, x - r, y + 0.12, z, C.acier)); // la charnière
+    groupe.add(boite(0.04, 0.04, 0.2, m.teinte, x + r * 0.5, y + 0.16, z, C.acier)); // la poignée
+  }
+  // Une mitrailleuse (sur son affût) : le boîtier, le canon, la caisse de munitions.
+  function mitrailleuse(groupe, m, x, y, z, longueur, lourde) {
+    const e = lourde ? 1.4 : 1;
+    groupe.add(tube([x - 0.2, y, z], [x, y + 0.25, z], 0.03, m.teinte, 6, C.acier)); // l'affût
+    groupe.add(boite(0.55 * e, 0.12 * e, 0.11 * e, m.teinte, x + 0.05, y + 0.32, z, C.noir));
+    groupe.add(couche(cylindre(0.025 * e, 0.025 * e, longueur, m.teinte, 6, C.noir), "x", x + 0.3 + longueur / 2, y + 0.33, z));
+    if (lourde) groupe.add(couche(cylindre(0.045, 0.045, 0.45, m.teinte, 8, C.noir), "x", x + 0.55, y + 0.33, z)); // le manchon perforé
+    groupe.add(boite(0.2, 0.16, 0.14, m.teinte, x, y + 0.26, z - 0.14 * e, C.olive)); // la caisse de munitions
+    groupe.add(boite(0.06, 0.12, 0.12, m.teinte, x - 0.22 * e, y + 0.32, z, C.noir)); // les poignées
+  }
+  // Un bloc de lance-fumigènes : des tubes, penchés vers l'extérieur et vers le haut.
+  function fumigenes(groupe, m, x, y, z, cote, colonnes, rangees, versAvant) {
+    const bloc = new THREE.Group();
+    for (let i = 0; i < colonnes; i++) {
+      for (let j = 0; j < rangees; j++) {
+        const t = cylindre(0.055, 0.055, 0.3, m.teinte, 7, C.noir);
+        t.position.set(i * 0.13, j * 0.12, 0);
+        bloc.add(t);
+      }
+    }
+    bloc.add(boite(colonnes * 0.13 + 0.05, 0.05, 0.14, m.teinte, (colonnes - 1) * 0.065, -0.16, 0, C.olive));
+    bloc.rotation.set(cote * -0.9, versAvant ? -0.5 * cote : 0, versAvant ? -0.5 : 0, "YXZ");
+    bloc.position.set(x, y, z);
+    bloc.updateMatrixWorld(true);
+    for (const t of [...bloc.children]) { // (on remet les tubes dans le groupe, à leur place, pour pouvoir les souder)
+      t.applyMatrix4(bloc.matrix);
+      groupe.add(t);
+    }
+  }
+
+  // ------------------------------------------------------------------ le tank
+  function fabriquer(fiche, equipe) {
+    const m = materiaux(), E = matsEquipe(equipe), P = E.peinture;
+    const T = TYPES[fiche.id] || TYPES.leclerc, F = T.tourelle;
+    const L = fiche.longueur, W = fiche.largeur, H = fiche.hauteur, pont = H - T.hT;
+    const tw = 0.64, ep = 0.09, zc = W / 2 - tw / 2 - 0.12; // la largeur et l'épaisseur des chenilles, et leur place
+    const zJupe = zc + tw / 2 + 0.05, yFlanc = 1.2; // les jupes ; le dessous des flancs de la caisse (au-dessus des chenilles)
     const g = new THREE.Group(), caisse = new THREE.Group();
     g.add(caisse);
-    // 1. Les chenilles : une boucle (un « stade » vu de côté, creux), qui fait le tour des roues.
+
+    // 1. Le train de roulement : galets, barbotin (à l'arrière), roue folle (à l'avant), rouleaux, et la chenille.
+    const xAr = -L / 2 + 0.47, yS = 0.74, rS = 0.32, xAv = L / 2 - 0.42, yI = 0.7, rI = 0.3;
+    const rG = T.rG, yG = rG + ep, x0 = xAr + 0.78, x1 = xAv - 0.72;
+    const xsGalets = [];
+    for (let k = 0; k < T.galets; k++) xsGalets.push(x0 + (k / (T.galets - 1)) * (x1 - x0));
+    const xsRouleaux = [];
+    for (let k = 0; k < T.rouleaux; k++) xsRouleaux.push(x0 + 0.4 + ((k + 0.5) / T.rouleaux) * (x1 - x0 - 0.8));
+    const rR = 0.08, yR = 1.0 - rR;
+    const cercles = xsGalets.map((x) => ({ x, y: yG, r: rG })).concat([{ x: xAr, y: yS, r: rS }, { x: xAv, y: yI, r: rI }], xsRouleaux.map((x) => ({ x, y: yR, r: rR })));
+    const geoBoucle = geoChenille(cercles, ep, tw);
     const patins = texturePatins();
-    const chenilles = [], roues = [];
+    const chenilles = [], lesRoues = [];
     for (const cote of [-1, 1]) {
-      const exterieur = new THREE.Shape(), r = 0.47, x0 = -L / 2 + 0.45, x1 = L / 2 - 0.3;
-      exterieur.absarc(x1, r + 0.02, r, -Math.PI / 2, Math.PI / 2, false);
-      exterieur.lineTo(x0, 1.0);
-      exterieur.absarc(x0, r + 0.02, r * 0.95, Math.PI / 2, (3 * Math.PI) / 2, false);
-      exterieur.closePath();
-      const trou = new THREE.Path();
-      trou.absarc(x1, r + 0.02, r - 0.11, -Math.PI / 2, Math.PI / 2, false);
-      trou.lineTo(x0, 1.0 - 0.11);
-      trou.absarc(x0, r + 0.02, r * 0.95 - 0.11, Math.PI / 2, (3 * Math.PI) / 2, false);
-      exterieur.holes.push(trou);
-      const geo = new THREE.ExtrudeGeometry(exterieur, { depth: tw, bevelEnabled: false, curveSegments: 10 });
-      geo.translate(0, 0, -tw / 2);
-      const mat = new THREE.MeshStandardMaterial({ map: patins.clone(), roughness: 0.9, metalness: 0.4 });
+      const mat = new THREE.MeshStandardMaterial({ map: patins.clone(), roughness: 0.82, metalness: 0.45, side: THREE.DoubleSide });
       mat.map.needsUpdate = true;
-      mat.map.repeat.set(0.9, 0.9);
-      const chenille = new THREE.Mesh(geo, mat);
+      const chenille = new THREE.Mesh(geoBoucle, mat);
       chenille.position.z = cote * zc;
       chenille.castShadow = chenille.receiveShadow = true;
       g.add(chenille);
       chenilles.push(mat);
-      // les galets (7), le barbotin (à l'arrière, denté), la roue folle (à l'avant), les rouleaux du haut
-      const n = 7;
-      for (let k = 0; k < n; k++) {
-        const x = x0 + 0.35 + (k / (n - 1)) * (x1 - x0 - 0.75);
-        const galet = cylindre(0.36, tw * 0.8, m.metal, 18);
-        galet.rotation.x = Math.PI / 2;
-        galet.position.set(x, 0.42, cote * zc);
-        const moyeu = cylindre(0.13, tw * 0.85, m.noir, 10);
-        moyeu.rotation.x = Math.PI / 2;
-        moyeu.position.copy(galet.position);
-        g.add(galet, moyeu);
-        roues.push(galet);
-      }
-      for (const [x, rr] of [[x0, 0.4], [x1, 0.38]]) {
-        const roue = cylindre(rr, tw * 0.7, m.metal, 12);
+      const ajouterRoue = (geo, x, y, r) => {
+        const roue = new THREE.Mesh(geo, m.teinte);
         roue.rotation.x = Math.PI / 2;
-        roue.position.set(x, 0.5, cote * zc);
+        roue.position.set(x, y, cote * zc);
+        roue.castShadow = false; // (cachées derrière les jupes : leur ombre ne se verrait pas, on ne la calcule pas)
+        roue.receiveShadow = true;
+        roue.userData.rayon = r;
         g.add(roue);
-        roues.push(roue);
-      }
-      for (const x of [x0 + 1.4, 0, x1 - 1.4]) {
-        const rouleau = cylindre(0.1, tw * 0.6, m.noir, 10);
-        rouleau.rotation.x = Math.PI / 2;
-        rouleau.position.set(x, 0.92, cote * zc);
-        g.add(rouleau);
-      }
-      // la jupe de protection (elle cache le haut de la chenille), en deux parties
-      const jupe = boite(L * 0.82, 0.55, 0.07, peinture, 0.1, 1.05, cote * (W / 2 + 0.02));
-      jupe.rotation.x = cote * 0.06;
-      caisse.add(jupe);
-      caisse.add(boite(L * 0.82, 0.05, 0.08, m.noir, 0.1, 0.79, cote * (W / 2 + 0.03))); // le bas caoutchouté
+        lesRoues.push(roue);
+      };
+      for (const x of xsGalets) ajouterRoue(geoGalet(rG, tw * 0.82, E, cote), x, yG, rG);
+      ajouterRoue(geoBarbotin(rS, tw * 0.9, E, cote), xAr, yS, rS);
+      ajouterRoue(geoGalet(rI, tw * 0.78, E, cote, true), xAv, yI, rI);
+      for (const x of xsRouleaux) caisse.add(couche(cylindre(rR, rR, tw * 0.5, m.teinte, 10, C.acier), "z", x, yR, cote * zc));
+      // les bras de suspension (on les voit sous les jupes) et les garde-boue en caoutchouc à l'avant
+      for (const x of xsGalets) caisse.add(tube([x, yG, cote * (zc - tw * 0.45)], [x + 0.35, yG + 0.2, cote * (zc - tw * 0.5 - 0.05)], 0.06, m.teinte, 6, E.vertFonce));
+      caisse.add(boite(0.04, 0.5, tw + 0.05, m.teinte, L / 2 + 0.03, yFlanc - 0.18, cote * zc, C.caoutchouc));
     }
-    // 2. La caisse : le dessous (entre les chenilles), puis le dessus avec le glacis incliné de l'avant.
-    caisse.add(boite(L - 0.9, 0.7, W - 2 * tw - 0.1, m.noir, 0, 0.8, 0));
-    caisse.add(profilExtrude([[-L / 2, 1.0], [-L / 2 + 0.1, 1.62], [L / 2 - 1.75, 1.66], [L / 2, 1.22], [L / 2 - 0.15, 0.85], [L / 2 - 0.8, 0.75], [-L / 2 + 0.3, 0.8]], W, peinture, 0.06));
-    // les phares (de petites lampes sous le glacis), les crochets de remorquage, la plaque arrière (les moteurs)
+
+    // 2. La caisse : en bas, entre les chenilles (avec le glacis du bas) ; en haut, sur toute la largeur (avec le grand glacis).
+    const lBas = 2 * (zc - tw / 2 - 0.03);
+    caisse.add(profil([[-L / 2 + 0.05, yFlanc + 0.02], [-L / 2 + 0.05, 0.75], [-L / 2 + 0.38, 0.5], [L / 2 - 1.05, 0.46], [L / 2 - 0.1, yFlanc + 0.02]], lBas, P, 0.04));
+    const lHaut = 2 * zJupe - 0.08, xG = L / 2 - T.glacis;
+    caisse.add(profil([[-L / 2, yFlanc], [-L / 2, pont - 0.1], [-L / 2 + 0.1, pont], [xG, pont], [L / 2 - 0.08, T.nez], [L / 2, T.nez - 0.1], [L / 2 - 0.04, yFlanc]], lHaut, P, 0.05));
+    const yGlacis = (x) => pont + ((x - xG) / (L / 2 - 0.08 - xG)) * (T.nez - pont); // (la hauteur du glacis à l'abscisse x)
+    const penteGlacis = Math.atan2(pont - T.nez, L / 2 - 0.08 - xG);
+    // la trappe du pilote (sur le glacis ou juste derrière) et ses 3 périscopes
+    const xP = xG + 0.15;
+    trappe(caisse, P, m, xP - 0.25, pont, T.pilote, 0.3);
+    for (const dz of [-0.22, 0, 0.22]) {
+      const peri = boite(0.1, 0.1, 0.17, m.verre, xP + 0.12, yGlacis(xP + 0.12) + 0.05, T.pilote + dz);
+      peri.rotation.z = -penteGlacis;
+      caisse.add(peri);
+      caisse.add(boite(0.14, 0.06, 0.2, m.teinte, xP + 0.12, yGlacis(xP + 0.12) + 0.01, T.pilote + dz, C.noir));
+    }
+    // les phares (dans leur boîtier, avec une grille de protection) et les feux de position
     for (const cote of [-1, 1]) {
-      caisse.add(boite(0.08, 0.12, 0.2, m.verre, L / 2 - 0.05, 1.12, cote * (W / 2 - 0.4)));
-      caisse.add(boite(0.15, 0.1, 0.1, m.noir, L / 2 - 0.12, 0.85, cote * 0.6));
+      const z = cote * (zJupe - 0.32), x = L / 2 - 0.42, y = yGlacis(x);
+      caisse.add(boite(0.22, 0.2, 0.36, m.teinte, x, y + 0.1, z, C.noir));
+      for (const dz of [-0.09, 0.09]) caisse.add(couche(cylindre(0.065, 0.065, 0.03, m.phare, 12), "x", x + 0.12, y + 0.12, z + dz));
+      caisse.add(cable([[x - 0.08, y + 0.02, z - 0.22], [x + 0.2, y + 0.25, z - 0.2], [x + 0.2, y + 0.25, z + 0.2], [x - 0.08, y + 0.02, z + 0.22]], 0.015, m.teinte, C.acier, 12)); // la grille
+      caisse.add(boite(0.05, 0.06, 0.08, m.teinte, L / 2 - 0.02, T.nez - 0.05, cote * (zJupe - 0.12), C.orange)); // le clignotant
+      caisse.add(boite(0.18, 0.12, 0.1, m.teinte, L / 2 - 0.25, 0.92, cote * 0.55, C.acier)); // les crochets de remorquage
+      caisse.add(boite(0.2, 0.12, 0.1, m.teinte, -L / 2 - 0.05, 1.0, cote * 0.6, C.acier));
+      caisse.add(boite(0.03, 0.1, 0.22, m.teinte, -L / 2 - 0.02, pont - 0.2, cote * (zJupe - 0.2), C.rouge)); // les feux arrière
     }
-    for (let k = 0; k < 6; k++) caisse.add(boite(0.9, 0.03, 0.08, m.noir, -L / 2 + 1.1, 1.66, -0.9 + k * 0.36)); // la grille du moteur
-    caisse.add(boite(0.25, 0.35, W * 0.8, m.noir, -L / 2 - 0.05, 1.3, 0)); // la plaque arrière
-    // 3. La tourelle (elle tourne) : sa forme, et dessus la trappe, le périscope, la mitrailleuse, les antennes.
-    const fo = TOURELLES[fiche.id];
+    // le câble de remorquage, en boucle sur le glacis (Leopard) ou le long de l'arrière
+    if (fiche.id === "leopard") {
+      const xa = xG + 0.55, xb = L / 2 - 0.35;
+      caisse.add(cable([[xa, yGlacis(xa) + 0.04, -1.1], [xb, yGlacis(xb) + 0.04, -0.8], [xb + 0.05, yGlacis(xb + 0.05) + 0.04, 0], [xb, yGlacis(xb) + 0.04, 0.8], [xa, yGlacis(xa) + 0.04, 1.1]], 0.035, m.teinte, C.acier, 30));
+    } else {
+      for (const cote of [-1, 1]) caisse.add(cable([[-L / 2 + 0.3, pont + 0.04, cote * (zJupe - 0.25)], [-L / 2 + 1.4, pont + 0.04, cote * (zJupe - 0.2)], [-L / 2 + 2.6, pont + 0.04, cote * (zJupe - 0.25)]], 0.035, m.teinte, C.acier, 18));
+    }
+    // les outils sur les ailes : la pelle, la pioche, la barre à mine
+    for (const cote of [-1, 1]) {
+      const z = cote * (zJupe - 0.18), xo = 0.4 * cote;
+      caisse.add(couche(cylindre(0.025, 0.025, 1.2, m.teinte, 6, C.bois), "x", xo, pont + 0.04, z));
+      caisse.add(boite(0.28, 0.025, 0.2, m.teinte, xo + 0.72, pont + 0.03, z, C.acier));
+      caisse.add(couche(cylindre(0.02, 0.02, 1.5, m.teinte, 6, C.noir), "x", xo - 0.2, pont + 0.03, z - cote * 0.1));
+      for (const dx of [-0.4, 0.4]) caisse.add(boite(0.05, 0.06, 0.16, m.teinte, xo + dx, pont + 0.04, z - cote * 0.05, C.olive)); // les attaches
+    }
+    // les grilles du moteur (à l'arrière du pont) : un fond sombre et des lames
+    for (const cote of [-1, 1]) {
+      const xg = -L / 2 + 0.95, zg = cote * 0.75;
+      caisse.add(boite(1.4, 0.02, 1.0, m.teinte, xg, pont + 0.005, zg, C.noir));
+      for (let k = 0; k < 8; k++) caisse.add(boite(0.08, 0.04, 0.96, P, xg - 0.6 + k * 0.172, pont + 0.025, zg));
+    }
+    caisse.add(boite(0.8, 0.05, 0.6, P, -L / 2 + 2.2, pont + 0.02, 0)); // une trappe de visite du moteur
+    for (const [dx, dz] of [[-0.35, -0.25], [-0.35, 0.25], [0.35, -0.25], [0.35, 0.25]]) caisse.add(boite(0.05, 0.03, 0.05, m.teinte, -L / 2 + 2.2 + dx, pont + 0.055, dz, C.acier));
+    // la plaque arrière, et les échappements
+    caisse.add(boite(0.1, pont - yFlanc - 0.1, lHaut - 0.3, P, -L / 2 - 0.04, (pont + yFlanc) / 2 - 0.05, 0));
+    const grilleEchappement = (x, y, z, l, h, larg, axe) => {
+      caisse.add(boite(axe === "x" ? 0.06 : larg, h, axe === "x" ? larg : 0.06, m.teinte, x, y, z, C.noir));
+      for (let k = 0; k < 6; k++) caisse.add(boite(axe === "x" ? 0.08 : larg - 0.04, 0.025, axe === "x" ? larg - 0.04 : 0.08, m.teinte, x + (axe === "x" ? -0.02 : 0), y - h / 2 + 0.05 + (k * (h - 0.1)) / 5, z + (axe === "x" ? 0 : 0.02 * Math.sign(z)), C.acier));
+    };
+    if (T.echappement === "arriere") grilleEchappement(-L / 2 - 0.1, pont - 0.3, 0, 0, 0.45, 1.5, "x"); // (la turbine de l'Abrams souffle par l'arrière)
+    else if (T.echappement === "gauche") grilleEchappement(-L / 2 - 0.1, pont - 0.32, -0.95, 0, 0.36, 0.7, "x");
+    else for (const cote of [-1, 1]) grilleEchappement(-L / 2 - 0.1, pont - 0.32, cote * 1.0, 0, 0.36, 0.55, "x");
+    if (T.futs) { // (le Leclerc peut porter deux fûts de carburant en plus, à l'arrière)
+      for (const cote of [-1, 1]) {
+        caisse.add(couche(cylindre(0.29, 0.29, 0.95, m.teinte, 14, C.fut), "z", -L / 2 - 0.36, pont - 0.15, cote * 0.58));
+        for (const dz of [-0.3, 0.3]) caisse.add(couche(cylindre(0.3, 0.3, 0.03, m.teinte, 14, C.noir), "z", -L / 2 - 0.36, pont - 0.15, cote * 0.58 + dz));
+      }
+      caisse.add(boite(0.12, 0.1, 2.2, m.teinte, -L / 2 - 0.12, pont - 0.42, 0, C.noir)); // leur support
+    }
+    // 3. Les jupes : des plaques le long des côtés (les deux premières sont un vrai blindage, plus épais).
+    const xJ0 = -L / 2 + 0.35, xJ1 = L / 2 - 0.22, nJ = Math.round((xJ1 - xJ0) / 0.95), lJ = (xJ1 - xJ0) / nJ;
+    for (const cote of [-1, 1]) {
+      for (let k = 0; k < nJ; k++) {
+        const avant = k >= nJ - 2, e = avant ? 0.11 : 0.045, xa = xJ0 + k * lJ + 0.015, xb = xJ0 + (k + 1) * lJ - 0.015;
+        const bas = avant ? 0.56 : 0.6, hautJ = pont - 0.04;
+        const pts = [[xa, bas], [xb, bas], [xb, hautJ], [xa, hautJ]];
+        if (k === nJ - 1) pts.splice(1, 1, [xb - 0.25, bas], [xb, bas + 0.32]); // (le nez de la jupe est coupé en biais)
+        if (fiche.id === "leopard" && !avant) { // (les jupes du Leopard ont le bas « en vagues »)
+          pts.splice(0, 2, [xa, bas]);
+          for (let q = 1; q <= 6; q++) pts.splice(q, 0, [xa + ((xb - xa) * q) / 6, bas + (q % 2 ? 0.08 : 0)]);
+        }
+        const plaque = profil(pts, e, P, 0.012);
+        plaque.position.z = cote * (zJupe + e / 2);
+        caisse.add(plaque);
+        for (const dx of [0.12, lJ / 2, lJ - 0.12]) caisse.add(boite(0.05, 0.05, 0.03, m.teinte, xa + dx, hautJ - 0.08, cote * (zJupe + e + 0.005), C.acier)); // les boulons
+        if (!avant && fiche.id !== "leopard") caisse.add(boite(xb - xa, 0.12, 0.02, m.teinte, (xa + xb) / 2, bas - 0.05, cote * (zJupe + e / 2), C.caoutchouc)); // la bavette
+      }
+    }
+    // 4. La tourelle (elle tourne) : sa forme lissée aux faces inclinées, et tout ce qu'il y a dessus.
     const tourelle = new THREE.Group();
-    tourelle.position.set(fo.x, 0, 0);
+    tourelle.position.set(T.xT, 0, 0);
     caisse.add(tourelle);
-    const yT = 1.66;
-    tourelle.add(dessusExtrude(fo.moitie, yT, fo.h, peinture));
-    if (fo.coffre) tourelle.add(boite(0.8, fo.h * 0.8, 1.9, peinture, -2.75, yT + fo.h * 0.45, 0)); // le coffre du chargeur automatique (Leclerc)
-    const haut = yT + fo.h;
-    const trappe = cylindre(0.38, 0.22, peinture, 16);
-    trappe.position.set(-0.6, haut + 0.1, 0.55);
-    tourelle.add(trappe);
-    tourelle.add(boite(0.28, 0.06, 0.6, m.noir, -0.6, haut + 0.24, 0.55)); // le couvercle de la trappe
-    const viseur = boite(0.45, 0.35, 0.4, peinture, 0.6, haut + 0.17, -0.65); // le viseur du tireur (avec sa vitre)
-    tourelle.add(viseur);
-    tourelle.add(boite(0.02, 0.2, 0.3, m.verre, 0.83, haut + 0.2, -0.65));
-    const periscope = cylindre(0.14, 0.45, peinture, 12); // le viseur panoramique du chef de char
-    periscope.position.set(-0.1, haut + 0.25, 0.75);
-    tourelle.add(periscope);
-    tourelle.add(boite(0.22, 0.18, 0.22, m.verre, -0.1, haut + 0.5, 0.75));
-    const mg = cylindre(0.04, 1.1, m.noir, 8); // la mitrailleuse
-    mg.rotation.z = Math.PI / 2;
-    mg.position.set(-0.15, haut + 0.32, 0.55);
-    tourelle.add(mg);
-    for (const cote of [-1, 1]) {
-      for (let k = 0; k < 4; k++) { // les lance-fumigènes, 4 tubes de chaque côté
-        const tube = cylindre(0.06, 0.32, m.noir, 8);
-        tube.rotation.z = Math.PI / 2 - 0.4;
-        tube.rotation.y = cote * 0.5;
-        tube.position.set(fo.moitie[1][0] - 0.3 - k * 0.14, yT + fo.h * 0.65, cote * (fo.moitie[1][1] + 0.05));
-        tourelle.add(tube);
+    const toit = pont + T.hT;
+    tourelle.add(cylindre(1.05, 1.1, 0.12, m.teinte, 24, C.noir).translateY(pont + 0.04)); // l'anneau de la tourelle
+    tourelle.add(lisse(contourComplet(F.bas), contourComplet(F.haut), pont + 0.06, toit, P));
+    const zFlanc = (x) => largeurA(F.bas, x), zToit = (x) => largeurA(F.haut, x);
+    const avantT = F.haut[2][0]; // (l'avant du toit, à côté du canon)
+    if (fiche.id === "leclerc") {
+      // le coffre du chargeur automatique fait partie du contour ; dessus : le viseur du tireur, le viseur panoramique du chef
+      tourelle.add(boite(0.6, 0.42, 0.5, P, avantT - 0.55, toit + 0.2, -0.72));
+      tourelle.add(boite(0.03, 0.26, 0.38, m.verre, avantT - 0.24, toit + 0.24, -0.72));
+      tourelle.add(cylindre(0.15, 0.18, 0.4, m.teinte, 12, C.olive).translateX(avantT - 0.9).translateY(toit + 0.2).translateZ(0.8));
+      tourelle.add(boite(0.36, 0.3, 0.36, P, avantT - 0.9, toit + 0.52, 0.8));
+      tourelle.add(boite(0.03, 0.18, 0.26, m.verre, avantT - 0.71, toit + 0.54, 0.8));
+      chef(tourelle, m, -0.45, toit, 0.7);
+      trappe(tourelle, P, m, -0.45, toit, -0.7, 0.32);
+      mitrailleuse(tourelle, m, -0.1, toit, 0.25, 0.7, false);
+      for (const cote of [-1, 1]) fumigenes(tourelle, m, -1.15, toit - 0.02, cote * (zToit(-1.15) - 0.15), cote, 3, 3, false);
+      for (const cote of [-1, 1]) tourelle.add(boite(1.2, 0.5, 0.06, P, -2.2, toit - 0.35, cote * (zFlanc(-2.2) + 0.03))); // les coffres sur les flancs
+      tourelle.add(couche(cylindre(0.03, 0.03, 0.4, m.teinte, 6, C.noir), "y", -2.6, toit + 0.2, 0.3)); // le capteur de vent
+      tourelle.add(boite(0.25, 0.05, 0.05, m.teinte, -2.6, toit + 0.4, 0.3, C.noir));
+    } else if (fiche.id === "abrams") {
+      // le viseur du tireur (la « niche » à droite), le viseur indépendant du chef, la coupole du chef, la trappe du chargeur
+      tourelle.add(boite(0.7, 0.42, 0.55, P, avantT - 0.75, toit + 0.2, 0.75));
+      tourelle.add(boite(0.03, 0.26, 0.42, m.verre, avantT - 0.39, toit + 0.22, 0.75));
+      for (const s of [-1, 1]) tourelle.add(boite(0.03, 0.3, 0.18, P, avantT - 0.33, toit + 0.22, 0.75 + s * 0.32)); // les volets blindés, ouverts
+      tourelle.add(cylindre(0.12, 0.14, 0.4, m.teinte, 10, C.olive).translateX(avantT - 0.95).translateY(toit + 0.2).translateZ(-0.5));
+      tourelle.add(boite(0.4, 0.32, 0.36, P, avantT - 0.95, toit + 0.52, -0.5));
+      tourelle.add(boite(0.03, 0.18, 0.24, m.verre, avantT - 0.74, toit + 0.54, -0.5));
+      tourelle.add(cylindre(0.48, 0.5, 0.22, P, 16).translateX(-0.5).translateY(toit + 0.11).translateZ(0.72)); // la coupole
+      for (let k = 0; k < 6; k++) { // ses blocs de vision
+        const a = (k / 6) * Math.PI * 2;
+        tourelle.add(boite(0.06, 0.08, 0.14, m.verre, -0.5 + Math.cos(a) * 0.49, toit + 0.14, 0.72 + Math.sin(a) * 0.49).rotateY(-a));
       }
-      const antenne = cylindre(0.012, 2.4, m.noir, 4);
-      antenne.position.set(fo.moitie[fo.moitie.length - 1][0] + 0.3, haut + 1.2, cote * 0.7);
-      tourelle.add(antenne);
-      // ✍️ la marque de l'équipe : un panneau de couleur sur chaque côté de la tourelle
-      const marque = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.35), new THREE.MeshStandardMaterial({ color: E.marque, emissive: E.marque, emissiveIntensity: 0.25, side: THREE.DoubleSide }));
-      marque.position.set(-0.5, yT + fo.h * 0.55, cote * (fo.moitie[2][1] + 0.1));
+      chef(tourelle, m, -0.5, toit + 0.12, 0.72);
+      mitrailleuse(tourelle, m, -0.2, toit + 0.15, 0.95, 1.1, true); // la grosse mitrailleuse de 12,7 mm
+      trappe(tourelle, P, m, -0.45, toit, -0.75, 0.33);
+      mitrailleuse(tourelle, m, -0.1, toit, -1.15, 0.6, false);
+      for (const cote of [-1, 1]) fumigenes(tourelle, m, 0.65, toit - 0.12, cote * (zFlanc(0.65) + 0.08), cote, 3, 2, true);
+      // le panier à l'arrière de la tourelle, avec les sacs et les caisses de l'équipage
+      const xa = -3.08, xb = -3.75, za = 1.35;
+      tourelle.add(boite(xa - xb, 0.04, 2 * za, m.teinte, (xa + xb) / 2, toit - 0.5, 0, C.olive));
+      tourelle.add(cable([[xa, toit - 0.05, za], [xb, toit - 0.05, za], [xb - 0.02, toit - 0.05, 0], [xb, toit - 0.05, -za], [xa, toit - 0.05, -za]], 0.025, m.teinte, C.olive, 24));
+      for (let k = 0; k < 9; k++) {
+        const t = k / 8, z = za - t * 2 * za;
+        tourelle.add(tube([xb, toit - 0.5, z], [xb, toit - 0.05, z], 0.018, m.teinte, 5, C.olive));
+      }
+      for (const s of [-1, 1]) tourelle.add(tube([xa, toit - 0.5, s * za], [xb, toit - 0.05, s * za], 0.018, m.teinte, 5, C.olive));
+      tourelle.add(boite(0.5, 0.3, 0.7, m.teinte, -3.4, toit - 0.33, 0.5, C.toile));
+      tourelle.add(O.piece(new THREE.CapsuleGeometry(0.17, 0.6, 3, 8), m.teinte, -3.4, toit - 0.3, -0.55, C.sable).rotateX(Math.PI / 2));
+      tourelle.add(boite(0.4, 0.25, 0.45, m.teinte, -3.4, toit - 0.35, -0.05, C.fut)); // une caisse de munitions
+      tourelle.add(couche(cylindre(0.025, 0.025, 0.6, m.teinte, 6, C.noir), "y", -2.7, toit + 0.3, 0)); // le capteur de vent
+      tourelle.add(boite(0.05, 0.05, 0.3, m.teinte, -2.7, toit + 0.6, 0, C.noir));
+    } else {
+      // Leopard 2A6 : le viseur EMES du tireur, le périscope PERI du chef sur son mât, les deux trappes
+      tourelle.add(boite(0.75, 0.4, 0.55, P, avantT - 0.75, toit + 0.19, 0.68));
+      tourelle.add(boite(0.03, 0.22, 0.4, m.verre, avantT - 0.37, toit + 0.2, 0.68));
+      tourelle.add(boite(0.36, 0.06, 0.6, P, avantT - 0.55, toit + 0.42, 0.68)); // le volet du viseur
+      tourelle.add(cylindre(0.13, 0.15, 0.5, m.teinte, 12, C.olive).translateX(-0.2).translateY(toit + 0.25).translateZ(0.98));
+      tourelle.add(cylindre(0.2, 0.2, 0.28, P, 12).translateX(-0.2).translateY(toit + 0.62).translateZ(0.98));
+      tourelle.add(boite(0.03, 0.14, 0.2, m.verre, -0.01, toit + 0.64, 0.98));
+      chef(tourelle, m, -0.75, toit, 0.5);
+      trappe(tourelle, P, m, -0.75, toit, -0.68, 0.33);
+      mitrailleuse(tourelle, m, -0.45, toit, -0.95, 0.6, false);
+      for (const cote of [-1, 1]) fumigenes(tourelle, m, -1.25, toit - 0.05, cote * (zToit(-1.25) - 0.1), cote, 4, 2, false);
+      for (const cote of [-1, 1]) { // les paniers de rangement à l'arrière des flancs
+        const z = cote * (zFlanc(-2.4) + 0.2);
+        tourelle.add(boite(0.9, 0.04, 0.38, m.teinte, -2.4, toit - 0.6, z, C.olive));
+        tourelle.add(cable([[-1.95, toit - 0.12, cote * (zFlanc(-1.95) + 0.02)], [-1.95, toit - 0.12, z + cote * 0.18], [-2.85, toit - 0.12, z + cote * 0.18], [-2.85, toit - 0.12, cote * (zFlanc(-2.85) + 0.02)]], 0.02, m.teinte, C.olive, 18));
+        tourelle.add(boite(0.75, 0.35, 0.3, m.teinte, -2.4, toit - 0.4, z, C.toile));
+      }
+      tourelle.add(couche(cylindre(0.025, 0.025, 0.5, m.teinte, 6, C.noir), "y", -2.4, toit + 0.25, 0));
+      tourelle.add(boite(0.05, 0.05, 0.3, m.teinte, -2.4, toit + 0.5, 0, C.noir));
+    }
+    // les antennes, et leurs socles
+    const xAnt = F.haut[F.haut.length - 2][0] + 0.35;
+    for (const cote of [-1, 1]) {
+      const za = cote * (zToit(xAnt) - 0.25);
+      tourelle.add(cylindre(0.07, 0.09, 0.14, m.teinte, 8, C.noir).translateX(xAnt).translateY(toit + 0.07).translateZ(za));
+      tourelle.add(cylindre(0.008, 0.016, 2.4, m.teinte, 4, C.noir).translateX(xAnt).translateY(toit + 1.3).translateZ(za));
+    }
+    // ✍️ la marque de l'équipe : un panneau de couleur sur chaque flanc de la tourelle (penché comme le flanc)…
+    const xMarque = -0.6, pente = Math.atan2(zFlanc(xMarque) - zToit(xMarque), T.hT);
+    for (const cote of [-1, 1]) {
+      const marque = boite(0.75, 0.36, 0.02, E.marque, xMarque, pont + T.hT * 0.55, cote * ((zFlanc(xMarque) + zToit(xMarque)) / 2 + 0.03));
+      marque.rotation.x = -cote * pente;
+      marque.castShadow = false;
       tourelle.add(marque);
     }
-    // une flèche de la couleur de l'équipe sur le toit (pour les avions… et pour toi, d'en haut)
-    const fleche = new THREE.Mesh(new THREE.CircleGeometry(0.45, 3), new THREE.MeshStandardMaterial({ color: E.marque, emissive: E.marque, emissiveIntensity: 0.3 }));
+    // … et une flèche sur le toit (pour les avions… et pour toi, d'en haut)
+    const fleche = O.piece(new THREE.CircleGeometry(0.45, 3), E.marque, -1.45, toit + 0.012, 0);
     fleche.rotation.x = -Math.PI / 2;
-    fleche.position.set(-1.2, haut + 0.02, 0);
+    fleche.castShadow = false;
     tourelle.add(fleche);
-    // 4. Le canon (il monte et descend) : le masque, le tube, le manchon thermique, le bout.
+
+    // 5. Le canon (il monte et descend) : le masque, le tube qui s'amincit, les manchons thermiques, le bout.
     const canon = new THREE.Group();
-    canon.position.set(fo.moitie[0][0] - 0.25, yT + fo.h * 0.48, 0);
+    canon.position.set(F.pivot, pont + F.yPivot, 0);
     tourelle.add(canon);
-    canon.add(boite(0.55, 0.55, 0.85, peinture, 0.1, 0, 0)); // le masque
     const Lc = fiche.canon;
-    const tube = cylindre(0.1, Lc, m.metal, 14);
-    tube.rotation.z = -Math.PI / 2;
-    tube.position.x = 0.3 + Lc / 2;
-    canon.add(tube);
-    for (const [x, l, r] of [[0.3 + Lc * 0.28, Lc * 0.4, 0.14], [0.3 + Lc * 0.68, Lc * 0.28, 0.13]]) {
-      const manchon = cylindre(r, l, peinture, 14);
-      manchon.rotation.z = -Math.PI / 2;
-      manchon.position.x = x;
-      canon.add(manchon);
+    if (fiche.id === "abrams") {
+      canon.add(boite(0.35, 0.62, 1.05, P, 0.12, 0, 0)); // le masque large et plat
+      canon.add(boite(0.06, 0.08, 0.08, m.teinte, 0.31, -0.05, 0.38, C.noir)); // la mitrailleuse coaxiale
+    } else if (fiche.id === "leopard") {
+      canon.add(profil([[-0.1, -0.3], [0.38, -0.22], [0.42, 0.18], [-0.1, 0.32]], 0.66, P, 0.03));
+      canon.add(boite(0.06, 0.08, 0.08, m.teinte, 0.42, -0.08, -0.25, C.noir));
+    } else {
+      canon.add(boite(0.4, 0.56, 0.62, P, 0.1, 0, 0));
+      canon.add(boite(0.06, 0.08, 0.08, m.teinte, 0.31, -0.1, 0.24, C.noir));
     }
-    const bout = cylindre(0.12, 0.25, m.noir, 14);
-    bout.rotation.z = -Math.PI / 2;
-    bout.position.x = 0.3 + Lc - 0.1;
-    canon.add(bout);
-    return { g, caisse, tourelle, canon, roues, chenilles, bouche: 0.3 + Lc, peinture };
+    const x0c = 0.3, bout = x0c + Lc;
+    canon.add(couche(cylindre(0.085, 0.115, Lc, m.teinte, 14, E.vertFonce), "x", x0c + Lc / 2, 0, 0)); // le tube (plus fin au bout)
+    canon.add(couche(cylindre(0.19, 0.19, 0.32, P, 14), "x", x0c + 0.16, 0, 0)); // la bague à la sortie du masque
+    const manchons = fiche.id === "leclerc" ? [[0.05, 0.36], [0.4, 0.68], [0.72, 0.94]] : [[0.05, 0.3], [0.58, 0.78], [0.8, 0.95]];
+    for (const [a, b] of manchons) {
+      const r = 0.135 - a * 0.03;
+      canon.add(couche(cylindre(r, r, (b - a) * Lc, P, 14), "x", x0c + ((a + b) / 2) * Lc, 0, 0));
+      for (const t of [a, b]) canon.add(couche(cylindre(r + 0.012, r + 0.012, 0.05, m.teinte, 14, C.noir), "x", x0c + t * Lc, 0, 0)); // les colliers
+    }
+    if (fiche.id !== "leclerc") { // l'évacuateur de fumée : le renflement du tube
+      const xe = x0c + 0.44 * Lc;
+      canon.add(couche(cylindre(0.17, 0.17, 0.7, P, 16), "x", xe, 0, 0));
+      for (const s of [-1, 1]) canon.add(couche(cylindre(0.13, 0.17, 0.12, P, 16), "x", xe + s * 0.41, 0, 0).rotateZ(s > 0 ? Math.PI : 0));
+    }
+    canon.add(couche(cylindre(0.11, 0.11, 0.18, m.teinte, 14, C.noir), "x", bout - 0.09, 0, 0)); // la bouche
+    canon.add(boite(0.14, 0.08, 0.08, m.teinte, bout - 0.2, 0.15, 0, C.noir)); // le capteur de bouche (il mesure si le tube se tord)
+    souder(canon);
+    souder(tourelle);
+    souder(caisse);
+    return { g, caisse, tourelle, canon, roues: lesRoues, chenilles, bouche: bout, peinture: P, pasChenille: 1 / PAS_TOILE };
   }
 
   // Un tank détruit : tout devient noir et brûlé, la tourelle est soufflée de travers.
@@ -272,5 +621,5 @@ Tanks.Chars3D = (function () {
     o.canon.rotation.z = -0.15;
   }
 
-  return { fabriquer, bruler, camouflage };
+  return { fabriquer, bruler, camouflage, materiaux, C };
 })();

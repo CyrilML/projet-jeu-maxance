@@ -8,7 +8,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 8,
+  version: 9,
   pasFixe: 1 / 120,
 
   monde: {

@@ -191,6 +191,7 @@
       <a href="#etape67">Étape 67</a>
       <a href="#etape68">Étape 68</a>
       <a href="#etape69">Étape 69</a>
+      <a href="#etape70">Étape 70</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4061,6 +4062,43 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <details class="question"><summary>Pourquoi un phare « moulé » a-t-il l'air plus vrai qu'une petite boîte ?</summary><p>Parce que chacun de ses points est posé sur la carrosserie : il suit la courbe du nez, comme un vrai phare encastré.</p></details>
     </section>
 
+    <section id="etape70">
+      <h2>🏁 Étape 70 : toutes les voitures plus réalistes, dans tous les jeux <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les 36 voitures du circuit 3D, les 7 véhicules du rallye-raid et les chars et engins des tanks sont redessinés. <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a> · <a href="raid/index.html"><strong>▶ le rallye-raid</strong></a> · <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/70-toutes-les-voitures-realistes.md</code>.</p>
+          <ul>
+            <li>✍️ Toutes les voitures, dans tous les jeux.</li>
+            <li>✍️ Encore plus de détails sur les 16 voitures de l'étape 69.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Circuit « version 30 » : la 208, la police, le taxi, la F1, le kart, le monster truck… ont leur vraie forme, leur emblème et leur conducteur.</li>
+            <li>☐ Les 16 de l'étape 69 ont maintenant leurs plaques, leurs répétiteurs orange, leur antenne et des passages de roues noirs.</li>
+            <li>☐ Rallye-raid « version 3 » : le Hilux avec ses roues de secours dans la benne, le Kamaz avec ses 6 phares, les motos avec leur tour de navigation.</li>
+            <li>☐ Tanks « version 9 » : les chenilles qui défilent autour des galets, le chef de char qui sort la tête, le Humvee avec son tireur.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>✏️ La silhouette : 5 lignes au lieu de 50 nombres</h3>
+      <p>À l'étape 69, chaque tranche d'une voiture était écrite à la main (7 nombres par tranche, 14 tranches : presque 100 nombres !). Pour refaire 20 voitures, il fallait plus simple. Un designer dessine une voiture avec quelques <strong>lignes</strong> : le profil (vu de côté), la ceinture (où commencent les vitres), la largeur (vue de dessus), la largeur du toit et le bas. L'outil <code>silhouette</code> lit ces 5 lignes et fabrique tout seul une tranche tous les 20 cm.</p>
+      <h3>🔩 Souder les pièces</h3>
+      <p>Un char a maintenant des centaines de pièces (galets, boulons, patins de chenille…). Si la carte graphique devait les dessiner une par une, le jeu ralentirait. Alors, une fois le char fini, on <strong>soude</strong> toutes les pièces de la même matière en une seule : le jeu des tanks dessine maintenant environ 270 objets par image au lieu de 700, et le rallye-raid 390 au lieu de 780, alors qu'il y a plus de détails !</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans le circuit, prends la Formule 1 : regarde le « halo » au-dessus du pilote.</li>
+        <li>Dans les tanks, ouvre « sous le capot » : cherche la ligne « l'atelier (étape 70) » et le nombre de pièces soudées.</li>
+        <li>Dans <code>circuit/affichage/voitures-refaites.js</code>, trouve le <code>profil</code> de la 208 et change le <code>1.43</code> en <code>1.3</code> : elle devient toute basse.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi souder les pièces rend-il le jeu plus rapide ?</summary><p>Parce que la carte graphique dessine un objet à la fois : 1 grosse pièce soudée, c'est 1 dessin au lieu de 100.</p></details>
+      <details class="question"><summary>Combien de lignes faut-il pour décrire une voiture avec la silhouette ?</summary><p>5 : le profil, la ceinture, la largeur, le toit et le bas.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4408,7 +4446,7 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <div class="carte fait">
           <div class="num">🌄</div>
           <h4>Des cartes 3 fois plus grandes <span class="etiquette">✅ fait · à valider</span></h4>
-          <p>Les 5 cartes du circuit 3D 3 fois plus grandes, avec des collines, des forêts, une rivière et des ponts, et 16 nouvelles voitures (étape 68), redessinées avec leurs vraies mesures, leur intérieur et leur emblème (étape 69).</p>
+          <p>Les 5 cartes du circuit 3D 3 fois plus grandes, avec des collines, des forêts, une rivière et des ponts, et 16 nouvelles voitures (étape 68), redessinées avec leurs vraies mesures, leur intérieur et leur emblème (étape 69), puis toutes les voitures de tous les jeux (étape 70).</p>
           <p class="apprend"><b>Tu apprends :</b> étirer une route comme un élastique, recopier une tuile en la tournant, un relief calculé une fois sur une grille, l'interpolation. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte fait">
@@ -5052,6 +5090,15 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
         <textarea class="journal" id="appris-69" data-cle="appris-69" placeholder="Ex. : J'ai appris qu'une voiture se dessine par tranches…"></textarea>
         <label for="idees-69"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-69" data-cle="idees-69" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 70 · toutes les voitures plus réalistes <span class="petit">· 13 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la silhouette et les passages de roues (<code>circuit/affichage/voitures-nouvelles.js</code>), les 20 voitures refaites (<code>circuit/affichage/voitures-refaites.js</code>), l'atelier du rallye-raid (<code>raid/affichage/atelier.js</code>, <code>vehicules.js</code>) et celui des tanks (<code>tanks/affichage/outils3d.js</code>, <code>chars3d.js</code>, <code>engins3d.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : tous les jeux, et encore plus de détails sur les 16.</p>
+        <label for="appris-70"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-70" data-cle="appris-70" placeholder="Ex. : J'ai appris qu'on soude les pièces pour aller plus vite…"></textarea>
+        <label for="idees-70"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-70" data-cle="idees-70" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

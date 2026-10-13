@@ -134,9 +134,11 @@ Tanks.Scene = (function () {
     o.tourelle.rotation.y = -c.tourelle;
     o.canon.rotation.z = c.hausse;
     // les galets tournent, les chenilles défilent (chacune à sa vitesse quand le tank tourne)
-    for (let i = 0; i < o.roues.length; i++) o.roues[i].rotation.y = -(i < o.roues.length / 2 ? c.chenilles.gauche : c.chenilles.droite) / 0.38;
-    o.chenilles[0].map.offset.x = -c.chenilles.gauche * 0.2;
-    o.chenilles[1].map.offset.x = -c.chenilles.droite * 0.2;
+    // (étape 70 : chaque roue tourne selon SA taille : le barbotin et la roue folle sont plus petits que les galets ;
+    // les patins défilent tout autour de la boucle de la chenille, d'autant de « toiles » que de mètres parcourus)
+    for (let i = 0; i < o.roues.length; i++) o.roues[i].rotation.y = -(i < o.roues.length / 2 ? c.chenilles.gauche : c.chenilles.droite) / (o.roues[i].userData.rayon || 0.38);
+    o.chenilles[0].map.offset.x = c.chenilles.gauche * (o.pasChenille || -0.2);
+    o.chenilles[1].map.offset.x = c.chenilles.droite * (o.pasChenille || -0.2);
   }
 
   // ------------------------------------------------------------------ étape 61 : les soldats et les engins

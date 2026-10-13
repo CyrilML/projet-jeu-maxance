@@ -9,7 +9,7 @@ window.Raid = window.Raid || {};
 
 Raid.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans raid/index.html.
-  version: 2,
+  version: 3,
 
   pasFixe: 1 / 120, // la boucle de jeu avance par petits pas de 1/120 s
   gravite: 9.8, // m/s²
@@ -78,4 +78,13 @@ Raid.CONFIG = {
   poussiere: { particules: 260, parSeconde: 50, vie: 2.2, taille: [0.7, 5] },
   traces: { nombre: 1500, ecart: 0.6, largeur: 0.32, longueur: 0.8 },
   decor: { touffes: 9000, buissons: 900, rochers: 700, distanceTouffes: 260 },
+
+  // Étape 70 : ✍️ « des voitures plus réalistes ». Les réglages de la carrosserie (affichage/atelier.js et vehicules.js).
+  carrosserie: {
+    ailes: 0.04, // m : de combien la carrosserie gonfle au-dessus de chaque roue (les ailes bombées)
+    vitres: 0.55, // 0 = pas de vitre du tout, 1 = vitre noire (on ne voit plus l'intérieur ni le pilote)
+    metal: 0.15, // la peinture : 0 = pas du tout métallique, 1 = un miroir (à 0,4 elle avait l'air dorée au soleil)
+    rugosite: 0.36, // 0 = un miroir lisse, 1 = tout mat
+    phares: 0.8, // la taille des blocs de phares moulés (1 = la taille dessinée)
+  },
 };

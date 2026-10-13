@@ -43,7 +43,53 @@ Circuit.VoituresNouvelles = (function () {
     const m = new THREE.Mesh(c.geometrie, [mat, M.vitreClaire]);
     m.castShadow = m.receiveShadow = true;
     caisse.add(m);
+    passagesDeRoues(caisse, c, R, voie);
     return c;
+  }
+  // Étape 70 : les PASSAGES DE ROUES. Sous chaque aile, une coque noire en demi-cercle (en plastique, comme sur les
+  // vraies voitures) : sinon, en regardant entre le pneu et l'aile, on voyait à travers la carrosserie.
+  const MPR = {};
+  function passagesDeRoues(caisse, c, R, voie) {
+    const mat = MPR.m || (MPR.m = new THREE.MeshStandardMaterial({ color: 0x0c0c0d, roughness: 1, side: THREE.DoubleSide }));
+    for (const r of R) {
+      const rayon = r.r + 0.055, z1 = Math.max(0.05, (r.voie || voie) - r.l / 2 - 0.08), z2 = c.tranche(r.x).w + 0.05;
+      const pos = [], idx = [], n = 16;
+      for (let k = 0; k <= n; k++) {
+        const a = (k / n) * Math.PI, x = r.x + Math.cos(a) * rayon, y = r.r + Math.sin(a) * rayon;
+        pos.push(x, y, z1, x, y, z2);
+        if (k < n) idx.push(k * 2, k * 2 + 1, k * 2 + 2, k * 2 + 1, k * 2 + 3, k * 2 + 2);
+      }
+      for (const cote of [-1, 1]) {
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute("position", new THREE.Float32BufferAttribute(pos.map((v, i) => (i % 3 === 2 ? v * cote : v)), 3));
+        geo.setIndex(idx);
+        geo.computeVertexNormals();
+        caisse.add(new THREE.Mesh(geo, mat));
+      }
+    }
+  }
+
+  // Étape 70 : LA SILHOUETTE. Au lieu d'écrire chaque tranche à la main, on donne 5 lignes, comme sur le dessin d'un
+  // designer : le PROFIL (la hauteur du dessus, vue de côté), la CEINTURE (la hauteur de l'épaule), la LARGEUR (vue
+  // de dessus), le TOIT (la demi-largeur du toit) et le BAS. Chaque ligne est une liste de points [x, valeur] ; entre
+  // deux points, on va tout droit. L'outil fabrique une tranche tous les 20 cm (et à chaque point donné).
+  const lin = (pts, x) => {
+    if (x <= pts[0][0]) return pts[0][1];
+    for (let i = 0; i < pts.length - 1; i++) if (x <= pts[i + 1][0]) return pts[i][1] + ((pts[i + 1][1] - pts[i][1]) * (x - pts[i][0])) / (pts[i + 1][0] - pts[i][0]);
+    return pts[pts.length - 1][1];
+  };
+  function silhouette(o) {
+    const P = o.profil, x0 = P[0][0], x1 = P[P.length - 1][0], pas = o.pas || 0.2;
+    let xs = [];
+    for (let x = x0; x < x1; x += pas) xs.push(x);
+    for (const l of [o.profil, o.ceinture, o.largeur, o.toit, o.bas]) for (const p of l) xs.push(p[0]);
+    xs.push(x1);
+    xs = xs.filter((x) => x >= x0 && x <= x1).sort((a, b) => a - b).filter((x, i, t) => i === 0 || x - t[i - 1] > 0.03);
+    return xs.map((x) => {
+      const w = lin(o.largeur, x), epaule = o.epaule === undefined ? 0.07 : o.epaule;
+      const wt = Math.min(lin(o.toit, x), w - epaule - 0.02);
+      return T(x, lin(o.bas, x), lin(o.ceinture, x), lin(o.profil, x), w, w - epaule, wt, { rt: o.rt || 0.09, de: o.de === undefined ? 0.015 : o.de, wl: w - (o.galbe === undefined ? 0.05 : o.galbe) });
+    });
   }
 
   // La règle des vitres d'une peau d'un seul morceau : les vitres sont AU-DESSUS de l'épaule.
@@ -447,6 +493,46 @@ Circuit.VoituresNouvelles = (function () {
   const trou = () => MP.trou || (MP.trou = new THREE.MeshStandardMaterial({ color: 0x050506, roughness: 0.95 }));
   const carbone = () => MP.carbone || (MP.carbone = new THREE.MeshStandardMaterial({ color: 0x1d1f22, roughness: 0.35, metalness: 0.4 }));
 
+  // ---------------------------------------------------------------- étape 70 : les finitions
+  // ✍️ « Encore plus de détails » : sur chaque voiture, ce qu'on remarque quand on s'approche d'une vraie. Les plaques
+  // (quand elle n'en avait pas), les répétiteurs de clignotants sur les ailes avant, l'antenne « aileron de requin »,
+  // les capteurs de stationnement (de petits ronds dans les pare-chocs), et la caméra de recul.
+  // o = { plaque: [texte, y avant, y arrière] (facultatif), repetiteur: [x, y], antenne: x, capteurs: [y avant, y arrière, demi-largeur] }
+  function finitions(caisse, c, R, o) {
+    if (o.plaque) {
+      plaque(caisse, c, true, o.plaque[1], o.plaque[0]);
+      plaque(caisse, c, false, o.plaque[2], o.plaque[0]);
+    }
+    if (o.repetiteur) {
+      const [x, y] = o.repetiteur;
+      pieceFlanc(caisse, c, R, [[x - 0.05, y - 0.012], [x + 0.05, y - 0.012], [x + 0.05, y + 0.012], [x - 0.05, y + 0.012]], M.orange, 0.012);
+    }
+    if (o.antenne !== undefined) {
+      const forme = new THREE.Shape();
+      forme.moveTo(0, 0); forme.lineTo(0.16, 0); forme.quadraticCurveTo(0.04, 0.02, 0.02, 0.06); forme.closePath();
+      const geo = new THREE.ExtrudeGeometry(forme, { depth: 0.035, bevelEnabled: false });
+      geo.translate(-0.08, 0, -0.0175);
+      const m = new THREE.Mesh(geo, M.noir);
+      m.position.set(o.antenne, c.dessus(o.antenne, 0) - 0.005, 0);
+      caisse.add(m);
+    }
+    if (o.capteurs) {
+      const [yAv, yAr, l] = o.capteurs;
+      for (const [avant, y] of [[true, yAv], [false, yAr]]) {
+        for (const z of [-l, -l / 3, l / 3, l]) {
+          const capteur = cylindre(0.012, 0.01, M.noir, 10);
+          capteur.rotation.z = Math.PI / 2;
+          capteur.position.set(avant ? c.xMax + 0.004 : c.xMin - 0.004, y, z);
+          caisse.add(capteur);
+        }
+      }
+      const camera = cylindre(0.012, 0.012, M.vitre, 10);
+      camera.rotation.z = Math.PI / 2;
+      camera.position.set(c.xMin - 0.006, yAr + 0.25, 0.08);
+      caisse.add(camera);
+    }
+  }
+
   // ---------------------------------------------------------------- les petits détails
   // Les essuie-glaces, couchés au bas du pare-brise.
   function essuieGlaces(caisse, c, x, longueur, deux) {
@@ -561,6 +647,7 @@ Circuit.VoituresNouvelles = (function () {
     retro(caisse, 0.62, 0.92, 0.79, peinture(k2), 0.95);
     basDeCaisse(caisse, c, 0.9, -0.95, 0.2);
     portiere(caisse, c, 0.88, -0.46, 0.22, 0.82, false);
+    finitions(caisse, c, R, { plaque: ["R8-V10-AU", 0.24, 0.5], repetiteur: [1.62, 0.6], capteurs: [0.27, 0.3, 0.5] }); // (étape 70)
     const roues = roues4(g, R, 0.82, "y", { etrier: [0.75, 0.06, 0.06] });
     return voiture(g, caisse, roues, 1.05);
   }
@@ -618,6 +705,7 @@ Circuit.VoituresNouvelles = (function () {
     retro(caisse, 0.72, 0.9, 0.8, peinture(k1), 0.9);
     basDeCaisse(caisse, c, 1.0, -0.9, 0.2);
     portiere(caisse, c, 0.95, -0.5, 0.22, 0.8, false);
+    finitions(caisse, c, R, { plaque: ["SF-90-ST", 0.22, 0.5], repetiteur: [1.7, 0.6], capteurs: [0.26, 0.3, 0.5] }); // (étape 70)
     const roues = roues4(g, R, 0.84, "doubles", { etrier: [0.95, 0.75, 0.05] });
     return voiture(g, caisse, roues, 1.0);
   }
@@ -671,6 +759,7 @@ Circuit.VoituresNouvelles = (function () {
     retro(caisse, 0.64, 0.86, 0.72, peinture(k2), 0.9);
     basDeCaisse(caisse, c, 0.95, -1.0, 0.2);
     portiere(caisse, c, 0.9, -0.66, 0.24, 0.78, false);
+    finitions(caisse, c, R, { plaque: ["MC-720-S", 0.22, 0.48], repetiteur: [1.62, 0.58], capteurs: [0.26, 0.3, 0.5] }); // (étape 70)
     const roues = roues4(g, R, 0.83, "fins", { etrier: [1, 0.5, 0.02] });
     return voiture(g, caisse, roues, 1.0);
   }
@@ -734,6 +823,7 @@ Circuit.VoituresNouvelles = (function () {
     basDeCaisse(caisse, c, 1.0, -1.0, 0.24, carbone());
     portiere(caisse, c, 0.96, -0.12, 0.26, 0.92, false);
     portiere(caisse, c, -0.14, -1.05, 0.26, 0.94, false);
+    finitions(caisse, c, R, { repetiteur: [1.7, 0.78], antenne: -0.9, capteurs: [0.3, 0.38, 0.6] }); // (étape 70)
     const roues = roues4(g, R, 0.8, "y", { etrier: [0.1, 0.3, 0.8] });
     return voiture(g, caisse, roues, 1.3);
   }
@@ -785,6 +875,7 @@ Circuit.VoituresNouvelles = (function () {
     basDeCaisse(caisse, c, 1.05, -1.05, 0.22, carbone());
     portiere(caisse, c, 1.0, -0.15, 0.22, 0.86, false);
     portiere(caisse, c, -0.17, -1.12, 0.22, 0.88, false);
+    finitions(caisse, c, R, { repetiteur: [1.75, 0.68], antenne: -0.95, capteurs: [0.28, 0.36, 0.6] }); // (étape 70)
     const roues = roues4(g, R, 0.84, "turbine", { etrier: [0.95, 0.85, 0.15] });
     return voiture(g, caisse, roues, 1.25);
   }
@@ -843,6 +934,7 @@ Circuit.VoituresNouvelles = (function () {
     emblemeAuBout(caisse, c, "bugatti", false, 0.74, 0.12, 0.08);
     retro(caisse, 0.5, 0.74, 0.7, carbone(), 0.8);
     basDeCaisse(caisse, c, 1.0, -0.95, 0.15, carbone());
+    finitions(caisse, c, R, { repetiteur: [1.7, 0.5] }); // (étape 70)
     const roues = roues4(g, R, 0.84, "turbine", { etrier: [0.1, 0.2, 0.9] });
     return voiture(g, caisse, roues, 0.85);
   }
@@ -899,6 +991,7 @@ Circuit.VoituresNouvelles = (function () {
     basDeCaisse(caisse, c, 0.85, -0.85, 0.2);
     portiere(caisse, c, 0.78, -0.6, 0.22, 0.78, false);
     traitFlanc(caisse, c, R, [[1.6, 0.42], [0.5, 0.36], [-0.7, 0.4], [-1.6, 0.5]], 0.006, peinture(fonce(k1, 0.75)));
+    finitions(caisse, c, R, { plaque: ["A110-ALP", 0.27, 0.42], repetiteur: [1.5, 0.6], capteurs: [0.25, 0.34, 0.45] }); // (étape 70)
     const roues = roues4(g, R, 0.78, "etoile", { etrier: [0.1, 0.35, 0.9] });
     return voiture(g, caisse, roues, 1.05);
   }
@@ -950,6 +1043,7 @@ Circuit.VoituresNouvelles = (function () {
     for (const r of R) traitFlanc(caisse, c, R, [[r.x + 0.48, 0.3], [r.x + 0.38, 0.62], [r.x, 0.74], [r.x - 0.38, 0.62], [r.x - 0.48, 0.3]], 0.03, M.plastique); // les élargisseurs d'ailes
     portiere(caisse, c, 0.9, -0.3, 0.28, 0.92, false);
     portiere(caisse, c, -0.32, -1.05, 0.28, 0.94, false);
+    finitions(caisse, c, R, { repetiteur: [1.55, 0.8], antenne: -1.2, capteurs: [0.36, 0.45, 0.55] }); // (étape 70)
     const roues = roues4(g, R, 0.76, "turbine", {});
     return voiture(g, caisse, roues, 1.35);
   }
@@ -998,6 +1092,7 @@ Circuit.VoituresNouvelles = (function () {
     traitFlanc(caisse, c, R, [[2.0, 0.52], [1.2, 0.5], [0, 0.48], [-1.2, 0.5], [-2.0, 0.52]], 0.022, M.plastique);
     essuieGlaces(caisse, c, 0.84, 0.55);
     retro(caisse, 0.62, 0.86, 0.82, M.noir, 0.9);
+    finitions(caisse, c, R, { plaque: ["OUTATIME", 0.4, 0.42], repetiteur: [1.6, 0.6] }); // (étape 70)
     const roues = roues4(g, R, 0.78, "fins", {});
     return voiture(g, caisse, roues, 1.0);
   }
@@ -1032,6 +1127,7 @@ Circuit.VoituresNouvelles = (function () {
     for (const x of [1.25, -0.2, -1.4]) for (const cote of [-1, 1]) surLeFlanc(caisse, c, x, 0.85, cote, 0.006, 0.6, M.noir, 0.004);
     for (const cote of [-1, 1]) caisse.add(boite(0.08, 0.05, 0.06, M.noir, 1.25, 1.22, cote * 1.03));
     essuieGlaces(caisse, c, 1.5, 1.2, false);
+    finitions(caisse, c, R, { plaque: ["CYB-3R-TS", 0.62, 0.66] }); // (étape 70)
     const roues = roues4(g, R, 0.9, "turbine", { pneu: "crampons", metal: new THREE.MeshStandardMaterial({ color: 0x2a2c30, metalness: 0.5, roughness: 0.4 }) });
     return voiture(g, caisse, roues, 1.65);
   }
@@ -1091,6 +1187,7 @@ Circuit.VoituresNouvelles = (function () {
     flamme.position.set(-3.26, 0.48, 0);
     caisse.add(flamme);
     basDeCaisse(caisse, c, 1.4, -1.1, 0.16, M.chrome);
+    finitions(caisse, c, R, { capteurs: [0.28, 0.4, 0.4] }); // (étape 70)
     const roues = roues4(g, R, 0.85, "turbine", { metal: new THREE.MeshStandardMaterial({ color: 0x2a2a2e, metalness: 0.7, roughness: 0.3 }), etrier: [0.95, 0.75, 0.1] });
     return voiture(g, caisse, roues, 1.0);
   }
@@ -1162,6 +1259,7 @@ Circuit.VoituresNouvelles = (function () {
     plaque(caisse, c, false, 0.52, "2CV-1949");
     for (const x of [0.6, -0.4, -1.15]) for (const cote of [-1, 1]) surLeFlanc(caisse, c, x, 0.68, cote, 0.006, 0.5, M.noir, 0.004);
     retro(caisse, 0.62, 1.08, 0.66, M.chrome, 0.75);
+    finitions(caisse, c, R, {}); // (étape 70)
     const roues = roues4(g, R, 0.62, "acier", {});
     return voiture(g, caisse, roues, 1.5);
   }
@@ -1246,6 +1344,7 @@ Circuit.VoituresNouvelles = (function () {
     auBout(caisse, c, false, 0.55, 0, 0.16, 1.9, M.plastique, 0.1);
     essuieGlaces(caisse, c, 0.87, 0.6);
     retro(caisse, 0.78, 1.32, 0.98, peinture(k1), 1.25);
+    finitions(caisse, c, R, { repetiteur: [1.8, 1.0], antenne: -1.6, capteurs: [0.55, 0.55, 0.7] }); // (étape 70)
     const roues = roues4(g, R, 0.84, "y", { etrier: [0.75, 0.06, 0.06] });
     return voiture(g, caisse, roues, 1.8);
   }
@@ -1301,6 +1400,7 @@ Circuit.VoituresNouvelles = (function () {
     auBout(caisse, c, false, 0.6, 0, 0.14, 1.9, M.plastique, 0.08);
     essuieGlaces(caisse, c, 1.11, 0.6);
     retro(caisse, 1.0, 1.3, 0.99, peinture(k2), 1.25);
+    finitions(caisse, c, R, { repetiteur: [1.8, 1.0], antenne: -1.7, capteurs: [0.6, 0.6, 0.7] }); // (étape 70)
     const roues = roues4(g, R, 0.84, "etoile", { pneu: "crampons" });
     return voiture(g, caisse, roues, 1.8);
   }
@@ -1365,6 +1465,7 @@ Circuit.VoituresNouvelles = (function () {
     auBout(caisse, c, false, 0.6, 0, 0.14, 1.7, M.plastique, 0.08);
     essuieGlaces(caisse, c, 0.69, 0.55);
     retro(caisse, 0.62, 1.22, 0.88, M.noir, 1.2);
+    finitions(caisse, c, R, { repetiteur: [1.5, 0.98], antenne: 0.1 }); // (étape 70)
     const roues = roues4(g, R, 0.81, "doubles", { pneu: "crampons" });
     return voiture(g, caisse, roues, 1.75);
   }
@@ -1428,10 +1529,12 @@ Circuit.VoituresNouvelles = (function () {
     for (const x of [1.0, -0.15]) poignees(caisse, c, x, 1.25, 0.2, M.noir);
     essuieGlaces(caisse, c, 1.7, 0.65);
     retro(caisse, 1.55, 1.48, 1.02, M.noir, 1.4);
+    finitions(caisse, c, R, { repetiteur: [2.3, 1.2], antenne: -0.2 }); // (étape 70)
     const roues = roues4(g, R, 0.92, "acier", { pneu: "crampons", metal: new THREE.MeshStandardMaterial({ color: 0x2a2b2e, metalness: 0.6, roughness: 0.35 }) });
     return voiture(g, caisse, roues, 1.9);
   }
 
   Circuit.Modeles.ajouter({ audiR8, mercedesG, bmwM3, taycan, ferrariSF90, mcLaren720S, bolide, alpineA110, renault5, citroen2CV, defender, wrangler, raptor, cybertruck, batmobile, delorean });
-  return { habitacle, embleme, pieceDessus, pieceFlanc, vitresUnies };
+  // (étape 70 : tous les outils du bureau d'études sont prêtés à l'atelier des voitures refaites : affichage/voitures-refaites.js)
+  return { outils: { arches, T, peau, silhouette, lin, vitresUnies, habitacle, embleme, emblemeAuBout, emblemeDessus, pieceDessus, pieceFlanc, pharePose, bande, traitFlanc, essuieGlaces, poignees, retro, diffuseur, basDeCaisse, roues4, roueSecours, elargisseur, trou, carbone, nidAbeille, inox, inoxClair, fonce, LOGOS } };
 })();
