@@ -21,7 +21,7 @@ Raid.Monde = (function () {
       phase: "garage", temps: 0, choix: index,
       voiture: Raid.Vehicule.creer(C.vehicules[index], depart.x, depart.z, depart.angle),
       pilotes: Raid.Pilotes.creer(hasard, 0),
-      terrainAvant: null, distanceSauvee: 0, dernierSaut: null,
+      terrainAvant: null, distanceSauvee: 0, dernierSaut: null, pilotesCalcules: 0,
     };
     radio.emettre("monde", { pilotes: monde.pilotes.length, piste: T.longueurPiste, gues: T.gues.length });
     return monde;
@@ -67,7 +67,8 @@ Raid.Monde = (function () {
         }
       }
     }
-    Raid.Pilotes.etape(monde.pilotes, dt); // (leurs sauts ne sont pas annoncés : le journal ne parle que de toi)
+    // (leurs sauts ne sont pas annoncés : le journal ne parle que de toi ; étape 72 : on retient combien ont été calculés)
+    monde.pilotesCalcules = Raid.Pilotes.etape(monde.pilotes, dt, v).calcules;
     for (const [, d] of Raid.Vehicule.chocs([v].concat(monde.pilotes.map((p) => p.v)))) {
       if ((d.a === v || d.b === v) && d.force > 3) radio.emettre("choc", { force: d.force, contre: (d.a === v ? d.b : d.a).fiche.nom });
     }

@@ -121,7 +121,7 @@ Circuit.SousLeCapot = (function () {
     son: (d) => (d.allume ? "🔊 Son remis (B)" : "🔇 Son coupé (B)"),
     camera: (d) => "🎥 Caméra : " + d.mode,
     "meteo-choisie": (d) => "🌦️ Tu as choisi la météo : " + d.icone + " " + d.nom + " (elle ne changera pas pendant la partie)",
-    qualite: (d) => (d.plus ? "🔼 Ça va vite (" : "🔽 Ça rame (") + Math.round(d.ms) + " ms par image) : qualité automatique à " + Math.round(d.pixels * 100) + " %" + (d.plus ? ", l'image redevient plus fine" : ", on peint moins de pixels"),
+    qualite: (d) => (d.plus ? "🔼 Ça va vite (" : "🔽 Ça rame (") + Math.round(d.ms) + " ms par image) : qualité automatique au niveau " + d.niveau + "/" + d.max + " « " + d.nom + " »" + (d.plus ? " : plus beau" : " : plus léger (moins de pixels, d'ombres, d'herbe et d'arbres au loin)"),
   };
 
   let elements = null;
@@ -185,6 +185,10 @@ Circuit.SousLeCapot = (function () {
       ["z (avant ↔ arrière)", virgule(v.z, 1) + " m"],
       ["y (hauteur)", virgule(v.y || 0, 2) + " m" + (v.enLAir ? " ✈️ en l'air" : "")],
       ["angle", virgule(v.angle, 2) + " rad = " + degres + "°"],
+      ...(fiche.deuxRoues ? [["la moto penche (étape 71)", (function () {
+        const o = Circuit.Scene3D && Circuit.Scene3D.objetJoueur, a = o && o.g ? o.inclinaison || 0 : 0;
+        return Math.round((Math.abs(a) * 180) / Math.PI) + "° " + (a > 0.01 ? "à droite" : a < -0.01 ? "à gauche" : "(tout droit)") + " · au plus " + Math.round((Circuit.CONFIG.motos.inclinaison * 180) / Math.PI) + "°";
+      })()]] : []),
       ["vitesse", virgule(v.vitesse, 1) + " m/s = " + Math.round(Math.abs(v.vitesse) * 3.6) + " km/h"],
       ["pédale", v.pedale],
       ["volant", virgule(v.volant, 2) + (Math.abs(v.volant) < 0.05 ? " (tout droit)" : v.volant < 0 ? " (à gauche)" : " (à droite)")],
@@ -416,7 +420,13 @@ Circuit.SousLeCapot = (function () {
       ["sirène (étape 40)", Circuit.Sons.enDirect.sirene ? Math.round(Circuit.Sons.enDirect.sirene) + " Hz" : "éteinte"],
       ["Le dessin"],
       ["caméra", Circuit.Scene3D.camera.mode],
-      ["qualité automatique (étape 56)", Math.round(Circuit.Scene3D.qualite.pixels * 100) + " % des pixels · " + (Circuit.Scene3D.qualite.moyenne ? Math.round(Circuit.Scene3D.qualite.moyenne * 1000) + " ms par image en moyenne" : "mesure en cours…")],
+      ["le soudeur (étape 72)", Circuit.Souder.bilan.avant + " pièces du décor soudées en " + Circuit.Souder.bilan.apres + " (moins de dessins pour la carte graphique)"],
+      ["voitures dessinées (étape 72)", Circuit.Scene3D.lod.proches + " en détail · " + Circuit.Scene3D.lod.loin + " simplifiées (plus loin que " + Circuit.CONFIG.qualite.niveaux[Math.max(0, Circuit.Scene3D.qualite.niveau)].details + " m : seulement la carrosserie, les vitres et les pneus)"],
+      ["qualité automatique (étape 72)", (function () {
+        const q = Circuit.Scene3D.qualite, N = Circuit.CONFIG.qualite.niveaux[Math.max(0, q.niveau)];
+        return "niveau " + q.niveau + "/" + (Circuit.CONFIG.qualite.niveaux.length - 1) + " « " + q.nom + " » · " + (q.moyenne ? Math.round(q.moyenne * 1000) + " ms par image (" + q.ips + " i/s)" : "mesure en cours…")
+          + " · " + Math.round(q.pixels * 100) + " % des pixels · ombres " + ["non", "simples", "douces"][N.ombres] + " · vue " + N.vue + " m · arbres " + N.arbres + " m · herbe " + N.herbe + " m";
+      })()],
       ["triangles dessinés", compteur.triangles.toLocaleString("fr-FR")],
       ["objets envoyés à la carte graphique", compteur.objets.toLocaleString("fr-FR")],
       ["lignes (rayons X)", compteur.lignes.toLocaleString("fr-FR")],

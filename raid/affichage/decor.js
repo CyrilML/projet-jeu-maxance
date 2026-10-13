@@ -8,6 +8,10 @@
 //   - LA RIVIÈRE : un ruban d'eau qui ondule (ses vaguelettes bougent) ;
 //   - LA VÉGÉTATION et les ROCHERS : des milliers de touffes d'herbe sèche, des buissons, quelques arbres secs, des
 //     rochers (en « instances », rangées par parcelles : on ne dessine que les parcelles proches).
+// Étape 72 (« ça rame ») : le sol est découpé en 6 × 6 grandes PARCELLES de 300 m, comme un puzzle. La carte graphique
+// ne dessine que les pièces que la caméra voit ; et une pièce LOIN de toi est dessinée « en gros » (un point tous les
+// 12 m : 4 fois moins de triangles ; une petite jupe cache la couture avec les pièces fines). Les distances de la
+// végétation et sa densité suivent le niveau de qualité (affichage/qualite.js).
 // Comme tout l'affichage, il ne change jamais le monde.
 
 window.Raid = window.Raid || {};
@@ -15,6 +19,7 @@ window.Raid = window.Raid || {};
 Raid.Decor = (function () {
   const C = Raid.CONFIG, W = C.monde, T = Raid.Terrain, D = C.decor;
   const parcelles = [];
+  const morceaux = []; // (étape 72) les pièces du puzzle du sol : { fin, gros, x0, x1, z0, z1 }
   let eauMateriau = null;
   let etat = 7;
   const hasard = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
@@ -152,6 +157,8 @@ Raid.Decor = (function () {
         uvs.set([x / 8, z / 8], k * 2);
       }
     }
+    // Les normales (le sens où penche chaque point) : calculées une fois sur la grille entière, pour que les coutures
+    // entre les pièces du puzzle ne se voient pas.
     const indices = [];
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
@@ -159,16 +166,72 @@ Raid.Decor = (function () {
         indices.push(a, a + 1, b, b, a + 1, b + 1);
       }
     }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute("color", new THREE.BufferAttribute(couleurs, 3));
-    geo.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
-    geo.setIndex(indices);
-    geo.computeVertexNormals();
+    const entier = new THREE.BufferGeometry();
+    entier.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    entier.setIndex(indices);
+    entier.computeVertexNormals();
+    const normales = entier.attributes.normal.array;
+    entier.dispose();
+
     const g = grain();
-    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, map: g, bumpMap: g, bumpScale: 1.5, roughness: 0.95 }));
-    m.receiveShadow = true;
-    return m;
+    const materiau = new THREE.MeshStandardMaterial({ vertexColors: true, map: g, bumpMap: g, bumpScale: 1.5, roughness: 0.95 });
+    const groupe = new THREE.Group();
+    const c = Math.max(2, Math.round(C.sol.parcelle / pas / 2) * 2), nb = Math.ceil(n / c); // c : cases par pièce (un nombre pair)
+    // Une pièce du puzzle : les points (i0..i1, j0..j1) de la grille, un sur « saut » ; jupe : la petite jupe des pièces « en gros ».
+    function piece(i0, j0, i1, j1, saut, jupe) {
+      const ni = (i1 - i0) / saut + 1, nj = (j1 - j0) / saut + 1;
+      const P = [], N = [], K = [], U = [], idx = [];
+      const ajouter = (i, j, dy) => {
+        const k = i * (n + 1) + j;
+        P.push(positions[k * 3], positions[k * 3 + 1] + dy, positions[k * 3 + 2]);
+        N.push(normales[k * 3], normales[k * 3 + 1], normales[k * 3 + 2]);
+        K.push(couleurs[k * 3], couleurs[k * 3 + 1], couleurs[k * 3 + 2]);
+        U.push(uvs[k * 2], uvs[k * 2 + 1]);
+        return P.length / 3 - 1;
+      };
+      for (let a = 0; a < ni; a++) for (let b = 0; b < nj; b++) ajouter(i0 + a * saut, j0 + b * saut, 0);
+      for (let a = 0; a < ni - 1; a++) {
+        for (let b = 0; b < nj - 1; b++) {
+          const p = a * nj + b, q = p + nj;
+          idx.push(p, p + 1, q, q, p + 1, q + 1);
+        }
+      }
+      if (jupe) {
+        // Le tour de la pièce, et pour chaque point du tour, un point 4 m plus bas : une bande verticale (dans les deux sens).
+        const tour = [];
+        for (let b = 0; b < nj; b++) tour.push([0, b]);
+        for (let a = 1; a < ni; a++) tour.push([a, nj - 1]);
+        for (let b = nj - 2; b >= 0; b--) tour.push([ni - 1, b]);
+        for (let a = ni - 2; a >= 1; a--) tour.push([a, 0]);
+        const bas = tour.map(([a, b]) => ajouter(i0 + a * saut, j0 + b * saut, -4));
+        for (let t = 0; t < tour.length; t++) {
+          const u = (t + 1) % tour.length;
+          const h1 = tour[t][0] * nj + tour[t][1], h2 = tour[u][0] * nj + tour[u][1], b1 = bas[t], b2 = bas[u];
+          idx.push(h1, b1, h2, h2, b1, b2, h1, h2, b1, h2, b2, b1);
+        }
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(P, 3));
+      geo.setAttribute("normal", new THREE.Float32BufferAttribute(N, 3));
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(K, 3));
+      geo.setAttribute("uv", new THREE.Float32BufferAttribute(U, 2));
+      geo.setIndex(idx);
+      geo.computeBoundingSphere();
+      const m = new THREE.Mesh(geo, materiau);
+      m.receiveShadow = true;
+      groupe.add(m);
+      return m;
+    }
+    for (let a = 0; a < nb; a++) {
+      for (let b = 0; b < nb; b++) {
+        const i0 = a * c, j0 = b * c, i1 = Math.min(n, i0 + c), j1 = Math.min(n, j0 + c);
+        const fin = piece(i0, j0, i1, j1, 1, false);
+        const gros = (i1 - i0) % 2 === 0 && (j1 - j0) % 2 === 0 ? piece(i0, j0, i1, j1, 2, true) : null;
+        if (gros) gros.visible = false;
+        morceaux.push({ fin, gros, x0: -T.demi + i0 * pas, x1: -T.demi + i1 * pas, z0: -T.demi + j0 * pas, z1: -T.demi + j1 * pas });
+      }
+    }
+    return groupe;
   }
 
   // La piste : un ruban de 11 m qui suit le sol (5 points en travers, pour bien épouser les bosses).
@@ -243,7 +306,7 @@ Raid.Decor = (function () {
       im.computeBoundingSphere();
       groupe.add(im);
       const [i, j] = cle.split(",").map(Number);
-      parcelles.push({ objet: im, x: (i + 0.5) * PARCELLE, z: (j + 0.5) * PARCELLE, loin: ombre ? 900 : D.distanceTouffes });
+      parcelles.push({ objet: im, x: (i + 0.5) * PARCELLE, z: (j + 0.5) * PARCELLE, sorte: ombre ? "decor" : "touffes", total: l.length });
     }
   }
   // Un point au hasard, pas sur la piste ni dans l'eau, sur un terrain accepté.
@@ -339,17 +402,40 @@ Raid.Decor = (function () {
     return g;
   }
 
-  // Chaque image : les vaguelettes glissent, et on cache les parcelles trop loin de la caméra.
-  let affichees = 0;
+  // Chaque image : les vaguelettes glissent, et on cache les parcelles trop loin de la caméra (les distances viennent du
+  // niveau de qualité). Pour le sol : près de toi les pièces fines, plus loin les pièces « en gros ».
+  const vue = new THREE.Frustum(), projection = new THREE.Matrix4(), boule = new THREE.Sphere();
+  const bilan = { affichees: 0, solFin: 0, solGros: 0, densite: 1 };
   function maj(dt, cam) {
     if (eauMateriau) eauMateriau.normalMap.offset.y = (eauMateriau.normalMap.offset.y - dt * 0.08) % 1;
-    affichees = 0;
+    const R = Raid.Qualite.reglage, cx = cam.position.x, cz = cam.position.z;
+    cam.updateMatrixWorld();
+    projection.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
+    vue.setFromProjectionMatrix(projection);
+    const changeDensite = R.densite !== bilan.densite;
+    bilan.densite = R.densite;
+    bilan.affichees = 0;
     for (const p of parcelles) {
-      const dx = p.x - cam.position.x, dz = p.z - cam.position.z;
-      p.objet.visible = dx * dx + dz * dz < (p.loin + PARCELLE) ** 2;
-      if (p.objet.visible) affichees++;
+      const dx = p.x - cx, dz = p.z - cz, loin = p.sorte === "touffes" ? Math.min(R.touffes, D.distanceTouffes) : R.decor;
+      p.objet.visible = dx * dx + dz * dz < (loin + PARCELLE) ** 2;
+      if (changeDensite) p.objet.count = Math.max(1, Math.round(p.total * R.densite));
+      if (p.objet.visible && vue.intersectsSphere(p.objet.boundingSphere)) bilan.affichees++;
+    }
+    bilan.solFin = bilan.solGros = 0;
+    for (const m of morceaux) {
+      // (la distance entre la caméra et le bord le plus proche de la pièce)
+      const dx = Math.max(m.x0 - cx, 0, cx - m.x1), dz = Math.max(m.z0 - cz, 0, cz - m.z1);
+      const fin = !m.gros || dx * dx + dz * dz < R.solFin * R.solFin;
+      m.fin.visible = fin;
+      if (m.gros) m.gros.visible = !fin;
+      const objet = fin ? m.fin : m.gros;
+      boule.copy(objet.geometry.boundingSphere);
+      if (vue.intersectsSphere(boule) && boule.center.distanceTo(cam.position) - boule.radius < cam.far) fin ? bilan.solFin++ : bilan.solGros++;
     }
   }
 
-  return { construire, maj, get parcellesAffichees() { return affichees; }, get parcelles() { return parcelles.length; } };
+  return {
+    construire, maj, bilan,
+    get parcellesAffichees() { return bilan.affichees; }, get parcelles() { return parcelles.length; }, get morceaux() { return morceaux.length; },
+  };
 })();

@@ -4,6 +4,8 @@
 //   1. les règles avancent par petits pas tous égaux (1/120 s), autant de pas qu'il faut pour rattraper l'horloge ;
 //   2. puis on dessine une image (3D, tableau de bord, sous le capot) et on règle le son.
 // Comme ça, le jeu va à la même vitesse sur un ordinateur rapide ou lent.
+// Étape 72 : au plus 8 pas par image (si l'ordinateur a trop de retard, on oublie le retard au lieu de s'y noyer), et on
+// chronomètre chaque partie (règles, dessin 3D, tableau de bord) pour le régulateur de qualité (affichage/qualite.js).
 
 window.Raid = window.Raid || {};
 
@@ -35,20 +37,28 @@ window.Raid = window.Raid || {};
   document.querySelectorAll("[data-appuyer]").forEach((b) => b.addEventListener("click", () => { E.appuyer(b.dataset.appuyer); toile2d.focus(); }));
 
   let enPause = false, reste = 0, avant = performance.now();
+  const ecranPause = document.getElementById("pause");
+  const travail = { logique: 0, pas: 0, dessin: 0, tableau: 0, capot: 0 };
   function boucle(maintenant) {
-    const dt = Math.min(0.1, (maintenant - avant) / 1000);
+    const ecart = maintenant - avant;
+    const dt = Math.min(0.1, ecart / 1000);
     avant = maintenant;
+    if (ecart > 250) Raid.Qualite.oublierLaMesure(); // (onglet caché, fenêtre réduite : cette image ne compte pas)
     if (E.consommer("pause")) enPause = !enPause;
     if (E.consommer("camera")) Raid.Scene.changerCamera();
     if (E.consommer("son")) Raid.Sons.basculer();
+    if (E.consommer("qualite")) Raid.Qualite.basculer();
     if (E.consommer("retour") && monde.phase === "balade") {
       monde.phase = "garage";
       Raid.Evenements.emettre("garage", { nom: monde.voiture.fiche.nom });
     }
+    let t = performance.now();
+    travail.pas = 0;
     if (!enPause) {
       reste += dt;
-      while (reste >= C.pasFixe) {
+      while (reste >= C.pasFixe && travail.pas < C.pasMaxParImage) {
         reste -= C.pasFixe;
+        travail.pas++;
         Raid.Monde.etape(monde, C.pasFixe, {
           accelerer: E.estEnfoncee("accelerer"), freiner: E.estEnfoncee("freiner"),
           gauche: E.estEnfoncee("gauche"), droite: E.estEnfoncee("droite"),
@@ -56,12 +66,25 @@ window.Raid = window.Raid || {};
           valider: E.consommer("valider"), recommencer: E.consommer("recommencer"),
         });
       }
+      // Trop de retard ? On l'oublie (le jeu ralentit un instant au lieu de « ramer » de plus en plus).
+      if (reste >= C.pasFixe) {
+        Raid.Qualite.etat.lache += reste;
+        reste = 0;
+      }
     }
+    let t2 = performance.now();
+    travail.logique = t2 - t;
     Raid.Scene.dessiner(monde, enPause ? 0 : dt);
+    t = performance.now();
+    travail.dessin = t - t2;
     Raid.Tableau.dessiner(monde);
-    document.getElementById("pause").hidden = !enPause;
+    t2 = performance.now();
+    travail.tableau = t2 - t;
+    if (ecranPause.hidden === enPause) ecranPause.hidden = !enPause;
     Raid.SousLeCapot.maj();
     Raid.Sons.maj(monde);
+    travail.capot = performance.now() - t2;
+    Raid.Qualite.noter(maintenant, travail);
     requestAnimationFrame(boucle);
   }
   requestAnimationFrame(boucle);

@@ -873,6 +873,9 @@ Circuit.TableauDeBord = (function () {
     panneau(12, H - 74, 300, 30);
     texte(v.icone + " " + v.nom + (M.etat.fixe ? " (choisie)" : M.etat.melange > 0 ? " → " + prochain.icone + " " + prochain.nom : " · " + prochain.icone + " dans " + reste + " s"), 22, H - 53, 15, "#e8f0ff");
     if (v.adherence < 0.75 && !monde.pieton) texte("⚠️ Route glissante !", 324, H - 53, 15, "#ffb37a");
+    // Étape 72 : le niveau de la qualité automatique, et les images par seconde (tout petit, en bas à gauche).
+    const q = Circuit.Scene3D.qualite;
+    if (q.niveau >= 0) texte("⚙️ qualité " + q.niveau + "/" + (C.qualite.niveaux.length - 1) + (q.ips ? " · " + q.ips + " i/s" : ""), 22, H - 84, 12, "#b9c4dc");
     // Étape 53 : DRIFT ! (en gros, avec l'angle de la glissade), et la fumée quand une sportive patine.
     const vo = monde.voiture;
     if (!monde.pieton && vo.drift) {

@@ -371,6 +371,10 @@ Circuit.Nature = (function () {
       im.castShadow = im.receiveShadow = true;
       im.computeBoundingSphere();
       groupe.add(im);
+      // (étape 72 : chaque carré d'arbres est rangé, pour le cacher quand il est trop loin)
+      let sx = 0, sz = 0;
+      for (const p of liste) { sx += p[0]; sz += p[1]; }
+      bosquets.push({ objet: im, x: sx / liste.length, z: sz / liste.length });
     }
     const mat = (o) => new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.85 }, o));
     const VERTS_FEUILLU = [0x2f6b2a, 0x3d7a2c, 0x4a8a35, 0x5a7a2a, 0x356a35];
@@ -411,19 +415,31 @@ Circuit.Nature = (function () {
   // ---------- Chaque image ----------
   // Le temps avance (l'herbe ondule), le vent de la météo plie l'herbe, et on cache les parcelles trop loin.
   let affichees = 0;
+  // Étape 72 : jusqu'où on dessine l'herbe et les arbres (la qualité automatique, affichage/scene3d.js, les règle).
+  const distances = { herbe: N.distanceAffichage, arbres: Infinity };
+  const bosquets = []; // { objet, x, z } : les carrés d'arbres
+  function regler(herbe, arbres) {
+    distances.herbe = herbe;
+    distances.arbres = arbres;
+  }
   function maj(dt, cam) {
     uTemps.value += dt;
     const vent = Circuit.Meteo ? Circuit.Meteo.vent() : { x: 0, z: 0 };
     const limite = 0.45; // m : l'herbe ne plie jamais plus que ça (sinon elle se couche par terre)
     uVent.value.set(Math.max(-limite, Math.min(limite, vent.x * N.flexion)), Math.max(-limite, Math.min(limite, vent.z * N.flexion)));
-    const d2 = (N.distanceAffichage + N.parcelle * 0.7) ** 2;
+    const d2 = (distances.herbe + N.parcelle * 0.7) ** 2;
     affichees = 0;
     for (const p of parcelles) {
       const dx = p.x - cam.position.x, dz = p.z - cam.position.z;
       p.objet.visible = dx * dx + dz * dz < d2;
       if (p.objet.visible && p.objet.parent && p.objet.parent.parent && p.objet.parent.parent.visible) affichees++;
     }
+    const a2 = (distances.arbres + N.carreForet * 0.75) ** 2; // (un carré d'arbres : on compte depuis son milieu)
+    for (const b of bosquets) {
+      const dx = b.x - cam.position.x, dz = b.z - cam.position.z;
+      b.objet.visible = dx * dx + dz * dz < a2;
+    }
   }
 
-  return { tapis, foret, maj, bilan, hasardDepuis, get parcellesAffichees() { return affichees; }, get parcelles() { return parcelles.length; } };
+  return { tapis, foret, maj, regler, bilan, hasardDepuis, get parcellesAffichees() { return affichees; }, get parcelles() { return parcelles.length; } };
 })();

@@ -9,9 +9,13 @@ window.Raid = window.Raid || {};
 
 Raid.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans raid/index.html.
-  version: 3,
+  version: 4,
 
   pasFixe: 1 / 120, // la boucle de jeu avance par petits pas de 1/120 s
+  // Étape 72 : ✍️ « ça rame ». Au plus 8 petits pas par image : si l'ordinateur a pris trop de retard, on OUBLIE le
+  // retard (le jeu ralentit un instant) au lieu de vouloir tout rattraper (sinon : plus de pas → image encore plus lente
+  // → encore plus de pas… la « spirale » qui fige le jeu).
+  pasMaxParImage: 8,
   gravite: 9.8, // m/s²
 
   // Le MONDE : un carré de 1 800 m de côté (de −900 à +900), avec une graine (même graine = même paysage).
@@ -63,7 +67,12 @@ Raid.CONFIG = {
   ],
 
   // Les AUTRES CONCURRENTS qui roulent sur la piste (pilotés par l'ordinateur).
-  pilotes: { nombre: 10, regardDevant: 18, vitesse: [0.55, 0.85] }, // vitesse : une part de leur vitesse max, au hasard entre les deux
+  pilotes: {
+    nombre: 10, regardDevant: 18, vitesse: [0.55, 0.85], // vitesse : une part de leur vitesse max, au hasard entre les deux
+    // Étape 72 : un pilote à plus de 250 m de toi n'est calculé qu'un pas sur 4 (avec un pas 4 fois plus grand) :
+    // il roule pareil, mais l'ordinateur travaille 4 fois moins pour lui (de toute façon, tu ne le vois presque pas).
+    distanceLoin: 250, pasLoin: 4,
+  },
 
   vehicule: {
     freinage: 14, // m/s²
@@ -78,6 +87,33 @@ Raid.CONFIG = {
   poussiere: { particules: 260, parSeconde: 50, vie: 2.2, taille: [0.7, 5] },
   traces: { nombre: 1500, ecart: 0.6, largeur: 0.32, longueur: 0.8 },
   decor: { touffes: 9000, buissons: 900, rochers: 700, distanceTouffes: 260 },
+  // Étape 72 : le sol est découpé en 6 × 6 grandes PARCELLES de 300 m (on ne dessine que celles que la caméra voit) ;
+  // une parcelle loin de toi est dessinée avec 4 fois moins de triangles (un point tous les 12 m au lieu de 6 m).
+  sol: { parcelle: 300 },
+
+  // Étape 72 : ✍️ « Ça rame trop, le jeu a des lags. » Le RÉGULATEUR DE QUALITÉ (affichage/qualite.js) mesure le temps
+  // de chaque image. Toutes les 2 s, il fait la moyenne : au-dessus de 20 ms (moins de 50 images par seconde), il baisse
+  // la qualité d'un cran ; en dessous de 13 ms deux fois de suite, il la remonte d'un cran. Touche G : forcer un niveau.
+  qualite: {
+    depart: 1, // le niveau au démarrage
+    fenetre: 2, // s : la durée d'une mesure
+    descendreAuDessus: 20, // ms par image
+    monterSous: 13, // ms par image
+    foisPourMonter: 2, // combien de mesures rapides de suite avant de remonter
+    // pixels : la finesse de l'image (1 = un point de calcul par point de l'écran ; jamais plus que l'écran lui-même) ;
+    // ombres : 0 = pas d'ombres, sinon la taille de la carte des ombres (en points) et si leurs bords sont doux ;
+    // vue : m, jusqu'où on voit (au-delà : la brume) ; brume : m, où la brume commence ;
+    // touffes, decor : m, jusqu'où on dessine les touffes d'herbe, et les buissons / arbres / rochers ;
+    // densite : la part des touffes, buissons et rochers dessinés (1 = tous) ; solFin : m, jusqu'où le sol est fin ;
+    // poussiere : combien de nuages de poussière au plus ; detailles, simplifies : m, jusqu'où les autres pilotes sont
+    // dessinés en détail, puis en « maquette » simplifiée (au-delà : cachés).
+    niveaux: [
+      { nom: "très léger", pixels: 0.6, ombres: 0, vue: 450, brume: 80, touffes: 70, decor: 250, densite: 0.4, solFin: 150, poussiere: 80, detailles: 35, simplifies: 300 },
+      { nom: "léger", pixels: 0.8, ombres: { taille: 1024, douces: false }, vue: 700, brume: 110, touffes: 140, decor: 450, densite: 0.7, solFin: 250, poussiere: 150, detailles: 60, simplifies: 500 },
+      { nom: "normal", pixels: 1, ombres: { taille: 2048, douces: false }, vue: 1100, brume: 120, touffes: 200, decor: 700, densite: 1, solFin: 350, poussiere: 220, detailles: 100, simplifies: 800 },
+      { nom: "beau", pixels: 1.5, ombres: { taille: 2048, douces: true }, vue: 1400, brume: 120, touffes: 260, decor: 900, densite: 1, solFin: 450, poussiere: 260, detailles: 160, simplifies: 900 },
+    ],
+  },
 
   // Étape 70 : ✍️ « des voitures plus réalistes ». Les réglages de la carrosserie (affichage/atelier.js et vehicules.js).
   carrosserie: {

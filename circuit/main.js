@@ -116,11 +116,16 @@
 
     if (!options.pause) {
       reserve += ecoule;
-      while (reserve >= C.pasFixe) {
+      // (étape 72 : au plus C.qualite.pasMax pas par image. Si l'ordinateur a pris du retard, on oublie le reste :
+      // sinon il passerait encore plus de temps à rattraper… et prendrait encore plus de retard, une « spirale ».)
+      let faits = 0;
+      while (reserve >= C.pasFixe && faits < C.qualite.pasMax) {
         Circuit.Course.etape(monde, C.pasFixe, lireIntentions());
         reserve -= C.pasFixe;
         pas++;
+        faits++;
       }
+      if (faits >= C.qualite.pasMax) reserve = Math.min(reserve, C.pasFixe);
     } else if (pasSuivant) {
       Circuit.Course.etape(monde, C.pasFixe, lireIntentions());
       pas++;

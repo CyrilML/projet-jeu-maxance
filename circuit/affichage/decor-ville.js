@@ -244,7 +244,13 @@ Circuit.DecorVille = (function () {
       for (const groupe of feux) {
         for (const axe of ["x", "z"]) {
           const couleur = Circuit.Circulation.feu(temps, groupe.decalage, 0, axe);
-          for (const nom of ["rouge", "orange", "vert"]) groupe[axe][nom].emissiveIntensity = couleur === nom ? 3 : 0.04;
+          for (const nom of ["rouge", "orange", "vert"]) {
+            const l = groupe[axe][nom], allumee = couleur === nom;
+            if (l.allumee === allumee) continue; // (on ne change que les lampes qui changent)
+            l.allumee = allumee;
+            for (let k = l.debut; k < l.fin; k++) l.paquet.setColorAt(k, allumee ? l.couleur : l.eteinte);
+            l.paquet.instanceColor.needsUpdate = true;
+          }
         }
       }
     }
@@ -657,13 +663,30 @@ Circuit.DecorVille = (function () {
     };
     instances(new THREE.CylinderGeometry(0.1, 0.1, 4.2, 8), noir, poteaux);
     instances(new THREE.BoxGeometry(0.4, 1.15, 0.4), noir, boitiers);
+    // (Étape 72 : avant, chaque groupe de lampes avait sa propre matière : 90 dessins à faire ! Maintenant il y a UN
+    // seul paquet d'instances par couleur (3 dessins) : chaque lampe a sa propre couleur, allumée ou éteinte.)
     const geoLampe = new THREE.SphereGeometry(0.15, 10, 8);
     const groupes = [];
-    for (const [cle, positions] of Object.entries(lampes)) {
-      const [decalage, axe, nom] = cle.split("-");
-      const gr = (groupes[decalage] = groupes[decalage] || { decalage: +decalage, x: {}, z: {} });
-      gr[axe][nom] = new THREE.MeshStandardMaterial({ color: COULEURS[nom], emissive: COULEURS[nom], emissiveIntensity: 0.04, roughness: 0.3 });
-      instances(geoLampe, gr[axe][nom], positions);
+    const paquets = {};
+    for (const nom of ["rouge", "orange", "vert"]) {
+      const toutes = Object.entries(lampes).filter(([cle]) => cle.endsWith("-" + nom));
+      const n = toutes.reduce((t, [, pos]) => t + pos.length, 0);
+      const im = new THREE.InstancedMesh(geoLampe, new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }), n);
+      const m4 = new THREE.Matrix4(), eteinte = new THREE.Color(COULEURS[nom]).multiplyScalar(0.12);
+      let k = 0;
+      for (const [cle, positions] of toutes) {
+        const [decalage, axe] = cle.split("-");
+        const gr = (groupes[decalage] = groupes[decalage] || { decalage: +decalage, x: {}, z: {} });
+        const debut = k;
+        for (const [x, y, z] of positions) {
+          im.setMatrixAt(k, m4.makeTranslation(x, y, z));
+          im.setColorAt(k, eteinte);
+          k++;
+        }
+        gr[axe][nom] = { paquet: im, debut, fin: k, allumee: false, couleur: new THREE.Color(COULEURS[nom]).multiplyScalar(1.6), eteinte };
+      }
+      g.add(im);
+      paquets[nom] = im;
     }
     return groupes.filter(Boolean);
   }

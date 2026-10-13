@@ -18,6 +18,7 @@ Raid.Entrees = (function () {
     camera: ["KeyC"],
     son: ["KeyB"],
     pause: ["Escape", "KeyP"],
+    qualite: ["KeyG"], // (étape 72 : G comme « graphismes » : changer la qualité de l'image)
   };
   const actionsDeLaTouche = {};
   for (const action in CARTE) for (const code of CARTE[action]) (actionsDeLaTouche[code] = actionsDeLaTouche[code] || []).push(action);

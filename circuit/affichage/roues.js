@@ -11,7 +11,8 @@
 // en place (il est fixé à la voiture). Ce fichier ne connaît aucune voiture : on lui donne des mesures et un style.
 //
 // Styles de jante : "fins" (beaucoup de rayons fins), "doubles" (5 rayons doublés), "etoile" (5 branches larges),
-// "y" (5 branches en Y), "turbine" (des pales courbées), "moto" (3 branches fines), "acier" (une jante pleine percée).
+// "y" (5 branches en Y), "turbine" (des pales courbées), "moto" (3 branches fines), "acier" (une jante pleine percée),
+// "rayons" (étape 71 : la roue de moto cross, 36 rayons fins croisés).
 
 window.Circuit = window.Circuit || {};
 
@@ -190,10 +191,10 @@ Circuit.Roues = (function () {
     // la cuvette (le fond de la jante, en retrait)
     const fond = new THREE.Mesh(new THREE.CircleGeometry(rJ * 0.98, 32), sombre);
     fond.position.z = zFace - rJ * 0.32;
-    roue.add(fond);
+    if (o.style !== "rayons") roue.add(fond); // (étape 71 : une roue à rayons, on voit à travers)
     // les rayons
     const style = o.style || "fins";
-    const n = o.rayons || { fins: 10, doubles: 5, etoile: 5, y: 5, turbine: 12, moto: 3, acier: 0 }[style];
+    const n = o.rayons || { fins: 10, doubles: 5, etoile: 5, y: 5, turbine: 12, moto: 3, acier: 0, rayons: 0 }[style];
     const ajouterRayon = (angle, l0, l1, ep, courbe) => {
       const r = ombre(new THREE.Mesh(formeRayon(rJ, l0, l1, ep, courbe), metal));
       r.rotation.z = angle;
@@ -225,17 +226,34 @@ Circuit.Roues = (function () {
         roue.add(trou);
       }
     }
+    if (style === "rayons") {
+      // (étape 71) la roue de moto cross : 36 rayons fins, du moyeu (au milieu de la roue) jusqu'à la jante, croisés
+      const matRayon = memo("mat-rayon", () => new THREE.MeshStandardMaterial({ color: 0xc9ccd1, metalness: 0.9, roughness: 0.3 }));
+      const rMoyeu = Math.min(0.06, rJ * 0.2);
+      for (let k = 0; k < 36; k++) {
+        const a = (k / 36) * Math.PI * 2, cote = k % 2 ? 1 : -1, decale = cote * 0.35;
+        const pied = new THREE.Vector3(Math.cos(a) * rMoyeu, Math.sin(a) * rMoyeu, cote * largeur * 0.22);
+        const bout = new THREE.Vector3(Math.cos(a + decale) * rJ * 0.97, Math.sin(a + decale) * rJ * 0.97, 0);
+        const r = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, pied.distanceTo(bout), 4), matRayon);
+        r.position.copy(pied).add(bout).multiplyScalar(0.5);
+        r.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), bout.clone().sub(pied).normalize());
+        roue.add(r);
+      }
+      const gros = new THREE.Mesh(new THREE.CylinderGeometry(rMoyeu, rMoyeu, largeur * 0.5, 18), metal);
+      gros.rotation.x = Math.PI / 2;
+      roue.add(gros);
+    }
     // le moyeu, les 5 écrous, le cache central
     const moyeu = new THREE.Mesh(new THREE.CylinderGeometry(rJ * 0.19, rJ * 0.22, 0.05, 24), metal); // (étape 59 : plus petit, comme les vrais)
     moyeu.rotation.x = Math.PI / 2;
     moyeu.position.z = zFace - 0.02;
-    roue.add(moyeu);
+    if (style !== "rayons") roue.add(moyeu);
     const ecrou = memo("geo-ecrou", () => {
       const g = new THREE.CylinderGeometry(0.014, 0.014, 0.03, 6);
       g.rotateX(Math.PI / 2);
       return g;
     });
-    const nombreEcrous = style === "moto" ? 0 : 5;
+    const nombreEcrous = style === "moto" || style === "rayons" ? 0 : 5;
     for (let k = 0; k < nombreEcrous; k++) {
       const a = (k / 5) * Math.PI * 2 + 0.3;
       const e = new THREE.Mesh(ecrou, M.chrome);
@@ -245,7 +263,7 @@ Circuit.Roues = (function () {
     const cache = new THREE.Mesh(new THREE.CylinderGeometry(rJ * 0.07, rJ * 0.07, 0.02, 16), M.noir);
     cache.rotation.x = Math.PI / 2;
     cache.position.z = zFace + 0.015;
-    roue.add(cache);
+    if (style !== "rayons") roue.add(cache);
     // le frein : le disque (il tourne, avec la roue) et l'étrier (il ne tourne pas : il est accroché au pivot)
     let etrier = null;
     if (o.etrier !== false) {

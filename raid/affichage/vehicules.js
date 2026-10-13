@@ -739,5 +739,46 @@ Raid.Vehicules = (function () {
     A.recoller(v);
     return v;
   }
-  return { fabriquer };
+
+  // Étape 72 : la MAQUETTE d'un véhicule, pour le dessiner de loin. Comme un jouet en bois : une boîte de sa couleur pour
+  // le bas, une boîte plus petite pour la cabine (un peu plus sombre), et un cube noir par roue. Tout est recollé en une
+  // seule pièce : 1 dessin au lieu d'une soixantaine. De loin (au-delà de 60 à 160 m), on ne voit pas la différence.
+  const matMaquette = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.1 });
+  function maquette(objet, fiche) {
+    objet.g.updateMatrixWorld(true);
+    const boite3 = new THREE.Box3().setFromObject(objet.caisse), taille = boite3.getSize(new THREE.Vector3()), milieu = boite3.getCenter(new THREE.Vector3());
+    const k = fiche.couleurs[0], couleur = new THREE.Color(k[0], k[1], k[2]).convertSRGBToLinear();
+    const sombre = couleur.clone().multiplyScalar(0.55), noir = new THREE.Color(0.02, 0.02, 0.02);
+    const pieces = [];
+    const cube = (l, h, p, x, y, z, c) => pieces.push({ geo: new THREE.BoxGeometry(l, h, p).translate(x, y, z), c });
+    const moto = objet.famille === "moto";
+    const bas = taille.y * (moto ? 0.5 : 0.55), plancher = boite3.min.y + taille.y * (moto ? 0.3 : 0.12);
+    cube(taille.x * 0.96, bas - (plancher - boite3.min.y), taille.z * (moto ? 0.5 : 0.92), milieu.x, (plancher + boite3.min.y + bas) / 2, milieu.z, couleur);
+    cube(taille.x * (moto ? 0.3 : 0.5), taille.y - bas, taille.z * (moto ? 0.6 : 0.8), milieu.x - taille.x * (objet.famille === "camion" ? -0.3 : 0.08), boite3.min.y + bas + (taille.y - bas) / 2, milieu.z, sombre);
+    const ici = new THREE.Vector3();
+    for (const r of objet.roues) {
+      r.pivot.getWorldPosition(ici);
+      const d = ici.y * 2; // (le centre de la roue est à un rayon du sol)
+      cube(d, d, moto ? 0.15 : 0.35, ici.x, ici.y, ici.z, noir);
+    }
+    // On recolle tout (avec une couleur par point).
+    const pos = [], nor = [], col = [];
+    for (const { geo, c } of pieces) {
+      const g = geo.toNonIndexed();
+      pos.push(...g.attributes.position.array);
+      nor.push(...g.attributes.normal.array);
+      for (let i = 0; i < g.attributes.position.count; i++) col.push(c.r, c.g, c.b);
+      g.dispose();
+      geo.dispose();
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+    geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+    const m = new THREE.Mesh(geo, matMaquette);
+    m.receiveShadow = true;
+    return m;
+  }
+
+  return { fabriquer, maquette };
 })();

@@ -45,8 +45,7 @@ Circuit.Scene3D = (function () {
     } catch (e) {
       return false; // pas de WebGL sur cet ordinateur
     }
-    qualite.pixels = Math.min(window.devicePixelRatio || 1, C.qualite.pixelsMax); // (étape 56)
-    rendu.setPixelRatio(qualite.pixels);
+    rendu.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1)); // (étape 72 : la qualité automatique règle ensuite les pixels)
     rendu.setSize(canvas.width, canvas.height, false);
     rendu.outputColorSpace = THREE.SRGBColorSpace;
     rendu.toneMapping = THREE.ACESFilmicToneMapping; // des couleurs « comme au cinéma »
@@ -130,6 +129,7 @@ Circuit.Scene3D = (function () {
       else if (carte === "ciel") ({ groupe, maj } = Circuit.DecorRampes.construire()); // étape 41
       else if (carte === "ville") ({ groupe, maj } = Circuit.DecorVille.construire());
       else groupe = Circuit.DecorCircuit.construire();
+      Circuit.Souder.souder(groupe); // étape 72 : les pièces du décor qui ne bougent pas sont soudées (affichage/souder.js)
       const rayons = Circuit.RayonsX.fixes(carte);
       scene.add(groupe);
       sceneX.add(rayons);
@@ -436,8 +436,53 @@ Circuit.Scene3D = (function () {
 
   let objetJoueur = null; // (étape 55 : le dessin de ta voiture, pour compter ses pièces sous le capot)
 
+  // Étape 72 : le « NIVEAU DE DÉTAIL » des voitures (les jeux disent LOD). Une voiture, c'est une cinquantaine de
+  // pièces à dessiner (l'intérieur, les phares, les emblèmes, les freins, les rayons…). De loin, on ne les voit pas :
+  // alors, au-delà de quelques dizaines de mètres, on ne dessine que la carrosserie, les vitres et les 4 pneus.
+  // On trie les pièces une seule fois : ce qu'on garde de loin (la peau, les grosses pièces, le pneu de chaque roue)
+  // et les détails (tout le reste).
+  const lod = { proches: 0, loin: 0 };
+  function preparerDetails(objet) {
+    const details = [];
+    const roues = new Set((objet.roues || []).map((w) => w.pivot));
+    const rayon = (m) => {
+      if (!m.geometry.boundingSphere) m.geometry.computeBoundingSphere();
+      return m.geometry.boundingSphere ? m.geometry.boundingSphere.radius * Math.max(m.scale.x, m.scale.y, m.scale.z) : 0;
+    };
+    for (const w of objet.roues || []) {
+      const pieces = [];
+      w.pivot.traverse((o) => { if (o.isMesh) pieces.push(o); });
+      let pneu = null;
+      for (const m of pieces) if (!pneu || rayon(m) > rayon(pneu)) pneu = m;
+      for (const m of pieces) if (m !== pneu) details.push(m);
+    }
+    objet.g.traverse((o) => {
+      if (!o.isMesh || details.includes(o)) return;
+      let a = o, dansRoue = false;
+      while (a && a !== objet.g) { if (roues.has(a)) dansRoue = true; a = a.parent; }
+      if (dansRoue) return;
+      const peau = Array.isArray(o.material) && o.material.length === 2; // (la peau : peinture + vitres)
+      if (!peau && rayon(o) < 1.3) details.push(o);
+    });
+    for (const m of details) m.castShadow = false; // (une petite pièce ne fait pas d'ombre qu'on verrait : un dessin de moins)
+    objet.details = details;
+    objet.detailsVisibles = true;
+  }
+  function niveauDeDetail(objet, v) {
+    if (!objet.details) preparerDetails(objet);
+    const dx = v.x - cam.position.x, dz = v.z - cam.position.z, dy = (v.y || 0) - cam.position.y;
+    const N = niveauQualite();
+    const proche = objet === objetJoueur || (dx * dx + dy * dy + dz * dz < N.details ** 2 && lod.proches < N.detaillees);
+    if (proche && objet !== objetJoueur) lod.proches++;
+    else lod.loin++;
+    if (proche === objet.detailsVisibles) return;
+    objet.detailsVisibles = proche;
+    for (const m of objet.details) m.visible = proche;
+  }
+
   // Met une voiture (le groupe Three.js) à la place de la voiture du monde.
   function placerVoiture(objet, v) {
+    niveauDeDetail(objet, v); // étape 72
     const y = v.y || 0;
     const cible = v.tangage || (Math.abs(v.vy || 0) > 0.01 ? Math.max(-0.6, Math.min(0.6, Math.atan2(v.vy, Math.abs(v.vitesse) || 1))) : 0);
     // Étape 46 : la voiture penche EN DOUCEUR (elle rattrape un quart de l'écart à chaque image), comme une vraie
@@ -445,7 +490,12 @@ Circuit.Scene3D = (function () {
     const penche = v.tangage ? cible : objet.penche === undefined ? cible : objet.penche + (cible - objet.penche) * 0.25;
     objet.penche = penche;
     objet.g.position.set(v.x, y, v.z);
-    objet.g.rotation.set(v.roulis || 0, -v.angle, penche, "YZX"); // d'abord tourner (angle), puis pencher (pente, looping), puis le roulis (étape 44 : un avion qui vire)
+    // Étape 71 : une moto PENCHE vers l'intérieur du virage (d'autant plus qu'on va vite), en douceur.
+    if (objet.deuxRoues) {
+      const Mo = C.motos, cibleMoto = v.enLAir ? 0 : -(v.volant || 0) * Mo.inclinaison * Math.min(1, Math.abs(v.vitesse || 0) / Mo.vitesse);
+      objet.inclinaison = (objet.inclinaison || 0) + (cibleMoto - (objet.inclinaison || 0)) * 0.15;
+    }
+    objet.g.rotation.set((v.roulis || 0) + (objet.inclinaison || 0), -v.angle, penche, "YZX"); // d'abord tourner (angle), puis pencher (pente, looping), puis le roulis (étape 44 : un avion qui vire)
     // Étape 44 : le rotor de l'hélico et l'hélice du petit avion tournent (leur angle est rotationRoues).
     if (objet.rotor) objet.rotor.rotation.y = v.rotationRoues || 0;
     if (objet.rotorArriere) objet.rotorArriere.rotation.z = (v.rotationRoues || 0) * 1.7;
@@ -477,12 +527,39 @@ Circuit.Scene3D = (function () {
     return reserve[index];
   }
 
-  // Étape 56 : la QUALITÉ AUTOMATIQUE. On chronomètre chaque image ; toutes les 2 s, on regarde la moyenne :
-  // trop lent → on peint moins de pixels (l'image est un tout petit peu moins fine, mais le jeu ne saccade plus) ;
-  // très rapide → on en remet. C'est ce que font les vrais jeux vidéo (« résolution dynamique »).
-  const qualite = { pixels: 1, moyenne: 0, total: 0, images: 0, debut: 0, avant: 0 };
+  // Étape 56 : la QUALITÉ AUTOMATIQUE. On chronomètre chaque image ; toutes les 2 s, on regarde la moyenne.
+  // Étape 72 : ✍️ « ça rame trop » : au lieu de changer seulement les pixels, il y a 4 NIVEAUX (config.js, qualite).
+  // Trop lent → on descend d'un niveau (moins de pixels, des ombres plus simples, on voit moins loin, moins d'herbe
+  // et d'arbres au loin) ; très rapide 2 fois de suite → on remonte. Comme les « réglages graphiques » des vrais jeux.
+  const qualite = { niveau: -1, nom: "", pixels: 1, moyenne: 0, total: 0, images: 0, debut: 0, avant: 0, rapides: 0, ips: 0, interdit: -1, jusqua: 0 };
+  const niveauQualite = () => C.qualite.niveaux[Math.max(0, qualite.niveau)];
+  function appliquerQualite(n) {
+    const Q = C.qualite, ancien = qualite.niveau;
+    n = Math.max(0, Math.min(Q.niveaux.length - 1, n));
+    if (n === ancien) return;
+    const N = Q.niveaux[n], A = ancien >= 0 ? Q.niveaux[ancien] : null;
+    qualite.niveau = n;
+    qualite.nom = N.nom;
+    qualite.pixels = Math.min(window.devicePixelRatio || 1, N.pixels);
+    rendu.setPixelRatio(qualite.pixels); // (Three.js garde la taille de l'écran et change seulement le nombre de pixels peints)
+    // les ombres : allumées ou éteintes, simples ou douces, et la taille de leur image
+    rendu.shadowMap.enabled = N.ombres > 0;
+    rendu.shadowMap.type = N.ombres > 1 ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
+    if (N.carteOmbre && soleil.shadow.mapSize.x !== N.carteOmbre) {
+      soleil.shadow.mapSize.set(N.carteOmbre, N.carteOmbre);
+      if (soleil.shadow.map) { soleil.shadow.map.dispose(); soleil.shadow.map = null; }
+    }
+    if (!A || A.ombres !== N.ombres) scene.traverse((o) => { if (o.material) for (const m of [].concat(o.material)) m.needsUpdate = true; }); // (les matières se refont)
+    // jusqu'où on voit : la caméra ne dessine rien après (c'est caché dans le brouillard), le ciel se rapproche
+    cam.far = N.vue + 300;
+    cam.updateProjectionMatrix();
+    ciel.scale.setScalar(Math.min(1, (N.vue + 200) / 4000));
+    Circuit.Nature.regler(N.herbe, N.arbres);
+    if (ancien >= 0) Circuit.Evenements.emettre("qualite", { niveau: n, nom: N.nom, plus: n > ancien, ms: qualite.moyenne * 1000, max: Q.niveaux.length - 1 });
+  }
   function reglerQualite(maintenant) {
     const Q = C.qualite;
+    if (qualite.niveau < 0) appliquerQualite(Q.depart);
     if (qualite.avant) {
       qualite.total += Math.min(0.25, (maintenant - qualite.avant) / 1000);
       qualite.images++;
@@ -491,21 +568,31 @@ Circuit.Scene3D = (function () {
     if (!qualite.debut) qualite.debut = maintenant;
     if (maintenant - qualite.debut < Q.mesure * 1000 || !qualite.images) return;
     qualite.moyenne = qualite.total / qualite.images;
+    qualite.ips = Math.round(1 / Math.max(0.001, qualite.moyenne));
     qualite.total = qualite.images = 0;
     qualite.debut = maintenant;
-    const max = Math.min(window.devicePixelRatio || 1, Q.pixelsMax);
-    let nouveau = qualite.pixels;
-    if (qualite.moyenne > Q.imageLente) nouveau = Math.max(Q.pixelsMin, qualite.pixels - Q.pas);
-    else if (qualite.moyenne < Q.imageRapide) nouveau = Math.min(max, qualite.pixels + Q.pas);
-    if (Math.abs(nouveau - qualite.pixels) < 0.01) return;
-    const plus = nouveau > qualite.pixels;
-    qualite.pixels = nouveau;
-    rendu.setPixelRatio(nouveau); // (Three.js garde la taille de l'écran et change seulement le nombre de pixels peints)
-    Circuit.Evenements.emettre("qualite", { pixels: nouveau, plus, ms: qualite.moyenne * 1000 });
+    if (document.hidden) return; // (onglet caché : les mesures ne veulent rien dire)
+    // (Changer de niveau fait une petite pause : les matières se refont. Pour ne pas faire le yo-yo, un niveau trop
+    // lent est INTERDIT pendant Q.attente secondes : on ne remonte pas tout de suite là où ça ramait.)
+    if (qualite.interdit >= 0 && maintenant > qualite.jusqua) qualite.interdit = -1;
+    if (qualite.moyenne > Q.imageLente) {
+      qualite.rapides = 0;
+      if (qualite.niveau > 0) {
+        qualite.interdit = qualite.niveau;
+        qualite.jusqua = maintenant + Q.attente * 1000;
+      }
+      appliquerQualite(qualite.niveau - 1);
+    } else if (qualite.moyenne < Q.imageRapide) {
+      if (++qualite.rapides >= 2) {
+        qualite.rapides = 0;
+        if (qualite.interdit < 0 || qualite.niveau + 1 < qualite.interdit) appliquerQualite(qualite.niveau + 1);
+      }
+    } else qualite.rapides = 0;
   }
 
   function dessiner(monde, options, dt) {
     reglerQualite(performance.now());
+    lod.proches = lod.loin = 0; // (étape 72 : on recompte à chaque image)
     if (monde.carte !== carteDessinee) preparerCarte(monde.carte);
     placerCamera(monde, dt);
     const v = monde.voiture;
@@ -553,7 +640,7 @@ Circuit.Scene3D = (function () {
     const montrer = (voiture) => {
       // Étape 42 : la map est énorme. On ne dessine que les véhicules à moins de 400 m (les autres sont cachés).
       // (Étape 56 : en ville, 170 m suffisent : plus loin, les immeubles les cachent, et ça faisait ramer.)
-      const loin = monde.carte === "ville" ? C.qualite.distanceVehiculesVille : C.qualite.distanceVehicules;
+      const loin = monde.carte === "ville" ? niveauQualite().vehiculesVille : niveauQualite().vehicules; // (étape 72 : selon le niveau de qualité)
       if (Math.abs(voiture.x - suivi0.x) > loin || Math.abs(voiture.z - suivi0.z) > loin) return;
       // Une réserve par modèle ET par couleur (les motos des méga-rampes ont chacune leur couleur).
       const cleFlotte = voiture.couleurs ? voiture.modele + JSON.stringify(voiture.couleurs) : voiture.modele;
@@ -649,7 +736,7 @@ Circuit.Scene3D = (function () {
     soleil.target.position.set(suivi.x, hautSuivi, suivi.z);
     if (decors[carteDessinee].maj) decors[carteDessinee].maj(monde.temps, monde); // étape 39 : les feux de la ville
     ciel.position.copy(cam.position);
-    Circuit.Meteo3D.maj(options.pause ? 0 : dt, cam, monde.carte, brouillardCarte); // étape 47
+    Circuit.Meteo3D.maj(options.pause ? 0 : dt, cam, monde.carte, Math.min(brouillardCarte, niveauQualite().vue)); // étape 47 (étape 72 : pas plus loin que la qualité ne le permet)
     Circuit.Nature.maj(options.pause ? 0 : dt, cam); // étape 48 : l'herbe plie au vent, on cache l'herbe trop loin
     Circuit.Fumee.maj(options.pause ? 0 : dt, monde, monde.pieton ? null : vehicule(monde.voiture.modele)); // étape 53
     Circuit.Eau.maj(options.pause ? 0 : dt); // étape 48 : les vagues
@@ -686,6 +773,7 @@ Circuit.Scene3D = (function () {
       return vueProjection;
     },
     qualite,
+    lod, // étape 72 : combien de voitures sont dessinées en détail, et combien simplifiées
     get objetJoueur() {
       return objetJoueur;
     },

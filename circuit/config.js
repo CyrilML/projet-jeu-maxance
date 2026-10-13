@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 30,
+  version: 32,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -109,6 +109,12 @@ Circuit.CONFIG = {
     { id: "raptor", nom: "Le Ford Raptor", modele: "raptor", prix: 250, vitesseMax: 41.7, acceleration: 14, virage: 1.6, saut: 1.3, ecrase: true,
       couleurs: [[0.15, 0.32, 0.65], [0.1, 0.1, 0.11]], son: { ralenti: 35, max: 95 } },
     "cybertruck",
+    // Étape 71 : ✍️ la MOTO CROSS (« un peu une Honda ») et la MOTO DE TRIAL. Très légères : elles sautent très haut
+    // (saut) et tournent vite. Elles sont aussi au garage du grand parcours et de la ville.
+    { id: "crf", nom: "La moto cross Honda CRF450R", modele: "crf", prix: 120, vitesseMax: 40.3, acceleration: 20, virage: 2.8, saut: 1.6, deuxRoues: true,
+      couleurs: [[0.85, 0.06, 0.08], [0.08, 0.08, 0.09]], son: { ralenti: 120, max: 380 } },
+    { id: "trial", nom: "La moto de trial Montesa Cota", modele: "trial", prix: 90, vitesseMax: 27.8, acceleration: 16, virage: 3.2, saut: 1.9, deuxRoues: true,
+      couleurs: [[0.85, 0.06, 0.08], [0.12, 0.12, 0.13]], son: { ralenti: 130, max: 360 } },
   ],
 
   // Étape 39 : le garage de la ville. ✍️ Petite citadine, SUV, voiture basse, camionnette et camion.
@@ -157,6 +163,7 @@ Circuit.CONFIG = {
     { id: "delorean", sportive: true, nom: "La DeLorean", modele: "delorean", prix: 500, vitesseMax: 49, acceleration: 15,
       couleurs: [[0.72, 0.74, 0.77], [0.3, 0.3, 0.32]], son: { ralenti: 50, max: 140 } },
     "ferrariSF90", "mcLaren720S", "defender", "wrangler", "raptor",
+    "crf", "trial", // étape 71 : les motos tout-terrain
   ],
 
   // Étape 40 : le garage du GRAND PARCOURS. ✍️ Le kart (offert), puis des véhicules qui sont aussi dans
@@ -168,6 +175,7 @@ Circuit.CONFIG = {
     "quad",
     "rallye",
     "defender", "wrangler", "raptor", "cybertruck", // étape 68
+    "crf", "trial", // étape 71
   ],
 
   // Étape 41 : le garage des MÉGA-RAMPES : les voitures de course (la piste est faite pour aller vite !).
@@ -533,7 +541,10 @@ Circuit.CONFIG = {
   },
 
   // Étape 57 : ✍️ la TAILLE des véhicules (1 = la vraie taille). Maxance les trouvait trop petits.
-  taille: { voitures: 1.15, moto: 1.5 },
+  taille: { voitures: 1.15, moto: 1.5, crf: 1.4, trial: 1.4 }, // (étape 71 : les motos tout-terrain, agrandies elles aussi)
+  // Étape 71 : ✍️ les motos PENCHENT dans les virages (seulement le dessin : ça ne change pas comment elles roulent).
+  // inclinaison = l'angle (radians) quand on tourne à fond assez vite ; vitesse = à partir de quelle vitesse (m/s) on penche à fond.
+  motos: { inclinaison: 0.45, vitesse: 15 },
   phares: { taille: 0.7 },
   vitres: { opacite: 0.6 },
   formes: { ailes: 0.045 }, // étape 59 : m : de combien les ailes gonflent au-dessus des roues // étape 59 : 0 = pas de vitre du tout, 1 = vitre noire (on ne voit pas l'intérieur) // les blocs de phares font 70 % de leur taille d'avant (ils étaient trop gros)
@@ -542,16 +553,27 @@ Circuit.CONFIG = {
 
   // Étape 56 : la QUALITÉ AUTOMATIQUE (pour que le jeu ne rame pas). Si une image met trop longtemps à se dessiner,
   // le jeu dessine un peu moins de pixels ; si tout va vite, il remet de la finesse.
+  // Étape 72 : ✍️ « Ça rame trop » : la QUALITÉ AUTOMATIQUE a maintenant 4 NIVEAUX. Toutes les 2 secondes, on mesure
+  // le temps moyen d'une image : trop lent → on descend d'un niveau ; très rapide 2 fois de suite → on remonte.
+  // Chaque niveau règle : les pixels peints, les ombres, jusqu'où on voit, jusqu'où on dessine l'herbe, les arbres et
+  // les autres véhicules. (Ce qui est plus loin est caché dans le brouillard : on ne le voit presque pas.)
   qualite: {
-    pixelsMax: 1.5, // au plus 1,5 pixel de jeu par pixel de l'écran (les écrans « Retina » en ont 2 : c'est 2 fois moins à peindre)
-    pixelsMin: 0.75, // au moins 0,75 (en dessous, l'image serait trop floue)
-    pas: 0.15, // de combien on change à chaque fois
-    imageLente: 0.03, // s : en moyenne plus de 30 ms par image (moins de 33 images par seconde) → moins de pixels
-    imageRapide: 0.018, // s : moins de 18 ms par image (plus de 55 images par seconde) → plus de pixels
+    depart: 1, // on commence au niveau « léger » (puis on monte si l'ordinateur est rapide)
     mesure: 2, // s : on fait la moyenne sur 2 secondes avant de décider
-    distanceVehicules: 400, // m : on ne dessine pas les véhicules plus loin que ça…
-    distanceVehiculesVille: 170, // m : … et en ville, les immeubles les cachent : 170 m suffisent
+    imageLente: 0.021, // s : plus de 21 ms par image (moins de 48 images par seconde) → on descend d'un niveau
+    imageRapide: 0.014, // s : moins de 14 ms par image (plus de 70 images par seconde), 2 fois de suite → on monte
+    niveaux: [
+      { nom: "très léger", pixels: 0.6, ombres: 0, carteOmbre: 0, vue: 650, herbe: 70, arbres: 550, vehicules: 160, vehiculesVille: 110, details: 14, detaillees: 2 },
+      { nom: "léger", pixels: 0.8, ombres: 1, carteOmbre: 1024, vue: 1000, herbe: 130, arbres: 850, vehicules: 250, vehiculesVille: 140, details: 22, detaillees: 3 },
+      { nom: "moyen", pixels: 1.0, ombres: 1, carteOmbre: 2048, vue: 1500, herbe: 190, arbres: 1300, vehicules: 330, vehiculesVille: 160, details: 32, detaillees: 4 },
+      { nom: "beau", pixels: 1.5, ombres: 2, carteOmbre: 2048, vue: 2200, herbe: 230, arbres: 2200, vehicules: 400, vehiculesVille: 170, details: 50, detaillees: 6 },
+    ], // ombres : 0 = pas d'ombres, 1 = ombres simples, 2 = ombres aux bords doux ; vue, herbe, arbres, véhicules : en mètres ;
+    // details : plus loin que ça (m), une voiture est dessinée SIMPLIFIÉE (la carrosserie, les vitres et les pneus) ;
+    // detaillees : au plus ce nombre d'autres voitures en détail (au départ d'une course, les 11 adversaires sont tout près !)
+    attente: 60, // s : un niveau qui ramait est interdit pendant 60 s (pas de yo-yo : changer de niveau fait une petite pause)
+    pasMax: 8, // pas de jeu au plus par image : si l'ordinateur prend du retard, on ne cherche pas à tout rattraper
   },
+
 
 camera: {
     distance: 11, // m derrière la voiture

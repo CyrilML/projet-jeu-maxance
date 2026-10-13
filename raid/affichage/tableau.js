@@ -2,6 +2,7 @@
 //
 // Le compteur de vitesse, le terrain sous tes roues, ta distance, ton plus grand saut, une petite CARTE du désert
 // (avec la piste, la rivière, toi en jaune et les autres pilotes en blanc), et le garage pour choisir ton véhicule.
+// Étape 72 : en bas à gauche, un petit mot du régulateur de qualité (« ⚙️ qualité 1/3 · 58 i/s »).
 // Il lit le monde, il ne le modifie jamais.
 
 window.Raid = window.Raid || {};
@@ -47,8 +48,13 @@ Raid.Tableau = (function () {
   }
   const virgule = (n, c) => n.toFixed(c).replace(".", ",");
 
+  function etiquetteQualite() {
+    texte(Raid.Qualite.etiquette, 14, H - 14, 12, "rgba(255,255,255,0.75)");
+  }
+
   function dessiner(monde) {
     ctx.clearRect(0, 0, L, H);
+    etiquetteQualite();
     const v = monde.voiture, f = v.fiche;
     if (monde.phase === "garage") {
       panneau(L / 2 - 250, H - 170, 500, 150);
