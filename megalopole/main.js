@@ -38,7 +38,7 @@
     sauver("nouvelle ville");
   }
   radio.ecouter("maire-renvoye", () => { sauver("le maire est renvoyé"); Megalopole.Interface.renvoye(monde); });
-  for (const ev of ["batiment-pose", "nouveau-palier", "batiment-ameliore", "recherche-commencee", "recherche-finie"]) radio.ecouter(ev, () => sauver(ev === "nouveau-palier" ? "nouveau palier" : "nouveau bâtiment"));
+  for (const ev of ["batiment-pose", "nouveau-palier", "batiment-ameliore", "recherche-commencee", "recherche-finie", "objectif-reussi", "problemes-coupes", "batiment-brule"]) radio.ecouter(ev, () => sauver(ev === "nouveau-palier" ? "nouveau palier" : "nouveau bâtiment"));
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") sauver("la page se cache"); });
   window.addEventListener("pagehide", () => sauver("la page se ferme"));
   setInterval(() => sauver("sauvegarde automatique"), C.sauvegardeAuto * 1000);
@@ -65,7 +65,7 @@
       dx: (E.estEnfoncee("droite") ? 1 : 0) - (E.estEnfoncee("gauche") ? 1 : 0),
       dy: (E.estEnfoncee("bas") ? 1 : 0) - (E.estEnfoncee("haut") ? 1 : 0),
       zoom: souris.molette + (E.consommer("zoomPlus") ? 1 : 0) - (E.consommer("zoomMoins") ? 1 : 0),
-      outil: ui.outil, taux: ui.taux, postes: ui.postes, pret: ui.pret, annuler: E.consommer("annuler") || ui.annulerTrace, confirmer: ui.confirmer, guide: ui.guide, deplacer: ui.deplacer, ameliorer: ui.ameliorer, rechercher: ui.rechercher, souris,
+      outil: ui.outil, taux: ui.taux, postes: ui.postes, pret: ui.pret, annuler: E.consommer("annuler") || ui.annulerTrace, confirmer: ui.confirmer, guide: ui.guide, deplacer: ui.deplacer, ameliorer: ui.ameliorer, rechercher: ui.rechercher, changerObjectif: ui.changerObjectif, canadair: ui.canadair, reparer: ui.reparer, couperProblemes: ui.couperProblemes, souris,
     };
     if (E.consommer("route")) i.outil = { sorte: "route", valeur: "route" };
     if (E.consommer("demolir")) i.outil = { sorte: "demolir", valeur: null };

@@ -21,7 +21,7 @@ Megalopole.Interface = (function () {
   const radio = Megalopole.Evenements;
   const $ = (id) => document.getElementById(id);
   const fr = (n) => Math.round(n).toLocaleString("fr-FR");
-  const demandes = { outil: undefined, taux: [], postes: [], pret: null, vitesse: null, calque: undefined, difficulte: null, guide: null, confirmer: false, annulerTrace: false, deplacer: false, ameliorer: false, rechercher: null };
+  const demandes = { outil: undefined, taux: [], postes: [], pret: null, vitesse: null, calque: undefined, difficulte: null, guide: null, confirmer: false, annulerTrace: false, deplacer: false, ameliorer: false, rechercher: null, changerObjectif: null, canadair: false, reparer: false, couperProblemes: null };
   const auDoigt = () => window.matchMedia && matchMedia("(pointer: coarse)").matches; // (un téléphone, une tablette)
   let groupeOuvert = null, onglet = "reclamations", monde = null;
 
@@ -42,6 +42,7 @@ Megalopole.Interface = (function () {
     else if (B.salete) f.push("🌫️ salit autour");
     if (C.budget.carburant[t]) f.push("⛽ carburant");
     if (Megalopole.Ameliorations.ameliorable(t)) f.push("⭐ jusqu'à ★" + C.ameliorations.max); // (étape 17)
+    if (B.monument) f.push("😊 +" + B.joie + " · 📸 touristes ×" + B.touristes + " · 💎 +" + String(B.prestige.force).replace(".", ",") + " autour"); // (étape 19)
     const ou = B.surMer ? "🌊 dans la mer" : B.riviere ? "🏞️ contre une rivière" : B.bordDeMer ? "🌊 au bord de la mer" : B.bordDeLEau ? "💧 au bord de l'eau" : "";
     if (ou) f.push(ou);
     return f.join(" · ");
@@ -110,6 +111,9 @@ Megalopole.Interface = (function () {
     // (les boutons du budget sont redessinés 4 fois par seconde : on écoute leur parent, qui, lui, reste)
     $("contenu-panneau").addEventListener("click", (e) => {
       if (e.target.closest("[data-deplacer]")) { demandes.deplacer = true; fermerPanneau(); return; }
+      const pb = e.target.closest("[data-canadair],[data-reparer],[data-problemes]"); // (étape 20)
+      if (pb) { if (pb.dataset.canadair) demandes.canadair = true; else if (pb.dataset.reparer) demandes.reparer = true; else demandes.couperProblemes = pb.dataset.problemes === "couper"; setTimeout(() => rafraichir(true), 30); return; }
+      const ch = e.target.closest("[data-changer]"); if (ch) { demandes.changerObjectif = ch.dataset.changer; setTimeout(() => rafraichir(true), 30); return; } // (étape 19)
       const am = e.target.closest("[data-ameliorer],[data-recherche]"); // (étape 17)
       if (am) { if (am.dataset.ameliorer) demandes.ameliorer = true; else demandes.rechercher = am.dataset.recherche; setTimeout(() => rafraichir(true), 30); return; }
       const bt = e.target.closest("[data-taux],[data-poste],[data-pret]");
@@ -146,11 +150,15 @@ Megalopole.Interface = (function () {
     const t = $("tiroir");
     t.innerHTML = "";
     for (const o of outilsDu(g)) {
-      const b = document.createElement("button"), verrou = o.palier !== undefined && Megalopole.Population.palier(monde) < o.palier;
+      const b = document.createElement("button"), Bo = o.sorte === "batiment" ? C.batiments[o.valeur] : null;
+      // (étape 19 : un monument est verrouillé tant que son objectif 🏆 n'est pas réussi)
+      const monumentFerme = Bo && Bo.monument && !Megalopole.Objectifs.debloque(monde, o.valeur), deja = Bo && Bo.unique && monde.batiments.some((x) => x.type === o.valeur);
+      const verrou = monumentFerme || (o.palier !== undefined && Megalopole.Population.palier(monde) < o.palier);
+      const texteVerrou = monumentFerme ? "🔒 🏆 « " + Megalopole.Objectifs.objectifDuMonument(o.valeur).titre + " »" : verrou ? "🔒 " + C.paliers[o.palier].emoji + " " + C.paliers[o.palier].nom + " (" + fr(C.paliers[o.palier].habitants) + " hab.)" : "";
       b.className = "carte-outil" + (verrou ? " verrou" : "");
-      b.innerHTML = "<span class='emoji'" + (o.couleur ? " style='background:" + o.couleur + "'" : "") + ">" + o.emoji + "</span><b>" + o.nom + "</b><small>" + (verrou ? "🔒 " + C.paliers[o.palier].emoji + " " + C.paliers[o.palier].nom + " (" + fr(C.paliers[o.palier].habitants) + " hab.)" : o.prix) + "</small>" + (o.fiche ? "<small class='fiche'>" + o.fiche + "</small>" : "");
+      b.innerHTML = "<span class='emoji'" + (o.couleur ? " style='background:" + o.couleur + "'" : "") + ">" + o.emoji + "</span><b>" + o.nom + "</b><small>" + (verrou ? texteVerrou : deja && Bo.monument ? "✅ déjà construit" : o.prix) + "</small>" + (o.fiche ? "<small class='fiche'>" + o.fiche + "</small>" : "");
       b.title = o.nom + (o.fiche ? " — " + o.fiche : "");
-      b.addEventListener("click", () => { if (verrou) { afficher("🔒 " + o.nom + " : il faut d'abord être un(e) " + C.paliers[o.palier].nom.toLowerCase() + " (" + fr(C.paliers[o.palier].habitants) + " habitants)"); return; } demandes.outil = { sorte: o.sorte, valeur: o.valeur }; fermerTiroir(); });
+      b.addEventListener("click", () => { if (monumentFerme) { afficher("🔒 " + o.nom + " : réussis d'abord l'objectif 🏆 « " + Megalopole.Objectifs.objectifDuMonument(o.valeur).titre + " »"); return; } if (verrou) { afficher("🔒 " + o.nom + " : il faut d'abord être un(e) " + C.paliers[o.palier].nom.toLowerCase() + " (" + fr(C.paliers[o.palier].habitants) + " habitants)"); return; } demandes.outil = { sorte: o.sorte, valeur: o.valeur }; fermerTiroir(); });
       t.appendChild(b);
     }
     const x = document.createElement("button"); x.className = "fermer"; x.textContent = "✖"; x.title = "Fermer";
@@ -194,6 +202,21 @@ Megalopole.Interface = (function () {
     "routes-abimees": (d) => "🛣️⚠️ Les routes s'abîment (" + d.etat + " %) : augmente leur budget dans 🧾",
     "batiment-souleve": (d) => "📦 " + d.emoji + " " + d.nom + " soulevé(e) : touche sa nouvelle place, puis ✅ (❌ pour le remettre)",
     "batiment-deplace": (d) => "📦✅ " + d.emoji + " " + d.nom + " déplacé(e) !",
+    "objectif-reussi": (d) => "🏆 Objectif réussi : " + d.emoji + " " + d.titre + " ! +" + fr(d.recompense) + " 🪙", // étape 19
+    "incendie": (d) => "🔥 Au feu ! " + d.nom + " en (" + d.colonne + ", " + d.ligne + ") (menu 📢)", // étape 20
+    "incendie-etendu": (d) => "🔥 Le feu s'étend : " + d.nom + " !",
+    "incendie-eteint": (d) => "🚒 Feu éteint par " + d.par,
+    "batiment-brule": (d) => "🔥💥 " + d.nom + " a brûlé : il ne reste qu'un terrain vide",
+    "canadair": (d) => "🚁 Le canadair éteint " + d.feux + " feu(x) ! −" + fr(d.prix) + " 🪙",
+    "vol": (d) => "🦹 Un vol ! −" + fr(d.somme) + " 🪙 (pas de police dans ce quartier)",
+    "panne": (d) => "⚡ Panne : " + d.emoji + " " + d.nom + " s'arrête " + d.duree + " s (touche-la pour la réparer)",
+    "panne-reparee": (d) => "🔧 " + d.emoji + " " + d.nom + " réparée !",
+    "panne-finie": (d) => "⚡ " + d.emoji + " " + d.nom + " repart",
+    "greve": (d) => "🪧 Grève ! La zone " + d.emoji + " ne paie plus d'impôt : " + d.raison,
+    "greve-finie": (d) => "🪧 Fin de la grève " + d.emoji,
+    "problemes-coupes": (d) => d.coupes ? "😴 Problèmes coupés" : "🔥 Problèmes remis",
+    "objectif-change": (d) => "⏭️ Défi mis de côté : " + d.emoji + " " + d.titre,
+    "monument-debloque": (d) => "🗽 Nouveau monument : " + d.emoji + " " + d.nom + " (menu 🗽 Monuments)",
     "batiment-ameliore": (d) => "⭐ " + d.emoji + " " + d.nom + " : ★" + d.etoiles + " ! (× " + String(d.facteur).replace(".", ",") + ")",
     "recherche-commencee": (d) => "🔬 Le laboratoire cherche : " + d.emoji + " " + d.nom + "…",
     "recherche-finie": (d) => "🔬✅ Trouvé : " + d.emoji + " " + d.nom + " ! " + d.texte,
@@ -255,6 +278,7 @@ Megalopole.Interface = (function () {
     // 🎓 l'icône des missions : la mission en cours (« 3/9 »), ou ✅ quand tout est fait
     const g = Megalopole.Guide.progres(m), badge = g ? g.numero + "/" + g.total : m.guide && m.guide.fini ? "✅" : "";
     if ($("badge-guide").textContent !== badge) $("badge-guide").textContent = badge;
+    { const Pb = m.problemes, alerte = !!(Pb && (Pb.feux.length || Pb.greve || m.batiments.some((b) => b.panne))); const bt = document.querySelector("[data-onglet='reclamations']"); if (bt.classList.contains("alerte") !== alerte) bt.classList.toggle("alerte", alerte); } // (étape 20 : 📢 clignote quand il y a un problème)
     marquerGroupes();
     // la case touchée ouvre l'onglet 🔎
     if (m.selection && m.selection !== dejaVue) { dejaVue = m.selection; onglet = "case"; $("panneau").classList.add("ouvert"); }
@@ -277,13 +301,14 @@ Megalopole.Interface = (function () {
     const m = monde, s = m.stats;
     if (o === "guide") return guideHTML(m);
     if (o === "reclamations") {
-      let h = "<h3>📢 Ce que réclament les habitants</h3>";
+      let h = problemesHTML(m) + "<h3>📢 Ce que réclament les habitants</h3>";
       if (!s.habitants) return h + "<p>Pas encore d'habitants. Commence par : 🛣️ une route, ⚡ une centrale (ou des éoliennes) touchant la route, puis peins des zones 🏠 habitation, 🛍️ commerce et 🏭 industrie le long de la route.</p>";
       if (!m.reclamations.length) return h + "<p>😄 Tout le monde est content ! La ville grandit toute seule.</p>";
       return h + m.reclamations.slice(0, 7).map((r) => "<div class='recl'><b>" + r.emoji + " " + r.texte + "</b><br><small>💡 " + r.conseil + "</small></div>").join("");
     }
     if (o === "besoins") return bilanHTML(m);
     if (o === "labo") return laboHTML(m);
+    if (o === "objectifs") return objectifsHTML(m);
     if (o === "budget") return budgetHTML(m);
     // 🔎 la case touchée
     const sel = m.selection;
@@ -293,6 +318,7 @@ Megalopole.Interface = (function () {
     if (b) {
       const B = C.batiments[b.type];
       h += "<h3>" + B.emoji + " " + B.nom + "</h3>";
+      if (b.panne) h += "<div class='recl alerte'><b>⚡ En panne !</b><small>Elle repart toute seule dans " + Math.ceil(b.panne - m.temps) + " s.</small><button data-reparer='1'" + (m.argent < Megalopole.Problemes.prixReparation(m, b) ? " class='verrou'" : "") + ">🔧 Réparer tout de suite : " + fr(Megalopole.Problemes.prixReparation(m, b)) + " 🪙</button></div>"; // (étape 20)
       h += ficheReseau(m, b, B); // (étape 13 : capacité de ce bâtiment, de toute la ville, la demande, et le verdict)
       h += atelierHTML(m, b, B); // (étape 17 : ⭐ l'améliorer)
       if (B.trafic) h += "<p>🚗 Enlève " + Math.round(B.trafic * 100) + " % du trafic autour</p>";
@@ -306,6 +332,7 @@ Megalopole.Interface = (function () {
     else if (z) {
       const nv = m.niveau[i], Zc = C.zones[z], nm = Z.niveauMax(m, i), e = Z.envie(m, i);
       h += "<h3>" + Zc.emoji + " " + Zc.niveaux[nv] + " <small>(niveau " + nv + ")</small></h3>";
+      { const f = m.problemes && m.problemes.feux.find((x) => x.i === i); if (f) h += "<div class='recl alerte'><b>🔥 En feu : " + Math.round(f.force * 100) + " %</b><small>" + (m.couverture.feu[i] ? "🚒 Les pompiers arrivent." : "Pas de pompiers ici : à 100 %, il brûle !") + "</small><button data-canadair='1'>🚁 Canadair : " + fr(Megalopole.Budget.prix(m, C.problemes.feu.canadair)) + " 🪙</button></div>"; } // (étape 20)
       h += "<p>" + (z === "R" ? "👥 " + Zc.gens[nv] + " habitants" : "💼 " + Zc.gens[nv] + " emplois") + "</p>";
       // 📋 étape 12 : la liste « pour grandir », avec seulement ce qui compte pour CETTE zone
       const cd = Z.conditions(m, i), manque = cd.liste.filter((x) => !x.ok);
@@ -371,6 +398,35 @@ Megalopole.Interface = (function () {
     const r = Am.raisonAmeliorer(m, b), prix = Am.prixAmelioration(m, b);
     h += "<p>★" + (e + 1) + " : " + quoi + " × <b>" + String(1 + A.bonus * (e + 1)).replace(".", ",") + "</b> (+" + Math.round(A.bonus * 100) + " % de la base) · entretien +" + Math.round(A.entretien * 100) + " %</p>";
     return h + "<button data-ameliorer='1'" + (r ? " class='verrou' title='" + r.replace(/'/g, "’") + "'" : "") + ">" + (r ? "🔒 " : "⬆️ ") + "Améliorer pour " + fr(prix) + " 🪙</button>" + (r ? "<p class='mal'><small>" + r + "</small></p>" : "") + "</div>";
+  }
+  // 🔥 Étape 20 : les PROBLÈMES en cours (en haut du panneau 📢), avec les boutons pour les régler
+  function problemesHTML(m) {
+    const Pr = Megalopole.Problemes, E = Pr.etat(m), n = m.carte.colonnes, P = C.problemes;
+    let h = "";
+    if (E.feux.length) {
+      const prix = Megalopole.Budget.prix(m, P.feu.canadair);
+      h += "<div class='recl alerte'><b>🔥 " + E.feux.length + " incendie(s) !</b>" + E.feux.map((f) => "<small>" + Megalopole.Zones.lettre(m, f.i) + " (" + (f.i % n) + ", " + ((f.i / n) | 0) + ") : " + Math.round(f.force * 100) + " % " + (m.couverture.feu[f.i] ? "· 🚒 les pompiers arrivent" : "· pas de pompiers ici !") + "</small>").join("") + "<button data-canadair='1'" + (m.argent < prix ? " class='verrou'" : "") + ">🚁 Canadair : tout éteindre pour " + fr(prix) + " 🪙</button><small>💡 Une caserne 🚒 qui sert ce quartier éteint les feux toute seule.</small></div>";
+    }
+    for (const b of m.batiments) if (b.panne) h += "<div class='recl alerte'><b>⚡ " + C.batiments[b.type].emoji + " " + C.batiments[b.type].nom + " en panne</b><small>Elle repart dans " + Math.ceil(b.panne - m.temps) + " s. Touche-la pour la réparer (" + fr(Pr.prixReparation(m, b)) + " 🪙).</small></div>";
+    if (E.greve) h += "<div class='recl alerte'><b>🪧 Grève de la zone " + C.zones[E.greve.zone].emoji + " " + C.zones[E.greve.zone].nom.toLowerCase() + "</b><small>Elle ne paie plus d'impôt pendant encore " + Math.ceil(E.greve.fin - m.temps) + " s, car " + E.greve.raison + ". 💡 Baisse l'impôt (🧾) ou rends les habitants plus heureux.</small></div>";
+    const vols = E.effets.filter((e) => e.sorte === "vol");
+    if (vols.length) h += "<div class='recl alerte'><b>🦹 " + vols.length + " vol(s) récent(s) : " + Pr.malusBonheur(m) + " de bonheur</b><small>💡 Un commissariat 🚓 qui sert ces quartiers empêche les vols.</small></div>";
+    h += "<p class='petit'>" + (E.coupes ? "😴 Les problèmes sont coupés. <button data-problemes='remettre'>🔥 Les remettre</button>" : "🎲 Problèmes activés (" + Megalopole.Budget.difficulte(m).nom.toLowerCase() + " : environ 1 toutes les " + Math.round(P.intervalle[m.difficulte || "normal"] / 60 * 10) / 10 + " min s'il manque quelque chose). <button data-problemes='couper'>😴 Couper</button>") + "</p>";
+    return h;
+  }
+  // 🏆 Étape 19 : le TABLEAU DES DÉFIS : les 3 objectifs du moment avec leur barre, puis les monuments débloqués
+  function objectifsHTML(m) {
+    const O = Megalopole.Objectifs, faits = m.objectifs.faits.length, rangs = { 1: "🟢 facile", 2: "🟠 moyen", 3: "🔴 dur" };
+    let h = "<h3>🏆 Les objectifs</h3><p><small>" + faits + " / " + C.objectifs.length + " réussis. Réussis-en un : tu gagnes la récompense, et un nouveau défi arrive.</small></p>";
+    const liste = O.actifs(m);
+    if (!liste.length) h += "<div class='mission'><b>🎉 Tous les objectifs sont réussis : tu es un maire de légende !</b></div>";
+    for (const o of liste) {
+      const v = O.mesurer(m, o), a = O.avance(m, o);
+      h += "<div class='mission objectif'><b>" + o.emoji + " " + o.titre + "</b><small class='rang'>" + rangs[o.rang] + " · 🎁 " + fr(o.recompense) + " 🪙" + (o.monument ? " + " + C.batiments[o.monument].emoji + " " + C.batiments[o.monument].nom : "") + "</small>" + barreHTML(a, "#c89a20") + "<button data-changer='" + o.id + "' class='passer' title='Mettre ce défi de côté : le suivant le remplace'>⏭️ Changer</button><small>En ce moment : " + fr(v) + (o.test === "vert" || o.test === "air" || o.test === "chomage" || o.test === "bonheur" ? " %" : "") + (o.avec ? " · il faut aussi " + fr(o.avec) + (o.test === "vert" ? " ⚡ utilisés" : " habitants") : "") + "</small></div>";
+    }
+    const mo = Object.entries(C.batiments).filter(([, B]) => B.monument);
+    h += "<h4>🗽 Les monuments</h4>" + mo.map(([t, B]) => "<div class='ligne'><span>" + B.emoji + " " + B.nom + "</span><small>" + (m.batiments.some((b) => b.type === t) ? "✅ construit" : O.debloque(m, t) ? "🔓 à construire (🗽 en bas)" : "🔒 « " + O.objectifDuMonument(t).titre + " »") + "</small></div>").join("");
+    return h;
   }
   // 🔬 Étape 17 : le LABORATOIRE (l'icône 🔬) : les recherches, par famille
   function laboHTML(m) {
@@ -482,7 +538,7 @@ Megalopole.Interface = (function () {
   }
 
   // Ce que l'interface a reçu du joueur depuis la dernière fois (et on remet à zéro)
-  function consommer() { const d = Object.assign({}, demandes); demandes.outil = undefined; demandes.taux = []; demandes.postes = []; demandes.pret = null; demandes.vitesse = null; demandes.calque = undefined; demandes.difficulte = null; demandes.guide = null; demandes.confirmer = false; demandes.annulerTrace = false; demandes.deplacer = false; demandes.ameliorer = false; demandes.rechercher = null; return d; }
+  function consommer() { const d = Object.assign({}, demandes); demandes.outil = undefined; demandes.taux = []; demandes.postes = []; demandes.pret = null; demandes.vitesse = null; demandes.calque = undefined; demandes.difficulte = null; demandes.guide = null; demandes.confirmer = false; demandes.annulerTrace = false; demandes.deplacer = false; demandes.ameliorer = false; demandes.rechercher = null; demandes.changerObjectif = null; demandes.canadair = false; demandes.reparer = false; demandes.couperProblemes = null; return d; }
 
   return { initialiser, changerMonde, rafraichir, consommer, afficher, fermerTiroir, fermerPanneau, ouvrirTiroir, choisirDifficulte, renvoye, demandes };
 })();

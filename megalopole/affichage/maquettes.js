@@ -432,6 +432,48 @@ Megalopole.Maquettes = (function () {
         forme(ctx, [[x - R * 0.9, y - H - r * 0.25], [x - R * 0.5, y - H - r * 0.85], [x + R * 0.5, y - H - r * 0.85], [x + R * 0.9, y - H - r * 0.25], [x + R * 0.8, y - H - r * 0.05], [x - R * 0.8, y - H - r * 0.05]], "rgba(235, 238, 242, .75)"); // le toit de la tribune du fond
         for (const [px, py] of [[-1, -0.3], [1, -0.3], [-0.55, -0.95], [0.55, -0.95]]) { const X = x + px * R * 1.02, Y = y - H + py * r; ctx.strokeStyle = "#5a5e64"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(X, Y + H); ctx.lineTo(X, Y - 26); ctx.stroke(); forme(ctx, [[X - 4, Y - 26], [X + 4, Y - 26], [X + 4, Y - 31], [X - 4, Y - 31]], vue.nuit > 0.35 ? "#fff8d0" : "#d8dce2"); if (vue.nuit > 0.35) { ctx.fillStyle = "rgba(255, 245, 200, .18)"; ctx.beginPath(); ctx.moveTo(X - 4, Y - 28); ctx.lineTo(x - R * 0.3, y - H + r * 0.3); ctx.lineTo(x + R * 0.3, y - H + r * 0.3); ctx.lineTo(X + 4, Y - 28); ctx.fill(); } } // les projecteurs
         return [x, y - H - 34]; }
+      // 🗽 étape 19 : les MONUMENTS
+      case "statue": { sol(ctx, x, y, 0.95 * t, "#d8ccb0"); if (vue.detail) for (let k = 0; k < 4; k++) arbre(ctx, x + [-34, 34, -6, 8][k], y + [0, 0, -14, 14][k], k + 3, 0.8, 1);
+        ombre(ctx, x, y + 2, 14, 14, 14); const c = boite(ctx, x, y + 2, 14, 14, 12, "#c8c0b0", "#e0d8c8", "beton"); // le socle
+        const p = c.hH, X = p[0], Y = p[1] + 7, br = "#5a8a78", br2 = "#3f6a5a";
+        forme(ctx, [[X - 5, Y], [X + 5, Y], [X + 4, Y - 16], [X + 6, Y - 26], [X - 6, Y - 26], [X - 4, Y - 16]], br); // le corps
+        forme(ctx, [[X + 5, Y - 24], [X + 13, Y - 36], [X + 15, Y - 34], [X + 7, Y - 21]], br2); // le bras levé
+        rond(ctx, X, Y - 30, 4.2, br); rond(ctx, X + 15, Y - 37, 2, "#e8c040"); // la tête, et la torche
+        if (vue.detail) { ctx.strokeStyle = "rgba(255,255,255,.25)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(X - 3, Y - 2); ctx.lineTo(X - 4, Y - 24); ctx.stroke(); }
+        return [X, Y - 42]; }
+      case "grandeRoue": { sol(ctx, x, y, 0.95 * t, "#c8c4b8"); const rx = x, ry = y - 64, R = 54, an = ti * 0.2;
+        ctx.strokeStyle = "#4a5058"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(rx - 26, y + 6); ctx.lineTo(rx, ry); ctx.lineTo(rx + 26, y + 6); ctx.stroke();
+        ctx.strokeStyle = "#e8ecf0"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(rx, ry, R, 0, TOUR); ctx.stroke(); ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(rx, ry, R * 0.92, 0, TOUR); ctx.stroke();
+        for (let k = 0; k < 16; k++) { const q = an + (k * TOUR) / 16, px = rx + Math.cos(q) * R, py = ry + Math.sin(q) * R; ctx.strokeStyle = "rgba(230,236,242,.8)"; ctx.lineWidth = 0.7; ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(px, py); ctx.stroke(); forme(ctx, [[px - 3.5, py + 1], [px + 3.5, py + 1], [px + 3, py + 7], [px - 3, py + 7]], ["#c8443a", "#3f6fc4", "#e8b830", "#3f8a4a"][k % 4]); }
+        rond(ctx, rx, ry, 4, "#8a9098"); if (vue.nuit > 0.35) { ctx.strokeStyle = "rgba(255, 220, 120, .55)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(rx, ry, R, 0, TOUR); ctx.stroke(); }
+        const g = boite(ctx, x + 30, y + 12, 12, 12, 10, "#e8dcc4", "#c8443a"); porte(ctx, g, 0.5, 7); // la billetterie
+        return [rx, ry - R - 6]; }
+      case "tour": { sol(ctx, x, y, 0.95 * t, "#c8c0a8"); const H = 150, pieds = [[-38, 0], [0, -19], [38, 0], [0, 19]], fer = "#7a6a58";
+        const sommet = (k, f) => [x + pieds[k][0] * (1 - f) * (f < 0.3 ? 1 : 0.6 + 0.4 * (1 - f)), y + pieds[k][1] * (1 - f) * (f < 0.3 ? 1 : 0.6 + 0.4 * (1 - f)) - H * f];
+        ctx.strokeStyle = fer; ctx.lineWidth = 2.2;
+        for (const k of [0, 3, 2]) { ctx.beginPath(); for (let f = 0; f <= 1.001; f += 0.05) { const P = sommet(k, f); f ? ctx.lineTo(P[0], P[1]) : ctx.moveTo(P[0], P[1]); } ctx.stroke(); } // les 3 pieds qu'on voit
+        if (vue.detail) { ctx.lineWidth = 0.6; ctx.strokeStyle = "rgba(90, 76, 60, .8)"; ctx.beginPath(); for (let f = 0.04; f < 0.9; f += 0.06) { const A = sommet(0, f), Bq = sommet(3, f + 0.03), Cq = sommet(2, f); ctx.moveTo(A[0], A[1]); ctx.lineTo(Bq[0], Bq[1]); ctx.lineTo(Cq[0], Cq[1]); } ctx.stroke(); } // le treillis
+        ctx.beginPath(); const a1 = sommet(0, 0.12), a2 = sommet(2, 0.12); ctx.moveTo(a1[0], a1[1]); ctx.quadraticCurveTo(x, y - 4, a2[0], a2[1]); ctx.lineWidth = 2; ctx.strokeStyle = fer; ctx.stroke(); // l'arche
+        for (const f of [0.3, 0.6]) { const A = sommet(0, f), Cq = sommet(2, f); forme(ctx, [[A[0] - 3, A[1]], [x, A[1] - 6], [Cq[0] + 3, Cq[1]], [x, A[1] + 6]], "#8a7a66"); } // les étages
+        const top = sommet(0, 1); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(top[0], top[1]); ctx.lineTo(top[0], top[1] - 14); ctx.stroke(); if (vue.nuit > 0.35 && Math.floor(ti * 2) % 2) rond(ctx, top[0], top[1] - 14, 2.4, "#fff2b0");
+        return [top[0], top[1] - 20]; }
+      case "cathedrale": { sol(ctx, x, y, 0.95 * t, "#d0c8b4"); const pierre = "#d8cdb4";
+        ombre(ctx, x + 10, y + 8, a * 0.42, a * 0.7, 40); const nef = boite(ctx, x + 10, y + 8, a * 0.42, a * 0.7, 36, pierre, null, "beton"); toitPointu(ctx, nef, 20, "#5a6878"); fenetres(ctx, nef, 36, 1, 6, 11, "rgba(120, 80, 160, .8)"); // la nef et ses vitraux
+        for (const dx of [-30, -6]) { const T = boite(ctx, x + dx - 6, y - 4 + (dx + 30) * 0.5, 10, 10, 64, pierre, null, "beton"); fenetres(ctx, T, 64, 3, 1, 4); toitPointu(ctx, T, 30, "#4a5868"); } // les 2 tours et leurs flèches
+        const f = entre(nef.G, nef.B, 0.5); rond(ctx, f[0] - 4, f[1] - 26, 5.5, "#7a4aa0"); if (vue.detail) { ctx.strokeStyle = "#e8d8a0"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(f[0] - 4, f[1] - 26, 5.5, 0, TOUR); ctx.stroke(); } // la rosace
+        return [x - 18, y - 110]; }
+      case "opera": { sol(ctx, x, y, 0.95 * t, "#d8d0c0"); if (vue.detail) { forme(ctx, [[x - 60, y + 14], [x - 20, y + 34], [x - 6, y + 27], [x - 46, y + 7]], "#c8bca4", false); } // le parvis
+        ombre(ctx, x + 6, y + 2, a * 0.62, a * 0.55, 34); const c = boite(ctx, x + 6, y + 2, a * 0.62, a * 0.55, 30, "#efe4c8", "#d8c8a0", "beton"); fenetres(ctx, c, 30, 2, 6, 13, "rgba(255, 210, 120, .8)");
+        for (let k = 0; k < 7; k++) { const P = entre(c.G, c.B, 0.08 + k * 0.14); forme(ctx, [[P[0] - 1.4, P[1]], [P[0] + 1.4, P[1]], [P[0] + 1.4, P[1] - 22], [P[0] - 1.4, P[1] - 22]], "#fbf6e8"); } // les colonnes
+        const d = entre(c.hG, c.hD, 0.5); ctx.beginPath(); ctx.ellipse(d[0], d[1], 26, 13, 0, Math.PI, 0); ctx.lineTo(d[0] + 26, d[1]); ctx.ellipse(d[0], d[1], 26, 8, 0, 0, Math.PI); ctx.closePath();
+        const g = ctx.createLinearGradient(d[0] - 26, 0, d[0] + 26, 0); g.addColorStop(0, "#7ab0a0"); g.addColorStop(1, "#3f7a6a"); ctx.fillStyle = g; ctx.fill(); ctx.strokeStyle = CONTOUR; ctx.stroke(); // la coupole verte
+        rond(ctx, d[0], d[1] - 14, 3, "#e8c040"); return [d[0], d[1] - 24]; }
+      case "gratteCiel": { sol(ctx, x, y, 0.95 * t, "#a8acb4"); const verre = "#6a8ab0";
+        ombre(ctx, x, y + 4, a * 0.5, a * 0.5, 120); const c1 = boite(ctx, x, y + 4, a * 0.5, a * 0.5, 90, verre, "#8aa4c4", "verre"); fenetres(ctx, c1, 90, 9, 4, 21, "rgba(255, 230, 160, .7)");
+        const c2 = boite(ctx, c1.hH[0], c1.hH[1] + a * 0.25 * 0.8, a * 0.36, a * 0.36, 60, "#7896bc", "#9ab4d4", "verre"); fenetres(ctx, c2, 60, 6, 3, 22, "rgba(255, 230, 160, .7)");
+        const c3 = boite(ctx, c2.hH[0], c2.hH[1] + a * 0.18 * 0.8, a * 0.22, a * 0.22, 30, "#88a4c8", "#b0c8e4", "verre");
+        const p = c3.hH; ctx.strokeStyle = "#c8ccd2"; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(p[0], p[1] + 6); ctx.lineTo(p[0], p[1] - 34); ctx.stroke(); if (Math.floor(ti * 1.5) % 2) rond(ctx, p[0], p[1] - 34, 2.2, "#ff4a3a"); // l'antenne et sa lumière rouge
+        return [p[0], p[1] - 40]; }
       case "attractions": { forme(ctx, losangeDe(x, y, 0.95 * t), "#a8c87a", false); // la grande roue, les montagnes russes et un manège
         const rx = x - 30, ry = y - 70, R = 46, an = ti * 0.3;
         ctx.strokeStyle = "#5a6068"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(rx - 20, y - 10); ctx.lineTo(rx, ry); ctx.lineTo(rx + 20, y - 10); ctx.stroke();

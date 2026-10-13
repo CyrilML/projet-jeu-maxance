@@ -40,6 +40,7 @@ Megalopole.Reseaux = (function () {
     const B = C.batiments[b.type];
     if (quoi === "courant" && B.courantDechets) return Math.round(B.courantDechets * Math.min(1, (b.traite || 0) / B.dechets)); // l'incinérateur
     if (!B[quoi]) return 0;
+    if (b.panne) return 0; // (étape 20 : une centrale en panne ⚡ ne produit rien)
     if (quoi === "eau" && !monde.reseaux.courantDe(b)) return 0; // une pompe a besoin de courant pour pomper
     if (B.consoCourant && !b.alimente) return 0; // (le dessalement : il lui faut SON électricité)
     if (quoi === "dechets" && B.contenance && (b.rempli || 0) >= B.contenance) return 0; // une décharge pleine

@@ -45,7 +45,7 @@ Megalopole.Budget = (function () {
       if (!z || !nv) continue;
       assiette[z] += Z[z].gens[nv] * Bu.revenus[z][nv]; // tout ce que gagnent les gens de cette zone
     }
-    for (const z of C.ordreZones) impots[z] = Math.round((assiette[z] * monde.taux[z]) / 100);
+    for (const z of C.ordreZones) impots[z] = Megalopole.Problemes.enGreve(monde, z) ? 0 : Math.round((assiette[z] * monde.taux[z]) / 100); // (étape 20 : une zone en grève 🪧 ne paie rien)
     const k = difficulte(monde).couts;
     let routes = 0;
     for (let i = 0; i < N; i++) if (monde.route[i]) routes += monde.route[i] === 2 ? C.routes.avenue.entretien : C.routes.route.entretien;
