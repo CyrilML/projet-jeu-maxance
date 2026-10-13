@@ -22,6 +22,7 @@ window.Tanks = window.Tanks || {};
 Tanks.Engins = (function () {
   const C = Tanks.CONFIG, G = C.engins, T = Tanks.Terrain;
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+  const prochesArbres = []; // (étape 72 : les arbres des cases voisines, dans une liste réutilisée)
   const yCamp = () => T.demi - 30;
 
   // Les places de parking (derrière les Bleus) : le 4x4, puis l'aérodrome (l'hélico, l'avion, le drone).
@@ -112,7 +113,7 @@ Tanks.Engins = (function () {
     e.x = Math.max(-lim, Math.min(lim, e.x));
     e.z = Math.max(-lim, Math.min(lim, e.z));
     if (T.repousser(e, 2)) e.vitesse *= 0.6;
-    for (const a of T.arbres) {
+    for (const a of T.arbresAutour(e.x, e.z, 2.4, prochesArbres)) { // (étape 72 : les cases voisines seulement)
       if (!a.ecrase && Math.hypot(a.x - e.x, a.z - e.z) < 2.4) {
         if (Math.abs(e.vitesse) > 8) (a.ecrase = true), (a.angleChute = e.angle), ev.push(["arbre-ecrase", { nom: "toi", vitesse: e.vitesse }]);
         else e.vitesse *= 0.3;

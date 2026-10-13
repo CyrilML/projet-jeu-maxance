@@ -17,6 +17,7 @@ window.Tanks = window.Tanks || {};
 Tanks.Soldat = (function () {
   const C = Tanks.CONFIG, S = C.soldats, A = C.armes, T = Tanks.Terrain;
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+  const prochesArbres = [], vehiculesBalle = []; // (étape 72 : des listes réutilisées)
 
   function creer(equipe, x, z, angle, nom, joueur) {
     return {
@@ -77,6 +78,14 @@ Tanks.Soldat = (function () {
     ev.push(["balle", { tireur, de: { x, y, z }, a: fin }]);
   }
 
+  // Les véhicules sur lesquels une balle ricoche : les tanks et le 4x4 (rangés dans une liste réutilisée).
+  function vehiculesDe(monde) {
+    vehiculesBalle.length = 0;
+    for (const c of monde.chars) vehiculesBalle.push(c);
+    for (const e of monde.engins) if (e.sorte === "jeep") vehiculesBalle.push(e);
+    return vehiculesBalle;
+  }
+
   // Un pas de temps pour un soldat. intentions = { avancer, reculer, gauche, droite, tirer, versAngle (l'ordinateur) }
   function avancer(s, intentions, dt, monde, ev) {
     if (s.mort) {
@@ -103,7 +112,7 @@ Tanks.Soldat = (function () {
     s.z = Math.max(-lim, Math.min(lim, s.z));
     T.repousser(s, 0.5);
     // les arbres (encore debout) sont des poteaux : on en fait le tour
-    for (const a of T.arbres) {
+    for (const a of T.arbresAutour(s.x, s.z, 1.2, prochesArbres)) { // (étape 72 : les cases voisines seulement)
       if (a.ecrase || Math.abs(a.x - s.x) > 1.2 || Math.abs(a.z - s.z) > 1.2) continue;
       const d = Math.hypot(s.x - a.x, s.z - a.z), min = a.r + 0.35;
       if (d < min && d > 0.001) {
@@ -140,7 +149,7 @@ Tanks.Soldat = (function () {
         Tanks.Obus.lancer(monde.obus, s, "roquette", depart, dir, null);
         ev.push(["roquette", { tireur: s, x: depart.x, y, z: depart.z, dir }]);
       } else {
-        balle(s, s.x + Math.cos(s.angle) * 0.7, y, s.z + Math.sin(s.angle) * 0.7, s.angle + (intentions.erreur || 0), s.arme, monde.soldats, monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep")), ev);
+        balle(s, s.x + Math.cos(s.angle) * 0.7, y, s.z + Math.sin(s.angle) * 0.7, s.angle + (intentions.erreur || 0), s.arme, monde.soldats, vehiculesDe(monde), ev);
       }
     }
   }

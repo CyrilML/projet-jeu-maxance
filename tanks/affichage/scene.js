@@ -16,6 +16,11 @@
 // Étape 63 : chaque objet est dessiné ENTRE sa position d'avant et celle de maintenant (« interpolation ») : le jeu
 // calcule 120 pas par seconde, mais l'écran n'affiche pas toujours ses images pile entre deux pas ; sans ça, ton
 // personnage faisait de tout petits sauts. Et la caméra ne passe plus à travers les murs : elle s'avance devant.
+// Étape 72 (« ça rame ») : le RÉGULATEUR DE QUALITÉ (affichage/qualite.js) choisit un niveau, et la scène l'applique :
+// la finesse de l'image (pixels), les ombres, la distance de vue (le brouillard), et les « niveaux de détail » : un
+// soldat proche est dessiné en détail, plus loin en simple, encore plus loin en SILHOUETTE (une seule pièce, toutes les
+// silhouettes d'une équipe en un seul dessin), et au-delà il n'est pas dessiné ; un tank loin a ses roues soudées en
+// une pièce. Le ciel suit la caméra (c'est une grande boule autour d'elle, plus petite quand la vue est courte).
 // Comme tout l'affichage, ce fichier lit le monde et ne le modifie jamais.
 
 window.Tanks = window.Tanks || {};
@@ -27,6 +32,10 @@ Tanks.Scene = (function () {
   const dessinsSoldats = new Map(), dessinsEngins = new Map(); // (étape 61) soldat → dessin, engin → dessin
   const dessinsPortails = new Map(); // (étape 62)
   let horloge = 0, dernierSuivi = null, alpha = 1;
+  // (étape 72) le niveau de qualité en cours (réglé par affichage/qualite.js), le ciel, les silhouettes des soldats
+  let Q = C.qualite.niveaux[C.qualite.depart], leCiel = null;
+  const silhouettes = {};
+  const lod = { soldatsDetail: 0, soldatsSimples: 0, silhouettes: 0, soldatsCaches: 0, tanksRouesSoudees: 0, enginsCaches: 0 };
   // La « vue » d'un objet : le même objet, mais avec x, y, z, angle (et tourelle) pris entre l'avant et maintenant.
   const melange = (a, b) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * alpha;
   function vue(o) {
@@ -67,6 +76,7 @@ Tanks.Scene = (function () {
     });
     return new THREE.Mesh(new THREE.SphereGeometry(3000, 32, 16), mat);
   }
+  const RAYON_CIEL = 3000;
 
   function initialiser(toile) {
     rendu = new THREE.WebGLRenderer({ canvas: toile, antialias: true });
@@ -77,7 +87,10 @@ Tanks.Scene = (function () {
     rendu.shadowMap.type = THREE.PCFSoftShadowMap;
     scene = new THREE.Scene();
     scene.fog = new THREE.Fog(0xc4cfd6, 200, 1100);
-    scene.add(ciel());
+    leCiel = ciel();
+    leCiel.renderOrder = -1;
+    leCiel.frustumCulled = false;
+    scene.add(leCiel);
     const pm = new THREE.PMREMGenerator(rendu), env = new THREE.Scene();
     env.add(ciel());
     const solReflet = new THREE.Mesh(new THREE.CircleGeometry(2000, 32), new THREE.MeshBasicMaterial({ color: 0x4d5a3a }));
@@ -100,6 +113,34 @@ Tanks.Scene = (function () {
     cam = new THREE.PerspectiveCamera(C.camera.champ, toile.width / toile.height, 0.3, 4000);
     scene.add(Tanks.Decor.construire());
     Tanks.Effets.initialiser(scene);
+    for (const equipe of ["bleus", "rouges"]) scene.add((silhouettes[equipe] = Tanks.Engins3D.silhouettes(equipe, 160)));
+  }
+
+  // (étape 72) Appliquer un niveau de qualité (appelé par le régulateur, affichage/qualite.js).
+  function appliquerQualite(n) {
+    if (!rendu) return;
+    Q = n;
+    rendu.setPixelRatio(n.selonEcran ? Math.min(n.pixels, window.devicePixelRatio || 1) : n.pixels);
+    // les ombres : on ne touche à la carte graphique que si ça change (changer les ombres oblige à refaire les
+    // « programmes » de dessin de toutes les matières : c'est un petit à-coup, une seule fois)
+    const ombres = n.ombres > 0, sorte = n.douces ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap, taille = n.ombres || 512;
+    if (ombres !== rendu.shadowMap.enabled || (ombres && (sorte !== rendu.shadowMap.type || taille !== soleil.shadow.mapSize.x))) {
+      rendu.shadowMap.enabled = ombres;
+      rendu.shadowMap.type = sorte;
+      soleil.castShadow = ombres;
+      if (soleil.shadow.map) (soleil.shadow.map.dispose(), (soleil.shadow.map = null));
+      soleil.shadow.mapSize.set(taille, taille);
+      scene.traverse((o) => {
+        if (!o.material) return;
+        for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.needsUpdate = true;
+      });
+    }
+    // la distance de vue : le brouillard devient complet à « vue » mètres, et la caméra ne dessine rien plus loin
+    scene.fog.near = Math.min(C.qualite.brouillard, n.vue * 0.4);
+    scene.fog.far = n.vue;
+    cam.far = n.vue * 1.05;
+    cam.updateProjectionMatrix();
+    leCiel.scale.setScalar((n.vue * 0.95) / RAYON_CIEL);
   }
 
   function objetDe(c) {
@@ -116,14 +157,27 @@ Tanks.Scene = (function () {
     return o;
   }
 
-  const haut = new THREE.Vector3(0, 1, 0), qLacet = new THREE.Quaternion(), qPente = new THREE.Quaternion();
+  const haut = new THREE.Vector3(0, 1, 0), qLacet = new THREE.Quaternion(), qPente = new THREE.Quaternion(), vn = new THREE.Vector3();
   function placer(o, c, dt) {
+    // (étape 72) plus loin que la vue (dans le brouillard) : on ne le dessine pas
+    const d = Math.hypot(c.x - cam.position.x, c.z - cam.position.z);
+    o.g.visible = d < Q.vue + 20;
+    if (!o.g.visible) return;
     const n = T.normale(c.x, c.z);
-    o.normale.lerp(new THREE.Vector3(n.x, n.y, n.z), Math.min(1, dt * 8)).normalize();
+    o.normale.lerp(vn.set(n.x, n.y, n.z), Math.min(1, dt * 8)).normalize();
     o.g.position.set(c.x, c.y, c.z);
     qLacet.setFromAxisAngle(haut, -c.angle);
     qPente.setFromUnitVectors(haut, o.normale);
     o.g.quaternion.copy(qPente).multiply(qLacet);
+    // (étape 72) loin de la caméra (ou détruit : ses roues ne tournent plus), les 18 roues sont remplacées par la pièce
+    // soudée, qui ne tourne pas
+    const loin = d > Q.roues || c.detruit;
+    if (o.rouesFixes && o.loin !== loin) {
+      o.loin = loin;
+      o.rouesFixes.visible = loin;
+      for (const r of o.roues) r.visible = !loin;
+    }
+    if (loin) lod.tanksRouesSoudees++;
     if (c.detruit) {
       if (!o.brule) {
         Tanks.Chars3D.bruler(o);
@@ -133,12 +187,13 @@ Tanks.Scene = (function () {
     }
     o.tourelle.rotation.y = -c.tourelle;
     o.canon.rotation.z = c.hausse;
+    o.chenilles[0].map.offset.x = c.chenilles.gauche * (o.pasChenille || -0.2);
+    o.chenilles[1].map.offset.x = c.chenilles.droite * (o.pasChenille || -0.2);
+    if (loin) return;
     // les galets tournent, les chenilles défilent (chacune à sa vitesse quand le tank tourne)
     // (étape 70 : chaque roue tourne selon SA taille : le barbotin et la roue folle sont plus petits que les galets ;
     // les patins défilent tout autour de la boucle de la chenille, d'autant de « toiles » que de mètres parcourus)
     for (let i = 0; i < o.roues.length; i++) o.roues[i].rotation.y = -(i < o.roues.length / 2 ? c.chenilles.gauche : c.chenilles.droite) / (o.roues[i].userData.rayon || 0.38);
-    o.chenilles[0].map.offset.x = c.chenilles.gauche * (o.pasChenille || -0.2);
-    o.chenilles[1].map.offset.x = c.chenilles.droite * (o.pasChenille || -0.2);
   }
 
   // ------------------------------------------------------------------ étape 61 : les soldats et les engins
@@ -151,17 +206,38 @@ Tanks.Scene = (function () {
     }
     return o;
   }
+  // (étape 72) Une silhouette (soldat loin) : on écrit sa place dans la liste des instances de son équipe.
+  const m4 = new THREE.Matrix4(), qS = new THREE.Quaternion(), eS = new THREE.Euler(0, 0, 0, "YZX"), pS = new THREE.Vector3(), un = new THREE.Vector3(1, 1, 1);
+  function poserSilhouette(s) {
+    const tous = silhouettes[s.equipe];
+    if (!tous || tous.count >= tous.instanceMatrix.count) return false;
+    const k = s.mort ? Math.min(1, s.depuisMort * 2) : 0; // (à terre : couché sur le dos, comme le soldat détaillé)
+    eS.set(0, -s.angle, k * (Math.PI / 2), "YZX");
+    tous.setMatrixAt(tous.count++, m4.compose(pS.set(s.x, s.y + 0.12 * k, s.z), qS.setFromEuler(eS), un));
+    return true;
+  }
   function placerSoldat(o, s, cam, dt) {
-    // loin de la caméra (plus de 250 m), on ne le dessine pas : il serait plus petit qu'un point
+    // (étape 72) loin de la caméra (plus loin que les silhouettes), on ne le dessine pas : il serait plus petit qu'un point
     const d = Math.hypot(s.x - cam.position.x, s.z - cam.position.z);
-    o.g.visible = !s.dansUnEngin && d < 250 && !(s.mort && s.depuisMort > 20);
-    if (!o.g.visible) return;
+    const cache = s.dansUnEngin || d > Q.soldatSilhouette || (s.mort && s.depuisMort > 20);
+    // assez loin (et pas toi, pas en parachute, pas à la nage) : une silhouette au lieu du squelette
+    const silhouette = !cache && !s.joueur && !s.parachute && !s.nage && d > Q.soldatSimple && poserSilhouette(s);
+    o.g.visible = !cache && !silhouette;
+    if (cache) lod.soldatsCaches++;
+    if (silhouette) lod.silhouettes++;
+    if (!o.g.visible) {
+      o.angleAvant = s.angle;
+      return;
+    }
     o.g.position.set(s.x, s.y, s.z);
     o.g.rotation.set(0, -s.angle, 0);
     // tourne-t-il sur place ? (alors ses pieds bougent un peu : avant, il glissait sur le sol en pivotant)
     const tourne = o.angleAvant !== undefined && dt > 0 && Math.abs(Math.atan2(Math.sin(s.angle - o.angleAvant), Math.cos(s.angle - o.angleAvant))) / dt > 0.6;
     o.angleAvant = s.angle;
-    Tanks.Engins3D.animer(o, s, horloge, tourne, s.joueur || d < C.soldats.detail);
+    const pres = s.joueur || d < Q.soldatDetail;
+    if (pres) lod.soldatsDetail++;
+    else lod.soldatsSimples++;
+    Tanks.Engins3D.animer(o, s, horloge, tourne, pres);
     if (o.parachute) o.parachute.visible = !!s.parachute;
   }
   function engin3d(e) {
@@ -176,6 +252,8 @@ Tanks.Scene = (function () {
   }
   function placerEngin(o, e, dt, original) {
     o.g.visible = e.etat !== "attend" && e.etat !== "parti";
+    // (étape 72) plus loin que la vue (dans le brouillard) : pas dessiné
+    if (o.g.visible && Math.hypot(e.x - cam.position.x, e.y - cam.position.y, e.z - cam.position.z) > Q.vue + 50) (o.g.visible = false), lod.enginsCaches++;
     o.g.position.set(e.x, e.y, e.z);
     o.g.rotation.set(e.roulis || 0, -e.angle, e.tangage || 0, "YXZ");
     if (e.sorte === "sousmarin") {
@@ -193,7 +271,7 @@ Tanks.Scene = (function () {
     } else if (e.sorte === "jeep" || !e.enVol) { // (au sol, il se penche comme la colline, comme un tank)
       const n = T.normale(e.x, e.z);
       qLacet.setFromAxisAngle(haut, -e.angle);
-      qPente.setFromUnitVectors(haut, new THREE.Vector3(n.x, n.y, n.z));
+      qPente.setFromUnitVectors(haut, vn.set(n.x, n.y, n.z));
       o.g.quaternion.copy(qPente).multiply(qLacet);
     }
     if (e.detruit) {
@@ -298,6 +376,7 @@ Tanks.Scene = (function () {
 
   function dessiner(monde, dt, entreDeuxPas) {
     alpha = entreDeuxPas === undefined ? 1 : entreDeuxPas;
+    for (const k in lod) lod[k] = 0; // (étape 72 : on recompte les niveaux de détail à chaque image)
     // on enlève les dessins des tanks qui n'existent plus (nouvelle bataille)
     const vivants = new Set(monde.chars);
     for (const [c, o] of objets) if (!vivants.has(c)) (scene.remove(o.g), objets.delete(c));
@@ -326,7 +405,13 @@ Tanks.Scene = (function () {
       o.eclat = Math.max(0, o.eclat - dt);
       o.anneau.material.emissiveIntensity = 1.4 + Math.sin(horloge * 4) * 0.3 + o.eclat * 4;
     }
+    for (const equipe in silhouettes) silhouettes[equipe].count = 0;
     for (const s of monde.soldats) placerSoldat(soldat3d(s), vue(s), cam, dt);
+    for (const equipe in silhouettes) {
+      const tous = silhouettes[equipe];
+      tous.visible = tous.count > 0;
+      if (tous.count) tous.instanceMatrix.needsUpdate = true;
+    }
     placerProjectiles(monde);
     // la caméra
     const j = monde.joueur, R = C.camera;
@@ -360,9 +445,11 @@ Tanks.Scene = (function () {
     const centre = monde.phase === "garage" ? j : suivi(monde); // (les ombres sont nettes autour de toi)
     soleil.position.set(centre.x + SOLEIL.x * 200, centre.y + SOLEIL.y * 200, centre.z + SOLEIL.z * 200);
     soleil.target.position.set(centre.x, centre.y, centre.z);
+    leCiel.position.copy(cam.position); // (étape 72 : le ciel suit la caméra)
     Tanks.Decor.majArbres(false);
+    Tanks.Decor.majDistance(cam.position, Math.min(Q.decor, Q.vue)); // (étape 72 : les morceaux et les arbres trop loin sont cachés)
     Tanks.Decor.majEau(dt);
-    Tanks.Effets.maj(dt, monde, cam);
+    Tanks.Effets.maj(dt, monde, cam, Q.effets);
     rendu.render(scene, cam);
   }
 
@@ -374,5 +461,5 @@ Tanks.Scene = (function () {
     return { x: (v.x * 0.5 + 0.5) * L, y: (-v.y * 0.5 + 0.5) * H };
   }
 
-  return { initialiser, dessiner, versEcran, changerCamera: () => (camera.mode = (camera.mode + 1) % 2), get infos() { return rendu ? rendu.info.render : {}; }, entreDeuxPas: () => alpha, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
+  return { initialiser, dessiner, versEcran, appliquerQualite, lod, changerCamera: () => (camera.mode = (camera.mode + 1) % 2), get infos() { return rendu ? rendu.info.render : {}; }, get rendu() { return rendu; }, entreDeuxPas: () => alpha, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
 })();

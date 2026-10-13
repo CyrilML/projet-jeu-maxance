@@ -14,6 +14,8 @@
 // Étape 65 : TES ORDRES (la phrase que tu écris dans la barre arrive ici, dans « intentions.ordre »).
 // Étape 64 : les AVIONS (monde.avions : les chasseurs ennemis et les avions de transport) et les PARACHUTISTES.
 // Étape 63 : les SOUS-MARINS (le tien dans monde.engins, 2 ennemis dans monde.sousMarins) et les îles.
+// Étape 72 : pour aller vite, les soldats sont rangés dans un QUADRILLAGE à chaque pas (moteur/grille.js), et la liste
+// des cibles est faite une seule fois par pas.
 // Il annonce tout à la radio : le journal, les sons, les effets et la sauvegarde écoutent.
 
 window.Tanks = window.Tanks || {};
@@ -87,7 +89,25 @@ Tanks.Monde = (function () {
   const soldatsVivants = (monde, equipe) => monde.soldats.filter((s) => s.equipe === equipe && !s.mort && !s.joueur).length;
   // Ce que voient et visent les tanks de l'ordinateur : les tanks, et ton 4x4 quand tu es dedans.
   // (étape 62 : et les bateaux : les patrouilleurs ennemis, et ta vedette quand tu es dedans)
-  const cibles = (monde) => monde.chars.concat(monde.engins.filter((e) => (e.sorte === "jeep" || e.sorte === "dca" || e.sorte === "bateau" || (e.sorte === "sousmarin" && !Tanks.SousMarins.sousLEau(e))) && e.pilote && !e.detruit), monde.bateaux.filter((b) => !b.detruit), monde.sousMarins.filter((m) => !m.detruit && !Tanks.SousMarins.sousLEau(m))); // (étape 63 : un sous-marin, seulement à la surface)
+  // (étape 72 : rangés dans une liste réutilisée, refaite une seule fois par pas, au lieu de 3 nouvelles listes deux fois par pas)
+  const listeCibles = [], prochesEcrases = [];
+  function cibles(monde) {
+    const l = listeCibles;
+    l.length = 0;
+    for (const c of monde.chars) l.push(c);
+    for (const e of monde.engins) if ((e.sorte === "jeep" || e.sorte === "dca" || e.sorte === "bateau" || (e.sorte === "sousmarin" && !Tanks.SousMarins.sousLEau(e))) && e.pilote && !e.detruit) l.push(e);
+    for (const b of monde.bateaux) if (!b.detruit) l.push(b);
+    for (const m of monde.sousMarins) if (!m.detruit && !Tanks.SousMarins.sousLEau(m)) l.push(m); // (étape 63 : un sous-marin, seulement à la surface)
+    return l;
+  }
+  // (étape 72) Le quadrillage des soldats (moteur/grille.js) : refait à chaque pas (ils bougent), pour que chaque soldat
+  // trouve vite ses voisins (au lieu de regarder les 60 autres).
+  const grilleSoldats = Tanks.Grille.creer(C.monde.taille, C.grille.case);
+  function rangerSoldats(monde) {
+    Tanks.Grille.vider(grilleSoldats);
+    for (const s of monde.soldats) if (!s.mort && !s.dansUnEngin) Tanks.Grille.ajouter(grilleSoldats, s, s.x, s.z, 0);
+    monde.grilleSoldats = grilleSoldats;
+  }
 
   // ✍️ Touche E : sortir de l'engin où tu es, ou monter dans le plus proche.
   function sortirOuMonter(monde) {
@@ -234,6 +254,7 @@ Tanks.Monde = (function () {
     for (const x of Tanks.Avions.avancer(monde, dt)) evenements.push(x); // (étape 64) les avions
     Tanks.Bateaux.chocs(monde.bateaux.concat(monde.sousMarins, monde.engins.filter((e) => e.sorte === "bateau" || e.sorte === "sousmarin")));
     // 3. Les soldats : toi (à pied, ou en parachute), et les 24 de l'ordinateur.
+    rangerSoldats(monde);
     for (const s of monde.soldats) {
       // (étapes 61 et 64) en parachute : toi, ou un parachutiste ; il descend en glissant un peu vers l'avant
       if (s.parachute) {
@@ -266,7 +287,7 @@ Tanks.Monde = (function () {
     // Un tank ou ton 4x4 qui roule vite écrase les soldats ennemis.
     for (const v of cibles(monde)) {
       if (v.detruit || Math.abs(v.vitesse) < C.soldats.ecrase) continue;
-      for (const s of monde.soldats) {
+      for (const s of Tanks.Grille.chercher(grilleSoldats, v.x, v.z, 4, prochesEcrases)) { // (étape 72 : les soldats des cases voisines)
         if (s.mort || s.dansUnEngin || s.parachute || s.equipe === v.equipe || Math.hypot(s.x - v.x, s.z - v.z) > 2.8) continue;
         Tanks.Soldat.blesser(s, 99, v, evenements, "ecrase");
       }

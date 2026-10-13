@@ -355,6 +355,9 @@ Tanks.Tableau = (function () {
 
   function dessiner(monde) {
     ctx.clearRect(0, 0, L, H);
+    // (étape 72) le petit mot du régulateur de qualité, sous la carte : « ⚙️ qualité 2/3 · 58 i/s »
+    const Q = Tanks.Qualite;
+    if (Q) texte("⚙️ qualité " + Q.niveau + "/" + (C.qualite.niveaux.length - 1) + (Q.auto ? "" : " ✋") + " · " + Math.round(Q.mesures.ips) + " i/s", L - 12, 192, 12, "rgba(255,255,255,.75)", "right");
     const j = monde.joueur, f = j.fiche;
     if (monde.phase === "garage") {
       panneau(L / 2 - 260, H - 190, 520, 170);

@@ -19,10 +19,11 @@ window.Tanks = window.Tanks || {};
 Tanks.IA = (function () {
   const C = Tanks.CONFIG, I = C.ia, T = Tanks.Terrain, Ch = Tanks.Char;
   let etat = 60;
+  const prochesBoites = [], prochesArbres = []; // (étape 72 : les obstacles des cases voisines, dans des listes réutilisées)
   const hasard = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
 
   function preparer(c) {
-    c.ia = { cible: null, prochainChoix: hasard() * 1.5, erreur: 0, esquive: 0, sensEsquive: 1, etat: "cherche", voit: false, vieAvant: c.vie, sansVue: 0, cote: hasard() < 0.5 ? -1 : 1 };
+    c.ia = { regard: hasard() * 0.2, cible: null, prochainChoix: hasard() * 1.5, erreur: 0, esquive: 0, sensEsquive: 1, etat: "cherche", voit: false, vieAvant: c.vie, sansVue: 0, cote: hasard() < 0.5 ? -1 : 1 };
   }
 
   function choisirCible(c, tous) {
@@ -105,8 +106,8 @@ Tanks.IA = (function () {
         rz += (ez / e) * force * (1 - e / rayon);
       }
     };
-    for (const b of T.boites) if (Math.abs(b.x - c.x) < 30 && Math.abs(b.z - c.z) < 30) repousse(b.x, b.z, Math.max(b.demiL, b.demiP) + I.regardObstacles * 0.6, 60);
-    for (const a of T.arbres) if (!a.ecrase && Math.abs(a.x - c.x) < 10 && Math.abs(a.z - c.z) < 10) repousse(a.x, a.z, 8, 15);
+    for (const b of T.boitesAutour(c.x, c.z, 30, prochesBoites)) if (Math.abs(b.x - c.x) < 30 && Math.abs(b.z - c.z) < 30) repousse(b.x, b.z, Math.max(b.demiL, b.demiP) + I.regardObstacles * 0.6, 60);
+    for (const a of T.arbresAutour(c.x, c.z, 10, prochesArbres)) if (!a.ecrase && Math.abs(a.x - c.x) < 10 && Math.abs(a.z - c.z) < 10) repousse(a.x, a.z, 8, 15);
     for (const o of tous) if (o !== c && o.genre !== "bateau") repousse(o.x, o.z, 14, 40);
     // (étape 62) le lac aussi repousse : un tank ne sait pas nager ! (il s'arrête sur la rive et tire sur les bateaux)
     const dl = T.distLac(c.x, c.z);

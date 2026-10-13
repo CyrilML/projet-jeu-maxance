@@ -8,8 +8,12 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 9,
+  version: 10,
   pasFixe: 1 / 120,
+  // (étape 72) ✍️ « Ça rame trop. » La boucle ne fait jamais plus de 6 petits pas par image : si l'ordinateur est en
+  // retard (une image a duré plus de 6 / 120 = 0,05 s), on JETTE le retard au lieu de courir après (sinon, plus il est
+  // en retard, plus il a de pas à calculer, et plus il prend de retard : la « spirale de la mort »).
+  boucle: { pasMaxParImage: 6 },
 
   monde: {
     taille: 700, // m de côté
@@ -85,6 +89,7 @@ Tanks.CONFIG = {
     // (étape 63) un soldat qui tombe à l'eau NAGE (lentement, sans tirer), la tête hors de l'eau
     nage: 1.6, // m/s
     detail: 45, // m : plus près que ça, on dessine le soldat en détail (genoux, coudes, visage…) ; plus loin, en simple
+    // (étape 72 : cette distance dépend maintenant du niveau de qualité : voir « qualite.niveaux », soldatDetail)
   },
   // ✍️ Les armes à pied : le pistolet, la mitrailleuse et le lance-roquettes (touches 1, 2, 3).
   // Une balle va tout de suite où on vise (pas de vol) : la chance de toucher baisse avec la distance.
@@ -233,5 +238,39 @@ Tanks.CONFIG = {
 
   camera: { distance: 15, hauteur: 6.5, regardDevant: 22, souplesse: 6, champ: 60 },
   effets: { particules: 300, debris: 60 },
-  decor: { distanceArbres: 380 },
+  decor: { distanceArbres: 380, morceau: 140 }, // (étape 72) le décor est découpé en morceaux de 140 m (des « tuiles »)
+
+  // ------------------------------------------------------------------ étape 72 : le RÉGULATEUR DE QUALITÉ
+  // ✍️ « Ça rame trop, le jeu a des lags. Arrange ça. » Le régulateur regarde combien de temps dure chaque image
+  // (60 images par seconde = 16,7 ms par image). Toutes les 2 s, il fait la moyenne :
+  //   - plus de 20 ms (moins de 50 images/s) : ça rame → il descend d'un niveau (moins beau, plus rapide) ;
+  //   - moins de 13 ms deux fois de suite → il remonte d'un niveau (plus beau).
+  //     (Sur un écran à 60 images/s, une image dure toujours au moins 16,7 ms : alors il remonte aussi quand l'image
+  //     dure moins de 18 ms ET que le calcul du jeu prend moins de 8 ms : il reste de la marge.)
+  //   - s'il a dû descendre d'un niveau, il n'y remonte pas avant 60 s (sinon il ferait le yo-yo).
+  // Touche G : choisir le niveau soi-même (0, 1, 2, 3), puis revenir en automatique.
+  qualite: {
+    depart: 1, // ✍️ on commence au niveau 1
+    intervalle: 2, // s entre deux décisions
+    lent: 20, rapide: 13, // ms
+    rapide60: 18, calculMax: 8, // ms (la règle des écrans à 60 images/s)
+    foisRapide: 2, // combien de fois de suite « rapide » avant de remonter
+    punition: 60, // s : on ne remonte pas tout de suite au niveau qui ramait
+    capot: 0.5, // s entre deux mises à jour du panneau « sous le capot » (il coûte cher à écrire)
+    brouillard: 200, // m : le brouillard commence à 200 m au plus (plus près si la vue est courte)
+    // Chaque niveau règle : pixels (la finesse de l'image : 0,8 = 80 % des pixels dans chaque sens), ombres (taille de
+    // l'image des ombres, 0 = pas d'ombres ; douces = bords flous), vue (m : au-delà, le brouillard cache tout),
+    // decor (m : les morceaux de sol, de village et les arbres plus loin ne sont pas dessinés), soldats (m : en
+    // détail, en simple, en « silhouette » d'une seule pièce, au-delà : cachés), roues (m : plus loin, les roues des
+    // tanks sont soudées en une pièce qui ne tourne plus), effets (m : plus loin, pas de fumée ni d'étincelles).
+    niveaux: [
+      { nom: "très léger", pixels: 0.6, ombres: 0, douces: false, vue: 380, decor: 300, soldatDetail: 12, soldatSimple: 30, soldatSilhouette: 170, roues: 35, effets: 140 },
+      { nom: "léger", pixels: 0.8, ombres: 1024, douces: false, vue: 520, decor: 380, soldatDetail: 20, soldatSimple: 45, soldatSilhouette: 210, roues: 60, effets: 200 },
+      { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 750, decor: 520, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280 },
+      { nom: "beau", pixels: 1.5, selonEcran: true, ombres: 2048, douces: true, vue: 1100, decor: 800, soldatDetail: 45, soldatSimple: 100, soldatSilhouette: 300, roues: 160, effets: 400 },
+    ],
+  },
+  // (étape 72) Le QUADRILLAGE : la carte est découpée en cases de 16 m. Pour savoir quels arbres ou quelles maisons sont
+  // près de toi, on ne regarde que ta case et ses voisines (au lieu des 400 arbres et 150 murs à chaque fois).
+  grille: { case: 16 },
 };

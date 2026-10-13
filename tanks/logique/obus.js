@@ -21,7 +21,9 @@ window.Tanks = window.Tanks || {};
 
 Tanks.Obus = (function () {
   const C = Tanks.CONFIG, O = C.obus, T = Tanks.Terrain;
-  const reglages = (sorte) => Object.assign({ vitesse: O.vitesse, gravite: O.gravite }, sorte === "obus" ? {} : {}, C.projectiles[sorte]);
+  // (étape 72 : les réglages de chaque sorte sont préparés une seule fois, au lieu d'être recopiés à chaque pas)
+  const reglagesPrets = {};
+  const reglages = (sorte) => reglagesPrets[sorte] || (reglagesPrets[sorte] = Object.assign({ vitesse: O.vitesse, gravite: O.gravite }, C.projectiles[sorte]));
 
   // Un obus de tank (il part du bout du canon).
   function tirer(liste, tireur) {
@@ -73,7 +75,7 @@ Tanks.Obus = (function () {
     }
     // (une bombe ou un missile abîme aussi un tank qui est tout près, même sans le toucher)
     if (R.degatsChar >= 2) {
-      for (const c of vehicules(monde)) {
+      for (const c of vehicules(monde, listeSouffle)) {
         if (c === dejaTouche || c.detruit || c.equipe === p.tireur.equipe || cache(c, p.sorte)) continue;
         if (Math.hypot(c.x - x, c.z - z) < 4.5 && Math.abs(c.y - y) < 5) abimer(c, 1, p.tireur, x, y, z, p.vx, p.vz, ev);
       }
@@ -81,12 +83,21 @@ Tanks.Obus = (function () {
   }
   // Tous les véhicules qu'un projectile peut toucher : les tanks, le 4x4 (étape 61), et les bateaux (étape 62).
   // (étape 63 : et les sous-marins ; étape 64 : et la DCA)
-  const vehicules = (monde) => monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || e.sorte === "dca" || e.sorte === "bateau" || e.sorte === "sousmarin"), monde.bateaux || [], monde.sousMarins || []);
+  // (étape 72 : rangés dans une liste réutilisée)
+  const listeVehicules = [], listeSouffle = [];
+  function vehicules(monde, l) {
+    l.length = 0;
+    for (const c of monde.chars) l.push(c);
+    for (const e of monde.engins) if (e.sorte === "jeep" || e.sorte === "dca" || e.sorte === "bateau" || e.sorte === "sousmarin") l.push(e);
+    for (const b of monde.bateaux || []) l.push(b);
+    for (const m of monde.sousMarins || []) l.push(m);
+    return l;
+  }
   const cache = (c, sorte) => c.genre === "sousmarin" && sorte !== "torpille" && Tanks.SousMarins.sousLEau(c); // (sous l'eau)
 
   function avancer(liste, monde, dt) {
     const ev = [];
-    const cibles = vehicules(monde);
+    const cibles = vehicules(monde, listeVehicules);
     for (let i = liste.length - 1; i >= 0; i--) {
       const p = liste[i], R = reglages(p.sorte);
       p.age += dt;

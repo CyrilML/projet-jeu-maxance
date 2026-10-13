@@ -24,6 +24,7 @@ Tanks.Entrees = (function () {
     ordre: [], // étape 65 : le bouton « 📢 Ordre » (la touche T, elle, est écoutée directement par la barre : affichage/barre-ordres.js)
     son: ["KeyB"],
     pause: ["Escape", "KeyP"],
+    qualite: ["KeyG"], // étape 72 : choisir le niveau de qualité (auto → 0 → 1 → 2 → 3 → auto)
   };
   const actionsDeLaTouche = {};
   for (const action in CARTE) for (const code of CARTE[action]) (actionsDeLaTouche[code] = actionsDeLaTouche[code] || []).push(action);

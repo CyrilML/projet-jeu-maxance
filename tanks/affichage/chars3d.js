@@ -24,6 +24,7 @@
 //   - le CANON s'amincit vers le bout, avec ses manchons thermiques, leurs colliers et le capteur de bouche.
 // Toutes les pièces d'une même matière sont SOUDÉES en un seul objet (voir outils3d.js) : il y a beaucoup plus de
 // détails, mais la carte graphique a MOINS d'objets à dessiner qu'avant.
+// (Étape 72 : et une copie de toutes les roues soudées en une pièce, montrée à la place des 18 roues quand le tank est loin.)
 //
 // Tout est construit « nez vers x+ », posé au sol (y = 0). Ce fichier ne connaît pas les règles du jeu.
 
@@ -607,7 +608,34 @@ Tanks.Chars3D = (function () {
     souder(canon);
     souder(tourelle);
     souder(caisse);
-    return { g, caisse, tourelle, canon, roues: lesRoues, chenilles, bouche: bout, peinture: P, pasChenille: 1 / PAS_TOILE };
+    const rouesFixes = rouesSoudees(lesRoues, m.teinte);
+    g.add(rouesFixes);
+    return { g, caisse, tourelle, canon, roues: lesRoues, rouesFixes, chenilles, bouche: bout, peinture: P, pasChenille: 1 / PAS_TOILE };
+  }
+
+  // (étape 72) ✍️ « Ça rame. » Chaque roue d'un tank est un objet à part (pour pouvoir la faire tourner) : 18 roues =
+  // 18 dessins par tank. De loin, on ne voit pas une roue tourner ! Alors on prépare aussi une copie de TOUTES les roues
+  // soudées en UNE pièce (qui ne tourne pas). Loin de la caméra, la scène montre la pièce soudée et cache les 18 roues.
+  function rouesSoudees(roues, matiere) {
+    const morceaux = roues.map((r) => {
+      r.updateMatrix();
+      const g = r.geometry.index ? r.geometry.toNonIndexed() : r.geometry.clone();
+      return g.applyMatrix4(r.matrix);
+    });
+    const geo = new THREE.BufferGeometry();
+    for (const nom of ["position", "normal", "uv", "color"]) {
+      if (!morceaux.every((g) => g.attributes[nom])) continue;
+      const taille = morceaux[0].attributes[nom].itemSize, tab = new Float32Array(morceaux.reduce((t, g) => t + g.attributes[nom].count * taille, 0));
+      let k = 0;
+      for (const g of morceaux) (tab.set(g.attributes[nom].array.subarray(0, g.attributes[nom].count * taille), k), (k += g.attributes[nom].count * taille));
+      geo.setAttribute(nom, new THREE.BufferAttribute(tab, taille));
+    }
+    for (const g of morceaux) g.dispose();
+    geo.computeBoundingSphere();
+    const m = new THREE.Mesh(geo, matiere);
+    m.receiveShadow = true;
+    m.visible = false;
+    return m;
   }
 
   // Un tank détruit : tout devient noir et brûlé, la tourelle est soufflée de travers.

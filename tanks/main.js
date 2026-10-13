@@ -3,19 +3,24 @@
 // Il branche toutes les pièces ensemble, puis fait tourner la BOUCLE du jeu :
 //   1. les règles avancent par petits pas tous égaux (1/120 s), autant de pas qu'il faut pour rattraper l'horloge ;
 //   2. puis on dessine une image (3D, tableau de bord, sous le capot) et on règle le son.
+// Étape 72 (« ça rame ») : jamais plus de 6 petits pas par image. Si l'ordinateur a pris du retard, on JETTE le retard
+// (le jeu ralentit un instant) au lieu de courir après : sinon chaque image aurait encore plus de pas à calculer, donc
+// encore plus de retard… (la « spirale de la mort »). Et on chronomètre chaque partie de l'image pour le régulateur de
+// qualité (affichage/qualite.js), qui choisit le niveau de détail. Touche G : choisir le niveau soi-même.
 
 window.Tanks = window.Tanks || {};
 
 (function () {
   const C = Tanks.CONFIG, E = Tanks.Entrees;
   document.getElementById("version").textContent = "version " + C.version;
-  const toile3d = document.getElementById("ecran3d"), toile2d = document.getElementById("ecran2d");
+  const toile3d = document.getElementById("ecran3d"), toile2d = document.getElementById("ecran2d"), pause = document.getElementById("pause");
   E.initialiser(window);
   Tanks.SousLeCapot.initialiser(null);
   const monde = Tanks.Monde.creer();
   Tanks.SousLeCapot.initialiser(monde);
   Tanks.monde = monde; // pour explorer depuis la console (F12)
   Tanks.Scene.initialiser(toile3d);
+  Tanks.Qualite.initialiser(); // (étape 72 : le régulateur applique le niveau de départ)
   Tanks.Tableau.initialiser(toile2d);
   Tanks.BarreOrdres.initialiser(); // (étape 65)
   toile2d.focus();
@@ -31,17 +36,28 @@ window.Tanks = window.Tanks || {};
   document.querySelectorAll("[data-appuyer]").forEach((b) => b.addEventListener("click", () => { E.appuyer(b.dataset.appuyer); toile2d.focus(); }));
 
   let enPause = false, reste = 0, avant = performance.now(), ordre = null;
+  const parts = { logique: 0, dessin: 0, tableau: 0, capot: 0, pas: 0, abandonnes: 0 }; // (étape 72 : le chronomètre)
   function boucle(maintenant) {
-    const dt = Math.min(0.1, (maintenant - avant) / 1000);
+    const dtMs = maintenant - avant, dt = Math.min(0.1, dtMs / 1000);
     avant = maintenant;
+    if (E.consommer("qualite")) Tanks.Qualite.basculer(); // (étape 72 : touche G)
     if (E.consommer("pause")) enPause = !enPause;
     if (E.consommer("camera")) Tanks.Scene.changerCamera();
     if (E.consommer("son")) Tanks.Sons.basculer();
     if (E.consommer("ordre") && monde.phase === "bataille") Tanks.BarreOrdres.ouvrir(); // (étape 65 : touche T)
     ordre = ordre || Tanks.BarreOrdres.prendre(); // (la phrase écrite dans la barre, s'il y en a une ; elle attend le prochain pas)
+    let t0 = performance.now();
+    parts.pas = parts.abandonnes = 0;
     if (!enPause) {
       reste += dt;
       while (reste >= C.pasFixe) {
+        // (étape 72) déjà 6 pas dans cette image ? on jette le retard (on garde juste le petit bout pour l'entre-deux)
+        if (parts.pas >= C.boucle.pasMaxParImage) {
+          parts.abandonnes = Math.floor(reste / C.pasFixe);
+          reste %= C.pasFixe;
+          break;
+        }
+        parts.pas++;
         reste -= C.pasFixe;
         Tanks.Monde.memoriser(monde); // (étape 63 : pour dessiner sans à-coups)
         Tanks.Monde.etape(monde, C.pasFixe, {
@@ -57,12 +73,20 @@ window.Tanks = window.Tanks || {};
         ordre = null;
       }
     }
+    let t1 = performance.now();
+    parts.logique = t1 - t0;
     // (étape 63) où en est-on entre deux pas ? 0 = juste après le dernier pas, presque 1 = juste avant le prochain
     Tanks.Scene.dessiner(monde, enPause ? 0 : dt, Math.min(1, reste / C.pasFixe));
+    t0 = performance.now();
+    parts.dessin = t0 - t1;
     Tanks.Tableau.dessiner(monde);
-    document.getElementById("pause").hidden = !enPause;
+    t1 = performance.now();
+    parts.tableau = t1 - t0;
+    pause.hidden = !enPause;
     Tanks.SousLeCapot.maj();
+    parts.capot = performance.now() - t1;
     Tanks.Sons.maj(monde);
+    if (!enPause) Tanks.Qualite.noterImage(dtMs, parts); // (en pause, les images ne coûtent rien : on ne les compte pas)
     requestAnimationFrame(boucle);
   }
   requestAnimationFrame(boucle);

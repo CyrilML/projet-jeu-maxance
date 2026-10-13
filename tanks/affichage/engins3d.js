@@ -359,6 +359,43 @@ Tanks.Engins3D = (function () {
     r.cou.rotation.z = 0.08 * Math.min(1, v / 4); // (il garde la tête droite en courant)
   }
 
+  // ------------------------------------------------------------------ étape 72 : la SILHOUETTE (le soldat vu de loin)
+  // ✍️ « Ça rame. » Un soldat en détail, c'est une vingtaine de pièces qui bougent (hanches, genoux, coudes…) : autant de
+  // dessins pour la carte graphique. De loin, on ne voit pas ses genoux ! Alors, loin de la caméra, chaque soldat devient
+  // une SILHOUETTE : une seule pièce, déjà dans la pose « fusil en main », avec ses couleurs écrites dans les sommets.
+  // Et toutes les silhouettes d'une équipe sont des « instances » : la même forme recopiée à 100 endroits, en UN dessin.
+  function silhouettes(equipe, max) {
+    const E = Tanks.CONFIG.equipes[equipe], mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9 });
+    const tenue = E.camouflage[0], gilet = equipe === "bleus" ? 0x5f6a4a : 0x8a7a56, peau = 0xc8956c, bottes = 0x3a2c20, arme = 0x23252a;
+    const g = new THREE.Group();
+    const poser = (geo, x, y, z, teinte, rz) => {
+      const m = O.piece(geo, mat, x, y, z, teinte);
+      if (rz) m.rotation.z = rz;
+      g.add(m);
+    };
+    for (const z of [-OS.ecartHanches, OS.ecartHanches]) {
+      poser(new THREE.CapsuleGeometry(0.075, 0.72, 2, 6), 0, 0.5, z, tenue); // la jambe
+      poser(new THREE.BoxGeometry(0.26, 0.12, 0.12), 0.05, 0.06, z, bottes); // la botte
+    }
+    poser(new THREE.BoxGeometry(0.24, 0.2, 0.32), 0, 0.96, 0, tenue); // le bassin
+    poser(new THREE.BoxGeometry(0.3, 0.5, 0.4), 0.01, 1.24, 0, gilet); // le torse et son gilet
+    poser(new THREE.BoxGeometry(0.2, 0.34, 0.28), -0.21, 1.24, 0, gilet); // le sac à dos
+    poser(new THREE.SphereGeometry(0.11, 8, 6), 0.01, 1.62, 0, peau); // la tête
+    poser(new THREE.SphereGeometry(0.14, 8, 5, 0, Math.PI * 2, 0, Math.PI * 0.52), -0.005, 1.66, 0, tenue); // le casque
+    for (const z of [-OS.ecartEpaules, OS.ecartEpaules]) {
+      poser(new THREE.CapsuleGeometry(0.055, 0.42, 2, 6), 0.22, 1.33, z * 0.8, tenue, 1.17); // le bras, tendu vers le fusil
+      poser(new THREE.BoxGeometry(0.12, 0.08, 0.13), 0.03, 1.36, z * 1.1, E.marque); // le brassard de l'équipe
+    }
+    poser(new THREE.BoxGeometry(0.85, 0.08, 0.05), 0.42, 1.27, 0.08, arme); // le fusil
+    const [piece] = O.souder(g, false);
+    const tous = new THREE.InstancedMesh(piece.geometry, mat, max);
+    tous.count = 0;
+    tous.frustumCulled = false; // (ils sont partout sur la carte : on les envoie tous, c'est un seul dessin)
+    tous.castShadow = false;
+    tous.receiveShadow = true;
+    return tous;
+  }
+
     // ------------------------------------------------------------------ les engins
   // (étape 70) Les outils de l'atelier (outils3d.js) et les couleurs des petites pièces (les mêmes que pour les tanks).
   const O = Tanks.Outils3D, CT = Tanks.Chars3D.C;
@@ -1209,5 +1246,5 @@ Tanks.Engins3D = (function () {
     });
   }
 
-  return { soldat, animer, fabriquer, bruler, portail };
+  return { soldat, animer, fabriquer, bruler, portail, silhouettes };
 })();

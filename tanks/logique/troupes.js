@@ -8,6 +8,8 @@
 //   3. sinon, il AVANCE vers le village puis vers le camp ennemi, chacun dans son couloir (sa place dans la ligne),
 //      en contournant les murs (ils le repoussent) et sans se coller aux autres.
 // Il fabrique les mêmes intentions que toi (avancer, tourner, tirer), avec le même soldat (logique/soldat.js).
+// (Étape 72 : pour aller vite, il regarde les ennemis du plus proche au plus loin et s'arrête au premier qu'il voit ; pour
+// ne pas se coller aux autres, il ne regarde que les soldats des cases voisines du quadrillage.)
 // (Étape 65 : TES ORDRES passent avant tout. « Va là » : il y court sans s'arrêter pour tirer, puis il défend sa place ;
 // « vise … » : il choisit sa cible dans ce que tu as dit ; « cessez le feu » : il ne tire plus.)
 
@@ -16,6 +18,8 @@ window.Tanks = window.Tanks || {};
 Tanks.Troupes = (function () {
   const C = Tanks.CONFIG, S = C.soldats, T = Tanks.Terrain;
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
+  const prochesSoldats = [], parDistance = [], paires = []; // (étape 72 : des listes réutilisées)
+  const plusProche = (a, b) => a.d - b.d;
 
   function creer(monde) {
     const liste = [];
@@ -59,10 +63,23 @@ Tanks.Troupes = (function () {
       const permises = Tanks.Ordres.ciblesPermises(s, monde);
       const utiles = permises && permises.filter((o) => (roquettes ? o.genre !== "soldat" : o.genre === "soldat"));
       const candidats = utiles && utiles.length ? utiles : roquettes ? monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || (e.sorte === "bateau" && e.pilote)), monde.bateaux).filter((c) => !c.detruit && c.equipe !== s.equipe) : monde.soldats.filter((o) => !o.mort && !o.dansUnEngin && o.equipe !== s.equipe);
+      // (étape 72) on range les candidats du plus proche au plus loin, puis on regarde la ligne de vue dans cet ordre :
+      // le premier qu'on VOIT est le bon (avant, on faisait le long calcul de la ligne de vue pour beaucoup plus d'ennemis)
+      const portee = roquettes ? 120 : S.vue;
+      parDistance.length = 0;
       for (const o of candidats) {
         const d = Math.hypot(o.x - s.x, o.z - s.z);
-        if (d > (roquettes ? 120 : S.vue) || (meilleur && d > meilleur.d)) continue;
-        if (T.vueLibre(s.x, s.y + 1.5, s.z, o.x, o.y + 1.2, o.z)) meilleur = { o, d };
+        if (d > portee) continue;
+        const paire = paires[parDistance.length] || (paires[parDistance.length] = { o: null, d: 0 });
+        (paire.o = o), (paire.d = d);
+        parDistance.push(paire);
+      }
+      parDistance.sort(plusProche);
+      for (const p of parDistance) {
+        if (T.vueLibre(s.x, s.y + 1.5, s.z, p.o.x, p.o.y + 1.2, p.o.z)) {
+          meilleur = { o: p.o, d: p.d };
+          break;
+        }
       }
       ia.cible = meilleur ? meilleur.o : null;
       ia.erreur = (Math.random() - 0.5) * 0.06;
@@ -106,7 +123,8 @@ Tanks.Troupes = (function () {
     const objectifZ = s.z * sens < -20 ? 0 : sens * (T.demi - 60);
     let gx = ia.couloir - s.x, gz = objectifZ - s.z;
     // se pousser loin des autres soldats (pas tous au même endroit)
-    for (const o of monde.soldats) {
+    const voisins = monde.grilleSoldats ? Tanks.Grille.chercher(monde.grilleSoldats, s.x, s.z, 5, prochesSoldats) : monde.soldats; // (étape 72 : les cases voisines)
+    for (const o of voisins) {
       if (o === s || o.mort) continue;
       const dx = s.x - o.x, dz = s.z - o.z, d = Math.hypot(dx, dz);
       if (d < 4 && d > 0.01) (gx += (dx / d) * 30), (gz += (dz / d) * 30);

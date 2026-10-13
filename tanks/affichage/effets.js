@@ -18,6 +18,10 @@
 //     traînée de fumée pendant qu'il tombe, et le grand « boum » quand il s'écrase.
 // Ce sont des « particules » : des petites images toujours tournées vers la caméra (des sprites), qui naissent,
 // grossissent, montent, s'effacent et meurent. On en a 300, qu'on réutilise sans arrêt.
+// Étape 72 (« ça rame ») : avant, chaque particule était un objet à part : 300 particules = 300 dessins demandés à la
+// carte graphique ! Maintenant elles sont toutes dans UN SEUL objet (des « instances » : la même petite image carrée
+// recopiée à 300 endroits), plus un deuxième pour celles qui brillent (le feu). Et on ne fait pas de fumée trop loin
+// de la caméra (on ne la verrait presque pas) : la distance est réglée par le régulateur de qualité.
 // Il écoute la radio (tir, impact, touche, detruit) pour savoir quand faire des effets.
 
 window.Tanks = window.Tanks || {};
@@ -25,32 +29,68 @@ window.Tanks = window.Tanks || {};
 Tanks.Effets = (function () {
   const C = Tanks.CONFIG, T = Tanks.Terrain;
   let scene, particules = [], traceurs = [], lumiere, prochaine = 0;
+  let lotFumee = null, lotFeu = null; // (étape 72) les deux objets qui dessinent toutes les particules
+  const camera = { x: 0, y: 0, z: 0, connue: false }, reglage = { distance: Infinity }; // (étape 72) où est la caméra, jusqu'où faire des effets
   const balles = []; // (étape 61) les traits des balles : { ligne, reste }
   const epaves = []; // les tanks qui brûlent (la fumée sort de là)
-  const bilan = { vivantes: 0, traceurs: 0, epaves: 0, balles: 0 };
+  const bilan = { vivantes: 0, traceurs: 0, epaves: 0, balles: 0, tropLoin: 0 };
   const GROS = { obus: 1, roquette: 1, grenade: 1.2, missile: 2, bombe: 2.8, torpille: 2.2 }; // la taille de l'explosion
 
-  function image(couleurCentre) {
-    const c = document.createElement("canvas");
-    c.width = c.height = 64;
-    const ctx = c.getContext("2d");
-    const d = ctx.createRadialGradient(32, 32, 2, 32, 32, 31);
-    d.addColorStop(0, couleurCentre);
-    d.addColorStop(0.5, "rgba(255,255,255,0.35)");
-    d.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.fillStyle = d;
-    ctx.fillRect(0, 0, 64, 64);
-    return new THREE.CanvasTexture(c);
+  // (étape 72) Un LOT de particules : un petit carré (2 triangles) recopié autant de fois qu'il y a de particules.
+  // Pour chaque copie, on donne son centre, sa taille, sa couleur et sa transparence. Le carré est toujours tourné vers
+  // la caméra, et on y peint un rond flou (blanc au milieu, transparent au bord) : c'est la boule de fumée.
+  function lot(max, brille) {
+    const carre = new THREE.PlaneGeometry(1, 1), geo = new THREE.InstancedBufferGeometry();
+    geo.index = carre.index;
+    geo.setAttribute("position", carre.attributes.position);
+    const attribut = (n) => new THREE.InstancedBufferAttribute(new Float32Array(max * n), n).setUsage(THREE.DynamicDrawUsage);
+    const centres = attribut(3), teintes = attribut(4), tailles = attribut(1);
+    geo.setAttribute("centre", centres);
+    geo.setAttribute("teinte", teintes);
+    geo.setAttribute("taille", tailles);
+    geo.instanceCount = 0;
+    const mat = new THREE.ShaderMaterial({
+      uniforms: THREE.UniformsUtils.clone(THREE.UniformsLib.fog), fog: true,
+      transparent: true, depthWrite: false, blending: brille ? THREE.AdditiveBlending : THREE.NormalBlending,
+      vertexShader: [
+        "attribute vec3 centre; attribute vec4 teinte; attribute float taille;",
+        "varying vec4 vTeinte; varying vec2 vCoin;",
+        "#include <fog_pars_vertex>",
+        "void main() {",
+        "  vTeinte = teinte; vCoin = position.xy;",
+        "  vec4 mvPosition = modelViewMatrix * vec4(centre, 1.0);", // le centre, vu par la caméra…
+        "  mvPosition.xy += position.xy * taille;", // …et le coin du carré, écarté de la taille de la particule
+        "  gl_Position = projectionMatrix * mvPosition;",
+        "  #include <fog_vertex>",
+        "}",
+      ].join("\n"),
+      fragmentShader: [
+        "varying vec4 vTeinte; varying vec2 vCoin;",
+        "#include <fog_pars_fragment>",
+        "void main() {",
+        "  float d = length(vCoin) * 2.0;", // 0 au milieu, 1 sur le bord du rond
+        "  float a = d < 0.5 ? mix(0.9, 0.35, clamp((d - 0.06) / 0.44, 0.0, 1.0)) : mix(0.35, 0.0, clamp((d - 0.5) / 0.5, 0.0, 1.0));",
+        "  gl_FragColor = vec4(vTeinte.rgb, a * vTeinte.a);",
+        "  #include <tonemapping_fragment>",
+        "  #include <colorspace_fragment>",
+        "  #include <fog_fragment>",
+        "}",
+      ].join("\n"),
+    });
+    const objet = new THREE.Mesh(geo, mat);
+    objet.frustumCulled = false;
+    objet.visible = false;
+    objet.renderOrder = brille ? 3 : 2;
+    scene.add(objet);
+    return { objet, geo, centres, teintes, tailles, n: 0 };
   }
 
   function initialiser(s) {
     scene = s;
-    const fumee = image("rgba(255,255,255,0.9)");
+    lotFumee = lot(C.effets.particules, false);
+    lotFeu = lot(C.effets.particules, true);
     for (let i = 0; i < C.effets.particules; i++) {
-      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: fumee, transparent: true, depthWrite: false, opacity: 0 }));
-      sp.visible = false;
-      scene.add(sp);
-      particules.push({ sp, age: 0, vie: 1, vx: 0, vy: 0, vz: 0, t0: 1, t1: 2, op: 0.5, gravite: 0, feu: false });
+      particules.push({ vivante: false, x: 0, y: 0, z: 0, r: 1, g: 1, b: 1, age: 0, vie: 1, vx: 0, vy: 0, vz: 0, t0: 1, t1: 2, op: 0.5, gravite: 0, feu: false });
     }
     // le traceur d'un obus : un petit bâton lumineux
     const geo = new THREE.CylinderGeometry(0.09, 0.09, 3.2, 6);
@@ -149,10 +189,18 @@ Tanks.Effets = (function () {
   const alea = (f) => (Math.random() * 2 - 1) * f;
 
   function particule(x, y, z, vx, vy, vz, vie, t0, t1, op, couleur, feu, gravite) {
+    // (étape 72) trop loin de la caméra ? on ne la fait pas (on ne la verrait presque pas)
+    if (camera.connue) {
+      const dx = x - camera.x, dy = y - camera.y, dz = z - camera.z;
+      if (dx * dx + dy * dy + dz * dz > reglage.distance * reglage.distance) {
+        bilan.tropLoin++;
+        return;
+      }
+    }
     let p = null;
     for (let k = 0; k < particules.length; k++) {
       const q = particules[(prochaine + k) % particules.length];
-      if (!q.sp.visible) {
+      if (!q.vivante) {
         p = q;
         prochaine = (prochaine + k + 1) % particules.length;
         break;
@@ -162,11 +210,10 @@ Tanks.Effets = (function () {
       p = particules[prochaine];
       prochaine = (prochaine + 1) % particules.length;
     }
-    Object.assign(p, { age: 0, vie, vx, vy, vz, t0, t1, op, feu: !!feu, gravite: gravite || 0 });
-    p.sp.material.color.setRGB(couleur[0], couleur[1], couleur[2]);
-    p.sp.material.blending = feu ? THREE.AdditiveBlending : THREE.NormalBlending;
-    p.sp.position.set(x, y, z);
-    p.sp.visible = true;
+    (p.age = 0), (p.vie = vie), (p.vx = vx), (p.vy = vy), (p.vz = vz), (p.t0 = t0), (p.t1 = t1), (p.op = op), (p.feu = !!feu), (p.gravite = gravite || 0);
+    (p.r = couleur[0]), (p.g = couleur[1]), (p.b = couleur[2]);
+    (p.x = x), (p.y = y), (p.z = z);
+    p.vivante = true;
   }
 
   let flashReste = 0;
@@ -178,7 +225,9 @@ Tanks.Effets = (function () {
 
   // Chaque image : les particules vieillissent, les obus ont leur traceur, les épaves fument, les tanks soulèvent
   // de la poussière.
-  function maj(dt, monde, camera) {
+  function maj(dt, monde, cam, distance) {
+    if (cam) (camera.x = cam.position.x), (camera.y = cam.position.y), (camera.z = cam.position.z), (camera.connue = true);
+    if (distance) reglage.distance = distance;
     if (flashReste > 0) {
       flashReste -= dt;
       if (flashReste <= 0) lumiere.intensity = 0;
@@ -200,11 +249,12 @@ Tanks.Effets = (function () {
       particule(c.x + ca * ar + alea(1.5), c.y + 0.4, c.z + sa * ar + alea(1.5), alea(0.8), 0.6, alea(0.8), 1.6, 1.5, 5, 0.35, [0.62, 0.56, 0.44]);
     }
     let vivantes = 0;
+    lotFumee.n = lotFeu.n = 0;
     for (const p of particules) {
-      if (!p.sp.visible) continue;
+      if (!p.vivante) continue;
       p.age += dt;
       if (p.age >= p.vie) {
-        p.sp.visible = false;
+        p.vivante = false;
         continue;
       }
       vivantes++;
@@ -212,12 +262,24 @@ Tanks.Effets = (function () {
       p.vy -= p.gravite * dt;
       p.vx *= 1 - dt * 0.8;
       p.vz *= 1 - dt * 0.8;
-      p.sp.position.x += p.vx * dt;
-      p.sp.position.y += p.vy * dt;
-      p.sp.position.z += p.vz * dt;
-      const s = p.t0 + (p.t1 - p.t0) * Math.sqrt(t);
-      p.sp.scale.set(s, s, 1);
-      p.sp.material.opacity = p.op * (1 - t) * Math.min(1, t * 10);
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.z += p.vz * dt;
+      // on la range dans son lot (la fumée, ou le feu qui brille) : centre, taille, couleur et transparence
+      const L = p.feu ? lotFeu : lotFumee, i = L.n++;
+      L.centres.array[i * 3] = p.x;
+      L.centres.array[i * 3 + 1] = p.y;
+      L.centres.array[i * 3 + 2] = p.z;
+      L.tailles.array[i] = p.t0 + (p.t1 - p.t0) * Math.sqrt(t);
+      L.teintes.array[i * 4] = p.r;
+      L.teintes.array[i * 4 + 1] = p.g;
+      L.teintes.array[i * 4 + 2] = p.b;
+      L.teintes.array[i * 4 + 3] = p.op * (1 - t) * Math.min(1, t * 10);
+    }
+    for (const L of [lotFumee, lotFeu]) {
+      L.geo.instanceCount = L.n;
+      L.objet.visible = L.n > 0;
+      if (L.n) L.centres.needsUpdate = L.tailles.needsUpdate = L.teintes.needsUpdate = true;
     }
     bilan.vivantes = vivantes;
     // les traceurs des obus en vol (les roquettes et les missiles laissent une traînée de fumée)
@@ -253,7 +315,7 @@ Tanks.Effets = (function () {
       if (!a.detruit || a.etat === "parti" || Math.random() > dt * 40) continue;
       particule(a.x + alea(1), a.y, a.z + alea(1), alea(1), 1, alea(1), 3, 2, 8, 0.7, Math.random() < 0.3 ? [1, 0.5, 0.15] : [0.13, 0.12, 0.12], false);
     }
-    for (const e of monde.engins.concat(monde.bateaux || [], monde.sousMarins || [])) {
+    for (const liste of [monde.engins, monde.bateaux || [], monde.sousMarins || []]) for (const e of liste) {
       if (e.detruit) continue;
       if (e.sorte === "sousmarin" && Math.abs(e.vitesse) > 1) {
         if (e.profondeur > 1.5 ? Math.random() < dt * 10 : Math.random() < dt * 20) {
@@ -276,7 +338,7 @@ Tanks.Effets = (function () {
 
   function effacer() {
     epaves.length = 0;
-    for (const p of particules) p.sp.visible = false;
+    for (const p of particules) p.vivante = false;
     for (const x of balles) x.l.visible = false;
   }
 

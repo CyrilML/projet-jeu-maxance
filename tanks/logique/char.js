@@ -17,6 +17,7 @@ window.Tanks = window.Tanks || {};
 Tanks.Char = (function () {
   const C = Tanks.CONFIG, K = C.char, O = C.obus, T = Tanks.Terrain;
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a)); // ramène un angle entre −π et π
+  const prochesArbres = [], AVANT = { x: 1, z: 0 }; // (étape 72 : réutilisés à chaque pas, pour ne pas fabriquer d'objets)
 
   function creer(fiche, equipe, place, nom) {
     return {
@@ -59,7 +60,8 @@ Tanks.Char = (function () {
     else if (intentions.reculer) c.vitesse = Math.max(-K.marcheArriere, c.vitesse - (c.vitesse > 0 ? K.freinage : f.acceleration) * dt);
     else c.vitesse -= Math.sign(c.vitesse) * Math.min(Math.abs(c.vitesse), K.ralentissement * dt);
     // la pente : en montée, la gravité freine ; en descente, elle pousse
-    const avant = { x: Math.cos(c.angle), z: Math.sin(c.angle) };
+    const avant = AVANT;
+    (avant.x = Math.cos(c.angle)), (avant.z = Math.sin(c.angle)); // (étape 72 : on réutilise le même petit objet)
     const pente = (T.hauteur(c.x + avant.x * 2, c.z + avant.z * 2) - T.hauteur(c.x - avant.x * 2, c.z - avant.z * 2)) / 4;
     c.vitesse -= pente * 9.8 * 0.5 * dt;
     // 2. Tourner sur place (plus lentement quand on va vite)
@@ -78,7 +80,7 @@ Tanks.Char = (function () {
     c.z = Math.max(-lim, Math.min(lim, c.z));
     if (T.repousser(c, K.rayon * 0.8)) c.vitesse *= 0.9;
     // 4. Écraser les arbres (à plus de 9 km/h) ; sinon, l'arbre arrête le tank.
-    for (const a of T.arbres) {
+    for (const a of T.arbresAutour(c.x, c.z, 5, prochesArbres)) { // (étape 72 : seulement les arbres des cases voisines)
       if (a.ecrase || Math.abs(a.x - c.x) > 5 || Math.abs(a.z - c.z) > 5) continue;
       const d = Math.hypot(a.x - c.x, a.z - c.z);
       if (d > K.rayon * 0.75 + a.r) continue;

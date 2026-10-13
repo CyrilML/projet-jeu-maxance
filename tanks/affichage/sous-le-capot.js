@@ -11,6 +11,10 @@
 // Étape 65 : chaque ordre donné (ce que le jeu a compris, les mots devinés), et l'ordre de chaque tank et soldat allié.
 // Étape 64 : chaque avion (ce qu'il fait : approche, bombarde, dégage, duel ; sa hauteur, sa vitesse, sa vie), la DCA
 // (où elle vise, l'avion qu'elle suit), les parachutistes en l'air.
+// Étape 72 : LA VITESSE DU JEU : le niveau de qualité choisi par le régulateur (et pourquoi), les images par seconde, le
+// temps de chaque partie d'une image (règles, dessin, tableau de bord, ce panneau), les pas jetés, et ce que la scène
+// dessine (soldats en détail / simples / silhouettes, morceaux du décor, arbres, particules trop loin).
+// Ce panneau ne se remet à jour que 2 fois par seconde (l'écrire coûte cher), et pas du tout quand il est caché.
 // Étape 63 : les sous-marins (leur PROFONDEUR, s'ils sont sous l'eau), les îles, si tu nages, et le dessin « entre deux
 // pas » (l'interpolation qui empêche ton personnage de faire de petits sauts).
 
@@ -23,6 +27,8 @@ Tanks.SousLeCapot = (function () {
   let table, journal, monde, branche = false;
 
   const MESSAGES = {
+    // étape 72
+    qualite: (d) => "⚙️ Qualité " + d.niveau + "/" + d.max + " (" + d.nom + ")" + (d.auto ? "" : " ✋") + " : " + d.raison + " → pixels ×" + virgule(d.reglages.pixels, 1) + ", ombres " + (d.reglages.ombres ? d.reglages.ombres + (d.reglages.douces ? " douces" : "") : "aucune") + ", vue " + d.reglages.vue + " m",
     "son-endormi": (d) => "🔇 Le son s'endort : " + d.raison,
     "son-reveille": () => "🔊 Tu es revenu : le son se réveille",
     garage: (d) => "🏭 Au garage, tu regardes le " + d.nom + " (" + d.pays + ")",
@@ -102,9 +108,27 @@ Tanks.SousLeCapot = (function () {
     });
   }
 
+  // (étape 72) LA VITESSE DU JEU : tout en haut du panneau.
+  function lignesVitesse(l) {
+    const Q = Tanks.Qualite, M = Q.mesures, R = Q.reglages, L = Tanks.Scene.lod, D = Tanks.Decor.bilan, ms = (x) => virgule(x, 1) + " ms";
+    l.push(["La vitesse du jeu (étape 72)"],
+      ["qualité", Q.niveau + " / " + (C.qualite.niveaux.length - 1) + " « " + R.nom + " » · " + (Q.auto ? "automatique (G : choisir)" : "choisie à la main ✋ (G : changer)") + " · dernier changement : " + (M.derniere || "—")],
+      ["images", Math.round(M.ips) + " i/s = " + ms(M.ms) + " par image (moyenne sur " + C.qualite.intervalle + " s) · descend si > " + C.qualite.lent + " ms, monte si < " + C.qualite.rapide + " ms"],
+      ["une image, c'est", "règles " + ms(M.logique) + " (" + virgule(M.pasParImage, 1) + " pas) + dessin " + ms(M.dessin) + " + tableau de bord " + ms(M.tableau) + " + ce panneau " + ms(M.capot) + " = calcul " + ms(M.calcul)],
+      ["pas jetés", M.abandonnes + " dans les 2 dernières s · " + M.abandonnesTotal + " en tout (jamais plus de " + C.boucle.pasMaxParImage + " pas par image)"],
+      ["réglages du niveau", "pixels ×" + virgule(R.pixels, 1) + " · ombres " + (R.ombres ? R.ombres + (R.douces ? " douces" : "") : "aucune") + " · vue " + R.vue + " m · décor " + Math.min(R.decor, R.vue) + " m · effets " + R.effets + " m"],
+      ["soldats dessinés", L.soldatsDetail + " en détail (< " + R.soldatDetail + " m) · " + L.soldatsSimples + " simples (< " + R.soldatSimple + " m) · " + L.silhouettes + " silhouettes (< " + R.soldatSilhouette + " m, 2 dessins pour toutes) · " + L.soldatsCaches + " cachés"],
+      ["tanks et engins", L.tanksRouesSoudees + " tank(s) loin (> " + R.roues + " m) : roues soudées · " + L.enginsCaches + " engin(s) au-delà de la vue, cachés"],
+      ["le décor", D.morceauxVus + " / " + D.morceaux + " morceaux dessinés · " + D.arbresVus + " / " + D.arbres + " arbres"],
+      ["particules", Tanks.Effets.bilan.vivantes + " en vie (2 dessins pour toutes) · " + Tanks.Effets.bilan.tropLoin + " pas faites (trop loin)"],
+      ["le quadrillage", "cases de " + C.grille.case + " m · " + Tanks.Terrain.grilles.arbres.objets + " arbres et " + Tanks.Terrain.grilles.boites.objets + " murs rangés une fois · " + (monde.grilleSoldats ? monde.grilleSoldats.objets : 0) + " soldats rangés à chaque pas"]);
+  }
+
   function lignes() {
     const j = monde.joueur, f = j.fiche, t = monde.toi || {}, s = t.soldat;
-    const l = [["Où tu es (étape 61)"], ["phase", monde.phase]];
+    const l = [];
+    lignesVitesse(l);
+    l.push(["Où tu es (étape 61)"], ["phase", monde.phase]);
     if (s) {
       const ou = { dca: "à la DCA 🎯", sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];
       l.push(["mode", t.mode + " = " + ou]);
@@ -186,9 +210,16 @@ Tanks.SousLeCapot = (function () {
     return l;
   }
 
+  // (étape 72) Le panneau est-il à l'écran ? (s'il est caché en bas de la page, inutile de le réécrire)
+  let visible = true, observe = false;
   let dernier = 0;
   function maj() {
-    if (!table || !monde || performance.now() - dernier < 200) return;
+    if (!table || !monde || performance.now() - dernier < C.qualite.capot * 1000) return;
+    if (!observe && window.IntersectionObserver) {
+      observe = true;
+      new IntersectionObserver((e) => (visible = e[e.length - 1].isIntersecting)).observe(table);
+    }
+    if (!visible) return;
     dernier = performance.now();
     table.innerHTML = lignes().map((x) => (x.length === 1 ? '<tr class="groupe"><th colspan="2">' + x[0] + "</th></tr>" : "<tr><td>" + x[0] + "</td><td>" + x[1] + "</td></tr>")).join("");
   }

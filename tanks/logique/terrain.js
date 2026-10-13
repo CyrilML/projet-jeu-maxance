@@ -12,6 +12,8 @@
 // ou sur l'île la plus proche) ; un soldat, lui, NAGE (étape 63).
 // Étape 63 : les ÎLES sont des petites collines rondes posées dans le lac : à moins de « rayon » de leur centre, le sol
 // sort de l'eau. Un point est donc « dans l'eau » s'il est dans l'ellipse du lac ET sur aucune île.
+// Étape 72 : pour aller vite, les arbres et les boîtes sont rangés dans un QUADRILLAGE (moteur/grille.js) : « qu'y a-t-il
+// près de moi ? » ne regarde plus que les cases voisines.
 // Ce fichier ne dessine rien.
 
 window.Tanks = window.Tanks || {};
@@ -126,6 +128,17 @@ Tanks.Terrain = (function () {
   }
   if (ILES[0]) boites.push({ x: ILES[0].x + 10, z: ILES[0].z + 12, demiL: 3.5, demiP: 3.5, angle: 0.4, h: 9, sorte: "maison", graine: 6301 });
 
+  // (étape 72) LE QUADRILLAGE des obstacles (moteur/grille.js) : chaque arbre est rangé dans la case de son tronc,
+  // chaque boîte dans toutes les cases qu'elle touche. « Qu'y a-t-il près de moi ? » = ouvrir ma case et ses voisines.
+  const grilleArbres = Tanks.Grille.creer(W.taille, C.grille.case), grilleBoites = Tanks.Grille.creer(W.taille, C.grille.case);
+  for (const a of arbres) Tanks.Grille.ajouter(grilleArbres, a, a.x, a.z, 0);
+  for (const b of boites) Tanks.Grille.ajouter(grilleBoites, b, b.x, b.z, Math.hypot(b.demiL, b.demiP));
+  // Les arbres (ou les boîtes) dont le centre est peut-être à moins de « rayon » de (x, z) : il faut encore vérifier la
+  // vraie distance. « sortie » : la liste (réutilisée) où les mettre.
+  const arbresAutour = (x, z, rayon, sortie) => Tanks.Grille.chercher(grilleArbres, x, z, rayon + 1, sortie);
+  const boitesAutour = (x, z, rayon, sortie) => Tanks.Grille.chercher(grilleBoites, x, z, rayon, sortie);
+  const prochesRepousser = [];
+
   // Un point (x, z) dans une boîte ? (on le ramène dans le repère de la boîte : le long, et en travers)
   function dansBoite(b, x, z, marge) {
     const c = Math.cos(b.angle), s = Math.sin(b.angle), dx = x - b.x, dz = z - b.z;
@@ -136,7 +149,7 @@ Tanks.Terrain = (function () {
   // Pousse un cercle (un tank) hors des boîtes. Renvoie la boîte touchée (ou null).
   function repousser(o, r) {
     let touche = null;
-    for (const b of boites) {
+    for (const b of boitesAutour(o.x, o.z, r + 0.01, prochesRepousser)) { // (étape 72 : seulement les boîtes des cases voisines)
       if (Math.abs(o.x - b.x) > b.demiL + b.demiP + r || Math.abs(o.z - b.z) > b.demiL + b.demiP + r) continue;
       const c = Math.cos(b.angle), s = Math.sin(b.angle), dx = o.x - b.x, dz = o.z - b.z;
       const u = dx * c + dz * s, v = -dx * s + dz * c;
@@ -180,10 +193,13 @@ Tanks.Terrain = (function () {
   // (Étape 61 : pour aller vite — 24 soldats et 8 tanks se posent la question sans arrêt —, on ne regarde que les
   // boîtes qui sont dans le rectangle autour de la ligne, et le sol tous les 8 m seulement.)
   for (const b of boites) (b.rayon = Math.hypot(b.demiL, b.demiP)), (b.sol = hauteur(b.x, b.z));
+  const prochesVue = []; // (une liste réutilisée : on n'en fabrique pas une nouvelle à chaque question)
   function vueLibre(x1, y1, z1, x2, y2, z2) {
     const d = Math.hypot(x2 - x1, z2 - z1);
     const minX = Math.min(x1, x2), maxX = Math.max(x1, x2), minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);
-    const proches = boites.filter((b) => b.x + b.rayon > minX && b.x - b.rayon < maxX && b.z + b.rayon > minZ && b.z - b.rayon < maxZ);
+    const proches = prochesVue;
+    proches.length = 0;
+    for (const b of boites) if (b.x + b.rayon > minX && b.x - b.rayon < maxX && b.z + b.rayon > minZ && b.z - b.rayon < maxZ) proches.push(b);
     const n = Math.max(2, Math.ceil(d / 3));
     for (let i = 1; i < n; i++) {
       const t = i / n, x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t, z = z1 + (z2 - z1) * t;
@@ -200,5 +216,5 @@ Tanks.Terrain = (function () {
     return liste;
   }
 
-  return { hauteur, normale, boites, arbres, dansBoite, repousser, vueLibre, departs, demi, distLac, dansLEau, ileProche, iles: ILES };
+  return { hauteur, normale, boites, arbres, arbresAutour, boitesAutour, grilles: { arbres: grilleArbres, boites: grilleBoites }, dansBoite, repousser, vueLibre, departs, demi, distLac, dansLEau, ileProche, iles: ILES };
 })();
