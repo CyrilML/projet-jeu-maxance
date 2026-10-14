@@ -62,7 +62,7 @@ Tanks.Obus = (function () {
     if (cible.vie <= 0) {
       cible.detruit = true;
       // (étape 64) un avion n'est pas une épave qui fume au sol : il est « abattu », et il tombe
-      ev.push([cible.genre === "avion" ? "abattu" : "detruit", { x: cible.x, y: cible.y, z: cible.z, tireur, cible, distance, bateau }]);
+      ev.push([cible.genre === "avion" ? "abattu" : "detruit", { x: cible.x, y: cible.y, z: cible.z, tireur, cible, distance, bateau, petit: cible.genre === "vehicule" && cible.sorte !== "camion", passagers: cible.passagers || 0 }]);
     }
   }
 
@@ -91,6 +91,9 @@ Tanks.Obus = (function () {
     for (const e of monde.engins) if (e.sorte === "jeep" || e.sorte === "dca" || e.sorte === "bateau" || e.sorte === "sousmarin") l.push(e);
     for (const b of monde.bateaux || []) l.push(b);
     for (const m of monde.sousMarins || []) l.push(m);
+    // (étape 71) les motos, quads et camions : les tiens (garés ou pas) et ceux de l'ordinateur
+    for (const e of monde.engins) if (e.genre === "vehicule") l.push(e);
+    for (const v of monde.vehicules || []) l.push(v);
     return l;
   }
   const cache = (c, sorte) => c.genre === "sousmarin" && sorte !== "torpille" && Tanks.SousMarins.sousLEau(c); // (sous l'eau)

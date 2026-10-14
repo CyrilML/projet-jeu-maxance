@@ -81,6 +81,7 @@ Tanks.Engins = (function () {
         e.profondeur += 0.4 * dt;
         e.y = Tanks.SousMarins.hauteurDe(e);
       } else e.vitesse = 0;
+      if (e.tombe) e.roulis += (1.45 - e.roulis) * Math.min(1, dt * 4); // (étape 71 : ta moto se couche quand tu tombes)
       return ev;
     }
     if (e.sorte === "sousmarin") {

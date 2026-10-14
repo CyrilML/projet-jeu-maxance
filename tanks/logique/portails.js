@@ -38,8 +38,9 @@ Tanks.Portails = (function () {
     for (const e of monde.engins) {
       if (e.detruit || e.sorte === "bateau" || e.sorte === "sousmarin" || e.sorte === "avion") continue;
       if (e.sorte !== "jeep" && e.y - T.hauteur(e.x, e.z) > P.hauteurMax) continue;
-      l.push([e, e.sorte === "helico" ? 6 : 2.5]);
+      l.push([e, e.sorte === "helico" ? 6 : e.sorte === "camion" ? 4 : 2.5]);
     }
+    for (const v of monde.vehicules || []) if (!v.detruit) l.push([v, v.sorte === "camion" ? 4 : 2.5]); // (étape 71 : les motos, quads et camions)
     return l;
   }
 

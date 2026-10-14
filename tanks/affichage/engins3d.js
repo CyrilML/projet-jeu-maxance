@@ -1237,6 +1237,7 @@ Tanks.Engins3D = (function () {
   }
 
   function fabriquer(sorte, equipe) {
+    if (Tanks.Vehicules3D && Tanks.Vehicules3D.sait(sorte)) return Tanks.Vehicules3D.fabriquer(sorte, equipe); // (étape 71)
     return { jeep, helico, avion, drone, bateau, sousmarin, dca, transport, chasseur: avion }[sorte](equipe);
   }
   function bruler(o) {
@@ -1246,5 +1247,7 @@ Tanks.Engins3D = (function () {
     });
   }
 
-  return { soldat, animer, fabriquer, bruler, portail, silhouettes };
+  // (étape 71) la moto, le quad et le camion sont fabriqués dans affichage/vehicules3d.js (qui réutilise ces outils)
+  const outils = { pilote, siege, peintureSoudee, vitreClaire, mats };
+  return { soldat, animer, fabriquer, bruler, portail, silhouettes, outils };
 })();
