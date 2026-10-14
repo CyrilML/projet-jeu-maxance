@@ -226,7 +226,7 @@ Tanks.Tableau = (function () {
           if (d < dmin) (dmin = d), (proche = nom);
         };
         voir(monde.joueur, "ton tank", C.char.rayon);
-        for (const x of monde.engins) voir(x, x.fiche.icone + " " + x.nom, x.sorte === "bateau" ? 7 : x.sorte === "sousmarin" ? 11 : 2);
+        for (const x of monde.engins) voir(x, x.fiche.icone + " " + x.nom, x.sorte === "bateau" ? 7 : x.sorte === "sousmarin" ? 11 : x.sorte === "camion" ? 3.5 : 2);
         if (proche) texte("E : monter dans " + proche, L / 2, H - 120, 22, "#ffe27a", "center");
       }
       return;

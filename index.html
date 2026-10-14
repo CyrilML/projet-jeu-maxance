@@ -4102,8 +4102,8 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
     </section>
 
     <section id="etape71">
-      <h2>🏍️ Étape 71 : une moto cross Honda et une moto de trial <span class="etiquette">🟡 en partie · à valider</span></h2>
-      <p class="chapeau">Deux motos dans les garages du circuit 3D : la Honda CRF450R et la Montesa Cota de trial. <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a></p>
+      <h2>🏍️ Étape 71 : des motos, un quad, un camion et une carte des tanks 3 fois plus grande <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Deux motos dans les garages du circuit 3D (la Honda CRF450R et la Montesa Cota de trial), et dans les tanks : une moto cross, un quad à mitrailleuse et un camion de 6 soldats pour les deux camps, sur une carte de 2,1 km. <a href="circuit/index.html"><strong>▶ le circuit 3D</strong></a> · <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
       <div class="grille">
         <div class="carte">
           <h4>📋 La demande</h4>
@@ -4111,7 +4111,8 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
           <ul>
             <li>✍️ Une moto cross, « un peu une Honda », dans le parcours, le grand parcours et la ville.</li>
             <li>✍️ Une moto de trial dans le jeu de voitures 3D.</li>
-            <li>✍️ Dans les tanks : la moto cross pour tout le monde, un quad, un camion de 6 soldats et une carte 5 fois plus grande. <strong>En pause</strong> : il fallait d'abord régler les lags (étape 72).</li>
+            <li>✍️ Dans les tanks : la moto cross pour tout le monde, un quad, un camion de 6 soldats, pour les deux camps.</li>
+            <li>✍️ Une carte des tanks plus grande : 5 fois d'abord, puis, après l'étape 72 (les lags), <strong>3 fois</strong> (2 100 m de côté au lieu de 700 m).</li>
           </ul>
         </div>
         <div class="carte">
@@ -4122,13 +4123,25 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
             <li>☐ Les roues ont des rayons, comme les vraies.</li>
             <li>☐ Dans un virage, la moto <strong>penche</strong> : plus tu vas vite, plus elle penche.</li>
             <li>☐ La trial est moins rapide mais tourne mieux et saute plus haut.</li>
+            <li>☐ Tanks « version 11 » : la mini-carte montre une carte bien plus grande, avec 2 hameaux en ruines et de grandes forêts.</li>
+            <li>☐ Sors du tank (E) : la moto, le quad et le camion sont garés à côté du 4x4. E pour monter, Espace pour tirer (pistolet sur la moto, mitrailleuse sur le quad).</li>
+            <li>☐ Dans le camion, F fait descendre tes 6 soldats.</li>
+            <li>☐ Les camions de l'ordinateur vont au front et déposent leurs soldats : « 🚛 Camion … décharge 6 soldats » dans le journal.</li>
           </ul>
         </div>
       </div>
       <h3>🏍️ Pourquoi une moto penche</h3>
       <p>Une vraie moto ne tourne pas comme une voiture : le pilote la <strong>penche</strong> vers l'intérieur du virage, sinon il tomberait vers l'extérieur. Dans le jeu, l'angle dépend de 2 choses : combien tu tournes le guidon, et ta vitesse. À l'arrêt, elle reste droite. L'angle maximum est dans <code>circuit/config.js</code> : <code>motos: { inclinaison: 0.45 }</code> (0,45 radian, environ 26°).</p>
+      <h3>🚛 Le camion de l'ordinateur : une machine à états</h3>
+      <p>Le camion de l'ordinateur suit toujours le même cycle, comme un bus sur sa ligne :</p>
+      <pre style="white-space: pre-wrap">🏠 au camp, plein (6 soldats) ──▶ 🚛 roule vers le front ──▶ 🪂 décharge (un soldat à la fois)
+       ▲                                                              │
+       └────────── ⏳ se remplit 15 s ◀── 🔙 rentre au camp, vide ◀───┘</pre>
+      <p>Pour tourner, la moto, le quad et le camion suivent la règle du vélo : plus les roues avant sont braquées et plus on va vite, plus on tourne ; et plus l'engin est long, moins il tourne court. C'est pour ça que le camion fait de grands virages.</p>
       <h3>🔎 Missions d'exploration</h3>
       <ul>
+        <li>Dans les tanks, ouvre « sous le capot » et cherche « La grande carte et les engins qui roulent » : suis l'état du camion bleu (roule, décharge, rentre…).</li>
+        <li>Dans <code>tanks/config.js</code>, cherche le camion et change le nombre de soldats à bord (6) : que se passe-t-il au front ?</li>
         <li>Ouvre « sous le capot » et cherche « la moto penche (étape 71) » : regarde l'angle changer pendant un virage.</li>
         <li>Dans <code>circuit/config.js</code>, change <code>inclinaison: 0.45</code> en <code>0.9</code> : la moto se couche presque par terre !</li>
         <li>Compare la vitesse max de la CRF (<code>vitesseMax: 40.3</code> m/s) et de la trial (<code>27.8</code>) : combien de km/h ? (multiplie par 3,6)</li>
@@ -4136,6 +4149,7 @@ hauteur = rayon × (1 − cos(θ))     → à θ = 180°, tu es tout en haut, la
       <h3>❓ Quiz</h3>
       <details class="question"><summary>Pourquoi la moto ne penche-t-elle pas à l'arrêt ?</summary><p>Parce que l'angle est multiplié par la vitesse : à 0 km/h, il vaut 0.</p></details>
       <details class="question"><summary>Combien de rayons a une roue de moto du jeu ?</summary><p>36, croisés comme sur une vraie roue de cross.</p></details>
+      <details class="question"><summary>Que fait le camion de l'ordinateur une fois vide ?</summary><p>Il rentre au camp, se remplit pendant 15 secondes, puis repart vers le front.</p></details>
     </section>
 
     <section id="etape72">
@@ -4542,7 +4556,7 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <div class="carte fait">
           <div class="num">⚡</div>
           <h4>Des motos, et plus de lags <span class="etiquette">✅ fait · à valider</span></h4>
-          <p>Une moto cross Honda et une moto de trial dans le circuit 3D (étape 71 ; la partie tanks est en pause), puis un régulateur de qualité, moins de détails au loin et le soudeur dans les 3 jeux 3D pour qu'ils ne rament plus (étape 72).</p>
+          <p>Une moto cross Honda et une moto de trial dans le circuit 3D (étape 71), puis dans les tanks une moto, un quad, un camion de 6 soldats et une carte 3 fois plus grande (étape 71), puis un régulateur de qualité, moins de détails au loin et le soudeur dans les 3 jeux 3D pour qu'ils ne rament plus (étape 72).</p>
           <p class="apprend"><b>Tu apprends :</b> les images par seconde, le régulateur, le niveau de détail, souder les dessins. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte fait">
@@ -5197,9 +5211,9 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="idees-70" data-cle="idees-70" placeholder="Ex. : …"></textarea>
       </div>
       <div class="carte" style="margin-top: 14px">
-        <h4>Étape 71 · une moto cross Honda et une moto de trial <span class="petit">· 13 octobre 2026</span></h4>
-        <p><strong>Ce qui a été construit :</strong> les deux motos (<code>circuit/affichage/motos-cross.js</code>), les roues à rayons (<code>roues.js</code>) et la moto qui penche (<code>scene3d.js</code>).</p>
-        <p class="petit">✍️ Maxance a choisi : parcours, grand parcours et ville ; la moto aussi pour l'ordinateur dans les tanks, un quad, un camion, une carte des tanks 5 fois plus grande (en pause), une moto de trial.</p>
+        <h4>Étape 71 · des motos, un quad, un camion et une carte des tanks 3 fois plus grande <span class="petit">· 14 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les deux motos (<code>circuit/affichage/motos-cross.js</code>), les roues à rayons (<code>roues.js</code>) et la moto qui penche (<code>scene3d.js</code>) ; dans les tanks, les engins qui roulent (<code>tanks/logique/vehicules.js</code>, <code>tanks/affichage/vehicules3d.js</code>) et la grande carte (<code>tanks/logique/terrain.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : parcours, grand parcours et ville ; la moto aussi pour l'ordinateur dans les tanks, un quad, un camion, une carte des tanks 3 fois plus grande, une moto de trial.</p>
         <label for="appris-71"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
         <textarea class="journal" id="appris-71" data-cle="appris-71" placeholder="Ex. : J'ai appris qu'une moto penche dans les virages…"></textarea>
         <label for="idees-71"><strong>Mes idées pour la suite</strong></label>

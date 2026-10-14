@@ -157,7 +157,8 @@ Tanks.Vehicules = (function () {
     let n = 0;
     const debout = monde.soldats.filter((s) => s.equipe === v.equipe && !s.mort).length;
     const place = Math.max(0, C.parachutistes.maxParEquipe - debout);
-    for (let k = 0; k < Math.min(nombre, v.passagers, place); k++) {
+    const combien = Math.min(nombre, v.passagers, place); // (calculé une fois : « passagers » baisse pendant la boucle)
+    for (let k = 0; k < combien; k++) {
       const ar = -G.camion.longueur / 2 - 1.2, cote = ((v.places0 || 0) + k) % 2 ? 1 : -1, g = v.angle + Math.PI / 2;
       const x = v.x + Math.cos(v.angle) * ar + Math.cos(g) * cote * 0.8, z = v.z + Math.sin(v.angle) * ar + Math.sin(g) * cote * 0.8;
       const s = Tanks.Troupes.renfort(v.equipe, x, z, v.angle, G.camion.places - v.passagers + 1, v.ia ? v.ia.couloir : x);

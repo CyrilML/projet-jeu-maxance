@@ -1,7 +1,7 @@
 // 🎨 LE DÉCOR : le peintre du champ de bataille (étape 60)
 //
 // Il fabrique (une seule fois) ce qu'on voit :
-//   - LE SOL : une grande grille de 700 m posée sur les collines (logique/terrain.js), avec des couleurs qui changent
+//   - LE SOL : une grande grille de 2 100 m (étape 71 ; avant : 700 m) posée sur les collines (logique/terrain.js), avec des couleurs qui changent
 //     doucement (herbe claire, herbe sombre, terre près du village) et une image de grains d'herbe répétée dessus ;
 //   - LE VILLAGE EN RUINES : chaque maison a 4 murs en pierre, cassés en haut (des hauteurs différentes), des trous
 //     de fenêtres, parfois un morceau de toit, et des tas de gravats autour ;
