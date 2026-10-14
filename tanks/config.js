@@ -1,5 +1,8 @@
 // ⚙️ LES RÉGLAGES : tous les nombres du jeu de tanks (étape 60)
 //
+// (étape 71) ✍️ « Une carte 3 fois plus grande, une moto cross, un quad et un camion qui transporte 6 soldats. »
+// Voir « monde » (2 100 m), « engins » (moto, quad, camion) et « vehicules » (ceux que conduit l'ordinateur).
+//
 // ✍️ Maxance a choisi : un nouveau jeu à part, une BATAILLE D'ÉQUIPES (toi + 3 alliés bleus contre 4 ennemis rouges),
 // dans une campagne avec un village en ruines, avec de vrais tanks modernes (Leclerc, Abrams, Leopard 2), et
 // 4 obus pour détruire un tank. Unités : m, s, m/s, radians.
@@ -8,7 +11,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 10,
+  version: 11,
   pasFixe: 1 / 120,
   // (étape 72) ✍️ « Ça rame trop. » La boucle ne fait jamais plus de 6 petits pas par image : si l'ordinateur est en
   // retard (une image a duré plus de 6 / 120 = 0,05 s), on JETTE le retard au lieu de courir après (sinon, plus il est
@@ -16,11 +19,21 @@ Tanks.CONFIG = {
   boucle: { pasMaxParImage: 6 },
 
   monde: {
-    taille: 700, // m de côté
+    // ✍️ (étape 71) 3 fois plus grande : 2 100 m de côté au lieu de 700 (donc 9 fois plus de terrain : 4,4 km²)
+    taille: 2100, // m de côté
     graine: 1944,
-    collines: { hauteur: 10, taille: 180 }, // des collines douces de 10 m, larges de 180 m environ
-    village: { x: 0, z: 0, rayon: 75, maisons: 16, murets: 26, ruines: 40 },
-    arbres: 320, bosquets: 14, haies: 18,
+    collines: { hauteur: 13, taille: 230 }, // des collines douces de 13 m, larges de 230 m environ
+    village: { nom: "le village", x: 0, z: 0, rayon: 75, maisons: 16, murets: 26, ruines: 40 },
+    // (étape 71) pour remplir la grande carte : deux autres groupes de maisons en ruines
+    hameaux: [
+      { nom: "le hameau de l'ouest", x: -560, z: 170, rayon: 60, maisons: 11, murets: 16 },
+      { nom: "la ferme du nord-est", x: 300, z: -620, rayon: 48, maisons: 7, murets: 12 },
+    ],
+    // les arbres : en petits bois (« bosquets »), en grandes FORÊTS (étape 71) et quelques-uns tout seuls
+    arbres: 2700, bosquets: 70, forets: 9, partForets: 0.45, partBosquets: 0.4,
+    haies: 120, granges: 30,
+    camp: 640, // m : (étape 71) chaque camp est à 640 m du centre (avant : 280 m) ; les Bleus au sud, les Rouges au nord
+    sol: 5, // m entre deux points du sol 3D (avant : 4 m ; la carte est plus grande, on garde le même nombre de triangles près de toi)
     bord: 20, // m : on ne peut pas sortir du champ de bataille (une clôture invisible à 20 m du bord)
   },
 
@@ -98,6 +111,9 @@ Tanks.CONFIG = {
     mitrailleuse: { nom: "Mitrailleuse", icone: "🔫🔫", cadence: 0.09, precision: 0.6, portee: 140, degats: 1 },
     roquettes: { nom: "Lance-roquettes", icone: "🚀", cadence: 3, roquette: true }, // ✍️ 1 roquette = 1 obus pour un tank
     soldat: { cadence: 0.6, precision: 0.35, portee: 140, degats: 1 }, // le fusil des soldats de l'ordinateur
+    // (étape 71) le pistolet du motard (il tire d'une main en roulant) et la petite mitrailleuse du quad
+    motard: { nom: "Pistolet du motard", icone: "🔫", cadence: 0.45, precision: 0.5, portee: 70, degats: 1 },
+    quad: { nom: "Mitrailleuse du quad", icone: "🔫🔫", cadence: 0.11, precision: 0.42, portee: 120, degats: 1 },
   },
   // Les projectiles qui volent (en plus des obus) : vitesse (m/s), gravité, dégâts sur un tank, rayon de l'explosion.
   projectiles: {
@@ -119,6 +135,23 @@ Tanks.CONFIG = {
     // ← → tourner, ↑ ↓ lever / baisser les canons, Espace tirer. Ses obus explosent tout seuls près d'un avion.
     dca: { nom: "DCA (canon anti-aérien)", icone: "🎯", longueur: 3.2, largeur: 3.2, hauteur: 2.4, vie: 3, rotation: 1.2, levee: 0.8, cadence: 0.12 },
     drone: { nom: "Drone", icone: "🛸", vitesseMax: 30, acceleration: 12, virage: 2, montee: 12, hauteurMax: 120, munitions: 6, recharge: 3, arme: "grenade" },
+    // ✍️ (étape 71) Trois nouveaux engins qui roulent (pour toi ET pour l'ordinateur, dans les deux camps).
+    // Ils tournent comme un vrai vélo : vitesse de rotation = vitesse × tan(braquage) ÷ empattement (l'écart entre les roues),
+    // jamais plus vite que « virage » (rad/s). vie = les obus ou roquettes qu'ils encaissent ; balles = celles que le
+    // pilote encaisse (sur une moto ou un quad, il n'est pas protégé !) ; ballesJoueur = quand c'est TOI le pilote.
+    //  - la MOTO CROSS (rouge, façon Honda CRF450R) : très rapide, elle PENCHE dans les virages (penche = 40° au plus),
+    //    son pilote tire au pistolet ;
+    //  - le QUAD : plus stable, avec une petite mitrailleuse fixée devant ;
+    //  - le CAMION DE TRANSPORT : lent, solide, il emmène 6 soldats au front (F : les faire descendre).
+    moto: { nom: "Moto cross", icone: "🏍️", modele: "rouge, façon Honda CRF450R", longueur: 2.2, largeur: 0.85, hauteur: 1.3, rayon: 1,
+      vitesseMax: 33, acceleration: 11, freinage: 16, ralentissement: 3, marcheArriere: 3, braquage: 0.55, empattement: 1.48, virage: 1.9,
+      penche: 0.7, vie: 1, balles: 3, ballesJoueur: 12, arme: "motard", son: [90, 230] },
+    quad: { nom: "Quad", icone: "🛞", longueur: 2.1, largeur: 1.25, hauteur: 1.25, rayon: 1.3,
+      vitesseMax: 24, acceleration: 8, freinage: 14, ralentissement: 3, marcheArriere: 5, braquage: 0.6, empattement: 1.3, virage: 1.6,
+      penche: 0.06, vie: 1, balles: 4, ballesJoueur: 14, arme: "quad", son: [70, 170] },
+    camion: { nom: "Camion de transport", icone: "🚛", longueur: 7.4, largeur: 2.5, hauteur: 3.2, rayon: 2.6,
+      vitesseMax: 22, acceleration: 4, freinage: 8, ralentissement: 2, marcheArriere: 5, braquage: 0.55, empattement: 4.6, virage: 0.75,
+      penche: 0.04, vie: 3, places: 6, son: [32, 80] },
     distanceMonter: 6, // m : on peut monter dans un engin à moins de 6 m
     parachute: 4, // m/s : la vitesse de descente en parachute (on s'éjecte de l'avion avec E)
   },
@@ -126,13 +159,14 @@ Tanks.CONFIG = {
   // ------------------------------------------------------------------ étape 62 : le lac, les bateaux et les portails
   // ✍️ Un LAC à l'est du champ de bataille (une ellipse : un cercle étiré). Ton bateau de guerre est amarré au bord, de
   // ton côté ; 2 patrouilleurs ennemis tournent sur le lac et tirent sur tout ce qui est bleu près de l'eau.
-  lac: { x: 215, z: 0, rayonX: 80, rayonZ: 185, niveau: -1, profondeur: 8, // m ; niveau = la hauteur de l'eau
+  // (étape 71 : la carte est 3 fois plus grande, le lac aussi : il est 3 fois plus loin et presque 3 fois plus long)
+  lac: { x: 640, z: 0, rayonX: 210, rayonZ: 500, niveau: -1, profondeur: 8, // m ; niveau = la hauteur de l'eau
     // (étape 63) 3 ÎLES : des collines rondes qui sortent de l'eau (rayon = là où la terre touche l'eau). On n'y va
     // qu'en bateau… ou par le portail jaune !
     iles: [
-      { nom: "la grande île", x: 222, z: -15, rayon: 30, hauteur: 5 },
-      { nom: "l'île aux pins", x: 185, z: 95, rayon: 15, hauteur: 3.5 },
-      { nom: "l'île du rocher", x: 178, z: -130, rayon: 16, hauteur: 4 },
+      { nom: "la grande île", x: 665, z: -45, rayon: 55, hauteur: 6 },
+      { nom: "l'île aux pins", x: 560, z: 285, rayon: 30, hauteur: 4 },
+      { nom: "l'île du rocher", x: 540, z: -390, rayon: 32, hauteur: 5 },
     ],
   },
   bateaux: {
@@ -156,9 +190,10 @@ Tanks.CONFIG = {
   // très bas. Les bateaux et l'avion, non.
   portails: {
     paires: [
-      { nom: "bleu ↔ orange", couleurs: ["#3b9cff", "#ff9a2e"], a: [-200, 245], b: [-110, 35] }, // ton camp ↔ à l'ouest du village
-      { nom: "violet ↔ vert", couleurs: ["#b45cff", "#3dff8a"], a: [60, -255], b: [95, 70] }, // le camp ennemi ↔ entre le village et le lac
-      { nom: "jaune ↔ rose", couleurs: ["#ffe14a", "#ff6fc8"], a: [105, 215], b: [214, -10] }, // (étape 63) près du lac ↔ la grande île
+      // (étape 71 : places multipliées par 3, comme la carte)
+      { nom: "bleu ↔ orange", couleurs: ["#3b9cff", "#ff9a2e"], a: [-260, 600], b: [-330, 105] }, // ton camp ↔ à l'ouest du village
+      { nom: "violet ↔ vert", couleurs: ["#b45cff", "#3dff8a"], a: [180, -600], b: [285, 210] }, // le camp ennemi ↔ entre le village et le lac
+      { nom: "jaune ↔ rose", couleurs: ["#ffe14a", "#ff6fc8"], a: [380, 420], b: [645, -25] }, // (étape 63) près du lac ↔ la grande île
     ],
     rayon: 4, // m : la taille de l'anneau
     entree: 2.6, // m : il faut passer à moins de 2,6 m du centre pour être aspiré
@@ -172,6 +207,7 @@ Tanks.CONFIG = {
   // des missiles (un DUEL dans le ciel). ✍️ On les abat avec la DCA (et avec les missiles de ton Rafale).
   avionsEnnemis: {
     nombre: 2, nom: "Chasseur ennemi", vitesse: 105, virage: 0.55, altitude: 95, vie: 3, bombes: 2,
+    loin: 450, ecartDepart: 600, // m : (étape 71) ils arrivent de 450 m au-delà du bord de la carte, à ± 600 m du milieu
     premierPassage: 35, // s : ils arrivent 35 s après le début de la bataille
     retour: 45, // s : un avion abattu est remplacé 45 s plus tard
     duel: 900, // m : s'il voit ton Rafale à moins de 900 m, il le prend en chasse
@@ -183,7 +219,7 @@ Tanks.CONFIG = {
   parachutistes: {
     nombre: 6, toutesLes: 60, premier: 25, // s
     altitude: 110, descente: 5.5, // m, m/s (toi : 4 m/s)
-    largage: { bleus: [0, 110], rouges: [0, -110] }, // [x, z] : au-dessus de quoi on saute
+    largage: { bleus: [0, 330], rouges: [0, -330] }, // (étape 71 : 3 fois plus loin du village) // [x, z] : au-dessus de quoi on saute
     maxParEquipe: 30, // (pas plus de 30 soldats debout par équipe : sinon le jeu ralentit)
     transport: { nom: "Avion de transport", vitesse: 70, vie: 4 },
   },
@@ -220,8 +256,9 @@ Tanks.CONFIG = {
     },
     // ✍️ Les ENDROITS où on peut envoyer ses troupes : [x, z] (les portails, on les trouve tout seuls par leur couleur)
     lieux: {
-      village: [0, 0], lac: [118, 10], camp: [0, 285], base: [0, 285], aerodrome: [-90, 300], ennemi: [0, -250], ennemis: [0, -250],
-      nord: [0, -180], sud: [0, 180], est: [110, 0], ouest: [-220, 0], centre: [0, 0], dca: [80, 270],
+      // (étape 71 : la carte est 3 fois plus grande, les endroits aussi sont plus loin ; et deux nouveaux : le hameau, la ferme)
+      village: [0, 0], lac: [395, 30], camp: [0, 645], base: [0, 645], aerodrome: [-90, 680], ennemi: [0, -630], ennemis: [0, -630],
+      nord: [0, -450], sud: [0, 450], est: [330, 0], ouest: [-500, 0], centre: [0, 0], dca: [80, 630], hameau: [-560, 200], ferme: [300, -590],
     },
     // les CIBLES qu'on peut viser par catégorie
     cibles: {
@@ -238,7 +275,32 @@ Tanks.CONFIG = {
 
   camera: { distance: 15, hauteur: 6.5, regardDevant: 22, souplesse: 6, champ: 60 },
   effets: { particules: 300, debris: 60 },
-  decor: { distanceArbres: 380, morceau: 140 }, // (étape 72) le décor est découpé en morceaux de 140 m (des « tuiles »)
+  decor: { morceau: 140 }, // (étape 72) le décor est découpé en morceaux de 140 m (des « tuiles ») ; (étape 71) 15 × 15 morceaux
+
+  // ------------------------------------------------------------------ étape 71 : les MOTOS, QUADS et CAMIONS de l'ordinateur
+  // ✍️ Dans CHAQUE camp (les Bleus et les Rouges), l'ordinateur conduit 2 motos, 2 quads et 1 camion (leurs réglages
+  // sont dans « engins » : moto, quad, camion).
+  //   - la moto et le quad sont des ÉCLAIREURS : ils foncent vers l'ennemi ; s'ils voient un soldat (ou une moto, un quad)
+  //     à moins de « vue » m, ils tournent autour de lui à « distance » m et le pilote tire ; un tank ennemi trop près
+  //     (« fuir » m) : ils s'enfuient ;
+  //   - le CAMION emmène 6 soldats jusqu'au FRONT (« front » m avant le village, dans son couloir), les fait descendre (un
+  //     toutes les « decharge » s : ils deviennent des soldats normaux), rentre au camp, attend « recharge » s qu'on
+  //     le remplisse, et repart. Touché, il fait descendre ses soldats tout de suite.
+  //   - un engin détruit revient au camp « retour » s plus tard (un nouveau pilote).
+  vehicules: {
+    parCamp: { moto: 2, quad: 2, camion: 1 },
+    vue: 150, distance: { moto: 45, quad: 30 }, fuir: 70, // m
+    pense: 0.25, // s : ils réfléchissent 4 fois par seconde
+    erreur: 0.05, // rad : le pilote vise un peu de travers
+    coneMoto: 1.2, coneQuad: 0.14, // rad : la moto tire d'une main vers le côté (± 69°) ; la mitrailleuse du quad, seulement devant (± 8°)
+    front: 230, // m avant le village (côté de son camp) : là où le camion pose ses soldats
+    couloir: 320, // m : chacun a son couloir (± 320 m à gauche ou à droite du milieu)
+    decharge: 0.4, recharge: 15, retour: 40, // s
+    arrive: 15, // m : le camion est « arrivé » à moins de 15 m de son but
+    rechargerA: 45, // m : un camion vide se remplit s'il est arrêté à moins de 45 m de son camp (ou de son parking, pour le tien)
+    bloque: 2, // s : un engin qui n'avance plus depuis 2 s alors qu'il voudrait, recule en braquant (pour se décoincer)
+    loin: { moto: 1, quad: 1, camion: 1.4 }, // × la distance des « roues » (qualité) : plus loin, on dessine la version simple
+  },
 
   // ------------------------------------------------------------------ étape 72 : le RÉGULATEUR DE QUALITÉ
   // ✍️ « Ça rame trop, le jeu a des lags. Arrange ça. » Le régulateur regarde combien de temps dure chaque image
@@ -264,8 +326,8 @@ Tanks.CONFIG = {
     niveaux: [
       { nom: "très léger", pixels: 0.6, ombres: 0, douces: false, vue: 380, decor: 300, soldatDetail: 12, soldatSimple: 30, soldatSilhouette: 170, roues: 35, effets: 140 },
       { nom: "léger", pixels: 0.8, ombres: 1024, douces: false, vue: 520, decor: 380, soldatDetail: 20, soldatSimple: 45, soldatSilhouette: 210, roues: 60, effets: 200 },
-      { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 750, decor: 520, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280 },
-      { nom: "beau", pixels: 1.5, selonEcran: true, ombres: 2048, douces: true, vue: 1100, decor: 800, soldatDetail: 45, soldatSimple: 100, soldatSilhouette: 300, roues: 160, effets: 400 },
+      { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 800, decor: 540, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280 },
+      { nom: "beau", pixels: 1.5, selonEcran: true, ombres: 2048, douces: true, vue: 1300, decor: 850, soldatDetail: 45, soldatSimple: 100, soldatSilhouette: 300, roues: 160, effets: 400 },
     ],
   },
   // (étape 72) Le QUADRILLAGE : la carte est découpée en cases de 16 m. Pour savoir quels arbres ou quelles maisons sont

@@ -84,7 +84,7 @@ Tanks.Obus = (function () {
   // Tous les véhicules qu'un projectile peut toucher : les tanks, le 4x4 (étape 61), et les bateaux (étape 62).
   // (étape 63 : et les sous-marins ; étape 64 : et la DCA)
   // (étape 72 : rangés dans une liste réutilisée)
-  const listeVehicules = [], listeSouffle = [];
+  const listeVehicules = [], listeSouffle = [], prochesBoites = [];
   function vehicules(monde, l) {
     l.length = 0;
     for (const c of monde.chars) l.push(c);
@@ -161,7 +161,7 @@ Tanks.Obus = (function () {
       } else if (!fini && p.y < T.hauteur(p.x, p.z)) fini = ["impact", { x: p.x, y: T.hauteur(p.x, p.z), z: p.z, sur: "sol", sorte: p.sorte }];
       // une maison, un muret ?
       if (!fini) {
-        for (const b of T.boites) {
+        for (const b of T.boitesAutour(p.x, p.z, 1, prochesBoites)) { // (étape 71 : seulement les murs des cases voisines)
           if (Math.abs(p.x - b.x) > b.demiL + b.demiP || Math.abs(p.z - b.z) > b.demiL + b.demiP) continue;
           if (p.y < T.hauteur(b.x, b.z) + b.h && T.dansBoite(b, p.x, p.z)) {
             fini = ["impact", { x: p.x, y: p.y, z: p.z, sur: b.sorte, sorte: p.sorte }];

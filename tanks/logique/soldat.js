@@ -42,11 +42,19 @@ Tanks.Soldat = (function () {
   }
 
   // Une balle : qui touche-t-elle ? (cibles = les soldats ; vehicules = les tanks et le 4x4, sur lesquels elle ricoche)
-  function balle(tireur, x, y, z, angle, arme, soldats, vehicules, ev) {
+  // (étape 71) legers = les motos et les quads : la balle peut toucher leur PILOTE (il n'est pas protégé)
+  function balle(tireur, x, y, z, angle, arme, soldats, vehicules, ev, legers) {
     const R = A[arme];
     let meilleur = null;
     for (const s of soldats) {
       if (s.mort || s.dansUnEngin || s.equipe === tireur.equipe || s === tireur) continue;
+      const d = Math.hypot(s.x - x, s.z - z);
+      if (d > R.portee) continue;
+      const ecart = Math.abs(angleEntre(Math.atan2(s.z - z, s.x - x) - angle));
+      if (ecart < 0.12 && (!meilleur || d < meilleur.d)) meilleur = { s, d };
+    }
+    for (const s of legers || []) {
+      if (s.detruit || s.equipe === tireur.equipe || s === tireur) continue;
       const d = Math.hypot(s.x - x, s.z - z);
       if (d > R.portee) continue;
       const ecart = Math.abs(angleEntre(Math.atan2(s.z - z, s.x - x) - angle));
@@ -69,7 +77,8 @@ Tanks.Soldat = (function () {
       const chance = R.precision * (1 - 0.5 * (meilleur.d / R.portee));
       if (Math.random() < chance) {
         ev.push(["balle", { tireur, de: { x, y, z }, a: { x: meilleur.s.x, y: meilleur.s.y + 1.2, z: meilleur.s.z }, touche: true }]);
-        blesser(meilleur.s, R.degats, tireur, ev, arme);
+        if (meilleur.s.genre === "vehicule" || meilleur.s.sorte) Tanks.Vehicules.blesserPilote(meilleur.s, R.degats, tireur, ev);
+        else blesser(meilleur.s, R.degats, tireur, ev, arme);
         return;
       }
       fin.x = meilleur.s.x + (Math.random() - 0.5) * 3;
@@ -82,7 +91,8 @@ Tanks.Soldat = (function () {
   function vehiculesDe(monde) {
     vehiculesBalle.length = 0;
     for (const c of monde.chars) vehiculesBalle.push(c);
-    for (const e of monde.engins) if (e.sorte === "jeep") vehiculesBalle.push(e);
+    for (const e of monde.engins) if (e.sorte === "jeep" || e.sorte === "camion") vehiculesBalle.push(e);
+    for (const v of monde.vehicules || []) if (v.sorte === "camion") vehiculesBalle.push(v); // (étape 71 : le camion est blindé)
     return vehiculesBalle;
   }
 
@@ -149,10 +159,10 @@ Tanks.Soldat = (function () {
         Tanks.Obus.lancer(monde.obus, s, "roquette", depart, dir, null);
         ev.push(["roquette", { tireur: s, x: depart.x, y, z: depart.z, dir }]);
       } else {
-        balle(s, s.x + Math.cos(s.angle) * 0.7, y, s.z + Math.sin(s.angle) * 0.7, s.angle + (intentions.erreur || 0), s.arme, monde.soldats, vehiculesDe(monde), ev);
+        balle(s, s.x + Math.cos(s.angle) * 0.7, y, s.z + Math.sin(s.angle) * 0.7, s.angle + (intentions.erreur || 0), s.arme, monde.soldats, vehiculesDe(monde), ev, Tanks.Vehicules.legers(monde));
       }
     }
   }
 
-  return { creer, avancer, blesser, balle };
+  return { creer, avancer, blesser, balle, vehiculesDe };
 })();

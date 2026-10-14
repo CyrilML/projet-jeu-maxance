@@ -14,6 +14,9 @@
 //   - (étape 64) la DCA : un canon anti-aérien double. ← → tourner, ↑ ↓ lever / baisser, Espace tirer. Sa VISÉE ASSISTÉE
 //     calcule où sera l'avion quand l'obus arrivera (on vise DEVANT l'avion, comme un chasseur de canards) ;
 //   - (étape 63) le SOUS-MARIN, amarré à côté (logique/sousmarins.js) : D plonger, Q remonter, Espace une torpille.
+//   - (étape 71) la MOTO CROSS, le QUAD et le CAMION DE TRANSPORT (leur mécanique est dans logique/vehicules.js) : la moto
+//     penche dans les virages et son pilote tire au pistolet, le quad a une petite mitrailleuse devant, le camion emmène
+//     6 soldats (F : les faire descendre ; vide, il se remplit si tu le gares près de ton parking).
 // Les engins volants ne peuvent pas être touchés (les tanks ne tirent pas en l'air).
 // Ce fichier ne dessine rien.
 
@@ -23,10 +26,11 @@ Tanks.Engins = (function () {
   const C = Tanks.CONFIG, G = C.engins, T = Tanks.Terrain;
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   const prochesArbres = []; // (étape 72 : les arbres des cases voisines, dans une liste réutilisée)
-  const yCamp = () => T.demi - 30;
+  const yCamp = () => T.camp + 40; // (étape 71 : juste derrière les tanks de ton camp)
 
   // Les places de parking (derrière les Bleus) : le 4x4, puis l'aérodrome (l'hélico, l'avion, le drone).
-  const PLACES = { jeep: [40, -12], helico: [-60, 0], avion: [-120, 0], drone: [-30, 4], dca: [80, -50] }; // (la DCA, un peu devant, sur du plat)
+  const PLACES = { jeep: [40, -12], helico: [-60, 0], avion: [-120, 0], drone: [-30, 4], dca: [80, -50], moto: [52, -14], quad: [60, -13], camion: [74, -10] }; // (la DCA, un peu devant, sur du plat ; étape 71 : la moto, le quad, le camion à côté du 4x4)
+  const place = (sorte) => ({ x: PLACES[sorte][0], z: yCamp() + PLACES[sorte][1] });
   function creer() {
     const liste = Object.keys(PLACES).map((sorte) => garer({ sorte, fiche: Object.assign({ longueur: 4.8, largeur: 2.2, hauteur: 2 }, G[sorte]) }));
     liste.push(garer({ sorte: "bateau", fiche: Object.assign({}, C.bateaux.joueur) })); // (étape 62)
@@ -60,6 +64,8 @@ Tanks.Engins = (function () {
       munitions: G[e.sorte].munitions || 0, recharge: 0, rechargeMunition: 0, pilote: false, rotor: 0, enVol: false,
     });
     if (e.sorte === "dca") Object.assign(e, { tourelle: 0, hausse: 0.5, canon: 0, cible: null, angle: -Math.PI / 2 });
+    // (étape 71) la moto, le quad, le camion : le braquage, la vie de TON pilote (plus solide), les 6 soldats du camion
+    if (Tanks.Vehicules.SORTES.includes(e.sorte)) Object.assign(e, { genre: "vehicule", braquage: 0, rotation: 0, balles: G[e.sorte].ballesJoueur || 0, passagers: G[e.sorte].places || 0, tombe: false, tirs: 0, reussis: 0, remplissage: 0 });
     return e;
   }
 
@@ -95,6 +101,10 @@ Tanks.Engins = (function () {
     }
     if (e.sorte === "dca") viserLeCiel(e, intentions, dt, R, monde, ev);
     else if (e.sorte === "jeep") rouler(e, intentions, dt, R, monde, ev);
+    else if (Tanks.Vehicules.SORTES.includes(e.sorte)) {
+      Tanks.Vehicules.conduire(e, intentions, dt, monde, ev); // (étape 71)
+      Tanks.Vehicules.remplirAuParking(e, place(e.sorte), dt, ev);
+    }
     else if (e.sorte === "avion") voler(e, intentions, dt, R, monde, ev);
     else planer(e, intentions, dt, R, monde, ev);
     return ev;
@@ -124,7 +134,7 @@ Tanks.Engins = (function () {
     if (I.tirer && e.recharge === 0 && e.pilote) {
       e.recharge = C.armes.mitrailleuse.cadence;
       const a = e.angle + e.tourelle;
-      Tanks.Soldat.balle(e, e.x + Math.cos(a) * 1.2, e.y + 2.6, e.z + Math.sin(a) * 1.2, a, "mitrailleuse", monde.soldats, monde.chars, ev);
+      Tanks.Soldat.balle(e, e.x + Math.cos(a) * 1.2, e.y + 2.6, e.z + Math.sin(a) * 1.2, a, "mitrailleuse", monde.soldats, monde.chars, ev, Tanks.Vehicules.legers(monde));
     }
   }
 
@@ -318,5 +328,5 @@ Tanks.Engins = (function () {
     }
   }
 
-  return { creer, garer, avancer };
+  return { creer, garer, avancer, place };
 })();

@@ -14,6 +14,9 @@
 // sort de l'eau. Un point est donc « dans l'eau » s'il est dans l'ellipse du lac ET sur aucune île.
 // Étape 72 : pour aller vite, les arbres et les boîtes sont rangés dans un QUADRILLAGE (moteur/grille.js) : « qu'y a-t-il
 // près de moi ? » ne regarde plus que les cases voisines.
+// Étape 71 : ✍️ la carte est 3 FOIS PLUS GRANDE (2 100 m de côté). Pour la remplir : deux HAMEAUX en ruines en plus du
+// village (le sol est aplati sous chacun), de grandes FORÊTS en plus des bosquets, plus de haies et de granges. Les
+// deux camps sont à 640 m du centre (« camp »). Les nombres sont dans config.js (monde).
 // Ce fichier ne dessine rien.
 
 window.Tanks = window.Tanks || {};
@@ -23,7 +26,12 @@ Tanks.Terrain = (function () {
   const bruit = B.creer(W.graine);
   let etat = W.graine;
   const hasard = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
-  const demi = W.taille / 2, V = W.village, LAC = C.lac;
+  const demi = W.taille / 2, V = W.village, LAC = C.lac, CAMP = W.camp;
+  // (étape 71) tous les groupes de maisons : le village, puis les hameaux
+  const VILLAGES = [V].concat(W.hameaux || []);
+  const presDUnVillage = (x, z, plus) => VILLAGES.some((v) => Math.hypot(x - v.x, z - v.z) < v.rayon + (plus || 0));
+  // (étape 71) les camps (et le parking des engins juste derrière) : ni arbre ni muret
+  const dansUnCamp = (x, z) => Math.abs(x) < 210 && Math.abs(Math.abs(z) - CAMP - 15) < 95;
   // (étape 62) « dl » : 0 au milieu du lac, 1 sur la rive, plus de 1 en dehors
   const distLac = (x, z) => Math.hypot((x - LAC.x) / LAC.rayonX, (z - LAC.z) / LAC.rayonZ);
   const ILES = LAC.iles || [];
@@ -40,8 +48,12 @@ Tanks.Terrain = (function () {
   // ------------------------------------------------------------------ la hauteur du sol
   function hauteur(x, z) {
     let h = B.fractal(bruit, x / W.collines.taille, z / W.collines.taille, 4) * W.collines.hauteur;
-    // le village est sur un terrain presque plat : on « aplatit » les collines près du centre
-    const d = Math.hypot(x - V.x, z - V.z), plat = Math.min(1, Math.max(0, (d - V.rayon * 0.8) / (V.rayon * 0.9)));
+    // le village est sur un terrain presque plat : on « aplatit » les collines près du centre (étape 71 : et sous les hameaux)
+    let plat = 1;
+    for (let i = 0; i < VILLAGES.length; i++) {
+      const v = VILLAGES[i], d = Math.hypot(x - v.x, z - v.z);
+      if (d < v.rayon * 1.7) plat = Math.min(plat, Math.max(0, (d - v.rayon * 0.8) / (v.rayon * 0.9)));
+    }
     h = h * (0.15 + 0.85 * plat);
     // au bord, le terrain remonte un peu (une cuvette : on voit que c'est la fin du champ de bataille)
     const bord = Math.max(Math.abs(x), Math.abs(z)) - (demi - 60);
@@ -73,47 +85,52 @@ Tanks.Terrain = (function () {
   const loinDe = (x, z, d) => !dansLEau(x, z, d + 10) && !presDUnPortail(x, z, d + 12) && boites.every((b) => Math.hypot(b.x - x, b.z - z) > d + Math.max(b.demiL, b.demiP));
 
   // Le village : des maisons en ruines le long de deux rues en croix, des murets, des tas de gravats.
-  for (let essai = 0, n = 0; n < V.maisons && essai < 600; essai++) {
-    const rue = hasard() < 0.5, le_long = (hasard() * 2 - 1) * V.rayon, cote = (hasard() < 0.5 ? -1 : 1) * (11 + hasard() * 10);
-    const x = V.x + (rue ? le_long : cote), z = V.z + (rue ? cote : le_long);
-    const demiL = 4 + hasard() * 3.5, demiP = 3.5 + hasard() * 2.5;
-    if (!loinDe(x, z, 4)) continue;
-    boites.push({ x, z, demiL, demiP, angle: rue ? 0 : Math.PI / 2, h: 4 + hasard() * 4, sorte: "maison", graine: Math.floor(hasard() * 1e6) });
-    n++;
-  }
-  for (let essai = 0, n = 0; n < V.murets && essai < 600; essai++) {
-    const a = hasard() * Math.PI * 2, r = V.rayon * (0.4 + hasard() * 0.9);
-    const x = V.x + Math.cos(a) * r, z = V.z + Math.sin(a) * r;
-    if (!loinDe(x, z, 3)) continue;
-    boites.push({ x, z, demiL: 3 + hasard() * 5, demiP: 0.35, angle: hasard() < 0.5 ? a : a + Math.PI / 2, h: 1.1, sorte: "muret" });
-    n++;
+  // (étape 71 : pareil pour chaque hameau, avec moins de maisons)
+  for (const vi of VILLAGES) {
+    for (let essai = 0, n = 0; n < vi.maisons && essai < 600; essai++) {
+      const rue = hasard() < 0.5, le_long = (hasard() * 2 - 1) * vi.rayon, cote = (hasard() < 0.5 ? -1 : 1) * (11 + hasard() * 10);
+      const x = vi.x + (rue ? le_long : cote), z = vi.z + (rue ? cote : le_long);
+      const demiL = 4 + hasard() * 3.5, demiP = 3.5 + hasard() * 2.5;
+      if (!loinDe(x, z, 4)) continue;
+      boites.push({ x, z, demiL, demiP, angle: rue ? 0 : Math.PI / 2, h: 4 + hasard() * 4, sorte: "maison", graine: Math.floor(hasard() * 1e6) });
+      n++;
+    }
+    for (let essai = 0, n = 0; n < vi.murets && essai < 600; essai++) {
+      const a = hasard() * Math.PI * 2, r = vi.rayon * (0.4 + hasard() * 0.9);
+      const x = vi.x + Math.cos(a) * r, z = vi.z + Math.sin(a) * r;
+      if (!loinDe(x, z, 3)) continue;
+      boites.push({ x, z, demiL: 3 + hasard() * 5, demiP: 0.35, angle: hasard() < 0.5 ? a : a + Math.PI / 2, h: 1.1, sorte: "muret" });
+      n++;
+    }
   }
   // Les haies et les murets dans la campagne (pour se cacher), et quelques ruines isolées (des granges).
   for (let k = 0; k < W.haies; k++) {
     const x = (hasard() * 2 - 1) * (demi - 80), z = (hasard() * 2 - 1) * (demi - 80);
-    if (Math.hypot(x, z) < V.rayon + 20 || !loinDe(x, z, 8)) continue;
+    if (presDUnVillage(x, z, 20) || dansUnCamp(x, z) || !loinDe(x, z, 8)) continue;
     boites.push({ x, z, demiL: 8 + hasard() * 10, demiP: 0.6, angle: hasard() * Math.PI, h: 1.6, sorte: "muret" });
   }
-  for (let k = 0; k < 6; k++) {
-    const a = hasard() * Math.PI * 2, r = V.rayon + 60 + hasard() * 150;
-    const x = Math.cos(a) * r, z = Math.sin(a) * r;
-    if (!loinDe(x, z, 10)) continue;
+  for (let k = 0; k < W.granges; k++) {
+    const x = (hasard() * 2 - 1) * (demi - 120), z = (hasard() * 2 - 1) * (demi - 120);
+    if (presDUnVillage(x, z, 40) || dansUnCamp(x, z) || !loinDe(x, z, 10)) continue;
     boites.push({ x, z, demiL: 6 + hasard() * 3, demiP: 4.5, angle: hasard() * Math.PI, h: 5, sorte: "maison", graine: Math.floor(hasard() * 1e6) });
   }
-  // Les arbres : en bosquets (des petits bois), et quelques-uns tout seuls.
-  const centres = [];
+  // Les arbres : en grandes forêts (étape 71), en bosquets (des petits bois), et quelques-uns tout seuls.
+  const centres = [], forets = [];
   for (let k = 0; k < W.bosquets; k++) centres.push({ x: (hasard() * 2 - 1) * (demi - 70), z: (hasard() * 2 - 1) * (demi - 70), r: 18 + hasard() * 22 });
+  for (let k = 0; k < W.forets; k++) forets.push({ x: (hasard() * 2 - 1) * (demi - 150), z: (hasard() * 2 - 1) * (demi - 150), r: 60 + hasard() * 70 });
   for (let k = 0; k < W.arbres; k++) {
     let x, z;
-    if (hasard() < 0.8) {
-      const c = centres[Math.floor(hasard() * centres.length)], a = hasard() * Math.PI * 2, r = Math.sqrt(hasard()) * c.r;
+    const tirage = hasard();
+    if (tirage < W.partForets + W.partBosquets) {
+      const liste = tirage < W.partForets ? forets : centres;
+      const c = liste[Math.floor(hasard() * liste.length)], a = hasard() * Math.PI * 2, r = Math.sqrt(hasard()) * c.r;
       x = c.x + Math.cos(a) * r;
       z = c.z + Math.sin(a) * r;
     } else {
       x = (hasard() * 2 - 1) * (demi - 40);
       z = (hasard() * 2 - 1) * (demi - 40);
     }
-    if (Math.hypot(x - V.x, z - V.z) < V.rayon * 0.9 || !loinDe(x, z, 2) || dansLEau(x, z, 3) || presDUnPortail(x, z, 9) || Math.abs(z) > demi - 90 && Math.abs(x) < 120) continue; // (pas sur les départs)
+    if (Math.max(Math.abs(x), Math.abs(z)) > demi - 30 || presDUnVillage(x, z, -0.1 * V.rayon) || dansUnCamp(x, z) || !loinDe(x, z, 2) || dansLEau(x, z, 3) || presDUnPortail(x, z, 9)) continue; // (pas sur les départs)
     arbres.push({ x, z, r: 0.6, taille: 0.8 + hasard() * 0.6, ecrase: false, sorte: hasard() < 0.35 ? "sapin" : "feuillu", angleChute: 0 });
   }
 
@@ -209,12 +226,12 @@ Tanks.Terrain = (function () {
     return true;
   }
 
-  // Les places de départ : les Bleus au sud (z > 0), les Rouges au nord, en ligne.
+  // Les places de départ : les Bleus au sud (z > 0), les Rouges au nord, en ligne (étape 71 : à 640 m du centre).
   function departs(equipe, n) {
-    const z = (equipe === "bleus" ? 1 : -1) * (demi - 70), liste = [];
+    const z = (equipe === "bleus" ? 1 : -1) * CAMP, liste = [];
     for (let k = 0; k < n; k++) liste.push({ x: (k - (n - 1) / 2) * C.equipes.ecart, z, angle: equipe === "bleus" ? -Math.PI / 2 : Math.PI / 2 });
     return liste;
   }
 
-  return { hauteur, normale, boites, arbres, arbresAutour, boitesAutour, grilles: { arbres: grilleArbres, boites: grilleBoites }, dansBoite, repousser, vueLibre, departs, demi, distLac, dansLEau, ileProche, iles: ILES };
+  return { hauteur, normale, boites, arbres, arbresAutour, boitesAutour, grilles: { arbres: grilleArbres, boites: grilleBoites }, dansBoite, repousser, vueLibre, departs, demi, camp: CAMP, villages: VILLAGES, forets, distLac, dansLEau, ileProche, iles: ILES };
 })();

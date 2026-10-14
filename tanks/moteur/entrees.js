@@ -25,6 +25,7 @@ Tanks.Entrees = (function () {
     son: ["KeyB"],
     pause: ["Escape", "KeyP"],
     qualite: ["KeyG"], // étape 72 : choisir le niveau de qualité (auto → 0 → 1 → 2 → 3 → auto)
+    decharger: ["KeyF"], // étape 71 : dans le camion, faire descendre les 6 soldats (F est libre sur un clavier français aussi)
   };
   const actionsDeLaTouche = {};
   for (const action in CARTE) for (const code of CARTE[action]) (actionsDeLaTouche[code] = actionsDeLaTouche[code] || []).push(action);

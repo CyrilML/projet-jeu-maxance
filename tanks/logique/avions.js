@@ -20,7 +20,7 @@ Tanks.Avions = (function () {
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   let etat = 64;
   const hasard = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
-  const LOIN = T.demi + 700; // (là où ils arrivent et repartent : hors de la carte)
+  const LOIN = T.demi + A.loin; // (là où ils arrivent et repartent : hors de la carte)
 
   function chasseur(n) {
     return {
@@ -38,7 +38,7 @@ Tanks.Avions = (function () {
   }
   // (Re)mettre un chasseur au départ : loin au nord, chez les Rouges.
   function depart(a) {
-    Object.assign(a, { x: (hasard() * 2 - 1) * 300, z: -LOIN, angle: Math.PI / 2, tangage: 0, roulis: 0, vie: A.vie, detruit: false, etat: "approche", cible: null, recharge: 0, chute: 0 });
+    Object.assign(a, { x: (hasard() * 2 - 1) * A.ecartDepart, z: -LOIN, angle: Math.PI / 2, tangage: 0, roulis: 0, vie: A.vie, detruit: false, etat: "approche", cible: null, recharge: 0, chute: 0 });
     a.y = A.altitude + 20;
   }
 

@@ -69,6 +69,7 @@ window.Tanks = window.Tanks || {};
           valider: E.consommer("valider"), recommencer: E.consommer("recommencer"), retour: E.consommer("retour"),
           ordre: ordre, // (étape 65 : donné à un seul petit pas)
           monter: E.consommer("monter"), arme1: E.consommer("arme1"), arme2: E.consommer("arme2"), arme3: E.consommer("arme3"), // (étape 61)
+          decharger: E.consommer("decharger"), // (étape 71 : F, dans le camion)
         });
         ordre = null;
       }

@@ -24,7 +24,7 @@ Tanks.Troupes = (function () {
   function creer(monde) {
     const liste = [];
     for (const equipe of ["bleus", "rouges"]) {
-      const sens = equipe === "bleus" ? 1 : -1, z0 = sens * (T.demi - 52);
+      const sens = equipe === "bleus" ? 1 : -1, z0 = sens * (T.camp + 18); // (étape 71 : juste derrière les tanks)
       for (let k = 0; k < S.parEquipe; k++) {
         const x = (k - (S.parEquipe - 1) / 2) * 9;
         const s = Tanks.Soldat.creer(equipe, x, z0 + (k % 2) * 4 * sens, sens > 0 ? -Math.PI / 2 : Math.PI / 2, (equipe === "bleus" ? "soldat bleu n° " : "soldat rouge n° ") + (k + 1));
@@ -49,6 +49,15 @@ Tanks.Troupes = (function () {
     return s;
   }
 
+  // (étape 71) Un soldat qui DESCEND D'UN CAMION : à terre tout de suite, il fait comme les autres (dans le couloir du camion).
+  function renfort(equipe, x, z, angle, n, couloir) {
+    const s = Tanks.Soldat.creer(equipe, x, z, angle, "soldat du camion " + (equipe === "bleus" ? "bleu" : "rouge") + " n° " + n);
+    if (n === 3) s.arme = "roquettes";
+    s.camion = true;
+    s.ia = { pense: (n / 6) * S.pense, cible: null, voit: false, couloir: couloir + (n - 3.5) * 5, etat: "descend du camion", erreur: 0 };
+    return s;
+  }
+
   // Les intentions d'un soldat de l'ordinateur pour ce pas.
   function decider(s, monde, dt) {
     const ia = s.ia;
@@ -62,7 +71,8 @@ Tanks.Troupes = (function () {
       // (étape 65 : « visez les tanks / les soldats / Faucon… » — seulement ce que son arme peut toucher)
       const permises = Tanks.Ordres.ciblesPermises(s, monde);
       const utiles = permises && permises.filter((o) => (roquettes ? o.genre !== "soldat" : o.genre === "soldat"));
-      const candidats = utiles && utiles.length ? utiles : roquettes ? monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || (e.sorte === "bateau" && e.pilote)), monde.bateaux).filter((c) => !c.detruit && c.equipe !== s.equipe) : monde.soldats.filter((o) => !o.mort && !o.dansUnEngin && o.equipe !== s.equipe);
+      // (étape 71 : le lance-roquettes vise aussi les camions et les quads ; le fusil, les pilotes des motos et des quads)
+      const candidats = utiles && utiles.length ? utiles : roquettes ? monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || ((e.sorte === "bateau" || e.sorte === "camion" || e.sorte === "quad") && e.pilote)), monde.bateaux, monde.vehicules.filter((v) => v.sorte !== "moto")).filter((c) => !c.detruit && c.equipe !== s.equipe) : monde.soldats.filter((o) => !o.mort && !o.dansUnEngin && o.equipe !== s.equipe).concat(Tanks.Vehicules.legers(monde).filter((v) => v.equipe !== s.equipe));
       // (étape 72) on range les candidats du plus proche au plus loin, puis on regarde la ligne de vue dans cet ordre :
       // le premier qu'on VOIT est le bon (avant, on faisait le long calcul de la ligne de vue pour beaucoup plus d'ennemis)
       const portee = roquettes ? 120 : S.vue;
@@ -120,7 +130,7 @@ Tanks.Troupes = (function () {
     // 3. il avance : d'abord vers le village, puis vers le camp ennemi, dans son couloir
     ia.etat = "avance";
     const sens = s.equipe === "bleus" ? -1 : 1;
-    const objectifZ = s.z * sens < -20 ? 0 : sens * (T.demi - 60);
+    const objectifZ = s.z * sens < -20 ? 0 : sens * (T.camp + 10);
     let gx = ia.couloir - s.x, gz = objectifZ - s.z;
     // se pousser loin des autres soldats (pas tous au même endroit)
     const voisins = monde.grilleSoldats ? Tanks.Grille.chercher(monde.grilleSoldats, s.x, s.z, 5, prochesSoldats) : monde.soldats; // (étape 72 : les cases voisines)
@@ -136,5 +146,5 @@ Tanks.Troupes = (function () {
     return intentions;
   }
 
-  return { creer, decider, parachutiste };
+  return { creer, decider, parachutiste, renfort };
 })();
