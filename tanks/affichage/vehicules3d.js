@@ -101,12 +101,14 @@ Tanks.Vehicules3D = (function () {
     groupe.add(buste);
     groupe.add(O.tube([hanche[0] + 0.05, hanche[1] + 0.05, 0], [epaule[0] - 0.06, epaule[1] - 0.04, 0], 0.2, m.teinte, 8, 0x5f6a4a)); // le gilet pare-balles
     groupe.add(O.piece(new THREE.SphereGeometry(0.1, 10, 8), m.teinte, tete[0], tete[1], tete[2] || 0, CT.peau));
-    const casque = O.piece(new THREE.SphereGeometry(0.155, 12, 10), m.teinte, tete[0] - 0.01, tete[1] + 0.03, 0, E.marque);
-    casque.scale.set(1.15, 1, 1);
+    const casque = O.piece(new THREE.SphereGeometry(0.135, 12, 10), m.teinte, tete[0] - 0.01, tete[1] + 0.03, 0, E.marque);
+    casque.scale.set(1.12, 1, 0.95);
     groupe.add(casque);
-    groupe.add(O.boite(0.12, 0.03, 0.2, m.teinte, tete[0] + 0.16, tete[1] + 0.1, 0, E.marque).rotateZ(-0.25)); // la visière du casque de cross
-    groupe.add(O.boite(0.08, 0.07, 0.22, m.teinte, tete[0] + 0.12, tete[1], 0, 0x16191c)); // les lunettes
-    groupe.add(O.boite(0.1, 0.08, 0.16, m.teinte, tete[0] + 0.14, tete[1] - 0.09, 0, E.marque)); // la mentonnière
+    groupe.add(O.boite(0.11, 0.025, 0.17, m.teinte, tete[0] + 0.15, tete[1] + 0.1, 0, E.marque).rotateZ(-0.25)); // la visière du casque de cross
+    groupe.add(O.boite(0.06, 0.06, 0.19, m.teinte, tete[0] + 0.1, tete[1] + 0.01, 0, 0x16191c)); // les lunettes
+    const menton = O.piece(new THREE.SphereGeometry(0.07, 8, 6), m.teinte, tete[0] + 0.1, tete[1] - 0.07, 0, E.marque); // la mentonnière
+    menton.scale.set(1, 0.8, 1.2);
+    groupe.add(menton);
     for (const s of [-1, 1]) {
       const ep = [epaule[0], epaule[1], s * 0.2], ma = [mains[0], mains[1], s * mains[2]];
       const coude = [(ep[0] + ma[0]) / 2 - 0.04, (ep[1] + ma[1]) / 2 - 0.08, s * (mains[2] + 0.06)];
@@ -347,8 +349,18 @@ Tanks.Vehicules3D = (function () {
       caisse.add(O.boite(0.5, 0.06, 0.12, m.teinte, 2.2, 0.75, s * 1.18, CT.noir)); // les marchepieds de la cabine
       caisse.add(O.boite(0.5, 0.06, 0.12, m.teinte, 2.2, 0.45, s * 1.18, CT.noir));
     }
-    // 2. La cabine avancée (le moteur est dessous) : la forme vue de côté, peinte en camouflage.
-    caisse.add(O.profil([[2.05, 1.12], [3.62, 1.12], [3.72, 1.32], [3.72, 2.05], [3.56, 2.82], [3.42, 2.95], [2.05, 2.95]], 2.4, P, 0.06));
+    // 2. La cabine avancée (le moteur est dessous), peinte en camouflage. Elle est CREUSE (des panneaux : le bas de
+    // l'avant, les portières, le mur du fond, le toit, les montants) : par les vitres, on voit le chauffeur.
+    caisse.add(O.profil([[2.05, 1.12], [3.62, 1.12], [3.72, 1.32], [3.72, 2.08], [3.6, 2.08], [3.6, 1.4], [2.05, 1.4]], 2.4, P, 0.04)); // le bas (sur le moteur)
+    for (const s of [-1, 1]) {
+      caisse.add(O.boite(1.6, 0.72, 0.06, P, 2.85, 1.76, s * 1.17)); // le bas de la portière
+      caisse.add(O.boite(0.14, 0.86, 0.08, P, 2.12, 2.52, s * 1.16)); // le montant arrière
+      caisse.add(O.boite(0.1, 0.84, 0.08, P, 3.6, 2.47, s * 1.16).rotateZ(0.21)); // le montant avant (penché)
+      caisse.add(O.boite(1.55, 0.08, 0.08, P, 2.85, 2.9, s * 1.16)); // le haut de la portière
+    }
+    caisse.add(O.boite(0.08, 1.85, 2.4, P, 2.07, 2.02, 0)); // le mur du fond
+    caisse.add(O.boite(1.48, 0.08, 2.4, P, 2.83, 2.95, 0)); // le toit
+    caisse.add(O.boite(0.24, 0.08, 2.4, P, 3.5, 2.9, 0).rotateZ(-0.5)); // l'arrondi du toit
     caisse.add(O.boite(0.06, 0.65, 2.3, m.teinte, 3.74, 1.6, 0, CT.noir)); // la calandre…
     for (let k = 0; k < 8; k++) caisse.add(O.boite(0.03, 0.6, 0.06, P, 3.76, 1.6, -1.0 + k * 0.285)); // … et ses lames
     caisse.add(O.boite(0.3, 0.32, 2.5, m.teinte, 3.82, 1.02, 0, CT.olive)); // le pare-chocs
@@ -360,7 +372,7 @@ Tanks.Vehicules3D = (function () {
       caisse.add(O.boite(0.02, 1.35, 0.01, m.teinte, 2.15, 2.0, s * 1.205, CT.noir));
       caisse.add(O.boite(0.02, 1.35, 0.01, m.teinte, 3.4, 2.0, s * 1.205, CT.noir));
       caisse.add(O.boite(0.12, 0.04, 0.03, m.teinte, 2.3, 1.95, s * 1.22, CT.acier));
-      caisse.add(O.boite(0.95, 0.62, 0.02, V, 2.85, 2.45, s * 1.19));
+      caisse.add(O.boite(1.32, 0.72, 0.02, V, 2.86, 2.48, s * 1.16));
       caisse.add(O.boite(0.5, 0.32, 0.012, m.teinte, 2.85, 1.65, s * 1.207, E.marque));
       // les rétroviseurs sur leurs bras
       caisse.add(O.tube([3.5, 2.6, s * 1.2], [3.6, 2.6, s * 1.45], 0.02, m.teinte, 5, CT.noir));
@@ -381,7 +393,11 @@ Tanks.Vehicules3D = (function () {
     volant.rotation.set(0, Math.PI / 2, 0.5, "YXZ");
     caisse.add(volant);
     caisse.add(O.tube([3.24, 2.13, -0.6], [3.42, 1.85, -0.6], 0.03, m.teinte, 6, CT.noir));
-    for (const z of [-0.6, 0.6]) OU().siege(caisse, m, 2.75, 1.85, z, CT.toile);
+    for (const z of [-0.6, 0.6]) { // les sièges : l'assise sur son socle, le dossier
+      caisse.add(O.boite(0.5, 0.1, 0.5, m.teinte, 2.75, 1.8, z, CT.toile));
+      caisse.add(O.boite(0.4, 0.38, 0.42, m.teinte, 2.75, 1.6, z, CT.noir));
+      caisse.add(O.boite(0.1, 0.62, 0.5, m.teinte, 2.48, 2.15, z, CT.toile).rotateZ(0.18));
+    }
     OU().pilote(caisse, m, 2.75, 1.85, -0.6, [3.2, 2.15, -0.6]);
     // 3. Derrière la cabine : la roue de secours, le pot d'échappement vertical, le réservoir, le coffre à outils.
     caisse.add(O.couche(O.cylindre(0.5, 0.5, 0.36, m.teinte, 18, CT.caoutchouc), "x", 1.88, 2.1, 0));

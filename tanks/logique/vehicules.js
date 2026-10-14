@@ -39,9 +39,9 @@ Tanks.Vehicules = (function () {
     };
   }
   const placeAuCamp = (v) => {
-    // chaque engin a sa place, en ligne derrière les tanks de son camp (les motos à gauche, les camions à droite)
+    // chaque engin a sa place, en ligne à droite des tanks de son camp (à côté de la DCA, loin de ton parking)
     const k = SORTES.indexOf(v.sorte) * 3 + v.n, sens = v.equipe === "bleus" ? 1 : -1;
-    return { x: (k - 4) * 9 * sens - sens * 60, z: sens * (T.camp + 22) };
+    return { x: sens * (125 + k * 9), z: sens * (T.camp + 8) };
   };
   function garerAuCamp(v) {
     const p = placeAuCamp(v), R = G[v.sorte];
