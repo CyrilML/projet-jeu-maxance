@@ -49,7 +49,7 @@ Tanks.Vehicules = (function () {
       vie: R.vie, balles: R.balles || 0, detruit: false, tombe: false, touche: 9, recharge: 0, passagers: R.places || 0, cible: null });
     v.y = T.hauteur(v.x, v.z);
     // les pensées de l'ordinateur : où il va, sa cible, son couloir
-    v.ia = { etat: v.sorte === "camion" ? "part au front" : "avance", pense: hasard() * V.pense, cible: null, bloque: 0, recule: 0,
+    v.ia = { etat: v.sorte === "camion" ? "part au front" : "avance", pense: hasard() * V.pense, cible: null, bloque: 0, recule: 0, detour: 0, coteDetour: 1,
       couloir: (hasard() * 2 - 1) * V.couloir, tour: hasard() < 0.5 ? -1 : 1, erreur: 0, retour: 0, decharge: 0, attente: 0 };
     if (v.sorte === "camion") v.ia.but = { x: v.ia.couloir * 0.6, z: (v.equipe === "bleus" ? 1 : -1) * V.front };
     return v;
@@ -73,7 +73,9 @@ Tanks.Vehicules = (function () {
     e.vitesse -= pente * 9.8 * 0.4 * dt;
     // 2. tourner comme un vélo : rotation = vitesse × tan(braquage) ÷ empattement (et pas plus que « virage »)
     const sens = (I.droite ? 1 : 0) - (I.gauche ? 1 : 0);
-    e.braquage += (sens * R.braquage - e.braquage) * Math.min(1, dt * 6);
+    // (à grande vitesse, on braque moins : juste assez pour tourner à « virage » rad/s, comme un vrai pilote)
+    const maxi = Math.min(R.braquage, Math.atan((R.virage * R.empattement) / Math.max(0.1, Math.abs(e.vitesse))));
+    e.braquage += (sens * maxi - e.braquage) * Math.min(1, dt * 6);
     let w = (e.vitesse * Math.tan(e.braquage)) / R.empattement;
     w = Math.max(-R.virage, Math.min(R.virage, w));
     e.rotation = w;
@@ -131,7 +133,7 @@ Tanks.Vehicules = (function () {
     if (v.detruit) return;
     v.balles = Math.max(0, v.balles - degats);
     v.touche = 0;
-    ev.push(["soldat-touche", { cible: v, tireur, vie: v.balles, par: "balle" }]);
+    ev.push(["soldat-touche", { cible: v, tireur, vie: v.balles, vieMax: v.ia ? G[v.sorte].balles : G[v.sorte].ballesJoueur, par: "balle" }]);
     if (v.balles === 0) {
       v.detruit = true;
       v.tombe = true;
@@ -150,7 +152,8 @@ Tanks.Vehicules = (function () {
 
   // Faire descendre « nombre » soldats du camion (derrière lui). Renvoie combien sont vraiment descendus.
   // (Pas plus de « parachutistes.maxParEquipe » soldats debout par équipe : sinon le jeu ralentirait.)
-  function decharger(v, monde, nombre, ev) {
+  // (L'ordinateur fait descendre ses soldats un par un : il ne l'annonce qu'une fois, quand le camion est vide.)
+  function decharger(v, monde, nombre, ev, sansAnnonce) {
     let n = 0;
     const debout = monde.soldats.filter((s) => s.equipe === v.equipe && !s.mort).length;
     const place = Math.max(0, C.parachutistes.maxParEquipe - debout);
@@ -164,7 +167,7 @@ Tanks.Vehicules = (function () {
     }
     if (n) {
       monde.dechargesTotal = (monde.dechargesTotal || 0) + n;
-      ev.push(["camion-decharge", { nom: v.nom, equipe: v.equipe, nombre: n, reste: v.passagers, x: v.x, z: v.z, toi: !!v.pilote }]);
+      if (!sansAnnonce) ev.push(["camion-decharge", { nom: v.nom, equipe: v.equipe, nombre: n, reste: v.passagers, x: v.x, z: v.z, toi: !!v.pilote }]);
     }
     return n;
   }
@@ -173,15 +176,41 @@ Tanks.Vehicules = (function () {
   const loinDuCamp = (v) => { const p = placeAuCamp(v); return Math.hypot(v.x - p.x, v.z - p.z); };
 
   // Les « aimants » qui repoussent (les maisons, les arbres, le lac, les autres engins et les tanks), ajoutés au but.
+  // (Le but compte pour 40 au plus, même s'il est à 500 m : sinon les aimants ne pèseraient rien à côté.)
+  // Et on REGARDE DEVANT : si un mur est à 7 ou 14 m devant, on braque vers le côté le plus libre.
   function eviter(v, gx, gz, monde) {
+    const lg = Math.hypot(gx, gz);
+    if (lg > 40) (gx *= 40 / lg), (gz *= 40 / lg);
     let rx = 0, rz = 0;
+    const ca = Math.cos(v.angle), sa = Math.sin(v.angle), sens = v.vitesse < -0.5 ? -1 : 1;
     const repousse = (ox, oz, rayon, force) => {
       const ex = v.x - ox, ez = v.z - oz, e = Math.hypot(ex, ez);
       if (e < rayon && e > 0.01) (rx += (ex / e) * force * (1 - e / rayon)), (rz += (ez / e) * force * (1 - e / rayon));
     };
     const loin = G[v.sorte].rayon + 10;
-    for (const b of T.boitesAutour(v.x, v.z, loin + 8, prochesBoites)) if (Math.abs(b.x - v.x) < loin + b.rayon && Math.abs(b.z - v.z) < loin + b.rayon) repousse(b.x, b.z, b.rayon + 9, 45);
-    if (v.sorte !== "camion") for (const a of T.arbresAutour(v.x, v.z, 7, prochesArbres)) if (!a.ecrase && Math.abs(a.x - v.x) < 7 && Math.abs(a.z - v.z) < 7) repousse(a.x, a.z, 6, 14);
+    for (const b of T.boitesAutour(v.x, v.z, loin + 8, prochesBoites)) {
+      if (Math.abs(b.x - v.x) > loin + b.rayon + 8 || Math.abs(b.z - v.z) > loin + b.rayon + 8) continue;
+      repousse(b.x, b.z, b.rayon + 6, 30);
+      for (const devant of [7, 14]) {
+        const px = v.x + ca * devant * sens, pz = v.z + sa * devant * sens;
+        if (!T.dansBoite(b, px, pz, G[v.sorte].rayon + 1)) continue;
+        // le mur est devant : on pousse sur le côté (du côté où le centre du mur n'est pas)
+        const cote = (b.x - v.x) * -sa + (b.z - v.z) * ca > 0 ? -1 : 1; // (le mur est-il à droite ou à gauche ?)
+        rx += -sa * cote * (devant === 7 ? 70 : 40);
+        rz += ca * cote * (devant === 7 ? 70 : 40);
+        break;
+      }
+    }
+    // les arbres juste devant (moins de 11 m, dans le couloir de l'engin) : on braque pour les contourner
+    const largeur = G[v.sorte].rayon + 1.2;
+    for (const a of T.arbresAutour(v.x + ca * 6 * sens, v.z + sa * 6 * sens, 8, prochesArbres)) {
+      if (a.ecrase) continue;
+      const dx = a.x - v.x, dz = a.z - v.z, u = (dx * ca + dz * sa) * sens, w = -dx * sa + dz * ca;
+      if (u > 0 && u < 11 && Math.abs(w) < largeur) {
+        const cote = w > 0 ? -1 : 1, force = 25 + 45 * (1 - u / 11);
+        (rx += -sa * cote * force), (rz += ca * cote * force);
+      }
+    }
     for (const c of monde.chars) if (Math.abs(c.x - v.x) < 14 && Math.abs(c.z - v.z) < 14) repousse(c.x, c.z, 13, 40);
     for (const o of monde.vehicules) if (o !== v && Math.abs(o.x - v.x) < 9 && Math.abs(o.z - v.z) < 9) repousse(o.x, o.z, 8, 20);
     const dl = T.distLac(v.x, v.z);
@@ -225,6 +254,7 @@ Tanks.Vehicules = (function () {
         if (Math.hypot(gx, gz) < V.arrive || (v.touche < 0.5 && v.vie < G.camion.vie)) {
           ia.etat = "décharge";
           ia.decharge = 0;
+          ia.descendus = 0;
           v.places0 = 0;
         }
       }
@@ -234,12 +264,14 @@ Tanks.Vehicules = (function () {
           ia.decharge -= dt;
           if (ia.decharge <= 0 && v.passagers > 0) {
             ia.decharge = V.decharge;
-            if (!decharger(v, monde, 1, ev)) ia.etat = "attend de la place";
+            const n = decharger(v, monde, 1, ev, true);
+            if (!n) ia.etat = "attend de la place";
+            ia.descendus += n;
             v.places0 = (v.places0 || 0) + 1;
           }
           if (v.passagers === 0) {
             ia.etat = "rentre au camp (vide)";
-            ev.push(["camion-vide", { nom: v.nom, equipe: v.equipe }]);
+            ev.push(["camion-decharge", { nom: v.nom, equipe: v.equipe, nombre: ia.descendus, reste: 0, x: v.x, z: v.z, toi: false }]);
           }
         }
         return I;
@@ -315,19 +347,26 @@ Tanks.Vehicules = (function () {
       }
     }
     // conduire vers le but (en évitant les obstacles)
+    // (après une marche arrière pour se décoincer, il fait un DÉTOUR : il part de biais pendant 2,5 s)
+    if (ia.detour > 0) {
+      ia.detour -= dt;
+      const a = Math.atan2(gz, gx) + ia.coteDetour * 1.1, l = Math.max(30, Math.hypot(gx, gz));
+      (gx = Math.cos(a) * l), (gz = Math.sin(a) * l);
+    }
     const voulu = eviter(v, gx, gz, monde), envie = Math.hypot(voulu.x, voulu.z);
-    if (envie < 3) return Object.assign(I, { freiner: true });
+    if (envie < 3 && Math.hypot(gx, gz) < 3) return Object.assign(I, { freiner: true });
     const diff = angleEntre(Math.atan2(voulu.z, voulu.x) - v.angle);
     // coincé ? (il voudrait avancer mais n'avance plus) : il recule en braquant de l'autre côté
     if (ia.recule > 0) {
       ia.recule -= dt;
       I.reculer = true;
-      I.droite = diff < 0;
-      I.gauche = diff > 0;
+      I.droite = ia.coteDetour < 0;
+      I.gauche = ia.coteDetour > 0;
+      if (ia.recule <= 0) ia.detour = 2.5;
       return I;
     }
     ia.bloque = Math.abs(v.vitesse) < 1 ? ia.bloque + dt : 0;
-    if (ia.bloque > V.bloque) (ia.bloque = 0), (ia.recule = 1.5);
+    if (ia.bloque > V.bloque) (ia.bloque = 0), (ia.recule = 1.5), (ia.coteDetour = hasard() < 0.5 ? -1 : 1);
     I.gauche = diff < -0.06;
     I.droite = diff > 0.06;
     I.avancer = true;

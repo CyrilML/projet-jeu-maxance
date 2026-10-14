@@ -17,6 +17,8 @@
 // Ce panneau ne se remet à jour que 2 fois par seconde (l'écrire coûte cher), et pas du tout quand il est caché.
 // Étape 63 : les sous-marins (leur PROFONDEUR, s'ils sont sous l'eau), les îles, si tu nages, et le dessin « entre deux
 // pas » (l'interpolation qui empêche ton personnage de faire de petits sauts).
+// Étape 71 : LA GRANDE CARTE (sa taille, ses villages, ses arbres, ses tuiles de sol) et LES ENGINS QUI ROULENT : chaque
+// moto, quad et camion des deux camps (ce qu'il fait, sa vitesse, sa vie, son pilote, les soldats à bord), et les tiens.
 
 window.Tanks = window.Tanks || {};
 
@@ -32,7 +34,12 @@ Tanks.SousLeCapot = (function () {
     "son-endormi": (d) => "🔇 Le son s'endort : " + d.raison,
     "son-reveille": () => "🔊 Tu es revenu : le son se réveille",
     garage: (d) => "🏭 Au garage, tu regardes le " + d.nom + " (" + d.pays + ")",
-    bataille: (d) => "⚔️ La bataille commence ! Toi (" + d.char + ") et " + d.allies + " alliés contre " + d.ennemis + " ennemis",
+    // étape 71
+    "camion-decharge": (d) => "🚛 " + (d.toi ? "Ton camion" : d.nom) + " décharge " + d.nombre + " soldat" + (d.nombre > 1 ? "s" : "") + " (ils deviennent des soldats normaux)" + (d.reste ? " · il en reste " + d.reste + " à bord" : " · le camion est vide" + (d.toi ? "" : " : il rentre au camp se remplir")),
+    "camion-recharge": (d) => "🚛 " + (d.toi ? "Ton camion" : d.nom) + " est rempli : " + d.places + " soldats montent à bord" + (d.toi ? " (F pour les faire descendre)" : " : il repart au front"),
+    "vehicule-retour": (d) => "🔧 " + d.nom + " revient au camp, avec un nouveau pilote (" + C.vehicules.retour + " s après avoir été détruit)",
+    "pilote-abattu": (d) => "🎯 Le pilote " + (d.surToi ? "(toi !)" : "de " + d.cible) + " est touché par " + d.tireur + " : " + (d.sorte === "moto" ? "la moto" : "le quad") + " tombe (hors de combat)",
+    bataille: (d) => "⚔️ La bataille commence ! Toi (" + d.char + ") et " + d.allies + " alliés contre " + d.ennemis + " ennemis, sur une carte de " + C.monde.taille + " m · " + (d.vehicules || 0) + " motos, quads et camions conduits par l'ordinateur",
     tir: (d) => d.joueur ? "🔥 Tu tires" + (d.assiste ? " (visée assistée sur " + d.cible + ", " + d.distance + " m : le canon s'est réglé tout seul)" : "") : "🔥 " + d.nom + " (" + (d.equipe === "bleus" ? "allié" : "ennemi") + ") tire sur " + d.cible + " à " + d.distance + " m",
     recharge: () => "🔄 Ton canon est rechargé",
     touche: (d) => "🎯 " + d.tireur + " touche " + d.cible + " " + d.cote + " à " + d.distance + " m · il lui reste " + d.vie + " / " + (d.vieMax || C.char.vie),
@@ -69,7 +76,7 @@ Tanks.SousLeCapot = (function () {
     portail: (d) => "🌀 " + d.qui + " entre dans le portail " + d.de + " et ressort par le portail " + d.vers,
     // étape 61
     sortir: (d) => "🚪 Tu sors de " + d.de + " : te voilà à pied (E pour remonter)",
-    monter: (d) => "🪜 Tu montes dans " + d.dans + ({ dca: " : ← → tourner, ↑ ↓ lever les canons, Espace tirer en l'air", jeep: " : ↑ ↓ ← → conduire, Q / D la mitrailleuse, Espace tirer", helico: " : Q monter, D descendre, Espace lâcher une bombe", avion: " : ↑ piquer, ↓ cabrer, Espace un missile, E s'éjecter", drone: " : Q monter, D descendre, Espace lâcher une grenade" }[d.mode] || ""),
+    monter: (d) => "🪜 Tu montes dans " + d.dans + ({ moto: " : ↑ ↓ ← → conduire (elle penche dans les virages), Espace tirer au pistolet", quad: " : ↑ ↓ ← → conduire, Espace la mitrailleuse (droit devant)", camion: " : ↑ ↓ ← → conduire, F faire descendre les soldats", dca: " : ← → tourner, ↑ ↓ lever les canons, Espace tirer en l'air", jeep: " : ↑ ↓ ← → conduire, Q / D la mitrailleuse, Espace tirer", helico: " : Q monter, D descendre, Espace lâcher une bombe", avion: " : ↑ piquer, ↓ cabrer, Espace un missile, E s'éjecter", drone: " : Q monter, D descendre, Espace lâcher une grenade" }[d.mode] || ""),
     ejection: (d) => (d.abattu ? "🔥 Ton Rafale est abattu ! " : "") + "🪂 Éjection à " + d.hauteur + " m de haut ! Tu redescends en parachute à " + C.engins.parachute + " m/s",
     atterrissage: () => "🪂 Tu touches le sol : te voilà à pied",
     impossible: (d) => "✋ Impossible : " + d.raison,
@@ -124,6 +131,35 @@ Tanks.SousLeCapot = (function () {
       ["le quadrillage", "cases de " + C.grille.case + " m · " + Tanks.Terrain.grilles.arbres.objets + " arbres et " + Tanks.Terrain.grilles.boites.objets + " murs rangés une fois · " + (monde.grilleSoldats ? monde.grilleSoldats.objets : 0) + " soldats rangés à chaque pas"]);
   }
 
+  // (étape 71) Un engin qui roule : ce qu'il fait, sa vitesse, son braquage, sa vie, son pilote, les soldats à bord.
+  function ligneVehicule(v, toi) {
+    const R = C.engins[v.sorte];
+    if (v.detruit) return (v.tombe ? "pilote touché : couché par terre ✖" : "détruit ✖") + (v.ia ? " · " + v.ia.etat : "");
+    const morceaux = [toi ? (v.pilote ? "👤 tu conduis" : "garé") : v.ia.etat, Math.round(Math.abs(v.vitesse) * 3.6) + " km/h"];
+    if (Math.abs(v.vitesse) > 0.5) morceaux.push("braque " + degres(v.braquage) + " → tourne à " + degres(v.rotation) + "/s");
+    if (v.sorte === "moto") morceaux.push("penche " + degres(v.roulis) + " (tan = v × rotation ÷ 9,8)");
+    morceaux.push("vie " + v.vie + " / " + R.vie);
+    if (v.sorte !== "camion") morceaux.push("pilote " + v.balles + " / " + (toi ? R.ballesJoueur : R.balles) + " balles");
+    else morceaux.push("🪖 " + v.passagers + " / " + R.places + " à bord");
+    if (v.ia && v.ia.cible && !v.ia.cible.mort && !v.ia.cible.detruit) morceaux.push("cible " + v.ia.cible.nom);
+    return morceaux.join(" · ");
+  }
+  function lignesCarte(l) {
+    const T = Tanks.Terrain, W = C.monde, D = Tanks.Decor.bilan, km2 = (W.taille * W.taille) / 1e6;
+    l.push(["La grande carte et les engins qui roulent (étape 71)"]);
+    l.push(["la carte", W.taille + " m × " + W.taille + " m = " + virgule(km2, 1) + " km² (avant : 700 m, 0,5 km² : " + Math.round(km2 / 0.49) + " fois plus de terrain) · camps à ± " + W.camp + " m du centre"]);
+    l.push(["ce qu'il y a dessus", T.villages.map((v) => v.nom).join(", ") + " · " + T.arbres.length + " arbres (" + T.forets.length + " forêts) · " + T.boites.length + " maisons et murs · " + T.iles.length + " îles"]);
+    l.push(["le sol 3D", "un point tous les " + W.sol + " m · " + Math.ceil(W.taille / C.decor.morceau) ** 2 + " tuiles de " + C.decor.morceau + " m (avec les maisons : " + D.morceaux + " morceaux, " + D.morceauxVus + " dessinés)"]);
+    for (const eq of ["bleus", "rouges"]) {
+      const liste = monde.vehicules.filter((v) => v.equipe === eq);
+      const compte = (s) => liste.filter((v) => v.sorte === s && !v.detruit).length + "/" + liste.filter((v) => v.sorte === s).length;
+      l.push([(eq === "bleus" ? "🔵 " : "🔴 ") + C.equipes[eq].nom, "🏍️ motos " + compte("moto") + " · 🛞 quads " + compte("quad") + " · 🚛 camions " + compte("camion") + " en état de rouler"]);
+    }
+    for (const v of monde.vehicules) l.push([(v.equipe === "bleus" ? "🔵 " : "🔴 ") + v.fiche.icone + " " + v.nom, ligneVehicule(v, false)]);
+    const L = Tanks.Scene.lod;
+    l.push(["soldats des camions", (monde.dechargesTotal || 0) + " descendus depuis le début · dessin : " + L.vehiculesDetail + " engin(s) en détail, " + L.vehiculesSimples + " en version simple (1 dessin par sorte et par équipe), " + L.vehiculesCaches + " cachés"]);
+  }
+
   function lignes() {
     const j = monde.joueur, f = j.fiche, t = monde.toi || {}, s = t.soldat;
     const l = [];
@@ -149,9 +185,14 @@ Tanks.SousLeCapot = (function () {
           l.push([C.bateaux.joueur.icone + " " + e.nom, e.detruit ? "coulée ✖" : (e.pilote ? "👤 pilotée · " : "amarrée · ") + Math.round(Math.abs(e.vitesse) * 3.6) + " km/h · vie " + e.vie + " / " + C.bateaux.joueur.vie + " · dl " + virgule(Tanks.Terrain.distLac(e.x, e.z), 2) + (e.echoue ? " (échouée !)" : "")]);
           continue;
         }
+        if (e.genre === "vehicule") { // (étape 71)
+          l.push([C.engins[e.sorte].icone + " " + e.nom + " (à toi)", ligneVehicule(e, true)]);
+          continue;
+        }
         const R = C.engins[e.sorte], haut = e.y - Tanks.Terrain.hauteur(e.x, e.z);
         l.push([R.icone + " " + R.nom, (e.detruit ? "détruit ✖" : (e.pilote ? "👤 piloté · " : "garé · ") + Math.round(Math.abs(e.vitesse) * 3.6) + " km/h" + (e.sorte !== "jeep" ? " · " + Math.round(haut) + " m de haut" : " · vie " + e.vie + " / " + R.vie) + (R.munitions ? " · " + e.munitions + " / " + R.munitions + " " + R.arme + (e.munitions < R.munitions ? " (+1 dans " + virgule(R.recharge - e.rechargeMunition, 1) + " s)" : "") : ""))]);
       }
+      lignesCarte(l);
       l.push(["Les soldats"]);
       for (const eq of ["bleus", "rouges"]) {
         const liste = monde.soldats.filter((o) => o.equipe === eq && !o.joueur);
@@ -206,7 +247,7 @@ Tanks.SousLeCapot = (function () {
     }
     l.push(["Le dessin"], ["le son", Tanks.Sons.etat()], ["particules", Tanks.Effets.bilan.vivantes + " · épaves qui fument : " + Tanks.Effets.bilan.epaves + " · traits de balles : " + Tanks.Effets.bilan.balles], ["projectiles en vol", monde.obus.length ? Object.entries(monde.obus.reduce((n, p) => ((n[p.sorte] = (n[p.sorte] || 0) + 1), n), {})).map(([k, v]) => v + " " + k).join(", ") : "aucun"], ["entre deux pas", "le dessin est à " + Math.round(Tanks.Scene.entreDeuxPas() * 100) + " % entre l'avant-dernier pas et le dernier (interpolation)"], ["dessins", Tanks.Scene.dessins().soldats + " soldats, " + Tanks.Scene.dessins().engins + " engins"], ["la carte graphique", (Tanks.Scene.infos.triangles || 0).toLocaleString("fr-FR") + " triangles, " + (Tanks.Scene.infos.calls || 0) + " dessins par image"], ["l'atelier (étape 70)", Tanks.Outils3D.bilan.pieces.toLocaleString("fr-FR") + " pièces soudées en " + Tanks.Outils3D.bilan.objets + " objets (une matière = un objet à dessiner)"]);
     const S = Tanks.Sauvegarde.donnees;
-    l.push(["Le livret militaire (sauvegarde)"], ["victoires · défaites", S.victoires + " · " + S.defaites], ["tanks détruits", S.detruits], ["bateaux · sous-marins coulés", S.bateaux + " · " + S.sousMarins], ["passages de portail", S.portails], ["avions abattus", S.avions], ["ordres donnés", S.ordres], ["obus tirés · au but", S.tirs + " · " + S.touches]);
+    l.push(["Le livret militaire (sauvegarde)"], ["victoires · défaites", S.victoires + " · " + S.defaites], ["tanks détruits", S.detruits], ["bateaux · sous-marins coulés", S.bateaux + " · " + S.sousMarins], ["passages de portail", S.portails], ["avions abattus", S.avions], ["ordres donnés", S.ordres], ["obus tirés · au but", S.tirs + " · " + S.touches], ["motos, quads, camions ennemis (étape 71)", S.vehicules]);
     return l;
   }
 

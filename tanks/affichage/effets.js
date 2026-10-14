@@ -22,6 +22,8 @@
 // carte graphique ! Maintenant elles sont toutes dans UN SEUL objet (des « instances » : la même petite image carrée
 // recopiée à 300 endroits), plus un deuxième pour celles qui brillent (le feu). Et on ne fait pas de fumée trop loin
 // de la caméra (on ne la verrait presque pas) : la distance est réglée par le régulateur de qualité.
+// (étape 71) la poussière derrière les motos, les quads et les camions ; une explosion plus petite pour une moto ou un
+// quad (« petit »), et un petit nuage quand un camion fait descendre ses soldats.
 // Il écoute la radio (tir, impact, touche, detruit) pour savoir quand faire des effets.
 
 window.Tanks = window.Tanks || {};
@@ -179,7 +181,16 @@ Tanks.Effets = (function () {
     radio.ecouter("soldat-mort", (d) => {
       for (let k = 0; k < 4; k++) particule(d.x, d.y + 0.8, d.z, alea(1), 0.8, alea(1), 1.2, 0.6, 2, 0.4, [0.55, 0.5, 0.42]);
     });
+    radio.ecouter("camion-decharge", (d) => {
+      for (let k = 0; k < 5; k++) particule(d.x + alea(2), T.hauteur(d.x, d.z) + 0.3, d.z + alea(2), alea(1), 0.5, alea(1), 1.2, 1, 3, 0.3, [0.62, 0.56, 0.44]);
+    });
     radio.ecouter("detruit", (d) => {
+      if (d.petit) { // (étape 71 : une moto, un quad : une petite explosion, et l'épave fume moins longtemps)
+        for (let k = 0; k < 12; k++) particule(d.x, d.y + 0.8, d.z, alea(4), 3 + Math.random() * 4, alea(4), 0.7 + Math.random() * 0.4, 1.5, 5, 1, [1, 0.6, 0.2], true, 3);
+        flash(d.x, d.y + 1, d.z, 40);
+        epaves.push({ x: d.x, y: d.y - 1.2, z: d.z, age: 18, reste: 0 });
+        return;
+      }
       for (let k = 0; k < 26; k++) particule(d.x, d.y + 1.5, d.z, alea(7), 4 + Math.random() * 8, alea(7), 0.9 + Math.random() * 0.6, 3, 10, 1, [1, 0.6, 0.2], true, 3);
       for (let k = 0; k < 20; k++) particule(d.x, d.y + 1, d.z, alea(4), 2 + Math.random() * 3, alea(4), 3, 4, 12, 0.6, [0.15, 0.14, 0.13]);
       flash(d.x, d.y + 2, d.z, 80);
@@ -316,7 +327,7 @@ Tanks.Effets = (function () {
       if (!a.detruit || a.etat === "parti" || Math.random() > dt * 40) continue;
       particule(a.x + alea(1), a.y, a.z + alea(1), alea(1), 1, alea(1), 3, 2, 8, 0.7, Math.random() < 0.3 ? [1, 0.5, 0.15] : [0.13, 0.12, 0.12], false);
     }
-    for (const liste of [monde.engins, monde.bateaux || [], monde.sousMarins || []]) for (const e of liste) {
+    for (const liste of [monde.engins, monde.vehicules || [], monde.bateaux || [], monde.sousMarins || []]) for (const e of liste) {
       if (e.detruit) continue;
       if (e.sorte === "sousmarin" && Math.abs(e.vitesse) > 1) {
         if (e.profondeur > 1.5 ? Math.random() < dt * 10 : Math.random() < dt * 20) {
@@ -328,6 +339,10 @@ Tanks.Effets = (function () {
       if (e.sorte === "bateau" && Math.abs(e.vitesse) > 2 && Math.random() < dt * 25) {
         const ar = -4.6, ca = Math.cos(e.angle), sa = Math.sin(e.angle);
         particule(e.x + ca * ar + alea(0.8), e.y + 0.15, e.z + sa * ar + alea(0.8), -ca * 1.5 + alea(0.6), 0.2, -sa * 1.5 + alea(0.6), 2.2, 1, 4.5, 0.55, [0.93, 0.96, 1]);
+      }
+      if (e.genre === "vehicule" && Math.abs(e.vitesse) > 6 && Math.random() < dt * (e.sorte === "camion" ? 16 : 10)) { // (étape 71)
+        const ar = -e.fiche.longueur / 2;
+        particule(e.x + Math.cos(e.angle) * ar, e.y + 0.3, e.z + Math.sin(e.angle) * ar, alea(0.6), 0.5, alea(0.6), 1.2, e.sorte === "camion" ? 1.4 : 0.7, e.sorte === "camion" ? 4.5 : 3, 0.3, [0.62, 0.56, 0.44]);
       }
       if (e.sorte === "jeep" && Math.abs(e.vitesse) > 6 && Math.random() < dt * 14) particule(e.x - Math.cos(e.angle) * 2.5, e.y + 0.4, e.z - Math.sin(e.angle) * 2.5, alea(0.6), 0.5, alea(0.6), 1.4, 1, 4, 0.3, [0.62, 0.56, 0.44]);
       if (e.sorte === "helico" && e.pilote && e.y - T.hauteur(e.x, e.z) < 18 && Math.random() < dt * 12) {

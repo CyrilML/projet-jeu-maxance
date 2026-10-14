@@ -134,7 +134,7 @@ Tanks.Avions = (function () {
         a.etat = "bombarde";
         a.bombes = A.bombes;
         a.prochaineBombe = 0;
-        ev.push(["bombardement", { nom: a.nom, cible: a.cible.nom === "toi" ? "toi" : a.cible.nom }]);
+        ev.push(["bombardement", { nom: a.nom, cible: a.cible }]); // (étape 71 : on donne la cible elle-même, le journal écrit son nom ; avant, il écrivait « undefined »)
       }
       return;
     }

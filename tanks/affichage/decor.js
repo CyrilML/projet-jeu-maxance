@@ -11,6 +11,8 @@
 // Étape 72 (« ça rame ») : le décor est découpé en MORCEAUX de 140 m (comme un puzzle) : le sol en tuiles, le village
 // et les murets par morceau. La carte graphique ne dessine que les morceaux devant la caméra, et le régulateur de
 // qualité (affichage/qualite.js) cache ceux qui sont trop loin. Les arbres trop loin ne sont pas dessinés non plus.
+// Étape 71 : la carte est 3 fois plus grande (2 100 m). Le sol a un point tous les 5 m (au lieu de 4) : 15 × 15 tuiles,
+// et seules celles qui sont près de toi et devant la caméra sont dessinées. Les hameaux ont aussi leur terre battue.
 // Comme tout l'affichage, il ne change jamais le monde : il le lit.
 
 window.Tanks = window.Tanks || {};
@@ -64,14 +66,16 @@ Tanks.Decor = (function () {
   }
 
   function sol(groupe) {
-    const taille = C.monde.taille, n = 175, geo = new THREE.PlaneGeometry(taille, taille, n, n);
+    const taille = C.monde.taille, n = Math.round(taille / C.monde.sol), geo = new THREE.PlaneGeometry(taille, taille, n, n);
     geo.rotateX(-Math.PI / 2);
     const p = geo.attributes.position, couleurs = [], uv = geo.attributes.uv;
     const bruit = Tanks.Bruit.creer(77);
     for (let i = 0; i < p.count; i++) {
       const x = p.getX(i), z = p.getZ(i);
       p.setY(i, T.hauteur(x, z));
-      const b = Tanks.Bruit.fractal(bruit, x / 60, z / 60, 3), village = Math.max(0, 1 - Math.hypot(x, z) / (C.monde.village.rayon * 1.3));
+      const b = Tanks.Bruit.fractal(bruit, x / 60, z / 60, 3);
+      let village = 0; // (étape 71 : le village et les hameaux)
+      for (const v of T.villages) village = Math.max(village, 1 - Math.hypot(x - v.x, z - v.z) / (v.rayon * 1.3));
       let r = 0.36 + b * 0.06, g = 0.47 + b * 0.08, bl = 0.24 + b * 0.04; // l'herbe
       r += village * 0.18; g += village * 0.02; bl += village * 0.08; // la terre battue du village
       let rive = Math.max(0, 1 - Math.abs(T.distLac(x, z) - 1) / 0.1); // (étape 62) le sable de la rive
@@ -317,7 +321,7 @@ Tanks.Decor = (function () {
     ctx.putImageData(img, 0, 0);
     vagues = new THREE.CanvasTexture(bosses);
     vagues.wrapS = vagues.wrapT = THREE.RepeatWrapping;
-    vagues.repeat.set(18, 40);
+    vagues.repeat.set(L.rayonX / 4.5, L.rayonZ / 4.6); // (des vagues de la même taille, même si le lac est plus grand)
     const eau = new THREE.Mesh(new THREE.CircleGeometry(1, 72), new THREE.MeshStandardMaterial({ color: 0x2b5763, roughness: 0.2, metalness: 0.25, transparent: true, opacity: 0.88, normalMap: vagues, normalScale: new THREE.Vector2(0.35, 0.35) }));
     eau.rotation.x = -Math.PI / 2;
     eau.scale.set(L.rayonX * 1.02, L.rayonZ * 1.02, 1);

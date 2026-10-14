@@ -21,6 +21,9 @@
 // soldat proche est dessiné en détail, plus loin en simple, encore plus loin en SILHOUETTE (une seule pièce, toutes les
 // silhouettes d'une équipe en un seul dessin), et au-delà il n'est pas dessiné ; un tank loin a ses roues soudées en
 // une pièce. Le ciel suit la caméra (c'est une grande boule autour d'elle, plus petite quand la vue est courte).
+// Étape 71 : les MOTOS, QUADS et CAMIONS (affichage/vehicules3d.js). Près de la caméra : en détail (les roues tournent,
+// la fourche et les roues avant braquent, la moto PENCHE dans les virages, le pilote et les 6 soldats du camion sont là
+// ou pas) ; plus loin : la version simple, toutes les copies d'une sorte et d'une équipe en UN seul dessin (instances).
 // Comme tout l'affichage, ce fichier lit le monde et ne le modifie jamais.
 
 window.Tanks = window.Tanks || {};
@@ -35,7 +38,8 @@ Tanks.Scene = (function () {
   // (étape 72) le niveau de qualité en cours (réglé par affichage/qualite.js), le ciel, les silhouettes des soldats
   let Q = C.qualite.niveaux[C.qualite.depart], leCiel = null;
   const silhouettes = {};
-  const lod = { soldatsDetail: 0, soldatsSimples: 0, silhouettes: 0, soldatsCaches: 0, tanksRouesSoudees: 0, enginsCaches: 0 };
+  const lod = { soldatsDetail: 0, soldatsSimples: 0, silhouettes: 0, soldatsCaches: 0, tanksRouesSoudees: 0, enginsCaches: 0, vehiculesDetail: 0, vehiculesSimples: 0, vehiculesCaches: 0 };
+  const lotsSimples = {}; // (étape 71) « moto:bleus » → les instances de la version simple
   // La « vue » d'un objet : le même objet, mais avec x, y, z, angle (et tourelle) pris entre l'avant et maintenant.
   const melange = (a, b) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * alpha;
   function vue(o) {
@@ -114,6 +118,7 @@ Tanks.Scene = (function () {
     scene.add(Tanks.Decor.construire());
     Tanks.Effets.initialiser(scene);
     for (const equipe of ["bleus", "rouges"]) scene.add((silhouettes[equipe] = Tanks.Engins3D.silhouettes(equipe, 160)));
+    for (const sorte of Tanks.Vehicules3D.SORTES) for (const equipe of ["bleus", "rouges"]) scene.add((lotsSimples[sorte + ":" + equipe] = Tanks.Vehicules3D.lotSimple(sorte, equipe, 12)));
   }
 
   // (étape 72) Appliquer un niveau de qualité (appelé par le régulateur, affichage/qualite.js).
@@ -250,7 +255,53 @@ Tanks.Scene = (function () {
     }
     return o;
   }
+  // (étape 71) Une moto, un quad, un camion : posé sur la pente, tourné, PENCHÉ (roulis) et le nez levé (tangage).
+  const qLocal = new THREE.Quaternion(), eLocal = new THREE.Euler(0, 0, 0, "XZY"), blanc = new THREE.Color(1, 1, 1), sombre = new THREE.Color(0.13, 0.12, 0.11);
+  function placerVehicule(o, e, dt, original) {
+    const d = Math.hypot(e.x - cam.position.x, e.z - cam.position.z);
+    const n = T.normale(e.x, e.z);
+    qLacet.setFromAxisAngle(haut, -e.angle);
+    qPente.setFromUnitVectors(haut, vn.set(n.x, n.y, n.z));
+    qLocal.setFromEuler(eLocal.set(e.roulis || 0, 0, e.tangage || 0, "XZY"));
+    o.g.quaternion.copy(qPente).multiply(qLacet).multiply(qLocal);
+    o.g.position.set(e.x, e.y, e.z);
+    if (d > Q.vue + 20) {
+      o.g.visible = false;
+      lod.vehiculesCaches++;
+      return;
+    }
+    // loin : la version simple (une instance de plus dans le lot de sa sorte et de son équipe)
+    const lot = lotsSimples[e.sorte + ":" + e.equipe];
+    if (d > Q.roues * C.vehicules.loin[e.sorte] && lot && lot.count < lot.instanceMatrix.count) {
+      o.g.visible = false;
+      lot.setMatrixAt(lot.count, m4.compose(o.g.position, o.g.quaternion, un));
+      lot.setColorAt(lot.count++, e.detruit && !e.tombe ? sombre : blanc);
+      lod.vehiculesSimples++;
+      return;
+    }
+    o.g.visible = true;
+    lod.vehiculesDetail++;
+    if (e.detruit && !e.tombe) {
+      if (!o.brule) (Tanks.Engins3D.bruler(o), (o.brule = true));
+      if (o.pilote) o.pilote.visible = false;
+      return;
+    }
+    if (o.brule) { // (un engin revenu au camp, tout neuf : on refait son dessin)
+      scene.remove(o.g);
+      dessinsEngins.delete(original || e);
+      return;
+    }
+    // les roues tournent (chacune selon sa taille), les roues avant (et la fourche, le guidon) braquent
+    o.dist += e.vitesse * dt;
+    for (const r of o.roues) r.rotation.y = -o.dist / r.userData.rayon;
+    if (o.braquage) o.braquage.rotation.y = -(e.braquage || 0);
+    for (const p of o.pivots) p.rotation.y = -(e.braquage || 0);
+    if (o.pilote) o.pilote.visible = !!(e.pilote || e.ia) && !e.tombe;
+    if (o.passagers) o.passagers.visible = e.passagers > 0;
+  }
+
   function placerEngin(o, e, dt, original) {
+    if (Tanks.Vehicules3D.sait(e.sorte)) return placerVehicule(o, e, dt, original); // (étape 71)
     o.g.visible = e.etat !== "attend" && e.etat !== "parti";
     // (étape 72) plus loin que la vue (dans le brouillard) : pas dessiné
     if (o.g.visible && Math.hypot(e.x - cam.position.x, e.y - cam.position.y, e.z - cam.position.z) > Q.vue + 50) (o.g.visible = false), lod.enginsCaches++;
@@ -352,6 +403,9 @@ Tanks.Scene = (function () {
     if (e.sorte === "dca") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle, distance: 0.5, hauteur: 0.4, devant: 1, regardY: 1.5 + Math.tan(Math.min(1.2, e.hausse)) * C.camera.regardDevant * 0.7 };
     if (e.sorte === "sousmarin") return { x: e.x, y: Math.max(e.y, C.lac.niveau - 1.3), z: e.z, angle: e.angle, distance: 1.5, hauteur: 0.75, devant: 1, regardY: 1.5 };
     if (e.sorte === "jeep") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle * 0.7, distance: 0.75, hauteur: 0.7, devant: 1, regardY: 2 };
+    if (e.sorte === "moto") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 0.42, hauteur: 0.42, devant: 0.8, regardY: 1.4 }; // (étape 71)
+    if (e.sorte === "quad") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 0.48, hauteur: 0.45, devant: 0.8, regardY: 1.3 };
+    if (e.sorte === "camion") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 1.05, hauteur: 0.85, devant: 1, regardY: 2.6 };
     if (e.sorte === "bateau") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle, distance: 1.1, hauteur: 0.8, devant: 1, regardY: 2 };
     if (e.sorte === "avion") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 1.9, hauteur: 0.9, devant: 2, regardY: 2, sansSol: true, tangage: e.tangage };
     if (e.sorte === "drone") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 0.6, hauteur: 0.9, devant: 0.6, regardY: -2 };
@@ -383,11 +437,18 @@ Tanks.Scene = (function () {
     if (monde.phase === "garage" && objets.size === 1) Tanks.Effets.effacer();
     for (const c of monde.chars) placer(objetDe(c), vue(c), dt);
     // étape 61 : les soldats, les engins, les projectiles (on enlève les dessins de ceux qui n'existent plus)
-    const presents = new Set(monde.soldats.concat(monde.engins, monde.bateaux, monde.sousMarins, monde.avions));
+    const presents = new Set(monde.soldats.concat(monde.engins, monde.vehicules, monde.bateaux, monde.sousMarins, monde.avions));
     for (const [x, o] of dessinsSoldats) if (!presents.has(x)) (scene.remove(o.g), dessinsSoldats.delete(x));
     for (const [x, o] of dessinsEngins) if (!presents.has(x)) (scene.remove(o.g), dessinsEngins.delete(x));
     horloge += dt;
-    for (const e of monde.engins.concat(monde.bateaux, monde.sousMarins, monde.avions)) placerEngin(engin3d(e), vue(e), dt, e);
+    for (const k in lotsSimples) lotsSimples[k].count = 0; // (étape 71 : les versions simples, recomptées à chaque image)
+    for (const e of monde.engins.concat(monde.vehicules, monde.bateaux, monde.sousMarins, monde.avions)) placerEngin(engin3d(e), vue(e), dt, e);
+    for (const k in lotsSimples) {
+      const lot = lotsSimples[k];
+      lot.visible = lot.count > 0 || !lot.userData.pret; // (première image : montré vide, pour préparer son programme de dessin)
+      lot.userData.pret = true;
+      if (lot.count) (lot.instanceMatrix.needsUpdate = true), (lot.instanceColor.needsUpdate = true);
+    }
     // (étape 62) les portails : le tourbillon tourne, l'anneau brille plus fort quand quelqu'un vient de passer
     for (const p of monde.portails) {
       let o = dessinsPortails.get(p);

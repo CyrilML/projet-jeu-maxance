@@ -215,6 +215,9 @@ Tanks.Sons = (function () {
     } else if (toi.mode === "jeep") {
       const part = Math.min(1, Math.abs(e.vitesse) / C.engins.jeep.vitesseMax);
       (frequence = 55 + part * 90), (aigu = 400 + part * 900), (fort = e.detruit ? 0 : 0.12 + part * 0.1);
+    } else if (toi.mode === "moto" || toi.mode === "quad" || toi.mode === "camion") { // (étape 71) le moteur monte dans les aigus avec la vitesse
+      const R = C.engins[toi.mode], part = Math.min(1, Math.abs(e.vitesse) / R.vitesseMax);
+      (frequence = R.son[0] + part * (R.son[1] - R.son[0])), (aigu = 500 + part * 1400), (fort = e.detruit ? 0 : 0.1 + part * 0.08);
     } else if (toi.mode === "sousmarin") { // (étape 63) un moteur électrique, grave et doux, et le « ping » du sonar
       const part = Math.min(1, Math.abs(e.vitesse) / C.sousMarins.joueur.vitesseMax);
       (frequence = 30 + part * 25), (aigu = 160 + part * 200), (fort = e.detruit ? 0 : 0.1 + part * 0.06), (souffleFort = 0.03), (souffleAigu = 250);
