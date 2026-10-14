@@ -103,7 +103,8 @@ Tanks.Engins = (function () {
     if (e.sorte === "dca") viserLeCiel(e, intentions, dt, R, monde, ev);
     else if (e.sorte === "jeep") rouler(e, intentions, dt, R, monde, ev);
     else if (Tanks.Vehicules.SORTES.includes(e.sorte)) {
-      Tanks.Vehicules.conduire(e, intentions, dt, monde, ev); // (étape 71)
+      // (étape 71) garé, sans personne dessus, immobile : rien à calculer (sauf le remplissage du camion)
+      if (e.pilote || Math.abs(e.vitesse) > 0.01) Tanks.Vehicules.conduire(e, intentions, dt, monde, ev);
       Tanks.Vehicules.remplirAuParking(e, place(e.sorte), dt, ev);
     }
     else if (e.sorte === "avion") voler(e, intentions, dt, R, monde, ev);
