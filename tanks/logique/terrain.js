@@ -46,7 +46,30 @@ Tanks.Terrain = (function () {
   const presDUnPortail = (x, z, d) => PORTAILS.some(([px, pz]) => Math.hypot(px - x, pz - z) < d);
 
   // ------------------------------------------------------------------ la hauteur du sol
+  // (étape 71) « Quelle est la hauteur du sol ici ? » est la question la plus posée du jeu (chaque soldat, chaque engin,
+  // chaque ligne de vue, 120 fois par seconde) et le calcul exact est long (4 couches de bruit, les villages, le lac…).
+  // Alors on garde un CAHIER DES HAUTEURS : la hauteur exacte aux coins d'un quadrillage de 2 m, calculée la première
+  // fois qu'on en a besoin, puis relue. Entre 4 coins, on fait la moyenne pondérée (« interpolation bilinéaire ») :
+  // l'écart avec le calcul exact est de quelques millimètres.
+  const PAS_H = C.monde.pasHauteurs, NH = Math.ceil(W.taille / PAS_H) + 1, cahier = new Float32Array(NH * NH).fill(NaN);
+  const cahierBilan = { remplies: 0, cases: NH * NH };
+  function coin(i, j) {
+    const k = j * NH + i;
+    let h = cahier[k];
+    if (h !== h) { // (NaN : pas encore calculée)
+      h = cahier[k] = hauteurExacte(i * PAS_H - demi, j * PAS_H - demi);
+      cahierBilan.remplies++;
+    }
+    return h;
+  }
   function hauteur(x, z) {
+    const u = (x + demi) / PAS_H, v = (z + demi) / PAS_H, i = Math.floor(u), j = Math.floor(v);
+    if (i < 0 || j < 0 || i >= NH - 1 || j >= NH - 1) return hauteurExacte(x, z); // (hors de la carte : le calcul exact)
+    const fu = u - i, fv = v - j;
+    const h00 = coin(i, j), h10 = coin(i + 1, j), h01 = coin(i, j + 1), h11 = coin(i + 1, j + 1);
+    return (h00 * (1 - fu) + h10 * fu) * (1 - fv) + (h01 * (1 - fu) + h11 * fu) * fv;
+  }
+  function hauteurExacte(x, z) {
     let h = B.fractal(bruit, x / W.collines.taille, z / W.collines.taille, 4) * W.collines.hauteur;
     // le village est sur un terrain presque plat : on « aplatit » les collines près du centre (étape 71 : et sous les hameaux)
     let plat = 1;
@@ -233,5 +256,5 @@ Tanks.Terrain = (function () {
     return liste;
   }
 
-  return { hauteur, normale, boites, arbres, arbresAutour, boitesAutour, grilles: { arbres: grilleArbres, boites: grilleBoites }, dansBoite, repousser, vueLibre, departs, demi, camp: CAMP, villages: VILLAGES, forets, distLac, dansLEau, ileProche, iles: ILES };
+  return { hauteur, hauteurExacte, cahierBilan, normale, boites, arbres, arbresAutour, boitesAutour, grilles: { arbres: grilleArbres, boites: grilleBoites }, dansBoite, repousser, vueLibre, departs, demi, camp: CAMP, villages: VILLAGES, forets, distLac, dansLEau, ileProche, iles: ILES };
 })();

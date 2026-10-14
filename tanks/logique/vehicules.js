@@ -353,9 +353,16 @@ Tanks.Vehicules = (function () {
       const a = Math.atan2(gz, gx) + ia.coteDetour * 1.1, l = Math.max(30, Math.hypot(gx, gz));
       (gx = Math.cos(a) * l), (gz = Math.sin(a) * l);
     }
-    const voulu = eviter(v, gx, gz, monde), envie = Math.hypot(voulu.x, voulu.z);
-    if (envie < 3 && Math.hypot(gx, gz) < 3) return Object.assign(I, { freiner: true });
-    const diff = angleEntre(Math.atan2(voulu.z, voulu.x) - v.angle);
+    // (regarder autour de soi coûte cher : on refait le calcul des aimants 20 fois par seconde, pas 120)
+    ia.regard = (ia.regard || 0) - dt;
+    if (ia.regard <= 0 || ia.direction === undefined) {
+      ia.regard = V.regard;
+      const voulu = eviter(v, gx, gz, monde);
+      ia.direction = Math.atan2(voulu.z, voulu.x);
+      ia.envie = Math.hypot(voulu.x, voulu.z);
+    }
+    if (ia.envie < 3 && Math.hypot(gx, gz) < 3) return Object.assign(I, { freiner: true });
+    const diff = angleEntre(ia.direction - v.angle);
     // coincé ? (il voudrait avancer mais n'avance plus) : il recule en braquant de l'autre côté
     if (ia.recule > 0) {
       ia.recule -= dt;

@@ -72,7 +72,7 @@ Tanks.Decor = (function () {
     const bruit = Tanks.Bruit.creer(77);
     for (let i = 0; i < p.count; i++) {
       const x = p.getX(i), z = p.getZ(i);
-      p.setY(i, T.hauteur(x, z));
+      p.setY(i, T.hauteurExacte(x, z));
       const b = Tanks.Bruit.fractal(bruit, x / 60, z / 60, 3);
       let village = 0; // (étape 71 : le village et les hameaux)
       for (const v of T.villages) village = Math.max(village, 1 - Math.hypot(x - v.x, z - v.z) / (v.rayon * 1.3));

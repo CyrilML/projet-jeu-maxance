@@ -33,6 +33,7 @@ Tanks.CONFIG = {
     arbres: 2700, bosquets: 70, forets: 9, partForets: 0.45, partBosquets: 0.4,
     haies: 120, granges: 30,
     camp: 640, // m : (étape 71) chaque camp est à 640 m du centre (avant : 280 m) ; les Bleus au sud, les Rouges au nord
+    pasHauteurs: 2, // m : (étape 71) le « cahier des hauteurs » retient la hauteur du sol tous les 2 m (voir logique/terrain.js)
     sol: 5, // m entre deux points du sol 3D (avant : 4 m ; la carte est plus grande, on garde le même nombre de triangles près de toi)
     bord: 20, // m : on ne peut pas sortir du champ de bataille (une clôture invisible à 20 m du bord)
   },
@@ -290,7 +291,8 @@ Tanks.CONFIG = {
   vehicules: {
     parCamp: { moto: 2, quad: 2, camion: 1 },
     vue: 150, distance: { moto: 45, quad: 30 }, fuir: 70, // m
-    pense: 0.25, // s : ils réfléchissent 4 fois par seconde
+    pense: 0.25, // s : ils cherchent une cible 4 fois par seconde
+    regard: 0.05, // s : ils regardent les obstacles autour d'eux 20 fois par seconde (pas 120 : ça coûte cher)
     erreur: 0.05, // rad : le pilote vise un peu de travers
     coneMoto: 1.2, coneQuad: 0.14, // rad : la moto tire d'une main vers le côté (± 69°) ; la mitrailleuse du quad, seulement devant (± 8°)
     front: 230, // m avant le village (côté de son camp) : là où le camion pose ses soldats
