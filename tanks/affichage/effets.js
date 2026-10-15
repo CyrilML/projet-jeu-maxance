@@ -152,12 +152,12 @@ Tanks.Effets = (function () {
         for (let k = 0; k < 6; k++) particule(d.x, d.y + 0.3, d.z, alea(3), 0.3, alea(3), 2, 2, 7 * g, 0.5, [0.85, 0.9, 0.92]);
         return;
       }
-      if (d.sorte === "grenade" && d.grenade) { // (étape 75) une grenade à main : un éclair, de la terre, un anneau de poussière
-        for (let k = 0; k < 16; k++) particule(d.x, d.y + 0.2, d.z, alea(5), 3 + Math.random() * 7, alea(5), 1 + Math.random() * 0.6, 0.6, 2.2, 0.9, [0.38, 0.3, 0.2], false, 9.8);
-        for (let k = 0; k < 12; k++) { const a = (k / 12) * Math.PI * 2; particule(d.x, d.y + 0.3, d.z, Math.cos(a) * 6, 0.4, Math.sin(a) * 6, 1.6, 1, 4, 0.5, [0.62, 0.58, 0.5]); }
-        for (let k = 0; k < 8; k++) particule(d.x, d.y + 0.6, d.z, alea(2.5), 1 + Math.random() * 2, alea(2.5), 0.35 + Math.random() * 0.2, 1.5, 3.2, 1, [1, 0.62, 0.25], true);
-        for (let k = 0; k < 5; k++) particule(d.x, d.y + 1, d.z, alea(1), 1.2, alea(1), 3, 2, 6, 0.45, [0.25, 0.23, 0.21]);
-        flash(d.x, d.y + 1, d.z, 25);
+      if (d.sorte === "grenade" && d.grenade) { // (étape 75) une grenade à main : un éclair, une gerbe de terre, un anneau de poussière, de la fumée
+        for (let k = 0; k < 24; k++) particule(d.x + alea(0.3), d.y + 0.2, d.z + alea(0.3), alea(4.5), 3 + Math.random() * 8, alea(4.5), 0.9 + Math.random() * 0.7, 0.35, 1.3, 0.95, [0.24, 0.19, 0.13], false, 9.8);
+        for (let k = 0; k < 14; k++) { const a = (k / 14) * Math.PI * 2; particule(d.x, d.y + 0.25, d.z, Math.cos(a) * 7, 0.5, Math.sin(a) * 7, 1.8, 0.8, 3.6, 0.55, [0.5, 0.45, 0.37]); }
+        for (let k = 0; k < 6; k++) particule(d.x + alea(0.4), d.y + 0.5 + Math.random() * 0.5, d.z + alea(0.4), alea(2), 1 + Math.random() * 2, alea(2), 0.22 + Math.random() * 0.12, 0.7, 1.8, 0.75, [1, 0.5, 0.16], true);
+        for (let k = 0; k < 8; k++) particule(d.x + alea(0.6), d.y + 0.8, d.z + alea(0.6), alea(0.8), 1.4 + Math.random(), alea(0.8), 3.5, 1.2, 4.5, 0.5, [0.2, 0.19, 0.17]);
+        flash(d.x, d.y + 1, d.z, 22);
         return;
       }
       const couleur = terre ? [0.42, 0.33, 0.22] : pierre ? [0.7, 0.66, 0.58] : [1, 0.8, 0.4];
