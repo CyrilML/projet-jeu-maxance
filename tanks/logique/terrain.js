@@ -14,6 +14,9 @@
 // sort de l'eau. Un point est donc « dans l'eau » s'il est dans l'ellipse du lac ET sur aucune île.
 // Étape 72 : pour aller vite, les arbres et les boîtes sont rangés dans un QUADRILLAGE (moteur/grille.js) : « qu'y a-t-il
 // près de moi ? » ne regarde plus que les cases voisines.
+// Étape 75 : ✍️ les MAISONS QU'ON PEUT DÉTRUIRE. Chaque boîte a maintenant un « type » (maison, grange, tour, muret,
+// haie) ; ses murs sont découpés en MORCEAUX par logique/structures.js. Une maison n'est plus un bloc plein : c'est 4 murs
+// et un toit (on peut entrer par un trou !). « repousser » et « vueLibre » demandent donc aux morceaux encore debout.
 // Étape 71 : ✍️ la carte est 3 FOIS PLUS GRANDE (2 100 m de côté). Pour la remplir : deux HAMEAUX en ruines en plus du
 // village (le sol est aplati sous chacun), de grandes FORÊTS en plus des bosquets, plus de haies et de granges. Les
 // deux camps sont à 640 m du centre (« camp »). Les nombres sont dans config.js (monde).
@@ -115,14 +118,14 @@ Tanks.Terrain = (function () {
       const x = vi.x + (rue ? le_long : cote), z = vi.z + (rue ? cote : le_long);
       const demiL = 4 + hasard() * 3.5, demiP = 3.5 + hasard() * 2.5;
       if (!loinDe(x, z, 4)) continue;
-      boites.push({ x, z, demiL, demiP, angle: rue ? 0 : Math.PI / 2, h: 4 + hasard() * 4, sorte: "maison", graine: Math.floor(hasard() * 1e6) });
+      boites.push({ x, z, demiL, demiP, angle: rue ? 0 : Math.PI / 2, h: 4 + hasard() * 4, sorte: "maison", type: "maison", hameau: vi !== V, lieu: vi.nom, graine: Math.floor(hasard() * 1e6) });
       n++;
     }
     for (let essai = 0, n = 0; n < vi.murets && essai < 600; essai++) {
       const a = hasard() * Math.PI * 2, r = vi.rayon * (0.4 + hasard() * 0.9);
       const x = vi.x + Math.cos(a) * r, z = vi.z + Math.sin(a) * r;
       if (!loinDe(x, z, 3)) continue;
-      boites.push({ x, z, demiL: 3 + hasard() * 5, demiP: 0.35, angle: hasard() < 0.5 ? a : a + Math.PI / 2, h: 1.1, sorte: "muret" });
+      boites.push({ x, z, demiL: 3 + hasard() * 5, demiP: 0.35, angle: hasard() < 0.5 ? a : a + Math.PI / 2, h: 1.1, sorte: "muret", type: "muret", lieu: vi.nom });
       n++;
     }
   }
@@ -130,12 +133,12 @@ Tanks.Terrain = (function () {
   for (let k = 0; k < W.haies; k++) {
     const x = (hasard() * 2 - 1) * (demi - 80), z = (hasard() * 2 - 1) * (demi - 80);
     if (presDUnVillage(x, z, 20) || dansUnCamp(x, z) || !loinDe(x, z, 8)) continue;
-    boites.push({ x, z, demiL: 8 + hasard() * 10, demiP: 0.6, angle: hasard() * Math.PI, h: 1.6, sorte: "muret" });
+    boites.push({ x, z, demiL: 8 + hasard() * 10, demiP: 0.6, angle: hasard() * Math.PI, h: 1.6, sorte: "muret", type: "haie", lieu: "la campagne" });
   }
   for (let k = 0; k < W.granges; k++) {
     const x = (hasard() * 2 - 1) * (demi - 120), z = (hasard() * 2 - 1) * (demi - 120);
     if (presDUnVillage(x, z, 40) || dansUnCamp(x, z) || !loinDe(x, z, 10)) continue;
-    boites.push({ x, z, demiL: 6 + hasard() * 3, demiP: 4.5, angle: hasard() * Math.PI, h: 5, sorte: "maison", graine: Math.floor(hasard() * 1e6) });
+    boites.push({ x, z, demiL: 6 + hasard() * 3, demiP: 4.5, angle: hasard() * Math.PI, h: 5, sorte: "maison", type: "grange", lieu: "la campagne", graine: Math.floor(hasard() * 1e6) });
   }
   // Les arbres : en grandes forêts (étape 71), en bosquets (des petits bois), et quelques-uns tout seuls.
   const centres = [], forets = [];
@@ -166,7 +169,7 @@ Tanks.Terrain = (function () {
       arbres.push({ x, z, r: 0.6, taille: 0.8 + hasard() * 0.5, ecrase: false, sorte: hasard() < 0.7 ? "sapin" : "feuillu", angleChute: 0 });
     }
   }
-  if (ILES[0]) boites.push({ x: ILES[0].x + 10, z: ILES[0].z + 12, demiL: 3.5, demiP: 3.5, angle: 0.4, h: 9, sorte: "maison", graine: 6301 });
+  if (ILES[0]) boites.push({ x: ILES[0].x + 10, z: ILES[0].z + 12, demiL: 3.5, demiP: 3.5, angle: 0.4, h: 9, sorte: "maison", type: "tour", lieu: ILES[0].nom, graine: 6301 });
 
   // (étape 72) LE QUADRILLAGE des obstacles (moteur/grille.js) : chaque arbre est rangé dans la case de son tronc,
   // chaque boîte dans toutes les cases qu'elle touche. « Qu'y a-t-il près de moi ? » = ouvrir ma case et ses voisines.
@@ -187,27 +190,15 @@ Tanks.Terrain = (function () {
   }
 
   // Pousse un cercle (un tank) hors des boîtes. Renvoie la boîte touchée (ou null).
+  // (étape 75) Une boîte n'est plus pleine : on demande à ses MORCEAUX de mur encore debout (logique/structures.js) ;
+  // le morceau touché est noté dans « o.morceauTouche » (un tank lancé vite peut défoncer le mur).
   function repousser(o, r) {
     let touche = null;
+    o.morceauTouche = null;
     for (const b of boitesAutour(o.x, o.z, r + 0.01, prochesRepousser)) { // (étape 72 : seulement les boîtes des cases voisines)
       if (Math.abs(o.x - b.x) > b.demiL + b.demiP + r || Math.abs(o.z - b.z) > b.demiL + b.demiP + r) continue;
-      const c = Math.cos(b.angle), s = Math.sin(b.angle), dx = o.x - b.x, dz = o.z - b.z;
-      const u = dx * c + dz * s, v = -dx * s + dz * c;
-      // le point de la boîte le plus proche du centre du tank
-      const pu = Math.max(-b.demiL, Math.min(b.demiL, u)), pv = Math.max(-b.demiP, Math.min(b.demiP, v));
-      let eu = u - pu, ev = v - pv, d = Math.hypot(eu, ev);
-      if (d >= r) continue;
-      if (d < 1e-6) { // (le centre est dans la boîte : on sort par le côté le plus proche)
-        const versU = b.demiL - Math.abs(u), versV = b.demiP - Math.abs(v);
-        if (versU < versV) (eu = Math.sign(u) || 1), (ev = 0);
-        else (eu = 0), (ev = Math.sign(v) || 1);
-        d = 0;
-      }
-      const l = Math.hypot(eu, ev) || 1, pousse = r - d;
-      const nu = eu / l, nv = ev / l;
-      o.x += (nu * c - nv * s) * pousse;
-      o.z += (nu * s + nv * c) * pousse;
-      touche = b;
+      const m = Tanks.Structures.pousser(b, o, r);
+      if (m) (touche = b), (o.morceauTouche = m);
     }
     // (étape 62) l'eau : on ramène le point sur la rive (en agrandissant son écart au centre du lac)…
     // (étape 63) …ou sur l'île d'où il vient, s'il est tout près d'une île (sinon un tank qui roule au bord d'une île
@@ -230,21 +221,16 @@ Tanks.Terrain = (function () {
   const LAC_BOITE = { sorte: "eau" };
 
   // La ligne de vue entre deux points (à la hauteur y au-dessus du sol) : rien entre les deux ?
-  // (Étape 61 : pour aller vite — 24 soldats et 8 tanks se posent la question sans arrêt —, on ne regarde que les
-  // boîtes qui sont dans le rectangle autour de la ligne, et le sol tous les 8 m seulement.)
+  // (Étape 61 : pour aller vite — 24 soldats et 8 tanks se posent la question sans arrêt —, on ne regarde le sol que tous
+  // les 9 m.) (Étape 75 : les murs, les gravats et les toits, c'est logique/structures.js qui répond : on peut voir à
+  // travers une fenêtre ou un trou !)
   for (const b of boites) (b.rayon = Math.hypot(b.demiL, b.demiP)), (b.sol = hauteur(b.x, b.z));
-  const prochesVue = []; // (une liste réutilisée : on n'en fabrique pas une nouvelle à chaque question)
   function vueLibre(x1, y1, z1, x2, y2, z2) {
-    const d = Math.hypot(x2 - x1, z2 - z1);
-    const minX = Math.min(x1, x2), maxX = Math.max(x1, x2), minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);
-    const proches = prochesVue;
-    proches.length = 0;
-    for (const b of boites) if (b.x + b.rayon > minX && b.x - b.rayon < maxX && b.z + b.rayon > minZ && b.z - b.rayon < maxZ) proches.push(b);
-    const n = Math.max(2, Math.ceil(d / 3));
+    if (Tanks.Structures.touche(x1, y1, z1, x2, y2, z2)) return false;
+    const d = Math.hypot(x2 - x1, z2 - z1), n = Math.max(2, Math.ceil(d / 9));
     for (let i = 1; i < n; i++) {
       const t = i / n, x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t, z = z1 + (z2 - z1) * t;
-      if (i % 3 === 0 && y < hauteur(x, z)) return false; // une colline entre les deux
-      for (const b of proches) if (y < b.sol + b.h && dansBoite(b, x, z)) return false;
+      if (y < hauteur(x, z)) return false; // une colline entre les deux
     }
     return true;
   }

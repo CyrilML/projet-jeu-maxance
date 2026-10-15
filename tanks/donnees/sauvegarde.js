@@ -15,23 +15,30 @@
 //     garde tout, avec 0.
 //   7 (étape 73) : + helicos (les hélicos de transport ennemis que tu as abattus ou détruits) et cordes (les soldats que
 //     tu as déposés à la corde avec ton Chinook ou ton Black Hawk). Une ancienne version garde tout, avec 0.
+//   8 (étape 75) : + maisons (les maisons que tu as fait s'effondrer), murs (les morceaux de mur que tu as fait tomber)
+//     et grenades (les grenades que tu as lancées). Une ancienne version garde tout, avec 0.
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 7;
+  const VERSION = 8;
   const radio = Tanks.Evenements;
 
   function vide() {
-    return { version: VERSION, char: "leclerc", victoires: 0, defaites: 0, detruits: 0, tirs: 0, touches: 0, bateaux: 0, portails: 0, sousMarins: 0, avions: 0, ordres: 0, vehicules: 0, helicos: 0, cordes: 0 };
+    return { version: VERSION, char: "leclerc", victoires: 0, defaites: 0, detruits: 0, tirs: 0, touches: 0, bateaux: 0, portails: 0, sousMarins: 0, avions: 0, ordres: 0, vehicules: 0, helicos: 0, cordes: 0, maisons: 0, murs: 0, grenades: 0 };
   }
 
   let donnees = vide();
   function lire() {
     try {
       const brut = localStorage.getItem(CLE);
-      if (brut) donnees = Object.assign(vide(), JSON.parse(brut), { version: VERSION });
+      // (une ancienne version : on garde tout ce qu'elle avait, et les nouveaux compteurs commencent à 0)
+      if (brut) {
+        const ancienne = JSON.parse(brut);
+        donnees = Object.assign(vide(), ancienne, { version: VERSION });
+        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION });
+      }
     } catch (e) {
       donnees = vide();
     }

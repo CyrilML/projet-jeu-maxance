@@ -26,6 +26,17 @@
 // détails, mais la carte graphique a MOINS d'objets à dessiner qu'avant.
 // (Étape 72 : et une copie de toutes les roues soudées en une pièce, montrée à la place des 18 roues quand le tank est loin.)
 //
+// ✍️ Étape 75 : « Refais aussi les tanks : le plus beau possible. »
+//   - la PEINTURE : un vrai camouflage à grandes taches arrondies, peint au démarrage avec du « bruit » (bois : olive,
+//     brun, noir et vert clair pour les Bleus ; désert : sable, brun et ocre pour les Rouges, comme les hélicos), avec
+//     le grain de la peinture mate ;
+//   - l'USURE : le « shader » de la peinture ajoute de la BOUE en bas (plus on est près du sol, plus il y en a, avec des
+//     bords irréguliers), de la poussière, des coulures et de petits éclats de peinture (on voit l'apprêt dessous) ;
+//   - des formes ARRONDIES : la tourelle a des coins arrondis et un chanfrein (une petite pente) tout autour du toit, qui
+//     attrape la lumière comme une vraie arête ; les plaques de la caisse ont des bords adoucis ;
+//   - les CHENILLES : de près, chaque MAILLON est une vraie pièce en 3D (le patin, la semelle en caoutchouc, les deux
+//     connecteurs, le guide au milieu) qui défile autour des roues ; de loin, l'image d'avant ;
+//   - le NUMÉRO du tank peint sur la tourelle (avec la marque de son équipe), des maillons de rechange, des jerricans.
 // Tout est construit « nez vers x+ », posé au sol (y = 0). Ce fichier ne connaît pas les règles du jeu.
 
 window.Tanks = window.Tanks || {};
@@ -65,6 +76,134 @@ Tanks.Chars3D = (function () {
     t.colorSpace = THREE.SRGBColorSpace;
     t.repeat.set(0.25, 0.25);
     return (cache[cle] = t);
+  }
+
+  // ------------------------------------------------------------------ (étape 75) la peinture des tanks
+  // Un bruit qui se RÉPÈTE parfaitement d'un bord de l'image à l'autre : on mélange 4 copies décalées du bruit, chacune
+  // d'autant plus forte qu'on est loin du bord où elle « casse ».
+  const bruitRepete = (br, x, y, P, oct) => {
+    const fx = x / P, fy = y / P, f = (a, b) => Tanks.Bruit.fractal(br, a, b, oct);
+    return f(x, y) * (1 - fx) * (1 - fy) + f(x - P, y) * fx * (1 - fy) + f(x, y - P) * (1 - fx) * fy + f(x - P, y - P) * fx * fy;
+  };
+  // Le CAMOUFLAGE d'une équipe (une image de 512 points = 4 m de tôle) : des taches arrondies, chacune de sa couleur, qui se
+  // chevauchent (bois : de longues taches noires par-dessus ; désert : de grandes plaques brunes et ocre).
+  function camoChar(equipe) {
+    const cle = "camo:" + equipe;
+    if (cache[cle]) return cache[cle];
+    const PE = Tanks.CONFIG.peinture[equipe], n = 256, P = 4; // (4 « cases » de bruit sur l'image : des taches d'environ 1 m)
+    const cols = PE.taches.map((h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b].map((v) => Math.round(Math.pow(v, 1 / 2.2) * 255)); });
+    const b1 = Tanks.Bruit.creer(equipe === "bleus" ? 751 : 761), b2 = Tanks.Bruit.creer(equipe === "bleus" ? 752 : 762), b3 = Tanks.Bruit.creer(equipe === "bleus" ? 753 : 763);
+    const petit = document.createElement("canvas");
+    petit.width = petit.height = n;
+    const pc = petit.getContext("2d"), img = pc.createImageData(n, n);
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+      const x = (i / n) * P, y = (j / n) * P * 0.8 + 0.37;
+      const t1 = bruitRepete(b1, x, y, P, 3), t2 = bruitRepete(b2, x * 1.3, y * 1.3, P * 1.3, 3), t3 = bruitRepete(b3, x * 1.7, y * 1.1, P * 1.7, 2);
+      let c = cols[0];
+      if (equipe === "bleus") {
+        if (t2 > 0.16) c = cols[3];
+        if (t1 > 0.1) c = cols[1];
+        if (t3 > 0.22) c = cols[2];
+      } else {
+        if (t1 > 0.06) c = cols[1];
+        if (t2 > 0.2) c = cols[2];
+        if (t3 > 0.3) c = cols[3];
+      }
+      const k = (j * n + i) * 4;
+      img.data[k] = c[0]; img.data[k + 1] = c[1]; img.data[k + 2] = c[2]; img.data[k + 3] = 255;
+    }
+    pc.putImageData(img, 0, 0);
+    const c = document.createElement("canvas");
+    c.width = c.height = 512;
+    const ctx = c.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(petit, 0, 0, 512, 512);
+    let etat = 75;
+    const h = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
+    for (let i = 0; i < 16000; i++) (ctx.fillStyle = "rgba(" + (h() < 0.5 ? "0,0,0," : "255,250,235,") + h() * 0.07 + ")"), ctx.fillRect(h() * 512, h() * 512, 1.5, 1.5);
+    for (let i = 0; i < 90; i++) { // des retouches de peinture (un peu plus claires ou plus foncées)
+      const x = h() * 512, y = h() * 512, r = 10 + h() * 40, g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, "rgba(" + (h() < 0.5 ? "0,0,0," : "255,255,255,") + "0.05)");
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 8;
+    t.repeat.set(0.25, 0.25);
+    return (cache[cle] = t);
+  }
+  // L'image de la SALETÉ (4 m) : rouge = des nuages de saleté, vert = de petits éclats de peinture, bleu = des coulures.
+  function texSalete() {
+    if (cache.salete) return cache.salete;
+    const n = 256, P = 6, br = Tanks.Bruit.creer(7577), img = new ImageData(n, n);
+    let etat = 7578;
+    const h = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
+    const eclats = new Float32Array(n * n), coulures = new Float32Array(n * n);
+    for (let k = 0; k < 110; k++) { // les éclats : de petites taches irrégulières
+      const x = Math.floor(h() * n), y = Math.floor(h() * n), r = 1 + h() * 2.2;
+      for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (dx * dx + dy * dy < r * r * (0.6 + h() * 0.8)) eclats[((y + dy + n) % n) * n + ((x + dx + n) % n)] = 1;
+    }
+    for (let k = 0; k < 70; k++) { // les coulures : des traits verticaux qui s'effacent
+      const x = Math.floor(h() * n), y = Math.floor(h() * n), l = 10 + h() * 60, f = 0.3 + h() * 0.7;
+      for (let d = 0; d < l; d++) coulures[((y + d) % n) * n + x] = Math.max(coulures[((y + d) % n) * n + x], f * (1 - d / l));
+    }
+    for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+      const v = bruitRepete(br, (i / n) * P, (j / n) * P, P, 4) * 0.5 + 0.5, k = (j * n + i) * 4;
+      img.data[k] = Math.max(0, Math.min(255, v * 255));
+      img.data[k + 1] = eclats[j * n + i] * 255;
+      img.data[k + 2] = coulures[j * n + i] * 255;
+      img.data[k + 3] = 255;
+    }
+    const c = document.createElement("canvas");
+    c.width = c.height = n;
+    c.getContext("2d").putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = 4;
+    return (cache.salete = t);
+  }
+  // Le « shader » de l'USURE : de la boue en bas (selon la hauteur de chaque point, « hauteur », dans le repère du tank),
+  // de la poussière, des coulures, et des éclats de peinture. (Les coordonnées de texture sont en mètres : camoAPlat.)
+  function usure(mat, equipe) {
+    const PE = Tanks.CONFIG.peinture[equipe];
+    mat.onBeforeCompile = (sh) => {
+      sh.uniforms.texSalete = { value: texSalete() };
+      sh.uniforms.couleurBoue = { value: new THREE.Color(PE.boue) };
+      sh.uniforms.couleurPoussiere = { value: new THREE.Color(PE.poussiere) };
+      sh.uniforms.hauteurBoue = { value: Tanks.CONFIG.peinture.boue };
+      sh.vertexShader = sh.vertexShader
+        .replace("#include <common>", "#include <common>\nattribute float hauteur;\nvarying float vHaut;\nvarying vec2 vUvSal;")
+        .replace("#include <begin_vertex>", "#include <begin_vertex>\nvHaut = hauteur;\nvUvSal = uv;");
+      sh.fragmentShader = sh.fragmentShader
+        .replace("#include <common>", "#include <common>\nuniform sampler2D texSalete;\nuniform vec3 couleurBoue;\nuniform vec3 couleurPoussiere;\nuniform float hauteurBoue;\nvarying float vHaut;\nvarying vec2 vUvSal;")
+        .replace("#include <map_fragment>", [
+          "#include <map_fragment>",
+          "vec4 sal = texture2D(texSalete, vUvSal * 0.25);",
+          "vec4 sal2 = texture2D(texSalete, vUvSal * 0.9 + 0.31);",
+          "float boue = smoothstep(hauteurBoue, hauteurBoue * 0.3, vHaut + (sal.r - 0.5) * 0.9 + (sal2.r - 0.5) * 0.25);",
+          "diffuseColor.rgb = mix(diffuseColor.rgb, couleurBoue * (0.7 + 0.6 * sal2.r), boue * 0.9);",
+          "diffuseColor.rgb = mix(diffuseColor.rgb, couleurPoussiere, (1.0 - boue) * smoothstep(0.45, 0.85, sal.r) * 0.35);",
+          "diffuseColor.rgb *= 1.0 - sal2.b * 0.28 * (1.0 - boue);",
+          "diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.155, 0.14), sal.g * (1.0 - boue) * 0.5);",
+        ].join("\n"))
+        .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.97, boue);")
+        // (les faces tournées vers le bas reçoivent moins de lumière du ciel : un peu plus sombres, comme dans la réalité)
+        .replace("#include <normal_fragment_maps>", "#include <normal_fragment_maps>\nvec3 nMonde = normalize((vec4(normal, 0.0) * viewMatrix).xyz);\ndiffuseColor.rgb *= mix(0.6, 1.0, smoothstep(-0.75, 0.25, nMonde.y));");
+    };
+    mat.customProgramCacheKey = () => "usure-" + equipe;
+    return mat;
+  }
+  // (on écrit, pour chaque point d'un objet soudé, sa hauteur dans le repère du tank : c'est elle qui dit où va la boue)
+  function hauteurs(objets, decalage) {
+    for (const o of objets) {
+      if (!o.material.userData.usure) continue;
+      const p = o.geometry.attributes.position, h = new Float32Array(p.count);
+      for (let i = 0; i < p.count; i++) h[i] = p.getY(i) + decalage;
+      o.geometry.setAttribute("hauteur", new THREE.BufferAttribute(h, 1));
+    }
   }
 
   // Les patins de la chenille, dessinés sur une petite toile (4 patins de 16 cm : la toile fait 64 cm de chenille).
@@ -117,6 +256,7 @@ Tanks.Chars3D = (function () {
     mats.verre = new THREE.MeshStandardMaterial({ color: 0x1d3a4c, metalness: 0.85, roughness: 0.08, emissive: 0x08141c });
     mats.phare = new THREE.MeshStandardMaterial({ color: 0xe8eef0, metalness: 0.4, roughness: 0.1, emissive: 0xb8c4c8, emissiveIntensity: 0.35 });
     mats.brule = new THREE.MeshStandardMaterial({ color: 0x1c1a18, roughness: 1, metalness: 0.1 });
+    mats.maillon = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.78, metalness: 0.45 }); // (étape 75 : les maillons)
     return mats;
   }
   // Les matières de chaque équipe : la peinture camouflage et la couleur de la marque.
@@ -124,11 +264,15 @@ Tanks.Chars3D = (function () {
   function matsEquipe(equipe) {
     if (parEquipe[equipe]) return parEquipe[equipe];
     const E = Tanks.CONFIG.equipes[equipe];
-    const peinture = new THREE.MeshStandardMaterial({ map: camouflage(E.camouflage), roughness: 0.85, metalness: 0.15 });
-    peinture.userData.camo = true;
-    const vert = new THREE.Color(E.camouflage[0]).multiplyScalar(0.8);
+    // (étape 75) le camouflage à taches arrondies, et l'usure (la boue, la poussière, les éclats)
+    const peinture = usure(new THREE.MeshStandardMaterial({ map: camoChar(equipe), roughness: 0.8, metalness: 0.12 }), equipe);
+    peinture.userData.camo = peinture.userData.usure = true;
+    // (les petites pièces à couleurs de sommets du tank : la même usure, avec la boue sur les roues)
+    const teinte = usure(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.72, metalness: 0.35 }), equipe);
+    teinte.userData.camo = teinte.userData.usure = true;
+    const vert = new THREE.Color(Tanks.CONFIG.peinture[equipe].taches[0]).multiplyScalar(0.85);
     return (parEquipe[equipe] = {
-      peinture,
+      peinture, teinte,
       marque: new THREE.MeshStandardMaterial({ color: E.marque, emissive: E.marque, emissiveIntensity: 0.25, side: THREE.DoubleSide }),
       vert, // (la couleur de fond, sans taches, pour les roues et les petites pièces peintes)
       vertFonce: vert.clone().multiplyScalar(0.7),
@@ -148,7 +292,7 @@ Tanks.Chars3D = (function () {
   function geoGalet(r, larg, E, cote, acierNu) {
     const cle = ["galet", r, larg, E.vert.getHex(), cote, acierNu].join(":");
     if (roues[cle]) return roues[cle];
-    const m = materiaux(), o = cote; // (o : de quel côté est la face extérieure de la roue)
+    const m = { teinte: E.teinte }, o = cote; // (o : de quel côté est la face extérieure de la roue) (étape 75 : avec l'usure)
     const p = [];
     p.push(cylindre(r, r, larg * 0.98, m.teinte, 14, acierNu ? C.acier : C.caoutchouc)); // le pneu (ou la jante d'acier)
     p.push(cylindre(r - 0.065, r - 0.065, larg + 0.012, m.teinte, 14, E.vert)); // la flasque
@@ -167,7 +311,7 @@ Tanks.Chars3D = (function () {
   function geoBarbotin(r, larg, E, cote) {
     const cle = ["barbotin", r, larg, E.vert.getHex(), cote].join(":");
     if (roues[cle]) return roues[cle];
-    const m = materiaux(), o = cote, n = 12, dent = new THREE.Shape();
+    const m = { teinte: E.teinte }, o = cote, n = 12, dent = new THREE.Shape();
     for (let k = 0; k < n; k++) { // une roue dentée : 12 dents
       const a = (k / n) * Math.PI * 2, d = Math.PI / n;
       const pt = (rr, aa) => [Math.cos(aa) * rr, Math.sin(aa) * rr];
@@ -343,9 +487,174 @@ Tanks.Chars3D = (function () {
     }
   }
 
+  // ------------------------------------------------------------------ (étape 75) la tourelle ARRONDIE
+  // On « arrondit » chaque coin du contour (vu de dessus) : le coin est remplacé par un petit arc de cercle. Puis on
+  // fait 3 anneaux : le bas, le haut (un peu sous le toit) et le haut RENTRÉ de « ch » (le chanfrein : une petite pente
+  // tout autour du toit), et on les relie. Les normales (la direction de chaque point de la surface) sont calculées
+  // pour que la lumière glisse en douceur sur les arrondis, et que les grandes faces restent bien plates.
+  function arrondir(contour, r, nSeg) {
+    const n = contour.length, sortie = [];
+    for (let i = 0; i < n; i++) {
+      const p0 = contour[(i - 1 + n) % n], p1 = contour[i], p2 = contour[(i + 1) % n];
+      let e1x = p1[0] - p0[0], e1z = p1[1] - p0[1], e2x = p2[0] - p1[0], e2z = p2[1] - p1[1];
+      const l1 = Math.hypot(e1x, e1z) || 1, l2 = Math.hypot(e2x, e2z) || 1;
+      (e1x /= l1), (e1z /= l1), (e2x /= l2), (e2z /= l2);
+      const cos = Math.max(-1, Math.min(1, -(e1x * e2x + e1z * e2z))), angle = Math.acos(cos); // (l'angle du coin)
+      if (angle > Math.PI - 0.05) { sortie.push({ x: p1[0], z: p1[1], tx: e1x + e2x, tz: e1z + e2z }); continue; }
+      const d = Math.min(r / Math.tan(angle / 2), l1 * 0.45, l2 * 0.45);
+      for (let k = 0; k <= nSeg; k++) {
+        const t = k / nSeg, ax = p1[0] - e1x * d, az = p1[1] - e1z * d, bx = p1[0] + e2x * d, bz = p1[1] + e2z * d;
+        // (une courbe de Bézier entre le début et la fin de l'arrondi, tirée vers le coin : presque un arc de cercle)
+        const u = 1 - t, x = u * u * ax + 2 * u * t * p1[0] + t * t * bx, z = u * u * az + 2 * u * t * p1[1] + t * t * bz;
+        sortie.push({ x, z, tx: e1x * u + e2x * t, tz: e1z * u + e2z * t });
+      }
+    }
+    for (const p of sortie) { const l = Math.hypot(p.tx, p.tz) || 1; (p.tx /= l), (p.tz /= l); }
+    return sortie;
+  }
+  function tourelleArrondie(bas, haut, y0, y1, mat, r, ch) {
+    const A = arrondir(bas, r, 4), B = arrondir(haut, r * 0.9, 4), n = A.length;
+    let aire = 0, cx = 0, cz = 0;
+    for (let i = 0; i < n; i++) (aire += A[i].x * A[(i + 1) % n].z - A[(i + 1) % n].x * A[i].z), (cx += A[i].x / n), (cz += A[i].z / n);
+    const s = aire > 0 ? -1 : 1; // (de quel côté est l'extérieur)
+    const nrm = (p) => [p.tz * s, -p.tx * s]; // (la normale vers l'extérieur, vue de dessus)
+    const C2 = B.map((p) => { const [nx, nz] = nrm(p); return { x: p.x - nx * ch, z: p.z - nz * ch }; });
+    const pos = [], nor = [];
+    const sommet = (x, y, z, n) => (pos.push(x, y, z), nor.push(n[0], n[1], n[2]));
+    const normCote = (i) => { // la normale du flanc (penché) au point i
+      const [nx, nz] = nrm(A[i]), dx = B[i].x - A[i].x, dz = B[i].z - A[i].z, dy = y1 - ch - y0;
+      // (le flanc penche vers l'intérieur : sa normale monte un peu)
+      const pente = -(dx * nx + dz * nz) / dy, l = Math.hypot(nx, pente, nz);
+      return [nx / l, pente / l, nz / l];
+    };
+    const normChanfrein = (i) => { const [nx, nz] = nrm(B[i]), l = Math.hypot(nx, 1.1, nz); return [nx / l, 1.1 / l, nz / l]; };
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n, ni = normCote(i), nj = normCote(j), ci = normChanfrein(i), cj = normChanfrein(j);
+      // le flanc
+      sommet(A[i].x, y0, A[i].z, ni); sommet(A[j].x, y0, A[j].z, nj); sommet(B[j].x, y1 - ch, B[j].z, nj);
+      sommet(A[i].x, y0, A[i].z, ni); sommet(B[j].x, y1 - ch, B[j].z, nj); sommet(B[i].x, y1 - ch, B[i].z, ni);
+      // le chanfrein
+      sommet(B[i].x, y1 - ch, B[i].z, ci); sommet(B[j].x, y1 - ch, B[j].z, cj); sommet(C2[j].x, y1, C2[j].z, cj);
+      sommet(B[i].x, y1 - ch, B[i].z, ci); sommet(C2[j].x, y1, C2[j].z, cj); sommet(C2[i].x, y1, C2[i].z, ci);
+    }
+    // le toit (à plat)
+    const tris = THREE.ShapeUtils.triangulateShape(C2.map((p) => new THREE.Vector2(p.x, p.z)), []);
+    for (const t of tris) {
+      const [a, b, c] = t.map((k) => C2[k]), up = (b.x - a.x) * (c.z - a.z) - (b.z - a.z) * (c.x - a.x) < 0;
+      for (const p of up ? [a, b, c] : [a, c, b]) sommet(p.x, y1, p.z, [0, 1, 0]);
+    }
+    // (le sens des triangles des flancs : leur normale « géométrique » doit aller vers l'extérieur, sinon on les retourne)
+    const P0 = new THREE.Vector3(...pos.slice(0, 3)), P1 = new THREE.Vector3(...pos.slice(3, 6)), P2 = new THREE.Vector3(...pos.slice(6, 9));
+    const g0 = new THREE.Vector3().subVectors(P1, P0).cross(new THREE.Vector3().subVectors(P2, P0));
+    if (g0.dot(new THREE.Vector3(...nor.slice(0, 3))) < 0) {
+      const fin = n * 12 * 3;
+      for (let t = 0; t < fin; t += 9) for (let k = 0; k < 3; k++) {
+        [pos[t + 3 + k], pos[t + 6 + k]] = [pos[t + 6 + k], pos[t + 3 + k]];
+        [nor[t + 3 + k], nor[t + 6 + k]] = [nor[t + 6 + k], nor[t + 3 + k]];
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
+    g.setAttribute("uv", new THREE.Float32BufferAttribute(new Float32Array((pos.length / 3) * 2), 2));
+    return O.piece(g, mat);
+  }
+
+  // ------------------------------------------------------------------ (étape 75) les MAILLONS de la chenille, en 3D
+  // Un maillon (dans son repère : x le long de la chenille, −y vers l'extérieur — le sol —, z en travers) : le patin en
+  // acier, les deux semelles en caoutchouc (dehors), les deux connecteurs (des tiges en travers, avec leurs écrous) et le
+  // guide au milieu (dedans, il passe entre les deux moitiés des galets).
+  const PAS_MAILLON = 0.165;
+  function geoMaillon(tw) {
+    const cle = "maillon:" + tw;
+    if (cache[cle]) return cache[cle];
+    const mt = materiaux().maillon, p = [], w = tw / 2;
+    p.push(boite(0.13, 0.045, tw * 0.94, mt, 0, -0.012, 0, 0x3b3a35)); // le patin
+    for (const s of [-1, 1]) {
+      p.push(boite(0.11, 0.028, w * 0.72, mt, 0, -0.048, s * w * 0.5, 0x191918)); // les semelles en caoutchouc
+      p.push(boite(0.035, 0.03, 0.05, mt, 0, -0.004, s * (w + 0.015), 0x5b5852)); // les écrous des connecteurs
+    }
+    for (const x of [-PAS_MAILLON / 2 + 0.012, PAS_MAILLON / 2 - 0.012]) p.push(couche(cylindre(0.02, 0.02, tw * 1.02, mt, 6, 0x56544e), "z", x, 0.0, 0));
+    p.push(boite(0.07, 0.07, 0.06, mt, 0, 0.045, 0, 0x4b4943)); // le guide
+    return (cache[cle] = geometrieTeintee(p, mt));
+  }
+  // Le chemin du milieu de la chenille tout autour des roues (des points, et la longueur parcourue jusqu'à chacun).
+  function cheminChenille(cercles, ep) {
+    const int = enveloppe(cercles), n = int.length, pts = [];
+    for (let i = 0; i < n; i++) {
+      const a = int[(i - 1 + n) % n], b = int[(i + 1) % n], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1;
+      pts.push([int[i][0] + (dy / l) * ep * 0.5, int[i][1] - (dx / l) * ep * 0.5]);
+    }
+    const s = [0];
+    for (let i = 1; i <= n; i++) s.push(s[i - 1] + Math.hypot(pts[i % n][0] - pts[i - 1][0], pts[i % n][1] - pts[i - 1][1]));
+    return { pts, s, longueur: s[n] };
+  }
+  // Les maillons des 2 chenilles (une seule « instance » pour tout le tank) ; maj(gauche, droite) les fait défiler.
+  function maillons(cercles, ep, tw, zc) {
+    const ch = cheminChenille(cercles, ep), nb = Math.round(ch.longueur / PAS_MAILLON), pas = ch.longueur / nb;
+    const mesh = new THREE.InstancedMesh(geoMaillon(tw), materiaux().maillon, nb * 2);
+    mesh.castShadow = mesh.receiveShadow = true;
+    mesh.frustumCulled = false;
+    const tab = mesh.instanceMatrix.array, n = ch.pts.length;
+    function maj(gauche, droite) {
+      [gauche, droite].forEach((dist, cote) => {
+        const z = (cote ? 1 : -1) * zc;
+        let d0 = (-dist) % pas;
+        if (d0 < 0) d0 += pas;
+        let seg = 0;
+        for (let k = 0; k < nb; k++) {
+          const voulu = d0 + k * pas;
+          while (seg < n - 1 && ch.s[seg + 1] < voulu) seg++;
+          const a = ch.pts[seg], b = ch.pts[(seg + 1) % n], l = ch.s[seg + 1] - ch.s[seg] || 1e-6, t = (voulu - ch.s[seg]) / l;
+          const x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t, tx = (b[0] - a[0]) / l, ty = (b[1] - a[1]) / l;
+          const i = (cote * nb + k) * 16;
+          // la matrice : x du maillon le long du chemin (tx, ty), son y vers l'intérieur de la boucle (−ty, tx)
+          tab[i] = tx; tab[i + 1] = ty; tab[i + 2] = 0; tab[i + 3] = 0;
+          tab[i + 4] = -ty; tab[i + 5] = tx; tab[i + 6] = 0; tab[i + 7] = 0;
+          tab[i + 8] = 0; tab[i + 9] = 0; tab[i + 10] = 1; tab[i + 11] = 0;
+          tab[i + 12] = x; tab[i + 13] = y; tab[i + 14] = z; tab[i + 15] = 1;
+        }
+      });
+      mesh.instanceMatrix.needsUpdate = true;
+    }
+    maj(0, 0);
+    return { mesh, maj, nombre: nb * 2 };
+  }
+
+  // ------------------------------------------------------------------ (étape 75) le NUMÉRO peint sur la tourelle
+  // Une petite image : la marque de l'équipe (un chevron pour les Bleus, un triangle pour les Rouges, dans sa couleur),
+  // et le numéro du tank en lettres « au pochoir » (avec les petits ponts qui coupent les chiffres), un peu usé.
+  function imageNumero(equipe, numero) {
+    const c = document.createElement("canvas");
+    c.width = 256;
+    c.height = 128;
+    const ctx = c.getContext("2d"), E = Tanks.CONFIG.equipes[equipe];
+    ctx.fillStyle = E.marque;
+    if (equipe === "bleus") {
+      ctx.beginPath(); ctx.moveTo(14, 96); ctx.lineTo(50, 30); ctx.lineTo(86, 96); ctx.lineTo(70, 96); ctx.lineTo(50, 58); ctx.lineTo(30, 96); ctx.closePath(); ctx.fill();
+    } else {
+      ctx.beginPath(); ctx.moveTo(16, 34); ctx.lineTo(84, 34); ctx.lineTo(50, 96); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle = "rgba(236,232,218,0.95)";
+    ctx.font = "bold 78px Impact, 'Arial Black', sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillText(numero, 100, 66);
+    ctx.globalCompositeOperation = "destination-out"; // les ponts du pochoir, et l'usure
+    ctx.fillStyle = "#000";
+    for (let x = 100; x < 250; x += 37) ctx.fillRect(x + 17, 20, 4, 100);
+    let etat = numero.charCodeAt(0) * 31 + numero.charCodeAt(1);
+    const h = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
+    for (let i = 0; i < 260; i++) (ctx.globalAlpha = 0.3 + h() * 0.6), ctx.fillRect(h() * 256, h() * 128, 1 + h() * 4, 1 + h() * 3);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    return t;
+  }
+
   // ------------------------------------------------------------------ le tank
-  function fabriquer(fiche, equipe) {
-    const m = materiaux(), E = matsEquipe(equipe), P = E.peinture;
+  function fabriquer(fiche, equipe, numero) {
+    const E = matsEquipe(equipe), P = E.peinture;
+    const m = Object.assign(Object.create(materiaux()), { teinte: E.teinte }); // (étape 75 : les petites pièces du tank ont aussi l'usure)
     const T = TYPES[fiche.id] || TYPES.leclerc, F = T.tourelle;
     const L = fiche.longueur, W = fiche.largeur, H = fiche.hauteur, pont = H - T.hT;
     const tw = 0.64, ep = 0.09, zc = W / 2 - tw / 2 - 0.12; // la largeur et l'épaisseur des chenilles, et leur place
@@ -364,7 +673,7 @@ Tanks.Chars3D = (function () {
     const cercles = xsGalets.map((x) => ({ x, y: yG, r: rG })).concat([{ x: xAr, y: yS, r: rS }, { x: xAv, y: yI, r: rI }], xsRouleaux.map((x) => ({ x, y: yR, r: rR })));
     const geoBoucle = geoChenille(cercles, ep, tw);
     const patins = texturePatins();
-    const chenilles = [], lesRoues = [];
+    const chenilles = [], lesRoues = [], chenillesImages = [];
     for (const cote of [-1, 1]) {
       const mat = new THREE.MeshStandardMaterial({ map: patins.clone(), roughness: 0.82, metalness: 0.45, side: THREE.DoubleSide });
       mat.map.needsUpdate = true;
@@ -372,8 +681,10 @@ Tanks.Chars3D = (function () {
       chenille.position.z = cote * zc;
       chenille.castShadow = chenille.receiveShadow = true;
       g.add(chenille);
+      chenillesImages.push(chenille);
       chenilles.push(mat);
       const ajouterRoue = (geo, x, y, r) => {
+        if (!geo.attributes.hauteur) geo.setAttribute("hauteur", new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count).fill(y * 0.55), 1)); // (étape 75 : les roues sont boueuses)
         const roue = new THREE.Mesh(geo, m.teinte);
         roue.rotation.x = Math.PI / 2;
         roue.position.set(x, y, cote * zc);
@@ -434,6 +745,15 @@ Tanks.Chars3D = (function () {
       caisse.add(couche(cylindre(0.02, 0.02, 1.5, m.teinte, 6, C.noir), "x", xo - 0.2, pont + 0.03, z - cote * 0.1));
       for (const dx of [-0.4, 0.4]) caisse.add(boite(0.05, 0.06, 0.16, m.teinte, xo + dx, pont + 0.04, z - cote * 0.05, C.olive)); // les attaches
     }
+    // (étape 75) les COFFRES DE RANGEMENT sur les garde-boue (avec leur couvercle, leurs charnières et leurs fermoirs)
+    for (const cote of [-1, 1]) {
+      const z = cote * (zJupe - 0.32);
+      for (const [x, l] of [[-L / 2 + 1.05, 1.25]]) {
+        caisse.add(profil([[x - l / 2, pont], [x + l / 2, pont], [x + l / 2, pont + 0.3], [x - l / 2 + 0.04, pont + 0.32]], 0.5, P, 0.02).translateZ(z));
+        caisse.add(boite(l + 0.02, 0.03, 0.52, P, x, pont + 0.33, z)); // le couvercle
+        for (const dx of [-l / 3, l / 3]) caisse.add(boite(0.06, 0.08, 0.025, m.teinte, x + dx, pont + 0.24, z + cote * 0.26, C.noir)); // les fermoirs
+      }
+    }
     // les grilles du moteur (à l'arrière du pont) : un fond sombre et des lames
     for (const cote of [-1, 1]) {
       const xg = -L / 2 + 0.95, zg = cote * 0.75;
@@ -483,7 +803,7 @@ Tanks.Chars3D = (function () {
     caisse.add(tourelle);
     const toit = pont + T.hT;
     tourelle.add(cylindre(1.05, 1.1, 0.12, m.teinte, 24, C.noir).translateY(pont + 0.04)); // l'anneau de la tourelle
-    tourelle.add(lisse(contourComplet(F.bas), contourComplet(F.haut), pont + 0.06, toit, P));
+    tourelle.add(tourelleArrondie(contourComplet(F.bas), contourComplet(F.haut), pont + 0.06, toit, P, 0.14, 0.07)); // (étape 75 : arrondie)
     const zFlanc = (x) => largeurA(F.bas, x), zToit = (x) => largeurA(F.haut, x);
     const avantT = F.haut[2][0]; // (l'avant du toit, à côté du canon)
     if (fiche.id === "leclerc") {
@@ -560,13 +880,14 @@ Tanks.Chars3D = (function () {
       tourelle.add(cylindre(0.07, 0.09, 0.14, m.teinte, 8, C.noir).translateX(xAnt).translateY(toit + 0.07).translateZ(za));
       tourelle.add(cylindre(0.008, 0.016, 2.4, m.teinte, 4, C.noir).translateX(xAnt).translateY(toit + 1.3).translateZ(za));
     }
-    // ✍️ la marque de l'équipe : un panneau de couleur sur chaque flanc de la tourelle (penché comme le flanc)…
-    const xMarque = -0.6, pente = Math.atan2(zFlanc(xMarque) - zToit(xMarque), T.hT);
+    // ✍️ la marque de l'équipe et le NUMÉRO du tank (étape 75) : peints sur chaque flanc de la tourelle (penchés comme lui)
+    const xMarque = fiche.id === "abrams" ? -1.0 : -0.75, pente = Math.atan2(zFlanc(xMarque) - zToit(xMarque), T.hT);
+    const matNumero = new THREE.MeshStandardMaterial({ map: imageNumero(equipe, numero || "11"), transparent: true, alphaTest: 0.35, roughness: 0.8, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
     for (const cote of [-1, 1]) {
-      const marque = boite(0.75, 0.36, 0.02, E.marque, xMarque, pont + T.hT * 0.55, cote * ((zFlanc(xMarque) + zToit(xMarque)) / 2 + 0.03));
-      marque.rotation.x = -cote * pente;
-      marque.castShadow = false;
-      tourelle.add(marque);
+      const plaque = O.piece(new THREE.PlaneGeometry(1.3, 0.65), matNumero, xMarque, pont + T.hT * 0.5, cote * ((zFlanc(xMarque) + zToit(xMarque)) / 2 + 0.012));
+      plaque.rotation.set(-pente, cote > 0 ? 0 : Math.PI, 0, "YXZ");
+      plaque.castShadow = false;
+      tourelle.add(plaque);
     }
     // … et une flèche sur le toit (pour les avions… et pour toi, d'en haut)
     const fleche = O.piece(new THREE.CircleGeometry(0.45, 3), E.marque, -1.45, toit + 0.012, 0);
@@ -605,12 +926,27 @@ Tanks.Chars3D = (function () {
     }
     canon.add(couche(cylindre(0.11, 0.11, 0.18, m.teinte, 14, C.noir), "x", bout - 0.09, 0, 0)); // la bouche
     canon.add(boite(0.14, 0.08, 0.08, m.teinte, bout - 0.2, 0.15, 0, C.noir)); // le capteur de bouche (il mesure si le tube se tord)
-    souder(canon);
-    souder(tourelle);
-    souder(caisse);
+    // (étape 75) des MAILLONS DE RECHANGE accrochés (sur le glacis du Leclerc et de l'Abrams, sur les flancs de la tourelle du Leopard)
+    const gm = geoMaillon(tw);
+    const rechange = (groupe, x, y, z, rz) => { const p = O.piece(gm.clone(), m.maillon, x, y, z); p.rotation.set(0, 0, rz || 0); groupe.add(p); };
+    for (const cote of [-1, 1]) for (let k = 0; k < 3; k++) { const x = L / 2 - 0.55 - k * 0.17; rechange(caisse, x, yGlacis(x) + 0.06, cote * (zJupe - 0.62), -penteGlacis); }
+    // (étape 75) des jerricans à l'arrière (dans leurs supports)
+    for (const cote of fiche.id === "leclerc" ? [] : [-1, 1]) {
+      const z = cote * (zJupe - 0.45);
+      caisse.add(boite(0.18, 0.45, 0.34, m.teinte, -L / 2 - 0.12, pont - 0.32, z, C.fut));
+      caisse.add(boite(0.05, 0.05, 0.12, m.teinte, -L / 2 - 0.12, pont - 0.07, z, C.noir));
+      caisse.add(boite(0.21, 0.04, 0.38, m.teinte, -L / 2 - 0.12, pont - 0.56, z, C.noir));
+    }
+    hauteurs(souder(canon), pont + F.yPivot); // (étape 75 : la hauteur de chaque point, pour la boue)
+    hauteurs(souder(tourelle), 0);
+    hauteurs(souder(caisse), 0);
     const rouesFixes = rouesSoudees(lesRoues, m.teinte);
     g.add(rouesFixes);
-    return { g, caisse, tourelle, canon, roues: lesRoues, rouesFixes, chenilles, bouche: bout, peinture: P, pasChenille: 1 / PAS_TOILE };
+    // (étape 75) les maillons en 3D (de près) : la chenille « image » est montrée de loin seulement
+    const lesMaillons = maillons(cercles, ep, tw, zc);
+    lesMaillons.mesh.visible = false; // (la scène les montre quand le tank est près de la caméra)
+    g.add(lesMaillons.mesh);
+    return { g, caisse, tourelle, canon, roues: lesRoues, rouesFixes, chenilles, chenillesImages, maillons: lesMaillons, bouche: bout, peinture: P, pasChenille: 1 / PAS_TOILE };
   }
 
   // (étape 72) ✍️ « Ça rame. » Chaque roue d'un tank est un objet à part (pour pouvoir la faire tourner) : 18 roues =
@@ -623,7 +959,7 @@ Tanks.Chars3D = (function () {
       return g.applyMatrix4(r.matrix);
     });
     const geo = new THREE.BufferGeometry();
-    for (const nom of ["position", "normal", "uv", "color"]) {
+    for (const nom of ["position", "normal", "uv", "color", "hauteur"]) {
       if (!morceaux.every((g) => g.attributes[nom])) continue;
       const taille = morceaux[0].attributes[nom].itemSize, tab = new Float32Array(morceaux.reduce((t, g) => t + g.attributes[nom].count * taille, 0));
       let k = 0;

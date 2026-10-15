@@ -7,6 +7,8 @@
 // Étape 61 : les BALLES (un « tac » sec et court : un tout petit souffle de bruit aigu), les ROQUETTES et MISSILES
 // (un « pschhh »), et le moteur change selon ce que tu conduis : le 4x4 ronronne plus aigu, l'hélico fait
 // « tchop-tchop » (le volume monte et descend à chaque tour de pale), l'avion siffle (un souffle aigu et fort).
+// Étape 75 : la GRENADE (le « clic » de la goupille quand on la lance, un « tink » métallique à chaque rebond près de
+// toi, puis le boum), les MURS qui tombent (un fracas de pierres) et la MAISON qui s'effondre (un long grondement).
 // Quand tu QUITTES le jeu (un autre onglet, une autre application, une autre fenêtre devant), le son « s'endort » :
 // on met le synthétiseur en pause (ctx.suspend). Il se réveille quand tu reviens.
 
@@ -77,6 +79,10 @@ Tanks.Sons = (function () {
       if (e.sorte === "bombe" || e.sorte === "missile") boum(attenuation(e.x, e.z), 1.8, 60);
       else if (e.sorte === "grenade" || e.sorte === "roquette") boum(attenuation(e.x, e.z) * 0.7, 0.7, 90);
     });
+    // (étape 75) les grenades et les maisons
+    radio.ecouter("grenade-lancee", (e) => tink(e.parToi ? 0.5 : attenuation(e.x, e.z) * 0.4, 2400));
+    radio.ecouter("mur-troue", (e) => fracas(attenuation(e.x, e.z) * Math.min(1, 0.4 + e.morceaux.length * 0.15), 0.6));
+    radio.ecouter("maison-effondree", (e) => (fracas(attenuation(e.x, e.z), 2.2), boum(attenuation(e.x, e.z) * 0.8, 2.5, 45)));
     let derniereBalle = 0;
     radio.ecouter("balle", (e) => {
       // (les balles de l'ordinateur : pas plus d'une toutes les 0,05 s, sinon c'est un vacarme)
@@ -141,6 +147,33 @@ Tanks.Sons = (function () {
     }
   }
 
+  // (étape 75) Un « tink » de métal (une grenade qui rebondit, la goupille qu'on tire).
+  function tink(force, frequence) {
+    if (!ctx || coupe || force < 0.03) return;
+    const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "triangle";
+    o.frequency.value = frequence || 1900;
+    g.gain.setValueAtTime(0.16 * force, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    o.connect(g).connect(sortie);
+    o.start(t);
+    o.stop(t + 0.14);
+  }
+  // (étape 75) Un fracas de pierres qui tombent : du bruit grave et rugueux qui dure un peu.
+  function fracas(force, duree) {
+    if (!ctx || coupe || force < 0.03) return;
+    const t = ctx.currentTime, b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    b.buffer = tampon;
+    f.type = "lowpass";
+    f.frequency.setValueAtTime(900, t);
+    f.frequency.exponentialRampToValueAtTime(120, t + duree);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.6 * force, t + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, t + duree);
+    b.connect(f).connect(g).connect(sortie);
+    b.start(t, Math.random());
+    b.stop(t + duree + 0.1);
+  }
   // Un coup de feu : un « tac » très court.
   function tac(force) {
     if (!ctx || coupe || force < 0.03) return;
@@ -204,9 +237,15 @@ Tanks.Sons = (function () {
     b.stop(t + 0.9);
   }
 
+  const rebondsEntendus = new WeakMap(); // (étape 75) grenade → combien de rebonds on a déjà fait sonner
   function maj(m) {
     monde = m;
     if (!ctx) return;
+    for (const p of m.obus) {
+      if (!p.main) continue;
+      const deja = rebondsEntendus.get(p) || 0;
+      if (p.rebonds > deja) (rebondsEntendus.set(p, p.rebonds), tink(attenuation(p.x, p.z) * (deja < 2 ? 0.9 : 0.5), 1500 + Math.random() * 600));
+    }
     const j = m.joueur, t = ctx.currentTime, toi = m.toi || { mode: "char" }, e = toi.engin;
     let frequence = 0, aigu = 0, fort = 0, souffleFort = 0, souffleAigu = 400;
     if (toi.mode === "char") {

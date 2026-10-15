@@ -32,6 +32,8 @@
 // exposition réglable (tout dans config.js, « beaute.soleil »), un ciel avec de vrais nuages éclairés ; le disque flou
 // des rotors qui tournent vite ; la rampe du Chinook fermée suit la pente du bas de la coque ; et le décor reçoit, à
 // chaque image, la distance des beaux arbres et le rayon des touffes d'herbe (selon le niveau de qualité).
+// Étape 75 : les MAISONS qu'on détruit (affichage/maisons3d.js, mis à jour à chaque image), les GRENADES qui volent et
+// rebondissent, et la caméra qui reste devant le premier mur (même quand tu es dans une maison).
 // Comme tout l'affichage, ce fichier lit le monde et ne le modifie jamais.
 
 window.Tanks = window.Tanks || {};
@@ -46,7 +48,7 @@ Tanks.Scene = (function () {
   // (étape 72) le niveau de qualité en cours (réglé par affichage/qualite.js), le ciel, les silhouettes des soldats
   let Q = C.qualite.niveaux[C.qualite.depart], leCiel = null;
   const silhouettes = {};
-  const lod = { soldatsDetail: 0, soldatsSimples: 0, silhouettes: 0, soldatsCaches: 0, tanksRouesSoudees: 0, enginsCaches: 0, vehiculesDetail: 0, vehiculesSimples: 0, vehiculesCaches: 0, helicosDetail: 0, helicosSimples: 0, helicosCaches: 0 };
+  const lod = { soldatsDetail: 0, soldatsSimples: 0, silhouettes: 0, soldatsCaches: 0, tanksRouesSoudees: 0, enginsCaches: 0, vehiculesDetail: 0, vehiculesSimples: 0, vehiculesCaches: 0, helicosDetail: 0, helicosSimples: 0, helicosCaches: 0, maillons: 0 };
   const lotsSimples = {}; // (étape 71) « moto:bleus » → les instances de la version simple
   // La « vue » d'un objet : le même objet, mais avec x, y, z, angle (et tourelle) pris entre l'avant et maintenant.
   const melange = (a, b) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * alpha;
@@ -171,7 +173,9 @@ Tanks.Scene = (function () {
     let o = objets.get(c);
     if (!o || o.fiche !== c.fiche) {
       if (o) scene.remove(o.g);
-      o = Tanks.Chars3D.fabriquer(c.fiche, c.equipe);
+      // (étape 75) le numéro peint sur la tourelle : 1x pour les Bleus, 3x pour les Rouges (selon le nom du tank)
+      const numero = (c.equipe === "bleus" ? 1 : 3) + "" + (1 + ([...c.nom].reduce((t, l) => t + l.charCodeAt(0), 0) % 9));
+      o = Tanks.Chars3D.fabriquer(c.fiche, c.equipe, c.nom === "toi" ? "10" : numero);
       o.fiche = c.fiche;
       o.normale = new THREE.Vector3(0, 1, 0);
       o.brule = false;
@@ -200,6 +204,16 @@ Tanks.Scene = (function () {
       o.loin = loin;
       o.rouesFixes.visible = loin;
       for (const r of o.roues) r.visible = !loin;
+    }
+    // (étape 75) de près, les vrais maillons de la chenille ; plus loin, la chenille « image »
+    const maillons = !c.detruit && d < Q.roues * C.peinture.maillons;
+    if (o.maillons && o.maillons.mesh.visible !== maillons) {
+      o.maillons.mesh.visible = maillons;
+      for (const ch of o.chenillesImages) ch.visible = !maillons;
+    }
+    if (maillons) {
+      o.maillons.maj(c.chenilles.gauche, c.chenilles.droite);
+      lod.maillons += o.maillons.nombre;
     }
     if (loin) lod.tanksRouesSoudees++;
     if (c.detruit) {
@@ -457,10 +471,37 @@ Tanks.Scene = (function () {
     return projectiles3d[i];
   }
   const TAILLES = { roquette: 1, bombe: 1.6, missile: 1.5, grenade: 0.5, torpille: 1.8, flak: 0.35 };
+  // (étape 75) La GRENADE À MAIN : un œuf vert olive (le corps quadrillé), la cuillère (le levier) et le bouchon. On la
+  // dessine 2 fois plus grosse que la vraie (6 cm), sinon on ne la verrait pas voler. Elle tourne sur elle-même en l'air.
+  const grenades3d = [];
+  function grenade3d(i) {
+    if (!grenades3d[i]) {
+      const g = new THREE.Group(), olive = new THREE.MeshStandardMaterial({ color: 0x4a5532, roughness: 0.7, metalness: 0.2 }), metal = new THREE.MeshStandardMaterial({ color: 0x8a8c86, roughness: 0.35, metalness: 0.8 });
+      const corps = new THREE.Mesh(new THREE.SphereGeometry(0.065, 12, 9), olive);
+      corps.scale.set(1, 1.12, 1);
+      const bouchon = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.028, 0.045, 8), metal);
+      bouchon.position.y = 0.08;
+      const cuillere = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.12, 0.03), metal);
+      cuillere.position.set(0.05, 0.035, 0);
+      cuillere.rotation.z = -0.3;
+      for (const m of [corps, bouchon, cuillere]) (m.castShadow = true), g.add(m);
+      g.scale.setScalar(2);
+      scene.add(g);
+      grenades3d[i] = g;
+    }
+    return grenades3d[i];
+  }
   function placerProjectiles(monde) {
-    let n = 0;
+    let n = 0, ng = 0;
     for (const p of monde.obus) {
       if (p.sorte === "obus") continue;
+      if (p.main) { // (étape 75)
+        const g = grenade3d(ng++);
+        g.visible = true;
+        g.position.set(p.x, p.y + 0.08, p.z);
+        if (!p.auRepos) g.rotation.set(p.age * 11, p.age * 3, p.age * 7);
+        continue;
+      }
       const g = projectile3d(n++);
       g.visible = true;
       g.position.set(p.x, p.y, p.z);
@@ -469,6 +510,7 @@ Tanks.Scene = (function () {
       g.feu.visible = p.sorte === "roquette" || p.sorte === "missile" || p.sorte === "flak"; // (les bombes tombent sans moteur ; la torpille fait des bulles)
     }
     for (let i = n; i < projectiles3d.length; i++) projectiles3d[i].visible = false;
+    for (let i = ng; i < grenades3d.length; i++) grenades3d[i].visible = false;
   }
 
   // La caméra suit… ce que tu conduis (ou toi à pied).
@@ -502,16 +544,16 @@ Tanks.Scene = (function () {
   // elle rentre dans une maison ou un muret, on l'avance jusque devant.
   // (Et pas non plus dans un tank ou un engin : quand tu sortais de ton tank, la caméra se retrouvait DANS le blindage.)
   function devantLesMurs(depart, oeil, monde, moi) {
-    const proches = T.boites.filter((b) => Math.abs(b.x - oeil.x) < b.rayon + 20 && Math.abs(b.z - oeil.z) < b.rayon + 20);
+    // (étape 75) les murs, les toits et les gravats : on demande à logique/structures.js ce que la ligne touche en premier
+    // (une maison n'est plus un bloc plein : quand tu es DEDANS, la caméra reste dans la pièce, devant le mur)
+    const m = Tanks.Structures.premier(depart.x, depart.y, depart.z, oeil.x, oeil.y, oeil.z);
+    const tMur = m ? Math.max(0.08, m.t - 0.5 / Math.max(1, depart.distanceTo(oeil))) : 1;
     const vehicules = monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || e.sorte === "helico" || !e.enVol)).filter((c) => c !== moi && c.fiche && Math.hypot(c.x - oeil.x, c.z - oeil.z) < 25);
-    if (!proches.length && !vehicules.length) return oeil;
-    for (let k = 1; k <= 16; k++) {
+    for (let k = 1; vehicules.length && k <= 16 && k / 16 < tMur; k++) {
       const t = k / 16, x = depart.x + (oeil.x - depart.x) * t, y = depart.y + (oeil.y - depart.y) * t, z = depart.z + (oeil.z - depart.z) * t;
-      const mur = proches.some((b) => y < b.sol + b.h + 0.3 && T.dansBoite(b, x, z, 0.4));
-      const blinde = vehicules.some((c) => Tanks.Obus.dansLeChar(c, x, y - 0.4, z) || Tanks.Obus.dansLeChar(c, x, y + 0.4, z));
-      if (mur || blinde) return depart.clone().lerp(oeil, Math.max(0.08, (k - 1.5) / 16));
+      if (vehicules.some((c) => Tanks.Obus.dansLeChar(c, x, y - 0.4, z) || Tanks.Obus.dansLeChar(c, x, y + 0.4, z))) return depart.clone().lerp(oeil, Math.max(0.08, (k - 1.5) / 16));
     }
-    return oeil;
+    return tMur < 1 ? depart.clone().lerp(oeil, tMur) : oeil;
   }
 
   function dessiner(monde, dt, entreDeuxPas) {
@@ -598,6 +640,7 @@ Tanks.Scene = (function () {
     Tanks.Decor.majDistance(cam.position, Math.min(Q.decor, Q.vue), Q.arbresDetail); // (étape 72 : les morceaux et les arbres trop loin sont cachés ; étape 74 : les beaux arbres de près)
     Tanks.Decor.majHerbe(cam.position, Q.herbe || 0); // (étape 74 : les touffes d'herbe autour de la caméra)
     Tanks.Decor.majEau(dt);
+    Tanks.Maisons3D.maj(dt); // (étape 75 : les morceaux de mur tombés, les débris qui volent, les toits qui s'effondrent)
     Tanks.Effets.maj(dt, monde, cam, Q.effets);
     rendu.render(scene, cam);
   }

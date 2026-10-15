@@ -10,7 +10,11 @@
 // Les balles rebondissent sur les tanks (« ricochet »). ✍️ 3 balles = un soldat à terre (toi : 5).
 // Étape 63 : dans l'eau, un soldat NAGE (lentement, la tête hors de l'eau, sans pouvoir tirer). Et il ne traverse plus
 // les arbres (avant, il passait au travers : un petit bug).
-// Ce fichier ne dessine rien : il renvoie des événements (« balle », « soldat-touche », « soldat-mort », « nage »).
+// Étape 75 : ✍️ une balle qui rencontre un MUR s'arrête dedans et l'abîme (logique/structures.js) ; elle passe par les
+// fenêtres et les trous. ✍️ Les GRENADES (touche 4) : Espace en lance une en cloche (si un ennemi est presque devant
+// toi, juste assez fort pour tomber sur lui) ; tu en regagnes une toutes les 25 s, et toutes au camp.
+// Ce fichier ne dessine rien : il renvoie des événements (« balle », « soldat-touche », « soldat-mort », « nage »,
+// « grenade-lancee », « grenades », « mur-abime »…).
 
 window.Tanks = window.Tanks || {};
 
@@ -26,6 +30,7 @@ Tanks.Soldat = (function () {
       vie: joueur ? S.vieJoueur : S.vie, vieMax: joueur ? S.vieJoueur : S.vie, soin: 0, mort: false, depuisMort: 0,
       arme: joueur ? "mitrailleuse" : "soldat", roquettes: false, recharge: 0, tir: 0, pas: 0, touche: 9,
       dansUnEngin: null,
+      grenades: joueur ? C.grenades.nombre : C.grenades.ia.nombre, attenteGrenade: 0, regainGrenade: 0, lancer: 0, // (étape 75)
     };
   }
 
@@ -43,6 +48,7 @@ Tanks.Soldat = (function () {
 
   // Une balle : qui touche-t-elle ? (cibles = les soldats ; vehicules = les tanks et le 4x4, sur lesquels elle ricoche)
   // (étape 71) legers = les motos et les quads : la balle peut toucher leur PILOTE (il n'est pas protégé)
+  let monde = null; // (étape 75 : le monde, pour la maison qui s'effondre sur les soldats)
   function balle(tireur, x, y, z, angle, arme, soldats, vehicules, ev, legers) {
     const R = A[arme];
     let meilleur = null;
@@ -68,9 +74,18 @@ Tanks.Soldat = (function () {
       if (Math.abs(angleEntre(Math.atan2(c.z - z, c.x - x) - angle)) < Math.atan2(2, d)) mur = { c, d };
     }
     const portee = meilleur ? meilleur.d : R.portee * 0.7;
-    const fin = { x: x + Math.cos(angle) * portee, y: y - 0.2, z: z + Math.sin(angle) * portee };
+    // (étape 75) une balle perdue ne file pas parfaitement à plat : elle monte ou descend un tout petit peu
+    const fin = { x: x + Math.cos(angle) * portee, y: y - 0.2 + (Math.random() - 0.5) * portee * (0.02 + (1 - (R.precision || 0.5)) * 0.08), z: z + Math.sin(angle) * portee };
     if (mur && (!meilleur || mur.d < meilleur.d)) {
       ev.push(["balle", { tireur, de: { x, y, z }, a: { x: mur.c.x, y: mur.c.y + 1.5, z: mur.c.z }, ricochet: true }]);
+      return;
+    }
+    // (étape 75) un mur entre le tireur et là où va la balle ? elle s'arrête dedans et l'abîme
+    const vers = meilleur ? { x: meilleur.s.x, y: meilleur.s.y + 1.2, z: meilleur.s.z } : fin;
+    const m = Tanks.Structures.premier(x, y, z, vers.x, vers.y, vers.z);
+    if (m) {
+      ev.push(["balle", { tireur, de: { x, y, z }, a: { x: m.x, y: m.y, z: m.z }, mur: true }]);
+      Tanks.Structures.balle(m, R.degats || 1, tireur, ev, monde);
       return;
     }
     if (meilleur && T.vueLibre(x, y, z, meilleur.s.x, meilleur.s.y + 1.2, meilleur.s.z)) {
@@ -97,7 +112,59 @@ Tanks.Soldat = (function () {
   }
 
   // Un pas de temps pour un soldat. intentions = { avancer, reculer, gauche, droite, tirer, versAngle (l'ordinateur) }
-  function avancer(s, intentions, dt, monde, ev) {
+  // (étape 75) LANCER UNE GRENADE vers (cx, cz) : en cloche, à l'angle « angle » ; la vitesse qu'il faut pour tomber à la
+  // distance d (sur un sol plat) : v = √(g × d ÷ sin(2 × angle)). Sans cible : la vitesse normale, droit devant.
+  function lancerGrenade(s, mondeIci, ev, cible) {
+    const G = C.grenades, g = C.projectiles.grenade.gravite;
+    let dir = s.angle, v = G.vitesse;
+    if (cible) {
+      const d = Math.hypot(cible.x - s.x, cible.z - s.z);
+      dir = Math.atan2(cible.z - s.z, cible.x - s.x);
+      v = Math.max(G.vitesseMin, Math.min(G.vitesseMax, Math.sqrt((g * Math.max(2, d - 0.8)) / Math.sin(2 * G.angle))));
+    }
+    const ca = Math.cos(G.angle), depart = { x: s.x + Math.cos(dir) * 0.45, y: s.y + 1.75, z: s.z + Math.sin(dir) * 0.45 };
+    const p = Tanks.Obus.lancer(mondeIci.obus, s, "grenade", depart, { x: 0, y: 0, z: 0 }, null, { x: Math.cos(dir) * ca * v, y: Math.sin(G.angle) * v, z: Math.sin(dir) * ca * v });
+    p.meche = G.meche;
+    p.rebonds = 0;
+    p.main = true;
+    s.grenades--;
+    s.lancer = 0.5; // (le bras qui lance : pour le dessin)
+    ev.push(["grenade-lancee", { tireur: s, x: depart.x, y: depart.y, z: depart.z, reste: s.grenades, max: s.joueur ? G.nombre : G.ia.nombre, distance: cible ? Math.round(Math.hypot(cible.x - s.x, cible.z - s.z)) : null, vise: cible && cible.nom, groupe: cible && cible.groupe, meche: G.meche }]);
+    return p;
+  }
+  // (étape 75) Ta grenade : un ennemi presque devant toi (dans le petit cône), assez près ? on vise sur lui.
+  function cibleGrenade(s, mondeIci) {
+    let meilleur = null;
+    for (const o of mondeIci.soldats) {
+      if (o.mort || o.dansUnEngin || o.equipe === s.equipe) continue;
+      const d = Math.hypot(o.x - s.x, o.z - s.z);
+      if (d > C.grenades.porteeAide || d < 3) continue;
+      const ecart = Math.abs(angleEntre(Math.atan2(o.z - s.z, o.x - s.x) - s.angle));
+      if (ecart < C.grenades.coneAide && (!meilleur || ecart < meilleur.ecart)) meilleur = { o, ecart };
+    }
+    return meilleur ? meilleur.o : null;
+  }
+  // (étape 75) Regagner ses grenades : une toutes les « recharge » s, et toutes d'un coup près de son camp.
+  function regagner(s, dt, ev) {
+    const G = C.grenades, max = s.joueur ? G.nombre : G.ia.nombre;
+    if (s.grenades >= max) return void (s.regainGrenade = 0);
+    if (s.joueur && Math.abs(s.z - (s.equipe === "bleus" ? 1 : -1) * T.camp) < G.camp && Math.abs(s.x) < 220) {
+      s.grenades = max;
+      return void ev.push(["grenades", { tireur: s, nombre: max, max, camp: true }]);
+    }
+    s.regainGrenade += dt;
+    if (s.regainGrenade >= G.recharge) {
+      s.regainGrenade = 0;
+      s.grenades++;
+      if (s.joueur) ev.push(["grenades", { tireur: s, nombre: s.grenades, max, camp: false }]);
+    }
+  }
+
+  function avancer(s, intentions, dt, mondeIci, ev) {
+    monde = mondeIci;
+    return avancerSoldat(s, intentions, dt, mondeIci, ev);
+  }
+  function avancerSoldat(s, intentions, dt, monde, ev) {
     if (s.mort) {
       s.depuisMort += dt;
       return;
@@ -105,6 +172,9 @@ Tanks.Soldat = (function () {
     if (s.dansUnEngin) return;
     s.touche += dt;
     s.tir = Math.max(0, s.tir - dt);
+    s.lancer = Math.max(0, (s.lancer || 0) - dt);
+    s.attenteGrenade = Math.max(0, (s.attenteGrenade || 0) - dt);
+    regagner(s, dt, ev); // (étape 75)
     // tourner (le joueur : avec les flèches ; l'ordinateur : vers un angle)
     if (intentions.versAngle !== undefined) {
       const diff = angleEntre(intentions.versAngle - s.angle);
@@ -145,7 +215,19 @@ Tanks.Soldat = (function () {
     if (s.nage !== nageait && s.joueur) ev.push(["nage", { nom: s.nom, nage: s.nage }]);
     // tirer (pas en nageant !)
     s.recharge = Math.max(0, s.recharge - dt);
-    if (intentions.tirer && s.recharge === 0 && !s.nage) {
+    // (étape 75) une GRENADE : la tienne (arme 4), ou celle d'un soldat de l'ordinateur (« intentions.grenade » : où la lancer)
+    if (!s.nage && s.recharge === 0 && (intentions.grenade || (intentions.tirer && s.arme === "grenades"))) {
+      if (s.grenades <= 0) {
+        s.recharge = 0.6;
+        if (s.joueur) ev.push(["impossible", { raison: "plus de grenades (tu en regagnes 1 toutes les " + C.grenades.recharge + " s, ou toutes d'un coup à ton camp)" }]);
+        return;
+      }
+      s.recharge = A.grenades.cadence;
+      s.attenteGrenade = C.grenades.ia.attente;
+      lancerGrenade(s, monde, ev, intentions.grenade || cibleGrenade(s, monde));
+      return;
+    }
+    if (intentions.tirer && s.recharge === 0 && !s.nage && s.arme !== "grenades") {
       const R = A[s.arme];
       s.recharge = R.cadence;
       s.tir = 0.08;
@@ -164,5 +246,5 @@ Tanks.Soldat = (function () {
     }
   }
 
-  return { creer, avancer, blesser, balle, vehiculesDe };
+  return { creer, avancer, blesser, balle, vehiculesDe, lancerGrenade };
 })();

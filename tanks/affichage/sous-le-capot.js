@@ -21,6 +21,9 @@
 // pas » (l'interpolation qui empêche ton personnage de faire de petits sauts).
 // Étape 71 : LA GRANDE CARTE (sa taille, ses villages, ses arbres, ses tuiles de sol) et LES ENGINS QUI ROULENT : chaque
 // moto, quad et camion des deux camps (ce qu'il fait, sa vitesse, sa vie, son pilote, les soldats à bord), et les tiens.
+// Étape 75 : LES MAISONS ET LES GRENADES : combien de maisons sont intactes, abîmées, en ruines ; la SOLIDITÉ de la maison
+// la plus proche de toi (ses morceaux debout, mur par mur, son toit) ; les grenades en vol (leur mèche, leurs rebonds), les
+// tiennes ; et ce que coûtent les murs à calculer et à dessiner (les lignes testées, les débris, les trous de balles).
 // Étape 73 : LES HÉLICOS DE TRANSPORT : chaque Chinook et Black Hawk (les tiens et ceux de l'ordinateur) : son état (au
 // camp, en vol, stationnaire, descente à la corde, retour), sa hauteur, sa vitesse, ses soldats à bord et sur les cordes,
 // sa vie, et ce que visent ses 2 mitrailleuses de porte.
@@ -34,6 +37,13 @@ Tanks.SousLeCapot = (function () {
   let table, journal, monde, branche = false;
 
   const MESSAGES = {
+    // étape 75
+    "mur-abime": (d) => "🧱 " + (d.parToi ? "Tes balles fissurent " : d.tireur + " fissure ") + d.nom + " (ce morceau de mur : " + d.vie + " / " + d.vieMax + " points)",
+    "mur-troue": (d) => "🧱 " + ({ balle: "Les balles", obus: "Un obus", roquette: "Une roquette", grenade: "Une grenade", bombe: "Une bombe", missile: "Un missile", char: "Le tank", torpille: "Une torpille" }[d.sorte] || "Une explosion") + (d.tireur ? " de " + d.tireur : "") + " fait un trou dans " + d.nom + " : " + d.morceaux.length + " morceau" + (d.morceaux.length > 1 ? "x" : "") + " de mur tombe" + (d.morceaux.length > 1 ? "nt" : "") + " (il en reste " + d.debout + " / " + d.total + " debout)",
+    "maison-effondree": (d) => "🏚️ Une maison s'effondre : " + d.nom + (d.tireur ? " (" + (d.parToi ? "c'est toi !" : "par " + d.tireur) + ")" : "") + " · le toit tombe, " + d.morceaux.length + " morceaux de mur avec lui" + (d.blesses ? " · " + d.blesses + " soldat" + (d.blesses > 1 ? "s" : "") + " blessé" + (d.blesses > 1 ? "s" : "") + " dessous" : ""),
+    "grenade-lancee": (d) => "💣 " + (d.parToi ? "Tu lances une grenade" : d.tireur + " lance une grenade") + (d.vise ? " sur " + d.vise + " à " + d.distance + " m" + (d.groupe > 1 ? " (" + d.groupe + " ennemis groupés)" : "") : "") + " · elle explose dans " + d.meche + " s · il " + (d.parToi ? "t'" : "lui ") + "en reste " + d.reste + " / " + d.max,
+    grenades: (d) => "🎒 " + (d.camp ? "Au camp : tu reprends toutes tes grenades (" + d.nombre + " / " + d.max + ")" : "Tu regagnes une grenade (" + d.nombre + " / " + d.max + ", 1 toutes les " + C.grenades.recharge + " s)"),
+    "sauvegarde-convertie": (d) => "💾 Ton livret militaire (version " + d.de + ") est converti en version " + d.vers + " : rien n'est perdu, les nouveaux compteurs (maisons, murs, grenades) commencent à 0",
     // étape 72
     qualite: (d) => "⚙️ Qualité " + d.niveau + "/" + d.max + " (" + d.nom + ")" + (d.auto ? "" : " ✋") + " : " + d.raison + " → pixels ×" + virgule(d.reglages.pixels, 1) + ", ombres " + (d.reglages.ombres ? d.reglages.ombres + (d.reglages.douces ? " douces" : "") : "aucune") + ", vue " + d.reglages.vue + " m",
     "son-endormi": (d) => "🔇 Le son s'endort : " + d.raison,
@@ -57,7 +67,7 @@ Tanks.SousLeCapot = (function () {
     recharge: () => "🔄 Ton canon est rechargé",
     touche: (d) => "🎯 " + d.tireur + " touche " + d.cible + " " + d.cote + " à " + d.distance + " m · il lui reste " + d.vie + " / " + (d.vieMax || C.char.vie),
     detruit: (d) => (d.bateau ? "🌊 " + d.cible + " est COULÉ par " : "💥 " + d.cible + " est DÉTRUIT par ") + d.tireur,
-    impact: (d) => (d.sur === "eau" ? "🌊 " : "💨 ") + ({ roquette: "Une roquette", bombe: "Une bombe", missile: "Un missile", grenade: "Une grenade" }[d.sorte] || "Un obus") + " tombe sur " + { sol: "le sol", maison: "une maison", muret: "un muret", char: "un tank", epave: "une épave", eau: "l'eau du lac (une gerbe d'eau !)" }[d.sur],
+    impact: (d) => d.grenade ? "💥 La grenade" + (d.tireur ? " de " + d.tireur : "") + " explose (après " + d.rebonds + " rebond" + (d.rebonds > 1 ? "s" : "") + ")" : (d.sur === "eau" ? "🌊 " : "💨 ") + ({ roquette: "Une roquette", bombe: "Une bombe", missile: "Un missile", grenade: "Une grenade" }[d.sorte] || "Un obus") + " tombe sur " + ({ sol: "le sol", maison: d.toit ? "le toit de " + d.nom : d.nom || "une maison", muret: d.nom || "un muret", char: "un tank", epave: "une épave", eau: "l'eau du lac (une gerbe d'eau !)" }[d.sur] || d.sur),
     "tir-ami": (d) => "⛔ " + d.tireur + " a touché un allié (" + d.sur + ") : pas de dégâts",
     "arbre-ecrase": (d) => "🌳 " + (d.nom === "toi" ? "Tu écrases" : d.nom + " écrase") + " un arbre à " + Math.round(Math.abs(d.vitesse) * 3.6) + " km/h",
     victoire: (d) => "🏆 VICTOIRE en " + Math.round(d.temps) + " s ! Il te reste " + d.vie + " / " + (d.vieMax || C.char.vie) + " de vie et " + d.allies + " allié(s)",
@@ -93,13 +103,13 @@ Tanks.SousLeCapot = (function () {
     ejection: (d) => (d.abattu ? "🔥 Ton Rafale est abattu ! " : "") + "🪂 Éjection à " + d.hauteur + " m de haut ! Tu redescends en parachute à " + C.engins.parachute + " m/s",
     atterrissage: () => "🪂 Tu touches le sol : te voilà à pied",
     impossible: (d) => "✋ Impossible : " + d.raison,
-    arme: (d) => "🎒 Tu prends : " + d.icone + " " + d.nom,
+    arme: (d) => "🎒 Tu prends : " + d.icone + " " + d.nom + (d.grenades !== undefined ? " (" + d.grenades + " dans ta poche : Espace en lance une, elle explose après " + C.grenades.meche + " s)" : ""),
     balle: (d) => (d.touche ? "🔫 Ta balle touche" : d.ricochet ? "🔫 Ta balle ricoche sur un blindé" : "🔫 Ta balle rate"),
     roquette: (d) => "🚀 " + (d.parToi ? "Tu tires" : d.tireur + " tire") + " une roquette",
     largage: (d) => "💣 " + d.engin + " lâche " + (d.sorte === "bombe" ? "une bombe" : "une grenade") + " (il en reste " + d.reste + ")",
     missile: (d) => "🚀 Missile tiré" + (d.cible ? ", guidé vers " + d.cible : " tout droit (aucun ennemi en face)") + " · il en reste " + d.reste,
     "soldat-touche": (d) => "🩹 " + d.cible + " est touché par " + d.tireur + " (vie " + d.vie + ")",
-    "soldat-mort": (d) => "✖ " + d.cible + " est à terre (" + ({ chute: "tombé de la corde de " + d.tireur, ecrase: "écrasé par " + d.tireur, bombe: "bombe de " + d.tireur, missile: "missile de " + d.tireur, grenade: "grenade de " + d.tireur, roquette: "roquette de " + d.tireur, obus: "obus de " + d.tireur }[d.par] || "balle de " + d.tireur) + ")",
+    "soldat-mort": (d) => "✖ " + d.cible + " est à terre (" + ({ chute: "tombé de la corde de " + d.tireur, ecrase: "écrasé par " + d.tireur, bombe: "bombe de " + d.tireur, missile: "missile de " + d.tireur, grenade: "grenade de " + d.tireur, effondrement: "écrasé sous une maison qui s'effondre", roquette: "roquette de " + d.tireur, obus: "obus de " + d.tireur }[d.par] || "balle de " + d.tireur) + ")",
   };
 
   function initialiser(m) {
@@ -120,7 +130,14 @@ Tanks.SousLeCapot = (function () {
       if (enHelico && (nom === "balle" || (nom === "soldat-touche" && d.parToi))) return;
       if (nom === "soldat-touche" && !d.parToi && !d.surToi) return;
       if (nom === "roquette" && !d.parToi) return;
-      if (nom === "flak") return; // (la DCA tire 8 obus par seconde : on ne les écrit pas tous ; ils sont comptés sous le capot)
+      if (nom === "flak") return;
+      // (étape 75) les murs : seulement tes balles quand un morceau se fissure ; les trous et les grenades : les tiens, ou près de toi
+      const ici = monde && monde.toi && monde.toi.soldat && monde.toi.mode !== "char" ? (monde.toi.engin || monde.toi.soldat) : monde && monde.joueur;
+      const loin = (x, z, max) => ici && Math.hypot(x - ici.x, z - ici.z) > max;
+      if (nom === "mur-abime" && !(d.parToi && d.fissure)) return;
+      if (nom === "mur-troue" && !d.parToi && loin(d.x, d.z, 150)) return;
+      if (nom === "grenade-lancee" && !d.parToi && loin(d.x, d.z, 100)) return;
+      if (nom === "impact" && d.grenade && !d.parToi && loin(d.x, d.z, 100)) return; // (la DCA tire 8 obus par seconde : on ne les écrit pas tous ; ils sont comptés sous le capot)
       if (nom === "portail" && !d.quiToi && d.qui.startsWith("soldat")) return; // (les soldats de l'ordinateur : pas dans le journal)
       const li = document.createElement("li");
       li.dataset.evenement = nom;
@@ -195,6 +212,39 @@ Tanks.SousLeCapot = (function () {
     l.push(["dessin des hélicos", L.helicosDetail + " en détail (< " + Math.round(Tanks.Qualite.reglages.roues * H.loin) + " m), " + L.helicosSimples + " en version simple (1 dessin par sorte et par équipe), " + L.helicosCaches + " cachés"]);
   }
 
+  // (étape 75) Les maisons et les grenades.
+  let avantTests = { ligne: 0, boite: 0, temps: 0 }, parSeconde = { ligne: 0, boite: 0 };
+  function lignesMaisons(l, s) {
+    const ST = Tanks.Structures, B = ST.bilan, n = ST.compter(), S = C.structures, M3 = Tanks.Maisons3D.bilan, G = C.grenades;
+    const maintenant = performance.now() / 1000;
+    if (maintenant - avantTests.temps > 0.9) {
+      const dt = maintenant - avantTests.temps;
+      parSeconde = { ligne: Math.round((B.testsLigne - avantTests.ligne) / dt), boite: Math.round((B.testsBoite - avantTests.boite) / dt) };
+      avantTests = { ligne: B.testsLigne, boite: B.testsBoite, temps: maintenant };
+    }
+    l.push(["Les maisons et les grenades (étape 75)"]);
+    l.push(["les maisons", n.maisons + " maisons, granges et tours : " + n.intactes + " intactes · " + n.abimees + " abîmées · " + n.ruines + " en ruines (dont " + n.ruinesDepart + " déjà au départ) · " + n.murets + " murets et haies"]);
+    l.push(["les morceaux de mur", n.debout.toLocaleString("fr-FR") + " / " + n.morceaux.toLocaleString("fr-FR") + " debout (colonnes de " + virgule(S.colonne, 1) + " m, rangées de " + virgule(S.etage, 1) + " m) · vie : brique " + S.vie.brique + ", pierre " + S.vie.pierre + ", bois " + S.vie.bois + ", porte " + S.vie.porte + ", haie " + S.vie.haie + " (1 balle = " + S.degatsBalle + ")"]);
+    l.push(["les explosions", Object.entries(S.explosions).map(([k, [d, r]]) => k + " " + d + " pts / " + virgule(r, 1) + " m").join(" · ") + " (moins loin du centre : points × (1 − distance ÷ rayon))"]);
+    const ici = s && monde.toi.mode !== "char" ? s : monde.joueur, b = ST.plusProche(ici.x, ici.z, 80);
+    if (b) {
+      const parMur = b.murs.map((m, i) => { const ms = b.morceaux.filter((x) => x.mur === i); return ["N", "S", "E", "O"][i] + " " + ms.filter((x) => !x.tombe).length + "/" + ms.length; }).join(" · ");
+      const vie = b.morceaux.reduce((t, m) => t + Math.max(0, m.vie), 0), vieMax = b.morceaux.reduce((t, m) => t + m.vieMax, 0);
+      l.push(["🏠 la plus proche de toi", b.nom + " à " + Math.round(Math.hypot(b.x - ici.x, b.z - ici.z)) + " m · " + (b.etat === "ruine" ? "EN RUINE 🏚️" : b.tombes ? "trouée" : vie < vieMax ? "abîmée" : "intacte") + (ST.dedans(b, ici.x, ici.z) ? " · tu es DEDANS" : "")]);
+      l.push(["   sa solidité", Math.round((vie / vieMax) * 100) + " % des points (" + vie + " / " + vieMax + ") · morceaux debout : " + (b.total - b.tombes) + " / " + b.total + " (" + parMur + ") · le toit s'effondre à " + Math.round(S.effondrement * 100) + " % de morceaux tombés (là : " + Math.round((b.tombes / b.total) * 100) + " %)"]);
+      l.push(["   son toit", b.toit.intact ? "debout · " + b.toit.vie + " / " + S.toitVie + " coups directs avant de s'effondrer" : "effondré · gravats au milieu : " + virgule(b.gravatsDedans, 1) + " m"]);
+    }
+    const enVol = monde.obus.filter((p) => p.main);
+    l.push(["grenades en vol", enVol.length ? enVol.map((p) => "💣 de " + (p.tireur === s ? "toi" : p.tireur.nom) + " : mèche " + virgule(Math.max(0, p.meche), 1) + " s, " + p.rebonds + " rebond(s)" + (p.auRepos ? ", par terre" : ", " + virgule(Math.hypot(p.vx, p.vy, p.vz), 1) + " m/s") + ", à " + Math.round(Math.hypot(p.x - ici.x, p.z - ici.z)) + " m de toi").join(" · ") : "aucune"]);
+    if (s) l.push(["tes grenades", s.grenades + " / " + G.nombre + (s.grenades < G.nombre ? " (+1 dans " + Math.ceil(G.recharge - s.regainGrenade) + " s, ou toutes à ton camp)" : "") + " · lancer : " + virgule(G.vitesse, 0) + " m/s à " + Math.round((G.angle * 180) / Math.PI) + "° (≈ " + Math.round((G.vitesse * G.vitesse * Math.sin(2 * G.angle)) / C.projectiles.grenade.gravite) + " m), ou juste ce qu'il faut pour un ennemi à moins de " + G.porteeAide + " m devant toi · mèche " + G.meche + " s · rebond " + Math.round(G.rebond * 100) + " %"]);
+    for (const eq of ["bleus", "rouges"]) {
+      const soldats = monde.soldats.filter((o) => o.equipe === eq && !o.mort && !o.joueur);
+      l.push([(eq === "bleus" ? "🔵 " : "🔴 ") + "grenades des soldats", soldats.reduce((t, o) => t + (o.grenades || 0), 0) + " dans les poches · " + soldats.filter((o) => o.ia && /grenade/.test(o.ia.etat)).length + " en train d'en lancer (sur un groupe de " + G.ia.groupe + "+ ou un ennemi caché, entre " + G.ia.portee[0] + " et " + G.ia.portee[1] + " m, 1 toutes les " + G.ia.attente + " s au plus)"]);
+    }
+    l.push(["calculs des murs", parSeconde.ligne.toLocaleString("fr-FR") + " lignes testées par seconde (regards, obus, balles) → " + parSeconde.boite.toLocaleString("fr-FR") + " boîtes testées (méthode des tranches) · " + B.balles + " balles dans les murs, " + B.trous + " trous, " + B.effondrees + " effondrements, " + B.chocs + " chocs de tank"]);
+    l.push(["dessin des maisons", M3.lots + " objets (1 par matière et par quartier) · " + M3.sommets.toLocaleString("fr-FR") + " sommets · " + M3.morceauxCaches + " morceaux cachés · " + M3.trous + " trous de balles (au plus " + S.debris.trous + ") · " + M3.brulures + " traces noires · " + M3.debrisVol + " débris en vol (au plus " + S.debris.vol + ") · " + M3.gravats + " gravats tombés (au plus " + S.debris.gravatsMax + ") + " + M3.gravatsFixes + " des ruines · " + M3.toitsTombes + " toits tombés"]);
+  }
+
   function lignes() {
     const j = monde.joueur, f = j.fiche, t = monde.toi || {}, s = t.soldat;
     const l = [];
@@ -228,6 +278,7 @@ Tanks.SousLeCapot = (function () {
         const R = C.engins[e.sorte], haut = e.y - Tanks.Terrain.hauteur(e.x, e.z);
         l.push([R.icone + " " + R.nom, (e.detruit ? "détruit ✖" : (e.pilote ? "👤 piloté · " : "garé · ") + Math.round(Math.abs(e.vitesse) * 3.6) + " km/h" + (e.sorte !== "jeep" ? " · " + Math.round(haut) + " m de haut" : " · vie " + e.vie + " / " + R.vie) + (R.munitions ? " · " + e.munitions + " / " + R.munitions + " " + R.arme + (e.munitions < R.munitions ? " (+1 dans " + virgule(R.recharge - e.rechargeMunition, 1) + " s)" : "") : ""))]);
       }
+      lignesMaisons(l, s); // (étape 75)
       lignesCarte(l);
       lignesHelicos(l);
       l.push(["Les soldats"]);
@@ -288,7 +339,7 @@ Tanks.SousLeCapot = (function () {
     }
     l.push(["Le dessin"], ["le son", Tanks.Sons.etat()], ["particules", Tanks.Effets.bilan.vivantes + " · épaves qui fument : " + Tanks.Effets.bilan.epaves + " · traits de balles : " + Tanks.Effets.bilan.balles], ["projectiles en vol", monde.obus.length ? Object.entries(monde.obus.reduce((n, p) => ((n[p.sorte] = (n[p.sorte] || 0) + 1), n), {})).map(([k, v]) => v + " " + k).join(", ") : "aucun"], ["entre deux pas", "le dessin est à " + Math.round(Tanks.Scene.entreDeuxPas() * 100) + " % entre l'avant-dernier pas et le dernier (interpolation)"], ["dessins", Tanks.Scene.dessins().soldats + " soldats, " + Tanks.Scene.dessins().engins + " engins"], ["la carte graphique", (Tanks.Scene.infos.triangles || 0).toLocaleString("fr-FR") + " triangles, " + (Tanks.Scene.infos.calls || 0) + " dessins par image"], ["l'atelier (étape 70)", Tanks.Outils3D.bilan.pieces.toLocaleString("fr-FR") + " pièces soudées en " + Tanks.Outils3D.bilan.objets + " objets (une matière = un objet à dessiner)"]);
     const S = Tanks.Sauvegarde.donnees;
-    l.push(["Le livret militaire (sauvegarde)"], ["victoires · défaites", S.victoires + " · " + S.defaites], ["tanks détruits", S.detruits], ["bateaux · sous-marins coulés", S.bateaux + " · " + S.sousMarins], ["passages de portail", S.portails], ["avions abattus", S.avions], ["ordres donnés", S.ordres], ["obus tirés · au but", S.tirs + " · " + S.touches], ["motos, quads, camions ennemis (étape 71)", S.vehicules], ["hélicos de transport ennemis abattus · soldats déposés à la corde (étape 73)", S.helicos + " · " + S.cordes]);
+    l.push(["Le livret militaire (sauvegarde)"], ["victoires · défaites", S.victoires + " · " + S.defaites], ["tanks détruits", S.detruits], ["bateaux · sous-marins coulés", S.bateaux + " · " + S.sousMarins], ["passages de portail", S.portails], ["avions abattus", S.avions], ["ordres donnés", S.ordres], ["obus tirés · au but", S.tirs + " · " + S.touches], ["motos, quads, camions ennemis (étape 71)", S.vehicules], ["hélicos de transport ennemis abattus · soldats déposés à la corde (étape 73)", S.helicos + " · " + S.cordes], ["maisons effondrées · morceaux de mur abattus · grenades lancées (étape 75)", S.maisons + " · " + S.murs + " · " + S.grenades]);
     return l;
   }
 

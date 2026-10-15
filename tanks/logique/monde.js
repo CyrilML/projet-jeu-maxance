@@ -20,6 +20,8 @@
 // (monde.vehicules, logique/vehicules.js). Les tiens (une moto, un quad, un camion) sont garés avec tes engins.
 // Étape 73 : ✍️ les HÉLICOS DE TRANSPORT (un Chinook et un Black Hawk par camp, monde.helicos, logique/helicos.js) qui
 // déposent 10 soldats à la corde au front ; les tiens sont garés à ton aérodrome. Les soldats sur une corde glissent.
+// Étape 75 : ✍️ les MAISONS qu'on détruit (logique/structures.js) sont reconstruites à chaque nouvelle bataille ; touche 4 :
+// les GRENADES.
 // Il annonce tout à la radio : le journal, les sons, les effets et la sauvegarde écoutent.
 
 window.Tanks = window.Tanks || {};
@@ -57,6 +59,7 @@ Tanks.Monde = (function () {
     monde.phase = "bataille";
     monde.chrono = 0;
     monde.obus = [];
+    Tanks.Structures.reinitialiser(); // (étape 75 : les maisons sont reconstruites comme au départ)
     for (const a of T.arbres) a.ecrase = false; // (tous les arbres se relèvent)
     const bleus = T.departs("bleus", E.allies + 1), rouges = T.departs("rouges", E.ennemis);
     const milieu = Math.floor(bleus.length / 2);
@@ -233,10 +236,10 @@ Tanks.Monde = (function () {
     // étape 61 : E (sortir / monter) et 1, 2, 3 (changer d'arme)
     if (enJeu && intentions.monter) sortirOuMonter(monde);
     if (toi) {
-      for (const [k, arme] of [["arme1", "pistolet"], ["arme2", "mitrailleuse"], ["arme3", "roquettes"]]) {
+      for (const [k, arme] of [["arme1", "pistolet"], ["arme2", "mitrailleuse"], ["arme3", "roquettes"], ["arme4", "grenades"]]) { // (étape 75 : 4 = les grenades)
         if (intentions[k] && toi.arme !== arme) {
           toi.arme = arme;
-          radio.emettre("arme", { nom: C.armes[arme].nom, icone: C.armes[arme].icone });
+          radio.emettre("arme", { nom: C.armes[arme].nom, icone: C.armes[arme].icone, grenades: arme === "grenades" ? toi.grenades : undefined });
         }
       }
     }
@@ -256,7 +259,7 @@ Tanks.Monde = (function () {
     const visibles = cibles(monde);
     for (const c of monde.chars) {
       const ints = c === monde.joueur ? pourToi("char") : Tanks.IA.decider(c, visibles, dt, monde);
-      for (const e of Tanks.Char.avancer(c, ints, dt, visibles)) evenements.push(e);
+      for (const e of Tanks.Char.avancer(c, ints, dt, visibles, monde)) evenements.push(e);
     }
     Tanks.Char.chocs(monde.chars);
     // 2. Les engins de ton camp (seulement toi les conduis).
@@ -335,6 +338,10 @@ Tanks.Monde = (function () {
       if (nom === "abattu" && deToi && d.cible.equipe !== "bleus") S.donnees[d.cible.genre === "helico" ? "helicos" : "avions"]++; // (étape 64 ; étape 73 : un hélico)
       if (nom === "helico-depose" && d.toi) S.donnees.cordes += d.nombre; // (étape 73 : les soldats que TU as déposés à la corde)
       if (nom === "pilote-abattu" && deToi && d.cible.equipe !== "bleus") S.donnees.vehicules++; // (étape 71)
+      // (étape 75) les maisons que TU as fait s'effondrer, les morceaux de mur que tu as fait tomber, tes grenades
+      if (nom === "maison-effondree" && deToi) S.donnees.maisons++;
+      if (nom === "mur-troue" && deToi) S.donnees.murs += d.morceaux.length;
+      if (nom === "grenade-lancee" && deToi) S.donnees.grenades++;
     };
     for (const [nom, d] of evenements) {
       if (nom === "tir") {

@@ -96,7 +96,12 @@ Tanks.Tableau = (function () {
     // étape 61
     radio.ecouter("impossible", (d) => dire("✋ " + d.raison, "#ffb37a"));
     radio.ecouter("monter", (d) => dire("🪜 Tu montes dans " + d.dans, "#9cc4ff"));
-    radio.ecouter("sortir", () => dire("🪖 À pied ! (1 pistolet · 2 mitrailleuse · 3 lance-roquettes)", "#9cc4ff", 2500));
+    radio.ecouter("sortir", () => dire("🪖 À pied ! (1 pistolet · 2 mitrailleuse · 3 lance-roquettes · 4 grenades)", "#9cc4ff", 2500));
+    // (étape 75) les maisons et les grenades
+    radio.ecouter("maison-effondree", (d) => d.parToi ? dire("🏚️ La maison s'effondre !", "#ffb37a", 2500) : null);
+    radio.ecouter("mur-troue", (d) => d.parToi && d.sorte !== "balle" ? dire("🧱 Un trou dans le mur ! (" + d.debout + " / " + d.total + " morceaux debout)", "#e6c9a0") : null);
+    radio.ecouter("grenade-lancee", (d) => d.parToi ? dire("💣 Grenade ! (" + d.reste + " / " + d.max + ")", "#c8e68a") : null);
+    radio.ecouter("grenades", (d) => dire(d.camp ? "🎒 Au camp : grenades au complet (" + d.nombre + ")" : "🎒 +1 grenade (" + d.nombre + " / " + d.max + ")", "#c8e68a"));
     radio.ecouter("ejection", () => dire("🪂 ÉJECTION !", "#ffe27a"));
     radio.ecouter("soldat-mort", (d) => {
       if (d.parToi) dire("✖ " + d.cible + " à terre", "#7dffa0");
@@ -221,16 +226,19 @@ Tanks.Tableau = (function () {
       // le viseur : 40 m devant toi, à hauteur d'homme
       const v = Tanks.Scene.versEcran(s.x + Math.cos(s.angle) * 40, s.y + 1.4, s.z + Math.sin(s.angle) * 40, L, H);
       if (v && !s.parachute) viseur(v, false, 10);
-      panneau(12, H - 118, 330, 106);
+      panneau(12, H - 118, 436, 106);
       texte(s.parachute ? "🪂 En parachute…" : "🪖 À pied", 24, H - 92, 17, "#ffe27a");
       barreVie(24, H - 80, 200, s);
-      ["pistolet", "mitrailleuse", "roquettes"].forEach((a, i) => {
+      // (étape 75) 4 armes : la 4e, les grenades (avec combien il t'en reste)
+      ["pistolet", "mitrailleuse", "roquettes", "grenades"].forEach((a, i) => {
         const x = 24 + i * 104, choisi = s.arme === a;
         ctx.fillStyle = choisi ? "rgba(255,207,90,.3)" : "rgba(255,255,255,.08)";
         ctx.fillRect(x, H - 58, 98, 24);
-        texte(i + 1 + " " + C.armes[a].icone + " " + C.armes[a].nom.replace("Lance-roquettes", "Roquettes"), x + 49, H - 41, 12, choisi ? "#ffe27a" : "#ccc", "center");
+        const nom = a === "grenades" ? "Grenades ×" + s.grenades : C.armes[a].nom.replace("Lance-roquettes", "Roquettes");
+        texte(i + 1 + " " + C.armes[a].icone + " " + nom, x + 49, H - 41, 12, choisi ? "#ffe27a" : a === "grenades" && !s.grenades ? "#888" : "#ccc", "center");
       });
-      barre(24, H - 28, 200, 1 - s.recharge / C.armes[s.arme].cadence, s.recharge === 0, s.recharge === 0 ? "🔥 Espace : tirer" : "recharge…");
+      if (s.arme === "grenades") barre(24, H - 28, 200, s.grenades ? 1 - s.recharge / C.armes.grenades.cadence : s.regainGrenade / C.grenades.recharge, s.recharge === 0 && s.grenades > 0, s.grenades ? (s.recharge === 0 ? "💣 Espace : lancer (" + s.grenades + ")" : "…") : "plus de grenades : +1 dans " + Math.ceil(C.grenades.recharge - s.regainGrenade) + " s");
+      else barre(24, H - 28, 200, 1 - s.recharge / C.armes[s.arme].cadence, s.recharge === 0, s.recharge === 0 ? "🔥 Espace : tirer" : "recharge…");
       // E : monter ? (le plus proche, à moins de 6 m)
       if (!s.parachute) {
         let proche = null, dmin = C.engins.distanceMonter;
@@ -448,6 +456,12 @@ Tanks.Tableau = (function () {
     }
     const t = monde.toi || { mode: "char" }, dansLeTank = t.mode === "char";
     const ici = dansLeTank ? j : t.engin || t.soldat; // (là où tu es)
+    // (étape 75) au-dessus de chaque grenade proche : le temps avant l'explosion (en rouge, celles de l'ennemi : attention !)
+    for (const p of monde.obus) {
+      if (!p.main || Math.hypot(p.x - ici.x, p.z - ici.z) > 45) continue;
+      const e = Tanks.Scene.versEcran(p.x, p.y + 0.7, p.z, L, H);
+      if (e) texte((p.tireur.equipe === "bleus" ? "💣 " : "⚠️ 💣 ") + virgule(Math.max(0, p.meche)) + " s", e.x, e.y, 13, p.tireur.equipe === "bleus" ? "#c8e68a" : "#ff7a6a", "center");
+    }
     // Au-dessus de chaque tank : son nom et sa vie (et ton tank aussi, quand tu n'es pas dedans).
     for (const c of monde.chars) {
       if (c === j && dansLeTank) continue;
@@ -660,7 +674,7 @@ Tanks.Tableau = (function () {
     } else {
       const aide = {
         char: "↑ ↓ ← → rouler · Q / D tourelle · Espace tirer · E sortir · T ordre · C caméra · R recommencer",
-        pied: t.soldat && t.soldat.nage ? "↑ ↓ nager · ← → tourner · (pas de tir dans l'eau)" : "↑ ↓ marcher · ← → tourner · Espace tirer · 1 2 3 armes · E monter",
+        pied: t.soldat && t.soldat.nage ? "↑ ↓ nager · ← → tourner · (pas de tir dans l'eau)" : "↑ ↓ marcher · ← → tourner · Espace tirer · 1 2 3 armes · 4 grenades · E monter",
         jeep: "↑ ↓ ← → rouler · Q / D mitrailleuse · Espace tirer · E descendre (arrêté)",
         moto: "↑ ↓ ← → conduire (elle penche dans les virages) · Espace pistolet · E descendre (arrêté)",
         quad: "↑ ↓ ← → conduire · Espace mitrailleuse (elle tire droit devant) · E descendre (arrêté)",

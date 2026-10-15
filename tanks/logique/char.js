@@ -10,6 +10,7 @@
 // il tourne un tout petit peu vers lui, et il monte juste ce qu'il faut pour que l'obus, qui retombe en volant,
 // arrive sur lui. La formule (pour un sol plat) : angle = ½ × arcsin(gravité × distance ÷ vitesse²).
 //
+// Étape 75 : ✍️ un tank lancé à plus de 6 m/s contre un mur le défonce (logique/structures.js).
 // Ce fichier ne dessine rien. Il renvoie des événements (« tir », « arbre-ecrase »…) que le monde annonce à la radio.
 
 window.Tanks = window.Tanks || {};
@@ -46,7 +47,7 @@ Tanks.Char = (function () {
   // Avancer d'un petit pas. intentions = { avancer, reculer, gauche, droite, tourelleGauche, tourelleDroite, tirer }
   // (pour l'ordinateur : viseAngle = l'angle du monde vers lequel tourner la tourelle).
   // tous = tous les tanks (pour la visée assistée). Renvoie une liste d'événements [nom, données].
-  function avancer(c, intentions, dt, tous) {
+  function avancer(c, intentions, dt, tous, monde) {
     const ev = [];
     if (c.detruit) {
       c.depuisDetruit += dt;
@@ -78,7 +79,11 @@ Tanks.Char = (function () {
     const lim = T.demi - C.monde.bord;
     c.x = Math.max(-lim, Math.min(lim, c.x));
     c.z = Math.max(-lim, Math.min(lim, c.z));
-    if (T.repousser(c, K.rayon * 0.8)) c.vitesse *= 0.9;
+    if (T.repousser(c, K.rayon * 0.8)) {
+      // (étape 75) ✍️ lancé vite contre un mur, le tank le DÉFONCE (et ralentit beaucoup) ; sinon il est arrêté
+      if (c.morceauTouche && Tanks.Structures.choc(c.morceauTouche, c, ev, monde)) c.vitesse *= 0.55;
+      else c.vitesse *= 0.9;
+    }
     // 4. Écraser les arbres (à plus de 9 km/h) ; sinon, l'arbre arrête le tank.
     for (const a of T.arbresAutour(c.x, c.z, 5, prochesArbres)) { // (étape 72 : seulement les arbres des cases voisines)
       if (a.ecrase || Math.abs(a.x - c.x) > 5 || Math.abs(a.z - c.z) > 5) continue;

@@ -26,6 +26,8 @@
 // quad (« petit »), et un petit nuage quand un camion fait descendre ses soldats.
 // (étape 73) la poussière soulevée par le souffle des rotors d'un hélico de transport qui vole bas, et la fumée d'un
 // hélico abattu qui tombe.
+// (étape 75) l'explosion d'une GRENADE (de la terre qui gicle, un éclair, un anneau de poussière), et la poussière des
+// murs touchés (affichage/maisons3d.js s'en sert aussi : « particule »).
 // Il écoute la radio (tir, impact, touche, detruit) pour savoir quand faire des effets.
 
 window.Tanks = window.Tanks || {};
@@ -148,6 +150,14 @@ Tanks.Effets = (function () {
       if (d.sur === "eau") { // (étape 62) une gerbe d'eau : de l'écume blanche qui monte haut et retombe
         for (let k = 0; k < 22 * g; k++) particule(d.x + alea(g), d.y + 0.2, d.z + alea(g), alea(2.5 * g), 6 + Math.random() * 9 * g, alea(2.5 * g), 1.2 + Math.random() * 0.6, 0.8, 3 * g, 0.9, [0.92, 0.96, 1], false, 9.8);
         for (let k = 0; k < 6; k++) particule(d.x, d.y + 0.3, d.z, alea(3), 0.3, alea(3), 2, 2, 7 * g, 0.5, [0.85, 0.9, 0.92]);
+        return;
+      }
+      if (d.sorte === "grenade" && d.grenade) { // (étape 75) une grenade à main : un éclair, de la terre, un anneau de poussière
+        for (let k = 0; k < 16; k++) particule(d.x, d.y + 0.2, d.z, alea(5), 3 + Math.random() * 7, alea(5), 1 + Math.random() * 0.6, 0.6, 2.2, 0.9, [0.38, 0.3, 0.2], false, 9.8);
+        for (let k = 0; k < 12; k++) { const a = (k / 12) * Math.PI * 2; particule(d.x, d.y + 0.3, d.z, Math.cos(a) * 6, 0.4, Math.sin(a) * 6, 1.6, 1, 4, 0.5, [0.62, 0.58, 0.5]); }
+        for (let k = 0; k < 8; k++) particule(d.x, d.y + 0.6, d.z, alea(2.5), 1 + Math.random() * 2, alea(2.5), 0.35 + Math.random() * 0.2, 1.5, 3.2, 1, [1, 0.62, 0.25], true);
+        for (let k = 0; k < 5; k++) particule(d.x, d.y + 1, d.z, alea(1), 1.2, alea(1), 3, 2, 6, 0.45, [0.25, 0.23, 0.21]);
+        flash(d.x, d.y + 1, d.z, 25);
         return;
       }
       const couleur = terre ? [0.42, 0.33, 0.22] : pierre ? [0.7, 0.66, 0.58] : [1, 0.8, 0.4];
@@ -370,5 +380,5 @@ Tanks.Effets = (function () {
     for (const x of balles) x.l.visible = false;
   }
 
-  return { initialiser, maj, effacer, bilan };
+  return { initialiser, maj, effacer, bilan, particule, flash }; // (étape 75 : les maisons qui s'écroulent font aussi de la poussière)
 })();

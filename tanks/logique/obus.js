@@ -15,6 +15,11 @@
 // Étape 64 : les AVIONS peuvent être touchés (les chasseurs et les transports ennemis, et ton Rafale) : par un missile,
 // ou par l'obus de la DCA (le « flak »), qui éclate tout seul quand il passe à moins de 9 m d'un avion ennemi.
 // Étape 73 : les HÉLICOS DE TRANSPORT aussi (le Chinook, le Black Hawk) : touchés en l'air, ils sont « abattus » et tombent.
+// Étape 75 : ✍️ les MAISONS se détruisent (logique/structures.js) : un projectile qui touche un mur (on regarde tout le
+// trajet du dernier petit pas, pas seulement le point d'arrivée : un mur ne fait que 45 cm d'épaisseur !) explose contre
+// lui, et chaque explosion abîme les morceaux de mur tout autour. Une explosion derrière un mur ou des gravats blesse
+// moins (le mur protège). ✍️ La GRENADE à main : elle vole en cloche, REBONDIT sur le sol et les murs, roule, et explose
+// quand sa MÈCHE est finie (3 s) ; son souffle abîme aussi les engins légers (moto, quad, camion, 4x4).
 // ✍️ 4 obus détruisent un tank. Un projectile ne fait pas de mal à sa propre équipe.
 // Ce fichier ne dessine rien : il renvoie des événements (« touche », « detruit », « impact », « soldat-touche »…).
 
@@ -68,11 +73,22 @@ Tanks.Obus = (function () {
   }
 
   // Une explosion : son souffle met à terre les soldats ennemis tout près.
+  // (étape 75) Derrière un mur ou un tas de gravats (une ligne entre l'explosion et lui touche un mur), il est protégé :
+  // il n'est que blessé (1). Et une grenade abîme aussi les engins légers tout près.
   function souffle(monde, p, R, x, y, z, ev, dejaTouche) {
     for (const s of monde.soldats) {
       if (s.mort || s.dansUnEngin || s.equipe === p.tireur.equipe) continue;
       const d = Math.hypot(s.x - x, s.z - z);
-      if (d < R.souffle && Math.abs(s.y - y) < R.souffle) Tanks.Soldat.blesser(s, d < R.souffle * 0.6 ? 99 : 2, p.tireur, ev, p.sorte);
+      if (d < R.souffle && Math.abs(s.y - y) < R.souffle) {
+        const abrite = Tanks.Structures.touche(x, y + 0.35, z, s.x, s.y + 1, s.z);
+        Tanks.Soldat.blesser(s, abrite ? 1 : d < R.souffle * 0.6 ? 99 : 2, p.tireur, ev, p.sorte);
+      }
+    }
+    if (p.sorte === "grenade") {
+      for (const c of vehicules(monde, listeSouffle)) {
+        if (c.detruit || c.equipe === p.tireur.equipe || !(c.genre === "vehicule" || c.sorte === "jeep")) continue;
+        if (Math.hypot(c.x - x, c.z - z) < C.grenades.vehiculeLeger && Math.abs(c.y - y) < 3) abimer(c, 1, p.tireur, x, y, z, p.vx, p.vz, ev);
+      }
     }
     // (une bombe ou un missile abîme aussi un tank qui est tout près, même sans le toucher)
     if (R.degatsChar >= 2) {
@@ -85,7 +101,7 @@ Tanks.Obus = (function () {
   // Tous les véhicules qu'un projectile peut toucher : les tanks, le 4x4 (étape 61), et les bateaux (étape 62).
   // (étape 63 : et les sous-marins ; étape 64 : et la DCA)
   // (étape 72 : rangés dans une liste réutilisée)
-  const listeVehicules = [], listeSouffle = [], prochesBoites = [];
+  const listeVehicules = [], listeSouffle = [];
   function vehicules(monde, l) {
     l.length = 0;
     for (const c of monde.chars) l.push(c);
@@ -102,12 +118,84 @@ Tanks.Obus = (function () {
   }
   const cache = (c, sorte) => c.genre === "sousmarin" && sorte !== "torpille" && Tanks.SousMarins.sousLEau(c); // (sous l'eau)
 
+  // (étape 75) LA GRENADE À MAIN : elle tombe, rebondit (sur le sol, les murs, les engins), roule, et explose quand sa
+  // mèche est finie. Renvoie l'événement de l'explosion (ou null tant qu'elle n'a pas explosé).
+  const G = C.grenades;
+  function avancerGrenade(p, monde, dt, cibles) {
+    p.meche -= dt;
+    const ax = p.x, ay = p.y, az = p.z;
+    if (!p.auRepos) {
+      p.vy -= C.projectiles.grenade.gravite * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.z += p.vz * dt;
+      // un mur sur le trajet ? elle rebondit dessus (on renverse sa vitesse dans le sens de la face touchée)
+      const m = Tanks.Structures.premier(ax, ay, az, p.x, p.y, p.z);
+      if (m) {
+        const vn = p.vx * m.nx + p.vy * m.ny + p.vz * m.nz;
+        if (vn < 0) {
+          p.vx -= (1 + G.rebond) * vn * m.nx;
+          p.vy -= (1 + G.rebond) * vn * m.ny;
+          p.vz -= (1 + G.rebond) * vn * m.nz;
+          p.vx *= G.frottement + 0.3;
+          p.vz *= G.frottement + 0.3;
+          p.rebonds++;
+        }
+        p.x = m.x + m.nx * 0.06;
+        p.y = m.y + m.ny * 0.06;
+        p.z = m.z + m.nz * 0.06;
+      }
+      // un engin ? elle rebondit (un peu) sur sa caisse
+      for (const c of cibles) {
+        if (!dansLeChar(c, p.x, p.y, p.z)) continue;
+        p.x = ax;
+        p.z = az;
+        p.vx *= -0.3;
+        p.vz *= -0.3;
+        p.rebonds++;
+        break;
+      }
+    }
+    // le sol : elle rebondit (elle garde « rebond » de sa vitesse vers le haut), puis elle roule et s'arrête
+    const sol = T.dansLEau(p.x, p.z) ? C.lac.niveau - 3 : T.hauteur(p.x, p.z);
+    if (p.y < sol + 0.05) {
+      p.y = sol + 0.05;
+      if (p.vy < -1.2) {
+        p.vy = -p.vy * G.rebond;
+        p.vx *= G.frottement;
+        p.vz *= G.frottement;
+        p.rebonds++;
+      } else {
+        p.vy = 0;
+        const k = Math.max(0, 1 - G.roule * dt);
+        p.vx *= k;
+        p.vz *= k;
+        if (Math.hypot(p.vx, p.vz) < 0.15) (p.vx = p.vz = 0), (p.auRepos = true);
+      }
+    }
+    if (p.meche > 0) return null;
+    if (p.y < C.lac.niveau && T.dansLEau(p.x, p.z)) return ["impact", { x: p.x, y: C.lac.niveau, z: p.z, sur: "eau", sorte: "grenade" }];
+    return ["impact", { x: p.x, y: p.y, z: p.z, sur: "sol", sorte: "grenade", grenade: true, rebonds: p.rebonds, tireur: p.tireur }];
+  }
+
   function avancer(liste, monde, dt) {
     const ev = [];
     const cibles = vehicules(monde, listeVehicules);
     for (let i = liste.length - 1; i >= 0; i--) {
       const p = liste[i], R = reglages(p.sorte);
       p.age += dt;
+      if (p.meche !== undefined) { // (étape 75 : une grenade à main)
+        const fin = avancerGrenade(p, monde, dt, cibles);
+        if (fin) {
+          if (fin[1].sur !== "eau") {
+            souffle(monde, p, R, fin[1].x, fin[1].y, fin[1].z, ev, null);
+            Tanks.Structures.exploser(fin[1].x, fin[1].y, fin[1].z, "grenade", p.tireur, ev, monde, null);
+          }
+          ev.push(fin);
+          liste.splice(i, 1);
+        }
+        continue;
+      }
       // le missile guidé tourne un peu vers sa cible
       if (R.guide && p.cible && !p.cible.detruit) {
         const v = Math.hypot(p.vx, p.vy, p.vz), dx = p.cible.x - p.x, dy = p.cible.y + 1.2 - p.y, dz = p.cible.z - p.z, d = Math.hypot(dx, dy, dz) || 1;
@@ -120,6 +208,7 @@ Tanks.Obus = (function () {
         p.vy *= v / v2;
         p.vz *= v / v2;
       }
+      const ax = p.x, ay = p.y, az = p.z; // (étape 75 : d'où il part pendant ce petit pas)
       p.vy -= R.gravite * dt;
       p.x += p.vx * dt;
       p.y += p.vy * dt;
@@ -131,7 +220,7 @@ Tanks.Obus = (function () {
         fondTorpille = T.hauteur(p.x, p.z);
         p.y = Math.max(fondTorpille + 0.4, Math.min(p.y, C.lac.niveau - 0.6));
       }
-      let fini = null;
+      let fini = null, toit = null;
       // un véhicule ?
       for (const c of cibles) {
         if (c === p.tireur || cache(c, p.sorte) || !dansLeChar(c, p.x, p.y, p.z)) continue;
@@ -160,23 +249,23 @@ Tanks.Obus = (function () {
           }
         }
       }
+      // (étape 75) une maison, un muret, des gravats, un toit ? (sur tout le trajet de ce petit pas)
+      if (!fini && p.sorte !== "torpille" && p.sorte !== "flak") {
+        const m = Tanks.Structures.premier(ax, ay, az, p.x, p.y, p.z);
+        if (m) {
+          fini = ["impact", { x: m.x + m.nx * 0.2, y: m.y + m.ny * 0.2, z: m.z + m.nz * 0.2, sur: m.b.sorte, sorte: p.sorte, toit: m.toit, nx: m.nx, ny: m.ny, nz: m.nz, nom: m.b.nom }];
+          if (m.toit) toit = m.b;
+        }
+      }
       // l'eau du lac ? (étape 62)
       if (!fini && p.sorte !== "torpille" && p.y < C.lac.niveau && T.dansLEau(p.x, p.z)) fini = ["impact", { x: p.x, y: C.lac.niveau, z: p.z, sur: "eau", sorte: p.sorte }];
       // le sol ?
       if (!fini && fondTorpille !== null) {
         if (fondTorpille > C.lac.niveau - 0.9) fini = ["impact", { x: p.x, y: C.lac.niveau, z: p.z, sur: "sol", sorte: p.sorte }];
       } else if (!fini && p.y < T.hauteur(p.x, p.z)) fini = ["impact", { x: p.x, y: T.hauteur(p.x, p.z), z: p.z, sur: "sol", sorte: p.sorte }];
-      // une maison, un muret ?
-      if (!fini) {
-        for (const b of T.boitesAutour(p.x, p.z, 1, prochesBoites)) { // (étape 71 : seulement les murs des cases voisines)
-          if (Math.abs(p.x - b.x) > b.demiL + b.demiP || Math.abs(p.z - b.z) > b.demiL + b.demiP) continue;
-          if (p.y < T.hauteur(b.x, b.z) + b.h && T.dansBoite(b, p.x, p.z)) {
-            fini = ["impact", { x: p.x, y: p.y, z: p.z, sur: b.sorte, sorte: p.sorte }];
-            break;
-          }
-        }
-      }
       if (fini && fini[1].sur !== "char") souffle(monde, p, R, fini[1].x, fini[1].y, fini[1].z, ev, null);
+      // (étape 75) l'explosion abîme les murs tout autour (pas dans l'eau ni en l'air)
+      if (fini && fini[0] === "impact" && fini[1].sur !== "air" && fini[1].sur !== "eau") Tanks.Structures.exploser(fini[1].x, fini[1].y, fini[1].z, p.sorte, p.tireur, ev, monde, toit);
       if (!fini && p.age > (R.vieMax || O.vieMax + (p.sorte === "bombe" || p.sorte === "grenade" ? 20 : 0))) fini = p.sorte === "flak" ? ["impact", { x: p.x, y: p.y, z: p.z, sur: "air", sorte: "flak" }] : ["perdu", {}];
       if (fini) {
         if (fini[0] !== "perdu") ev.push(fini);

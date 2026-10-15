@@ -17,6 +17,7 @@ Tanks.Entrees = (function () {
     tirer: ["Space"],
     monter: ["KeyE"], // étape 61 : sortir du tank, monter dans un engin
     arme1: ["Digit1", "Numpad1"], arme2: ["Digit2", "Numpad2"], arme3: ["Digit3", "Numpad3"], // étape 61 : les armes à pied
+    arme4: ["Digit4", "Numpad4"], // étape 75 : les grenades
     valider: ["Enter", "NumpadEnter"],
     recommencer: ["KeyR"],
     retour: ["Backspace"],

@@ -2,8 +2,7 @@
 //
 // Il fabrique (une seule fois) ce qu'on voit :
 //   - LE SOL : une grande grille de 2 100 m (étape 71 ; avant : 700 m) posée sur les collines (logique/terrain.js) ;
-//   - LE VILLAGE EN RUINES : chaque maison a 4 murs en pierre, cassés en haut (des hauteurs différentes), des trous
-//     de fenêtres, parfois un morceau de toit, et des tas de gravats autour ;
+//   - LES MAISONS : (étape 75) elles sont maintenant dessinées par affichage/maisons3d.js (on peut les détruire) ;
 //   - LES MURETS et les haies, LES ARBRES (feuillus et sapins). Un arbre écrasé par un tank se couche par terre.
 // Pour que ce soit rapide, tout ce qui a la même matière est « recollé » en une seule forme (une maison = des
 // dizaines de pierres, mais un seul dessin pour tout le village), et les arbres sont des « instances ».
@@ -68,23 +67,6 @@ Tanks.Decor = (function () {
     h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
     return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
   };
-
-  // Recolle une liste de formes déjà placées (geo + matrice) en une seule.
-  function recoller(liste) {
-    const pos = [], nor = [], uv = [];
-    for (const { geo, m4 } of liste) {
-      const g = (geo.index ? geo.toNonIndexed() : geo.clone()).applyMatrix4(m4);
-      pos.push(...g.attributes.position.array);
-      nor.push(...g.attributes.normal.array);
-      if (g.attributes.uv) uv.push(...g.attributes.uv.array);
-      else for (let i = 0; i < g.attributes.position.count; i++) uv.push(0, 0);
-    }
-    const r = new THREE.BufferGeometry();
-    r.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-    r.setAttribute("normal", new THREE.Float32BufferAttribute(nor, 3));
-    r.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
-    return r;
-  }
 
   // ------------------------------------------------------------------ (étape 74) LE SOL PEINT
   // 1. Le CHAMP : la couleur du sol tous les 4 m (512 × 512 cases), calculée case par case avec du « bruit » :
@@ -372,94 +354,6 @@ Tanks.Decor = (function () {
       const m = new THREE.Mesh(g, matiere);
       m.receiveShadow = true;
       ajouterMorceau(groupe, m);
-    }
-  }
-
-  function village(groupe) {
-    const pierre = image(256, (ctx, t) => {
-      ctx.fillStyle = "#a59b88";
-      ctx.fillRect(0, 0, t, t);
-      for (let y = 0; y < t; y += 16) {
-        for (let x = (y / 16) % 2 ? 0 : 12; x < t; x += 24) {
-          const v = 140 + Math.floor(hasard() * 50);
-          ctx.fillStyle = "rgb(" + v + "," + (v - 8) + "," + (v - 22) + ")";
-          ctx.fillRect(x + 1, y + 1, 22, 14);
-        }
-      }
-      for (let i = 0; i < 2500; i++) {
-        ctx.fillStyle = "rgba(0,0,0," + hasard() * 0.15 + ")";
-        ctx.fillRect(hasard() * t, hasard() * t, 2, 2);
-      }
-    });
-    const parMorceau = []; // (étape 72) pour chaque morceau de 140 m : { pierre, bois, tuiles, gravats }
-    let lot = null;
-    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Vector3(), haut = new THREE.Vector3(0, 1, 0);
-    const poser = (liste, geo, x, y, z, angle, sx, sy, sz, inclinaison) => {
-      q.setFromAxisAngle(haut, -angle);
-      if (inclinaison) q.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), inclinaison));
-      liste.push({ geo, m4: m4.clone().compose(new THREE.Vector3(x, y, z), q, e.set(sx, sy, sz)) });
-    };
-    const cube = new THREE.BoxGeometry(1, 1, 1);
-    for (const b of T.boites) {
-      const k = numeroMorceau(b.x, b.z);
-      lot = parMorceau[k] = parMorceau[k] || { pierre: [], bois: [], tuiles: [], gravats: [] };
-      const y0 = T.hauteur(b.x, b.z) - 0.4, c = Math.cos(b.angle), s = Math.sin(b.angle);
-      const ici = (u, v) => [b.x + u * c - v * s, b.z + u * s + v * c];
-      if (b.sorte === "muret") {
-        const [x, z] = ici(0, 0);
-        poser(lot.pierre, cube, x, y0 + b.h / 2 + 0.2, z, b.angle, b.demiL * 2, b.h + 0.4, b.demiP * 2);
-        continue;
-      }
-      // Une maison en ruines : 4 murs, chacun coupé en lot de 1,5 m de hauteurs différentes (le haut est cassé).
-      let graine = b.graine || 1;
-      const h2 = () => ((graine = (graine * 1664525 + 1013904223) >>> 0) / 4294967296);
-      const ep = 0.45;
-      for (const [u0, v0, long, angleMur] of [[0, b.demiP, b.demiL, 0], [0, -b.demiP, b.demiL, 0], [b.demiL, 0, b.demiP, Math.PI / 2], [-b.demiL, 0, b.demiP, Math.PI / 2]]) {
-        const n = Math.max(2, Math.round((long * 2) / 1.5)), pas = (long * 2) / n;
-        for (let k = 0; k < n; k++) {
-          const d = -long + (k + 0.5) * pas;
-          const u = u0 + (angleMur ? 0 : d), v = v0 + (angleMur ? d : 0);
-          const fenetre = k % 3 === 1 && h2() < 0.7; // un trou de fenêtre : le bas et le haut du mur, rien au milieu
-          const hauteur = b.h * (0.35 + h2() * 0.65);
-          const [x, z] = ici(u, v);
-          if (fenetre && hauteur > 2.6) {
-            poser(lot.pierre, cube, x, y0 + 0.65, z, b.angle + angleMur, pas + 0.02, 1.3, ep);
-            poser(lot.pierre, cube, x, y0 + 2.3 + (hauteur - 2.3) / 2, z, b.angle + angleMur, pas + 0.02, hauteur - 2.3, ep);
-            poser(lot.bois, cube, x, y0 + 2.25, z, b.angle + angleMur, pas + 0.1, 0.12, ep + 0.06); // le linteau en bois
-          } else poser(lot.pierre, cube, x, y0 + hauteur / 2, z, b.angle + angleMur, pas + 0.02, hauteur, ep);
-        }
-      }
-      // parfois un morceau de toit qui tient encore (penché), et des poutres
-      if (h2() < 0.45) {
-        const [x, z] = ici(-b.demiL * 0.3, b.demiP * 0.45);
-        poser(lot.tuiles, cube, x, y0 + b.h * 0.95, z, b.angle, b.demiL * 1.2, 0.18, b.demiP * 1.2, 0.5);
-      }
-      for (let k = 0; k < 3; k++) {
-        const [x, z] = ici((h2() - 0.5) * b.demiL, (h2() - 0.5) * b.demiP);
-        poser(lot.bois, cube, x, y0 + 0.8 + h2() * 2, z, h2() * 3, 0.2, 0.2, b.demiP * 1.6, 0.6 + h2());
-      }
-      // les gravats autour
-      for (let k = 0; k < 10; k++) {
-        const a = h2() * Math.PI * 2, r = Math.max(b.demiL, b.demiP) * (0.6 + h2() * 0.7);
-        const [x, z] = ici(Math.cos(a) * r, Math.sin(a) * r);
-        const t = 0.3 + h2() * 0.8;
-        poser(lot.gravats, cube, x, T.hauteur(x, z) + t * 0.2, z, h2() * 6, t * 1.4, t * 0.6, t, h2());
-      }
-    }
-    const matieres = {
-      pierre: new THREE.MeshStandardMaterial({ map: pierre, roughness: 0.95 }),
-      gravats: new THREE.MeshStandardMaterial({ map: pierre, color: 0x9a8f7e, roughness: 1 }),
-      bois: new THREE.MeshStandardMaterial({ color: 0x4a3524, roughness: 0.9 }),
-      tuiles: new THREE.MeshStandardMaterial({ color: 0x8a4630, roughness: 0.85 }),
-    };
-    for (const morceau of parMorceau) {
-      if (!morceau) continue;
-      for (const [nom, liste] of Object.entries(morceau)) {
-        if (!liste.length) continue;
-        const m = new THREE.Mesh(recoller(liste), matieres[nom]);
-        m.castShadow = m.receiveShadow = true;
-        ajouterMorceau(groupe, m);
-      }
     }
   }
 
@@ -878,7 +772,7 @@ Tanks.Decor = (function () {
     const g = new THREE.Group();
     sol(g);
     lac(g);
-    village(g);
+    Tanks.Maisons3D.construire(g, ajouterMorceau, numeroMorceau); // (étape 75 : les maisons qu'on peut détruire)
     arbres(g);
     touffes(g);
     return g;

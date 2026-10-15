@@ -11,6 +11,9 @@
 // (Étape 72 : pour aller vite, il regarde les ennemis du plus proche au plus loin et s'arrête au premier qu'il voit ; pour
 // ne pas se coller aux autres, il ne regarde que les soldats des cases voisines du quadrillage.)
 // (Étape 73 : les soldats qui descendent à la corde d'un hélico de transport : « parCorde ».)
+// (Étape 75 : ✍️ les GRENADES. Quand il réfléchit, un soldat qui a encore une grenade (et qui n'en a pas lancé depuis
+// 16 s) peut en lancer une — 30 % des fois — sur un GROUPE d'ennemis (2 ou plus à moins de 6 m l'un de l'autre), ou sur
+// un ennemi CACHÉ derrière un mur ou DANS une maison, entre 9 et 30 m. La grenade passe par-dessus le mur !)
 // (Étape 65 : TES ORDRES passent avant tout. « Va là » : il y court sans s'arrêter pour tirer, puis il défend sa place ;
 // « vise … » : il choisit sa cible dans ce que tu as dit ; « cessez le feu » : il ne tire plus.)
 
@@ -106,6 +109,7 @@ Tanks.Troupes = (function () {
       }
       ia.cible = meilleur ? meilleur.o : null;
       ia.erreur = (Math.random() - 0.5) * 0.06;
+      ia.grenade = !roquettes && s.grenades > 0 && s.attenteGrenade === 0 && Math.random() < C.grenades.ia.chance ? ouLancer(s, monde, meilleur) : null;
     }
     const intentions = {};
     let cible = ia.cible && !ia.cible.mort && !ia.cible.detruit ? ia.cible : null;
@@ -126,6 +130,15 @@ Tanks.Troupes = (function () {
       }
     }
     if (cible && s.feuLibre === false) cible = null; // (« cessez le feu » : il ne vise plus personne)
+    // (étape 75) une grenade à lancer ? il se tourne vers l'endroit et la lance
+    if (ia.grenade && s.feuLibre !== false) {
+      const g = ia.grenade;
+      ia.grenade = null;
+      ia.etat = "lance une grenade (" + g.raison + ")";
+      intentions.versAngle = Math.atan2(g.z - s.z, g.x - s.x);
+      intentions.grenade = g;
+      return intentions;
+    }
     if (cible) {
       // 2. il vise et il tire
       ia.etat = "tire";
@@ -157,6 +170,30 @@ Tanks.Troupes = (function () {
       intentions.avancer = Math.abs(angleEntre(intentions.versAngle - s.angle)) < 1;
     }
     return intentions;
+  }
+
+  // (étape 75) Où lancer une grenade ? Sur un groupe d'ennemis qu'il voit, ou sur un ennemi caché (derrière un mur,
+  // dans une maison) qu'il ne voit pas. Renvoie { x, y, z, nom, groupe, raison } ou null.
+  const GI = C.grenades.ia;
+  function ouLancer(s, monde, vu) {
+    const [min, max] = GI.portee;
+    const groupe = (o) => {
+      let n = 0;
+      for (const a of Tanks.Grille.chercher(monde.grilleSoldats, o.x, o.z, GI.rayonGroupe, prochesSoldats)) if (!a.mort && a.equipe === o.equipe && !a.dansUnEngin && Math.hypot(a.x - o.x, a.z - o.z) < GI.rayonGroupe) n++;
+      return n;
+    };
+    // 1. un groupe d'ennemis, ou un ennemi dans une maison (il le voit par une fenêtre ou un trou)
+    if (vu && vu.o.genre === "soldat" && vu.d > min && vu.d < max) {
+      const n = groupe(vu.o), maison = Tanks.Terrain.boitesAutour(vu.o.x, vu.o.z, 1, prochesSoldats).some((b) => b.toit && Tanks.Structures.dedans(b, vu.o.x, vu.o.z));
+      if (n >= GI.groupe || maison) return { x: vu.o.x, y: vu.o.y, z: vu.o.z, nom: vu.o.nom, groupe: n, raison: maison ? "dans une maison" : n + " ennemis groupés" };
+    }
+    // 2. un ennemi caché derrière un mur, assez près
+    for (const p of parDistance) {
+      if (p.d > max) break;
+      if (p.d < min || p.o.genre !== "soldat" || (vu && p.o === vu.o)) continue;
+      if (Tanks.Structures.touche(s.x, s.y + 1.5, s.z, p.o.x, p.o.y + 1.2, p.o.z)) return { x: p.o.x, y: p.o.y, z: p.o.z, nom: p.o.nom, groupe: groupe(p.o), raison: "caché derrière un mur" };
+    }
+    return null;
   }
 
   return { creer, decider, parachutiste, renfort, parCorde };
