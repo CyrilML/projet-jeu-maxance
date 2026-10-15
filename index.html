@@ -196,6 +196,7 @@
       <a href="#etape72">Étape 72</a>
       <a href="#etape73">Étape 73</a>
       <a href="#etape74">Étape 74</a>
+      <a href="#etape75">Étape 75</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4288,6 +4289,56 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <details class="question"><summary>Pourquoi un soldat en une seule peau est-il plus rapide à dessiner ?</summary><p>Parce que la carte graphique fait 1 dessin pour la peau au lieu de 20 pour les pièces séparées.</p></details>
     </section>
 
+    <section id="etape75">
+      <h2>🏚️ Étape 75 : de beaux tanks, des maisons qu'on peut détruire, des grenades <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Tous les tanks sont repeints en camouflage, les maisons se cassent morceau par morceau, et tu peux lancer des grenades. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/75-tanks-maisons-destructibles-grenades.md</code>.</p>
+          <ul>
+            <li>✍️ Tous les tanks, le plus beau possible.</li>
+            <li>✍️ « Si tu tires sur une maison ou une autre structure avec un tank ou une mitraillette, tu fais des dégâts. Cela se détruit, et je veux que ce soit un peu réaliste. »</li>
+            <li>✍️ Des grenades dans les armes.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Tanks « version 14 ».</li>
+            <li>☐ Les tanks bleus ont un camouflage forêt, les rouges un camouflage désert, avec de la boue en bas et un numéro sur la tourelle.</li>
+            <li>☐ Mitrailleuse sur une maison : des trous de balles apparaissent.</li>
+            <li>☐ Un obus de tank : un gros trou, des briques qui volent, de la poussière.</li>
+            <li>☐ Après plusieurs obus, le toit s'effondre : « 🏚️ Une maison s'effondre » dans le journal.</li>
+            <li>☐ Un tank lancé vite défonce un mur.</li>
+            <li>☐ À pied, touche 4 (grenades), Espace pour lancer : elle rebondit et explose après 3 s. Tu en as 4, et tu en regagnes 1 toutes les 25 s.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🧱 Un mur fait de morceaux</h3>
+      <p>Chaque mur est découpé en morceaux de 1,6 m × 2,8 m (environ 4 800 sur toute la carte). Chaque morceau a ses points de vie :</p>
+      <ul>
+        <li>Une balle enlève 1 point au morceau touché.</li>
+        <li>Une explosion enlève beaucoup de points à tous les morceaux autour d'elle : un obus enlève 95 points dans un rayon de 3,1 m. Ça fait le gros trou.</li>
+        <li>Un morceau qui n'a plus de points tombe, et ceux qui étaient posés dessus tombent aussi. Il reste des gravats.</li>
+        <li>Quand 36 % des morceaux sont tombés, le toit n'est plus tenu : il s'effondre.</li>
+      </ul>
+      <pre style="white-space: pre-wrap">avant :  ▓▓▓▓▓▓      1 obus :  ▓▓  ▓▓      6 obus :  (toit par terre)
+         ▓▓▓▓▓▓                ▓    ▓               ░░▓░░▓░  gravats</pre>
+      <p>Les balles, les obus et les regards des soldats passent par les trous et les fenêtres, mais pas à travers un mur entier. Un mur te protège donc d'une explosion qui a lieu de l'autre côté.</p>
+      <h3>💣 La grenade : une balle qui rebondit</h3>
+      <p>Une grenade, c'est un petit objet qui suit la gravité : à chaque pas, elle avance et elle tombe un peu plus vite. Quand elle touche le sol ou un mur, elle rebondit en perdant de la vitesse, puis elle roule. Un compte à rebours de 3 secondes commence au lancer. À 0, elle explose.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Ouvre « sous le capot » et va voir « Les maisons et les grenades (étape 75) » : regarde la solidité de la maison la plus proche baisser pendant que tu tires.</li>
+        <li>Lance une grenade contre un mur et compte ses rebonds (tu entends un « tink » à chaque fois).</li>
+        <li>Dans <code>tanks/config.js</code>, cherche les grenades et change la durée avant l'explosion (3 s) : que se passe-t-il avec 1 s ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi découpe-t-on un mur en morceaux ?</summary><p>Pour qu'un tir enlève seulement le morceau touché : on peut alors faire un trou au bon endroit, au lieu de détruire tout le mur d'un coup.</p></details>
+      <details class="question"><summary>Quand le toit d'une maison s'effondre-t-il ?</summary><p>Quand 36 % des morceaux de ses murs sont tombés, ou après 3 coups directs sur le toit.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4655,6 +4706,12 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
           <h4>Des tanks bien plus beaux, 60 soldats <span class="etiquette">✅ fait · à valider</span></h4>
           <p>Les hélicos, les soldats et le décor des tanks redessinés (sol peint, chemins, herbe au vent, beaux arbres), et 60 soldats debout par équipe (étape 74).</p>
           <p class="apprend"><b>Tu apprends :</b> peindre une grande image pour le sol, la texture de détail, le squelette et la peau. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">🏚️</div>
+          <h4>Beaux tanks, maisons destructibles, grenades <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Tous les tanks en camouflage, des maisons qui se cassent morceau par morceau et s'effondrent, et des grenades qui rebondissent (étape 75).</p>
+          <p class="apprend"><b>Tu apprends :</b> découper un mur en morceaux, les points de vie, la gravité et les rebonds. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte fait">
           <div class="num">⚔️</div>
@@ -5342,6 +5399,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-74" data-cle="appris-74" placeholder="Ex. : J'ai appris qu'un personnage a un squelette sous sa peau…"></textarea>
         <label for="idees-74"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-74" data-cle="idees-74" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 75 · beaux tanks, maisons destructibles, grenades <span class="petit">· 16 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les murs en morceaux (<code>tanks/logique/structures.js</code>), le dessin des maisons et de leurs dégâts (<code>tanks/affichage/maisons3d.js</code>), les tanks repeints (<code>chars3d.js</code>) et les grenades.</p>
+        <p class="petit">✍️ Maxance a choisi : tous les tanks le plus beau possible, des maisons et des structures qui se détruisent de façon un peu réaliste, des grenades.</p>
+        <label for="appris-75"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-75" data-cle="appris-75" placeholder="Ex. : J'ai appris qu'un mur est fait de morceaux avec des points de vie…"></textarea>
+        <label for="idees-75"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-75" data-cle="idees-75" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

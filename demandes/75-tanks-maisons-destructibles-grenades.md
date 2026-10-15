@@ -1,6 +1,6 @@
 # Demande n° 75 : de beaux tanks, des maisons qu'on peut détruire, des grenades
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée le 16/10/2026 (tanks version 14), à valider par Maxance.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi

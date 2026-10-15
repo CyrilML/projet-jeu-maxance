@@ -948,12 +948,13 @@ Tanks.Maisons3D = (function () {
       const g = { obus: 1.8, roquette: 1.6, bombe: 3.2, missile: 2.6, grenade: 1.5 }[d.sorte] || 1.5;
       // les traces noires : sur les morceaux de mur encore debout autour du point d'explosion (au centre, il y a un trou !)
       const tx = -d.nz, tz = d.nx;
-      const ray = ((S.explosions[d.sorte] || [0, 2.5])[1]) * 0.75;
-      for (let k = 0; k < 9; k++) {
-        const an = (k / 8) * Math.PI * 2, da = k === 8 ? 0 : Math.cos(an) * ray, dy = k === 8 ? 0 : Math.sin(an) * ray * 0.7;
+      const R0 = (S.explosions[d.sorte] || [0, 2.5])[1];
+      let n = 0;
+      for (const ray of [0, R0 * 0.8, R0 * 1.05, R0 * 1.3]) for (let k = 0; k < (ray ? 8 : 1) && n < 6; k++) {
+        const an = (k / 8) * Math.PI * 2 + ray, da = Math.cos(an) * ray, dy = Math.sin(an) * ray * 0.6;
         const x = d.x + tx * da, y = d.y + dy, z = d.z + tz * da;
         const m = Tanks.Structures.premier(x + d.nx * 0.5, y, z + d.nz * 0.5, x - d.nx * 1.0, y, z - d.nz * 1.0);
-        if (m && m.morceau) coller(brulures, m.x, m.y, m.z, m.nx, m.ny, m.nz, g * (0.9 + hasard() * 0.6), [m.b, m.morceau.k], "brulures");
+        if (m && m.morceau) (coller(brulures, m.x, m.y, m.z, m.nx, m.ny, m.nz, g * (0.9 + hasard() * 0.6), [m.b, m.morceau.k], "brulures"), n++);
       }
     });
     radio.ecouter("maison-effondree", (d) => {
