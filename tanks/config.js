@@ -377,12 +377,12 @@ Tanks.CONFIG = {
   // ✍️ (étape 75) LA PEINTURE DES TANKS : un camouflage à grandes taches (bois et olive pour les Bleus, désert pour les
   // Rouges), de la boue et de la poussière en bas (jusqu'à « boue » m), des éclats de peinture sur les arêtes, et le
   // numéro de chaque tank sur sa tourelle. De près (moins de « maillons » × la distance des roues), la chenille est faite de
-  // vrais MAILLONS en 3D qui défilent ; plus loin, une image.
+  // vrais MAILLONS en 3D qui défilent ; plus loin, une image. (« maillons » × la distance des roues de la qualité.)
   peinture: {
     bleus: { taches: ["#626f45", "#6e5a3e", "#30332a", "#87915f"], boue: "#5e503c", poussiere: "#9a8f72" },
     rouges: { taches: ["#a08a60", "#7d6646", "#c2ad82", "#5e5440"], boue: "#6b5a40", poussiere: "#c4b08a" },
     boue: 1.0, // m
-    maillons: 0.8,
+    maillons: 0.35, // (× la distance des roues : 56 m au niveau « beau », 21 m au niveau « léger »)
   },
 
   // ------------------------------------------------------------------ étape 71 : les MOTOS, QUADS et CAMIONS de l'ordinateur
@@ -464,11 +464,12 @@ Tanks.CONFIG = {
     // tanks sont soudées en une pièce qui ne tourne plus), effets (m : plus loin, pas de fumée ni d'étincelles).
     // (étape 74) herbe (m : les touffes d'herbe autour de la caméra ; 0 = pas de touffes), arbresDetail (m : plus près,
     // les beaux arbres à grappes de feuillage ; plus loin, des arbres simples). Le niveau « beau » a des ombres plus fines.
+    // (étape 75) maisons (m : plus près, les belles maisons avec leurs fenêtres, leurs briques… ; plus loin, la version simple).
     niveaux: [
-      { nom: "très léger", pixels: 0.6, ombres: 0, douces: false, vue: 380, decor: 300, soldatDetail: 12, soldatSimple: 30, soldatSilhouette: 170, roues: 35, effets: 140, herbe: 0, arbresDetail: 50 },
-      { nom: "léger", pixels: 0.8, ombres: 1024, douces: false, vue: 520, decor: 380, soldatDetail: 20, soldatSimple: 45, soldatSilhouette: 210, roues: 60, effets: 200, herbe: 22, arbresDetail: 80 },
-      { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 800, decor: 540, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280, herbe: 38, arbresDetail: 130 },
-      { nom: "beau", pixels: 1.5, selonEcran: true, ombres: 4096, douces: true, vue: 1300, decor: 850, soldatDetail: 50, soldatSimple: 110, soldatSilhouette: 300, roues: 160, effets: 400, herbe: 60, arbresDetail: 220 },
+      { nom: "très léger", pixels: 0.6, ombres: 0, douces: false, vue: 380, decor: 300, soldatDetail: 12, soldatSimple: 30, soldatSilhouette: 170, roues: 35, effets: 140, herbe: 0, arbresDetail: 50, maisons: 60 },
+      { nom: "léger", pixels: 0.8, ombres: 1024, douces: false, vue: 520, decor: 380, soldatDetail: 20, soldatSimple: 45, soldatSilhouette: 210, roues: 60, effets: 200, herbe: 22, arbresDetail: 80, maisons: 100 },
+      { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 800, decor: 540, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280, herbe: 38, arbresDetail: 130, maisons: 160 },
+      { nom: "beau", pixels: 1.5, selonEcran: true, ombres: 4096, douces: true, vue: 1300, decor: 850, soldatDetail: 50, soldatSimple: 110, soldatSilhouette: 300, roues: 160, effets: 400, herbe: 60, arbresDetail: 220, maisons: 240 },
     ],
   },
   // (étape 72) Le QUADRILLAGE : la carte est découpée en cases de 16 m. Pour savoir quels arbres ou quelles maisons sont

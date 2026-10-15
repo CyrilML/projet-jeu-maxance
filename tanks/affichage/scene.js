@@ -640,7 +640,7 @@ Tanks.Scene = (function () {
     Tanks.Decor.majDistance(cam.position, Math.min(Q.decor, Q.vue), Q.arbresDetail); // (étape 72 : les morceaux et les arbres trop loin sont cachés ; étape 74 : les beaux arbres de près)
     Tanks.Decor.majHerbe(cam.position, Q.herbe || 0); // (étape 74 : les touffes d'herbe autour de la caméra)
     Tanks.Decor.majEau(dt);
-    Tanks.Maisons3D.maj(dt); // (étape 75 : les morceaux de mur tombés, les débris qui volent, les toits qui s'effondrent)
+    Tanks.Maisons3D.maj(dt, cam.position, Q.maisons); // (étape 75 : les morceaux de mur tombés, les débris qui volent, les toits qui s'effondrent ; la belle version de près)
     Tanks.Effets.maj(dt, monde, cam, Q.effets);
     rendu.render(scene, cam);
   }

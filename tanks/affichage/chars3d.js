@@ -570,11 +570,8 @@ Tanks.Chars3D = (function () {
     if (cache[cle]) return cache[cle];
     const mt = materiaux().maillon, p = [], w = tw / 2;
     p.push(boite(0.13, 0.045, tw * 0.94, mt, 0, -0.012, 0, 0x3b3a35)); // le patin
-    for (const s of [-1, 1]) {
-      p.push(boite(0.11, 0.028, w * 0.72, mt, 0, -0.048, s * w * 0.5, 0x191918)); // les semelles en caoutchouc
-      p.push(boite(0.035, 0.03, 0.05, mt, 0, -0.004, s * (w + 0.015), 0x5b5852)); // les écrous des connecteurs
-    }
-    for (const x of [-PAS_MAILLON / 2 + 0.012, PAS_MAILLON / 2 - 0.012]) p.push(couche(cylindre(0.02, 0.02, tw * 1.02, mt, 6, 0x56544e), "z", x, 0.0, 0));
+    for (const s of [-1, 1]) p.push(boite(0.11, 0.028, w * 0.72, mt, 0, -0.048, s * w * 0.5, 0x191918)); // les semelles en caoutchouc
+    for (const x of [-PAS_MAILLON / 2 + 0.014, PAS_MAILLON / 2 - 0.014]) p.push(boite(0.03, 0.03, tw * 1.04, mt, x, 0.002, 0, 0x56544e)); // les connecteurs
     p.push(boite(0.07, 0.07, 0.06, mt, 0, 0.045, 0, 0x4b4943)); // le guide
     return (cache[cle] = geometrieTeintee(p, mt));
   }
@@ -593,7 +590,8 @@ Tanks.Chars3D = (function () {
   function maillons(cercles, ep, tw, zc) {
     const ch = cheminChenille(cercles, ep), nb = Math.round(ch.longueur / PAS_MAILLON), pas = ch.longueur / nb;
     const mesh = new THREE.InstancedMesh(geoMaillon(tw), materiaux().maillon, nb * 2);
-    mesh.castShadow = mesh.receiveShadow = true;
+    mesh.castShadow = false; // (sous la caisse, leur ombre ne se verrait pas : on ne la calcule pas)
+    mesh.receiveShadow = true;
     mesh.frustumCulled = false;
     const tab = mesh.instanceMatrix.array, n = ch.pts.length;
     function maj(gauche, droite) {

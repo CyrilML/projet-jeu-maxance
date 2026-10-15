@@ -257,7 +257,7 @@ Tanks.Maisons3D = (function () {
     mat.customProgramCacheKey = () => "maison-" + (verre ? "v" : "") + (ombre ? "o" : "");
   }
   const quartiers = new Map(); // numéro du quartier → { lots: { mur, brique, … } }
-  const NOMS_LOTS = ["mur", "brique", "pierre", "toit", "bois", "verre", "haie"];
+  const NOMS_LOTS = ["mur", "brique", "pierre", "toit", "bois", "verre", "haie", "loin"];
   function lotDe(q, nom) {
     return q.lots[nom] || (q.lots[nom] = { nom, pos: [], nor: [], uv: [], col: [], idx: [], geo: null });
   }
@@ -329,8 +329,48 @@ Tanks.Maisons3D = (function () {
     return s;
   }
 
+  // ------------------------------------------------------------------ la version SIMPLE (de loin)
+  // De loin, on ne voit pas les cadres des fenêtres ni les briques : chaque morceau est une simple boîte colorée (sans
+  // image), avec la fenêtre peinte en sombre et ses volets ; le toit, deux pentes. Tout un quartier = UN seul dessin.
+  // (Chaque morceau a ses deux versions : quand il tombe, les deux disparaissent.)
+  function emettreLoin(b, mur, m, st, q) {
+    const L = lotDe(q, "loin"), ep = b.ep, w0 = -ep / 2, w1 = ep / 2;
+    const base = m.matiere === "haie" ? fois(lin("#4e6a32"), 0.9) : m.matiere === "pierre" ? fois(st.pierre, 0.82) : m.matiere === "bois" && !m.porte ? fois(st.planches || st.porte, 0.8) : fois(st.crepi, 0.86);
+    if (m.matiere === "haie") {
+      const ac = (m.a0 + m.a1) / 2, la = (m.a1 - m.a0) * 0.62, lw = b.demiP * 1.3;
+      return paveMur(mur, ac - la, ac + la, 0, b.h * 1.05, -lw, lw, (f) => (f === "dessous" ? null : [L, f === "dessus" ? fois(base, 1.15) : base]));
+    }
+    paveMur(mur, m.a0, m.a1, m.y0, m.y1, w0, w1, (f) => (f === "dessous" ? null : [L, f === "dehors" ? base : f === "dedans" ? st.dedans : fois(base, 0.85)]));
+    if (!b.toit) return paveMur(mur, m.a0, m.a1, m.y1, m.y1 + 0.12, w0 - 0.05, w1 + 0.05, toutes(L, fois(st.pierre, 0.95)));
+    const o = m.ouverture, sombre = lin("#2a3036");
+    const peint = (a0, a1, y0, y1, col) => paveMur(mur, a0, a1, y0, y1, w1, w1 + 0.012, (f) => (f === "dehors" ? [L, col] : null));
+    if (o) {
+      peint(o.a0, o.a1, o.y0, o.y1, sombre);
+      if (st.volets && b.type === "maison") {
+        const lv = (o.a1 - o.a0) / 2;
+        peint(o.a0 - lv - 0.03, o.a0 - 0.03, o.y0, o.y1, st.volet);
+        peint(o.a1 + 0.03, o.a1 + lv + 0.03, o.y0, o.y1, st.volet);
+      }
+    }
+    if (m.porte) peint((m.a0 + m.a1) / 2 - 0.52, (m.a0 + m.a1) / 2 + 0.52, 0, Math.min(m.y1 - 0.35, 2.25), b.type === "grange" ? st.porte : fois(st.porte, 0.8));
+  }
+  function emettreToitLoin(b, st, L) {
+    const hT = b.toit.hauteur, ov = 0.4, V = b.demiP, U = b.demiL, h = b.h, pente = hT / V, ve = V + ov, ye = h - ov * pente, uA = -U - 0.3, uB = U + 0.3, yF = h + hT;
+    const ct = Math.cos(Math.atan(pente)), sn = Math.sin(Math.atan(pente));
+    for (const s of [1, -1]) {
+      quad(L, [uA, ye, s * ve], [uB, ye, s * ve], [uB, yF + 0.02, 0], [uA, yF + 0.02, 0], [0, ct, s * sn], [0, 0, 0, 0, 0, 0, 0, 0], fois(st.tuile, 0.8));
+      quad(L, [uA, ye - 0.16, s * ve], [uB, ye - 0.16, s * ve], [uB, ye, s * ve], [uA, ye, s * ve], [0, 0, s], [0, 0, 0, 0, 0, 0, 0, 0], lin("#4a3a2c"));
+    }
+    for (const su of [1, -1]) quad(L, [su * U, h - 0.01, -V], [su * U, h - 0.01, V], [su * U, yF - 0.05, 0.001], [su * U, yF - 0.05, -0.001], [su, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], fois(st.crepi, 0.86));
+    if (st.cheminee && b.type === "maison") {
+      const cu = st.coteCheminee * U * 0.55, cv = V * 0.32;
+      pave(cu - 0.38, cu + 0.38, h + hT * (1 - (cv + 0.3) / V) - 0.1, yF + 0.85, cv - 0.3, cv + 0.3, (f) => (f === "-y" ? null : [L, fois(st.crepi, 0.86)]));
+    }
+  }
+
   // ------------------------------------------------------------------ construire les morceaux d'une maison
   function emettreMorceau(b, mur, m, st, q) {
+    emettreLoin(b, mur, m, st, q); // (étape 75 : la version simple, pour voir la maison de loin)
     const L = (nom) => lotDe(q, nom), ep = b.ep, w0 = -ep / 2, w1 = ep / 2;
     const pierreux = m.matiere === "pierre", boise = m.matiere === "bois" && !m.porte, haie = m.matiere === "haie";
     if (haie) return emettreHaie(b, mur, m, q);
@@ -504,6 +544,7 @@ Tanks.Maisons3D = (function () {
   }
 
   // ------------------------------------------------------------------ construire tout (une seule fois)
+  const objetsQuartiers = []; // (étape 75) chaque objet d'un quartier : { mesh, loin (la version simple ?), x, z, r }
   const vues = new Map(); // structure → { morceaux: [{ plages, tombe, vie }], toit: plages, toitVu, changements, generation }
   let gravatsFixes = null, gravats = null, debrisVol = null, trous = null, brulures = null, dents = null, groupe = null;
   function plagesDepuis(q, avant) {
@@ -526,6 +567,7 @@ Tanks.Maisons3D = (function () {
       bois: new THREE.MeshStandardMaterial({ map: tex.bois, vertexColors: true, roughness: 0.85 }),
       verre: new THREE.MeshStandardMaterial({ color: 0x5d707c, emissive: 0x0d1418, metalness: 0.35, roughness: 0.06, envMapIntensity: 2.2 }),
       haie: new THREE.MeshStandardMaterial({ map: tex.haie, vertexColors: true, roughness: 0.96 }),
+      loin: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.92 }),
       gravats: new THREE.MeshStandardMaterial({ map: tex.grain, roughness: 0.95 }),
     };
     for (const nom of NOMS_LOTS) avecEtat(mats[nom], nom === "verre");
@@ -545,6 +587,7 @@ Tanks.Maisons3D = (function () {
       if (b.toit) {
         const avant = tailles(q);
         emettreToit(b, st, (nom) => lotDe(q, nom));
+        emettreToitLoin(b, st, lotDe(q, "loin"));
         vue.toit = plagesDepuis(q, avant);
       }
       vues.set(b, vue);
@@ -571,6 +614,8 @@ Tanks.Maisons3D = (function () {
         mesh.receiveShadow = true;
         ajouterMorceau(g, mesh);
         bilan.lots++;
+        const sphere = geo.boundingSphere;
+        objetsQuartiers.push({ mesh, loin: nom === "loin", x: sphere.center.x, z: sphere.center.z, r: sphere.radius });
       }
     }
     // les instances : les gravats (ceux des ruines du début, ceux de la bataille), les débris qui volent, les trous, les traces
@@ -933,8 +978,21 @@ Tanks.Maisons3D = (function () {
 
   // ------------------------------------------------------------------ chaque image
   let generationVue = -1;
-  function maj(dt) {
+  // De près, la belle version ; plus loin que « distance » (le niveau de qualité), la version simple.
+  function choisirVersion(cam, distance) {
+    let pres = 0, loin = 0;
+    for (const o of objetsQuartiers) {
+      if (!o.mesh.visible) continue; // (déjà caché par le décor : trop loin, au-delà de la vue)
+      const proche = Math.hypot(o.x - cam.x, o.z - cam.z) - o.r < distance;
+      o.mesh.visible = o.loin ? !proche : proche;
+      if (o.mesh.visible) o.loin ? loin++ : pres++;
+    }
+    bilan.objetsPres = pres;
+    bilan.objetsLoin = loin;
+  }
+  function maj(dt, cam, distance) {
     if (!mats) return;
+    if (cam) choisirVersion(cam, distance || 150);
     // une nouvelle bataille : les gravats, les débris, les trous et les traces disparaissent
     if (generationVue !== ST().generation) {
       generationVue = ST().generation;
@@ -969,6 +1027,8 @@ Tanks.Maisons3D = (function () {
     envoyerEtats();
     majDebris(dt);
     majToits(dt);
+    // (les instances vides ne sont pas dessinées : pas de dessin pour rien)
+    for (const im of [gravatsFixes, gravats, debrisVol, trous, brulures, dents]) im.visible = im.count > 0;
   }
 
   return { construire, maj, bilan };

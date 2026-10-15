@@ -153,10 +153,10 @@ Tanks.Effets = (function () {
         return;
       }
       if (d.sorte === "grenade" && d.grenade) { // (étape 75) une grenade à main : un éclair, une gerbe de terre, un anneau de poussière, de la fumée
-        for (let k = 0; k < 24; k++) particule(d.x + alea(0.3), d.y + 0.2, d.z + alea(0.3), alea(4.5), 3 + Math.random() * 8, alea(4.5), 0.9 + Math.random() * 0.7, 0.35, 1.3, 0.95, [0.24, 0.19, 0.13], false, 9.8);
+        for (let k = 0; k < 30; k++) particule(d.x + alea(0.3), d.y + 0.2, d.z + alea(0.3), alea(3), 4 + Math.random() * 7, alea(3), 0.9 + Math.random() * 0.8, 0.5, 1.6, 0.95, [0.22, 0.17, 0.12], false, 9.8);
         for (let k = 0; k < 14; k++) { const a = (k / 14) * Math.PI * 2; particule(d.x, d.y + 0.25, d.z, Math.cos(a) * 7, 0.5, Math.sin(a) * 7, 1.8, 0.8, 3.6, 0.55, [0.5, 0.45, 0.37]); }
         for (let k = 0; k < 6; k++) particule(d.x + alea(0.4), d.y + 0.5 + Math.random() * 0.5, d.z + alea(0.4), alea(2), 1 + Math.random() * 2, alea(2), 0.22 + Math.random() * 0.12, 0.7, 1.8, 0.75, [1, 0.5, 0.16], true);
-        for (let k = 0; k < 8; k++) particule(d.x + alea(0.6), d.y + 0.8, d.z + alea(0.6), alea(0.8), 1.4 + Math.random(), alea(0.8), 3.5, 1.2, 4.5, 0.5, [0.2, 0.19, 0.17]);
+        for (let k = 0; k < 10; k++) particule(d.x + alea(0.6), d.y + 0.6 + k * 0.25, d.z + alea(0.6), alea(0.8), 1.2 + Math.random() * 1.5, alea(0.8), 3.5 + Math.random(), 1.4, 5, 0.55, [0.27, 0.25, 0.22]);
         flash(d.x, d.y + 1, d.z, 22);
         return;
       }
