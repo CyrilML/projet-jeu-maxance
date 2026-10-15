@@ -295,6 +295,7 @@ Tanks.Monde = (function () {
         if (s.y <= sol) {
           s.y = sol;
           s.parachute = false;
+          Tanks.Structures.sortir(s); // (étape 75 : pas dans une maison couverte : il serait passé à travers le toit)
           T.repousser(s, 0.5); // (pas dans un mur)
           if (s === toi) radio.emettre("atterrissage", {});
           else if (s.ia) s.ia.etat = "avance";

@@ -703,9 +703,9 @@ Tanks.Chars3D = (function () {
 
     // 2. La caisse : en bas, entre les chenilles (avec le glacis du bas) ; en haut, sur toute la largeur (avec le grand glacis).
     const lBas = 2 * (zc - tw / 2 - 0.03);
-    caisse.add(profil([[-L / 2 + 0.05, yFlanc + 0.02], [-L / 2 + 0.05, 0.75], [-L / 2 + 0.38, 0.5], [L / 2 - 1.05, 0.46], [L / 2 - 0.1, yFlanc + 0.02]], lBas, P, 0.04));
+    caisse.add(profil([[-L / 2 + 0.05, yFlanc + 0.02], [-L / 2 + 0.05, 0.75], [-L / 2 + 0.38, 0.5], [L / 2 - 1.05, 0.46], [L / 2 - 0.1, yFlanc + 0.02]], lBas, P, 0.05, undefined, 3)); // (étape 75 : des bords arrondis)
     const lHaut = 2 * zJupe - 0.08, xG = L / 2 - T.glacis;
-    caisse.add(profil([[-L / 2, yFlanc], [-L / 2, pont - 0.1], [-L / 2 + 0.1, pont], [xG, pont], [L / 2 - 0.08, T.nez], [L / 2, T.nez - 0.1], [L / 2 - 0.04, yFlanc]], lHaut, P, 0.05));
+    caisse.add(profil([[-L / 2, yFlanc], [-L / 2, pont - 0.1], [-L / 2 + 0.1, pont], [xG, pont], [L / 2 - 0.08, T.nez], [L / 2, T.nez - 0.1], [L / 2 - 0.04, yFlanc]], lHaut, P, 0.07, undefined, 3));
     const yGlacis = (x) => pont + ((x - xG) / (L / 2 - 0.08 - xG)) * (T.nez - pont); // (la hauteur du glacis à l'abscisse x)
     const penteGlacis = Math.atan2(pont - T.nez, L / 2 - 0.08 - xG);
     // la trappe du pilote (sur le glacis ou juste derrière) et ses 3 périscopes
@@ -909,17 +909,17 @@ Tanks.Chars3D = (function () {
       canon.add(boite(0.06, 0.08, 0.08, m.teinte, 0.31, -0.1, 0.24, C.noir));
     }
     const x0c = 0.3, bout = x0c + Lc;
-    canon.add(couche(cylindre(0.085, 0.115, Lc, m.teinte, 14, E.vertFonce), "x", x0c + Lc / 2, 0, 0)); // le tube (plus fin au bout)
+    canon.add(couche(cylindre(0.085, 0.115, Lc, m.teinte, 22, E.vertFonce), "x", x0c + Lc / 2, 0, 0)); // le tube (plus fin au bout)
     canon.add(couche(cylindre(0.19, 0.19, 0.32, P, 14), "x", x0c + 0.16, 0, 0)); // la bague à la sortie du masque
     const manchons = fiche.id === "leclerc" ? [[0.05, 0.36], [0.4, 0.68], [0.72, 0.94]] : [[0.05, 0.3], [0.58, 0.78], [0.8, 0.95]];
     for (const [a, b] of manchons) {
       const r = 0.135 - a * 0.03;
-      canon.add(couche(cylindre(r, r, (b - a) * Lc, P, 14), "x", x0c + ((a + b) / 2) * Lc, 0, 0));
+      canon.add(couche(cylindre(r, r, (b - a) * Lc, P, 22), "x", x0c + ((a + b) / 2) * Lc, 0, 0));
       for (const t of [a, b]) canon.add(couche(cylindre(r + 0.012, r + 0.012, 0.05, m.teinte, 14, C.noir), "x", x0c + t * Lc, 0, 0)); // les colliers
     }
     if (fiche.id !== "leclerc") { // l'évacuateur de fumée : le renflement du tube
       const xe = x0c + 0.44 * Lc;
-      canon.add(couche(cylindre(0.17, 0.17, 0.7, P, 16), "x", xe, 0, 0));
+      canon.add(couche(cylindre(0.17, 0.17, 0.7, P, 22), "x", xe, 0, 0));
       for (const s of [-1, 1]) canon.add(couche(cylindre(0.13, 0.17, 0.12, P, 16), "x", xe + s * 0.41, 0, 0).rotateZ(s > 0 ? Math.PI : 0));
     }
     canon.add(couche(cylindre(0.11, 0.11, 0.18, m.teinte, 14, C.noir), "x", bout - 0.09, 0, 0)); // la bouche

@@ -213,7 +213,7 @@ Tanks.Soldat = (function () {
     const nageait = s.nage;
     s.nage = T.dansLEau(s.x, s.z) && T.hauteur(s.x, s.z) < C.lac.niveau - 1.1;
     s.y = s.nage ? C.lac.niveau - 1.25 : T.hauteur(s.x, s.z);
-    if (s.nage !== nageait && s.joueur) ev.push(["nage", { nom: s.nom, nage: s.nage }]);
+    if (s.nage !== !!nageait && s.joueur) ev.push(["nage", { nom: s.nom, nage: s.nage }]); // (étape 75 : plus de faux « tu as pied » en sortant du tank)
     // tirer (pas en nageant !)
     s.recharge = Math.max(0, s.recharge - dt);
     // (étape 75) une GRENADE : la tienne (arme 4), ou celle d'un soldat de l'ordinateur (« intentions.grenade » : où la lancer)

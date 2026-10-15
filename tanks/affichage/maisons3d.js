@@ -78,7 +78,7 @@ Tanks.Maisons3D = (function () {
         ctx.fillStyle = g;
         ctx.fillRect(x, y, 3 + hasard() * 8, l);
       }
-      for (let i = 0; i < 2; i++) { // une ou deux plaques de crépi tombé : on voit les briques (estompées)
+      for (let i = 0; i < 1; i++) { // une plaque de crépi tombé : on voit les briques (estompées)
         const x = hasard() * n * 0.8, y = hasard() * n * 0.8, l = 26 + hasard() * 40, h = 16 + hasard() * 24;
         ctx.save();
         ctx.beginPath();
@@ -90,7 +90,7 @@ Tanks.Maisons3D = (function () {
         ctx.fillStyle = "#b0a49a";
         ctx.fill();
         ctx.clip();
-        ctx.globalAlpha = 0.55;
+        ctx.globalAlpha = 0.4;
         briques(ctx, x, y, l, h, 128, 1.05);
         ctx.globalAlpha = 1;
         ctx.restore();
@@ -948,10 +948,12 @@ Tanks.Maisons3D = (function () {
       const g = { obus: 1.8, roquette: 1.6, bombe: 3.2, missile: 2.6, grenade: 1.5 }[d.sorte] || 1.5;
       // les traces noires : sur les morceaux de mur encore debout autour du point d'explosion (au centre, il y a un trou !)
       const tx = -d.nz, tz = d.nx;
-      for (const [da, dy] of [[0, 0], [1.1, 0.3], [-1.1, -0.2], [0.3, 1.1], [-0.4, -0.9]]) {
-        const x = d.x + tx * da * g * 0.7, y = d.y + dy * g * 0.7, z = d.z + tz * da * g * 0.7;
+      const ray = ((S.explosions[d.sorte] || [0, 2.5])[1]) * 0.75;
+      for (let k = 0; k < 9; k++) {
+        const an = (k / 8) * Math.PI * 2, da = k === 8 ? 0 : Math.cos(an) * ray, dy = k === 8 ? 0 : Math.sin(an) * ray * 0.7;
+        const x = d.x + tx * da, y = d.y + dy, z = d.z + tz * da;
         const m = Tanks.Structures.premier(x + d.nx * 0.5, y, z + d.nz * 0.5, x - d.nx * 1.0, y, z - d.nz * 1.0);
-        if (m && m.morceau) coller(brulures, m.x, m.y, m.z, m.nx, m.ny, m.nz, g * (0.8 + hasard() * 0.5), [m.b, m.morceau.k], "brulures");
+        if (m && m.morceau) coller(brulures, m.x, m.y, m.z, m.nx, m.ny, m.nz, g * (0.9 + hasard() * 0.6), [m.b, m.morceau.k], "brulures");
       }
     });
     radio.ecouter("maison-effondree", (d) => {

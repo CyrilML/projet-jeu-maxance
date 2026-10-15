@@ -233,6 +233,7 @@ Tanks.Helicos = (function () {
     if (s.y > sol) return;
     s.y = sol;
     s.corde = null;
+    Tanks.Structures.sortir(s); // (étape 75 : pas dans une maison couverte)
     h.surLesCordes = Math.max(0, h.surLesCordes - 1);
     T.repousser(s, 0.5);
     if (s.ia) s.ia.etat = "avance";

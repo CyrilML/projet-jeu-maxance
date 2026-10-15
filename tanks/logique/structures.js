@@ -424,6 +424,22 @@ Tanks.Structures = (function () {
     return tombes.length > 0;
   }
 
+  // Quelqu'un qui arrive du ciel (en parachute, à la corde) DANS une maison encore couverte (il serait passé à travers le
+  // toit !) : on le pose dehors, devant le mur le plus proche.
+  const prochesSortir = [];
+  function sortir(o) {
+    for (const b of T.boitesAutour(o.x, o.z, 1, prochesSortir)) {
+      if (!b.toit || !b.toit.intact || !dedans(b, o.x, o.z, 0.3)) continue;
+      const p = versMaison(b, o.x, o.z), c = Math.cos(b.angle), s = Math.sin(b.angle);
+      let u = p.u, v = p.v;
+      if (b.demiL - Math.abs(u) < b.demiP - Math.abs(v)) u = Math.sign(u || 1) * (b.demiL + 1);
+      else v = Math.sign(v || 1) * (b.demiP + 1);
+      o.x = b.x + u * c - v * s;
+      o.z = b.z + u * s + v * c;
+      o.y = T.hauteur(o.x, o.z);
+    }
+  }
+
   // La maison (avec un toit) la plus proche d'un point (pour « sous le capot »).
   function plusProche(x, z, max) {
     let meilleur = null, dm = max || 1e9;
@@ -449,5 +465,5 @@ Tanks.Structures = (function () {
     return r;
   }
 
-  return { liste, pousser, touche, premier, dedans, balle, exploser, choc, reinitialiser, plusProche, compter, bilan, get generation() { return generation; } };
+  return { liste, pousser, touche, premier, dedans, sortir, balle, exploser, choc, reinitialiser, plusProche, compter, bilan, get generation() { return generation; } };
 })();

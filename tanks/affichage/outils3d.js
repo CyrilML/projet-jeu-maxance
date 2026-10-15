@@ -51,10 +51,11 @@ Tanks.Outils3D = (function () {
     return piece(new THREE.TubeGeometry(courbe, n || points.length * 6, r, 6, false), mat, 0, 0, 0, teinte);
   }
   // Un PROFIL vu de côté (des points [x, y]) « tiré » sur une largeur (le long de z), centré en z = 0, aux bords biseautés.
-  function profil(points, largeur, mat, biseau, teinte) {
+  // (étape 75 : « segments » : le nombre de petites facettes du biseau ; 3 = un bord presque arrondi)
+  function profil(points, largeur, mat, biseau, teinte, segments) {
     const s = new THREE.Shape(points.map(([x, y]) => new THREE.Vector2(x, y)));
     const b = Math.min(biseau === undefined ? 0.03 : biseau, largeur * 0.3);
-    const g = new THREE.ExtrudeGeometry(s, { depth: Math.max(0.001, largeur - 2 * b), bevelEnabled: b > 0, bevelThickness: b, bevelSize: b, bevelSegments: 1, curveSegments: 8 });
+    const g = new THREE.ExtrudeGeometry(s, { depth: Math.max(0.001, largeur - 2 * b), bevelEnabled: b > 0, bevelThickness: b, bevelSize: b, bevelSegments: segments || 1, curveSegments: 8 });
     g.translate(0, 0, -(largeur - 2 * b) / 2);
     return piece(g, mat, 0, 0, 0, teinte);
   }
