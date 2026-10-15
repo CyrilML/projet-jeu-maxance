@@ -1,5 +1,8 @@
 // ⚙️ LES RÉGLAGES : tous les nombres du jeu de tanks (étape 60)
 //
+// (étape 74) ✍️ « Augmente la limite à 60 soldats et refais les images : le plus beau possible. » Voir « parachutistes »
+// (maxParEquipe : 60), « beaute » (le sol, l'herbe, les arbres, l'eau, la lumière) et « qualite » (herbe, arbres en détail).
+//
 // (étape 73) ✍️ « Des hélicos de transport : un Chinook et un Black Hawk, pour les deux camps, 10 soldats à bord qui
 // descendent à la corde. » Voir « engins » (chinook, blackhawk), « armes » (porte) et « helicosTransport ».
 //
@@ -14,7 +17,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 12,
+  version: 13,
   pasFixe: 1 / 120,
   // (étape 72) ✍️ « Ça rame trop. » La boucle ne fait jamais plus de 6 petits pas par image : si l'ordinateur est en
   // retard (une image a duré plus de 6 / 120 = 0,05 s), on JETTE le retard au lieu de courir après (sinon, plus il est
@@ -237,7 +240,7 @@ Tanks.CONFIG = {
     nombre: 6, toutesLes: 60, premier: 25, // s
     altitude: 110, descente: 5.5, // m, m/s (toi : 4 m/s)
     largage: { bleus: [0, 330], rouges: [0, -330] }, // (étape 71 : 3 fois plus loin du village) // [x, z] : au-dessus de quoi on saute
-    maxParEquipe: 30, // (pas plus de 30 soldats debout par équipe : sinon le jeu ralentit)
+    maxParEquipe: 60, // ✍️ (étape 74 : 60 au lieu de 30) pas plus de 60 soldats debout par équipe : sinon le jeu ralentit
     transport: { nom: "Avion de transport", vitesse: 70, vie: 4 },
   },
 
@@ -334,7 +337,7 @@ Tanks.CONFIG = {
     front: 230, couloir: 280, // m (comme le camion)
     arrive: 18, // m : il est « arrivé » au-dessus du front à moins de 18 m
     recharge: 18, rechargerA: 40, retour: 60, // s, m, s
-    attenteMax: 8, // s : pas de place pour poser les soldats (déjà 30 debout) ? il attend 8 s, puis rentre avec eux
+    attenteMax: 8, // s : pas de place pour poser les soldats (déjà 60 debout) ? il attend 8 s, puis rentre avec eux
     // ✍️ La DESCENTE À LA CORDE (le « fast-rope ») : il faut être à moins de « hauteurMax » m du sol et presque arrêté
     // (moins de « vitesseMax » m/s). Les soldats glissent à « glisse » m/s, un toutes les « intervalle » s, sur 2 cordes.
     corde: { hauteurMax: 25, vitesseMax: 3, glisse: 6, intervalle: 0.55, chute: 4 }, // (chute : m ; un soldat qui tombe de plus haut est blessé)

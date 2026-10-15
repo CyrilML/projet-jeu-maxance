@@ -10,7 +10,7 @@
 //     au-dessus du but : sa vitesse ne dépasse jamais √(2 × freinage × distance) (comme une voiture qui s'arrête au feu) ;
 //   - la DESCENTE À LA CORDE : l'hélico doit être assez BAS (moins de 25 m) et presque ARRÊTÉ (moins de 3 m/s). Un soldat
 //     part toutes les 0,55 s, une fois sur la corde de droite, une fois sur celle de gauche ; il glisse à 6 m/s jusqu'au
-//     sol, puis devient un soldat normal (logique/troupes.js). Pas plus de 30 soldats debout par camp (sinon il attend) ;
+//     sol, puis devient un soldat normal (logique/troupes.js). Pas plus de 60 soldats debout par camp (étape 74 ; sinon il attend) ;
 //   - les 2 MITRAILLEUSES DE PORTE : chaque tireur regarde de SON côté (droite ou gauche, ± 75°), choisit l'ennemi le plus
 //     proche qu'il voit (un soldat, une moto, un quad) 3 fois par seconde, et tire des rafales (des balles instantanées,
 //     comme le fusil des soldats : logique/soldat.js) ;
