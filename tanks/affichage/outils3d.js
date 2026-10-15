@@ -147,6 +147,208 @@ Tanks.Outils3D = (function () {
   // Une forme vue de face (un « tour » : rotation d'un profil [rayon, y] autour de l'axe y) : pneus, moyeux, phares ronds.
   const tour = (points, mat, n, teinte) => piece(new THREE.LatheGeometry(points.map(([r, y]) => new THREE.Vector2(r, y)), n || 20), mat, 0, 0, 0, teinte);
 
+  // ------------------------------------------------------------------ (étape 74) les formes LISSES : le potier
+  // ✍️ « Des vraies formes arrondies. » Un potier ne colle pas des boîtes : il tourne une forme qui change doucement.
+  // Une COQUE (un fuselage d'hélico, une nacelle, une pale) est faite de « tranches » (des anneaux), comme le fuseau,
+  // mais :
+  //   - on ne donne que quelques tranches CLÉS ; entre deux clés, l'outil invente des tranches intermédiaires qui
+  //     glissent en douceur (une « courbe monotone » : elle ne dépasse jamais les clés, pas de bosse bizarre) ;
+  //   - chaque anneau a beaucoup de points (40) et les normales sont LISSÉES (moyenne des faces voisines) : plus de
+  //     facettes, la lumière glisse sur la peinture comme sur une vraie tôle ;
+  //   - une fonction « zone » range chaque triangle dans une matière (la peinture, la vitre, l'intérieur sombre…) : les
+  //     vitres du cockpit sont DÉCOUPÉES dans la coque, elles suivent exactement sa courbe ;
+  //   - les coordonnées de texture (u, v) sont en MÈTRES le long et autour de la coque : les lignes de tôle (les
+  //     « panneaux ») suivent la forme sans se casser.
+  // Une interpolation monotone (Fritsch-Carlson) : les valeurs v aux abscisses xs → une fonction x → valeur.
+  function courbeMonotone(xs, vs) {
+    const n = xs.length, d = [], m = [];
+    for (let i = 0; i < n - 1; i++) d.push((vs[i + 1] - vs[i]) / (xs[i + 1] - xs[i] || 1e-6));
+    for (let i = 0; i < n; i++) {
+      if (i === 0) m.push(d[0] || 0);
+      else if (i === n - 1) m.push(d[n - 2] || 0);
+      else m.push(d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2);
+    }
+    for (let i = 0; i < n - 1; i++) {
+      if (d[i] === 0) (m[i] = 0), (m[i + 1] = 0);
+      else {
+        const a = m[i] / d[i], b = m[i + 1] / d[i], s = a * a + b * b;
+        if (s > 9) (m[i] = (3 * a * d[i]) / Math.sqrt(s)), (m[i + 1] = (3 * b * d[i]) / Math.sqrt(s));
+      }
+    }
+    return (x) => {
+      if (x <= xs[0]) return vs[0];
+      if (x >= xs[n - 1]) return vs[n - 1];
+      let i = 0;
+      while (x > xs[i + 1]) i++;
+      const h = xs[i + 1] - xs[i], t = (x - xs[i]) / h, t2 = t * t, t3 = t2 * t;
+      return (2 * t3 - 3 * t2 + 1) * vs[i] + (t3 - 2 * t2 + t) * h * m[i] + (-2 * t3 + 3 * t2) * vs[i + 1] + (t3 - t2) * h * m[i + 1];
+    };
+  }
+  // cles : [{ x, y (centre), w (demi-largeur), h (demi-hauteur du haut), b (du bas, sinon h), n (2 = rond, 4 = presque
+  // carré), z (décalage de côté) }], de l'arrière vers l'avant.
+  // options : tours (points par anneau), pas (m entre deux tranches), deformer(p) (pour plier un point), zone(c, n) →
+  // nom de matière ou null (triangle enlevé), couleur(p, n) → [r, g, b], uv (m par répétition), fermer (true : on
+  // bouche les deux bouts ; [debut, fin] sinon), retourner (true : les faces regardent vers l'intérieur).
+  function coque(cles, options) {
+    const o = options || {}, N = o.tours || 40, pas = o.pas || 0.15;
+    const xs = cles.map((c) => c.x), prop = (nom, def) => courbeMonotone(xs, cles.map((c) => (c[nom] === undefined ? (typeof def === "string" ? c[def] : def) : c[nom])));
+    const Y = prop("y", 0), W = prop("w", 0.5), H = prop("h", 0.5), B = prop("b", "h"), NN = prop("n", 2), Z = prop("z", 0);
+    // les abscisses des tranches : un pas régulier, plus les clés elles-mêmes
+    const tranches = [];
+    for (let i = 0; i < cles.length - 1; i++) {
+      const k = Math.max(1, Math.ceil((xs[i + 1] - xs[i]) / pas));
+      for (let j = 0; j < k; j++) tranches.push(xs[i] + ((xs[i + 1] - xs[i]) * j) / k);
+    }
+    tranches.push(xs[xs.length - 1]);
+    const v3 = new THREE.Vector3();
+    // un point de la coque : à l'abscisse x, à l'angle a (0 = côté droit z+, π/2 = le dessus, −π/2 = le dessous)
+    function brut(x, a, p) {
+      const c = Math.cos(a), s = Math.sin(a), n = NN(x), e = 2 / n;
+      p.set(x, Y(x) + Math.sign(s) * Math.pow(Math.abs(s), e) * (s >= 0 ? H(x) : B(x)), Z(x) + Math.sign(c) * Math.pow(Math.abs(c), e) * W(x));
+      if (o.deformer) o.deformer(p, a);
+      return p;
+    }
+    const pos = [], uv = [], idx = [], NT = tranches.length;
+    for (let i = 0; i < NT; i++) {
+      let arc = 0;
+      const prec = new THREE.Vector3();
+      for (let j = 0; j <= N; j++) {
+        const a = -Math.PI / 2 + (j / N) * Math.PI * 2;
+        brut(tranches[i], a, v3);
+        if (j) arc += v3.distanceTo(prec);
+        prec.copy(v3);
+        pos.push(v3.x, v3.y, v3.z);
+        uv.push(tranches[i] / (o.uv || 1), arc / (o.uv || 1));
+      }
+    }
+    const R = N + 1;
+    for (let i = 0; i < NT - 1; i++) for (let j = 0; j < N; j++) {
+      const a = i * R + j, b = a + 1, c = a + R, d = c + 1;
+      idx.push(a, c, b, b, c, d);
+    }
+    const fermer = o.fermer === undefined ? [true, true] : o.fermer === true ? [true, true] : o.fermer || [false, false];
+    for (const [i, sens] of [[0, -1], [NT - 1, 1]]) {
+      if (!fermer[sens < 0 ? 0 : 1]) continue;
+      const centre = pos.length / 3, x = tranches[i];
+      brut(x, 0, v3);
+      pos.push(x, Y(x), Z(x));
+      uv.push(x / (o.uv || 1), 0);
+      for (let j = 0; j < N; j++) {
+        const a = i * R + j, b = a + 1;
+        if (sens > 0) idx.push(centre, b, a);
+        else idx.push(centre, a, b);
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    const nor = g.attributes.normal;
+    // (le dessus doit regarder vers le haut ; sinon on retourne tout)
+    const test = Math.min(NT - 1, 1) * R + Math.round(N * 0.5);
+    if ((nor.getY(test) < 0) !== !!o.retourner) {
+      const t = g.index.array;
+      for (let j = 0; j < t.length; j += 3) [t[j + 1], t[j + 2]] = [t[j + 2], t[j + 1]];
+      g.computeVertexNormals();
+    }
+    // la couture (le premier et le dernier point de chaque anneau sont au même endroit) : même normale des deux côtés
+    for (let i = 0; i < NT; i++) {
+      const a = i * R, b = a + N;
+      v3.set(nor.getX(a) + nor.getX(b), nor.getY(a) + nor.getY(b), nor.getZ(a) + nor.getZ(b)).normalize();
+      nor.setXYZ(a, v3.x, v3.y, v3.z);
+      nor.setXYZ(b, v3.x, v3.y, v3.z);
+    }
+    // les couleurs (par point) et les zones (par triangle)
+    const P = g.attributes.position, tout = g.toNonIndexed(), np = tout.attributes.position, nn = tout.attributes.normal, n = np.count;
+    const col = new Float32Array(n * 3), cp = new THREE.Vector3(), cn = new THREE.Vector3();
+    for (let i = 0; i < n; i++) {
+      const c = o.couleur ? o.couleur(cp.fromBufferAttribute(np, i), cn.fromBufferAttribute(nn, i)) : [1, 1, 1];
+      (col[i * 3] = c[0]), (col[i * 3 + 1] = c[1]), (col[i * 3 + 2] = c[2]);
+    }
+    tout.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    const zones = {};
+    const mettre = (nom, t) => {
+      const z = zones[nom] || (zones[nom] = { position: [], normal: [], uv: [], color: [] });
+      for (let k = 0; k < 3; k++) {
+        const i = t + k;
+        z.position.push(np.getX(i), np.getY(i), np.getZ(i));
+        z.normal.push(nn.getX(i), nn.getY(i), nn.getZ(i));
+        z.uv.push(tout.attributes.uv.getX(i), tout.attributes.uv.getY(i));
+        z.color.push(col[i * 3], col[i * 3 + 1], col[i * 3 + 2]);
+      }
+    };
+    for (let t = 0; t < n; t += 3) {
+      cp.set((np.getX(t) + np.getX(t + 1) + np.getX(t + 2)) / 3, (np.getY(t) + np.getY(t + 1) + np.getY(t + 2)) / 3, (np.getZ(t) + np.getZ(t + 1) + np.getZ(t + 2)) / 3);
+      cn.set(nn.getX(t) + nn.getX(t + 1) + nn.getX(t + 2), nn.getY(t) + nn.getY(t + 1) + nn.getY(t + 2), nn.getZ(t) + nn.getZ(t + 1) + nn.getZ(t + 2)).normalize();
+      const nom = o.zone ? o.zone(cp, cn) : "coque";
+      if (nom) mettre(nom, t);
+    }
+    const geos = {};
+    for (const nom in zones) {
+      const z = zones[nom], r = new THREE.BufferGeometry();
+      r.setAttribute("position", new THREE.Float32BufferAttribute(z.position, 3));
+      r.setAttribute("normal", new THREE.Float32BufferAttribute(z.normal, 3));
+      r.setAttribute("uv", new THREE.Float32BufferAttribute(z.uv, 2));
+      r.setAttribute("color", new THREE.Float32BufferAttribute(z.color, 3));
+      geos[nom] = r;
+    }
+    g.dispose();
+    // un point de la surface et sa normale (pour y poser un hublot, une antenne, une poignée…)
+    function point(x, a, decalage) {
+      const p = brut(x, a, new THREE.Vector3()), e = 0.01;
+      const px = brut(x + e, a, new THREE.Vector3()).sub(brut(x - e, a, new THREE.Vector3()));
+      const pa = brut(x, a + e, new THREE.Vector3()).sub(brut(x, a - e, new THREE.Vector3()));
+      const normale = pa.cross(px).normalize();
+      if (o.retourner) normale.negate();
+      if (decalage) p.addScaledVector(normale, decalage);
+      return { p, n: normale };
+    }
+    return { geos, point, Y, W, H, B };
+  }
+  // Une SURFACE en grille (nu × nv points) donnée par une fonction f(u, v) → [x, y, z] (u, v entre 0 et 1), aux normales
+  // lissées. fermeeV : l'anneau en v se referme (une pale, un tube).
+  function surface(nu, nv, f, fermeeV) {
+    const pos = [], uv = [], idx = [];
+    for (let i = 0; i <= nu; i++) for (let j = 0; j <= nv; j++) {
+      const p = f(i / nu, j / nv);
+      pos.push(p[0], p[1], p[2]);
+      uv.push(i / nu, j / nv);
+    }
+    const R = nv + 1;
+    for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) {
+      const a = i * R + j, b = a + 1, c = a + R, d = c + 1;
+      idx.push(a, c, b, b, c, d);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    if (fermeeV) { // (la couture : même normale des deux côtés)
+      const nor = g.attributes.normal, v = new THREE.Vector3();
+      for (let i = 0; i <= nu; i++) {
+        const a = i * R, b = a + nv;
+        v.set(nor.getX(a) + nor.getX(b), nor.getY(a) + nor.getY(b), nor.getZ(a) + nor.getZ(b)).normalize();
+        nor.setXYZ(a, v.x, v.y, v.z);
+        nor.setXYZ(b, v.x, v.y, v.z);
+      }
+    }
+    return g;
+  }
+  // Une forme TOURNÉE autour de l'axe x (une nacelle de moteur, un réservoir, un pneu couché…) : profil [[x, rayon], …].
+  function tourX(profil, mat, n, teinte) {
+    const g = new THREE.LatheGeometry(profil.map(([x, r]) => new THREE.Vector2(Math.max(0, r), x)), n || 24);
+    g.rotateZ(-Math.PI / 2);
+    return piece(g, mat, 0, 0, 0, teinte);
+  }
+  // Une pièce « posée » sur une surface : placée au point p, son axe y tourné vers la normale n.
+  function surLaSurface(m, p, n) {
+    m.position.copy(p);
+    m.quaternion.setFromUnitVectors(AXE_Y, n);
+    return m;
+  }
+
   // Le camouflage « au pistolet » : pour chaque triangle, on projette selon sa direction principale.
   const TAILLE_CAMO = 1; // (avec la répétition 0,25 de la texture : une image de camouflage tous les 4 m)
   function camoAPlat(g) {
@@ -181,7 +383,8 @@ Tanks.Outils3D = (function () {
       if (!g.attributes.uv) g.setAttribute("uv", new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
       const mat = enfant.material;
       if (mat.userData.camo) camoAPlat(g);
-      if (mat.vertexColors) {
+      // (étape 74 : une pièce qui a déjà ses propres couleurs de sommets, sans teinte, les garde : une coque peinte)
+      if (mat.vertexColors && !(g.attributes.color && g.attributes.color.itemSize === 3 && enfant.userData.teinte === undefined)) {
         const c = enfant.userData.teinte || couleurBlanche, n = g.attributes.position.count, tab = new Float32Array(n * 3);
         for (let i = 0; i < n; i++) (tab[i * 3] = c.r), (tab[i * 3 + 1] = c.g), (tab[i * 3 + 2] = c.b);
         g.setAttribute("color", new THREE.BufferAttribute(tab, 3));
@@ -225,5 +428,5 @@ Tanks.Outils3D = (function () {
     return m.geometry;
   }
 
-  return { bilan, piece, boite, cylindre, couche, tube, cable, profil, contourComplet, lisse, fuseau, tour, souder, geometrieTeintee, camoAPlat };
+  return { bilan, piece, boite, cylindre, couche, tube, cable, profil, contourComplet, lisse, fuseau, tour, souder, geometrieTeintee, camoAPlat, coque, surface, tourX, surLaSurface, courbeMonotone };
 })();

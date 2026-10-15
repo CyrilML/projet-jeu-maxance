@@ -101,6 +101,7 @@ Tanks.Monde = (function () {
   // (étape 62 : et les bateaux : les patrouilleurs ennemis, et ta vedette quand tu es dedans)
   // (étape 72 : rangés dans une liste réutilisée, refaite une seule fois par pas, au lieu de 3 nouvelles listes deux fois par pas)
   const listeCibles = [], prochesEcrases = [], helicosBas = [];
+  const aEnlever = (o) => !o.joueur && o.mort && o.depuisMort >= 25; // (un soldat tombé depuis plus de 25 s)
   function cibles(monde) {
     const l = listeCibles;
     l.length = 0;
@@ -376,7 +377,13 @@ Tanks.Monde = (function () {
       t.engin = null;
     }
     // (étape 64) on enlève les soldats tombés depuis plus de 25 s (sinon, avec les parachutistes, la liste grandit sans fin)
-    if (monde.soldats.length > 40) monde.soldats = monde.soldats.filter((o) => o.joueur || !o.mort || o.depuisMort < 25);
+    // (étape 74 : avec 60 soldats par camp, la liste dépasse presque toujours 40 : on ne refait plus une liste neuve à
+    // chaque pas ; on range sur place, et seulement s'il y a vraiment quelqu'un à enlever)
+    if (monde.soldats.length > 40 && monde.soldats.some(aEnlever)) {
+      let k = 0;
+      for (const o of monde.soldats) if (!aEnlever(o)) monde.soldats[k++] = o;
+      monde.soldats.length = k;
+    }
     // 5. La fin de la bataille ?
     if (enJeu) {
       const horsDeCombat = (t.mode === "char" && monde.joueur.detruit) || (toi && toi.mort) || (t.engin && t.engin.genre === "helico" && t.engin.detruit) || ((t.mode === "jeep" || t.mode === "bateau" || t.mode === "sousmarin" || t.mode === "dca" || t.mode === "moto" || t.mode === "quad" || t.mode === "camion") && t.engin.detruit);
