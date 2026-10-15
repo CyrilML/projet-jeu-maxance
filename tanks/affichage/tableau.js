@@ -20,6 +20,9 @@
 // carrés de la couleur de leur équipe) ; au-dessus d'eux, leur nom ; et ce que tu vois quand tu conduis l'un d'eux.
 // Étape 63 : les ÎLES sur la carte ; les sous-marins ennemis (seulement quand ils sont à la surface : sous l'eau, on ne
 // les voit pas !) ; dans ton sous-marin, sa PROFONDEUR (une jauge qui descend) et la cible de ta torpille.
+// Étape 73 : dans ton CHINOOK ou ton BLACK HAWK : sa vie, les soldats à bord, si la corde est possible (assez bas ? assez
+// lent ? « F »), ce que visent les 2 mitrailleuses (un petit carré rouge sur chaque cible), la hauteur et la vitesse.
+// Au-dessus des hélicos de transport de l'ordinateur : leur nom, leurs soldats ; sur la carte, une petite croix.
 // Il lit le monde, il ne le modifie jamais.
 
 window.Tanks = window.Tanks || {};
@@ -137,6 +140,17 @@ Tanks.Tableau = (function () {
       if (d.parToi) dire("🎯 Pilote touché : " + d.cible + " est hors de combat !", "#7dffa0", 2500);
       else if (d.surToi) dire("💀 Tu tombes de ton engin…", "#ff7a6a", 2500);
     });
+    // étape 73
+    radio.ecouter("helico-depose", (d) => {
+      if (d.toi) dire("🪢 " + d.nombre + " soldats descendus à la corde !", "#9cc4ff", 2500);
+      else if (d.equipe === "bleus") dire("🚁 Renforts : " + d.nombre + " soldats bleus descendent à la corde", "#9cc4ff");
+    });
+    radio.ecouter("helico-stationnaire", (d) => {
+      if (d.toi) dire("🪢 Les cordes descendent : ne bouge plus !", "#9cc4ff", 2000);
+      else if (d.equipe === "rouges") dire("⚠️ Un " + d.nom + " dépose des soldats à la corde !", "#ff9a8a");
+    });
+    radio.ecouter("helico-recharge", (d) => d.toi && dire("🚁 Ton " + d.nom + " est plein : " + d.places + " soldats à bord (F : la corde)", "#9cc4ff", 2500));
+    radio.ecouter("helico-abattu", (d) => d.toi && dire("🔥 Ton " + d.nom + " est abattu !", "#ff7a6a", 3000));
     radio.ecouter("soin-fini", (d) => dire("💚 " + (d.qui === "ton tank" ? "Ton tank est" : "Tu es") + " de nouveau en pleine forme !", "#7dffa0", 2000));
   }
 
@@ -226,7 +240,7 @@ Tanks.Tableau = (function () {
           if (d < dmin) (dmin = d), (proche = nom);
         };
         voir(monde.joueur, "ton tank", C.char.rayon);
-        for (const x of monde.engins) voir(x, x.fiche.icone + " " + x.nom, x.sorte === "bateau" ? 7 : x.sorte === "sousmarin" ? 11 : x.sorte === "camion" ? 3.5 : 2);
+        for (const x of monde.engins) voir(x, x.fiche.icone + " " + x.nom, x.sorte === "bateau" ? 7 : x.sorte === "sousmarin" ? 11 : x.sorte === "camion" ? 3.5 : x.genre === "helico" ? x.fiche.rayon : 2);
         if (proche) texte("E : monter dans " + proche, L / 2, H - 120, 22, "#ffe27a", "center");
       }
       return;
@@ -317,6 +331,31 @@ Tanks.Tableau = (function () {
       if (R.arme) barre(24, H - 36, 200, 1 - e.recharge / C.armes[R.arme].cadence, e.recharge === 0, "Espace : " + C.armes[R.arme].nom.toLowerCase());
       else texte("🪖 " + e.passagers + " / " + R.places + " soldats à bord" + (e.passagers ? " · F : les faire descendre" : e.remplissage > 0 ? " · on remplit : " + Math.ceil(C.vehicules.recharge - e.remplissage) + " s" : " · vide : gare-toi au parking"), 24, H - 24, 13, "#e8e4d6");
       if (e.sorte === "moto") texte("penche " + Math.round(Math.abs(e.roulis * 180) / Math.PI) + "°", L - 16, H - 82, 14, "#ccc", "right");
+      return;
+    }
+    // (étape 73) le Chinook, le Black Hawk
+    if (e.genre === "helico") {
+      const R = C.engins[e.sorte], HT = C.helicosTransport, K = HT.corde, haut = e.y - T.hauteur(e.x, e.z);
+      for (const p of e.portes) { // (la cible de chaque mitrailleuse : un petit carré rouge)
+        const v = p.cible && Tanks.Scene.versEcran(p.cible.x, p.cible.y + 1, p.cible.z, L, H);
+        if (!v) continue;
+        ctx.strokeStyle = "#ff4a3d";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(v.x - 10, v.y - 10, 20, 20);
+      }
+      const bas = haut <= K.hauteurMax, lent = Math.abs(e.vitesse) <= K.vitesseMax, pret = bas && lent && e.passagers > 0 && !e.descente;
+      const corde = e.descente ? (e.cordeBloquee ? "⏸️ corde en pause : " + e.cordeBloquee : "🪢 descente à la corde… (" + e.surLesCordes + " sur les cordes)")
+        : e.passagers === 0 ? (e.remplissage > 0 ? "on remplit : " + Math.ceil(HT.recharge - e.remplissage) + " s" : "vide : pose-toi près de ton aérodrome")
+        : !bas ? "trop haut pour la corde (plus de " + K.hauteurMax + " m) : D pour descendre" : !lent ? "trop vite pour la corde : ralentis" : "✅ F : descente à la corde";
+      panneau(12, H - 118, 470, 106);
+      texte(R.icone + " " + R.nom + " (" + R.modele + ")", 24, H - 92, 16, "#ffe27a");
+      cases(24, H - 80, R.vie, e.vie);
+      texte("vie", 24 + R.vie * 30 + 4, H - 68, 13, "#ccc");
+      texte("🪖 " + e.passagers + " / " + R.places + " à bord · " + corde, 24, H - 42, 13, pret ? "#7dffa0" : "#e8e4d6");
+      texte("🔫 " + e.portes.map((p) => p.cote + " : " + (p.cible ? "tire sur " + p.cible.nom : "cherche")).join(" · "), 24, H - 22, 12, "#ccc");
+      panneau(L - 150, H - 134, 138, 58);
+      texte(Math.round(haut) + "", L - 60, H - 90, 30, e.enVol && bas ? "#7dffa0" : "#fff", "right");
+      texte("m haut", L - 16, H - 90, 13, "#ccc", "right");
       return;
     }
     const R = C.engins[e.sorte], haut = e.y - T.hauteur(e.x, e.z);
@@ -451,6 +490,15 @@ Tanks.Tableau = (function () {
       if (!e || e.x < -40 || e.x > L + 40) continue;
       texte(v.fiche.icone + " " + v.nom + (v.sorte === "camion" && v.passagers ? " · 🪖 " + v.passagers : "") + (d > 120 ? " · " + Math.round(d) + " m" : ""), e.x, e.y, 11, v.equipe === "bleus" ? E.bleus.marque : E.rouges.marque, "center");
     }
+    // (étape 73) Les hélicos de transport de l'ordinateur (moins de 600 m) : leur nom, leur hauteur, leurs soldats.
+    for (const h of monde.helicos || []) {
+      if (h.detruit) continue;
+      const d = Math.hypot(h.x - ici.x, h.z - ici.z);
+      if (d > 600) continue;
+      const e = Tanks.Scene.versEcran(h.x, h.y + 6.5, h.z, L, H);
+      if (!e || e.x < -40 || e.x > L + 40) continue;
+      texte("🚁 " + h.nom + (h.passagers ? " · 🪖 " + h.passagers : "") + (h.cordesSorties ? " · 🪢 corde" : "") + (d > 120 ? " · " + Math.round(d) + " m" : ""), e.x, e.y, 12, h.equipe === "bleus" ? E.bleus.marque : E.rouges.marque, "center");
+    }
     // (étape 64) Les avions : nom, distance et vie.
     for (const a of monde.avions) {
       if (a.etat === "attend" || a.etat === "parti" || a.detruit) continue;
@@ -554,6 +602,17 @@ Tanks.Tableau = (function () {
       ctx.fillStyle = v.detruit ? "#555" : v.equipe === "bleus" ? "#cfe2ff" : "#ffc4b8";
       ctx.fillRect(vx - cote / 2, vz - cote / 2, cote, cote);
     }
+    for (const h of monde.helicos || []) { // (étape 73) les hélicos de transport : une petite croix de la couleur de l'équipe
+      const hx = x0 + tc / 2 + h.x * k, hz = y0 + tc / 2 + h.z * k;
+      ctx.strokeStyle = h.detruit ? "#555" : h.equipe === "bleus" ? "#cfe2ff" : "#ffc4b8";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(hx - 4, hz - 4);
+      ctx.lineTo(hx + 4, hz + 4);
+      ctx.moveTo(hx + 4, hz - 4);
+      ctx.lineTo(hx - 4, hz + 4);
+      ctx.stroke();
+    }
     for (const e of monde.engins) { // les engins de ton camp : un petit carré blanc
       if (e === t.engin) continue;
       ctx.fillStyle = e.detruit ? "#555" : "#fff";
@@ -592,7 +651,7 @@ Tanks.Tableau = (function () {
     if (monde.phase === "victoire" || monde.phase === "defaite") {
       const gagne = monde.phase === "victoire";
       panneau(L / 2 - 240, H / 2 - 90, 480, 170);
-      const perdu = t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "moto" ? "💥 Ta moto est hors de combat…" : t.mode === "quad" ? "💥 Ton quad est hors de combat…" : t.mode === "camion" ? "💥 Ton camion est détruit…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : t.mode === "sousmarin" ? "🌊 Ton sous-marin est coulé…" : t.mode === "dca" ? "💥 Ta DCA est détruite…" : "💥 Ton tank est détruit…";
+      const perdu = t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "moto" ? "💥 Ta moto est hors de combat…" : t.mode === "quad" ? "💥 Ton quad est hors de combat…" : t.mode === "camion" ? "💥 Ton camion est détruit…" : t.engin && t.engin.genre === "helico" ? "🔥 Ton " + t.engin.nom + " est abattu…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : t.mode === "sousmarin" ? "🌊 Ton sous-marin est coulé…" : t.mode === "dca" ? "💥 Ta DCA est détruite…" : "💥 Ton tank est détruit…";
       texte(gagne ? "🏆 VICTOIRE !" : perdu, L / 2, H / 2 - 40, 38, gagne ? "#7dffa0" : "#ff7a6a", "center");
       texte(gagne ? "Tous les tanks rouges sont détruits" : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
       const S = Tanks.Sauvegarde.donnees;
@@ -607,6 +666,8 @@ Tanks.Tableau = (function () {
         quad: "↑ ↓ ← → conduire · Espace mitrailleuse (elle tire droit devant) · E descendre (arrêté)",
         camion: "↑ ↓ ← → conduire · F faire descendre les soldats · E descendre (arrêté)",
         helico: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · Espace bombe · E descendre (posé)",
+        chinook: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · F soldats à la corde (bas, presque arrêté) · E descendre (posé)",
+        blackhawk: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · F soldats à la corde (bas, presque arrêté) · E descendre (posé)",
         drone: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · Espace grenade · E descendre (posé)",
         avion: "↑ piquer · ↓ cabrer · ← → virer · Espace missile · E s'éjecter",
         bateau: "↑ ↓ ← → naviguer · Q / D canon · Espace tirer · E descendre (près de la rive)",

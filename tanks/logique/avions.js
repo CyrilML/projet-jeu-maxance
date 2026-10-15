@@ -223,7 +223,8 @@ Tanks.Avions = (function () {
   }
 
   // Ceux qu'on peut toucher en l'air (pour les obus de DCA et les missiles) : les avions qui volent, et ton Rafale.
-  const enLAir = (monde) => monde.avions.filter((a) => a.etat !== "attend" && a.etat !== "parti" && !a.detruit).concat(monde.engins.filter((e) => e.sorte === "avion" && e.pilote && e.enVol && !e.detruit));
+  // (étape 73 : et les hélicos de transport qui volent à plus de 8 m : la DCA et les missiles peuvent les abattre)
+  const enLAir = (monde) => monde.avions.filter((a) => a.etat !== "attend" && a.etat !== "parti" && !a.detruit).concat(monde.engins.filter((e) => e.sorte === "avion" && e.pilote && e.enVol && !e.detruit), Tanks.Helicos.enLAir(monde));
 
   return { creer, avancer, enLAir };
 })();

@@ -1,6 +1,6 @@
 # Demande n° 73 : des hélicoptères de transport dans les tanks
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée le 15/10/2026 (tanks version 12), à valider par Maxance.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi

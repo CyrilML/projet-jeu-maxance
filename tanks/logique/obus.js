@@ -14,6 +14,7 @@
 // ne peut être touché QUE par une torpille (les obus et les roquettes explosent à la surface).
 // Étape 64 : les AVIONS peuvent être touchés (les chasseurs et les transports ennemis, et ton Rafale) : par un missile,
 // ou par l'obus de la DCA (le « flak »), qui éclate tout seul quand il passe à moins de 9 m d'un avion ennemi.
+// Étape 73 : les HÉLICOS DE TRANSPORT aussi (le Chinook, le Black Hawk) : touchés en l'air, ils sont « abattus » et tombent.
 // ✍️ 4 obus détruisent un tank. Un projectile ne fait pas de mal à sa propre équipe.
 // Ce fichier ne dessine rien : il renvoie des événements (« touche », « detruit », « impact », « soldat-touche »…).
 
@@ -62,7 +63,7 @@ Tanks.Obus = (function () {
     if (cible.vie <= 0) {
       cible.detruit = true;
       // (étape 64) un avion n'est pas une épave qui fume au sol : il est « abattu », et il tombe
-      ev.push([cible.genre === "avion" ? "abattu" : "detruit", { x: cible.x, y: cible.y, z: cible.z, tireur, cible, distance, bateau, petit: cible.genre === "vehicule" && cible.sorte !== "camion", passagers: cible.passagers || 0 }]);
+      ev.push([cible.genre === "avion" || (cible.genre === "helico" && cible.enVol) ? "abattu" : "detruit", { x: cible.x, y: cible.y, z: cible.z, tireur, cible, distance, bateau, petit: cible.genre === "vehicule" && cible.sorte !== "camion", passagers: cible.passagers || 0 }]);
     }
   }
 
@@ -94,6 +95,9 @@ Tanks.Obus = (function () {
     // (étape 71) les motos, quads et camions : les tiens (garés ou pas) et ceux de l'ordinateur
     for (const e of monde.engins) if (e.genre === "vehicule") l.push(e);
     for (const v of monde.vehicules || []) l.push(v);
+    // (étape 73) les hélicos de transport : les tiens et ceux de l'ordinateur (en l'air, la boîte est autour de leur fuselage)
+    for (const e of monde.engins) if (e.genre === "helico") l.push(e);
+    for (const h of monde.helicos || []) l.push(h);
     return l;
   }
   const cache = (c, sorte) => c.genre === "sousmarin" && sorte !== "torpille" && Tanks.SousMarins.sousLEau(c); // (sous l'eau)

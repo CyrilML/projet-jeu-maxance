@@ -108,7 +108,7 @@ Tanks.IA = (function () {
     };
     for (const b of T.boitesAutour(c.x, c.z, 30, prochesBoites)) if (Math.abs(b.x - c.x) < 30 && Math.abs(b.z - c.z) < 30) repousse(b.x, b.z, Math.max(b.demiL, b.demiP) + I.regardObstacles * 0.6, 60);
     for (const a of T.arbresAutour(c.x, c.z, 10, prochesArbres)) if (!a.ecrase && Math.abs(a.x - c.x) < 10 && Math.abs(a.z - c.z) < 10) repousse(a.x, a.z, 8, 15);
-    for (const o of tous) if (o !== c && o.genre !== "bateau") repousse(o.x, o.z, 14, 40);
+    for (const o of tous) if (o !== c && o.genre !== "bateau" && o.genre !== "helico") repousse(o.x, o.z, 14, 40); // (étape 73 : un hélico en l'air ne gêne pas)
     // (étape 62) le lac aussi repousse : un tank ne sait pas nager ! (il s'arrête sur la rive et tire sur les bateaux)
     const dl = T.distLac(c.x, c.z);
     if (dl < 1.3 && !T.ileProche(c.x, c.z, 4)) { // (sur une île, arrivé par le portail rose, on ne le repousse pas)

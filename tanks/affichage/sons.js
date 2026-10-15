@@ -228,6 +228,11 @@ Tanks.Sons = (function () {
     } else if (toi.mode === "bateau") { // (un moteur de bateau : grave, et le bruit de l'eau)
       const part = Math.min(1, Math.abs(e.vitesse) / C.bateaux.joueur.vitesseMax);
       (frequence = 40 + part * 50), (aigu = 300 + part * 500), (fort = e.detruit ? 0 : 0.12 + part * 0.1), (souffleFort = part * 0.08), (souffleAigu = 600);
+    } else if (toi.mode === "chinook" || toi.mode === "blackhawk") { // (étape 73) un « tchop-tchop » plus grave (le Chinook : 2 gros rotors lents)
+      const tours = toi.mode === "chinook" ? 3.6 : 4.8;
+      souffleFort = 0.13 + 0.14 * Math.max(0, Math.sin(t * Math.PI * 2 * tours));
+      souffleAigu = toi.mode === "chinook" ? 210 : 280;
+      (frequence = toi.mode === "chinook" ? 34 : 46), (aigu = 260), (fort = e.detruit ? 0 : 0.07);
     } else if (toi.mode === "helico" || toi.mode === "drone") {
       const tours = toi.mode === "helico" ? 5.5 : 30; // le « tchop-tchop » : le volume suit les tours du rotor
       souffleFort = (0.12 + 0.12 * Math.max(0, Math.sin(t * Math.PI * 2 * tours))) * (toi.mode === "drone" ? 0.5 : 1);
@@ -245,7 +250,7 @@ Tanks.Sons = (function () {
     const silence = coupe || m.phase === "garage";
     volume.gain.setTargetAtTime(silence ? 0 : fort, t, 0.15);
     filtreSouffle.frequency.setTargetAtTime(souffleAigu, t, 0.2);
-    volumeSouffle.gain.setTargetAtTime(silence ? 0 : souffleFort, t, toi.mode === "helico" ? 0.02 : 0.2);
+    volumeSouffle.gain.setTargetAtTime(silence ? 0 : souffleFort, t, toi.mode === "helico" || toi.mode === "chinook" || toi.mode === "blackhawk" ? 0.02 : 0.2);
   }
   function basculer() {
     coupe = !coupe;

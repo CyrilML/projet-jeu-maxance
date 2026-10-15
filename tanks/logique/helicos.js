@@ -190,6 +190,12 @@ Tanks.Helicos = (function () {
     return sortie;
   }
   const ici = { x: 0, y: 0, z: 0 };
+  // Combien de soldats debout dans ce camp ? (pas plus de « parachutistes.maxParEquipe » : sinon le jeu ralentit)
+  function debout(monde, equipe) {
+    let n = 0;
+    for (const s of monde.soldats) if (s.equipe === equipe && !s.mort) n++;
+    return n;
+  }
   function cordes(h, monde, dt) {
     h.cordesSorties = h.descente || h.surLesCordes > 0;
     h.cordeBloquee = "";
@@ -199,9 +205,7 @@ Tanks.Helicos = (function () {
     if (Math.abs(h.vitesse) > K.vitesseMax) return void (h.cordeBloquee = "trop vite");
     h.prochaineCorde -= dt;
     if (h.prochaineCorde > 0) return;
-    let debout = 0;
-    for (const s of monde.soldats) if (s.equipe === h.equipe && !s.mort) debout++;
-    if (debout >= C.parachutistes.maxParEquipe) return void (h.cordeBloquee = "plein");
+    if (debout(monde, h.equipe) >= C.parachutistes.maxParEquipe) return void (h.cordeBloquee = "plein");
     h.prochaineCorde = K.intervalle;
     const k = h.cordeN++ % 2, a = point(h, H.cordes[h.sorte][k], ici);
     const n = G[h.sorte].places - h.passagers + 1;
@@ -326,6 +330,7 @@ Tanks.Helicos = (function () {
     if (e.pilote && I.decharger) {
       if (e.passagers === 0) ev.push(["impossible", { raison: "personne à bord : pose-toi près de ton aérodrome pour remplir ton " + R.nom }]);
       else if (e.descente) ev.push(["impossible", { raison: "la descente à la corde est déjà en cours" }]);
+      else if (debout(monde, e.equipe) >= C.parachutistes.maxParEquipe) ev.push(["impossible", { raison: "déjà " + C.parachutistes.maxParEquipe + " soldats debout dans ton camp : attends qu'il y ait de la place" }]);
       else if (haut > K.hauteurMax) ev.push(["impossible", { raison: "trop haut (" + Math.round(haut) + " m) : descends à moins de " + K.hauteurMax + " m (D) pour la corde" }]);
       else if (Math.abs(e.vitesse) > K.vitesseMax) ev.push(["impossible", { raison: "trop vite (" + Math.round(Math.abs(e.vitesse) * 3.6) + " km/h) : arrête-toi presque (moins de " + Math.round(K.vitesseMax * 3.6) + " km/h)" }]);
       else {

@@ -36,7 +36,7 @@ Tanks.Portails = (function () {
     for (const c of monde.chars) if (!c.detruit) l.push([c, C.char.rayon]);
     for (const s of monde.soldats) if (!s.mort && !s.dansUnEngin && !s.parachute) l.push([s, 0.5]);
     for (const e of monde.engins) {
-      if (e.detruit || e.sorte === "bateau" || e.sorte === "sousmarin" || e.sorte === "avion") continue;
+      if (e.detruit || e.sorte === "bateau" || e.sorte === "sousmarin" || e.sorte === "avion" || e.genre === "helico") continue; // (étape 73 : un hélico de transport est trop grand)
       if (e.sorte !== "jeep" && e.y - T.hauteur(e.x, e.z) > P.hauteurMax) continue;
       l.push([e, e.sorte === "helico" ? 6 : e.sorte === "camion" ? 4 : 2.5]);
     }

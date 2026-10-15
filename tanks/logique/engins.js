@@ -17,7 +17,11 @@
 //   - (étape 71) la MOTO CROSS, le QUAD et le CAMION DE TRANSPORT (leur mécanique est dans logique/vehicules.js) : la moto
 //     penche dans les virages et son pilote tire au pistolet, le quad a une petite mitrailleuse devant, le camion emmène
 //     6 soldats (F : les faire descendre ; vide, il se remplit si tu le gares près de ton parking).
-// Les engins volants ne peuvent pas être touchés (les tanks ne tirent pas en l'air).
+//   - (étape 73) le CHINOOK et le BLACK HAWK, les hélicos de transport (leur mécanique est dans logique/helicos.js) : ils
+//     volent comme le Tigre (même code : « planer »), emmènent 10 soldats (F : la descente à la corde, quand tu es bas et
+//     presque arrêté), et leurs 2 mitrailleuses de porte tirent toutes seules. Posé près de ton aérodrome, il se remplit.
+// Le Tigre et le drone ne peuvent pas être touchés (les tanks ne tirent pas en l'air) ; (étape 73) le Chinook et le Black
+// Hawk, si : quand ils volent bas, les tanks et les lance-roquettes les visent, et la DCA ou les missiles en l'air.
 // Ce fichier ne dessine rien.
 
 window.Tanks = window.Tanks || {};
@@ -29,7 +33,7 @@ Tanks.Engins = (function () {
   const yCamp = () => T.camp + 40; // (étape 71 : juste derrière les tanks de ton camp)
 
   // Les places de parking (derrière les Bleus) : le 4x4, puis l'aérodrome (l'hélico, l'avion, le drone).
-  const PLACES = { jeep: [40, -12], helico: [-60, 0], avion: [-120, 0], drone: [-30, 4], dca: [80, -50], moto: [52, -14], quad: [60, -13], camion: [74, -10] }; // (la DCA, un peu devant, sur du plat ; étape 71 : la moto, le quad, le camion à côté du 4x4)
+  const PLACES = { jeep: [40, -12], helico: [-60, 0], avion: [-120, 0], drone: [-30, 4], dca: [80, -50], moto: [52, -14], quad: [60, -13], camion: [74, -10], chinook: [-172, 8], blackhawk: [-205, 6] }; // (étape 73 : les hélicos de transport, à l'ouest de l'avion) // (la DCA, un peu devant, sur du plat ; étape 71 : la moto, le quad, le camion à côté du 4x4)
   const place = (sorte) => ({ x: PLACES[sorte][0], z: yCamp() + PLACES[sorte][1] });
   function creer() {
     const liste = Object.keys(PLACES).map((sorte) => garer({ sorte, fiche: Object.assign({ longueur: 4.8, largeur: 2.2, hauteur: 2 }, G[sorte]) }));
@@ -66,6 +70,7 @@ Tanks.Engins = (function () {
     if (e.sorte === "dca") Object.assign(e, { tourelle: 0, hausse: 0.5, canon: 0, cible: null, angle: -Math.PI / 2 });
     // (étape 71) la moto, le quad, le camion : le braquage, la vie de TON pilote (plus solide), les 6 soldats du camion
     if (Tanks.Vehicules.SORTES.includes(e.sorte)) Object.assign(e, { genre: "vehicule", braquage: 0, rotation: 0, balles: G[e.sorte].ballesJoueur || 0, passagers: G[e.sorte].places || 0, tombe: false, tirs: 0, reussis: 0, remplissage: 0 });
+    if (Tanks.Helicos.SORTES.includes(e.sorte)) Object.assign(Tanks.Helicos.equiper(e), { reussis: 0 }); // (étape 73 : 10 soldats, les cordes, les 2 tireurs)
     return e;
   }
 
@@ -75,6 +80,14 @@ Tanks.Engins = (function () {
     const ev = [], R = G[e.sorte];
     e.touche += dt;
     if (e.detruit) {
+      if (e.genre === "helico") { // (étape 73) il tombe ; 60 s après le crash, un nouveau t'attend à l'aérodrome
+        Tanks.Helicos.tomber(e, dt, ev);
+        if (e.chute.auSol && e.chute.depuis > C.helicosTransport.retour && !e.pilote) {
+          garer(e);
+          ev.push(["helico-retour", { nom: e.nom, equipe: e.equipe, sorte: e.sorte, toi: true }]);
+        }
+        return ev;
+      }
       if (e.sorte === "bateau") Tanks.Bateaux.couler(e, dt);
       else if (e.sorte === "sousmarin") {
         e.vitesse *= 1 - dt;
@@ -108,7 +121,10 @@ Tanks.Engins = (function () {
       Tanks.Vehicules.remplirAuParking(e, place(e.sorte), dt, ev);
     }
     else if (e.sorte === "avion") voler(e, intentions, dt, R, monde, ev);
-    else planer(e, intentions, dt, R, monde, ev);
+    else {
+      planer(e, intentions, dt, R, monde, ev);
+      if (e.genre === "helico") Tanks.Helicos.equipage(e, intentions, dt, monde, ev, place(e.sorte)); // (étape 73)
+    }
     return ev;
   }
 
@@ -242,7 +258,7 @@ Tanks.Engins = (function () {
     }
   }
 
-  // L'hélico et le drone : ils restent en l'air sur place, avancent, reculent, tournent, montent, descendent.
+  // L'hélico et le drone (et, étape 73, le Chinook et le Black Hawk) : ils restent en l'air sur place, avancent, reculent, tournent, montent, descendent.
   function planer(e, I, dt, R, monde, ev) {
     const sol = T.hauteur(e.x, e.z);
     e.rotor += dt * (e.pilote || e.y > sol + 0.5 ? 40 : 4);

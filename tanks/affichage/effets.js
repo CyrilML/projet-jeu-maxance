@@ -24,6 +24,8 @@
 // de la caméra (on ne la verrait presque pas) : la distance est réglée par le régulateur de qualité.
 // (étape 71) la poussière derrière les motos, les quads et les camions ; une explosion plus petite pour une moto ou un
 // quad (« petit »), et un petit nuage quand un camion fait descendre ses soldats.
+// (étape 73) la poussière soulevée par le souffle des rotors d'un hélico de transport qui vole bas, et la fumée d'un
+// hélico abattu qui tombe.
 // Il écoute la radio (tir, impact, touche, detruit) pour savoir quand faire des effets.
 
 window.Tanks = window.Tanks || {};
@@ -327,8 +329,18 @@ Tanks.Effets = (function () {
       if (!a.detruit || a.etat === "parti" || Math.random() > dt * 40) continue;
       particule(a.x + alea(1), a.y, a.z + alea(1), alea(1), 1, alea(1), 3, 2, 8, 0.7, Math.random() < 0.3 ? [1, 0.5, 0.15] : [0.13, 0.12, 0.12], false);
     }
-    for (const liste of [monde.engins, monde.vehicules || [], monde.bateaux || [], monde.sousMarins || []]) for (const e of liste) {
+    for (const liste of [monde.engins, monde.vehicules || [], monde.helicos || [], monde.bateaux || [], monde.sousMarins || []]) for (const e of liste) {
+      // (étape 73) un hélico de transport abattu laisse une traînée de fumée noire en tombant
+      if (e.genre === "helico" && e.detruit && e.chute && !e.chute.auSol && Math.random() < dt * 35) particule(e.x + alea(1), e.y + 2, e.z + alea(1), alea(1), 1, alea(1), 3, 2, 8, 0.7, Math.random() < 0.3 ? [1, 0.5, 0.15] : [0.13, 0.12, 0.12], false);
       if (e.detruit) continue;
+      // (étape 73) le souffle des rotors soulève la poussière quand un hélico de transport vole bas
+      if (e.genre === "helico" && e.enVol && Math.random() < dt * 14) {
+        const sol = T.hauteur(e.x, e.z);
+        if (e.y - sol < 22) { // (trop loin de la caméra, « particule » ne la fait pas)
+          const a = Math.random() * Math.PI * 2, r = e.sorte === "chinook" ? 7 : 5;
+          particule(e.x + Math.cos(a) * r, sol + 0.4, e.z + Math.sin(a) * r, Math.cos(a) * 7, 0.5, Math.sin(a) * 7, 1.3, 1.8, 6, 0.3, [0.66, 0.6, 0.48]);
+        }
+      }
       if (e.sorte === "sousmarin" && Math.abs(e.vitesse) > 1) {
         if (e.profondeur > 1.5 ? Math.random() < dt * 10 : Math.random() < dt * 20) {
           const ar = -6.5, ca = Math.cos(e.angle), sa = Math.sin(e.angle);

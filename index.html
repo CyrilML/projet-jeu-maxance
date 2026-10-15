@@ -194,6 +194,7 @@
       <a href="#etape70">Étape 70</a>
       <a href="#etape71">Étape 71</a>
       <a href="#etape72">Étape 72</a>
+      <a href="#etape73">Étape 73</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4203,6 +4204,48 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <details class="question"><summary>Pourquoi ne soude-t-on pas les fenêtres qui s'allument ?</summary><p>Parce que leur lumière change pendant le jeu : soudées, elles s'allumeraient toutes en même temps.</p></details>
     </section>
 
+    <section id="etape73">
+      <h2>🚁 Étape 73 : des hélicoptères de transport dans les tanks <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Un Chinook et un Black Hawk pour toi et pour chaque camp : 10 soldats à bord, 2 mitrailleuses de porte, et la descente à la corde. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/73-helicopteres-de-transport.md</code>.</p>
+          <ul>
+            <li>✍️ Les deux modèles : le Chinook (2 rotors, rampe à l'arrière) et le Black Hawk (1 rotor, portes sur les côtés).</li>
+            <li>✍️ Pour les deux camps : toi tu pilotes, l'ordinateur amène des soldats au front.</li>
+            <li>✍️ 10 soldats et 2 mitrailleuses qui tirent toutes seules.</li>
+            <li>✍️ Les soldats descendent à la corde.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Tanks « version 12 ».</li>
+            <li>☐ Le Chinook et le Black Hawk sont garés à l'ouest de ton aérodrome : E pour monter.</li>
+            <li>☐ Q monter, D descendre, flèches pour avancer et tourner.</li>
+            <li>☐ Descends sous 25 m, freine presque à l'arrêt, puis F : les 10 soldats glissent le long de 2 cordes.</li>
+            <li>☐ Trop haut ou trop vite ? Un message te le dit.</li>
+            <li>☐ Les mitrailleuses de porte tirent toutes seules sur les ennemis à moins de 120 m.</li>
+            <li>☐ Journal : « 🚁 Chinook rouge dépose 10 soldats à la corde ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🪢 Pourquoi « bas et presque arrêté » ?</h3>
+      <p>Une vraie corde de descente fait environ 25 m. Si l'hélico est plus haut, la corde ne touche pas le sol ; s'il avance, les soldats se balancent et tombent. Le jeu vérifie donc 2 conditions avant d'envoyer un soldat : la <strong>hauteur</strong> (moins de 25 m) ET la <strong>vitesse</strong> (moins de 11 km/h). C'est un « ET » : il faut les deux en même temps.</p>
+      <h3>🔫 La mitrailleuse qui vise toute seule</h3>
+      <p>Chaque tireur de porte surveille son côté (75° de chaque côté de sa porte). Plusieurs fois par seconde, il cherche l'ennemi le plus proche à moins de 120 m dans son secteur, tourne son arme vers lui et tire. Sous le capot, tu vois la cible de chaque mitrailleuse.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Ouvre « sous le capot » et suis l'état d'un hélico de l'ordinateur : au camp, décolle, en vol, stationnaire, descente à la corde, retour…</li>
+        <li>Dans <code>tanks/config.js</code>, cherche <code>corde: { hauteurMax: 25</code> et mets 60 : tu peux poser tes soldats de très haut !</li>
+        <li>Compare le Chinook et le Black Hawk : lequel va le plus vite ? Lequel résiste le mieux ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Quelles sont les 2 conditions pour la descente à la corde ?</summary><p>Être à moins de 25 m du sol ET aller à moins de 11 km/h.</p></details>
+      <details class="question"><summary>Pourquoi le deuxième hélico pose-t-il parfois seulement 1 ou 2 soldats ?</summary><p>Parce qu'un camp ne peut pas avoir plus de 30 soldats debout en même temps : quand il est plein, l'hélico rentre au camp.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4558,6 +4601,12 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
           <h4>Des motos, et plus de lags <span class="etiquette">✅ fait · à valider</span></h4>
           <p>Une moto cross Honda et une moto de trial dans le circuit 3D (étape 71), puis dans les tanks une moto, un quad, un camion de 6 soldats et une carte 3 fois plus grande (étape 71), puis un régulateur de qualité, moins de détails au loin et le soudeur dans les 3 jeux 3D pour qu'ils ne rament plus (étape 72).</p>
           <p class="apprend"><b>Tu apprends :</b> les images par seconde, le régulateur, le niveau de détail, souder les dessins. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">🚁</div>
+          <h4>Les hélicoptères de transport <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Un Chinook et un Black Hawk dans les tanks, pour toi et pour les deux camps, avec 10 soldats qui descendent à la corde et 2 mitrailleuses de porte (étape 73).</p>
+          <p class="apprend"><b>Tu apprends :</b> les conditions avec « ET », la machine à états, viser tout seul. <b>Durée :</b> 1 séance.</p>
         </div>
         <div class="carte fait">
           <div class="num">⚔️</div>
@@ -5227,6 +5276,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-72" data-cle="appris-72" placeholder="Ex. : J'ai appris qu'un jeu dessine 60 images par seconde…"></textarea>
         <label for="idees-72"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-72" data-cle="idees-72" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 73 · les hélicoptères de transport <span class="petit">· 15 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les hélicos de transport (<code>tanks/logique/helicos.js</code>) et leur dessin (<code>tanks/affichage/helicos3d.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : le Chinook et le Black Hawk, pour les deux camps, 10 soldats et 2 mitrailleuses, la descente à la corde.</p>
+        <label for="appris-73"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-73" data-cle="appris-73" placeholder="Ex. : J'ai appris qu'il faut 2 conditions pour descendre à la corde…"></textarea>
+        <label for="idees-73"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-73" data-cle="idees-73" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

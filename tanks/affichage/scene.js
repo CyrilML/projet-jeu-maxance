@@ -24,6 +24,10 @@
 // Étape 71 : les MOTOS, QUADS et CAMIONS (affichage/vehicules3d.js). Près de la caméra : en détail (les roues tournent,
 // la fourche et les roues avant braquent, la moto PENCHE dans les virages, le pilote et les 6 soldats du camion sont là
 // ou pas) ; plus loin : la version simple, toutes les copies d'une sorte et d'une équipe en UN seul dessin (instances).
+// Étape 73 : les HÉLICOS DE TRANSPORT (affichage/helicos3d.js) : les rotors tournent (les 2 du Chinook en sens inverse), la
+// rampe du Chinook se baisse au sol, se met à plat pour la corde et se relève en vol ; les soldats assis aux portes du
+// Black Hawk disparaissent quand ils sont descendus ; les 2 CORDES pendent jusqu'au sol pendant la descente ; une petite
+// flamme quand une mitrailleuse de porte tire. De loin : la version simple en instances (1 dessin par sorte et par équipe).
 // Comme tout l'affichage, ce fichier lit le monde et ne le modifie jamais.
 
 window.Tanks = window.Tanks || {};
@@ -38,7 +42,7 @@ Tanks.Scene = (function () {
   // (étape 72) le niveau de qualité en cours (réglé par affichage/qualite.js), le ciel, les silhouettes des soldats
   let Q = C.qualite.niveaux[C.qualite.depart], leCiel = null;
   const silhouettes = {};
-  const lod = { soldatsDetail: 0, soldatsSimples: 0, silhouettes: 0, soldatsCaches: 0, tanksRouesSoudees: 0, enginsCaches: 0, vehiculesDetail: 0, vehiculesSimples: 0, vehiculesCaches: 0 };
+  const lod = { soldatsDetail: 0, soldatsSimples: 0, silhouettes: 0, soldatsCaches: 0, tanksRouesSoudees: 0, enginsCaches: 0, vehiculesDetail: 0, vehiculesSimples: 0, vehiculesCaches: 0, helicosDetail: 0, helicosSimples: 0, helicosCaches: 0 };
   const lotsSimples = {}; // (étape 71) « moto:bleus » → les instances de la version simple
   // La « vue » d'un objet : le même objet, mais avec x, y, z, angle (et tourelle) pris entre l'avant et maintenant.
   const melange = (a, b) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * alpha;
@@ -119,6 +123,7 @@ Tanks.Scene = (function () {
     Tanks.Effets.initialiser(scene);
     for (const equipe of ["bleus", "rouges"]) scene.add((silhouettes[equipe] = Tanks.Engins3D.silhouettes(equipe, 160)));
     for (const sorte of Tanks.Vehicules3D.SORTES) for (const equipe of ["bleus", "rouges"]) scene.add((lotsSimples[sorte + ":" + equipe] = Tanks.Vehicules3D.lotSimple(sorte, equipe, 12)));
+    for (const sorte of Tanks.Helicos3D.SORTES) for (const equipe of ["bleus", "rouges"]) scene.add((lotsSimples[sorte + ":" + equipe] = Tanks.Helicos3D.lotSimple(sorte, equipe, 6))); // (étape 73)
   }
 
   // (étape 72) Appliquer un niveau de qualité (appelé par le régulateur, affichage/qualite.js).
@@ -300,8 +305,66 @@ Tanks.Scene = (function () {
     if (o.passagers) o.passagers.visible = e.passagers > 0;
   }
 
+  // (étape 73) Un hélico de transport : en vol, tourné et penché ; posé, comme la colline. Loin : la version simple.
+  function placerHelico(o, e, dt, original) {
+    const d = Math.hypot(e.x - cam.position.x, e.y - cam.position.y, e.z - cam.position.z);
+    o.g.position.set(e.x, e.y, e.z);
+    if (e.enVol || (e.detruit && e.chute && !e.chute.auSol)) o.g.rotation.set(e.roulis || 0, -e.angle, e.tangage || 0, "YXZ");
+    else {
+      const n = T.normale(e.x, e.z);
+      qLacet.setFromAxisAngle(haut, -e.angle);
+      qPente.setFromUnitVectors(haut, vn.set(n.x, n.y, n.z));
+      o.g.quaternion.copy(qPente).multiply(qLacet);
+    }
+    if (d > Q.vue + 50) {
+      o.g.visible = false;
+      lod.helicosCaches++;
+      return;
+    }
+    const lot = lotsSimples[e.sorte + ":" + e.equipe];
+    if (d > Q.roues * C.helicosTransport.loin && lot && lot.count < lot.instanceMatrix.count) {
+      o.g.visible = false;
+      o.g.updateMatrix();
+      lot.setMatrixAt(lot.count, o.g.matrix);
+      lot.setColorAt(lot.count++, e.detruit ? sombre : blanc);
+      lod.helicosSimples++;
+      return;
+    }
+    o.g.visible = true;
+    lod.helicosDetail++;
+    if (e.detruit) {
+      if (!o.brule) (Tanks.Engins3D.bruler(o), (o.brule = true));
+      for (const c of o.cordes) c.visible = false;
+      for (const f of o.flammes) f.visible = false;
+      return;
+    }
+    if (o.brule) { // (un nouvel hélico est revenu au camp : on refait son dessin)
+      scene.remove(o.g);
+      dessinsEngins.delete(original || e);
+      return;
+    }
+    // les rotors : les 2 du Chinook en sens inverse ; le rotor de queue du Black Hawk, beaucoup plus vite
+    o.rotors.forEach((r, i) => (r.rotation.y = i ? -e.rotor : e.rotor));
+    if (o.rotorQueue) o.rotorQueue.rotation.z = e.rotor * 4.5;
+    // la rampe du Chinook : baissée au sol (on monte), à plat pour la corde, relevée en vol
+    if (o.rampe) {
+      const voulu = e.cordesSorties ? 0 : !e.enVol ? 0.42 : -0.9;
+      o.angleRampe += (voulu - o.angleRampe) * Math.min(1, dt * 1.5);
+      o.rampe.rotation.z = o.angleRampe;
+    }
+    if (o.passagers) o.passagers.visible = e.passagers > 0;
+    // les 2 cordes, du point d'accroche jusqu'au sol
+    const sol = T.hauteur(e.x, e.z), points = C.helicosTransport.cordes[e.sorte];
+    o.cordes.forEach((c, k) => {
+      c.visible = !!e.cordesSorties;
+      if (c.visible) c.scale.y = Math.max(0.5, e.y + points[k][1] - sol);
+    });
+    o.flammes.forEach((f, k) => (f.visible = !!(e.portes && e.portes[k].tir > 0)));
+  }
+
   function placerEngin(o, e, dt, original) {
     if (Tanks.Vehicules3D.sait(e.sorte)) return placerVehicule(o, e, dt, original); // (étape 71)
+    if (Tanks.Helicos3D.sait(e.sorte)) return placerHelico(o, e, dt, original); // (étape 73)
     o.g.visible = e.etat !== "attend" && e.etat !== "parti";
     // (étape 72) plus loin que la vue (dans le brouillard) : pas dessiné
     if (o.g.visible && Math.hypot(e.x - cam.position.x, e.y - cam.position.y, e.z - cam.position.z) > Q.vue + 50) (o.g.visible = false), lod.enginsCaches++;
@@ -409,6 +472,8 @@ Tanks.Scene = (function () {
     if (e.sorte === "bateau") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle, distance: 1.1, hauteur: 0.8, devant: 1, regardY: 2 };
     if (e.sorte === "avion") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 1.9, hauteur: 0.9, devant: 2, regardY: 2, sansSol: true, tangage: e.tangage };
     if (e.sorte === "drone") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 0.6, hauteur: 0.9, devant: 0.6, regardY: -2 };
+    if (e.sorte === "chinook") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 2.4, hauteur: 1.5, devant: 1.2, regardY: -1 }; // (étape 73 : il est long !)
+    if (e.sorte === "blackhawk") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 1.9, hauteur: 1.3, devant: 1.2, regardY: -1 };
     return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 1.4, hauteur: 1.1, devant: 1.2, regardY: -1 };
   }
 
@@ -437,12 +502,12 @@ Tanks.Scene = (function () {
     if (monde.phase === "garage" && objets.size === 1) Tanks.Effets.effacer();
     for (const c of monde.chars) placer(objetDe(c), vue(c), dt);
     // étape 61 : les soldats, les engins, les projectiles (on enlève les dessins de ceux qui n'existent plus)
-    const presents = new Set(monde.soldats.concat(monde.engins, monde.vehicules, monde.bateaux, monde.sousMarins, monde.avions));
+    const presents = new Set(monde.soldats.concat(monde.engins, monde.vehicules, monde.helicos || [], monde.bateaux, monde.sousMarins, monde.avions));
     for (const [x, o] of dessinsSoldats) if (!presents.has(x)) (scene.remove(o.g), dessinsSoldats.delete(x));
     for (const [x, o] of dessinsEngins) if (!presents.has(x)) (scene.remove(o.g), dessinsEngins.delete(x));
     horloge += dt;
     for (const k in lotsSimples) lotsSimples[k].count = 0; // (étape 71 : les versions simples, recomptées à chaque image)
-    for (const e of monde.engins.concat(monde.vehicules, monde.bateaux, monde.sousMarins, monde.avions)) placerEngin(engin3d(e), vue(e), dt, e);
+    for (const e of monde.engins.concat(monde.vehicules, monde.helicos || [], monde.bateaux, monde.sousMarins, monde.avions)) placerEngin(engin3d(e), vue(e), dt, e);
     for (const k in lotsSimples) {
       const lot = lotsSimples[k];
       lot.visible = lot.count > 0 || !lot.userData.pret; // (première image : montré vide, pour préparer son programme de dessin)

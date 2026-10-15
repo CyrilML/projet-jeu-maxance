@@ -1238,6 +1238,7 @@ Tanks.Engins3D = (function () {
 
   function fabriquer(sorte, equipe) {
     if (Tanks.Vehicules3D && Tanks.Vehicules3D.sait(sorte)) return Tanks.Vehicules3D.fabriquer(sorte, equipe); // (étape 71)
+    if (Tanks.Helicos3D && Tanks.Helicos3D.sait(sorte)) return Tanks.Helicos3D.fabriquer(sorte, equipe); // (étape 73)
     return { jeep, helico, avion, drone, bateau, sousmarin, dca, transport, chasseur: avion }[sorte](equipe);
   }
   function bruler(o) {
@@ -1248,6 +1249,7 @@ Tanks.Engins3D = (function () {
   }
 
   // (étape 71) la moto, le quad et le camion sont fabriqués dans affichage/vehicules3d.js (qui réutilise ces outils)
+  // (étape 73) le Chinook et le Black Hawk, dans affichage/helicos3d.js
   const outils = { pilote, siege, peintureSoudee, vitreClaire, mats };
   return { soldat, animer, fabriquer, bruler, portail, silhouettes, outils };
 })();

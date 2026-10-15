@@ -19,6 +19,9 @@
 // pas » (l'interpolation qui empêche ton personnage de faire de petits sauts).
 // Étape 71 : LA GRANDE CARTE (sa taille, ses villages, ses arbres, ses tuiles de sol) et LES ENGINS QUI ROULENT : chaque
 // moto, quad et camion des deux camps (ce qu'il fait, sa vitesse, sa vie, son pilote, les soldats à bord), et les tiens.
+// Étape 73 : LES HÉLICOS DE TRANSPORT : chaque Chinook et Black Hawk (les tiens et ceux de l'ordinateur) : son état (au
+// camp, en vol, stationnaire, descente à la corde, retour), sa hauteur, sa vitesse, ses soldats à bord et sur les cordes,
+// sa vie, et ce que visent ses 2 mitrailleuses de porte.
 
 window.Tanks = window.Tanks || {};
 
@@ -34,12 +37,20 @@ Tanks.SousLeCapot = (function () {
     "son-endormi": (d) => "🔇 Le son s'endort : " + d.raison,
     "son-reveille": () => "🔊 Tu es revenu : le son se réveille",
     garage: (d) => "🏭 Au garage, tu regardes le " + d.nom + " (" + d.pays + ")",
+    // étape 73
+    "helico-decolle": (d) => "🚁 " + d.nom + " décolle avec " + d.passagers + " soldats vers le front (" + Math.round(d.x) + " ; " + Math.round(d.z) + ")",
+    "helico-stationnaire": (d) => "🚁 " + (d.toi ? "Ton " + d.nom : d.nom) + " s'arrête en l'air à " + d.hauteur + " m (vol stationnaire) : les 2 cordes descendent jusqu'au sol",
+    "helico-depose": (d) => "🚁 " + (d.toi ? "Ton " + d.nom : d.nom) + " dépose " + d.nombre + " soldat" + (d.nombre > 1 ? "s" : "") + " à la corde (ils deviennent des soldats normaux)" + (d.toi ? "" : " : il rentre au camp"),
+    "helico-recharge": (d) => "🚁 " + (d.toi ? "Ton " + d.nom : d.nom) + " est rempli : " + d.places + " soldats montent à bord" + (d.toi ? " (F pour la descente à la corde)" : ""),
+    "helico-attend": (d) => "✋ " + d.nom + " ne peut plus poser personne (déjà " + d.max + " soldats debout dans son camp) : il rentre avec " + d.reste + " soldats",
+    "helico-abattu": (d) => "💥 " + (d.toi ? "Ton " + d.nom : d.nom) + (d.enVol ? " est abattu en vol" : " est détruit au sol") + (d.morts ? " : " + d.morts + " soldats à bord sont perdus" : " (personne à bord)"),
+    "helico-retour": (d) => "🔧 Un nouveau " + d.nom + " " + (d.toi ? "t'attend à ton aérodrome" : "arrive au camp") + " (" + C.helicosTransport.retour + " s après le crash)",
     // étape 71
     "camion-decharge": (d) => "🚛 " + (d.toi ? "Ton camion" : d.nom) + " décharge " + d.nombre + " soldat" + (d.nombre > 1 ? "s" : "") + " (ils deviennent des soldats normaux)" + (d.reste ? " · il en reste " + d.reste + " à bord" : " · le camion est vide" + (d.toi ? "" : " : il rentre au camp se remplir")),
     "camion-recharge": (d) => "🚛 " + (d.toi ? "Ton camion" : d.nom) + " est rempli : " + d.places + " soldats montent à bord" + (d.toi ? " (F pour les faire descendre)" : " : il repart au front"),
     "vehicule-retour": (d) => "🔧 " + d.nom + " revient au camp, avec un nouveau pilote (" + C.vehicules.retour + " s après avoir été détruit)",
     "pilote-abattu": (d) => "🎯 Le pilote " + (d.surToi ? "(toi !)" : "de " + d.cible) + " est touché par " + d.tireur + " : " + (d.sorte === "moto" ? "la moto" : "le quad") + " tombe (hors de combat)",
-    bataille: (d) => "⚔️ La bataille commence ! Toi (" + d.char + ") et " + d.allies + " alliés contre " + d.ennemis + " ennemis, sur une carte de " + C.monde.taille + " m · " + (d.vehicules || 0) + " motos, quads et camions conduits par l'ordinateur",
+    bataille: (d) => "⚔️ La bataille commence ! Toi (" + d.char + ") et " + d.allies + " alliés contre " + d.ennemis + " ennemis, sur une carte de " + C.monde.taille + " m · " + (d.vehicules || 0) + " motos, quads et camions et " + (d.helicos || 0) + " hélicos de transport conduits par l'ordinateur",
     tir: (d) => d.joueur ? "🔥 Tu tires" + (d.assiste ? " (visée assistée sur " + d.cible + ", " + d.distance + " m : le canon s'est réglé tout seul)" : "") : "🔥 " + d.nom + " (" + (d.equipe === "bleus" ? "allié" : "ennemi") + ") tire sur " + d.cible + " à " + d.distance + " m",
     recharge: () => "🔄 Ton canon est rechargé",
     touche: (d) => "🎯 " + d.tireur + " touche " + d.cible + " " + d.cote + " à " + d.distance + " m · il lui reste " + d.vie + " / " + (d.vieMax || C.char.vie),
@@ -76,7 +87,7 @@ Tanks.SousLeCapot = (function () {
     portail: (d) => "🌀 " + d.qui + " entre dans le portail " + d.de + " et ressort par le portail " + d.vers,
     // étape 61
     sortir: (d) => "🚪 Tu sors de " + d.de + " : te voilà à pied (E pour remonter)",
-    monter: (d) => "🪜 Tu montes dans " + d.dans + ({ moto: " : ↑ ↓ ← → conduire (elle penche dans les virages), Espace tirer au pistolet", quad: " : ↑ ↓ ← → conduire, Espace la mitrailleuse (droit devant)", camion: " : ↑ ↓ ← → conduire, F faire descendre les soldats", dca: " : ← → tourner, ↑ ↓ lever les canons, Espace tirer en l'air", jeep: " : ↑ ↓ ← → conduire, Q / D la mitrailleuse, Espace tirer", helico: " : Q monter, D descendre, Espace lâcher une bombe", avion: " : ↑ piquer, ↓ cabrer, Espace un missile, E s'éjecter", drone: " : Q monter, D descendre, Espace lâcher une grenade" }[d.mode] || ""),
+    monter: (d) => "🪜 Tu montes dans " + d.dans + ({ moto: " : ↑ ↓ ← → conduire (elle penche dans les virages), Espace tirer au pistolet", quad: " : ↑ ↓ ← → conduire, Espace la mitrailleuse (droit devant)", camion: " : ↑ ↓ ← → conduire, F faire descendre les soldats", dca: " : ← → tourner, ↑ ↓ lever les canons, Espace tirer en l'air", jeep: " : ↑ ↓ ← → conduire, Q / D la mitrailleuse, Espace tirer", helico: " : Q monter, D descendre, Espace lâcher une bombe", chinook: " : Q monter, D descendre, F la descente à la corde (bas et presque arrêté) ; les mitrailleuses tirent toutes seules", blackhawk: " : Q monter, D descendre, F la descente à la corde (bas et presque arrêté) ; les mitrailleuses tirent toutes seules", avion: " : ↑ piquer, ↓ cabrer, Espace un missile, E s'éjecter", drone: " : Q monter, D descendre, Espace lâcher une grenade" }[d.mode] || ""),
     ejection: (d) => (d.abattu ? "🔥 Ton Rafale est abattu ! " : "") + "🪂 Éjection à " + d.hauteur + " m de haut ! Tu redescends en parachute à " + C.engins.parachute + " m/s",
     atterrissage: () => "🪂 Tu touches le sol : te voilà à pied",
     impossible: (d) => "✋ Impossible : " + d.raison,
@@ -86,7 +97,7 @@ Tanks.SousLeCapot = (function () {
     largage: (d) => "💣 " + d.engin + " lâche " + (d.sorte === "bombe" ? "une bombe" : "une grenade") + " (il en reste " + d.reste + ")",
     missile: (d) => "🚀 Missile tiré" + (d.cible ? ", guidé vers " + d.cible : " tout droit (aucun ennemi en face)") + " · il en reste " + d.reste,
     "soldat-touche": (d) => "🩹 " + d.cible + " est touché par " + d.tireur + " (vie " + d.vie + ")",
-    "soldat-mort": (d) => "✖ " + d.cible + " est à terre (" + ({ ecrase: "écrasé par " + d.tireur, bombe: "bombe de " + d.tireur, missile: "missile de " + d.tireur, grenade: "grenade de " + d.tireur, roquette: "roquette de " + d.tireur, obus: "obus de " + d.tireur }[d.par] || "balle de " + d.tireur) + ")",
+    "soldat-mort": (d) => "✖ " + d.cible + " est à terre (" + ({ chute: "tombé de la corde de " + d.tireur, ecrase: "écrasé par " + d.tireur, bombe: "bombe de " + d.tireur, missile: "missile de " + d.tireur, grenade: "grenade de " + d.tireur, roquette: "roquette de " + d.tireur, obus: "obus de " + d.tireur }[d.par] || "balle de " + d.tireur) + ")",
   };
 
   function initialiser(m) {
@@ -102,6 +113,9 @@ Tanks.SousLeCapot = (function () {
       if (nom === "arbre-ecrase" && d.nom !== "toi") return; // (seulement les tiens, sinon le journal déborde)
       // (24 soldats tirent sans arrêt : on n'écrit que TES balles qui touchent ou ricochent, et ce qui t'arrive à toi)
       if (nom === "balle" && !(d.parToi && (d.touche || d.ricochet))) return;
+      // (étape 73 : dans ton hélico de transport, les mitrailleuses de porte tirent toutes seules : on n'écrit que les soldats à terre)
+      const enHelico = monde && monde.toi && (monde.toi.mode === "chinook" || monde.toi.mode === "blackhawk");
+      if (enHelico && (nom === "balle" || (nom === "soldat-touche" && d.parToi))) return;
       if (nom === "soldat-touche" && !d.parToi && !d.surToi) return;
       if (nom === "roquette" && !d.parToi) return;
       if (nom === "flak") return; // (la DCA tire 8 obus par seconde : on ne les écrit pas tous ; ils sont comptés sous le capot)
@@ -160,13 +174,31 @@ Tanks.SousLeCapot = (function () {
     l.push(["soldats des camions", (monde.dechargesTotal || 0) + " descendus depuis le début · dessin : " + L.vehiculesDetail + " engin(s) en détail, " + L.vehiculesSimples + " en version simple (1 dessin par sorte et par équipe), " + L.vehiculesCaches + " cachés"]);
   }
 
+  // (étape 73) Un hélico de transport : son état, sa hauteur, sa vitesse, ses soldats, sa vie, ses 2 mitrailleuses.
+  function ligneHelico(h, toi) {
+    const R = C.engins[h.sorte], H = C.helicosTransport, haut = h.y - Tanks.Terrain.hauteur(h.x, h.z);
+    if (h.detruit) return (h.ia ? h.ia.etat : h.chute && h.chute.auSol ? "abattu ✖ (un nouveau dans " + Math.max(0, Math.ceil(H.retour - h.chute.depuis)) + " s)" : "abattu : il tombe 🔥") + " · " + Math.round(haut) + " m";
+    const etat = toi ? (h.pilote ? "👤 tu pilotes" : "garé") + (h.descente ? " · descente à la corde" + (h.cordeBloquee ? " en pause (" + h.cordeBloquee + ")" : "") : h.enVol ? (Math.abs(h.vitesse) < H.corde.vitesseMax ? " · stationnaire" : " · en vol") : " · au sol") : h.ia.etat + (h.ia.etat === "au camp" ? " (décolle dans " + Math.max(0, Math.ceil(h.ia.attente)) + " s)" : h.ia.etat === "en vol vers le front" ? " (" + Math.round(Math.hypot(h.ia.but.x - h.x, h.ia.but.z - h.z)) + " m)" : h.cordeBloquee === "plein" ? " (attend de la place)" : "");
+    const tireurs = h.portes.map((p) => p.cote + " " + (p.cible ? "→ " + p.cible.nom : "rien") + " (" + p.tirs + ")").join(", ");
+    return [etat, Math.round(haut) + " m de haut", Math.round(Math.abs(h.vitesse) * 3.6) + " km/h", "🪖 " + h.passagers + " / " + R.places + " à bord" + (h.surLesCordes ? " + " + h.surLesCordes + " sur les cordes" : ""), "vie " + h.vie + " / " + R.vie, "🔫 " + tireurs].join(" · ");
+  }
+  function lignesHelicos(l) {
+    const H = C.helicosTransport;
+    l.push(["Les hélicos de transport (étape 73)"]);
+    for (const e of monde.engins) if (e.genre === "helico") l.push(["🔵 " + C.engins[e.sorte].icone + " ton " + e.nom, ligneHelico(e, true)]);
+    for (const h of monde.helicos || []) l.push([(h.equipe === "bleus" ? "🔵 " : "🔴 ") + h.fiche.icone + " " + h.nom, ligneHelico(h, false)]);
+    const L = Tanks.Scene.lod;
+    l.push(["la corde", "il faut être à moins de " + H.corde.hauteurMax + " m du sol et à moins de " + Math.round(H.corde.vitesseMax * 3.6) + " km/h · 1 soldat toutes les " + virgule(H.corde.intervalle, 2) + " s, il glisse à " + H.corde.glisse + " m/s · " + (monde.cordesTotal || 0) + " soldats descendus depuis le début"]);
+    l.push(["dessin des hélicos", L.helicosDetail + " en détail (< " + Math.round(Tanks.Qualite.reglages.roues * H.loin) + " m), " + L.helicosSimples + " en version simple (1 dessin par sorte et par équipe), " + L.helicosCaches + " cachés"]);
+  }
+
   function lignes() {
     const j = monde.joueur, f = j.fiche, t = monde.toi || {}, s = t.soldat;
     const l = [];
     lignesVitesse(l);
     l.push(["Où tu es (étape 61)"], ["phase", monde.phase]);
     if (s) {
-      const ou = { dca: "à la DCA 🎯", sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];
+      const ou = { dca: "à la DCA 🎯", sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", chinook: "aux commandes du Chinook 🚁", blackhawk: "aux commandes du Black Hawk 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];
       l.push(["mode", t.mode + " = " + ou]);
       l.push(["ton soldat", "vie " + s.vie + " / " + s.vieMax + (s.seSoigne ? " ➕ (se soigne)" : s.vie < s.vieMax ? " (soin dans " + virgule(Math.max(0, C.soins.attente - s.touche), 1) + " s)" : "") + " · arme " + C.armes[s.arme].icone + " " + C.armes[s.arme].nom + (s.recharge > 0 ? " (recharge " + virgule(s.recharge, 2) + " s)" : "")]);
       if (t.mode === "pied") l.push(["à pied", "x, z " + virgule(s.x, 1) + " ; " + virgule(s.z, 1) + " · " + virgule(s.vitesse, 1) + " m/s · cap " + degres(s.angle)]);
@@ -185,6 +217,7 @@ Tanks.SousLeCapot = (function () {
           l.push([C.bateaux.joueur.icone + " " + e.nom, e.detruit ? "coulée ✖" : (e.pilote ? "👤 pilotée · " : "amarrée · ") + Math.round(Math.abs(e.vitesse) * 3.6) + " km/h · vie " + e.vie + " / " + C.bateaux.joueur.vie + " · dl " + virgule(Tanks.Terrain.distLac(e.x, e.z), 2) + (e.echoue ? " (échouée !)" : "")]);
           continue;
         }
+        if (e.genre === "helico") continue; // (étape 73 : plus bas, avec les autres hélicos de transport)
         if (e.genre === "vehicule") { // (étape 71)
           l.push([C.engins[e.sorte].icone + " " + e.nom + " (à toi)", ligneVehicule(e, true)]);
           continue;
@@ -193,6 +226,7 @@ Tanks.SousLeCapot = (function () {
         l.push([R.icone + " " + R.nom, (e.detruit ? "détruit ✖" : (e.pilote ? "👤 piloté · " : "garé · ") + Math.round(Math.abs(e.vitesse) * 3.6) + " km/h" + (e.sorte !== "jeep" ? " · " + Math.round(haut) + " m de haut" : " · vie " + e.vie + " / " + R.vie) + (R.munitions ? " · " + e.munitions + " / " + R.munitions + " " + R.arme + (e.munitions < R.munitions ? " (+1 dans " + virgule(R.recharge - e.rechargeMunition, 1) + " s)" : "") : ""))]);
       }
       lignesCarte(l);
+      lignesHelicos(l);
       l.push(["Les soldats"]);
       for (const eq of ["bleus", "rouges"]) {
         const liste = monde.soldats.filter((o) => o.equipe === eq && !o.joueur);
@@ -247,7 +281,7 @@ Tanks.SousLeCapot = (function () {
     }
     l.push(["Le dessin"], ["le son", Tanks.Sons.etat()], ["particules", Tanks.Effets.bilan.vivantes + " · épaves qui fument : " + Tanks.Effets.bilan.epaves + " · traits de balles : " + Tanks.Effets.bilan.balles], ["projectiles en vol", monde.obus.length ? Object.entries(monde.obus.reduce((n, p) => ((n[p.sorte] = (n[p.sorte] || 0) + 1), n), {})).map(([k, v]) => v + " " + k).join(", ") : "aucun"], ["entre deux pas", "le dessin est à " + Math.round(Tanks.Scene.entreDeuxPas() * 100) + " % entre l'avant-dernier pas et le dernier (interpolation)"], ["dessins", Tanks.Scene.dessins().soldats + " soldats, " + Tanks.Scene.dessins().engins + " engins"], ["la carte graphique", (Tanks.Scene.infos.triangles || 0).toLocaleString("fr-FR") + " triangles, " + (Tanks.Scene.infos.calls || 0) + " dessins par image"], ["l'atelier (étape 70)", Tanks.Outils3D.bilan.pieces.toLocaleString("fr-FR") + " pièces soudées en " + Tanks.Outils3D.bilan.objets + " objets (une matière = un objet à dessiner)"]);
     const S = Tanks.Sauvegarde.donnees;
-    l.push(["Le livret militaire (sauvegarde)"], ["victoires · défaites", S.victoires + " · " + S.defaites], ["tanks détruits", S.detruits], ["bateaux · sous-marins coulés", S.bateaux + " · " + S.sousMarins], ["passages de portail", S.portails], ["avions abattus", S.avions], ["ordres donnés", S.ordres], ["obus tirés · au but", S.tirs + " · " + S.touches], ["motos, quads, camions ennemis (étape 71)", S.vehicules]);
+    l.push(["Le livret militaire (sauvegarde)"], ["victoires · défaites", S.victoires + " · " + S.defaites], ["tanks détruits", S.detruits], ["bateaux · sous-marins coulés", S.bateaux + " · " + S.sousMarins], ["passages de portail", S.portails], ["avions abattus", S.avions], ["ordres donnés", S.ordres], ["obus tirés · au but", S.tirs + " · " + S.touches], ["motos, quads, camions ennemis (étape 71)", S.vehicules], ["hélicos de transport ennemis abattus · soldats déposés à la corde (étape 73)", S.helicos + " · " + S.cordes]);
     return l;
   }
 

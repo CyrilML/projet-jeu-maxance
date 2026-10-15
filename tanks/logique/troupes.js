@@ -10,6 +10,7 @@
 // Il fabrique les mêmes intentions que toi (avancer, tourner, tirer), avec le même soldat (logique/soldat.js).
 // (Étape 72 : pour aller vite, il regarde les ennemis du plus proche au plus loin et s'arrête au premier qu'il voit ; pour
 // ne pas se coller aux autres, il ne regarde que les soldats des cases voisines du quadrillage.)
+// (Étape 73 : les soldats qui descendent à la corde d'un hélico de transport : « parCorde ».)
 // (Étape 65 : TES ORDRES passent avant tout. « Va là » : il y court sans s'arrêter pour tirer, puis il défend sa place ;
 // « vise … » : il choisit sa cible dans ce que tu as dit ; « cessez le feu » : il ne tire plus.)
 
@@ -18,7 +19,7 @@ window.Tanks = window.Tanks || {};
 Tanks.Troupes = (function () {
   const C = Tanks.CONFIG, S = C.soldats, T = Tanks.Terrain;
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
-  const prochesSoldats = [], parDistance = [], paires = []; // (étape 72 : des listes réutilisées)
+  const prochesSoldats = [], parDistance = [], paires = [], helicosBas = []; // (étape 72 : des listes réutilisées)
   const plusProche = (a, b) => a.d - b.d;
 
   function creer(monde) {
@@ -58,10 +59,21 @@ Tanks.Troupes = (function () {
     return s;
   }
 
+  // (étape 73) Un soldat qui DESCEND À LA CORDE d'un hélico de transport : il glisse jusqu'au sol (logique/helicos.js),
+  // puis fait comme les autres, dans le couloir de son hélico. Les n° 3 et 8 ont un lance-roquettes.
+  function parCorde(equipe, x, y, z, angle, n, couloir, helico) {
+    const s = Tanks.Soldat.creer(equipe, x, z, angle, "soldat de l'hélico " + (equipe === "bleus" ? "bleu" : "rouge") + " n° " + n);
+    s.y = y;
+    if (n === 3 || n === 8) s.arme = "roquettes";
+    s.helico = helico;
+    s.ia = { pense: ((n % 6) / 6) * S.pense, cible: null, voit: false, couloir: couloir + (n - 5.5) * 4, etat: "descend à la corde", erreur: 0 };
+    return s;
+  }
+
   // Les intentions d'un soldat de l'ordinateur pour ce pas.
   function decider(s, monde, dt) {
     const ia = s.ia;
-    if (s.mort || s.parachute) return {};
+    if (s.mort || s.parachute || s.corde) return {};
     ia.pense -= dt;
     if (ia.pense <= 0) {
       ia.pense = S.pense;
@@ -72,7 +84,8 @@ Tanks.Troupes = (function () {
       const permises = Tanks.Ordres.ciblesPermises(s, monde);
       const utiles = permises && permises.filter((o) => (roquettes ? o.genre !== "soldat" : o.genre === "soldat"));
       // (étape 71 : le lance-roquettes vise aussi les camions et les quads ; le fusil, les pilotes des motos et des quads)
-      const candidats = utiles && utiles.length ? utiles : roquettes ? monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || ((e.sorte === "bateau" || e.sorte === "camion" || e.sorte === "quad") && e.pilote)), monde.bateaux, monde.vehicules.filter((v) => v.sorte !== "moto")).filter((c) => !c.detruit && c.equipe !== s.equipe) : monde.soldats.filter((o) => !o.mort && !o.dansUnEngin && o.equipe !== s.equipe).concat(Tanks.Vehicules.legers(monde).filter((v) => v.equipe !== s.equipe));
+      // (étape 73 : et les hélicos de transport ennemis quand ils volent bas, par exemple pendant la descente à la corde)
+      const candidats = utiles && utiles.length ? utiles : roquettes ? monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || ((e.sorte === "bateau" || e.sorte === "camion" || e.sorte === "quad") && e.pilote)), monde.bateaux, monde.vehicules.filter((v) => v.sorte !== "moto"), Tanks.Helicos.bas(monde, helicosBas)).filter((c) => !c.detruit && c.equipe !== s.equipe) : monde.soldats.filter((o) => !o.mort && !o.dansUnEngin && o.equipe !== s.equipe).concat(Tanks.Vehicules.legers(monde).filter((v) => v.equipe !== s.equipe));
       // (étape 72) on range les candidats du plus proche au plus loin, puis on regarde la ligne de vue dans cet ordre :
       // le premier qu'on VOIT est le bon (avant, on faisait le long calcul de la ligne de vue pour beaucoup plus d'ennemis)
       const portee = roquettes ? 120 : S.vue;
@@ -146,5 +159,5 @@ Tanks.Troupes = (function () {
     return intentions;
   }
 
-  return { creer, decider, parachutiste, renfort };
+  return { creer, decider, parachutiste, renfort, parCorde };
 })();
