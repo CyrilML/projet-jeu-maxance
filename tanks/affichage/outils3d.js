@@ -200,6 +200,31 @@ Tanks.Outils3D = (function () {
       for (let j = 0; j < k; j++) tranches.push(xs[i] + ((xs[i + 1] - xs[i]) * j) / k);
     }
     tranches.push(xs[xs.length - 1]);
+    // (les « coupes » : des tranches en plus, pile au bord d'une vitre ou d'une porte, pour que leur bord soit bien droit)
+    for (const x of o.coupes || []) if (x > xs[0] && x < xs[xs.length - 1]) tranches.push(x);
+    tranches.sort((a, b) => a - b);
+    for (let i = tranches.length - 1; i > 0; i--) if (tranches[i] - tranches[i - 1] < 0.02) tranches.splice(i, 1);
+    // les angles des points d'un anneau : répartis pour que les points soient À ÉGALE DISTANCE le long du contour (sur
+    // une forme presque carrée, des angles réguliers mettraient presque tous les points dans les coins)
+    const ref = cles.reduce((m, c) => ((c.w || 0) * (c.h || 0) > (m.w || 0) * (m.h || 0) ? c : m), cles[0]);
+    const angles = [], echant = [], M = 720;
+    {
+      const nr = ref.n || 2, e = 2 / nr, bb = ref.b === undefined ? ref.h : ref.b;
+      let l = 0, py = 0, pz = 0;
+      for (let k = 0; k <= M; k++) {
+        const a = -Math.PI / 2 + (k / M) * Math.PI * 2, c = Math.cos(a), si = Math.sin(a);
+        const y = Math.sign(si) * Math.pow(Math.abs(si), e) * (si >= 0 ? ref.h : bb), z = Math.sign(c) * Math.pow(Math.abs(c), e) * ref.w;
+        if (k) l += Math.hypot(y - py, z - pz);
+        (py = y), (pz = z);
+        echant.push([a, l]);
+      }
+      for (let j = 0, k = 0; j <= N; j++) {
+        const voulu = (j / N) * l;
+        while (k < M && echant[k + 1][1] < voulu) k++;
+        const [a0, l0] = echant[k], [a1, l1] = echant[Math.min(M, k + 1)];
+        angles.push(a0 + (a1 - a0) * (l1 > l0 ? (voulu - l0) / (l1 - l0) : 0));
+      }
+    }
     const v3 = new THREE.Vector3();
     // un point de la coque : à l'abscisse x, à l'angle a (0 = côté droit z+, π/2 = le dessus, −π/2 = le dessous)
     function brut(x, a, p) {
@@ -213,8 +238,7 @@ Tanks.Outils3D = (function () {
       let arc = 0;
       const prec = new THREE.Vector3();
       for (let j = 0; j <= N; j++) {
-        const a = -Math.PI / 2 + (j / N) * Math.PI * 2;
-        brut(tranches[i], a, v3);
+        brut(tranches[i], angles[j], v3);
         if (j) arc += v3.distanceTo(prec);
         prec.copy(v3);
         pos.push(v3.x, v3.y, v3.z);
@@ -245,9 +269,18 @@ Tanks.Outils3D = (function () {
     g.setIndex(idx);
     g.computeVertexNormals();
     const nor = g.attributes.normal;
-    // (le dessus doit regarder vers le haut ; sinon on retourne tout)
-    const test = Math.min(NT - 1, 1) * R + Math.round(N * 0.5);
-    if ((nor.getY(test) < 0) !== !!o.retourner) {
+    // (les faces doivent regarder vers l'extérieur : on calcule le « volume signé » de la forme ; s'il est négatif, les
+    // triangles tournent dans le mauvais sens, et on retourne tout)
+    let volume = 0;
+    const ia = g.index.array, A = new THREE.Vector3(), Bv = new THREE.Vector3(), Cv = new THREE.Vector3();
+    const centre = new THREE.Vector3(tranches[Math.floor(NT / 2)], Y(tranches[Math.floor(NT / 2)]), Z(tranches[Math.floor(NT / 2)]));
+    for (let t = 0; t < ia.length; t += 3) {
+      A.fromArray(pos, ia[t] * 3).sub(centre);
+      Bv.fromArray(pos, ia[t + 1] * 3).sub(centre);
+      Cv.fromArray(pos, ia[t + 2] * 3).sub(centre);
+      volume += A.dot(Bv.cross(Cv));
+    }
+    if ((volume < 0) !== !!o.retourner) {
       const t = g.index.array;
       for (let j = 0; j < t.length; j += 3) [t[j + 1], t[j + 2]] = [t[j + 2], t[j + 1]];
       g.computeVertexNormals();
@@ -278,10 +311,38 @@ Tanks.Outils3D = (function () {
         z.color.push(col[i * 3], col[i * 3 + 1], col[i * 3 + 2]);
       }
     };
+    // (la zone est choisie pour chaque CARRÉ de la grille — ses 2 triangles ensemble — : les bords des vitres suivent les
+    // lignes de la grille, sans dents de scie)
+    const nQuads = (NT - 1) * N, infoZone = { x: 0, a: 0, droite: true };
     for (let t = 0; t < n; t += 3) {
+      const q = Math.floor(t / 3);
+      let nom;
+      if (q < nQuads * 2) {
+        if (q % 2) continue; // (le 2e triangle du carré est rangé avec le 1er)
+        const t2 = t + 3; // (les 6 sommets des 2 triangles : leur moyenne est le centre du carré)
+        cp.set(0, 0, 0);
+        cn.set(0, 0, 0);
+        for (let i = t; i < t + 6; i++) {
+          cp.x += np.getX(i) / 6, cp.y += np.getY(i) / 6, cp.z += np.getZ(i) / 6;
+          cn.x += nn.getX(i), cn.y += nn.getY(i), cn.z += nn.getZ(i);
+        }
+        cn.normalize();
+        // (on dit aussi à « zone » où est le carré sur la grille : son abscisse et son angle autour de la coque, ramené
+        // du côté droit — comme ça, une vitre se décrit par « de x1 à x2, de l'angle a1 à l'angle a2 » et ses bords sont
+        // pile sur les lignes de la grille)
+        const iq = Math.floor(q / 2 / N), jq = (q / 2) % N, a = (angles[jq] + angles[jq + 1]) / 2;
+        infoZone.x = (tranches[iq] + tranches[iq + 1]) / 2;
+        infoZone.a = a <= Math.PI / 2 ? a : Math.PI - a;
+        infoZone.droite = a <= Math.PI / 2 && a > -Math.PI / 2 + 1e-6;
+        nom = o.zone ? o.zone(cp, cn, infoZone) : "coque";
+        if (nom) (mettre(nom, t), mettre(nom, t2));
+        continue;
+      }
       cp.set((np.getX(t) + np.getX(t + 1) + np.getX(t + 2)) / 3, (np.getY(t) + np.getY(t + 1) + np.getY(t + 2)) / 3, (np.getZ(t) + np.getZ(t + 1) + np.getZ(t + 2)) / 3);
       cn.set(nn.getX(t) + nn.getX(t + 1) + nn.getX(t + 2), nn.getY(t) + nn.getY(t + 1) + nn.getY(t + 2), nn.getZ(t) + nn.getZ(t + 1) + nn.getZ(t + 2)).normalize();
-      const nom = o.zone ? o.zone(cp, cn) : "coque";
+      infoZone.x = cp.x;
+      infoZone.a = 0;
+      nom = o.zone ? o.zone(cp, cn, infoZone) : "coque";
       if (nom) mettre(nom, t);
     }
     const geos = {};

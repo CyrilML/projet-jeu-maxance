@@ -14,6 +14,7 @@
 // pièces SOUDÉES par matière ; ensuite, chaque moto du jeu est une COPIE du modèle (les mêmes formes, partagées : rien
 // à refabriquer). Et de loin, on dessine une version SIMPLE (quelques boîtes et cylindres, en une pièce) : toutes les
 // motos simples d'une équipe sont des « instances » (une seule forme recopiée), donc UN seul dessin pour toutes.
+// (Étape 74 : le chauffeur et les 6 soldats du camion sont de vraies figurines de soldats, affichage/engins3d.js.)
 // Tout est construit « nez vers x+ », posé au sol (y = 0). Ce fichier ne connaît pas les règles du jeu.
 
 window.Tanks = window.Tanks || {};
@@ -398,7 +399,7 @@ Tanks.Vehicules3D = (function () {
       caisse.add(O.boite(0.4, 0.38, 0.42, m.teinte, 2.75, 1.6, z, CT.noir));
       caisse.add(O.boite(0.1, 0.62, 0.5, m.teinte, 2.48, 2.15, z, CT.toile).rotateZ(0.18));
     }
-    OU().pilote(caisse, m, 2.75, 1.85, -0.6, [3.2, 2.15, -0.6]);
+    OU().pilote(caisse, m, 2.75, 1.85, -0.6, [3.2, 2.15, -0.6], equipe);
     // 3. Derrière la cabine : la roue de secours, le pot d'échappement vertical, le réservoir, le coffre à outils.
     caisse.add(O.couche(O.cylindre(0.5, 0.5, 0.36, m.teinte, 18, CT.caoutchouc), "x", 1.88, 2.1, 0));
     caisse.add(O.couche(O.cylindre(0.3, 0.3, 0.38, m.teinte, 12, fonce), "x", 1.88, 2.1, 0));
@@ -441,18 +442,21 @@ Tanks.Vehicules3D = (function () {
     // 6. Les 6 soldats assis sur les bancs, face à face (à part : on les cache quand ils sont descendus).
     const passagers = new THREE.Group();
     passagers.name = "passagers";
-    const tenue = new THREE.Color(E.camouflage[0]), gilet = equipe === "bleus" ? 0x5f6a4a : 0x8a7a56;
+    // (étape 74 : de vraies figurines de soldats, assises, le fusil debout entre les genoux)
+    const fusil = OU().formesArmes(true).fusil, mf = new THREE.Matrix4();
     for (let k = 0; k < 6; k++) {
       const s = k % 2 ? 1 : -1, x = xAr + 0.55 + Math.floor(k / 2) * 0.85, z = s * 0.95, f = -s; // f : il regarde vers le milieu
-      passagers.add(O.boite(0.32, 0.5, 0.26, m.teinte, x, 2.15, z + f * 0.02, gilet)); // le buste et son gilet
-      passagers.add(O.piece(new THREE.SphereGeometry(0.1, 8, 6), m.teinte, x, 2.52, z + f * 0.03, CT.peau));
-      passagers.add(O.piece(new THREE.SphereGeometry(0.13, 8, 5, 0, Math.PI * 2, 0, Math.PI * 0.55), m.teinte, x, 2.56, z + f * 0.02, CT.casque));
-      for (const d of [-0.09, 0.09]) {
-        passagers.add(O.tube([x + d, 1.9, z], [x + d, 1.92, z + f * 0.42], 0.07, m.teinte, 6, tenue)); // la cuisse
-        passagers.add(O.tube([x + d, 1.92, z + f * 0.42], [x + d, 1.52, z + f * 0.48], 0.06, m.teinte, 6, tenue)); // la jambe
-      }
-      passagers.add(O.boite(0.05, 0.85, 0.05, m.teinte, x + 0.14, 2.05, z + f * 0.3, 0x23252a).rotateX(f * 0.15)); // le fusil, debout entre les genoux
-      passagers.add(O.boite(0.1, 0.06, 0.16, m.teinte, x, 2.3, z + f * 0.15, E.marque)); // le brassard
+      OU().figurineDans(passagers, OU().figurine(equipe, (r, bras) => {
+        for (const j of r.jambes) j.rotation.z = 1.45;
+        for (const g of r.genoux) g.rotation.z = -1.4;
+        r.dos.rotation.z = -0.08;
+        r.cou.rotation.z = -0.1 * (k % 3);
+        bras(r.epaules[0], r.coudes[0], [0.36, -0.12, 0.08], new THREE.Vector3(0, -1, 0.6));
+        bras(r.epaules[1], r.coudes[1], [0.36, 0.02, 0.0], new THREE.Vector3(0, -1, -0.6));
+      }, true, k % 4), x, 1.98 - 0.92, z, f > 0 ? -Math.PI / 2 : Math.PI / 2);
+      const p = O.piece(fusil.clone().applyMatrix4(mf.makeRotationZ(Math.PI / 2 - 0.12)), m.teinte); // le fusil, debout entre les genoux
+      p.position.set(x, 1.55, z + f * 0.38);
+      passagers.add(p);
     }
     O.souder(passagers);
     g.add(passagers);

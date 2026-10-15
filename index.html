@@ -195,6 +195,7 @@
       <a href="#etape71">Étape 71</a>
       <a href="#etape72">Étape 72</a>
       <a href="#etape73">Étape 73</a>
+      <a href="#etape74">Étape 74</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4246,6 +4247,47 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <details class="question"><summary>Pourquoi le deuxième hélico pose-t-il parfois seulement 1 ou 2 soldats ?</summary><p>Parce qu'un camp ne peut pas avoir plus de 30 soldats debout en même temps : quand il est plein, l'hélico rentre au camp.</p></details>
     </section>
 
+    <section id="etape74">
+      <h2>🎨 Étape 74 : 60 soldats, et des tanks bien plus beaux <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les hélicos, les soldats et tout le décor des tanks sont redessinés, et chaque camp peut avoir 60 soldats debout. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/74-plus-beau-et-60-soldats.md</code>.</p>
+          <ul>
+            <li>✍️ 60 soldats debout par équipe au lieu de 30.</li>
+            <li>✍️ Refaire les hélicos, les soldats, le décor et les photos.</li>
+            <li>✍️ Le plus beau possible, même si c'est plus lourd.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Tanks « version 13 ».</li>
+            <li>☐ Le Chinook : fuselage arrondi, hublots ronds, réservoirs sur les côtés, rampe ouverte sur une soute avec des bancs rouges.</li>
+            <li>☐ Le Black Hawk : portes ouvertes avec des passagers assis, tireurs aux portes.</li>
+            <li>☐ Les soldats : casque, lunettes, gilet à poches, sac, genouillères, visage. À la corde, ils tiennent la corde à deux mains.</li>
+            <li>☐ Le sol : herbe nuancée, terre, chemins, sable au bord du lac, touffes d'herbe qui bougent au vent.</li>
+            <li>☐ Sous le capot : « la limite (étape 74) : 60 soldats » et « le sol (étape 74) ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🗺️ Une seule grande image pour tout le sol</h3>
+      <p>Avant, le sol avait partout la même couleur. Maintenant, au démarrage, le jeu <strong>peint une image</strong> de toute la carte (2048 × 2048 points, environ 1 point par mètre) : de l'herbe ici, de la terre là, un chemin entre les camps, du sable au bord du lac. Puis il la pose sur le sol comme un grand tapis.</p>
+      <p>Mais de près, 1 point par mètre, c'est flou ! Alors on ajoute une 2e image toute petite (des brins d'herbe et des cailloux), répétée tous les 3,6 m. Elle s'efface au loin, là où on n'en a plus besoin.</p>
+      <h3>🦴 Un soldat en « chair et os »</h3>
+      <p>Avant, un soldat était fait d'une vingtaine de pièces séparées : 20 dessins pour la carte graphique. Maintenant, c'est <strong>une seule peau</strong> posée sur un squelette : quand un os bouge (le bras), la peau autour bouge avec lui. C'est comme ça que sont faits les personnages des vrais jeux vidéo. Résultat : un soldat plus beau qui ne coûte que 2 ou 3 dessins.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Appuie sur G pour passer du niveau 0 au niveau 3 : regarde l'herbe, les ombres et les arbres changer.</li>
+        <li>Dans <code>tanks/config.js</code>, cherche <code>maxParEquipe: 60</code> et mets 100 : est-ce que le jeu ralentit ?</li>
+        <li>Pose-toi près du lac et regarde le sable et la boue de la rive.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi ajoute-t-on une petite image répétée sur le sol ?</summary><p>Parce que la grande image a seulement 1 point par mètre : de près, ce serait flou. La petite image ajoute les détails (brins d'herbe, cailloux).</p></details>
+      <details class="question"><summary>Pourquoi un soldat en une seule peau est-il plus rapide à dessiner ?</summary><p>Parce que la carte graphique fait 1 dessin pour la peau au lieu de 20 pour les pièces séparées.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4607,6 +4649,12 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
           <h4>Les hélicoptères de transport <span class="etiquette">✅ fait · à valider</span></h4>
           <p>Un Chinook et un Black Hawk dans les tanks, pour toi et pour les deux camps, avec 10 soldats qui descendent à la corde et 2 mitrailleuses de porte (étape 73).</p>
           <p class="apprend"><b>Tu apprends :</b> les conditions avec « ET », la machine à états, viser tout seul. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">🎨</div>
+          <h4>Des tanks bien plus beaux, 60 soldats <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Les hélicos, les soldats et le décor des tanks redessinés (sol peint, chemins, herbe au vent, beaux arbres), et 60 soldats debout par équipe (étape 74).</p>
+          <p class="apprend"><b>Tu apprends :</b> peindre une grande image pour le sol, la texture de détail, le squelette et la peau. <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte fait">
           <div class="num">⚔️</div>
@@ -5285,6 +5333,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-73" data-cle="appris-73" placeholder="Ex. : J'ai appris qu'il faut 2 conditions pour descendre à la corde…"></textarea>
         <label for="idees-73"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-73" data-cle="idees-73" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 74 · 60 soldats, et des tanks bien plus beaux <span class="petit">· 15 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les coques lisses (<code>tanks/affichage/outils3d.js</code>), les hélicos refaits (<code>helicos3d.js</code>), les soldats en chair et os (<code>engins3d.js</code>) et le sol peint, l'herbe et les arbres (<code>decor.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : 60 soldats ; refaire les hélicos, les soldats, le décor et les photos ; le plus beau possible.</p>
+        <label for="appris-74"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-74" data-cle="appris-74" placeholder="Ex. : J'ai appris qu'un personnage a un squelette sous sa peau…"></textarea>
+        <label for="idees-74"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-74" data-cle="idees-74" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

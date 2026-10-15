@@ -16,6 +16,8 @@
 // vitres : sièges, tableau de bord, volant, pilote) ; l'hélico, l'avion, le bateau, le sous-marin, l'avion de
 // transport et la DCA ont leurs vraies formes et beaucoup plus de détails. Les pièces sont fabriquées avec la boîte à
 // outils (outils3d.js) et SOUDÉES par matière : plus de détails, mais moins d'objets à dessiner.
+// Étape 74 : le SOLDAT est refait (« chair et os », un vrai équipement, un visage, les mains sur la corde pendant la
+// descente) et il sert aussi de FIGURINE (immobile) pour les pilotes, les mitrailleurs et les passagers des engins.
 // Tout est construit « nez vers x+ », posé au sol (y = 0). Ce fichier ne connaît pas les règles du jeu.
 
 window.Tanks = window.Tanks || {};
@@ -572,24 +574,25 @@ Tanks.Engins3D = (function () {
 
   // Un soldat ASSIS (le pilote) : le bassin sur le siège, le buste, la tête et son casque, les bras vers le volant,
   // les cuisses vers l'avant et les jambes vers les pédales. (x, y, z) = le haut de l'assise ; v = le volant.
-  function pilote(groupe, m, x, y, z, v) {
-    const buste = O.piece(new THREE.CapsuleGeometry(0.17, 0.28, 3, 10), m.teinte, x - 0.06, y + 0.36, z, CT.tissu);
-    buste.rotation.z = 0.15;
-    buste.scale.set(0.8, 1, 1.1);
-    groupe.add(buste);
-    groupe.add(O.boite(0.28, 0.34, 0.36, m.teinte, x - 0.02, y + 0.38, z, 0x5f6a4a)); // le gilet pare-balles
-    groupe.add(O.piece(new THREE.SphereGeometry(0.1, 10, 8), m.teinte, x - 0.04, y + 0.78, z, CT.peau));
-    const casque = O.piece(new THREE.SphereGeometry(0.128, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.55), m.teinte, x - 0.05, y + 0.81, z, CT.casque);
-    casque.scale.set(1.08, 0.95, 1.05);
-    groupe.add(casque);
-    for (const s of [-1, 1]) {
-      const epaule = [x - 0.05, y + 0.55, z + s * 0.2], coude = [x + 0.2, y + 0.32, z + s * 0.22], main = v ? [v[0] - 0.02, v[1] + 0.02, v[2] + s * 0.15] : [x + 0.42, y + 0.25, z + s * 0.14];
-      groupe.add(O.tube(epaule, coude, 0.045, m.teinte, 6, CT.tissu), O.tube(coude, main, 0.04, m.teinte, 6, CT.tissu));
-      groupe.add(O.piece(new THREE.SphereGeometry(0.04, 6, 5), m.teinte, main[0], main[1], main[2], 0x1e1e1c)); // le gant
-      groupe.add(O.tube([x - 0.05, y + 0.06, z + s * 0.1], [x + 0.4, y + 0.1, z + s * 0.11], 0.075, m.teinte, 6, CT.tissu)); // la cuisse
-      groupe.add(O.tube([x + 0.4, y + 0.1, z + s * 0.11], [x + 0.55, y - 0.38, z + s * 0.11], 0.06, m.teinte, 6, CT.tissu)); // la jambe
-      groupe.add(O.boite(0.26, 0.1, 0.11, m.teinte, x + 0.62, y - 0.42, z + s * 0.11, 0x3a2c20)); // la botte
-    }
+  // (Étape 74 : c'est une vraie FIGURINE de soldat — le même équipement que les soldats à pied —, posée assise, les
+  // mains sur le volant ; elle est cuite avec l'engin.)
+  function pilote(groupe, m, x, y, z, v, equipe) {
+    const hanches = y + 0.1, dos = [x, hanches - OS.hanche + OS.dos, z]; // (le dos, quand il est droit)
+    const mains = v ? [v[0] - 0.04 - dos[0], v[1] + 0.02 - dos[1], v[2] - dos[2]] : [0.42, -0.1, 0];
+    figurineDans(groupe, figurine(equipe || "bleus", (r, bras) => {
+      for (const j of r.jambes) j.rotation.z = 1.4;
+      for (const g of r.genoux) g.rotation.z = -1.25;
+      r.dos.rotation.z = -0.1;
+      bras(r.epaules[0], r.coudes[0], [mains[0], mains[1], mains[2] + 0.15], new THREE.Vector3(-0.2, -1, 0.7));
+      bras(r.epaules[1], r.coudes[1], [mains[0], mains[1], mains[2] - 0.15], new THREE.Vector3(-0.2, -1, -0.7));
+    }, true, 0), x, hanches - OS.hanche, z, 0);
+  }
+  // Poser une figurine (cuite) dans un groupe d'engin, tournée de « angle » autour de y.
+  function figurineDans(groupe, fig, x, y, z, angle) {
+    fig.position.set(x, y, z);
+    fig.rotation.y = angle || 0;
+    fig.updateMatrix();
+    for (const m of fig.children) groupe.add(O.piece(m.geometry.clone().applyMatrix4(fig.matrix), m.material));
   }
   // Un siège : l'assise, le dossier penché, l'appui-tête.
   function siege(groupe, m, x, y, z, couleur) {
@@ -756,7 +759,7 @@ Tanks.Engins3D = (function () {
     for (const t of [...volant.children]) (t.applyMatrix4(volant.matrix), caisse.add(t));
     caisse.add(O.tube([0.34, 1.41, -0.5], [0.5, 1.22, -0.5], 0.03, m.teinte, 6, CT.noir)); // la colonne de direction
     for (const [x, z] of [[-0.02, -0.5], [-0.02, 0.5], [-0.8, -0.5], [-0.8, 0.5]]) siege(caisse, m, x, 1.0, z, CT.toile);
-    pilote(caisse, m, -0.02, 1.0, -0.5, [0.32, 1.42, -0.5]);
+    pilote(caisse, m, -0.02, 1.0, -0.5, [0.32, 1.42, -0.5], equipe);
     // 6. La tourelle du tireur (elle tourne) : l'anneau, le bouclier blindé avec sa vitre, la mitrailleuse, le tireur.
     const tourelle = new THREE.Group();
     tourelle.position.set(-0.45, yToit + 0.035, 0);
@@ -1409,6 +1412,6 @@ Tanks.Engins3D = (function () {
 
   // (étape 71) la moto, le quad et le camion sont fabriqués dans affichage/vehicules3d.js (qui réutilise ces outils)
   // (étape 73) le Chinook et le Black Hawk, dans affichage/helicos3d.js
-  const outils = { pilote, siege, peintureSoudee, vitreClaire, mats, figurine, poserBras, MAINS, galet, membre };
+  const outils = { pilote, siege, peintureSoudee, vitreClaire, mats, figurine, figurineDans, poserBras, MAINS, galet, membre, formesArmes };
   return { soldat, animer, fabriquer, bruler, portail, silhouettes, outils };
 })();

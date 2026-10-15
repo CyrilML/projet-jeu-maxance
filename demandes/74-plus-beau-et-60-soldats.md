@@ -1,6 +1,6 @@
 # Demande n° 74 : 60 soldats, et des tanks plus beaux
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée le 15/10/2026 (tanks version 13), à valider par Maxance.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi

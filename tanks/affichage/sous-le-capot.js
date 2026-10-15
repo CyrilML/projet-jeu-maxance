@@ -8,6 +8,8 @@
 // Étape 62 : le lac (où tu es par rapport à la rive : « dl »), les patrouilleurs ennemis (ce qu'ils font), et les
 // portails (combien de passages).
 // Étape 67 : ta vie (et quand elle remonte : « soin »).
+// Étape 74 : la LIMITE de 60 soldats debout par équipe (combien il y en a dans chaque camp), le SOL peint (l'image de
+// toute la carte, les chemins, la texture de détail, les touffes d'herbe) et les beaux arbres dessinés de près.
 // Étape 65 : chaque ordre donné (ce que le jeu a compris, les mots devinés), et l'ordre de chaque tank et soldat allié.
 // Étape 64 : chaque avion (ce qu'il fait : approche, bombarde, dégage, duel ; sa hauteur, sa vitesse, sa vie), la DCA
 // (où elle vise, l'avion qu'elle suit), les parachutistes en l'air.
@@ -137,10 +139,11 @@ Tanks.SousLeCapot = (function () {
       ["images", Math.round(M.ips) + " i/s = " + ms(M.ms) + " par image (moyenne sur " + C.qualite.intervalle + " s) · descend si > " + C.qualite.lent + " ms, monte si < " + virgule(C.qualite.rapide, 1) + " ms deux fois de suite (pas de retour avant " + C.qualite.punition + " s à un niveau qui ramait)"],
       ["une image, c'est", "règles " + ms(M.logique) + " (" + virgule(M.pasParImage, 1) + " pas) + dessin " + ms(M.dessin) + " + tableau de bord " + ms(M.tableau) + " + ce panneau " + ms(M.capot) + " = calcul " + ms(M.calcul)],
       ["pas jetés", M.abandonnes + " dans les 2 dernières s · " + M.abandonnesTotal + " en tout (jamais plus de " + C.boucle.pasMaxParImage + " pas par image)"],
-      ["réglages du niveau", "pixels ×" + virgule(R.pixels, 1) + " · ombres " + (R.ombres ? R.ombres + (R.douces ? " douces" : "") : "aucune") + " · vue " + R.vue + " m · décor " + Math.min(R.decor, R.vue) + " m · effets " + R.effets + " m"],
-      ["soldats dessinés", L.soldatsDetail + " en détail (< " + R.soldatDetail + " m) · " + L.soldatsSimples + " simples (< " + R.soldatSimple + " m) · " + L.silhouettes + " silhouettes (< " + R.soldatSilhouette + " m, 2 dessins pour toutes) · " + L.soldatsCaches + " cachés"],
+      ["réglages du niveau", "pixels ×" + virgule(R.pixels, 1) + " · ombres " + (R.ombres ? R.ombres + (R.douces ? " douces" : "") : "aucune") + " · vue " + R.vue + " m · décor " + Math.min(R.decor, R.vue) + " m · effets " + R.effets + " m · herbe " + (R.herbe ? R.herbe + " m" : "aucune") + " · beaux arbres " + R.arbresDetail + " m"],
+      ["soldats dessinés", L.soldatsDetail + " en détail (< " + R.soldatDetail + " m) · " + L.soldatsSimples + " simples (< " + R.soldatSimple + " m) · " + L.silhouettes + " silhouettes (< " + R.soldatSilhouette + " m, 2 dessins pour toutes) · " + L.soldatsCaches + " cachés · (étape 74) « chair et os » : 2 dessins par soldat + son arme"],
       ["tanks et engins", L.tanksRouesSoudees + " tank(s) loin (> " + R.roues + " m) ou détruits : roues soudées en 1 pièce · " + L.enginsCaches + " engin(s) au-delà de la vue, cachés"],
-      ["le décor", D.morceauxVus + " / " + D.morceaux + " morceaux dessinés · " + D.arbresVus + " / " + D.arbres + " arbres"],
+      ["le décor", D.morceauxVus + " / " + D.morceaux + " morceaux dessinés · " + D.arbresVus + " / " + D.arbres + " arbres, dont " + D.arbresBeaux + " beaux (à grappes, < " + R.arbresDetail + " m)"],
+      ["le sol (étape 74)", "herbe / terre / chemins : une image de " + D.imageSol + " × " + D.imageSol + " points pour toute la carte (≈ " + virgule(C.monde.taille / D.imageSol, 2) + " m par point), " + D.chemins + " chemins de terre · texture de détail " + D.detailSol + " × " + D.detailSol + " répétée tous les " + virgule(C.beaute.sol.detail, 1) + " m (brins d'herbe ou cailloux, elle s'efface entre " + C.beaute.sol.fondu[0] + " et " + C.beaute.sol.fondu[1] + " m) · " + D.touffes + " touffes d'herbe (au plus " + D.touffesMax + ", à moins de " + (R.herbe || 0) + " m, 1 dessin pour toutes)"],
       ["particules", Tanks.Effets.bilan.vivantes + " en vie (2 dessins pour toutes) · " + Tanks.Effets.bilan.tropLoin + " pas faites (trop loin)"],
       ["le quadrillage", "cases de " + C.grille.case + " m · " + Tanks.Terrain.grilles.arbres.objets + " arbres et " + Tanks.Terrain.grilles.boites.objets + " murs rangés une fois · " + (monde.grilleSoldats ? monde.grilleSoldats.objets : 0) + " soldats rangés à chaque pas"]);
   }
@@ -228,6 +231,10 @@ Tanks.SousLeCapot = (function () {
       lignesCarte(l);
       lignesHelicos(l);
       l.push(["Les soldats"]);
+      { // (étape 74) ✍️ la limite : 60 soldats debout au plus par équipe (au-delà, camions, hélicos et avions attendent)
+        const max = C.parachutistes.maxParEquipe, n = (eq) => monde.soldats.filter((o) => o.equipe === eq && !o.mort).length;
+        l.push(["la limite (étape 74)", max + " soldats debout au plus par équipe · 🔵 " + n("bleus") + " / " + max + " · 🔴 " + n("rouges") + " / " + max + " (s'il n'y a plus de place, les camions et les hélicos attendent)"]);
+      }
       for (const eq of ["bleus", "rouges"]) {
         const liste = monde.soldats.filter((o) => o.equipe === eq && !o.joueur);
         const debout = liste.filter((o) => !o.mort), tirent = debout.filter((o) => o.ia && o.ia.etat === "tire").length;

@@ -28,6 +28,10 @@
 // rampe du Chinook se baisse au sol, se met à plat pour la corde et se relève en vol ; les soldats assis aux portes du
 // Black Hawk disparaissent quand ils sont descendus ; les 2 CORDES pendent jusqu'au sol pendant la descente ; une petite
 // flamme quand une mitrailleuse de porte tire. De loin : la version simple en instances (1 dessin par sorte et par équipe).
+// Étape 74 (« le plus beau possible ») : un soleil un peu plus bas et plus chaud, la lumière du ciel et du sol, une
+// exposition réglable (tout dans config.js, « beaute.soleil »), un ciel avec de vrais nuages éclairés ; le disque flou
+// des rotors qui tournent vite ; la rampe du Chinook fermée suit la pente du bas de la coque ; et le décor reçoit, à
+// chaque image, la distance des beaux arbres et le rayon des touffes d'herbe (selon le niveau de qualité).
 // Comme tout l'affichage, ce fichier lit le monde et ne le modifie jamais.
 
 window.Tanks = window.Tanks || {};
@@ -58,26 +62,35 @@ Tanks.Scene = (function () {
     return v;
   }
   const camera = { angle: 0, pret: false, mode: 0 };
-  const SOLEIL = new THREE.Vector3(0.5, 0.75, 0.35).normalize();
+  const L = C.beaute.soleil, SOLEIL = new THREE.Vector3(...L.direction).normalize(); // (étape 74 : un soleil un peu plus bas et plus chaud)
 
   function ciel() {
     const mat = new THREE.ShaderMaterial({
       side: THREE.BackSide, depthWrite: false, fog: false,
       uniforms: { soleil: { value: SOLEIL } },
       vertexShader: "varying vec3 vDir; void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+      // (étape 74) un ciel plus beau : un bleu plus profond en haut, une brume dorée à l'horizon du côté du soleil, des
+      // nuages en 5 couches de bruit, éclairés par le soleil (plus clairs du côté du soleil, plus gris dessous), qui
+      // s'effacent doucement vers l'horizon (avant : des traînées blanches verticales).
       fragmentShader: [
         "uniform vec3 soleil; varying vec3 vDir;",
         "float h21(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }",
         "float bruit(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);",
         "  return mix(mix(h21(i), h21(i + vec2(1, 0)), f.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), f.x), f.y); }",
+        "float fbm(vec2 p) { float t = 0.0, a = 0.5; for (int k = 0; k < 5; k++) { t += bruit(p) * a; p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; } return t; }",
         "void main() {",
-        "  float h = clamp(vDir.y, -0.1, 1.0);",
-        "  vec3 c = mix(vec3(0.78, 0.84, 0.88), vec3(0.32, 0.52, 0.8), pow(max(h, 0.0), 0.5));",
-        "  vec2 p = vDir.xz / max(0.12, vDir.y) * 1.6;", // les nuages, plaqués sur un plafond
-        "  float n = bruit(p) * 0.5 + bruit(p * 2.1) * 0.3 + bruit(p * 4.3) * 0.2;",
-        "  c = mix(c, vec3(0.96), smoothstep(0.55, 0.8, n) * smoothstep(0.02, 0.2, h) * 0.85);",
-        "  float s = max(dot(normalize(vDir), soleil), 0.0);",
-        "  c += vec3(1.0, 0.9, 0.7) * pow(s, 500.0) * 3.0 + vec3(1.0, 0.85, 0.6) * pow(s, 10.0) * 0.2;",
+        "  vec3 d = normalize(vDir);",
+        "  float h = clamp(d.y, -0.1, 1.0);",
+        "  float s = max(dot(d, soleil), 0.0);",
+        "  vec3 horizon = mix(vec3(0.80, 0.85, 0.88), vec3(0.95, 0.88, 0.76), pow(s, 6.0) * 0.6);",
+        "  vec3 c = mix(horizon, vec3(0.22, 0.42, 0.74), pow(max(h, 0.0), 0.55));",
+        "  vec2 p = d.xz / max(0.08, d.y) * 1.2;", // (les nuages, plaqués sur un plafond)
+        "  float n = fbm(p * 0.9 + vec2(3.0, 1.0));",
+        "  float nuage = smoothstep(0.5, 0.78, n) * smoothstep(0.04, 0.32, h);",
+        "  float eclaire = clamp(0.55 + (fbm(p * 0.9 + vec2(3.0, 1.0) + soleil.xz * 0.12) - n) * -3.0, 0.0, 1.0);",
+        "  vec3 couleurNuage = mix(vec3(0.62, 0.66, 0.72), vec3(1.0, 0.98, 0.94), eclaire);",
+        "  c = mix(c, couleurNuage, nuage * 0.92);",
+        "  c += vec3(1.0, 0.9, 0.7) * pow(s, 600.0) * 4.0 + vec3(1.0, 0.85, 0.6) * pow(s, 12.0) * 0.25;",
         "  gl_FragColor = vec4(c, 1.0);",
         "}",
       ].join("\n"),
@@ -91,6 +104,7 @@ Tanks.Scene = (function () {
     rendu.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
     rendu.outputColorSpace = THREE.SRGBColorSpace;
     rendu.toneMapping = THREE.ACESFilmicToneMapping;
+    rendu.toneMappingExposure = L.exposition;
     rendu.shadowMap.enabled = true;
     rendu.shadowMap.type = THREE.PCFSoftShadowMap;
     scene = new THREE.Scene();
@@ -106,8 +120,8 @@ Tanks.Scene = (function () {
     solReflet.position.y = -3;
     env.add(solReflet);
     scene.environment = pm.fromScene(env, 0.04).texture;
-    scene.add(new THREE.HemisphereLight(0xd8e6ff, 0x5a6a40, 0.8));
-    soleil = new THREE.DirectionalLight(0xfff1dc, 2.5);
+    scene.add(new THREE.HemisphereLight(L.ciel, L.sol, L.ambiance));
+    soleil = new THREE.DirectionalLight(L.couleur, L.force);
     soleil.castShadow = true;
     soleil.shadow.mapSize.set(2048, 2048);
     const o = soleil.shadow.camera;
@@ -346,9 +360,16 @@ Tanks.Scene = (function () {
     // les rotors : les 2 du Chinook en sens inverse ; le rotor de queue du Black Hawk, beaucoup plus vite
     o.rotors.forEach((r, i) => (r.rotation.y = i ? -e.rotor : e.rotor));
     if (o.rotorQueue) o.rotorQueue.rotation.z = e.rotor * 4.5;
-    // la rampe du Chinook : baissée au sol (on monte), à plat pour la corde, relevée en vol
+    // (étape 74) le rotor tourne vite (plus de 2 tours par seconde) ? un léger disque flou, comme sur une photo
+    if (dt > 0) {
+      o.toursRotor = Math.abs(e.rotor - (o.rotorAvant === undefined ? e.rotor : o.rotorAvant)) / dt / (Math.PI * 2);
+      o.rotorAvant = e.rotor;
+    }
+    for (const f of o.flous) f.visible = (o.toursRotor || 0) > 2;
+    // la rampe du Chinook : baissée au sol (on monte), à plat pour la corde, relevée en vol (étape 74 : fermée, elle
+    // suit la pente du bas de la coque)
     if (o.rampe) {
-      const voulu = e.cordesSorties ? 0 : !e.enVol ? 0.42 : -0.9;
+      const voulu = e.cordesSorties ? 0 : !e.enVol ? 0.42 : -Tanks.Helicos3D.PENTE_RAMPE;
       o.angleRampe += (voulu - o.angleRampe) * Math.min(1, dt * 1.5);
       o.rampe.rotation.z = o.angleRampe;
     }
@@ -574,7 +595,8 @@ Tanks.Scene = (function () {
     soleil.target.position.set(centre.x, centre.y, centre.z);
     leCiel.position.copy(cam.position); // (étape 72 : le ciel suit la caméra)
     Tanks.Decor.majArbres(false);
-    Tanks.Decor.majDistance(cam.position, Math.min(Q.decor, Q.vue)); // (étape 72 : les morceaux et les arbres trop loin sont cachés)
+    Tanks.Decor.majDistance(cam.position, Math.min(Q.decor, Q.vue), Q.arbresDetail); // (étape 72 : les morceaux et les arbres trop loin sont cachés ; étape 74 : les beaux arbres de près)
+    Tanks.Decor.majHerbe(cam.position, Q.herbe || 0); // (étape 74 : les touffes d'herbe autour de la caméra)
     Tanks.Decor.majEau(dt);
     Tanks.Effets.maj(dt, monde, cam, Q.effets);
     rendu.render(scene, cam);
