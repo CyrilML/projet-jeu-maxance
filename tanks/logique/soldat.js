@@ -120,7 +120,8 @@ Tanks.Soldat = (function () {
     if (cible) {
       const d = Math.hypot(cible.x - s.x, cible.z - s.z);
       dir = Math.atan2(cible.z - s.z, cible.x - s.x);
-      v = Math.max(G.vitesseMin, Math.min(G.vitesseMax, Math.sqrt((g * Math.max(2, d - 0.8)) / Math.sin(2 * G.angle))));
+      // (elle rebondit et roule encore un peu après sa chute : on vise un peu court, « court » × la distance)
+      v = Math.max(G.vitesseMin, Math.min(G.vitesseMax, Math.sqrt((g * Math.max(2, d * G.court)) / Math.sin(2 * G.angle))));
     }
     const ca = Math.cos(G.angle), depart = { x: s.x + Math.cos(dir) * 0.45, y: s.y + 1.75, z: s.z + Math.sin(dir) * 0.45 };
     const p = Tanks.Obus.lancer(mondeIci.obus, s, "grenade", depart, { x: 0, y: 0, z: 0 }, null, { x: Math.cos(dir) * ca * v, y: Math.sin(G.angle) * v, z: Math.sin(dir) * ca * v });

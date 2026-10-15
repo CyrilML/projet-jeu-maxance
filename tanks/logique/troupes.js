@@ -110,6 +110,8 @@ Tanks.Troupes = (function () {
       ia.cible = meilleur ? meilleur.o : null;
       ia.erreur = (Math.random() - 0.5) * 0.06;
       ia.grenade = !roquettes && s.grenades > 0 && s.attenteGrenade === 0 && Math.random() < C.grenades.ia.chance ? ouLancer(s, monde, meilleur) : null;
+      // (étape 75) l'ASSAUT : un ennemi groupé, dans une maison ou contre un mur, pas trop loin ? on avance vers lui (pour la grenade)
+      ia.assaut = !roquettes && s.grenades > 0 && meilleur && meilleur.o.genre === "soldat" && meilleur.d > C.grenades.ia.portee[1] - 4 && meilleur.d < C.grenades.ia.approche && abrite(meilleur.o, monde);
     }
     const intentions = {};
     let cible = ia.cible && !ia.cible.mort && !ia.cible.detruit ? ia.cible : null;
@@ -146,6 +148,12 @@ Tanks.Troupes = (function () {
       intentions.cible = cible;
       intentions.erreur = ia.erreur;
       if (Math.abs(angleEntre(intentions.versAngle - s.angle)) < 0.08) intentions.tirer = true;
+      if (ia.assaut) { // (étape 75) il avance en tirant, pour arriver à portée de grenade
+        ia.etat = "à l'assaut (pour lancer une grenade)";
+        intentions.avancer = true;
+        intentions.lent = true;
+        return intentions;
+      }
       // de temps en temps, il fait un pas de côté
       if (s.touche < 1.5) {
         intentions.avancer = true;
@@ -174,7 +182,14 @@ Tanks.Troupes = (function () {
 
   // (étape 75) Où lancer une grenade ? Sur un groupe d'ennemis qu'il voit, ou sur un ennemi caché (derrière un mur,
   // dans une maison) qu'il ne voit pas. Renvoie { x, y, z, nom, groupe, raison } ou null.
-  const GI = C.grenades.ia;
+  const GI = C.grenades.ia, prochesAbri = [];
+  // (étape 75) Un ennemi « à l'abri » : dans une maison, contre un mur (à moins de « abri » m), ou avec d'autres autour de lui.
+  function abrite(o, monde) {
+    for (const b of Tanks.Terrain.boitesAutour(o.x, o.z, GI.abri, prochesAbri)) if (Tanks.Terrain.dansBoite(b, o.x, o.z, GI.abri)) return true;
+    let n = 0;
+    for (const a of Tanks.Grille.chercher(monde.grilleSoldats, o.x, o.z, GI.rayonGroupe, prochesAbri)) if (!a.mort && a.equipe === o.equipe && Math.hypot(a.x - o.x, a.z - o.z) < GI.rayonGroupe) n++;
+    return n >= GI.groupe;
+  }
   function ouLancer(s, monde, vu) {
     const [min, max] = GI.portee;
     const groupe = (o) => {

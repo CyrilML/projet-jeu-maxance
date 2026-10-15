@@ -103,7 +103,7 @@ Tanks.Chars3D = (function () {
       if (equipe === "bleus") {
         if (t2 > 0.16) c = cols[3];
         if (t1 > 0.1) c = cols[1];
-        if (t3 > 0.22) c = cols[2];
+        if (t3 > 0.27) c = cols[2];
       } else {
         if (t1 > 0.06) c = cols[1];
         if (t2 > 0.2) c = cols[2];
@@ -184,7 +184,7 @@ Tanks.Chars3D = (function () {
           "vec4 sal = texture2D(texSalete, vUvSal * 0.25);",
           "vec4 sal2 = texture2D(texSalete, vUvSal * 0.9 + 0.31);",
           "float boue = smoothstep(hauteurBoue, hauteurBoue * 0.3, vHaut + (sal.r - 0.5) * 0.9 + (sal2.r - 0.5) * 0.25);",
-          "diffuseColor.rgb = mix(diffuseColor.rgb, couleurBoue * (0.7 + 0.6 * sal2.r), boue * 0.9);",
+          "diffuseColor.rgb = mix(diffuseColor.rgb, couleurBoue * (0.75 + 0.5 * sal2.r), boue * 0.8);",
           "diffuseColor.rgb = mix(diffuseColor.rgb, couleurPoussiere, (1.0 - boue) * smoothstep(0.45, 0.85, sal.r) * 0.35);",
           "diffuseColor.rgb *= 1.0 - sal2.b * 0.28 * (1.0 - boue);",
           "diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.155, 0.14), sal.g * (1.0 - boue) * 0.5);",

@@ -362,23 +362,26 @@ Tanks.CONFIG = {
   // « structures.explosions.grenade »). Elle abîme aussi un engin léger (moto, quad, camion, 4x4) à moins de « vehiculeLeger » m.
   // Les soldats de l'ordinateur en ont « ia.nombre » : ils en lancent sur un GROUPE d'ennemis (« ia.groupe » à moins de
   // « ia.rayonGroupe » m l'un de l'autre), ou sur un ennemi caché derrière un mur ou dans une maison, entre « ia.portee »
-  // m ; pas plus d'une toutes les « ia.attente » s, et seulement « ia.chance » des fois où il y pense.
+  // m ; pas plus d'une toutes les « ia.attente » s, et seulement « ia.chance » des fois où il y pense. Un soldat qui voit
+  // un tel ennemi (groupé, dans une maison, ou à moins de « ia.abri » m d'un mur) à moins de « ia.approche » m AVANCE vers
+  // lui en tirant, pour arriver à portée de grenade (c'est « l'assaut »).
   grenades: {
     nombre: 4, recharge: 25, camp: 90, // -, s, m
-    vitesse: 15, vitesseMin: 5, vitesseMax: 21, angle: 0.62, // m/s, rad (36°)
-    meche: 3, rebond: 0.32, frottement: 0.55, roule: 3, // s, -, -, (ralentissement quand elle roule, par s)
+    vitesse: 15, vitesseMin: 5, vitesseMax: 22, angle: 0.62, // m/s, rad (36°)
+    meche: 3, rebond: 0.32, frottement: 0.45, roule: 4, // s, -, -, (ralentissement quand elle roule, par s)
+    court: 0.8, // on la lance pour qu'elle tombe à 80 % de la distance : ses rebonds l'emmènent jusqu'à la cible
     coneAide: 0.16, porteeAide: 32, // rad, m
     vehiculeLeger: 3.2, // m
-    ia: { nombre: 2, attente: 16, chance: 0.3, portee: [9, 30], groupe: 2, rayonGroupe: 6 },
+    ia: { nombre: 2, attente: 16, chance: 0.35, portee: [8, 38], groupe: 2, rayonGroupe: 6, approche: 120, abri: 4 },
   },
   // ✍️ (étape 75) LA PEINTURE DES TANKS : un camouflage à grandes taches (bois et olive pour les Bleus, désert pour les
   // Rouges), de la boue et de la poussière en bas (jusqu'à « boue » m), des éclats de peinture sur les arêtes, et le
   // numéro de chaque tank sur sa tourelle. De près (moins de « maillons » × la distance des roues), la chenille est faite de
   // vrais MAILLONS en 3D qui défilent ; plus loin, une image.
   peinture: {
-    bleus: { taches: ["#4d5838", "#5c4a33", "#262920", "#6d7350"], boue: "#4f4232", poussiere: "#8c8064" },
+    bleus: { taches: ["#626f45", "#6e5a3e", "#30332a", "#87915f"], boue: "#5e503c", poussiere: "#9a8f72" },
     rouges: { taches: ["#a08a60", "#7d6646", "#c2ad82", "#5e5440"], boue: "#6b5a40", poussiere: "#c4b08a" },
-    boue: 1.35, // m
+    boue: 1.0, // m
     maillons: 0.8,
   },
 
