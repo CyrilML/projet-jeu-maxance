@@ -1,6 +1,6 @@
 # Demande n° 76 : refaire les avions et le Tigre
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée le 16/10/2026 (tanks version 15), à valider par Maxance.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi

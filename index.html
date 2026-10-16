@@ -197,6 +197,7 @@
       <a href="#etape73">Étape 73</a>
       <a href="#etape74">Étape 74</a>
       <a href="#etape75">Étape 75</a>
+      <a href="#etape76">Étape 76</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4339,6 +4340,45 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <details class="question"><summary>Quand le toit d'une maison s'effondre-t-il ?</summary><p>Quand 36 % des morceaux de ses murs sont tombés, ou après 3 coups directs sur le toit.</p></details>
     </section>
 
+    <section id="etape76">
+      <h2>✈️ Étape 76 : les avions et le Tigre redessinés <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Le Rafale, les chasseurs ennemis, l'avion de transport, le drone et l'hélicoptère Tigre sont refaits, le plus beau possible. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/76-avions-et-tigre.md</code>.</p>
+          <ul>
+            <li>✍️ « Refais aussi les avions et le tigre. »</li>
+            <li>Comme aux étapes 74 et 75 : le plus beau possible, et une version simple de loin. Les règles du jeu ne changent pas.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Tanks « version 15 ».</li>
+            <li>☐ Le Rafale : au sol, sa verrière est ouverte ; en vol, le train rentre ; à fond, la flamme de la postcombustion sort des tuyères ; ses missiles disparaissent un par un quand tu tires.</li>
+            <li>☐ Le Tigre : nez fin, 2 places l'une derrière l'autre, canon sous le nez, roquettes et missiles sur les petites ailes.</li>
+            <li>☐ Les chasseurs ennemis ont 2 dérives et des étoiles rouges.</li>
+            <li>☐ L'avion de transport ouvre sa rampe avant de larguer les parachutistes.</li>
+            <li>☐ Le drone a 4 hélices et lâche ses grenades une par une.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🛩️ Une aile, ce n'est pas une planche</h3>
+      <p>Coupe une vraie aile d'avion en tranches : chaque tranche a une forme de goutte allongée, bombée dessus, plus plate dessous. C'est ce qu'on appelle un <strong>profil</strong>. Le nouvel outil <code>aile()</code> fabrique une aile en posant des profils les uns à côté des autres, de plus en plus petits vers le bout. C'est pour ça que les ailes ont maintenant un bord d'attaque arrondi et un bord de fuite fin.</p>
+      <h3>🎨 Un camouflage sans couture</h3>
+      <p>Avant, le camouflage était une image collée sur chaque pièce : entre deux pièces, les taches ne se raccordaient pas. Maintenant, c'est la carte graphique qui calcule la couleur à partir de la <strong>position dans l'espace</strong> de chaque point de l'avion. Deux pièces qui se touchent ont donc la même couleur au même endroit, et les taches continuent d'une pièce à l'autre.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Prends le Rafale : regarde la verrière se fermer, puis le train rentrer après le décollage.</li>
+        <li>Ouvre « sous le capot » et cherche « Les avions et le Tigre (étape 76) » : combien de triangles pour le Rafale de près ? Et de loin ?</li>
+        <li>Dans <code>tanks/config.js</code>, cherche le bloc <code>avions3d</code> et change la durée du train d'atterrissage.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi dessiner un avion en « version simple » quand il est loin ?</summary><p>Parce qu'à 500 m il fait quelques pixels à l'écran : 600 triangles suffisent au lieu de 46 000, et le jeu reste fluide.</p></details>
+      <details class="question"><summary>Comment le camouflage fait-il pour ne pas avoir de couture ?</summary><p>La couleur est calculée à partir de la position dans l'espace : deux pièces qui se touchent ont la même couleur au même endroit.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4712,6 +4752,12 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
           <h4>Beaux tanks, maisons destructibles, grenades <span class="etiquette">✅ fait · à valider</span></h4>
           <p>Tous les tanks en camouflage, des maisons qui se cassent morceau par morceau et s'effondrent, et des grenades qui rebondissent (étape 75).</p>
           <p class="apprend"><b>Tu apprends :</b> découper un mur en morceaux, les points de vie, la gravité et les rebonds. <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">✈️</div>
+          <h4>Les avions et le Tigre redessinés <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Le Rafale, les chasseurs ennemis, l'avion de transport, le drone et le Tigre refaits, avec leurs animations (train, verrière, rampe, postcombustion) (étape 76).</p>
+          <p class="apprend"><b>Tu apprends :</b> le profil d'une aile, un camouflage calculé dans l'espace, le niveau de détail. <b>Durée :</b> 1 séance.</p>
         </div>
         <div class="carte fait">
           <div class="num">⚔️</div>
@@ -5408,6 +5454,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-75" data-cle="appris-75" placeholder="Ex. : J'ai appris qu'un mur est fait de morceaux avec des points de vie…"></textarea>
         <label for="idees-75"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-75" data-cle="idees-75" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 76 · les avions et le Tigre redessinés <span class="petit">· 16 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les 5 appareils (<code>tanks/affichage/avions3d.js</code>), l'outil qui fabrique les ailes (<code>outils3d.js</code>) et leur placement avec le niveau de détail (<code>scene.js</code>).</p>
+        <p class="petit">✍️ Maxance a demandé : refaire les avions et le Tigre.</p>
+        <label for="appris-76"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-76" data-cle="appris-76" placeholder="Ex. : J'ai appris qu'une aile a un profil en forme de goutte…"></textarea>
+        <label for="idees-76"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-76" data-cle="idees-76" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
