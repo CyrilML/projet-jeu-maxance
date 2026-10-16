@@ -18,6 +18,8 @@
 // outils (outils3d.js) et SOUDÉES par matière : plus de détails, mais moins d'objets à dessiner.
 // Étape 74 : le SOLDAT est refait (« chair et os », un vrai équipement, un visage, les mains sur la corde pendant la
 // descente) et il sert aussi de FIGURINE (immobile) pour les pilotes, les mitrailleurs et les passagers des engins.
+// Étape 76 : le Tigre, le Rafale, le drone, les chasseurs ennemis et l'avion de transport sont refaits « le plus beau
+// possible » dans leur propre atelier, affichage/avions3d.js (ce fichier lui prête ses outils : le pilote, la figurine…).
 // Tout est construit « nez vers x+ », posé au sol (y = 0). Ce fichier ne connaît pas les règles du jeu.
 
 window.Tanks = window.Tanks || {};
@@ -48,7 +50,6 @@ Tanks.Engins3D = (function () {
     c.castShadow = true;
     return c;
   };
-  const peinture = (equipe) => new THREE.MeshStandardMaterial({ map: Tanks.Chars3D.camouflage(Tanks.CONFIG.equipes[equipe].camouflage), roughness: 0.85, metalness: 0.1 });
 
   // ------------------------------------------------------------------ le soldat (refait à l'étape 63, puis à l'étape 74)
   // Un vrai petit squelette, comme dans les jeux : chaque morceau du corps est accroché à une ARTICULATION (un « os »
@@ -827,232 +828,6 @@ Tanks.Engins3D = (function () {
     groupe.add(O.boite(0.06, 0.08, 0.2, m.teinte, x + 0.11, y - 0.02, z, 0x14181c)); // la visière
   }
 
-  // (étape 70) L'HÉLICOPTÈRE TIGRE, refait : un fuselage fin et « taillé » (pour être difficile à toucher), deux
-  // places l'une derrière l'autre sous deux verrières en marches d'escalier (le pilote devant, le tireur derrière et
-  // plus haut), les deux moteurs de chaque côté du mât, le viseur en boule au-dessus du rotor, le canon de 30 mm sous
-  // le nez, les petites ailes avec les paniers de roquettes et les missiles, un train à roues, et l'empennage avec ses
-  // deux petites dérives. Le grand rotor (4 pales) et le petit rotor de queue (3 pales) tournent.
-  function helico(equipe) {
-    mats();
-    const m = MT(), P = peintureSoudee(equipe), E = Tanks.CONFIG.equipes[equipe], V = vitreClaire();
-    const g = new THREE.Group(), caisse = new THREE.Group();
-    g.add(caisse);
-    caisse.add(O.fuseau([
-      { x: -7.7, y: 2.52, w: 0.07, h: 0.09 },
-      { x: -7.1, y: 2.46, w: 0.13, h: 0.16 },
-      { x: -5.0, y: 2.32, w: 0.22, h: 0.26 },
-      { x: -2.9, y: 2.15, w: 0.36, h: 0.42, n: 2.6 },
-      { x: -2.0, y: 2.0, w: 0.58, h: 0.72, n: 3.2, b: 0.62 },
-      { x: -0.7, y: 1.93, w: 0.66, h: 0.8, n: 3.4, b: 0.7 },
-      { x: 0.6, y: 1.84, w: 0.64, h: 0.7, n: 3.4, b: 0.68 },
-      { x: 1.6, y: 1.72, w: 0.56, h: 0.52, n: 3, b: 0.58 },
-      { x: 2.4, y: 1.62, w: 0.4, h: 0.35, n: 2.6, b: 0.45 },
-      { x: 2.9, y: 1.55, w: 0.14, h: 0.14 },
-    ], P, 20));
-    // les deux verrières, en marches (la deuxième plus haute), et l'équipage
-    caisse.add(O.fuseau([{ x: 0.95, y: 2.2, w: 0.3, h: 0.28 }, { x: 1.15, y: 2.18, w: 0.48, h: 0.42 }, { x: 1.7, y: 2.1, w: 0.5, h: 0.42 }, { x: 2.15, y: 2.0, w: 0.42, h: 0.3 }, { x: 2.45, y: 1.92, w: 0.15, h: 0.1 }], V, 16));
-    caisse.add(O.fuseau([{ x: -0.85, y: 2.55, w: 0.25, h: 0.22 }, { x: -0.55, y: 2.55, w: 0.48, h: 0.45 }, { x: 0.3, y: 2.48, w: 0.52, h: 0.5 }, { x: 0.85, y: 2.36, w: 0.45, h: 0.4 }, { x: 1.05, y: 2.3, w: 0.2, h: 0.18 }], V, 16));
-    for (const [x, y] of [[1.5, 2.25], [0.0, 2.7]]) {
-      equipage(caisse, m, x, y, 0, CT.casque);
-      caisse.add(O.boite(0.2, 0.18, 0.7, m.teinte, x + 0.5, y - 0.25, 0, CT.noir)); // le tableau de bord
-    }
-    for (const x of [1.05, -0.85]) caisse.add(O.boite(0.06, 0.08, 1.0, m.teinte, x, x > 0 ? 2.42 : 2.78, 0, CT.noir)); // les arceaux des verrières
-    // les moteurs, de chaque côté du mât, avec leurs entrées d'air et leurs tuyères tournées vers l'extérieur
-    for (const s of [-1, 1]) {
-      const moteur = O.fuseau([{ x: -2.4, y: 2.66, w: 0.16, h: 0.18 }, { x: -2.0, y: 2.7, w: 0.3, h: 0.3, n: 2.6 }, { x: -0.3, y: 2.72, w: 0.3, h: 0.3, n: 2.6 }, { x: 0.0, y: 2.68, w: 0.2, h: 0.2 }], P, 12);
-      moteur.position.z = s * 0.45;
-      caisse.add(moteur);
-      caisse.add(O.couche(O.cylindre(0.17, 0.17, 0.04, m.teinte, 12, CT.noir), "x", 0.0, 2.68, s * 0.45));
-      caisse.add(O.tube([-2.0, 2.72, s * 0.6], [-2.5, 2.85, s * 0.95], 0.13, m.teinte, 10, CT.noir));
-    }
-    caisse.add(O.boite(1.4, 0.4, 0.5, P, -1.0, 2.75, 0)); // le capot entre les moteurs
-    caisse.add(O.cylindre(0.16, 0.24, 0.55, m.teinte, 10, CT.noir).translateX(-0.9).translateY(3.05)); // le mât
-    caisse.add(O.cylindre(0.04, 0.04, 0.5, m.teinte, 6, CT.noir).translateX(-0.9).translateY(3.6));
-    caisse.add(O.piece(new THREE.SphereGeometry(0.28, 12, 8), m.teinte, -0.9, 3.95, 0, CT.olive)); // le viseur au-dessus du rotor
-    caisse.add(O.boite(0.04, 0.16, 0.3, M.verre, -0.64, 3.97, 0));
-    // le canon de 30 mm, dans sa tourelle sous le nez
-    caisse.add(O.piece(new THREE.SphereGeometry(0.26, 10, 8), m.teinte, 2.0, 1.12, 0, CT.olive));
-    caisse.add(O.couche(O.cylindre(0.045, 0.06, 1.3, m.teinte, 8, CT.noir), "x", 2.75, 1.1, 0));
-    // les petites ailes : le panier de roquettes (dedans) et les 4 missiles (dehors), et un missile air-air au bout
-    for (const s of [-1, 1]) {
-      const aile = O.boite(1.0, 0.1, 1.75, P, -0.55, 1.85, s * 1.35);
-      aile.rotation.x = s * 0.08;
-      caisse.add(aile);
-      caisse.add(O.boite(0.5, 0.25, 0.08, m.teinte, -0.5, 1.68, s * 1.1, CT.noir), O.boite(0.5, 0.25, 0.08, m.teinte, -0.5, 1.66, s * 1.8, CT.noir)); // les pylônes
-      caisse.add(O.couche(O.cylindre(0.22, 0.22, 1.5, m.teinte, 12, CT.olive), "x", -0.45, 1.38, s * 1.1)); // le panier de roquettes
-      caisse.add(O.couche(O.cylindre(0.2, 0.2, 0.02, m.teinte, 12, CT.noir), "x", 0.31, 1.38, s * 1.1));
-      for (const [dy, dz] of [[0, -0.12], [0, 0.12], [-0.24, -0.12], [-0.24, 0.12]]) {
-        caisse.add(O.couche(O.cylindre(0.08, 0.08, 1.4, m.teinte, 8, 0xc9c6b8), "x", -0.45, 1.42 + dy, s * 1.8 + dz)); // les missiles
-        caisse.add(O.couche(O.cylindre(0.001, 0.08, 0.18, m.teinte, 8, 0xc9c6b8), "x", 0.34, 1.42 + dy, s * 1.8 + dz).rotateZ(Math.PI));
-      }
-      caisse.add(O.couche(O.cylindre(0.05, 0.05, 1.2, m.teinte, 8, 0xd8d8d0), "x", -0.5, 1.98, s * 2.25)); // le missile air-air
-      // le train : la roue, le pneu, les jambes
-      caisse.add(O.couche(O.cylindre(0.3, 0.3, 0.18, m.teinte, 14, CT.caoutchouc), "z", 0.6, 0.3, s * 1.0));
-      caisse.add(O.couche(O.cylindre(0.15, 0.15, 0.2, m.teinte, 10, CT.acier), "z", 0.6, 0.3, s * 1.0));
-      caisse.add(O.tube([0.6, 0.3, s * 0.9], [0.95, 1.3, s * 0.5], 0.05, m.teinte, 6, CT.acier), O.tube([0.6, 0.3, s * 0.9], [0.1, 1.25, s * 0.5], 0.05, m.teinte, 6, CT.acier));
-    }
-    // la queue : la roue de queue, le plan horizontal avec ses deux petites dérives, la grande dérive
-    caisse.add(O.tube([-6.1, 2.2, 0], [-6.5, 0.32, 0], 0.06, m.teinte, 6, CT.acier), O.tube([-6.8, 2.38, 0], [-6.5, 0.4, 0], 0.035, m.teinte, 6, CT.acier));
-    caisse.add(O.couche(O.cylindre(0.18, 0.18, 0.12, m.teinte, 10, CT.caoutchouc), "z", -6.5, 0.2, 0));
-    caisse.add(O.boite(0.75, 0.07, 2.3, P, -6.3, 2.38, 0));
-    for (const s of [-1, 1]) caisse.add(O.profil([[-6.0, 2.1], [-6.7, 2.1], [-6.85, 2.75], [-6.35, 2.7]], 0.06, P, 0.01).translateZ(s * 1.15));
-    caisse.add(O.profil([[-6.9, 2.4], [-7.75, 2.45], [-8.05, 3.75], [-7.6, 3.8]], 0.12, P, 0.03));
-    caisse.add(O.boite(0.3, 0.3, 0.12, m.teinte, -7.45, 3.0, 0.12, CT.noir)); // la boîte du rotor de queue
-    // la marque de l'équipe, sur les flancs de la queue
-    const marque = new THREE.MeshStandardMaterial({ color: E.marque, emissive: E.marque, emissiveIntensity: 0.3 });
-    for (const s of [-1, 1]) {
-      const b = O.boite(1.0, 0.24, 0.02, marque, -3.6, 2.25, s * 0.33);
-      b.rotation.x = s * 0.1;
-      caisse.add(b);
-    }
-    O.souder(caisse);
-    // le grand rotor (4 pales effilées, et leurs attaches) et le petit rotor de queue
-    const rotor = new THREE.Group();
-    rotor.position.set(-0.9, 3.35, 0);
-    caisse.add(rotor);
-    rotor.add(O.cylindre(0.38, 0.32, 0.22, m.teinte, 14, CT.noir));
-    for (let k = 0; k < 4; k++) {
-      const a = (k * Math.PI) / 2, c = Math.cos(a), s = -Math.sin(a);
-      const pale = O.profil([[0, -0.2], [6.3, -0.2], [6.55, -0.08], [6.55, 0.12], [0, 0.22]], 0.05, m.teinte, 0.01, 0x2a2d30);
-      pale.rotation.set(-Math.PI / 2, a, 0, "YXZ");
-      pale.position.set(c * 0.35, 0.02, s * 0.35);
-      rotor.add(pale);
-      rotor.add(O.boite(0.5, 0.12, 0.18, m.teinte, c * 0.45, 0, s * 0.45, CT.acier).rotateY(a));
-      rotor.add(O.boite(0.25, 0.051, 0.36, m.teinte, c * 6.4, 0.025, s * 6.4, 0xd8b020).rotateY(a)); // le bout peint en jaune
-    }
-    O.souder(rotor);
-    const rotorQueue = new THREE.Group();
-    rotorQueue.position.set(-7.45, 3.0, 0.3);
-    caisse.add(rotorQueue);
-    rotorQueue.add(O.couche(O.cylindre(0.1, 0.1, 0.12, m.teinte, 8, CT.noir), "z", 0, 0, 0));
-    for (let k = 0; k < 3; k++) {
-      const a = (k * Math.PI * 2) / 3;
-      const pale = O.boite(0.14, 1.25, 0.03, m.teinte, -Math.sin(a) * 0.68, Math.cos(a) * 0.68, 0, 0x2a2d30);
-      pale.rotation.z = a;
-      rotorQueue.add(pale);
-    }
-    O.souder(rotorQueue);
-    return { g, caisse, rotor, rotorQueue };
-  }
-
-  // (étape 70) L'AVION DE CHASSE RAFALE, refait : un fuselage fin qui s'élargit vers les entrées d'air (sous les
-  // ailes), un long nez pointu (le radar), la verrière en bulle avec le pilote, la perche de ravitaillement, l'aile en
-  // triangle (« delta ») avec ses gouvernes, les canards, la dérive, DEUX moteurs (deux tuyères, deux flammes), des
-  // missiles sous les ailes et au bout des ailes, et le train d'atterrissage (rentré en vol).
-  function avion(equipe) {
-    mats();
-    const m = MT(), g = new THREE.Group(), caisse = new THREE.Group(), V = vitreClaire();
-    // (étape 64 : le chasseur ENNEMI est le même avion, mais gris-vert foncé, avec des cocardes rouges)
-    const gris = new THREE.MeshStandardMaterial({ color: equipe === "rouges" ? 0x5c6352 : 0x8c949c, roughness: 0.45, metalness: 0.5 });
-    const grisFonce = equipe === "rouges" ? 0x474d40 : 0x6d747b;
-    g.add(caisse);
-    caisse.add(O.fuseau([
-      { x: -6.9, y: 2.0, w: 0.98, h: 0.5, n: 2.6 },
-      { x: -5.6, y: 2.02, w: 1.05, h: 0.6, n: 3 },
-      { x: -2.5, y: 2.06, w: 1.12, h: 0.66, n: 3.2 },
-      { x: 0.5, y: 2.1, w: 1.0, h: 0.72, n: 3, b: 0.68 },
-      { x: 2.6, y: 2.16, w: 0.62, h: 0.62, n: 2.6, b: 0.5 },
-      { x: 4.4, y: 2.18, w: 0.5, h: 0.52, n: 2.3, b: 0.42 },
-      { x: 6.0, y: 2.1, w: 0.36, h: 0.36 },
-      { x: 7.3, y: 2.04, w: 0.16, h: 0.16 },
-      { x: 7.9, y: 2.02, w: 0.02, h: 0.02 },
-    ], gris, 20));
-    // la verrière et le pilote, la perche de ravitaillement
-    caisse.add(O.fuseau([{ x: 1.9, y: 2.66, w: 0.12, h: 0.06 }, { x: 2.5, y: 2.7, w: 0.38, h: 0.3 }, { x: 3.6, y: 2.74, w: 0.44, h: 0.42 }, { x: 4.7, y: 2.66, w: 0.38, h: 0.3 }, { x: 5.4, y: 2.56, w: 0.12, h: 0.06 }], V, 16));
-    equipage(caisse, m, 3.75, 2.9, 0, 0x5a6066);
-    caisse.add(O.boite(0.3, 0.2, 0.55, m.teinte, 4.35, 2.66, 0, CT.noir));
-    caisse.add(O.boite(0.08, 0.1, 0.84, m.teinte, 3.1, 3.05, 0, CT.noir)); // l'arceau de la verrière
-    caisse.add(O.tube([4.4, 2.55, 0.42], [6.6, 2.6, 0.38], 0.04, m.teinte, 6, grisFonce));
-    // les entrées d'air (sous les ailes, de chaque côté), avec leur bouche sombre
-    for (const s of [-1, 1]) {
-      const entree = O.lisse(O.contourComplet([[2.4, 0], [2.4, 0.3], [-1.2, 0.32], [-1.2, 0]]), O.contourComplet([[2.0, 0], [2.0, 0.24], [-1.2, 0.26], [-1.2, 0]]), 1.45, 2.05, gris);
-      entree.position.z = s * 0.95;
-      caisse.add(entree);
-      caisse.add(O.boite(0.04, 0.42, 0.42, m.teinte, 2.42, 1.7, s * 0.95, 0x0a0a0a));
-    }
-    // l'aile delta (un triangle épais), ses gouvernes et ses cocardes
-    const forme = new THREE.Shape([new THREE.Vector2(1.5, 0), new THREE.Vector2(-4.8, 5.5), new THREE.Vector2(-5.6, 5.4), new THREE.Vector2(-5.2, 0), new THREE.Vector2(-5.6, -5.4), new THREE.Vector2(-4.8, -5.5)]);
-    const aile = O.piece(new THREE.ExtrudeGeometry(forme, { depth: 0.12, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 1 }), gris, 0, 1.92, 0);
-    aile.rotation.x = Math.PI / 2;
-    caisse.add(aile);
-    for (const s of [-1, 1]) for (const [za, zb] of [[1.3, 3.0], [3.1, 5.2]]) caisse.add(O.boite(0.55, 0.03, zb - za, m.teinte, -5.25, 1.88, (s * (za + zb)) / 2, grisFonce)); // les gouvernes
-    const canard = new THREE.Shape([new THREE.Vector2(0.5, 0), new THREE.Vector2(-0.8, 1.8), new THREE.Vector2(-1.2, 1.7), new THREE.Vector2(-1, 0), new THREE.Vector2(-1.2, -1.7), new THREE.Vector2(-0.8, -1.8)]);
-    const canards = O.piece(new THREE.ExtrudeGeometry(canard, { depth: 0.07, bevelEnabled: false }), gris, 2.2, 2.42, 0);
-    canards.rotation.x = Math.PI / 2;
-    caisse.add(canards);
-    caisse.add(O.profil([[-2.6, 0], [-5.6, 3.2], [-6.35, 3.2], [-6.15, 0]], 0.14, gris, 0.03).translateY(2.45));
-    caisse.add(O.boite(0.7, 0.9, 0.16, m.teinte, -6.0, 3.6, 0, grisFonce)); // la gouverne de direction
-    caisse.add(O.boite(0.7, 0.18, 0.18, m.teinte, -6.0, 5.6, 0, 0x2a2d30)); // les antennes en haut de la dérive
-    // les deux tuyères
-    for (const s of [-1, 1]) {
-      caisse.add(O.couche(O.cylindre(0.4, 0.44, 0.9, m.teinte, 14, 0x3a3836), "x", -7.15, 2.0, s * 0.48));
-      caisse.add(O.couche(O.cylindre(0.33, 0.33, 0.04, m.teinte, 14, 0x0a0a0a), "x", -7.61, 2.0, s * 0.48));
-    }
-    // les missiles : 4 sous les ailes, 2 au bout des ailes
-    const blanc = 0xe8e8e8;
-    for (const [x, y, z] of [[-2.5, 1.55, -3.4], [-2.5, 1.55, -2.2], [-2.5, 1.55, 2.2], [-2.5, 1.55, 3.4], [-4.4, 1.92, -5.6], [-4.4, 1.92, 5.6]]) {
-      caisse.add(O.couche(O.cylindre(0.1, 0.1, 2.4, m.teinte, 8, blanc), "x", x, y, z));
-      caisse.add(O.couche(O.cylindre(0.001, 0.1, 0.35, m.teinte, 8, blanc), "x", x + 1.37, y, z).rotateZ(Math.PI));
-      for (const a of [0, Math.PI / 2]) caisse.add(O.boite(0.35, 0.36, 0.02, m.teinte, x - 1.0, y, z, blanc).rotateX(a + Math.PI / 4));
-      if (Math.abs(z) < 5) caisse.add(O.boite(1.2, 0.2, 0.08, m.teinte, x, y + 0.2, z, grisFonce)); // le pylône
-    }
-    // les cocardes bleu-blanc-rouge sur les ailes
-    const couleurs = equipe === "rouges" ? [[0.7, 0xd21f1f], [0.47, 0xffffff], [0.24, 0xd21f1f]] : [[0.7, 0x1d3f9a], [0.47, 0xffffff], [0.24, 0xd21f1f]];
-    for (const z of [-3.8, 3.8]) {
-      for (const [r, c] of couleurs) {
-        const rond = O.piece(new THREE.CircleGeometry(r, 20), m.teinte, -3.2, 2.035 + (0.7 - r) * 0.01, z, c);
-        rond.rotation.x = -Math.PI / 2;
-        rond.castShadow = false;
-        caisse.add(rond);
-      }
-    }
-    O.souder(caisse);
-    // les deux flammes (une seule forme : on l'allonge et on la raccourcit très vite)
-    const geoFlamme = new THREE.ConeGeometry(0.34, 2.4, 10);
-    const deux = [geoFlamme.clone().translate(0, 0, -0.48), geoFlamme.clone().translate(0, 0, 0.48)].map((x) => x.toNonIndexed());
-    const geoF = new THREE.BufferGeometry();
-    for (const nom of ["position", "normal", "uv"]) {
-      const t = nom === "uv" ? 2 : 3, tab = new Float32Array(deux.reduce((a, x) => a + x.attributes[nom].array.length, 0));
-      tab.set(deux[0].attributes[nom].array, 0);
-      tab.set(deux[1].attributes[nom].array, deux[0].attributes[nom].array.length);
-      geoF.setAttribute(nom, new THREE.BufferAttribute(tab, t));
-    }
-    const flamme = new THREE.Mesh(geoF, new THREE.MeshBasicMaterial({ color: 0xffa040, transparent: true, opacity: 0.8 }));
-    flamme.rotation.z = Math.PI / 2;
-    flamme.position.set(-8.8, 2.0, 0);
-    caisse.add(flamme);
-    // le train d'atterrissage (rentré en vol) : les jambes, les roues, les trappes
-    const train = new THREE.Group();
-    caisse.add(train);
-    for (const [x, z, r] of [[4.6, 0, 0.24], [-1.5, 1.4, 0.32], [-1.5, -1.4, 0.32]]) {
-      train.add(O.couche(O.cylindre(r, r, 0.2, m.teinte, 12, CT.caoutchouc), "z", x, r, z));
-      train.add(O.couche(O.cylindre(r * 0.5, r * 0.5, 0.21, m.teinte, 8, 0x9a9da0), "z", x, r, z));
-      train.add(O.tube([x, r, z], [x + 0.25, 1.75, z * 0.8], 0.06, m.teinte, 6, 0xb8bcc0));
-      train.add(O.tube([x - 0.05, r + 0.1, z], [x - 0.6, 1.7, z * 0.75], 0.035, m.teinte, 6, 0x9a9da0));
-      train.add(O.boite(1.0, 0.03, 0.4, m.teinte, x + 0.2, 1.55, z * 0.8 + (z ? Math.sign(z) * 0.25 : 0.25), grisFonce).rotateX(z ? Math.sign(z) * 1.2 : 1.3)); // la trappe ouverte
-    }
-    O.souder(train);
-    return { g, caisse, flamme, train };
-  }
-
-  function drone(equipe) {
-    const m = mats(), p = peinture(equipe), g = new THREE.Group(), caisse = new THREE.Group();
-    g.add(caisse);
-    caisse.add(boite(0.9, 0.35, 0.9, p, 0, 0.6, 0));
-    caisse.add(new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), m.verre).translateX(0.45).translateY(0.5)); // la caméra
-    const helices = [];
-    for (const [x, z] of [[0.9, 0.9], [0.9, -0.9], [-0.9, 0.9], [-0.9, -0.9]]) {
-      const bras = boite(Math.hypot(x, z), 0.08, 0.08, m.noir, x / 2, 0.65, z / 2);
-      bras.rotation.y = -Math.atan2(z, x);
-      caisse.add(bras, cyl(0.08, 0.08, 0.2, m.noir, 8).translateX(x).translateY(0.75).translateZ(z));
-      const h = boite(0.9, 0.02, 0.08, m.noir, x, 0.86, z);
-      caisse.add(h);
-      helices.push(h);
-    }
-    for (const z of [-0.3, 0.3]) caisse.add(boite(1, 0.05, 0.05, m.noir, 0, 0.15, z), boite(0.05, 0.4, 0.05, m.noir, 0, 0.35, z));
-    return { g, caisse, helices };
-  }
-
   // (étape 70) LE BATEAU DE GUERRE (une vedette de combat), refait : une coque dont les flancs s'évasent vers le haut
   // (l'étrave, à l'avant, est penchée vers l'avant pour fendre les vagues), une bande noire à la ligne de flottaison,
   // un pont antidérapant, la passerelle avec un bandeau de vitres tout autour (on voit le barreur dedans), le mât
@@ -1216,85 +991,6 @@ Tanks.Engins3D = (function () {
     return { g, caisse, helice };
   }
 
-  // (étape 64, refait à l'étape 70) L'AVION DE TRANSPORT (comme un A400M) : un gros fuselage rond dont l'arrière
-  // remonte (la porte-rampe d'où sautent les parachutistes), le nez avec les vitres du poste de pilotage, l'aile en
-  // haut (elle penche un peu vers le bas), 4 moteurs avec leurs hélices à 8 pales recourbées, la queue en T, les
-  // carénages du train sur les côtés.
-  function transport(equipe) {
-    mats();
-    const m = MT(), g = new THREE.Group(), caisse = new THREE.Group(), E = Tanks.CONFIG.equipes[equipe];
-    const peau = new THREE.MeshStandardMaterial({ color: equipe === "bleus" ? 0x6b7461 : 0x7a6f5a, roughness: 0.6, metalness: 0.3 });
-    const fonce = equipe === "bleus" ? 0x535a4b : 0x5e5646;
-    g.add(caisse);
-    caisse.add(O.fuseau([
-      { x: -12.5, y: 5.0, w: 0.35, h: 0.3 }, { x: -11, y: 4.4, w: 0.9, h: 0.8, b: 0.6 }, { x: -8.5, y: 3.7, w: 1.6, h: 1.6, b: 1.1 },
-      { x: -6, y: 3.15, w: 2.05, h: 2.0, b: 1.7 }, { x: -3, y: 3.0, w: 2.1, h: 2.1 }, { x: 6.5, y: 3.0, w: 2.1, h: 2.1 },
-      { x: 8.8, y: 3.05, w: 1.95, h: 1.9, b: 2.05 }, { x: 10.5, y: 3.0, w: 1.55, h: 1.45, b: 1.95 }, { x: 11.6, y: 2.7, w: 0.9, h: 0.8, b: 1.4 },
-      { x: 12.1, y: 2.5, w: 0.25, h: 0.25, b: 0.4 },
-    ], peau, 24));
-    // les vitres du poste de pilotage
-    for (const s of [-1, 1]) {
-      const v = O.boite(0.05, 0.42, 0.85, M.verre, 10.62, 4.12, s * 0.55);
-      v.rotation.set(0, s * 0.45, 0.75, "YXZ");
-      caisse.add(v);
-      caisse.add(O.boite(0.7, 0.36, 0.05, M.verre, 9.9, 4.05, s * 1.58).rotateX(s * 0.35));
-    }
-    // les carénages du train, la porte-rampe, la porte latérale des parachutistes, la bande de l'équipe
-    for (const s of [-1, 1]) {
-      const car = O.fuseau([{ x: -3.5, y: 1.25, w: 0.3, h: 0.3 }, { x: -2.5, y: 1.2, w: 0.6, h: 0.62 }, { x: 3.0, y: 1.2, w: 0.6, h: 0.62 }, { x: 4.0, y: 1.3, w: 0.25, h: 0.3 }], peau, 12);
-      car.position.z = s * 1.75;
-      caisse.add(car);
-      for (const x of [-1.5, 0.4, 2.2]) caisse.add(O.couche(O.cylindre(0.55, 0.55, 0.35, m.teinte, 14, CT.caoutchouc), "z", x, 0.55, s * 1.8));
-      caisse.add(O.boite(1.2, 2.0, 0.03, m.teinte, -6.4, 3.0, s * 2.03, fonce).rotateY(s * 0.12));
-      caisse.add(O.boite(3.0, 0.6, 0.05, new THREE.MeshStandardMaterial({ color: E.marque }), -2.5, 3.5, s * 2.1));
-    }
-    caisse.add(O.couche(O.cylindre(0.4, 0.4, 0.3, m.teinte, 12, CT.caoutchouc), "z", 9.4, 0.4, 0));
-    caisse.add(O.tube([9.4, 0.4, 0], [9.2, 1.4, 0], 0.08, m.teinte, 6, 0x9a9da0));
-    // l'aile (en haut, un peu penchée vers le bas), avec ses gouvernes
-    for (const s of [-1, 1]) {
-      const forme = new THREE.Shape([new THREE.Vector2(3.0, 0), new THREE.Vector2(1.6, 15), new THREE.Vector2(0.2, 15.2), new THREE.Vector2(-1.4, 0)]);
-      const aile = O.piece(new THREE.ExtrudeGeometry(forme, { depth: 0.35, bevelEnabled: true, bevelThickness: 0.08, bevelSize: 0.08, bevelSegments: 1 }), peau);
-      aile.rotation.x = s > 0 ? Math.PI / 2 - 0.05 : Math.PI / 2 + 0.05;
-      if (s < 0) aile.scale.y = -1;
-      aile.position.set(0, 5.15, 0);
-      caisse.add(aile);
-    }
-    caisse.add(O.fuseau([{ x: -4, y: 5.2, w: 0.4, h: 0.2 }, { x: -1.5, y: 5.35, w: 1.4, h: 0.6 }, { x: 3, y: 5.3, w: 1.4, h: 0.6 }, { x: 4.5, y: 5.2, w: 0.6, h: 0.3 }], peau, 12)); // le carénage de l'aile sur le dos
-    // la queue en T : la grande dérive et le plan horizontal tout en haut
-    caisse.add(O.profil([[-8.5, 4.5], [-12.4, 5.0], [-13.6, 10.6], [-11.4, 10.6]], 0.35, peau, 0.08));
-    const plan = new THREE.Shape([new THREE.Vector2(-11.2, 0), new THREE.Vector2(-12.4, 6.2), new THREE.Vector2(-13.4, 6.2), new THREE.Vector2(-13.8, 0), new THREE.Vector2(-13.4, -6.2), new THREE.Vector2(-12.4, -6.2)]);
-    const planG = O.piece(new THREE.ExtrudeGeometry(plan, { depth: 0.25, bevelEnabled: false }), peau, 0, 10.5, 0);
-    planG.rotation.x = Math.PI / 2;
-    caisse.add(planG);
-    // les 4 moteurs (sous l'aile), avec leurs entrées d'air et leurs tuyères
-    const zM = [-10.5, -5.5, 5.5, 10.5];
-    for (const z of zM) {
-      const moteur = O.fuseau([{ x: -1.5, y: 4.6, w: 0.35, h: 0.4 }, { x: 0.0, y: 4.5, w: 0.65, h: 0.75 }, { x: 3.8, y: 4.5, w: 0.7, h: 0.75 }, { x: 4.6, y: 4.55, w: 0.5, h: 0.5 }], peau, 14);
-      moteur.position.z = z;
-      caisse.add(moteur);
-      caisse.add(O.boite(0.5, 0.25, 0.35, m.teinte, 4.0, 3.85, z, CT.noir)); // l'entrée d'air, dessous
-      caisse.add(O.tube([0.5, 4.8, z + 0.45], [-0.3, 4.95, z + 0.75], 0.15, m.teinte, 8, CT.noir)); // la tuyère
-    }
-    O.souder(caisse);
-    const helices = [];
-    for (const z of zM) {
-      const h = new THREE.Group();
-      h.position.set(4.95, 4.55, z);
-      h.add(O.couche(O.cylindre(0.05, 0.45, 0.8, m.teinte, 12, 0x2a2d30), "x", 0.2, 0, 0).rotateZ(Math.PI)); // le cône
-      for (let k = 0; k < 8; k++) {
-        const pale = O.profil([[0.2, -0.16], [2.1, -0.06], [2.25, 0.15], [1.4, 0.2], [0.2, 0.14]], 0.04, m.teinte, 0.01, 0x1c1d1f);
-        pale.rotation.set((k * Math.PI) / 4, 0, 0, "XYZ");
-        pale.rotateZ(Math.PI / 2);
-        pale.rotateY(0.35);
-        h.add(pale);
-      }
-      O.souder(h);
-      caisse.add(h);
-      helices.push(h);
-    }
-    return { g, caisse, helices };
-  }
-
   // (étape 64, refait à l'étape 70) LA DCA : un socle posé sur 4 bras avec leurs vérins, une tourelle qui tourne avec
   // le siège du tireur (et le tireur), son viseur, le bouclier avec sa vitre, et 2 longs canons (avec leurs chargeurs et
   // leurs freins de bouche) qui se lèvent.
@@ -1401,7 +1097,8 @@ Tanks.Engins3D = (function () {
   function fabriquer(sorte, equipe) {
     if (Tanks.Vehicules3D && Tanks.Vehicules3D.sait(sorte)) return Tanks.Vehicules3D.fabriquer(sorte, equipe); // (étape 71)
     if (Tanks.Helicos3D && Tanks.Helicos3D.sait(sorte)) return Tanks.Helicos3D.fabriquer(sorte, equipe); // (étape 73)
-    return { jeep, helico, avion, drone, bateau, sousmarin, dca, transport, chasseur: avion }[sorte](equipe);
+    if (Tanks.Avions3D && Tanks.Avions3D.sait(sorte)) return Tanks.Avions3D.fabriquer(sorte, equipe); // (étape 76 : les avions, le drone et le Tigre)
+    return { jeep, bateau, sousmarin, dca }[sorte](equipe);
   }
   function bruler(o) {
     const m = mats();
@@ -1412,6 +1109,7 @@ Tanks.Engins3D = (function () {
 
   // (étape 71) la moto, le quad et le camion sont fabriqués dans affichage/vehicules3d.js (qui réutilise ces outils)
   // (étape 73) le Chinook et le Black Hawk, dans affichage/helicos3d.js
+  // (étape 76) le Rafale, les chasseurs ennemis, l'avion de transport, le drone et le Tigre, dans affichage/avions3d.js
   const outils = { pilote, siege, peintureSoudee, vitreClaire, mats, figurine, figurineDans, poserBras, MAINS, galet, membre, formesArmes };
   return { soldat, animer, fabriquer, bruler, portail, silhouettes, outils };
 })();

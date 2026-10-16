@@ -398,6 +398,98 @@ Tanks.Outils3D = (function () {
     }
     return g;
   }
+  // (étape 76) Remettre les faces d'une forme fermée vers l'EXTÉRIEUR : on calcule son « volume signé » (la somme des
+  // petites pyramides entre le centre et chaque triangle) ; s'il est négatif, les triangles tournent à l'envers.
+  function orienter(g, retourner) {
+    const p = g.attributes.position, ia = g.index.array, A = new THREE.Vector3(), B = new THREE.Vector3(), Cc = new THREE.Vector3();
+    g.computeBoundingBox();
+    const centre = g.boundingBox.getCenter(new THREE.Vector3());
+    let volume = 0;
+    for (let t = 0; t < ia.length; t += 3) {
+      A.fromBufferAttribute(p, ia[t]).sub(centre);
+      B.fromBufferAttribute(p, ia[t + 1]).sub(centre);
+      Cc.fromBufferAttribute(p, ia[t + 2]).sub(centre);
+      volume += A.dot(B.cross(Cc));
+    }
+    if ((volume < 0) !== !!retourner) for (let j = 0; j < ia.length; j += 3) [ia[j + 1], ia[j + 2]] = [ia[j + 2], ia[j + 1]];
+    g.computeVertexNormals();
+    return g;
+  }
+  // (étape 76) Une AILE (ou une dérive, un plan de queue, une pale d'hélice) : un vrai PROFIL d'aile (arrondi devant,
+  // effilé derrière : le profil « NACA » des ingénieurs), de l'EMPLANTURE (r : la racine, contre le fuselage) au SAUMON
+  // (b : le bout). r et b : { x (le bord d'attaque), y, z, corde (m, de l'avant à l'arrière), ep (l'épaisseur, en part de
+  // la corde) }. L'aile peut monter (une dérive), descendre, reculer (la « flèche ») : elle va simplement de r à b.
+  // options : nu (tranches dans l'envergure), nv (points sur chaque face du profil), fentes (les fines lignes sombres
+  // des gouvernes : { c (en part de la corde), de, a (en part de l'envergure) } pour une ligne le long de l'envergure,
+  // { u, c0 } pour une ligne en travers, à partir de c0), uv (m par répétition de l'image de tôle).
+  // Elle renvoie la pièce ; pièce.userData.point(c, u, cote) donne un point de la surface (cote 1 : le dessus, ou le
+  // côté z+ pour une dérive ; −1 : l'autre face) et sa normale, pour y poser une cocarde.
+  function aile(r, b, mat, options) {
+    const o = options || {}, nu = o.nu || 6, nv = o.nv || 10, fentes = o.fentes || [];
+    const tri = (t) => t.sort((a1, a2) => a1 - a2).filter((v, i, tab) => v >= 0 && v <= 1 && (i === 0 || v - tab[i - 1] > 1e-4));
+    const cs = [], us = [];
+    for (let i = 0; i <= nv; i++) cs.push(0.5 * (1 - Math.cos((i / nv) * Math.PI)));
+    for (let i = 0; i <= nu; i++) us.push(i / nu);
+    for (const f of fentes) {
+      if (f.c !== undefined) cs.push(f.c - 0.014, f.c - 0.004, f.c + 0.004, f.c + 0.014);
+      if (f.u !== undefined) us.push(f.u - 0.012, f.u - 0.003, f.u + 0.003, f.u + 0.012);
+    }
+    tri(cs);
+    tri(us);
+    // l'anneau du profil : le dessus du bord de fuite vers le bord d'attaque, puis le dessous dans l'autre sens
+    const anneau = cs.slice().reverse().map((c) => [c, 1]).concat(cs.slice(1, -1).map((c) => [c, -1]));
+    const S = new THREE.Vector3(b.x - r.x, b.y - r.y, b.z - r.z), L = S.length();
+    const d = new THREE.Vector3(0, S.z, -S.y).normalize(); // (la direction de l'épaisseur : perpendiculaire à l'envergure et à x)
+    if (d.y < -1e-6 || (Math.abs(d.y) < 1e-6 && d.z < 0)) d.negate();
+    const epaisseur = (c) => 5 * (0.2969 * Math.sqrt(c) - 0.126 * c - 0.3516 * c * c + 0.2843 * c ** 3 - 0.1036 * c ** 4);
+    const lerp = (a1, a2, u) => a1 + (a2 - a1) * u;
+    const point = (c, u, cote, v) => {
+      const corde = lerp(r.corde, b.corde, u), e = lerp(r.ep, b.ep, u) * corde * epaisseur(c) * cote;
+      return (v || new THREE.Vector3()).set(lerp(r.x, b.x, u) - c * corde + d.x * e, lerp(r.y, b.y, u) + d.y * e, lerp(r.z, b.z, u) + d.z * e);
+    };
+    const sombre = (c, u) => fentes.some((f) => (f.c !== undefined && Math.abs(c - f.c) < 0.005 && u >= (f.de || 0) - 1e-3 && u <= (f.a === undefined ? 1 : f.a) + 1e-3) || (f.u !== undefined && Math.abs(u - f.u) < 0.004 && c >= (f.c0 || 0) - 1e-3));
+    const pos = [], uv = [], col = [], idx = [], v3 = new THREE.Vector3(), R = anneau.length;
+    for (const u of us) for (const [c, cote] of anneau) {
+      point(c, u, cote, v3);
+      pos.push(v3.x, v3.y, v3.z);
+      uv.push(v3.x / (o.uv || 1), (u * L) / (o.uv || 1));
+      const k = sombre(c, u) ? 0.35 : 1;
+      col.push(k, k, k);
+    }
+    for (let i = 0; i < us.length - 1; i++) for (let j = 0; j < R; j++) {
+      const a1 = i * R + j, b1 = i * R + ((j + 1) % R), c1 = a1 + R, d1 = b1 + R;
+      idx.push(a1, c1, b1, b1, c1, d1);
+    }
+    // les deux bouts (l'emplanture et le saumon) : bouchés par un éventail (avec leurs propres points : un bord net)
+    for (const u of [0, 1]) {
+      const debut = pos.length / 3;
+      for (const [c, cote] of anneau) {
+        point(c, u, cote, v3);
+        pos.push(v3.x, v3.y, v3.z);
+        uv.push(v3.x / (o.uv || 1), (u * L) / (o.uv || 1));
+        col.push(1, 1, 1);
+      }
+      for (let j = 1; j < R - 1; j++) idx.push(debut, debut + j, debut + j + 1);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+    g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+    g.setIndex(idx);
+    orienter(g);
+    // (les bouts sont plats : leurs normales doivent être celles de leur face, pas lissées avec les côtés — c'est déjà le
+    // cas, puisqu'ils ont leurs propres points)
+    const m = piece(g, mat);
+    m.userData.point = (c, u, cote) => {
+      const p = point(c, u, cote), e = 0.01;
+      const pc = point(Math.min(1, c + e), u, cote).sub(point(Math.max(0, c - e), u, cote));
+      const pu = point(c, Math.min(1, u + e), cote).sub(point(c, Math.max(0, u - e), cote));
+      const n = pc.cross(pu).normalize();
+      if (n.dot(d) * cote < 0) n.negate();
+      return { p, n };
+    };
+    return m;
+  }
   // Une forme TOURNÉE autour de l'axe x (une nacelle de moteur, un réservoir, un pneu couché…) : profil [[x, rayon], …].
   function tourX(profil, mat, n, teinte) {
     const g = new THREE.LatheGeometry(profil.map(([x, r]) => new THREE.Vector2(Math.max(0, r), x)), n || 24);
@@ -490,5 +582,5 @@ Tanks.Outils3D = (function () {
     return m.geometry;
   }
 
-  return { bilan, piece, boite, cylindre, couche, tube, cable, profil, contourComplet, lisse, fuseau, tour, souder, geometrieTeintee, camoAPlat, coque, surface, tourX, surLaSurface, courbeMonotone };
+  return { bilan, piece, boite, cylindre, couche, tube, cable, profil, contourComplet, lisse, fuseau, tour, souder, geometrieTeintee, camoAPlat, coque, surface, tourX, surLaSurface, courbeMonotone, aile, orienter };
 })();

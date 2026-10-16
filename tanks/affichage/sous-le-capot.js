@@ -27,6 +27,9 @@
 // Étape 73 : LES HÉLICOS DE TRANSPORT : chaque Chinook et Black Hawk (les tiens et ceux de l'ordinateur) : son état (au
 // camp, en vol, stationnaire, descente à la corde, retour), sa hauteur, sa vitesse, ses soldats à bord et sur les cordes,
 // sa vie, et ce que visent ses 2 mitrailleuses de porte.
+// Étape 76 : LES AVIONS ET LE TIGRE REDESSINÉS : combien sont dessinés en détail, en version simple, cachés ; pour
+// chaque modèle (Rafale, chasseur ennemi, avion de transport, drone, Tigre), ses triangles et ses dessins de près, et
+// ses triangles de loin ; et ce qui bouge sur ton Rafale (le train, la verrière, la postcombustion, les missiles).
 
 window.Tanks = window.Tanks || {};
 
@@ -212,6 +215,25 @@ Tanks.SousLeCapot = (function () {
     l.push(["dessin des hélicos", L.helicosDetail + " en détail (< " + Math.round(Tanks.Qualite.reglages.roues * H.loin) + " m), " + L.helicosSimples + " en version simple (1 dessin par sorte et par équipe), " + L.helicosCaches + " cachés"]);
   }
 
+  // (étape 76) Les avions et le Tigre redessinés : le niveau de détail, et ce que coûte chaque modèle.
+  function lignesAvions(l) {
+    const A = C.avions3d, L = Tanks.Scene.lod, B = Tanks.Avions3D.bilan, R = Tanks.Qualite.reglages, nb = (n) => Math.round(n).toLocaleString("fr-FR");
+    l.push(["Les avions et le Tigre (étape 76)"]);
+    l.push(["dessin", L.avionsDetail + " en détail · " + L.avionsSimples + " en version simple (1 dessin par sorte et par équipe) · " + L.avionsCaches + " cachés · en détail à moins de " + Tanks.Avions3D.SORTES.map((s) => Tanks.Avions3D.NOMS[s] + " " + Math.round(R.roues * A.loin[s]) + " m").join(", ")]);
+    for (const s of Tanks.Avions3D.SORTES) {
+      const b = B[s];
+      if (!b || !b.triangles) continue;
+      l.push(["✈️ " + b.nom, "de près : " + nb(b.triangles) + " triangles en " + b.objets + " dessins (les pièces soudées par matière) · de loin : " + nb(b.simple || 0) + " triangles"]);
+    }
+    const rafale = monde.engins.find((e) => e.sorte === "avion");
+    if (rafale) {
+      const vMax = C.engins.avion.vitesse, pc = Math.max(0, Math.min(1, (rafale.vitesse / vMax - A.postCombustion[0]) / (A.postCombustion[1] - A.postCombustion[0])));
+      l.push(["ton Rafale", (rafale.pilote ? "👤 tu pilotes" : "garé, verrière ouverte") + " · train " + (rafale.enVol ? "rentré (en vol)" : "sorti (au sol)") + " · " + Math.round(rafale.vitesse * 3.6) + " km/h → postcombustion " + Math.round(pc * 100) + " % (de " + Math.round(A.postCombustion[0] * 100) + " à " + Math.round(A.postCombustion[1] * 100) + " % de la vitesse max) · missiles sous les ailes : " + rafale.munitions + " / " + C.engins.avion.munitions]);
+    }
+    const tr = (monde.avions || []).filter((a) => a.sorte === "transport" && a.etat !== "parti");
+    for (const a of tr) l.push(["🛩️ " + a.nom, "rampe " + (Math.abs(a.x - a.largage.x) < A.rampe.distance && (a.restent > 0 || Math.abs(a.x - a.largage.x) < 120) ? "ouverte (zone de largage à " + Math.round(Math.abs(a.x - a.largage.x)) + " m)" : "fermée") + " · " + a.restent + " parachutistes à bord"]);
+  }
+
   // (étape 75) Les maisons et les grenades.
   let avantTests = { ligne: 0, boite: 0, temps: 0 }, parSeconde = { ligne: 0, boite: 0 };
   function lignesMaisons(l, s) {
@@ -281,6 +303,7 @@ Tanks.SousLeCapot = (function () {
       lignesMaisons(l, s); // (étape 75)
       lignesCarte(l);
       lignesHelicos(l);
+      lignesAvions(l); // (étape 76)
       l.push(["Les soldats"]);
       { // (étape 74) ✍️ la limite : 60 soldats debout au plus par équipe (au-delà, camions, hélicos et avions attendent)
         const max = C.parachutistes.maxParEquipe, n = (eq) => monde.soldats.filter((o) => o.equipe === eq && !o.mort).length;

@@ -34,6 +34,11 @@
 // chaque image, la distance des beaux arbres et le rayon des touffes d'herbe (selon le niveau de qualité).
 // Étape 75 : les MAISONS qu'on détruit (affichage/maisons3d.js, mis à jour à chaque image), les GRENADES qui volent et
 // rebondissent, et la caméra qui reste devant le premier mur (même quand tu es dans une maison).
+// Étape 76 : les AVIONS, le DRONE et le TIGRE (affichage/avions3d.js) : le train d'atterrissage du Rafale RENTRE après le
+// décollage (chaque jambe tourne autour de sa charnière) et ressort au sol, sa verrière se ferme quand tu montes, la
+// flamme de la POSTCOMBUSTION s'allonge quand il va vite, ses missiles disparaissent un par un quand tu tires (et les
+// grenades du drone) ; les hélices de l'avion de transport tournent (2 dans chaque sens) et sa RAMPE s'ouvre avant le
+// largage ; le disque flou des rotors et des hélices qui tournent vite. De loin : la version simple en instances.
 // Comme tout l'affichage, ce fichier lit le monde et ne le modifie jamais.
 
 window.Tanks = window.Tanks || {};
@@ -48,7 +53,7 @@ Tanks.Scene = (function () {
   // (étape 72) le niveau de qualité en cours (réglé par affichage/qualite.js), le ciel, les silhouettes des soldats
   let Q = C.qualite.niveaux[C.qualite.depart], leCiel = null;
   const silhouettes = {};
-  const lod = { soldatsDetail: 0, soldatsSimples: 0, silhouettes: 0, soldatsCaches: 0, tanksRouesSoudees: 0, enginsCaches: 0, vehiculesDetail: 0, vehiculesSimples: 0, vehiculesCaches: 0, helicosDetail: 0, helicosSimples: 0, helicosCaches: 0, maillons: 0 };
+  const lod = { soldatsDetail: 0, soldatsSimples: 0, silhouettes: 0, soldatsCaches: 0, tanksRouesSoudees: 0, enginsCaches: 0, vehiculesDetail: 0, vehiculesSimples: 0, vehiculesCaches: 0, helicosDetail: 0, helicosSimples: 0, helicosCaches: 0, maillons: 0, avionsDetail: 0, avionsSimples: 0, avionsCaches: 0 };
   const lotsSimples = {}; // (étape 71) « moto:bleus » → les instances de la version simple
   // La « vue » d'un objet : le même objet, mais avec x, y, z, angle (et tourelle) pris entre l'avant et maintenant.
   const melange = (a, b) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * alpha;
@@ -140,6 +145,8 @@ Tanks.Scene = (function () {
     for (const equipe of ["bleus", "rouges"]) scene.add((silhouettes[equipe] = Tanks.Engins3D.silhouettes(equipe, 160)));
     for (const sorte of Tanks.Vehicules3D.SORTES) for (const equipe of ["bleus", "rouges"]) scene.add((lotsSimples[sorte + ":" + equipe] = Tanks.Vehicules3D.lotSimple(sorte, equipe, 12)));
     for (const sorte of Tanks.Helicos3D.SORTES) for (const equipe of ["bleus", "rouges"]) scene.add((lotsSimples[sorte + ":" + equipe] = Tanks.Helicos3D.lotSimple(sorte, equipe, 6))); // (étape 73)
+    // (étape 76) les avions, le drone et le Tigre : les chasseurs ennemis sont rouges ; le Rafale, le drone et le Tigre, bleus
+    for (const [sorte, equipes] of [["avion", ["bleus"]], ["chasseur", ["rouges"]], ["transport", ["bleus", "rouges"]], ["drone", ["bleus"]], ["helico", ["bleus"]]]) for (const equipe of equipes) scene.add((lotsSimples[sorte + ":" + equipe] = Tanks.Avions3D.lotSimple(sorte, equipe, 6)));
   }
 
   // (étape 72) Appliquer un niveau de qualité (appelé par le régulateur, affichage/qualite.js).
@@ -397,9 +404,97 @@ Tanks.Scene = (function () {
     o.flammes.forEach((f, k) => (f.visible = !!(e.portes && e.portes[k].tir > 0)));
   }
 
+  // (étape 76) Un avion, le drone ou le Tigre : en vol, tourné et penché ; posé, comme la colline. Loin : la version simple.
+  // Puis ce qui bouge : le train d'atterrissage, la verrière, la flamme, les missiles, les rotors, les hélices, la rampe.
+  const vers = (a, b, pas) => (a < b ? Math.min(b, a + pas) : Math.max(b, a - pas)); // (aller doucement de a vers b)
+  function placerAvion(o, e, dt, original) {
+    const A = C.avions3d;
+    o.g.visible = e.etat !== "attend" && e.etat !== "parti";
+    o.g.position.set(e.x, e.y, e.z);
+    if (e.enVol) o.g.rotation.set(e.roulis || 0, -e.angle, e.tangage || 0, "YXZ");
+    else { // (au sol, il se penche comme la colline)
+      const n = T.normale(e.x, e.z);
+      qLacet.setFromAxisAngle(haut, -e.angle);
+      qPente.setFromUnitVectors(haut, vn.set(n.x, n.y, n.z));
+      o.g.quaternion.copy(qPente).multiply(qLacet);
+    }
+    if (!o.g.visible) return;
+    const d = Math.hypot(e.x - cam.position.x, e.y - cam.position.y, e.z - cam.position.z);
+    if (d > Q.vue + 50) {
+      o.g.visible = false;
+      lod.avionsCaches++;
+      return;
+    }
+    const lot = lotsSimples[e.sorte + ":" + e.equipe];
+    if (d > Q.roues * A.loin[e.sorte] && lot && lot.count < lot.instanceMatrix.count) {
+      o.g.visible = false;
+      o.g.updateMatrix();
+      lot.setMatrixAt(lot.count, o.g.matrix);
+      lot.setColorAt(lot.count++, e.detruit ? sombre : blanc);
+      lod.avionsSimples++;
+      return;
+    }
+    lod.avionsDetail++;
+    if (e.detruit) {
+      if (!o.brule) {
+        Tanks.Engins3D.bruler(o);
+        o.brule = true;
+        for (const x of [o.flamme, o.lueur, o.flous]) if (x) x.visible = false;
+      }
+      return;
+    }
+    if (o.brule) { // (un engin remis à neuf : on refait son dessin)
+      scene.remove(o.g);
+      dessinsEngins.delete(original || e);
+      return;
+    }
+    // les rotors et les hélices (et le disque flou quand ils tournent vite)
+    if (dt > 0 && e.rotor !== undefined) {
+      o.tours = Math.abs(e.rotor - (o.rotorAvant === undefined ? e.rotor : o.rotorAvant)) / dt / (Math.PI * 2);
+      o.rotorAvant = e.rotor;
+    }
+    if (e.sorte === "helico") {
+      o.rotor.rotation.y = e.rotor;
+      o.rotorQueue.rotation.z = e.rotor * 1.7;
+      o.flous.visible = (o.tours || 0) > A.flou;
+    } else if (e.sorte === "drone") {
+      o.helices.forEach((h, i) => (h.rotation.y = e.rotor * (i % 2 ? 2 : -2)));
+      o.flous.visible = (o.tours || 0) * 2 > A.flou;
+      o.grenades.forEach((g, i) => (g.visible = i < e.munitions)); // (les grenades qui restent)
+    } else if (e.sorte === "transport") {
+      o.helices.forEach((h) => (h.rotation.x += dt * 30 * h.userData.sens));
+      // la rampe s'ouvre avant la zone de largage (tant qu'il reste des parachutistes, et un peu après le dernier)
+      const dx = Math.abs(e.x - e.largage.x), ouvert = dx < A.rampe.distance && (e.restent > 0 || dx < 120);
+      o.ouverture = vers(o.ouverture, ouvert ? 1 : 0, dt / A.rampe.duree);
+      o.rampe.rotation.z = -Tanks.Avions3D.PENTE * (1 - o.ouverture);
+      o.porteSoute.rotation.z = -Tanks.Avions3D.PENTE + 0.95 * o.ouverture;
+    } else if (e.sorte === "avion" || e.sorte === "chasseur") {
+      // le train : il rentre en vol (chaque jambe tourne autour de sa charnière), il sort au sol
+      if (o.jambes.length) {
+        o.sortie = !e.pilote ? 1 : vers(o.sortie, e.enVol ? 0 : 1, dt / A.train);
+        for (const j of o.jambes) j.rotation.z = (1 - o.sortie) * (Math.PI / 2) * j.userData.sens;
+        o.train.visible = o.sortie > 0.02;
+      }
+      // la verrière : ouverte quand l'avion est garé, vide ; elle se ferme quand tu montes
+      if (o.verriere) {
+        o.ouverture = vers(o.ouverture, e.pilote ? 0 : 1, dt / A.verriere);
+        o.verriere.rotation.z = o.ouverture * 0.6;
+      }
+      if (o.pilote) o.pilote.visible = !!e.pilote;
+      if (o.missiles) o.missiles.forEach((m, i) => (m.visible = i < e.munitions)); // (les missiles qui restent sous les ailes)
+      // la flamme : plus longue quand il va vite (la postcombustion), elle tremble un peu
+      const vMax = e.sorte === "avion" ? C.engins.avion.vitesse : 1;
+      const p = e.sorte === "avion" ? Math.max(0, Math.min(1, (e.vitesse / vMax - A.postCombustion[0]) / (A.postCombustion[1] - A.postCombustion[0]))) : A.flammeChasseur;
+      o.flamme.visible = !!e.pilote && p > 0.02;
+      o.flamme.scale.set(p * (0.85 + Math.random() * 0.3), 0.9 + Math.random() * 0.15, 0.9 + Math.random() * 0.15);
+      o.lueur.visible = !!e.pilote;
+    }
+  }
+
   function placerEngin(o, e, dt, original) {
     if (Tanks.Vehicules3D.sait(e.sorte)) return placerVehicule(o, e, dt, original); // (étape 71)
     if (Tanks.Helicos3D.sait(e.sorte)) return placerHelico(o, e, dt, original); // (étape 73)
+    if (Tanks.Avions3D.sait(e.sorte)) return placerAvion(o, e, dt, original); // (étape 76)
     o.g.visible = e.etat !== "attend" && e.etat !== "parti";
     // (étape 72) plus loin que la vue (dans le brouillard) : pas dessiné
     if (o.g.visible && Math.hypot(e.x - cam.position.x, e.y - cam.position.y, e.z - cam.position.z) > Q.vue + 50) (o.g.visible = false), lod.enginsCaches++;
@@ -437,21 +532,10 @@ Tanks.Scene = (function () {
       o.tourelle.rotation.y = -e.tourelle;
       o.tour = (o.tour || 0) + (e.vitesse * dt) / 0.5;
       for (const r of o.roues) r.rotation.y = -o.tour;
-    } else if (e.sorte === "helico") {
-      o.rotor.rotation.y = e.rotor;
-      o.rotorQueue.rotation.z = e.rotor * 1.7;
-    } else if (e.sorte === "drone") {
-      o.helices.forEach((h, i) => (h.rotation.y = e.rotor * (i % 2 ? 2 : -2)));
     } else if (e.sorte === "dca") {
       o.tourelle.rotation.y = -e.tourelle;
       o.canons.rotation.z = e.hausse;
       o.flammes.forEach((f, i) => (f.visible = e.recharge > C.engins.dca.cadence * 0.5 && e.canon === i));
-    } else if (e.sorte === "transport") {
-      for (const h of o.helices) h.rotation.x += dt * 30;
-    } else if (e.sorte === "avion" || e.sorte === "chasseur") {
-      if (o.train) o.train.visible = !e.enVol;
-      o.flamme.visible = e.pilote;
-      o.flamme.scale.set(1, 0.8 + Math.random() * 0.4, 1);
     }
   }
   // Les projectiles qui volent (sauf l'obus, qui a déjà son traceur dans les effets) : roquette, bombe, missile, grenade.
