@@ -17,12 +17,19 @@
 //   - le BRUIT : quand tu tires, les ennemis t'entendent jusqu'à 160 m × le bruit de l'arme (le silencieux : × 0,3) :
 //     pendant 4 s, tu es « repéré » et ils te cherchent. La LAMPE et le LASER se voient aussi de loin (« visibilite »).
 //   - le POINT VISÉ : là où arrive le laser (un mur, le sol, un soldat), recalculé 40 fois par seconde.
+// Étape 79 : LE SNIPER. Avec une lunette (les fusils de précision, ou la lunette ×6), épauler montre la vraie lunette.
+//   - la RESPIRATION : ta visée dessine doucement un « 8 » (comme quand on respire en tenant un fusil lourd).
+//   - Maj : tu RETIENS TON SOUFFLE quelques secondes : la visée s'arrête presque. Si tu tiens jusqu'au bout, tu dois
+//     reprendre ton souffle : pendant « reprise » secondes, la visée bouge beaucoup plus.
+//   - la CHUTE : une balle tombe pendant son vol, comme une pierre qu'on lance : chute = ½ × g × temps², avec
+//     temps = distance ÷ vitesse de la balle. La lunette est réglée à 200 m : plus loin, la balle arrive sous la croix
+//     (à 400 m, une cinquantaine de cm) : de très loin, ça peut te faire rater !
 // Ce fichier ne dessine rien : il renvoie des événements (« balle », « roquette », « recharge-arme », « vide »…).
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Armes = (function () {
-  const C = Tanks.CONFIG, TIR = C.tir, T = Tanks.Terrain;
+  const C = Tanks.CONFIG, TIR = C.tir, T = Tanks.Terrain, L = C.tir.lunette;
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   const vehicules = [];
 
@@ -102,6 +109,37 @@ Tanks.Armes = (function () {
     return st.dispersion + (st.dispersionVisee - st.dispersion) * s.visee + s.dispersionRecul + Math.min(1, Math.abs(s.vitesse) / 4) * 0.012 * (1 - s.visee * 0.5);
   }
 
+  // ✍️ (étape 79) LA CHUTE de la balle à « d » mètres (m) : ½ × g × (d ÷ v)².
+  function chute(d, vitesse) {
+    if (!vitesse) return 0;
+    const temps = d / vitesse;
+    return 0.5 * L.gravite * temps * temps;
+  }
+  // Comme un vrai tireur, ta lunette est RÉGLÉE à « zero » mètres : là, la balle arrive pile sur la croix (on vise un tout
+  // petit peu vers le haut sans le savoir). Plus loin, elle arrive EN DESSOUS de la croix (m) ; plus près, un peu au-dessus.
+  const sousLaCroix = (d, vitesse) => chute(d, vitesse) - chute(L.zero, vitesse) * (d / L.zero);
+
+  // ✍️ (étape 79) LA RESPIRATION dans la lunette, et Maj pour retenir son souffle.
+  // s.souffle = { reserve (1 = plein, 0 = vide), retenu, reprise (s), t (l'horloge du « 8 ») } ; s.balancement = { x, y } (rad).
+  function respirer(s, st, intentions, dt) {
+    const b = s.souffle || (s.souffle = { reserve: 1, retenu: false, reprise: 0, t: 0, force: 1 });
+    const dansLaLunette = !!st.lunette && s.visee > 0.6;
+    b.reprise = Math.max(0, b.reprise - dt);
+    b.retenu = dansLaLunette && !!intentions.souffle && b.reprise <= 0 && b.reserve > 0;
+    if (b.retenu) {
+      b.reserve = Math.max(0, b.reserve - dt / L.souffle);
+      if (b.reserve <= 0) (b.retenu = false), (b.reprise = L.reprise); // tenu jusqu'au bout : il faut reprendre son souffle
+    } else b.reserve = Math.min(1, b.reserve + dt / L.souffle);
+    // la force du balancement : presque rien souffle retenu, beaucoup plus en reprenant son souffle (on lisse un peu)
+    const voulue = b.retenu ? L.retenu : b.reprise > 0 ? L.essouffle : 1;
+    b.force += (voulue - b.force) * Math.min(1, dt * 6);
+    b.t += dt * (b.reprise > 0 ? 1.8 : 1); // (essoufflé : on respire plus vite)
+    const w = (Math.PI * 2) / L.periode, A = L.balancement * b.force * s.visee * (st.lunette ? 1 : 0);
+    const bal = s.balancement || (s.balancement = { x: 0, y: 0 });
+    bal.x = A * Math.sin(b.t * w); // un « 8 » couché : 1 aller-retour de côté pendant 2 en hauteur
+    bal.y = A * 0.6 * Math.sin(2 * b.t * w);
+  }
+
   // Un tir : une balle (avec la nouvelle mécanique : voir Soldat.balle), ou une roquette.
   function tirer(s, A, monde, ev) {
     const st = A.stats, sigma = dispersion(s, st);
@@ -123,10 +161,13 @@ Tanks.Armes = (function () {
       ev.push(["roquette", { tireur: s, x: depart.x, y, z: depart.z, dir, arme: st.nom, guide: !!(R.guide && cible), cible: cible && cible.nom }]);
     } else {
       // une balle : elle part dans la direction du viseur (l'écart au hasard est tiré dans Soldat.balle)
-      const R = { portee: st.portee, porteeEfficace: st.porteeEfficace, degats: st.degats, degatsLoin: st.degatsLoin, degatsVehicule: st.degatsVehicule, cone: st.cone, dispersionTir: sigma, precision: 0.8, nom: st.nom };
+      // (étape 79) avec la lunette : la balle part là où la respiration a mis ta visée, et elle TOMBE (vitesseBalle)
+      const bal = s.balancement || { x: 0, y: 0 };
+      const R = { portee: st.portee, porteeEfficace: st.porteeEfficace, degats: st.degats, degatsLoin: st.degatsLoin, degatsVehicule: st.degatsVehicule, cone: st.cone, dispersionTir: sigma, precision: 0.8, nom: st.nom,
+        vitesseBalle: st.vitesseBalle, hausse: bal.y };
       const x = s.x + Math.cos(s.angle) * 0.7, z = s.z + Math.sin(s.angle) * 0.7;
       const avant = ev.length;
-      Tanks.Soldat.balle(s, x, y, z, s.angle, R, monde.soldats, Tanks.Soldat.vehiculesDe(monde), ev, Tanks.Vehicules.legers(monde));
+      Tanks.Soldat.balle(s, x, y, z, s.angle + bal.x, R, monde.soldats, Tanks.Soldat.vehiculesDe(monde), ev, Tanks.Vehicules.legers(monde));
       for (let k = avant; k < ev.length; k++) if (ev[k][0] === "balle" && ev[k][1].touche) s.compteurs.touches++;
     }
     // le RECUL : la dispersion grandit, et l'arme saute un peu de côté
@@ -156,6 +197,7 @@ Tanks.Armes = (function () {
     s.visee = Math.max(0, Math.min(1, s.visee + (voulu ? 1 : -1) * (dt / duree)));
     // 2. le recul redescend, le « coup » s'efface, le repérage s'oublie
     s.dispersionRecul = Math.max(0, s.dispersionRecul - TIR.reculRetour * dt);
+    respirer(s, st, intentions, dt); // (étape 79 : la respiration dans la lunette, Maj)
     s.coup = Math.max(0, (s.coup || 0) - dt * 8);
     s.repere = Math.max(0, (s.repere || 0) - dt);
     // la visibilité : la lampe allumée et le laser se voient de loin
@@ -211,5 +253,5 @@ Tanks.Armes = (function () {
     return st.mobilite * (1 + (TIR.viseeLent - 1) * s.visee);
   }
 
-  return { avancer, mobilite, dispersion, enMain, chercherCible, pointVise };
+  return { avancer, mobilite, dispersion, enMain, chercherCible, pointVise, chute, sousLaCroix };
 })();

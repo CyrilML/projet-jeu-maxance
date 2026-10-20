@@ -268,20 +268,8 @@ Tanks.Tableau = (function () {
             const p = Tanks.Scene.versEcran(s.assist.o.x, s.assist.o.y + 1.2, s.assist.o.z, L, H);
             if (p) (ctx.strokeStyle = "rgba(125,255,160,.8)"), (ctx.lineWidth = 1.5), ctx.strokeRect(p.x - 12, p.y - 16, 24, 32);
           }
-          // épaulé : le zoom (une lunette assombrit les bords)
-          if (s.visee > 0.6 && st.zoom >= 3) {
-            const r = H * 0.42;
-            ctx.fillStyle = "rgba(0,0,0," + (0.92 * s.visee) + ")";
-            ctx.beginPath();
-            ctx.rect(0, 0, L, H);
-            ctx.arc(L / 2, H / 2, r, 0, Math.PI * 2, true);
-            ctx.fill();
-            ctx.strokeStyle = "rgba(0,0,0,.9)";
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(L / 2 - r, H / 2); ctx.lineTo(L / 2 + r, H / 2); ctx.moveTo(L / 2, H / 2 - r); ctx.lineTo(L / 2, H / 2 + r);
-            ctx.stroke();
-          }
+          // épaulé : (étape 79) la VRAIE LUNETTE (affichage/lunette... dessinée ici) : le rond, la croix, les graduations
+          if (s.visee > 0.6 && st.lunette) dessinerLunette(ctx, L, H, s, st);
         } else if (s.arme === "gadget") {
           const F = g.fiche, part = g.id === "reparation" ? (g.cible ? g.part : 0) : g.attente > 0 ? 1 - g.attente / (F.attente || F.cadence || 1) : 1;
           const etat = g.id === "lanceGrenades" ? g.munitions + " / " + F.munitions + " · Espace : tirer" : g.id === "reparation" ? (g.cible ? "🔧 répare " + (g.cible === monde.joueur ? "ton tank" : g.cible.nom) + " : " + g.cible.vie + " / " + Tanks.Gadgets.vieMaxDe(g.cible) : "tiens Espace près d'un véhicule ami abîmé") : g.attente > 0 ? "prêt dans " + Math.ceil(g.attente) + " s" : "Espace : utiliser" + (g.id === "jumelles" ? " (V : zoom)" : "");
@@ -748,6 +736,73 @@ Tanks.Tableau = (function () {
       }[t.mode];
       texte(aide, L / 2, H - 14, 13, "rgba(255,255,255,.85)", "center");
     }
+  }
+
+  // ✍️ (étape 79) LA LUNETTE DE SNIPER : tout est noir sauf un grand rond ; dedans, une croix fine avec des points
+  // (les « mil-dots » : chacun = 1 milliradian, soit 1 m à 1 000 m), un bord un peu sombre (le vignettage), et en bas
+  // la barre de ton SOUFFLE (Maj). Le peintre ne fait que LIRE le soldat : s.souffle, s.balancement, s.vise.
+  function dessinerLunette(ctx, L, H, s, st) {
+    const cx = L / 2, cy = H / 2, r = Math.min(L, H) * 0.44, a = Math.min(1, (s.visee - 0.6) / 0.3);
+    ctx.save();
+    ctx.globalAlpha = a;
+    // le noir autour du rond
+    ctx.fillStyle = "#000";
+    ctx.beginPath();
+    ctx.rect(0, 0, L, H);
+    ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
+    ctx.fill();
+    // le vignettage : le bord du verre s'assombrit
+    const g = ctx.createRadialGradient(cx, cy, r * 0.7, cx, cy, r);
+    g.addColorStop(0, "rgba(0,0,0,0)");
+    g.addColorStop(1, "rgba(0,0,0,.75)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    // la croix : épaisse sur les bords, très fine au centre
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(cx - r, cy); ctx.lineTo(cx - r * 0.45, cy); ctx.moveTo(cx + r * 0.45, cy); ctx.lineTo(cx + r, cy);
+    ctx.moveTo(cx, cy + r); ctx.lineTo(cx, cy + r * 0.45);
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.45, cy); ctx.lineTo(cx + r * 0.45, cy); ctx.moveTo(cx, cy - r); ctx.lineTo(cx, cy + r * 0.45);
+    ctx.stroke();
+    // les mil-dots : 1 milliradian = (1 ÷ 1000) rad ; à l'écran, ça dépend du zoom
+    const champ = (Tanks.CONFIG.camera.champ / st.zoom) * (Math.PI / 180), mil = (0.001 / champ) * H;
+    ctx.fillStyle = "#000";
+    const pas = Math.max(1, Math.ceil(14 / mil)); // (on espace les points s'ils sont trop serrés : 1 point = « pas » mrad)
+    for (let k = 1; k <= 10; k++) {
+      const p = k * mil * pas;
+      if (p > r * 0.44) break;
+      for (const [dx, dy] of [[p, 0], [-p, 0], [0, p], [0, -p]]) {
+        ctx.beginPath();
+        ctx.arc(cx + dx, cy + dy, k % 5 === 0 ? 2.6 : 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    // le petit point rouge au centre
+    ctx.fillStyle = "rgba(255,40,40,.9)";
+    ctx.beginPath();
+    ctx.arc(cx, cy, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+    // la barre du SOUFFLE (Maj) et les chiffres utiles
+    const b = s.souffle || { reserve: 1, retenu: false, reprise: 0 }, lb = r * 0.5, yb = cy + r * 0.6;
+    ctx.fillStyle = "rgba(0,0,0,.55)";
+    ctx.fillRect(cx - lb / 2 - 2, yb - 2, lb + 4, 10);
+    ctx.fillStyle = b.reprise > 0 ? "#ff6a5a" : b.retenu ? "#7dd8ff" : "#d9e6ef";
+    ctx.fillRect(cx - lb / 2, yb, lb * b.reserve, 6);
+    ctx.font = "13px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#fff";
+    ctx.fillText(b.reprise > 0 ? "😮‍💨 tu reprends ton souffle…" : b.retenu ? "🤫 souffle retenu" : "Maj : retenir ton souffle", cx, yb - 8);
+    if (s.vise) {
+      const sous = Tanks.Armes.sousLaCroix(s.vise.d, st.vitesseBalle);
+      ctx.fillText("×" + st.zoom.toFixed(0) + " · " + Math.round(s.vise.d) + " m · 1 point = " + pas + " mrad" + (st.vitesseBalle ? " · la balle arrive " + Math.abs(Math.round(sous * 100)) + " cm " + (sous >= 0 ? "sous" : "au-dessus de") + " la croix" : ""), cx, yb + 24);
+    }
+    ctx.restore();
   }
 
   return { initialiser, dessiner };

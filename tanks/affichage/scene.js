@@ -716,7 +716,9 @@ Tanks.Scene = (function () {
     const toiPied = monde.phase !== "garage" && monde.toi && monde.toi.mode === "pied" && monde.toi.soldat.armes ? monde.toi.soldat : null;
     const zoom = !toiPied ? 1 : 1 + ((toiPied.arme === "gadget" && toiPied.gadget.id === "jumelles" ? toiPied.gadget.fiche.zoom : toiPied.arme === "pistolet" || toiPied.arme === "principale" ? toiPied.armes[toiPied.arme].stats.zoom : 1) - 1) * (toiPied.visee || 0);
     if (Math.abs(cam.fov - C.camera.champ / zoom) > 0.01) (cam.fov = C.camera.champ / zoom), cam.updateProjectionMatrix();
-    if (zoom > 2.5) oeil = new THREE.Vector3(toiPied.x, toiPied.y + 1.65, toiPied.z), (cible = new THREE.Vector3(toiPied.x + Math.cos(toiPied.angle) * 50, toiPied.y + 1.55, toiPied.z + Math.sin(toiPied.angle) * 50)), (camera.saut = true);
+    // (étape 79) dans la lunette, la caméra suit ta RESPIRATION (le « 8 » de logique/armes.js) : on la lit, sans rien changer
+    const bal = (zoom > 2.5 && toiPied.balancement) || { x: 0, y: 0 }, aV = toiPied ? toiPied.angle + bal.x : 0;
+    if (zoom > 2.5) oeil = new THREE.Vector3(toiPied.x, toiPied.y + 1.65, toiPied.z), (cible = new THREE.Vector3(toiPied.x + Math.cos(aV) * 50, toiPied.y + 1.55 + bal.y * 50, toiPied.z + Math.sin(aV) * 50)), (camera.saut = true);
     cam.position.lerp(oeil, monde.phase === "garage" || camera.saut ? 1 : Math.min(1, dt * 14));
     camera.saut = false;
     cam.lookAt(cible);

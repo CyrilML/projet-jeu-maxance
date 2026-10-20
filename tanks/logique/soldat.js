@@ -95,7 +95,10 @@ Tanks.Soldat = (function () {
       let chance = R.precision * (1 - 0.5 * (meilleur.d / R.portee)), degats = R.degats;
       if (R.dispersionTir !== undefined) {
         const sig = R.dispersionTir, d = meilleur.d, [w, h] = C.tir.cible;
-        chance = Math.abs((Math.random() * 2 - 1) * sig) < w / d && Math.abs((Math.random() * 2 - 1) * sig) < h / d ? 1 : 0;
+        // (étape 79) la CHUTE de la balle (m, vue d'ici : chute ÷ d radians) et la respiration (hausse) décalent l'écart en hauteur
+        const tombe = R.vitesseBalle ? Tanks.Armes.sousLaCroix(d, R.vitesseBalle) : 0;
+        if (R.vitesseBalle) tireur.derniereChute = { d, chute: Tanks.Armes.chute(d, R.vitesseBalle), sous: tombe };
+        chance = Math.abs((Math.random() * 2 - 1) * sig) < w / d && Math.abs((Math.random() * 2 - 1) * sig + (R.hausse || 0) - tombe / d) < h / d ? 1 : 0;
         if (d > R.porteeEfficace) degats *= 1 + (R.degatsLoin - 1) * Math.min(1, (d - R.porteeEfficace) / Math.max(1, R.portee - R.porteeEfficace));
       }
       if (Math.random() < chance) {

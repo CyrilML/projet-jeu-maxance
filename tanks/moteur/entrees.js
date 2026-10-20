@@ -21,6 +21,7 @@ Tanks.Entrees = (function () {
     valider: ["Enter", "NumpadEnter"],
     recommencer: ["KeyR"],
     recharger: ["KeyR"], // étape 77 : à pied, pendant la bataille, R recharge ton arme
+    souffle: ["ShiftLeft", "ShiftRight"], // étape 79 : Maj retient ton souffle dans la lunette
     viser: ["KeyV"], // étape 77 : épauler (ou le clic droit)
     lampe: ["KeyL"], // étape 77 : allumer / éteindre la lampe de ton arme
     retour: ["Backspace"],

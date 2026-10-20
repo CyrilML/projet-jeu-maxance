@@ -43,6 +43,9 @@ Tanks.Equipement = (function () {
     }
     r.chargeur = Math.max(1, Math.round(r.chargeur));
     r.visee = Math.max(0.08, r.visee);
+    // (étape 79) une LUNETTE de sniper : les fusils « precision » en ont une (au moins ×4), et toute arme avec la lunette ×6
+    r.lunette = r.famille === "precision" || r.zoom >= 3;
+    if (r.lunette) r.zoom = Math.max(r.zoom, C.tir.lunette.zoom);
     r.precision = 1 - Math.min(1, r.dispersionVisee / 0.02); // (pour les barres du menu : 1 = parfait)
     return r;
   }

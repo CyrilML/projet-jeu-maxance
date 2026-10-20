@@ -24,7 +24,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 16,
+  version: 17,
   pasFixe: 1 / 120,
   // (étape 72) ✍️ « Ça rame trop. » La boucle ne fait jamais plus de 6 petits pas par image : si l'ordinateur est en
   // retard (une image a duré plus de 6 / 120 = 0,05 s), on JETTE le retard au lieu de courir après (sinon, plus il est
@@ -541,7 +541,7 @@ Tanks.CONFIG = {
       armes: ["rpg7", "at4", "javelin"], gadgets: ["reparation", "droneReparation"], explosifs: ["mineAT", "c4"] },
     eclaireur: { nom: "Éclaireur", icone: "🔭", couleur: "#7dff8a", vie: 1,
       texte: "Tireur de loin : fusil de précision avec lunette, et des JUMELLES qui marquent les ennemis.",
-      armes: ["m110", "lapua", "barrett"], gadgets: ["jumelles", "capteur"], explosifs: ["claymore", "grenades"] },
+      armes: ["m110", "svd", "lapua", "barrett"], gadgets: ["jumelles", "capteur"], explosifs: ["claymore", "grenades"] },
     medecin: { nom: "Médecin de guerre", icone: "⛑️", couleur: "#ff5a6a", vie: 1,
       texte: "Il SOIGNE ses amis avec sa trousse et RELÈVE les soldats tombés avec son défibrillateur.",
       armes: ["mp5", "vector", "p90"], gadgets: ["trousse", "defibrillateur"], explosifs: ["fumigene", "grenades"] },
@@ -588,17 +588,23 @@ Tanks.CONFIG = {
     m110: { nom: "M110", type: "Fusil de tireur d'élite", icone: "🎯", classe: "eclaireur", famille: "precision",
       texte: "Semi-automatique : 2 balles mettent un soldat à terre, de très loin.",
       degats: 2, cadence: 0.4, portee: 330, porteeEfficace: 200, degatsLoin: 0.75, chargeur: 10, reserve: 50, rechargement: 2.6,
-      dispersion: 0.06, dispersionVisee: 0.0015, recul: 0.02, visee: 0.38, mobilite: 0.97, bruit: 1.2, zoom: 1.4,
+      dispersion: 0.06, dispersionVisee: 0.0015, recul: 0.02, visee: 0.38, mobilite: 0.97, bruit: 1.2, zoom: 1.4, vitesseBalle: 780,
       modele: { corps: 0.38, canon: 0.46, crosse: "precision", chargeur: "droit", garde: 0.34, teinte: 0x3a3a30, poly: 0x5a5440 } },
+    // (étape 79) le nouveau fusil de l'éclaireur : semi-automatique, plus léger que le .338, la balle tombe un peu plus vite.
+    svd: { nom: "SVD Dragunov", type: "Fusil de tireur d'élite", icone: "🎯", classe: "eclaireur", famille: "precision",
+      texte: "Le fusil russe : léger, semi-automatique, 2 balles par soldat. Sa balle est plus lente : vise un peu plus haut de loin !",
+      degats: 2.2, cadence: 0.55, portee: 380, porteeEfficace: 240, degatsLoin: 0.8, chargeur: 10, reserve: 40, rechargement: 2.8,
+      dispersion: 0.07, dispersionVisee: 0.0012, recul: 0.025, visee: 0.4, mobilite: 0.98, bruit: 1.3, zoom: 1.4, vitesseBalle: 700,
+      modele: { corps: 0.4, canon: 0.56, crosse: "precision", chargeur: "petit", garde: 0.32, teinte: 0x4a3a2a, poly: 0x6a4a30 } },
     lapua: { nom: "Sniper .338", type: "Fusil à verrou", icone: "🎯", classe: "eclaireur", famille: "precision",
       texte: "1 balle = 1 soldat à terre. Mais il faut réarmer après chaque tir.",
       degats: 3.5, cadence: 1.25, portee: 450, porteeEfficace: 300, degatsLoin: 0.85, chargeur: 5, reserve: 30, rechargement: 3.2,
-      dispersion: 0.08, dispersionVisee: 0.0008, recul: 0.03, visee: 0.45, mobilite: 0.95, bruit: 1.4, zoom: 1.4,
+      dispersion: 0.08, dispersionVisee: 0.0008, recul: 0.03, visee: 0.45, mobilite: 0.95, bruit: 1.4, zoom: 1.4, vitesseBalle: 900,
       modele: { corps: 0.42, canon: 0.58, crosse: "precision", chargeur: "petit", garde: 0.3, verrou: true, teinte: 0x2c3328, poly: 0x4a5a3a } },
     barrett: { nom: "Barrett .50", type: "Fusil anti-matériel", icone: "🎯", classe: "eclaireur", famille: "precision",
       texte: "Énorme ! Il abîme aussi les motos, les quads et le 4x4. Très lourd.",
       degats: 4, degatsVehicule: 1, cadence: 0.9, portee: 520, porteeEfficace: 350, degatsLoin: 0.9, chargeur: 10, reserve: 30, rechargement: 3.8,
-      dispersion: 0.09, dispersionVisee: 0.001, recul: 0.045, visee: 0.6, mobilite: 0.88, bruit: 1.8, zoom: 1.4,
+      dispersion: 0.09, dispersionVisee: 0.001, recul: 0.045, visee: 0.6, mobilite: 0.88, bruit: 1.8, zoom: 1.4, vitesseBalle: 850,
       modele: { corps: 0.5, canon: 0.62, crosse: "lourde", chargeur: "droit", garde: 0.3, frein: true, bipied: true, teinte: 0x30302c, poly: 0x3a3a34 } },
     mp5: { nom: "MP5", type: "Pistolet-mitrailleur", icone: "🔫", classe: "medecin", famille: "pm",
       texte: "Petit, léger et précis de près : on court plus vite avec.",
@@ -708,5 +714,12 @@ Tanks.CONFIG = {
   //   la dispersion) reste dans ce rectangle ; reculRetour : rad/s (le recul redescend) ; reculMax : rad ;
   //   bruit : m (un tir s'entend jusqu'à 160 m × le bruit de l'arme) ; repere : s pendant lesquels tu es « repéré » ;
   //   viseeLent : × ta vitesse en visant ; pullHorizontal : la part du recul qui fait bouger ton arme de côté.
-  tir: { cible: [0.32, 0.85], reculRetour: 0.09, reculMax: 0.08, bruit: 160, repere: 4, viseeLent: 0.6, reculCote: 0.25, vise: 0.05 },
+  tir: { cible: [0.32, 0.85], reculRetour: 0.09, reculMax: 0.08, bruit: 160, repere: 4, viseeLent: 0.6, reculCote: 0.25, vise: 0.05,
+    // (étape 79) LA LUNETTE DE SNIPER (les fusils « precision », ou toute arme avec la lunette ×6) :
+    //   zoom : le zoom minimum d'un fusil de sniper ; balancement : rad, l'écart de la respiration (un « 8 » en
+    //   « periode » s) ; souffle : s où tu retiens ton souffle (Maj) ; reprise : s où tu reprends ton souffle après
+    //   l'avoir retenu jusqu'au bout (la visée bouge alors « essouffle » fois plus) ; retenu : × le balancement souffle
+    //   retenu ; gravite : m/s², ce qui fait tomber la balle (chute = ½ × g × temps², temps = distance ÷ vitesseBalle) ;
+    //   zero : m, la distance où la lunette est réglée (la balle arrive pile sur la croix ; plus loin, en dessous).
+    lunette: { zoom: 4, balancement: 0.004, periode: 5, souffle: 4, reprise: 3, essouffle: 2.2, retenu: 0.05, gravite: 9.81, zero: 200 } },
 };
