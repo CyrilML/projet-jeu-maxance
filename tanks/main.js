@@ -37,6 +37,7 @@ window.Tanks = window.Tanks || {};
   });
   document.querySelectorAll("[data-appuyer]").forEach((b) => b.addEventListener("click", () => { E.appuyer(b.dataset.appuyer); toile2d.focus(); }));
 
+  let rechargement = false; // (étape 81)
   let enPause = false, reste = 0, avant = performance.now(), ordre = null;
   const parts = { logique: 0, dessin: 0, tableau: 0, capot: 0, pas: 0, abandonnes: 0 }; // (étape 72 : le chronomètre)
   function boucle(maintenant) {
@@ -48,6 +49,12 @@ window.Tanks = window.Tanks || {};
     if (E.consommer("son")) Tanks.Sons.basculer();
     if (E.consommer("lampe") && monde.toi && monde.toi.soldat) Tanks.Equipement.basculerLampe(monde.toi.soldat); // (étape 77 : L)
     Tanks.Menu.maj(monde); // (étape 77 : le menu s'ouvre au garage, se ferme en bataille)
+    // ✍️ (étape 81) une carte avec un AUTRE DÉCOR a été choisie (la ville, le désert…) : le décor est fabriqué au
+    // chargement, alors on recharge la page (la sauvegarde a déjà retenu la carte : le menu revient avec elle)
+    if (monde.phase === "garage" && !rechargement && Tanks.CarteDuJour.decorDe(C.cartes.find((c) => c.id === monde.carte)) !== Tanks.CarteDuJour.decor) {
+      rechargement = true;
+      setTimeout(() => location.reload(), 150);
+    }
     if (E.consommer("ordre") && monde.phase === "bataille") Tanks.BarreOrdres.ouvrir(); // (étape 65 : touche T)
     ordre = ordre || Tanks.BarreOrdres.prendre(); // (la phrase écrite dans la barre, s'il y en a une ; elle attend le prochain pas)
     let t0 = performance.now();

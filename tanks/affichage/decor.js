@@ -81,6 +81,9 @@ Tanks.Decor = (function () {
     herbe: [80, 104, 50], herbeSombre: [58, 82, 40], herbeSeche: [138, 130, 82], herbeJaune: [104, 114, 58], terre: [116, 96, 70], terreBattue: [126, 110, 86],
     sousBois: [60, 58, 38], sable: [176, 160, 122], boue: [82, 74, 54], fond: [70, 76, 62], chemin: [126, 108, 80],
   };
+  // (étape 81) la variante de la carte (le désert, la ville en ruines…) peut changer les couleurs du sol
+  const VAR = T.variante || {};
+  Object.assign(COUL, VAR.sol || {});
   function peindreChamp() {
     const b1 = Tanks.Bruit.creer(741), b2 = Tanks.Bruit.creer(742), b3 = Tanks.Bruit.creer(743), b4 = Tanks.Bruit.creer(744);
     // la densité des arbres (pour le sol sombre des forêts) : chaque arbre « assombrit » sa case et ses voisines
@@ -233,6 +236,22 @@ Tanks.Decor = (function () {
     for (const l of lignes) tracer(l, L * 0.78, "rgba(98,80,56,0.55)");
     for (const l of lignes) tracer(l, L * 0.42, "rgba(132,114,82,0.9)");
     for (const l of lignes) tracer(l, L * 0.16, "rgba(104,112,62,0.55)");
+    // ✍️ (étape 81) les RUES de la ville : du bitume gris, un trottoir plus clair de chaque côté, une ligne blanche au milieu
+    const Q = VAR.quartier;
+    if (Q) {
+      for (const l of T.rues) tracer(l, (Q.rue + 3) * k, "rgba(150,148,142,0.95)");
+      for (const l of T.rues) tracer(l, Q.rue * k, VAR.rues || "#5a5c60");
+      if (!VAR.toitPlat) for (const l of T.rues) tracer(l, 0.25 * k, "rgba(225,225,215,0.6)");
+      // (des trous d'obus en plus dans la ville en ruines)
+      for (let i = 0; i < Q.rayon * (VAR.trous || 0); i++) {
+        const a = hasard() * Math.PI * 2, d = Math.sqrt(hasard()) * Q.rayon, x = X(Q.x + Math.cos(a) * d), y = X(Q.z + Math.sin(a) * d), r = (1.5 + hasard() * 3) * k;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, "rgba(30,28,26,0.8)");
+        g.addColorStop(1, "rgba(60,58,54,0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(x - r, y - r, r * 2, r * 2);
+      }
+    }
     const t = new THREE.CanvasTexture(c);
     t.flipY = false;
     t.colorSpace = THREE.SRGBColorSpace;
@@ -689,6 +708,7 @@ Tanks.Decor = (function () {
   const mH = new THREE.Matrix4(), qH = new THREE.Quaternion(), pH = new THREE.Vector3(), sH = new THREE.Vector3(), cH = new THREE.Color();
   function majHerbe(position, rayon) {
     if (!herbe) return;
+    if (VAR.herbe === false) rayon = 0; // (étape 81 : pas d'herbe dans le désert)
     herbe.visible = rayon > 0;
     // (vue de haut, de plus de 15 m au-dessus du sol, on ne verrait que le cercle d'herbe : pas de touffes)
     if (rayon && position.y - T.hauteur(position.x, position.z) > 15) rayon = 0;

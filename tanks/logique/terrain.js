@@ -37,7 +37,11 @@ Tanks.Terrain = (function () {
   const SO = () => Tanks.Souterrain;
   const demi = W.taille / 2, V = W.village, LAC = C.lac, CAMP = W.camp;
   // (étape 71) tous les groupes de maisons : le village, puis les hameaux
-  const VILLAGES = [V].concat(W.hameaux || []);
+  // (étape 81) la VARIANTE de la carte du jour (donnees/carte-du-jour.js) : la ville, les ruines, le désert… (ou rien)
+  const VAR = (Tanks.CarteDuJour && Tanks.CarteDuJour.variante) || {}, Q = VAR.quartier || null;
+  // (étape 81) une VILLE en damier : elle prend la place du village (même terrain plat, mais plus grand)
+  const VILLE = Q ? { nom: "la ville", x: Q.x, z: Q.z, rayon: Q.rayon, maisons: VAR.village === false ? 0 : V.maisons, murets: 14 } : null;
+  const VILLAGES = [VILLE || (VAR.village === false ? Object.assign({}, V, { maisons: 0 }) : V)].concat(W.hameaux || []);
   const presDUnVillage = (x, z, plus) => VILLAGES.some((v) => Math.hypot(x - v.x, z - v.z) < v.rayon + (plus || 0));
   // (étape 71) les camps (et le parking des engins juste derrière) : ni arbre ni muret
   const dansUnCamp = (x, z) => Math.abs(x) < 210 && Math.abs(Math.abs(z) - CAMP - 15) < 95;
@@ -81,7 +85,7 @@ Tanks.Terrain = (function () {
     return (h00 * (1 - fu) + h10 * fu) * (1 - fv) + (h01 * (1 - fu) + h11 * fu) * fv;
   }
   function hauteurExacte(x, z) {
-    let h = B.fractal(bruit, x / W.collines.taille, z / W.collines.taille, 4) * W.collines.hauteur;
+    let h = B.fractal(bruit, x / W.collines.taille, z / W.collines.taille, 4) * W.collines.hauteur * (VAR.collines || 1); // (étape 81 : × 1,8 dans le désert = des dunes)
     // le village est sur un terrain presque plat : on « aplatit » les collines près du centre (étape 71 : et sous les hameaux)
     let plat = 1;
     for (let i = 0; i < VILLAGES.length; i++) {
@@ -118,6 +122,29 @@ Tanks.Terrain = (function () {
   const arbres = []; // { x, z, r, taille, ecrase: false }
   const loinDe = (x, z, d) => !dansLEau(x, z, d + 10) && !presDUnPortail(x, z, d + 12) && boites.every((b) => Math.hypot(b.x - x, b.z - z) > d + Math.max(b.demiL, b.demiP));
 
+  // ✍️ (étape 81) LA VILLE : des rues en damier (tous les « ilot » m), et dans chaque pâté de maisons (entre 4 rues),
+  // jusqu'à « maisons » maisons dans ses 4 coins, alignées sur les rues. « rues » : les lignes que le peintre colorie.
+  const rues = [];
+  if (Q) {
+    const n = Math.floor(Q.rayon / Q.ilot), dedans = (Q.ilot - Q.rue) / 2;
+    for (let k = -n; k <= n; k++) {
+      const u = k * Q.ilot, l = Math.sqrt(Math.max(0, Q.rayon * Q.rayon - u * u)) + Q.ilot * 0.5;
+      rues.push([[Q.x + u, Q.z - l], [Q.x + u, Q.z + l]], [[Q.x - l, Q.z + u], [Q.x + l, Q.z + u]]);
+    }
+    for (let gi = -n; gi < n; gi++) for (let gj = -n; gj < n; gj++) {
+      const cx = Q.x + (gi + 0.5) * Q.ilot, cz = Q.z + (gj + 0.5) * Q.ilot;
+      if (Math.hypot(cx - Q.x, cz - Q.z) > Q.rayon - Q.ilot * 0.3) continue;
+      const coins = [[-1, -1], [1, -1], [-1, 1], [1, 1]].sort(() => hasard() - 0.5).slice(0, Q.maisons);
+      for (const [sx, sz] of coins) {
+        const demiL = 4 + hasard() * 2.5, demiP = 3.5 + hasard() * 1.5, tourne = hasard() < 0.5;
+        const ex = tourne ? demiP : demiL, ez = tourne ? demiL : demiP; // (la place qu'elle prend, le long des rues)
+        const x = cx + sx * (dedans - ex - 1), z = cz + sz * (dedans - ez - 1);
+        if (!loinDe(x, z, 1)) continue;
+        boites.push({ x, z, demiL, demiP, angle: tourne ? Math.PI / 2 : 0, h: 4 + hasard() * 5, sorte: "maison", type: "maison", hameau: false, quartier: true, ruinesDepart: Q.ruinesDepart || 0, lieu: "la ville", graine: Math.floor(hasard() * 1e6) });
+      }
+    }
+  }
+
   // Le village : des maisons en ruines le long de deux rues en croix, des murets, des tas de gravats.
   // (étape 71 : pareil pour chaque hameau, avec moins de maisons)
   for (const vi of VILLAGES) {
@@ -126,7 +153,7 @@ Tanks.Terrain = (function () {
       const x = vi.x + (rue ? le_long : cote), z = vi.z + (rue ? cote : le_long);
       const demiL = 4 + hasard() * 3.5, demiP = 3.5 + hasard() * 2.5;
       if (!loinDe(x, z, 4)) continue;
-      boites.push({ x, z, demiL, demiP, angle: rue ? 0 : Math.PI / 2, h: 4 + hasard() * 4, sorte: "maison", type: "maison", hameau: vi !== V, lieu: vi.nom, graine: Math.floor(hasard() * 1e6) });
+      boites.push({ x, z, demiL, demiP, angle: rue ? 0 : Math.PI / 2, h: 4 + hasard() * 4, sorte: "maison", type: "maison", hameau: vi !== VILLAGES[0], lieu: vi.nom, graine: Math.floor(hasard() * 1e6) });
       n++;
     }
     for (let essai = 0, n = 0; n < vi.murets && essai < 600; essai++) {
@@ -152,7 +179,7 @@ Tanks.Terrain = (function () {
   const centres = [], forets = [];
   for (let k = 0; k < W.bosquets; k++) centres.push({ x: (hasard() * 2 - 1) * (demi - 70), z: (hasard() * 2 - 1) * (demi - 70), r: 18 + hasard() * 22 });
   for (let k = 0; k < W.forets; k++) forets.push({ x: (hasard() * 2 - 1) * (demi - 150), z: (hasard() * 2 - 1) * (demi - 150), r: 60 + hasard() * 70 });
-  for (let k = 0; k < W.arbres; k++) {
+  for (let k = 0, nArbres = Math.round(W.arbres * (VAR.arbres == null ? 1 : VAR.arbres)); k < nArbres; k++) { // (étape 81 : × « arbres » de la variante)
     let x, z;
     const tirage = hasard();
     if (tirage < W.partForets + W.partBosquets) {
@@ -164,7 +191,7 @@ Tanks.Terrain = (function () {
       x = (hasard() * 2 - 1) * (demi - 40);
       z = (hasard() * 2 - 1) * (demi - 40);
     }
-    if (Math.max(Math.abs(x), Math.abs(z)) > demi - 30 || presDUnVillage(x, z, -0.1 * V.rayon) || dansUnCamp(x, z) || !loinDe(x, z, 2) || dansLEau(x, z, 3) || presDUnPortail(x, z, 9)) continue; // (pas sur les départs)
+    if (Math.max(Math.abs(x), Math.abs(z)) > demi - 30 || presDUnVillage(x, z, -0.1 * VILLAGES[0].rayon) || dansUnCamp(x, z) || !loinDe(x, z, 2) || dansLEau(x, z, 3) || presDUnPortail(x, z, 9)) continue; // (pas sur les départs)
     arbres.push({ x, z, r: 0.6, taille: 0.8 + hasard() * 0.6, ecrase: false, sorte: hasard() < 0.35 ? "sapin" : "feuillu", angleChute: 0 });
   }
 
@@ -258,5 +285,5 @@ Tanks.Terrain = (function () {
     carte = nom === "souterrain" ? "souterrain" : "bataille";
   }
 
-  return { choisirCarte, get carte() { return carte; }, get souterrain() { return carte === "souterrain"; }, hauteur, hauteurExacte, cahierBilan, normale, boites, arbres, arbresAutour, boitesAutour, grilles: { arbres: grilleArbres, boites: grilleBoites }, dansBoite, repousser, vueLibre, departs, demi, camp: CAMP, villages: VILLAGES, forets, distLac, dansLEau, ileProche, iles: ILES };
+  return { variante: VAR, rues, choisirCarte, get carte() { return carte; }, get souterrain() { return carte === "souterrain"; }, hauteur, hauteurExacte, cahierBilan, normale, boites, arbres, arbresAutour, boitesAutour, grilles: { arbres: grilleArbres, boites: grilleBoites }, dansBoite, repousser, vueLibre, departs, demi, camp: CAMP, villages: VILLAGES, forets, distLac, dansLEau, ileProche, iles: ILES };
 })();

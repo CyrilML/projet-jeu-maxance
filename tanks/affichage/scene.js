@@ -73,7 +73,7 @@ Tanks.Scene = (function () {
     return v;
   }
   const camera = { angle: 0, pret: false, mode: 0 };
-  const L = C.beaute.soleil, SOLEIL = new THREE.Vector3(...L.direction).normalize(); // (étape 74 : un soleil un peu plus bas et plus chaud)
+  const L = Object.assign({}, C.beaute.soleil, (Tanks.CarteDuJour.variante || {}).soleil), /* (étape 81 : le soleil du désert…) */ SOLEIL = new THREE.Vector3(...L.direction).normalize(); // (étape 74 : un soleil un peu plus bas et plus chaud)
 
   function ciel() {
     const mat = new THREE.ShaderMaterial({
@@ -119,7 +119,7 @@ Tanks.Scene = (function () {
     rendu.shadowMap.enabled = true;
     rendu.shadowMap.type = THREE.PCFSoftShadowMap;
     scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0xc4cfd6, 200, 1100);
+    scene.fog = new THREE.Fog(Tanks.CarteDuJour.variante.brume || 0xc4cfd6, 200, 1100);
     leCiel = ciel();
     leCiel.renderOrder = -1;
     leCiel.frustumCulled = false;
@@ -182,7 +182,7 @@ Tanks.Scene = (function () {
   }
 
   // (étape 80) Descendre dans le souterrain, ou remonter dehors : on cache l'un, on montre l'autre, on change la lumière.
-  const BRUME = { dehors: new THREE.Color(0xc4cfd6), dessous: new THREE.Color(0x111316) };
+  const BRUME = { dehors: new THREE.Color(Tanks.CarteDuJour.variante.brume || 0xc4cfd6), dessous: new THREE.Color(0x111316) };
   function changerMonde(dessous) {
     sousTerre = dessous;
     if (dessous && !Tanks.Station3D.construite) Tanks.Station3D.construire(scene);

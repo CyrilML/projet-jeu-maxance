@@ -324,6 +324,9 @@ Tanks.Maisons3D = (function () {
     s.tranche = lin("#efe4da"); // (l'image des briques a déjà leur couleur)
     s.pierre = fois(lin("#c9bfae"), 0.9 + h2() * 0.15);
     s.cadre = h2() < 0.6 ? lin("#e8e4da") : s.volet;
+    // (étape 81) le village du désert : des murs couleur sable (et des toits presque plats, voir « toitPlat »)
+    const VAR = Tanks.Terrain.variante || {};
+    if (VAR.crepis && b.quartier) (s.crepi = lin(VAR.crepis[Math.floor(h2() * VAR.crepis.length)])), (s.tuile = fois(s.crepi, 0.8)), (s.volets = false);
     if (b.type === "grange") (s.crepi = lin("#a8a090")), (s.tuile = fois(lin("#8a6a58"), 0.85)), (s.planches = fois(lin("#8d7a62"), 0.85 + h2() * 0.2)), (s.porte = lin("#6a4b32"));
     if (b.type === "tour") (s.tuile = lin("#6d6a72")), (s.pierre = lin("#b8b0a2"));
     return s;

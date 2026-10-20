@@ -98,14 +98,15 @@ Tanks.Structures = (function () {
       b.murs.push(mur);
     });
     // le toit : à deux pentes, le faîte (le sommet) dans la longueur de la maison
-    b.toit = toit ? { hauteur: Math.min(b.demiP * (b.type === "tour" ? 1.25 : 0.82), 4.2), intact: true, vie: S.toitVie } : null;
+    b.toit = toit ? { hauteur: b.quartier && Tanks.Terrain.variante.toitPlat ? 0.7 : Math.min(b.demiP * (b.type === "tour" ? 1.25 : 0.82), 4.2), /* (étape 81 : toit presque plat dans le désert) */ intact: true, vie: S.toitVie } : null;
     b.etat = toit ? "intacte" : "debout";
     b.gravatsDedans = 0;
     b.changements = 0;
     b.total = b.morceaux.length;
     b.tombes = 0;
     // ✍️ (choix de Claude) quelques maisons des hameaux sont DÉJÀ en ruines au début de la bataille
-    if (b.type === "maison" && b.hameau && h2() < S.ruinesDepart) {
+    // (étape 81) et celles de la ville selon la variante (« ruinesDepart » de la carte : 80 % dans la ville en ruines)
+    if (b.type === "maison" && h2() < (b.quartier ? b.ruinesDepart : b.hameau ? S.ruinesDepart : 0)) {
       for (const m of b.morceaux) if (!m.tombe && (m.rang > 0 ? h2() < 0.8 : h2() < 0.3)) tomber(m, null);
       b.toit.intact = false;
       b.gravatsDedans = S.gravatsDedans * 0.8;
