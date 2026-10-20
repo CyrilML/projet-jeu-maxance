@@ -7,6 +7,8 @@
 // (le jeu ralentit un instant) au lieu de courir après : sinon chaque image aurait encore plus de pas à calculer, donc
 // encore plus de retard… (la « spirale de la mort »). Et on chronomètre chaque partie de l'image pour le régulateur de
 // qualité (affichage/qualite.js), qui choisit le niveau de détail. Touche G : choisir le niveau soi-même.
+// Étape 88 : la CAMPAGNE. Les écrans de la campagne (affichage/campagne-ecrans.js) font des demandes au metteur en scène
+// (logique/campagne.js), et son tableau de bord (affichage/campagne-tableau.js) se dessine par-dessus l'autre.
 
 window.Tanks = window.Tanks || {};
 
@@ -27,6 +29,8 @@ window.Tanks = window.Tanks || {};
   Tanks.Ambiance.initialiser(); // (étape 87 : le filtre « Battlefield »)
   Tanks.Accueil.initialiser(); // (étape 84 : la page d'accueil, avec la musique)
   Tanks.Menu.initialiser(monde, (type, valeur) => (type === "combat" ? Tanks.Monde.lancer(monde) : Tanks.Equipement.demander(monde, type, valeur)));
+  Tanks.TableauCampagne.initialiser(toile2d); // (étape 88)
+  Tanks.EcranCampagne.initialiser(monde, (type, valeur) => Tanks.Campagne.demander(monde, type, valeur)); // (étape 88 : comme le menu, des DEMANDES)
   toile2d.focus();
 
   const reveil = () => (Tanks.Sons.demarrer(), Tanks.Musique.demarrer()); // (étape 82 : la musique démarre avec le son)
@@ -43,7 +47,7 @@ window.Tanks = window.Tanks || {};
   let enPause = false, reste = 0, avant = performance.now(), ordre = null;
   const parts = { logique: 0, dessin: 0, tableau: 0, capot: 0, pas: 0, abandonnes: 0 }; // (étape 72 : le chronomètre)
   function boucle(maintenant) {
-    const dtMs = maintenant - avant, dt = Math.min(0.1, dtMs / 1000);
+    const dtMs = Math.max(0, maintenant - avant), dt = Math.min(0.1, dtMs / 1000); // (demande 88 : jamais négatif : la 1re image peut dater d'avant la fin du chargement)
     avant = maintenant;
     if (E.consommer("qualite")) Tanks.Qualite.basculer(); // (étape 72 : touche G)
     if (E.consommer("pause")) enPause = !enPause;
@@ -52,9 +56,10 @@ window.Tanks = window.Tanks || {};
     if (E.consommer("musique")) Tanks.Musique.basculer(); // (étape 82) M : la musique
     if (E.consommer("lampe") && monde.toi && monde.toi.soldat) Tanks.Equipement.basculerLampe(monde.toi.soldat); // (étape 77 : L)
     Tanks.Menu.maj(monde); // (étape 77 : le menu s'ouvre au garage, se ferme en bataille)
+    Tanks.EcranCampagne.maj(monde); // (étape 88 : l'intro qui avance, l'écran de fin qui arrive)
     // ✍️ (étape 81) une carte avec un AUTRE DÉCOR a été choisie (la ville, le désert…) : le décor est fabriqué au
     // chargement, alors on recharge la page (la sauvegarde a déjà retenu la carte : le menu revient avec elle)
-    if (monde.phase === "garage" && !rechargement && Tanks.CarteDuJour.decorDe(C.cartes.find((c) => c.id === monde.carte)) !== Tanks.CarteDuJour.decor) {
+    if (monde.phase === "garage" && !rechargement && !Tanks.EcranCampagne.actif && Tanks.CarteDuJour.decorDe(C.cartes.find((c) => c.id === monde.carte)) !== Tanks.CarteDuJour.decor) {
       rechargement = true;
       setTimeout(() => location.reload(), 150);
     }
@@ -96,6 +101,7 @@ window.Tanks = window.Tanks || {};
     t0 = performance.now();
     parts.dessin = t0 - t1;
     Tanks.Tableau.dessiner(monde);
+    Tanks.TableauCampagne.dessiner(monde); // (étape 88 : les objectifs, les marqueurs, la radio)
     t1 = performance.now();
     parts.tableau = t1 - t0;
     pause.hidden = !enPause;

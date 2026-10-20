@@ -137,19 +137,23 @@ Tanks.Menu = (function () {
       '<div class="m-haut"><div class="m-titre-jeu">🛡️ Prépare ta bataille</div><div class="m-resume">' + (C.cartes.find((f) => f.id === monde.carte) || C.cartes[0]).icone + " " + html((C.cartes.find((f) => f.id === monde.carte) || C.cartes[0]).nom) + " · " + (pied ? "🚶 à pied" : C.chars[monde.choix].drapeau + " " + html(C.chars[monde.choix].nom)) + " · " + K.icone + " " + html(K.nom) + " · " + A.icone + " " + html(A.nom) + " · " + C.gadgets[c.gadget].icone + " " + html(C.gadgets[c.gadget].nom) + " · " + C.explosifs[c.explosif].icone + " " + html(C.explosifs[c.explosif].nom) + "</div>" +
       '<button class="m-rejouer" data-action="combat">▶ Rejouer avec le même équipement</button></div>' +
       '<div class="m-onglets">' + ONGLETS.map(([id, t], i) => '<button class="m-onglet' + (i === onglet ? " actif" : "") + (pied && id === "vehicule" ? " grise" : "") + '" data-action="onglet" data-valeur="' + i + '">' + (i + 1) + ". " + t + (pied && id === "vehicule" ? " (infanterie seulement)" : "") + "</button>").join("") + "</div>" +
-      '<div class="m-aide">' + html(aide) + "</div>" + atelier +
+      '<div class="m-aide">' + html(aide) + "</div>" + atelier + (nom === "armes" || nom === "atelier" ? '<div class="m-apercu"></div>' : "") + // (demande 88 : l'arme en 3D qui tourne)
       '<div class="m-cartes n' + liste.length + '">' + liste.map(dessinerCarte).join("") + "</div>" +
       '<div class="m-bas"><span>⌨️ ← → choisir une carte · Entrée prendre · ' + (nom === "atelier" ? "↑ ↓ emplacement · " : "↑ ↓ onglet · ") + 'Tab onglet suivant · 🖱️ clic</span>' +
       (onglet < ONGLETS.length - 1 ? '<button class="m-suivant" data-action="suivant">Suivant ➜</button>' : "") + '<button class="m-combat" data-action="combat">⚔️ Au combat !</button></div>';
+    // (demande 88) l'APERÇU 3D : l'arme sur laquelle tu es (dans l'atelier : avec la pièce que tu regardes déjà vissée dessus)
+    const essai = nom === "armes" ? liste[carte].valeur : c.arme, ici = nom === "atelier" ? Object.assign({}, c.pieces, { [EMPLACEMENTS[emplacement]]: liste[carte].valeur }) : essai === c.arme ? c.pieces : null;
+    Tanks.Armes3D.apercu(racine.querySelector(".m-apercu"), essai, ici, { lanceGrenades: c.gadget === "lanceGrenades" });
   }
 
   // À chaque image : le menu est ouvert au garage, fermé pendant la bataille.
   function maj(m) {
     monde = m;
-    const doit = m.phase === "garage" && !Tanks.Accueil.visible; // (étape 84 : pas tant que la page d'accueil est là)
+    const doit = m.phase === "garage" && !Tanks.Accueil.visible && !(Tanks.EcranCampagne && Tanks.EcranCampagne.actif); // (étape 84 : pas tant que la page d'accueil est là ; étape 88 : ni pendant la campagne)
     if (doit !== ouvert) {
       ouvert = doit;
       racine.hidden = !ouvert;
+      if (!ouvert) Tanks.Armes3D.apercu(null); // (demande 88 : le menu se ferme : l'aperçu 3D s'arrête de tourner)
       if (ouvert) dessiner();
       else document.getElementById("ecran2d").focus();
     }

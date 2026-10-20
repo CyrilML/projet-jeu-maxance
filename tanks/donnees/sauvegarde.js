@@ -22,17 +22,21 @@
 //     pièces d'origine).
 //   10 (étape 80) : + carte (la dernière carte choisie dans le menu : "bataille" ou "souterrain") et souterrain (tes
 //     victoires dans le souterrain). Une ancienne version garde tout, avec la grande bataille et 0 victoire sous terre.
+//   11 (étape 88) : + campagne (le livret de la campagne : « debloque » = le plus grand chapitre ouvert, « chapitres » =
+//     pour chaque chapitre ses meilleures étoiles, son meilleur temps, ses essais ; « enCours » = le chapitre choisi, pour
+//     le retrouver après le rechargement de la page). Une ancienne version garde tout, avec le chapitre 1 ouvert.
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 10;
+  const VERSION = 11; // (étape 88 : + campagne)
   const radio = Tanks.Evenements;
 
   function vide() {
     return { version: VERSION, char: "leclerc", victoires: 0, defaites: 0, detruits: 0, tirs: 0, touches: 0, bateaux: 0, portails: 0, sousMarins: 0, avions: 0, ordres: 0, vehicules: 0, helicos: 0, cordes: 0, maisons: 0, murs: 0, grenades: 0,
       carte: "bataille", souterrain: 0, // (étape 80)
+      campagne: { debloque: 1, chapitres: {}, enCours: null }, // (étape 88)
       equipement: equipementDeDepart() }; // (étape 77)
   }
   // (étape 77) L'équipement de départ : pour chaque classe, sa 1re arme, son 1er gadget et son 1er explosif ; pour chaque arme, les pièces d'origine.
@@ -63,7 +67,7 @@ Tanks.Sauvegarde = (function () {
       if (brut) {
         const ancienne = JSON.parse(brut);
         const neuve = vide();
-        donnees = Object.assign(neuve, ancienne, { version: VERSION, equipement: fusionner(neuve.equipement, ancienne.equipement) });
+        donnees = Object.assign(neuve, ancienne, { version: VERSION, equipement: fusionner(neuve.equipement, ancienne.equipement), campagne: fusionner(neuve.campagne, ancienne.campagne) }); // (étape 88 : la campagne aussi)
         if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION });
       }
     } catch (e) {

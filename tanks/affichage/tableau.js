@@ -288,7 +288,7 @@ Tanks.Tableau = (function () {
           if (d < dmin) (dmin = d), (proche = nom);
         };
         voir(monde.joueur, "ton tank", C.char.rayon);
-        for (const x of monde.engins) voir(x, x.fiche.icone + " " + x.nom, x.sorte === "bateau" ? 7 : x.sorte === "sousmarin" ? 11 : x.sorte === "camion" ? 3.5 : x.genre === "helico" ? x.fiche.rayon : 2);
+        for (const x of monde.engins) if (x.equipe !== "rouges") voir(x, x.fiche.icone + " " + x.nom, x.sorte === "bateau" ? 7 : x.sorte === "sousmarin" ? 11 : x.sorte === "camion" ? 3.5 : x.genre === "helico" ? x.fiche.rayon : 2);
         if (proche) texte("E : monter dans " + proche, L / 2, H - 120, 22, "#ffe27a", "center");
       }
       return;
@@ -477,6 +477,7 @@ Tanks.Tableau = (function () {
     if (Q) texte("⚙️ qualité " + Q.niveau + "/" + (C.qualite.niveaux.length - 1) + (Q.auto ? "" : " ✋") + " · " + Math.round(Q.mesures.ips) + " i/s", L - 12, 192, 12, "rgba(255,255,255,.75)", "right");
     const j = monde.joueur, f = j.fiche;
     if (monde.phase === "garage" && Tanks.Menu && Tanks.Menu.ouvert) return; // (étape 77 : le menu montre déjà tout)
+    if (monde.phase === "briefing" || (monde.phase === "garage" && Tanks.EcranCampagne && Tanks.EcranCampagne.actif)) return; // (étape 88 : les écrans de la campagne montrent déjà tout)
     if (monde.phase === "garage") {
       panneau(L / 2 - 260, H - 190, 520, 170);
       texte(f.drapeau + " " + f.nom, L / 2, H - 150, 32, "#ffe27a", "center");
@@ -597,14 +598,16 @@ Tanks.Tableau = (function () {
       if (rouge) texte("🎯 " + j.cible.nom + " · " + Math.round(dv) + " m", v.x, v.y + 40, 14, "#ff7a6a", "center");
     }
     if (monde.metro) return void dessinerSouterrain(monde, t, ici);
-    // En haut : les équipes
+    // En haut : les équipes (étape 88 : pas en campagne, ce sont les objectifs qui comptent)
     const bleus = Tanks.Monde.vivants(monde, "bleus"), rouges = Tanks.Monde.vivants(monde, "rouges");
+    if (!monde.campagne) {
     panneau(L / 2 - 150, 10, 300, 40);
     texte("🔵 " + bleus + " / " + (E.allies + 1), L / 2 - 34, 37, 20, E.bleus.marque, "right");
     texte("contre", L / 2, 36, 13, "#ccc", "center");
     texte(rouges + " / " + E.ennemis + " 🔴", L / 2 + 34, 37, 20, E.rouges.marque);
     const sb = Tanks.Monde.soldatsVivants(monde, "bleus"), sr = Tanks.Monde.soldatsVivants(monde, "rouges");
     texte("🪖 " + sb + " / " + C.soldats.parEquipe + "   soldats   " + sr + " / " + C.soldats.parEquipe + " 🪖", L / 2, 68, 14, "#e8e4d6", "center");
+    }
     // En bas à gauche : ta vie et la recharge
     if (dansLeTank) {
     panneau(12, H - 98, 280, 86);
@@ -714,6 +717,7 @@ Tanks.Tableau = (function () {
   }
   function finEtAide(monde, t) {
     // La fin de la bataille
+    if ((monde.phase === "victoire" || monde.phase === "defaite") && monde.campagne) return; // (étape 88 : en campagne, l'écran de fin est celui de la campagne)
     if (monde.phase === "victoire" || monde.phase === "defaite") {
       const gagne = monde.phase === "victoire";
       panneau(L / 2 - 240, H / 2 - 90, 480, 170);
@@ -790,7 +794,7 @@ Tanks.Tableau = (function () {
     texte("🔵 " + (sb + (t.soldat && !t.soldat.mort ? 1 : 0)) + " debout · " + M.renforts.bleus + " renforts", L / 2 - 26, 34, 17, E.bleus.marque, "right");
     texte("contre", L / 2, 33, 12, "#ccc", "center");
     texte(sr + " debout · " + M.renforts.rouges + " renforts 🔴", L / 2 + 26, 34, 17, E.rouges.marque);
-    texte("🚇 le souterrain · le camp sans renfort ni soldat debout a perdu · ✖ " + M.elimines.rouges + " rouges et " + M.elimines.bleus + " bleus à terre", L / 2, 58, 12, "#e8e4d6", "center");
+    texte((monde.campagne ? "🚇 la station Terminus" : "🚇 le souterrain · le camp sans renfort ni soldat debout a perdu") + " · ✖ " + M.elimines.rouges + " rouges et " + M.elimines.bleus + " bleus à terre", L / 2, 58, 12, "#e8e4d6", "center");
     // le plan de la station (en haut à droite)
     const l = 300, h = 84, k = l / (2 * (SO().L + CS.tunnel) + 6), x0 = L - l - 12, y0 = 12, cx = l / 2, cz = h / 2;
     if (!plan) plan = fabriquerPlan(l, h, k, cx, cz);

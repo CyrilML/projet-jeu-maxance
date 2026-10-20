@@ -267,7 +267,7 @@ Tanks.Musique = (function () {
     if (!ctx) return;
     const doitDormir = document.hidden || !document.hasFocus();
     if (doitDormir !== endormie) (endormie = doitDormir), endormie ? ctx.suspend() : ctx.resume();
-    const auMenu = Tanks.Accueil.visible; // (étape 84 : la musique joue sur la page d'accueil seulement)
+    const auMenu = Tanks.Accueil.visible || !!(Tanks.EcranCampagne && Tanks.EcranCampagne.musique); // (étape 84 : la musique joue sur la page d'accueil seulement ; étape 88 : et sur les écrans de la campagne)
     if (auMenu && !joue) (joue = true), (pas = 0), (prochaine = ctx.currentTime + 0.1); // (on revient au menu : le morceau recommence au début)
     if (!auMenu && joue) joue = false;
     etat.joue = joue && !coupee && !sonCoupe;

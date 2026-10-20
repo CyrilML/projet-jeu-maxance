@@ -328,16 +328,6 @@ Tanks.Engins3D = (function () {
     return (geoArmes[cle] = { fusil, pistolet, roquettes, mat });
   }
   const PLACE_ARMES = { fusil: [0.2, 0.28, 0.1], pistolet: [0.48, 0.3, 0.03], roquettes: [0.15, 0.5, 0.15] };
-  function armes(detail) {
-    const F = formesArmes(detail), r = {};
-    for (const nom of ["fusil", "pistolet", "roquettes"]) {
-      const m = new THREE.Mesh(F[nom], F.mat);
-      m.position.set(...PLACE_ARMES[nom]);
-      m.castShadow = true;
-      r[nom] = m;
-    }
-    return r;
-  }
   // Où vont les mains pour chaque arme (dans le repère du dos).
   const MAINS = {
     fusil: { droite: [0.38, 0.21, 0.1], gauche: [0.66, 0.24, 0.07] },
@@ -369,12 +359,13 @@ Tanks.Engins3D = (function () {
       if (nom === "tenue") m.add(r.corps);
       m.bind(squel);
     }
-    const canons = armes(detail);
-    for (const c of Object.values(canons)) r.dos.add(c);
+    // (demande 88) le PORTE-ARME : l'arme de CE soldat (fabriquée par l'armurier, affichage/armes3d.js) y est accrochée
+    const porteArme = new THREE.Group();
+    r.dos.add(porteArme);
     const flamme = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffc860 }));
-    flamme.position.set(0.98, 0.29, 0.1);
-    r.dos.add(flamme);
-    return { porteur, corps: r.corps, dos: r.dos, cou: r.cou, jambes: r.jambes, genoux: r.genoux, epaules: r.epaules, coudes: r.coudes, canons, flamme, pose: null };
+    flamme.scale.set(1.6, 0.8, 0.8);
+    porteArme.add(flamme);
+    return { porteur, corps: r.corps, dos: r.dos, cou: r.cou, jambes: r.jambes, genoux: r.genoux, epaules: r.epaules, coudes: r.coudes, porteArme, objetArme: null, cleArme: null, torsion: 0, flamme, pose: null };
   }
 
   // La « cinématique inverse » à 2 os : l'épaule S, la main voulue M ; on cherche le coude.
@@ -431,24 +422,56 @@ Tanks.Engins3D = (function () {
     return { g, detail, simple, parachute };
   }
 
+  // (demande 88) ACCROCHER LA VRAIE ARME dans les mains (ou dans le dos, à la corde). Chaque famille se tient à sa façon :
+  //   place : où va le haut de la poignée (devant le dos, en m : x devant, y en haut, z à droite) ;
+  //   torsion : de combien le haut du corps tourne (rad) pour que la main gauche atteigne le garde-main.
+  // Les mains vont ensuite sur la POIGNÉE et sur le GARDE-MAIN de CETTE arme (la cinématique inverse plie les coudes).
+  const TENUES = {
+    fusil: { place: [0.33, 0.36, 0.13], torsion: -0.55 },
+    pistolet: { place: [0.45, 0.33, 0.04], torsion: -0.2 },
+    roquettes: { place: [0.3, 0.44, 0.17], torsion: -0.6 },
+  };
+  const _v = new THREE.Vector3(), _axeY = new THREE.Vector3(0, 1, 0);
+  function porterArme(r, modele, famille, corde) {
+    const cle = modele.cle + ":" + famille + (corde ? ":dos" : "");
+    if (r.cleArme === cle) return r.poseArme;
+    r.cleArme = cle;
+    if (r.objetArme) r.porteArme.remove(r.objetArme);
+    r.objetArme = Tanks.Armes3D.exemplaire(modele);
+    r.porteArme.add(r.objetArme);
+    r.flamme.position.copy(modele.bouche).add(new THREE.Vector3(0.06, 0, 0));
+    if (corde) {
+      r.torsion = 0;
+      r.porteArme.position.copy(DANS_LE_DOS.position);
+      r.porteArme.rotation.copy(DANS_LE_DOS.rotation);
+      return (r.poseArme = "corde");
+    }
+    const T = TENUES[famille] || TENUES.fusil;
+    r.torsion = T.torsion;
+    r.porteArme.position.fromArray(T.place).applyAxisAngle(_axeY, -T.torsion);
+    r.porteArme.rotation.set(0, -T.torsion, 0);
+    // les mains : sur la poignée et sur le garde-main (ou la poignée avant) de cette arme, vues depuis le dos
+    const versDos = (p) => _v.copy(p).applyAxisAngle(_axeY, -T.torsion).add(r.porteArme.position).toArray();
+    const pose = "arme:" + modele.cle + ":" + famille;
+    if (!MAINS[pose]) MAINS[pose] = { droite: versDos(modele.poignee.centre), gauche: versDos(modele.garde.centre) };
+    r.pose = null; // (on repose les bras)
+    return (r.poseArme = pose);
+  }
+
   // L'animation : marcher, courir, tourner sur place, nager, tomber, (étape 74) glisser à la corde. t = l'horloge (s).
   const DANS_LE_DOS = { position: new THREE.Vector3(-0.27, 0.3, -0.05), rotation: new THREE.Euler(0.15, 0, -1.0) }; // (le fusil, à la corde)
   function animer(o, s, t, tourne, pres) {
     const r = pres ? o.detail : o.simple;
     o.detail.porteur.visible = pres;
     o.simple.porteur.visible = !pres;
-    const arme = s.arme === "pistolet" ? "pistolet" : s.arme === "roquettes" || s.roquettesIA || (s.armes && s.armes.principale.stats.famille === "roquettes") ? "roquettes" : "fusil"; // (étape 77 : ton arme)
+    // (demande 88) LA VRAIE ARME de ce soldat : la tienne (avec ses pièces), ou celle tirée au sort pour lui (armes3d.js)
     const corde = !!s.corde && !s.mort;
-    for (const n in r.canons) r.canons[n].visible = (n === arme || (corde && n === "fusil")) && !s.nage && !s.mort;
-    // (à la corde, le fusil passe dans le dos ; sinon il revient dans les mains)
-    const f = r.canons.fusil;
-    if (corde !== !!r.fusilDansLeDos) {
-      r.fusilDansLeDos = corde;
-      if (corde) (f.position.copy(DANS_LE_DOS.position), f.rotation.copy(DANS_LE_DOS.rotation));
-      else (f.position.set(...PLACE_ARMES.fusil), f.rotation.set(0, 0, 0));
-    }
-    r.flamme.visible = s.tir > 0 && arme !== "roquettes" && !s.mort && !corde;
-    if (r.flamme.visible) r.flamme.position.x = arme === "pistolet" ? 0.62 : 0.98;
+    const modele = Tanks.Armes3D.pourSoldat(s, pres);
+    const famille = modele.id === "pistolet" ? "pistolet" : modele.famille === "roquettes" ? "roquettes" : "fusil";
+    const arme = porterArme(r, modele, famille, corde); // (la « pose » des bras pour cette arme)
+    r.porteArme.visible = !s.nage && !s.mort;
+    if (s.joueur) Tanks.Armes3D.noterArmeDuJoueur(r.objetArme, modele);
+    r.flamme.visible = s.tir > 0 && famille !== "roquettes" && !s.mort && !corde;
     const c = r.corps;
     if (s.mort) {
       // il tombe sur le dos en une demi-seconde, les bras ouverts
@@ -532,6 +555,8 @@ Tanks.Engins3D = (function () {
       // à plat ventre dans l'eau, la tête dehors ; les bras font la brasse et les jambes battent
       c.rotation.set(0, 0, -1.35);
       c.position.set(-0.2, 1.12, 0);
+      r.dos.rotation.set(0, 0, 0);
+      r.cou.rotation.set(0, 0, 0);
       r.pose = null;
       const brasse = t * 3;
       for (let i = 0; i < 2; i++) {
@@ -556,9 +581,10 @@ Tanks.Engins3D = (function () {
     }
     // le corps monte et descend un peu à chaque pas, et se penche en avant quand il court ; il respire au repos
     c.position.set(0, -Math.abs(Math.cos(phase)) * 0.045 * ampleur, 0);
-    r.dos.rotation.set(0, 0, -0.13 * Math.min(1, v / 4) + (s.tir > 0 && arme !== "roquettes" ? 0.025 : 0)); // (le recul du tir)
+    // (demande 88) le haut du corps tourne un peu (l'épaule gauche en avant, comme un vrai tireur) ; la tête, elle, regarde devant
+    r.dos.rotation.set(0, r.torsion, -0.13 * Math.min(1, v / 4) + (s.tir > 0 && famille !== "roquettes" ? 0.025 : 0)); // (le recul du tir)
     r.dos.scale.y = 1 + Math.sin(t * 2.2) * 0.008 * (1 - ampleur);
-    r.cou.rotation.set(0, 0, 0.08 * Math.min(1, v / 4)); // (il garde la tête droite en courant)
+    r.cou.rotation.set(0, -r.torsion * 0.9, 0.08 * Math.min(1, v / 4)); // (il garde la tête droite en courant)
   }
 
   // ------------------------------------------------------------------ (étape 74) une FIGURINE : un soldat immobile

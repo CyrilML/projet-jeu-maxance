@@ -33,6 +33,9 @@
 // Étape 80 : LA CARTE choisie, et dans le SOUTERRAIN : les parties de la station (rames, trams en feu, piliers, bancs,
 // escaliers, escalators, lampes), les renforts et les soldats tombés de chaque camp, l'étage où tu es, la route de chaque
 // soldat, les vraies lumières et les dessins de la station, et ce que coûtent ses lignes de vue.
+// Étape 88 : LA CAMPAGNE : ton livret (chapitres ouverts, étoiles, records), et pendant un chapitre : chaque objectif et
+// son compteur, la réplique de la radio et celles qui attendent, les événements du scénario à venir (dans combien de
+// secondes), les cibles spéciales (leur vie), le camion escorté, les avions de la frappe, et tes compteurs de mission.
 
 window.Tanks = window.Tanks || {};
 
@@ -56,7 +59,24 @@ Tanks.SousLeCapot = (function () {
     releve: (d) => "⚡ Tu relèves " + d.cible + " avec ton défibrillateur !",
     munitions: (d) => "🎒 Sac de munitions : réserve du " + d.arme + " pleine (" + d.reserve + "), grenades au complet",
     lampe: (d) => "🔦 Lampe " + (d.allumee ? "allumée" : "éteinte"),
-    accueil: () => "🏰 Tu quittes la page d'accueil : la musique se tait, place au menu",
+    accueil: (d) => (d.mode === "campagne" ? "🎬 Tu entres dans la CAMPAGNE : la liste des chapitres" : "🏰 Tu quittes la page d'accueil : la musique se tait, place au menu"),
+    // étape 88 : la campagne
+    "campagne-chapitre": (d) => "🎬 Chapitre " + d.numero + " « " + d.titre + " » installé : " + d.lieu + ", " + d.date + " · " + d.objectifs + " objectifs · " + d.chars + " chars et " + d.soldats + " soldats placés selon le scénario (tout est figé pendant le survol et le briefing)",
+    "campagne-debut": (d) => "▶ La mission « " + d.titre + " » commence ! Toi " + (d.mode === "pied" ? "à pied" : "dans ton char") + ", classe " + d.classe,
+    "campagne-objectif-nouveau": (d) => "🎯 Objectif " + d.numero + " / " + d.total + " (" + d.verbe + ") : " + d.texte + (d.type === "tenir" || d.type === "survivre" ? " · " + d.objectif + " s" : d.type === "eliminer" || d.type === "chars" ? " · " + d.objectif + " à faire" : ""),
+    "campagne-objectif": (d) => "✅ Objectif " + d.numero + " / " + d.total + " accompli en " + Math.round(d.temps) + " s : " + d.texte,
+    "campagne-radio": (d) => (d.camp === "rouges" ? "📡 (intercepté) " : "📻 ") + d.nom + " : « " + d.texte + " » (affichée " + virgule(d.duree, 1) + " s)",
+    "campagne-renforts": (d) => (d.equipe === "bleus" ? "▲ Renforts alliés : " : "⚠ Le Front envoie ") + d.nombre + (d.sorte === "chars" ? " char" : " soldat") + (d.nombre > 1 ? "s" : "") + (d.noms ? " (" + d.noms.join(", ") + ")" : "") + " depuis (" + Math.round(d.x) + " ; " + Math.round(d.z) + ")",
+    "campagne-helico": (d) => "🚁 Scénario : le " + d.nom + " vole vers (" + Math.round(d.x) + " ; " + Math.round(d.z) + ") avec " + d.passagers + " soldats à déposer à la corde",
+    "campagne-decollage": (d) => "🚁 " + d.nom + " décolle vers (" + Math.round(d.x) + " ; " + Math.round(d.z) + ")",
+    "campagne-frappe": (d) => "✈️ Frappe aérienne : " + d.avions + " avions, " + d.bombes + " bombes sur (" + d.x + " ; " + d.z + ") · chaque bombe est lâchée AVANT d'être au-dessus (elle garde la vitesse de l'avion en tombant)",
+    "campagne-convoi": (d) => "🚛 Un convoi de " + d.nombre + " camions part de (" + Math.round(d.x) + " ; " + Math.round(d.z) + ") et suit sa route jusqu'à (" + d.vers[0] + " ; " + d.vers[1] + ")",
+    "campagne-escorte": (d) => (d.attend ? "⏸ " + d.nom + " s'arrête et t'attend (tu es à " + d.distance + " m, plus de " + C.campagne.regles.escorte.attend + " m)" : "▶ " + d.nom + " repart (tu es à " + d.distance + " m)"),
+    "campagne-reussie": (d) => "🏆 MISSION ACCOMPLIE : chapitre " + d.numero + " « " + d.titre + " » en " + Math.floor(d.temps / 60) + " min " + Math.round(d.temps % 60) + " s · " + d.eliminations + " ennemis mis hors de combat par toi · précision " + Math.round(d.precision * 100) + " % · " + d.nbEtoiles + " étoile" + (d.nbEtoiles > 1 ? "s" : ""),
+    "campagne-echouee": (d) => "💀 MISSION ÉCHOUÉE : chapitre " + d.numero + " « " + d.titre + " » · " + d.raison + " (" + d.objectifs + " / " + d.total + " objectifs faits)",
+    "campagne-debloque": (d) => "🔓 Chapitre " + d.numero + " débloqué : « " + d.titre + " » (c'est écrit dans ton livret)",
+    "campagne-quitte": (d) => "↩ Tu quittes le chapitre " + d.numero + " « " + d.titre + " » (" + (d.raison === "accueil" ? "retour à l'accueil" : "retour à la liste des chapitres") + ")",
+    "campagne-decor": (d) => "🔄 Le chapitre " + d.numero + " se passe sur un autre décor (« " + d.carte + " ») : la page se recharge, et la sauvegarde te ramène directement au chapitre",
     musique: (d) => (d.allumee ? "🎻 La musique joue (M pour la couper)" : "🔇 Musique coupée (M pour la remettre)"),
     vue: (d) => (d.aPied ? (d.premiere ? "👁️ Vue à la première personne (C) : tu vois par les yeux du soldat" : "🎥 Vue de derrière le soldat (C)") : "🎥 Caméra du véhicule changée (C)"),
     // étape 75
@@ -315,6 +335,11 @@ Tanks.SousLeCapot = (function () {
     }
     l.push(["assistance à la visée", "cône " + v(st.cone) + " · aimant " + virgule(st.aimant, 1) + " rad/s · " + (s.assist ? "🧲 cible : " + s.assist.o.nom + " à " + Math.round(s.assist.d) + " m" + (s.aimantActif ? " (l'arme glisse vers lui)" : "") : "personne dans le cône")]);
     l.push(["lampe · laser · bruit", (st.lampe ? "🔦 " + st.lampe.portee + " m " + (s.lampeAllumee ? "allumée" : "éteinte") : "pas de lampe") + " · " + (st.laser ? "laser " + st.laser + " → " + (s.vise ? s.vise.sur + " à " + virgule(s.vise.d, 1) + " m" : "—") : "pas de laser") + " · on t'entend à " + Math.round(C.tir.bruit * st.bruit) + " m" + (s.repere > 0 ? " · 📢 REPÉRÉ (" + virgule(s.repere, 1) + " s)" : "") + " · visibilité +" + Math.round(s.visibilite || 0) + " m"]);
+    // (demande 88) L'ARMURIER : le modèle 3D de ton arme, ses pièces vissées, la vue à la première personne
+    const A3 = Tanks.Armes3D.bilan, VU = Tanks.Armes3D.vue, mod = VU.modele || Tanks.Armes3D.fabriquer(A.id, A.pieces, "beau", { lanceGrenades: g.id === "lanceGrenades" });
+    l.push(["🔫 modèle 3D (demande 88)", mod.nom + " · " + mod.liste.join(" · ") + " · " + mod.triangles.toLocaleString("fr-FR") + " triangles en " + mod.objets + " dessins (1 par matière)"]);
+    l.push(["👁️ vue de l'arme", (VU.actif ? "première personne : " + A3.vueTriangles.toLocaleString("fr-FR") + " triangles (arme + 2 mains gantées + avant-bras), " + A3.vueObjets + " dessins, dessinée par-dessus le monde · recul " + virgule(VU.recul || 0, 2) + (VU.baisse > 0 ? " · arme baissée à " + Math.round(VU.baisse * 100) + " %" : "") : "pas active (C à pied pour la voir)") + " · 🔦 " + A3.lampe + " · 🔴 laser " + A3.laser]);
+    l.push(["🏭 l'armurier", A3.modeles + " modèles fabriqués en " + Math.round(A3.ms) + " ms (gardés au magasin, partagés par tous les soldats) · armes vues sur les soldats : " + Object.keys(A3.soldatsArmes).join(", ") + " · aperçu du menu : " + A3.apercu]);
     l.push(["ton gadget", g.fiche.icone + " " + g.fiche.nom + (g.attente > 0 ? " · prêt dans " + virgule(g.attente, 1) + " s" : " · prêt") + (g.id === "lanceGrenades" ? " · " + g.munitions + " / " + g.fiche.munitions : "") + (g.zone ? " · trousse posée (" + virgule(g.zone.reste, 0) + " s)" : "") + (g.drone ? " · drone sur " + g.drone.cible.nom : "")]);
     const marques = monde.soldats.concat(monde.chars, monde.vehicules).filter((o) => o.marque > 0).length;
     l.push(["tes compteurs", "tirs " + s.compteurs.tirs + " · touchés " + s.compteurs.touches + " · soins " + virgule(s.compteurs.soins, 1) + " · réparations " + s.compteurs.reparations + " · ennemis marqués " + s.compteurs.marques + " (" + marques + " marqués en ce moment) · relevés " + s.compteurs.releves]);
@@ -341,9 +366,31 @@ Tanks.SousLeCapot = (function () {
     l.push(["les lignes de vue", SO.bilan.lignes.toLocaleString("fr-FR") + " lignes testées depuis le début · " + SO.bilan.pas.toLocaleString("fr-FR") + " petits pas de 35 cm"]);
   }
 
+  // (étape 88) LA CAMPAGNE
+  function lignesCampagne(l) {
+    const K = C.campagne, P = Tanks.Campagne.progression(), e = monde.campagne;
+    l.push(["La campagne (étape 88)"]);
+    l.push(["ton livret", K.chapitres.map((c) => { const f = P.chapitres[c.id]; return c.numero + " " + (c.numero > P.debloque ? "🔒" : "★".repeat((f && f.etoiles) || 0) + "☆".repeat(3 - ((f && f.etoiles) || 0)) + (f && f.temps ? " " + Math.floor(f.temps / 60) + ":" + String(f.temps % 60).padStart(2, "0") : "")); }).join(" · ") + (P.enCours ? " · en cours : " + P.enCours.id + " (" + P.enCours.carte + ")" : "")]);
+    l.push(["les écrans", Tanks.EcranCampagne.etat + (Tanks.Scene.filme ? " · 🎥 caméra de cinéma" : "")]);
+    if (!e) return;
+    l.push(["chapitre " + e.numero, e.titre + " · " + e.etat + " · " + virgule(e.chrono, 1) + " s · phase du monde : " + monde.phase + (e.ecranDans > 0 ? " · écran de fin dans " + virgule(e.ecranDans, 1) + " s" : "")]);
+    for (const o of e.objectifs) l.push([(o.etat === "fait" ? "✔ " : o.etat === "en cours" ? "▶ " : o.etat === "raté" ? "✖ " : "· ") + o.numero + ". " + o.type, o.texte + " → " + (o.type === "atteindre" || o.type === "escorter" ? Math.round(o.progres) + " m de la zone" : (o.type === "tenir" || o.type === "survivre" ? virgule(o.progres, 1) : o.progres) + " / " + o.total + (o.type === "tenir" ? (o.dedans ? " (dans la zone ✅)" : " (hors de la zone ⏸)") : "")) + " · " + o.etat]);
+    l.push(["la radio", e.radio ? e.radio.nom + " : « " + e.radio.texte.slice(0, 60) + (e.radio.texte.length > 60 ? "…" : "") + " » (" + virgule(e.radio.t, 1) + " / " + virgule(e.radio.duree, 1) + " s)" : "silence"]);
+    l.push(["répliques en attente", e.file.length + " · " + e.repliques + " dites depuis le début"]);
+    l.push(["événements à venir", e.attente.length ? e.attente.map((a) => (a.e.action || "radio") + " dans " + virgule(Math.max(0, a.t - e.chrono), 0) + " s").join(" · ") : "aucun"]);
+    for (const id in e.cibles) {
+      const o = e.cibles[id];
+      l.push(["🎯 " + o.nom, o.detruit ? "détruit ✖" : "vie " + o.vie + " / " + (o.vieMax || (o.fiche && o.fiche.vie) || "?") + " · (" + Math.round(o.x) + " ; " + Math.round(o.z) + ")" + (o.ia && o.ia.etat ? " · " + o.ia.etat : "")]);
+    }
+    for (const g in e.groupes) l.push(["groupe « " + g + " »", e.groupes[g].filter((o) => !o.detruit).length + " / " + e.groupes[g].length + " debout · " + e.groupes[g].map((o) => o.detruit ? "✖" : (o.ia && o.ia.etat) || "").join(" · ")]);
+    if (e.avions.length) l.push(["✈️ frappe aérienne", e.avions.map((a) => a.nom + " " + Math.round(a.y - Tanks.Terrain.hauteur(Math.max(-1000, Math.min(1000, a.x)), Math.max(-1000, Math.min(1000, a.z)))) + " m de haut, " + a.bombes + " bombe(s) à bord").join(" · ")]);
+    l.push(["tes compteurs", "ennemis mis hors de combat par toi : " + e.compteurs.parToi + " (" + e.compteurs.soldatsParToi + " soldats, " + e.compteurs.vehiculesParToi + " engins) · soldats du Front éliminés par ton camp : " + e.compteurs.eliminesCamp]);
+  }
+
   function lignes() {
     const j = monde.joueur, f = j.fiche, t = monde.toi || {}, s = t.soldat;
     const l = [];
+    lignesCampagne(l); // (étape 88)
     lignesVitesse(l);
     lignesSouterrain(l, s);
     l.push(["Où tu es (étape 61)"], ["phase", monde.phase]);

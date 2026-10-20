@@ -30,6 +30,9 @@
 // portail, ni parachutiste) ; tu commences à pied avec ta classe ; chaque camp a 10 soldats debout et 30 RENFORTS qui
 // arrivent à son bout de la station (un toutes les 3 s quand il en manque). ✍️ La règle : le camp qui n'a plus ni
 // renfort ni soldat debout a perdu (et toi, si ton soldat est à terre, c'est perdu aussi).
+// Étape 88 : ✍️ LA CAMPAGNE (logique/campagne.js, le metteur en scène). « monde.campagne » : le chapitre en cours (null en
+// bataille libre). Nouvelle phase "briefing" : la bataille est installée mais figée (le survol, puis le briefing). En
+// campagne, ce n'est plus « tous les tanks rouges détruits » qui fait gagner : ce sont les OBJECTIFS du chapitre.
 // Il annonce tout à la radio : le journal, les sons, les effets et la sauvegarde écoutent.
 
 window.Tanks = window.Tanks || {};
@@ -261,7 +264,7 @@ Tanks.Monde = (function () {
       if (d < G.distanceMonter && (!meilleur || d < meilleur.d)) meilleur = { e, mode, d };
     };
     regarder(monde.joueur, "char", C.char.rayon);
-    for (const e of monde.engins) regarder(e, e.sorte, e.sorte === "bateau" ? 7 : e.sorte === "sousmarin" ? 11 : e.sorte === "camion" ? 3.5 : e.genre === "helico" ? e.fiche.rayon : 2); // (étape 73 : un hélico de transport est long) // (la vedette est longue, et amarrée à quelques mètres de la rive)
+    for (const e of monde.engins) if (e.equipe !== "rouges") regarder(e, e.sorte, e.sorte === "bateau" ? 7 : e.sorte === "sousmarin" ? 11 : e.sorte === "camion" ? 3.5 : e.genre === "helico" ? e.fiche.rayon : 2); // (étape 73 : un hélico de transport est long) // (la vedette est longue, et amarrée à quelques mètres de la rive)
     if (!meilleur) {
       radio.emettre("impossible", { raison: "approche-toi de ton tank ou d'un engin" });
       return;
@@ -275,6 +278,7 @@ Tanks.Monde = (function () {
 
   function etape(monde, dt, intentions) {
     monde.temps += dt;
+    if (monde.phase === "briefing") return; // (étape 88 : pendant le survol et le briefing de la campagne, rien ne bouge)
     if (monde.phase === "garage") {
       if (intentions.gaucheAppui || intentions.droiteAppui) {
         const n = C.chars.length;
@@ -289,16 +293,16 @@ Tanks.Monde = (function () {
       }
       return;
     }
-    if (intentions.retour) { // ⌫ : retour au garage (on abandonne la bataille)
+    if (intentions.retour && !monde.campagne) { // ⌫ : retour au garage (on abandonne la bataille) (étape 88 : en campagne, c'est l'écran de la campagne qui s'en occupe)
       monde.phase = "garage";
       preparerGarage(monde);
       return;
     }
-    if (intentions.recommencer && monde.phase !== "bataille") { // (étape 77 : pendant la bataille, R recharge ton arme)
+    if (intentions.recommencer && monde.phase !== "bataille" && !monde.campagne) { // (étape 77 : pendant la bataille, R recharge ton arme)
       lancer(monde);
       return;
     }
-    if (monde.phase !== "bataille" && intentions.valider) {
+    if (monde.phase !== "bataille" && intentions.valider && !monde.campagne) {
       monde.phase = "garage";
       preparerGarage(monde);
       return;
@@ -338,7 +342,7 @@ Tanks.Monde = (function () {
     }
     Tanks.Char.chocs(monde.chars);
     // 2. Les engins de ton camp (seulement toi les conduis).
-    for (const e of monde.engins) for (const x of Tanks.Engins.avancer(e, pourToi(e.sorte), dt, monde)) evenements.push(x);
+    for (const e of monde.engins) for (const x of Tanks.Engins.avancer(e, pourToi(e === t.engin ? e.sorte : ""), dt, monde)) evenements.push(x); // (étape 88 : seulement l'engin où tu es : une DCA ennemie ne doit pas suivre tes touches)
     // 2 ter. (étape 71) Les motos, quads et camions de l'ordinateur (les deux camps).
     for (const v of monde.vehicules) for (const x of Tanks.Vehicules.avancer(v, monde, dt)) evenements.push(x);
     // 2 quater. (étape 73) Les hélicos de transport de l'ordinateur (les deux camps).
@@ -478,7 +482,7 @@ Tanks.Monde = (function () {
         S.donnees.defaites++;
         S.ecrire("défaite");
         radio.emettre("defaite", { temps: monde.chrono, allies: vivants(monde, "bleus"), ennemis: monde.metro ? soldatsVivants(monde, "rouges") + monde.metro.renforts.rouges : vivants(monde, "rouges"), comment: toi && toi.mort ? "ton soldat est à terre" : t.mode === "jeep" ? "ton 4x4 est détruit" : t.mode === "moto" || t.mode === "quad" ? (t.engin.tombe ? "tu es tombé " + (t.mode === "moto" ? "de ta moto" : "de ton quad") : t.mode === "moto" ? "ta moto est détruite" : "ton quad est détruit") : t.mode === "camion" ? "ton camion est détruit" : t.engin && t.engin.genre === "helico" ? "ton " + t.engin.nom + " est abattu" : t.mode === "bateau" ? "ta vedette est coulée" : t.mode === "sousmarin" ? "ton sous-marin est coulé" : t.mode === "dca" ? "ta DCA est détruite" : "ton tank est détruit" });
-      } else if (monde.metro ? monde.metro.renforts.rouges === 0 && soldatsVivants(monde, "rouges") === 0 : vivants(monde, "rouges") === 0) {
+      } else if (!monde.campagne && (monde.metro ? monde.metro.renforts.rouges === 0 && soldatsVivants(monde, "rouges") === 0 : vivants(monde, "rouges") === 0)) { // (étape 88 : en campagne, ce sont les objectifs)
         monde.phase = "victoire";
         S.donnees.victoires++;
         if (monde.metro) S.donnees.souterrain++; // (étape 80)
@@ -487,6 +491,7 @@ Tanks.Monde = (function () {
         else radio.emettre("victoire", { temps: monde.chrono, allies: vivants(monde, "bleus") - (monde.joueur.detruit ? 0 : 1), vie: monde.joueur.vie, vieMax: monde.joueur.vieMax });
       }
     }
+    if (monde.campagne) Tanks.Campagne.etape(monde, dt); // (étape 88 : les objectifs, les événements du scénario, la radio)
   }
 
   // (étape 63) Avant chaque pas, chacun note où il était (« av » = avant). Le dessin pourra ainsi placer chaque objet

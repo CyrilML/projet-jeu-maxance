@@ -6,6 +6,7 @@
 // commencent, ce panneau lit dans la sauvegarde QUELLE carte a été choisie, et affiche ses réglages pour tout le monde.
 // Changer de décor dans le menu = recharger la page (main.js s'en occupe), pour tout refaire avec les nouveaux réglages.
 // (C'est un fichier de « donnees/ » parce qu'il lit le stockage ; il ne fait que lire.)
+// (Étape 88 : un chapitre de la CAMPAGNE est en cours ? C'est SA carte qui compte : « campagne.enCours.carte ».)
 
 window.Tanks = window.Tanks || {};
 
@@ -15,7 +16,10 @@ Tanks.CarteDuJour = (function () {
   let id = "bataille";
   try {
     const brut = localStorage.getItem(CLE);
-    if (brut) id = JSON.parse(brut).carte || "bataille";
+    if (brut) {
+      const d = JSON.parse(brut);
+      id = (d.campagne && d.campagne.enCours && d.campagne.enCours.carte) || d.carte || "bataille"; // (étape 88)
+    }
   } catch (e) {
     id = "bataille";
   }

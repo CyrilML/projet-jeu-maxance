@@ -214,6 +214,7 @@ Tanks.Avions = (function () {
     }
     for (const a of monde.avions) {
       a.touche += dt;
+      if (a.scripte) continue; // (étape 88 : un avion de la campagne, la frappe aérienne : c'est logique/campagne.js qui le pilote)
       if (a.sorte === "chasseur") avancerChasseur(a, monde, dt, ev);
       else if (a.etat !== "parti") avancerTransport(a, monde, dt, ev);
     }
@@ -226,5 +227,5 @@ Tanks.Avions = (function () {
   // (étape 73 : et les hélicos de transport qui volent à plus de 8 m : la DCA et les missiles peuvent les abattre)
   const enLAir = (monde) => monde.avions.filter((a) => a.etat !== "attend" && a.etat !== "parti" && !a.detruit).concat(monde.engins.filter((e) => e.sorte === "avion" && e.pilote && e.enVol && !e.detruit), Tanks.Helicos.enLAir(monde));
 
-  return { creer, avancer, enLAir };
+  return { creer, avancer, enLAir, piloter }; // (étape 88 : piloter, pour les avions de la campagne)
 })();

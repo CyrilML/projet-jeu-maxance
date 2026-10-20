@@ -717,6 +717,8 @@ Tanks.CONFIG = {
       { id: "mire", nom: "Mire métallique", texte: "Le guidon et le cran de mire : simple et rapide.", effets: {} },
       { id: "pointRouge", nom: "Point rouge", texte: "Un petit point rouge : on vise mieux.", effets: { zoom: 1.6, dispersionVisee: 0.85, visee: 0.03 } },
       { id: "holo", nom: "Holographique", texte: "Une grande fenêtre avec un cercle : précis et clair.", effets: { zoom: 1.9, dispersionVisee: 0.75, visee: 0.06, mobilite: -0.01 } },
+      // (demande 88) une lunette compacte entre le point rouge et la grosse lunette
+      { id: "lunette4", nom: "Lunette ×4", texte: "Une lunette courte et solide : on tire loin, sans être trop lent.", effets: { zoom: 4, dispersionVisee: 0.6, portee: 1.08, visee: 0.1, mobilite: -0.015 } },
       { id: "lunette", nom: "Lunette ×6", texte: "Pour tirer TRÈS loin. Lente à épauler, et on voit moins autour.", effets: { zoom: 6, dispersionVisee: 0.5, portee: 1.15, visee: 0.18, mobilite: -0.03, dispersion: 1.1 } },
     ] },
     canon: { nom: "Canon", icone: "📏", pieces: [
@@ -753,6 +755,55 @@ Tanks.CONFIG = {
       { id: "rouge", nom: "Laser rouge", texte: "Un point rouge là où tu vises : plus précis sans viser. Il se voit un peu.", effets: { laser: "#ff2a1a", dispersion: 0.75, visibilite: 15 } },
       { id: "vert", nom: "Laser vert", texte: "Plus brillant : encore plus précis, épaule plus vite… mais il se voit de loin.", effets: { laser: "#3dff4a", dispersion: 0.62, visee: -0.03, visibilite: 35 } },
     ] },
+  },
+  // ================================================================== demande 88 : ✍️ LES ARMES EN 3D (affichage/armes3d.js)
+  // ✍️ « Refais toutes les armes, style Battlefield. » Chaque arme a son VRAI modèle 3D, les pièces de l'atelier se voient
+  // dessus, l'arme tourne dans le menu, et à la première personne (C) elle est tenue par deux mains gantées. Unités : m, s, rad.
+  armes3d: {
+    // ✍️ les armes des soldats de l'ordinateur : tirées au sort (toujours la même pour un même soldat, d'après son nom)
+    // dans la liste de son camp. [arme, poids] : un poids 4 sort 4 fois plus souvent qu'un poids 1.
+    ia: {
+      bleus: [["ar4", 4], ["famas", 3], ["mp5", 2], ["p90", 1], ["vector", 1], ["m110", 1.2], ["lapua", 0.6]],
+      rouges: [["ak12", 5], ["svd", 1.6], ["vector", 1.2], ["mp5", 1], ["ar4", 1], ["barrett", 0.5]],
+      roquettes: [["rpg7", 3], ["at4", 2], ["javelin", 1]], // (les soldats « anti-tank »)
+      viseur: [["mire", 3], ["pointRouge", 3], ["holo", 2], ["lunette4", 1]],
+      canon: [["standard", 4], ["silencieux", 1], ["court", 1], ["long", 1]],
+      chargeur: [["standard", 6], ["grand", 1], ["rapide", 1]],
+      manche: [["aucun", 3], ["vertical", 2], ["incline", 1]],
+    },
+    // LA VUE À LA PREMIÈRE PERSONNE (C) : l'arme a sa propre petite caméra, dessinée PAR-DESSUS le monde (elle ne rentre
+    // jamais dans un mur). Positions en m devant l'œil : x à droite, y en haut, z vers toi (−0,3 = 30 cm devant).
+    vue: {
+      champ: 56, // ° : le champ de vision de la caméra de l'arme
+      hanche: { fusil: [0.135, -0.175, -0.43], pm: [0.13, -0.17, -0.4], precision: [0.145, -0.18, -0.45], pistolet: [0.085, -0.11, -0.47], roquettes: [0.2, -0.16, -0.24] },
+      hancheLacet: { fusil: 0.2, pm: 0.2, precision: 0.17, pistolet: 0.06, roquettes: 0.02 }, // rad : à la hanche, l'arme est un peu tournée vers le centre…
+      hancheRoulis: { fusil: -0.12, pm: -0.14, precision: -0.1, pistolet: -0.05, roquettes: 0 }, // rad : … et un peu penchée
+      oeil: { fusil: 0.24, pm: 0.22, precision: 0.18, pistolet: 0.42, roquettes: 0.16 }, // m : de l'œil à l'arrière du viseur, épaulé
+      respiration: [0.0035, 0.32], // [m, battements par s] : l'arme respire au repos
+      pas: 0.014, // m : l'arme monte et descend à chaque pas
+      retard: 0.035, // rad par rad/s : l'arme traîne un peu derrière quand tu tournes
+      recul: { fusil: [0.035, 0.05], pm: [0.025, 0.035], precision: [0.08, 0.14], pistolet: [0.04, 0.16], roquettes: [0.1, 0.07], mitrailleuse: [0.04, 0.05] }, // [m en arrière, rad vers le haut] par tir
+      ressort: 260, amorti: 26, // le ressort qui ramène l'arme après le recul (raideur, frottement)
+      // pendant le rechargement : [m vers la droite, m vers le haut, m vers toi, rad de roulis, rad vers le haut]
+      rechargePose: { fusil: [-0.07, 0.05, 0.05, 0.62, 0.22], pm: [-0.06, 0.05, 0.05, 0.6, 0.2], precision: [-0.07, 0.05, 0.05, 0.5, 0.2], pistolet: [-0.04, 0.04, 0.03, 0.5, 0.3], roquettes: [-0.04, -0.03, 0.02, 0.12, -0.08] },
+      changement: 0.22, // s pour baisser l'arme (puis autant pour lever la nouvelle)
+      flamme: 0.045, // s : l'éclair au bout du canon
+      douilles: 12, // douilles éjectées en même temps (au plus)
+    },
+    lampe: { force: 1.8, faisceau: 0.16 }, // × la force de la lampe de l'atelier (la vraie lumière) ; l'opacité du faisceau qu'on voit
+    laser: { epaisseur: 0.0035, point: 0.07, opacite: 0.55 }, // m, m, 0 à 1
+    apercu: { vitesse: 0.55, hauteur: 210 }, // rad/s : l'arme tourne dans le menu ; px de haut
+    // ✍️ LE SON de chaque famille d'arme (affichage/sons.js) : la note du « crac » (Hz), sa durée (s), la force du
+    // « boum » grave (0 à 1) et sa note (Hz), et l'écho (s). Le silencieux étouffe tout (un « pfft »).
+    sons: {
+      pistolet: { crac: 2100, duree: 0.07, boum: 0.25, grave: 220, echo: 0.12 },
+      pm: { crac: 2600, duree: 0.055, boum: 0.18, grave: 260, echo: 0.1 },
+      fusil: { crac: 1500, duree: 0.09, boum: 0.45, grave: 150, echo: 0.25 },
+      ak: { crac: 1150, duree: 0.1, boum: 0.6, grave: 120, echo: 0.3 },
+      precision: { crac: 1000, duree: 0.14, boum: 0.85, grave: 90, echo: 0.7 },
+      lourd: { crac: 700, duree: 0.2, boum: 1, grave: 60, echo: 1.1 },
+      silencieux: { crac: 600, duree: 0.06, boum: 0.05, grave: 300, echo: 0 },
+    },
   },
   // Les barres du menu : la valeur qui remplit la barre (le menu montre « avant → après »).
   menu: {
@@ -840,5 +891,366 @@ Tanks.CONFIG = {
     feux: { lumieres: 4, force: 80, portee: 36, flammes: 22, fumee: 5 }, // flammes, fumee : particules par seconde et par feu
     brouillard: [14, 120],
     regles: { soldats: 10, renforts: 30, attente: 3, vue: 110 },
+  },
+
+  // ------------------------------------------------------------------ étape 88 : LA CAMPAGNE (le mode histoire)
+  // ✍️ « Refais l'histoire style Battlefield. Refais les histoires, refais la campagne. » Une guerre INVENTÉE (aucun vrai
+  // pays) : la Valdrie, attaquée par le Front Écarlate du Maréchal Varrok. 6 chapitres, chacun sur une carte du jeu.
+  // Tout le contenu de l'histoire est rangé ici, comme des données : on peut changer un texte, un nombre, une position
+  // sans toucher au code (logique/campagne.js fait jouer ces données ; affichage/campagne-*.js les montrent).
+  // Unités : m, s. Positions [x, z] : les Bleus (nous) au SUD (z > 0), le Front au NORD (z < 0), le centre en (0, 0).
+  // Un angle (rad) : la direction où l'on regarde (−π/2 ≈ −1,57 = vers le nord).
+  campagne: {
+    titre: "Les Lions de Valdrie",
+    sousTitre: "Campagne · 6 chapitres",
+    // Les deux camps (inventés).
+    camps: { bleus: "l'Alliance de Valdrie", rouges: "le Front Écarlate" },
+    // Les voix de la radio : nom, rôle, icône (le « portrait »), couleur, camp.
+    personnages: {
+      hargrave: { nom: "Colonel Hargrave", role: "QG Rempart · commandement", icone: "🎖️", couleur: "#ffb547", camp: "bleus" },
+      volk: { nom: "Lieutenant Volk", role: "Lion 2 · cheffe d'escouade", icone: "🪖", couleur: "#9cc4ff", camp: "bleus" },
+      dorn: { nom: "Sergent Dorn", role: "Marteau 1 · chef de char", icone: "🛡️", couleur: "#8fd3a0", camp: "bleus" },
+      faucon: { nom: "Faucon 2-1", role: "pilote d'hélico", icone: "🚁", couleur: "#7fe0d0", camp: "bleus" },
+      tonnerre: { nom: "Tonnerre", role: "chasseurs-bombardiers", icone: "✈️", couleur: "#c9d6ff", camp: "bleus" },
+      moreau: { nom: "Sergent Moreau", role: "tireur d'élite", icone: "🔭", couleur: "#d6b8ff", camp: "bleus" },
+      arnaud: { nom: "Mme Arnaud", role: "maire de Valcourt", icone: "🏛️", couleur: "#ffe08a", camp: "bleus" },
+      varrok: { nom: "Maréchal Varrok", role: "radio ennemie interceptée", icone: "📡", couleur: "#ff6a5a", camp: "rouges" },
+    },
+    // Les mots du tableau de bord pour chaque sorte d'objectif.
+    verbes: { atteindre: "ATTEINDRE", tenir: "DÉFENDRE", survivre: "TENIR BON", eliminer: "ÉLIMINER", chars: "DÉTRUIRE", detruire: "DÉTRUIRE", escorter: "ESCORTER" },
+    regles: {
+      intro: 11, // s : la durée du survol de la carte au début d'un chapitre (Espace ou un clic : passer)
+      radio: { base: 2.6, parLettre: 0.05, max: 8.5, pause: 0.5 }, // s : une réplique dure base + parLettre × lettres (au plus max), puis une petite pause
+      escorte: { attend: 95, repart: 70 }, // m : le camion escorté s'arrête si tu es à plus de 95 m, et repart sous 70 m
+      frappe: { altitude: 85, vitesse: 95, bombes: 6, ecart: 0.08, loin: 950, decalage: 22 }, // la frappe aérienne : m, m/s, bombes par avion, s entre 2 bombes, m (où ils arrivent), m entre les 2 avions
+      fin: 3, // s : le temps de voir la fin (explosion, dernier mot à la radio) avant l'écran de fin
+      soldatsDebout: 50, // un renfort scripté n'arrive pas s'il y a déjà ce nombre de soldats debout dans ce camp
+    },
+    // ✍️ LES 6 CHAPITRES. Pour chacun :
+    //   carte (une des « cartes » plus haut), lieu, date, briefing (les paragraphes), conseil (la classe conseillée),
+    //   vol (le survol du début : des points [x, hauteur au-dessus du sol, z, regardX, regardHauteur, regardZ]),
+    //   forces (qui est où au départ), cibles (les cibles spéciales : DCA, char de commandement, camions…),
+    //   objectifs (dans l'ordre ; chacun : type, texte, ses réglages, « debut » = ce qui arrive quand il commence
+    //   (« apres » s plus tard), « fin » = les répliques quand il est accompli), radio (les répliques au début),
+    //   etoiles (★ réussi · ★ en moins de « temps » s · ★ au moins « eliminations » ennemis mis hors de combat par toi).
+    // Les sortes d'objectifs : atteindre (zone [x, z, rayon]) · tenir (zone, duree : rester dedans) · survivre (duree) ·
+    //   eliminer (nombre de soldats ennemis, par toi et tes alliés) · chars (nombre de chars ennemis, ou tous: true) ·
+    //   detruire (cibles: [ids] ou groupe) · escorter (cible, zone : elle doit arriver, sans être détruite).
+    // Les cibles spéciales (« cibles ») : sorte "dca" (un canon antiaérien du Front), "char" (un char ennemi qui garde sa
+    //   place), "camion" (un camion qui suit une « route » : celui qu'on escorte), "helico" (un hélico posé au sol).
+    // Les événements (« debut ») : radio [qui, texte] · action: "tanks" (des chars arrivent « de » … « vers » …) ·
+    //   "soldats" (une colonne de soldats) · "helico" (un hélico de transport dépose 10 soldats à la corde) · "frappe" (2 avions
+    //   bombardent « sur » un point ou sur les chars ennemis) · "convoi" (des camions du Front suivent une « route ») ·
+    //   "decollage" (un hélico posé décolle « vers » un point).
+    chapitres: [
+      {
+        id: "oasis", numero: 1, titre: "Le réveil du lion", icone: "🌴", couleur: "#d9a45a",
+        carte: "village-desert", lieu: "Oasis de Tamerin · province de Sahrane", date: "14 mars 2041 · 05 h 42",
+        resume: "Reprends l'oasis et son relais radio, à pied avec ton escouade.",
+        briefing: [
+          "Il y a trois jours, toutes les radios de Valdrie se sont tues. Plus de radar, plus de satellites : un brouillard électronique recouvre le pays.",
+          "Profitant du silence, le Front Écarlate du Maréchal Varrok a franchi la frontière. Cette nuit, ses soldats ont pris l'oasis de Tamerin et son relais radio, le dernier du désert.",
+          "Ton escouade, les Lions, est la plus proche. Entre dans l'oasis, chasse le Front de la place du puits et tiens-la : sans ce relais, l'Alliance est sourde et aveugle.",
+          "Ton char est garé juste derrière toi, au sud. Garde-le en tête : on ne sait jamais ce qui peut sortir des dunes.",
+        ],
+        conseil: { classe: "assaut", texte: "Combat de rue à pied : un fusil d'assaut et des grenades." },
+        vol: [[0, 90, 520, 0, 0, 0], [180, 90, 260, 0, 0, 0], [140, 45, -40, 0, 2, 0], [-40, 22, -110, 0, 2, 0], [-60, 14, 40, 0, 3, 0]],
+        forces: {
+          toi: { mode: "pied", x: -6, z: 250, angle: -1.57, char: [16, 262] },
+          alliesChars: [], ennemisChars: [],
+          alliesSoldats: { nombre: 8, x: 0, z: 262, rayon: 14 },
+          ennemisSoldats: [{ nombre: 6, x: 0, z: 0, rayon: 40 }, { nombre: 4, x: -40, z: 50, rayon: 25 }, { nombre: 4, x: 45, z: -45, rayon: 25 }],
+          avions: false, paras: false, helicos: false, vehicules: false, lac: false,
+        },
+        cibles: [],
+        radio: [
+          ["hargrave", "Lion 1, ici Rempart. Le relais de Tamerin ne répond plus depuis 3 heures. Le Front est dans l'oasis."],
+          ["volk", "Les Lions sont prêts. Reste près de moi, on entre par le sud."],
+        ],
+        objectifs: [
+          { type: "atteindre", texte: "Rejoins l'entrée sud de l'oasis", zone: [0, 128, 16],
+            fin: [["volk", "On est à l'entrée. Je vois des sentinelles dans les ruelles !"]] },
+          { type: "eliminer", texte: "Nettoie les ruelles : élimine les soldats du Front", nombre: 8,
+            debut: [{ apres: 1, radio: ["volk", "Ils sont retranchés dans les maisons. Grenades dans les fenêtres, et avance de mur en mur !"] }],
+            fin: [["volk", "Les ruelles sont à nous ! Direction le puits."]] },
+          { type: "tenir", texte: "Tiens la place du puits pendant la réparation du relais", zone: [0, 0, 20], duree: 40,
+            debut: [
+              { apres: 0, radio: ["hargrave", "Bien joué, Lion. Notre technicien répare le relais. Tiens la place du puits !"] },
+              { apres: 6, action: "helico", equipe: "rouges", de: [-500, -700], vers: [10, -80] },
+              { apres: 7, radio: ["volk", "Hélico ennemi au nord ! Ils déposent des soldats à la corde !"] },
+              { apres: 18, action: "soldats", equipe: "rouges", nombre: 6, de: [60, -260], vers: [0, -10] },
+              { apres: 20, radio: ["volk", "Encore des fantassins, du nord-est. Restez à couvert !"] },
+            ],
+            fin: [["hargrave", "Le relais est réparé ! On vous entend fort et clair, Lions."]] },
+          { type: "chars", texte: "Un char du Front arrive : détruis-le (ton char t'attend au sud, touche E)", nombre: 1,
+            debut: [
+              { apres: 0, action: "tanks", equipe: "rouges", noms: ["Scorpion"], de: [[0, -520]], vers: [0, -40] },
+              { apres: 1, radio: ["volk", "Char ennemi ! Nos fusils ne lui font rien. Lion 1, file à ton char, au sud du village !"] },
+              { apres: 14, radio: ["hargrave", "Un obus dans le flanc ou dans le dos, c'est là que le blindage est le plus fin."] },
+            ],
+            fin: [["volk", "Le Scorpion est en feu ! L'oasis est à nous."], ["hargrave", "Superbe travail, Lions. Grâce à vous, l'Alliance n'est plus sourde."]] },
+        ],
+        etoiles: { temps: 480, eliminations: 10 },
+        reussite: "L'oasis de Tamerin est libérée. Le relais radio fonctionne de nouveau : pour la première fois depuis trois jours, l'Alliance entend ce que prépare le Front…",
+      },
+      {
+        id: "route", numero: 2, titre: "La route de cendre", icone: "🏜️", couleur: "#e0b070",
+        carte: "desert", lieu: "Désert de Sahrane · route du nord", date: "15 mars 2041 · 16 h 20",
+        resume: "En char : intercepte le convoi et fais taire la batterie antiaérienne.",
+        briefing: [
+          "Le relais de Tamerin a capté un message du Front : un convoi de ravitaillement traverse le désert pour nourrir l'avant-garde de Varrok.",
+          "Plus au nord, une batterie antiaérienne protège la route. Tant que ses canons tirent, nos avions Tonnerre ne peuvent pas t'aider.",
+          "Prends ton char avec le peloton Marteau. Coupe la route du convoi, fais taire la batterie, et tiens bon : le Front ne laissera pas passer ça sans réagir.",
+        ],
+        conseil: { classe: "ingenieur", texte: "Mission en char : l'Ingénieur peut réparer ton tank s'il en sort." },
+        vol: [[-900, 80, -60, -500, 0, -150], [-520, 70, 80, -300, 0, -160], [-200, 60, -300, -100, 0, -500], [-60, 30, -420, -100, 2, -510], [-250, 18, 260, -250, 3, 160]],
+        forces: {
+          toi: { mode: "char", x: -250, z: 290, angle: -1.57 },
+          alliesChars: [[-280, 302, "Marteau 2"], [-220, 302, "Marteau 3"]],
+          ennemisChars: [[-60, -470, "Cobra"], [-160, -470, "Vipère"]],
+          alliesSoldats: { nombre: 6, x: -250, z: 320, rayon: 14 },
+          ennemisSoldats: [{ nombre: 8, x: -100, z: -490, rayon: 30 }, { nombre: 4, x: 0, z: 0, rayon: 40 }],
+          avions: false, paras: false, helicos: false, vehicules: false, lac: false,
+        },
+        cibles: [
+          { id: "dca1", sorte: "dca", nom: "DCA « Épine » 1", x: -112, z: -495 },
+          { id: "dca2", sorte: "dca", nom: "DCA « Épine » 2", x: -82, z: -515 },
+          { id: "dca3", sorte: "dca", nom: "DCA « Épine » 3", x: -128, z: -528 },
+        ],
+        radio: [
+          ["dorn", "Marteau en position. Lion 1, on te suit : tu ouvres la route."],
+          ["hargrave", "Le convoi vient de l'ouest et file vers la ferme du nord-est. Ne le laisse pas passer."],
+        ],
+        objectifs: [
+          { type: "detruire", texte: "Intercepte le convoi de ravitaillement", groupe: "convoi",
+            debut: [
+              { apres: 0, action: "convoi", groupe: "convoi", nom: "Camion du convoi", nombre: 3, route: [[-930, -110], [-620, -140], [-320, -170], [0, -230], [240, -330], [300, -600]] },
+              { apres: 2, radio: ["dorn", "Je les vois ! Trois camions, plein ouest. Ils roulent vite !"] },
+              { apres: 25, radio: ["hargrave", "Vise les camions, pas l'escorte : sans essence, l'avant-garde du Front s'arrête."] },
+            ],
+            fin: [["dorn", "Plus de convoi ! Ça, ça va leur faire mal."]] },
+          { type: "detruire", texte: "Fais taire la batterie antiaérienne", cibles: ["dca1", "dca2", "dca3"],
+            debut: [{ apres: 1, radio: ["hargrave", "La batterie Épine est au nord, sur la crête. Trois canons. Détruis-les pour que Tonnerre puisse voler."] }],
+            fin: [["tonnerre", "Ici Tonnerre. Le ciel est dégagé, on arrive. Donnez-nous des cibles !"]] },
+          { type: "survivre", texte: "Contre-attaque blindée : tiens bon jusqu'à la frappe aérienne", duree: 45,
+            debut: [
+              { apres: 0, action: "tanks", equipe: "rouges", noms: ["Hyène", "Chacal", "Mamba"], de: [[-260, -900], [-120, -930], [20, -900]], vers: "toi" },
+              { apres: 1, radio: ["dorn", "Trois chars ennemis au nord ! Ils viennent pour nous !"] },
+              { apres: 20, action: "frappe", sur: "tanks" },
+              { apres: 20, radio: ["tonnerre", "Tonnerre en approche. Bombes larguées sur les blindés ! Gardez la tête baissée !"] },
+            ],
+            fin: [["hargrave", "La frappe a fait mouche. Finissez le travail, Marteau et Lion."]] },
+          { type: "chars", texte: "Achève les chars ennemis encore debout", tous: true,
+            fin: [["dorn", "Le dernier est à terre. La route du nord est coupée !"], ["varrok", "… Unités du désert, repliez-vous. Je répète, repliez-vous vers la vallée."]] },
+        ],
+        etoiles: { temps: 540, eliminations: 8 },
+        reussite: "Le convoi ne livrera jamais son essence, et la batterie Épine s'est tue. Mais la radio du Front a parlé : Varrok rassemble ses chars dans la vallée de Morvane.",
+      },
+      {
+        id: "enclume", numero: 3, titre: "L'enclume", icone: "🌄", couleur: "#8fb070",
+        carte: "bataille", lieu: "Vallée de Morvane · le village du centre", date: "19 mars 2041 · 07 h 05",
+        resume: "La grande bataille : brise la ligne de chars, prends le village, abats le Mammouth.",
+        briefing: [
+          "Le Front a rassemblé ses blindés dans la vallée de Morvane, sur la route de la capitale. Si la vallée tombe, plus rien ne l'arrête jusqu'à Valcourt.",
+          "Toute la 7e Brigade est engagée : chars, hélicos, parachutistes, avions. Toi et le peloton Marteau, vous êtes la pointe de l'attaque.",
+          "Brise leur ligne de chars, prends le village au centre de la vallée, et tiens-le pendant que nos renforts arrivent.",
+          "On raconte que Varrok a envoyé son char de commandement, le Mammouth. S'il tombe, son armée perd la tête.",
+        ],
+        conseil: { classe: "ingenieur", texte: "Bataille de chars : l'Ingénieur répare ton tank et porte un lance-roquettes." },
+        vol: [[-60, 70, 430, 0, 0, 0], [300, 80, 260, 0, 0, -100], [260, 70, -320, 0, 0, -120], [-120, 40, -170, 0, 5, 0], [0, 20, 380, 0, 4, 200]],
+        forces: {
+          toi: { mode: "char", x: 0, z: 400, angle: -1.57 },
+          alliesChars: [[-40, 412, "Marteau 2"], [40, 412, "Marteau 3"], [-80, 425, "Marteau 4"]],
+          ennemisChars: [[-90, -170, "Faucon noir"], [90, -170, "Loup"], [-210, -90, "Ours"], [210, -110, "Requin"]],
+          alliesSoldats: { nombre: 12, x: 0, z: 440, rayon: 30 },
+          ennemisSoldats: [{ nombre: 8, x: 0, z: -30, rayon: 55 }, { nombre: 6, x: 0, z: -230, rayon: 60 }],
+          avions: true, paras: true, helicos: false, vehicules: true, lac: true,
+        },
+        cibles: [],
+        radio: [
+          ["hargrave", "À toutes les unités : l'opération Enclume commence. Que la vallée tremble."],
+          ["dorn", "Marteau à Lion 1 : ligne de chars ennemis au nord du village. On fonce avec toi."],
+        ],
+        objectifs: [
+          { type: "chars", texte: "Brise la ligne de chars du Front", nombre: 3,
+            debut: [{ apres: 30, radio: ["dorn", "Bouge, Lion 1 ! Un char immobile, c'est une cible."] }],
+            fin: [["dorn", "Leur ligne cède ! Au village, maintenant !"]] },
+          { type: "atteindre", texte: "Prends le village au centre de la vallée", zone: [0, 0, 34],
+            fin: [["volk", "Les Lions sont au village avec toi. On s'installe !"]] },
+          { type: "tenir", texte: "Tiens le village pendant l'arrivée des renforts", zone: [0, 0, 45], duree: 50,
+            debut: [
+              { apres: 2, action: "helico", equipe: "bleus", de: [-300, 900], vers: [-20, 30] },
+              { apres: 3, radio: ["faucon", "Faucon 2-1 en approche avec dix soldats. On les pose au village !"] },
+              { apres: 12, action: "tanks", equipe: "rouges", noms: ["Taureau", "Bison"], de: [[-320, -720], [320, -720]], vers: [0, -20] },
+              { apres: 13, radio: ["volk", "Deux chars du Front, nord-ouest et nord-est !"] },
+              { apres: 22, action: "helico", equipe: "rouges", de: [600, -900], vers: [50, -70] },
+              { apres: 30, action: "tanks", equipe: "bleus", noms: ["Marteau 5", "Marteau 6"], de: [[-40, 800], [40, 800]], vers: [0, 30] },
+              { apres: 31, radio: ["hargrave", "Renforts blindés en route depuis le sud. Encore un effort, Lion !"] },
+            ],
+            fin: [["hargrave", "Le village est à nous. Mais regardez au nord-est…"]] },
+          { type: "detruire", texte: "Détruis le Mammouth, le char de commandement de Varrok", cibles: ["mammouth"],
+            debut: [
+              { apres: 0, action: "tanks", equipe: "rouges", noms: ["Mammouth", "Garde 1"], de: [[300, -560], [330, -585]], vie: [10, 4], id: ["mammouth"] },
+              { apres: 1, radio: ["varrok", "Ici le Maréchal Varrok. Vous avez gagné un village. Moi, je vais vous reprendre la vallée."] },
+              { apres: 6, radio: ["hargrave", "C'est son char de commandement, près de la ferme du nord-est. Il est très blindé : vise bien, et ne reste pas en face de lui."] },
+            ],
+            fin: [["dorn", "LE MAMMOUTH EST EN FEU !"], ["varrok", "… Repliez-vous… Tout le monde, repliez-vous sur Valcourt !"]] },
+        ],
+        etoiles: { temps: 660, eliminations: 14 },
+        reussite: "La vallée de Morvane est libre et le Mammouth n'est plus qu'une épave. Le Front recule vers Valcourt, la capitale… où des milliers d'habitants attendent de l'aide.",
+      },
+      {
+        id: "valcourt", numero: 4, titre: "Les rues de Valcourt", icone: "🏙️", couleur: "#9aa7b8",
+        carte: "ville", lieu: "Valcourt · quartier de la mairie", date: "2 avril 2041 · 13 h 30",
+        resume: "Escorte le camion de vivres jusqu'à la mairie, à travers les rues.",
+        briefing: [
+          "La vallée est libre, mais Valcourt, la capitale, est encerclée depuis des semaines. Les habitants réfugiés à la mairie n'ont presque plus rien à manger.",
+          "Un camion de vivres doit traverser les rues jusqu'à la mairie. Les rues sont pleines de soldats du Front, et deux chars attendent en embuscade.",
+          "Ton char ouvre la route, le camion te suit. S'il est détruit, la mission est un échec : reste devant lui, mais pas trop loin.",
+        ],
+        conseil: { classe: "ingenieur", texte: "En ville : l'Ingénieur répare ton char et le camion." },
+        vol: [[0, 80, 420, 0, 0, 0], [160, 70, 160, 0, 0, -30], [120, 30, -120, 0, 4, -38], [20, 14, -80, 0, 5, -38], [20, 12, 330, 0, 3, 270]],
+        forces: {
+          toi: { mode: "char", x: 0, z: 262, angle: -1.57 },
+          alliesChars: [[-14, 330, "Marteau 2"]],
+          ennemisChars: [],
+          alliesSoldats: { nombre: 6, x: 0, z: 320, rayon: 12 },
+          ennemisSoldats: [{ nombre: 6, x: 0, z: 100, rayon: 50 }, { nombre: 6, x: 0, z: -40, rayon: 50 }, { nombre: 4, x: -76, z: 0, rayon: 30 }],
+          avions: false, paras: false, helicos: false, vehicules: false, lac: false,
+        },
+        cibles: [
+          { id: "vivres", sorte: "camion", equipe: "bleus", nom: "Camion de vivres", x: 0, z: 300, angle: -1.57, vie: 8, route: [[0, 230], [0, 150], [0, 76], [0, 0], [0, -30]] },
+          { id: "embuscade1", sorte: "char", nom: "Embuscade 1", x: 38, z: -76, angle: 1.57 },
+          { id: "embuscade2", sorte: "char", nom: "Embuscade 2", x: -76, z: 38, angle: 0 },
+        ],
+        radio: [
+          ["arnaud", "Ici Mme Arnaud, maire de Valcourt. Nous sommes trois cents à la mairie. Nous comptons sur vous."],
+          ["hargrave", "Lion 1, le camion de vivres te suit. Ouvre la route vers le nord, rue par rue."],
+        ],
+        objectifs: [
+          { type: "escorter", texte: "Escorte le camion de vivres jusqu'à la mairie", cible: "vivres", zone: [0, -30, 16],
+            debut: [
+              { apres: 8, radio: ["volk", "Fantassins dans les fenêtres ! Un lance-roquettes peut abîmer le camion !"] },
+              { apres: 40, radio: ["hargrave", "Si le camion s'arrête, c'est qu'il t'attend : ne le laisse pas seul derrière."] },
+            ],
+            fin: [["arnaud", "Le camion est arrivé ! Merci… merci du fond du cœur."]] },
+          { type: "detruire", texte: "Détruis les deux chars embusqués dans les rues", cibles: ["embuscade1", "embuscade2"],
+            debut: [{ apres: 1, radio: ["dorn", "Deux chars du Front cachés entre les maisons. Le premier à l'est de la mairie, l'autre à l'ouest."] }],
+            fin: [["dorn", "Plus de chars dans le quartier. Joli tir !"]] },
+          { type: "eliminer", texte: "Nettoie les rues autour de la mairie", nombre: 10,
+            debut: [{ apres: 0, action: "soldats", equipe: "rouges", nombre: 8, de: [0, -300], vers: [0, -60] }],
+            fin: [["volk", "Le quartier est sûr. Mais j'entends des moteurs au nord…"]] },
+          { type: "tenir", texte: "Défends la mairie contre la dernière vague", zone: [0, -38, 24], duree: 40,
+            debut: [
+              { apres: 2, action: "helico", equipe: "rouges", de: [-700, -900], vers: [-30, -90] },
+              { apres: 3, radio: ["varrok", "Valcourt est à moi. Reprenez cette mairie !"] },
+              { apres: 15, action: "tanks", equipe: "rouges", noms: ["Sanglier"], de: [[0, -600]], vers: [0, -60] },
+              { apres: 16, radio: ["dorn", "Un dernier char, droit au nord ! Il remonte la grande rue !"] },
+            ],
+            fin: [["arnaud", "Ils reculent ! Valcourt-Centre est libre !"], ["hargrave", "Bravo, Lion 1. Mais ce n'est pas fini : il reste les ruines de l'ouest."]] },
+        ],
+        etoiles: { temps: 600, eliminations: 12 },
+        reussite: "Les vivres sont arrivés à la mairie et le centre de Valcourt est libre. Mais à l'ouest, dans les ruines, un de nos hélicos vient de lancer un appel au secours…",
+      },
+      {
+        id: "fantome", numero: 5, titre: "La ville fantôme", icone: "🏚️", couleur: "#a09a90",
+        carte: "ruines", lieu: "Valcourt-Ouest · les ruines", date: "3 avril 2041 · 06 h 10",
+        resume: "À pied dans les ruines : sauve Faucon 2-1 et détruis trois canons antiaériens.",
+        briefing: [
+          "Cette nuit, l'hélico de Faucon 2-1 a dû se poser en urgence dans les ruines de Valcourt-Ouest. L'équipage va bien, mais trois canons antiaériens l'empêchent de redécoller.",
+          "Les ruines sont trop étroites pour un char. Tu y vas à pied, avec un lance-roquettes : c'est la seule arme qui fera taire ces canons.",
+          "Rejoins Faucon, détruis les trois canons, tiens jusqu'à l'arrivée des secours, puis rejoins la zone d'extraction.",
+          "Le Sergent Moreau te couvre depuis les toits. Écoute bien la radio.",
+        ],
+        conseil: { classe: "ingenieur", texte: "Les canons antiaériens ne craignent que les roquettes et les explosifs." },
+        vol: [[-260, 75, 330, -76, 0, 76], [-200, 50, 140, -76, 2, 76], [-60, 40, 40, 38, 2, -38], [40, 26, -60, 76, 2, -114], [-140, 14, 250, -114, 2, 160]],
+        forces: {
+          toi: { mode: "pied", x: -114, z: 232, angle: -1.57, char: null },
+          alliesChars: [], ennemisChars: [],
+          alliesSoldats: { nombre: 6, x: -114, z: 248, rayon: 10 },
+          ennemisSoldats: [{ nombre: 5, x: -76, z: 20, rayon: 30 }, { nombre: 6, x: 40, z: -60, rayon: 50 }, { nombre: 5, x: -38, z: -140, rayon: 30 }],
+          avions: false, paras: false, helicos: false, vehicules: false, lac: false,
+        },
+        cibles: [
+          { id: "dcaA", sorte: "dca", nom: "Canon antiaérien A", x: 38, z: -38 },
+          { id: "dcaB", sorte: "dca", nom: "Canon antiaérien B", x: 76, z: -114 },
+          { id: "dcaC", sorte: "dca", nom: "Canon antiaérien C", x: -38, z: -152 },
+          { id: "faucon", sorte: "helico", modele: "blackhawk", equipe: "bleus", nom: "Faucon 2-1", x: -70, z: 64, angle: 0.4 },
+        ],
+        radio: [
+          ["faucon", "Ici Faucon 2-1… On est posés dans les ruines, près d'un carrefour. Ils nous tirent dessus !"],
+          ["moreau", "Moreau en position sur les toits. Je te couvre, Lion 1. Avance."],
+        ],
+        objectifs: [
+          { type: "atteindre", texte: "Rejoins l'hélico de Faucon 2-1", zone: [-76, 76, 16],
+            debut: [{ apres: 12, radio: ["moreau", "Sentinelles au carrefour devant toi. Reste à l'abri des murs."] }],
+            fin: [["faucon", "Lion 1 ! Content de te voir. Ces trois canons nous empêchent de décoller."]] },
+          { type: "detruire", texte: "Détruis les trois canons antiaériens (roquettes, explosifs)", cibles: ["dcaA", "dcaB", "dcaC"],
+            debut: [
+              { apres: 2, radio: ["moreau", "Je les marque sur ta carte. Un au carrefour est, un au sud-est, un au nord."] },
+              { apres: 35, action: "soldats", equipe: "rouges", nombre: 6, de: [120, -260], vers: [40, -60] },
+            ],
+            fin: [["faucon", "Le ciel est libre ! Il faut encore réparer le rotor… tenez-les à distance !"]] },
+          { type: "survivre", texte: "Tiens bon pendant la réparation de l'hélico", duree: 60,
+            debut: [
+              { apres: 0, action: "soldats", equipe: "rouges", nombre: 8, de: [0, -340], vers: [-76, 40] },
+              { apres: 3, radio: ["moreau", "Une colonne arrive du nord. Beaucoup de monde !"] },
+              { apres: 20, action: "tanks", equipe: "rouges", noms: ["Chacal"], de: [[100, -500]], vers: [-40, 0] },
+              { apres: 22, radio: ["volk", "Un char ! Tes roquettes, Lion 1, vise le flanc !"] },
+              { apres: 34, action: "frappe", sur: [0, -120] },
+              { apres: 34, radio: ["tonnerre", "Tonnerre en approche : frappe sur la colonne du nord. Tête baissée !"] },
+              { apres: 44, action: "helico", equipe: "bleus", de: [-900, 700], vers: [-100, 60] },
+              { apres: 45, radio: ["hargrave", "Les secours arrivent du sud-ouest. Tiens encore quelques secondes !"] },
+            ],
+            fin: [["faucon", "Rotor réparé ! On décolle, et on passe au-dessus de la zone d'extraction pour te montrer le chemin."]] },
+          { type: "atteindre", texte: "Rejoins la zone d'extraction, à l'ouest", zone: [-152, 0, 16],
+            debut: [{ apres: 1, action: "decollage", cible: "faucon", vers: [-152, 6] }],
+            fin: [["faucon", "Je te vois à la zone d'extraction, Lion 1. Un camion vient vous chercher. Direction la base !"], ["hargrave", "Mission accomplie, Lion. Et Faucon a vu quelque chose en volant… On en reparle au QG."]] },
+        ],
+        etoiles: { temps: 660, eliminations: 12 },
+        reussite: "Faucon 2-1 et son équipage sont sains et saufs. En décollant, ils ont repéré d'où vient le brouillard électronique : de sous la ville, dans le métro…",
+      },
+      {
+        id: "terminus", numero: 6, titre: "Terminus", icone: "🚇", couleur: "#c86a4a",
+        carte: "souterrain", lieu: "Sous Valcourt · station Terminus", date: "4 avril 2041 · 03 h 15",
+        resume: "Le final, à pied dans le métro : arrête le Brouilleur et le Maréchal Varrok.",
+        briefing: [
+          "Faucon a vu d'où venait le brouillard : le Brouilleur Orage est caché sous la ville, dans la station de métro Terminus. Le Maréchal Varrok s'y cache aussi.",
+          "Pas de chars, pas d'hélicos : seulement toi, ton escouade et les tunnels. Les trams brûlent encore depuis la dernière attaque.",
+          "Avance sur les quais, élimine sa garde, atteins le poste de commandement au bout ouest de la station, et tiens-le jusqu'à l'arrivée des renforts.",
+          "Ce soir, on rallume les radios de Valdrie.",
+        ],
+        conseil: { classe: "assaut", texte: "Combat rapproché sous terre : fusil d'assaut, ou mitraillette du Médecin." },
+        vol: [[96, 3, -6, 60, 2, 0], [70, 6, 10, 20, 2, 0], [30, 5, -12, -20, 2, 0], [-20, 6, 8, -70, 2, 0], [-60, 4, -8, -95, 2, 0]],
+        forces: {
+          renfortsRouges: 28, renfortsBleus: 30,
+          avions: false, paras: false, helicos: false, vehicules: false, lac: false,
+        },
+        cibles: [],
+        radio: [
+          ["volk", "On est dans la station. Les néons clignotent… restez groupés."],
+          ["hargrave", "Lion 1, le Brouilleur est au bout ouest. Varrok aussi. Bonne chance."],
+        ],
+        objectifs: [
+          { type: "atteindre", texte: "Avance jusqu'aux escalators de l'est", zone: [29, 9, 9],
+            fin: [["volk", "Escalators en vue ! Ils nous attendent sur les quais."]] },
+          { type: "eliminer", texte: "Élimine la garde du Maréchal", nombre: 12,
+            debut: [{ apres: 2, radio: ["varrok", "Vous êtes chez moi, ici. Aucun de vous ne verra le bout du quai."] }],
+            fin: [["volk", "Leur garde est en miettes ! Fonce vers l'ouest !"]] },
+          { type: "atteindre", texte: "Atteins le poste de commandement, au bout ouest", zone: [-62, 9, 11], renfortsRouges: 4,
+            debut: [{ apres: 15, radio: ["hargrave", "Le poste est derrière les rames, au bout du quai. Garde la tête basse."] }],
+            fin: [["volk", "On y est ! Le Brouilleur est là, une énorme machine… je le coupe !"]] },
+          { type: "tenir", texte: "Tiens le poste pendant que Volk coupe le Brouilleur", zone: [-62, 9, 16], duree: 45, renfortsRouges: 8,
+            debut: [
+              { apres: 2, radio: ["varrok", "Non ! Gardes, à moi ! Défendez la machine !"] },
+              { apres: 20, radio: ["volk", "Encore vingt secondes… les câbles sont épais !"] },
+              { apres: 38, radio: ["hargrave", "Les radios se rallument au QG… Je vous entends ! Tenez bon !"] },
+            ],
+            fin: [["volk", "BROUILLEUR COUPÉ !"], ["varrok", "… C'est fini. Je me rends. Que mes soldats déposent les armes."], ["hargrave", "À toutes les unités de Valdrie : la guerre est finie. Rentrez à la maison, Lions."]] },
+        ],
+        etoiles: { temps: 540, eliminations: 15 },
+        reussite: "Le Maréchal Varrok s'est rendu à 4 h 02. Privé de son brouilleur et de son chef, le Front Écarlate a déposé les armes dans la journée. Une à une, les radios de Valdrie se sont rallumées. La guerre est finie : les Lions rentrent à la maison.",
+      },
+    ],
   },
 };

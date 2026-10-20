@@ -14,6 +14,9 @@
 // roquette détruit l'engin (« vie »).
 // L'ORDINATEUR (« decider ») conduit les engins des deux camps : la moto et le quad sont des éclaireurs qui tournent
 // autour des soldats ennemis en tirant ; le camion emmène 6 soldats au front, les fait descendre, revient se remplir.
+// (Étape 88, la campagne) Une ROUTE imposée (« ia.route » : une liste de points [x, z]) : l'engin la suit point par point,
+// sans s'arrêter pour se battre, comme un convoi ; « ia.prudent » : il roule moins vite (45 %) ; « ia.pause » : il attend
+// sur place (le camion qu'on escorte t'attend si tu es trop loin). Au bout de la route, il s'arrête.
 // Ce fichier ne dessine rien : il renvoie des événements (« camion-decharge », « pilote-abattu »…).
 
 window.Tanks = window.Tanks || {};
@@ -245,7 +248,18 @@ Tanks.Vehicules = (function () {
     const ia = v.ia, sens = v.equipe === "bleus" ? 1 : -1, I = {};
     ia.pense -= dt;
     let gx = 0, gz = 0, vise = null;
-    if (v.sorte === "camion") {
+    if (ia.route) {
+      // (étape 88) LA ROUTE : vers le prochain point ; arrivé (à moins de « arrive » m), on passe au suivant
+      while (ia.route.length && Math.hypot(ia.route[0][0] - v.x, ia.route[0][1] - v.z) < V.arrive) ia.route.shift();
+      if (!ia.route.length || ia.pause) {
+        ia.etat = ia.route.length ? "attend (" + ia.route.length + " points de route)" : "arrivé au bout de sa route";
+        return Object.assign(I, { freiner: true });
+      }
+      ia.etat = "suit sa route (encore " + ia.route.length + " point" + (ia.route.length > 1 ? "s" : "") + ")";
+      gx = ia.route[0][0] - v.x;
+      gz = ia.route[0][1] - v.z;
+      if (ia.prudent) I.lent = true;
+    } else if (v.sorte === "camion") {
       // LE CAMION : au front → il décharge → il rentre → il se remplit → il repart
       if (ia.etat === "part au front" || ia.etat === "roule vers le front") {
         ia.etat = "roule vers le front";
@@ -430,5 +444,5 @@ Tanks.Vehicules = (function () {
     }
   }
 
-  return { creer, avancer, conduire, rouler, legers, blesserPilote, decharger, remplirAuParking, SORTES };
+  return { creer, avancer, conduire, rouler, legers, blesserPilote, decharger, remplirAuParking, SORTES, nouveau, garerAuCamp }; // (étape 88 : nouveau, garerAuCamp pour la campagne)
 })();

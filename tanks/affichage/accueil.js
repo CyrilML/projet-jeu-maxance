@@ -6,6 +6,8 @@
 //   1. « attente » : le navigateur interdit la musique tant que tu n'as rien touché. Alors on t'invite à cliquer ou à
 //      appuyer sur une touche : ce premier geste réveille la musique ;
 //   2. « prête » : les boutons apparaissent : ▶ JOUER (ouvre le menu de l'équipement) et 📓 le carnet.
+//      ✍️ (étape 88) Deux portes au lieu d'une : ▶ CAMPAGNE (l'histoire, en 6 chapitres : affichage/campagne-ecrans.js)
+//      et ⚔️ BATAILLE (la bataille libre, comme avant : le menu de l'équipement). ← → pour choisir, Entrée pour entrer.
 // L'accueil est un ÉCRAN (de l'affichage) : il ne touche pas au monde. Le menu attend qu'il soit fermé.
 
 window.Tanks = window.Tanks || {};
@@ -25,10 +27,11 @@ Tanks.Accueil = (function () {
       '<div class="a-ligne"></div>' +
       '<p class="a-attente">🔊 Clique ou appuie sur une touche</p>' +
       '<div class="a-boutons" hidden>' +
-      '<button class="a-jouer" data-accueil="jouer">▶ JOUER</button>' +
+      '<button class="a-jouer a-mode a-campagne" data-accueil="campagne">▶ CAMPAGNE<small>' + Tanks.CONFIG.campagne.chapitres.length + " chapitres · l'histoire</small></button>" + // (étape 88)
+      '<button class="a-jouer a-mode a-bataille" data-accueil="bataille">⚔️ BATAILLE<small>bataille libre · toutes les cartes</small></button>' +
       '<a class="a-carnet" href="../index.html#etape84">📓 Le carnet</a>' +
       "</div>" +
-      '<p class="a-pied">Entrée : jouer · M : musique</p>' +
+      '<p class="a-pied">← → choisir · Entrée : entrer · M : musique</p>' +
       "</div>";
     // (le clavier et la souris : capturés avant les oreilles du jeu tant que l'accueil est là)
     const geste = (e) => {
@@ -38,26 +41,49 @@ Tanks.Accueil = (function () {
         pret = true;
         racine.querySelector(".a-attente").hidden = true;
         racine.querySelector(".a-boutons").hidden = false;
-        racine.querySelector(".a-jouer").focus();
+        racine.querySelector(".a-campagne").focus();
         e.preventDefault && e.type === "keydown" && e.preventDefault();
         if (e.type === "keydown") e.stopPropagation();
         return;
       }
-      if (e.type === "keydown" && (e.code === "Enter" || e.code === "Space" || e.code === "NumpadEnter")) e.preventDefault(), e.stopPropagation(), fermer();
+      const portes = [...racine.querySelectorAll("[data-accueil]")], ici = portes.indexOf(document.activeElement);
+      if (e.type === "keydown" && (e.code === "ArrowLeft" || e.code === "ArrowRight" || e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "Tab")) {
+        e.preventDefault(), e.stopPropagation();
+        portes[(Math.max(0, ici) + 1) % portes.length].focus(); // (étape 88 : passer d'une porte à l'autre)
+      } else if (e.type === "keydown" && (e.code === "Enter" || e.code === "Space" || e.code === "NumpadEnter")) e.preventDefault(), e.stopPropagation(), fermer(ici >= 0 ? portes[ici].dataset.accueil : "campagne");
       else if (e.type === "keydown" && e.code !== "KeyM" && e.code !== "Semicolon" && e.code !== "KeyB") e.stopPropagation();
     };
     window.addEventListener("keydown", geste, true);
     racine.addEventListener("pointerdown", geste);
-    racine.querySelector(".a-jouer").addEventListener("click", (e) => (e.stopPropagation(), fermer()));
+    racine.querySelectorAll("[data-accueil]").forEach((b) => b.addEventListener("click", (e) => (e.stopPropagation(), fermer(b.dataset.accueil))));
   }
 
-  function fermer() {
+  // mode : "campagne" (la liste des chapitres) ou "bataille" (le menu de la bataille libre)
+  function fermer(mode) {
     visible = false;
     racine.classList.add("a-part");
     document.getElementById("ecran2d").style.visibility = "";
-    setTimeout(() => (racine.hidden = true), 600);
-    Tanks.Evenements.emettre("accueil", { quitte: true });
+    setTimeout(() => !visible && (racine.hidden = true), 600);
+    if (mode === "campagne") Tanks.EcranCampagne.ouvrirListe(); // (étape 88)
+    Tanks.Evenements.emettre("accueil", { quitte: true, mode: mode || "bataille" });
+  }
+  // (étape 88) La campagne reprend juste après un rechargement de la page : l'accueil s'efface tout de suite.
+  function cacher() {
+    visible = false;
+    pret = true;
+    racine.hidden = true;
+  }
+  // (étape 88) Retour à l'accueil depuis la campagne : les deux portes sont déjà là.
+  function montrer() {
+    visible = true;
+    pret = true;
+    racine.hidden = false;
+    racine.classList.remove("a-part");
+    racine.querySelector(".a-attente").hidden = true;
+    racine.querySelector(".a-boutons").hidden = false;
+    document.getElementById("ecran2d").style.visibility = "hidden";
+    racine.querySelector(".a-campagne").focus();
   }
 
-  return { initialiser, get visible() { return visible; } };
+  return { initialiser, cacher, montrer, get visible() { return visible; } };
 })();

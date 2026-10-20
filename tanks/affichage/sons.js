@@ -9,6 +9,10 @@
 // « tchop-tchop » (le volume monte et descend à chaque tour de pale), l'avion siffle (un souffle aigu et fort).
 // Étape 75 : la GRENADE (le « clic » de la goupille quand on la lance, un « tink » métallique à chaque rebond près de
 // toi, puis le boum), les MURS qui tombent (un fracas de pierres) et la MAISON qui s'effondre (un long grondement).
+// Étape 88 : la RADIO de la campagne : un « kchh » de grésillement puis « bip-bip » quand quelqu'un parle (grave et
+// tordu quand c'est la radio ennemie interceptée), et 3 notes qui montent quand un objectif est accompli.
+// Demande 88 : chaque FAMILLE D'ARME a son coup de feu (le pistolet claque, la mitraillette crépite, l'AK gronde, le
+// fusil de précision tonne avec un long écho, le silencieux fait « pfft »), et ton rechargement fait « clic… clac ».
 // Quand tu QUITTES le jeu (un autre onglet, une autre application, une autre fenêtre devant), le son « s'endort » :
 // on met le synthétiseur en pause (ctx.suspend). Il se réveille quand tu reviens.
 
@@ -74,6 +78,10 @@ Tanks.Sons = (function () {
     // (étape 65) la radio : « bip-bip » quand un ordre est compris, « bouuu » quand il ne l'est pas
     radio.ecouter("ordre", () => (bip(880, 0), bip(1320, 0.12)));
     radio.ecouter("ordre-incompris", () => bip(220, 0, 0.35));
+    // (étape 88) la radio de la campagne, et les objectifs accomplis
+    radio.ecouter("campagne-radio", (e) => (gresillement(), e.camp === "rouges" ? (bip(330, 0.09, 0.07), bip(247, 0.18, 0.09)) : (bip(1320, 0.09, 0.05), bip(1760, 0.16, 0.05))));
+    radio.ecouter("campagne-objectif", () => (bip(660, 0, 0.12), bip(880, 0.12, 0.12), bip(1320, 0.24, 0.22)));
+    radio.ecouter("campagne-echouee", () => (bip(392, 0, 0.25), bip(294, 0.25, 0.25), bip(196, 0.5, 0.6)));
     radio.ecouter("torpille", (e) => pschh(e.joueur ? 0.5 : attenuation(e.x, e.z) * 0.4)); // (étape 63)
     radio.ecouter("impact", (e) => {
       if (e.sorte === "bombe" || e.sorte === "missile") boum(attenuation(e.x, e.z), 1.8, 60);
@@ -88,8 +96,10 @@ Tanks.Sons = (function () {
       // (les balles de l'ordinateur : pas plus d'une toutes les 0,05 s, sinon c'est un vacarme)
       if (!e.parToi && ctx.currentTime - derniereBalle < 0.05) return;
       derniereBalle = ctx.currentTime;
-      tac(e.parToi ? 0.8 : attenuation(e.de.x, e.de.z) * 0.35);
+      coupDeFeu(Tanks.Armes3D.sonDe(e, monde), e.parToi ? 0.8 : attenuation(e.de.x, e.de.z) * 0.35); // (demande 88 : chaque famille d'arme a son bruit)
     });
+    // (demande 88) le rechargement de TON arme : « clic » (le chargeur sort), puis « clac » (le neuf est enfoncé)
+    radio.ecouter("recharge-arme", (e) => e.parToi && (e.fini ? (clic(0.5, 1800, 0), clic(0.35, 900, 0.07)) : (clic(0.4, 1300, 0.05), clic(0.3, 2400, 0.32))));
     for (const n of ["roquette", "missile"]) radio.ecouter(n, (e) => pschh(e.parToi || n === "missile" ? 0.7 : attenuation(e.x, e.z) * 0.5));
     // le souffle de l'hélico et de l'avion : du bruit filtré, en boucle
     souffle = ctx.createBufferSource();
@@ -187,6 +197,59 @@ Tanks.Sons = (function () {
     b.start(t, Math.random());
     b.stop(t + 0.1);
   }
+  // (demande 88) LE COUP DE FEU d'une famille d'arme (réglages : config.js, « armes3d.sons ») : un « crac » de bruit
+  // (sa note et sa durée), un « boum » grave qui plonge (le souffle), et un ÉCHO qui traîne (plus long pour les gros calibres).
+  function coupDeFeu(famille, force) {
+    if (!ctx || coupe || force < 0.03) return;
+    const R = Tanks.CONFIG.armes3d.sons[famille] || Tanks.CONFIG.armes3d.sons.fusil, t = ctx.currentTime;
+    const b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    b.buffer = tampon;
+    f.type = famille === "silencieux" ? "lowpass" : "bandpass";
+    f.frequency.value = R.crac;
+    f.Q.value = famille === "silencieux" ? 0.7 : 0.9;
+    g.gain.setValueAtTime(0.8 * force, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + R.duree);
+    b.connect(f).connect(g).connect(sortie);
+    b.start(t, Math.random());
+    b.stop(t + R.duree + 0.02);
+    if (R.boum > 0.02) {
+      const o = ctx.createOscillator(), go = ctx.createGain();
+      o.frequency.setValueAtTime(R.grave, t);
+      o.frequency.exponentialRampToValueAtTime(R.grave * 0.35, t + R.duree * 2.5);
+      go.gain.setValueAtTime(0.6 * R.boum * force, t);
+      go.gain.exponentialRampToValueAtTime(0.001, t + R.duree * 2.5);
+      o.connect(go).connect(sortie);
+      o.start(t);
+      o.stop(t + R.duree * 2.5 + 0.02);
+    }
+    if (R.echo > 0) {
+      const e = ctx.createBufferSource(), fe = ctx.createBiquadFilter(), ge = ctx.createGain();
+      e.buffer = tampon;
+      fe.type = "lowpass";
+      fe.frequency.value = 520;
+      ge.gain.setValueAtTime(0.0001, t);
+      ge.gain.exponentialRampToValueAtTime(0.22 * force, t + 0.04);
+      ge.gain.exponentialRampToValueAtTime(0.001, t + R.echo);
+      e.connect(fe).connect(ge).connect(sortie);
+      e.start(t, Math.random());
+      e.stop(t + R.echo + 0.05);
+    }
+    if (famille === "silencieux") clic(0.25 * force, 2600, 0.01); // (la culasse qui claque : c'est presque tout ce qu'on entend)
+  }
+  // (demande 88) Un petit « clic » métallique (un chargeur, une culasse), retardé de « retard » s.
+  function clic(force, frequence, retard) {
+    if (!ctx || coupe) return;
+    const t = ctx.currentTime + (retard || 0), b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    b.buffer = tampon;
+    f.type = "bandpass";
+    f.frequency.value = frequence;
+    f.Q.value = 6;
+    g.gain.setValueAtTime(0.5 * force, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+    b.connect(f).connect(g).connect(sortie);
+    b.start(t, Math.random());
+    b.stop(t + 0.06);
+  }
   // (étape 62) Un portail : un « wiiiou » qui monte (une note qui glisse vers l'aigu).
   function portail() {
     if (!ctx || coupe) return;
@@ -211,6 +274,21 @@ Tanks.Sons = (function () {
     o.connect(g).connect(sortie);
     o.start(t);
     o.stop(t + (duree || 0.1) + 0.02);
+  }
+  // (étape 88) Le grésillement de la radio : un petit souffle de bruit, filtré comme dans un talkie-walkie.
+  function gresillement() {
+    if (!ctx || coupe) return;
+    const t = ctx.currentTime, b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    b.buffer = tampon;
+    f.type = "bandpass";
+    f.frequency.value = 2200;
+    f.Q.value = 0.8;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.22, t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    b.connect(f).connect(g).connect(sortie);
+    b.start(t, Math.random());
+    b.stop(t + 0.14);
   }
   // (étape 63) Le sonar : « ping » (une note aiguë qui résonne longtemps).
   function ping() {
@@ -286,7 +364,7 @@ Tanks.Sons = (function () {
       const d = Math.hypot(a.x - ici.x, a.y - ici.y, a.z - ici.z);
       if (d < 500 && (1 - d / 500) * 0.4 > souffleFort) (souffleFort = (1 - d / 500) * 0.4), (souffleAigu = 1200);
     }
-    const silence = coupe || m.phase === "garage";
+    const silence = coupe || m.phase === "garage" || m.phase === "briefing"; // (étape 88 : pas de moteur pendant le survol et le briefing)
     volume.gain.setTargetAtTime(silence ? 0 : fort, t, 0.15);
     filtreSouffle.frequency.setTargetAtTime(souffleAigu, t, 0.2);
     volumeSouffle.gain.setTargetAtTime(silence ? 0 : souffleFort, t, toi.mode === "helico" || toi.mode === "chinook" || toi.mode === "blackhawk" ? 0.02 : 0.2);

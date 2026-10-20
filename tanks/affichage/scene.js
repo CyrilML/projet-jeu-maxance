@@ -54,6 +54,7 @@ Tanks.Scene = (function () {
   const dessinsSoldats = new Map(), dessinsEngins = new Map(); // (étape 61) soldat → dessin, engin → dessin
   const dessinsPortails = new Map(); // (étape 62)
   let horloge = 0, dernierSuivi = null, alpha = 1;
+  let cinema = null, plan = null; // (étape 88 : la caméra de cinéma de la campagne : une fonction qui donne { oeil, cible })
   // (étape 72) le niveau de qualité en cours (réglé par affichage/qualite.js), le ciel, les silhouettes des soldats
   let Q = C.qualite.niveaux[C.qualite.depart], leCiel = null;
   const silhouettes = {};
@@ -290,6 +291,7 @@ Tanks.Scene = (function () {
     // assez loin (et pas toi, pas en parachute, pas à la nage) : une silhouette au lieu du squelette
     const silhouette = !cache && !s.joueur && !s.parachute && !s.nage && d > Q.soldatSimple && poserSilhouette(s);
     o.g.visible = !cache && !silhouette;
+    if (s.joueur && Tanks.Armes3D.vue.actif) o.g.visible = false; // (demande 88 : à la première personne, tu vois tes mains et ton arme à part)
     if (cache) lod.soldatsCaches++;
     if (silhouette) lod.silhouettes++;
     if (!o.g.visible) {
@@ -752,13 +754,16 @@ Tanks.Scene = (function () {
       cible = new THREE.Vector3(oeil.x + ca * 10, oeil.y - P.baisse * 10, oeil.z + sa * 10);
       camera.saut = true;
     }
+    // (étape 88) LA CAMÉRA DE CINÉMA de la campagne (le survol du début, le briefing, la fin) : elle passe avant tout
+    plan = cinema ? cinema(monde, dt) : null;
+    if (plan) (oeil = new THREE.Vector3(plan.oeil.x, plan.oeil.y, plan.oeil.z)), (cible = new THREE.Vector3(plan.cible.x, plan.cible.y, plan.cible.z)), (camera.saut = true);
     const proche = enPremiere || zoom > 2.5 ? P.proche : 0.3;
     if (cam.near !== proche) (cam.near = proche), cam.updateProjectionMatrix();
     cam.position.lerp(oeil, monde.phase === "garage" || camera.saut ? 1 : Math.min(1, dt * 14));
     camera.saut = false;
     cam.lookAt(cible);
     cam.updateMatrixWorld();
-    const centre = monde.phase === "garage" ? j : suivi(monde); // (les ombres sont nettes autour de toi)
+    const centre = plan ? plan.cible : monde.phase === "garage" ? j : suivi(monde); // (les ombres sont nettes autour de toi) (étape 88 : ou de ce que filme la caméra de cinéma)
     soleil.position.set(centre.x + SOLEIL.x * 200, centre.y + SOLEIL.y * 200, centre.z + SOLEIL.z * 200);
     soleil.target.position.set(centre.x, centre.y, centre.z);
     leCiel.position.copy(cam.position); // (étape 72 : le ciel suit la caméra)
@@ -771,7 +776,10 @@ Tanks.Scene = (function () {
     Tanks.Maisons3D.maj(dt, cam.position, Q.maisons); // (étape 75 : les morceaux de mur tombés, les débris qui volent, les toits qui s'effondrent ; la belle version de près)
     }
     Tanks.Effets.maj(dt, monde, cam, Q.effets);
+    // (demande 88) l'arme vue à la première personne, la lampe qui éclaire, le laser (affichage/armes3d.js)
+    Tanks.Armes3D.maj(monde, dt, cam, scene, !!(camera.premiere && toiPied));
     rendu.render(scene, cam);
+    Tanks.Armes3D.dessinerVue(rendu); // (dessinée PAR-DESSUS le monde : elle ne rentre jamais dans un mur)
   }
 
   // Où tombe un point du monde sur l'écran ? (pour le tableau de bord : les noms et la vie au-dessus des tanks)
@@ -782,7 +790,7 @@ Tanks.Scene = (function () {
     return { x: (v.x * 0.5 + 0.5) * L, y: (-v.y * 0.5 + 0.5) * H };
   }
 
-  return { initialiser, dessiner, versEcran, appliquerQualite, lod, changerCamera: (aPied) => {
+  return { initialiser, dessiner, versEcran, appliquerQualite, lod, cinema: (f) => (cinema = f || null), get filme() { return !!plan; }, changerCamera: (aPied) => {
       // (étape 78) à pied, C passe de la vue de derrière à la vue dans les yeux ; dans un engin, C éloigne la caméra
       if (aPied) camera.premiere = !camera.premiere;
       else camera.mode = (camera.mode + 1) % 2;
