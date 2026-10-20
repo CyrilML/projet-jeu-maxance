@@ -198,7 +198,7 @@ Tanks.Station3D = (function () {
       jaune: mat({ color: 0xd8b21c, roughness: 0.6 }),
       pierre: mat({ color: 0x9a968e, roughness: 0.7 }),
       metal: mat({ color: 0x8c9096, roughness: 0.35, metalness: 0.85 }),
-      rouille: mat({ color: 0x4a3a2e, roughness: 0.8, metalness: 0.4 }),
+      rouille: mat({ color: 0x8a5a36, roughness: 0.8, metalness: 0.3 }),
       noir: mat({ color: 0x111214, roughness: 0.9 }),
       inox: mat({ color: 0xb9bec4, roughness: 0.28, metalness: 0.9 }),
       caoutchouc: mat({ color: 0x18181a, roughness: 0.6 }),
@@ -206,6 +206,7 @@ Tanks.Station3D = (function () {
       gravats: mat({ color: 0x6d6862, roughness: 1 }),
       bleuNom: mat({ map: panneau("GARE MAXANCE", "#1b3d8a", "#ffffff", 1024, 192, "#e6e6e6"), roughness: 0.5 }),
       sortie: mat({ map: panneau("SORTIE ➜", "#13703a", "#ffffff", 512, 128), emissive: 0x0a3a1c, roughness: 0.5 }),
+      horsService: mat({ map: panneau("HORS SERVICE", "#b81c1c", "#ffffff", 512, 128), emissive: 0x3a0606, roughness: 0.5 }),
       affiche: mat({ map: panneau("LIGNE 80", "#c9a227", "#1a1a1a", 512, 256, "#1a1a1a"), roughness: 0.6 }),
       carrosserieMetro: mat({ color: 0xcfd3d7, roughness: 0.4, metalness: 0.5 }),
       carrosserieTram: mat({ color: 0xe0d8bc, roughness: 0.45, metalness: 0.3 }),
@@ -354,6 +355,12 @@ Tanks.Station3D = (function () {
         g.add(b);
       }
     }
+    // le panneau « HORS SERVICE » au pied, et un gros morceau de l'escalator cassé, tombé de travers sur le quai
+    g.add(bloc(0.05, 0.9, 0.05, MT.metal, (E.x0 + E.x1) / 2, 0.45, sz * (Q - 1.2)));
+    g.add(bloc(1.8, 0.45, 0.04, MT.horsService, (E.x0 + E.x1) / 2, 1.1, sz * (Q - 1.2)));
+    const morceau = bloc(larg - 0.4, 0.5, 3.2, MT.rouille, E.x1 - larg / 2 + 0.6, 0.5, sz * (Q - 2.6));
+    morceau.rotation.set(sz * 0.35, 0.5, 0.15);
+    g.add(morceau);
     // la main courante arrachée qui pend du haut de l'escalator cassé
     g.add(O.tube([E.x1 - 0.2, M.hauteur + 1, sz * E.haut], [E.x1 - 1.2, 1.4, sz * (Q + 1.5)], 0.05, MT.caoutchouc));
   }

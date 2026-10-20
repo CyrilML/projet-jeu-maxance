@@ -77,6 +77,7 @@ Tanks.Souterrain = (function () {
   // les bancs : entre les piliers, le dos vers le mur du fond
   const bancs = [];
   for (let x = -L + 10; x <= L - 10; x += S.bancs.ecart) {
+    if (RAMPES.some((R) => x > R.x0 - 4 && x < R.x1 + 4)) continue; // (pas devant un escalier ou un escalator)
     for (const z of [-S.bancs.z, S.bancs.z]) {
       bancs.push(boite({ x, z, dl: 1.1, dp: 0.32, angle: 0, y0: 0, y1: 0.55, sorte: "banc", nom: "un banc" }));
       parties.bancs++;
