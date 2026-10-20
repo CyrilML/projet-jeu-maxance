@@ -206,6 +206,7 @@
       <a href="#etape82">Étape 82</a>
       <a href="#etape83">Étape 83</a>
       <a href="#etape84">Étape 84</a>
+      <a href="#etape85">Étape 85</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4679,6 +4680,32 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <details class="question"><summary>Pourquoi le jeu ne peut-il pas lancer la musique tout seul ?</summary><p>Parce que les navigateurs exigent un geste (clic ou touche) avant de jouer du son, pour éviter les pages qui font du bruit sans qu'on le veuille.</p></details>
     </section>
 
+    <section id="etape85">
+      <h2>🪖 Étape 85 : les chutes des soldats <span class="etiquette">🟡 version très courte · à valider</span></h2>
+      <p class="chapeau">Un soldat touché ne tombe plus tout raide : il tombe en avant ou en arrière selon d'où vient le coup. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/85-chutes-des-soldats.md</code>.</p>
+          <ul>
+            <li>✍️ « Une balle dans la tête : il s'écroule. Tiré dans le dos : il tombe en avant. Il tombe à genoux, puis il tombe. »</li>
+            <li>✍️ En 2 minutes : la version très courte.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 24 ».</li>
+            <li>☐ Tire dans le dos d'un soldat : il tombe en avant. De face : il tombe en arrière.</li>
+            <li>☐ Journal : « 💥 soldat rouge n° … : balle dans la tête, il s'écroule » (ou dans le dos, à genoux, explosion…).</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🧭 D'où vient la balle ?</h3>
+      <p>Le jeu compare deux directions : celle où le soldat <strong>regarde</strong>, et celle d'où <strong>arrive</strong> la balle. Si elles sont presque opposées (la balle arrive de devant), il part en arrière. Si la balle arrive de derrière (à moins de 60° de son dos), il tombe en avant.</p>
+      <p class="petit">Pas encore fait (version très courte) : les vraies poses (s'écrouler, tomber à genoux, être projeté par une explosion), l'arme qui tombe des mains, le compteur sous le capot.</p>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -5871,6 +5898,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-84" data-cle="appris-84" placeholder="Ex. : J'ai appris qu'un site doit attendre un clic pour faire du son…"></textarea>
         <label for="idees-84"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-84" data-cle="idees-84" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 85 · les chutes des soldats <span class="petit">· 20 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le choix de la chute (<code>tanks/logique/soldat.js</code>) et la chute en avant ou en arrière (<code>tanks/affichage/engins3d.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : des chutes différentes selon le coup, en version très courte.</p>
+        <label for="appris-85"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-85" data-cle="appris-85" placeholder="Ex. : J'ai appris qu'on compare deux directions…"></textarea>
+        <label for="idees-85"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-85" data-cle="idees-85" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

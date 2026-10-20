@@ -1,6 +1,6 @@
 # Demande n° 85 : des chutes réalistes quand un soldat est touché
 
-> Statut : 🛠️ en cours.
+> Statut : 🟡 version très courte livrée le 20/10/2026 (tanks version 24) : le jeu choisit le genre de chute (tête, dos, face, genoux, explosion, écrasé) et le dit dans le journal, mais le dessin montre seulement une chute en avant ou en arrière. Les vraies poses restent à faire.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
