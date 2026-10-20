@@ -36,6 +36,8 @@
 // Étape 88 : LA CAMPAGNE : ton livret (chapitres ouverts, étoiles, records), et pendant un chapitre : chaque objectif et
 // son compteur, la réplique de la radio et celles qui attendent, les événements du scénario à venir (dans combien de
 // secondes), les cibles spéciales (leur vie), le camion escorté, les avions de la frappe, et tes compteurs de mission.
+// Demande 88 : L'ARMURIER : le modèle 3D de ton arme (ses pièces, ses triangles, ses dessins), la vue à la première
+// personne (ses triangles, le recul, l'arme baissée), la lampe et le laser, et combien de modèles sont au magasin.
 
 window.Tanks = window.Tanks || {};
 

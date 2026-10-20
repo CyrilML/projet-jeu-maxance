@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 27,
+  version: 28,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -790,7 +790,7 @@ Tanks.CONFIG = {
       flamme: 0.045, // s : l'éclair au bout du canon
       douilles: 12, // douilles éjectées en même temps (au plus)
     },
-    lampe: { force: 1.8, faisceau: 0.16 }, // × la force de la lampe de l'atelier (la vraie lumière) ; l'opacité du faisceau qu'on voit
+    lampe: { force: 1.1, faisceau: 0.2 }, // × la force de la lampe de l'atelier (la vraie lumière) ; l'opacité du faisceau qu'on voit
     laser: { epaisseur: 0.0035, point: 0.07, opacite: 0.55 }, // m, m, 0 à 1
     apercu: { vitesse: 0.55, hauteur: 210 }, // rad/s : l'arme tourne dans le menu ; px de haut
     // ✍️ LE SON de chaque famille d'arme (affichage/sons.js) : la note du « crac » (Hz), sa durée (s), la force du

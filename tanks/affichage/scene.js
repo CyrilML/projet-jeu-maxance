@@ -43,6 +43,8 @@
 // dehors (le sol, les arbres, les maisons, le lac, le ciel, le soleil et ses ombres : rien de tout ça n'est dessiné ni
 // calculé) et MONTRE la station (affichage/station3d.js, construite la première fois qu'on descend). La lumière change :
 // un brouillard sombre et proche, une lumière d'ambiance froide, les feux orange et les néons de la station.
+// Demande 88 : à la PREMIÈRE PERSONNE, ton soldat est caché : c'est l'armurier (affichage/armes3d.js) qui dessine tes
+// mains et ton arme, avec leur propre caméra, juste APRÈS le monde ; il pose aussi la lampe et le laser dans la scène.
 // Comme tout l'affichage, ce fichier lit le monde et ne le modifie jamais.
 
 window.Tanks = window.Tanks || {};

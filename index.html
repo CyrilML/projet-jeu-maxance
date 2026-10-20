@@ -209,6 +209,7 @@
       <a href="#etape85">Étape 85</a>
       <a href="#etape86">Étape 86</a>
       <a href="#etape87">Étape 87</a>
+      <a href="#etape88">Étape 88</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4763,6 +4764,53 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <p class="petit">Pas encore fait (5 minutes) : redessiner les objets eux-mêmes dans le style Battlefield.</p>
     </section>
 
+    <section id="etape88">
+      <h2>🎖️ Étape 88 : la campagne « Les Lions de Valdrie » et toutes les armes <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Un mode histoire de 6 chapitres, et 14 armes toutes différentes, avec leurs pièces visibles, dans le style Battlefield. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/88-campagne-et-armes.md</code>.</p>
+          <ul>
+            <li>✍️ « Refais l'histoire, la campagne, toutes les armes, tout, dans le style Battlefield. Un vrai travail. »</li>
+            <li>✍️ « Pour les armes, c'est toujours la même chose. Change ça. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 28 ». Accueil : ▶ CAMPAGNE et ⚔️ BATAILLE.</li>
+            <li>☐ Campagne : la liste des 6 chapitres, le survol de la carte, le briefing avec la carte tactique.</li>
+            <li>☐ En mission : les objectifs en haut à gauche, le losange orange avec la distance, la radio en bas.</li>
+            <li>☐ La fin : les 3 étoiles, le chapitre suivant se débloque.</li>
+            <li>☐ Menu, onglets Armes et Atelier : l'arme tourne en 3D, et les pièces se vissent dessus.</li>
+            <li>☐ Les soldats de l'ordinateur ont des armes différentes. Les tirs n'ont pas le même bruit selon l'arme.</li>
+            <li>☐ C (première personne) : tes mains, l'arme qui bouge, recule, éjecte ses douilles, se recharge. L : la lampe éclaire vraiment.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>📖 L'histoire</h3>
+      <p>L'Alliance de Valdrie se bat contre le Front Écarlate du Maréchal Varrok, qui a coupé toutes les radios du pays avec un brouilleur, « Orage ».</p>
+      <ol>
+        <li><strong>Le réveil du lion</strong> (village du désert, à pied) : reprendre l'oasis et son relais radio.</li>
+        <li><strong>La route de cendre</strong> (désert, en tank) : un convoi, des canons antiaériens, la frappe aérienne.</li>
+        <li><strong>L'enclume</strong> (grande bataille) : la ligne de chars, le village, le « Mammouth » de Varrok.</li>
+        <li><strong>Les rues de Valcourt</strong> (ville) : escorter un camion de vivres jusqu'à la mairie.</li>
+        <li><strong>La ville fantôme</strong> (ruines, à pied) : rejoindre l'hélico abattu et tenir jusqu'à l'évacuation.</li>
+        <li><strong>Terminus</strong> (souterrain) : la finale, couper le brouilleur.</li>
+      </ol>
+      <h3>🎯 Un objectif, c'est une petite machine</h3>
+      <p>Chaque objectif a un <strong>type</strong> (atteindre, tenir, survivre, éliminer, détruire, escorter) et un <strong>compteur</strong>. À chaque pas, le jeu vérifie : « suis-je dans la zone ? », « combien de chars restent-ils ? ». Quand le compteur arrive au bout, l'objectif est accompli et le suivant commence. Toute l'histoire (textes, objectifs, radio, événements) est rangée comme des <strong>données</strong> dans <code>config.js</code>.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>tanks/config.js</code>, cherche <code>campagne</code> : lis le chapitre 1 et change une réplique de la radio !</li>
+        <li>Compare l'AK-12 et l'AR-4 dans le menu : quelles différences vois-tu ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi l'histoire est-elle rangée dans config.js ?</summary><p>Parce que ce sont des données : on peut changer les textes, les objectifs et la radio sans toucher au moteur qui les fait marcher.</p></details>
+      <p class="petit">Limites : la difficulté n'a pas été essayée en vraie partie ; les soldats de l'ordinateur ont des armes différentes en apparence, mais elles tirent pareil.</p>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -5178,6 +5226,12 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
           <h4>The Last Battlefield : la page d'accueil <span class="etiquette">✅ fait · à valider</span></h4>
           <p>Le nouveau nom du jeu, une page d'accueil, et la musique épique (chœur, cymbales) seulement sur l'accueil (étape 84).</p>
           <p class="apprend"><b>Tu apprends :</b> le geste avant le son, les formants d'une voix. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">🎖️</div>
+          <h4>La campagne et toutes les armes <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>« Les Lions de Valdrie » en 6 chapitres, et 14 armes en 3D toutes différentes, avec leurs pièces visibles et la vue à la première personne (étape 88).</p>
+          <p class="apprend"><b>Tu apprends :</b> une histoire rangée en données, les objectifs comme des petites machines. <b>Durée :</b> 3 séances.</p>
         </div>
         <div class="carte fait">
           <div class="num">⚔️</div>
@@ -5982,6 +6036,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-87" data-cle="appris-87" placeholder="Ex. : J'ai appris ce qu'est l'étalonnage…"></textarea>
         <label for="idees-87"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-87" data-cle="idees-87" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 88 · la campagne et toutes les armes <span class="petit">· 20 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la campagne (<code>tanks/logique/campagne.js</code>, <code>affichage/campagne-ecrans.js</code>, <code>affichage/campagne-tableau.js</code>) et les armes (<code>tanks/affichage/armes3d.js</code>).</p>
+        <p class="petit">✍️ Maxance a demandé : la campagne et toutes les armes, style Battlefield, un vrai travail.</p>
+        <label for="appris-88"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-88" data-cle="appris-88" placeholder="Ex. : J'ai appris qu'une histoire peut être rangée en données…"></textarea>
+        <label for="idees-88"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-88" data-cle="idees-88" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

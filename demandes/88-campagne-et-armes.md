@@ -1,6 +1,6 @@
 # Demande n° 88 : la campagne et toutes les armes, style Battlefield
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée le 20/10/2026 (tanks version 28), à valider par Maxance.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi

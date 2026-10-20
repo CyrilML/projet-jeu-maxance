@@ -20,6 +20,9 @@
 // descente) et il sert aussi de FIGURINE (immobile) pour les pilotes, les mitrailleurs et les passagers des engins.
 // Étape 76 : le Tigre, le Rafale, le drone, les chasseurs ennemis et l'avion de transport sont refaits « le plus beau
 // possible » dans leur propre atelier, affichage/avions3d.js (ce fichier lui prête ses outils : le pilote, la figurine…).
+// Demande 88 : le soldat ne tient plus « le » fusil de tout le monde, mais SA vraie arme, fabriquée par l'armurier
+// (affichage/armes3d.js) : la tienne avec ses pièces, et pour l'ordinateur une arme tirée au sort selon son camp. Ses
+// mains vont sur la poignée et le garde-main de CETTE arme, et le haut de son corps tourne un peu (épaule gauche en avant).
 // Tout est construit « nez vers x+ », posé au sol (y = 0). Ce fichier ne connaît pas les règles du jeu.
 
 window.Tanks = window.Tanks || {};

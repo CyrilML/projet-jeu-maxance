@@ -492,9 +492,13 @@ Tanks.Armes3D = (function () {
       else {
         e.tube(-0.262, -0.072, 0.0145, 0.0145, by, 0, "metal", A, 16); // le tube de crosse
         e.tube(-0.084, -0.074, 0.019, 0.019, by, 0, "metal", A, 8);
-        e.cote([[-0.2, 0.062], [-0.2, 0.026], [-0.335, -0.046], [-0.342, -0.046], [-0.342, 0.074], [-0.33, 0.078], [-0.24, 0.07]], 0.042, "poly", K.noir, 0, 0.006, null, 2);
-        e.boite(0.012, 0.122, 0.044, -0.347, 0.015, 0, "poly", K.caoutchouc);
+        // la crosse réglable : le corps, l'appui-joue bombé, les 2 « poches » à piles sur les côtés, la plaque de couche
+        e.cote([[-0.2, 0.062], [-0.2, 0.026], [-0.3, -0.03], [-0.335, -0.048], [-0.342, -0.048], [-0.342, 0.074], [-0.33, 0.078], [-0.24, 0.07]], 0.04, "poly", K.noir, 0, 0.006, null, 2);
+        e.galet(0.12, 0.022, 0.046, -0.275, 0.072, 0, "poly", K.noir, 0.32);
+        for (const zz of [-1, 1]) e.galet(0.1, 0.034, 0.016, -0.262, 0.03, zz * 0.026, "poly", K.noir, 0.35, 12, 0, 0, 0.42);
+        e.boite(0.014, 0.126, 0.046, -0.348, 0.014, 0, "poly", K.caoutchouc);
         e.boite(0.03, 0.01, 0.03, -0.22, 0.018, 0, "poly", K.noir, 0, 0, 0.5); // le levier de réglage
+        e.boite(0.016, 0.01, 0.03, -0.31, -0.03, 0, "metal", K.acier, 0, 0, 0.5); // l'anneau de la sangle
       }
       poignee(e, "ar", K.noir);
       pontet(e, 0.008, 0.075, 0.0, A);
@@ -794,9 +798,9 @@ Tanks.Armes3D = (function () {
       const by = 0.022, O = 0x3e4433;
       const ell = (cx, cy, rx, ry) => { const t = []; for (let k = 0; k < 20; k++) { const a = (k / 20) * Math.PI * 2; t.push([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry]); } return t; };
       e.cote([[-0.272, -0.085], [-0.272, 0.05], [-0.24, 0.06], [0.13, 0.06], [0.2, 0.05], [0.235, 0.03], [0.242, 0.0], [0.226, -0.03], [0.2, -0.065], [0.17, -0.088], [0.12, -0.092], [0.075, -0.085], [0.03, -0.1], [-0.03, -0.106], [-0.08, -0.1], [-0.2, -0.094]], 0.06, "poly", O, 0, 0.014,
-        [ell(-0.07, -0.05, 0.03, 0.026), ell(0.042, -0.052, 0.03, 0.024), ell(0.163, -0.042, 0.027, 0.02)], 3);
-      e.boite(0.004, 0.02, 0.006, 0.03, -0.042, 0, "metal", K.acier, 0, 0, -0.3); // la détente
-      e.disque(0.012, 0.064, 0.03, -0.088, 0, "poly", K.noir, 14); // le sélecteur sous la détente
+        [ell(-0.062, -0.052, 0.045, 0.03), ell(0.066, -0.055, 0.045, 0.03), ell(0.176, -0.045, 0.03, 0.022)], 3);
+      e.boite(0.004, 0.022, 0.006, 0.034, -0.04, 0, "metal", K.acier, 0, 0, -0.3); // la détente
+      e.disque(0.012, 0.064, 0.06, -0.093, 0, "poly", K.noir, 14); // le sélecteur sous la détente
       for (const s of [-1, 1]) e.boite(0.012, 0.008, 0.008, 0.125, 0.034, s * 0.034, "poly", K.noir); // les leviers d'armement
       e.dans("chargeur", () => {
         const l = p.chargeur === "grand" || p.chargeur === "tambour" ? 0.43 : 0.36, x0 = -0.2;
@@ -812,9 +816,9 @@ Tanks.Armes3D = (function () {
       e.tube(0.235, 0.24 + lc, 0.009, 0.009, by, 0, "metal", K.canon, 12);
       if (p.manche === "crosse") { e.boite(0.03, 0.14, 0.064, -0.29, -0.018, 0, "poly", K.caoutchouc); e.galet(0.12, 0.022, 0.05, -0.2, 0.0, 0.034, "poly", K.noir, 0.3); }
       const tip = bout(e, p.canon, 0.24 + lc, by, 0.009, "a2");
-      return { by, tip, ch, rail: { xa: -0.11, xb: 0.12, y: yr }, dessous: { x: 0.2, y: -0.07 }, garde: { centre: V3(0.17, -0.07), axe: V3(1, 0.2, 0).normalize(), sorte: "dessous" },
+      return { by, tip, ch, rail: { xa: -0.11, xb: 0.12, y: yr }, dessous: { x: 0.2, y: -0.07 }, garde: { centre: V3(0.176, -0.078), axe: V3(1, 0.2, 0).normalize(), sorte: "dessous" },
         lampe: { x: 0.215, y: 0.0, z: -0.031, sens: -1, petitRail: true }, laser: { x: 0.215, y: 0.0, z: 0.031, sens: "droite", petitRail: true }, ejection: V3(-0.06, -0.09, 0),
-        mireNative: null, integre: true, grip: { centre: V3(-0.022, -0.05), axe: V3(0.15, 1, 0).normalize() }, crosse: -0.27 };
+        mireNative: null, integre: true, grip: { centre: V3(0.0, -0.052), axe: V3(0.12, 1, 0).normalize() }, crosse: -0.27 };
     },
 
     // ✍️ LE PISTOLET : la carcasse sable, la culasse noire striée (elle recule à chaque tir !), les points lumineux des
@@ -1084,14 +1088,26 @@ Tanks.Armes3D = (function () {
     const cle = nom + ":" + equipe + ":" + (roquettes ? 1 : 0);
     if (choixIA.has(cle)) return choixIA.get(cle);
     const I = A3.ia, id = tirer(roquettes ? I.roquettes : I[equipe] || I.bleus, hacher(nom, 1));
-    const pieces = vides();
-    if (!roquettes) for (const emp of ["viseur", "canon", "chargeur", "manche"]) pieces[emp] = tirer(I[emp], hacher(nom, 7 + emp.length));
-    const c = { id, pieces };
+    // ses pièces : une des 4 « versions » de cette arme (pas une par soldat : le magasin reste petit, et 30 soldats avec
+    // la même version partagent la même forme)
+    const pieces = vides(), version = Math.floor(hacher(nom, 3) * 4);
+    if (!roquettes) for (const emp of ["viseur", "canon", "chargeur", "manche"]) pieces[emp] = tirer(I[emp], hacher(id + ":" + version + ":" + emp, 11));
+    const c = { id, pieces, version };
     choixIA.set(cle, c);
     return c;
   }
   // Pour un soldat : quelle arme, avec quelles pièces, et en quelle qualité ?
+  const memoire = new WeakMap(); // soldat → ses modèles déjà trouvés (pour ne pas refaire la recherche à chaque image)
   function pourSoldat(s, pres) {
+    const qualite = s.joueur ? "beau" : pres ? "jeu" : "simple";
+    let m = memoire.get(s);
+    if (!m) memoire.set(s, (m = {}));
+    const enMain = s.armes ? (s.arme === "pistolet" ? s.armes.pistolet : s.armes.principale) : null;
+    const signe = enMain ? enMain.id + ":" + (s.gadget && s.gadget.id) : (s.roquettesIA ? "R" : "") + s.arme, pieces = enMain ? enMain.pieces : null;
+    if (m.signe !== signe || m.pieces !== pieces) (m.beau = m.jeu = m.simple = null), (m.signe = signe), (m.pieces = pieces);
+    return m[qualite] || (m[qualite] = trouverPourSoldat(s, qualite));
+  }
+  function trouverPourSoldat(s, qualite) {
     let id, pieces, lg = false;
     if (s.armes) { // toi : ton équipement exact
       const enMain = s.arme === "pistolet" ? s.armes.pistolet : s.armes.principale;
@@ -1103,7 +1119,6 @@ Tanks.Armes3D = (function () {
       id = c.id;
       pieces = c.pieces;
     }
-    const qualite = s.joueur ? "beau" : pres ? "jeu" : "simple";
     const m = fabriquer(id, pieces, qualite, { lanceGrenades: lg });
     bilan.soldatsArmes[m.nom] = true;
     return m;
@@ -1162,6 +1177,16 @@ Tanks.Armes3D = (function () {
     contre.position.set(-3, 1.5, -3);
     AP.scene.add(cle, contre);
     AP.cam = new THREE.PerspectiveCamera(26, 2, 0.05, 20);
+    // une OMBRE douce sous l'arme (un disque sombre peint en dégradé) : elle a l'air posée dans le studio
+    const ombre = toile(128, 128, (ctx) => {
+      const g = ctx.createRadialGradient(64, 64, 4, 64, 64, 64);
+      g.addColorStop(0, "rgba(0,0,0,.55)");
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 128, 128);
+    });
+    AP.ombre = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: ombre, transparent: true, depthWrite: false }));
+    AP.scene.add(AP.ombre);
   }
   function apercu(conteneur, id, pieces, options) {
     if (!conteneur) { AP.actif = false; bilan.apercu = "arrêté (menu fermé ou autre onglet)"; return; }
@@ -1177,6 +1202,8 @@ Tanks.Armes3D = (function () {
       AP.objet.children.forEach((g) => g.position.sub(c));
       AP.long = Math.max(t.x, t.z, 0.25);
       AP.haut = Math.max(t.y, 0.12);
+      AP.ombre.position.y = -t.y / 2 - 0.03;
+      AP.ombre.scale.set(t.x * 1.1, 1, Math.max(t.x * 0.35, 0.12));
       AP.titre.textContent = m.nom;
       AP.legende.textContent = "🔧 " + m.liste.join(" · ") + " · " + m.triangles.toLocaleString("fr-FR") + " triangles";
       AP.scene.add(AP.objet);
@@ -1272,13 +1299,13 @@ Tanks.Armes3D = (function () {
     if (!LM.spot && st && st.lampe) {
       // la VRAIE lumière (un projecteur, sans ombres) : ajoutée seulement si ton arme a une lampe (une lumière de plus,
       // c'est un peu plus de calcul pour chaque pixel de l'écran)
-      LM.spot = new THREE.SpotLight(0xfff1dc, 0, 30, 0.3, 0.45, 1.5);
+      LM.spot = new THREE.SpotLight(0xfff1dc, 0, 30, 0.3, 0.45, 1);
       LM.spot.castShadow = false;
       scene.add(LM.spot, LM.spot.target);
     }
     if (LM.spot) LM.spot.intensity = 0;
     LM.faisceau.visible = LM.lueur.visible = false;
-    bilan.lampe = st && st.lampe ? (allume ? "allumée : " + st.lampe.portee + " m, " + Math.round(st.lampe.force * A3.lampe.force) + " cd" : "éteinte (L)") : "pas de lampe";
+    bilan.lampe = st && st.lampe ? (allume ? "allumée : " + st.lampe.portee + " m, " + Math.round(st.lampe.force * A3.lampe.force) + " cd" : !enMain ? "(ton arme principale n'est pas en main)" : "éteinte (L)") : "pas de lampe";
     if (allume && pointDansLeMonde(modele.lampe, cam, _a)) {
       const dx = Math.cos(s.angle), dz = Math.sin(s.angle);
       _d.set(dx, -0.035, dz).normalize();
@@ -1525,7 +1552,6 @@ Tanks.Armes3D = (function () {
     V.objet.updateMatrix();
     // le chargeur pendant le rechargement : il descend et tombe, puis le neuf remonte
     const groupeCh = V.objet.getObjectByName("chargeur"), groupeCul = V.objet.getObjectByName("culasse");
-    let mainG = new THREE.Vector3();
     if (groupeCh) {
       groupeCh.visible = true;
       groupeCh.position.set(0, 0, 0);
@@ -1534,7 +1560,6 @@ Tanks.Armes3D = (function () {
           const sort = entre(recharge, 0.1, 0.35), rentre = 1 - entre(recharge, 0.5, 0.85);
           groupeCh.visible = recharge < 0.36 || recharge > 0.5;
           groupeCh.position.set((recharge < 0.4 ? sort : rentre) * 0.35, (recharge < 0.4 ? sort : rentre) * -0.25, 0);
-          mainG.set(0.6, -0.05, 0).multiplyScalar(0).add(groupeCh.position);
         } else {
           const sort = entre(recharge, 0.12, 0.32), rentre = 1 - entre(recharge, 0.48, 0.74);
           if (recharge < 0.4) groupeCh.position.set(sort * 0.02, -sort * sort * 0.45, 0);
@@ -1547,7 +1572,6 @@ Tanks.Armes3D = (function () {
       if (m.id === "lapua") { // le verrou : on le tire en arrière puis on le repousse, après chaque tir
         const t = V.t - V.dernierTir, c = t > 0.15 && t < 0.85 ? Math.sin(Math.PI * Math.min(1, (t - 0.15) / 0.6)) : 0;
         groupeCul.position.set(-c * 0.075, 0, 0);
-        groupeCul.rotation.x = -Math.min(1, c * 3) * 0.9;
       } else groupeCul.position.set(-V.culasse * 0.03, 0, 0);
     }
     // 6. les mains
@@ -1573,7 +1597,7 @@ Tanks.Armes3D = (function () {
     if (flamme) {
       const sil = m.pieces.canon === "silencieux";
       V.flamme.rotation.x = Math.random() * Math.PI;
-      V.flamme.scale.setScalar((sil ? 0.3 : 0.75 + Math.random() * 0.5) * (fam === "precision" ? 1.5 : fam === "pistolet" ? 0.7 : 1));
+      V.flamme.scale.setScalar((sil ? 0.3 : 1 + Math.random() * 0.6) * (fam === "precision" ? 1.6 : fam === "pistolet" ? 0.6 : 1.2));
     }
     V.eclair.intensity = flamme ? (m.pieces.canon === "silencieux" ? 0.3 : 3) : 0;
     if (flamme) V.eclair.position.copy(m.bouche).applyMatrix4(V.objet.matrix);
@@ -1591,8 +1615,9 @@ Tanks.Armes3D = (function () {
     // 9. la lumière de la vue suit celle du monde (le soleil vu depuis la caméra ; sous terre : plus sombre)
     const dessous = Tanks.Scene.sousTerre;
     V.scene.environment = scene.environment;
-    V.ciel.intensity = dessous ? 0.55 : 1.15;
-    V.soleil.intensity = dessous ? 0.25 : 2.3;
+    V.ciel.intensity = dessous ? 0.95 : 1.15;
+    V.soleil.intensity = dessous ? 0.6 : 2.3;
+    V.ciel.color.set(dessous ? 0xd8c8b0 : 0xdfe8f0); // (sous terre : la lumière chaude des feux et des néons)
     const soleil = new THREE.Vector3(...C.beaute.soleil.direction).normalize().transformDirection(cam.matrixWorldInverse);
     V.soleil.position.copy(soleil);
     bilan.nom = m.nom;
