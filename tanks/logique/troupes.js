@@ -97,7 +97,7 @@ Tanks.Troupes = (function () {
         const d = Math.hypot(o.x - s.x, o.z - s.z);
         if (d > portee) continue;
         const paire = paires[parDistance.length] || (paires[parDistance.length] = { o: null, d: 0 });
-        (paire.o = o), (paire.d = d);
+        (paire.o = o), (paire.d = o.marque > 0 ? d * 0.45 : d); // (étape 77 : un ennemi MARQUÉ par toi passe en premier)
         parDistance.push(paire);
       }
       parDistance.sort(plusProche);

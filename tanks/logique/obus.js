@@ -232,7 +232,8 @@ Tanks.Obus = (function () {
           fini = ["tir-ami", { x: p.x, y: p.y, z: p.z, tireur: p.tireur, sur: c.nom }];
           break;
         }
-        abimer(c, R.degatsChar, p.tireur, p.x, p.y, p.z, p.vx, p.vz, ev);
+        const degats = p.degatsChar !== undefined ? p.degatsChar : R.degatsChar; // (étape 77 : le Javelin fait 2)
+        if (degats > 0) abimer(c, degats, p.tireur, p.x, p.y, p.z, p.vx, p.vz, ev); // (la grenade de 40 mm ne perce pas un blindage)
         souffle(monde, p, R, p.x, p.y, p.z, ev, c);
         fini = ["impact", { x: p.x, y: p.y, z: p.z, sur: "char", sorte: p.sorte }];
         break;

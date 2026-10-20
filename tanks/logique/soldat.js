@@ -50,21 +50,22 @@ Tanks.Soldat = (function () {
   // (étape 71) legers = les motos et les quads : la balle peut toucher leur PILOTE (il n'est pas protégé)
   let monde = null; // (étape 75 : le monde, pour la maison qui s'effondre sur les soldats)
   function balle(tireur, x, y, z, angle, arme, soldats, vehicules, ev, legers) {
-    const R = A[arme];
+    // (étape 77) arme : un nom (les soldats de l'ordinateur) ou les vrais chiffres de TON arme (logique/armes.js)
+    const R = typeof arme === "string" ? A[arme] : arme, CONE = R.cone || 0.12;
     let meilleur = null;
     for (const s of soldats) {
       if (s.mort || s.dansUnEngin || s.equipe === tireur.equipe || s === tireur) continue;
       const d = Math.hypot(s.x - x, s.z - z);
       if (d > R.portee) continue;
       const ecart = Math.abs(angleEntre(Math.atan2(s.z - z, s.x - x) - angle));
-      if (ecart < 0.12 && (!meilleur || d < meilleur.d)) meilleur = { s, d };
+      if (ecart < CONE && (!meilleur || d < meilleur.d)) meilleur = { s, d };
     }
     for (const s of legers || []) {
       if (s.detruit || s.equipe === tireur.equipe || s === tireur) continue;
       const d = Math.hypot(s.x - x, s.z - z);
       if (d > R.portee) continue;
       const ecart = Math.abs(angleEntre(Math.atan2(s.z - z, s.x - x) - angle));
-      if (ecart < 0.12 && (!meilleur || d < meilleur.d)) meilleur = { s, d };
+      if (ecart < CONE && (!meilleur || d < meilleur.d)) meilleur = { s, d };
     }
     // un véhicule plus près, juste devant ? la balle ricoche dessus
     let mur = null;
@@ -89,11 +90,18 @@ Tanks.Soldat = (function () {
       return;
     }
     if (meilleur && T.vueLibre(x, y, z, meilleur.s.x, meilleur.s.y + 1.2, meilleur.s.z)) {
-      const chance = R.precision * (1 - 0.5 * (meilleur.d / R.portee));
+      // (étape 77) TON arme : la balle s'écarte au hasard (± la dispersion, de côté et en hauteur) ; elle touche si l'écart
+      // reste dans la silhouette (± 0,32 m de côté, ± 0,85 m de haut, vue à cette distance). Les dégâts baissent au loin.
+      let chance = R.precision * (1 - 0.5 * (meilleur.d / R.portee)), degats = R.degats;
+      if (R.dispersionTir !== undefined) {
+        const sig = R.dispersionTir, d = meilleur.d, [w, h] = C.tir.cible;
+        chance = Math.abs((Math.random() * 2 - 1) * sig) < w / d && Math.abs((Math.random() * 2 - 1) * sig) < h / d ? 1 : 0;
+        if (d > R.porteeEfficace) degats *= 1 + (R.degatsLoin - 1) * Math.min(1, (d - R.porteeEfficace) / Math.max(1, R.portee - R.porteeEfficace));
+      }
       if (Math.random() < chance) {
         ev.push(["balle", { tireur, de: { x, y, z }, a: { x: meilleur.s.x, y: meilleur.s.y + 1.2, z: meilleur.s.z }, touche: true }]);
-        if (meilleur.s.genre === "vehicule" || meilleur.s.sorte) Tanks.Vehicules.blesserPilote(meilleur.s, R.degats, tireur, ev);
-        else blesser(meilleur.s, R.degats, tireur, ev, arme);
+        if (meilleur.s.genre === "vehicule" || meilleur.s.sorte) Tanks.Vehicules.blesserPilote(meilleur.s, Math.ceil(degats), tireur, ev);
+        else blesser(meilleur.s, degats, tireur, ev, typeof arme === "string" ? arme : "balle");
         return;
       }
       fin.x = meilleur.s.x + (Math.random() - 0.5) * 3;
@@ -181,7 +189,7 @@ Tanks.Soldat = (function () {
       const diff = angleEntre(intentions.versAngle - s.angle);
       s.angle = angleEntre(s.angle + Math.max(-S.rotation * dt, Math.min(S.rotation * dt, diff)));
     } else s.angle = angleEntre(s.angle + ((intentions.droite ? 1 : 0) - (intentions.gauche ? 1 : 0)) * S.rotation * 0.8 * dt);
-    const vMax = s.nage ? S.nage : S.vitesse;
+    const vMax = s.nage ? S.nage : S.vitesse * (s.armes ? Tanks.Armes.mobilite(s) : 1); // (étape 77 : ton arme pèse plus ou moins lourd)
     const voulue = intentions.avancer ? vMax * (intentions.lent ? 0.5 : 1) : intentions.reculer ? -Math.min(S.recul, vMax) : 0;
     s.vitesse += Math.max(-20 * dt, Math.min(20 * dt, voulue - s.vitesse));
     const dir = intentions.direction !== undefined ? intentions.direction : s.angle;
@@ -216,6 +224,12 @@ Tanks.Soldat = (function () {
     if (s.nage !== !!nageait && s.joueur) ev.push(["nage", { nom: s.nom, nage: s.nage }]); // (étape 75 : plus de faux « tu as pied » en sortant du tank)
     // tirer (pas en nageant !)
     s.recharge = Math.max(0, s.recharge - dt);
+    // (étape 77) TON soldat : ton arme (chargeur, recul, dispersion, assistance…) et ton gadget
+    if (s.armes) {
+      Tanks.Armes.avancer(s, intentions, dt, monde, ev);
+      Tanks.Gadgets.avancer(s, intentions, dt, monde, ev);
+      if (s.arme !== "grenades") return;
+    }
     // (étape 75) une GRENADE : la tienne (arme 4), ou celle d'un soldat de l'ordinateur (« intentions.grenade » : où la lancer)
     if (!s.nage && s.recharge === 0 && (intentions.grenade || (intentions.tirer && s.arme === "grenades"))) {
       if (s.grenades <= 0) {

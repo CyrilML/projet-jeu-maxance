@@ -637,7 +637,7 @@ Tanks.CONFIG = {
     trousse: { nom: "Trousse de soins", icone: "🩹", texte: "Espace : pose une trousse. Toi et tes amis tout près, vous êtes soignés.",
       rayon: 6, vitesse: 2.5, duree: 14, attente: 25 }, // m ; vie par s (pour toi ; ÷ 8 pour un soldat de l'ordinateur, qui a 3 de vie)
     defibrillateur: { nom: "Défibrillateur", icone: "⚡", texte: "Espace près d'un ami tombé : il se RELÈVE (avec la moitié de sa vie).",
-      distance: 3, attente: 1.5 },
+      distance: 3, attente: 1.5, delai: 16 }, // (delai : s depuis sa chute)
   },
   // ✍️ Les EXPLOSIFS (2 par classe, tu en prends 1 : touche 5). nombre : combien tu en as ; regain : s pour en regagner 1.
   explosifs: {

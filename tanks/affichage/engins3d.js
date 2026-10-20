@@ -437,7 +437,7 @@ Tanks.Engins3D = (function () {
     const r = pres ? o.detail : o.simple;
     o.detail.porteur.visible = pres;
     o.simple.porteur.visible = !pres;
-    const arme = s.arme === "pistolet" ? "pistolet" : s.arme === "roquettes" || s.roquettesIA ? "roquettes" : "fusil";
+    const arme = s.arme === "pistolet" ? "pistolet" : s.arme === "roquettes" || s.roquettesIA || (s.armes && s.armes.principale.stats.famille === "roquettes") ? "roquettes" : "fusil"; // (étape 77 : ton arme)
     const corde = !!s.corde && !s.mort;
     for (const n in r.canons) r.canons[n].visible = (n === arme || (corde && n === "fusil")) && !s.nage && !s.mort;
     // (à la corde, le fusil passe dans le dos ; sinon il revient dans les mains)

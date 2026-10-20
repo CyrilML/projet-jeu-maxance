@@ -22,6 +22,9 @@
 // déposent 10 soldats à la corde au front ; les tiens sont garés à ton aérodrome. Les soldats sur une corde glissent.
 // Étape 75 : ✍️ les MAISONS qu'on détruit (logique/structures.js) sont reconstruites à chaque nouvelle bataille ; touche 4 :
 // les GRENADES.
+// Étape 77 : ✍️ le MENU avant la bataille (affichage/menu.js) : le tank se choisit dans le menu (« choisirChar »), et au
+// départ ton soldat est ÉQUIPÉ selon ta classe (logique/equipement.js). À pied : 1 pistolet, 2 ton arme, 3 ton gadget,
+// 4 grenades ; R recharge (pendant la bataille, R ne recommence plus : c'est seulement à la fin, « rejouer »).
 // Il annonce tout à la radio : le journal, les sons, les effets et la sauvegarde écoutent.
 
 window.Tanks = window.Tanks || {};
@@ -54,6 +57,13 @@ Tanks.Monde = (function () {
     monde.toi = { mode: "char", engin: null, soldat: null };
   }
 
+  // (étape 77) Le menu choisit un tank : on le montre au garage.
+  function choisirChar(monde, k) {
+    monde.choix = k;
+    preparerGarage(monde);
+    radio.emettre("garage", { nom: C.chars[k].nom, pays: C.chars[k].pays });
+  }
+
   // ✍️ La bataille : toi + 3 alliés contre 4 ennemis, 12 soldats par équipe, et les engins garés dans ton camp.
   function lancer(monde) {
     monde.phase = "bataille";
@@ -82,6 +92,7 @@ Tanks.Monde = (function () {
     monde.soldats = Tanks.Troupes.creer(monde);
     const toi = Tanks.Soldat.creer("bleus", monde.joueur.x, monde.joueur.z, monde.joueur.angle, "toi", true);
     toi.dansUnEngin = monde.joueur;
+    const equipement = Tanks.Equipement.equiper(toi); // (étape 77 : ta classe, ton arme et ses pièces, ton gadget)
     monde.soldats.push(toi);
     monde.engins = Tanks.Engins.creer();
     monde.vehicules = Tanks.Vehicules.creer(); // (étape 71) les motos, quads et camions des deux camps
@@ -95,7 +106,7 @@ Tanks.Monde = (function () {
     monde.portails = Tanks.Portails.creer();
     for (const p of monde.portails) p.passages = 0;
     monde.toi = { mode: "char", engin: monde.joueur, soldat: toi };
-    radio.emettre("bataille", { char: monde.joueur.fiche.nom, allies: E.allies, ennemis: E.ennemis, soldats: C.soldats.parEquipe, engins: monde.engins.length, vehicules: monde.vehicules.length, helicos: monde.helicos.length, bateaux: monde.bateaux.length, sousMarins: monde.sousMarins.length, portails: monde.portails.length });
+    radio.emettre("bataille", { classe: C.classes[equipement.classe].nom, arme: C.armesPrincipales[equipement.arme].nom, gadget: C.gadgets[equipement.gadget].nom, char: monde.joueur.fiche.nom, allies: E.allies, ennemis: E.ennemis, soldats: C.soldats.parEquipe, engins: monde.engins.length, vehicules: monde.vehicules.length, helicos: monde.helicos.length, bateaux: monde.bateaux.length, sousMarins: monde.sousMarins.length, portails: monde.portails.length });
   }
 
   const vivants = (monde, equipe) => monde.chars.filter((c) => c.equipe === equipe && !c.detruit).length;
@@ -221,7 +232,7 @@ Tanks.Monde = (function () {
       preparerGarage(monde);
       return;
     }
-    if (intentions.recommencer) {
+    if (intentions.recommencer && monde.phase !== "bataille") { // (étape 77 : pendant la bataille, R recharge ton arme)
       lancer(monde);
       return;
     }
@@ -236,10 +247,12 @@ Tanks.Monde = (function () {
     // étape 61 : E (sortir / monter) et 1, 2, 3 (changer d'arme)
     if (enJeu && intentions.monter) sortirOuMonter(monde);
     if (toi) {
-      for (const [k, arme] of [["arme1", "pistolet"], ["arme2", "mitrailleuse"], ["arme3", "roquettes"], ["arme4", "grenades"]]) { // (étape 75 : 4 = les grenades)
+      // (étape 77) 1 pistolet, 2 ton arme principale, 3 ton gadget, 4 les grenades
+      for (const [k, arme] of [["arme1", "pistolet"], ["arme2", "principale"], ["arme3", "gadget"], ["arme4", "grenades"]]) {
         if (intentions[k] && toi.arme !== arme) {
           toi.arme = arme;
-          radio.emettre("arme", { nom: C.armes[arme].nom, icone: C.armes[arme].icone, grenades: arme === "grenades" ? toi.grenades : undefined });
+          const f = arme === "grenades" ? C.armes.grenades : arme === "gadget" ? toi.gadget.fiche : toi.armes[arme].stats;
+          radio.emettre("arme", { nom: f.nom, icone: f.icone, grenades: arme === "grenades" ? toi.grenades : undefined });
         }
       }
     }
@@ -354,6 +367,7 @@ Tanks.Monde = (function () {
       } else annoncer(nom, d);
     }
     for (const [nom, d] of Tanks.Obus.avancer(monde.obus, monde, dt)) annoncer(nom, d);
+    if (enJeu) for (const [nom, d] of Tanks.Gadgets.etape(monde, dt, []) || []) annoncer(nom, d);
     // (étape 67) TA VIE REMONTE : pas touché depuis 5 s ? Ton soldat et ton tank se soignent doucement.
     if (enJeu) {
       if (toi && (toi.dansUnEngin || toi.parachute)) toi.touche += dt; // (dans un engin, le temps passe aussi pour lui)
@@ -420,5 +434,5 @@ Tanks.Monde = (function () {
     }
   }
 
-  return { creer, etape, lancer, vivants, soldatsVivants, memoriser };
+  return { creer, etape, lancer, vivants, soldatsVivants, memoriser, choisirChar };
 })();

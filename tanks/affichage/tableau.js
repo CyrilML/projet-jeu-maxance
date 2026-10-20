@@ -96,7 +96,14 @@ Tanks.Tableau = (function () {
     // étape 61
     radio.ecouter("impossible", (d) => dire("✋ " + d.raison, "#ffb37a"));
     radio.ecouter("monter", (d) => dire("🪜 Tu montes dans " + d.dans, "#9cc4ff"));
-    radio.ecouter("sortir", () => dire("🪖 À pied ! (1 pistolet · 2 mitrailleuse · 3 lance-roquettes · 4 grenades)", "#9cc4ff", 2500));
+    radio.ecouter("sortir", () => dire("🪖 À pied ! (1 pistolet · 2 ton arme · 3 ton gadget · 4 grenades)", "#9cc4ff", 2500));
+    // (étape 77)
+    radio.ecouter("marque", (d) => dire("🔭 " + d.nombre + " ennemi" + (d.nombre > 1 ? "s marqués" : " marqué") + " !", "#ffe14a"));
+    radio.ecouter("reparation", (d) => dire("🔧 " + d.qui + " : " + d.vie + " / " + d.vieMax, "#7dffa0", 1200));
+    radio.ecouter("releve", (d) => dire("⚡ " + d.cible + " se relève !", "#7dffa0", 2000));
+    radio.ecouter("trousse", () => dire("🩹 Trousse posée : on se soigne ici", "#7dffa0"));
+    radio.ecouter("recharge-arme", (d) => !d.fini && dire("🔄 Rechargement…", "#ccc", 900));
+    radio.ecouter("vide", () => dire("🫙 Plus de balles ! (sac de munitions, ou change d'arme)", "#ffb37a"));
     // (étape 75) les maisons et les grenades
     radio.ecouter("maison-effondree", (d) => d.parToi ? dire("🏚️ La maison s'effondre !", "#ffb37a", 2500) : null);
     radio.ecouter("mur-troue", (d) => d.parToi && d.sorte !== "balle" ? dire("🧱 Un trou dans le mur ! (" + d.debout + " / " + d.total + " morceaux debout)", "#e6c9a0") : null);
@@ -229,16 +236,59 @@ Tanks.Tableau = (function () {
       panneau(12, H - 118, 436, 106);
       texte(s.parachute ? "🪂 En parachute…" : "🪖 À pied", 24, H - 92, 17, "#ffe27a");
       barreVie(24, H - 80, 200, s);
-      // (étape 75) 4 armes : la 4e, les grenades (avec combien il t'en reste)
-      ["pistolet", "mitrailleuse", "roquettes", "grenades"].forEach((a, i) => {
-        const x = 24 + i * 104, choisi = s.arme === a;
-        ctx.fillStyle = choisi ? "rgba(255,207,90,.3)" : "rgba(255,255,255,.08)";
-        ctx.fillRect(x, H - 58, 98, 24);
-        const nom = a === "grenades" ? "Grenades ×" + s.grenades : C.armes[a].nom.replace("Lance-roquettes", "Roquettes");
-        texte(i + 1 + " " + C.armes[a].icone + " " + nom, x + 49, H - 41, 12, choisi ? "#ffe27a" : a === "grenades" && !s.grenades ? "#888" : "#ccc", "center");
-      });
-      if (s.arme === "grenades") barre(24, H - 28, 200, s.grenades ? 1 - s.recharge / C.armes.grenades.cadence : s.regainGrenade / C.grenades.recharge, s.recharge === 0 && s.grenades > 0, s.grenades ? (s.recharge === 0 ? "💣 Espace : lancer (" + s.grenades + ")" : "…") : "plus de grenades : +1 dans " + Math.ceil(C.grenades.recharge - s.regainGrenade) + " s");
-      else barre(24, H - 28, 200, 1 - s.recharge / C.armes[s.arme].cadence, s.recharge === 0, s.recharge === 0 ? "🔥 Espace : tirer" : "recharge…");
+      // (étape 77) tes 4 armes : 1 pistolet, 2 ton arme, 3 ton gadget, 4 les grenades
+      if (s.armes) {
+        const g = s.gadget, noms = [["pistolet", "🔫 Pistolet"], ["principale", s.armes.principale.stats.icone + " " + s.armes.principale.stats.nom], ["gadget", g.fiche.icone + " " + g.fiche.nom], ["grenades", "💣 ×" + s.grenades]];
+        noms.forEach(([a, nom], i) => {
+          const x = 24 + i * 104, choisi = s.arme === a;
+          ctx.fillStyle = choisi ? "rgba(255,207,90,.3)" : "rgba(255,255,255,.08)";
+          ctx.fillRect(x, H - 58, 98, 24);
+          texte(i + 1 + " " + nom, x + 49, H - 41, 11, choisi ? "#ffe27a" : "#ccc", "center");
+        });
+        if (s.arme === "pistolet" || s.arme === "principale") {
+          const A = s.armes[s.arme], st = A.stats;
+          barre(24, H - 28, 200, s.rechargement > 0 ? 1 - s.rechargement / st.rechargement : A.chargeur / st.chargeur, A.chargeur > 0 && !s.rechargement, s.rechargement > 0 ? "🔄 recharge…" : A.chargeur + " / " + st.chargeur + "  ·  " + (A.reserve === Infinity ? "∞" : A.reserve) + (A.chargeur === 0 ? "  R : recharger" : ""));
+          // les munitions en gros, en bas à droite, et le point du laser
+          panneau(L - 300, H - 70, 140, 58);
+          texte(A.chargeur + "", L - 200, H - 26, 34, A.chargeur === 0 ? "#ff7a6a" : "#fff", "right");
+          texte("/ " + (A.reserve === Infinity ? "∞" : A.reserve), L - 194, H - 26, 14, "#ccc");
+          if (st.laser && s.vise && s.arme === "principale") {
+            const p = Tanks.Scene.versEcran(s.vise.x, s.vise.y, s.vise.z, L, H);
+            if (p) {
+              ctx.fillStyle = st.laser;
+              ctx.shadowColor = st.laser;
+              ctx.shadowBlur = 10;
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.shadowBlur = 0;
+            }
+          }
+          if (s.assist && st.aimant > 0) {
+            const p = Tanks.Scene.versEcran(s.assist.o.x, s.assist.o.y + 1.2, s.assist.o.z, L, H);
+            if (p) (ctx.strokeStyle = "rgba(125,255,160,.8)"), (ctx.lineWidth = 1.5), ctx.strokeRect(p.x - 12, p.y - 16, 24, 32);
+          }
+          // épaulé : le zoom (une lunette assombrit les bords)
+          if (s.visee > 0.6 && st.zoom >= 3) {
+            const r = H * 0.42;
+            ctx.fillStyle = "rgba(0,0,0," + (0.92 * s.visee) + ")";
+            ctx.beginPath();
+            ctx.rect(0, 0, L, H);
+            ctx.arc(L / 2, H / 2, r, 0, Math.PI * 2, true);
+            ctx.fill();
+            ctx.strokeStyle = "rgba(0,0,0,.9)";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(L / 2 - r, H / 2); ctx.lineTo(L / 2 + r, H / 2); ctx.moveTo(L / 2, H / 2 - r); ctx.lineTo(L / 2, H / 2 + r);
+            ctx.stroke();
+          }
+        } else if (s.arme === "gadget") {
+          const F = g.fiche, part = g.id === "reparation" ? (g.cible ? g.part : 0) : g.attente > 0 ? 1 - g.attente / (F.attente || F.cadence || 1) : 1;
+          const etat = g.id === "lanceGrenades" ? g.munitions + " / " + F.munitions + " · Espace : tirer" : g.id === "reparation" ? (g.cible ? "🔧 répare " + (g.cible === monde.joueur ? "ton tank" : g.cible.nom) + " : " + g.cible.vie + " / " + Tanks.Gadgets.vieMaxDe(g.cible) : "tiens Espace près d'un véhicule ami abîmé") : g.attente > 0 ? "prêt dans " + Math.ceil(g.attente) + " s" : "Espace : utiliser" + (g.id === "jumelles" ? " (V : zoom)" : "");
+          barre(24, H - 28, 200, part, g.attente === 0, etat);
+        } else barre(24, H - 28, 200, s.grenades ? 1 - s.recharge / C.armes.grenades.cadence : s.regainGrenade / C.grenades.recharge, s.recharge === 0 && s.grenades > 0, s.grenades ? "💣 Espace : lancer (" + s.grenades + ")" : "plus de grenades");
+        texte(C.classes[s.classe].icone + " " + C.classes[s.classe].nom, 440, H - 92, 14, C.classes[s.classe].couleur, "right");
+      }
       // E : monter ? (le plus proche, à moins de 6 m)
       if (!s.parachute) {
         let proche = null, dmin = C.engins.distanceMonter;
@@ -525,6 +575,12 @@ Tanks.Tableau = (function () {
         ctx.fillRect(e.x - a.fiche.vie * 5.5 + k * 11, e.y - 2, 9, 4);
       }
     }
+    // (étape 77) Les ennemis MARQUÉS (jumelles, capteur) : un grand ◆ jaune au-dessus d'eux, même de loin.
+    for (const o of monde.soldats.concat(monde.chars, monde.vehicules)) {
+      if (!(o.marque > 0) || o.mort || o.detruit) continue;
+      const e = Tanks.Scene.versEcran(o.x, o.y + (o.fiche ? 5.4 : 2.7), o.z, L, H);
+      if (e) texte("◆ " + Math.ceil(o.marque) + " s", e.x, e.y, 14, "#ffe14a", "center");
+    }
     // Les soldats ennemis tout près (moins de 120 m) : un petit losange rouge au-dessus de leur tête.
     for (const o of monde.soldats) {
       if (o.mort || o.equipe !== "rouges" || Math.hypot(o.x - ici.x, o.z - ici.z) > 120) continue;
@@ -580,10 +636,11 @@ Tanks.Tableau = (function () {
     ctx.globalAlpha = 1;
     ctx.strokeStyle = "rgba(255,255,255,.6)";
     ctx.strokeRect(x0, y0, tc, tc);
-    for (const o of monde.soldats) { // (étape 61) les soldats : des petits points
+    for (const o of monde.soldats) { // (étape 61) les soldats : des petits points (étape 77 : les marqués, en gros et jaunes)
       if (o.mort || o.joueur) continue;
-      ctx.fillStyle = o.equipe === "bleus" ? "#9cc4ff" : "#ff9a8a";
-      ctx.fillRect(x0 + tc / 2 + o.x * k - 1, y0 + tc / 2 + o.z * k - 1, 2, 2);
+      ctx.fillStyle = o.marque > 0 ? "#ffe14a" : o.equipe === "bleus" ? "#9cc4ff" : "#ff9a8a";
+      const t2 = o.marque > 0 ? 4 : 2;
+      ctx.fillRect(x0 + tc / 2 + o.x * k - t2 / 2, y0 + tc / 2 + o.z * k - t2 / 2, t2, t2);
     }
     for (const b of monde.bateaux.concat(monde.sousMarins.filter((m) => !Tanks.SousMarins.sousLEau(m)))) { // (étape 62) les patrouilleurs (et les sous-marins à la surface) : un petit losange rouge
       ctx.fillStyle = b.detruit ? "#555" : E.rouges.marque;
@@ -670,11 +727,11 @@ Tanks.Tableau = (function () {
       texte(gagne ? "Tous les tanks rouges sont détruits" : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
       const S = Tanks.Sauvegarde.donnees;
       texte("Victoires : " + S.victoires + " · défaites : " + S.defaites + " · tanks détruits : " + S.detruits, L / 2, H / 2 + 24, 15, "#e8e4d6", "center");
-      texte("Entrée : garage · R : rejouer", L / 2, H / 2 + 56, 17, "#ffe27a", "center");
+      texte("Entrée : menu · R : rejouer avec le même équipement", L / 2, H / 2 + 56, 17, "#ffe27a", "center");
     } else {
       const aide = {
         char: "↑ ↓ ← → rouler · Q / D tourelle · Espace tirer · E sortir · T ordre · C caméra · R recommencer",
-        pied: t.soldat && t.soldat.nage ? "↑ ↓ nager · ← → tourner · (pas de tir dans l'eau)" : "↑ ↓ marcher · ← → tourner · Espace tirer · 1 2 3 armes · 4 grenades · E monter",
+        pied: t.soldat && t.soldat.nage ? "↑ ↓ nager · ← → tourner · (pas de tir dans l'eau)" : "↑ ↓ marcher · ← → tourner · Espace tirer · V épauler · R recharger · 1 pistolet 2 arme 3 gadget 4 grenades · L lampe · E monter",
         jeep: "↑ ↓ ← → rouler · Q / D mitrailleuse · Espace tirer · E descendre (arrêté)",
         moto: "↑ ↓ ← → conduire (elle penche dans les virages) · Espace pistolet · E descendre (arrêté)",
         quad: "↑ ↓ ← → conduire · Espace mitrailleuse (elle tire droit devant) · E descendre (arrêté)",

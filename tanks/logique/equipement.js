@@ -96,5 +96,12 @@ Tanks.Equipement = (function () {
     return c;
   }
 
-  return { choix, stats, demander, equiper, piece };
+  // (étape 77) Touche L : allumer / éteindre la lampe de ton arme.
+  function basculerLampe(s) {
+    if (!s.armes || !s.armes.principale.stats.lampe) return;
+    s.lampeAllumee = !s.lampeAllumee;
+    radio.emettre("lampe", { allumee: s.lampeAllumee });
+  }
+
+  return { choix, stats, demander, equiper, piece, basculerLampe };
 })();

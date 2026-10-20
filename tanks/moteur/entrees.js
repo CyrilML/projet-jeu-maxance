@@ -20,6 +20,9 @@ Tanks.Entrees = (function () {
     arme4: ["Digit4", "Numpad4"], // étape 75 : les grenades
     valider: ["Enter", "NumpadEnter"],
     recommencer: ["KeyR"],
+    recharger: ["KeyR"], // étape 77 : à pied, pendant la bataille, R recharge ton arme
+    viser: ["KeyV"], // étape 77 : épauler (ou le clic droit)
+    lampe: ["KeyL"], // étape 77 : allumer / éteindre la lampe de ton arme
     retour: ["Backspace"],
     camera: ["KeyC"],
     ordre: [], // étape 65 : le bouton « 📢 Ordre » (la touche T, elle, est écoutée directement par la barre : affichage/barre-ordres.js)
@@ -44,6 +47,13 @@ Tanks.Entrees = (function () {
       if (!e.repeat) for (const a of actions) appuisEnAttente.add(a);
     });
     cible.addEventListener("keyup", (e) => touchesEnfoncees.delete(e.code));
+    // (étape 77) la souris sur l'écran de jeu : clic gauche = tirer, clic droit = épauler
+    const ecran = document.getElementById("ecran2d");
+    if (ecran) {
+      ecran.addEventListener("contextmenu", (e) => e.preventDefault());
+      ecran.addEventListener("pointerdown", (e) => tenir(e.button === 2 ? "viser" : "tirer", true));
+      for (const fin of ["pointerup", "pointerleave"]) ecran.addEventListener(fin, () => (tenir("viser", false), tenir("tirer", false)));
+    }
     cible.addEventListener("blur", () => {
       touchesEnfoncees.clear();
       tenues.clear();

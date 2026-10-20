@@ -23,6 +23,8 @@ window.Tanks = window.Tanks || {};
   Tanks.Qualite.initialiser(); // (étape 72 : le régulateur applique le niveau de départ)
   Tanks.Tableau.initialiser(toile2d);
   Tanks.BarreOrdres.initialiser(); // (étape 65)
+  // (étape 77) le menu : il ne touche pas au monde lui-même, il fait des DEMANDES que le quartier-maître accepte
+  Tanks.Menu.initialiser(monde, (type, valeur) => (type === "combat" ? Tanks.Monde.lancer(monde) : Tanks.Equipement.demander(monde, type, valeur)));
   toile2d.focus();
 
   const reveil = () => Tanks.Sons.demarrer();
@@ -44,6 +46,8 @@ window.Tanks = window.Tanks || {};
     if (E.consommer("pause")) enPause = !enPause;
     if (E.consommer("camera")) Tanks.Scene.changerCamera();
     if (E.consommer("son")) Tanks.Sons.basculer();
+    if (E.consommer("lampe") && monde.toi && monde.toi.soldat) Tanks.Equipement.basculerLampe(monde.toi.soldat); // (étape 77 : L)
+    Tanks.Menu.maj(monde); // (étape 77 : le menu s'ouvre au garage, se ferme en bataille)
     if (E.consommer("ordre") && monde.phase === "bataille") Tanks.BarreOrdres.ouvrir(); // (étape 65 : touche T)
     ordre = ordre || Tanks.BarreOrdres.prendre(); // (la phrase écrite dans la barre, s'il y en a une ; elle attend le prochain pas)
     let t0 = performance.now();
@@ -70,6 +74,7 @@ window.Tanks = window.Tanks || {};
           ordre: ordre, // (étape 65 : donné à un seul petit pas)
           monter: E.consommer("monter"), arme1: E.consommer("arme1"), arme2: E.consommer("arme2"), arme3: E.consommer("arme3"), arme4: E.consommer("arme4"), // (étapes 61 et 75)
           decharger: E.consommer("decharger"), // (étape 71 : F, dans le camion)
+          viser: E.estEnfoncee("viser"), recharger: E.consommer("recharger"), // (étape 77)
         });
         ordre = null;
       }
@@ -87,7 +92,7 @@ window.Tanks = window.Tanks || {};
     Tanks.SousLeCapot.maj();
     parts.capot = performance.now() - t1;
     Tanks.Sons.maj(monde);
-    if (!enPause) Tanks.Qualite.noterImage(dtMs, parts); // (en pause, les images ne coûtent rien : on ne les compte pas)
+    if (!enPause && !Tanks.Menu.ouvert) Tanks.Qualite.noterImage(dtMs, parts); // (étape 77 : pas pendant le menu) // (en pause, les images ne coûtent rien : on ne les compte pas)
     requestAnimationFrame(boucle);
   }
   requestAnimationFrame(boucle);

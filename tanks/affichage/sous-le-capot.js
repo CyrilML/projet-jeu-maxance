@@ -40,6 +40,19 @@ Tanks.SousLeCapot = (function () {
   let table, journal, monde, branche = false;
 
   const MESSAGES = {
+    // étape 77
+    classe: (d) => "🎖️ Tu choisis la classe " + d.icone + " " + d.nom,
+    piece: (d) => "🔧 Atelier : " + d.arme + " · " + d.emplacement + " → " + d.nom + " (portée " + Math.round(d.avant.portee) + " → " + Math.round(d.apres.portee) + " m, chargeur " + d.avant.chargeur + " → " + d.apres.chargeur + ", écart " + virgule(d.avant.dispersion * 1000, 1) + " → " + virgule(d.apres.dispersion * 1000, 1) + " mrad, mobilité " + Math.round(d.avant.mobilite * 100) + " → " + Math.round(d.apres.mobilite * 100) + " %)",
+    "recharge-arme": (d) => d.fini ? "🔄 " + d.arme + " rechargé : " + d.chargeur + " balles (réserve " + d.reserve + ")" : "🔄 Tu recharges ton " + d.arme + " (" + virgule(d.duree, 1) + " s)",
+    vide: (d) => "🫙 " + d.arme + " : plus de balles du tout !",
+    marque: (d) => "🔭 " + (d.comment === "capteur" ? "Ton capteur" : "Tes jumelles") + " marque" + (d.nombre > 1 ? "nt " : " ") + d.nombre + " ennemi" + (d.nombre > 1 ? "s" : "") + (d.noms.length ? " (" + d.noms.join(", ") + ")" : "") + " pendant " + d.duree + " s : tes alliés les visent en premier",
+    reparation: (d) => "🔧 " + (d.par === "drone" ? "Ton drone répare " : "Tu répares ") + d.qui + " : " + d.vie + " / " + d.vieMax,
+    "drone-reparation": (d) => "🛸 Ton drone de réparation s'envole vers " + d.qui + " (" + d.duree + " s)",
+    trousse: (d) => "🩹 Tu poses ta trousse de soins : elle soigne pendant " + d.duree + " s à moins de " + d.rayon + " m",
+    soigne: (d) => "💚 " + (d.cible === "toi" ? "Tu es" : d.cible + " est") + " soigné(e) par ta trousse : pleine forme !",
+    releve: (d) => "⚡ Tu relèves " + d.cible + " avec ton défibrillateur !",
+    munitions: (d) => "🎒 Sac de munitions : réserve du " + d.arme + " pleine (" + d.reserve + "), grenades au complet",
+    lampe: (d) => "🔦 Lampe " + (d.allumee ? "allumée" : "éteinte"),
     // étape 75
     "mur-abime": (d) => "🧱 " + (d.parToi ? "Tes balles fissurent " : d.tireur + " fissure ") + d.nom + " (ce morceau de mur : " + d.vie + " / " + d.vieMax + " points)",
     "mur-troue": (d) => "🧱 " + ({ balle: "Les balles", obus: "Un obus", roquette: "Une roquette", grenade: "Une grenade", bombe: "Une bombe", missile: "Un missile", char: "Le tank", torpille: "Une torpille" }[d.sorte] || "Une explosion") + (d.tireur ? " de " + d.tireur : "") + " fait un trou dans " + d.nom + " : " + d.morceaux.length + " morceau" + (d.morceaux.length > 1 ? "x" : "") + " de mur tombe" + (d.morceaux.length > 1 ? "nt" : "") + " (il en reste " + d.debout + " / " + d.total + " debout)",
@@ -65,7 +78,7 @@ Tanks.SousLeCapot = (function () {
     "camion-recharge": (d) => "🚛 " + (d.toi ? "Ton camion" : d.nom) + " est rempli : " + d.places + " soldats montent à bord" + (d.toi ? " (F pour les faire descendre)" : " : il repart au front"),
     "vehicule-retour": (d) => "🔧 " + d.nom + " revient au camp, avec un nouveau pilote (" + C.vehicules.retour + " s après avoir été détruit)",
     "pilote-abattu": (d) => "🎯 Le pilote " + (d.surToi ? "(toi !)" : "de " + d.cible) + " est touché par " + d.tireur + " : " + (d.sorte === "moto" ? "la moto" : "le quad") + " tombe (hors de combat)",
-    bataille: (d) => "⚔️ La bataille commence ! Toi (" + d.char + ") et " + d.allies + " alliés contre " + d.ennemis + " ennemis, sur une carte de " + C.monde.taille + " m · " + (d.vehicules || 0) + " motos, quads et camions et " + (d.helicos || 0) + " hélicos de transport conduits par l'ordinateur",
+    bataille: (d) => "⚔️ La bataille commence ! Toi (" + d.char + (d.classe ? ", classe " + d.classe + " avec " + d.arme + " et " + d.gadget : "") + ") et " + d.allies + " alliés contre " + d.ennemis + " ennemis, sur une carte de " + C.monde.taille + " m · " + (d.vehicules || 0) + " motos, quads et camions et " + (d.helicos || 0) + " hélicos de transport conduits par l'ordinateur",
     tir: (d) => d.joueur ? "🔥 Tu tires" + (d.assiste ? " (visée assistée sur " + d.cible + ", " + d.distance + " m : le canon s'est réglé tout seul)" : "") : "🔥 " + d.nom + " (" + (d.equipe === "bleus" ? "allié" : "ennemi") + ") tire sur " + d.cible + " à " + d.distance + " m",
     recharge: () => "🔄 Ton canon est rechargé",
     touche: (d) => "🎯 " + d.tireur + " touche " + d.cible + " " + d.cote + " à " + d.distance + " m · il lui reste " + d.vie + " / " + (d.vieMax || C.char.vie),
@@ -267,6 +280,25 @@ Tanks.SousLeCapot = (function () {
     l.push(["dessin des maisons", M3.lots + " objets (1 par matière et par quartier) · " + M3.sommets.toLocaleString("fr-FR") + " sommets · " + M3.morceauxCaches + " morceaux cachés · " + M3.trous + " trous de balles (au plus " + S.debris.trous + ") · " + M3.brulures + " traces noires · " + M3.debrisVol + " débris en vol (au plus " + S.debris.vol + ") · " + M3.gravats + " gravats tombés (au plus " + S.debris.gravatsMax + ") + " + M3.gravatsFixes + " des ruines · " + M3.toitsTombes + " toits tombés"]);
   }
 
+  // (étape 77) Le nom de l'arme en main.
+  const nomArme = (s) => !s.armes ? C.armes[s.arme].icone + " " + C.armes[s.arme].nom : s.arme === "grenades" ? "💣 grenades" : s.arme === "gadget" ? s.gadget.fiche.icone + " " + s.gadget.fiche.nom : s.armes[s.arme].stats.icone + " " + s.armes[s.arme].stats.nom;
+  // (étape 77) TA CLASSE ET TON ÉQUIPEMENT : ta classe, ton arme avec ses 7 pièces et ses VRAIS chiffres, l'assistance à la
+  // visée, ton gadget et ce qu'il a fait (soins, réparations, marques).
+  function lignesEquipement(l, s) {
+    const K = C.classes[s.classe], A = s.armes.principale, st = A.stats, g = s.gadget, v = (x) => virgule(x * 1000, 1) + " mrad";
+    l.push(["Ta classe et tes armes (étape 77)"]);
+    l.push(["classe", K.icone + " " + K.nom + " · vie " + Math.round(s.vie) + " / " + s.vieMax + (K.vie !== 1 ? " (× " + virgule(K.vie, 2) + ")" : "")]);
+    l.push(["ton arme", st.icone + " " + st.nom + " (" + st.type + ") · chargeur " + A.chargeur + " / " + st.chargeur + " · réserve " + A.reserve + (s.rechargement > 0 ? " · RECHARGE " + virgule(s.rechargement, 1) + " s" : "")]);
+    l.push(["ses pièces", Object.keys(C.atelier).map((e) => C.atelier[e].icone + " " + Tanks.Equipement.piece(e, A.pieces[e]).nom).join(" · ")]);
+    l.push(["ses vrais chiffres", "dégâts " + virgule(st.degats, 2) + " (pleins jusqu'à " + Math.round(st.porteeEfficace) + " m, puis × " + virgule(st.degatsLoin, 2) + ") · portée " + Math.round(st.portee) + " m · cadence " + Math.round(60 / st.cadence) + "/min · rechargement " + virgule(st.rechargement, 1) + " s · épauler " + virgule(st.visee, 2) + " s · mobilité " + Math.round(st.mobilite * 100) + " % · zoom ×" + virgule(st.zoom, 1)]);
+    l.push(["la dispersion", "hanche " + v(st.dispersion) + " · épaulé " + v(st.dispersionVisee) + " · recul +" + v(st.recul) + " par balle · MAINTENANT " + v(Tanks.Armes.dispersion(s, st)) + " (épaulé à " + Math.round(s.visee * 100) + " %, recul " + v(s.dispersionRecul) + ")"]);
+    l.push(["assistance à la visée", "cône " + v(st.cone) + " · aimant " + virgule(st.aimant, 1) + " rad/s · " + (s.assist ? "🧲 cible : " + s.assist.o.nom + " à " + Math.round(s.assist.d) + " m" + (s.aimantActif ? " (l'arme glisse vers lui)" : "") : "personne dans le cône")]);
+    l.push(["lampe · laser · bruit", (st.lampe ? "🔦 " + st.lampe.portee + " m " + (s.lampeAllumee ? "allumée" : "éteinte") : "pas de lampe") + " · " + (st.laser ? "laser " + st.laser + " → " + (s.vise ? s.vise.sur + " à " + virgule(s.vise.d, 1) + " m" : "—") : "pas de laser") + " · on t'entend à " + Math.round(C.tir.bruit * st.bruit) + " m" + (s.repere > 0 ? " · 📢 REPÉRÉ (" + virgule(s.repere, 1) + " s)" : "") + " · visibilité +" + Math.round(s.visibilite || 0) + " m"]);
+    l.push(["ton gadget", g.fiche.icone + " " + g.fiche.nom + (g.attente > 0 ? " · prêt dans " + virgule(g.attente, 1) + " s" : " · prêt") + (g.id === "lanceGrenades" ? " · " + g.munitions + " / " + g.fiche.munitions : "") + (g.zone ? " · trousse posée (" + virgule(g.zone.reste, 0) + " s)" : "") + (g.drone ? " · drone sur " + g.drone.cible.nom : "")]);
+    const marques = monde.soldats.concat(monde.chars, monde.vehicules).filter((o) => o.marque > 0).length;
+    l.push(["tes compteurs", "tirs " + s.compteurs.tirs + " · touchés " + s.compteurs.touches + " · soins " + virgule(s.compteurs.soins, 1) + " · réparations " + s.compteurs.reparations + " · ennemis marqués " + s.compteurs.marques + " (" + marques + " marqués en ce moment) · relevés " + s.compteurs.releves]);
+  }
+
   function lignes() {
     const j = monde.joueur, f = j.fiche, t = monde.toi || {}, s = t.soldat;
     const l = [];
@@ -275,7 +307,8 @@ Tanks.SousLeCapot = (function () {
     if (s) {
       const ou = { dca: "à la DCA 🎯", sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", chinook: "aux commandes du Chinook 🚁", blackhawk: "aux commandes du Black Hawk 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];
       l.push(["mode", t.mode + " = " + ou]);
-      l.push(["ton soldat", "vie " + s.vie + " / " + s.vieMax + (s.seSoigne ? " ➕ (se soigne)" : s.vie < s.vieMax ? " (soin dans " + virgule(Math.max(0, C.soins.attente - s.touche), 1) + " s)" : "") + " · arme " + C.armes[s.arme].icone + " " + C.armes[s.arme].nom + (s.recharge > 0 ? " (recharge " + virgule(s.recharge, 2) + " s)" : "")]);
+      l.push(["ton soldat", "vie " + s.vie + " / " + s.vieMax + (s.seSoigne ? " ➕ (se soigne)" : s.vie < s.vieMax ? " (soin dans " + virgule(Math.max(0, C.soins.attente - s.touche), 1) + " s)" : "") + " · arme " + nomArme(s) + (s.recharge > 0 ? " (recharge " + virgule(s.recharge, 2) + " s)" : "")]);
+      if (s.armes) lignesEquipement(l, s);
       if (t.mode === "pied") l.push(["à pied", "x, z " + virgule(s.x, 1) + " ; " + virgule(s.z, 1) + " · " + virgule(s.vitesse, 1) + " m/s · cap " + degres(s.angle)]);
       l.push(["Les engins de ton camp"]);
       for (const e of monde.engins) {

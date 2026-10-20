@@ -150,7 +150,7 @@ Tanks.Armes = (function () {
   function avancer(s, intentions, dt, monde, ev) {
     const A = enMain(s), st = A.stats, arme = estUneArme(s);
     // 1. épauler (V ou clic droit) : « visee » va de 0 (hanche) à 1 (épaulé) en st.visee secondes
-    const jumelles = !arme && s.gadgetEnMain && s.gadgetEnMain.id === "jumelles";
+    const jumelles = s.arme === "gadget" && s.gadget.id === "jumelles";
     const voulu = intentions.viser && (arme || jumelles) && !s.nage ? 1 : 0;
     const duree = jumelles ? 0.3 : st.visee;
     s.visee = Math.max(0, Math.min(1, s.visee + (voulu ? 1 : -1) * (dt / duree)));
