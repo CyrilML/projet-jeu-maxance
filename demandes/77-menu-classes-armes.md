@@ -1,6 +1,6 @@
 # Demande n° 77 : le menu avant la bataille, les classes, les armes et leurs modifications
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée en version simple le 20/10/2026 (tanks version 16), à valider par Maxance.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi

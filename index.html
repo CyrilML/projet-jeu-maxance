@@ -198,6 +198,7 @@
       <a href="#etape74">Étape 74</a>
       <a href="#etape75">Étape 75</a>
       <a href="#etape76">Étape 76</a>
+      <a href="#etape77">Étape 77</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4379,6 +4380,50 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <details class="question"><summary>Comment le camouflage fait-il pour ne pas avoir de couture ?</summary><p>La couleur est calculée à partir de la position dans l'espace : deux pièces qui se touchent ont la même couleur au même endroit.</p></details>
     </section>
 
+    <section id="etape77">
+      <h2>🎖️ Étape 77 : le menu, les classes et l'atelier des armes <span class="etiquette">✅ livrée (version simple) · à valider</span></h2>
+      <p class="chapeau">Avant la bataille, tu choisis ton tank, ta classe, ton arme, ton gadget et ton explosif, puis tu modifies ton arme dans l'atelier. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/77-menu-classes-armes.md</code>.</p>
+          <ul>
+            <li>✍️ Un menu avant de jouer : véhicule, classe, armes, gadgets, explosifs.</li>
+            <li>✍️ 4 classes comme Battlefield : assaut, ingénieur, éclaireur, médecin de guerre.</li>
+            <li>✍️ Modifier son arme : viseur, canon, chargeur, manche, assistance à la visée, lampe, laser.</li>
+            <li>✍️ Pour aller plus vite : pas de déblocage pour l'instant, et seul le joueur a une classe.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Tanks « version 16 » : le menu s'ouvre au lancement (souris, ou ← → Entrée Tab).</li>
+            <li>☐ Atelier : chaque pièce montre ses avantages en vert ▲ et ses défauts en rouge ▼ (avant → après).</li>
+            <li>☐ À pied : 1 pistolet, 2 arme, 3 gadget, 4 grenades, R recharger, V ou clic droit épauler, L lampe.</li>
+            <li>☐ Assaut : 25 points de vie au lieu de 20. Ingénieur : tiens Espace près d'un tank abîmé pour le réparer.</li>
+            <li>☐ Éclaireur : jumelles, Espace marque l'ennemi (◆ jaune pendant 20 s). Médecin : la trousse soigne autour de toi.</li>
+            <li>☐ « Rejouer avec le même équipement » garde tes choix.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>⚖️ Un avantage, un défaut</h3>
+      <p>Chaque pièce de l'atelier change des <strong>nombres</strong> de l'arme. Mais rien n'est gratuit : un grand chargeur donne plus de balles, mais il est plus long à changer et l'arme est plus lourde. C'est ce qui rend le choix intéressant : il n'y a pas « une meilleure pièce », il y a la meilleure pièce <em>pour ta façon de jouer</em>.</p>
+      <pre style="white-space: pre-wrap">arme de base  ──▶  + viseur  ──▶  + canon  ──▶  … + laser  ──▶  chiffres finaux
+(dégâts, portée, précision, recul, chargeur, rechargement, mobilité)</pre>
+      <h3>🎯 Pourquoi l'arme ne tire pas tout droit</h3>
+      <p>À la hanche, chaque balle part un peu de travers (la <strong>dispersion</strong>). En épaulant, elle est beaucoup plus petite. Et à chaque tir, le <strong>recul</strong> fait monter l'arme un peu plus : si tu tires sans t'arrêter, tu rates de plus en plus. Le recul redescend quand tu arrêtes de tirer.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Mets le tambour sur ton arme : combien de balles ? Et combien de temps pour recharger ?</li>
+        <li>Ouvre « sous le capot » et cherche « Ta classe et tes armes » : regarde la dispersion grandir quand tu tires sans t'arrêter.</li>
+        <li>Dans <code>tanks/config.js</code>, cherche <code>atelier</code> et invente ta propre pièce !</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi le grand chargeur a-t-il un défaut ?</summary><p>Pour que le choix soit intéressant : plus de balles, mais un rechargement plus long et une arme plus lourde.</p></details>
+      <details class="question"><summary>Que fait le recul quand tu tires longtemps sans t'arrêter ?</summary><p>Il s'accumule : l'arme monte et tu rates de plus en plus. Il redescend quand tu arrêtes.</p></details>
+      <p class="petit">Pas encore fait (version simple) : l'arme en 3D dans le menu et les pièces visibles sur l'arme, la vraie lumière de la lampe, le rayon du laser en 3D, la fumée, les mines, le C4 et la claymore (ils donnent des grenades pour l'instant).</p>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4758,6 +4803,12 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
           <h4>Les avions et le Tigre redessinés <span class="etiquette">✅ fait · à valider</span></h4>
           <p>Le Rafale, les chasseurs ennemis, l'avion de transport, le drone et le Tigre refaits, avec leurs animations (train, verrière, rampe, postcombustion) (étape 76).</p>
           <p class="apprend"><b>Tu apprends :</b> le profil d'une aile, un camouflage calculé dans l'espace, le niveau de détail. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">🎖️</div>
+          <h4>Le menu, les classes et l'atelier des armes <span class="etiquette">✅ fait (version simple) · à valider</span></h4>
+          <p>Un menu avant la bataille, 4 classes comme Battlefield, et un atelier pour modifier son arme avec de vrais effets (étape 77).</p>
+          <p class="apprend"><b>Tu apprends :</b> avantages et défauts, la dispersion, le recul, l'état d'une arme (chargeur, réserve). <b>Durée :</b> 2 séances.</p>
         </div>
         <div class="carte fait">
           <div class="num">⚔️</div>
@@ -5463,6 +5514,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-76" data-cle="appris-76" placeholder="Ex. : J'ai appris qu'une aile a un profil en forme de goutte…"></textarea>
         <label for="idees-76"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-76" data-cle="idees-76" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 77 · le menu, les classes et l'atelier des armes <span class="petit">· 20 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le menu (<code>tanks/affichage/menu.js</code>), l'équipement et les classes (<code>logique/equipement.js</code>), les armes (<code>logique/armes.js</code>) et les gadgets (<code>logique/gadgets.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : 4 classes comme Battlefield, 7 modifications avec de vrais effets, 3 à 4 choix par liste ; puis, pour aller vite, pas de déblocage ni de classes pour l'ordinateur.</p>
+        <label for="appris-77"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-77" data-cle="appris-77" placeholder="Ex. : J'ai appris que chaque pièce a un avantage et un défaut…"></textarea>
+        <label for="idees-77"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-77" data-cle="idees-77" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
