@@ -208,6 +208,7 @@
       <a href="#etape84">Étape 84</a>
       <a href="#etape85">Étape 85</a>
       <a href="#etape86">Étape 86</a>
+      <a href="#etape87">Étape 87</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4737,6 +4738,31 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <ul><li>Dans <code>tanks/config.js</code>, cherche <code>realisme</code> et mets <code>asymetrie: 0</code> : tous les soldats retombent pareil. Puis <code>1.2</code> : ils deviennent tout tordus !</li></ul>
     </section>
 
+    <section id="etape87">
+      <h2>🎞️ Étape 87 : le style Battlefield (le filtre de cinéma) <span class="etiquette">🟡 version 5 minutes · à valider</span></h2>
+      <p class="chapeau">Un filtre de cinéma sur tout le jeu : couleurs de guerre, contraste, bords sombres, grain de caméra. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/87-style-battlefield.md</code>.</p>
+          <ul><li>✍️ « Les décors, les soldats, les tanks, les villes et les souterrains dans le même style que Battlefield. En 5 minutes. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 27 ».</li>
+            <li>☐ Les couleurs sont plus éteintes, l'image plus contrastée, les bords plus sombres.</li>
+            <li>☐ Regarde de près : un léger grain qui bouge, comme une caméra de reportage.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🎨 L'étalonnage, le secret des films</h3>
+      <p>Au cinéma, après le tournage, on <strong>retouche les couleurs</strong> de toutes les images : c'est l'étalonnage. Les films de guerre et Battlefield ont un étalonnage reconnaissable : des couleurs moins vives, plus de contraste, des ombres bleu-vert et des lumières orange (on l'appelle « teal &amp; orange »). Le jeu pose ce filtre par-dessus l'image 3D, sans rien changer au monde.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul><li>Dans <code>tanks/config.js</code>, cherche <code>ambiance</code> : mets <code>saturation: 0</code> (noir et blanc, comme un vieux film de guerre !) ou <code>grain: 0.3</code>.</li></ul>
+      <p class="petit">Pas encore fait (5 minutes) : redessiner les objets eux-mêmes dans le style Battlefield.</p>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -5947,6 +5973,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-86" data-cle="appris-86" placeholder="Ex. : J'ai appris qu'un vrai corps n'est jamais symétrique…"></textarea>
         <label for="idees-86"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-86" data-cle="idees-86" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 87 · le style Battlefield <span class="petit">· 20 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le filtre de cinéma (<code>tanks/affichage/ambiance.js</code>).</p>
+        <p class="petit">✍️ Maxance a demandé : le style Battlefield partout, en 5 minutes.</p>
+        <label for="appris-87"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-87" data-cle="appris-87" placeholder="Ex. : J'ai appris ce qu'est l'étalonnage…"></textarea>
+        <label for="idees-87"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-87" data-cle="idees-87" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
