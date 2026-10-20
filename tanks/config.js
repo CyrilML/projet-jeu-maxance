@@ -1,5 +1,9 @@
 // ⚙️ LES RÉGLAGES : tous les nombres du jeu de tanks (étape 60)
 //
+// (étape 77) ✍️ « Un menu avant de jouer : choisir son véhicule, sa classe, ses armes, ses gadgets et ses explosifs, puis
+// modifier son arme. » Voir tout en bas : « classes », « armesPrincipales », « gadgets », « explosifs », « atelier »,
+// « progression » (les points et les niveaux), « tir » (le chargeur, le recul, la dispersion), « marques », « aTerre ».
+//
 // (étape 75) ✍️ « Refais aussi les tanks et les maisons » : des tanks plus beaux (voir « peinture »), des MAISONS qu'on
 // peut détruire (voir « structures ») et des GRENADES (voir « grenades » et « armes »).
 //
@@ -20,7 +24,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 15,
+  version: 16,
   pasFixe: 1 / 120,
   // (étape 72) ✍️ « Ça rame trop. » La boucle ne fait jamais plus de 6 petits pas par image : si l'ordinateur est en
   // retard (une image a duré plus de 6 / 120 = 0,05 s), on JETTE le retard au lieu de courir après (sinon, plus il est
@@ -122,6 +126,10 @@ Tanks.CONFIG = {
     roquettes: { nom: "Lance-roquettes", icone: "🚀", cadence: 3, roquette: true }, // ✍️ 1 roquette = 1 obus pour un tank
     grenades: { nom: "Grenades", icone: "💣", cadence: 1.1, grenade: true }, // ✍️ (étape 75) touche 4 : Espace lance une grenade
     soldat: { cadence: 0.6, precision: 0.35, portee: 140, degats: 1 }, // le fusil des soldats de l'ordinateur
+    // (étape 77) les soldats de l'ordinateur ont une CLASSE : l'éclaireur a un fusil de précision (lent, loin, fort),
+    // le médecin une mitraillette (rapide, de près)
+    soldatPrecision: { cadence: 1.9, precision: 0.5, portee: 230, degats: 2 },
+    soldatPM: { cadence: 0.32, precision: 0.38, portee: 90, degats: 1 },
     // (étape 71) le pistolet du motard (il tire d'une main en roulant) et la petite mitrailleuse du quad
     motard: { nom: "Pistolet du motard", icone: "🔫", cadence: 0.45, precision: 0.5, portee: 70, degats: 1 },
     quad: { nom: "Mitrailleuse du quad", icone: "🔫🔫", cadence: 0.11, precision: 0.42, portee: 120, degats: 1 },
@@ -137,6 +145,14 @@ Tanks.CONFIG = {
     grenade: { vitesse: 0, gravite: 9.8, degatsChar: 0, souffle: 7 },
     flak: { vitesse: 300, gravite: 4.9, degatsChar: 0, souffle: 0, vieMax: 3, fusee: 9, degatsAvion: 1 }, // (étape 64) l'obus de la DCA : il éclate à 9 m d'un avion
     torpille: { vitesse: 26, gravite: 0, degatsChar: 2, souffle: 5, guide: 0.5, vieMax: 14 }, // (étape 63) elle file sous l'eau
+    // (étape 77) la grenade de 40 mm du lance-grenades (elle explose en touchant), la roquette de l'AT4 (plus rapide,
+    // plus droite), le missile JAVELIN (guidé vers le tank visé), et les explosifs posés : la mine antichar, le C4, la claymore
+    lg40: { vitesse: 62, gravite: 9.8, degatsChar: 0, souffle: 4.5 },
+    at4: { vitesse: 120, gravite: 0.3, degatsChar: 1, souffle: 5.5 },
+    javelin: { vitesse: 70, gravite: 0, degatsChar: 2, souffle: 6, guide: 2.4, vieMax: 9 },
+    mine: { vitesse: 0, gravite: 0, degatsChar: 2, souffle: 5 },
+    c4: { vitesse: 0, gravite: 0, degatsChar: 2, souffle: 7 },
+    claymore: { vitesse: 0, gravite: 0, degatsChar: 0, souffle: 0 },
   },
   // ✍️ Les engins garés dans ton camp (seulement toi les conduis) : le 4x4 à mitrailleuse, l'hélico qui lâche des
   // bombes, l'avion de chasse, et le drone. Touche E : monter ou descendre.
@@ -342,7 +358,8 @@ Tanks.CONFIG = {
     epaisseur: 0.45, // m : l'épaisseur des murs des maisons (les murets ont la leur)
     vie: { brique: 26, pierre: 36, bois: 14, porte: 10, haie: 18 }, // points par morceau (une balle = 1)
     degatsBalle: 1,
-    explosions: { obus: [95, 3.1], roquette: [85, 2.9], grenade: [60, 2.7], bombe: [240, 6.5], missile: [160, 4.6], torpille: [60, 2.5] }, // [points au centre, rayon en m]
+    explosions: { obus: [95, 3.1], roquette: [85, 2.9], grenade: [60, 2.7], bombe: [240, 6.5], missile: [160, 4.6], torpille: [60, 2.5],
+      lg40: [70, 2.6], at4: [100, 3], javelin: [150, 4], mine: [120, 3.5], c4: [230, 5.5], claymore: [40, 2] }, // [points au centre, rayon en m] (étape 77 : les nouveaux)
     toitVie: 3, // coups directs (obus, roquettes, bombes…) sur le toit avant qu'il s'effondre
     effondrement: 0.36, // part des morceaux tombés (36 %) : le toit s'effondre
     tombeAvecLeToit: 0.3, // quand le toit tombe, chaque morceau du bas encore debout a 30 % de chances de tomber aussi
@@ -513,4 +530,205 @@ Tanks.CONFIG = {
   // (étape 72) Le QUADRILLAGE : la carte est découpée en cases de 16 m. Pour savoir quels arbres ou quelles maisons sont
   // près de toi, on ne regarde que ta case et ses voisines (au lieu des 400 arbres et 150 murs à chaque fois).
   grille: { case: 16 },
+
+  // ================================================================== étape 77 : ✍️ LE MENU, LES CLASSES, LES ARMES, L'ATELIER
+  // ✍️ « Un menu avant de jouer : choisir son véhicule, sa classe, ses armes, ses gadgets et ses explosifs, puis modifier
+  // son arme. » Les 4 CLASSES comme Battlefield. Pour chacune : 3 armes principales (tu en prends 1), 2 gadgets (tu as
+  // les 2 : touches 3 et 4) et 2 explosifs (tu en prends 1 : touche 5). Le pistolet reste toujours en arme 1.
+  // vie : × la vie de ton soldat (l'Assaut : 25 % de plus). ia : la part des soldats de l'ordinateur de cette classe.
+  classes: {
+    assaut: { nom: "Assaut", icone: "🪖", couleur: "#ff8a3d", vie: 1.25, ia: 0.42,
+      texte: "En première ligne : fusil d'assaut, lance-grenades sous le canon, et 25 % de vie en plus.",
+      armes: ["ar4", "famas", "ak12"], gadgets: ["lanceGrenades", "sacMunitions"], explosifs: ["grenades", "fumigene"] },
+    ingenieur: { nom: "Ingénieur", icone: "🔧", couleur: "#ffd23d", vie: 1, ia: 0.18,
+      texte: "Le chasseur de tanks : lance-roquettes, et il RÉPARE les tanks et les engins de son camp.",
+      armes: ["rpg7", "at4", "javelin"], gadgets: ["reparation", "droneReparation"], explosifs: ["mineAT", "c4"] },
+    eclaireur: { nom: "Éclaireur", icone: "🔭", couleur: "#7dff8a", vie: 1, ia: 0.15,
+      texte: "Tireur de loin : fusil de précision avec lunette, et des JUMELLES qui marquent les ennemis.",
+      armes: ["m110", "lapua", "barrett"], gadgets: ["jumelles", "capteur"], explosifs: ["claymore", "grenades"] },
+    medecin: { nom: "Médecin de guerre", icone: "⛑️", couleur: "#ff5a6a", vie: 1, ia: 0.25,
+      texte: "Il SOIGNE ses amis avec sa trousse et RELÈVE les soldats tombés avec son défibrillateur.",
+      armes: ["mp5", "vector", "p90"], gadgets: ["trousse", "defibrillateur"], explosifs: ["fumigene", "grenades"] },
+  },
+  // ✍️ Les ARMES PRINCIPALES. niveau = le niveau qu'il faut pour la débloquer (la 1re de chaque classe : dès le début).
+  //   degats : par balle (un soldat de l'ordinateur a 3 de vie) ; loin de « porteeEfficace » m, ils baissent jusqu'à
+  //   « degatsLoin » × à la portée max ; cadence : s entre 2 balles ; chargeur : balles ; reserve : balles en plus ;
+  //   rechargement : s ; dispersion : l'écart des balles (rad) en tirant « à la hanche » ; dispersionVisee : en visant
+  //   (touche V ou clic droit) ; recul : rad ajoutés à la dispersion à chaque balle (il redescend tout seul) ;
+  //   visee : s pour épauler ; mobilite : × ta vitesse ; bruit : × la distance à laquelle les ennemis t'entendent ;
+  //   zoom : le zoom sans lunette. Les lance-roquettes : projectile, et pas de balles (degats = sur un tank).
+  //   modele : la forme 3D (affichage/armes3d.js) : longueur du corps, du canon, sorte de crosse, de chargeur…
+  armesPrincipales: {
+    ar4: { nom: "AR-4", type: "Fusil d'assaut", icone: "🔫", classe: "assaut", niveau: 1, famille: "fusil",
+      texte: "Le fusil d'assaut classique : précis, facile à tenir.",
+      degats: 1, cadence: 0.1, portee: 170, porteeEfficace: 70, degatsLoin: 0.6, chargeur: 30, reserve: 150, rechargement: 2.2,
+      dispersion: 0.03, dispersionVisee: 0.006, recul: 0.006, visee: 0.25, mobilite: 1, bruit: 1, zoom: 1.25,
+      modele: { corps: 0.34, canon: 0.3, crosse: "tube", chargeur: "courbe", garde: 0.26, teinte: 0x26282b, poly: 0x2d2c28 } },
+    famas: { nom: "FAMAS", type: "Fusil d'assaut (bullpup)", icone: "🔫", classe: "assaut", niveau: 4, famille: "fusil",
+      texte: "Le « clairon » français : il tire TRÈS vite, mais il bouge plus.",
+      degats: 0.9, cadence: 0.065, portee: 150, porteeEfficace: 60, degatsLoin: 0.55, chargeur: 25, reserve: 150, rechargement: 2.6,
+      dispersion: 0.034, dispersionVisee: 0.008, recul: 0.009, visee: 0.22, mobilite: 1.04, bruit: 1, zoom: 1.25,
+      modele: { corps: 0.5, canon: 0.22, crosse: "bullpup", chargeur: "droit", garde: 0.12, poignee: "clairon", teinte: 0x2b2d26, poly: 0x3a3a32 } },
+    ak12: { nom: "AK-12", type: "Fusil d'assaut lourd", icone: "🔫", classe: "assaut", niveau: 8, famille: "fusil",
+      texte: "Gros calibre : fait plus mal, va plus loin… mais recule fort.",
+      degats: 1.35, cadence: 0.11, portee: 190, porteeEfficace: 85, degatsLoin: 0.65, chargeur: 30, reserve: 120, rechargement: 2.5,
+      dispersion: 0.032, dispersionVisee: 0.007, recul: 0.012, visee: 0.3, mobilite: 0.96, bruit: 1.15, zoom: 1.25,
+      modele: { corps: 0.36, canon: 0.34, crosse: "pliante", chargeur: "banane", garde: 0.28, teinte: 0x1f2022, poly: 0x2a2620 } },
+    rpg7: { nom: "RPG-7", type: "Lance-roquettes", icone: "🚀", classe: "ingenieur", niveau: 1, famille: "roquettes", projectile: "roquette",
+      texte: "Le lance-roquettes : 1 roquette = 1 obus sur un tank.",
+      degats: 1, cadence: 0.5, portee: 260, porteeEfficace: 260, degatsLoin: 1, chargeur: 1, reserve: 6, rechargement: 3,
+      dispersion: 0.03, dispersionVisee: 0.008, recul: 0.03, visee: 0.45, mobilite: 0.93, bruit: 1.4, zoom: 1.5,
+      modele: { tube: 1.0, rayon: 0.05, ogive: "rpg", teinte: 0x4b5a34 } },
+    at4: { nom: "AT4", type: "Lance-roquettes rapide", icone: "🚀", classe: "ingenieur", niveau: 3, famille: "roquettes", projectile: "at4",
+      texte: "Sa roquette vole 2 fois plus vite et presque droit : plus facile de toucher de loin.",
+      degats: 1, cadence: 0.5, portee: 320, porteeEfficace: 320, degatsLoin: 1, chargeur: 1, reserve: 5, rechargement: 3.6,
+      dispersion: 0.025, dispersionVisee: 0.005, recul: 0.03, visee: 0.5, mobilite: 0.92, bruit: 1.4, zoom: 1.6,
+      modele: { tube: 1.02, rayon: 0.06, ogive: "tube", teinte: 0x5b6a3e } },
+    javelin: { nom: "Javelin", type: "Missile guidé", icone: "🎯", classe: "ingenieur", niveau: 7, famille: "roquettes", projectile: "javelin",
+      texte: "Son missile SUIT le véhicule visé et fait 2 dégâts. Mais il recharge lentement.",
+      degats: 2, cadence: 0.5, portee: 400, porteeEfficace: 400, degatsLoin: 1, chargeur: 1, reserve: 4, rechargement: 5,
+      dispersion: 0.02, dispersionVisee: 0.004, recul: 0.03, visee: 0.7, mobilite: 0.88, bruit: 1.3, zoom: 2,
+      modele: { tube: 1.15, rayon: 0.07, ogive: "javelin", teinte: 0x5a5e44 } },
+    m110: { nom: "M110", type: "Fusil de tireur d'élite", icone: "🎯", classe: "eclaireur", niveau: 1, famille: "precision",
+      texte: "Semi-automatique : 2 balles mettent un soldat à terre, de très loin.",
+      degats: 2, cadence: 0.4, portee: 330, porteeEfficace: 200, degatsLoin: 0.75, chargeur: 10, reserve: 50, rechargement: 2.6,
+      dispersion: 0.06, dispersionVisee: 0.0015, recul: 0.02, visee: 0.38, mobilite: 0.97, bruit: 1.2, zoom: 1.4,
+      modele: { corps: 0.38, canon: 0.46, crosse: "precision", chargeur: "droit", garde: 0.34, teinte: 0x3a3a30, poly: 0x5a5440 } },
+    lapua: { nom: "Sniper .338", type: "Fusil à verrou", icone: "🎯", classe: "eclaireur", niveau: 3, famille: "precision",
+      texte: "1 balle = 1 soldat à terre. Mais il faut réarmer après chaque tir.",
+      degats: 3.5, cadence: 1.25, portee: 450, porteeEfficace: 300, degatsLoin: 0.85, chargeur: 5, reserve: 30, rechargement: 3.2,
+      dispersion: 0.08, dispersionVisee: 0.0008, recul: 0.03, visee: 0.45, mobilite: 0.95, bruit: 1.4, zoom: 1.4,
+      modele: { corps: 0.42, canon: 0.58, crosse: "precision", chargeur: "petit", garde: 0.3, verrou: true, teinte: 0x2c3328, poly: 0x4a5a3a } },
+    barrett: { nom: "Barrett .50", type: "Fusil anti-matériel", icone: "🎯", classe: "eclaireur", niveau: 9, famille: "precision",
+      texte: "Énorme ! Il abîme aussi les motos, les quads et le 4x4. Très lourd.",
+      degats: 4, degatsVehicule: 1, cadence: 0.9, portee: 520, porteeEfficace: 350, degatsLoin: 0.9, chargeur: 10, reserve: 30, rechargement: 3.8,
+      dispersion: 0.09, dispersionVisee: 0.001, recul: 0.045, visee: 0.6, mobilite: 0.88, bruit: 1.8, zoom: 1.4,
+      modele: { corps: 0.5, canon: 0.62, crosse: "lourde", chargeur: "droit", garde: 0.3, frein: true, bipied: true, teinte: 0x30302c, poly: 0x3a3a34 } },
+    mp5: { nom: "MP5", type: "Pistolet-mitrailleur", icone: "🔫", classe: "medecin", niveau: 1, famille: "pm",
+      texte: "Petit, léger et précis de près : on court plus vite avec.",
+      degats: 0.8, cadence: 0.075, portee: 100, porteeEfficace: 35, degatsLoin: 0.5, chargeur: 30, reserve: 180, rechargement: 1.9,
+      dispersion: 0.03, dispersionVisee: 0.01, recul: 0.005, visee: 0.18, mobilite: 1.1, bruit: 0.85, zoom: 1.2,
+      modele: { corps: 0.28, canon: 0.14, crosse: "pliante", chargeur: "courbe", garde: 0.16, teinte: 0x1e1f21, poly: 0x262626 } },
+    vector: { nom: "Vector", type: "Pistolet-mitrailleur rapide", icone: "🔫", classe: "medecin", niveau: 3, famille: "pm",
+      texte: "Il crache les balles 2 fois plus vite… et vide son chargeur en un clin d'œil.",
+      degats: 0.75, cadence: 0.045, portee: 85, porteeEfficace: 30, degatsLoin: 0.45, chargeur: 25, reserve: 200, rechargement: 2,
+      dispersion: 0.034, dispersionVisee: 0.012, recul: 0.004, visee: 0.18, mobilite: 1.1, bruit: 0.9, zoom: 1.2,
+      modele: { corps: 0.34, canon: 0.12, crosse: "tube", chargeur: "droit", garde: 0.12, carre: true, teinte: 0x2a2a2a, poly: 0x3b3b38 } },
+    p90: { nom: "P90", type: "Arme de défense", icone: "🔫", classe: "medecin", niveau: 6, famille: "pm",
+      texte: "Un chargeur de 50 balles posé sur le dessus : on tire longtemps.",
+      degats: 0.8, cadence: 0.06, portee: 110, porteeEfficace: 45, degatsLoin: 0.55, chargeur: 50, reserve: 200, rechargement: 2.8,
+      dispersion: 0.03, dispersionVisee: 0.009, recul: 0.0045, visee: 0.2, mobilite: 1.08, bruit: 0.9, zoom: 1.25,
+      modele: { corps: 0.5, canon: 0.1, crosse: "bullpup", chargeur: "dessus", garde: 0.1, teinte: 0x2f3329, poly: 0x40443a } },
+  },
+  // ✍️ Le PISTOLET (arme 1, pour toutes les classes) : les mêmes réglages que les armes principales.
+  pistolet: { nom: "Pistolet", type: "Arme de poing", icone: "🔫", famille: "pistolet", niveau: 1,
+    degats: 1, cadence: 0.3, portee: 70, porteeEfficace: 25, degatsLoin: 0.5, chargeur: 12, reserve: Infinity, rechargement: 1.4,
+    dispersion: 0.03, dispersionVisee: 0.012, recul: 0.02, visee: 0.15, mobilite: 1.05, bruit: 0.8, zoom: 1.2 },
+  // ✍️ Les GADGETS (2 par classe, touches 3 et 4 ; le 2e se débloque au « niveau »).
+  gadgets: {
+    lanceGrenades: { nom: "Lance-grenades", icone: "💥", niveau: 1, texte: "Sous le canon : une grenade de 40 mm qui explose en touchant.",
+      munitions: 4, regain: 20, cadence: 1.2, projectile: "lg40" }, // (regain : +1 toutes les 20 s, et tout au camp)
+    sacMunitions: { nom: "Sac de munitions", icone: "🎒", niveau: 3, texte: "Recharge tes balles, ton lance-grenades et 1 explosif, et ceux de tes amis tout près.",
+      attente: 30, rayon: 8 },
+    reparation: { nom: "Outil de réparation", icone: "🔧", niveau: 1, texte: "Tiens Espace près d'un tank ou d'un engin ami abîmé (le tien aussi !) : il se répare.",
+      distance: 5.5, vitesse: 0.45, chauffe: 6, refroidit: 2.5 }, // m ; points de vie par s ; s avant de surchauffer ; s pour refroidir
+    droneReparation: { nom: "Drone de réparation", icone: "🛸", niveau: 5, texte: "Il s'envole vers le véhicule ami le plus abîmé (moins de 30 m) et le répare tout seul.",
+      portee: 30, vitesse: 0.3, duree: 18, attente: 40, hauteur: 3.2 },
+    jumelles: { nom: "Jumelles", icone: "🔭", niveau: 1, texte: "V (ou clic droit) : regarder loin. Espace : MARQUER l'ennemi visé, pour toi et tes alliés.",
+      zoom: 5, attente: 0.8 },
+    capteur: { nom: "Capteur de mouvement", icone: "📡", niveau: 4, texte: "À lancer : il marque tous les ennemis qui bougent autour de lui.",
+      rayon: 32, duree: 25, attente: 45, vitesse: 13 },
+    trousse: { nom: "Trousse de soins", icone: "🩹", niveau: 1, texte: "Espace : pose une trousse. Toi et tes amis tout près, vous êtes soignés.",
+      rayon: 6, vitesse: 2.5, duree: 14, attente: 25 }, // m ; vie par s (pour toi ; ÷ 8 pour un soldat de l'ordinateur, qui a 3 de vie)
+    defibrillateur: { nom: "Défibrillateur", icone: "⚡", niveau: 2, texte: "Espace près d'un ami tombé : il se RELÈVE (avec la moitié de sa vie).",
+      distance: 3, attente: 1.5 },
+  },
+  // ✍️ Les EXPLOSIFS (2 par classe, tu en prends 1 : touche 5). nombre : combien tu en as ; regain : s pour en regagner 1.
+  explosifs: {
+    grenades: { nom: "Grenades", icone: "💣", niveau: 1, texte: "Lancée en cloche, elle rebondit et explose après 3 s.", nombre: 4, regain: 25 },
+    fumigene: { nom: "Grenades fumigènes", icone: "💨", niveau: 2, texte: "Un gros nuage : les ennemis ne voient plus au travers. Parfait pour relever un ami !",
+      nombre: 3, regain: 25, rayon: 8, duree: 20 },
+    mineAT: { nom: "Mine antichar", icone: "⭕", niveau: 1, texte: "Posée par terre : elle explose sous un véhicule ennemi (2 dégâts).", nombre: 3, regain: 40, declenche: 2.6, max: 6 },
+    c4: { nom: "C4", icone: "🧨", niveau: 5, texte: "Colle-le, éloigne-toi, puis R : BOUM ! Très puissant.", nombre: 2, regain: 40, max: 4 },
+    claymore: { nom: "Claymore", icone: "📦", niveau: 1, texte: "Une mine posée qui saute quand un soldat ennemi passe DEVANT elle.",
+      nombre: 2, regain: 35, declenche: 5, cone: 0.9, max: 4 },
+  },
+  // ✍️ L'ATELIER : 7 emplacements, 4 pièces chacun (la 1re : dès le début). effets : × (ou + pour visee, mobilite,
+  // visibilite) sur les réglages de l'arme. Chaque pièce a des AVANTAGES et des DÉFAUTS.
+  //   zoom : le zoom en visant ; aimant / cone : l'assistance à la visée (rad/s qui tirent ton arme vers l'ennemi, et le
+  //   cône où elle le cherche) ; lampe : { portee (m), angle (rad), force, aveugle (m : elle éblouit l'ennemi) } ;
+  //   laser : sa couleur ; visibilite : m de plus où l'ennemi te REMARQUE (une lumière, ça se voit !).
+  atelier: {
+    viseur: { nom: "Viseur", icone: "🎯", pieces: [
+      { id: "mire", nom: "Mire métallique", niveau: 1, texte: "Le guidon et le cran de mire : simple et rapide.", effets: {} },
+      { id: "pointRouge", nom: "Point rouge", niveau: 2, texte: "Un petit point rouge : on vise mieux.", effets: { zoom: 1.6, dispersionVisee: 0.85, visee: 0.03 } },
+      { id: "holo", nom: "Holographique", niveau: 4, texte: "Une grande fenêtre avec un cercle : précis et clair.", effets: { zoom: 1.9, dispersionVisee: 0.75, visee: 0.06, mobilite: -0.01 } },
+      { id: "lunette", nom: "Lunette ×6", niveau: 6, texte: "Pour tirer TRÈS loin. Lente à épauler, et on voit moins autour.", effets: { zoom: 6, dispersionVisee: 0.5, portee: 1.15, visee: 0.18, mobilite: -0.03, dispersion: 1.1 } },
+    ] },
+    canon: { nom: "Canon", icone: "📏", pieces: [
+      { id: "standard", nom: "Canon standard", niveau: 1, texte: "Le canon d'origine.", effets: {} },
+      { id: "long", nom: "Canon long", niveau: 3, texte: "Plus loin et plus fort, mais plus lourd.", effets: { portee: 1.25, degatsLoin: 1.15, dispersionVisee: 0.9, visee: 0.05, mobilite: -0.03 } },
+      { id: "court", nom: "Canon court", niveau: 5, texte: "Léger et rapide, mais moins loin.", effets: { portee: 0.8, mobilite: 0.04, visee: -0.04, dispersion: 0.9, degatsLoin: 0.9 } },
+      { id: "silencieux", nom: "Silencieux", niveau: 7, texte: "Les ennemis t'entendent 3 fois moins loin. Un peu moins fort.", effets: { bruit: 0.3, degats: 0.9, portee: 0.9, recul: 0.9 } },
+    ] },
+    chargeur: { nom: "Chargeur", icone: "🧱", pieces: [
+      { id: "standard", nom: "Chargeur standard", niveau: 1, texte: "Le chargeur d'origine.", effets: {} },
+      { id: "grand", nom: "Grand chargeur", niveau: 2, texte: "50 % de balles en plus, mais plus long à changer.", effets: { chargeur: 1.5, rechargement: 1.25, mobilite: -0.02 } },
+      { id: "rapide", nom: "Chargeur rapide", niveau: 5, texte: "2 chargeurs scotchés : on recharge très vite, mais un peu moins de balles.", effets: { rechargement: 0.6, chargeur: 0.85 } },
+      { id: "tambour", nom: "Tambour", niveau: 8, texte: "2 fois plus de balles ! Très lourd et lent à recharger.", effets: { chargeur: 2, rechargement: 1.6, mobilite: -0.05, visee: 0.05 } },
+    ] },
+    manche: { nom: "Manche", icone: "✊", pieces: [
+      { id: "aucun", nom: "Rien", niveau: 1, texte: "La main sur le garde-main.", effets: {} },
+      { id: "vertical", nom: "Poignée verticale", niveau: 2, texte: "L'arme recule moins.", effets: { recul: 0.75, visee: 0.02, mobilite: -0.01 } },
+      { id: "incline", nom: "Poignée inclinée", niveau: 4, texte: "On épaule plus vite.", effets: { visee: -0.06, recul: 0.9 } },
+      { id: "crosse", nom: "Crosse lourde", niveau: 7, texte: "Elle ne bouge presque plus… mais elle pèse lourd.", effets: { recul: 0.55, dispersion: 0.85, mobilite: -0.06, visee: 0.06 } },
+    ] },
+    assistance: { nom: "Assistance à la visée", icone: "🧲", pieces: [
+      { id: "aucune", nom: "Aucune", niveau: 1, texte: "C'est toi qui vises.", effets: { cone: 0.04, aimant: 0 } },
+      { id: "legere", nom: "Légère", niveau: 2, texte: "Ton arme glisse un peu vers l'ennemi. Un peu moins de dégâts.", effets: { cone: 0.09, aimant: 0.6, degats: 0.95 } },
+      { id: "moyenne", nom: "Moyenne", niveau: 4, texte: "Elle t'aide bien. Moins de dégâts, et un peu plus lourde.", effets: { cone: 0.14, aimant: 1.2, degats: 0.9, mobilite: -0.01 } },
+      { id: "forte", nom: "Forte", niveau: 6, texte: "Elle « colle » à l'ennemi ! Mais tes balles font beaucoup moins mal.", effets: { cone: 0.2, aimant: 2.2, degats: 0.8, mobilite: -0.02 } },
+    ] },
+    lampe: { nom: "Lampe", icone: "🔦", pieces: [
+      { id: "aucune", nom: "Aucune", niveau: 1, texte: "Pas de lampe.", effets: {} },
+      { id: "lampe", nom: "Lampe", niveau: 2, texte: "Éclaire devant toi (touche L). Mais on te voit de plus loin.", effets: { lampe: { portee: 30, angle: 0.32, force: 40, aveugle: 0 }, visibilite: 25 } },
+      { id: "puissante", nom: "Lampe puissante", niveau: 5, texte: "Éclaire loin et ÉBLOUIT les ennemis devant elle (ils visent mal). Mais on te voit de TRÈS loin.", effets: { lampe: { portee: 55, angle: 0.26, force: 110, aveugle: 22 }, visibilite: 60, mobilite: -0.01 } },
+    ] },
+    laser: { nom: "Laser", icone: "🔴", pieces: [
+      { id: "aucun", nom: "Aucun", niveau: 1, texte: "Pas de laser.", effets: {} },
+      { id: "rouge", nom: "Laser rouge", niveau: 3, texte: "Un point rouge là où tu vises : plus précis sans viser. Il se voit un peu.", effets: { laser: "#ff2a1a", dispersion: 0.75, visibilite: 15 } },
+      { id: "vert", nom: "Laser vert", niveau: 6, texte: "Plus brillant : encore plus précis, épaule plus vite… mais il se voit de loin.", effets: { laser: "#3dff4a", dispersion: 0.62, visee: -0.03, visibilite: 35 } },
+    ] },
+  },
+  // Les barres du menu : la valeur qui remplit la barre (le menu montre « avant → après »).
+  menu: {
+    barres: { degats: 4, portee: 520, precision: 1, recul: 0.05, chargeur: 60, rechargement: 6, visee: 0.8, mobilite: 1.2, bruit: 2 },
+    apercu: { tours: 0.12, pixels: 1.5 }, // tours par seconde de l'arme qui tourne dans l'aperçu ; finesse de l'image
+  },
+  // ✍️ LE TIR : la mécanique des armes (pour toi).
+  //   cible : la « taille » d'un soldat vu de face (demi-largeur, demi-hauteur, m) : une balle touche si son écart (dû à
+  //   la dispersion) reste dans ce rectangle ; reculRetour : rad/s (le recul redescend) ; reculMax : rad ;
+  //   bruit : m (un tir s'entend jusqu'à 160 m × le bruit de l'arme) ; repere : s pendant lesquels tu es « repéré » ;
+  //   viseeLent : × ta vitesse en visant ; pullHorizontal : la part du recul qui fait bouger ton arme de côté.
+  tir: { cible: [0.32, 0.85], reculRetour: 0.09, reculMax: 0.08, bruit: 160, repere: 4, viseeLent: 0.6, reculCote: 0.25, vise: 0.05 },
+  // ✍️ LES MARQUES (les jumelles, le capteur) : un ennemi marqué est montré sur la carte et par un ◆ au-dessus de lui
+  // pendant « duree » s. Tes ALLIÉS de l'ordinateur le visent en premier (sa distance compte × « priorite ») et le voient
+  // de plus loin (× « vue »). cone : rad autour du centre des jumelles ; portee : m ; autour : m (ses voisins aussi).
+  marques: { duree: 20, cone: 0.07, portee: 500, autour: 7, priorite: 0.45, vue: 1.6 },
+  // ✍️ À TERRE : un soldat de l'ordinateur qui tombe reste « à terre » (blessé) pendant « delai » s : un médecin peut le
+  // RELEVER (avec « vie » × sa vie). Après, c'est fini. Les médecins de l'ordinateur relèvent ceux qui sont à moins de
+  // « cherche » m (il leur faut « duree » s à côté de lui) ; les ingénieurs réparent les tanks à moins de « repare » m.
+  aTerre: { delai: 16, vie: 0.5, cherche: 45, duree: 1.6, repare: 40, vitesseRepare: 0.2 },
+  // ✍️ LES POINTS D'EXPÉRIENCE et les NIVEAUX. Le niveau n demande base × (n − 1) ^ puissance points en tout.
+  progression: {
+    points: { soldat: 100, vehicule: 150, char: 400, helico: 300, avion: 300, bateau: 250, soin: 10, relever: 75, reparation: 40, marque: 15, victoire: 500, defaite: 100 },
+    raisons: { soldat: "ennemi abattu", vehicule: "engin détruit", char: "tank détruit", helico: "hélico abattu", avion: "avion abattu", bateau: "bateau coulé", soin: "soin", relever: "soldat relevé", reparation: "réparation", marque: "ennemi marqué", victoire: "VICTOIRE", defaite: "bataille finie" },
+    courbe: { base: 400, puissance: 1.5 }, niveauMax: 12,
+  },
+  // ✍️ (choix de Claude) L'HEURE de la bataille, choisie dans le menu : le jour, ou le CRÉPUSCULE (pour voir la lampe et le laser).
+  heures: {
+    jour: { nom: "Jour", icone: "☀️" },
+    crepuscule: { nom: "Crépuscule", icone: "🌆", soleil: [0.75, 0.12, 0.3], couleur: 0xff9a5a, force: 0.7, ciel: 0x5a6a9a, sol: 0x2a2a20, ambiance: 0.3,
+      exposition: 0.75, brouillard: 0x4a4e64, nuit: 0.72 },
+  },
 };

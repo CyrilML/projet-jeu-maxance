@@ -17,16 +17,39 @@
 //     tu as déposés à la corde avec ton Chinook ou ton Black Hawk). Une ancienne version garde tout, avec 0.
 //   8 (étape 75) : + maisons (les maisons que tu as fait s'effondrer), murs (les morceaux de mur que tu as fait tomber)
 //     et grenades (les grenades que tu as lancées). Une ancienne version garde tout, avec 0.
+//   9 (étape 77) : + xp (tes points d'expérience), niveau, equipement (ta dernière classe, l'heure, et pour chaque classe
+//     son arme et son explosif ; pour chaque arme ses 7 pièces de l'atelier), soins, releves, reparations, marques.
+//     Une ancienne version garde tout : 0 point, niveau 1, et l'équipement de départ (Assaut, AR-4, pièces d'origine).
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 8;
+  const VERSION = 9;
   const radio = Tanks.Evenements;
 
   function vide() {
-    return { version: VERSION, char: "leclerc", victoires: 0, defaites: 0, detruits: 0, tirs: 0, touches: 0, bateaux: 0, portails: 0, sousMarins: 0, avions: 0, ordres: 0, vehicules: 0, helicos: 0, cordes: 0, maisons: 0, murs: 0, grenades: 0 };
+    return { version: VERSION, char: "leclerc", victoires: 0, defaites: 0, detruits: 0, tirs: 0, touches: 0, bateaux: 0, portails: 0, sousMarins: 0, avions: 0, ordres: 0, vehicules: 0, helicos: 0, cordes: 0, maisons: 0, murs: 0, grenades: 0,
+      xp: 0, niveau: 1, soins: 0, releves: 0, reparations: 0, marques: 0, equipement: equipementDeDepart() }; // (étape 77)
+  }
+  // (étape 77) L'équipement de départ : pour chaque classe, sa 1re arme et son 1er explosif ; pour chaque arme, les pièces d'origine.
+  function equipementDeDepart() {
+    const C = Tanks.CONFIG, e = { classe: "assaut", heure: "jour", armes: {}, explosifs: {}, pieces: {} };
+    for (const k in C.classes) (e.armes[k] = C.classes[k].armes[0]), (e.explosifs[k] = C.classes[k].explosifs[0]);
+    for (const a in C.armesPrincipales) {
+      e.pieces[a] = {};
+      for (const emp in C.atelier) e.pieces[a][emp] = C.atelier[emp].pieces[0].id;
+    }
+    return e;
+  }
+  // (étape 77) Recopier l'équipement sauvegardé par-dessus celui de départ (ce qui manque garde sa valeur de départ).
+  function fusionner(depart, ancien) {
+    if (!ancien || typeof ancien !== "object") return depart;
+    for (const k in ancien) {
+      if (depart[k] && typeof depart[k] === "object" && ancien[k] && typeof ancien[k] === "object") fusionner(depart[k], ancien[k]);
+      else if (ancien[k] !== undefined && ancien[k] !== null) depart[k] = ancien[k];
+    }
+    return depart;
   }
 
   let donnees = vide();
@@ -36,7 +59,8 @@ Tanks.Sauvegarde = (function () {
       // (une ancienne version : on garde tout ce qu'elle avait, et les nouveaux compteurs commencent à 0)
       if (brut) {
         const ancienne = JSON.parse(brut);
-        donnees = Object.assign(vide(), ancienne, { version: VERSION });
+        const neuve = vide();
+        donnees = Object.assign(neuve, ancienne, { version: VERSION, equipement: fusionner(neuve.equipement, ancienne.equipement) });
         if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION });
       }
     } catch (e) {
@@ -44,10 +68,11 @@ Tanks.Sauvegarde = (function () {
     }
     return donnees;
   }
-  function ecrire(raison) {
+  // (étape 77) discret = true : on écrit sans l'annoncer à la radio (les points gagnés pendant la bataille)
+  function ecrire(raison, discret) {
     try {
       localStorage.setItem(CLE, JSON.stringify(donnees));
-      radio.emettre("sauvegarde", { raison });
+      if (!discret) radio.emettre("sauvegarde", { raison });
     } catch (e) {
       // (navigation privée : le jeu continue sans mémoire)
     }
