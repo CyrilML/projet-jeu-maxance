@@ -194,7 +194,7 @@ Tanks.Station3D = (function () {
       carrelage: mat({ map: carrelage(), roughness: 0.35 }),
       sol: mat({ map: dalles(), roughness: 0.55 }),
       ballast: mat({ map: ballast(), roughness: 1 }),
-      beton: mat({ map: beton(), roughness: 0.95, color: 0x8a8a88 }),
+      beton: mat({ map: beton(), roughness: 0.95, color: 0xb4b2ac }),
       jaune: mat({ color: 0xd8b21c, roughness: 0.6 }),
       pierre: mat({ color: 0x9a968e, roughness: 0.7 }),
       metal: mat({ color: 0x8c9096, roughness: 0.35, metalness: 0.85 }),

@@ -192,7 +192,7 @@ Tanks.Scene = (function () {
     scene.background = dessous ? BRUME.dessous : null;
     scene.fog.color.copy(dessous ? BRUME.dessous : BRUME.dehors);
     ambiance.color.set(dessous ? 0xc8d2dc : L.ciel);
-    ambiance.groundColor.set(dessous ? 0x3a3028 : L.sol);
+    ambiance.groundColor.set(dessous ? 0x6a6058 : L.sol);
     ambiance.intensity = dessous ? 1.25 : L.ambiance;
     appliquerQualite(Q);
     Tanks.Evenements.emettre("monde-3d", { dessous, dessins: Tanks.Station3D.bilan.dessins, ms: Tanks.Station3D.bilan.ms });

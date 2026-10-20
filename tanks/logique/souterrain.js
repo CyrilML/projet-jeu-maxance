@@ -98,7 +98,7 @@ Tanks.Souterrain = (function () {
     }
   }
   // des tas de gravats (le plafond s'est un peu effondré) et un morceau d'escalator tombé sur le quai
-  const GRAVATS = [[-52, 12.8, 2.2, 1.4, 0.4, 1.3], [62, -12.2, 2.6, 1.6, -0.3, 1.5], [-6, 13.2, 1.8, 1.2, 0.8, 1.1], [36, 13.5, 3.2, 0.9, 0.15, 1.2]];
+  const GRAVATS = [[-52, 13.9, 2.2, 0.9, 0.1, 1.3], [62, -13.9, 2.6, 0.9, -0.08, 1.5], [-6, 13.9, 1.8, 0.9, 0.12, 1.1], [74, 13.9, 3.2, 0.9, 0.05, 1.2]]; // (contre le mur du fond : pas sur les routes)
   for (const [x, z, dl, dp, angle, h] of GRAVATS) {
     boite({ x, z, dl, dp, angle, y0: 0, y1: h, sorte: "gravats", nom: "un tas de gravats" });
     parties.gravats++;
@@ -244,10 +244,15 @@ Tanks.Souterrain = (function () {
   }
   // Le prochain point de sa route (arrivé à moins de 2,5 m d'un point, il passe au suivant ; au bout, il repart dans
   // l'autre sens : il patrouille).
+  // (Coincé derrière un obstacle depuis 5 s sans s'approcher du point ? il passe au point suivant.)
   function prochainPoint(s) {
     const ia = s.ia, r = ia.route;
     let p = r[ia.etape];
-    if (Math.hypot(p.x - s.x, p.z - s.z) < 2.5) {
+    const d = Math.hypot(p.x - s.x, p.z - s.z);
+    if (ia.meilleur === undefined || d < ia.meilleur - 0.5) (ia.meilleur = d), (ia.coince = 0);
+    else ia.coince += C.pasFixe;
+    if (d < 2.5 || ia.coince > 5) {
+      ia.meilleur = undefined;
       ia.etape++;
       if (ia.etape >= r.length) (ia.route = r.slice().reverse()), (ia.etape = 1);
       p = ia.route[ia.etape];
