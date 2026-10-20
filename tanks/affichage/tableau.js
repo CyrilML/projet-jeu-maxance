@@ -27,6 +27,8 @@
 
 window.Tanks = window.Tanks || {};
 
+// Étape 80 : dans le SOUTERRAIN, en haut : les soldats debout et les RENFORTS de chaque camp (la règle de la victoire) ;
+// la petite carte devient le PLAN DE LA STATION (les quais, les voies, la mezzanine, les escaliers, les rames, les feux).
 Tanks.Tableau = (function () {
   const C = Tanks.CONFIG, T = Tanks.Terrain, E = C.equipes;
   let ctx, L, H, carte = null, message = null, reponse = null, ordreEnCours = null;
@@ -594,6 +596,7 @@ Tanks.Tableau = (function () {
       ctx.stroke();
       if (rouge) texte("🎯 " + j.cible.nom + " · " + Math.round(dv) + " m", v.x, v.y + 40, 14, "#ff7a6a", "center");
     }
+    if (monde.metro) return void dessinerSouterrain(monde, t, ici);
     // En haut : les équipes
     const bleus = Tanks.Monde.vivants(monde, "bleus"), rouges = Tanks.Monde.vivants(monde, "rouges");
     panneau(L / 2 - 150, 10, 300, 40);
@@ -707,15 +710,18 @@ Tanks.Tableau = (function () {
     if (reponse && performance.now() < reponse.jusqua) texte(reponse.texte, L / 2, 140, 16, "#e8f0ff", "center");
     const grandMessage = message && performance.now() < message.jusqua && message.texte;
     if (ordreEnCours && performance.now() < ordreEnCours.jusqua && !Tanks.BarreOrdres.ouverte && !grandMessage) texte(ordreEnCours.texte, L / 2, 88, 13, "rgba(255,226,122,.9)", "center");
+    finEtAide(monde, t);
+  }
+  function finEtAide(monde, t) {
     // La fin de la bataille
     if (monde.phase === "victoire" || monde.phase === "defaite") {
       const gagne = monde.phase === "victoire";
       panneau(L / 2 - 240, H / 2 - 90, 480, 170);
       const perdu = t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "moto" ? "💥 Ta moto est hors de combat…" : t.mode === "quad" ? "💥 Ton quad est hors de combat…" : t.mode === "camion" ? "💥 Ton camion est détruit…" : t.engin && t.engin.genre === "helico" ? "🔥 Ton " + t.engin.nom + " est abattu…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : t.mode === "sousmarin" ? "🌊 Ton sous-marin est coulé…" : t.mode === "dca" ? "💥 Ta DCA est détruite…" : "💥 Ton tank est détruit…";
       texte(gagne ? "🏆 VICTOIRE !" : perdu, L / 2, H / 2 - 40, 38, gagne ? "#7dffa0" : "#ff7a6a", "center");
-      texte(gagne ? "Tous les tanks rouges sont détruits" : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
+      texte(gagne ? (monde.metro ? "Les Rouges n'ont plus ni renfort ni soldat debout dans la station" : "Tous les tanks rouges sont détruits") : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
       const S = Tanks.Sauvegarde.donnees;
-      texte("Victoires : " + S.victoires + " · défaites : " + S.defaites + " · tanks détruits : " + S.detruits, L / 2, H / 2 + 24, 15, "#e8e4d6", "center");
+      texte("Victoires : " + S.victoires + " · défaites : " + S.defaites + (monde.metro ? " · victoires dans le souterrain : " + S.souterrain : " · tanks détruits : " + S.detruits), L / 2, H / 2 + 24, 15, "#e8e4d6", "center");
       texte("Entrée : menu · R : rejouer avec le même équipement", L / 2, H / 2 + 56, 17, "#ffe27a", "center");
     } else {
       const aide = {
@@ -736,6 +742,85 @@ Tanks.Tableau = (function () {
       }[t.mode];
       texte(aide, L / 2, H - 14, 13, "rgba(255,255,255,.85)", "center");
     }
+  }
+
+  // ✍️ (étape 80) LE TABLEAU DE BORD DU SOUTERRAIN : les losanges des ennemis proches, les camps et leurs renforts en
+  // haut, le plan de la station en haut à droite, tes armes en bas (horsDuTank), la fin de la bataille.
+  let plan = null;
+  const SO = () => Tanks.Souterrain, CS = C.souterrain;
+  function fabriquerPlan(l, h, k, cx, cz) {
+    const c = document.createElement("canvas");
+    c.width = l;
+    c.height = h;
+    const g = c.getContext("2d"), X = (x) => cx + x * k, Z = (z) => cz + z * k, R = SO().L, V = CS.voies, M = CS.mezzanine, Q = CS.quai.fond;
+    g.fillStyle = "rgba(8,9,11,.85)";
+    g.fillRect(0, 0, l, h);
+    g.fillStyle = "#3a3f46"; // la mezzanine
+    g.fillRect(X(-M.demiX), Z(-M.fond), 2 * M.demiX * k, (M.fond - Q) * k);
+    g.fillRect(X(-M.demiX), Z(Q), 2 * M.demiX * k, (M.fond - Q) * k);
+    g.fillStyle = "#6c6a66"; // les quais
+    g.fillRect(X(-R), Z(-Q), 2 * R * k, (Q - V.demi) * k);
+    g.fillRect(X(-R), Z(V.demi), 2 * R * k, (Q - V.demi) * k);
+    g.fillStyle = "#1c1a18"; // la tranchée et les tunnels
+    g.fillRect(X(-R - CS.tunnel), Z(-V.demi), 2 * (R + CS.tunnel) * k, 2 * V.demi * k);
+    g.fillStyle = "#d8b21c";
+    for (const sz of [-1, 1]) g.fillRect(X(-R), Z(sz * (V.demi + 0.5)) - 0.5, 2 * R * k, 1);
+    for (const r of SO().rampes) for (const sz of [-1, 1]) { // les escaliers et les escalators : des marches
+      g.fillStyle = "#9a958c";
+      const z0 = Z(sz > 0 ? Q : -r.haut);
+      g.fillRect(X(r.x0), z0, (r.x1 - r.x0) * k, (r.haut - Q) * k);
+      g.fillStyle = "#4a4740";
+      for (let z = 0; z < (r.haut - Q) * k; z += 2) g.fillRect(X(r.x0), z0 + z, (r.x1 - r.x0) * k, 0.8);
+    }
+    for (const b of SO().boites) { // les rames (les trams en feu en orange), les piliers, les bancs
+      g.save();
+      g.translate(X(b.x), Z(b.z));
+      g.rotate(b.angle);
+      g.fillStyle = b.sorte === "metro" || b.sorte === "tram" ? (b.rame.feu ? "#c8541c" : b.rame.brule ? "#4a3a30" : "#9ab0c8") : b.sorte === "pilier" ? "#8aa0c0" : b.sorte === "banc" ? "#8a5a32" : b.sorte === "gravats" ? "#5d5852" : "#777";
+      g.fillRect(-b.dl * k, -b.dp * k, Math.max(1, 2 * b.dl * k), Math.max(1, 2 * b.dp * k));
+      g.restore();
+    }
+    return c;
+  }
+  function dessinerSouterrain(monde, t, ici) {
+    const M = monde.metro;
+    // en haut : les deux camps (soldats debout + renforts qui attendent : quand les deux sont à 0, le camp a perdu)
+    const sb = Tanks.Monde.soldatsVivants(monde, "bleus"), sr = Tanks.Monde.soldatsVivants(monde, "rouges");
+    panneau(L / 2 - 230, 10, 460, 62);
+    texte("🔵 " + (sb + (t.soldat && !t.soldat.mort ? 1 : 0)) + " debout · " + M.renforts.bleus + " renforts", L / 2 - 26, 34, 17, E.bleus.marque, "right");
+    texte("contre", L / 2, 33, 12, "#ccc", "center");
+    texte(sr + " debout · " + M.renforts.rouges + " renforts 🔴", L / 2 + 26, 34, 17, E.rouges.marque);
+    texte("🚇 le souterrain · le camp sans renfort ni soldat debout a perdu · ✖ " + M.elimines.rouges + " rouges et " + M.elimines.bleus + " bleus à terre", L / 2, 58, 12, "#e8e4d6", "center");
+    // le plan de la station (en haut à droite)
+    const l = 300, h = 84, k = l / (2 * (SO().L + CS.tunnel) + 6), x0 = L - l - 12, y0 = 12, cx = l / 2, cz = h / 2;
+    if (!plan) plan = fabriquerPlan(l, h, k, cx, cz);
+    ctx.drawImage(plan, x0, y0);
+    ctx.strokeStyle = "rgba(255,255,255,.6)";
+    ctx.strokeRect(x0, y0, l, h);
+    for (const o of monde.soldats) {
+      if (o.mort || o.joueur) continue;
+      ctx.fillStyle = o.marque > 0 ? "#ffe14a" : o.equipe === "bleus" ? "#9cc4ff" : "#ff7a6a";
+      const tt = o.marque > 0 ? 4 : 3;
+      ctx.fillRect(x0 + cx + o.x * k - tt / 2, y0 + cz + o.z * k - tt / 2, tt, tt);
+    }
+    if (t.soldat) {
+      ctx.save();
+      ctx.translate(x0 + cx + t.soldat.x * k, y0 + cz + t.soldat.z * k);
+      ctx.rotate(t.soldat.angle);
+      ctx.fillStyle = "#ffe27a";
+      ctx.beginPath();
+      ctx.moveTo(6, 0);
+      ctx.lineTo(-4, -4);
+      ctx.lineTo(-4, 4);
+      ctx.fill();
+      ctx.restore();
+    }
+    texte("ouest 🔴", x0 + 4, y0 + h + 14, 11, "#ff9a8a");
+    texte("🔵 est", x0 + l - 4, y0 + h + 14, 11, "#9cc4ff", "right");
+    texte("étage : " + (ici.y > CS.mezzanine.hauteur - 0.3 ? "mezzanine" : ici.y < -0.5 ? "sur les voies" : ici.y > 0.3 ? "dans l'escalier" : "quai"), L - 12, y0 + h + 30, 12, "rgba(255,255,255,.8)", "right");
+    if (message && performance.now() < message.jusqua && message.texte) texte(message.texte, L / 2, 110, 26, message.couleur, "center");
+    if (reponse && performance.now() < reponse.jusqua) texte(reponse.texte, L / 2, 140, 16, "#e8f0ff", "center");
+    finEtAide(monde, t);
   }
 
   // ✍️ (étape 79) LA LUNETTE DE SNIPER : tout est noir sauf un grand rond ; dedans, une croix fine avec des points

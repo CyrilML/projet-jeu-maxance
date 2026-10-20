@@ -20,6 +20,9 @@
 // Étape 71 : ✍️ la carte est 3 FOIS PLUS GRANDE (2 100 m de côté). Pour la remplir : deux HAMEAUX en ruines en plus du
 // village (le sol est aplati sous chacun), de grandes FORÊTS en plus des bosquets, plus de haies et de granges. Les
 // deux camps sont à 640 m du centre (« camp »). Les nombres sont dans config.js (monde).
+// Étape 80 : ✍️ LES CARTES. Quand la carte « Le souterrain » est choisie (choisirCarte), le géomètre passe toutes les
+// questions (la hauteur du sol, les obstacles, la ligne de vue) à l'architecte de la station (logique/souterrain.js) :
+// les autres fichiers posent les mêmes questions sans savoir sur quelle carte ils sont.
 // Ce fichier ne dessine rien.
 
 window.Tanks = window.Tanks || {};
@@ -29,6 +32,9 @@ Tanks.Terrain = (function () {
   const bruit = B.creer(W.graine);
   let etat = W.graine;
   const hasard = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
+  // (étape 80) la carte en cours : "bataille" (la grande campagne) ou "souterrain" (la station de métro)
+  let carte = "bataille";
+  const SO = () => Tanks.Souterrain;
   const demi = W.taille / 2, V = W.village, LAC = C.lac, CAMP = W.camp;
   // (étape 71) tous les groupes de maisons : le village, puis les hameaux
   const VILLAGES = [V].concat(W.hameaux || []);
@@ -36,11 +42,12 @@ Tanks.Terrain = (function () {
   // (étape 71) les camps (et le parking des engins juste derrière) : ni arbre ni muret
   const dansUnCamp = (x, z) => Math.abs(x) < 210 && Math.abs(Math.abs(z) - CAMP - 15) < 95;
   // (étape 62) « dl » : 0 au milieu du lac, 1 sur la rive, plus de 1 en dehors
-  const distLac = (x, z) => Math.hypot((x - LAC.x) / LAC.rayonX, (z - LAC.z) / LAC.rayonZ);
+  const distLac = (x, z) => carte === "souterrain" ? 99 : Math.hypot((x - LAC.x) / LAC.rayonX, (z - LAC.z) / LAC.rayonZ);
   const ILES = LAC.iles || [];
   // l'île sur laquelle (ou tout près de laquelle) on est, ou null
   const ileProche = (x, z, plus) => ILES.find((i) => Math.hypot(x - i.x, z - i.z) < i.rayon + (plus || 0)) || null;
   const dansLEau = (x, z, marge) => {
+    if (carte === "souterrain") return false;
     const m = marge || 0;
     return distLac(x, z) < 1 + m / Math.min(LAC.rayonX, LAC.rayonZ) && !ILES.some((i) => Math.hypot(x - i.x, z - i.z) < i.rayon - m);
   };
@@ -66,6 +73,7 @@ Tanks.Terrain = (function () {
     return h;
   }
   function hauteur(x, z) {
+    if (carte === "souterrain") return SO().hauteur(x, z);
     const u = (x + demi) / PAS_H, v = (z + demi) / PAS_H, i = Math.floor(u), j = Math.floor(v);
     if (i < 0 || j < 0 || i >= NH - 1 || j >= NH - 1) return hauteurExacte(x, z); // (hors de la carte : le calcul exact)
     const fu = u - i, fv = v - j;
@@ -178,8 +186,9 @@ Tanks.Terrain = (function () {
   for (const b of boites) Tanks.Grille.ajouter(grilleBoites, b, b.x, b.z, Math.hypot(b.demiL, b.demiP));
   // Les arbres (ou les boîtes) dont le centre est peut-être à moins de « rayon » de (x, z) : il faut encore vérifier la
   // vraie distance. « sortie » : la liste (réutilisée) où les mettre.
-  const arbresAutour = (x, z, rayon, sortie) => Tanks.Grille.chercher(grilleArbres, x, z, rayon + 1, sortie);
-  const boitesAutour = (x, z, rayon, sortie) => Tanks.Grille.chercher(grilleBoites, x, z, rayon, sortie);
+  const vide = (sortie) => ((sortie.length = 0), sortie); // (étape 80 : dans le souterrain, ni arbre ni maison)
+  const arbresAutour = (x, z, rayon, sortie) => carte === "souterrain" ? vide(sortie) : Tanks.Grille.chercher(grilleArbres, x, z, rayon + 1, sortie);
+  const boitesAutour = (x, z, rayon, sortie) => carte === "souterrain" ? vide(sortie) : Tanks.Grille.chercher(grilleBoites, x, z, rayon, sortie);
   const prochesRepousser = [];
 
   // Un point (x, z) dans une boîte ? (on le ramène dans le repère de la boîte : le long, et en travers)
@@ -193,6 +202,7 @@ Tanks.Terrain = (function () {
   // (étape 75) Une boîte n'est plus pleine : on demande à ses MORCEAUX de mur encore debout (logique/structures.js) ;
   // le morceau touché est noté dans « o.morceauTouche » (un tank lancé vite peut défoncer le mur).
   function repousser(o, r) {
+    if (carte === "souterrain") return SO().repousser(o, r);
     let touche = null;
     o.morceauTouche = null;
     for (const b of boitesAutour(o.x, o.z, r + 0.01, prochesRepousser)) { // (étape 72 : seulement les boîtes des cases voisines)
@@ -226,6 +236,7 @@ Tanks.Terrain = (function () {
   // travers une fenêtre ou un trou !)
   for (const b of boites) (b.rayon = Math.hypot(b.demiL, b.demiP)), (b.sol = hauteur(b.x, b.z));
   function vueLibre(x1, y1, z1, x2, y2, z2) {
+    if (carte === "souterrain") return !SO().ligne(x1, y1, z1, x2, y2, z2, true);
     if (Tanks.Structures.touche(x1, y1, z1, x2, y2, z2)) return false;
     const d = Math.hypot(x2 - x1, z2 - z1), n = Math.max(2, Math.ceil(d / 9));
     for (let i = 1; i < n; i++) {
@@ -242,5 +253,10 @@ Tanks.Terrain = (function () {
     return liste;
   }
 
-  return { hauteur, hauteurExacte, cahierBilan, normale, boites, arbres, arbresAutour, boitesAutour, grilles: { arbres: grilleArbres, boites: grilleBoites }, dansBoite, repousser, vueLibre, departs, demi, camp: CAMP, villages: VILLAGES, forets, distLac, dansLEau, ileProche, iles: ILES };
+  // (étape 80) changer de carte (au début de chaque bataille ; le garage est toujours dehors)
+  function choisirCarte(nom) {
+    carte = nom === "souterrain" ? "souterrain" : "bataille";
+  }
+
+  return { choisirCarte, get carte() { return carte; }, get souterrain() { return carte === "souterrain"; }, hauteur, hauteurExacte, cahierBilan, normale, boites, arbres, arbresAutour, boitesAutour, grilles: { arbres: grilleArbres, boites: grilleBoites }, dansBoite, repousser, vueLibre, departs, demi, camp: CAMP, villages: VILLAGES, forets, distLac, dansLEau, ileProche, iles: ILES };
 })();

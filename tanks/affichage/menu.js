@@ -5,6 +5,8 @@
 // Atelier → « Au combat ! ». Chaque choix est une CARTE ; on clique dessus, ou on la choisit au clavier
 // (← → pour changer de carte, Entrée pour la prendre, Tab / Maj+Tab ou ↑ ↓ pour changer d'onglet).
 // Dans l'Atelier, chaque pièce montre ses AVANTAGES (en vert) et ses DÉFAUTS (en rouge) : les barres disent « avant → après ».
+// (Étape 80 : ✍️ le 1er onglet, « Carte » : la grande bataille ou le souterrain. Dans le souterrain, c'est à pied
+// seulement : l'onglet Véhicule est grisé, « infanterie seulement ».)
 // Ce fichier lit l'équipement et ne le change jamais lui-même : il fait des DEMANDES (main.js les passe au quartier-maître).
 
 window.Tanks = window.Tanks || {};
@@ -12,7 +14,7 @@ window.Tanks = window.Tanks || {};
 Tanks.Menu = (function () {
   const C = Tanks.CONFIG;
   let racine, monde, demander, onglet = 0, carte = 0, emplacement = 0, ouvert = false;
-  const ONGLETS = [["vehicule", "🛡️ Véhicule"], ["classe", "🎖️ Classe"], ["armes", "🔫 Armes"], ["gadgets", "🧰 Gadgets"], ["explosifs", "💣 Explosifs"], ["atelier", "🔧 Atelier"]];
+  const ONGLETS = [["carte", "🗺️ Carte"], ["vehicule", "🛡️ Véhicule"], ["classe", "🎖️ Classe"], ["armes", "🔫 Armes"], ["gadgets", "🧰 Gadgets"], ["explosifs", "💣 Explosifs"], ["atelier", "🔧 Atelier"]];
   const EMPLACEMENTS = Object.keys(C.atelier);
   const html = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   const virgule = (n, k) => (+n).toFixed(k === undefined ? 1 : k).replace(".", ",");
@@ -69,7 +71,10 @@ Tanks.Menu = (function () {
   // Les cartes de l'onglet en cours : { action, valeur, choisi, html }
   function cartes() {
     const c = Tanks.Equipement.choix(), K = C.classes[c.classe], nom = ONGLETS[onglet][0];
-    if (nom === "vehicule") return C.chars.map((f, i) => ({ action: "char", valeur: f.id, choisi: monde.choix === i, icone: f.drapeau, titre: f.nom, sous: f.pays, texte: f.texte,
+    if (nom === "carte") return C.cartes.map((f) => ({ action: "carte", valeur: f.id, choisi: monde.carte === f.id, icone: f.icone, titre: f.nom, sous: f.infanterie ? "infanterie seulement" : "tous les engins", texte: f.texte,
+      lignes: f.id === "souterrain" ? ["🚇 " + C.souterrain.longueur + " m de quais, " + Tanks.Souterrain.parties.rames + " rames (" + Tanks.Souterrain.parties.enFeu + " trams en feu)", "🪖 " + C.souterrain.regles.soldats + " soldats par camp + " + C.souterrain.regles.renforts + " renforts", "🏆 le camp sans renfort ni soldat debout a perdu"] : ["🗺️ " + C.monde.taille + " m de côté", "🛡️ toi + " + C.equipes.allies + " tanks alliés contre " + C.equipes.ennemis, "🏆 détruis tous les tanks rouges"] }));
+    const pied = monde.carte === "souterrain"; // (étape 80 : à pied seulement)
+    if (nom === "vehicule") return C.chars.map((f, i) => ({ action: "char", valeur: f.id, choisi: monde.choix === i, grise: pied, icone: f.drapeau, titre: f.nom, sous: f.pays, texte: f.texte,
       barres: [["Vitesse", f.vitesseMax / 21, Math.round(f.vitesseMax * 3.6) + " km/h"], ["Recharge", 1.2 / f.recharge, virgule(f.recharge) + " s"], ["Tourelle", f.tourelle, Math.round((f.tourelle * 180) / Math.PI) + " °/s"]] }));
     if (nom === "classe") return Object.keys(C.classes).map((id) => { const k = C.classes[id]; return { action: "classe", valeur: id, choisi: c.classe === id, icone: k.icone, titre: k.nom, texte: k.texte, couleur: k.couleur,
       lignes: ["❤️ vie " + Math.round(C.soldats.vieJoueur * k.vie), "🔫 " + k.armes.map((a) => C.armesPrincipales[a].nom).join(", "), "🧰 " + k.gadgets.map((g) => C.gadgets[g].nom).join(" ou ")] }; });
@@ -110,7 +115,7 @@ Tanks.Menu = (function () {
     const barres = (c.barres || []).map(([nom, part, valeur]) => '<div class="m-barre"><span>' + nom + '</span><i><b style="width:' + Math.round(Math.max(0.04, Math.min(1, part)) * 100) + '%"></b></i><em>' + html(valeur) + "</em></div>").join("");
     const lignes = (c.lignes || []).map((t) => "<div class=\"m-ligne\">" + html(t) + "</div>").join("");
     const effets = c.effets ? (c.effets.length ? c.effets.map((e) => '<div class="m-effet ' + (e.mieux ? "plus" : "moins") + '">' + (e.mieux ? "▲ " : "▼ ") + html(e.nom) + " : " + html(e.avant) + " → <b>" + html(e.apres) + "</b></div>").join("") : '<div class="m-effet neutre">= rien ne change</div>') : "";
-    return '<button class="m-carte' + (c.choisi ? " choisi" : "") + (i === carte ? " focus" : "") + '" data-action="' + c.action + '" data-valeur="' + c.valeur + '"' + (c.couleur ? ' style="--classe:' + c.couleur + '"' : "") + ">" +
+    return '<button class="m-carte' + (c.choisi ? " choisi" : "") + (c.grise ? " grise" : "") + (i === carte ? " focus" : "") + '" data-action="' + c.action + '" data-valeur="' + c.valeur + '"' + (c.couleur ? ' style="--classe:' + c.couleur + '"' : "") + ">" +
       '<div class="m-icone">' + c.icone + "</div><div class=\"m-titre\">" + html(c.titre) + (c.choisi ? ' <span class="m-coche">✔</span>' : "") + "</div>" + (c.sous ? '<div class="m-sous">' + html(c.sous) + "</div>" : "") +
       '<div class="m-texte">' + html(c.texte || "") + "</div>" + barres + lignes + effets + "</button>";
   }
@@ -120,7 +125,8 @@ Tanks.Menu = (function () {
     const c = Tanks.Equipement.choix(), K = C.classes[c.classe], A = C.armesPrincipales[c.arme], liste = cartes();
     carte = Math.min(carte, liste.length - 1);
     const nom = ONGLETS[onglet][0];
-    let aide = { vehicule: "Ton tank de départ (tu peux en sortir avec E).", classe: "Ta classe donne tes armes et tes pouvoirs.", armes: "Ton arme principale (touche 2). Le pistolet (touche 1) est toujours là.", gadgets: "Ton gadget (touche 3, puis Espace).", explosifs: "Ton explosif (touche 4).", atelier: "Modifie ton " + A.nom + " : 7 emplacements. Vert = mieux, rouge = moins bien." }[nom];
+    const pied = monde.carte === "souterrain";
+    let aide = { carte: "Où se passe la bataille ? (← → puis Entrée, ou un clic)", vehicule: pied ? "🚶 Infanterie seulement : dans le souterrain, pas de tank. Tu commences à pied avec ta classe (le tank choisi attend la grande bataille)." : "Ton tank de départ (tu peux en sortir avec E).", classe: "Ta classe donne tes armes et tes pouvoirs.", armes: "Ton arme principale (touche 2). Le pistolet (touche 1) est toujours là.", gadgets: "Ton gadget (touche 3, puis Espace).", explosifs: "Ton explosif (touche 4).", atelier: "Modifie ton " + A.nom + " : 7 emplacements. Vert = mieux, rouge = moins bien." }[nom];
     let atelier = "";
     if (nom === "atelier") {
       atelier = '<div class="m-emplacements">' + EMPLACEMENTS.map((e, i) => '<button class="m-emp' + (i === emplacement ? " actif" : "") + '" data-action="emplacement" data-valeur="' + i + '">' + C.atelier[e].icone + " " + C.atelier[e].nom + "<small>" + html(Tanks.Equipement.piece(e, c.pieces[e]).nom) + "</small></button>").join("") + "</div>";
@@ -128,9 +134,9 @@ Tanks.Menu = (function () {
       atelier += '<div class="m-fiche"><b>' + A.icone + " " + html(A.nom) + "</b> avec ses pièces : " + barresArme(st).map(([n, , v]) => n + " " + v).join(" · ") + "</div>";
     }
     racine.innerHTML =
-      '<div class="m-haut"><div class="m-titre-jeu">🛡️ Prépare ta bataille</div><div class="m-resume">' + C.chars[monde.choix].drapeau + " " + html(C.chars[monde.choix].nom) + " · " + K.icone + " " + html(K.nom) + " · " + A.icone + " " + html(A.nom) + " · " + C.gadgets[c.gadget].icone + " " + html(C.gadgets[c.gadget].nom) + " · " + C.explosifs[c.explosif].icone + " " + html(C.explosifs[c.explosif].nom) + "</div>" +
+      '<div class="m-haut"><div class="m-titre-jeu">🛡️ Prépare ta bataille</div><div class="m-resume">' + (C.cartes.find((f) => f.id === monde.carte) || C.cartes[0]).icone + " " + html((C.cartes.find((f) => f.id === monde.carte) || C.cartes[0]).nom) + " · " + (pied ? "🚶 à pied" : C.chars[monde.choix].drapeau + " " + html(C.chars[monde.choix].nom)) + " · " + K.icone + " " + html(K.nom) + " · " + A.icone + " " + html(A.nom) + " · " + C.gadgets[c.gadget].icone + " " + html(C.gadgets[c.gadget].nom) + " · " + C.explosifs[c.explosif].icone + " " + html(C.explosifs[c.explosif].nom) + "</div>" +
       '<button class="m-rejouer" data-action="combat">▶ Rejouer avec le même équipement</button></div>' +
-      '<div class="m-onglets">' + ONGLETS.map(([, t], i) => '<button class="m-onglet' + (i === onglet ? " actif" : "") + '" data-action="onglet" data-valeur="' + i + '">' + (i + 1) + ". " + t + "</button>").join("") + "</div>" +
+      '<div class="m-onglets">' + ONGLETS.map(([id, t], i) => '<button class="m-onglet' + (i === onglet ? " actif" : "") + (pied && id === "vehicule" ? " grise" : "") + '" data-action="onglet" data-valeur="' + i + '">' + (i + 1) + ". " + t + (pied && id === "vehicule" ? " (infanterie seulement)" : "") + "</button>").join("") + "</div>" +
       '<div class="m-aide">' + html(aide) + "</div>" + atelier +
       '<div class="m-cartes n' + liste.length + '">' + liste.map(dessinerCarte).join("") + "</div>" +
       '<div class="m-bas"><span>⌨️ ← → choisir une carte · Entrée prendre · ' + (nom === "atelier" ? "↑ ↓ emplacement · " : "↑ ↓ onglet · ") + 'Tab onglet suivant · 🖱️ clic</span>' +

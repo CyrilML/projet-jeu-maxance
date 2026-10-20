@@ -30,6 +30,9 @@
 // Étape 76 : LES AVIONS ET LE TIGRE REDESSINÉS : combien sont dessinés en détail, en version simple, cachés ; pour
 // chaque modèle (Rafale, chasseur ennemi, avion de transport, drone, Tigre), ses triangles et ses dessins de près, et
 // ses triangles de loin ; et ce qui bouge sur ton Rafale (le train, la verrière, la postcombustion, les missiles).
+// Étape 80 : LA CARTE choisie, et dans le SOUTERRAIN : les parties de la station (rames, trams en feu, piliers, bancs,
+// escaliers, escalators, lampes), les renforts et les soldats tombés de chaque camp, l'étage où tu es, la route de chaque
+// soldat, les vraies lumières et les dessins de la station, et ce que coûtent ses lignes de vue.
 
 window.Tanks = window.Tanks || {};
 
@@ -79,6 +82,10 @@ Tanks.SousLeCapot = (function () {
     "camion-recharge": (d) => "🚛 " + (d.toi ? "Ton camion" : d.nom) + " est rempli : " + d.places + " soldats montent à bord" + (d.toi ? " (F pour les faire descendre)" : " : il repart au front"),
     "vehicule-retour": (d) => "🔧 " + d.nom + " revient au camp, avec un nouveau pilote (" + C.vehicules.retour + " s après avoir été détruit)",
     "pilote-abattu": (d) => "🎯 Le pilote " + (d.surToi ? "(toi !)" : "de " + d.cible) + " est touché par " + d.tireur + " : " + (d.sorte === "moto" ? "la moto" : "le quad") + " tombe (hors de combat)",
+    carte: (d) => "🗺️ Carte choisie : " + d.icone + " " + d.nom + (d.infanterie ? " (infanterie seulement : à pied, sans tank ni engin)" : ""),
+    souterrain: (d) => "🚇 La bataille commence dans le SOUTERRAIN ! Toi (à pied, classe " + d.classe + " avec " + d.arme + ") et " + d.soldats + " soldats bleus à l'est, contre " + d.soldats + " soldats rouges à l'ouest · " + d.renforts + " renforts par camp · " + d.longueur + " m de quais, " + d.rames + " rames dont " + d.enFeu + " en feu",
+    "renforts-epuises": (d) => "📉 " + d.nom + " n'ont plus de renforts : il leur reste " + d.debout + " soldat(s) debout dans la station",
+    "monde-3d": (d) => (d.dessous ? "🚇 On descend : le dehors (sol, arbres, maisons, ciel, soleil) est caché, la station est montrée (" + d.dessins + " dessins, construite en " + d.ms + " ms)" : "🌄 On remonte : la station est cachée, le dehors est montré"),
     bataille: (d) => "⚔️ La bataille commence ! Toi (" + d.char + (d.classe ? ", classe " + d.classe + " avec " + d.arme + " et " + d.gadget : "") + ") et " + d.allies + " alliés contre " + d.ennemis + " ennemis, sur une carte de " + C.monde.taille + " m · " + (d.vehicules || 0) + " motos, quads et camions et " + (d.helicos || 0) + " hélicos de transport conduits par l'ordinateur",
     tir: (d) => d.joueur ? "🔥 Tu tires" + (d.assiste ? " (visée assistée sur " + d.cible + ", " + d.distance + " m : le canon s'est réglé tout seul)" : "") : "🔥 " + d.nom + " (" + (d.equipe === "bleus" ? "allié" : "ennemi") + ") tire sur " + d.cible + " à " + d.distance + " m",
     recharge: () => "🔄 Ton canon est rechargé",
@@ -87,7 +94,7 @@ Tanks.SousLeCapot = (function () {
     impact: (d) => d.grenade ? "💥 La grenade" + (d.tireur ? " de " + d.tireur : "") + " explose (après " + d.rebonds + " rebond" + (d.rebonds > 1 ? "s" : "") + ")" : (d.sur === "eau" ? "🌊 " : "💨 ") + ({ roquette: "Une roquette", bombe: "Une bombe", missile: "Un missile", grenade: "Une grenade" }[d.sorte] || "Un obus") + " tombe sur " + ({ sol: "le sol", maison: d.toit ? "le toit de " + d.nom : d.nom || "une maison", muret: d.nom || "un muret", char: "un tank", epave: "une épave", eau: "l'eau du lac (une gerbe d'eau !)" }[d.sur] || d.sur),
     "tir-ami": (d) => "⛔ " + d.tireur + " a touché un allié (" + d.sur + ") : pas de dégâts",
     "arbre-ecrase": (d) => "🌳 " + (d.nom === "toi" ? "Tu écrases" : d.nom + " écrase") + " un arbre à " + Math.round(Math.abs(d.vitesse) * 3.6) + " km/h",
-    victoire: (d) => "🏆 VICTOIRE en " + Math.round(d.temps) + " s ! Il te reste " + d.vie + " / " + (d.vieMax || C.char.vie) + " de vie et " + d.allies + " allié(s)",
+    victoire: (d) => "🏆 VICTOIRE en " + Math.round(d.temps) + " s ! Il te reste " + d.vie + " / " + (d.vieMax || C.char.vie) + " de vie et " + d.allies + (d.souterrain ? " soldat(s) bleu(s) debout dans le souterrain" : " allié(s)"),
     defaite: (d) => "💀 Défaite après " + Math.round(d.temps) + " s : il restait " + d.ennemis + " ennemi(s)",
     sauvegarde: (d) => "💾 Livret militaire écrit (" + d.raison + ")",
     // étape 67
@@ -308,10 +315,29 @@ Tanks.SousLeCapot = (function () {
     l.push(["tes compteurs", "tirs " + s.compteurs.tirs + " · touchés " + s.compteurs.touches + " · soins " + virgule(s.compteurs.soins, 1) + " · réparations " + s.compteurs.reparations + " · ennemis marqués " + s.compteurs.marques + " (" + marques + " marqués en ce moment) · relevés " + s.compteurs.releves]);
   }
 
+  // (étape 80) La carte choisie ; et sous terre : la station, les renforts, l'étage, les routes, ce que coûte la station.
+  function lignesSouterrain(l, s) {
+    const f = C.cartes.find((c) => c.id === monde.carte) || C.cartes[0], SO = Tanks.Souterrain, P = SO.parties, B = Tanks.Station3D.bilan, R = C.souterrain.regles;
+    l.push(["La carte (étape 80)"], ["carte choisie", f.icone + " " + f.nom + (f.infanterie ? " · infanterie seulement" : "") + " · le géomètre répond pour : " + (Tanks.Terrain.souterrain ? "🚇 le souterrain" : "🌄 la grande bataille")]);
+    l.push(["la station", C.souterrain.longueur + " m · " + P.quais + " quais, " + P.voies + " voies · " + P.rames + " rames (" + P.metros + " métros, " + P.trams + " trams) = " + P.voitures + " voitures, dont " + P.enFeu + " en feu 🔥 et " + P.deraillees + " déraillées · " + P.piliers + " piliers · " + P.bancs + " bancs · " + P.escaliers + " escaliers · " + P.escalators + " groupes d'escalators (cassés) · " + P.portiques + " portiques · " + P.gravats + " tas de gravats · " + B.lampes + " lampes (" + B.clignotent + " clignotent, " + B.eteintes + " éteintes)"]);
+    l.push(["les étages", "rails " + -C.souterrain.voies.profondeur + " m · quai 0 m · mezzanine " + C.souterrain.mezzanine.hauteur + " m · plafond " + C.souterrain.plafond + " m · une marche de " + C.souterrain.marche + " m au plus (plus haut : c'est un mur)"]);
+    if (!monde.metro) return;
+    const M = monde.metro, vb = Tanks.Monde.soldatsVivants(monde, "bleus"), vr = Tanks.Monde.soldatsVivants(monde, "rouges");
+    l.push(["🔵 les Bleus", vb + " debout (+ toi) · " + M.renforts.bleus + " / " + R.renforts + " renforts · " + M.elimines.bleus + " à terre · prochain renfort " + (vb < R.soldats && M.renforts.bleus ? "dans " + virgule(M.attente.bleus, 1) + " s" : "—")]);
+    l.push(["🔴 les Rouges", vr + " debout · " + M.renforts.rouges + " / " + R.renforts + " renforts · " + M.elimines.rouges + " à terre · prochain renfort " + (vr < R.soldats && M.renforts.rouges ? "dans " + virgule(M.attente.rouges, 1) + " s" : "—")]);
+    if (s) l.push(["ton étage", "sol à " + virgule(Tanks.Terrain.hauteur(s.x, s.z), 2) + " m sous tes pieds · x " + virgule(s.x, 1) + " ; z " + virgule(s.z, 1)]);
+    const routes = {};
+    for (const o of monde.soldats) if (o.ia && o.ia.nomRoute && !o.mort) routes[o.ia.nomRoute] = (routes[o.ia.nomRoute] || 0) + 1;
+    l.push(["les routes", Object.entries(routes).map(([n, k]) => k + " par " + n).join(" · ") || "—"]);
+    l.push(["le dessin", B.dessins + " dessins pour toute la station (" + B.pieces + " pièces soudées en tout dans le jeu) · " + B.traverses + " traverses en 1 dessin · " + B.lumieres + " vraies lumières (" + C.souterrain.feux.lumieres + " feux qui tremblent + néons) · " + B.foyers + " foyers de flammes · construite en " + B.ms + " ms · dessins de l'image : " + (Tanks.Scene.infos.calls || 0)]);
+    l.push(["les lignes de vue", SO.bilan.lignes.toLocaleString("fr-FR") + " lignes testées depuis le début · " + SO.bilan.pas.toLocaleString("fr-FR") + " petits pas de 35 cm"]);
+  }
+
   function lignes() {
     const j = monde.joueur, f = j.fiche, t = monde.toi || {}, s = t.soldat;
     const l = [];
     lignesVitesse(l);
+    lignesSouterrain(l, s);
     l.push(["Où tu es (étape 61)"], ["phase", monde.phase]);
     if (s) {
       const ou = { dca: "à la DCA 🎯", sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", chinook: "aux commandes du Chinook 🚁", blackhawk: "aux commandes du Black Hawk 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];
@@ -404,7 +430,7 @@ Tanks.SousLeCapot = (function () {
     }
     l.push(["Le dessin"], ["le son", Tanks.Sons.etat()], ["particules", Tanks.Effets.bilan.vivantes + " · épaves qui fument : " + Tanks.Effets.bilan.epaves + " · traits de balles : " + Tanks.Effets.bilan.balles], ["projectiles en vol", monde.obus.length ? Object.entries(monde.obus.reduce((n, p) => ((n[p.sorte] = (n[p.sorte] || 0) + 1), n), {})).map(([k, v]) => v + " " + k).join(", ") : "aucun"], ["entre deux pas", "le dessin est à " + Math.round(Tanks.Scene.entreDeuxPas() * 100) + " % entre l'avant-dernier pas et le dernier (interpolation)"], ["dessins", Tanks.Scene.dessins().soldats + " soldats, " + Tanks.Scene.dessins().engins + " engins"], ["la carte graphique", (Tanks.Scene.infos.triangles || 0).toLocaleString("fr-FR") + " triangles, " + (Tanks.Scene.infos.calls || 0) + " dessins par image"], ["l'atelier (étape 70)", Tanks.Outils3D.bilan.pieces.toLocaleString("fr-FR") + " pièces soudées en " + Tanks.Outils3D.bilan.objets + " objets (une matière = un objet à dessiner)"]);
     const S = Tanks.Sauvegarde.donnees;
-    l.push(["Le livret militaire (sauvegarde)"], ["victoires · défaites", S.victoires + " · " + S.defaites], ["tanks détruits", S.detruits], ["bateaux · sous-marins coulés", S.bateaux + " · " + S.sousMarins], ["passages de portail", S.portails], ["avions abattus", S.avions], ["ordres donnés", S.ordres], ["obus tirés · au but", S.tirs + " · " + S.touches], ["motos, quads, camions ennemis (étape 71)", S.vehicules], ["hélicos de transport ennemis abattus · soldats déposés à la corde (étape 73)", S.helicos + " · " + S.cordes], ["maisons effondrées · morceaux de mur abattus · grenades lancées (étape 75)", S.maisons + " · " + S.murs + " · " + S.grenades]);
+    l.push(["Le livret militaire (sauvegarde)"], ["victoires · défaites", S.victoires + " · " + S.defaites], ["tanks détruits", S.detruits], ["bateaux · sous-marins coulés", S.bateaux + " · " + S.sousMarins], ["passages de portail", S.portails], ["avions abattus", S.avions], ["ordres donnés", S.ordres], ["obus tirés · au but", S.tirs + " · " + S.touches], ["motos, quads, camions ennemis (étape 71)", S.vehicules], ["hélicos de transport ennemis abattus · soldats déposés à la corde (étape 73)", S.helicos + " · " + S.cordes], ["maisons effondrées · morceaux de mur abattus · grenades lancées (étape 75)", S.maisons + " · " + S.murs + " · " + S.grenades], ["dernière carte choisie · victoires dans le souterrain (étape 80)", S.carte + " · " + S.souterrain]);
     return l;
   }
 

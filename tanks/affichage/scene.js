@@ -39,13 +39,17 @@
 // flamme de la POSTCOMBUSTION s'allonge quand il va vite, ses missiles disparaissent un par un quand tu tires (et les
 // grenades du drone) ; les hélices de l'avion de transport tournent (2 dans chaque sens) et sa RAMPE s'ouvre avant le
 // largage ; le disque flou des rotors et des hélices qui tournent vite. De loin : la version simple en instances.
+// Étape 80 : ✍️ LE SOUTERRAIN. Quand la bataille est sous terre (logique/terrain.js le dit), la scène CACHE tout le
+// dehors (le sol, les arbres, les maisons, le lac, le ciel, le soleil et ses ombres : rien de tout ça n'est dessiné ni
+// calculé) et MONTRE la station (affichage/station3d.js, construite la première fois qu'on descend). La lumière change :
+// un brouillard sombre et proche, une lumière d'ambiance froide, les feux orange et les néons de la station.
 // Comme tout l'affichage, ce fichier lit le monde et ne le modifie jamais.
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Scene = (function () {
   const C = Tanks.CONFIG, T = Tanks.Terrain;
-  let rendu, scene, cam, soleil;
+  let rendu, scene, cam, soleil, leDecor, ambiance, reflets, sousTerre = false; // (étape 80 : le dehors, l'ambiance, les reflets du ciel, où on est)
   const objets = new Map(); // tank du monde → son dessin
   const dessinsSoldats = new Map(), dessinsEngins = new Map(); // (étape 61) soldat → dessin, engin → dessin
   const dessinsPortails = new Map(); // (étape 62)
@@ -126,8 +130,8 @@ Tanks.Scene = (function () {
     solReflet.rotation.x = -Math.PI / 2;
     solReflet.position.y = -3;
     env.add(solReflet);
-    scene.environment = pm.fromScene(env, 0.04).texture;
-    scene.add(new THREE.HemisphereLight(L.ciel, L.sol, L.ambiance));
+    scene.environment = reflets = pm.fromScene(env, 0.04).texture;
+    scene.add((ambiance = new THREE.HemisphereLight(L.ciel, L.sol, L.ambiance)));
     soleil = new THREE.DirectionalLight(L.couleur, L.force);
     soleil.castShadow = true;
     soleil.shadow.mapSize.set(2048, 2048);
@@ -140,7 +144,7 @@ Tanks.Scene = (function () {
     soleil.shadow.normalBias = 0.04;
     scene.add(soleil, soleil.target);
     cam = new THREE.PerspectiveCamera(C.camera.champ, toile.width / toile.height, 0.3, 4000);
-    scene.add(Tanks.Decor.construire());
+    scene.add((leDecor = Tanks.Decor.construire()));
     Tanks.Effets.initialiser(scene);
     for (const equipe of ["bleus", "rouges"]) scene.add((silhouettes[equipe] = Tanks.Engins3D.silhouettes(equipe, 160)));
     for (const sorte of Tanks.Vehicules3D.SORTES) for (const equipe of ["bleus", "rouges"]) scene.add((lotsSimples[sorte + ":" + equipe] = Tanks.Vehicules3D.lotSimple(sorte, equipe, 12)));
@@ -174,6 +178,24 @@ Tanks.Scene = (function () {
     cam.far = n.vue * 1.05;
     cam.updateProjectionMatrix();
     leCiel.scale.setScalar((n.vue * 0.95) / RAYON_CIEL);
+    if (sousTerre) (scene.fog.near = C.souterrain.brouillard[0]), (scene.fog.far = C.souterrain.brouillard[1]);
+  }
+
+  // (étape 80) Descendre dans le souterrain, ou remonter dehors : on cache l'un, on montre l'autre, on change la lumière.
+  const BRUME = { dehors: new THREE.Color(0xc4cfd6), dessous: new THREE.Color(0x0d0e10) };
+  function changerMonde(dessous) {
+    sousTerre = dessous;
+    if (dessous && !Tanks.Station3D.construite) Tanks.Station3D.construire(scene);
+    Tanks.Station3D.montrer(dessous);
+    leDecor.visible = leCiel.visible = soleil.visible = !dessous;
+    scene.environment = dessous ? null : reflets;
+    scene.background = dessous ? BRUME.dessous : null;
+    scene.fog.color.copy(dessous ? BRUME.dessous : BRUME.dehors);
+    ambiance.color.set(dessous ? 0xc8d2dc : L.ciel);
+    ambiance.groundColor.set(dessous ? 0x3a3028 : L.sol);
+    ambiance.intensity = dessous ? 1.25 : L.ambiance;
+    appliquerQualite(Q);
+    Tanks.Evenements.emettre("monde-3d", { dessous, dessins: Tanks.Station3D.bilan.dessins, ms: Tanks.Station3D.bilan.ms });
   }
 
   function objetDe(c) {
@@ -641,6 +663,7 @@ Tanks.Scene = (function () {
   }
 
   function dessiner(monde, dt, entreDeuxPas) {
+    if (T.souterrain !== sousTerre) changerMonde(T.souterrain); // (étape 80)
     alpha = entreDeuxPas === undefined ? 1 : entreDeuxPas;
     for (const k in lod) lod[k] = 0; // (étape 72 : on recompte les niveaux de détail à chaque image)
     // on enlève les dessins des tanks qui n'existent plus (nouvelle bataille)
@@ -707,7 +730,8 @@ Tanks.Scene = (function () {
       const k = camera.mode === 1 ? 1.8 : 1, cx = Math.cos(camera.angle), cz = Math.sin(camera.angle);
       const cote = v.cote || 0; // (à pied, la caméra est un peu à droite : on voit par-dessus ton épaule)
       oeil = new THREE.Vector3(v.x - cx * R.distance * v.distance * k - cz * cote, v.y + R.hauteur * v.hauteur * k + (v.tangage ? -Math.sin(v.tangage) * 20 : 0), v.z - cz * R.distance * v.distance * k + cx * cote);
-      oeil.y = Math.max(oeil.y, T.hauteur(oeil.x, oeil.z) + (v.distance < 0.5 ? 1 : 2), T.distLac(oeil.x, oeil.z) < 1.1 ? C.lac.niveau + 1 : -1e9); // (jamais sous l'eau)
+      const solOeil = T.hauteur(oeil.x, oeil.z); // (étape 80 : sous terre, un mur n'est pas un sol : la caméra reste sous le plafond)
+      oeil.y = Math.max(oeil.y, sousTerre && solOeil > C.souterrain.plafond - 1 ? -1e9 : solOeil + (v.distance < 0.5 ? 1 : 2), T.distLac(oeil.x, oeil.z) < 1.1 ? C.lac.niveau + 1 : -1e9); // (jamais sous l'eau)
       const moi = !monde.toi || monde.toi.mode === "char" ? monde.joueur : monde.toi.engin;
       oeil = devantLesMurs(new THREE.Vector3(v.x, v.y + 1.6, v.z), oeil, monde, moi);
       cible = new THREE.Vector3(v.x + cx * R.regardDevant * v.devant, v.y + v.regardY + (v.tangage ? Math.sin(v.tangage) * 40 : 0), v.z + cz * R.regardDevant * v.devant);
@@ -738,11 +762,14 @@ Tanks.Scene = (function () {
     soleil.position.set(centre.x + SOLEIL.x * 200, centre.y + SOLEIL.y * 200, centre.z + SOLEIL.z * 200);
     soleil.target.position.set(centre.x, centre.y, centre.z);
     leCiel.position.copy(cam.position); // (étape 72 : le ciel suit la caméra)
+    if (sousTerre) Tanks.Station3D.maj(dt, cam); // (étape 80 : les feux, la fumée, les néons qui clignotent ; le dehors n'est pas calculé)
+    else {
     Tanks.Decor.majArbres(false);
     Tanks.Decor.majDistance(cam.position, Math.min(Q.decor, Q.vue), Q.arbresDetail); // (étape 72 : les morceaux et les arbres trop loin sont cachés ; étape 74 : les beaux arbres de près)
     Tanks.Decor.majHerbe(cam.position, Q.herbe || 0); // (étape 74 : les touffes d'herbe autour de la caméra)
     Tanks.Decor.majEau(dt);
     Tanks.Maisons3D.maj(dt, cam.position, Q.maisons); // (étape 75 : les morceaux de mur tombés, les débris qui volent, les toits qui s'effondrent ; la belle version de près)
+    }
     Tanks.Effets.maj(dt, monde, cam, Q.effets);
     rendu.render(scene, cam);
   }
@@ -761,5 +788,5 @@ Tanks.Scene = (function () {
       else camera.mode = (camera.mode + 1) % 2;
       Tanks.Evenements.emettre("vue", { premiere: !!camera.premiere, aPied: !!aPied });
     },
-    get vue() { return { premiere: !!camera.premiere, mode: camera.mode }; }, get infos() { return rendu ? rendu.info.render : {}; }, get rendu() { return rendu; }, entreDeuxPas: () => alpha, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
+    get vue() { return { premiere: !!camera.premiere, mode: camera.mode }; }, get infos() { return rendu ? rendu.info.render : {}; }, get sousTerre() { return sousTerre; }, get rendu() { return rendu; }, entreDeuxPas: () => alpha, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
 })();

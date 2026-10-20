@@ -25,6 +25,11 @@
 // Étape 77 : ✍️ le MENU avant la bataille (affichage/menu.js) : le tank se choisit dans le menu (« choisirChar »), et au
 // départ ton soldat est ÉQUIPÉ selon ta classe (logique/equipement.js). À pied : 1 pistolet, 2 ton arme, 3 ton gadget,
 // 4 grenades ; R recharge (pendant la bataille, R ne recommence plus : c'est seulement à la fin, « rejouer »).
+// Étape 80 : ✍️ LES CARTES. « monde.carte » : "bataille" (la grande campagne) ou "souterrain" (la station de métro,
+// logique/souterrain.js). Dans le souterrain : ✍️ INFANTERIE SEULEMENT (ni tank, ni engin, ni avion, ni bateau, ni
+// portail, ni parachutiste) ; tu commences à pied avec ta classe ; chaque camp a 10 soldats debout et 30 RENFORTS qui
+// arrivent à son bout de la station (un toutes les 3 s quand il en manque). ✍️ La règle : le camp qui n'a plus ni
+// renfort ni soldat debout a perdu (et toi, si ton soldat est à terre, c'est perdu aussi).
 // Il annonce tout à la radio : le journal, les sons, les effets et la sauvegarde écoutent.
 
 window.Tanks = window.Tanks || {};
@@ -36,13 +41,17 @@ Tanks.Monde = (function () {
   function creer() {
     const d = S.lire();
     const choix = Math.max(0, C.chars.findIndex((f) => f.id === d.char));
-    const monde = { phase: "garage", temps: 0, choix, chars: [], obus: [], soldats: [], engins: [], vehicules: [], helicos: [], bateaux: [], sousMarins: [], avions: [], portails: Tanks.Portails.creer(), joueur: null, toi: null, chrono: 0 };
+    const carte = C.cartes.some((c) => c.id === d.carte) ? d.carte : "bataille"; // (étape 80)
+    const monde = { phase: "garage", carte, temps: 0, choix, chars: [], obus: [], soldats: [], engins: [], vehicules: [], helicos: [], bateaux: [], sousMarins: [], avions: [], portails: Tanks.Portails.creer(), joueur: null, toi: null, chrono: 0 };
     preparerGarage(monde);
     return monde;
   }
 
   // Au garage : ton tank tout seul, au départ des Bleus.
   function preparerGarage(monde) {
+    T.choisirCarte("bataille"); // (étape 80 : le garage est toujours dehors)
+    monde.metro = null;
+    monde.portails = Tanks.Portails.creer();
     const place = T.departs("bleus", 1)[0];
     monde.joueur = Tanks.Char.creer(C.chars[monde.choix], "bleus", place, "toi");
     monde.chars = [monde.joueur];
@@ -64,8 +73,60 @@ Tanks.Monde = (function () {
     radio.emettre("garage", { nom: C.chars[k].nom, pays: C.chars[k].pays });
   }
 
+  // (étape 80) Le menu choisit une carte.
+  function choisirCarte(monde, id) {
+    const f = C.cartes.find((c) => c.id === id);
+    if (!f) return false;
+    monde.carte = id;
+    radio.emettre("carte", { nom: f.nom, icone: f.icone, infanterie: f.infanterie });
+    return true;
+  }
+
+  // ✍️ (étape 80) LA BATAILLE DANS LE SOUTERRAIN : à pied seulement, les deux camps à chaque bout de la station.
+  function lancerSouterrain(monde) {
+    const R = C.souterrain.regles, SO = Tanks.Souterrain;
+    T.choisirCarte("souterrain");
+    monde.phase = "bataille";
+    monde.chrono = 0;
+    monde.obus = [];
+    // (ton tank existe pour les autres fichiers, mais il est resté dehors : il n'est pas dans la bataille)
+    const p = SO.toi();
+    monde.joueur = Tanks.Char.creer(C.chars[monde.choix], "bleus", p, "toi");
+    monde.joueur.detruit = true;
+    monde.joueur.resteDehors = true;
+    for (const nom of ["chars", "engins", "vehicules", "helicos", "bateaux", "sousMarins", "avions", "portails"]) monde[nom] = [];
+    monde.soldats = [];
+    for (const equipe of ["bleus", "rouges"]) for (let n = 1; n <= R.soldats; n++) monde.soldats.push(SO.soldat(equipe, n));
+    const toi = Tanks.Soldat.creer("bleus", p.x, p.z, p.angle, "toi", true);
+    const equipement = Tanks.Equipement.equiper(toi);
+    monde.soldats.push(toi);
+    monde.toi = { mode: "pied", engin: null, soldat: toi };
+    monde.dechargesTotal = monde.cordesTotal = 0;
+    monde.chronoParas = undefined;
+    monde.metro = { renforts: { bleus: R.renforts, rouges: R.renforts }, arrives: { bleus: R.soldats, rouges: R.soldats }, attente: { bleus: 0, rouges: 0 }, elimines: { bleus: 0, rouges: 0 } };
+    const P = SO.parties;
+    radio.emettre("souterrain", { classe: C.classes[equipement.classe].nom, arme: C.armesPrincipales[equipement.arme].nom, soldats: R.soldats, renforts: R.renforts, rames: P.rames, enFeu: P.enFeu, longueur: C.souterrain.longueur });
+  }
+  // (étape 80) Les RENFORTS : un camp qui a moins de 10 soldats debout en fait arriver un (toutes les 3 s), tant qu'il en a.
+  function renforts(monde, dt) {
+    const R = C.souterrain.regles, M = monde.metro;
+    for (const equipe of ["bleus", "rouges"]) {
+      const debout = soldatsVivants(monde, equipe);
+      M.elimines[equipe] = M.arrives[equipe] - debout; // (les soldats de ce camp tombés depuis le début)
+      M.attente[equipe] = Math.max(0, M.attente[equipe] - dt);
+      if (debout >= R.soldats || M.renforts[equipe] <= 0 || M.attente[equipe] > 0) continue;
+      M.attente[equipe] = R.attente;
+      M.renforts[equipe]--;
+      monde.soldats.push(Tanks.Souterrain.soldat(equipe, ++M.arrives[equipe]));
+      if (M.renforts[equipe] === 0) radio.emettre("renforts-epuises", { equipe, nom: C.equipes[equipe].nom, debout: debout + 1 });
+    }
+  }
+
   // ✍️ La bataille : toi + 3 alliés contre 4 ennemis, 12 soldats par équipe, et les engins garés dans ton camp.
   function lancer(monde) {
+    if (monde.carte === "souterrain") return lancerSouterrain(monde); // (étape 80)
+    T.choisirCarte("bataille");
+    monde.metro = null;
     monde.phase = "bataille";
     monde.chrono = 0;
     monde.obus = [];
@@ -139,6 +200,7 @@ Tanks.Monde = (function () {
   // ✍️ Touche E : sortir de l'engin où tu es, ou monter dans le plus proche.
   function sortirOuMonter(monde) {
     const t = monde.toi, s = t.soldat;
+    if (monde.carte === "souterrain" && monde.metro) return void radio.emettre("impossible", { raison: "infanterie seulement : pas de tank ni d'engin dans le souterrain" }); // (étape 80)
     if (t.mode !== "pied") {
       const e = t.engin;
       if (t.mode === "avion") {
@@ -284,7 +346,7 @@ Tanks.Monde = (function () {
     // 2 bis. (étape 62) Les patrouilleurs ennemis sur le lac.
     for (const b of monde.bateaux) for (const x of Tanks.Bateaux.avancer(b, monde, dt)) evenements.push(x);
     for (const m of monde.sousMarins) for (const x of Tanks.SousMarins.avancer(m, monde, dt)) evenements.push(x); // (étape 63)
-    for (const x of Tanks.Avions.avancer(monde, dt)) evenements.push(x); // (étape 64) les avions
+    if (!monde.metro) for (const x of Tanks.Avions.avancer(monde, dt)) evenements.push(x); // (étape 64) les avions (étape 80 : pas sous terre)
     Tanks.Bateaux.chocs(monde.bateaux.concat(monde.sousMarins, monde.engins.filter((e) => e.sorte === "bateau" || e.sorte === "sousmarin")));
     // 3. Les soldats : toi (à pied, ou en parachute), et les 24 de l'ordinateur.
     rangerSoldats(monde);
@@ -332,6 +394,7 @@ Tanks.Monde = (function () {
         Tanks.Soldat.blesser(s, 99, v, evenements, "ecrase");
       }
     }
+    if (enJeu && monde.metro) renforts(monde, dt); // (étape 80) les renforts du souterrain
     // 3 bis. (étape 62) Les portails.
     if (enJeu) for (const x of Tanks.Portails.passer(monde)) evenements.push(x);
     // 4. Les tirs partent, les obus volent.
@@ -413,12 +476,14 @@ Tanks.Monde = (function () {
         monde.phase = "defaite";
         S.donnees.defaites++;
         S.ecrire("défaite");
-        radio.emettre("defaite", { temps: monde.chrono, allies: vivants(monde, "bleus"), ennemis: vivants(monde, "rouges"), comment: toi && toi.mort ? "ton soldat est à terre" : t.mode === "jeep" ? "ton 4x4 est détruit" : t.mode === "moto" || t.mode === "quad" ? (t.engin.tombe ? "tu es tombé " + (t.mode === "moto" ? "de ta moto" : "de ton quad") : t.mode === "moto" ? "ta moto est détruite" : "ton quad est détruit") : t.mode === "camion" ? "ton camion est détruit" : t.engin && t.engin.genre === "helico" ? "ton " + t.engin.nom + " est abattu" : t.mode === "bateau" ? "ta vedette est coulée" : t.mode === "sousmarin" ? "ton sous-marin est coulé" : t.mode === "dca" ? "ta DCA est détruite" : "ton tank est détruit" });
-      } else if (vivants(monde, "rouges") === 0) {
+        radio.emettre("defaite", { temps: monde.chrono, allies: vivants(monde, "bleus"), ennemis: monde.metro ? soldatsVivants(monde, "rouges") + monde.metro.renforts.rouges : vivants(monde, "rouges"), comment: toi && toi.mort ? "ton soldat est à terre" : t.mode === "jeep" ? "ton 4x4 est détruit" : t.mode === "moto" || t.mode === "quad" ? (t.engin.tombe ? "tu es tombé " + (t.mode === "moto" ? "de ta moto" : "de ton quad") : t.mode === "moto" ? "ta moto est détruite" : "ton quad est détruit") : t.mode === "camion" ? "ton camion est détruit" : t.engin && t.engin.genre === "helico" ? "ton " + t.engin.nom + " est abattu" : t.mode === "bateau" ? "ta vedette est coulée" : t.mode === "sousmarin" ? "ton sous-marin est coulé" : t.mode === "dca" ? "ta DCA est détruite" : "ton tank est détruit" });
+      } else if (monde.metro ? monde.metro.renforts.rouges === 0 && soldatsVivants(monde, "rouges") === 0 : vivants(monde, "rouges") === 0) {
         monde.phase = "victoire";
         S.donnees.victoires++;
+        if (monde.metro) S.donnees.souterrain++; // (étape 80)
         S.ecrire("victoire");
-        radio.emettre("victoire", { temps: monde.chrono, allies: vivants(monde, "bleus") - (monde.joueur.detruit ? 0 : 1), vie: monde.joueur.vie, vieMax: monde.joueur.vieMax });
+        if (monde.metro) radio.emettre("victoire", { temps: monde.chrono, allies: soldatsVivants(monde, "bleus"), vie: toi.vie, vieMax: toi.vieMax, souterrain: true });
+        else radio.emettre("victoire", { temps: monde.chrono, allies: vivants(monde, "bleus") - (monde.joueur.detruit ? 0 : 1), vie: monde.joueur.vie, vieMax: monde.joueur.vieMax });
       }
     }
   }
@@ -434,5 +499,5 @@ Tanks.Monde = (function () {
     }
   }
 
-  return { creer, etape, lancer, vivants, soldatsVivants, memoriser, choisirChar };
+  return { creer, etape, lancer, vivants, soldatsVivants, memoriser, choisirChar, choisirCarte };
 })();

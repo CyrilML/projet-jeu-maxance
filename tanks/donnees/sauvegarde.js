@@ -20,16 +20,19 @@
 //   9 (étape 77) : + equipement (ta dernière classe et, pour chaque classe, son arme, son gadget et son explosif ; pour
 //     chaque arme ses 7 pièces de l'atelier). Une ancienne version garde tout, avec l'équipement de départ (Assaut, AR-4,
 //     pièces d'origine).
+//   10 (étape 80) : + carte (la dernière carte choisie dans le menu : "bataille" ou "souterrain") et souterrain (tes
+//     victoires dans le souterrain). Une ancienne version garde tout, avec la grande bataille et 0 victoire sous terre.
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 9;
+  const VERSION = 10;
   const radio = Tanks.Evenements;
 
   function vide() {
     return { version: VERSION, char: "leclerc", victoires: 0, defaites: 0, detruits: 0, tirs: 0, touches: 0, bateaux: 0, portails: 0, sousMarins: 0, avions: 0, ordres: 0, vehicules: 0, helicos: 0, cordes: 0, maisons: 0, murs: 0, grenades: 0,
+      carte: "bataille", souterrain: 0, // (étape 80)
       equipement: equipementDeDepart() }; // (étape 77)
   }
   // (étape 77) L'équipement de départ : pour chaque classe, sa 1re arme, son 1er gadget et son 1er explosif ; pour chaque arme, les pièces d'origine.

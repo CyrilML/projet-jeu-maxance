@@ -50,10 +50,16 @@ Tanks.Equipement = (function () {
     return r;
   }
 
-  // Les DEMANDES du menu : "char" (l'id d'un tank), "classe", "arme", "gadget", "explosif", "piece" ({ emplacement, id }).
+  // Les DEMANDES du menu : "carte" (étape 80 : "bataille" ou "souterrain"), "char" (l'id d'un tank), "classe", "arme", "gadget", "explosif", "piece" ({ emplacement, id }).
   function demander(monde, type, valeur) {
     const e = S().equipement, c = choix();
     e.gadgets = e.gadgets || {};
+    if (type === "carte") { // (étape 80) la carte de la bataille
+      if (!Tanks.Monde.choisirCarte(monde, valeur)) return false;
+      S().carte = valeur;
+      Tanks.Sauvegarde.ecrire("carte choisie", true);
+      return true;
+    }
     if (type === "char") {
       const k = C.chars.findIndex((f) => f.id === valeur);
       if (k < 0) return false;

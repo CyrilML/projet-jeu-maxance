@@ -1,5 +1,8 @@
 // ⚙️ LES RÉGLAGES : tous les nombres du jeu de tanks (étape 60)
 //
+// (étape 80) ✍️ « Des nouvelles cartes… un souterrain avec des trams en feu, des trains, des bancs, des escalators
+// détruits, des escaliers. Ce sera que de l'infanterie. » Voir « cartes » et « souterrain » (tout en bas).
+//
 // (étape 77) ✍️ « Un menu avant de jouer : choisir son véhicule, sa classe, ses armes, ses gadgets et ses explosifs, puis
 // modifier son arme. » Voir tout en bas : « classes », « armesPrincipales », « gadgets », « explosifs », « atelier »,
 // « tir » (le chargeur, le recul, la dispersion), « marques ».
@@ -24,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 18,
+  version: 19,
   pasFixe: 1 / 120,
   // (étape 72) ✍️ « Ça rame trop. » La boucle ne fait jamais plus de 6 petits pas par image : si l'ordinateur est en
   // retard (une image a duré plus de 6 / 120 = 0,05 s), on JETTE le retard au lieu de courir après (sinon, plus il est
@@ -727,4 +730,46 @@ Tanks.CONFIG = {
     //   retenu ; gravite : m/s², ce qui fait tomber la balle (chute = ½ × g × temps², temps = distance ÷ vitesseBalle) ;
     //   zero : m, la distance où la lunette est réglée (la balle arrive pile sur la croix ; plus loin, en dessous).
     lunette: { zoom: 4, balancement: 0.004, periode: 5, souffle: 4, reprise: 3, essouffle: 2.2, retenu: 0.05, gravite: 9.81, zero: 200 } },
+  // ✍️ (étape 80) LES CARTES : on choisit dans le menu (onglet « Carte ») avant la bataille.
+  cartes: [
+    { id: "bataille", nom: "La grande bataille", icone: "🌄", texte: "La campagne de 2 100 m : tanks, engins, avions, bateaux, hélicos, portails.", infanterie: false },
+    { id: "souterrain", nom: "Le souterrain", icone: "🚇", texte: "Une station de métro sous terre : trams en feu, rames, bancs, escalators détruits. À pied seulement !", infanterie: true },
+  ],
+  // ✍️ (étape 80) LE SOUTERRAIN : une station de métro (m). L'axe x va d'un bout à l'autre de la station (les Bleus à
+  // l'est, x > 0 ; les Rouges à l'ouest), l'axe z en travers (le quai nord est à z < 0, le quai sud à z > 0).
+  //   longueur : les quais vont de −longueur/2 à +longueur/2 ; tunnel : m de tunnel (bouché) au bout de chaque voie ;
+  //   voies : |z| < demi = la tranchée des rails, « profondeur » m plus bas que le quai ; rails : z des 2 voies ;
+  //   quai : le quai va de |z| = voies.demi à |z| = fond ; plafond : m au-dessus du quai ;
+  //   mezzanine : la galerie du haut (|x| < demiX, |z| de quai.fond à fond), à « hauteur » m au-dessus du quai ;
+  //   escaliers / escalators : de |z| = quai.fond (en bas) à |z| = haut (en haut), entre x0 et x1 ;
+  //   marche : m, la plus haute marche qu'un soldat peut monter d'un coup (plus haut : c'est un mur) ;
+  //   brouillard : m (début, fin) ; regles : soldats au départ par camp, renforts (soldats qui arrivent ensuite, un toutes
+  //   les « attente » s quand le camp en a moins que « soldats » debout), vue : m, ce que voit un soldat sous terre.
+  souterrain: {
+    longueur: 200, tunnel: 14,
+    voies: { demi: 4.5, profondeur: 1.1, rails: [-2.25, 2.25], ecartement: 1.435 },
+    quai: { fond: 15 },
+    plafond: 8.5,
+    mezzanine: { demiX: 38, fond: 27, hauteur: 4.5 },
+    escaliers: { x0: -34, x1: -27, haut: 23 },
+    escalators: { x0: 25, x1: 33, haut: 23 },
+    marche: 1.15,
+    piliers: { ecart: 12, z: 12.6, cote: 0.9 },
+    bancs: { ecart: 24, z: 9.2 },
+    lampes: { ecart: 8, clignotent: 0.22 },
+    // les rames : { sorte: "metro" | "tram", voie (0 nord, 1 sud), x (milieu), voitures, angle (rad : déraillée), feu, brule }
+    rames: [
+      { sorte: "metro", voie: 0, x: -38, voitures: 3, angle: 0, feu: false, brule: false },
+      { sorte: "metro", voie: 1, x: -74, voitures: 2, angle: 0.05, feu: false, brule: false },
+      { sorte: "tram", voie: 1, x: 18, voitures: 1, angle: 0, feu: true, brule: true },
+      { sorte: "tram", voie: 1, x: 50, voitures: 1, angle: -0.17, feu: true, brule: true },
+      { sorte: "tram", voie: 0, x: 70, voitures: 1, angle: 0.09, feu: true, brule: true },
+      { sorte: "metro", voie: 0, x: 26, voitures: 1, angle: 0.22, feu: false, brule: true },
+    ],
+    // la taille d'une voiture : longueur, largeur, hauteur (m) ; espace entre deux voitures
+    voiture: { metro: [17, 2.9, 3.5], tram: [15, 2.6, 3.4], espace: 0.8 },
+    feux: { lumieres: 4, force: 70, portee: 34, flammes: 14, fumee: 5 }, // flammes, fumee : particules par seconde et par feu
+    brouillard: [12, 95],
+    regles: { soldats: 10, renforts: 30, attente: 3, vue: 110 },
+  },
 };

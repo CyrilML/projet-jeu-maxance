@@ -285,6 +285,14 @@ Tanks.Structures = (function () {
   const proches = [];
   function chercher(x1, y1, z1, x2, y2, z2, premier) {
     bilan.testsLigne++;
+    // (étape 80) dans le souterrain, pas de maison : c'est l'architecte de la station qui répond (murs, rames, piliers…)
+    if (T.souterrain) {
+      const h = Tanks.Souterrain.ligne(x1, y1, z1, x2, y2, z2, premier);
+      if (!h || premier) return !!h;
+      Object.assign(coup, { b: Tanks.Souterrain.BOITE, morceau: null, toit: false, gravats: false, t: h.t, x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz });
+      Tanks.Souterrain.BOITE.nom = h.quoi.nom || "le mur de la station";
+      return true;
+    }
     meilleurT = 1.0000001;
     trouve = false;
     premierSeulement = premier;

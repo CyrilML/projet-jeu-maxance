@@ -14,6 +14,8 @@
 // (Étape 75 : ✍️ les GRENADES. Quand il réfléchit, un soldat qui a encore une grenade (et qui n'en a pas lancé depuis
 // 16 s) peut en lancer une — 30 % des fois — sur un GROUPE d'ennemis (2 ou plus à moins de 6 m l'un de l'autre), ou sur
 // un ennemi CACHÉ derrière un mur ou DANS une maison, entre 9 et 30 m. La grenade passe par-dessus le mur !)
+// (Étape 80 : ✍️ dans le SOUTERRAIN, un soldat suit sa ROUTE dans la station — le long d'un quai, ou par l'escalator, la
+// mezzanine et l'escalier d'en face — au lieu d'avancer vers le village ; et il voit moins loin : 110 m, il fait sombre.)
 // (Étape 65 : TES ORDRES passent avant tout. « Va là » : il y court sans s'arrêter pour tirer, puis il défend sa place ;
 // « vise … » : il choisit sa cible dans ce que tu as dit ; « cessez le feu » : il ne tire plus.)
 
@@ -91,7 +93,7 @@ Tanks.Troupes = (function () {
       const candidats = utiles && utiles.length ? utiles : roquettes ? monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || ((e.sorte === "bateau" || e.sorte === "camion" || e.sorte === "quad") && e.pilote)), monde.bateaux, monde.vehicules.filter((v) => v.sorte !== "moto"), Tanks.Helicos.bas(monde, helicosBas)).filter((c) => !c.detruit && c.equipe !== s.equipe) : monde.soldats.filter((o) => !o.mort && !o.dansUnEngin && o.equipe !== s.equipe).concat(Tanks.Vehicules.legers(monde).filter((v) => v.equipe !== s.equipe));
       // (étape 72) on range les candidats du plus proche au plus loin, puis on regarde la ligne de vue dans cet ordre :
       // le premier qu'on VOIT est le bon (avant, on faisait le long calcul de la ligne de vue pour beaucoup plus d'ennemis)
-      const portee = roquettes ? 120 : S.vue;
+      const portee = roquettes ? 120 : T.souterrain ? C.souterrain.regles.vue : S.vue; // (étape 80 : moins loin sous terre)
       parDistance.length = 0;
       for (const o of candidats) {
         const d = Math.hypot(o.x - s.x, o.z - s.z);
@@ -166,6 +168,14 @@ Tanks.Troupes = (function () {
     const sens = s.equipe === "bleus" ? -1 : 1;
     const objectifZ = s.z * sens < -20 ? 0 : sens * (T.camp + 10);
     let gx = ia.couloir - s.x, gz = objectifZ - s.z;
+    if (T.souterrain && ia.route) { // (étape 80) le prochain point de sa route dans la station
+      const p = Tanks.Souterrain.prochainPoint(s);
+      gx = p.x - s.x;
+      gz = p.z - s.z;
+      ia.etat = "avance par " + ia.nomRoute + " (point " + (ia.etape + 1) + " / " + ia.route.length + ")";
+      const l = Math.hypot(gx, gz) || 1;
+      (gx *= 60 / l), (gz *= 60 / l); // (le point compte plus que les voisins : sinon, dans l'escalier, ils se repoussent sans avancer)
+    }
     // se pousser loin des autres soldats (pas tous au même endroit)
     const voisins = monde.grilleSoldats ? Tanks.Grille.chercher(monde.grilleSoldats, s.x, s.z, 5, prochesSoldats) : monde.soldats; // (étape 72 : les cases voisines)
     for (const o of voisins) {
