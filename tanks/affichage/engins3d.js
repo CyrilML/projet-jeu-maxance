@@ -492,15 +492,23 @@ Tanks.Engins3D = (function () {
         pivot = Q * b; haut = 0.12 * b; dos = -0.3 * Math.sin(Math.PI * k); cou = 0.35 * b; genoux = -0.45 * Math.sin(Math.PI * Math.min(1, k * 1.3));
         bras = 0.6 + 1.5 * Math.sin(Math.PI * Math.min(1, k * 1.4)); coude = 0.3;
       }
-      c.rotation.set(travers * k, 0, pivot);
-      c.position.set(recul, haut, 0);
+      // (étape 86, plus réaliste) 1. le CHOC : au moment où la balle touche, le corps sursaute (un petit coup en arrière
+      // ou en avant, très rapide) ; 2. le REBOND : en touchant le sol, le corps rebondit un tout petit peu puis s'immobilise ;
+      // 3. le corps n'est jamais SYMÉTRIQUE : chaque soldat a ses propres angles (tirés de son numéro), un bras plus
+      // ouvert que l'autre, une jambe plus pliée ; 4. à la fin, la TÊTE roule sur le côté.
+      const R = Tanks.CONFIG.soldats.realisme, apres = ch ? s.depuisMort - ch.debut - ch.duree : 0;
+      const choc = R.choc * Math.exp(-s.depuisMort * 18) * Math.sin(s.depuisMort * 40) * (genre === "dos" ? -1 : 1);
+      const rebond = apres > 0 && genre !== "ecrase" ? R.rebond * Math.exp(-apres * 7) * Math.abs(Math.sin(apres * 14)) : 0;
+      const graine = ch ? ch.travers * 917.3 + ch.sens * 3.1 : 0, hasard = (n) => Math.sin(graine + n * 78.233) * 0.5; // (de -0,5 à 0,5 : tiré au hasard à sa chute, puis toujours le même)
+      c.rotation.set(travers * k + hasard(1) * R.asymetrie * k, hasard(2) * R.asymetrie * 0.5 * k, pivot + choc);
+      c.position.set(recul, haut + rebond, 0);
       c.scale.set(1, ecrase, 1);
-      r.dos.rotation.set(0, 0, -dos);
-      r.cou.rotation.set(0, 0, -cou);
-      for (const e of r.epaules) e.rotation.set(0, 0, bras);
-      for (const e of r.coudes) e.rotation.set(0, 0, coude);
-      for (const g of r.genoux) g.rotation.set(0, 0, genoux);
-      for (const j of r.jambes) j.rotation.set(0, 0, hanches);
+      r.dos.rotation.set(hasard(3) * R.asymetrie * 0.4 * k, 0, -dos);
+      r.cou.rotation.set(hasard(4) > 0 ? R.tete * doux(de(0.8, 1)) : -R.tete * doux(de(0.8, 1)), 0, -cou);
+      r.epaules.forEach((e, i) => e.rotation.set(hasard(5 + i) * R.asymetrie * k, 0, bras * (1 + hasard(7 + i) * R.asymetrie)));
+      r.coudes.forEach((e, i) => e.rotation.set(0, 0, coude + Math.abs(hasard(9 + i)) * R.asymetrie * k));
+      r.genoux.forEach((g, i) => g.rotation.set(0, 0, genoux - Math.abs(hasard(11 + i)) * R.asymetrie * 0.8 * k));
+      r.jambes.forEach((j, i) => j.rotation.set(hasard(13 + i) * R.asymetrie * 0.5 * k, 0, hanches + hasard(15 + i) * R.asymetrie * 0.6 * k));
       return;
     }
     c.scale.set(1, 1, 1); // (étape 85 : un soldat relevé par le médecin n'est plus aplati)

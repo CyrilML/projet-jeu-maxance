@@ -16,7 +16,6 @@ Tanks.Accueil = (function () {
   function initialiser() {
     racine = document.getElementById("accueil");
     document.getElementById("ecran2d").style.visibility = "hidden"; // (le tableau de bord du garage attend derrière)
-    document.getElementById("ecran2d").style.visibility = "hidden"; // (le tableau de bord du garage attend derrière)
     racine.innerHTML =
       '<div class="a-fond"></div>' +
       '<div class="a-contenu">' +
@@ -55,7 +54,6 @@ Tanks.Accueil = (function () {
   function fermer() {
     visible = false;
     racine.classList.add("a-part");
-    document.getElementById("ecran2d").style.visibility = "";
     document.getElementById("ecran2d").style.visibility = "";
     setTimeout(() => (racine.hidden = true), 600);
     Tanks.Evenements.emettre("accueil", { quitte: true });

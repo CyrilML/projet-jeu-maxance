@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 25,
+  version: 26,
   // ✍️ (étape 82, refaite aux étapes 83 et 84) LA MUSIQUE DE LA PAGE D'ACCUEIL, « un mix Battlefield 6 et Pirates des Caraïbes » (une musique
   // inventée), SEULEMENT au menu : elle se tait pendant la bataille (en « fondu » secondes).
   // tempo : battements par minute (2 croches par battement, 6 croches par mesure) ; volume de chaque instrument ;
@@ -153,6 +153,9 @@ Tanks.CONFIG = {
       pauseGenoux: 0.4, // s : à genoux, il reste un moment avant de tomber
       hasard: 0.25, // ± 25 % sur la vitesse, et un petit angle de travers
     },
+    // (étape 86) ✍️ « réalisme total » : le sursaut quand la balle touche (rad), le petit rebond sur le sol (m), à quel
+    // point les deux côtés du corps sont différents (rad), et de combien la tête roule sur le côté à la fin (rad)
+    realisme: { choc: 0.18, rebond: 0.06, asymetrie: 0.45, tete: 0.7 },
     // (étape 63) un soldat qui tombe à l'eau NAGE (lentement, sans tirer), la tête hors de l'eau
     nage: 1.6, // m/s
     detail: 45, // m : plus près que ça, on dessine le soldat en détail (genoux, coudes, visage…) ; plus loin, en simple

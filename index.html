@@ -207,6 +207,7 @@
       <a href="#etape83">Étape 83</a>
       <a href="#etape84">Étape 84</a>
       <a href="#etape85">Étape 85</a>
+      <a href="#etape86">Étape 86</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4711,6 +4712,31 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <p class="petit">Pas encore fait : l'arme qui tombe des mains, le compteur des chutes sous le capot.</p>
     </section>
 
+    <section id="etape86">
+      <h2>🎬 Étape 86 : des chutes encore plus réalistes <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Le choc de la balle, le rebond sur le sol, un corps jamais symétrique, la tête qui roule. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/86-chutes-realistes.md</code>.</p>
+          <ul><li>✍️ « En 5 minutes, un réalisme total. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 26 ».</li>
+            <li>☐ Quand la balle touche : le soldat sursaute.</li>
+            <li>☐ En tombant : un petit rebond sur le sol, puis il ne bouge plus ; sa tête roule sur le côté.</li>
+            <li>☐ Les soldats tombés n'ont jamais tout à fait la même pose.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🎲 Pourquoi le réel n'est jamais symétrique</h3>
+      <p>Un corps qui tombe pour de vrai ne retombe jamais avec les deux bras pareils. Le jeu tire donc quelques nombres au hasard au moment de la chute (un bras plus ouvert, une jambe plus pliée, la tête à gauche ou à droite) et les garde jusqu'au bout : chaque soldat tombé a sa propre pose.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul><li>Dans <code>tanks/config.js</code>, cherche <code>realisme</code> et mets <code>asymetrie: 0</code> : tous les soldats retombent pareil. Puis <code>1.2</code> : ils deviennent tout tordus !</li></ul>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -5912,6 +5938,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-85" data-cle="appris-85" placeholder="Ex. : J'ai appris qu'on compare deux directions…"></textarea>
         <label for="idees-85"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-85" data-cle="idees-85" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 86 · des chutes encore plus réalistes <span class="petit">· 20 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le choc, le rebond, l'asymétrie et la tête qui roule (<code>tanks/affichage/engins3d.js</code>).</p>
+        <p class="petit">✍️ Maxance a demandé : un réalisme total, en 5 minutes.</p>
+        <label for="appris-86"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-86" data-cle="appris-86" placeholder="Ex. : J'ai appris qu'un vrai corps n'est jamais symétrique…"></textarea>
+        <label for="idees-86"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-86" data-cle="idees-86" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
