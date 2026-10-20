@@ -1,6 +1,6 @@
 # Demande n° 79 : le sniper
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée en version courte le 20/10/2026 (tanks version 17), à valider par Maxance.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi

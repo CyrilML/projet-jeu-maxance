@@ -1,6 +1,6 @@
 # Demande n° 78 : la vue à la première personne (touche C)
 
-> Statut : 🛠️ en cours.
+> Statut : ⏸️ en attente (après le sniper, demande n° 79).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi

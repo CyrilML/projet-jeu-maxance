@@ -199,6 +199,7 @@
       <a href="#etape75">Étape 75</a>
       <a href="#etape76">Étape 76</a>
       <a href="#etape77">Étape 77</a>
+      <a href="#etape79">Étape 79</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4424,6 +4425,44 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <p class="petit">Pas encore fait (version simple) : l'arme en 3D dans le menu et les pièces visibles sur l'arme, la vraie lumière de la lampe, le rayon du laser en 3D, la fumée, les mines, le C4 et la claymore (ils donnent des grenades pour l'instant).</p>
     </section>
 
+    <section id="etape79">
+      <h2>🔭 Étape 79 : le sniper <span class="etiquette">✅ livrée (version courte) · à valider</span></h2>
+      <p class="chapeau">Une vraie lunette, la respiration qui fait bouger la visée, la balle qui tombe avec la distance, et le fusil Dragunov. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/79-sniper.md</code>.</p>
+          <ul>
+            <li>✍️ « Fais un sniper » : la vue de lunette, des snipers ennemis et un nouveau fusil.</li>
+            <li>✍️ Version courte (10 à 15 minutes) : la lunette et le nouveau fusil. Les snipers ennemis, plus tard.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Tanks « version 17 ».</li>
+            <li>☐ Éclaireur avec un fusil de sniper, à pied : V ou clic droit → la lunette ronde avec la croix.</li>
+            <li>☐ La visée dessine doucement un « 8 » : c'est ta respiration.</li>
+            <li>☐ Maj : tu retiens ton souffle 4 s, la visée ne bouge presque plus. Trop long ? Tu reprends ton souffle (barre rouge).</li>
+            <li>☐ En bas de la lunette : la distance, et de combien la balle tombe sous la croix.</li>
+            <li>☐ Le « SVD Dragunov » est dans le menu de l'éclaireur.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🪨 Pourquoi la balle tombe</h3>
+      <p>Une balle va très vite (700 à 900 m/s), mais pendant son vol, la gravité la tire vers le bas, comme une grenade. Plus la cible est loin, plus la balle vole longtemps, et plus elle tombe :</p>
+      <pre style="white-space: pre-wrap">chute = ½ × gravité × (distance ÷ vitesse)²
+à 300 m, à 700 m/s : le vol dure 0,43 s → la balle tombe d'environ 90 cm</pre>
+      <p>La lunette est réglée pour 200 m : à cette distance, la balle arrive pile sur la croix. Plus loin, elle arrive en dessous.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Compare la chute du Dragunov (700 m/s) et du Sniper .338 (900 m/s) à la même distance : lequel tombe le moins ?</li>
+        <li>Ouvre « sous le capot » et cherche « chute de la balle » : regarde le calcul de ton dernier tir.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi une balle plus rapide tombe-t-elle moins ?</summary><p>Parce qu'elle arrive plus vite : la gravité a moins de temps pour la tirer vers le bas.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4809,6 +4848,12 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
           <h4>Le menu, les classes et l'atelier des armes <span class="etiquette">✅ fait (version simple) · à valider</span></h4>
           <p>Un menu avant la bataille, 4 classes comme Battlefield, et un atelier pour modifier son arme avec de vrais effets (étape 77).</p>
           <p class="apprend"><b>Tu apprends :</b> avantages et défauts, la dispersion, le recul, l'état d'une arme (chargeur, réserve). <b>Durée :</b> 2 séances.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">🔭</div>
+          <h4>Le sniper <span class="etiquette">✅ fait (version courte) · à valider</span></h4>
+          <p>Une vraie lunette, la respiration et Maj pour retenir son souffle, la balle qui tombe, le Dragunov (étape 79). À suivre : les snipers ennemis.</p>
+          <p class="apprend"><b>Tu apprends :</b> la chute d'une balle, un réglage de lunette. <b>Durée :</b> 1 séance.</p>
         </div>
         <div class="carte fait">
           <div class="num">⚔️</div>
@@ -5523,6 +5568,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-77" data-cle="appris-77" placeholder="Ex. : J'ai appris que chaque pièce a un avantage et un défaut…"></textarea>
         <label for="idees-77"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-77" data-cle="idees-77" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 79 · le sniper <span class="petit">· 20 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la respiration et la chute de la balle (<code>tanks/logique/armes.js</code>), la lunette (<code>tanks/affichage/tableau.js</code>) et le Dragunov (<code>config.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : la lunette, les snipers ennemis et un nouveau fusil ; puis une version courte.</p>
+        <label for="appris-79"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-79" data-cle="appris-79" placeholder="Ex. : J'ai appris qu'une balle tombe avec la distance…"></textarea>
+        <label for="idees-79"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-79" data-cle="idees-79" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
