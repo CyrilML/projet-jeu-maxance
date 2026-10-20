@@ -17,9 +17,9 @@
 //     tu as déposés à la corde avec ton Chinook ou ton Black Hawk). Une ancienne version garde tout, avec 0.
 //   8 (étape 75) : + maisons (les maisons que tu as fait s'effondrer), murs (les morceaux de mur que tu as fait tomber)
 //     et grenades (les grenades que tu as lancées). Une ancienne version garde tout, avec 0.
-//   9 (étape 77) : + xp (tes points d'expérience), niveau, equipement (ta dernière classe, l'heure, et pour chaque classe
-//     son arme et son explosif ; pour chaque arme ses 7 pièces de l'atelier), soins, releves, reparations, marques.
-//     Une ancienne version garde tout : 0 point, niveau 1, et l'équipement de départ (Assaut, AR-4, pièces d'origine).
+//   9 (étape 77) : + equipement (ta dernière classe et, pour chaque classe, son arme, son gadget et son explosif ; pour
+//     chaque arme ses 7 pièces de l'atelier). Une ancienne version garde tout, avec l'équipement de départ (Assaut, AR-4,
+//     pièces d'origine).
 
 window.Tanks = window.Tanks || {};
 
@@ -30,12 +30,12 @@ Tanks.Sauvegarde = (function () {
 
   function vide() {
     return { version: VERSION, char: "leclerc", victoires: 0, defaites: 0, detruits: 0, tirs: 0, touches: 0, bateaux: 0, portails: 0, sousMarins: 0, avions: 0, ordres: 0, vehicules: 0, helicos: 0, cordes: 0, maisons: 0, murs: 0, grenades: 0,
-      xp: 0, niveau: 1, soins: 0, releves: 0, reparations: 0, marques: 0, equipement: equipementDeDepart() }; // (étape 77)
+      equipement: equipementDeDepart() }; // (étape 77)
   }
-  // (étape 77) L'équipement de départ : pour chaque classe, sa 1re arme et son 1er explosif ; pour chaque arme, les pièces d'origine.
+  // (étape 77) L'équipement de départ : pour chaque classe, sa 1re arme, son 1er gadget et son 1er explosif ; pour chaque arme, les pièces d'origine.
   function equipementDeDepart() {
-    const C = Tanks.CONFIG, e = { classe: "assaut", heure: "jour", armes: {}, explosifs: {}, pieces: {} };
-    for (const k in C.classes) (e.armes[k] = C.classes[k].armes[0]), (e.explosifs[k] = C.classes[k].explosifs[0]);
+    const C = Tanks.CONFIG, e = { classe: "assaut", armes: {}, gadgets: {}, explosifs: {}, pieces: {} };
+    for (const k in C.classes) (e.armes[k] = C.classes[k].armes[0]), (e.gadgets[k] = C.classes[k].gadgets[0]), (e.explosifs[k] = C.classes[k].explosifs[0]);
     for (const a in C.armesPrincipales) {
       e.pieces[a] = {};
       for (const emp in C.atelier) e.pieces[a][emp] = C.atelier[emp].pieces[0].id;
