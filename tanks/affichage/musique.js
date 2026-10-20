@@ -1,29 +1,33 @@
-// 🎻 LA MUSIQUE : le petit orchestre caché dans le jeu (étape 82)
+// 🎻 LA MUSIQUE DU MENU : le petit orchestre caché dans le jeu (étape 82, refaite à l'étape 83)
 //
-// ✍️ « Une musique un peu dans le style Pirates des Caraïbes et Battlefield 6. » Il n'y a AUCUN fichier de musique :
-// l'ordinateur joue lui-même chaque note, comme un orchestre de robots. C'est une musique INVENTÉE pour le jeu (on
-// n'a pas le droit de recopier celle d'un film) mais elle prend les « ingrédients » de ces deux styles :
-//   - côté pirates : une mesure à 6/8 (« DOUM-ta-ta DOUM-ta-ta », comme un cheval qui galope), des cordes qui
-//     répètent la même note très vite (l'« ostinato »), en ré mineur, avec une grande mélodie héroïque ;
-//   - côté Battlefield : une basse très grave qui pulse, et de gros coups sourds (le « BRAAAM ») toutes les 4 mesures.
-// Le chef d'orchestre regarde un peu en avance (0,2 s) et prépare les notes qui arrivent : c'est le « planificateur ».
-// M : couper ou remettre la musique (B coupe tous les sons). Tous les réglages sont dans config.js (« musique »).
+// ✍️ « Une musique un peu dans le style Battlefield 6 et Pirates des Caraïbes, seulement quand j'accède au jeu, pas
+// pendant la partie. » Elle joue donc dans le MENU (au garage) et se tait doucement quand la bataille commence.
+// Il n'y a AUCUN fichier : l'ordinateur fabrique chaque son. C'est une musique INVENTÉE (on n'a pas le droit de
+// recopier celle d'un film), qui mélange les « ingrédients » des deux styles :
+//   - Battlefield : une nappe grave et sombre, une pulsation de synthé, de gros coups « BRAAAM » qui grondent ;
+//   - pirates : une mesure à 6/8 qui galope, des violoncelles qui martèlent (l'« ostinato »), de grands tambours
+//     (des « taikos ») et une mélodie de cuivres héroïque, en ré mineur.
+// Pour que ça sonne comme un vrai orchestre et pas comme un jouet : chaque instrument est fait de plusieurs voix un peu
+// désaccordées (un « chœur »), les sons passent dans une grande SALLE (un écho : la réverbération), et un
+// « compresseur » égalise le volume. Le chef d'orchestre regarde 0,25 s en avance et prépare les notes qui arrivent.
+// Le morceau a 3 parties : l'INTRO (4 mesures sombres), la MONTÉE (4 mesures, les violoncelles et les tambours
+// arrivent), le THÈME (8 mesures, avec la mélodie), puis on reprend à la montée. Réglages : config.js (« musique »).
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Musique = (function () {
   const C = Tanks.CONFIG;
   const M = C.musique;
-  let ctx = null, sortie = null, bruit = null, coupee = false, endormie = false;
-  let prochaine = 0, pas = 0, minuteur = null;
-  const etat = { mesure: 0, accord: "", notes: 0 };
+  let ctx = null, sortie = null, salle = null, sec = null, bruit = null, coupee = false, endormie = false;
+  let prochaine = 0, pas = 0, minuteur = null, joue = false;
+  const etat = { mesure: 0, partie: "", accord: "", notes: 0, joue: false };
 
   // Une note par son nom (« D3 » = le ré de la 3e octave) → sa fréquence (Hz)
   const NOMS = { C: -9, "C#": -8, Db: -8, D: -7, "D#": -6, Eb: -6, E: -5, F: -4, "F#": -3, Gb: -3, G: -2, "G#": -1, Ab: -1, A: 0, "A#": 1, Bb: 1, B: 2 };
-  function hz(nom) {
+  const hz = (nom) => {
     const m = nom.match(/^([A-G][#b]?)(\d)$/);
     return 440 * Math.pow(2, (NOMS[m[1]] + (Number(m[2]) - 4) * 12) / 12);
-  }
+  };
 
   function demarrer() {
     if (ctx) {
@@ -35,88 +39,165 @@ Tanks.Musique = (function () {
     } catch (e) {
       return;
     }
+    // le compresseur (il égalise) → les haut-parleurs
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -18;
+    comp.ratio.value = 4;
+    comp.connect(ctx.destination);
     sortie = ctx.createGain();
-    sortie.gain.value = coupee ? 0 : M.volume;
-    sortie.connect(ctx.destination);
+    sortie.gain.value = 0;
+    sortie.connect(comp);
+    // la SALLE : un écho fabriqué avec un souffle qui s'éteint en M.salle.duree secondes
+    salle = ctx.createConvolver();
+    const n = Math.floor(ctx.sampleRate * M.salle.duree), ir = ctx.createBuffer(2, n, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = ir.getChannelData(c);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3);
+    }
+    salle.buffer = ir;
+    const mouille = ctx.createGain();
+    mouille.gain.value = M.salle.part;
+    salle.connect(mouille).connect(sortie);
+    sec = ctx.createGain(); // (le son « direct », sans écho)
+    sec.gain.value = 1;
+    sec.connect(sortie);
     bruit = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const d = bruit.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     prochaine = ctx.currentTime + 0.1;
     minuteur = setInterval(planifier, 50);
-    Tanks.Evenements.emettre("musique", { allumee: !coupee });
   }
 
-  // Les instruments : chacun fabrique UNE note à l'heure t
-  function voix(type, f, t, duree, fort, filtreHz, attaque) {
-    const o = ctx.createOscillator(), g = ctx.createGain(), fi = ctx.createBiquadFilter();
-    o.type = type;
-    o.frequency.value = f;
+  // Branche un son vers la salle (écho) et vers le son direct
+  function brancher(noeud, echo) {
+    noeud.connect(sec);
+    const g = ctx.createGain();
+    g.gain.value = echo;
+    noeud.connect(g).connect(salle);
+  }
+
+  // Un CHŒUR de voix un peu désaccordées (c'est ce qui fait « orchestre ») avec une enveloppe et un filtre
+  function choeur({ type, f, t, duree, fort, filtre, filtreFin, attaque, relache, voix, ecart, echo, vibrato }) {
+    const g = ctx.createGain(), fi = ctx.createBiquadFilter();
     fi.type = "lowpass";
-    fi.frequency.value = filtreHz;
-    g.gain.setValueAtTime(0, t);
+    fi.Q.value = 0.7;
+    fi.frequency.setValueAtTime(filtre, t);
+    if (filtreFin) fi.frequency.linearRampToValueAtTime(filtreFin, t + attaque * 1.5);
+    g.gain.setValueAtTime(0.0001, t);
     g.gain.linearRampToValueAtTime(fort, t + attaque);
-    g.gain.setTargetAtTime(0, t + duree * 0.7, duree * 0.25);
-    o.connect(fi).connect(g).connect(sortie);
-    o.start(t);
-    o.stop(t + duree * 1.6 + 0.1);
+    g.gain.setValueAtTime(fort, t + Math.max(attaque, duree - relache));
+    g.gain.linearRampToValueAtTime(0.0001, t + duree + relache);
+    fi.connect(g);
+    brancher(g, echo);
+    let lfo = null;
+    if (vibrato) {
+      lfo = ctx.createOscillator();
+      const lg = ctx.createGain();
+      lfo.frequency.value = 5.2;
+      lg.gain.value = f * 0.006;
+      lfo.connect(lg);
+      lfo.start(t + attaque);
+      lfo.stop(t + duree + relache + 0.1);
+      lfo.lg = lg;
+    }
+    for (let v = 0; v < voix; v++) {
+      const o = ctx.createOscillator();
+      o.type = type;
+      o.frequency.value = f;
+      o.detune.value = voix > 1 ? (v / (voix - 1) - 0.5) * 2 * ecart : 0;
+      if (lfo) lfo.lg.connect(o.frequency);
+      o.connect(fi);
+      o.start(t);
+      o.stop(t + duree + relache + 0.1);
+    }
     etat.notes++;
   }
-  function cordes(f, t, duree, fort) { // l'ostinato : des cordes frottées très vite
-    voix("sawtooth", f, t, duree, fort, 1600, 0.01);
-    voix("sawtooth", f * 1.004, t, duree, fort * 0.6, 1400, 0.01);
+
+  // Les instruments
+  const nappe = (f, t, duree) => choeur({ type: "sawtooth", f, t, duree, fort: M.nappe, filtre: 500, filtreFin: 900, attaque: 1.2, relache: 1.2, voix: 4, ecart: 14, echo: 0.9 });
+  const violoncelle = (f, t, duree, fort) => choeur({ type: "sawtooth", f, t, duree, fort: M.violoncelles * fort, filtre: 700, attaque: 0.012, relache: 0.08, voix: 3, ecart: 9, echo: 0.35 });
+  const cuivre = (f, t, duree) => choeur({ type: "sawtooth", f, t, duree, fort: M.cuivres, filtre: 300, filtreFin: 1500, attaque: 0.09, relache: 0.35, voix: 3, ecart: 7, echo: 0.7, vibrato: duree > 0.5 });
+  const cor = (f, t, duree) => choeur({ type: "triangle", f, t, duree, fort: M.cuivres * 0.7, filtre: 1200, attaque: 0.12, relache: 0.4, voix: 2, ecart: 5, echo: 0.8 });
+  function pulsation(f, t, duree) { // la pulsation de synthé grave de Battlefield
+    choeur({ type: "square", f, t, duree, fort: M.pulsation, filtre: 180, filtreFin: 380, attaque: 0.005, relache: 0.05, voix: 2, ecart: 6, echo: 0.1 });
   }
-  function cuivres(f, t, duree, fort) { // la grande mélodie : des cors (une dent de scie douce, filtrée)
-    voix("sawtooth", f, t, duree, fort, 1100, 0.05);
-    voix("triangle", f * 2, t, duree, fort * 0.35, 3000, 0.05);
+  function braam(f, t) { // le gros coup sourd : des voix graves, saturées, qui s'ouvrent lentement
+    const dist = ctx.createWaveShaper(), courbe = new Float32Array(256);
+    for (let i = 0; i < 256; i++) { const x = i / 128 - 1; courbe[i] = Math.tanh(x * 3); }
+    dist.curve = courbe;
+    const g = ctx.createGain(), fi = ctx.createBiquadFilter(), D = M.braam.duree;
+    fi.type = "lowpass";
+    fi.frequency.setValueAtTime(120, t);
+    fi.frequency.linearRampToValueAtTime(900, t + D * 0.35);
+    fi.frequency.linearRampToValueAtTime(200, t + D);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(M.braam.fort, t + 0.18);
+    g.gain.linearRampToValueAtTime(0.0001, t + D);
+    dist.connect(fi).connect(g);
+    brancher(g, 0.8);
+    [1, 1.006, 0.994, 2.003].forEach((k) => {
+      const o = ctx.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.value = f * k;
+      o.connect(dist);
+      o.start(t);
+      o.stop(t + D + 0.1);
+    });
   }
-  function basse(f, t, duree, fort) { voix("square", f, t, duree, fort, 260, 0.01); }
-  function braam(f, t) { // le gros coup sourd de Battlefield
-    [1, 1.007, 0.993, 2].forEach((k, i) => voix("sawtooth", f * k, t, M.braam.duree, i === 3 ? M.braam.fort * 0.3 : M.braam.fort, 380, 0.25));
-  }
-  function grosseCaisse(t, fort) {
+  function taiko(t, fort, grave) { // un grand tambour japonais (un « boum » profond + le claquement de la peau)
     const o = ctx.createOscillator(), g = ctx.createGain();
-    o.frequency.setValueAtTime(110, t);
-    o.frequency.exponentialRampToValueAtTime(38, t + 0.18);
-    g.gain.setValueAtTime(fort, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
-    o.connect(g).connect(sortie);
+    o.frequency.setValueAtTime(grave ? 90 : 140, t);
+    o.frequency.exponentialRampToValueAtTime(grave ? 42 : 70, t + 0.25);
+    g.gain.setValueAtTime(M.tambours * fort, t);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + 0.7);
+    o.connect(g);
+    brancher(g, 0.6);
     o.start(t);
-    o.stop(t + 0.4);
-  }
-  function tambour(t, fort) { // la caisse claire (un souffle de bruit court)
-    const s = ctx.createBufferSource(), g = ctx.createGain(), fi = ctx.createBiquadFilter();
+    o.stop(t + 0.75);
+    const s = ctx.createBufferSource(), gs = ctx.createGain(), fs = ctx.createBiquadFilter();
     s.buffer = bruit;
-    fi.type = "bandpass";
-    fi.frequency.value = 1800;
-    g.gain.setValueAtTime(fort, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
-    s.connect(fi).connect(g).connect(sortie);
+    fs.type = "lowpass";
+    fs.frequency.value = 900;
+    gs.gain.setValueAtTime(M.tambours * fort * 0.5, t);
+    gs.gain.exponentialRampToValueAtTime(0.0008, t + 0.12);
+    s.connect(fs).connect(gs);
+    brancher(gs, 0.5);
     s.start(t);
-    s.stop(t + 0.2);
+    s.stop(t + 0.15);
   }
 
-  // Une « croche » : la musique avance par petits pas (6 par mesure à 6/8)
+  // Une « croche » : le morceau avance par petits pas (6 par mesure, à 6/8)
   function jouerLePas(t) {
     const croche = 60 / M.tempo / 2;
-    const mesure = Math.floor(pas / 6), i = pas % 6;
+    // les 16 mesures du morceau ; après la première fois, on reprend à la montée (mesure 4)
+    const brut = Math.floor(pas / 6), i = pas % 6;
+    const mesure = brut < 16 ? brut : 4 + ((brut - 16) % 12);
+    const partie = mesure < 4 ? "intro" : mesure < 8 ? "montée" : "thème";
     const grille = M.accords[mesure % M.accords.length];
-    const [racine, quinte, octave] = grille.notes.map(hz);
-    etat.mesure = mesure;
-    etat.accord = grille.nom;
-    // les cordes galopent : DOUM-ta-ta DOUM-ta-ta (fort sur 1 et 4)
-    const accent = i === 0 || i === 3 ? 1 : 0.55;
-    cordes(i === 2 || i === 5 ? quinte : racine, t, croche * 0.9, M.cordes * accent);
-    cordes(octave, t, croche * 0.9, M.cordes * 0.35 * accent);
-    // la basse sur 1 et 4, les tambours
-    if (i === 0 || i === 3) basse(racine / 2, t, croche * 2.6, M.basse), grosseCaisse(t, M.tambours);
-    if (i === 3) tambour(t, M.tambours * 0.6);
-    if (i === 5 && mesure % 2 === 1) tambour(t, M.tambours * 0.35);
-    // le BRAAAM toutes les 4 mesures
-    if (i === 0 && mesure % 4 === 0) braam(racine / 4, t);
-    // la mélodie (elle commence après 8 mesures d'introduction, puis revient toujours)
-    if (mesure >= M.intro) {
-      const phrase = M.melodie[(mesure - M.intro) % M.melodie.length];
-      for (const [quand, nom, longueur] of phrase) if (quand === i) cuivres(hz(nom), t, croche * longueur, M.cuivres);
+    const [basseNote, quinte, octave, tierce] = grille.notes.map(hz);
+    Object.assign(etat, { mesure: mesure + 1, partie, accord: grille.nom });
+    // la nappe sombre : un accord tenu toute la mesure (Battlefield)
+    if (i === 0) for (const f of [basseNote, quinte, tierce]) nappe(f, t, croche * 6);
+    // la pulsation de synthé : toutes les croches, très grave
+    pulsation(basseNote / 2, t, croche * 0.6);
+    // le BRAAAM au début de l'intro, puis toutes les 4 mesures
+    if (i === 0 && mesure % 4 === 0) braam(basseNote / 2, t);
+    if (partie === "intro") return;
+    // les violoncelles martèlent : DOUM-ta-ta DOUM-ta-ta (pirates)
+    const accent = i === 0 || i === 3 ? 1 : 0.6;
+    violoncelle(i === 2 || i === 5 ? quinte : basseNote, t, croche * 0.75, accent);
+    if (partie === "thème") violoncelle(octave, t, croche * 0.75, accent * 0.5);
+    // les taikos
+    if (i === 0) taiko(t, 1, true);
+    if (i === 3) taiko(t, 0.75, true);
+    if (partie === "thème" && (i === 4 || i === 5) && mesure % 2 === 1) taiko(t, 0.45, false);
+    if (partie === "montée" && mesure === 7 && i >= 3) taiko(t, 0.5 + (i - 3) * 0.2, false); // (le roulement avant le thème)
+    // la mélodie de cuivres (et un cor une octave plus bas)
+    if (partie === "thème") {
+      for (const [quand, nom, longueur] of M.melodie[(mesure - 8) % M.melodie.length]) if (quand === i) {
+        cuivre(hz(nom), t, croche * longueur);
+        cor(hz(nom) / 2, t, croche * longueur);
+      }
     }
   }
 
@@ -124,24 +205,26 @@ Tanks.Musique = (function () {
     if (!ctx || ctx.state !== "running") return;
     const croche = 60 / M.tempo / 2;
     if (prochaine < ctx.currentTime - 0.5) prochaine = ctx.currentTime + 0.05; // (on revient d'une pause : on repart d'ici)
-    while (prochaine < ctx.currentTime + 0.2) {
-      if (!coupee) jouerLePas(prochaine);
+    while (prochaine < ctx.currentTime + 0.25) {
+      if (joue) jouerLePas(prochaine), pas++;
       prochaine += croche;
-      pas++;
     }
   }
 
   function basculer() {
     coupee = !coupee;
-    if (sortie) sortie.gain.setTargetAtTime(coupee ? 0 : M.volume, ctx.currentTime, 0.1);
     Tanks.Evenements.emettre("musique", { allumee: !coupee });
   }
-  // (le son général coupé avec B, ou le jeu caché : la musique se tait aussi)
-  function maj(sonCoupe) {
+  // À chaque image : la musique joue seulement au MENU (au garage) ; pendant la bataille elle se tait doucement.
+  function maj(monde, sonCoupe) {
     if (!ctx) return;
     const doitDormir = document.hidden || !document.hasFocus();
     if (doitDormir !== endormie) (endormie = doitDormir), endormie ? ctx.suspend() : ctx.resume();
-    sortie.gain.setTargetAtTime(coupee || sonCoupe ? 0 : M.volume, ctx.currentTime, 0.1);
+    const auMenu = monde.phase === "garage";
+    if (auMenu && !joue) (joue = true), (pas = 0), (prochaine = ctx.currentTime + 0.1); // (on revient au menu : le morceau recommence au début)
+    if (!auMenu && joue) joue = false;
+    etat.joue = joue && !coupee && !sonCoupe;
+    sortie.gain.setTargetAtTime(auMenu && !coupee && !sonCoupe ? M.volume : 0, ctx.currentTime, auMenu ? 0.3 : M.fondu);
   }
 
   return { demarrer, basculer, maj, get etat() { return { allumee: !!ctx && !coupee, ...etat }; } };

@@ -27,31 +27,35 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 21,
-  // ✍️ (étape 82) LA MUSIQUE « un peu dans le style Pirates des Caraïbes et Battlefield 6 » (une musique inventée) :
-  // tempo (noires pointées… ici : battements par minute, 2 croches par battement), le volume de chaque instrument,
-  // les accords (une mesure chacun : la note de base, la quinte, l'octave) et la mélodie (par mesure : [croche 0 à 5,
-  // note, durée en croches]). « intro » : le nombre de mesures sans mélodie au début.
+  version: 22,
+  // ✍️ (étape 82, refaite à l'étape 83) LA MUSIQUE DU MENU, « un mix Battlefield 6 et Pirates des Caraïbes » (une musique
+  // inventée), SEULEMENT au menu : elle se tait pendant la bataille (en « fondu » secondes).
+  // tempo : battements par minute (2 croches par battement, 6 croches par mesure) ; volume de chaque instrument ;
+  // salle : la réverbération (durée de l'écho en s, part de l'écho) ; accords : une mesure chacun (la basse, la quinte,
+  // l'octave, la tierce) ; mélodie : 8 phrases (par mesure : [croche 0 à 5, note, durée en croches]).
   musique: {
-    tempo: 138, volume: 0.32, cordes: 0.05, basse: 0.09, cuivres: 0.07, tambours: 0.5, intro: 8,
-    braam: { fort: 0.06, duree: 2.8 },
+    tempo: 124, volume: 0.42, fondu: 1.2,
+    nappe: 0.035, violoncelles: 0.06, cuivres: 0.05, pulsation: 0.07, tambours: 0.9,
+    braam: { fort: 0.12, duree: 3.4 },
+    salle: { duree: 2.8, part: 0.55 },
     accords: [
-      { nom: "ré mineur", notes: ["D3", "A3", "D4"] }, { nom: "ré mineur", notes: ["D3", "A3", "D4"] },
-      { nom: "si bémol", notes: ["Bb2", "F3", "Bb3"] }, { nom: "do", notes: ["C3", "G3", "C4"] },
-      { nom: "ré mineur", notes: ["D3", "A3", "D4"] }, { nom: "fa", notes: ["F3", "C4", "F4"] },
-      { nom: "sol mineur", notes: ["G2", "D3", "G3"] }, { nom: "la", notes: ["A2", "E3", "A3"] },
+      { nom: "ré mineur", notes: ["D2", "A2", "D3", "F3"] }, { nom: "ré mineur", notes: ["D2", "A2", "D3", "F3"] },
+      { nom: "si bémol", notes: ["Bb1", "F2", "Bb2", "D3"] }, { nom: "la", notes: ["A1", "E2", "A2", "C#3"] },
+      { nom: "ré mineur", notes: ["D2", "A2", "D3", "F3"] }, { nom: "fa", notes: ["F2", "C3", "F3", "A3"] },
+      { nom: "do", notes: ["C2", "G2", "C3", "E3"] }, { nom: "la", notes: ["A1", "E2", "A2", "C#3"] },
     ],
     melodie: [
-      [[0, "D4", 2], [2, "F4", 1], [3, "A4", 3]],
-      [[0, "G4", 1], [1, "F4", 1], [2, "E4", 1], [3, "D4", 3]],
-      [[0, "Bb4", 3], [3, "A4", 2], [5, "G4", 1]],
-      [[0, "G4", 2], [2, "E4", 1], [3, "C5", 3]],
-      [[0, "A4", 2], [2, "D5", 1], [3, "C5", 1], [4, "A4", 2]],
-      [[0, "F4", 2], [2, "A4", 1], [3, "C5", 3]],
-      [[0, "Bb4", 1], [1, "A4", 1], [2, "G4", 1], [3, "D5", 3]],
-      [[0, "C#5", 3], [3, "E5", 2], [5, "A4", 1]],
+      [[0, "A4", 3], [3, "D5", 3]],
+      [[0, "C5", 1], [1, "Bb4", 1], [2, "A4", 1], [3, "F4", 3]],
+      [[0, "G4", 2], [2, "A4", 1], [3, "Bb4", 3]],
+      [[0, "A4", 4], [4, "E4", 2]],
+      [[0, "D4", 1], [1, "F4", 1], [2, "A4", 1], [3, "D5", 2], [5, "E5", 1]],
+      [[0, "F5", 3], [3, "E5", 2], [5, "C5", 1]],
+      [[0, "D5", 2], [2, "C5", 1], [3, "Bb4", 2], [5, "G4", 1]],
+      [[0, "A4", 6]],
     ],
   },
+
   pasFixe: 1 / 120,
   // (étape 72) ✍️ « Ça rame trop. » La boucle ne fait jamais plus de 6 petits pas par image : si l'ordinateur est en
   // retard (une image a duré plus de 6 / 120 = 0,05 s), on JETTE le retard au lieu de courir après (sinon, plus il est

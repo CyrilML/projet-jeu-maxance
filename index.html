@@ -204,6 +204,7 @@
       <a href="#etape80">Étape 80</a>
       <a href="#etape81">Étape 81</a>
       <a href="#etape82">Étape 82</a>
+      <a href="#etape83">Étape 83</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4607,6 +4608,40 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <details class="question"><summary>Pourquoi a-t-on inventé une musique au lieu de reprendre celle du film ?</summary><p>Parce que la musique d'un film appartient à ceux qui l'ont créée : on n'a pas le droit de la recopier. On peut s'inspirer de son style.</p></details>
     </section>
 
+    <section id="etape83">
+      <h2>🎺 Étape 83 : la musique refaite, seulement au menu <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Un nouveau morceau plus « orchestre », qui joue seulement quand tu arrives dans le jeu, au menu. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/83-musique-du-menu.md</code>.</p>
+          <ul><li>✍️ « Refais la musique dans un mix Battlefield 6 et Pirates des Caraïbes, seulement quand j'accède au jeu, pas pendant la partie. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Tanks « version 22 ».</li>
+            <li>☐ Au menu : l'intro sombre (BRAAAM), puis les violoncelles et les tambours, puis la mélodie des cuivres.</li>
+            <li>☐ « Au combat ! » : la musique se tait doucement. De retour au menu : elle recommence.</li>
+            <li>☐ M : couper / remettre.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🏛️ Pourquoi ça sonne plus « orchestre »</h3>
+      <ul>
+        <li><strong>Le chœur</strong> : dans un orchestre, 10 violons ne jouent jamais exactement la même note. Le jeu fait jouer chaque note par 3 ou 4 voix un tout petit peu désaccordées : ça donne un son plus large.</li>
+        <li><strong>La salle</strong> : un orchestre joue dans une grande salle qui fait de l'écho. Le jeu fabrique cet écho (la réverbération).</li>
+        <li><strong>Le compresseur</strong> : il baisse les sons trop forts et monte les trop faibles, pour un volume égal.</li>
+      </ul>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>tanks/config.js</code>, cherche <code>salle</code> et mets <code>part: 0</code> : plus d'écho, écoute la différence !</li>
+        <li>Change <code>tempo: 124</code> pour rendre la musique plus calme ou plus rapide.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi joue-t-on chaque note avec plusieurs voix un peu désaccordées ?</summary><p>Pour imiter un vrai orchestre, où plusieurs musiciens jouent la même note jamais tout à fait pareil : le son devient plus large.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -5014,7 +5049,7 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <div class="carte fait">
           <div class="num">🎻</div>
           <h4>La musique <span class="etiquette">✅ fait · à valider</span></h4>
-          <p>Une musique épique inventée, jouée par l'ordinateur, entre Pirates des Caraïbes et Battlefield (étape 82).</p>
+          <p>Une musique épique inventée, jouée par l'ordinateur, entre Pirates des Caraïbes et Battlefield (étape 82), refaite plus « orchestre » et seulement au menu (étape 83).</p>
           <p class="apprend"><b>Tu apprends :</b> une note est une vibration, une partition rangée en données. <b>Durée :</b> 1 séance.</p>
         </div>
         <div class="carte fait">
@@ -5775,6 +5810,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-82" data-cle="appris-82" placeholder="Ex. : J'ai appris qu'une note est une vibration…"></textarea>
         <label for="idees-82"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-82" data-cle="idees-82" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 83 · la musique refaite, seulement au menu <span class="petit">· 20 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le nouvel orchestre (<code>tanks/affichage/musique.js</code>) : chœurs, salle, compresseur, taikos, BRAAAM.</p>
+        <p class="petit">✍️ Maxance a choisi : un mix Battlefield 6 et Pirates des Caraïbes, seulement au menu.</p>
+        <label for="appris-83"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-83" data-cle="appris-83" placeholder="Ex. : J'ai appris ce qu'est la réverbération…"></textarea>
+        <label for="idees-83"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-83" data-cle="idees-83" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

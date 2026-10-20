@@ -100,7 +100,7 @@ window.Tanks = window.Tanks || {};
     Tanks.SousLeCapot.maj();
     parts.capot = performance.now() - t1;
     Tanks.Sons.maj(monde);
-    Tanks.Musique.maj(Tanks.Sons.coupe());
+    Tanks.Musique.maj(monde, Tanks.Sons.coupe()); // (étape 83 : seulement au menu)
     if (!enPause && !Tanks.Menu.ouvert) Tanks.Qualite.noterImage(dtMs, parts); // (étape 77 : pas pendant le menu) // (en pause, les images ne coûtent rien : on ne les compte pas)
     requestAnimationFrame(boucle);
   }
