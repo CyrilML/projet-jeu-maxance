@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 24,
+  version: 25,
   // ✍️ (étape 82, refaite aux étapes 83 et 84) LA MUSIQUE DE LA PAGE D'ACCUEIL, « un mix Battlefield 6 et Pirates des Caraïbes » (une musique
   // inventée), SEULEMENT au menu : elle se tait pendant la bataille (en « fondu » secondes).
   // tempo : battements par minute (2 croches par battement, 6 croches par mesure) ; volume de chaque instrument ;

@@ -453,15 +453,57 @@ Tanks.Engins3D = (function () {
     if (s.mort) {
       // il tombe sur le dos en une demi-seconde, les bras ouverts
       // (étape 85) en avant ou en arrière selon sa chute (logique/soldat.js), à la vitesse de sa chute, un peu de travers
-      const ch = s.chute, k = Math.min(1, ch ? (s.depuisMort - ch.debut) / ch.duree : s.depuisMort * 2);
-      c.rotation.set(ch ? ch.travers * k : 0, 0, (ch && ch.enAvant ? -1 : 1) * k * (Math.PI / 2));
-      c.position.set(0, 0.12 * k, 0);
+      // (étape 85, les vraies poses) chaque GENRE de chute a sa façon de bouger les os ; k va de 0 (touché) à 1 (couché)
+      const ch = s.chute, k = Math.min(1, ch ? Math.max(0, s.depuisMort - ch.debut) / ch.duree : s.depuisMort * 2);
+      const doux = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x)); // (lent, puis vite, puis lent : plus naturel)
+      const tombe = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x); // (une chute accélère, comme tout ce qui tombe)
+      const de = (a, b) => Math.max(0, Math.min(1, (k - a) / (b - a))); // (une partie de la chute, entre a et b)
+      const genre = ch ? ch.genre : "face", travers = ch ? ch.travers : 0, Q = Math.PI / 2;
       r.pose = null;
-      for (const e of r.epaules) e.quaternion.identity(), e.rotation.set(0, 0, 0.6 * k);
-      for (const g of r.genoux) g.rotation.set(0, 0, -0.3 * k);
-      for (const j of r.jambes) j.rotation.set(0, 0, 0);
+      r.dos.scale.y = 1;
+      for (const e of r.epaules) e.quaternion.identity();
+      for (const e of r.coudes) e.quaternion.identity();
+      let pivot = 0, haut = 0, dos = 0, cou = 0, hanches = 0, genoux = 0, bras = 0.6, coude = 0.3, ecrase = 1, recul = 0;
+      if (genre === "tete") {
+        // 🎯 balle dans la tête : les jambes lâchent d'un coup (il s'affaisse), puis le corps bascule en avant
+        const a = doux(de(0, 0.45)), b = tombe(de(0.35, 1));
+        genoux = -1.7 * a * (1 - b * 0.6); hanches = 1.1 * a * (1 - b * 0.5); haut = -0.55 * a * (1 - b) + 0.12 * b;
+        dos = 0.5 * a; cou = 0.7 * a; pivot = -Q * b; bras = 0.15 + 0.2 * b; coude = 0.1;
+      } else if (genre === "dos" || genre === "ecrase") {
+        // 🔙 touché dans le dos : il est poussé en avant, les bras partent devant pour se rattraper
+        const b = tombe(k);
+        pivot = -Q * b; haut = 0.12 * b; dos = 0.25 * Math.sin(Math.PI * k); cou = -0.3 * b; hanches = 0.2 * b; genoux = -0.25 * b;
+        bras = 0.6 + 1.6 * doux(de(0, 0.6)); coude = 0.2;
+        if (genre === "ecrase") ecrase = 1 - 0.7 * doux(de(0.5, 1)); // 🚜 écrasé : aplati
+      } else if (genre === "genoux") {
+        // 🧎 il tombe d'abord à genoux, reste un moment, puis bascule en avant
+        const a = doux(de(0, 0.3)), b = tombe(de(0.57, 1));
+        genoux = -2.0 * a * (1 - b * 0.7); hanches = 0.15 * a; haut = -0.5 * a * (1 - b) + 0.12 * b;
+        dos = 0.25 * a + 0.3 * b; cou = 0.4 * a; pivot = -Q * b; bras = 0.3 + 1.2 * b; coude = 0.4;
+      } else if (genre === "explosion") {
+        // 💥 une explosion : il est projeté en arc, fait un tour en l'air et retombe sur le dos
+        const v = doux(k);
+        haut = Math.sin(Math.PI * Math.min(1, k * 1.15)) * 1.4 + 0.12 * v; recul = -2.4 * v;
+        pivot = (Q + 2 * Math.PI) * v; bras = 1.8 * Math.sin(Math.PI * k) + 0.8; coude = 0.5; genoux = -0.8 * Math.sin(Math.PI * k);
+        hanches = 0.6 * Math.sin(Math.PI * k);
+      } else {
+        // 🔜 touché de face : il part en arrière, les bras s'ouvrent en l'air
+        const b = tombe(k);
+        pivot = Q * b; haut = 0.12 * b; dos = -0.3 * Math.sin(Math.PI * k); cou = 0.35 * b; genoux = -0.45 * Math.sin(Math.PI * Math.min(1, k * 1.3));
+        bras = 0.6 + 1.5 * Math.sin(Math.PI * Math.min(1, k * 1.4)); coude = 0.3;
+      }
+      c.rotation.set(travers * k, 0, pivot);
+      c.position.set(recul, haut, 0);
+      c.scale.set(1, ecrase, 1);
+      r.dos.rotation.set(0, 0, -dos);
+      r.cou.rotation.set(0, 0, -cou);
+      for (const e of r.epaules) e.rotation.set(0, 0, bras);
+      for (const e of r.coudes) e.rotation.set(0, 0, coude);
+      for (const g of r.genoux) g.rotation.set(0, 0, genoux);
+      for (const j of r.jambes) j.rotation.set(0, 0, hanches);
       return;
     }
+    c.scale.set(1, 1, 1); // (étape 85 : un soldat relevé par le médecin n'est plus aplati)
     if (corde) {
       // ✍️ (étape 74) à la corde : les deux mains serrent la corde au-dessus de la tête, les jambes pliées serrent la
       // corde (une jambe plus pliée que l'autre), le corps un peu penché en arrière ; il se balance un tout petit peu.

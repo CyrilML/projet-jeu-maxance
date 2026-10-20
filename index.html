@@ -4681,7 +4681,7 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
     </section>
 
     <section id="etape85">
-      <h2>🪖 Étape 85 : les chutes des soldats <span class="etiquette">🟡 version très courte · à valider</span></h2>
+      <h2>🪖 Étape 85 : les chutes des soldats <span class="etiquette">✅ livrée · à valider</span></h2>
       <p class="chapeau">Un soldat touché ne tombe plus tout raide : il tombe en avant ou en arrière selon d'où vient le coup. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
       <div class="grille">
         <div class="carte">
@@ -4695,15 +4695,20 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <div class="carte">
           <h4>✅ Ce que tu peux vérifier</h4>
           <ul>
-            <li>☐ « version 24 ».</li>
-            <li>☐ Tire dans le dos d'un soldat : il tombe en avant. De face : il tombe en arrière.</li>
+            <li>☐ « version 25 ».</li>
+            <li>☐ 🎯 Balle dans la tête : les jambes lâchent, il s'affaisse, puis bascule en avant.</li>
+            <li>☐ 🔙 Dans le dos : il tombe en avant, les bras devant. 🔜 De face : il part en arrière, les bras en l'air.</li>
+            <li>☐ 🧎 À genoux : il tombe à genoux, s'arrête un instant, puis bascule.</li>
+            <li>☐ 💥 Explosion : il est projeté, fait un tour en l'air et retombe sur le dos. 🚜 Écrasé : aplati.</li>
             <li>☐ Journal : « 💥 soldat rouge n° … : balle dans la tête, il s'écroule » (ou dans le dos, à genoux, explosion…).</li>
           </ul>
         </div>
       </div>
       <h3>🧭 D'où vient la balle ?</h3>
       <p>Le jeu compare deux directions : celle où le soldat <strong>regarde</strong>, et celle d'où <strong>arrive</strong> la balle. Si elles sont presque opposées (la balle arrive de devant), il part en arrière. Si la balle arrive de derrière (à moins de 60° de son dos), il tombe en avant.</p>
-      <p class="petit">Pas encore fait (version très courte) : les vraies poses (s'écrouler, tomber à genoux, être projeté par une explosion), l'arme qui tombe des mains, le compteur sous le capot.</p>
+      <h3>🦴 Une chute, c'est des os qui bougent</h3>
+      <p>Pour chaque genre de chute, le jeu dit à chaque os (les genoux, les hanches, le dos, le cou, les épaules) de combien tourner, selon un nombre <code>k</code> qui va de 0 (touché) à 1 (couché). Par exemple, à genoux : de 0 à 0,3 les genoux se plient, de 0,3 à 0,57 il attend, de 0,57 à 1 il bascule. Et la chute <strong>accélère</strong>, comme tout ce qui tombe.</p>
+      <p class="petit">Pas encore fait : l'arme qui tombe des mains, le compteur des chutes sous le capot.</p>
     </section>
 
     <!-- ============ LE VILLAGE (projet à part) ============ -->
