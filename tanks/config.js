@@ -24,7 +24,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 17,
+  version: 18,
   pasFixe: 1 / 120,
   // (étape 72) ✍️ « Ça rame trop. » La boucle ne fait jamais plus de 6 petits pas par image : si l'ordinateur est en
   // retard (une image a duré plus de 6 / 120 = 0,05 s), on JETTE le retard au lieu de courir après (sinon, plus il est
@@ -310,6 +310,11 @@ Tanks.CONFIG = {
   soins: { attente: 5, soldat: 2, tank: 0.5 },
 
   camera: { distance: 15, hauteur: 6.5, regardDevant: 22, souplesse: 6, champ: 60 },
+  // ✍️ (étape 78) À PIED, la touche C passe dans les YEUX du soldat (la vue à la première personne, comme dans
+  // Battlefield) : l'œil est à « oeil » m du sol, un peu en avant de la tête (« avance » m, pour ne pas voir l'intérieur
+  // du casque) ; on regarde un peu vers le bas (« baisse » : 0,22 = 22 cm de descente par mètre) pour voir ses mains
+  // et son arme ; « proche » m : la caméra dessine dès 5 cm (sinon l'arme, tout près, serait coupée).
+  premiere: { oeil: 1.58, avance: 0.18, baisse: 0.22, proche: 0.05 },
   effets: { particules: 420, debris: 60 }, // (étape 75 : 420 au lieu de 300, pour la poussière des maisons qui s'effondrent)
   decor: { morceau: 140 }, // (étape 72) le décor est découpé en morceaux de 140 m (des « tuiles ») ; (étape 71) 15 × 15 morceaux
 

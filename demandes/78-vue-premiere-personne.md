@@ -1,6 +1,6 @@
 # Demande n° 78 : la vue à la première personne (touche C)
 
-> Statut : ⏸️ en attente (après le sniper, demande n° 79).
+> Statut : ✅ livrée en version simple le 20/10/2026 (tanks version 18), à valider par Maxance.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -15,7 +15,7 @@ personnage. »
 - Tous les nombres sont dans `tanks/config.js`.
 
 ## ✅ Critères de réussite
-- [ ] Tanks « version 17 ».
+- [ ] Tanks « version 18 ».
 - [ ] À pied, C : on voit par les yeux du soldat, avec ses mains et son arme ; C encore : retour à la vue de derrière.
 - [ ] Le corps du soldat ne cache pas la vue.
 - [ ] Changer d'arme (1 2 3 4) change ce qu'il a dans les mains.

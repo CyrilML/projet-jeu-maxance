@@ -53,6 +53,7 @@ Tanks.SousLeCapot = (function () {
     releve: (d) => "⚡ Tu relèves " + d.cible + " avec ton défibrillateur !",
     munitions: (d) => "🎒 Sac de munitions : réserve du " + d.arme + " pleine (" + d.reserve + "), grenades au complet",
     lampe: (d) => "🔦 Lampe " + (d.allumee ? "allumée" : "éteinte"),
+    vue: (d) => (d.aPied ? (d.premiere ? "👁️ Vue à la première personne (C) : tu vois par les yeux du soldat" : "🎥 Vue de derrière le soldat (C)") : "🎥 Caméra du véhicule changée (C)"),
     // étape 75
     "mur-abime": (d) => "🧱 " + (d.parToi ? "Tes balles fissurent " : d.tireur + " fissure ") + d.nom + " (ce morceau de mur : " + d.vie + " / " + d.vieMax + " points)",
     "mur-troue": (d) => "🧱 " + ({ balle: "Les balles", obus: "Un obus", roquette: "Une roquette", grenade: "Une grenade", bombe: "Une bombe", missile: "Un missile", char: "Le tank", torpille: "Une torpille" }[d.sorte] || "Une explosion") + (d.tireur ? " de " + d.tireur : "") + " fait un trou dans " + d.nom + " : " + d.morceaux.length + " morceau" + (d.morceaux.length > 1 ? "x" : "") + " de mur tombe" + (d.morceaux.length > 1 ? "nt" : "") + " (il en reste " + d.debout + " / " + d.total + " debout)",
@@ -295,6 +296,7 @@ Tanks.SousLeCapot = (function () {
     if (st.lunette) {
       // (étape 79) la lunette : la respiration, le souffle (Maj) et la chute de la balle
       const b = s.souffle || { reserve: 1, retenu: false, reprise: 0, force: 1 }, bal = s.balancement || { x: 0, y: 0 }, LU = C.tir.lunette;
+      l.push(["👁️ la vue (étape 78)", Tanks.Scene.vue.premiere ? "première personne : l'œil à " + virgule(C.premiere.oeil, 2) + " m, " + virgule(C.premiere.avance, 2) + " m devant la tête, la caméra dessine dès " + virgule(C.premiere.proche, 2) + " m" : "troisième personne (derrière le soldat)"]);
       l.push(["🔭 lunette · souffle", "×" + virgule(st.zoom, 0) + (s.visee > 0.6 ? " (dans la lunette)" : " (épaule avec V)") + " · respiration : un « 8 » de " + v(LU.balancement) + " en " + LU.periode + " s, × " + virgule(b.force, 2) + " maintenant → écart " + v(bal.x) + " de côté, " + v(bal.y) + " en haut · souffle " + Math.round(b.reserve * 100) + " %" + (b.retenu ? " 🤫 RETENU (Maj)" : "") + (b.reprise > 0 ? " · 😮‍💨 reprise " + virgule(b.reprise, 1) + " s (× " + LU.essouffle + ")" : "")]);
       const d = s.vise ? s.vise.d : 300, dc = s.derniereChute;
       l.push(["🪨 chute de la balle", st.vitesseBalle ? "vitesse " + st.vitesseBalle + " m/s · chute = ½ × " + virgule(LU.gravite, 2) + " × (d ÷ v)² · à " + Math.round(d) + " m : vol " + virgule(d / st.vitesseBalle, 2) + " s, chute " + Math.round(Tanks.Armes.chute(d, st.vitesseBalle) * 100) + " cm, réglée à " + LU.zero + " m → " + Math.round(Tanks.Armes.sousLaCroix(d, st.vitesseBalle) * 100) + " cm sous la croix" + (dc ? " · dernier tir : " + Math.round(dc.d) + " m, " + Math.round(dc.sous * 100) + " cm sous la croix" : "") : "cette arme n'a pas de vitesse de balle (pas de chute)"]);

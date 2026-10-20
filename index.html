@@ -199,6 +199,7 @@
       <a href="#etape75">Étape 75</a>
       <a href="#etape76">Étape 76</a>
       <a href="#etape77">Étape 77</a>
+      <a href="#etape78">Étape 78</a>
       <a href="#etape79">Étape 79</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
@@ -4425,6 +4426,41 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <p class="petit">Pas encore fait (version simple) : l'arme en 3D dans le menu et les pièces visibles sur l'arme, la vraie lumière de la lampe, le rayon du laser en 3D, la fumée, les mines, le C4 et la claymore (ils donnent des grenades pour l'instant).</p>
     </section>
 
+    <section id="etape78">
+      <h2>👁️ Étape 78 : la vue à la première personne (touche C) <span class="etiquette">✅ livrée (version simple) · à valider</span></h2>
+      <p class="chapeau">À pied, C te met dans les yeux du soldat, comme dans Battlefield : tu vois ton arme et tes mains, pas ton corps. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/78-vue-premiere-personne.md</code>.</p>
+          <ul>
+            <li>✍️ « Avec C, voir comme dans Battlefield : il voit les armes, mais il ne voit pas le personnage. »</li>
+            <li>✍️ Version simple (5 minutes), après le sniper.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Tanks « version 18 ».</li>
+            <li>☐ À pied (E pour sortir du tank), C : tu vois par les yeux du soldat, ton arme en bas de l'écran.</li>
+            <li>☐ C encore une fois : retour à la vue de derrière. Dans un tank, C éloigne la caméra comme avant.</li>
+            <li>☐ Sous le capot : « la vue (étape 78) » ; dans le journal : « 👁️ Vue à la première personne ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>📷 Où est la caméra ?</h3>
+      <p>Une caméra 3D, c'est un œil posé quelque part qui regarde vers un point. En vue de derrière, l'œil est 15 m derrière toi et 6,5 m plus haut. En première personne, on le met <strong>dans la tête</strong> du soldat (à 1,58 m du sol), un tout petit peu en avant pour ne pas voir l'intérieur du casque. Le corps est derrière et sous l'œil : on ne le voit pas. Mais les mains et l'arme sont devant : on les voit !</p>
+      <p>Une astuce : une caméra ne dessine pas ce qui est trop près d'elle (pour gagner du temps). En première personne, l'arme est à quelques centimètres : on règle la caméra pour qu'elle dessine dès 5 cm.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>tanks/config.js</code>, cherche <code>premiere</code> et change <code>baisse: 0.22</code> en <code>0</code> : tu regardes tout droit, et l'arme disparaît en bas !</li>
+        <li>Change <code>oeil: 1.58</code> en <code>3</code> : tu deviens un géant.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi ne voit-on pas son propre corps en première personne ?</summary><p>Parce que l'œil (la caméra) est dans la tête : le corps est derrière et en dessous, hors de ce que la caméra regarde.</p></details>
+      <p class="petit">Pas encore fait (version simple) : des bras et une arme spéciale pour la vue à la première personne, le balancement en marchant, l'animation du rechargement.</p>
+    </section>
+
     <section id="etape79">
       <h2>🔭 Étape 79 : le sniper <span class="etiquette">✅ livrée (version courte) · à valider</span></h2>
       <p class="chapeau">Une vraie lunette, la respiration qui fait bouger la visée, la balle qui tombe avec la distance, et le fusil Dragunov. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
@@ -4852,7 +4888,7 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <div class="carte fait">
           <div class="num">🔭</div>
           <h4>Le sniper <span class="etiquette">✅ fait (version courte) · à valider</span></h4>
-          <p>Une vraie lunette, la respiration et Maj pour retenir son souffle, la balle qui tombe, le Dragunov (étape 79). À suivre : les snipers ennemis.</p>
+          <p>Une vraie lunette, la respiration et Maj pour retenir son souffle, la balle qui tombe, le Dragunov (étape 79). La vue à la première personne avec C (étape 78). À suivre : les snipers ennemis.</p>
           <p class="apprend"><b>Tu apprends :</b> la chute d'une balle, un réglage de lunette. <b>Durée :</b> 1 séance.</p>
         </div>
         <div class="carte fait">
@@ -5568,6 +5604,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-77" data-cle="appris-77" placeholder="Ex. : J'ai appris que chaque pièce a un avantage et un défaut…"></textarea>
         <label for="idees-77"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-77" data-cle="idees-77" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 78 · la vue à la première personne <span class="petit">· 20 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> la caméra dans les yeux du soldat (<code>tanks/affichage/scene.js</code>), réglée dans <code>config.js</code> (<code>premiere</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : C comme dans Battlefield, en version simple de 5 minutes.</p>
+        <label for="appris-78"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-78" data-cle="appris-78" placeholder="Ex. : J'ai appris qu'une caméra est un œil posé quelque part…"></textarea>
+        <label for="idees-78"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-78" data-cle="idees-78" placeholder="Ex. : …"></textarea>
       </div>
       <div class="carte" style="margin-top: 14px">
         <h4>Étape 79 · le sniper <span class="petit">· 20 octobre 2026</span></h4>

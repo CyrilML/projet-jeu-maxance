@@ -719,6 +719,17 @@ Tanks.Scene = (function () {
     // (étape 79) dans la lunette, la caméra suit ta RESPIRATION (le « 8 » de logique/armes.js) : on la lit, sans rien changer
     const bal = (zoom > 2.5 && toiPied.balancement) || { x: 0, y: 0 }, aV = toiPied ? toiPied.angle + bal.x : 0;
     if (zoom > 2.5) oeil = new THREE.Vector3(toiPied.x, toiPied.y + 1.65, toiPied.z), (cible = new THREE.Vector3(toiPied.x + Math.cos(aV) * 50, toiPied.y + 1.55 + bal.y * 50, toiPied.z + Math.sin(aV) * 50)), (camera.saut = true);
+    // (étape 78) la vue à la PREMIÈRE PERSONNE (touche C, à pied) : l'œil est dans la tête du soldat, un peu en avant ;
+    // son corps est derrière et sous la caméra, on ne le voit pas, mais ses mains et son arme sont devant : on les voit.
+    const P = C.premiere, enPremiere = camera.premiere && toiPied && zoom <= 2.5;
+    if (enPremiere) {
+      const ca = Math.cos(toiPied.angle), sa = Math.sin(toiPied.angle);
+      oeil = new THREE.Vector3(toiPied.x + ca * P.avance, toiPied.y + P.oeil, toiPied.z + sa * P.avance);
+      cible = new THREE.Vector3(oeil.x + ca * 10, oeil.y - P.baisse * 10, oeil.z + sa * 10);
+      camera.saut = true;
+    }
+    const proche = enPremiere || zoom > 2.5 ? P.proche : 0.3;
+    if (cam.near !== proche) (cam.near = proche), cam.updateProjectionMatrix();
     cam.position.lerp(oeil, monde.phase === "garage" || camera.saut ? 1 : Math.min(1, dt * 14));
     camera.saut = false;
     cam.lookAt(cible);
@@ -744,5 +755,11 @@ Tanks.Scene = (function () {
     return { x: (v.x * 0.5 + 0.5) * L, y: (-v.y * 0.5 + 0.5) * H };
   }
 
-  return { initialiser, dessiner, versEcran, appliquerQualite, lod, changerCamera: () => (camera.mode = (camera.mode + 1) % 2), get infos() { return rendu ? rendu.info.render : {}; }, get rendu() { return rendu; }, entreDeuxPas: () => alpha, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
+  return { initialiser, dessiner, versEcran, appliquerQualite, lod, changerCamera: (aPied) => {
+      // (étape 78) à pied, C passe de la vue de derrière à la vue dans les yeux ; dans un engin, C éloigne la caméra
+      if (aPied) camera.premiere = !camera.premiere;
+      else camera.mode = (camera.mode + 1) % 2;
+      Tanks.Evenements.emettre("vue", { premiere: !!camera.premiere, aPied: !!aPied });
+    },
+    get vue() { return { premiere: !!camera.premiere, mode: camera.mode }; }, get infos() { return rendu ? rendu.info.render : {}; }, get rendu() { return rendu; }, entreDeuxPas: () => alpha, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
 })();

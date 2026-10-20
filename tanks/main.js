@@ -44,7 +44,7 @@ window.Tanks = window.Tanks || {};
     avant = maintenant;
     if (E.consommer("qualite")) Tanks.Qualite.basculer(); // (étape 72 : touche G)
     if (E.consommer("pause")) enPause = !enPause;
-    if (E.consommer("camera")) Tanks.Scene.changerCamera();
+    if (E.consommer("camera")) Tanks.Scene.changerCamera(!!(Tanks.monde && Tanks.monde.toi && Tanks.monde.toi.mode === "pied"));
     if (E.consommer("son")) Tanks.Sons.basculer();
     if (E.consommer("lampe") && monde.toi && monde.toi.soldat) Tanks.Equipement.basculerLampe(monde.toi.soldat); // (étape 77 : L)
     Tanks.Menu.maj(monde); // (étape 77 : le menu s'ouvre au garage, se ferme en bataille)
