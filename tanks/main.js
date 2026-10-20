@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
   Tanks.Menu.initialiser(monde, (type, valeur) => (type === "combat" ? Tanks.Monde.lancer(monde) : Tanks.Equipement.demander(monde, type, valeur)));
   toile2d.focus();
 
-  const reveil = () => Tanks.Sons.demarrer();
+  const reveil = () => (Tanks.Sons.demarrer(), Tanks.Musique.demarrer()); // (étape 82 : la musique démarre avec le son)
   window.addEventListener("keydown", reveil);
   window.addEventListener("pointerdown", reveil);
   document.querySelectorAll("[data-tenir]").forEach((b) => {
@@ -47,6 +47,7 @@ window.Tanks = window.Tanks || {};
     if (E.consommer("pause")) enPause = !enPause;
     if (E.consommer("camera")) Tanks.Scene.changerCamera(!!(Tanks.monde && Tanks.monde.toi && Tanks.monde.toi.mode === "pied"));
     if (E.consommer("son")) Tanks.Sons.basculer();
+    if (E.consommer("musique")) Tanks.Musique.basculer(); // (étape 82) M : la musique
     if (E.consommer("lampe") && monde.toi && monde.toi.soldat) Tanks.Equipement.basculerLampe(monde.toi.soldat); // (étape 77 : L)
     Tanks.Menu.maj(monde); // (étape 77 : le menu s'ouvre au garage, se ferme en bataille)
     // ✍️ (étape 81) une carte avec un AUTRE DÉCOR a été choisie (la ville, le désert…) : le décor est fabriqué au
@@ -99,6 +100,7 @@ window.Tanks = window.Tanks || {};
     Tanks.SousLeCapot.maj();
     parts.capot = performance.now() - t1;
     Tanks.Sons.maj(monde);
+    Tanks.Musique.maj(Tanks.Sons.coupe());
     if (!enPause && !Tanks.Menu.ouvert) Tanks.Qualite.noterImage(dtMs, parts); // (étape 77 : pas pendant le menu) // (en pause, les images ne coûtent rien : on ne les compte pas)
     requestAnimationFrame(boucle);
   }

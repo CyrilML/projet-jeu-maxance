@@ -28,6 +28,7 @@ Tanks.Entrees = (function () {
     camera: ["KeyC"],
     ordre: [], // étape 65 : le bouton « 📢 Ordre » (la touche T, elle, est écoutée directement par la barre : affichage/barre-ordres.js)
     son: ["KeyB"],
+    musique: ["Semicolon", "KeyM"], // étape 82 : couper ou remettre la musique (la touche M : « Semicolon » sur un clavier azerty, « KeyM » sur un qwerty)
     pause: ["Escape", "KeyP"],
     qualite: ["KeyG"], // étape 72 : choisir le niveau de qualité (auto → 0 → 1 → 2 → 3 → auto)
     decharger: ["KeyF"], // étape 71 : dans le camion, faire descendre les 6 soldats (F est libre sur un clavier français aussi)

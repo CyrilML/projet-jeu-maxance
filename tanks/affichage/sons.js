@@ -294,5 +294,5 @@ Tanks.Sons = (function () {
   function basculer() {
     coupe = !coupe;
   }
-  return { demarrer, maj, basculer, etat: () => (ctx ? (ctx.state === "running" ? "allumé 🔊" : "endormi 🔇") : "pas encore allumé (appuie sur une touche)") };
+  return { demarrer, maj, basculer, coupe: () => coupe, etat: () => (ctx ? (ctx.state === "running" ? "allumé 🔊" : "endormi 🔇") : "pas encore allumé (appuie sur une touche)") };
 })();

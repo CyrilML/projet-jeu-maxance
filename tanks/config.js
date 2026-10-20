@@ -27,7 +27,31 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 20,
+  version: 21,
+  // ✍️ (étape 82) LA MUSIQUE « un peu dans le style Pirates des Caraïbes et Battlefield 6 » (une musique inventée) :
+  // tempo (noires pointées… ici : battements par minute, 2 croches par battement), le volume de chaque instrument,
+  // les accords (une mesure chacun : la note de base, la quinte, l'octave) et la mélodie (par mesure : [croche 0 à 5,
+  // note, durée en croches]). « intro » : le nombre de mesures sans mélodie au début.
+  musique: {
+    tempo: 138, volume: 0.32, cordes: 0.05, basse: 0.09, cuivres: 0.07, tambours: 0.5, intro: 8,
+    braam: { fort: 0.06, duree: 2.8 },
+    accords: [
+      { nom: "ré mineur", notes: ["D3", "A3", "D4"] }, { nom: "ré mineur", notes: ["D3", "A3", "D4"] },
+      { nom: "si bémol", notes: ["Bb2", "F3", "Bb3"] }, { nom: "do", notes: ["C3", "G3", "C4"] },
+      { nom: "ré mineur", notes: ["D3", "A3", "D4"] }, { nom: "fa", notes: ["F3", "C4", "F4"] },
+      { nom: "sol mineur", notes: ["G2", "D3", "G3"] }, { nom: "la", notes: ["A2", "E3", "A3"] },
+    ],
+    melodie: [
+      [[0, "D4", 2], [2, "F4", 1], [3, "A4", 3]],
+      [[0, "G4", 1], [1, "F4", 1], [2, "E4", 1], [3, "D4", 3]],
+      [[0, "Bb4", 3], [3, "A4", 2], [5, "G4", 1]],
+      [[0, "G4", 2], [2, "E4", 1], [3, "C5", 3]],
+      [[0, "A4", 2], [2, "D5", 1], [3, "C5", 1], [4, "A4", 2]],
+      [[0, "F4", 2], [2, "A4", 1], [3, "C5", 3]],
+      [[0, "Bb4", 1], [1, "A4", 1], [2, "G4", 1], [3, "D5", 3]],
+      [[0, "C#5", 3], [3, "E5", 2], [5, "A4", 1]],
+    ],
+  },
   pasFixe: 1 / 120,
   // (étape 72) ✍️ « Ça rame trop. » La boucle ne fait jamais plus de 6 petits pas par image : si l'ordinateur est en
   // retard (une image a duré plus de 6 / 120 = 0,05 s), on JETTE le retard au lieu de courir après (sinon, plus il est

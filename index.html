@@ -203,6 +203,7 @@
       <a href="#etape79">Étape 79</a>
       <a href="#etape80">Étape 80</a>
       <a href="#etape81">Étape 81</a>
+      <a href="#etape82">Étape 82</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4570,6 +4571,42 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <details class="question"><summary>Pourquoi ces 4 cartes ont-elles pu être faites si vite ?</summary><p>Parce qu'elles réutilisent le même fabricant de carte : on change seulement ses réglages (couleurs, maisons, ruines, arbres).</p></details>
     </section>
 
+    <section id="etape82">
+      <h2>🎻 Étape 82 : la musique <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Une musique épique inventée pour les tanks, entre Pirates des Caraïbes et Battlefield, jouée note par note par l'ordinateur. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/82-musique.md</code>.</p>
+          <ul><li>✍️ « Une musique un peu dans le style Pirates des Caraïbes et Battlefield 6. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Tanks « version 21 ».</li>
+            <li>☐ Clique ou appuie sur une touche : la musique démarre (d'abord les cordes et les tambours, la mélodie arrive après 8 mesures).</li>
+            <li>☐ M : couper / remettre la musique. B : couper tous les sons.</li>
+            <li>☐ Sous le capot : « la musique (étape 82) » avec la mesure et l'accord joués.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🎼 Une musique sans fichier</h3>
+      <p>Il n'y a aucun fichier de musique : le jeu fabrique chaque son avec des <strong>oscillateurs</strong> (des petits générateurs de vibrations). Une note, c'est une vibration : le « la » vibre 440 fois par seconde. Une octave plus haut, c'est 2 fois plus vite (880).</p>
+      <p>La partition est rangée comme des données dans <code>config.js</code> : 8 accords (un par mesure) et 8 petites phrases de mélodie. Le « chef d'orchestre » regarde 0,2 s en avance et prépare les notes qui arrivent.</p>
+      <pre style="white-space: pre-wrap">mesure à 6/8 :  DOUM  ta  ta  DOUM  ta  ta     (comme un cheval qui galope)
+                 1    2   3    4    5   6
+                 🥁 grosse caisse sur 1 et 4 · caisse claire sur 4 · BRAAAM toutes les 4 mesures</pre>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>tanks/config.js</code>, cherche <code>musique</code> et change <code>tempo: 138</code> en <code>180</code> : la musique s'emballe !</li>
+        <li>Change une note de la mélodie (par exemple <code>"D4"</code> en <code>"E4"</code>) et écoute la différence.</li>
+        <li>Invente ta propre phrase de mélodie !</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Combien de fois par seconde vibre le « la » une octave au-dessus de 440 ?</summary><p>880 fois : une octave plus haut, c'est 2 fois plus vite.</p></details>
+      <details class="question"><summary>Pourquoi a-t-on inventé une musique au lieu de reprendre celle du film ?</summary><p>Parce que la musique d'un film appartient à ceux qui l'ont créée : on n'a pas le droit de la recopier. On peut s'inspirer de son style.</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4973,6 +5010,12 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
           <h4>La ville, les ruines, le désert, le village du désert <span class="etiquette">✅ fait (version rapide) · à valider</span></h4>
           <p>4 variantes de la grande carte, à choisir dans le menu (étape 81).</p>
           <p class="apprend"><b>Tu apprends :</b> une carte faite de réglages, réutiliser un fabricant. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">🎻</div>
+          <h4>La musique <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Une musique épique inventée, jouée par l'ordinateur, entre Pirates des Caraïbes et Battlefield (étape 82).</p>
+          <p class="apprend"><b>Tu apprends :</b> une note est une vibration, une partition rangée en données. <b>Durée :</b> 1 séance.</p>
         </div>
         <div class="carte fait">
           <div class="num">⚔️</div>
@@ -5723,6 +5766,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-81" data-cle="appris-81" placeholder="Ex. : J'ai appris qu'une carte peut être faite de réglages…"></textarea>
         <label for="idees-81"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-81" data-cle="idees-81" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 82 · la musique <span class="petit">· 20 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le petit orchestre (<code>tanks/affichage/musique.js</code>) et la partition (<code>config.js</code>, <code>musique</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : un style Pirates des Caraïbes et Battlefield 6.</p>
+        <label for="appris-82"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-82" data-cle="appris-82" placeholder="Ex. : J'ai appris qu'une note est une vibration…"></textarea>
+        <label for="idees-82"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-82" data-cle="idees-82" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
