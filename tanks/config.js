@@ -27,15 +27,15 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 22,
-  // ✍️ (étape 82, refaite à l'étape 83) LA MUSIQUE DU MENU, « un mix Battlefield 6 et Pirates des Caraïbes » (une musique
+  version: 23,
+  // ✍️ (étape 82, refaite aux étapes 83 et 84) LA MUSIQUE DE LA PAGE D'ACCUEIL, « un mix Battlefield 6 et Pirates des Caraïbes » (une musique
   // inventée), SEULEMENT au menu : elle se tait pendant la bataille (en « fondu » secondes).
   // tempo : battements par minute (2 croches par battement, 6 croches par mesure) ; volume de chaque instrument ;
   // salle : la réverbération (durée de l'écho en s, part de l'écho) ; accords : une mesure chacun (la basse, la quinte,
   // l'octave, la tierce) ; mélodie : 8 phrases (par mesure : [croche 0 à 5, note, durée en croches]).
   musique: {
-    tempo: 124, volume: 0.42, fondu: 1.2,
-    nappe: 0.035, violoncelles: 0.06, cuivres: 0.05, pulsation: 0.07, tambours: 0.9,
+    tempo: 128, volume: 0.45, fondu: 1.2,
+    nappe: 0.035, violoncelles: 0.06, cuivres: 0.06, pulsation: 0.07, tambours: 1, choeur: 0.05, cymbales: 0.12, // (étape 84 : le chœur et les cymbales)
     braam: { fort: 0.12, duree: 3.4 },
     salle: { duree: 2.8, part: 0.55 },
     accords: [

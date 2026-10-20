@@ -56,6 +56,7 @@ Tanks.SousLeCapot = (function () {
     releve: (d) => "⚡ Tu relèves " + d.cible + " avec ton défibrillateur !",
     munitions: (d) => "🎒 Sac de munitions : réserve du " + d.arme + " pleine (" + d.reserve + "), grenades au complet",
     lampe: (d) => "🔦 Lampe " + (d.allumee ? "allumée" : "éteinte"),
+    accueil: () => "🏰 Tu quittes la page d'accueil : la musique se tait, place au menu",
     musique: (d) => (d.allumee ? "🎻 La musique joue (M pour la couper)" : "🔇 Musique coupée (M pour la remettre)"),
     vue: (d) => (d.aPied ? (d.premiere ? "👁️ Vue à la première personne (C) : tu vois par les yeux du soldat" : "🎥 Vue de derrière le soldat (C)") : "🎥 Caméra du véhicule changée (C)"),
     // étape 75

@@ -144,6 +144,46 @@ Tanks.Musique = (function () {
       o.stop(t + D + 0.1);
     });
   }
+  // (étape 84, plus épique) un CHŒUR qui chante « aaah » : des voix dont on garde seulement 2 bandes de fréquences,
+  // celles qui font le son « a » de la bouche (les « formants » : vers 700 et 1 100 Hz)
+  function chorale(f, t, duree) {
+    const g = ctx.createGain(), f1 = ctx.createBiquadFilter(), f2 = ctx.createBiquadFilter();
+    f1.type = f2.type = "bandpass";
+    f1.frequency.value = 700;
+    f2.frequency.value = 1150;
+    f1.Q.value = f2.Q.value = 4;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(M.choeur, t + 0.6);
+    g.gain.setValueAtTime(M.choeur, t + Math.max(0.6, duree - 0.5));
+    g.gain.linearRampToValueAtTime(0.0001, t + duree + 0.8);
+    f1.connect(g);
+    f2.connect(g);
+    brancher(g, 1);
+    for (let v = 0; v < 5; v++) {
+      const o = ctx.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.value = f;
+      o.detune.value = (v / 4 - 0.5) * 30;
+      o.connect(f1);
+      o.connect(f2);
+      o.start(t);
+      o.stop(t + duree + 0.9);
+    }
+  }
+  // une CYMBALE : un souffle aigu qui monte (avant le thème) ou qui éclate (au début du thème)
+  function cymbale(t, duree, monte) {
+    const s = ctx.createBufferSource(), g = ctx.createGain(), fi = ctx.createBiquadFilter();
+    s.buffer = bruit;
+    s.loop = true;
+    fi.type = "highpass";
+    fi.frequency.value = 5000;
+    if (monte) g.gain.setValueAtTime(0.0001, t), g.gain.exponentialRampToValueAtTime(M.cymbales, t + duree), g.gain.linearRampToValueAtTime(0.0001, t + duree + 0.05);
+    else g.gain.setValueAtTime(M.cymbales, t), g.gain.exponentialRampToValueAtTime(0.0005, t + duree);
+    s.connect(fi).connect(g);
+    brancher(g, 0.9);
+    s.start(t);
+    s.stop(t + duree + 0.1);
+  }
   function taiko(t, fort, grave) { // un grand tambour japonais (un « boum » profond + le claquement de la peau)
     const o = ctx.createOscillator(), g = ctx.createGain();
     o.frequency.setValueAtTime(grave ? 90 : 140, t);
@@ -183,19 +223,26 @@ Tanks.Musique = (function () {
     // le BRAAAM au début de l'intro, puis toutes les 4 mesures
     if (i === 0 && mesure % 4 === 0) braam(basseNote / 2, t);
     if (partie === "intro") return;
+    // (étape 84) la cymbale monte pendant la dernière mesure de la montée, puis ÉCLATE avec le thème
+    if (mesure === 7 && i === 0) cymbale(t, croche * 6, true);
+    if (mesure === 8 && i === 0) cymbale(t, 2.5, false);
+    // (étape 84) le chœur chante l'accord pendant tout le thème
+    if (partie === "thème" && i === 0) for (const f of [quinte, octave, tierce * 2]) chorale(f, t, croche * 6);
     // les violoncelles martèlent : DOUM-ta-ta DOUM-ta-ta (pirates)
     const accent = i === 0 || i === 3 ? 1 : 0.6;
     violoncelle(i === 2 || i === 5 ? quinte : basseNote, t, croche * 0.75, accent);
-    if (partie === "thème") violoncelle(octave, t, croche * 0.75, accent * 0.5);
+    if (partie === "thème") violoncelle(octave, t, croche * 0.75, accent * 0.5), violoncelle(octave * 2, t, croche * 0.6, accent * 0.45); // (et les violons, 2 octaves plus haut)
     // les taikos
     if (i === 0) taiko(t, 1, true);
     if (i === 3) taiko(t, 0.75, true);
     if (partie === "thème" && (i === 4 || i === 5) && mesure % 2 === 1) taiko(t, 0.45, false);
+    if (partie === "thème" && mesure === 15) taiko(t, 0.5 + i * 0.1, i % 2 === 0); // (le grand roulement avant de reprendre)
     if (partie === "montée" && mesure === 7 && i >= 3) taiko(t, 0.5 + (i - 3) * 0.2, false); // (le roulement avant le thème)
     // la mélodie de cuivres (et un cor une octave plus bas)
     if (partie === "thème") {
       for (const [quand, nom, longueur] of M.melodie[(mesure - 8) % M.melodie.length]) if (quand === i) {
         cuivre(hz(nom), t, croche * longueur);
+        cuivre(hz(nom) / 2, t, croche * longueur); // (les trombones, une octave plus bas : plus puissant)
         cor(hz(nom) / 2, t, croche * longueur);
       }
     }
@@ -220,7 +267,7 @@ Tanks.Musique = (function () {
     if (!ctx) return;
     const doitDormir = document.hidden || !document.hasFocus();
     if (doitDormir !== endormie) (endormie = doitDormir), endormie ? ctx.suspend() : ctx.resume();
-    const auMenu = monde.phase === "garage";
+    const auMenu = Tanks.Accueil.visible; // (étape 84 : la musique joue sur la page d'accueil seulement)
     if (auMenu && !joue) (joue = true), (pas = 0), (prochaine = ctx.currentTime + 0.1); // (on revient au menu : le morceau recommence au début)
     if (!auMenu && joue) joue = false;
     etat.joue = joue && !coupee && !sonCoupe;

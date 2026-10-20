@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#1c160f">
-  <title>Les tanks de Maxance</title>
+  <title>The Last Battlefield</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
   <style>
     :root { --fond: #141a12; --panneau: #1f2a1b; --bord: #3c4a32; --texte: #eef0e4; --doux: #b9c2a6; --accent: #ffcf5a; }
@@ -72,6 +72,28 @@
     #menu { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; gap: 8px; padding: 14px 18px; overflow-y: auto;
       background: radial-gradient(ellipse at 70% 20%, rgba(40,52,30,.82), rgba(8,11,7,.95)); font-size: 14px; }
     #menu[hidden] { display: none; }
+    /* (étape 84) la page d'accueil */
+    #accueil { position: absolute; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: opacity .6s; }
+    #accueil[hidden] { display: none; }
+    #accueil.a-part { opacity: 0; pointer-events: none; }
+    .a-fond { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, rgba(20,24,16,.25), rgba(4,5,3,.88) 75%), linear-gradient(transparent 55%, rgba(0,0,0,.85)); }
+    .a-contenu { position: relative; text-align: center; padding: 20px; }
+    .a-sur-titre { color: #c9b98a; letter-spacing: .3em; font-size: .8rem; text-transform: uppercase; opacity: .85; }
+    .a-titre { margin: 10px 0 6px; font-size: clamp(2.4rem, 8vw, 5.4rem); line-height: .95; letter-spacing: .06em; color: #f3e6c0;
+      text-shadow: 0 3px 0 #3a2a0a, 0 0 30px rgba(255,170,60,.45), 0 8px 24px #000; animation: a-respire 4s ease-in-out infinite; }
+    .a-titre span { color: var(--accent); font-size: .62em; letter-spacing: .18em; }
+    .a-auteur { color: #c9b98a; letter-spacing: .25em; font-size: .85rem; text-transform: uppercase; }
+    .a-ligne { width: min(420px, 70vw); height: 2px; margin: 12px auto 20px; background: linear-gradient(90deg, transparent, #e0b04a, transparent); }
+    .a-attente { color: #f0e6c8; font-size: 1.1rem; animation: a-clignote 1.4s ease-in-out infinite; }
+    .a-boutons { display: flex; gap: 14px; justify-content: center; align-items: center; flex-wrap: wrap; }
+    .a-boutons[hidden] { display: none; }
+    .a-jouer { font-size: 1.5rem; font-weight: bold; letter-spacing: .1em; padding: 14px 46px; border-radius: 10px; color: #1a1205;
+      background: linear-gradient(#ffd77a, #d9962a); border: 2px solid #fff1c4; box-shadow: 0 0 24px rgba(255,180,60,.55), 0 6px 0 #6b4410; cursor: pointer; }
+    .a-jouer:hover, .a-jouer:focus { filter: brightness(1.12); outline: none; transform: translateY(-1px); }
+    .a-carnet { color: #e8dcb8; padding: 10px 16px; border: 1px solid #6b5a30; border-radius: 8px; background: rgba(20,16,8,.6); text-decoration: none; }
+    .a-pied { margin-top: 22px; color: #a99f84; font-size: .8rem; }
+    @keyframes a-clignote { 50% { opacity: .35; } }
+    @keyframes a-respire { 50% { text-shadow: 0 3px 0 #3a2a0a, 0 0 46px rgba(255,170,60,.7), 0 8px 24px #000; } }
     #menu button { touch-action: manipulation; }
     .m-haut { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .m-titre-jeu { font-size: 1.5rem; font-weight: bold; color: var(--accent); letter-spacing: .04em; text-transform: uppercase; text-shadow: 0 2px 0 #000; }
@@ -119,8 +141,8 @@
 <body>
   <div class="page">
     <header class="entete">
-      <h1>🛡️ Les tanks de Maxance · bataille de tanks, soldats, grenades, maisons à détruire, engins, motos, quads, camions, hélicos de transport, bateaux, sous-marins, avions et portails · et le souterrain</h1>
-      <span><span id="version" class="version"></span> <a href="../index.html#etape83">📓 Ouvrir le carnet (étapes 60 à 83)</a></span>
+      <h1>🛡️ The Last Battlefield · bataille de tanks, soldats, grenades, maisons à détruire, engins, motos, quads, camions, hélicos de transport, bateaux, sous-marins, avions et portails · et le souterrain</h1>
+      <span><span id="version" class="version"></span> <a href="../index.html#etape84">📓 Ouvrir le carnet (étapes 60 à 84)</a></span>
     </header>
 
     <div class="cadre-ecran">
@@ -131,6 +153,7 @@
         <input id="ordre" type="text" autocomplete="off" spellcheck="false" maxlength="120" placeholder="Écris ton ordre… (Entrée : envoyer · Échap : annuler · ↑ : le dernier)">
         <div id="exemples-ordres" aria-label="Exemples d'ordres"></div>
       </div>
+      <div id="accueil" aria-label="La page d'accueil du jeu"></div>
       <div id="menu" hidden aria-label="Le menu avant la bataille"></div>
       <div id="pause" hidden>⏸️ Pause (Échap pour reprendre)</div>
     </div>
@@ -172,51 +195,52 @@
   </div>
 
   <script src="../circuit/vendor/three.min.js"></script>
-  <script src="config.js?v=22"></script>
-  <script src="moteur/evenements.js?v=22"></script>
-  <script src="moteur/bruit.js?v=22"></script>
-  <script src="moteur/entrees.js?v=22"></script>
-  <script src="moteur/grille.js?v=22"></script>
-  <script src="donnees/carte-du-jour.js?v=22"></script>
-  <script src="logique/terrain.js?v=22"></script>
-  <script src="logique/souterrain.js?v=22"></script>
-  <script src="logique/structures.js?v=22"></script>
-  <script src="logique/char.js?v=22"></script>
-  <script src="logique/obus.js?v=22"></script>
-  <script src="logique/ia.js?v=22"></script>
-  <script src="logique/soldat.js?v=22"></script>
-  <script src="logique/troupes.js?v=22"></script>
-  <script src="logique/vehicules.js?v=22"></script>
-  <script src="logique/helicos.js?v=22"></script>
-  <script src="logique/bateaux.js?v=22"></script>
-  <script src="logique/portails.js?v=22"></script>
-  <script src="logique/sousmarins.js?v=22"></script>
-  <script src="logique/avions.js?v=22"></script>
-  <script src="logique/ordres.js?v=22"></script>
-  <script src="logique/engins.js?v=22"></script>
-  <script src="logique/equipement.js?v=22"></script>
-  <script src="logique/armes.js?v=22"></script>
-  <script src="logique/gadgets.js?v=22"></script>
-  <script src="donnees/sauvegarde.js?v=22"></script>
-  <script src="logique/monde.js?v=22"></script>
-  <script src="affichage/outils3d.js?v=22"></script>
-  <script src="affichage/chars3d.js?v=22"></script>
-  <script src="affichage/engins3d.js?v=22"></script>
-  <script src="affichage/vehicules3d.js?v=22"></script>
-  <script src="affichage/helicos3d.js?v=22"></script>
-  <script src="affichage/avions3d.js?v=22"></script>
-  <script src="affichage/maisons3d.js?v=22"></script>
-  <script src="affichage/decor.js?v=22"></script>
-  <script src="affichage/effets.js?v=22"></script>
-  <script src="affichage/station3d.js?v=22"></script>
-  <script src="affichage/scene.js?v=22"></script>
-  <script src="affichage/qualite.js?v=22"></script>
-  <script src="affichage/tableau.js?v=22"></script>
-  <script src="affichage/sous-le-capot.js?v=22"></script>
-  <script src="affichage/sons.js?v=22"></script>
-  <script src="affichage/musique.js?v=22"></script>
-  <script src="affichage/barre-ordres.js?v=22"></script>
-  <script src="affichage/menu.js?v=22"></script>
-  <script src="main.js?v=22"></script>
+  <script src="config.js?v=23"></script>
+  <script src="moteur/evenements.js?v=23"></script>
+  <script src="moteur/bruit.js?v=23"></script>
+  <script src="moteur/entrees.js?v=23"></script>
+  <script src="moteur/grille.js?v=23"></script>
+  <script src="donnees/carte-du-jour.js?v=23"></script>
+  <script src="logique/terrain.js?v=23"></script>
+  <script src="logique/souterrain.js?v=23"></script>
+  <script src="logique/structures.js?v=23"></script>
+  <script src="logique/char.js?v=23"></script>
+  <script src="logique/obus.js?v=23"></script>
+  <script src="logique/ia.js?v=23"></script>
+  <script src="logique/soldat.js?v=23"></script>
+  <script src="logique/troupes.js?v=23"></script>
+  <script src="logique/vehicules.js?v=23"></script>
+  <script src="logique/helicos.js?v=23"></script>
+  <script src="logique/bateaux.js?v=23"></script>
+  <script src="logique/portails.js?v=23"></script>
+  <script src="logique/sousmarins.js?v=23"></script>
+  <script src="logique/avions.js?v=23"></script>
+  <script src="logique/ordres.js?v=23"></script>
+  <script src="logique/engins.js?v=23"></script>
+  <script src="logique/equipement.js?v=23"></script>
+  <script src="logique/armes.js?v=23"></script>
+  <script src="logique/gadgets.js?v=23"></script>
+  <script src="donnees/sauvegarde.js?v=23"></script>
+  <script src="logique/monde.js?v=23"></script>
+  <script src="affichage/outils3d.js?v=23"></script>
+  <script src="affichage/chars3d.js?v=23"></script>
+  <script src="affichage/engins3d.js?v=23"></script>
+  <script src="affichage/vehicules3d.js?v=23"></script>
+  <script src="affichage/helicos3d.js?v=23"></script>
+  <script src="affichage/avions3d.js?v=23"></script>
+  <script src="affichage/maisons3d.js?v=23"></script>
+  <script src="affichage/decor.js?v=23"></script>
+  <script src="affichage/effets.js?v=23"></script>
+  <script src="affichage/station3d.js?v=23"></script>
+  <script src="affichage/scene.js?v=23"></script>
+  <script src="affichage/qualite.js?v=23"></script>
+  <script src="affichage/tableau.js?v=23"></script>
+  <script src="affichage/sous-le-capot.js?v=23"></script>
+  <script src="affichage/sons.js?v=23"></script>
+  <script src="affichage/musique.js?v=23"></script>
+  <script src="affichage/barre-ordres.js?v=23"></script>
+  <script src="affichage/accueil.js?v=23"></script>
+  <script src="affichage/menu.js?v=23"></script>
+  <script src="main.js?v=23"></script>
 </body>
 </html>

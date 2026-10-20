@@ -146,7 +146,7 @@ Tanks.Menu = (function () {
   // À chaque image : le menu est ouvert au garage, fermé pendant la bataille.
   function maj(m) {
     monde = m;
-    const doit = m.phase === "garage";
+    const doit = m.phase === "garage" && !Tanks.Accueil.visible; // (étape 84 : pas tant que la page d'accueil est là)
     if (doit !== ouvert) {
       ouvert = doit;
       racine.hidden = !ouvert;

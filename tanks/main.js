@@ -24,6 +24,7 @@ window.Tanks = window.Tanks || {};
   Tanks.Tableau.initialiser(toile2d);
   Tanks.BarreOrdres.initialiser(); // (étape 65)
   // (étape 77) le menu : il ne touche pas au monde lui-même, il fait des DEMANDES que le quartier-maître accepte
+  Tanks.Accueil.initialiser(); // (étape 84 : la page d'accueil, avec la musique)
   Tanks.Menu.initialiser(monde, (type, valeur) => (type === "combat" ? Tanks.Monde.lancer(monde) : Tanks.Equipement.demander(monde, type, valeur)));
   toile2d.focus();
 
