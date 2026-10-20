@@ -768,8 +768,8 @@ Tanks.CONFIG = {
     ],
     // la taille d'une voiture : longueur, largeur, hauteur (m) ; espace entre deux voitures
     voiture: { metro: [17, 2.9, 3.5], tram: [15, 2.6, 3.4], espace: 0.8 },
-    feux: { lumieres: 4, force: 70, portee: 34, flammes: 14, fumee: 5 }, // flammes, fumee : particules par seconde et par feu
-    brouillard: [12, 95],
+    feux: { lumieres: 4, force: 80, portee: 36, flammes: 22, fumee: 5 }, // flammes, fumee : particules par seconde et par feu
+    brouillard: [14, 120],
     regles: { soldats: 10, renforts: 30, attente: 3, vue: 110 },
   },
 };

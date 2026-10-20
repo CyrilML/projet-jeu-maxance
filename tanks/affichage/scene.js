@@ -182,7 +182,7 @@ Tanks.Scene = (function () {
   }
 
   // (étape 80) Descendre dans le souterrain, ou remonter dehors : on cache l'un, on montre l'autre, on change la lumière.
-  const BRUME = { dehors: new THREE.Color(0xc4cfd6), dessous: new THREE.Color(0x0d0e10) };
+  const BRUME = { dehors: new THREE.Color(0xc4cfd6), dessous: new THREE.Color(0x111316) };
   function changerMonde(dessous) {
     sousTerre = dessous;
     if (dessous && !Tanks.Station3D.construite) Tanks.Station3D.construire(scene);
@@ -192,7 +192,7 @@ Tanks.Scene = (function () {
     scene.background = dessous ? BRUME.dessous : null;
     scene.fog.color.copy(dessous ? BRUME.dessous : BRUME.dehors);
     ambiance.color.set(dessous ? 0xc8d2dc : L.ciel);
-    ambiance.groundColor.set(dessous ? 0x6a6058 : L.sol);
+    ambiance.groundColor.set(dessous ? 0x8a8078 : L.sol);
     ambiance.intensity = dessous ? 1.25 : L.ambiance;
     appliquerQualite(Q);
     Tanks.Evenements.emettre("monde-3d", { dessous, dessins: Tanks.Station3D.bilan.dessins, ms: Tanks.Station3D.bilan.ms });

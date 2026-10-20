@@ -85,9 +85,9 @@ Tanks.Station3D = (function () {
   }, 1.5);
   // le BÉTON du plafond et des tunnels
   const beton = () => image(256, 256, (g, l, h) => {
-    g.fillStyle = "#4a4a48";
+    g.fillStyle = "#8c8a85";
     g.fillRect(0, 0, l, h);
-    grain(g, l, h, 2500, ["#555552", "#3f3f3d", "#5d5b57", "#383735"], 5);
+    grain(g, l, h, 2500, ["#9a9893", "#7a7874", "#a5a29b", "#6a6864", "rgba(30,28,26,.4)"], 5);
     g.strokeStyle = "rgba(20,20,20,.35)";
     g.lineWidth = 2;
     g.strokeRect(0, 0, l, h);
@@ -194,7 +194,7 @@ Tanks.Station3D = (function () {
       carrelage: mat({ map: carrelage(), roughness: 0.35 }),
       sol: mat({ map: dalles(), roughness: 0.55 }),
       ballast: mat({ map: ballast(), roughness: 1 }),
-      beton: mat({ map: beton(), roughness: 0.95, color: 0xb4b2ac }),
+      beton: mat({ map: beton(), roughness: 0.95, color: 0xd0cec8 }),
       jaune: mat({ color: 0xd8b21c, roughness: 0.6 }),
       pierre: mat({ color: 0x9a968e, roughness: 0.7 }),
       metal: mat({ color: 0x8c9096, roughness: 0.35, metalness: 0.85 }),
@@ -474,7 +474,8 @@ Tanks.Station3D = (function () {
       while (f.reste > 1) {
         f.reste -= 1;
         const o = f.foyers[Math.floor(Math.random() * f.foyers.length)];
-        E.particule(o.x + (Math.random() - 0.5) * 1.6, o.y + Math.random() * 1.2, o.z + (Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 0.6, 1.6 + Math.random() * 1.6, (Math.random() - 0.5) * 0.6, 0.55 + Math.random() * 0.4, 0.9, 1.9, 0.95, Math.random() < 0.5 ? [1, 0.55, 0.15] : [1, 0.75, 0.3], true);
+        const toit = Math.random() < 0.35; // (des flammes sortent aussi par le toit crevé)
+        E.particule(o.x + (Math.random() - 0.5) * 1.8, o.y + (toit ? 2.2 : Math.random() * 1.2), o.z + (Math.random() - 0.5) * 1.2, (Math.random() - 0.5) * 0.6, 1.8 + Math.random() * 1.8, (Math.random() - 0.5) * 0.6, 0.6 + Math.random() * 0.5, 1.2, toit ? 3 : 2.4, 0.95, Math.random() < 0.5 ? [1, 0.5, 0.12] : [1, 0.72, 0.28], true);
       }
       f.fumee += dt * F.fumee;
       while (f.fumee > 1) {
