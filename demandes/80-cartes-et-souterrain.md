@@ -1,6 +1,6 @@
 # Demande n° 80 : de nouvelles cartes, et d'abord le souterrain
 
-> Statut : 🟡 le souterrain est livré le 20/10/2026 (tanks version 19) ; les 4 autres cartes restent à faire.
+> Statut : ✅ le souterrain est livré (tanks version 19) ; les 4 autres cartes aussi, en version rapide (demande n° 81, tanks version 20).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi

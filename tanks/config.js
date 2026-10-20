@@ -736,7 +736,7 @@ Tanks.CONFIG = {
     { id: "souterrain", nom: "Le souterrain", icone: "🚇", texte: "Une station de métro sous terre : trams en feu, rames, bancs, escalators détruits. À pied seulement !", infanterie: true },
     // ✍️ (étape 81) 4 VARIANTES de la grande bataille : le même terrain, les mêmes règles, mais d'autres RÉGLAGES
     // (« variante »). Le décor est fabriqué au chargement de la page : changer de décor RECHARGE la page (1 s).
-    //   arbres : × le nombre d'arbres ; collines : × la hauteur des collines ; herbe : false = pas de touffes d'herbe ;
+    //   arbres : × le nombre d'arbres ; haies : le nombre de haies (sinon monde.haies) ; collines : × la hauteur des collines ; herbe : false = pas de touffes d'herbe ;
     //   village : false = pas les 16 maisons du village (la ville prend la place) ;
     //   quartier : une VILLE en damier autour de (x, z) : « ilot » m entre deux rues, rues de « rue » m de large,
     //     « maisons » par pâté (îlot), jusqu'à « rayon » m du centre ; ruinesDepart : part des maisons de la ville déjà en
@@ -750,11 +750,11 @@ Tanks.CONFIG = {
         sol: { herbe: [92, 94, 80], herbeSombre: [70, 72, 62], herbeSeche: [120, 116, 100], herbeJaune: [96, 98, 82], terre: [96, 90, 82], terreBattue: [110, 106, 100] },
         soleil: { couleur: 0xe8e2d8, force: 2.2, ciel: 0xb8bcc2, sol: 0x55524c }, brume: 0xa8a8aa } },
     { id: "desert", nom: "Le désert", icone: "🏜️", texte: "Des dunes de sable à perte de vue, presque pas d'arbres, un soleil brûlant.", infanterie: false,
-      variante: { arbres: 0.02, collines: 1.8, herbe: false,
+      variante: { arbres: 0.02, collines: 1.8, herbe: false, haies: 0,
         sol: { herbe: [214, 178, 120], herbeSombre: [196, 152, 96], herbeSeche: [226, 196, 140], herbeJaune: [220, 170, 100], terre: [190, 150, 104], terreBattue: [200, 166, 120], sousBois: [170, 136, 90], chemin: [186, 150, 106] },
         soleil: { couleur: 0xfff0d0, force: 3.2, ciel: 0xf0e0c0, sol: 0xb08a58 }, brume: 0xe6d6b8 } },
     { id: "village-desert", nom: "Le village du désert", icone: "🕌", texte: "Le désert, avec un village de maisons couleur sable au milieu des dunes.", infanterie: false,
-      variante: { arbres: 0.02, collines: 1.8, herbe: false, village: false,
+      variante: { arbres: 0.02, collines: 1.8, herbe: false, haies: 0, village: false,
         quartier: { x: 0, z: 0, rayon: 120, ilot: 34, rue: 8, maisons: 2, ruinesDepart: 0.15 }, rues: "#c8a678", toitPlat: true,
         crepis: ["#d8bf92", "#e2cfa6", "#cfae7c", "#e6d6b6", "#c99f6a"],
         sol: { herbe: [214, 178, 120], herbeSombre: [196, 152, 96], herbeSeche: [226, 196, 140], herbeJaune: [220, 170, 100], terre: [190, 150, 104], terreBattue: [200, 166, 120], sousBois: [170, 136, 90], chemin: [186, 150, 106] },

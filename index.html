@@ -202,6 +202,7 @@
       <a href="#etape78">Étape 78</a>
       <a href="#etape79">Étape 79</a>
       <a href="#etape80">Étape 80</a>
+      <a href="#etape81">Étape 81</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4536,6 +4537,39 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <details class="question"><summary>Pourquoi le jeu ne fabrique-t-il pas le grand terrain dans le souterrain ?</summary><p>Parce qu'on ne le verrait pas, et que ça ferait dessiner plein de choses pour rien : le jeu serait plus lent.</p></details>
     </section>
 
+    <section id="etape81">
+      <h2>🏜️ Étape 81 : la ville, les ruines, le désert et le village du désert <span class="etiquette">✅ livrée (version rapide) · à valider</span></h2>
+      <p class="chapeau">4 nouvelles cartes à choisir dans le menu, avec les tanks. <a href="tanks/index.html"><strong>▶ les tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/81-quatre-cartes.md</code>.</p>
+          <ul>
+            <li>✍️ En pleine ville, une ville en ruines, le désert, un village du désert.</li>
+            <li>✍️ En 10 minutes : des variantes de la grande carte.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ Tanks « version 20 ».</li>
+            <li>☐ Onglet « Carte » du menu : 6 cartes au choix.</li>
+            <li>☐ La ville : des maisons serrées et des rues grises. Les ruines : presque tout est détruit.</li>
+            <li>☐ Le désert : du sable et des dunes. Le village du désert : des maisons au milieu du sable.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🎛️ Une carte = des réglages</h3>
+      <p>Pour aller vite, on n'a pas écrit 4 nouveaux programmes. On a gardé le même « fabricant de carte » et on lui donne des <strong>réglages</strong> différents : la couleur du sol, le nombre de maisons, combien sont en ruines, le nombre d'arbres, la couleur du soleil. C'est comme une recette de gâteau : la même recette, mais avec d'autres ingrédients.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>tanks/config.js</code>, cherche <code>cartes</code> : compare les réglages du désert et de la ville.</li>
+        <li>Invente ta propre carte en changeant quelques nombres d'une variante !</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>Pourquoi ces 4 cartes ont-elles pu être faites si vite ?</summary><p>Parce qu'elles réutilisent le même fabricant de carte : on change seulement ses réglages (couleurs, maisons, ruines, arbres).</p></details>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -4933,6 +4967,12 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
           <h4>Le souterrain <span class="etiquette">✅ fait · à valider</span></h4>
           <p>Une station de métro pour l'infanterie, avec des trams en feu (étape 80). À suivre : la ville, la ville en ruines, le désert et le village du désert.</p>
           <p class="apprend"><b>Tu apprends :</b> choisir une carte, construire un lieu fermé, des lumières qui tremblent. <b>Durée :</b> 1 séance.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">🏜️</div>
+          <h4>La ville, les ruines, le désert, le village du désert <span class="etiquette">✅ fait (version rapide) · à valider</span></h4>
+          <p>4 variantes de la grande carte, à choisir dans le menu (étape 81).</p>
+          <p class="apprend"><b>Tu apprends :</b> une carte faite de réglages, réutiliser un fabricant. <b>Durée :</b> 1 séance.</p>
         </div>
         <div class="carte fait">
           <div class="num">⚔️</div>
@@ -5674,6 +5714,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-80" data-cle="appris-80" placeholder="Ex. : J'ai appris qu'une carte se construit à partir de données…"></textarea>
         <label for="idees-80"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-80" data-cle="idees-80" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 81 · la ville, les ruines, le désert et le village du désert <span class="petit">· 20 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les réglages des 4 cartes (<code>tanks/config.js</code>, <code>cartes</code>) et leur choix dans le menu.</p>
+        <p class="petit">✍️ Maxance a choisi : la ville, la ville en ruines, le désert, le village du désert, en 10 minutes.</p>
+        <label for="appris-81"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-81" data-cle="appris-81" placeholder="Ex. : J'ai appris qu'une carte peut être faite de réglages…"></textarea>
+        <label for="idees-81"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-81" data-cle="idees-81" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

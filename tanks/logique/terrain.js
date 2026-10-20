@@ -165,7 +165,7 @@ Tanks.Terrain = (function () {
     }
   }
   // Les haies et les murets dans la campagne (pour se cacher), et quelques ruines isolées (des granges).
-  for (let k = 0; k < W.haies; k++) {
+  for (let k = 0, nHaies = VAR.haies == null ? W.haies : VAR.haies; k < nHaies; k++) { // (étape 81 : pas de haies dans le désert)
     const x = (hasard() * 2 - 1) * (demi - 80), z = (hasard() * 2 - 1) * (demi - 80);
     if (presDUnVillage(x, z, 20) || dansUnCamp(x, z) || !loinDe(x, z, 8)) continue;
     boites.push({ x, z, demiL: 8 + hasard() * 10, demiP: 0.6, angle: hasard() * Math.PI, h: 1.6, sorte: "muret", type: "haie", lieu: "la campagne" });
