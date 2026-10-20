@@ -134,6 +134,8 @@ Tanks.SousLeCapot = (function () {
     roquette: (d) => "🚀 " + (d.parToi ? "Tu tires" : d.tireur + " tire") + " une roquette",
     largage: (d) => "💣 " + d.engin + " lâche " + (d.sorte === "bombe" ? "une bombe" : "une grenade") + " (il en reste " + d.reste + ")",
     missile: (d) => "🚀 Missile tiré" + (d.cible ? ", guidé vers " + d.cible : " tout droit (aucun ennemi en face)") + " · il en reste " + d.reste,
+    // étape 85
+    "soldat-tombe": (d) => ({ tete: "💥 ", dos: "⤵️ ", face: "⤴️ ", genoux: "🧎 ", explosion: "💨 ", ecrase: "🛞 " }[d.genre] || "") + d.cible + " : " + ({ tete: "balle dans la tête, il s'écroule", dos: "touché dans le dos, il tombe en avant", face: "touché de face, il part en arrière", genoux: "il tombe à genoux… puis en avant", explosion: "projeté par l'explosion", ecrase: "écrasé, il s'aplatit" }[d.genre] || d.genre),
     "soldat-touche": (d) => "🩹 " + d.cible + " est touché par " + d.tireur + " (vie " + d.vie + ")",
     "soldat-mort": (d) => "✖ " + d.cible + " est à terre (" + ({ chute: "tombé de la corde de " + d.tireur, ecrase: "écrasé par " + d.tireur, bombe: "bombe de " + d.tireur, missile: "missile de " + d.tireur, grenade: "grenade de " + d.tireur, effondrement: "écrasé sous une maison qui s'effondre", roquette: "roquette de " + d.tireur, obus: "obus de " + d.tireur }[d.par] || "balle de " + d.tireur) + ")",
   };

@@ -81,7 +81,7 @@ Tanks.Obus = (function () {
       const d = Math.hypot(s.x - x, s.z - z);
       if (d < R.souffle && Math.abs(s.y - y) < R.souffle) {
         const abrite = Tanks.Structures.touche(x, y + 0.35, z, s.x, s.y + 1, s.z);
-        Tanks.Soldat.blesser(s, abrite ? 1 : d < R.souffle * 0.6 ? 99 : 2, p.tireur, ev, p.sorte);
+        Tanks.Soldat.blesser(s, abrite ? 1 : d < R.souffle * 0.6 ? 99 : 2, p.tireur, ev, p.sorte, { x, z });
       }
     }
     if (p.sorte === "grenade") {

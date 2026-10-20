@@ -452,8 +452,9 @@ Tanks.Engins3D = (function () {
     const c = r.corps;
     if (s.mort) {
       // il tombe sur le dos en une demi-seconde, les bras ouverts
-      const k = Math.min(1, s.depuisMort * 2);
-      c.rotation.set(0, 0, k * (Math.PI / 2));
+      // (étape 85) en avant ou en arrière selon sa chute (logique/soldat.js), à la vitesse de sa chute, un peu de travers
+      const ch = s.chute, k = Math.min(1, ch ? (s.depuisMort - ch.debut) / ch.duree : s.depuisMort * 2);
+      c.rotation.set(ch ? ch.travers * k : 0, 0, (ch && ch.enAvant ? -1 : 1) * k * (Math.PI / 2));
       c.position.set(0, 0.12 * k, 0);
       r.pose = null;
       for (const e of r.epaules) e.quaternion.identity(), e.rotation.set(0, 0, 0.6 * k);

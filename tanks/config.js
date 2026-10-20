@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 23,
+  version: 24,
   // ✍️ (étape 82, refaite aux étapes 83 et 84) LA MUSIQUE DE LA PAGE D'ACCUEIL, « un mix Battlefield 6 et Pirates des Caraïbes » (une musique
   // inventée), SEULEMENT au menu : elle se tait pendant la bataille (en « fondu » secondes).
   // tempo : battements par minute (2 croches par battement, 6 croches par mesure) ; volume de chaque instrument ;
@@ -144,6 +144,15 @@ Tanks.CONFIG = {
     vue: 140, // m : un soldat voit et tire jusqu'à 140 m
     pense: 0.25, // s : un soldat de l'ordinateur réfléchit 4 fois par seconde (pas plus : ils sont 24 !)
     ecrase: 3, // m/s : un tank ou un 4x4 ennemi qui roule plus vite écrase un soldat
+    // ✍️ (étape 85) LES CHUTES : comment il tombe quand il est à terre (choisi par logique/soldat.js, joué par affichage/engins3d.js)
+    chutes: {
+      chanceTete: 0.18, // une balle sur 6 environ touche la tête : il s'écroule
+      chanceGenoux: 0.3, // sinon, 3 fois sur 10 il tombe d'abord à genoux
+      dos: 1.05, // rad : la balle arrive à moins de 60° de son dos → il tombe en avant (de face → en arrière)
+      durees: { tete: 0.7, dos: 0.75, face: 0.8, genoux: 1.5, explosion: 0.6, ecrase: 0.25 }, // s : la durée de la chute
+      pauseGenoux: 0.4, // s : à genoux, il reste un moment avant de tomber
+      hasard: 0.25, // ± 25 % sur la vitesse, et un petit angle de travers
+    },
     // (étape 63) un soldat qui tombe à l'eau NAGE (lentement, sans tirer), la tête hors de l'eau
     nage: 1.6, // m/s
     detail: 45, // m : plus près que ça, on dessine le soldat en détail (genoux, coudes, visage…) ; plus loin, en simple

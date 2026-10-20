@@ -35,7 +35,8 @@ Tanks.Soldat = (function () {
   }
 
   // Blesser un soldat (une balle = 1, une explosion tout près = 99). Renvoie les événements dans ev.
-  function blesser(s, degats, tireur, ev, par) {
+  // (étape 85) origine = d'où vient le coup ({ x, z } : le tireur, ou le centre de l'explosion), pour choisir la CHUTE.
+  function blesser(s, degats, tireur, ev, par, origine) {
     if (s.mort) return;
     s.vie = Math.max(0, s.vie - degats);
     s.touche = 0;
@@ -43,7 +44,28 @@ Tanks.Soldat = (function () {
     if (s.vie === 0) {
       s.mort = true;
       ev.push(["soldat-mort", { cible: s, tireur, par: par || "balle", x: s.x, y: s.y, z: s.z }]);
+      s.chute = choisirChute(s, par || "balle", origine || tireur);
+      ev.push(["soldat-tombe", { cible: s, tireur, genre: s.chute.genre, x: s.x, y: s.y, z: s.z }]);
     }
+  }
+
+  // ✍️ (étape 85) COMMENT il tombe (le « metteur en scène » de la chute) : on regarde d'où vient le coup par rapport à
+  // là où il regarde. Une balle qui arrive dans son DOS le pousse en avant ; de FACE, en arrière ; parfois à la tête
+  // (il s'écroule) ou il tombe d'abord à genoux. Une explosion le projette, un tank l'écrase. Un peu de hasard pour
+  // que deux chutes ne soient jamais pareilles. (Ça ne change pas les règles : il est à terre pareil.)
+  function choisirChute(s, par, o) {
+    const K = S.chutes, hasard = 1 + (Math.random() * 2 - 1) * K.hasard;
+    const vers = o && o.x !== undefined ? Math.atan2(s.z - o.z, s.x - o.x) : s.angle + Math.PI; // (le sens où va le coup)
+    const ecart = Math.abs(angleEntre(vers - s.angle)); // 0 : le coup va dans le sens où il regarde (dans le dos)
+    let genre;
+    if (par === "ecrase" || par === "effondrement") genre = "ecrase";
+    else if (["grenade", "roquette", "obus", "bombe", "missile"].includes(par)) genre = "explosion";
+    else if (Math.random() < K.chanceTete) genre = "tete";
+    else if (Math.random() < K.chanceGenoux) genre = "genoux";
+    else genre = ecart < K.dos ? "dos" : ecart > Math.PI - K.dos ? "face" : Math.random() < 0.5 ? "dos" : "face";
+    // en avant ou en arrière ? (l'explosion : loin du souffle)
+    const enAvant = genre === "dos" || genre === "genoux" || genre === "ecrase" || (genre === "explosion" && ecart < Math.PI / 2);
+    return { genre, enAvant, sens: Math.random() < 0.5 ? -1 : 1, travers: (Math.random() * 2 - 1) * 0.35, duree: K.durees[genre] / hasard, debut: s.depuisMort };
   }
 
   // Une balle : qui touche-t-elle ? (cibles = les soldats ; vehicules = les tanks et le 4x4, sur lesquels elle ricoche)
@@ -104,7 +126,7 @@ Tanks.Soldat = (function () {
       if (Math.random() < chance) {
         ev.push(["balle", { tireur, de: { x, y, z }, a: { x: meilleur.s.x, y: meilleur.s.y + 1.2, z: meilleur.s.z }, touche: true }]);
         if (meilleur.s.genre === "vehicule" || meilleur.s.sorte) Tanks.Vehicules.blesserPilote(meilleur.s, Math.ceil(degats), tireur, ev);
-        else blesser(meilleur.s, degats, tireur, ev, typeof arme === "string" ? arme : "balle");
+        else blesser(meilleur.s, degats, tireur, ev, typeof arme === "string" ? arme : "balle", { x, z });
         return;
       }
       fin.x = meilleur.s.x + (Math.random() - 0.5) * 3;

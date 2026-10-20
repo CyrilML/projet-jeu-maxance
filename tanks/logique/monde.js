@@ -42,7 +42,7 @@ Tanks.Monde = (function () {
     const d = S.lire();
     const choix = Math.max(0, C.chars.findIndex((f) => f.id === d.char));
     const carte = C.cartes.some((c) => c.id === d.carte) ? d.carte : "bataille"; // (étape 80)
-    const monde = { phase: "garage", carte, temps: 0, choix, chars: [], obus: [], soldats: [], engins: [], vehicules: [], helicos: [], bateaux: [], sousMarins: [], avions: [], portails: Tanks.Portails.creer(), joueur: null, toi: null, chrono: 0 };
+    const monde = { phase: "garage", carte, temps: 0, choix, chars: [], obus: [], soldats: [], engins: [], vehicules: [], helicos: [], bateaux: [], sousMarins: [], avions: [], portails: Tanks.Portails.creer(), joueur: null, toi: null, chrono: 0, chutes: {} };
     preparerGarage(monde);
     return monde;
   }
@@ -419,6 +419,7 @@ Tanks.Monde = (function () {
       if (nom === "maison-effondree" && deToi) S.donnees.maisons++;
       if (nom === "mur-troue" && deToi) S.donnees.murs += d.morceaux.length;
       if (nom === "grenade-lancee" && deToi) S.donnees.grenades++;
+      if (nom === "soldat-tombe") monde.chutes[d.genre] = (monde.chutes[d.genre] || 0) + 1; // (étape 85 : les chutes de cette bataille)
     };
     for (const [nom, d] of evenements) {
       if (nom === "tir") {

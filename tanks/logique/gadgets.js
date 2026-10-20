@@ -122,7 +122,7 @@ Tanks.Gadgets = (function () {
       g.attente = F.attente;
       if (!meilleur) return void ev.push(["impossible", { raison: "aucun ami tombé tout près (moins de " + F.distance + " m, depuis moins de " + F.delai + " s)" }]);
       const o = meilleur.o;
-      Object.assign(o, { mort: false, depuisMort: 0, vie: o.vieMax * 0.5, touche: 0 });
+      Object.assign(o, { mort: false, chute: null, depuisMort: 0, vie: o.vieMax * 0.5, touche: 0 });
       if (o.ia) o.ia.etat = "relevé";
       s.compteurs.releves++;
       ev.push(["releve", { cible: o.nom }]);
