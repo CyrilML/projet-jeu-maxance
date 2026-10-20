@@ -21,16 +21,15 @@ l'arme. »
 - ✍️ Les 7 modifications : **le viseur, le canon, le chargeur, le manche (la poignée), l'assistance à la visée, la
   lampe, le laser**. Elles ont de **vrais effets** (précision, portée, recul, balles par chargeur, vitesse de visée…),
   avec des avantages ET des défauts, et on les **voit sur l'arme en 3D**. La lampe éclaire, le laser fait un point rouge.
-- ✍️ Les armes et les modifications sont **à débloquer** : on gagne des points en jouant.
-  - Choix de Claude (à valider par Maxance) : des **points d'expérience** (ennemi abattu, tank détruit, soin, réparation,
-    victoire) qui font monter de **niveau** ; chaque niveau débloque des armes et des pièces. La première arme et la
-    première pièce de chaque liste sont débloquées dès le début. Tout est sauvegardé.
-- Tous les nombres (dégâts, effets des pièces, points, niveaux) sont dans `tanks/config.js`.
+- ✍️ Au départ, les armes et les modifications devaient être **à débloquer**. Pour finir plus vite, Maxance a décidé
+  de **l'enlever pour l'instant** : tout est disponible tout de suite (on pourra l'ajouter plus tard).
+- ✍️ Seul **le joueur** a une classe : les soldats de l'ordinateur restent comme avant (enlevé pour finir plus vite).
+- Tous les nombres (dégâts, effets des pièces) sont dans `tanks/config.js`.
 
 ## ✅ Critères de réussite
 - [ ] Tanks « version 16 ».
 - [ ] Au lancement : le menu, avec le choix du véhicule, de la classe, des armes, des gadgets, des explosifs.
 - [ ] Choisir une arme ouvre l'atelier : 7 emplacements, chaque pièce montre ses avantages et défauts, l'arme en 3D change.
-- [ ] Les objets pas encore débloqués sont grisés avec le niveau nécessaire ; le niveau et les points sont sauvegardés.
+- [ ] Ton dernier équipement est gardé pour la prochaine bataille.
 - [ ] En jeu : l'ingénieur répare, le médecin soigne et relève, l'éclaireur marque les ennemis, l'assaut a plus de vie.
-- [ ] Sous le capot : la classe, l'arme et ses pièces, et les vrais chiffres de l'arme ; dans le journal : les niveaux gagnés.
+- [ ] Sous le capot : la classe, l'arme et ses pièces, et les vrais chiffres de l'arme.
