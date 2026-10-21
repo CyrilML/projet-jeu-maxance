@@ -9,6 +9,8 @@
 // qualité (affichage/qualite.js), qui choisit le niveau de détail. Touche G : choisir le niveau soi-même.
 // Étape 88 : la CAMPAGNE. Les écrans de la campagne (affichage/campagne-ecrans.js) font des demandes au metteur en scène
 // (logique/campagne.js), et son tableau de bord (affichage/campagne-tableau.js) se dessine par-dessus l'autre.
+// Demande 96 (« le jeu rame souvent ») : le dessin est chronométré en deux : la SCÈNE (placer chaque chose) et le RENDU
+// (l'envoyer à la carte graphique) ; « sous le capot », la ligne « performance » montre les 4 parts d'une image.
 // Demande 94 : la RADIO QUI PARLE (affichage/radio-voix.js) : sa file d'attente avance à chaque image, ses sous-titres se
 // dessinent en dernier, et N coupe ou remet les voix.
 
@@ -49,7 +51,7 @@ window.Tanks = window.Tanks || {};
 
   let rechargement = false; // (étape 81)
   let enPause = false, reste = 0, avant = performance.now(), ordre = null;
-  const parts = { logique: 0, dessin: 0, tableau: 0, capot: 0, pas: 0, abandonnes: 0 }; // (étape 72 : le chronomètre)
+  const parts = { logique: 0, dessin: 0, scene: 0, rendu: 0, tableau: 0, capot: 0, pas: 0, abandonnes: 0 }; // (étape 72 : le chronomètre ; demande 96 : le dessin coupé en « scène » et « rendu »)
   function boucle(maintenant) {
     const dtMs = Math.max(0, maintenant - avant), dt = Math.min(0.1, dtMs / 1000); // (demande 88 : jamais négatif : la 1re image peut dater d'avant la fin du chargement)
     avant = maintenant;
@@ -107,6 +109,8 @@ window.Tanks = window.Tanks || {};
     Tanks.Scene.dessiner(monde, enPause ? 0 : dt, Math.min(1, reste / C.pasFixe));
     t0 = performance.now();
     parts.dessin = t0 - t1;
+    parts.rendu = Tanks.Scene.chrono.rendu; // (demande 96) envoyer le dessin à la carte graphique…
+    parts.scene = Math.max(0, parts.dessin - parts.rendu); // … et tout le reste : placer les tanks, les soldats, l'herbe…
     Tanks.Tableau.dessiner(monde);
     Tanks.TableauCampagne.dessiner(monde); // (étape 88 : les objectifs, les marqueurs, la radio)
     Tanks.RadioVoix.maj(monde); // (demande 94 : la file d'attente de la radio, la voix…)

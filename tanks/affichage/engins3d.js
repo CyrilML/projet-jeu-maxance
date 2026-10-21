@@ -549,6 +549,10 @@ Tanks.Engins3D = (function () {
   function squelette(equipe, joueur, detail, peau) {
     const M = matsSoldat(equipe), formesCorps = formeSoldat(equipe, detail, peau, !!joueur), r = os();
     const porteur = new THREE.Group(), squel = new THREE.Skeleton(r.liste);
+    // (demande 96) un squelette « gelé » n'est pas recalculé ni renvoyé à la carte graphique à cette image (la scène gèle
+    // les soldats assez loin une image sur deux : ils bougent à 30 images par seconde au lieu de 60, on ne le voit pas)
+    squel.gele = false;
+    squel.update = function () { if (!this.gele) THREE.Skeleton.prototype.update.call(this); };
     for (const nom of ["tenue", "teinte"]) {
       const m = new THREE.SkinnedMesh(formesCorps[nom], M[nom]);
       m.castShadow = true;
@@ -564,7 +568,7 @@ Tanks.Engins3D = (function () {
     const flamme = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffc860 }));
     flamme.scale.set(1.6, 0.8, 0.8);
     porteArme.add(flamme);
-    return { porteur, corps: r.corps, dos: r.dos, cou: r.cou, jambes: r.jambes, genoux: r.genoux, epaules: r.epaules, coudes: r.coudes, porteArme, objetArme: null, cleArme: null, torsion: 0, flamme, pose: null };
+    return { porteur, squel, corps: r.corps, dos: r.dos, cou: r.cou, jambes: r.jambes, genoux: r.genoux, epaules: r.epaules, coudes: r.coudes, porteArme, objetArme: null, cleArme: null, torsion: 0, flamme, pose: null };
   }
 
   // La « cinématique inverse » à 2 os : l'épaule S, la main voulue M ; on cherche le coude.

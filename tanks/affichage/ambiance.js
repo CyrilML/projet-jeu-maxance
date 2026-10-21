@@ -20,7 +20,8 @@ Tanks.Ambiance = (function () {
   function initialiser() {
     const ecran = document.getElementById("ecran3d");
     // 1. l'étalonnage : moins de couleurs, plus de contraste
-    ecran.style.filter = "contrast(" + A.contraste + ") saturate(" + A.saturation + ") brightness(" + A.luminosite + ")";
+    filtreCSS = "contrast(" + A.contraste + ") saturate(" + A.saturation + ") brightness(" + A.luminosite + ")";
+    ecran.style.filter = actif ? filtreCSS : "";
     const cadre = ecran.parentElement;
     // 2. les ombres bleu-vert, les lumières orange (un dégradé « mélangé » à l'image)
     const teinte = document.createElement("div");
@@ -52,5 +53,13 @@ Tanks.Ambiance = (function () {
     if (A.melanges) for (const d of [teinte, couche]) cadre.insertBefore(d, ecran.nextSibling);
   }
 
-  return { initialiser };
+  // (demande 96) au niveau de qualité 0, le filtre est enlevé : le navigateur n'a plus à repasser sur toute l'image
+  let filtreCSS = "", actif = true;
+  function filtre(oui) {
+    actif = !!oui;
+    const ecran = document.getElementById("ecran3d");
+    if (ecran && filtreCSS) ecran.style.filter = actif ? filtreCSS : "";
+  }
+
+  return { initialiser, filtre, get actif() { return actif; } };
 })();

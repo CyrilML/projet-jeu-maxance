@@ -60,7 +60,8 @@ Tanks.Scene = (function () {
   // (étape 72) le niveau de qualité en cours (réglé par affichage/qualite.js), le ciel, les silhouettes des soldats
   let Q = C.qualite.niveaux[C.qualite.depart], leCiel = null;
   const silhouettes = {};
-  const lod = { soldatsDetail: 0, soldatsSimples: 0, silhouettes: 0, soldatsCaches: 0, tanksRouesSoudees: 0, enginsCaches: 0, vehiculesDetail: 0, vehiculesSimples: 0, vehiculesCaches: 0, helicosDetail: 0, helicosSimples: 0, helicosCaches: 0, maillons: 0, avionsDetail: 0, avionsSimples: 0, avionsCaches: 0 };
+  const lod = { soldatsDetail: 0, soldatsSimples: 0, silhouettes: 0, soldatsCaches: 0, tanksRouesSoudees: 0, enginsCaches: 0, vehiculesDetail: 0, vehiculesSimples: 0, vehiculesCaches: 0, helicosDetail: 0, helicosSimples: 0, helicosCaches: 0, maillons: 0, avionsDetail: 0, avionsSimples: 0, avionsCaches: 0, soldatsGeles: 0 };
+  let numeroDessin = 0; // (demande 96 : un numéro par soldat dessiné, pour les animer chacun à son tour)
   const lotsSimples = {}; // (étape 71) « moto:bleus » → les instances de la version simple
   // La « vue » d'un objet : le même objet, mais avec x, y, z, angle (et tourelle) pris entre l'avant et maintenant.
   const melange = (a, b) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * alpha;
@@ -176,17 +177,29 @@ Tanks.Scene = (function () {
     // les ombres : on ne touche à la carte graphique que si ça change (changer les ombres oblige à refaire les
     // « programmes » de dessin de toutes les matières : c'est un petit à-coup, une seule fois)
     const ombres = n.ombres > 0, sorte = n.douces ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap, taille = n.ombres || 512;
-    if (ombres !== rendu.shadowMap.enabled || (ombres && (sorte !== rendu.shadowMap.type || taille !== soleil.shadow.mapSize.x))) {
+    // (demande 96) seuls « avec ou sans ombres » et « douces ou pas » obligent à refaire les programmes ; la TAILLE de l'image
+    // des ombres, non (avant, on refaisait tout à chaque changement de niveau : un à-coup pour rien)
+    const programmes = ombres !== rendu.shadowMap.enabled || (ombres && sorte !== rendu.shadowMap.type);
+    if (programmes || (ombres && taille !== soleil.shadow.mapSize.x)) {
       rendu.shadowMap.enabled = ombres;
       rendu.shadowMap.type = sorte;
       soleil.castShadow = ombres;
       if (soleil.shadow.map) (soleil.shadow.map.dispose(), (soleil.shadow.map = null));
       soleil.shadow.mapSize.set(taille, taille);
-      scene.traverse((o) => {
+      if (programmes) scene.traverse((o) => {
         if (!o.material) return;
         for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.needsUpdate = true;
       });
     }
+    rendu.shadowMap.autoUpdate = false; // (demande 96 : c'est nous qui disons quand refaire l'image des ombres : voir dessiner)
+    rendu.shadowMap.needsUpdate = true;
+    // (demande 96) le MIROIR DU CIEL (les reflets) : seulement aux niveaux 2 et 3. Sans lui, la lumière du ciel est plus forte.
+    if (!sousTerre) {
+      scene.environment = n.reflets ? reflets : null;
+      ambiance.intensity = L.ambiance * (n.reflets ? 1 : C.qualite.sansReflets);
+    }
+    Tanks.Decor.qualiteSol(n); // (demande 96 : la netteté du sol de loin, ses images de détail en plus)
+    if (Tanks.Ambiance && Tanks.Ambiance.filtre) Tanks.Ambiance.filtre(n.filtre !== false); // (demande 96)
     // la distance de vue : le brouillard devient complet à « vue » mètres, et la caméra ne dessine rien plus loin
     scene.fog.near = Math.min(C.qualite.brouillard, n.vue * 0.4) * C.realisme.atmosphere.debut; // (demande 93 : la brume lointaine commence plus près)
     scene.fog.far = n.vue;
@@ -203,12 +216,12 @@ Tanks.Scene = (function () {
     if (dessous && !Tanks.Station3D.construite) Tanks.Station3D.construire(scene);
     Tanks.Station3D.montrer(dessous);
     leDecor.visible = leCiel.visible = soleil.visible = !dessous;
-    scene.environment = dessous ? null : reflets;
+    scene.environment = dessous || !Q.reflets ? null : reflets; // (demande 96 : pas de reflets aux niveaux légers)
     scene.background = dessous ? BRUME.dessous : null;
     scene.fog.color.copy(dessous ? BRUME.dessous : BRUME.dehors);
     ambiance.color.set(dessous ? 0xc8d2dc : L.ciel);
     ambiance.groundColor.set(dessous ? 0x8a8078 : L.sol);
-    ambiance.intensity = dessous ? 1.25 : L.ambiance;
+    ambiance.intensity = dessous ? 1.25 : L.ambiance * (Q.reflets ? 1 : C.qualite.sansReflets);
     appliquerQualite(Q);
     Tanks.Evenements.emettre("monde-3d", { dessous, dessins: Tanks.Station3D.bilan.dessins, ms: Tanks.Station3D.bilan.ms });
   }
@@ -309,8 +322,12 @@ Tanks.Scene = (function () {
     if (s.joueur && camera.lunette) o.g.visible = false; // (étape 89 : dans la lunette, l'œil est dans ta tête : ton corps est caché, sinon on voit l'intérieur du personnage)
     if (cache) lod.soldatsCaches++;
     if (silhouette) lod.silhouettes++;
+    // (demande 96) un soldat caché n'a pas besoin que ses ~40 morceaux et os soient recalculés à chaque image (avant : 3 500
+    // morceaux de soldats cachés recalculés pour rien, 3 ms par image)
+    o.g.matrixWorldAutoUpdate = o.g.visible || !!s.joueur;
     if (!o.g.visible) {
       o.angleAvant = s.angle;
+      o.pres = undefined;
       return;
     }
     o.g.position.set(s.x, s.y, s.z);
@@ -321,6 +338,17 @@ Tanks.Scene = (function () {
     const pres = s.joueur || d < Q.soldatDetail;
     if (pres) lod.soldatsDetail++;
     else lod.soldatsSimples++;
+    // (demande 96) un soldat « simple » (assez loin) ne bouge ses bras et ses jambes que toutes les « animLoin » images
+    // (chacun à son tour : pas tous à la même image). Son corps, lui, avance à chaque image.
+    const pas = Q.animLoin || 1, tour = (o.tour = (o.tour || 0) + 1);
+    const gele = !pres && pas > 1 && o.pres === false && !s.mort && (tour + (o.numero || (o.numero = ++numeroDessin))) % pas !== 0;
+    o.pres = pres;
+    if (o.simple && o.simple.squel) o.simple.squel.gele = gele;
+    if (gele) {
+      lod.soldatsGeles++;
+      if (o.parachute) o.parachute.visible = !!s.parachute;
+      return;
+    }
     Tanks.Engins3D.animer(o, s, horloge, tourne, pres);
     if (o.parachute) o.parachute.visible = !!s.parachute;
   }
@@ -684,17 +712,23 @@ Tanks.Scene = (function () {
     alpha = entreDeuxPas === undefined ? 1 : entreDeuxPas;
     for (const k in lod) lod[k] = 0; // (étape 72 : on recompte les niveaux de détail à chaque image)
     // on enlève les dessins des tanks qui n'existent plus (nouvelle bataille)
-    const vivants = new Set(monde.chars);
+    // (demande 96) les mêmes listes servent à chaque image (avant : de nouvelles listes à chaque image, que le navigateur
+    // devait ensuite jeter : le « ramasse-miettes » qui fait de petites pauses)
+    const vivants = listeVivants;
+    vivants.clear();
+    for (const c of monde.chars) vivants.add(c);
     for (const [c, o] of objets) if (!vivants.has(c)) (scene.remove(o.g), objets.delete(c));
     if (monde.phase === "garage" && objets.size === 1) Tanks.Effets.effacer();
     for (const c of monde.chars) placer(objetDe(c), vue(c), dt);
     // étape 61 : les soldats, les engins, les projectiles (on enlève les dessins de ceux qui n'existent plus)
-    const presents = new Set(monde.soldats.concat(monde.engins, monde.vehicules, monde.helicos || [], monde.bateaux, monde.sousMarins, monde.avions));
+    const presents = listePresents;
+    presents.clear();
+    for (const liste of [monde.soldats, monde.engins, monde.vehicules, monde.helicos || [], monde.bateaux, monde.sousMarins, monde.avions]) for (const x of liste) presents.add(x);
     for (const [x, o] of dessinsSoldats) if (!presents.has(x)) (scene.remove(o.g), dessinsSoldats.delete(x));
     for (const [x, o] of dessinsEngins) if (!presents.has(x)) (scene.remove(o.g), dessinsEngins.delete(x));
     horloge += dt;
     for (const k in lotsSimples) lotsSimples[k].count = 0; // (étape 71 : les versions simples, recomptées à chaque image)
-    for (const e of monde.engins.concat(monde.vehicules, monde.helicos || [], monde.bateaux, monde.sousMarins, monde.avions)) placerEngin(engin3d(e), vue(e), dt, e);
+    for (const liste of [monde.engins, monde.vehicules, monde.helicos || [], monde.bateaux, monde.sousMarins, monde.avions]) for (const e of liste) placerEngin(engin3d(e), vue(e), dt, e);
     for (const k in lotsSimples) {
       const lot = lotsSimples[k];
       lot.visible = lot.count > 0 || !lot.userData.pret; // (première image : montré vide, pour préparer son programme de dessin)
@@ -796,8 +830,32 @@ Tanks.Scene = (function () {
     // (demande 88) l'arme vue à la première personne, la lampe qui éclaire, le laser (affichage/armes3d.js)
     Tanks.Armes3D.maj(monde, dt, cam, scene, !!(camera.premiere && toiPied));
     Tanks.Explosions.secouer(cam, dt); // (demande 92 : l'écran qui tremble ; remis droit à l'image suivante par lookAt)
+    // (demande 96) l'image des ombres est refaite toutes les « ombresChaque » images (au niveau léger : 1 sur 2). Entre deux,
+    // l'ancienne sert encore : seules les ombres des choses qui bougent ont une image de retard (on ne le voit pas).
+    if (++compteOmbres >= (Q.ombresChaque || 1)) (compteOmbres = 0), (rendu.shadowMap.needsUpdate = true);
+    const debutRendu = performance.now();
     rendu.render(scene, cam);
+    chrono.rendu = performance.now() - debutRendu; // (demande 96 : le temps pour ENVOYER le dessin à la carte graphique)
+    if (!dejaPrepare && monde.phase !== "garage") preparerProgrammes(); // (demande 96)
     Tanks.Armes3D.dessinerVue(rendu); // (dessinée PAR-DESSUS le monde : elle ne rentre jamais dans un mur)
+  }
+
+  // (demande 96) PRÉPARER LES PROGRAMMES : la carte graphique doit « compiler » un petit programme de dessin pour chaque
+  // sorte de matière, la première fois qu'elle la voit. Ça peut prendre 0,1 s ou plus : c'étaient les à-coups quand un
+  // soldat en détail, une maison détruite ou un hélico apparaissaient pour la 1re fois. Au début de la bataille, on montre
+  // TOUT un instant (sans le dessiner) pour qu'elle les prépare tous d'un coup, pendant que le jeu démarre.
+  let dejaPrepare = false, compteOmbres = 0;
+  const listeVivants = new Set(), listePresents = new Set();
+  const chrono = { rendu: 0 }; // (demande 96 : lu par la boucle, main.js)
+  const preparation = { programmes: 0, ms: 0 };
+  function preparerProgrammes() {
+    dejaPrepare = true;
+    const t0 = performance.now(), caches = [];
+    scene.traverse((o) => { if (!o.visible) (caches.push(o), (o.visible = true)); });
+    try { rendu.compile(scene, cam); } finally { for (const o of caches) o.visible = false; }
+    preparation.programmes = rendu.info.programs.length;
+    preparation.ms = performance.now() - t0;
+    Tanks.Evenements.emettre("programmes-prets", { programmes: preparation.programmes, ms: preparation.ms, caches: caches.length });
   }
 
   // Où tombe un point du monde sur l'écran ? (pour le tableau de bord : les noms et la vie au-dessus des tanks)
@@ -814,5 +872,5 @@ Tanks.Scene = (function () {
       else camera.mode = (camera.mode + 1) % 2;
       Tanks.Evenements.emettre("vue", { premiere: !!camera.premiere, aPied: !!aPied });
     },
-    get vue() { return { premiere: !!camera.premiere, mode: camera.mode }; }, get infos() { return rendu ? rendu.info.render : {}; }, get sousTerre() { return sousTerre; }, get ciel() { return "« " + Tanks.CarteDuJour.decor + " » · soleil à " + Math.round((Math.asin(SOLEIL.y) * 180) / Math.PI) + "° de haut · nuages " + Math.round(AMB.nuages * 100) + " % · exposition " + String(L.exposition).replace(".", ","); }, get rendu() { return rendu; }, entreDeuxPas: () => alpha, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
+    get vue() { return { premiere: !!camera.premiere, mode: camera.mode }; }, get infos() { return rendu ? rendu.info.render : {}; }, get sousTerre() { return sousTerre; }, get ciel() { return "« " + Tanks.CarteDuJour.decor + " » · soleil à " + Math.round((Math.asin(SOLEIL.y) * 180) / Math.PI) + "° de haut · nuages " + Math.round(AMB.nuages * 100) + " % · exposition " + String(L.exposition).replace(".", ","); }, get rendu() { return rendu; }, preparation, chrono, entreDeuxPas: () => alpha, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
 })();

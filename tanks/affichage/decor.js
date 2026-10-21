@@ -323,6 +323,17 @@ Tanks.Decor = (function () {
     return t;
   }
 
+  // (demande 96) les réglages du sol qui suivent le niveau de qualité (appelé par la scène)
+  let matiereSol = null;
+  const solFin = { value: 1 };
+  function qualiteSol(n) {
+    solFin.value = n.solFin === false ? 0 : 1;
+    const t = matiereSol && matiereSol.map, a = n.anisotropie || 8;
+    if (t && t.anisotropy !== a) (t.anisotropy = a), (t.needsUpdate = true);
+    bilan.solLeger = !solFin.value;
+    bilan.anisotropie = a;
+  }
+
   function sol(groupe) {
     const taille = C.monde.taille, n = Math.round(taille / C.monde.sol), geo = new THREE.PlaneGeometry(taille, taille, n, n);
     geo.rotateX(-Math.PI / 2);
@@ -341,6 +352,7 @@ Tanks.Decor = (function () {
     // (étape 72) Le sol en TUILES : toutes les tuiles partagent les mêmes sommets (aucune couture), mais chacune a sa
     // liste de triangles : la carte graphique peut sauter les tuiles derrière la caméra, ou trop loin.
     const matiere = new THREE.MeshStandardMaterial({ map: grandeImage(lignes), roughness: 0.96, metalness: 0 });
+    matiereSol = matiere;
     // (étape 74) le DÉTAIL, ajouté au « peintre » de la carte graphique (son programme, le « shader »)
     matiere.onBeforeCompile = (sh) => {
       sh.uniforms.detailSol = { value: detail };
@@ -348,12 +360,13 @@ Tanks.Decor = (function () {
       sh.uniforms.detailFondu = { value: new THREE.Vector2(BE.sol.fondu[0], BE.sol.fondu[1]) };
       sh.uniforms.detailCasse = { value: new THREE.Vector2(1 / C.realisme.sol.detail.casse, C.realisme.sol.detail.pente) };
       sh.uniforms.detailTaches = { value: new THREE.Vector3(1 / C.realisme.sol.taches.echelle[0], 1 / C.realisme.sol.taches.echelle[1], C.realisme.sol.taches.force) }; // (demande 93)
+      sh.uniforms.detailFin = solFin; // (demande 96 : 1 = les images de détail en plus ; 0 = on les saute, c'est plus léger)
       sh.vertexShader = sh.vertexShader
         .replace("#include <common>", "#include <common>\nvarying vec3 vSolMonde;\nvarying float vSolDist;")
         .replace("#include <common>", "#include <common>\nvarying float vSolPente;")
         .replace("#include <project_vertex>", "#include <project_vertex>\nvSolMonde = position;\nvSolDist = -mvPosition.z;\nvSolPente = 1.0 - normal.y;");
       sh.fragmentShader = sh.fragmentShader
-        .replace("#include <common>", "#include <common>\nuniform sampler2D detailSol;\nuniform vec2 detailEchelle;\nuniform vec2 detailFondu;\nuniform vec2 detailCasse;\nuniform vec3 detailTaches;\nvarying vec3 vSolMonde;\nvarying float vSolDist;\nvarying float vSolPente;")
+        .replace("#include <common>", "#include <common>\nuniform sampler2D detailSol;\nuniform vec2 detailEchelle;\nuniform vec2 detailFondu;\nuniform vec2 detailCasse;\nuniform vec3 detailTaches;\nuniform float detailFin;\nvarying vec3 vSolMonde;\nvarying float vSolDist;\nvarying float vSolPente;")
         .replace("#include <map_fragment>", [
           "#include <map_fragment>",
           "{",
@@ -363,13 +376,18 @@ Tanks.Decor = (function () {
           "  float terre = clamp((diffuseColor.r - diffuseColor.g) * 14.0 + 0.4, 0.0, 1.0);", // (plus rouge que vert : de la terre)
           "  float pres = 1.0 - smoothstep(detailFondu.x, detailFondu.y, vSolDist);",
           // (demande 92) une 2e image de détail, tournée et plus grande, mélangée à la 1re : on ne voit plus la répétition
+          // (demande 96) aux niveaux légers (detailFin = 0), la carte graphique saute ces 3 images en plus (le « if » sur un
+          // réglage commun à tout l'écran ne coûte presque rien)
+          "  if (detailFin > 0.5) {",
           "  vec4 dC = texture2D(detailSol, mat2(0.6, 0.8, -0.8, 0.6) * p * detailCasse.x + 0.37);",
           "  float melange = smoothstep(0.3, 0.7, dB.r * 0.5 + dC.g * 0.5);",
           "  dA = mix(dA, dC, melange * 0.5);",
+          "  }",
           "  float dPres = mix(dA.r, dA.g, terre) * 2.0, dLoin = mix(dB.r, dB.g, terre) * 2.0;",
           "  diffuseColor.rgb *= mix(mix(1.0, dLoin, 0.45), dPres * mix(1.0, dLoin, 0.35), pres);",
           // (demande 93) les grandes TACHES : plus sombre et plus vert (humide) ici, plus jaune (sec) là
-          "  float tache = texture2D(detailSol, p * detailTaches.x).b * 0.6 + texture2D(detailSol, mat2(0.8, 0.6, -0.6, 0.8) * p * detailTaches.y + 0.5).b * 0.4;",
+          "  float tache = texture2D(detailSol, p * detailTaches.x).b;",
+          "  if (detailFin > 0.5) tache = tache * 0.6 + texture2D(detailSol, mat2(0.8, 0.6, -0.6, 0.8) * p * detailTaches.y + 0.5).b * 0.4;",
           "  tache = smoothstep(0.25, 0.75, tache) - 0.5;",
           "  diffuseColor.rgb *= 1.0 + detailTaches.z * (tache < 0.0 ? vec3(0.5, 0.25, 0.55) * tache * 1.6 : vec3(0.35, 0.22, -0.15) * tache * 1.6) * (1.0 - terre * 0.5);",
           // (demande 92) les PENTES : plus sombres, et la terre y apparaît (l'herbe tient mal)
@@ -830,37 +848,60 @@ Tanks.Decor = (function () {
     // (vue de haut, de plus de 15 m au-dessus du sol, on ne verrait que le cercle d'herbe : pas de touffes)
     if (rayon && position.y - T.hauteur(position.x, position.z) > 15) rayon = 0;
     herbe.visible = rayon > 0;
-    if (!rayon) return void ((bilan.touffes = 0), (herbeR = -1));
+    if (!rayon) return void ((bilan.touffes = 0), (herbeR = -1), (chantierHerbe = null));
     const K = caseHerbe();
-    if (rayon === herbeR && K === herbeK && Math.hypot(position.x - herbeX, position.z - herbeZ) < BE.herbe.bouge) return;
-    (herbeX = position.x), (herbeZ = position.z), (herbeR = rayon), (herbeK = K);
-    const i0 = Math.floor((position.x - rayon) / K), i1 = Math.floor((position.x + rayon) / K), j0 = Math.floor((position.z - rayon) / K), j1 = Math.floor((position.z + rayon) / K);
-    let n = 0;
-    const r2 = rayon * rayon, max = herbe.instanceMatrix.count, [hMin, hMax] = RH.hauteur;
-    for (let j = j0; j <= j1 && n < max; j++) for (let i = i0; i <= i1 && n < max; i++) {
-      const x = (i + hasardIci(i, j, 1)) * K, z = (j + hasardIci(i, j, 2)) * K, dx = x - position.x, dz = z - position.z;
-      if (dx * dx + dz * dz > r2 || Math.abs(x) > demi - 25 || Math.abs(z) > demi - 25) continue;
-      // (l'herbe pousse en PLAQUES : plus dense ici, plus clairsemée là ; et elle s'éclaircit vers le bord du cercle)
-      const vert = herbeIci(x, z) * (0.25 + 0.95 * Math.max(0, bruitHerbe(x / 9, z / 9) * 0.8 + 0.45)) * Math.min(1, 1.6 - (dx * dx + dz * dz) / r2);
-      if (hasardIci(i, j, 3) > vert || T.dansLEau(x, z, 1.5)) continue;
-      const bord = Math.min(1, (rayon - Math.sqrt(dx * dx + dz * dz)) / (rayon * 0.3)); // (près du bord du cercle, elles rapetissent : pas de bord net)
-      const taille = (0.5 + hasardIci(i, j, 4) * 0.55) * Math.max(0.15, bord);
-      // (demande 93) la sorte de touffe, et si elle est sèche (de grandes plaques de paille)
-      const sec = Math.max(0, Math.min(1, (bruitSec(x / 23, z / 23) * 0.5 + 0.5 - (1 - RH.seche)) * 2.5 + (hasardIci(i, j, 8) - 0.5) * 0.6));
-      const sorte = sec > 0.55 && hasardIci(i, j, 9) < 0.7 ? 2 : Math.floor(hasardIci(i, j, 10) * 3.999) % 4 === 2 ? 0 : Math.floor(hasardIci(i, j, 10) * 3.999);
-      varianteHerbe.setX(n, sorte);
-      qH.setFromAxisAngle(axeY, hasardIci(i, j, 5) * Math.PI * 2);
-      herbe.setMatrixAt(n, mH.compose(pH.set(x, T.hauteur(x, z) - 0.05, z), qH, sH.set(taille, taille * (hMin + hasardIci(i, j, 6) * (hMax - hMin)) * (sorte === 3 ? 0.7 : 1), taille)));
-      couleurIci(x, z, cH).multiplyScalar(1.3 + hasardIci(i, j, 7) * 0.45).lerp(PAILLE, sec * 0.75);
-      herbe.setColorAt(n++, cH);
+    // (demande 96) l'herbe repousse PAR MORCEAUX : un « chantier » avance de quelques rangées à chaque image (au plus
+    // qualite.herbeBudget ms), dans un brouillon ; quand il est fini, on montre la nouvelle herbe d'un coup. Avant, tout
+    // était refait dans la même image (jusqu'à 14 ms au niveau beau : une petite saccade tous les 3 m).
+    if (!chantierHerbe) {
+      if (rayon === herbeR && K === herbeK && Math.hypot(position.x - herbeX, position.z - herbeZ) < BE.herbe.bouge) return;
+      (herbeX = position.x), (herbeZ = position.z), (herbeR = rayon), (herbeK = K);
+      const max = herbe.instanceMatrix.count;
+      if (!brouillonHerbe) brouillonHerbe = { mat: new Float32Array(max * 16), col: new Float32Array(max * 3), sorte: new Float32Array(max) };
+      chantierHerbe = { x: position.x, z: position.z, rayon, K, i0: Math.floor((position.x - rayon) / K), i1: Math.floor((position.x + rayon) / K), j: Math.floor((position.z - rayon) / K), j1: Math.floor((position.z + rayon) / K), n: 0, images: 0, ms: 0 };
     }
+    const ch = chantierHerbe, B = brouillonHerbe, debut = performance.now(), budget = C.qualite.herbeBudget || 1.5;
+    const r2 = ch.rayon * ch.rayon, max = herbe.instanceMatrix.count, [hMin, hMax] = RH.hauteur, Kc = ch.K, cx = ch.x, cz = ch.z, R = ch.rayon;
+    ch.images++;
+    for (; ch.j <= ch.j1 && ch.n < max; ch.j++) {
+      if (performance.now() - debut > budget) break; // (assez pour cette image : la suite à la prochaine)
+      const j = ch.j;
+      for (let i = ch.i0; i <= ch.i1 && ch.n < max; i++) {
+        const x = (i + hasardIci(i, j, 1)) * Kc, z = (j + hasardIci(i, j, 2)) * Kc, dx = x - cx, dz = z - cz;
+        if (dx * dx + dz * dz > r2 || Math.abs(x) > demi - 25 || Math.abs(z) > demi - 25) continue;
+        // (l'herbe pousse en PLAQUES : plus dense ici, plus clairsemée là ; et elle s'éclaircit vers le bord du cercle)
+        const vert = herbeIci(x, z) * (0.25 + 0.95 * Math.max(0, bruitHerbe(x / 9, z / 9) * 0.8 + 0.45)) * Math.min(1, 1.6 - (dx * dx + dz * dz) / r2);
+        if (hasardIci(i, j, 3) > vert || T.dansLEau(x, z, 1.5)) continue;
+        const bord = Math.min(1, (R - Math.sqrt(dx * dx + dz * dz)) / (R * 0.3)); // (près du bord du cercle, elles rapetissent : pas de bord net)
+        const taille = (0.5 + hasardIci(i, j, 4) * 0.55) * Math.max(0.15, bord);
+        // (demande 93) la sorte de touffe, et si elle est sèche (de grandes plaques de paille)
+        const sec = Math.max(0, Math.min(1, (bruitSec(x / 23, z / 23) * 0.5 + 0.5 - (1 - RH.seche)) * 2.5 + (hasardIci(i, j, 8) - 0.5) * 0.6));
+        const sorte = sec > 0.55 && hasardIci(i, j, 9) < 0.7 ? 2 : Math.floor(hasardIci(i, j, 10) * 3.999) % 4 === 2 ? 0 : Math.floor(hasardIci(i, j, 10) * 3.999);
+        const n = ch.n++;
+        B.sorte[n] = sorte;
+        qH.setFromAxisAngle(axeY, hasardIci(i, j, 5) * Math.PI * 2);
+        mH.compose(pH.set(x, T.hauteur(x, z) - 0.05, z), qH, sH.set(taille, taille * (hMin + hasardIci(i, j, 6) * (hMax - hMin)) * (sorte === 3 ? 0.7 : 1), taille)).toArray(B.mat, n * 16);
+        couleurIci(x, z, cH).multiplyScalar(1.3 + hasardIci(i, j, 7) * 0.45).lerp(PAILLE, sec * 0.75).toArray(B.col, n * 3);
+      }
+    }
+    ch.ms += performance.now() - debut;
+    if (ch.j <= ch.j1 && ch.n < max) return; // (pas encore fini)
+    // le chantier est fini : la nouvelle herbe remplace l'ancienne, d'un coup
+    const n = ch.n;
+    herbe.instanceMatrix.array.set(B.mat.subarray(0, n * 16));
+    herbe.instanceColor.array.set(B.col.subarray(0, n * 3));
+    varianteHerbe.array.set(B.sorte.subarray(0, n));
     herbe.count = n;
     herbe.instanceMatrix.needsUpdate = true;
     herbe.instanceColor.needsUpdate = true;
     varianteHerbe.needsUpdate = true;
     bilan.touffes = n;
-    bilan.caseHerbe = K;
+    bilan.caseHerbe = ch.K;
+    bilan.herbeImages = ch.images; // (demande 96 : en combien d'images la dernière herbe a repoussé, et combien de ms en tout)
+    bilan.herbeMs = ch.ms;
+    chantierHerbe = null;
   }
+  let chantierHerbe = null, brouillonHerbe = null;
   let herbeK = -1;
 
   // (étape 62) L'eau du lac : une ellipse plate et lisse, un peu transparente, qui reflète le ciel. On lui donne de
@@ -924,5 +965,5 @@ Tanks.Decor = (function () {
     return g;
   }
 
-  return { construire, majArbres, majEau, majDistance, majHerbe, herbeIci, bilan };
+  return { construire, majArbres, majEau, majDistance, majHerbe, herbeIci, qualiteSol, bilan };
 })();

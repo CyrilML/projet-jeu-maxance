@@ -567,6 +567,9 @@ Tanks.CONFIG = {
     foisRapide: 2, // combien de fois de suite « rapide » avant de remonter
     punition: 60, // s : on ne remonte pas tout de suite au niveau qui ramait
     capot: 0.5, // s entre deux mises à jour du panneau « sous le capot » (il coûte cher à écrire)
+    alerte: 0.6, // s (demande 96) : s'il rame déjà au bout de 0,6 s, il descend sans attendre la fin des 2 s
+    calme: 1, // s (demande 96) : après un changement de niveau, on ne compte pas les images pendant 1 s
+    longue: 50, // ms (demande 96) : une image plus longue, c'est un « à-coup » (compté sous le capot)
     brouillard: 200, // m : le brouillard commence à 200 m au plus (plus près si la vue est courte)
     // Chaque niveau règle : pixels (la finesse de l'image : 0,8 = 80 % des pixels dans chaque sens), ombres (taille de
     // l'image des ombres, 0 = pas d'ombres ; douces = bords flous), vue (m : au-delà, le brouillard cache tout),
@@ -576,12 +579,32 @@ Tanks.CONFIG = {
     // (étape 74) herbe (m : les touffes d'herbe autour de la caméra ; 0 = pas de touffes), arbresDetail (m : plus près,
     // les beaux arbres à grappes de feuillage ; plus loin, des arbres simples). Le niveau « beau » a des ombres plus fines.
     // (étape 75) maisons (m : plus près, les belles maisons avec leurs fenêtres, leurs briques… ; plus loin, la version simple).
+    // (demande 96, « le jeu rame souvent ») de nouveaux réglages, mesurés un par un :
+    //   reflets : le ciel qui se reflète sur TOUT (le « miroir du ciel ») ; il coûte cher pour chaque point de l'écran ;
+    //     sans lui, la lumière du ciel est un peu plus forte (realisme.sansReflets) pour garder la même clarté ;
+    //   ombresChaque : l'image des ombres est refaite toutes les N images (1 = à chaque image) ;
+    //   anisotropie : la netteté du sol vu de loin, en rasant (1 = flou, 8 = net) ;
+    //   solFin : les 2 images de détail en plus sur le sol (les grandes taches, la 2e image tournée) ;
+    //   animLoin : un soldat « simple » (assez loin) bouge ses bras et ses jambes toutes les N images seulement ;
+    //   filtre : le filtre de cinéma (affichage/ambiance.js) passé sur toute l'image par le navigateur.
+    // Les réglages qui obligent la carte graphique à refaire ses PROGRAMMES (un à-coup) changent seulement entre les niveaux
+    // 0 et 1 (ombres, lumières) et entre 1 et 2 (reflets) ; « douces » entre 2 et 3.
     niveaux: [
-      { nom: "très léger", pixels: 0.6, ombres: 0, douces: false, vue: 380, decor: 300, soldatDetail: 12, soldatSimple: 30, soldatSilhouette: 170, roues: 35, effets: 140, herbe: 0, arbresDetail: 50, maisons: 60 },
-      { nom: "léger", pixels: 0.8, ombres: 1024, douces: false, vue: 520, decor: 380, soldatDetail: 20, soldatSimple: 45, soldatSilhouette: 210, roues: 60, effets: 200, herbe: 22, arbresDetail: 80, maisons: 100 },
-      { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 800, decor: 540, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280, herbe: 38, arbresDetail: 130, maisons: 160 },
-      { nom: "beau", pixels: 1.25, selonEcran: true, ombres: 2048, douces: true, vue: 1300, decor: 850, soldatDetail: 50, soldatSimple: 110, soldatSilhouette: 300, roues: 160, effets: 400, herbe: 60, arbresDetail: 220, maisons: 240 },
+      { nom: "très léger", pixels: 0.6, ombres: 0, douces: false, vue: 380, decor: 300, soldatDetail: 12, soldatSimple: 30, soldatSilhouette: 150, roues: 35, effets: 120, herbe: 0, arbresDetail: 50, maisons: 60,
+        reflets: false, ombresChaque: 1, anisotropie: 2, solFin: false, animLoin: 3, filtre: false },
+      { nom: "léger", pixels: 0.75, ombres: 1024, douces: false, vue: 520, decor: 380, soldatDetail: 18, soldatSimple: 40, soldatSilhouette: 200, roues: 60, effets: 180, herbe: 18, arbresDetail: 70, maisons: 90,
+        reflets: false, ombresChaque: 2, anisotropie: 4, solFin: false, animLoin: 2, filtre: true },
+      { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 800, decor: 540, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280, herbe: 38, arbresDetail: 130, maisons: 160,
+        reflets: true, ombresChaque: 1, anisotropie: 8, solFin: true, animLoin: 2, filtre: true },
+      { nom: "beau", pixels: 1.25, selonEcran: true, ombres: 2048, douces: true, vue: 1300, decor: 850, soldatDetail: 50, soldatSimple: 110, soldatSilhouette: 300, roues: 160, effets: 400, herbe: 60, arbresDetail: 220, maisons: 240,
+        reflets: true, ombresChaque: 1, anisotropie: 8, solFin: true, animLoin: 1, filtre: true },
     ],
+    // (demande 96) l'herbe qui repousse autour de toi est recalculée par petits morceaux : au plus « herbeBudget » ms par
+    // image (avant : tout d'un coup, jusqu'à 14 ms, une petite saccade tous les 3 m).
+    herbeBudget: 1.5,
+    // (demande 96) sans les reflets du ciel, la lumière du ciel (et du sol) est multipliée par « sansReflets » : la scène
+    // garde à peu près la même clarté.
+    sansReflets: 1.25,
   },
   // (étape 72) Le QUADRILLAGE : la carte est découpée en cases de 16 m. Pour savoir quels arbres ou quelles maisons sont
   // près de toi, on ne regarde que ta case et ses voisines (au lieu des 400 arbres et 150 murs à chaque fois).
