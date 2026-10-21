@@ -17,6 +17,10 @@
     .version { color: var(--doux); font-size: .85rem; margin-right: 10px; }
     .cadre-ecran { position: relative; max-width: 1280px; margin: 0 auto; aspect-ratio: 16 / 9; border: 2px solid var(--bord); border-radius: 12px; overflow: hidden; background: #9aa58a; }
     .cadre-ecran canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    /* (étape 91) le plein écran : le cadre prend tout l'écran, en gardant sa forme 16/9 (bandes noires si besoin) */
+    .cadre-ecran:fullscreen { max-width: none; width: min(100vw, calc(100vh * 16 / 9)); height: auto; margin: auto; border: 0; border-radius: 0; }
+    .cadre-ecran:fullscreen::backdrop { background: #000; }
+    #plein-ecran { margin-left: 8px; padding: 3px 10px; font-size: .85rem; cursor: pointer; }
     #ecran2d { outline: none; touch-action: none; }
     #pause { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 2.4rem; font-weight: bold; background: rgba(0,0,0,.35); pointer-events: none; }
     #pause[hidden] { display: none; }
@@ -320,7 +324,7 @@
   <div class="page">
     <header class="entete">
       <h1>🛡️ The Last Battlefield · bataille de tanks, soldats, grenades, maisons à détruire, engins, motos, quads, camions, hélicos de transport, bateaux, sous-marins, avions et portails · et le souterrain</h1>
-      <span><span id="version" class="version"></span> <a href="../index.html#etape90">📓 Ouvrir le carnet (étapes 60 à 90)</a></span>
+      <span><span id="version" class="version"></span> <a href="../index.html#etape91">📓 Ouvrir le carnet (étapes 60 à 91)</a> <button id="plein-ecran" type="button" title="Plein écran (touche K)">⛶ Plein écran (K)</button></span>
     </header>
 
     <div class="cadre-ecran">
@@ -374,57 +378,58 @@
   </div>
 
   <script src="../circuit/vendor/three.min.js"></script>
-  <script src="config.js?v=31"></script>
-  <script src="moteur/evenements.js?v=31"></script>
-  <script src="moteur/bruit.js?v=31"></script>
-  <script src="moteur/entrees.js?v=31"></script>
-  <script src="moteur/grille.js?v=31"></script>
-  <script src="donnees/carte-du-jour.js?v=31"></script>
-  <script src="logique/terrain.js?v=31"></script>
-  <script src="logique/souterrain.js?v=31"></script>
-  <script src="logique/structures.js?v=31"></script>
-  <script src="logique/char.js?v=31"></script>
-  <script src="logique/obus.js?v=31"></script>
-  <script src="logique/ia.js?v=31"></script>
-  <script src="logique/soldat.js?v=31"></script>
-  <script src="logique/troupes.js?v=31"></script>
-  <script src="logique/vehicules.js?v=31"></script>
-  <script src="logique/helicos.js?v=31"></script>
-  <script src="logique/bateaux.js?v=31"></script>
-  <script src="logique/portails.js?v=31"></script>
-  <script src="logique/sousmarins.js?v=31"></script>
-  <script src="logique/avions.js?v=31"></script>
-  <script src="logique/ordres.js?v=31"></script>
-  <script src="logique/engins.js?v=31"></script>
-  <script src="logique/equipement.js?v=31"></script>
-  <script src="logique/armes.js?v=31"></script>
-  <script src="logique/gadgets.js?v=31"></script>
-  <script src="donnees/sauvegarde.js?v=31"></script>
-  <script src="logique/monde.js?v=31"></script>
-  <script src="logique/campagne.js?v=31"></script>
-  <script src="affichage/outils3d.js?v=31"></script>
-  <script src="affichage/chars3d.js?v=31"></script>
-  <script src="affichage/armes3d.js?v=31"></script>
-  <script src="affichage/engins3d.js?v=31"></script>
-  <script src="affichage/vehicules3d.js?v=31"></script>
-  <script src="affichage/helicos3d.js?v=31"></script>
-  <script src="affichage/avions3d.js?v=31"></script>
-  <script src="affichage/maisons3d.js?v=31"></script>
-  <script src="affichage/decor.js?v=31"></script>
-  <script src="affichage/effets.js?v=31"></script>
-  <script src="affichage/station3d.js?v=31"></script>
-  <script src="affichage/scene.js?v=31"></script>
-  <script src="affichage/qualite.js?v=31"></script>
-  <script src="affichage/tableau.js?v=31"></script>
-  <script src="affichage/sous-le-capot.js?v=31"></script>
-  <script src="affichage/sons.js?v=31"></script>
-  <script src="affichage/musique.js?v=31"></script>
-  <script src="affichage/barre-ordres.js?v=31"></script>
-  <script src="affichage/ambiance.js?v=31"></script>
-  <script src="affichage/accueil.js?v=31"></script>
-  <script src="affichage/menu.js?v=31"></script>
-  <script src="affichage/campagne-tableau.js?v=31"></script>
-  <script src="affichage/campagne-ecrans.js?v=31"></script>
-  <script src="main.js?v=31"></script>
+  <script src="config.js?v=32"></script>
+  <script src="moteur/evenements.js?v=32"></script>
+  <script src="moteur/bruit.js?v=32"></script>
+  <script src="moteur/entrees.js?v=32"></script>
+  <script src="moteur/grille.js?v=32"></script>
+  <script src="donnees/carte-du-jour.js?v=32"></script>
+  <script src="logique/terrain.js?v=32"></script>
+  <script src="logique/souterrain.js?v=32"></script>
+  <script src="logique/structures.js?v=32"></script>
+  <script src="logique/char.js?v=32"></script>
+  <script src="logique/obus.js?v=32"></script>
+  <script src="logique/ia.js?v=32"></script>
+  <script src="logique/soldat.js?v=32"></script>
+  <script src="logique/troupes.js?v=32"></script>
+  <script src="logique/vehicules.js?v=32"></script>
+  <script src="logique/helicos.js?v=32"></script>
+  <script src="logique/bateaux.js?v=32"></script>
+  <script src="logique/portails.js?v=32"></script>
+  <script src="logique/sousmarins.js?v=32"></script>
+  <script src="logique/avions.js?v=32"></script>
+  <script src="logique/ordres.js?v=32"></script>
+  <script src="logique/engins.js?v=32"></script>
+  <script src="logique/equipement.js?v=32"></script>
+  <script src="logique/armes.js?v=32"></script>
+  <script src="logique/gadgets.js?v=32"></script>
+  <script src="donnees/sauvegarde.js?v=32"></script>
+  <script src="logique/monde.js?v=32"></script>
+  <script src="logique/campagne.js?v=32"></script>
+  <script src="affichage/outils3d.js?v=32"></script>
+  <script src="affichage/chars3d.js?v=32"></script>
+  <script src="affichage/armes3d.js?v=32"></script>
+  <script src="affichage/engins3d.js?v=32"></script>
+  <script src="affichage/vehicules3d.js?v=32"></script>
+  <script src="affichage/helicos3d.js?v=32"></script>
+  <script src="affichage/avions3d.js?v=32"></script>
+  <script src="affichage/maisons3d.js?v=32"></script>
+  <script src="affichage/decor.js?v=32"></script>
+  <script src="affichage/effets.js?v=32"></script>
+  <script src="affichage/station3d.js?v=32"></script>
+  <script src="affichage/scene.js?v=32"></script>
+  <script src="affichage/qualite.js?v=32"></script>
+  <script src="affichage/tableau.js?v=32"></script>
+  <script src="affichage/sous-le-capot.js?v=32"></script>
+  <script src="affichage/sons.js?v=32"></script>
+  <script src="affichage/musique.js?v=32"></script>
+  <script src="affichage/barre-ordres.js?v=32"></script>
+  <script src="affichage/ambiance.js?v=32"></script>
+  <script src="affichage/plein-ecran.js?v=32"></script>
+  <script src="affichage/accueil.js?v=32"></script>
+  <script src="affichage/menu.js?v=32"></script>
+  <script src="affichage/campagne-tableau.js?v=32"></script>
+  <script src="affichage/campagne-ecrans.js?v=32"></script>
+  <script src="main.js?v=32"></script>
 </body>
 </html>
