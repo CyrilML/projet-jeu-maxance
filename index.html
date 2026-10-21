@@ -211,6 +211,7 @@
       <a href="#etape87">Étape 87</a>
       <a href="#etape88">Étape 88</a>
       <a href="#etape89">Étape 89</a>
+      <a href="#etape90">Étape 90</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4833,6 +4834,38 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <p>Une caméra voit tout ce qui est devant elle, même l'intérieur des objets si elle est dedans. C'est pour ça que les jeux cachent le corps du joueur quand la caméra est dans sa tête (à la première personne, et dans la lunette).</p>
     </section>
 
+    <section id="etape90">
+      <h2>🧸 Étape 90 : moins de lags, et 5 difficultés pour la campagne <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Le filtre de cinéma allégé, et le choix entre très facile, facile, normal, difficile et très difficile. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/90-moins-de-lags-et-difficulte.md</code>.</p>
+          <ul>
+            <li>✍️ « Le jeu rame. Arrange d'abord le jeu. »</li>
+            <li>✍️ « La campagne est beaucoup trop compliquée : très facile, facile, normal, difficile, très difficile. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 31 ».</li>
+            <li>☐ Le jeu rame moins (regarde « ⚙️ qualité … i/s »).</li>
+            <li>☐ Campagne : 5 boutons de difficulté en haut de la liste des chapitres (ou les touches 1 à 5).</li>
+            <li>☐ En 🧸 très facile : 3 fois plus de vie, qui revient toute seule ; les ennemis font 3 fois moins de dégâts et sont 2 fois moins nombreux.</li>
+            <li>☐ Le niveau se voit sur le briefing, pendant la mission et sur l'écran de fin.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>✖️ La difficulté, ce sont des multiplications</h3>
+      <p>Le jeu ne réécrit pas les missions pour chaque niveau. Il garde les mêmes, et <strong>multiplie</strong> quelques nombres : ta vie × 3, les dégâts ennemis × 0,35, le nombre d'ennemis × 0,5… En « difficile », tout est multiplié par 1 : c'est l'ancienne campagne.</p>
+      <pre style="white-space: pre-wrap">vie de ton tank : 16 × 3 = 48 (très facile)   16 × 1 = 16 (difficile)   16 × 0,75 = 12 (très difficile)</pre>
+      <h3>🐢 Pourquoi le jeu ramait</h3>
+      <p>Le filtre de cinéma de l'étape 87 obligeait l'ordinateur à mélanger deux grandes images par-dessus le jeu, à chaque image (et le grain bougeait 12 fois par seconde). On a gardé les couleurs de guerre et les bords sombres, qui ne coûtent presque rien.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul><li>Dans <code>tanks/config.js</code>, cherche <code>difficultes</code> et invente ton propre niveau !</li></ul>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6076,6 +6109,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-89" data-cle="appris-89" placeholder="Ex. : J'ai appris qu'une caméra voit l'intérieur des objets…"></textarea>
         <label for="idees-89"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-89" data-cle="idees-89" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 90 · moins de lags, 5 difficultés <span class="petit">· 21 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> le filtre allégé (<code>tanks/affichage/ambiance.js</code>) et les difficultés (<code>tanks/logique/campagne.js</code>, <code>config.js</code> : <code>campagne.difficultes</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : d'abord les lags, puis 5 niveaux de très facile à très difficile.</p>
+        <label for="appris-90"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-90" data-cle="appris-90" placeholder="Ex. : J'ai appris que la difficulté, ce sont des multiplications…"></textarea>
+        <label for="idees-90"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-90" data-cle="idees-90" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
