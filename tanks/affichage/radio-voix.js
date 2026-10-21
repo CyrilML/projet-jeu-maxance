@@ -26,6 +26,7 @@ Tanks.RadioVoix = (function () {
   } catch (e) {
     synthese = null;
   }
+  let meilleure = "aucune"; // (étape 95 : le nom de la plus belle voix trouvée)
   let actives = true, voixFr = [], toutes = 0, ctx = null, L = 1280, H = 720, blancJusqua = 0, bouton = null;
   const file = []; // les phrases qui attendent leur tour
   let enCours = null; // celle qu'on dit en ce moment
@@ -44,7 +45,13 @@ Tanks.RadioVoix = (function () {
     }
     toutes = v.length;
     voixFr = v.filter((x) => (x.lang || "").toLowerCase().replace("_", "-").startsWith("fr"));
-    voixFr.sort((a, b) => (b.lang === V.langue) - (a.lang === V.langue)); // (le français de France d'abord)
+    // (étape 95) les plus belles voix d'abord (voir config « qualite »), puis le français de France ; on ne garde que
+    // les meilleures, pour qu'aucun soldat n'ait une vieille voix très robotique quand il en existe une naturelle
+    const points = (x) => V.qualite.reduce((n, [mot, pts]) => n + ((x.name || "").toLowerCase().includes(mot) ? pts : 0), 0) + (x.lang === V.langue ? 5 : 0) + (x.localService === false ? 3 : 0);
+    voixFr.sort((a, b) => points(b) - points(a));
+    meilleure = voixFr.length ? voixFr[0].name : "aucune";
+    const seuil = voixFr.length ? points(voixFr[0]) : 0;
+    if (seuil >= 40) voixFr = voixFr.filter((x) => points(x) >= 40).slice(0, V.garder); // (des belles voix existent : seulement elles)
   }
 
   function initialiser(toile) {
@@ -257,7 +264,7 @@ Tanks.RadioVoix = (function () {
   // Pour « sous le capot »
   function etat() {
     return {
-      actives, synthese: !!synthese, voixFr: voixFr.map((v) => v.name + " (" + v.lang + ")"), toutes, possible: voixPossible(),
+      actives, synthese: !!synthese, voixFr: voixFr.map((v) => v.name + " (" + v.lang + ")"), toutes, possible: voixPossible(), meilleure,
       enCours: enCours && { qui: enCours.phrase.qui, texte: enCours.phrase.texte, etat: enCours.etat, voix: !!enCours.utterance },
       file: file.map((x) => ({ qui: x.phrase.qui, priorite: x.phrase.priorite, attend: (performance.now() - x.recue) / 1000 })), max: V.file, historique, bilan,
       sousTitres: sousTitres.length,

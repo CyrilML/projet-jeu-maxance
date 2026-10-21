@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 36,
+  version: 37,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -1500,11 +1500,19 @@ Tanks.CONFIG.radio = {
     volume: 0.95,
     // Chaque soldat a SA voix : on la choisit d'après son nom (toujours la même pour lui). hauteur = « pitch » (0,5 grave
     // … 2 aigu), vitesse = « rate » (1 = normal).
+    // ✍️ (étape 95 : « pas si robotiques ») tordre beaucoup la hauteur d'une voix la rend robotique (une voix d'humain
+    // pousse à 0,6 ou 1,3 sonne comme un dessin animé). On ne la change plus que très peu : la VARIÉTÉ vient surtout
+    // du choix de VOIX différentes (homme, femme, autres voix de l'ordinateur), et des meilleures voix d'abord.
     timbres: [
-      { hauteur: 0.72, vitesse: 1.02 }, { hauteur: 0.9, vitesse: 1.12 }, { hauteur: 1.08, vitesse: 1.0 }, { hauteur: 1.22, vitesse: 1.15 },
-      { hauteur: 0.82, vitesse: 1.2 }, { hauteur: 1.0, vitesse: 1.25 }, { hauteur: 1.35, vitesse: 1.06 }, { hauteur: 0.65, vitesse: 1.1 },
+      { hauteur: 0.96, vitesse: 1.06 }, { hauteur: 1.0, vitesse: 1.1 }, { hauteur: 1.04, vitesse: 1.04 }, { hauteur: 0.93, vitesse: 1.12 },
+      { hauteur: 1.02, vitesse: 1.15 }, { hauteur: 0.98, vitesse: 1.02 }, { hauteur: 1.06, vitesse: 1.08 }, { hauteur: 0.95, vitesse: 1.14 },
     ],
-    interceptee: { hauteur: 0.55, vitesse: 0.95 }, // la radio ennemie : grave et lente
+    interceptee: { hauteur: 0.88, vitesse: 1.0 }, // la radio ennemie : un peu plus grave
+    // (étape 95) Les MEILLEURES voix d'abord : les voix « naturelles » (Microsoft Edge : « Online (Natural) »), puis
+    // les voix « neuronales », « Premium », « Améliorée », celles de Google, puis les autres. Un mot trouvé dans le
+    // nom de la voix donne des points ; on garde les « garder » meilleures voix pour les soldats.
+    qualite: [["natural", 100], ["naturel", 100], ["neural", 90], ["online", 60], ["premium", 70], ["enhanced", 60], ["améliorée", 60], ["google", 40], ["siri", 50]],
+    garder: 4,
     couleurs: { bleus: "#5aa8ff", rouges: "#ff5a4a", radio: "#ffd27a" },
   },
   // ------------------------------------------------------------------ les phrases
