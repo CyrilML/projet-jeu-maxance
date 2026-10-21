@@ -31,8 +31,8 @@ Tanks.Explosions = (function () {
   function modeles() {
     const B = R.boule, F = R.fumee;
     return {
-      lueur: { image: I.lueur, mode: P.FACE, brille: true, vie: R.eclair.duree, taille: [6, 9], couleur: [3, 2.3, 1.4], entree: 0.0001, sortie: 1.8, portee: 6 },
-      flamme: { image: I.flamme, images: 4, defile: 2, mode: P.FACE, brille: true, vie: B.vie, taille: [B.taille * 0.35, B.taille], couleurs: [[5, 4.2, 2.8], [4, 2, 0.6], [2.2, 0.7, 0.12], [0.5, 0.12, 0.02]], monte: B.monte, frein: 3.5, tourne: 1.2, entree: 0.0001, sortie: 1.2, portee: 6 },
+      lueur: { image: I.lueur, mode: P.FACE, brille: true, vie: R.eclair.duree, taille: [6, 9], couleur: [1.8, 1.2, 0.6], entree: 0.0001, sortie: 1.8, portee: 6 },
+      flamme: { image: I.flamme, images: 4, defile: 2, mode: P.FACE, brille: true, vie: B.vie, taille: [B.taille * 0.35, B.taille], couleurs: [[3, 2.2, 1.2], [2.6, 1.1, 0.3], [1.4, 0.4, 0.06], [0.4, 0.1, 0.02]], monte: B.monte, frein: 3.5, tourne: 1.2, entree: 0.0001, sortie: 1.2, portee: 6 },
       fumeeNoire: { image: I.fumee, mode: P.FACE, eclaire: true, vie: F.vie, taille: [2, F.taille], couleur: [0.14, 0.13, 0.12], opacite: 0.78, frein: 0.9, monte: F.monte, vent: 0.35, tourne: 0.25, entree: 0.05, sortie: 1.8, portee: 8 },
       fumeeGrise: { image: I.fumee2, mode: P.FACE, eclaire: true, vie: F.vie * 0.8, taille: [2, F.taille * 0.9], couleur: [0.42, 0.4, 0.37], opacite: 0.6, frein: 0.9, monte: F.monte * 0.8, vent: 0.4, tourne: 0.25, entree: 0.05, sortie: 1.6, portee: 8 },
       onde: { image: I.anneau, mode: P.PLAT, vie: R.onde.duree, taille: [1, R.onde.rayon * 2], opacite: R.onde.opacite, lineaire: true, entree: 0.0001, sortie: 1.3, portee: 4 },

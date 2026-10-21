@@ -1347,7 +1347,7 @@ Tanks.CONFIG.realisme = Object.assign(Tanks.CONFIG.realisme || {}, {
     // La BALLE TRAÇANTE : 1 balle sur « chaque » brille (comme les vraies : une sur 4 ou 5). Elle vole à « vitesse » m/s
     // (une vraie va à 900 m/s : on la ralentit un peu pour qu'on la voie), c'est un trait de « longueur » m, large de
     // « largeur » m, orange (les deux camps : la même couleur), « force » fois plus lumineux qu'un objet blanc.
-    traceur: { chaque: 4, vitesse: 420, longueur: 11, largeur: 0.08, couleur: [1, 0.42, 0.12], force: 5 },
+    traceur: { chaque: 4, vitesse: 420, longueur: 11, largeur: 0.08, couleur: [1, 0.36, 0.08], force: 3 },
     // Les AUTRES balles : un trait à peine visible (l'air chaud qui tremble), plus court.
     balle: { vitesse: 700, longueur: 3.5, largeur: 0.03, opacite: 0.16 },
     // L'ÉCLAIR au bout du canon (pour tous les tireurs) : taille (m), durée (s), vraie lumière (force, portée m) pour les
@@ -1357,7 +1357,7 @@ Tanks.CONFIG.realisme = Object.assign(Tanks.CONFIG.realisme || {}, {
     fumee: { chance: 0.45, vie: 1.6, taille: 0.7 },
     // LE COUP DE CANON d'un tank : la boule de feu (m), la vraie lumière, l'anneau de POUSSIÈRE soulevé autour du tank
     // (nombre de bouffées, m de rayon, m/s), la fumée devant le canon.
-    canon: { flash: 2.6, lumiere: 70, portee: 34, poussiere: 22, rayon: 4.5, souffle: 11, fumee: 9, secousse: 0.35 },
+    canon: { flash: 2, lumiere: 70, portee: 34, poussiere: 22, rayon: 4.5, souffle: 11, fumee: 9, secousse: 0.35 },
     // La TRAÎNÉE de fumée des roquettes et missiles : une bouffée tous les « pas » m, qui vit « vie » s ; l'obus de tank
     // a un petit traceur rouge au culot (« culot » : taille en m).
     trainee: { pas: 0.6, vie: 3.2, taille: [0.7, 2.8], culot: 0.5 },

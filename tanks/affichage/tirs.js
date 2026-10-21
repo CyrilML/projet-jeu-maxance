@@ -36,7 +36,7 @@ Tanks.Tirs = (function () {
       traceuse: { image: I.trait, mode: P.TRAIT, brille: true, exacte: true, longueur: TR.longueur, couleur: TR.couleur, force: TR.force, taille: [TR.largeur, TR.largeur], entree: 0.0001, sortie: 0.15, portee: 4 },
       lueurTraceuse: { image: I.lueur, mode: P.FACE, brille: true, exacte: true, couleur: TR.couleur, force: TR.force * 0.5, taille: [0.35, 0.35], entree: 0.0001, sortie: 0.1, portee: 4 },
       balle: { image: I.trait, mode: P.TRAIT, brille: true, exacte: true, longueur: BA.longueur, couleur: [1, 0.85, 0.6], force: 1.4, opacite: BA.opacite, taille: [BA.largeur, BA.largeur], entree: 0.0001, sortie: 0.3 },
-      etoile: { image: I.etoile, mode: P.FACE, brille: true, vie: EC.duree, taille: [EC.taille, EC.taille * 1.25], couleurs: [[3.2, 2.6, 1.6], [2.4, 1.3, 0.5]], entree: 0.0001, sortie: 1.6, portee: 2 },
+      etoile: { image: I.etoile, mode: P.FACE, brille: true, vie: EC.duree, taille: [EC.taille, EC.taille * 1.25], couleurs: [[2.6, 1.9, 0.9], [2, 0.9, 0.3]], entree: 0.0001, sortie: 1.6, portee: 2 },
       flammeBouche: { image: I.bouche, mode: P.TRAIT, brille: true, vie: EC.duree, etire: -1, taille: [EC.taille * 0.45, EC.taille * 0.5], couleurs: [[3, 2.2, 1.2], [2.2, 1, 0.35]], entree: 0.0001, sortie: 1.4, portee: 2 },
       fumeeBouche: { image: I.fumee2, mode: P.FACE, eclaire: true, vie: FU.vie, taille: [0.12, FU.taille], couleur: [0.78, 0.77, 0.75], opacite: 0.32, frein: 2.8, monte: 0.5, vent: 0.7, tourne: 0.7, sortie: 1.4 },
       // les impacts
@@ -51,9 +51,9 @@ Tanks.Tirs = (function () {
       jetEau: { image: I.trait, mode: P.TRAIT, vie: 0.6, etire: 0.06, taille: [0.06, 0.1], couleur: [0.92, 0.96, 1], opacite: 0.7, gravite: 9.8, entree: 0.0001, sortie: 0.8 },
       rond: { image: I.anneau, mode: P.PLAT, vie: 1.3, taille: [0.2, 1.4], couleur: [0.95, 0.98, 1], opacite: 0.55, lineaire: true, entree: 0.0001, sortie: 1.2 },
       // le coup de canon d'un tank
-      boule: { image: I.flamme, images: 4, mode: P.FACE, brille: true, vie: 0.22, taille: [1, 2.4], couleurs: [[4, 3.2, 2], [3, 1.4, 0.4], [1.2, 0.3, 0.05]], tourne: 2, entree: 0.0001, sortie: 1.2, portee: 4 },
-      flammeCanon: { image: I.bouche, mode: P.TRAIT, brille: true, vie: 0.1, etire: -1, taille: [1.1, 1.4], couleurs: [[4, 3, 1.6], [2.6, 1.1, 0.3]], entree: 0.0001, sortie: 1.3, portee: 4 },
-      lueurCanon: { image: I.lueur, mode: P.FACE, brille: true, vie: 0.12, taille: [5, 7], couleur: [2, 1.3, 0.6], opacite: 0.7, entree: 0.0001, sortie: 1.5, portee: 4 },
+      boule: { image: I.flamme, images: 4, mode: P.FACE, brille: true, vie: 0.22, taille: [1, 2.4], couleurs: [[3, 2.1, 1], [2.2, 0.9, 0.25], [0.9, 0.2, 0.04]], tourne: 2, entree: 0.0001, sortie: 1.2, portee: 4 },
+      flammeCanon: { image: I.bouche, mode: P.TRAIT, brille: true, vie: 0.1, etire: -1, taille: [1.1, 1.4], couleurs: [[3, 2, 0.9], [2, 0.8, 0.2]], entree: 0.0001, sortie: 1.3, portee: 4 },
+      lueurCanon: { image: I.lueur, mode: P.FACE, brille: true, vie: 0.12, taille: [5, 7], couleur: [1.2, 0.75, 0.35], opacite: 0.6, entree: 0.0001, sortie: 1.5, portee: 4 },
       fumeeCanon: { image: I.fumee, mode: P.FACE, eclaire: true, vie: 5, taille: [0.8, 4.5], couleur: [0.72, 0.71, 0.69], opacite: 0.5, frein: 1.6, monte: 0.5, vent: 0.45, tourne: 0.4, sortie: 1.5, portee: 3 },
       poussiereCanon: { image: I.poussiere, mode: P.FACE, eclaire: true, vie: 2.8, taille: [0.8, 3.6], opacite: 0.5, frein: 2.6, monte: 0.35, vent: 0.5, tourne: 0.5, sortie: 1.4, portee: 3 },
       // les traînées
