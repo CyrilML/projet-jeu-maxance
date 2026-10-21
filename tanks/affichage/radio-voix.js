@@ -107,9 +107,17 @@ Tanks.RadioVoix = (function () {
   // (étape 96) LE TOUR DES VOIX : le 1er soldat qui parle reçoit la 1re voix, le 2e la 2e, etc. (avant, deux soldats
   // pouvaient tomber sur la même voix par hasard). Chacun garde ensuite toujours la sienne.
   const voixDe = new Map();
+  let decalage = 0; // (étape 96 : ✍️ « que je puisse changer les voix tout de suite » : J fait tourner les voix d'un cran)
   function voixPour(qui) {
     if (!voixDe.has(qui)) voixDe.set(qui, voixDe.size);
-    return voixFr[voixDe.get(qui) % voixFr.length];
+    return voixFr[(voixDe.get(qui) + decalage) % voixFr.length];
+  }
+  // J : chaque soldat passe à la voix suivante ; un message de la radio fait entendre la nouvelle voix tout de suite
+  function changerVoix() {
+    decalage++;
+    const v = voixFr.length ? voixFr[decalage % voixFr.length].name : "aucune voix française";
+    Tanks.Evenements.emettre("voix-changees", { decalage, voix: v, nombre: voixFr.length });
+    recevoir({ qui: "Radio", texte: "Nouvelles voix, à vous ! Ici " + v.split(" - ")[0].replace("Microsoft ", "").replace(" Online (Natural)", "") + ".", priorite: "reponse", equipe: "bleus" });
   }
   function numero(nom) {
     let h = 7;
@@ -286,5 +294,5 @@ Tanks.RadioVoix = (function () {
     };
   }
 
-  return { initialiser, maj, dessiner, basculer, etat, get actives() { return actives; } };
+  return { initialiser, maj, dessiner, basculer, changerVoix, etat, get actives() { return actives; } };
 })();

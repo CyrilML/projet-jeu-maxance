@@ -28,6 +28,7 @@ Tanks.Entrees = (function () {
     camera: ["KeyC"],
     ordre: [], // étape 65 : le bouton « 📢 Ordre » (la touche T, elle, est écoutée directement par la barre : affichage/barre-ordres.js)
     son: ["KeyB"],
+    changerVoix: ["KeyJ"], // étape 96 : J fait passer chaque soldat à une autre voix
     voix: ["KeyN"], // demande 94 : couper ou remettre les voix de la radio (N est à la même place sur un clavier français)
     musique: ["Semicolon", "KeyM"], // étape 82 : couper ou remettre la musique (la touche M : « Semicolon » sur un clavier azerty, « KeyM » sur un qwerty)
     pause: ["Escape", "KeyP"],
