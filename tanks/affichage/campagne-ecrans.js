@@ -173,11 +173,11 @@ Tanks.EcranCampagne = (function () {
     const zone = racine.querySelector(".cp-difficultes"), detail = racine.querySelector(".cp-diff-detail");
     if (!zone) return;
     const D = Tanks.Campagne.difficulte();
-    zone.innerHTML = '<div class="cp-diff-titre">Difficulté<small>' + html(D.texte) + "</small></div>" + K.difficultes.map((n, k) =>
-      '<button class="cp-diff' + (n.id === D.id ? " cp-actif" : "") + '" data-cp="difficulte" data-valeur="' + n.id + '" style="--diff:' + n.couleur + '"><span class="cp-diff-icone">' + n.icone + '</span><span class="cp-diff-texte"><span class="cp-diff-nom">' + html(n.nom) + '</span><span class="cp-diff-chiffres">vie ' + fois(n.vieChar) + " · dégâts ennemis " + fois(n.degats) + "</span></span><kbd>" + (k + 1) + "</kbd></button>").join("");
+    zone.innerHTML = '<div class="cp-diff-titre">Difficulté<small>' + K.difficultes.length + " niveaux</small></div>" + K.difficultes.map((n, k) =>
+      '<button class="cp-diff' + (n.id === D.id ? " cp-actif" : "") + '" data-cp="difficulte" data-valeur="' + n.id + '" style="--diff:' + n.couleur + '"><span class="cp-diff-icone">' + n.icone + '</span><span class="cp-diff-texte"><span class="cp-diff-nom">' + html(n.nom) + '</span><span class="cp-diff-chiffres">vie ' + fois(n.vieChar) + " · dégâts " + fois(n.degats) + "</span></span><kbd>" + (k + 1) + "</kbd></button>").join("");
     detail.style.setProperty("--diff", D.couleur);
-    detail.innerHTML = "<span><b>" + html(D.icone + " " + D.nom) + "</b> · ta vie " + fois(D.vieChar) + " (tank) et " + fois(D.vieSoldat) + " (soldat) · dégâts du Front " + fois(D.degats) + " · précision du Front " + fois(D.precision) +
-      " · ennemis " + fois(D.soldats) + " · durées à tenir " + fois(D.durees) + " · alliés " + fois(D.allies) + (D.soin ? " · ta vie revient toute seule après " + D.attente + " s sans être touché" : "") + "</span>";
+    detail.innerHTML = "<span><b>" + html(D.icone + " " + D.nom) + "</b> · " + html(D.texte) + " · ta vie " + fois(D.vieChar) + " · dégâts du Front " + fois(D.degats) +
+      " · ennemis " + fois(D.soldats) + " · durées à tenir " + fois(D.durees) + " · alliés " + fois(D.allies) + (D.soin ? " · ta vie revient toute seule" : "") + "</span>";
   }
   function choisirDifficulte(id) {
     if (demander("difficulte", id).ok) majDifficultes();
