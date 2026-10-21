@@ -1302,6 +1302,12 @@ Tanks.CONFIG.realisme = Object.assign(Tanks.CONFIG.realisme || {}, {
     // LES GESTES (l'affichage) : en combien de temps on passe d'une position à l'autre (s : plus petit = plus vif) ;
     // le recul de l'arme à chaque tir (m vers l'arrière, rad vers le haut) ; la longueur d'une foulée (m, 2 pas).
     gestes: { souplesse: 0.18, reculArriere: 0.04, reculHaut: 0.07, foulee: 2.4, regardAutour: 0.35 },
+    // (demande 93) LE VISAGE (affichage/engins3d.js, la tête sculptée) : grain : les nuances au hasard de la peau (0 = toute
+    // d'une couleur) ; rougeur : les joues et le nez plus roses ; barbe : la force de la barbe de 3 jours (0 = rasé de près) ;
+    // poils : combien de petits poils le tailleur sème dans la barbe (0 à 1) ; lunettes : une par soldat, à tour de rôle
+    // ("casque" = relevées sur le casque, "soleil" = lunettes de soleil, "masque" = le masque de protection sur les yeux) ;
+    // casque : sa hauteur (m au-dessus du cou) et sa pente (rad : posé un peu en arrière).
+    visage: { grain: 0.07, rougeur: 0.1, barbe: 0.24, poils: 0.32, lunettes: ["casque", "soleil", "masque", "casque"], casque: { hauteur: 0.176, pente: 0.09 } },
   },
   // ------------------------------------------------------------------ LE SOL
   sol: {
@@ -1321,6 +1327,16 @@ Tanks.CONFIG.realisme = Object.assign(Tanks.CONFIG.realisme || {}, {
       traces: [0, 900, 2000, 4000], tracesLoin: [0, 120, 200, 300], tracesDuree: [0, 70, 120, 200],
       crateres: [30, 70, 140, 220],
     },
+    // (demande 93) L'HERBE plus dense et plus variée : case = m entre deux touffes (par niveau de qualité : plus petit =
+    // plus dense) ; hauteur : × la hauteur d'une touffe (la plus petite, la plus grande) ; seche : la part de l'herbe
+    // qui est sèche (paille), en grandes plaques (0 à 1).
+    herbe: { case: [1.3, 1.1, 0.92, 0.8], hauteur: [0.75, 1.55], seche: 0.4 },
+    // Les petits CAILLOUX semés autour de la caméra : rayon m (par niveau, 0 = pas de cailloux), case m, chance d'en avoir
+    // un par case (× (1 + surTerre) sur la terre et les chemins), taille m (le plus petit, le plus gros).
+    cailloux: { rayon: [0, 12, 18, 26], case: 0.85, chance: 0.14, surTerre: 2, taille: [0.025, 0.11] },
+    // Les TACHES du sol : de grandes plaques plus sombres (humides) ou plus jaunes (sèches) : leur taille (m, 2 échelles
+    // mélangées) et leur force (0 = pas de taches).
+    taches: { echelle: [55, 170], force: 0.32 },
   },
 });
 
@@ -1381,7 +1397,7 @@ Tanks.CONFIG.realisme = Object.assign(Tanks.CONFIG.realisme || {}, {
     onde: { rayon: 13, duree: 0.5, opacite: 0.45, bouffees: 16 },
     // La COLONNE DE FUMÉE noire : « nombre » bouffées de « taille » m, pendant « emission » s ; elles vivent « vie » s,
     // montent à « monte » m/s et partent avec le VENT (m/s, vers x et z).
-    fumee: { nombre: 12, taille: 6, emission: 1.2, vie: 10, monte: 2.6 },
+    fumee: { nombre: 16, taille: 6, emission: 2.4, vie: 10, monte: 2.6 }, // (demande 93 : elle sort plus longtemps : une vraie colonne)
     vent: [1.8, 0.7],
     // Les DÉBRIS : « nombre » cailloux en 3D (et des mottes en images) lancés à « vitesse » m/s ; les ÉTINCELLES.
     debris: { nombre: 10, vitesse: 15, taille: 0.22, mottes: 14 },
@@ -1393,7 +1409,21 @@ Tanks.CONFIG.realisme = Object.assign(Tanks.CONFIG.realisme || {}, {
     son: { vitesse: 340, sourd: 260, loin: 700, fort: 1 },
     // L'ÉPAVE QUI BRÛLE (un tank détruit) : le feu dure « feu » s, la fumée « fumee » s ; la lueur du feu (force, portée m).
     epave: { feu: 50, fumee: 110, lumiere: 22, portee: 16, flammes: 14, bouffees: 3 },
+    // (demande 93) ✍️ « Fais un peu plus réaliste » : de VRAIES explosions, plus des boules blanches.
+    //   coeur : le tout petit cœur blanc-jaune du début (taille m, vie s) ; le reste du feu CACHE ce qui est derrière
+    //   (il n'est plus « ajouté » à l'image, qui devenait toute blanche) et finit en fumée noire ;
+    //   fumeeFeu : les bouffées noires qui sortent DU feu (nombre, taille m, monte m/s) ;
+    //   terre : la terre (brune) projetée en l'air (nombre, taille m, vitesse m/s) ;
+    //   brume : les NAPPES de fumée qui traînent au ras du sol après les explosions et autour des épaves (nappes par
+    //   explosion, une toutes les « epave » s près d'une épave, vie s, taille m, opacite) ; au plus « max » (par niveau).
+    coeur: { taille: 2.2, vie: 0.09 },
+    fumeeFeu: { nombre: 7, taille: 5, monte: 3.5 },
+    terre: { nombre: 10, taille: 3.4, vitesse: 13 },
+    brume: { parExplosion: 2, epave: 7, vie: 50, taille: 24, opacite: 0.22, max: [0, 6, 12, 20] },
   },
+  // (demande 93) L'AIR DU CHAMP DE BATAILLE : la brume lointaine commence plus près (× « debut ») : les collines au loin
+  // deviennent plus pâles, comme dans la vraie vie (l'air n'est jamais tout à fait transparent).
+  atmosphere: { debut: 0.55 },
   // ------------------------------------------------------------------ LA LUMIÈRE ET LE CIEL (affichage/scene.js)
   // Une ambiance par décor. direction : vers le soleil [x, y, z] (y petit = soleil bas, plus chaud) ; couleur et force du
   // soleil ; ciel / sol : la lumière qui vient du ciel et celle renvoyée par le sol (« hémisphère ») ; ambiance : sa force ;

@@ -188,7 +188,7 @@ Tanks.Scene = (function () {
       });
     }
     // la distance de vue : le brouillard devient complet à « vue » mètres, et la caméra ne dessine rien plus loin
-    scene.fog.near = Math.min(C.qualite.brouillard, n.vue * 0.4);
+    scene.fog.near = Math.min(C.qualite.brouillard, n.vue * 0.4) * C.realisme.atmosphere.debut; // (demande 93 : la brume lointaine commence plus près)
     scene.fog.far = n.vue;
     cam.far = n.vue * 1.05;
     cam.updateProjectionMatrix();

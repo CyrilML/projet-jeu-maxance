@@ -16,6 +16,7 @@
 // taille. Et il est projeté sur le soldat « au garde-à-vous » : quand il bouge, le motif suit le tissu.
 // Le peintre ajoute encore : le FILET sur le casque, les COUTURES sur les côtés (avec leurs points), la BOUE sur le bas
 // des jambes et les genoux, et une peau un peu plus douce et plus chaude que le tissu.
+// (Demande 93) La peau n'est plus d'une seule couleur : de petites marbrures, et des POILS dans la barbe de 3 jours.
 // Comme tout l'affichage, il ne touche jamais au monde : il habille seulement.
 
 window.Tanks = window.Tanks || {};
@@ -160,7 +161,7 @@ Tanks.Uniformes = (function () {
   // sommet dit sa MATIÈRE : 1 = la peau, 2 = le gilet et ses sangles MOLLE, 3 = le cuir et le caoutchouc, 4 = le nylon
   // uni (le sac, les poches), 0 = le reste).
   const GLSL_COMMUN = [
-    "uniform sampler2D tissuTex; uniform sampler2D equipTex; uniform vec4 tissuReglages;",
+    "uniform sampler2D tissuTex; uniform sampler2D equipTex; uniform vec4 tissuReglages; uniform vec4 visageReglages;",
     "varying vec3 vPosB; varying vec3 vNorB; varying float vMatiere;",
     "float hTissu = 0.5; float peau = 0.0;",
     "vec4 triplan(sampler2D t, vec3 p, vec3 n) {",
@@ -193,6 +194,7 @@ Tanks.Uniformes = (function () {
       tissuTex: { value: tenue ? tissu(equipe) : texEquipement() },
       equipTex: { value: texEquipement() },
       tissuReglages: { value: new THREE.Vector4(1 / R.motif, R.plis, R.boue, R.relief) },
+      visageReglages: { value: new THREE.Vector4(Tanks.CONFIG.realisme.soldats.visage.poils, 0, 0, 0) }, // (demande 93)
     };
     mat.userData.tailleur = sorte;
     mat.customProgramCacheKey = () => "uniforme-" + sorte;
@@ -227,6 +229,14 @@ Tanks.Uniformes = (function () {
         "  float molle = 1.0 - step(0.5, abs(m - 2.0)), nylon = 1.0 - step(0.5, abs(m - 4.0)), cuir = 1.0 - step(0.5, abs(m - 3.0));",
         "  diffuseColor.rgb *= mix(1.0, eq.r * 2.0, molle) * mix(1.0, 0.9 + eq.b * 0.2, nylon + cuir) * mix(1.0, 0.95 + eq.a * 0.1, peau);",
         "  hTissu = 0.5 + molle * (eq.g - 0.5) + (cuir + nylon * 0.5) * (eq.b - 0.5) * 0.6 + peau * (eq.a - 0.5) * 0.25;",
+        // (demande 93) la PEAU vivante : des petites marbrures (un peu plus rouge ici, plus pâle là), et dans la barbe de
+        // 3 jours (la « matière » entre 1 et 1,4) des petits POILS sombres semés au hasard, qui accrochent la lumière
+        "  float marbre = bruit3(vPosB * 140.0) - 0.5;",
+        "  diffuseColor.rgb *= mix(vec3(1.0), vec3(1.0 + marbre * 0.16, 1.0 - marbre * 0.04, 1.0 - marbre * 0.02), peau);",
+        "  float barbe = peau * clamp((m - 1.0) * 2.5, 0.0, 1.0);",
+        "  float poil = step(1.0 - visageReglages.x, h31(floor(vPosB * 650.0))) * barbe;",
+        "  diffuseColor.rgb *= 1.0 - poil * 0.45;",
+        "  hTissu -= poil * 0.35;",
         "  if (peau < 0.5) {",
         GLSL_BOUE,
         "  }",
