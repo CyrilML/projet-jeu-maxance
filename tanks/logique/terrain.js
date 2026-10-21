@@ -285,5 +285,18 @@ Tanks.Terrain = (function () {
     carte = nom === "souterrain" ? "souterrain" : "bataille";
   }
 
-  return { variante: VAR, rues, choisirCarte, get carte() { return carte; }, get souterrain() { return carte === "souterrain"; }, hauteur, hauteurExacte, cahierBilan, normale, boites, arbres, arbresAutour, boitesAutour, grilles: { arbres: grilleArbres, boites: grilleBoites }, dansBoite, repousser, vueLibre, departs, demi, camp: CAMP, villages: VILLAGES, forets, distLac, dansLEau, ileProche, iles: ILES };
+  // (demande 92) DE QUOI EST FAIT LE SOL en (x, z) ? (pour que l'affichage sache quoi faire gicler quand une balle ou un
+  // obus arrive : de la terre, du sable, des éclats de béton, de l'eau…). Les rues de la ville sont pavées.
+  function matiere(x, z) {
+    if (carte === "souterrain") return "beton";
+    if (dansLEau(x, z)) return "eau";
+    if (VAR.herbe === false) return "sable";
+    if (Q && Math.hypot(x - Q.x, z - Q.z) < Q.rayon) {
+      const ix = ((((x - Q.x) % Q.ilot) + Q.ilot) % Q.ilot), iz = ((((z - Q.z) % Q.ilot) + Q.ilot) % Q.ilot), demiRue = Q.rue / 2;
+      if (ix < demiRue || ix > Q.ilot - demiRue || iz < demiRue || iz > Q.ilot - demiRue) return "pierre";
+    }
+    return "terre";
+  }
+
+  return { matiere, variante: VAR, rues, choisirCarte, get carte() { return carte; }, get souterrain() { return carte === "souterrain"; }, hauteur, hauteurExacte, cahierBilan, normale, boites, arbres, arbresAutour, boitesAutour, grilles: { arbres: grilleArbres, boites: grilleBoites }, dansBoite, repousser, vueLibre, departs, demi, camp: CAMP, villages: VILLAGES, forets, distLac, dansLEau, ileProche, iles: ILES };
 })();

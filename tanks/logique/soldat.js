@@ -101,14 +101,14 @@ Tanks.Soldat = (function () {
     // (étape 75) une balle perdue ne file pas parfaitement à plat : elle monte ou descend un tout petit peu
     const fin = { x: x + Math.cos(angle) * portee, y: y - 0.2 + (Math.random() - 0.5) * portee * (0.02 + (1 - (R.precision || 0.5)) * 0.08), z: z + Math.sin(angle) * portee };
     if (mur && (!meilleur || mur.d < meilleur.d)) {
-      ev.push(["balle", { tireur, de: { x, y, z }, a: { x: mur.c.x, y: mur.c.y + 1.5, z: mur.c.z }, ricochet: true }]);
+      ev.push(["balle", { tireur, de: { x, y, z }, a: { x: mur.c.x, y: mur.c.y + 1.5, z: mur.c.z }, ricochet: true, matiere: "metal" }]); // (demande 92 : la matière touchée, pour l'affichage)
       return;
     }
     // (étape 75) un mur entre le tireur et là où va la balle ? elle s'arrête dedans et l'abîme
     const vers = meilleur ? { x: meilleur.s.x, y: meilleur.s.y + 1.2, z: meilleur.s.z } : fin;
     const m = Tanks.Structures.premier(x, y, z, vers.x, vers.y, vers.z);
     if (m) {
-      ev.push(["balle", { tireur, de: { x, y, z }, a: { x: m.x, y: m.y, z: m.z }, mur: true }]);
+      ev.push(["balle", { tireur, de: { x, y, z }, a: { x: m.x, y: m.y, z: m.z }, mur: true, matiere: m.morceau ? m.morceau.matiere : T.souterrain ? "beton" : m.toit ? "tuiles" : "gravats", nx: m.nx, ny: m.ny, nz: m.nz }]);
       Tanks.Structures.balle(m, R.degats || 1, tireur, ev, monde);
       return;
     }
@@ -134,7 +134,7 @@ Tanks.Soldat = (function () {
       fin.x = meilleur.s.x + (Math.random() - 0.5) * 3;
       fin.z = meilleur.s.z + (Math.random() - 0.5) * 3;
     }
-    ev.push(["balle", { tireur, de: { x, y, z }, a: fin }]);
+    ev.push(["balle", { tireur, de: { x, y, z }, a: fin, matiere: T.matiere(fin.x, fin.z) }]);
   }
 
   // Les véhicules sur lesquels une balle ricoche : les tanks et le 4x4 (rangés dans une liste réutilisée).

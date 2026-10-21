@@ -179,6 +179,9 @@ Tanks.Obus = (function () {
     return ["impact", { x: p.x, y: p.y, z: p.z, sur: "sol", sorte: "grenade", grenade: true, rebonds: p.rebonds, tireur: p.tireur }];
   }
 
+  // (demande 92) De quoi est fait ce que l'obus a touché ? (l'affichage en a besoin : terre, sable, métal, eau…)
+  const matiereDe = (d) => (d.sur === "eau" ? "eau" : d.sur === "air" ? "air" : d.sur === "char" || d.sur === "epave" ? "metal" : T.matiere(d.x, d.z));
+
   function avancer(liste, monde, dt) {
     const ev = [];
     const cibles = vehicules(monde, listeVehicules);
@@ -187,6 +190,7 @@ Tanks.Obus = (function () {
       p.age += dt;
       if (p.meche !== undefined) { // (étape 75 : une grenade à main)
         const fin = avancerGrenade(p, monde, dt, cibles);
+        if (fin) fin[1].matiere = matiereDe(fin[1]); // (demande 92)
         if (fin) {
           if (fin[1].sur !== "eau") {
             souffle(monde, p, R, fin[1].x, fin[1].y, fin[1].z, ev, null);
@@ -255,7 +259,7 @@ Tanks.Obus = (function () {
       if (!fini && p.sorte !== "torpille" && p.sorte !== "flak") {
         const m = Tanks.Structures.premier(ax, ay, az, p.x, p.y, p.z);
         if (m) {
-          fini = ["impact", { x: m.x + m.nx * 0.2, y: m.y + m.ny * 0.2, z: m.z + m.nz * 0.2, sur: m.b.sorte, sorte: p.sorte, toit: m.toit, nx: m.nx, ny: m.ny, nz: m.nz, nom: m.b.nom }];
+          fini = ["impact", { x: m.x + m.nx * 0.2, y: m.y + m.ny * 0.2, z: m.z + m.nz * 0.2, sur: m.b.sorte, sorte: p.sorte, toit: m.toit, nx: m.nx, ny: m.ny, nz: m.nz, nom: m.b.nom, matiere: m.morceau ? m.morceau.matiere : T.souterrain ? "beton" : m.toit ? "tuiles" : "gravats" }];
           if (m.toit) toit = m.b;
         }
       }
@@ -269,6 +273,7 @@ Tanks.Obus = (function () {
       // (étape 75) l'explosion abîme les murs tout autour (pas dans l'eau ni en l'air)
       if (fini && fini[0] === "impact" && fini[1].sur !== "air" && fini[1].sur !== "eau") Tanks.Structures.exploser(fini[1].x, fini[1].y, fini[1].z, p.sorte, p.tireur, ev, monde, toit);
       if (!fini && p.age > (R.vieMax || O.vieMax + (p.sorte === "bombe" || p.sorte === "grenade" ? 20 : 0))) fini = p.sorte === "flak" ? ["impact", { x: p.x, y: p.y, z: p.z, sur: "air", sorte: "flak" }] : ["perdu", {}];
+      if (fini && fini[0] === "impact" && !fini[1].matiere) fini[1].matiere = matiereDe(fini[1]); // (demande 92)
       if (fini) {
         if (fini[0] !== "perdu") ev.push(fini);
         liste.splice(i, 1);

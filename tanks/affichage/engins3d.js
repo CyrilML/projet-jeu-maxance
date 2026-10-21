@@ -79,20 +79,23 @@ Tanks.Engins3D = (function () {
   const PEAUX = [0xc8956c, 0xe2b896, 0x9c6b48, 0x6b4630]; // (4 couleurs de peau)
   function matsSoldat(equipe) {
     if (matsEquipe[equipe]) return matsEquipe[equipe];
-    const E = Tanks.CONFIG.equipes[equipe], camo = Tanks.Chars3D.camouflage(E.camouflage).clone();
-    camo.needsUpdate = true;
-    camo.repeat.set(2.2, 2.2); // (des taches plus petites que sur un tank)
+    const E = Tanks.CONFIG.equipes[equipe], U = Tanks.CONFIG.realisme.soldats.uniformes, UE = U[equipe] || U.bleus;
+    const coul = (h) => new THREE.Color(h).getHex();
     return (matsEquipe[equipe] = {
-      tenue: new THREE.MeshStandardMaterial({ map: camo, roughness: 0.93 }),
+      // (demande 92) le tissu camouflé est peint par le tailleur (affichage/uniformes.js) : woodland ou désert, ripstop,
+      // plis, coutures, filet du casque, boue
+      tenue: Tanks.Uniformes.habiller(new THREE.MeshStandardMaterial({ roughness: 0.93 }), "tenue", equipe),
       // (étape 74) tout le reste dans UNE matière : chaque pièce garde sa couleur dans ses sommets
-      teinte: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.78, metalness: 0.05 }),
+      // (demande 92 : et sa MATIÈRE : la peau, le nylon à sangles, le cuir… le tailleur s'en sert)
+      teinte: Tanks.Uniformes.habiller(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, metalness: 0.03 }), "teinte", equipe),
       arme: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.55 }),
       couleurs: {
-        gilet: equipe === "bleus" ? 0x4f5739 : 0x8a7652, sac: equipe === "bleus" ? 0x48502f : 0x7c6a48, sangle: 0x35342a,
-        bottes: equipe === "bleus" ? 0x4a3d2c : 0x7a6244, semelle: 0x1d1a17, gants: 0x2b2b27, protege: 0x2e3029,
-        arme: 0x232528, polymere: 0x2d2c28, verre: 0x0d1418, blanc: 0xe6e1d8, pupille: 0x1c140f, sourcils: 0x3a2a1c,
+        gilet: coul(UE.equipement), sac: new THREE.Color(UE.equipement).multiplyScalar(0.9).getHex(), rabat: new THREE.Color(UE.equipement).multiplyScalar(0.84).getHex(),
+        sangle: 0x35342a, bottes: equipe === "bleus" ? 0x3e3226 : 0x8a6e4c, semelle: 0x1d1a17, gants: 0x2b2b27, protege: 0x2e3029, lacets: 0x2a241c,
+        arme: 0x232528, polymere: 0x2d2c28, verre: 0x0d1418, blanc: 0xe6e1d8, pupille: 0x1c140f, sourcils: 0x3a2a1c, noir: 0x1b1c1c, radio: 0x2c2f2b,
+        metal: 0x6c6c66, levres: 0x8d5a4a, olive: 0x4a5532,
         marque: new THREE.Color(E.marque).getHex(), marqueToi: new THREE.Color(E.marque).multiplyScalar(1.35).getHex(),
-        casqueBord: new THREE.Color(E.camouflage[2]).getHex(), tenue: new THREE.Color(E.camouflage[0]).getHex(),
+        casqueBord: new THREE.Color(E.camouflage[2]).getHex(), tenue: coul(UE.fond),
       },
     });
   }
@@ -151,77 +154,136 @@ Tanks.Engins3D = (function () {
 
   // Les PIÈCES du corps, accrochées à chaque os. Chaque pièce : [os, forme, x, y, z, couleur | "tenue", (rotation)].
   // detail = true : la belle version ; false : la version simple (moins de pièces, moins de points).
+  // ✍️ (demande 92, « réalisme total ») plus de vrais détails : la poche de cuisse avec son rabat, le holster sur la
+  // cuisse droite, les genouillères avec leur sangle, le bas du pantalon replié sur la botte, les LACETS et la languette
+  // des bottes, le bout renforcé ; le gilet porte-plaques avec ses porte-chargeurs à rabat, la poche administrative, le
+  // garrot sur la bretelle, la RADIO dans sa poche avec son antenne, la poche à grenade (et sa grenade), la trousse de
+  // secours, la poche de vidage ; le col de la veste ; le casque avec son contrepoids, le micro du casque radio ; les
+  // lèvres, les coques des gants. Et le VISAGE est peint : les yeux un peu creusés, les joues plus roses, la barbe de 3 jours.
+  // Chaque pièce dit aussi sa MATIÈRE (la peau, le nylon, le cuir…) : le tailleur (affichage/uniformes.js) s'en sert.
   function pieces(equipe, detail, peau, joueur) {
     const K = matsSoldat(equipe).couleurs, L = [], s = detail ? 12 : 7;
     const p = (osNom, geo, x, y, z, couleur, rx, ry, rz) => L.push({ os: osNom, geo, x, y, z, couleur, rx: rx || 0, ry: ry || 0, rz: rz || 0 });
     const pc = (osNom, geo, x, y, z, couleur, rx, ry, rz) => p(osNom, geo, x, y, z, couleur, rx, ry, rz);
+    const dernier = () => L[L.length - 1];
+    const peint = (f) => (dernier().peint = f); // (des nuances peintes sur la pièce, selon la place de chaque point)
+    // les matières (1 = la peau, 2 = le gilet à sangles MOLLE, 3 = le cuir et le caoutchouc, 4 = le nylon uni)
+    L.matieres = new Map([[peau, 1], [K.sac, 4], [K.rabat, 4], [K.sangle, 4], [K.radio, 4], [K.gilet, 2], [K.bottes, 3], [K.semelle, 3], [K.gants, 3], [K.protege, 3], [K.lacets, 3]]);
+    const anneau = (r, e, n) => new THREE.TorusGeometry(r, e, 4, n || (detail ? 14 : 8));
     // les jambes (0 : gauche, z < 0 ; 1 : droite)
     for (const k of [0, 1]) {
       const cote = k ? 1 : -1, h = "jambe" + k, g = "genou" + k;
-      pc(h, membre(0.09, 0.068, OS.cuisse + 0.03, s), 0, 0.02, 0, "tenue");
-      if (detail) pc(h, galet(0.075, 0.13, 0.05, 0.4, 8), 0.0, -0.21, cote * 0.075, "tenue"); // la poche de cuisse
-      pc(g, membre(0.068, 0.05, OS.tibia - 0.02, s), 0, 0, 0, "tenue");
-      pc(g, galet(0.065, 0.13, 0.115, 0.45, detail ? 10 : 6), 0.06, -0.03, 0, K.protege); // la genouillère
-      pc(g, membre(0.06, 0.058, 0.17, s), 0, -0.27, 0, K.bottes); // la tige de la botte
-      pc(g, galet(0.27, 0.11, 0.115, 0.3, detail ? 12 : 7), 0.05, -0.41, 0, K.bottes); // le pied
-      pc(g, galet(0.285, 0.035, 0.122, 0.2, detail ? 10 : 6), 0.05, -0.465, 0, K.semelle); // la semelle
+      pc(h, membre(0.094, 0.07, OS.cuisse + 0.03, s), 0, 0.02, 0, "tenue");
+      if (detail) {
+        pc(h, galet(0.08, 0.14, 0.055, 0.4, 8), 0.0, -0.21, cote * 0.08, "tenue"); // la poche de cuisse
+        pc(h, galet(0.088, 0.035, 0.062, 0.35, 8), 0.0, -0.135, cote * 0.083, "tenue"); // son rabat
+        if (k === 1) { // le HOLSTER sur la cuisse droite, avec ses 2 sangles autour de la cuisse
+          pc(h, galet(0.075, 0.17, 0.045, 0.3, 8), 0.025, -0.15, 0.108, K.polymere);
+          for (const y of [-0.09, -0.22]) pc(h, anneau(0.093 - y * 0.06, 0.011), 0, y, 0, K.sangle, Math.PI / 2);
+        }
+      }
+      pc(g, membre(0.07, 0.052, OS.tibia - 0.02, s), 0, 0, 0, "tenue");
+      pc(g, galet(0.07, 0.14, 0.12, 0.42, detail ? 10 : 6), 0.065, -0.03, 0, K.protege); // la genouillère
+      if (detail) pc(g, anneau(0.066, 0.01), 0, -0.1, 0, K.sangle, Math.PI / 2); // sa sangle
+      pc(g, membre(0.063, 0.06, 0.19, s), 0, -0.25, 0, K.bottes); // la tige de la botte
+      if (detail) {
+        pc(g, anneau(0.066, 0.017), 0.0, -0.225, 0, "tenue", Math.PI / 2); // le bas du pantalon, replié sur la botte
+        pc(g, galet(0.022, 0.13, 0.05, 0.4, 6), 0.06, -0.31, 0, K.bottes); // la languette
+        for (let n = 0; n < 4; n++) pc(g, galet(0.014, 0.009, 0.066, 0.3, 4), 0.068, -0.265 - n * 0.033, 0, K.lacets, 0, 0, 0.12); // les LACETS
+        pc(g, galet(0.09, 0.075, 0.118, 0.45, 8), 0.155, -0.425, 0, K.bottes); // le bout renforcé
+        peint((x, y) => (y > 0 ? 0.85 : 1)); // (le dessus du bout, frotté, plus sombre)
+      }
+      pc(g, galet(0.28, 0.11, 0.115, 0.3, detail ? 12 : 7), 0.05, -0.41, 0, K.bottes); // le pied
+      pc(g, galet(0.295, 0.04, 0.125, 0.2, detail ? 10 : 6), 0.05, -0.47, 0, K.semelle); // la semelle
     }
     // le bassin, le buste, le gilet porte-plaques, le sac
     pc("dos", galet(0.25, 0.22, 0.35, 0.5, s), 0, -0.05, 0, "tenue"); // le bassin
-    pc("dos", galet(0.25, 0.46, 0.37, 0.55, s), 0, 0.24, 0, "tenue"); // le buste
-    pc("dos", galet(0.275, 0.065, 0.375, 0.3, s), 0, 0.0, 0, K.sangle); // la ceinture
-    pc("dos", galet(0.07, 0.34, 0.31, 0.3, s), 0.12, 0.27, 0, K.gilet); // la plaque de devant
-    pc("dos", galet(0.07, 0.34, 0.31, 0.3, s), -0.12, 0.27, 0, K.gilet); // la plaque de derrière
-    pc("dos", galet(0.265, 0.15, 0.39, 0.3, s), 0, 0.15, 0, K.gilet); // la large ceinture du gilet
-    for (const z of [-0.1, 0.1]) pc("dos", galet(0.27, 0.05, 0.065, 0.3, 6), 0, 0.445, z, K.gilet); // les bretelles
+    pc("dos", galet(0.26, 0.48, 0.38, 0.55, s), 0, 0.24, 0, "tenue"); // le buste
+    pc("dos", galet(0.285, 0.07, 0.385, 0.3, s), 0, 0.0, 0, K.gilet); // le ceinturon de combat
+    pc("dos", galet(0.075, 0.33, 0.3, 0.22, s), 0.13, 0.27, 0, K.gilet); // la plaque de devant
+    pc("dos", galet(0.075, 0.33, 0.3, 0.22, s), -0.13, 0.27, 0, K.gilet); // la plaque de derrière
+    pc("dos", galet(0.27, 0.16, 0.395, 0.3, s), 0, 0.16, 0, K.gilet); // la large ceinture du gilet
+    for (const z of [-0.1, 0.1]) pc("dos", galet(0.27, 0.05, 0.07, 0.3, 6), 0, 0.445, z, K.gilet); // les bretelles
     pc("dos", galet(0.21, 0.36, 0.3, 0.3, s), -0.25, 0.27, 0, K.sac); // le sac à dos
     if (detail) {
-      for (const z of [-0.09, 0, 0.09]) pc("dos", galet(0.055, 0.11, 0.08, 0.3, 8), 0.175, 0.16, z, K.gilet); // 3 poches à chargeurs
-      pc("dos", galet(0.045, 0.085, 0.15, 0.3, 8), 0.17, 0.33, 0, K.sac); // la poche de carte
-      pc("dos", galet(0.06, 0.11, 0.06, 0.3, 8), 0.02, 0.2, -0.205, K.sac); // la poche radio
-      pc("dos", galet(0.05, 0.05, 0.04, 0.3, 6), 0.165, 0.37, 0.1, joueur ? K.marqueToi : K.marque); // l'écusson de l'équipe
-      pc("dos", galet(0.22, 0.07, 0.31, 0.3, 8), -0.25, 0.465, 0, K.gilet); // le rabat du sac
+      pc("dos", anneau(0.068, 0.022), 0.0, 0.49, 0, "tenue", Math.PI / 2); // le col de la veste
+      for (const z of [-0.095, 0, 0.095]) {
+        pc("dos", galet(0.06, 0.12, 0.086, 0.3, 8), 0.188, 0.165, z, K.gilet); // 3 porte-chargeurs
+        pc("dos", galet(0.066, 0.032, 0.09, 0.3, 6), 0.19, 0.232, z, K.rabat); // et leurs rabats
+      }
+      pc("dos", galet(0.045, 0.085, 0.16, 0.3, 8), 0.175, 0.33, 0, K.rabat); // la poche administrative
+      pc("dos", galet(0.012, 0.045, 0.06, 0.3, 6), 0.2, 0.34, 0.05, joueur ? K.marqueToi : K.marque); // l'écusson de l'équipe
+      pc("dos", new THREE.CylinderGeometry(0.019, 0.019, 0.1, 8), 0.135, 0.39, -0.1, K.noir, 0.15, 0, 0); // le garrot, sur la bretelle
+      // la RADIO, dans sa poche sur le côté gauche, avec son antenne souple
+      pc("dos", galet(0.07, 0.13, 0.065, 0.3, 8), -0.04, 0.22, -0.212, K.gilet);
+      pc("dos", galet(0.055, 0.06, 0.05, 0.25, 6), -0.04, 0.31, -0.212, K.radio);
+      pc("dos", new THREE.CylinderGeometry(0.005, 0.007, 0.42, 4), -0.07, 0.53, -0.225, K.noir, -0.12, 0, 0.18);
+      // la poche à grenade (côté droit), avec le haut de la grenade qui dépasse
+      pc("dos", galet(0.065, 0.085, 0.065, 0.35, 8), 0.06, 0.07, 0.215, K.gilet);
+      pc("dos", new THREE.SphereGeometry(0.03, 8, 6), 0.06, 0.12, 0.215, K.olive);
+      pc("dos", galet(0.08, 0.1, 0.12, 0.35, 8), -0.14, 0.02, 0.13, K.rabat); // la trousse de secours (dans le dos, à droite)
+      pc("dos", galet(0.09, 0.12, 0.08, 0.5, 8), -0.08, -0.03, -0.19, K.sac); // la poche de vidage (à gauche)
+      pc("dos", galet(0.05, 0.03, 0.06, 0.3, 6), 0.15, 0.0, 0.0, K.metal); // la boucle du ceinturon
+      pc("dos", galet(0.22, 0.07, 0.31, 0.3, 8), -0.25, 0.465, 0, K.rabat); // le rabat du sac
       for (const z of [-0.17, 0.17]) pc("dos", galet(0.11, 0.16, 0.06, 0.35, 8), -0.26, 0.2, z, K.gilet); // les poches du sac
       pc("dos", new THREE.CylinderGeometry(0.058, 0.058, 0.36, 10), -0.24, 0.53, 0, 0x3e4631, Math.PI / 2); // le duvet roulé
       pc("dos", new THREE.CylinderGeometry(0.006, 0.008, 0.55, 4), -0.33, 0.7, -0.1, K.sangle, 0, 0, 0.15); // l'antenne radio
-      pc("dos", galet(0.04, 0.05, 0.045, 0.4, 6), 0.03, 0.02, 0.19, K.sac); // la gourde
+      pc("dos", galet(0.05, 0.1, 0.07, 0.4, 6), -0.15, 0.04, -0.07, K.sac); // la gourde
     }
     // la tête
     pc("cou", membre(0.05, 0.056, 0.13, 8), 0, 0.1, 0, peau); // le cou
     pc("cou", new THREE.SphereGeometry(0.105, s + 2, s), 0.012, 0.13, 0, peau, 0, 0, 0); // le crâne
-    L[L.length - 1].echelle = [1.0, 1.15, 0.92];
+    dernier().echelle = [1.0, 1.15, 0.92];
+    // (le visage peint) les yeux un peu creusés, les joues plus roses, la barbe de 3 jours sur le bas
+    if (detail) peint((x, y, z) => {
+      if (x < 0.05) return 1;
+      const yeux = y > 0.0 && y < 0.045 && Math.abs(z) > 0.015 && Math.abs(z) < 0.07 ? 0.8 : 1;
+      const joue = y < 0.0 && y > -0.05 && Math.abs(z) > 0.035 ? [1.06, 0.94, 0.92] : 1;
+      const barbe = y < -0.045 ? 0.82 : 1;
+      return Array.isArray(joue) ? joue.map((v) => v * yeux * barbe) : yeux * barbe;
+    });
     pc("cou", galet(0.12, 0.075, 0.13, 0.6, detail ? 10 : 6), 0.035, 0.07, 0, peau); // la mâchoire
+    if (detail) peint((x, y) => (y < 0 ? 0.8 : 0.9)); // (la barbe de 3 jours)
     const casque = new THREE.SphereGeometry(0.14, detail ? 22 : 12, detail ? 10 : 6, 0, Math.PI * 2, 0, Math.PI * 0.5);
-    pc("cou", casque, -0.005, 0.165, 0, "tenue"); // le casque (avec sa housse camouflée)
-    L[L.length - 1].echelle = [1.1, 0.95, 1.04];
+    pc("cou", casque, -0.005, 0.165, 0, "tenue"); // le casque (avec sa housse camouflée et son filet)
+    dernier().echelle = [1.1, 0.95, 1.04];
     pc("cou", new THREE.TorusGeometry(0.14, 0.012, 5, detail ? 24 : 12), -0.005, 0.165, 0, K.casqueBord, Math.PI / 2); // le bord du casque
-    L[L.length - 1].echelle = [1.1, 1.04, 1];
+    dernier().echelle = [1.1, 1.04, 1];
     pc("cou", new THREE.TorusGeometry(0.133, 0.014, 5, detail ? 24 : 12), -0.005, 0.205, 0, joueur ? K.marqueToi : K.marque, Math.PI / 2); // ✍️ le bandeau de l'équipe
-    L[L.length - 1].echelle = [1.1, 1.04, 1];
+    dernier().echelle = [1.1, 1.04, 1];
     if (detail) {
       pc("cou", galet(0.03, 0.045, 0.028, 0.5, 8), 0.112, 0.125, 0, peau); // le nez
+      peint((x, y) => (y < -0.01 ? [1.05, 0.92, 0.9] : 1)); // (le bout du nez, plus rose)
       for (const z of [-0.036, 0.036]) {
         pc("cou", new THREE.SphereGeometry(0.0135, 8, 6), 0.094, 0.152, z, K.blanc); // le blanc de l'œil
         pc("cou", new THREE.SphereGeometry(0.0085, 6, 5), 0.105, 0.152, z, K.pupille); // la pupille
         pc("cou", galet(0.02, 0.011, 0.042, 0.4, 6), 0.1, 0.172, z * 1.05, K.sourcils); // le sourcil
       }
-      pc("cou", galet(0.008, 0.007, 0.04, 0.5, 6), 0.106, 0.086, 0, 0x6b4334); // la bouche
+      pc("cou", galet(0.011, 0.012, 0.044, 0.5, 6), 0.104, 0.087, 0, K.levres); // les lèvres
       for (const z of [-0.112, 0.112]) pc("cou", galet(0.065, 0.075, 0.04, 0.45, 8), -0.005, 0.135, z, K.sangle); // le casque radio
+      pc("cou", galet(0.018, 0.018, 0.018, 0.6, 6), 0.1, 0.085, -0.055, K.noir); // son micro, devant la bouche
+      pc("cou", new THREE.CylinderGeometry(0.004, 0.004, 0.11, 4), 0.05, 0.1, -0.095, K.noir, 0, -0.6, Math.PI / 2 - 0.25); // sa tige
       pc("cou", galet(0.035, 0.05, 0.17, 0.35, 8), 0.125, 0.235, 0, K.verre); // les lunettes de protection, relevées
       pc("cou", galet(0.03, 0.055, 0.05, 0.3, 6), 0.148, 0.2, 0, K.sangle); // le support des jumelles de nuit
+      pc("cou", galet(0.06, 0.05, 0.09, 0.4, 6), -0.16, 0.2, 0, K.sac); // le contrepoids, à l'arrière du casque
       for (const z of [-0.147, 0.147]) pc("cou", galet(0.1, 0.018, 0.012, 0.3, 6), -0.005, 0.195, z, K.sangle); // les rails
       for (const z of [-0.09, 0.09]) pc("cou", galet(0.012, 0.11, 0.008, 0.5, 4), 0.05, 0.1, z * 1.05, K.sangle, 0.0, 0, -0.35); // la jugulaire
     }
     // les bras (0 : droit, z > 0 ; 1 : gauche)
     for (const k of [0, 1]) {
       const cote = k ? -1 : 1, e = "epaule" + k, c = "coude" + k;
-      pc(e, galet(0.13, 0.12, 0.13, 0.7, s), 0, -0.02, 0, "tenue"); // l'épaule
-      pc(e, membre(0.064, 0.054, OS.bras + 0.02, s), 0, 0, 0, "tenue");
-      pc(e, new THREE.CylinderGeometry(0.068, 0.066, 0.07, s), 0, -0.1, 0, k === 0 && joueur ? K.marqueToi : K.marque); // ✍️ le brassard
-      pc(c, membre(0.054, 0.042, OS.avantBras, s), 0, 0, 0, "tenue");
+      pc(e, galet(0.135, 0.125, 0.135, 0.7, s), 0, -0.02, 0, "tenue"); // l'épaule
+      pc(e, membre(0.068, 0.056, OS.bras + 0.02, s), 0, 0, 0, "tenue");
+      pc(e, new THREE.CylinderGeometry(0.071, 0.069, 0.07, s), 0, -0.1, 0, k === 0 && joueur ? K.marqueToi : K.marque); // ✍️ le brassard
+      if (detail) pc(e, galet(0.06, 0.07, 0.025, 0.35, 6), 0.0, -0.2, cote * 0.062, "tenue"); // la poche de manche
+      pc(c, membre(0.056, 0.043, OS.avantBras, s), 0, 0, 0, "tenue");
       if (detail) pc(c, galet(0.065, 0.075, 0.085, 0.45, 8), -0.03, -0.01, 0, K.protege); // la coudière
-      pc(c, galet(0.055, 0.1, 0.085, 0.45, detail ? 10 : 6), 0, -OS.avantBras - 0.03, 0, K.gants); // la main gantée
-      if (detail) pc(c, galet(0.028, 0.055, 0.028, 0.5, 6), 0.03, -OS.avantBras - 0.01, -cote * 0.03, K.gants, 0, 0, 0.4); // le pouce
+      if (detail) pc(c, anneau(0.046, 0.012), 0, -OS.avantBras + 0.03, 0, K.gants, Math.PI / 2); // le haut du gant
+      pc(c, galet(0.058, 0.1, 0.088, 0.45, detail ? 10 : 6), 0, -OS.avantBras - 0.03, 0, K.gants); // la main gantée
+      if (detail) {
+        pc(c, galet(0.028, 0.055, 0.028, 0.5, 6), 0.03, -OS.avantBras - 0.01, -cote * 0.03, K.gants, 0, 0, 0.4); // le pouce
+        pc(c, galet(0.045, 0.03, 0.022, 0.4, 6), 0, -OS.avantBras - 0.055, cote * 0.043, K.protege); // la coque des articulations
+      }
     }
     return L;
   }
@@ -242,14 +304,20 @@ Tanks.Engins3D = (function () {
       TEMP.scale.set(...(pc.echelle || [1, 1, 1]));
       TEMP.updateMatrix();
       const m = new THREE.Matrix4().multiplyMatrices(racine, b.matrixWorld).multiply(TEMP.matrix);
-      const g = (pc.geo.index ? pc.geo.toNonIndexed() : pc.geo.clone()).applyMatrix4(m), n = g.attributes.position.count;
+      const g = pc.geo.index ? pc.geo.toNonIndexed() : pc.geo.clone(), n = g.attributes.position.count, loc = g.attributes.position;
       if (!g.attributes.uv) g.setAttribute("uv", new THREE.Float32BufferAttribute(new Float32Array(n * 2), 2));
       if (pc.couleur !== "tenue") {
         c.set(pc.couleur);
         const t = new Float32Array(n * 3);
-        for (let i = 0; i < n; i++) (t[i * 3] = c.r), (t[i * 3 + 1] = c.g), (t[i * 3 + 2] = c.b);
+        for (let i = 0; i < n; i++) {
+          // (demande 92) des nuances peintes selon la place du point dans sa pièce (le visage, le bout des bottes…)
+          const f = pc.peint ? pc.peint(loc.getX(i), loc.getY(i), loc.getZ(i)) : 1, fr = f[0] || f, fg = f[1] || f, fb = f[2] || f;
+          (t[i * 3] = c.r * fr), (t[i * 3 + 1] = c.g * fg), (t[i * 3 + 2] = c.b * fb);
+        }
         g.setAttribute("color", new THREE.BufferAttribute(t, 3));
+        g.setAttribute("matiere", new THREE.BufferAttribute(new Float32Array(n).fill((liste.matieres && liste.matieres.get(pc.couleur)) || 0), 1)); // (demande 92 : la peau, le nylon, le cuir…)
       }
+      g.applyMatrix4(m);
       if (pourChair) {
         const si = new Uint16Array(n * 4), sw = new Float32Array(n * 4), k = index.get(b);
         for (let i = 0; i < n; i++) (si[i * 4] = k), (sw[i * 4] = 1);
@@ -262,7 +330,7 @@ Tanks.Engins3D = (function () {
     for (const nom in parMat) {
       const geos = parMat[nom];
       if (!geos.length) continue;
-      const attrs = ["position", "normal", "uv"].concat(nom === "teinte" ? ["color"] : [], pourChair ? ["skinIndex", "skinWeight"] : []);
+      const attrs = ["position", "normal", "uv"].concat(nom === "teinte" ? ["color", "matiere"] : [], pourChair ? ["skinIndex", "skinWeight"] : []);
       const geo = new THREE.BufferGeometry();
       for (const a of attrs) {
         const taille = geos[0].attributes[a].itemSize, Type = a === "skinIndex" ? Uint16Array : Float32Array;
@@ -443,6 +511,10 @@ Tanks.Engins3D = (function () {
     r.objetArme = Tanks.Armes3D.exemplaire(modele);
     r.porteArme.add(r.objetArme);
     r.flamme.position.copy(modele.bouche).add(new THREE.Vector3(0.06, 0, 0));
+    // (demande 92) les points de CETTE arme que les mains attrapent (la poignée, le garde-main, le chargeur)
+    r.mainD = modele.poignee.centre;
+    r.mainG = modele.garde.centre;
+    r.chargeurArme = modele.chargeur ? new THREE.Vector3(modele.chargeur.x, modele.chargeur.y - 0.05, 0) : null;
     if (corde) {
       r.torsion = 0;
       r.porteArme.position.copy(DANS_LE_DOS.position);
@@ -451,6 +523,7 @@ Tanks.Engins3D = (function () {
     }
     const T = TENUES[famille] || TENUES.fusil;
     r.torsion = T.torsion;
+    r.tenue = T;
     r.porteArme.position.fromArray(T.place).applyAxisAngle(_axeY, -T.torsion);
     r.porteArme.rotation.set(0, -T.torsion, 0);
     // les mains : sur la poignée et sur le garde-main (ou la poignée avant) de cette arme, vues depuis le dos
@@ -538,9 +611,11 @@ Tanks.Engins3D = (function () {
       return;
     }
     c.scale.set(1, 1, 1); // (étape 85 : un soldat relevé par le médecin n'est plus aplati)
+    const G = etatGeste(o, s, t);
     if (corde) {
       // ✍️ (étape 74) à la corde : les deux mains serrent la corde au-dessus de la tête, les jambes pliées serrent la
       // corde (une jambe plus pliée que l'autre), le corps un peu penché en arrière ; il se balance un tout petit peu.
+      compter("corde", pres);
       c.rotation.set(0, 0, 0);
       c.position.set(-0.16, 0, 0); // (la corde passe juste devant lui : ses mains sont dessus)
       tenir(r, "corde");
@@ -556,6 +631,7 @@ Tanks.Engins3D = (function () {
     for (const j of r.jambes) j.rotation.x = 0;
     if (s.nage) {
       // à plat ventre dans l'eau, la tête dehors ; les bras font la brasse et les jambes battent
+      compter("nagent", pres);
       c.rotation.set(0, 0, -1.35);
       c.position.set(-0.2, 1.12, 0);
       r.dos.rotation.set(0, 0, 0);
@@ -572,23 +648,148 @@ Tanks.Engins3D = (function () {
       }
       return;
     }
-    c.rotation.set(0, 0, 0);
-    tenir(r, arme);
-    // les jambes : la hanche se balance, le genou plie quand la jambe revient vers l'arrière
-    const v = Math.abs(s.vitesse), ampleur = Math.max(Math.min(1, v / 3.5), tourne ? 0.35 : 0);
-    const phase = s.pas * 2.6 + (tourne && v < 0.5 ? t * 7 : 0);
+    // ✍️ (demande 92) LES GESTES NATURELS. Tout est un MÉLANGE de poses, dosé par l'état lissé du soldat (G) :
+    //   - la COURSE : les jambes (la hanche avance, le genou plie quand la jambe revient), le corps qui monte et descend
+    //     2 fois par foulée, qui se penche en avant et tourne un peu à chaque pas (les épaules à l'opposé des hanches) ;
+    //     de CÔTÉ (pas chassés) les jambes s'écartent sur le côté ; en ARRIÈRE, la foulée s'inverse ;
+    //   - ACCROUPI : arrêté, un genou à terre (le droit) et l'autre jambe devant ; en marchant, les jambes pliées ;
+    //   - l'ARME : en joue quand il tire ou vise, canon vers le bas quand il court ; elle RECULE à chaque tir ;
+    //   - RECHARGER : il penche l'arme, la main gauche enlève le chargeur, va en chercher un neuf dans le gilet et le met ;
+    //   - LANCER une grenade : le bras droit part en arrière, lance, puis revient sur l'arme ;
+    //   - au REPOS : il respire, change d'appui, tourne la tête pour regarder autour.
+    // Les mains vont toujours sur l'arme là où elle est (cinématique inverse, comme avant), donc elles la suivent.
+    const RG = Tanks.CONFIG.realisme.soldats.gestes, v = Math.hypot(G.avant, G.cote);
+    const allure = Math.min(1, v / 4.2), bouge = Math.max(Math.min(1, v / 1.4), tourne ? 0.35 : 0);
+    const fAvant = v > 0.25 ? G.avant / v : 1, fCote = v > 0.25 ? G.cote / v : 0;
+    const phase = (s.pas * Math.PI * 2) / RG.foulee + (tourne && v < 0.5 ? t * 7 : 0);
+    const acc = G.accroupi, aGenou = acc * (1 - bouge), aMarche = acc * bouge; // (accroupi arrêté : un genou à terre ; en marchant : jambes pliées)
+    const pas = 1 - 0.35 * aMarche; // (accroupi, les pas sont plus petits)
+    const hanches = [0, 0], genoux = [0, 0], cotes = [0, 0];
     for (let i = 0; i < 2; i++) {
-      const p = phase + i * Math.PI, sens = s.vitesse < -0.1 ? -1 : 1;
-      r.jambes[i].rotation.z = Math.sin(p) * 0.55 * ampleur * sens;
-      r.genoux[i].rotation.z = -Math.max(0, Math.sin(p + 1.3)) * 0.95 * ampleur;
+      const p = phase + i * Math.PI;
+      hanches[i] = (Math.sin(p) * (0.3 + 0.32 * allure) * fAvant + 0.08 * allure) * bouge * pas;
+      cotes[i] = (-Math.sin(p) * 0.3 * fCote + (i ? -0.05 : 0.05) * Math.abs(fCote)) * bouge * pas;
+      genoux[i] = -(Math.max(0, Math.sin(p + (fAvant < 0 ? -1.3 : 1.3))) * (0.5 + 0.95 * allure) + 0.08 + 0.12 * allure) * bouge;
     }
-    // le corps monte et descend un peu à chaque pas, et se penche en avant quand il court ; il respire au repos
-    c.position.set(0, -Math.abs(Math.cos(phase)) * 0.045 * ampleur, 0);
-    // (demande 88) le haut du corps tourne un peu (l'épaule gauche en avant, comme un vrai tireur) ; la tête, elle, regarde devant
-    r.dos.rotation.set(0, r.torsion, -0.13 * Math.min(1, v / 4) + (s.tir > 0 && famille !== "roquettes" ? 0.025 : 0)); // (le recul du tir)
-    r.dos.scale.y = 1 + Math.sin(t * 2.2) * 0.008 * (1 - ampleur);
-    r.cou.rotation.set(0, -r.torsion * 0.9, 0.08 * Math.min(1, v / 4)); // (il garde la tête droite en courant)
+    // le genou à terre (la jambe droite, i = 1) et la jambe gauche devant ; accroupi en marchant : tout plié
+    const GEN = { hanches: [1.35, 0.12], genoux: [-1.4, -1.68] };
+    for (let i = 0; i < 2; i++) {
+      r.jambes[i].rotation.set(cotes[i] * (1 - aGenou), 0, hanches[i] + (GEN.hanches[i] - hanches[i]) * aGenou + 0.62 * aMarche);
+      r.genoux[i].rotation.z = genoux[i] + (GEN.genoux[i] - genoux[i]) * aGenou - 1.0 * aMarche;
+    }
+    // le corps : il monte et descend 2 fois par foulée, se penche en avant en courant, se baisse accroupi
+    const souffle = Math.sin(t * 2.1 + G.graine), calme = (1 - bouge) * (1 - acc);
+    const rebond = -Math.abs(Math.cos(phase)) * (0.02 + 0.045 * allure) * bouge * (1 - acc);
+    c.position.set(-0.04 * aGenou, rebond - 0.39 * aGenou - 0.24 * aMarche, 0);
+    c.rotation.set(-fCote * 0.07 * bouge + Math.sin(t * 0.37 + G.graine) * 0.018 * calme, -Math.sin(phase) * 0.11 * allure * bouge, 0);
+    const penche = (0.04 + 0.2 * allure) * bouge * Math.max(0, fAvant) - 0.05 * bouge * Math.max(0, -fAvant) + 0.12 * aGenou + 0.26 * aMarche;
+    const tir = G.recul * (r.tenue === TENUES.roquettes ? 1.8 : 1);
+    // les gestes en cours : recharger (0 → 1) et lancer (0 → 1) ; -1 = rien
+    const rp = G.rechargeK, lp = G.lancerK, ch = G.charge, jet = G.jet;
+    const torsionLancer = jet * courbe(LANCER_TORSION, lp < 0 ? 1 : lp);
+    r.dos.rotation.set(0, r.torsion + Math.sin(phase) * 0.1 * allure * bouge * (1 - G.vise * 0.6) + torsionLancer, -penche + tir * 0.04 + souffle * 0.012 * calme);
+    r.dos.scale.y = 1 + souffle * 0.008 * calme;
+    // la tête : elle regarde devant (elle compense la torsion et la course), et au repos elle regarde autour
+    const regard = Math.sin(t * 0.23 + G.graine * 3) * RG.regardAutour * calme * (1 - G.vise);
+    r.cou.rotation.set(0, -r.torsion * 0.9 - torsionLancer * 0.7 + regard, penche * 0.7 - 0.03 * aGenou);
+    // L'ARME (dans le repère du dos) : en joue, ou canon vers le bas ; le recul ; penchée pour recharger ; baissée pour lancer
+    const T = r.tenue || TENUES.fusil, A = r.porteArme, bas = 1 - G.vise;
+    A.position.fromArray(T.place).applyAxisAngle(_axeY, -r.torsion);
+    A.position.x += -tir * RG.reculArriere - 0.04 * ch - 0.02 * bas;
+    A.position.y += Math.sin(phase * 2) * 0.012 * allure * bouge - 0.05 * bas - 0.03 * ch - 0.1 * jet;
+    A.position.z += -0.1 * jet;
+    A.rotation.set(0.45 * ch * cloche(rp) + 0.2 * jet, -r.torsion + Math.sin(phase) * 0.05 * allure * bouge, -0.5 * bas + tir * RG.reculHaut + 0.15 * ch * cloche(rp) - 0.8 * jet, "YXZ");
+    A.updateMatrix();
+    // les mains : la droite sur la poignée, la gauche sur le garde-main… sauf pendant un geste
+    const mainD = _mD.copy(r.mainD).applyMatrix4(A.matrix), mainG = _mG.copy(r.mainG).applyMatrix4(A.matrix);
+    if (ch > 0.01 && rp >= 0) { // RECHARGER : la main gauche fait le trajet du chargeur
+      const mag = _mC.copy(r.chargeurArme || _mC.set(r.mainD.x + 0.1, r.mainD.y - 0.06, 0)).applyMatrix4(A.matrix);
+      const dessous = _mT.copy(mag).add(_bas18);
+      chemin([mainG, mag, dessous, POCHE, dessous, mag, mainG], RECHARGE_TEMPS, rp, _mP);
+      mainG.lerp(_mP, ch);
+    }
+    if (jet > 0.01 && lp >= 0) { // LANCER : la main droite part en arrière, lance, revient
+      chemin([mainD, LANCER_POINTS[0], LANCER_POINTS[1], LANCER_POINTS[2], mainD], LANCER_TEMPS, lp, _mP);
+      mainD.lerp(_mP, jet);
+    }
+    r.pose = null;
+    poserBras(r.epaules[0], r.coudes[0], mainD.toArray(_tabD), POLES[0]);
+    poserBras(r.epaules[1], r.coudes[1], mainG.toArray(_tabG), POLES[1]);
+    // (pour « sous le capot » : ce que fait ce soldat)
+    compter(rp >= 0 ? "rechargent" : lp >= 0 ? "lancent" : acc > 0.5 ? "accroupis" : v > 3 ? "courent" : v > 0.4 ? "marchent" : G.vise > 0.5 ? "visent" : "repos", pres);
   }
+
+  // (demande 92) L'ÉTAT DES GESTES d'un soldat dessiné : il glisse doucement vers ce que fait le soldat (« souplesse » s).
+  // La vitesse vient du vrai déplacement depuis l'image d'avant (vers l'avant et sur le côté, dans le repère du soldat).
+  function etatGeste(o, s, t) {
+    let G = o.geste;
+    if (!G) G = o.geste = { t, x: s.x, z: s.z, avant: 0, cote: 0, accroupi: s.accroupi ? 1 : 0, vise: 0, recul: 0, tirAvant: 0, depuisTir: 9, charge: 0, jet: 0, rechargeK: -1, lancerK: -1, graine: (numeroGeste++ * 2.39) % 6.28 };
+    const dt = Math.max(0, Math.min(0.1, t - G.t)), RG = Tanks.CONFIG.realisme.soldats.gestes;
+    G.t = t;
+    if (s.joueur) gesteJoueur = G;
+    if (dt > 0) {
+      let vx = (s.x - G.x) / dt, vz = (s.z - G.z) / dt;
+      if (vx * vx + vz * vz > 15 * 15) vx = vz = 0; // (un portail, une téléportation : pas une vitesse)
+      const ca = Math.cos(s.angle), sa = Math.sin(s.angle), kv = 1 - Math.exp(-dt * 10);
+      G.avant += (vx * ca + vz * sa - G.avant) * kv;
+      G.cote += (-vx * sa + vz * ca - G.cote) * kv;
+    }
+    G.x = s.x;
+    G.z = s.z;
+    // un nouveau tir ? (le compteur « tir » vient de remonter) : le recul repart
+    if (s.tir > G.tirAvant + 1e-4) (G.recul = 1), (G.depuisTir = 0);
+    G.tirAvant = s.tir;
+    G.depuisTir += dt;
+    G.recul *= Math.exp(-dt * 13);
+    // recharger : où en est-il (de 0 à 1) ? Toi : ton arme ; l'ordinateur : son chargeur (logique/soldat.js)
+    const duree = s.rechargementDe && s.rechargementDe.stats ? s.rechargementDe.stats.rechargement : s.rechargementDuree || 2.5;
+    G.rechargeK = s.rechargement > 0 ? Math.max(0, Math.min(1, 1 - s.rechargement / duree)) : -1;
+    G.lancerK = s.lancer > 0 ? 1 - s.lancer / 0.5 : -1;
+    const vise = s.visee > 0.1 || G.depuisTir < 2 || !!(s.ia && s.ia.cible && !s.ia.cible.mort && !s.ia.cible.detruit) || s.accroupi;
+    const k = 1 - Math.exp(-dt / RG.souplesse);
+    G.accroupi += ((s.accroupi ? 1 : 0) - G.accroupi) * k;
+    G.vise += ((vise ? 1 : 0) - G.vise) * k;
+    G.charge += ((G.rechargeK >= 0 ? 1 : 0) - G.charge) * Math.min(1, k * 1.6);
+    G.jet += ((G.lancerK >= 0 ? 1 : 0) - G.jet) * Math.min(1, k * 2.5);
+    return G;
+  }
+  let numeroGeste = 0;
+  // un chemin de points (des Vector3) à des moments (de 0 à 1) : on glisse en douceur de l'un à l'autre
+  function chemin(points, temps, u, sortie) {
+    let i = 0;
+    while (i < temps.length - 2 && u > temps[i + 1]) i++;
+    const a = temps[i], b = temps[i + 1], x = Math.max(0, Math.min(1, (u - a) / (b - a || 1)));
+    return sortie.copy(points[i]).lerp(points[i + 1], x * x * (3 - 2 * x));
+  }
+  const courbe = (pts, u) => { // (des nombres à des moments : [[moment, valeur], …])
+    let i = 0;
+    while (i < pts.length - 2 && u > pts[i + 1][0]) i++;
+    const [a, va] = pts[i], [b, vb] = pts[i + 1], x = Math.max(0, Math.min(1, (u - a) / (b - a || 1)));
+    return va + (vb - va) * x * x * (3 - 2 * x);
+  };
+  const cloche = (u) => (u < 0 ? 0 : Math.sin(Math.min(1, u) * Math.PI) ** 0.5); // (0 au début et à la fin d'un geste, 1 au milieu)
+  const _mD = new THREE.Vector3(), _mG = new THREE.Vector3(), _mC = new THREE.Vector3(), _mT = new THREE.Vector3(), _mP = new THREE.Vector3(), _bas18 = new THREE.Vector3(0, -0.18, 0.02);
+  const _tabD = [0, 0, 0], _tabG = [0, 0, 0];
+  const POCHE = new THREE.Vector3(0.24, 0.19, -0.05); // (le porte-chargeurs du gilet, devant)
+  const RECHARGE_TEMPS = [0, 0.12, 0.3, 0.48, 0.64, 0.78, 0.94];
+  const LANCER_POINTS = [new THREE.Vector3(-0.14, 0.66, 0.3), new THREE.Vector3(0.52, 0.62, 0.12), new THREE.Vector3(0.32, 0.12, -0.1)];
+  const LANCER_TEMPS = [0, 0.12, 0.3, 0.55, 1];
+  const LANCER_TORSION = [[0, 0], [0.12, 0.4], [0.3, -0.35], [0.55, -0.45], [1, 0]];
+  // (demande 92) Pour « sous le capot » : combien de soldats dessinés courent, marchent, sont accroupis, rechargent…
+  // (on recommence à compter à chaque nouvelle image)
+  const gestes = { image: -1, courent: 0, marchent: 0, accroupis: 0, rechargent: 0, lancent: 0, visent: 0, repos: 0, nagent: 0, corde: 0, detail: 0 };
+  function compter(etat, pres) {
+    const image = Tanks.Scene.infos.frame;
+    if (image !== gestes.image) {
+      for (const k in gestes) gestes[k] = 0;
+      gestes.image = image;
+    }
+    gestes[etat]++;
+    if (pres) gestes.detail++;
+  }
+  // (demande 92) De combien la tête de ce soldat est baissée (m) : accroupi. Pour la caméra à la 1re personne.
+  let gesteJoueur = null;
+  const baisse = () => (gesteJoueur ? gesteJoueur.accroupi * 0.62 : 0);
 
   // ------------------------------------------------------------------ (étape 74) une FIGURINE : un soldat immobile
   // Pour les pilotes, les mitrailleurs et les soldats assis dans les hélicos : le même soldat, mais posé une fois pour
@@ -1191,5 +1392,5 @@ Tanks.Engins3D = (function () {
   // (étape 73) le Chinook et le Black Hawk, dans affichage/helicos3d.js
   // (étape 76) le Rafale, les chasseurs ennemis, l'avion de transport, le drone et le Tigre, dans affichage/avions3d.js
   const outils = { pilote, siege, peintureSoudee, vitreClaire, mats, figurine, figurineDans, poserBras, MAINS, galet, membre, formesArmes };
-  return { soldat, animer, fabriquer, bruler, portail, silhouettes, outils };
+  return { soldat, animer, fabriquer, bruler, portail, silhouettes, outils, gestes, baisse };
 })();

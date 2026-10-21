@@ -1277,3 +1277,149 @@ Tanks.CONFIG = {
     ],
   },
 };
+
+// ================================================================== demande 92 : ✍️ « LE RÉALISME TOTAL » (les soldats et le sol)
+// (Rangé à part, dans « Tanks.CONFIG.realisme », pour ne pas se mélanger avec les tirs, les explosions et la lumière.)
+// Les tableaux « parNiveau » ont 4 cases : une par niveau de qualité (0 = très léger … 3 = beau, voir « qualite »).
+Tanks.CONFIG.realisme = Object.assign(Tanks.CONFIG.realisme || {}, {
+  // ------------------------------------------------------------------ LES SOLDATS
+  soldats: {
+    // Les UNIFORMES : un camouflage par équipe (✍️ les Bleus en « woodland » des forêts, les Rouges en « désert »),
+    // dessiné sur un tissu « ripstop » (un petit quadrillage tous les « ripstop » m), avec des plis, de l'usure et de la boue.
+    //   motif : m couverts par l'image du tissu ; plis : la force des plis (0 = tout plat) ; boue : la hauteur (m) sous
+    //   laquelle les jambes sont salies ; relief : la force du relief (la lumière accroche les plis et les sangles).
+    uniformes: {
+      bleus: { nom: "woodland", fond: "#78785a", taches: ["#55613d", "#5f4b33", "#2a2d22"], equipement: "#4c5438" },
+      rouges: { nom: "désert", fond: "#c8b38a", taches: ["#a68962", "#8e8466", "#d8c8a2"], equipement: "#8c7752" },
+      motif: 0.7, ripstop: 0.006, plis: 1, boue: 0.55, relief: 1.6,
+    },
+    // S'ACCROUPIR : (touche X pour toi ; les soldats de l'ordinateur s'accroupissent tout seuls quand ils tirent sur place)
+    //   vitesse : × la vitesse quand on avance accroupi ; hauteur : m, là où les balles visent un soldat accroupi (debout :
+    //   1,2 m) : derrière un muret, il est caché ! ; touche : × la chance d'être touché (il est plus petit)
+    accroupi: { vitesse: 0.45, hauteur: 0.8, touche: 0.75 },
+    // Les soldats de l'ordinateur ont maintenant un CHARGEUR : après « chargeur » balles, ils rechargent pendant « rechargement » s.
+    ia: { chargeur: 20, rechargement: 2.6 },
+    // LES GESTES (l'affichage) : en combien de temps on passe d'une position à l'autre (s : plus petit = plus vif) ;
+    // le recul de l'arme à chaque tir (m vers l'arrière, rad vers le haut) ; la longueur d'une foulée (m, 2 pas).
+    gestes: { souplesse: 0.18, reculArriere: 0.04, reculHaut: 0.07, foulee: 2.4, regardAutour: 0.35 },
+  },
+  // ------------------------------------------------------------------ LE SOL
+  sol: {
+    // Les FLAQUES : dans les creux du terrain (plus bas que le sol autour, de « creux » m au moins), là où le bruit le veut
+    // (« part » : 0,1 = environ 1 creux sur 10) ; dans les ornières des chemins aussi. Pas de flaques dans le désert.
+    flaques: { creux: 0.35, part: 0.16, chemins: 0.12 },
+    // Les détails du sol : une 2e image de détail, tournée et plus grande (« casse » m), pour qu'on ne voie pas la
+    // répétition ; « pente » : à quel point les pentes sont plus sombres (0 = pas du tout).
+    detail: { casse: 6.2, pente: 0.9 },
+    // Les CAILLOUX en 3D autour de la caméra : un par case de « case » m (au hasard), plus sur la terre que sur l'herbe.
+    cailloux: { case: 1.1, max: 2600, bouge: 2.5, taille: [0.05, 0.22] },
+    // Les TRACES DE CHENILLES (et de pneus) : un morceau de trace tous les « pas » m, qui s'efface en « duree » s.
+    //   largeur : m (tank, camion, quad, moto, 4x4) ; ecart : m entre les deux traces ; couleur et force (0 à 1).
+    traces: { pas: 0.9, max: 4000, couleur: "#2e271d", force: 0.62,
+      engins: { char: [0.62, null], camion: [0.38, 1.9], quad: [0.24, 1.1], moto: [0.13, 0], jeep: [0.32, 1.8] } },
+    // Les CRATÈRES des explosions (au sol) : leur rayon en m selon ce qui explose ; ils restent (au plus « max »).
+    crateres: { max: 220, rayons: { obus: 1.8, roquette: 1.5, grenade: 1.1, bombe: 4.2, missile: 3.2, torpille: 2.4, lg40: 1.2, at4: 1.6, javelin: 2.2, mine: 2.4, c4: 3.2 } },
+    // Le sol du SOUTERRAIN : des carreaux mouillés qui brillent (0 = mat, 1 = miroir) et de la saleté.
+    souterrain: { brillant: 0.55, sale: 0.5 },
+    // Selon le niveau de qualité (0 … 3) :
+    //   traces : morceaux de trace gardés (0 = pas de traces) ; tracesLoin : m, pas de nouvelles traces plus loin de la
+    //   caméra ; tracesDuree : s avant qu'une trace soit effacée ; crateres : cratères gardés ; cailloux : m (rayon autour
+    //   de la caméra, 0 = pas de cailloux) ; flaques : 0 = pas de reflets dans les flaques ; gestesLoin : m, plus loin les
+    //   soldats ont des gestes simplifiés (pas de rechargement, de recul…).
+    parNiveau: {
+      traces: [0, 900, 2000, 4000], tracesLoin: [0, 120, 200, 300], tracesDuree: [0, 70, 120, 200],
+      crateres: [30, 70, 140, 220], cailloux: [0, 16, 24, 34], flaques: [0, 1, 1, 1], gestesLoin: [15, 30, 45, 70],
+    },
+  },
+});
+
+// ================================================================== demande 92 : ✍️ « LE RÉALISME TOTAL » (les tirs, les explosions, la lumière)
+// (Rangé à part lui aussi : « realisme.tirs », « realisme.explosions » et « realisme.lumiere ».)
+// Les tableaux à 4 cases donnent un réglage par niveau de qualité (0 = très léger … 3 = beau, voir « qualite »).
+// Les couleurs des petites images sont [rouge, vert, bleu] : 1 = normal ; plus que 1 = ça BRILLE (le feu, les traceuses).
+Tanks.CONFIG.realisme = Object.assign(Tanks.CONFIG.realisme || {}, {
+  // ------------------------------------------------------------------ LES TIRS ET LES BALLES (affichage/tirs.js)
+  tirs: {
+    // La fabrique de petites images (affichage/particules.js) : combien au plus en même temps (fumée, feu, étincelles,
+    // traits), combien de cailloux en 3D, combien de VRAIES lumières (sur « lumieresPosees », toujours posées dans la scène :
+    // en ajouter ou en enlever obligerait la carte graphique à tout recalculer).
+    particules: [600, 1000, 1500, 2200], debris3d: [12, 30, 60, 100], lumieres: [1, 2, 3, 3], lumieresPosees: 3,
+    // La BALLE TRAÇANTE : 1 balle sur « chaque » brille (comme les vraies : une sur 4 ou 5). Elle vole à « vitesse » m/s
+    // (une vraie va à 900 m/s : on la ralentit un peu pour qu'on la voie), c'est un trait de « longueur » m, large de
+    // « largeur » m, orange (les deux camps : la même couleur), « force » fois plus lumineux qu'un objet blanc.
+    traceur: { chaque: 4, vitesse: 420, longueur: 11, largeur: 0.08, couleur: [1, 0.42, 0.12], force: 5 },
+    // Les AUTRES balles : un trait à peine visible (l'air chaud qui tremble), plus court.
+    balle: { vitesse: 700, longueur: 3.5, largeur: 0.03, opacite: 0.16 },
+    // L'ÉCLAIR au bout du canon (pour tous les tireurs) : taille (m), durée (s), vraie lumière (force, portée m) pour les
+    // plus proches seulement, au plus une toutes les « intervalle » s ; pas d'éclair plus loin que « loin » m (par niveau).
+    eclair: { taille: 0.55, duree: 0.06, lumiere: 4, portee: 7, intervalle: 0.06, loin: [45, 70, 110, 160] },
+    // La petite FUMÉE au bout du canon : 1 tir sur « chance » ; elle vit « vie » s.
+    fumee: { chance: 0.45, vie: 1.6, taille: 0.7 },
+    // LE COUP DE CANON d'un tank : la boule de feu (m), la vraie lumière, l'anneau de POUSSIÈRE soulevé autour du tank
+    // (nombre de bouffées, m de rayon, m/s), la fumée devant le canon.
+    canon: { flash: 2.6, lumiere: 70, portee: 34, poussiere: 22, rayon: 4.5, souffle: 11, fumee: 9, secousse: 0.35 },
+    // La TRAÎNÉE de fumée des roquettes et missiles : une bouffée tous les « pas » m, qui vit « vie » s ; l'obus de tank
+    // a un petit traceur rouge au culot (« culot » : taille en m).
+    trainee: { pas: 1.3, vie: 3.2, taille: [0.5, 2.6], culot: 0.5 },
+    // Une balle qui passe PRÈS DE TOI : à moins de « distance » m on l'entend siffler, à moins de « crac » m elle claque
+    // (elle va plus vite que le son). Le journal en parle au plus une fois toutes les « journal » s.
+    frole: { distance: 6, crac: 2.5, journal: 4, tireurMin: 8 },
+    // LES IMPACTS selon la MATIÈRE touchée : couleur de la poussière, des morceaux qui volent, combien.
+    //   poussiere : couleur ; morceaux : couleur ; nombre : morceaux par balle ; saute : m/s vers le haut ; etincelles : 0 ou 1
+    matieres: {
+      terre: { poussiere: [0.42, 0.35, 0.26], morceaux: [0.2, 0.16, 0.11], nombre: 4, saute: 4 },
+      sable: { poussiere: [0.86, 0.74, 0.55], morceaux: [0.8, 0.68, 0.48], nombre: 7, saute: 6 },
+      pierre: { poussiere: [0.66, 0.64, 0.6], morceaux: [0.5, 0.48, 0.45], nombre: 4, saute: 3.5, etincelles: 1 },
+      brique: { poussiere: [0.72, 0.52, 0.42], morceaux: [0.55, 0.3, 0.22], nombre: 4, saute: 3.5, etincelles: 1 },
+      bois: { poussiere: [0.6, 0.48, 0.33], morceaux: [0.62, 0.45, 0.26], nombre: 4, saute: 3 },
+      feuilles: { poussiere: [0.42, 0.5, 0.3], morceaux: [0.28, 0.42, 0.18], nombre: 5, saute: 2 },
+      metal: { poussiere: [0.5, 0.48, 0.45], morceaux: [1.6, 1, 0.45], nombre: 6, saute: 4, etincelles: 1 },
+      eau: { poussiere: [0.85, 0.9, 0.95], morceaux: [0.9, 0.95, 1], nombre: 8, saute: 5 },
+      beton: { poussiere: [0.62, 0.62, 0.62], morceaux: [0.5, 0.5, 0.5], nombre: 4, saute: 3.5, etincelles: 1 },
+    },
+  },
+  // ------------------------------------------------------------------ LES EXPLOSIONS (affichage/explosions.js)
+  explosions: {
+    // La TAILLE de chaque explosion (1 = un obus de tank) : tout grandit avec elle (le feu, la fumée, l'onde, les débris).
+    tailles: { obus: 1, roquette: 0.85, grenade: 0.6, flak: 0.35, missile: 1.5, bombe: 2.4, torpille: 1.6, char: 1.7, petit: 0.9, avion: 1.8, crash: 2.2 },
+    // L'ÉCLAIR : il dure « duree » s ; la vraie lumière (force, portée m).
+    eclair: { duree: 0.14, lumiere: 220, portee: 55 },
+    // La BOULE DE FEU : « nombre » flammes, de « taille » m, qui vivent « vie » s et montent à « monte » m/s.
+    boule: { nombre: 9, taille: 2.6, vie: 0.85, monte: 3 },
+    // L'ONDE DE CHOC : un anneau de poussière qui court sur le sol jusqu'à « rayon » m en « duree » s.
+    onde: { rayon: 13, duree: 0.5, opacite: 0.45, bouffees: 16 },
+    // La COLONNE DE FUMÉE noire : « nombre » bouffées de « taille » m, pendant « emission » s ; elles vivent « vie » s,
+    // montent à « monte » m/s et partent avec le VENT (m/s, vers x et z).
+    fumee: { nombre: 12, taille: 6, emission: 1.2, vie: 10, monte: 2.6 },
+    vent: [1.8, 0.7],
+    // Les DÉBRIS : « nombre » cailloux en 3D (et des mottes en images) lancés à « vitesse » m/s ; les ÉTINCELLES.
+    debris: { nombre: 10, vitesse: 15, taille: 0.22, mottes: 14 },
+    etincelles: { nombre: 14, vitesse: 28 },
+    // L'ÉCRAN QUI TREMBLE : « angle » rad au plus près, plus rien au-delà de « rayon » m × la taille ; il se calme en « calme » s.
+    secousse: { angle: 0.04, rayon: 140, calme: 0.6 },
+    // LE SON : il voyage à « vitesse » m/s (on voit l'explosion AVANT de l'entendre) ; de loin il est sourd (« sourd » Hz
+    // à « loin » m : les aigus se perdent dans l'air).
+    son: { vitesse: 340, sourd: 260, loin: 700, fort: 1 },
+    // L'ÉPAVE QUI BRÛLE (un tank détruit) : le feu dure « feu » s, la fumée « fumee » s ; la lueur du feu (force, portée m).
+    epave: { feu: 50, fumee: 110, lumiere: 22, portee: 16, flammes: 14, bouffees: 3 },
+  },
+  // ------------------------------------------------------------------ LA LUMIÈRE ET LE CIEL (affichage/scene.js)
+  // Une ambiance par décor. direction : vers le soleil [x, y, z] (y petit = soleil bas, plus chaud) ; couleur et force du
+  // soleil ; ciel / sol : la lumière qui vient du ciel et celle renvoyée par le sol (« hémisphère ») ; ambiance : sa force ;
+  // exposition : l'ouverture de l'appareil photo (ACES) ; zenith / horizon : les couleurs du ciel (en haut, au bord) ;
+  // brume : la couleur du brouillard (= l'horizon, sinon les collines lointaines « flotteraient ») ; halo : la lueur
+  // autour du soleil ; nuages : 0 = ciel pur, 1 = couvert ; fumees : des colonnes de fumée au loin (la guerre !).
+  // filtre : le réglage du filtre de cinéma (affichage/ambiance.js) pour ce décor.
+  lumiere: {
+    bataille: { direction: [0.62, 0.42, 0.34], couleur: "#ffe0b4", force: 3.1, ciel: "#b7cdea", sol: "#6a6646", ambiance: 0.8, exposition: 0.95,
+      zenith: "#3f6fb4", horizon: "#c9d3d8", brume: "#c4cdd0", halo: 0.55, nuages: 0.5, fumees: 2, filtre: { saturation: 0.8, contraste: 1.1 } },
+    ville: { direction: [0.5, 0.55, 0.42], couleur: "#f0e6d8", force: 2.5, ciel: "#b4bcc6", sol: "#5c5a56", ambiance: 0.95, exposition: 1,
+      zenith: "#6a7c92", horizon: "#b9bdc0", brume: "#b4b8ba", halo: 0.35, nuages: 0.82, fumees: 2, filtre: { saturation: 0.7, contraste: 1.12 } },
+    ruines: { direction: [0.55, 0.36, 0.4], couleur: "#f2c890", force: 2.3, ciel: "#b0aaa0", sol: "#57524a", ambiance: 0.9, exposition: 1,
+      zenith: "#5d6470", horizon: "#a89c8c", brume: "#a0968a", halo: 0.6, nuages: 0.9, fumees: 6, filtre: { saturation: 0.66, contraste: 1.15 } },
+    desert: { direction: [0.3, 0.86, 0.26], couleur: "#fff3dc", force: 3.8, ciel: "#e6dcc4", sol: "#c49c66", ambiance: 0.85, exposition: 0.85,
+      zenith: "#3c74c4", horizon: "#e2d6bc", brume: "#ddd0b4", halo: 0.7, nuages: 0.12, fumees: 1, filtre: { saturation: 0.86, contraste: 1.12 } },
+    "village-desert": { direction: [0.3, 0.86, 0.26], couleur: "#fff3dc", force: 3.8, ciel: "#e6dcc4", sol: "#c49c66", ambiance: 0.85, exposition: 0.85,
+      zenith: "#3c74c4", horizon: "#e2d6bc", brume: "#ddd0b4", halo: 0.7, nuages: 0.12, fumees: 2, filtre: { saturation: 0.86, contraste: 1.12 } },
+  },
+});
