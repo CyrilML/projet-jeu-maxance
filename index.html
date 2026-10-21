@@ -4879,13 +4879,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <div class="carte">
           <h4>✅ Ce que tu peux vérifier</h4>
           <ul>
-            <li>☐ « version 32 ».</li>
-            <li>☐ K (ou le bouton en haut) : plein écran. K encore, ou Échap : retour à la page.</li>
+            <li>☐ « version 33 ».</li>
+            <li>☐ K (ou le bouton en haut) : plein écran, partout (accueil, menu, campagne, bataille). K encore, ou Échap : retour à la page.</li>
           </ul>
         </div>
       </div>
       <h3>🔒 Pourquoi faut-il appuyer sur une touche ?</h3>
       <p>Comme pour le son, un site n'a pas le droit de passer en plein écran tout seul : il faut un geste de toi (un clic ou une touche). Et Échap permet toujours d'en sortir, pour ne jamais rester bloqué.</p>
+      <h3>🐞 Le bug de la version 32</h3>
+      <p>Maxance a appuyé sur K… et rien ! La page d'accueil, le menu et la campagne <strong>gardent les touches pour eux</strong> (pour que flèches et Entrée ne fassent pas bouger le tank derrière). Le K était donc arrêté avant d'arriver au plein écran. Correction : le plein écran écoute le clavier <strong>en premier</strong>, avant tous les autres (c'est la « capture »).</p>
     </section>
 
     <!-- ============ LE VILLAGE (projet à part) ============ -->
