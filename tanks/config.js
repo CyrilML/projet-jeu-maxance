@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 37,
+  version: 38,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -1512,7 +1512,9 @@ Tanks.CONFIG.radio = {
     // les voix « neuronales », « Premium », « Améliorée », celles de Google, puis les autres. Un mot trouvé dans le
     // nom de la voix donne des points ; on garde les « garder » meilleures voix pour les soldats.
     qualite: [["natural", 100], ["naturel", 100], ["neural", 90], ["online", 60], ["premium", 70], ["enhanced", 60], ["améliorée", 60], ["google", 40], ["siri", 50]],
-    garder: 4,
+    garder: 6,
+    auMoins: 3, // (étape 96) au moins 3 voix différentes si l'ordinateur en a (même un peu moins belles)
+    hasard: { hauteur: 0.04, vitesse: 0.06, urgent: 1.08 }, // (étape 96) ± 4 % de hauteur, ± 6 % de vitesse à chaque phrase ; × 1,08 si c'est urgent
     couleurs: { bleus: "#5aa8ff", rouges: "#ff5a4a", radio: "#ffd27a" },
   },
   // ------------------------------------------------------------------ les phrases

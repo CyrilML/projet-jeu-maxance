@@ -53,6 +53,7 @@ Tanks.SousLeCapot = (function () {
   const MESSAGES = {
     // demande 94 : la radio qui parle
     "radio-phrase": (d) => (d.interceptee ? "📡 (interceptée) " : "📻 ") + d.qui + (d.role ? " (" + d.role + ")" : "") + " : « " + d.texte + " » · " + ({ reponse: "réponse à ton ordre", urgent: "urgent", bavardage: "bavardage" }[d.priorite] || d.priorite) + " · " + d.genre + (d.distance ? " · à " + d.distance + " m de toi" : ""),
+    "voix-changees": (d) => "🔁 Les voix tournent d'un cran (J) : " + d.nombre + " voix françaises, la 1re est maintenant " + d.voix,
     "radio-voix": (d) => (d.actives ? "🗣️ Voix de la radio allumées (N)" : "🔇 Voix de la radio coupées (N) : les sous-titres restent") + " · " + (d.synthese ? d.voixFr + " voix française(s) sur " + d.toutes : "pas de synthèse vocale dans ce navigateur : sous-titres seulement"),
     "radio-question": (d) => "❔ Ta question (" + { ennemis: "où sont les ennemis", position: "où es-tu", merci: "merci" }[d.question] + ") : " + d.qui + " répond",
     "soin-allie": (d) => "⛑️ " + d.de + " soigne " + d.qui + " : " + Math.round(d.vie) + " / " + d.vieMax + (d.demande ? " (tu l'as demandé)" : ""),

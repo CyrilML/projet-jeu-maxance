@@ -58,6 +58,7 @@ window.Tanks = window.Tanks || {};
     if (E.consommer("camera")) Tanks.Scene.changerCamera(!!(Tanks.monde && Tanks.monde.toi && Tanks.monde.toi.mode === "pied"));
     if (E.consommer("son")) Tanks.Sons.basculer();
     if (E.consommer("musique")) Tanks.Musique.basculer(); // (étape 82) M : la musique
+    if (E.consommer("changerVoix")) Tanks.RadioVoix.changerVoix(); // (étape 96) J : changer les voix
     if (E.consommer("voix")) Tanks.RadioVoix.basculer(); // (demande 94) N : les voix de la radio
     if (E.consommer("lampe") && monde.toi && monde.toi.soldat) Tanks.Equipement.basculerLampe(monde.toi.soldat); // (étape 77 : L)
     Tanks.Menu.maj(monde); // (étape 77 : le menu s'ouvre au garage, se ferme en bataille)
