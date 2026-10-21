@@ -51,7 +51,12 @@ Tanks.RadioVoix = (function () {
     voixFr.sort((a, b) => points(b) - points(a));
     meilleure = voixFr.length ? voixFr[0].name : "aucune";
     const seuil = voixFr.length ? points(voixFr[0]) : 0;
-    if (seuil >= 40) voixFr = voixFr.filter((x) => points(x) >= 40).slice(0, V.garder); // (des belles voix existent : seulement elles)
+    // (étape 96 : ✍️ « que les voix ne soient pas toujours les mêmes ») on garde les belles voix, mais s'il y en a
+    // moins de « auMoins », on complète avec les suivantes : mieux vaut plusieurs voix différentes qu'une seule
+    if (seuil >= 40) {
+      const belles = voixFr.filter((x) => points(x) >= 40);
+      voixFr = (belles.length >= V.auMoins ? belles : belles.concat(voixFr.filter((x) => points(x) < 40)).slice(0, V.auMoins)).slice(0, V.garder);
+    }
   }
 
   function initialiser(toile) {
@@ -99,6 +104,13 @@ Tanks.RadioVoix = (function () {
 
   // ------------------------------------------------------------------ 2. la voix
   // Le « numéro » d'un nom (toujours le même pour le même nom) : il choisit le timbre et la voix de ce soldat.
+  // (étape 96) LE TOUR DES VOIX : le 1er soldat qui parle reçoit la 1re voix, le 2e la 2e, etc. (avant, deux soldats
+  // pouvaient tomber sur la même voix par hasard). Chacun garde ensuite toujours la sienne.
+  const voixDe = new Map();
+  function voixPour(qui) {
+    if (!voixDe.has(qui)) voixDe.set(qui, voixDe.size);
+    return voixFr[voixDe.get(qui) % voixFr.length];
+  }
   function numero(nom) {
     let h = 7;
     for (let i = 0; i < nom.length; i++) h = (h * 31 + nom.charCodeAt(i)) >>> 0;
@@ -130,9 +142,12 @@ Tanks.RadioVoix = (function () {
     try {
       const u = new window.SpeechSynthesisUtterance(p.texte);
       u.lang = V.langue;
-      u.voice = voixFr[(numero(p.qui) >>> 3) % voixFr.length];
-      u.pitch = tb.hauteur;
-      u.rate = tb.vitesse;
+      u.voice = voixPour(p.qui);
+      // (étape 96) un peu de hasard à CHAQUE phrase : on ne dit jamais deux fois une phrase exactement pareil
+      // (plus vite quand c'est urgent, un poil plus haut ou plus bas)
+      const h = V.hasard, urgent = p.priorite === "urgent";
+      u.pitch = tb.hauteur * (1 + (Math.random() * 2 - 1) * h.hauteur);
+      u.rate = tb.vitesse * (1 + (Math.random() * 2 - 1) * h.vitesse) * (urgent ? h.urgent : 1);
       u.volume = V.volume;
       u.onend = () => (item.fini = true);
       u.onerror = () => ((item.fini = true), bilan.erreurs++);
