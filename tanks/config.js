@@ -1358,7 +1358,10 @@ Tanks.CONFIG.realisme = Object.assign(Tanks.CONFIG.realisme || {}, {
     // La fabrique de petites images (affichage/particules.js) : combien au plus en même temps (fumée, feu, étincelles,
     // traits), combien de cailloux en 3D, combien de VRAIES lumières (sur « lumieresPosees », toujours posées dans la scène :
     // en ajouter ou en enlever obligerait la carte graphique à tout recalculer).
-    particules: [600, 1000, 1500, 2200], debris3d: [12, 30, 60, 100], lumieres: [1, 2, 3, 3], lumieresPosees: 3,
+    // (demande 96, « ça rame ») chaque vraie lumière posée coûte un calcul de plus pour CHAQUE point de l'écran, même
+    // éteinte : 1 seule (prêtée à l'éclair le plus fort et le plus proche), et aucune au niveau 0 (elle est alors enlevée en
+    // même temps que les ombres : la carte graphique ne refait ses programmes qu'une fois). Moins de petites images en bas.
+    particules: [350, 700, 1300, 2000], debris3d: [8, 20, 50, 90], lumieres: [0, 1, 1, 1], lumieresPosees: 1,
     // La BALLE TRAÇANTE : 1 balle sur « chaque » brille (comme les vraies : une sur 4 ou 5). Elle vole à « vitesse » m/s
     // (une vraie va à 900 m/s : on la ralentit un peu pour qu'on la voie), c'est un trait de « longueur » m, large de
     // « largeur » m, orange (les deux camps : la même couleur), « force » fois plus lumineux qu'un objet blanc.

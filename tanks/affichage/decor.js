@@ -384,13 +384,25 @@ Tanks.Decor = (function () {
       const k = numeroMorceau((p.getX(a) + p.getX(b) + p.getX(c)) / 3, (p.getZ(a) + p.getZ(b) + p.getZ(c)) / 3);
       (parTuile[k] = parTuile[k] || []).push(a, b, c);
     }
-    for (const liste of parTuile) {
-      if (!liste) continue;
-      const g = new THREE.BufferGeometry();
-      for (const nom of ["position", "normal", "uv"]) g.setAttribute(nom, geo.attributes[nom]);
+    // (demande 96, « ça rame ») chaque tuile reçoit SA PROPRE petite copie des sommets qu'elle utilise (les mêmes nombres :
+    // toujours aucune couture). Avant, chaque tuile pointait vers les 177 000 sommets de toute la carte, et certaines cartes
+    // graphiques (celles qui calculent sans vraie carte graphique, ou les plus simples) les recalculaient TOUS à chaque tuile.
+    for (const listeGlobale of parTuile) {
+      if (!listeGlobale) continue;
+      const g = new THREE.BufferGeometry(), nouveau = new Map(), liste = [];
+      for (const i of listeGlobale) {
+        let k = nouveau.get(i);
+        if (k === undefined) nouveau.set(i, (k = nouveau.size));
+        liste.push(k);
+      }
+      for (const [nom, t] of [["position", 3], ["normal", 3], ["uv", 2]]) {
+        const source = geo.attributes[nom].array, tab = new Float32Array(nouveau.size * t);
+        for (const [i, k] of nouveau) for (let c = 0; c < t; c++) tab[k * t + c] = source[i * t + c];
+        g.setAttribute(nom, new THREE.BufferAttribute(tab, t));
+      }
       g.setIndex(liste);
       const boite = new THREE.Box3(), v = new THREE.Vector3();
-      for (const i of liste) boite.expandByPoint(v.fromBufferAttribute(p, i));
+      for (const i of listeGlobale) boite.expandByPoint(v.fromBufferAttribute(p, i));
       g.boundingBox = boite;
       g.boundingSphere = boite.getBoundingSphere(new THREE.Sphere());
       const m = new THREE.Mesh(g, matiere);

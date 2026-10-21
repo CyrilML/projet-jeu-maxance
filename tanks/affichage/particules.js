@@ -396,6 +396,7 @@ Tanks.Particules = (function () {
     const max = R.lumieres[niveau];
     lumieres.forEach((L, k) => {
       L.age += dt;
+      L.l.visible = k < max; // (demande 96 : au-delà du nombre permis, la lumière est ENLEVÉE, pas seulement éteinte : une lumière éteinte coûte autant)
       if (k >= max || L.age >= L.duree) return void (L.l.intensity = 0);
       const f = 1 - L.age / L.duree;
       L.l.intensity = L.force * f * f * (L.scintille ? 0.7 + 0.3 * Math.sin(L.age * 37 + k) * Math.sin(L.age * 23) : 1);

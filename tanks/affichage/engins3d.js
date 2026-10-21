@@ -1463,6 +1463,21 @@ Tanks.Engins3D = (function () {
     return { g, caisse, tourelle, canons, flammes };
   }
 
+  // (demande 96) l'image de la lueur des portails : un rond blanc qui s'efface vers le bord (faite une seule fois)
+  let lueurPortail = null;
+  function imageLueur() {
+    if (lueurPortail) return lueurPortail;
+    const toile = document.createElement("canvas");
+    toile.width = toile.height = 64;
+    const ctx = toile.getContext("2d"), d = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    d.addColorStop(0, "rgba(255,255,255,1)");
+    d.addColorStop(0.35, "rgba(255,255,255,0.45)");
+    d.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = d;
+    ctx.fillRect(0, 0, 64, 64);
+    return (lueurPortail = new THREE.CanvasTexture(toile));
+  }
+
   // Le portail : un anneau qui brille, un tourbillon (un disque avec une spirale dessinée, qui tourne) et un socle.
   function portail(couleur, rayon) {
     const g = new THREE.Group(), c = new THREE.Color(couleur);
@@ -1497,9 +1512,14 @@ Tanks.Engins3D = (function () {
     anneau.rotation.y = Math.PI / 2;
     const pierre = new THREE.MeshStandardMaterial({ color: 0x8a8578, roughness: 0.95 });
     for (const z of [-rayon - 0.3, rayon + 0.3]) g.add(boite(1.4, 1.2, 1.4, pierre, 0, 0.3, z));
-    const lumiere = new THREE.PointLight(c, 6, 18, 2);
-    lumiere.position.y = rayon + 0.3;
-    g.add(lumiere);
+    // (demande 96, « ça rame ») plus de VRAIE lumière dans le portail : chaque vraie lumière oblige la carte graphique à
+    // refaire un calcul pour CHAQUE point de l'écran (même très loin du portail !). À la place, une LUEUR peinte : un disque
+    // posé au sol, qui ajoute sa couleur, plus forte au centre (presque le même effet, 1 seul petit dessin).
+    const lueur = new THREE.Mesh(new THREE.CircleGeometry(rayon * 2.4, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: imageLueur(), color: c, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false, fog: true }));
+    lueur.position.y = 0.25;
+    lueur.renderOrder = 3;
+    lueur.name = "lueur du portail";
+    g.add(lueur);
     return { g, tourbillon, anneau };
   }
 
