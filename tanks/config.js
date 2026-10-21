@@ -1305,30 +1305,21 @@ Tanks.CONFIG.realisme = Object.assign(Tanks.CONFIG.realisme || {}, {
   },
   // ------------------------------------------------------------------ LE SOL
   sol: {
-    // Les FLAQUES : dans les creux du terrain (plus bas que le sol autour, de « creux » m au moins), là où le bruit le veut
-    // (« part » : 0,1 = environ 1 creux sur 10) ; dans les ornières des chemins aussi. Pas de flaques dans le désert.
-    flaques: { creux: 0.35, part: 0.16, chemins: 0.12 },
     // Les détails du sol : une 2e image de détail, tournée et plus grande (« casse » m), pour qu'on ne voie pas la
     // répétition ; « pente » : à quel point les pentes sont plus sombres (0 = pas du tout).
     detail: { casse: 6.2, pente: 0.9 },
-    // Les CAILLOUX en 3D autour de la caméra : un par case de « case » m (au hasard), plus sur la terre que sur l'herbe.
-    cailloux: { case: 1.1, max: 2600, bouge: 2.5, taille: [0.05, 0.22] },
     // Les TRACES DE CHENILLES (et de pneus) : un morceau de trace tous les « pas » m, qui s'efface en « duree » s.
     //   largeur : m (tank, camion, quad, moto, 4x4) ; ecart : m entre les deux traces ; couleur et force (0 à 1).
     traces: { pas: 0.9, max: 4000, couleur: "#2e271d", force: 0.62,
       engins: { char: [0.62, null], camion: [0.38, 1.9], quad: [0.24, 1.1], moto: [0.13, 0], jeep: [0.32, 1.8] } },
     // Les CRATÈRES des explosions (au sol) : leur rayon en m selon ce qui explose ; ils restent (au plus « max »).
     crateres: { max: 220, rayons: { obus: 1.8, roquette: 1.5, grenade: 1.1, bombe: 4.2, missile: 3.2, torpille: 2.4, lg40: 1.2, at4: 1.6, javelin: 2.2, mine: 2.4, c4: 3.2 } },
-    // Le sol du SOUTERRAIN : des carreaux mouillés qui brillent (0 = mat, 1 = miroir) et de la saleté.
-    souterrain: { brillant: 0.55, sale: 0.5 },
     // Selon le niveau de qualité (0 … 3) :
     //   traces : morceaux de trace gardés (0 = pas de traces) ; tracesLoin : m, pas de nouvelles traces plus loin de la
-    //   caméra ; tracesDuree : s avant qu'une trace soit effacée ; crateres : cratères gardés ; cailloux : m (rayon autour
-    //   de la caméra, 0 = pas de cailloux) ; flaques : 0 = pas de reflets dans les flaques ; gestesLoin : m, plus loin les
-    //   soldats ont des gestes simplifiés (pas de rechargement, de recul…).
+    //   caméra ; tracesDuree : s avant qu'une trace soit effacée ; crateres : cratères gardés.
     parNiveau: {
       traces: [0, 900, 2000, 4000], tracesLoin: [0, 120, 200, 300], tracesDuree: [0, 70, 120, 200],
-      crateres: [30, 70, 140, 220], cailloux: [0, 16, 24, 34], flaques: [0, 1, 1, 1], gestesLoin: [15, 30, 45, 70],
+      crateres: [30, 70, 140, 220],
     },
   },
 });

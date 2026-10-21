@@ -36,7 +36,7 @@ Tanks.Explosions = (function () {
       fumeeNoire: { image: I.fumee, mode: P.FACE, eclaire: true, vie: F.vie, taille: [2, F.taille], couleur: [0.14, 0.13, 0.12], opacite: 0.78, frein: 0.9, monte: F.monte, vent: 0.35, tourne: 0.25, entree: 0.05, sortie: 1.8, portee: 8 },
       fumeeGrise: { image: I.fumee2, mode: P.FACE, eclaire: true, vie: F.vie * 0.8, taille: [2, F.taille * 0.9], couleur: [0.42, 0.4, 0.37], opacite: 0.6, frein: 0.9, monte: F.monte * 0.8, vent: 0.4, tourne: 0.25, entree: 0.05, sortie: 1.6, portee: 8 },
       onde: { image: I.anneau, mode: P.PLAT, vie: R.onde.duree, taille: [1, R.onde.rayon * 2], opacite: R.onde.opacite, lineaire: true, entree: 0.0001, sortie: 1.3, portee: 4 },
-      ondeAir: { image: I.anneau, mode: P.FACE, brille: true, vie: 0.16, taille: [1, R.onde.rayon * 1.2], couleur: [0.5, 0.48, 0.45], lineaire: true, entree: 0.0001, sortie: 1, portee: 4 },
+      ondeAir: { image: I.anneau, mode: P.FACE, brille: true, vie: 0.16, taille: [1, R.onde.rayon * 1.2], couleur: [0.16, 0.15, 0.14], lineaire: true, entree: 0.0001, sortie: 1, portee: 4 },
       roule: { image: I.poussiere, mode: P.FACE, eclaire: true, vie: 3.2, taille: [1.2, 5], opacite: 0.6, frein: 2.4, monte: 0.4, vent: 0.4, tourne: 0.4, sortie: 1.4, portee: 6 },
       motte: { image: I.motte, mode: P.FACE, eclaire: true, vie: 2.2, taille: [0.28, 0.24], gravite: 9.8, rebond: 0.2, tourne: 8, entree: 0.0001, sortie: 0.2, portee: 4 },
       jet: { image: I.poussiere, mode: P.TRAIT, eclaire: true, vie: 1.4, etire: 0.08, taille: [0.3, 0.9], opacite: 0.7, gravite: 9.8, entree: 0.0001, sortie: 1.2, portee: 4 },
@@ -106,7 +106,7 @@ Tanks.Explosions = (function () {
         P.emettre(M.roule, x + Math.cos(a) * g, sol + 0.5, z + Math.sin(a) * g, Math.cos(a) * v, 0.6 + Math.random(), Math.sin(a) * v, g * (0.7 + Math.random() * 0.5), couleur);
       }
     }
-    if (g >= 0.8) P.emettre(M.ondeAir, x, y + g, z, 0, 0, 0, g);
+    if (g >= 1.4) P.emettre(M.ondeAir, x, y + g, z, 0, 0, 0, g);
     // 4. les débris : des jets de terre (au sol), des mottes, des cailloux en 3D, des étincelles
     if (auSol && s !== "metal") {
       for (let k = 0; k < Math.round(10 * rg); k++) {
