@@ -42,8 +42,12 @@ Tanks.Ambiance = (function () {
     const couche = document.createElement("div");
     couche.className = "ambiance-grain";
     couche.style.cssText = "position:absolute;inset:-64px;pointer-events:none;mix-blend-mode:overlay;opacity:" + A.grain + ";background-image:url(" + grain.toDataURL() + ")";
-    for (const d of [teinte, vignette, couche]) cadre.insertBefore(d, ecran.nextSibling);
-    setInterval(() => (couche.style.transform = "translate(" + Math.floor(Math.random() * 64) + "px," + Math.floor(Math.random() * 64) + "px)"), 1000 / 12);
+    // (étape 90 : ✍️ « le jeu rame ») la teinte « soft-light » et le grain « overlay » obligeaient l'ordinateur à
+    // MÉLANGER deux grandes images par-dessus le jeu à chaque image, et le grain bougeait 12 fois par seconde : très
+    // cher. On ne les pose que si config.ambiance.melanges le demande ; le grain ne bouge plus. Les bords sombres
+    // (un dégradé tout simple) restent : ils ne coûtent presque rien.
+    cadre.insertBefore(vignette, ecran.nextSibling);
+    if (A.melanges) for (const d of [teinte, couche]) cadre.insertBefore(d, ecran.nextSibling);
   }
 
   return { initialiser };

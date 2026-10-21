@@ -27,11 +27,11 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 29,
+  version: 30,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
-  ambiance: { contraste: 1.14, saturation: 0.74, luminosite: 0.97, teinte: 0.32, vignette: 0.55, grain: 0.07 },
+  ambiance: { contraste: 1.14, saturation: 0.74, luminosite: 0.97, teinte: 0.32, vignette: 0.55, grain: 0.07, melanges: false }, // (étape 90 : melanges = la teinte et le grain, trop lourds : coupés)
   // ✍️ (étape 82, refaite aux étapes 83 et 84) LA MUSIQUE DE LA PAGE D'ACCUEIL, « un mix Battlefield 6 et Pirates des Caraïbes » (une musique
   // inventée), SEULEMENT au menu : elle se tait pendant la bataille (en « fondu » secondes).
   // tempo : battements par minute (2 croches par battement, 6 croches par mesure) ; volume de chaque instrument ;
@@ -572,7 +572,7 @@ Tanks.CONFIG = {
       { nom: "très léger", pixels: 0.6, ombres: 0, douces: false, vue: 380, decor: 300, soldatDetail: 12, soldatSimple: 30, soldatSilhouette: 170, roues: 35, effets: 140, herbe: 0, arbresDetail: 50, maisons: 60 },
       { nom: "léger", pixels: 0.8, ombres: 1024, douces: false, vue: 520, decor: 380, soldatDetail: 20, soldatSimple: 45, soldatSilhouette: 210, roues: 60, effets: 200, herbe: 22, arbresDetail: 80, maisons: 100 },
       { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 800, decor: 540, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280, herbe: 38, arbresDetail: 130, maisons: 160 },
-      { nom: "beau", pixels: 1.5, selonEcran: true, ombres: 4096, douces: true, vue: 1300, decor: 850, soldatDetail: 50, soldatSimple: 110, soldatSilhouette: 300, roues: 160, effets: 400, herbe: 60, arbresDetail: 220, maisons: 240 },
+      { nom: "beau", pixels: 1.25, selonEcran: true, ombres: 2048, douces: true, vue: 1300, decor: 850, soldatDetail: 50, soldatSimple: 110, soldatSilhouette: 300, roues: 160, effets: 400, herbe: 60, arbresDetail: 220, maisons: 240 },
     ],
   },
   // (étape 72) Le QUADRILLAGE : la carte est découpée en cases de 16 m. Pour savoir quels arbres ou quelles maisons sont

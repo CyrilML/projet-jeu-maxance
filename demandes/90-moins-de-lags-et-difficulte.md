@@ -1,6 +1,6 @@
 # Demande n° 90 : le jeu rame, et la campagne est trop difficile
 
-> Statut : 🛠️ en cours (d'abord les lags, puis la difficulté).
+> Statut : 🟡 lags : version 10 minutes livrée le 21/10/2026 (tanks version 30) ; la difficulté arrive ensuite.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
