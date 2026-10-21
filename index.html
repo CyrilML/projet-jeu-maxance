@@ -210,6 +210,7 @@
       <a href="#etape86">Étape 86</a>
       <a href="#etape87">Étape 87</a>
       <a href="#etape88">Étape 88</a>
+      <a href="#etape89">Étape 89</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4811,6 +4812,27 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <p class="petit">Limites : la difficulté n'a pas été essayée en vraie partie ; les soldats de l'ordinateur ont des armes différentes en apparence, mais elles tirent pareil.</p>
     </section>
 
+    <section id="etape89">
+      <h2>🔧 Étape 89 : la lunette sans l'intérieur du personnage <span class="etiquette">✅ corrigée · à valider</span></h2>
+      <p class="chapeau">Dans la lunette ×6, on voyait l'intérieur de la tête du soldat. C'est réparé. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>🐞 Le bug</h4>
+          <p>Pour viser dans la lunette, la caméra se met <strong>dans la tête</strong> du soldat. Mais son corps restait dessiné autour d'elle : on voyait l'intérieur du casque et du visage, comme si on regardait de l'intérieur d'une boîte.</p>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 29 ».</li>
+            <li>☐ Éclaireur + fusil de précision (ou la lunette ×6), à pied, V : une vue propre, sans morceaux du personnage.</li>
+            <li>☐ Le petit viseur blanc a disparu dans la lunette : il reste seulement la croix.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🧠 La leçon</h3>
+      <p>Une caméra voit tout ce qui est devant elle, même l'intérieur des objets si elle est dedans. C'est pour ça que les jeux cachent le corps du joueur quand la caméra est dans sa tête (à la première personne, et dans la lunette).</p>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6045,6 +6067,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-88" data-cle="appris-88" placeholder="Ex. : J'ai appris qu'une histoire peut être rangée en données…"></textarea>
         <label for="idees-88"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-88" data-cle="idees-88" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 89 · la lunette sans l'intérieur du personnage <span class="petit">· 21 octobre 2026</span></h4>
+        <p><strong>Ce qui a été corrigé :</strong> le corps est caché dans la lunette (<code>tanks/affichage/scene.js</code>), et le petit viseur aussi (<code>tableau.js</code>).</p>
+        <p class="petit">✍️ Maxance a trouvé le bug.</p>
+        <label for="appris-89"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-89" data-cle="appris-89" placeholder="Ex. : J'ai appris qu'une caméra voit l'intérieur des objets…"></textarea>
+        <label for="idees-89"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-89" data-cle="idees-89" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

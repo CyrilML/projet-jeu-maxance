@@ -294,6 +294,7 @@ Tanks.Scene = (function () {
     const silhouette = !cache && !s.joueur && !s.parachute && !s.nage && d > Q.soldatSimple && poserSilhouette(s);
     o.g.visible = !cache && !silhouette;
     if (s.joueur && Tanks.Armes3D.vue.actif) o.g.visible = false; // (demande 88 : à la première personne, tu vois tes mains et ton arme à part)
+    if (s.joueur && camera.lunette) o.g.visible = false; // (étape 89 : dans la lunette, l'œil est dans ta tête : ton corps est caché, sinon on voit l'intérieur du personnage)
     if (cache) lod.soldatsCaches++;
     if (silhouette) lod.silhouettes++;
     if (!o.g.visible) {
@@ -746,6 +747,7 @@ Tanks.Scene = (function () {
     if (Math.abs(cam.fov - C.camera.champ / zoom) > 0.01) (cam.fov = C.camera.champ / zoom), cam.updateProjectionMatrix();
     // (étape 79) dans la lunette, la caméra suit ta RESPIRATION (le « 8 » de logique/armes.js) : on la lit, sans rien changer
     const bal = (zoom > 2.5 && toiPied.balancement) || { x: 0, y: 0 }, aV = toiPied ? toiPied.angle + bal.x : 0;
+    camera.lunette = zoom > 2.5; // (étape 89 : lu par placerSoldat à l'image suivante)
     if (zoom > 2.5) oeil = new THREE.Vector3(toiPied.x, toiPied.y + 1.65, toiPied.z), (cible = new THREE.Vector3(toiPied.x + Math.cos(aV) * 50, toiPied.y + 1.55 + bal.y * 50, toiPied.z + Math.sin(aV) * 50)), (camera.saut = true);
     // (étape 78) la vue à la PREMIÈRE PERSONNE (touche C, à pied) : l'œil est dans la tête du soldat, un peu en avant ;
     // son corps est derrière et sous la caméra, on ne le voit pas, mais ses mains et son arme sont devant : on les voit.

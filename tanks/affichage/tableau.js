@@ -234,7 +234,8 @@ Tanks.Tableau = (function () {
     if (t.mode === "pied") {
       // le viseur : 40 m devant toi, à hauteur d'homme
       const v = Tanks.Scene.versEcran(s.x + Math.cos(s.angle) * 40, s.y + 1.4, s.z + Math.sin(s.angle) * 40, L, H);
-      if (v && !s.parachute) viseur(v, false, 10);
+      const dansLaLunette = s.armes && s.visee > 0.6 && (s.arme === "pistolet" || s.arme === "principale") && s.armes[s.arme].stats.lunette; // (étape 89 : la croix de la lunette suffit)
+      if (v && !s.parachute && !dansLaLunette) viseur(v, false, 10);
       panneau(12, H - 118, 436, 106);
       texte(s.parachute ? "🪂 En parachute…" : "🪖 À pied", 24, H - 92, 17, "#ffe27a");
       barreVie(24, H - 80, 200, s);
