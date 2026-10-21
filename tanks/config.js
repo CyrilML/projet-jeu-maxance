@@ -1360,7 +1360,7 @@ Tanks.CONFIG.realisme = Object.assign(Tanks.CONFIG.realisme || {}, {
     canon: { flash: 2.6, lumiere: 70, portee: 34, poussiere: 22, rayon: 4.5, souffle: 11, fumee: 9, secousse: 0.35 },
     // La TRAÎNÉE de fumée des roquettes et missiles : une bouffée tous les « pas » m, qui vit « vie » s ; l'obus de tank
     // a un petit traceur rouge au culot (« culot » : taille en m).
-    trainee: { pas: 1.3, vie: 3.2, taille: [0.5, 2.6], culot: 0.5 },
+    trainee: { pas: 0.6, vie: 3.2, taille: [0.7, 2.8], culot: 0.5 },
     // Une balle qui passe PRÈS DE TOI : à moins de « distance » m on l'entend siffler, à moins de « crac » m elle claque
     // (elle va plus vite que le son). Le journal en parle au plus une fois toutes les « journal » s.
     frole: { distance: 6, crac: 2.5, journal: 4, tireurMin: 8 },

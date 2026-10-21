@@ -16,6 +16,7 @@
 // un ennemi CACHÉ derrière un mur ou DANS une maison, entre 9 et 30 m. La grenade passe par-dessus le mur !)
 // (Étape 80 : ✍️ dans le SOUTERRAIN, un soldat suit sa ROUTE dans la station — le long d'un quai, ou par l'escalator, la
 // mezzanine et l'escalier d'en face — au lieu d'avancer vers le village ; et il voit moins loin : 110 m, il fait sombre.)
+// (Demande 92 : quand il s'arrête pour tirer, il s'ACCROUPIT ; quand son chargeur est vide, il recharge.)
 // (Étape 65 : TES ORDRES passent avant tout. « Va là » : il y court sans s'arrêter pour tirer, puis il défend sa place ;
 // « vise … » : il choisit sa cible dans ce que tu as dit ; « cessez le feu » : il ne tire plus.)
 
@@ -104,7 +105,7 @@ Tanks.Troupes = (function () {
       }
       parDistance.sort(plusProche);
       for (const p of parDistance) {
-        if (T.vueLibre(s.x, s.y + 1.5, s.z, p.o.x, p.o.y + 1.2, p.o.z)) {
+        if (T.vueLibre(s.x, s.y + 1.5, s.z, p.o.x, p.o.y + Tanks.Soldat.hauteurVisee(p.o), p.o.z)) { // (demande 92 : un ennemi accroupi derrière un muret est caché)
           meilleur = { o: p.o, d: p.d };
           break;
         }
@@ -156,6 +157,9 @@ Tanks.Troupes = (function () {
         intentions.lent = true;
         return intentions;
       }
+      // ✍️ (demande 92) arrêté pour tirer, il s'ACCROUPIT (plus petit, plus dur à toucher) ; et il recharge accroupi
+      intentions.accroupi = true;
+      if (s.rechargement > 0) ia.etat = "recharge, accroupi (" + (Math.round(s.rechargement * 10) / 10 + " s").replace(".", ",") + ")";
       // de temps en temps, il fait un pas de côté
       if (s.touche < 1.5) {
         intentions.avancer = true;

@@ -13,13 +13,18 @@
 // Étape 75 : ✍️ une balle qui rencontre un MUR s'arrête dedans et l'abîme (logique/structures.js) ; elle passe par les
 // fenêtres et les trous. ✍️ Les GRENADES (touche 4) : Espace en lance une en cloche (si un ennemi est presque devant
 // toi, juste assez fort pour tomber sur lui) ; tu en regagnes une toutes les 25 s, et toutes au camp.
+// ✍️ Demande 92 (« le réalisme total ») : un soldat peut S'ACCROUPIR (toi : touche X ; l'ordinateur : quand il s'arrête
+// pour tirer). Accroupi, il avance moins vite, il est plus petit (plus dur à toucher) et les balles le visent plus bas :
+// derrière un muret, on ne le voit plus ! Et les soldats de l'ordinateur ont maintenant un CHARGEUR : vide, ils rechargent.
 // Ce fichier ne dessine rien : il renvoie des événements (« balle », « soldat-touche », « soldat-mort », « nage »,
-// « grenade-lancee », « grenades », « mur-abime »…).
+// « grenade-lancee », « grenades », « mur-abime », « accroupi »…).
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Soldat = (function () {
-  const C = Tanks.CONFIG, S = C.soldats, A = C.armes, T = Tanks.Terrain;
+  const C = Tanks.CONFIG, S = C.soldats, A = C.armes, T = Tanks.Terrain, RS = C.realisme.soldats;
+  // (demande 92) à quelle hauteur on vise un soldat (accroupi : plus bas) ; un engin : 1,2 m comme avant
+  const hauteurVisee = (o) => (o.accroupi ? RS.accroupi.hauteur : 1.2);
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   const prochesArbres = [], vehiculesBalle = []; // (étape 72 : des listes réutilisées)
 
@@ -29,7 +34,7 @@ Tanks.Soldat = (function () {
       x, z, y: T.hauteur(x, z), angle, vitesse: 0,
       vie: joueur ? S.vieJoueur : S.vie, vieMax: joueur ? S.vieJoueur : S.vie, soin: 0, mort: false, depuisMort: 0,
       arme: joueur ? "mitrailleuse" : "soldat", roquettes: false, recharge: 0, tir: 0, pas: 0, touche: 9,
-      dansUnEngin: null,
+      dansUnEngin: null, accroupi: false, // (demande 92)
       grenades: joueur ? C.grenades.nombre : C.grenades.ia.nombre, attenteGrenade: 0, regainGrenade: 0, lancer: 0, // (étape 75)
     };
   }
@@ -105,14 +110,14 @@ Tanks.Soldat = (function () {
       return;
     }
     // (étape 75) un mur entre le tireur et là où va la balle ? elle s'arrête dedans et l'abîme
-    const vers = meilleur ? { x: meilleur.s.x, y: meilleur.s.y + 1.2, z: meilleur.s.z } : fin;
+    const vers = meilleur ? { x: meilleur.s.x, y: meilleur.s.y + hauteurVisee(meilleur.s), z: meilleur.s.z } : fin;
     const m = Tanks.Structures.premier(x, y, z, vers.x, vers.y, vers.z);
     if (m) {
       ev.push(["balle", { tireur, de: { x, y, z }, a: { x: m.x, y: m.y, z: m.z }, mur: true, matiere: m.morceau ? m.morceau.matiere : T.souterrain ? "beton" : m.toit ? "tuiles" : "gravats", nx: m.nx, ny: m.ny, nz: m.nz }]);
       Tanks.Structures.balle(m, R.degats || 1, tireur, ev, monde);
       return;
     }
-    if (meilleur && T.vueLibre(x, y, z, meilleur.s.x, meilleur.s.y + 1.2, meilleur.s.z)) {
+    if (meilleur && T.vueLibre(x, y, z, meilleur.s.x, meilleur.s.y + hauteurVisee(meilleur.s), meilleur.s.z)) {
       // (étape 77) TON arme : la balle s'écarte au hasard (± la dispersion, de côté et en hauteur) ; elle touche si l'écart
       // reste dans la silhouette (± 0,32 m de côté, ± 0,85 m de haut, vue à cette distance). Les dégâts baissent au loin.
       let chance = R.precision * (1 - 0.5 * (meilleur.d / R.portee)), degats = R.degats;
@@ -125,8 +130,9 @@ Tanks.Soldat = (function () {
         if (d > R.porteeEfficace) degats *= 1 + (R.degatsLoin - 1) * Math.min(1, (d - R.porteeEfficace) / Math.max(1, R.portee - R.porteeEfficace));
       }
       if (tireur.equipe === "rouges") chance *= Tanks.Campagne.facteur("precision"); // (demande 90 : la précision du Front)
+      if (meilleur.s.accroupi) chance *= RS.accroupi.touche; // (demande 92 : accroupi, il est plus petit)
       if (Math.random() < chance) {
-        ev.push(["balle", { tireur, de: { x, y, z }, a: { x: meilleur.s.x, y: meilleur.s.y + 1.2, z: meilleur.s.z }, touche: true }]);
+        ev.push(["balle", { tireur, de: { x, y, z }, a: { x: meilleur.s.x, y: meilleur.s.y + hauteurVisee(meilleur.s), z: meilleur.s.z }, touche: true }]);
         if (meilleur.s.genre === "vehicule" || meilleur.s.sorte) Tanks.Vehicules.blesserPilote(meilleur.s, Math.ceil(degats), tireur, ev);
         else blesser(meilleur.s, degats, tireur, ev, typeof arme === "string" ? arme : "balle", { x, z });
         return;
@@ -206,6 +212,14 @@ Tanks.Soldat = (function () {
       return;
     }
     if (s.dansUnEngin) return;
+    // ✍️ (demande 92) S'ACCROUPIR : toi, chaque appui sur X change ; l'ordinateur, quand il le décide (logique/troupes.js)
+    if (s.joueur) {
+      if (intentions.accroupir && !s.nage) {
+        s.accroupi = !s.accroupi;
+        ev.push(["accroupi", { nom: s.nom, accroupi: s.accroupi, vitesse: RS.accroupi.vitesse, hauteur: RS.accroupi.hauteur }]);
+      }
+    } else s.accroupi = !!intentions.accroupi;
+    if (s.nage) s.accroupi = false;
     s.touche += dt;
     s.tir = Math.max(0, s.tir - dt);
     s.lancer = Math.max(0, (s.lancer || 0) - dt);
@@ -216,7 +230,7 @@ Tanks.Soldat = (function () {
       const diff = angleEntre(intentions.versAngle - s.angle);
       s.angle = angleEntre(s.angle + Math.max(-S.rotation * dt, Math.min(S.rotation * dt, diff)));
     } else s.angle = angleEntre(s.angle + ((intentions.droite ? 1 : 0) - (intentions.gauche ? 1 : 0)) * S.rotation * 0.8 * dt);
-    const vMax = s.nage ? S.nage : S.vitesse * (s.armes ? Tanks.Armes.mobilite(s) : 1); // (étape 77 : ton arme pèse plus ou moins lourd)
+    const vMax = (s.nage ? S.nage : S.vitesse * (s.armes ? Tanks.Armes.mobilite(s) : 1)) * (s.accroupi ? RS.accroupi.vitesse : 1); // (étape 77 : ton arme pèse plus ou moins lourd) (demande 92 : accroupi, plus lent)
     const voulue = intentions.avancer ? vMax * (intentions.lent ? 0.5 : 1) : intentions.reculer ? -Math.min(S.recul, vMax) : 0;
     s.vitesse += Math.max(-20 * dt, Math.min(20 * dt, voulue - s.vitesse));
     const dir = intentions.direction !== undefined ? intentions.direction : s.angle;
@@ -251,6 +265,11 @@ Tanks.Soldat = (function () {
     if (s.nage !== !!nageait && s.joueur) ev.push(["nage", { nom: s.nom, nage: s.nage }]); // (étape 75 : plus de faux « tu as pied » en sortant du tank)
     // tirer (pas en nageant !)
     s.recharge = Math.max(0, s.recharge - dt);
+    // (demande 92) le CHARGEUR des soldats de l'ordinateur : pendant qu'il recharge, il ne tire pas
+    if (!s.armes && s.rechargement > 0) {
+      s.rechargement = Math.max(0, s.rechargement - dt);
+      if (s.rechargement === 0) s.balles = RS.ia.chargeur;
+    }
     // (étape 77) TON soldat : ton arme (chargeur, recul, dispersion, assistance…) et ton gadget
     if (s.armes) {
       Tanks.Armes.avancer(s, intentions, dt, monde, ev);
@@ -269,7 +288,7 @@ Tanks.Soldat = (function () {
       lancerGrenade(s, monde, ev, intentions.grenade || cibleGrenade(s, monde));
       return;
     }
-    if (intentions.tirer && s.recharge === 0 && !s.nage && s.arme !== "grenades") {
+    if (intentions.tirer && s.recharge === 0 && !s.nage && s.arme !== "grenades" && !(s.rechargement > 0)) {
       const R = A[s.arme];
       s.recharge = R.cadence;
       s.tir = 0.08;
@@ -284,9 +303,13 @@ Tanks.Soldat = (function () {
         ev.push(["roquette", { tireur: s, x: depart.x, y, z: depart.z, dir }]);
       } else {
         balle(s, s.x + Math.cos(s.angle) * 0.7, y, s.z + Math.sin(s.angle) * 0.7, s.angle + (intentions.erreur || 0), s.arme, monde.soldats, vehiculesDe(monde), ev, Tanks.Vehicules.legers(monde));
+        if (!s.armes && s.arme === "soldat") { // (demande 92) une balle de moins dans son chargeur ; vide : il recharge
+          s.balles = (s.balles === undefined ? RS.ia.chargeur : s.balles) - 1;
+          if (s.balles <= 0) s.rechargement = s.rechargementDuree = RS.ia.rechargement;
+        }
       }
     }
   }
 
-  return { creer, avancer, blesser, balle, vehiculesDe, lancerGrenade };
+  return { creer, avancer, blesser, balle, vehiculesDe, lancerGrenade, hauteurVisee };
 })();

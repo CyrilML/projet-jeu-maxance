@@ -12,7 +12,9 @@
 window.Tanks = window.Tanks || {};
 
 Tanks.Ambiance = (function () {
-  const A = Tanks.CONFIG.ambiance;
+  // (demande 92) chaque décor peut changer un peu le filtre (le désert plus coloré, les ruines plus ternes)
+  const C = Tanks.CONFIG, AMB = C.realisme.lumiere[Tanks.CarteDuJour.decor] || {};
+  const A = Object.assign({}, C.ambiance, AMB.filtre);
   let grain = null;
 
   function initialiser() {

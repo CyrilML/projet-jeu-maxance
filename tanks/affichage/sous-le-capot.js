@@ -52,6 +52,7 @@ Tanks.SousLeCapot = (function () {
     classe: (d) => "🎖️ Tu choisis la classe " + d.icone + " " + d.nom,
     piece: (d) => "🔧 Atelier : " + d.arme + " · " + d.emplacement + " → " + d.nom + " (portée " + Math.round(d.avant.portee) + " → " + Math.round(d.apres.portee) + " m, chargeur " + d.avant.chargeur + " → " + d.apres.chargeur + ", écart " + virgule(d.avant.dispersion * 1000, 1) + " → " + virgule(d.apres.dispersion * 1000, 1) + " mrad, mobilité " + Math.round(d.avant.mobilite * 100) + " → " + Math.round(d.apres.mobilite * 100) + " %)",
     "recharge-arme": (d) => d.fini ? "🔄 " + d.arme + " rechargé : " + d.chargeur + " balles (réserve " + d.reserve + ")" : "🔄 Tu recharges ton " + d.arme + " (" + virgule(d.duree, 1) + " s)",
+    accroupi: (d) => d.accroupi ? "🧎 Tu t'accroupis (X) : plus petit, plus dur à toucher, caché derrière un muret (les balles visent à " + String(d.hauteur).replace(".", ",") + " m), mais " + Math.round(d.vitesse * 100) + " % de ta vitesse" : "🧍 Tu te relèves (X)", // (demande 92)
     vide: (d) => "🫙 " + d.arme + " : plus de balles du tout !",
     marque: (d) => "🔭 " + (d.comment === "capteur" ? "Ton capteur" : "Tes jumelles") + " marque" + (d.nombre > 1 ? "nt " : " ") + d.nombre + " ennemi" + (d.nombre > 1 ? "s" : "") + (d.noms.length ? " (" + d.noms.join(", ") + ")" : "") + " pendant " + d.duree + " s : tes alliés les visent en premier",
     reparation: (d) => "🔧 " + (d.par === "drone" ? "Ton drone répare " : "Tu répares ") + d.qui + " : " + d.vie + " / " + d.vieMax,
@@ -154,7 +155,9 @@ Tanks.SousLeCapot = (function () {
     atterrissage: () => "🪂 Tu touches le sol : te voilà à pied",
     impossible: (d) => "✋ Impossible : " + d.raison,
     arme: (d) => "🎒 Tu prends : " + d.icone + " " + d.nom + (d.grenades !== undefined ? " (" + d.grenades + " dans ta poche : Espace en lance une, elle explose après " + C.grenades.meche + " s)" : ""),
-    balle: (d) => (d.touche ? "🔫 Ta balle touche" : d.ricochet ? "🔫 Ta balle ricoche sur un blindé" : "🔫 Ta balle rate"),
+    balle: (d) => (d.touche ? "🔫 Ta balle touche" : d.ricochet ? "🔫 Ta balle ricoche sur un blindé" : "🔫 Ta balle rate") + (d.matiere && !d.touche ? " (matière : " + d.matiere + ")" : ""),
+    // demande 92
+    "balle-frole": (d) => "🐝 Une balle de " + d.tireur + " (à " + d.distance + " m) te frôle à " + virgule(d.ecart, 1) + " m" + (d.crac ? " : CRAC ! (elle va plus vite que le son)" : " : elle siffle"),
     roquette: (d) => "🚀 " + (d.parToi ? "Tu tires" : d.tireur + " tire") + " une roquette",
     largage: (d) => "💣 " + d.engin + " lâche " + (d.sorte === "bombe" ? "une bombe" : "une grenade") + " (il en reste " + d.reste + ")",
     missile: (d) => "🚀 Missile tiré" + (d.cible ? ", guidé vers " + d.cible : " tout droit (aucun ennemi en face)") + " · il en reste " + d.reste,
@@ -200,6 +203,20 @@ Tanks.SousLeCapot = (function () {
     });
   }
 
+  // (demande 92) LES TIRS, LES IMPACTS, LES EXPLOSIONS, LA LUMIÈRE : ce que font l'imprimerie, l'armurier et l'artificier.
+  function lignesRealisme() {
+    const P = Tanks.Particules.bilan, T = Tanks.Tirs.bilan, E = Tanks.Explosions.bilan, imp = Object.entries(T.impacts).filter(([, n]) => n).map(([m, n]) => m + " " + n).join(", ") || "aucun";
+    return [
+      ["autocollants (demande 92)", P.vivantes + " / " + P.max + " (" + P.cachent + " qui cachent + " + P.brillent + " qui brillent : 2 dessins) · " + P.perdues + " pas faits (plein) · " + P.tropLoin + " trop loin · cailloux 3D " + P.cailloux + " / " + P.caillouxMax],
+      ["tirs", T.balles + " balles, dont " + T.traceuses + " traçantes (1 sur " + C.realisme.tirs.traceur.chaque + ") · " + T.eclairs + " éclairs au bout du canon (" + T.eclairsLumiere + " avec une vraie lumière) · " + T.coupsDeCanon + " coups de canon · " + T.obusEnVol + " obus en vol · " + T.trainees + " bouffées de traînée"],
+      ["impacts par matière", imp],
+      ["balles qui t'ont frôlé", T.frolements + " (dont " + T.cracs + " « crac » à moins de " + virgule(C.realisme.tirs.frole.crac, 1) + " m)"],
+      ["explosions", E.explosions + " en tout · " + E.actives + " qui fument encore · " + E.epaves + " épaves (" + E.epavesEnFeu + " en feu) · écran qui tremble : " + Math.round(E.secousse * 100) + " %"],
+      ["vraies lumières", P.lumieres + " allumées / " + P.lumieresMax + " permises (" + P.lumieresPosees + " posées) · " + P.demandesLumiere + " demandes"],
+      ["le ciel", Tanks.Scene.ciel || "—"],
+    ];
+  }
+
   // (étape 72) LA VITESSE DU JEU : tout en haut du panneau.
   function lignesVitesse(l) {
     const Q = Tanks.Qualite, M = Q.mesures, R = Q.reglages, L = Tanks.Scene.lod, D = Tanks.Decor.bilan, ms = (x) => virgule(x, 1) + " ms";
@@ -214,6 +231,10 @@ Tanks.SousLeCapot = (function () {
       ["le décor", D.morceauxVus + " / " + D.morceaux + " morceaux dessinés · " + D.arbresVus + " / " + D.arbres + " arbres, dont " + D.arbresBeaux + " beaux (à grappes, < " + R.arbresDetail + " m)"],
       ["le sol (étape 74)", "herbe / terre / chemins : une image de " + D.imageSol + " × " + D.imageSol + " points pour toute la carte (≈ " + virgule(C.monde.taille / D.imageSol, 2) + " m par point), " + D.chemins + " chemins de terre · texture de détail " + D.detailSol + " × " + D.detailSol + " répétée tous les " + virgule(C.beaute.sol.detail, 1) + " m (brins d'herbe ou cailloux, elle s'efface entre " + C.beaute.sol.fondu[0] + " et " + C.beaute.sol.fondu[1] + " m) · " + D.touffes + " touffes d'herbe (au plus " + D.touffesMax + ", à moins de " + (R.herbe || 0) + " m, 1 dessin pour toutes)"],
       ["particules", Tanks.Effets.bilan.vivantes + " en vie (2 dessins pour toutes) · " + Tanks.Effets.bilan.tropLoin + " pas faites (trop loin)"],
+      // (demande 92) le réalisme des soldats et du sol
+      ["gestes des soldats (92)", (() => { const G = Tanks.Engins3D.gestes; return G.courent + " courent · " + G.marchent + " marchent · " + G.accroupis + " accroupis · " + G.rechargent + " rechargent · " + G.lancent + " lancent une grenade · " + G.visent + " visent · " + G.repos + " au repos (ils respirent) · " + G.nagent + " nagent · " + G.corde + " à la corde · " + G.detail + " en détail (camouflage peint : " + Tanks.Uniformes.bilan.tissus + " tissus de " + Tanks.Uniformes.bilan.pointsTissu + " × " + Tanks.Uniformes.bilan.pointsTissu + " points, " + Math.round(Tanks.Uniformes.bilan.ms) + " ms à peindre)"; })()],
+      ["traces et cratères (92)", (() => { const M = Tanks.MarquesSol.bilan; return M.traces + " morceaux de traces de chenilles et de pneus (au plus " + C.realisme.sol.parNiveau.traces[Tanks.Qualite.niveau] + " à ce niveau, effacés en " + M.dureeTraces + " s ; " + M.tracesFaites + " posés en tout) · " + M.crateres + " cratères (au plus " + C.realisme.sol.parNiveau.crateres[Tanks.Qualite.niveau] + " ; " + M.crateresFaits + " en tout) · 2 dessins pour tout"; })()],
+      ...lignesRealisme(),
       ["le quadrillage", "cases de " + C.grille.case + " m · " + Tanks.Terrain.grilles.arbres.objets + " arbres et " + Tanks.Terrain.grilles.boites.objets + " murs rangés une fois · " + (monde.grilleSoldats ? monde.grilleSoldats.objets : 0) + " soldats rangés à chaque pas"]);
   }
 

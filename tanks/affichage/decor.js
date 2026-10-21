@@ -337,11 +337,13 @@ Tanks.Decor = (function () {
       sh.uniforms.detailSol = { value: detail };
       sh.uniforms.detailEchelle = { value: new THREE.Vector2(1 / BE.sol.detail, 1 / BE.sol.detailLoin) };
       sh.uniforms.detailFondu = { value: new THREE.Vector2(BE.sol.fondu[0], BE.sol.fondu[1]) };
+      sh.uniforms.detailCasse = { value: new THREE.Vector2(1 / C.realisme.sol.detail.casse, C.realisme.sol.detail.pente) };
       sh.vertexShader = sh.vertexShader
         .replace("#include <common>", "#include <common>\nvarying vec3 vSolMonde;\nvarying float vSolDist;")
-        .replace("#include <project_vertex>", "#include <project_vertex>\nvSolMonde = position;\nvSolDist = -mvPosition.z;");
+        .replace("#include <common>", "#include <common>\nvarying float vSolPente;")
+        .replace("#include <project_vertex>", "#include <project_vertex>\nvSolMonde = position;\nvSolDist = -mvPosition.z;\nvSolPente = 1.0 - normal.y;");
       sh.fragmentShader = sh.fragmentShader
-        .replace("#include <common>", "#include <common>\nuniform sampler2D detailSol;\nuniform vec2 detailEchelle;\nuniform vec2 detailFondu;\nvarying vec3 vSolMonde;\nvarying float vSolDist;")
+        .replace("#include <common>", "#include <common>\nuniform sampler2D detailSol;\nuniform vec2 detailEchelle;\nuniform vec2 detailFondu;\nuniform vec2 detailCasse;\nvarying vec3 vSolMonde;\nvarying float vSolDist;\nvarying float vSolPente;")
         .replace("#include <map_fragment>", [
           "#include <map_fragment>",
           "{",
@@ -350,8 +352,15 @@ Tanks.Decor = (function () {
           "  vec4 dB = texture2D(detailSol, mat2(0.8, -0.6, 0.6, 0.8) * p * detailEchelle.y);",
           "  float terre = clamp((diffuseColor.r - diffuseColor.g) * 14.0 + 0.4, 0.0, 1.0);", // (plus rouge que vert : de la terre)
           "  float pres = 1.0 - smoothstep(detailFondu.x, detailFondu.y, vSolDist);",
+          // (demande 92) une 2e image de détail, tournée et plus grande, mélangée à la 1re : on ne voit plus la répétition
+          "  vec4 dC = texture2D(detailSol, mat2(0.6, 0.8, -0.8, 0.6) * p * detailCasse.x + 0.37);",
+          "  float melange = smoothstep(0.3, 0.7, dB.r * 0.5 + dC.g * 0.5);",
+          "  dA = mix(dA, dC, melange * 0.5);",
           "  float dPres = mix(dA.r, dA.g, terre) * 2.0, dLoin = mix(dB.r, dB.g, terre) * 2.0;",
           "  diffuseColor.rgb *= mix(mix(1.0, dLoin, 0.45), dPres * mix(1.0, dLoin, 0.35), pres);",
+          // (demande 92) les PENTES : plus sombres, et la terre y apparaît (l'herbe tient mal)
+          "  float pente = smoothstep(0.03, 0.25, vSolPente) * detailCasse.y;",
+          "  diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.92, 0.82, 0.7), pente * 0.6) * (1.0 - pente * 0.18);",
           "}",
         ].join("\n"));
     };
@@ -795,6 +804,7 @@ Tanks.Decor = (function () {
     Tanks.Maisons3D.construire(g, ajouterMorceau, numeroMorceau); // (étape 75 : les maisons qu'on peut détruire)
     arbres(g);
     touffes(g);
+    Tanks.MarquesSol.construire(g); // (demande 92 : les traces de chenilles et les cratères, posés sur le sol)
     return g;
   }
 

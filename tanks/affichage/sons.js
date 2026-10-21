@@ -13,6 +13,9 @@
 // tordu quand c'est la radio ennemie interceptée), et 3 notes qui montent quand un objectif est accompli.
 // Demande 88 : chaque FAMILLE D'ARME a son coup de feu (le pistolet claque, la mitraillette crépite, l'AK gronde, le
 // fusil de précision tonne avec un long écho, le silencieux fait « pfft »), et ton rechargement fait « clic… clac ».
+// Demande 92 : les EXPLOSIONS arrivent EN RETARD (le son va à 340 m/s) et plus SOURDES de loin (les aigus se perdent) ;
+// une balle qui te FRÔLE siffle (et claque si elle passe tout près), du côté où elle passe ; chaque IMPACT a son bruit
+// selon la matière (« tchk » dans la terre, « ping » sur le métal, « plouf » dans l'eau…).
 // Quand tu QUITTES le jeu (un autre onglet, une autre application, une autre fenêtre devant), le son « s'endort » :
 // on met le synthétiseur en pause (ctx.suspend). Il se réveille quand tu reviens.
 
@@ -65,16 +68,16 @@ Tanks.Sons = (function () {
     const d = tampon.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     const radio = Tanks.Evenements;
-    radio.ecouter("tir", (e) => boum(e.joueur ? 1 : attenuation(e.x, e.z) * 0.8, 0.5, 120));
-    radio.ecouter("detruit", (e) => boum(attenuation(e.x, e.z), 1.6, 70));
+    radio.ecouter("tir", (e) => boum(e.joueur ? 1 : attenuation(e.x, e.z) * 0.8, 0.5, 120, e.joueur ? 0 : retard(e.x, e.z)));
+    radio.ecouter("detruit", (e) => explosion(e.x, e.z, 1.7)); // (demande 92)
     radio.ecouter("touche", (e) => clang(attenuation(e.x, e.z)));
     radio.ecouter("tir-bateau", (e) => boum(e.joueur ? 0.8 : attenuation(e.x, e.z) * 0.7, 0.45, 140)); // (étape 62)
     radio.ecouter("portail", (e) => e.quiToi && portail());
     // (étape 64) la DCA (un « tac » grave), les obus qui éclatent en l'air, un avion abattu, un crash
     radio.ecouter("flak", (e) => tac(0.9));
-    radio.ecouter("impact", (e) => e.sur === "air" && boum(attenuation(e.x, e.z) * 0.35, 0.3, 160));
-    radio.ecouter("abattu", (e) => boum(attenuation(e.x, e.z) * 0.8, 1, 90));
-    radio.ecouter("crash", (e) => boum(attenuation(e.x, e.z), 1.8, 50));
+    radio.ecouter("impact", (e) => e.sur === "air" && boum(attenuation(e.x, e.z) * 0.35, 0.3, 160, retard(e.x, e.z)));
+    radio.ecouter("abattu", (e) => explosion(e.x, e.z, 1.5));
+    radio.ecouter("crash", (e) => explosion(e.x, e.z, 2));
     // (étape 65) la radio : « bip-bip » quand un ordre est compris, « bouuu » quand il ne l'est pas
     radio.ecouter("ordre", () => (bip(880, 0), bip(1320, 0.12)));
     radio.ecouter("ordre-incompris", () => bip(220, 0, 0.35));
@@ -84,8 +87,9 @@ Tanks.Sons = (function () {
     radio.ecouter("campagne-echouee", () => (bip(392, 0, 0.25), bip(294, 0.25, 0.25), bip(196, 0.5, 0.6)));
     radio.ecouter("torpille", (e) => pschh(e.joueur ? 0.5 : attenuation(e.x, e.z) * 0.4)); // (étape 63)
     radio.ecouter("impact", (e) => {
-      if (e.sorte === "bombe" || e.sorte === "missile") boum(attenuation(e.x, e.z), 1.8, 60);
-      else if (e.sorte === "grenade" || e.sorte === "roquette") boum(attenuation(e.x, e.z) * 0.7, 0.7, 90);
+      if (e.sur === "air" || e.sur === "char") return;
+      const g = (Tanks.CONFIG.realisme.explosions.tailles[e.grenade ? "grenade" : e.sorte] || 1);
+      explosion(e.x, e.z, g);
     });
     // (étape 75) les grenades et les maisons
     radio.ecouter("grenade-lancee", (e) => tink(e.parToi ? 0.5 : attenuation(e.x, e.z) * 0.4, 2400));
@@ -96,7 +100,7 @@ Tanks.Sons = (function () {
       // (les balles de l'ordinateur : pas plus d'une toutes les 0,05 s, sinon c'est un vacarme)
       if (!e.parToi && ctx.currentTime - derniereBalle < 0.05) return;
       derniereBalle = ctx.currentTime;
-      coupDeFeu(Tanks.Armes3D.sonDe(e, monde), e.parToi ? 0.8 : attenuation(e.de.x, e.de.z) * 0.35); // (demande 88 : chaque famille d'arme a son bruit)
+      coupDeFeu(Tanks.Armes3D.sonDe(e, monde), e.parToi ? 0.8 : attenuation(e.de.x, e.de.z) * 0.35, e.parToi ? 0 : retard(e.de.x, e.de.z)); // (demande 88 : chaque famille d'arme a son bruit) (demande 92 : en retard de loin)
     });
     // (demande 88) le rechargement de TON arme : « clic » (le chargeur sort), puis « clac » (le neuf est enfoncé)
     radio.ecouter("recharge-arme", (e) => e.parToi && (e.fini ? (clic(0.5, 1800, 0), clic(0.35, 900, 0.07)) : (clic(0.4, 1300, 0.05), clic(0.3, 2400, 0.32))));
@@ -120,9 +124,81 @@ Tanks.Sons = (function () {
     const d = Math.hypot(x - ici.x, z - ici.z);
     return Math.max(0.05, 1 - d / 600);
   }
-  function boum(force, duree, frequence) {
+  // (demande 92) Combien de temps le son met pour venir jusqu'à toi (340 m/s) ; et une EXPLOSION : un boum grave, en
+  // retard, et plus sourd de loin (un filtre « passe-bas » qui coupe les aigus).
+  function distance(x, z) {
+    if (!monde) return 0;
+    const ici = monde.toi && monde.toi.soldat && monde.toi.mode !== "char" ? monde.toi.soldat : monde.joueur;
+    return Math.hypot(x - ici.x, z - ici.z);
+  }
+  const retard = (x, z) => distance(x, z) / Tanks.CONFIG.realisme.explosions.son.vitesse;
+  function explosion(x, z, g) {
     if (!ctx || coupe) return;
-    const t = ctx.currentTime;
+    const S = Tanks.CONFIG.realisme.explosions.son, d = distance(x, z), loin = Math.min(1, d / S.loin);
+    const force = Math.min(1.2, attenuation(x, z) * Math.min(1.4, 0.55 + g * 0.35) * S.fort), t = ctx.currentTime + d / S.vitesse;
+    const b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g2 = ctx.createGain(), duree = 1.2 + g * 0.6 + loin * 1.2;
+    b.buffer = tampon;
+    f.type = "lowpass";
+    f.frequency.setValueAtTime(3200 * (1 - loin) + S.sourd, t);
+    f.frequency.exponentialRampToValueAtTime(90, t + duree);
+    g2.gain.setValueAtTime(0.0001, t);
+    g2.gain.exponentialRampToValueAtTime(force, t + 0.01);
+    g2.gain.exponentialRampToValueAtTime(0.001, t + duree);
+    b.connect(f).connect(g2).connect(sortie);
+    b.start(t, Math.random());
+    b.stop(t + duree + 0.1);
+    const o = ctx.createOscillator(), go = ctx.createGain();
+    o.frequency.setValueAtTime(70 + 40 / g, t);
+    o.frequency.exponentialRampToValueAtTime(24, t + duree * 0.7);
+    go.gain.setValueAtTime(0.0001, t);
+    go.gain.exponentialRampToValueAtTime(0.8 * force, t + 0.015);
+    go.gain.exponentialRampToValueAtTime(0.001, t + duree * 0.7);
+    o.connect(go).connect(sortie);
+    o.start(t);
+    o.stop(t + duree);
+  }
+  // (demande 92) Une balle qui te frôle : un « fffiou » (du bruit filtré dont la note glisse), du côté où elle passe ;
+  // tout près, un « CRAC » sec (le petit « bang » de la balle qui va plus vite que le son).
+  function frole(force, cote, crac) {
+    if (!ctx || coupe) return;
+    const t = ctx.currentTime, b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+    b.buffer = tampon;
+    f.type = "bandpass";
+    f.Q.value = 4;
+    f.frequency.setValueAtTime(3800, t);
+    f.frequency.exponentialRampToValueAtTime(1300, t + 0.22);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.5 * force + 0.05, t + 0.06);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    let n = b.connect(f).connect(g);
+    if (pan) (pan.pan.value = cote * 0.8), (n = n.connect(pan));
+    n.connect(sortie);
+    b.start(t, Math.random());
+    b.stop(t + 0.3);
+    if (crac) clic(1.4, 3000, 0), clic(0.8, 1600, 0.004);
+  }
+  // (demande 92) Le bruit d'un impact de balle selon la matière.
+  function impact(sorte, force, ricochet) {
+    if (!ctx || coupe || force < 0.05) return;
+    if (sorte === "metal") {
+      if (ricochet && Math.random() < 0.5) { // le « piouuu » du ricochet : une note qui glisse vers le grave
+        const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.setValueAtTime(2600 + Math.random() * 1200, t);
+        o.frequency.exponentialRampToValueAtTime(700, t + 0.35);
+        g.gain.setValueAtTime(0.08 * force, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+        o.connect(g).connect(sortie);
+        o.start(t);
+        o.stop(t + 0.4);
+      } else tink(force * 0.7, 2200 + Math.random() * 1500);
+    } else if (sorte === "eau") clic(force * 0.5, 600, 0);
+    else if (sorte === "bois") clic(force * 0.6, 900, 0);
+    else clic(force * 0.45, sorte === "pierre" || sorte === "beton" || sorte === "brique" ? 2400 : 450, 0);
+  }
+  function boum(force, duree, frequence, apres) {
+    if (!ctx || coupe) return;
+    const t = ctx.currentTime + (apres || 0);
     const b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
     b.buffer = tampon;
     f.type = "lowpass";
@@ -199,9 +275,9 @@ Tanks.Sons = (function () {
   }
   // (demande 88) LE COUP DE FEU d'une famille d'arme (réglages : config.js, « armes3d.sons ») : un « crac » de bruit
   // (sa note et sa durée), un « boum » grave qui plonge (le souffle), et un ÉCHO qui traîne (plus long pour les gros calibres).
-  function coupDeFeu(famille, force) {
+  function coupDeFeu(famille, force, apres) {
     if (!ctx || coupe || force < 0.03) return;
-    const R = Tanks.CONFIG.armes3d.sons[famille] || Tanks.CONFIG.armes3d.sons.fusil, t = ctx.currentTime;
+    const R = Tanks.CONFIG.armes3d.sons[famille] || Tanks.CONFIG.armes3d.sons.fusil, t = ctx.currentTime + (apres || 0);
     const b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
     b.buffer = tampon;
     f.type = famille === "silencieux" ? "lowpass" : "bandpass";
@@ -372,5 +448,5 @@ Tanks.Sons = (function () {
   function basculer() {
     coupe = !coupe;
   }
-  return { demarrer, maj, basculer, coupe: () => coupe, etat: () => (ctx ? (ctx.state === "running" ? "allumé 🔊" : "endormi 🔇") : "pas encore allumé (appuie sur une touche)") };
+  return { demarrer, maj, basculer, frole, impact, explosion, coupe: () => coupe, etat: () => (ctx ? (ctx.state === "running" ? "allumé 🔊" : "endormi 🔇") : "pas encore allumé (appuie sur une touche)") };
 })();

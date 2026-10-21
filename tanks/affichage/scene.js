@@ -76,36 +76,45 @@ Tanks.Scene = (function () {
     return v;
   }
   const camera = { angle: 0, pret: false, mode: 0 };
-  const L = Object.assign({}, C.beaute.soleil, (Tanks.CarteDuJour.variante || {}).soleil), /* (étape 81 : le soleil du désert…) */ SOLEIL = new THREE.Vector3(...L.direction).normalize(); // (étape 74 : un soleil un peu plus bas et plus chaud)
+  // (demande 92) l'AMBIANCE DE LUMIÈRE du décor (config.js, « realisme.lumiere ») passe par-dessus : soleil, ciel, brume
+  const AMB = C.realisme.lumiere[Tanks.CarteDuJour.decor] || C.realisme.lumiere.bataille;
+  const L = Object.assign({}, C.beaute.soleil, (Tanks.CarteDuJour.variante || {}).soleil, AMB), /* (étape 81 : le soleil du désert…) */ SOLEIL = new THREE.Vector3(...L.direction).normalize(); // (étape 74 : un soleil un peu plus bas et plus chaud)
 
+  // (demande 92) Une couleur « #rrggbb » telle quelle (0 à 1), sans conversion : le ciel et la brume sont peints avec
+  // les MÊMES nombres, pour que les collines lointaines se fondent pile dans l'horizon.
+  const brut = (h) => { const n = parseInt(String(h).slice(1), 16); return new THREE.Vector3(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255); };
+  const HORIZON = brut(AMB.brume || AMB.horizon);
   function ciel() {
     const mat = new THREE.ShaderMaterial({
       side: THREE.BackSide, depthWrite: false, fog: false,
-      uniforms: { soleil: { value: SOLEIL } },
+      uniforms: { soleil: { value: SOLEIL }, zenith: { value: brut(AMB.zenith) }, horizon: { value: brut(AMB.horizon) }, brume: { value: HORIZON }, couleurSoleil: { value: brut(AMB.couleur) }, halo: { value: AMB.halo }, nuages: { value: AMB.nuages } },
       vertexShader: "varying vec3 vDir; void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-      // (étape 74) un ciel plus beau : un bleu plus profond en haut, une brume dorée à l'horizon du côté du soleil, des
-      // nuages en 5 couches de bruit, éclairés par le soleil (plus clairs du côté du soleil, plus gris dessous), qui
-      // s'effacent doucement vers l'horizon (avant : des traînées blanches verticales).
+      // (étape 74) des nuages en 5 couches de bruit, éclairés par le soleil.
+      // (demande 92) un ciel « physique » : l'air diffuse le bleu (le ZÉNITH est bleu profond, l'HORIZON pâle : on regarde
+      // à travers beaucoup plus d'air) ; autour du soleil, un HALO (les poussières renvoient la lumière vers l'avant) ;
+      // le DISQUE du soleil, un peu plus sombre au bord ; l'horizon a pile la couleur de la brume ; « nuages » règle la
+      // quantité de nuages (0 = ciel pur, 1 = couvert).
       fragmentShader: [
-        "uniform vec3 soleil; varying vec3 vDir;",
+        "uniform vec3 soleil, zenith, horizon, brume, couleurSoleil; uniform float halo, nuages; varying vec3 vDir;",
         "float h21(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }",
         "float bruit(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);",
         "  return mix(mix(h21(i), h21(i + vec2(1, 0)), f.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), f.x), f.y); }",
         "float fbm(vec2 p) { float t = 0.0, a = 0.5; for (int k = 0; k < 5; k++) { t += bruit(p) * a; p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; } return t; }",
         "void main() {",
         "  vec3 d = normalize(vDir);",
-        "  float h = clamp(d.y, -0.1, 1.0);",
-        "  float s = max(dot(d, soleil), 0.0);",
-        "  vec3 horizon = mix(vec3(0.80, 0.85, 0.88), vec3(0.95, 0.88, 0.76), pow(s, 6.0) * 0.6);",
-        "  vec3 c = mix(horizon, vec3(0.22, 0.42, 0.74), pow(max(h, 0.0), 0.55));",
-        "  vec2 p = d.xz / max(0.08, d.y) * 1.2;", // (les nuages, plaqués sur un plafond)
+        "  float h = max(d.y, 0.0), s = max(dot(d, soleil), 0.0);",
+        "  vec3 c = mix(horizon, zenith, pow(h, 0.42));",
+        "  c = mix(brume, c, smoothstep(0.0, 0.06, d.y));", // (tout en bas : la brume)
+        "  c += couleurSoleil * halo * (pow(s, 6.0) * 0.18 + pow(s, 48.0) * 0.35) * (1.0 - h * 0.5);", // le halo
+        "  vec2 p = d.xz / max(0.08, d.y) * 1.2;",
         "  float n = fbm(p * 0.9 + vec2(3.0, 1.0));",
-        "  float nuage = smoothstep(0.5, 0.78, n) * smoothstep(0.04, 0.32, h);",
+        "  float nuage = smoothstep(0.66 - nuages * 0.36, 0.9 - nuages * 0.22, n) * smoothstep(0.03, 0.3, h);",
         "  float eclaire = clamp(0.55 + (fbm(p * 0.9 + vec2(3.0, 1.0) + soleil.xz * 0.12) - n) * -3.0, 0.0, 1.0);",
-        "  vec3 couleurNuage = mix(vec3(0.62, 0.66, 0.72), vec3(1.0, 0.98, 0.94), eclaire);",
-        "  c = mix(c, couleurNuage, nuage * 0.92);",
-        "  c += vec3(1.0, 0.9, 0.7) * pow(s, 600.0) * 4.0 + vec3(1.0, 0.85, 0.6) * pow(s, 12.0) * 0.25;",
-        "  gl_FragColor = vec4(c, 1.0);",
+        "  vec3 couleurNuage = mix(mix(horizon, zenith, 0.25) * 0.78, mix(vec3(1.0), couleurSoleil, 0.4), eclaire) + couleurSoleil * pow(s, 12.0) * 0.25;",
+        "  c = mix(c, couleurNuage, nuage * (0.75 + nuages * 0.2));",
+        "  float disque = smoothstep(0.99985, 0.99993, s);", // (le soleil : 0,6° de large)
+        "  c = mix(c, couleurSoleil * 1.4 + 0.3, disque * (1.0 - nuage * 0.85));",
+        "  gl_FragColor = vec4(min(c, vec3(1.0)), 1.0);",
         "}",
       ].join("\n"),
     });
@@ -122,7 +131,8 @@ Tanks.Scene = (function () {
     rendu.shadowMap.enabled = true;
     rendu.shadowMap.type = THREE.PCFSoftShadowMap;
     scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(Tanks.CarteDuJour.variante.brume || 0xc4cfd6, 200, 1100);
+    scene.fog = new THREE.Fog(0xc4cfd6, 200, 1100);
+    scene.fog.color.setRGB(HORIZON.x, HORIZON.y, HORIZON.z, THREE.LinearSRGBColorSpace); // (demande 92 : pile la couleur de l'horizon)
     leCiel = ciel();
     leCiel.renderOrder = -1;
     leCiel.frustumCulled = false;
@@ -135,6 +145,8 @@ Tanks.Scene = (function () {
     env.add(solReflet);
     scene.environment = reflets = pm.fromScene(env, 0.04).texture;
     scene.add((ambiance = new THREE.HemisphereLight(L.ciel, L.sol, L.ambiance)));
+    // (demande 92) la fumée des explosions est éclairée par le MÊME soleil et le même ciel
+    Tanks.Particules.eclairage(SOLEIL, new THREE.Color(L.couleur).multiplyScalar(0.3 * L.force), new THREE.Color(L.ciel).multiplyScalar(0.55 * L.ambiance));
     soleil = new THREE.DirectionalLight(L.couleur, L.force);
     soleil.castShadow = true;
     soleil.shadow.mapSize.set(2048, 2048);
@@ -185,7 +197,7 @@ Tanks.Scene = (function () {
   }
 
   // (étape 80) Descendre dans le souterrain, ou remonter dehors : on cache l'un, on montre l'autre, on change la lumière.
-  const BRUME = { dehors: new THREE.Color(Tanks.CarteDuJour.variante.brume || 0xc4cfd6), dessous: new THREE.Color(0x111316) };
+  const BRUME = { dehors: new THREE.Color().setRGB(HORIZON.x, HORIZON.y, HORIZON.z, THREE.LinearSRGBColorSpace), dessous: new THREE.Color(0x111316) }; // (demande 92 : la brume = l'horizon)
   function changerMonde(dessous) {
     sousTerre = dessous;
     if (dessous && !Tanks.Station3D.construite) Tanks.Station3D.construire(scene);
@@ -754,7 +766,7 @@ Tanks.Scene = (function () {
     const P = C.premiere, enPremiere = camera.premiere && toiPied && zoom <= 2.5;
     if (enPremiere) {
       const ca = Math.cos(toiPied.angle), sa = Math.sin(toiPied.angle);
-      oeil = new THREE.Vector3(toiPied.x + ca * P.avance, toiPied.y + P.oeil, toiPied.z + sa * P.avance);
+      oeil = new THREE.Vector3(toiPied.x + ca * P.avance, toiPied.y + P.oeil - Tanks.Engins3D.baisse(), toiPied.z + sa * P.avance); // (demande 92 : accroupi, l'œil est plus bas)
       cible = new THREE.Vector3(oeil.x + ca * 10, oeil.y - P.baisse * 10, oeil.z + sa * 10);
       camera.saut = true;
     }
@@ -777,11 +789,13 @@ Tanks.Scene = (function () {
     Tanks.Decor.majDistance(cam.position, Math.min(Q.decor, Q.vue), Q.arbresDetail); // (étape 72 : les morceaux et les arbres trop loin sont cachés ; étape 74 : les beaux arbres de près)
     Tanks.Decor.majHerbe(cam.position, Q.herbe || 0); // (étape 74 : les touffes d'herbe autour de la caméra)
     Tanks.Decor.majEau(dt);
+    Tanks.MarquesSol.maj(dt, monde, cam.position); // (demande 92 : les traces de chenilles et les cratères)
     Tanks.Maisons3D.maj(dt, cam.position, Q.maisons); // (étape 75 : les morceaux de mur tombés, les débris qui volent, les toits qui s'effondrent ; la belle version de près)
     }
     Tanks.Effets.maj(dt, monde, cam, Q.effets);
     // (demande 88) l'arme vue à la première personne, la lampe qui éclaire, le laser (affichage/armes3d.js)
     Tanks.Armes3D.maj(monde, dt, cam, scene, !!(camera.premiere && toiPied));
+    Tanks.Explosions.secouer(cam, dt); // (demande 92 : l'écran qui tremble ; remis droit à l'image suivante par lookAt)
     rendu.render(scene, cam);
     Tanks.Armes3D.dessinerVue(rendu); // (dessinée PAR-DESSUS le monde : elle ne rentre jamais dans un mur)
   }
@@ -800,5 +814,5 @@ Tanks.Scene = (function () {
       else camera.mode = (camera.mode + 1) % 2;
       Tanks.Evenements.emettre("vue", { premiere: !!camera.premiere, aPied: !!aPied });
     },
-    get vue() { return { premiere: !!camera.premiere, mode: camera.mode }; }, get infos() { return rendu ? rendu.info.render : {}; }, get sousTerre() { return sousTerre; }, get rendu() { return rendu; }, entreDeuxPas: () => alpha, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
+    get vue() { return { premiere: !!camera.premiere, mode: camera.mode }; }, get infos() { return rendu ? rendu.info.render : {}; }, get sousTerre() { return sousTerre; }, get ciel() { return "« " + Tanks.CarteDuJour.decor + " » · soleil à " + Math.round((Math.asin(SOLEIL.y) * 180) / Math.PI) + "° de haut · nuages " + Math.round(AMB.nuages * 100) + " % · exposition " + String(L.exposition).replace(".", ","); }, get rendu() { return rendu; }, entreDeuxPas: () => alpha, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
 })();

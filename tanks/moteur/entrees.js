@@ -31,6 +31,7 @@ Tanks.Entrees = (function () {
     musique: ["Semicolon", "KeyM"], // étape 82 : couper ou remettre la musique (la touche M : « Semicolon » sur un clavier azerty, « KeyM » sur un qwerty)
     pause: ["Escape", "KeyP"],
     qualite: ["KeyG"], // étape 72 : choisir le niveau de qualité (auto → 0 → 1 → 2 → 3 → auto)
+    accroupir: ["KeyX"], // demande 92 : s'accroupir / se relever (X est à la même place sur un clavier français)
     decharger: ["KeyF"], // étape 71 : dans le camion, faire descendre les 6 soldats (F est libre sur un clavier français aussi)
   };
   const actionsDeLaTouche = {};
