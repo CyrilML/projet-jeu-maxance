@@ -2,6 +2,7 @@
 //
 // ✍️ « Style Battlefield. » Les écrans qui entourent chaque mission, comme dans un vrai jeu de guerre :
 //   1. la LISTE DES CHAPITRES : 6 cartes, avec le lieu, la date, tes étoiles ; un cadenas sur ceux qui sont fermés ;
+//      (demande 90) au-dessus, les 5 NIVEAUX DE DIFFICULTÉ (un clic, ou les touches 1 à 5, ou Maj + ← →) ;
 //   2. l'INTRO : des bandes noires de cinéma, le titre du chapitre, le lieu et la date qui s'écrivent comme à la machine
 //      à écrire, pendant que la caméra SURVOLE la carte (Espace ou un clic : passer) ;
 //   3. le BRIEFING : l'histoire en quelques paragraphes, les objectifs, la CARTE TACTIQUE (dessinée ici : les maisons,
@@ -76,6 +77,7 @@ Tanks.EcranCampagne = (function () {
     Tanks.Scene.cinema(null);
   }
   function agir(action, valeur) {
+    if (action === "difficulte") return choisirDifficulte(valeur);
     if (action === "chapitre") return lancerChapitre(K.chapitres[+valeur]);
     if (action === "accueil") return retourAccueil();
     if (action === "liste") {
@@ -151,16 +153,34 @@ Tanks.EcranCampagne = (function () {
         '<span class="cp-carte-fond"></span><span class="cp-carte-icone">' + c.icone + "</span>" +
         '<span class="cp-numero">' + deux(c.numero) + "</span>" +
         '<span class="cp-carte-texte"><span class="cp-carte-lieu">' + html(c.lieu) + '</span><span class="cp-carte-titre">' + html(c.titre.toUpperCase()) + '</span><span class="cp-carte-resume">' + html(ouvert ? c.resume : "Termine le chapitre " + (c.numero - 1) + " pour ouvrir celui-ci.") + "</span></span>" +
-        '<span class="cp-carte-bas">' + (ouvert ? '<span class="cp-etoiles">' + [0, 1, 2].map((k) => '<i class="' + (k < nb ? "on" : "") + '">' + ETOILE + "</i>").join("") + "</span>" + (f.temps ? '<span class="cp-record">⏱ ' + minutes(f.temps) + "</span>" : f.essais ? '<span class="cp-record">' + f.essais + " essai" + (f.essais > 1 ? "s" : "") + "</span>" : '<span class="cp-record cp-nouveau">NOUVEAU</span>') : '<span class="cp-cadenas">🔒 VERROUILLÉ</span>') + "</span></button>";
+        '<span class="cp-carte-bas">' + (ouvert ? '<span class="cp-etoiles">' + [0, 1, 2].map((k) => '<i class="' + (k < nb ? "on" : "") + '">' + ETOILE + "</i>").join("") + "</span>" +
+          (f.niveaux ? '<span class="cp-niveaux" title="réussi à ces difficultés">' + K.difficultes.filter((n) => f.niveaux[n.id]).map((n) => n.icone).join("") + "</span>" : "") + (f.temps ? '<span class="cp-record">⏱ ' + minutes(f.temps) + "</span>" : f.essais ? '<span class="cp-record">' + f.essais + " essai" + (f.essais > 1 ? "s" : "") + "</span>" : '<span class="cp-record cp-nouveau">NOUVEAU</span>') : '<span class="cp-cadenas">🔒 VERROUILLÉ</span>') + "</span></button>";
     }).join("");
     montrer("liste",
       '<div class="cp-voile"></div>' +
       '<header class="cp-haut"><div><div class="cp-etiquette">Campagne · ' + html(K.camps.bleus) + " contre " + html(K.camps.rouges) + '</div><h2 class="cp-titre-geant">' + html(K.titre.toUpperCase()) + "</h2></div>" +
       '<div class="cp-progres"><div><b>' + finis + "</b> / " + n + "<small>chapitres</small></div><div><b>" + etoiles + "</b> / " + n * 3 + '<small>étoiles</small></div><div class="cp-jauge"><i style="width:' + Math.round((finis / n) * 100) + '%"></i></div></div></header>' +
+      '<div class="cp-difficultes"></div><div class="cp-diff-detail"></div>' +
       '<div class="cp-grille">' + cartes + "</div>" +
-      '<footer class="cp-bas"><button class="cp-bouton cp-secondaire" data-cp="accueil">◀ Accueil <kbd>Échap</kbd></button><span class="cp-aide">← → ↑ ↓ choisir · <kbd>Entrée</kbd> jouer le chapitre</span><button class="cp-bouton cp-principal" data-cp="chapitre" data-valeur="-1" id="cp-jouer">▶ Jouer</button></footer>');
+      '<footer class="cp-bas"><button class="cp-bouton cp-secondaire" data-cp="accueil">◀ Accueil <kbd>Échap</kbd></button><span class="cp-aide">← → ↑ ↓ choisir · <kbd>1</kbd>–<kbd>5</kbd> ou <kbd>Maj</kbd> + ← → difficulté · <kbd>Entrée</kbd> jouer le chapitre</span><button class="cp-bouton cp-principal" data-cp="chapitre" data-valeur="-1" id="cp-jouer">▶ Jouer</button></footer>');
     majSelection();
+    majDifficultes();
     Tanks.Scene.cinema(cameraListe);
+  }
+  // (demande 90) LES 5 NIVEAUX : un bouton chacun ; sous les boutons, les chiffres du niveau choisi.
+  const fois = (x) => "× " + String(Math.round(x * 100) / 100).replace(".", ",");
+  function majDifficultes() {
+    const zone = racine.querySelector(".cp-difficultes"), detail = racine.querySelector(".cp-diff-detail");
+    if (!zone) return;
+    const D = Tanks.Campagne.difficulte();
+    zone.innerHTML = '<div class="cp-diff-titre">Difficulté<small>' + html(D.texte) + "</small></div>" + K.difficultes.map((n, k) =>
+      '<button class="cp-diff' + (n.id === D.id ? " cp-actif" : "") + '" data-cp="difficulte" data-valeur="' + n.id + '" style="--diff:' + n.couleur + '"><span class="cp-diff-icone">' + n.icone + '</span><span class="cp-diff-texte"><span class="cp-diff-nom">' + html(n.nom) + '</span><span class="cp-diff-chiffres">vie ' + fois(n.vieChar) + " · dégâts ennemis " + fois(n.degats) + "</span></span><kbd>" + (k + 1) + "</kbd></button>").join("");
+    detail.style.setProperty("--diff", D.couleur);
+    detail.innerHTML = "<span><b>" + html(D.icone + " " + D.nom) + "</b> · ta vie " + fois(D.vieChar) + " (tank) et " + fois(D.vieSoldat) + " (soldat) · dégâts du Front " + fois(D.degats) + " · précision du Front " + fois(D.precision) +
+      " · ennemis " + fois(D.soldats) + " · durées à tenir " + fois(D.durees) + " · alliés " + fois(D.allies) + (D.soin ? " · ta vie revient toute seule après " + D.attente + " s sans être touché" : "") + "</span>";
+  }
+  function choisirDifficulte(id) {
+    if (demander("difficulte", id).ok) majDifficultes();
   }
   function majSelection() {
     racine.querySelectorAll(".cp-chapitre").forEach((b, i) => b.classList.toggle("cp-choisi", i === choix));
@@ -215,6 +235,7 @@ Tanks.EcranCampagne = (function () {
       '<div class="cp-etiquette">Briefing · chapitre ' + c.numero + " / " + K.chapitres.length + "</div>" +
       '<h2 class="cp-titre-grand">' + html(c.titre.toUpperCase()) + "</h2>" +
       '<div class="cp-lieu">' + html(c.icone + " " + c.lieu) + " <span>· " + html(c.date) + "</span></div>" +
+      badgeDifficulte(monde.campagne.difficulte) +
       '<div class="cp-histoire">' + c.briefing.map((p, k) => '<p style="--k:' + k + '">' + html(p) + "</p>").join("") + "</div>" +
       '<div class="cp-sous-titre">Objectifs</div><ol class="cp-objectifs">' + objectifs + "</ol>" +
       "</section>" +
@@ -227,6 +248,10 @@ Tanks.EcranCampagne = (function () {
     majEquipement();
     dessinerCarteTactique(racine.querySelector(".cp-carte-tactique canvas"), c);
     Tanks.Scene.cinema(cameraBriefing);
+  }
+  // (demande 90) le badge de la difficulté (briefing, écran de fin)
+  function badgeDifficulte(D) {
+    return D ? '<div class="cp-badge-diff" style="--diff:' + D.couleur + '">' + D.icone + " Difficulté : " + html(D.nom) + (D.vieChar !== undefined ? " · ta vie " + fois(D.vieChar) + " · dégâts ennemis " + fois(D.degats) : "") + "</div>" : "";
   }
   function majEquipement() {
     const zone = racine.querySelector(".cp-classes"), c = ch();
@@ -467,6 +492,7 @@ Tanks.EcranCampagne = (function () {
       '<div class="cp-fin">' +
       '<div class="cp-etiquette">Chapitre ' + c.numero + " · " + html(c.titre) + "</div>" +
       '<h2 class="cp-titre-geant cp-resultat ' + (b.reussi ? "ok" : "rate") + '">' + (b.reussi ? (dernier ? "CAMPAGNE TERMINÉE" : "MISSION ACCOMPLIE") : "MISSION ÉCHOUÉE") + "</h2>" +
+      badgeDifficulte(b.difficulte) +
       (b.reussi ? "" : '<div class="cp-raison">' + html(e.raison || "") + "</div>") +
       '<div class="cp-etoiles-fin">' + etoiles + "</div>" +
       '<div class="cp-tuiles">' + tuiles + "</div>" +
@@ -507,6 +533,10 @@ Tanks.EcranCampagne = (function () {
     }
     if (etat === "liste") {
       const n = K.chapitres.length, cols = 3;
+      // (demande 90) la difficulté : 1 à 5, ou Maj + ← →
+      const iD = K.difficultes.findIndex((x) => x.id === Tanks.Campagne.difficulte().id);
+      if (/^(Digit|Numpad)[1-5]$/.test(k)) return choisirDifficulte(K.difficultes[+k.slice(-1) - 1].id);
+      if (e.shiftKey && (k === "ArrowRight" || k === "ArrowLeft")) return choisirDifficulte(K.difficultes[Math.max(0, Math.min(K.difficultes.length - 1, iD + (k === "ArrowRight" ? 1 : -1)))].id);
       if (k === "ArrowRight") choix = (choix + 1) % n;
       else if (k === "ArrowLeft") choix = (choix - 1 + n) % n;
       else if (k === "ArrowDown") choix = Math.min(n - 1, choix + cols);

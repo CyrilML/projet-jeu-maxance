@@ -926,6 +926,29 @@ Tanks.CONFIG = {
       fin: 3, // s : le temps de voir la fin (explosion, dernier mot à la radio) avant l'écran de fin
       soldatsDebout: 50, // un renfort scripté n'arrive pas s'il y a déjà ce nombre de soldats debout dans ce camp
     },
+    // ✍️ (demande 90) « La campagne est beaucoup trop compliquée : très facile, facile, normal, difficile, très difficile. »
+    // LES 5 NIVEAUX DE DIFFICULTÉ (choisis sur la liste des chapitres, retenus dans la sauvegarde). Chaque nombre est un
+    // MULTIPLICATEUR (× 1 = comme avant la demande 90, c'est le niveau « difficile ») :
+    //   vieChar, vieSoldat : la vie de TON tank et de TON soldat · degats : les dégâts des ennemis sur ton camp ·
+    //   precision : la chance qu'une balle ennemie touche · erreur : l'erreur de visée des chars ennemis (plus grand = ils
+    //   ratent plus) · reaction : le temps que les ennemis mettent à réfléchir et à recharger (plus grand = plus lents) ·
+    //   chars, soldats : le nombre de chars et de soldats ennemis (au départ, en renfort, et à éliminer) ·
+    //   durees : les secondes à tenir ou à survivre · allies : le nombre de tes soldats alliés · degatsAllies : les dégâts
+    //   de tes alliés sur le Front · etoiles : le temps permis pour l'étoile « rapide » ·
+    //   soin : ta vie revient toute seule (fraction de ta vie par seconde) si personne ne t'a touché depuis « attente » s.
+    difficulteDepart: "facile", // ✍️ le niveau d'un nouveau joueur
+    difficultes: [
+      { id: "tres-facile", nom: "Très facile", icone: "🧸", couleur: "#7fe08a", texte: "Pour découvrir l'histoire : tu es presque invincible.",
+        vieChar: 3, vieSoldat: 3, degats: 0.35, precision: 0.45, erreur: 3, reaction: 2, chars: 0.5, soldats: 0.5, durees: 0.5, allies: 1.5, degatsAllies: 2, etoiles: 2, soin: 0.05, attente: 4 },
+      { id: "facile", nom: "Facile", icone: "🙂", couleur: "#b8e070", texte: "Des ennemis moins nombreux et qui visent mal.",
+        vieChar: 2, vieSoldat: 2, degats: 0.6, precision: 0.7, erreur: 2, reaction: 1.5, chars: 0.67, soldats: 0.7, durees: 0.7, allies: 1.25, degatsAllies: 1.5, etoiles: 1.5, soin: 0.02, attente: 6 },
+      { id: "normal", nom: "Normal", icone: "🎖️", couleur: "#ffb547", texte: "Un vrai combat, mais juste.",
+        vieChar: 1.4, vieSoldat: 1.4, degats: 0.8, precision: 0.85, erreur: 1.4, reaction: 1.2, chars: 0.85, soldats: 0.85, durees: 0.85, allies: 1, degatsAllies: 1.2, etoiles: 1.25, soin: 0, attente: 0 },
+      { id: "difficile", nom: "Difficile", icone: "💀", couleur: "#ff7a45", texte: "La campagne d'origine (avant la demande 90).",
+        vieChar: 1, vieSoldat: 1, degats: 1, precision: 1, erreur: 1, reaction: 1, chars: 1, soldats: 1, durees: 1, allies: 1, degatsAllies: 1, etoiles: 1, soin: 0, attente: 0 },
+      { id: "tres-difficile", nom: "Très difficile", icone: "☠️", couleur: "#ff4a4a", texte: "Pour les vétérans : plus d'ennemis, qui tirent fort et juste.",
+        vieChar: 0.75, vieSoldat: 0.75, degats: 1.3, precision: 1.2, erreur: 0.7, reaction: 0.8, chars: 1.34, soldats: 1.3, durees: 1.25, allies: 0.8, degatsAllies: 1, etoiles: 0.85, soin: 0, attente: 0 },
+    ],
     // ✍️ LES 6 CHAPITRES. Pour chacun :
     //   carte (une des « cartes » plus haut), lieu, date, briefing (les paragraphes), conseil (la classe conseillée),
     //   vol (le survol du début : des points [x, hauteur au-dessus du sol, z, regardX, regardHauteur, regardZ]),

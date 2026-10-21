@@ -174,7 +174,25 @@
     .cp-progres small { display: block; font-size: .7em; letter-spacing: .24em; text-transform: uppercase; }
     .cp-jauge { width: 10em; height: .28em; background: rgba(255,255,255,.12); align-self: center; margin-top: 1.4em; }
     .cp-jauge i { display: block; height: 100%; background: var(--cp-orange); }
-    .cp-grille { position: absolute; top: 8.9em; left: 2.6em; right: 2.6em; bottom: 5.2em; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 1em; }
+    /* (demande 90) les 5 niveaux de difficulté */
+    .cp-difficultes { position: absolute; top: 8.3em; left: 2.6em; right: 2.6em; display: flex; align-items: stretch; gap: .5em; }
+    .cp-diff-titre { display: flex; flex-direction: column; justify-content: center; flex: 0 0 auto; font-size: .66em; font-weight: 700; letter-spacing: .24em; text-transform: uppercase; color: var(--cp-orange); }
+    .cp-diff-titre small { margin-top: .3em; letter-spacing: .08em; color: var(--cp-gris); font-weight: 400; }
+    .cp-diff { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: .55em; padding: .45em .7em; border: 1px solid rgba(255,255,255,.12); border-radius: 0; background: rgba(13,16,20,.85); color: #dfe3e7; text-align: left; cursor: pointer; transition: border-color .15s, background .15s, transform .15s; }
+    .cp-diff:hover { background: rgba(255,255,255,.08); filter: none; }
+    .cp-diff-icone { font-size: 1.5em; line-height: 1; }
+    .cp-diff-texte { display: flex; flex-direction: column; min-width: 0; }
+    .cp-diff-nom { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .84em; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .cp-diff-chiffres { font-size: .62em; color: var(--cp-gris); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cp-diff kbd { margin-left: auto; font-size: .62em; opacity: .6; }
+    .cp-diff.cp-actif { border-color: var(--diff); background: color-mix(in srgb, var(--diff) 18%, #0d1014); box-shadow: inset 0 -3px 0 var(--diff); transform: translateY(-.15em); }
+    .cp-diff.cp-actif .cp-diff-nom { color: var(--diff); }
+    .cp-diff-detail { position: absolute; top: 11.75em; left: 2.6em; right: 2.6em; color: #c9ced4; letter-spacing: .03em; }
+    .cp-diff-detail span { font-size: .72em; }
+    .cp-diff-detail b { color: var(--diff); }
+    .cp-badge-diff { display: inline-flex; align-items: center; gap: .4em; margin-top: .45em; padding: .2em .7em; border: 1px solid var(--diff); color: var(--diff); font-size: .72em; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; background: color-mix(in srgb, var(--diff) 12%, transparent); }
+    .cp-niveaux { font-size: .72em; letter-spacing: .05em; }
+    .cp-grille { position: absolute; top: 13.7em; left: 2.6em; right: 2.6em; bottom: 5.2em; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 1em; }
     .cp-chapitre { position: relative; overflow: hidden; padding: 0; border: 1px solid rgba(255,255,255,.12); border-radius: 0; background: #0d1014; color: #f4f1ea; text-align: left; font-weight: 400; cursor: pointer;
       clip-path: polygon(0 0, calc(100% - 1.4em) 0, 100% 1.4em, 100% 100%, 0 100%); transition: transform .2s, border-color .2s, box-shadow .2s; animation: cp-monte .5s both; }
     .cp-chapitre:nth-child(2) { animation-delay: .05s; } .cp-chapitre:nth-child(3) { animation-delay: .1s; } .cp-chapitre:nth-child(4) { animation-delay: .15s; } .cp-chapitre:nth-child(5) { animation-delay: .2s; } .cp-chapitre:nth-child(6) { animation-delay: .25s; }

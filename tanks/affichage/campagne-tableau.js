@@ -101,7 +101,7 @@ Tanks.TableauCampagne = (function () {
     ctx.fillStyle = ORANGE;
     ctx.fillRect(x, y, 4, 30);
     espace("CHAPITRE " + e.numero + " · " + e.titre.toUpperCase(), x + 14, y + 20, 13, ORANGE, 1.6, "left", true);
-    ecrire("⏱ " + minutes(e.chrono), x + l - 10, y + 20, 13, GRIS, "right", true);
+    ecrire((e.difficulte ? e.difficulte.icone + " " : "") + "⏱ " + minutes(e.chrono), x + l - 10, y + 20, 13, GRIS, "right", true); // (demande 90 : l'icône de la difficulté)
     y += 34;
     for (const o of visibles) {
       const enCours = o.etat === "en cours", fait = o.etat === "fait", rate = o.etat === "raté";

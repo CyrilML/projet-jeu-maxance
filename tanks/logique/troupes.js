@@ -81,7 +81,7 @@ Tanks.Troupes = (function () {
     if (s.mort || s.parachute || s.corde) return {};
     ia.pense -= dt;
     if (ia.pense <= 0) {
-      ia.pense = S.pense;
+      ia.pense = S.pense * (s.equipe === "rouges" ? Tanks.Campagne.facteur("reaction") : 1); // (demande 90 : la difficulté)
       // 1. la cible : un soldat ennemi (ou toi à pied) ; pour un lance-roquettes, un tank ou le 4x4
       let meilleur = null;
       const roquettes = s.arme === "roquettes";
@@ -110,7 +110,7 @@ Tanks.Troupes = (function () {
         }
       }
       ia.cible = meilleur ? meilleur.o : null;
-      ia.erreur = (Math.random() - 0.5) * 0.06;
+      ia.erreur = (Math.random() - 0.5) * 0.06 * (s.equipe === "rouges" ? Tanks.Campagne.facteur("erreur") : 1);
       ia.grenade = !roquettes && s.grenades > 0 && s.attenteGrenade === 0 && Math.random() < C.grenades.ia.chance ? ouLancer(s, monde, meilleur) : null;
       // (étape 75) l'ASSAUT : un ennemi groupé, dans une maison ou contre un mur, pas trop loin ? on avance vers lui (pour la grenade)
       ia.assaut = !roquettes && s.grenades > 0 && meilleur && meilleur.o.genre === "soldat" && meilleur.d > C.grenades.ia.portee[1] - 4 && meilleur.d < C.grenades.ia.approche && abrite(meilleur.o, monde);

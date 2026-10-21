@@ -25,18 +25,21 @@
 //   11 (étape 88) : + campagne (le livret de la campagne : « debloque » = le plus grand chapitre ouvert, « chapitres » =
 //     pour chaque chapitre ses meilleures étoiles, son meilleur temps, ses essais ; « enCours » = le chapitre choisi, pour
 //     le retrouver après le rechargement de la page). Une ancienne version garde tout, avec le chapitre 1 ouvert.
+//   12 (demande 90) : + campagne.difficulte (le niveau choisi : "tres-facile", "facile", "normal", "difficile" ou
+//     "tres-difficile") et, pour chaque chapitre réussi, « niveaux » = les meilleures étoiles à chaque difficulté. Une
+//     ancienne version garde tout, avec le niveau « facile » (✍️ Maxance trouvait la campagne trop dure).
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 11; // (étape 88 : + campagne)
+  const VERSION = 12; // (étape 88 : + campagne ; demande 90 : + campagne.difficulte)
   const radio = Tanks.Evenements;
 
   function vide() {
     return { version: VERSION, char: "leclerc", victoires: 0, defaites: 0, detruits: 0, tirs: 0, touches: 0, bateaux: 0, portails: 0, sousMarins: 0, avions: 0, ordres: 0, vehicules: 0, helicos: 0, cordes: 0, maisons: 0, murs: 0, grenades: 0,
       carte: "bataille", souterrain: 0, // (étape 80)
-      campagne: { debloque: 1, chapitres: {}, enCours: null }, // (étape 88)
+      campagne: { debloque: 1, chapitres: {}, enCours: null, difficulte: Tanks.CONFIG.campagne.difficulteDepart }, // (étape 88 ; demande 90 : + difficulte)
       equipement: equipementDeDepart() }; // (étape 77)
   }
   // (étape 77) L'équipement de départ : pour chaque classe, sa 1re arme, son 1er gadget et son 1er explosif ; pour chaque arme, les pièces d'origine.

@@ -22,6 +22,9 @@ Tanks.IA = (function () {
   const prochesBoites = [], prochesArbres = []; // (étape 72 : les obstacles des cases voisines, dans des listes réutilisées)
   const hasard = () => ((etat = (etat * 1664525 + 1013904223) >>> 0) / 4294967296);
 
+  // (demande 90) un multiplicateur de la difficulté de la campagne, seulement pour les chars du Front (× 1 sinon)
+  const difficulte = (c, nom) => (c.equipe === "rouges" ? Tanks.Campagne.facteur(nom) : 1);
+
   function preparer(c) {
     c.ia = { regard: hasard() * 0.2, cible: null, prochainChoix: hasard() * 1.5, erreur: 0, esquive: 0, sensEsquive: 1, etat: "cherche", voit: false, vieAvant: c.vie, sansVue: 0, cote: hasard() < 0.5 ? -1 : 1 };
   }
@@ -49,7 +52,7 @@ Tanks.IA = (function () {
       const permises = monde && Tanks.Ordres.ciblesPermises(c, monde);
       ia.cible = choisirCible(c, permises && permises.length ? permises : tous);
       ia.prochainChoix = I.changeDeCible;
-      ia.erreur = (hasard() * 2 - 1) * I.erreur * 2;
+      ia.erreur = (hasard() * 2 - 1) * I.erreur * 2 * difficulte(c, "erreur");
     }
     // Touché ? On fait un écart.
     if (c.vie < ia.vieAvant) {
@@ -129,7 +132,7 @@ Tanks.IA = (function () {
     // 2. La tourelle vers la cible (avec la petite erreur de visée)
     intentions.viseAngle = versCible + ia.erreur;
     intentions.cible = cible;
-    intentions.recharge = I.recharge;
+    intentions.recharge = I.recharge * difficulte(c, "reaction"); // (demande 90 : plus lent en campagne facile)
     // 3. Tirer ?
     const aligne = Math.abs(Ch.angleEntre(intentions.viseAngle - Ch.angleTourelle(c))) < I.alignement;
     // (étape 61 : il regarde s'il voit sa cible 5 fois par seconde, pas à chaque pas : c'est un long calcul)
@@ -142,7 +145,7 @@ Tanks.IA = (function () {
     if (aligne && ia.voit && c.recharge === 0 && c.feuLibre !== false) { // (sauf si tu as dit « cessez le feu »)
       intentions.tirer = true;
       ia.etat = "tire !";
-      ia.erreur = (hasard() * 2 - 1) * I.erreur * 2; // (le prochain tir aura une autre petite erreur)
+      ia.erreur = (hasard() * 2 - 1) * I.erreur * 2 * difficulte(c, "erreur"); // (le prochain tir aura une autre petite erreur)
     }
     return intentions;
   }

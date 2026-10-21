@@ -63,7 +63,8 @@ Tanks.SousLeCapot = (function () {
     lampe: (d) => "🔦 Lampe " + (d.allumee ? "allumée" : "éteinte"),
     accueil: (d) => (d.mode === "campagne" ? "🎬 Tu entres dans la CAMPAGNE : la liste des chapitres" : "🏰 Tu quittes la page d'accueil : la musique se tait, place au menu"),
     // étape 88 : la campagne
-    "campagne-chapitre": (d) => "🎬 Chapitre " + d.numero + " « " + d.titre + " » installé : " + d.lieu + ", " + d.date + " · " + d.objectifs + " objectifs · " + d.chars + " chars et " + d.soldats + " soldats placés selon le scénario (tout est figé pendant le survol et le briefing)",
+    "campagne-chapitre": (d) => "🎬 Chapitre " + d.numero + " « " + d.titre + " » installé : " + d.lieu + ", " + d.date + " · " + d.objectifs + " objectifs · " + d.chars + " chars et " + d.soldats + " soldats placés selon le scénario (tout est figé pendant le survol et le briefing)" + (d.difficulte ? " · difficulté " + d.difficulte : ""),
+    "campagne-difficulte": (d) => "🎚️ Difficulté de la campagne : " + d.icone + " " + d.nom + (d.avant ? " (avant : " + d.avant + ")" : "") + " · ta vie × " + virgule(d.vieChar, 2) + " (tank) et × " + virgule(d.vieSoldat, 2) + " (soldat) · dégâts du Front × " + virgule(d.degats, 2) + " · chars × " + virgule(d.chars, 2) + " · soldats × " + virgule(d.soldats, 2) + " · durées × " + virgule(d.durees, 2) + " (retenu dans la sauvegarde)", // (demande 90)
     "campagne-debut": (d) => "▶ La mission « " + d.titre + " » commence ! Toi " + (d.mode === "pied" ? "à pied" : "dans ton char") + ", classe " + d.classe,
     "campagne-objectif-nouveau": (d) => "🎯 Objectif " + d.numero + " / " + d.total + " (" + d.verbe + ") : " + d.texte + (d.type === "tenir" || d.type === "survivre" ? " · " + d.objectif + " s" : d.type === "eliminer" || d.type === "chars" ? " · " + d.objectif + " à faire" : ""),
     "campagne-objectif": (d) => "✅ Objectif " + d.numero + " / " + d.total + " accompli en " + Math.round(d.temps) + " s : " + d.texte,
@@ -373,6 +374,11 @@ Tanks.SousLeCapot = (function () {
     const K = C.campagne, P = Tanks.Campagne.progression(), e = monde.campagne;
     l.push(["La campagne (étape 88)"]);
     l.push(["ton livret", K.chapitres.map((c) => { const f = P.chapitres[c.id]; return c.numero + " " + (c.numero > P.debloque ? "🔒" : "★".repeat((f && f.etoiles) || 0) + "☆".repeat(3 - ((f && f.etoiles) || 0)) + (f && f.temps ? " " + Math.floor(f.temps / 60) + ":" + String(f.temps % 60).padStart(2, "0") : "")); }).join(" · ") + (P.enCours ? " · en cours : " + P.enCours.id + " (" + P.enCours.carte + ")" : "")]);
+    // (demande 90) la difficulté et tous ses multiplicateurs
+    const D = Tanks.Campagne.difficulte(), x = (n) => "× " + virgule(n, 2);
+    l.push(["difficulté (demande 90)", D.icone + " " + D.nom + (e ? " (figée pour ce chapitre)" : " (choisie dans le livret)") + " · vie de ton tank " + x(D.vieChar) + " · de ton soldat " + x(D.vieSoldat) + " · dégâts du Front " + x(D.degats) + " · précision du Front " + x(D.precision) + " · erreur de visée des chars du Front " + x(D.erreur) + " · temps de réaction du Front " + x(D.reaction)]);
+    l.push(["difficulté (suite)", "chars ennemis " + x(D.chars) + " · soldats ennemis " + x(D.soldats) + " · durées à tenir " + x(D.durees) + " · soldats alliés " + x(D.allies) + " · dégâts des alliés " + x(D.degatsAllies) + " · temps pour l'étoile " + x(D.etoiles) + " · soin automatique " + (D.soin ? virgule(D.soin * 100, 0) + " % de ta vie par seconde après " + D.attente + " s sans être touché" : "non")]);
+    if (e) l.push(["ta vie (avec la difficulté)", "tank " + virgule(monde.joueur.vie, 1) + " / " + monde.joueur.vieMax + (monde.toi.soldat ? " · soldat " + virgule(monde.toi.soldat.vie, 1) + " / " + monde.toi.soldat.vieMax : "")]);
     l.push(["les écrans", Tanks.EcranCampagne.etat + (Tanks.Scene.filme ? " · 🎥 caméra de cinéma" : "")]);
     if (!e) return;
     l.push(["chapitre " + e.numero, e.titre + " · " + e.etat + " · " + virgule(e.chrono, 1) + " s · phase du monde : " + monde.phase + (e.ecranDans > 0 ? " · écran de fin dans " + virgule(e.ecranDans, 1) + " s" : "")]);

@@ -57,6 +57,7 @@ Tanks.Obus = (function () {
   // Abîmer un véhicule (un tank, ou le 4x4) : renvoie les événements « touche » et peut-être « detruit ».
   function abimer(cible, degats, tireur, x, y, z, vx, vz, ev) {
     if (cible.detruit) return;
+    degats *= Tanks.Campagne.facteurDegats(tireur, cible); // (demande 90 : la difficulté de la campagne ; × 1 en bataille libre)
     cible.vie = Math.max(0, cible.vie - degats);
     cible.touche = 0;
     if (tireur && tireur.reussis !== undefined) tireur.reussis++;

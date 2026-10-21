@@ -38,6 +38,7 @@ Tanks.Soldat = (function () {
   // (étape 85) origine = d'où vient le coup ({ x, z } : le tireur, ou le centre de l'explosion), pour choisir la CHUTE.
   function blesser(s, degats, tireur, ev, par, origine) {
     if (s.mort) return;
+    degats *= Tanks.Campagne.facteurDegats(tireur, s); // (demande 90 : la difficulté de la campagne ; × 1 en bataille libre)
     s.vie = Math.max(0, s.vie - degats);
     s.touche = 0;
     ev.push(["soldat-touche", { cible: s, tireur, vie: s.vie, par: par || "balle" }]);
@@ -123,6 +124,7 @@ Tanks.Soldat = (function () {
         chance = Math.abs((Math.random() * 2 - 1) * sig) < w / d && Math.abs((Math.random() * 2 - 1) * sig + (R.hausse || 0) - tombe / d) < h / d ? 1 : 0;
         if (d > R.porteeEfficace) degats *= 1 + (R.degatsLoin - 1) * Math.min(1, (d - R.porteeEfficace) / Math.max(1, R.portee - R.porteeEfficace));
       }
+      if (tireur.equipe === "rouges") chance *= Tanks.Campagne.facteur("precision"); // (demande 90 : la précision du Front)
       if (Math.random() < chance) {
         ev.push(["balle", { tireur, de: { x, y, z }, a: { x: meilleur.s.x, y: meilleur.s.y + 1.2, z: meilleur.s.z }, touche: true }]);
         if (meilleur.s.genre === "vehicule" || meilleur.s.sorte) Tanks.Vehicules.blesserPilote(meilleur.s, Math.ceil(degats), tireur, ev);

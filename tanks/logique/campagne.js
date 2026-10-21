@@ -11,6 +11,9 @@
 //   4. il fait parler la RADIO : une réplique à la fois, chacune assez longtemps pour être lue (une file d'attente) ;
 //   5. à la fin, il calcule le BILAN (temps, ennemis mis hors de combat, précision, étoiles) et débloque le chapitre
 //      suivant dans le livret militaire (donnees/sauvegarde.js).
+//   6. (demande 90) il applique la DIFFICULTÉ choisie (config.js : campagne.difficultes) : ta vie, le nombre d'ennemis,
+//      les durées à tenir, l'aide des alliés… Les autres règles (logique/soldat.js, ia.js, troupes.js, obus.js) lui
+//      demandent leurs multiplicateurs (« facteur ») : en bataille libre, tout reste × 1.
 // Les phases du monde : "briefing" (tout est installé mais rien ne bouge : le survol et le briefing), puis "bataille",
 // puis "victoire" ou "defaite". « monde.campagne » garde l'état du chapitre en cours (null en bataille libre).
 // Ce fichier ne dessine rien : il annonce tout à la radio du jeu (« campagne-… ») ; affichage/campagne-*.js montrent.
@@ -32,7 +35,61 @@ Tanks.Campagne = (function () {
   function progression() {
     const d = S();
     if (!d.campagne) d.campagne = { debloque: 1, chapitres: {}, enCours: null };
+    if (!niveau(d.campagne.difficulte)) d.campagne.difficulte = K.difficulteDepart; // (demande 90)
     return d.campagne;
+  }
+
+  // ------------------------------------------------------------------ (demande 90) la difficulté
+  const niveau = (id) => K.difficultes.find((n) => n.id === id) || null;
+  // Le niveau choisi (celui du livret), ou celui du chapitre en cours (il ne change pas pendant une mission).
+  function difficulte() {
+    const e = actuel && actuel.campagne;
+    return (e && e.difficulte) || niveau(progression().difficulte) || niveau(K.difficulteDepart);
+  }
+  // Un multiplicateur de la difficulté (× 1 en bataille libre : la campagne n'est pas en cours).
+  function facteur(nom) {
+    const e = actuel && actuel.campagne;
+    return e && e.difficulte && e.difficulte[nom] !== undefined ? e.difficulte[nom] : 1;
+  }
+  // Les dégâts d'un coup : le Front sur ton camp (× degats), tes alliés sur le Front (× degatsAllies ; pas toi).
+  function facteurDegats(tireur, cible) {
+    const e = actuel && actuel.campagne;
+    if (!e || !e.difficulte || !tireur || !cible) return 1;
+    if (tireur.equipe === "rouges" && cible.equipe === "bleus") return e.difficulte.degats;
+    if (tireur.equipe === "bleus" && cible.equipe === "rouges") {
+      const toi = actuel.toi || {};
+      return tireur === actuel.joueur || tireur.joueur || tireur === toi.soldat || tireur === toi.engin ? 1 : e.difficulte.degatsAllies;
+    }
+    return 1;
+  }
+  // Un nombre d'ennemis à faire APPARAÎTRE (arrondi au-dessus : au moins 1) ou à ÉLIMINER (arrondi au-dessous : au
+  // moins 1) : comme ça, il y a toujours assez d'ennemis pour finir un objectif.
+  const apparait = (n, f) => (n > 0 ? Math.max(1, Math.ceil(n * f - 1e-9)) : 0);
+  const aFaire = (n, f) => Math.max(1, Math.floor(n * f + 1e-9));
+  // Ta vie selon la difficulté (ton tank et ton soldat).
+  function appliquerVie(monde) {
+    const D = monde.campagne.difficulte, j = monde.joueur, s = monde.toi.soldat;
+    j.vie = j.vieMax = Math.round(C.char.vieJoueur * D.vieChar);
+    if (s) s.vie = s.vieMax = Math.round(s.vieMax * D.vieSoldat);
+  }
+  // (très facile, facile) ta vie revient toute seule quand personne ne t'a touché depuis un moment
+  function soigner(monde, dt) {
+    const D = monde.campagne.difficulte;
+    if (!D.soin || monde.phase !== "bataille") return;
+    for (const o of [monde.joueur, monde.toi.soldat]) {
+      if (!o || o.detruit || o.mort || o.vie >= o.vieMax || o.touche < D.attente) continue;
+      o.vie = Math.min(o.vieMax, o.vie + D.soin * o.vieMax * dt);
+    }
+  }
+  function choisirDifficulte(id) {
+    const n = niveau(id), P = progression();
+    if (!n) return false;
+    const avant = niveau(P.difficulte);
+    if (P.difficulte === id) return true;
+    P.difficulte = id;
+    Tanks.Sauvegarde.ecrire("difficulté de la campagne", true);
+    radio.emettre("campagne-difficulte", { id, nom: n.nom, icone: n.icone, avant: avant ? avant.nom : "", vieChar: n.vieChar, vieSoldat: n.vieSoldat, degats: n.degats, chars: n.chars, soldats: n.soldats, durees: n.durees });
+    return true;
   }
   const estDebloque = (ch) => !!ch && ch.numero <= progression().debloque;
 
@@ -150,8 +207,8 @@ Tanks.Campagne = (function () {
     const F = ch.forces || {};
     if (monde.metro) {
       // (le souterrain : les deux camps sont déjà à leur bout de la station ; on règle seulement les renforts)
-      if (F.renfortsRouges !== undefined) monde.metro.renforts.rouges = F.renfortsRouges;
-      if (F.renfortsBleus !== undefined) monde.metro.renforts.bleus = F.renfortsBleus;
+      if (F.renfortsRouges !== undefined) monde.metro.renforts.rouges = apparait(F.renfortsRouges, etat.difficulte.soldats); // (demande 90)
+      if (F.renfortsBleus !== undefined) monde.metro.renforts.bleus = Math.round(F.renfortsBleus * etat.difficulte.allies);
     } else {
       const j = monde.joueur, toi = monde.toi.soldat, D = F.toi || { mode: "char", x: 0, z: 400, angle: -Math.PI / 2 };
       if (D.mode === "pied") {
@@ -166,10 +223,12 @@ Tanks.Campagne = (function () {
         poser(toi, D.x, D.z, D.angle);
       }
       rangerChars(monde, "bleus", F.alliesChars || [], false);
-      rangerChars(monde, "rouges", F.ennemisChars || [], true);
+      // (demande 90) la difficulté change le nombre de chars et de soldats (on copie : le scénario ne change pas)
+      const N = etat.difficulte, liste = F.ennemisChars || [], nChars = apparait(liste.length, N.chars);
+      rangerChars(monde, "rouges", Array.from({ length: nChars }, (_, k) => (k < liste.length ? liste[k] : [liste[k % liste.length][0] + 14, liste[k % liste.length][1] - 10, liste[k % liste.length][2] + " bis"])), true);
       const A = F.alliesSoldats || { nombre: 8, x: D.x, z: D.z + 15, rayon: 12 };
-      rangerSoldats(monde, "bleus", [A], false);
-      rangerSoldats(monde, "rouges", F.ennemisSoldats || [], true);
+      rangerSoldats(monde, "bleus", [Object.assign({}, A, { nombre: Math.max(1, Math.round(A.nombre * N.allies)) })], false);
+      rangerSoldats(monde, "rouges", (F.ennemisSoldats || []).map((g) => Object.assign({}, g, { nombre: Math.max(1, Math.round(g.nombre * N.soldats)) })), true);
       if (!F.avions) monde.avions = monde.avions.filter((a) => a.sorte !== "chasseur");
       if (!F.paras) monde.chronoParas = -1e9; // (les avions de transport ne viendront pas)
       if (!F.vehicules) monde.vehicules = [];
@@ -188,6 +247,7 @@ Tanks.Campagne = (function () {
       cibles: {}, groupes: {}, nChars: 0, nVehicules: 0, avions: [],
       compteurs: { eliminesCamp: 0, parToi: 0, soldatsParToi: 0, vehiculesParToi: 0 },
       bilan: null, ecranDans: 0, raison: "", escorte: null, apparitions: 0,
+      difficulte: Object.assign({}, niveau(progression().difficulte) || niveau(K.difficulteDepart)), // (demande 90 : figée pour tout le chapitre)
     };
   }
   // ✍️ Préparer un chapitre : la bataille est installée d'après le scénario, mais tout est figé (phase "briefing")
@@ -202,11 +262,12 @@ Tanks.Campagne = (function () {
     const etat = nouvelEtat(ch);
     monde.campagne = etat;
     installer(monde, ch, etat); // (…puis le metteur en scène place chacun selon le scénario)
+    appliquerVie(monde); // (demande 90)
     monde.phase = "briefing";
     const P = progression();
     P.enCours = { id: ch.id, carte: ch.carte };
     Tanks.Sauvegarde.ecrire("campagne : chapitre " + ch.numero, true);
-    radio.emettre("campagne-chapitre", { numero: ch.numero, titre: ch.titre, lieu: ch.lieu, date: ch.date, carte: ch.carte, objectifs: ch.objectifs.length, chars: monde.chars.length, soldats: monde.soldats.length });
+    radio.emettre("campagne-chapitre", { numero: ch.numero, titre: ch.titre, lieu: ch.lieu, date: ch.date, carte: ch.carte, objectifs: ch.objectifs.length, chars: monde.chars.length, soldats: monde.soldats.length, difficulte: etat.difficulte.icone + " " + etat.difficulte.nom });
     return true;
   }
   // « Commencer la mission » (le bouton du briefing) : ton soldat prend la classe choisie, et l'action commence.
@@ -215,6 +276,7 @@ Tanks.Campagne = (function () {
     if (!etat || monde.phase !== "briefing") return false;
     const ch = chapitre(etat.id);
     const eq = Tanks.Equipement.equiper(monde.toi.soldat); // (la classe a peut-être changé pendant le briefing)
+    appliquerVie(monde); // (demande 90 : la vie selon la difficulté, après l'équipement qui l'a remise à zéro)
     monde.phase = "bataille";
     monde.chrono = 0;
     etat.etat = "en cours";
@@ -270,11 +332,12 @@ Tanks.Campagne = (function () {
     o.etat = "en cours";
     o.depuis = etat.chrono;
     o.progres = 0;
-    if (def.type === "tenir" || def.type === "survivre") o.total = def.duree;
-    else if (def.type === "eliminer") (o.base = etat.compteurs.eliminesCamp), (o.total = def.nombre);
-    else if (def.type === "chars") (o.base = rougesDetruits(monde)), (o.total = def.tous ? Math.max(1, rougesVivants(monde).length) : def.nombre);
+    const N = etat.difficulte; // (demande 90 : les durées et les nombres selon la difficulté)
+    if (def.type === "tenir" || def.type === "survivre") o.total = Math.max(5, Math.round(def.duree * N.durees));
+    else if (def.type === "eliminer") (o.base = etat.compteurs.eliminesCamp), (o.total = aFaire(def.nombre, N.soldats));
+    else if (def.type === "chars") (o.base = rougesDetruits(monde)), (o.total = def.tous ? Math.max(1, rougesVivants(monde).length) : aFaire(def.nombre, N.chars));
     else o.total = 1;
-    if (def.renfortsRouges !== undefined && monde.metro) monde.metro.renforts.rouges = def.renfortsRouges;
+    if (def.renfortsRouges !== undefined && monde.metro) monde.metro.renforts.rouges = apparait(def.renfortsRouges, N.soldats);
     for (const e of def.debut || []) etat.attente.push({ t: etat.chrono + (e.apres || 0), e });
     jouerEvenements(monde);
     // tes alliés (chars et soldats) avancent vers l'objectif
@@ -351,7 +414,10 @@ Tanks.Campagne = (function () {
   function agir(monde, e) {
     const etat = monde.campagne, equipe = e.equipe || "rouges";
     if (e.action === "tanks") {
-      const vers = versPoint(monde, e.vers || [0, 0]), noms = e.noms || ["Renfort"];
+      // (demande 90) le nombre de chars selon la difficulté (sauf les chars « cibles » du scénario, qui ont un id)
+      const vers = versPoint(monde, e.vers || [0, 0]), base = e.noms || ["Renfort"];
+      const n = e.id ? base.length : apparait(base.length, equipe === "rouges" ? etat.difficulte.chars : etat.difficulte.allies);
+      const noms = Array.from({ length: n }, (_, k) => base[k % base.length] + (k >= base.length ? " bis" : ""));
       noms.forEach((nom, k) => {
         const de = (e.de && (e.de[k] || e.de[0])) || [0, -700];
         const c = nouveauChar(monde, equipe, de[0], de[1], angleVers({ x: de[0], z: de[1] }, vers), nom, etat.nChars++);
@@ -364,7 +430,8 @@ Tanks.Campagne = (function () {
     } else if (e.action === "soldats") {
       const vers = versPoint(monde, e.vers || [0, 0]);
       let n = 0;
-      for (let k = 0; k < e.nombre; k++) {
+      const nombre = apparait(e.nombre, equipe === "rouges" ? etat.difficulte.soldats : etat.difficulte.allies); // (demande 90)
+      for (let k = 0; k < nombre; k++) {
         if (soldatsDebout(monde, equipe) >= R.soldatsDebout) break;
         const p = autour(e.de[0], e.de[1], 10), s = nouveauSoldat(equipe, p.x, p.z, angleVers(p, vers), 200 + ++etat.apparitions);
         placerSoldat(s, p.x, p.z);
@@ -488,6 +555,7 @@ Tanks.Campagne = (function () {
     if (!etat) return;
     actuel = monde;
     parler(etat, dt);
+    soigner(monde, dt); // (demande 90)
     if (etat.avions.length) piloterFrappes(monde, dt);
     // (les hélicos du scénario gardent leur but ; ceux qui ne sont pas du scénario restent au camp)
     for (const h of monde.helicos) {
@@ -516,11 +584,13 @@ Tanks.Campagne = (function () {
     const etat = monde.campagne, ch = chapitre(etat.id), toi = monde.toi.soldat, j = monde.joueur;
     const tirs = ((toi && toi.compteurs && toi.compteurs.tirs) || 0) + (j.tirs || 0), touches = ((toi && toi.compteurs && toi.compteurs.touches) || 0) + (j.reussis || 0);
     const precision = tirs ? Math.min(1, touches / tirs) : 0;
-    const etoiles = reussi ? [true, etat.chrono <= ch.etoiles.temps, etat.compteurs.parToi >= ch.etoiles.eliminations] : [false, false, false];
+    const N = etat.difficulte, tempsEtoile = Math.round(ch.etoiles.temps * N.etoiles), elimEtoile = aFaire(ch.etoiles.eliminations, N.soldats); // (demande 90)
+    const etoiles = reussi ? [true, etat.chrono <= tempsEtoile, etat.compteurs.parToi >= elimEtoile] : [false, false, false];
     return {
       reussi, temps: etat.chrono, eliminations: etat.compteurs.parToi, soldats: etat.compteurs.soldatsParToi, vehicules: etat.compteurs.vehiculesParToi,
       tirs, touches, precision, objectifs: etat.objectifs.filter((o) => o.etat === "fait").length, total: etat.objectifs.length,
-      etoiles, nbEtoiles: etoiles.filter(Boolean).length, criteres: { temps: ch.etoiles.temps, eliminations: ch.etoiles.eliminations },
+      etoiles, nbEtoiles: etoiles.filter(Boolean).length, criteres: { temps: tempsEtoile, eliminations: elimEtoile },
+      difficulte: { id: N.id, nom: N.nom, icone: N.icone, couleur: N.couleur },
     };
   }
   function terminer(monde, reussi, raison) {
@@ -538,6 +608,8 @@ Tanks.Campagne = (function () {
       f.reussi = true;
       f.etoiles = Math.max(f.etoiles, etat.bilan.nbEtoiles);
       f.temps = f.temps ? Math.min(f.temps, Math.round(etat.chrono)) : Math.round(etat.chrono);
+      f.niveaux = f.niveaux || {}; // (demande 90 : les meilleures étoiles à chaque difficulté)
+      f.niveaux[etat.difficulte.id] = Math.max(f.niveaux[etat.difficulte.id] || 0, etat.bilan.nbEtoiles);
       etat.bilan.record = f.temps === Math.round(etat.chrono);
       if (P.debloque < ch.numero + 1 && ch.numero < K.chapitres.length) {
         P.debloque = ch.numero + 1;
@@ -597,6 +669,7 @@ Tanks.Campagne = (function () {
       const id = monde.campagne && monde.campagne.id;
       return { ok: !!id && preparer(monde, id) && commencer(monde) };
     }
+    if (type === "difficulte") return { ok: choisirDifficulte(valeur) }; // (demande 90)
     if (type === "classe") return { ok: Tanks.Equipement.demander(monde, "classe", valeur) };
     if (type === "abandonner") {
       if (monde.campagne && monde.campagne.etat === "en cours") echouer(monde, "Mission abandonnée");
@@ -609,5 +682,5 @@ Tanks.Campagne = (function () {
     return { ok: false };
   }
 
-  return { demander, preparer, commencer, quitter, etape, points, progression, chapitre, estDebloque, get chapitres() { return K.chapitres; } };
+  return { demander, facteur, facteurDegats, difficulte, niveau, preparer, commencer, quitter, etape, points, progression, chapitre, estDebloque, get chapitres() { return K.chapitres; } };
 })();
