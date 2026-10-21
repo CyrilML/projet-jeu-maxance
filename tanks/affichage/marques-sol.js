@@ -102,7 +102,7 @@ Tanks.MarquesSol = (function () {
     }
     for (let i = 0; i < anneaux.length - 1; i++) for (let k = 0; k < n; k++) {
       const a = i * (n + 1) + k, b = a + n + 1;
-      idx.push(a, b, a + 1, a + 1, b, b + 1);
+      idx.push(a, a + 1, b, a + 1, b + 1, b); // (dans ce sens, les triangles regardent vers le ciel)
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
