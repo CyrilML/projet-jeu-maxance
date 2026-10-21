@@ -1,6 +1,6 @@
 # Demande n° 96 : le jeu rame souvent, et des voix qui ne sont pas toujours les mêmes
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ voix livrées (tanks version 38, touche J) et lags corrigés (tanks version 39), à valider par Maxance.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -16,6 +16,8 @@
      avoir la même par hasard) ;
    - **au moins 3 voix différentes** si l'ordinateur en a ;
    - un peu de **hasard à chaque phrase** (± 4 % de hauteur, ± 6 % de vitesse, plus vite quand c'est urgent).
+   - ✍️ « que je puisse changer les voix tout de suite » : la touche **J** fait passer chaque soldat à la voix suivante,
+     et la radio le dit tout de suite avec la nouvelle voix.
 
 ## ✅ Critères de réussite
 - [ ] Tanks « version 38 ».
