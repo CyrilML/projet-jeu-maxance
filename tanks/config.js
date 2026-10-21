@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 35,
+  version: 36,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -325,17 +325,25 @@ Tanks.CONFIG = {
       tanks: ["tanks", "tank", "chars", "char", "blindes", "blinde"],
       soldats: ["soldats", "soldat", "troupes", "troupe", "infanterie", "fantassins", "paras", "parachutistes", "hommes", "gars"],
       // les ORDRES (le mouvement)
-      attaque: ["attaque", "attaquez", "attaquer", "attaquons", "chargez", "charge", "foncez", "fonce", "assaut", "detruisez", "detruis", "tuez", "tue", "eliminez", "degommez", "allez-y"],
-      suis: ["suivez", "suis", "suivre", "suivez-moi", "venez", "viens", "rejoignez", "rejoins", "escorte", "escortez", "couvrez", "protegez"],
-      reste: ["restez", "reste", "rester", "defendez", "defends", "defense", "gardez", "garde", "tenez", "stop", "arretez", "arrete", "halte", "bougez", "attendez", "attends"],
+      attaque: ["attaque", "attaquez", "attaquer", "attaquons", "chargez", "charge", "foncez", "fonce", "assaut", "detruisez", "detruis", "tuez", "tue", "eliminez", "degommez", "allez-y", "go"], // (demande 94 : « go ! » = à l'attaque)
+      suis: ["suivez", "suis", "suivre", "suivez-moi", "suis-moi", "venez", "rejoignez", "rejoins", "escorte", "escortez"],
+      reste: ["restez", "reste", "rester", "defendez", "defends", "defendre", "defense", "gardez", "garde", "tenez", "tiens", "stop", "arretez", "arrete", "halte", "bougez", "attendez", "attends"],
       recule: ["reculez", "recule", "reculer", "repli", "repliez", "retraite", "fuyez", "fuis", "rentrez", "rentre", "base"],
-      va: ["allez", "va", "vas", "aller", "partez", "pars", "direction", "rendez-vous", "avancez", "avance", "go", "bougez-vous"],
+      va: ["allez", "va", "vas", "aller", "partez", "pars", "direction", "rendez-vous", "avancez", "avance", "bougez-vous"],
       disperse: ["dispersez", "disperse", "ecartez", "ecarte", "eparpillez", "eparpille", "dispersion"],
       ligne: ["ligne", "alignez", "aligne", "formation", "rang", "rangs"],
       // les ordres de TIR
       cessez: ["cessez", "cesse", "cessez-le-feu"],
       feu: ["feu", "tirez", "tire", "volonte", "ouvrez"],
       vise: ["visez", "vise", "ciblez", "cible", "sur"],
+      // ✍️ (demande 94) TES PROPRES PHRASES : les mots qui font comprendre une demande (des synonymes, pour écrire comme tu veux)
+      couvre: ["couvre", "couvrez", "couvre-moi", "couvrez-moi", "couverture", "protege", "protegez", "protege-moi", "protegez-moi"],
+      renforts: ["renfort", "renforts", "aide", "aidez", "aidez-moi", "aide-moi", "secours", "viens", "rapplique", "rappliquez", "help"],
+      soigne: ["soigne", "soignez", "soigne-moi", "soignez-moi", "soin", "soins", "medecin", "medic", "infirmier", "infirmiere", "trousse", "blesse", "heal"],
+      repare: ["repare", "reparez", "repare-moi", "reparation", "reparer", "mecanicien", "mecano", "depanne", "depannez", "outils"],
+      rapport: ["ou", "rapport", "situation", "combien", "position", "positions", "statut", "status", "vois", "voyez", "signalez", "signale", "nouvelles"],
+      merci: ["merci", "joue", "super", "genial", "excellent", "parfait", "felicitations", "chapeau", "top", "cool", "bien"],
+      insultes: ["idiot", "idiots", "nul", "nuls", "nulle", "debile", "debiles", "imbecile", "cretin", "abruti", "boulet", "naze", "con", "cons", "connard", "merde", "bouffon", "andouille"],
     },
     // ✍️ Les ENDROITS où on peut envoyer ses troupes : [x, z] (les portails, on les trouve tout seuls par leur couleur)
     lieux: {
@@ -349,7 +357,7 @@ Tanks.CONFIG = {
       bateaux: ["bateaux", "bateau", "patrouilleurs", "patrouilleur", "navires"], sousMarins: ["sous-marins", "sous-marin", "submersibles"],
     },
     reponses: ["Bien reçu !", "À vos ordres !", "C'est parti !", "Compris, chef !", "On y va !", "Affirmatif !"],
-    exemples: ["attaquez", "suivez-moi", "les tanks, allez au village", "Bravo, reste ici", "visez les bateaux", "dispersez-vous", "en ligne", "cessez le feu", "allez au portail vert"],
+    exemples: ["Bravo, couvre-moi", "où sont les ennemis ?", "Écho, soigne-moi", "à l'aide !", "attaquez", "suivez-moi", "les tanks, allez au village", "Bravo, reste ici", "visez les bateaux", "dispersez-vous", "en ligne", "cessez le feu", "allez au portail vert"],
   },
 
   // ✍️ (étape 67) Ta vie REMONTE toute seule : si tu n'es pas touché pendant 5 s, ton soldat regagne 2 balles par
@@ -1444,3 +1452,129 @@ Tanks.CONFIG.realisme = Object.assign(Tanks.CONFIG.realisme || {}, {
       zenith: "#3c74c4", horizon: "#e2d6bc", brume: "#ddd0b4", halo: 0.7, nuages: 0.12, fumees: 2, filtre: { saturation: 0.86, contraste: 1.12 } },
   },
 });
+
+// ================================================================== demande 94 : ✍️ « LA RADIO QUI PARLE »
+// Tes ordres écrits avec tes propres mots, les réponses de tes soldats à voix haute, et leurs discussions pendant la
+// bataille. ✍️ Gratuit : la voix est celle que ton navigateur sait déjà lire (la « synthèse vocale »), pas de serveur.
+// Les phrases sont des LISTES : à chaque fois, le jeu en tire une au hasard (jamais deux fois la même de suite).
+// Dans les phrases, les mots entre accolades sont remplacés par la vraie situation : {distance} (en mètres), {dir}
+// (« au nord-est »…), {nom}, {lieu}, {victime}, {cible}, {aide}, {delai}, {loin} (« Je suis à 230 mètres au sud. »).
+Tanks.CONFIG.radio = {
+  // ------------------------------------------------------------------ qui parle
+  // Les INDICATIFS radio des soldats de ton camp (les tanks gardent leur nom : Bravo, Charlie, Delta). Les soldats
+  // arrivés reçoivent ces noms, dans l'ordre ; le nom d'un soldat tombé est redonné à un nouveau (jamais deux vivants
+  // avec le même nom). Tu peux les appeler : « Écho, soigne-moi ».
+  indicatifs: ["Écho", "Fox", "Golf", "Hôtel", "India", "Juliette", "Kilo", "Lima", "Mike", "Novembre", "Oscar", "Papa", "Roméo", "Sierra", "Tango", "Victor", "Whisky", "Yankee", "Zoulou"],
+  infirmiers: ["Écho", "Kilo", "Sierra"], // ⛑️ ils soignent (toi, quand tu le demandes, et les blessés autour d'eux)
+  mecaniciens: ["Golf", "Mike", "Victor"], // 🔧 ils réparent (ton char, quand tu le demandes, et les chars abîmés tout près)
+  nomEnnemi: "Radio ennemie", // (le nom affiché pour un soldat ennemi dont on intercepte la radio)
+  // ------------------------------------------------------------------ obéir
+  renforts: { tanks: 1, soldats: 4 }, // « à l'aide ! » à tout le monde : le char et les 4 soldats les plus proches viennent
+  cloue: { recent: 3, delai: 5 }, // s : touché il y a moins de 3 s avec un ennemi en vue = « cloué au sol » ; il part 5 s plus tard
+  soin: { parPoint: 0.6, autour: 10, parPointAllie: 2.5, portee: 2.5 }, // s par point de vie rendu (toi) ; m : soigne les blessés à moins de 10 m (1 point / 2,5 s) ; m : à moins de 2,5 m de toi
+  reparation: { parPoint: 1.2, autour: 12, portee: 3 }, // s par point de blindage ; m autour d'un char ; m du bord de ton char
+  // ------------------------------------------------------------------ bavarder (pas trop !)
+  bavardage: {
+    portee: 220, // m : on n'entend que les soldats à moins de 220 m de toi (sauf les nouvelles importantes)
+    pause: 4, pauseUrgente: 2, // s entre deux phrases spontanées (2 s pour une phrase urgente)
+    parQui: 9, // s : un même soldat ne reparle pas avant 9 s
+    regarde: 0.25, // s : la radio regarde les soldats (recharge, renforts, char en vue) 4 fois par seconde
+    charRevu: 45, // s : un char ennemi déjà annoncé n'est réannoncé qu'après 45 s
+    charVu: 380, // m : un char ennemi à moins de 380 m de toi est « en vue »
+    seul: 45, trop: 2, // m : autour d'un soldat ; « trop nombreux » = au moins 2 ennemis de plus que d'amis
+    parGenre: { touche: 7, toucheChar: 8, aTerre: 6, recharge: 10, grenade: 5, charEnVue: 8, abattu: 7, charDetruit: 3, joliTir: 3, renforts: 14, soin: 8, soinFini: 2, repare: 8, repareFini: 2, allieDetruit: 2, vehiculeDetruit: 8, interceptee: 14 },
+    chances: { touche: 0.85, abattu: 0.55, recharge: 0.45, grenade: 0.9, interceptee: 0.3 }, // 0 à 1 : la chance qu'il le dise
+    importants: ["allieDetruit", "charEnVue", "charDetruit", "joliTir"], // entendus même de loin
+    urgents: ["touche", "toucheChar", "aTerre", "grenade", "charEnVue", "renforts", "allieDetruit"],
+    interceptePortee: 140, // m : la radio ennemie s'entend quand l'ennemi est à moins de 140 m de toi
+  },
+  // ------------------------------------------------------------------ la voix et les sous-titres (affichage/radio-voix.js)
+  voix: {
+    langue: "fr-FR",
+    file: 5, // phrases au plus qui attendent leur tour (au-delà, on jette les moins importantes)
+    perime: { reponse: 12, urgent: 6, bavardage: 4 }, // s : une phrase qui attend depuis plus longtemps est jetée (trop vieille)
+    blanc: 0.35, // s de silence entre deux phrases
+    avant: 0.22, // s entre le « clic-grésillement » et le début de la voix
+    lettre: 0.062, minimum: 1.1, // s : durée d'une phrase sans voix (ou si la voix ne dit rien) = 1,1 s + 0,062 s par lettre
+    restent: 3.2, // s : le sous-titre reste encore à l'écran après la fin de la phrase
+    volume: 0.95,
+    // Chaque soldat a SA voix : on la choisit d'après son nom (toujours la même pour lui). hauteur = « pitch » (0,5 grave
+    // … 2 aigu), vitesse = « rate » (1 = normal).
+    timbres: [
+      { hauteur: 0.72, vitesse: 1.02 }, { hauteur: 0.9, vitesse: 1.12 }, { hauteur: 1.08, vitesse: 1.0 }, { hauteur: 1.22, vitesse: 1.15 },
+      { hauteur: 0.82, vitesse: 1.2 }, { hauteur: 1.0, vitesse: 1.25 }, { hauteur: 1.35, vitesse: 1.06 }, { hauteur: 0.65, vitesse: 1.1 },
+    ],
+    interceptee: { hauteur: 0.55, vitesse: 0.95 }, // la radio ennemie : grave et lente
+    couleurs: { bleus: "#5aa8ff", rouges: "#ff5a4a", radio: "#ffd27a" },
+  },
+  // ------------------------------------------------------------------ les phrases
+  // Les réponses à TES ordres.
+  reponses: {
+    attaque: ["À l'attaque !", "Bien reçu, on fonce !", "Compris, j'engage l'ennemi !", "On y va, chef !", "Affirmatif, on leur rentre dedans !"],
+    suis: ["Je te suis ! {loin}", "Bien reçu, je reste derrière toi. {loin}", "Compris, je te colle aux basques. {loin}", "J'arrive, je te suis. {loin}"],
+    couvre: ["Je te couvre ! {loin}", "Compris, je reste près de toi et je tire sur tout ce qui bouge. {loin}", "Bien reçu, je surveille tes arrières. {loin}", "Couverture en place, vas-y ! {loin}"],
+    renforts: ["J'arrive en renfort ! {loin}", "Tiens bon, on arrive ! {loin}", "Renforts en route ! {loin}", "Bien reçu, je viens t'aider. {loin}"],
+    reste: ["Bien reçu, je tiens la position.", "Je défends ici, personne ne passe !", "Compris, je ne bouge plus.", "Position tenue, chef !"],
+    recule: ["Compris, on se replie !", "Repli vers le camp, bien reçu.", "On recule !", "Retraite, bien reçu !"],
+    va: ["Bien reçu, en route pour {lieu}.", "Direction {lieu} !", "Compris, je vais à {lieu}.", "En route vers {lieu}, chef !"],
+    tir: ["Feu à volonté, bien reçu !", "Compris, on ouvre le feu !"],
+    cessez: ["Cessez-le-feu, bien reçu.", "Compris, on ne tire plus."],
+    vise: ["Cible reçue : {cible} !", "Compris, je vise {cible}."],
+    general: ["Bien reçu !", "À vos ordres !", "Affirmatif !", "Compris, chef !", "C'est parti !"],
+    soigne: ["J'arrive avec ma trousse, tiens bon ! {loin}", "Médecin en route ! {loin}", "Bouge pas, j'arrive pour te soigner. {loin}"],
+    soigneDansLeChar: ["Tu es dans ton char, je ne peux pas te soigner là-dedans ! Sors d'abord.", "Négatif, sors de ton char et je te soigne."],
+    soignePasBesoin: ["Tu n'as rien, chef ! Pas une égratignure.", "Négatif, tu es en pleine forme !"],
+    repare: ["Je prends ma caisse à outils, j'arrive ! {loin}", "Mécanicien en route pour ton char ! {loin}", "Bien reçu, je viens réparer ton blindage. {loin}"],
+    reparePasBesoin: ["Ton char est en parfait état, chef.", "Négatif, rien à réparer sur ton char."],
+    pasDeChar: ["Pas de char ici, chef !", "Négatif, ton char est hors de portée."],
+    unChar: ["Négatif, je suis dans un char ! J'envoie {aide}.", "Je ne peux pas, je pilote un char. {aide} arrive !"],
+    personne: ["Négatif, il n'y a plus personne pour ça…", "Désolé, chef, personne de disponible."],
+    cloue: ["Négatif, je suis cloué au sol ! J'arrive dès que possible.", "Impossible pour l'instant, je suis sous le feu ! Donne-moi {delai} secondes.", "Je suis bloqué, ils me tirent dessus ! J'arrive dès que je peux."],
+    blesse: ["Je suis touché, mais je tiens.", "Je suis blessé, fais vite.", "Je suis bien amoché."],
+    position: ["Je suis à {distance} mètres {dir} de toi.", "Ma position : {distance} mètres {dir}.", "Je suis {dir}, à {distance} mètres de toi."],
+    positionProche: ["Je suis juste à côté de toi, chef !", "Regarde autour de toi, je suis là !"],
+    rapport: ["{chars}. {soldats}.", "Rapport : {chars}. {soldats}.", "Situation : {chars}. {soldats}."],
+    merci: ["Merci, chef !", "Avec plaisir !", "On forme une sacrée équipe !", "C'est toi le meilleur, chef !", "À ton service !"],
+    incompris: ["Je n'ai pas compris, tu peux répéter ?", "Négatif, message pas clair. Répète ?", "Euh… je n'ai rien compris, chef.", "Répète, la radio grésille !"],
+    insulte: ["On reste poli à la radio, chef. Je n'ai pas compris l'ordre.", "Hé, on se calme ! Donne-moi un vrai ordre.", "Pas de gros mots sur la fréquence, chef !"],
+    silence: ["{nom} ne répond plus…", "Pas de réponse de {nom}…"],
+    personneObeit: ["Il n'y a plus personne pour obéir…"],
+  },
+  // Le rapport : comment on dit les ennemis.
+  rapport: {
+    chars: "{n} char{s} ennemi{s}, le plus proche {dir} à {distance} mètres",
+    aucunChar: "Plus aucun char ennemi",
+    soldats: "{n} soldat{s} ennemi{s}, surtout {dir}",
+    soldatsProches: "dont {proches} à moins de 100 mètres",
+    aucunSoldat: "aucun soldat ennemi en vue",
+  },
+  // Ce qu'ils disent tout seuls pendant la bataille.
+  bavard: {
+    touche: ["Je suis touché !", "Aïe ! Je suis touché !", "Je prends des balles !", "Touché ! Je suis touché !"],
+    toucheChar: ["On est touchés !", "Impact sur le blindage !", "Ils nous allument !", "Coup au but sur nous !"],
+    aTerre: ["Homme à terre !", "{victime} est tombé !", "On a perdu {victime} !", "Homme à terre, homme à terre !"],
+    recharge: ["Je recharge, couvrez-moi !", "Rechargement !", "Chargeur vide !", "Je recharge !"],
+    grenade: ["Grenade !", "Grenade lancée !", "Attention, grenade !", "Je lance une grenade !"],
+    charEnVue: ["Char ennemi en vue, à {distance} mètres {dir} !", "Contact ! Un char {dir}, {distance} mètres !", "Attention, char ennemi {dir}, à {distance} mètres !"],
+    abattu: ["Ennemi abattu !", "Je l'ai eu !", "Un de moins !", "Cible au tapis !"],
+    charDetruit: ["Char ennemi détruit !", "{cible} est en flammes !", "On a eu {cible} !"],
+    joliTir: ["Joli tir, chef !", "Bien joué, chef ! {cible} est détruit !", "En plein dans le mille !"],
+    renforts: ["J'ai besoin de renforts !", "Ils sont trop nombreux, envoyez des renforts !", "Je suis seul ici, besoin d'aide !"],
+    soin: ["Je te soigne, tiens bon !", "Bouge pas, je te soigne.", "Ça va aller, je m'occupe de toi."],
+    soinFini: ["Voilà, tu es comme neuf !", "C'est bon, tu peux y retourner !"],
+    repare: ["Je répare ton blindage !", "Je m'occupe du moteur, couvrez-moi !", "Réparation en cours !"],
+    repareFini: ["Réparation terminée !", "Ton char est comme neuf !"],
+    allieDetruit: ["On a perdu {victime} !", "{victime} est détruit !", "{victime} ne répond plus, il est en flammes !"],
+    vehiculeDetruit: ["Véhicule détruit !", "On a perdu un véhicule !"],
+  },
+  // La radio ennemie interceptée (en français aussi, mais avec la voix grave du Front).
+  interceptee: {
+    touche: ["Je suis touché ! Où sont les secours ?", "Ils m'ont eu ! Je suis touché !"],
+    aTerre: ["Homme à terre ! Ils nous massacrent !", "On a perdu un homme !"],
+    grenade: ["Grenade ! À couvert !"],
+    renforts: ["Il nous faut des renforts, vite !", "Repliez-vous, ils sont partout !"],
+  },
+  // Les mots de la boussole (0 = nord, puis dans le sens des aiguilles d'une montre). Le nord, c'est vers le camp ennemi.
+  boussole: ["au nord", "au nord-est", "à l'est", "au sud-est", "au sud", "au sud-ouest", "à l'ouest", "au nord-ouest"],
+  nombres: ["zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf", "vingt"],
+};

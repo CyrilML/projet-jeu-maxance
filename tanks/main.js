@@ -9,6 +9,8 @@
 // qualité (affichage/qualite.js), qui choisit le niveau de détail. Touche G : choisir le niveau soi-même.
 // Étape 88 : la CAMPAGNE. Les écrans de la campagne (affichage/campagne-ecrans.js) font des demandes au metteur en scène
 // (logique/campagne.js), et son tableau de bord (affichage/campagne-tableau.js) se dessine par-dessus l'autre.
+// Demande 94 : la RADIO QUI PARLE (affichage/radio-voix.js) : sa file d'attente avance à chaque image, ses sous-titres se
+// dessinent en dernier, et N coupe ou remet les voix.
 
 window.Tanks = window.Tanks || {};
 
@@ -25,6 +27,7 @@ window.Tanks = window.Tanks || {};
   Tanks.Qualite.initialiser(); // (étape 72 : le régulateur applique le niveau de départ)
   Tanks.Tableau.initialiser(toile2d);
   Tanks.BarreOrdres.initialiser(); // (étape 65)
+  Tanks.RadioVoix.initialiser(toile2d); // (demande 94 : la radio qui parle, touche N)
   // (étape 77) le menu : il ne touche pas au monde lui-même, il fait des DEMANDES que le quartier-maître accepte
   Tanks.PleinEcran.initialiser(); // (étape 91 : ⛶ ou K)
   Tanks.Ambiance.initialiser(); // (étape 87 : le filtre « Battlefield »)
@@ -55,6 +58,7 @@ window.Tanks = window.Tanks || {};
     if (E.consommer("camera")) Tanks.Scene.changerCamera(!!(Tanks.monde && Tanks.monde.toi && Tanks.monde.toi.mode === "pied"));
     if (E.consommer("son")) Tanks.Sons.basculer();
     if (E.consommer("musique")) Tanks.Musique.basculer(); // (étape 82) M : la musique
+    if (E.consommer("voix")) Tanks.RadioVoix.basculer(); // (demande 94) N : les voix de la radio
     if (E.consommer("lampe") && monde.toi && monde.toi.soldat) Tanks.Equipement.basculerLampe(monde.toi.soldat); // (étape 77 : L)
     Tanks.Menu.maj(monde); // (étape 77 : le menu s'ouvre au garage, se ferme en bataille)
     Tanks.EcranCampagne.maj(monde); // (étape 88 : l'intro qui avance, l'écran de fin qui arrive)
@@ -104,6 +108,8 @@ window.Tanks = window.Tanks || {};
     parts.dessin = t0 - t1;
     Tanks.Tableau.dessiner(monde);
     Tanks.TableauCampagne.dessiner(monde); // (étape 88 : les objectifs, les marqueurs, la radio)
+    Tanks.RadioVoix.maj(monde); // (demande 94 : la file d'attente de la radio, la voix…)
+    Tanks.RadioVoix.dessiner(); // (… et les sous-titres en bas)
     t1 = performance.now();
     parts.tableau = t1 - t0;
     pause.hidden = !enPause;

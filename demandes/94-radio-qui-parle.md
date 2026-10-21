@@ -1,6 +1,6 @@
 # Demande n° 94 : la radio qui parle
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée le 21/10/2026 (tanks version 36), à valider par Maxance (le son des voix est à vérifier sur son ordinateur).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -25,4 +25,4 @@ la radio, les gens qui discutent, par exemple : "Couvrez-moi, j'ai besoin de ren
 - [ ] Tanks « version 36 ».
 - [ ] T, puis une phrase à moi (par exemple « Bravo, couvre-moi ») : Bravo répond à voix haute et le fait.
 - [ ] Pendant la bataille, j'entends les soldats parler à la radio, avec un grésillement, et je lis leurs phrases.
-- [ ] Une touche coupe et remet les voix.
+- [ ] N coupe et remet les voix.

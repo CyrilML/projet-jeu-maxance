@@ -215,6 +215,7 @@
       <a href="#etape91">Étape 91</a>
       <a href="#etape92">Étape 92</a>
       <a href="#etape93">Étape 93</a>
+      <a href="#etape94">Étape 94</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4955,6 +4956,42 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <p>Avant, le feu était <strong>ajouté</strong> à l'image : quand on ajoute plein de lumières orange les unes sur les autres, ça finit tout blanc (comme quand on mélange les lumières de plusieurs lampes). Maintenant le feu <strong>cache</strong> ce qui est derrière, comme un vrai nuage de flammes et de fumée : on voit ses vraies couleurs.</p>
     </section>
 
+    <section id="etape94">
+      <h2>📻 Étape 94 : la radio qui parle <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Écris tes propres ordres : les soldats te répondent à voix haute. Et pendant la bataille, ils parlent tout seuls à la radio. Gratuit, sans serveur. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/94-radio-qui-parle.md</code>.</p>
+          <ul>
+            <li>✍️ « Je ne veux pas qu'on paye. »</li>
+            <li>✍️ « Inventer mon propre ordre, entendre les réponses à la radio, les gens qui discutent : couvrez-moi, j'ai besoin de renfort, je suis touché… »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 36 ».</li>
+            <li>☐ T, puis « Bravo, couvre-moi » : Bravo répond à voix haute et reste près de toi.</li>
+            <li>☐ T, puis « où sont les ennemis ? » : un rapport avec les vrais nombres et directions.</li>
+            <li>☐ À pied, « Écho, soigne-moi » : l'infirmier vient te soigner. « Répare mon char » : le mécanicien vient.</li>
+            <li>☐ Pendant la bataille : « Je suis touché ! », « Grenade ! », « Char ennemi en vue ! »… avec un grésillement.</li>
+            <li>☐ N : couper ou remettre les voix (les sous-titres restent).</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🗣️ Comment l'ordinateur parle</h3>
+      <p>Les navigateurs savent lire un texte à voix haute : c'est la <strong>synthèse vocale</strong>. C'est gratuit et déjà dans ton ordinateur. Le jeu choisit une voix française, et change sa <strong>hauteur</strong> (grave ou aiguë) et sa <strong>vitesse</strong> pour chaque soldat. Autour, il ajoute un « clic-kchh » de radio.</p>
+      <h3>🔑 Comment le jeu comprend tes phrases</h3>
+      <p>Il ne comprend pas tout comme un humain : il cherche des <strong>mots-clés</strong>. « Bravo » → à qui tu parles. « couvre », « couverture », « protège » → l'ordre « couvrir ». « où », « combien » → une question. Ensuite, il fabrique la réponse avec la vraie situation : combien d'ennemis, à quelle distance, dans quelle direction.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>tanks/config.js</code>, cherche <code>radio</code> : ajoute ta propre phrase dans une liste !</li>
+        <li>Essaie de piéger la radio avec une phrase bizarre : que répond-elle ?</li>
+      </ul>
+      <p class="petit">À savoir : si ton ordinateur n'a pas de voix française, il n'y a que les sous-titres.</p>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6234,6 +6271,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-93" data-cle="appris-93" placeholder="Ex. : J'ai appris pourquoi des lumières ajoutées deviennent blanches…"></textarea>
         <label for="idees-93"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-93" data-cle="idees-93" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 94 · la radio qui parle <span class="petit">· 21 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> l'opérateur radio (<code>tanks/logique/radio.js</code>), le haut-parleur (<code>tanks/affichage/radio-voix.js</code>) et les ordres libres (<code>logique/ordres.js</code>).</p>
+        <p class="petit">✍️ Maxance a choisi : gratuit, ses propres ordres, des réponses à voix haute, des soldats qui discutent.</p>
+        <label for="appris-94"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-94" data-cle="appris-94" placeholder="Ex. : J'ai appris que le jeu cherche des mots-clés…"></textarea>
+        <label for="idees-94"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-94" data-cle="idees-94" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

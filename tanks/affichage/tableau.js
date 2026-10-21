@@ -127,8 +127,8 @@ Tanks.Tableau = (function () {
       const qui = d.noms.length && !d.soldats ? d.noms.join(", ") : [d.tanks ? d.tanks + " tank" + (d.tanks > 1 ? "s" : "") : "", d.soldats ? d.soldats + " soldat" + (d.soldats > 1 ? "s" : "") : ""].filter(Boolean).join(" + ") || "personne";
       ordreEnCours = { texte: "📢 « " + d.texte + " » → " + qui + (d.quoi ? " : " + d.quoi : ""), jusqua: performance.now() + 30000 };
       dire(d.tanks + d.soldats ? "📢 " + qui + (d.quoi ? " " + d.quoi : "") : "📢 Personne pour obéir (ils sont tous tombés…)", "#ffe27a", 3500);
-      const parleur = d.noms[0] || "Radio";
-      reponse = { texte: "📻 " + parleur + " : " + d.reponse + (d.devines.length ? "  (j'ai compris " + d.devines.map(([a, b]) => "« " + b + " » pour « " + a + " »").join(", ") + ")" : ""), jusqua: performance.now() + 3500 };
+      // (demande 94 : la réponse s'entend et s'écrit en bas, en sous-titre ; ici, seulement les mots devinés)
+      reponse = d.devines.length ? { texte: "📻 j'ai compris " + d.devines.map(([a, b]) => "« " + b + " » pour « " + a + " »").join(", "), jusqua: performance.now() + 3500 } : null;
     });
     radio.ecouter("ordre-incompris", (d) => {
       dire("❓ Je n'ai pas compris « " + d.texte + " »", "#ffb37a", 5000);

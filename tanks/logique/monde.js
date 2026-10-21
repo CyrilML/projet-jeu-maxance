@@ -33,6 +33,8 @@
 // Étape 88 : ✍️ LA CAMPAGNE (logique/campagne.js, le metteur en scène). « monde.campagne » : le chapitre en cours (null en
 // bataille libre). Nouvelle phase "briefing" : la bataille est installée mais figée (le survol, puis le briefing). En
 // campagne, ce n'est plus « tous les tanks rouges détruits » qui fait gagner : ce sont les OBJECTIFS du chapitre.
+// Demande 94 : L'OPÉRATEUR RADIO (logique/radio.js) : tes phrases passent par lui, et il voit chaque événement (avec les
+// vrais objets) pour faire parler tes soldats.
 // Il annonce tout à la radio : le journal, les sons, les effets et la sauvegarde écoutent.
 
 window.Tanks = window.Tanks || {};
@@ -322,16 +324,8 @@ Tanks.Monde = (function () {
         }
       }
     }
-    // (étape 65) un ordre écrit dans la barre ?
-    if (enJeu && intentions.ordre) {
-      const r = Tanks.Ordres.comprendre(intentions.ordre, monde);
-      if (!r.compris) radio.emettre("ordre-incompris", { texte: intentions.ordre, devines: r.devines, exemples: C.ordres.exemples });
-      else {
-        const bilan = Tanks.Ordres.donner(monde, r);
-        S.donnees.ordres++;
-        radio.emettre("ordre", Object.assign({ texte: intentions.ordre, devines: r.devines, reponse: C.ordres.reponses[Math.floor(monde.temps * 7) % C.ordres.reponses.length] }, bilan));
-      }
-    }
+    // (étape 65) un ordre écrit dans la barre ? (demande 94 : c'est l'opérateur radio qui le fait comprendre, obéir et répondre)
+    if (enJeu && intentions.ordre && Tanks.Radio.ordre(monde, intentions.ordre)) S.donnees.ordres++;
     const pourToi = (mode) => (enJeu && t.mode === mode ? intentions : {});
     // 1. Les tanks : le tien (si tu es dedans), les autres (l'ordinateur).
     const evenements = [];
@@ -405,6 +399,7 @@ Tanks.Monde = (function () {
     const parToi = (o) => !!o && (o === toi || (o === monde.joueur && t.mode === "char") || o === t.engin);
     const journal = (d) => Object.assign({}, d, d.qui ? { qui: d.qui === monde.joueur ? "ton tank" : d.qui.nom, quiToi: parToi(d.qui) } : {}, { tireur: d.tireur && d.tireur.nom, equipeTireur: d.tireur && d.tireur.equipe, cible: d.cible && d.cible.nom, equipeCible: d.cible && d.cible.equipe, parToi: d.tireur === monde.joueur || d.tireur === toi || (d.tireur && d.tireur === t.engin), surToi: d.cible === monde.joueur || d.cible === toi || (d.cible && d.cible === t.engin) });
     const annoncer = (nom, d) => {
+      if (enJeu) Tanks.Radio.noter(monde, nom, d); // (demande 94 : l'opérateur radio voit les vrais objets : qui est touché, par qui)
       radio.emettre(nom, journal(d));
       if (nom === "touche" && d.tireur === monde.joueur) S.donnees.touches++;
       const deToi = d.tireur === monde.joueur || d.tireur === toi || (d.tireur && d.tireur === t.engin);
@@ -491,6 +486,7 @@ Tanks.Monde = (function () {
         else radio.emettre("victoire", { temps: monde.chrono, allies: vivants(monde, "bleus") - (monde.joueur.detruit ? 0 : 1), vie: monde.joueur.vie, vieMax: monde.joueur.vieMax });
       }
     }
+    if (monde.phase === "bataille") Tanks.Radio.etape(monde, dt); // (demande 94 : les soins, les réparations, le bavardage)
     if (monde.campagne) Tanks.Campagne.etape(monde, dt); // (étape 88 : les objectifs, les événements du scénario, la radio)
   }
 

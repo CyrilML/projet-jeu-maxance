@@ -38,6 +38,9 @@
 // secondes), les cibles spéciales (leur vie), le camion escorté, les avions de la frappe, et tes compteurs de mission.
 // Demande 88 : L'ARMURIER : le modèle 3D de ton arme (ses pièces, ses triangles, ses dessins), la vue à la première
 // personne (ses triangles, le recul, l'arme baissée), la lampe et le laser, et combien de modèles sont au magasin.
+// Demande 94 : LA RADIO QUI PARLE : les voix (allumées ou coupées, combien de voix françaises), la phrase dite en ce
+// moment, la file d'attente (et l'importance de chaque phrase), les dernières phrases, les pauses du bavardage, les
+// indicatifs des soldats (et qui est infirmier ou mécanicien), et qui va te soigner ou réparer ton char.
 
 window.Tanks = window.Tanks || {};
 
@@ -48,6 +51,12 @@ Tanks.SousLeCapot = (function () {
   let table, journal, monde, branche = false;
 
   const MESSAGES = {
+    // demande 94 : la radio qui parle
+    "radio-phrase": (d) => (d.interceptee ? "📡 (interceptée) " : "📻 ") + d.qui + (d.role ? " (" + d.role + ")" : "") + " : « " + d.texte + " » · " + ({ reponse: "réponse à ton ordre", urgent: "urgent", bavardage: "bavardage" }[d.priorite] || d.priorite) + " · " + d.genre + (d.distance ? " · à " + d.distance + " m de toi" : ""),
+    "radio-voix": (d) => (d.actives ? "🗣️ Voix de la radio allumées (N)" : "🔇 Voix de la radio coupées (N) : les sous-titres restent") + " · " + (d.synthese ? d.voixFr + " voix française(s) sur " + d.toutes : "pas de synthèse vocale dans ce navigateur : sous-titres seulement"),
+    "radio-question": (d) => "❔ Ta question (" + { ennemis: "où sont les ennemis", position: "où es-tu", merci: "merci" }[d.question] + ") : " + d.qui + " répond",
+    "soin-allie": (d) => "⛑️ " + d.de + " soigne " + d.qui + " : " + Math.round(d.vie) + " / " + d.vieMax + (d.demande ? " (tu l'as demandé)" : ""),
+    "reparation-allie": (d) => "🔧 " + d.de + " répare " + d.qui + " : " + Math.round(d.vie) + " / " + d.vieMax + (d.demande ? " (tu l'as demandé)" : ""),
     // étape 77
     classe: (d) => "🎖️ Tu choisis la classe " + d.icone + " " + d.nom,
     piece: (d) => "🔧 Atelier : " + d.arme + " · " + d.emplacement + " → " + d.nom + " (portée " + Math.round(d.avant.portee) + " → " + Math.round(d.apres.portee) + " m, chargeur " + d.avant.chargeur + " → " + d.apres.chargeur + ", écart " + virgule(d.avant.dispersion * 1000, 1) + " → " + virgule(d.apres.dispersion * 1000, 1) + " mrad, mobilité " + Math.round(d.avant.mobilite * 100) + " → " + Math.round(d.apres.mobilite * 100) + " %)",
@@ -418,9 +427,29 @@ Tanks.SousLeCapot = (function () {
     l.push(["tes compteurs", "ennemis mis hors de combat par toi : " + e.compteurs.parToi + " (" + e.compteurs.soldatsParToi + " soldats, " + e.compteurs.vehiculesParToi + " engins) · soldats du Front éliminés par ton camp : " + e.compteurs.eliminesCamp]);
   }
 
+  // (demande 94) LA RADIO QUI PARLE
+  function lignesRadio(l) {
+    const V = Tanks.RadioVoix.etat(), O = Tanks.Radio.etat, B = C.radio.bavardage, P = { reponse: "🔴 réponse", urgent: "🟠 urgent", bavardage: "⚪ bavardage" };
+    l.push(["La radio qui parle (demande 94)"]);
+    l.push(["les voix (N)", (V.actives ? "🗣️ allumées" : "🔇 coupées") + " · " + (V.synthese ? V.voixFr.length + " voix française(s) sur " + V.toutes + " voix dans ton ordinateur" + (V.voixFr.length ? " : " + V.voixFr.slice(0, 3).join(", ") + (V.voixFr.length > 3 ? "…" : "") : " → sous-titres seulement") : "pas de synthèse vocale dans ce navigateur → sous-titres seulement") + (V.actives && !V.possible && V.voixFr.length ? " (son coupé : B)" : "")]);
+    l.push(["en ce moment", V.enCours ? V.enCours.qui + " : « " + V.enCours.texte + " » (" + (V.enCours.etat === "clic" ? "clic-kchh…" : V.enCours.voix ? "à voix haute" : "sous-titre seulement") + ")" : "silence"]);
+    l.push(["file d'attente", V.file.length + " / " + V.max + (V.file.length ? " · " + V.file.map((x) => P[x.priorite] + " " + x.qui + " (" + virgule(x.attend, 1) + " s)").join(" · ") : "") + " · jetées si trop vieilles : réponse " + C.radio.voix.perime.reponse + " s, urgent " + C.radio.voix.perime.urgent + " s, bavardage " + C.radio.voix.perime.bavardage + " s"]);
+    l.push(["compteurs", V.bilan.recues + " reçues · " + V.bilan.dites + " dites (" + V.bilan.lues + " à voix haute) · " + V.bilan.jetees + " jetées (file pleine) · " + V.bilan.perimees + " trop vieilles · " + V.bilan.coupees + " coupées par une réponse" + (V.bilan.erreurs ? " · " + V.bilan.erreurs + " erreurs de voix" : "")]);
+    V.historique.forEach((h, i) => l.push([i === 0 ? "dernières phrases" : "", (h.interceptee ? "📡 " : "📻 ") + h.qui + " : « " + h.texte + " »" + (h.voix ? " 🗣️" : "")]));
+    const t = monde.temps;
+    l.push(["l'opérateur (bavardage)", O.dites + " phrases (" + O.reponses + " réponses à tes ordres) · " + O.tues + " retenues (pause ou hasard) · prochaine phrase spontanée possible dans " + virgule(Math.max(0, B.pause - (t - O.derniere)), 1) + " s (urgente : " + virgule(Math.max(0, B.pauseUrgente - (t - O.derniere)), 1) + " s) · on n'entend que les soldats à moins de " + B.portee + " m"]);
+    const sortes = Object.entries(O.parSorte).map(([k, n]) => k + " " + n).join(" · ");
+    if (sortes) l.push(["phrases par sorte", sortes]);
+    const bleus = monde.soldats.filter((o) => o.equipe === "bleus" && o.indicatif);
+    if (bleus.length) l.push(["indicatifs", bleus.map((o) => (o.mort ? "✖ " : "") + o.indicatif + (o.role === "infirmier" ? " ⛑️" : o.role === "mecanicien" ? " 🔧" : "")).join(" · ")]);
+    const aides = monde.soldats.filter((o) => o.ordre && (o.ordre.action === "soigne" || o.ordre.action === "repare") && !o.mort);
+    l.push(["soins · réparations", O.soins + " points de vie rendus · " + O.reparations + " points de blindage réparés" + (aides.length ? " · en route : " + aides.map((o) => o.indicatif + " " + Tanks.Ordres.enMots(o) + " (" + Math.round(Math.hypot(o.x - Tanks.Ordres.ici(monde).x, o.z - Tanks.Ordres.ici(monde).z)) + " m)").join(", ") : "")]);
+  }
+
   function lignes() {
     const j = monde.joueur, f = j.fiche, t = monde.toi || {}, s = t.soldat;
     const l = [];
+    lignesRadio(l); // (demande 94)
     lignesCampagne(l); // (étape 88)
     lignesVitesse(l);
     lignesSouterrain(l, s);

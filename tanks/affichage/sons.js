@@ -16,6 +16,9 @@
 // Demande 92 : les EXPLOSIONS arrivent EN RETARD (le son va à 340 m/s) et plus SOURDES de loin (les aigus se perdent) ;
 // une balle qui te FRÔLE siffle (et claque si elle passe tout près), du côté où elle passe ; chaque IMPACT a son bruit
 // selon la matière (« tchk » dans la terre, « ping » sur le métal, « plouf » dans l'eau…).
+// Demande 94 : LA RADIO QUI PARLE : avant chaque phrase, un « clic » (on appuie sur le bouton du talkie-walkie) et un
+// petit « kchh » ; pendant qu'il parle, un léger souffle de friture ; à la fin, « kchh » et « clic » (on relâche).
+// La voix elle-même vient du navigateur (affichage/radio-voix.js) : elle ne passe pas par ce synthétiseur.
 // Quand tu QUITTES le jeu (un autre onglet, une autre application, une autre fenêtre devant), le son « s'endort » :
 // on met le synthétiseur en pause (ctx.suspend). Il se réveille quand tu reviens.
 
@@ -366,6 +369,48 @@ Tanks.Sons = (function () {
     b.start(t, Math.random());
     b.stop(t + 0.14);
   }
+  // (demande 94) La radio qui parle : le « clic-kchh » avant et après chaque phrase, et le souffle pendant.
+  function radioDebut(ennemi) {
+    if (!ctx || coupe) return;
+    clic(0.35, ennemi ? 900 : 1500, 0);
+    friture(0.2, 0.16, ennemi ? 1400 : 2400);
+  }
+  function radioFin(ennemi) {
+    if (!ctx || coupe) return;
+    friture(0.16, 0.12, ennemi ? 1400 : 2400);
+    clic(0.3, ennemi ? 700 : 1200, 0.11);
+  }
+  // une courte rafale de « friture » (du bruit filtré comme dans un talkie-walkie)
+  function friture(force, duree, frequence) {
+    const t = ctx.currentTime, b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    b.buffer = tampon;
+    f.type = "bandpass";
+    f.frequency.value = frequence;
+    f.Q.value = 0.7;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(force, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.001, t + duree);
+    b.connect(f).connect(g).connect(sortie);
+    b.start(t, Math.random());
+    b.stop(t + duree + 0.02);
+  }
+  let fond = null; // { source, volume } : le souffle pendant que quelqu'un parle
+  function radioFond(oui) {
+    if (!ctx) return;
+    if (!fond) {
+      const b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      b.buffer = tampon;
+      b.loop = true;
+      f.type = "bandpass";
+      f.frequency.value = 3000;
+      f.Q.value = 0.5;
+      g.gain.value = 0;
+      b.connect(f).connect(g).connect(sortie);
+      b.start();
+      fond = { source: b, volume: g };
+    }
+    fond.volume.gain.setTargetAtTime(oui && !coupe ? 0.018 : 0, ctx.currentTime, 0.04);
+  }
   // (étape 63) Le sonar : « ping » (une note aiguë qui résonne longtemps).
   function ping() {
     if (!ctx || coupe) return;
@@ -448,5 +493,5 @@ Tanks.Sons = (function () {
   function basculer() {
     coupe = !coupe;
   }
-  return { demarrer, maj, basculer, frole, impact, explosion, coupe: () => coupe, etat: () => (ctx ? (ctx.state === "running" ? "allumé 🔊" : "endormi 🔇") : "pas encore allumé (appuie sur une touche)") };
+  return { demarrer, maj, basculer, frole, impact, explosion, radioDebut, radioFin, radioFond, coupe: () => coupe, etat: () => (ctx ? (ctx.state === "running" ? "allumé 🔊" : "endormi 🔇") : "pas encore allumé (appuie sur une touche)") };
 })();
