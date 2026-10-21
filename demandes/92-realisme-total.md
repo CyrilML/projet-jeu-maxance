@@ -1,6 +1,6 @@
 # Demande n° 92 : le réalisme total
 
-> Statut : 🛠️ en cours (version de 4 heures).
+> Statut : ✅ livrée le 21/10/2026 en version raccourcie (environ 1 h, tanks version 34), à valider par Maxance.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -22,6 +22,7 @@ balles, tout ce que tu veux. » ✍️ La version de 4 heures.
 
 ## ✅ Critères de réussite
 - [ ] Tanks « version 34 ».
+- [ ] X : s’accroupir (plus difficile à toucher, caché derrière un muret).
 - [ ] Les soldats, le sol, les tirs, les impacts et les explosions ont l'air beaucoup plus vrais.
 - [ ] Les tanks laissent des traces ; les explosions laissent des cratères.
 - [ ] Le compteur « ⚙️ qualité … i/s » reste bon.

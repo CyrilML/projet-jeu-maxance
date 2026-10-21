@@ -213,6 +213,7 @@
       <a href="#etape89">Étape 89</a>
       <a href="#etape90">Étape 90</a>
       <a href="#etape91">Étape 91</a>
+      <a href="#etape92">Étape 92</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -4890,6 +4891,45 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <p>Maxance a appuyé sur K… et rien ! La page d'accueil, le menu et la campagne <strong>gardent les touches pour eux</strong> (pour que flèches et Entrée ne fassent pas bouger le tank derrière). Le K était donc arrêté avant d'arriver au plein écran. Correction : le plein écran écoute le clavier <strong>en premier</strong>, avant tous les autres (c'est la « capture »).</p>
     </section>
 
+    <section id="etape92">
+      <h2>🎯 Étape 92 : le réalisme total <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Des soldats en vrai camouflage qui bougent naturellement, des traces de chenilles et des cratères, des balles traçantes, des impacts selon la matière, des explosions en couches et un nouveau ciel. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/92-realisme-total.md</code>.</p>
+          <ul>
+            <li>✍️ « Un réalisme total : le soldat, le sol, les tirs, les balles, tout. »</li>
+            <li>✍️ La version de 4 heures, puis raccourcie à environ 1 heure.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 34 ».</li>
+            <li>☐ Soldats : camouflage forêt (bleus) et désert (rouges), plis, boue, sangles, radio. Ils courent penchés en avant, s'accroupissent pour tirer, rechargent.</li>
+            <li>☐ À pied, <strong>X</strong> : t'accroupir (plus lent, mais plus dur à toucher, et caché derrière un muret).</li>
+            <li>☐ Les tanks laissent des traces de chenilles ; les explosions laissent des cratères.</li>
+            <li>☐ Une balle sur 4 est traçante ; les impacts changent selon ce qui est touché (terre, sable, mur, métal, eau, bois).</li>
+            <li>☐ Explosions : éclair, boule de feu, onde de choc, débris, colonne de fumée ; l'écran tremble ; le boum arrive en retard quand c'est loin.</li>
+            <li>☐ Les balles qui passent près de toi sifflent. Un tank détruit brûle pendant 2 minutes.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔊 Pourquoi le boum arrive en retard ?</h3>
+      <p>La lumière va presque instantanément, mais le son avance à <strong>340 mètres par seconde</strong>. Une explosion à 680 m : tu vois l'éclair tout de suite, et tu entends le boum 2 secondes après. Le jeu fait pareil, comme pour l'orage (on compte les secondes entre l'éclair et le tonnerre).</p>
+      <h3>🖼️ 2 dessins pour des centaines d'étincelles</h3>
+      <p>Les fumées, flammes, étincelles et gouttes sont peintes une seule fois sur une grande « planche » de 16 images. Ensuite, toutes les particules piochent dans cette planche et sont dessinées <strong>ensemble</strong> : 2 dessins, qu'il y ait 10 ou 1 000 particules. C'est pour ça que le jeu ne rame pas plus.</p>
+      <h3>🔎 Missions d'exploration</h3>
+      <ul>
+        <li>Dans <code>tanks/config.js</code>, cherche <code>realisme</code> : change le nombre de balles traçantes, ou la durée des traces de chenilles.</li>
+        <li>Fais exploser un obus à 340 m et compte : le boum arrive environ 1 seconde après l'éclair.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <details class="question"><summary>À quelle vitesse va le son ?</summary><p>Environ 340 mètres par seconde.</p></details>
+      <p class="petit">Pas encore fait (version raccourcie) : flaques, cailloux en 3D partout, sol du souterrain, colonnes de fumée lointaines, rayons de soleil.</p>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6151,6 +6191,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-91" data-cle="appris-91" placeholder="Ex. : J'ai appris qu'un site doit attendre un geste pour passer en plein écran…"></textarea>
         <label for="idees-91"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-91" data-cle="idees-91" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 92 · le réalisme total <span class="petit">· 21 octobre 2026</span></h4>
+        <p><strong>Ce qui a été construit :</strong> les uniformes (<code>tanks/affichage/uniformes.js</code>), les traces et cratères (<code>marques-sol.js</code>), les particules (<code>particules.js</code>), les tirs (<code>tirs.js</code>), les explosions (<code>explosions.js</code>), le nouveau ciel et les sons en retard.</p>
+        <p class="petit">✍️ Maxance a demandé : un réalisme total, la version de 4 heures, raccourcie à 1 heure.</p>
+        <label for="appris-92"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-92" data-cle="appris-92" placeholder="Ex. : J'ai appris que le son va à 340 m par seconde…"></textarea>
+        <label for="idees-92"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-92" data-cle="idees-92" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
