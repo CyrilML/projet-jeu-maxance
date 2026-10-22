@@ -1,6 +1,6 @@
 # Demande n° 99 : une base aérienne dans chaque camp, et des pistes qu'on peut détruire
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée (tanks version 42).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -21,6 +21,6 @@ détruire leurs pistes pour empêcher les avions de chasse et les avions de tran
 - Tout se voit sous le capot (l'état de chaque piste).
 
 ## ✅ Critères de réussite
-- [ ] Tanks « version 42 ».
-- [ ] Deux bases aériennes rangées, sauf dans le souterrain.
-- [ ] Des cratères sur la piste ; piste fermée = plus d'avions qui décollent ; réparation.
+- [x] Tanks « version 42 ».
+- [x] Deux bases aériennes rangées, sauf dans le souterrain.
+- [x] Des cratères sur la piste ; piste fermée = plus d'avions qui décollent ; réparation.

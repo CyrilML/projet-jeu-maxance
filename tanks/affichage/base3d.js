@@ -368,7 +368,7 @@ Tanks.Base3D = (function () {
     const mats = {
       beton: new THREE.MeshStandardMaterial({ map: imageBeton(), vertexColors: true, roughness: 0.92, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
       piste: new THREE.MeshStandardMaterial({ map: imagePiste(), roughness: 0.85, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
-      tole: new THREE.MeshStandardMaterial({ map: imageTole(), vertexColors: true, roughness: 0.75, metalness: 0.05, emissive: 0x23251f, side: THREE.DoubleSide, shadowSide: THREE.FrontSide }),
+      tole: new THREE.MeshStandardMaterial({ map: imageTole(), vertexColors: true, roughness: 0.75, metalness: 0.05, emissive: 0x3a3c34, side: THREE.DoubleSide, shadowSide: THREE.FrontSide }),
       lampe: new THREE.MeshBasicMaterial({ toneMapped: false }),
       lampeGeo: new THREE.BoxGeometry(0.45, 0.3, 0.45),
       aire: new THREE.MeshStandardMaterial({ map: imageAire(), roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }),

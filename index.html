@@ -220,6 +220,7 @@
       <a href="#etape96">Étape 96</a>
       <a href="#etape97">Étape 97</a>
       <a href="#etape98">Étape 98</a>
+      <a href="#etape99">Étape 99</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5141,6 +5142,44 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape99">
+      <h2>🛫 Étape 99 : les bases aériennes, et des pistes qu'on peut détruire <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Chaque camp a sa base : une piste, des hangars, une tour de contrôle, des aires « H » pour les hélicos, une zone pour les tanks et un parking bien rangé. Et tu peux trouer la piste ennemie pour clouer ses avions au sol ! <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/99-base-aerienne.md</code>.</p>
+          <ul>
+            <li>✍️ « Une base aérienne avec une piste d'atterrissage, des hangars et des zones pour faire décoller les avions, les hélicoptères et les tanks. Range tout. »</li>
+            <li>✍️ « Tu pourras détruire leurs pistes pour empêcher les avions de chasse et les avions de transport de décoller. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 42 ».</li>
+            <li>☐ Ta base (au sud) : la piste, 3 hangars, la tour, les aires H, les tanks en ligne, le parking.</li>
+            <li>☐ La même base chez l'ennemi (au nord) ; pas de base dans le souterrain.</li>
+            <li>☐ Les avions ennemis roulent sur leur piste et décollent.</li>
+            <li>☐ 3 morceaux de piste troués (bombes du Tigre, roquettes, obus…) → piste FERMÉE, une croix jaune, plus d'avions ennemis ni de parachutistes.</li>
+            <li>☐ L'ennemi rebouche un trou toutes les 14 s. Toi, ton ingénieur rebouche ta piste avec l'outil de réparation (Espace, 4 s par trou).</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🧩 Une piste en 8 morceaux</h3>
+      <p>La piste fait 440 m. Le jeu la coupe en 8 morceaux de 55 m. Chaque explosion donne des « points de dégâts » au morceau touché (bombe 2, roquette 1, grenade 0,5…). À 2 points, le morceau est troué. À 3 morceaux troués, la piste ferme. Elle rouvre seulement quand il n'y a plus aucun trou. C'est un compteur par morceau, puis une règle sur le total.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, section « Les bases aériennes (demande 99) » : regarde la barre [▮▮▮▮····] de chaque piste pendant que tu bombardes.</li>
+        <li>Dans <code>tanks/config.js</code>, cherche <code>baseAerienne</code> : combien de morceaux troués faut-il pour fermer la piste ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+        <li>Combien de morceaux troués ferment une piste ? <span class="petit">(3)</span></li>
+        <li>Si l'ennemi ferme TA piste, que peux-tu faire ? <span class="petit">(la réparer avec l'ingénieur)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6465,6 +6504,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-98" data-cle="appris-98" placeholder="Ex. : …"></textarea>
         <label for="idees-98"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-98" data-cle="idees-98" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 99 · les bases aériennes <span class="petit">· 22 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/logique/base.js</code>, <code>tanks/affichage/base3d.js</code>, <code>terrain.js</code>, <code>avions.js</code>, <code>engins.js</code>.</p>
+        <p class="petit">✍️ Maxance a demandé : une base aérienne rangée, et des pistes qu'on peut détruire.</p>
+        <label for="appris-99"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-99" data-cle="appris-99" placeholder="Ex. : …"></textarea>
+        <label for="idees-99"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-99" data-cle="idees-99" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
