@@ -206,17 +206,26 @@ Tanks.EcranCinematique = (function () {
     ctx.fillStyle = "rgba(255,138,31,.95)";
     ctx.font = "600 15px " + POLICE;
     if (T0.etiquette) ctx.fillText(T0.etiquette.toUpperCase().split("").join(" "), L / 2, H * 0.4);
-    ctx.font = "bold 62px " + POLICE;
-    ctx.fillStyle = "#f4f1ea";
+    if (T0.haut) (ctx.fillStyle = "rgba(244,241,234,.8)"), (ctx.font = "16px " + POLICE), ctx.fillText(T0.haut, L / 2, H * 0.4 - 26), (ctx.fillStyle = "rgba(255,138,31,.95)");
+    ctx.font = "bold " + (T0.taille || 62) + "px " + POLICE;
+    ctx.fillStyle = T0.couleur || "#f4f1ea";
     ctx.shadowColor = "rgba(0,0,0,.6)";
     ctx.shadowBlur = 18;
-    if (T0.grand) ctx.fillText(T0.grand, L / 2, H * 0.4 + 66);
+    const dy = Math.max(0, ((T0.taille || 62) - 62) * 0.75); // (un très grand titre, « FIN » : tout descend un peu)
+    if (T0.grand) ctx.fillText(T0.grand, L / 2, H * 0.4 + 66 + dy);
     ctx.shadowBlur = 0;
     ctx.fillStyle = "#ff8a1f";
-    ctx.fillRect(L / 2 - 60 * k, H * 0.4 + 86, 120 * k, 2);
+    ctx.fillRect(L / 2 - 60 * k, H * 0.4 + 86 + dy, 120 * k, 2);
     ctx.font = "17px " + POLICE;
     ctx.fillStyle = "rgba(244,241,234,.85)";
-    if (T0.petit) ctx.fillText(T0.petit.slice(0, Math.floor((t - de) * 40)), L / 2, H * 0.4 + 116);
+    if (T0.petit) {
+      // (un long texte : coupé en lignes, et écrit petit à petit)
+      let reste = Math.floor((t - de) * 40);
+      couper(T0.petit, 860).forEach((l, i) => {
+        ctx.fillText(l.slice(0, Math.max(0, reste)), L / 2, H * 0.4 + 116 + dy + i * 24);
+        reste -= l.length + 1;
+      });
+    }
     ctx.restore();
   }
   function couper(texte, largeur) {

@@ -597,7 +597,21 @@ Tanks.Campagne = (function () {
       etat.chrono += dt;
       jouerEvenements(monde);
       if (etat.index >= 0 && etat.index < etat.objectifs.length) suivreObjectif(monde, dt);
+    } else if (etat.filmFin) {
+      etat.filmDans -= dt;
+      if (etat.filmDans <= 0) filmDeFin(monde);
     } else if (etat.ecranDans > 0) etat.ecranDans = Math.max(0, etat.ecranDans - dt);
+  }
+
+  // (demande 101, morceau 2) Le film de fin : la radio du chapitre se tait (le film a ses répliques), et l'écran de fin
+  // arrive dès que le film est fini (ou passé).
+  function filmDeFin(monde) {
+    const etat = monde.campagne, id = etat.filmFin;
+    etat.filmFin = null;
+    etat.file.length = 0;
+    etat.radio = null;
+    const fini = (m) => m.campagne && (m.campagne.ecranDans = 0);
+    if (!Tanks.Cinematique.lancer(monde, id, { pour: "campagne-fin", alaFin: fini })) etat.ecranDans = 0;
   }
 
   // ------------------------------------------------------------------ la fin : le bilan, les étoiles, le livret
@@ -645,6 +659,14 @@ Tanks.Campagne = (function () {
       }
     }
     Tanks.Sauvegarde.ecrire(reussi ? "campagne : chapitre réussi" : "campagne : chapitre échoué", true);
+    // ✍️ (demande 101, morceau 2) la CINÉMATIQUE DE FIN (config : films.reussite ou films.echec) : elle passe quelques
+    // secondes après la fin (le temps de voir la dernière explosion), puis l'écran de fin arrive juste après elle.
+    const film = ch.films && ch.films[reussi ? "reussite" : "echec"];
+    if (film && Tanks.Cinematique.film(film)) {
+      etat.filmFin = film;
+      etat.filmDans = R.fin;
+      etat.ecranDans = 1e9; // (l'écran attend la fin du film)
+    }
     radio.emettre(reussi ? "campagne-reussie" : "campagne-echouee", Object.assign({ numero: ch.numero, titre: ch.titre, raison: etat.raison }, etat.bilan));
   }
   function reussir(monde) {

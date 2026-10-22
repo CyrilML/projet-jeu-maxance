@@ -520,7 +520,7 @@ Tanks.EcranCampagne = (function () {
     const k = e.code, libres = { KeyM: 1, KeyB: 1, KeyG: 1, F12: 1, F5: 1 };
     if (etat === "jeu") {
       const camp = monde && monde.campagne;
-      if (!camp || camp.etat === "film") return; // (demande 101 : pendant le film, Entrée et Échap sont pour la cinématique)
+      if (!camp || camp.etat === "film" || monde.cinematique) return; // (demande 101 : pendant un film, Entrée et Échap sont pour la cinématique)
       if (camp.etat === "en cours") {
         if (k === "Backspace") e.preventDefault(), e.stopImmediatePropagation(), demander("abandonner");
         return;

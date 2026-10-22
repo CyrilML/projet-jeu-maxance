@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 43,
+  version: 44,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -1252,7 +1252,7 @@ Tanks.CONFIG = {
             fin: [["volk", "Le Scorpion est en feu ! L'oasis est à nous."], ["hargrave", "Superbe travail, Lions. Grâce à vous, l'Alliance n'est plus sourde."]] },
         ],
         etoiles: { temps: 480, eliminations: 10 },
-        films: { ouverture: "ouverture-oasis" }, // ✍️ (demande 101) la cinématique d'ouverture (cinematiques.films, tout en bas)
+        films: { ouverture: "ouverture-oasis", reussite: "fin-oasis-reussite", echec: "fin-oasis-echec" }, // ✍️ (demande 101) les cinématiques d'ouverture et de fin (cinematiques.films, tout en bas)
         reussite: "L'oasis de Tamerin est libérée. Le relais radio fonctionne de nouveau : pour la première fois depuis trois jours, l'Alliance entend ce que prépare le Front…",
       },
       {
@@ -1306,6 +1306,7 @@ Tanks.CONFIG = {
             fin: [["dorn", "Le dernier est à terre. La route du nord est coupée !"], ["varrok", "… Unités du désert, repliez-vous. Je répète, repliez-vous vers la vallée."]] },
         ],
         etoiles: { temps: 540, eliminations: 8 },
+        films: { reussite: "fin-route-reussite", echec: "fin-route-echec" }, // ✍️ (demande 101) les cinématiques de fin
         reussite: "Le convoi ne livrera jamais son essence, et la batterie Épine s'est tue. Mais la radio du Front a parlé : Varrok rassemble ses chars dans la vallée de Morvane.",
       },
       {
@@ -1359,6 +1360,7 @@ Tanks.CONFIG = {
             fin: [["dorn", "LE MAMMOUTH EST EN FEU !"], ["varrok", "… Repliez-vous… Tout le monde, repliez-vous sur Valcourt !"]] },
         ],
         etoiles: { temps: 660, eliminations: 14 },
+        films: { reussite: "fin-enclume-reussite", echec: "fin-enclume-echec" }, // ✍️ (demande 101) les cinématiques de fin
         reussite: "La vallée de Morvane est libre et le Mammouth n'est plus qu'une épave. Le Front recule vers Valcourt, la capitale… où des milliers d'habitants attendent de l'aide.",
       },
       {
@@ -1412,6 +1414,7 @@ Tanks.CONFIG = {
             fin: [["arnaud", "Ils reculent ! Valcourt-Centre est libre !"], ["hargrave", "Bravo, Lion 1. Mais ce n'est pas fini : il reste les ruines de l'ouest."]] },
         ],
         etoiles: { temps: 600, eliminations: 12 },
+        films: { reussite: "fin-valcourt-reussite", echec: "fin-valcourt-echec" }, // ✍️ (demande 101) les cinématiques de fin
         reussite: "Les vivres sont arrivés à la mairie et le centre de Valcourt est libre. Mais à l'ouest, dans les ruines, un de nos hélicos vient de lancer un appel au secours…",
       },
       {
@@ -1470,6 +1473,7 @@ Tanks.CONFIG = {
             fin: [["faucon", "Je te vois à la zone d'extraction, Lion 1. Un camion vient vous chercher. Direction la base !"], ["hargrave", "Mission accomplie, Lion. Et Faucon a vu quelque chose en volant… On en reparle au QG."]] },
         ],
         etoiles: { temps: 660, eliminations: 12 },
+        films: { reussite: "fin-fantome-reussite", echec: "fin-fantome-echec" }, // ✍️ (demande 101) les cinématiques de fin
         reussite: "Faucon 2-1 et son équipage sont sains et saufs. En décollant, ils ont repéré d'où vient le brouillard électronique : de sous la ville, dans le métro…",
       },
       {
@@ -1511,6 +1515,7 @@ Tanks.CONFIG = {
             fin: [["volk", "BROUILLEUR COUPÉ !"], ["varrok", "… C'est fini. Je me rends. Que mes soldats déposent les armes."], ["hargrave", "À toutes les unités de Valdrie : la guerre est finie. Rentrez à la maison, Lions."]] },
         ],
         etoiles: { temps: 540, eliminations: 15 },
+        films: { reussite: "fin-terminus-reussite", echec: "fin-terminus-echec" }, // ✍️ (demande 101) les cinématiques de fin
         reussite: "Le Maréchal Varrok s'est rendu à 4 h 02. Privé de son brouilleur et de son chef, le Front Écarlate a déposé les armes dans la journée. Une à une, les radios de Valdrie se sont rallumées. La guerre est finie : les Lions rentrent à la maison.",
       },
     ],
@@ -1863,6 +1868,8 @@ Tanks.CONFIG.cinematiques = {
     rattrape: 1.6, // × la vitesse du groupe : un soldat en retard rattrape sa place
     entreGestes: [2.5, 6], // s : le temps entre deux gestes d'un même soldat (au hasard entre les deux)
     signe: 0.5, // s : le geste « on avance ! » (le bras en arrière puis en avant)
+    tourneChar: 0.9, // rad/s : un char du film tourne au plus à cette vitesse (morceau 2)
+    fete: { toutesLes: 1.1, saut: 0.28 }, // (morceau 2) « celebre » : un bras levé et un saut de 0,28 m toutes les 1,1 s environ
     gestes: {
       balaye: { duree: 2.4, angle: 0.75, allers: 1.5, tourne: 7.5, ralenti: 0.45 }, // ± 0,75 rad (43°), 1,5 aller-retour, 7,5 rad/s
       retourne: { duree: 2.6, tourne: 4.5 }, // il s'arrête, se retourne (4,5 rad/s) et surveille derrière
@@ -1927,3 +1934,333 @@ Tanks.CONFIG.cinematiques = {
     },
   },
 };
+
+// ✍️ (demande 101, morceau 2) LES 12 CINÉMATIQUES DE FIN DE MISSION : « À chaque fin de mission, une cinématique plus courte
+// que la première, de 50 à 90 secondes. Elle expliquera les conséquences de ta mission : si tu l'as échouée, ce qui se
+// passe, et si tu l'as réussie, ce qui se passe. » Une réussite et un échec pour chacun des 6 chapitres (campagne :
+// chapitres[…].films). Elles passent juste avant l'écran de fin. Les acteurs sont des FIGURANTS (prendre: "figurants"
+// ou "chars", camp: "bleus" ou "rouges") : engagés rien que pour le film, ils marchent même si ton soldat est à terre.
+// « places » : [[x, z, angle], …] = des places fixes (une épave, un groupe qui attend) au lieu d'un chemin ;
+// « epave: true » : des chars détruits qui brûlent ; action « celebre » (duree) : ils sautent de joie, le bras levé.
+// Un titre peut avoir « couleur », « taille » et « haut » (une ligne au-dessus de l'étiquette).
+(function () {
+  const OK = "#ffcf5a", RATE = "#ff5a4a";
+  const accompli = (n, titre, extra) => Object.assign({ etiquette: "Chapitre " + n + " · " + titre, grand: "MISSION ACCOMPLIE", couleur: OK, de: 1, a: 8.5 }, extra || {});
+  const echoue = (n, titre, extra) => Object.assign({ etiquette: "Chapitre " + n + " · " + titre, grand: "MISSION ÉCHOUÉE", couleur: RATE, de: 1, a: 8.5 }, extra || {});
+  const suite = (n, titre, petit) => ({ etiquette: "La suite · chapitre " + n, grand: titre, petit, de: 3.5, a: 10.5 });
+  Object.assign(Tanks.CONFIG.cinematiques.films, {
+    // ---------------------------------------------------------------- chapitre 1 : l'oasis de Tamerin
+    "fin-oasis-reussite": {
+      titre: "Chapitre 1 · réussite", musique: 0.6,
+      decor: { feux: [[0, -40, 1.6], [-23, 12, 1], [44, -12, 1], [25, 40, 0.8]] },
+      acteurs: [
+        { id: "lions", prendre: "figurants", camp: "bleus", nombre: 8, chemin: [[0, 150], [0, 118]], vitesse: 0.9, formation: "colonne", ecart: 2.4, arme: "levee", tactique: { balaye: 0.4, retourne: 0.2 } },
+        { id: "front", prendre: "figurants", camp: "rouges", nombre: 6, chemin: [[0, -60], [0, -230]], vitesse: 2.7, formation: "colonne", ecart: 3, arme: "basse", tactique: { retourne: 0.3 } },
+        { id: "char", prendre: "chars", camp: "bleus", nombre: 1, nom: "Lion", chemin: [[16, 262], [6, 175]], vitesse: 4, depart: 30 },
+        { id: "epave", prendre: "chars", camp: "rouges", nombre: 1, nom: "Scorpion", epave: true, places: [[0, -40, 1.57]] },
+      ],
+      plans: [
+        { nom: "l'oasis libérée", duree: 10, fondu: { entree: 1.5 }, titre: accompli(1, "Le réveil du lion"),
+          camera: { type: "travelling", de: { oeil: [120, 55, 200], cible: [0, 4, 0] }, a: { oeil: [60, 35, 150], cible: [0, 2, 20] } },
+          repliques: [{ a: 3, qui: "hargrave", radio: true, duree: 6.5, texte: "Ici Rempart. Le relais de Tamerin émet de nouveau. Pour la première fois depuis trois jours… on vous entend, Lions." }] },
+        { nom: "le Front s'enfuit", duree: 8, camera: { type: "suivre", acteur: "front", de: [-11, 1.8, 3], a: [-7, 1.6, 2], regardHauteur: 1.3, tremble: 0.08 },
+          repliques: [{ a: 1, qui: "varrok", radio: true, duree: 6, texte: "Tamerin est perdue. Unités du désert, repliez-vous vers le nord. Sauvez les camions !" }] },
+        { nom: "les Lions entrent dans l'oasis", duree: 9, camera: { type: "suivre", acteur: "lions", de: [-10, 1.6, 3], a: [-6, 1.5, 2], regardHauteur: 1.3 },
+          actions: [{ a: 3, acteur: "lions", faire: "halte" }, { a: 3.3, acteur: "lions", faire: "celebre", duree: 16 }],
+          repliques: [{ a: 3.5, qui: "volk", duree: 5, texte: "L'oasis est à nous ! Les Lions, vous avez été magnifiques." }] },
+        { nom: "la joie", duree: 8, camera: { type: "orbite", acteur: "lions", rayon: 8, hauteur: 2.2, de: 0.8, a: 2.2, regardHauteur: 1.2 } },
+        { nom: "ton char arrive", duree: 8, camera: { type: "suivre", acteur: "char", de: [-15, 3, 6], a: [-11, 2.5, 4], regardHauteur: 2 },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 6.5, texte: "Le relais a déjà capté un message du Front : un convoi de ravitaillement traverse le désert de Sahrane." }] },
+        { nom: "la route du désert", duree: 12, fondu: { sortie: 2 }, titre: suite(2, "LA ROUTE DE CENDRE", "En char : intercepte le convoi et fais taire la batterie antiaérienne."),
+          camera: { type: "travelling", de: { oeil: [0, 8, 140], cible: [0, 3, 40] }, a: { oeil: [0, 45, 190], cible: [0, 0, -300] } },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 7, texte: "Ce convoi nourrit l'avant-garde de Varrok. Reposez-vous cette nuit, Lions : demain, on coupe cette route." }] },
+      ],
+    },
+    "fin-oasis-echec": {
+      titre: "Chapitre 1 · échec", musique: 0.4,
+      decor: { feux: [[0, 0, 1.8], [12, 90, 1.2], [-23, 12, 1.5], [6, 150, 1], [44, -12, 1]] },
+      acteurs: [
+        { id: "lions", prendre: "figurants", camp: "bleus", nombre: 7, chemin: [[0, 140], [0, 290]], vitesse: 1.6, formation: "colonne", ecart: 2.6, arme: "levee", tactique: { retourne: 0.6 } },
+        { id: "front", prendre: "figurants", camp: "rouges", nombre: 8, chemin: [[0, -20], [0, 125]], vitesse: 1.0, formation: "colonne", ecart: 2.8, arme: "levee", tactique: { balaye: 0.5, retourne: 0.2 } },
+        { id: "chars", prendre: "chars", camp: "rouges", nombre: 1, nom: "Scorpion", chemin: [[0, -330], [0, -90]], vitesse: 4 },
+      ],
+      plans: [
+        { nom: "l'oasis tombée", duree: 9, fondu: { entree: 1.5 }, titre: echoue(1, "Le réveil du lion"),
+          camera: { type: "travelling", de: { oeil: [120, 55, 200], cible: [0, 4, 0] }, a: { oeil: [70, 38, 160], cible: [0, 2, 10] } },
+          repliques: [{ a: 3, qui: "varrok", radio: true, duree: 5.8, texte: "Ici le Maréchal Varrok. Tamerin est à moi, et son relais aussi. Valdrie restera sourde." }] },
+        { nom: "le Front avance", duree: 8, camera: { type: "suivre", acteur: "front", de: [-11, 1.7, 3], a: [-7, 1.5, 2], regardHauteur: 1.3, tremble: 0.06 } },
+        { nom: "les Lions se replient", duree: 9, camera: { type: "suivre", acteur: "lions", de: [-12, 1.8, -3], a: [-8, 1.6, -2], regardHauteur: 1.3, tremble: 0.1 },
+          repliques: [{ a: 1, qui: "volk", duree: 5, texte: "On ne peut pas tenir ! Repliez-vous dans les dunes, je couvre !" }] },
+        { nom: "un char dans l'oasis", duree: 8, camera: { type: "suivre", acteur: "chars", de: [-16, 3, 6], a: [-12, 2.6, 4], regardHauteur: 2 },
+          repliques: [{ a: 1, qui: "hargrave", radio: true, duree: 6, texte: "Un char du Front dans l'oasis… Lions, décrochez. Ne perdez pas un seul homme." }] },
+        { nom: "dans les dunes", duree: 8, camera: { type: "orbite", acteur: "lions", rayon: 10, hauteur: 3, de: 2, a: 3, regardHauteur: 1.2 },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 6.5, texte: "Sans le relais, nous sommes aveugles. Le Front va ravitailler ses troupes sans être vu." }] },
+        { nom: "Tamerin brûle", duree: 12, fondu: { sortie: 2.5 }, musique: 0.3,
+          titre: { grand: "L'OASIS EST TOMBÉE", couleur: RATE, petit: "Le relais reste muet. Mais les Lions ne renoncent jamais : réessaie la mission pour libérer Tamerin.", de: 3, a: 11 },
+          camera: { type: "travelling", de: { oeil: [-40, 6, 230], cible: [0, 4, 0] }, a: { oeil: [-60, 40, 300], cible: [0, 2, 0] } },
+          repliques: [{ a: 0.5, qui: "volk", duree: 3.5, texte: "On reviendra, Lion 1. On reviendra." }] },
+      ],
+    },
+    // ---------------------------------------------------------------- chapitre 2 : la route de cendre (désert)
+    "fin-route-reussite": {
+      titre: "Chapitre 2 · réussite", musique: 0.6,
+      decor: { feux: [[-300, -170, 1.6], [-330, -165, 1.4], [-270, -178, 1.4], [-112, -495, 1.2], [-82, -515, 1.2], [-128, -528, 1.2]] },
+      acteurs: [
+        { id: "epaves", prendre: "chars", camp: "rouges", epave: true, nom: "Convoi", places: [[-300, -170, 0.1], [-330, -165, 0.05], [-270, -178, 0.2]] },
+        { id: "lions", prendre: "figurants", camp: "bleus", nombre: 6, chemin: [[-262, -140], [-262, -150]], vitesse: 0.6, formation: "ligne", ecart: 2.2, arme: "levee" },
+        { id: "front", prendre: "figurants", camp: "rouges", nombre: 7, chemin: [[-120, -470], [-170, -720]], vitesse: 2.8, formation: "colonne", ecart: 3, arme: "basse", tactique: { retourne: 0.3 } },
+        { id: "marteau", prendre: "chars", camp: "bleus", nombre: 3, nom: "Marteau", chemin: [[-250, -60], [-250, -300], [-200, -560]], vitesse: 5, depart: 25, formation: "colonne", ecart: 16, largeur: 0 },
+      ],
+      plans: [
+        { nom: "le convoi brûle", duree: 10, fondu: { entree: 1.5 }, titre: accompli(2, "La route de cendre"),
+          camera: { type: "travelling", de: { oeil: [-200, 45, -60], cible: [-300, 2, -170] }, a: { oeil: [-360, 30, -90], cible: [-300, 2, -175] } },
+          repliques: [{ a: 3.5, qui: "dorn", radio: true, duree: 5.5, texte: "Le convoi brûle encore. Pas une goutte d'essence n'arrivera à Varrok." }] },
+        { nom: "les Lions fêtent", duree: 9, camera: { type: "orbite", acteur: "lions", rayon: 8, hauteur: 2, de: 1, a: 2.4, regardHauteur: 1.2 },
+          actions: [{ a: 0, acteur: "lions", faire: "celebre", duree: 16 }],
+          repliques: [{ a: 2, qui: "tonnerre", radio: true, duree: 6, texte: "Ici Tonnerre. La batterie Épine s'est tue : le ciel du désert est à nous !" }] },
+        { nom: "le Front s'enfuit", duree: 8, camera: { type: "suivre", acteur: "front", de: [-12, 1.8, 4], a: [-8, 1.6, 3], regardHauteur: 1.3, tremble: 0.08 },
+          repliques: [{ a: 1, qui: "varrok", radio: true, duree: 6.5, texte: "Unités du désert, repliez-vous vers la vallée de Morvane. Tous mes chars, rassemblement !" }] },
+        { nom: "Marteau roule vers le nord", duree: 10, camera: { type: "suivre", acteur: "marteau", de: [26, 6, 10], a: [18, 4, 8], regardHauteur: 2 },
+          repliques: [{ a: 1, qui: "dorn", radio: true, duree: 4.5, texte: "Marteau, en colonne derrière moi. Direction le nord !" }] },
+        { nom: "le chef de char", duree: 8, camera: { type: "suivre", acteur: "marteau.0", de: [-16, 2.6, 5], a: [-11, 2.1, 3], regardHauteur: 2 },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 6.5, texte: "Varrok rassemble ses blindés dans la vallée de Morvane, sur la route de la capitale." }] },
+        { nom: "vers la vallée", duree: 12, fondu: { sortie: 2 }, titre: suite(3, "L'ENCLUME", "La grande bataille : brise la ligne de chars, prends le village, abats le Mammouth."),
+          camera: { type: "travelling", de: { oeil: [-250, 30, -350], cible: [-150, 5, -800] }, a: { oeil: [-250, 70, -420], cible: [0, 0, -1000] } },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 8, texte: "Toute la 7e Brigade se prépare : ce sera l'opération Enclume. Et toi, Lion 1, tu seras la pointe de l'attaque." }] },
+      ],
+    },
+    "fin-route-echec": {
+      titre: "Chapitre 2 · échec", musique: 0.4,
+      decor: { feux: [[-200, -120, 1.6], [-112, -470, 0.8]] },
+      acteurs: [
+        { id: "convoi", prendre: "chars", camp: "rouges", nombre: 4, nom: "Convoi", chemin: [[-620, -140], [-320, -170], [0, -230], [240, -330]], vitesse: 6, formation: "colonne", ecart: 18, largeur: 0 },
+        { id: "fete", prendre: "figurants", camp: "rouges", nombre: 6, chemin: [[-100, -470], [-100, -476]], vitesse: 0.5, formation: "ligne", ecart: 2.2, arme: "levee" },
+        { id: "marteau", prendre: "chars", camp: "bleus", nombre: 2, nom: "Marteau", chemin: [[-250, 150], [-250, 330]], vitesse: 4, formation: "colonne", ecart: 16, largeur: 0 },
+        { id: "epave", prendre: "chars", camp: "bleus", epave: true, nom: "Marteau 2", places: [[-200, -120, 2]] },
+      ],
+      plans: [
+        { nom: "le convoi passe", duree: 9, fondu: { entree: 1.5 }, titre: echoue(2, "La route de cendre"),
+          camera: { type: "travelling", de: { oeil: [-450, 40, -40], cible: [-560, 2, -150] }, a: { oeil: [-380, 30, -60], cible: [-470, 2, -160] } },
+          repliques: [{ a: 3, qui: "varrok", radio: true, duree: 6, texte: "Le convoi passe. Mon avant-garde aura son essence, et vos avions resteront au sol." }] },
+        { nom: "la colonne du Front", duree: 8, camera: { type: "suivre", acteur: "convoi", de: [-30, 5, 12], a: [-22, 3.5, 9], regardHauteur: 2 } },
+        { nom: "la batterie fête", duree: 8, camera: { type: "orbite", acteur: "fete", rayon: 9, hauteur: 2.5, de: 0.5, a: 1.6, regardHauteur: 1.2 },
+          actions: [{ a: 0, acteur: "fete", faire: "celebre", duree: 10 }],
+          repliques: [{ a: 1, qui: "tonnerre", radio: true, duree: 6, texte: "Ici Tonnerre. La batterie tire toujours : impossible de passer. On fait demi-tour." }] },
+        { nom: "Marteau décroche", duree: 9, camera: { type: "suivre", acteur: "marteau", de: [-20, 3.5, 6], a: [-15, 3, 5], regardHauteur: 2 },
+          repliques: [{ a: 0.5, qui: "dorn", radio: true, duree: 7.5, texte: "Marteau, on décroche ! On a perdu Marteau 2… l'équipage est sorti à temps, on les a récupérés." }] },
+        { nom: "l'épave", duree: 8, camera: { type: "orbite", acteur: "epave", rayon: 14, hauteur: 4, de: 0, a: 1, regardHauteur: 1.5 },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 6.5, texte: "Avec cette essence, les chars de Varrok vont rouler jusqu'à la vallée de Morvane." }] },
+        { nom: "la route est ouverte", duree: 12, fondu: { sortie: 2.5 }, musique: 0.3,
+          titre: { grand: "LA ROUTE EST OUVERTE", couleur: RATE, petit: "Le Front se ravitaille… Réessaie la mission pour couper la route du désert.", de: 3, a: 11 },
+          camera: { type: "travelling", de: { oeil: [-150, 20, -120], cible: [0, 2, -230] }, a: { oeil: [-200, 60, -60], cible: [100, 0, -300] } },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 6, texte: "Rentre à la base, Lion 1. On recommencera, et cette fois, on les arrêtera." }] },
+      ],
+    },
+    // ---------------------------------------------------------------- chapitre 3 : l'enclume (la grande bataille)
+    "fin-enclume-reussite": {
+      titre: "Chapitre 3 · réussite", musique: 0.65,
+      decor: { feux: [[300, -560, 2], [90, -170, 1.4], [-90, -170, 1.4], [-210, -90, 1.2], [0, -40, 1]] },
+      acteurs: [
+        { id: "epaves", prendre: "chars", camp: "rouges", epave: true, nom: "Épave", places: [[300, -560, 1.2], [90, -170, 2], [-90, -170, 1]] },
+        { id: "front", prendre: "chars", camp: "rouges", nombre: 3, nom: "Front", chemin: [[0, -260], [0, -760]], vitesse: 6, formation: "colonne", ecart: 18, largeur: 0 },
+        { id: "fuyards", prendre: "figurants", camp: "rouges", nombre: 6, chemin: [[20, -220], [20, -520]], vitesse: 2.8, formation: "colonne", ecart: 3, arme: "basse", tactique: { retourne: 0.3 } },
+        { id: "marteau", prendre: "chars", camp: "bleus", nombre: 3, nom: "Marteau", chemin: [[0, 280], [0, 70]], vitesse: 5, depart: 12, formation: "colonne", ecart: 16, largeur: 0 },
+        { id: "lions", prendre: "figurants", camp: "bleus", nombre: 9, chemin: [[0, 50], [0, 20]], vitesse: 1, formation: "colonne", ecart: 2.4, arme: "levee", tactique: { balaye: 0.3 } },
+      ],
+      plans: [
+        { nom: "le Mammouth en feu", duree: 10, fondu: { entree: 1.5 }, titre: accompli(3, "L'enclume"),
+          camera: { type: "travelling", de: { oeil: [150, 70, -300], cible: [300, 3, -560] }, a: { oeil: [220, 40, -430], cible: [300, 3, -560] } },
+          repliques: [{ a: 3, qui: "dorn", radio: true, duree: 6, texte: "Le Mammouth est en feu ! Leur chef a perdu son char de commandement !" }] },
+        { nom: "le Front recule", duree: 8, camera: { type: "suivre", acteur: "front", de: [24, 5, 8], a: [32, 8, 10], regardHauteur: 2 },
+          repliques: [{ a: 1, qui: "varrok", radio: true, duree: 5, texte: "… Repliez-vous… Tout le monde, repliez-vous sur Valcourt !" }] },
+        { nom: "Marteau entre dans la vallée", duree: 9, camera: { type: "suivre", acteur: "marteau", de: [-22, 3, 6], a: [-16, 2.5, 4], regardHauteur: 2 },
+          repliques: [{ a: 1, qui: "hargrave", radio: true, duree: 7, texte: "À toutes les unités : la vallée de Morvane est libre. L'opération Enclume est un succès !" }] },
+        { nom: "le village est à nous", duree: 9, camera: { type: "orbite", acteur: "lions", rayon: 8, hauteur: 2.2, de: 0.5, a: 2, regardHauteur: 1.2 },
+          actions: [{ a: 0, acteur: "lions", faire: "halte" }, { a: 0.2, acteur: "lions", faire: "celebre", duree: 14 }],
+          repliques: [{ a: 1, qui: "volk", duree: 4.5, texte: "On a tenu le village ! Bravo, les Lions !" }] },
+        { nom: "les fuyards", duree: 8, camera: { type: "suivre", acteur: "fuyards", de: [-11, 1.8, 3], a: [-7, 1.6, 2], regardHauteur: 1.3, tremble: 0.08 } },
+        { nom: "vers Valcourt", duree: 12, fondu: { sortie: 2 }, titre: suite(4, "LES RUES DE VALCOURT", "Escorte le camion de vivres jusqu'à la mairie, à travers les rues."),
+          camera: { type: "travelling", de: { oeil: [0, 10, 120], cible: [0, 4, 0] }, a: { oeil: [0, 60, 250], cible: [0, 0, -600] } },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 8, texte: "Le Front recule vers Valcourt, notre capitale. Des milliers d'habitants y attendent de l'aide depuis des semaines." }] },
+      ],
+    },
+    "fin-enclume-echec": {
+      titre: "Chapitre 3 · échec", musique: 0.4,
+      decor: { feux: [[-40, 180, 1.6], [50, 220, 1.6], [0, 0, 1.2], [-20, 60, 1], [30, -30, 1]] },
+      acteurs: [
+        { id: "front", prendre: "chars", camp: "rouges", nombre: 4, nom: "Front", chemin: [[0, -420], [0, 0], [0, 320]], vitesse: 6, formation: "colonne", ecart: 18, largeur: 0 },
+        { id: "epaves", prendre: "chars", camp: "bleus", epave: true, nom: "Marteau", places: [[-40, 180, 1], [50, 220, 2]] },
+        { id: "lions", prendre: "figurants", camp: "bleus", nombre: 8, chemin: [[0, 330], [0, 530]], vitesse: 1.8, formation: "colonne", ecart: 2.6, arme: "levee", tactique: { retourne: 0.6 } },
+        { id: "fete", prendre: "figurants", camp: "rouges", nombre: 7, chemin: [[0, 30], [0, 12]], vitesse: 1, formation: "colonne", ecart: 2.4, arme: "levee" },
+      ],
+      plans: [
+        { nom: "la vallée perdue", duree: 9, fondu: { entree: 1.5 }, titre: echoue(3, "L'enclume"),
+          camera: { type: "travelling", de: { oeil: [140, 60, 200], cible: [0, 4, 0] }, a: { oeil: [90, 40, 140], cible: [0, 2, 0] } },
+          repliques: [{ a: 3, qui: "varrok", radio: true, duree: 5.5, texte: "La vallée de Morvane est à moi. Et maintenant… Valcourt." }] },
+        { nom: "les chars du Front", duree: 9, camera: { type: "suivre", acteur: "front", de: [-30, 4, 10], a: [-22, 3, 8], regardHauteur: 2 } },
+        { nom: "le Front au village", duree: 8, camera: { type: "orbite", acteur: "fete", rayon: 8, hauteur: 2.4, de: 0.5, a: 1.8, regardHauteur: 1.2 },
+          actions: [{ a: 0, acteur: "fete", faire: "celebre", duree: 10 }] },
+        { nom: "les Lions se replient", duree: 9, camera: { type: "suivre", acteur: "lions", de: [-12, 1.9, -4], a: [-9, 1.7, -3], regardHauteur: 1.3, tremble: 0.1 },
+          repliques: [{ a: 1, qui: "volk", duree: 5.5, texte: "Repliez-vous ! Emmenez les blessés, personne ne reste derrière !" }] },
+        { nom: "les épaves de Marteau", duree: 8, camera: { type: "orbite", acteur: "epaves.0", rayon: 15, hauteur: 4, de: 0, a: 1, regardHauteur: 1.5 },
+          repliques: [{ a: 0.5, qui: "dorn", radio: true, duree: 7, texte: "Marteau a perdu deux chars. Les équipages sont sortis à temps… mais la ligne est brisée." }] },
+        { nom: "la route de Valcourt", duree: 12, fondu: { sortie: 2.5 }, musique: 0.3,
+          titre: { grand: "LA VALLÉE EST PERDUE", couleur: RATE, petit: "Le Front marche sur Valcourt. Réessaie l'opération Enclume pour l'arrêter.", de: 3, a: 11 },
+          camera: { type: "travelling", de: { oeil: [0, 12, 380], cible: [0, 3, 200] }, a: { oeil: [0, 55, 520], cible: [0, 0, 0] } },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 7, texte: "La route de Valcourt est ouverte au Front. Il faudra reprendre la vallée, coûte que coûte." }] },
+      ],
+    },
+    // ---------------------------------------------------------------- chapitre 4 : les rues de Valcourt (la ville)
+    "fin-valcourt-reussite": {
+      titre: "Chapitre 4 · réussite", musique: 0.6,
+      decor: { feux: [[0, -150, 1.5], [38, -76, 1.2], [-76, 38, 1.2], [-40, 100, 0.8]] },
+      acteurs: [
+        { id: "lions", prendre: "figurants", camp: "bleus", nombre: 8, chemin: [[0, 4], [0, -22]], vitesse: 0.9, formation: "colonne", ecart: 2.4, arme: "levee", tactique: { balaye: 0.3 } },
+        { id: "front", prendre: "figurants", camp: "rouges", nombre: 6, chemin: [[0, -120], [0, -320]], vitesse: 2.8, formation: "colonne", ecart: 3, arme: "basse", tactique: { retourne: 0.3 } },
+        { id: "marteau", prendre: "chars", camp: "bleus", nombre: 1, nom: "Marteau", chemin: [[0, 150], [0, 50]], vitesse: 3.5, depart: 24 },
+        { id: "epave", prendre: "chars", camp: "rouges", epave: true, nom: "Sanglier", places: [[0, -150, 1.57]] },
+      ],
+      plans: [
+        { nom: "la mairie", duree: 10, fondu: { entree: 1.5 }, titre: accompli(4, "Les rues de Valcourt"),
+          camera: { type: "travelling", de: { oeil: [120, 70, 150], cible: [0, 3, -30] }, a: { oeil: [60, 45, 80], cible: [0, 2, -30] } },
+          repliques: [{ a: 3, qui: "arnaud", radio: true, duree: 6.5, texte: "Le camion est arrivé ! Il y a du pain, de l'eau, des médicaments… Merci, les Lions." }] },
+        { nom: "les Lions à la mairie", duree: 9, camera: { type: "suivre", acteur: "lions", de: [-10, 1.8, 2], a: [-6.5, 1.6, 1.5], regardHauteur: 1.3 },
+          actions: [{ a: 2, acteur: "lions", faire: "halte" }, { a: 2.2, acteur: "lions", faire: "celebre", duree: 12 }],
+          repliques: [{ a: 1, qui: "volk", duree: 5.5, texte: "Valcourt-Centre est libre ! Regardez, les habitants sortent de la mairie !" }] },
+        { nom: "le Front quitte le centre", duree: 8, camera: { type: "suivre", acteur: "front", de: [-10, 1.8, 2], a: [-7, 1.6, 1.5], regardHauteur: 1.3, tremble: 0.08 },
+          repliques: [{ a: 1, qui: "varrok", radio: true, duree: 6, texte: "Valcourt-Centre est perdu… Gardez l'ouest. Les ruines doivent tenir, quoi qu'il arrive." }] },
+        { nom: "Marteau dans la grande rue", duree: 8, camera: { type: "suivre", acteur: "marteau", de: [-16, 3, 2], a: [-12, 2.6, 1.5], regardHauteur: 2 },
+          repliques: [{ a: 1, qui: "dorn", radio: true, duree: 5, texte: "Plus un char du Front dans le quartier. La grande rue est à nous." }] },
+        { nom: "un appel de l'ouest", duree: 9, camera: { type: "travelling", de: { oeil: [0, 30, -60], cible: [-200, 5, -60] }, a: { oeil: [20, 45, -40], cible: [-300, 0, -80] } },
+          repliques: [{ a: 0.5, qui: "faucon", radio: true, duree: 7, texte: "Mayday, mayday ! Ici Faucon 2-1, on est touchés ! On se pose en urgence dans les ruines de l'ouest !" }] },
+        { nom: "vers les ruines", duree: 11, fondu: { sortie: 2 }, titre: suite(5, "LA VILLE FANTÔME", "À pied dans les ruines : sauve Faucon 2-1 et détruis trois canons antiaériens."),
+          camera: { type: "travelling", de: { oeil: [20, 45, -40], cible: [-300, 0, -80] }, a: { oeil: [60, 80, 20], cible: [-400, 0, -100] } },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 7, texte: "Faucon est au sol dans Valcourt-Ouest. Lion 1, prépare-toi : on part le chercher à l'aube." }] },
+      ],
+    },
+    "fin-valcourt-echec": {
+      titre: "Chapitre 4 · échec", musique: 0.4,
+      decor: { feux: [[0, 120, 1.8], [38, -76, 1], [-76, 38, 1], [0, -38, 0.8]] },
+      acteurs: [
+        { id: "front", prendre: "figurants", camp: "rouges", nombre: 9, chemin: [[0, -200], [0, -50]], vitesse: 1.2, formation: "colonne", ecart: 2.6, arme: "levee", tactique: { balaye: 0.5, retourne: 0.2 } },
+        { id: "chars", prendre: "chars", camp: "rouges", nombre: 1, nom: "Sanglier", chemin: [[0, -430], [0, -110]], vitesse: 4 },
+        { id: "lions", prendre: "figurants", camp: "bleus", nombre: 7, chemin: [[0, 60], [0, 270]], vitesse: 1.8, formation: "colonne", ecart: 2.6, arme: "levee", tactique: { retourne: 0.6 } },
+      ],
+      plans: [
+        { nom: "la ville encerclée", duree: 9, fondu: { entree: 1.5 }, titre: echoue(4, "Les rues de Valcourt"),
+          camera: { type: "travelling", de: { oeil: [120, 70, 200], cible: [0, 3, 0] }, a: { oeil: [70, 48, 140], cible: [0, 2, 0] } },
+          repliques: [{ a: 3, qui: "varrok", radio: true, duree: 6, texte: "Le camion n'arrivera jamais. Valcourt a faim… et Valcourt se rendra." }] },
+        { nom: "le Front marche sur la mairie", duree: 9, camera: { type: "suivre", acteur: "front", de: [-10, 1.8, 2], a: [-7, 1.6, 1.5], regardHauteur: 1.3, tremble: 0.06 } },
+        { nom: "le char du Front", duree: 8, camera: { type: "suivre", acteur: "chars", de: [-16, 3, 2], a: [-12, 2.6, 1.5], regardHauteur: 2 } },
+        { nom: "les Lions reculent", duree: 9, camera: { type: "suivre", acteur: "lions", de: [-10, 1.8, -2], a: [-8, 1.6, -1.5], regardHauteur: 1.3, tremble: 0.1 },
+          repliques: [{ a: 1, qui: "volk", duree: 4.5, texte: "On recule jusqu'au pont ! Je répète, on recule !" }] },
+        { nom: "le camion brûle", duree: 8, camera: { type: "travelling", de: { oeil: [15, 8, 150], cible: [0, 1, 120] }, a: { oeil: [10, 6, 142], cible: [0, 1, 120] } },
+          repliques: [{ a: 0.5, qui: "arnaud", radio: true, duree: 7, texte: "Mairie à Rempart… Nous n'avons presque plus rien. Nous tiendrons encore un peu… venez vite." }] },
+        { nom: "Valcourt a faim", duree: 12, fondu: { sortie: 2.5 }, musique: 0.3,
+          titre: { grand: "VALCOURT A FAIM", couleur: RATE, petit: "Les habitants attendent toujours. Réessaie la mission pour apporter les vivres à la mairie.", de: 3, a: 11 },
+          camera: { type: "travelling", de: { oeil: [0, 15, 200], cible: [0, 3, 0] }, a: { oeil: [0, 70, 300], cible: [0, 0, -100] } },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 5.5, texte: "Les habitants comptent sur nous, Lion 1. On ne les abandonnera pas." }] },
+      ],
+    },
+    // ---------------------------------------------------------------- chapitre 5 : la ville fantôme (les ruines)
+    "fin-fantome-reussite": {
+      titre: "Chapitre 5 · réussite", musique: 0.6,
+      decor: { feux: [[38, -38, 1.4], [76, -114, 1.4], [-38, -152, 1.4], [0, -120, 1.2]] },
+      acteurs: [
+        { id: "lions", prendre: "figurants", camp: "bleus", nombre: 7, chemin: [[-100, 0], [-150, 0]], vitesse: 1.2, formation: "colonne", ecart: 2.4, arme: "levee", tactique: { balaye: 0.4, retourne: 0.2 } },
+        { id: "front", prendre: "figurants", camp: "rouges", nombre: 5, chemin: [[38, -60], [38, -260]], vitesse: 2.6, formation: "colonne", ecart: 3, arme: "basse", tactique: { retourne: 0.3 } },
+        { id: "epave", prendre: "chars", camp: "rouges", epave: true, nom: "Chacal", places: [[-38, -76, 1]] },
+      ],
+      plans: [
+        { nom: "Faucon s'envole", duree: 10, fondu: { entree: 1.5 }, titre: accompli(5, "La ville fantôme"),
+          camera: { type: "travelling", de: { oeil: [-250, 60, 150], cible: [-76, 3, 0] }, a: { oeil: [-200, 40, 90], cible: [-76, 3, 0] } },
+          repliques: [{ a: 3, qui: "faucon", radio: true, duree: 6, texte: "Ici Faucon 2-1, en vol ! Tout l'équipage est sain et sauf. Merci, Lion 1." }] },
+        { nom: "vers l'extraction", duree: 9, camera: { type: "suivre", acteur: "lions", de: [-10, 1.8, 2], a: [-7, 1.6, 1.5], regardHauteur: 1.3, tremble: 0.05 },
+          repliques: [{ a: 1, qui: "moreau", radio: true, duree: 5, texte: "Je descends des toits. Plus un ennemi en vue dans les ruines." }] },
+        { nom: "le Front quitte les ruines", duree: 8, camera: { type: "suivre", acteur: "front", de: [-10, 1.8, 2], a: [-7, 1.6, 1.5], regardHauteur: 1.3, tremble: 0.08 },
+          repliques: [{ a: 1, qui: "varrok", radio: true, duree: 6, texte: "Laissez les ruines ! Tout le monde au Terminus. Protégez la machine, à tout prix !" }] },
+        { nom: "extraction réussie", duree: 9, camera: { type: "suivre", acteur: "lions", de: [-8, 2, 2], a: [-6, 1.8, 1.5], regardHauteur: 1.2 },
+          actions: [{ a: 0, acteur: "lions", faire: "halte" }, { a: 0.3, acteur: "lions", faire: "celebre", duree: 12 }],
+          repliques: [{ a: 1, qui: "volk", duree: 5, texte: "Extraction réussie ! Le camion arrive, on rentre à la base." }] },
+        { nom: "sous la ville", duree: 9, camera: { type: "travelling", de: { oeil: [-150, 25, 40], cible: [0, 0, 0] }, a: { oeil: [-120, 55, 60], cible: [60, -20, 0] } },
+          repliques: [{ a: 0.5, qui: "faucon", radio: true, duree: 8, texte: "Rempart, en volant au-dessus de la ville, nos instruments ont trouvé la source du brouillard. Elle est sous Valcourt… dans le métro." }] },
+        { nom: "Terminus", duree: 11, fondu: { sortie: 2 }, titre: suite(6, "TERMINUS", "Le final, à pied dans le métro : arrête le Brouilleur et le Maréchal Varrok."),
+          camera: { type: "travelling", de: { oeil: [-120, 55, 60], cible: [60, -20, 0] }, a: { oeil: [-60, 90, 120], cible: [60, -40, -40] } },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 6.5, texte: "Le Brouilleur… et sûrement Varrok avec lui. Lions, cette nuit, on descend dans le métro." }] },
+      ],
+    },
+    "fin-fantome-echec": {
+      titre: "Chapitre 5 · échec", musique: 0.4,
+      decor: { feux: [[38, -38, 1], [-76, 76, 1.2], [0, 0, 1], [76, -114, 1]] },
+      acteurs: [
+        { id: "front", prendre: "figurants", camp: "rouges", nombre: 9, chemin: [[60, 76], [-50, 76]], vitesse: 1.1, formation: "colonne", ecart: 2.6, arme: "levee", tactique: { balaye: 0.5, retourne: 0.2 } },
+        { id: "chars", prendre: "chars", camp: "rouges", nombre: 1, nom: "Chacal", chemin: [[220, 76], [-10, 76]], vitesse: 3.5, depart: 8 },
+        { id: "lions", prendre: "figurants", camp: "bleus", nombre: 6, chemin: [[-114, 120], [-114, 290]], vitesse: 1.8, formation: "colonne", ecart: 2.6, arme: "levee", tactique: { retourne: 0.6 } },
+      ],
+      plans: [
+        { nom: "les ruines", duree: 9, fondu: { entree: 1.5 }, titre: echoue(5, "La ville fantôme"),
+          camera: { type: "travelling", de: { oeil: [-250, 60, 150], cible: [-76, 3, 76] }, a: { oeil: [-200, 42, 120], cible: [-76, 3, 76] } },
+          repliques: [{ a: 3, qui: "varrok", radio: true, duree: 5.5, texte: "Vos pilotes sont mes prisonniers. Votre hélicoptère est à moi." }] },
+        { nom: "le Front encercle l'hélico", duree: 9, camera: { type: "suivre", acteur: "front", de: [-10, 1.8, 2], a: [-7, 1.6, 1.5], regardHauteur: 1.3, tremble: 0.06 } },
+        { nom: "un char dans les ruines", duree: 8, camera: { type: "suivre", acteur: "chars", de: [-16, 3, 2], a: [-12, 2.6, 1.5], regardHauteur: 2 } },
+        { nom: "les Lions décrochent", duree: 9, camera: { type: "suivre", acteur: "lions", de: [-10, 1.8, -2], a: [-8, 1.6, -1.5], regardHauteur: 1.3, tremble: 0.1 },
+          repliques: [{ a: 1, qui: "moreau", radio: true, duree: 4.5, texte: "Je n'ai plus d'angle de tir ! On décroche, Lion 1 !" }] },
+        { nom: "le dernier appel", duree: 8, camera: { type: "travelling", de: { oeil: [-110, 22, 140], cible: [-76, 2, 76] }, a: { oeil: [-125, 32, 170], cible: [-76, 2, 76] } },
+          repliques: [{ a: 0.5, qui: "faucon", radio: true, duree: 6.5, texte: "… Ici Faucon 2-1… ils sont partout… on se rend. Prévenez Rempart…" }] },
+        { nom: "le brouillard reste", duree: 12, fondu: { sortie: 2.5 }, musique: 0.3,
+          titre: { grand: "FAUCON EST PRISONNIER", couleur: RATE, petit: "Le brouillard couvre toujours Valdrie. Réessaie la mission pour sauver l'équipage.", de: 3, a: 11 },
+          camera: { type: "travelling", de: { oeil: [-125, 32, 170], cible: [-76, 2, 76] }, a: { oeil: [-160, 75, 260], cible: [0, 0, 0] } },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 6, texte: "Ils sont vivants. On les ramènera, Lion 1. Je te le promets." }] },
+      ],
+    },
+    // ---------------------------------------------------------------- chapitre 6 : Terminus (le métro, le final)
+    "fin-terminus-reussite": {
+      titre: "Chapitre 6 · la fin de la guerre", musique: 0.8,
+      acteurs: [
+        { id: "lions", prendre: "figurants", camp: "bleus", nombre: 8, chemin: [[-66, 7], [-54, 7]], vitesse: 0.8, formation: "colonne", ecart: 2.2, largeur: 1.3, arme: "levee" },
+        { id: "front", prendre: "figurants", camp: "rouges", nombre: 6, arme: "basse", places: [[-58, -8, 1.57], [-54, -8, 1.57], [-50, -8, 1.57], [-46, -8, 1.57], [-42, -8, 1.57], [-38, -8, 1.57]] },
+        { id: "sortie", prendre: "figurants", camp: "bleus", nombre: 6, chemin: [[-22, 7], [27, 7]], vitesse: 1.1, depart: 22, formation: "colonne", ecart: 2.4, largeur: 1.3, arme: "basse" },
+      ],
+      plans: [
+        { nom: "le Brouilleur coupé", duree: 9, fondu: { entree: 1.5 }, titre: accompli(6, "Terminus", { grand: "BROUILLEUR COUPÉ" }),
+          camera: { type: "travelling", de: { oeil: [-20, 3, 10], cible: [-62, 1.5, 6] }, a: { oeil: [-34, 2.6, 10], cible: [-62, 1.5, 6] } },
+          repliques: [{ a: 3, qui: "volk", duree: 5, texte: "Le Brouilleur est coupé ! Les radios… les radios se rallument !" }] },
+        { nom: "la joie des Lions", duree: 9, camera: { type: "suivre", acteur: "lions", de: [-6, 1.8, 1], a: [-4.5, 1.7, 0.8], regardHauteur: 1.3 },
+          actions: [{ a: 0, acteur: "lions", faire: "halte" }, { a: 0.2, acteur: "lions", faire: "celebre", duree: 16 }],
+          repliques: [{ a: 1, qui: "hargrave", radio: true, duree: 6, texte: "Ici Rempart. Je vous entends ! Je vous entends fort et clair, Lions !" }] },
+        { nom: "Varrok se rend", duree: 9, camera: { type: "travelling", de: { oeil: [-48, 2.2, 2], cible: [-48, 1.2, -8] }, a: { oeil: [-44, 2, 1], cible: [-48, 1.2, -8] } },
+          repliques: [{ a: 1, qui: "varrok", duree: 6, texte: "… C'est fini. Je me rends. Que mes soldats déposent les armes." }] },
+        { nom: "on rentre à la maison", duree: 9, camera: { type: "suivre", acteur: "sortie", de: [5, 1.9, 1], a: [6, 2.1, 1.2], regard: [29, 2, 7] },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 6.5, texte: "À toutes les unités de Valdrie : la guerre est finie. Rentrez à la maison, Lions." }] },
+        { nom: "épilogue", duree: 10, camera: { type: "travelling", de: { oeil: [60, 4, -10], cible: [-20, 1.5, 5] }, a: { oeil: [66, 4.6, -7], cible: [-20, 1.5, 5] } },
+          titre: { etiquette: "Épilogue", grand: "LA PAIX", couleur: OK, petit: "Le Maréchal Varrok s'est rendu à 4 h 02. Le Front Écarlate a déposé les armes, et une à une, les radios de Valdrie se sont rallumées.", de: 1, a: 9.5 },
+          repliques: [{ a: 0.5, qui: "arnaud", radio: true, duree: 7, texte: "Ici Valcourt… les cloches sonnent dans toute la ville. Merci, les Lions. Merci pour tout." }] },
+        { nom: "fin", duree: 10, fondu: { sortie: 3 }, musique: 0.9,
+          camera: { type: "travelling", de: { oeil: [66, 4.6, -7], cible: [-20, 1.5, 5] }, a: { oeil: [72, 5, -4], cible: [-20, 2, 5] } },
+          titre: { etiquette: "The Last Battlefield", grand: "FIN", taille: 110, couleur: OK, petit: "un jeu de Maxance", de: 0.5, a: 9.8 } },
+      ],
+    },
+    "fin-terminus-echec": {
+      titre: "Chapitre 6 · échec", musique: 0.35,
+      acteurs: [
+        { id: "front", prendre: "figurants", camp: "rouges", nombre: 10, chemin: [[-60, -7], [30, -7]], vitesse: 1.0, formation: "colonne", ecart: 2.4, largeur: 1.3, arme: "levee", tactique: { balaye: 0.5, retourne: 0.2 } },
+        { id: "lions", prendre: "figurants", camp: "bleus", nombre: 6, chemin: [[-10, 7], [27, 7]], vitesse: 1.6, formation: "colonne", ecart: 2.4, largeur: 1.3, arme: "levee", tactique: { retourne: 0.6 } },
+      ],
+      plans: [
+        { nom: "le Brouilleur tourne", duree: 9, fondu: { entree: 1.5 }, titre: echoue(6, "Terminus"),
+          camera: { type: "travelling", de: { oeil: [-20, 3, 0], cible: [-80, 2, 0] }, a: { oeil: [-30, 2.6, 0], cible: [-80, 2, 0] } },
+          repliques: [{ a: 3, qui: "varrok", radio: true, duree: 5.5, texte: "Le Brouilleur tourne toujours. Valdrie restera dans le silence… pour toujours." }] },
+        { nom: "la garde avance", duree: 9, camera: { type: "suivre", acteur: "front", de: [-9, 1.8, 1], a: [-6.5, 1.6, 0.8], regardHauteur: 1.3, tremble: 0.06 } },
+        { nom: "les Lions remontent", duree: 9, camera: { type: "suivre", acteur: "lions", de: [-8, 1.8, -0.6], a: [-6, 1.6, -0.5], regardHauteur: 1.3, tremble: 0.1 },
+          repliques: [{ a: 1, qui: "volk", duree: 5, texte: "On ne passera pas ! Remontez à la surface, tout de suite !" }] },
+        { nom: "plus rien", duree: 9, camera: { type: "travelling", de: { oeil: [60, 4, -10], cible: [-20, 1.5, 5] }, a: { oeil: [56, 3.6, -8], cible: [-20, 1.5, 5] } },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 7, texte: "Lion 1, ici Rempart… Lion 1, tu m'entends ?… Plus rien. Le brouillard est revenu." }] },
+        { nom: "Varrok s'enfuit", duree: 9, camera: { type: "travelling", de: { oeil: [-50, 3, -10], cible: [-100, 2, -2] }, a: { oeil: [-60, 2.6, -8], cible: [-110, 2, 0] } },
+          repliques: [{ a: 0.5, qui: "hargrave", radio: true, duree: 7, texte: "Varrok s'est enfui par les tunnels. Il faut retourner au Terminus avant qu'il ne recommence." }] },
+        { nom: "dans le noir", duree: 11, fondu: { sortie: 4 }, musique: 0.25,
+          titre: { grand: "VALDRIE RESTE DANS LE NOIR", couleur: RATE, taille: 54, petit: "Mais les Lions ne renoncent jamais. Réessaie le chapitre pour couper le Brouilleur.", de: 1, a: 10 },
+          camera: { type: "travelling", de: { oeil: [-60, 2.6, -8], cible: [-110, 2, 0] }, a: { oeil: [-66, 2.4, -7], cible: [-110, 2, 0] } } },
+      ],
+    },
+  });
+})();
