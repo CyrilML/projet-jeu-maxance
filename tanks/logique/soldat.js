@@ -65,7 +65,7 @@ Tanks.Soldat = (function () {
     const ecart = Math.abs(angleEntre(vers - s.angle)); // 0 : le coup va dans le sens où il regarde (dans le dos)
     let genre;
     if (par === "ecrase" || par === "effondrement") genre = "ecrase";
-    else if (["grenade", "roquette", "obus", "bombe", "missile"].includes(par)) genre = "explosion";
+    else if (["grenade", "roquette", "obus", "bombe", "missile", "mine", "c4", "claymore"].includes(par)) genre = "explosion"; // (demande 98 : et les explosifs posés)
     else if (Math.random() < K.chanceTete) genre = "tete";
     else if (Math.random() < K.chanceGenoux) genre = "genoux";
     else genre = ecart < K.dos ? "dos" : ecart > Math.PI - K.dos ? "face" : Math.random() < 0.5 ? "dos" : "face";
@@ -274,6 +274,8 @@ Tanks.Soldat = (function () {
     if (s.armes) {
       Tanks.Armes.avancer(s, intentions, dt, monde, ev);
       Tanks.Gadgets.avancer(s, intentions, dt, monde, ev);
+      // (demande 98) ton explosif n'est pas la grenade ? c'est le sapeur qui s'en occupe (logique/explosifs.js)
+      if (s.poche) return void Tanks.Explosifs.avancer(s, intentions, dt, monde, ev);
       if (s.arme !== "grenades") return;
     }
     // (étape 75) une GRENADE : la tienne (arme 4), ou celle d'un soldat de l'ordinateur (« intentions.grenade » : où la lancer)

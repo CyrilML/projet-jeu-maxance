@@ -69,6 +69,8 @@ Tanks.Monde = (function () {
     monde.bateaux = [];
     monde.sousMarins = [];
     monde.avions = [];
+    monde.explosifs = []; // (demande 98 : les explosifs posés et les nuages de fumée)
+    monde.fumees = [];
     monde.toi = { mode: "char", engin: null, soldat: null };
   }
 
@@ -316,12 +318,13 @@ Tanks.Monde = (function () {
     // étape 61 : E (sortir / monter) et 1, 2, 3 (changer d'arme)
     if (enJeu && intentions.monter) sortirOuMonter(monde);
     if (toi) {
-      // (étape 77) 1 pistolet, 2 ton arme principale, 3 ton gadget, 4 les grenades
+      // (étape 77) 1 pistolet, 2 ton arme principale, 3 ton gadget, 4 ton explosif (demande 98 : grenades, ou ta poche d'explosifs)
       for (const [k, arme] of [["arme1", "pistolet"], ["arme2", "principale"], ["arme3", "gadget"], ["arme4", "grenades"]]) {
         if (intentions[k] && toi.arme !== arme) {
           toi.arme = arme;
-          const f = arme === "grenades" ? C.armes.grenades : arme === "gadget" ? toi.gadget.fiche : toi.armes[arme].stats;
-          radio.emettre("arme", { nom: f.nom, icone: f.icone, grenades: arme === "grenades" ? toi.grenades : undefined });
+          const poche = arme === "grenades" && toi.poche;
+          const f = poche ? C.explosifs[poche.id] : arme === "grenades" ? C.armes.grenades : arme === "gadget" ? toi.gadget.fiche : toi.armes[arme].stats;
+          radio.emettre("arme", { nom: f.nom, icone: f.icone, grenades: arme === "grenades" && !poche ? toi.grenades : undefined, explosif: poche ? poche.id : undefined, nombre: poche ? poche.nombre : undefined });
         }
       }
     }
@@ -433,6 +436,7 @@ Tanks.Monde = (function () {
     }
     for (const [nom, d] of Tanks.Obus.avancer(monde.obus, monde, dt)) annoncer(nom, d);
     if (enJeu) for (const [nom, d] of Tanks.Gadgets.etape(monde, dt, []) || []) annoncer(nom, d);
+    if (enJeu) for (const [nom, d] of Tanks.Explosifs.etape(monde, dt, [])) annoncer(nom, d); // (demande 98 : les mines, les claymores, les C4 collés, les nuages)
     // (étape 67) TA VIE REMONTE : pas touché depuis 5 s ? Ton soldat et ton tank se soignent doucement.
     if (enJeu) {
       if (toi && (toi.dansUnEngin || toi.parachute)) toi.touche += dt; // (dans un engin, le temps passe aussi pour lui)

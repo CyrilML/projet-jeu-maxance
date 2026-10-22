@@ -49,9 +49,10 @@ Tanks.Equipement = (function () {
   // et les pièces de l'arme et du pistolet. (demande 97 : une arme encore sous cadenas est remplacée par la 1re débloquée)
   function choix() {
     const e = S().equipement, classe = C.classes[e.classe] ? e.classe : "assaut", K = C.classes[classe];
-    const dans = (liste, x) => (liste.includes(x) ? x : liste[0]);
     const debloquee = (liste, x) => (liste.includes(x) && PR().armeDebloquee(x) ? x : liste.find((a) => PR().armeDebloquee(a)) || liste[0]);
-    const arme = debloquee(K.armes, (e.armes || {})[classe]), gadget = dans(K.gadgets, (e.gadgets || {})[classe]), explosif = dans(K.explosifs, (e.explosifs || {})[classe]);
+    // (demande 98) un gadget ou un explosif sous cadenas : le 1er de la liste (toujours libre)
+    const libre = (type, x) => (K[type + "s"].includes(x) && PR().outilDebloque(classe, type, x) ? x : K[type + "s"][0]);
+    const arme = debloquee(K.armes, (e.armes || {})[classe]), gadget = libre("gadget", (e.gadgets || {})[classe]), explosif = libre("explosif", (e.explosifs || {})[classe]);
     const pistolet = debloquee(Object.keys(C.pistolets), e.pistolet);
     const pieces = piecesValides(arme, (e.pieces || {})[arme]), piecesPistolet = piecesValides(pistolet, (e.pieces || {})[pistolet]);
     return { classe, arme, gadget, explosif, pieces, pistolet, piecesPistolet };
@@ -121,7 +122,10 @@ Tanks.Equipement = (function () {
     } else if (type === "gadget" || type === "explosif") {
       const liste = C.classes[c.classe][type + "s"];
       if (!liste.includes(valeur)) return false;
-      e[type + "s"][c.classe] = valeur;
+      const F = (type === "gadget" ? C.gadgets : C.explosifs)[valeur];
+      if (!PR().outilDebloque(c.classe, type, valeur)) return refuser(F.nom, "débloqué au niveau de joueur " + F.niveau + " (tu es niveau " + PR().niveauJoueur().niveau + ")"); // (demande 98)
+      (e[type + "s"] = e[type + "s"] || {})[c.classe] = valeur;
+      radio.emettre(type + "-choisi", { nom: F.nom, icone: F.icone, classe: C.classes[c.classe].nom });
     } else if (type === "piece") {
       const armeId = valeur.arme || c.arme, F = fiche(armeId);
       if (!F || !emplacementsDe(armeId).includes(valeur.emplacement)) return false;
@@ -149,6 +153,7 @@ Tanks.Equipement = (function () {
     s.armes = { pistolet: arme(c.pistolet, c.piecesPistolet), principale: arme(c.arme, c.pieces) };
     s.gadget = { id: c.gadget, fiche: C.gadgets[c.gadget], attente: 0, munitions: C.gadgets[c.gadget].munitions || 0, regain: 0, part: 0 };
     s.explosif = c.explosif;
+    Tanks.Explosifs.equiper(s); // (demande 98 : tes mines, ton C4, ta claymore ou tes fumigènes)
     s.arme = "principale";
     s.visee = 0;
     s.dispersionRecul = 0;

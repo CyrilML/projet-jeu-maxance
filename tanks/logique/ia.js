@@ -35,7 +35,7 @@ Tanks.IA = (function () {
       if (o.equipe === c.equipe || o.detruit) continue;
       const d = Math.hypot(o.x - c.x, o.z - c.z);
       if ((o.genre === "bateau" || o.genre === "sousmarin") && d > 150) continue; // (étape 63 : un bateau, seulement s'il est tout près)
-      const voit = T.vueLibre(c.x, c.y + 2.4, c.z, o.x, o.y + 1.5, o.z);
+      const voit = T.vueLibre(c.x, c.y + 2.4, c.z, o.x, o.y + 1.5, o.z) && !Tanks.Explosifs.fumee(c.x, c.y + 2.4, c.z, o.x, o.y + 1.5, o.z); // (demande 98 : pas à travers un fumigène)
       const s = d * (voit ? 1 : 1.8);
       if (s < score) (score = s), (meilleur = o);
     }
@@ -139,7 +139,7 @@ Tanks.IA = (function () {
     ia.regard = (ia.regard || 0) - dt;
     if (ia.regard <= 0) {
       ia.regard = 0.2;
-      ia.voit = d < I.portee && T.vueLibre(c.x, c.y + 2.4, c.z, cible.x, cible.y + 1.5, cible.z);
+      ia.voit = d < I.portee && T.vueLibre(c.x, c.y + 2.4, c.z, cible.x, cible.y + 1.5, cible.z) && !Tanks.Explosifs.fumee(c.x, c.y + 2.4, c.z, cible.x, cible.y + 1.5, cible.z); // (demande 98)
     }
     ia.sansVue = ia.voit ? 0 : ia.sansVue + dt;
     if (aligne && ia.voit && c.recharge === 0 && c.feuLibre !== false) { // (sauf si tu as dit « cessez le feu »)

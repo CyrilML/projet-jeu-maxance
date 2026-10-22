@@ -8,6 +8,8 @@
 //   - Chaque ARME a aussi son propre carnet : les ennemis abattus AVEC elle lui donnent des points, et son NIVEAU D'ARME
 //     débloque ses pièces et ses peintures, une par une.
 //   - Au début : la 1re arme de chaque classe, le 1er pistolet et la 1re pièce de chaque liste sont débloqués.
+//   - (demande 98) Les GADGETS et les EXPLOSIFS aussi : le 1er de chaque classe est libre, le 2e se débloque à son
+//     « niveau » de joueur (config.js : « gadgets », « explosifs »).
 //   - ✍️ Tout est écrit dans la sauvegarde (donnees/sauvegarde.js) : ta progression est gardée quand tu reviens.
 // Il compte aussi le BILAN de la bataille en cours (les XP par catégorie), que l'écran de fin montre en barres.
 // Pour tester seulement : l'adresse « …/tanks/index.html?toutdebloquer=1 » débloque tout (sans rien écrire dans la sauvegarde).
@@ -50,6 +52,28 @@ Tanks.Progression = (function () {
     if (toutDebloque || p === A.pieces[0] || (p.niveau || 0) <= niveauArme(armeId).niveau) return true;
     return ((carnet().cadeaux.pieces || {})[armeId] || []).includes(emp + ":" + pieceId);
   }
+  // (demande 98) Un gadget ou un explosif (type : "gadget" ou "explosif") : le 1er de la liste de sa classe est toujours
+  // libre ; les autres, quand ton niveau de joueur atteint leur « niveau ».
+  const ficheOutil = (type, id) => (type === "gadget" ? C.gadgets : C.explosifs)[id];
+  function outilDebloque(classe, type, id) {
+    const K = C.classes[classe], liste = K && K[type + "s"], F = ficheOutil(type, id);
+    if (!F || !liste || !liste.includes(id)) return false;
+    return toutDebloque || id === liste[0] || (F.niveau || 0) <= niveauJoueur().niveau;
+  }
+  // Les gadgets et explosifs débloqués pile au niveau n (pas le 1er d'une classe : il est libre).
+  function outilsAuNiveau(n) {
+    const l = [];
+    for (const type of ["gadget", "explosif"]) {
+      const vus = {};
+      for (const k in C.classes) for (const id of C.classes[k][type + "s"].slice(1)) {
+        const F = ficheOutil(type, id);
+        if (vus[id] || (F.niveau || 0) !== n || Object.keys(C.classes).some((k2) => C.classes[k2][type + "s"][0] === id)) continue;
+        vus[id] = true;
+        l.push({ id, type, nom: F.nom, icone: F.icone, classe: Object.keys(C.classes).filter((k2) => C.classes[k2][type + "s"].includes(id)).map((k2) => C.classes[k2].nom).join(", ") });
+      }
+    }
+    return l;
+  }
   // Les armes débloquées pile au niveau de joueur n, et les pièces d'une arme débloquées pile à son niveau n.
   const toutesLesArmes = () => Object.keys(C.armesPrincipales).concat(Object.keys(C.pistolets));
   const armesAuNiveau = (n) => toutesLesArmes().filter((id) => (fiche(id).niveau || 0) === n);
@@ -69,7 +93,10 @@ Tanks.Progression = (function () {
     const E = Tanks.Equipement, armes = toutesLesArmes();
     let pieces = 0, piecesTotal = 0;
     for (const a of armes) for (const emp of E.emplacementsDe(a)) for (const p of E.piecesDe(a, emp)) (piecesTotal++), pieceDebloquee(a, emp, p.id) && pieces++;
-    return { armes: armes.filter(armeDebloquee).length, armesTotal: armes.length, pieces, piecesTotal };
+    // (demande 98) les gadgets et les explosifs (chaque paire « classe + outil » compte une fois)
+    let outils = 0, outilsTotal = 0;
+    for (const k in C.classes) for (const type of ["gadget", "explosif"]) for (const id of C.classes[k][type + "s"]) (outilsTotal++), outilDebloque(k, type, id) && outils++;
+    return { armes: armes.filter(armeDebloquee).length, armesTotal: armes.length, pieces, piecesTotal, outils, outilsTotal };
   }
 
   // ------------------------------------------------------------------ LE BILAN DE LA BATAILLE EN COURS
@@ -104,8 +131,9 @@ Tanks.Progression = (function () {
     const apres = niveauJoueur();
     for (let n = avant.niveau + 1; n <= apres.niveau; n++) {
       const armes = armesAuNiveau(n).map((id) => ({ id, nom: fiche(id).nom, classe: fiche(id).classe ? C.classes[fiche(id).classe].nom : "Pistolet" }));
-      if (bataille) bataille.niveaux.push(n), bataille.debloques.push(...armes.map((a) => ({ groupe: "Armes", nom: a.nom })));
-      radio.emettre("niveau-joueur", { niveau: n, armes });
+      const outils = outilsAuNiveau(n); // (demande 98 : les gadgets et les explosifs)
+      if (bataille) bataille.niveaux.push(n), bataille.debloques.push(...armes.map((a) => ({ groupe: "Armes", nom: a.nom })), ...outils.map((o) => ({ groupe: o.type === "gadget" ? "Gadgets" : "Explosifs", nom: o.icone + " " + o.nom })));
+      radio.emettre("niveau-joueur", { niveau: n, armes, outils });
     }
     if (F && xpArme) {
       const na = niveauArme(armeId);
@@ -174,7 +202,7 @@ Tanks.Progression = (function () {
   radio.ecouter("campagne-objectif", () => bataille && !bataille.fini && gagner("objectif", 1));
 
   return {
-    niveauJoueur, niveauArme, niveauDe, xpDuNiveau, armeDebloquee, pieceDebloquee, armesAuNiveau, piecesAuNiveau, prochainePiece, comptes, gagner, noter, finir,
+    niveauJoueur, niveauArme, niveauDe, xpDuNiveau, armeDebloquee, pieceDebloquee, outilDebloque, outilsAuNiveau, armesAuNiveau, piecesAuNiveau, prochainePiece, comptes, gagner, noter, finir,
     brancher: (m) => (monde = m), get bataille() { return bataille; }, get toutDebloque() { return toutDebloque; },
   };
 })();

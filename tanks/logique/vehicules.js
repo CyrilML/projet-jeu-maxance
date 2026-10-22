@@ -239,7 +239,7 @@ Tanks.Vehicules = (function () {
     for (const s of monde.soldats) if (!s.mort && !s.dansUnEngin && !s.parachute && s.equipe !== v.equipe && Math.abs(s.x - v.x) < V.vue && Math.abs(s.z - v.z) < V.vue) ajouter(s);
     for (const o of legers(monde)) if (o.equipe !== v.equipe) ajouter(o);
     parDistance.sort(plusProche);
-    for (const p of parDistance) if (T.vueLibre(v.x, v.y + 1.5, v.z, p.o.x, p.o.y + 1.2, p.o.z)) return p.o;
+    for (const p of parDistance) if (T.vueLibre(v.x, v.y + 1.5, v.z, p.o.x, p.o.y + 1.2, p.o.z) && !Tanks.Explosifs.fumee(v.x, v.y + 1.5, v.z, p.o.x, p.o.y + 1.2, p.o.z)) return p.o; // (demande 98 : pas à travers un fumigène)
     return null;
   }
 

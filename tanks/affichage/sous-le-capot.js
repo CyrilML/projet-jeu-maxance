@@ -40,6 +40,8 @@
 // personne (ses triangles, le recul, l'arme baissée), la lampe et le laser, et combien de modèles sont au magasin.
 // Demande 97 : LES DÉBLOCAGES : ton niveau et tes points d'expérience, le niveau de chaque arme, combien d'armes et de
 // pièces sont débloquées, l'équipement choisi avec ses chiffres finaux, les points de la bataille en cours, la vitrine.
+// Demande 98 : LES EXPLOSIFS : ta poche (mines, C4, claymores, fumigènes), ce que tu as posé et où, ce qui les déclenche,
+// les nuages de fumée (et combien de bouffées sont dessinées) ; combien de gadgets et d'explosifs sont débloqués.
 // Demande 94 : LA RADIO QUI PARLE : les voix (allumées ou coupées, combien de voix françaises), la phrase dite en ce
 // moment, la file d'attente (et l'importance de chaque phrase), les dernières phrases, les pauses du bavardage, les
 // indicatifs des soldats (et qui est infirmier ou mécanicien), et qui va te soigner ou réparer ton char.
@@ -64,7 +66,17 @@ Tanks.SousLeCapot = (function () {
     classe: (d) => "🎖️ Tu choisis la classe " + d.icone + " " + d.nom,
     // demande 97 : l'armurerie et les déblocages
     xp: (d) => "⭐ +" + d.xp + " XP : " + d.icone + " " + d.nom + (d.fois > 1 ? " × " + d.fois : "") + (d.arme && d.xpArme ? " · ton " + d.arme + " +" + d.xpArme + " XP" : "") + " (total " + d.total.toLocaleString("fr-FR") + " XP)",
-    "niveau-joueur": (d) => "🎖️ NIVEAU SUPÉRIEUR ! Tu passes niveau " + d.niveau + (d.armes.length ? " · 🔓 débloqué : " + d.armes.map((a) => a.nom).join(", ") : ""),
+    "niveau-joueur": (d) => "🎖️ NIVEAU SUPÉRIEUR ! Tu passes niveau " + d.niveau + (d.armes.length || (d.outils || []).length ? " · 🔓 débloqué : " + d.armes.map((a) => a.nom).concat((d.outils || []).map((o) => o.icone + " " + o.nom + " (" + (o.type === "gadget" ? "gadget" : "explosif") + ", " + o.classe + ")")).join(", ") : ""),
+    // demande 98 : les gadgets et les explosifs (déblocages, et les explosifs en bataille)
+    "gadget-choisi": (d) => "🧰 Gadget choisi pour " + d.classe + " : " + d.icone + " " + d.nom,
+    "explosif-choisi": (d) => "💣 Explosif choisi pour " + d.classe + " : " + d.icone + " " + d.nom,
+    "explosif-pose": (d) => d.icone + " " + (d.parToi ? "Tu " : d.tireur + " ") + (d.lance ? "lances un fumigène (il fume dans " + virgule(C.posesEnBataille.meche, 1) + " s)" : "poses " + (d.sorte === "c4" ? "un C4" : "une " + d.nom.toLowerCase()) + (d.sur ? " collé sur " + d.sur : " par terre") + " (" + d.poses + " / " + d.maxPoses + " posés" + (d.sorte === "c4" ? " · R pour le faire sauter" : " · elle s'arme en " + virgule(C.posesEnBataille.armement, 1) + " s") + ")") + " · il t'en reste " + d.reste + " / " + d.max,
+    "explosif-explose": (d) => "💥 " + (d.sorte === "c4" ? "Le C4" : "La " + d.nom.toLowerCase()) + (d.parToi ? " (à toi)" : d.tireur ? " de " + d.tireur : "") + " saute : " + d.cause + " · " + d.soldats + " soldat(s) dans le souffle · " + d.vehicules + " véhicule(s) abîmé(s) · posé" + (d.sorte === "c4" ? "" : "e") + " depuis " + d.age + " s",
+    "c4-declenche": (d) => "📡 Tu appuies sur R : " + d.nombre + " C4 reçoivent le signal (le plus proche à " + d.distance + " m de toi)",
+    fumee: (d) => "💨 Le fumigène" + (d.parToi ? "" : d.tireur ? " de " + d.tireur : "") + " fume : un nuage de " + d.rayon + " m de rayon pendant " + d.duree + " s · l'ordinateur ne voit plus au travers (" + d.nuages + " nuage(s))",
+    "fumee-finie": (d) => "🌬️ Un nuage de fumée s'est dissipé (après " + d.duree + " s)",
+    "explosif-retire": (d) => "♻️ Plus de " + d.max + " " + d.nom.toLowerCase() + " posés : le plus vieux est retiré",
+    explosifs: (d) => d.icone + " " + (d.camp ? "Au camp : " + d.nom.toLowerCase() + " au complet (" + d.nombre + " / " + d.max + ")" : "Tu regagnes 1 " + d.nom.toLowerCase() + " (" + d.nombre + " / " + d.max + ", 1 toutes les " + d.regain + " s)"),
     "niveau-arme": (d) => "🔫 " + d.arme + " passe niveau " + d.niveau + (d.pieces.length ? " · 🔓 " + d.pieces.map((p) => p.icone + " " + p.nom).join(", ") : ""),
     "bilan-xp": (d) => "🏅 Bilan de la bataille : +" + d.total.toLocaleString("fr-FR") + " XP (" + d.categories + " sortes de points)" + (d.niveau > d.depart ? " · niveau " + d.depart + " → " + d.niveau : " · niveau " + d.niveau) + (d.mvp ? " · 🥇 MVP" : "") + (d.debloques ? " · " + d.debloques + " déblocage(s)" : ""),
     verrouille: (d) => "🔒 " + d.nom + " : " + d.raison,
@@ -174,7 +186,7 @@ Tanks.SousLeCapot = (function () {
     ejection: (d) => (d.abattu ? "🔥 Ton Rafale est abattu ! " : "") + "🪂 Éjection à " + d.hauteur + " m de haut ! Tu redescends en parachute à " + C.engins.parachute + " m/s",
     atterrissage: () => "🪂 Tu touches le sol : te voilà à pied",
     impossible: (d) => "✋ Impossible : " + d.raison,
-    arme: (d) => "🎒 Tu prends : " + d.icone + " " + d.nom + (d.grenades !== undefined ? " (" + d.grenades + " dans ta poche : Espace en lance une, elle explose après " + C.grenades.meche + " s)" : ""),
+    arme: (d) => "🎒 Tu prends : " + d.icone + " " + d.nom + (d.explosif ? " (" + d.nombre + " dans ta poche : Espace " + (d.explosif === "fumigene" ? "en lance un" : "en pose un") + (d.explosif === "c4" ? ", R les fait sauter" : "") + ")" : "") + (d.grenades !== undefined ? " (" + d.grenades + " dans ta poche : Espace en lance une, elle explose après " + C.grenades.meche + " s)" : ""),
     balle: (d) => (d.touche ? "🔫 Ta balle touche" : d.ricochet ? "🔫 Ta balle ricoche sur un blindé" : "🔫 Ta balle rate") + (d.matiere && !d.touche ? " (matière : " + d.matiere + ")" : ""),
     // demande 92
     "balle-frole": (d) => "🐝 Une balle de " + d.tireur + " (à " + d.distance + " m) te frôle à " + virgule(d.ecart, 1) + " m" + (d.crac ? " : CRAC ! (elle va plus vite que le son)" : " : elle siffle"),
@@ -184,7 +196,7 @@ Tanks.SousLeCapot = (function () {
     // étape 85
     "soldat-tombe": (d) => ({ tete: "💥 ", dos: "⤵️ ", face: "⤴️ ", genoux: "🧎 ", explosion: "💨 ", ecrase: "🛞 " }[d.genre] || "") + d.cible + " : " + ({ tete: "balle dans la tête, il s'écroule", dos: "touché dans le dos, il tombe en avant", face: "touché de face, il part en arrière", genoux: "il tombe à genoux… puis en avant", explosion: "projeté par l'explosion", ecrase: "écrasé, il s'aplatit" }[d.genre] || d.genre),
     "soldat-touche": (d) => "🩹 " + d.cible + " est touché par " + d.tireur + " (vie " + d.vie + ")",
-    "soldat-mort": (d) => "✖ " + d.cible + " est à terre (" + ({ chute: "tombé de la corde de " + d.tireur, ecrase: "écrasé par " + d.tireur, bombe: "bombe de " + d.tireur, missile: "missile de " + d.tireur, grenade: "grenade de " + d.tireur, effondrement: "écrasé sous une maison qui s'effondre", roquette: "roquette de " + d.tireur, obus: "obus de " + d.tireur }[d.par] || "balle de " + d.tireur) + ")",
+    "soldat-mort": (d) => "✖ " + d.cible + " est à terre (" + ({ chute: "tombé de la corde de " + d.tireur, ecrase: "écrasé par " + d.tireur, bombe: "bombe de " + d.tireur, missile: "missile de " + d.tireur, grenade: "grenade de " + d.tireur, effondrement: "écrasé sous une maison qui s'effondre", mine: "mine de " + d.tireur, c4: "C4 de " + d.tireur, claymore: "claymore de " + d.tireur, roquette: "roquette de " + d.tireur, obus: "obus de " + d.tireur }[d.par] || "balle de " + d.tireur) + ")",
   };
 
   function initialiser(m) {
@@ -197,6 +209,7 @@ Tanks.SousLeCapot = (function () {
       const f = MESSAGES[nom];
       if (!f || !journal) return;
       if (nom === "impact" && d.sur === "char") return; // (déjà dit par « touche »)
+      if (nom === "impact" && d.pose) return; // (demande 98 : déjà dit par « explosif-explose »)
       if (nom === "arbre-ecrase" && d.nom !== "toi") return; // (seulement les tiens, sinon le journal déborde)
       // (24 soldats tirent sans arrêt : on n'écrit que TES balles qui touchent ou ricochent, et ce qui t'arrive à toi)
       if (nom === "balle" && !(d.parToi && (d.touche || d.ricochet))) return;
@@ -364,7 +377,7 @@ Tanks.SousLeCapot = (function () {
   }
 
   // (étape 77) Le nom de l'arme en main.
-  const nomArme = (s) => !s.armes ? C.armes[s.arme].icone + " " + C.armes[s.arme].nom : s.arme === "grenades" ? "💣 grenades" : s.arme === "gadget" ? s.gadget.fiche.icone + " " + s.gadget.fiche.nom : s.armes[s.arme].stats.icone + " " + s.armes[s.arme].stats.nom;
+  const nomArme = (s) => !s.armes ? C.armes[s.arme].icone + " " + C.armes[s.arme].nom : s.arme === "grenades" ? (s.poche ? C.explosifs[s.poche.id].icone + " " + C.explosifs[s.poche.id].nom : "💣 grenades") : s.arme === "gadget" ? s.gadget.fiche.icone + " " + s.gadget.fiche.nom : s.armes[s.arme].stats.icone + " " + s.armes[s.arme].stats.nom;
   // (étape 77) TA CLASSE ET TON ÉQUIPEMENT : ta classe, ton arme avec ses 7 pièces et ses VRAIS chiffres, l'assistance à la
   // visée, ton gadget et ce qu'il a fait (soins, réparations, marques).
   function lignesEquipement(l, s) {
@@ -464,13 +477,25 @@ Tanks.SousLeCapot = (function () {
     l.push(["soins · réparations", O.soins + " points de vie rendus · " + O.reparations + " points de blindage réparés" + (aides.length ? " · en route : " + aides.map((o) => o.indicatif + " " + Tanks.Ordres.enMots(o) + " (" + Math.round(Math.hypot(o.x - Tanks.Ordres.ici(monde).x, o.z - Tanks.Ordres.ici(monde).z)) + " m)").join(", ") : "")]);
   }
 
+  // (demande 98) LES EXPLOSIFS EN BATAILLE : ta poche, ce que tu as posé (et où), les nuages de fumée.
+  function lignesExplosifs(l, s) {
+    const p = s.poche, X = C.explosifs, liste = monde.explosifs || [], fumees = monde.fumees || [], B3 = Tanks.Explosifs3D.bilan;
+    l.push(["Les explosifs (demande 98)"]);
+    l.push(["ton explosif (touche 4)", p ? X[p.id].icone + " " + X[p.id].nom + " · " + p.nombre + " / " + X[p.id].nombre + " dans ta poche" + (p.nombre < X[p.id].nombre ? " (+1 dans " + Math.ceil(X[p.id].regain - p.regain) + " s, ou tous à ton camp)" : "") : "💣 grenades (" + s.grenades + " / " + C.grenades.nombre + ")"]);
+    const miens = liste.filter((e) => e.tireur === s), compte = (id) => miens.filter((e) => e.id === id).length;
+    l.push(["tes explosifs posés", miens.length ? ["mineAT", "c4", "claymore"].filter(compte).map((id) => X[id].icone + " " + compte(id) + " / " + X[id].max + " " + X[id].nom.toLowerCase()).join(" · ") + " → " + miens.slice(0, 6).map((e) => X[e.id].icone + " à " + Math.round(Math.hypot(e.x - s.x, e.z - s.z)) + " m" + (e.sur ? " (collé sur " + (e.sur.nom || e.sur.sorte) + ")" : "") + (e.age < C.posesEnBataille.armement && e.id !== "c4" ? " (s'arme…)" : "")).join(" · ") : "aucun"]);
+    l.push(["ce qui les déclenche", "⭕ mine : un véhicule ennemi à moins de " + virgule(X.mineAT.declenche, 1) + " m (" + C.projectiles.mine.degatsChar + " dégâts) · 📦 claymore : un soldat ennemi à moins de " + X.claymore.declenche + " m dans ± " + Math.round((X.claymore.cone * 180) / Math.PI) + "° (les billes vont à " + X.claymore.portee + " m) · 🧨 C4 : R (" + C.projectiles.c4.degatsChar + " dégâts à " + virgule(C.projectiles.c4.rayonChar, 1) + " m)"]);
+    l.push(["nuages de fumée", fumees.length ? fumees.map((f) => "💨 à " + Math.round(Math.hypot(f.x - s.x, f.z - s.z)) + " m, encore " + Math.ceil(f.duree - f.age) + " s").join(" · ") + " · l'ordinateur ne voit pas au travers (jusqu'à " + C.posesEnBataille.nuage.hauteur + " m de haut)" : "aucun"]);
+    l.push(["dessin (maquettes · fumée)", B3.poses + " maquettes posées · " + B3.nuages + " nuage(s) · " + B3.bouffees + " bouffées de fumée imprimées depuis le début (" + C.posesEnBataille.nuage.bouffees.join(" / ") + " par seconde selon la qualité)"]);
+  }
+
   // (demande 97) LES DÉBLOCAGES : tes points d'expérience, ton niveau, celui de chaque arme, ce qui est débloqué, et les
   // vrais chiffres de l'arme choisie avec toutes ses pièces (le « build »).
   function lignesProgression(l) {
     const PR = Tanks.Progression, P = C.progression, n = PR.niveauJoueur(), k = PR.comptes(), c = Tanks.Equipement.choix(), b = PR.bataille;
     l.push(["Les déblocages (demande 97)"]);
     l.push(["toi", "niveau " + n.niveau + " / " + P.joueur.max + " · " + n.xp.toLocaleString("fr-FR") + " XP en tout · " + (n.max ? "niveau maximum" : n.dans + " / " + n.pour + " XP vers le niveau " + (n.niveau + 1) + " (il faut " + P.joueur.base + " + " + P.joueur.pas + " × (niveau − 1))") + (PR.toutDebloque ? " · 🔓 ?toutdebloquer=1 (test)" : "") + " · batailles terminées : " + (Tanks.Sauvegarde.donnees.progression.parties || 0)]);
-    l.push(["débloqué", k.armes + " / " + k.armesTotal + " armes · " + k.pieces + " / " + k.piecesTotal + " pièces et peintures (toutes armes) · cadeaux de l'ancienne sauvegarde : " + Tanks.Sauvegarde.donnees.progression.cadeaux.armes.length + " armes"]);
+    l.push(["débloqué", k.armes + " / " + k.armesTotal + " armes · " + k.pieces + " / " + k.piecesTotal + " pièces et peintures (toutes armes) · " + k.outils + " / " + k.outilsTotal + " gadgets et explosifs (demande 98 : " + Object.keys(C.classes).map((id) => C.classes[id].icone + " " + ["gadget", "explosif"].map((t) => C.classes[id][t + "s"].map((o) => (t === "gadget" ? C.gadgets : C.explosifs)[o].icone + (PR.outilDebloque(id, t, o) ? "" : "🔒" + (t === "gadget" ? C.gadgets : C.explosifs)[o].niveau)).join("")).join(" ")).join(" · ") + ") · cadeaux de l'ancienne sauvegarde : " + Tanks.Sauvegarde.donnees.progression.cadeaux.armes.length + " armes"]);
     const xa = Tanks.Sauvegarde.donnees.progression.armes || {};
     l.push(["niveaux d'arme", Object.keys(xa).length ? Object.keys(xa).map((id) => { const m = PR.niveauArme(id); return (C.armesPrincipales[id] || C.pistolets[id]).nom + " niv " + m.niveau + " (" + xa[id] + " XP)"; }).join(" · ") : "aucune arme n'a encore de points (abats des ennemis avec !)"]);
     const st = Tanks.Equipement.stats(c.arme, c.pieces);
@@ -495,6 +520,7 @@ Tanks.SousLeCapot = (function () {
       l.push(["mode", t.mode + " = " + ou]);
       l.push(["ton soldat", "vie " + s.vie + " / " + s.vieMax + (s.seSoigne ? " ➕ (se soigne)" : s.vie < s.vieMax ? " (soin dans " + virgule(Math.max(0, C.soins.attente - s.touche), 1) + " s)" : "") + " · arme " + nomArme(s) + (s.recharge > 0 ? " (recharge " + virgule(s.recharge, 2) + " s)" : "")]);
       if (s.armes) lignesEquipement(l, s);
+      if (s.armes) lignesExplosifs(l, s); // (demande 98)
       if (t.mode === "pied") l.push(["à pied", "x, z " + virgule(s.x, 1) + " ; " + virgule(s.z, 1) + " · " + virgule(s.vitesse, 1) + " m/s · cap " + degres(s.angle)]);
       l.push(["Les engins de ton camp"]);
       for (const e of monde.engins) {

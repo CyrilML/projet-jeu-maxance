@@ -286,7 +286,7 @@ Tanks.Helicos = (function () {
     parDistance.sort(plusProche);
     for (let i = 0; i < Math.min(3, parDistance.length); i++) { // (la ligne de vue coûte cher : les 3 plus proches seulement)
       const o = parDistance[i].o;
-      if (T.vueLibre(g.x, g.y, g.z, o.x, o.y + 1.2, o.z)) return o;
+      if (T.vueLibre(g.x, g.y, g.z, o.x, o.y + 1.2, o.z) && !Tanks.Explosifs.fumee(g.x, g.y, g.z, o.x, o.y + 1.2, o.z)) return o; // (demande 98 : pas à travers un fumigène)
     }
     return null;
   }

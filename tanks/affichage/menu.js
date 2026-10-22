@@ -195,17 +195,22 @@ Tanks.Menu = (function () {
     if (nom === "vehicule") return C.chars.map((f, i) => ({ action: "char", valeur: f.id, choisi: monde.choix === i, grise: pied, icone: f.drapeau, titre: f.nom, sous: f.pays, texte: f.texte,
       barres: [["Vitesse", f.vitesseMax / 21, Math.round(f.vitesseMax * 3.6) + " km/h"], ["Recharge", 1.2 / f.recharge, virgule(f.recharge) + " s"], ["Tourelle", f.tourelle, Math.round((f.tourelle * 180) / Math.PI) + " °/s"]] }));
     if (nom === "classe") return Object.keys(C.classes).map((id) => { const k = C.classes[id]; return { action: "classe", valeur: id, choisi: c.classe === id, icone: k.icone, titre: k.nom, texte: k.texte, couleur: k.couleur,
-      lignes: ["❤️ vie " + Math.round(C.soldats.vieJoueur * k.vie), "🔫 " + k.armes.map((a) => C.armesPrincipales[a].nom + (PR().armeDebloquee(a) ? "" : " 🔒" + C.armesPrincipales[a].niveau)).join(", "), "🧰 " + k.gadgets.map((g) => C.gadgets[g].nom).join(" ou ")] }; });
-    if (nom === "gadgets") return K.gadgets.map((id) => ({ action: "gadget", valeur: id, choisi: c.gadget === id, icone: C.gadgets[id].icone, titre: C.gadgets[id].nom, texte: C.gadgets[id].texte, lignes: ["Touche 3, puis Espace"] }));
-    if (nom === "explosifs") return K.explosifs.map((id) => ({ action: "explosif", valeur: id, choisi: c.explosif === id, icone: C.explosifs[id].icone, titre: C.explosifs[id].nom, texte: C.explosifs[id].texte, lignes: [id === "grenades" ? "Touche 4 : " + C.explosifs[id].nombre + " grenades" : "🚧 pas encore en bataille : tu auras les grenades (touche 4)"] }));
+      lignes: ["❤️ vie " + Math.round(C.soldats.vieJoueur * k.vie), "🔫 " + k.armes.map((a) => C.armesPrincipales[a].nom + (PR().armeDebloquee(a) ? "" : " 🔒" + C.armesPrincipales[a].niveau)).join(", "),
+        "🧰 " + k.gadgets.map((g) => C.gadgets[g].nom + (PR().outilDebloque(id, "gadget", g) ? "" : " 🔒" + C.gadgets[g].niveau)).join(" ou "), "💣 " + k.explosifs.map((x) => C.explosifs[x].nom + (PR().outilDebloque(id, "explosif", x) ? "" : " 🔒" + C.explosifs[x].niveau)).join(" ou ")] }; }); // (demande 98 : les cadenas des gadgets et des explosifs)
+    // (demande 98) les gadgets et les explosifs : un cadenas « Niveau N » sur ceux qui ne sont pas encore gagnés
+    const utilisation = { grenades: "Touche 4, Espace : lancer", fumigene: "Touche 4, Espace : lancer le fumigène", mineAT: "Touche 4, Espace : poser (" + C.explosifs.mineAT.max + " au plus)", c4: "Touche 4, Espace : poser · R : BOUM !", claymore: "Touche 4, Espace : poser (tournée vers l'ennemi)" };
+    const outil = (type, id, choisi) => { const F = (type === "gadget" ? C.gadgets : C.explosifs)[id], ok = PR().outilDebloque(c.classe, type, id); return { action: type, valeur: id, choisi: choisi && ok, verrou: ok ? null : F.niveau, icone: F.icone, titre: F.nom, texte: F.texte,
+      lignes: type === "gadget" ? ["Touche 3, puis Espace"] : [utilisation[id] + (F.nombre ? " · " + F.nombre + " dans ta poche, +1 toutes les " + F.regain + " s" : "")] }; };
+    if (nom === "gadgets") return K.gadgets.map((id) => outil("gadget", id, c.gadget === id));
+    if (nom === "explosifs") return K.explosifs.map((id) => outil("explosif", id, c.explosif === id));
     return [];
   }
   function dessinerCarte(c, i) {
     const barres = (c.barres || []).map(([nom, part, valeur]) => '<div class="m-barre"><span>' + nom + '</span><i><b style="width:' + Math.round(Math.max(0.04, Math.min(1, part)) * 100) + '%"></b></i><em>' + html(valeur) + "</em></div>").join("");
     const lignes = (c.lignes || []).map((t) => "<div class=\"m-ligne\">" + html(t) + "</div>").join("");
-    return '<button class="m-carte' + (c.choisi ? " choisi" : "") + (c.grise ? " grise" : "") + (i === carte ? " focus" : "") + '" data-action="' + c.action + '" data-valeur="' + c.valeur + '"' + (c.couleur ? ' style="--classe:' + c.couleur + '"' : "") + ">" +
+    return '<button class="m-carte' + (c.choisi ? " choisi" : "") + (c.grise ? " grise" : "") + (c.verrou ? " verrou" : "") + (i === carte ? " focus" : "") + '" data-action="' + c.action + '" data-valeur="' + c.valeur + '"' + (c.couleur ? ' style="--classe:' + c.couleur + '"' : "") + ">" +
       '<div class="m-icone">' + c.icone + "</div><div class=\"m-titre\">" + html(c.titre) + (c.choisi ? ' <span class="m-coche">✔</span>' : "") + "</div>" + (c.sous ? '<div class="m-sous">' + html(c.sous) + "</div>" : "") +
-      '<div class="m-texte">' + html(c.texte || "") + "</div>" + barres + lignes + "</button>";
+      '<div class="m-texte">' + html(c.texte || "") + "</div>" + barres + lignes + (c.verrou ? '<div class="ar-cadenas">🔒 Niveau ' + c.verrou + "<small>niveau de joueur (tu es niveau " + PR().niveauJoueur().niveau + ")</small></div>" : "") + "</button>";
   }
 
   // ------------------------------------------------------------------ l'ARMURERIE (demande 97)
@@ -328,7 +333,7 @@ Tanks.Menu = (function () {
       '<div class="m-joueur" title="Ton niveau de joueur : il débloque les armes"><span class="m-joueur-niv">' + nj.niveau + '</span><span class="m-joueur-txt"><b>NIVEAU ' + nj.niveau + (PR().toutDebloque ? " · 🔓 TOUT DÉBLOQUÉ (test)" : "") + "</b><small>" + (nj.max ? "niveau maximum !" : nj.dans.toLocaleString("fr-FR") + " / " + nj.pour.toLocaleString("fr-FR") + " XP") + "</small>" + barreXP(nj, "m-joueur-xp") + "</span></div>" +
       '<button class="m-rejouer" data-action="combat">▶ Rejouer</button></div>' +
       '<div class="m-onglets">' + ONGLETS.map(([id, t], i) => '<button class="m-onglet' + (i === onglet ? " actif" : "") + (pied && id === "vehicule" ? " grise" : "") + '" data-action="onglet" data-valeur="' + i + '">' + (i + 1) + ". " + t + (pied && id === "vehicule" ? " (infanterie seulement)" : "") + "</button>").join("") + "</div>" +
-      (nom === "armurerie" ? htmlArmurerie() : '<div class="m-aide">' + html(aide) + "</div>" + '<div class="m-cartes n' + liste.length + '">' + liste.map(dessinerCarte).join("") + "</div>") +
+      (nom === "armurerie" ? htmlArmurerie() : '<div class="m-aide">' + html(aide) + "</div>" + (AR.message && (nom === "gadgets" || nom === "explosifs") ? '<div class="ar-message m-message">' + html(AR.message.texte) + "</div>" : "") + /* (demande 98 : le message du cadenas) */ '<div class="m-cartes n' + liste.length + '">' + liste.map(dessinerCarte).join("") + "</div>") +
       '<div class="m-bas"><span>⌨️ ' + (nom === "armurerie" ? "↑ ↓ arme · ← → emplacement · Entrée ouvrir / prendre · Échap fermer · Tab onglet suivant · 🖱️ clic" : "← → choisir une carte · Entrée prendre · ↑ ↓ onglet · Tab onglet suivant · 🖱️ clic") + "</span>" +
       (onglet < ONGLETS.length - 1 ? '<button class="m-suivant" data-action="suivant">Suivant ➜</button>' : "") + '<button class="m-combat" data-action="combat">⚔️ Au combat !</button></div>';
     AR.places = null;

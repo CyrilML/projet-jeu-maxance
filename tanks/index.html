@@ -139,6 +139,8 @@
     .m-combat { font-size: 1.15rem; font-weight: 800 !important; text-transform: uppercase; letter-spacing: .08em; background: linear-gradient(#ff8a2a, #d9560c) !important; border-color: #ffb15a !important; color: #111 !important; padding: 10px 24px; }
     .m-suivant { text-transform: uppercase; letter-spacing: .06em; padding: 9px 16px; }
     .m-carte.grise, .m-onglet.grise { opacity: .5; filter: grayscale(.85); } /* (étape 80 : infanterie seulement) */
+    .m-carte.verrou { background: repeating-linear-gradient(135deg, #181b20 0 8px, #15181c 8px 16px) !important; } .m-carte.verrou .m-icone, .m-carte.verrou .m-texte { opacity: .6; filter: grayscale(.7); } /* (demande 98 : un gadget ou un explosif sous cadenas) */
+    .ar-message.m-message { position: static; transform: none; margin: 0 auto 8px; display: table; } /* (demande 98 : le message du cadenas, dans les onglets Gadgets et Explosifs) */
     /* (demande 97) L'ARMURERIE : la liste à gauche, la vitrine 3D au milieu, les chiffres à droite */
     .ar-armurerie { flex: 1; min-height: 400px; display: grid; grid-template-columns: 210px minmax(0, 1fr) 272px; gap: 8px; }
     .ar-liste, .ar-droite { overflow-y: auto; background: rgba(12,14,17,.72); border: 1px solid var(--bf-bord); padding: 6px; scrollbar-width: thin; scrollbar-color: #3a414b transparent; }
@@ -536,6 +538,7 @@
   <script src="logique/equipement.js?v=40"></script>
   <script src="logique/armes.js?v=40"></script>
   <script src="logique/gadgets.js?v=40"></script>
+  <script src="logique/explosifs.js?v=40"></script>
   <script src="donnees/sauvegarde.js?v=40"></script>
   <script src="logique/monde.js?v=40"></script>
   <script src="logique/campagne.js?v=40"></script>
@@ -554,6 +557,7 @@
   <script src="affichage/particules.js?v=40"></script>
   <script src="affichage/tirs.js?v=40"></script>
   <script src="affichage/explosions.js?v=40"></script>
+  <script src="affichage/explosifs3d.js?v=40"></script>
   <script src="affichage/station3d.js?v=40"></script>
   <script src="affichage/scene.js?v=40"></script>
   <script src="affichage/qualite.js?v=40"></script>

@@ -761,6 +761,7 @@ Tanks.Scene = (function () {
       if (tous.count) tous.instanceMatrix.needsUpdate = true;
     }
     placerProjectiles(monde);
+    Tanks.Explosifs3D.maj(monde, dt, scene); // (demande 98 : les mines, les C4, les claymores posés et les nuages de fumée)
     // la caméra
     const j = monde.joueur, R = C.camera;
     let oeil, cible;

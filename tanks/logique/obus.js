@@ -191,6 +191,11 @@ Tanks.Obus = (function () {
       if (p.meche !== undefined) { // (étape 75 : une grenade à main)
         const fin = avancerGrenade(p, monde, dt, cibles);
         if (fin) fin[1].matiere = matiereDe(fin[1]); // (demande 92)
+        if (fin && p.fumigene) { // (demande 98) un FUMIGÈNE : pas d'explosion, un nuage (logique/explosifs.js)
+          if (fin[1].sur !== "eau") Tanks.Explosifs.nuage(monde, fin[1].x, fin[1].y, fin[1].z, p.tireur, ev);
+          liste.splice(i, 1);
+          continue;
+        }
         if (fin) {
           if (fin[1].sur !== "eau") {
             souffle(monde, p, R, fin[1].x, fin[1].y, fin[1].z, ev, null);
@@ -282,5 +287,5 @@ Tanks.Obus = (function () {
     return ev;
   }
 
-  return { tirer, lancer, avancer, dansLeChar, abimer };
+  return { tirer, lancer, avancer, dansLeChar, abimer, cibles: (monde, l) => vehicules(monde, l || []) }; // (demande 98 : « cibles » pour les mines et le C4)
 })();

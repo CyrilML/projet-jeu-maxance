@@ -108,7 +108,8 @@ Tanks.Troupes = (function () {
       }
       parDistance.sort(plusProche);
       for (const p of parDistance) {
-        if (T.vueLibre(s.x, s.y + 1.5, s.z, p.o.x, p.o.y + Tanks.Soldat.hauteurVisee(p.o), p.o.z)) { // (demande 92 : un ennemi accroupi derrière un muret est caché)
+        // (demande 98) un NUAGE de fumigène entre les deux : il ne le voit pas
+        if (T.vueLibre(s.x, s.y + 1.5, s.z, p.o.x, p.o.y + Tanks.Soldat.hauteurVisee(p.o), p.o.z) && !Tanks.Explosifs.fumee(s.x, s.y + 1.5, s.z, p.o.x, p.o.y + 1.2, p.o.z)) { // (demande 92 : un ennemi accroupi derrière un muret est caché)
           meilleur = { o: p.o, d: p.d };
           break;
         }

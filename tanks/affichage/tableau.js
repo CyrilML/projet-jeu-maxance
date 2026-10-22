@@ -98,7 +98,7 @@ Tanks.Tableau = (function () {
     // étape 61
     radio.ecouter("impossible", (d) => dire("✋ " + d.raison, "#ffb37a"));
     radio.ecouter("monter", (d) => dire("🪜 Tu montes dans " + d.dans, "#9cc4ff"));
-    radio.ecouter("sortir", () => dire("🪖 À pied ! (1 pistolet · 2 ton arme · 3 ton gadget · 4 grenades)", "#9cc4ff", 2500));
+    radio.ecouter("sortir", () => dire("🪖 À pied ! (1 pistolet · 2 ton arme · 3 ton gadget · 4 ton explosif)", "#9cc4ff", 2500));
     // (étape 77)
     radio.ecouter("marque", (d) => dire("🔭 " + d.nombre + " ennemi" + (d.nombre > 1 ? "s marqués" : " marqué") + " !", "#ffe14a"));
     radio.ecouter("reparation", (d) => dire("🔧 " + d.qui + " : " + d.vie + " / " + d.vieMax, "#7dffa0", 1200));
@@ -110,6 +110,11 @@ Tanks.Tableau = (function () {
     radio.ecouter("maison-effondree", (d) => d.parToi ? dire("🏚️ La maison s'effondre !", "#ffb37a", 2500) : null);
     radio.ecouter("mur-troue", (d) => d.parToi && d.sorte !== "balle" ? dire("🧱 Un trou dans le mur ! (" + d.debout + " / " + d.total + " morceaux debout)", "#e6c9a0") : null);
     radio.ecouter("grenade-lancee", (d) => d.parToi ? dire("💣 Grenade ! (" + d.reste + " / " + d.max + ")", "#c8e68a") : null);
+    // (demande 98) les explosifs : poser, faire sauter, la fumée
+    radio.ecouter("explosif-pose", (d) => d.parToi ? dire(d.icone + " " + d.nom + (d.lance ? " lancé !" : " posé" + (d.sur ? " (collé sur " + d.sur + ")" : "") + (d.sorte === "c4" ? " · R : BOUM !" : "")) + " (" + d.reste + " / " + d.max + ")", "#c8e68a") : null);
+    radio.ecouter("explosif-explose", (d) => d.parToi ? dire("💥 " + d.nom + " : BOUM ! (" + d.cause + ")" + (d.soldats ? " · " + d.soldats + " soldat(s)" : "") + (d.vehicules ? " · " + d.vehicules + " véhicule(s)" : ""), "#ffb35a", 3000) : null);
+    radio.ecouter("fumee", (d) => d.parToi ? dire("💨 Écran de fumée : les ennemis ne voient plus au travers (" + d.duree + " s)", "#dfe6ea") : null);
+    radio.ecouter("explosifs", (d) => dire(d.icone + " " + (d.camp ? "Au camp : " + d.nom.toLowerCase() + " au complet (" + d.nombre + ")" : "+1 " + d.nom.toLowerCase() + " (" + d.nombre + " / " + d.max + ")"), "#c8e68a"));
     radio.ecouter("grenades", (d) => dire(d.camp ? "🎒 Au camp : grenades au complet (" + d.nombre + ")" : "🎒 +1 grenade (" + d.nombre + " / " + d.max + ")", "#c8e68a"));
     radio.ecouter("ejection", () => dire("🪂 ÉJECTION !", "#ffe27a"));
     radio.ecouter("soldat-mort", (d) => {
@@ -241,7 +246,7 @@ Tanks.Tableau = (function () {
       barreVie(24, H - 80, 200, s);
       // (étape 77) tes 4 armes : 1 pistolet, 2 ton arme, 3 ton gadget, 4 les grenades
       if (s.armes) {
-        const g = s.gadget, noms = [["pistolet", "🔫 " + s.armes.pistolet.stats.nom], ["principale", s.armes.principale.stats.icone + " " + s.armes.principale.stats.nom], ["gadget", g.fiche.icone + " " + g.fiche.nom], ["grenades", "💣 ×" + s.grenades]];
+        const g = s.gadget, noms = [["pistolet", "🔫 " + s.armes.pistolet.stats.nom], ["principale", s.armes.principale.stats.icone + " " + s.armes.principale.stats.nom], ["gadget", g.fiche.icone + " " + g.fiche.nom], ["grenades", s.poche ? C.explosifs[s.poche.id].icone + " ×" + s.poche.nombre : "💣 ×" + s.grenades]]; // (demande 98 : ton explosif)
         noms.forEach(([a, nom], i) => {
           const x = 24 + i * 104, choisi = s.arme === a;
           ctx.fillStyle = choisi ? "rgba(255,207,90,.3)" : "rgba(255,255,255,.08)";
@@ -277,6 +282,10 @@ Tanks.Tableau = (function () {
           const F = g.fiche, part = g.id === "reparation" ? (g.cible ? g.part : 0) : g.attente > 0 ? 1 - g.attente / (F.attente || F.cadence || 1) : 1;
           const etat = g.id === "lanceGrenades" ? g.munitions + " / " + F.munitions + " · Espace : tirer" : g.id === "reparation" ? (g.cible ? "🔧 répare " + (g.cible === monde.joueur ? "ton tank" : g.cible.nom) + " : " + g.cible.vie + " / " + Tanks.Gadgets.vieMaxDe(g.cible) : "tiens Espace près d'un véhicule ami abîmé") : g.attente > 0 ? "prêt dans " + Math.ceil(g.attente) + " s" : "Espace : utiliser" + (g.id === "jumelles" ? " (V : zoom)" : "");
           barre(24, H - 28, 200, part, g.attente === 0, etat);
+        } else if (s.poche) { // (demande 98) ta poche d'explosifs : combien il en reste, combien sont posés, R pour le C4
+          const p = s.poche, F = C.explosifs[p.id], poses = (monde.explosifs || []).filter((e) => e.id === p.id && e.tireur === s).length;
+          const etat = p.nombre ? F.icone + " Espace : " + (p.id === "fumigene" ? "lancer" : "poser") + " (" + p.nombre + ")" : "plus de " + F.nom.toLowerCase();
+          barre(24, H - 28, 200, p.nombre ? 1 : p.regain / F.regain, p.nombre > 0, etat + (p.id === "c4" ? " · R : BOUM (" + poses + " posé" + (poses > 1 ? "s" : "") + ")" : p.id !== "fumigene" ? " · " + poses + " / " + F.max + " posés" : ""));
         } else barre(24, H - 28, 200, s.grenades ? 1 - s.recharge / C.armes.grenades.cadence : s.regainGrenade / C.grenades.recharge, s.recharge === 0 && s.grenades > 0, s.grenades ? "💣 Espace : lancer (" + s.grenades + ")" : "plus de grenades");
         texte(C.classes[s.classe].icone + " " + C.classes[s.classe].nom, 440, H - 92, 14, C.classes[s.classe].couleur, "right");
       }
@@ -766,7 +775,7 @@ Tanks.Tableau = (function () {
     } else {
       const aide = {
         char: "↑ ↓ ← → rouler · Q / D tourelle · Espace tirer · E sortir · T ordre · C caméra · R recommencer",
-        pied: t.soldat && t.soldat.nage ? "↑ ↓ nager · ← → tourner · (pas de tir dans l'eau)" : "↑ ↓ marcher · ← → tourner · Espace tirer · V épauler · R recharger · 1 pistolet 2 arme 3 gadget 4 grenades · L lampe · C vue" + (monde.metro ? " · 🚇 à pied seulement" : " · E monter"),
+        pied: t.soldat && t.soldat.nage ? "↑ ↓ nager · ← → tourner · (pas de tir dans l'eau)" : "↑ ↓ marcher · ← → tourner · Espace tirer · V épauler · R recharger · 1 pistolet 2 arme 3 gadget 4 explosif (C4 : R) · L lampe · C vue" + (monde.metro ? " · 🚇 à pied seulement" : " · E monter"),
         jeep: "↑ ↓ ← → rouler · Q / D mitrailleuse · Espace tirer · E descendre (arrêté)",
         moto: "↑ ↓ ← → conduire (elle penche dans les virages) · Espace pistolet · E descendre (arrêté)",
         quad: "↑ ↓ ← → conduire · Espace mitrailleuse (elle tire droit devant) · E descendre (arrêté)",

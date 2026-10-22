@@ -1,7 +1,7 @@
 // 🏅 LES ÉCRANS DE LA PROGRESSION : le tableau d'honneur (demande 97)
 //
 // ✍️ « Un écran NIVEAU SUPÉRIEUR ! avec ce qui vient d'être débloqué. » Ce fichier affiche :
-//   - les BANDEAUX « NIVEAU SUPÉRIEUR ! » (ton niveau de joueur : les armes débloquées) et « ARME AMÉLIORÉE » (le niveau
+//   - les BANDEAUX « NIVEAU SUPÉRIEUR ! » (ton niveau de joueur : les armes, gadgets et explosifs débloqués) et « ARME AMÉLIORÉE » (le niveau
 //     d'une arme : ses nouvelles pièces et peintures), qui glissent en haut de l'écran puis s'effacent tout seuls ;
 //   - à la fin d'une bataille libre (ou du souterrain), le BILAN D'EXPÉRIENCE : les points gagnés ligne par ligne (ennemis,
 //     tirs à la tête, tanks, soins, victoire, MVP…), la barre de ton niveau qui se remplit, celle de chaque arme utilisée,
@@ -22,7 +22,8 @@ Tanks.EcranProgression = (function () {
     racine.innerHTML = '<div class="pg-toasts"></div>';
     pile = racine.querySelector(".pg-toasts");
     radio.ecouter("niveau-joueur", (d) => bandeau("", d.niveau, "NIVEAU SUPÉRIEUR !", "Niveau de joueur " + d.niveau,
-      d.armes.length ? "🔓 Débloqué : " + d.armes.map((a) => "<b>" + html(a.nom) + "</b> (" + html(a.classe) + ")").join(", ") : "Continue : de nouvelles armes t'attendent aux prochains niveaux !"));
+      // (demande 98) et les gadgets et les explosifs débloqués à ce niveau
+      d.armes.length || (d.outils || []).length ? "🔓 Débloqué : " + d.armes.map((a) => "<b>" + html(a.nom) + "</b> (" + html(a.classe) + ")").concat((d.outils || []).map((o) => o.icone + " <b>" + html(o.nom) + "</b> (" + (o.type === "gadget" ? "gadget" : "explosif") + " · " + html(o.classe) + ")")).join(", ") : "Continue : de nouvelles armes t'attendent aux prochains niveaux !"));
     radio.ecouter("niveau-arme", (d) => bandeau("arme", d.niveau, html(d.arme) + " AMÉLIORÉ !", "Niveau d'arme " + d.niveau,
       d.pieces.length ? "🔓 Nouvelles pièces : " + d.pieces.map((p) => p.icone + " <b>" + html(p.nom) + "</b>").join(", ") : "Ton arme gagne en expérience."));
     radio.ecouter("bilan-xp", () => { if (monde && !monde.campagne) montrerBilan(); });

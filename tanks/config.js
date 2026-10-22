@@ -193,8 +193,9 @@ Tanks.CONFIG = {
     lg40: { vitesse: 62, gravite: 9.8, degatsChar: 0, souffle: 4.5 },
     at4: { vitesse: 120, gravite: 0.3, degatsChar: 1, souffle: 5.5 },
     javelin: { vitesse: 70, gravite: 0, degatsChar: 2, souffle: 6, guide: 2.4, vieMax: 9 },
-    mine: { vitesse: 0, gravite: 0, degatsChar: 2, souffle: 5 },
-    c4: { vitesse: 0, gravite: 0, degatsChar: 2, souffle: 7 },
+    // (demande 98) rayonChar : m où l'explosion abîme un véhicule ennemi (de « degatsChar »)
+    mine: { vitesse: 0, gravite: 0, degatsChar: 2, souffle: 5, rayonChar: 3.5 },
+    c4: { vitesse: 0, gravite: 0, degatsChar: 2, souffle: 7, rayonChar: 4.5 },
     claymore: { vitesse: 0, gravite: 0, degatsChar: 0, souffle: 0 },
   },
   // ✍️ Les engins garés dans ton camp (seulement toi les conduis) : le 4x4 à mitrailleuse, l'hélico qui lâche des
@@ -612,8 +613,9 @@ Tanks.CONFIG = {
 
   // ================================================================== étape 77 : ✍️ LE MENU, LES CLASSES, LES ARMES, L'ATELIER
   // ✍️ « Un menu avant de jouer : choisir son véhicule, sa classe, ses armes, ses gadgets et ses explosifs, puis modifier
-  // son arme. » Les 4 CLASSES comme Battlefield. Pour chacune : 5 ou 6 armes principales (demande 97 ; tu en prends 1), 2 gadgets (tu as
-  // en prends 1 : touche 3) et 2 explosifs (tu en prends 1 : touche 4 ; seules les grenades explosent pour l'instant). Le pistolet reste toujours en arme 1.
+  // son arme. » Les 4 CLASSES comme Battlefield. Pour chacune : 5 ou 6 armes principales (demande 97 ; tu en prends 1), 2 gadgets (tu
+  // en prends 1 : touche 3) et 2 explosifs (tu en prends 1 : touche 4). Le pistolet reste toujours en arme 1.
+  // (demande 98) Le 1er gadget et le 1er explosif de chaque liste sont libres dès le début ; le 2e a un cadenas (son « niveau »).
   // vie : × la vie de ton soldat (l'Assaut : 25 % de plus). Seul TON soldat a une classe.
   classes: {
     assaut: { nom: "Assaut", icone: "🪖", couleur: "#ff8a3d", vie: 1.25,
@@ -624,10 +626,10 @@ Tanks.CONFIG = {
       armes: ["rpg7", "ump45", "at4", "javelin", "carlgustaf"], gadgets: ["reparation", "droneReparation"], explosifs: ["mineAT", "c4"] },
     eclaireur: { nom: "Éclaireur", icone: "🔭", couleur: "#7dff8a", vie: 1,
       texte: "Tireur de loin : fusil de précision avec lunette, et des JUMELLES qui marquent les ennemis.",
-      armes: ["m110", "svd", "m24", "mk14", "lapua", "barrett"], gadgets: ["jumelles", "capteur"], explosifs: ["claymore", "grenades"] },
+      armes: ["m110", "svd", "m24", "mk14", "lapua", "barrett"], gadgets: ["jumelles", "capteur"], explosifs: ["grenades", "claymore"] },
     medecin: { nom: "Médecin de guerre", icone: "⛑️", couleur: "#ff5a6a", vie: 1,
       texte: "Il SOIGNE ses amis avec sa trousse et RELÈVE les soldats tombés avec son défibrillateur.",
-      armes: ["mp5", "vector", "mp7", "p90", "bizon"], gadgets: ["trousse", "defibrillateur"], explosifs: ["fumigene", "grenades"] },
+      armes: ["mp5", "vector", "mp7", "p90", "bizon"], gadgets: ["trousse", "defibrillateur"], explosifs: ["grenades", "fumigene"] },
   },
   // ✍️ Les ARMES PRINCIPALES. (Demande 97 : ✍️ « lance les déblocages » : chaque arme a un « niveau » : le NIVEAU DE
   // JOUEUR qu'il faut pour la débloquer (0 = disponible dès le début : la 1re arme de chaque classe).)
@@ -761,33 +763,49 @@ Tanks.CONFIG = {
       dispersion: 0.036, dispersionVisee: 0.011, recul: 0.05, visee: 0.19, mobilite: 1, bruit: 1.35, zoom: 1.25 },
   },
   // ✍️ Les GADGETS (2 par classe, tu en prends 1 : touche 3, puis Espace).
+  // (demande 98) niveau : le NIVEAU DE JOUEUR qui le débloque (0 : libre dès le début ; le 1er de chaque classe est toujours libre).
   gadgets: {
-    lanceGrenades: { nom: "Lance-grenades", icone: "💥", texte: "Sous le canon : une grenade de 40 mm qui explose en touchant.",
+    lanceGrenades: { nom: "Lance-grenades", niveau: 0, icone: "💥", texte: "Sous le canon : une grenade de 40 mm qui explose en touchant.",
       munitions: 4, regain: 20, cadence: 1.2, projectile: "lg40" }, // (regain : +1 toutes les 20 s, et tout au camp)
-    sacMunitions: { nom: "Sac de munitions", icone: "🎒", texte: "Recharge tes balles, ton lance-grenades et 1 explosif, et ceux de tes amis tout près.",
+    sacMunitions: { nom: "Sac de munitions", niveau: 4, icone: "🎒", texte: "Recharge tes balles, ton lance-grenades et 1 explosif, et ceux de tes amis tout près.",
       attente: 30, rayon: 8 },
-    reparation: { nom: "Outil de réparation", icone: "🔧", texte: "Tiens Espace près d'un tank ou d'un engin ami abîmé (le tien aussi !) : il se répare.",
+    reparation: { nom: "Outil de réparation", niveau: 0, icone: "🔧", texte: "Tiens Espace près d'un tank ou d'un engin ami abîmé (le tien aussi !) : il se répare.",
       distance: 5.5, vitesse: 0.45, chauffe: 6, refroidit: 2.5 }, // m ; points de vie par s ; s avant de surchauffer ; s pour refroidir
-    droneReparation: { nom: "Drone de réparation", icone: "🛸", texte: "Il s'envole vers le véhicule ami le plus abîmé (moins de 30 m) et le répare tout seul.",
+    droneReparation: { nom: "Drone de réparation", niveau: 7, icone: "🛸", texte: "Il s'envole vers le véhicule ami le plus abîmé (moins de 30 m) et le répare tout seul.",
       portee: 30, vitesse: 0.3, duree: 18, attente: 40, hauteur: 3.2 },
-    jumelles: { nom: "Jumelles", icone: "🔭", texte: "V (ou clic droit) : regarder loin. Espace : MARQUER l'ennemi visé, pour toi et tes alliés.",
+    jumelles: { nom: "Jumelles", niveau: 0, icone: "🔭", texte: "V (ou clic droit) : regarder loin. Espace : MARQUER l'ennemi visé, pour toi et tes alliés.",
       zoom: 5, attente: 0.8 },
-    capteur: { nom: "Capteur de mouvement", icone: "📡", texte: "À lancer : il marque tous les ennemis qui bougent autour de lui.",
+    capteur: { nom: "Capteur de mouvement", niveau: 5, icone: "📡", texte: "À lancer : il marque tous les ennemis qui bougent autour de lui.",
       rayon: 32, duree: 25, attente: 45, vitesse: 13 },
-    trousse: { nom: "Trousse de soins", icone: "🩹", texte: "Espace : pose une trousse. Toi et tes amis tout près, vous êtes soignés.",
+    trousse: { nom: "Trousse de soins", niveau: 0, icone: "🩹", texte: "Espace : pose une trousse. Toi et tes amis tout près, vous êtes soignés.",
       rayon: 6, vitesse: 2.5, duree: 14, attente: 25 }, // m ; vie par s (pour toi ; ÷ 8 pour un soldat de l'ordinateur, qui a 3 de vie)
-    defibrillateur: { nom: "Défibrillateur", icone: "⚡", texte: "Espace près d'un ami tombé : il se RELÈVE (avec la moitié de sa vie).",
+    defibrillateur: { nom: "Défibrillateur", niveau: 3, icone: "⚡", texte: "Espace près d'un ami tombé : il se RELÈVE (avec la moitié de sa vie).",
       distance: 3, attente: 1.5, delai: 16 }, // (delai : s depuis sa chute)
   },
-  // ✍️ Les EXPLOSIFS (2 par classe, tu en prends 1 : touche 5). nombre : combien tu en as ; regain : s pour en regagner 1.
+  // ✍️ Les EXPLOSIFS (2 par classe, tu en prends 1 : touche 4). nombre : combien tu en as ; regain : s pour en regagner 1
+  // (et tous d'un coup à ton camp). (demande 98) niveau : le niveau de joueur qui le débloque ; rayon, duree : le nuage
+  // de fumée (m, s) ; declenche : m (un véhicule ennemi pour la mine, un soldat ennemi pour la claymore) ; cone : ± rad
+  // devant la claymore ; portee : m où la claymore abat les soldats ; max : combien tu peux en poser à la fois (le plus
+  // vieux disparaît). Leur souffle : « projectiles » (mine, c4, claymore) ; les murs : « structures.explosions ».
   explosifs: {
-    grenades: { nom: "Grenades", icone: "💣", texte: "Lancée en cloche, elle rebondit et explose après 3 s.", nombre: 4, regain: 25 },
-    fumigene: { nom: "Grenades fumigènes", icone: "💨", texte: "Un gros nuage : les ennemis ne voient plus au travers. Parfait pour relever un ami !",
+    grenades: { nom: "Grenades", niveau: 0, icone: "💣", texte: "Lancée en cloche, elle rebondit et explose après 3 s.", nombre: 4, regain: 25 },
+    fumigene: { nom: "Grenades fumigènes", niveau: 2, icone: "💨", texte: "Un gros nuage : les ennemis ne voient plus au travers. Parfait pour relever un ami !",
       nombre: 3, regain: 25, rayon: 8, duree: 20 },
-    mineAT: { nom: "Mine antichar", icone: "⭕", texte: "Posée par terre : elle explose sous un véhicule ennemi (2 dégâts).", nombre: 3, regain: 40, declenche: 2.6, max: 6 },
-    c4: { nom: "C4", icone: "🧨", texte: "Colle-le, éloigne-toi, puis R : BOUM ! Très puissant.", nombre: 2, regain: 40, max: 4 },
-    claymore: { nom: "Claymore", icone: "📦", texte: "Une mine posée qui saute quand un soldat ennemi passe DEVANT elle.",
-      nombre: 2, regain: 35, declenche: 5, cone: 0.9, max: 4 },
+    mineAT: { nom: "Mine antichar", niveau: 0, icone: "⭕", texte: "Posée par terre : elle explose sous un véhicule ennemi (2 dégâts).", nombre: 3, regain: 40, declenche: 2.6, max: 6 },
+    c4: { nom: "C4", niveau: 8, icone: "🧨", texte: "Colle-le (au sol ou sur un véhicule), éloigne-toi, puis R : BOUM ! Très puissant.", nombre: 2, regain: 40, max: 4 },
+    claymore: { nom: "Claymore", niveau: 6, icone: "📦", texte: "Une mine posée qui saute quand un soldat ennemi passe DEVANT elle.",
+      nombre: 2, regain: 35, declenche: 5, cone: 0.9, portee: 10, max: 4 },
+  },
+  // (demande 98) ✍️ LES EXPLOSIFS EN BATAILLE (touche 4, puis Espace ; le C4 : R pour le faire sauter).
+  //   - poser : la mine, le C4 et la claymore sont posés à « devant » m devant toi ; le C4 se COLLE sur un véhicule à
+  //     moins de « colle » m de cet endroit (et le suit quand il roule) ; « attente » s entre deux poses ;
+  //   - le fumigène est lancé comme une grenade (« lancer » m/s, à l'angle des grenades) et fume « meche » s après ;
+  //   - armement : une mine ou une claymore ne saute pas pendant les « armement » premières secondes (le temps de partir) ;
+  //   - le nuage (l'affichage) : « bouffees » bouffées de fumée par seconde selon la qualité (0 très léger … 3 beau),
+  //     qui vivent « vie » s ; « hauteur » m : le nuage cache jusqu'à cette hauteur (un hélico au-dessus voit encore).
+  posesEnBataille: {
+    devant: 1.4, colle: 3, attente: 0.8, lancer: 13, meche: 1.6, armement: 1.5,
+    nuage: { bouffees: [2, 3, 4, 6], vie: 7, hauteur: 9 },
   },
   // ✍️ L'ARMURERIE (demande 97, avant : l'atelier de l'étape 77) : 11 emplacements. Chaque pièce a des AVANTAGES ET des
   // DÉFAUTS, se voit sur l'arme en 3D, et se débloque au NIVEAU D'ARME « niveau » (la 1re pièce de chaque liste : dès le
@@ -1552,7 +1570,7 @@ Tanks.CONFIG.realisme = Object.assign(Tanks.CONFIG.realisme || {}, {
   // ------------------------------------------------------------------ LES EXPLOSIONS (affichage/explosions.js)
   explosions: {
     // La TAILLE de chaque explosion (1 = un obus de tank) : tout grandit avec elle (le feu, la fumée, l'onde, les débris).
-    tailles: { obus: 1, roquette: 0.85, grenade: 0.6, flak: 0.35, missile: 1.5, bombe: 2.4, torpille: 1.6, char: 1.7, petit: 0.9, avion: 1.8, crash: 2.2 },
+    tailles: { mine: 1.3, c4: 1.8, claymore: 0.55, obus: 1, roquette: 0.85, grenade: 0.6, flak: 0.35, missile: 1.5, bombe: 2.4, torpille: 1.6, char: 1.7, petit: 0.9, avion: 1.8, crash: 2.2 },
     // L'ÉCLAIR : il dure « duree » s ; la vraie lumière (force, portée m).
     eclair: { duree: 0.14, lumiere: 220, portee: 55 },
     // La BOULE DE FEU : « nombre » flammes, de « taille » m, qui vivent « vie » s et montent à « monte » m/s.

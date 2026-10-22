@@ -86,6 +86,7 @@ Tanks.Gadgets = (function () {
       const A = s.armes.principale;
       A.reserve = A.stats.reserve;
       s.grenades = C.grenades.nombre;
+      Tanks.Explosifs.remplir(s, 1); // (demande 98 : et 1 explosif de plus : mine, C4, claymore ou fumigène)
       g.attente = F.attente;
       ev.push(["munitions", { arme: A.stats.nom, reserve: A.reserve }]);
     } else if (g.id === "droneReparation") {
