@@ -38,6 +38,8 @@
 // secondes), les cibles spéciales (leur vie), le camion escorté, les avions de la frappe, et tes compteurs de mission.
 // Demande 88 : L'ARMURIER : le modèle 3D de ton arme (ses pièces, ses triangles, ses dessins), la vue à la première
 // personne (ses triangles, le recul, l'arme baissée), la lampe et le laser, et combien de modèles sont au magasin.
+// Demande 97 : LES DÉBLOCAGES : ton niveau et tes points d'expérience, le niveau de chaque arme, combien d'armes et de
+// pièces sont débloquées, l'équipement choisi avec ses chiffres finaux, les points de la bataille en cours, la vitrine.
 // Demande 94 : LA RADIO QUI PARLE : les voix (allumées ou coupées, combien de voix françaises), la phrase dite en ce
 // moment, la file d'attente (et l'importance de chaque phrase), les dernières phrases, les pauses du bavardage, les
 // indicatifs des soldats (et qui est infirmier ou mécanicien), et qui va te soigner ou réparer ton char.
@@ -60,7 +62,14 @@ Tanks.SousLeCapot = (function () {
     "reparation-allie": (d) => "🔧 " + d.de + " répare " + d.qui + " : " + Math.round(d.vie) + " / " + d.vieMax + (d.demande ? " (tu l'as demandé)" : ""),
     // étape 77
     classe: (d) => "🎖️ Tu choisis la classe " + d.icone + " " + d.nom,
-    piece: (d) => "🔧 Atelier : " + d.arme + " · " + d.emplacement + " → " + d.nom + " (portée " + Math.round(d.avant.portee) + " → " + Math.round(d.apres.portee) + " m, chargeur " + d.avant.chargeur + " → " + d.apres.chargeur + ", écart " + virgule(d.avant.dispersion * 1000, 1) + " → " + virgule(d.apres.dispersion * 1000, 1) + " mrad, mobilité " + Math.round(d.avant.mobilite * 100) + " → " + Math.round(d.apres.mobilite * 100) + " %)",
+    // demande 97 : l'armurerie et les déblocages
+    xp: (d) => "⭐ +" + d.xp + " XP : " + d.icone + " " + d.nom + (d.fois > 1 ? " × " + d.fois : "") + (d.arme && d.xpArme ? " · ton " + d.arme + " +" + d.xpArme + " XP" : "") + " (total " + d.total.toLocaleString("fr-FR") + " XP)",
+    "niveau-joueur": (d) => "🎖️ NIVEAU SUPÉRIEUR ! Tu passes niveau " + d.niveau + (d.armes.length ? " · 🔓 débloqué : " + d.armes.map((a) => a.nom).join(", ") : ""),
+    "niveau-arme": (d) => "🔫 " + d.arme + " passe niveau " + d.niveau + (d.pieces.length ? " · 🔓 " + d.pieces.map((p) => p.icone + " " + p.nom).join(", ") : ""),
+    "bilan-xp": (d) => "🏅 Bilan de la bataille : +" + d.total.toLocaleString("fr-FR") + " XP (" + d.categories + " sortes de points)" + (d.niveau > d.depart ? " · niveau " + d.depart + " → " + d.niveau : " · niveau " + d.niveau) + (d.mvp ? " · 🥇 MVP" : "") + (d.debloques ? " · " + d.debloques + " déblocage(s)" : ""),
+    verrouille: (d) => "🔒 " + d.nom + " : " + d.raison,
+    "arme-choisie": (d) => "🔫 Armurerie : tu prends le " + d.nom + " (" + d.type + ", niveau d'arme " + d.niveau + ")",
+    piece: (d) => "🔧 Armurerie : " + d.arme + " · " + d.emplacement + " → " + d.nom + " (portée " + Math.round(d.avant.portee) + " → " + Math.round(d.apres.portee) + " m, chargeur " + d.avant.chargeur + " → " + d.apres.chargeur + ", écart " + virgule(d.avant.dispersion * 1000, 1) + " → " + virgule(d.apres.dispersion * 1000, 1) + " mrad, mobilité " + Math.round(d.avant.mobilite * 100) + " → " + Math.round(d.apres.mobilite * 100) + " %)",
     "recharge-arme": (d) => d.fini ? "🔄 " + d.arme + " rechargé : " + d.chargeur + " balles (réserve " + d.reserve + ")" : "🔄 Tu recharges ton " + d.arme + " (" + virgule(d.duree, 1) + " s)",
     accroupi: (d) => d.accroupi ? "🧎 Tu t'accroupis (X) : plus petit, plus dur à toucher, caché derrière un muret (les balles visent à " + String(d.hauteur).replace(".", ",") + " m), mais " + Math.round(d.vitesse * 100) + " % de ta vitesse" : "🧍 Tu te relèves (X)", // (demande 92)
     vide: (d) => "🫙 " + d.arme + " : plus de balles du tout !",
@@ -363,7 +372,9 @@ Tanks.SousLeCapot = (function () {
     l.push(["Ta classe et tes armes (étape 77)"]);
     l.push(["classe", K.icone + " " + K.nom + " · vie " + Math.round(s.vie) + " / " + s.vieMax + (K.vie !== 1 ? " (× " + virgule(K.vie, 2) + ")" : "")]);
     l.push(["ton arme", st.icone + " " + st.nom + " (" + st.type + ") · chargeur " + A.chargeur + " / " + st.chargeur + " · réserve " + A.reserve + (s.rechargement > 0 ? " · RECHARGE " + virgule(s.rechargement, 1) + " s" : "")]);
-    l.push(["ses pièces", Object.keys(C.atelier).map((e) => C.atelier[e].icone + " " + Tanks.Equipement.piece(e, A.pieces[e]).nom).join(" · ")]);
+    l.push(["ses pièces (demande 97)", Tanks.Equipement.emplacementsDe(A.id).map((e) => C.atelier[e].icone + " " + Tanks.Equipement.piece(e, A.pieces[e]).nom).join(" · ")]);
+    l.push(["ton pistolet", s.armes.pistolet.stats.nom + " · " + Tanks.Equipement.emplacementsDe(s.armes.pistolet.id).filter((e) => s.armes.pistolet.pieces[e] !== C.atelier[e].pieces[0].id).map((e) => C.atelier[e].icone + " " + Tanks.Equipement.piece(e, s.armes.pistolet.pieces[e]).nom).join(" · ")]);
+    l.push(["munitions · bouche · peinture", "dégâts sur les engins × " + virgule(st.vsVehicule || 1, 1) + (st.vitesseBalle ? " · balle à " + Math.round(st.vitesseBalle) + " m/s" : "") + " · éclair × " + virgule(st.flamme || 1, 2) + (st.thermique ? " · 🌡️ lunette thermique" : "") + " · peinture : " + Tanks.Equipement.piece("peinture", A.pieces.peinture).nom]);
     l.push(["ses vrais chiffres", "dégâts " + virgule(st.degats, 2) + " (pleins jusqu'à " + Math.round(st.porteeEfficace) + " m, puis × " + virgule(st.degatsLoin, 2) + ") · portée " + Math.round(st.portee) + " m · cadence " + Math.round(60 / st.cadence) + "/min · rechargement " + virgule(st.rechargement, 1) + " s · épauler " + virgule(st.visee, 2) + " s · mobilité " + Math.round(st.mobilite * 100) + " % · zoom ×" + virgule(st.zoom, 1)]);
     l.push(["la dispersion", "hanche " + v(st.dispersion) + " · épaulé " + v(st.dispersionVisee) + " · recul +" + v(st.recul) + " par balle · MAINTENANT " + v(Tanks.Armes.dispersion(s, st)) + " (épaulé à " + Math.round(s.visee * 100) + " %, recul " + v(s.dispersionRecul) + ")"]);
     if (st.lunette) {
@@ -453,10 +464,28 @@ Tanks.SousLeCapot = (function () {
     l.push(["soins · réparations", O.soins + " points de vie rendus · " + O.reparations + " points de blindage réparés" + (aides.length ? " · en route : " + aides.map((o) => o.indicatif + " " + Tanks.Ordres.enMots(o) + " (" + Math.round(Math.hypot(o.x - Tanks.Ordres.ici(monde).x, o.z - Tanks.Ordres.ici(monde).z)) + " m)").join(", ") : "")]);
   }
 
+  // (demande 97) LES DÉBLOCAGES : tes points d'expérience, ton niveau, celui de chaque arme, ce qui est débloqué, et les
+  // vrais chiffres de l'arme choisie avec toutes ses pièces (le « build »).
+  function lignesProgression(l) {
+    const PR = Tanks.Progression, P = C.progression, n = PR.niveauJoueur(), k = PR.comptes(), c = Tanks.Equipement.choix(), b = PR.bataille;
+    l.push(["Les déblocages (demande 97)"]);
+    l.push(["toi", "niveau " + n.niveau + " / " + P.joueur.max + " · " + n.xp.toLocaleString("fr-FR") + " XP en tout · " + (n.max ? "niveau maximum" : n.dans + " / " + n.pour + " XP vers le niveau " + (n.niveau + 1) + " (il faut " + P.joueur.base + " + " + P.joueur.pas + " × (niveau − 1))") + (PR.toutDebloque ? " · 🔓 ?toutdebloquer=1 (test)" : "") + " · batailles terminées : " + (Tanks.Sauvegarde.donnees.progression.parties || 0)]);
+    l.push(["débloqué", k.armes + " / " + k.armesTotal + " armes · " + k.pieces + " / " + k.piecesTotal + " pièces et peintures (toutes armes) · cadeaux de l'ancienne sauvegarde : " + Tanks.Sauvegarde.donnees.progression.cadeaux.armes.length + " armes"]);
+    const xa = Tanks.Sauvegarde.donnees.progression.armes || {};
+    l.push(["niveaux d'arme", Object.keys(xa).length ? Object.keys(xa).map((id) => { const m = PR.niveauArme(id); return (C.armesPrincipales[id] || C.pistolets[id]).nom + " niv " + m.niveau + " (" + xa[id] + " XP)"; }).join(" · ") : "aucune arme n'a encore de points (abats des ennemis avec !)"]);
+    const st = Tanks.Equipement.stats(c.arme, c.pieces);
+    l.push(["ton équipement (build)", st.nom + " · " + Tanks.Equipement.emplacementsDe(c.arme).map((e) => C.atelier[e].icone + " " + Tanks.Equipement.piece(e, c.pieces[e]).nom).join(" · ")]);
+    l.push(["ses chiffres finaux", "dégâts " + virgule(st.degats, 2) + " · portée " + Math.round(st.portee) + " m · épaulé " + virgule(st.dispersionVisee * 1000, 1) + " mrad · recul " + virgule(st.recul * 1000, 1) + " mrad · " + Math.round(60 / st.cadence) + " coups/min · chargeur " + st.chargeur + " · rechargement " + virgule(st.rechargement, 1) + " s · épauler " + virgule(st.visee, 2) + " s · vitesse " + Math.round(st.mobilite * 100) + " % · entendu à " + Math.round(st.bruit * C.tir.bruit) + " m · remarqué " + (st.visibilite >= 0 ? "+" : "") + Math.round(st.visibilite) + " m · engins × " + virgule(st.vsVehicule, 1)]);
+    if (b) l.push(["cette bataille", "+" + b.total.toLocaleString("fr-FR") + " XP · " + (Object.keys(b.categories).map((k2) => P.points[k2].icone + " " + b.categories[k2].nombre + " → " + b.categories[k2].xp).join(" · ") || "rien encore") + " · éliminations de ton camp : " + (Object.entries(b.eliminations).map(([q, v]) => q + " " + v).join(", ") || "—") + (b.fini ? " · terminée" + (b.mvp ? " · 🥇 MVP" : "") : "")]);
+    const V = Tanks.Armes3D.vitrineEtat;
+    l.push(["la vitrine de l'armurerie", (V.actif ? "allumée : " + (V.modele ? V.modele.nom : "—") + " · " + V.images + " images dessinées · zoom × " + virgule(V.zoom, 2) : "éteinte (elle ne tourne que dans l'onglet Armurerie)") + " · " + V.magasin + " modèles au magasin (au plus 48 : les plus vieux sont jetés, " + (Tanks.Armes3D.bilan.jetes || 0) + " déjà)"]);
+  }
+
   function lignes() {
     const j = monde.joueur, f = j.fiche, t = monde.toi || {}, s = t.soldat;
     const l = [];
     lignesRadio(l); // (demande 94)
+    lignesProgression(l); // (demande 97)
     lignesCampagne(l); // (étape 88)
     lignesVitesse(l);
     lignesSouterrain(l, s);

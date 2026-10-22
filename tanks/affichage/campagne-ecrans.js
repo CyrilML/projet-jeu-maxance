@@ -496,6 +496,7 @@ Tanks.EcranCampagne = (function () {
       (b.reussi ? "" : '<div class="cp-raison">' + html(e.raison || "") + "</div>") +
       '<div class="cp-etoiles-fin">' + etoiles + "</div>" +
       '<div class="cp-tuiles">' + tuiles + "</div>" +
+      Tanks.EcranProgression.blocHTML() + // (demande 97 : l'expérience gagnée pendant la mission)
       (b.reussi ? '<p class="cp-recit">' + html(c.reussite) + "</p>" : '<p class="cp-recit">Ne lâche rien, Lion. Relis les objectifs, change de classe si besoin, et retente ta chance.</p>') +
       (b.debloque ? '<div class="cp-debloque">🔓 Nouveau chapitre débloqué : <b>' + html(b.debloque) + "</b></div>" : dernier && b.reussi ? '<div class="cp-debloque">🏆 Tu as terminé la campagne « ' + html(K.titre) + " » · " + K.chapitres.reduce((s, x) => s + ((P.chapitres[x.id] && P.chapitres[x.id].etoiles) || 0), 0) + " / " + K.chapitres.length * 3 + " étoiles</div>" : "") +
       '<div class="cp-boutons">' + boutons + "</div></div>");

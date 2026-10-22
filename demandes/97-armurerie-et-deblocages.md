@@ -1,6 +1,6 @@
 # Demande n° 97 : l'armurerie refaite, plus d'armes et de pièces, et les déblocages
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée (tanks version 40).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -25,8 +25,8 @@ les déblocages et refais tout dans le moindre détail. »
 - Le jeu ne doit pas ramer : les nouveaux modèles suivent les niveaux de qualité.
 
 ## ✅ Critères de réussite
-- [ ] Tanks « version 40 ».
-- [ ] La nouvelle armurerie, l'arme en 3D qu'on fait tourner, les barres « avant → après ».
-- [ ] De nouvelles armes et beaucoup de nouvelles pièces, visibles sur l'arme.
-- [ ] Des cadenas avec le niveau nécessaire ; en jouant, je gagne des points et je débloque des choses.
-- [ ] Ma progression est gardée quand je reviens.
+- [x] Tanks « version 40 ».
+- [x] La nouvelle armurerie, l'arme en 3D qu'on fait tourner, les barres « avant → après ».
+- [x] De nouvelles armes et beaucoup de nouvelles pièces, visibles sur l'arme.
+- [x] Des cadenas avec le niveau nécessaire ; en jouant, je gagne des points et je débloque des choses.
+- [x] Ma progression est gardée quand je reviens.

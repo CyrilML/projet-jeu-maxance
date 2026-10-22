@@ -241,7 +241,7 @@ Tanks.Tableau = (function () {
       barreVie(24, H - 80, 200, s);
       // (étape 77) tes 4 armes : 1 pistolet, 2 ton arme, 3 ton gadget, 4 les grenades
       if (s.armes) {
-        const g = s.gadget, noms = [["pistolet", "🔫 Pistolet"], ["principale", s.armes.principale.stats.icone + " " + s.armes.principale.stats.nom], ["gadget", g.fiche.icone + " " + g.fiche.nom], ["grenades", "💣 ×" + s.grenades]];
+        const g = s.gadget, noms = [["pistolet", "🔫 " + s.armes.pistolet.stats.nom], ["principale", s.armes.principale.stats.icone + " " + s.armes.principale.stats.nom], ["gadget", g.fiche.icone + " " + g.fiche.nom], ["grenades", "💣 ×" + s.grenades]];
         noms.forEach(([a, nom], i) => {
           const x = 24 + i * 104, choisi = s.arme === a;
           ctx.fillStyle = choisi ? "rgba(255,207,90,.3)" : "rgba(255,255,255,.08)";
@@ -471,7 +471,41 @@ Tanks.Tableau = (function () {
   }
   const virgule = (n) => (n || 0).toFixed(1).replace(".", ",");
 
+  // (demande 97) LA LUNETTE THERMIQUE : pendant qu'on regarde dedans, l'image 3D devient grise et sombre (un simple filtre,
+  // presque gratuit), et chaque soldat ou moteur est dessiné comme une tache BLANCHE et chaude.
+  const thermique = { voulu: false, actif: false };
+  function appliquerThermique() {
+    if (thermique.voulu === thermique.actif) return;
+    thermique.actif = thermique.voulu;
+    const t = document.getElementById("ecran3d");
+    if (t) t.style.filter = thermique.actif ? "grayscale(1) brightness(.55) contrast(1.35)" : "";
+  }
+  function tachesDeChaleur(cx, cy, r) {
+    const monde = Tanks.monde, toi = monde && monde.toi && monde.toi.soldat;
+    if (!monde || !toi) return;
+    const chaud = (x, y0, y1, z, largeur, force) => {
+      const a = Tanks.Scene.versEcran(x, y0, z, L, H), b = Tanks.Scene.versEcran(x, y1, z, L, H);
+      if (!a || !b) return;
+      const hpx = Math.abs(a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      if (hpx < 1.5 || Math.hypot(mx - cx, my - cy) > r) return;
+      const g = ctx.createRadialGradient(mx, my, 0, mx, my, hpx * 0.6);
+      g.addColorStop(0, "rgba(255,255,250," + force + ")");
+      g.addColorStop(0.55, "rgba(255,250,230," + force * 0.6 + ")");
+      g.addColorStop(1, "rgba(255,240,200,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(mx, my, Math.max(2, hpx * largeur), hpx * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    };
+    for (const o of monde.soldats) if (o !== toi && !o.dansUnEngin && Math.hypot(o.x - toi.x, o.z - toi.z) < 450) chaud(o.x, o.y + (o.mort ? 0.05 : 0.15), o.y + (o.mort ? 0.35 : o.accroupi ? 1.2 : 1.75), o.z, o.mort ? 1.4 : 0.32, o.mort ? 0.35 : 0.95);
+    for (const c of monde.chars.concat(monde.vehicules, monde.engins)) if (!c.detruit && Math.hypot(c.x - toi.x, c.z - toi.z) < 600) chaud(c.x, c.y + 0.6, c.y + 2.2, c.z, 1.3, 0.8);
+  }
   function dessiner(monde) {
+    thermique.voulu = false;
+    dessinerTout(monde);
+    appliquerThermique();
+  }
+  function dessinerTout(monde) {
     ctx.clearRect(0, 0, L, H);
     // (étape 72) le petit mot du régulateur de qualité, sous la carte : « ⚙️ qualité 2/3 · 58 i/s »
     const Q = Tanks.Qualite;
@@ -719,6 +753,7 @@ Tanks.Tableau = (function () {
   function finEtAide(monde, t) {
     // La fin de la bataille
     if ((monde.phase === "victoire" || monde.phase === "defaite") && monde.campagne) return; // (étape 88 : en campagne, l'écran de fin est celui de la campagne)
+    if ((monde.phase === "victoire" || monde.phase === "defaite") && Tanks.EcranProgression && Tanks.EcranProgression.visible) return; // (demande 97 : le bilan d'expérience prend la place)
     if (monde.phase === "victoire" || monde.phase === "defaite") {
       const gagne = monde.phase === "victoire";
       panneau(L / 2 - 240, H / 2 - 90, 480, 170);
@@ -834,6 +869,18 @@ Tanks.Tableau = (function () {
   function dessinerLunette(ctx, L, H, s, st) {
     const cx = L / 2, cy = H / 2, r = Math.min(L, H) * 0.44, a = Math.min(1, (s.visee - 0.6) / 0.3);
     ctx.save();
+    if (st.thermique) { // (demande 97) la vision de la CHALEUR
+      thermique.voulu = a > 0.5;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.fillStyle = "rgba(20,26,34," + 0.35 * a + ")";
+      ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+      ctx.globalAlpha = a;
+      tachesDeChaleur(cx, cy, r);
+      ctx.restore();
+    }
     ctx.globalAlpha = a;
     // le noir autour du rond
     ctx.fillStyle = "#000";
@@ -888,6 +935,7 @@ Tanks.Tableau = (function () {
     ctx.textAlign = "center";
     ctx.fillStyle = "#fff";
     ctx.fillText(b.reprise > 0 ? "😮‍💨 tu reprends ton souffle…" : b.retenu ? "🤫 souffle retenu" : "Maj : retenir ton souffle", cx, yb - 8);
+    if (st.thermique) (ctx.fillStyle = "#ffe8b0"), ctx.fillText("🌡️ THERMIQUE : les corps chauds brillent en blanc", cx, cy - r * 0.62), (ctx.fillStyle = "#fff");
     if (s.vise) {
       const sous = Tanks.Armes.sousLaCroix(s.vise.d, st.vitesseBalle);
       ctx.fillText("×" + st.zoom.toFixed(0) + " · " + Math.round(s.vise.d) + " m · 1 point = " + pas + " mrad" + (st.vitesseBalle ? " · la balle arrive " + Math.abs(Math.round(sous * 100)) + " cm " + (sous >= 0 ? "sous" : "au-dessus de") + " la croix" : ""), cx, yb + 24);

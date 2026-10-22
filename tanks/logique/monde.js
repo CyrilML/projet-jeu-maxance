@@ -35,6 +35,7 @@
 // campagne, ce n'est plus « tous les tanks rouges détruits » qui fait gagner : ce sont les OBJECTIFS du chapitre.
 // Demande 94 : L'OPÉRATEUR RADIO (logique/radio.js) : tes phrases passent par lui, et il voit chaque événement (avec les
 // vrais objets) pour faire parler tes soldats.
+// Demande 97 : LE SERGENT INSTRUCTEUR (logique/progression.js) voit aussi chaque événement : il donne les points d'expérience.
 // Il annonce tout à la radio : le journal, les sons, les effets et la sauvegarde écoutent.
 
 window.Tanks = window.Tanks || {};
@@ -110,7 +111,7 @@ Tanks.Monde = (function () {
     monde.chronoParas = undefined;
     monde.metro = { renforts: { bleus: R.renforts, rouges: R.renforts }, arrives: { bleus: R.soldats, rouges: R.soldats }, attente: { bleus: 0, rouges: 0 }, elimines: { bleus: 0, rouges: 0 } };
     const P = SO.parties;
-    radio.emettre("souterrain", { classe: C.classes[equipement.classe].nom, arme: C.armesPrincipales[equipement.arme].nom, soldats: R.soldats, renforts: R.renforts, rames: P.rames, enFeu: P.enFeu, longueur: C.souterrain.longueur });
+    radio.emettre("souterrain", { classe: C.classes[equipement.classe].nom, arme: Tanks.Equipement.fiche(equipement.arme).nom, soldats: R.soldats, renforts: R.renforts, rames: P.rames, enFeu: P.enFeu, longueur: C.souterrain.longueur });
   }
   // (étape 80) Les RENFORTS : un camp qui a moins de 10 soldats debout en fait arriver un (toutes les 3 s), tant qu'il en a.
   function renforts(monde, dt) {
@@ -172,7 +173,7 @@ Tanks.Monde = (function () {
     monde.portails = Tanks.Portails.creer();
     for (const p of monde.portails) p.passages = 0;
     monde.toi = { mode: "char", engin: monde.joueur, soldat: toi };
-    radio.emettre("bataille", { classe: C.classes[equipement.classe].nom, arme: C.armesPrincipales[equipement.arme].nom, gadget: C.gadgets[equipement.gadget].nom, char: monde.joueur.fiche.nom, allies: E.allies, ennemis: E.ennemis, soldats: C.soldats.parEquipe, engins: monde.engins.length, vehicules: monde.vehicules.length, helicos: monde.helicos.length, bateaux: monde.bateaux.length, sousMarins: monde.sousMarins.length, portails: monde.portails.length });
+    radio.emettre("bataille", { classe: C.classes[equipement.classe].nom, arme: Tanks.Equipement.fiche(equipement.arme).nom, gadget: C.gadgets[equipement.gadget].nom, char: monde.joueur.fiche.nom, allies: E.allies, ennemis: E.ennemis, soldats: C.soldats.parEquipe, engins: monde.engins.length, vehicules: monde.vehicules.length, helicos: monde.helicos.length, bateaux: monde.bateaux.length, sousMarins: monde.sousMarins.length, portails: monde.portails.length });
   }
 
   const vivants = (monde, equipe) => monde.chars.filter((c) => c.equipe === equipe && !c.detruit).length;
@@ -403,6 +404,7 @@ Tanks.Monde = (function () {
       radio.emettre(nom, journal(d));
       if (nom === "touche" && d.tireur === monde.joueur) S.donnees.touches++;
       const deToi = d.tireur === monde.joueur || d.tireur === toi || (d.tireur && d.tireur === t.engin);
+      Tanks.Progression.noter(monde, nom, d, deToi); // (demande 97 : le sergent instructeur donne les points d'expérience)
       if (nom === "detruit" && deToi && d.cible.equipe !== "bleus") {
         if (d.cible.genre === "bateau") S.donnees.bateaux++; // (étape 62)
         else if (d.cible.genre === "sousmarin") S.donnees.sousMarins++; // (étape 63)

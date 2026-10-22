@@ -98,7 +98,10 @@ Tanks.Troupes = (function () {
       parDistance.length = 0;
       for (const o of candidats) {
         const d = Math.hypot(o.x - s.x, o.z - s.z);
-        if (d > portee) continue;
+        // (demande 97) TOI, on te remarque de plus loin avec une lampe, un laser, de l'or… (moins loin avec un cache-flamme
+        // ou un camouflage) ; et si tu viens de tirer, on t'ENTEND jusqu'au bruit de ton arme (le silencieux : 3 fois moins loin)
+        const enPlus = o.joueur ? (o.visibilite || 0) + (o.repere > 0 ? Math.max(0, (o.bruitTir || 0) - portee) : 0) : 0;
+        if (d > portee + enPlus) continue;
         const paire = paires[parDistance.length] || (paires[parDistance.length] = { o: null, d: 0 });
         (paire.o = o), (paire.d = o.marque > 0 ? d * 0.45 : d); // (étape 77 : un ennemi MARQUÉ par toi passe en premier)
         parDistance.push(paire);

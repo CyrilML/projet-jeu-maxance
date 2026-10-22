@@ -28,25 +28,33 @@
 //   12 (demande 90) : + campagne.difficulte (le niveau choisi : "tres-facile", "facile", "normal", "difficile" ou
 //     "tres-difficile") et, pour chaque chapitre réussi, « niveaux » = les meilleures étoiles à chaque difficulté. Une
 //     ancienne version garde tout, avec le niveau « facile » (✍️ Maxance trouvait la campagne trop dure).
+//   13 (demande 97 : l'armurerie et les déblocages) : + progression (« xp » = tes points d'expérience, « armes » = les points
+//     de chaque arme, « cadeaux » = ce qui est débloqué quoi qu'il arrive, « parties » = tes batailles terminées) et
+//     equipement.pistolet (le pistolet choisi). Les pièces changent de place : l'ancien « manche » devient la « poignée »
+//     (et sa « crosse lourde » va dans le nouvel emplacement « crosse »), le « silencieux » quitte le « canon » pour la
+//     « bouche ». ✍️ Une ancienne sauvegarde GARDE SON ÉQUIPEMENT : l'arme choisie dans chaque classe et ses pièces
+//     deviennent des « cadeaux » (débloqués même si ton niveau est plus bas), et tes anciennes victoires, tanks détruits
+//     et étoiles de campagne te donnent des points de « vétéran » (au plus progression.veteran.max).
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 12; // (étape 88 : + campagne ; demande 90 : + campagne.difficulte)
+  const VERSION = 13; // (étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression)
   const radio = Tanks.Evenements;
 
   function vide() {
     return { version: VERSION, char: "leclerc", victoires: 0, defaites: 0, detruits: 0, tirs: 0, touches: 0, bateaux: 0, portails: 0, sousMarins: 0, avions: 0, ordres: 0, vehicules: 0, helicos: 0, cordes: 0, maisons: 0, murs: 0, grenades: 0,
       carte: "bataille", souterrain: 0, // (étape 80)
       campagne: { debloque: 1, chapitres: {}, enCours: null, difficulte: Tanks.CONFIG.campagne.difficulteDepart }, // (étape 88 ; demande 90 : + difficulte)
-      equipement: equipementDeDepart() }; // (étape 77)
+      equipement: equipementDeDepart(), // (étape 77)
+      progression: { xp: 0, armes: {}, cadeaux: { armes: [], pieces: {} }, parties: 0 } }; // (demande 97)
   }
   // (étape 77) L'équipement de départ : pour chaque classe, sa 1re arme, son 1er gadget et son 1er explosif ; pour chaque arme, les pièces d'origine.
   function equipementDeDepart() {
-    const C = Tanks.CONFIG, e = { classe: "assaut", armes: {}, gadgets: {}, explosifs: {}, pieces: {} };
+    const C = Tanks.CONFIG, e = { classe: "assaut", armes: {}, gadgets: {}, explosifs: {}, pieces: {}, pistolet: Object.keys(C.pistolets)[0] }; // (demande 97 : + le pistolet)
     for (const k in C.classes) (e.armes[k] = C.classes[k].armes[0]), (e.gadgets[k] = C.classes[k].gadgets[0]), (e.explosifs[k] = C.classes[k].explosifs[0]);
-    for (const a in C.armesPrincipales) {
+    for (const a of Object.keys(C.armesPrincipales).concat(Object.keys(C.pistolets))) { // (demande 97 : les pistolets ont aussi leurs pièces)
       e.pieces[a] = {};
       for (const emp in C.atelier) e.pieces[a][emp] = C.atelier[emp].pieces[0].id;
     }
@@ -62,6 +70,30 @@ Tanks.Sauvegarde = (function () {
     return depart;
   }
 
+  // (demande 97) Une sauvegarde d'avant la version 13 : les pièces changent de place, l'équipement choisi devient un
+  // « cadeau » (il reste débloqué), et les anciens exploits donnent des points de vétéran.
+  function convertir13(d, ancienne) {
+    const C = Tanks.CONFIG, V = C.progression.veteran, e = d.equipement, ae = (ancienne && ancienne.equipement) || {};
+    const MANCHE = { aucun: ["poignee", "aucun"], vertical: ["poignee", "vertical"], incline: ["poignee", "incline"], crosse: ["crosse", "lourde"] };
+    for (const a in e.pieces) {
+      const p = e.pieces[a];
+      if (p.manche && MANCHE[p.manche]) p[MANCHE[p.manche][0]] = MANCHE[p.manche][1];
+      delete p.manche;
+      if (p.canon === "silencieux") (p.canon = "standard"), (p.bouche = "silencieux");
+    }
+    const P = d.progression, cadeaux = P.cadeaux;
+    for (const k in ae.armes || {}) {
+      const a = ae.armes[k];
+      if (!C.armesPrincipales[a]) continue;
+      if (!cadeaux.armes.includes(a)) cadeaux.armes.push(a);
+      const p = e.pieces[a] || {}, liste = (cadeaux.pieces[a] = cadeaux.pieces[a] || []);
+      for (const emp in p) if (C.atelier[emp] && p[emp] !== C.atelier[emp].pieces[0].id && !liste.includes(emp + ":" + p[emp])) liste.push(emp + ":" + p[emp]);
+    }
+    const etoiles = Object.values((d.campagne && d.campagne.chapitres) || {}).reduce((t, c) => t + (c.etoiles || 0), 0);
+    P.xp = Math.max(P.xp || 0, Math.min(V.max, (d.victoires || 0) * V.victoire + (d.detruits || 0) * V.tank + etoiles * V.etoile));
+    P.veteran = P.xp;
+  }
+
   let donnees = vide();
   function lire() {
     try {
@@ -70,7 +102,8 @@ Tanks.Sauvegarde = (function () {
       if (brut) {
         const ancienne = JSON.parse(brut);
         const neuve = vide();
-        donnees = Object.assign(neuve, ancienne, { version: VERSION, equipement: fusionner(neuve.equipement, ancienne.equipement), campagne: fusionner(neuve.campagne, ancienne.campagne) }); // (étape 88 : la campagne aussi)
+        donnees = Object.assign(neuve, ancienne, { version: VERSION, equipement: fusionner(neuve.equipement, ancienne.equipement), campagne: fusionner(neuve.campagne, ancienne.campagne), progression: fusionner(neuve.progression, ancienne.progression) }); // (étape 88 : la campagne aussi ; demande 97 : la progression)
+        if ((ancienne.version || 1) < 13) convertir13(donnees, ancienne); // (demande 97)
         if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION });
       }
     } catch (e) {

@@ -218,6 +218,7 @@
       <a href="#etape94">Étape 94</a>
       <a href="#etape95">Étape 95</a>
       <a href="#etape96">Étape 96</a>
+      <a href="#etape97">Étape 97</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5052,6 +5053,52 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ul>
     </section>
 
+    <section id="etape97">
+      <h2>🔫 Étape 97 : l'armurerie, de nouvelles armes et les déblocages <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Une grande armurerie avec l'arme en 3D au centre, 25 armes, 10 emplacements de pièces, des peintures, et des déblocages : on gagne de l'expérience en jouant. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/97-armurerie-et-deblocages.md</code>.</p>
+          <ul>
+            <li>✍️ « Refais le menu du jeu avec les armes. Ajoute des armes, des canons, des viseurs, des chargeurs et tout ça. »</li>
+            <li>✍️ « Lance les déblocages et refais tout dans le moindre détail. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 40 ».</li>
+            <li>☐ L'armurerie : l'arme tourne quand tu la tires à la souris, la molette zoome, un double-clic la remet droite.</li>
+            <li>☐ ↑ ↓ change d'arme, ← → change d'emplacement, Entrée ouvre le tiroir des pièces.</li>
+            <li>☐ Les barres montrent « avant → après » quand tu passes sur une pièce.</li>
+            <li>☐ Les armes et pièces pas encore gagnées ont un cadenas avec le niveau à atteindre.</li>
+            <li>☐ À la fin d'une bataille : le bilan de l'expérience, et « NIVEAU SUPÉRIEUR ! » quand tu montes.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>⭐ Deux sortes de niveaux</h3>
+      <ul>
+        <li><strong>Ton niveau de joueur</strong> (jusqu'à 30) débloque les <em>armes</em>. Il faut 800 points pour le niveau 2, puis 150 de plus à chaque niveau.</li>
+        <li><strong>Le niveau de chaque arme</strong> (jusqu'à 10) débloque ses <em>pièces</em> et ses <em>peintures</em>. On le monte en jouant AVEC cette arme.</li>
+        <li>Les points : ennemi abattu 100, tir à la tête +50, char détruit 300, victoire 500, meilleur joueur +400…</li>
+      </ul>
+      <h3>🗄️ La sauvegarde a changé (version 13)</h3>
+      <p>Le jeu doit maintenant se souvenir de tes points et de tes niveaux. Comme tu jouais déjà avant, le jeu a lu ton ancienne sauvegarde et t'a donné des points de « vétéran » (jusqu'à 8 000) pour ne pas tout recommencer à zéro.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+        <li>Ouvre « sous le capot » pendant une bataille : regarde ton expérience monter à chaque ennemi.</li>
+        <li>Dans <code>tanks/config.js</code>, cherche <code>progression</code> : c'est là que sont rangés tous les points et les niveaux.</li>
+        <li>Mets un viseur ×8 puis un point rouge : quelles barres changent ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+        <li>Qu'est-ce qui débloque une nouvelle arme : ton niveau ou celui de l'arme ? <span class="petit">(ton niveau de joueur)</span></li>
+        <li>Pourquoi a-t-on augmenté le numéro de la sauvegarde ? <span class="petit">(parce que son format a changé : l'ancienne doit être convertie)</span></li>
+        <li>Une pièce a-t-elle seulement des avantages ? <span class="petit">(non : par exemple un silencieux réduit la portée)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6349,6 +6396,24 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-95" data-cle="appris-95" placeholder="Ex. : J'ai appris qu'une voix trop tordue sonne comme un robot…"></textarea>
         <label for="idees-95"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-95" data-cle="idees-95" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 96 · des voix qui changent et moins de lags <span class="petit">· 22 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/affichage/radio-voix.js</code>, <code>scene.js</code>, <code>qualite.js</code>.</p>
+        <p class="petit">✍️ Maxance a demandé : des voix différentes, la touche J, et un jeu qui rame moins.</p>
+        <label for="appris-96"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-96" data-cle="appris-96" placeholder="Ex. : …"></textarea>
+        <label for="idees-96"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-96" data-cle="idees-96" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 97 · l'armurerie et les déblocages <span class="petit">· 22 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/logique/progression.js</code>, <code>tanks/affichage/menu.js</code>, <code>armes3d.js</code>, <code>donnees/sauvegarde.js</code>.</p>
+        <p class="petit">✍️ Maxance a demandé : plus d'armes, plus de pièces, et des déblocages.</p>
+        <label for="appris-97"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-97" data-cle="appris-97" placeholder="Ex. : …"></textarea>
+        <label for="idees-97"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-97" data-cle="idees-97" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

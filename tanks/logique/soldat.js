@@ -133,7 +133,7 @@ Tanks.Soldat = (function () {
       if (meilleur.s.accroupi) chance *= RS.accroupi.touche; // (demande 92 : accroupi, il est plus petit)
       if (Math.random() < chance) {
         ev.push(["balle", { tireur, de: { x, y, z }, a: { x: meilleur.s.x, y: meilleur.s.y + hauteurVisee(meilleur.s), z: meilleur.s.z }, touche: true }]);
-        if (meilleur.s.genre === "vehicule" || meilleur.s.sorte) Tanks.Vehicules.blesserPilote(meilleur.s, Math.ceil(degats), tireur, ev);
+        if (meilleur.s.genre === "vehicule" || meilleur.s.sorte) Tanks.Vehicules.blesserPilote(meilleur.s, Math.ceil(degats * (R.vsVehicule || 1) * 2) / 2, tireur, ev); // (demande 97 : × les munitions perforantes ou à pointe creuse)
         else blesser(meilleur.s, degats, tireur, ev, typeof arme === "string" ? arme : "balle", { x, z });
         return;
       }

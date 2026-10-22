@@ -17,6 +17,8 @@
 //   - le BRUIT : quand tu tires, les ennemis t'entendent jusqu'à 160 m × le bruit de l'arme (le silencieux : × 0,3) :
 //     pendant 4 s, tu es « repéré » et ils te cherchent. La LAMPE et le LASER se voient aussi de loin (« visibilite »).
 //   - le POINT VISÉ : là où arrive le laser (un mur, le sol, un soldat), recalculé 40 fois par seconde.
+// Demande 97 : les MUNITIONS de l'armurerie : les perforantes font plus mal aux motos, aux quads et à leurs pilotes
+// (« vsVehicule »), les subsoniques font moins de bruit mais leur balle est plus lente (elle tombe plus).
 // Étape 79 : LE SNIPER. Avec une lunette (les fusils de précision, ou la lunette ×6), épauler montre la vraie lunette.
 //   - la RESPIRATION : ta visée dessine doucement un « 8 » (comme quand on respire en tenant un fusil lourd).
 //   - Maj : tu RETIENS TON SOUFFLE quelques secondes : la visée s'arrête presque. Si tu tiens jusqu'au bout, tu dois
@@ -163,7 +165,7 @@ Tanks.Armes = (function () {
       // une balle : elle part dans la direction du viseur (l'écart au hasard est tiré dans Soldat.balle)
       // (étape 79) avec la lunette : la balle part là où la respiration a mis ta visée, et elle TOMBE (vitesseBalle)
       const bal = s.balancement || { x: 0, y: 0 };
-      const R = { portee: st.portee, porteeEfficace: st.porteeEfficace, degats: st.degats, degatsLoin: st.degatsLoin, degatsVehicule: st.degatsVehicule, cone: st.cone, dispersionTir: sigma, precision: 0.8, nom: st.nom,
+      const R = { portee: st.portee, porteeEfficace: st.porteeEfficace, degats: st.degats, degatsLoin: st.degatsLoin, degatsVehicule: st.degatsVehicule, vsVehicule: st.vsVehicule, cone: st.cone, dispersionTir: sigma, precision: 0.8, nom: st.nom,
         vitesseBalle: st.vitesseBalle, hausse: bal.y };
       const x = s.x + Math.cos(s.angle) * 0.7, z = s.z + Math.sin(s.angle) * 0.7;
       const avant = ev.length;
@@ -201,8 +203,10 @@ Tanks.Armes = (function () {
     s.coup = Math.max(0, (s.coup || 0) - dt * 8);
     s.repere = Math.max(0, (s.repere || 0) - dt);
     // la visibilité : la lampe allumée et le laser se voient de loin
-    const lampe = A === s.armes.principale && st.lampe && s.lampeAllumee;
-    s.visibilite = (lampe ? C.atelier.lampe.pieces.find((p) => p.effets.lampe === st.lampe).effets.visibilite : 0) + (st.laser && A === s.armes.principale ? C.atelier.laser.pieces.find((p) => p.effets.laser === st.laser).effets.visibilite : 0);
+    // (demande 97) toutes les pièces comptent (le cache-flamme et le camouflage te cachent un peu, l'or te montre…) ; une
+    // lampe éteinte (L) ne se voit pas. Les soldats de l'ordinateur te remarquent d'autant plus loin (logique/troupes.js).
+    const lampeEteinte = st.lampe && !(A === s.armes.principale && s.lampeAllumee);
+    s.visibilite = st.visibilite - (lampeEteinte ? st.visibiliteLampe : 0);
     // 3. le rechargement
     if (s.rechargement > 0) {
       s.rechargement -= dt;

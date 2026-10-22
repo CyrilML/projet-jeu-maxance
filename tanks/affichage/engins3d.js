@@ -675,7 +675,7 @@ Tanks.Engins3D = (function () {
     // (demande 88) LA VRAIE ARME de ce soldat : la tienne (avec ses pièces), ou celle tirée au sort pour lui (armes3d.js)
     const corde = !!s.corde && !s.mort;
     const modele = Tanks.Armes3D.pourSoldat(s, pres);
-    const famille = modele.id === "pistolet" ? "pistolet" : modele.famille === "roquettes" ? "roquettes" : "fusil";
+    const famille = modele.famille === "pistolet" ? "pistolet" : modele.famille === "roquettes" ? "roquettes" : "fusil";
     const arme = porterArme(r, modele, famille, corde); // (la « pose » des bras pour cette arme)
     r.porteArme.visible = !s.nage && !s.mort;
     if (s.joueur) Tanks.Armes3D.noterArmeDuJoueur(r.objetArme, modele);

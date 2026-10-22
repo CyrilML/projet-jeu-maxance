@@ -72,10 +72,6 @@
     #journal li[data-evenement="mur-troue"], #journal li[data-evenement="mur-abime"] { color: #e6c9a0; }
     #journal li[data-evenement="grenade-lancee"], #journal li[data-evenement="grenades"] { color: #c8e68a; }
     #journal li[data-evenement="marque"], #journal li[data-evenement="reparation"], #journal li[data-evenement="soigne"], #journal li[data-evenement="releve"] { color: #7dffa0; }
-    /* (étape 77) LE MENU avant la bataille : la caserne */
-    #menu { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; gap: 8px; padding: 14px 18px; overflow-y: auto;
-      background: radial-gradient(ellipse at 70% 20%, rgba(40,52,30,.82), rgba(8,11,7,.95)); font-size: 14px; }
-    #menu[hidden] { display: none; }
     /* (étape 84) la page d'accueil */
     #accueil { position: absolute; inset: 0; z-index: 9; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: opacity .6s; }
     #accueil[hidden] { display: none; }
@@ -98,47 +94,177 @@
     .a-pied { margin-top: 22px; color: #a99f84; font-size: .8rem; }
     @keyframes a-clignote { 50% { opacity: .35; } }
     @keyframes a-respire { 50% { text-shadow: 0 3px 0 #3a2a0a, 0 0 46px rgba(255,170,60,.7), 0 8px 24px #000; } }
-    #menu button { touch-action: manipulation; }
+    /* (étape 77) LE MENU avant la bataille : la caserne ; (demande 97) refait façon Battlefield : sombre, orange et blanc, lettres serrées */
+    #menu { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; gap: 7px; padding: 10px 14px; overflow-y: auto; color: #f2f4f7;
+      --bf-orange: #ff7a1a; --bf-orange2: #ffb15a; --bf-gris: #9aa3ad; --bf-bord: #2a3038; --bf-vert: #62e38e; --bf-rouge: #ff5d4d;
+      font-family: "Bahnschrift", "Roboto Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif; font-stretch: condensed; font-size: 14px;
+      background: radial-gradient(ellipse at 50% -10%, #1f242b 0%, #0d0f12 55%, #060708 100%); }
+    #menu[hidden] { display: none; }
+    #menu button { touch-action: manipulation; font-family: inherit; color: #f2f4f7; background: #181c21; border: 1px solid var(--bf-bord); border-radius: 3px; }
+    #menu button:hover { filter: brightness(1.25); }
     .m-haut { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .m-titre-jeu { font-size: 1.5rem; font-weight: bold; color: var(--accent); letter-spacing: .04em; text-transform: uppercase; text-shadow: 0 2px 0 #000; }
-    .m-resume { flex: 1; color: var(--doux); font-size: .9rem; }
-    .m-rejouer { background: #24331c; border-color: #6b8a4a; }
-    .m-onglets { display: flex; gap: 6px; flex-wrap: wrap; }
-    .m-onglet { background: #1b2416; border: 1px solid #3c4a32; border-radius: 8px 8px 0 0; padding: 7px 12px; color: var(--doux); }
-    .m-onglet.actif { background: linear-gradient(#5a4a1c, #3a2d10); color: var(--accent); border-color: var(--accent); }
-    .m-aide { color: #e8e4d6; font-size: .95rem; }
+    .m-titre-jeu { font-size: 1.45rem; font-weight: 800; color: #fff; letter-spacing: .08em; text-transform: uppercase; border-left: 4px solid var(--bf-orange); padding-left: 10px; line-height: 1; }
+    .m-resume { flex: 1; color: var(--bf-gris); font-size: .82rem; min-width: 200px; }
+    .m-joueur { display: flex; align-items: center; gap: 8px; }
+    .m-joueur-niv { width: 38px; height: 38px; display: grid; place-items: center; font-size: 1.25rem; font-weight: 800; color: #111; background: linear-gradient(#ffb15a, #ff7a1a); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+    .m-joueur-txt { display: flex; flex-direction: column; min-width: 150px; }
+    .m-joueur-txt b { font-size: .78rem; letter-spacing: .1em; }
+    .m-joueur-txt small { color: var(--bf-gris); font-size: .72rem; }
+    .m-joueur-xp, .ar-xp, .ar-mini-xp { height: 4px; background: rgba(255,255,255,.12); margin-top: 3px; }
+    .m-joueur-xp i, .ar-xp i, .ar-mini-xp i { display: block; height: 100%; background: linear-gradient(90deg, var(--bf-orange), var(--bf-orange2)); }
+    .m-rejouer { background: #1d2a1c !important; border-color: #3f6a3c !important; }
+    .m-onglets { display: flex; gap: 2px; flex-wrap: wrap; border-bottom: 1px solid var(--bf-bord); }
+    .m-onglet { background: transparent !important; border: 0 !important; border-bottom: 3px solid transparent !important; border-radius: 0 !important; padding: 7px 14px; color: var(--bf-gris) !important; text-transform: uppercase; letter-spacing: .07em; font-size: .86rem; }
+    .m-onglet.actif { color: #fff !important; border-bottom-color: var(--bf-orange) !important; background: linear-gradient(transparent, rgba(255,122,26,.14)) !important; }
+    .m-aide { color: #d8dde3; font-size: .95rem; }
     .m-cartes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
     .m-cartes.n4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .m-cartes.n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .m-carte { text-align: left; font-weight: normal; background: linear-gradient(160deg, #26321e, #151c11); border: 2px solid #3c4a32; border-top: 4px solid var(--classe, #6b7a52);
-      border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; min-height: 120px; box-shadow: 0 4px 14px rgba(0,0,0,.45); }
-    .m-carte.choisi { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(255,207,90,.35), 0 4px 18px rgba(0,0,0,.5); background: linear-gradient(160deg, #3a3a1c, #1c1f10); }
-    .m-carte.focus { outline: 3px dashed #9cc4ff; outline-offset: 2px; }
+    .m-carte { text-align: left; font-weight: normal; background: linear-gradient(160deg, #1d2229, #111418) !important; border: 1px solid var(--bf-bord) !important; border-top: 3px solid var(--classe, #59616b) !important;
+      padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; min-height: 120px; box-shadow: 0 4px 14px rgba(0,0,0,.45); }
+    .m-carte.choisi { border-color: var(--bf-orange) !important; box-shadow: 0 0 0 1px var(--bf-orange), 0 4px 18px rgba(0,0,0,.5); background: linear-gradient(160deg, #2b2218, #15110d) !important; }
+    .m-carte.focus { outline: 2px dashed #9cc4ff; outline-offset: 2px; }
     .m-icone { font-size: 2rem; line-height: 1; }
-    .m-titre { font-size: 1.1rem; font-weight: bold; color: #fff; }
-    .m-coche { color: var(--accent); }
-    .m-sous { color: var(--accent); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
-    .m-texte { color: var(--doux); font-size: .85rem; }
-    .m-ligne { font-size: .82rem; color: #e8e4d6; }
-    .m-barre { display: grid; grid-template-columns: 74px 1fr 76px; gap: 6px; align-items: center; font-size: .78rem; color: #cfd6bf; }
-    .m-barre i { height: 7px; background: rgba(255,255,255,.12); border-radius: 4px; overflow: hidden; }
-    .m-barre b { display: block; height: 100%; background: linear-gradient(90deg, #c9a240, #ffcf5a); }
+    .m-titre { font-size: 1.15rem; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: .03em; }
+    .m-coche { color: var(--bf-orange); }
+    .m-sous { color: var(--bf-orange2); font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; }
+    .m-texte { color: var(--bf-gris); font-size: .85rem; }
+    .m-ligne { font-size: .82rem; color: #dfe3e8; }
+    .m-barre { display: grid; grid-template-columns: 74px 1fr 76px; gap: 6px; align-items: center; font-size: .78rem; color: #cfd5dc; }
+    .m-barre i { height: 5px; background: rgba(255,255,255,.12); overflow: hidden; }
+    .m-barre b { display: block; height: 100%; background: linear-gradient(90deg, #d8dde3, #fff); }
     .m-barre em { font-style: normal; text-align: right; color: #fff; }
-    .m-effet { font-size: .8rem; padding: 1px 6px; border-radius: 5px; }
-    .m-effet.plus { color: #8dff9e; background: rgba(60,160,80,.15); }
-    .m-effet.moins { color: #ff9a8a; background: rgba(190,60,50,.15); }
-    .m-effet.neutre { color: var(--doux); }
-    .m-emplacements { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
-    .m-emp { font-size: .78rem; padding: 6px 4px; background: #1b2416; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-    .m-emp small { font-weight: normal; color: var(--doux); font-size: .7rem; }
-    .m-emp.actif { border-color: var(--accent); color: var(--accent); background: #3a2d10; }
-    .m-fiche { font-size: .8rem; color: #e8e4d6; background: rgba(0,0,0,.3); border-radius: 8px; padding: 5px 8px; }
-    .m-bas { margin-top: auto; display: flex; gap: 10px; align-items: center; justify-content: flex-end; color: var(--doux); font-size: .8rem; }
+    .m-bas { margin-top: auto; display: flex; gap: 10px; align-items: center; justify-content: flex-end; color: var(--bf-gris); font-size: .8rem; }
     .m-bas span { flex: 1; }
-    .m-combat { font-size: 1.2rem; background: linear-gradient(#b8401c, #7a2410); border-color: #ff8a5a; padding: 10px 22px; }
-    .m-suivant { background: #2c3a24; }
+    .m-combat { font-size: 1.15rem; font-weight: 800 !important; text-transform: uppercase; letter-spacing: .08em; background: linear-gradient(#ff8a2a, #d9560c) !important; border-color: #ffb15a !important; color: #111 !important; padding: 10px 24px; }
+    .m-suivant { text-transform: uppercase; letter-spacing: .06em; padding: 9px 16px; }
     .m-carte.grise, .m-onglet.grise { opacity: .5; filter: grayscale(.85); } /* (étape 80 : infanterie seulement) */
-    @media (max-width: 800px) { .m-cartes, .m-cartes.n4 { grid-template-columns: 1fr 1fr; } .m-emplacements { grid-template-columns: repeat(4, 1fr); } }
+    /* (demande 97) L'ARMURERIE : la liste à gauche, la vitrine 3D au milieu, les chiffres à droite */
+    .ar-armurerie { flex: 1; min-height: 400px; display: grid; grid-template-columns: 210px minmax(0, 1fr) 272px; gap: 8px; }
+    .ar-liste, .ar-droite { overflow-y: auto; background: rgba(12,14,17,.72); border: 1px solid var(--bf-bord); padding: 6px; scrollbar-width: thin; scrollbar-color: #3a414b transparent; }
+    .ar-groupe { font-size: .7rem; text-transform: uppercase; letter-spacing: .14em; color: var(--bf-orange2); padding: 6px 4px 3px; }
+    .ar-arme { width: 100%; display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 6px; text-align: left; padding: 5px 6px !important; margin-bottom: 3px; border-left: 3px solid transparent !important; background: rgba(255,255,255,.03) !important; }
+    .ar-arme.vue { background: linear-gradient(90deg, rgba(255,122,26,.28), rgba(255,122,26,.06)) !important; border-left-color: var(--bf-orange) !important; }
+    .ar-arme.verrou { opacity: .62; }
+    .ar-arme-icone { font-size: 1rem; }
+    .ar-arme-nom { font-weight: 800; font-size: .92rem; text-transform: uppercase; line-height: 1.05; }
+    .ar-arme-nom small { display: block; font-weight: 400; font-size: .68rem; text-transform: none; color: var(--bf-gris); }
+    .ar-arme-niv { font-size: .68rem; color: #fff; text-align: right; min-width: 44px; }
+    .ar-arme.equipee .ar-arme-niv { color: var(--bf-orange2); }
+    .ar-arme-cadenas { font-size: .95rem; text-align: center; }
+    .ar-arme-cadenas small { display: block; font-size: .6rem; color: var(--bf-gris); }
+    .ar-scene { position: relative; overflow: hidden; border: 1px solid var(--bf-bord); min-height: 300px;
+      background: radial-gradient(ellipse at 50% 46%, #2b3038 0%, #15181c 52%, #08090b 100%), #0b0c0e; }
+    .ar-scene::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+      background: repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 40px), repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, transparent 1px 40px);
+      -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 20%, transparent 75%); mask-image: radial-gradient(ellipse at 50% 50%, #000 20%, transparent 75%); }
+    .ar-studio { position: absolute; inset: 0; }
+    .ar-traits { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; overflow: visible; }
+    .ar-traits path { fill: none; stroke: rgba(255,255,255,.5); stroke-width: 1.1; }
+    .ar-traits path.actif { stroke: var(--bf-orange); stroke-width: 1.8; }
+    .ar-traits circle { fill: #fff; stroke: rgba(0,0,0,.6); stroke-width: 1; }
+    .ar-traits circle.actif { fill: var(--bf-orange); }
+    .ar-traits .derriere { opacity: .35; stroke-dasharray: 3 3; }
+    .ar-emp { position: absolute; z-index: 2; transform: translate(-50%, -50%); width: 132px; padding: 4px 8px !important; text-align: left; display: flex; flex-direction: column; gap: 1px;
+      background: rgba(10,12,15,.88) !important; border-left: 3px solid #5a636e !important; }
+    .ar-emp.actif { border-color: var(--bf-orange) !important; box-shadow: 0 0 14px rgba(255,122,26,.35); }
+    .ar-emp.ouvert { background: rgba(60,32,10,.92) !important; }
+    .ar-emp.cache { display: none; }
+    .ar-emp.verrou { opacity: .55; }
+    .ar-emp-nom { display: flex; justify-content: space-between; font-size: .64rem; letter-spacing: .1em; text-transform: uppercase; color: var(--bf-gris); font-weight: 600; }
+    .ar-emp-nom small { color: var(--bf-orange2); }
+    .ar-emp-piece { font-weight: 800; font-size: .84rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ar-aide-3d { position: absolute; left: 50%; transform: translateX(-50%); top: 22%; font-size: .72rem; color: rgba(255,255,255,.4); pointer-events: none; white-space: nowrap; z-index: 1; }
+    .ar-message { position: absolute; left: 50%; top: 26%; transform: translateX(-50%); z-index: 4; background: rgba(40,12,8,.94); border: 1px solid var(--bf-rouge); color: #ffd9d2; padding: 7px 14px; font-weight: 700; max-width: 90%; text-align: center; }
+    .ar-tiroir > * { pointer-events: auto; }
+    .ar-tiroir { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 26px 8px 8px; pointer-events: none; background: linear-gradient(rgba(6,7,9,0), rgba(6,7,9,.92) 22%, rgba(6,7,9,.97)); }
+    .ar-tiroir-titre { display: flex; align-items: baseline; gap: 10px; font-weight: 800; letter-spacing: .1em; font-size: .95rem; padding: 0 2px 6px; }
+    .ar-tiroir-titre small { flex: 1; font-weight: 400; letter-spacing: 0; color: var(--bf-gris); font-size: .74rem; }
+    .ar-fermer { padding: 2px 10px !important; }
+    .ar-pieces { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; scrollbar-color: #3a414b transparent; }
+    .ar-piece { flex: 0 0 172px; min-height: 124px; text-align: left; display: flex; flex-direction: column; gap: 3px; padding: 7px 8px !important; font-weight: 400;
+      background: linear-gradient(165deg, #20252c, #13161a) !important; border-top: 2px solid #49515c !important; }
+    .ar-piece.mise { border-top-color: var(--bf-orange) !important; background: linear-gradient(165deg, #33251a, #17120e) !important; }
+    .ar-piece.focus { outline: 2px solid #fff; outline-offset: -2px; }
+    .ar-piece.verrou { opacity: .78; background: repeating-linear-gradient(135deg, #181b20 0 8px, #15181c 8px 16px) !important; }
+    .ar-piece-haut { display: flex; align-items: center; gap: 6px; }
+    .ar-piece-haut b { font-size: .9rem; text-transform: uppercase; letter-spacing: .02em; line-height: 1.05; flex: 1; }
+    .ar-mise { font-size: .6rem; color: #111; background: var(--bf-orange); padding: 1px 4px; font-weight: 800; letter-spacing: .06em; }
+    .ar-pastille { width: 18px; height: 18px; border: 1px solid rgba(255,255,255,.4); flex: none; }
+    .ar-piece-texte { font-size: .72rem; color: var(--bf-gris); line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .ar-effets { display: flex; flex-direction: column; gap: 1px; font-size: .72rem; margin-top: auto; }
+    .ar-effets .plus { color: var(--bf-vert); } .ar-effets .moins { color: var(--bf-rouge); } .ar-effets .neutre { color: var(--bf-gris); }
+    .ar-cadenas { margin-top: auto; font-weight: 800; color: var(--bf-orange2); font-size: .82rem; }
+    .ar-cadenas small { display: block; font-weight: 400; color: var(--bf-gris); font-size: .68rem; }
+    .ar-fiche-type { font-size: .7rem; text-transform: uppercase; letter-spacing: .14em; color: var(--bf-orange2); }
+    .ar-fiche-nom { font-size: 1.75rem; font-weight: 800; text-transform: uppercase; line-height: 1; letter-spacing: .02em; }
+    .ar-fiche-texte { font-size: .76rem; color: var(--bf-gris); margin: 4px 0 6px; line-height: 1.25; }
+    .ar-niveau { display: flex; gap: 8px; align-items: center; background: rgba(255,255,255,.04); padding: 5px 6px; }
+    .ar-niveau-rond { width: 34px; height: 34px; flex: none; display: grid; place-items: center; font-weight: 800; font-size: 1.1rem; border: 2px solid var(--bf-orange); color: var(--bf-orange2); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); background: rgba(255,122,26,.12); }
+    .ar-niveau.verrou .ar-niveau-rond { border-color: #666; color: #ccc; }
+    .ar-niveau-txt { flex: 1; display: flex; flex-direction: column; font-size: .72rem; }
+    .ar-niveau-txt b { letter-spacing: .12em; font-size: .7rem; }
+    .ar-niveau-txt span { color: var(--bf-gris); }
+    .ar-prochain { font-size: .72rem; color: #dfe3e8; padding: 4px 2px 0; }
+    .ar-stats-titre { margin-top: 8px; font-size: .72rem; text-transform: uppercase; letter-spacing: .14em; color: var(--bf-orange2); display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--bf-bord); padding-bottom: 2px; }
+    .ar-stats-titre small { text-transform: none; letter-spacing: 0; color: var(--bf-gris); font-size: .64rem; }
+    .ar-stat { display: grid; grid-template-columns: 1fr auto; column-gap: 6px; padding: 3px 0 1px; font-size: .74rem; }
+    .ar-stat-nom { text-transform: uppercase; letter-spacing: .05em; color: #cfd5dc; font-weight: 600; }
+    .ar-stat-val { color: #fff; text-align: right; white-space: nowrap; }
+    .ar-stat.mieux .ar-stat-val b { color: var(--bf-vert); } .ar-stat.pire .ar-stat-val b { color: var(--bf-rouge); }
+    .ar-stat-barre { grid-column: 1 / -1; position: relative; height: 5px; background: rgba(255,255,255,.1); margin-top: 2px; display: block; }
+    .ar-stat-barre b { position: absolute; left: 0; top: 0; bottom: 0; background: #e9edf1; }
+    .ar-stat-barre em { position: absolute; top: 0; bottom: 0; }
+    .ar-stat.mieux .ar-stat-barre em { background: var(--bf-vert); } .ar-stat.pire .ar-stat-barre em { background: var(--bf-rouge); }
+    @media (max-width: 900px) { .ar-armurerie { grid-template-columns: 1fr; grid-template-rows: auto 360px auto; } .ar-liste { max-height: 160px; } .ar-emp { width: 104px; font-size: .9em; } }
+    @media (max-width: 800px) { .m-cartes, .m-cartes.n4 { grid-template-columns: 1fr 1fr; } }
+    /* (demande 97) LA PROGRESSION : « NIVEAU SUPÉRIEUR ! » et le bilan d'expérience de fin de bataille */
+    #progression { position: absolute; inset: 0; z-index: 11; pointer-events: none; font-family: "Bahnschrift", "Roboto Condensed", "Arial Narrow", Arial, sans-serif; font-stretch: condensed; color: #f2f4f7; }
+    .pg-toasts { position: absolute; top: 9%; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; align-items: center; width: min(560px, 92%); }
+    .pg-toast { width: 100%; background: linear-gradient(90deg, rgba(10,12,15,.96), rgba(28,20,12,.96)); border-left: 5px solid #ff7a1a; box-shadow: 0 10px 30px rgba(0,0,0,.6); padding: 10px 16px; display: grid; grid-template-columns: 58px 1fr; gap: 12px; align-items: center;
+      animation: pg-arrive .45s cubic-bezier(.2,1.4,.4,1) both, pg-part .5s ease-in forwards; animation-delay: 0s, var(--duree, 4.5s); }
+    .pg-toast.arme { border-left-color: #ffd36a; }
+    .pg-toast-niv { width: 58px; height: 58px; display: grid; place-items: center; font-size: 1.7rem; font-weight: 800; color: #111; background: linear-gradient(#ffb15a, #ff7a1a); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+    .pg-toast.arme .pg-toast-niv { background: linear-gradient(#fff0b0, #e0a020); }
+    .pg-toast-titre { font-size: 1.45rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; line-height: 1; }
+    .pg-toast-titre small { display: block; font-size: .78rem; letter-spacing: .12em; color: #ffb15a; margin-top: 2px; }
+    .pg-toast-liste { font-size: .86rem; color: #e6e9ed; margin-top: 4px; }
+    .pg-toast-liste b { color: #fff; }
+    @keyframes pg-arrive { from { opacity: 0; transform: translateY(-14px) scale(.92); } to { opacity: 1; transform: none; } }
+    @keyframes pg-part { to { opacity: 0; transform: translateY(-8px); } }
+    .pg-bilan { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(780px, 94%); max-height: 92%; overflow: auto; pointer-events: auto;
+      background: linear-gradient(180deg, rgba(14,16,20,.97), rgba(8,9,11,.97)); border: 1px solid #2a3038; border-top: 4px solid #ff7a1a; box-shadow: 0 20px 60px rgba(0,0,0,.7); padding: 16px 22px; animation: pg-bilan .5s ease-out both; }
+    @keyframes pg-bilan { from { opacity: 0; transform: translate(-50%, -46%) scale(.96); } to { opacity: 1; transform: translate(-50%, -50%); } }
+    #progression.voile { background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.35), rgba(0,0,0,.7)); transition: background .4s; }
+    .pg-debloque b.pg-groupe { color: #ffb15a; }
+    .pg-bilan.perdu { border-top-color: #ff5d4d; }
+    .pg-entete { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; border-bottom: 1px solid #2a3038; padding-bottom: 8px; }
+    .pg-resultat { font-size: 2.3rem; font-weight: 800; letter-spacing: .08em; line-height: .95; text-transform: uppercase; }
+    .pg-resultat small { display: block; font-size: .8rem; letter-spacing: .14em; color: #9aa3ad; font-weight: 600; }
+    .pg-total { text-align: right; }
+    .pg-total b { display: block; font-size: 2.2rem; font-weight: 800; color: #ffb15a; line-height: 1; }
+    .pg-total small { color: #9aa3ad; letter-spacing: .12em; text-transform: uppercase; font-size: .7rem; }
+    .pg-mvp { display: inline-block; margin-top: 4px; background: linear-gradient(#ffe08a, #d8a93c); color: #111; font-weight: 800; padding: 2px 8px; letter-spacing: .1em; font-size: .8rem; }
+    .pg-colonnes { display: grid; grid-template-columns: 1.1fr 1fr; gap: 18px; margin-top: 10px; }
+    .pg-titre { font-size: .72rem; text-transform: uppercase; letter-spacing: .16em; color: #ffb15a; margin: 2px 0 6px; }
+    .pg-ligne { display: grid; grid-template-columns: 24px 1fr auto auto; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: .9rem;
+      animation: pg-arrive .4s ease-out both; animation-delay: calc(var(--k) * 90ms + 200ms); }
+    .pg-ligne em { font-style: normal; color: #9aa3ad; font-size: .8rem; }
+    .pg-ligne b { color: #fff; min-width: 64px; text-align: right; }
+    .pg-barre { margin: 6px 0 10px; }
+    .pg-barre-haut { display: flex; justify-content: space-between; font-size: .82rem; font-weight: 700; }
+    .pg-barre-haut small { color: #9aa3ad; font-weight: 400; }
+    .pg-barre-fond { position: relative; height: 8px; background: rgba(255,255,255,.1); margin-top: 3px; overflow: hidden; }
+    .pg-barre-fond i { position: absolute; left: 0; top: 0; bottom: 0; background: #d8dde3; }
+    .pg-barre-fond em { position: absolute; top: 0; bottom: 0; background: linear-gradient(90deg, #ff7a1a, #ffb15a); transform-origin: left; animation: pg-remplit 1.4s .5s ease-out both; }
+    @keyframes pg-remplit { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    .pg-debloque { background: rgba(255,122,26,.1); border: 1px solid rgba(255,122,26,.4); padding: 6px 10px; font-size: .86rem; margin-top: 6px; }
+    .pg-pied { margin-top: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; color: #9aa3ad; font-size: .82rem; }
+    .pg-pied > span:first-child { flex: 1; }
+    .pg-pied > span:last-child { display: flex; gap: 6px; flex: none; }
+    .pg-pied button { white-space: nowrap; pointer-events: auto; font-family: inherit; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; background: linear-gradient(#ff8a2a, #d9560c); color: #111; border: 1px solid #ffb15a; border-radius: 3px; padding: 8px 18px; cursor: pointer; }
+    .pg-pied button.second { background: #1b1f25; color: #f2f4f7; border-color: #2a3038; }
+    .cp-xp { margin: .6em auto 0; width: min(30em, 92%); text-align: left; font-size: .9em; }
     @media (max-width: 1000px) { .capot { grid-template-columns: 1fr; } #journal { height: 240px; } }
     #journal li[data-evenement^="campagne-"] { color: #ffb547; }
     #journal li[data-evenement="campagne-radio"] { color: #e8dcc0; font-style: italic; }
@@ -326,7 +452,7 @@
   <div class="page">
     <header class="entete">
       <h1>🛡️ The Last Battlefield · bataille de tanks, soldats, grenades, maisons à détruire, engins, motos, quads, camions, hélicos de transport, bateaux, sous-marins, avions et portails · et le souterrain</h1>
-      <span><span id="version" class="version"></span> <a href="../index.html#etape96">📓 Ouvrir le carnet (étapes 60 à 96)</a> <button id="plein-ecran" type="button" title="Plein écran (touche K)">⛶ Plein écran (K)</button></span>
+      <span><span id="version" class="version"></span> <a href="../index.html#etape97">📓 Ouvrir le carnet (étapes 60 à 97)</a> <button id="plein-ecran" type="button" title="Plein écran (touche K)">⛶ Plein écran (K)</button></span>
     </header>
 
     <div class="cadre-ecran">
@@ -340,6 +466,7 @@
       <div id="accueil" aria-label="La page d'accueil du jeu"></div>
       <div id="menu" hidden aria-label="Le menu avant la bataille"></div>
       <div id="campagne" hidden aria-label="La campagne : chapitres, briefing, fin de mission"></div>
+      <div id="progression" aria-label="Ta progression : niveaux et bilan d'expérience"></div>
       <div id="pause" hidden>⏸️ Pause (Échap pour reprendre)</div>
     </div>
 
@@ -382,65 +509,67 @@
   </div>
 
   <script src="../circuit/vendor/three.min.js"></script>
-  <script src="config.js?v=39"></script>
-  <script src="moteur/evenements.js?v=39"></script>
-  <script src="moteur/bruit.js?v=39"></script>
-  <script src="moteur/entrees.js?v=39"></script>
-  <script src="moteur/grille.js?v=39"></script>
-  <script src="donnees/carte-du-jour.js?v=39"></script>
-  <script src="logique/terrain.js?v=39"></script>
-  <script src="logique/souterrain.js?v=39"></script>
-  <script src="logique/structures.js?v=39"></script>
-  <script src="logique/char.js?v=39"></script>
-  <script src="logique/obus.js?v=39"></script>
-  <script src="logique/ia.js?v=39"></script>
-  <script src="logique/soldat.js?v=39"></script>
-  <script src="logique/troupes.js?v=39"></script>
-  <script src="logique/vehicules.js?v=39"></script>
-  <script src="logique/helicos.js?v=39"></script>
-  <script src="logique/bateaux.js?v=39"></script>
-  <script src="logique/portails.js?v=39"></script>
-  <script src="logique/sousmarins.js?v=39"></script>
-  <script src="logique/avions.js?v=39"></script>
-  <script src="logique/ordres.js?v=39"></script>
-  <script src="logique/radio.js?v=39"></script>
-  <script src="logique/engins.js?v=39"></script>
-  <script src="logique/equipement.js?v=39"></script>
-  <script src="logique/armes.js?v=39"></script>
-  <script src="logique/gadgets.js?v=39"></script>
-  <script src="donnees/sauvegarde.js?v=39"></script>
-  <script src="logique/monde.js?v=39"></script>
-  <script src="logique/campagne.js?v=39"></script>
-  <script src="affichage/outils3d.js?v=39"></script>
-  <script src="affichage/chars3d.js?v=39"></script>
-  <script src="affichage/armes3d.js?v=39"></script>
-  <script src="affichage/uniformes.js?v=39"></script>
-  <script src="affichage/engins3d.js?v=39"></script>
-  <script src="affichage/vehicules3d.js?v=39"></script>
-  <script src="affichage/helicos3d.js?v=39"></script>
-  <script src="affichage/avions3d.js?v=39"></script>
-  <script src="affichage/maisons3d.js?v=39"></script>
-  <script src="affichage/decor.js?v=39"></script>
-  <script src="affichage/marques-sol.js?v=39"></script>
-  <script src="affichage/effets.js?v=39"></script>
-  <script src="affichage/particules.js?v=39"></script>
-  <script src="affichage/tirs.js?v=39"></script>
-  <script src="affichage/explosions.js?v=39"></script>
-  <script src="affichage/station3d.js?v=39"></script>
-  <script src="affichage/scene.js?v=39"></script>
-  <script src="affichage/qualite.js?v=39"></script>
-  <script src="affichage/tableau.js?v=39"></script>
-  <script src="affichage/sous-le-capot.js?v=39"></script>
-  <script src="affichage/sons.js?v=39"></script>
-  <script src="affichage/musique.js?v=39"></script>
-  <script src="affichage/barre-ordres.js?v=39"></script>
-  <script src="affichage/radio-voix.js?v=39"></script>
-  <script src="affichage/ambiance.js?v=39"></script>
-  <script src="affichage/plein-ecran.js?v=39"></script>
-  <script src="affichage/accueil.js?v=39"></script>
-  <script src="affichage/menu.js?v=39"></script>
-  <script src="affichage/campagne-tableau.js?v=39"></script>
-  <script src="affichage/campagne-ecrans.js?v=39"></script>
-  <script src="main.js?v=39"></script>
+  <script src="config.js?v=40"></script>
+  <script src="moteur/evenements.js?v=40"></script>
+  <script src="moteur/bruit.js?v=40"></script>
+  <script src="moteur/entrees.js?v=40"></script>
+  <script src="moteur/grille.js?v=40"></script>
+  <script src="donnees/carte-du-jour.js?v=40"></script>
+  <script src="logique/terrain.js?v=40"></script>
+  <script src="logique/souterrain.js?v=40"></script>
+  <script src="logique/structures.js?v=40"></script>
+  <script src="logique/char.js?v=40"></script>
+  <script src="logique/obus.js?v=40"></script>
+  <script src="logique/ia.js?v=40"></script>
+  <script src="logique/soldat.js?v=40"></script>
+  <script src="logique/troupes.js?v=40"></script>
+  <script src="logique/vehicules.js?v=40"></script>
+  <script src="logique/helicos.js?v=40"></script>
+  <script src="logique/bateaux.js?v=40"></script>
+  <script src="logique/portails.js?v=40"></script>
+  <script src="logique/sousmarins.js?v=40"></script>
+  <script src="logique/avions.js?v=40"></script>
+  <script src="logique/ordres.js?v=40"></script>
+  <script src="logique/radio.js?v=40"></script>
+  <script src="logique/engins.js?v=40"></script>
+  <script src="logique/progression.js?v=40"></script>
+  <script src="logique/equipement.js?v=40"></script>
+  <script src="logique/armes.js?v=40"></script>
+  <script src="logique/gadgets.js?v=40"></script>
+  <script src="donnees/sauvegarde.js?v=40"></script>
+  <script src="logique/monde.js?v=40"></script>
+  <script src="logique/campagne.js?v=40"></script>
+  <script src="affichage/outils3d.js?v=40"></script>
+  <script src="affichage/chars3d.js?v=40"></script>
+  <script src="affichage/armes3d.js?v=40"></script>
+  <script src="affichage/uniformes.js?v=40"></script>
+  <script src="affichage/engins3d.js?v=40"></script>
+  <script src="affichage/vehicules3d.js?v=40"></script>
+  <script src="affichage/helicos3d.js?v=40"></script>
+  <script src="affichage/avions3d.js?v=40"></script>
+  <script src="affichage/maisons3d.js?v=40"></script>
+  <script src="affichage/decor.js?v=40"></script>
+  <script src="affichage/marques-sol.js?v=40"></script>
+  <script src="affichage/effets.js?v=40"></script>
+  <script src="affichage/particules.js?v=40"></script>
+  <script src="affichage/tirs.js?v=40"></script>
+  <script src="affichage/explosions.js?v=40"></script>
+  <script src="affichage/station3d.js?v=40"></script>
+  <script src="affichage/scene.js?v=40"></script>
+  <script src="affichage/qualite.js?v=40"></script>
+  <script src="affichage/tableau.js?v=40"></script>
+  <script src="affichage/sous-le-capot.js?v=40"></script>
+  <script src="affichage/sons.js?v=40"></script>
+  <script src="affichage/musique.js?v=40"></script>
+  <script src="affichage/barre-ordres.js?v=40"></script>
+  <script src="affichage/radio-voix.js?v=40"></script>
+  <script src="affichage/ambiance.js?v=40"></script>
+  <script src="affichage/plein-ecran.js?v=40"></script>
+  <script src="affichage/accueil.js?v=40"></script>
+  <script src="affichage/menu.js?v=40"></script>
+  <script src="affichage/progression-ecrans.js?v=40"></script>
+  <script src="affichage/campagne-tableau.js?v=40"></script>
+  <script src="affichage/campagne-ecrans.js?v=40"></script>
+  <script src="main.js?v=40"></script>
 </body>
 </html>

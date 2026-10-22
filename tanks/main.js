@@ -11,6 +11,8 @@
 // (logique/campagne.js), et son tableau de bord (affichage/campagne-tableau.js) se dessine par-dessus l'autre.
 // Demande 96 (« le jeu rame souvent ») : le dessin est chronométré en deux : la SCÈNE (placer chaque chose) et le RENDU
 // (l'envoyer à la carte graphique) ; « sous le capot », la ligne « performance » montre les 4 parts d'une image.
+// Demande 97 : les DÉBLOCAGES : le sergent instructeur (logique/progression.js) est branché sur le monde, et ses écrans
+// (affichage/progression-ecrans.js : « NIVEAU SUPÉRIEUR ! », le bilan d'expérience) suivent la bataille.
 // Demande 94 : la RADIO QUI PARLE (affichage/radio-voix.js) : sa file d'attente avance à chaque image, ses sous-titres se
 // dessinent en dernier, et N coupe ou remet les voix.
 
@@ -35,6 +37,8 @@ window.Tanks = window.Tanks || {};
   Tanks.Ambiance.initialiser(); // (étape 87 : le filtre « Battlefield »)
   Tanks.Accueil.initialiser(); // (étape 84 : la page d'accueil, avec la musique)
   Tanks.Menu.initialiser(monde, (type, valeur) => (type === "combat" ? Tanks.Monde.lancer(monde) : Tanks.Equipement.demander(monde, type, valeur)));
+  Tanks.Progression.brancher(monde); // (demande 97 : le sergent instructeur et ses points d'expérience)
+  Tanks.EcranProgression.initialiser(); // (demande 97 : « NIVEAU SUPÉRIEUR ! » et le bilan de fin de bataille)
   Tanks.TableauCampagne.initialiser(toile2d); // (étape 88)
   Tanks.EcranCampagne.initialiser(monde, (type, valeur) => Tanks.Campagne.demander(monde, type, valeur)); // (étape 88 : comme le menu, des DEMANDES)
   toile2d.focus();
@@ -65,6 +69,7 @@ window.Tanks = window.Tanks || {};
     if (E.consommer("lampe") && monde.toi && monde.toi.soldat) Tanks.Equipement.basculerLampe(monde.toi.soldat); // (étape 77 : L)
     Tanks.Menu.maj(monde); // (étape 77 : le menu s'ouvre au garage, se ferme en bataille)
     Tanks.EcranCampagne.maj(monde); // (étape 88 : l'intro qui avance, l'écran de fin qui arrive)
+    Tanks.EcranProgression.maj(monde); // (demande 97 : le bilan d'expérience part quand on rejoue)
     // ✍️ (étape 81) une carte avec un AUTRE DÉCOR a été choisie (la ville, le désert…) : le décor est fabriqué au
     // chargement, alors on recharge la page (la sauvegarde a déjà retenu la carte : le menu revient avec elle)
     if (monde.phase === "garage" && !rechargement && !Tanks.EcranCampagne.actif && Tanks.CarteDuJour.decorDe(C.cartes.find((c) => c.id === monde.carte)) !== Tanks.CarteDuJour.decor) {

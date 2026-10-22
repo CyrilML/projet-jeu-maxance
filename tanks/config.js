@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 39,
+  version: 40,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -612,103 +612,154 @@ Tanks.CONFIG = {
 
   // ================================================================== étape 77 : ✍️ LE MENU, LES CLASSES, LES ARMES, L'ATELIER
   // ✍️ « Un menu avant de jouer : choisir son véhicule, sa classe, ses armes, ses gadgets et ses explosifs, puis modifier
-  // son arme. » Les 4 CLASSES comme Battlefield. Pour chacune : 3 armes principales (tu en prends 1), 2 gadgets (tu as
+  // son arme. » Les 4 CLASSES comme Battlefield. Pour chacune : 5 ou 6 armes principales (demande 97 ; tu en prends 1), 2 gadgets (tu as
   // en prends 1 : touche 3) et 2 explosifs (tu en prends 1 : touche 4 ; seules les grenades explosent pour l'instant). Le pistolet reste toujours en arme 1.
   // vie : × la vie de ton soldat (l'Assaut : 25 % de plus). Seul TON soldat a une classe.
   classes: {
     assaut: { nom: "Assaut", icone: "🪖", couleur: "#ff8a3d", vie: 1.25,
       texte: "En première ligne : fusil d'assaut, lance-grenades sous le canon, et 25 % de vie en plus.",
-      armes: ["ar4", "famas", "ak12"], gadgets: ["lanceGrenades", "sacMunitions"], explosifs: ["grenades", "fumigene"] },
+      armes: ["ar4", "famas", "ak12", "g36", "scarh"], gadgets: ["lanceGrenades", "sacMunitions"], explosifs: ["grenades", "fumigene"] },
     ingenieur: { nom: "Ingénieur", icone: "🔧", couleur: "#ffd23d", vie: 1,
       texte: "Le chasseur de tanks : lance-roquettes, et il RÉPARE les tanks et les engins de son camp.",
-      armes: ["rpg7", "at4", "javelin"], gadgets: ["reparation", "droneReparation"], explosifs: ["mineAT", "c4"] },
+      armes: ["rpg7", "ump45", "at4", "javelin", "carlgustaf"], gadgets: ["reparation", "droneReparation"], explosifs: ["mineAT", "c4"] },
     eclaireur: { nom: "Éclaireur", icone: "🔭", couleur: "#7dff8a", vie: 1,
       texte: "Tireur de loin : fusil de précision avec lunette, et des JUMELLES qui marquent les ennemis.",
-      armes: ["m110", "svd", "lapua", "barrett"], gadgets: ["jumelles", "capteur"], explosifs: ["claymore", "grenades"] },
+      armes: ["m110", "svd", "m24", "mk14", "lapua", "barrett"], gadgets: ["jumelles", "capteur"], explosifs: ["claymore", "grenades"] },
     medecin: { nom: "Médecin de guerre", icone: "⛑️", couleur: "#ff5a6a", vie: 1,
       texte: "Il SOIGNE ses amis avec sa trousse et RELÈVE les soldats tombés avec son défibrillateur.",
-      armes: ["mp5", "vector", "p90"], gadgets: ["trousse", "defibrillateur"], explosifs: ["fumigene", "grenades"] },
+      armes: ["mp5", "vector", "mp7", "p90", "bizon"], gadgets: ["trousse", "defibrillateur"], explosifs: ["fumigene", "grenades"] },
   },
-  // ✍️ Les ARMES PRINCIPALES (✍️ tout est disponible dès le début).
+  // ✍️ Les ARMES PRINCIPALES. (Demande 97 : ✍️ « lance les déblocages » : chaque arme a un « niveau » : le NIVEAU DE
+  // JOUEUR qu'il faut pour la débloquer (0 = disponible dès le début : la 1re arme de chaque classe).)
   //   degats : par balle (un soldat de l'ordinateur a 3 de vie) ; loin de « porteeEfficace » m, ils baissent jusqu'à
   //   « degatsLoin » × à la portée max ; cadence : s entre 2 balles ; chargeur : balles ; reserve : balles en plus ;
   //   rechargement : s ; dispersion : l'écart des balles (rad) en tirant « à la hanche » ; dispersionVisee : en visant
   //   (touche V ou clic droit) ; recul : rad ajoutés à la dispersion à chaque balle (il redescend tout seul) ;
   //   visee : s pour épauler ; mobilite : × ta vitesse ; bruit : × la distance à laquelle les ennemis t'entendent ;
   //   zoom : le zoom sans lunette. Les lance-roquettes : projectile, et pas de balles (degats = sur un tank).
-  //   modele : la forme 3D (affichage/armes3d.js) : longueur du corps, du canon, sorte de crosse, de chargeur…
+  //   verrou : un fusil à verrou (on réarme à la main après chaque tir) ; exclus : les emplacements (ou « emplacement:pièce »)
+  //   qui n'existent pas sur cette arme (un « bullpup » ne peut pas changer de crosse : elle fait partie de l'arme ; il
+  //   peut seulement l'alourdir avec une grosse plaque, la « crosse lourde »).
+  //   (La forme 3D de chaque arme est dessinée dans affichage/armes3d.js.)
   armesPrincipales: {
-    ar4: { nom: "AR-4", type: "Fusil d'assaut", icone: "🔫", classe: "assaut", famille: "fusil",
+    // ---------- 🪖 ASSAUT
+    ar4: { nom: "AR-4", type: "Fusil d'assaut", icone: "🔫", classe: "assaut", famille: "fusil", niveau: 0,
       texte: "Le fusil d'assaut classique : précis, facile à tenir.",
       degats: 1, cadence: 0.1, portee: 170, porteeEfficace: 70, degatsLoin: 0.6, chargeur: 30, reserve: 150, rechargement: 2.2,
-      dispersion: 0.03, dispersionVisee: 0.006, recul: 0.006, visee: 0.25, mobilite: 1, bruit: 1, zoom: 1.25,
-      modele: { corps: 0.34, canon: 0.3, crosse: "tube", chargeur: "courbe", garde: 0.26, teinte: 0x26282b, poly: 0x2d2c28 } },
-    famas: { nom: "FAMAS", type: "Fusil d'assaut (bullpup)", icone: "🔫", classe: "assaut", famille: "fusil",
+      dispersion: 0.03, dispersionVisee: 0.006, recul: 0.006, visee: 0.25, mobilite: 1, bruit: 1, zoom: 1.25 },
+    famas: { nom: "FAMAS", type: "Fusil d'assaut (bullpup)", icone: "🔫", classe: "assaut", famille: "fusil", niveau: 3, exclus: ["crosse:legere", "crosse:repliable"],
       texte: "Le « clairon » français : il tire TRÈS vite, mais il bouge plus.",
       degats: 0.9, cadence: 0.065, portee: 150, porteeEfficace: 60, degatsLoin: 0.55, chargeur: 25, reserve: 150, rechargement: 2.6,
-      dispersion: 0.034, dispersionVisee: 0.008, recul: 0.009, visee: 0.22, mobilite: 1.04, bruit: 1, zoom: 1.25,
-      modele: { corps: 0.5, canon: 0.22, crosse: "bullpup", chargeur: "droit", garde: 0.12, poignee: "clairon", teinte: 0x2b2d26, poly: 0x3a3a32 } },
-    ak12: { nom: "AK-12", type: "Fusil d'assaut lourd", icone: "🔫", classe: "assaut", famille: "fusil",
+      dispersion: 0.034, dispersionVisee: 0.008, recul: 0.009, visee: 0.22, mobilite: 1.04, bruit: 1, zoom: 1.25 },
+    ak12: { nom: "AK-12", type: "Fusil d'assaut lourd", icone: "🔫", classe: "assaut", famille: "fusil", niveau: 6,
       texte: "Gros calibre : fait plus mal, va plus loin… mais recule fort.",
       degats: 1.35, cadence: 0.11, portee: 190, porteeEfficace: 85, degatsLoin: 0.65, chargeur: 30, reserve: 120, rechargement: 2.5,
-      dispersion: 0.032, dispersionVisee: 0.007, recul: 0.012, visee: 0.3, mobilite: 0.96, bruit: 1.15, zoom: 1.25,
-      modele: { corps: 0.36, canon: 0.34, crosse: "pliante", chargeur: "banane", garde: 0.28, teinte: 0x1f2022, poly: 0x2a2620 } },
-    rpg7: { nom: "RPG-7", type: "Lance-roquettes", icone: "🚀", classe: "ingenieur", famille: "roquettes", projectile: "roquette",
+      dispersion: 0.032, dispersionVisee: 0.007, recul: 0.012, visee: 0.3, mobilite: 0.96, bruit: 1.15, zoom: 1.25 },
+    // (demande 97) le fusil allemand en plastique, avec sa grande poignée de transport et son chargeur transparent
+    g36: { nom: "G36", type: "Fusil d'assaut", icone: "🔫", classe: "assaut", famille: "fusil", niveau: 9,
+      texte: "Le fusil allemand tout en plastique : il recule très peu et reste précis en rafale, mais il fait un peu moins mal.",
+      degats: 0.95, cadence: 0.09, portee: 175, porteeEfficace: 75, degatsLoin: 0.6, chargeur: 30, reserve: 150, rechargement: 2.4,
+      dispersion: 0.028, dispersionVisee: 0.0055, recul: 0.0045, visee: 0.27, mobilite: 1, bruit: 1, zoom: 1.25 },
+    // (demande 97) le gros fusil de combat couleur sable : une balle de 7,62 mm
+    scarh: { nom: "SCAR-H", type: "Fusil de combat (7,62 mm)", icone: "🔫", classe: "assaut", famille: "fusil", niveau: 14,
+      texte: "Une grosse balle : 2 balles par soldat, et elle porte loin. Mais 20 balles seulement, et un recul de mule !",
+      degats: 1.6, cadence: 0.125, portee: 230, porteeEfficace: 100, degatsLoin: 0.7, chargeur: 20, reserve: 120, rechargement: 2.5,
+      dispersion: 0.034, dispersionVisee: 0.0055, recul: 0.015, visee: 0.32, mobilite: 0.95, bruit: 1.2, zoom: 1.25 },
+    // ---------- 🔧 INGÉNIEUR
+    rpg7: { nom: "RPG-7", type: "Lance-roquettes", icone: "🚀", classe: "ingenieur", famille: "roquettes", projectile: "roquette", niveau: 0,
       texte: "Le lance-roquettes : 1 roquette = 1 obus sur un tank.",
       degats: 1, cadence: 0.5, portee: 260, porteeEfficace: 260, degatsLoin: 1, chargeur: 1, reserve: 6, rechargement: 3,
-      dispersion: 0.03, dispersionVisee: 0.008, recul: 0.03, visee: 0.45, mobilite: 0.93, bruit: 1.4, zoom: 1.5,
-      modele: { tube: 1.0, rayon: 0.05, ogive: "rpg", teinte: 0x4b5a34 } },
-    at4: { nom: "AT4", type: "Lance-roquettes rapide", icone: "🚀", classe: "ingenieur", famille: "roquettes", projectile: "at4",
+      dispersion: 0.03, dispersionVisee: 0.008, recul: 0.03, visee: 0.45, mobilite: 0.93, bruit: 1.4, zoom: 1.5 },
+    // (demande 97) l'arme de défense de l'ingénieur : contre les soldats (mais plus de roquette contre les tanks !)
+    ump45: { nom: "UMP45", type: "Pistolet-mitrailleur (.45)", icone: "🔫", classe: "ingenieur", famille: "pm", niveau: 2,
+      texte: "Pour se défendre contre les soldats : de grosses balles lentes. Mais sans lance-roquettes, rien contre les tanks !",
+      degats: 1, cadence: 0.09, portee: 95, porteeEfficace: 35, degatsLoin: 0.5, chargeur: 25, reserve: 175, rechargement: 2.1,
+      dispersion: 0.03, dispersionVisee: 0.011, recul: 0.006, visee: 0.2, mobilite: 1.06, bruit: 0.9, zoom: 1.2 },
+    at4: { nom: "AT4", type: "Lance-roquettes rapide", icone: "🚀", classe: "ingenieur", famille: "roquettes", projectile: "at4", niveau: 5,
       texte: "Sa roquette vole 2 fois plus vite et presque droit : plus facile de toucher de loin.",
       degats: 1, cadence: 0.5, portee: 320, porteeEfficace: 320, degatsLoin: 1, chargeur: 1, reserve: 5, rechargement: 3.6,
-      dispersion: 0.025, dispersionVisee: 0.005, recul: 0.03, visee: 0.5, mobilite: 0.92, bruit: 1.4, zoom: 1.6,
-      modele: { tube: 1.02, rayon: 0.06, ogive: "tube", teinte: 0x5b6a3e } },
-    javelin: { nom: "Javelin", type: "Missile guidé", icone: "🎯", classe: "ingenieur", famille: "roquettes", projectile: "javelin",
+      dispersion: 0.025, dispersionVisee: 0.005, recul: 0.03, visee: 0.5, mobilite: 0.92, bruit: 1.4, zoom: 1.6 },
+    javelin: { nom: "Javelin", type: "Missile guidé", icone: "🎯", classe: "ingenieur", famille: "roquettes", projectile: "javelin", niveau: 10,
       texte: "Son missile SUIT le véhicule visé et fait 2 dégâts. Mais il recharge lentement.",
       degats: 2, cadence: 0.5, portee: 400, porteeEfficace: 400, degatsLoin: 1, chargeur: 1, reserve: 4, rechargement: 5,
-      dispersion: 0.02, dispersionVisee: 0.004, recul: 0.03, visee: 0.7, mobilite: 0.88, bruit: 1.3, zoom: 2,
-      modele: { tube: 1.15, rayon: 0.07, ogive: "javelin", teinte: 0x5a5e44 } },
-    m110: { nom: "M110", type: "Fusil de tireur d'élite", icone: "🎯", classe: "eclaireur", famille: "precision",
+      dispersion: 0.02, dispersionVisee: 0.004, recul: 0.03, visee: 0.7, mobilite: 0.88, bruit: 1.3, zoom: 2 },
+    // (demande 97) le canon d'épaule suédois : un obus plus fort qu'une roquette, rechargé par l'arrière
+    carlgustaf: { nom: "Carl Gustaf M4", type: "Canon sans recul", icone: "🚀", classe: "ingenieur", famille: "roquettes", projectile: "at4", niveau: 16,
+      texte: "Un canon d'épaule : son obus fait 1,5 fois plus mal qu'une roquette, et il en emporte 6. Très lourd et bruyant.",
+      degats: 1.5, cadence: 0.5, portee: 340, porteeEfficace: 340, degatsLoin: 1, chargeur: 1, reserve: 6, rechargement: 3.4,
+      dispersion: 0.026, dispersionVisee: 0.0045, recul: 0.035, visee: 0.55, mobilite: 0.86, bruit: 1.6, zoom: 1.7 },
+    // ---------- 🔭 ÉCLAIREUR
+    m110: { nom: "M110", type: "Fusil de tireur d'élite", icone: "🎯", classe: "eclaireur", famille: "precision", niveau: 0,
       texte: "Semi-automatique : 2 balles mettent un soldat à terre, de très loin.",
       degats: 2, cadence: 0.4, portee: 330, porteeEfficace: 200, degatsLoin: 0.75, chargeur: 10, reserve: 50, rechargement: 2.6,
-      dispersion: 0.06, dispersionVisee: 0.0015, recul: 0.02, visee: 0.38, mobilite: 0.97, bruit: 1.2, zoom: 1.4, vitesseBalle: 780,
-      modele: { corps: 0.38, canon: 0.46, crosse: "precision", chargeur: "droit", garde: 0.34, teinte: 0x3a3a30, poly: 0x5a5440 } },
-    // (étape 79) le nouveau fusil de l'éclaireur : semi-automatique, plus léger que le .338, la balle tombe un peu plus vite.
-    svd: { nom: "SVD Dragunov", type: "Fusil de tireur d'élite", icone: "🎯", classe: "eclaireur", famille: "precision",
+      dispersion: 0.06, dispersionVisee: 0.0015, recul: 0.02, visee: 0.38, mobilite: 0.97, bruit: 1.2, zoom: 1.4, vitesseBalle: 780 },
+    // (étape 79) le fusil russe : semi-automatique, plus léger que le .338, la balle tombe un peu plus vite.
+    svd: { nom: "SVD Dragunov", type: "Fusil de tireur d'élite", icone: "🎯", classe: "eclaireur", famille: "precision", niveau: 4,
       texte: "Le fusil russe : léger, semi-automatique, 2 balles par soldat. Sa balle est plus lente : vise un peu plus haut de loin !",
       degats: 2.2, cadence: 0.55, portee: 380, porteeEfficace: 240, degatsLoin: 0.8, chargeur: 10, reserve: 40, rechargement: 2.8,
-      dispersion: 0.07, dispersionVisee: 0.0012, recul: 0.025, visee: 0.4, mobilite: 0.98, bruit: 1.3, zoom: 1.4, vitesseBalle: 700,
-      modele: { corps: 0.4, canon: 0.56, crosse: "precision", chargeur: "petit", garde: 0.32, teinte: 0x4a3a2a, poly: 0x6a4a30 } },
-    lapua: { nom: "Sniper .338", type: "Fusil à verrou", icone: "🎯", classe: "eclaireur", famille: "precision",
+      dispersion: 0.07, dispersionVisee: 0.0012, recul: 0.025, visee: 0.4, mobilite: 0.98, bruit: 1.3, zoom: 1.4, vitesseBalle: 700 },
+    // (demande 97) le fusil à verrou classique, avec sa crosse « de chasse » mouchetée : le plus précis de tous
+    m24: { nom: "M24", type: "Fusil à verrou", icone: "🎯", classe: "eclaireur", famille: "precision", niveau: 6, verrou: true, exclus: ["chargeur:rapide", "chargeur:tambour"],
+      texte: "Le plus PRÉCIS de tous, et léger. 1 balle fait presque tomber un soldat. Mais 5 balles, à recharger une par une…",
+      degats: 3, cadence: 1.1, portee: 420, porteeEfficace: 280, degatsLoin: 0.85, chargeur: 5, reserve: 35, rechargement: 3.1,
+      dispersion: 0.07, dispersionVisee: 0.0007, recul: 0.026, visee: 0.4, mobilite: 0.98, bruit: 1.3, zoom: 1.4, vitesseBalle: 800 },
+    // (demande 97) entre le fusil d'assaut et le sniper : le « DMR »
+    mk14: { nom: "Mk 14 EBR", type: "Fusil de précision semi-auto", icone: "🎯", classe: "eclaireur", famille: "precision", niveau: 9,
+      texte: "Entre le fusil d'assaut et le sniper : il tire vite pour un fusil de précision, avec 20 balles.",
+      degats: 1.7, cadence: 0.22, portee: 300, porteeEfficace: 160, degatsLoin: 0.75, chargeur: 20, reserve: 80, rechargement: 2.6,
+      dispersion: 0.05, dispersionVisee: 0.0018, recul: 0.016, visee: 0.34, mobilite: 0.97, bruit: 1.2, zoom: 1.4, vitesseBalle: 790 },
+    lapua: { nom: "Sniper .338", type: "Fusil à verrou", icone: "🎯", classe: "eclaireur", famille: "precision", niveau: 13, verrou: true,
       texte: "1 balle = 1 soldat à terre. Mais il faut réarmer après chaque tir.",
       degats: 3.5, cadence: 1.25, portee: 450, porteeEfficace: 300, degatsLoin: 0.85, chargeur: 5, reserve: 30, rechargement: 3.2,
-      dispersion: 0.08, dispersionVisee: 0.0008, recul: 0.03, visee: 0.45, mobilite: 0.95, bruit: 1.4, zoom: 1.4, vitesseBalle: 900,
-      modele: { corps: 0.42, canon: 0.58, crosse: "precision", chargeur: "petit", garde: 0.3, verrou: true, teinte: 0x2c3328, poly: 0x4a5a3a } },
-    barrett: { nom: "Barrett .50", type: "Fusil anti-matériel", icone: "🎯", classe: "eclaireur", famille: "precision",
+      dispersion: 0.08, dispersionVisee: 0.0008, recul: 0.03, visee: 0.45, mobilite: 0.95, bruit: 1.4, zoom: 1.4, vitesseBalle: 900 },
+    barrett: { nom: "Barrett .50", type: "Fusil anti-matériel", icone: "🎯", classe: "eclaireur", famille: "precision", niveau: 18, exclus: ["crosse:legere", "crosse:repliable", "chargeur:rapide"],
       texte: "Énorme ! Il abîme aussi les motos, les quads et le 4x4. Très lourd.",
       degats: 4, degatsVehicule: 1, cadence: 0.9, portee: 520, porteeEfficace: 350, degatsLoin: 0.9, chargeur: 10, reserve: 30, rechargement: 3.8,
-      dispersion: 0.09, dispersionVisee: 0.001, recul: 0.045, visee: 0.6, mobilite: 0.88, bruit: 1.8, zoom: 1.4, vitesseBalle: 850,
-      modele: { corps: 0.5, canon: 0.62, crosse: "lourde", chargeur: "droit", garde: 0.3, frein: true, bipied: true, teinte: 0x30302c, poly: 0x3a3a34 } },
-    mp5: { nom: "MP5", type: "Pistolet-mitrailleur", icone: "🔫", classe: "medecin", famille: "pm",
+      dispersion: 0.09, dispersionVisee: 0.001, recul: 0.045, visee: 0.6, mobilite: 0.88, bruit: 1.8, zoom: 1.4, vitesseBalle: 850 },
+    // ---------- ⛑️ MÉDECIN
+    mp5: { nom: "MP5", type: "Pistolet-mitrailleur", icone: "🔫", classe: "medecin", famille: "pm", niveau: 0,
       texte: "Petit, léger et précis de près : on court plus vite avec.",
       degats: 0.8, cadence: 0.075, portee: 100, porteeEfficace: 35, degatsLoin: 0.5, chargeur: 30, reserve: 180, rechargement: 1.9,
-      dispersion: 0.03, dispersionVisee: 0.01, recul: 0.005, visee: 0.18, mobilite: 1.1, bruit: 0.85, zoom: 1.2,
-      modele: { corps: 0.28, canon: 0.14, crosse: "pliante", chargeur: "courbe", garde: 0.16, teinte: 0x1e1f21, poly: 0x262626 } },
-    vector: { nom: "Vector", type: "Pistolet-mitrailleur rapide", icone: "🔫", classe: "medecin", famille: "pm",
+      dispersion: 0.03, dispersionVisee: 0.01, recul: 0.005, visee: 0.18, mobilite: 1.1, bruit: 0.85, zoom: 1.2 },
+    vector: { nom: "Vector", type: "Pistolet-mitrailleur rapide", icone: "🔫", classe: "medecin", famille: "pm", niveau: 5,
       texte: "Il crache les balles 2 fois plus vite… et vide son chargeur en un clin d'œil.",
       degats: 0.75, cadence: 0.045, portee: 85, porteeEfficace: 30, degatsLoin: 0.45, chargeur: 25, reserve: 200, rechargement: 2,
-      dispersion: 0.034, dispersionVisee: 0.012, recul: 0.004, visee: 0.18, mobilite: 1.1, bruit: 0.9, zoom: 1.2,
-      modele: { corps: 0.34, canon: 0.12, crosse: "tube", chargeur: "droit", garde: 0.12, carre: true, teinte: 0x2a2a2a, poly: 0x3b3b38 } },
-    p90: { nom: "P90", type: "Arme de défense", icone: "🔫", classe: "medecin", famille: "pm",
+      dispersion: 0.034, dispersionVisee: 0.012, recul: 0.004, visee: 0.18, mobilite: 1.1, bruit: 0.9, zoom: 1.2 },
+    // (demande 97) tout petit, le chargeur DANS la poignée
+    mp7: { nom: "MP7", type: "Pistolet-mitrailleur compact", icone: "🔫", classe: "medecin", famille: "pm", niveau: 8, exclus: ["chargeur:rapide", "chargeur:tambour"],
+      texte: "Tout petit et très rapide, avec 40 balles. Son chargeur est rangé DANS la poignée !",
+      degats: 0.7, cadence: 0.052, portee: 95, porteeEfficace: 40, degatsLoin: 0.55, chargeur: 40, reserve: 200, rechargement: 2.1,
+      dispersion: 0.028, dispersionVisee: 0.01, recul: 0.0042, visee: 0.16, mobilite: 1.12, bruit: 0.85, zoom: 1.2 },
+    p90: { nom: "P90", type: "Arme de défense", icone: "🔫", classe: "medecin", famille: "pm", niveau: 11, exclus: ["crosse:legere", "crosse:repliable"],
       texte: "Un chargeur de 50 balles posé sur le dessus : on tire longtemps.",
       degats: 0.8, cadence: 0.06, portee: 110, porteeEfficace: 45, degatsLoin: 0.55, chargeur: 50, reserve: 200, rechargement: 2.8,
-      dispersion: 0.03, dispersionVisee: 0.009, recul: 0.0045, visee: 0.2, mobilite: 1.08, bruit: 0.9, zoom: 1.25,
-      modele: { corps: 0.5, canon: 0.1, crosse: "bullpup", chargeur: "dessus", garde: 0.1, teinte: 0x2f3329, poly: 0x40443a } },
+      dispersion: 0.03, dispersionVisee: 0.009, recul: 0.0045, visee: 0.2, mobilite: 1.08, bruit: 0.9, zoom: 1.25 },
+    // (demande 97) le chargeur en TUBE sous le canon (il sert aussi de poignée)
+    bizon: { nom: "PP-19 Bizon", type: "Pistolet-mitrailleur", icone: "🔫", classe: "medecin", famille: "pm", niveau: 15, exclus: ["chargeur:tambour", "chargeur:rapide", "poignee"],
+      texte: "Son gros chargeur en tube, SOUS le canon, tient 64 balles ! Mais il est long à recharger.",
+      degats: 0.75, cadence: 0.07, portee: 90, porteeEfficace: 32, degatsLoin: 0.5, chargeur: 64, reserve: 192, rechargement: 3.1,
+      dispersion: 0.033, dispersionVisee: 0.011, recul: 0.005, visee: 0.21, mobilite: 1.06, bruit: 0.9, zoom: 1.2 },
   },
-  // ✍️ Le PISTOLET (arme 1, pour toutes les classes) : les mêmes réglages que les armes principales.
-  pistolet: { nom: "Pistolet", type: "Arme de poing", icone: "🔫", famille: "pistolet",
-    degats: 1, cadence: 0.3, portee: 70, porteeEfficace: 25, degatsLoin: 0.5, chargeur: 12, reserve: Infinity, rechargement: 1.4,
-    dispersion: 0.03, dispersionVisee: 0.012, recul: 0.02, visee: 0.15, mobilite: 1.05, bruit: 0.8, zoom: 1.2 },
+  // ✍️ Les PISTOLETS (arme 1, pour toutes les classes ; demande 97 : on en choisit un dans l'armurerie). Les mêmes
+  // réglages que les armes principales ; « niveau » : le niveau de joueur qu'il faut pour le débloquer.
+  pistolets: {
+    pistolet: { nom: "M17", type: "Pistolet", icone: "🔫", famille: "pistolet", niveau: 0,
+      texte: "Le pistolet de tout le monde : solide et précis, 12 balles, et des munitions sans fin.",
+      degats: 1, cadence: 0.3, portee: 70, porteeEfficace: 25, degatsLoin: 0.5, chargeur: 12, reserve: Infinity, rechargement: 1.4,
+      dispersion: 0.03, dispersionVisee: 0.012, recul: 0.02, visee: 0.15, mobilite: 1.05, bruit: 0.8, zoom: 1.2 },
+    glock17: { nom: "Glock 17", type: "Pistolet", icone: "🔫", famille: "pistolet", niveau: 3,
+      texte: "Carré et léger : 17 balles, il tire vite. Un peu moins fort.",
+      degats: 0.9, cadence: 0.2, portee: 65, porteeEfficace: 25, degatsLoin: 0.5, chargeur: 17, reserve: Infinity, rechargement: 1.5,
+      dispersion: 0.03, dispersionVisee: 0.013, recul: 0.018, visee: 0.14, mobilite: 1.06, bruit: 0.8, zoom: 1.2 },
+    mr73: { nom: "MR73", type: "Revolver (.357)", icone: "🔫", famille: "pistolet", niveau: 7,
+      texte: "Le revolver des gendarmes français : 2 dégâts par balle et très précis. Mais 6 balles, et le barillet est lent à remplir.",
+      degats: 2, cadence: 0.45, portee: 85, porteeEfficace: 35, degatsLoin: 0.55, chargeur: 6, reserve: Infinity, rechargement: 3.2,
+      dispersion: 0.026, dispersionVisee: 0.008, recul: 0.04, visee: 0.17, mobilite: 1.04, bruit: 1.1, zoom: 1.25 },
+    deagle: { nom: "Desert Eagle", type: "Gros pistolet (.50)", icone: "🔫", famille: "pistolet", niveau: 12,
+      texte: "ÉNORME pistolet : 2,2 dégâts par balle ! Mais il saute dans la main, et 7 balles seulement.",
+      degats: 2.2, cadence: 0.42, portee: 80, porteeEfficace: 30, degatsLoin: 0.5, chargeur: 7, reserve: Infinity, rechargement: 2,
+      dispersion: 0.036, dispersionVisee: 0.011, recul: 0.05, visee: 0.19, mobilite: 1, bruit: 1.35, zoom: 1.25 },
+  },
   // ✍️ Les GADGETS (2 par classe, tu en prends 1 : touche 3, puis Espace).
   gadgets: {
     lanceGrenades: { nom: "Lance-grenades", icone: "💥", texte: "Sous le canon : une grenade de 40 mm qui explose en touchant.",
@@ -738,54 +789,127 @@ Tanks.CONFIG = {
     claymore: { nom: "Claymore", icone: "📦", texte: "Une mine posée qui saute quand un soldat ennemi passe DEVANT elle.",
       nombre: 2, regain: 35, declenche: 5, cone: 0.9, max: 4 },
   },
-  // ✍️ L'ATELIER : 7 emplacements, 3 ou 4 pièces chacun. effets : × (ou + pour visee, mobilite,
-  // visibilite) sur les réglages de l'arme. Chaque pièce a des AVANTAGES et des DÉFAUTS.
+  // ✍️ L'ARMURERIE (demande 97, avant : l'atelier de l'étape 77) : 11 emplacements. Chaque pièce a des AVANTAGES ET des
+  // DÉFAUTS, se voit sur l'arme en 3D, et se débloque au NIVEAU D'ARME « niveau » (la 1re pièce de chaque liste : dès le
+  // début). pour : les familles d'armes qui ont cet emplacement (ou cette pièce) ; « fusil », « pm », « precision »,
+  // « pistolet », « roquettes ».
+  //   effets : × (ou + pour visee, mobilite, visibilite) sur les réglages de l'arme. Les autres REMPLACENT la valeur :
   //   zoom : le zoom en visant ; aimant / cone : l'assistance à la visée (rad/s qui tirent ton arme vers l'ennemi, et le
   //   cône où elle le cherche) ; lampe : { portee (m), angle (rad), force, aveugle (m : elle éblouit l'ennemi) } ;
-  //   laser : sa couleur ; visibilite : m de plus où l'ennemi te REMARQUE (une lumière, ça se voit !).
+  //   laser : sa couleur ; thermique : la lunette montre la CHALEUR (les soldats et les moteurs brillent en blanc) ;
+  //   visibilite : m de plus (ou de moins) où l'ennemi te REMARQUE ; flamme : × la taille de l'éclair au bout du canon ;
+  //   vsVehicule : × les dégâts sur une moto, un quad ou leur pilote ; vitesseBalle : × la vitesse de la balle (les
+  //   fusils de précision : elle tombe moins vite) ; cadence : × le temps entre 2 balles.
   atelier: {
-    viseur: { nom: "Viseur", icone: "🎯", pieces: [
-      { id: "mire", nom: "Mire métallique", texte: "Le guidon et le cran de mire : simple et rapide.", effets: {} },
-      { id: "pointRouge", nom: "Point rouge", texte: "Un petit point rouge : on vise mieux.", effets: { zoom: 1.6, dispersionVisee: 0.85, visee: 0.03 } },
-      { id: "holo", nom: "Holographique", texte: "Une grande fenêtre avec un cercle : précis et clair.", effets: { zoom: 1.9, dispersionVisee: 0.75, visee: 0.06, mobilite: -0.01 } },
+    viseur: { nom: "Viseur", icone: "🎯", pour: ["fusil", "pm", "precision", "pistolet", "roquettes"], pieces: [
+      { id: "mire", nom: "Mire métallique", niveau: 0, texte: "Le guidon et le cran de mire : simple et rapide.", effets: {} },
+      { id: "pointRouge", nom: "Point rouge", niveau: 1, texte: "Un petit point rouge : on vise mieux.", effets: { zoom: 1.6, dispersionVisee: 0.85, visee: 0.03 } },
+      { id: "lunette2", nom: "Viseur ×2 compact", niveau: 2, pour: ["fusil", "pm", "precision", "roquettes"], texte: "Un petit prisme qui grossit 2 fois : bien pour les combats moyens.", effets: { zoom: 2.2, dispersionVisee: 0.78, visee: 0.05, mobilite: -0.005 } },
+      { id: "holo", nom: "Holographique", niveau: 3, pour: ["fusil", "pm", "precision", "roquettes"], texte: "Une grande fenêtre avec un cercle : précis et clair.", effets: { zoom: 1.9, dispersionVisee: 0.75, visee: 0.06, mobilite: -0.01 } },
       // (demande 88) une lunette compacte entre le point rouge et la grosse lunette
-      { id: "lunette4", nom: "Lunette ×4", texte: "Une lunette courte et solide : on tire loin, sans être trop lent.", effets: { zoom: 4, dispersionVisee: 0.6, portee: 1.08, visee: 0.1, mobilite: -0.015 } },
-      { id: "lunette", nom: "Lunette ×6", texte: "Pour tirer TRÈS loin. Lente à épauler, et on voit moins autour.", effets: { zoom: 6, dispersionVisee: 0.5, portee: 1.15, visee: 0.18, mobilite: -0.03, dispersion: 1.1 } },
+      { id: "lunette4", nom: "Lunette ×4", niveau: 5, pour: ["fusil", "pm", "precision", "roquettes"], texte: "Une lunette courte et solide : on tire loin, sans être trop lent.", effets: { zoom: 4, dispersionVisee: 0.6, portee: 1.08, visee: 0.1, mobilite: -0.015 } },
+      { id: "lunette", nom: "Lunette ×6", niveau: 7, pour: ["fusil", "pm", "precision"], texte: "Pour tirer TRÈS loin. Lente à épauler, et on voit moins autour.", effets: { zoom: 6, dispersionVisee: 0.5, portee: 1.15, visee: 0.18, mobilite: -0.03, dispersion: 1.1 } },
+      { id: "lunette8", nom: "Lunette ×8", niveau: 8, pour: ["fusil", "precision"], texte: "La plus grosse lunette : on voit un soldat à 500 m ! Très lente, très lourde.", effets: { zoom: 8, dispersionVisee: 0.42, portee: 1.2, visee: 0.24, mobilite: -0.04, dispersion: 1.15 } },
+      { id: "thermique", nom: "Lunette thermique", niveau: 10, pour: ["fusil", "pm", "precision", "roquettes"], texte: "×4 qui voit la CHALEUR : les soldats et les moteurs brillent en blanc, même dans la fumée. Lourde, et l'écran éclaire ton visage.", effets: { zoom: 4, thermique: true, dispersionVisee: 0.65, visee: 0.14, mobilite: -0.025, visibilite: 8 } },
     ] },
-    canon: { nom: "Canon", icone: "📏", pieces: [
-      { id: "standard", nom: "Canon standard", texte: "Le canon d'origine.", effets: {} },
-      { id: "long", nom: "Canon long", texte: "Plus loin et plus fort, mais plus lourd.", effets: { portee: 1.25, degatsLoin: 1.15, dispersionVisee: 0.9, visee: 0.05, mobilite: -0.03 } },
-      { id: "court", nom: "Canon court", texte: "Léger et rapide, mais moins loin.", effets: { portee: 0.8, mobilite: 0.04, visee: -0.04, dispersion: 0.9, degatsLoin: 0.9 } },
-      { id: "silencieux", nom: "Silencieux", texte: "Les ennemis t'entendent 3 fois moins loin. Un peu moins fort.", effets: { bruit: 0.3, degats: 0.9, portee: 0.9, recul: 0.9 } },
+    canon: { nom: "Canon", icone: "📏", pour: ["fusil", "pm", "precision"], pieces: [
+      { id: "standard", nom: "Canon standard", niveau: 0, texte: "Le canon d'origine.", effets: {} },
+      { id: "court", nom: "Canon court", niveau: 2, texte: "Léger et rapide, mais moins loin.", effets: { portee: 0.8, mobilite: 0.04, visee: -0.04, dispersion: 0.9, degatsLoin: 0.9, vitesseBalle: 0.9 } },
+      { id: "long", nom: "Canon long", niveau: 4, texte: "Plus loin et plus fort, mais plus lourd.", effets: { portee: 1.25, degatsLoin: 1.15, dispersionVisee: 0.9, visee: 0.05, mobilite: -0.03, vitesseBalle: 1.1 } },
+      { id: "lourd", nom: "Canon lourd", niveau: 7, texte: "Un canon épais et cannelé : il ne chauffe pas et ne bouge presque pas. Mais il pèse !", effets: { recul: 0.8, dispersionVisee: 0.85, portee: 1.1, visee: 0.08, mobilite: -0.05 } },
     ] },
-    chargeur: { nom: "Chargeur", icone: "🧱", pieces: [
-      { id: "standard", nom: "Chargeur standard", texte: "Le chargeur d'origine.", effets: {} },
-      { id: "grand", nom: "Grand chargeur", texte: "50 % de balles en plus, mais plus long à changer.", effets: { chargeur: 1.5, rechargement: 1.25, mobilite: -0.02 } },
-      { id: "rapide", nom: "Chargeur rapide", texte: "2 chargeurs scotchés : on recharge très vite, mais un peu moins de balles.", effets: { rechargement: 0.6, chargeur: 0.85 } },
-      { id: "tambour", nom: "Tambour", texte: "2 fois plus de balles ! Très lourd et lent à recharger.", effets: { chargeur: 2, rechargement: 1.6, mobilite: -0.05, visee: 0.05 } },
+    bouche: { nom: "Bouche", icone: "💨", pour: ["fusil", "pm", "precision", "pistolet"], pieces: [
+      { id: "aucune", nom: "D'origine", niveau: 0, texte: "Le bout de canon d'origine.", effets: {} },
+      { id: "cacheFlamme", nom: "Cache-flamme", niveau: 1, texte: "Presque plus d'éclair : on te remarque moins. Un tout petit peu plus de recul.", effets: { flamme: 0.35, visibilite: -10, recul: 1.05 } },
+      { id: "compensateur", nom: "Compensateur", niveau: 3, texte: "Des trous sur le dessus : le canon remonte moins. Plus bruyant, un peu moins précis à la hanche.", effets: { recul: 0.82, dispersion: 1.05, bruit: 1.1 } },
+      { id: "frein", nom: "Frein de bouche", niveau: 5, pour: ["fusil", "pm", "precision"], texte: "Le gros frein : BEAUCOUP moins de recul. Mais il soulève la poussière et fait un bruit terrible.", effets: { recul: 0.7, bruit: 1.25, visibilite: 12, flamme: 1.3 } },
+      { id: "silencieux", nom: "Silencieux", niveau: 8, texte: "Les ennemis t'entendent 3 fois moins loin. Un peu moins fort, et plus long à épauler.", effets: { bruit: 0.3, degats: 0.92, portee: 0.9, recul: 0.9, flamme: 0.1, visee: 0.02, visibilite: -6 } },
     ] },
-    manche: { nom: "Manche", icone: "✊", pieces: [
-      { id: "aucun", nom: "Rien", texte: "La main sur le garde-main.", effets: {} },
-      { id: "vertical", nom: "Poignée verticale", texte: "L'arme recule moins.", effets: { recul: 0.75, visee: 0.02, mobilite: -0.01 } },
-      { id: "incline", nom: "Poignée inclinée", texte: "On épaule plus vite.", effets: { visee: -0.06, recul: 0.9 } },
-      { id: "crosse", nom: "Crosse lourde", texte: "Elle ne bouge presque plus… mais elle pèse lourd.", effets: { recul: 0.55, dispersion: 0.85, mobilite: -0.06, visee: 0.06 } },
+    chargeur: { nom: "Chargeur", icone: "🧱", pour: ["fusil", "pm", "precision", "pistolet"], pieces: [
+      { id: "standard", nom: "Chargeur standard", niveau: 0, texte: "Le chargeur d'origine.", effets: {} },
+      { id: "rapide", nom: "Chargeur rapide", niveau: 2, pour: ["fusil", "pm"], texte: "2 chargeurs scotchés : on recharge très vite, mais un peu moins de balles.", effets: { rechargement: 0.6, chargeur: 0.85 } },
+      { id: "grand", nom: "Grand chargeur", niveau: 4, texte: "50 % de balles en plus, mais plus long à changer.", effets: { chargeur: 1.5, rechargement: 1.25, mobilite: -0.02 } },
+      { id: "tambour", nom: "Tambour", niveau: 9, pour: ["fusil", "pm"], texte: "2 fois plus de balles ! Très lourd et lent à recharger.", effets: { chargeur: 2, rechargement: 1.6, mobilite: -0.05, visee: 0.05 } },
     ] },
-    assistance: { nom: "Assistance à la visée", icone: "🧲", pieces: [
-      { id: "aucune", nom: "Aucune", texte: "C'est toi qui vises.", effets: { cone: 0.04, aimant: 0 } },
-      { id: "legere", nom: "Légère", texte: "Ton arme glisse un peu vers l'ennemi. Un peu moins de dégâts.", effets: { cone: 0.09, aimant: 0.6, degats: 0.95 } },
-      { id: "moyenne", nom: "Moyenne", texte: "Elle t'aide bien. Moins de dégâts, et un peu plus lourde.", effets: { cone: 0.14, aimant: 1.2, degats: 0.9, mobilite: -0.01 } },
-      { id: "forte", nom: "Forte", texte: "Elle « colle » à l'ennemi ! Mais tes balles font beaucoup moins mal.", effets: { cone: 0.2, aimant: 2.2, degats: 0.8, mobilite: -0.02 } },
+    poignee: { nom: "Poignée", icone: "✊", pour: ["fusil", "pm", "precision"], pieces: [
+      { id: "aucun", nom: "Rien", niveau: 0, texte: "La main sur le garde-main.", effets: {} },
+      { id: "vertical", nom: "Poignée verticale", niveau: 1, texte: "L'arme recule moins.", effets: { recul: 0.75, visee: 0.02, mobilite: -0.01 } },
+      { id: "incline", nom: "Poignée inclinée", niveau: 3, texte: "On épaule plus vite.", effets: { visee: -0.06, recul: 0.9 } },
+      { id: "arretoir", nom: "Arrêtoir de main", niveau: 5, texte: "Une petite butée devant la main : précis à la hanche. Le recul revient un peu plus.", effets: { dispersion: 0.8, visee: -0.02, recul: 1.05 } },
+      { id: "bipied", nom: "Bipied", niveau: 7, pour: ["fusil", "precision"], texte: "2 pieds dépliés : l'arme ne bouge presque plus quand tu vises… mais elle pèse et elle est lente.", effets: { recul: 0.55, dispersionVisee: 0.8, mobilite: -0.05, visee: 0.08 } },
     ] },
-    lampe: { nom: "Lampe", icone: "🔦", pieces: [
-      { id: "aucune", nom: "Aucune", texte: "Pas de lampe.", effets: {} },
-      { id: "lampe", nom: "Lampe", texte: "Éclaire devant toi (touche L). Mais on te voit de plus loin.", effets: { lampe: { portee: 30, angle: 0.32, force: 40, aveugle: 0 }, visibilite: 25 } },
-      { id: "puissante", nom: "Lampe puissante", texte: "Éclaire loin et ÉBLOUIT les ennemis devant elle (ils visent mal). Mais on te voit de TRÈS loin.", effets: { lampe: { portee: 55, angle: 0.26, force: 110, aveugle: 22 }, visibilite: 60, mobilite: -0.01 } },
+    crosse: { nom: "Crosse", icone: "🪵", pour: ["fusil", "pm", "precision"], pieces: [
+      { id: "standard", nom: "Crosse d'origine", niveau: 0, texte: "La crosse livrée avec l'arme.", effets: {} },
+      { id: "legere", nom: "Crosse légère", niveau: 2, texte: "Un simple squelette : on court et on épaule plus vite. L'arme recule plus.", effets: { mobilite: 0.04, visee: -0.04, recul: 1.15 } },
+      { id: "repliable", nom: "Crosse repliée", niveau: 4, texte: "Repliée sur le côté : l'arme est toute courte et rapide… mais elle saute dans les mains.", effets: { mobilite: 0.06, visee: -0.06, recul: 1.3, dispersionVisee: 1.15 } },
+      { id: "lourde", nom: "Crosse lourde", niveau: 6, texte: "Elle ne bouge presque plus… mais elle pèse lourd.", effets: { recul: 0.55, dispersion: 0.85, mobilite: -0.06, visee: 0.06 } },
     ] },
-    laser: { nom: "Laser", icone: "🔴", pieces: [
-      { id: "aucun", nom: "Aucun", texte: "Pas de laser.", effets: {} },
-      { id: "rouge", nom: "Laser rouge", texte: "Un point rouge là où tu vises : plus précis sans viser. Il se voit un peu.", effets: { laser: "#ff2a1a", dispersion: 0.75, visibilite: 15 } },
-      { id: "vert", nom: "Laser vert", texte: "Plus brillant : encore plus précis, épaule plus vite… mais il se voit de loin.", effets: { laser: "#3dff4a", dispersion: 0.62, visee: -0.03, visibilite: 35 } },
+    munitions: { nom: "Munitions", icone: "🔸", pour: ["fusil", "pm", "precision", "pistolet"], pieces: [
+      { id: "standard", nom: "Balles normales", niveau: 0, texte: "Les balles d'origine.", effets: {} },
+      { id: "pointeCreuse", nom: "Pointe creuse", niveau: 3, texte: "Elles s'ouvrent en touchant : 20 % de dégâts en plus… mais elles portent moins loin, et rien contre les engins.", effets: { degats: 1.2, portee: 0.85, degatsLoin: 0.85, vsVehicule: 0.5 } },
+      { id: "perforantes", nom: "Perforantes", niveau: 6, texte: "Une pointe d'acier : 2,5 fois plus de dégâts sur les motos, quads et leurs pilotes. Un peu moins sur les soldats.", effets: { vsVehicule: 2.5, degats: 0.95, recul: 1.05 } },
+      { id: "subsoniques", nom: "Subsoniques", niveau: 8, texte: "Plus lentes que le son : beaucoup plus discrètes. Mais elles tombent plus vite et vont moins loin.", effets: { bruit: 0.6, vitesseBalle: 0.7, degatsLoin: 0.85, portee: 0.9 } },
     ] },
+    lampe: { nom: "Lampe", icone: "🔦", pour: ["fusil", "pm", "precision", "roquettes"], pieces: [
+      { id: "aucune", nom: "Aucune", niveau: 0, texte: "Pas de lampe.", effets: {} },
+      { id: "lampe", nom: "Lampe", niveau: 2, texte: "Éclaire devant toi (touche L). Mais on te voit de plus loin.", effets: { lampe: { portee: 30, angle: 0.32, force: 40, aveugle: 0 }, visibilite: 25 } },
+      { id: "puissante", nom: "Lampe puissante", niveau: 6, texte: "Éclaire loin et ÉBLOUIT les ennemis devant elle (ils visent mal). Mais on te voit de TRÈS loin.", effets: { lampe: { portee: 55, angle: 0.26, force: 110, aveugle: 22 }, visibilite: 60, mobilite: -0.01 } },
+    ] },
+    laser: { nom: "Laser", icone: "🔴", pour: ["fusil", "pm", "precision", "roquettes"], pieces: [
+      { id: "aucun", nom: "Aucun", niveau: 0, texte: "Pas de laser.", effets: {} },
+      { id: "rouge", nom: "Laser rouge", niveau: 1, texte: "Un point rouge là où tu vises : plus précis sans viser. Il se voit un peu.", effets: { laser: "#ff2a1a", dispersion: 0.75, visibilite: 15 } },
+      { id: "vert", nom: "Laser vert", niveau: 5, texte: "Plus brillant : encore plus précis, épaule plus vite… mais il se voit de loin.", effets: { laser: "#3dff4a", dispersion: 0.62, visee: -0.03, visibilite: 35 } },
+    ] },
+    assistance: { nom: "Assistance à la visée", court: "Assistance", icone: "🧲", pour: ["fusil", "pm", "precision", "pistolet", "roquettes"], pieces: [
+      { id: "aucune", nom: "Aucune", niveau: 0, texte: "C'est toi qui vises.", effets: { cone: 0.04, aimant: 0 } },
+      { id: "legere", nom: "Légère", niveau: 1, texte: "Ton arme glisse un peu vers l'ennemi. Un peu moins de dégâts.", effets: { cone: 0.09, aimant: 0.6, degats: 0.95 } },
+      { id: "moyenne", nom: "Moyenne", niveau: 2, texte: "Elle t'aide bien. Moins de dégâts, et un peu plus lourde.", effets: { cone: 0.14, aimant: 1.2, degats: 0.9, mobilite: -0.01 } },
+      { id: "forte", nom: "Forte", niveau: 4, texte: "Elle « colle » à l'ennemi ! Mais tes balles font beaucoup moins mal.", effets: { cone: 0.2, aimant: 2.2, degats: 0.8, mobilite: -0.02 } },
+    ] },
+    // ✍️ LES PEINTURES (des camouflages, peints par l'ordinateur au démarrage : aucune image à télécharger). motif : la
+    // façon de peindre (des « taches » en couches, des « pixels », des « rayures » de tigre, la trame du « carbone », l'« or »
+    // gravé) ; couleurs : le fond puis chaque couche ; brillant : 0 (mat) à 1 (métal qui brille).
+    // Le camouflage aide un peu à se cacher (on te remarque 5 m moins loin) ; l'or se voit de loin… mais c'est de l'OR !
+    peinture: { nom: "Peinture", icone: "🎨", pour: ["fusil", "pm", "precision", "pistolet", "roquettes"], pieces: [
+      { id: "aucune", nom: "D'usine", niveau: 0, texte: "La couleur d'origine de l'arme.", effets: {} },
+      { id: "foret", nom: "Forêt", niveau: 1, texte: "Le camouflage des bois : vert, brun et noir.", motif: "taches", couleurs: ["#5c6440", "#3d4a2a", "#6e5434", "#1f221a"], effets: { visibilite: -5 } },
+      { id: "desert", nom: "Désert", niveau: 2, texte: "Sable, ocre et brun clair : pour les dunes.", motif: "taches", couleurs: ["#c9ad7c", "#a88a5c", "#e0cfa4", "#7d6444"], effets: { visibilite: -5 } },
+      { id: "urbain", nom: "Urbain", niveau: 3, texte: "Gris, noir et blanc : pour les villes en ruines.", motif: "taches", couleurs: ["#7a7c80", "#4a4c50", "#b8babd", "#202124"], effets: { visibilite: -5 } },
+      { id: "neige", nom: "Neige", niveau: 4, texte: "Blanc avec des taches grises : pour l'hiver.", motif: "taches", couleurs: ["#e6eaee", "#b8c0c8", "#f8fafc", "#6e767e"], effets: { visibilite: -5 } },
+      { id: "numerique", nom: "Numérique", niveau: 5, texte: "Un camouflage en petits carrés, comme un écran.", motif: "pixels", couleurs: ["#6b7250", "#4a5236", "#8a8a62", "#2e3324"], effets: { visibilite: -5 } },
+      { id: "tigre", nom: "Tigre", niveau: 6, texte: "Orange et rayé de noir : le roi de la jungle !", motif: "rayures", couleurs: ["#e07a1c", "#141210", "#f2a54a"], effets: {} },
+      { id: "carbone", nom: "Carbone", niveau: 8, texte: "La trame noire des voitures de course : élégant.", motif: "carbone", couleurs: ["#26282c", "#0e0f11", "#3a3d42"], brillant: 0.35, effets: {} },
+      { id: "or", nom: "Or", niveau: 10, texte: "En OR gravé ! La récompense des champions… mais ça brille : on te voit de 25 m plus loin.", motif: "or", couleurs: ["#d8a93c", "#a8781e", "#ffe08a"], brillant: 1, effets: { visibilite: 25 } },
+    ] },
+  },
+  // ✍️ (demande 97) LES DÉBLOCAGES ET L'EXPÉRIENCE (logique/progression.js). En jouant, tu gagnes des POINTS D'EXPÉRIENCE
+  // (« XP ») ; assez de points = un NIVEAU DE JOUEUR de plus, qui débloque des armes (leur « niveau » plus haut). Chaque arme
+  // gagne aussi ses propres points (les ennemis abattus AVEC elle) : son NIVEAU D'ARME débloque ses pièces et peintures.
+  //   joueur : il faut « base + pas × (niveau − 1) » XP pour passer du niveau N au N+1, jusqu'au niveau « max » ;
+  //   arme : pareil pour une arme ; points : les XP gagnés pour chaque action (« arme » : les XP de ton arme en main) ;
+  //   mvp : le meilleur de ton camp (le plus d'ennemis abattus, au moins « minimum ») gagne un bonus à la fin ;
+  //   veteran : une ancienne sauvegarde (avant la demande 97) reçoit des XP pour ses victoires passées (au plus « max »).
+  progression: {
+    joueur: { base: 800, pas: 150, max: 30 },
+    arme: { base: 300, pas: 100, max: 10 },
+    points: {
+      ennemi: { xp: 100, arme: 100, nom: "Ennemis abattus", icone: "💀" },
+      tete: { xp: 50, arme: 50, nom: "Tirs à la tête", icone: "🎯" },
+      tank: { xp: 300, arme: 200, nom: "Tanks détruits", icone: "💥" },
+      vehicule: { xp: 150, arme: 100, nom: "Engins détruits", icone: "🚙" },
+      soin: { xp: 40, nom: "Soins", icone: "🩹" },
+      releve: { xp: 120, nom: "Soldats relevés", icone: "⚡" },
+      reparation: { xp: 15, nom: "Réparations", icone: "🔧" },
+      marque: { xp: 20, nom: "Ennemis marqués", icone: "🔭" },
+      objectif: { xp: 250, nom: "Objectifs", icone: "🚩" },
+      victoire: { xp: 500, nom: "Victoire", icone: "🏆" },
+      participation: { xp: 100, nom: "Participation", icone: "🎖️" },
+      etoile: { xp: 150, nom: "Étoiles de campagne", icone: "⭐" },
+      mvp: { xp: 400, nom: "Meilleur joueur (MVP)", icone: "🥇" },
+    },
+    mvp: { minimum: 3 },
+    veteran: { victoire: 150, tank: 40, etoile: 100, max: 8000 },
+    toast: 5, // s : le temps où « NIVEAU SUPÉRIEUR ! » reste affiché
   },
   // ================================================================== demande 88 : ✍️ LES ARMES EN 3D (affichage/armes3d.js)
   // ✍️ « Refais toutes les armes, style Battlefield. » Chaque arme a son VRAI modèle 3D, les pièces de l'atelier se voient
@@ -794,13 +918,15 @@ Tanks.CONFIG = {
     // ✍️ les armes des soldats de l'ordinateur : tirées au sort (toujours la même pour un même soldat, d'après son nom)
     // dans la liste de son camp. [arme, poids] : un poids 4 sort 4 fois plus souvent qu'un poids 1.
     ia: {
-      bleus: [["ar4", 4], ["famas", 3], ["mp5", 2], ["p90", 1], ["vector", 1], ["m110", 1.2], ["lapua", 0.6]],
-      rouges: [["ak12", 5], ["svd", 1.6], ["vector", 1.2], ["mp5", 1], ["ar4", 1], ["barrett", 0.5]],
-      roquettes: [["rpg7", 3], ["at4", 2], ["javelin", 1]], // (les soldats « anti-tank »)
-      viseur: [["mire", 3], ["pointRouge", 3], ["holo", 2], ["lunette4", 1]],
-      canon: [["standard", 4], ["silencieux", 1], ["court", 1], ["long", 1]],
+      bleus: [["ar4", 4], ["famas", 3], ["g36", 2], ["scarh", 1], ["mp5", 2], ["mp7", 1], ["p90", 1], ["vector", 1], ["ump45", 1], ["m110", 1.2], ["m24", 0.6], ["mk14", 0.6], ["lapua", 0.6]],
+      rouges: [["ak12", 5], ["svd", 1.6], ["bizon", 1.2], ["vector", 1.2], ["mp5", 1], ["ar4", 1], ["scarh", 0.8], ["mk14", 0.6], ["barrett", 0.5]],
+      roquettes: [["rpg7", 3], ["at4", 2], ["javelin", 1], ["carlgustaf", 1]], // (les soldats « anti-tank »)
+      // (demande 97 : les nouvelles pièces de l'armurerie ; les soldats de l'ordinateur n'ont ni peinture ni munitions spéciales)
+      viseur: [["mire", 3], ["pointRouge", 3], ["holo", 2], ["lunette2", 1], ["lunette4", 1]],
+      canon: [["standard", 5], ["court", 1], ["long", 1], ["lourd", 0.5]],
+      bouche: [["aucune", 4], ["silencieux", 1], ["cacheFlamme", 1], ["compensateur", 1], ["frein", 0.5]],
       chargeur: [["standard", 6], ["grand", 1], ["rapide", 1]],
-      manche: [["aucun", 3], ["vertical", 2], ["incline", 1]],
+      poignee: [["aucun", 3], ["vertical", 2], ["incline", 1], ["arretoir", 1]],
     },
     // LA VUE À LA PREMIÈRE PERSONNE (C) : l'arme a sa propre petite caméra, dessinée PAR-DESSUS le monde (elle ne rentre
     // jamais dans un mur). Positions en m devant l'œil : x à droite, y en haut, z vers toi (−0,3 = 30 cm devant).
@@ -837,8 +963,12 @@ Tanks.CONFIG = {
     },
   },
   // Les barres du menu : la valeur qui remplit la barre (le menu montre « avant → après »).
+  // (demande 97) L'ARMURERIE : la valeur qui remplit chaque barre (plus la barre est longue, mieux c'est) ; « vue » : la
+  // caméra qui tourne autour de l'arme (rad/s quand on n'y touche plus, s avant de reprendre, zoom le plus près / le plus
+  // loin ; l'arme se balance de « balancement » rad autour de sa vue de côté).
   menu: {
-    barres: { degats: 4, portee: 520, precision: 1, recul: 0.05, chargeur: 60, rechargement: 6, visee: 0.8, mobilite: 1.2, bruit: 2 },
+    barres: { degats: 4.2, portee: 520, precision: 0.014, recul: 0.05, cadence: 1300, chargeur: 64, rechargement: 6, visee: 0.8, mobilite: [0.8, 1.2], bruit: 2, visibilite: 80 },
+    vue: { vitesse: 0.35, reprise: 4, zoomMin: 0.55, zoomMax: 1.8, balancement: 0.55, depart: 0.3, hauteur: 0.14 },
   },
   // ✍️ LES MARQUES (les jumelles et le capteur de l'éclaireur) : un ennemi marqué a un ◆ jaune au-dessus de lui et sur
   // la carte pendant « duree » s. cone : rad autour du viseur ; portee : m.
