@@ -219,6 +219,7 @@
       <a href="#etape95">Étape 95</a>
       <a href="#etape96">Étape 96</a>
       <a href="#etape97">Étape 97</a>
+      <a href="#etape98">Étape 98</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5099,6 +5100,47 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape98">
+      <h2>💣 Étape 98 : débloquer les gadgets et les explosifs (qui marchent enfin !) <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les gadgets et les explosifs se débloquent avec ton niveau, et la mine antichar, le C4, la claymore et le fumigène marchent vraiment en bataille. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/98-deblocage-gadgets-et-explosifs.md</code>.</p>
+          <ul><li>✍️ « C'est aussi le déblocage du gadget des explosifs. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 41 ».</li>
+            <li>☐ Onglets Gadgets et Explosifs : un 🔒 « Niveau N » sur ce qui n'est pas encore gagné.</li>
+            <li>☐ Touche 4 puis Espace : tu poses (ou lances) ton explosif.</li>
+            <li>☐ C4 : touche 4 en main, puis R → BOUM.</li>
+            <li>☐ Mine : un tank ennemi qui passe dessus est très abîmé. Claymore : un soldat ennemi qui passe DEVANT tombe.</li>
+            <li>☐ Fumigène : les ennemis ne te visent plus à travers le nuage.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔒 Qui débloque quoi ?</h3>
+      <ul>
+        <li>Le 1er gadget et le 1er explosif de ta classe : libres.</li>
+        <li>Gadgets : défibrillateur 3, sac de munitions 4, capteur 5, drone de réparation 7.</li>
+        <li>Explosifs : fumigène 2, claymore 6, C4 8.</li>
+      </ul>
+      <h3>🧠 Le « déclencheur »</h3>
+      <p>Une mine posée vérifie, à chaque instant : « Y a-t-il un véhicule ennemi à moins de 2,6 m ? » La claymore : « Un soldat ennemi est-il devant moi, dans mon cône ? » Le C4, lui, attend un ordre : ta touche R. C'est trois façons de décider quand exploser : la distance, la direction, ou un ordre.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, section « Les explosifs (demande 98) » : regarde ce qui est posé et ce qui le déclenche.</li>
+        <li>Dans <code>tanks/config.js</code>, cherche <code>explosifs</code> : change la durée du fumigène.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+        <li>Qu'est-ce qui fait exploser le C4 ? <span class="petit">(la touche R)</span></li>
+        <li>Une claymore saute-t-elle si l'ennemi passe derrière elle ? <span class="petit">(non : seulement devant)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6414,6 +6456,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-97" data-cle="appris-97" placeholder="Ex. : …"></textarea>
         <label for="idees-97"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-97" data-cle="idees-97" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 98 · débloquer les gadgets et les explosifs <span class="petit">· 22 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/logique/explosifs.js</code>, <code>tanks/affichage/explosifs3d.js</code>, <code>progression.js</code>, <code>menu.js</code>.</p>
+        <p class="petit">✍️ Maxance a demandé : les gadgets et les explosifs se débloquent aussi.</p>
+        <label for="appris-98"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-98" data-cle="appris-98" placeholder="Ex. : …"></textarea>
+        <label for="idees-98"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-98" data-cle="idees-98" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

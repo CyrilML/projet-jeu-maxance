@@ -1,6 +1,6 @@
 # Demande n° 98 : débloquer les gadgets et les explosifs (et les faire vraiment marcher)
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée (tanks version 41).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -22,7 +22,7 @@ débloquer avec le niveau de joueur.
 - Tout se voit sous le capot (journal et état en direct).
 
 ## ✅ Critères de réussite
-- [ ] Tanks « version 41 ».
-- [ ] Des cadenas sur les gadgets et explosifs pas encore gagnés, avec leur niveau.
-- [ ] Les 4 explosifs marchent en bataille (touche 4).
-- [ ] « NIVEAU SUPÉRIEUR ! » montre aussi les gadgets et explosifs débloqués.
+- [x] Tanks « version 41 ».
+- [x] Des cadenas sur les gadgets et explosifs pas encore gagnés, avec leur niveau.
+- [x] Les 4 explosifs marchent en bataille (touche 4).
+- [x] « NIVEAU SUPÉRIEUR ! » montre aussi les gadgets et explosifs débloqués.

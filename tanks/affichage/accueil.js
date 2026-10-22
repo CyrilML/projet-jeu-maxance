@@ -29,7 +29,7 @@ Tanks.Accueil = (function () {
       '<div class="a-boutons" hidden>' +
       '<button class="a-jouer a-mode a-campagne" data-accueil="campagne">▶ CAMPAGNE<small>' + Tanks.CONFIG.campagne.chapitres.length + " chapitres · l'histoire</small></button>" + // (étape 88)
       '<button class="a-jouer a-mode a-bataille" data-accueil="bataille">⚔️ BATAILLE<small>bataille libre · toutes les cartes</small></button>' +
-      '<a class="a-carnet" href="../index.html#etape97">📓 Le carnet</a>' +
+      '<a class="a-carnet" href="../index.html#etape98">📓 Le carnet</a>' +
       "</div>" +
       '<p class="a-pied">← → choisir · Entrée : entrer · M : musique</p>' +
       "</div>";
