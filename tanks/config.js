@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 42,
+  version: 43,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -1172,6 +1172,9 @@ Tanks.CONFIG = {
     //   de tes alliés sur le Front · etoiles : le temps permis pour l'étoile « rapide » ·
     //   soin : ta vie revient toute seule (fraction de ta vie par seconde) si personne ne t'a touché depuis « attente » s.
     difficulteDepart: "facile", // ✍️ le niveau d'un nouveau joueur
+    // ✍️ (demande 101) LES BATTLE COINS gagnés à chaque mission RÉUSSIE, selon la difficulté (gardés dans la sauvegarde ;
+    // la boutique pour les dépenser viendra plus tard). Une mission ratée ne rapporte rien.
+    battleCoins: { "tres-facile": 100, facile: 200, normal: 500, difficile: 1000, "tres-difficile": 2000 },
     difficultes: [
       { id: "tres-facile", nom: "Très facile", icone: "🧸", couleur: "#7fe08a", texte: "Pour découvrir l'histoire : tu es presque invincible.",
         vieChar: 3, vieSoldat: 3, degats: 0.35, precision: 0.45, erreur: 3, reaction: 2, chars: 0.5, soldats: 0.5, durees: 0.5, allies: 1.5, degatsAllies: 2, etoiles: 2, soin: 0.05, attente: 4 },
@@ -1249,6 +1252,7 @@ Tanks.CONFIG = {
             fin: [["volk", "Le Scorpion est en feu ! L'oasis est à nous."], ["hargrave", "Superbe travail, Lions. Grâce à vous, l'Alliance n'est plus sourde."]] },
         ],
         etoiles: { temps: 480, eliminations: 10 },
+        films: { ouverture: "ouverture-oasis" }, // ✍️ (demande 101) la cinématique d'ouverture (cinematiques.films, tout en bas)
         reussite: "L'oasis de Tamerin est libérée. Le relais radio fonctionne de nouveau : pour la première fois depuis trois jours, l'Alliance entend ce que prépare le Front…",
       },
       {
@@ -1822,4 +1826,104 @@ Tanks.CONFIG.radio = {
   // Les mots de la boussole (0 = nord, puis dans le sens des aiguilles d'une montre). Le nord, c'est vers le camp ennemi.
   boussole: ["au nord", "au nord-est", "à l'est", "au sud-est", "au sud", "au sud-ouest", "à l'ouest", "au nord-ouest"],
   nombres: ["zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf", "vingt"],
+};
+
+// ✍️ (demande 101) LES CINÉMATIQUES : des films joués DANS le jeu (le vrai décor 3D, les vrais soldats), comme au cinéma :
+// bandes noires, titres, sous-titres, voix de la radio, musique. Entrée ou Échap : passer.
+// Un film se lance par son nom (par exemple un chapitre de la campagne : « films: { ouverture: "ouverture-oasis" } »).
+// Pour écrire un NOUVEAU film, il suffit d'ajouter ses données dans « films » (pas besoin de toucher au code) :
+//   titre, musique (le volume de la musique, de 0 à 1, × celui du menu), passable (false : on ne peut pas passer),
+//   decor : { feux: [[x, z, force], …] } (des feux et des colonnes de fumée allumés pendant le film seulement),
+//   acteurs : les GROUPES de soldats (de vrais soldats du monde, empruntés pendant le film) :
+//     { id, prendre: "allies" | "ennemis" | "toi", nombre (0 = tous), proches: [x, z] (on prend les plus proches de ce
+//       point), avecToi: rang (ton soldat marche dans ce groupe, à ce rang), chef: "volk" (le 1er du groupe est ce
+//       personnage : il parle, on le filme avec « groupe.chef »), chemin: [[x, z], …], vitesse (m/s), depart (s),
+//       formation: "colonne" | "ligne" | "coin", ecart (m entre deux rangs), largeur (m entre les 2 files),
+//       arme: "levee" | "basse", garde (rad : à l'arrêt, chacun surveille son côté),
+//       tactique: { balaye, retourne, accroupi } (la chance de chaque geste, à chaque fois qu'un soldat en fait un) }
+//   actions : [{ a (s), acteur: "escouade" | "escouade.chef" | "escouade.3" | "toi", faire: "marche" | "halte" |
+//     "seTourne" (vers: [x, z] ou un acteur) | "balaye" | "retourne" | "accroupi" | "debout" | "signe" | "arme" (levee) , duree }]
+//   repliques : [{ a (s), qui (un personnage de campagne.personnages), texte, duree (s, sinon selon la longueur),
+//     radio: true (à la radio, de loin ; sinon il parle en face) }]
+//   plans : les morceaux du film, l'un après l'autre. Chacun : { nom, duree (s), camera, titre, fondu, musique,
+//     actions, repliques (leur « a » compte depuis le début de CE plan) }.
+//     camera : { type: "travelling" (de: { oeil, cible } → a: { oeil, cible } ; un point = [x, hauteur au-dessus du sol, z]) ·
+//                "suivre" (acteur, de: [en arrière, hauteur, sur le côté] → a: […], repere: "chemin" | "regard",
+//                  regard: un acteur ou [x, h, z], regardHauteur) ·
+//                "orbite" (acteur, rayon, hauteur, de → a : angles en rad autour de lui, regardHauteur) ·
+//                "rejoindre" (la caméra glisse jusque derrière ton soldat : la main est rendue sans coupure) ·
+//                courbe: "doux" | "lineaire", tremble (m : la caméra à l'épaule) }
+//     titre : { etiquette, grand, petit, de (s), a (s) } · fondu : { entree (s), sortie (s) } (au noir).
+Tanks.CONFIG.cinematiques = {
+  regles: {
+    bandes: 0.11, // la hauteur de chaque bande noire (part de l'écran)
+    bandesEntree: 1.2, // s : les bandes arrivent au début du film
+    replique: { base: 2.4, parLettre: 0.055, max: 9 }, // s : la durée d'une réplique sans « duree » = base + parLettre × lettres
+    tourne: 2.6, // rad/s : un acteur tourne au plus à cette vitesse
+    rattrape: 1.6, // × la vitesse du groupe : un soldat en retard rattrape sa place
+    entreGestes: [2.5, 6], // s : le temps entre deux gestes d'un même soldat (au hasard entre les deux)
+    signe: 0.5, // s : le geste « on avance ! » (le bras en arrière puis en avant)
+    gestes: {
+      balaye: { duree: 2.4, angle: 0.75, allers: 1.5, tourne: 7.5, ralenti: 0.45 }, // ± 0,75 rad (43°), 1,5 aller-retour, 7,5 rad/s
+      retourne: { duree: 2.6, tourne: 4.5 }, // il s'arrête, se retourne (4,5 rad/s) et surveille derrière
+      accroupi: { duree: 2.2 }, // il s'accroupit en visant un instant
+    },
+    passer: "Entrée · Échap : passer",
+  },
+  films: {
+    // ✍️ LA CINÉMATIQUE D'OUVERTURE DE LA CAMPAGNE (chapitre 1, l'oasis de Tamerin), environ 85 s.
+    "ouverture-oasis": {
+      titre: "Ouverture · Le réveil du lion",
+      musique: 0.75,
+      decor: { feux: [[-23, 12, 1.6], [25, 40, 1.4], [-45, -22, 1.8], [12, 90, 1.2], [-12, 55, 1.3], [44, -12, 1.6], [62, 24, 1.2], [-58, -56, 1.5], [6, 150, 1.0], [-30, 100, 1.1]] },
+      acteurs: [
+        { id: "escouade", prendre: "allies", nombre: 0, avecToi: 2, chef: "volk", chemin: [[0, 268], [0, 198]], vitesse: 0.85, depart: 0,
+          formation: "colonne", ecart: 2.6, largeur: 1.5, arme: "levee", garde: 1.0, tactique: { balaye: 0.4, retourne: 0.25, accroupi: 0.2 } },
+        { id: "patrouille", prendre: "ennemis", nombre: 3, proches: [-25, 60], chemin: [[-34, 98], [-34, 60], [-34, 20]], vitesse: 1.0, depart: 0,
+          formation: "colonne", ecart: 3.2, largeur: 1.2, arme: "levee", tactique: { balaye: 0.55, retourne: 0.3 } },
+        { id: "garnison", prendre: "ennemis", nombre: 3, proches: [0, 0], chemin: [[0, 30], [0, -10]], vitesse: 0.6, depart: 0,
+          formation: "ligne", ecart: 3, arme: "levee", tactique: { balaye: 0.5, retourne: 0.3 } },
+      ],
+      plans: [
+        { nom: "la ville dévastée", duree: 10, fondu: { entree: 2.2 },
+          camera: { type: "travelling", de: { oeil: [150, 62, 235], cible: [0, 4, 30] }, a: { oeil: [72, 30, 150], cible: [-12, 3, 25] } },
+          titre: { etiquette: "Chapitre 1 / 6 · Les Lions de Valdrie", grand: "LE RÉVEIL DU LION", petit: "Oasis de Tamerin · province de Sahrane · 14 mars 2041 · 05 h 42", de: 1.8, a: 9.2 },
+          repliques: [{ a: 4.5, qui: "hargrave", texte: "Ici Rempart. Trois jours sans radio, sans radar, sans satellites. Le désert est devenu muet.", duree: 5.2, radio: true }] },
+        { nom: "la patrouille ennemie", duree: 9,
+          camera: { type: "suivre", acteur: "patrouille", de: [-13, 1.7, 4.5], a: [-8.5, 1.5, 3], regardHauteur: 1.3, tremble: 0.07 },
+          repliques: [{ a: 1, qui: "varrok", texte: "Patrouille trois, rien dans les ruelles. L'oasis et son relais sont au Front. Que personne ne passe.", duree: 6.5, radio: true }] },
+        { nom: "l'escouade avance", duree: 10,
+          camera: { type: "suivre", acteur: "escouade", de: [-17, 1.4, 6], a: [-11, 1.6, 3.5], regardHauteur: 1.2, tremble: 0.06 },
+          repliques: [{ a: 2.5, qui: "volk", texte: "Doucement, les Lions. Restez groupés. Les yeux partout.", duree: 4.5 }] },
+        { nom: "il balaie la rue", duree: 6,
+          camera: { type: "suivre", acteur: "escouade.3", de: [-2.9, 1.55, 1.3], a: [-2.2, 1.5, 0.9], regardHauteur: 1.45, tremble: 0.04 },
+          actions: [{ a: 0, acteur: "escouade.3", faire: "balaye", duree: 5.5 }] },
+        { nom: "il surveille derrière", duree: 6,
+          camera: { type: "orbite", acteur: "escouade.7", rayon: 4.6, hauteur: 1.7, de: 2.5, a: 1.5, regardHauteur: 1.3 },
+          actions: [{ a: 0.2, acteur: "escouade.7", faire: "retourne", duree: 5 }, { a: 1, acteur: "escouade.6", faire: "accroupi" }, { a: 4, acteur: "escouade.6", faire: "debout" }] },
+        { nom: "vers la ville", duree: 7,
+          camera: { type: "suivre", acteur: "escouade", de: [9, 2.2, -2.2], a: [11, 2.8, -3], regard: [0, 6, 70], tremble: 0.1 },
+          actions: [{ a: 3.5, acteur: "escouade.chef", faire: "signe" }] },
+        { nom: "halte", duree: 5,
+          camera: { type: "suivre", acteur: "escouade.chef", repere: "chemin", de: [7.5, 1.9, 2.6], a: [5, 1.75, 1.6], regardHauteur: 1.5 },
+          actions: [{ a: 0, acteur: "escouade", faire: "halte" }, { a: 0.7, acteur: "escouade.chef", faire: "seTourne", vers: "toi" }, { a: 0.7, acteur: "escouade.chef", faire: "arme", levee: false }, { a: 2.2, acteur: "toi", faire: "seTourne", vers: "escouade.chef" }, { a: 1.2, acteur: "escouade.4", faire: "accroupi" }, { a: 1.6, acteur: "escouade.5", faire: "accroupi" }],
+          repliques: [{ a: 1.4, qui: "volk", texte: "Halte. Tout le monde à couvert. Lion 1, approche.", duree: 3.4 }] },
+        { nom: "le commandant explique", duree: 14,
+          camera: { type: "suivre", acteur: "escouade.chef", repere: "chemin", de: [4.2, 1.75, -1.3], a: [2.8, 1.66, -0.85], regardHauteur: 1.58 },
+          repliques: [
+            { a: 0.4, qui: "volk", texte: "Écoute-moi bien. Il y a trois jours, toutes les radios de Valdrie se sont tues. Plus de radar, plus de satellites.", duree: 6.6 },
+            { a: 7.2, qui: "volk", texte: "Cette nuit, le Front de Varrok a pris l'oasis de Tamerin et son relais radio : le dernier du désert.", duree: 6.4 },
+          ] },
+        { nom: "ton escouade écoute", duree: 7.5,
+          camera: { type: "suivre", acteur: "escouade.chef", repere: "chemin", de: [-1.9, 1.78, 0.75], a: [-1.6, 1.74, 0.6], regard: "toi", regardHauteur: 1.45, tremble: 0.02 },
+          repliques: [{ a: 0.2, qui: "volk", texte: "On entre par le sud, on nettoie les ruelles, et on tient la place du puits pendant qu'on répare le relais.", duree: 7 }] },
+        { nom: "en avant", duree: 6.5,
+          camera: { type: "suivre", acteur: "escouade.chef", repere: "chemin", de: [2.5, 1.68, -0.95], a: [2.0, 1.62, -0.7], regardHauteur: 1.58 },
+          actions: [{ a: 3.8, acteur: "escouade.chef", faire: "signe" }, { a: 4.6, acteur: "toi", faire: "seTourne", vers: [0, 128] }, { a: 5, acteur: "escouade.chef", faire: "seTourne", vers: [0, 128] }, { a: 5, acteur: "escouade", faire: "debout" }],
+          repliques: [{ a: 0.2, qui: "volk", texte: "Sans ce relais, l'Alliance est sourde et aveugle. Lion 1, tu restes avec moi. En avant !", duree: 6 }] },
+        { nom: "derrière toi", duree: 4.5, musique: 0.25,
+          camera: { type: "rejoindre" } },
+      ],
+    },
+  },
 };

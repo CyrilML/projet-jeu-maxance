@@ -35,17 +35,21 @@
 //     « bouche ». ✍️ Une ancienne sauvegarde GARDE SON ÉQUIPEMENT : l'arme choisie dans chaque classe et ses pièces
 //     deviennent des « cadeaux » (débloqués même si ton niveau est plus bas), et tes anciennes victoires, tanks détruits
 //     et étoiles de campagne te donnent des points de « vétéran » (au plus progression.veteran.max).
+//   14 (demande 101) : + battleCoins (les Battle Coins gagnés à chaque mission réussie de la campagne, selon la
+//     difficulté). Une ancienne version garde tout ; ✍️ (choix de Claude) ses chapitres déjà réussis rapportent leurs
+//     Battle Coins tout de suite, une fois par difficulté réussie (« niveaux »), comme s'ils venaient d'être gagnés.
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 13; // (étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression)
+  const VERSION = 14; // (étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins)
   const radio = Tanks.Evenements;
 
   function vide() {
     return { version: VERSION, char: "leclerc", victoires: 0, defaites: 0, detruits: 0, tirs: 0, touches: 0, bateaux: 0, portails: 0, sousMarins: 0, avions: 0, ordres: 0, vehicules: 0, helicos: 0, cordes: 0, maisons: 0, murs: 0, grenades: 0,
       carte: "bataille", souterrain: 0, // (étape 80)
+      battleCoins: 0, // (demande 101)
       campagne: { debloque: 1, chapitres: {}, enCours: null, difficulte: Tanks.CONFIG.campagne.difficulteDepart }, // (étape 88 ; demande 90 : + difficulte)
       equipement: equipementDeDepart(), // (étape 77)
       progression: { xp: 0, armes: {}, cadeaux: { armes: [], pieces: {} }, parties: 0 } }; // (demande 97)
@@ -94,6 +98,21 @@ Tanks.Sauvegarde = (function () {
     P.veteran = P.xp;
   }
 
+  // (demande 101) Une sauvegarde d'avant la version 14 : les chapitres déjà réussis rapportent leurs Battle Coins (une
+  // fois par difficulté réussie ; un chapitre réussi avant la demande 90, sans « niveaux », compte comme « difficile »).
+  function convertir14(d) {
+    const B = Tanks.CONFIG.campagne.battleCoins, chapitres = (d.campagne && d.campagne.chapitres) || {};
+    let n = 0;
+    for (const id in chapitres) {
+      const c = chapitres[id];
+      if (!c || !c.reussi) continue;
+      const niveaux = c.niveaux && Object.keys(c.niveaux).length ? Object.keys(c.niveaux) : ["difficile"];
+      for (const k of niveaux) n += B[k] || 0;
+    }
+    d.battleCoins = (d.battleCoins || 0) + n;
+    return n;
+  }
+
   let donnees = vide();
   function lire() {
     try {
@@ -104,7 +123,8 @@ Tanks.Sauvegarde = (function () {
         const neuve = vide();
         donnees = Object.assign(neuve, ancienne, { version: VERSION, equipement: fusionner(neuve.equipement, ancienne.equipement), campagne: fusionner(neuve.campagne, ancienne.campagne), progression: fusionner(neuve.progression, ancienne.progression) }); // (étape 88 : la campagne aussi ; demande 97 : la progression)
         if ((ancienne.version || 1) < 13) convertir13(donnees, ancienne); // (demande 97)
-        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION });
+        const coins = (ancienne.version || 1) < 14 ? convertir14(donnees) : 0; // (demande 101)
+        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins });
       }
     } catch (e) {
       donnees = vide();

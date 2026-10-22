@@ -15,6 +15,8 @@
 // (affichage/progression-ecrans.js : « NIVEAU SUPÉRIEUR ! », le bilan d'expérience) suivent la bataille.
 // Demande 94 : la RADIO QUI PARLE (affichage/radio-voix.js) : sa file d'attente avance à chaque image, ses sous-titres se
 // dessinent en dernier, et N coupe ou remet les voix.
+// Demande 101 : LES CINÉMATIQUES : le réalisateur (logique/cinematique.js) joue pendant les petits pas (phase
+// "cinematique") ; le caméraman (affichage/cinematique.js) filme et dessine l'écran de cinéma en tout dernier.
 
 window.Tanks = window.Tanks || {};
 
@@ -41,6 +43,7 @@ window.Tanks = window.Tanks || {};
   Tanks.EcranProgression.initialiser(); // (demande 97 : « NIVEAU SUPÉRIEUR ! » et le bilan de fin de bataille)
   Tanks.TableauCampagne.initialiser(toile2d); // (étape 88)
   Tanks.EcranCampagne.initialiser(monde, (type, valeur) => Tanks.Campagne.demander(monde, type, valeur)); // (étape 88 : comme le menu, des DEMANDES)
+  Tanks.EcranCinematique.initialiser(toile2d, monde, (type) => Tanks.Cinematique.demander(monde, type)); // (demande 101 : Entrée ou Échap = « passer »)
   toile2d.focus();
 
   const reveil = () => (Tanks.Sons.demarrer(), Tanks.Musique.demarrer()); // (étape 82 : la musique démarre avec le son)
@@ -70,6 +73,7 @@ window.Tanks = window.Tanks || {};
     Tanks.Menu.maj(monde); // (étape 77 : le menu s'ouvre au garage, se ferme en bataille)
     Tanks.EcranCampagne.maj(monde); // (étape 88 : l'intro qui avance, l'écran de fin qui arrive)
     Tanks.EcranProgression.maj(monde); // (demande 97 : le bilan d'expérience part quand on rejoue)
+    Tanks.EcranCinematique.maj(monde); // (demande 101 : la caméra de cinéma pendant un film)
     // ✍️ (étape 81) une carte avec un AUTRE DÉCOR a été choisie (la ville, le désert…) : le décor est fabriqué au
     // chargement, alors on recharge la page (la sauvegarde a déjà retenu la carte : le menu revient avec elle)
     if (monde.phase === "garage" && !rechargement && !Tanks.EcranCampagne.actif && Tanks.CarteDuJour.decorDe(C.cartes.find((c) => c.id === monde.carte)) !== Tanks.CarteDuJour.decor) {
@@ -120,6 +124,7 @@ window.Tanks = window.Tanks || {};
     Tanks.TableauCampagne.dessiner(monde); // (étape 88 : les objectifs, les marqueurs, la radio)
     Tanks.RadioVoix.maj(monde); // (demande 94 : la file d'attente de la radio, la voix…)
     Tanks.RadioVoix.dessiner(); // (… et les sous-titres en bas)
+    Tanks.EcranCinematique.dessiner(monde); // (demande 101 : pendant un film, l'écran de cinéma remplace le tableau de bord)
     t1 = performance.now();
     parts.tableau = t1 - t0;
     pause.hidden = !enPause;

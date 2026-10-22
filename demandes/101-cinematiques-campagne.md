@@ -1,6 +1,6 @@
 # Demande n° 101 : les cinématiques de la campagne, les Battle Coins par mission, et la vidéo d'introduction
 
-> Statut : 🛠️ en cours.
+> Statut : 🛠️ en cours : morceau 1 livré (tanks version 43).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -27,7 +27,7 @@ mission jusqu'à la fin. »
   à la fin de la mission et sous le capot.
 
 ## ✅ Critères de réussite
-- [ ] Morceau 1 : la cinématique d'ouverture (ville dévastée, escadron et ennemis qui avancent en se méfiant, le
+- [x] Morceau 1 : la cinématique d'ouverture (ville dévastée, escadron et ennemis qui avancent en se méfiant, le
       commandant qui parle, puis la caméra derrière ton soldat) ; Battle Coins selon la difficulté.
 - [ ] Morceau 2 : 12 cinématiques de fin (6 réussites, 6 échecs), de 50 à 90 s.
 - [ ] Morceau 3 : la vidéo d'introduction.

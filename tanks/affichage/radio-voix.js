@@ -195,10 +195,39 @@ Tanks.RadioVoix = (function () {
     if (!enCours && file.length && maintenant >= blancJusqua) demarrer(file.shift(), maintenant);
   }
 
+  // (demande 101) LES CINÉMATIQUES : une réplique de film est dite TOUT DE SUITE, par la voix de ce personnage (pas de
+  // file d'attente, pas de sous-titre ici : l'écran de cinéma, affichage/cinematique.js, écrit le sien).
+  let filmParle = null;
+  function dire(texte, qui, interceptee) {
+    taire();
+    bilan.film = (bilan.film || 0) + 1;
+    if (!voixPossible()) return;
+    try {
+      const tb = interceptee ? V.interceptee : V.timbres[numero(qui) % V.timbres.length];
+      const u = new window.SpeechSynthesisUtterance(texte);
+      u.lang = V.langue;
+      u.voice = voixPour(qui);
+      u.pitch = tb.hauteur;
+      u.rate = tb.vitesse;
+      u.volume = V.volume;
+      u.onend = u.onerror = () => filmParle === u && (filmParle = null);
+      filmParle = u;
+      synthese.speak(u);
+      bilan.lues++;
+    } catch (e) {
+      bilan.erreurs++;
+      filmParle = null;
+    }
+  }
+  function taire() {
+    if (filmParle && synthese) synthese.cancel();
+    filmParle = null;
+  }
+
   // Touche N (ou le bouton sous le capot) : couper ou remettre les voix.
   function basculer() {
     actives = !actives;
-    if (!actives && synthese) synthese.cancel();
+    if (!actives && synthese) (synthese.cancel(), (filmParle = null));
     majBouton();
     Tanks.Evenements.emettre("radio-voix", { actives, synthese: !!synthese, voixFr: voixFr.length, toutes });
   }
@@ -294,5 +323,5 @@ Tanks.RadioVoix = (function () {
     };
   }
 
-  return { initialiser, maj, dessiner, basculer, changerVoix, etat, get actives() { return actives; } };
+  return { initialiser, maj, dessiner, basculer, changerVoix, etat, dire, taire, get actives() { return actives; } };
 })();

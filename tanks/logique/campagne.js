@@ -14,7 +14,10 @@
 //   6. (demande 90) il applique la DIFFICULTÉ choisie (config.js : campagne.difficultes) : ta vie, le nombre d'ennemis,
 //      les durées à tenir, l'aide des alliés… Les autres règles (logique/soldat.js, ia.js, troupes.js, obus.js) lui
 //      demandent leurs multiplicateurs (« facteur ») : en bataille libre, tout reste × 1.
-// Les phases du monde : "briefing" (tout est installé mais rien ne bouge : le survol et le briefing), puis "bataille",
+//   7. (demande 101) avant l'action, il fait passer la CINÉMATIQUE d'ouverture du chapitre (logique/cinematique.js), et
+//      à chaque mission réussie il donne des BATTLE COINS selon la difficulté (gardés dans la sauvegarde).
+// Les phases du monde : "briefing" (tout est installé mais rien ne bouge : le survol et le briefing), (demande 101)
+// "cinematique" (le film : seuls les acteurs bougent), puis "bataille",
 // puis "victoire" ou "defaite". « monde.campagne » garde l'état du chapitre en cours (null en bataille libre).
 // Ce fichier ne dessine rien : il annonce tout à la radio du jeu (« campagne-… ») ; affichage/campagne-*.js montrent.
 
@@ -256,6 +259,7 @@ Tanks.Campagne = (function () {
     const ch = chapitre(id);
     if (!ch || !estDebloque(ch)) return false;
     actuel = monde;
+    Tanks.Cinematique.arreter(monde); // (demande 101)
     monde.campagne = null;
     monde.carte = ch.carte;
     Tanks.Monde.lancer(monde); // (toute la bataille, comme d'habitude…)
@@ -271,23 +275,40 @@ Tanks.Campagne = (function () {
     return true;
   }
   // « Commencer la mission » (le bouton du briefing) : ton soldat prend la classe choisie, et l'action commence.
-  function commencer(monde) {
+  // ✍️ (demande 101) Si le chapitre a une cinématique d'ouverture (config : films.ouverture), le film passe d'abord
+  // (logique/cinematique.js) ; la mission commence à la fin du film (ou quand tu le passes). « Rejouer » : pas de film.
+  function commencer(monde, sansFilm) {
     const etat = monde.campagne;
     if (!etat || monde.phase !== "briefing") return false;
     const ch = chapitre(etat.id);
     const eq = Tanks.Equipement.equiper(monde.toi.soldat); // (la classe a peut-être changé pendant le briefing)
     appliquerVie(monde); // (demande 90 : la vie selon la difficulté, après l'équipement qui l'a remise à zéro)
+    etat.classe = C.classes[eq.classe].nom;
+    const film = !sansFilm && ch.films && ch.films.ouverture;
+    if (film && Tanks.Cinematique.lancer(monde, film, { pour: "campagne", alaFin: (m) => action(m) })) {
+      etat.etat = "film";
+      etat.film = film;
+      return true;
+    }
+    return action(monde);
+  }
+  // L'action commence : le chrono, la radio du chapitre, le 1er objectif.
+  function action(monde) {
+    const etat = monde.campagne;
+    if (!etat) return false;
+    const ch = chapitre(etat.id);
     monde.phase = "bataille";
     monde.chrono = 0;
     etat.etat = "en cours";
     for (const r of ch.radio || []) etat.file.push(r);
-    radio.emettre("campagne-debut", { numero: ch.numero, titre: ch.titre, classe: C.classes[eq.classe].nom, mode: monde.toi.mode });
+    radio.emettre("campagne-debut", { numero: ch.numero, titre: ch.titre, classe: etat.classe, mode: monde.toi.mode, film: etat.film || "" });
     demarrerObjectif(monde, 0);
     return true;
   }
   // Quitter la campagne : retour au garage de la bataille libre (avec ta carte à toi).
   function quitter(monde, raison) {
     const etat = monde.campagne;
+    Tanks.Cinematique.arreter(monde); // (demande 101 : un film en cours s'arrête, sans lancer la mission)
     if (etat) radio.emettre("campagne-quitte", { numero: etat.numero, titre: etat.titre, raison: raison || "retour" });
     monde.campagne = null;
     monde.carte = C.cartes.some((c) => c.id === S().carte) ? S().carte : "bataille";
@@ -611,6 +632,12 @@ Tanks.Campagne = (function () {
       f.niveaux = f.niveaux || {}; // (demande 90 : les meilleures étoiles à chaque difficulté)
       f.niveaux[etat.difficulte.id] = Math.max(f.niveaux[etat.difficulte.id] || 0, etat.bilan.nbEtoiles);
       etat.bilan.record = f.temps === Math.round(etat.chrono);
+      // ✍️ (demande 101) les BATTLE COINS : selon la difficulté de la mission (config : campagne.battleCoins)
+      const gain = K.battleCoins[etat.difficulte.id] || 0, S0 = S();
+      S0.battleCoins = (S0.battleCoins || 0) + gain;
+      etat.bilan.battleCoins = gain;
+      etat.bilan.totalCoins = S0.battleCoins;
+      radio.emettre("battle-coins", { gain, total: S0.battleCoins, difficulte: etat.difficulte.icone + " " + etat.difficulte.nom, numero: ch.numero, titre: ch.titre });
       if (P.debloque < ch.numero + 1 && ch.numero < K.chapitres.length) {
         P.debloque = ch.numero + 1;
         etat.bilan.debloque = K.chapitres[ch.numero].titre;
@@ -667,7 +694,7 @@ Tanks.Campagne = (function () {
     if (type === "commencer") return { ok: commencer(monde) };
     if (type === "rejouer") {
       const id = monde.campagne && monde.campagne.id;
-      return { ok: !!id && preparer(monde, id) && commencer(monde) };
+      return { ok: !!id && preparer(monde, id) && commencer(monde, true) }; // (demande 101 : on rejoue sans revoir le film)
     }
     if (type === "difficulte") return { ok: choisirDifficulte(valeur) }; // (demande 90)
     if (type === "classe") return { ok: Tanks.Equipement.demander(monde, "classe", valeur) };

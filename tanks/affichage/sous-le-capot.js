@@ -95,6 +95,14 @@ Tanks.SousLeCapot = (function () {
     lampe: (d) => "🔦 Lampe " + (d.allumee ? "allumée" : "éteinte"),
     "plein-ecran": (d) => (d.actif ? "🖥️ Plein écran (K ou Échap pour sortir)" : "🖥️ Retour à la page"),
     accueil: (d) => (d.mode === "campagne" ? "🎬 Tu entres dans la CAMPAGNE : la liste des chapitres" : "🏰 Tu quittes la page d'accueil : la musique se tait, place au menu"),
+    // demande 101 : les cinématiques et les Battle Coins
+    "cinematique-debut": (d) => "🎬 Film « " + d.titre + " » : " + d.plans + " plans, " + virgule(d.duree, 0) + " s · " + d.acteurs + " acteurs (" + d.groupes.join(", ") + ") · la bataille est FIGÉE (phase « cinematique ») · Entrée ou Échap : passer",
+    "cinematique-plan": (d) => "🎞️ Plan " + d.numero + " / " + d.total + (d.nom ? " « " + d.nom + " »" : "") + " · caméra : " + d.camera + " · à " + virgule(d.t, 1) + " s",
+    "cinematique-replique": (d) => "🎙️ " + d.nom + (d.radio ? " (à la radio)" : "") + " : « " + d.texte + " » (" + virgule(d.duree, 1) + " s · réplique " + d.numero + " / " + d.total + ")",
+    "cinematique-action": (d) => "🪖 Le réalisateur : « " + d.acteur + " » → " + d.faire + " (" + d.soldats + " soldat" + (d.soldats > 1 ? "s" : "") + ", à " + virgule(d.t, 1) + " s)",
+    "cinematique-fin": (d) => "🎬 Fin du film « " + d.titre + " » (" + virgule(d.duree, 0) + " s, " + d.dites + " répliques) : la caméra est derrière toi, à toi de jouer !",
+    "cinematique-passee": (d) => "⏭️ Film « " + d.titre + " » passé à " + virgule(d.t, 1) + " / " + virgule(d.duree, 0) + " s (plan " + d.plan + " / " + d.plans + ") : à toi de jouer !",
+    "battle-coins": (d) => "🪙 +" + d.gain.toLocaleString("fr-FR") + " Battle Coins (chapitre " + d.numero + " réussi en " + d.difficulte + ") · total " + d.total.toLocaleString("fr-FR") + " (écrit dans le livret)",
     // étape 88 : la campagne
     "campagne-chapitre": (d) => "🎬 Chapitre " + d.numero + " « " + d.titre + " » installé : " + d.lieu + ", " + d.date + " · " + d.objectifs + " objectifs · " + d.chars + " chars et " + d.soldats + " soldats placés selon le scénario (tout est figé pendant le survol et le briefing)" + (d.difficulte ? " · difficulté " + d.difficulte : ""),
     "campagne-difficulte": (d) => "🎚️ Difficulté de la campagne : " + d.icone + " " + d.nom + (d.avant ? " (avant : " + d.avant + ")" : "") + " · ta vie × " + virgule(d.vieChar, 2) + " (tank) et × " + virgule(d.vieSoldat, 2) + " (soldat) · dégâts du Front × " + virgule(d.degats, 2) + " · chars × " + virgule(d.chars, 2) + " · soldats × " + virgule(d.soldats, 2) + " · durées × " + virgule(d.durees, 2) + " (retenu dans la sauvegarde)", // (demande 90)
@@ -121,7 +129,7 @@ Tanks.SousLeCapot = (function () {
     "maison-effondree": (d) => "🏚️ Une maison s'effondre : " + d.nom + (d.tireur ? " (" + (d.parToi ? "c'est toi !" : "par " + d.tireur) + ")" : "") + " · le toit tombe, " + d.morceaux.length + " morceaux de mur avec lui" + (d.blesses ? " · " + d.blesses + " soldat" + (d.blesses > 1 ? "s" : "") + " blessé" + (d.blesses > 1 ? "s" : "") + " dessous" : ""),
     "grenade-lancee": (d) => "💣 " + (d.parToi ? "Tu lances une grenade" : d.tireur + " lance une grenade") + (d.vise ? " sur " + d.vise + " à " + d.distance + " m" + (d.groupe > 1 ? " (" + d.groupe + " ennemis groupés)" : "") : "") + " · elle explose dans " + d.meche + " s · il " + (d.parToi ? "t'" : "lui ") + "en reste " + d.reste + " / " + d.max,
     grenades: (d) => "🎒 " + (d.camp ? "Au camp : tu reprends toutes tes grenades (" + d.nombre + " / " + d.max + ")" : "Tu regagnes une grenade (" + d.nombre + " / " + d.max + ", 1 toutes les " + C.grenades.recharge + " s)"),
-    "sauvegarde-convertie": (d) => "💾 Ton livret militaire (version " + d.de + ") est converti en version " + d.vers + " : rien n'est perdu, les nouveaux compteurs (maisons, murs, grenades) commencent à 0",
+    "sauvegarde-convertie": (d) => "💾 Ton livret militaire (version " + d.de + ") est converti en version " + d.vers + " : rien n'est perdu, les nouveaux compteurs commencent à 0" + (d.battleCoins ? " · 🪙 +" + d.battleCoins.toLocaleString("fr-FR") + " Battle Coins pour tes chapitres déjà réussis (demande 101)" : ""),
     // étape 72
     qualite: (d) => "⚙️ Qualité " + d.niveau + "/" + d.max + " (" + d.nom + ")" + (d.auto ? "" : " ✋") + " : " + d.raison + " → pixels ×" + virgule(d.reglages.pixels, 1) + ", ombres " + (d.reglages.ombres ? d.reglages.ombres + (d.reglages.douces ? " douces" : "") : "aucune") + ", vue " + d.reglages.vue + " m",
     "programmes-prets": (d) => "🧩 La carte graphique a préparé d'un coup ses " + d.programmes + " programmes de dessin (" + Math.round(d.ms) + " ms, " + d.caches + " objets cachés montrés un instant) : plus d'à-coup quand un nouvel objet apparaît",
@@ -478,6 +486,23 @@ Tanks.SousLeCapot = (function () {
     l.push(["tes compteurs", "ennemis mis hors de combat par toi : " + e.compteurs.parToi + " (" + e.compteurs.soldatsParToi + " soldats, " + e.compteurs.vehiculesParToi + " engins) · soldats du Front éliminés par ton camp : " + e.compteurs.eliminesCamp]);
   }
 
+  // (demande 101) LES CINÉMATIQUES : le film en cours, son plan, son temps, ses acteurs, la réplique
+  function lignesCinematique(l) {
+    const e = monde.cinematique, E = Tanks.EcranCinematique.etat();
+    l.push(["Les cinématiques (demande 101)"]);
+    l.push(["🪙 Battle Coins", (Tanks.Sauvegarde.donnees.battleCoins || 0).toLocaleString("fr-FR") + " · par mission réussie : " + C.campagne.difficultes.map((n) => n.icone + " " + (C.campagne.battleCoins[n.id] || 0)).join(" · ")]);
+    l.push(["films", Object.keys(C.cinematiques.films).map((id) => { const p = Tanks.Cinematique.aPlat(C.cinematiques.films[id]); return id + " (" + C.cinematiques.films[id].plans.length + " plans, " + virgule(p.duree, 0) + " s)"; }).join(" · ") + " · déjà vus : " + E.bilan.films + " · passés : " + E.bilan.passes]);
+    if (!e) return void l.push(["en ce moment", "pas de film (les acteurs, les feux du décor et la caméra de cinéma dorment : rien ne coûte pendant le jeu)"]);
+    l.push(["🎬 " + e.titre, "plan " + (e.plan + 1) + " / " + e.plans + (E.plan ? " « " + E.plan.nom + " » · caméra " + E.plan.camera + " · " + virgule(E.plan.t, 1) + " / " + virgule(E.plan.duree, 1) + " s" : "") + " · film " + virgule(e.t, 1) + " / " + virgule(e.duree, 1) + " s · phase du monde : " + monde.phase]);
+    for (const id in e.groupes) {
+      const g = e.groupes[id];
+      l.push(["groupe « " + id + " »", g.membres.length + " soldats · " + (g.arrete ? "à l'arrêt" : g.enMarche ? "marche à " + virgule(g.vitesse || 1, 2) + " m/s" : "attend") + " · " + virgule(g.avance, 1) + " / " + virgule(g.chemin.total, 0) + " m du chemin · gestes : " + g.membres.map((a) => (a.s.joueur ? "toi" : a.role === "chef" ? "chef" : a.geste ? a.geste.sorte : a.halte ? "garde" : "marche") + (a.s.accroupi ? " 🧎" : "")).join(", ")]);
+    }
+    l.push(["réplique", e.replique ? e.replique.nom + " : « " + e.replique.texte.slice(0, 70) + (e.replique.texte.length > 70 ? "…" : "") + " » (" + virgule(e.t - e.replique.debut, 1) + " / " + virgule(e.replique.duree, 1) + " s)" : "silence · " + e.dites + " / " + e.repliques.length + " dites"]);
+    l.push(["actions à venir", e.actions.slice(e.prochaineAction, e.prochaineAction + 4).map((a) => a.acteur + " → " + a.faire + " à " + virgule(a.a, 1) + " s").join(" · ") || "aucune"]);
+    l.push(["décor du film", E.feux + " feux (et leurs colonnes de fumée) allumés pour le film, éteints à la fin"]);
+  }
+
   // (demande 94) LA RADIO QUI PARLE
   function lignesRadio(l) {
     const V = Tanks.RadioVoix.etat(), O = Tanks.Radio.etat, B = C.radio.bavardage, P = { reponse: "🔴 réponse", urgent: "🟠 urgent", bavardage: "⚪ bavardage" };
@@ -529,6 +554,7 @@ Tanks.SousLeCapot = (function () {
   function lignes() {
     const j = monde.joueur, f = j.fiche, t = monde.toi || {}, s = t.soldat;
     const l = [];
+    lignesCinematique(l); // (demande 101)
     lignesRadio(l); // (demande 94)
     lignesProgression(l); // (demande 97)
     lignesCampagne(l); // (étape 88)
@@ -628,7 +654,7 @@ Tanks.SousLeCapot = (function () {
     }
     l.push(["Le dessin"], ["le son", Tanks.Sons.etat()], ["particules", Tanks.Effets.bilan.vivantes + " · épaves qui fument : " + Tanks.Effets.bilan.epaves + " · traits de balles : " + Tanks.Effets.bilan.balles], ["projectiles en vol", monde.obus.length ? Object.entries(monde.obus.reduce((n, p) => ((n[p.sorte] = (n[p.sorte] || 0) + 1), n), {})).map(([k, v]) => v + " " + k).join(", ") : "aucun"], ["entre deux pas", "le dessin est à " + Math.round(Tanks.Scene.entreDeuxPas() * 100) + " % entre l'avant-dernier pas et le dernier (interpolation)"], ["dessins", Tanks.Scene.dessins().soldats + " soldats, " + Tanks.Scene.dessins().engins + " engins"], ["la carte graphique", (Tanks.Scene.infos.triangles || 0).toLocaleString("fr-FR") + " triangles, " + (Tanks.Scene.infos.calls || 0) + " dessins par image"], ["l'atelier (étape 70)", Tanks.Outils3D.bilan.pieces.toLocaleString("fr-FR") + " pièces soudées en " + Tanks.Outils3D.bilan.objets + " objets (une matière = un objet à dessiner)"]);
     const S = Tanks.Sauvegarde.donnees;
-    l.push(["Le livret militaire (sauvegarde)"], ["victoires · défaites", S.victoires + " · " + S.defaites], ["tanks détruits", S.detruits], ["bateaux · sous-marins coulés", S.bateaux + " · " + S.sousMarins], ["passages de portail", S.portails], ["avions abattus", S.avions], ["ordres donnés", S.ordres], ["obus tirés · au but", S.tirs + " · " + S.touches], ["motos, quads, camions ennemis (étape 71)", S.vehicules], ["hélicos de transport ennemis abattus · soldats déposés à la corde (étape 73)", S.helicos + " · " + S.cordes], ["maisons effondrées · morceaux de mur abattus · grenades lancées (étape 75)", S.maisons + " · " + S.murs + " · " + S.grenades], ["dernière carte choisie · victoires dans le souterrain (étape 80)", S.carte + " · " + S.souterrain]);
+    l.push(["Le livret militaire (sauvegarde)"], ["victoires · défaites", S.victoires + " · " + S.defaites], ["tanks détruits", S.detruits], ["bateaux · sous-marins coulés", S.bateaux + " · " + S.sousMarins], ["passages de portail", S.portails], ["avions abattus", S.avions], ["ordres donnés", S.ordres], ["obus tirés · au but", S.tirs + " · " + S.touches], ["motos, quads, camions ennemis (étape 71)", S.vehicules], ["hélicos de transport ennemis abattus · soldats déposés à la corde (étape 73)", S.helicos + " · " + S.cordes], ["maisons effondrées · morceaux de mur abattus · grenades lancées (étape 75)", S.maisons + " · " + S.murs + " · " + S.grenades], ["dernière carte choisie · victoires dans le souterrain (étape 80)", S.carte + " · " + S.souterrain], ["🪙 Battle Coins (demande 101)", (S.battleCoins || 0).toLocaleString("fr-FR")]);
     return l;
   }
 

@@ -38,6 +38,8 @@
 // Demande 97 : LE SERGENT INSTRUCTEUR (logique/progression.js) voit aussi chaque événement : il donne les points d'expérience.
 // Demande 99 : LES BASES AÉRIENNES (logique/base.js) : « monde.bases » = les 2 pistes qu'on peut détruire (vide au garage et
 // dans le souterrain). Le chef de base rebouche les cratères de l'ennemi à chaque pas.
+// Demande 101 : nouvelle phase "cinematique" : un FILM (logique/cinematique.js) ; la bataille est figée, seuls les
+// acteurs du film bougent (personne ne tire, personne n'est blessé).
 // Il annonce tout à la radio : le journal, les sons, les effets et la sauvegarde écoutent.
 
 window.Tanks = window.Tanks || {};
@@ -288,6 +290,7 @@ Tanks.Monde = (function () {
   function etape(monde, dt, intentions) {
     monde.temps += dt;
     if (monde.phase === "briefing") return; // (étape 88 : pendant le survol et le briefing de la campagne, rien ne bouge)
+    if (monde.phase === "cinematique") return Tanks.Cinematique.etape(monde, dt); // (demande 101 : le film ; la bataille est figée, seuls les acteurs bougent)
     if (monde.phase === "garage") {
       if (intentions.gaucheAppui || intentions.droiteAppui) {
         const n = C.chars.length;

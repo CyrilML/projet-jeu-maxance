@@ -267,11 +267,12 @@ Tanks.Musique = (function () {
     if (!ctx) return;
     const doitDormir = document.hidden || !document.hasFocus();
     if (doitDormir !== endormie) (endormie = doitDormir), endormie ? ctx.suspend() : ctx.resume();
-    const auMenu = Tanks.Accueil.visible || !!(Tanks.EcranCampagne && Tanks.EcranCampagne.musique); // (étape 84 : la musique joue sur la page d'accueil seulement ; étape 88 : et sur les écrans de la campagne)
+    const film = (Tanks.EcranCinematique && Tanks.EcranCinematique.musique) || 0; // (demande 101 : pendant un film, la musique joue au volume du plan)
+    const auMenu = Tanks.Accueil.visible || !!(Tanks.EcranCampagne && Tanks.EcranCampagne.musique) || film > 0; // (étape 84 : la musique joue sur la page d'accueil seulement ; étape 88 : et sur les écrans de la campagne)
     if (auMenu && !joue) (joue = true), (pas = 0), (prochaine = ctx.currentTime + 0.1); // (on revient au menu : le morceau recommence au début)
     if (!auMenu && joue) joue = false;
     etat.joue = joue && !coupee && !sonCoupe;
-    sortie.gain.setTargetAtTime(auMenu && !coupee && !sonCoupe ? M.volume : 0, ctx.currentTime, auMenu ? 0.3 : M.fondu);
+    sortie.gain.setTargetAtTime(auMenu && !coupee && !sonCoupe ? M.volume * (film > 0 ? film : 1) : 0, ctx.currentTime, auMenu ? (film > 0 ? 1 : 0.3) : M.fondu);
   }
 
   return { demarrer, basculer, maj, get etat() { return { allumee: !!ctx && !coupee, ...etat }; } };

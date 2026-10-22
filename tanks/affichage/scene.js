@@ -707,6 +707,33 @@ Tanks.Scene = (function () {
     return tMur < 1 ? depart.clone().lerp(oeil, tMur) : oeil;
   }
 
+  // La place de la caméra derrière ce que tu conduis (ou derrière ton soldat), tournée vers « angle ».
+  // (demande 101 : sortie de la boucle, pour que la caméra de cinéma sache où se poser à la fin d'un film)
+  function derriere(monde, v, angle) {
+    const R = C.camera, k = camera.mode === 1 ? 1.8 : 1, cx = Math.cos(angle), cz = Math.sin(angle);
+    const cote = v.cote || 0; // (à pied, la caméra est un peu à droite : on voit par-dessus ton épaule)
+    let oeil = new THREE.Vector3(v.x - cx * R.distance * v.distance * k - cz * cote, v.y + R.hauteur * v.hauteur * k + (v.tangage ? -Math.sin(v.tangage) * 20 : 0), v.z - cz * R.distance * v.distance * k + cx * cote);
+    const solOeil = T.hauteur(oeil.x, oeil.z); // (étape 80 : sous terre, un mur n'est pas un sol : la caméra reste sous le plafond)
+    oeil.y = Math.max(oeil.y, sousTerre && solOeil > C.souterrain.plafond - 1 ? -1e9 : solOeil + (v.distance < 0.5 ? 1 : 2), T.distLac(oeil.x, oeil.z) < 1.1 ? C.lac.niveau + 1 : -1e9); // (jamais sous l'eau)
+    const moi = !monde.toi || monde.toi.mode === "char" ? monde.joueur : monde.toi.engin;
+    oeil = devantLesMurs(new THREE.Vector3(v.x, v.y + 1.6, v.z), oeil, monde, moi);
+    const cible = new THREE.Vector3(v.x + cx * R.regardDevant * v.devant, v.y + v.regardY + (v.tangage ? Math.sin(v.tangage) * 40 : 0), v.z + cz * R.regardDevant * v.devant);
+    return { oeil, cible };
+  }
+  // (demande 101) Où sera la caméra du JEU quand le film rendra la main (derrière ton soldat, ou dans ses yeux à la
+  // première personne) ? La caméra de cinéma glisse jusque-là : pas de coupure au noir. On aligne aussi la caméra du jeu
+  // sur ton soldat, pour qu'elle ne tourne pas toute seule à la première image après le film.
+  function poseJeu(monde) {
+    const v = suivi(monde), t = monde.toi, s = t && t.mode === "pied" ? vue(t.soldat) : null;
+    camera.angle = v.angle;
+    camera.pret = true;
+    if (camera.premiere && s && t.soldat.armes) {
+      const P = C.premiere, ca = Math.cos(s.angle), sa = Math.sin(s.angle), o = { x: s.x + ca * P.avance, y: s.y + P.oeil, z: s.z + sa * P.avance };
+      return { oeil: o, cible: { x: o.x + ca * 10, y: o.y - P.baisse * 10, z: o.z + sa * 10 } };
+    }
+    return derriere(monde, v, v.angle);
+  }
+
   function dessiner(monde, dt, entreDeuxPas) {
     if (T.souterrain !== sousTerre) changerMonde(T.souterrain); // (étape 80)
     alpha = entreDeuxPas === undefined ? 1 : entreDeuxPas;
@@ -779,14 +806,9 @@ Tanks.Scene = (function () {
       let diff = Math.atan2(Math.sin(voulu - camera.angle), Math.cos(voulu - camera.angle));
       camera.angle += diff * (camera.pret ? 1 - Math.exp(-R.souplesse * dt) : 1);
       camera.pret = true;
-      const k = camera.mode === 1 ? 1.8 : 1, cx = Math.cos(camera.angle), cz = Math.sin(camera.angle);
-      const cote = v.cote || 0; // (à pied, la caméra est un peu à droite : on voit par-dessus ton épaule)
-      oeil = new THREE.Vector3(v.x - cx * R.distance * v.distance * k - cz * cote, v.y + R.hauteur * v.hauteur * k + (v.tangage ? -Math.sin(v.tangage) * 20 : 0), v.z - cz * R.distance * v.distance * k + cx * cote);
-      const solOeil = T.hauteur(oeil.x, oeil.z); // (étape 80 : sous terre, un mur n'est pas un sol : la caméra reste sous le plafond)
-      oeil.y = Math.max(oeil.y, sousTerre && solOeil > C.souterrain.plafond - 1 ? -1e9 : solOeil + (v.distance < 0.5 ? 1 : 2), T.distLac(oeil.x, oeil.z) < 1.1 ? C.lac.niveau + 1 : -1e9); // (jamais sous l'eau)
-      const moi = !monde.toi || monde.toi.mode === "char" ? monde.joueur : monde.toi.engin;
-      oeil = devantLesMurs(new THREE.Vector3(v.x, v.y + 1.6, v.z), oeil, monde, moi);
-      cible = new THREE.Vector3(v.x + cx * R.regardDevant * v.devant, v.y + v.regardY + (v.tangage ? Math.sin(v.tangage) * 40 : 0), v.z + cz * R.regardDevant * v.devant);
+      const p = derriere(monde, v, camera.angle);
+      oeil = p.oeil;
+      cible = p.cible;
     }
     // (étape 77) épaulé (V ou clic droit) : la caméra ZOOME selon le viseur de ton arme (une lunette ×6 : 6 fois plus près)
     const toiPied = monde.phase !== "garage" && monde.toi && monde.toi.mode === "pied" && monde.toi.soldat.armes ? monde.toi.soldat : null;
@@ -830,7 +852,7 @@ Tanks.Scene = (function () {
     }
     Tanks.Effets.maj(dt, monde, cam, Q.effets);
     // (demande 88) l'arme vue à la première personne, la lampe qui éclaire, le laser (affichage/armes3d.js)
-    Tanks.Armes3D.maj(monde, dt, cam, scene, !!(camera.premiere && toiPied));
+    Tanks.Armes3D.maj(monde, dt, cam, scene, !!(camera.premiere && toiPied && !plan)); // (demande 101 : pas pendant un film)
     Tanks.Explosions.secouer(cam, dt); // (demande 92 : l'écran qui tremble ; remis droit à l'image suivante par lookAt)
     // (demande 96) l'image des ombres est refaite toutes les « ombresChaque » images (au niveau léger : 1 sur 2). Entre deux,
     // l'ancienne sert encore : seules les ombres des choses qui bougent ont une image de retard (on ne le voit pas).
@@ -868,7 +890,7 @@ Tanks.Scene = (function () {
     return { x: (v.x * 0.5 + 0.5) * L, y: (-v.y * 0.5 + 0.5) * H };
   }
 
-  return { initialiser, dessiner, versEcran, appliquerQualite, lod, cinema: (f) => (cinema = f || null), get filme() { return !!plan; }, changerCamera: (aPied) => {
+  return { initialiser, dessiner, versEcran, appliquerQualite, lod, poseJeu, cinema: (f) => (cinema = f || null), get filme() { return !!plan; }, changerCamera: (aPied) => {
       // (étape 78) à pied, C passe de la vue de derrière à la vue dans les yeux ; dans un engin, C éloigne la caméra
       if (aPied) camera.premiere = !camera.premiere;
       else camera.mode = (camera.mode + 1) % 2;

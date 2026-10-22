@@ -7,6 +7,7 @@
 //      à écrire, pendant que la caméra SURVOLE la carte (Espace ou un clic : passer) ;
 //   3. le BRIEFING : l'histoire en quelques paragraphes, les objectifs, la CARTE TACTIQUE (dessinée ici : les maisons,
 //      les rues, le lac, les zones numérotées, les ennemis repérés), la classe conseillée, et « Commencer la mission » ;
+//   (demande 101) tes BATTLE COINS : le compteur sur la liste des chapitres, et « +500 Battle Coins » à la fin ;
 //   4. l'écran de FIN : mission accomplie ou échouée, les 3 étoiles, ton temps, tes éliminations, ta précision, et les
 //      boutons « Rejouer le chapitre », « Chapitre suivant », « Chapitres », « Accueil ».
 // Pendant la mission, c'est affichage/campagne-tableau.js qui dessine (les objectifs, les marqueurs, la radio).
@@ -141,6 +142,9 @@ Tanks.EcranCampagne = (function () {
     document.getElementById("ecran2d").focus();
   }
 
+  // (demande 101) tes Battle Coins (le livret, donnees/sauvegarde.js : on lit seulement)
+  const coins = () => (Tanks.Sauvegarde.donnees.battleCoins || 0).toLocaleString("fr-FR");
+
   // ------------------------------------------------------------------ 1. LA LISTE DES CHAPITRES
   function ouvrirListe() {
     const P = Tanks.Campagne.progression(), n = K.chapitres.length;
@@ -159,7 +163,7 @@ Tanks.EcranCampagne = (function () {
     montrer("liste",
       '<div class="cp-voile"></div>' +
       '<header class="cp-haut"><div><div class="cp-etiquette">Campagne · ' + html(K.camps.bleus) + " contre " + html(K.camps.rouges) + '</div><h2 class="cp-titre-geant">' + html(K.titre.toUpperCase()) + "</h2></div>" +
-      '<div class="cp-progres"><div><b>' + finis + "</b> / " + n + "<small>chapitres</small></div><div><b>" + etoiles + "</b> / " + n * 3 + '<small>étoiles</small></div><div class="cp-jauge"><i style="width:' + Math.round((finis / n) * 100) + '%"></i></div></div></header>' +
+      '<div class="cp-progres"><div><b>' + finis + "</b> / " + n + "<small>chapitres</small></div><div><b>" + etoiles + "</b> / " + n * 3 + '<small>étoiles</small></div><div class="cp-coins-liste"><b>🪙 ' + coins() + '</b><small>Battle Coins</small></div><div class="cp-jauge"><i style="width:' + Math.round((finis / n) * 100) + '%"></i></div></div></header>' +
       '<div class="cp-difficultes"></div><div class="cp-diff-detail"></div>' +
       '<div class="cp-grille">' + cartes + "</div>" +
       '<footer class="cp-bas"><button class="cp-bouton cp-secondaire" data-cp="accueil">◀ Accueil <kbd>Échap</kbd></button><span class="cp-aide">← → ↑ ↓ choisir · <kbd>1</kbd>–<kbd>5</kbd> ou <kbd>Maj</kbd> + ← → difficulté · <kbd>Entrée</kbd> jouer le chapitre</span><button class="cp-bouton cp-principal" data-cp="chapitre" data-valeur="-1" id="cp-jouer">▶ Jouer</button></footer>');
@@ -496,6 +500,7 @@ Tanks.EcranCampagne = (function () {
       (b.reussi ? "" : '<div class="cp-raison">' + html(e.raison || "") + "</div>") +
       '<div class="cp-etoiles-fin">' + etoiles + "</div>" +
       '<div class="cp-tuiles">' + tuiles + "</div>" +
+      (b.reussi && b.battleCoins ? '<div class="cp-coins"><span class="cp-coins-gain">🪙 +' + b.battleCoins.toLocaleString("fr-FR") + " Battle Coins</span><small>" + html(b.difficulte.icone + " " + b.difficulte.nom) + " · total " + (b.totalCoins || 0).toLocaleString("fr-FR") + "</small></div>" : "") + // (demande 101)
       Tanks.EcranProgression.blocHTML() + // (demande 97 : l'expérience gagnée pendant la mission)
       (b.reussi ? '<p class="cp-recit">' + html(c.reussite) + "</p>" : '<p class="cp-recit">Ne lâche rien, Lion. Relis les objectifs, change de classe si besoin, et retente ta chance.</p>') +
       (b.debloque ? '<div class="cp-debloque">🔓 Nouveau chapitre débloqué : <b>' + html(b.debloque) + "</b></div>" : dernier && b.reussi ? '<div class="cp-debloque">🏆 Tu as terminé la campagne « ' + html(K.titre) + " » · " + K.chapitres.reduce((s, x) => s + ((P.chapitres[x.id] && P.chapitres[x.id].etoiles) || 0), 0) + " / " + K.chapitres.length * 3 + " étoiles</div>" : "") +
@@ -515,7 +520,7 @@ Tanks.EcranCampagne = (function () {
     const k = e.code, libres = { KeyM: 1, KeyB: 1, KeyG: 1, F12: 1, F5: 1 };
     if (etat === "jeu") {
       const camp = monde && monde.campagne;
-      if (!camp) return;
+      if (!camp || camp.etat === "film") return; // (demande 101 : pendant le film, Entrée et Échap sont pour la cinématique)
       if (camp.etat === "en cours") {
         if (k === "Backspace") e.preventDefault(), e.stopImmediatePropagation(), demander("abandonner");
         return;
@@ -623,7 +628,7 @@ Tanks.EcranCampagne = (function () {
     else if (etat === "jeu") {
       const e = m.campagne;
       if (!e) return cacher();
-      if (e.etat !== "en cours" && e.ecranDans <= 0) montrerFin();
+      if (e.etat !== "en cours" && e.etat !== "film" && e.ecranDans <= 0) montrerFin(); // (demande 101 : pas pendant le film)
     }
   }
 

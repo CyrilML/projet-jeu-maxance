@@ -221,6 +221,7 @@
       <a href="#etape97">Étape 97</a>
       <a href="#etape98">Étape 98</a>
       <a href="#etape99">Étape 99</a>
+      <a href="#etape101">Étape 101</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5180,6 +5181,44 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape101">
+      <h2>🎬 Étape 101 : la cinématique d'ouverture de la campagne et les Battle Coins <span class="etiquette">✅ morceau 1 livré · à valider</span></h2>
+      <p class="chapeau">Un vrai film au début de la campagne, joué dans le jeu, puis la caméra se pose derrière ton soldat et c'est à toi. Chaque mission réussie rapporte des Battle Coins. (La demande 100, la boutique, est en pause.) <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/101-cinematiques-campagne.md</code>.</p>
+          <ul>
+            <li>✍️ « La caméra montre une ville dévastée avec des soldats ennemis et ton escadron, qui avancent doucement en se méfiant… Le commandant explique la mission. Après, la caméra se place derrière ton personnage. »</li>
+            <li>✍️ Battle Coins par mission réussie : 100 / 200 / 500 / 1 000 / 2 000 selon la difficulté.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 43 ».</li>
+            <li>☐ Campagne, chapitre 1 : le film (environ 85 s), avec les bandes noires et les sous-titres.</li>
+            <li>☐ Des soldats qui balaient de droite à gauche en visant, d'autres qui se retournent, la lieutenante Volk qui explique la mission.</li>
+            <li>☐ À la fin, la caméra glisse derrière ton soldat sans écran noir.</li>
+            <li>☐ Entrée ou Échap : passer le film.</li>
+            <li>☐ Mission réussie : « +500 Battle Coins » en normal ; le total sur l'accueil.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🎥 Un film fait avec des données</h3>
+      <p>Le film n'est pas une vidéo : c'est une LISTE de plans rangée dans <code>config.js</code> (<code>cinematiques</code>). Chaque plan dit : combien de secondes, où va la caméra (un « travelling », une « orbite », « suivre » un soldat…), ce que font les acteurs (marcher, s'arrêter, balayer, se retourner, s'accroupir) et qui parle. Le « réalisateur » (<code>logique/cinematique.js</code>) lit la liste et fait jouer les VRAIS soldats du jeu, pendant que la bataille est gelée : personne ne peut être blessé.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+        <li>Sous le capot, section « Les cinématiques » : regarde le numéro du plan et le geste de chaque soldat pendant le film.</li>
+        <li>Dans <code>tanks/config.js</code>, cherche <code>ouverture-oasis</code> et change une phrase de la lieutenante.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+        <li>Le film est-il une vidéo enregistrée ? <span class="petit">(non : c'est le jeu qui le joue, à partir d'une liste de plans)</span></li>
+        <li>Combien de Battle Coins en « difficile » ? <span class="petit">(1 000)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6513,6 +6552,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-99" data-cle="appris-99" placeholder="Ex. : …"></textarea>
         <label for="idees-99"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-99" data-cle="idees-99" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 101 · la cinématique d'ouverture <span class="petit">· 22 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/logique/cinematique.js</code>, <code>tanks/affichage/cinematique.js</code>, <code>campagne.js</code>, <code>sauvegarde.js</code> (version 14).</p>
+        <p class="petit">✍️ Maxance a demandé : des cinématiques pour la campagne, et des Battle Coins par mission.</p>
+        <label for="appris-101"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-101" data-cle="appris-101" placeholder="Ex. : …"></textarea>
+        <label for="idees-101"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-101" data-cle="idees-101" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

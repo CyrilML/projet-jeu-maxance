@@ -171,7 +171,16 @@ Tanks.Explosions = (function () {
   // ------------------------------------------------------------------ l'épave qui brûle
   function epave(x, y, z, feu, fumee) {
     if (epaves.length >= 12) epaves.shift(); // (les plus vieilles s'éteignent)
-    epaves.push({ x, y, z, age: 0, feu: R.epave.feu * feu, fumee: R.epave.fumee * fumee, accFeu: 0, accFumee: 0, accLumiere: 0, k: feu });
+    const e = { x, y, z, age: 0, feu: R.epave.feu * feu, fumee: R.epave.fumee * fumee, accFeu: 0, accFumee: 0, accLumiere: 0, k: feu };
+    epaves.push(e);
+    return e;
+  }
+  // (demande 101) Éteindre des feux allumés pour un film : ils s'arrêtent net (la fumée déjà sortie s'envole encore).
+  function eteindre(liste) {
+    for (const e of liste) {
+      const i = epaves.indexOf(e);
+      if (i >= 0) epaves.splice(i, 1);
+    }
   }
 
   // ------------------------------------------------------------------ l'écran qui tremble
@@ -263,5 +272,5 @@ Tanks.Explosions = (function () {
     secousse.force = 0;
   }
 
-  return { initialiser, maj, effacer, exploser, epave, secouer, secousse: secousseIci, bilan };
+  return { initialiser, maj, effacer, exploser, epave, eteindre, secouer, secousse: secousseIci, bilan };
 })();

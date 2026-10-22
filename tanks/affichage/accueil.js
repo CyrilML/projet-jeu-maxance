@@ -8,6 +8,7 @@
 //   2. « prête » : les boutons apparaissent : ▶ JOUER (ouvre le menu de l'équipement) et 📓 le carnet.
 //      ✍️ (étape 88) Deux portes au lieu d'une : ▶ CAMPAGNE (l'histoire, en 6 chapitres : affichage/campagne-ecrans.js)
 //      et ⚔️ BATAILLE (la bataille libre, comme avant : le menu de l'équipement). ← → pour choisir, Entrée pour entrer.
+// (demande 101) En bas : tes BATTLE COINS (gagnés à chaque mission réussie de la campagne).
 // L'accueil est un ÉCRAN (de l'affichage) : il ne touche pas au monde. Le menu attend qu'il soit fermé.
 
 window.Tanks = window.Tanks || {};
@@ -29,8 +30,9 @@ Tanks.Accueil = (function () {
       '<div class="a-boutons" hidden>' +
       '<button class="a-jouer a-mode a-campagne" data-accueil="campagne">▶ CAMPAGNE<small>' + Tanks.CONFIG.campagne.chapitres.length + " chapitres · l'histoire</small></button>" + // (étape 88)
       '<button class="a-jouer a-mode a-bataille" data-accueil="bataille">⚔️ BATAILLE<small>bataille libre · toutes les cartes</small></button>' +
-      '<a class="a-carnet" href="../index.html#etape99">📓 Le carnet</a>' +
+      '<a class="a-carnet" href="../index.html#etape101">📓 Le carnet</a>' +
       "</div>" +
+      '<div class="a-coins" title="Gagnés à chaque mission réussie de la campagne (demande 101)">🪙 <b></b> Battle Coins</div>' +
       '<p class="a-pied">← → choisir · Entrée : entrer · M : musique</p>' +
       "</div>";
     // (le clavier et la souris : capturés avant les oreilles du jeu tant que l'accueil est là)
@@ -53,6 +55,7 @@ Tanks.Accueil = (function () {
       } else if (e.type === "keydown" && (e.code === "Enter" || e.code === "Space" || e.code === "NumpadEnter")) e.preventDefault(), e.stopPropagation(), fermer(ici >= 0 ? portes[ici].dataset.accueil : "campagne");
       else if (e.type === "keydown" && e.code !== "KeyM" && e.code !== "Semicolon" && e.code !== "KeyB") e.stopPropagation();
     };
+    majCoins();
     window.addEventListener("keydown", geste, true);
     racine.addEventListener("pointerdown", geste);
     racine.querySelectorAll("[data-accueil]").forEach((b) => b.addEventListener("click", (e) => (e.stopPropagation(), fermer(b.dataset.accueil))));
@@ -73,8 +76,14 @@ Tanks.Accueil = (function () {
     pret = true;
     racine.hidden = true;
   }
+  // (demande 101) le compteur de Battle Coins (lu dans le livret : donnees/sauvegarde.js)
+  function majCoins() {
+    const b = racine && racine.querySelector(".a-coins b");
+    if (b) b.textContent = (Tanks.Sauvegarde.donnees.battleCoins || 0).toLocaleString("fr-FR");
+  }
   // (étape 88) Retour à l'accueil depuis la campagne : les deux portes sont déjà là.
   function montrer() {
+    majCoins();
     visible = true;
     pret = true;
     racine.hidden = false;
