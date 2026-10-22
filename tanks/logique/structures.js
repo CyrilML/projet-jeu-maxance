@@ -387,6 +387,7 @@ Tanks.Structures = (function () {
   // surLeToit : l'obus est tombé pile sur le toit (coup direct).
   const prochesExplosion = [];
   function exploser(x, y, z, sorte, tireur, ev, monde, surLeToit) {
+    Tanks.Base.exploser(x, y, z, sorte, tireur, ev, monde); // (demande 99 : sur une piste, l'explosion creuse un cratère)
     const E = S.explosions[sorte];
     if (!E || !E[0]) return;
     const [D, Ray] = E;

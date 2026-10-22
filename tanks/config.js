@@ -298,6 +298,62 @@ Tanks.CONFIG = {
     missile: { portee: 600, recharge: 6, cone: 0.35 },
     erreurBombe: 8, // m : ses bombes tombent à ± 8 m de là où il vise
   },
+  // ------------------------------------------------------------------ demande 99 : LA BASE AÉRIENNE de chaque camp
+  // ✍️ « À part dans le souterrain, une base aérienne avec une piste, des hangars et des zones pour faire décoller les
+  // avions de chasse, les hélicoptères et les tanks. Range les tanks, les 4x4, les motos, les camions, les hélicos. »
+  // ✍️ « Tu pourras détruire leurs pistes pour empêcher les avions de chasse et les avions de transport de décoller. »
+  // Toutes les places sont écrites pour les BLEUS : [x, dz] où dz = les mètres DERRIÈRE la ligne de départ des tanks
+  // (vers le bord de la carte). Pour les Rouges, c'est le même plan vu dans un miroir (z changé de signe) : la piste est
+  // aussi à l'ouest. Unités : m, s.
+  baseAerienne: {
+    nom: { bleus: "la base aérienne bleue", rouges: "la base aérienne rouge" },
+    // le terrain est mis bien à plat sur toute la base (x de … à …, dz de … à …), avec une pente douce de « bord » m autour ;
+    // ni arbre, ni haie, ni grange à moins de « vide » m de la base
+    zone: { x: [-505, 195], dz: [-30, 235], bord: 70, vide: 20 },
+    // LA PISTE : en béton, de x0 à x1, centrée sur dz, large de « largeur » ; découpée en « troncons » tronçons égaux
+    piste: { x: [-480, -40], dz: 150, largeur: 30, troncons: 8, balises: 22 }, // (balises : m entre deux lampes du bord)
+    // les DALLES de béton : [x0, x1, dz0, dz1, nom]
+    dalles: [
+      [-430, -140, 165, 200, "le tarmac des hangars"],
+      [-62, -40, 40, 135, "la bretelle (de la piste aux hélicos)"],
+      [-252, -24, 30, 62, "l'aire des hélicoptères"],
+      [-46, 46, -20, 20, "la zone de départ des tanks"],
+      [56, 176, 18, 70, "le parking des véhicules"],
+      [130, 170, -16, 16, "la plateforme de la DCA"],
+    ],
+    // LES HANGARS : [x, dz] du centre ; ouverts du côté de la piste ; largeur (le long de x) × profondeur × hauteur
+    hangars: { places: [[-180, 216], [-250, 216], [-320, 216]], largeur: 34, profondeur: 28, hauteur: 11, mur: 0.6 },
+    // les avions de chasse rangés dans les hangars (le décor) et l'avion de transport garé sur le tarmac : [x, dz]
+    rangesHangars: [[-250, 214], [-320, 214]],
+    transportGare: [-395, 184],
+    // LES AIRES « H » pour les hélicos (de « aire » m de côté) ; et les places de chacun : [x, dz, angle] (angle : 0 = vers
+    // l'ennemi). Les « ia… » sont ceux de l'ordinateur. Le Rafale attend au BOUT EST de la piste, le nez vers l'ouest.
+    aire: 24, petiteAire: 10,
+    aires: [[-70, 46], [-110, 46], [-150, 46], [-190, 46], [-230, 46]],
+    places: {
+      helico: [-70, 46], blackhawk: [-110, 46], chinook: [-150, 46], iaBlackhawk: [-190, 46], iaChinook: [-230, 46], drone: [-38, 46],
+      avion: [-60, 150, "ouest"],
+      jeep: [66, 32], moto: [78, 32], quad: [88, 32], camion: [104, 32], dca: [150, 0],
+    },
+    // le parking de l'ordinateur (2e rangée) : la place n° k (moto 1, moto 2, quad 1, quad 2, camion 1) = [x0 + k × pas, dz]
+    parkingIA: { x0: 66, pas: 12, dz: 58 },
+    // ✍️ LES PISTES QU'ON DÉTRUIT. Une explosion à moins de « hauteur » m au-dessus de la piste abîme son tronçon :
+    // degats = [points, rayon du cratère en m] selon ce qui explose. Un tronçon qui a « seuil » points est TROUÉ ;
+    // « fermeture » tronçons troués → la piste est FERMÉE (aucun avion de chasse ni de transport de ce camp ne décolle).
+    // L'ennemi rebouche UN cratère toutes les « ennemi » s ; toi, l'ingénieur rebouche un cratère de TA piste en tenant
+    // Espace avec l'outil de réparation pendant « outil » s (à moins de « distance » m du bord du cratère).
+    // Au plus « parTroncon » cratères dessinés par tronçon (au-delà, le plus petit grandit).
+    destruction: {
+      hauteur: 4, seuil: 2, fermeture: 3, parTroncon: 6,
+      degats: { bombe: [2, 4.5], missile: [2, 3.6], c4: [2, 4], javelin: [1.5, 3], obus: [1, 2.6], roquette: [1, 2.2], at4: [1, 2.2],
+        mine: [1, 2.4], lg40: [0.5, 1.4], grenade: [0.5, 1.4] }, // (la claymore souffle vers l'avant, la torpille reste dans l'eau : rien)
+      reparation: { ennemi: 14, outil: 4, distance: 5 },
+      messageFermee: 3, // s entre deux messages « piste fermée » quand tu essaies de décoller
+    },
+    // ✍️ LE DÉCOLLAGE des chasseurs ennemis : ils roulent sur leur piste (accélération en m/s²), quittent le sol à
+    // « envol » × leur vitesse, puis montent (au plus « pente » rad).
+    decollage: { acceleration: 16, envol: 0.62, pente: 0.22 },
+  },
   // ✍️ Les PARACHUTISTES : pour CHAQUE équipe, un avion de transport passe toutes les 60 s et lâche 6 soldats au-dessus
   // de la zone de combat de son camp. L'avion de transport ennemi peut être abattu (avant le largage : pas de renforts !).
   parachutistes: {
@@ -349,8 +405,9 @@ Tanks.CONFIG = {
     // ✍️ Les ENDROITS où on peut envoyer ses troupes : [x, z] (les portails, on les trouve tout seuls par leur couleur)
     lieux: {
       // (étape 71 : la carte est 3 fois plus grande, les endroits aussi sont plus loin ; et deux nouveaux : le hameau, la ferme)
-      village: [0, 0], lac: [395, 30], camp: [0, 645], base: [0, 645], aerodrome: [-90, 680], ennemi: [0, -630], ennemis: [0, -630],
-      nord: [0, -450], sud: [0, 450], est: [330, 0], ouest: [-500, 0], centre: [0, 0], dca: [80, 630], hameau: [-560, 200], ferme: [300, -590],
+      village: [0, 0], lac: [395, 30], camp: [0, 645], base: [0, 645], aerodrome: [-150, 700], // (demande 99 : l'aire des hélicos de la base aérienne)
+      ennemi: [0, -630], ennemis: [0, -630],
+      nord: [0, -450], sud: [0, 450], est: [330, 0], ouest: [-500, 0], centre: [0, 0], dca: [150, 625], hameau: [-560, 200], ferme: [300, -590],
     },
     // les CIBLES qu'on peut viser par catégorie
     cibles: {
@@ -392,8 +449,7 @@ Tanks.CONFIG = {
         [[50, -40], [140, -200], [210, -360], [260, -500], [300, -620]],
         [[300, -620], [200, -660], [80, -650]],
         [[70, 4], [180, 18], [300, 26], [415, 30]],
-        [[-30, 690], [-90, 690], [-200, 690], [-280, 680]],
-        [[-30, -690], [-160, -690], [-280, -680]],
+        // (demande 99 : les 2 chemins vers les anciens aérodromes sont enlevés : la base aérienne a ses routes en béton)
       ],
     },
     // L'HERBE en touffes (des petits bouquets de brins, en instances), autour de la caméra seulement (voir qualite.herbe)
@@ -1656,7 +1712,7 @@ Tanks.CONFIG.radio = {
     charRevu: 45, // s : un char ennemi déjà annoncé n'est réannoncé qu'après 45 s
     charVu: 380, // m : un char ennemi à moins de 380 m de toi est « en vue »
     seul: 45, trop: 2, // m : autour d'un soldat ; « trop nombreux » = au moins 2 ennemis de plus que d'amis
-    parGenre: { touche: 7, toucheChar: 8, aTerre: 6, recharge: 10, grenade: 5, charEnVue: 8, abattu: 7, charDetruit: 3, joliTir: 3, renforts: 14, soin: 8, soinFini: 2, repare: 8, repareFini: 2, allieDetruit: 2, vehiculeDetruit: 8, interceptee: 14 },
+    parGenre: { touche: 7, toucheChar: 8, aTerre: 6, recharge: 10, grenade: 5, charEnVue: 8, abattu: 7, charDetruit: 3, joliTir: 3, renforts: 14, soin: 8, soinFini: 2, repare: 8, repareFini: 2, allieDetruit: 2, vehiculeDetruit: 8, interceptee: 14, pisteEnnemieFermee: 2, pisteEnnemieRouverte: 2, notrePisteFermee: 2, notrePisteRouverte: 2 }, // (demande 99 : les pistes)
     chances: { touche: 0.85, abattu: 0.55, recharge: 0.45, grenade: 0.9, interceptee: 0.3 }, // 0 à 1 : la chance qu'il le dise
     importants: ["allieDetruit", "charEnVue", "charDetruit", "joliTir"], // entendus même de loin
     urgents: ["touche", "toucheChar", "aTerre", "grenade", "charEnVue", "renforts", "allieDetruit"],
@@ -1750,6 +1806,11 @@ Tanks.CONFIG.radio = {
     repareFini: ["Réparation terminée !", "Ton char est comme neuf !"],
     allieDetruit: ["On a perdu {victime} !", "{victime} est détruit !", "{victime} ne répond plus, il est en flammes !"],
     vehiculeDetruit: ["Véhicule détruit !", "On a perdu un véhicule !"],
+    // (demande 99) la tour de contrôle annonce l'état des pistes
+    pisteEnnemieFermee: ["Leur piste est hors service ! Plus aucun avion ne décolle !", "Piste ennemie fermée, beau travail !", "Leur piste est criblée de cratères !"],
+    pisteEnnemieRouverte: ["Attention, ils ont rebouché leur piste !", "La piste ennemie est rouverte, leurs avions vont redécoller !"],
+    notrePisteFermee: ["Notre piste est touchée, plus aucun décollage !", "Piste fermée ! Il faut un ingénieur pour la réparer !"],
+    notrePisteRouverte: ["Notre piste est réparée, décollage autorisé !", "Piste rouverte, les avions peuvent partir !"],
   },
   // La radio ennemie interceptée (en français aussi, mais avec la voix grave du Front).
   interceptee: {

@@ -52,10 +52,10 @@ Tanks.Helicos = (function () {
       vie: R.vie, detruit: false, touche: 9, pilote: false, reussis: 0,
     });
   }
-  // La place de chacun au camp (son « héliport ») : à l'ouest des tanks de son camp, loin de ton aérodrome.
+  // La place de chacun au camp (son « héliport »).
+  // (demande 99) son aire « H » de la base aérienne de son camp (logique/base.js)
   function placeAuCamp(h) {
-    const k = SORTES.indexOf(h.sorte) * 2 + (h.n - 1), sens = h.equipe === "bleus" ? 1 : -1;
-    return { x: -250 - k * 45, z: sens * (T.camp + 35) };
+    return Tanks.Base.placeHelico(h.equipe, h.sorte, h.n);
   }
   function garerAuCamp(h) {
     const p = placeAuCamp(h);

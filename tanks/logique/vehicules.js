@@ -41,11 +41,8 @@ Tanks.Vehicules = (function () {
       passagers: R.places || 0, pilote: false, cible: null,
     };
   }
-  const placeAuCamp = (v) => {
-    // chaque engin a sa place, en ligne à droite des tanks de son camp (à côté de la DCA, loin de ton parking)
-    const k = SORTES.indexOf(v.sorte) * 3 + v.n, sens = v.equipe === "bleus" ? 1 : -1;
-    return { x: sens * (125 + k * 9), z: sens * (T.camp + 8) };
-  };
+  // chaque engin a sa place : (demande 99) au parking de la base aérienne de son camp, 2e rangée (logique/base.js)
+  const placeAuCamp = (v) => Tanks.Base.placeVehicule(v.equipe, v.sorte, v.n);
   function garerAuCamp(v) {
     const p = placeAuCamp(v), R = G[v.sorte];
     Object.assign(v, { x: p.x, z: p.z, angle: v.equipe === "bleus" ? -Math.PI / 2 : Math.PI / 2, vitesse: 0, braquage: 0, rotation: 0, roulis: 0,

@@ -163,7 +163,14 @@ Tanks.SousLeCapot = (function () {
     ordre: (d) => "📢 Ordre « " + d.texte + " » → compris : " + (d.quoi || "?") + " · obéissent : " + (d.noms.length ? d.noms.join(", ") : "aucun tank") + (d.soldats ? " + " + d.soldats + " soldats" : "") + (d.devines.length ? " · mots devinés : " + d.devines.map(([a, b]) => a + " → " + b).join(", ") : ""),
     "ordre-incompris": (d) => "❓ Ordre « " + d.texte + " » pas compris : aucun mot connu" + (d.devines.length ? " (même en devinant)" : "") + ". Exemples : " + d.exemples.slice(0, 4).join(" · "),
     // étape 64
-    "avion-arrive": (d) => "✈️ " + d.nom + " arrive au-dessus du champ de bataille",
+    "avion-arrive": (d) => "✈️ " + d.nom + (d.piste ? " sort du hangar et roule sur la piste de sa base pour décoller" : " arrive au-dessus du champ de bataille"),
+    // demande 99 : les bases aériennes et leurs pistes
+    decollage: (d) => "🛫 " + d.nom + " décolle de sa piste à " + d.vitesse + " km/h, après " + d.roule + " m de roulage",
+    "avion-cloue": (d) => "⛔ " + d.nom + " reste au sol : la piste " + (d.equipe === "bleus" ? "bleue" : "rouge") + " est fermée" + (d.sorte === "transport" ? " (pas de parachutistes cette fois)" : " (il réessaiera toutes les 2 s)"),
+    "piste-touchee": (d) => "🕳️ " + ({ bombe: "Une bombe", missile: "Un missile", c4: "Du C4", javelin: "Un Javelin", obus: "Un obus", roquette: "Une roquette", at4: "Une roquette AT4", mine: "Une mine", lg40: "Une grenade de 40 mm", grenade: "Une grenade" }[d.sorte] || "Une explosion") + (d.parToi ? " (à toi)" : d.tireur ? " de " + d.tireur : "") + " creuse un cratère dans " + d.nom + " : tronçon " + d.troncon + " / " + d.troncons + " → " + virgule(d.points, 1) + " / " + d.seuil + " points" + (d.nouveauTrou ? " : TROUÉ" : d.troue ? " (déjà troué)" : "") + " · " + d.troues + " / " + d.fermeture + " tronçons troués pour la fermer" + (d.ouverte ? "" : " · piste FERMÉE"),
+    "piste-fermee": (d) => "⛔ " + d.nom[0].toUpperCase() + d.nom.slice(1) + " est FERMÉE : " + d.troues + " tronçons sur " + d.troncons + " sont troués (" + d.crateres + " cratères) · ses avions de chasse et son avion de transport ne décollent plus" + (d.equipe === "rouges" ? " ; l'ennemi rebouche un cratère toutes les " + C.baseAerienne.destruction.reparation.ennemi + " s" : " ; répare-la avec un ingénieur (outil de réparation, Espace près d'un cratère)"),
+    "piste-rouverte": (d) => "🛫 " + d.nom[0].toUpperCase() + d.nom.slice(1) + " est ROUVERTE après " + d.ferme + " s (plus aucun tronçon troué) : ses avions peuvent redécoller",
+    "piste-reparee": (d) => "🔧 " + (d.par === "toi" ? "Tu rebouches" : "L'ennemi rebouche") + " un cratère du tronçon " + d.troncon + " de " + d.nom + " · il reste " + d.reste + " cratère(s), " + d.troues + " tronçon(s) troué(s)",
     bombardement: (d) => "💣 " + d.nom + " lâche " + C.avionsEnnemis.bombes + " bombes sur " + d.cible + " (il les lâche AVANT d'être au-dessus : elles gardent sa vitesse)",
     duel: (d) => "⚔️ " + d.nom + " voit ton Rafale à moins de " + C.avionsEnnemis.duel + " m : il te prend en chasse",
     "missile-ennemi": (d) => "🚨 " + d.tireur + " tire un missile sur ton Rafale",
@@ -289,6 +296,19 @@ Tanks.SousLeCapot = (function () {
     else morceaux.push("🪖 " + v.passagers + " / " + R.places + " à bord");
     if (v.ia && v.ia.cible && !v.ia.cible.mort && !v.ia.cible.detruit) morceaux.push("cible " + v.ia.cible.nom);
     return morceaux.join(" · ");
+  }
+  // (demande 99) LES BASES AÉRIENNES : chaque piste, tronçon par tronçon (▮ troué, ▯ abîmé, · intact), ouverte ou fermée.
+  function lignesBases(l) {
+    const DE = C.baseAerienne.destruction, B3 = Tanks.Base3D.bilan;
+    l.push(["Les bases aériennes (demande 99)"]);
+    for (const b of monde.bases || []) {
+      const tr = b.troncons.map((t) => (t.troue ? "▮" : t.points > 0 ? "▯" : "·")).join("");
+      l.push([(b.equipe === "bleus" ? "🔵 " : "🔴 ") + b.nom, (b.ouverte ? "🛫 OUVERTE" : "⛔ FERMÉE depuis " + Math.round(b.depuis) + " s") + " · tronçons [" + tr + "] · " + b.troues + " troué(s) (fermée à " + DE.fermeture + ", rouvre à 0) · " + Tanks.Base.nombreCrateres(b) + " cratère(s) · " + b.touches + " explosion(s) sur la piste · " + b.rebouches + " rebouché(s)" + (b.equipe === "rouges" && Tanks.Base.nombreCrateres(b) ? " · prochain rebouché dans " + Math.ceil(DE.reparation.ennemi - b.chrono) + " s" : "") + (b.equipe === "bleus" && b.reparesParToi ? " · " + b.reparesParToi + " par toi" : "")]);
+      l.push(["   points par tronçon", b.troncons.map((t) => t.numero + ": " + virgule(t.points, 1) + (t.crateres.length ? " (" + t.crateres.length + " 🕳️)" : "")).join(" · ") + " · un tronçon est troué à " + DE.seuil + " points"]);
+    }
+    const g = monde.toi && monde.toi.soldat && monde.toi.soldat.gadget;
+    if (g && g.cratere) l.push(["🔧 ton outil", "tu rebouches un cratère : " + Math.round(g.cratere.repare * 100) + " % (" + DE.reparation.outil + " s par cratère)"]);
+    l.push(["dessin des bases", B3.visibles + " / " + B3.bases + " base(s) dessinée(s) (les autres sont trop loin) · " + B3.dessins + " dessins par base · " + B3.balises + " balises (des boîtes qui brillent, 1 dessin, aucune vraie lumière) · " + Math.round(B3.triangles / 1000) + " k triangles soudés · " + B3.crateres + " cratère(s) dessiné(s) · " + B3.croix + " croix « X »"]);
   }
   function lignesCarte(l) {
     const T = Tanks.Terrain, W = C.monde, D = Tanks.Decor.bilan, km2 = (W.taille * W.taille) / 1e6;
@@ -546,6 +566,7 @@ Tanks.SousLeCapot = (function () {
         l.push([R.icone + " " + R.nom, (e.detruit ? "détruit ✖" : (e.pilote ? "👤 piloté · " : "garé · ") + Math.round(Math.abs(e.vitesse) * 3.6) + " km/h" + (e.sorte !== "jeep" ? " · " + Math.round(haut) + " m de haut" : " · vie " + e.vie + " / " + R.vie) + (R.munitions ? " · " + e.munitions + " / " + R.munitions + " " + R.arme + (e.munitions < R.munitions ? " (+1 dans " + virgule(R.recharge - e.rechargeMunition, 1) + " s)" : "") : ""))]);
       }
       lignesMaisons(l, s); // (étape 75)
+      lignesBases(l); // (demande 99)
       lignesCarte(l);
       lignesHelicos(l);
       lignesAvions(l); // (étape 76)
@@ -575,7 +596,7 @@ Tanks.SousLeCapot = (function () {
       l.push(["Le ciel (étape 64)"]);
       for (const a of monde.avions) {
         const haut = Math.round(a.y - Tanks.Terrain.hauteur(a.x, a.z));
-        l.push(["✈️ " + a.nom, a.etat === "attend" || a.etat === "parti" ? "pas encore là (arrive dans " + Math.max(0, Math.round(a.attente)) + " s)" : a.detruit ? "abattu : il tombe 🔥" : a.etat + " · " + haut + " m de haut · " + Math.round(a.vitesse * 3.6) + " km/h · vie " + a.vie + " / " + a.fiche.vie + (a.sorte === "transport" ? " · " + a.restent + " parachutistes à bord" : "") + (a.etat === "approche" && a.distanceLarguage ? " · largage dans " + Math.round(a.distanceLarguage) + " m" : "")]);
+        l.push(["✈️ " + a.nom, a.etat === "cloue" ? "⛔ cloué au sol : sa piste est fermée" : a.etat === "attend" || a.etat === "parti" ? "pas encore là (arrive dans " + Math.max(0, Math.round(a.attente)) + " s)" : a.detruit ? "abattu : il tombe 🔥" : a.etat + " · " + haut + " m de haut · " + Math.round(a.vitesse * 3.6) + " km/h · vie " + a.vie + " / " + a.fiche.vie + (a.sorte === "transport" ? " · " + a.restent + " parachutistes à bord" : "") + (a.etat === "approche" && a.distanceLarguage ? " · largage dans " + Math.round(a.distanceLarguage) + " m" : "")]);
       }
       const enLAir = monde.soldats.filter((o) => o.parachute && !o.joueur);
       l.push(["parachutistes", enLAir.length + " en l'air (🔵 " + enLAir.filter((o) => o.equipe === "bleus").length + ", 🔴 " + enLAir.filter((o) => o.equipe === "rouges").length + ") · prochain avion de transport dans " + Math.max(0, Math.round(C.parachutistes.toutesLes - (monde.chronoParas || 0))) + " s"]);

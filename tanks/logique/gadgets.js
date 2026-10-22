@@ -4,7 +4,7 @@
 //   - ASSAUT : le LANCE-GRENADES (une grenade de 40 mm qui explose en touchant ; 4, +1 toutes les 20 s) ou le SAC DE
 //     MUNITIONS (il remplit ta réserve de balles et ton lance-grenades) ; et 25 % de vie en plus (logique/equipement.js) ;
 //   - INGÉNIEUR : l'OUTIL DE RÉPARATION (tiens Espace à moins de 5,5 m d'un tank ou d'un engin ami abîmé, le tien aussi :
-//     il regagne 0,45 point de vie par seconde) ou le DRONE DE RÉPARATION (il répare le plus abîmé à moins de 30 m) ;
+//     il regagne 0,45 point de vie par seconde ; demande 99 : ou près d'un CRATÈRE de ta piste : tu le rebouches) ou le DRONE DE RÉPARATION (il répare le plus abîmé à moins de 30 m) ;
 //   - ÉCLAIREUR : les JUMELLES (V : regarder loin ; Espace : MARQUER l'ennemi visé, ◆ jaune pendant 20 s, visé en
 //     premier par tes alliés) ou le CAPTEUR (il marque tous les ennemis à moins de 32 m de toi) ;
 //   - MÉDECIN : la TROUSSE (elle soigne toi et tes amis à moins de 6 m) ou le DÉFIBRILLATEUR (Espace près d'un ami
@@ -65,7 +65,10 @@ Tanks.Gadgets = (function () {
       g.cible = null;
       if (!intentions.tirer) return;
       const v = vehiculesAbimes(s, monde, F.distance)[0];
-      if (!v) return void (g.attente === 0 && (ev.push(["impossible", { raison: "aucun véhicule ami abîmé tout près (moins de " + F.distance + " m)" }]), (g.attente = 1.5)));
+      // (demande 99) aucun véhicule abîmé ? un cratère de TA piste tout près : tu le rebouches
+      g.cratere = v ? null : Tanks.Base.reparer(s, monde, dt, ev);
+      if (g.cratere) return;
+      if (!v) return void (g.attente === 0 && (ev.push(["impossible", { raison: "aucun véhicule ami abîmé tout près (moins de " + F.distance + " m), ni cratère de ta piste" }]), (g.attente = 1.5)));
       g.cible = v.o;
       return reparer(g, v.o, F.vitesse * dt, s, ev, "outil");
     }

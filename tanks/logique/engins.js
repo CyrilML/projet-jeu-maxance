@@ -30,13 +30,13 @@ Tanks.Engins = (function () {
   const C = Tanks.CONFIG, G = C.engins, T = Tanks.Terrain;
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   const prochesArbres = []; // (étape 72 : les arbres des cases voisines, dans une liste réutilisée)
-  const yCamp = () => T.camp + 40; // (étape 71 : juste derrière les tanks de ton camp)
-
-  // Les places de parking (derrière les Bleus) : le 4x4, puis l'aérodrome (l'hélico, l'avion, le drone).
-  const PLACES = { jeep: [40, -12], helico: [-60, 0], avion: [-120, 0], drone: [-30, 4], dca: [80, -50], moto: [52, -14], quad: [60, -13], camion: [74, -10], chinook: [-172, 8], blackhawk: [-205, 6] }; // (étape 73 : les hélicos de transport, à l'ouest de l'avion) // (la DCA, un peu devant, sur du plat ; étape 71 : la moto, le quad, le camion à côté du 4x4)
-  const place = (sorte) => ({ x: PLACES[sorte][0], z: yCamp() + PLACES[sorte][1] });
+  // Les places de parking : (demande 99) elles sont sur le PLAN de ta base aérienne (logique/base.js, config.js
+  // « baseAerienne.places ») : le 4x4, la moto, le quad et le camion au parking ; le Tigre, le drone, le Chinook et le
+  // Black Hawk sur leurs aires « H » ; le Rafale au bout de la piste ; la DCA sur sa plateforme.
+  const PLACES = ["jeep", "helico", "avion", "drone", "dca", "moto", "quad", "camion", "chinook", "blackhawk"];
+  const place = (sorte) => Tanks.Base.place("bleus", sorte);
   function creer() {
-    const liste = Object.keys(PLACES).map((sorte) => garer({ sorte, fiche: Object.assign({ longueur: 4.8, largeur: 2.2, hauteur: 2 }, G[sorte]) }));
+    const liste = PLACES.map((sorte) => garer({ sorte, fiche: Object.assign({ longueur: 4.8, largeur: 2.2, hauteur: 2 }, G[sorte]) }));
     liste.push(garer({ sorte: "bateau", fiche: Object.assign({}, C.bateaux.joueur) })); // (étape 62)
     liste.push(garer({ sorte: "sousmarin", fiche: Object.assign({}, C.sousMarins.joueur) })); // (étape 63)
     return liste;
@@ -61,9 +61,9 @@ Tanks.Engins = (function () {
         vitesse: 0, tourelle: 0, vie: R.vie, detruit: false, touche: 9, recharge: 0, pilote: false, cible: null, tirs: 0, reussis: 0,
       });
     }
-    const [x, dz] = PLACES[e.sorte];
+    const p = place(e.sorte);
     Object.assign(e, {
-      equipe: "bleus", nom: G[e.sorte].nom, x, z: yCamp() + dz, y: T.hauteur(x, yCamp() + dz), angle: -Math.PI / 2,
+      equipe: "bleus", nom: G[e.sorte].nom, x: p.x, z: p.z, y: T.hauteur(p.x, p.z), angle: p.angle,
       vitesse: 0, vy: 0, tangage: 0, roulis: 0, tourelle: 0, vie: G[e.sorte].vie || 1, detruit: false, touche: 9,
       munitions: G[e.sorte].munitions || 0, recharge: 0, rechargeMunition: 0, pilote: false, rotor: 0, enVol: false,
     });
@@ -300,6 +300,18 @@ Tanks.Engins = (function () {
       e.y = sol;
       e.tangage = e.roulis = 0;
       e.enVol = false;
+      return;
+    }
+    // ✍️ (demande 99) au sol, sur une piste FERMÉE (trop de cratères) : impossible de décoller
+    if (!e.enVol && !Tanks.Base.ouverte(monde, e.equipe)) {
+      e.vitesse = 0;
+      e.y = sol;
+      e.messagePiste = (e.messagePiste || 0) - dt;
+      if (e.messagePiste <= 0) {
+        e.messagePiste = C.baseAerienne.destruction.messageFermee;
+        const b = monde.bases.find((x) => x.equipe === e.equipe);
+        ev.push(["impossible", { raison: "la piste est fermée : " + b.troues + " tronçon(s) troué(s), " + Tanks.Base.nombreCrateres(b) + " cratère(s) à reboucher (un ingénieur avec l'outil de réparation)" }]);
+      }
       return;
     }
     e.vitesse += (R.vitesse - e.vitesse) * Math.min(1, dt * 0.8); // (au décollage, il accélère sur la piste)

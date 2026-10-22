@@ -476,7 +476,7 @@ Tanks.Scene = (function () {
   const vers = (a, b, pas) => (a < b ? Math.min(b, a + pas) : Math.max(b, a - pas)); // (aller doucement de a vers b)
   function placerAvion(o, e, dt, original) {
     const A = C.avions3d;
-    o.g.visible = e.etat !== "attend" && e.etat !== "parti";
+    o.g.visible = e.etat !== "attend" && e.etat !== "parti" && e.etat !== "cloue";
     o.g.position.set(e.x, e.y, e.z);
     if (e.enVol) o.g.rotation.set(e.roulis || 0, -e.angle, e.tangage || 0, "YXZ");
     else { // (au sol, il se penche comme la colline)
@@ -562,7 +562,7 @@ Tanks.Scene = (function () {
     if (Tanks.Vehicules3D.sait(e.sorte)) return placerVehicule(o, e, dt, original); // (étape 71)
     if (Tanks.Helicos3D.sait(e.sorte)) return placerHelico(o, e, dt, original); // (étape 73)
     if (Tanks.Avions3D.sait(e.sorte)) return placerAvion(o, e, dt, original); // (étape 76)
-    o.g.visible = e.etat !== "attend" && e.etat !== "parti";
+    o.g.visible = e.etat !== "attend" && e.etat !== "parti" && e.etat !== "cloue";
     // (étape 72) plus loin que la vue (dans le brouillard) : pas dessiné
     if (o.g.visible && Math.hypot(e.x - cam.position.x, e.y - cam.position.y, e.z - cam.position.z) > Q.vue + 50) (o.g.visible = false), lod.enginsCaches++;
     o.g.position.set(e.x, e.y, e.z);
@@ -825,6 +825,7 @@ Tanks.Scene = (function () {
     Tanks.Decor.majHerbe(cam.position, Q.herbe || 0); // (étape 74 : les touffes d'herbe autour de la caméra)
     Tanks.Decor.majEau(dt);
     Tanks.MarquesSol.maj(dt, monde, cam.position); // (demande 92 : les traces de chenilles et les cratères)
+    Tanks.Base3D.maj(monde, cam.position, Q.vue); // (demande 99 : les bases aériennes, les cratères des pistes)
     Tanks.Maisons3D.maj(dt, cam.position, Q.maisons); // (étape 75 : les morceaux de mur tombés, les débris qui volent, les toits qui s'effondrent ; la belle version de près)
     }
     Tanks.Effets.maj(dt, monde, cam, Q.effets);

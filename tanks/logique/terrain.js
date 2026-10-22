@@ -44,7 +44,9 @@ Tanks.Terrain = (function () {
   const VILLAGES = [VILLE || (VAR.village === false ? Object.assign({}, V, { maisons: 0 }) : V)].concat(W.hameaux || []);
   const presDUnVillage = (x, z, plus) => VILLAGES.some((v) => Math.hypot(x - v.x, z - v.z) < v.rayon + (plus || 0));
   // (étape 71) les camps (et le parking des engins juste derrière) : ni arbre ni muret
-  const dansUnCamp = (x, z) => Math.abs(x) < 210 && Math.abs(Math.abs(z) - CAMP - 15) < 95;
+  // (demande 99 : et les BASES AÉRIENNES, logique/base.js : ni arbre, ni haie, ni grange sur la piste ou les hangars)
+  const BASE = Tanks.Base;
+  const dansUnCamp = (x, z) => (Math.abs(x) < 210 && Math.abs(Math.abs(z) - CAMP - 15) < 95) || BASE.dans(x, z);
   // (étape 62) « dl » : 0 au milieu du lac, 1 sur la rive, plus de 1 en dehors
   const distLac = (x, z) => carte === "souterrain" ? 99 : Math.hypot((x - LAC.x) / LAC.rayonX, (z - LAC.z) / LAC.rayonZ);
   const ILES = LAC.iles || [];
@@ -93,6 +95,16 @@ Tanks.Terrain = (function () {
       if (d < v.rayon * 1.7) plat = Math.min(plat, Math.max(0, (d - v.rayon * 0.8) / (v.rayon * 0.9)));
     }
     h = h * (0.15 + 0.85 * plat);
+    // ✍️ (demande 99) les BASES AÉRIENNES : bien à plat (une piste ne monte pas !), à la hauteur du milieu de la base,
+    // avec une pente douce tout autour (« bord » m). On mélange : 0 dans la base, 1 à « bord » m de son bord.
+    for (let i = 0; i < ZONES.length; i++) {
+      const r = ZONES[i], dx = Math.max(r.x0 - x, 0, x - r.x1), dz = Math.max(r.z0 - z, 0, z - r.z1);
+      if (dx > r.bord || dz > r.bord) continue;
+      const d = Math.hypot(dx, dz);
+      if (d >= r.bord) continue;
+      const t = d / r.bord, f = t * t * (3 - 2 * t);
+      h = r.h * (1 - f) + h * f;
+    }
     // au bord, le terrain remonte un peu (une cuvette : on voit que c'est la fin du champ de bataille)
     const bord = Math.max(Math.abs(x), Math.abs(z)) - (demi - 60);
     if (bord > 0) h += bord * bord * 0.012;
@@ -110,6 +122,8 @@ Tanks.Terrain = (function () {
     }
     return h;
   }
+  // (demande 99) la hauteur de chaque base : les collines au milieu de la base (sans l'aplatir, bien sûr)
+  const ZONES = BASE.zones.map((r) => Object.assign({}, r, { h: B.fractal(bruit, ((r.x0 + r.x1) / 2) / W.collines.taille, ((r.z0 + r.z1) / 2) / W.collines.taille, 4) * W.collines.hauteur * (VAR.collines || 1) }));
   function normale(x, z) {
     const e = 1.5;
     const nx = hauteur(x - e, z) - hauteur(x + e, z), nz = hauteur(x, z - e) - hauteur(x, z + e);
@@ -237,6 +251,7 @@ Tanks.Terrain = (function () {
       const m = Tanks.Structures.pousser(b, o, r);
       if (m) (touche = b), (o.morceauTouche = m);
     }
+    if (BASE.repousser(o, r)) touche = touche || HANGAR_BOITE; // (demande 99 : les murs des hangars)
     // (étape 62) l'eau : on ramène le point sur la rive (en agrandissant son écart au centre du lac)…
     // (étape 63) …ou sur l'île d'où il vient, s'il est tout près d'une île (sinon un tank qui roule au bord d'une île
     // se retrouvait d'un coup sur la rive du lac : un bug !). Un soldat, lui, n'est pas repoussé : il nage.
@@ -255,7 +270,7 @@ Tanks.Terrain = (function () {
     }
     return touche;
   }
-  const LAC_BOITE = { sorte: "eau" };
+  const LAC_BOITE = { sorte: "eau" }, HANGAR_BOITE = { sorte: "hangar" };
 
   // La ligne de vue entre deux points (à la hauteur y au-dessus du sol) : rien entre les deux ?
   // (Étape 61 : pour aller vite — 24 soldats et 8 tanks se posent la question sans arrêt —, on ne regarde le sol que tous

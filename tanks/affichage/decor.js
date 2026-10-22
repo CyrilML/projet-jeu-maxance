@@ -177,6 +177,7 @@ Tanks.Decor = (function () {
     const terre = (t[j * NC + i] * (1 - fu) + t[j * NC + i + 1] * fu) * (1 - fv) + (t[(j + 1) * NC + i] * (1 - fu) + t[(j + 1) * NC + i + 1] * fu) * fv;
     const ic = Math.floor(((x + demi) / C.monde.taille) * NCH), jc = Math.floor(((z + demi) / C.monde.taille) * NCH);
     if (ic >= 0 && jc >= 0 && ic < NCH && jc < NCH && masqueChemins[jc * NCH + ic]) return 0;
+    if (Tanks.Base.surBeton(x, z)) return 0; // (demande 99 : pas d'herbe sur le béton de la base aérienne)
     return 1 - terre;
   }
   function couleurIci(x, z, sortie) {
@@ -962,6 +963,7 @@ Tanks.Decor = (function () {
     arbres(g);
     touffes(g);
     Tanks.MarquesSol.construire(g); // (demande 92 : les traces de chenilles et les cratères, posés sur le sol)
+    Tanks.Base3D.construire(g); // (demande 99 : les 2 bases aériennes, posées sur le sol aplati)
     return g;
   }
 

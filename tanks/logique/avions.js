@@ -10,6 +10,9 @@
 //     ✍️ Abattu (par la DCA ou ton Rafale), un chasseur tombe en fumant, s'écrase, et un autre arrive 45 s plus tard ;
 //   - ✍️ les AVIONS DE TRANSPORT : un par équipe, toutes les 60 s. Ils traversent la carte et lâchent 6 PARACHUTISTES
 //     au-dessus de la zone de combat de leur camp. Au sol, les parachutistes deviennent des soldats comme les autres.
+// ✍️ Demande 99 : les chasseurs ennemis DÉCOLLENT de la piste de la base aérienne rouge (logique/base.js) : ils roulent,
+// accélèrent, quittent le sol et montent. Si leur piste est FERMÉE (trop de cratères), ils restent au sol ; l'avion de
+// transport d'un camp dont la piste est fermée ne part pas non plus (pas de parachutistes).
 // Un avion vole « simplement » : il tourne d'au plus 0,55 radian par seconde, monte ou descend doucement, et penche
 // ses ailes quand il tourne. Ce fichier ne dessine rien.
 
@@ -38,7 +41,7 @@ Tanks.Avions = (function () {
   }
   // (Re)mettre un chasseur au départ : loin au nord, chez les Rouges.
   function depart(a) {
-    Object.assign(a, { x: (hasard() * 2 - 1) * A.ecartDepart, z: -LOIN, angle: Math.PI / 2, tangage: 0, roulis: 0, vie: A.vie, detruit: false, etat: "approche", cible: null, recharge: 0, chute: 0 });
+    Object.assign(a, { x: (hasard() * 2 - 1) * A.ecartDepart, z: -LOIN, angle: Math.PI / 2, tangage: 0, roulis: 0, vie: A.vie, detruit: false, etat: "approche", enVol: true, cible: null, recharge: 0, chute: 0 });
     a.y = A.altitude + 20;
   }
 
@@ -61,10 +64,41 @@ Tanks.Avions = (function () {
   }
 
   // Un chasseur ennemi pendant un pas.
+  // (demande 99) Sur la piste : il roule tout droit en accélérant, quitte le sol à « envol » × sa vitesse, puis monte.
+  function decoller(a, dt, ev) {
+    const D = C.baseAerienne.decollage, sol = T.hauteur(a.x, a.z);
+    a.vitesse = Math.min(A.vitesse, a.vitesse + D.acceleration * dt);
+    const enLAir = a.vitesse >= A.vitesse * D.envol;
+    a.tangage += ((enLAir ? D.pente : 0) - a.tangage) * Math.min(1, dt * 2);
+    a.vx = Math.cos(a.angle) * a.vitesse;
+    a.vz = Math.sin(a.angle) * a.vitesse;
+    a.vy = enLAir ? Math.sin(a.tangage) * a.vitesse : 0;
+    a.x += a.vx * dt;
+    a.z += a.vz * dt;
+    a.y = Math.max(sol, a.y + a.vy * dt);
+    if (enLAir && !a.enVol) (a.enVol = true), ev.push(["decollage", { nom: a.nom, equipe: a.equipe, vitesse: Math.round(a.vitesse * 3.6), roule: Math.round(Math.hypot(a.x - a.depart.x, a.z - a.depart.z)) }]);
+    if (a.y - sol > 35) a.etat = "approche";
+  }
+
   function avancerChasseur(a, monde, dt, ev) {
-    if (a.etat === "attend" || a.etat === "parti") {
+    if (a.etat === "attend" || a.etat === "parti" || a.etat === "cloue") {
       a.attente -= dt;
       if (a.attente <= 0) {
+        // (demande 99) sa piste est fermée ? il reste au sol (et réessaie dans 2 s)
+        if (!Tanks.Base.ouverte(monde, a.equipe)) {
+          if (a.etat !== "cloue") ev.push(["avion-cloue", { nom: a.nom, equipe: a.equipe, sorte: "chasseur" }]);
+          a.etat = "cloue";
+          a.attente = 2;
+          return;
+        }
+        if (monde.bases && monde.bases.length) {
+          // (demande 99) il part du SEUIL de la piste de son camp, au sol, à l'arrêt
+          const p = Tanks.Base.seuil(a.equipe);
+          Object.assign(a, { x: p.x, z: p.z, angle: p.angle, tangage: 0, roulis: 0, vitesse: 0, vx: 0, vy: 0, vz: 0, vie: A.vie, detruit: false, etat: "decolle", enVol: false, cible: null, recharge: 0, chute: 0, depart: { x: p.x, z: p.z } });
+          a.y = T.hauteur(p.x, p.z);
+          ev.push(["avion-arrive", { nom: a.nom, piste: true }]);
+          return;
+        }
         depart(a);
         ev.push(["avion-arrive", { nom: a.nom }]);
       }
@@ -89,6 +123,7 @@ Tanks.Avions = (function () {
       return;
     }
     a.recharge = Math.max(0, a.recharge - dt);
+    if (a.etat === "decolle") return decoller(a, dt, ev); // (demande 99)
     // 1. Ton Rafale est en l'air, tout près ? DUEL !
     const rafale = monde.engins.find((e) => e.sorte === "avion" && e.pilote && e.enVol && !e.detruit);
     const dRafale = rafale ? Math.hypot(rafale.x - a.x, rafale.y - a.y, rafale.z - a.z) : Infinity;
@@ -210,7 +245,11 @@ Tanks.Avions = (function () {
     monde.chronoParas = (monde.chronoParas === undefined ? P.toutesLes - P.premier : monde.chronoParas) + dt;
     if (monde.chronoParas >= P.toutesLes) {
       monde.chronoParas = 0;
-      for (const equipe of ["bleus", "rouges"]) monde.avions.push(transport(equipe, monde));
+      for (const equipe of ["bleus", "rouges"]) {
+        // (demande 99) piste fermée : l'avion de transport de ce camp ne décolle pas (pas de parachutistes cette fois)
+        if (!Tanks.Base.ouverte(monde, equipe)) ev.push(["avion-cloue", { nom: P.transport.nom + (equipe === "bleus" ? " bleu" : " rouge"), equipe, sorte: "transport" }]);
+        else monde.avions.push(transport(equipe, monde));
+      }
     }
     for (const a of monde.avions) {
       a.touche += dt;
@@ -225,7 +264,7 @@ Tanks.Avions = (function () {
 
   // Ceux qu'on peut toucher en l'air (pour les obus de DCA et les missiles) : les avions qui volent, et ton Rafale.
   // (étape 73 : et les hélicos de transport qui volent à plus de 8 m : la DCA et les missiles peuvent les abattre)
-  const enLAir = (monde) => monde.avions.filter((a) => a.etat !== "attend" && a.etat !== "parti" && !a.detruit).concat(monde.engins.filter((e) => e.sorte === "avion" && e.pilote && e.enVol && !e.detruit), Tanks.Helicos.enLAir(monde));
+  const enLAir = (monde) => monde.avions.filter((a) => a.etat !== "attend" && a.etat !== "parti" && a.etat !== "cloue" && !a.detruit).concat(monde.engins.filter((e) => e.sorte === "avion" && e.pilote && e.enVol && !e.detruit), Tanks.Helicos.enLAir(monde));
 
   return { creer, avancer, enLAir, piloter }; // (étape 88 : piloter, pour les avions de la campagne)
 })();

@@ -279,6 +279,10 @@ Tanks.Radio = (function () {
       else intercepter(monde, tireur, "grenade");
     } else if (nom === "touche") {
       if (estChar(c) && c.equipe === "bleus" && c !== monde.joueur && !c.detruit) bavarder(monde, c, "toucheChar");
+    } else if (nom === "piste-fermee" || nom === "piste-rouverte") {
+      // (demande 99) la tour de contrôle annonce l'état des pistes
+      const genre = (d.equipe === "rouges" ? "pisteEnnemie" : "notrePiste") + (nom === "piste-fermee" ? "Fermee" : "Rouverte");
+      dire(monde, null, genre, "urgent", {}, { qui: "Tour de contrôle" });
     } else if (nom === "detruit") {
       if (!c) return;
       if (estChar(c) && c.equipe === "rouges") {

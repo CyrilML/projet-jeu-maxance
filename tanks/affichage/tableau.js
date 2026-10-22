@@ -601,7 +601,7 @@ Tanks.Tableau = (function () {
     }
     // (étape 64) Les avions : nom, distance et vie.
     for (const a of monde.avions) {
-      if (a.etat === "attend" || a.etat === "parti" || a.detruit) continue;
+      if (a.etat === "attend" || a.etat === "parti" || a.etat === "cloue" || a.detruit) continue;
       const e = Tanks.Scene.versEcran(a.x, a.y + 5, a.z, L, H), d = Math.hypot(a.x - ici.x, a.y - (ici.y || 0), a.z - ici.z);
       if (!e || e.x < -40 || e.x > L + 40 || d > 2500) continue;
       const couleur = a.equipe === "bleus" ? E.bleus.marque : E.rouges.marque;
@@ -692,7 +692,7 @@ Tanks.Tableau = (function () {
       ctx.fill();
     }
     for (const a of monde.avions) { // (étape 64) les avions : un petit triangle dans le sens où ils volent
-      if (a.etat === "attend" || a.etat === "parti") continue;
+      if (a.etat === "attend" || a.etat === "parti" || a.etat === "cloue") continue;
       const ax = x0 + tc / 2 + a.x * k, az = y0 + tc / 2 + a.z * k;
       if (ax < x0 || ax > x0 + tc || az < y0 || az > y0 + tc) continue;
       ctx.save();

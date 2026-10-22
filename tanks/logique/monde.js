@@ -36,6 +36,8 @@
 // Demande 94 : L'OPÉRATEUR RADIO (logique/radio.js) : tes phrases passent par lui, et il voit chaque événement (avec les
 // vrais objets) pour faire parler tes soldats.
 // Demande 97 : LE SERGENT INSTRUCTEUR (logique/progression.js) voit aussi chaque événement : il donne les points d'expérience.
+// Demande 99 : LES BASES AÉRIENNES (logique/base.js) : « monde.bases » = les 2 pistes qu'on peut détruire (vide au garage et
+// dans le souterrain). Le chef de base rebouche les cratères de l'ennemi à chaque pas.
 // Il annonce tout à la radio : le journal, les sons, les effets et la sauvegarde écoutent.
 
 window.Tanks = window.Tanks || {};
@@ -71,6 +73,7 @@ Tanks.Monde = (function () {
     monde.avions = [];
     monde.explosifs = []; // (demande 98 : les explosifs posés et les nuages de fumée)
     monde.fumees = [];
+    monde.bases = []; // (demande 99 : au garage, pas de piste à détruire)
     monde.toi = { mode: "char", engin: null, soldat: null };
   }
 
@@ -102,7 +105,7 @@ Tanks.Monde = (function () {
     monde.joueur = Tanks.Char.creer(C.chars[monde.choix], "bleus", p, "toi");
     monde.joueur.detruit = true;
     monde.joueur.resteDehors = true;
-    for (const nom of ["chars", "engins", "vehicules", "helicos", "bateaux", "sousMarins", "avions", "portails"]) monde[nom] = [];
+    for (const nom of ["chars", "engins", "vehicules", "helicos", "bateaux", "sousMarins", "avions", "portails", "bases"]) monde[nom] = []; // (demande 99 : pas de base aérienne sous terre)
     monde.soldats = [];
     for (const equipe of ["bleus", "rouges"]) for (let n = 1; n <= R.soldats; n++) monde.soldats.push(SO.soldat(equipe, n));
     const toi = Tanks.Soldat.creer("bleus", p.x, p.z, p.angle, "toi", true);
@@ -171,6 +174,7 @@ Tanks.Monde = (function () {
     monde.bateaux = Tanks.Bateaux.creer(); // (étape 62) les patrouilleurs ennemis
     monde.sousMarins = Tanks.SousMarins.creer(); // (étape 63) les sous-marins ennemis
     monde.avions = Tanks.Avions.creer(); // (étape 64) les chasseurs ennemis (les transports arrivent pendant la bataille)
+    monde.bases = Tanks.Base.creer(); // (demande 99) les 2 bases aériennes : leurs pistes sont neuves
     monde.chronoParas = undefined;
     monde.portails = Tanks.Portails.creer();
     for (const p of monde.portails) p.passages = 0;
@@ -437,6 +441,7 @@ Tanks.Monde = (function () {
     for (const [nom, d] of Tanks.Obus.avancer(monde.obus, monde, dt)) annoncer(nom, d);
     if (enJeu) for (const [nom, d] of Tanks.Gadgets.etape(monde, dt, []) || []) annoncer(nom, d);
     if (enJeu) for (const [nom, d] of Tanks.Explosifs.etape(monde, dt, [])) annoncer(nom, d); // (demande 98 : les mines, les claymores, les C4 collés, les nuages)
+    if (enJeu) for (const [nom, d] of Tanks.Base.etape(monde, dt)) annoncer(nom, d); // (demande 99 : l'ennemi rebouche les cratères de sa piste)
     // (étape 67) TA VIE REMONTE : pas touché depuis 5 s ? Ton soldat et ton tank se soignent doucement.
     if (enJeu) {
       if (toi && (toi.dansUnEngin || toi.parachute)) toi.touche += dt; // (dans un engin, le temps passe aussi pour lui)

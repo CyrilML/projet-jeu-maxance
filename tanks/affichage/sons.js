@@ -480,7 +480,7 @@ Tanks.Sons = (function () {
     if (aigu) filtre.frequency.setTargetAtTime(aigu, t, 0.1);
     // (étape 64) un avion qui passe tout près : un grand souffle (plus il est près, plus c'est fort)
     for (const a of m.avions || []) {
-      if (a.etat === "attend" || a.etat === "parti") continue;
+      if (a.etat === "attend" || a.etat === "parti" || a.etat === "cloue") continue;
       const ici = m.toi && m.toi.soldat && m.toi.mode !== "char" ? m.toi.soldat : m.joueur;
       const d = Math.hypot(a.x - ici.x, a.y - ici.y, a.z - ici.z);
       if (d < 500 && (1 - d / 500) * 0.4 > souffleFort) (souffleFort = (1 - d / 500) * 0.4), (souffleAigu = 1200);
