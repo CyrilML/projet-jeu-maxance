@@ -17,6 +17,10 @@
 // (ton soldat est peut-être à terre, les ennemis tous partis…) : le réalisateur engage des soldats et des chars rien que
 // pour le film (« prendre: "figurants" » ou « "chars" »), et ils repartent à la fin. Ils peuvent aussi CÉLÉBRER
 // (sauter, lever le bras) ; un char « épave » est une carcasse qui brûle.
+// (demande 101, morceau 3) La BANDE-ANNONCE : des figurants volants aussi (« prendre: "engins" » : l'hélico Tigre, le
+// Chinook, le Black Hawk, l'avion de chasse…) qui suivent un chemin à une hauteur donnée (« hauteurs »), qui roulent
+// sur la piste puis décollent ; des EXPLOSIONS commandées (action « explose ») ; un tireur d'élite avec sa vraie arme
+// (« armeId »). La base aérienne est montrée même au garage (« bases: true »), puis tout est rangé comme avant.
 // Pendant le film, le monde est en phase "cinematique" : la bataille est FIGÉE (personne ne tire, personne n'est
 // blessé, l'ordinateur ne réfléchit pas) ; seuls les acteurs bougent, et seulement comme le scénario le dit.
 // Ce fichier ne dessine rien : la caméra de cinéma, les bandes noires, les sous-titres et la voix sont faits par
@@ -55,7 +59,7 @@ Tanks.Cinematique = (function () {
   // Les soldats d'un camp (debout, pas toi), du plus proche au plus loin d'un point.
   function prendre(monde, g, deja) {
     if (g.prendre === "toi") return monde.toi && monde.toi.soldat && monde.toi.mode === "pied" && !monde.toi.soldat.mort ? [monde.toi.soldat] : [];
-    if (g.prendre === "figurants" || g.prendre === "chars") return engager(monde, g);
+    if (g.prendre === "figurants" || g.prendre === "chars" || g.prendre === "engins") return engager(monde, g);
     const equipe = g.prendre === "ennemis" ? "rouges" : "bleus", p = g.proches || (g.chemin && g.chemin[0]) || [0, 0];
     const libres = monde.soldats.filter((s) => s.equipe === equipe && !s.joueur && !s.mort && !s.dansUnEngin && !s.parachute && !s.corde && !deja.has(s));
     libres.sort((a, b) => Math.hypot(a.x - p[0], a.z - p[1]) - Math.hypot(b.x - p[0], b.z - p[1]));
@@ -65,6 +69,19 @@ Tanks.Cinematique = (function () {
   // avec les autres (pour être dessinés comme eux), marqués « figurant », et enlevés à la fin du film.
   function engager(monde, g) {
     const equipe = g.camp || "bleus", n = g.nombre || (g.places ? g.places.length : 6), p0 = (g.chemin && g.chemin[0]) || [0, 0], l = [];
+    if (g.prendre === "engins") {
+      // (morceau 3) les engins de ton camp, tout neufs (garés à la base), de ces sortes-là
+      const tous = Tanks.Engins.creer(), l2 = [];
+      for (const sorte of g.sortes || []) {
+        const e = tous.find((x) => x.sorte === sorte && !l2.includes(x));
+        if (!e) continue;
+        Object.assign(e, { figurant: true, pilote: true, vitesse: 0, rotor: 0, av: null, equipe: e.equipe || "bleus" });
+        if (e.y === undefined) e.y = T.hauteur(e.x, e.z);
+        monde.engins.push(e);
+        l2.push(e);
+      }
+      return l2;
+    }
     for (let k = 0; k < n; k++) {
       const pl = g.places && g.places[k], x = pl ? pl[0] : p0[0], z = pl ? pl[1] : p0[1], angle = pl && pl[2] !== undefined ? pl[2] : 0;
       let o;
@@ -77,6 +94,13 @@ Tanks.Cinematique = (function () {
       } else {
         o = Tanks.Soldat.creer(equipe, x, z, angle, (equipe === "bleus" ? "Lion " : "soldat du Front ") + (k + 1));
         if (k % 5 === 3) o.arme = "roquettes";
+        if (g.armeId && C.armesPrincipales[g.armeId]) {
+          // (morceau 3) une vraie arme de l'armurerie (le tireur d'élite et son fusil à lunette), avec ses pièces d'origine
+          const pieces = {};
+          for (const emp in C.atelier) pieces[emp] = C.atelier[emp].pieces[0].id;
+          o.armes = { principale: { id: g.armeId, pieces } };
+          o.arme = "principale";
+        }
         monde.soldats.push(o);
       }
       o.figurant = true;
@@ -127,6 +151,8 @@ Tanks.Cinematique = (function () {
       debuts: plat.debuts, actions: plat.actions, repliques: plat.repliques, prochaineAction: 0, prochaineReplique: 0,
       replique: null, dites: 0, groupes: {}, acteurs: [], phaseAvant: monde.phase, passable: f.passable !== false,
     };
+    // (morceau 3) « bases: true » : la base aérienne est montrée même au garage (on la rend à la fin)
+    if (f.bases && !(monde.bases && monde.bases.length)) (etat.basesAvant = monde.bases || []), (monde.bases = Tanks.Base.creer());
     // les acteurs : chaque groupe prend ses soldats, les place au début de son chemin, en formation
     const deja = new Set();
     for (const g0 of f.acteurs || []) {
@@ -168,7 +194,9 @@ Tanks.Cinematique = (function () {
     if (etat.acteurs.some((a) => a.s.figurant)) {
       monde.soldats = monde.soldats.filter((s) => !s.figurant);
       monde.chars = monde.chars.filter((c) => !c.figurant);
+      monde.engins = monde.engins.filter((e) => !e.figurant);
     }
+    if (etat.basesAvant) monde.bases = etat.basesAvant; // (morceau 3 : la base aérienne prêtée pour le film)
     for (const a of etat.acteurs) {
       const s = a.s;
       if (s.figurant || s.genre !== "soldat") continue;
@@ -186,7 +214,7 @@ Tanks.Cinematique = (function () {
     rendre(monde, etat);
     monde.cinematique = null;
     if (monde.phase === "cinematique") monde.phase = etat.phaseAvant === "cinematique" ? "bataille" : etat.phaseAvant;
-    radio.emettre(passee ? "cinematique-passee" : "cinematique-fin", { id: etat.id, titre: etat.titre, t: etat.t, duree: etat.duree, plan: etat.plan + 1, plans: etat.plans, dites: etat.dites, repliques: etat.repliques.length });
+    radio.emettre(passee ? "cinematique-passee" : "cinematique-fin", { pour: etat.pour, id: etat.id, titre: etat.titre, t: etat.t, duree: etat.duree, plan: etat.plan + 1, plans: etat.plans, dites: etat.dites, repliques: etat.repliques.length });
     if (etat.alaFin) etat.alaFin(monde, !!passee);
   }
   // Arrêter sans rien lancer après (on quitte la campagne, un autre film commence…).
@@ -243,6 +271,11 @@ Tanks.Cinematique = (function () {
       for (const a of l) a.s.lancer = R.signe; // (le bras part en arrière puis en avant : « on avance ! »)
     } else if (act.faire === "arme") {
       for (const a of l) a.arme = act.levee !== false;
+    } else if (act.faire === "explose") {
+      // (morceau 3) une explosion de cinéma : rien n'est abîmé, c'est l'écran qui la montre (affichage/cinematique.js)
+      const q = Array.isArray(act.ou) ? act.ou : [0, 0];
+      radio.emettre("cinematique-explosion", { x: q[0], z: q[1], force: act.force || 1, sorte: act.sorte || "obus", t: etat.t });
+      return;
     } else if (act.faire === "celebre") {
       for (const a of l) (a.fete = act.duree || 6), (a.geste = null), (a.s.accroupi = false), (a.feteDans = hasard() * 0.6);
     }
@@ -300,7 +333,9 @@ Tanks.Cinematique = (function () {
   function avancerGroupe(monde, g, dt) {
     const etat = monde.cinematique;
     if (!g.enMarche && etat.t >= (g.depart || 0)) g.enMarche = true;
-    if (g.enMarche && !g.arrete) g.avance = Math.min(g.chemin.total, g.avance + (g.vitesse || 1) * dt);
+    // (morceau 3) « acceleration » : le groupe part de 0 et prend de la vitesse (un avion sur la piste)
+    g.vitesseActuelle = g.acceleration ? Math.min(g.vitesse || 1, (g.vitesseActuelle || 0) + (g.enMarche && !g.arrete ? g.acceleration * dt : 0)) : g.vitesse || 1;
+    if (g.enMarche && !g.arrete) g.avance = Math.min(g.chemin.total, g.avance + g.vitesseActuelle * dt);
     for (const a of g.membres) avancerActeur(monde, g, a, dt);
   }
   // (morceau 2) Un char du film : il roule le long du chemin, à sa place dans la colonne (une épave ne bouge pas).
@@ -323,7 +358,26 @@ Tanks.Cinematique = (function () {
     c.vitesse = v;
     c.y = T.hauteur(c.x, c.z);
   }
+  // (morceau 3) Un engin du film (hélico, avion) : il suit le chemin, à la hauteur voulue à cet endroit (« hauteurs » :
+  // [[mètres parcourus, hauteur au-dessus du sol], …]) ; il penche le nez quand il monte ; les rotors tournent.
+  function hauteurA(g, d) {
+    const H = g.hauteurs || [[0, 0]];
+    if (d <= H[0][0]) return H[0][1];
+    for (let i = 1; i < H.length; i++) if (d <= H[i][0]) return H[i - 1][1] + ((H[i][1] - H[i - 1][1]) * (d - H[i - 1][0])) / (H[i][0] - H[i - 1][0] || 1);
+    return H[H.length - 1][1];
+  }
+  function avancerVol(g, a, dt) {
+    const e = a.s, [arriere, cote] = place(g, a.rang), d = g.avance - arriere, p = surChemin(g.chemin, d);
+    const x = p.x - Math.sin(p.cap) * cote, z = p.z + Math.cos(p.cap) * cote, h = hauteurA(g, d), y = T.hauteur(x, z) + h;
+    const v = g.enMarche && !g.arrete ? g.vitesseActuelle || 0 : 0;
+    // (un avion lève le nez quand il monte ; un hélico, lui, penche à peine le nez vers l'avant en avançant)
+    e.tangage = e.rotor !== undefined ? -Math.min(0.12, v * 0.004) : v > 1 ? Math.atan2(y - e.y, Math.max(0.01, v * dt)) * 0.6 : 0;
+    Object.assign(e, { x, z, y, angle: p.cap, vitesse: v, enVol: h > 0.4, roulis: 0 });
+    a.cap = p.cap;
+    if (e.rotor !== undefined) e.rotor += (g.rotor || 28) * dt;
+  }
   function avancerActeur(monde, g, a, dt) {
+    if (g.prendre === "engins") return avancerVol(g, a, dt);
     if (a.s.genre !== "soldat") return avancerChar(g, a, dt);
     const s = a.s, G = a.geste, [arriere, cote] = place(g, a.rang), p = surChemin(g.chemin, g.avance - arriere);
     a.cap = p.cap;

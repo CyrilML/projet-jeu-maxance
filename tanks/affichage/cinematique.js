@@ -34,8 +34,10 @@ Tanks.EcranCinematique = (function () {
       bilan.repliques++;
       Tanks.RadioVoix.dire(d.texte, d.qui, d.camp === "rouges");
     });
-    radio.ecouter("cinematique-fin", () => fin(false));
-    radio.ecouter("cinematique-passee", () => fin(true));
+    radio.ecouter("cinematique-fin", (d) => fin(false, d));
+    radio.ecouter("cinematique-passee", (d) => fin(true, d));
+    // (morceau 3) une explosion de cinéma : le feu, la fumée, la terre qui gicle, l'écran qui tremble (rien n'est abîmé)
+    radio.ecouter("cinematique-explosion", (d) => Tanks.Explosions.exploser(d.x, T.hauteur(d.x, d.z), d.z, d.force, "terre", d.sorte));
     // Entrée ou Échap : passer le film (capturé avant les oreilles du jeu : Échap ne met pas le jeu en pause)
     window.addEventListener("keydown", (e) => {
       if (!monde || !monde.cinematique) return;
@@ -57,7 +59,9 @@ Tanks.EcranCinematique = (function () {
     // le décor du film : des feux et leurs colonnes de fumée (éteints à la fin)
     feux = ((f && f.decor && f.decor.feux) || []).map(([x, z, force]) => Tanks.Explosions.epave(x, T.hauteur(x, z), z, force || 1, 1)).filter(Boolean);
   }
-  function fin(passee) {
+  function fin(passee, d) {
+    const f = d && Tanks.Cinematique.film(d.id);
+    if (f && f.nettoyer) Tanks.Explosions.effacer(), Tanks.Particules.effacer(); // (morceau 3 : la bande-annonce ne laisse ni fumée ni feu)
     if (passee) (bilan.passes++, Tanks.RadioVoix.taire(), (noirApres = performance.now() + 450)); // (un petit fondu au noir : la coupure se voit moins)
     Tanks.Explosions.eteindre(feux);
     feux = [];

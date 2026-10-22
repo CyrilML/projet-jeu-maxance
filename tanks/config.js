@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 44,
+  version: 45,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -2263,4 +2263,51 @@ Tanks.CONFIG.cinematiques = {
       ],
     },
   });
+})();
+
+// ✍️ (demande 101, morceau 3) LA BANDE-ANNONCE DU JEU : « À la fin, une vidéo qui fait l'introduction du jeu. » Le bouton
+// « 🎬 Bande-annonce » de la page d'accueil la lance ; à la fin (ou Entrée / Échap), on revient à l'accueil. Elle est
+// tournée sur la carte du moment avec des figurants (des chars, une escouade, un tireur d'élite, les hélicos et l'avion
+// de chasse de la base aérienne) : rien ne reste après le film. « nettoyer » : les explosions et la fumée du film
+// disparaissent à la fin.
+Tanks.CONFIG.cinematiques.bandeAnnonce = "bande-annonce";
+(function () {
+  const C = Tanks.CONFIG, armes = Object.keys(C.armesPrincipales).length + Object.keys(C.pistolets).length;
+  const slogan = (grand, etiquette, petit) => ({ etiquette: etiquette || "", grand, petit, taille: 58, de: 1.5, a: 7 });
+  C.cinematiques.films["bande-annonce"] = {
+    titre: "Bande-annonce · The Last Battlefield", musique: 1, nettoyer: true, bases: true,
+    decor: { feux: [[-60, 250, 1.6], [50, 300, 1.4], [120, 180, 1.2], [-130, 120, 1.2]] },
+    acteurs: [
+      { id: "blindes", prendre: "chars", camp: "bleus", nombre: 4, nom: "Marteau", chemin: [[0, 560], [0, -300]], vitesse: 7, formation: "colonne", ecart: 18, largeur: 0 },
+      { id: "escouade", prendre: "figurants", camp: "bleus", nombre: 8, chemin: [[40, 470], [40, 380]], vitesse: 0.9, formation: "colonne", ecart: 2.5, arme: "levee", tactique: { balaye: 0.45, retourne: 0.25, accroupi: 0.2 } },
+      { id: "sniper", prendre: "figurants", camp: "bleus", nombre: 1, armeId: "lapua", places: [[-20, 420, -1.57]] },
+      { id: "helicos", prendre: "engins", sortes: ["helico", "blackhawk", "chinook"], chemin: [[-110, 690], [-110, 600], [-60, 200], [0, -400]], vitesse: 28, acceleration: 7, depart: 30,
+        formation: "ligne", ecart: 40, hauteurs: [[0, 0], [30, 12], [160, 45], [1500, 60]], rotor: 30 },
+      { id: "avion", prendre: "engins", sortes: ["avion"], chemin: [[-60, 790], [-480, 790], [-1000, 700]], vitesse: 80, acceleration: 13, depart: 47,
+        hauteurs: [[0, 0], [230, 0], [430, 22], [900, 110]] },
+    ],
+    plans: [
+      { nom: "le champ de bataille", duree: 7, fondu: { entree: 2 },
+        camera: { type: "travelling", de: { oeil: [300, 120, 900], cible: [0, 0, 300] }, a: { oeil: [220, 95, 780], cible: [0, 0, 250] } },
+        titre: { etiquette: "Un jeu de Maxance", grand: "", petit: "Valdrie, 2041. Toutes les radios se sont tues.", de: 1.5, a: 6.5 } },
+      { nom: "les blindés", duree: 8, camera: { type: "suivre", acteur: "blindes", de: [-34, 4, 12], a: [-22, 3, 9], regardHauteur: 2, tremble: 0.05 },
+        titre: slogan("BLINDÉS.", "Leclerc · Abrams · Leopard 2") },
+      { nom: "l'infanterie", duree: 8, camera: { type: "suivre", acteur: "escouade", de: [-10, 1.7, 3], a: [-7, 1.6, 2], regardHauteur: 1.3, tremble: 0.06 },
+        titre: slogan("INFANTERIE.", "4 classes · grenades · explosifs") },
+      { nom: "le tireur d'élite", duree: 7, camera: { type: "suivre", acteur: "sniper", repere: "regard", de: [2.4, 1.45, 0.8], a: [1.5, 1.3, 0.55], regard: [-20, 2, 250] },
+        actions: [{ a: 0.3, acteur: "sniper", faire: "accroupi" }],
+        titre: slogan("DÉBLOQUE " + armes + " ARMES.", "L'armurerie · lunettes · silencieux · peintures") },
+      { nom: "les hélicos décollent", duree: 9, camera: { type: "travelling", de: { oeil: [-30, 6, 640], cible: [-110, 6, 686] }, a: { oeil: [-50, 22, 590], cible: [-100, 40, 600] } },
+        titre: slogan("HÉLICOS.", "Tigre · Black Hawk · Chinook") },
+      { nom: "en vol", duree: 8, camera: { type: "suivre", acteur: "helicos", de: [55, 14, 25], a: [40, 8, 18], regardHauteur: 0, tremble: 0.15 } },
+      { nom: "l'avion décolle", duree: 10, camera: { type: "travelling", de: { oeil: [-170, 4, 825], cible: [-60, 3, 790] }, a: { oeil: [-300, 12, 835], cible: [-520, 25, 790] } },
+        titre: slogan("AVIONS.", "La base aérienne · la piste · le ciel") },
+      { nom: "la bataille", duree: 8, camera: { type: "suivre", acteur: "blindes", de: [-45, 9, 26], a: [-34, 6, 20], regardHauteur: 2, tremble: 0.2 },
+        actions: [{ a: 0.6, faire: "explose", ou: [-24, 150], force: 2.2 }, { a: 2.2, faire: "explose", ou: [26, 130], force: 2.6, sorte: "bombe" }, { a: 3.6, faire: "explose", ou: [-14, 112], force: 1.8 }, { a: 5.2, faire: "explose", ou: [30, 100], force: 2.4, sorte: "bombe" }, { a: 6.6, faire: "explose", ou: [-30, 90], force: 2 }],
+        titre: { etiquette: "La campagne", grand: C.campagne.chapitres.length + " CHAPITRES.", petit: "Les Lions de Valdrie contre le Front Écarlate.", taille: 58, de: 1.5, a: 7.5 } },
+      { nom: "le logo", duree: 12, fondu: { sortie: 1.5 },
+        camera: { type: "travelling", de: { oeil: [200, 60, 500], cible: [0, 20, 0] }, a: { oeil: [150, 140, 450], cible: [0, 30, 0] } },
+        titre: { etiquette: "Infanterie · Blindés · Hélicos · Avions", grand: "THE LAST BATTLEFIELD", taille: 72, couleur: "#ffcf5a", petit: "Un jeu de Maxance · Appuie sur Entrée", de: 1, a: 11.5 } },
+    ],
+  };
 })();

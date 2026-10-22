@@ -8,7 +8,7 @@
 //   2. « prête » : les boutons apparaissent : ▶ JOUER (ouvre le menu de l'équipement) et 📓 le carnet.
 //      ✍️ (étape 88) Deux portes au lieu d'une : ▶ CAMPAGNE (l'histoire, en 6 chapitres : affichage/campagne-ecrans.js)
 //      et ⚔️ BATAILLE (la bataille libre, comme avant : le menu de l'équipement). ← → pour choisir, Entrée pour entrer.
-// (demande 101) En bas : tes BATTLE COINS (gagnés à chaque mission réussie de la campagne).
+// (demande 101) « 🎬 Bande-annonce » : la vidéo d'introduction du jeu, puis retour ici. En bas : tes BATTLE COINS (gagnés à chaque mission réussie de la campagne).
 // L'accueil est un ÉCRAN (de l'affichage) : il ne touche pas au monde. Le menu attend qu'il soit fermé.
 
 window.Tanks = window.Tanks || {};
@@ -16,7 +16,11 @@ window.Tanks = window.Tanks || {};
 Tanks.Accueil = (function () {
   let racine = null, visible = true, pret = false;
 
-  function initialiser() {
+  let demander = null; // (morceau 3 : la bande-annonce est une DEMANDE au réalisateur, logique/cinematique.js)
+  function initialiser(fonctionDemande) {
+    demander = fonctionDemande || null;
+    // (à la fin de la bande-annonce, ou si on la passe : retour à l'accueil)
+    for (const n of ["cinematique-fin", "cinematique-passee"]) Tanks.Evenements.ecouter(n, (d) => d.pour === "accueil" && montrer());
     racine = document.getElementById("accueil");
     document.getElementById("ecran2d").style.visibility = "hidden"; // (le tableau de bord du garage attend derrière)
     racine.innerHTML =
@@ -30,6 +34,7 @@ Tanks.Accueil = (function () {
       '<div class="a-boutons" hidden>' +
       '<button class="a-jouer a-mode a-campagne" data-accueil="campagne">▶ CAMPAGNE<small>' + Tanks.CONFIG.campagne.chapitres.length + " chapitres · l'histoire</small></button>" + // (étape 88)
       '<button class="a-jouer a-mode a-bataille" data-accueil="bataille">⚔️ BATAILLE<small>bataille libre · toutes les cartes</small></button>' +
+      '<button class="a-film" data-accueil="film" title="La bande-annonce du jeu (demande 101)">🎬 Bande-annonce</button>' +
       '<a class="a-carnet" href="../index.html#etape101">📓 Le carnet</a>' +
       "</div>" +
       '<div class="a-coins" title="Gagnés à chaque mission réussie de la campagne (demande 101)">🪙 <b></b> Battle Coins</div>' +
@@ -52,7 +57,7 @@ Tanks.Accueil = (function () {
       if (e.type === "keydown" && (e.code === "ArrowLeft" || e.code === "ArrowRight" || e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "Tab")) {
         e.preventDefault(), e.stopPropagation();
         portes[(Math.max(0, ici) + 1) % portes.length].focus(); // (étape 88 : passer d'une porte à l'autre)
-      } else if (e.type === "keydown" && (e.code === "Enter" || e.code === "Space" || e.code === "NumpadEnter")) e.preventDefault(), e.stopPropagation(), fermer(ici >= 0 ? portes[ici].dataset.accueil : "campagne");
+      } else if (e.type === "keydown" && (e.code === "Enter" || e.code === "Space" || e.code === "NumpadEnter")) e.preventDefault(), e.stopImmediatePropagation(), fermer(ici >= 0 ? portes[ici].dataset.accueil : "campagne");
       else if (e.type === "keydown" && e.code !== "KeyM" && e.code !== "Semicolon" && e.code !== "KeyB") e.stopPropagation();
     };
     majCoins();
@@ -63,6 +68,15 @@ Tanks.Accueil = (function () {
 
   // mode : "campagne" (la liste des chapitres) ou "bataille" (le menu de la bataille libre)
   function fermer(mode) {
+    if (mode === "film") {
+      // ✍️ (morceau 3) la bande-annonce : l'accueil s'efface, le film commence (s'il ne peut pas, l'accueil reste)
+      if (!demander || !demander("film")) return;
+      visible = false;
+      racine.hidden = true;
+      document.getElementById("ecran2d").style.visibility = "";
+      Tanks.Evenements.emettre("accueil", { quitte: true, mode: "film" });
+      return;
+    }
     visible = false;
     racine.classList.add("a-part");
     document.getElementById("ecran2d").style.visibility = "";

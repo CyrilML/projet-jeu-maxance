@@ -90,6 +90,8 @@
     .a-jouer { font-size: 1.5rem; font-weight: bold; letter-spacing: .1em; padding: 14px 46px; border-radius: 10px; color: #1a1205;
       background: linear-gradient(#ffd77a, #d9962a); border: 2px solid #fff1c4; box-shadow: 0 0 24px rgba(255,180,60,.55), 0 6px 0 #6b4410; cursor: pointer; }
     .a-jouer:hover, .a-jouer:focus { filter: brightness(1.12); outline: none; transform: translateY(-1px); }
+    .a-film { padding: 10px 16px; border: 1px solid #8a6a30; border-radius: 8px; background: rgba(40,28,10,.65); color: #ffd98a; font: inherit; cursor: pointer; }
+    .a-film:hover, .a-film:focus { background: rgba(90,60,20,.8); outline: 2px solid #ffcf5a; }
     .a-coins { margin-top: 14px; color: #ffd36a; font-size: .95rem; letter-spacing: .06em; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
     .a-coins b { font-size: 1.25rem; color: #ffe9a8; }
     .a-carnet { color: #e8dcb8; padding: 10px 16px; border: 1px solid #6b5a30; border-radius: 8px; background: rgba(20,16,8,.6); text-decoration: none; }
@@ -517,73 +519,73 @@
   </div>
 
   <script src="../circuit/vendor/three.min.js"></script>
-  <script src="config.js?v=44"></script>
-  <script src="moteur/evenements.js?v=44"></script>
-  <script src="moteur/bruit.js?v=44"></script>
-  <script src="moteur/entrees.js?v=44"></script>
-  <script src="moteur/grille.js?v=44"></script>
-  <script src="donnees/carte-du-jour.js?v=44"></script>
-  <script src="logique/base.js?v=44"></script>
-  <script src="logique/terrain.js?v=44"></script>
-  <script src="logique/souterrain.js?v=44"></script>
-  <script src="logique/structures.js?v=44"></script>
-  <script src="logique/char.js?v=44"></script>
-  <script src="logique/obus.js?v=44"></script>
-  <script src="logique/ia.js?v=44"></script>
-  <script src="logique/soldat.js?v=44"></script>
-  <script src="logique/troupes.js?v=44"></script>
-  <script src="logique/vehicules.js?v=44"></script>
-  <script src="logique/helicos.js?v=44"></script>
-  <script src="logique/bateaux.js?v=44"></script>
-  <script src="logique/portails.js?v=44"></script>
-  <script src="logique/sousmarins.js?v=44"></script>
-  <script src="logique/avions.js?v=44"></script>
-  <script src="logique/ordres.js?v=44"></script>
-  <script src="logique/radio.js?v=44"></script>
-  <script src="logique/engins.js?v=44"></script>
-  <script src="logique/progression.js?v=44"></script>
-  <script src="logique/equipement.js?v=44"></script>
-  <script src="logique/armes.js?v=44"></script>
-  <script src="logique/gadgets.js?v=44"></script>
-  <script src="logique/explosifs.js?v=44"></script>
-  <script src="donnees/sauvegarde.js?v=44"></script>
-  <script src="logique/monde.js?v=44"></script>
-  <script src="logique/campagne.js?v=44"></script>
-  <script src="logique/cinematique.js?v=44"></script>
-  <script src="affichage/outils3d.js?v=44"></script>
-  <script src="affichage/chars3d.js?v=44"></script>
-  <script src="affichage/armes3d.js?v=44"></script>
-  <script src="affichage/uniformes.js?v=44"></script>
-  <script src="affichage/engins3d.js?v=44"></script>
-  <script src="affichage/vehicules3d.js?v=44"></script>
-  <script src="affichage/helicos3d.js?v=44"></script>
-  <script src="affichage/avions3d.js?v=44"></script>
-  <script src="affichage/maisons3d.js?v=44"></script>
-  <script src="affichage/base3d.js?v=44"></script>
-  <script src="affichage/decor.js?v=44"></script>
-  <script src="affichage/marques-sol.js?v=44"></script>
-  <script src="affichage/effets.js?v=44"></script>
-  <script src="affichage/particules.js?v=44"></script>
-  <script src="affichage/tirs.js?v=44"></script>
-  <script src="affichage/explosions.js?v=44"></script>
-  <script src="affichage/explosifs3d.js?v=44"></script>
-  <script src="affichage/station3d.js?v=44"></script>
-  <script src="affichage/scene.js?v=44"></script>
-  <script src="affichage/qualite.js?v=44"></script>
-  <script src="affichage/tableau.js?v=44"></script>
-  <script src="affichage/sous-le-capot.js?v=44"></script>
-  <script src="affichage/sons.js?v=44"></script>
-  <script src="affichage/musique.js?v=44"></script>
-  <script src="affichage/barre-ordres.js?v=44"></script>
-  <script src="affichage/radio-voix.js?v=44"></script>
-  <script src="affichage/ambiance.js?v=44"></script>
-  <script src="affichage/plein-ecran.js?v=44"></script>
-  <script src="affichage/accueil.js?v=44"></script>
-  <script src="affichage/menu.js?v=44"></script>
-  <script src="affichage/progression-ecrans.js?v=44"></script>
-  <script src="affichage/campagne-tableau.js?v=44"></script>
-  <script src="affichage/campagne-ecrans.js?v=44"></script>
-  <script src="affichage/cinematique.js?v=44"></script>
-  <script src="main.js?v=44"></script>
+  <script src="config.js?v=45"></script>
+  <script src="moteur/evenements.js?v=45"></script>
+  <script src="moteur/bruit.js?v=45"></script>
+  <script src="moteur/entrees.js?v=45"></script>
+  <script src="moteur/grille.js?v=45"></script>
+  <script src="donnees/carte-du-jour.js?v=45"></script>
+  <script src="logique/base.js?v=45"></script>
+  <script src="logique/terrain.js?v=45"></script>
+  <script src="logique/souterrain.js?v=45"></script>
+  <script src="logique/structures.js?v=45"></script>
+  <script src="logique/char.js?v=45"></script>
+  <script src="logique/obus.js?v=45"></script>
+  <script src="logique/ia.js?v=45"></script>
+  <script src="logique/soldat.js?v=45"></script>
+  <script src="logique/troupes.js?v=45"></script>
+  <script src="logique/vehicules.js?v=45"></script>
+  <script src="logique/helicos.js?v=45"></script>
+  <script src="logique/bateaux.js?v=45"></script>
+  <script src="logique/portails.js?v=45"></script>
+  <script src="logique/sousmarins.js?v=45"></script>
+  <script src="logique/avions.js?v=45"></script>
+  <script src="logique/ordres.js?v=45"></script>
+  <script src="logique/radio.js?v=45"></script>
+  <script src="logique/engins.js?v=45"></script>
+  <script src="logique/progression.js?v=45"></script>
+  <script src="logique/equipement.js?v=45"></script>
+  <script src="logique/armes.js?v=45"></script>
+  <script src="logique/gadgets.js?v=45"></script>
+  <script src="logique/explosifs.js?v=45"></script>
+  <script src="donnees/sauvegarde.js?v=45"></script>
+  <script src="logique/monde.js?v=45"></script>
+  <script src="logique/campagne.js?v=45"></script>
+  <script src="logique/cinematique.js?v=45"></script>
+  <script src="affichage/outils3d.js?v=45"></script>
+  <script src="affichage/chars3d.js?v=45"></script>
+  <script src="affichage/armes3d.js?v=45"></script>
+  <script src="affichage/uniformes.js?v=45"></script>
+  <script src="affichage/engins3d.js?v=45"></script>
+  <script src="affichage/vehicules3d.js?v=45"></script>
+  <script src="affichage/helicos3d.js?v=45"></script>
+  <script src="affichage/avions3d.js?v=45"></script>
+  <script src="affichage/maisons3d.js?v=45"></script>
+  <script src="affichage/base3d.js?v=45"></script>
+  <script src="affichage/decor.js?v=45"></script>
+  <script src="affichage/marques-sol.js?v=45"></script>
+  <script src="affichage/effets.js?v=45"></script>
+  <script src="affichage/particules.js?v=45"></script>
+  <script src="affichage/tirs.js?v=45"></script>
+  <script src="affichage/explosions.js?v=45"></script>
+  <script src="affichage/explosifs3d.js?v=45"></script>
+  <script src="affichage/station3d.js?v=45"></script>
+  <script src="affichage/scene.js?v=45"></script>
+  <script src="affichage/qualite.js?v=45"></script>
+  <script src="affichage/tableau.js?v=45"></script>
+  <script src="affichage/sous-le-capot.js?v=45"></script>
+  <script src="affichage/sons.js?v=45"></script>
+  <script src="affichage/musique.js?v=45"></script>
+  <script src="affichage/barre-ordres.js?v=45"></script>
+  <script src="affichage/radio-voix.js?v=45"></script>
+  <script src="affichage/ambiance.js?v=45"></script>
+  <script src="affichage/plein-ecran.js?v=45"></script>
+  <script src="affichage/accueil.js?v=45"></script>
+  <script src="affichage/menu.js?v=45"></script>
+  <script src="affichage/progression-ecrans.js?v=45"></script>
+  <script src="affichage/campagne-tableau.js?v=45"></script>
+  <script src="affichage/campagne-ecrans.js?v=45"></script>
+  <script src="affichage/cinematique.js?v=45"></script>
+  <script src="main.js?v=45"></script>
 </body>
 </html>

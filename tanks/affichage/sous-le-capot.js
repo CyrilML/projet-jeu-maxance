@@ -94,11 +94,12 @@ Tanks.SousLeCapot = (function () {
     munitions: (d) => "🎒 Sac de munitions : réserve du " + d.arme + " pleine (" + d.reserve + "), grenades au complet",
     lampe: (d) => "🔦 Lampe " + (d.allumee ? "allumée" : "éteinte"),
     "plein-ecran": (d) => (d.actif ? "🖥️ Plein écran (K ou Échap pour sortir)" : "🖥️ Retour à la page"),
-    accueil: (d) => (d.mode === "campagne" ? "🎬 Tu entres dans la CAMPAGNE : la liste des chapitres" : "🏰 Tu quittes la page d'accueil : la musique se tait, place au menu"),
+    accueil: (d) => (d.mode === "film" ? "🎬 La bande-annonce du jeu commence (Entrée ou Échap : passer)" : d.mode === "campagne" ? "🎬 Tu entres dans la CAMPAGNE : la liste des chapitres" : "🏰 Tu quittes la page d'accueil : la musique se tait, place au menu"),
     // demande 101 : les cinématiques et les Battle Coins
     "cinematique-debut": (d) => "🎬 Film « " + d.titre + " » : " + d.plans + " plans, " + virgule(d.duree, 0) + " s · " + d.acteurs + " acteurs (" + d.groupes.join(", ") + ") · la bataille est FIGÉE (phase « cinematique ») · Entrée ou Échap : passer",
     "cinematique-plan": (d) => "🎞️ Plan " + d.numero + " / " + d.total + (d.nom ? " « " + d.nom + " »" : "") + " · caméra : " + d.camera + " · à " + virgule(d.t, 1) + " s",
     "cinematique-replique": (d) => "🎙️ " + d.nom + (d.radio ? " (à la radio)" : "") + " : « " + d.texte + " » (" + virgule(d.duree, 1) + " s · réplique " + d.numero + " / " + d.total + ")",
+    "cinematique-explosion": (d) => "💥 Explosion de cinéma (" + d.sorte + ", force " + virgule(d.force, 1) + ") en (" + Math.round(d.x) + " ; " + Math.round(d.z) + ") : rien n'est abîmé",
     "cinematique-action": (d) => "🪖 Le réalisateur : « " + d.acteur + " » → " + d.faire + " (" + d.soldats + " soldat" + (d.soldats > 1 ? "s" : "") + ", à " + virgule(d.t, 1) + " s)",
     "cinematique-fin": (d) => "🎬 Fin du film « " + d.titre + " » (" + virgule(d.duree, 0) + " s, " + d.dites + " répliques) : la caméra est derrière toi, à toi de jouer !",
     "cinematique-passee": (d) => "⏭️ Film « " + d.titre + " » passé à " + virgule(d.t, 1) + " / " + virgule(d.duree, 0) + " s (plan " + d.plan + " / " + d.plans + ") : à toi de jouer !",

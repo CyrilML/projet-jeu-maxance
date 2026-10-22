@@ -37,7 +37,7 @@ window.Tanks = window.Tanks || {};
   // (étape 77) le menu : il ne touche pas au monde lui-même, il fait des DEMANDES que le quartier-maître accepte
   Tanks.PleinEcran.initialiser(); // (étape 91 : ⛶ ou K)
   Tanks.Ambiance.initialiser(); // (étape 87 : le filtre « Battlefield »)
-  Tanks.Accueil.initialiser(); // (étape 84 : la page d'accueil, avec la musique)
+  Tanks.Accueil.initialiser((type) => type === "film" && monde.phase === "garage" && Tanks.Cinematique.lancer(monde, C.cinematiques.bandeAnnonce, { pour: "accueil" })); // (étape 84 : la page d'accueil, avec la musique ; demande 101 : la bande-annonce)
   Tanks.Menu.initialiser(monde, (type, valeur) => (type === "combat" ? Tanks.Monde.lancer(monde) : Tanks.Equipement.demander(monde, type, valeur)));
   Tanks.Progression.brancher(monde); // (demande 97 : le sergent instructeur et ses points d'expérience)
   Tanks.EcranProgression.initialiser(); // (demande 97 : « NIVEAU SUPÉRIEUR ! » et le bilan de fin de bataille)
