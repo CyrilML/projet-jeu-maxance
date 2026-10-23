@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 48,
+  version: 49,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -671,6 +671,7 @@ Tanks.CONFIG = {
   // ✍️ « Un menu avant de jouer : choisir son véhicule, sa classe, ses armes, ses gadgets et ses explosifs, puis modifier
   // son arme. » Les 4 CLASSES comme Battlefield. Pour chacune : 5 ou 6 armes principales (demande 97 ; tu en prends 1), 2 gadgets (tu
   // en prends 1 : touche 3) et 2 explosifs (tu en prends 1 : touche 4). Le pistolet reste toujours en arme 1.
+  // (livre de demandes n° 6) L'Ingénieur a en plus une ARME BONUS (touche 5) : « armesBonus ».
   // (demande 98) Le 1er gadget et le 1er explosif de chaque liste sont libres dès le début ; le 2e a un cadenas (son « niveau »).
   // vie : × la vie de ton soldat (l'Assaut : 25 % de plus). Seul TON soldat a une classe.
   classes: {
@@ -678,8 +679,12 @@ Tanks.CONFIG = {
       texte: "En première ligne : fusil d'assaut, lance-grenades sous le canon, et 25 % de vie en plus.",
       armes: ["ar4", "famas", "ak12", "g36", "scarh", "m870", "m870dragon"], gadgets: ["lanceGrenades", "sacMunitions"], explosifs: ["grenades", "fumigene"] },
     ingenieur: { nom: "Ingénieur", icone: "🔧", couleur: "#ffd23d", vie: 1,
-      texte: "Le chasseur de tanks : lance-roquettes, et il RÉPARE les tanks et les engins de son camp.",
-      armes: ["rpg7", "ump45", "at4", "javelin", "carlgustaf"], gadgets: ["reparation", "droneReparation"], explosifs: ["mineAT", "c4"] },
+      texte: "Le chasseur de tanks : lance-roquettes PLUS une arme bonus contre les soldats, et il RÉPARE les tanks et les engins de son camp.",
+      armes: ["rpg7", "at4", "javelin", "carlgustaf"], gadgets: ["reparation", "droneReparation"], explosifs: ["mineAT", "c4"],
+      // (livre de demandes n° 6) ✍️ « Faire en sorte que l'ingénieur ait le droit à une arme bonus en plus de son
+      // lance-roquettes. » L'ARME BONUS (touche 5) : une petite arme contre les soldats, EN PLUS du lance-roquettes (2)
+      // et du pistolet (1). Tu en choisis une dans cette liste (la 1re est libre dès le début ; les autres : leur « niveau »).
+      armesBonus: ["ump45", "mp5", "m870", "m4courte"] },
     eclaireur: { nom: "Éclaireur", icone: "🔭", couleur: "#7dff8a", vie: 1,
       texte: "Tireur de loin : fusil de précision avec lunette, et des JUMELLES qui marquent les ennemis.",
       armes: ["m110", "svd", "m24", "mk14", "lapua", "barrett"], gadgets: ["jumelles", "capteur"], explosifs: ["grenades", "claymore"] },
@@ -728,11 +733,16 @@ Tanks.CONFIG = {
       texte: "Le lance-roquettes : 1 roquette = 1 obus sur un tank.",
       degats: 1, cadence: 0.5, portee: 260, porteeEfficace: 260, degatsLoin: 1, chargeur: 1, reserve: 6, rechargement: 3,
       dispersion: 0.03, dispersionVisee: 0.008, recul: 0.03, visee: 0.45, mobilite: 0.93, bruit: 1.4, zoom: 1.5 },
-    // (demande 97) l'arme de défense de l'ingénieur : contre les soldats (mais plus de roquette contre les tanks !)
-    ump45: { nom: "UMP45", type: "Pistolet-mitrailleur (.45)", icone: "🔫", classe: "ingenieur", famille: "pm", niveau: 2,
-      texte: "Pour se défendre contre les soldats : de grosses balles lentes. Mais sans lance-roquettes, rien contre les tanks !",
+    // (demande 97) l'arme de défense de l'ingénieur ; (livre n° 6) c'est maintenant son ARME BONUS (touche 5), libre dès le début
+    ump45: { nom: "UMP45", type: "Pistolet-mitrailleur (.45)", icone: "🔫", classe: "ingenieur", famille: "pm", niveau: 0,
+      texte: "Pour se défendre contre les soldats : de grosses balles lentes. Ton lance-roquettes reste sur ton dos (touche 2) !",
       degats: 1, cadence: 0.09, portee: 95, porteeEfficace: 35, degatsLoin: 0.5, chargeur: 25, reserve: 175, rechargement: 2.1,
       dispersion: 0.03, dispersionVisee: 0.011, recul: 0.006, visee: 0.2, mobilite: 1.06, bruit: 0.9, zoom: 1.2 },
+    // (livre n° 6) la carabine COURTE de l'ingénieur (arme bonus) : un AR-4 au canon raccourci et à la crosse rentrée
+    m4courte: { nom: "M4 courte", type: "Carabine compacte", icone: "🔫", classe: "ingenieur", famille: "fusil", niveau: 7,
+      texte: "Un AR-4 tout court : il tire plus loin qu'un pistolet-mitrailleur et fait plus mal, mais il recule plus et on court un peu moins vite.",
+      degats: 1, cadence: 0.085, portee: 130, porteeEfficace: 50, degatsLoin: 0.55, chargeur: 30, reserve: 120, rechargement: 2.1,
+      dispersion: 0.03, dispersionVisee: 0.008, recul: 0.0075, visee: 0.21, mobilite: 1.03, bruit: 1.1, zoom: 1.25 },
     at4: { nom: "AT4", type: "Lance-roquettes rapide", icone: "🚀", classe: "ingenieur", famille: "roquettes", projectile: "at4", niveau: 5,
       texte: "Sa roquette vole 2 fois plus vite et presque droit : plus facile de toucher de loin.",
       degats: 1, cadence: 0.5, portee: 320, porteeEfficace: 320, degatsLoin: 1, chargeur: 1, reserve: 5, rechargement: 3.6,

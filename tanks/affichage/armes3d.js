@@ -668,8 +668,9 @@ Tanks.Armes3D = (function () {
   const FABRIQUES = {
     // ✍️ AR-4 : le fusil d'assaut classique (comme un M4) : carcasse en alu noir, crosse à tube réglable, garde-main
     // octogonal à fentes « M-LOK », rail sur toute la longueur, chargeur sable courbe.
-    ar4(e, p) {
-      const by = 0.045, A = K.anodise;
+    // (livre n° 6) « court » : la M4 COURTE de l'Ingénieur : le même fusil, garde-main et canon raccourcis, crosse rentrée.
+    ar4(e, p, court) {
+      const by = 0.045, A = K.anodise, rentre = court ? 0.06 : 0; // (m : la crosse rentrée de 6 cm)
       e.cote([[-0.072, 0.0], [-0.072, 0.03], [0.112, 0.03], [0.112, 0.012], [0.104, 0.0], [0.1, -0.038], [0.034, -0.038], [0.03, -0.006], [0.014, 0.0]], 0.032, "metal", A, 0, 0.003);
       e.cote([[-0.078, 0.03], [-0.078, 0.064], [0.116, 0.064], [0.116, 0.03]], 0.03, "metal", A, 0, 0.003);
       e.boite(0.045, 0.014, 0.002, 0.025, 0.046, 0.0158, "poly", K.fente); // la fenêtre d'éjection
@@ -679,32 +680,38 @@ Tanks.Armes3D = (function () {
       e.boite(0.194, 0.006, 0.022, 0.019, 0.066, 0, "metal", A);
       e.boite(0.014, 0.008, 0.006, -0.025, 0.012, 0.018, "metal", A); // le sélecteur de tir
       if (!crosseSpeciale(e, p, -0.072, by, K.noir)) {
-        e.tube(-0.262, -0.072, 0.0145, 0.0145, by, 0, "metal", A, 16); // le tube de crosse
+        const r = rentre;
+        e.tube(-0.262 + r, -0.072, 0.0145, 0.0145, by, 0, "metal", A, 16); // le tube de crosse
         e.tube(-0.084, -0.074, 0.019, 0.019, by, 0, "metal", A, 8);
         // la crosse réglable : le corps, l'appui-joue bombé, les 2 « poches » à piles sur les côtés, la plaque de couche
-        e.cote([[-0.2, 0.062], [-0.2, 0.026], [-0.3, -0.03], [-0.335, -0.048], [-0.342, -0.048], [-0.342, 0.074], [-0.33, 0.078], [-0.24, 0.07]], 0.04, "poly", K.noir, 0, 0.006, null, 2);
-        e.galet(0.12, 0.022, 0.046, -0.275, 0.072, 0, "poly", K.noir, 0.32);
-        for (const zz of [-1, 1]) e.galet(0.1, 0.034, 0.016, -0.262, 0.03, zz * 0.026, "poly", K.noir, 0.35, 12, 0, 0, 0.42);
-        e.boite(0.014, 0.126, 0.046, -0.348, 0.014, 0, "poly", K.caoutchouc);
-        e.boite(0.03, 0.01, 0.03, -0.22, 0.018, 0, "poly", K.noir, 0, 0, 0.5); // le levier de réglage
-        e.boite(0.016, 0.01, 0.03, -0.31, -0.03, 0, "metal", K.acier, 0, 0, 0.5); // l'anneau de la sangle
+        e.cote([[-0.2 + r, 0.062], [-0.2 + r, 0.026], [-0.3 + r, -0.03], [-0.335 + r, -0.048], [-0.342 + r, -0.048], [-0.342 + r, 0.074], [-0.33 + r, 0.078], [-0.24 + r, 0.07]], 0.04, "poly", K.noir, 0, 0.006, null, 2);
+        e.galet(0.12, 0.022, 0.046, -0.275 + r, 0.072, 0, "poly", K.noir, 0.32);
+        for (const zz of [-1, 1]) e.galet(0.1, 0.034, 0.016, -0.262 + r, 0.03, zz * 0.026, "poly", K.noir, 0.35, 12, 0, 0, 0.42);
+        e.boite(0.014, 0.126, 0.046, -0.348 + r, 0.014, 0, "poly", K.caoutchouc);
+        e.boite(0.03, 0.01, 0.03, -0.22 + r, 0.018, 0, "poly", K.noir, 0, 0, 0.5); // le levier de réglage
+        e.boite(0.016, 0.01, 0.03, -0.31 + r, -0.03, 0, "metal", K.acier, 0, 0, 0.5); // l'anneau de la sangle
       }
       poignee(e, "ar", K.noir);
       pontet(e, 0.008, 0.075, 0.0, A);
-      const ch = chargeur(e, { l: 0.15, p: 0.058, w: 0.022, k: 0.2, a: 0.05, coul: K.fde, nervures: "pmag", double: true }, p.chargeur, 0.067, -0.03);
+      const ch = chargeur(e, { l: 0.15, p: 0.058, w: 0.022, k: 0.2, a: 0.05, coul: court ? K.noir : K.fde, nervures: "pmag", double: true }, p.chargeur, 0.067, -0.03);
       // le garde-main octogonal, ses fentes M-LOK, son rail du haut, ses petits rails dessous et à gauche
-      const hg = 0.44;
+      const hg = court ? 0.31 : 0.44;
       e.tube(0.116, hg, 0.028, 0.028, by, 0, "metal", A, 8, Math.PI / 8);
       e.tube(hg - 0.004, hg, 0.0295, 0.0295, by, 0, "metal", 0x18191b, 8, Math.PI / 8);
       if (!e.leger) for (let x = 0.16; x < hg - 0.03; x += 0.05) for (const s of [-1, 1]) e.boite(0.032, 0.007, 0.004, x, by, s * 0.026, "poly", K.fente);
       const yr = rail(e, -0.076, hg - 0.004, 0.069, 0);
-      const yb = rail(e, 0.28, hg - 0.02, by - 0.027, 0, "bas");
+      const yb = rail(e, hg - 0.16, hg - 0.02, by - 0.027, 0, "bas");
       rail(e, hg - 0.08, hg - 0.006, by, -0.027, "gauche");
-      const lc = LONGUEUR_CANON(p.canon, 0.105, 0.2, 0.03, 0.06);
+      const lc = court ? LONGUEUR_CANON(p.canon, 0.06, 0.12, 0.025) : LONGUEUR_CANON(p.canon, 0.105, 0.2, 0.03, 0.06);
       canonTube(e, p, hg, hg + lc, by, 0.0095);
       const tip = bout(e, p.bouche, hg + lc, by, 0.0095, "a2");
-      return { by, tip, ch, rail: { xa: -0.075, xb: hg - 0.01, y: yr }, dessous: { x: 0.36, y: yb, rail: true }, garde: { centre: V3(0.24, by - 0.03), axe: V3(1, 0, 0), sorte: "dessous" },
-        lampe: { x: hg - 0.012, y: by, z: -0.037, sens: -1 }, laser: { x: hg - 0.07, y: yr, z: 0, sens: "haut" }, ejection: V3(0.025, 0.047, 0.017), mireAvant: hg - 0.03, mireArriere: -0.06, crosse: -0.35 };
+      return { by, tip, ch, rail: { xa: -0.075, xb: hg - 0.01, y: yr }, dessous: { x: hg - 0.08, y: yb, rail: true }, garde: { centre: V3(Math.min(0.24, hg - 0.09), by - 0.03), axe: V3(1, 0, 0), sorte: "dessous" },
+        lampe: { x: hg - 0.012, y: by, z: -0.037, sens: -1 }, laser: { x: hg - 0.07, y: yr, z: 0, sens: "haut" }, ejection: V3(0.025, 0.047, 0.017), mireAvant: hg - 0.03, mireArriere: -0.06, crosse: -0.35 + rentre };
+    },
+    // ✍️ (livre de demandes n° 6) M4 COURTE : l'arme bonus de l'Ingénieur. C'est l'AR-4 en version courte (comme une
+    // carabine de commando) : un garde-main de 19 cm au lieu de 32, un canon plus court, la crosse rentrée, un chargeur noir.
+    m4courte(e, p) {
+      return FABRIQUES.ar4(e, p, true);
     },
 
     // ✍️ FAMAS : le « clairon » français. Un « bullpup » : le chargeur est DERRIÈRE la poignée (l'arme est courte), et la
@@ -1749,7 +1756,7 @@ Tanks.Armes3D = (function () {
     const qualite = s.joueur ? "beau" : pres ? "jeu" : "simple";
     let m = memoire.get(s);
     if (!m) memoire.set(s, (m = {}));
-    const enMain = s.armes ? (s.arme === "pistolet" ? s.armes.pistolet : s.armes.principale) : null;
+    const enMain = s.armes ? Tanks.Armes.enMain(s) : null; // (livre n° 6 : le pistolet, l'arme principale ou l'arme bonus)
     const signe = enMain ? enMain.id + ":" + (s.gadget && s.gadget.id) : (s.roquettesIA ? "R" : "") + s.arme, pieces = enMain ? enMain.pieces : null;
     if (m.signe !== signe || m.pieces !== pieces) (m.beau = m.jeu = m.simple = null), (m.signe = signe), (m.pieces = pieces);
     return m[qualite] || (m[qualite] = trouverPourSoldat(s, qualite));
@@ -1757,7 +1764,7 @@ Tanks.Armes3D = (function () {
   function trouverPourSoldat(s, qualite) {
     let id, pieces, lg = false;
     if (s.armes) { // toi : ton équipement exact
-      const enMain = s.arme === "pistolet" ? s.armes.pistolet : s.armes.principale;
+      const enMain = Tanks.Armes.enMain(s);
       id = enMain.id;
       pieces = enMain.pieces;
       lg = s.gadget && s.gadget.id === "lanceGrenades";
@@ -1778,7 +1785,7 @@ Tanks.Armes3D = (function () {
     else for (const o of monde.soldats) if (o.nom === e.tireur && o.equipe === e.equipeTireur) { s = o; break; }
     if (!s) return "ak"; // (une mitrailleuse de véhicule)
     let id, pieces;
-    if (s.armes) { const A = s.arme === "pistolet" ? s.armes.pistolet : s.armes.principale; id = A.id; pieces = A.pieces || {}; }
+    if (s.armes) { const A = Tanks.Armes.enMain(s); id = A.id; pieces = A.pieces || {}; }
     else { const c = armeIA(s.nom || "?", s.equipe, !!s.roquettesIA); id = c.id; pieces = c.pieces; }
     if (pieces.bouche === "silencieux") return "silencieux"; // (demande 97 : le silencieux est dans la « bouche »)
     const F = fiche(id);
@@ -2001,7 +2008,7 @@ Tanks.Armes3D = (function () {
   }
   function majLumieres(monde, cam, scene, s) {
     preparerLumieres(scene);
-    const A = s && s.armes && s.armes.principale, st = A && A.stats, enMain = s && s.arme !== "pistolet" && !s.mort && !s.nage && !s.dansUnEngin;
+    const A = s && s.armes && (s.arme === "bonus" && s.armes.bonus ? s.armes.bonus : s.armes.principale), st = A && A.stats, enMain = s && s.arme !== "pistolet" && !s.mort && !s.nage && !s.dansUnEngin; // (livre n° 6 : la lampe de l'arme bonus)
     const modele = V.actif ? V.modele : armeDuJoueur && armeDuJoueur.modele;
     const allume = !!(enMain && st && st.lampe && s.lampeAllumee && modele && modele.lampe);
     if (!LM.spot && st && st.lampe) {
@@ -2168,7 +2175,7 @@ Tanks.Armes3D = (function () {
     preparerVue();
     V.t += dt;
     // 1. quelle arme en main ? (les grenades et la plupart des gadgets : l'arme est baissée hors de l'écran)
-    const tenue = s.arme === "pistolet" ? s.armes.pistolet : s.armes.principale;
+    const tenue = Tanks.Armes.enMain(s); // (livre n° 6 : ou l'arme bonus)
     const range = s.arme === "grenades" || (s.arme === "gadget" && s.gadget.id !== "lanceGrenades");
     const lg = s.gadget && s.gadget.id === "lanceGrenades";
     const voulu = fabriquer(tenue.id, tenue.pieces, "beau", { lanceGrenades: lg });

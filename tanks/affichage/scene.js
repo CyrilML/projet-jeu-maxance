@@ -812,7 +812,7 @@ Tanks.Scene = (function () {
     }
     // (étape 77) épaulé (V ou clic droit) : la caméra ZOOME selon le viseur de ton arme (une lunette ×6 : 6 fois plus près)
     const toiPied = monde.phase !== "garage" && monde.toi && monde.toi.mode === "pied" && monde.toi.soldat.armes ? monde.toi.soldat : null;
-    const zoom = !toiPied ? 1 : 1 + ((toiPied.arme === "gadget" && toiPied.gadget.id === "jumelles" ? toiPied.gadget.fiche.zoom : toiPied.arme === "pistolet" || toiPied.arme === "principale" ? toiPied.armes[toiPied.arme].stats.zoom : 1) - 1) * (toiPied.visee || 0);
+    const zoom = !toiPied ? 1 : 1 + ((toiPied.arme === "gadget" && toiPied.gadget.id === "jumelles" ? toiPied.gadget.fiche.zoom : Tanks.Armes.estUneArme(toiPied) ? Tanks.Armes.enMain(toiPied).stats.zoom : 1) - 1) * (toiPied.visee || 0);
     if (Math.abs(cam.fov - C.camera.champ / zoom) > 0.01) (cam.fov = C.camera.champ / zoom), cam.updateProjectionMatrix();
     // (étape 79) dans la lunette, la caméra suit ta RESPIRATION (le « 8 » de logique/armes.js) : on la lit, sans rien changer
     const bal = (zoom > 2.5 && toiPied.balancement) || { x: 0, y: 0 }, aV = toiPied ? toiPied.angle + bal.x : 0;

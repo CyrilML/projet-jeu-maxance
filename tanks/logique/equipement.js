@@ -2,6 +2,8 @@
 //
 // ✍️ « Un menu avant de jouer : choisir son véhicule, sa classe, ses armes, ses gadgets et ses explosifs, puis modifier
 // son arme. » Le quartier-maître, c'est celui qui tient le magasin de la caserne :
+//   - (livre de demandes n° 6) ✍️ « l'ingénieur a le droit à une arme bonus en plus de son lance-roquettes » : il range
+//     aussi l'ARME BONUS de la classe (config.js : « armesBonus ») et la met dans la 3e main de ton soldat (touche 5) ;
 //   - il note tes choix (ta classe, ton arme, ton pistolet, ton gadget, ton explosif, les pièces de chaque arme) dans ton livret ;
 //   - il CALCULE les vrais chiffres de ton arme avec ses pièces : on part des chiffres de l'arme, puis chaque pièce les
 //     multiplie (× 1,25 pour la portée d'un canon long…) ou en ajoute (+ 0,05 s pour épauler…) ;
@@ -55,7 +57,10 @@ Tanks.Equipement = (function () {
     const arme = debloquee(K.armes, (e.armes || {})[classe]), gadget = libre("gadget", (e.gadgets || {})[classe]), explosif = libre("explosif", (e.explosifs || {})[classe]);
     const pistolet = debloquee(Object.keys(C.pistolets), e.pistolet);
     const pieces = piecesValides(arme, (e.pieces || {})[arme]), piecesPistolet = piecesValides(pistolet, (e.pieces || {})[pistolet]);
-    return { classe, arme, gadget, explosif, pieces, pistolet, piecesPistolet };
+    // (livre n° 6) l'ARME BONUS : seulement pour une classe qui a une liste « armesBonus » (l'Ingénieur) ; sinon null
+    const bonus = K.armesBonus ? debloquee(K.armesBonus, (e.bonus || {})[classe]) : null;
+    const piecesBonus = bonus ? piecesValides(bonus, (e.pieces || {})[bonus]) : null;
+    return { classe, arme, gadget, explosif, pieces, pistolet, piecesPistolet, bonus, piecesBonus };
   }
   // Les pièces enregistrées pour N'IMPORTE QUELLE arme (l'armurerie montre aussi les armes que tu n'as pas en main).
   const piecesPour = (armeId) => piecesValides(armeId, (S().equipement.pieces || {})[armeId]);
@@ -88,7 +93,8 @@ Tanks.Equipement = (function () {
   }
 
   // Les DEMANDES du menu : "carte" (étape 80 : "bataille" ou "souterrain"), "char" (l'id d'un tank), "classe", "arme",
-  // "pistolet" (demande 97), "gadget", "explosif", "piece" ({ arme, emplacement, id } ; sans « arme » : ton arme principale).
+  // "pistolet" (demande 97), "bonus" (livre n° 6 : l'arme bonus de l'Ingénieur), "gadget", "explosif", "piece" ({ arme,
+  // emplacement, id } ; sans « arme » : ton arme principale).
   // (demande 97) Une demande pour une chose sous cadenas est REFUSÉE : la radio annonce « verrouille » (et pourquoi).
   function refuser(nom, raison) {
     radio.emettre("verrouille", { nom, raison });
@@ -112,13 +118,14 @@ Tanks.Equipement = (function () {
       if (!C.classes[valeur]) return false;
       e.classe = valeur;
       radio.emettre("classe", { nom: C.classes[valeur].nom, icone: C.classes[valeur].icone });
-    } else if (type === "arme" || type === "pistolet") {
-      const liste = type === "pistolet" ? Object.keys(C.pistolets) : C.classes[c.classe].armes;
+    } else if (type === "arme" || type === "pistolet" || type === "bonus") {
+      const liste = type === "pistolet" ? Object.keys(C.pistolets) : type === "bonus" ? C.classes[c.classe].armesBonus || [] : C.classes[c.classe].armes;
       if (!liste.includes(valeur)) return false;
       if (!PR().armeDebloquee(valeur)) return refuser(fiche(valeur).nom, "débloqué au niveau de joueur " + fiche(valeur).niveau + " (tu es niveau " + PR().niveauJoueur().niveau + ")");
       if (type === "pistolet") e.pistolet = valeur;
+      else if (type === "bonus") (e.bonus = e.bonus || {})[c.classe] = valeur; // (livre n° 6)
       else e.armes[c.classe] = valeur;
-      radio.emettre("arme-choisie", { nom: fiche(valeur).nom, type: fiche(valeur).type, niveau: PR().niveauArme(valeur).niveau });
+      radio.emettre("arme-choisie", { nom: fiche(valeur).nom, type: fiche(valeur).type, niveau: PR().niveauArme(valeur).niveau, bonus: type === "bonus" });
     } else if (type === "gadget" || type === "explosif") {
       const liste = C.classes[c.classe][type + "s"];
       if (!liste.includes(valeur)) return false;
@@ -151,6 +158,7 @@ Tanks.Equipement = (function () {
       return { id, stats: st, pieces: pieces || null, chargeur: st.chargeur, reserve: st.reserve };
     };
     s.armes = { pistolet: arme(c.pistolet, c.piecesPistolet), principale: arme(c.arme, c.pieces) };
+    if (c.bonus) s.armes.bonus = arme(c.bonus, c.piecesBonus); // (livre n° 6 : l'arme bonus de l'Ingénieur, touche 5)
     s.gadget = { id: c.gadget, fiche: C.gadgets[c.gadget], attente: 0, munitions: C.gadgets[c.gadget].munitions || 0, regain: 0, part: 0 };
     s.explosif = c.explosif;
     Tanks.Explosifs.equiper(s); // (demande 98 : tes mines, ton C4, ta claymore ou tes fumigènes)
@@ -162,9 +170,9 @@ Tanks.Equipement = (function () {
     return c;
   }
 
-  // (étape 77) Touche L : allumer / éteindre la lampe de ton arme.
+  // (étape 77) Touche L : allumer / éteindre la lampe de ton arme (livre n° 6 : ou de ton arme bonus).
   function basculerLampe(s) {
-    if (!s.armes || !s.armes.principale.stats.lampe) return;
+    if (!s.armes || !(s.armes.principale.stats.lampe || (s.armes.bonus && s.armes.bonus.stats.lampe))) return;
     s.lampeAllumee = !s.lampeAllumee;
     radio.emettre("lampe", { allumee: s.lampeAllumee });
   }

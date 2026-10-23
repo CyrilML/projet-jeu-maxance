@@ -41,12 +41,16 @@
 //   15 (demande 102 : ✍️ « tout se débloque trop rapidement ») : les niveaux demandent plus de points. Pour que tu ne
 //     PERDES RIEN, tes points (et ceux de chaque arme) sont recalculés : même niveau qu'avant, et la même part de la
 //     barre déjà remplie (à moitié avant = à moitié maintenant). C'est seulement la suite qui sera plus lente.
+//   16 (livre de demandes n° 6 : ✍️ « une arme bonus en plus de son lance-roquettes ») : + equipement.bonus (pour
+//     chaque classe qui en a une, l'arme bonus choisie : l'Ingénieur). Le UMP45 quitte la liste des lance-roquettes pour
+//     celle des armes bonus : un Ingénieur qui avait pris le UMP45 garde le UMP45 en arme bonus, et reprend le RPG-7
+//     comme lance-roquettes. Tout le reste est gardé.
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 15; // (étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents)
+  const VERSION = 16; // (étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents ; livre n° 6 : + l'arme bonus)
   const radio = Tanks.Evenements;
 
   function vide() {
@@ -59,8 +63,9 @@ Tanks.Sauvegarde = (function () {
   }
   // (étape 77) L'équipement de départ : pour chaque classe, sa 1re arme, son 1er gadget et son 1er explosif ; pour chaque arme, les pièces d'origine.
   function equipementDeDepart() {
-    const C = Tanks.CONFIG, e = { classe: "assaut", armes: {}, gadgets: {}, explosifs: {}, pieces: {}, pistolet: Object.keys(C.pistolets)[0] }; // (demande 97 : + le pistolet)
+    const C = Tanks.CONFIG, e = { classe: "assaut", armes: {}, gadgets: {}, explosifs: {}, pieces: {}, pistolet: Object.keys(C.pistolets)[0], bonus: {} }; // (demande 97 : + le pistolet ; livre n° 6 : + l'arme bonus)
     for (const k in C.classes) (e.armes[k] = C.classes[k].armes[0]), (e.gadgets[k] = C.classes[k].gadgets[0]), (e.explosifs[k] = C.classes[k].explosifs[0]);
+    for (const k in C.classes) if (C.classes[k].armesBonus) e.bonus[k] = C.classes[k].armesBonus[0]; // (livre n° 6)
     for (const a of Object.keys(C.armesPrincipales).concat(Object.keys(C.pistolets))) { // (demande 97 : les pistolets ont aussi leurs pièces)
       e.pieces[a] = {};
       for (const emp in C.atelier) e.pieces[a][emp] = C.atelier[emp].pieces[0].id;
@@ -131,6 +136,20 @@ Tanks.Sauvegarde = (function () {
     for (const id in pr.armes || {}) pr.armes[id] = reechelonner(pr.armes[id], P.ancien.arme, P.arme, P.arme.max);
   }
 
+  // (livre n° 6) Une sauvegarde d'avant la version 16 : l'arme principale d'une classe qui est maintenant une arme BONUS
+  // (le UMP45 de l'Ingénieur) devient son arme bonus, et la classe reprend sa 1re arme principale (le RPG-7).
+  function convertir16(d) {
+    const C = Tanks.CONFIG, e = d.equipement, changes = [];
+    for (const k in C.classes) {
+      const K = C.classes[k], a = e.armes[k];
+      if (!K.armesBonus || K.armes.includes(a) || !K.armesBonus.includes(a)) continue;
+      e.bonus[k] = a;
+      e.armes[k] = K.armes[0];
+      changes.push(K.nom + " : " + a + " → arme bonus, " + K.armes[0] + " → arme principale");
+    }
+    return changes;
+  }
+
   let donnees = vide();
   function lire() {
     try {
@@ -143,7 +162,8 @@ Tanks.Sauvegarde = (function () {
         if ((ancienne.version || 1) < 13) convertir13(donnees, ancienne); // (demande 97)
         const coins = (ancienne.version || 1) < 14 ? convertir14(donnees) : 0; // (demande 101)
         if ((ancienne.version || 1) < 15) convertir15(donnees); // (demande 102)
-        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins });
+        const bonus = (ancienne.version || 1) < 16 ? convertir16(donnees) : []; // (livre n° 6)
+        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins, bonus });
       }
     } catch (e) {
       donnees = vide();

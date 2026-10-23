@@ -225,6 +225,7 @@
       <a href="#etape102">Étape 102</a>
       <a href="#etape103">Étape 103</a>
       <a href="#etape104">Étape 104</a>
+      <a href="#etape105">Étape 105</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5339,6 +5340,41 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape105">
+      <h2>🎁 Étape 105 : l'arme bonus de l'ingénieur <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">L'ingénieur garde son lance-roquettes (touche 2) et porte en plus une arme bonus (touche 5). Demande n° 6 de ton livre. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/105-arme-bonus-ingenieur.md</code>.</p>
+          <ul>
+            <li>✍️ « Faire en sorte que l'ingénieur ait le droit à une arme bonus en plus de son lance-roquettes. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 49 ».</li>
+            <li>☐ Armurerie de l'ingénieur : le groupe « 🎁 Arme bonus (arme 5) » : UMP45, MP5, M870, et la nouvelle M4 courte (niveau 7).</li>
+            <li>☐ En bataille : 2 = lance-roquettes, 5 = arme bonus.</li>
+            <li>☐ Les ennemis abattus avec l'arme bonus lui donnent ses points.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🧳 Un emplacement de plus</h3>
+      <p>Avant, l'ingénieur devait CHOISIR : un lance-roquettes OU l'UMP45. Maintenant, son « sac » a un emplacement de plus, rangé à part dans la sauvegarde (<code>equipement.bonus</code>). Comme la forme de la sauvegarde a changé, elle est passée en version 16 : un ingénieur qui avait l'UMP45 reçoit le RPG-7 en lance-roquettes, et garde son UMP45 en arme bonus, avec ses pièces.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot : la ligne « 🎁 ton arme bonus (5) ».</li>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>armesBonus</code> : la liste des armes bonus.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Quelle touche prend l'arme bonus ? <span class="petit">(5)</span></li>
+            <li>Les autres classes ont-elles une arme bonus ? <span class="petit">(non, seulement l'ingénieur)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6708,6 +6744,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-104" data-cle="appris-104" placeholder="Ex. : …"></textarea>
         <label for="idees-104"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-104" data-cle="idees-104" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 105 · l'arme bonus de l'ingénieur <span class="petit">· 23 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/logique/equipement.js</code>, <code>armes.js</code>, <code>donnees/sauvegarde.js</code> (version 16), <code>affichage/menu.js</code>, <code>tableau.js</code>.</p>
+        <p class="petit">✍️ Maxance a demandé : une arme bonus pour l'ingénieur.</p>
+        <label for="appris-105"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-105" data-cle="appris-105" placeholder="Ex. : …"></textarea>
+        <label for="idees-105"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-105" data-cle="idees-105" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

@@ -105,7 +105,7 @@ window.Tanks = window.Tanks || {};
           gaucheAppui: E.consommer("gauche"), droiteAppui: E.consommer("droite"),
           valider: E.consommer("valider"), recommencer: E.consommer("recommencer"), retour: E.consommer("retour"),
           ordre: ordre, // (étape 65 : donné à un seul petit pas)
-          monter: E.consommer("monter"), arme1: E.consommer("arme1"), arme2: E.consommer("arme2"), arme3: E.consommer("arme3"), arme4: E.consommer("arme4"), // (étapes 61 et 75)
+          monter: E.consommer("monter"), arme1: E.consommer("arme1"), arme2: E.consommer("arme2"), arme3: E.consommer("arme3"), arme4: E.consommer("arme4"), arme5: E.consommer("arme5"), // (étapes 61 et 75 ; livre n° 6 : 5 l'arme bonus)
           decharger: E.consommer("decharger"), // (étape 71 : F, dans le camion)
           accroupir: E.consommer("accroupir"), // (demande 92 : X, à pied)
           viser: E.estEnfoncee("viser"), souffle: E.estEnfoncee("souffle"), recharger: E.consommer("recharger"), // (étape 77)

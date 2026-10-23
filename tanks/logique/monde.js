@@ -326,8 +326,9 @@ Tanks.Monde = (function () {
     if (enJeu && intentions.monter) sortirOuMonter(monde);
     if (toi) {
       // (étape 77) 1 pistolet, 2 ton arme principale, 3 ton gadget, 4 ton explosif (demande 98 : grenades, ou ta poche d'explosifs)
-      for (const [k, arme] of [["arme1", "pistolet"], ["arme2", "principale"], ["arme3", "gadget"], ["arme4", "grenades"]]) {
-        if (intentions[k] && toi.arme !== arme) {
+      // (livre de demandes n° 6) 5 : l'arme bonus de l'Ingénieur (les autres classes n'en ont pas : la touche 5 ne fait rien)
+      for (const [k, arme] of [["arme1", "pistolet"], ["arme2", "principale"], ["arme3", "gadget"], ["arme4", "grenades"], ["arme5", "bonus"]]) {
+        if (intentions[k] && toi.arme !== arme && (arme !== "bonus" || (toi.armes && toi.armes.bonus))) {
           toi.arme = arme;
           const poche = arme === "grenades" && toi.poche;
           const f = poche ? C.explosifs[poche.id] : arme === "grenades" ? C.armes.grenades : arme === "gadget" ? toi.gadget.fiche : toi.armes[arme].stats;

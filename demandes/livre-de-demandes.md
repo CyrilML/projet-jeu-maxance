@@ -8,7 +8,7 @@ On commence par les fusils à pompe (demande 103), puis on suit la liste dans l'
 3. ✅ Faire des voix plus réalistes et plus humaines. (demande 104, version 48)
 4. ✅ Refaire le menu dans le mode détail. (demande 104, version 48)
 5. ✅ Lancer les déblocages. (étapes 97, 98, 102)
-6. ⬜ L'ingénieur a droit à une arme bonus en plus de son lance-roquettes.
+6. ✅ L'ingénieur a droit à une arme bonus en plus de son lance-roquettes. (demande 105, version 49)
 7. ⬜ Un menu d'achats (ex. : un pack de skins de véhicules, avec des avancements de jeu).
 8. ⬜ Pouvoir entrer dans les maisons.
 9. ⬜ Une map en ville très réaliste.

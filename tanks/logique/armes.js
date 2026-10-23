@@ -1,6 +1,7 @@
 // 🔫 LES ARMES : le moniteur de tir (étape 77)
 //
-// ✍️ « Des armes avec de vrais effets. » Ton arme (le pistolet en 1, ton arme principale en 2) n'est plus une simple
+// ✍️ « Des armes avec de vrais effets. » Ton arme (le pistolet en 1, ton arme principale en 2, et pour l'Ingénieur son
+// arme bonus en 5 : livre de demandes n° 6) n'est plus une simple
 // « chance de toucher » : elle a une vraie mécanique, comme dans les jeux de tir.
 //   - le CHARGEUR : chaque balle en enlève une. Vide ? Il faut RECHARGER (touche R) : ça prend du temps (rechargement),
 //     et les balles viennent de ta RÉSERVE (le pistolet en a toujours).
@@ -40,9 +41,10 @@ Tanks.Armes = (function () {
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   const vehicules = [];
 
-  // L'arme que tu tiens (les gadgets et les explosifs se tiennent avec l'arme principale)
-  const enMain = (s) => (s.arme === "pistolet" ? s.armes.pistolet : s.armes.principale);
-  const estUneArme = (s) => s.arme === "pistolet" || s.arme === "principale";
+  // L'arme que tu tiens (les gadgets et les explosifs se tiennent avec l'arme principale). (livre n° 6) « bonus » :
+  // l'arme bonus de l'Ingénieur (touche 5).
+  const enMain = (s) => (s.arme === "pistolet" ? s.armes.pistolet : s.arme === "bonus" && s.armes.bonus ? s.armes.bonus : s.armes.principale);
+  const estUneArme = (s) => s.arme === "pistolet" || s.arme === "principale" || (s.arme === "bonus" && !!s.armes.bonus);
 
   // Les véhicules ennemis qu'un lance-roquettes peut viser.
   function vehiculesEnnemis(s, monde) {
@@ -241,7 +243,7 @@ Tanks.Armes = (function () {
     // la visibilité : la lampe allumée et le laser se voient de loin
     // (demande 97) toutes les pièces comptent (le cache-flamme et le camouflage te cachent un peu, l'or te montre…) ; une
     // lampe éteinte (L) ne se voit pas. Les soldats de l'ordinateur te remarquent d'autant plus loin (logique/troupes.js).
-    const lampeEteinte = st.lampe && !(A === s.armes.principale && s.lampeAllumee);
+    const lampeEteinte = st.lampe && !((A === s.armes.principale || A === s.armes.bonus) && s.lampeAllumee);
     s.visibilite = st.visibilite - (lampeEteinte ? st.visibiliteLampe : 0);
     // 3. le rechargement
     if (s.rechargement > 0) {
@@ -300,5 +302,5 @@ Tanks.Armes = (function () {
     return st.mobilite * (1 + (TIR.viseeLent - 1) * s.visee);
   }
 
-  return { avancer, mobilite, dispersion, enMain, chercherCible, pointVise, chute, sousLaCroix, bruler };
+  return { avancer, mobilite, dispersion, enMain, estUneArme, chercherCible, pointVise, chute, sousLaCroix, bruler };
 })();

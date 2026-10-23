@@ -18,6 +18,7 @@ Tanks.Entrees = (function () {
     monter: ["KeyE"], // étape 61 : sortir du tank, monter dans un engin
     arme1: ["Digit1", "Numpad1"], arme2: ["Digit2", "Numpad2"], arme3: ["Digit3", "Numpad3"], // étape 61 : les armes à pied
     arme4: ["Digit4", "Numpad4"], // étape 75 : les grenades
+    arme5: ["Digit5", "Numpad5"], // livre de demandes n° 6 : l'arme bonus de l'Ingénieur
     valider: ["Enter", "NumpadEnter"],
     recommencer: ["KeyR"],
     recharger: ["KeyR"], // étape 77 : à pied, pendant la bataille, R recharge ton arme

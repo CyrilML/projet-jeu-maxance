@@ -88,6 +88,7 @@ Tanks.Gadgets = (function () {
     } else if (g.id === "sacMunitions") {
       const A = s.armes.principale;
       A.reserve = A.stats.reserve;
+      if (s.armes.bonus) s.armes.bonus.reserve = s.armes.bonus.stats.reserve; // (livre n° 6 : l'arme bonus aussi)
       s.grenades = C.grenades.nombre;
       Tanks.Explosifs.remplir(s, 1); // (demande 98 : et 1 explosif de plus : mine, C4, claymore ou fumigène)
       g.attente = F.attente;

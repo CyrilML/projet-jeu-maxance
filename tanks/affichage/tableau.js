@@ -246,29 +246,33 @@ Tanks.Tableau = (function () {
     if (t.mode === "pied") {
       // le viseur : 40 m devant toi, à hauteur d'homme
       const v = Tanks.Scene.versEcran(s.x + Math.cos(s.angle) * 40, s.y + 1.4, s.z + Math.sin(s.angle) * 40, L, H);
-      const dansLaLunette = s.armes && s.visee > 0.6 && (s.arme === "pistolet" || s.arme === "principale") && s.armes[s.arme].stats.lunette; // (étape 89 : la croix de la lunette suffit)
+      const dansLaLunette = s.armes && s.visee > 0.6 && Tanks.Armes.estUneArme(s) && Tanks.Armes.enMain(s).stats.lunette; // (étape 89 : la croix de la lunette suffit)
       if (v && !s.parachute && !dansLaLunette) viseur(v, false, 10);
-      panneau(12, H - 118, 436, 106);
+      const larg = s.armes && s.armes.bonus ? 536 : 436; // (livre n° 6 : avec l'arme bonus, 5 cases : le cadre s'élargit)
+      panneau(12, H - 118, larg, 106);
       texte(s.parachute ? "🪂 En parachute…" : "🪖 À pied", 24, H - 92, 17, "#ffe27a");
       barreVie(24, H - 80, 200, s);
       // (étape 77) tes 4 armes : 1 pistolet, 2 ton arme, 3 ton gadget, 4 les grenades
+      // (livre de demandes n° 6) l'Ingénieur a une 5e case : 5 son arme bonus (les 5 cases sont alors un peu plus étroites)
       if (s.armes) {
         const g = s.gadget, noms = [["pistolet", "🔫 " + s.armes.pistolet.stats.nom], ["principale", s.armes.principale.stats.icone + " " + s.armes.principale.stats.nom], ["gadget", g.fiche.icone + " " + g.fiche.nom], ["grenades", s.poche ? C.explosifs[s.poche.id].icone + " ×" + s.poche.nombre : "💣 ×" + s.grenades]]; // (demande 98 : ton explosif)
+        if (s.armes.bonus) noms.push(["bonus", "🎁 " + s.armes.bonus.stats.nom]);
+        const pas = 104;
         noms.forEach(([a, nom], i) => {
-          const x = 24 + i * 104, choisi = s.arme === a;
+          const x = 24 + i * pas, choisi = s.arme === a;
           ctx.fillStyle = choisi ? "rgba(255,207,90,.3)" : "rgba(255,255,255,.08)";
-          ctx.fillRect(x, H - 58, 98, 24);
-          texteAjuste(i + 1 + " " + nom, x + 49, H - 41, 11, choisi ? "#ffe27a" : "#ccc", 92); // (livre n° 1 : le nom tient dans sa case)
+          ctx.fillRect(x, H - 58, pas - 6, 24);
+          texteAjuste((a === "bonus" ? 5 : i + 1) + " " + nom, x + (pas - 6) / 2, H - 41, 11, choisi ? "#ffe27a" : "#ccc", pas - 12); // (livre n° 1 : le nom tient dans sa case)
         });
-        if (s.arme === "pistolet" || s.arme === "principale") {
-          const A = s.armes[s.arme], st = A.stats;
+        if (Tanks.Armes.estUneArme(s)) {
+          const A = Tanks.Armes.enMain(s), st = A.stats;
           barre(24, H - 28, 200, s.rechargement > 0 ? 1 - s.rechargement / st.rechargement : A.chargeur / st.chargeur, A.chargeur > 0 && !s.rechargement, s.rechargement > 0 ? "🔄 recharge…" : A.chargeur === 0 ? "R : recharger" : ""); // (livre n° 1 : les balles sont déjà écrites en gros, en bas à droite)
           // les munitions en gros, en bas à droite, et le point du laser
           const xm = IU.vitesseAPied ? 0 : 150; // (livre n° 1 : sans la vitesse, les munitions vont tout à droite)
           panneau(L - 300 + xm, H - 70, 140, 58);
           texte(A.chargeur + "", L - 200 + xm, H - 26, 34, A.chargeur === 0 ? "#ff7a6a" : "#fff", "right");
           texte("/ " + (A.reserve === Infinity ? "∞" : A.reserve), L - 194 + xm, H - 26, 14, "#ccc");
-          if (st.laser && s.vise && s.arme === "principale") {
+          if (st.laser && s.vise && s.arme !== "pistolet") { // (livre n° 6 : l'arme bonus aussi)
             const p = Tanks.Scene.versEcran(s.vise.x, s.vise.y, s.vise.z, L, H);
             if (p) {
               ctx.fillStyle = st.laser;
@@ -295,7 +299,7 @@ Tanks.Tableau = (function () {
           const etat = p.nombre ? F.icone + " Espace : " + (p.id === "fumigene" ? "lancer" : "poser") + " (" + p.nombre + ")" : "plus de " + F.nom.toLowerCase();
           barre(24, H - 28, 200, p.nombre ? 1 : p.regain / F.regain, p.nombre > 0, etat + (p.id === "c4" ? " · R : BOUM (" + poses + " posé" + (poses > 1 ? "s" : "") + ")" : p.id !== "fumigene" ? " · " + poses + " / " + F.max + " posés" : ""));
         } else barre(24, H - 28, 200, s.grenades ? 1 - s.recharge / C.armes.grenades.cadence : s.regainGrenade / C.grenades.recharge, s.recharge === 0 && s.grenades > 0, s.grenades ? "💣 Espace : lancer (" + s.grenades + ")" : "plus de grenades");
-        texte(C.classes[s.classe].icone + " " + C.classes[s.classe].nom, 440, H - 92, 14, C.classes[s.classe].couleur, "right");
+        texte(C.classes[s.classe].icone + " " + C.classes[s.classe].nom, larg + 4, H - 92, 14, C.classes[s.classe].couleur, "right");
       }
       // E : monter ? (le plus proche, à moins de 6 m)
       if (!s.parachute) {
@@ -792,7 +796,7 @@ Tanks.Tableau = (function () {
     } else {
       const aide = {
         char: "↑ ↓ ← → rouler · Q / D tourelle · Espace tirer · E sortir · T ordre · C caméra · R recommencer",
-        pied: t.soldat && t.soldat.nage ? "↑ ↓ nager · ← → tourner · (pas de tir dans l'eau)" : "↑ ↓ marcher · ← → tourner · Espace tirer · V épauler · R recharger · 1 pistolet 2 arme 3 gadget 4 explosif (C4 : R) · L lampe · C vue" + (monde.metro ? " · 🚇 à pied seulement" : " · E monter"),
+        pied: t.soldat && t.soldat.nage ? "↑ ↓ nager · ← → tourner · (pas de tir dans l'eau)" : "↑ ↓ marcher · ← → tourner · Espace tirer · V épauler · R recharger · " + (t.soldat && t.soldat.armes && t.soldat.armes.bonus ? "1 pistolet 2 lance-roquettes 5 arme bonus · 3 gadget 4 explosif (C4 : R)" : "1 pistolet 2 arme 3 gadget 4 explosif (C4 : R)") + " · L lampe · C vue" + (monde.metro ? " · 🚇 à pied seulement" : " · E monter"),
         jeep: "↑ ↓ ← → rouler · Q / D mitrailleuse · Espace tirer · E descendre (arrêté)",
         moto: "↑ ↓ ← → conduire (elle penche dans les virages) · Espace pistolet · E descendre (arrêté)",
         quad: "↑ ↓ ← → conduire · Espace mitrailleuse (elle tire droit devant) · E descendre (arrêté)",

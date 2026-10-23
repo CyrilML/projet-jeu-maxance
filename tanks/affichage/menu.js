@@ -18,6 +18,8 @@
 //     une autre pièce, et le niveau de l'arme avec sa barre d'expérience.
 // Clavier dans l'armurerie : ↑ ↓ choisir l'arme · ← → choisir l'emplacement · Entrée ouvrir le tiroir (puis ← → et
 // Entrée pour prendre une pièce) · Échap fermer le tiroir · Tab l'onglet suivant.
+// (livre de demandes n° 6) L'Ingénieur a une 3e liste : son ARME BONUS (touche 5 en bataille), entre ses lance-roquettes
+// et les pistolets. On la choisit et on change ses pièces comme les autres (avec les mêmes cadenas).
 // ✍️ (livre de demandes n° 4 : « refaire le menu dans le moindre détail ») Chaque carte a maintenant un APERÇU en haut :
 // la carte du champ de bataille dessinée en petit (ciel, collines, arbres, immeubles, dunes ou tunnel), la silhouette
 // du tank (à ses vraies proportions), le portrait de la classe dans un hexagone de sa couleur, la grande icône du gadget
@@ -101,7 +103,7 @@ Tanks.Menu = (function () {
       AR.arme = valeur;
       AR.tiroir = false;
       AR.emp = Math.min(AR.emp, Math.max(0, EQ().emplacementsDe(valeur).length - 1));
-      if (PR().armeDebloquee(valeur)) demander(EQ().estPistolet(valeur) ? "pistolet" : "arme", valeur);
+      if (PR().armeDebloquee(valeur)) demander((listeArmes().find((x) => x.id === valeur) || { type: "arme" }).type, valeur); // (livre n° 6 : "arme", "bonus" ou "pistolet")
       else AR.message = { texte: "🔒 " + fiche(valeur).nom + " : débloqué au niveau de joueur " + fiche(valeur).niveau + " (tu es niveau " + PR().niveauJoueur().niveau + "). Tu peux la regarder !", jusqua: performance.now() + 3500 };
     } else if (action === "emplacement") {
       const i = +valeur;
@@ -126,10 +128,12 @@ Tanks.Menu = (function () {
   const nomEmp = () => emps()[Math.min(AR.emp, emps().length - 1)];
   const piecesArme = () => EQ().piecesPour(AR.arme);
   const piecesTiroir = () => (nomEmp() ? EQ().piecesDe(AR.arme, nomEmp()) : []);
-  // la liste de gauche : les armes de ta classe, puis les pistolets
+  // la liste de gauche : les armes de ta classe, (livre n° 6) ses armes bonus, puis les pistolets. type : la demande à faire.
   function listeArmes() {
     const c = EQ().choix(), K = C.classes[c.classe];
-    return K.armes.map((id) => ({ id, groupe: K.icone + " " + K.nom })).concat(Object.keys(C.pistolets).map((id) => ({ id, groupe: "🔫 Pistolets (arme 1)" })));
+    return K.armes.map((id) => ({ id, type: "arme", groupe: K.icone + " " + K.nom + (K.armesBonus ? " · lance-roquettes (arme 2)" : "") }))
+      .concat((K.armesBonus || []).map((id) => ({ id, type: "bonus", groupe: "🎁 Arme bonus (arme 5)" })))
+      .concat(Object.keys(C.pistolets).map((id) => ({ id, type: "pistolet", groupe: "🔫 Pistolets (arme 1)" })));
   }
   // les pièces montrées sur l'arme : les siennes, et la pièce survolée dans le tiroir
   function piecesMontrees() {
@@ -376,6 +380,7 @@ Tanks.Menu = (function () {
       barres: [["Vitesse", f.vitesseMax / 21, Math.round(f.vitesseMax * 3.6) + " km/h"], ["Recharge", 1.2 / f.recharge, virgule(f.recharge) + " s"], ["Tourelle", f.tourelle, Math.round((f.tourelle * 180) / Math.PI) + " °/s"]] }));
     if (nom === "classe") return Object.keys(C.classes).map((id) => { const k = C.classes[id]; return { action: "classe", valeur: id, choisi: c.classe === id, icone: k.icone, portrait: true, titre: k.nom, texte: k.texte, couleur: k.couleur,
       lignes: ["❤️ vie " + Math.round(C.soldats.vieJoueur * k.vie), "🔫 " + k.armes.map((a) => C.armesPrincipales[a].nom + (PR().armeDebloquee(a) ? "" : " 🔒" + C.armesPrincipales[a].niveau)).join(", "),
+        ...(k.armesBonus ? ["🎁 + 1 arme bonus : " + k.armesBonus.map((a) => C.armesPrincipales[a].nom + (PR().armeDebloquee(a) ? "" : " 🔒" + C.armesPrincipales[a].niveau)).join(", ")] : []), // (livre n° 6)
         "🧰 " + k.gadgets.map((g) => C.gadgets[g].nom + (PR().outilDebloque(id, "gadget", g) ? "" : " 🔒" + C.gadgets[g].niveau)).join(" ou "), "💣 " + k.explosifs.map((x) => C.explosifs[x].nom + (PR().outilDebloque(id, "explosif", x) ? "" : " 🔒" + C.explosifs[x].niveau)).join(" ou ")] }; }); // (demande 98 : les cadenas des gadgets et des explosifs)
     // (demande 98) les gadgets et les explosifs : un cadenas « Niveau N » sur ceux qui ne sont pas encore gagnés
     const utilisation = { grenades: "Touche 4, Espace : lancer", fumigene: "Touche 4, Espace : lancer le fumigène", mineAT: "Touche 4, Espace : poser (" + C.explosifs.mineAT.max + " au plus)", c4: "Touche 4, Espace : poser · R : BOUM !", claymore: "Touche 4, Espace : poser (tournée vers l'ennemi)" };
@@ -404,7 +409,7 @@ Tanks.Menu = (function () {
     let groupe = "", h = "";
     for (const { id, groupe: g } of listeArmes()) {
       if (g !== groupe) (h += '<div class="ar-groupe">' + html(g) + "</div>"), (groupe = g);
-      const F = fiche(id), ok = PR().armeDebloquee(id), n = PR().niveauArme(id), equipee = id === c.arme || id === c.pistolet;
+      const F = fiche(id), ok = PR().armeDebloquee(id), n = PR().niveauArme(id), equipee = id === c.arme || id === c.pistolet || id === c.bonus;
       h += '<button class="ar-arme' + (id === AR.arme ? " vue" : "") + (equipee ? " equipee" : "") + (ok ? "" : " verrou") + '" data-action="voirArme" data-valeur="' + id + '">' +
         '<span class="ar-arme-icone">' + F.icone + "</span><span class=\"ar-arme-nom\">" + html(F.nom) + "<small>" + html(F.type) + "</small></span>" +
         (ok ? '<span class="ar-arme-niv">' + (equipee ? "✔ " : "") + "NIV " + n.niveau + barreXP(n, "ar-mini-xp") + "</span>" : '<span class="ar-arme-cadenas">🔒<small>NIV. ' + F.niveau + "</small></span>") + "</button>";
@@ -514,7 +519,7 @@ Tanks.Menu = (function () {
     const carteF = C.cartes.find((f) => f.id === monde.carte) || C.cartes[0];
     racine.innerHTML =
       '<div class="m-haut"><div class="m-titre-jeu">Prépare ta bataille<small>The Last Battlefield · bataille libre</small></div><div class="m-resume">' + /* (livre n° 4 : ton équipement en pastilles, une par onglet) */
-      [carteF.icone + " " + html(carteF.nom), pied ? "🚶 à pied" : C.chars[monde.choix].drapeau + " " + html(C.chars[monde.choix].nom), K.icone + " " + html(K.nom), A.icone + " " + html(A.nom) + " · 🔫 " + html(fiche(c.pistolet).nom), C.gadgets[c.gadget].icone + " " + html(C.gadgets[c.gadget].nom), C.explosifs[c.explosif].icone + " " + html(C.explosifs[c.explosif].nom)]
+      [carteF.icone + " " + html(carteF.nom), pied ? "🚶 à pied" : C.chars[monde.choix].drapeau + " " + html(C.chars[monde.choix].nom), K.icone + " " + html(K.nom), A.icone + " " + html(A.nom) + (c.bonus ? " · 🎁 " + html(fiche(c.bonus).nom) : "") + " · 🔫 " + html(fiche(c.pistolet).nom), C.gadgets[c.gadget].icone + " " + html(C.gadgets[c.gadget].nom), C.explosifs[c.explosif].icone + " " + html(C.explosifs[c.explosif].nom)]
         .map((t, i) => '<span class="m-pastille' + (i === onglet ? " ici" : "") + '">' + t + "</span>").join("") + "</div>" +
       '<div class="m-joueur" title="Ton niveau de joueur : il débloque les armes"><span class="m-joueur-niv">' + nj.niveau + '</span><span class="m-joueur-txt"><b>NIVEAU ' + nj.niveau + (PR().toutDebloque ? " · 🔓 TOUT DÉBLOQUÉ (test)" : "") + "</b><small>" + (nj.max ? "niveau maximum !" : nj.dans.toLocaleString("fr-FR") + " / " + nj.pour.toLocaleString("fr-FR") + " XP") + "</small>" + barreXP(nj, "m-joueur-xp") + "</span></div>" +
       '<button class="m-rejouer" data-action="combat">▶ Rejouer</button></div>' +
