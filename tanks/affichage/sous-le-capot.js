@@ -212,7 +212,9 @@ Tanks.SousLeCapot = (function () {
     // étape 85
     "soldat-tombe": (d) => ({ tete: "💥 ", dos: "⤵️ ", face: "⤴️ ", genoux: "🧎 ", explosion: "💨 ", ecrase: "🛞 " }[d.genre] || "") + d.cible + " : " + ({ tete: "balle dans la tête, il s'écroule", dos: "touché dans le dos, il tombe en avant", face: "touché de face, il part en arrière", genoux: "il tombe à genoux… puis en avant", explosion: "projeté par l'explosion", ecrase: "écrasé, il s'aplatit" }[d.genre] || d.genre),
     "soldat-touche": (d) => "🩹 " + d.cible + " est touché par " + d.tireur + " (vie " + d.vie + ")",
-    "soldat-mort": (d) => "✖ " + d.cible + " est à terre (" + ({ chute: "tombé de la corde de " + d.tireur, ecrase: "écrasé par " + d.tireur, bombe: "bombe de " + d.tireur, missile: "missile de " + d.tireur, grenade: "grenade de " + d.tireur, effondrement: "écrasé sous une maison qui s'effondre", mine: "mine de " + d.tireur, c4: "C4 de " + d.tireur, claymore: "claymore de " + d.tireur, roquette: "roquette de " + d.tireur, obus: "obus de " + d.tireur }[d.par] || "balle de " + d.tireur) + ")",
+    // (fusils à pompe) une cartouche incendiaire met le feu à un soldat
+    enflamme: (d) => "🔥 " + d.cible + " prend FEU (cartouche incendiaire de " + d.tireur + ") : il brûle " + d.duree + " s et perdra " + virgule(d.degats, 1) + " de vie",
+    "soldat-mort": (d) => "✖ " + d.cible + " est à terre (" + ({ chute: "tombé de la corde de " + d.tireur, ecrase: "écrasé par " + d.tireur, bombe: "bombe de " + d.tireur, missile: "missile de " + d.tireur, grenade: "grenade de " + d.tireur, effondrement: "écrasé sous une maison qui s'effondre", mine: "mine de " + d.tireur, c4: "C4 de " + d.tireur, claymore: "claymore de " + d.tireur, feu: "brûlé par la cartouche incendiaire de " + d.tireur, roquette: "roquette de " + d.tireur, obus: "obus de " + d.tireur }[d.par] || "balle de " + d.tireur) + ")",
   };
 
   function initialiser(m) {
@@ -229,6 +231,8 @@ Tanks.SousLeCapot = (function () {
       if (nom === "arbre-ecrase" && d.nom !== "toi") return; // (seulement les tiens, sinon le journal déborde)
       // (24 soldats tirent sans arrêt : on n'écrit que TES balles qui touchent ou ricochent, et ce qui t'arrive à toi)
       if (nom === "balle" && !(d.parToi && (d.touche || d.ricochet))) return;
+      if (nom === "balle" && d.plomb > 0) return; // (fusil à pompe : 8 plombs par coup ; on n'écrit que le 1er)
+      if (nom === "soldat-touche" && d.par === "feu") return; // (la brûlure : déjà dite par « enflamme »)
       // (étape 73 : dans ton hélico de transport, les mitrailleuses de porte tirent toutes seules : on n'écrit que les soldats à terre)
       const enHelico = monde && monde.toi && (monde.toi.mode === "chinook" || monde.toi.mode === "blackhawk");
       if (enHelico && (nom === "balle" || (nom === "soldat-touche" && d.parToi))) return;
@@ -418,6 +422,7 @@ Tanks.SousLeCapot = (function () {
     l.push(["ton pistolet", s.armes.pistolet.stats.nom + " · " + Tanks.Equipement.emplacementsDe(s.armes.pistolet.id).filter((e) => s.armes.pistolet.pieces[e] !== C.atelier[e].pieces[0].id).map((e) => C.atelier[e].icone + " " + Tanks.Equipement.piece(e, s.armes.pistolet.pieces[e]).nom).join(" · ")]);
     l.push(["munitions · bouche · peinture", "dégâts sur les engins × " + virgule(st.vsVehicule || 1, 1) + (st.vitesseBalle ? " · balle à " + Math.round(st.vitesseBalle) + " m/s" : "") + " · éclair × " + virgule(st.flamme || 1, 2) + (st.thermique ? " · 🌡️ lunette thermique" : "") + " · peinture : " + Tanks.Equipement.piece("peinture", A.pieces.peinture).nom]);
     l.push(["ses vrais chiffres", "dégâts " + virgule(st.degats, 2) + " (pleins jusqu'à " + Math.round(st.porteeEfficace) + " m, puis × " + virgule(st.degatsLoin, 2) + ") · portée " + Math.round(st.portee) + " m · cadence " + Math.round(60 / st.cadence) + "/min · rechargement " + virgule(st.rechargement, 1) + " s · épauler " + virgule(st.visee, 2) + " s · mobilité " + Math.round(st.mobilite * 100) + " % · zoom ×" + virgule(st.zoom, 1)]);
+    if (st.plombs) l.push(["💥 fusil à pompe", st.plombs + " plombs par coup, gerbe ± " + v(st.gerbe) + " en plus · dégâts par plomb " + virgule(st.degats, 2) + " · pompe " + virgule(st.cadence, 2) + " s · recharge cartouche par cartouche (" + virgule(st.rechargement, 2) + " s chacune)" + (st.incendiaire ? " · 🔥 incendiaire : " + st.incendiaire.duree + " s de feu, " + virgule(st.incendiaire.degats, 1) + " de vie en tout" : "") + " · soldats en feu maintenant : " + (monde ? monde.soldats.filter((o) => o.brule && !o.mort).length : 0)]);
     l.push(["la dispersion", "hanche " + v(st.dispersion) + " · épaulé " + v(st.dispersionVisee) + " · recul +" + v(st.recul) + " par balle · MAINTENANT " + v(Tanks.Armes.dispersion(s, st)) + " (épaulé à " + Math.round(s.visee * 100) + " %, recul " + v(s.dispersionRecul) + ")"]);
     if (st.lunette) {
       // (étape 79) la lunette : la respiration, le souffle (Maj) et la chute de la balle

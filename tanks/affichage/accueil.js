@@ -35,7 +35,7 @@ Tanks.Accueil = (function () {
       '<button class="a-jouer a-mode a-campagne" data-accueil="campagne">▶ CAMPAGNE<small>' + Tanks.CONFIG.campagne.chapitres.length + " chapitres · l'histoire</small></button>" + // (étape 88)
       '<button class="a-jouer a-mode a-bataille" data-accueil="bataille">⚔️ BATAILLE<small>bataille libre · toutes les cartes</small></button>' +
       '<button class="a-film" data-accueil="film" title="La bande-annonce du jeu (demande 101)">🎬 Bande-annonce</button>' +
-      '<a class="a-carnet" href="../index.html#etape102">📓 Le carnet</a>' +
+      '<a class="a-carnet" href="../index.html#etape103">📓 Le carnet</a>' +
       "</div>" +
       '<div class="a-coins" title="Gagnés à chaque mission réussie de la campagne (demande 101)">🪙 <b></b> Battle Coins</div>' +
       '<p class="a-pied">← → choisir · Entrée : entrer · M : musique</p>' +

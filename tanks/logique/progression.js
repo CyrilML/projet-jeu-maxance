@@ -130,7 +130,7 @@ Tanks.Progression = (function () {
     // un NIVEAU DE JOUEUR de plus ? (on peut en sauter plusieurs d'un coup : on annonce chacun)
     const apres = niveauJoueur();
     for (let n = avant.niveau + 1; n <= apres.niveau; n++) {
-      const armes = armesAuNiveau(n).map((id) => ({ id, nom: fiche(id).nom, classe: fiche(id).classe ? C.classes[fiche(id).classe].nom : "Pistolet" }));
+      const armes = armesAuNiveau(n).map((id) => ({ id, nom: fiche(id).nom, classe: fiche(id).classe ? Object.keys(C.classes).filter((k) => C.classes[k].armes.includes(id)).map((k) => C.classes[k].nom).join(", ") : "Pistolet" }));
       const outils = outilsAuNiveau(n); // (demande 98 : les gadgets et les explosifs)
       if (bataille) bataille.niveaux.push(n), bataille.debloques.push(...armes.map((a) => ({ groupe: "Armes", nom: a.nom })), ...outils.map((o) => ({ groupe: o.type === "gadget" ? "Gadgets" : "Explosifs", nom: o.icone + " " + o.nom })));
       radio.emettre("niveau-joueur", { niveau: n, armes, outils });
@@ -155,6 +155,7 @@ Tanks.Progression = (function () {
     // l'arme qui gagne les points : celle que ton SOLDAT tenait (pas ton tank)
     const armeDe = (d) => {
       if (!toi || d.tireur !== toi || !toi.armes) return null;
+      if (d.par === "feu") return toi.armes.principale.id; // (fusil à pompe incendiaire : le feu compte pour lui)
       if (d.par === "balle") return toi.arme === "pistolet" ? toi.armes.pistolet.id : toi.arme === "principale" ? toi.armes.principale.id : null;
       const P2 = toi.armes.principale;
       return ["roquette", "at4", "javelin"].includes(d.par) || (nom !== "soldat-mort" && toi.arme === "principale" && P2.stats.famille === "roquettes") ? P2.id : null;

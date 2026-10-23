@@ -26,6 +26,11 @@
 //   - la CHUTE : une balle tombe pendant son vol, comme une pierre qu'on lance : chute = ½ × g × temps², avec
 //     temps = distance ÷ vitesse de la balle. La lunette est réglée à 200 m : plus loin, la balle arrive sous la croix
 //     (à 400 m, une cinquantaine de cm) : de très loin, ça peut te faire rater !
+// ✍️ LES FUSILS À POMPE (« Je veux que tu fasses les fusils à pompe, normaux et incendiaires… ») : un coup lance
+// « plombs » billes. Chaque bille est une balle à part : elle a SA chance de toucher (l'écart de l'arme + la « gerbe »).
+// De près, la silhouette paraît grande : presque toutes les billes touchent. De loin, presque aucune. On recharge
+// cartouche par cartouche (tirer arrête le rechargement). Les cartouches INCENDIAIRES mettent le feu au soldat touché :
+// il perd un peu de vie toutes les 0,5 s pendant 3 s (« enflamme », puis « soldat-touche » par le feu).
 // Ce fichier ne dessine rien : il renvoie des événements (« balle », « roquette », « recharge-arme », « vide »…).
 
 window.Tanks = window.Tanks || {};
@@ -169,7 +174,18 @@ Tanks.Armes = (function () {
         vitesseBalle: st.vitesseBalle, hausse: bal.y };
       const x = s.x + Math.cos(s.angle) * 0.7, z = s.z + Math.sin(s.angle) * 0.7;
       const avant = ev.length;
-      Tanks.Soldat.balle(s, x, y, z, s.angle + bal.x, R, monde.soldats, Tanks.Soldat.vehiculesDe(monde), ev, Tanks.Vehicules.legers(monde));
+      // (fusils à pompe) « plombs » billes, chacune avec un écart plus grand (la gerbe) ; les autres armes : 1 balle
+      const plombs = st.plombs || 1;
+      if (st.gerbe) R.dispersionTir = sigma + st.gerbe;
+      for (let p = 0; p < plombs; p++) {
+        const debut = ev.length;
+        Tanks.Soldat.balle(s, x, y, z, s.angle + bal.x, R, monde.soldats, Tanks.Soldat.vehiculesDe(monde), ev, Tanks.Vehicules.legers(monde));
+        for (let k = debut; k < ev.length; k++) {
+          const [nom, d] = ev[k];
+          if (nom === "balle" && plombs > 1) (d.plomb = p), (d.pompe = true), (d.feu = !!st.incendiaire);
+          if (nom === "soldat-touche" && st.incendiaire && d.cible && d.cible.genre === "soldat" && !d.cible.mort) enflammer(d.cible, s, st.incendiaire, ev);
+        }
+      }
       for (let k = avant; k < ev.length; k++) if (ev[k][0] === "balle" && ev[k][1].touche) s.compteurs.touches++;
     }
     // le RECUL : la dispersion grandit, et l'arme saute un peu de côté
@@ -179,6 +195,26 @@ Tanks.Armes = (function () {
     // le BRUIT : les ennemis autour t'entendent
     s.repere = TIR.repere;
     s.bruitTir = TIR.bruit * st.bruit;
+  }
+
+  // ✍️ (fusils à pompe) METTRE LE FEU à un soldat : il brûle « duree » s (on repart de zéro s'il brûlait déjà).
+  function enflammer(cible, tireur, I, ev) {
+    const deja = !!cible.brule;
+    cible.brule = { reste: I.duree, attente: I.intervalle, coup: (I.degats * I.intervalle) / I.duree, intervalle: I.intervalle, tireur };
+    if (!deja) ev.push(["enflamme", { cible, tireur, duree: I.duree, degats: I.degats, x: cible.x, y: cible.y, z: cible.z }]);
+  }
+  // Un petit pas pour un soldat qui BRÛLE (appelé par logique/soldat.js) : un petit coup de feu toutes les « intervalle » s.
+  function bruler(s, dt, ev) {
+    const b = s.brule;
+    if (!b) return;
+    if (s.mort || s.nage) return void (s.brule = null); // (l'eau éteint le feu)
+    b.reste -= dt;
+    b.attente -= dt;
+    if (b.attente <= 0) {
+      b.attente += b.intervalle;
+      Tanks.Soldat.blesser(s, b.coup, b.tireur, ev, "feu", b.tireur);
+    }
+    if (b.reste <= 0) s.brule = null;
   }
 
   function commencerRechargement(s, A, ev) {
@@ -212,11 +248,13 @@ Tanks.Armes = (function () {
       s.rechargement -= dt;
       if (s.rechargementDe !== A) s.rechargement = 0; // (tu as changé d'arme : le rechargement est annulé)
       else if (s.rechargement <= 0) {
-        const n = Math.min(st.chargeur - A.chargeur, A.reserve);
+        // (fusils à pompe) une seule cartouche à la fois : on recommence tant que le tube n'est pas plein
+        const n = Math.min(st.coupParCoup ? 1 : st.chargeur - A.chargeur, A.reserve);
         A.chargeur += n;
         A.reserve -= n;
         s.rechargement = 0;
-        ev.push(["recharge-arme", { tireur: s, arme: st.nom, chargeur: A.chargeur, reserve: A.reserve, fini: true }]);
+        if (st.coupParCoup && A.chargeur < st.chargeur && A.reserve > 0) s.rechargement = st.rechargement;
+        else ev.push(["recharge-arme", { tireur: s, arme: st.nom, chargeur: A.chargeur, reserve: A.reserve, fini: true }]);
       }
     }
     if (intentions.recharger && arme) commencerRechargement(s, A, ev);
@@ -240,6 +278,11 @@ Tanks.Armes = (function () {
       pointVise(s, monde, Math.min(st.portee, 120));
     }
     // 6. tirer
+    // (fusils à pompe) en train de glisser des cartouches ? Tirer arrête le rechargement (s'il y en a au moins une)
+    if (arme && intentions.tirer && st.coupParCoup && s.rechargement > 0 && s.rechargementDe === A && A.chargeur > 0 && s.recharge <= 0) {
+      s.rechargement = 0;
+      ev.push(["recharge-arme", { tireur: s, arme: st.nom, chargeur: A.chargeur, reserve: A.reserve, fini: true }]);
+    }
     if (!arme || !intentions.tirer || s.recharge > 0 || s.rechargement > 0 || s.nage) return;
     if (A.chargeur <= 0) {
       s.recharge = 0.3;
@@ -257,5 +300,5 @@ Tanks.Armes = (function () {
     return st.mobilite * (1 + (TIR.viseeLent - 1) * s.visee);
   }
 
-  return { avancer, mobilite, dispersion, enMain, chercherCible, pointVise, chute, sousLaCroix };
+  return { avancer, mobilite, dispersion, enMain, chercherCible, pointVise, chute, sousLaCroix, bruler };
 })();

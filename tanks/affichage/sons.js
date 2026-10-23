@@ -101,9 +101,12 @@ Tanks.Sons = (function () {
     let derniereBalle = 0;
     radio.ecouter("balle", (e) => {
       // (les balles de l'ordinateur : pas plus d'une toutes les 0,05 s, sinon c'est un vacarme)
+      if (e.plomb > 0) return; // (fusil à pompe : 8 plombs, mais UN seul coup de feu)
       if (!e.parToi && ctx.currentTime - derniereBalle < 0.05) return;
       derniereBalle = ctx.currentTime;
       coupDeFeu(Tanks.Armes3D.sonDe(e, monde), e.parToi ? 0.8 : attenuation(e.de.x, e.de.z) * 0.35, e.parToi ? 0 : retard(e.de.x, e.de.z)); // (demande 88 : chaque famille d'arme a son bruit) (demande 92 : en retard de loin)
+      // (fusils à pompe) le « clac-clac » de la pompe : le garde-main recule (clac grave) puis revient (clac aigu)
+      if (e.pompe && e.parToi) { const ap = Tanks.CONFIG.armes3d.sons.pompe.pompeApres; clic(0.55, 900, ap), clic(0.5, 1500, ap + 0.2); }
     });
     // (demande 88) le rechargement de TON arme : « clic » (le chargeur sort), puis « clac » (le neuf est enfoncé)
     radio.ecouter("recharge-arme", (e) => e.parToi && (e.fini ? (clic(0.5, 1800, 0), clic(0.35, 900, 0.07)) : (clic(0.4, 1300, 0.05), clic(0.3, 2400, 0.32))));

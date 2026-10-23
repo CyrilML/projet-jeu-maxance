@@ -20,6 +20,8 @@
 //     sifflement (et le « crac » si elle passe tout près).
 // (Demande 93 : les éclairs et la boule de feu du canon sont moins blancs : jaune-orange, et la boule de feu CACHE ce
 // qui est derrière au lieu de s'ajouter à l'image, puis finit en fumée.)
+// (Fusils à pompe : un seul gros éclair pour les 8 plombs ; les cartouches INCENDIAIRES crachent une gerbe de traits
+// orange, et un soldat qui brûle a de petites flammes sur lui tant que dure le feu.)
 // Il ne fait que lire le monde et la radio : il ne change jamais les règles.
 
 window.Tanks = window.Tanks || {};
@@ -63,6 +65,8 @@ Tanks.Tirs = (function () {
       feuMoteur: { image: I.bouche, mode: P.TRAIT, brille: true, couleur: [3.2, 2, 0.9], taille: [0.28, 0.28], portee: 4 },
       lueurMoteur: { image: I.lueur, mode: P.FACE, brille: true, couleur: [2.6, 1.6, 0.7], taille: [1, 1], portee: 4 },
       culot: { image: I.trait, mode: P.TRAIT, brille: true, couleur: [3.2, 1.1, 0.35], taille: [0.12, 0.12], portee: 5 },
+      // (fusils à pompe incendiaires) les petites flammes sur un soldat qui brûle
+      flammeFeu: { image: I.flamme, images: 4, mode: P.FACE, brille: true, vie: 0.55, taille: [0.28, 0.65], couleurs: [[2.6, 1.6, 0.5], [2, 0.7, 0.15], [0.6, 0.16, 0.04]], opacite: 0.9, tourne: 2, entree: 0.0001, sortie: 1.2, portee: 2 },
       lueurCulot: { image: I.lueur, mode: P.FACE, brille: true, couleur: [3, 1.2, 0.4], taille: [0.5, 0.5], portee: 5 },
     };
   }
@@ -95,12 +99,12 @@ Tanks.Tirs = (function () {
     bilan.balles++;
     const dx = d.a.x - d.de.x, dy = d.a.y - d.de.y, dz = d.a.z - d.de.z, dist = Math.hypot(dx, dy, dz) || 1, ux = dx / dist, uy = dy / dist, uz = dz / dist;
     const premiere = d.parToi && Tanks.Armes3D && Tanks.Armes3D.vue.actif; // (à la 1re personne, l'armurier dessine déjà ta flamme)
-    // l'éclair et la fumée au bout du canon
-    if (!premiere) eclairBouche(d.de.x, d.de.y, d.de.z, ux, uy, uz, 1, false);
+    // l'éclair et la fumée au bout du canon (fusil à pompe : un seul, plus gros, pour les 8 plombs)
+    if (!premiere && !(d.plomb > 0)) eclairBouche(d.de.x, d.de.y, d.de.z, ux, uy, uz, d.pompe ? (d.feu ? 2.2 : 1.5) : 1, false);
     // la traçante (1 sur « chaque ») ou le trait léger
     const cle = (d.tireur || "?") + (d.equipeTireur || ""), n = (comptes.get(cle) || 0) + 1;
     comptes.set(cle, n);
-    const traceuse = n % R.traceur.chaque === 1 % R.traceur.chaque;
+    const traceuse = d.feu || n % R.traceur.chaque === 1 % R.traceur.chaque; // (les plombs incendiaires brillent tous)
     const S = traceuse ? R.traceur : R.balle, v = S.vitesse, vie = Math.max(0.02, dist / v);
     // (la balle part un peu devant le canon, pour ne pas briller DANS l'arme)
     const depart = premiere ? 1.2 : 0.4, x0 = d.de.x + ux * depart, y0 = d.de.y + uy * depart, z0 = d.de.z + uz * depart;
@@ -109,6 +113,7 @@ Tanks.Tirs = (function () {
     frole(d, ux, uy, uz, dist);
     // l'impact (les murs : c'est « mur-abime » qui le dit, avec la face du mur ; un soldat : un petit nuage de tissu)
     if (d.mur) return;
+    if (d.touche && d.feu) for (let k = 0; k < 3; k++) P.emettre(M.flammeFeu, d.a.x + alea(0.15), d.a.y + alea(0.2), d.a.z + alea(0.15), alea(0.3), 0.8 + Math.random() * 0.6, alea(0.3), 1);
     if (d.touche) {
       P.emettre(M.poussiere, d.a.x, d.a.y, d.a.z, -ux * 1.5, 0.4, -uz * 1.5, 0.45, [0.5, 0.47, 0.4]);
       return;
@@ -239,6 +244,11 @@ Tanks.Tirs = (function () {
   function maj(dt, m) {
     monde = m;
     horloge += dt;
+    // (fusils à pompe incendiaires) les soldats qui brûlent : quelques petites flammes qui montent (environ 22 par seconde)
+    for (const s of m.soldats) {
+      if (!s.brule || s.mort || s.dansUnEngin || Math.random() > dt * 22) continue;
+      P.emettre(M.flammeFeu, s.x + alea(0.22), s.y + 0.3 + Math.random() * 1.2, s.z + alea(0.22), alea(0.2), 0.9 + Math.random() * 0.8, alea(0.2), 0.8 + Math.random() * 0.5);
+    }
     let obus = 0;
     for (const p of m.obus) {
       if (p.main || p.sorte === "torpille" || p.sorte === "bombe") continue;

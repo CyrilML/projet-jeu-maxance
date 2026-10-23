@@ -207,6 +207,7 @@ Tanks.Soldat = (function () {
     return avancerSoldat(s, intentions, dt, mondeIci, ev);
   }
   function avancerSoldat(s, intentions, dt, monde, ev) {
+    if (s.brule) Tanks.Armes.bruler(s, dt, ev); // (fusil à pompe incendiaire : il brûle encore un peu ; tombé, le feu s'éteint)
     if (s.mort) {
       s.depuisMort += dt;
       return;

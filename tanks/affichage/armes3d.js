@@ -1473,6 +1473,71 @@ Tanks.Armes3D = (function () {
         munitionsVisibles: true, grip: { centre: V3(-0.03, -0.05), axe: V3(0.25, 1, 0).normalize() }, crosse: -0.06 };
     },
   };
+  // ✍️ LES FUSILS À POMPE (« qu'ils soient assez beaux et réalistes ») : le M870 (façon Remington 870) et sa version
+  // « Dragon » aux cartouches incendiaires. Un boîtier en acier, un long canon avec son guidon-bille, le MAGASIN TUBULAIRE
+  // sous le canon (les cartouches y sont rangées l'une derrière l'autre), la POMPE (le garde-main qui glisse : elle est
+  // dans le groupe « culasse », c'est elle qui recule et revient après chaque tir, avec ses 2 barres d'action), la
+  // crosse. Sur le flanc gauche, une cartouchière (« side saddle ») avec des cartouches de rechange : rouges pour le M870,
+  // ORANGE vif pour le Dragon (qui a aussi une crosse en polymère noir et des bandes orange sur la pompe).
+  function fusilPompe(e, p, dragon) {
+    const by = 0.03, A = 0x2c2e31, Bx = dragon ? K.noir : null, matCrosse = dragon ? "poly" : "bois";
+    const ORANGE = 0xe0661c, ROUGE = 0x8a1c14;
+    // le BOÎTIER (l'acier bronzé), la fenêtre d'éjection à droite, la fenêtre de chargement dessous
+    e.cote([[-0.085, -0.018], [-0.085, 0.036], [-0.07, 0.048], [0.125, 0.048], [0.132, 0.04], [0.132, -0.012], [0.12, -0.02], [0.03, -0.02], [0.0, -0.018]], 0.038, "metal", A, 0, 0.004, null, 2);
+    e.boite(0.07, 0.022, 0.002, 0.045, 0.026, 0.0192, "poly", K.fente); // la fenêtre d'éjection
+    e.boite(0.075, 0.002, 0.026, 0.07, -0.0205, 0, "poly", K.fente); // la fenêtre de chargement (dessous)
+    e.cyl(0.0045, 0.0045, 0.044, 0.025, -0.008, 0, "metal", K.acier, 10, Math.PI / 2); // la sûreté (un bouton qui traverse)
+    e.boite(0.016, 0.008, 0.006, 0.105, -0.012, -0.0205, "metal", K.acier); // le bouton qui libère la pompe
+    if (!e.leger) for (const x of [-0.06, 0.1]) for (const z of [-1, 1]) e.boule(0.0028, x, 0.012, z * 0.0192, "metal", K.acier, 6); // les goupilles
+    const yr = rail(e, -0.06, 0.115, 0.048, 0);
+    // le PONTET et la DÉTENTE
+    pontet(e, -0.005, 0.055, -0.016, A);
+    // la CROSSE : d'origine, en bois verni (M870) ou en polymère noir (Dragon), avec une poignée « col de cygne » et une plaque de couche
+    if (!crosseSpeciale(e, p, -0.085, by, dragon ? K.noir : undefined)) {
+      e.cote([[-0.083, 0.04], [-0.083, -0.014], [-0.1, -0.032], [-0.13, -0.065], [-0.17, -0.078], [-0.42, -0.1], [-0.435, -0.098], [-0.435, 0.046], [-0.42, 0.05], [-0.16, 0.042]], 0.04, matCrosse, Bx, 0, 0.007, null, 3);
+      e.boite(0.016, 0.152, 0.044, -0.443, -0.026, 0, "poly", K.caoutchouc); // la plaque de couche en caoutchouc
+      if (!e.leger) for (let k = 0; k < 4; k++) e.boite(0.0165, 0.003, 0.0445, -0.443, -0.085 + k * 0.035, 0, "poly", 0x141414);
+      e.disque(0.008, 0.042, -0.36, -0.08, 0, "metal", K.acier, 12); // l'anneau de la sangle
+      if (dragon && !e.leger) for (const zz of [-1, 1]) e.boite(0.06, 0.03, 0.002, -0.27, -0.03, zz * 0.0205, "poly", 0x1c1c1c); // le quadrillage
+    } else poignee(e, "ar", K.noir, -0.01, -0.016);
+    // le CANON (long : un fusil à pompe tire des plombs, pas une balle) et son guidon-bille
+    const lc = LONGUEUR_CANON(p.canon, 0.47, 0.56, 0.33);
+    canonTube(e, p, 0.13, 0.13 + lc, by, 0.0118);
+    e.tube(0.13 + lc - 0.004, 0.13 + lc, 0.0085, 0.0085, by, 0, "poly", K.fente, 14); // l'âme du canon (le trou)
+    e.boule(0.0032, 0.13 + lc - 0.02, by + 0.014, 0, "metal", dragon ? 0xff8a2a : 0xd8d0b8, 8); // le guidon-bille
+    if (!e.leger) e.boite(lc * 0.9, 0.003, 0.006, 0.13 + lc * 0.5, by + 0.0125, 0, "metal", A); // la bande ventilée du dessus
+    // le MAGASIN TUBULAIRE sous le canon, son bouchon et le collier qui le tient au canon
+    const L = p.chargeur === "grand" ? 0.47 : 0.36, yt = by - 0.026, xt = 0.132;
+    e.dans("chargeur", () => {
+      e.tube(xt, xt + L, 0.0112, 0.0112, yt, 0, "metal", A, 16);
+      e.tour([[xt + L, 0.012], [xt + L + 0.012, 0.012], [xt + L + 0.018, 0.009], [xt + L + 0.02, 0.003]], yt, 0, "metal", A, 16); // le bouchon
+    });
+    e.boite(0.02, 0.04, 0.026, xt + L - 0.02, by - 0.013, 0, "metal", A); // le collier canon-magasin
+    // la POMPE : elle glisse sur le magasin (groupe « culasse ») ; ses 2 barres d'action vont jusqu'au boîtier
+    const xp = 0.25, lp = 0.16;
+    e.dans("culasse", () => {
+      if (dragon) e.cote([[xp - lp / 2, yt + 0.02], [xp + lp / 2, yt + 0.02], [xp + lp / 2 + 0.006, yt + 0.008], [xp + lp / 2 + 0.006, yt - 0.016], [xp + lp / 2 - 0.01, yt - 0.024], [xp - lp / 2 + 0.01, yt - 0.024], [xp - lp / 2, yt - 0.014]], 0.044, "poly", K.noir, 0, 0.007, null, 2);
+      else e.galet(lp, 0.044, 0.046, xp, yt - 0.002, 0, "bois", null, 0.3, 18);
+      if (!e.leger) for (let k = 0; k < 9; k++) for (const zz of [-1, 1]) e.boite(0.006, 0.026, 0.003, xp - lp / 2 + 0.03 + k * 0.012, yt - 0.003, zz * (dragon ? 0.0225 : 0.0222), "poly", dragon ? 0x161616 : 0x3a1e0c); // les rainures (pour ne pas glisser)
+      if (dragon) for (const x of [xp - lp / 2 + 0.012, xp + lp / 2 - 0.012]) e.tube(x - 0.005, x + 0.005, 0.0235, 0.0235, yt - 0.002, 0, "poly", ORANGE, 18); // les bandes ORANGE
+      for (const zz of [-1, 1]) e.boite(0.08, 0.005, 0.003, 0.14, yt + 0.006, zz * 0.0145, "metal", K.acier); // les barres d'action
+    });
+    // la CARTOUCHIÈRE sur le flanc gauche, avec ses cartouches (le culot en laiton vers le bas)
+    e.boite(0.09, 0.05, 0.006, 0.05, 0.012, -0.022, "poly", 0x1e1f21);
+    for (let k = 0; k < 5; k++) {
+      const x = 0.014 + k * 0.018;
+      e.cyl(0.0078, 0.0078, 0.05, x, 0.019, -0.031, "poly", dragon ? ORANGE : ROUGE, 12);
+      e.cyl(0.0082, 0.0082, 0.012, x, -0.01, -0.031, "metal", K.laiton, 12);
+    }
+    return { by, tip: 0.13 + lc, ch: { x: 0.07, y: yt, bandeTube: { x: xt + L - 0.03, y: yt, r: 0.0112 } }, rail: { xa: -0.055, xb: 0.11, y: yr }, dessous: null,
+      garde: { centre: V3(xp, yt - 0.026), axe: V3(1, 0, 0), sorte: "dessous" },
+      lampe: { x: xt + L - 0.03, y: by - 0.012, z: -0.022, sens: -1, petitRail: true }, laser: { x: xt + L - 0.07, y: by - 0.012, z: 0.022, sens: "droite", petitRail: true },
+      ejection: V3(0.045, 0.026, 0.02), mireAvant: 0.13 + lc - 0.02, mireArriere: 0.0, mireNative: { ligne: by + 0.017, arriere: -0.02, z: 0, nom: "guidon-bille" }, crosse: -0.44,
+      grip: p.crosse === "standard" ? { centre: V3(-0.115, -0.05), axe: V3(0.55, 1, 0).normalize() } : null };
+  }
+  FABRIQUES.m870 = (e, p) => fusilPompe(e, p, false);
+  FABRIQUES.m870dragon = (e, p) => fusilPompe(e, p, true);
+
   const FAMILLES_FUSIL = ["fusil", "pm", "precision"];
 
   // Le M320 : le lance-grenades sous le canon (le gadget de l'Assaut).
@@ -1721,7 +1786,7 @@ Tanks.Armes3D = (function () {
     if (id === "barrett") return "lourd";
     if (id === "ak12" || id === "bizon" || id === "scarh" || id === "mk14") return "ak";
     if (id === "deagle" || id === "mr73") return "precision"; // (les gros calibres de poing claquent fort)
-    return { pistolet: "pistolet", pm: "pm", fusil: "fusil", precision: "precision" }[F.famille] || "fusil";
+    return { pistolet: "pistolet", pm: "pm", fusil: "fusil", precision: "precision", pompe: "pompe" }[F.famille] || "fusil";
   }
 
   // ------------------------------------------------------------------ (demande 97) LA VITRINE DE L'ARMURERIE
@@ -2176,8 +2241,10 @@ Tanks.Armes3D = (function () {
     const R = D.recul[fam] || D.recul.fusil, fort = 1 - 0.45 * k;
     const reculZ = V.recul * R[0] * fort, reculH = V.recul * R[1] * fort;
     // le RECHARGEMENT (t de 0 à 1) : on penche l'arme, le chargeur tombe, la main en remet un neuf, clac
-    const recharge = s.rechargement > 0 && s.rechargementDe === tenue ? 1 - s.rechargement / st.rechargement : 0;
-    const penche = recharge > 0 ? entre(recharge, 0, 0.14) * (1 - entre(recharge, 0.82, 1)) : 0;
+    const pompe = fam === "pompe", glisse = pompe && s.rechargement > 0 && s.rechargementDe === tenue; // (fusil à pompe : cartouche par cartouche)
+    const recharge = s.rechargement > 0 && s.rechargementDe === tenue && !pompe ? 1 - s.rechargement / st.rechargement : 0;
+    V.penchePompe = Math.max(0, Math.min(1, (V.penchePompe || 0) + (glisse ? 1 : -1) * dt * 6));
+    const penche = pompe ? lisse(V.penchePompe) : recharge > 0 ? entre(recharge, 0, 0.14) * (1 - entre(recharge, 0.82, 1)) : 0;
     const roquettes = fam === "roquettes", sansChargeur = !m.chargeur;
     const descente = roquettes && sansChargeur ? Math.sin(Math.PI * Math.min(1, recharge * 1.05)) : 0;
     // (pendant le rechargement, l'arme vient vers le centre et se couche sur le côté : on voit le puits du chargeur)
@@ -2212,7 +2279,10 @@ Tanks.Armes3D = (function () {
       }
     }
     if (groupeCul) {
-      if (fiche(m.id).verrou) { // le verrou (le .338 et le M24) : on le tire en arrière puis on le repousse, après chaque tir
+      if (pompe) { // (fusil à pompe) la POMPE : le garde-main recule puis revient, juste après chaque tir
+        const PO = A3.pompe, t = V.t - V.dernierTir, c = t > PO.debut && t < PO.fin ? Math.sin(Math.PI * (t - PO.debut) / (PO.fin - PO.debut)) : 0;
+        groupeCul.position.set(-c * PO.course, 0, 0);
+      } else if (fiche(m.id).verrou) { // le verrou (le .338 et le M24) : on le tire en arrière puis on le repousse, après chaque tir
         const t = V.t - V.dernierTir, c = t > 0.15 && t < 0.85 ? Math.sin(Math.PI * Math.min(1, (t - 0.15) / 0.6)) : 0;
         groupeCul.position.set(-c * 0.075, 0, 0);
       } else groupeCul.position.set(-V.culasse * 0.03, 0, 0);
@@ -2228,6 +2298,13 @@ Tanks.Armes3D = (function () {
     } else if (recharge > 0 && roquettes && m.chargeur) {
       const surR = entre(recharge, 0.05, 0.2) * (1 - entre(recharge, 0.85, 0.95));
       decG = new THREE.Vector3(m.chargeur.x - m.garde.centre.x, m.chargeur.y - 0.04 - m.garde.centre.y, 0).add(groupeCh.position).multiplyScalar(surR);
+    }
+    if (pompe && groupeCul) { // la main gauche tient la pompe (elle la suit) ; en rechargeant, elle glisse des cartouches par-dessous
+      decG = groupeCul.position.clone();
+      if (glisse) {
+        const ph = 1 - s.rechargement / st.rechargement, va = Math.sin(Math.PI * ph);
+        decG.add(new THREE.Vector3(0.07 - m.garde.centre.x, -0.02 - m.garde.centre.y, 0).multiplyScalar(0.85 * lisse(V.penchePompe))).add(new THREE.Vector3(0, -0.09 * va, 0.02 * va));
+      }
     }
     poserMain(M1, m, V.objet, m.garde, -1, decG);
     poserAvantBras(V.avantBras[0], M0, _b.set(0.24, -0.45, 0.12));
