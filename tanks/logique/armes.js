@@ -32,12 +32,18 @@
 // De près, la silhouette paraît grande : presque toutes les billes touchent. De loin, presque aucune. On recharge
 // cartouche par cartouche (tirer arrête le rechargement). Les cartouches INCENDIAIRES mettent le feu au soldat touché :
 // il perd un peu de vie toutes les 0,5 s pendant 3 s (« enflamme », puis « soldat-touche » par le feu).
+// ✍️ (livre de demandes n° 26) « UN RÉALISME ABSURDE » (les nombres : config.js, « realismeAbsurde ») :
+//   - essoufflé (tu as couru) ou apeuré (des balles t'ont frôlé), ta visée TREMBLE et s'écarte, avec toutes les armes ;
+//   - le RECHARGEMENT : chargeur vide = plus long (il faut aussi réarmer) ; chargeur pas vide (« tactique ») = une balle
+//     reste dans la chambre (30 + 1), mais l'ancien chargeur tombe par terre avec ses balles : elles sont PERDUES ;
+//   - le VENT fait dériver la balle (dans la lunette : tu peux viser à côté pour compenser) ;
+//   - l'ENRAYAGE (éteint au départ) : l'arme se bloque, R la débloque.
 // Ce fichier ne dessine rien : il renvoie des événements (« balle », « roquette », « recharge-arme », « vide »…).
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Armes = (function () {
-  const C = Tanks.CONFIG, TIR = C.tir, T = Tanks.Terrain, L = C.tir.lunette;
+  const C = Tanks.CONFIG, TIR = C.tir, T = Tanks.Terrain, L = C.tir.lunette, RA = C.realismeAbsurde;
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   const vehicules = [];
 
@@ -115,7 +121,8 @@ Tanks.Armes = (function () {
 
   // La dispersion de CE tir : de la hanche à l'épaule selon « visee », plus le recul, plus un peu quand tu bouges.
   function dispersion(s, st) {
-    return st.dispersion + (st.dispersionVisee - st.dispersion) * s.visee + s.dispersionRecul + Math.min(1, Math.abs(s.vitesse) / 4) * 0.012 * (1 - s.visee * 0.5);
+    return st.dispersion + (st.dispersionVisee - st.dispersion) * s.visee + s.dispersionRecul + Math.min(1, Math.abs(s.vitesse) / 4) * 0.012 * (1 - s.visee * 0.5) +
+      (s.peur || 0) * RA.suppression.dispersion + (s.fatigue || 0) * RA.fatigue.dispersion; // (livre n° 26 : la peur et l'essoufflement)
   }
 
   // ✍️ (étape 79) LA CHUTE de la balle à « d » mètres (m) : ½ × g × (d ÷ v)².
@@ -147,6 +154,13 @@ Tanks.Armes = (function () {
     const bal = s.balancement || (s.balancement = { x: 0, y: 0 });
     bal.x = A * Math.sin(b.t * w); // un « 8 » couché : 1 aller-retour de côté pendant 2 en hauteur
     bal.y = A * 0.6 * Math.sin(2 * b.t * w);
+    // ✍️ (livre n° 26) ESSOUFFLÉ ou APEURÉ : un 2e « 8 », plus rapide (on respire vite), avec TOUTES les armes ; épaulé, il se
+    // voit plus (à la hanche, l'arme bouge aussi, mais on ne vise pas finement). Souffle retenu : il s'arrête presque aussi.
+    const F = s.fatigue || 0, P = s.peur || 0;
+    b.t2 = (b.t2 || 0) + dt * (1 + F * 1.5 + P);
+    const A2 = (RA.fatigue.balancement * F + RA.suppression.balancement * P) * (0.4 + 0.6 * s.visee) * (b.retenu ? L.retenu * 4 : 1), w2 = (Math.PI * 2) / RA.fatigue.periode;
+    if (A2 > 0) (bal.x += A2 * Math.sin(b.t2 * w2 + 0.7)), (bal.y += A2 * 0.7 * Math.sin(2 * b.t2 * w2));
+    bal.tremble = A2;
   }
 
   // Un tir : une balle (avec la nouvelle mécanique : voir Soldat.balle), ou une roquette.
@@ -173,7 +187,8 @@ Tanks.Armes = (function () {
       // (étape 79) avec la lunette : la balle part là où la respiration a mis ta visée, et elle TOMBE (vitesseBalle)
       const bal = s.balancement || { x: 0, y: 0 };
       const R = { portee: st.portee, porteeEfficace: st.porteeEfficace, degats: st.degats, degatsLoin: st.degatsLoin, degatsVehicule: st.degatsVehicule, vsVehicule: st.vsVehicule, cone: st.cone, dispersionTir: sigma, precision: 0.8, nom: st.nom,
-        vitesseBalle: st.vitesseBalle, hausse: bal.y };
+        vitesseBalle: st.vitesseBalle, hausse: bal.y,
+        lunette: !!st.lunette && s.visee > 0.6 }; // (livre n° 26 : dans la lunette, là où tu vises compte, et le vent fait dériver)
       const x = s.x + Math.cos(s.angle) * 0.7, z = s.z + Math.sin(s.angle) * 0.7;
       const avant = ev.length;
       // (fusils à pompe) « plombs » billes, chacune avec un écart plus grand (la gerbe) ; les autres armes : 1 balle
@@ -219,11 +234,19 @@ Tanks.Armes = (function () {
     if (b.reste <= 0) s.brule = null;
   }
 
+  // ✍️ (livre n° 26) VIDE ou TACTIQUE ? Vide : × « vide » (il faut aussi réarmer). Tactique : la durée normale.
   function commencerRechargement(s, A, ev) {
-    if (s.rechargement > 0 || A.chargeur >= A.stats.chargeur || A.reserve <= 0) return false;
-    s.rechargement = A.stats.rechargement;
+    const st = A.stats, RR = RA.rechargement;
+    if (s.rechargement > 0 || A.chargeur >= st.chargeur || A.reserve <= 0) return false; // (déjà plein : on ne jette pas un chargeur plein !)
+    const sorte = !RR.actif || st.coupParCoup ? "normal" : A.chargeur === 0 ? "vide" : "tactique";
+    const duree = st.rechargement * (sorte === "vide" ? RR.vide : sorte === "tactique" ? RR.tactique : 1);
+    s.rechargement = s.rechargementTotal = duree;
     s.rechargementDe = A;
-    ev.push(["recharge-arme", { tireur: s, arme: A.stats.nom, duree: A.stats.rechargement, fini: false }]);
+    s.rechargementSorte = sorte;
+    s.desenraye = false;
+    if (sorte === "vide") Tanks.Realisme.bilan.rechargementsVides++;
+    if (sorte === "tactique") Tanks.Realisme.bilan.rechargementsTactiques++;
+    ev.push(["recharge-arme", { tireur: s, arme: st.nom, duree: Math.round(duree * 10) / 10, fini: false, sorte, perdues: sorte === "tactique" && RR.perdre ? Math.max(0, A.chargeur - (RR.chambre ? 1 : 0)) : 0 }]);
     return true;
   }
 
@@ -249,17 +272,37 @@ Tanks.Armes = (function () {
     if (s.rechargement > 0) {
       s.rechargement -= dt;
       if (s.rechargementDe !== A) s.rechargement = 0; // (tu as changé d'arme : le rechargement est annulé)
+      else if (s.rechargement <= 0 && s.desenraye) (s.rechargement = 0), (s.desenraye = false), ev.push(["desenrayee", { tireur: s, arme: st.nom }]); // (livre n° 26)
       else if (s.rechargement <= 0) {
         // (fusils à pompe) une seule cartouche à la fois : on recommence tant que le tube n'est pas plein
-        const n = Math.min(st.coupParCoup ? 1 : st.chargeur - A.chargeur, A.reserve);
+        // ✍️ (livre n° 26) rechargement TACTIQUE : une balle reste dans la chambre, les autres tombent avec le vieux chargeur
+        const RR = RA.rechargement;
+        let perdues = 0;
+        if (s.rechargementSorte === "tactique" && RR.perdre) {
+          const garde = RR.chambre ? Math.min(1, A.chargeur) : 0;
+          perdues = A.chargeur - garde;
+          A.chargeur = garde;
+          Tanks.Realisme.bilan.ballesPerdues += perdues;
+          Tanks.Realisme.bilan.chargeursJetes++;
+          s.compteurs.ballesPerdues = (s.compteurs.ballesPerdues || 0) + perdues;
+        }
+        const chambre = s.rechargementSorte === "tactique" && RR.chambre && A.chargeur > 0 ? 1 : 0;
+        const n = Math.min(st.coupParCoup ? 1 : st.chargeur + chambre - A.chargeur, A.reserve);
         A.chargeur += n;
         A.reserve -= n;
         s.rechargement = 0;
+        s.derniersPerdues = perdues;
         if (st.coupParCoup && A.chargeur < st.chargeur && A.reserve > 0) s.rechargement = st.rechargement;
         else ev.push(["recharge-arme", { tireur: s, arme: st.nom, chargeur: A.chargeur, reserve: A.reserve, fini: true }]);
       }
     }
-    if (intentions.recharger && arme) commencerRechargement(s, A, ev);
+    if (intentions.recharger && arme && s.enraye) { // (livre n° 26) R débloque l'arme enrayée
+      s.enraye = false;
+      s.rechargement = s.rechargementTotal = RA.enrayage.duree;
+      s.rechargementDe = A;
+      s.rechargementSorte = "désenrayer";
+      s.desenraye = true;
+    } else if (intentions.recharger && arme) commencerRechargement(s, A, ev);
     // 4. l'assistance à la visée (10 fois par seconde on cherche la cible ; à chaque pas, l'aimant tire l'arme vers elle)
     s.attenteAssist = (s.attenteAssist || 0) - dt;
     if (s.attenteAssist <= 0) {
@@ -291,7 +334,16 @@ Tanks.Armes = (function () {
       if (!commencerRechargement(s, A, ev)) ev.push(["vide", { tireur: s, arme: st.nom }]);
       return;
     }
+    if (s.enraye) return void (s.recharge = 0.3); // (livre n° 26 : l'arme est enrayée : R pour la débloquer)
     tirer(s, A, monde, ev);
+    // ✍️ (livre n° 26) L'ENRAYAGE (éteint au départ, dans config.js) : la cartouche se coince
+    const EN = RA.enrayage;
+    if (EN.actif && !st.coupParCoup && st.famille !== "roquettes" && A.chargeur > 0 && Math.random() < EN.chance) {
+      s.enraye = true;
+      Tanks.Realisme.bilan.enrayages++;
+      ev.push(["enrayee", { tireur: s, arme: st.nom }]);
+      return;
+    }
     if (A.chargeur === 0) commencerRechargement(s, A, ev); // (le dernier coup : on recharge tout seul)
   }
 

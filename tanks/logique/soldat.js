@@ -18,6 +18,8 @@
 // derrière un muret, on ne le voit plus ! Et les soldats de l'ordinateur ont maintenant un CHARGEUR : vide, ils rechargent.
 // Ce fichier ne dessine rien : il renvoie des événements (« balle », « soldat-touche », « soldat-mort », « nage »,
 // « grenade-lancee », « grenades », « mur-abime », « accroupi »…).
+// Livre de demandes n° 26 : ✍️ « un réalisme absurde » : une balle TRAVERSE les matières minces (moins de dégâts derrière),
+// RICOCHE en rasant le béton ou le métal (« ricochet »), et le VENT la fait dériver (logique/realisme.js).
 // Livre de demandes n° 8 : ✍️ « Pouvoir entrer dans les maisons. » La hauteur de tes pieds vient du concierge des maisons
 // (logique/interieurs.js) : le plancher, la pente de l'escalier, l'étage — ou le terrain dehors.
 
@@ -118,30 +120,64 @@ Tanks.Soldat = (function () {
       return;
     }
     // (étape 75) un mur entre le tireur et là où va la balle ? elle s'arrête dedans et l'abîme
+    // ✍️ (livre n° 26) … sauf si elle RICOCHE (elle arrive en rasant sur du béton, de la pierre, du métal) ou si elle
+    // TRAVERSE (une porte en bois, des planches, une portière, la tôle d'un métro…) : derrière, elle fait moins mal.
     const vers = meilleur ? { x: meilleur.s.x, y: meilleur.s.y + hauteurVisee(meilleur.s), z: meilleur.s.z } : fin;
+    let ox = x, oy = y, oz = z, facteur = 1, suite = false;
     const m = Tanks.Structures.premier(x, y, z, vers.x, vers.y, vers.z);
     if (m) {
-      ev.push(["balle", { tireur, de: { x, y, z }, a: { x: m.x, y: m.y, z: m.z }, mur: true, matiere: m.morceau ? m.morceau.matiere : T.souterrain ? "beton" : m.toit ? "tuiles" : m.plancher === "objet" ? "metal" : "gravats", nx: m.nx, ny: m.ny, nz: m.nz }]);
+      const matiere = m.morceau ? m.morceau.matiere : T.souterrain ? (m.metro && (m.metro.sorte === "metro" || m.metro.sorte === "tram") ? "metal" : "beton") : m.toit ? "tuiles" : m.plancher === "objet" ? "metal" : "gravats";
+      const mx = m.x, my = m.y, mz = m.z, nx = m.nx, ny = m.ny, nz = m.nz, l = Math.hypot(vers.x - x, vers.y - y, vers.z - z) || 1;
+      const ux = (vers.x - x) / l, uy = (vers.y - y) / l, uz = (vers.z - z) / l;
+      const k = Tanks.Realisme.traverse(m); // (avant que « m » ne serve à autre chose : c'est un objet réutilisé)
+      ev.push(["balle", { tireur, de: { x, y, z }, a: { x: mx, y: my, z: mz }, mur: true, matiere, nx, ny, nz, traverse: !!k }]);
       Tanks.Structures.balle(m, R.degats || 1, tireur, ev, monde);
-      return;
+      const r = !k && Tanks.Realisme.ricochet(ux, uy, uz, nx, ny, nz, matiere);
+      if (r) {
+        // le ricochet repart (et s'arrête sur le prochain mur) ; c'est du spectacle : il ne blesse personne
+        let ax = mx + r.x * r.longueur, ay = my + r.y * r.longueur, az = mz + r.z * r.longueur;
+        const m2 = Tanks.Structures.premier(mx + r.x * 0.05, my + r.y * 0.05, mz + r.z * 0.05, ax, ay, az);
+        if (m2) (ax = m2.x), (ay = m2.y), (az = m2.z);
+        ev.push(["ricochet", { tireur, de: { x: mx, y: my, z: mz }, a: { x: ax, y: ay, z: az }, matiere, angle: r.angle, nx, ny, nz }]);
+        return;
+      }
+      if (!k) return;
+      // la balle ressort de l'autre côté : où ? On regarde À L'ENVERS depuis un peu plus loin que l'épaisseur permise : la
+      // 1re face touchée est la face de SORTIE (plus épais que permis : elle reste coincée dedans)
+      const cle = Tanks.Realisme.cleTraverse(m), E = Math.min(Tanks.Realisme.epaisseur(cle), Math.max(0.1, l - Math.hypot(mx - x, my - y, mz - z) - 0.3));
+      (ox = mx + ux * E), (oy = my + uy * E), (oz = mz + uz * E);
+      const dos = Tanks.Structures.premier(ox, oy, oz, mx + ux * 0.01, my + uy * 0.01, mz + uz * 0.01);
+      if (dos) (ox = dos.x + ux * 0.04), (oy = dos.y + uy * 0.04), (oz = dos.z + uz * 0.04);
+      const m3 = Tanks.Structures.premier(ox, oy, oz, vers.x, vers.y, vers.z);
+      if (m3) {
+        ev.push(["balle", { tireur, de: { x: ox, y: oy, z: oz }, a: { x: m3.x, y: m3.y, z: m3.z }, mur: true, suite: true, matiere: m3.morceau ? m3.morceau.matiere : T.souterrain ? "beton" : "gravats", nx: m3.nx, ny: m3.ny, nz: m3.nz }]);
+        Tanks.Structures.balle(m3, (R.degats || 1) * k, tireur, ev, monde);
+        return;
+      }
+      (facteur = k), (suite = true);
+      Tanks.Realisme.noterTraversee(cle);
     }
-    if (meilleur && T.vueLibre(x, y, z, meilleur.s.x, meilleur.s.y + hauteurVisee(meilleur.s), meilleur.s.z)) {
+    if (meilleur && T.vueLibre(ox, oy, oz, meilleur.s.x, meilleur.s.y + hauteurVisee(meilleur.s), meilleur.s.z)) {
       // (étape 77) TON arme : la balle s'écarte au hasard (± la dispersion, de côté et en hauteur) ; elle touche si l'écart
       // reste dans la silhouette (± 0,32 m de côté, ± 0,85 m de haut, vue à cette distance). Les dégâts baissent au loin.
-      let chance = R.precision * (1 - 0.5 * (meilleur.d / R.portee)), degats = R.degats;
+      let chance = R.precision * (1 - 0.5 * (meilleur.d / R.portee)), degats = R.degats * facteur;
       if (R.dispersionTir !== undefined) {
         const sig = R.dispersionTir, d = meilleur.d, [w, h] = C.tir.cible;
         // (étape 79) la CHUTE de la balle (m, vue d'ici : chute ÷ d radians) et la respiration (hausse) décalent l'écart en hauteur
         const tombe = R.vitesseBalle ? Tanks.Armes.sousLaCroix(d, R.vitesseBalle) : 0;
         if (R.vitesseBalle) tireur.derniereChute = { d, chute: Tanks.Armes.chute(d, R.vitesseBalle), sous: tombe };
-        chance = Math.abs((Math.random() * 2 - 1) * sig) < w / d && Math.abs((Math.random() * 2 - 1) * sig + (R.hausse || 0) - tombe / d) < h / d ? 1 : 0;
+        // ✍️ (livre n° 26) le VENT pousse la balle de côté ; et dans la lunette, là où TU vises compte (tu peux viser à côté
+        // pour compenser le vent : l'indicateur de vent te dit de combien)
+        const derive = Tanks.Realisme.derive(angle, d, R.vitesseBalle), vise = R.lunette ? angleEntre(angle - Math.atan2(meilleur.s.z - z, meilleur.s.x - x)) : 0;
+        if (derive) (Tanks.Realisme.noterDerive(derive), (tireur.derniereDerive = { d, derive }));
+        chance = Math.abs((Math.random() * 2 - 1) * sig + derive / d + vise) < w / d && Math.abs((Math.random() * 2 - 1) * sig + (R.hausse || 0) - tombe / d) < h / d ? 1 : 0;
         if (d > R.porteeEfficace) degats *= 1 + (R.degatsLoin - 1) * Math.min(1, (d - R.porteeEfficace) / Math.max(1, R.portee - R.porteeEfficace));
       }
       if (tireur.equipe === "rouges") chance *= Tanks.Campagne.facteur("precision"); // (demande 90 : la précision du Front)
       if (meilleur.s.accroupi) chance *= RS.accroupi.touche; // (demande 92 : accroupi, il est plus petit)
       if (Tanks.Perchoirs.abrite(meilleur.s, y)) chance *= C.perchoirs.couvert.touche; // (livre n° 12 : accroupi derrière les sacs de sable, tiré d'en bas)
       if (Math.random() < chance) {
-        ev.push(["balle", { tireur, de: { x, y, z }, a: { x: meilleur.s.x, y: meilleur.s.y + hauteurVisee(meilleur.s), z: meilleur.s.z }, touche: true }]);
+        ev.push(["balle", { tireur, de: { x: ox, y: oy, z: oz }, a: { x: meilleur.s.x, y: meilleur.s.y + hauteurVisee(meilleur.s), z: meilleur.s.z }, touche: true, suite, traverse: suite }]);
         if (meilleur.s.genre === "vehicule" || meilleur.s.sorte) Tanks.Vehicules.blesserPilote(meilleur.s, Math.ceil(degats * (R.vsVehicule || 1) * 2) / 2, tireur, ev); // (demande 97 : × les munitions perforantes ou à pointe creuse)
         else blesser(meilleur.s, degats, tireur, ev, typeof arme === "string" ? arme : "balle", { x, z });
         return;
@@ -149,7 +185,7 @@ Tanks.Soldat = (function () {
       fin.x = meilleur.s.x + (Math.random() - 0.5) * 3;
       fin.z = meilleur.s.z + (Math.random() - 0.5) * 3;
     }
-    ev.push(["balle", { tireur, de: { x, y, z }, a: fin, matiere: T.matiere(fin.x, fin.z) }]);
+    ev.push(["balle", { tireur, de: { x: ox, y: oy, z: oz }, a: fin, matiere: T.matiere(fin.x, fin.z), suite }]);
   }
 
   // Les véhicules sur lesquels une balle ricoche : les tanks et le 4x4 (rangés dans une liste réutilisée).

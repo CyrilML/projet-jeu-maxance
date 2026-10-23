@@ -2289,7 +2289,7 @@ Tanks.Armes3D = (function () {
     const reculZ = V.recul * R[0] * fort, reculH = V.recul * R[1] * fort;
     // le RECHARGEMENT (t de 0 à 1) : on penche l'arme, le chargeur tombe, la main en remet un neuf, clac
     const pompe = fam === "pompe", glisse = pompe && s.rechargement > 0 && s.rechargementDe === tenue; // (fusil à pompe : cartouche par cartouche)
-    const recharge = s.rechargement > 0 && s.rechargementDe === tenue && !pompe ? 1 - s.rechargement / st.rechargement : 0;
+    const recharge = s.rechargement > 0 && s.rechargementDe === tenue && !pompe ? 1 - s.rechargement / (s.rechargementTotal || st.rechargement) : 0; // (livre n° 26 : vide, le rechargement dure plus)
     V.penchePompe = Math.max(0, Math.min(1, (V.penchePompe || 0) + (glisse ? 1 : -1) * dt * 6));
     const penche = pompe ? lisse(V.penchePompe) : recharge > 0 ? entre(recharge, 0, 0.14) * (1 - entre(recharge, 0.82, 1)) : 0;
     const roquettes = fam === "roquettes", sansChargeur = !m.chargeur;
@@ -2350,7 +2350,7 @@ Tanks.Armes3D = (function () {
     if (pompe && groupeCul) { // la main gauche tient la pompe (elle la suit) ; en rechargeant, elle glisse des cartouches par-dessous
       decG = groupeCul.position.clone();
       if (glisse) {
-        const ph = 1 - s.rechargement / st.rechargement, va = Math.sin(Math.PI * ph);
+        const ph = 1 - s.rechargement / (s.rechargementTotal || st.rechargement), va = Math.sin(Math.PI * ph);
         decG.add(new THREE.Vector3(0.07 - m.garde.centre.x, -0.02 - m.garde.centre.y, 0).multiplyScalar(0.85 * lisse(V.penchePompe))).add(new THREE.Vector3(0, -0.09 * va, 0.02 * va));
       }
     }

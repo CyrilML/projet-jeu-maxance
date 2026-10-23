@@ -19,6 +19,7 @@
 // Demande 94 : LA RADIO QUI PARLE : avant chaque phrase, un « clic » (on appuie sur le bouton du talkie-walkie) et un
 // petit « kchh » ; pendant qu'il parle, un léger souffle de friture ; à la fin, « kchh » et « clic » (on relâche).
 // La voix elle-même vient du navigateur (affichage/radio-voix.js) : elle ne passe pas par ce synthétiseur.
+// (Livre de demandes n° 26 : essoufflé, tu entends ton SOUFFLE — « hhh… hhh… » — et une balle qui ricoche fait « piouu ».)
 // Quand tu QUITTES le jeu (un autre onglet, une autre application, une autre fenêtre devant), le son « s'endort » :
 // on met le synthétiseur en pause (ctx.suspend). Il se réveille quand tu reviens.
 
@@ -95,13 +96,14 @@ Tanks.Sons = (function () {
       explosion(e.x, e.z, g);
     });
     // (étape 75) les grenades et les maisons
+    radio.ecouter("ricochet", (e) => impact(e.matiere === "metal" ? "metal" : "beton", Math.max(0, 1 - distance(e.de.x, e.de.z) / 45), "toujours")); // (livre n° 26 : le « piouu »)
     radio.ecouter("grenade-lancee", (e) => tink(e.parToi ? 0.5 : attenuation(e.x, e.z) * 0.4, 2400));
     radio.ecouter("mur-troue", (e) => fracas(attenuation(e.x, e.z) * Math.min(1, 0.4 + e.morceaux.length * 0.15), 0.6));
     radio.ecouter("maison-effondree", (e) => (fracas(attenuation(e.x, e.z), 2.2), boum(attenuation(e.x, e.z) * 0.8, 2.5, 45)));
     let derniereBalle = 0;
     radio.ecouter("balle", (e) => {
       // (les balles de l'ordinateur : pas plus d'une toutes les 0,05 s, sinon c'est un vacarme)
-      if (e.plomb > 0) return; // (fusil à pompe : 8 plombs, mais UN seul coup de feu)
+      if (e.plomb > 0 || e.suite) return; // (fusil à pompe : 8 plombs, mais UN seul coup de feu) (livre n° 26 : la balle qui a traversé une porte : pas un 2e coup)
       if (!e.parToi && ctx.currentTime - derniereBalle < 0.05) return;
       derniereBalle = ctx.currentTime;
       coupDeFeu(Tanks.Armes3D.sonDe(e, monde), e.parToi ? 0.8 : attenuation(e.de.x, e.de.z) * 0.35, e.parToi ? 0 : retard(e.de.x, e.de.z)); // (demande 88 : chaque famille d'arme a son bruit) (demande 92 : en retard de loin)
@@ -187,8 +189,8 @@ Tanks.Sons = (function () {
   // (demande 92) Le bruit d'un impact de balle selon la matière.
   function impact(sorte, force, ricochet) {
     if (!ctx || coupe || force < 0.05) return;
-    if (sorte === "metal") {
-      if (ricochet && Math.random() < 0.5) { // le « piouuu » du ricochet : une note qui glisse vers le grave
+    if (sorte === "metal" || ricochet === "toujours") {
+      if (ricochet === "toujours" || (ricochet && Math.random() < 0.5)) { // le « piouuu » du ricochet : une note qui glisse vers le grave
         const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
         o.frequency.setValueAtTime(2600 + Math.random() * 1200, t);
         o.frequency.exponentialRampToValueAtTime(700, t + 0.35);
@@ -449,6 +451,7 @@ Tanks.Sons = (function () {
   function maj(m) {
     monde = m;
     if (!ctx) return;
+    respirer(m); // (livre n° 26)
     for (const p of m.obus) {
       if (!p.main) continue;
       const deja = rebondsEntendus.get(p) || 0;
@@ -501,6 +504,27 @@ Tanks.Sons = (function () {
   }
   function basculer() {
     coupe = !coupe;
+  }
+  // ✍️ (livre n° 26) TON SOUFFLE quand tu es essoufflé : « hhh… hhh… » (du bruit filtré, comme de l'air), plus vite et plus
+  // fort quand la fatigue monte. Appelé à chaque image : on joue une respiration quand c'est l'heure.
+  let prochainSouffle = 0, inspire = true;
+  function respirer(m) {
+    const t = m.toi, s = t && t.mode === "pied" ? t.soldat : null, F = s && !s.mort ? s.fatigue || 0 : 0, RF = C.realismeAbsurde.fatigue;
+    if (!ctx || coupe || F < 0.12 || ctx.currentTime < prochainSouffle) return;
+    const duree = (RF.periode / 2) / (0.8 + F * 1.2);
+    prochainSouffle = ctx.currentTime + duree;
+    const h = ctx.currentTime, b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    b.buffer = tampon;
+    f.type = "bandpass";
+    f.frequency.value = inspire ? 1500 : 900;
+    f.Q.value = 0.9;
+    g.gain.setValueAtTime(0.0001, h);
+    g.gain.linearRampToValueAtTime(RF.souffle * F * (inspire ? 0.7 : 1), h + duree * 0.35);
+    g.gain.exponentialRampToValueAtTime(0.0001, h + duree * 0.9);
+    b.connect(f).connect(g).connect(sortie);
+    b.start(h, Math.random() * 1.5);
+    b.stop(h + duree);
+    inspire = !inspire;
   }
   return { demarrer, maj, basculer, frole, impact, explosion, radioDebut, radioFin, radioFond, crepitement, coupe: () => coupe, etat: () => (ctx ? (ctx.state === "running" ? "allumé 🔊" : "endormi 🔇") : "pas encore allumé (appuie sur une touche)") };
 })();

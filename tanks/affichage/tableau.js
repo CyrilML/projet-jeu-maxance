@@ -25,6 +25,9 @@
 // Au-dessus des hélicos de transport de l'ordinateur : leur nom, leurs soldats ; sur la carte, une petite croix.
 // Il lit le monde, il ne le modifie jamais.
 
+// (Livre de demandes n° 25 : dans le souterrain, la VIE DES 2 QG sous le panneau du haut. N° 26 : quand des balles te
+// frôlent, les bords de l'écran s'assombrissent et l'image se brouille ; dans la lunette, l'INDICATEUR DE VENT ; essoufflé
+// ou apeuré, le viseur tremble avec ta visée.)
 window.Tanks = window.Tanks || {};
 
 // Étape 80 : dans le SOUTERRAIN, en haut : les soldats debout et les RENFORTS de chaque camp (la règle de la victoire) ;
@@ -118,6 +121,10 @@ Tanks.Tableau = (function () {
     radio.ecouter("trousse", () => dire("🩹 Trousse posée : on se soigne ici", "#7dffa0"));
     radio.ecouter("recharge-arme", (d) => !d.fini && dire("🔄 Rechargement…", "#ccc", 900));
     radio.ecouter("vide", () => dire("🫙 Plus de balles ! (sac de munitions, ou change d'arme)", "#ffb37a"));
+    // ✍️ (livre n° 25) les QG du souterrain
+    radio.ecouter("qg-attaque", (d) => dire(d.equipe === "bleus" ? "🚨 TON QG EST ATTAQUÉ ! (" + d.baies + " baie" + (d.baies > 1 ? "s" : "") + " debout)" : "🎯 Le QG du Front est touché !", d.equipe === "bleus" ? "#ff7a6a" : "#ffe27a", 2200));
+    radio.ecouter("qg-baie-detruite", (d) => dire(d.equipe === "bleus" ? "💥 Une baie de ton QG a sauté ! Plus que " + d.baies : "💥 Une baie du Front a sauté ! Plus que " + d.baies, d.equipe === "bleus" ? "#ff7a6a" : "#7dffa0", 2800));
+    radio.ecouter("qg-detruit", (d) => dire(d.equipe === "bleus" ? "🏚️ TON QG EST DÉTRUIT…" : "🏚️ LE QG DU FRONT EST DÉTRUIT !", d.equipe === "bleus" ? "#ff7a6a" : "#7dffa0", 4000));
     // (étape 75) les maisons et les grenades
     radio.ecouter("maison-effondree", (d) => d.parToi ? dire("🏚️ La maison s'effondre !", "#ffb37a", 2500) : null);
     radio.ecouter("mur-troue", (d) => d.parToi && d.sorte !== "balle" ? dire("🧱 Un trou dans le mur ! (" + d.debout + " / " + d.total + " morceaux debout)", "#e6c9a0") : null);
@@ -268,7 +275,8 @@ Tanks.Tableau = (function () {
     const t = monde.toi, s = t.soldat, e = t.engin;
     if (t.mode === "pied") {
       // le viseur : 40 m devant toi, à hauteur d'homme
-      const v = Tanks.Scene.versEcran(s.x + Math.cos(s.angle) * 40, s.y + 1.4, s.z + Math.sin(s.angle) * 40, L, H);
+      const bv = s.balancement || { x: 0, y: 0 }; // (livre n° 26 : essoufflé ou apeuré, le viseur tremble avec ta visée)
+      const v = Tanks.Scene.versEcran(s.x + Math.cos(s.angle + bv.x) * 40, s.y + 1.4 + bv.y * 40, s.z + Math.sin(s.angle + bv.x) * 40, L, H);
       const dansLaLunette = s.armes && s.visee > 0.6 && Tanks.Armes.estUneArme(s) && Tanks.Armes.enMain(s).stats.lunette; // (étape 89 : la croix de la lunette suffit)
       if (v && !s.parachute && !dansLaLunette) viseurDynamique(v, s);
       else if (v) dessinerMarqueur(v);
@@ -292,7 +300,7 @@ Tanks.Tableau = (function () {
         });
         if (Tanks.Armes.estUneArme(s)) {
           const A = Tanks.Armes.enMain(s), st = A.stats;
-          barre(24, H - 28, 200, s.rechargement > 0 ? 1 - s.rechargement / st.rechargement : A.chargeur / st.chargeur, A.chargeur > 0 && !s.rechargement, s.rechargement > 0 ? "🔄 recharge…" : A.chargeur === 0 ? "R : recharger" : ""); // (livre n° 1 : les balles sont déjà écrites en gros, en bas à droite)
+          barre(24, H - 28, 200, s.rechargement > 0 ? 1 - s.rechargement / (s.rechargementTotal || st.rechargement) : Math.min(1, A.chargeur / st.chargeur), A.chargeur > 0 && !s.rechargement, s.rechargement > 0 ? (s.rechargementSorte === "vide" ? "🔄 recharge (vide : plus long)…" : s.rechargementSorte === "tactique" ? "🔄 recharge tactique (chargeur jeté)…" : s.rechargementSorte === "désenrayer" ? "🔧 désenraye…" : "🔄 recharge…") : s.enraye ? "⚠️ ENRAYÉE : R" : A.chargeur === 0 ? "R : recharger" : ""); // (livre n° 1 : les balles sont déjà écrites en gros, en bas à droite)
           // les munitions en gros, en bas à droite, et le point du laser
           const xm = IU.vitesseAPied ? 0 : 150; // (livre n° 1 : sans la vitesse, les munitions vont tout à droite)
           panneau(L - 300 + xm, H - 70, 140, 58);
@@ -315,7 +323,7 @@ Tanks.Tableau = (function () {
             if (p) (ctx.strokeStyle = "rgba(125,255,160,.8)"), (ctx.lineWidth = 1.5), ctx.strokeRect(p.x - 12, p.y - 16, 24, 32);
           }
           // épaulé : (étape 79) la VRAIE LUNETTE (affichage/lunette... dessinée ici) : le rond, la croix, les graduations
-          if (s.visee > 0.6 && st.lunette) dessinerLunette(ctx, L, H, s, st);
+          if (s.visee > 0.6 && st.lunette) (dessinerLunette(ctx, L, H, s, st), indicateurVent(monde, s, st)); // (livre n° 26 : le vent)
           else if (Tanks.Armes3D.vue.dansLeX2) dessinerX2(ctx, L, H, s, st); // (livre n° 13 : le viseur ×2, à la 1re personne)
         } else if (s.arme === "gadget") {
           const F = g.fiche, part = g.id === "reparation" ? (g.cible ? g.part : 0) : g.attente > 0 ? 1 - g.attente / (F.attente || F.cadence || 1) : 1;
@@ -561,6 +569,7 @@ Tanks.Tableau = (function () {
   }
   function dessinerTout(monde) {
     ctx.clearRect(0, 0, L, H);
+    if (monde.phase !== "bataille") peurEtFlou(null, false); // (livre n° 26 : hors de la bataille, jamais de flou)
     ecran.nomsMontres = ecran.nomsCaches = 0;
     // (étape 72) le petit mot du régulateur de qualité, sous la carte : « ⚙️ qualité 2/3 · 58 i/s »
     const Q = Tanks.Qualite;
@@ -588,6 +597,7 @@ Tanks.Tableau = (function () {
     }
     const t = monde.toi || { mode: "char" }, dansLeTank = t.mode === "char";
     const ici = dansLeTank ? j : t.engin || t.soldat; // (là où tu es)
+    peurEtFlou(monde.phase === "bataille" ? t : null, true); // ✍️ (livre n° 26) les balles qui frôlent : les bords de l'écran s'assombrissent, l'image devient floue
     // (étape 75) au-dessus de chaque grenade proche : le temps avant l'explosion (en rouge, celles de l'ennemi : attention !)
     for (const p of monde.obus) {
       if (!p.main || Math.hypot(p.x - ici.x, p.z - ici.z) > 45) continue;
@@ -842,7 +852,8 @@ Tanks.Tableau = (function () {
       panneau(L / 2 - 240, H / 2 - 90, 480, 170);
       const perdu = t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "moto" ? "💥 Ta moto est hors de combat…" : t.mode === "quad" ? "💥 Ton quad est hors de combat…" : t.mode === "camion" ? "💥 Ton camion est détruit…" : t.engin && t.engin.genre === "helico" ? "🔥 Ton " + t.engin.nom + " est abattu…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : t.mode === "sousmarin" ? "🌊 Ton sous-marin est coulé…" : t.mode === "dca" ? "💥 Ta DCA est détruite…" : "💥 Ton tank est détruit…";
       texte(gagne ? "🏆 VICTOIRE !" : perdu, L / 2, H / 2 - 40, 38, gagne ? "#7dffa0" : "#ff7a6a", "center");
-      texte(gagne ? (monde.metro ? "Les Rouges n'ont plus ni renfort ni soldat debout dans la station" : "Tous les tanks rouges sont détruits") : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
+      const qgFin = monde.metro && monde.metro.qg && !monde.campagne ? monde.metro.qg : null; // (livre n° 25)
+      texte(gagne ? (qgFin && qgFin.rouges.detruit ? "🏚️ Le QG du Front est détruit : ils n'ont plus de commandement !" : monde.metro ? "Les Rouges n'ont plus ni renfort ni soldat debout dans la station" : "Tous les tanks rouges sont détruits") : qgFin && qgFin.bleus.detruit ? "🏚️ Ton QG Rempart est détruit…" : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
       const S = Tanks.Sauvegarde.donnees;
       texte("Victoires : " + S.victoires + " · défaites : " + S.defaites + (monde.metro ? " · victoires dans le souterrain : " + S.souterrain : " · tanks détruits : " + S.detruits), L / 2, H / 2 + 24, 15, "#e8e4d6", "center");
       texte("Entrée : menu · R : rejouer avec le même équipement", L / 2, H / 2 + 56, 17, "#ffe27a", "center");
@@ -947,15 +958,38 @@ Tanks.Tableau = (function () {
       g.fillStyle = "#4a4740";
       for (let z = 0; z < (r.haut - Q) * k; z += 2) g.fillRect(X(r.x0), z0 + z, (r.x1 - r.x0) * k, 0.8);
     }
+    for (const e in SO().qg) { // (livre n° 25) les salles des QG, à la couleur de leur camp
+      const q = SO().qg[e];
+      g.fillStyle = e === "bleus" ? "#24406e" : "#6e2424";
+      g.fillRect(X(q.sx > 0 ? q.x0 : -q.x1), Z(q.sz > 0 ? q.z0 : -q.z1), (q.x1 - q.x0) * k, (q.z1 - q.z0) * k);
+    }
     for (const b of SO().boites) { // les rames (les trams en feu en orange), les piliers, les bancs
       g.save();
       g.translate(X(b.x), Z(b.z));
       g.rotate(b.angle);
-      g.fillStyle = b.sorte === "metro" || b.sorte === "tram" ? (b.rame.feu ? "#c8541c" : b.rame.brule ? "#4a3a30" : "#9ab0c8") : b.sorte === "pilier" ? "#8aa0c0" : b.sorte === "banc" ? "#8a5a32" : b.sorte === "gravats" ? "#5d5852" : "#777";
+      g.fillStyle = b.sorte === "metro" || b.sorte === "tram" ? (b.rame.feu ? "#c8541c" : b.rame.brule ? "#4a3a30" : "#9ab0c8") : b.sorte === "pilier" ? "#8aa0c0" : b.sorte === "banc" ? "#8a5a32" : b.sorte === "gravats" ? "#5d5852" : b.sorte === "baie" ? "#ffe14a" : "#777";
       g.fillRect(-b.dl * k, -b.dp * k, Math.max(1, 2 * b.dl * k), Math.max(1, 2 * b.dp * k));
       g.restore();
     }
     return c;
+  }
+  // ✍️ (livre n° 25) LA VIE DES DEUX QG, sous le panneau du haut : une barre par camp, et ses 3 baies (un carré chacune).
+  // Attaqué depuis moins de 3 s ? la barre clignote en rouge.
+  function barresQG(qg) {
+    panneau(L / 2 - 230, 76, 460, 34);
+    const QC = C.souterrain.qg, now = Tanks.monde ? Tanks.monde.temps : 0;
+    [["bleus", L / 2 - 222, E.bleus.marque], ["rouges", L / 2 + 8, E.rouges.marque]].forEach(([e, x, couleur]) => {
+      const q = qg[e], part = Tanks.QG.vie(q) / q.vieMax, attaque = now - q.attaque < 3 && Math.floor(now * 6) % 2 === 0;
+      texte((e === "bleus" ? "🏢 " : "") + (e === "bleus" ? "QG Rempart" : "QG du Front") + (e === "rouges" ? " 🏢" : ""), e === "bleus" ? x : x + 214, 89, 11, couleur, e === "bleus" ? "left" : "right");
+      ctx.fillStyle = "rgba(0,0,0,.5)";
+      ctx.fillRect(x, 95, 214, 8);
+      ctx.fillStyle = q.detruit ? "#555" : attaque ? "#ff3a2a" : couleur;
+      ctx.fillRect(e === "bleus" ? x : x + 214 * (1 - part), 95, 214 * part, 8);
+      q.vies.forEach((v, k) => {
+        ctx.fillStyle = v <= 0 ? "#333" : v / QC.vieBaie < 0.35 ? "#ff5a3a" : v / QC.vieBaie < 0.7 ? "#ffb030" : "#7dff8a";
+        ctx.fillRect((e === "bleus" ? x + 150 : x + 8) + k * 18, 82, 12, 8);
+      });
+    });
   }
   function dessinerSouterrain(monde, t, ici) {
     const M = monde.metro;
@@ -965,7 +999,9 @@ Tanks.Tableau = (function () {
     texte("🔵 " + (sb + (t.soldat && !t.soldat.mort ? 1 : 0)) + " debout · " + M.renforts.bleus + " renforts", L / 2 - 26, 34, 17, E.bleus.marque, "right");
     texte("contre", L / 2, 33, 12, "#ccc", "center");
     texte(sr + " debout · " + M.renforts.rouges + " renforts 🔴", L / 2 + 26, 34, 17, E.rouges.marque);
-    texte((monde.campagne ? "🚇 la station Terminus" : "🚇 le souterrain · le camp sans renfort ni soldat debout a perdu") + " · ✖ " + M.elimines.rouges + " rouges et " + M.elimines.bleus + " bleus à terre", L / 2, 58, 12, "#e8e4d6", "center");
+    const qg = M.qg && !monde.campagne ? M.qg : null;
+    texte((monde.campagne ? "🚇 la station Terminus" : qg ? "🚇 le souterrain · détruis le QG du Front, ou plus un Rouge debout" : "🚇 le souterrain · le camp sans renfort ni soldat debout a perdu") + " · ✖ " + M.elimines.rouges + " rouges et " + M.elimines.bleus + " bleus à terre", L / 2, 58, 12, "#e8e4d6", "center");
+    if (qg) barresQG(qg);
     // le plan de la station (en haut à droite)
     const l = 300, h = 84, k = l / (2 * (SO().L + CS.tunnel) + 6), x0 = L - l - 12, y0 = 12, cx = l / 2, cz = h / 2;
     if (!plan) plan = fabriquerPlan(l, h, k, cx, cz);
@@ -993,8 +1029,9 @@ Tanks.Tableau = (function () {
     texte("ouest 🔴", x0 + 4, y0 + h + 14, 11, "#ff9a8a");
     texte("🔵 est", x0 + l - 4, y0 + h + 14, 11, "#9cc4ff", "right");
     texte("étage : " + (ici.y > CS.mezzanine.hauteur - 0.3 ? "mezzanine" : ici.y < -0.5 ? "sur les voies" : ici.y > 0.3 ? "dans l'escalier" : "quai"), L - 12, y0 + h + 30, 12, "rgba(255,255,255,.8)", "right");
-    if (message && performance.now() < message.jusqua && message.texte) texte(message.texte, L / 2, 110, 26, message.couleur, "center");
-    if (reponse && performance.now() < reponse.jusqua) texte(reponse.texte, L / 2, 140, 16, "#e8f0ff", "center");
+    const bas = qg ? 34 : 0; // (livre n° 25 : sous les barres des QG)
+    if (message && performance.now() < message.jusqua && message.texte) texte(message.texte, L / 2, 110 + bas, 26, message.couleur, "center");
+    if (reponse && performance.now() < reponse.jusqua) texte(reponse.texte, L / 2, 140 + bas, 16, "#e8f0ff", "center");
     finEtAide(monde, t);
   }
 
@@ -1235,6 +1272,52 @@ Tanks.Tableau = (function () {
   // ✍️ (étape 79) LA LUNETTE DE SNIPER : tout est noir sauf un grand rond ; dedans, une croix fine avec des points
   // (les « mil-dots » : chacun = 1 milliradian, soit 1 m à 1 000 m), un bord un peu sombre (le vignettage), et en bas
   // la barre de ton SOUFFLE (Maj). Le peintre ne fait que LIRE le soldat : s.souffle, s.balancement, s.vise.
+  // ✍️ (livre n° 26) LA PEUR (la « suppression ») : un voile sombre sur les bords, et un léger flou (le filtre de
+  // l'image 3D, affichage/ambiance.js ; pas de flou aux niveaux de qualité légers). Le peintre lit s.peur, sans la changer.
+  let flouAvant = -1;
+  function peurEtFlou(t, peindre) {
+    const s = t && t.mode === "pied" ? t.soldat : null, peur = s && !s.mort ? s.peur || 0 : 0, P = C.realismeAbsurde.suppression;
+    const flou = Math.round(peur * (P.flou[Tanks.Qualite.niveau] || 0) * 10) / 10;
+    if (flou !== flouAvant) (flouAvant = flou), Tanks.Ambiance.flou(flou);
+    if (peur < 0.02 || !peindre) return;
+    const g = ctx.createRadialGradient(L / 2, H / 2, Math.min(L, H) * 0.25, L / 2, H / 2, Math.max(L, H) * 0.65);
+    g.addColorStop(0, "rgba(0,0,0,0)");
+    g.addColorStop(1, "rgba(10,6,4," + (peur * P.vignette).toFixed(3) + ")");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, L, H);
+    if (peur > 0.6) texte("😰 sous le feu !", L / 2, H - 150, 14, "rgba(255,200,170," + (peur - 0.4).toFixed(2) + ")", "center");
+  }
+  // ✍️ (livre n° 26) L'INDICATEUR DE VENT, dans la lunette : d'où vient le vent (une flèche, par rapport à là où tu
+  // regardes), sa force, et de combien ta balle va DÉRIVER à la distance de ce que tu vises (vise de l'autre côté !).
+  function indicateurVent(monde, s, st) {
+    const V = monde.vent;
+    if (!V || !C.realismeAbsurde.vent.actif) return;
+    const x = L / 2 + Math.min(L, H) * 0.36, y = H / 2 - Math.min(L, H) * 0.3;
+    panneau(x - 70, y - 44, 140, 104);
+    if (!V.force) return void texte("💨 pas de vent ici", x, y, 12, "#ccc", "center");
+    // la flèche : le vent souffle VERS où ? (vu de toi : en haut = devant toi, à droite = vers ta droite)
+    const a = Math.atan2(V.z, V.x) - s.angle, l = 22;
+    ctx.save();
+    ctx.translate(x, y - 6);
+    ctx.rotate(a); // (0 = vers l'avant, en haut ; π/2 = vers ta droite)
+    ctx.strokeStyle = "#9ee0ff";
+    ctx.fillStyle = "#9ee0ff";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, l);
+    ctx.lineTo(0, -l + 6);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, -l);
+    ctx.lineTo(-7, -l + 9);
+    ctx.lineTo(7, -l + 9);
+    ctx.fill();
+    ctx.restore();
+    const d = Math.max(20, (s.vise && s.vise.d) || 100), derive = Tanks.Realisme.derive(s.angle, d, st.vitesseBalle), cm = Math.round(Math.abs(derive) * 100);
+    texte("💨 " + virgule(V.force, 1) + " m/s" + (V.rafale > 1.2 ? " (rafale)" : ""), x, y + 30, 12, "#e8f0ff", "center");
+    texte(cm < 2 ? "à " + Math.round(d) + " m : pas de dérive" : "à " + Math.round(d) + " m : " + cm + " cm " + (derive > 0 ? "→" : "←"), x, y + 45, 12, cm < 2 ? "#ccc" : "#ffe27a", "center");
+    if (cm >= 5) texte("vise " + cm + " cm " + (derive > 0 ? "à gauche" : "à droite"), x, y + 58, 11, "#ffb37a", "center");
+  }
   function dessinerLunette(ctx, L, H, s, st) {
     const cx = L / 2, cy = H / 2, r = Math.min(L, H) * 0.44, a = Math.min(1, (s.visee - 0.6) / 0.3);
     ctx.save();

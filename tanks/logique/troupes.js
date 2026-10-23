@@ -38,6 +38,8 @@
 // seconde (chacun à son tour) : les recherches d'abri et de contournement ne se font qu'à ce moment-là.)
 // (Étape 65 : TES ORDRES passent avant tout. « Va là » : il y court sans s'arrêter pour tirer, puis il défend sa place ;
 // « vise … » : il choisit sa cible dans ce que tu as dit ; « cessez le feu » : il ne tire plus.)
+// (Livre de demandes n° 25 : dans le souterrain, chaque soldat a un RÔLE au QG (logique/qg.js) : le GARDE patrouille
+// devant son QG, le SAPEUR fonce vers le QG ennemi en tirant en marchant, et près d'une baie ennemie il l'attaque.)
 
 window.Tanks = window.Tanks || {};
 
@@ -188,6 +190,7 @@ Tanks.Troupes = (function () {
         if (a) (a.fin = monde.temps + CI.ia.duree), (ia.abri = a);
       }
     }
+    if (T.souterrain) Tanks.QG.preparer(s, monde); // (livre n° 25 : garde, sapeur ou patrouille ? une seule fois)
     const intentions = {};
     let cible = ia.cible && !ia.cible.mort && !ia.cible.detruit ? ia.cible : null;
     // (étape 65) TON ORDRE de mouvement : il y va d'abord ; arrivé, il se bat sur place (sans repartir en avant)
@@ -233,6 +236,11 @@ Tanks.Troupes = (function () {
       intentions.versAngle = Math.atan2(g.z - s.z, g.x - s.x);
       intentions.grenade = g;
       return intentions;
+    }
+    // ✍️ (livre n° 25) LE SAPEUR fonce vers le QG ennemi : il tire en courant au lieu de s'arrêter (sauf un ennemi tout près)
+    if (T.souterrain && !but) {
+      const r = Tanks.QG.foncer(s, ia, cible, monde, intentions);
+      if (r) return debloquer(s, ia, r, dt); // (coincé contre un banc ou une rame ? il se décale)
     }
     // ✍️ (livre n° 12) LE TIREUR D'ÉLITE : il va s'installer sur un perchoir libre, y grimpe et tire de là-haut
     if (s.tireurElite && !T.souterrain && !s.ordre) {
@@ -288,6 +296,11 @@ Tanks.Troupes = (function () {
         intentions.direction = s.angle + Math.PI / 2;
       }
       return intentions;
+    }
+    // ✍️ (livre n° 25) sous terre, sans ennemi en vue, une BAIE du QG ennemi tout près ? il l'attaque
+    if (T.souterrain && !but) {
+      const r = Tanks.QG.decider(s, ia, monde, intentions);
+      if (r) return r;
     }
     // (livre n° 8) il est DANS une maison sans rien à y faire ? il ressort par la porte (l'escalier, le passage d'abord)
     // (s'il n'arrive pas à sortir par la porte depuis « abandon » s — une épave de tank devant ? —, il oublie la porte un

@@ -866,7 +866,8 @@ Tanks.Scene = (function () {
     if (enPremiere) {
       const ca = Math.cos(toiPied.angle), sa = Math.sin(toiPied.angle);
       oeil = new THREE.Vector3(toiPied.x + ca * P.avance, toiPied.y + P.oeil - Tanks.Engins3D.baisse(), toiPied.z + sa * P.avance); // (demande 92 : accroupi, l'œil est plus bas)
-      cible = new THREE.Vector3(oeil.x + ca * 10, oeil.y - P.baisse * 10, oeil.z + sa * 10);
+      const bp = toiPied.balancement || { x: 0, y: 0 }, cb = Math.cos(toiPied.angle + bp.x), sb = Math.sin(toiPied.angle + bp.x); // (livre n° 26 : essoufflé ou apeuré, ta visée tremble)
+      cible = new THREE.Vector3(oeil.x + cb * 10, oeil.y - P.baisse * 10 + bp.y * 10, oeil.z + sb * 10);
       camera.saut = true;
     }
     // (étape 88) LA CAMÉRA DE CINÉMA de la campagne (le survol du début, le briefing, la fin) : elle passe avant tout

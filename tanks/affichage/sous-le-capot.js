@@ -103,7 +103,11 @@ Tanks.SousLeCapot = (function () {
     "bc-gagnes": (d) => "🪙 +" + d.gain + " Battle Coins (" + ({ ennemi: "ennemi abattu", victoire: "victoire", niveau: "niveau de joueur" })[d.cle] + (d.double ? ", × 2 grâce à l'avancement" : "") + ") · cette bataille : " + d.bataille + " · total " + d.solde.toLocaleString("fr-FR"),
     "arme-choisie": (d) => "🔫 Armurerie : tu prends le " + d.nom + " (" + d.type + ", niveau d'arme " + d.niveau + ")" + (d.bonus ? " comme ARME BONUS (touche 5)" : ""), // (livre n° 6)
     piece: (d) => "🔧 Armurerie : " + d.arme + " · " + d.emplacement + " → " + d.nom + " (portée " + Math.round(d.avant.portee) + " → " + Math.round(d.apres.portee) + " m, chargeur " + d.avant.chargeur + " → " + d.apres.chargeur + ", écart " + virgule(d.avant.dispersion * 1000, 1) + " → " + virgule(d.apres.dispersion * 1000, 1) + " mrad, mobilité " + Math.round(d.avant.mobilite * 100) + " → " + Math.round(d.apres.mobilite * 100) + " %)",
-    "recharge-arme": (d) => d.fini ? "🔄 " + d.arme + " rechargé : " + d.chargeur + " balles (réserve " + d.reserve + ")" : "🔄 Tu recharges ton " + d.arme + " (" + virgule(d.duree, 1) + " s)",
+    "recharge-arme": (d) => d.fini ? "🔄 " + d.arme + " rechargé : " + d.chargeur + " balles (réserve " + d.reserve + ")" : "🔄 Tu recharges ton " + d.arme + " (" + virgule(d.duree, 1) + " s" + (d.sorte === "vide" ? " : chargeur VIDE, il faut aussi réarmer, c'est plus long" : d.sorte === "tactique" ? " : rechargement TACTIQUE, 1 balle reste dans la chambre" + (d.perdues ? ", " + d.perdues + " balle(s) tombent avec le vieux chargeur" : "") : "") + ")",
+    // ✍️ (livre n° 26) le réalisme absurde
+    ricochet: (d) => "✨ Ta balle RICOCHE sur " + ({ beton: "le béton", pierre: "la pierre", metal: "le métal", gravats: "les gravats", brique: "la brique" }[d.matiere] || d.matiere) + " (arrivée en rasant, à " + d.angle + "° de la surface) : piouu !",
+    enrayee: (d) => "⚠️ Ton " + d.arme + " s'ENRAYE ! (une cartouche coincée : R pour la débloquer)",
+    desenrayee: (d) => "🔧 " + d.arme + " débloqué : tu peux tirer",
     accroupi: (d) => d.accroupi ? "🧎 Tu t'accroupis (X) : plus petit, plus dur à toucher, caché derrière un muret (les balles visent à " + String(d.hauteur).replace(".", ",") + " m), mais " + Math.round(d.vitesse * 100) + " % de ta vitesse" : "🧍 Tu te relèves (X)", // (demande 92)
     vide: (d) => "🫙 " + d.arme + " : plus de balles du tout !",
     marque: (d) => "🔭 " + (d.comment === "capteur" ? "Ton capteur" : "Tes jumelles") + " marque" + (d.nombre > 1 ? "nt " : " ") + d.nombre + " ennemi" + (d.nombre > 1 ? "s" : "") + (d.noms.length ? " (" + d.noms.join(", ") + ")" : "") + " pendant " + d.duree + " s : tes alliés les visent en premier",
@@ -195,6 +199,10 @@ Tanks.SousLeCapot = (function () {
     "pilote-abattu": (d) => "🎯 Le pilote " + (d.surToi ? "(toi !)" : "de " + d.cible) + " est touché par " + d.tireur + " : " + (d.sorte === "moto" ? "la moto" : "le quad") + " tombe (hors de combat)",
     carte: (d) => "🗺️ Carte choisie : " + d.icone + " " + d.nom + (d.infanterie ? " (infanterie seulement : à pied, sans tank ni engin)" : ""),
     souterrain: (d) => "🚇 La bataille commence dans le SOUTERRAIN ! Toi (à pied, classe " + d.classe + " avec " + d.arme + ") et " + d.soldats + " soldats bleus à l'est, contre " + d.soldats + " soldats rouges à l'ouest · " + d.renforts + " renforts par camp · " + d.longueur + " m de quais, " + d.rames + " rames dont " + d.enFeu + " en feu",
+    // ✍️ (livre n° 25) les QG du souterrain
+    "qg-attaque": (d) => "🚨 " + d.nom[0].toUpperCase() + d.nom.slice(1) + " est ATTAQUÉ (" + ({ balle: "des balles", grenade: "une grenade", roquette: "une roquette", c4: "du C4" }[d.sorte] || d.sorte) + (d.tireur ? ", par " + d.tireur : "") + ") : " + d.vie + " / " + d.vieMax + " points, " + d.baies + " baie(s) debout",
+    "qg-baie-detruite": (d) => "💥 " + d.baie[0].toUpperCase() + d.baie.slice(1) + " " + d.nom.replace(/^le /, "du ") + " EXPLOSE" + (d.tireur ? " (" + d.tireur + ")" : "") + " : il lui reste " + d.baies + " baie(s) sur " + C.souterrain.qg.baies.length,
+    "qg-detruit": (d) => "🏚️ " + d.nom[0].toUpperCase() + d.nom.slice(1) + " est DÉTRUIT après " + d.temps + " s ! " + (d.equipe === "rouges" ? "Le Front n'a plus de commandement : VICTOIRE" : "Ton camp n'a plus de commandement : DÉFAITE"),
     "renforts-epuises": (d) => "📉 " + d.nom + " n'ont plus de renforts : il leur reste " + d.debout + " soldat(s) debout dans la station",
     "monde-3d": (d) => (d.dessous ? "🚇 On descend : le dehors (sol, arbres, maisons, ciel, soleil) est caché, la station est montrée (" + d.dessins + " dessins, construite en " + d.ms + " ms)" : "🌄 On remonte : la station est cachée, le dehors est montré"),
     bataille: (d) => "⚔️ La bataille commence ! Toi (" + d.char + (d.classe ? ", classe " + d.classe + " avec " + d.arme + " et " + d.gadget : "") + ") et " + d.allies + " alliés contre " + d.ennemis + " ennemis, sur une carte de " + C.monde.taille + " m · " + (d.vehicules || 0) + " motos, quads et camions et " + (d.helicos || 0) + " hélicos de transport conduits par l'ordinateur",
@@ -246,7 +254,7 @@ Tanks.SousLeCapot = (function () {
     atterrissage: () => "🪂 Tu touches le sol : te voilà à pied",
     impossible: (d) => "✋ Impossible : " + d.raison,
     arme: (d) => (d.bascule ? "⇄ (4 encore) " : "") + "🎒 Tu prends : " + d.icone + " " + d.nom + (d.explosif ? " (" + d.nombre + " dans ta poche : Espace " + (d.explosif === "fumigene" ? "en lance un" : "en pose un") + (d.explosif === "c4" ? ", R les fait sauter" : "") + ")" : "") + (d.grenades !== undefined ? " (" + d.grenades + " dans ta poche : Espace en lance une, elle explose après " + C.grenades.meche + " s)" : ""),
-    balle: (d) => (d.touche ? "🔫 Ta balle touche" : d.ricochet ? "🔫 Ta balle ricoche sur un blindé" : "🔫 Ta balle rate") + (d.matiere && !d.touche ? " (matière : " + d.matiere + ")" : ""),
+    balle: (d) => (d.traverse && d.touche ? "🔫 Ta balle TRAVERSE et touche" : d.traverse ? "🔫 Ta balle traverse " + ({ porte: "la porte", bois: "les planches", haie: "la haie", tuiles: "le toit", metal: "la tôle" }[d.matiere] || d.matiere) : d.touche ? "🔫 Ta balle touche" : d.ricochet ? "🔫 Ta balle ricoche sur un blindé" : "🔫 Ta balle rate") + (d.matiere && !d.touche ? " (matière : " + d.matiere + ")" : ""),
     // demande 92
     "balle-frole": (d) => "🐝 Une balle de " + d.tireur + " (à " + d.distance + " m) te frôle à " + virgule(d.ecart, 1) + " m" + (d.crac ? " : CRAC ! (elle va plus vite que le son)" : " : elle siffle"),
     roquette: (d) => "🚀 " + (d.parToi ? "Tu tires" : d.tireur + " tire") + " une roquette",
@@ -273,8 +281,10 @@ Tanks.SousLeCapot = (function () {
       if (nom === "impact" && d.pose) return; // (demande 98 : déjà dit par « explosif-explose »)
       if (nom === "arbre-ecrase" && d.nom !== "toi") return; // (seulement les tiens, sinon le journal déborde)
       // (24 soldats tirent sans arrêt : on n'écrit que TES balles qui touchent ou ricochent, et ce qui t'arrive à toi)
-      if (nom === "balle" && !(d.parToi && (d.touche || d.ricochet))) return;
+      if (nom === "balle" && !(d.parToi && (d.touche || d.ricochet || d.traverse))) return;
       if (nom === "balle" && d.plomb > 0) return; // (fusil à pompe : 8 plombs par coup ; on n'écrit que le 1er)
+      if (nom === "balle" && d.suite && !d.touche) return; // (livre n° 26 : la même balle, de l'autre côté d'une porte : déjà écrite)
+      if (nom === "ricochet" && !d.parToi) return; // (livre n° 26 : seulement tes ricochets)
       if (nom === "soldat-touche" && d.par === "feu") return; // (la brûlure : déjà dite par « enflamme »)
       // (étape 73 : dans ton hélico de transport, les mitrailleuses de porte tirent toutes seules : on n'écrit que les soldats à terre)
       const enHelico = monde && monde.toi && (monde.toi.mode === "chinook" || monde.toi.mode === "blackhawk");
@@ -551,6 +561,18 @@ Tanks.SousLeCapot = (function () {
     const routes = {};
     for (const o of monde.soldats) if (o.ia && o.ia.nomRoute && !o.mort) routes[o.ia.nomRoute] = (routes[o.ia.nomRoute] || 0) + 1;
     l.push(["les routes", Object.entries(routes).map(([n, k]) => k + " par " + n).join(" · ") || "—"]);
+    // ✍️ (livre n° 25) les deux QG : la vie de chaque baie, qui les a abîmées, les gardes et les sapeurs
+    if (M.qg) {
+      const QB = Tanks.QG.bilan, roles = Tanks.QG.roles(monde), QC = C.souterrain.qg;
+      l.push(["Les QG (livre n° 25)"]);
+      for (const e of ["bleus", "rouges"]) {
+        const q = M.qg[e], r = roles[e];
+        l.push([(e === "bleus" ? "🔵 " : "🔴 ") + q.nom, (q.detruit ? "🏚️ DÉTRUIT · " : "") + "baies " + q.vies.map((v, k) => "n° " + (k + 1) + " " + Math.ceil(v) + " / " + QC.vieBaie + (v <= 0 ? " 💥" : "")).join(" · ") + " · total " + Math.round(Tanks.QG.vie(q)) + " / " + q.vieMax +
+          " · abîmé par : " + (Object.entries(q.parSorte).map(([k, v]) => k + " " + Math.round(v)).join(", ") || "rien") + (q.parToi ? " (dont toi " + Math.round(q.parToi) + ")" : "") + (monde.temps - q.attaque < 5 ? " · 🚨 ATTAQUÉ" : "")]);
+        l.push(["   ses soldats", r.garde + " gardes · " + r.sapeur + " sapeurs (vont au QG ennemi) · " + r.patrouille + " patrouillent · " + r.dansQG + " dans le QG ennemi en ce moment"]);
+      }
+      l.push(["   la règle", "les 3 baies ennemies détruites = victoire ; les tiennes = défaite · une balle = " + virgule(QC.degats.balle, 1) + " point × les dégâts de l'arme · grenade " + QC.degats.grenade + " · roquette " + QC.degats.roquette + " · C4 " + QC.degats.c4 + " (au centre de l'explosion) · " + QB.balles + " balles et " + QB.explosions + " explosions sur des baies · l'ordinateur : " + QB.tirsIA + " tirs, " + QB.grenadesIA + " grenades · " + QB.alertes + " alertes radio"]);
+    }
     l.push(["le dessin", B.dessins + " dessins pour toute la station (" + B.pieces + " pièces soudées en tout dans le jeu) · " + B.traverses + " traverses en 1 dessin · " + B.lumieres + " vraies lumières (" + C.souterrain.feux.lumieres + " feux qui tremblent + néons) · " + B.foyers + " foyers de flammes · construite en " + B.ms + " ms · dessins de l'image : " + (Tanks.Scene.infos.calls || 0)]);
     l.push(["les lignes de vue", SO.bilan.lignes.toLocaleString("fr-FR") + " lignes testées depuis le début · " + SO.bilan.pas.toLocaleString("fr-FR") + " petits pas de 35 cm"]);
   }
@@ -683,6 +705,24 @@ Tanks.SousLeCapot = (function () {
     l.push(["🤖 tactiques 🔴", enMots(TT.rouges)]);
   }
 
+  // ✍️ (livre n° 26) LE RÉALISME ABSURDE : le vent, la peur, la fatigue, les balles qui traversent ou ricochent, le
+  // rechargement, les douilles. Le capot lit le professeur de physique (logique/realisme.js) et ton soldat.
+  function lignesRealismeAbsurde(l, s) {
+    const B = Tanks.Realisme.bilan, RA = C.realismeAbsurde, V = monde.vent || { force: 0, direction: 0, rafale: 1 }, TB = Tanks.Tirs.bilan;
+    const pct = (x) => Math.round((x || 0) * 100) + " %";
+    l.push(["Le réalisme absurde (livre n° 26)"]);
+    l.push(["💨 le vent", V.force ? virgule(V.force, 1) + " m/s vers " + Math.round(((V.direction * 180) / Math.PI + 360) % 360) + "° (rafale × " + virgule(V.rafale, 2) + ") · il pousse la fumée (× " + virgule(RA.vent.fumee, 2) + ") et les balles : dérive = vent de côté × temps de vol × " + virgule(RA.vent.derive, 2) + " · " + B.derives + " balles déviées (au plus " + Math.round(B.deriveMax * 100) + " cm)" : "aucun (sous terre, l'air ne bouge pas)"]);
+    if (s && s.armes) {
+      const A = Tanks.Armes.enMain(s), bal = s.balancement || { x: 0, y: 0 }, dd = s.derniereDerive;
+      l.push(["😰 la peur (suppression)", pct(s.peur) + (s.peur > 0 ? " · la visée s'écarte de " + virgule((s.peur || 0) * RA.suppression.dispersion * 1000, 1) + " mrad · flou " + virgule(Tanks.Ambiance.pixelsFlou, 1) + " px" : "") + " · " + B.frolements + " balles ennemies à moins de " + RA.suppression.distance + " m de ta tête (max " + pct(B.peurMax) + ")"]);
+      l.push(["😮‍💨 la fatigue", pct(s.fatigue) + " (on s'essouffle en courant debout sans épauler, à plus de " + pct(RA.fatigue.course) + " de ta vitesse) · tremblement " + virgule((bal.tremble || 0) * 1000, 1) + " mrad · max " + pct(B.fatigueMax) + (s.fatigue > 0.12 ? " · 🫁 tu entends ton souffle" : "")]);
+      l.push(["🔄 le rechargement", (s.rechargement > 0 ? "EN COURS (" + (s.rechargementSorte || "normal") + ", " + virgule(s.rechargement, 1) + " / " + virgule(s.rechargementTotal || A.stats.rechargement, 1) + " s) · " : "") + B.rechargementsVides + " à vide (× " + virgule(RA.rechargement.vide, 1) + " plus long) · " + B.rechargementsTactiques + " tactiques (1 balle gardée dans la chambre : " + (A.stats.chargeur + 1) + " au lieu de " + A.stats.chargeur + ") · " + B.chargeursJetes + " chargeurs jetés = " + B.ballesPerdues + " balles PERDUES" + (s.enraye ? " · ⚠️ ARME ENRAYÉE (R)" : "") + " · enrayage " + (RA.enrayage.actif ? "allumé (" + virgule(RA.enrayage.chance * 100, 1) + " % par tir, " + B.enrayages + " fois)" : "éteint")]);
+      if (dd) l.push(["🎯 ta dernière balle", "à " + Math.round(dd.d) + " m, le vent l'a poussée de " + Math.round(dd.derive * 100) + " cm " + (dd.derive > 0 ? "vers la droite" : "vers la gauche")]);
+    }
+    l.push(["🧱 traversées, ricochets", B.traversees + " balles ont traversé (" + (Object.entries(B.parMatiere).map(([k, v]) => k + " " + v).join(", ") || "aucune") + " ; derrière : × " + Object.entries(RA.traverse.matieres).map(([k, v]) => k + " " + virgule(v, 2)).join(", ") + ") · " + B.ricochets + " ricochets (moins de " + RA.ricochet.angle + "° sur " + RA.ricochet.matieres.join(", ") + ")"]);
+    l.push(["🥉 les douilles", (TB.douillesAuSol || 0) + " par terre (au plus " + RA.douilles.max[Tanks.Qualite.niveau] + " à ce niveau, " + RA.douilles.duree + " s chacune) · " + (TB.douilles || 0) + " éjectées en tout · 1 dessin pour toutes"]);
+  }
+
   function lignes() {
     const j = monde.joueur, f = j.fiche, t = monde.toi || {}, s = t.soldat;
     const l = [];
@@ -693,6 +733,7 @@ Tanks.SousLeCapot = (function () {
     lignesVitesse(l);
     lignesSouterrain(l, s);
     if (monde.phase !== "garage") lignesSecoursTactiques(l, s);
+    if (monde.phase !== "garage") lignesRealismeAbsurde(l, s); // (livre n° 26)
     l.push(["Où tu es (étape 61)"], ["phase", monde.phase]);
     if (s) {
       const ou = { dca: "à la DCA 🎯", sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", chinook: "aux commandes du Chinook 🚁", blackhawk: "aux commandes du Black Hawk 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];

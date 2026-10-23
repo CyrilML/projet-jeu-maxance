@@ -7,6 +7,7 @@
 //   - les ombres tirent vers le bleu-vert, les lumières vers l'orange (le « teal & orange » des films d'action) ;
 //   - les bords de l'écran plus sombres (le « vignettage »), qui attirent l'œil au centre ;
 //   - un léger GRAIN qui bouge, comme une caméra de reportage.
+// (Livre de demandes n° 26 : quand des balles te frôlent, un léger FLOU s'ajoute au filtre : « flou ».)
 // Ce filtre se pose PAR-DESSUS l'image 3D : il ne change rien au monde. Tous les réglages : config.js (« ambiance »).
 
 window.Tanks = window.Tanks || {};
@@ -54,12 +55,21 @@ Tanks.Ambiance = (function () {
   }
 
   // (demande 96) au niveau de qualité 0, le filtre est enlevé : le navigateur n'a plus à repasser sur toute l'image
-  let filtreCSS = "", actif = true;
+  let filtreCSS = "", actif = true, flouPx = 0;
+  function poser() {
+    const ecran = document.getElementById("ecran3d");
+    if (ecran) ecran.style.filter = ((actif ? filtreCSS : "") + (flouPx > 0 ? " blur(" + flouPx + "px)" : "")).trim();
+  }
   function filtre(oui) {
     actif = !!oui;
-    const ecran = document.getElementById("ecran3d");
-    if (ecran && filtreCSS) ecran.style.filter = actif ? filtreCSS : "";
+    poser();
+  }
+  // ✍️ (livre n° 26) le FLOU de la peur (des balles qui frôlent) : px de flou ajoutés au filtre (0 = aucun)
+  function flou(px) {
+    if (px === flouPx) return;
+    flouPx = px;
+    poser();
   }
 
-  return { initialiser, filtre, get actif() { return actif; } };
+  return { initialiser, filtre, flou, get actif() { return actif; }, get pixelsFlou() { return flouPx; } };
 })();

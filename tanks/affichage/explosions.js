@@ -15,6 +15,7 @@
 // (Demande 93 : le feu CACHE ce qui est derrière au lieu de s'ajouter à l'image, qui devenait toute blanche ; il finit en
 // fumée noire ; de grosses gerbes de TERRE brune ; et des NAPPES de fumée qui traînent au ras du sol, longtemps.)
 // Sur l'eau : une grande gerbe blanche. En l'air (un avion touché, le flak) : pas d'onde au sol.
+// (Livre n° 25) Une BAIE de QG qui saute : une explosion de C4 et une épave qui brûle ; le QG détruit : encore 2 boums.
 // Il ne change jamais le monde : la caméra qui tremble est remise droite à chaque image par la scène.
 
 window.Tanks = window.Tanks || {};
@@ -81,6 +82,13 @@ Tanks.Explosions = (function () {
       epave(d.x, d.y, d.z, d.petit ? 0.45 : 1, d.petit ? 0.5 : 1);
     });
     radio.ecouter("abattu", (d) => exploser(d.x, d.y, d.z, E.avion, "air", "avion"));
+    // ✍️ (livre n° 25) une baie du QG saute : une explosion, puis elle brûle et fume ; le QG détruit : 2 explosions en plus
+    radio.ecouter("qg-baie-detruite", (d) => (exploser(d.x, d.y, d.z, E.c4 * 0.7, "metal", "qg"), epave(d.x, 0.4, d.z, 0.5, 0.6)));
+    radio.ecouter("qg-detruit", (d) => {
+      exploser(d.x, 1.5, d.z, E.c4, "beton", "qg");
+      exploser(d.x + 3, 1, d.z - 2, E.c4 * 0.6, "metal", "qg");
+      epave(d.x, 0.3, d.z, 0.8, 1);
+    });
     radio.ecouter("crash", (d) => {
       if (d.dansLEau) return void exploser(d.x, d.y, d.z, E.crash, "eau", "crash");
       exploser(d.x, d.y + 1, d.z, E.crash, "metal", "crash");

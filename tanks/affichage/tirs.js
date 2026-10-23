@@ -22,6 +22,9 @@
 // qui est derrière au lieu de s'ajouter à l'image, puis finit en fumée.)
 // (Fusils à pompe : un seul gros éclair pour les 8 plombs ; les cartouches INCENDIAIRES crachent une gerbe de traits
 // orange, et un soldat qui brûle a de petites flammes sur lui tant que dure le feu.)
+// ✍️ (Livre de demandes n° 26 : « un réalisme absurde ».) Une balle qui RICOCHE : une gerbe d'étincelles et un petit trait
+// qui repart en biais ; une balle qui a TRAVERSÉ une porte : son trait continue derrière (sans 2e éclair) ; et les DOUILLES
+// éjectées par chaque arme tombent, rebondissent et RESTENT par terre (1 dessin pour toutes : des « instances »).
 // Il ne fait que lire le monde et la radio : il ne change jamais les règles.
 
 window.Tanks = window.Tanks || {};
@@ -71,13 +74,15 @@ Tanks.Tirs = (function () {
     };
   }
 
-  function initialiser() {
+  function initialiser(scene) {
     P = Tanks.Particules;
+    if (scene) preparerDouilles(scene); // (livre n° 26)
     I = P.IMG;
     M = modeles();
     for (const m in R.matieres) bilan.impacts[m] = 0;
     const radio = Tanks.Evenements;
     radio.ecouter("balle", balle);
+    radio.ecouter("ricochet", ricochet); // (livre n° 26)
     radio.ecouter("tir", coupDeCanon);
     radio.ecouter("tir-bateau", (d) => coupDeCanon(Object.assign({ petit: true, surLEau: true }, d)));
     radio.ecouter("flak", (d) => eclairBouche(d.x, d.y, d.z, 0, 1, 0, 1.6, true));
@@ -100,7 +105,8 @@ Tanks.Tirs = (function () {
     const dx = d.a.x - d.de.x, dy = d.a.y - d.de.y, dz = d.a.z - d.de.z, dist = Math.hypot(dx, dy, dz) || 1, ux = dx / dist, uy = dy / dist, uz = dz / dist;
     const premiere = d.parToi && Tanks.Armes3D && Tanks.Armes3D.vue.actif; // (à la 1re personne, l'armurier dessine déjà ta flamme)
     // l'éclair et la fumée au bout du canon (fusil à pompe : un seul, plus gros, pour les 8 plombs)
-    if (!premiere && !(d.plomb > 0)) eclairBouche(d.de.x, d.de.y, d.de.z, ux, uy, uz, d.pompe ? (d.feu ? 2.2 : 1.5) : 1, false);
+    if (!d.suite && !(d.plomb > 0)) douille(d, ux, uz); // (livre n° 26 : la douille éjectée)
+    if (!premiere && !(d.plomb > 0) && !d.suite) eclairBouche(d.de.x, d.de.y, d.de.z, ux, uy, uz, d.pompe ? (d.feu ? 2.2 : 1.5) : 1, false);
     // la traçante (1 sur « chaque ») ou le trait léger
     const cle = (d.tireur || "?") + (d.equipeTireur || ""), n = (comptes.get(cle) || 0) + 1;
     comptes.set(cle, n);
@@ -125,6 +131,87 @@ Tanks.Tirs = (function () {
       (y = sol + 0.03), (nx = 0), (ny = 1), (nz = 0);
     }
     impact(d.a.x, y, d.a.z, d.matiere || "terre", nx, ny, nz, false, d.ricochet);
+  }
+
+  // ✍️ (livre n° 26) LE RICOCHET : des étincelles qui jaillissent du point touché, un petit éclair, et un trait (traçant
+  // une fois sur deux) qui repart en biais dans la nouvelle direction.
+  function ricochet(d) {
+    const dx = d.a.x - d.de.x, dy = d.a.y - d.de.y, dz = d.a.z - d.de.z, l = Math.hypot(dx, dy, dz) || 1, ux = dx / l, uy = dy / l, uz = dz / l;
+    bilan.ricochets = (bilan.ricochets || 0) + 1;
+    for (let k = 0; k < 16; k++) P.emettre(M.etincelle, d.de.x, d.de.y, d.de.z, ux * (5 + Math.random() * 12) + alea(4), uy * 6 + Math.random() * 4, uz * (5 + Math.random() * 12) + alea(4), 1.4);
+    P.emettre(M.eclairImpact, d.de.x, d.de.y, d.de.z, 0, 0, 0, 2);
+    const S = Math.random() < 0.5 ? R.traceur : R.balle, v = S.vitesse * 0.6;
+    P.emettre(S === R.traceur ? M.traceuse : M.balle, d.de.x, d.de.y, d.de.z, ux * v, uy * v, uz * v, 0.8, null, Math.max(0.02, l / v));
+    impact(d.a.x, d.a.y, d.a.z, d.matiere, -ux, -uy, -uz, false, false);
+  }
+
+  // ✍️ (livre n° 26) LES DOUILLES : des petits cylindres en laiton (une « instance » chacune : 1 dessin pour toutes). Elles
+  // sautent à droite de l'arme, tombent, rebondissent une fois, roulent un peu et RESTENT par terre « duree » s (au plus
+  // « max » selon le niveau de qualité : les plus vieilles disparaissent d'abord). Seulement près de la caméra.
+  const RD = C.realismeAbsurde.douilles, douilles = [];
+  let lotDouilles = null, prochaineDouille = 0, douillesChangees = false;
+  const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), e4 = new THREE.Euler(), p4 = new THREE.Vector3(), s4 = new THREE.Vector3(1, 1, 1), zero4 = new THREE.Vector3(0, 0, 0);
+  function preparerDouilles(scene) {
+    const n = Math.max(...RD.max);
+    if (!RD.actif || !n) return;
+    const geo = new THREE.CylinderGeometry(0.0055, 0.0055, 0.045, 6);
+    lotDouilles = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ color: 0xc9a14a, roughness: 0.35, metalness: 0.9 }), n);
+    lotDouilles.count = 0;
+    lotDouilles.frustumCulled = false;
+    lotDouilles.castShadow = lotDouilles.receiveShadow = false;
+    scene.add(lotDouilles);
+  }
+  function douille(d, ux, uz) {
+    if (!lotDouilles || !P.camera) return;
+    const max = RD.max[P.niveau] || 0, c = P.camera;
+    if (!max || (d.de.x - c.x) ** 2 + (d.de.z - c.z) ** 2 > RD.loin * RD.loin) return;
+    const l = Math.hypot(ux, uz) || 1, fx = ux / l, fz = uz / l, rx = -fz, rz = fx; // (devant, et à droite de l'arme)
+    let o = douilles.length < max ? null : douilles[prochaineDouille % douilles.length];
+    if (!o) (o = {}), douilles.push(o);
+    else prochaineDouille++;
+    const v = 2 + Math.random() * 1.5;
+    Object.assign(o, { fini: false, x: d.de.x - fx * 0.55 + rx * 0.06, y: d.de.y + 0.03, z: d.de.z - fz * 0.55 + rz * 0.06, vx: rx * v - fx * 0.6, vy: 1.6 + Math.random() * 1.4, vz: rz * v - fz * 0.6, age: 0, rebonds: 0, pose: false, rot: Math.random() * 6, tourne: 18 + Math.random() * 20, cap: Math.random() * 6.3 });
+    bilan.douilles = (bilan.douilles || 0) + 1;
+  }
+  function majDouilles(dt) {
+    if (!lotDouilles) return;
+    const max = RD.max[P.niveau] || 0;
+    if (douilles.length > max) (douilles.length = max), (prochaineDouille = 0), (douillesChangees = true);
+    let k = 0, vivantes = 0;
+    for (const o of douilles) {
+      o.age += dt;
+      if (o.age > RD.duree) {
+        if (!o.fini) (o.fini = true), lotDouilles.setMatrixAt(k, m4.compose(zero4, q4.identity(), zero4)), (douillesChangees = true); // (cachée : taille 0)
+        k++;
+        continue;
+      }
+      vivantes++;
+      if (!o.pose) {
+        o.vy -= 9.8 * dt;
+        o.x += o.vx * dt;
+        o.y += o.vy * dt;
+        o.z += o.vz * dt;
+        o.rot += o.tourne * dt;
+        const sol = Tanks.Interieurs.sol(o.x, o.y + 0.3, o.z) + 0.006;
+        if (o.y < sol) {
+          o.y = sol;
+          if (o.rebonds++ < 1 && o.vy < -1) (o.vy *= -0.3), (o.vx *= 0.4), (o.vz *= 0.4), (o.tourne *= 0.5);
+          else (o.pose = true), (o.rot = Math.PI / 2);
+        }
+        douillesChangees = true;
+      } else if (k >= lotDouilles.count) douillesChangees = true;
+      if (douillesChangees) lotDouilles.setMatrixAt(k, m4.compose(p4.set(o.x, o.y, o.z), q4.setFromEuler(e4.set(o.rot, o.cap, 0)), s4));
+      k++;
+    }
+    if (lotDouilles.count !== k) (lotDouilles.count = k), (douillesChangees = true);
+    if (douillesChangees) lotDouilles.instanceMatrix.needsUpdate = true;
+    douillesChangees = false;
+    bilan.douillesAuSol = vivantes;
+  }
+  function effacerDouilles() {
+    douilles.length = 0;
+    prochaineDouille = 0;
+    if (lotDouilles) lotDouilles.count = 0;
   }
 
   // L'éclair au bout du canon (k : la taille), dans la direction (ux, uy, uz).
@@ -244,6 +331,7 @@ Tanks.Tirs = (function () {
   function maj(dt, m) {
     monde = m;
     horloge += dt;
+    majDouilles(dt); // (livre n° 26)
     // (fusils à pompe incendiaires) les soldats qui brûlent : quelques petites flammes qui montent (environ 22 par seconde)
     for (const s of m.soldats) {
       if (!s.brule || s.mort || s.dansUnEngin || Math.random() > dt * 22) continue;
@@ -280,6 +368,7 @@ Tanks.Tirs = (function () {
 
   function effacer() {
     comptes.clear();
+    effacerDouilles();
   }
 
   return { initialiser, maj, effacer, bilan, impact, eclairBouche };

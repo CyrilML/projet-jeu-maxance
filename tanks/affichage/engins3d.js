@@ -887,7 +887,7 @@ Tanks.Engins3D = (function () {
     G.depuisTir += dt;
     G.recul *= Math.exp(-dt * 13);
     // recharger : où en est-il (de 0 à 1) ? Toi : ton arme ; l'ordinateur : son chargeur (logique/soldat.js)
-    const duree = s.rechargementDe && s.rechargementDe.stats ? s.rechargementDe.stats.rechargement : s.rechargementDuree || 2.5;
+    const duree = s.rechargementTotal || (s.rechargementDe && s.rechargementDe.stats ? s.rechargementDe.stats.rechargement : s.rechargementDuree || 2.5); // (livre n° 26)
     G.rechargeK = s.rechargement > 0 ? Math.max(0, Math.min(1, 1 - s.rechargement / duree)) : -1;
     G.lancerK = s.lancer > 0 ? 1 - s.lancer / 0.5 : -1;
     const vise = s.visee > 0.1 || G.depuisTir < 2 || !!(s.ia && s.ia.cible && !s.ia.cible.mort && !s.ia.cible.detruit) || s.accroupi;

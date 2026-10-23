@@ -25,6 +25,8 @@
 // Étape 77 : ✍️ le MENU avant la bataille (affichage/menu.js) : le tank se choisit dans le menu (« choisirChar »), et au
 // départ ton soldat est ÉQUIPÉ selon ta classe (logique/equipement.js). À pied : 1 pistolet, 2 ton arme, 3 ton gadget,
 // 4 grenades ; R recharge (pendant la bataille, R ne recommence plus : c'est seulement à la fin, « rejouer »).
+// Livre de demandes n° 25 : ✍️ « un QG à détruire à chacun » dans le souterrain (logique/qg.js) : le QG du Front détruit
+// = victoire, le tien = défaite. N° 26 : ✍️ « un réalisme absurde » (logique/realisme.js : le vent, la peur, la fatigue).
 // Étape 80 : ✍️ LES CARTES. « monde.carte » : "bataille" (la grande campagne) ou "souterrain" (la station de métro,
 // logique/souterrain.js). Dans le souterrain : ✍️ INFANTERIE SEULEMENT (ni tank, ni engin, ni avion, ni bateau, ni
 // portail, ni parachutiste) ; tu commences à pied avec ta classe ; chaque camp a 10 soldats debout et 30 RENFORTS qui
@@ -117,6 +119,7 @@ Tanks.Monde = (function () {
     monde.dechargesTotal = monde.cordesTotal = 0;
     monde.chronoParas = undefined;
     monde.metro = { renforts: { bleus: R.renforts, rouges: R.renforts }, arrives: { bleus: R.soldats, rouges: R.soldats }, attente: { bleus: 0, rouges: 0 }, elimines: { bleus: 0, rouges: 0 } };
+    Tanks.QG.creer(monde); // ✍️ (livre n° 25) un QG à détruire à chacun (monde.metro.qg)
     const P = SO.parties;
     radio.emettre("souterrain", { classe: C.classes[equipement.classe].nom, arme: Tanks.Equipement.fiche(equipement.arme).nom, soldats: R.soldats, renforts: R.renforts, rames: P.rames, enFeu: P.enFeu, longueur: C.souterrain.longueur });
   }
@@ -307,6 +310,7 @@ Tanks.Monde = (function () {
       }
       return;
     }
+    Tanks.Realisme.etape(monde, dt); // ✍️ (livre n° 26) le vent, la peur (suppression), la fatigue
     if (intentions.retour && !monde.campagne) { // ⌫ : retour au garage (on abandonne la bataille) (étape 88 : en campagne, c'est l'écran de la campagne qui s'en occupe)
       monde.phase = "garage";
       preparerGarage(monde);
@@ -501,18 +505,19 @@ Tanks.Monde = (function () {
     }
     // 5. La fin de la bataille ?
     if (enJeu) {
-      const horsDeCombat = (t.mode === "char" && monde.joueur.detruit) || (toi && toi.mort && !toi.aTerre) || (t.engin && t.engin.genre === "helico" && t.engin.detruit) || ((t.mode === "jeep" || t.mode === "bateau" || t.mode === "sousmarin" || t.mode === "dca" || t.mode === "moto" || t.mode === "quad" || t.mode === "camion") && t.engin.detruit);
+      const finQG = monde.metro ? Tanks.QG.fin(monde) : null; // ✍️ (livre n° 25) un QG détruit : la bataille est finie
+      const horsDeCombat = finQG === "defaite" || (t.mode === "char" && monde.joueur.detruit) || (toi && toi.mort && !toi.aTerre) || (t.engin && t.engin.genre === "helico" && t.engin.detruit) || ((t.mode === "jeep" || t.mode === "bateau" || t.mode === "sousmarin" || t.mode === "dca" || t.mode === "moto" || t.mode === "quad" || t.mode === "camion") && t.engin.detruit);
       if (horsDeCombat) {
         monde.phase = "defaite";
         S.donnees.defaites++;
         S.ecrire("défaite");
-        radio.emettre("defaite", { temps: monde.chrono, allies: vivants(monde, "bleus"), ennemis: monde.metro ? soldatsVivants(monde, "rouges") + monde.metro.renforts.rouges : vivants(monde, "rouges"), comment: toi && toi.mort ? "ton soldat est à terre" : t.mode === "jeep" ? "ton 4x4 est détruit" : t.mode === "moto" || t.mode === "quad" ? (t.engin.tombe ? "tu es tombé " + (t.mode === "moto" ? "de ta moto" : "de ton quad") : t.mode === "moto" ? "ta moto est détruite" : "ton quad est détruit") : t.mode === "camion" ? "ton camion est détruit" : t.engin && t.engin.genre === "helico" ? "ton " + t.engin.nom + " est abattu" : t.mode === "bateau" ? "ta vedette est coulée" : t.mode === "sousmarin" ? "ton sous-marin est coulé" : t.mode === "dca" ? "ta DCA est détruite" : "ton tank est détruit" });
-      } else if (!monde.campagne && (monde.metro ? monde.metro.renforts.rouges === 0 && soldatsVivants(monde, "rouges") === 0 : vivants(monde, "rouges") === 0)) { // (étape 88 : en campagne, ce sont les objectifs)
+        radio.emettre("defaite", { temps: monde.chrono, allies: vivants(monde, "bleus"), ennemis: monde.metro ? soldatsVivants(monde, "rouges") + monde.metro.renforts.rouges : vivants(monde, "rouges"), comment: finQG === "defaite" ? "ton QG est détruit" : toi && toi.mort ? "ton soldat est à terre" : t.mode === "jeep" ? "ton 4x4 est détruit" : t.mode === "moto" || t.mode === "quad" ? (t.engin.tombe ? "tu es tombé " + (t.mode === "moto" ? "de ta moto" : "de ton quad") : t.mode === "moto" ? "ta moto est détruite" : "ton quad est détruit") : t.mode === "camion" ? "ton camion est détruit" : t.engin && t.engin.genre === "helico" ? "ton " + t.engin.nom + " est abattu" : t.mode === "bateau" ? "ta vedette est coulée" : t.mode === "sousmarin" ? "ton sous-marin est coulé" : t.mode === "dca" ? "ta DCA est détruite" : "ton tank est détruit" });
+      } else if (!monde.campagne && (monde.metro ? finQG === "victoire" || (monde.metro.renforts.rouges === 0 && soldatsVivants(monde, "rouges") === 0) : vivants(monde, "rouges") === 0)) { // (étape 88 : en campagne, ce sont les objectifs)
         monde.phase = "victoire";
         S.donnees.victoires++;
         if (monde.metro) S.donnees.souterrain++; // (étape 80)
         S.ecrire("victoire");
-        if (monde.metro) radio.emettre("victoire", { temps: monde.chrono, allies: soldatsVivants(monde, "bleus"), vie: toi.vie, vieMax: toi.vieMax, souterrain: true });
+        if (monde.metro) radio.emettre("victoire", { temps: monde.chrono, allies: soldatsVivants(monde, "bleus"), vie: toi.vie, vieMax: toi.vieMax, souterrain: true, qg: finQG === "victoire" });
         else radio.emettre("victoire", { temps: monde.chrono, allies: vivants(monde, "bleus") - (monde.joueur.detruit ? 0 : 1), vie: monde.joueur.vie, vieMax: monde.joueur.vieMax });
       }
     }

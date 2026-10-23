@@ -333,6 +333,11 @@ Tanks.Radio = (function () {
       else intercepter(monde, tireur, "grenade");
     } else if (nom === "touche") {
       if (estChar(c) && c.equipe === "bleus" && c !== monde.joueur && !c.detruit) bavarder(monde, c, "toucheChar");
+    } else if (nom === "qg-attaque" || nom === "qg-baie-detruite" || nom === "qg-detruit") {
+      // ✍️ (livre n° 25) le QG RAMPART prévient : notre QG est attaqué, une baie a sauté… (ou celui du Front)
+      const notre = d.equipe === "bleus";
+      const genre = nom === "qg-attaque" ? (notre ? "qgAttaque" : "qgEnnemiAttaque") : nom === "qg-baie-detruite" ? (notre ? "qgBaie" : "qgEnnemiBaie") : notre ? "qgPerdu" : "qgDetruit";
+      dire(monde, null, genre, "urgent", { baies: enLettres(d.baies) }, { qui: "QG Rempart", force: nom !== "qg-attaque" });
     } else if (nom === "piste-fermee" || nom === "piste-rouverte") {
       // (demande 99) la tour de contrôle annonce l'état des pistes
       const genre = (d.equipe === "rouges" ? "pisteEnnemie" : "notrePiste") + (nom === "piste-fermee" ? "Fermee" : "Rouverte");

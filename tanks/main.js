@@ -41,6 +41,7 @@ window.Tanks = window.Tanks || {};
   Tanks.Accueil.initialiser((type) => type === "film" && monde.phase === "garage" && Tanks.Cinematique.lancer(monde, C.cinematiques.bandeAnnonce, { pour: "accueil" })); // (étape 84 : la page d'accueil, avec la musique ; demande 101 : la bande-annonce)
   Tanks.Menu.initialiser(monde, (type, valeur) => (type === "combat" ? Tanks.Monde.lancer(monde) : Tanks.Equipement.demander(monde, type, valeur)));
   Tanks.Progression.brancher(monde); // (demande 97 : le sergent instructeur et ses points d'expérience)
+  Tanks.Realisme.brancher(monde); // (livre n° 26 : le professeur de physique écoute les balles qui frôlent)
   Tanks.EcranProgression.initialiser(); // (demande 97 : « NIVEAU SUPÉRIEUR ! » et le bilan de fin de bataille)
   Tanks.TableauCampagne.initialiser(toile2d); // (étape 88)
   Tanks.EcranCampagne.initialiser(monde, (type, valeur) => Tanks.Campagne.demander(monde, type, valeur)); // (étape 88 : comme le menu, des DEMANDES)

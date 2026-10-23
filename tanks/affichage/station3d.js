@@ -13,6 +13,11 @@
 //     néons qui brillent sans éclairer (et certaines clignotent).
 // Les images (carrelage, sol, ballast, béton, flancs des rames) sont PEINTES par le programme (des « canvas »).
 // Les FLAMMES et la FUMÉE des trams sont des particules d'affichage/effets.js.
+// ✍️ (livre de demandes n° 25) LES DEUX QG : derrière le mur du bout de chaque station, une salle de commandement (porte
+// dans le mur, sacs de sable, table des cartes, bureaux de radios et d'écrans, groupe électrogène, éclairage de secours
+// rouge) et ses 3 BAIES : leurs voyants passent du vert au rouge quand elles sont abîmées, et une baie détruite devient
+// une carcasse noire, penchée (le feu et la fumée : affichage/explosions.js). Pas de vraie lumière en plus (trop cher) :
+// les écrans, les voyants et les lampes rouges brillent tout seuls.
 // Comme tout l'affichage, il lit le monde et ne le modifie jamais.
 
 window.Tanks = window.Tanks || {};
@@ -157,6 +162,45 @@ Tanks.Station3D = (function () {
     });
   }
 
+  // (livre n° 25) la carte de la station (vue de dessus, pour la table des cartes et le mur), et un écran de QG
+  function carteDeLaStation() {
+    return image(512, 256, (g, l, h) => {
+      g.fillStyle = "#d8cfae";
+      g.fillRect(0, 0, l, h);
+      g.fillStyle = "#8a8064";
+      g.fillRect(20, 108, l - 40, 40); // les rails
+      g.fillStyle = "#b8ad8c";
+      g.fillRect(20, 60, l - 40, 48);
+      g.fillRect(20, 148, l - 40, 48);
+      g.strokeStyle = "#2a4a9a";
+      g.lineWidth = 4;
+      g.strokeRect(l - 70, 160, 50, 40);
+      g.strokeStyle = "#9a2a2a";
+      g.strokeRect(20, 56, 50, 40);
+      g.strokeStyle = "rgba(160,30,30,.8)";
+      g.lineWidth = 3;
+      for (let k = 0; k < 5; k++) (g.beginPath(), g.moveTo(80 + k * 70, 80), g.lineTo(110 + k * 70, 175), g.stroke());
+      grain(g, l, h, 300, ["rgba(60,50,30,.25)"], 3);
+    });
+  }
+  function ecranQG(radar) {
+    return image(128, 80, (g, l, h) => {
+      g.fillStyle = "#03140a";
+      g.fillRect(0, 0, l, h);
+      g.strokeStyle = "#39ff7a";
+      g.fillStyle = "#39ff7a";
+      g.lineWidth = 2;
+      if (radar) {
+        for (const r of [12, 24, 36]) (g.beginPath(), g.arc(l / 2, h / 2, r, 0, 7), g.stroke());
+        g.beginPath(), g.moveTo(l / 2, h / 2), g.lineTo(l / 2 + 34, h / 2 - 18), g.stroke();
+        for (let k = 0; k < 5; k++) g.fillRect(20 + hasard() * 88, 10 + hasard() * 60, 3, 3);
+      } else {
+        g.font = "bold 10px monospace";
+        for (let k = 0; k < 6; k++) g.fillText(["LIGNE 80", "QUAI N : OK", "QUAI S : ??", "MEZZ. : !!", "COM : 3/3", "ÉNERGIE 92%"][k], 6, 12 + k * 12);
+      }
+    });
+  }
+
   // ------------------------------------------------------------------ des boîtes à la bonne échelle de carreaux
   // Une boîte dont l'image est répétée tous les « metres » mètres (sinon un mur de 200 m aurait des carreaux géants).
   function bloc(lx, ly, lz, mat, x, y, z) {
@@ -216,6 +260,28 @@ Tanks.Station3D = (function () {
       flancBrule: mat({ map: flanc("metro", "brule"), roughness: 0.95 }),
       flancFeu: mat({ map: flanc("tram", "brule"), emissiveMap: flanc("tram", "feu"), emissive: 0xffffff, emissiveIntensity: 2.2, roughness: 0.95 }),
     };
+    // (livre n° 25) les matières des QG (un peu « émissives » : la salle n'a pas de vraie lampe, on doit la voir quand même)
+    Object.assign(MT, {
+      solQG: mat({ map: MT.beton.map, color: 0x6a6660, roughness: 0.9, emissive: 0x161312 }),
+      murQG: mat({ map: MT.beton.map, color: 0x7c7a70, roughness: 0.95, emissive: 0x1c1514 }),
+      sac: mat({ color: 0x9d8a62, roughness: 1, emissive: 0x0c0a06 }),
+      bois: mat({ color: 0x6b4a2c, roughness: 0.75, emissive: 0x0a0604 }),
+      groupe: mat({ color: 0xc9a227, roughness: 0.55, metalness: 0.3, emissive: 0x140f02 }),
+      radio: mat({ color: 0x3d4a35, roughness: 0.6, metalness: 0.4 }),
+      caisse: mat({ color: 0x4c5a32, roughness: 0.8, emissive: 0x060804 }),
+      secours: new THREE.MeshBasicMaterial({ color: 0xff2a1a, toneMapped: false }),
+      voyant: new THREE.MeshBasicMaterial({ color: 0x7dff8a, toneMapped: false }),
+      pionBleu: new THREE.MeshBasicMaterial({ color: 0x4a8cff }),
+      pionRouge: new THREE.MeshBasicMaterial({ color: 0xff4a3a }),
+      carte: mat({ map: carteDeLaStation(), roughness: 0.8, emissive: 0x1a1a14 }),
+      plan: mat({ map: carteDeLaStation(), roughness: 0.8, emissive: 0x222218 }),
+      ecran: mat({ map: ecranQG(false), emissiveMap: ecranQG(false), emissive: 0xffffff, emissiveIntensity: 1.1 }),
+      ecranRadar: mat({ map: ecranQG(true), emissiveMap: ecranQG(true), emissive: 0xffffff, emissiveIntensity: 1.1 }),
+      panneauBleu: mat({ map: panneau("QG RAMPART", "#1b3d8a", "#ffffff", 512, 128, "#e6e6e6"), emissive: 0x0a1430, roughness: 0.5 }),
+      panneauRouge: mat({ map: panneau("QG DU FRONT", "#7a1010", "#ffd0c0", 512, 128, "#2a0a0a"), emissive: 0x300606, roughness: 0.5 }),
+      drapeauBleu: mat({ map: panneau("🦁", "#1d4fa0", "#ffd23c", 256, 160), side: THREE.DoubleSide, emissive: 0x0a1020 }),
+      drapeauRouge: mat({ map: panneau("✪", "#9a1414", "#111111", 256, 160), side: THREE.DoubleSide, emissive: 0x200404 }),
+    });
 
     // --- les quais, la tranchée, les rails
     for (const sz of [-1, 1]) {
@@ -262,7 +328,11 @@ Tanks.Station3D = (function () {
     g.add(bloc(2 * L + 1, 0.6, 2 * M.fond + 1, MT.beton, 0, H + 0.3, 0));
     for (let x = -L + 6; x < L; x += S.piliers.ecart) g.add(bloc(0.7, 0.6, 2 * Q, MT.beton, x, H - 0.3, 0));
     for (const sx of [-1, 1]) {
-      for (const sz of [-1, 1]) g.add(bloc(0.5, H + V.profondeur, Q - V.demi, MT.carrelage, sx * (L + 0.25), (H - V.profondeur) / 2, sz * (V.demi + Q) / 2));
+      for (const sz of [-1, 1]) {
+        const qg = Object.values(Tanks.Souterrain.qg).find((q) => q.sx === sx && q.sz === sz);
+        if (qg) murDuQG(g, MT, qg); // (livre n° 25 : le mur avec la porte du QG)
+        else g.add(bloc(0.5, H + V.profondeur, Q - V.demi, MT.carrelage, sx * (L + 0.25), (H - V.profondeur) / 2, sz * (V.demi + Q) / 2));
+      }
       g.add(bloc(0.5, H - 4.4, 2 * V.demi, MT.carrelage, sx * (L + 0.25), (H + 4.4) / 2, 0)); // au-dessus de la bouche du tunnel
       for (const sz of [-1, 1]) g.add(bloc(T, 5.6, 0.5, MT.beton, sx * (L + T / 2), 1.7, sz * (V.demi + 0.25)));
       g.add(bloc(T, 0.5, 2 * V.demi + 1, MT.beton, sx * (L + T / 2), 4.65, 0));
@@ -300,8 +370,11 @@ Tanks.Station3D = (function () {
     // --- les rames
     for (const v of Tanks.Souterrain.voitures) voiture(g, MT, v);
 
+    for (const e in Tanks.Souterrain.qg) salleDuQG(g, MT, Tanks.Souterrain.qg[e]); // (livre n° 25)
+
     O.souder(g, false);
     racine.add(g);
+    baiesDesQG(); // (livre n° 25 : les 6 baies restent à part : elles changent quand on les abîme)
     // --- les instances : piliers, bancs, lampes, traverses
     instances(MT);
     lumieres();
@@ -314,6 +387,138 @@ Tanks.Station3D = (function () {
     bilan.construite = true;
     bilan.ms = Math.round(performance.now() - t0);
     return racine;
+  }
+
+  // ------------------------------------------------------------------ ✍️ (livre n° 25) LES QG
+  // (u = la distance depuis le centre de la station le long des quais, v = la distance depuis le milieu des rails)
+  const QC = S.qg;
+  const ici = (q, u, v) => [q.sx * u, q.sz * v];
+  // Le mur du bout de la station, côté QG : 2 morceaux et le linteau, avec un cadre en acier et le panneau au-dessus
+  function murDuQG(g, MT, q) {
+    const P = q.porte, hp = QC.hauteurPorte, y0 = -V.profondeur, X = q.sx * (L + 0.25);
+    for (const [a, b] of [[V.demi, P[0]], [P[1], Q]]) g.add(bloc(0.5, H - y0, b - a, MT.carrelage, X, (H + y0) / 2, q.sz * (a + b) / 2));
+    g.add(bloc(0.5, H - hp, P[1] - P[0], MT.carrelage, X, (H + hp) / 2, q.sz * (P[0] + P[1]) / 2));
+    for (const v of P) g.add(bloc(0.6, hp, 0.12, MT.metal, X, hp / 2, q.sz * v));
+    g.add(bloc(0.6, 0.12, P[1] - P[0] + 0.24, MT.metal, X, hp, q.sz * (P[0] + P[1]) / 2));
+    const panneauQG = q.equipe === "bleus" ? MT.panneauBleu : MT.panneauRouge, face = X - q.sx * 0.28;
+    g.add(bloc(0.04, 0.6, 2.6, panneauQG, face, hp + 0.55, q.sz * (P[0] + P[1]) / 2));
+    // les rayures jaunes et noires sur le sol, devant la porte
+    for (let k = 0; k < 6; k++) g.add(bloc(0.25, 0.015, P[1] - P[0], k % 2 ? MT.noir : MT.jaune, q.sx * (L - 0.2 - k * 0.25), 0.008, q.sz * (P[0] + P[1]) / 2));
+  }
+  // La salle : le sol, le plafond, les murs, et tout ce qu'il y a dedans
+  function salleDuQG(g, MT, q) {
+    const U0 = L + 0.5, U1 = L + QC.profondeur, P = q.porte, h = QC.plafond, mu = (U0 + U1) / 2, lu = U1 - U0, mv = (q.z0 + q.z1) / 2, lv = q.z1 - q.z0;
+    const p = (u, v) => ici(q, u, v);
+    let [x, z] = p(mu, mv);
+    g.add(bloc(lu, 0.2, lv, MT.solQG, x, -0.1, z));
+    g.add(bloc(lu + 0.5, 0.5, lv + 0.5, MT.beton, x, h + 0.25, z));
+    [x, z] = p(U1 + 0.25, mv);
+    g.add(bloc(0.5, h + 0.5, lv + 0.5, MT.murQG, x, h / 2, z));
+    for (const v of [q.z0 - 0.15, q.z1 + 0.25]) ([x, z] = p(mu, v)), g.add(bloc(lu, h + 0.5, v < q.z0 ? 0.3 : 0.5, MT.murQG, x, h / 2, z));
+    // la bande rouge de l'éclairage de secours, le long du plafond, et les lampes rouges grillagées
+    for (const v of [q.z0 + 0.05, q.z1 - 0.05]) ([x, z] = p(mu, v)), g.add(bloc(lu - 1, 0.06, 0.06, MT.secours, x, h - 0.15, z));
+    for (const u of [L + 4, L + 10, L + 16]) ([x, z] = p(u, mv)), g.add(bloc(0.5, 0.12, 0.3, MT.secours, x, h - 0.08, z));
+    // les boîtes de l'architecte : les sacs de sable, les bureaux, le groupe électrogène
+    for (const b of Tanks.Souterrain.boites) {
+      if (b.qgDe !== q.equipe || b.sorte === "baie") continue;
+      const lx = 2 * b.dl, lz = 2 * b.dp;
+      if (b.sorte === "sacs") {
+        for (let r = 0; r < 3; r++) for (let k = 0; k < Math.floor(lz / 0.7); k++) {
+          const s2 = bloc(0.62, 0.32, 0.68, MT.sac, b.x + (hasard() - 0.5) * 0.08, 0.16 + r * 0.33, b.z - b.dp + 0.35 + k * 0.7 + (r % 2) * 0.2);
+          s2.rotation.y = (hasard() - 0.5) * 0.2;
+          g.add(s2);
+        }
+      } else if (b.sorte === "bureau") {
+        g.add(bloc(lx, 0.06, lz, MT.bois, b.x, b.y1 - 0.03, b.z));
+        for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) g.add(bloc(0.06, b.y1, 0.06, MT.metal, b.x + dx * (b.dl - 0.1), b.y1 / 2, b.z + dz * (b.dp - 0.1)));
+        if (/cartes/.test(b.nom)) { // la grande carte de la station, avec des pions
+          g.add(bloc(lx - 0.3, 0.01, lz - 0.2, MT.carte, b.x, b.y1 + 0.005, b.z));
+          for (let k = 0; k < 6; k++) g.add(bloc(0.08, 0.1, 0.08, k % 2 ? MT.pionRouge : MT.pionBleu, b.x + (hasard() - 0.5) * (lx - 0.6), b.y1 + 0.05, b.z + (hasard() - 0.5) * (lz - 0.4)));
+        } else if (/radios/.test(b.nom)) { // les postes de radio (avec leurs cadrans) et un casque
+          for (let k = 0; k < 3; k++) {
+            const xx = b.x + (k - 1) * 0.95 * (b.dl > b.dp ? 1 : 0), zz = b.z + (k - 1) * 0.95 * (b.dl > b.dp ? 0 : 1);
+            g.add(bloc(0.5, 0.3, 0.32, MT.radio, xx, b.y1 + 0.15, zz));
+            g.add(bloc(0.36, 0.05, 0.02, MT.voyant, xx, b.y1 + 0.22, zz - q.sz * 0.17));
+          }
+        } else { // les écrans (ils brillent : la carte de la ligne, des radars)
+          for (let k = 0; k < 3; k++) {
+            const xx = b.x + (k - 1) * 0.95;
+            g.add(bloc(0.08, 0.4, 0.06, MT.metal, xx, b.y1 + 0.2, b.z));
+            g.add(bloc(0.75, 0.45, 0.05, k === 1 ? MT.ecranRadar : MT.ecran, xx, b.y1 + 0.55, b.z + q.sz * 0.04));
+          }
+        }
+      } else if (b.sorte === "groupe") { // le groupe électrogène : un gros caisson jaune, son pot d'échappement, ses câbles
+        g.add(bloc(lx, b.y1, lz, MT.groupe, b.x, b.y1 / 2, b.z));
+        g.add(bloc(lx * 0.7, 0.05, 0.02, MT.noir, b.x, b.y1 * 0.6, b.z - q.sz * (b.dp + 0.01)));
+        g.add(O.tube([b.x + q.sx * 0.6, b.y1, b.z], [b.x + q.sx * 0.6, h, b.z], 0.07, MT.metal));
+        g.add(O.tube([b.x, 0.1, b.z - q.sz * b.dp], [q.sx * (U1 - 0.7), 0.1, q.sz * 10], 0.035, MT.caoutchouc));
+      }
+    }
+    // des caisses de munitions, une carte du réseau au mur, un drapeau du camp
+    for (let k = 0; k < 4; k++) ([x, z] = p(L + 3.5 + k * 0.7, q.z0 + 0.5)), g.add(bloc(0.6, 0.35, 0.4, MT.caisse, x, 0.18 + (k === 3 ? 0.35 : 0), z));
+    [x, z] = p(L + 9, q.z1 + 0.02);
+    g.add(bloc(3, 1.6, 0.04, MT.plan, x, 2.2, z));
+    [x, z] = p(U1 - 0.05, mv);
+    g.add(bloc(0.04, 1.2, 1.9, q.equipe === "bleus" ? MT.drapeauBleu : MT.drapeauRouge, x, 3.1, z));
+  }
+  // Les BAIES : une armoire noire avec une façade de voyants (sa propre matière, pour changer de couleur)
+  const baies = [];
+  function baiesDesQG() {
+    const geo = new THREE.BoxGeometry(1, 1, 1), face = facadeBaie();
+    for (const e in Tanks.Souterrain.qg) {
+      const q = Tanks.Souterrain.qg[e];
+      q.baies.forEach((b, k) => {
+        const mats = [];
+        for (let f = 0; f < 6; f++) mats.push(new THREE.MeshStandardMaterial({ color: 0x1c1f22, roughness: 0.5, metalness: 0.6 }));
+        const avant = q.sx > 0 ? 1 : 0; // (la face qui regarde la porte : −x pour le QG de l'est, +x pour l'ouest)
+        mats[avant] = new THREE.MeshStandardMaterial({ map: face, emissiveMap: face, emissive: 0x55ff77, emissiveIntensity: 1.2, roughness: 0.4, metalness: 0.4 });
+        const m = new THREE.Mesh(geo, mats);
+        m.scale.set(2 * b.dl, b.y1 - b.y0, 2 * b.dp);
+        m.position.set(b.x, (b.y1 + b.y0) / 2, b.z);
+        racine.add(m);
+        baies.push({ m, equipe: e, k, avant, etat: "neuve" });
+      });
+    }
+  }
+  // la façade d'une baie : des rangées de serveurs et leurs voyants
+  function facadeBaie() {
+    return image(128, 256, (g, l, h) => {
+      g.fillStyle = "#000";
+      g.fillRect(0, 0, l, h);
+      for (let r = 0; r < 14; r++) {
+        g.fillStyle = "#14171a";
+        g.fillRect(6, 8 + r * 17, l - 12, 14);
+        for (let k = 0; k < 6; k++) {
+          g.fillStyle = hasard() < 0.7 ? "#7dff8a" : hasard() < 0.5 ? "#ffd04a" : "#4ab0ff";
+          g.fillRect(12 + k * 7, 13 + r * 17, 3, 3);
+        }
+        g.fillStyle = "#222830";
+        g.fillRect(70, 12 + r * 17, 46, 6);
+      }
+    });
+  }
+  // chaque image : la couleur des voyants suit la vie de la baie (vert → orange → rouge), détruite : carcasse noire penchée
+  const vertVif = new THREE.Color(0x55ff77), orange = new THREE.Color(0xffa030), rouge = new THREE.Color(0xff3020);
+  function majBaies() {
+    const monde = Tanks.monde, qg = monde && monde.metro && monde.metro.qg;
+    for (const B of baies) {
+      const vie = qg && qg[B.equipe] ? qg[B.equipe].vies[B.k] / QC.vieBaie : 1;
+      const etat = vie <= 0 ? "detruite" : vie < 0.35 ? "rouge" : vie < 0.7 ? "orange" : "neuve";
+      const avant = B.m.material[B.avant];
+      if (etat === "rouge") avant.emissiveIntensity = 0.6 + 0.6 * (Math.sin(horloge * 9 + B.k) > 0 ? 1 : 0); // (elle clignote : alarme)
+      if (etat === B.etat) continue;
+      B.etat = etat;
+      if (etat === "detruite") {
+        for (const mt of B.m.material) (mt.color.setHex(0x0e0c0b)), (mt.emissiveIntensity = 0), (mt.roughness = 1);
+        B.m.rotation.set(0, 0, (B.equipe === "bleus" ? 1 : -1) * 0.12);
+        B.m.scale.y *= 0.82;
+        B.m.position.y *= 0.82;
+      } else {
+        avant.emissive.copy(etat === "neuve" ? vertVif : etat === "orange" ? orange : rouge);
+        avant.emissiveIntensity = 1.2;
+        if (etat === "neuve") (B.m.rotation.set(0, 0, 0), (B.m.scale.y = 2.1), (B.m.position.y = 1.05), B.m.material.forEach((mt, f) => (mt.color.setHex(f === B.avant ? 0xffffff : 0x1c1f22), (mt.roughness = f === B.avant ? 0.4 : 0.5))));
+      }
+    }
   }
 
   // Un morceau de gravats (un bloc de béton tombé du plafond, tourné au hasard)
@@ -474,6 +679,7 @@ Tanks.Station3D = (function () {
   function maj(dt, cam) {
     if (!racine || !racine.visible) return;
     horloge += dt;
+    majBaies(); // (livre n° 25)
     const F = S.feux, E = Tanks.Effets;
     for (const f of feux) {
       if (f.lum) f.lum.intensity = F.force * (0.7 + 0.18 * Math.sin(horloge * 13 + f.phase) + 0.12 * Math.sin(horloge * 31 + f.phase * 2) + Math.random() * 0.15);

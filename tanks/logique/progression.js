@@ -188,6 +188,7 @@ Tanks.Progression = (function () {
     else if (nom === "releve") gagner("releve", 1);
     else if (nom === "reparation") gagner("reparation", 1);
     else if (nom === "marque" && d.nouveaux > 0) gagner("marque", d.nouveaux);
+    else if (nom === "qg-baie-detruite" && d.equipe === "rouges") gagner("baieQG", 1); // (livre n° 25)
   }
 
   // ✍️ LA FIN DE LA BATAILLE : la victoire (ou la participation), les étoiles de la campagne, le MVP ; puis le bilan.

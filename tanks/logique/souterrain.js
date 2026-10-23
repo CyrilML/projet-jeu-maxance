@@ -17,6 +17,10 @@
 //     l'escalator, la mezzanine et l'escalier d'en face).
 // La station va de l'est (x > 0, les Bleus) à l'ouest (x < 0, les Rouges). Tous les nombres sont dans config.js
 // (« souterrain »). Ce fichier ne dessine rien.
+// ✍️ (livre de demandes n° 25) « Un QG à détruire à chacun. » Derrière le mur du bout de chaque station, une SALLE : le
+// poste de commandement du camp (une porte dans le mur, des sacs de sable, des bureaux, un groupe électrogène et les
+// 3 BAIES de serveurs et de radios, des boîtes « baie » que logique/qg.js abîme). L'architecte en donne le plan (« qg »)
+// et les routes : celle des GARDES (ils patrouillent devant leur QG) et celle des SAPEURS (ils vont au QG ennemi).
 
 window.Tanks = window.Tanks || {};
 
@@ -24,12 +28,26 @@ Tanks.Souterrain = (function () {
   const C = Tanks.CONFIG, S = C.souterrain, V = S.voies, M = S.mezzanine;
   const L = S.longueur / 2, MUR = S.plafond + 2;
   const RAMPES = [Object.assign({ nom: "l'escalier" }, S.escaliers), Object.assign({ nom: "l'escalator" }, S.escalators)];
+  // (livre n° 25) les deux salles des QG : sx, sz = de quel côté (x : le bout de la station ; z : le quai)
+  const Q = S.qg || null, QG = {};
+  if (Q && Q.actif) for (const equipe of ["bleus", "rouges"]) {
+    const c = Q.cote[equipe];
+    QG[equipe] = { equipe, nom: Q.noms[equipe], sx: c.x, sz: c.z, x0: L, x1: L + Q.profondeur, z0: Q.z[0], z1: Q.z[1], porte: Q.porte, baies: [] };
+  }
+  // (x, z) est-il dans la salle d'un QG ?
+  function dansQG(x, z) {
+    for (const e in QG) {
+      const q = QG[e], u = x * q.sx, v = z * q.sz;
+      if (u > q.x0 && u < q.x1 && v >= q.z0 && v < q.z1) return q;
+    }
+    return null;
+  }
 
   // ------------------------------------------------------------------ la hauteur du sol
   function hauteur(x, z) {
     const ax = Math.abs(x), az = Math.abs(z);
     if (az < V.demi) return ax <= L + S.tunnel ? -V.profondeur : MUR; // la tranchée des rails (et le tunnel, bouché au bout)
-    if (ax > L) return MUR; // le mur du bout des quais
+    if (ax > L) return dansQG(x, z) ? 0 : MUR; // le mur du bout des quais (livre n° 25 : sauf la salle du QG, derrière)
     if (az < S.quai.fond) return 0; // le quai
     if (az < M.fond && ax < M.demiX) {
       for (const R of RAMPES) if (x >= R.x0 && x <= R.x1 && az < R.haut) return ((az - S.quai.fond) / (R.haut - S.quai.fond)) * M.hauteur; // une pente
@@ -103,6 +121,27 @@ Tanks.Souterrain = (function () {
   for (const [x, z, dl, dp, angle, h] of GRAVATS) {
     boite({ x, z, dl, dp, angle, y0: 0, y1: h, sorte: "gravats", nom: "un tas de gravats" });
     parties.gravats++;
+  }
+  // (livre n° 25) LES QG : le mur du bout avec sa PORTE (2 morceaux de mur et le linteau au-dessus), des sacs de sable de
+  // chaque côté de la porte (pour s'abriter), un grand bureau avec les cartes, 2 bureaux de radios et d'écrans, le groupe
+  // électrogène et les 3 BAIES contre le mur du fond. (u = vers le fond de la salle, v = vers le mur du quai.)
+  for (const e in QG) {
+    const q = QG[e], ici = (u, v) => ({ x: q.sx * u, z: q.sz * v });
+    const mur = (v0, v1, y0, y1) => boite(Object.assign(ici(L + 0.25, (v0 + v1) / 2), { dl: 0.25, dp: (v1 - v0) / 2, angle: 0, y0, y1, sorte: "mur-qg", nom: "le mur " + q.nom.replace(/^le /, "du ") }));
+    mur(q.z0 - 0.5, q.porte[0], -5, MUR);
+    mur(q.porte[1], q.z1 + 0.5, -5, MUR);
+    mur(q.porte[0], q.porte[1], Q.hauteurPorte, MUR);
+    const objet = (u, v, dl, dp, h, sorte, nom) => boite(Object.assign(ici(u, v), { dl, dp, angle: 0, y0: 0, y1: h, sorte, nom: nom + " (" + q.nom + ")", qgDe: e }));
+    objet(L + 2.4, (q.z0 + q.porte[0]) / 2 - 0.2, 0.35, (q.porte[0] - q.z0) / 2 - 0.4, 1.05, "sacs", "les sacs de sable");
+    objet(L + 2.4, (q.porte[1] + q.z1) / 2 + 0.2, 0.35, (q.z1 - q.porte[1]) / 2 - 0.4, 1.05, "sacs", "les sacs de sable");
+    objet(L + 8.5, 10, 1.7, 0.85, 0.82, "bureau", "la table des cartes");
+    objet(L + 5.5, q.z1 - 0.5, 1.6, 0.4, 0.8, "bureau", "le bureau des radios");
+    objet(L + 12, q.z0 + 0.5, 1.6, 0.4, 0.8, "bureau", "le bureau des écrans");
+    objet(L + 15.5, q.z1 - 0.7, 1.1, 0.55, 1.3, "groupe", "le groupe électrogène");
+    Q.baies.forEach((v, k) => q.baies.push(objet(L + Q.profondeur - 0.6, v, 0.45, 0.62, 2.1, "baie", "la baie n° " + (k + 1))));
+    q.porteX = q.sx * L;
+    q.porteZ = q.sz * (q.porte[0] + q.porte[1]) / 2;
+    q.centre = ici(L + Q.profondeur / 2, (q.z0 + q.z1) / 2);
   }
   // (les escalators : chacun des deux a sa rampe ; l'un des deux est cassé, ses marches manquent — c'est le dessin)
   parties.lampes = Math.floor(S.longueur / S.lampes.ecart) * 2;
@@ -227,6 +266,24 @@ Tanks.Souterrain = (function () {
     { nom: "la mezzanine sud", points: (j) => [[L - 4, 7 + j], [XE + 6, 11], [XE, 13.5], [XE + j * 0.5, ZM], [XS + j * 0.5, ZM], [XS, 13.5], [XS - 6, 11], [-L + 4, 7 + j]] },
     { nom: "le quai nord", points: (j) => [[L - 4, -11 + j * 0.5], [-L + 4, -11 + j * 0.5]] },
   ];
+  // (livre n° 25) La route d'un GARDE (devant et dans son QG, en aller-retour) ou d'un SAPEUR (son quai, puis la porte
+  // du QG ennemi, puis jusqu'aux baies). j : un petit décalage, pour qu'ils ne marchent pas tous à la file.
+  function routeQG(equipe, role, j, cote) {
+    const ennemi = equipe === "bleus" ? "rouges" : "bleus", q = QG[role === "garde" ? equipe : ennemi];
+    if (!q) return null;
+    const p = (u, v) => ({ x: q.sx * u, z: q.sz * v }), vp = (q.porte[0] + q.porte[1]) / 2;
+    if (role === "garde") return [p(L - 7 - j, vp + j * 0.6), p(L - 1.5, vp), p(L + 4, vp - 1.5 + j), p(L + 9, q.z0 + 2 + j), p(L + 4, q.z1 - 2 - j * 0.5)];
+    // une route de SON quai (« cote » : le côté où il arrive) ; si le QG ennemi est de l'autre côté des rails, il les
+    // traverse au bout de la station, là où il n'y a ni pilier ni rame (à 6,5 m du mur du bout)
+    const R = ROUTES.filter((r) => Math.sign(r.points(0)[0][1]) === cote && /quai/.test(r.nom))[Math.floor(j * 7) % 2]; // (le long d'un quai : le plus direct)
+    let pts = R.points(j).map(([x, z]) => ({ x, z }));
+    if (equipe === "rouges") pts = pts.reverse();
+    pts.pop();
+    const xt = q.sx * (L - 6.5);
+    pts.push({ x: xt, z: cote * 7 });
+    if (cote !== q.sz) pts.push({ x: xt, z: cote * 3 }, { x: xt, z: -cote * 3 }, { x: xt, z: -cote * 7 });
+    return { nom: R.nom + " → " + q.nom, points: pts.concat([p(L - 2.5, vp + (j - 1) * 0.6), p(L + 1.5, vp), p(L + 5, vp), p(L + 10, vp + (j - 1) * 1.5)]) };
+  }
   // Où arrive un soldat de ce camp ? (au bout de la station : les Bleus à l'est, les Rouges à l'ouest)
   function depart(equipe, n) {
     const sens = equipe === "bleus" ? 1 : -1, cote = n % 2 ? -1 : 1;
@@ -240,7 +297,7 @@ Tanks.Souterrain = (function () {
     const R = ROUTES[n % ROUTES.length], j = ((n * 37) % 10) / 10 * 2;
     let pts = R.points(j).map(([x, z]) => ({ x, z }));
     if (equipe === "rouges") pts = pts.reverse();
-    s.ia = { pense: ((n % 6) / 6) * C.soldats.pense, cible: null, voit: false, couloir: 0, etat: "arrive dans la station", erreur: 0, route: pts, etape: 0, nomRoute: R.nom };
+    s.ia = { pense: ((n % 6) / 6) * C.soldats.pense, cible: null, voit: false, couloir: 0, etat: "arrive dans la station", erreur: 0, route: pts, etape: 0, nomRoute: R.nom, n, j }; // (livre n° 25 : n et j, pour son rôle au QG)
     return s;
   }
   // Le prochain point de sa route (arrivé à moins de 2,5 m d'un point, il passe au suivant ; au bout, il repart dans
@@ -255,7 +312,8 @@ Tanks.Souterrain = (function () {
     if (d < 2.5 || ia.coince > 5) {
       ia.meilleur = undefined;
       ia.etape++;
-      if (ia.etape >= r.length) (ia.route = r.slice().reverse()), (ia.etape = 1);
+      if (ia.etape >= r.length && ia.sansRetour) ia.etape = r.length - 1; // (livre n° 25 : le sapeur ne rentre pas chez lui)
+      else if (ia.etape >= r.length) (ia.route = r.slice().reverse()), (ia.etape = 1);
       p = ia.route[ia.etape];
     }
     return p;
@@ -263,5 +321,5 @@ Tanks.Souterrain = (function () {
   // Ton départ : sur le quai sud, au bout des Bleus, tourné vers l'ouest.
   const toi = () => ({ x: L - 6, z: 6.5, angle: Math.PI });
 
-  return { hauteur, plafond, estMur, repousser, ligne, boites, voitures, piliers, bancs, parties, bilan, soldat, prochainPoint, toi, depart, routes: ROUTES, rampes: RAMPES, BOITE, MUR, L };
+  return { hauteur, plafond, estMur, repousser, ligne, boites, voitures, piliers, bancs, parties, bilan, soldat, prochainPoint, toi, depart, routes: ROUTES, rampes: RAMPES, BOITE, MUR, L, qg: QG, dansQG, routeQG };
 })();

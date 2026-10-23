@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 55,
+  version: 56,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -1201,6 +1201,7 @@ Tanks.CONFIG = {
       reparation: { xp: 5, nom: "Réparations", icone: "🔧" },
       marque: { xp: 6, nom: "Ennemis marqués", icone: "🔭" },
       objectif: { xp: 80, nom: "Objectifs", icone: "🚩" },
+      baieQG: { xp: 60, nom: "Baies de QG détruites", icone: "🗄️" }, // (livre n° 25 : une baie du QG du Front, dans le souterrain)
       victoire: { xp: 300, nom: "Victoire", icone: "🏆" },
       participation: { xp: 50, nom: "Participation", icone: "🎖️" },
       etoile: { xp: 60, nom: "Étoiles de campagne", icone: "⭐" },
@@ -1406,6 +1407,37 @@ Tanks.CONFIG = {
     feux: { lumieres: 4, force: 80, portee: 36, flammes: 22, fumee: 5 }, // flammes, fumee : particules par seconde et par feu
     brouillard: [14, 120],
     regles: { soldats: 10, renforts: 30, attente: 3, vue: 110 },
+    // ✍️ (livre de demandes n° 25) « Dans les souterrains, un QG à détruire à chacun. » Chaque camp a son QG (son poste de
+    // commandement) dans une salle derrière le mur du bout de SA station : les Bleus à l'est, côté sud (z > 0), les Rouges
+    // à l'ouest, côté nord (z < 0). Dedans : des bureaux, des cartes, des radios, des écrans, un groupe électrogène, des
+    // sacs de sable… et 3 BAIES (des armoires de serveurs et de radios) : c'est le CŒUR du QG.
+    //   salle : elle va de |x| = L (le mur du bout) à |x| = L + profondeur, et de |z| = z[0] à z[1] ; plafond : m ;
+    //   porte : le passage dans le mur du bout (|z| de porte[0] à porte[1], « hauteur » m) ;
+    //   baies : les 3 armoires (|z| de chacune, contre le mur du fond), « vie » points chacune ;
+    //   degats : les points qu'enlève à une baie une balle (× les dégâts de l'arme) ou une explosion (au centre ; moins
+    //     loin, plus rien au-delà de son rayon, celui de « structures.explosions ») ;
+    //   alerte : s, la radio dit « le QG est attaqué » au plus une fois toutes les « alerte » s (pour chaque camp) ;
+    //   ia : les soldats reçoivent leur RÔLE à tour de rôle (« roles », d'après leur numéro : le n° 1 le 1er rôle, le n° 2
+    //     le 2e…) : « garde » reste GARDER son QG, « sapeur » part DÉTRUIRE le QG ennemi, « patrouille » fait comme avant
+    //     (il patrouille et se bat dans la station). Arrivé à moins de « portee » m
+    //     d'une baie ennemie qu'il voit, sans ennemi en vue, il tire dessus, et lance une grenade s'il est entre
+    //     grenade[0] et grenade[1] m (« chance » des fois où il regarde, toutes les « pense » s). En route, le sapeur tire
+    //     EN MARCHANT (il ne s'arrête que si un ennemi est à moins de « arret » m).
+    // Détruire les 3 baies ennemies = VICTOIRE (en plus de l'ancienne règle : le dernier camp debout gagne). Perdre les
+    // 3 tiennes = DÉFAITE. (Pas dans la campagne : là, ce sont les objectifs du chapitre qui comptent.)
+    qg: {
+      actif: true,
+      profondeur: 18, z: [5, 15], plafond: 4.4,
+      porte: [8.6, 11.6], hauteurPorte: 2.7,
+      cote: { bleus: { x: 1, z: 1 }, rouges: { x: -1, z: -1 } },
+      noms: { bleus: "le QG Rempart", rouges: "le QG du Front" },
+      baies: [7, 10, 13], vieBaie: 100,
+      degats: { balle: 0.6, grenade: 70, roquette: 85, at4: 95, javelin: 120, lg40: 55, c4: 260, mine: 160, claymore: 25, obus: 110, missile: 150, bombe: 260 },
+      alerte: 12,
+      ia: { roles: ["garde", "sapeur", "patrouille", "sapeur", "patrouille"], portee: 15, grenade: [7, 20], chance: 0.35, pense: 0.5, arret: 8 },
+      // (l'affichage) la fumée et le feu d'une baie détruite : flammes et bouffées par seconde ; elles durent « feu » s
+      feu: { flammes: 10, fumee: 3, duree: 90 },
+    },
   },
 
   // ------------------------------------------------------------------ étape 88 : LA CAMPAGNE (le mode histoire)
@@ -2826,3 +2858,63 @@ Tanks.CONFIG.boutique = {
     for (const schema in A) A[schema]["bleus~" + p.id] = Object.assign({}, A[schema].bleus, { fond: p.camouflage[0], taches: p.camouflage.slice(1, 4), ventre: A[schema].bleus.ventre ? p.ventre : null });
   }
 })();
+
+// ================================================================== livre de demandes n° 25 : les phrases du QG à la radio
+// (« QG Rempart » parle pour ton camp ; la radio ennemie interceptée, pour le Front.) {baies} : les baies encore debout.
+Object.assign(Tanks.CONFIG.radio.bavard, {
+  qgAttaque: ["Ici QG Rempart : on nous attaque ! Des ennemis dans le poste de commandement !", "QG Rempart à toutes les unités : le QG est attaqué, revenez le défendre !", "Contact au QG ! Ils tirent sur nos baies ! Il nous en reste {baies} !"],
+  qgBaie: ["Une baie du QG vient de sauter ! Plus que {baies} !", "On a perdu une baie de serveurs ! Il en reste {baies}, tenez bon !"],
+  qgEnnemiAttaque: ["Leur QG est touché, continuez !", "On est dans leur poste de commandement ! Feu sur les baies !"],
+  qgEnnemiBaie: ["Une baie ennemie a explosé ! Plus que {baies} !", "Boum ! Leur QG perd une baie. Encore {baies} !"],
+  qgDetruit: ["LEUR QG EST DÉTRUIT ! Le Front n'a plus de commandement !"],
+  qgPerdu: ["Le QG Rempart est tombé… On a perdu le commandement !"],
+});
+
+// ================================================================== livre de demandes n° 26 : ✍️ « FAIRE UN RÉALISME ABSURDE »
+// (= un réalisme extrême.) Des détails comme dans la vraie vie, qu'on REMARQUE en jouant, mais sans ralentir le jeu
+// (✍️ Maxance déteste le lag) : chacun se règle ici, et on peut l'éteindre (actif: false). Déjà là avant (demande 92) :
+// le « crac » des balles qui frôlent, le son qui arrive en retard de loin (340 m/s), la fumée au bout du canon, la
+// poussière soulevée par le coup de canon d'un tank, le vent qui pousse la fumée.
+Tanks.CONFIG.realismeAbsurde = {
+  // 1. LA BALLE TRAVERSE les matières minces (une porte en bois, des planches, une haie, des tuiles, la portière d'une
+  //    voiture, la tôle d'une rame de métro, un banc) : elle continue, mais elle fait moins mal derrière (× le nombre).
+  //    Le béton, la brique et la pierre l'arrêtent. Une seule traversée par balle. « epaisseurs » : m, le plus épais
+  //    qu'elle traverse (une voiture : ses deux portières ; une rame de métro : ses deux flancs) ; plus épais, elle reste dedans.
+  traverse: { actif: true, matieres: { porte: 0.6, bois: 0.55, haie: 0.85, tuiles: 0.7, objet: 0.5, tole: 0.4, banc: 0.65 },
+    epaisseurs: { porte: 0.6, bois: 0.6, haie: 1.2, tuiles: 0.6, objet: 2.4, tole: 3.3, banc: 0.8 } },
+  // 2. LE RICOCHET : une balle qui arrive EN RASANT (moins de « angle » degrés avec la surface) sur du béton, de la pierre
+  //    ou du métal rebondit (« chance ») : des étincelles, un « piouu », et elle repart (perd « perte » de sa vitesse)
+  //    sur « longueur » m (entre les deux nombres).
+  ricochet: { actif: true, angle: 22, chance: 0.75, matieres: ["beton", "pierre", "metal", "gravats", "brique"], longueur: [12, 40], ecart: 0.12 },
+  // 3. LA SUPPRESSION : des balles ennemies qui passent à moins de « distance » m de ta tête te font PEUR : chacune ajoute
+  //    jusqu'à « gain » (de 0 à 1) ; ça redescend de « baisse » par seconde après « attente » s sans balle. Effets : ta
+  //    visée tremble (« balancement » rad), s'écarte (« dispersion » rad), les bords de l'écran s'assombrissent
+  //    (« vignette ») et l'image devient floue (« flou » px, par niveau de qualité : 0 = pas de flou, c'est plus léger).
+  suppression: { actif: true, distance: 5, gain: 0.22, attente: 1.2, baisse: 0.35, balancement: 0.012, dispersion: 0.02, vignette: 0.75, flou: [0, 0, 1.2, 1.8] },
+  // 4. LA FATIGUE : courir (avancer à plus de « course » × la vitesse, debout, sans épauler) essouffle (« gain » par
+  //    seconde) ; on récupère de « recup » par seconde (× 2 à l'arrêt, × 2,5 accroupi). Essoufflé : la visée bouge (un
+  //    « 8 » plus rapide, de « balancement » rad au plus), s'écarte (« dispersion »), et on entend son souffle.
+  fatigue: { actif: true, course: 0.8, gain: 0.09, recup: 0.12, balancement: 0.01, dispersion: 0.012, periode: 1.6, souffle: 0.35 },
+  // 5. LE VENT (dehors seulement : sous terre, il n'y en a pas) : « force » m/s, qui tourne doucement (« direction » rad
+  //    au départ, ± « tourne » rad) avec des RAFALES (± « rafales » × la force, toutes les ~« periode » s). Il pousse la
+  //    fumée ET les balles : dérive = vent de côté × temps de vol × « derive » (une balle sans vitesse connue : « vitesse »
+  //    m/s). Dans la lunette, l'INDICATEUR DE VENT dit de combien la balle va dériver à la distance visée. La fumée part
+  //    avec « fumee » × le vent.
+  vent: { actif: true, force: 4.5, direction: 0.4, tourne: 0.5, rafales: 0.45, periode: 9, derive: 0.15, vitesse: 880, fumee: 0.45 },
+  // 6. LE RECHARGEMENT RÉALISTE : chargeur VIDE = plus long (× « vide » : il faut aussi réarmer la culasse) ; chargeur
+  //    pas vide (rechargement « tactique ») = une balle reste dans la chambre (30 + 1 !), mais l'ancien chargeur tombe
+  //    par terre avec ses balles (« perdre » : elles sont perdues, comptées sous le capot). Pas les fusils à pompe.
+  rechargement: { actif: true, vide: 1.3, tactique: 1, chambre: true, perdre: true },
+  // 7. LES DOUILLES restent par terre : « max » au plus (par niveau de qualité ; les plus vieilles s'en vont), « duree » s,
+  //    seulement à moins de « loin » m de la caméra.
+  douilles: { actif: true, max: [40, 120, 260, 400], duree: 60, loin: 40 },
+  // 8. L'ENRAYAGE : une arme qui s'enraye (« chance » par tir ; ✍️ éteint au départ : c'est plus agaçant qu'amusant).
+  //    Enrayée, R la désenraye en « duree » s.
+  enrayage: { actif: false, chance: 0.002, duree: 0.9 },
+};
+
+// ================================================================== livre de demandes n° 27 : ✍️ « BANNIR TOUTE PUBLICITÉ »
+// AUCUNE PUBLICITÉ, AUCUN TRAQUEUR. Le jeu ne charge rien d'Internet (sauf Three.js, rangé dans le dépôt), n'envoie
+// rien nulle part, n'a ni pub, ni mouchard, ni statistiques. Les affiches et les panneaux de la ville (affichage/ville3d.js)
+// sont du DÉCOR : des marques INVENTÉES (Valdrie, Valcourt…), aucune vraie. La boutique se paie en Battle Coins du jeu.
+Tanks.CONFIG.sansPublicite = "Aucune publicité, aucun traqueur";

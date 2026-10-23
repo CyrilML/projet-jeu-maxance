@@ -39,6 +39,7 @@ window.Tanks = window.Tanks || {};
 Tanks.Effets = (function () {
   const C = Tanks.CONFIG, T = Tanks.Terrain;
   let scene, particules = [], prochaine = 0;
+  const ventFumee = [0, 0]; // (livre n° 26)
   let lotFumee = null, lotFeu = null; // (étape 72) les deux objets qui dessinent toutes les particules
   const camera = { x: 0, y: 0, z: 0, connue: false }, reglage = { distance: Infinity }; // (étape 72) où est la caméra, jusqu'où faire des effets
   const bilan = { vivantes: 0, traceurs: 0, epaves: 0, balles: 0, tropLoin: 0 };
@@ -95,7 +96,7 @@ Tanks.Effets = (function () {
   function initialiser(s) {
     scene = s;
     Tanks.Particules.initialiser(s); // (demande 92)
-    Tanks.Tirs.initialiser();
+    Tanks.Tirs.initialiser(s); // (livre n° 26 : la scène, pour les douilles)
     Tanks.Explosions.initialiser();
     lotFumee = lot(C.effets.particules, false);
     lotFeu = lot(C.effets.particules, true);
@@ -249,7 +250,10 @@ Tanks.Effets = (function () {
     // (demande 92) les tirs, les explosions, puis l'imprimerie (qui fait vivre et range tous ses autocollants)
     Tanks.Tirs.maj(dt, monde);
     Tanks.Explosions.maj(dt);
-    Tanks.Particules.maj(dt, cam, distance, C.realisme.explosions.vent);
+    // ✍️ (livre n° 26) la fumée part avec le VRAI vent du moment (ses rafales ; sous terre, pas de vent)
+    const V = monde && monde.vent && C.realismeAbsurde.vent.actif ? monde.vent : null;
+    if (V) (ventFumee[0] = V.x * C.realismeAbsurde.vent.fumee), (ventFumee[1] = V.z * C.realismeAbsurde.vent.fumee);
+    Tanks.Particules.maj(dt, cam, distance, V ? ventFumee : C.realisme.explosions.vent);
     bilan.balles = Tanks.Particules.bilan.brillent;
     bilan.traceurs = Tanks.Tirs.bilan.obusEnVol;
     bilan.epaves = Tanks.Explosions.bilan.epaves;

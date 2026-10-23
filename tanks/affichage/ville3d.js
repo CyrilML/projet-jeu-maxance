@@ -4,7 +4,8 @@
 // (logique/ville.js) a inventé : les trottoirs et leurs bordures, les passages piétons, les lignes, les plaques d'égout,
 // les lampadaires, les feux, les panneaux, les bancs, les arbres en bac, les kiosques, les abribus, les grands panneaux
 // de pub, les stores des boutiques, les balcons et leur linge, les climatiseurs, les AFFICHES et les PUBLICITÉS (des
-// marques inventées, peintes au démarrage sur une grande image), les voitures, les bus, les scooters… et les objets
+// marques inventées, peintes au démarrage sur une grande image ; ✍️ livre n° 27 « bannir toute publicité » : ce sont
+// des affiches du DÉCOR, aucune vraie marque — les noms qui ressemblaient à une vraie marque ont été changés), les voitures, les bus, les scooters… et les objets
 // laissés dans la fuite (sacs, valises, téléphones, nounours, journaux, chaises renversées, papiers partout).
 // Pour que le jeu ne rame pas (✍️ Maxance déteste le lag) :
 //   - tout ce qui ne bouge pas est RECOLLÉ par quartier de 70 m : 1 dessin pour le mobilier, 1 pour les affiches, 1 pour
@@ -92,13 +93,13 @@ Tanks.Ville3D = (function () {
     // 4 : Zéphyr mobile
     r = A[4]; cx = r[0] + 128;
     fond(r, "#e8f3ff", "#7fb3e6");
-    texte("ZÉPHYR", cx, r[1] + 50, 46, "#0b3d7a", true); texte("mobile", cx, r[1] + 88, 26, "#0b3d7a");
+    texte("ONDIVAL", cx, r[1] + 50, 42, "#0b3d7a", true); texte("mobile", cx, r[1] + 88, 26, "#0b3d7a");
     g.fillStyle = "#111"; g.fillRect(cx - 50, r[1] + 120, 100, 190); g.fillStyle = "#3aa0ff"; g.fillRect(cx - 42, r[1] + 132, 84, 160);
     texte("5G partout", cx, r[1] + 345, 24, "#0b3d7a", true);
-    // 5 : biscuits Lumen
+    // 5 : biscuits Valdrine (livre n° 27 : un nom inventé, qui ne ressemble à aucune vraie marque)
     r = A[5]; cx = r[0] + 128;
     fond(r, "#ffd56b", "#f29a2e");
-    texte("LUMEN", cx, r[1] + 60, 52, "#5a2a0a", true); texte("biscuits au beurre", cx, r[1] + 100, 20, "#5a2a0a");
+    texte("VALDRINE", cx, r[1] + 60, 40, "#5a2a0a", true); texte("biscuits au beurre", cx, r[1] + 100, 20, "#5a2a0a");
     for (let i = 0; i < 5; i++) (g.fillStyle = "#c97a2a"), g.beginPath(), g.arc(cx - 70 + i * 35, r[1] + 200 + (i % 2) * 30, 30, 0, 7), g.fill(), (g.fillStyle = "#e9a95a"), g.beginPath(), g.arc(cx - 70 + i * 35, r[1] + 200 + (i % 2) * 30, 22, 0, 7), g.fill();
     texte("Le goût d'avant", cx, r[1] + 320, 22, "#5a2a0a", true);
     // 6 : fête de la ville
@@ -116,7 +117,7 @@ Tanks.Ville3D = (function () {
     r = P[0]; fond(r, "#ff6a00", "#c43c00"); texte("PIZZA VOLTA", r[0] + 256, r[1] + 80, 64, "#fff", true); texte("livrée chaude en 20 minutes", r[0] + 256, r[1] + 150, 30, "#fff3d0"); g.fillStyle = "#ffd"; g.beginPath(); g.arc(r[0] + 440, r[1] + 205, 40, 0, 7); g.fill(); texte("📞 33 20", r[0] + 140, r[1] + 210, 30, "#fff", true);
     r = P[1]; fond(r, "#bcd6e8", "#5c7e98"); g.fillStyle = "#b8202a"; g.beginPath(); g.ellipse(r[0] + 330, r[1] + 170, 150, 45, 0, 0, 7); g.fill(); g.fillRect(r[0] + 240, r[1] + 110, 160, 50); g.fillStyle = "#222"; g.beginPath(); g.arc(r[0] + 245, r[1] + 210, 26, 0, 7); g.arc(r[0] + 420, r[1] + 210, 26, 0, 7); g.fill(); texte("AUTO DELMAR", r[0] + 140, r[1] + 60, 38, "#0d2840", true); texte("la nouvelle Ondine", r[0] + 140, r[1] + 105, 24, "#0d2840");
     r = P[2]; fond(r, "#0d2b4f", "#174a7a"); texte("BANQUE DE VALDRIE", r[0] + 256, r[1] + 90, 44, "#e8c66a", true); texte("Votre avenir, notre métier", r[0] + 256, r[1] + 155, 28, "#fff");
-    r = P[3]; fond(r, "#ffffff", "#d8eef8"); texte("MONTCLAIR", r[0] + 180, r[1] + 90, 56, "#1a5aa8", true); texte("lait frais de nos montagnes", r[0] + 180, r[1] + 150, 24, "#1a5aa8"); g.fillStyle = "#fff"; g.strokeStyle = "#1a5aa8"; g.lineWidth = 6; g.strokeRect(r[0] + 390, r[1] + 50, 80, 170); texte("1 L", r[0] + 430, r[1] + 140, 30, "#1a5aa8", true);
+    r = P[3]; fond(r, "#ffffff", "#d8eef8"); texte("MONTVALDRE", r[0] + 180, r[1] + 90, 48, "#1a5aa8", true); texte("lait frais de nos montagnes", r[0] + 180, r[1] + 150, 24, "#1a5aa8"); g.fillStyle = "#fff"; g.strokeStyle = "#1a5aa8"; g.lineWidth = 6; g.strokeRect(r[0] + 390, r[1] + 50, 80, 170); texte("1 L", r[0] + 430, r[1] + 140, 30, "#1a5aa8", true);
     // les enseignes des boutiques
     const E = RECTS.enseigne, NOMS = [["BOULANGERIE", "#6a3a14", "#f3e2c0"], ["PHARMACIE", "#fff", "#1f8a3a"], ["CAFÉ DU MARCHÉ", "#f4e8c8", "#5a1e14"], ["TABAC · PRESSE", "#fff", "#b8202a"], ["COIFFURE ÉLODIE", "#4a1a4a", "#f2c6e0"], ["ÉPICERIE FINE", "#fff", "#2a5a2a"], ["BAR LE CENTRAL", "#ffd23c", "#1a1a1a"], ["LIBRAIRIE", "#1a2a5a", "#e6dcc0"]];
     E.forEach((r2, i) => { fond(r2, NOMS[i][2]); g.strokeStyle = NOMS[i][0]; g.lineWidth = 4; g.strokeRect(r2[0] + 6, r2[1] + 6, r2[2] - 12, r2[3] - 12); texte(NOMS[i][0], r2[0] + 256, r2[1] + 50, 46, NOMS[i][1], true); });

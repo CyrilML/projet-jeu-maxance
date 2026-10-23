@@ -232,6 +232,7 @@
       <a href="#etape109">Étape 109</a>
       <a href="#etape110">Étape 110</a>
       <a href="#etape111">Étape 111</a>
+      <a href="#etape112">Étape 112</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5631,6 +5632,52 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape112">
+      <h2>💥 Étape 112 : les QG du souterrain, le réalisme absurde, et zéro publicité <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Dans le souterrain, chaque camp a un QG à détruire. Les balles traversent le bois, ricochent sur le béton, le vent les pousse, la peur fait trembler ton arme… Et le jeu n'a aucune publicité ni aucun traqueur. Demandes n° 25, 26 et 27 de ton livre. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/112-qg-realisme-sans-pub.md</code>.</p>
+          <ul>
+            <li>✍️ « Dans les souterrains, un QG à détruire à chacun. »</li>
+            <li>✍️ « Faire un réalisme absurde. »</li>
+            <li>✍️ « Bannir toute publicité. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 56 ».</li>
+            <li>☐ Souterrain : le QG RAMPART (toi) et le QG DU FRONT (l'ennemi), avec 3 baies de serveurs chacun. Détruis les 3 baies ennemies (C4, roquettes, grenades) → victoire !</li>
+            <li>☐ Les barres des deux QG en haut de l'écran ; « QG Rempart » prévient à la radio quand ton QG est attaqué.</li>
+            <li>☐ Les balles traversent les portes en bois, les haies, les portières, les rames de métro (moins fort derrière) ; le béton les arrête.</li>
+            <li>☐ Des ricochets avec étincelles et « piouu » quand la balle frappe en biais.</li>
+            <li>☐ Des balles qui passent près de toi : bords de l'écran sombres, arme qui tremble. Après une course : tu souffles.</li>
+            <li>☐ Dans la lunette : la flèche du vent et la dérive ; vise un peu à côté !</li>
+            <li>☐ Recharger un chargeur vide prend plus de temps ; les douilles restent par terre 60 s.</li>
+            <li>☐ En haut de la page : « Aucune publicité, aucun traqueur ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🌬️ Le vent et la balle</h3>
+      <p>Une balle met du temps pour aller loin, et pendant ce temps le vent la pousse de côté. Plus la cible est loin, plus la balle dérive. Les vrais tireurs d'élite visent donc un peu à côté de la cible, du côté d'où vient le vent. La lunette te montre de combien.</p>
+      <h3>🧱 Traverser ou ricocher</h3>
+      <p>Chaque matière a sa règle : le bois laisse passer la balle (moins forte), le béton l'arrête, et si la balle arrive très en biais (moins de 22°), elle rebondit. C'est encore une décision « si… alors… sinon », mais avec l'angle de la balle.</p>
+      <h3>🚫 Pourquoi aucune publicité ?</h3>
+      <p>Une vraie pub dans un jeu, c'est souvent aussi un « traqueur » qui envoie des informations sur le joueur à une entreprise. Ton jeu n'envoie rien à personne. Les affiches de la ville sont des marques inventées : du décor, pas de la pub.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot : la vie de chaque baie du QG, et les lignes du réalisme (peur, fatigue, vent, ricochets).</li>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>realismeAbsurde</code> : coupe le vent (ou allume l'enrayage !).</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Combien de baies faut-il détruire dans un QG ? <span class="petit">(3)</span></li>
+            <li>Pourquoi viser à côté avec le vent ? <span class="petit">(le vent pousse la balle pendant son vol)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7063,6 +7110,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-111" data-cle="appris-111" placeholder="Ex. : …"></textarea>
         <label for="idees-111"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-111" data-cle="idees-111" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 112 · les QG du souterrain, le réalisme absurde, zéro publicité <span class="petit">· 24 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/logique/qg.js</code>, <code>tanks/logique/realisme.js</code>, <code>souterrain.js</code>, <code>station3d.js</code>, <code>armes.js</code>, <code>config.js</code> (<code>souterrain.qg</code>, <code>realismeAbsurde</code>, <code>sansPublicite</code>).</p>
+        <p class="petit">✍️ Maxance a demandé : un QG à détruire dans le souterrain, un réalisme absurde, aucune publicité.</p>
+        <label for="appris-112"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-112" data-cle="appris-112" placeholder="Ex. : …"></textarea>
+        <label for="idees-112"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-112" data-cle="idees-112" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

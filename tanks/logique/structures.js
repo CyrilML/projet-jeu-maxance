@@ -325,11 +325,12 @@ Tanks.Structures = (function () {
     if (T.souterrain) {
       const h = Tanks.Souterrain.ligne(x1, y1, z1, x2, y2, z2, premier);
       if (!h || premier) return !!h;
-      Object.assign(coup, { b: Tanks.Souterrain.BOITE, morceau: null, toit: false, gravats: false, t: h.t, x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz });
+      Object.assign(coup, { b: Tanks.Souterrain.BOITE, morceau: null, toit: false, gravats: false, t: h.t, x: h.x, y: h.y, z: h.z, nx: h.nx, ny: h.ny, nz: h.nz, metro: h.quoi }); // (livre n° 25 : « metro » = la boîte touchée : une baie du QG ?)
       Tanks.Souterrain.BOITE.nom = h.quoi.nom || "le mur de la station";
       return true;
     }
     meilleurT = 1.0000001;
+    coup.metro = null;
     trouve = false;
     premierSeulement = premier;
     const minX = Math.min(x1, x2), maxX = Math.max(x1, x2), minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);
@@ -417,6 +418,7 @@ Tanks.Structures = (function () {
   // Une BALLE arrive sur ce que « premier » a trouvé (coup). Renvoie l'événement à annoncer.
   function balle(c, degats, tireur, ev, monde) {
     bilan.balles++;
+    if (c.metro && Tanks.QG) Tanks.QG.balle(c.metro, degats, tireur, ev, monde); // (livre n° 25 : une baie du QG)
     const m = c.morceau, b = c.b;
     const d = { b, k: m ? m.k : -1, nom: b.nom, matiere: m ? m.matiere : c.toit ? "tuiles" : c.plancher === "plancher" ? "bois" : c.plancher === "objet" ? "metal" : "gravats", x: c.x, y: c.y, z: c.z, nx: c.nx, ny: c.ny, nz: c.nz, tireur, vie: m ? m.vie : 0, vieMax: m ? m.vieMax : 0 };
     if (!m && b.objet) Tanks.Ville.balle(b.objet, degats, tireur, ev); // (livre n° 9 et 11 : une voiture, un bus…)
@@ -437,6 +439,7 @@ Tanks.Structures = (function () {
   // surLeToit : l'obus est tombé pile sur le toit (coup direct).
   const prochesExplosion = [];
   function exploser(x, y, z, sorte, tireur, ev, monde, surLeToit) {
+    if (Tanks.QG) Tanks.QG.exploser(x, y, z, sorte, tireur, ev, monde); // (livre n° 25 : les baies des QG du souterrain)
     Tanks.Base.exploser(x, y, z, sorte, tireur, ev, monde); // (demande 99 : sur une piste, l'explosion creuse un cratère)
     if (Tanks.Ville) Tanks.Ville.exploser(x, y, z, sorte, tireur, ev); // (livre n° 9 et 11 : les voitures, les petits objets)
     if (Tanks.Perchoirs) Tanks.Perchoirs.exploser(x, y, z, sorte, tireur, ev, monde); // (livre n° 12 : les miradors, les châteaux d'eau…)
