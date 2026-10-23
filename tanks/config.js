@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 45,
+  version: 46,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -963,23 +963,28 @@ Tanks.CONFIG = {
   //   arme : pareil pour une arme ; points : les XP gagnés pour chaque action (« arme » : les XP de ton arme en main) ;
   //   mvp : le meilleur de ton camp (le plus d'ennemis abattus, au moins « minimum ») gagne un bonus à la fin ;
   //   veteran : une ancienne sauvegarde (avant la demande 97) reçoit des XP pour ses victoires passées (au plus « max »).
+  // ✍️ (demande 102) « Tout se débloque trop rapidement. Je veux que ça se débloque plus lentement. » Les points sont
+  // environ 3 fois plus petits et les niveaux plus longs : il faut environ 3 à 4 fois plus de batailles pour le joueur,
+  // et environ 5 fois plus d'ennemis abattus avec une arme pour ses pièces. (avant : joueur 800 + 150, arme 300 + 100,
+  // un ennemi 100 XP.) « ancien » : les anciennes courbes, pour convertir une sauvegarde sans faire baisser ton niveau.
   progression: {
-    joueur: { base: 800, pas: 150, max: 30 },
-    arme: { base: 300, pas: 100, max: 10 },
+    joueur: { base: 1000, pas: 200, max: 30 },
+    arme: { base: 500, pas: 150, max: 10 },
+    ancien: { joueur: { base: 800, pas: 150 }, arme: { base: 300, pas: 100 } },
     points: {
-      ennemi: { xp: 100, arme: 100, nom: "Ennemis abattus", icone: "💀" },
-      tete: { xp: 50, arme: 50, nom: "Tirs à la tête", icone: "🎯" },
-      tank: { xp: 300, arme: 200, nom: "Tanks détruits", icone: "💥" },
-      vehicule: { xp: 150, arme: 100, nom: "Engins détruits", icone: "🚙" },
-      soin: { xp: 40, nom: "Soins", icone: "🩹" },
-      releve: { xp: 120, nom: "Soldats relevés", icone: "⚡" },
-      reparation: { xp: 15, nom: "Réparations", icone: "🔧" },
-      marque: { xp: 20, nom: "Ennemis marqués", icone: "🔭" },
-      objectif: { xp: 250, nom: "Objectifs", icone: "🚩" },
-      victoire: { xp: 500, nom: "Victoire", icone: "🏆" },
-      participation: { xp: 100, nom: "Participation", icone: "🎖️" },
-      etoile: { xp: 150, nom: "Étoiles de campagne", icone: "⭐" },
-      mvp: { xp: 400, nom: "Meilleur joueur (MVP)", icone: "🥇" },
+      ennemi: { xp: 30, arme: 30, nom: "Ennemis abattus", icone: "💀" },
+      tete: { xp: 15, arme: 15, nom: "Tirs à la tête", icone: "🎯" },
+      tank: { xp: 100, arme: 70, nom: "Tanks détruits", icone: "💥" },
+      vehicule: { xp: 50, arme: 35, nom: "Engins détruits", icone: "🚙" },
+      soin: { xp: 12, nom: "Soins", icone: "🩹" },
+      releve: { xp: 40, nom: "Soldats relevés", icone: "⚡" },
+      reparation: { xp: 5, nom: "Réparations", icone: "🔧" },
+      marque: { xp: 6, nom: "Ennemis marqués", icone: "🔭" },
+      objectif: { xp: 80, nom: "Objectifs", icone: "🚩" },
+      victoire: { xp: 300, nom: "Victoire", icone: "🏆" },
+      participation: { xp: 50, nom: "Participation", icone: "🎖️" },
+      etoile: { xp: 60, nom: "Étoiles de campagne", icone: "⭐" },
+      mvp: { xp: 150, nom: "Meilleur joueur (MVP)", icone: "🥇" },
     },
     mvp: { minimum: 3 },
     veteran: { victoire: 150, tank: 40, etoile: 100, max: 8000 },

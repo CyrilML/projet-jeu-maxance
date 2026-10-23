@@ -222,6 +222,7 @@
       <a href="#etape98">Étape 98</a>
       <a href="#etape99">Étape 99</a>
       <a href="#etape101">Étape 101</a>
+      <a href="#etape102">Étape 102</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5232,6 +5233,36 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ul>
     </section>
 
+    <section id="etape102">
+      <h2>🐢 Étape 102 : des déblocages plus lents <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les armes, les pièces, les gadgets et les explosifs se gagnent maintenant plus lentement : chaque déblocage a plus de valeur. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/102-deblocages-plus-lents.md</code>.</p>
+          <ul><li>✍️ « Tout se débloque trop rapidement. Je veux que ça se débloque plus lentement. »</li></ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 46 ».</li>
+            <li>☐ Tu gardes ton niveau et tout ce que tu avais débloqué.</li>
+            <li>☐ Un ennemi abattu donne +30 XP (avant +100).</li>
+            <li>☐ Il faut plusieurs batailles pour monter d'un niveau.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>⚖️ L'équilibrage</h3>
+      <p>Les créateurs de jeux appellent ça « l'équilibrage » : on règle des nombres pour que le jeu ne soit ni trop facile ni trop long. Ici, deux boutons : <strong>combien de points</strong> on gagne (plus petits), et <strong>combien de points</strong> il faut par niveau (plus grands). Tous ces nombres sont rangés au même endroit : <code>progression</code> dans <code>tanks/config.js</code>.</p>
+      <h3>💾 Pourquoi tu n'as rien perdu</h3>
+      <p>Si on avait juste changé les nombres, tes anciens points auraient donné un niveau plus bas, et des armes se seraient refermées ! Alors la sauvegarde (version 15) a recalculé tes points : même niveau, et la barre remplie à la même part (à moitié avant = à moitié maintenant).</p>
+      <h3>❓ Quiz</h3>
+      <ol>
+        <li>Combien d'XP pour un ennemi abattu maintenant ? <span class="petit">(30)</span></li>
+        <li>Pourquoi a-t-on changé la version de la sauvegarde ? <span class="petit">(pour convertir tes points sans te faire perdre ton niveau)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6574,6 +6605,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-101" data-cle="appris-101" placeholder="Ex. : …"></textarea>
         <label for="idees-101"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-101" data-cle="idees-101" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 102 · des déblocages plus lents <span class="petit">· 23 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/config.js</code> (<code>progression</code>) et <code>tanks/donnees/sauvegarde.js</code> (version 15).</p>
+        <p class="petit">✍️ Maxance a demandé : que tout se débloque plus lentement.</p>
+        <label for="appris-102"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-102" data-cle="appris-102" placeholder="Ex. : …"></textarea>
+        <label for="idees-102"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-102" data-cle="idees-102" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

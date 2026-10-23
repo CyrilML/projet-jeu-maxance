@@ -38,12 +38,15 @@
 //   14 (demande 101) : + battleCoins (les Battle Coins gagnés à chaque mission réussie de la campagne, selon la
 //     difficulté). Une ancienne version garde tout ; ✍️ (choix de Claude) ses chapitres déjà réussis rapportent leurs
 //     Battle Coins tout de suite, une fois par difficulté réussie (« niveaux »), comme s'ils venaient d'être gagnés.
+//   15 (demande 102 : ✍️ « tout se débloque trop rapidement ») : les niveaux demandent plus de points. Pour que tu ne
+//     PERDES RIEN, tes points (et ceux de chaque arme) sont recalculés : même niveau qu'avant, et la même part de la
+//     barre déjà remplie (à moitié avant = à moitié maintenant). C'est seulement la suite qui sera plus lente.
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 14; // (étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins)
+  const VERSION = 15; // (étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents)
   const radio = Tanks.Evenements;
 
   function vide() {
@@ -113,6 +116,21 @@ Tanks.Sauvegarde = (function () {
     return n;
   }
 
+  // (demande 102) Les points d'une ancienne courbe → les points de la nouvelle, au MÊME niveau et à la même part de barre.
+  function reechelonner(xp, ancienne, nouvelle, max) {
+    const marche = (c, n) => c.base + c.pas * (n - 1);
+    let n = 1, reste = Math.max(0, xp || 0), total = 0;
+    while (n < max && reste >= marche(ancienne, n)) (reste -= marche(ancienne, n)), n++;
+    for (let k = 1; k < n; k++) total += marche(nouvelle, k);
+    return Math.round(total + (n < max ? (reste / marche(ancienne, n)) * marche(nouvelle, n) : 0));
+  }
+  function convertir15(d) {
+    const P = Tanks.CONFIG.progression, pr = d.progression;
+    if (!pr) return;
+    pr.xp = reechelonner(pr.xp, P.ancien.joueur, P.joueur, P.joueur.max);
+    for (const id in pr.armes || {}) pr.armes[id] = reechelonner(pr.armes[id], P.ancien.arme, P.arme, P.arme.max);
+  }
+
   let donnees = vide();
   function lire() {
     try {
@@ -124,6 +142,7 @@ Tanks.Sauvegarde = (function () {
         donnees = Object.assign(neuve, ancienne, { version: VERSION, equipement: fusionner(neuve.equipement, ancienne.equipement), campagne: fusionner(neuve.campagne, ancienne.campagne), progression: fusionner(neuve.progression, ancienne.progression) }); // (étape 88 : la campagne aussi ; demande 97 : la progression)
         if ((ancienne.version || 1) < 13) convertir13(donnees, ancienne); // (demande 97)
         const coins = (ancienne.version || 1) < 14 ? convertir14(donnees) : 0; // (demande 101)
+        if ((ancienne.version || 1) < 15) convertir15(donnees); // (demande 102)
         if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins });
       }
     } catch (e) {
