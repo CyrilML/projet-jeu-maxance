@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 51,
+  version: 52,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -522,6 +522,34 @@ Tanks.CONFIG = {
     // et s'il n'arrive pas à sortir par la porte en « abandon » s, il l'oublie pendant « oubli » s (il sort par un trou).
     debloquer: { distance: 0.4, bloque: 1.5, decale: 1.0, abandon: 12, oubli: 25 },
   },
+  // ✍️ (livre de demandes n° 9 et 11) « Faire une map en ville très réaliste. » « Faire comme si la map avait été
+  // abandonnée rapidement : laisser les affiches, les publicités, les véhicules et parfois même des objets du quotidien
+  // (téléphone, table, sac à dos). » Seulement sur les cartes qui ont « ville » dans leur variante (la ville, la ville en
+  // ruines). Tout est inventé par logique/ville.js (toujours pareil, grâce à la graine) et dessiné par affichage/ville3d.js.
+  //   rue : la chaussée fait « chaussee » m de large (2 voies) ; le reste de la rue est le TROTTOIR (« bordure » m de haut).
+  //   tous les « lampadaire » m un lampadaire (de chaque côté, en quinconce), tous les « arbre » m un arbre dans son bac ;
+  //   « voiture » : en moyenne une voiture tous les N m de trottoir (garée, ou abandonnée de travers au milieu) ;
+  //   parts (de 0 à 1) : portes ouvertes, voitures brûlées, accidentées (encastrées de travers), abandonnées au milieu ;
+  //   immeubles : part des maisons de la ville qui deviennent des IMMEUBLES de 4 ou 5 étages (« etages ») ;
+  //   boutiques : part des façades sur rue qui ont une BOUTIQUE (store, enseigne) ; balcons, clims, affiches : pareil ;
+  //   vitresCassees : part des fenêtres déjà cassées au début (à moitié abîmées : les vitres sont tombées) ;
+  //   objets : combien d'objets du quotidien par îlot ; papiers : combien de papiers par îlot ;
+  //   voitureVie : points d'une voiture (un obus enlève ses points d'explosion, voir structures.explosions + « souffle » m
+  //     de rayon en plus) ; balle : points par balle ; feu : s que brûle une voiture détruite ;
+  //   ecraser : un tank ou un engin plus rapide que « ecraser » m/s écrase les petits objets (bancs, poubelles, tables,
+  //     barrières, objets) ; pousser : la part du choc qui pousse la VOITURE (le reste arrête le tank) ;
+  //   distances : les petits objets sont dessinés à moins de « objets » m (selon la qualité, voir qualite.niveaux).
+  ville: {
+    rue: { chaussee: 7, bordure: 0.15 },
+    lampadaire: 24, arbre: 23, voiture: 11, banc: 0.35, poubelle: 0.45, abribus: 0.12, kiosque: 0.1, panneau: 0.35,
+    parts: { portesOuvertes: 0.35, brulees: 0.12, accidentees: 0.1, milieu: 0.18 },
+    immeubles: 0.22, etages: [4, 5], boutiques: 0.55, balcons: 0.35, clims: 0.1, affiches: 0.5, vitresCassees: 0.18,
+    objets: 14, papiers: 40, terrasses: 0.5,
+    voitureVie: 70, balle: 0.5, souffle: 1.5, feu: 25, busVie: 160,
+    ecraser: 2.5, pousser: 0.7,
+    // (la ville en ruines : plus de voitures brûlées, moins de vitres, plus de débris)
+    ruines: { brulees: 0.45, accidentees: 0.2, vitresCassees: 0.6, papiers: 70 },
+  },
   // ✍️ (étape 75) LES GRENADES : à pied, touche 4. Espace lance une grenade en cloche (à « angle » au-dessus de l'horizon) ;
   // elle REBONDIT (elle garde « rebond » de sa vitesse, et « frottement » quand elle glisse) et explose après « meche » s.
   // Si un ennemi est presque devant toi (« coneAide ») à moins de « porteeAide » m, elle est lancée juste assez fort pour
@@ -676,6 +704,7 @@ Tanks.CONFIG = {
     // (étape 75) maisons (m : plus près, les belles maisons avec leurs fenêtres, leurs briques… ; plus loin, la version simple).
     // (livre de demandes n° 8) interieurs (m : les INTÉRIEURS des maisons — sol, escalier, meubles — ne sont fabriqués et
     // dessinés qu'à moins de cette distance de la caméra ; plus loin, on ne les voit pas par les fenêtres).
+    // (livre n° 9 et 11) objetsVille (m : les petits objets de la ville — sacs, téléphones, papiers, chaises — plus près).
     // (demande 96, « le jeu rame souvent ») de nouveaux réglages, mesurés un par un :
     //   reflets : le ciel qui se reflète sur TOUT (le « miroir du ciel ») ; il coûte cher pour chaque point de l'écran ;
     //     sans lui, la lumière du ciel est un peu plus forte (realisme.sansReflets) pour garder la même clarté ;
@@ -687,13 +716,13 @@ Tanks.CONFIG = {
     // Les réglages qui obligent la carte graphique à refaire ses PROGRAMMES (un à-coup) changent seulement entre les niveaux
     // 0 et 1 (ombres, lumières) et entre 1 et 2 (reflets) ; « douces » entre 2 et 3.
     niveaux: [
-      { nom: "très léger", pixels: 0.6, ombres: 0, douces: false, vue: 380, decor: 300, soldatDetail: 12, soldatSimple: 30, soldatSilhouette: 150, roues: 35, effets: 120, herbe: 0, arbresDetail: 50, maisons: 60, interieurs: 15,
+      { nom: "très léger", pixels: 0.6, ombres: 0, douces: false, vue: 380, decor: 300, soldatDetail: 12, soldatSimple: 30, soldatSilhouette: 150, roues: 35, effets: 120, herbe: 0, arbresDetail: 50, maisons: 60, interieurs: 15, objetsVille: 45,
         reflets: false, ombresChaque: 1, anisotropie: 2, solFin: false, animLoin: 3, filtre: false },
-      { nom: "léger", pixels: 0.75, ombres: 1024, douces: false, vue: 520, decor: 380, soldatDetail: 18, soldatSimple: 40, soldatSilhouette: 200, roues: 60, effets: 180, herbe: 18, arbresDetail: 70, maisons: 90, interieurs: 25,
+      { nom: "léger", pixels: 0.75, ombres: 1024, douces: false, vue: 520, decor: 380, soldatDetail: 18, soldatSimple: 40, soldatSilhouette: 200, roues: 60, effets: 180, herbe: 18, arbresDetail: 70, maisons: 90, interieurs: 25, objetsVille: 70,
         reflets: false, ombresChaque: 2, anisotropie: 4, solFin: false, animLoin: 2, filtre: true },
-      { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 800, decor: 540, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280, herbe: 38, arbresDetail: 130, maisons: 160, interieurs: 40,
+      { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 800, decor: 540, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280, herbe: 38, arbresDetail: 130, maisons: 160, interieurs: 40, objetsVille: 110,
         reflets: true, ombresChaque: 1, anisotropie: 8, solFin: true, animLoin: 2, filtre: true },
-      { nom: "beau", pixels: 1.25, selonEcran: true, ombres: 2048, douces: true, vue: 1300, decor: 850, soldatDetail: 50, soldatSimple: 110, soldatSilhouette: 300, roues: 160, effets: 400, herbe: 60, arbresDetail: 220, maisons: 240, interieurs: 60,
+      { nom: "beau", pixels: 1.25, selonEcran: true, ombres: 2048, douces: true, vue: 1300, decor: 850, soldatDetail: 50, soldatSimple: 110, soldatSilhouette: 300, roues: 160, effets: 400, herbe: 60, arbresDetail: 220, maisons: 240, interieurs: 60, objetsVille: 160,
         reflets: true, ombresChaque: 1, anisotropie: 8, solFin: true, animLoin: 1, filtre: true },
     ],
     // (demande 96) l'herbe qui repousse autour de toi est recalculée par petits morceaux : au plus « herbeBudget » ms par
@@ -1183,11 +1212,11 @@ Tanks.CONFIG = {
     //     « maisons » par pâté (îlot), jusqu'à « rayon » m du centre ; ruinesDepart : part des maisons de la ville déjà en
     //     ruines (0,8 = 80 %) ; crepis : les couleurs des murs (sinon les couleurs habituelles) ; toitPlat : toits presque plats ;
     //   sol : les couleurs du sol peint (remplacent celles de affichage/decor.js : [rouge, vert, bleu] de 0 à 255) ;
-    //   rues : la couleur des rues ; soleil : remplace des réglages de beaute.soleil ; brume : la couleur de la brume.
+    //   rues : la couleur des rues ; ville : « abandonnee » ou « ruines » = la ville réaliste (voir « ville » plus haut) ; soleil : remplace des réglages de beaute.soleil ; brume : la couleur de la brume.
     { id: "ville", nom: "La ville", icone: "🏙️", texte: "En pleine ville : des rues en damier et des dizaines de maisons entières où se cacher.", infanterie: false,
-      variante: { arbres: 0.25, village: false, quartier: { x: 0, z: 0, rayon: 190, ilot: 38, rue: 10, maisons: 3, ruinesDepart: 0 }, rues: "#5a5c60" } },
+      variante: { arbres: 0.25, village: false, quartier: { x: 0, z: 0, rayon: 190, ilot: 38, rue: 10, maisons: 3, ruinesDepart: 0 }, rues: "#5a5c60", ville: "abandonnee" } },
     { id: "ruines", nom: "La ville en ruines", icone: "🏚️", texte: "La même ville, mais après les combats : presque tout est écroulé, gravats et sol gris.", infanterie: false,
-      variante: { arbres: 0.15, village: false, quartier: { x: 0, z: 0, rayon: 190, ilot: 38, rue: 10, maisons: 3, ruinesDepart: 0.8 }, rues: "#4a4b4e", trous: 4,
+      variante: { arbres: 0.15, village: false, quartier: { x: 0, z: 0, rayon: 190, ilot: 38, rue: 10, maisons: 3, ruinesDepart: 0.8 }, rues: "#4a4b4e", trous: 4, ville: "ruines",
         sol: { herbe: [92, 94, 80], herbeSombre: [70, 72, 62], herbeSeche: [120, 116, 100], herbeJaune: [96, 98, 82], terre: [96, 90, 82], terreBattue: [110, 106, 100] },
         soleil: { couleur: 0xe8e2d8, force: 2.2, ciel: 0xb8bcc2, sol: 0x55524c }, brume: 0xa8a8aa } },
     { id: "desert", nom: "Le désert", icone: "🏜️", texte: "Des dunes de sable à perte de vue, presque pas d'arbres, un soleil brûlant.", infanterie: false,

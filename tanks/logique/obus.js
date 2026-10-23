@@ -264,7 +264,7 @@ Tanks.Obus = (function () {
       if (!fini && p.sorte !== "torpille" && p.sorte !== "flak") {
         const m = Tanks.Structures.premier(ax, ay, az, p.x, p.y, p.z);
         if (m) {
-          fini = ["impact", { x: m.x + m.nx * 0.2, y: m.y + m.ny * 0.2, z: m.z + m.nz * 0.2, sur: m.b.sorte, sorte: p.sorte, toit: m.toit, nx: m.nx, ny: m.ny, nz: m.nz, nom: m.b.nom, matiere: m.morceau ? m.morceau.matiere : T.souterrain ? "beton" : m.toit ? "tuiles" : "gravats" }];
+          fini = ["impact", { x: m.x + m.nx * 0.2, y: m.y + m.ny * 0.2, z: m.z + m.nz * 0.2, sur: m.b.sorte, sorte: p.sorte, toit: m.toit, nx: m.nx, ny: m.ny, nz: m.nz, nom: m.b.nom, matiere: m.morceau ? m.morceau.matiere : T.souterrain ? "beton" : m.toit ? "tuiles" : m.plancher === "objet" ? "metal" : "gravats" }];
           if (m.toit) toit = m.b;
         }
       }

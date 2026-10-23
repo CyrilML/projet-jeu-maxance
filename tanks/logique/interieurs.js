@@ -74,6 +74,8 @@ Tanks.Interieurs = (function () {
         boite(esc.u1, iu1, hr - E, hr, iv0, sv1, "plancher", true);
         boite(esc.u0, esc.u1, hr, hr + 0.95, sv1, sv1 + 0.06, "rampe", false); // (le garde-corps, le long du trou de l'escalier)
       } else boite(iu0, iu1, hr - E, hr, iv0, iv1, "plancher", true);
+      // (livre n° 9 : les immeubles de 4 ou 5 étages : les étages du dessus ont leur plancher, mais on n'y monte pas)
+      for (let r = 2; r < rangs; r++) boite(iu0, iu1, r * hr - E, r * hr, iv0, iv1, "plancher", true);
     }
     if (cloison) {
       const e = CL.epaisseur / 2, p = CL.passage / 2;
@@ -280,7 +282,7 @@ Tanks.Interieurs = (function () {
   // ------------------------------------------------------------------ 3. Le concierge : où est ce soldat, à quelle hauteur ?
   // Appelé par logique/soldat.js à chaque pas, à la place de « la hauteur du terrain ». Il ouvre aussi les portes.
   function placer(s, dt, ev) {
-    const sol = T.hauteur(s.x, s.z);
+    const sol = T.hauteur(s.x, s.z) + (Tanks.Ville ? Tanks.Ville.trottoir(s.x, s.z) : 0); // (livre n° 9 : sur le trottoir, 15 cm plus haut)
     if (T.souterrain) return (s.dedans = null), (s.dedansMaison = null), sol;
     const avant = s.dedans;
     let dedans = null, maison = null, cible = sol;

@@ -319,6 +319,49 @@ Tanks.Interieurs3D = (function () {
         default: boite(u0, u1, y, y + h, v0, v1, 1, TISSU);
       }
     }
+    // ✍️ (livre de demandes n° 11) LES OBJETS LAISSÉS DANS LA FUITE : sur la table (assiettes, tasse, téléphone), par terre
+    // (sac à dos, valise ouverte, nounours, journal, chaussures, vêtements), et une valise à moitié faite sur le lit
+    const libreSol = (u, v, etage) => !P.boites.some((q) => q.sorte !== "plancher" && q.sorte !== "rampe" && (etage === 1 ? q.y0 >= P.haut - 0.1 : q.y0 < P.p0 + 0.5) && u > q.u0 - 0.25 && u < q.u1 + 0.25 && v > q.v0 - 0.25 && v < q.v1 + 0.25) && !(P.esc && u > P.esc.u0 - 0.4 && u < P.esc.u1 + 0.4 && v < P.esc.v1 + 0.4);
+    const objet = (u, v, y, sorte, col) => {
+      const a = h2() * 6.28, c = Math.cos(a), sn = Math.sin(a), b2 = (x0, x1, y0, y1, z0, z1, cc, lot) => {
+        // une petite boîte tournée de « a » autour de son centre (u, v)
+        const L = lots[lot || 1], cc2 = fois(cc, S), o = L.pos.length / 3, coins = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([x, z]) => [u + x * c - z * sn, v + x * sn + z * c]);
+        const pt = (k, yy) => [coins[k][0], yy, coins[k][1]];
+        quad(L, pt(0, y + y1), pt(1, y + y1), pt(2, y + y1), pt(3, y + y1), [0, 1, 0], [0, 0, 0, 0, 0, 0, 0, 0], cc2);
+        for (let k = 0; k < 4; k++) { const k2 = (k + 1) % 4, nx = (coins[k2][1] - coins[k][1]), nz = -(coins[k2][0] - coins[k][0]), l = Math.hypot(nx, nz) || 1; quad(L, pt(k, y + y0), pt(k2, y + y0), pt(k2, y + y1), pt(k, y + y1), [-nx / l, 0, -nz / l], [0, 0, 0, 0, 0, 0, 0, 0], fois(cc2, 0.85)); }
+      };
+      if (sorte === "sac") (b2(-0.15, 0.15, 0, 0.4, -0.12, 0.12, col), b2(0.15, 0.21, 0.05, 0.25, -0.09, 0.09, fois(col, 0.85)));
+      else if (sorte === "valise") (b2(-0.35, 0.35, 0, 0.12, -0.23, 0.23, col), b2(-0.35, 0.35, 0, 0.12, 0.25, 0.71, col), b2(-0.3, 0.25, 0.12, 0.17, -0.2, 0.15, lin("#e0ddd2")));
+      else if (sorte === "ours") (b2(-0.12, 0.12, 0, 0.26, -0.12, 0.12, lin("#8a5a2a")), b2(-0.09, 0.09, 0.26, 0.42, -0.09, 0.09, lin("#8a5a2a")));
+      else if (sorte === "journal") (b2(-0.2, 0.2, 0, 0.012, -0.15, 0.15, lin("#dcdad0")), b2(-0.5, -0.15, 0, 0.008, 0.1, 0.35, lin("#d0cec4")));
+      else if (sorte === "chaussures") (b2(-0.14, 0.14, 0, 0.1, -0.13, -0.03, col), b2(-0.1, 0.18, 0, 0.1, 0.05, 0.15, col));
+      else if (sorte === "vetement") (b2(-0.3, 0.3, 0, 0.03, -0.25, 0.25, col), b2(-0.25, 0.05, 0, 0.025, 0.25, 0.6, fois(col, 0.9)));
+      else if (sorte === "assiette") b2(-0.12, 0.12, 0, 0.02, -0.12, 0.12, lin("#f0efe8"));
+      else if (sorte === "tasse") b2(-0.04, 0.04, 0, 0.09, -0.04, 0.04, lin("#e8e4dc"));
+      else if (sorte === "telephone") (b2(-0.08, 0.08, 0, 0.012, -0.04, 0.04, lin("#111111")), b2(-0.07, 0.07, 0.012, 0.014, -0.035, 0.035, lin("#3a6a9a"), 2));
+    };
+    const COUL_OBJ = [lin("#2b3a55"), lin("#7a2e2e"), lin("#3e5a3e"), lin("#8a6a3a"), lin("#5a3a6a"), lin("#c0a030")];
+    const table = P.meubles.find((m) => m.sorte === "table");
+    if (table) {
+      const tu = (table.u0 + table.u1) / 2, tv = (table.v0 + table.v1) / 2, y = table.y + table.h;
+      objet(tu - 0.3, tv - 0.15, y, "assiette"); objet(tu + 0.3, tv + 0.1, y, "assiette"); objet(tu + 0.05, tv - 0.2, y, "tasse");
+      if (h2() < 0.6) objet(tu - 0.05, tv + 0.2, y, "telephone");
+    }
+    const poser = (etage, sortes) => {
+      const y = etage === 1 ? P.haut : p0;
+      for (const sorte of sortes) for (let essai = 0; essai < 12; essai++) {
+        const u = iu0 + 0.4 + h2() * (iu1 - iu0 - 0.8), v = iv0 + 0.4 + h2() * (iv1 - iv0 - 0.8);
+        if (!libreSol(u, v, etage)) continue;
+        objet(u, v, y, sorte, choix(COUL_OBJ));
+        break;
+      }
+    };
+    poser(0, ["sac", "journal", "chaussures"].concat(h2() < 0.5 ? ["valise"] : [], h2() < 0.4 ? ["ours"] : [], h2() < 0.5 ? ["vetement"] : []));
+    if (P.esc) {
+      poser(1, ["vetement", "chaussures"].concat(h2() < 0.5 ? ["sac"] : []));
+      const lit = P.meubles.find((m) => m.sorte === "lit");
+      if (lit && h2() < 0.7) objet((lit.u0 + lit.u1) / 2, (lit.v0 + lit.v1) / 2, lit.y + lit.h + 0.04, "valise", choix(COUL_OBJ));
+    }
     // --- les 3 lots → UN objet, UN dessin (le grain et la lueur sont rangés dans chaque sommet)
     const geo = new THREE.BufferGeometry(), pos = [], nor = [], uv = [], col = [], idx = [], grain = [], lueur = [];
     let triangles = 0;

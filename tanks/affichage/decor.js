@@ -242,7 +242,7 @@ Tanks.Decor = (function () {
     if (Q) {
       for (const l of T.rues) tracer(l, (Q.rue + 3) * k, "rgba(150,148,142,0.95)");
       for (const l of T.rues) tracer(l, Q.rue * k, VAR.rues || "#5a5c60");
-      if (!VAR.toitPlat) for (const l of T.rues) tracer(l, 0.25 * k, "rgba(225,225,215,0.6)");
+      if (!VAR.toitPlat && !VAR.ville) for (const l of T.rues) tracer(l, 0.25 * k, "rgba(225,225,215,0.6)"); // (livre n° 9 : dans la ville réaliste, les lignes sont de vraies bandes de peinture)
       // (des trous d'obus en plus dans la ville en ruines)
       for (let i = 0; i < Q.rayon * (VAR.trous || 0); i++) {
         const a = hasard() * Math.PI * 2, d = Math.sqrt(hasard()) * Q.rayon, x = X(Q.x + Math.cos(a) * d), y = X(Q.z + Math.sin(a) * d), r = (1.5 + hasard() * 3) * k;
@@ -961,6 +961,7 @@ Tanks.Decor = (function () {
     lac(g);
     Tanks.Maisons3D.construire(g, ajouterMorceau, numeroMorceau); // (étape 75 : les maisons qu'on peut détruire)
     Tanks.Interieurs3D.construire(g); // (livre de demandes n° 8 : les intérieurs des maisons, et leurs portes qui s'ouvrent)
+    Tanks.Ville3D.construire(g, ajouterMorceau); // (livre de demandes n° 9 et 11 : la ville réaliste et abandonnée)
     arbres(g);
     touffes(g);
     Tanks.MarquesSol.construire(g); // (demande 92 : les traces de chenilles et les cratères, posés sur le sol)

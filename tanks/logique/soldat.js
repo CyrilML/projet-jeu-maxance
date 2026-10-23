@@ -115,7 +115,7 @@ Tanks.Soldat = (function () {
     const vers = meilleur ? { x: meilleur.s.x, y: meilleur.s.y + hauteurVisee(meilleur.s), z: meilleur.s.z } : fin;
     const m = Tanks.Structures.premier(x, y, z, vers.x, vers.y, vers.z);
     if (m) {
-      ev.push(["balle", { tireur, de: { x, y, z }, a: { x: m.x, y: m.y, z: m.z }, mur: true, matiere: m.morceau ? m.morceau.matiere : T.souterrain ? "beton" : m.toit ? "tuiles" : "gravats", nx: m.nx, ny: m.ny, nz: m.nz }]);
+      ev.push(["balle", { tireur, de: { x, y, z }, a: { x: m.x, y: m.y, z: m.z }, mur: true, matiere: m.morceau ? m.morceau.matiere : T.souterrain ? "beton" : m.toit ? "tuiles" : m.plancher === "objet" ? "metal" : "gravats", nx: m.nx, ny: m.ny, nz: m.nz }]);
       Tanks.Structures.balle(m, R.degats || 1, tireur, ev, monde);
       return;
     }

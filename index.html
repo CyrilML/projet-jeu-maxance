@@ -228,6 +228,7 @@
       <a href="#etape105">Étape 105</a>
       <a href="#etape106">Étape 106</a>
       <a href="#etape107">Étape 107</a>
+      <a href="#etape108">Étape 108</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5460,6 +5461,47 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape108">
+      <h2>🏙️ Étape 108 : une ville réaliste, abandonnée en vitesse <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">La ville (et la ville en ruines) ont des trottoirs, des feux, des arrêts de bus, des voitures abandonnées portes ouvertes, des affiches et des pubs inventées, et des objets oubliés partout. Demandes n° 9 et 11 de ton livre. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/108-ville-abandonnee.md</code>.</p>
+          <ul>
+            <li>✍️ « Faire une map en ville très réaliste. »</li>
+            <li>✍️ « Faire comme si la map avait été abandonnée rapidement : laisser les affiches, les publicités, les véhicules et parfois même des objets du quotidien (téléphone, table, sac à dos). »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 52 ».</li>
+            <li>☐ Carte « La ville » : trottoirs, passages piétons, feux, lampadaires, arrêts de bus, kiosques, panneaux publicitaires.</li>
+            <li>☐ 433 voitures abandonnées (portes ouvertes, accidentées, brûlées), des bus en travers, des scooters couchés.</li>
+            <li>☐ Affiches : « ÉVACUATION IMMÉDIATE », un chat perdu, des pubs de marques inventées (KRAKO, Pizza Volta…).</li>
+            <li>☐ Par terre : téléphones, sacs à dos, valises, nounours, journaux, caddies ; dans les maisons, des assiettes et des valises à moitié faites.</li>
+            <li>☐ Ton tank pousse les voitures et écrase les petits objets ; un obus fait exploser une voiture.</li>
+            <li>☐ Les voitures et les bus servent d'abri contre les balles.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🎲 Une ville tirée au sort… toujours la même</h3>
+      <p>Placer 433 voitures et des milliers d'objets à la main serait très long. Le jeu les place avec le hasard, mais un hasard qui part d'une « graine » (un nombre fixe) : avec la même graine, il refait exactement la même ville à chaque partie. C'est comme ça que Minecraft fabrique ses mondes.</p>
+      <h3>📦 Ranger par quartiers</h3>
+      <p>Pour ne pas ramer, les objets fixes d'un quartier de 140 m sont collés en UN seul objet à dessiner, et les petits objets ne sont dessinés que près de toi. Toutes les affiches sont peintes une seule fois, sur une seule grande image.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot, section « La ville abandonnée » : combien de voitures poussées, d'objets écrasés ?</li>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>ville</code> : change le nombre de voitures.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Pourquoi la ville est-elle la même à chaque partie ? <span class="petit">(grâce à la graine du hasard)</span></li>
+            <li>Que fait ton tank quand il roule sur un banc ? <span class="petit">(il l'écrase)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6856,6 +6898,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-107" data-cle="appris-107" placeholder="Ex. : …"></textarea>
         <label for="idees-107"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-107" data-cle="idees-107" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 108 · une ville réaliste, abandonnée en vitesse <span class="petit">· 23 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/logique/ville.js</code>, <code>tanks/affichage/ville3d.js</code>, <code>terrain.js</code>, <code>structures.js</code>, <code>interieurs.js</code>, <code>config.js</code> (<code>ville</code>).</p>
+        <p class="petit">✍️ Maxance a demandé : une ville très réaliste, abandonnée en vitesse.</p>
+        <label for="appris-108"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-108" data-cle="appris-108" placeholder="Ex. : …"></textarea>
+        <label for="idees-108"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-108" data-cle="idees-108" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

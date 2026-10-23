@@ -154,7 +154,10 @@ Tanks.Terrain = (function () {
         const ex = tourne ? demiP : demiL, ez = tourne ? demiL : demiP; // (la place qu'elle prend, le long des rues)
         const x = cx + sx * (dedans - ex - 1), z = cz + sz * (dedans - ez - 1);
         if (!loinDe(x, z, 1)) continue;
-        boites.push({ x, z, demiL, demiP, angle: tourne ? Math.PI / 2 : 0, h: 4 + hasard() * 5, sorte: "maison", type: "maison", hameau: false, quartier: true, ruinesDepart: Q.ruinesDepart || 0, lieu: "la ville", graine: Math.floor(hasard() * 1e6) });
+        // ✍️ (livre n° 9) la ville réaliste : certaines maisons sont des IMMEUBLES de 4 ou 5 étages
+        let h = 4 + hasard() * 5, immeuble = false;
+        if (VAR.ville && hasard() < C.ville.immeubles) (immeuble = true), (h = C.ville.etages[hasard() < 0.5 ? 0 : 1] * C.structures.etage + 0.2);
+        boites.push({ x, z, demiL, demiP, angle: tourne ? Math.PI / 2 : 0, h, immeuble, sorte: "maison", type: "maison", hameau: false, quartier: true, ruinesDepart: Q.ruinesDepart || 0, lieu: "la ville", graine: Math.floor(hasard() * 1e6) });
       }
     }
   }
@@ -252,6 +255,7 @@ Tanks.Terrain = (function () {
       if (m) (touche = b), (o.morceauTouche = m);
     }
     if (BASE.repousser(o, r)) touche = touche || HANGAR_BOITE; // (demande 99 : les murs des hangars)
+    if (Tanks.Ville && Tanks.Ville.actif) { const v = Tanks.Ville.repousser(o, r); if (v) touche = touche || v.boite; } // (livre n° 9 et 11 : voitures, bus, kiosques…)
     // (étape 62) l'eau : on ramène le point sur la rive (en agrandissant son écart au centre du lac)…
     // (étape 63) …ou sur l'île d'où il vient, s'il est tout près d'une île (sinon un tank qui roule au bord d'une île
     // se retrouvait d'un coup sur la rive du lac : un bug !). Un soldat, lui, n'est pas repoussé : il nage.

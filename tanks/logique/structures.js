@@ -21,6 +21,9 @@
 // l'étage) ; la porte OUVERTE laisse passer les soldats (jamais les tanks) et les balles ; le plancher de l'étage et les
 // cloisons (logique/interieurs.js) arrêtent les balles, les regards et les grenades ; une maison qui s'effondre pousse
 // dehors les soldats qui étaient dedans.
+// Livre de demandes n° 9 et 11 : ✍️ la ville réaliste et abandonnée. Les gros objets de la rue (voitures, bus, kiosques…,
+// logique/ville.js) sont des boîtes, testées comme les murs ; une explosion les abîme aussi ; des fenêtres sont déjà
+// cassées au début ; les IMMEUBLES ont jusqu'à 5 rangées.
 // Ce fichier ne dessine rien : il renvoie des événements (« mur-abime », « mur-troue », « maison-effondree »).
 
 window.Tanks = window.Tanks || {};
@@ -54,7 +57,7 @@ Tanks.Structures = (function () {
     const ep = toit ? (b.type === "tour" ? 0.7 : S.epaisseur) : b.demiP * 2;
     b.ep = ep;
     const matiereDe = (rang) => (b.type === "haie" ? "haie" : b.type === "muret" || b.type === "tour" ? "pierre" : b.type === "grange" ? (rang === 0 ? "pierre" : "bois") : "brique");
-    const rangs = toit ? Math.max(1, Math.min(3, Math.round(b.h / S.etage))) : 1, hr = b.h / rangs;
+    const rangs = toit ? Math.max(1, Math.min(b.immeuble ? 5 : 3, Math.round(b.h / S.etage))) : 1, hr = b.h / rangs; // (livre n° 9 : les immeubles, jusqu'à 5 étages)
     // les murs : [axe le long (« u » ou « v »), position en travers, de, à, sens de la normale]
     const murs = toit
       ? [["u", b.demiP - ep / 2, -b.demiL, b.demiL, 1], ["u", -b.demiP + ep / 2, -b.demiL, b.demiL, -1], ["v", b.demiL - ep / 2, -b.demiP + ep, b.demiP - ep, 1], ["v", -b.demiL + ep / 2, -b.demiP + ep, b.demiP - ep, -1]]
@@ -103,6 +106,12 @@ Tanks.Structures = (function () {
     });
     // le toit : à deux pentes, le faîte (le sommet) dans la longueur de la maison
     b.toit = toit ? { hauteur: b.quartier && Tanks.Terrain.variante.toitPlat ? 0.7 : Math.min(b.demiP * (b.type === "tour" ? 1.25 : 0.82), 4.2), /* (étape 81 : toit presque plat dans le désert) */ intact: true, vie: S.toitVie } : null;
+    // ✍️ (livre n° 9 et 11) la ville abandonnée : des fenêtres déjà cassées (le morceau est à moitié abîmé : la vitre est tombée)
+    const VV = Tanks.Terrain.variante || {};
+    if (b.quartier && VV.ville) {
+      const part = VV.ville === "ruines" ? Tanks.CONFIG.ville.ruines.vitresCassees : Tanks.CONFIG.ville.vitresCassees;
+      for (const m of b.morceaux) if (m.fenetre && h2() < part) m.vie = m.vieDepart = Math.floor(m.vieMax * 0.45);
+    }
     b.etat = toit ? "intacte" : "debout";
     b.gravatsDedans = 0;
     b.changements = 0;
@@ -138,7 +147,7 @@ Tanks.Structures = (function () {
   // Une nouvelle bataille : tout est reconstruit comme au départ.
   function reinitialiser() {
     for (const b of liste) {
-      b.morceaux.forEach((m, i) => ((m.tombe = b.depart.tombe[i]), (m.vie = m.tombe ? 0 : m.vieMax)));
+      b.morceaux.forEach((m, i) => ((m.tombe = b.depart.tombe[i]), (m.vie = m.tombe ? 0 : m.vieDepart || m.vieMax)));
       for (const col of b.colonnes) col.gravats = 0;
       b.tombes = 0;
       for (const m of b.morceaux) if (m.tombe) {
@@ -309,7 +318,7 @@ Tanks.Structures = (function () {
     if (b.toit && b.toit.intact && tranche(-b.demiL - 0.3, b.demiL + 0.3, b.h, b.h + b.toit.hauteur * 0.6, -b.demiP - 0.3, b.demiP + 0.3)) candidat(b, null, true, false);
   }
   // Les maisons dont la boîte entoure peut toucher le segment : celles du rectangle autour de lui.
-  const proches = [];
+  const proches = [], prochesVille = [];
   function chercher(x1, y1, z1, x2, y2, z2, premier) {
     bilan.testsLigne++;
     // (étape 80) dans le souterrain, pas de maison : c'est l'architecte de la station qui répond (murs, rames, piliers…)
@@ -336,6 +345,19 @@ Tanks.Structures = (function () {
       testerMaison(b);
       if (premier && trouve) return true;
       if (meilleurT < avant) coup.cs = [c, s]; // (pour remettre la normale dans le repère du monde)
+    }
+    // ✍️ (livre n° 9 et 11) les gros objets de la ville (voitures, bus, kiosques, abribus, bacs) : des boîtes, eux aussi
+    const VI = Tanks.Ville;
+    if (VI && VI.actif && maxX > VI.boite[0] && minX < VI.boite[1] && maxZ > VI.boite[2] && minZ < VI.boite[3]) for (const o of VI.solidesAutour((x1 + x2) / 2, (z1 + z2) / 2, Math.hypot(x2 - x1, z2 - z1) / 2, prochesVille)) {
+      const rr = Math.max(o.demiL, o.demiP) + 0.5;
+      if (o.ecrase || o.x + rr < minX || o.x - rr > maxX || o.z + rr < minZ || o.z - rr > maxZ) continue;
+      const c = Math.cos(o.angle), s = Math.sin(o.angle), dx = x1 - o.x, dz = z1 - o.z, ex = x2 - x1, ez = z2 - z1;
+      pu = dx * c + dz * s; pv = -dx * s + dz * c; py = y1 - o.y;
+      du = ex * c + ez * s; dv = -ex * s + ez * c; dy = y2 - y1;
+      const avant = meilleurT;
+      if (tranche(-o.demiL, o.demiL, 0.15, o.brule ? o.h * 0.8 : o.h, -o.demiP, o.demiP)) candidat(o.boite, null, false, false, "objet");
+      if (premier && trouve) return true;
+      if (meilleurT < avant) coup.cs = [c, s];
     }
     if (!trouve) return false;
     const t = meilleurT, [c, s] = coup.cs;
@@ -396,7 +418,8 @@ Tanks.Structures = (function () {
   function balle(c, degats, tireur, ev, monde) {
     bilan.balles++;
     const m = c.morceau, b = c.b;
-    const d = { b, k: m ? m.k : -1, nom: b.nom, matiere: m ? m.matiere : c.toit ? "tuiles" : c.plancher === "plancher" ? "bois" : "gravats", x: c.x, y: c.y, z: c.z, nx: c.nx, ny: c.ny, nz: c.nz, tireur, vie: m ? m.vie : 0, vieMax: m ? m.vieMax : 0 };
+    const d = { b, k: m ? m.k : -1, nom: b.nom, matiere: m ? m.matiere : c.toit ? "tuiles" : c.plancher === "plancher" ? "bois" : c.plancher === "objet" ? "metal" : "gravats", x: c.x, y: c.y, z: c.z, nx: c.nx, ny: c.ny, nz: c.nz, tireur, vie: m ? m.vie : 0, vieMax: m ? m.vieMax : 0 };
+    if (!m && b.objet) Tanks.Ville.balle(b.objet, degats, tireur, ev); // (livre n° 9 et 11 : une voiture, un bus…)
     if (!m) return void ev.push(["mur-abime", d]);
     const avant = m.vie, tombes = [];
     abimer(m, degats * S.degatsBalle, tombes);
@@ -415,6 +438,7 @@ Tanks.Structures = (function () {
   const prochesExplosion = [];
   function exploser(x, y, z, sorte, tireur, ev, monde, surLeToit) {
     Tanks.Base.exploser(x, y, z, sorte, tireur, ev, monde); // (demande 99 : sur une piste, l'explosion creuse un cratère)
+    if (Tanks.Ville) Tanks.Ville.exploser(x, y, z, sorte, tireur, ev); // (livre n° 9 et 11 : les voitures, les petits objets)
     const E = S.explosions[sorte];
     if (!E || !E[0]) return;
     const [D, Ray] = E;
