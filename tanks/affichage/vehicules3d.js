@@ -339,7 +339,7 @@ Tanks.Vehicules3D = (function () {
     const g = new THREE.Group(), caisse = new THREE.Group();
     g.add(caisse);
     const rR = 0.55, zR = 1.0, essieux = [2.75, -1.05, -2.5], base = new THREE.Color(E.camouflage[0]), fonce = base.clone().multiplyScalar(0.55);
-    const toile = new THREE.Color(equipe === "bleus" ? 0x55603e : 0x8f8261);
+    const toile = new THREE.Color(/~/.test(equipe) ? E.camouflage[3] : /^bleus/.test(equipe) ? 0x55603e : 0x8f8261); // (livre n° 28 : la bâche prend la couleur du pack)
     // 1. Le châssis : les deux longerons, les garde-boue noirs, les marchepieds.
     for (const s of [-1, 1]) caisse.add(O.boite(6.9, 0.28, 0.12, m.teinte, -0.1, 0.9, s * 0.45, CT.noir));
     for (const x of [-1.05, 1.0, -2.5]) caisse.add(O.boite(0.12, 0.2, 0.9, m.teinte, x, 0.9, 0, CT.noir)); // les traverses
@@ -529,7 +529,7 @@ Tanks.Vehicules3D = (function () {
       b(1.7, 1.85, 2.4, 2.9, 2.03, 0, base);
       b(0.04, 0.6, 2.0, 3.76, 2.45, 0, 0x1e3446);
       b(5.45, 0.6, 2.45, -0.96, 1.7, 0, base.clone().multiplyScalar(0.85));
-      b(5.3, 1.2, 2.44, -0.96, 2.6, 0, equipe === "bleus" ? 0x55603e : 0x8f8261);
+      b(5.3, 1.2, 2.44, -0.96, 2.6, 0, /~/.test(equipe) ? new THREE.Color(E.camouflage[3]).getHex() : /^bleus/.test(equipe) ? 0x55603e : 0x8f8261);
       b(6.9, 0.3, 1.0, -0.1, 0.9, 0, CT.noir);
     }
     const [piece] = O.souder(g, false);

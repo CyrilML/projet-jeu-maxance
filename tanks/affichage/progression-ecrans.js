@@ -72,6 +72,11 @@ Tanks.EcranProgression = (function () {
     return Object.keys(b.armes).map((id) => barre(fiche(id).icone + " " + html(fiche(id).nom) + " (+" + b.armes[id] + ")", b.departArmes[id], Tanks.Progression.niveauArme(id))).join("");
   }
 
+  // (livre n° 22) les Battle Coins gagnés pendant cette bataille (le marchand les compte : logique/boutique.js)
+  function coins() {
+    const d = Tanks.Boutique && Tanks.Boutique.dernier;
+    return '<small class="pg-coins">🪙 +' + ((d && d.gagnes) || 0).toLocaleString("fr-FR") + " BC</small>";
+  }
   // ✍️ LE BILAN de fin de bataille (bataille libre et souterrain)
   function montrerBilan() {
     const b = Tanks.Progression.bataille;
@@ -81,7 +86,7 @@ Tanks.EcranProgression = (function () {
     bilanEl.className = "pg-bilan" + (b.gagne ? "" : " perdu");
     bilanEl.innerHTML =
       '<div class="pg-entete"><div class="pg-resultat">' + (b.gagne ? "🏆 Victoire" : "Défaite") + "<small>" + (b.mode === "souterrain" ? "🚇 le souterrain" : "🌄 la grande bataille") + " · bilan d'expérience</small>" + (b.mvp ? '<span class="pg-mvp">🥇 MVP : LE MEILLEUR DE TON CAMP</span>' : "") + "</div>" +
-      '<div class="pg-total"><small>XP gagnés</small><b>+' + b.total.toLocaleString("fr-FR") + "</b></div></div>" +
+      '<div class="pg-total"><small>XP gagnés</small><b>+' + b.total.toLocaleString("fr-FR") + "</b>" + coins() + "</div></div>" +
       '<div class="pg-colonnes"><div><div class="pg-titre">Tes points</div>' + lignes(b) + "</div>" +
       '<div><div class="pg-titre">Ta progression</div>' + barre("🎖️ Toi", b.depart, b.arrivee) + (Object.keys(b.armes).length ? '<div class="pg-titre">Tes armes</div>' + armes(b) : '<div class="pg-ligne" style="--k:1"><span>💡</span><span>Abats des ennemis avec une arme pour la faire monter de niveau !</span><em></em><b></b></div>') +
       debloques(b) + "</div></div>" +

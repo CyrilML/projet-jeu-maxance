@@ -1,6 +1,6 @@
 # Demande n° 100 : la boutique et les Battle Coins
 
-> Statut : ⏸️ en pause. ✍️ « Annule la boutique. Tu feras ça quand je te le demanderai. » (rien n'a été codé)
+> Statut : ✅ reprise et livrée dans la demande 106 (tanks version 50).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi

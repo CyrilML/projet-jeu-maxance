@@ -70,7 +70,8 @@ Tanks.Uniformes = (function () {
   const tissus = {};
   function tissu(equipe) {
     if (tissus[equipe]) return tissus[equipe];
-    const t0 = performance.now(), P = U()[equipe] || U().bleus, N = 512, B = 256, desert = equipe === "rouges";
+    // (livre n° 28) une tenue de la boutique (« bleus~ghillie ») a sa palette et son motif (« bois » ou « desert »)
+    const t0 = performance.now(), P = U()[equipe] || U().bleus, N = 512, B = 256, desert = equipe === "rouges" || P.motif === "desert";
     // 1. Les grandes formes, calculées sur une image plus petite (256 × 256) : le motif, les plis, l'usure.
     const deforme = fractal(desert ? 91 : 81, 3, 3, 2), n1 = fractal(desert ? 92 : 82, 4, 4, 3), n2 = fractal(desert ? 93 : 83, 4, 4, 3), n3 = fractal(desert ? 94 : 84, 5, 5, 3), n4 = fractal(85, 3, 3, 2);
     const plis = fractal(86, 3, 12, 3), plis2 = fractal(87, 2, 7, 2), usure = fractal(88, 2, 2, 3);

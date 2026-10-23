@@ -91,7 +91,7 @@ Tanks.Engins3D = (function () {
       arme: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.55 }),
       couleurs: {
         gilet: coul(UE.equipement), sac: new THREE.Color(UE.equipement).multiplyScalar(0.9).getHex(), rabat: new THREE.Color(UE.equipement).multiplyScalar(0.84).getHex(),
-        sangle: 0x35342a, bottes: equipe === "bleus" ? 0x3e3226 : 0x8a6e4c, semelle: 0x1d1a17, gants: 0x2b2b27, protege: 0x2e3029, lacets: 0x2a241c,
+        sangle: 0x35342a, bottes: /^bleus/.test(equipe) ? 0x3e3226 : 0x8a6e4c, semelle: 0x1d1a17, gants: 0x2b2b27, protege: 0x2e3029, lacets: 0x2a241c,
         arme: 0x232528, polymere: 0x2d2c28, verre: 0x0d1418, blanc: 0xe6e1d8, pupille: 0x1c140f, sourcils: 0x3a2a1c, noir: 0x1b1c1c, radio: 0x2c2f2b,
         metal: 0x6c6c66, levres: 0x8d5a4a, olive: 0x4a5532,
         marque: new THREE.Color(E.marque).getHex(), marqueToi: new THREE.Color(E.marque).multiplyScalar(1.35).getHex(),
@@ -1250,8 +1250,8 @@ Tanks.Engins3D = (function () {
   function bateau(equipe) {
     mats();
     const m = MT(), g = new THREE.Group(), caisse = new THREE.Group(), E = Tanks.CONFIG.equipes[equipe], V = vitreClaire();
-    const coqueCouleur = new THREE.MeshStandardMaterial({ color: equipe === "bleus" ? 0x5d6870 : 0x7a7466, roughness: 0.55, metalness: 0.35 });
-    const clair = equipe === "bleus" ? 0x6b7680 : 0x8a8476, pontCouleur = 0x3e4245;
+    const coqueCouleur = new THREE.MeshStandardMaterial({ color: /^bleus/.test(equipe) ? 0x5d6870 : 0x7a7466, roughness: 0.55, metalness: 0.35 });
+    const clair = /^bleus/.test(equipe) ? 0x6b7680 : 0x8a8476, pontCouleur = 0x3e4245;
     g.add(caisse);
     // la coque : le contour du pont (en haut, large) et celui du fond (en bas, plus petit et plus court devant)
     const haut = [[5.0, 0], [4.3, 0.62], [2.6, 1.42], [0.6, 1.7], [-5.0, 1.7], [-5.0, 0]];
@@ -1349,8 +1349,8 @@ Tanks.Engins3D = (function () {
   function sousmarin(equipe) {
     mats();
     const m = MT(), g = new THREE.Group(), caisse = new THREE.Group(), E = Tanks.CONFIG.equipes[equipe];
-    const coque = new THREE.MeshStandardMaterial({ color: equipe === "bleus" ? 0x2b3136 : 0x3a3530, roughness: 0.5, metalness: 0.45 });
-    const fonce = equipe === "bleus" ? 0x1d2226 : 0x2a2622;
+    const coque = new THREE.MeshStandardMaterial({ color: /^bleus/.test(equipe) ? 0x2b3136 : 0x3a3530, roughness: 0.5, metalness: 0.45 });
+    const fonce = /^bleus/.test(equipe) ? 0x1d2226 : 0x2a2622;
     g.add(caisse);
     caisse.add(O.fuseau([
       { x: -7.3, y: 1.3, w: 0.12, h: 0.12 }, { x: -6.4, y: 1.3, w: 0.55, h: 0.55 }, { x: -5.0, y: 1.3, w: 1.05, h: 1.05 },

@@ -49,6 +49,7 @@ Tanks.Progression = (function () {
   function pieceDebloquee(armeId, emp, pieceId) {
     const A = C.atelier[emp], p = A && A.pieces.find((x) => x.id === pieceId);
     if (!p) return false;
+    if (p.boutique) return toutDebloque || (!!Tanks.Boutique && Tanks.Boutique.possede("peinture:" + p.id)); // (livre n° 28 : les peintures rares s'achètent)
     if (toutDebloque || p === A.pieces[0] || (p.niveau || 0) <= niveauArme(armeId).niveau) return true;
     return ((carnet().cadeaux.pieces || {})[armeId] || []).includes(emp + ":" + pieceId);
   }
@@ -108,7 +109,9 @@ Tanks.Progression = (function () {
   function gagner(cle, fois, armeId) {
     const R = P.points[cle];
     if (!R || !(fois > 0)) return;
-    const c = carnet(), xp = Math.round(R.xp * fois), avant = niveauJoueur();
+    // (livre n° 28) l'avancement « Double XP » de la boutique : × 2 (jamais sur la promotion achetée elle-même)
+    const fois2 = cle === "boutique" || !Tanks.Boutique ? 1 : Tanks.Boutique.multiplicateurXP();
+    const c = carnet(), xp = Math.round(R.xp * fois * fois2), avant = niveauJoueur();
     c.xp = (c.xp || 0) + xp;
     let xpArme = 0, avantArme = null, F = armeId && fiche(armeId);
     if (F && R.arme) {
@@ -126,7 +129,7 @@ Tanks.Progression = (function () {
         bataille.armes[armeId] = (bataille.armes[armeId] || 0) + xpArme;
       }
     }
-    radio.emettre("xp", { cle, nom: R.nom, icone: R.icone, xp, fois, total: c.xp, arme: F ? F.nom : null, xpArme });
+    radio.emettre("xp", { cle, nom: R.nom, icone: R.icone, xp, fois, total: c.xp, arme: F ? F.nom : null, xpArme, double: fois2 > 1 });
     // un NIVEAU DE JOUEUR de plus ? (on peut en sauter plusieurs d'un coup : on annonce chacun)
     const apres = niveauJoueur();
     for (let n = avant.niveau + 1; n <= apres.niveau; n++) {
@@ -144,6 +147,14 @@ Tanks.Progression = (function () {
       }
     }
     Tanks.Sauvegarde.ecrire("xp", true);
+  }
+
+  // (livre n° 28) LA PROMOTION de la boutique : juste assez de points pour le niveau de joueur suivant (false : déjà au max).
+  function promotion() {
+    const n = niveauJoueur();
+    if (n.max) return false;
+    gagner("boutique", xpDuNiveau(n.niveau + 1, P.joueur) - Math.floor(carnet().xp || 0));
+    return true;
   }
 
   // ✍️ LES OREILLES DU SERGENT : chaque événement de la bataille, avec les vrais objets (logique/monde.js l'appelle).
@@ -205,7 +216,7 @@ Tanks.Progression = (function () {
   radio.ecouter("campagne-objectif", () => bataille && !bataille.fini && gagner("objectif", 1));
 
   return {
-    niveauJoueur, niveauArme, niveauDe, xpDuNiveau, armeDebloquee, pieceDebloquee, outilDebloque, outilsAuNiveau, armesAuNiveau, piecesAuNiveau, prochainePiece, comptes, gagner, noter, finir,
+    niveauJoueur, niveauArme, niveauDe, xpDuNiveau, promotion, armeDebloquee, pieceDebloquee, outilDebloque, outilsAuNiveau, armesAuNiveau, piecesAuNiveau, prochainePiece, comptes, gagner, noter, finir,
     brancher: (m) => (monde = m), get bataille() { return bataille; }, get toutDebloque() { return toutDebloque; },
   };
 })();

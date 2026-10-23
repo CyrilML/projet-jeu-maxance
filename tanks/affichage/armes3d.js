@@ -134,6 +134,29 @@ Tanks.Armes3D = (function () {
         const ci = Math.floor(x / 16), cj = Math.floor(y / 16), fx = (x % 16) / 16, fy = (y % 16) / 16, couche = (ci + cj) % 2;
         const t = Math.sin(Math.PI * (couche ? fy : fx)), k = 0.35 + 0.65 * t;
         col = [c[1][0] + (c[2][0] - c[1][0]) * k, c[1][1] + (c[2][1] - c[1][1]) * k, c[1][2] + (c[2][2] - c[1][2]) * k];
+      } else if (P.motif === "ecailles") {
+        // (livre n° 28) les ÉCAILLES du dragon : des rangées de demi-cercles décalées, sombres au bord, bordées d'or
+        const r = 14, ry = Math.floor(y / (r * 0.8)), dx = ry % 2 ? r : 0, cx = Math.floor((x + dx) / (r * 2)) * r * 2 + r - dx, cy = ry * r * 0.8;
+        const dist = Math.hypot(x - cx, (y - cy) * 1.1) / r, ton = champs[0](u, v);
+        col = dist > 0.92 ? c[2] : [c[0][0] * (1.25 - dist * 0.7) * (0.8 + ton * 0.4), c[0][1] * (1.2 - dist * 0.6), c[0][2] * (1.2 - dist * 0.6)];
+        if (dist > 0.82 && dist <= 0.92) col = c[1];
+      } else if (P.motif === "fissures") {
+        // (livre n° 28) la GLACE et la LAVE : un fond qui varie, et des FISSURES fines là où un bruit passe par son milieu
+        const f1 = Math.abs(champs[0](u, v) - 0.5), f2 = Math.abs(champs[1](u * 1.7, v * 1.7) - 0.5), fond = champs[2](u, v);
+        col = fond > 0.55 ? c[2] : c[0];
+        const fente = Math.min(f1, f2 * 1.3);
+        if (fente < 0.018) col = c[1];
+        else if (fente < 0.04) col = col.map((k, i) => k + (c[1][i] - k) * 0.35);
+      } else if (P.motif === "etoiles") {
+        // (livre n° 28) la GALAXIE : un ciel sombre, des nébuleuses violettes et bleues, et des étoiles semées au hasard
+        const n1 = champs[1](u, v), n2 = champs[2](u * 1.3, v * 1.3);
+        col = c[0].map((k, i) => k + (c[1][i] - k) * Math.max(0, n1 - 0.45) * 2.2 + (c[2][i] - k) * Math.max(0, n2 - 0.5) * 1.8);
+        if (hasard() < 0.006) col = c[3];
+      } else if (P.motif === "chrome") {
+        // (livre n° 28) le CHROME : des bandes de reflets (le ciel clair, l'horizon sombre), comme un miroir courbé
+        const k = 0.5 + 0.5 * Math.sin(v * 9 + champs[0](u, v) * 3);
+        col = c[1].map((z, i) => z + (c[0][i] - z) * k);
+        if (k > 0.93) col = c[2];
       } else if (P.motif === "or") {
         // l'OR gravé : un dégradé doré, des arabesques creusées et quelques paillettes
         const f = champs[1](u, v), k = 0.5 + 0.5 * Math.sin(f * 9);
@@ -2105,6 +2128,8 @@ Tanks.Armes3D = (function () {
     const camo = Tanks.Chars3D && Tanks.Chars3D.camouflage ? Tanks.Chars3D.camouflage(C.equipes.bleus.camouflage).clone() : null;
     if (camo) (camo.needsUpdate = true), camo.repeat.set(1.5, 3);
     const manche = new THREE.MeshStandardMaterial({ map: camo, color: camo ? 0xffffff : 0x55603e, roughness: 0.95 });
+    V.manche = manche;
+    V.mancheCamp = "bleus";
     V.mains = [gantGeo(1), gantGeo(-1)].map((g) => { const m = new THREE.Mesh(g, gant); m.matrixAutoUpdate = false; V.scene.add(m); return m; });
     V.avantBras = [0, 1].map(() => {
       const g = new THREE.Group();
@@ -2176,6 +2201,16 @@ Tanks.Armes3D = (function () {
     V.t += dt;
     // 1. quelle arme en main ? (les grenades et la plupart des gadgets : l'arme est baissée hors de l'écran)
     const tenue = Tanks.Armes.enMain(s); // (livre n° 6 : ou l'arme bonus)
+    // (livre n° 28) ta TENUE de la boutique : les manches (et les gants, assombris pour la nuit) prennent ses couleurs
+    const tenueBoutique = Tanks.Boutique && Tanks.Boutique.porte().tenue, camp = tenueBoutique ? "bleus~" + tenueBoutique : "bleus";
+    if (V.mancheCamp !== camp && Tanks.Chars3D && Tanks.Chars3D.camouflage) {
+      const t = Tanks.Chars3D.camouflage(C.equipes[camp].camouflage).clone();
+      (t.needsUpdate = true), t.repeat.set(1.5, 3);
+      V.manche.map = t;
+      V.manche.needsUpdate = true;
+      V.mancheCamp = camp;
+      bilan.manches = tenueBoutique ? "tenue « " + C.boutique.tenues.find((x) => x.id === tenueBoutique).nom + " »" : "uniforme des Bleus";
+    }
     const range = s.arme === "grenades" || (s.arme === "gadget" && s.gadget.id !== "lanceGrenades");
     const lg = s.gadget && s.gadget.id === "lanceGrenades";
     const voulu = fabriquer(tenue.id, tenue.pieces, "beau", { lanceGrenades: lg });

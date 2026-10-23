@@ -453,6 +453,7 @@ Tanks.Menu = (function () {
         '<div class="ar-piece-haut">' + peinture + "<b>" + html(x.nom) + "</b>" + (mis ? '<span class="ar-mise">✔ ÉQUIPÉE</span>' : "") + "</div>" +
         '<div class="ar-piece-texte">' + html(x.texte) + "</div>" +
         (ok ? '<div class="ar-effets">' + (mis ? '<span class="neutre">c\'est celle de ton arme</span>' : eff.length ? eff.slice(0, 5).map((d) => '<span class="' + (d.mieux ? "plus" : "moins") + '">' + (d.mieux ? "▲ " : "▼ ") + html(d.nom) + " " + html(d.apres) + "</span>").join("") : '<span class="neutre">= rien ne change dans les chiffres</span>') + "</div>"
+          : x.boutique ? '<div class="ar-cadenas">🛒 Boutique<small>peinture rare : ' + (C.boutique.peintures.find((k) => k.id === x.id) || {}).prix + " Battle Coins</small></div>" // (livre n° 28)
           : '<div class="ar-cadenas">🔒 Niveau d\'arme ' + x.niveau + "<small>ton " + html(fiche(AR.arme).nom) + " : niveau " + n.niveau + "</small></div>") + "</button>";
     }).join("");
     return '<div class="ar-tiroir"><div class="ar-tiroir-titre">' + A.icone + " " + html(A.nom.toUpperCase()) + "<small>" + liste.filter((x) => PR().pieceDebloquee(AR.arme, emp, x.id)).length + " / " + liste.length + " débloquées · ← → choisir · Entrée prendre · Échap fermer</small>" +

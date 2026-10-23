@@ -226,6 +226,7 @@
       <a href="#etape103">Étape 103</a>
       <a href="#etape104">Étape 104</a>
       <a href="#etape105">Étape 105</a>
+      <a href="#etape106">Étape 106</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5375,6 +5376,49 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape106">
+      <h2>🛒 Étape 106 : la boutique et les Battle Coins <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Une 3e porte sur l'accueil : la BOUTIQUE. Tout s'achète avec les Battle Coins gagnés en jouant. Demandes n° 7, 22 et 28 de ton livre (et la demande 100, qui était en pause). <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/106-boutique.md</code>.</p>
+          <ul>
+            <li>✍️ « Faire un menu avec des achats, par exemple un pack de skins de véhicules avec des avancements de jeu. »</li>
+            <li>✍️ « Développer les battle coins, la monnaie du jeu. »</li>
+            <li>✍️ « Faire une boutique. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 50 ».</li>
+            <li>☐ Accueil : 🛒 BOUTIQUE ; ↑ ↓ rayon, ← → article, Entrée acheter (puis Entrée pour confirmer), Échap retour.</li>
+            <li>☐ Rayons : Armes, Armurerie, Peintures d'armes (Dragon, Glace, Lave, Galaxie, Chrome, Camo Arctique), Personnages, Tanks, Véhicules (packs de skins), Avancements, Battle Coins.</li>
+            <li>☐ Une tenue, un skin de tank ou un pack achetés se voient en bataille (bouton Équiper).</li>
+            <li>☐ En bataille libre : +2 BC par ennemi, +25 par victoire, +50 par niveau.</li>
+            <li>☐ Les packs en euros : affichés, mais AUCUN paiement possible.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>💰 Une économie de jeu</h3>
+      <p>Une monnaie de jeu, c'est un robinet (ce qui fait GAGNER des Battle Coins : missions, ennemis, victoires) et un évier (ce qui les fait DÉPENSER : la boutique). Si le robinet coule trop fort, tout devient gratuit ; s'il coule trop peu, c'est décourageant. Tous ces nombres sont dans <code>config.js</code>, section <code>boutique</code> : tu peux les régler.</p>
+      <h3>⚠️ Pourquoi pas de vrais euros ?</h3>
+      <p>Encaisser de l'argent pour de vrai demande un adulte responsable, un compte de paiement, un serveur et le respect de lois (surtout pour les joueurs mineurs). C'est une décision pour Cyril. Les packs sont affichés comme tu les as voulus, mais le bouton ne fait rien payer.</p>
+      <h3>🎨 Comment un skin arrive sur le tank</h3>
+      <p>Chaque skin est rangé dans <code>config.js</code> comme une nouvelle « équipe » de couleurs (par exemple <code>bleus~ghillie</code>). Le peintre du jeu sait déjà peindre une équipe : il suffit de lui donner la bonne clé !</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot : ton solde, les BC gagnés cette bataille, tes derniers achats.</li>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>boutique</code> : change le prix d'une peinture.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Combien de BC pour un ennemi abattu en bataille libre ? <span class="petit">(2)</span></li>
+            <li>Peut-on acheter des Battle Coins avec de vrais euros ? <span class="petit">(non : il faut l'accord et l'aide d'un adulte)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6753,6 +6797,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-105" data-cle="appris-105" placeholder="Ex. : …"></textarea>
         <label for="idees-105"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-105" data-cle="idees-105" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 106 · la boutique et les Battle Coins <span class="petit">· 23 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/logique/boutique.js</code>, <code>tanks/affichage/boutique.js</code>, <code>config.js</code> (<code>boutique</code>), <code>donnees/sauvegarde.js</code> (version 17), les peintres 3D.</p>
+        <p class="petit">✍️ Maxance a demandé : une boutique, des Battle Coins, des packs de skins de véhicules et des avancements.</p>
+        <label for="appris-106"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-106" data-cle="appris-106" placeholder="Ex. : …"></textarea>
+        <label for="idees-106"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-106" data-cle="idees-106" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

@@ -36,6 +36,8 @@ Tanks.Helicos3D = (function () {
   const K = () => Tanks.CONFIG.helicosTransport;
   // les couleurs : vert olive pour les Bleus, sable pour les Rouges (les vrais hélicos ne sont pas camouflés à taches)
   const PEINTURE = { bleus: 0x4c5438, rouges: 0x93805a };
+  // (livre n° 28) un pack de véhicules de la boutique (« bleus~packDesert ») : la 1re couleur de son camouflage
+  const peintureDe = (e) => (PEINTURE[e] !== undefined ? PEINTURE[e] : new THREE.Color(Tanks.CONFIG.equipes[e] ? Tanks.CONFIG.equipes[e].camouflage[0] : "#4c5438").getHex());
   const COUL = { pale: 0x2a2d30, bout: 0xd8b020, sombre: 0x141516, interieur: 0x2b2d27, pneu: 0x161616, jante: 0x5a5e58, banc: 0x7a2e22, metal: 0x50545a, plancher: 0x30322e };
   let matCorde = null, matFlamme = null, matPeinture = null, matVerre = null, matFlou = null;
   const bruit = Tanks.Bruit.creer(74);
@@ -301,7 +303,7 @@ Tanks.Helicos3D = (function () {
   const PENTE_RAMPE = 0.68, CHARNIERE = [-5.6, 1.15], LONGUEUR_RAMPE = 2.4;
   const ligneRampe = (x) => CHARNIERE[1] + (CHARNIERE[0] - x) * Math.tan(PENTE_RAMPE);
   function chinook(equipe) {
-    const m = MT(), E = Tanks.CONFIG.equipes[equipe], P = PEINTURE[equipe], galet = OU().galet;
+    const m = MT(), E = Tanks.CONFIG.equipes[equipe], P = peintureDe(equipe), galet = OU().galet;
     const g = new THREE.Group(), caisse = new THREE.Group();
     g.add(caisse);
     const couleur = couleurPeinture(P), fonce = new THREE.Color(P).multiplyScalar(0.7).getHex();
@@ -455,7 +457,7 @@ Tanks.Helicos3D = (function () {
   // ------------------------------------------------------------------ le BLACK HAWK (UH-60)
   // Mesures : 15,3 m de long (sans les rotors), cabine de 2,4 m de large, grand rotor de 16,4 m, rotor de queue de 3,4 m.
   function blackhawk(equipe) {
-    const m = MT(), E = Tanks.CONFIG.equipes[equipe], P = PEINTURE[equipe], galet = OU().galet;
+    const m = MT(), E = Tanks.CONFIG.equipes[equipe], P = peintureDe(equipe), galet = OU().galet;
     const g = new THREE.Group(), caisse = new THREE.Group();
     g.add(caisse);
     const couleur = couleurPeinture(P), fonce = new THREE.Color(P).multiplyScalar(0.72).getHex();
@@ -613,7 +615,7 @@ Tanks.Helicos3D = (function () {
   // et des rotors en disques fins : 1 seule pièce.
   function formeSimple(sorte, equipe) {
     const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8 });
-    const g = new THREE.Group(), P = PEINTURE[equipe], E = Tanks.CONFIG.equipes[equipe], c = new THREE.Color(P);
+    const g = new THREE.Group(), P = peintureDe(equipe), E = Tanks.CONFIG.equipes[equipe], c = new THREE.Color(P);
     const peinte = (cles, zone) => {
       const r = O.coque(cles, { tours: 14, pas: 0.9, couleur: () => [c.r, c.g, c.b], zone });
       for (const nom in r.geos) {

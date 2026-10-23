@@ -136,7 +136,7 @@ Tanks.Avions3D = (function () {
     const U = {
       cFond: { value: new THREE.Color(P.fond) }, cT1: { value: new THREE.Color(P.taches[0]) }, cT2: { value: new THREE.Color(P.taches[1]) },
       cT3: { value: new THREE.Color(P.taches[2]) }, cVentre: { value: new THREE.Color(P.ventre || P.fond) }, forceVentre: { value: P.ventre ? 1 : 0 },
-      echelleCamo: { value: 1 / P.taille }, decalCamo: { value: new THREE.Vector3(equipe === "bleus" ? 3.7 : 17.3, 5.1, 9.9) },
+      echelleCamo: { value: 1 / P.taille }, decalCamo: { value: new THREE.Vector3(/^bleus/.test(equipe) ? 3.7 : 17.3, 5.1, 9.9) },
     };
     mat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, U);
@@ -909,7 +909,7 @@ Tanks.Avions3D = (function () {
   const PENTE = 0.62, CHARN = [-6.4, 1.0], L_RAMPE = 3.6, L_PORTE = 2.4;
   const ligneSoute = (x) => CHARN[1] + (CHARN[0] - x) * Math.tan(PENTE);
   function transport(equipe) {
-    const P = peinture(equipe, "transport"), E = Tanks.CONFIG.equipes[equipe], bleu = equipe === "bleus";
+    const P = peinture(equipe, "transport"), E = Tanks.CONFIG.equipes[equipe], bleu = /^bleus/.test(equipe);
     const g = new THREE.Group(), caisse = new THREE.Group();
     g.add(caisse);
     const sale = salissure();
@@ -1116,7 +1116,7 @@ Tanks.Avions3D = (function () {
     caisse.add(O.piece(new THREE.SphereGeometry(0.06, 14, 10, -Math.PI / 2 - 0.0, Math.PI, 0, Math.PI).rotateZ(-Math.PI / 2), brillant(), 0.44, 0.43, -0.025, 0x0d1830)); // l'objectif
     caisse.add(O.piece(new THREE.CircleGeometry(0.025, 12).rotateY(Math.PI / 2), brillant(), 0.481, 0.45, 0.05, 0x501010)); // le télémètre
     // 5. La cocarde (ou l'étoile) sur le dos.
-    decalco(caisse, equipe === "bleus" ? "cocarde" : "etoile", new THREE.Vector3(0.12, 0.818, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0), 0.2, 0.2);
+    decalco(caisse, /^bleus/.test(equipe) ? "cocarde" : "etoile", new THREE.Vector3(0.12, 0.818, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0), 0.2, 0.2);
     O.souder(caisse);
     // 6. Les 4 HÉLICES (2 pales chacune ; elles tournent) et les 4 disques flous en une seule pièce fixe.
     const helices = [], flous = [];
@@ -1282,8 +1282,8 @@ Tanks.Avions3D = (function () {
     }
     // 10. Les DÉCALCOMANIES : la cocarde sur la poutre de queue, « ARMÉE DE TERRE », le code sur la dérive.
     for (const s of [-1, 1]) {
-      decalcoCoque(caisse, fus, equipe === "bleus" ? "cocarde" : "etoile", -4.4, 0.1, 0.42, 0.42, s);
-      if (equipe === "bleus") decalcoCoque(caisse, fus, "terre", -2.5, 0.02, 1.6, 0.2, s);
+      decalcoCoque(caisse, fus, /^bleus/.test(equipe) ? "cocarde" : "etoile", -4.4, 0.1, 0.42, 0.42, s);
+      if (/^bleus/.test(equipe)) decalcoCoque(caisse, fus, "terre", -2.5, 0.02, 1.6, 0.2, s);
       const { p, n } = derive.userData.point(0.4, 0.4, s);
       decalco(caisse, "BHA", p, n, new THREE.Vector3(0, 1, 0), 0.5, 0.25);
       const f = fus.point(-1.5, s > 0 ? 0.35 : Math.PI - 0.35);

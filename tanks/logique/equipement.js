@@ -138,7 +138,7 @@ Tanks.Equipement = (function () {
       if (!F || !emplacementsDe(armeId).includes(valeur.emplacement)) return false;
       const p = piecesDe(armeId, valeur.emplacement).find((x) => x.id === valeur.id);
       if (!p) return false;
-      if (!PR().pieceDebloquee(armeId, valeur.emplacement, p.id)) return refuser(F.nom + " · " + p.nom, "débloqué au niveau d'arme " + p.niveau + " (ton " + F.nom + " est niveau " + PR().niveauArme(armeId).niveau + ")");
+      if (!PR().pieceDebloquee(armeId, valeur.emplacement, p.id)) return refuser(F.nom + " · " + p.nom, p.boutique ? "peinture rare : à acheter dans la 🛒 boutique avec tes Battle Coins" : "débloqué au niveau d'arme " + p.niveau + " (ton " + F.nom + " est niveau " + PR().niveauArme(armeId).niveau + ")"); // (livre n° 28)
       const avant = stats(armeId, piecesPour(armeId));
       (e.pieces[armeId] = e.pieces[armeId] || {})[valeur.emplacement] = p.id;
       const apres = stats(armeId, piecesPour(armeId));

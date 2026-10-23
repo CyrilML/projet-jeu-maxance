@@ -81,6 +81,13 @@ Tanks.SousLeCapot = (function () {
     "niveau-arme": (d) => "🔫 " + d.arme + " passe niveau " + d.niveau + (d.pieces.length ? " · 🔓 " + d.pieces.map((p) => p.icone + " " + p.nom).join(", ") : ""),
     "bilan-xp": (d) => "🏅 Bilan de la bataille : +" + d.total.toLocaleString("fr-FR") + " XP (" + d.categories + " sortes de points)" + (d.niveau > d.depart ? " · niveau " + d.depart + " → " + d.niveau : " · niveau " + d.niveau) + (d.mvp ? " · 🥇 MVP" : "") + (d.debloques ? " · " + d.debloques + " déblocage(s)" : ""),
     verrouille: (d) => "🔒 " + d.nom + " : " + d.raison,
+    // (livre de demandes n° 7, 22 et 28) LA BOUTIQUE et les Battle Coins
+    boutique: (d) => (d.ouverte ? "🛒 Tu entres dans la BOUTIQUE (" : "🛒 Tu sors de la boutique (") + d.solde.toLocaleString("fr-FR") + " Battle Coins)",
+    achat: (d) => "🛒 ACHAT : " + d.nom + " (rayon " + d.rayon + ") pour " + d.prix.toLocaleString("fr-FR") + " BC · il te reste " + d.solde.toLocaleString("fr-FR") + " BC",
+    "achat-refuse": (d) => "🛒 Le marchand refuse : " + d.nom + " : " + d.raison,
+    "achat-euros": (d) => "⚠️ Pack de " + d.bc + " BC à " + d.prix + " : PAS de vrai argent dans ce jeu (il faut l'accord et l'aide d'un adulte). Aucun Battle Coin donné.",
+    "boutique-porte": (d) => "🎽 Boutique : " + ({ tenue: "ta tenue", char: "la peinture de ton tank", pack: "ton pack de véhicules" })[d.type] + " → " + d.nom,
+    "bc-gagnes": (d) => "🪙 +" + d.gain + " Battle Coins (" + ({ ennemi: "ennemi abattu", victoire: "victoire", niveau: "niveau de joueur" })[d.cle] + (d.double ? ", × 2 grâce à l'avancement" : "") + ") · cette bataille : " + d.bataille + " · total " + d.solde.toLocaleString("fr-FR"),
     "arme-choisie": (d) => "🔫 Armurerie : tu prends le " + d.nom + " (" + d.type + ", niveau d'arme " + d.niveau + ")" + (d.bonus ? " comme ARME BONUS (touche 5)" : ""), // (livre n° 6)
     piece: (d) => "🔧 Armurerie : " + d.arme + " · " + d.emplacement + " → " + d.nom + " (portée " + Math.round(d.avant.portee) + " → " + Math.round(d.apres.portee) + " m, chargeur " + d.avant.chargeur + " → " + d.apres.chargeur + ", écart " + virgule(d.avant.dispersion * 1000, 1) + " → " + virgule(d.apres.dispersion * 1000, 1) + " mrad, mobilité " + Math.round(d.avant.mobilite * 100) + " → " + Math.round(d.apres.mobilite * 100) + " %)",
     "recharge-arme": (d) => d.fini ? "🔄 " + d.arme + " rechargé : " + d.chargeur + " balles (réserve " + d.reserve + ")" : "🔄 Tu recharges ton " + d.arme + " (" + virgule(d.duree, 1) + " s)",
@@ -131,7 +138,7 @@ Tanks.SousLeCapot = (function () {
     "maison-effondree": (d) => "🏚️ Une maison s'effondre : " + d.nom + (d.tireur ? " (" + (d.parToi ? "c'est toi !" : "par " + d.tireur) + ")" : "") + " · le toit tombe, " + d.morceaux.length + " morceaux de mur avec lui" + (d.blesses ? " · " + d.blesses + " soldat" + (d.blesses > 1 ? "s" : "") + " blessé" + (d.blesses > 1 ? "s" : "") + " dessous" : ""),
     "grenade-lancee": (d) => "💣 " + (d.parToi ? "Tu lances une grenade" : d.tireur + " lance une grenade") + (d.vise ? " sur " + d.vise + " à " + d.distance + " m" + (d.groupe > 1 ? " (" + d.groupe + " ennemis groupés)" : "") : "") + " · elle explose dans " + d.meche + " s · il " + (d.parToi ? "t'" : "lui ") + "en reste " + d.reste + " / " + d.max,
     grenades: (d) => "🎒 " + (d.camp ? "Au camp : tu reprends toutes tes grenades (" + d.nombre + " / " + d.max + ")" : "Tu regagnes une grenade (" + d.nombre + " / " + d.max + ", 1 toutes les " + C.grenades.recharge + " s)"),
-    "sauvegarde-convertie": (d) => "💾 Ton livret militaire (version " + d.de + ") est converti en version " + d.vers + " : rien n'est perdu, les nouveaux compteurs commencent à 0" + (d.battleCoins ? " · 🪙 +" + d.battleCoins.toLocaleString("fr-FR") + " Battle Coins pour tes chapitres déjà réussis (demande 101)" : "") + (d.de < 15 ? " · ⭐ tes points sont recalculés pour les niveaux plus lents : tu gardes ton niveau (demande 102)" : "") + (d.bonus && d.bonus.length ? " · 🎁 " + d.bonus.join(" ; ") + " (livre n° 6)" : ""),
+    "sauvegarde-convertie": (d) => "💾 Ton livret militaire (version " + d.de + ") est converti en version " + d.vers + " : rien n'est perdu, les nouveaux compteurs commencent à 0" + (d.battleCoins ? " · 🪙 +" + d.battleCoins.toLocaleString("fr-FR") + " Battle Coins pour tes chapitres déjà réussis (demande 101)" : "") + (d.de < 15 ? " · ⭐ tes points sont recalculés pour les niveaux plus lents : tu gardes ton niveau (demande 102)" : "") + (d.bonus && d.bonus.length ? " · 🎁 " + d.bonus.join(" ; ") + " (livre n° 6)" : "") + (d.boutique ? " · 🛒 + le carnet de la boutique (vide : rien acheté)" : ""),
     // étape 72
     qualite: (d) => "⚙️ Qualité " + d.niveau + "/" + d.max + " (" + d.nom + ")" + (d.auto ? "" : " ✋") + " : " + d.raison + " → pixels ×" + virgule(d.reglages.pixels, 1) + ", ombres " + (d.reglages.ombres ? d.reglages.ombres + (d.reglages.douces ? " douces" : "") : "aucune") + ", vue " + d.reglages.vue + " m",
     "programmes-prets": (d) => "🧩 La carte graphique a préparé d'un coup ses " + d.programmes + " programmes de dessin (" + Math.round(d.ms) + " ms, " + d.caches + " objets cachés montrés un instant) : plus d'à-coup quand un nouvel objet apparaît",
@@ -412,6 +419,13 @@ Tanks.SousLeCapot = (function () {
     l.push(["dessin des maisons", M3.lots + " objets (1 par matière et par quartier) · " + M3.sommets.toLocaleString("fr-FR") + " sommets · " + M3.morceauxCaches + " morceaux cachés · " + M3.trous + " trous de balles (au plus " + S.debris.trous + ") · " + M3.brulures + " traces noires · " + M3.debrisVol + " débris en vol (au plus " + S.debris.vol + ") · " + M3.gravats + " gravats tombés (au plus " + S.debris.gravatsMax + ") + " + M3.gravatsFixes + " des ruines · " + M3.toitsTombes + " toits tombés"]);
   }
 
+  // (livre n° 7, 22 et 28) LA BOUTIQUE : la caisse, les gains de la bataille, ce que tu portes, tes achats
+  function lignesBoutique(l) {
+    const bo = Tanks.Sauvegarde.donnees.boutique, G = C.boutique.gains, P = Tanks.Boutique.porte(), nom = (liste, id) => (id ? (liste.find((x) => x.id === id) || {}).nom : "d'origine");
+    l.push(["🛒 boutique : la caisse", (Tanks.Sauvegarde.donnees.battleCoins || 0).toLocaleString("fr-FR") + " BC · gagnés cette bataille : " + Tanks.Boutique.bataille.gagnes + " (ennemi +" + G.ennemi + ", victoire +" + G.victoire + ", niveau +" + G.niveau + ") · en bataille libre depuis le début : " + (bo.gagnes || 0).toLocaleString("fr-FR")]);
+    l.push(["🛒 tu portes", "tenue " + nom(C.boutique.tenues, P.tenue) + " · tank " + nom(C.boutique.chars, P.char) + " · véhicules " + nom(C.boutique.packs, P.pack) + " · avancements : Double XP " + (bo.boostXP || 0) + " bataille(s), Double BC " + (bo.boostCoins || 0)]);
+    l.push(["🛒 tes achats (" + bo.achats.length + ")", bo.achats.slice(-6).map((a) => a.nom + " (" + a.prix + ")").join(" · ") || "aucun"]);
+  }
   // (étape 77) Le nom de l'arme en main.
   const nomArme = (s) => !s.armes ? C.armes[s.arme].icone + " " + C.armes[s.arme].nom : s.arme === "grenades" ? (s.poche ? C.explosifs[s.poche.id].icone + " " + C.explosifs[s.poche.id].nom : "💣 grenades") : s.arme === "gadget" ? s.gadget.fiche.icone + " " + s.gadget.fiche.nom : s.armes[s.arme].stats.icone + " " + s.armes[s.arme].stats.nom;
   // (étape 77) TA CLASSE ET TON ÉQUIPEMENT : ta classe, ton arme avec ses 7 pièces et ses VRAIS chiffres, l'assistance à la
@@ -504,6 +518,7 @@ Tanks.SousLeCapot = (function () {
     const e = monde.cinematique, E = Tanks.EcranCinematique.etat();
     l.push(["Les cinématiques (demande 101)"]);
     l.push(["🪙 Battle Coins", (Tanks.Sauvegarde.donnees.battleCoins || 0).toLocaleString("fr-FR") + " · par mission réussie : " + C.campagne.difficultes.map((n) => n.icone + " " + (C.campagne.battleCoins[n.id] || 0)).join(" · ")]);
+    lignesBoutique(l);
     l.push(["films", Object.keys(C.cinematiques.films).map((id) => { const p = Tanks.Cinematique.aPlat(C.cinematiques.films[id]); return id + " (" + C.cinematiques.films[id].plans.length + " plans, " + virgule(p.duree, 0) + " s)"; }).join(" · ") + " · déjà vus : " + E.bilan.films + " · passés : " + E.bilan.passes]);
     if (!e) return void l.push(["en ce moment", "pas de film (les acteurs, les feux du décor et la caméra de cinéma dorment : rien ne coûte pendant le jeu)"]);
     l.push(["🎬 " + e.titre, "plan " + (e.plan + 1) + " / " + e.plans + (E.plan ? " « " + E.plan.nom + " » · caméra " + E.plan.camera + " · " + virgule(E.plan.t, 1) + " / " + virgule(E.plan.duree, 1) + " s" : "") + " · film " + virgule(e.t, 1) + " / " + virgule(e.duree, 1) + " s · phase du monde : " + monde.phase]);

@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 49,
+  version: 50,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -1013,6 +1013,7 @@ Tanks.CONFIG = {
       participation: { xp: 50, nom: "Participation", icone: "🎖️" },
       etoile: { xp: 60, nom: "Étoiles de campagne", icone: "⭐" },
       mvp: { xp: 150, nom: "Meilleur joueur (MVP)", icone: "🥇" },
+      boutique: { xp: 1, nom: "Promotion (boutique)", icone: "🛒" }, // (livre n° 28 : l'avancement « +1 niveau », jamais doublé)
     },
     mvp: { minimum: 3 },
     veteran: { victoire: 150, tank: 40, etoile: 100, max: 8000 },
@@ -2404,4 +2405,89 @@ Tanks.CONFIG.cinematiques.bandeAnnonce = "bande-annonce";
         titre: { etiquette: "Infanterie · Blindés · Hélicos · Avions", grand: "THE LAST BATTLEFIELD", taille: 72, couleur: "#ffcf5a", petit: "Un jeu de Maxance · Appuie sur Entrée", de: 1, a: 11.5 } },
     ],
   };
+})();
+
+// ================================================================== livre de demandes n° 7, 22 et 28 : 🛒 LA BOUTIQUE
+// ✍️ « Faire un menu avec des achats, par exemple un pack de skins de véhicules avec des avancements de jeu. »
+// ✍️ « Développer les battle coins, la monnaie du jeu. » ✍️ « Faire une boutique. »
+// ⚠️ PAS DE VRAI ARGENT : les packs en euros sont seulement AFFICHÉS (comme Maxance les a voulus, demande 100). Le bouton
+// dit qu'un achat avec de vrais euros demande l'accord et l'aide d'un adulte (Cyril) : il ne donne JAMAIS de Battle Coins.
+// Tout s'achète avec les BATTLE COINS (BC) gagnés en jouant (logique/boutique.js : le marchand).
+//   gains : les BC gagnés en BATAILLE LIBRE (et dans le souterrain) : par ennemi abattu, par victoire, par niveau de
+//     joueur gagné (la campagne, elle, donne ses BC à chaque mission réussie : « campagne.battleCoins ») ;
+//   armes : prix d'une arme encore sous cadenas = base + parNiveau × son niveau (elle se débloque tout de suite) ;
+//   pieces : prix d'une pièce d'armurerie (pour UNE arme) = base + parNiveau × son niveau d'arme ;
+//   peintures : les peintures RARES, vendues seulement ici (une fois achetée : sur TOUTES tes armes). motif : le dessin
+//     (affichage/armes3d.js, le peintre) ; couleurs ; brillant (0 mat … 1 miroir) ;
+//   tenues : les PERSONNAGES (la tenue de TON soldat : affichage/uniformes.js, le tailleur). fond, taches : le camouflage ;
+//     motif : "bois" (taches fines) ou "desert" (grandes taches) ; equipement : la couleur du gilet et du sac ;
+//   chars : les peintures de TON tank (taches : 4 couleurs ; boue, poussiere : la saleté) ;
+//   packs : les PACKS DE SKINS DE VÉHICULES : 1 achat = un thème pour tous les véhicules de ton camp de la liste
+//     « sortes » (camouflage : 4 couleurs ; ventre : le dessous des avions et des hélicos) ;
+//   avancements : ✍️ « des avancements de jeu » : xp2 (tes XP × 2 pendant « batailles » batailles), coins2 (les BC des
+//     batailles × 2), niveau (+1 niveau de joueur tout de suite) ;
+//   euros : les packs en euros (AFFICHÉS SEULEMENT).
+Tanks.CONFIG.boutique = {
+  gains: { ennemi: 2, victoire: 25, niveau: 50 },
+  armes: { base: 300, parNiveau: 150 },
+  pieces: { base: 100, parNiveau: 60 },
+  rayons: [["armes", "🔫", "Armes"], ["armurerie", "🔧", "Armurerie"], ["peintures", "🎨", "Peintures d'armes"], ["personnages", "🪖", "Personnages"],
+    ["tanks", "🛡️", "Tanks"], ["vehicules", "🚙", "Véhicules"], ["avancements", "⚡", "Avancements"], ["coins", "🪙", "Battle Coins"]],
+  peintures: [
+    { id: "dragon", nom: "Dragon", prix: 1800, texte: "Des écailles rouge sang bordées d'or : l'arme d'un dragon !", motif: "ecailles", couleurs: ["#7a0e0e", "#1a0505", "#e0a030"], brillant: 0.4 },
+    { id: "glace", nom: "Glace", prix: 1500, texte: "Bleu glacier, fendu de fissures blanches comme un lac gelé.", motif: "fissures", couleurs: ["#7fc4e8", "#e8f6ff", "#2f6f98"], brillant: 0.55 },
+    { id: "lave", nom: "Lave", prix: 2000, texte: "Une roche noire, et la lave orange qui brille dans ses fissures.", motif: "fissures", couleurs: ["#1c1412", "#ff7a14", "#3a2018"], brillant: 0.15 },
+    { id: "galaxie", nom: "Galaxie", prix: 2500, texte: "Le ciel de la nuit : nébuleuses violettes et des milliers d'étoiles.", motif: "etoiles", couleurs: ["#120a2a", "#6a2a9a", "#2a6ab8", "#ffffff"], brillant: 0.3 },
+    { id: "chrome", nom: "Chrome", prix: 2200, texte: "Un miroir de métal poli… mais ça brille : on te voit de loin !", motif: "chrome", couleurs: ["#d8dde2", "#5a6068", "#ffffff"], brillant: 1, effets: { visibilite: 30 } },
+    { id: "arctique", nom: "Camo Arctique", prix: 1200, texte: "Blanc, gris bleuté et glace : le camouflage des patrouilles polaires.", motif: "taches", couleurs: ["#eef3f6", "#a9b8c4", "#d2dde5", "#5d6c78"], effets: { visibilite: -6 } },
+  ],
+  tenues: [
+    { id: "commandoNuit", nom: "Commando de nuit", prix: 1500, icone: "🌙", texte: "Noir et gris sombre : invisible dans le noir.", fond: "#2a2c30", taches: ["#1a1b1e", "#3a3d42", "#101113"], equipement: "#1e2024", motif: "bois" },
+    { id: "forcesSpeciales", nom: "Forces spéciales", prix: 2200, icone: "🎖️", texte: "Le « multicam » des unités d'élite : beige, vert et brun.", fond: "#8a7f5e", taches: ["#5e6644", "#6b5236", "#b8a984"], equipement: "#6b6247", motif: "bois" },
+    { id: "desertTempete", nom: "Tempête du désert", prix: 1500, icone: "🏜️", texte: "Les 3 couleurs du désert : sable, brun et ocre.", fond: "#cdb68a", taches: ["#9c7b52", "#e2d2aa", "#7a5f3c"], equipement: "#a58c62", motif: "desert" },
+    { id: "neige", nom: "Chasseur des neiges", prix: 1800, icone: "❄️", texte: "Blanc et gris : pour se cacher dans la neige.", fond: "#e6eaee", taches: ["#b5bec6", "#f7f9fb", "#7f8a94"], equipement: "#d4dade", motif: "desert" },
+    { id: "officier", nom: "Officier", prix: 2600, icone: "⭐", texte: "Vert olive impeccable, gilet brun : la tenue du chef.", fond: "#56603e", taches: ["#4c5537", "#5f6a45", "#475033"], equipement: "#5a4630", motif: "bois" },
+    { id: "ghillie", nom: "Ghillie", prix: 3000, icone: "🌿", texte: "La tenue du tireur d'élite : couverte d'herbes et de feuilles.", fond: "#56602f", taches: ["#3c4a22", "#7a7a3c", "#2a3418"], equipement: "#4a5228", motif: "bois" },
+  ],
+  chars: [
+    { id: "charDesert", nom: "Tempête de sable", prix: 2000, icone: "🏜️", texte: "Sable et ocre : comme les tanks de la guerre du Golfe.", taches: ["#c2a56f", "#9e7d4c", "#dcc79a", "#7d6444"], boue: "#7a6648", poussiere: "#d4c29a" },
+    { id: "charHiver", nom: "Hiver", prix: 2200, icone: "❄️", texte: "Peint à la chaux blanche, avec des taches grises.", taches: ["#d8dde0", "#9aa3a8", "#f2f4f5", "#5e666b"], boue: "#6b6560", poussiere: "#e8ecee" },
+    { id: "charNuit", nom: "Nuit urbaine", prix: 2500, icone: "🌃", texte: "Gris foncé et noir, pour les combats de rue la nuit.", taches: ["#3c4044", "#25282b", "#55595e", "#151719"], boue: "#3a332a", poussiere: "#6a6a66" },
+    { id: "charTigre", nom: "Tigre", prix: 3500, icone: "🐯", texte: "Jaune sable et rayures vert foncé, comme les tanks d'autrefois.", taches: ["#c8a04c", "#3e4a26", "#8a6a34", "#2a2a1c"], boue: "#5e503c", poussiere: "#c4b08a" },
+  ],
+  packs: [
+    { id: "packDesert", nom: "Pack Désert", prix: 3000, icone: "🏜️", texte: "Tous tes véhicules couleur sable : jeep, moto, quad, camion, hélicos et Rafale.", camouflage: ["#c2a56f", "#d8c08e", "#8f7449", "#a89060"], ventre: "#d8d0b8" },
+    { id: "packArctique", nom: "Pack Arctique", prix: 3200, icone: "❄️", texte: "Blanc et gris glacé : tes véhicules disparaissent dans la neige.", camouflage: ["#dfe5e8", "#f4f6f7", "#9aa6ae", "#c0c9cf"], ventre: "#eef2f4" },
+    { id: "packNuit", nom: "Pack Nuit", prix: 3500, icone: "🌙", texte: "Noir mat et gris anthracite : pour les opérations de nuit.", camouflage: ["#2b2e32", "#3c4045", "#16181a", "#4a4e54"], ventre: "#3a3e44" },
+    { id: "packTigre", nom: "Pack Tigre", prix: 4000, icone: "🐯", texte: "Orange et noir rayé : le pack le plus voyant du champ de bataille !", camouflage: ["#d8781c", "#f0a040", "#1a1410", "#b05a14"], ventre: "#e8c090" },
+  ],
+  // (les véhicules de ton camp qui prennent le pack : la jeep, la moto, le quad, le camion, le Tigre, le Black Hawk, le
+  // Chinook, le Rafale et le drone)
+  sortesPack: ["jeep", "moto", "quad", "camion", "helico", "blackhawk", "chinook", "avion", "drone"],
+  avancements: [
+    { id: "xp2", nom: "Double XP", prix: 2500, icone: "⚡", texte: "Tes points d'expérience × 2 pendant tes 3 prochaines batailles.", batailles: 3 },
+    { id: "coins2", nom: "Double Battle Coins", prix: 2000, icone: "🪙", texte: "Les Battle Coins de tes 3 prochaines batailles libres × 2.", batailles: 3 },
+    { id: "niveau", nom: "Promotion", prix: 4000, icone: "🎖️", texte: "+1 NIVEAU DE JOUEUR tout de suite (et tout ce qu'il débloque)." },
+  ],
+  euros: [{ bc: 100, prix: "0,99 €" }, { bc: 550, prix: "4,99 €" }, { bc: 1200, prix: "9,99 €" }, { bc: 2600, prix: "19,99 €" }],
+};
+// Les peintures rares sont aussi des pièces de l'armurerie (emplacement « peinture ») : « boutique: true » = sous cadenas
+// tant qu'on ne les a pas achetées. Et chaque skin devient un « camp » à part pour le dessin (« bleus~commandoNuit » :
+// les Bleus, avec ces couleurs), pour que les tailleurs et les peintres le trouvent comme un vrai camp.
+(function () {
+  const C = Tanks.CONFIG, B = C.boutique, U = C.realisme.soldats.uniformes, A = C.avions3d.peinture;
+  for (const p of B.peintures) C.atelier.peinture.pieces.push({ id: p.id, nom: p.nom, niveau: 0, boutique: true, texte: p.texte, motif: p.motif, couleurs: p.couleurs, brillant: p.brillant || 0, effets: p.effets || {} });
+  const camp = (id, camouflage) => (C.equipes["bleus~" + id] = Object.assign({}, C.equipes.bleus, { camouflage }));
+  for (const t of B.tenues) {
+    camp(t.id, [t.fond].concat(t.taches));
+    U["bleus~" + t.id] = { nom: t.nom, fond: t.fond, taches: t.taches, equipement: t.equipement, motif: t.motif };
+  }
+  for (const c of B.chars) {
+    camp(c.id, c.taches);
+    C.peinture["bleus~" + c.id] = { taches: c.taches, boue: c.boue, poussiere: c.poussiere };
+  }
+  for (const p of B.packs) {
+    camp(p.id, p.camouflage);
+    for (const schema in A) A[schema]["bleus~" + p.id] = Object.assign({}, A[schema].bleus, { fond: p.camouflage[0], taches: p.camouflage.slice(1, 4), ventre: A[schema].bleus.ventre ? p.ventre : null });
+  }
 })();

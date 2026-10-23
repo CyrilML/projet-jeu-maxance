@@ -226,14 +226,31 @@ Tanks.Scene = (function () {
     Tanks.Evenements.emettre("monde-3d", { dessous, dessins: Tanks.Station3D.bilan.dessins, ms: Tanks.Station3D.bilan.ms });
   }
 
+  // (livre n° 28) LES SKINS DE LA BOUTIQUE : le « camp » à dessiner. Ta tenue (ton soldat), la peinture de TON tank, le pack
+  // de véhicules (tous les véhicules de ton camp de la liste « boutique.sortesPack ») : « bleus~ghillie »… ou le vrai camp.
+  const porte = () => (Tanks.Boutique ? Tanks.Boutique.porte() : {});
+  const campDe = (equipe, skin) => (skin && equipe === "bleus" ? equipe + "~" + skin : equipe);
+  // (livre n° 28) les véhicules LOIN (la version simple, en lot) prennent aussi les couleurs du pack : un lot de plus par
+  // pack porté, fabriqué la 1re fois qu'on en a besoin
+  const campEngin = (e) => campDe(e.equipe, Tanks.CONFIG.boutique.sortesPack.includes(e.sorte) ? porte().pack : null);
+  function lotDe(e) {
+    const camp = campEngin(e), cle = e.sorte + ":" + camp;
+    if (!lotsSimples[cle] && camp !== e.equipe && lotsSimples[e.sorte + ":" + e.equipe]) {
+      const M = [Tanks.Vehicules3D, Tanks.Helicos3D, Tanks.Avions3D].find((x) => x.sait(e.sorte));
+      if (M) scene.add((lotsSimples[cle] = M.lotSimple(e.sorte, camp, lotsSimples[e.sorte + ":" + e.equipe].instanceMatrix.count)));
+    }
+    return lotsSimples[cle] || lotsSimples[e.sorte + ":" + e.equipe];
+  }
   function objetDe(c) {
     let o = objets.get(c);
-    if (!o || o.fiche !== c.fiche) {
+    const camp = campDe(c.equipe, c.nom === "toi" ? porte().char : null);
+    if (!o || o.fiche !== c.fiche || o.camp !== camp) {
       if (o) scene.remove(o.g);
       // (étape 75) le numéro peint sur la tourelle : 1x pour les Bleus, 3x pour les Rouges (selon le nom du tank)
       const numero = (c.equipe === "bleus" ? 1 : 3) + "" + (1 + ([...c.nom].reduce((t, l) => t + l.charCodeAt(0), 0) % 9));
-      o = Tanks.Chars3D.fabriquer(c.fiche, c.equipe, c.nom === "toi" ? "10" : numero);
+      o = Tanks.Chars3D.fabriquer(c.fiche, camp, c.nom === "toi" ? "10" : numero);
       o.fiche = c.fiche;
+      o.camp = camp;
       o.normale = new THREE.Vector3(0, 1, 0);
       o.brule = false;
       scene.add(o.g);
@@ -294,8 +311,11 @@ Tanks.Scene = (function () {
   // ------------------------------------------------------------------ étape 61 : les soldats et les engins
   function soldat3d(s) {
     let o = dessinsSoldats.get(s);
+    const camp = campDe(s.equipe, s.joueur ? porte().tenue : null);
+    if (o && o.camp !== camp) (scene.remove(o.g), (o = null));
     if (!o) {
-      o = Tanks.Engins3D.soldat(s.equipe, s.joueur);
+      o = Tanks.Engins3D.soldat(camp, s.joueur);
+      o.camp = camp;
       scene.add(o.g);
       dessinsSoldats.set(s, o);
     }
@@ -354,8 +374,11 @@ Tanks.Scene = (function () {
   }
   function engin3d(e) {
     let o = dessinsEngins.get(e);
+    const camp = campEngin(e);
+    if (o && o.camp !== camp) (scene.remove(o.g), (o = null));
     if (!o) {
-      o = Tanks.Engins3D.fabriquer(e.sorte, e.equipe);
+      o = Tanks.Engins3D.fabriquer(e.sorte, camp);
+      o.camp = camp;
       o.brule = false;
       scene.add(o.g);
       dessinsEngins.set(e, o);
@@ -378,7 +401,7 @@ Tanks.Scene = (function () {
       return;
     }
     // loin : la version simple (une instance de plus dans le lot de sa sorte et de son équipe)
-    const lot = lotsSimples[e.sorte + ":" + e.equipe];
+    const lot = lotDe(e); // (livre n° 28 : le lot du pack de véhicules, s'il y en a un)
     if (d > Q.roues * C.vehicules.loin[e.sorte] && lot && lot.count < lot.instanceMatrix.count) {
       o.g.visible = false;
       lot.setMatrixAt(lot.count, m4.compose(o.g.position, o.g.quaternion, un));
@@ -423,7 +446,7 @@ Tanks.Scene = (function () {
       lod.helicosCaches++;
       return;
     }
-    const lot = lotsSimples[e.sorte + ":" + e.equipe];
+    const lot = lotDe(e); // (livre n° 28 : le lot du pack de véhicules, s'il y en a un)
     if (d > Q.roues * C.helicosTransport.loin && lot && lot.count < lot.instanceMatrix.count) {
       o.g.visible = false;
       o.g.updateMatrix();
@@ -492,7 +515,7 @@ Tanks.Scene = (function () {
       lod.avionsCaches++;
       return;
     }
-    const lot = lotsSimples[e.sorte + ":" + e.equipe];
+    const lot = lotDe(e); // (livre n° 28 : le lot du pack de véhicules, s'il y en a un)
     if (d > Q.roues * A.loin[e.sorte] && lot && lot.count < lot.instanceMatrix.count) {
       o.g.visible = false;
       o.g.updateMatrix();

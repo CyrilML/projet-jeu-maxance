@@ -92,7 +92,7 @@ Tanks.Chars3D = (function () {
     if (cache[cle]) return cache[cle];
     const PE = Tanks.CONFIG.peinture[equipe], n = 256, P = 4; // (4 « cases » de bruit sur l'image : des taches d'environ 1 m)
     const cols = PE.taches.map((h) => { const c = new THREE.Color(h); return [c.r, c.g, c.b].map((v) => Math.round(Math.pow(v, 1 / 2.2) * 255)); });
-    const b1 = Tanks.Bruit.creer(equipe === "bleus" ? 751 : 761), b2 = Tanks.Bruit.creer(equipe === "bleus" ? 752 : 762), b3 = Tanks.Bruit.creer(equipe === "bleus" ? 753 : 763);
+    const b1 = Tanks.Bruit.creer(/^bleus/.test(equipe) ? 751 : 761), b2 = Tanks.Bruit.creer(/^bleus/.test(equipe) ? 752 : 762), b3 = Tanks.Bruit.creer(/^bleus/.test(equipe) ? 753 : 763);
     const petit = document.createElement("canvas");
     petit.width = petit.height = n;
     const pc = petit.getContext("2d"), img = pc.createImageData(n, n);
@@ -100,7 +100,7 @@ Tanks.Chars3D = (function () {
       const x = (i / n) * P, y = (j / n) * P * 0.8 + 0.37;
       const t1 = bruitRepete(b1, x, y, P, 3), t2 = bruitRepete(b2, x * 1.3, y * 1.3, P * 1.3, 3), t3 = bruitRepete(b3, x * 1.7, y * 1.1, P * 1.7, 2);
       let c = cols[0];
-      if (equipe === "bleus") {
+      if (/^bleus/.test(equipe)) {
         if (t2 > 0.16) c = cols[3];
         if (t1 > 0.1) c = cols[1];
         if (t3 > 0.27) c = cols[2];
@@ -628,7 +628,7 @@ Tanks.Chars3D = (function () {
     c.height = 128;
     const ctx = c.getContext("2d"), E = Tanks.CONFIG.equipes[equipe];
     ctx.fillStyle = E.marque;
-    if (equipe === "bleus") {
+    if (/^bleus/.test(equipe)) {
       ctx.beginPath(); ctx.moveTo(14, 96); ctx.lineTo(50, 30); ctx.lineTo(86, 96); ctx.lineTo(70, 96); ctx.lineTo(50, 58); ctx.lineTo(30, 96); ctx.closePath(); ctx.fill();
     } else {
       ctx.beginPath(); ctx.moveTo(16, 34); ctx.lineTo(84, 34); ctx.lineTo(50, 96); ctx.closePath(); ctx.fill();

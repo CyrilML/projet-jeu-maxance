@@ -9,7 +9,7 @@ On commence par les fusils à pompe (demande 103), puis on suit la liste dans l'
 4. ✅ Refaire le menu dans le mode détail. (demande 104, version 48)
 5. ✅ Lancer les déblocages. (étapes 97, 98, 102)
 6. ✅ L'ingénieur a droit à une arme bonus en plus de son lance-roquettes. (demande 105, version 49)
-7. ⬜ Un menu d'achats (ex. : un pack de skins de véhicules, avec des avancements de jeu).
+7. ✅ Un menu d'achats (ex. : un pack de skins de véhicules, avec des avancements de jeu). (demande 106, version 50)
 8. ⬜ Pouvoir entrer dans les maisons.
 9. ⬜ Une map en ville très réaliste.
 10. ⬜ Des discussions plus réalistes.
@@ -24,10 +24,10 @@ On commence par les fusils à pompe (demande 103), puis on suit la liste dans l'
 19. ⬜ Demander une réanimation à ses compagnons.
 20. ✅ Des fusils à pompe normaux et incendiaires. (demande 103, version 47)
 21. ⬜ Améliorer les robots (les soldats de l'ordinateur).
-22. ⬜ Développer les Battle Coins.
+22. ✅ Développer les Battle Coins. (demande 106, version 50)
 23. ❓ Faire tester le jeu par des beta testers. (il faut de vrais joueurs : avec Cyril)
 24. ❓ Faire des éditions, genre d'autres jeux de combat. (à préciser)
 25. ⬜ Dans les souterrains, un QG à détruire pour chaque camp.
 26. ⬜ Un réalisme absurde.
 27. ⬜ Bannir toute publicité.
-28. ⬜ Faire une boutique. (sans vrai argent : il faut l'accord et l'aide de Cyril)
+28. ✅ Faire une boutique. (sans vrai argent : il faut l'accord et l'aide de Cyril) (demande 106, version 50)

@@ -45,12 +45,17 @@
 //     chaque classe qui en a une, l'arme bonus choisie : l'Ingénieur). Le UMP45 quitte la liste des lance-roquettes pour
 //     celle des armes bonus : un Ingénieur qui avait pris le UMP45 garde le UMP45 en arme bonus, et reprend le RPG-7
 //     comme lance-roquettes. Tout le reste est gardé.
+//   17 (livre de demandes n° 7, 22 et 28 : la boutique) : + boutique (« possede » = ce que tu as acheté : peintures rares,
+//     tenues, peintures de tank, packs de véhicules ; « tenue », « char », « pack » = ce que tu portes ; « boostXP »,
+//     « boostCoins » = les batailles qui restent avec un avancement × 2 ; « achats » = la liste de tes achats ; « gagnes » =
+//     les Battle Coins gagnés en bataille libre). Les armes et les pièces achetées vont dans progression.cadeaux (comme
+//     les cadeaux de la version 13). Une ancienne version garde tout, avec une boutique vide (rien acheté, rien porté).
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 16; // (étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents ; livre n° 6 : + l'arme bonus)
+  const VERSION = 17; // (étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents ; livre n° 6 : + l'arme bonus ; livre n° 28 : + la boutique)
   const radio = Tanks.Evenements;
 
   function vide() {
@@ -59,7 +64,12 @@ Tanks.Sauvegarde = (function () {
       battleCoins: 0, // (demande 101)
       campagne: { debloque: 1, chapitres: {}, enCours: null, difficulte: Tanks.CONFIG.campagne.difficulteDepart }, // (étape 88 ; demande 90 : + difficulte)
       equipement: equipementDeDepart(), // (étape 77)
-      progression: { xp: 0, armes: {}, cadeaux: { armes: [], pieces: {} }, parties: 0 } }; // (demande 97)
+      progression: { xp: 0, armes: {}, cadeaux: { armes: [], pieces: {} }, parties: 0 }, // (demande 97)
+      boutique: boutiqueVide() }; // (livre n° 28)
+  }
+  // (livre n° 28) la boutique au départ : rien d'acheté, rien de porté
+  function boutiqueVide() {
+    return { possede: [], tenue: null, char: null, pack: null, boostXP: 0, boostCoins: 0, achats: [], gagnes: 0 };
   }
   // (étape 77) L'équipement de départ : pour chaque classe, sa 1re arme, son 1er gadget et son 1er explosif ; pour chaque arme, les pièces d'origine.
   function equipementDeDepart() {
@@ -158,12 +168,12 @@ Tanks.Sauvegarde = (function () {
       if (brut) {
         const ancienne = JSON.parse(brut);
         const neuve = vide();
-        donnees = Object.assign(neuve, ancienne, { version: VERSION, equipement: fusionner(neuve.equipement, ancienne.equipement), campagne: fusionner(neuve.campagne, ancienne.campagne), progression: fusionner(neuve.progression, ancienne.progression) }); // (étape 88 : la campagne aussi ; demande 97 : la progression)
+        donnees = Object.assign(neuve, ancienne, { version: VERSION, equipement: fusionner(neuve.equipement, ancienne.equipement), campagne: fusionner(neuve.campagne, ancienne.campagne), progression: fusionner(neuve.progression, ancienne.progression), boutique: fusionner(neuve.boutique, ancienne.boutique) }); // (livre n° 28 : + la boutique) // (étape 88 : la campagne aussi ; demande 97 : la progression)
         if ((ancienne.version || 1) < 13) convertir13(donnees, ancienne); // (demande 97)
         const coins = (ancienne.version || 1) < 14 ? convertir14(donnees) : 0; // (demande 101)
         if ((ancienne.version || 1) < 15) convertir15(donnees); // (demande 102)
         const bonus = (ancienne.version || 1) < 16 ? convertir16(donnees) : []; // (livre n° 6)
-        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins, bonus });
+        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins, bonus, boutique: (ancienne.version || 1) < 17 }); // (livre n° 28)
       }
     } catch (e) {
       donnees = vide();

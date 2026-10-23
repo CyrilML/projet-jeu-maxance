@@ -505,13 +505,77 @@
     .a-coins { display: inline-block; padding: 4px 14px; border: 1px solid rgba(255,211,106,.35); border-radius: 20px; background: rgba(20,16,8,.55); }
     .a-pied kbd { color: #f0e6c8; }
     @keyframes a-entre { from { opacity: 0; transform: translateY(12px); } }
+    /* (livre de demandes n° 7, 22 et 28) LA BOUTIQUE : par-dessus l'accueil, dans le style de l'armurerie */
+    .a-boutique { color: #e9f6ff; background: linear-gradient(rgba(20,52,70,.92), rgba(8,20,30,.94)); border-color: #59b8e8; box-shadow: 0 0 18px rgba(90,190,255,.25), 0 6px 0 #0a2a3a; }
+    .a-boutique:hover, .a-boutique:focus { box-shadow: 0 0 30px rgba(90,190,255,.6), 0 8px 0 #0a2a3a; }
+    #boutique { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; gap: 8px; padding: 10px 14px; color: #f2f4f7; overflow: hidden;
+      --bf-orange: #ff7a1a; --bf-gris: #9aa3ad; --bf-bord: #2a3038; --bf-vert: #62e38e; --bf-rouge: #ff5d4d; --bq-or: #ffd36a;
+      font-family: "Bahnschrift", "Roboto Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif; font-stretch: condensed; font-size: 14px;
+      background: radial-gradient(ellipse at 50% -10%, #1f242b 0%, #0d0f12 55%, #060708 100%); }
+    #boutique[hidden] { display: none; }
+    #boutique button { touch-action: manipulation; font-family: inherit; color: #f2f4f7; background: #181c21; border: 1px solid var(--bf-bord); border-radius: 3px; }
+    #boutique kbd { font-size: .72em; padding: 0 4px; border: 1px solid #555d66; border-radius: 3px; background: #111418; }
+    .bq-haut { display: flex; align-items: center; gap: 14px; border-bottom: 1px solid var(--bf-bord); padding-bottom: 8px; }
+    .bq-titre { font-size: 1.7rem; font-weight: 800; letter-spacing: .06em; border-left: 4px solid var(--bf-orange); padding-left: 10px; }
+    .bq-titre small { display: block; font-size: .62rem; font-weight: 600; letter-spacing: .14em; color: var(--bf-gris); text-transform: uppercase; }
+    .bq-solde { margin-left: auto; padding: 5px 16px; border: 1px solid rgba(255,211,106,.45); border-radius: 20px; background: rgba(40,30,8,.6); color: var(--bq-or); font-size: 1.05rem; }
+    .bq-solde b { font-size: 1.3rem; }
+    .bq-retour { padding: 6px 12px !important; }
+    .bq-message { padding: 6px 12px; border-radius: 3px; background: rgba(98,227,142,.12); border: 1px solid var(--bf-vert); }
+    .bq-message.non { background: rgba(255,93,77,.12); border-color: var(--bf-rouge); }
+    .bq-message.euros { background: rgba(255,211,106,.14); border-color: var(--bq-or); font-weight: 700; }
+    .bq-corps { flex: 1; min-height: 0; display: grid; grid-template-columns: 170px 1fr 300px; gap: 10px; }
+    .bq-rayons { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+    .bq-rayon { display: flex; align-items: center; gap: 8px; text-align: left; padding: 8px 10px !important; font-size: .95rem; text-transform: uppercase; letter-spacing: .04em; }
+    .bq-rayon span { font-size: 1.2rem; }
+    .bq-rayon.actif { border-color: var(--bf-orange) !important; background: rgba(255,122,26,.16) !important; color: #fff; }
+    .bq-articles { min-height: 0; overflow-y: auto; padding-right: 4px; }
+    .bq-arme { display: block; margin-bottom: 8px; color: var(--bf-gris); }
+    .bq-arme select { font: inherit; color: #fff; background: #181c21; border: 1px solid var(--bf-bord); padding: 3px 6px; }
+    .bq-avert { margin: 0 0 8px; padding: 6px 10px; border-left: 3px solid var(--bq-or); background: rgba(255,211,106,.08); }
+    .bq-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+    .bq-carte { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: stretch; gap: 3px; padding: 0 0 8px !important; text-align: left; cursor: pointer; transition: transform .15s; }
+    .bq-carte:hover { transform: translateY(-2px); }
+    .bq-carte.focus { box-shadow: 0 0 0 2px #fff, 0 0 16px rgba(255,122,26,.55); }
+    .bq-carte.a-toi { opacity: .8; }
+    .bq-image { height: 78px; background: #14171b center / cover no-repeat; border-bottom: 1px solid var(--bf-bord); display: grid; place-items: center; }
+    .bq-icone { background: radial-gradient(circle at 50% 55%, rgba(255,177,90,.18), transparent 65%), #14171b; }
+    .bq-icone span { font-size: 2.3rem; filter: drop-shadow(0 3px 5px #000); }
+    .bq-pinceau { font-size: 1.4rem; filter: drop-shadow(0 2px 3px #000); }
+    .bq-nom, .bq-carte small, .bq-prix { padding: 0 8px; }
+    .bq-nom { font-size: .98rem; }
+    .bq-etat { color: var(--bf-gris); font-size: .74rem; }
+    .bq-prix { color: var(--bq-or); font-weight: 700; }
+    .bq-prix.cher { color: var(--bf-rouge); }
+    .bq-prix.eu { color: var(--bf-vert); }
+    .bq-prix.euros { color: #cfd5dc; text-decoration: line-through; }
+    .bq-bandeau { position: absolute; top: 12px; right: -30px; width: 116px; text-align: center; transform: rotate(35deg); background: var(--bf-vert); color: #111; font-size: .6rem; font-weight: 800; }
+    .bq-bandeau.porte { background: var(--bf-orange); }
+    .bq-vide { color: var(--bf-gris); }
+    .bq-detail { display: flex; flex-direction: column; gap: 6px; min-height: 0; overflow-y: auto; padding: 8px; border: 1px solid var(--bf-bord); background: rgba(18,21,25,.85); }
+    .bq-detail h3 { margin: 4px 0 0; font-size: 1.3rem; }
+    .bq-detail p { margin: 0; color: #d6dbe0; }
+    .bq-studio, .bq-grande { position: relative; height: 170px; background: #0e1013 center / contain no-repeat; border: 1px solid var(--bf-bord); }
+    .bq-grande.bq-icone { display: grid; place-items: center; } .bq-grande.bq-icone span { font-size: 4rem; }
+    .bq-studio canvas { width: 100% !important; height: 100% !important; }
+    .bq-bouton { padding: 9px 12px !important; font-weight: 800; background: linear-gradient(#ff8a2a, #d85e0c) !important; border-color: #ffb15a !important; color: #111 !important; }
+    .bq-bouton.cher { background: #3a2020 !important; color: #ffb0a8 !important; border-color: var(--bf-rouge) !important; }
+    .bq-bouton.porter { background: linear-gradient(#5fd38a, #2f9a58) !important; }
+    .bq-bouton.second { background: #22272d !important; color: #f2f4f7 !important; border-color: var(--bf-bord) !important; }
+    .bq-bouton.euros { background: #2a2614 !important; color: var(--bq-or) !important; border-color: var(--bq-or) !important; }
+    .bq-voile { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; background: rgba(0,0,0,.6); }
+    .bq-confirme { max-width: 440px; padding: 16px 18px; border: 1px solid var(--bf-orange); background: #121519; text-align: center; }
+    .bq-confirme h3 { margin: 0 0 8px; }
+    .bq-bouton kbd { color: #f2f4f7; }
+    .bq-pied { margin: 0; color: var(--bf-gris); font-size: .8rem; text-align: center; }
+    @media (max-width: 760px) { .bq-corps { grid-template-columns: 1fr; } .bq-rayons { flex-direction: row; flex-wrap: wrap; } }
   </style>
 </head>
 <body>
   <div class="page">
     <header class="entete">
       <h1>🛡️ The Last Battlefield · bataille de tanks, soldats, grenades, maisons à détruire, engins, motos, quads, camions, hélicos de transport, bateaux, sous-marins, avions et portails · et le souterrain</h1>
-      <span><span id="version" class="version"></span> <a href="../index.html#etape105">📓 Ouvrir le carnet (étapes 60 à 105)</a> <button id="plein-ecran" type="button" title="Plein écran (touche K)">⛶ Plein écran (K)</button></span>
+      <span><span id="version" class="version"></span> <a href="../index.html#etape106">📓 Ouvrir le carnet (étapes 60 à 106)</a> <button id="plein-ecran" type="button" title="Plein écran (touche K)">⛶ Plein écran (K)</button></span>
     </header>
 
     <div class="cadre-ecran">
@@ -524,6 +588,7 @@
       </div>
       <div id="accueil" aria-label="La page d'accueil du jeu"></div>
       <div id="menu" hidden aria-label="Le menu avant la bataille"></div>
+      <div id="boutique" hidden aria-label="La boutique : armes, skins, packs et avancements"></div>
       <div id="campagne" hidden aria-label="La campagne : chapitres, briefing, fin de mission"></div>
       <div id="progression" aria-label="Ta progression : niveaux et bilan d'expérience"></div>
       <div id="pause" hidden>⏸️ Pause (Échap pour reprendre)</div>
@@ -569,73 +634,75 @@
   </div>
 
   <script src="../circuit/vendor/three.min.js"></script>
-  <script src="config.js?v=49"></script>
-  <script src="moteur/evenements.js?v=49"></script>
-  <script src="moteur/bruit.js?v=49"></script>
-  <script src="moteur/entrees.js?v=49"></script>
-  <script src="moteur/grille.js?v=49"></script>
-  <script src="donnees/carte-du-jour.js?v=49"></script>
-  <script src="logique/base.js?v=49"></script>
-  <script src="logique/terrain.js?v=49"></script>
-  <script src="logique/souterrain.js?v=49"></script>
-  <script src="logique/structures.js?v=49"></script>
-  <script src="logique/char.js?v=49"></script>
-  <script src="logique/obus.js?v=49"></script>
-  <script src="logique/ia.js?v=49"></script>
-  <script src="logique/soldat.js?v=49"></script>
-  <script src="logique/troupes.js?v=49"></script>
-  <script src="logique/vehicules.js?v=49"></script>
-  <script src="logique/helicos.js?v=49"></script>
-  <script src="logique/bateaux.js?v=49"></script>
-  <script src="logique/portails.js?v=49"></script>
-  <script src="logique/sousmarins.js?v=49"></script>
-  <script src="logique/avions.js?v=49"></script>
-  <script src="logique/ordres.js?v=49"></script>
-  <script src="logique/radio.js?v=49"></script>
-  <script src="logique/engins.js?v=49"></script>
-  <script src="logique/progression.js?v=49"></script>
-  <script src="logique/equipement.js?v=49"></script>
-  <script src="logique/armes.js?v=49"></script>
-  <script src="logique/gadgets.js?v=49"></script>
-  <script src="logique/explosifs.js?v=49"></script>
-  <script src="donnees/sauvegarde.js?v=49"></script>
-  <script src="logique/monde.js?v=49"></script>
-  <script src="logique/campagne.js?v=49"></script>
-  <script src="logique/cinematique.js?v=49"></script>
-  <script src="affichage/outils3d.js?v=49"></script>
-  <script src="affichage/chars3d.js?v=49"></script>
-  <script src="affichage/armes3d.js?v=49"></script>
-  <script src="affichage/uniformes.js?v=49"></script>
-  <script src="affichage/engins3d.js?v=49"></script>
-  <script src="affichage/vehicules3d.js?v=49"></script>
-  <script src="affichage/helicos3d.js?v=49"></script>
-  <script src="affichage/avions3d.js?v=49"></script>
-  <script src="affichage/maisons3d.js?v=49"></script>
-  <script src="affichage/base3d.js?v=49"></script>
-  <script src="affichage/decor.js?v=49"></script>
-  <script src="affichage/marques-sol.js?v=49"></script>
-  <script src="affichage/effets.js?v=49"></script>
-  <script src="affichage/particules.js?v=49"></script>
-  <script src="affichage/tirs.js?v=49"></script>
-  <script src="affichage/explosions.js?v=49"></script>
-  <script src="affichage/explosifs3d.js?v=49"></script>
-  <script src="affichage/station3d.js?v=49"></script>
-  <script src="affichage/scene.js?v=49"></script>
-  <script src="affichage/qualite.js?v=49"></script>
-  <script src="affichage/tableau.js?v=49"></script>
-  <script src="affichage/sous-le-capot.js?v=49"></script>
-  <script src="affichage/sons.js?v=49"></script>
-  <script src="affichage/musique.js?v=49"></script>
-  <script src="affichage/barre-ordres.js?v=49"></script>
-  <script src="affichage/radio-voix.js?v=49"></script>
-  <script src="affichage/ambiance.js?v=49"></script>
-  <script src="affichage/plein-ecran.js?v=49"></script>
-  <script src="affichage/accueil.js?v=49"></script>
-  <script src="affichage/menu.js?v=49"></script>
-  <script src="affichage/progression-ecrans.js?v=49"></script>
-  <script src="affichage/campagne-tableau.js?v=49"></script>
-  <script src="affichage/campagne-ecrans.js?v=49"></script>
-  <script src="affichage/cinematique.js?v=49"></script>
-  <script src="main.js?v=49"></script>
+  <script src="config.js?v=50"></script>
+  <script src="moteur/evenements.js?v=50"></script>
+  <script src="moteur/bruit.js?v=50"></script>
+  <script src="moteur/entrees.js?v=50"></script>
+  <script src="moteur/grille.js?v=50"></script>
+  <script src="donnees/carte-du-jour.js?v=50"></script>
+  <script src="logique/base.js?v=50"></script>
+  <script src="logique/terrain.js?v=50"></script>
+  <script src="logique/souterrain.js?v=50"></script>
+  <script src="logique/structures.js?v=50"></script>
+  <script src="logique/char.js?v=50"></script>
+  <script src="logique/obus.js?v=50"></script>
+  <script src="logique/ia.js?v=50"></script>
+  <script src="logique/soldat.js?v=50"></script>
+  <script src="logique/troupes.js?v=50"></script>
+  <script src="logique/vehicules.js?v=50"></script>
+  <script src="logique/helicos.js?v=50"></script>
+  <script src="logique/bateaux.js?v=50"></script>
+  <script src="logique/portails.js?v=50"></script>
+  <script src="logique/sousmarins.js?v=50"></script>
+  <script src="logique/avions.js?v=50"></script>
+  <script src="logique/ordres.js?v=50"></script>
+  <script src="logique/radio.js?v=50"></script>
+  <script src="logique/engins.js?v=50"></script>
+  <script src="logique/progression.js?v=50"></script>
+  <script src="logique/equipement.js?v=50"></script>
+  <script src="logique/armes.js?v=50"></script>
+  <script src="logique/gadgets.js?v=50"></script>
+  <script src="logique/explosifs.js?v=50"></script>
+  <script src="donnees/sauvegarde.js?v=50"></script>
+  <script src="logique/boutique.js?v=50"></script>
+  <script src="logique/monde.js?v=50"></script>
+  <script src="logique/campagne.js?v=50"></script>
+  <script src="logique/cinematique.js?v=50"></script>
+  <script src="affichage/outils3d.js?v=50"></script>
+  <script src="affichage/chars3d.js?v=50"></script>
+  <script src="affichage/armes3d.js?v=50"></script>
+  <script src="affichage/uniformes.js?v=50"></script>
+  <script src="affichage/engins3d.js?v=50"></script>
+  <script src="affichage/vehicules3d.js?v=50"></script>
+  <script src="affichage/helicos3d.js?v=50"></script>
+  <script src="affichage/avions3d.js?v=50"></script>
+  <script src="affichage/maisons3d.js?v=50"></script>
+  <script src="affichage/base3d.js?v=50"></script>
+  <script src="affichage/decor.js?v=50"></script>
+  <script src="affichage/marques-sol.js?v=50"></script>
+  <script src="affichage/effets.js?v=50"></script>
+  <script src="affichage/particules.js?v=50"></script>
+  <script src="affichage/tirs.js?v=50"></script>
+  <script src="affichage/explosions.js?v=50"></script>
+  <script src="affichage/explosifs3d.js?v=50"></script>
+  <script src="affichage/station3d.js?v=50"></script>
+  <script src="affichage/scene.js?v=50"></script>
+  <script src="affichage/qualite.js?v=50"></script>
+  <script src="affichage/tableau.js?v=50"></script>
+  <script src="affichage/sous-le-capot.js?v=50"></script>
+  <script src="affichage/sons.js?v=50"></script>
+  <script src="affichage/musique.js?v=50"></script>
+  <script src="affichage/barre-ordres.js?v=50"></script>
+  <script src="affichage/radio-voix.js?v=50"></script>
+  <script src="affichage/ambiance.js?v=50"></script>
+  <script src="affichage/plein-ecran.js?v=50"></script>
+  <script src="affichage/accueil.js?v=50"></script>
+  <script src="affichage/menu.js?v=50"></script>
+  <script src="affichage/boutique.js?v=50"></script>
+  <script src="affichage/progression-ecrans.js?v=50"></script>
+  <script src="affichage/campagne-tableau.js?v=50"></script>
+  <script src="affichage/campagne-ecrans.js?v=50"></script>
+  <script src="affichage/cinematique.js?v=50"></script>
+  <script src="main.js?v=50"></script>
 </body>
 </html>

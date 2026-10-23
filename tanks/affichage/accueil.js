@@ -11,6 +11,8 @@
 // (demande 101) « 🎬 Bande-annonce » : la vidéo d'introduction du jeu, puis retour ici. En bas : tes BATTLE COINS (gagnés à chaque mission réussie de la campagne).
 // ✍️ (livre de demandes n° 4) l'affiche est peaufinée : un cadre en coins, les portes qui arrivent l'une après l'autre et
 // s'allument au survol, les touches dessinées comme des touches (le style est dans tanks/index.html).
+// ✍️ (livre de demandes n° 28 : « Faire une boutique ») une 3e porte : 🛒 BOUTIQUE (affichage/boutique.js). L'accueil reste
+// derrière ; « ← Retour » (ou Échap) y ramène.
 // L'accueil est un ÉCRAN (de l'affichage) : il ne touche pas au monde. Le menu attend qu'il soit fermé.
 
 window.Tanks = window.Tanks || {};
@@ -36,10 +38,11 @@ Tanks.Accueil = (function () {
       '<div class="a-boutons" hidden>' +
       '<button class="a-jouer a-mode a-campagne" data-accueil="campagne">▶ CAMPAGNE<small>' + Tanks.CONFIG.campagne.chapitres.length + " chapitres · l'histoire</small></button>" + // (étape 88)
       '<button class="a-jouer a-mode a-bataille" data-accueil="bataille">⚔️ BATAILLE<small>bataille libre · toutes les cartes</small></button>' +
+      '<button class="a-jouer a-mode a-boutique" data-accueil="boutique">🛒 BOUTIQUE<small>armes · skins · packs · avancements</small></button>' + // (livre n° 28)
       '<button class="a-film" data-accueil="film" title="La bande-annonce du jeu (demande 101)">🎬 Bande-annonce</button>' +
-      '<a class="a-carnet" href="../index.html#etape105">📓 Le carnet</a>' +
+      '<a class="a-carnet" href="../index.html#etape106">📓 Le carnet</a>' +
       "</div>" +
-      '<div class="a-coins" title="Gagnés à chaque mission réussie de la campagne (demande 101)">🪙 <b></b> Battle Coins</div>' +
+      '<div class="a-coins" title="Gagnés à chaque mission réussie de la campagne (demande 101) et en bataille libre (livre n° 22)">🪙 <b></b> Battle Coins</div>' +
       '<p class="a-pied"><kbd>←</kbd> <kbd>→</kbd> choisir · <kbd>Entrée</kbd> entrer · <kbd>M</kbd> musique</p>' + // (livre n° 4 : les touches dans de vraies petites touches)
       "</div>";
     // (le clavier et la souris : capturés avant les oreilles du jeu tant que l'accueil est là)
@@ -70,6 +73,14 @@ Tanks.Accueil = (function () {
 
   // mode : "campagne" (la liste des chapitres) ou "bataille" (le menu de la bataille libre)
   function fermer(mode) {
+    if (mode === "boutique") { // (livre n° 28) la boutique s'ouvre PAR-DESSUS l'accueil ; en sortant, on revient ici
+      visible = false;
+      Tanks.EcranBoutique.ouvrir(() => {
+        montrer();
+        racine.querySelector(".a-boutique").focus();
+      });
+      return;
+    }
     if (mode === "film") {
       // ✍️ (morceau 3) la bande-annonce : l'accueil s'efface, le film commence (s'il ne peut pas, l'accueil reste)
       if (!demander || !demander("film")) return;
