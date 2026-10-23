@@ -9,6 +9,8 @@
 //      ✍️ (étape 88) Deux portes au lieu d'une : ▶ CAMPAGNE (l'histoire, en 6 chapitres : affichage/campagne-ecrans.js)
 //      et ⚔️ BATAILLE (la bataille libre, comme avant : le menu de l'équipement). ← → pour choisir, Entrée pour entrer.
 // (demande 101) « 🎬 Bande-annonce » : la vidéo d'introduction du jeu, puis retour ici. En bas : tes BATTLE COINS (gagnés à chaque mission réussie de la campagne).
+// ✍️ (livre de demandes n° 4) l'affiche est peaufinée : un cadre en coins, les portes qui arrivent l'une après l'autre et
+// s'allument au survol, les touches dessinées comme des touches (le style est dans tanks/index.html).
 // L'accueil est un ÉCRAN (de l'affichage) : il ne touche pas au monde. Le menu attend qu'il soit fermé.
 
 window.Tanks = window.Tanks || {};
@@ -38,7 +40,7 @@ Tanks.Accueil = (function () {
       '<a class="a-carnet" href="../index.html#etape103">📓 Le carnet</a>' +
       "</div>" +
       '<div class="a-coins" title="Gagnés à chaque mission réussie de la campagne (demande 101)">🪙 <b></b> Battle Coins</div>' +
-      '<p class="a-pied">← → choisir · Entrée : entrer · M : musique</p>' +
+      '<p class="a-pied"><kbd>←</kbd> <kbd>→</kbd> choisir · <kbd>Entrée</kbd> entrer · <kbd>M</kbd> musique</p>' + // (livre n° 4 : les touches dans de vraies petites touches)
       "</div>";
     // (le clavier et la souris : capturés avant les oreilles du jeu tant que l'accueil est là)
     const geste = (e) => {

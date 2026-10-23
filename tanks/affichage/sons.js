@@ -382,6 +382,12 @@ Tanks.Sons = (function () {
     if (!ctx || coupe) return;
     friture(0.16, 0.12, ennemi ? 1400 : 2400);
     clic(0.3, ennemi ? 700 : 1200, 0.11);
+    if (!ennemi && C.radio.voix.effets && C.radio.voix.effets.bipFin) bip(1750, 0.16, 0.07); // (livre n° 3 : le « bip » quand on relâche le bouton)
+  }
+  // (livre n° 3) un petit « crr » dans le souffle de la radio, pendant que quelqu'un parle
+  function crepitement(ennemi) {
+    if (!ctx || coupe) return;
+    friture(0.05 + Math.random() * 0.06, 0.02 + Math.random() * 0.04, (ennemi ? 1200 : 2000) + Math.random() * 2500);
   }
   // une courte rafale de « friture » (du bruit filtré comme dans un talkie-walkie)
   function friture(force, duree, frequence) {
@@ -412,7 +418,7 @@ Tanks.Sons = (function () {
       b.start();
       fond = { source: b, volume: g };
     }
-    fond.volume.gain.setTargetAtTime(oui && !coupe ? 0.018 : 0, ctx.currentTime, 0.04);
+    fond.volume.gain.setTargetAtTime(oui && !coupe ? (C.radio.voix.effets ? C.radio.voix.effets.fond : 0.018) : 0, ctx.currentTime, 0.04);
   }
   // (étape 63) Le sonar : « ping » (une note aiguë qui résonne longtemps).
   function ping() {
@@ -496,5 +502,5 @@ Tanks.Sons = (function () {
   function basculer() {
     coupe = !coupe;
   }
-  return { demarrer, maj, basculer, frole, impact, explosion, radioDebut, radioFin, radioFond, coupe: () => coupe, etat: () => (ctx ? (ctx.state === "running" ? "allumé 🔊" : "endormi 🔇") : "pas encore allumé (appuie sur une touche)") };
+  return { demarrer, maj, basculer, frole, impact, explosion, radioDebut, radioFin, radioFond, crepitement, coupe: () => coupe, etat: () => (ctx ? (ctx.state === "running" ? "allumé 🔊" : "endormi 🔇") : "pas encore allumé (appuie sur une touche)") };
 })();

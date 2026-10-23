@@ -264,9 +264,10 @@ Tanks.Tableau = (function () {
           const A = s.armes[s.arme], st = A.stats;
           barre(24, H - 28, 200, s.rechargement > 0 ? 1 - s.rechargement / st.rechargement : A.chargeur / st.chargeur, A.chargeur > 0 && !s.rechargement, s.rechargement > 0 ? "🔄 recharge…" : A.chargeur === 0 ? "R : recharger" : ""); // (livre n° 1 : les balles sont déjà écrites en gros, en bas à droite)
           // les munitions en gros, en bas à droite, et le point du laser
-          panneau(L - 300, H - 70, 140, 58);
-          texte(A.chargeur + "", L - 200, H - 26, 34, A.chargeur === 0 ? "#ff7a6a" : "#fff", "right");
-          texte("/ " + (A.reserve === Infinity ? "∞" : A.reserve), L - 194, H - 26, 14, "#ccc");
+          const xm = IU.vitesseAPied ? 0 : 150; // (livre n° 1 : sans la vitesse, les munitions vont tout à droite)
+          panneau(L - 300 + xm, H - 70, 140, 58);
+          texte(A.chargeur + "", L - 200 + xm, H - 26, 34, A.chargeur === 0 ? "#ff7a6a" : "#fff", "right");
+          texte("/ " + (A.reserve === Infinity ? "∞" : A.reserve), L - 194 + xm, H - 26, 14, "#ccc");
           if (st.laser && s.vise && s.arme === "principale") {
             const p = Tanks.Scene.versEcran(s.vise.x, s.vise.y, s.vise.z, L, H);
             if (p) {

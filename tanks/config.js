@@ -1071,6 +1071,21 @@ Tanks.CONFIG = {
   menu: {
     barres: { degats: 4.2, portee: 520, precision: 0.014, recul: 0.05, cadence: 1300, chargeur: 64, rechargement: 6, visee: 0.8, mobilite: [0.8, 1.2], bruit: 2, visibilite: 80 },
     vue: { vitesse: 0.35, reprise: 4, zoomMin: 0.55, zoomMax: 1.8, balancement: 0.55, depart: 0.3, hauteur: 0.14 },
+    // ✍️ (livre de demandes n° 4 : « refaire le menu dans le moindre détail ») LES APERÇUS des cartes du menu, dessinés par
+    // le menu lui-même (pas d'image à télécharger) : pour chaque carte, le ciel (haut, bas), les collines (loin, près),
+    // le sol, et ce qu'on y voit (« decor » : arbres, maisons, immeubles, ruines, dunes, village, tunnel) ;
+    // pour chaque tank, sa couleur de camouflage (la forme vient de ses vraies mesures : longueur, hauteur, canon).
+    apercus: {
+      cartes: {
+        bataille: { ciel: ["#6d8fb0", "#d9d2b8"], collines: ["#5f7458", "#4a5e3c"], sol: "#56693a", decor: "arbres" },
+        souterrain: { ciel: ["#151719", "#2a2c2e"], collines: ["#202224", "#1a1b1c"], sol: "#3a3936", decor: "tunnel" },
+        ville: { ciel: ["#7f9bb5", "#d8d6cc"], collines: ["#77808a", "#5d646c"], sol: "#5a5c60", decor: "immeubles" },
+        ruines: { ciel: ["#8a8c90", "#c9c4b8"], collines: ["#6c6a66", "#56544f"], sol: "#5e5b55", decor: "ruines" },
+        desert: { ciel: ["#e9b878", "#f6e2b8"], collines: ["#d7ac70", "#c9975a"], sol: "#d6b47c", decor: "dunes" },
+        "village-desert": { ciel: ["#e2b47a", "#f4e0bc"], collines: ["#d4a96e", "#c49458"], sol: "#cfac78", decor: "village" },
+      },
+      chars: { leclerc: "#5d6448", abrams: "#a08c62", leopard: "#4f5a44" },
+    },
   },
   // ✍️ (livre de demandes, n° 1) « Retirer toutes les infos inutiles. » L'ÉCRAN DE LA BATAILLE, épuré façon Battlefield :
   // on garde l'essentiel (vie, munitions, armes, carte, score, viseur, objectif) ; le reste reste SOUS LE CAPOT.

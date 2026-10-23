@@ -456,6 +456,55 @@
     .a-mode { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 230px; }
     .a-mode small { font-size: .78rem; font-weight: normal; letter-spacing: .12em; text-transform: uppercase; opacity: .8; }
     .a-bataille { color: #f3e6c0; background: linear-gradient(rgba(60,46,20,.9), rgba(26,20,10,.92)); border-color: #c9a24a; box-shadow: 0 0 18px rgba(255,180,60,.25), 0 6px 0 #3a2a0a; }
+    /* ✍️ (livre de demandes n° 4) « Refaire le menu dans le moindre détail » : les aperçus, les animations, les pastilles */
+    .m-titre-jeu small { display: block; margin-top: 4px; font-size: .62rem; font-weight: 600; letter-spacing: .22em; color: var(--bf-gris); }
+    .m-resume { display: flex; flex-wrap: wrap; gap: 4px; }
+    .m-pastille { padding: 2px 8px; background: rgba(255,255,255,.05); border: 1px solid var(--bf-bord); border-radius: 2px; color: #cfd5dc; font-size: .74rem; white-space: nowrap; }
+    .m-pastille.ici { border-color: var(--bf-orange); color: #fff; background: rgba(255,122,26,.14); }
+    .m-onglet { position: relative; transition: color .15s, background .2s; }
+    .m-onglet:hover { color: #fff !important; }
+    .m-onglet.actif::after { content: ""; position: absolute; left: 50%; bottom: -3px; width: 8px; height: 8px; background: var(--bf-orange); transform: translate(-50%, 50%) rotate(45deg); }
+    .m-aide { border-left: 3px solid var(--bf-orange); padding: 2px 0 2px 10px; color: #e6e9ed; letter-spacing: .02em; }
+    .m-cartes { animation: m-arrive .28s ease-out; }
+    .m-carte { position: relative; overflow: hidden; padding: 0 12px 12px !important; transition: transform .16s ease, box-shadow .2s ease, border-color .2s; cursor: pointer; }
+    .m-carte:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,.6), 0 0 0 1px rgba(255,177,90,.45); }
+    .m-carte.focus { outline: none; box-shadow: 0 0 0 2px #fff, 0 0 18px rgba(255,122,26,.55); }
+    .m-carte.choisi { animation: m-choisi .35s ease-out; }
+    .m-apercu { position: relative; margin: 0 -12px 8px; height: 112px; background: #14171b center / cover no-repeat; border-bottom: 1px solid var(--bf-bord); display: grid; place-items: center; }
+    .m-apercu::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 55%, rgba(10,12,14,.75)); pointer-events: none; }
+    .m-apercu-icone { position: absolute; left: 10px; bottom: 6px; z-index: 1; font-size: 1.6rem; filter: drop-shadow(0 2px 3px #000); }
+    .m-carte:hover .m-apercu { filter: brightness(1.12) saturate(1.1); }
+    .m-portrait { background: radial-gradient(circle at 50% 60%, color-mix(in srgb, var(--classe, #59616b) 35%, transparent), transparent 70%), repeating-linear-gradient(135deg, #171a1f 0 10px, #13161a 10px 20px); }
+    .m-hexa { position: relative; z-index: 1; width: 84px; height: 84px; display: grid; place-items: center; font-size: 2.6rem; background: linear-gradient(160deg, var(--classe, #59616b), #1a1d22 130%);
+      clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%); transition: transform .25s; }
+    .m-carte:hover .m-hexa, .m-carte.choisi .m-hexa { transform: scale(1.08) rotate(-3deg); }
+    .m-grande-icone { background: radial-gradient(circle at 50% 55%, rgba(255,177,90,.18), transparent 65%), repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 16px), #14171b; }
+    .m-grande-icone span { position: relative; z-index: 1; font-size: 3rem; filter: drop-shadow(0 4px 6px #000); transition: transform .25s; }
+    .m-carte:hover .m-grande-icone span { transform: scale(1.12); }
+    .m-equipe { position: absolute; top: 20px; right: -34px; z-index: 2; width: 132px; text-align: center; transform: rotate(35deg); background: var(--bf-orange); color: #111; font-size: .62rem; font-weight: 800; letter-spacing: .12em; padding: 2px 0; box-shadow: 0 2px 6px rgba(0,0,0,.5); }
+    .m-barre b { transition: width .4s ease; }
+    .m-combat { position: relative; overflow: hidden; box-shadow: 0 0 22px rgba(255,122,26,.45); transition: transform .12s; }
+    .m-combat::after { content: ""; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.45), transparent); animation: m-reflet 2.6s ease-in-out infinite; }
+    .m-combat:hover { transform: scale(1.04); }
+    .m-bas { position: sticky; bottom: -10px; z-index: 3; border-top: 1px solid var(--bf-bord); padding: 8px 0 10px; background: linear-gradient(rgba(8,9,11,.82), #08090b); }
+    @keyframes m-arrive { from { opacity: 0; transform: translateY(6px); } }
+    @keyframes m-choisi { 40% { transform: scale(1.025); } }
+    @keyframes m-reflet { 0%, 55% { left: -60%; } 100% { left: 130%; } }
+    /* (livre n° 4) la page d'accueil : un cadre façon affiche, des portes qui s'allument au survol, un bandeau en bas */
+    .a-fond::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .18; background: repeating-linear-gradient(0deg, rgba(0,0,0,.25) 0 1px, transparent 1px 3px); }
+    .a-contenu::before, .a-contenu::after { content: ""; position: absolute; width: 38px; height: 38px; border: 2px solid rgba(255,177,90,.55); pointer-events: none; }
+    .a-contenu::before { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+    .a-contenu::after { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+    .a-jouer, .a-film, .a-carnet { transition: transform .15s ease, box-shadow .2s, filter .2s; }
+    .a-jouer:hover, .a-jouer:focus { transform: translateY(-3px) scale(1.03); box-shadow: 0 0 34px rgba(255,180,60,.75), 0 8px 0 #6b4410; }
+    .a-bataille:hover, .a-bataille:focus { box-shadow: 0 0 30px rgba(255,180,60,.55), 0 8px 0 #3a2a0a; }
+    .a-jouer:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+    .a-film:hover, .a-carnet:hover, .a-film:focus { transform: translateY(-2px); }
+    .a-boutons:not([hidden]) > * { animation: a-entre .45s ease-out backwards; }
+    .a-boutons > :nth-child(2) { animation-delay: .07s !important; } .a-boutons > :nth-child(3) { animation-delay: .14s !important; } .a-boutons > :nth-child(4) { animation-delay: .21s !important; }
+    .a-coins { display: inline-block; padding: 4px 14px; border: 1px solid rgba(255,211,106,.35); border-radius: 20px; background: rgba(20,16,8,.55); }
+    .a-pied kbd { color: #f0e6c8; }
+    @keyframes a-entre { from { opacity: 0; transform: translateY(12px); } }
   </style>
 </head>
 <body>

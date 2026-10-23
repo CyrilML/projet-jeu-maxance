@@ -12,6 +12,13 @@
 //   3. écrit la phrase en SOUS-TITRE en bas de l'écran : l'icône radio, le nom (couleur de son camp), la phrase.
 // Touche N : couper ou remettre les voix (les sous-titres restent). S'il n'y a pas de voix française dans ton
 // ordinateur, ou pas de synthèse vocale du tout : les sous-titres seulement (pas d'erreur).
+// ✍️ (livre de demandes n° 3 : « des voix plus réalistes et plus humaines ») La voix de l'ordinateur reste gratuite, mais :
+//   - on choisit mieux les voix (les « naturelles » d'abord, et des points en moins aux voix très robotiques) ;
+//   - on écrit la phrase COMME ON PARLE avant de la donner à la voix : « je ne bouge plus » → « je bouge plus », un petit
+//     « euh… » ou « bon, » de temps en temps (jamais quand c'est urgent) ;
+//   - on la coupe en MORCEAUX (à chaque « . ! ? ») : la voix respire entre deux, et chaque morceau a son propre rythme ;
+//   - l'ÉMOTION change la voix : urgent = plus vite et un peu plus haut, bavardage = calme, l'ennemi = grave et posé ;
+//   - autour : le « clic-kchh » du talkie-walkie, des petits crépitements dans le souffle, et un « bip » à la fin.
 // Ce fichier ne touche pas au monde : il écoute la radio du jeu et il dessine.
 
 window.Tanks = window.Tanks || {};
@@ -33,6 +40,8 @@ Tanks.RadioVoix = (function () {
   const sousTitres = []; // ce qui est écrit en bas de l'écran
   const historique = []; // les dernières phrases dites (pour « sous le capot »)
   const bilan = { recues: 0, dites: 0, jetees: 0, perimees: 0, coupees: 0, lues: 0, erreurs: 0 };
+  // (livre n° 3) ce que la voix a VRAIMENT dit la dernière fois, et comment (pour « sous le capot »)
+  const humain = { dernier: "", morceaux: 0, emotion: "—", vitesse: 1, hauteur: 1, hesitations: 0, negations: 0 };
 
   // Les voix françaises que l'ordinateur connaît (elles arrivent parfois un peu après le chargement de la page)
   function chargerVoix() {
@@ -47,7 +56,7 @@ Tanks.RadioVoix = (function () {
     voixFr = v.filter((x) => (x.lang || "").toLowerCase().replace("_", "-").startsWith("fr"));
     // (étape 95) les plus belles voix d'abord (voir config « qualite »), puis le français de France ; on ne garde que
     // les meilleures, pour qu'aucun soldat n'ait une vieille voix très robotique quand il en existe une naturelle
-    const points = (x) => V.qualite.reduce((n, [mot, pts]) => n + ((x.name || "").toLowerCase().includes(mot) ? pts : 0), 0) + (x.lang === V.langue ? 5 : 0) + (x.localService === false ? 3 : 0);
+    const points = (x) => V.qualite.reduce((n, [mot, pts]) => n + ((x.name || "").toLowerCase().includes(mot) ? pts : 0), 0) + (x.lang === V.langue ? V.langueBonus || 5 : 0) + (x.localService === false ? 3 : 0);
     voixFr.sort((a, b) => points(b) - points(a));
     meilleure = voixFr.length ? voixFr[0].name : "aucune";
     const seuil = voixFr.length ? points(voixFr[0]) : 0;
@@ -142,25 +151,61 @@ Tanks.RadioVoix = (function () {
     if (sousTitres.length > 4) sousTitres.shift();
     Tanks.Sons.radioDebut(p.interceptee);
   }
+  // ✍️ (livre n° 3) ÉCRIRE COMME ON PARLE : la phrase du sous-titre reste propre ; celle qu'on donne à la voix est « parlée ».
+  const HU = V.humain;
+  function humaniser(texte, priorite) {
+    let t = texte;
+    if (!HU) return t;
+    // 1. on « mange » le « ne » : « je ne bouge plus » → « je bouge plus », « n'y a plus » → « y a plus »
+    if (Math.random() < HU.negation) {
+      const avant = t;
+      t = t.replace(/\b([Nn])e ([^\s,.!?]+) (pas|plus|rien|jamais|personne)\b/g, (m, n, mot, fin) => (n === "N" ? mot[0].toUpperCase() + mot.slice(1) : mot) + " " + fin);
+      t = t.replace(/\b([Jj])e n'(?=[^\s,.!?]+ (pas|plus|rien|jamais|personne)\b)/g, "$1'"); // (« je n'ai rien » → « j'ai rien »)
+      t = t.replace(/\bn'(?=[^\s,.!?]+ (pas|plus|rien|jamais|personne)\b)/g, ""); // (« il n'y a plus » → « il y a plus »)
+      if (t !== avant) humain.negations++;
+    }
+    // 2. un petit mot pour commencer (jamais quand c'est urgent)
+    const liste = HU.debuts[priorite];
+    if (liste && Math.random() < (HU.hesitation[priorite] || 0)) {
+      t = liste[Math.floor(Math.random() * liste.length)] + t[0].toLowerCase() + t.slice(1);
+      humain.hesitations++;
+    }
+    // 3. « : » et « ; » deviennent des virgules (la voix fait une petite pause au lieu de lire bizarrement)
+    return t.replace(/\s*[:;]\s*/g, ", ");
+  }
+  // L'émotion de la phrase : elle change le rythme et la hauteur de la voix.
+  function emotionDe(p) {
+    if (p.interceptee) return "ennemi";
+    if (p.priorite === "urgent") return "urgent";
+    return p.priorite === "reponse" ? "reponse" : "bavardage";
+  }
+  const borne = (x, [a, b]) => Math.max(a, Math.min(b, x));
   function parler(item, maintenant) {
     const p = item.phrase, tb = timbreDe(p);
     item.etat = "parle";
     item.limite = maintenant + item.duree * 1000;
     if (!voixPossible()) return; // (pas de voix : le sous-titre seulement, pendant la durée prévue)
     try {
-      const u = new window.SpeechSynthesisUtterance(p.texte);
-      u.lang = V.langue;
-      u.voice = voixPour(p.qui);
+      const dit = humaniser(p.texte, p.priorite), emo = emotionDe(p), E = (HU && HU.emotions[emo]) || { vitesse: 1, hauteur: 1 };
+      // (livre n° 3) LES MORCEAUX : une phrase par « . ! ? … » ; la voix respire entre deux
+      const morceaux = HU && HU.morceaux ? (dit.match(/[^.!?…]+[.!?…]*/g) || [dit]).map((x) => x.trim()).filter(Boolean) : [dit];
       // (étape 96) un peu de hasard à CHAQUE phrase : on ne dit jamais deux fois une phrase exactement pareil
-      // (plus vite quand c'est urgent, un poil plus haut ou plus bas)
-      const h = V.hasard, urgent = p.priorite === "urgent";
-      u.pitch = tb.hauteur * (1 + (Math.random() * 2 - 1) * h.hauteur);
-      u.rate = tb.vitesse * (1 + (Math.random() * 2 - 1) * h.vitesse) * (urgent ? h.urgent : 1);
-      u.volume = V.volume;
-      u.onend = () => (item.fini = true);
-      u.onerror = () => ((item.fini = true), bilan.erreurs++);
-      item.utterance = u;
-      synthese.speak(u);
+      const h = V.hasard, base = tb.hauteur * E.hauteur * (1 + (Math.random() * 2 - 1) * h.hauteur), rythme = tb.vitesse * E.vitesse * (1 + (Math.random() * 2 - 1) * h.vitesse);
+      Object.assign(humain, { dernier: dit, morceaux: morceaux.length, emotion: emo, vitesse: rythme, hauteur: base });
+      morceaux.forEach((m, k) => {
+        const u = new window.SpeechSynthesisUtterance(m), cri = /!$/.test(m);
+        u.lang = V.langue;
+        u.voice = voixPour(p.qui);
+        // chaque morceau : un tout petit peu différent ; un cri (« ! ») un poil plus haut et plus vite
+        const bornes = (HU && HU.bornes) || { vitesse: [0.5, 2], hauteur: [0.5, 2] };
+        u.pitch = borne(base * (cri ? 1.03 : 1) * (1 + (Math.random() * 2 - 1) * 0.015), bornes.hauteur);
+        u.rate = borne(rythme * (cri ? 1.04 : 1) * (1 + (Math.random() * 2 - 1) * 0.03), bornes.vitesse);
+        u.volume = V.volume;
+        if (k === morceaux.length - 1) u.onend = () => (item.fini = true);
+        u.onerror = () => ((item.fini = true), bilan.erreurs++);
+        item.utterance = u;
+        synthese.speak(u);
+      });
       bilan.lues++;
       item.limite = maintenant + (item.duree * 2.2 + 2.5) * 1000; // (si la voix ne dit jamais « fini », on n'attend pas toujours)
       Tanks.Sons.radioFond(true);
@@ -191,6 +236,7 @@ Tanks.RadioVoix = (function () {
     if (enCours) {
       if (enCours.etat === "clic" && maintenant >= enCours.parleA) parler(enCours, maintenant);
       else if (enCours.etat === "parle" && (enCours.fini || maintenant > enCours.limite)) terminer(maintenant);
+      else if (enCours && enCours.etat === "parle" && enCours.utterance && V.effets && Math.random() < V.effets.crepitements / 60 && Tanks.Sons.crepitement) Tanks.Sons.crepitement(enCours.phrase.interceptee); // (livre n° 3 : « crr » dans le souffle)
     }
     if (!enCours && file.length && maintenant >= blancJusqua) demarrer(file.shift(), maintenant);
   }
@@ -319,7 +365,7 @@ Tanks.RadioVoix = (function () {
       actives, synthese: !!synthese, voixFr: voixFr.map((v) => v.name + " (" + v.lang + ")"), toutes, possible: voixPossible(), meilleure,
       enCours: enCours && { qui: enCours.phrase.qui, texte: enCours.phrase.texte, etat: enCours.etat, voix: !!enCours.utterance },
       file: file.map((x) => ({ qui: x.phrase.qui, priorite: x.phrase.priorite, attend: (performance.now() - x.recue) / 1000 })), max: V.file, historique, bilan,
-      sousTitres: sousTitres.length,
+      sousTitres: sousTitres.length, humain,
     };
   }
 
