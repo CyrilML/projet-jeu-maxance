@@ -231,6 +231,7 @@
       <a href="#etape108">Étape 108</a>
       <a href="#etape109">Étape 109</a>
       <a href="#etape110">Étape 110</a>
+      <a href="#etape111">Étape 111</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5588,6 +5589,48 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape111">
+      <h2>🩹 Étape 111 : les secours entre compagnons, et des robots plus malins <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Tes compagnons te soignent, un ami à terre lève la main et crie « Médic ! », tu peux appeler à l'aide quand tu tombes, et les soldats de l'ordinateur se battent beaucoup mieux. Demandes n° 17, 18, 19 et 21 de ton livre. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/111-secours-et-robots.md</code>.</p>
+          <ul>
+            <li>✍️ « Pouvoir se faire soigner par ses compagnons. »</li>
+            <li>✍️ « Quand le compagnon est à terre, faire en sorte qu'il puisse lever la main et demander des soins. »</li>
+            <li>✍️ « Pouvoir demander une réanimation à ses compagnons. »</li>
+            <li>✍️ « Faire une amélioration pour les robots. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 55 ».</li>
+            <li>☐ Blessé, un médecin allié vient te soigner avec sa trousse.</li>
+            <li>☐ Un ami à terre agite le bras, crie « Médic ! » à la radio, et une croix rouge (avec un compte à rebours de 25 s) le montre à l'écran et sur la mini-carte.</li>
+            <li>☐ À pied, tu ne perds plus d'un coup : tu tombes. <strong>E</strong> appelle un médecin (ou tape « médic » avec T), <strong>R</strong> abandonne. Relevé, tu as la moitié de ta vie.</li>
+            <li>☐ Les ennemis se mettent à l'abri (murs, voitures, fenêtres), te contournent, tirent pour te garder la tête baissée, reculent quand ils sont blessés, évitent le canon des tanks.</li>
+            <li>☐ Le jeu ne rame pas plus qu'avant.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🧠 Chacun son tour pour réfléchir</h3>
+      <p>Des soldats plus malins réfléchissent plus… et ça coûte du temps de calcul. Alors au plus 2 soldats « réfléchissent » à chaque petit pas du jeu (1/120 s), chacun à son tour, comme dans une file d'attente. Et comme ils meurent moins, une limite de 74 soldats en même temps empêche la bataille de se remplir : les renforts attendent qu'il y ait de la place.</p>
+      <h3>🎯 Choisir sa cible</h3>
+      <p>Un soldat ne vise plus juste le plus proche : il choisit le plus dangereux (celui qui le vise ou qui tire), puis celui qui est à découvert. Chaque soldat a aussi son « talent » (entre 0,65 et 1,3), qui change sa précision et sa vitesse de réaction.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot, section « Les secours et les tactiques » : qui court vers qui, et combien de soldats sont à l'abri, en train de contourner…</li>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>maxEnJeu</code> : la limite de soldats en même temps.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Quelle touche appelle un médecin quand tu es à terre ? <span class="petit">(E)</span></li>
+            <li>Pourquoi les soldats réfléchissent-ils chacun leur tour ? <span class="petit">(pour que le jeu ne rame pas)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7011,6 +7054,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-110" data-cle="appris-110" placeholder="Ex. : …"></textarea>
         <label for="idees-110"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-110" data-cle="idees-110" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 111 · les secours entre compagnons et des robots plus malins <span class="petit">· 23 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/logique/secours.js</code>, <code>troupes.js</code>, <code>soldat.js</code>, <code>avions.js</code>, <code>vehicules.js</code>, <code>helicos.js</code>, <code>config.js</code> (<code>secours</code>, <code>tactiques</code>).</p>
+        <p class="petit">✍️ Maxance a demandé : être soigné par ses compagnons, un compagnon à terre qui demande des soins, demander une réanimation, des robots plus malins.</p>
+        <label for="appris-111"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-111" data-cle="appris-111" placeholder="Ex. : …"></textarea>
+        <label for="idees-111"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-111" data-cle="idees-111" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

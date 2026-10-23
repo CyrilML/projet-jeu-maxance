@@ -19,11 +19,11 @@ On commence par les fusils à pompe (demande 103), puis on suit la liste dans l'
 14. ✅ Le médecin a les grenades et les plaquettes. (demande 110, version 54)
 15. ✅ Voir le défibrillateur. (demande 110, version 54)
 16. ✅ Voir les grenades et le C4 dans les mains. (demande 110, version 54)
-17. ⬜ Se faire soigner par ses compagnons.
-18. ⬜ Un compagnon à terre lève la main et demande des soins.
-19. ⬜ Demander une réanimation à ses compagnons.
+17. ✅ Se faire soigner par ses compagnons. (demande 111, version 55)
+18. ✅ Un compagnon à terre lève la main et demande des soins. (demande 111, version 55)
+19. ✅ Demander une réanimation à ses compagnons. (demande 111, version 55)
 20. ✅ Des fusils à pompe normaux et incendiaires. (demande 103, version 47)
-21. ⬜ Améliorer les robots (les soldats de l'ordinateur).
+21. ✅ Améliorer les robots (les soldats de l'ordinateur). (demande 111, version 55)
 22. ✅ Développer les Battle Coins. (demande 106, version 50)
 23. ❓ Faire tester le jeu par des beta testers. (il faut de vrais joueurs : avec Cyril)
 24. ❓ Faire des éditions, genre d'autres jeux de combat. (à préciser)

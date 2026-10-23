@@ -227,8 +227,7 @@ Tanks.Avions = (function () {
       if (a.prochain <= 0) {
         a.prochain = 0.7;
         a.restent--;
-        const vivants = monde.soldats.filter((s) => s.equipe === a.equipe && !s.mort).length;
-        if (vivants < P.maxParEquipe) {
+        if (Tanks.Troupes.place(monde, a.equipe) > 0) { // (livre n° 21 : de la place dans son camp ET sur le champ de bataille)
           const s = Tanks.Troupes.parachutiste(a.equipe, a.x - Math.cos(a.angle) * 8, a.y - 3, a.z, P.nombre - a.restent);
           monde.soldats.push(s);
           if (a.restent === P.nombre - 1) ev.push(["parachutistes", { equipe: a.equipe, nombre: P.nombre, x: a.x, z: a.z }]);

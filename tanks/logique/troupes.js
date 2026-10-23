@@ -101,11 +101,36 @@ Tanks.Troupes = (function () {
   }
 
   // Les intentions d'un soldat de l'ordinateur pour ce pas.
+  // ✍️ (livre n° 21, contre le lag) LE BUDGET de chaque petit pas : au plus « penseesParPas » soldats réfléchissent
+  // (les autres attendent leur tour : un peu plus tard, jamais plus de « attenteMax » s), au plus « vuesParPas » lignes de
+  // vue et « abrisParPas » recherches d'abri. Et la liste des ennemis de chaque camp est faite UNE fois par pas.
+  const budget = { temps: -1, pensees: 0, vues: 0, abris: 0, attendus: 0, ennemis: { bleus: null, rouges: null } };
+  const listesEnnemis = { bleus: [], rouges: [] }; // (réutilisées à chaque pas : pas de nouvelles listes à jeter)
+  function nouveauPas(monde) {
+    if (budget.temps === monde.temps) return;
+    budget.temps = monde.temps;
+    budget.pensees = budget.vues = budget.abris = 0;
+    budget.ennemis.bleus = budget.ennemis.rouges = null;
+  }
+  // les soldats (et les pilotes de motos et de quads) ennemis d'un camp, debout et à pied : une liste par pas, partagée
+  function ennemisDe(monde, equipe) {
+    let l = budget.ennemis[equipe];
+    if (l) return l;
+    l = budget.ennemis[equipe] = listesEnnemis[equipe];
+    l.length = 0;
+    for (const o of monde.soldats) if (!o.mort && !o.dansUnEngin && o.equipe !== equipe) l.push(o);
+    for (const v of Tanks.Vehicules.legers(monde)) if (v.equipe !== equipe) l.push(v);
+    return l;
+  }
   function decider(s, monde, dt) {
     const ia = s.ia;
     if (s.mort || s.parachute || s.corde) return {};
+    nouveauPas(monde);
     ia.pense -= dt;
-    if (ia.pense <= 0) {
+    const aSonTour = ia.pense <= 0 && (budget.pensees < TA.penseesParPas || ia.pense < -TA.attenteMax);
+    if (ia.pense <= 0 && !aSonTour) budget.attendus++;
+    if (aSonTour) {
+      budget.pensees++;
       ia.pense = (S.pense / (ia.talent || 1)) * (s.equipe === "rouges" ? Tanks.Campagne.facteur("reaction") : 1); // (demande 90 : la difficulté) (livre n° 21 : le talent)
       // 1. la cible : un soldat ennemi (ou toi à pied) ; pour un lance-roquettes, un tank ou le 4x4
       let meilleur = null;
@@ -115,7 +140,7 @@ Tanks.Troupes = (function () {
       const utiles = permises && permises.filter((o) => (roquettes ? o.genre !== "soldat" : o.genre === "soldat"));
       // (étape 71 : le lance-roquettes vise aussi les camions et les quads ; le fusil, les pilotes des motos et des quads)
       // (étape 73 : et les hélicos de transport ennemis quand ils volent bas, par exemple pendant la descente à la corde)
-      const candidats = utiles && utiles.length ? utiles : roquettes ? monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || ((e.sorte === "bateau" || e.sorte === "camion" || e.sorte === "quad") && e.pilote)), monde.bateaux, monde.vehicules.filter((v) => v.sorte !== "moto"), Tanks.Helicos.bas(monde, helicosBas)).filter((c) => !c.detruit && c.equipe !== s.equipe) : monde.soldats.filter((o) => !o.mort && !o.dansUnEngin && o.equipe !== s.equipe).concat(Tanks.Vehicules.legers(monde).filter((v) => v.equipe !== s.equipe));
+      const candidats = utiles && utiles.length ? utiles : roquettes ? monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || ((e.sorte === "bateau" || e.sorte === "camion" || e.sorte === "quad") && e.pilote)), monde.bateaux, monde.vehicules.filter((v) => v.sorte !== "moto"), Tanks.Helicos.bas(monde, helicosBas)).filter((c) => !c.detruit && c.equipe !== s.equipe) : ennemisDe(monde, s.equipe); // (livre n° 21 : la liste du pas, partagée)
       // (étape 72) on range les candidats du plus proche au plus loin, puis on regarde la ligne de vue dans cet ordre :
       // le premier qu'on VOIT est le bon (avant, on faisait le long calcul de la ligne de vue pour beaucoup plus d'ennemis)
       // (livre n° 12) le tireur d'élite voit plus loin, et la HAUTEUR fait voir plus loin (un perchoir, l'étage d'une maison)
@@ -137,6 +162,12 @@ Tanks.Troupes = (function () {
       let vus = 0, score = Infinity, essais = 0;
       for (const p of parDistance) {
         if (vus > 0 && ++essais > TA.cibles) break; // (après le 1er ennemi vu, on n'en regarde que quelques-uns de plus : la ligne de vue coûte cher)
+        // (plus de budget de lignes de vue à ce pas ? il garde la cible d'avant si elle est encore là)
+        if (budget.vues >= TA.vuesParPas) {
+          if (!meilleur && ia.cible && !ia.cible.mort && !ia.cible.detruit) meilleur = { o: ia.cible, d: Math.hypot(ia.cible.x - s.x, ia.cible.z - s.z) };
+          break;
+        }
+        budget.vues++;
         // (demande 98) un NUAGE de fumigène entre les deux : il ne le voit pas
         if (T.vueLibre(s.x, s.y + 1.5, s.z, p.o.x, p.o.y + Tanks.Soldat.hauteurVisee(p.o), p.o.z) && !Tanks.Explosifs.fumee(s.x, s.y + 1.5, s.z, p.o.x, p.o.y + 1.2, p.o.z)) { // (demande 92 : un ennemi accroupi derrière un muret est caché)
           const o = p.o, sc = p.d * (o.ia && o.ia.cible === s ? 0.55 : 1) * (o.tir > 0 || o.repere > 0 ? 0.75 : 1) * (o.accroupi ? 1.25 : 1) * (o.genre === "soldat" && !o.accroupi && !o.dedansMaison ? 0.85 : 1) * (o === ia.cible ? 0.8 : 1);
@@ -336,16 +367,17 @@ Tanks.Troupes = (function () {
   // RÉFLÉCHIR (4 fois par seconde au plus, à son tour) : la mémoire de l'ennemi, les bruits, l'escouade, l'abri, le contournement.
   function reflechirTactique(s, ia, meilleur, candidats, monde, roquettes) {
     const t = monde.temps;
-    if (meilleur) ia.vu = { x: meilleur.o.x, z: meilleur.o.z, t, nom: meilleur.o.nom };
+    const noter = (cle, o) => { const v = ia[cle] || (ia[cle] = {}); (v.x = o.x), (v.z = o.z), (v.t = t), (v.nom = o.nom || "un tireur"); }; // (on réutilise le même petit objet)
+    if (meilleur) noter("vu", meilleur.o);
     // les BRUITS : un ennemi qui tire (ou toi, repéré), qu'il ne voit pas, à moins de « entend » m
     else if (!ia.entendu || t - ia.entendu.t > 4) {
       for (const o of candidats) {
         if (o.genre !== "soldat" || !(o.tir > 0 || o.repere > 0)) continue;
-        if (Math.hypot(o.x - s.x, o.z - s.z) < TA.entend) { ia.entendu = { x: o.x, z: o.z, t, nom: o.nom }; break; }
+        if (Math.hypot(o.x - s.x, o.z - s.z) < TA.entend) { noter("entendu", o); break; }
       }
     }
     // touché par quelqu'un qu'il ne voit pas ? il se tourne vers lui (comme un bruit)
-    if (!meilleur && s.touche < 1.5 && s.blessePar && !s.blessePar.mort && s.blessePar.equipe !== s.equipe) ia.entendu = { x: s.blessePar.x, z: s.blessePar.z, t, nom: s.blessePar.nom || "un tireur" };
+    if (!meilleur && s.touche < 1.5 && s.blessePar && !s.blessePar.mort && s.blessePar.equipe !== s.equipe) noter("entendu", s.blessePar);
     // le CHEF de son escouade : le premier encore debout de son escouade (de son camp)
     if (ia.escouade !== null && ia.escouade !== undefined) {
       ia.chef = null;
@@ -357,7 +389,8 @@ Tanks.Troupes = (function () {
     if (roquettes || s.tireurElite || s.ordre || T.souterrain) return;
     // un ABRI : il est à découvert face à l'ennemi qu'il combat (ou on vient de le toucher) ? un mur, une voiture
     if (ia.couvert && (t > ia.couvert.fin || !meilleur && t - (ia.vu ? ia.vu.t : -99) > TA.suppression * 2)) ia.couvert = null;
-    if (meilleur && !ia.couvert && !ia.abri && !s.dedansMaison && meilleur.d < S.vue && (s.touche < 2 || Math.random() < TA.abriChance * 0.5) && Math.random() < TA.abriChance) {
+    if (meilleur && !ia.couvert && !ia.abri && !s.dedansMaison && meilleur.d < S.vue && budget.abris < TA.abrisParPas && (s.touche < 2 || Math.random() < TA.abriChance * 0.5) && Math.random() < TA.abriChance) {
+      budget.abris++;
       const c = chercherCouvert(s, meilleur.o);
       if (c) (c.fin = t + TA.abriTemps * (0.7 + Math.random() * 0.6)), (ia.couvert = c), (ia.contourne = null);
     }
@@ -367,6 +400,12 @@ Tanks.Troupes = (function () {
       const o = meilleur.o, dx = (s.x - o.x) / meilleur.d, dz = (s.z - o.z) / meilleur.d, cote = ia.rang % 2 ? 1 : -1;
       const recul = Math.min(meilleur.d * 0.45, 30);
       ia.contourne = { x: o.x + dx * recul - dz * TA.contourneEcart * cote, z: o.z + dz * recul + dx * TA.contourneEcart * cote, fin: t + 14, nom: o.nom };
+    }
+    // (blessé) le médecin de son camp le plus proche, pour s'y replier (à moins de 120 m)
+    ia.medecin = null;
+    if (s.vie < s.vieMax * C.secours.repli) {
+      let dmin = 120;
+      for (const o of monde.soldats) if (o !== s && o.equipe === s.equipe && !o.mort && Tanks.Secours.estMedecin(o) && Math.hypot(o.x - s.x, o.z - s.z) < dmin) (dmin = Math.hypot(o.x - s.x, o.z - s.z)), (ia.medecin = o);
     }
     // un TANK ENNEMI qui le regarde : son canon pointe sur lui ? il s'écarte de la ligne
     ia.esquive = null;
@@ -414,8 +453,8 @@ Tanks.Troupes = (function () {
     };
     // 1. presque plus de vie : il se REPLIE vers le médecin le plus proche (ou vers son camp)
     if (s.vie < s.vieMax * C.secours.repli && !Tanks.Secours.estMedecin(s) && !s.joueur) {
-      let med = null, dmin = 120;
-      for (const o of monde.soldats) if (o !== s && o.equipe === s.equipe && !o.mort && Tanks.Secours.estMedecin(o) && Math.hypot(o.x - s.x, o.z - s.z) < dmin) (dmin = Math.hypot(o.x - s.x, o.z - s.z)), (med = o);
+      // (le médecin le plus proche est cherché quand il réfléchit, pas à chaque pas : « ia.medecin »)
+      const med = ia.medecin && !ia.medecin.mort ? ia.medecin : null, dmin = med ? Math.hypot(med.x - s.x, med.z - s.z) : Infinity;
       ia.tactique = "se replie";
       if (med && dmin < 4) { ia.etat = "🩹 attend les soins de " + Tanks.Radio.nomDe(med); intentions.accroupi = true; return intentions; }
       const sens = s.equipe === "bleus" ? 1 : -1;
@@ -464,7 +503,7 @@ Tanks.Troupes = (function () {
       intentions.versAngle = Math.atan2(ia.vu.z - s.z, ia.vu.x - s.x);
       intentions.erreur = ia.erreur * 4 + (Math.random() - 0.5) * 0.05;
       intentions.accroupi = true;
-      if (Math.abs(angleEntre(intentions.versAngle - s.angle)) < 0.1 && Math.random() < 0.5) intentions.tirer = true;
+      if (Math.abs(angleEntre(intentions.versAngle - s.angle)) < 0.1 && Math.random() < TA.suppressionTir) intentions.tirer = true;
       return intentions;
     }
     if (ia.entendu && t - ia.entendu.t < 6 && Math.hypot(ia.entendu.x - s.x, ia.entendu.z - s.z) > 8) {
@@ -582,6 +621,15 @@ Tanks.Troupes = (function () {
     return null;
   }
 
+  // ✍️ (livre n° 21, contre le lag) LA PLACE sur le champ de bataille : combien de soldats ce camp peut encore faire
+  // arriver (parachutistes, camions, hélicos, soldats relevés) : pas plus de « maxParEquipe » debout dans son camp, ni
+  // plus de « maxEnJeu » debout en tout (les deux camps ensemble).
+  function place(monde, equipe) {
+    let camp = 0, tous = 0;
+    for (const s of monde.soldats) if (!s.mort) (tous++, s.equipe === equipe && camp++);
+    const P = C.parachutistes;
+    return Math.max(0, Math.min(P.maxParEquipe - camp, P.maxEnJeu - tous));
+  }
   // (livre n° 21) pour « sous le capot » : combien de soldats par tactique, dans chaque camp
   function compterTactiques(monde) {
     const r = { bleus: {}, rouges: {} };
@@ -589,5 +637,5 @@ Tanks.Troupes = (function () {
     return r;
   }
 
-  return { creer, decider, parachutiste, renfort, parCorde, compterTactiques };
+  return { creer, decider, parachutiste, renfort, parCorde, compterTactiques, budget, place };
 })();

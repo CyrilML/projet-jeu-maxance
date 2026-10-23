@@ -23,8 +23,10 @@ window.Tanks = window.Tanks || {};
 
 Tanks.Secours = (function () {
   const C = Tanks.CONFIG, SC = C.secours;
-  const etat = { attente: 0, missions: 0, releves: 0, soins: 0, appels: 0, perdus: 0, aTerre: { bleus: 0, rouges: 0 }, blesses: { bleus: 0, rouges: 0 } };
-  const amis = { bleus: 0, rouges: 0 }; // (les amis — pas médecins — partis relever quelqu'un, par camp)
+  const etat = { regarde: 0, attente: 0, missions: 0, releves: 0, soins: 0, appels: 0, perdus: 0, aTerre: { bleus: 0, rouges: 0 }, blesses: { bleus: 0, rouges: 0 } };
+  const amis = { bleus: 0, rouges: 0 };
+  let soldatsVus = null;
+  const actifs = []; // (les secouristes en mission, ou qui viennent de donner un choc : la seule liste parcourue à chaque pas) // (les amis — pas médecins — partis relever quelqu'un, par camp)
   const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
   const estMedecin = (s) => s.role === "infirmier" || !!s.medecin;
   // Peut-il encore être relevé ? (écrasé par un tank : non)
@@ -58,6 +60,7 @@ Tanks.Secours = (function () {
   // ------------------------------------------------------------------ CHAQUE PETIT PAS (appelé par logique/monde.js)
   function etape(monde, dt, intentions, ev) {
     const toi = monde.toi && monde.toi.soldat;
+    if (soldatsVus !== monde.soldats) (soldatsVus = monde.soldats), (actifs.length = 0); // (une nouvelle bataille : on oublie l'ancienne)
     // 1. TOI à terre : le temps passe ; E appelle un médecin ; R abandonne
     if (toi && toi.aTerre) {
       const a = toi.aTerre;
@@ -71,16 +74,24 @@ Tanks.Secours = (function () {
       }
     }
     // 2. le brancardier fait sa liste (toutes les « pense » s)
+    // (contre le lag : un camp à la fois, chacun toutes les « pense » s)
     etat.attente -= dt;
     if (etat.attente <= 0) {
-      etat.attente = SC.pense;
-      for (const equipe of ["bleus", "rouges"]) organiser(monde, equipe, ev);
+      etat.attente = SC.pense / 2;
+      etat.tour = etat.tour === "bleus" ? "rouges" : "bleus";
+      organiser(monde, etat.tour, ev);
     }
-    // 3. les secouristes arrivés près de leur blessé : ils soignent ou relèvent
-    for (const s of monde.soldats) {
+    // 3. les secouristes arrivés près de leur blessé : ils soignent ou relèvent (contre le lag : seulement la petite
+    // liste des secouristes en mission, pas tous les soldats)
+    for (let i = actifs.length - 1; i >= 0; i--) {
+      const s = actifs[i];
+      if (s.chocSecours > 0) s.chocSecours = Math.max(0, s.chocSecours - dt);
       const m = s.ia && s.ia.secours;
-      s.chocSecours = Math.max(0, (s.chocSecours || 0) - dt);
-      if (!m) { s.soinEnCours = null; continue; }
+      if (!m) {
+        s.soinEnCours = null;
+        if (!(s.chocSecours > 0)) actifs.splice(i, 1);
+        continue;
+      }
       const o = m.patient;
       const fini = s.mort || s.dansUnEngin || (m.sorte === "relever" ? !relevable(o) : o.mort || o.vie >= o.vieMax || (o.joueur && monde.toi.mode !== "pied"));
       if (fini) {
@@ -92,6 +103,7 @@ Tanks.Secours = (function () {
       const vitesse = estMedecin(s) ? 1 : 1 / SC.lentAmi;
       m.chrono += dt * vitesse;
       if (m.sorte === "relever") {
+        if (!o.joueur && m.chrono >= SC.relever && Tanks.Troupes.place(monde, o.equipe) <= 0) { terminer(s); continue; } // (le camp est plein : un renfort est arrivé entre-temps)
         if (!m.annonce && o.equipe === "bleus") (m.annonce = true), parler(monde, s, "degagez", { patient: nomDe(o) });
         if (m.chrono >= SC.relever) relever(monde, s, o, ev);
       } else {
@@ -106,6 +118,11 @@ Tanks.Secours = (function () {
       }
     }
     // 4. les soldats à terre qui appellent (« Médic ! ») : la main levée, et la radio de temps en temps (les Bleus)
+    // (contre le lag : toutes les « regarde » s seulement)
+    etat.regarde -= dt;
+    if (etat.regarde > 0) return ev;
+    const dtR = SC.regarde - etat.regarde;
+    etat.regarde = SC.regarde;
     etat.aTerre.bleus = etat.aTerre.rouges = 0;
     for (const o of monde.soldats) {
       if (!relevable(o)) { o.appelSoin = false; continue; }
@@ -116,7 +133,7 @@ Tanks.Secours = (function () {
         o.appelRadio = -1;
         ev.push(["appel-medic", { patient: nomDe(o), cible: o, x: o.x, z: o.z, reste: Math.round(reste(o)), comment: "main levée" }]);
       }
-      o.appelRadio = (o.appelRadio || 0) - dt;
+      o.appelRadio = (o.appelRadio || 0) - dtR;
       if (o.appelRadio <= 0 && o.equipe === "bleus" && monde.phase === "bataille") {
         o.appelRadio = SC.appelRadio;
         parler(monde, o, "medic", { nom: nomDe(o), lieu: Tanks.Radio.repere(monde, o.x, o.z) || "" });
@@ -126,14 +143,16 @@ Tanks.Secours = (function () {
   }
 
   // Le brancardier d'un camp : pour chaque blessé sans secouriste, le meilleur secouriste libre.
+  // (pas plus de soldats debout que la PLACE du champ de bataille : un soldat relevé compte, comme un renfort ; Troupes.place)
   function organiser(monde, equipe, ev) {
     const toi = monde.toi && monde.toi.soldat;
+    const plein = Tanks.Troupes.place(monde, equipe) <= 0; // (camp plein : on ne relève plus personne, sauf toi)
     etat.blesses[equipe] = 0;
     amis[equipe] = 0;
     for (const s of monde.soldats) if (s.equipe === equipe && s.ia && s.ia.secours && !estMedecin(s)) amis[equipe]++;
     for (const o of monde.soldats) {
       if (o.equipe !== equipe || o.dansUnEngin || o.parachute || o.corde) continue;
-      const aTerre = relevable(o), blesse = !o.mort && o.vie < o.vieMax * SC.blesse && (!o.joueur || monde.toi.mode === "pied");
+      const aTerre = relevable(o) && (o.joueur || !plein), blesse = !o.mort && o.vie < o.vieMax * SC.blesse && (!o.joueur || monde.toi.mode === "pied");
       if (!aTerre && !blesse) continue;
       etat.blesses[equipe]++;
       const s0 = o.secouruPar;
@@ -154,6 +173,7 @@ Tanks.Secours = (function () {
       }
       if (!meilleur) continue;
       if (!estMedecin(meilleur)) amis[equipe]++;
+      if (!actifs.includes(meilleur)) actifs.push(meilleur);
       meilleur.ia.secours = { patient: o, sorte: aTerre ? "relever" : "soigner", chrono: 0, depuis: monde.temps };
       o.secouruPar = meilleur;
       etat.missions++;

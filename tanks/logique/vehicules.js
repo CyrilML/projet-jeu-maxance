@@ -155,8 +155,7 @@ Tanks.Vehicules = (function () {
   // (L'ordinateur fait descendre ses soldats un par un : il ne l'annonce qu'une fois, quand le camion est vide.)
   function decharger(v, monde, nombre, ev, sansAnnonce) {
     let n = 0;
-    const debout = monde.soldats.filter((s) => s.equipe === v.equipe && !s.mort).length;
-    const place = Math.max(0, C.parachutistes.maxParEquipe - debout);
+    const place = Tanks.Troupes.place(monde, v.equipe); // (livre n° 21 : de la place dans son camp ET sur le champ de bataille)
     const combien = Math.min(nombre, v.passagers, place); // (calculé une fois : « passagers » baisse pendant la boucle)
     for (let k = 0; k < combien; k++) {
       const ar = -G.camion.longueur / 2 - 1.2, cote = ((v.places0 || 0) + k) % 2 ? 1 : -1, g = v.angle + Math.PI / 2;
@@ -426,7 +425,7 @@ Tanks.Vehicules = (function () {
     if (e.sorte === "camion" && I.decharger) {
       if (Math.abs(e.vitesse) > 3) ev.push(["impossible", { raison: "arrête-toi d'abord pour faire descendre les soldats" }]);
       else if (e.passagers === 0) ev.push(["impossible", { raison: "le camion est vide : reviens près de ton camp pour le remplir" }]);
-      else if (!decharger(e, monde, e.passagers, ev)) ev.push(["impossible", { raison: "déjà " + C.parachutistes.maxParEquipe + " soldats debout dans ton camp" }]);
+      else if (!decharger(e, monde, e.passagers, ev)) ev.push(["impossible", { raison: "trop de soldats debout (au plus " + C.parachutistes.maxParEquipe + " par camp et " + C.parachutistes.maxEnJeu + " en tout)" }]);
     }
   }
   // Ton camion vide, arrêté près de ton parking : il se remplit (6 soldats montent) au bout de « recharge » s.

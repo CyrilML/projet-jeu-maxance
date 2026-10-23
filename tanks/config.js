@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 54,
+  version: 55,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -362,6 +362,9 @@ Tanks.CONFIG = {
     altitude: 110, descente: 5.5, // m, m/s (toi : 4 m/s)
     largage: { bleus: [0, 330], rouges: [0, -330] }, // (étape 71 : 3 fois plus loin du village) // [x, z] : au-dessus de quoi on saute
     maxParEquipe: 60, // ✍️ (étape 74 : 60 au lieu de 30) pas plus de 60 soldats debout par équipe : sinon le jeu ralentit
+    // (livre n° 21, contre le lag) et pas plus de « maxEnJeu » soldats debout EN TOUT (les deux camps) : les soldats de
+    // l'ordinateur réfléchissent plus (abris, contournements, secours) ; un soldat relevé compte comme un renfort
+    maxEnJeu: 74,
     transport: { nom: "Avion de transport", vitesse: 70, vie: 4 },
   },
 
@@ -838,14 +841,15 @@ Tanks.CONFIG = {
   //     (« Médic ! ») ; sinon le plus proche des amis y va (n'importe qui peut relever, plus lentement : « lentAmi ») : pour
   //     un soldat de l'ordinateur, un ami à moins de « porteeAmi » m, et pas plus de « amisMax » amis à la fois par camp ;
   //   perdus : les chutes après lesquelles un soldat de l'ordinateur ne se relève pas (une balle dans la tête, une explosion) ;
-  //   blesse : un ami dont la vie est sous cette part (de 0 à 1) a besoin de soins ; pense : s entre deux tours du brancardier ;
+  //   blesse : un ami dont la vie est sous cette part (de 0 à 1) a besoin de soins ; pense : s entre deux tours du brancardier
+  //     (un camp, puis l'autre) ; regarde : s entre deux coups d'œil sur les soldats à terre (la main levée, « Médic ! ») ;
   //   relever : s à genoux à côté de lui avant le « Dégagez ! » ; soin : s par point de vie rendu (toi ; un soldat de
   //     l'ordinateur : « soinIA ») ; distance : m pour soigner ou relever ;
   //   repli : un soldat de l'ordinateur dont la vie passe sous cette part se REPLIE vers un médecin ;
   //   joueur : TOI, à terre au lieu de perdre tout de suite (E : appeler un médecin ; R : abandonner) ; vieRelevé : la part
   //     de vie quand on te relève ; appelRadio : s entre deux « Médic ! » d'un même soldat à terre.
   secours: { saignement: 25, medecins: [3, 8], portee: 45, appel: 140, porteeAmi: 22, amisMax: 1, perdus: ["tete", "explosion"], lentAmi: 1.6, blesse: 0.6, pense: 0.5, relever: 1.4,
-    soin: 0.5, soinIA: 1.6, distance: 1.8, repli: 0.35, joueur: true, vieReleve: 0.5, appelRadio: 9,
+    soin: 0.5, soinIA: 1.6, distance: 1.8, regarde: 0.25, repli: 0.35, joueur: true, vieReleve: 0.5, appelRadio: 9,
     radio: {
       medic: ["Médic ! {nom} à terre {lieu} !", "Médic, médic ! Je suis touché {lieu} !", "J'ai besoin d'un médecin {lieu} ! Vite !", "Ici {nom}, je suis à terre {lieu}, quelqu'un !"],
       jArrive: ["Tiens bon {patient}, j'arrive !", "Médecin en route vers {patient} !", "J'arrive {patient}, reste avec moi !"],
@@ -865,7 +869,11 @@ Tanks.CONFIG = {
   //     moins de « canonPortee » m) où il ne reste pas ; angles : s entre deux coups d'œil sur les côtés près des maisons ;
   //   cibles : combien d'ennemis vus il compare au plus (le plus menaçant, le plus à découvert) : moins = plus rapide.
   tactiques: { talent: [0.65, 1.3], abri: 16, abriTemps: 7, abriChance: 0.55, contourne: [25, 110], contourneEcart: 28, contourneChance: 0.35,
-    suppression: 3.5, entend: 110, escouade: 4, ecartEscouade: 6, canon: 0.3, canonPortee: 70, angles: 2.5, cibles: 4 },
+    suppression: 3.5, entend: 110, escouade: 4, ecartEscouade: 6, canon: 0.3, canonPortee: 70, angles: 2.5, cibles: 2,
+    // (contre le lag) à chaque petit pas (1/120 s) : au plus « penseesParPas » soldats réfléchissent (les autres attendent,
+    // au plus « attenteMax » s de plus), « vuesParPas » lignes de vue et « abrisParPas » recherches d'abri ; en tir de
+    // suppression, il ne tire qu'une fois sur « 1 ÷ suppressionTir » (des rafales espacées : moins de balles à calculer)
+    penseesParPas: 2, attenteMax: 0.4, vuesParPas: 8, abrisParPas: 1, suppressionTir: 0.12 },
   // ✍️ (livre de demandes n° 14) LES PLAQUETTES (les plaques de blindage du gilet, comme dans Warzone). Seulement pour les
   // classes qui ont « plaques: true » (le Médecin, décidé par Maxance).
   //   gilet : combien de plaques le gilet porte ; solidite : la vie d'une plaque (une balle d'ennemi = 1, ta vie = 20) :
