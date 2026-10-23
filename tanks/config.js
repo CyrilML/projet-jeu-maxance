@@ -830,6 +830,42 @@ Tanks.CONFIG = {
       //   plaques : il porte un GILET PARE-BALLES à plaques (voir « plaques » plus bas : touche 6 pour en glisser une).
       grenadesEnPlus: true, plaques: true },
   },
+  // ✍️ (livre de demandes n° 17, 18 et 19) LES SECOURS : le brancardier (logique/secours.js).
+  //   saignement : s pendant lesquels un soldat à terre peut encore être RELEVÉ (après : il est perdu) ; c'est aussi le
+  //     délai du défibrillateur ;
+  //   medecins : les numéros des soldats rouges qui sont médecins (chez les Bleus : les infirmiers de la radio) ;
+  //   portee : m où un médecin va de lui-même chercher un blessé ou un homme à terre ; appel : m quand on l'APPELLE
+  //     (« Médic ! ») ; sinon le plus proche des amis y va (n'importe qui peut relever, plus lentement : « lentAmi ») : pour
+  //     un soldat de l'ordinateur, un ami à moins de « porteeAmi » m, et pas plus de « amisMax » amis à la fois par camp ;
+  //   perdus : les chutes après lesquelles un soldat de l'ordinateur ne se relève pas (une balle dans la tête, une explosion) ;
+  //   blesse : un ami dont la vie est sous cette part (de 0 à 1) a besoin de soins ; pense : s entre deux tours du brancardier ;
+  //   relever : s à genoux à côté de lui avant le « Dégagez ! » ; soin : s par point de vie rendu (toi ; un soldat de
+  //     l'ordinateur : « soinIA ») ; distance : m pour soigner ou relever ;
+  //   repli : un soldat de l'ordinateur dont la vie passe sous cette part se REPLIE vers un médecin ;
+  //   joueur : TOI, à terre au lieu de perdre tout de suite (E : appeler un médecin ; R : abandonner) ; vieRelevé : la part
+  //     de vie quand on te relève ; appelRadio : s entre deux « Médic ! » d'un même soldat à terre.
+  secours: { saignement: 25, medecins: [3, 8], portee: 45, appel: 140, porteeAmi: 22, amisMax: 1, perdus: ["tete", "explosion"], lentAmi: 1.6, blesse: 0.6, pense: 0.5, relever: 1.4,
+    soin: 0.5, soinIA: 1.6, distance: 1.8, repli: 0.35, joueur: true, vieReleve: 0.5, appelRadio: 9,
+    radio: {
+      medic: ["Médic ! {nom} à terre {lieu} !", "Médic, médic ! Je suis touché {lieu} !", "J'ai besoin d'un médecin {lieu} ! Vite !", "Ici {nom}, je suis à terre {lieu}, quelqu'un !"],
+      jArrive: ["Tiens bon {patient}, j'arrive !", "Médecin en route vers {patient} !", "J'arrive {patient}, reste avec moi !"],
+      degagez: ["Dégagez ! … Choc !", "Chargé… Dégagez !", "Allez, reviens ! Dégagez !"],
+      releve: ["{patient} est de nouveau debout !", "C'est bon, il respire. On repart !", "{patient} est relevé, on continue !"],
+      toiATerre: ["{nom} est à terre ! Tenez bon, j'arrive !", "Le chef est touché ! Médecin, vite !"],
+    } },
+  // ✍️ (livre de demandes n° 21) « Faire une amélioration pour les robots. » LES TACTIQUES des soldats de l'ordinateur
+  // (logique/troupes.js). Chacun a son TALENT (de « talent[0] » à « talent[1] » : il vise mieux et réagit plus vite) ;
+  //   abri : m où il cherche un mur, une voiture ou une maison pour se cacher de l'ennemi qu'il combat ; abriTemps : s
+  //     qu'il y reste ; abriChance : la chance (à chaque réflexion) qu'il parte s'abriter s'il est à découvert ;
+  //   contourne : [m au moins, m au plus] de l'ennemi pour CONTOURNER (sur le côté, à « contourneEcart » m de la ligne
+  //     droite) ; contourneChance : la chance qu'un soldat de l'escouade soit choisi pour le faire ;
+  //   suppression : s pendant lesquelles il tire encore là où il a vu l'ennemi disparaître (pour le clouer au sol) ;
+  //   entend : m où il ENTEND un tir ennemi (il se tourne et va voir) ; escouade : soldats par escouade (ils suivent le
+  //     premier, leur chef, à « ecartEscouade » m les uns des autres) ; canon : rad devant le canon d'un tank ennemi (à
+  //     moins de « canonPortee » m) où il ne reste pas ; angles : s entre deux coups d'œil sur les côtés près des maisons ;
+  //   cibles : combien d'ennemis vus il compare au plus (le plus menaçant, le plus à découvert) : moins = plus rapide.
+  tactiques: { talent: [0.65, 1.3], abri: 16, abriTemps: 7, abriChance: 0.55, contourne: [25, 110], contourneEcart: 28, contourneChance: 0.35,
+    suppression: 3.5, entend: 110, escouade: 4, ecartEscouade: 6, canon: 0.3, canonPortee: 70, angles: 2.5, cibles: 4 },
   // ✍️ (livre de demandes n° 14) LES PLAQUETTES (les plaques de blindage du gilet, comme dans Warzone). Seulement pour les
   // classes qui ont « plaques: true » (le Médecin, décidé par Maxance).
   //   gilet : combien de plaques le gilet porte ; solidite : la vie d'une plaque (une balle d'ennemi = 1, ta vie = 20) :
@@ -1012,7 +1048,7 @@ Tanks.CONFIG = {
     trousse: { nom: "Trousse de soins", niveau: 0, icone: "🩹", texte: "Espace : pose une trousse. Toi et tes amis tout près, vous êtes soignés.",
       rayon: 6, vitesse: 2.5, duree: 14, attente: 25 }, // m ; vie par s (pour toi ; ÷ 8 pour un soldat de l'ordinateur, qui a 3 de vie)
     defibrillateur: { nom: "Défibrillateur", niveau: 3, icone: "⚡", texte: "Espace près d'un ami tombé : il se RELÈVE (avec la moitié de sa vie).",
-      distance: 3, attente: 1.5, delai: 16, choc: 0.7 }, // (delai : s depuis sa chute) (livre n° 15 : choc : s, le « Dégagez ! » des palettes)
+      distance: 3, attente: 1.5, delai: 25, choc: 0.7 }, // (delai : s depuis sa chute) (livre n° 15 : choc : s, le « Dégagez ! » des palettes)
   },
   // ✍️ Les EXPLOSIFS (2 par classe, tu en prends 1 : touche 4). nombre : combien tu en as ; regain : s pour en regagner 1
   // (et tous d'un coup à ton camp). (demande 98) niveau : le niveau de joueur qui le débloque ; rayon, duree : le nuage

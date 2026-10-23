@@ -260,6 +260,8 @@ Tanks.Radio = (function () {
     const repondant = (u) => u || plusProche(alliesVivants(monde), ici(monde));
     const finir = (u, genre, v) => (dire(monde, repondant(u), genre, "reponse", v), false); // (impossible ou inutile : il le dit, personne ne bouge)
     if (appel && appel.absent) return silence(monde, appel), false;
+    // ✍️ (livre n° 19) TOI À TERRE : « soigne-moi », « médic ! » = appeler un médecin (le brancardier envoie le plus proche)
+    if (soin && s && s.aTerre) return Tanks.Secours.appeler(monde, "ordre « " + texte + " »"), true;
     // ce qui rend la demande impossible (ou inutile)
     if (soin && t.mode !== "pied") return finir(appel, "soigneDansLeChar");
     if (soin && s && s.vie >= s.vieMax) return finir(appel, "soignePasBesoin");
@@ -651,5 +653,5 @@ Tanks.Radio = (function () {
     e.prochaine = monde.temps + dureeDe(l.texte);
   }
 
-  return { ordre, noter, etape, rapport, direction, nomDe, etat, caractere, echanger, repere, grille };
+  return { ordre, noter, etape, rapport, direction, nomDe, etat, caractere, echanger, repere, grille, dire };
 })();

@@ -190,6 +190,11 @@ Tanks.Tableau = (function () {
     });
     radio.ecouter("soldat-mort", (d) => d.parToi && d.equipeCible !== "bleus" && (marqueur = { t: performance.now(), rouge: true }));
     radio.ecouter("pilote-abattu", (d) => d.parToi && (marqueur = { t: performance.now(), rouge: true }));
+    // (livre n° 17, 18, 19) les secours
+    radio.ecouter("toi-a-terre", () => dire("💔 Tu es à terre ! E : appeler un médecin · R : abandonner", "#ff7a6a", 3500));
+    radio.ecouter("releve-allie", (d) => dire(d.toi ? "⚡ " + d.soigneur + " t'a relevé ! Tu es de nouveau debout" : "⚡ " + d.soigneur + " relève " + d.patient, "#7dffa0", 2500));
+    radio.ecouter("secours-en-route", (d) => d.toi && dire("⛑️ " + d.soigneur + " arrive pour " + (d.sorte === "relever" ? "te relever" : "te soigner") + " (" + d.distance + " m)", "#7dffa0", 2200));
+    radio.ecouter("appel-medic", (d) => d.toi && dire("📻 « Médic ! » : tu appelles un médecin", "#ffb37a", 2000));
     // (livre n° 14) les plaques du gilet
     radio.ecouter("plaque-cassee", (d) => d.surToi && dire("🛡️ Une plaque cassée ! (" + d.reste + " / " + d.max + " · 6 : en glisser une)", "#9cc8ff", 1500));
     radio.ecouter("plaque-posee", (d) => dire("🛡️ Plaque en place (" + d.gilet + " / " + d.max + " · " + d.reserve + " de rechange)", "#9cc8ff", 1500));
@@ -717,6 +722,8 @@ Tanks.Tableau = (function () {
     texte(Math.round(Math.abs(ici.vitesse || 0) * 3.6) + "", L - 60, H - 26, 34, "#fff", "right");
     texte("km/h", L - 22, H - 26, 13, "#ccc", "right");
     }
+    croixSoins(monde); // (livre n° 18 : une croix rouge au-dessus des amis à terre qu'on peut relever)
+    ecranATerre(monde); // (livre n° 19 : TOI à terre : l'écran gris, le compteur, E pour appeler un médecin)
     // La petite carte
     const tc = 160, x0 = L - tc - 12, y0 = 12, k = tc / C.monde.taille;
     ctx.globalAlpha = 0.9;
@@ -729,6 +736,15 @@ Tanks.Tableau = (function () {
       ctx.fillStyle = o.marque > 0 ? "#ffe14a" : o.equipe === "bleus" ? "#9cc4ff" : "#ff9a8a";
       const t2 = o.marque > 0 ? 4 : 2;
       ctx.fillRect(x0 + tc / 2 + o.x * k - t2 / 2, y0 + tc / 2 + o.z * k - t2 / 2, t2, t2);
+    }
+    for (const o of monde.soldats) { // ✍️ (livre n° 18) un ami à terre qui appelle : une petite croix rouge sur la carte
+      if (o.equipe !== "bleus" || !o.appelSoin || o.joueur) continue;
+      const ox = x0 + tc / 2 + o.x * k, oz = y0 + tc / 2 + o.z * k;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(ox - 4, oz - 4, 8, 8);
+      ctx.fillStyle = "#e0242a";
+      ctx.fillRect(ox - 3.5, oz - 1, 7, 2);
+      ctx.fillRect(ox - 1, oz - 3.5, 2, 7);
     }
     for (const q of Tanks.Perchoirs.liste) { // ✍️ (livre n° 12) les perchoirs des tireurs d'élite : un petit triangle doré (gris : effondré)
       const qx = x0 + tc / 2 + q.x * k, qz = y0 + tc / 2 + q.z * k;
@@ -980,6 +996,67 @@ Tanks.Tableau = (function () {
     if (message && performance.now() < message.jusqua && message.texte) texte(message.texte, L / 2, 110, 26, message.couleur, "center");
     if (reponse && performance.now() < reponse.jusqua) texte(reponse.texte, L / 2, 140, 16, "#e8f0ff", "center");
     finEtAide(monde, t);
+  }
+
+  // ✍️ (livre de demandes n° 18) LES AMIS À TERRE qui lèvent la main : une CROIX ROUGE au-dessus d'eux (on la voit de loin,
+  // même derrière un mur), la distance, et le temps qu'il leur reste avant d'être perdus (le « saignement ») ; un
+  // secouriste est en route ? on écrit son nom.
+  function croixSoins(monde) {
+    const ici = monde.toi && monde.toi.soldat ? monde.toi.soldat : monde.joueur;
+    let n = 0;
+    for (const o of monde.soldats) {
+      if (o.equipe !== "bleus" || !o.appelSoin || o.joueur) continue;
+      const e = Tanks.Scene.versEcran(o.x, o.y + 1.6, o.z, L, H);
+      if (!e || e.x < -30 || e.x > L + 30 || e.y < -30 || e.y > H + 30) continue;
+      n++;
+      const reste = Tanks.Secours.reste(o), d = Math.hypot(o.x - ici.x, o.z - ici.z), clign = reste < 8 && Math.sin(performance.now() / 120) > 0;
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,.95)";
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, 11, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = clign ? "#ff9a3a" : "#e0242a";
+      ctx.fillRect(e.x - 7, e.y - 2.5, 14, 5);
+      ctx.fillRect(e.x - 2.5, e.y - 7, 5, 14);
+      // le temps qui reste : un anneau qui se vide
+      ctx.strokeStyle = "#e0242a";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, 14, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (reste / C.secours.saignement));
+      ctx.stroke();
+      ctx.restore();
+      const qui = o.secouruPar && !o.secouruPar.mort ? " · ⛑️ " + Tanks.Radio.nomDe(o.secouruPar) + " arrive" : "";
+      texte(Tanks.Radio.nomDe(o) + " · " + Math.round(d) + " m · " + Math.ceil(reste) + " s" + qui, e.x, e.y + 27, 11, "#ffd0d0", "center");
+    }
+    ecran.croix = n;
+  }
+  // ✍️ (livre n° 19) TOI À TERRE : l'écran devient gris (un voile, et du rouge sur les bords), un gros compteur, et ce
+  // que tu peux faire : E (ou « médic » dans la barre T) appeler un médecin, R abandonner. Qui vient, et à quelle distance.
+  function ecranATerre(monde) {
+    const s = monde.toi && monde.toi.soldat;
+    if (!s || !s.aTerre || monde.phase !== "bataille") return;
+    const a = s.aTerre, SC = C.secours;
+    ctx.save();
+    ctx.fillStyle = "rgba(70,70,70,.5)";
+    ctx.fillRect(0, 0, L, H);
+    const g = ctx.createRadialGradient(L / 2, H / 2, H * 0.25, L / 2, H / 2, H * 0.8);
+    g.addColorStop(0, "rgba(120,0,0,0)");
+    g.addColorStop(1, "rgba(120,0,0," + (0.35 + 0.15 * Math.sin(performance.now() / 400)) + ")");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, L, H);
+    ctx.restore();
+    texte("💔 TU ES À TERRE", L / 2, H / 2 - 60, 30, "#ffdede", "center");
+    texte(Math.ceil(Math.max(0, a.reste)) + " s", L / 2, H / 2 - 18, 40, a.reste < 8 ? "#ff6a5a" : "#fff", "center");
+    ctx.fillStyle = "rgba(255,255,255,.2)";
+    ctx.fillRect(L / 2 - 120, H / 2, 240, 6);
+    ctx.fillStyle = "#ff5a4a";
+    ctx.fillRect(L / 2 - 120, H / 2, 240 * Math.max(0, a.reste / SC.saignement), 6);
+    const qui = s.secouruPar && !s.secouruPar.mort ? s.secouruPar : null;
+    if (qui) texte("⛑️ " + Tanks.Radio.nomDe(qui) + " arrive pour te relever (" + Math.round(Math.hypot(qui.x - s.x, qui.z - s.z)) + " m)", L / 2, H / 2 + 34, 17, "#7dffa0", "center");
+    else texte(a.appel ? "📻 Tu as appelé un médecin… personne n'est assez près" : "Personne ne vient pour l'instant", L / 2, H / 2 + 34, 15, "#ddd", "center");
+    if (!a.appel) invite("E", "appeler un médecin (« Médic ! »)", L / 2 - 150, H / 2 + 70);
+    invite("R", "abandonner (défaite)", L / 2 + (a.appel ? 0 : 150), H / 2 + 70);
+    ecran.aTerre = Math.ceil(a.reste) + " s" + (a.appel ? " · médecin appelé" : "");
   }
 
   // ✍️ (livre de demandes n° 13) « Améliorer la vue et le viseur. » LE VISEUR DYNAMIQUE : 4 petites branches autour d'un

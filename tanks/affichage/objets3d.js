@@ -483,7 +483,7 @@ Tanks.Objets3D = (function () {
   // (on les change). Renvoie l'id tenu (ou null).
   const RANGEE = { position: V3(-0.27, 0.3, -0.05), rotation: new THREE.Euler(0.15, 0, -1.0) }; // (le fusil à la bretelle, dans le dos)
   function troisieme(r, s, A, mainD, mainG) {
-    const id = s.joueur ? idEnMain(s) : null;
+    const id = s.joueur ? idEnMain(s) : idSecouriste(s);
     r.objets = r.objets || {};
     for (const k in r.objets) if (k !== id) montrer(r.objets[k], false);
     bilan.troisieme = !!id;
@@ -500,14 +500,18 @@ Tanks.Objets3D = (function () {
     mainG.set(...T.gauche);
     if (id === "mineAT" || id === "claymore" || id === "jumelles" || id === "droneReparation") (mainD.z = 0.17 * T.echelle * 0.8), (mainG.z = -0.17 * T.echelle * 0.8), (mainD.x = mainG.x = 0.36);
     if (id === "jumelles" && (s.visee || 0) > 0.3) (mainD.y = mainG.y = 0.5), (mainD.x = mainG.x = 0.3);
-    if (id === "defibrillateur" && s.gadget.choc > 0) mainD.x = mainG.x = 0.36 + 0.12 * Math.sin(Math.PI * (1 - s.gadget.choc / s.gadget.fiche.choc));
+    const choc = s.joueur ? s.gadget.choc : s.chocSecours, CH = C.gadgets.defibrillateur.choc;
+    if (id === "defibrillateur" && choc > 0) mainD.x = mainG.x = 0.36 + 0.12 * Math.sin(Math.PI * (1 - choc / CH));
+    if (!s.joueur && s.soinEnCours) (mainD.y -= 0.18), (mainG.y -= 0.18), (mainD.x += 0.08), (mainG.x += 0.08); // (à genoux, les mains vers le blessé)
     if (id === "plaque") { const ph = 1 - s.gilet.pose / C.plaques.pose; mainG.set(0.32 - 0.1 * ph, 0.28 - 0.12 * ph, 0.0); }
     E.droite.g.visible = reste(s, id) > 0 && !(s.lancer > 0.25 && (id === "grenades" || id === "fumigene"));
     return id;
   }
   // Après les gestes (le lancer) : l'objet suit la main.
+  // (livre n° 17) un secouriste de l'ordinateur : le défibrillateur pour relever, la trousse pour soigner
+  const idSecouriste = (s) => (s.mort ? null : s.soinEnCours === "relever" || s.chocSecours > 0 ? "defibrillateur" : s.soinEnCours === "soigner" ? "trousse" : null);
   function troisiemeMains(r, s, mainD, mainG) {
-    const id = s.joueur ? idEnMain(s) : null, E = id && r.objets && r.objets[id];
+    const id = s.joueur ? idEnMain(s) : idSecouriste(s), E = id && r.objets && r.objets[id];
     if (!E) return;
     const T = O.troisieme, deux = !E.gauche && (id === "mineAT" || id === "claymore" || id === "jumelles" || id === "droneReparation");
     if (id === "plaque") (E.droite.g.position.copy(mainG), E.droite.g.rotation.set(0, 0, 0));
@@ -537,6 +541,7 @@ Tanks.Objets3D = (function () {
   const chocs = [];
   let dernierClic = 0;
   Tanks.Evenements.ecouter("releve", (d) => d.x !== undefined && chocs.push({ x: d.x, y: d.y, z: d.z, age: 0 }));
+  Tanks.Evenements.ecouter("releve-allie", (d) => d.x !== undefined && chocs.push({ x: d.x, y: d.y, z: d.z, age: 0 })); // (livre n° 17 : un médecin relève un ami)
   Tanks.Evenements.ecouter("c4-declenche", () => (dernierClic = performance.now()));
   function maj(monde, dt, scene) {
     sceneMonde = scene;

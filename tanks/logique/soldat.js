@@ -50,11 +50,13 @@ Tanks.Soldat = (function () {
     if (s.gilet) degats = Tanks.Plaques.absorber(s, degats, par, ev); // (livre n° 14 : les plaques du gilet arrêtent le coup d'abord)
     s.vie = Math.max(0, s.vie - degats);
     s.touche = 0;
+    if (tireur && tireur.x !== undefined && tireur.genre === "soldat") s.blessePar = tireur; // (livre n° 21 : il saura d'où vient le coup)
     // (livre n° 13) « de » : d'où vient le coup (pour la flèche rouge des dégâts) ; « plaque » : combien le gilet a arrêté
     const o = origine || tireur;
     ev.push(["soldat-touche", { cible: s, tireur, vie: s.vie, par: par || "balle", de: o && o.x !== undefined ? { x: o.x, z: o.z } : null, plaque: avant - degats > 0 ? Math.round((avant - degats) * 10) / 10 : 0 }]);
     if (s.vie === 0) {
       s.mort = true;
+      Tanks.Secours.mettreATerre(s, par, ev); // (livre n° 19 : TOI, tu tombes « à terre » : on peut encore te relever)
       ev.push(["soldat-mort", { cible: s, tireur, par: par || "balle", x: s.x, y: s.y, z: s.z }]);
       s.chute = choisirChute(s, par || "balle", origine || tireur);
       ev.push(["soldat-tombe", { cible: s, tireur, genre: s.chute.genre, x: s.x, y: s.y, z: s.z }]);

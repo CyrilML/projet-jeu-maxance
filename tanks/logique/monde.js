@@ -325,7 +325,7 @@ Tanks.Monde = (function () {
     if (enJeu) monde.chrono += dt;
     const t = monde.toi, toi = t.soldat;
     // étape 61 : E (sortir / monter) et 1, 2, 3 (changer d'arme)
-    if (enJeu && intentions.monter) sortirOuMonter(monde);
+    if (enJeu && intentions.monter && !(toi && toi.aTerre)) sortirOuMonter(monde); // (livre n° 19 : à terre, E appelle un médecin)
     if (toi) {
       // (étape 77) 1 pistolet, 2 ton arme principale, 3 ton gadget, 4 ton explosif (demande 98 : grenades, ou ta poche d'explosifs)
       // (livre de demandes n° 6) 5 : l'arme bonus de l'Ingénieur (les autres classes n'en ont pas : la touche 5 ne fait rien)
@@ -458,6 +458,7 @@ Tanks.Monde = (function () {
     }
     for (const [nom, d] of Tanks.Obus.avancer(monde.obus, monde, dt)) annoncer(nom, d);
     if (enJeu) for (const [nom, d] of Tanks.Gadgets.etape(monde, dt, []) || []) annoncer(nom, d);
+    if (enJeu) for (const [nom, d] of Tanks.Secours.etape(monde, dt, t.mode === "pied" ? intentions : {}, [])) annoncer(nom, d); // (livre n° 17, 18, 19 : le brancardier)
     if (enJeu) for (const [nom, d] of Tanks.Explosifs.etape(monde, dt, [])) annoncer(nom, d); // (demande 98 : les mines, les claymores, les C4 collés, les nuages)
     if (enJeu) for (const [nom, d] of Tanks.Base.etape(monde, dt)) annoncer(nom, d); // (demande 99 : l'ennemi rebouche les cratères de sa piste)
     // (étape 67) TA VIE REMONTE : pas touché depuis 5 s ? Ton soldat et ton tank se soignent doucement.
@@ -500,7 +501,7 @@ Tanks.Monde = (function () {
     }
     // 5. La fin de la bataille ?
     if (enJeu) {
-      const horsDeCombat = (t.mode === "char" && monde.joueur.detruit) || (toi && toi.mort) || (t.engin && t.engin.genre === "helico" && t.engin.detruit) || ((t.mode === "jeep" || t.mode === "bateau" || t.mode === "sousmarin" || t.mode === "dca" || t.mode === "moto" || t.mode === "quad" || t.mode === "camion") && t.engin.detruit);
+      const horsDeCombat = (t.mode === "char" && monde.joueur.detruit) || (toi && toi.mort && !toi.aTerre) || (t.engin && t.engin.genre === "helico" && t.engin.detruit) || ((t.mode === "jeep" || t.mode === "bateau" || t.mode === "sousmarin" || t.mode === "dca" || t.mode === "moto" || t.mode === "quad" || t.mode === "camion") && t.engin.detruit);
       if (horsDeCombat) {
         monde.phase = "defaite";
         S.donnees.defaites++;

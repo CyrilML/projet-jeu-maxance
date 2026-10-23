@@ -112,6 +112,14 @@ Tanks.SousLeCapot = (function () {
     trousse: (d) => "🩹 Tu poses ta trousse de soins : elle soigne pendant " + d.duree + " s à moins de " + d.rayon + " m",
     soigne: (d) => "💚 " + (d.cible === "toi" ? "Tu es" : d.cible + " est") + " soigné(e) par ta trousse : pleine forme !",
     releve: (d) => "⚡ « Dégagez ! » Tu relèves " + d.cible + " avec ton défibrillateur (les palettes, l'étincelle)",
+    // livre de demandes n° 17, 18, 19 : les secours (logique/secours.js)
+    "toi-a-terre": (d) => "💔 Tu es À TERRE (" + d.par + ") : tu as " + d.reste + " s pour être relevé · E : appeler un médecin · R : abandonner",
+    "appel-medic": (d) => d.toi ? "📻 « Médic ! » Tu appelles un médecin (" + d.comment + ") : le plus proche (même pas médecin) va venir" : "✋ " + d.patient + " (" + (d.equipeCible === "bleus" ? "ami" : "ennemi") + ") est à terre et lève la main : « Médic ! » (encore " + d.reste + " s)",
+    "secours-en-route": (d) => "⛑️ " + d.soigneur + (d.medecin ? " (médecin)" : " (pas médecin)") + " court " + (d.sorte === "relever" ? "relever " : "soigner ") + d.patient + " (" + d.distance + " m)",
+    "soin-compagnon": (d) => "🩹 " + d.soigneur + " soigne " + d.patient + " avec sa trousse : " + d.vie + " / " + d.vieMax,
+    "releve-allie": (d) => "⚡ « Dégagez ! » " + d.soigneur + " relève " + d.patient + " avec son défibrillateur",
+    abandon: () => "🏳️ Tu abandonnes (R) : ton soldat est hors de combat",
+    "secours-perdu": () => "💀 Personne n'est arrivé à temps : ton soldat est hors de combat",
     // livre de demandes n° 13 et 14 : l'épaule de la caméra, les plaques du gilet
     epaule: (d) => "🎥 La caméra passe par-dessus ton épaule " + d.cote + " (Y)",
     "plaque-cassee": (d) => "🛡️ " + (d.surToi ? "Une plaque de ton gilet" : "Une plaque du gilet de " + d.cible) + " est cassée (" + d.par + ") : " + d.reste + " / " + d.max + " plaques encore utiles · " + d.reserve + " de rechange",
@@ -665,6 +673,16 @@ Tanks.SousLeCapot = (function () {
     l.push(["la vitrine de l'armurerie", (V.actif ? "allumée : " + (V.modele ? V.modele.nom : "—") + " · " + V.images + " images dessinées · zoom × " + virgule(V.zoom, 2) : "éteinte (elle ne tourne que dans l'onglet Armurerie)") + " · " + V.magasin + " modèles au magasin (au plus 48 : les plus vieux sont jetés, " + (Tanks.Armes3D.bilan.jetes || 0) + " déjà)"]);
   }
 
+  // ✍️ (livre de demandes n° 17 à 21) LES SECOURS (logique/secours.js) et LES TACTIQUES des soldats de l'ordinateur
+  // (logique/troupes.js) : combien sont à terre, qui court soigner qui, et combien de soldats font quoi dans chaque camp.
+  function lignesSecoursTactiques(l, s) {
+    l.push(["Les secours et les tactiques (livre n° 17 à 21)"]);
+    const SE = Tanks.Secours.etat, TT = Tanks.Troupes.compterTactiques(monde), enMots = (o) => Object.entries(o).sort((a, b) => b[1] - a[1]).map(([k, n]) => k + " " + n).join(" · ") || "—";
+    l.push(["⛑️ les secours (livre n° 17-19)", (s && s.aTerre ? "TOI À TERRE : encore " + virgule(s.aTerre.reste, 1) + " s" + (s.aTerre.appel ? " (médecin appelé)" : " (E : appeler)") + " · " : "") + "à terre (relevables) : 🔵 " + SE.aTerre.bleus + " · 🔴 " + SE.aTerre.rouges + " · blessés : 🔵 " + SE.blesses.bleus + " · 🔴 " + SE.blesses.rouges + " · missions " + SE.missions + " · relevés " + SE.releves + " · points de vie rendus " + SE.soins + " · appels " + SE.appels + " · secouristes en route : " + monde.soldats.filter((o) => o.ia && o.ia.secours).map((o) => Tanks.Radio.nomDe(o) + " → " + (o.ia.secours.patient.joueur ? "toi" : Tanks.Radio.nomDe(o.ia.secours.patient))).join(", ")]);
+    l.push(["🤖 tactiques 🔵 (livre n° 21)", enMots(TT.bleus)]);
+    l.push(["🤖 tactiques 🔴", enMots(TT.rouges)]);
+  }
+
   function lignes() {
     const j = monde.joueur, f = j.fiche, t = monde.toi || {}, s = t.soldat;
     const l = [];
@@ -674,6 +692,7 @@ Tanks.SousLeCapot = (function () {
     lignesCampagne(l); // (étape 88)
     lignesVitesse(l);
     lignesSouterrain(l, s);
+    if (monde.phase !== "garage") lignesSecoursTactiques(l, s);
     l.push(["Où tu es (étape 61)"], ["phase", monde.phase]);
     if (s) {
       const ou = { dca: "à la DCA 🎯", sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", chinook: "aux commandes du Chinook 🚁", blackhawk: "aux commandes du Black Hawk 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];

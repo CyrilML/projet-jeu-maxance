@@ -862,7 +862,7 @@ Tanks.Scene = (function () {
     if (zoom > 2.5) oeil = new THREE.Vector3(toiPied.x, toiPied.y + 1.65, toiPied.z), (cible = new THREE.Vector3(toiPied.x + Math.cos(aV) * 50, toiPied.y + 1.55 + bal.y * 50, toiPied.z + Math.sin(aV) * 50)), (camera.saut = true);
     // (étape 78) la vue à la PREMIÈRE PERSONNE (touche C, à pied) : l'œil est dans la tête du soldat, un peu en avant ;
     // son corps est derrière et sous la caméra, on ne le voit pas, mais ses mains et son arme sont devant : on les voit.
-    const P = C.premiere, enPremiere = camera.premiere && toiPied && zoom <= 2.5;
+    const P = C.premiere, enPremiere = camera.premiere && toiPied && zoom <= 2.5 && !toiPied.aTerre; // (livre n° 19 : à terre, on te voit de l'extérieur)
     if (enPremiere) {
       const ca = Math.cos(toiPied.angle), sa = Math.sin(toiPied.angle);
       oeil = new THREE.Vector3(toiPied.x + ca * P.avance, toiPied.y + P.oeil - Tanks.Engins3D.baisse(), toiPied.z + sa * P.avance); // (demande 92 : accroupi, l'œil est plus bas)

@@ -679,7 +679,7 @@ Tanks.Engins3D = (function () {
     const arme = porterArme(r, modele, famille, corde); // (la « pose » des bras pour cette arme)
     r.porteArme.visible = !s.nage && !s.mort;
     if (s.joueur) Tanks.Armes3D.noterArmeDuJoueur(r.objetArme, modele);
-    if (s.joueur && (s.mort || corde || s.nage)) Tanks.Objets3D.troisieme(r, s, r.porteArme, _mD, _mG); // (livre n° 16 : à terre, à la corde, dans l'eau : rien en main)
+    if ((s.joueur || r.objets) && (s.mort || corde || s.nage)) Tanks.Objets3D.troisieme(r, s, r.porteArme, _mD, _mG); // (livre n° 16 : à terre, à la corde, dans l'eau : rien en main)
     r.flamme.visible = s.tir > 0 && famille !== "roquettes" && !s.mort && !corde;
     const c = r.corps;
     if (s.mort) {
@@ -740,6 +740,13 @@ Tanks.Engins3D = (function () {
       r.epaules.forEach((e, i) => e.rotation.set(hasard(5 + i) * R.asymetrie * k, 0, bras * (1 + hasard(7 + i) * R.asymetrie)));
       r.coudes.forEach((e, i) => e.rotation.set(0, 0, coude + Math.abs(hasard(9 + i)) * R.asymetrie * k));
       r.genoux.forEach((g, i) => g.rotation.set(0, 0, genoux - Math.abs(hasard(11 + i)) * R.asymetrie * 0.8 * k));
+      // ✍️ (livre n° 18) À TERRE, il LÈVE LA MAIN vers le ciel et l'agite (« Médic ! ») : logique/secours.js le dit (« appelSoin »)
+      if (s.appelSoin && k >= 1) {
+        const ciel = (pivot % (2 * Math.PI)) > 0 ? 1 : -1, agite = Math.sin(t * 5 + graine) * 0.28;
+        r.epaules[0].rotation.set(0.25, 0, ciel * (1.45 + agite));
+        r.coudes[0].rotation.set(0, 0, 0.15 + Math.abs(agite) * 0.6);
+        r.cou.rotation.set(0, 0, -0.35 * ciel);
+      }
       r.jambes.forEach((j, i) => j.rotation.set(hasard(13 + i) * R.asymetrie * 0.5 * k, 0, hanches + hasard(15 + i) * R.asymetrie * 0.6 * k));
       return;
     }
@@ -837,7 +844,8 @@ Tanks.Engins3D = (function () {
     const mainD = _mD.copy(r.mainD).applyMatrix4(A.matrix), mainG = _mG.copy(r.mainG).applyMatrix4(A.matrix);
     // ✍️ (livre n° 14, 15, 16) TOI, avec une grenade, un explosif, un gadget ou une plaque en main : le fusil passe dans ton
     // dos (à la bretelle) et l'accessoiriste (affichage/objets3d.js) met l'objet dans tes mains
-    const tenu = s.joueur ? Tanks.Objets3D.troisieme(r, s, A, mainD, mainG) : null;
+    // (livre n° 17) un MÉDECIN de l'ordinateur qui soigne ou relève : la trousse ou le défibrillateur dans les mains
+    const tenu = s.joueur || s.soinEnCours || s.chocSecours > 0 || r.objets ? Tanks.Objets3D.troisieme(r, s, A, mainD, mainG) : null;
     if (ch > 0.01 && rp >= 0) { // RECHARGER : la main gauche fait le trajet du chargeur
       const mag = _mC.copy(r.chargeurArme || _mC.set(r.mainD.x + 0.1, r.mainD.y - 0.06, 0)).applyMatrix4(A.matrix);
       const dessous = _mT.copy(mag).add(_bas18);
