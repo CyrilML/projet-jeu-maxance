@@ -962,6 +962,7 @@ Tanks.Decor = (function () {
     Tanks.Maisons3D.construire(g, ajouterMorceau, numeroMorceau); // (étape 75 : les maisons qu'on peut détruire)
     Tanks.Interieurs3D.construire(g); // (livre de demandes n° 8 : les intérieurs des maisons, et leurs portes qui s'ouvrent)
     Tanks.Ville3D.construire(g, ajouterMorceau); // (livre de demandes n° 9 et 11 : la ville réaliste et abandonnée)
+    Tanks.Perchoirs3D.construire(g); // (livre de demandes n° 12 : les miradors, châteaux d'eau, échafaudages, nids de tireur)
     arbres(g);
     touffes(g);
     Tanks.MarquesSol.construire(g); // (demande 92 : les traces de chenilles et les cratères, posés sur le sol)

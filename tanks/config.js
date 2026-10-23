@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 52,
+  version: 53,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -173,6 +173,7 @@ Tanks.CONFIG = {
     roquettes: { nom: "Lance-roquettes", icone: "🚀", cadence: 3, roquette: true }, // ✍️ 1 roquette = 1 obus pour un tank
     grenades: { nom: "Grenades", icone: "💣", cadence: 1.1, grenade: true }, // ✍️ (étape 75) touche 4 : Espace lance une grenade
     soldat: { cadence: 0.6, precision: 0.35, portee: 140, degats: 1 }, // le fusil des soldats de l'ordinateur
+    elite: { cadence: 2.4, precision: 0.72, portee: 360, degats: 2 }, // ✍️ (livre n° 12) le fusil de précision des tireurs d'élite de l'ordinateur
     // (étape 71) le pistolet du motard (il tire d'une main en roulant) et la petite mitrailleuse du quad
     motard: { nom: "Pistolet du motard", icone: "🔫", cadence: 0.45, precision: 0.5, portee: 70, degats: 1 },
     quad: { nom: "Mitrailleuse du quad", icone: "🔫🔫", cadence: 0.11, precision: 0.42, portee: 120, degats: 1 },
@@ -521,6 +522,55 @@ Tanks.CONFIG = {
     // côté pendant « decale » s (une fois à gauche, une fois à droite) : il ne reste pas coincé contre un meuble, un mur…
     // et s'il n'arrive pas à sortir par la porte en « abandon » s, il l'oublie pendant « oubli » s (il sort par un trou).
     debloquer: { distance: 0.4, bloque: 1.5, decale: 1.0, abandon: 12, oubli: 25 },
+  },
+  // ✍️ (livre de demandes n° 12) « Faire des points en hauteur pour les snipers. » Des PERCHOIRS sur les cartes du
+  // dehors (jamais dans le souterrain), inventés par logique/perchoirs.js (toujours pareil, grâce à la graine) et dessinés
+  // par affichage/perchoirs3d.js :
+  //   sortes : MIRADOR (une tour de guet en bois), CHÂTEAU D'EAU (en béton, très haut), ÉCHAFAUDAGE (contre la façade d'un
+  //     immeuble, jusqu'au toit) et NID sur une COLLINE (des sacs de sable sur une bosse du terrain, sans échelle).
+  //     hauteur : m de la plateforme au-dessus du sol ; demi : la moitié de la largeur de la plateforme (m) ; pied : la
+  //     moitié de la largeur du pied (m : la partie solide au sol, on ne passe pas au travers) ; vie : points (un obus de
+  //     tank enlève « degats.obus » points) ; sacs : true = un muret de SACS DE SABLE tout autour de la plateforme.
+  //   parCarte : combien de chaque sorte, selon la carte du jour (« bataille » pour la grande campagne).
+  //   placement : à plus de « loinMaisons » m des maisons, à moins de « front » m du milieu (entre les 2 camps), à plus de
+  //     « ecart » m l'un de l'autre ; un sol pas trop en pente (« pente » m de différence sous le pied, au plus) ;
+  //     colline : une bosse au moins « bosse » m plus haute que le sol à « anneau » m autour d'elle.
+  //   echelle : on commence à grimper à moins de « distance » m du pied de l'échelle (↑ en avançant dedans, ou E) ;
+  //     « vitesse » m/s en montant ou en descendant ; en haut, E près de l'échelle (à moins de « haut » m) pour redescendre.
+  //   vue : la HAUTEUR fait voir plus loin : + « parMetre » m de vue par mètre au-dessus du sol d'alentour, au plus « max » m.
+  //   couvert : accroupi (X) derrière les sacs de sable, une balle tirée d'EN BAS a « touche » × moins de chances de te toucher.
+  //   degats : points enlevés à un perchoir par une explosion (au centre ; rien au bord de « rayon » m) ; « choc » : un tank
+  //     plus rapide que « ecrase » m/s qui fonce dans le pied enlève ces points. À 0 : le perchoir S'EFFONDRE (il bascule et
+  //     tombe, sans blessé grave : ceux qui étaient dessus perdent « chute » points de vie et se retrouvent au sol).
+  //   ia : les TIREURS D'ÉLITE de l'ordinateur (« parEquipe » par camp, les n° de « numeros ») ont un fusil de précision
+  //     (armes.elite). Ils cherchent un perchoir LIBRE à moins de « cherche » m, y montent, s'accroupissent et tirent de là ;
+  //     ils voient à « vue » m (+ la hauteur). Un ennemi à moins de « defense » m : ils se défendent d'abord.
+  //   reflet : le REFLET de leur lunette (un petit éclair) se voit de « min » à « max » m, environ « parSeconde » fois par s.
+  //   carte : la couleur des perchoirs sur la petite carte (un petit triangle).
+  perchoirs: {
+    sortes: {
+      mirador: { nom: "mirador", pluriel: "miradors", icone: "🗼", hauteur: 7, demi: 1.7, pied: 1.5, vie: 3, sacs: true },
+      chateau: { nom: "château d'eau", pluriel: "châteaux d'eau", icone: "🏛️", hauteur: 13, demi: 2.9, pied: 1.6, vie: 6, sacs: true },
+      echafaudage: { nom: "échafaudage", pluriel: "échafaudages", icone: "🏗️", hauteur: 0, demi: 1.0, long: 2.6, pied: 1.0, vie: 2, sacs: true }, // (hauteur : celle de l'immeuble)
+      colline: { nom: "nid de tireur", pluriel: "nids de tireur", icone: "⛰️", hauteur: 0, demi: 2.3, pied: 0, vie: 0, sacs: true }, // (vie 0 : on ne détruit pas une colline !)
+    },
+    parCarte: {
+      bataille: { mirador: 7, chateau: 2, colline: 5 },
+      ville: { echafaudage: 6, chateau: 2, mirador: 2, colline: 1 },
+      ruines: { echafaudage: 3, chateau: 1, mirador: 3, colline: 2 },
+      desert: { mirador: 5, chateau: 1, colline: 6 },
+      "village-desert": { mirador: 4, chateau: 1, colline: 4, echafaudage: 2 },
+    },
+    graine: 4242,
+    placement: { loinMaisons: 16, front: 460, ecart: 70, pente: 1.6, bosse: 3, anneau: 70, campX: 240, campZ: 130 },
+    echelle: { distance: 1.5, distanceIA: 3.5, vitesse: 1.9, haut: 1.4 }, // (distanceIA : un soldat de l'ordinateur attrape l'échelle d'un peu plus loin)
+    vue: { parMetre: 7, max: 170 },
+    couvert: { touche: 0.35 },
+    degats: { obus: 1.5, roquette: 1, at4: 1.2, javelin: 2, bombe: 6, missile: 3, grenade: 0.3, lg40: 0.5, mine: 2, c4: 4, claymore: 0.2, rayon: 5, choc: 1, ecrase: 6 },
+    chute: 1,
+    ia: { parEquipe: 2, numeros: [4, 9], cherche: 420, vue: 230, defense: 45 },
+    reflet: { min: 40, max: 700, parSeconde: 0.8, taille: 0.55 },
+    carte: { couleur: "#ffd27a" },
   },
   // ✍️ (livre de demandes n° 9 et 11) « Faire une map en ville très réaliste. » « Faire comme si la map avait été
   // abandonnée rapidement : laisser les affiches, les publicités, les véhicules et parfois même des objets du quotidien
@@ -1098,6 +1148,8 @@ Tanks.CONFIG = {
       bleus: [["ar4", 4], ["famas", 3], ["g36", 2], ["scarh", 1], ["mp5", 2], ["mp7", 1], ["p90", 1], ["vector", 1], ["ump45", 1], ["m110", 1.2], ["m24", 0.6], ["mk14", 0.6], ["lapua", 0.6]],
       rouges: [["ak12", 5], ["svd", 1.6], ["bizon", 1.2], ["vector", 1.2], ["mp5", 1], ["ar4", 1], ["scarh", 0.8], ["mk14", 0.6], ["barrett", 0.5]],
       roquettes: [["rpg7", 3], ["at4", 2], ["javelin", 1], ["carlgustaf", 1]], // (les soldats « anti-tank »)
+      // ✍️ (livre n° 12) les TIREURS D'ÉLITE de l'ordinateur (sur les perchoirs) : un vrai fusil de précision, avec une lunette
+      elite: { bleus: [["m110", 2], ["m24", 1], ["lapua", 1]], rouges: [["svd", 3], ["barrett", 1], ["mk14", 1]], viseur: [["lunette", 2], ["lunette8", 1]] },
       // (demande 97 : les nouvelles pièces de l'armurerie ; les soldats de l'ordinateur n'ont ni peinture ni munitions spéciales)
       viseur: [["mire", 3], ["pointRouge", 3], ["holo", 2], ["lunette2", 1], ["lunette4", 1]],
       canon: [["standard", 5], ["court", 1], ["long", 1], ["lourd", 0.5]],
@@ -1963,13 +2015,14 @@ Tanks.CONFIG.radio = {
   },
   // Ce qu'ils disent tout seuls pendant la bataille.
   bavard: {
-    touche: ["Je suis touché !", "Aïe ! Je suis touché !", "Je prends des balles !", "Touché ! Je suis touché !"],
+    // ✍️ (livre n° 10) une liste peut être par CARACTÈRE : chacun garde ses mots (sinon « tous »)
+    touche: { veteran: ["Touché. Je tiens.", "Je suis touché, ça va.", "Impact. Je reste en position."], recrue: ["Aïe ! Je suis touché ! Je suis touché !", "Ils m'ont eu ! Aïe !", "Touché ! Ça fait mal !"], blagueur: ["Aïe ! Ça, c'était pas prévu au programme !", "Touché ! Mon gilet a pris pour moi.", "Ouch ! Je suis touché, mais je reste beau."] },
     toucheChar: ["On est touchés !", "Impact sur le blindage !", "Ils nous allument !", "Coup au but sur nous !"],
     aTerre: ["Homme à terre !", "{victime} est tombé !", "On a perdu {victime} !", "Homme à terre, homme à terre !"],
-    recharge: ["Je recharge, couvrez-moi !", "Rechargement !", "Chargeur vide !", "Je recharge !"],
+    recharge: { veteran: ["Rechargement.", "Je recharge. Couvrez.", "Chargeur."], recrue: ["Je recharge, je recharge ! Couvrez-moi !", "Vide ! Je suis vide ! Je recharge !"], blagueur: ["Pause chargeur, deux secondes !", "Je recharge, ne bougez pas, vous êtes parfaits."] },
     grenade: ["Grenade !", "Grenade lancée !", "Attention, grenade !", "Je lance une grenade !"],
     charEnVue: ["Char ennemi en vue, à {distance} mètres {dir} !", "Contact ! Un char {dir}, {distance} mètres !", "Attention, char ennemi {dir}, à {distance} mètres !"],
-    abattu: ["Ennemi abattu !", "Je l'ai eu !", "Un de moins !", "Cible au tapis !"],
+    abattu: { veteran: ["Cible neutralisée.", "Un de moins.", "Ennemi au sol."], recrue: ["Je l'ai eu ! Je l'ai eu !", "Il est tombé ! C'est moi qui l'ai eu !"], blagueur: ["Et hop, au tapis !", "Un de moins. Qui veut le suivant ?"] },
     charDetruit: ["Char ennemi détruit !", "{cible} est en flammes !", "On a eu {cible} !"],
     joliTir: ["Joli tir, chef !", "Bien joué, chef ! {cible} est détruit !", "En plein dans le mille !"],
     renforts: ["J'ai besoin de renforts !", "Ils sont trop nombreux, envoyez des renforts !", "Je suis seul ici, besoin d'aide !"],
@@ -1991,6 +2044,131 @@ Tanks.CONFIG.radio = {
     aTerre: ["Homme à terre ! Ils nous massacrent !", "On a perdu un homme !"],
     grenade: ["Grenade ! À couvert !"],
     renforts: ["Il nous faut des renforts, vite !", "Repliez-vous, ils sont partout !"],
+  },
+  // ------------------------------------------------------------------ ✍️ (livre de demandes n° 10) DES DISCUSSIONS PLUS RÉALISTES
+  // Avant, chaque soldat lançait sa petite phrase tout seul. Maintenant, les soldats SE PARLENT, comme sur une vraie
+  // fréquence militaire : un ÉCHANGE, c'est 2 ou 3 soldats qui se répondent (l'appel → la réponse → la confirmation),
+  // avec la PROCÉDURE RADIO (« Fox, ici Écho », « Reçu », « Bien copié », « Négatif », « Je répète », « Terminé ») mélangée
+  // à des mots de tous les jours. Les mots entre accolades sont remplacés par la VRAIE situation :
+  //   {A} {B} {C} : les indicatifs de ceux qui parlent (A appelle, B répond, C ajoute un mot) ; {moi} : toi (« Lion 1 ») ;
+  //   {ennemi} / {Ennemi} : « un char », « un sniper », « un hélico », « un blindé », « des fantassins »… ;
+  //   {dir} : la direction depuis toi ; {distance} : en mètres ; {grille} : le carré de la carte (« carré Delta 6 ») ;
+  //   {lieu} : un repère (« près du mirador n° 2 », « au carrefour de la rue des Tilleuls et de l'avenue Foch ») ;
+  //   {nombre} : combien on en voit ; {victime} : le soldat à terre ; {cible} : le char détruit ; {reste} : les chars qui restent.
+  // Chaque soldat a un CARACTÈRE (toujours le même) et parle avec SES mots : le VÉTÉRAN calme (procédure parfaite, phrases
+  // courtes), la JEUNE RECRUE nerveuse (elle répète, elle hésite), le BLAGUEUR (de l'humour gentil). Une phrase peut être
+  // une liste pour tous, ou un objet { veteran: […], recrue: […], blagueur: […] } (sinon « tous »).
+  // La MÉMOIRE : les « memoire » dernières phrases ne sont pas redites tout de suite.
+  // Les INTERRUPTIONS : un échange URGENT (contact, homme à terre) coupe un bavardage en cours (« coupure » d'abord).
+  // Le CALME : après « silence » s sans rien à la radio et sans ennemi en vue, deux soldats parlent de la maison, de la
+  // nourriture, du temps qu'il fait… Jamais de gros mots, jamais rien d'horrible.
+  echanges: {
+    joueur: "Lion 1",
+    memoire: 14, // phrases retenues (pas redites tant qu'elles sont dans la mémoire)
+    pause: 0.55, // s de blanc entre deux répliques d'un échange (en plus du temps de lecture)
+    silence: 38, // s sans phrase et sans ennemi proche avant une petite discussion
+    pauseEchange: 7, // s au moins entre deux échanges (sauf urgence)
+    parScenario: { contact: 16, hommeATerre: 5, charDetruit: 6, blesse: 12, munitions: 25, sniper: 20, calme: 60, ennemiContact: 22, ennemiPerte: 18, ennemiCalme: 70, perchoirTombe: 8, tireurEnPlace: 30 }, // s entre deux fois le même genre
+    chances: { munitions: 0.3, ennemiContact: 0.5, ennemiPerte: 0.6 },
+    urgents: ["contact", "hommeATerre", "sniper", "blesse", "perchoirTombe"],
+    portee: 260, // m : les soldats qui se parlent sont à moins de 260 m de toi (la nouvelle elle-même peut venir de plus loin)
+    coupure: { veteran: ["Silence radio ! Priorité !", "Coupez, coupez !"], recrue: ["Attendez, attendez !", "Stop, stop !"], blagueur: ["On reparlera de ça plus tard !", "Pause café terminée !"] },
+    // LES CARACTÈRES (affichage/radio-voix.js règle un peu la voix : le vétéran parle plus lentement et plus grave)
+    personnalites: {
+      veteran: { nom: "vétéran calme", icone: "🎖️", voix: { vitesse: 0.94, hauteur: 0.97 } },
+      recrue: { nom: "jeune recrue nerveuse", icone: "😰", voix: { vitesse: 1.1, hauteur: 1.04 } },
+      blagueur: { nom: "blagueur", icone: "😄", voix: { vitesse: 1.02, hauteur: 1.0 } },
+    },
+    ordre: ["veteran", "recrue", "blagueur", "veteran", "blagueur", "recrue"], // les caractères, à tour de rôle (Écho, Fox, Golf…)
+    chars: { Bravo: "veteran", Charlie: "blagueur", Delta: "recrue" },
+    ennemis: { indicatifs: ["Vipère 1", "Vipère 2", "Vipère 3", "Corbeau 6", "Faucheur 2"] },
+    // les mots pour dire l'ennemi
+    menaces: { char: "un char", blinde: "un blindé", helico: "un hélico", avion: "un avion", sniper: "un sniper", roquettes: "un lance-roquettes", fantassin: "un fantassin" },
+    pluriels: { char: "chars", blinde: "blindés", helico: "hélicos", avion: "avions", sniper: "snipers", roquettes: "lance-roquettes", fantassin: "fantassins" },
+    grille: { taille: 210, lettres: ["Alpha", "Bravo", "Charlie", "Delta", "Écho", "Foxtrot", "Golf", "Hôtel", "India", "Juliette"] },
+    rues: { nord: ["rue des Tilleuls", "rue Victor-Hugo", "rue de la Gare", "rue Pasteur", "rue des Écoles", "rue du Marché", "rue Jean-Jaurès", "rue des Lilas", "rue de la Poste", "rue du Moulin", "rue des Remparts", "rue Saint-Michel"],
+      est: ["avenue Foch", "boulevard de la Liberté", "avenue de la République", "boulevard Gambetta", "avenue des Peupliers", "avenue du Parc", "boulevard Carnot", "avenue de Verdun", "avenue des Acacias", "boulevard du Lac", "avenue Molière", "avenue des Arts"] },
+    // LES SCÉNARIOS : des suites de répliques [qui, phrase] (plusieurs versions : une est tirée au sort)
+    scenarios: {
+      contact: [[["A", "contactAppel"], ["B", "contactRecu"], ["A", "terminer"]], [["A", "contactAppel"], ["B", "repete"], ["A", "contactRepete"], ["B", "bienCopie"]], [["A", "contactAppel"], ["B", "contactRecu"], ["C", "contactConseil"]]],
+      sniper: [[["A", "sniperAppel"], ["B", "sniperRecu"], ["A", "terminer"]], [["A", "sniperAppel"], ["C", "sniperConseil"], ["B", "bienCopie"]]],
+      hommeATerre: [[["A", "aTerreAppel"], ["B", "aTerreCouvre"], ["A", "bienCopie"]], [["A", "aTerreAppel"], ["B", "aTerreCouvre"], ["C", "aTerreMedecin"]]],
+      charDetruit: [[["A", "detruitAnnonce"], ["B", "detruitBravo"], ["C", "detruitReste"]], [["A", "detruitAnnonce"], ["B", "detruitBravo"]]],
+      blesse: [[["A", "blesseAppel"], ["B", "blesseRepond"], ["A", "recu"]]],
+      munitions: [[["A", "munitionsAppel"], ["B", "munitionsRepond"], ["A", "merci"]]],
+      perchoirTombe: [[["A", "perchoirTombe"], ["B", "perchoirTombeRepond"]]],
+      tireurEnPlace: [[["A", "tireurEnPlace"], ["B", "tireurEnPlaceRepond"]]],
+      calme: [[["A", "calmeMaison"], ["B", "calmeMaisonRepond"], ["A", "calmeFin"]], [["A", "calmeManger"], ["B", "calmeMangerRepond"], ["C", "calmeFin"]], [["A", "calmeMeteo"], ["B", "calmeMeteoRepond"]], [["A", "calmeBlague"], ["B", "calmeBlagueRepond"], ["C", "calmeSilence"]]],
+      ennemiContact: [[["A", "eContact"], ["B", "eRecu"]], [["A", "eContact"], ["B", "eRecu"], ["A", "eFin"]]],
+      ennemiPerte: [[["A", "ePerte"], ["B", "ePerteRepond"]]],
+      ennemiCalme: [[["A", "eCalme"], ["B", "eCalmeRepond"]]],
+    },
+    phrases: {
+      // la procédure
+      terminer: { veteran: ["Affirmatif. Terminé.", "Exact. {A}, terminé."], recrue: ["Oui ! Euh… affirmatif. Terminé.", "C'est ça, c'est ça ! Terminé."], blagueur: ["Tout juste. Terminé, et bon appétit à lui.", "Affirmatif. Je lui garde une place au chaud."] },
+      repete: { veteran: ["{A}, ici {B}, je n'ai pas copié la distance. Répétez.", "{A}, message coupé. Répétez, à vous."], recrue: ["Quoi ? {A}, répète, je t'entends mal !", "Euh… {A}, tu peux répéter ? Ça grésille !"], blagueur: ["{A}, ici {B}. J'ai entendu « contact » et puis plus rien. Répète, à vous.", "Répète, {A}, ma radio fait des bruits de friteuse."] },
+      contactRepete: { tous: ["Je répète : {ennemi}, {grille}, {distance} mètres {dir}.", "Je répète : {ennemi}, {dir}, {distance} mètres{lieu}."] },
+      bienCopie: { veteran: ["Bien copié.", "Bien copié, {A}."], recrue: ["Bien copié ! Bien copié !", "Copié… copié, oui."], blagueur: ["Bien copié, cinq sur cinq.", "Copié, je note tout."] },
+      recu: { veteran: ["Reçu.", "Reçu, {B}."], recrue: ["Reçu, reçu !", "Reçu… merci."], blagueur: ["Reçu, chef de rang.", "Reçu, merci du service."] },
+      merci: { veteran: ["Reçu, merci.", "Merci, {B}. Terminé."], recrue: ["Merci, merci beaucoup !", "Ouf, merci {B} !"], blagueur: ["Merci, je te revaudrai ça en barres de céréales.", "T'es un frère, {B}."] },
+      // un ennemi en vue
+      contactAppel: {
+        veteran: ["{B}, ici {A}. Contact : {ennemi}, {grille}, {distance} mètres {dir}{lieu}. À vous.", "{B} de {A}. {Ennemi} {dir}, environ {distance} mètres{lieu}. Parlez.", "Ici {A}. {Nombre} {dir}, {distance} mètres. J'observe."],
+        recrue: ["{B} ! {B}, ici {A} ! {Ennemi} {dir}, à {distance} mètres ! Il est là !", "{A} à {B}… euh, contact ! {Ennemi}{lieu}, {distance} mètres {dir} !", "Il y a {ennemi} {dir} ! {distance} mètres ! Vous le voyez ?"],
+        blagueur: ["{B}, ici {A}. On a de la visite : {ennemi}, {dir}, {distance} mètres. Personne ne l'a invité.", "{B} de {A}. {Ennemi} {dir}{lieu}, {distance} mètres. Il n'a pas l'air de vendre des croissants."],
+      },
+      contactRecu: {
+        veteran: ["{A}, ici {B}. Reçu, {ennemi} {dir}. On le garde à l'œil.", "Bien copié, {A}. Restez à couvert, on s'en occupe.", "Reçu {A}. Je préviens {moi}."],
+        recrue: ["Reçu ! Reçu ! Je le vois pas encore… ah si, je le vois !", "Copié… {dir}, c'est bien ça ? D'accord, d'accord !"],
+        blagueur: ["Reçu, {A}. Je lui prépare un comité d'accueil.", "Bien copié. On va lui expliquer qu'il s'est trompé d'adresse."],
+      },
+      contactConseil: { veteran: ["Ici {C}. Pas de précipitation. On attend qu'il se découvre.", "{C} à tous : couvrez-vous, et pas de tir inutile."], recrue: ["Ici {C}… on fait quoi, on fait quoi ?", "{C} ici. Je… je me mets à couvert !"], blagueur: ["Ici {C}. Moi je dis, on lui envoie {moi}, il adore ça.", "{C} ici. Quelqu'un a pensé au pique-nique ?"] },
+      sniperAppel: {
+        veteran: ["{B}, ici {A}. Tireur d'élite ennemi{lieu}, {grille}. Reflet de lunette {dir}. Restez bas.", "Ici {A}. Sniper {dir}, {distance} mètres{lieu}. Ne restez pas à découvert."],
+        recrue: ["Sniper ! Sniper ! {dir}{lieu} ! J'ai vu sa lunette briller !", "{B}, ici {A}, il y a un sniper{lieu}… il nous regarde !"],
+        blagueur: ["{B} de {A}. Un sniper s'est installé{lieu}. Belle vue, mauvaise idée.", "Ici {A}. Ça brille {dir}{lieu} : soit un sniper, soit quelqu'un qui fait des selfies."],
+      },
+      sniperRecu: { veteran: ["Reçu, {A}. Tout le monde à couvert. On le contourne.", "Bien copié. Personne ne traverse à découvert."], recrue: ["Reçu ! Je garde la tête baissée, promis !", "Copié… je bouge plus, je bouge plus."], blagueur: ["Reçu. Je vais marcher accroupi, comme un canard.", "Copié. Il faut lui casser son perchoir."] },
+      sniperConseil: { veteran: ["Ici {C}. Un obus de char dans son perchoir, et c'est réglé.", "{C} à tous : fumigène, et on avance par bonds."], recrue: ["{C} ici… quelqu'un peut demander un char ?", "Ici {C}. J'ose plus lever la tête !"], blagueur: ["Ici {C}. Un char qui passe par là pourrait lui faire visiter le sol.", "{C} ici : je propose qu'on lui fasse coucou… de loin."] },
+      // homme à terre
+      aTerreAppel: { veteran: ["Homme à terre ! {victime} est tombé{lieu} ! Je vais le chercher.", "Ici {A}, homme à terre, {victime}. Je m'en occupe, couvrez-moi."], recrue: ["Homme à terre ! {victime} ! {victime} ne bouge plus ! J'y vais !", "{victime} est tombé ! Je vais le chercher, je vais le chercher !"], blagueur: ["Homme à terre ! {victime}, accroche-toi, j'arrive. Pas de blague cette fois.", "{victime} est tombé ! Je vais le chercher, couvrez-moi !"] },
+      aTerreCouvre: { veteran: ["Reçu, {A}. Je te couvre. Vas-y !", "Bien copié. Feu de couverture, maintenant !"], recrue: ["Je te couvre ! Je te couvre ! Vas-y !", "Reçu ! Je tire, vas-y, vite !"], blagueur: ["Vas-y, {A}, je te couvre. Fais vite.", "Je te couvre ! Personne ne lève la tête !"] },
+      aTerreMedecin: { tous: ["Ici {C}, j'arrive avec la trousse. Tenez bon.", "{C} en route. On le ramène à l'arrière."] },
+      // un char ennemi détruit
+      detruitAnnonce: { veteran: ["Cible détruite. {cible} est hors de combat.", "Ici {A}. {cible} neutralisé. Beau travail."], recrue: ["Il est détruit ! {cible} est détruit ! On l'a eu !", "Ouais ! {cible} est en flammes !"], blagueur: ["{cible} est hors service. Je crois qu'il a besoin d'un garagiste.", "Et un char à la casse ! {cible} ne roulera plus."] },
+      detruitBravo: { veteran: ["Bien joué. Restez concentrés.", "Bien copié. Beau tir."], recrue: ["Ouais ! Bien joué, bien joué !", "Trop fort ! On les a eus !"], blagueur: ["Bravo ! Qui c'est le patron ? C'est nous !", "Joli tir ! Je l'aurais encadré."] },
+      detruitReste: { tous: ["Ici {C}. Il en reste {reste}. On ne relâche pas.", "{C} à tous : encore {reste}, ouvrez l'œil."] },
+      // blessé
+      blesseAppel: { veteran: ["{B}, ici {A}. Je suis touché. Je peux encore tenir.", "Ici {A}, je suis touché. Rien de grave, je ralentis."], recrue: ["{B} ! Je suis touché ! Je suis touché !", "Ici {A}… aïe ! Je suis touché, venez m'aider !"], blagueur: ["Ici {A}. Touché. Ça pique, mais j'ai connu pire au dentiste.", "{B}, {A} est touché. Prévenez ma mère que je vais bien."] },
+      blesseRepond: { veteran: ["Reçu, {A}. Garde la tête basse, on arrive.", "Bien copié. Reste à couvert, le médecin arrive."], recrue: ["J'arrive ! Bouge pas, bouge pas !", "Reçu ! Tiens bon, {A} !"], blagueur: ["Reçu. Reste là, on t'apporte le thé.", "Tiens bon, {A}. Le médecin arrive, il a même des pansements."] },
+      // les munitions
+      munitionsAppel: { veteran: ["{B}, ici {A}. Munitions basses. Il me reste deux chargeurs.", "Ici {A}. Je suis presque à sec. Une recharge ?"], recrue: ["{B} ! J'ai presque plus de balles ! Plus que deux chargeurs !", "Je suis à court, je suis à court !"], blagueur: ["{B}, ici {A}. Mon fusil a faim, il veut des chargeurs.", "Ici {A}. Plus que deux chargeurs, après je lance des cailloux."] },
+      munitionsRepond: { veteran: ["Reçu. Je t'en lance un. Attrape.", "Bien copié, chargeur en route."], recrue: ["J'en ai ! Tiens, attrape ! Oups, pardon !", "Je… oui, je t'en donne un !"], blagueur: ["Livraison express ! Signe ici.", "Attrape ! Et je veux le récupérer, hein."] },
+      // un perchoir qui tombe, un tireur d'élite ami installé
+      perchoirTombe: { veteran: ["{lieuNom} vient de tomber. Le sniper ne gêne plus.", "Ici {A}. {lieuNom} est à terre."], recrue: ["Whoa ! {lieuNom} s'est écroulé ! Vous avez vu ça ?", "Il est tombé ! {lieuNom} est tombé !"], blagueur: ["{lieuNom} vient de faire une sieste. À l'horizontale.", "Timber ! {lieuNom} est par terre."] },
+      perchoirTombeRepond: { tous: ["Bien copié. On avance.", "Reçu. Voie libre."] },
+      tireurEnPlace: { veteran: ["Ici {A}. En position sur {lieuNom}. Je couvre le secteur.", "{A} en place, {lieuNom}. Belle vue."], recrue: ["Ici {A}… je suis en haut ! C'est haut, quand même !", "{A} en position sur {lieuNom}. Je vois tout d'ici !"], blagueur: ["Ici {A}. Installé sur {lieuNom}. Vue imprenable, service en chambre pas compris.", "{A} en position. Si quelqu'un a des jumelles, on fait la visite."] },
+      tireurEnPlaceRepond: { tous: ["Reçu, {A}. Ouvre l'œil.", "Bien copié. Tu nous couvres."] },
+      // le calme (pas d'ennemi en vue depuis un moment)
+      calmeMaison: { veteran: ["{B}, tu sais ce qui me manque ? Le bruit de la mer, chez moi.", "Quand tout ça sera fini, je retourne à mon jardin. Mes tomates m'attendent."], recrue: ["{B}… tu crois qu'on sera rentrés pour Noël ?", "Ma sœur m'a écrit. Elle a eu son permis. Elle a raté le créneau trois fois."], blagueur: ["{B}, si on rentre, je t'invite chez ma grand-mère. Elle fait la meilleure tarte du pays.", "Mon chien doit se demander où je suis. Il doit dormir sur mon lit, ce traître."] },
+      calmeMaisonRepond: { veteran: ["On rentrera, {A}. Un jour à la fois.", "Garde ça en tête. Ça aide à tenir."], recrue: ["Moi aussi, ça me manque… beaucoup.", "J'espère… j'espère vraiment."], blagueur: ["Une tarte ? Je signe tout de suite.", "Ton chien a bien raison. Moi aussi, je dormirais sur ton lit."] },
+      calmeManger: { veteran: ["Encore des rations ce soir. Haricots ou haricots.", "{B}, il reste du café dans ta gourde ?"], recrue: ["J'ai trop faim… quelqu'un a un biscuit ?", "Vous croyez qu'il y aura du chaud ce soir ?"], blagueur: ["Le chef a dit « surprise » pour le dîner. J'ai peur.", "Si je vois encore un haricot, je lui donne un grade."] },
+      calmeMangerRepond: { veteran: ["Mange quand tu peux, dors quand tu peux.", "Il reste une barre. Tiens."], recrue: ["Moi j'ai que du chewing-gum…", "Arrête, tu me donnes faim !"], blagueur: ["La surprise, c'est qu'il n'y a pas de surprise.", "Haricots au menu, haricots en dessert."] },
+      calmeMeteo: { veteran: ["Le vent tourne. Il va pleuvoir avant ce soir.", "Belle lumière. Mauvais pour se cacher."], recrue: ["Il fait froid, non ? Ou c'est juste moi ?", "Il va pleuvoir… on va être trempés."], blagueur: ["Météo du jour : quelques nuages, et des obus en fin d'après-midi.", "Il fait beau. C'est presque des vacances. Presque."] },
+      calmeMeteoRepond: { veteran: ["Reçu. Gardez vos affaires au sec.", "Profitez du calme."], recrue: ["Ouais… j'aime pas la pluie.", "Moi j'ai froid aux pieds."], blagueur: ["Je réserve une chaise longue.", "Je mets de la crème solaire, alors."] },
+      calmeBlague: { blagueur: ["{B}, tu sais pourquoi les chars n'ont pas peur ? Parce qu'ils ont du blindage… au cœur.", "Quelle est la différence entre un char et un escargot ? L'escargot, il a sa maison, mais pas de canon."], veteran: ["{B}, tu te souviens du sergent qui avait perdu son casque… sur sa tête ?", "On m'a dit que tu ronflais comme un moteur de char, {B}."], recrue: ["{B}, c'est vrai que tu as pris le mauvais camion le premier jour ?", "Quelqu'un connaît une blague ? Je m'ennuie un peu…"] },
+      calmeBlagueRepond: { veteran: ["Très drôle. Reste concentré quand même.", "Ha. Bon. Silence radio, maintenant."], recrue: ["Ha ha ! Elle est nulle… mais j'ai ri !", "Hi hi ! Encore une !"], blagueur: ["Ha ! Celle-là, je la garde.", "Elle est bonne, celle-là !"] },
+      calmeFin: { tous: ["Allez. On garde l'œil ouvert.", "Bon. Silence radio, on reste vigilants."] },
+      calmeSilence: { tous: ["Ici {C}. Fin de la récréation, on surveille le secteur.", "{C} à tous : on se tait et on écoute."] },
+      // la radio ENNEMIE (interceptée)
+      eContact: { tous: ["{B}, ici {A}. {Ennemi} de Valdrie en vue, {distance} mètres. Je l'engage.", "Ici {A}. Contact ! {Ennemi} à {distance} mètres. Où sont les renforts ?", "{A} à {B}. Ils avancent vers nous. Ouvrez le feu !"] },
+      eRecu: { tous: ["Reçu, {A}. Tenez la position, on arrive.", "Négatif, {A}, pas de renfort. Tenez bon.", "Reçu. Repliez-vous sur les maisons."] },
+      eFin: { tous: ["Compris. Terminé.", "Reçu. On tient."] },
+      ePerte: { tous: ["{B}, ici {A}. On a un homme à terre ! Ils sont trop nombreux !", "Ici {A}… on a perdu un homme. Demande instructions."] },
+      ePerteRepond: { tous: ["Reçu, {A}. Repliez-vous, je répète, repliez-vous.", "Tenez la ligne, {A}. Le Maréchal ne veut pas de recul."] },
+      eCalme: { tous: ["{B}, ici {A}. Rien à signaler sur mon secteur.", "Ici {A}. Le café est froid et les ordres ne viennent pas."] },
+      eCalmeRepond: { tous: ["Reçu. Restez en alerte.", "Silence sur la fréquence, {A}. Ils écoutent peut-être."] },
+    },
   },
   // Les mots de la boussole (0 = nord, puis dans le sens des aiguilles d'une montre). Le nord, c'est vers le camp ennemi.
   boussole: ["au nord", "au nord-est", "à l'est", "au sud-est", "au sud", "au sud-ouest", "à l'ouest", "au nord-ouest"],

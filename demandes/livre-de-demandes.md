@@ -12,9 +12,9 @@ On commence par les fusils à pompe (demande 103), puis on suit la liste dans l'
 7. ✅ Un menu d'achats (ex. : un pack de skins de véhicules, avec des avancements de jeu). (demande 106, version 50)
 8. ✅ Pouvoir entrer dans les maisons. (demande 107, version 51)
 9. ✅ Une map en ville très réaliste. (demande 108, version 52)
-10. ⬜ Des discussions plus réalistes.
+10. ✅ Des discussions plus réalistes. (demande 109, version 53)
 11. ✅ Une map abandonnée en vitesse : affiches, publicités, véhicules, objets du quotidien (téléphone, table, sac à dos). (demande 108, version 52)
-12. ⬜ Des points en hauteur pour les snipers.
+12. ✅ Des points en hauteur pour les snipers. (demande 109, version 53)
 13. ⬜ Améliorer la vue et le viseur.
 14. ⬜ Le médecin a les grenades et les plaquettes.
 15. ⬜ Voir le défibrillateur.

@@ -301,8 +301,14 @@ Tanks.Tableau = (function () {
         } else barre(24, H - 28, 200, s.grenades ? 1 - s.recharge / C.armes.grenades.cadence : s.regainGrenade / C.grenades.recharge, s.recharge === 0 && s.grenades > 0, s.grenades ? "💣 Espace : lancer (" + s.grenades + ")" : "plus de grenades");
         texte(C.classes[s.classe].icone + " " + C.classes[s.classe].nom, larg + 4, H - 92, 14, C.classes[s.classe].couleur, "right");
       }
+      // ✍️ (livre n° 12) une échelle de perchoir tout près, sur l'échelle, ou en haut ?
+      const PA = s.visee > 0.5 ? null : Tanks.Perchoirs.aPortee(s); // (pas pendant que tu vises à la lunette)
+      if (PA && PA.quoi === "grimper") invite("E", "grimper sur " + PA.p.nom + " (ou ↑ dans l'échelle)", L / 2, H - 150);
+      else if (PA && PA.quoi === "echelle") invite("↑ ↓", "sur l'échelle : " + virgule(PA.h, 1) + " / " + Math.round(PA.p.haut - PA.p.base) + " m", L / 2, H - 150);
+      else if (PA && PA.quoi === "descendre") invite("E", "redescendre " + PA.p.nom.replace(/^le /, "du ").replace(/^l'/, "de l'"), L / 2, H - 150);
+      else if (PA && (PA.quoi === "dessus" || PA.quoi === "nid")) invite("X", (s.accroupi ? "à l'abri derrière les sacs de sable" : "s'accroupir derrière les sacs de sable") + " · vue + " + Math.round(Tanks.Perchoirs.bonusVue(s)) + " m", L / 2, H - 150);
       // E : monter ? (le plus proche, à moins de 6 m)
-      if (!s.parachute) {
+      if (!s.parachute && !(PA && PA.quoi !== "nid" && PA.quoi !== "dessus")) {
         let proche = null, dmin = C.engins.distanceMonter;
         const voir = (x, nom, rayon) => {
           if (x.detruit) return;
@@ -701,6 +707,15 @@ Tanks.Tableau = (function () {
       ctx.fillStyle = o.marque > 0 ? "#ffe14a" : o.equipe === "bleus" ? "#9cc4ff" : "#ff9a8a";
       const t2 = o.marque > 0 ? 4 : 2;
       ctx.fillRect(x0 + tc / 2 + o.x * k - t2 / 2, y0 + tc / 2 + o.z * k - t2 / 2, t2, t2);
+    }
+    for (const q of Tanks.Perchoirs.liste) { // ✍️ (livre n° 12) les perchoirs des tireurs d'élite : un petit triangle doré (gris : effondré)
+      const qx = x0 + tc / 2 + q.x * k, qz = y0 + tc / 2 + q.z * k;
+      ctx.fillStyle = q.debout ? C.perchoirs.carte.couleur : "#555";
+      ctx.beginPath();
+      ctx.moveTo(qx, qz - 3.5);
+      ctx.lineTo(qx + 3, qz + 2.5);
+      ctx.lineTo(qx - 3, qz + 2.5);
+      ctx.fill();
     }
     for (const b of monde.bateaux.concat(monde.sousMarins.filter((m) => !Tanks.SousMarins.sousLEau(m)))) { // (étape 62) les patrouilleurs (et les sous-marins à la surface) : un petit losange rouge
       ctx.fillStyle = b.detruit ? "#555" : E.rouges.marque;

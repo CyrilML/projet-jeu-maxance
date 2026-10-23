@@ -11,6 +11,13 @@
 //      phrases pour toute la radio, une pause pour chaque soldat, une pause pour chaque sorte de phrase (config.js,
 //      « radio.bavardage »), et seulement près de toi (sauf les nouvelles importantes). Parfois, on INTERCEPTE la radio
 //      ennemie.
+//   3. ✍️ (livre de demandes n° 10 : « des discussions plus réalistes ») LES ÉCHANGES : au lieu de phrases toutes seules,
+//      2 ou 3 soldats SE RÉPONDENT avec la vraie procédure radio (« Fox, ici Écho. Contact… À vous. » → « Reçu, Écho… »
+//      → « Affirmatif. Terminé. »). Ce qu'ils disent vient de la VRAIE bataille : quel ennemi (char, sniper, hélico…), où
+//      (la direction, la distance, le carré de la carte, le mirador ou la rue la plus proche), combien. Chaque soldat a un
+//      CARACTÈRE (le vétéran calme, la jeune recrue nerveuse, le blagueur) et garde ses mots ; une MÉMOIRE empêche de
+//      redire tout de suite la même phrase ; une urgence COUPE une discussion tranquille ; après un long calme, ils
+//      parlent de la maison, de la nourriture, du temps qu'il fait. La radio ennemie interceptée fait pareil.
 // Chaque phrase part à la radio du jeu : l'événement « radio-phrase » (qui parle, son camp, la phrase, son importance).
 // Ce fichier ne dessine rien et ne parle pas lui-même : c'est affichage/radio-voix.js (« le haut-parleur ») qui lit la
 // phrase à voix haute et l'écrit en sous-titre.
@@ -26,12 +33,18 @@ Tanks.Radio = (function () {
   const etat = {
     derniere: -99, parGenre: {}, choisies: {}, prochainIndicatif: 0, chronoAvant: 0, regarde: 0,
     dites: 0, tues: 0, reponses: 0, soins: 0, reparations: 0, dernieres: [], parSorte: {},
+    // (livre n° 10) les échanges : celui en cours, la mémoire des phrases, quand chaque genre d'échange a eu lieu
+    echange: null, memoire: [], parScenario: {}, dernierEchange: -99, dernierContact: 0, echanges: 0, coupes: 0, finis: 0, dernierEchangeFini: null,
   };
   function reinitialiser() {
     etat.derniere = -99;
     etat.parGenre = {};
     etat.prochainIndicatif = 0;
     etat.regarde = 0;
+    etat.echange = null;
+    etat.parScenario = {};
+    etat.dernierEchange = -99;
+    etat.dernierContact = 0;
   }
 
   // ------------------------------------------------------------------ les petits outils
@@ -47,15 +60,28 @@ Tanks.Radio = (function () {
   const majuscule = (t) => (t ? t[0].toUpperCase() + t.slice(1) : t);
   // Remplacer les {mots} d'une phrase par la vraie situation, puis enlever les espaces en trop.
   function remplir(modele, v) {
-    return modele.replace(/\{(\w+)\}/g, (_, k) => (v && v[k] !== undefined ? v[k] : "")).replace(/\s+/g, " ").replace(/\s+([.,])/g, "$1").trim(); // (en français, on garde l'espace avant « ! » et « ? »)
+    return modele.replace(/\{(\w+)\}/g, (_, k) => (v && v[k] !== undefined ? v[k] : "")).replace(/\s+/g, " ").replace(/\s+([.,])/g, "$1").replace(/\b([Dd])e ([AEIOUÉÈ])/g, "$1'$2").trim(); // (en français, on garde l'espace avant « ! » et « ? ») (livre n° 10 : « de Écho » → « d'Écho »)
   }
   // Tirer une phrase au hasard dans la liste… mais jamais la même que la dernière fois.
-  function choisir(liste, cleListe) {
+  // ✍️ (livre n° 10) LA MÉMOIRE : on évite toutes les phrases dites récemment (les « memoire » dernières) ; si toutes l'ont
+  // été, on prend celle dite il y a le plus longtemps. Une liste peut être un objet par CARACTÈRE ({ veteran, recrue, … }).
+  const X = R.echanges;
+  function retenir(t) {
+    const i = etat.memoire.indexOf(t);
+    if (i >= 0) etat.memoire.splice(i, 1);
+    etat.memoire.unshift(t);
+    if (etat.memoire.length > X.memoire) etat.memoire.pop();
+  }
+  function choisir(liste, cleListe, caractere) {
+    if (liste && !Array.isArray(liste)) liste = liste[caractere] || liste.tous || liste.veteran || Object.values(liste)[0];
     if (!liste || !liste.length) return "";
-    let k = Math.floor(Math.random() * liste.length);
-    if (liste.length > 1 && k === etat.choisies[cleListe]) k = (k + 1 + Math.floor(Math.random() * (liste.length - 1))) % liste.length;
-    etat.choisies[cleListe] = k;
-    return liste[k];
+    const libres = liste.filter((t, k) => !etat.memoire.includes(t) && !(liste.length > 1 && k === etat.choisies[cleListe]));
+    let pris;
+    if (libres.length) pris = libres[Math.floor(Math.random() * libres.length)];
+    else pris = liste.reduce((a, b) => (etat.memoire.indexOf(b) > etat.memoire.indexOf(a) ? b : a)); // (la plus ancienne dans la mémoire)
+    etat.choisies[cleListe] = liste.indexOf(pris);
+    retenir(pris);
+    return pris;
   }
   // Le nom radio d'une unité (les tanks : leur nom ; les soldats : leur indicatif)
   function nomDe(u) {
@@ -94,6 +120,7 @@ Tanks.Radio = (function () {
     const t = monde.temps, interceptee = !!options.interceptee, spontanee = priorite !== "reponse" && !options.force;
     const cleGenre = interceptee ? "interceptee" : genre;
     if (spontanee) {
+      if (etat.echange) return refus(); // (livre n° 10 : une discussion est en cours sur la fréquence : on ne coupe pas la parole)
       if (t - etat.derniere < (priorite === "urgent" ? B.pauseUrgente : B.pause)) return refus();
       if (u && u.radioDerniere !== undefined && t - u.radioDerniere < B.parQui) return refus();
       if (etat.parGenre[cleGenre] !== undefined && t - etat.parGenre[cleGenre] < (B.parGenre[cleGenre] || 0)) return refus();
@@ -101,14 +128,16 @@ Tanks.Radio = (function () {
       if (chance !== undefined && Math.random() > chance) return refus();
     }
     const liste = options.liste || (priorite === "reponse" || options.force && R.reponses[genre] ? R.reponses[genre] : interceptee ? R.interceptee[genre] : R.bavard[genre]);
-    let texte = majuscule(remplir(choisir(liste, cleGenre + ":" + genre), valeurs));
+    const car = caractere(u);
+    let texte = options.texte || majuscule(remplir(choisir(liste, cleGenre + ":" + genre, car), valeurs));
     if (options.suite) texte += " " + options.suite;
     if (!texte) return refus();
     const m = ici(monde);
     const phrase = {
       qui: options.qui || nomDe(u), sorte: u ? (estChar(u) ? "char" : "soldat") : "radio", role: (u && u.role) || "",
-      equipe: u ? u.equipe : "bleus", genre, priorite: priorite === "reponse" || options.force ? "reponse" : priorite, texte, interceptee,
+      equipe: u ? u.equipe : "bleus", genre, priorite: options.echange ? priorite : priorite === "reponse" || options.force ? "reponse" : priorite, texte, interceptee,
       distance: u ? Math.round(dist(u, m)) : 0, temps: t,
+      caractere: car, echange: options.echange || null, replique: options.replique || 0, repliques: options.repliques || 0, // (livre n° 10)
     };
     etat.derniere = t;
     etat.parGenre[cleGenre] = t;
@@ -264,15 +293,38 @@ Tanks.Radio = (function () {
     const deToi = tireur && (tireur === monde.joueur || tireur === t.soldat || tireur === t.engin);
     if (nom === "soldat-touche") {
       if (!c || c.genre !== "soldat" || c.joueur || c.mort) return;
+      // (livre n° 10) bien amoché ? il appelle à l'aide (un infirmier répond s'il y en a un)
+      if (c.equipe === "bleus" && c.vie / c.vieMax < 0.5 && dist(c, m) < X.portee) {
+        const soigneur = plusProche(alliesVivants(monde).filter((o) => o !== c && o.role === "infirmier"), c, X.portee) || plusProche(alliesVivants(monde).filter((o) => o !== c), c, X.portee);
+        if (soigneur && echanger(monde, "blesse", { A: c, B: soigneur })) return;
+      }
       if (c.equipe === "bleus") bavarder(monde, c, "touche");
       else intercepter(monde, c, "touche");
     } else if (nom === "soldat-mort") {
       if (!c || c.genre !== "soldat" || c.joueur) return;
       if (c.equipe === "bleus") {
-        const temoin = plusProche(alliesVivants(monde), c, 80);
+        const temoin = plusProche(alliesVivants(monde).filter((o) => o !== c), c, 80);
+        // (livre n° 10) « Homme à terre ! Je vais le chercher ! » « Je te couvre ! »
+        if (temoin && echanger(monde, "hommeATerre", acteurs(monde, temoin, c), null, { victime: c.indicatif || "un des nôtres", lieu: repere(monde, c.x, c.z) })) return;
         if (temoin) bavarder(monde, temoin, "aTerre", null, { victime: c.indicatif || "un des nôtres" });
       } else if (tireur && tireur.equipe === "bleus" && !deToi && !tireur.joueur) bavarder(monde, tireur, "abattu");
-      else intercepter(monde, plusProche(monde.soldats.filter((o) => o.equipe === "rouges" && !o.mort && o !== c), c, 40), "aTerre");
+      else {
+        const temoin = plusProche(monde.soldats.filter((o) => o.equipe === "rouges" && !o.mort && o !== c), c, 60);
+        if (temoin && dist(temoin, m) < B.interceptePortee && echanger(monde, "ennemiPerte", acteursEnnemis(monde, temoin))) return;
+        intercepter(monde, plusProche(monde.soldats.filter((o) => o.equipe === "rouges" && !o.mort && o !== c), c, 40), "aTerre");
+      }
+    } else if (nom === "tireur-en-place") {
+      // (livre n° 10 et 12) un tireur d'élite s'installe en hauteur : l'ennemi ? quelqu'un le repère ; l'ami ? il le dit
+      const s = d.qui;
+      if (!s || s.mort) return;
+      const lieu = " sur " + d.nom.replace(/ \(.*\)$/, "");
+      if (s.equipe === "rouges") {
+        const guetteur = plusProche(alliesVivants(monde), s, C.perchoirs.ia.vue);
+        if (guetteur && dist(guetteur, m) < X.portee) echanger(monde, "sniper", acteurs(monde, guetteur), s, { lieu });
+      } else if (dist(s, m) < X.portee * 1.5) echanger(monde, "tireurEnPlace", acteurs(monde, s), null, { lieuNom: d.nom.replace(/ \(.*\)$/, "") });
+    } else if (nom === "perchoir-effondre") {
+      const temoin = plusProche(alliesVivants(monde), d, X.portee);
+      if (temoin && dist(d, m) < X.portee * 1.5) echanger(monde, "perchoirTombe", acteurs(monde, temoin), null, { lieuNom: majuscule(d.nom.replace(/ \(.*\)$/, "")) });
     } else if (nom === "grenade-lancee") {
       if (!tireur || tireur.joueur) return;
       if (tireur.equipe === "bleus") bavarder(monde, tireur, "grenade");
@@ -286,6 +338,10 @@ Tanks.Radio = (function () {
     } else if (nom === "detruit") {
       if (!c) return;
       if (estChar(c) && c.equipe === "rouges") {
+        // (livre n° 10) « Cible détruite ! » « Bien joué ! » « Il en reste deux, on ne relâche pas. »
+        const annonceur = deToi ? plusProche(alliesVivants(monde), m, X.portee) : tireur && tireur.equipe === "bleus" && !tireur.joueur ? tireur : null;
+        const reste = monde.chars.filter((o) => o.equipe === "rouges" && !o.detruit && o !== c).length;
+        if (annonceur && echanger(monde, "charDetruit", acteurs(monde, annonceur), null, { cible: c.nom, reste: reste ? enLettres(reste) : "" }, reste ? null : { sansC: true })) return;
         if (deToi) bavarder(monde, plusProche(alliesVivants(monde), m), "joliTir", "bavardage", { cible: c.nom });
         else if (tireur && tireur.equipe === "bleus") bavarder(monde, tireur, "charDetruit", "bavardage", { cible: c.nom });
       } else if (c.equipe === "bleus" && c !== monde.joueur && c !== t.engin) {
@@ -300,6 +356,7 @@ Tanks.Radio = (function () {
     if (monde.chrono < etat.chronoAvant) reinitialiser(); // (une nouvelle bataille a commencé)
     etat.chronoAvant = monde.chrono;
     soignerEtReparer(monde, dt);
+    avancerEchange(monde); // (livre n° 10 : la réplique suivante de la discussion en cours)
     etat.regarde -= dt;
     if (etat.regarde > 0) return;
     etat.regarde = B.regarde;
@@ -333,11 +390,34 @@ Tanks.Radio = (function () {
     for (const s of monde.soldats) {
       if (s.equipe !== "bleus" || s.joueur || s.mort || !s.ia) continue;
       if (s.rechargement > 0) {
-        if (!s.radioRecharge && s.ia.cible) bavarder(monde, s, "recharge");
+        if (!s.radioRecharge && s.ia.cible && !(Math.random() < X.chances.munitions && dist(s, m) < X.portee && echanger(monde, "munitions", acteurs(monde, s)))) bavarder(monde, s, "recharge");
         s.radioRecharge = true;
       } else s.radioRecharge = false;
       if (!s.ia.cible || s.ia.cible.mort || dist(s, m) > B.portee) continue;
+      etat.dernierContact = t; // (un de tes soldats proches voit un ennemi : ce n'est pas le calme)
+      // (livre n° 10) un NOUVEL ennemi en vue (un sniper, un hélico, des fantassins…) : il le signale à un autre
+      const cible = s.ia.cible;
+      if (s.radioCible !== cible) {
+        s.radioCible = cible;
+        if (!estChar(cible)) echanger(monde, cible.tireurElite ? "sniper" : "contact", acteurs(monde, s), cible);
+      }
       if (s.vie / s.vieMax < 0.4 || seulContreTrop(monde, s)) bavarder(monde, s, "renforts");
+    }
+    // (livre n° 10) la radio ENNEMIE : un soldat du Front tout près de toi te voit ? on l'entend le dire à un autre
+    const toiCible = (o) => o && (o === monde.joueur || o === monde.toi.soldat || o === monde.toi.engin);
+    for (const s of monde.soldats) {
+      if (s.equipe !== "rouges" || s.mort || !s.ia || dist(s, m) > B.interceptePortee) continue;
+      if (toiCible(s.ia.cible) && s.radioCible !== s.ia.cible && Math.random() < X.chances.ennemiContact) echanger(monde, "ennemiContact", acteursEnnemis(monde, s), s.ia.cible);
+      s.radioCible = s.ia.cible;
+    }
+    // (livre n° 10) LE CALME : rien à la radio et aucun ennemi en vue depuis longtemps ? deux soldats bavardent un peu
+    if (!etat.echange && t - etat.derniere > X.silence && t - etat.dernierContact > X.silence) {
+      const a = plusProche(alliesVivants(monde).filter((o) => !estChar(o)), m, 90);
+      if (a) echanger(monde, "calme", acteurs(monde, a));
+      else {
+        const e = plusProche(monde.soldats.filter((o) => o.equipe === "rouges" && !o.mort && o.ia && !o.ia.cible), m, B.interceptePortee);
+        if (e) echanger(monde, "ennemiCalme", acteursEnnemis(monde, e));
+      }
     }
     if (monde.metro) return;
     for (const c of monde.chars) {
@@ -345,7 +425,8 @@ Tanks.Radio = (function () {
       let qui = monde.chars.find((a) => a.equipe === "bleus" && a !== monde.joueur && !a.detruit && a.ia && a.ia.cible === c && a.ia.voit);
       const d = dist(c, m);
       if (!qui && d < B.charVu && Tanks.Terrain.vueLibre(m.x, (monde.joueur.y || 0) + 2.4, m.z, c.x, c.y + 1.5, c.z)) qui = plusProche(alliesVivants(monde), m, B.portee);
-      if (qui && bavarder(monde, qui, "charEnVue", "urgent", { distance: metres(d), dir: direction(c.x - m.x, c.z - m.z) })) c.radioAnnonce = t;
+      // (livre n° 10) un échange « contact » (l'appel, la réponse, la confirmation) ; sinon la phrase toute seule
+      if (qui && (echanger(monde, "contact", acteurs(monde, qui), c) || bavarder(monde, qui, "charEnVue", "urgent", { distance: metres(d), dir: direction(c.x - m.x, c.z - m.z) }))) c.radioAnnonce = t;
     }
   }
   function seulContreTrop(monde, s) {
@@ -431,5 +512,144 @@ Tanks.Radio = (function () {
     }
   }
 
-  return { ordre, noter, etape, rapport, direction, nomDe, etat };
+  // ------------------------------------------------------------------ 4. ✍️ (livre n° 10) LES ÉCHANGES
+  // LE CARACTÈRE de chacun (toujours le même) : les soldats d'après leur indicatif (à tour de rôle), les tanks d'après leur nom.
+  function hacher(t) {
+    let h = 7;
+    for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;
+    return h;
+  }
+  function caractere(u) {
+    if (!u) return "veteran";
+    if (u.caractere) return u.caractere;
+    let c;
+    if (estChar(u)) c = X.chars[u.nom] || X.ordre[hacher(u.nom || "?") % X.ordre.length];
+    else if (u.equipe === "rouges") c = X.ordre[hacher(u.nom || "?") % X.ordre.length];
+    else if (u.indicatif) c = X.ordre[Math.max(0, R.indicatifs.indexOf(u.indicatif)) % X.ordre.length];
+    else return "veteran"; // (pas encore d'indicatif : on attend avant de lui donner un caractère)
+    u.caractere = c;
+    return c;
+  }
+  // le nom radio : l'indicatif (Écho…), le nom du tank (Bravo…), ou celui d'un soldat du Front (« Vipère 2 »)
+  function nomRadio(u) {
+    if (!u) return "";
+    if (u.equipe === "rouges" && !estChar(u)) return X.ennemis.indicatifs[hacher(u.nom || "?") % X.ennemis.indicatifs.length];
+    return nomDe(u);
+  }
+  // Qui parle ? A (celui qui a vu), B (un autre de ton camp, le plus proche de A), C (un troisième, s'il y en a).
+  function acteurs(monde, a, pres) {
+    const p = pres || a, autres = alliesVivants(monde).filter((o) => o !== a && (estChar(o) || o.indicatif)).sort((x, y) => dist(x, p) - dist(y, p));
+    return { A: a, B: autres[0] || null, C: autres[1] || null };
+  }
+  function acteursEnnemis(monde, a) {
+    const autres = monde.soldats.filter((o) => o.equipe === "rouges" && !o.mort && o !== a).sort((x, y) => dist(x, a) - dist(y, a));
+    return { A: a, B: autres[0] || null, C: autres[1] || null };
+  }
+  // L'ENNEMI : quelle sorte (pour le dire avec les bons mots), et combien autour de lui
+  function menaceDe(o) {
+    if (!o) return "fantassin";
+    if (estChar(o)) return "char";
+    if (o.genre === "helico") return "helico";
+    if (o.genre === "avion") return "avion";
+    if (o.genre === "vehicule" || o.genre === "bateau" || o.sorte === "jeep" || o.sorte === "camion" || o.sorte === "quad") return "blinde";
+    if (o.tireurElite) return "sniper";
+    if (o.arme === "roquettes") return "roquettes";
+    return "fantassin";
+  }
+  function combien(monde, o, sorte) {
+    if (!o || sorte === "char" || sorte === "helico" || sorte === "avion" || sorte === "sniper") return 1;
+    let n = 0;
+    for (const s of monde.soldats) if (s.equipe === o.equipe && !s.mort && Math.abs(s.x - o.x) < 60 && Math.abs(s.z - o.z) < 60) n++;
+    return Math.max(1, n);
+  }
+  // Le CARRÉ de la carte, comme sur une vraie carte militaire : « carré Delta 6 »
+  function grille(x, z) {
+    const G = X.grille, n = G.lettres.length, i = Math.max(0, Math.min(n - 1, Math.floor((x + Tanks.Terrain.demi) / G.taille))), j = Math.max(0, Math.min(9, Math.floor((z + Tanks.Terrain.demi) / G.taille)));
+    return "carré " + G.lettres[i] + " " + (j + 1);
+  }
+  // UN REPÈRE près de (x, z) : un perchoir, une rue (ou un carrefour) de la ville, un village… (« » s'il n'y a rien)
+  const article = (nom) => (/^rue/.test(nom) ? "la " : /^avenue/.test(nom) ? "l'" : "le ") + nom;
+  const deArticle = (nom) => (/^rue/.test(nom) ? "de la " : /^avenue/.test(nom) ? "de l'" : "du ") + nom;
+  function repere(monde, x, z) {
+    const T = Tanks.Terrain;
+    if (T.souterrain) return "";
+    for (const p of Tanks.Perchoirs.liste) if (p.debout && Math.abs(p.x - x) < 45 && Math.abs(p.z - z) < 45) return " près " + p.nom.replace(/ \(.*\)$/, "").replace(/^le /, "du ").replace(/^l'/, "de l'");
+    const Q = T.variante && T.variante.quartier;
+    if (Q && Math.hypot(x - Q.x, z - Q.z) < Q.rayon) {
+      const ki = Math.round((x - Q.x) / Q.ilot), kj = Math.round((z - Q.z) / Q.ilot), dx = Math.abs(x - (Q.x + ki * Q.ilot)), dz = Math.abs(z - (Q.z + kj * Q.ilot));
+      const nordSud = X.rues.nord[((ki % X.rues.nord.length) + X.rues.nord.length + 6) % X.rues.nord.length], estOuest = X.rues.est[((kj % X.rues.est.length) + X.rues.est.length + 6) % X.rues.est.length];
+      if (dx < Q.rue * 1.5 && dz < Q.rue * 1.5) return ", au carrefour " + deArticle(nordSud) + " et " + deArticle(estOuest);
+      return "," + (dx < dz ? (/^rue/.test(nordSud) ? " dans " : " sur ") + article(nordSud) : (/^rue/.test(estOuest) ? " dans " : " sur ") + article(estOuest));
+    }
+    for (const v of T.villages) if (v.nom && Math.hypot(x - v.x, z - v.z) < v.rayon + 40) return " vers " + v.nom;
+    return "";
+  }
+  // Les VALEURS de la situation (pour remplir les {mots} des phrases)
+  function situation(monde, ac, menace, extra) {
+    const m = ici(monde), o = menace, sorte = menaceDe(o), n = combien(monde, o, sorte);
+    const ennemi = n > 1 ? enLettres(n) + " " + X.pluriels[sorte] : X.menaces[sorte];
+    const v = { A: nomRadio(ac.A), B: nomRadio(ac.B), C: nomRadio(ac.C), moi: X.joueur, ennemi, Ennemi: majuscule(ennemi), nombre: ennemi, Nombre: majuscule(ennemi), dir: "", distance: "", grille: "", lieu: "", lieuNom: "", victime: "", cible: "", reste: "" };
+    if (o) Object.assign(v, { dir: direction(o.x - m.x, o.z - m.z), distance: metres(dist(o, m)), grille: grille(o.x, o.z), lieu: repere(monde, o.x, o.z) });
+    return Object.assign(v, extra || {});
+  }
+  // Combien de temps dure une réplique (pour savoir quand dire la suivante) : comme le haut-parleur, un peu plus large.
+  const V = R.voix;
+  const dureeDe = (texte) => ((V.minimum + texte.length * V.lettre) * 1.12 + V.avant + V.blanc + X.pause);
+  // COMMENCER un échange. scenario : un nom de « echanges.scenarios » ; ac : { A, B, C } ; menace : l'ennemi (ou null) ;
+  // extra : des valeurs en plus ; options : { sansC }. Renvoie true s'il a commencé.
+  function echanger(monde, scenario, ac, menace, extra, options) {
+    const t = monde.temps, urgent = X.urgents.includes(scenario), ennemi = /^ennemi/.test(scenario);
+    if (!ac || !ac.A || !ac.B || ac.A.mort || ac.A.detruit) return false; // (il faut être au moins deux pour discuter)
+    if (etat.parScenario[scenario] !== undefined && t - etat.parScenario[scenario] < (X.parScenario[scenario] || 0)) return false;
+    const en = etat.echange;
+    if (en && (!urgent || en.urgent)) return false; // (une discussion est déjà en cours)
+    if (!en && !urgent && t - etat.dernierEchange < X.pauseEchange) return false;
+    const chance = X.chances[scenario];
+    if (chance !== undefined && Math.random() > chance) return false;
+    let versions = X.scenarios[scenario].filter((ver) => ver.every(([q]) => !!ac[q]));
+    if (options && options.sansC) versions = versions.filter((ver) => ver.every(([q]) => q !== "C"));
+    if (!versions.length) return false;
+    const version = versions[Math.floor(Math.random() * versions.length)];
+    // (la radio ennemie parle depuis SA position : la distance entre lui et toi)
+    if (ennemi && menace) extra = Object.assign({ distance: metres(dist(ac.A, menace)) }, extra);
+    const valeurs = situation(monde, ac, menace, extra);
+    const lignes = version.map(([q, cle]) => ({ u: ac[q], qui: q, texte: majuscule(remplir(choisir(X.phrases[cle], "echange:" + cle, caractere(ac[q])), valeurs)) }));
+    // ✍️ une URGENCE coupe la discussion tranquille en cours : on le dit d'abord
+    if (en) {
+      etat.coupes++;
+      radio.emettre("radio-echange", { etat: "coupe", scenario: en.scenario, par: scenario, dites: en.k, repliques: en.lignes.length });
+      lignes[0].texte = choisir(X.coupure, "coupure", caractere(ac.A)) + " " + lignes[0].texte;
+    }
+    etat.echange = { scenario, lignes, k: 0, prochaine: t, urgent, interceptee: ennemi, debut: t, acteurs: ["A", "B", "C"].filter((q) => ac[q]).map((q) => ({ qui: q, nom: nomRadio(ac[q]), caractere: caractere(ac[q]) })) };
+    etat.parScenario[scenario] = t;
+    etat.dernierEchange = t;
+    etat.echanges++;
+    radio.emettre("radio-echange", { etat: "debut", scenario, urgent, interceptee: ennemi, repliques: lignes.length, acteurs: etat.echange.acteurs.map((a) => a.nom + " (" + X.personnalites[a.caractere].nom + ")"), menace: menace ? menaceDe(menace) : "", lieu: valeurs.lieu || valeurs.lieuNom || "" });
+    avancerEchange(monde);
+    return true;
+  }
+  // La réplique suivante (quand la précédente a eu le temps d'être dite)
+  function avancerEchange(monde) {
+    const e = etat.echange;
+    if (!e || monde.temps < e.prochaine) return;
+    if (e.k >= e.lignes.length) {
+      etat.echange = null;
+      etat.finis++;
+      etat.dernierEchangeFini = e;
+      radio.emettre("radio-echange", { etat: "fin", scenario: e.scenario, repliques: e.lignes.length, duree: Math.round((monde.temps - e.debut) * 10) / 10 });
+      return;
+    }
+    const l = e.lignes[e.k];
+    if (l.u && (l.u.mort || l.u.detruit)) { // (celui qui devait parler est tombé : la discussion s'arrête là)
+      etat.echange = null;
+      etat.coupes++;
+      radio.emettre("radio-echange", { etat: "coupe", scenario: e.scenario, par: "silence", dites: e.k, repliques: e.lignes.length });
+      return;
+    }
+    dire(monde, l.u, e.scenario, e.urgent ? "urgent" : "bavardage", {}, { force: true, texte: l.texte, interceptee: e.interceptee, qui: nomRadio(l.u), echange: e.scenario, replique: e.k + 1, repliques: e.lignes.length });
+    e.k++;
+    e.prochaine = monde.temps + dureeDe(l.texte);
+  }
+
+  return { ordre, noter, etape, rapport, direction, nomDe, etat, caractere, echanger, repere, grille };
 })();

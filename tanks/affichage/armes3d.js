@@ -1761,14 +1761,16 @@ Tanks.Armes3D = (function () {
   }
   const tirer = (liste, x) => { const total = liste.reduce((t, [, p]) => t + p, 0); let k = x * total; for (const [v, p] of liste) if ((k -= p) < 0) return v; return liste[0][0]; };
   const choixIA = new Map();
-  function armeIA(nom, equipe, roquettes) {
-    const cle = nom + ":" + equipe + ":" + (roquettes ? 1 : 0);
+  function armeIA(nom, equipe, roquettes, elite) {
+    const cle = nom + ":" + equipe + ":" + (roquettes ? 1 : 0) + (elite ? ":E" : "");
     if (choixIA.has(cle)) return choixIA.get(cle);
-    const I = A3.ia, id = tirer(roquettes ? I.roquettes : I[equipe] || I.bleus, hacher(nom, 1));
+    // (livre n° 12) un TIREUR D'ÉLITE de l'ordinateur : un fusil de précision avec une grosse lunette
+    const I = A3.ia, id = tirer(roquettes ? I.roquettes : elite && I.elite ? I.elite[equipe] || I.elite.bleus : I[equipe] || I.bleus, hacher(nom, 1));
     // ses pièces : une des 4 « versions » de cette arme (pas une par soldat : le magasin reste petit, et 30 soldats avec
     // la même version partagent la même forme)
     const pieces = vides(), version = Math.floor(hacher(nom, 3) * 4);
     if (!roquettes) for (const emp of ["viseur", "canon", "bouche", "chargeur", "poignee"]) pieces[emp] = tirer(I[emp], hacher(id + ":" + version + ":" + emp, 11)); // (demande 97 : les nouveaux emplacements)
+    if (elite && I.elite) pieces.viseur = tirer(I.elite.viseur, hacher(nom, 13));
     const c = { id, pieces, version };
     choixIA.set(cle, c);
     return c;
@@ -1792,7 +1794,7 @@ Tanks.Armes3D = (function () {
       pieces = enMain.pieces;
       lg = s.gadget && s.gadget.id === "lanceGrenades";
     } else {
-      const c = armeIA(s.nom || "?", s.equipe, !!s.roquettesIA || s.arme === "roquettes");
+      const c = armeIA(s.nom || "?", s.equipe, !!s.roquettesIA || s.arme === "roquettes", !!s.tireurElite);
       id = c.id;
       pieces = c.pieces;
     }
@@ -1809,7 +1811,7 @@ Tanks.Armes3D = (function () {
     if (!s) return "ak"; // (une mitrailleuse de véhicule)
     let id, pieces;
     if (s.armes) { const A = Tanks.Armes.enMain(s); id = A.id; pieces = A.pieces || {}; }
-    else { const c = armeIA(s.nom || "?", s.equipe, !!s.roquettesIA); id = c.id; pieces = c.pieces; }
+    else { const c = armeIA(s.nom || "?", s.equipe, !!s.roquettesIA, !!s.tireurElite); id = c.id; pieces = c.pieces; }
     if (pieces.bouche === "silencieux") return "silencieux"; // (demande 97 : le silencieux est dans la « bouche »)
     const F = fiche(id);
     if (!F) return "fusil";

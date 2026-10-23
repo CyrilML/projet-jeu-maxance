@@ -311,6 +311,8 @@ Tanks.Interieurs = (function () {
       else if (dedans && avant && typeof dedans.etage === "number" && dedans.etage !== (typeof avant.etage === "number" ? avant.etage : avant.dernier)) ev.push(["maison-etage", { nom: dedans.b.nom, etage: dedans.etage, hauteur: Math.round((s.y - dedans.b.sol) * 10) / 10 }]);
       if (dedans) dedans.dernier = typeof dedans.etage === "number" ? dedans.etage : avant && avant.b === dedans.b ? (typeof avant.etage === "number" ? avant.etage : avant.dernier) : 0;
     }
+    // (livre n° 12) sur la plateforme d'un mirador, d'un château d'eau, d'un échafaudage : le sol, c'est la plateforme
+    if (Tanks.Perchoirs) cible = Tanks.Perchoirs.hauteur(s, cible);
     // descendre doucement (un trou, l'escalier vu d'en haut) ; monter une marche d'un coup
     if (cible < s.y - I.marche && dt) return Math.max(cible, s.y - I.chute * dt);
     return cible;

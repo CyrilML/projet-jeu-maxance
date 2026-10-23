@@ -133,6 +133,7 @@ Tanks.Soldat = (function () {
       }
       if (tireur.equipe === "rouges") chance *= Tanks.Campagne.facteur("precision"); // (demande 90 : la précision du Front)
       if (meilleur.s.accroupi) chance *= RS.accroupi.touche; // (demande 92 : accroupi, il est plus petit)
+      if (Tanks.Perchoirs.abrite(meilleur.s, y)) chance *= C.perchoirs.couvert.touche; // (livre n° 12 : accroupi derrière les sacs de sable, tiré d'en bas)
       if (Math.random() < chance) {
         ev.push(["balle", { tireur, de: { x, y, z }, a: { x: meilleur.s.x, y: meilleur.s.y + hauteurVisee(meilleur.s), z: meilleur.s.z }, touche: true }]);
         if (meilleur.s.genre === "vehicule" || meilleur.s.sorte) Tanks.Vehicules.blesserPilote(meilleur.s, Math.ceil(degats * (R.vsVehicule || 1) * 2) / 2, tireur, ev); // (demande 97 : × les munitions perforantes ou à pointe creuse)
@@ -228,6 +229,8 @@ Tanks.Soldat = (function () {
     s.lancer = Math.max(0, (s.lancer || 0) - dt);
     s.attenteGrenade = Math.max(0, (s.attenteGrenade || 0) - dt);
     regagner(s, dt, ev); // (étape 75)
+    // ✍️ (livre n° 12) SUR L'ÉCHELLE d'un perchoir : il grimpe (ou descend), il ne marche pas et ne tire pas
+    if (Tanks.Perchoirs.grimper(s, intentions, dt, monde, ev)) return;
     // tourner (le joueur : avec les flèches ; l'ordinateur : vers un angle)
     if (intentions.versAngle !== undefined) {
       const diff = angleEntre(intentions.versAngle - s.angle);
@@ -244,6 +247,7 @@ Tanks.Soldat = (function () {
     s.x = Math.max(-lim, Math.min(lim, s.x));
     s.z = Math.max(-lim, Math.min(lim, s.z));
     T.repousser(s, 0.5);
+    Tanks.Perchoirs.contraindre(s); // (livre n° 12 : sur une plateforme, les sacs de sable tout autour : on ne tombe pas)
     // les arbres (encore debout) sont des poteaux : on en fait le tour
     for (const a of T.arbresAutour(s.x, s.z, 1.2, prochesArbres)) { // (étape 72 : les cases voisines seulement)
       if (a.ecrase || Math.abs(a.x - s.x) > 1.2 || Math.abs(a.z - s.z) > 1.2) continue;

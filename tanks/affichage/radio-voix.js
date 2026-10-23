@@ -190,7 +190,9 @@ Tanks.RadioVoix = (function () {
       // (livre n° 3) LES MORCEAUX : une phrase par « . ! ? … » ; la voix respire entre deux
       const morceaux = HU && HU.morceaux ? (dit.match(/[^.!?…]+[.!?…]*/g) || [dit]).map((x) => x.trim()).filter(Boolean) : [dit];
       // (étape 96) un peu de hasard à CHAQUE phrase : on ne dit jamais deux fois une phrase exactement pareil
-      const h = V.hasard, base = tb.hauteur * E.hauteur * (1 + (Math.random() * 2 - 1) * h.hauteur), rythme = tb.vitesse * E.vitesse * (1 + (Math.random() * 2 - 1) * h.vitesse);
+      // ✍️ (livre n° 10) le CARACTÈRE change un peu la voix : le vétéran parle posément, la jeune recrue vite et un peu plus haut
+      const PV = (p.caractere && !p.interceptee && C.radio.echanges.personnalites[p.caractere] && C.radio.echanges.personnalites[p.caractere].voix) || { vitesse: 1, hauteur: 1 };
+      const h = V.hasard, base = tb.hauteur * E.hauteur * PV.hauteur * (1 + (Math.random() * 2 - 1) * h.hauteur), rythme = tb.vitesse * E.vitesse * PV.vitesse * (1 + (Math.random() * 2 - 1) * h.vitesse);
       Object.assign(humain, { dernier: dit, morceaux: morceaux.length, emotion: emo, vitesse: rythme, hauteur: base });
       morceaux.forEach((m, k) => {
         const u = new window.SpeechSynthesisUtterance(m), cri = /!$/.test(m);
@@ -219,7 +221,7 @@ Tanks.RadioVoix = (function () {
     Tanks.Sons.radioFond(false);
     Tanks.Sons.radioFin(item.phrase.interceptee);
     item.sousTitre.fin = maintenant;
-    historique.unshift({ qui: item.phrase.qui, texte: item.phrase.texte, priorite: item.phrase.priorite, voix: !!item.utterance, interceptee: item.phrase.interceptee });
+    historique.unshift({ qui: item.phrase.qui, texte: item.phrase.texte, priorite: item.phrase.priorite, voix: !!item.utterance, interceptee: item.phrase.interceptee, caractere: item.phrase.caractere, echange: item.phrase.echange });
     if (historique.length > 6) historique.pop();
     bilan.dites++;
     enCours = null;
@@ -354,9 +356,11 @@ Tanks.RadioVoix = (function () {
     }
   }
   function etiquette(p) {
-    if (p.interceptee) return "INTERCEPTÉ";
+    // (livre n° 10) dans un ÉCHANGE : la réplique (2 / 3) ; et le caractère de celui qui parle (🎖️ 😰 😄)
+    const PE = p.caractere && C.radio.echanges.personnalites[p.caractere], echange = p.echange ? " · " + p.replique + "/" + p.repliques : "";
+    if (p.interceptee) return "INTERCEPTÉ" + echange;
     if (p.sorte === "radio") return "RADIO";
-    return (p.sorte === "char" ? "char" : p.role === "infirmier" ? "infirmier" : p.role === "mecanicien" ? "mécanicien" : "soldat") + (p.priorite === "reponse" ? " · répond" : "");
+    return (PE ? PE.icone + " " : "") + (p.sorte === "char" ? "char" : p.role === "infirmier" ? "infirmier" : p.role === "mecanicien" ? "mécanicien" : "soldat") + (p.priorite === "reponse" ? " · répond" : "") + echange;
   }
 
   // Pour « sous le capot »

@@ -60,10 +60,18 @@ Tanks.SousLeCapot = (function () {
   let table, journal, monde, branche = false;
 
   const MESSAGES = {
+    // livre de demandes n° 12 : les points en hauteur pour les snipers
+    "perchoir-echelle": (d) => "🪜 " + (d.joueur ? "Tu " + (d.monte ? "grimpes sur " : "redescends de ") : d.soldat + (d.monte ? " grimpe sur " : " redescend de ")) + d.nom + " (" + d.hauteur + " m d'échelle, " + C.perchoirs.echelle.vitesse.toString().replace(".", ",") + " m/s)",
+    "perchoir-monte": (d) => "🗼 " + (d.joueur ? "Tu es en haut de " : d.soldat + " est en haut de ") + d.nom + " : " + d.hauteur + " m au-dessus du sol, il domine le paysage de " + d.elevation + " m → vue + " + d.vue + " m (X : s'accroupir derrière les sacs de sable)",
+    "perchoir-descend": (d) => "🪜 " + (d.joueur ? "Tu es redescendu(e) de " : d.soldat + " est redescendu de ") + d.nom,
+    "perchoir-touche": (d) => "💥 " + d.nom + " est touché (" + d.par + ", −" + String(d.points).replace(".", ",") + " point" + (d.points > 1 ? "s" : "") + ") : " + String(d.vie).replace(".", ",") + " / " + d.vieMax + (d.parToi ? " (par toi)" : ""),
+    "perchoir-effondre": (d) => "🏚️ " + d.nom + " S'EFFONDRE (" + d.par + (d.parToi ? ", par toi" : "") + ") : il bascule et tombe" + (d.soldats ? " · " + d.soldats + " soldat" + (d.soldats > 1 ? "s" : "") + " dessus, retrouvé" + (d.soldats > 1 ? "s" : "") + " au sol (−" + C.perchoirs.chute + " point de vie, rien de grave)" : " · personne dessus"),
+    "tireur-en-place": (d) => "🎯 Tireur d'élite " + (d.equipe === "bleus" ? "allié" : "ENNEMI") + " (" + d.soldat + ") installé sur " + d.nom + " · il voit + " + d.vue + " m plus loin" + (d.equipe === "rouges" ? " · repère le reflet de sa lunette !" : ""),
     // demande 94 : la radio qui parle
     "radio-phrase": (d) => (d.interceptee ? "📡 (interceptée) " : "📻 ") + d.qui + (d.role ? " (" + d.role + ")" : "") + " : « " + d.texte + " » · " + ({ reponse: "réponse à ton ordre", urgent: "urgent", bavardage: "bavardage" }[d.priorite] || d.priorite) + " · " + d.genre + (d.distance ? " · à " + d.distance + " m de toi" : ""),
     "aide-touches": (d) => (d.visible ? "⌨️ La ligne des touches est affichée (H pour la cacher)" : "⌨️ La ligne des touches est cachée (H pour la revoir)") + " · livre de demandes n° 1 : l'écran épuré",
     "voix-changees": (d) => "🔁 Les voix tournent d'un cran (J) : " + d.nombre + " voix françaises, la 1re est maintenant " + d.voix,
+    "radio-echange": (d) => d.etat === "debut" ? "💬 Échange radio « " + d.scenario + " »" + (d.urgent ? " (URGENT)" : "") + (d.interceptee ? " (radio ennemie)" : "") + " : " + d.repliques + " répliques entre " + d.acteurs.join(", ") + (d.menace ? " · ennemi : " + d.menace : "") + (d.lieu ? " · repère :" + d.lieu : "") : d.etat === "coupe" ? "✂️ Échange « " + d.scenario + " » coupé après " + d.dites + " / " + d.repliques + " répliques (" + (d.par === "silence" ? "celui qui devait parler est tombé" : "urgence : « " + d.par + " »") + ")" : "✅ Échange « " + d.scenario + " » terminé (" + d.repliques + " répliques en " + virgule(d.duree, 1) + " s)", // (livre n° 10)
     "radio-voix": (d) => (d.actives ? "🗣️ Voix de la radio allumées (N)" : "🔇 Voix de la radio coupées (N) : les sous-titres restent") + " · " + (d.synthese ? d.voixFr + " voix française(s) sur " + d.toutes : "pas de synthèse vocale dans ce navigateur : sous-titres seulement"),
     "radio-question": (d) => "❔ Ta question (" + { ennemis: "où sont les ennemis", position: "où es-tu", merci: "merci" }[d.question] + ") : " + d.qui + " répond",
     "soin-allie": (d) => "⛑️ " + d.de + " soigne " + d.qui + " : " + Math.round(d.vie) + " / " + d.vieMax + (d.demande ? " (tu l'as demandé)" : ""),
@@ -567,6 +575,23 @@ Tanks.SousLeCapot = (function () {
     l.push(["décor du film", E.feux + " feux (et leurs colonnes de fumée) allumés pour le film, éteints à la fin"]);
   }
 
+  // (livre de demandes n° 12) LES POINTS EN HAUTEUR : les perchoirs, toi (échelle, plateforme, vue, couvert), les tireurs d'élite.
+  function lignesPerchoirs(l, s) {
+    const PP = Tanks.Perchoirs, B = PP.bilan, PC = C.perchoirs, liste = PP.liste;
+    if (!liste.length || Tanks.Terrain.souterrain) return;
+    l.push(["Les points en hauteur (livre n° 12)"]);
+    const parSorte = {};
+    for (const p of liste) parSorte[p.sorte] = (parSorte[p.sorte] || 0) + 1;
+    l.push(["les perchoirs", Object.keys(parSorte).map((k) => PC.sortes[k].icone + " " + parSorte[k] + " " + (parSorte[k] > 1 ? PC.sortes[k].pluriel : PC.sortes[k].nom)).join(" · ") + " · debout " + liste.filter((p) => p.debout).length + " / " + liste.length + " · " + B.occupes + " soldat(s) dessus · " + B.grimpent + " sur une échelle · (petite carte : triangles dorés)"]);
+    const proches = liste.slice().sort((a, b) => Math.hypot(a.x - s.x, a.z - s.z) - Math.hypot(b.x - s.x, b.z - s.z)).slice(0, 3);
+    for (const p of proches) l.push(["   " + PC.sortes[p.sorte].icone + " " + p.nom, Math.round(Math.hypot(p.x - s.x, p.z - s.z)) + " m de toi · " + (p.plateforme ? "plateforme à " + Math.round(p.haut - p.base) + " m" : "au sommet de la colline") + " (domine de " + Math.round(p.elevation) + " m → vue + " + Math.round(Math.min(PC.vue.max, p.elevation * PC.vue.parMetre)) + " m) · " + (p.debout ? (p.vieMax ? "vie " + virgule(p.vie, 1) + " / " + p.vieMax : "indestructible") : "effondré ✖") + " · " + p.occupants + " dessus" + (p.reserve ? " · réservé par " + p.reserve.nom : "")]);
+    const ici = s.echelle ? "🪜 sur l'échelle de " + s.echelle.p.nom + " : " + virgule(s.echelle.h, 1) + " / " + Math.round(s.echelle.p.echelle.hauteur) + " m (" + (s.echelle.sens > 0 ? "monte" : s.echelle.sens < 0 ? "descend" : "arrêté") + ")" : s.perchoir ? "🗼 sur " + s.perchoir.nom + (s.accroupi ? " · accroupi derrière les sacs : une balle d'en bas a × " + PC.couvert.touche + " de chances de te toucher" : " · debout (X : s'accroupir derrière les sacs)") : "au sol";
+    l.push(["toi", ici + " · tes pieds à " + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 1) + " m du sol · vue + " + Math.round(PP.bonusVue(s)) + " m (+ " + PC.vue.parMetre + " m par mètre de hauteur, au plus " + PC.vue.max + ")"]);
+    const elites = monde.soldats.filter((o) => o.tireurElite && !o.mort);
+    l.push(["tireurs d'élite", elites.length ? elites.map((o) => (o.equipe === "bleus" ? "🔵 " : "🔴 ") + o.nom.replace("soldat ", "") + " : " + (o.ia ? o.ia.etat : "—")).join(" · ") : "aucun debout"]);
+    l.push(["compteurs", B.montees + " montées · " + B.descentes + " descentes · " + B.coups + " coups reçus par les perchoirs · " + B.effondres + " effondré(s) · " + B.chocs + " choc(s) de tank · " + B.couverts + " balle(s) arrêtée(s) en partie par les sacs · dessin : " + Tanks.Perchoirs3D.bilan.dessins + " objets soudés, " + Math.round(Tanks.Perchoirs3D.bilan.triangles / 100) / 10 + " k triangles · " + Tanks.Perchoirs3D.bilan.reflets + " reflet(s) de lunette à l'écran"]);
+  }
+
   // (demande 94) LA RADIO QUI PARLE
   function lignesRadio(l) {
     const V = Tanks.RadioVoix.etat(), O = Tanks.Radio.etat, B = C.radio.bavardage, P = { reponse: "🔴 réponse", urgent: "🟠 urgent", bavardage: "⚪ bavardage" };
@@ -579,6 +604,14 @@ Tanks.SousLeCapot = (function () {
     V.historique.forEach((h, i) => l.push([i === 0 ? "dernières phrases" : "", (h.interceptee ? "📡 " : "📻 ") + h.qui + " : « " + h.texte + " »" + (h.voix ? " 🗣️" : "")]));
     const t = monde.temps;
     l.push(["l'opérateur (bavardage)", O.dites + " phrases (" + O.reponses + " réponses à tes ordres) · " + O.tues + " retenues (pause ou hasard) · prochaine phrase spontanée possible dans " + virgule(Math.max(0, B.pause - (t - O.derniere)), 1) + " s (urgente : " + virgule(Math.max(0, B.pauseUrgente - (t - O.derniere)), 1) + " s) · on n'entend que les soldats à moins de " + B.portee + " m"]);
+    // ✍️ (livre n° 10) LES ÉCHANGES : la discussion en cours, les caractères, la mémoire des phrases
+    const X = C.radio.echanges, PE = X.personnalites, e = O.echange || O.dernierEchangeFini;
+    l.push(["échange " + (O.echange ? "en cours" : "(le dernier)"), e ? "« " + e.scenario + " »" + (e.urgent ? " URGENT" : "") + (e.interceptee ? " (radio ennemie)" : "") + " · réplique " + Math.min(e.k, e.lignes.length) + " / " + e.lignes.length + " · " + e.acteurs.map((a) => a.qui + " = " + a.nom + " " + PE[a.caractere].icone + " " + PE[a.caractere].nom).join(", ") : "aucun pour l'instant"]);
+    if (e) e.lignes.forEach((x, i) => l.push(["", (i < e.k ? "✔ " : "… ") + x.qui + " : « " + x.texte + " »"]));
+    l.push(["échanges", O.echanges + " commencés · " + O.finis + " finis · " + O.coupes + " coupés (urgence, ou celui qui devait parler est tombé) · prochain possible dans " + virgule(Math.max(0, X.pauseEchange - (t - O.dernierEchange)), 1) + " s (urgent : tout de suite) · petite discussion après " + X.silence + " s de calme (calme depuis " + virgule(Math.min(t - O.derniere, t - O.dernierContact), 0) + " s)"]);
+    const bleusCar = monde.soldats.filter((o) => o.equipe === "bleus" && o.indicatif && !o.mort).concat(monde.chars.filter((c) => c.equipe === "bleus" && c !== monde.joueur && !c.detruit));
+    if (bleusCar.length) l.push(["caractères", bleusCar.map((o) => (o.indicatif || o.nom) + " " + PE[Tanks.Radio.caractere(o)].icone).join(" · ") + " (🎖️ " + PE.veteran.nom + ", 😰 " + PE.recrue.nom + ", 😄 " + PE.blagueur.nom + ")"]);
+    l.push(["mémoire des phrases", O.memoire.length + " / " + X.memoire + " phrases pas redites tout de suite" + (O.memoire.length ? " : « " + O.memoire.slice(0, 4).map((x) => x.slice(0, 38) + (x.length > 38 ? "…" : "")).join(" » · « ") + " »…" : "")]);
     const sortes = Object.entries(O.parSorte).map(([k, n]) => k + " " + n).join(" · ");
     if (sortes) l.push(["phrases par sorte", sortes]);
     const bleus = monde.soldats.filter((o) => o.equipe === "bleus" && o.indicatif);
@@ -657,6 +690,7 @@ Tanks.SousLeCapot = (function () {
         l.push([R.icone + " " + R.nom, (e.detruit ? "détruit ✖" : (e.pilote ? "👤 piloté · " : "garé · ") + Math.round(Math.abs(e.vitesse) * 3.6) + " km/h" + (e.sorte !== "jeep" ? " · " + Math.round(haut) + " m de haut" : " · vie " + e.vie + " / " + R.vie) + (R.munitions ? " · " + e.munitions + " / " + R.munitions + " " + R.arme + (e.munitions < R.munitions ? " (+1 dans " + virgule(R.recharge - e.rechargeMunition, 1) + " s)" : "") : ""))]);
       }
       lignesMaisons(l, s); // (étape 75)
+      lignesPerchoirs(l, s); // (livre n° 12)
       lignesBases(l); // (demande 99)
       lignesCarte(l);
       lignesHelicos(l);

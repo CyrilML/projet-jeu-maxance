@@ -229,6 +229,7 @@
       <a href="#etape106">Étape 106</a>
       <a href="#etape107">Étape 107</a>
       <a href="#etape108">Étape 108</a>
+      <a href="#etape109">Étape 109</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5502,6 +5503,47 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape109">
+      <h2>📻 Étape 109 : une radio réaliste et des points en hauteur pour les snipers <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les soldats se parlent vraiment à la radio (« Fox, ici Écho… À vous », « Bien copié »), chacun avec son caractère. Et il y a des miradors, des châteaux d'eau, des échafaudages et des nids de sacs de sable pour les snipers. Demandes n° 10 et 12 de ton livre. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/109-radio-et-perchoirs.md</code>.</p>
+          <ul>
+            <li>✍️ « Faire les discussions plus réalistes. »</li>
+            <li>✍️ « Faire des points en hauteur pour les snipers. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 53 ».</li>
+            <li>☐ Des échanges à 2 ou 3 voix : appel → réponse → confirmation, avec la direction, la distance, le « carré » de la carte.</li>
+            <li>☐ Trois caractères : 🎖️ le vétéran calme, 😰 la jeune recrue nerveuse, 😄 le blagueur.</li>
+            <li>☐ Quand c'est calme, ils parlent de la maison, de la nourriture, de la météo ; une alerte coupe la discussion (« Coupez, coupez ! »).</li>
+            <li>☐ Miradors et châteaux d'eau (triangles dorés sur la mini-carte) : ↑ contre l'échelle ou E pour monter, X pour s'accroupir derrière les sacs de sable.</li>
+            <li>☐ Les snipers ennemis montent aussi : guette le reflet de leur lunette !</li>
+            <li>☐ Deux obus de tank font tomber un mirador.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>📡 Le langage radio</h3>
+      <p>À la radio, un seul peut parler à la fois. Alors les soldats ont des règles : on dit qui on appelle et qui on est (« Fox, ici Écho »), on finit par « À vous » pour passer la parole, on confirme avec « Reçu » ou « Bien copié ». Le jeu fabrique ces échanges avec ce qui se passe vraiment : le type d'ennemi, sa direction, sa distance.</p>
+      <h3>👀 Voir plus loin d'en haut</h3>
+      <p>Un soldat de l'ordinateur voit 7 m plus loin pour chaque mètre de hauteur (jusqu'à 170 m de plus). C'est pour ça que les snipers veulent monter… et que les tanks ennemis visent les miradors !</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot : la section « Les points en hauteur » et l'échange radio en cours, ligne par ligne.</li>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>echanges</code> et écris ta propre réplique de blagueur.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Que veut dire « À vous » à la radio ? <span class="petit">(c'est à toi de parler)</span></li>
+            <li>Comment monter sur un mirador ? <span class="petit">(↑ contre l'échelle, ou E)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6907,6 +6949,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-108" data-cle="appris-108" placeholder="Ex. : …"></textarea>
         <label for="idees-108"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-108" data-cle="idees-108" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 109 · une radio réaliste et des points en hauteur <span class="petit">· 23 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/logique/radio.js</code>, <code>tanks/logique/perchoirs.js</code>, <code>tanks/affichage/perchoirs3d.js</code>, <code>config.js</code> (<code>radio.echanges</code>, <code>perchoirs</code>).</p>
+        <p class="petit">✍️ Maxance a demandé : des discussions plus réalistes et des points en hauteur pour les snipers.</p>
+        <label for="appris-109"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-109" data-cle="appris-109" placeholder="Ex. : …"></textarea>
+        <label for="idees-109"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-109" data-cle="idees-109" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

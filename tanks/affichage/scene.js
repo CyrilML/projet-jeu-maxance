@@ -880,6 +880,7 @@ Tanks.Scene = (function () {
     Tanks.MarquesSol.maj(dt, monde, cam.position); // (demande 92 : les traces de chenilles et les cratères)
     Tanks.Base3D.maj(monde, cam.position, Q.vue); // (demande 99 : les bases aériennes, les cratères des pistes)
     Tanks.Interieurs3D.maj(dt, cam.position, Q.interieurs || 30);
+    Tanks.Perchoirs3D.maj(dt, cam.position, monde); // (livre n° 12 : les perchoirs qui s'effondrent, le reflet des lunettes)
     Tanks.Ville3D.maj(dt, cam.position, Q.objetsVille || 90); // (livre n° 9 et 11 : la ville abandonnée ; les petits objets de près) // (livre de demandes n° 8 : les intérieurs près de la caméra, les portes)
     Tanks.Maisons3D.maj(dt, cam.position, Q.maisons); // (étape 75 : les morceaux de mur tombés, les débris qui volent, les toits qui s'effondrent ; la belle version de près)
     }

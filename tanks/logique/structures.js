@@ -439,6 +439,7 @@ Tanks.Structures = (function () {
   function exploser(x, y, z, sorte, tireur, ev, monde, surLeToit) {
     Tanks.Base.exploser(x, y, z, sorte, tireur, ev, monde); // (demande 99 : sur une piste, l'explosion creuse un cratère)
     if (Tanks.Ville) Tanks.Ville.exploser(x, y, z, sorte, tireur, ev); // (livre n° 9 et 11 : les voitures, les petits objets)
+    if (Tanks.Perchoirs) Tanks.Perchoirs.exploser(x, y, z, sorte, tireur, ev, monde); // (livre n° 12 : les miradors, les châteaux d'eau…)
     const E = S.explosions[sorte];
     if (!E || !E[0]) return;
     const [D, Ray] = E;

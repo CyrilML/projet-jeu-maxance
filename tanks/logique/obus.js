@@ -268,6 +268,11 @@ Tanks.Obus = (function () {
           if (m.toit) toit = m.b;
         }
       }
+      // (livre n° 12) un mirador, un château d'eau, un échafaudage ? (l'obus explose dessus : il l'abîme)
+      if (!fini && p.sorte !== "torpille" && p.sorte !== "flak" && Tanks.Perchoirs) {
+        const h = Tanks.Perchoirs.touche(ax, ay, az, p.x, p.y, p.z);
+        if (h) fini = ["impact", { x: h.x, y: h.y, z: h.z, sur: "perchoir", sorte: p.sorte, nom: h.nom, matiere: h.matiere }];
+      }
       // l'eau du lac ? (étape 62)
       if (!fini && p.sorte !== "torpille" && p.y < C.lac.niveau && T.dansLEau(p.x, p.z)) fini = ["impact", { x: p.x, y: C.lac.niveau, z: p.z, sur: "eau", sorte: p.sorte }];
       // le sol ?

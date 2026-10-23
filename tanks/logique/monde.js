@@ -267,6 +267,8 @@ Tanks.Monde = (function () {
       return;
     }
     if (s.parachute) return;
+    // ✍️ (livre n° 12) le pied (ou le haut) d'une échelle tout près ? E fait grimper (ou redescendre)
+    if (Tanks.Perchoirs.echelleProche(s)) return void (s.veutGrimper = true);
     // à pied : le plus proche (ton tank, ou un engin)
     let meilleur = null;
     const regarder = (e, mode, rayon) => {
@@ -399,6 +401,7 @@ Tanks.Monde = (function () {
     // (livre de demandes n° 8) les portes des maisons qui s'ouvrent et se referment, les soldats dedans
     if (!monde.metro) Tanks.Interieurs.avancer(monde, dt, evenements);
     if (!monde.metro) Tanks.Ville.avancer(monde, dt); // (livre n° 9 et 11 : les tanks écrasent les petits objets, les voitures brûlent)
+    if (!monde.metro) Tanks.Perchoirs.avancer(monde, dt, evenements); // (livre n° 12 : les perchoirs des tireurs d'élite)
     // Un tank ou ton 4x4 qui roule vite écrase les soldats ennemis.
     for (const v of cibles(monde)) {
       if (v.detruit || v.sorte === "moto" || v.genre === "helico" || Math.abs(v.vitesse) < C.soldats.ecrase) continue; // (étape 71 : une moto n'écrase personne)

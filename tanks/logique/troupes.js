@@ -39,6 +39,7 @@ Tanks.Troupes = (function () {
         const x = (k - (S.parEquipe - 1) / 2) * 9;
         const s = Tanks.Soldat.creer(equipe, x, z0 + (k % 2) * 4 * sens, sens > 0 ? -Math.PI / 2 : Math.PI / 2, (equipe === "bleus" ? "soldat bleu n° " : "soldat rouge n° ") + (k + 1));
         if (k % Math.round(S.parEquipe / S.lanceRoquettes) === 2) s.arme = "roquettes";
+        else if (C.perchoirs.ia.numeros.slice(0, C.perchoirs.ia.parEquipe).includes(k)) (s.tireurElite = true), (s.arme = "elite"); // ✍️ (livre n° 12) les tireurs d'élite
         s.ia = { pense: (k / S.parEquipe) * S.pense, cible: null, voit: false, couloir: x * 1.4, etat: "avance", erreur: 0 };
         liste.push(s);
       }
@@ -97,7 +98,8 @@ Tanks.Troupes = (function () {
       const candidats = utiles && utiles.length ? utiles : roquettes ? monde.chars.concat(monde.engins.filter((e) => e.sorte === "jeep" || ((e.sorte === "bateau" || e.sorte === "camion" || e.sorte === "quad") && e.pilote)), monde.bateaux, monde.vehicules.filter((v) => v.sorte !== "moto"), Tanks.Helicos.bas(monde, helicosBas)).filter((c) => !c.detruit && c.equipe !== s.equipe) : monde.soldats.filter((o) => !o.mort && !o.dansUnEngin && o.equipe !== s.equipe).concat(Tanks.Vehicules.legers(monde).filter((v) => v.equipe !== s.equipe));
       // (étape 72) on range les candidats du plus proche au plus loin, puis on regarde la ligne de vue dans cet ordre :
       // le premier qu'on VOIT est le bon (avant, on faisait le long calcul de la ligne de vue pour beaucoup plus d'ennemis)
-      const portee = roquettes ? 120 : T.souterrain ? C.souterrain.regles.vue : S.vue; // (étape 80 : moins loin sous terre)
+      // (livre n° 12) le tireur d'élite voit plus loin, et la HAUTEUR fait voir plus loin (un perchoir, l'étage d'une maison)
+      const portee = roquettes ? 120 : T.souterrain ? C.souterrain.regles.vue : (s.tireurElite ? C.perchoirs.ia.vue : S.vue) + Tanks.Perchoirs.bonusVue(s); // (étape 80 : moins loin sous terre)
       parDistance.length = 0;
       for (const o of candidats) {
         const d = Math.hypot(o.x - s.x, o.z - s.z);
@@ -135,6 +137,12 @@ Tanks.Troupes = (function () {
     const but = Tanks.Ordres.but(s, monde);
     if (but) {
       const gx = but.x - s.x, gz = but.z - s.z, reste = Math.hypot(gx, gz);
+      // (livre n° 12) en haut d'un perchoir, et l'endroit est ailleurs ? il redescend d'abord par l'échelle
+      if (s.perchoir && s.perchoir.plateforme && reste > but.rayon + 4) {
+        ia.etat = "📢 " + Tanks.Ordres.enMots(s) + " · 🪜 redescend de " + s.perchoir.nom;
+        ia.enPlace = false;
+        return { descendre: true };
+      }
       // (livre n° 8) l'endroit est dehors (ou dans une autre maison) ? il sort d'abord de la maison où il est
       const so = reste > but.rayon && s.dedansMaison && !Tanks.Structures.dedans(s.dedansMaison, but.x, but.z) ? Tanks.Interieurs.sortie(s) : null;
       if (so) {
@@ -164,6 +172,11 @@ Tanks.Troupes = (function () {
       intentions.versAngle = Math.atan2(g.z - s.z, g.x - s.x);
       intentions.grenade = g;
       return intentions;
+    }
+    // ✍️ (livre n° 12) LE TIREUR D'ÉLITE : il va s'installer sur un perchoir libre, y grimpe et tire de là-haut
+    if (s.tireurElite && !T.souterrain && !s.ordre) {
+      const r = elite(s, ia, cible, monde, dt, intentions);
+      if (r) return r;
     }
     // (livre n° 8) son ABRI dans une maison : il y court (par la porte), puis il tire par la fenêtre
     if (ia.abri) {
@@ -244,6 +257,51 @@ Tanks.Troupes = (function () {
       intentions.versAngle = Math.atan2(gz, gx);
       intentions.avancer = Math.abs(angleEntre(intentions.versAngle - s.angle)) < 1;
     }
+    return debloquer(s, ia, intentions, dt);
+  }
+
+  // ✍️ (livre de demandes n° 12) LE TIREUR D'ÉLITE de l'ordinateur. Sa méthode :
+  //   1. il choisit un perchoir LIBRE (proche, haut, pas trop chez l'ennemi : logique/perchoirs.js) et le réserve ;
+  //   2. il y va (un ennemi à moins de « defense » m ? il se défend d'abord, comme les autres) ;
+  //   3. au pied de l'échelle, il grimpe (logique/perchoirs.js le fait monter) ;
+  //   4. en haut : il s'ACCROUPIT derrière les sacs de sable, guette, et tire sur ce qu'il voit (il voit plus loin).
+  // Renvoie ses intentions, ou null (« fais comme les autres »).
+  function elite(s, ia, cible, monde, dt, intentions) {
+    const PP = Tanks.Perchoirs, PI = C.perchoirs.ia;
+    let p = ia.perchoir;
+    if (p && (!p.debout || (p.reserve && p.reserve !== s && !p.reserve.mort))) (ia.perchoir = p = null), (ia.enPlace = false);
+    if (!p) {
+      if (monde.temps < (ia.chercheA || 0)) return null;
+      ia.chercheA = monde.temps + 5;
+      p = ia.perchoir = PP.reserver(s);
+      if (!p) return null;
+    }
+    const enPlace = p.plateforme ? s.perchoir === p : Math.hypot(s.x - p.x, s.z - p.z) < p.demiL - 0.4;
+    ia.enPlace = enPlace;
+    if (enPlace) {
+      intentions.accroupi = true;
+      if (cible) {
+        ia.etat = "🎯 tireur d'élite sur " + p.nom + " : vise " + cible.nom + " (" + Math.round(Math.hypot(cible.x - s.x, cible.z - s.z)) + " m)";
+        intentions.versAngle = Math.atan2(cible.z - s.z, cible.x - s.x);
+        intentions.cible = cible;
+        intentions.erreur = ia.erreur * 0.5;
+        if (Math.abs(angleEntre(intentions.versAngle - s.angle)) < 0.05) intentions.tirer = true;
+      } else {
+        ia.etat = "🎯 en position sur " + p.nom + " (vue + " + Math.round(PP.bonusVue(s)) + " m) : guette";
+        intentions.versAngle = (s.equipe === "bleus" ? -1 : 1) * Math.PI / 2 + Math.sin(monde.temps * 0.3 + s.x) * 0.6; // (il balaie le paysage)
+      }
+      return intentions;
+    }
+    if (cible && Math.hypot(cible.x - s.x, cible.z - s.z) < PI.defense) return null; // (un ennemi tout près : il se défend d'abord)
+    const pt = PP.pointDAcces(p, s), d = Math.hypot(pt.x - s.x, pt.z - s.z);
+    intentions.versAngle = Math.atan2(pt.z - s.z, pt.x - s.x);
+    if (p.echelle && Math.hypot(p.echelle.x - s.x, p.echelle.z - s.z) < C.perchoirs.echelle.distanceIA) {
+      ia.etat = "🪜 grimpe sur " + p.nom;
+      intentions.grimper = true;
+      return intentions;
+    }
+    ia.etat = "🎯 va s'installer sur " + p.nom + " (" + Math.round(d) + " m)";
+    intentions.avancer = Math.abs(angleEntre(intentions.versAngle - s.angle)) < 1;
     return debloquer(s, ia, intentions, dt);
   }
 

@@ -255,6 +255,7 @@ Tanks.Terrain = (function () {
       if (m) (touche = b), (o.morceauTouche = m);
     }
     if (BASE.repousser(o, r)) touche = touche || HANGAR_BOITE; // (demande 99 : les murs des hangars)
+    if (Tanks.Perchoirs && Tanks.Perchoirs.repousser(o, r)) touche = touche || PERCHOIR_BOITE; // (livre n° 12 : le pied des miradors, des châteaux d'eau…)
     if (Tanks.Ville && Tanks.Ville.actif) { const v = Tanks.Ville.repousser(o, r); if (v) touche = touche || v.boite; } // (livre n° 9 et 11 : voitures, bus, kiosques…)
     // (étape 62) l'eau : on ramène le point sur la rive (en agrandissant son écart au centre du lac)…
     // (étape 63) …ou sur l'île d'où il vient, s'il est tout près d'une île (sinon un tank qui roule au bord d'une île
@@ -274,7 +275,7 @@ Tanks.Terrain = (function () {
     }
     return touche;
   }
-  const LAC_BOITE = { sorte: "eau" }, HANGAR_BOITE = { sorte: "hangar" };
+  const LAC_BOITE = { sorte: "eau" }, HANGAR_BOITE = { sorte: "hangar" }, PERCHOIR_BOITE = { sorte: "perchoir" };
 
   // La ligne de vue entre deux points (à la hauteur y au-dessus du sol) : rien entre les deux ?
   // (Étape 61 : pour aller vite — 24 soldats et 8 tanks se posent la question sans arrêt —, on ne regarde le sol que tous
