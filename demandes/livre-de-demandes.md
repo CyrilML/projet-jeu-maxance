@@ -10,7 +10,7 @@ On commence par les fusils à pompe (demande 103), puis on suit la liste dans l'
 5. ✅ Lancer les déblocages. (étapes 97, 98, 102)
 6. ✅ L'ingénieur a droit à une arme bonus en plus de son lance-roquettes. (demande 105, version 49)
 7. ✅ Un menu d'achats (ex. : un pack de skins de véhicules, avec des avancements de jeu). (demande 106, version 50)
-8. ⬜ Pouvoir entrer dans les maisons.
+8. ✅ Pouvoir entrer dans les maisons. (demande 107, version 51)
 9. ⬜ Une map en ville très réaliste.
 10. ⬜ Des discussions plus réalistes.
 11. ⬜ Une map abandonnée en vitesse : affiches, publicités, véhicules, objets du quotidien (téléphone, table, sac à dos).

@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 50,
+  version: 51,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -484,6 +484,44 @@ Tanks.CONFIG = {
     // les trous de balles (« trous ») et les traces noires des explosions (« brulures ») : au-delà, on réutilise les plus vieux
     debris: { vol: 240, parMorceau: 7, gravatsMax: 4000, trous: 700, brulures: 140, vitesse: 8 },
   },
+  // ✍️ (livre de demandes n° 8) « Pouvoir entrer dans les maisons. » Chaque MAISON (pas les granges ni les tours) a un
+  // INTÉRIEUR (logique/interieurs.js) : un plancher, une cloison avec un passage (2 pièces si la maison est assez longue),
+  // et si la maison a 2 rangées de fenêtres, un ÉTAGE avec un ESCALIER (une pente : ta hauteur suit la marche).
+  //   porte : la porte d'entrée (« largeur » m de passage) s'OUVRE toute seule quand un soldat à pied arrive à moins de
+  //     « ouvre » m (elle met 1 ÷ « vitesse » s à s'ouvrir), et se referme « attente » s après que plus personne n'est là.
+  //     Un tank ou un engin ne passe jamais (la porte fait 1,2 m, un tank 3,5 m !).
+  //   marche : on monte sur ce qui est moins haut que « marche » m au-dessus de tes pieds (une marche, la pente de
+  //     l'escalier) ; plus haut, c'est un obstacle. « chute » m/s : quand le sol est plus bas (un trou, l'escalier vu
+  //     d'en haut, une fenêtre de l'étage), tu descends à cette vitesse au lieu de te téléporter.
+  //   escalier : « pente » m de montée par mètre (0,68 ≈ 34°), « largeur » m ; plancher : « epaisseur » m ;
+  //   cloison : épaisseur, « passage » m de large ; elle n'existe que s'il reste « salleMin » m pour la 2e pièce.
+  //   meubles : [largeur, profondeur, hauteur] en m. Les petits (chaises, tapis, lampes) ne gênent pas ; les gros, si.
+  //   sombre : la lumière dans la maison (× la couleur des meubles, du sol, des murs du dedans : on n'ajoute AUCUNE vraie
+  //     lampe, ça coûterait trop cher) ; lampe : la petite lumière peinte de l'abat-jour.
+  //   ia : un soldat de l'ordinateur TOUCHÉ (depuis moins de « touche » s) qui voit une porte à moins de « distance » m
+  //     court SE METTRE À L'ABRI derrière une fenêtre de la maison (« chance » des fois où il réfléchit), et y reste
+  //     « duree » s. Un soldat qui n'a rien à faire dedans ressort par la porte (il ne reste pas coincé).
+  //   camera : dedans, la caméra se rapproche de ton épaule (au lieu de 5 m derrière toi, « distance » × 15 m), en
+  //     « lisse » s, pour ne pas rentrer dans les murs ni le plafond.
+  //   ecrase : quand la maison s'effondre, les soldats dedans sont blessés (structures.ecrasesSousLeToit) ET poussés
+  //     dehors, à « ecrase » m devant le mur le plus proche.
+  interieurs: {
+    porte: { largeur: 1.2, ouvre: 2.6, vitesse: 3, attente: 1.6 },
+    marche: 0.7, chute: 7,
+    escalier: { pente: 0.68, largeur: 1.05 },
+    plancher: { epaisseur: 0.18 },
+    cloison: { epaisseur: 0.12, passage: 1.1, salleMin: 2.6 },
+    meubles: { table: [1.4, 0.85, 0.76], chaise: [0.45, 0.45, 0.95], etagere: [1.1, 0.36, 1.85], canape: [1.9, 0.85, 0.85], lampe: [0.34, 0.34, 1.6], tapis: [2.2, 1.5, 0.02],
+      buffet: [1.6, 0.6, 0.92], armoire: [1.2, 0.6, 2.0], frigo: [0.7, 0.68, 1.85], lit: [1.5, 2.05, 0.55], chevet: [0.45, 0.4, 0.55], bureau: [1.2, 0.6, 0.76] },
+    sombre: 0.62, lampe: 0xffd9a0,
+    ia: { distance: 14, touche: 1.5, chance: 0.5, duree: 14 },
+    camera: { distance: 0.17, hauteur: 0.27, cote: 0.55, regardY: 1.5, devant: 0.5, lisse: 0.35 },
+    ecrase: 1.2,
+    // un soldat de l'ordinateur qui veut avancer mais a bougé de moins de « distance » m en « bloque » s fait un pas de
+    // côté pendant « decale » s (une fois à gauche, une fois à droite) : il ne reste pas coincé contre un meuble, un mur…
+    // et s'il n'arrive pas à sortir par la porte en « abandon » s, il l'oublie pendant « oubli » s (il sort par un trou).
+    debloquer: { distance: 0.4, bloque: 1.5, decale: 1.0, abandon: 12, oubli: 25 },
+  },
   // ✍️ (étape 75) LES GRENADES : à pied, touche 4. Espace lance une grenade en cloche (à « angle » au-dessus de l'horizon) ;
   // elle REBONDIT (elle garde « rebond » de sa vitesse, et « frottement » quand elle glisse) et explose après « meche » s.
   // Si un ennemi est presque devant toi (« coneAide ») à moins de « porteeAide » m, elle est lancée juste assez fort pour
@@ -636,6 +674,8 @@ Tanks.CONFIG = {
     // (étape 74) herbe (m : les touffes d'herbe autour de la caméra ; 0 = pas de touffes), arbresDetail (m : plus près,
     // les beaux arbres à grappes de feuillage ; plus loin, des arbres simples). Le niveau « beau » a des ombres plus fines.
     // (étape 75) maisons (m : plus près, les belles maisons avec leurs fenêtres, leurs briques… ; plus loin, la version simple).
+    // (livre de demandes n° 8) interieurs (m : les INTÉRIEURS des maisons — sol, escalier, meubles — ne sont fabriqués et
+    // dessinés qu'à moins de cette distance de la caméra ; plus loin, on ne les voit pas par les fenêtres).
     // (demande 96, « le jeu rame souvent ») de nouveaux réglages, mesurés un par un :
     //   reflets : le ciel qui se reflète sur TOUT (le « miroir du ciel ») ; il coûte cher pour chaque point de l'écran ;
     //     sans lui, la lumière du ciel est un peu plus forte (realisme.sansReflets) pour garder la même clarté ;
@@ -647,13 +687,13 @@ Tanks.CONFIG = {
     // Les réglages qui obligent la carte graphique à refaire ses PROGRAMMES (un à-coup) changent seulement entre les niveaux
     // 0 et 1 (ombres, lumières) et entre 1 et 2 (reflets) ; « douces » entre 2 et 3.
     niveaux: [
-      { nom: "très léger", pixels: 0.6, ombres: 0, douces: false, vue: 380, decor: 300, soldatDetail: 12, soldatSimple: 30, soldatSilhouette: 150, roues: 35, effets: 120, herbe: 0, arbresDetail: 50, maisons: 60,
+      { nom: "très léger", pixels: 0.6, ombres: 0, douces: false, vue: 380, decor: 300, soldatDetail: 12, soldatSimple: 30, soldatSilhouette: 150, roues: 35, effets: 120, herbe: 0, arbresDetail: 50, maisons: 60, interieurs: 15,
         reflets: false, ombresChaque: 1, anisotropie: 2, solFin: false, animLoin: 3, filtre: false },
-      { nom: "léger", pixels: 0.75, ombres: 1024, douces: false, vue: 520, decor: 380, soldatDetail: 18, soldatSimple: 40, soldatSilhouette: 200, roues: 60, effets: 180, herbe: 18, arbresDetail: 70, maisons: 90,
+      { nom: "léger", pixels: 0.75, ombres: 1024, douces: false, vue: 520, decor: 380, soldatDetail: 18, soldatSimple: 40, soldatSilhouette: 200, roues: 60, effets: 180, herbe: 18, arbresDetail: 70, maisons: 90, interieurs: 25,
         reflets: false, ombresChaque: 2, anisotropie: 4, solFin: false, animLoin: 2, filtre: true },
-      { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 800, decor: 540, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280, herbe: 38, arbresDetail: 130, maisons: 160,
+      { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 800, decor: 540, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280, herbe: 38, arbresDetail: 130, maisons: 160, interieurs: 40,
         reflets: true, ombresChaque: 1, anisotropie: 8, solFin: true, animLoin: 2, filtre: true },
-      { nom: "beau", pixels: 1.25, selonEcran: true, ombres: 2048, douces: true, vue: 1300, decor: 850, soldatDetail: 50, soldatSimple: 110, soldatSilhouette: 300, roues: 160, effets: 400, herbe: 60, arbresDetail: 220, maisons: 240,
+      { nom: "beau", pixels: 1.25, selonEcran: true, ombres: 2048, douces: true, vue: 1300, decor: 850, soldatDetail: 50, soldatSimple: 110, soldatSilhouette: 300, roues: 160, effets: 400, herbe: 60, arbresDetail: 220, maisons: 240, interieurs: 60,
         reflets: true, ombresChaque: 1, anisotropie: 8, solFin: true, animLoin: 1, filtre: true },
     ],
     // (demande 96) l'herbe qui repousse autour de toi est recalculée par petits morceaux : au plus « herbeBudget » ms par

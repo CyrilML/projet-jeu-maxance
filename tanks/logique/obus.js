@@ -158,7 +158,7 @@ Tanks.Obus = (function () {
       }
     }
     // le sol : elle rebondit (elle garde « rebond » de sa vitesse vers le haut), puis elle roule et s'arrête
-    const sol = T.dansLEau(p.x, p.z) ? C.lac.niveau - 3 : T.hauteur(p.x, p.z);
+    const sol = T.dansLEau(p.x, p.z) ? C.lac.niveau - 3 : Tanks.Interieurs.sol(p.x, p.y, p.z); // (livre n° 8 : le plancher de l'étage l'arrête)
     if (p.y < sol + 0.05) {
       p.y = sol + 0.05;
       if (p.vy < -1.2) {

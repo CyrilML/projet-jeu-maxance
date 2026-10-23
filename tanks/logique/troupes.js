@@ -17,13 +17,16 @@
 // (Étape 80 : ✍️ dans le SOUTERRAIN, un soldat suit sa ROUTE dans la station — le long d'un quai, ou par l'escalator, la
 // mezzanine et l'escalier d'en face — au lieu d'avancer vers le village ; et il voit moins loin : 110 m, il fait sombre.)
 // (Demande 92 : quand il s'arrête pour tirer, il s'ACCROUPIT ; quand son chargeur est vide, il recharge.)
+// (Livre de demandes n° 8 : ✍️ « entrer dans les maisons ». Un soldat TOUCHÉ près d'une maison court parfois s'y mettre à
+// l'abri, derrière une fenêtre tournée vers l'ennemi, et tire de là ; un soldat qui se retrouve dans une maison sans
+// rien y faire ressort par la porte (en descendant l'escalier, en passant la cloison) : il ne reste pas coincé.)
 // (Étape 65 : TES ORDRES passent avant tout. « Va là » : il y court sans s'arrêter pour tirer, puis il défend sa place ;
 // « vise … » : il choisit sa cible dans ce que tu as dit ; « cessez le feu » : il ne tire plus.)
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Troupes = (function () {
-  const C = Tanks.CONFIG, S = C.soldats, T = Tanks.Terrain;
+  const C = Tanks.CONFIG, S = C.soldats, T = Tanks.Terrain, CI = C.interieurs;
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   const prochesSoldats = [], parDistance = [], paires = [], helicosBas = []; // (étape 72 : des listes réutilisées)
   const plusProche = (a, b) => a.d - b.d;
@@ -119,6 +122,12 @@ Tanks.Troupes = (function () {
       ia.grenade = !roquettes && s.grenades > 0 && s.attenteGrenade === 0 && Math.random() < C.grenades.ia.chance ? ouLancer(s, monde, meilleur) : null;
       // (étape 75) l'ASSAUT : un ennemi groupé, dans une maison ou contre un mur, pas trop loin ? on avance vers lui (pour la grenade)
       ia.assaut = !roquettes && s.grenades > 0 && meilleur && meilleur.o.genre === "soldat" && meilleur.d > C.grenades.ia.portee[1] - 4 && meilleur.d < C.grenades.ia.approche && abrite(meilleur.o, monde);
+      // ✍️ (livre de demandes n° 8) TOUCHÉ, avec une maison tout près ? il court s'abriter derrière une de ses fenêtres
+      if (ia.abri && (monde.temps > ia.abri.fin || !Tanks.Interieurs.actif(ia.abri.b) || ia.abri.b.morceaux[ia.abri.f.k].tombe)) (ia.abri.f.occupant = null), (ia.abri = null);
+      if (!ia.abri && meilleur && !roquettes && !s.ordre && s.touche < CI.ia.touche && !T.souterrain && Math.random() < CI.ia.chance) {
+        const a = Tanks.Interieurs.chercherAbri(s, meilleur.o);
+        if (a) (a.fin = monde.temps + CI.ia.duree), (ia.abri = a);
+      }
     }
     const intentions = {};
     let cible = ia.cible && !ia.cible.mort && !ia.cible.detruit ? ia.cible : null;
@@ -126,6 +135,14 @@ Tanks.Troupes = (function () {
     const but = Tanks.Ordres.but(s, monde);
     if (but) {
       const gx = but.x - s.x, gz = but.z - s.z, reste = Math.hypot(gx, gz);
+      // (livre n° 8) l'endroit est dehors (ou dans une autre maison) ? il sort d'abord de la maison où il est
+      const so = reste > but.rayon && s.dedansMaison && !Tanks.Structures.dedans(s.dedansMaison, but.x, but.z) ? Tanks.Interieurs.sortie(s) : null;
+      if (so) {
+        ia.etat = "📢 " + Tanks.Ordres.enMots(s) + " · 🚪 " + so.quoi;
+        intentions.versAngle = Math.atan2(so.z - s.z, so.x - s.x);
+        intentions.avancer = Math.abs(angleEntre(intentions.versAngle - s.angle)) < 0.9;
+        return debloquer(s, ia, intentions, dt);
+      }
       if (reste > but.rayon) {
         ia.etat = "📢 " + Tanks.Ordres.enMots(s) + " (" + Math.round(reste) + " m)";
         intentions.versAngle = Math.atan2(gz, gx);
@@ -146,6 +163,24 @@ Tanks.Troupes = (function () {
       ia.etat = "lance une grenade (" + g.raison + ")";
       intentions.versAngle = Math.atan2(g.z - s.z, g.x - s.x);
       intentions.grenade = g;
+      return intentions;
+    }
+    // (livre n° 8) son ABRI dans une maison : il y court (par la porte), puis il tire par la fenêtre
+    if (ia.abri) {
+      const w = Tanks.Interieurs.versAbri(s, ia.abri);
+      if (!w.arrive) {
+        ia.etat = "🏠 court s'abriter dans " + ia.abri.nom + " (" + w.quoi + ")";
+        intentions.versAngle = Math.atan2(w.z - s.z, w.x - s.x);
+        intentions.avancer = Math.abs(angleEntre(intentions.versAngle - s.angle)) < 0.9;
+        return debloquer(s, ia, intentions, dt);
+      }
+      ia.etat = "🏠 à l'abri derrière une fenêtre de " + ia.abri.nom + " (encore " + Math.max(0, Math.round(ia.abri.fin - monde.temps)) + " s)";
+      if (cible) {
+        intentions.versAngle = Math.atan2(cible.z - s.z, cible.x - s.x);
+        intentions.cible = cible;
+        intentions.erreur = ia.erreur;
+        if (Math.abs(angleEntre(intentions.versAngle - s.angle)) < 0.08) intentions.tirer = true;
+      } else intentions.versAngle = Tanks.Interieurs.regardFenetre(ia.abri);
       return intentions;
     }
     if (cible) {
@@ -171,6 +206,20 @@ Tanks.Troupes = (function () {
       }
       return intentions;
     }
+    // (livre n° 8) il est DANS une maison sans rien à y faire ? il ressort par la porte (l'escalier, le passage d'abord)
+    // (s'il n'arrive pas à sortir par la porte depuis « abandon » s — une épave de tank devant ? —, il oublie la porte un
+    // moment et avance comme dehors : il sortira par un trou du mur)
+    const oubliee = ia.oubliee && ia.oubliee.b === s.dedansMaison && monde.temps < ia.oubliee.fin;
+    const so = oubliee ? null : Tanks.Interieurs.sortie(s);
+    ia.tempsSortie = so ? (ia.tempsSortie || 0) + dt : 0;
+    if (so && ia.tempsSortie > CI.debloquer.abandon) (ia.oubliee = { b: s.dedansMaison, fin: monde.temps + CI.debloquer.oubli }), (ia.tempsSortie = 0), (ia.maison = null);
+    if (so) {
+      ia.etat = "🚪 " + so.quoi + " (" + s.dedansMaison.nom + ")";
+      intentions.versAngle = Math.atan2(so.z - s.z, so.x - s.x);
+      intentions.avancer = Math.abs(angleEntre(intentions.versAngle - s.angle)) < 0.9;
+      return debloquer(s, ia, intentions, dt);
+    }
+    if (ia.maison && !s.dedansMaison) ia.maison = null;
     // 3. il avance : d'abord vers le village, puis vers le camp ennemi, dans son couloir
     ia.etat = "avance";
     const sens = s.equipe === "bleus" ? -1 : 1;
@@ -194,6 +243,30 @@ Tanks.Troupes = (function () {
     if (Math.hypot(gx, gz) > 3) {
       intentions.versAngle = Math.atan2(gz, gx);
       intentions.avancer = Math.abs(angleEntre(intentions.versAngle - s.angle)) < 1;
+    }
+    return debloquer(s, ia, intentions, dt);
+  }
+
+  // ✍️ (livre de demandes n° 8) NE PAS RESTER COINCÉ : il veut avancer mais n'a presque pas bougé depuis « bloque » s
+  // (un meuble, un mur, une épave de tank tombée dans la maison…) ? il fait un pas de côté pendant « decale » s
+  // (une fois à gauche, une fois à droite), puis reprend son chemin.
+  const DB = C.interieurs.debloquer;
+  function debloquer(s, ia, intentions, dt) {
+    if (!intentions.avancer && !(ia.decale > 0)) return (ia.bloque = 0), intentions;
+    ia.chronoBloque = (ia.chronoBloque || 0) + dt;
+    if (ia.chronoBloque >= 0.5) {
+      const d = ia.px === undefined ? 1 : Math.hypot(s.x - ia.px, s.z - ia.pz);
+      ia.bloque = d < DB.distance ? (ia.bloque || 0) + ia.chronoBloque : 0;
+      ia.chronoBloque = 0;
+      ia.px = s.x;
+      ia.pz = s.z;
+    }
+    if (ia.bloque > DB.bloque && !(ia.decale > 0)) (ia.decale = DB.decale), (ia.sensDecale = -(ia.sensDecale || 1)), (ia.bloque = 0), (ia.degagements = (ia.degagements || 0) + 1);
+    if (ia.decale > 0) {
+      ia.decale -= dt;
+      intentions.avancer = true;
+      intentions.direction = s.angle + ia.sensDecale * Math.PI * 0.5;
+      ia.etat += " · se décale pour se dégager";
     }
     return intentions;
   }

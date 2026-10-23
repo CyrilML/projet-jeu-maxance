@@ -396,6 +396,8 @@ Tanks.Monde = (function () {
         Tanks.Soldat.avancer(s, pourToi("pied"), dt, monde, evenements);
       } else Tanks.Soldat.avancer(s, Tanks.Troupes.decider(s, monde, dt), dt, monde, evenements);
     }
+    // (livre de demandes n° 8) les portes des maisons qui s'ouvrent et se referment, les soldats dedans
+    if (!monde.metro) Tanks.Interieurs.avancer(monde, dt, evenements);
     // Un tank ou ton 4x4 qui roule vite écrase les soldats ennemis.
     for (const v of cibles(monde)) {
       if (v.detruit || v.sorte === "moto" || v.genre === "helico" || Math.abs(v.vitesse) < C.soldats.ecrase) continue; // (étape 71 : une moto n'écrase personne)

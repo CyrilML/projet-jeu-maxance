@@ -320,7 +320,7 @@ Tanks.Maisons3D = (function () {
     const h2 = () => ((g = (g * 1664525 + 1013904223) >>> 0) / 4294967296);
     const choix = (l) => l[Math.floor(h2() * l.length)];
     const s = { crepi: choix(CREPIS), volet: choix(VOLETS), porte: choix(PORTES), tuile: choix(TUILES), volets: h2() < 0.8, cheminee: h2() < 0.85, coteCheminee: h2() < 0.5 ? -1 : 1 };
-    s.dedans = fois([0.86, 0.83, 0.78], 1);
+    s.dedans = fois([0.86, 0.83, 0.78], C.interieurs.sombre + 0.28); // (livre n° 8 : le dedans est un peu dans la pénombre)
     s.tranche = lin("#efe4da"); // (l'image des briques a déjà leur couleur)
     s.pierre = fois(lin("#c9bfae"), 0.9 + h2() * 0.15);
     s.cadre = h2() < 0.6 ? lin("#e8e4da") : s.volet;
@@ -355,7 +355,7 @@ Tanks.Maisons3D = (function () {
         peint(o.a1 + 0.03, o.a1 + lv + 0.03, o.y0, o.y1, st.volet);
       }
     }
-    if (m.porte) peint((m.a0 + m.a1) / 2 - 0.52, (m.a0 + m.a1) / 2 + 0.52, 0, Math.min(m.y1 - 0.35, 2.25), b.type === "grange" ? st.porte : fois(st.porte, 0.8));
+    if (m.porte) peint((m.a0 + m.a1) / 2 - (b.type === "maison" ? C.interieurs.porte.largeur / 2 : 0.52), (m.a0 + m.a1) / 2 + (b.type === "maison" ? C.interieurs.porte.largeur / 2 : 0.52), 0, Math.min(m.y1 - 0.35, 2.25), b.type === "grange" ? st.porte : fois(st.porte, 0.8));
   }
   function emettreToitLoin(b, st, L) {
     const hT = b.toit.hauteur, ov = 0.4, V = b.demiP, U = b.demiL, h = b.h, pente = hT / V, ve = V + ov, ye = h - ov * pente, uA = -U - 0.3, uB = U + 0.3, yF = h + hT;
@@ -394,15 +394,14 @@ Tanks.Maisons3D = (function () {
     };
     salir = !boise;
     if (m.porte && b.type !== "grange") {
-      const oa0 = (m.a0 + m.a1) / 2 - 0.52, oa1 = (m.a0 + m.a1) / 2 + 0.52, oy1 = Math.min(m.y1 - 0.35, 2.25);
+      // (livre de demandes n° 8) le passage est plus large (1,2 m) et la porte n'est plus collée au mur : c'est une vraie
+      // porte qui s'ouvre, dessinée à part (affichage/interieurs3d.js). Ici, il reste le trou, l'encadrement et la marche.
+      const lp = C.interieurs.porte.largeur / 2, oa0 = (m.a0 + m.a1) / 2 - lp, oa1 = (m.a0 + m.a1) / 2 + lp, oy1 = Math.min(m.y1 - 0.35, 2.25);
       paveMur(mur, m.a0, m.a1, oy1, m.y1, w0, w1, choisir);
       paveMur(mur, m.a0, oa0, 0, oy1, w0, w1, choisir);
       paveMur(mur, oa1, m.a1, 0, oy1, w0, w1, choisir);
       salir = false;
-      const bo = L("bois"), pi = L("pierre"), cp = st.porte;
-      paveMur(mur, oa0, oa1, 0, oy1, w1 - 0.16, w1 - 0.1, toutes(bo, cp)); // la porte
-      for (const [ya, yb] of [[0.22, 1.0], [1.18, oy1 - 0.18]]) paveMur(mur, oa0 + 0.1, oa1 - 0.1, ya, yb, w1 - 0.1, w1 - 0.085, devant(bo, fois(cp, 1.12))); // ses panneaux
-      paveMur(mur, oa1 - 0.2, oa1 - 0.12, 1.0, 1.08, w1 - 0.1, w1 - 0.03, devant(bo, lin("#2a2620"))); // la poignée
+      const pi = L("pierre");
       paveMur(mur, oa0 - 0.14, oa0, 0, oy1 + 0.16, w1 - 0.02, w1 + 0.035, devant(pi, st.pierre)); // l'encadrement en pierre
       paveMur(mur, oa1, oa1 + 0.14, 0, oy1 + 0.16, w1 - 0.02, w1 + 0.035, devant(pi, st.pierre));
       paveMur(mur, oa0 - 0.14, oa1 + 0.14, oy1, oy1 + 0.16, w1 - 0.02, w1 + 0.04, devant(pi, st.pierre));
@@ -457,7 +456,8 @@ Tanks.Maisons3D = (function () {
     // le SOCLE en pierre (en bas), les BANDEAUX entre les étages, la CORNICHE sous le toit
     if (m.rang === 0 && b.type === "maison") {
       const bas = (a0, a1) => paveMur(mur, a0, a1, -0.15, 0.42, w1 - 0.02, w1 + 0.035, (f, v) => (f === "dessous" ? null : [pi, fois(st.pierre, 0.82)]));
-      if (m.porte) (bas(m.a0, (m.a0 + m.a1) / 2 - 0.66), bas((m.a0 + m.a1) / 2 + 0.66, m.a1));
+      const dp = C.interieurs.porte.largeur / 2 + 0.14; // (livre n° 8 : la porte plus large)
+      if (m.porte) (bas(m.a0, (m.a0 + m.a1) / 2 - dp), bas((m.a0 + m.a1) / 2 + dp, m.a1));
       else bas(m.a0, m.a1);
     }
     if (b.type === "maison" && m.rang < rangs - 1) paveMur(mur, m.a0, m.a1, m.y1 - 0.07, m.y1 + 0.09, w1 - 0.02, w1 + 0.03, devant(L("mur"), fois(st.crepi, 1.06)));

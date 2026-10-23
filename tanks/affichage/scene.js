@@ -43,6 +43,8 @@
 // dehors (le sol, les arbres, les maisons, le lac, le ciel, le soleil et ses ombres : rien de tout ça n'est dessiné ni
 // calculé) et MONTRE la station (affichage/station3d.js, construite la première fois qu'on descend). La lumière change :
 // un brouillard sombre et proche, une lumière d'ambiance froide, les feux orange et les néons de la station.
+// Livre de demandes n° 8 : ✍️ « entrer dans les maisons ». Quand tu es DEDANS, la caméra de derrière se rapproche de ton
+// épaule (2,5 m au lieu de 5 m) ; les intérieurs (affichage/interieurs3d.js) sont mis à jour près de la caméra.
 // Demande 88 : à la PREMIÈRE PERSONNE, ton soldat est caché : c'est l'armurier (affichage/armes3d.js) qui dessine tes
 // mains et ton arme, avec leur propre caméra, juste APRÈS le monde ; il pose aussi la lampe et le laser dans la scène.
 // Comme tout l'affichage, ce fichier lit le monde et ne le modifie jamais.
@@ -77,6 +79,7 @@ Tanks.Scene = (function () {
     return v;
   }
   const camera = { angle: 0, pret: false, mode: 0 };
+  let dedansLisse = 0; // (livre de demandes n° 8 : 0 = la caméra de dehors, 1 = la caméra de l'intérieur des maisons)
   // (demande 92) l'AMBIANCE DE LUMIÈRE du décor (config.js, « realisme.lumiere ») passe par-dessus : soleil, ciel, brume
   const AMB = C.realisme.lumiere[Tanks.CarteDuJour.decor] || C.realisme.lumiere.bataille;
   const L = Object.assign({}, C.beaute.soleil, (Tanks.CarteDuJour.variante || {}).soleil, AMB), /* (étape 81 : le soleil du désert…) */ SOLEIL = new THREE.Vector3(...L.direction).normalize(); // (étape 74 : un soleil un peu plus bas et plus chaud)
@@ -697,7 +700,10 @@ Tanks.Scene = (function () {
     if (t.mode === "pied") {
       const s = vue(t.soldat);
       if (s.nage) return { x: s.x, y: s.y, z: s.z, angle: s.angle, distance: 0.4, hauteur: 0.35, devant: 0.6, regardY: 1.3, cote: 0.6 };
-      return { x: s.x, y: s.y, z: s.z, angle: s.angle, distance: 0.33, hauteur: 0.38, devant: 0.6, regardY: 1.6, cote: 0.9 };
+      // ✍️ (livre de demandes n° 8) DANS UNE MAISON, la caméra se rapproche de ton épaule (doucement : « dedansLisse » va
+      // de 0 = dehors à 1 = dedans), pour ne pas rentrer dans les murs, les cloisons ni le plafond
+      const k = dedansLisse, CI = C.interieurs.camera, mix = (a, b) => a + (b - a) * k;
+      return { x: s.x, y: s.y, z: s.z, angle: s.angle, distance: mix(0.33, CI.distance), hauteur: mix(0.38, CI.hauteur), devant: mix(0.6, CI.devant), regardY: mix(1.6, CI.regardY), cote: mix(0.9, CI.cote) };
     }
     const e = vue(t.engin);
     if (e.sorte === "dca") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle, distance: 0.5, hauteur: 0.4, devant: 1, regardY: 1.5 + Math.tan(Math.min(1.2, e.hausse)) * C.camera.regardDevant * 0.7 };
@@ -821,6 +827,8 @@ Tanks.Scene = (function () {
       cible = new THREE.Vector3(j.x, j.y + 1.6, j.z);
       camera.pret = false;
     } else {
+      const sp = monde.toi && monde.toi.mode === "pied" ? monde.toi.soldat : null; // (livre n° 8 : dans une maison ?)
+      dedansLisse += ((sp && sp.dedans ? 1 : 0) - dedansLisse) * Math.min(1, dt / C.interieurs.camera.lisse);
       const v = suivi(monde);
       // (étape 62) un portail t'a fait sauter très loin d'un coup ? la caméra saute aussi (sinon elle traverserait la carte)
       if (dernierSuivi && Math.hypot(v.x - dernierSuivi.x, v.z - dernierSuivi.z) > 30) (camera.pret = false), (camera.saut = true);
@@ -871,6 +879,7 @@ Tanks.Scene = (function () {
     Tanks.Decor.majEau(dt);
     Tanks.MarquesSol.maj(dt, monde, cam.position); // (demande 92 : les traces de chenilles et les cratères)
     Tanks.Base3D.maj(monde, cam.position, Q.vue); // (demande 99 : les bases aériennes, les cratères des pistes)
+    Tanks.Interieurs3D.maj(dt, cam.position, Q.interieurs || 30); // (livre de demandes n° 8 : les intérieurs près de la caméra, les portes)
     Tanks.Maisons3D.maj(dt, cam.position, Q.maisons); // (étape 75 : les morceaux de mur tombés, les débris qui volent, les toits qui s'effondrent ; la belle version de près)
     }
     Tanks.Effets.maj(dt, monde, cam, Q.effets);
@@ -919,5 +928,5 @@ Tanks.Scene = (function () {
       else camera.mode = (camera.mode + 1) % 2;
       Tanks.Evenements.emettre("vue", { premiere: !!camera.premiere, aPied: !!aPied });
     },
-    get vue() { return { premiere: !!camera.premiere, mode: camera.mode }; }, get infos() { return rendu ? rendu.info.render : {}; }, get sousTerre() { return sousTerre; }, get ciel() { return "« " + Tanks.CarteDuJour.decor + " » · soleil à " + Math.round((Math.asin(SOLEIL.y) * 180) / Math.PI) + "° de haut · nuages " + Math.round(AMB.nuages * 100) + " % · exposition " + String(L.exposition).replace(".", ","); }, get rendu() { return rendu; }, preparation, chrono, entreDeuxPas: () => alpha, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
+    get vue() { return { premiere: !!camera.premiere, mode: camera.mode }; }, get dedansLisse() { return dedansLisse; }, get infos() { return rendu ? rendu.info.render : {}; }, get sousTerre() { return sousTerre; }, get ciel() { return "« " + Tanks.CarteDuJour.decor + " » · soleil à " + Math.round((Math.asin(SOLEIL.y) * 180) / Math.PI) + "° de haut · nuages " + Math.round(AMB.nuages * 100) + " % · exposition " + String(L.exposition).replace(".", ","); }, get rendu() { return rendu; }, preparation, chrono, entreDeuxPas: () => alpha, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
 })();

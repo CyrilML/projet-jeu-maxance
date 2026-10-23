@@ -18,6 +18,8 @@
 // derrière un muret, on ne le voit plus ! Et les soldats de l'ordinateur ont maintenant un CHARGEUR : vide, ils rechargent.
 // Ce fichier ne dessine rien : il renvoie des événements (« balle », « soldat-touche », « soldat-mort », « nage »,
 // « grenade-lancee », « grenades », « mur-abime », « accroupi »…).
+// Livre de demandes n° 8 : ✍️ « Pouvoir entrer dans les maisons. » La hauteur de tes pieds vient du concierge des maisons
+// (logique/interieurs.js) : le plancher, la pente de l'escalier, l'étage — ou le terrain dehors.
 
 window.Tanks = window.Tanks || {};
 
@@ -262,7 +264,8 @@ Tanks.Soldat = (function () {
     // dans l'eau ? on nage (la tête juste hors de l'eau)
     const nageait = s.nage;
     s.nage = T.dansLEau(s.x, s.z) && T.hauteur(s.x, s.z) < C.lac.niveau - 1.1;
-    s.y = s.nage ? C.lac.niveau - 1.25 : T.hauteur(s.x, s.z);
+    // (livre de demandes n° 8) dans une maison, tes pieds sont sur le plancher, sur l'escalier ou à l'étage (logique/interieurs.js)
+    s.y = s.nage ? C.lac.niveau - 1.25 : Tanks.Interieurs.placer(s, dt, ev);
     if (s.nage !== !!nageait && s.joueur) ev.push(["nage", { nom: s.nom, nage: s.nage }]); // (étape 75 : plus de faux « tu as pied » en sortant du tank)
     // tirer (pas en nageant !)
     s.recharge = Math.max(0, s.recharge - dt);

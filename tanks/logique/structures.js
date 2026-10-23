@@ -17,6 +17,10 @@
 // savoir si une ligne (un regard, un obus, une balle) traverse une boîte est un petit calcul : la méthode des « tranches »
 // (on regarde quand la ligne entre et sort de la boîte dans chaque direction ; si les trois intervalles se chevauchent,
 // elle la traverse).
+// Livre de demandes n° 8 : ✍️ « entrer dans les maisons ». Un soldat se cogne aux morceaux À SA HAUTEUR (à l'étage, ceux de
+// l'étage) ; la porte OUVERTE laisse passer les soldats (jamais les tanks) et les balles ; le plancher de l'étage et les
+// cloisons (logique/interieurs.js) arrêtent les balles, les regards et les grenades ; une maison qui s'effondre pousse
+// dehors les soldats qui étaient dedans.
 // Ce fichier ne dessine rien : il renvoie des événements (« mur-abime », « mur-troue », « maison-effondree »).
 
 window.Tanks = window.Tanks || {};
@@ -167,37 +171,53 @@ Tanks.Structures = (function () {
   }
 
   // ------------------------------------------------------------------ 3. Pousser un cercle hors des morceaux (marcher, rouler)
-  // Seuls les morceaux du BAS comptent (la rangée 0) : ceux du dessus sont plus hauts que toi.
+  // Seuls les morceaux À TA HAUTEUR comptent (livre de demandes n° 8 : à l'étage, ce sont les morceaux de l'étage ; avant,
+  // seulement la rangée du bas) : ceux du dessus sont plus hauts que toi.
+  // Pousser le cercle (centre P = { u, v }, rayon r) hors d'une boîte [u0, u1] × [v0, v1]. Renvoie vrai s'il la touchait.
+  function pousserBoite(P, u0, u1, v0, v1, r) {
+    const pu = Math.max(u0, Math.min(u1, P.u)), pv = Math.max(v0, Math.min(v1, P.v));
+    let eu = P.u - pu, ev = P.v - pv, d = Math.hypot(eu, ev);
+    if (d >= r) return false;
+    if (d < 1e-6) { // (le centre est dans la boîte : on sort par le côté le plus proche)
+      const vers = [u1 - P.u, P.u - u0, v1 - P.v, P.v - v0], k = vers.indexOf(Math.min(...vers));
+      (eu = k === 0 ? 1 : k === 1 ? -1 : 0), (ev = k === 2 ? 1 : k === 3 ? -1 : 0);
+      d = 0;
+    }
+    const l = Math.hypot(eu, ev) || 1, pousse = r - d;
+    P.u += (eu / l) * pousse;
+    P.v += (ev / l) * pousse;
+    return true;
+  }
+  const PP = { u: 0, v: 0 };
   function pousser(b, o, r) {
     if (!b.morceaux) return null;
     const c = Math.cos(b.angle), s = Math.sin(b.angle);
-    let u = (o.x - b.x) * c + (o.z - b.z) * s, v = -(o.x - b.x) * s + (o.z - b.z) * c;
-    if (Math.abs(u) > b.demiL + r + 0.1 || Math.abs(v) > b.demiP + r + 0.1) return null;
+    PP.u = (o.x - b.x) * c + (o.z - b.z) * s;
+    PP.v = -(o.x - b.x) * s + (o.z - b.z) * c;
+    if (Math.abs(PP.u) > b.demiL + r + 0.1 || Math.abs(PP.v) > b.demiP + r + 0.1) return null;
+    // (livre n° 8) à quelle hauteur est-il ? un soldat à l'étage se cogne aux murs de l'étage ; un tank, à ceux du bas
+    const soldat = o.genre === "soldat", yPieds = soldat && o.y !== undefined ? o.y - b.sol : 0, haut = yPieds + 1.5, bas = yPieds + 0.3;
+    // (livre n° 8) la porte ouverte : un soldat qui a le droit de passer ne se cogne qu'aux deux montants de la porte
+    const po = b.porte, ouverte = soldat && po && po.ouverture > 0.5 && Tanks.Interieurs.peutPasser(o, b);
     let touche = null;
     for (const mur of b.murs) {
-      if (u < mur.u0 - r || u > mur.u1 + r || v < mur.v0 - r || v > mur.v1 + r) continue;
+      if (PP.u < mur.u0 - r || PP.u > mur.u1 + r || PP.v < mur.v0 - r || PP.v > mur.v1 + r) continue;
       for (const col of mur.colonnes) {
-        const m = col.morceaux[0];
-        if (m.tombe || (m.y0 > 0.5)) continue;
-        // le point de la boîte le plus proche du centre du cercle
-        const pu = Math.max(m.u0, Math.min(m.u1, u)), pv = Math.max(m.v0, Math.min(m.v1, v));
-        let eu = u - pu, ev = v - pv, d = Math.hypot(eu, ev);
-        if (d >= r) continue;
-        if (d < 1e-6) { // (le centre est dans la boîte : on sort par le côté le plus proche)
-          const vers = [m.u1 - u, u - m.u0, m.v1 - v, v - m.v0], k = vers.indexOf(Math.min(...vers));
-          (eu = k === 0 ? 1 : k === 1 ? -1 : 0), (ev = k === 2 ? 1 : k === 3 ? -1 : 0);
-          d = 0;
+        for (const m of col.morceaux) {
+          if (m.tombe || m.y0 > (soldat ? haut : 0.5) || (soldat && m.y1 < bas)) continue;
+          if (m.porte && ouverte && b.type === "maison") {
+            if (pousserBoite(PP, m.u0, po.trou.a0, m.v0, m.v1, r)) touche = m;
+            if (pousserBoite(PP, po.trou.a1, m.u1, m.v0, m.v1, r)) touche = m;
+            continue;
+          }
+          if (pousserBoite(PP, m.u0, m.u1, m.v0, m.v1, r)) touche = m;
         }
-        const l = Math.hypot(eu, ev) || 1, pousse = r - d;
-        u += (eu / l) * pousse;
-        v += (ev / l) * pousse;
-        touche = m;
       }
     }
-    if (touche) {
-      o.x = b.x + u * c - v * s;
-      o.z = b.z + u * s + v * c;
-    }
+    // (livre n° 8) dans la maison : les cloisons, les gros meubles, le dessous de l'escalier
+    if (soldat && b.plan && Math.abs(PP.u) < b.demiL && Math.abs(PP.v) < b.demiP) Tanks.Interieurs.pousserDedans(b, PP, yPieds, r);
+    o.x = b.x + PP.u * c - PP.v * s;
+    o.z = b.z + PP.u * s + PP.v * c;
     return touche;
   }
 
@@ -242,8 +262,8 @@ Tanks.Structures = (function () {
     return true;
   }
   // La ligne passe-t-elle par le TROU d'une fenêtre ? (là où elle entre ET là où elle sort du morceau)
-  function parLaFenetre(m) {
-    const o = m.ouverture;
+  function parLaFenetre(m, trou) {
+    const o = trou || m.ouverture;
     for (const t of [R.t0, Math.min(1, R.t1)]) {
       const a = m.axe === "u" ? pu + du * t : pv + dv * t, y = py + dy * t;
       if (a < o.a0 || a > o.a1 || y < o.y0 || y > o.y1) return false;
@@ -251,13 +271,13 @@ Tanks.Structures = (function () {
     return true;
   }
   // Le résultat (réutilisé) : la boîte, le morceau (ou null : des gravats, le toit), où, et la face (normale du monde).
-  const coup = { b: null, morceau: null, toit: false, gravats: false, t: 1, x: 0, y: 0, z: 0, nx: 0, ny: 0, nz: 0 };
+  const coup = { b: null, morceau: null, toit: false, gravats: false, plancher: null, t: 1, x: 0, y: 0, z: 0, nx: 0, ny: 0, nz: 0 };
   let meilleurT = 1, trouve = false, premierSeulement = false;
-  const candidat = (b, m, toit, gravats) => {
+  const candidat = (b, m, toit, gravats, plancher) => {
     if (R.t0 >= meilleurT) return;
     meilleurT = R.t0;
     trouve = true;
-    coup.b = b; coup.morceau = m; coup.toit = toit; coup.gravats = gravats; coup.axe = R.axe; coup.signe = R.signe;
+    coup.b = b; coup.morceau = m; coup.toit = toit; coup.gravats = gravats; coup.axe = R.axe; coup.signe = R.signe; coup.plancher = plancher || null;
   };
   // Tester une maison (le segment est déjà dans son repère : pu, py, pv, du, dy, dv).
   function testerMaison(b) {
@@ -269,6 +289,7 @@ Tanks.Structures = (function () {
         for (const m of col.morceaux) {
           if (m.tombe || !tranche(m.u0, m.u1, m.y0, m.y1, m.v0, m.v1)) continue;
           if (m.ouverture && parLaFenetre(m)) continue;
+          if (m.porte && b.porte && b.porte.ouverture > 0.5 && parLaFenetre(m, b.porte.trou)) continue; // (livre n° 8 : la porte ouverte)
           candidat(b, m, false, false);
           if (premierSeulement && trouve) return;
         }
@@ -278,6 +299,11 @@ Tanks.Structures = (function () {
           if (premierSeulement && trouve) return;
         }
       }
+    }
+    // (livre n° 8) l'intérieur : le plancher de l'étage et les cloisons arrêtent les balles, les regards et les grenades
+    if (b.plan && b.toit && b.toit.intact) for (const q of b.plan.boites) {
+      if (q.bloque && tranche(q.u0, q.u1, q.y0, q.y1, q.v0, q.v1)) candidat(b, null, false, false, q.sorte);
+      if (premierSeulement && trouve) return;
     }
     if (b.gravatsDedans > 0 && tranche(-b.demiL + b.ep, b.demiL - b.ep, -0.2, b.gravatsDedans, -b.demiP + b.ep, b.demiP - b.ep)) candidat(b, null, false, true);
     if (b.toit && b.toit.intact && tranche(-b.demiL - 0.3, b.demiL + 0.3, b.h, b.h + b.toit.hauteur * 0.6, -b.demiP - 0.3, b.demiP + 0.3)) candidat(b, null, true, false);
@@ -354,6 +380,7 @@ Tanks.Structures = (function () {
       if (s.mort || s.dansUnEngin || s.parachute || !dedans(b, s.x, s.z, -0.2)) continue;
       Tanks.Soldat.blesser(s, S.ecrasesSousLeToit, tireur || { nom: "la maison", equipe: "aucune" }, ev, "effondrement");
       blesses++;
+      if (!s.mort && b.plan) Tanks.Interieurs.ejecter(b, s, ev); // (livre n° 8 : et il est poussé dehors, au milieu de la poussière)
     }
     ev.push(["maison-effondree", { b, nom: b.nom, type: b.type, x: b.x, y: b.sol + b.h * 0.5, z: b.z, tireur, sorte, morceaux: tombes, debout: b.total - b.tombes, total: b.total, blesses }]);
   }
@@ -369,7 +396,7 @@ Tanks.Structures = (function () {
   function balle(c, degats, tireur, ev, monde) {
     bilan.balles++;
     const m = c.morceau, b = c.b;
-    const d = { b, k: m ? m.k : -1, nom: b.nom, matiere: m ? m.matiere : c.toit ? "tuiles" : "gravats", x: c.x, y: c.y, z: c.z, nx: c.nx, ny: c.ny, nz: c.nz, tireur, vie: m ? m.vie : 0, vieMax: m ? m.vieMax : 0 };
+    const d = { b, k: m ? m.k : -1, nom: b.nom, matiere: m ? m.matiere : c.toit ? "tuiles" : c.plancher === "plancher" ? "bois" : "gravats", x: c.x, y: c.y, z: c.z, nx: c.nx, ny: c.ny, nz: c.nz, tireur, vie: m ? m.vie : 0, vieMax: m ? m.vieMax : 0 };
     if (!m) return void ev.push(["mur-abime", d]);
     const avant = m.vie, tombes = [];
     abimer(m, degats * S.degatsBalle, tombes);
@@ -475,5 +502,5 @@ Tanks.Structures = (function () {
     return r;
   }
 
-  return { liste, pousser, touche, premier, dedans, sortir, balle, exploser, choc, reinitialiser, plusProche, compter, bilan, get generation() { return generation; } };
+  return { liste, pousser, pousserBoite, touche, premier, dedans, sortir, balle, exploser, choc, reinitialiser, plusProche, compter, bilan, get generation() { return generation; } };
 })();

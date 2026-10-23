@@ -227,6 +227,7 @@
       <a href="#etape104">Étape 104</a>
       <a href="#etape105">Étape 105</a>
       <a href="#etape106">Étape 106</a>
+      <a href="#etape107">Étape 107</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5419,6 +5420,46 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape107">
+      <h2>🏠 Étape 107 : entrer dans les maisons <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les maisons ont une vraie porte qui s'ouvre, des pièces, des meubles, un escalier et un étage avec des fenêtres pour tirer. Demande n° 8 de ton livre. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/107-entrer-dans-les-maisons.md</code>.</p>
+          <ul>
+            <li>✍️ « Pouvoir entrer dans les maisons. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 51 ».</li>
+            <li>☐ Va à pied vers une porte : elle s'ouvre toute seule, puis se referme.</li>
+            <li>☐ Dedans : des meubles (tables, lits, armoires, étagères), parfois 2 pièces.</li>
+            <li>☐ Monte l'escalier : à l'étage, tire par la fenêtre.</li>
+            <li>☐ La caméra se rapproche de ton épaule à l'intérieur.</li>
+            <li>☐ Les soldats de l'ordinateur se cachent parfois dans les maisons et tirent par les fenêtres.</li>
+            <li>☐ Si la maison s'écroule, tu es blessé et poussé dehors.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🧱 Un intérieur seulement près de toi</h3>
+      <p>La ville a 222 maisons et plus de 3 000 meubles : tout dessiner tout le temps ferait ramer le jeu. Alors le jeu ne construit l'intérieur d'une maison que quand la caméra s'en approche (15 à 60 m selon la qualité), au plus 2 par image, et le jette quand tu t'éloignes. C'est le « niveau de détail » : on ne dessine que ce que tu peux voir.</p>
+      <h3>🪜 Monter un escalier</h3>
+      <p>Le jeu calcule la hauteur du sol sous tes pieds : sur l'escalier, elle monte avec la pente. Tu peux « enjamber » jusqu'à 70 cm ; s'il n'y a plus rien sous toi, tu tombes.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot, section « Entrer dans les maisons » : regarde l'étage où tu es et l'ouverture de la porte.</li>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>interieurs</code> : change la distance où la porte s'ouvre.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Pourquoi l'intérieur n'est-il dessiné que près de toi ? <span class="petit">(pour que le jeu ne rame pas)</span></li>
+            <li>Peut-on entrer en tank dans une maison ? <span class="petit">(non : seulement à pied)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6806,6 +6847,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-106" data-cle="appris-106" placeholder="Ex. : …"></textarea>
         <label for="idees-106"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-106" data-cle="idees-106" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 107 · entrer dans les maisons <span class="petit">· 23 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/logique/interieurs.js</code>, <code>tanks/affichage/interieurs3d.js</code>, <code>structures.js</code>, <code>soldat.js</code>, <code>troupes.js</code>, <code>scene.js</code>.</p>
+        <p class="petit">✍️ Maxance a demandé : pouvoir entrer dans les maisons.</p>
+        <label for="appris-107"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-107" data-cle="appris-107" placeholder="Ex. : …"></textarea>
+        <label for="idees-107"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-107" data-cle="idees-107" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
