@@ -3,10 +3,10 @@
 ✍️ « Je vais te les donner un par un, et tu vas devoir les faire un par un… tu fais tout dans l'ordre que je t'ai donné. »
 On commence par les fusils à pompe (demande 103), puis on suit la liste dans l'ordre. ✅ = fait.
 
-1. ⬜ Retirer toutes les infos inutiles.
+1. ✅ Retirer toutes les infos inutiles. (demande 104, version 48)
 2. ❓ Faire une autre aussi. (à préciser : une autre quoi ?)
-3. ⬜ Faire des voix plus réalistes et plus humaines.
-4. ⬜ Refaire le menu dans le mode détail.
+3. ✅ Faire des voix plus réalistes et plus humaines. (demande 104, version 48)
+4. ✅ Refaire le menu dans le mode détail. (demande 104, version 48)
 5. ✅ Lancer les déblocages. (étapes 97, 98, 102)
 6. ⬜ L'ingénieur a droit à une arme bonus en plus de son lance-roquettes.
 7. ⬜ Un menu d'achats (ex. : un pack de skins de véhicules, avec des avancements de jeu).

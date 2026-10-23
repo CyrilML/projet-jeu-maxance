@@ -224,6 +224,7 @@
       <a href="#etape101">Étape 101</a>
       <a href="#etape102">Étape 102</a>
       <a href="#etape103">Étape 103</a>
+      <a href="#etape104">Étape 104</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5298,6 +5299,46 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape104">
+      <h2>🧹 Étape 104 : un écran épuré, des voix plus humaines, des menus refaits <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les demandes n° 1, 3 et 4 de ton livre de demandes. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/104-ecran-voix-menus.md</code>.</p>
+          <ul>
+            <li>✍️ « Retirer toutes les infos inutiles. »</li>
+            <li>✍️ « Faire des voix plus réalistes et plus humaines. »</li>
+            <li>✍️ « Refaire le menu dans le mode détail. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 48 ».</li>
+            <li>☐ L'aide des touches s'affiche 10 s au début, puis disparaît ; <strong>H</strong> la remontre.</li>
+            <li>☐ Moins de noms au-dessus des soldats : seulement ceux qui sont près.</li>
+            <li>☐ Les voix disent « je bouge plus », font des petites pauses, et on entend des grésillements radio.</li>
+            <li>☐ Le menu : une image pour chaque carte, chaque tank dessiné, des cartes qui se soulèvent sous la souris.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🧠 Montrer moins, c'est mieux</h3>
+      <p>Les créateurs de jeux parlent d'« interface épurée » : chaque texte à l'écran prend un peu de l'attention du joueur. On garde l'essentiel (vie, munitions, carte, viseur) et on range le reste : l'aide revient avec H, et tous les détails sont toujours sous le capot.</p>
+      <h3>🗣️ Une voix « parlée »</h3>
+      <p>Le jeu écrit deux versions de chaque phrase : celle des sous-titres (« je ne bouge plus ») et celle qu'on donne à la voix, comme on parle vraiment (« je bouge plus »). Il coupe aussi la phrase aux points pour que la voix respire.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot : les lignes « écran épuré (livre n° 1) » et « voix humaines (livre n° 3) ».</li>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>interface</code> : change la distance où les noms des alliés s'affichent.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Quelle touche remontre l'aide ? <span class="petit">(H)</span></li>
+            <li>Pourquoi la voix dit-elle « je bouge plus » ? <span class="petit">(parce que c'est comme ça qu'on parle vraiment)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6658,6 +6699,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-103" data-cle="appris-103" placeholder="Ex. : …"></textarea>
         <label for="idees-103"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-103" data-cle="idees-103" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 104 · un écran épuré, des voix plus humaines, des menus refaits <span class="petit">· 23 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/affichage/tableau.js</code>, <code>radio-voix.js</code>, <code>sons.js</code>, <code>menu.js</code>, <code>accueil.js</code>, <code>config.js</code>.</p>
+        <p class="petit">✍️ Maxance a demandé : moins d'infos inutiles, des voix plus humaines, des menus refaits en détail.</p>
+        <label for="appris-104"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-104" data-cle="appris-104" placeholder="Ex. : …"></textarea>
+        <label for="idees-104"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-104" data-cle="idees-104" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
