@@ -78,7 +78,7 @@ Tanks.Scene = (function () {
     if (o.tourelle !== undefined) v.tourelle = melange(a.tourelle, o.tourelle);
     return v;
   }
-  const camera = { angle: 0, pret: false, mode: 0 };
+  const camera = { angle: 0, pret: false, mode: 0, epaule: 1, coteLisse: 1, viseeLisse: 0 }; // (livre n° 13 : l'épaule, 1 = droite, -1 = gauche ; et ses valeurs « lissées »)
   let dedansLisse = 0; // (livre de demandes n° 8 : 0 = la caméra de dehors, 1 = la caméra de l'intérieur des maisons)
   // (demande 92) l'AMBIANCE DE LUMIÈRE du décor (config.js, « realisme.lumiere ») passe par-dessus : soleil, ciel, brume
   const AMB = C.realisme.lumiere[Tanks.CarteDuJour.decor] || C.realisme.lumiere.bataille;
@@ -702,8 +702,10 @@ Tanks.Scene = (function () {
       if (s.nage) return { x: s.x, y: s.y, z: s.z, angle: s.angle, distance: 0.4, hauteur: 0.35, devant: 0.6, regardY: 1.3, cote: 0.6 };
       // ✍️ (livre de demandes n° 8) DANS UNE MAISON, la caméra se rapproche de ton épaule (doucement : « dedansLisse » va
       // de 0 = dehors à 1 = dedans), pour ne pas rentrer dans les murs, les cloisons ni le plafond
-      const k = dedansLisse, CI = C.interieurs.camera, mix = (a, b) => a + (b - a) * k;
-      return { x: s.x, y: s.y, z: s.z, angle: s.angle, distance: mix(0.33, CI.distance), hauteur: mix(0.38, CI.hauteur), devant: mix(0.6, CI.devant), regardY: mix(1.6, CI.regardY), cote: mix(0.9, CI.cote) };
+      // ✍️ (livre n° 13) « Améliorer la vue » : PAR-DESSUS L'ÉPAULE. La caméra est près de toi, un peu à droite (Y : à
+      // gauche) ; en visant, elle glisse encore plus près de l'épaule (« viseeLisse » va doucement de 0 à 1).
+      const k = dedansLisse, CI = C.interieurs.camera, mix = (a, b) => a + (b - a) * k, EP = C.camera.epaule, a = camera.viseeLisse, v = (x, y) => x + (y - x) * a;
+      return { x: s.x, y: s.y, z: s.z, angle: s.angle, distance: mix(v(EP.distance, EP.viseeDistance), CI.distance), hauteur: mix(v(EP.hauteur, EP.viseeHauteur), CI.hauteur), devant: mix(EP.devant, CI.devant), regardY: mix(v(EP.regardY, EP.viseeRegardY), CI.regardY), cote: mix(v(EP.cote, EP.viseeCote), CI.cote) * camera.coteLisse };
     }
     const e = vue(t.engin);
     if (e.sorte === "dca") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle, distance: 0.5, hauteur: 0.4, devant: 1, regardY: 1.5 + Math.tan(Math.min(1.2, e.hausse)) * C.camera.regardDevant * 0.7 };
@@ -818,6 +820,7 @@ Tanks.Scene = (function () {
     }
     placerProjectiles(monde);
     Tanks.Explosifs3D.maj(monde, dt, scene); // (demande 98 : les mines, les C4, les claymores posés et les nuages de fumée)
+    Tanks.Objets3D.maj(monde, dt, scene); // (livre n° 15 : la trousse posée et son anneau vert ; l'étincelle du défibrillateur)
     // la caméra
     const j = monde.joueur, R = C.camera;
     let oeil, cible;
@@ -844,7 +847,15 @@ Tanks.Scene = (function () {
     // (étape 77) épaulé (V ou clic droit) : la caméra ZOOME selon le viseur de ton arme (une lunette ×6 : 6 fois plus près)
     const toiPied = monde.phase !== "garage" && monde.toi && monde.toi.mode === "pied" && monde.toi.soldat.armes ? monde.toi.soldat : null;
     const zoom = !toiPied ? 1 : 1 + ((toiPied.arme === "gadget" && toiPied.gadget.id === "jumelles" ? toiPied.gadget.fiche.zoom : Tanks.Armes.estUneArme(toiPied) ? Tanks.Armes.enMain(toiPied).stats.zoom : 1) - 1) * (toiPied.visee || 0);
-    if (Math.abs(cam.fov - C.camera.champ / zoom) > 0.01) (cam.fov = C.camera.champ / zoom), cam.updateProjectionMatrix();
+    // (livre n° 13) le champ de vision GLISSE vers le zoom voulu (jamais de saut) ; dans la lunette, il le suit exactement
+    // (les points de la lunette sont calculés d'après lui)
+    const EP = C.camera.epaule, champVoulu = C.camera.champ / zoom;
+    const champ = zoom > 2.5 || monde.phase === "garage" ? champVoulu : cam.fov + (champVoulu - cam.fov) * (1 - Math.exp(-dt / EP.lisseChamp));
+    if (Math.abs(cam.fov - champ) > 0.01) (cam.fov = champ), cam.updateProjectionMatrix();
+    // (livre n° 13) l'épaule et la visée de la caméra glissent doucement (lu par « suivi » à l'image suivante)
+    const kl = 1 - Math.exp(-dt / EP.lisse);
+    camera.coteLisse += (camera.epaule - camera.coteLisse) * kl;
+    camera.viseeLisse += ((toiPied ? toiPied.visee || 0 : 0) - camera.viseeLisse) * kl;
     // (étape 79) dans la lunette, la caméra suit ta RESPIRATION (le « 8 » de logique/armes.js) : on la lit, sans rien changer
     const bal = (zoom > 2.5 && toiPied.balancement) || { x: 0, y: 0 }, aV = toiPied ? toiPied.angle + bal.x : 0;
     camera.lunette = zoom > 2.5; // (étape 89 : lu par placerSoldat à l'image suivante)
@@ -863,7 +874,7 @@ Tanks.Scene = (function () {
     if (plan) (oeil = new THREE.Vector3(plan.oeil.x, plan.oeil.y, plan.oeil.z)), (cible = new THREE.Vector3(plan.cible.x, plan.cible.y, plan.cible.z)), (camera.saut = true);
     const proche = enPremiere || zoom > 2.5 ? P.proche : 0.3;
     if (cam.near !== proche) (cam.near = proche), cam.updateProjectionMatrix();
-    cam.position.lerp(oeil, monde.phase === "garage" || camera.saut ? 1 : Math.min(1, dt * 14));
+    cam.position.lerp(oeil, monde.phase === "garage" || camera.saut ? 1 : 1 - Math.exp(-dt * 14)); // (livre n° 13 : un vrai glissement, le même à 30 ou à 144 images par seconde)
     camera.saut = false;
     cam.lookAt(cible);
     cam.updateMatrixWorld();
@@ -930,5 +941,10 @@ Tanks.Scene = (function () {
       else camera.mode = (camera.mode + 1) % 2;
       Tanks.Evenements.emettre("vue", { premiere: !!camera.premiere, aPied: !!aPied });
     },
-    get vue() { return { premiere: !!camera.premiere, mode: camera.mode }; }, get dedansLisse() { return dedansLisse; }, get infos() { return rendu ? rendu.info.render : {}; }, get sousTerre() { return sousTerre; }, get ciel() { return "« " + Tanks.CarteDuJour.decor + " » · soleil à " + Math.round((Math.asin(SOLEIL.y) * 180) / Math.PI) + "° de haut · nuages " + Math.round(AMB.nuages * 100) + " % · exposition " + String(L.exposition).replace(".", ","); }, get rendu() { return rendu; }, preparation, chrono, entreDeuxPas: () => alpha, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
+    // (livre n° 13) Y : la caméra passe par-dessus l'autre épaule
+    changerEpaule: () => {
+      camera.epaule = -camera.epaule;
+      Tanks.Evenements.emettre("epaule", { cote: camera.epaule > 0 ? "droite" : "gauche" });
+    },
+    get vue() { return { premiere: !!camera.premiere, mode: camera.mode, epaule: camera.epaule > 0 ? "droite" : "gauche", coteLisse: camera.coteLisse, viseeLisse: camera.viseeLisse, champ: cam ? cam.fov : 0 }; }, get dedansLisse() { return dedansLisse; }, get infos() { return rendu ? rendu.info.render : {}; }, get sousTerre() { return sousTerre; }, get ciel() { return "« " + Tanks.CarteDuJour.decor + " » · soleil à " + Math.round((Math.asin(SOLEIL.y) * 180) / Math.PI) + "° de haut · nuages " + Math.round(AMB.nuages * 100) + " % · exposition " + String(L.exposition).replace(".", ","); }, get rendu() { return rendu; }, preparation, chrono, entreDeuxPas: () => alpha, dessins: () => ({ soldats: dessinsSoldats.size, engins: dessinsEngins.size, portails: dessinsPortails.size }) };
 })();

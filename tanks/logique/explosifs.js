@@ -31,6 +31,8 @@ Tanks.Explosifs = (function () {
     s.poche = s.explosif && s.explosif !== "grenades" ? { id: s.explosif, nombre: X[s.explosif].nombre, regain: 0, attente: 0 } : null;
   }
   // Le sac de munitions : « n » explosifs de plus (sans dépasser le nombre de départ).
+  // (livre n° 14) Ce que ta main tient quand tu as pris la touche 4 : « grenades », ou l'id de ta poche (« c4 »…).
+  const enMain = (s) => (s.poche && !s.grenadeEnMain ? s.poche.id : "grenades");
   function remplir(s, n) {
     if (s.poche) s.poche.nombre = Math.min(X[s.poche.id].nombre, s.poche.nombre + n);
   }
@@ -66,7 +68,7 @@ Tanks.Explosifs = (function () {
         ev.push(["explosifs", { nom: F.nom, icone: F.icone, nombre: p.nombre, max: F.nombre, camp: false, regain: F.regain }]);
       }
     } else p.regain = 0;
-    if (s.arme !== "grenades" || s.nage) return;
+    if (s.arme !== "grenades" || s.nage || s.grenadeEnMain) return; // (livre n° 14 : le Médecin tient ses grenades à main)
     // R avec le C4 en main : BOUM !
     if (p.id === "c4" && intentions.recharger) declencherC4(s, monde, ev);
     if (!intentions.tirer || p.attente > 0) return;
@@ -231,5 +233,5 @@ Tanks.Explosifs = (function () {
     return false;
   }
 
-  return { equiper, remplir, avancer, etape, nuage, fumee, exploser, SORTE };
+  return { enMain, equiper, remplir, avancer, etape, nuage, fumee, exploser, SORTE };
 })();

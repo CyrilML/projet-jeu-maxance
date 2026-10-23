@@ -111,7 +111,13 @@ Tanks.SousLeCapot = (function () {
     "drone-reparation": (d) => "🛸 Ton drone de réparation s'envole vers " + d.qui + " (" + d.duree + " s)",
     trousse: (d) => "🩹 Tu poses ta trousse de soins : elle soigne pendant " + d.duree + " s à moins de " + d.rayon + " m",
     soigne: (d) => "💚 " + (d.cible === "toi" ? "Tu es" : d.cible + " est") + " soigné(e) par ta trousse : pleine forme !",
-    releve: (d) => "⚡ Tu relèves " + d.cible + " avec ton défibrillateur !",
+    releve: (d) => "⚡ « Dégagez ! » Tu relèves " + d.cible + " avec ton défibrillateur (les palettes, l'étincelle)",
+    // livre de demandes n° 13 et 14 : l'épaule de la caméra, les plaques du gilet
+    epaule: (d) => "🎥 La caméra passe par-dessus ton épaule " + d.cote + " (Y)",
+    "plaque-cassee": (d) => "🛡️ " + (d.surToi ? "Une plaque de ton gilet" : "Une plaque du gilet de " + d.cible) + " est cassée (" + d.par + ") : " + d.reste + " / " + d.max + " plaques encore utiles · " + d.reserve + " de rechange",
+    "plaque-posee": (d) => "🛡️ Tu glisses une plaque neuve dans ton gilet (" + String(d.duree).replace(".", ",") + " s) : " + d.gilet + " / " + d.max + " · " + d.reserve + " de rechange",
+    "plaque-annulee": (d) => "🛡️ Plaque pas posée (" + d.raison + ")",
+    plaques: (d) => "🛡️ " + (d.camp ? "Au camp : gilet plein et " + d.reserve + " plaques de rechange" : "+1 plaque de rechange (" + d.reserve + " dans ton sac)"),
     munitions: (d) => "🎒 Sac de munitions : réserve du " + d.arme + " pleine (" + d.reserve + "), grenades au complet",
     lampe: (d) => "🔦 Lampe " + (d.allumee ? "allumée" : "éteinte"),
     "plein-ecran": (d) => (d.actif ? "🖥️ Plein écran (K ou Échap pour sortir)" : "🖥️ Retour à la page"),
@@ -231,7 +237,7 @@ Tanks.SousLeCapot = (function () {
     ejection: (d) => (d.abattu ? "🔥 Ton Rafale est abattu ! " : "") + "🪂 Éjection à " + d.hauteur + " m de haut ! Tu redescends en parachute à " + C.engins.parachute + " m/s",
     atterrissage: () => "🪂 Tu touches le sol : te voilà à pied",
     impossible: (d) => "✋ Impossible : " + d.raison,
-    arme: (d) => "🎒 Tu prends : " + d.icone + " " + d.nom + (d.explosif ? " (" + d.nombre + " dans ta poche : Espace " + (d.explosif === "fumigene" ? "en lance un" : "en pose un") + (d.explosif === "c4" ? ", R les fait sauter" : "") + ")" : "") + (d.grenades !== undefined ? " (" + d.grenades + " dans ta poche : Espace en lance une, elle explose après " + C.grenades.meche + " s)" : ""),
+    arme: (d) => (d.bascule ? "⇄ (4 encore) " : "") + "🎒 Tu prends : " + d.icone + " " + d.nom + (d.explosif ? " (" + d.nombre + " dans ta poche : Espace " + (d.explosif === "fumigene" ? "en lance un" : "en pose un") + (d.explosif === "c4" ? ", R les fait sauter" : "") + ")" : "") + (d.grenades !== undefined ? " (" + d.grenades + " dans ta poche : Espace en lance une, elle explose après " + C.grenades.meche + " s)" : ""),
     balle: (d) => (d.touche ? "🔫 Ta balle touche" : d.ricochet ? "🔫 Ta balle ricoche sur un blindé" : "🔫 Ta balle rate") + (d.matiere && !d.touche ? " (matière : " + d.matiere + ")" : ""),
     // demande 92
     "balle-frole": (d) => "🐝 Une balle de " + d.tireur + " (à " + d.distance + " m) te frôle à " + virgule(d.ecart, 1) + " m" + (d.crac ? " : CRAC ! (elle va plus vite que le son)" : " : elle siffle"),
@@ -471,7 +477,7 @@ Tanks.SousLeCapot = (function () {
     l.push(["🛒 tes achats (" + bo.achats.length + ")", bo.achats.slice(-6).map((a) => a.nom + " (" + a.prix + ")").join(" · ") || "aucun"]);
   }
   // (étape 77) Le nom de l'arme en main.
-  const nomArme = (s) => !s.armes ? C.armes[s.arme].icone + " " + C.armes[s.arme].nom : s.arme === "grenades" ? (s.poche ? C.explosifs[s.poche.id].icone + " " + C.explosifs[s.poche.id].nom : "💣 grenades") : s.arme === "gadget" ? s.gadget.fiche.icone + " " + s.gadget.fiche.nom : s.armes[s.arme].stats.icone + " " + s.armes[s.arme].stats.nom;
+  const nomArme = (s) => !s.armes ? C.armes[s.arme].icone + " " + C.armes[s.arme].nom : s.arme === "grenades" ? (s.poche && !s.grenadeEnMain ? C.explosifs[s.poche.id].icone + " " + C.explosifs[s.poche.id].nom : "💣 grenades") : s.arme === "gadget" ? s.gadget.fiche.icone + " " + s.gadget.fiche.nom : s.armes[s.arme].stats.icone + " " + s.armes[s.arme].stats.nom;
   // (étape 77) TA CLASSE ET TON ÉQUIPEMENT : ta classe, ton arme avec ses 7 pièces et ses VRAIS chiffres, l'assistance à la
   // visée, ton gadget et ce qu'il a fait (soins, réparations, marques).
   function lignesEquipement(l, s) {
@@ -505,6 +511,16 @@ Tanks.SousLeCapot = (function () {
     l.push(["🔫 modèle 3D (demande 88)", mod.nom + " · " + mod.liste.join(" · ") + " · " + mod.triangles.toLocaleString("fr-FR") + " triangles en " + mod.objets + " dessins (1 par matière)"]);
     l.push(["👁️ vue de l'arme", (VU.actif ? "première personne : " + A3.vueTriangles.toLocaleString("fr-FR") + " triangles (arme + 2 mains gantées + avant-bras), " + A3.vueObjets + " dessins, dessinée par-dessus le monde · recul " + virgule(VU.recul || 0, 2) + (VU.baisse > 0 ? " · arme baissée à " + Math.round(VU.baisse * 100) + " %" : "") : "pas active (C à pied pour la voir)") + " · 🔦 " + A3.lampe + " · 🔴 laser " + A3.laser]);
     l.push(["🏭 l'armurier", A3.modeles + " modèles fabriqués en " + Math.round(A3.ms) + " ms (gardés au magasin, partagés par tous les soldats) · armes vues sur les soldats : " + Object.keys(A3.soldatsArmes).join(", ") + " · aperçu du menu : " + A3.apercu]);
+    // (livre de demandes n° 13 à 16) la vue par-dessus l'épaule, le viseur dynamique, les plaques, ce que tu tiens en main
+    const SV = Tanks.Scene.vue, TE = Tanks.Tableau.ecran, OB = Tanks.Objets3D.bilan;
+    l.push(["🎥 la caméra (livre n° 13)", (SV.premiere ? "1re personne" : "par-dessus l'épaule " + SV.epaule + " (Y pour changer) · glisse vers l'épaule : " + Math.round(Math.abs(SV.coteLisse) * 100) + " % · rapprochée en visant : " + Math.round(SV.viseeLisse * 100) + " %") + " · champ de vision " + virgule(SV.champ, 1) + "° (zoom ×" + virgule(C.camera.champ / Math.max(1, SV.champ), 2) + ")"]);
+    l.push(["➕ le viseur (livre n° 13)", "écart des branches " + (TE.viseur || "—") + " · réticule à la 1re personne : " + VU.reticule + (TE.lunette ? " · lunette : " + TE.lunette : "") + " · flèches de dégâts à l'écran : " + (TE.fleches || 0)]);
+    if (s.gilet) {
+      const P = C.plaques;
+      l.push(["🛡️ ton gilet (livre n° 14)", s.gilet.plaques.map((x) => virgule(x, 1) + "/" + P.solidite).join(" · ") + " (solidité de chaque plaque) · " + s.gilet.reserve + " de rechange (+1 toutes les " + P.regain + " s)" + (s.gilet.pose > 0 ? " · 6 : PLAQUE EN COURS, encore " + virgule(s.gilet.pose, 1) + " s" : " · 6 : en glisser une (" + P.pose + " s)") + " · une explosion : × " + virgule(P.explosion, 2) + " arrêté"]);
+    }
+    if (s.poche && C.classes[s.classe].grenadesEnPlus) l.push(["💣 grenades du Médecin (livre n° 14)", (s.grenadeEnMain ? "les GRENADES en main" : C.explosifs[s.poche.id].nom + " en main") + " · 4 encore : changer · " + s.grenades + " grenades, " + s.poche.nombre + " " + C.explosifs[s.poche.id].nom.toLowerCase()]);
+    l.push(["🎭 en main (livre n° 15-16)", (Tanks.Objets3D.idEnMain(s) || "une arme") + " · 1re personne : " + (OB.vue ? "objet levé, mains dessus" : "—") + " · 3e personne : " + (OB.troisieme ? "fusil dans le dos, objet dans les mains" : "—") + " · " + OB.modeles + " maquettes fabriquées · trousse posée : " + (OB.trousses ? "oui (anneau vert)" : "non") + " · chocs de défibrillateur : " + OB.chocs + " (" + OB.etincelles + " étincelles)"]);
     l.push(["ton gadget", g.fiche.icone + " " + g.fiche.nom + (g.attente > 0 ? " · prêt dans " + virgule(g.attente, 1) + " s" : " · prêt") + (g.id === "lanceGrenades" ? " · " + g.munitions + " / " + g.fiche.munitions : "") + (g.zone ? " · trousse posée (" + virgule(g.zone.reste, 0) + " s)" : "") + (g.drone ? " · drone sur " + g.drone.cible.nom : "")]);
     const marques = monde.soldats.concat(monde.chars, monde.vehicules).filter((o) => o.marque > 0).length;
     l.push(["tes compteurs", "tirs " + s.compteurs.tirs + " · touchés " + s.compteurs.touches + " · soins " + virgule(s.compteurs.soins, 1) + " · réparations " + s.compteurs.reparations + " · ennemis marqués " + s.compteurs.marques + " (" + marques + " marqués en ce moment) · relevés " + s.compteurs.releves]);

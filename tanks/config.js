@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 53,
+  version: 54,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -423,7 +423,21 @@ Tanks.CONFIG = {
   // seconde et ton tank 1 obus toutes les 2 s (vie / s), jusqu'à être tout neuf.
   soins: { attente: 5, soldat: 2, tank: 0.5 },
 
-  camera: { distance: 15, hauteur: 6.5, regardDevant: 22, souplesse: 6, champ: 60 },
+  camera: { distance: 15, hauteur: 6.5, regardDevant: 22, souplesse: 6, champ: 60,
+    // ✍️ (livre de demandes n° 13) « Améliorer la vue et le viseur. » À PIED, la caméra se met PAR-DESSUS TON ÉPAULE
+    // (comme dans les jeux de tir à la 3e personne) : un peu à droite de ta tête (« cote » m), assez près (« distance » et
+    // « hauteur » : × 15 m et × 6,5 m, comme les autres caméras). En visant (V ou clic droit), elle se rapproche encore de
+    // l'épaule (« visee… ») et le champ de vision se resserre (le zoom de ton viseur). Y : changer d'épaule (gauche ↔ droite).
+    // lisse : s pour glisser d'une place à l'autre (l'épaule, le zoom, le champ de vision : jamais de saut).
+    epaule: { distance: 0.2, hauteur: 0.26, cote: 0.85, devant: 0.6, regardY: 1.55,
+      viseeDistance: 0.13, viseeHauteur: 0.235, viseeCote: 0.62, viseeRegardY: 1.5, lisse: 0.14, lisseChamp: 0.12 } },
+  // ✍️ (livre n° 13) LE VISEUR DYNAMIQUE (la croix au centre de l'écran) : ses 4 branches s'écartent selon la VRAIE
+  // dispersion de ton arme (logique/armes.js : à la hanche, en bougeant, après chaque tir) et se resserrent quand tu vises.
+  //   ecart : [px au moins, px au plus] entre le centre et les branches ; branche : px ; lisse : s pour suivre la dispersion.
+  // Les MARQUEURS DE TOUCHE : une petite croix blanche quand ta balle touche, ROUGE quand l'ennemi tombe (« duree » s ;
+  // « taille » px). Les FLÈCHES DE DÉGÂTS : un arc rouge autour du centre, du côté d'où vient le coup (« duree » s, « rayon » px).
+  viseur: { ecart: [4, 70], branche: 9, lisse: 0.06, couleur: "rgba(255,255,255,.92)",
+    marqueur: { duree: 0.28, taille: 11, rouge: 0.55 }, degats: { duree: 1.8, rayon: 118, largeur: 0.42 } },
   // ✍️ (étape 78) À PIED, la touche C passe dans les YEUX du soldat (la vue à la première personne, comme dans
   // Battlefield) : l'œil est à « oeil » m du sol, un peu en avant de la tête (« avance » m, pour ne pas voir l'intérieur
   // du casque) ; on regarde un peu vers le bas (« baisse » : 0,22 = 22 cm de descente par mètre) pour voir ses mains
@@ -809,8 +823,23 @@ Tanks.CONFIG = {
       armes: ["m110", "svd", "m24", "mk14", "lapua", "barrett"], gadgets: ["jumelles", "capteur"], explosifs: ["grenades", "claymore"] },
     medecin: { nom: "Médecin de guerre", icone: "⛑️", couleur: "#ff5a6a", vie: 1,
       texte: "Il SOIGNE ses amis avec sa trousse et RELÈVE les soldats tombés avec son défibrillateur.",
-      armes: ["mp5", "vector", "mp7", "p90", "bizon", "m870", "m870dragon"], gadgets: ["trousse", "defibrillateur"], explosifs: ["grenades", "fumigene"] },
+      armes: ["mp5", "vector", "mp7", "p90", "bizon", "m870", "m870dragon"], gadgets: ["trousse", "defibrillateur"], explosifs: ["grenades", "fumigene"],
+      // ✍️ (livre de demandes n° 14) « Avoir les grenades et les plaquettes quand tu es médecin. »
+      //   grenadesEnPlus : il garde TOUJOURS ses grenades à main, même s'il a choisi les fumigènes (touche 4 encore une
+      //     fois : on passe de l'un à l'autre) ;
+      //   plaques : il porte un GILET PARE-BALLES à plaques (voir « plaques » plus bas : touche 6 pour en glisser une).
+      grenadesEnPlus: true, plaques: true },
   },
+  // ✍️ (livre de demandes n° 14) LES PLAQUETTES (les plaques de blindage du gilet, comme dans Warzone). Seulement pour les
+  // classes qui ont « plaques: true » (le Médecin, décidé par Maxance).
+  //   gilet : combien de plaques le gilet porte ; solidite : la vie d'une plaque (une balle d'ennemi = 1, ta vie = 20) :
+  //   un coup abîme d'abord la plaque du dessus, le reste passe à la suivante, puis à ta vie (une plaque cassée ne protège
+  //   plus) ; explosion : × les dégâts d'une explosion que les plaques arrêtent (le souffle passe en partie à côté) ;
+  //   reserve : les plaques de rechange dans ton sac (au plus « reserveMax ») ; pose : s pour en glisser une (touche 6 :
+  //   ton arme est baissée pendant ce temps ; tirer ou changer d'arme l'annule) ; regain : s pour en regagner une ; ton
+  //   camp (à moins de « grenades.camp » m) remplit tout ; un sac de munitions aussi (« sac » plaques).
+  plaques: { gilet: 3, solidite: 3, explosion: 0.35, reserve: 4, reserveMax: 5, pose: 1.5, regain: 40, sac: 2 },
+
   // ✍️ Les ARMES PRINCIPALES. (Demande 97 : ✍️ « lance les déblocages » : chaque arme a un « niveau » : le NIVEAU DE
   // JOUEUR qu'il faut pour la débloquer (0 = disponible dès le début : la 1re arme de chaque classe).)
   //   degats : par balle (un soldat de l'ordinateur a 3 de vie) ; loin de « porteeEfficace » m, ils baissent jusqu'à
@@ -983,7 +1012,7 @@ Tanks.CONFIG = {
     trousse: { nom: "Trousse de soins", niveau: 0, icone: "🩹", texte: "Espace : pose une trousse. Toi et tes amis tout près, vous êtes soignés.",
       rayon: 6, vitesse: 2.5, duree: 14, attente: 25 }, // m ; vie par s (pour toi ; ÷ 8 pour un soldat de l'ordinateur, qui a 3 de vie)
     defibrillateur: { nom: "Défibrillateur", niveau: 3, icone: "⚡", texte: "Espace près d'un ami tombé : il se RELÈVE (avec la moitié de sa vie).",
-      distance: 3, attente: 1.5, delai: 16 }, // (delai : s depuis sa chute)
+      distance: 3, attente: 1.5, delai: 16, choc: 0.7 }, // (delai : s depuis sa chute) (livre n° 15 : choc : s, le « Dégagez ! » des palettes)
   },
   // ✍️ Les EXPLOSIFS (2 par classe, tu en prends 1 : touche 4). nombre : combien tu en as ; regain : s pour en regagner 1
   // (et tous d'un coup à ton camp). (demande 98) niveau : le niveau de joueur qui le débloque ; rayon, duree : le nuage
@@ -1195,6 +1224,21 @@ Tanks.CONFIG = {
     // (fusils à pompe) la POMPE à la 1re personne : le garde-main recule de « course » m puis revient, de « debut » à
     // « fin » s après le tir.
     pompe: { course: 0.075, debut: 0.18, fin: 0.62 },
+  },
+  // ✍️ (livre de demandes n° 15 et 16) « Je veux que tu puisses voir le défibrillateur » ; « quand tu as les grenades et les
+  // C4, je veux que tu les voies. » L'ACCESSOIRISTE (affichage/objets3d.js) fabrique ce que tu tiens EN MAIN quand ce
+  // n'est pas une arme : grenade, fumigène, C4 et sa télécommande, mine, claymore, défibrillateur (2 palettes, leurs câbles
+  // et le boîtier), trousse de soins, plaque du gilet, outil de réparation, jumelles, capteur, sac de munitions, tablette
+  // du drone. À la 1re personne (positions en m devant l'œil : x à droite, y en haut, z vers toi) :
+  //   droite / gauche : où sont tenus l'objet de la main droite et celui de la main gauche ; leve : s pour lever l'objet
+  //   (après avoir baissé ton arme) ; pas, respiration : comme l'arme. À la 3e personne : « echelle » (× la vraie taille,
+  //   pour qu'on les voie de loin) et « devant » (m devant ta poitrine, dans tes mains).
+  //   choc : le « Dégagez ! » du défibrillateur (m vers l'avant, éclair en m, force de la lumière).
+  objets3d: {
+    vue: { droite: [0.15, -0.14, -0.4], gauche: [-0.14, -0.15, -0.41], deuxMains: [0.0, -0.15, -0.38], leve: 0.22, pas: 0.012, respiration: [0.003, 0.3] },
+    troisieme: { echelle: 1.6, droite: [0.36, 0.22, 0.17], gauche: [0.34, 0.22, -0.12], hanche: [0.1, -0.02, 0.21] },
+    choc: { avance: 0.09, eclair: 0.07, lumiere: 4 },
+    trousse: { anneau: 0.35 }, // l'opacité de l'anneau vert de la trousse posée (on voit où elle soigne)
   },
   // Les barres du menu : la valeur qui remplit la barre (le menu montre « avant → après »).
   // (demande 97) L'ARMURERIE : la valeur qui remplit chaque barre (plus la barre est longue, mieux c'est) ; « vue » : la

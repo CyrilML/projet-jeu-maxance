@@ -329,10 +329,18 @@ Tanks.Monde = (function () {
     if (toi) {
       // (étape 77) 1 pistolet, 2 ton arme principale, 3 ton gadget, 4 ton explosif (demande 98 : grenades, ou ta poche d'explosifs)
       // (livre de demandes n° 6) 5 : l'arme bonus de l'Ingénieur (les autres classes n'en ont pas : la touche 5 ne fait rien)
+      // (livre de demandes n° 14) le Médecin GARDE ses grenades à main : s'il tient déjà ses fumigènes, la touche 4 encore
+      // une fois passe aux grenades (et inversement) ; « grenadeEnMain » dit lequel des deux est dans sa main.
+      const deuxExplosifs = intentions.arme4 && toi.arme === "grenades" && toi.poche && toi.classe && C.classes[toi.classe].grenadesEnPlus;
+      if (deuxExplosifs) {
+        toi.grenadeEnMain = !toi.grenadeEnMain;
+        const f = toi.grenadeEnMain ? C.armes.grenades : C.explosifs[toi.poche.id];
+        radio.emettre("arme", { nom: f.nom, icone: f.icone, grenades: toi.grenadeEnMain ? toi.grenades : undefined, explosif: toi.grenadeEnMain ? undefined : toi.poche.id, nombre: toi.grenadeEnMain ? undefined : toi.poche.nombre, bascule: true });
+      }
       for (const [k, arme] of [["arme1", "pistolet"], ["arme2", "principale"], ["arme3", "gadget"], ["arme4", "grenades"], ["arme5", "bonus"]]) {
         if (intentions[k] && toi.arme !== arme && (arme !== "bonus" || (toi.armes && toi.armes.bonus))) {
           toi.arme = arme;
-          const poche = arme === "grenades" && toi.poche;
+          const poche = arme === "grenades" && !toi.grenadeEnMain && toi.poche;
           const f = poche ? C.explosifs[poche.id] : arme === "grenades" ? C.armes.grenades : arme === "gadget" ? toi.gadget.fiche : toi.armes[arme].stats;
           radio.emettre("arme", { nom: f.nom, icone: f.icone, grenades: arme === "grenades" && !poche ? toi.grenades : undefined, explosif: poche ? poche.id : undefined, nombre: poche ? poche.nombre : undefined });
         }

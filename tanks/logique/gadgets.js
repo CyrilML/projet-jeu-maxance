@@ -56,6 +56,7 @@ Tanks.Gadgets = (function () {
   function avancer(s, intentions, dt, monde, ev) {
     const g = s.gadget, F = g.fiche;
     g.attente = Math.max(0, g.attente - dt);
+    g.choc = Math.max(0, (g.choc || 0) - dt); // (livre n° 15 : le « choc » du défibrillateur, pour le dessin : les palettes et l'étincelle)
     if (g.id === "lanceGrenades" && g.munitions < F.munitions) {
       g.regain += dt;
       if (g.regain >= F.regain) (g.regain = 0), g.munitions++;
@@ -91,6 +92,7 @@ Tanks.Gadgets = (function () {
       if (s.armes.bonus) s.armes.bonus.reserve = s.armes.bonus.stats.reserve; // (livre n° 6 : l'arme bonus aussi)
       s.grenades = C.grenades.nombre;
       Tanks.Explosifs.remplir(s, 1); // (demande 98 : et 1 explosif de plus : mine, C4, claymore ou fumigène)
+      Tanks.Plaques.remplir(s, C.plaques.sac); // (livre n° 14 : et des plaques de rechange, si tu portes un gilet)
       g.attente = F.attente;
       ev.push(["munitions", { arme: A.stats.nom, reserve: A.reserve }]);
     } else if (g.id === "droneReparation") {
@@ -130,7 +132,8 @@ Tanks.Gadgets = (function () {
       Object.assign(o, { mort: false, chute: null, depuisMort: 0, vie: o.vieMax * 0.5, touche: 0 });
       if (o.ia) o.ia.etat = "relevé";
       s.compteurs.releves++;
-      ev.push(["releve", { cible: o.nom }]);
+      g.choc = F.choc; // (livre n° 15 : « Dégagez ! » : les palettes se posent sur sa poitrine, l'étincelle)
+      ev.push(["releve", { cible: o, x: o.x, y: o.y, z: o.z, choc: F.choc }]);
     }
   }
 

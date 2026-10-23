@@ -15,10 +15,10 @@ On commence par les fusils à pompe (demande 103), puis on suit la liste dans l'
 10. ✅ Des discussions plus réalistes. (demande 109, version 53)
 11. ✅ Une map abandonnée en vitesse : affiches, publicités, véhicules, objets du quotidien (téléphone, table, sac à dos). (demande 108, version 52)
 12. ✅ Des points en hauteur pour les snipers. (demande 109, version 53)
-13. ⬜ Améliorer la vue et le viseur.
-14. ⬜ Le médecin a les grenades et les plaquettes.
-15. ⬜ Voir le défibrillateur.
-16. ⬜ Voir les grenades et le C4 dans les mains.
+13. ✅ Améliorer la vue et le viseur. (demande 110, version 54)
+14. ✅ Le médecin a les grenades et les plaquettes. (demande 110, version 54)
+15. ✅ Voir le défibrillateur. (demande 110, version 54)
+16. ✅ Voir les grenades et le C4 dans les mains. (demande 110, version 54)
 17. ⬜ Se faire soigner par ses compagnons.
 18. ⬜ Un compagnon à terre lève la main et demande des soins.
 19. ⬜ Demander une réanimation à ses compagnons.

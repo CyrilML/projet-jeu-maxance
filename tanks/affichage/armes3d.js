@@ -2197,6 +2197,7 @@ Tanks.Armes3D = (function () {
     const ok = premiere && s && s.armes && !s.mort && !s.nage && !s.parachute && !s.corde && !s.dansUnEngin;
     if (!ok) {
       V.actif = false;
+      if (V.scene) Tanks.Objets3D.cacherVue(); // (livre n° 16)
       return;
     }
     preparerVue();
@@ -2213,7 +2214,9 @@ Tanks.Armes3D = (function () {
       V.mancheCamp = camp;
       bilan.manches = tenueBoutique ? "tenue « " + C.boutique.tenues.find((x) => x.id === tenueBoutique).nom + " »" : "uniforme des Bleus";
     }
-    const range = s.arme === "grenades" || (s.arme === "gadget" && s.gadget.id !== "lanceGrenades");
+    // (livre n° 14, 15, 16) une grenade, un explosif, un gadget ou une plaque en main : l'arme est baissée, et
+    // l'accessoiriste (affichage/objets3d.js) lève l'objet
+    const range = !!Tanks.Objets3D.idEnMain(s);
     const lg = s.gadget && s.gadget.id === "lanceGrenades";
     const voulu = fabriquer(tenue.id, tenue.pieces, "beau", { lanceGrenades: lg });
     // 2. changer d'arme : on baisse l'ancienne, on prend la nouvelle, on la lève
@@ -2304,6 +2307,7 @@ Tanks.Armes3D = (function () {
     V.objet.position.copy(pos);
     V.objet.quaternion.copy(qVise).multiply(_q2.setFromEuler(_e.set(roulis, lacet, tangage, "YZX")));
     V.objet.updateMatrix();
+    reticule(vis, k, recharge > 0 || penche > 0.05 || V.baisse > 0.05);
     // le chargeur pendant le rechargement : il descend et tombe, puis le neuf remonte
     const groupeCh = V.objet.getObjectByName("chargeur"), groupeCul = V.objet.getObjectByName("culasse");
     if (groupeCh) {
@@ -2353,6 +2357,10 @@ Tanks.Armes3D = (function () {
     poserMain(M1, m, V.objet, m.garde, -1, decG);
     poserAvantBras(V.avantBras[0], M0, _b.set(0.24, -0.45, 0.12));
     poserAvantBras(V.avantBras[1], M1, _b.set(fam === "pistolet" ? 0.0 : -0.2, -0.45, 0.02));
+    for (const x of [M0, M1, V.avantBras[0], V.avantBras[1]]) x.visible = true;
+    // (livre n° 14, 15, 16) l'objet en main : quand l'arme est baissée, l'accessoiriste lève l'objet et y pose les mains
+    const tient = Tanks.Objets3D.majVue(s, dt, { scene: V.scene, mains: V.mains, avantBras: V.avantBras, poserMain, poserAvantBras, baisse: V.baisse, t: V.t });
+    V.objet.visible = !tient;
     // 7. l'éclair au bout du canon (presque rien avec un silencieux), et sa lumière sur l'arme et les mains
     const flamme = V.t - V.dernierTir < D.flamme && !roquettes;
     if (V.flamme.parent !== V.objet) V.objet.add(V.flamme);
@@ -2389,6 +2397,76 @@ Tanks.Armes3D = (function () {
     bilan.pieces = m.liste;
     // épaulé avec une LUNETTE : c'est la vraie lunette du tableau de bord qui prend la place (étape 79)
     if (st.lunette && (s.visee || 0) > 0.82) V.actif = false;
+    // (livre n° 13) le viseur ×2 compact, épaulé : l'œil est collé à l'œilleton ; le tableau de bord dessine ce qu'on voit
+    // dedans (le cercle, le chevron) : l'arme et les mains (déjà autour de l'œil) ne se dessinent plus
+    V.dansLeX2 = vis.nom === "viseur ×2" && (s.visee || 0) > 0.88 && !tient;
+    if (V.dansLeX2) for (const x of [V.objet, V.mains[0], V.mains[1], V.avantBras[0], V.avantBras[1]]) x.visible = false;
+  }
+  // ✍️ (livre n° 13) LE RÉTICULE LUMINEUX des viseurs à point rouge et holographiques, épaulé à la 1re personne : le petit
+  // point rouge (ou le cercle et son point) qui BRILLE dans la fenêtre du viseur. Un vrai point rouge est « sans
+  // parallaxe » : il est projeté au loin, pile là où va la balle. On le pose loin devant la fenêtre, le long de la ligne de
+  // visée de l'arme (il bouge donc avec l'arme quand elle recule), toujours face à l'œil, et il brille (il s'ajoute à la lumière).
+  //   taille : l'angle qu'il couvre (degrés, la moitié de son image) ; il apparaît quand tu as presque fini d'épauler.
+  const RETICULES = {
+    "point rouge": { dessin: "point", taille: 0.75 }, "mini point rouge": { dessin: "point", taille: 0.8 },
+    holographique: { dessin: "holo", taille: 1.35 }, "viseur intégré": { dessin: "holo", taille: 1.2 },
+  };
+  function textureReticule(dessin) {
+    return toile(128, 128, (ctx) => {
+      const lueur = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      if (dessin === "point") {
+        lueur.addColorStop(0, "rgba(255,240,230,1)");
+        lueur.addColorStop(0.09, "rgba(255,60,40,1)");
+        lueur.addColorStop(0.2, "rgba(255,30,20,.35)");
+        lueur.addColorStop(0.55, "rgba(255,20,10,.06)");
+        lueur.addColorStop(1, "rgba(255,0,0,0)");
+        ctx.fillStyle = lueur;
+        ctx.fillRect(0, 0, 128, 128);
+      } else {
+        // le cercle de 65 MOA, ses 4 petites dents, et le point de 1 MOA au centre (comme un EOTech)
+        ctx.shadowColor = "rgba(255,40,20,.9)";
+        ctx.shadowBlur = 6;
+        ctx.strokeStyle = "rgba(255,70,50,1)";
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.arc(64, 64, 50, 0, Math.PI * 2);
+        ctx.stroke();
+        for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+          ctx.beginPath();
+          ctx.moveTo(64 + dx * 50, 64 + dy * 50);
+          ctx.lineTo(64 + dx * 42, 64 + dy * 42);
+          ctx.stroke();
+        }
+        ctx.fillStyle = "rgba(255,230,220,1)";
+        ctx.beginPath();
+        ctx.arc(64, 64, 3.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+  }
+  function reticule(vis, k, occupe) {
+    const R = RETICULES[vis.nom];
+    V.reticules = V.reticules || {};
+    for (const n in V.reticules) V.reticules[n].visible = false;
+    bilan.reticule = "—";
+    if (!R) return;
+    let o = V.reticules[R.dessin];
+    if (!o) {
+      o = V.reticules[R.dessin] = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: textureReticule(R.dessin), transparent: true, blending: THREE.AdditiveBlending, depthTest: false, depthWrite: false, toneMapped: false }));
+      o.renderOrder = 20;
+      V.scene.add(o);
+    }
+    const a = occupe ? 0 : Math.max(0, Math.min(1, (k - 0.72) / 0.22));
+    if (a <= 0) return;
+    // le point, loin devant la fenêtre du viseur, sur la ligne de visée de l'arme
+    _p.set(vis.arriere + 0.6, vis.ligne, vis.z || 0).applyMatrix4(V.objet.matrix);
+    const dist = _p.length();
+    o.position.copy(_p);
+    o.lookAt(0, 0, 0);
+    o.scale.setScalar(2 * dist * Math.tan((R.taille * Math.PI) / 180));
+    o.material.opacity = a;
+    o.visible = true;
+    bilan.reticule = R.dessin === "holo" ? "cercle holographique" : "point rouge";
   }
   function ejecter(m) {
     if (!m.ejection || V.douilles.length === 0) return;
@@ -2423,7 +2501,7 @@ Tanks.Armes3D = (function () {
     get vitrineEtat() { return { actif: VI.actif, images: VI.images, zoom: VI.zoom, lacet: VI.lacet, modele: VI.modele, magasin: magasin.size }; },
     noterArmeDuJoueur: (objet, modele) => (armeDuJoueur = objet ? { objet, modele } : null),
     get armeDuJoueur() { return armeDuJoueur; },
-    get vue() { return { actif: V.actif, modele: V.modele, objet: V.objet, cam: V.cam, baisse: V.baisse, recul: V.recul, scene: V.scene }; },
+    get vue() { return { actif: V.actif, modele: V.modele, objet: V.objet, cam: V.cam, baisse: V.baisse, recul: V.recul, scene: V.scene, dansLeX2: !!(V.actif && V.dansLeX2), reticule: bilan.reticule || "—" }; },
     LISTE: () => Object.keys(C.armesPrincipales).concat(Object.keys(C.pistolets)),
   };
 })();

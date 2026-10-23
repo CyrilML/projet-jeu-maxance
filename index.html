@@ -230,6 +230,7 @@
       <a href="#etape107">Étape 107</a>
       <a href="#etape108">Étape 108</a>
       <a href="#etape109">Étape 109</a>
+      <a href="#etape110">Étape 110</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5544,6 +5545,49 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape110">
+      <h2>🎯 Étape 110 : une meilleure vue, de vrais viseurs, et les objets dans tes mains <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">La caméra par-dessus l'épaule, des viseurs qui brillent, un réticule qui s'écarte, des plaques de blindage pour le médecin, et tu vois enfin le défibrillateur, les grenades et le C4 dans tes mains. Demandes n° 13 à 16 de ton livre. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/110-vue-medecin-objets.md</code>.</p>
+          <ul>
+            <li>✍️ « Améliorer la vue et le viseur. »</li>
+            <li>✍️ « Avoir les grenades et les plaquettes quand tu es médecin. »</li>
+            <li>✍️ « Je veux que tu puisses voir le défibrillateur cardiaque. »</li>
+            <li>✍️ « Quand tu as les grenades et les C4, je veux que tu les voies. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 54 ».</li>
+            <li>☐ À pied, la caméra est par-dessus l'épaule ; <strong>Y</strong> change d'épaule.</li>
+            <li>☐ Le réticule s'écarte quand tu bouges, se resserre quand tu vises ; une croix blanche quand tu touches, rouge quand l'ennemi tombe ; un arc rouge montre d'où viennent les tirs.</li>
+            <li>☐ Vue C + V : point rouge et holo qui brillent, lunettes ×2, ×4, ×8 avec leurs réticules.</li>
+            <li>☐ Médecin : 3 plaques (barres bleues), <strong>6</strong> pour en remettre une (1,5 s) ; <strong>4</strong> deux fois pour passer du fumigène aux grenades.</li>
+            <li>☐ On voit le défibrillateur (palettes, câbles) et l'étincelle bleue quand il réanime ; la trousse posée avec son cercle vert.</li>
+            <li>☐ On voit la grenade, le C4 et sa télécommande dans tes mains, et le lancer.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🛡️ Les plaques, une deuxième barre de vie</h3>
+      <p>Quand le médecin est touché, le jeu enlève d'abord des points à la plaque. Seulement quand elle est cassée, il enlève de la vie. Les explosions passent plus (la plaque n'en arrête que 35 %). C'est une règle « si… alors… sinon » en deux étages.</p>
+      <h3>🎯 Un réticule qui dit la vérité</h3>
+      <p>L'écart des 4 traits du réticule vient du VRAI calcul de dispersion de ton arme : si les traits sont écartés, tes balles partent vraiment plus de travers. L'écran montre la règle du jeu.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot : l'écart du réticule en direct, l'état du gilet, ce que tu tiens dans la main.</li>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>plaques</code> : change le nombre de plaques.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Quelle touche pose une plaque ? <span class="petit">(6)</span></li>
+            <li>Que veut dire une croix ROUGE au centre de l'écran ? <span class="petit">(l'ennemi est tombé)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -6958,6 +7002,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-109" data-cle="appris-109" placeholder="Ex. : …"></textarea>
         <label for="idees-109"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-109" data-cle="idees-109" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 110 · la vue, les viseurs, le médecin, les objets dans les mains <span class="petit">· 23 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/logique/plaques.js</code>, <code>tanks/affichage/objets3d.js</code>, <code>scene.js</code>, <code>armes3d.js</code>, <code>tableau.js</code>, <code>config.js</code>.</p>
+        <p class="petit">✍️ Maxance a demandé : une meilleure vue et un meilleur viseur, des grenades et des plaques pour le médecin, voir le défibrillateur, les grenades et le C4.</p>
+        <label for="appris-110"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-110" data-cle="appris-110" placeholder="Ex. : …"></textarea>
+        <label for="idees-110"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-110" data-cle="idees-110" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

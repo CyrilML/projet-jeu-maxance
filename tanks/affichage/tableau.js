@@ -34,6 +34,11 @@ Tanks.Tableau = (function () {
   let ctx, L, H, carte = null, message = null, reponse = null, ordreEnCours = null;
   // ✍️ (livre de demandes, n° 1) l'écran épuré : la ligne des touches (H), et ce qu'on a caché à cette image (pour « sous le capot »)
   let aideForcee = false;
+  // (livre n° 13) le viseur dynamique : son écart (px, lissé), le dernier marqueur de touche, les flèches de dégâts, le
+  // balancement des lunettes (l'image de la lunette glisse un peu quand tu bouges : la croix, elle, reste sur la cible)
+  let marqueur = null, ecartViseur = 10, avantViseur = performance.now(), angleAvantLunette = null;
+  const degats = [], balLunette = { x: 0, y: 0 };
+  const VZ = C.viseur;
   const ecran = { aide: "—", nomsMontres: 0, nomsCaches: 0 };
   function basculerAide() {
     aideForcee = !aideForcee;
@@ -177,6 +182,19 @@ Tanks.Tableau = (function () {
     });
     radio.ecouter("helico-recharge", (d) => d.toi && dire("🚁 Ton " + d.nom + " est plein : " + d.places + " soldats à bord (F : la corde)", "#9cc4ff", 2500));
     radio.ecouter("helico-abattu", (d) => d.toi && dire("🔥 Ton " + d.nom + " est abattu !", "#ff7a6a", 3000));
+    // ✍️ (livre n° 13) les MARQUEURS DE TOUCHE (blanc : touché ; rouge : à terre) et les FLÈCHES DE DÉGÂTS (d'où vient le coup)
+    radio.ecouter("soldat-touche", (d) => {
+      if (d.parToi && !d.surToi && d.equipeCible !== "bleus") marqueur = { t: performance.now(), rouge: false };
+      if (d.surToi && d.de) degats.push({ x: d.de.x, z: d.de.z, t: performance.now(), plaque: d.plaque > 0 });
+      if (degats.length > 6) degats.shift();
+    });
+    radio.ecouter("soldat-mort", (d) => d.parToi && d.equipeCible !== "bleus" && (marqueur = { t: performance.now(), rouge: true }));
+    radio.ecouter("pilote-abattu", (d) => d.parToi && (marqueur = { t: performance.now(), rouge: true }));
+    // (livre n° 14) les plaques du gilet
+    radio.ecouter("plaque-cassee", (d) => d.surToi && dire("🛡️ Une plaque cassée ! (" + d.reste + " / " + d.max + " · 6 : en glisser une)", "#9cc8ff", 1500));
+    radio.ecouter("plaque-posee", (d) => dire("🛡️ Plaque en place (" + d.gilet + " / " + d.max + " · " + d.reserve + " de rechange)", "#9cc8ff", 1500));
+    radio.ecouter("plaque-annulee", (d) => dire("🛡️ Plaque pas posée : " + d.raison, "#ffb37a", 1300));
+    radio.ecouter("plaques", (d) => dire(d.camp ? "🛡️ Au camp : gilet et plaques au complet" : "🛡️ +1 plaque de rechange (" + d.reserve + ")", "#9cc8ff"));
     radio.ecouter("soin-fini", (d) => dire("💚 " + (d.qui === "ton tank" ? "Ton tank est" : "Tu es") + " de nouveau en pleine forme !", "#7dffa0", 2000));
   }
 
@@ -247,15 +265,18 @@ Tanks.Tableau = (function () {
       // le viseur : 40 m devant toi, à hauteur d'homme
       const v = Tanks.Scene.versEcran(s.x + Math.cos(s.angle) * 40, s.y + 1.4, s.z + Math.sin(s.angle) * 40, L, H);
       const dansLaLunette = s.armes && s.visee > 0.6 && Tanks.Armes.estUneArme(s) && Tanks.Armes.enMain(s).stats.lunette; // (étape 89 : la croix de la lunette suffit)
-      if (v && !s.parachute && !dansLaLunette) viseur(v, false, 10);
+      if (v && !s.parachute && !dansLaLunette) viseurDynamique(v, s);
+      else if (v) dessinerMarqueur(v);
+      fleches(s);
       const larg = s.armes && s.armes.bonus ? 536 : 436; // (livre n° 6 : avec l'arme bonus, 5 cases : le cadre s'élargit)
       panneau(12, H - 118, larg, 106);
       texte(s.parachute ? "🪂 En parachute…" : "🪖 À pied", 24, H - 92, 17, "#ffe27a");
       barreVie(24, H - 80, 200, s);
+      if (s.gilet) plaquesGilet(s, 140, H - 101); // (livre n° 14 : les plaques du gilet, au-dessus de la vie)
       // (étape 77) tes 4 armes : 1 pistolet, 2 ton arme, 3 ton gadget, 4 les grenades
       // (livre de demandes n° 6) l'Ingénieur a une 5e case : 5 son arme bonus (les 5 cases sont alors un peu plus étroites)
       if (s.armes) {
-        const g = s.gadget, noms = [["pistolet", "🔫 " + s.armes.pistolet.stats.nom], ["principale", s.armes.principale.stats.icone + " " + s.armes.principale.stats.nom], ["gadget", g.fiche.icone + " " + g.fiche.nom], ["grenades", s.poche ? C.explosifs[s.poche.id].icone + " ×" + s.poche.nombre : "💣 ×" + s.grenades]]; // (demande 98 : ton explosif)
+        const g = s.gadget, noms = [["pistolet", "🔫 " + s.armes.pistolet.stats.nom], ["principale", s.armes.principale.stats.icone + " " + s.armes.principale.stats.nom], ["gadget", g.fiche.icone + " " + g.fiche.nom], ["grenades", s.poche && !s.grenadeEnMain ? C.explosifs[s.poche.id].icone + " ×" + s.poche.nombre + (C.classes[s.classe].grenadesEnPlus ? " ⇄💣" : "") : "💣 ×" + s.grenades + (s.poche ? " ⇄" + C.explosifs[s.poche.id].icone : "")]]; // (demande 98 : ton explosif) (livre n° 14 : ⇄ le Médecin a les deux : 4 encore pour changer)
         if (s.armes.bonus) noms.push(["bonus", "🎁 " + s.armes.bonus.stats.nom]);
         const pas = 104;
         noms.forEach(([a, nom], i) => {
@@ -290,11 +311,12 @@ Tanks.Tableau = (function () {
           }
           // épaulé : (étape 79) la VRAIE LUNETTE (affichage/lunette... dessinée ici) : le rond, la croix, les graduations
           if (s.visee > 0.6 && st.lunette) dessinerLunette(ctx, L, H, s, st);
+          else if (Tanks.Armes3D.vue.dansLeX2) dessinerX2(ctx, L, H, s, st); // (livre n° 13 : le viseur ×2, à la 1re personne)
         } else if (s.arme === "gadget") {
           const F = g.fiche, part = g.id === "reparation" ? (g.cible ? g.part : 0) : g.attente > 0 ? 1 - g.attente / (F.attente || F.cadence || 1) : 1;
           const etat = g.id === "lanceGrenades" ? g.munitions + " / " + F.munitions + " · Espace : tirer" : g.id === "reparation" ? (g.cible ? "🔧 répare " + (g.cible === monde.joueur ? "ton tank" : g.cible.nom) + " : " + g.cible.vie + " / " + Tanks.Gadgets.vieMaxDe(g.cible) : "tiens Espace près d'un véhicule ami abîmé") : g.attente > 0 ? "prêt dans " + Math.ceil(g.attente) + " s" : "Espace : utiliser" + (g.id === "jumelles" ? " (V : zoom)" : "");
           barre(24, H - 28, 200, part, g.attente === 0, etat);
-        } else if (s.poche) { // (demande 98) ta poche d'explosifs : combien il en reste, combien sont posés, R pour le C4
+        } else if (s.poche && !s.grenadeEnMain) { // (demande 98) ta poche d'explosifs : combien il en reste, combien sont posés, R pour le C4
           const p = s.poche, F = C.explosifs[p.id], poses = (monde.explosifs || []).filter((e) => e.id === p.id && e.tireur === s).length;
           const etat = p.nombre ? F.icone + " Espace : " + (p.id === "fumigene" ? "lancer" : "poser") + " (" + p.nombre + ")" : "plus de " + F.nom.toLowerCase();
           barre(24, H - 28, 200, p.nombre ? 1 : p.regain / F.regain, p.nombre > 0, etat + (p.id === "c4" ? " · R : BOUM (" + poses + " posé" + (poses > 1 ? "s" : "") + ")" : p.id !== "fumigene" ? " · " + poses + " / " + F.max + " posés" : ""));
@@ -811,7 +833,7 @@ Tanks.Tableau = (function () {
     } else {
       const aide = {
         char: "↑ ↓ ← → rouler · Q / D tourelle · Espace tirer · E sortir · T ordre · C caméra · R recommencer",
-        pied: t.soldat && t.soldat.nage ? "↑ ↓ nager · ← → tourner · (pas de tir dans l'eau)" : "↑ ↓ marcher · ← → tourner · Espace tirer · V épauler · R recharger · " + (t.soldat && t.soldat.armes && t.soldat.armes.bonus ? "1 pistolet 2 lance-roquettes 5 arme bonus · 3 gadget 4 explosif (C4 : R)" : "1 pistolet 2 arme 3 gadget 4 explosif (C4 : R)") + " · L lampe · C vue" + (monde.metro ? " · 🚇 à pied seulement" : " · E monter"),
+        pied: t.soldat && t.soldat.nage ? "↑ ↓ nager · ← → tourner · (pas de tir dans l'eau)" : "↑ ↓ marcher · ← → tourner · Espace tirer · V épauler · R recharger · " + (t.soldat && t.soldat.armes && t.soldat.armes.bonus ? "1 pistolet 2 lance-roquettes 5 arme bonus · 3 gadget 4 explosif (C4 : R)" : "1 pistolet 2 arme 3 gadget 4 explosif (C4 : R)") + " · L lampe · C vue · Y épaule" + (t.soldat && t.soldat.gilet ? " · 6 plaque" : "") + (monde.metro ? " · 🚇 à pied seulement" : " · E monter"),
         jeep: "↑ ↓ ← → rouler · Q / D mitrailleuse · Espace tirer · E descendre (arrêté)",
         moto: "↑ ↓ ← → conduire (elle penche dans les virages) · Espace pistolet · E descendre (arrêté)",
         quad: "↑ ↓ ← → conduire · Espace mitrailleuse (elle tire droit devant) · E descendre (arrêté)",
@@ -960,6 +982,179 @@ Tanks.Tableau = (function () {
     finEtAide(monde, t);
   }
 
+  // ✍️ (livre de demandes n° 13) « Améliorer la vue et le viseur. » LE VISEUR DYNAMIQUE : 4 petites branches autour d'un
+  // point. Leur écart, c'est la VRAIE dispersion de ton arme (logique/armes.js) vue sur l'écran : un angle de « sigma »
+  // radians fait tan(sigma) ÷ tan(moitié du champ de vision) × la moitié de la hauteur de l'écran. À la hanche et en
+  // courant, les branches s'écartent ; chaque tir les pousse (le recul) ; épaulé, elles se resserrent. À la 1re personne,
+  // épaulé, il disparaît : tu vises avec le VRAI viseur de ton arme.
+  function viseurDynamique(v, s) {
+    const maintenant = performance.now(), dt = Math.min(0.1, (maintenant - avantViseur) / 1000);
+    avantViseur = maintenant;
+    const arme = s.armes && Tanks.Armes.estUneArme(s);
+    if (!arme) { // une grenade, un gadget : un petit rond
+      viseur(v, false, 6);
+      return dessinerMarqueur(v);
+    }
+    const st = Tanks.Armes.enMain(s).stats, sigma = Tanks.Armes.dispersion(s, st);
+    const champ = ((Tanks.Scene.vue.champ || C.camera.champ) * Math.PI) / 360;
+    const voulu = Math.max(VZ.ecart[0], Math.min(VZ.ecart[1], (Math.tan(sigma) / Math.tan(champ)) * (H / 2)));
+    ecartViseur += (voulu - ecartViseur) * (1 - Math.exp(-dt / VZ.lisse));
+    ecran.viseur = Math.round(ecartViseur) + " px (dispersion " + (sigma * 1000).toFixed(1) + " mrad)";
+    const premiere = Tanks.Scene.vue.premiere, epaule = s.visee || 0;
+    const a = premiere ? Math.max(0, 1 - epaule / 0.55) : 1; // (1re personne, épaulé : le vrai viseur prend la place)
+    if (a > 0.01) {
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.strokeStyle = "rgba(0,0,0,.55)";
+      ctx.lineWidth = 4;
+      branches(v, ecartViseur);
+      ctx.strokeStyle = VZ.couleur;
+      ctx.lineWidth = 2;
+      branches(v, ecartViseur);
+      ctx.fillStyle = VZ.couleur;
+      ctx.fillRect(v.x - 1, v.y - 1, 2, 2);
+      ctx.restore();
+    }
+    dessinerMarqueur(v);
+  }
+  function branches(v, e) {
+    const b = VZ.branche;
+    ctx.beginPath();
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      ctx.moveTo(v.x + dx * e, v.y + dy * e);
+      ctx.lineTo(v.x + dx * (e + b), v.y + dy * (e + b));
+    }
+    ctx.stroke();
+  }
+  // Le MARQUEUR DE TOUCHE : une croix en X autour du viseur, blanche (touché) ou rouge (à terre), qui s'efface vite.
+  function dessinerMarqueur(v) {
+    if (!marqueur) return;
+    const MQ = VZ.marqueur, age = (performance.now() - marqueur.t) / 1000, duree = marqueur.rouge ? MQ.rouge : MQ.duree;
+    if (age > duree) return void (marqueur = null);
+    const a = 1 - age / duree, r0 = 5 + 3 * (1 - a), r1 = r0 + MQ.taille;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, a * 1.5);
+    for (const [couleur, l] of [["rgba(0,0,0,.6)", 4], [marqueur.rouge ? "#ff3b2f" : "#ffffff", 2.2]]) {
+      ctx.strokeStyle = couleur;
+      ctx.lineWidth = l;
+      ctx.beginPath();
+      for (const [dx, dy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+        ctx.moveTo(v.x + dx * r0 * 0.707, v.y + dy * r0 * 0.707);
+        ctx.lineTo(v.x + dx * r1 * 0.707, v.y + dy * r1 * 0.707);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // Les FLÈCHES DE DÉGÂTS : un arc rouge autour du centre de l'écran, du côté d'où vient le coup (devant = en haut,
+  // à ta droite = à droite). L'angle : la direction du tireur moins la direction où tu regardes. Bleu : ta plaque l'a arrêté.
+  function fleches(s) {
+    const D = VZ.degats, maintenant = performance.now();
+    for (let i = degats.length - 1; i >= 0; i--) {
+      const d = degats[i], age = (maintenant - d.t) / 1000;
+      if (age > D.duree) { degats.splice(i, 1); continue; }
+      const rel = Math.atan2(d.z - s.z, d.x - s.x) - s.angle, th = rel - Math.PI / 2, a = 1 - age / D.duree;
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.strokeStyle = d.plaque ? "rgba(120,190,255,.95)" : "rgba(255,40,30,.9)";
+      ctx.shadowColor = ctx.strokeStyle;
+      ctx.shadowBlur = 8;
+      ctx.lineWidth = 7;
+      ctx.beginPath();
+      ctx.arc(L / 2, H / 2, D.rayon, th - D.largeur / 2, th + D.largeur / 2);
+      ctx.stroke();
+      // la pointe, vers l'extérieur
+      const px = L / 2 + Math.cos(th) * (D.rayon + 14), py = H / 2 + Math.sin(th) * (D.rayon + 14);
+      ctx.fillStyle = ctx.strokeStyle;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(L / 2 + Math.cos(th - 0.08) * (D.rayon + 3), H / 2 + Math.sin(th - 0.08) * (D.rayon + 3));
+      ctx.lineTo(L / 2 + Math.cos(th + 0.08) * (D.rayon + 3), H / 2 + Math.sin(th + 0.08) * (D.rayon + 3));
+      ctx.fill();
+      ctx.restore();
+    }
+    ecran.fleches = degats.length;
+  }
+  // ✍️ (livre n° 14) LES PLAQUES DU GILET : un segment bleu par plaque (plein, entamé ou cassé), les plaques de rechange,
+  // et, quand tu en glisses une (touche 6), une barre qui se remplit au milieu de l'écran.
+  function plaquesGilet(s, x, y) {
+    const g = s.gilet, P = C.plaques, l = 30;
+    g.plaques.forEach((v, i) => {
+      ctx.fillStyle = "rgba(255,255,255,.12)";
+      ctx.fillRect(x + i * (l + 4), y, l, 8);
+      ctx.fillStyle = v >= P.solidite ? "#5fb4ff" : "#a8d4ff";
+      ctx.fillRect(x + i * (l + 4), y, l * (v / P.solidite), 8);
+    });
+    texte("🛡️ +" + g.reserve, x + g.plaques.length * (l + 4) + 4, y + 9, 12, g.reserve ? "#bfe0ff" : "#888");
+    if (g.pose > 0) {
+      const part = 1 - g.pose / P.pose;
+      panneau(L / 2 - 110, H / 2 + 60, 220, 34);
+      texte("🛡️ Tu glisses une plaque…", L / 2, H / 2 + 76, 13, "#bfe0ff", "center");
+      ctx.fillStyle = "rgba(255,255,255,.15)";
+      ctx.fillRect(L / 2 - 96, H / 2 + 82, 192, 6);
+      ctx.fillStyle = "#5fb4ff";
+      ctx.fillRect(L / 2 - 96, H / 2 + 82, 192 * part, 6);
+    }
+  }
+  // ✍️ (livre n° 13) LE BALANCEMENT DES LUNETTES : quand tu marches ou que tu tournes, l'image ronde de la lunette glisse
+  // un peu (l'œil n'est plus pile derrière l'œilleton) et une OMBRE en croissant apparaît sur le bord. La croix, elle,
+  // reste là où va la balle (au centre).
+  function balancerLunette(s, r) {
+    const maintenant = performance.now(), dt = Math.max(0.001, Math.min(0.1, (maintenant - (balLunette.t || maintenant)) / 1000));
+    balLunette.t = maintenant;
+    const tourne = angleAvantLunette === null ? 0 : Math.atan2(Math.sin(s.angle - angleAvantLunette), Math.cos(s.angle - angleAvantLunette)) / dt;
+    angleAvantLunette = s.angle;
+    const vitesse = Math.min(1, Math.abs(s.vitesse || 0) / 3), phase = (s.pas || 0) * 2.6;
+    const vx = Math.max(-1, Math.min(1, -tourne * 0.35)) * r * 0.07 + Math.sin(phase) * vitesse * r * 0.05;
+    const vy = Math.abs(Math.cos(phase)) * vitesse * r * 0.05 + (s.coup || 0) * r * 0.05;
+    const k = 1 - Math.exp(-dt / 0.12);
+    balLunette.x += (vx - balLunette.x) * k;
+    balLunette.y += (vy - balLunette.y) * k;
+    return balLunette;
+  }
+  function ombreLunette(cx, cy, r, b) {
+    // le noir autour du rond (déplacé), le vignettage, et le croissant d'ombre du côté opposé au déplacement
+    ctx.fillStyle = "#000";
+    ctx.beginPath();
+    ctx.rect(0, 0, L, H);
+    ctx.arc(cx + b.x, cy + b.y, r, 0, Math.PI * 2, true);
+    ctx.fill();
+    const d = Math.hypot(b.x, b.y), g = ctx.createRadialGradient(cx + b.x * 2.2, cy + b.y * 2.2, r * (0.72 - Math.min(0.2, d / r)), cx + b.x, cy + b.y, r);
+    g.addColorStop(0, "rgba(0,0,0,0)");
+    g.addColorStop(0.75, "rgba(0,0,0," + (0.35 + Math.min(0.4, d / r * 4)) + ")");
+    g.addColorStop(1, "rgba(0,0,0,.92)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx + b.x, cy + b.y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // ✍️ (livre n° 13) LE VISEUR ×2 COMPACT (un petit prisme) : un cercle plus grand qu'une lunette, un CHEVRON rouge
+  // lumineux (la pointe = là où va la balle) et 2 petits traits de côté.
+  function dessinerX2(ctx, L, H, s) {
+    const cx = L / 2, cy = H / 2, r = Math.min(L, H) * 0.47, b = balancerLunette(s, r);
+    ctx.save();
+    ombreLunette(cx, cy, r, b);
+    ctx.beginPath();
+    ctx.arc(cx + b.x, cy + b.y, r, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.strokeStyle = "rgba(255,50,30,.95)";
+    ctx.shadowColor = "rgba(255,40,20,.9)";
+    ctx.shadowBlur = 6;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy + 10); ctx.lineTo(cx, cy); ctx.lineTo(cx + 10, cy + 10);
+    ctx.moveTo(cx - r * 0.42, cy); ctx.lineTo(cx - r * 0.2, cy);
+    ctx.moveTo(cx + r * 0.2, cy); ctx.lineTo(cx + r * 0.42, cy);
+    ctx.stroke();
+    ctx.fillStyle = "#fff0e8";
+    ctx.beginPath();
+    ctx.arc(cx, cy, 1.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    dessinerMarqueur({ x: cx, y: cy });
+    ecran.lunette = "viseur ×2 (chevron)";
+  }
+
   // ✍️ (étape 79) LA LUNETTE DE SNIPER : tout est noir sauf un grand rond ; dedans, une croix fine avec des points
   // (les « mil-dots » : chacun = 1 milliradian, soit 1 m à 1 000 m), un bord un peu sombre (le vignettage), et en bas
   // la barre de ton SOUFFLE (Maj). Le peintre ne fait que LIRE le soldat : s.souffle, s.balancement, s.vise.
@@ -979,36 +1174,58 @@ Tanks.Tableau = (function () {
       ctx.restore();
     }
     ctx.globalAlpha = a;
-    // le noir autour du rond
-    ctx.fillStyle = "#000";
+    // (livre n° 13) le noir autour du rond, le vignettage et l'ombre en croissant : l'image ronde glisse un peu quand tu
+    // bouges (« balancerLunette »), la croix reste au centre (là où va la balle)
+    const bl = balancerLunette(s, r);
+    ombreLunette(cx, cy, r, bl);
+    ctx.save();
     ctx.beginPath();
-    ctx.rect(0, 0, L, H);
-    ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
-    ctx.fill();
-    // le vignettage : le bord du verre s'assombrit
-    const g = ctx.createRadialGradient(cx, cy, r * 0.7, cx, cy, r);
-    g.addColorStop(0, "rgba(0,0,0,0)");
-    g.addColorStop(1, "rgba(0,0,0,.75)");
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fill();
-    // la croix : épaisse sur les bords, très fine au centre
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.moveTo(cx - r, cy); ctx.lineTo(cx - r * 0.45, cy); ctx.moveTo(cx + r * 0.45, cy); ctx.lineTo(cx + r, cy);
-    ctx.moveTo(cx, cy + r); ctx.lineTo(cx, cy + r * 0.45);
-    ctx.stroke();
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(cx - r * 0.45, cy); ctx.lineTo(cx + r * 0.45, cy); ctx.moveTo(cx, cy - r); ctx.lineTo(cx, cy + r * 0.45);
-    ctx.stroke();
-    // les mil-dots : 1 milliradian = (1 ÷ 1000) rad ; à l'écran, ça dépend du zoom
+    ctx.arc(cx + bl.x, cy + bl.y, r, 0, Math.PI * 2);
+    ctx.clip();
+    // (livre n° 13) LE RÉTICULE dépend de la lunette : ×4 et thermique : un CHEVRON (comme une ACOG) et les traits de
+    // distance en dessous ; ×8 : une croix très fine ; les autres : la croix épaisse sur les bords et fine au centre.
+    const vz = (st.pieces && st.pieces.viseur) || "lunette", style = vz === "lunette4" || vz === "thermique" ? "chevron" : vz === "lunette8" ? "fine" : "duplex";
+    ecran.lunette = style + " (" + vz + ")";
     const champ = (Tanks.CONFIG.camera.champ / st.zoom) * (Math.PI / 180), mil = (0.001 / champ) * H;
+    if (style === "chevron") {
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - r, cy); ctx.lineTo(cx - r * 0.3, cy); ctx.moveTo(cx + r * 0.3, cy); ctx.lineTo(cx + r, cy);
+      ctx.moveTo(cx, cy + 20); ctx.lineTo(cx, cy + r);
+      // les traits de distance (BDC) : plus courts quand c'est plus loin (la cible paraît plus petite)
+      for (let k = 1; k <= 4; k++) { const y = cy + 20 + k * Math.max(mil * 2.2, 11), w = 24 - k * 4; ctx.moveTo(cx - w, y); ctx.lineTo(cx + w, y); }
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(255,60,30,.95)";
+      ctx.shadowColor = "rgba(255,60,30,.8)";
+      ctx.shadowBlur = 5;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(cx - 9, cy + 12); ctx.lineTo(cx, cy); ctx.lineTo(cx + 9, cy + 12);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#000";
+      ctx.font = "10px system-ui, sans-serif";
+      ctx.textAlign = "left";
+      for (let k = 1; k <= 4; k++) ctx.fillText(String(k + 3), cx + 26 - k * 4, cy + 24 + k * Math.max(mil * 2.2, 11));
+    } else {
+      // la croix : épaisse sur les bords, très fine au centre (×8 : fine partout)
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = style === "fine" ? 1.5 : 4;
+      ctx.beginPath();
+      ctx.moveTo(cx - r, cy); ctx.lineTo(cx - r * 0.45, cy); ctx.moveTo(cx + r * 0.45, cy); ctx.lineTo(cx + r, cy);
+      ctx.moveTo(cx, cy + r); ctx.lineTo(cx, cy + r * 0.45);
+      ctx.stroke();
+      ctx.lineWidth = style === "fine" ? 0.8 : 1;
+      ctx.beginPath();
+      ctx.moveTo(cx - r * 0.45, cy); ctx.lineTo(cx + r * 0.45, cy); ctx.moveTo(cx, cy - r); ctx.lineTo(cx, cy + r * 0.45);
+      ctx.stroke();
+    }
+    ctx.restore();
+    // les mil-dots : 1 milliradian = (1 ÷ 1000) rad ; à l'écran, ça dépend du zoom
     ctx.fillStyle = "#000";
     const pas = Math.max(1, Math.ceil(14 / mil)); // (on espace les points s'ils sont trop serrés : 1 point = « pas » mrad)
-    for (let k = 1; k <= 10; k++) {
+    for (let k = 1; k <= 10 && style !== "chevron"; k++) {
       const p = k * mil * pas;
       if (p > r * 0.44) break;
       for (const [dx, dy] of [[p, 0], [-p, 0], [0, p], [0, -p]]) {

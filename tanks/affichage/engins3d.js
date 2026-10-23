@@ -679,6 +679,7 @@ Tanks.Engins3D = (function () {
     const arme = porterArme(r, modele, famille, corde); // (la « pose » des bras pour cette arme)
     r.porteArme.visible = !s.nage && !s.mort;
     if (s.joueur) Tanks.Armes3D.noterArmeDuJoueur(r.objetArme, modele);
+    if (s.joueur && (s.mort || corde || s.nage)) Tanks.Objets3D.troisieme(r, s, r.porteArme, _mD, _mG); // (livre n° 16 : à terre, à la corde, dans l'eau : rien en main)
     r.flamme.visible = s.tir > 0 && famille !== "roquettes" && !s.mort && !corde;
     const c = r.corps;
     if (s.mort) {
@@ -834,6 +835,9 @@ Tanks.Engins3D = (function () {
     A.updateMatrix();
     // les mains : la droite sur la poignée, la gauche sur le garde-main… sauf pendant un geste
     const mainD = _mD.copy(r.mainD).applyMatrix4(A.matrix), mainG = _mG.copy(r.mainG).applyMatrix4(A.matrix);
+    // ✍️ (livre n° 14, 15, 16) TOI, avec une grenade, un explosif, un gadget ou une plaque en main : le fusil passe dans ton
+    // dos (à la bretelle) et l'accessoiriste (affichage/objets3d.js) met l'objet dans tes mains
+    const tenu = s.joueur ? Tanks.Objets3D.troisieme(r, s, A, mainD, mainG) : null;
     if (ch > 0.01 && rp >= 0) { // RECHARGER : la main gauche fait le trajet du chargeur
       const mag = _mC.copy(r.chargeurArme || _mC.set(r.mainD.x + 0.1, r.mainD.y - 0.06, 0)).applyMatrix4(A.matrix);
       const dessous = _mT.copy(mag).add(_bas18);
@@ -844,6 +848,7 @@ Tanks.Engins3D = (function () {
       chemin([mainD, LANCER_POINTS[0], LANCER_POINTS[1], LANCER_POINTS[2], mainD], LANCER_TEMPS, lp, _mP);
       mainD.lerp(_mP, jet);
     }
+    if (tenu) Tanks.Objets3D.troisiemeMains(r, s, mainD, mainG);
     r.pose = null;
     poserBras(r.epaules[0], r.coudes[0], mainD.toArray(_tabD), POLES[0]);
     poserBras(r.epaules[1], r.coudes[1], mainG.toArray(_tabG), POLES[1]);

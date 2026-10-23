@@ -19,6 +19,8 @@ Tanks.Entrees = (function () {
     arme1: ["Digit1", "Numpad1"], arme2: ["Digit2", "Numpad2"], arme3: ["Digit3", "Numpad3"], // étape 61 : les armes à pied
     arme4: ["Digit4", "Numpad4"], // étape 75 : les grenades
     arme5: ["Digit5", "Numpad5"], // livre de demandes n° 6 : l'arme bonus de l'Ingénieur
+    plaque: ["Digit6", "Numpad6"], // livre de demandes n° 14 : glisser une plaque dans le gilet (le Médecin)
+    epaule: ["KeyY"], // livre de demandes n° 13 : la caméra passe par-dessus l'autre épaule (Y est à la même place sur un clavier français)
     valider: ["Enter", "NumpadEnter"],
     recommencer: ["KeyR"],
     recharger: ["KeyR"], // étape 77 : à pied, pendant la bataille, R recharge ton arme

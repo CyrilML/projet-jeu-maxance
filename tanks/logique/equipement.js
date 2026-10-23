@@ -162,6 +162,8 @@ Tanks.Equipement = (function () {
     s.gadget = { id: c.gadget, fiche: C.gadgets[c.gadget], attente: 0, munitions: C.gadgets[c.gadget].munitions || 0, regain: 0, part: 0 };
     s.explosif = c.explosif;
     Tanks.Explosifs.equiper(s); // (demande 98 : tes mines, ton C4, ta claymore ou tes fumigènes)
+    s.grenadeEnMain = false; // (livre n° 14 : le Médecin passe de ses fumigènes à ses grenades avec la touche 4)
+    Tanks.Plaques.equiper(s); // (livre n° 14 : le gilet à plaques du Médecin)
     s.arme = "principale";
     s.visee = 0;
     s.dispersionRecul = 0;

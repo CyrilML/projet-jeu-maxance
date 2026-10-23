@@ -65,6 +65,7 @@ window.Tanks = window.Tanks || {};
     avant = maintenant;
     if (E.consommer("qualite")) Tanks.Qualite.basculer(); // (étape 72 : touche G)
     if (E.consommer("pause")) enPause = !enPause;
+    if (E.consommer("epaule")) Tanks.Scene.changerEpaule(); // (livre n° 13) Y : l'autre épaule
     if (E.consommer("camera")) Tanks.Scene.changerCamera(!!(Tanks.monde && Tanks.monde.toi && Tanks.monde.toi.mode === "pied"));
     if (E.consommer("son")) Tanks.Sons.basculer();
     if (E.consommer("musique")) Tanks.Musique.basculer(); // (étape 82) M : la musique
@@ -109,6 +110,7 @@ window.Tanks = window.Tanks || {};
           monter: E.consommer("monter"), arme1: E.consommer("arme1"), arme2: E.consommer("arme2"), arme3: E.consommer("arme3"), arme4: E.consommer("arme4"), arme5: E.consommer("arme5"), // (étapes 61 et 75 ; livre n° 6 : 5 l'arme bonus)
           decharger: E.consommer("decharger"), // (étape 71 : F, dans le camion)
           accroupir: E.consommer("accroupir"), // (demande 92 : X, à pied)
+          plaque: E.consommer("plaque"), // (livre n° 14 : 6, glisser une plaque)
           viser: E.estEnfoncee("viser"), souffle: E.estEnfoncee("souffle"), recharger: E.consommer("recharger"), // (étape 77)
         });
         ordre = null;

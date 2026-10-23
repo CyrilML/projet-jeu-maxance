@@ -46,9 +46,13 @@ Tanks.Soldat = (function () {
   function blesser(s, degats, tireur, ev, par, origine) {
     if (s.mort) return;
     degats *= Tanks.Campagne.facteurDegats(tireur, s); // (demande 90 : la difficulté de la campagne ; × 1 en bataille libre)
+    const avant = degats;
+    if (s.gilet) degats = Tanks.Plaques.absorber(s, degats, par, ev); // (livre n° 14 : les plaques du gilet arrêtent le coup d'abord)
     s.vie = Math.max(0, s.vie - degats);
     s.touche = 0;
-    ev.push(["soldat-touche", { cible: s, tireur, vie: s.vie, par: par || "balle" }]);
+    // (livre n° 13) « de » : d'où vient le coup (pour la flèche rouge des dégâts) ; « plaque » : combien le gilet a arrêté
+    const o = origine || tireur;
+    ev.push(["soldat-touche", { cible: s, tireur, vie: s.vie, par: par || "balle", de: o && o.x !== undefined ? { x: o.x, z: o.z } : null, plaque: avant - degats > 0 ? Math.round((avant - degats) * 10) / 10 : 0 }]);
     if (s.vie === 0) {
       s.mort = true;
       ev.push(["soldat-mort", { cible: s, tireur, par: par || "balle", x: s.x, y: s.y, z: s.z }]);
@@ -282,8 +286,14 @@ Tanks.Soldat = (function () {
     if (s.armes) {
       Tanks.Armes.avancer(s, intentions, dt, monde, ev);
       Tanks.Gadgets.avancer(s, intentions, dt, monde, ev);
+      Tanks.Plaques.avancer(s, intentions, dt, ev); // (livre n° 14 : touche 6, glisser une plaque dans le gilet)
+      if (s.gilet && s.gilet.pose > 0) return; // (en train de glisser une plaque : les mains sont prises)
       // (demande 98) ton explosif n'est pas la grenade ? c'est le sapeur qui s'en occupe (logique/explosifs.js)
-      if (s.poche) return void Tanks.Explosifs.avancer(s, intentions, dt, monde, ev);
+      // (livre n° 14) le Médecin qui a pris ses GRENADES (touche 4 encore une fois) : le sapeur compte ses fumigènes, et on lance la grenade
+      if (s.poche) {
+        Tanks.Explosifs.avancer(s, intentions, dt, monde, ev);
+        if (!s.grenadeEnMain) return;
+      }
       if (s.arme !== "grenades") return;
     }
     // (étape 75) une GRENADE : la tienne (arme 4), ou celle d'un soldat de l'ordinateur (« intentions.grenade » : où la lancer)
