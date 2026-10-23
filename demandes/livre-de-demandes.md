@@ -22,7 +22,7 @@ On commence par les fusils à pompe (demande 103), puis on suit la liste dans l'
 17. ⬜ Se faire soigner par ses compagnons.
 18. ⬜ Un compagnon à terre lève la main et demande des soins.
 19. ⬜ Demander une réanimation à ses compagnons.
-20. 🛠️ Des fusils à pompe normaux et incendiaires. (demande 103, faite en premier)
+20. ✅ Des fusils à pompe normaux et incendiaires. (demande 103, version 47)
 21. ⬜ Améliorer les robots (les soldats de l'ordinateur).
 22. ⬜ Développer les Battle Coins.
 23. ❓ Faire tester le jeu par des beta testers. (il faut de vrais joueurs : avec Cyril)

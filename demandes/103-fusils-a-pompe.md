@@ -1,6 +1,6 @@
 # Demande n° 103 : les fusils à pompe, normal et incendiaire
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée (tanks version 47).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -14,5 +14,5 @@ réalistes. »
 - Un vrai modèle 3D (canon, tube magasin, pompe qui glisse), son propre son.
 
 ## ✅ Critères de réussite
-- [ ] Les deux fusils dans l'armurerie, en 3D.
-- [ ] En bataille : plusieurs plombs par tir, la pompe, et la brûlure des cartouches incendiaires.
+- [x] Les deux fusils dans l'armurerie, en 3D.
+- [x] En bataille : plusieurs plombs par tir, la pompe, et la brûlure des cartouches incendiaires.
