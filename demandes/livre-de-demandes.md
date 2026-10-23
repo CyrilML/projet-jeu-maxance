@@ -1,0 +1,33 @@
+# 📖 Le livre de demandes de Maxance (23 octobre 2026)
+
+✍️ « Je vais te les donner un par un, et tu vas devoir les faire un par un… tu fais tout dans l'ordre que je t'ai donné. »
+On commence par les fusils à pompe (demande 103), puis on suit la liste dans l'ordre. ✅ = fait.
+
+1. ⬜ Retirer toutes les infos inutiles.
+2. ❓ Faire une autre aussi. (à préciser : une autre quoi ?)
+3. ⬜ Faire des voix plus réalistes et plus humaines.
+4. ⬜ Refaire le menu dans le mode détail.
+5. ✅ Lancer les déblocages. (étapes 97, 98, 102)
+6. ⬜ L'ingénieur a droit à une arme bonus en plus de son lance-roquettes.
+7. ⬜ Un menu d'achats (ex. : un pack de skins de véhicules, avec des avancements de jeu).
+8. ⬜ Pouvoir entrer dans les maisons.
+9. ⬜ Une map en ville très réaliste.
+10. ⬜ Des discussions plus réalistes.
+11. ⬜ Une map abandonnée en vitesse : affiches, publicités, véhicules, objets du quotidien (téléphone, table, sac à dos).
+12. ⬜ Des points en hauteur pour les snipers.
+13. ⬜ Améliorer la vue et le viseur.
+14. ⬜ Le médecin a les grenades et les plaquettes.
+15. ⬜ Voir le défibrillateur.
+16. ⬜ Voir les grenades et le C4 dans les mains.
+17. ⬜ Se faire soigner par ses compagnons.
+18. ⬜ Un compagnon à terre lève la main et demande des soins.
+19. ⬜ Demander une réanimation à ses compagnons.
+20. 🛠️ Des fusils à pompe normaux et incendiaires. (demande 103, faite en premier)
+21. ⬜ Améliorer les robots (les soldats de l'ordinateur).
+22. ⬜ Développer les Battle Coins.
+23. ❓ Faire tester le jeu par des beta testers. (il faut de vrais joueurs : avec Cyril)
+24. ❓ Faire des éditions, genre d'autres jeux de combat. (à préciser)
+25. ⬜ Dans les souterrains, un QG à détruire pour chaque camp.
+26. ⬜ Un réalisme absurde.
+27. ⬜ Bannir toute publicité.
+28. ⬜ Faire une boutique. (sans vrai argent : il faut l'accord et l'aide de Cyril)
