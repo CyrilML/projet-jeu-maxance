@@ -1072,6 +1072,23 @@ Tanks.CONFIG = {
     barres: { degats: 4.2, portee: 520, precision: 0.014, recul: 0.05, cadence: 1300, chargeur: 64, rechargement: 6, visee: 0.8, mobilite: [0.8, 1.2], bruit: 2, visibilite: 80 },
     vue: { vitesse: 0.35, reprise: 4, zoomMin: 0.55, zoomMax: 1.8, balancement: 0.55, depart: 0.3, hauteur: 0.14 },
   },
+  // ✍️ (livre de demandes, n° 1) « Retirer toutes les infos inutiles. » L'ÉCRAN DE LA BATAILLE, épuré façon Battlefield :
+  // on garde l'essentiel (vie, munitions, armes, carte, score, viseur, objectif) ; le reste reste SOUS LE CAPOT.
+  //   aide : la ligne des touches n'apparaît que les « debut » premières secondes d'une bataille (puis s'efface en
+  //     « fondu » s), ou quand tu appuies sur H (H encore : elle se cache) ;
+  //   noms : au-dessus des alliés, le nom seulement à moins de « allies » m (ou s'il suit un de tes ordres : ton
+  //     escouade) ; plus loin, juste un petit ▼. Les ennemis : le nom à moins de « ennemis » m, sinon ◆ et la distance.
+  //     Les motos, quads, camions : le nom à moins de « engins » m ; les hélicos de transport : à moins de « helicos » m ;
+  //     « taille » : px, la taille des lettres ;
+  //   invite : « E : monter » en petit (taille px) ; qualiteAEcran : écrire « qualité 2/3 · 58 i/s » sous la carte
+  //     (false : seulement sous le capot) ; vitesseAPied : la vitesse en km/h quand tu marches (false : cachée).
+  interface: {
+    aide: { debut: 10, fondu: 1.5 },
+    noms: { allies: 60, ennemis: 150, engins: 60, helicos: 250, taille: 11 },
+    invite: { taille: 15 },
+    qualiteAEcran: false,
+    vitesseAPied: false,
+  },
   // ✍️ LES MARQUES (les jumelles et le capteur de l'éclaireur) : un ennemi marqué a un ◆ jaune au-dessus de lui et sur
   // la carte pendant « duree » s. cone : rad autour du viseur ; portee : m.
   marques: { duree: 20, cone: 0.07, portee: 500 },
@@ -1778,11 +1795,35 @@ Tanks.CONFIG.radio = {
     // (étape 95) Les MEILLEURES voix d'abord : les voix « naturelles » (Microsoft Edge : « Online (Natural) »), puis
     // les voix « neuronales », « Premium », « Améliorée », celles de Google, puis les autres. Un mot trouvé dans le
     // nom de la voix donne des points ; on garde les « garder » meilleures voix pour les soldats.
-    qualite: [["natural", 100], ["naturel", 100], ["neural", 90], ["online", 60], ["premium", 70], ["enhanced", 60], ["améliorée", 60], ["google", 40], ["siri", 50]],
+    qualite: [["natural", 100], ["naturel", 100], ["neural", 90], ["wavenet", 90], ["online", 60], ["premium", 70], ["enhanced", 60], ["améliorée", 60], ["google", 40], ["siri", 50],
+      // ✍️ (livre de demandes n° 3 : « des voix plus réalistes et plus humaines ») des POINTS EN MOINS pour les voix très
+      // robotiques : eSpeak (la voix de Linux), les voix « compactes », et les voix rigolotes d'Apple (« Eloquence »)
+      ["espeak", -120], ["compact", -40], ["eloquence", -80], ["grandma (", -80], ["grandpa (", -80], ["eddy (", -60], ["flo (", -60], ["reed (", -60], ["rocko (", -60], ["sandy (", -60], ["shelley (", -60]],
+    langueBonus: 15, // (livre n° 3) points en plus pour le français de France (avant le français du Canada, de Belgique…)
     garder: 6,
     auMoins: 3, // (étape 96) au moins 3 voix différentes si l'ordinateur en a (même un peu moins belles)
     hasard: { hauteur: 0.04, vitesse: 0.06, urgent: 1.08 }, // (étape 96) ± 4 % de hauteur, ± 6 % de vitesse à chaque phrase ; × 1,08 si c'est urgent
     couleurs: { bleus: "#5aa8ff", rouges: "#ff5a4a", radio: "#ffd27a" },
+    // ✍️ (livre de demandes n° 3) DES VOIX PLUS HUMAINES. La voix de l'ordinateur ne sait pas jouer la comédie ; alors on
+    // lui écrit les phrases comme on PARLE (pas comme on écrit), et on change son rythme selon l'émotion :
+    //   negation : la part des phrases où l'on « mange » le « ne » (« je ne bouge plus » → « je bouge plus ») ;
+    //   hesitation : la part des phrases (bavardage / réponse) qui commencent par un petit mot (« euh… », « bon, ») ;
+    //   debuts : ces petits mots ; morceaux : true = on coupe la phrase à chaque « . ! ? » et la voix respire entre deux ;
+    //   emotions : × la vitesse et × la hauteur selon ce qui se passe (urgent = plus vite et un peu plus haut ; bavardage =
+    //   calme, plus lent ; ennemi = plus grave et posé) ; bornes : jamais plus lent / plus vite, plus grave / plus aigu que ça
+    //   (au-delà, une voix devient un dessin animé).
+    humain: {
+      negation: 0.75,
+      hesitation: { bavardage: 0.22, reponse: 0.08, urgent: 0 },
+      debuts: { bavardage: ["Euh… ", "Bon, ", "Alors, ", "Ouais, "], reponse: ["Ok, ", "Reçu, ", "Ouais, "] },
+      morceaux: true,
+      emotions: { urgent: { vitesse: 1.12, hauteur: 1.04 }, reponse: { vitesse: 1.03, hauteur: 1 }, bavardage: { vitesse: 0.95, hauteur: 0.99 }, ennemi: { vitesse: 0.94, hauteur: 0.97 } },
+      bornes: { vitesse: [0.85, 1.3], hauteur: [0.88, 1.12] },
+    },
+    // (livre n° 3) LE TALKIE-WALKIE autour de la voix (affichage/sons.js) : fond = le volume du souffle pendant qu'il
+    // parle ; crepitements = petits « crr » par seconde dans ce souffle ; bipFin = le petit « bip » quand on relâche le
+    // bouton (comme les vraies radios militaires).
+    effets: { fond: 0.022, crepitements: 2.5, bipFin: true },
   },
   // ------------------------------------------------------------------ les phrases
   // Les réponses à TES ordres.

@@ -57,6 +57,7 @@ Tanks.SousLeCapot = (function () {
   const MESSAGES = {
     // demande 94 : la radio qui parle
     "radio-phrase": (d) => (d.interceptee ? "📡 (interceptée) " : "📻 ") + d.qui + (d.role ? " (" + d.role + ")" : "") + " : « " + d.texte + " » · " + ({ reponse: "réponse à ton ordre", urgent: "urgent", bavardage: "bavardage" }[d.priorite] || d.priorite) + " · " + d.genre + (d.distance ? " · à " + d.distance + " m de toi" : ""),
+    "aide-touches": (d) => (d.visible ? "⌨️ La ligne des touches est affichée (H pour la cacher)" : "⌨️ La ligne des touches est cachée (H pour la revoir)") + " · livre de demandes n° 1 : l'écran épuré",
     "voix-changees": (d) => "🔁 Les voix tournent d'un cran (J) : " + d.nombre + " voix françaises, la 1re est maintenant " + d.voix,
     "radio-voix": (d) => (d.actives ? "🗣️ Voix de la radio allumées (N)" : "🔇 Voix de la radio coupées (N) : les sous-titres restent") + " · " + (d.synthese ? d.voixFr + " voix française(s) sur " + d.toutes : "pas de synthèse vocale dans ce navigateur : sous-titres seulement"),
     "radio-question": (d) => "❔ Ta question (" + { ennemis: "où sont les ennemis", position: "où es-tu", merci: "merci" }[d.question] + ") : " + d.qui + " répond",
@@ -277,6 +278,8 @@ Tanks.SousLeCapot = (function () {
     l.push(["La vitesse du jeu (étape 72)"],
       ["qualité", Q.niveau + " / " + (C.qualite.niveaux.length - 1) + " « " + R.nom + " » · " + (Q.auto ? "automatique (G : choisir)" : "choisie à la main ✋ (G : changer)") + " · dernier changement : " + (M.derniere || "—")],
       ["images", Math.round(M.ips) + " i/s = " + ms(M.ms) + " par image (moyenne sur " + C.qualite.intervalle + " s) · descend si > " + C.qualite.lent + " ms, monte si < " + virgule(C.qualite.rapide, 1) + " ms deux fois de suite (pas de retour avant " + C.qualite.punition + " s à un niveau qui ramait)"],
+      // (livre de demandes n° 1) L'ÉCRAN ÉPURÉ : ce que le tableau de bord montre ou cache (réglages : config « interface »)
+      ["écran épuré (livre n° 1)", (() => { const T = Tanks.Tableau.ecran, I = C.interface; return "touches : " + T.aide + " · noms écrits : " + T.nomsMontres + ", cachés (trop loin) : " + T.nomsCaches + " · alliés nommés à < " + I.noms.allies + " m (ou s'ils suivent ton ordre), ennemis à < " + I.noms.ennemis + " m · qualité à l'écran : " + (I.qualiteAEcran ? "oui" : "non (ici seulement)"); })()],
       ["une image, c'est", "règles " + ms(M.logique) + " (" + virgule(M.pasParImage, 1) + " pas) + dessin " + ms(M.dessin) + " + tableau de bord " + ms(M.tableau) + " + ce panneau " + ms(M.capot) + " = calcul " + ms(M.calcul)],
       // (demande 96) LA PERFORMANCE : les 4 parts d'une image, les à-coups, et ce que la carte graphique a à faire
       ["performance (96)", (() => {
@@ -514,6 +517,7 @@ Tanks.SousLeCapot = (function () {
     const V = Tanks.RadioVoix.etat(), O = Tanks.Radio.etat, B = C.radio.bavardage, P = { reponse: "🔴 réponse", urgent: "🟠 urgent", bavardage: "⚪ bavardage" };
     l.push(["La radio qui parle (demande 94)"]);
     l.push(["les voix (N)", (V.actives ? "🗣️ allumées" : "🔇 coupées") + " · " + (V.synthese ? V.voixFr.length + " voix française(s) sur " + V.toutes + " voix dans ton ordinateur" + (V.voixFr.length ? " : " + V.voixFr.slice(0, 3).join(", ") + (V.voixFr.length > 3 ? "…" : "") : " → sous-titres seulement") : "pas de synthèse vocale dans ce navigateur → sous-titres seulement") + (V.actives && !V.possible && V.voixFr.length ? " (son coupé : B)" : "") + " · la plus belle : " + V.meilleure + " (étape 95)"]);
+    if (V.humain) l.push(["voix humaines (livre n° 3)", "dernière phrase dite : « " + (V.humain.dernier || "—") + " » · " + V.humain.morceaux + " morceau(x) · émotion : " + V.humain.emotion + " · vitesse ×" + virgule(V.humain.vitesse, 2) + ", hauteur ×" + virgule(V.humain.hauteur, 2) + " · « euh » ajoutés : " + V.humain.hesitations + " · « ne » enlevés : " + V.humain.negations]);
     l.push(["en ce moment", V.enCours ? V.enCours.qui + " : « " + V.enCours.texte + " » (" + (V.enCours.etat === "clic" ? "clic-kchh…" : V.enCours.voix ? "à voix haute" : "sous-titre seulement") + ")" : "silence"]);
     l.push(["file d'attente", V.file.length + " / " + V.max + (V.file.length ? " · " + V.file.map((x) => P[x.priorite] + " " + x.qui + " (" + virgule(x.attend, 1) + " s)").join(" · ") : "") + " · jetées si trop vieilles : réponse " + C.radio.voix.perime.reponse + " s, urgent " + C.radio.voix.perime.urgent + " s, bavardage " + C.radio.voix.perime.bavardage + " s"]);
     l.push(["compteurs", V.bilan.recues + " reçues · " + V.bilan.dites + " dites (" + V.bilan.lues + " à voix haute) · " + V.bilan.jetees + " jetées (file pleine) · " + V.bilan.perimees + " trop vieilles · " + V.bilan.coupees + " coupées par une réponse" + (V.bilan.erreurs ? " · " + V.bilan.erreurs + " erreurs de voix" : "")]);

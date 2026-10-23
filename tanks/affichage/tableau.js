@@ -30,8 +30,15 @@ window.Tanks = window.Tanks || {};
 // Étape 80 : dans le SOUTERRAIN, en haut : les soldats debout et les RENFORTS de chaque camp (la règle de la victoire) ;
 // la petite carte devient le PLAN DE LA STATION (les quais, les voies, la mezzanine, les escaliers, les rames, les feux).
 Tanks.Tableau = (function () {
-  const C = Tanks.CONFIG, T = Tanks.Terrain, E = C.equipes;
+  const C = Tanks.CONFIG, T = Tanks.Terrain, E = C.equipes, IU = C.interface;
   let ctx, L, H, carte = null, message = null, reponse = null, ordreEnCours = null;
+  // ✍️ (livre de demandes, n° 1) l'écran épuré : la ligne des touches (H), et ce qu'on a caché à cette image (pour « sous le capot »)
+  let aideForcee = false;
+  const ecran = { aide: "—", nomsMontres: 0, nomsCaches: 0 };
+  function basculerAide() {
+    aideForcee = !aideForcee;
+    Tanks.Evenements.emettre("aide-touches", { visible: aideForcee });
+  }
 
   function initialiser(toile) {
     ctx = toile.getContext("2d");
@@ -251,11 +258,11 @@ Tanks.Tableau = (function () {
           const x = 24 + i * 104, choisi = s.arme === a;
           ctx.fillStyle = choisi ? "rgba(255,207,90,.3)" : "rgba(255,255,255,.08)";
           ctx.fillRect(x, H - 58, 98, 24);
-          texte(i + 1 + " " + nom, x + 49, H - 41, 11, choisi ? "#ffe27a" : "#ccc", "center");
+          texteAjuste(i + 1 + " " + nom, x + 49, H - 41, 11, choisi ? "#ffe27a" : "#ccc", 92); // (livre n° 1 : le nom tient dans sa case)
         });
         if (s.arme === "pistolet" || s.arme === "principale") {
           const A = s.armes[s.arme], st = A.stats;
-          barre(24, H - 28, 200, s.rechargement > 0 ? 1 - s.rechargement / st.rechargement : A.chargeur / st.chargeur, A.chargeur > 0 && !s.rechargement, s.rechargement > 0 ? "🔄 recharge…" : A.chargeur + " / " + st.chargeur + "  ·  " + (A.reserve === Infinity ? "∞" : A.reserve) + (A.chargeur === 0 ? "  R : recharger" : ""));
+          barre(24, H - 28, 200, s.rechargement > 0 ? 1 - s.rechargement / st.rechargement : A.chargeur / st.chargeur, A.chargeur > 0 && !s.rechargement, s.rechargement > 0 ? "🔄 recharge…" : A.chargeur === 0 ? "R : recharger" : ""); // (livre n° 1 : les balles sont déjà écrites en gros, en bas à droite)
           // les munitions en gros, en bas à droite, et le point du laser
           panneau(L - 300, H - 70, 140, 58);
           texte(A.chargeur + "", L - 200, H - 26, 34, A.chargeur === 0 ? "#ff7a6a" : "#fff", "right");
@@ -299,7 +306,7 @@ Tanks.Tableau = (function () {
         };
         voir(monde.joueur, "ton tank", C.char.rayon);
         for (const x of monde.engins) if (x.equipe !== "rouges") voir(x, x.fiche.icone + " " + x.nom, x.sorte === "bateau" ? 7 : x.sorte === "sousmarin" ? 11 : x.sorte === "camion" ? 3.5 : x.genre === "helico" ? x.fiche.rayon : 2);
-        if (proche) texte("E : monter dans " + proche, L / 2, H - 120, 22, "#ffe27a", "center");
+        if (proche) invite("E", "monter dans " + proche, L / 2, H - 150); // (livre n° 1 : une petite pastille, plus un gros texte jaune)
       }
       return;
     }
@@ -516,9 +523,10 @@ Tanks.Tableau = (function () {
   }
   function dessinerTout(monde) {
     ctx.clearRect(0, 0, L, H);
+    ecran.nomsMontres = ecran.nomsCaches = 0;
     // (étape 72) le petit mot du régulateur de qualité, sous la carte : « ⚙️ qualité 2/3 · 58 i/s »
     const Q = Tanks.Qualite;
-    if (Q) texte("⚙️ qualité " + Q.niveau + "/" + (C.qualite.niveaux.length - 1) + (Q.auto ? "" : " ✋") + " · " + Math.round(Q.mesures.ips) + " i/s", L - 12, 192, 12, "rgba(255,255,255,.75)", "right");
+    if (Q && IU.qualiteAEcran) texte("⚙️ qualité " + Q.niveau + "/" + (C.qualite.niveaux.length - 1) + (Q.auto ? "" : " ✋") + " · " + Math.round(Q.mesures.ips) + " i/s", L - 12, 192, 12, "rgba(255,255,255,.75)", "right");
     const j = monde.joueur, f = j.fiche;
     if (monde.phase === "garage" && Tanks.Menu && Tanks.Menu.ouvert) return; // (étape 77 : le menu montre déjà tout)
     if (monde.phase === "briefing" || (monde.phase === "garage" && Tanks.EcranCampagne && Tanks.EcranCampagne.actif)) return; // (étape 88 : les écrans de la campagne montrent déjà tout)
@@ -559,9 +567,13 @@ Tanks.Tableau = (function () {
         if (d < 200) texte("✖", e.x, e.y, 14, "#999", "center");
         continue;
       }
-      texte((c.equipe === "bleus" ? "▼ " : "◆ ") + (c === j ? "ton tank" : c.nom) + (d > 120 ? " · " + Math.round(d) + " m" : ""), e.x, e.y - 8, 13, couleur, "center");
+      // ✍️ (livre n° 1) un allié : son nom seulement s'il est près, ou s'il suit un de tes ordres (ton escouade) ; sinon un petit ▼.
+      // Un ennemi : son nom de près, sinon ◆ et la distance.
       const ordre = c.equipe === "bleus" && c !== j ? Tanks.Ordres.enMots(c) : ""; // (étape 65 : son ordre)
-      if (ordre) texte("📢 " + ordre, e.x, e.y - 24, 11, "#ffe27a", "center");
+      const nomVisible = c === j || (c.equipe === "bleus" ? d < IU.noms.allies || !!ordre : d < IU.noms.ennemis);
+      nomVisible ? ecran.nomsMontres++ : ecran.nomsCaches++;
+      texte((c.equipe === "bleus" ? "▼" : "◆") + (nomVisible ? " " + (c === j ? "ton tank" : c.nom) : "") + (c.equipe === "rouges" && d > 120 ? " · " + Math.round(d) + " m" : ""), e.x, e.y - 8, IU.noms.taille, couleur, "center");
+      if (ordre && nomVisible) texte("📢 " + ordre, e.x, e.y - 21, IU.noms.taille - 1, "#ffe27a", "center");
       ctx.fillStyle = "rgba(0,0,0,.45)"; // (sa vie : une petite barre)
       ctx.fillRect(e.x - 22, e.y - 2, 44, 4);
       ctx.fillStyle = couleur;
@@ -575,7 +587,7 @@ Tanks.Tableau = (function () {
         if (d < 200) texte("✖", e.x, e.y, 14, "#999", "center");
         continue;
       }
-      texte((b.genre === "sousmarin" ? "🐋 " : "⚓ ") + b.nom + (d > 120 ? " · " + Math.round(d) + " m" : ""), e.x, e.y - 8, 13, E.rouges.marque, "center");
+      texte((b.genre === "sousmarin" ? "🐋 " : "⚓ ") + (d < IU.noms.ennemis ? b.nom : "") + (d > 120 ? " · " + Math.round(d) + " m" : ""), e.x, e.y - 8, IU.noms.taille, E.rouges.marque, "center");
       for (let k = 0; k < b.fiche.vie; k++) {
         ctx.fillStyle = k < b.vie ? E.rouges.marque : "rgba(0,0,0,.45)";
         ctx.fillRect(e.x - 16 + k * 11, e.y - 2, 9, 4);
@@ -585,7 +597,8 @@ Tanks.Tableau = (function () {
     for (const v of monde.vehicules) {
       if (v.detruit) continue;
       const d = Math.hypot(v.x - ici.x, v.z - ici.z);
-      if (d > 250) continue;
+      if (d > IU.noms.engins) { ecran.nomsCaches++; continue; } // (livre n° 1 : seulement de près)
+      ecran.nomsMontres++;
       const e = Tanks.Scene.versEcran(v.x, v.y + (v.sorte === "camion" ? 4.2 : 2.5), v.z, L, H);
       if (!e || e.x < -40 || e.x > L + 40) continue;
       texte(v.fiche.icone + " " + v.nom + (v.sorte === "camion" && v.passagers ? " · 🪖 " + v.passagers : "") + (d > 120 ? " · " + Math.round(d) + " m" : ""), e.x, e.y, 11, v.equipe === "bleus" ? E.bleus.marque : E.rouges.marque, "center");
@@ -594,7 +607,8 @@ Tanks.Tableau = (function () {
     for (const h of monde.helicos || []) {
       if (h.detruit) continue;
       const d = Math.hypot(h.x - ici.x, h.z - ici.z);
-      if (d > 600) continue;
+      if (d > IU.noms.helicos) { ecran.nomsCaches++; continue; } // (livre n° 1)
+      ecran.nomsMontres++;
       const e = Tanks.Scene.versEcran(h.x, h.y + 6.5, h.z, L, H);
       if (!e || e.x < -40 || e.x > L + 40) continue;
       texte("🚁 " + h.nom + (h.passagers ? " · 🪖 " + h.passagers : "") + (h.cordesSorties ? " · 🪢 corde" : "") + (d > 120 ? " · " + Math.round(d) + " m" : ""), e.x, e.y, 12, h.equipe === "bleus" ? E.bleus.marque : E.rouges.marque, "center");
@@ -605,7 +619,7 @@ Tanks.Tableau = (function () {
       const e = Tanks.Scene.versEcran(a.x, a.y + 5, a.z, L, H), d = Math.hypot(a.x - ici.x, a.y - (ici.y || 0), a.z - ici.z);
       if (!e || e.x < -40 || e.x > L + 40 || d > 2500) continue;
       const couleur = a.equipe === "bleus" ? E.bleus.marque : E.rouges.marque;
-      texte("✈️ " + a.nom + " · " + Math.round(d) + " m", e.x, e.y - 8, 13, couleur, "center");
+      texte("✈️ " + (d < 600 ? a.nom + " · " : "") + Math.round(d) + " m", e.x, e.y - 8, IU.noms.taille, couleur, "center"); // (livre n° 1 : le nom seulement à moins de 600 m)
       for (let k = 0; k < a.fiche.vie; k++) {
         ctx.fillStyle = k < a.vie ? couleur : "rgba(0,0,0,.45)";
         ctx.fillRect(e.x - a.fiche.vie * 5.5 + k * 11, e.y - 2, 9, 4);
@@ -650,7 +664,7 @@ Tanks.Tableau = (function () {
     texte("contre", L / 2, 36, 13, "#ccc", "center");
     texte(rouges + " / " + E.ennemis + " 🔴", L / 2 + 34, 37, 20, E.rouges.marque);
     const sb = Tanks.Monde.soldatsVivants(monde, "bleus"), sr = Tanks.Monde.soldatsVivants(monde, "rouges");
-    texte("🪖 " + sb + " / " + C.soldats.parEquipe + "   soldats   " + sr + " / " + C.soldats.parEquipe + " 🪖", L / 2, 68, 14, "#e8e4d6", "center");
+    texte("🪖 " + sb + " / " + C.soldats.parEquipe + "   soldats   " + sr + " / " + C.soldats.parEquipe + " 🪖", L / 2, 66, 12, "rgba(232,228,214,.85)", "center");
     }
     // En bas à gauche : ta vie et la recharge
     if (dansLeTank) {
@@ -664,10 +678,12 @@ Tanks.Tableau = (function () {
     ctx.fillRect(24, H - 36, 200 * (1 - j.recharge / f.recharge), 10);
     texte(pret ? "🔥 PRÊT (Espace)" : "recharge…", 232, H - 26, 13, pret ? "#ffcf5a" : "#ccc");
     }
-    // En bas à droite : la vitesse
+    // En bas à droite : la vitesse (livre n° 1 : pas à pied, elle ne sert à rien)
+    if (t.mode !== "pied" || IU.vitesseAPied) {
     panneau(L - 150, H - 70, 138, 58);
     texte(Math.round(Math.abs(ici.vitesse || 0) * 3.6) + "", L - 60, H - 26, 34, "#fff", "right");
     texte("km/h", L - 22, H - 26, 13, "#ccc", "right");
+    }
     // La petite carte
     const tc = 160, x0 = L - tc - 12, y0 = 12, k = tc / C.monde.taille;
     ctx.globalAlpha = 0.9;
@@ -789,8 +805,60 @@ Tanks.Tableau = (function () {
         dca: "← → tourner les canons · ↑ ↓ les lever / baisser · Espace tirer · E descendre",
         sousmarin: "↑ ↓ ← → naviguer · D plonger · Q remonter · Espace torpille · E descendre (à la surface, près d'une rive)",
       }[t.mode];
-      texte(aide, L / 2, H - 14, 13, "rgba(255,255,255,.85)", "center");
+      dessinerAide(monde, aide);
     }
+  }
+  // ✍️ (livre n° 1) LA LIGNE DES TOUCHES : plus en bas de l'écran (elle cachait tes munitions), mais dans un petit cadre
+  // à gauche, une touche par ligne. Visible les « aide.debut » premières secondes de la bataille (puis elle s'efface
+  // doucement), ou quand tu appuies sur H. Le reste du temps : juste « H : touches », tout petit.
+  function dessinerAide(monde, aide) {
+    const A = IU.aide, tps = monde.chrono || 0;
+    const force = aideForcee ? 1 : Math.max(0, Math.min(1, (A.debut + A.fondu - tps) / A.fondu));
+    ecran.aide = aideForcee ? "montrée (H)" : force > 0 ? "début de bataille : encore " + Math.ceil(A.debut + A.fondu - tps) + " s" : "cachée (H pour la voir)";
+    if (!aide) return;
+    const x = 12, y0 = monde.campagne ? 310 : 200; // (en campagne, les objectifs sont au-dessus)
+    if (force <= 0) {
+      ctx.globalAlpha = 0.55;
+      invite("H", "touches", x + 44, y0 + 14, 12);
+      ctx.globalAlpha = 1;
+      return;
+    }
+    const lignes = aide.split(" · "), h = 30 + lignes.length * 18;
+    ctx.globalAlpha = force;
+    panneau(x, y0, 270, h);
+    ctx.fillStyle = "#ff7a1a";
+    ctx.fillRect(x, y0 + 8, 3, h - 16);
+    texte("TOUCHES", x + 14, y0 + 20, 11, "#ffb15a");
+    texte("H : cacher", x + 258, y0 + 20, 10, "rgba(255,255,255,.6)", "right");
+    lignes.forEach((l, i) => texteAjuste(l, x + 14, y0 + 40 + i * 18, 12, "rgba(255,255,255,.92)", 248, "left"));
+    ctx.globalAlpha = 1;
+  }
+  // ✍️ (livre n° 1) UNE INVITE : une petite pastille avec la touche (« E ») et ce qu'elle fait, centrée en (x, y).
+  function invite(touche, quoi, x, y, taille) {
+    const t = taille || IU.invite.taille;
+    ctx.font = "bold " + t + "px 'Trebuchet MS', sans-serif";
+    const lq = ctx.measureText(quoi).width, lt = Math.max(t * 1.3, ctx.measureText(touche).width + 10), l = lt + lq + 18, gauche = x - l / 2;
+    ctx.fillStyle = "rgba(10,12,14,.72)";
+    ctx.beginPath();
+    ctx.roundRect(gauche, y - t, l, t * 1.9, 5);
+    ctx.fill();
+    ctx.fillStyle = "#f2f4f7";
+    ctx.beginPath();
+    ctx.roundRect(gauche + 4, y - t + 4, lt, t * 1.9 - 8, 3);
+    ctx.fill();
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#111";
+    ctx.fillText(touche, gauche + 4 + lt / 2, y + t * 0.38);
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#f2f4f7";
+    ctx.fillText(quoi, gauche + lt + 12, y + t * 0.38);
+  }
+  // Un texte qui rétrécit pour tenir dans « largeur » px.
+  function texteAjuste(t, x, y, taille, couleur, largeur, align) {
+    let k = taille;
+    ctx.font = "bold " + k + "px 'Trebuchet MS', sans-serif";
+    while (k > 8 && ctx.measureText(t).width > largeur) ctx.font = "bold " + --k + "px 'Trebuchet MS', sans-serif";
+    texte(t, x, y, k, couleur, align || "center");
   }
 
   // ✍️ (étape 80) LE TABLEAU DE BORD DU SOUTERRAIN : les losanges des ennemis proches, les camps et leurs renforts en
@@ -952,5 +1020,5 @@ Tanks.Tableau = (function () {
     ctx.restore();
   }
 
-  return { initialiser, dessiner };
+  return { initialiser, dessiner, basculerAide, get ecran() { return Object.assign({ forcee: aideForcee }, ecran); } };
 })();
