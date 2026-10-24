@@ -351,21 +351,26 @@ Tanks.Tableau = (function () {
           if (d < dmin) (dmin = d), (proche = nom);
         };
         voir(monde.joueur, "ton tank", C.char.rayon);
-        for (const x of monde.engins) if (x.equipe !== "rouges") voir(x, x.fiche.icone + " " + x.nom, x.sorte === "bateau" ? 7 : x.sorte === "sousmarin" ? 11 : x.sorte === "camion" ? 3.5 : x.genre === "helico" ? x.fiche.rayon : 2);
-        if (proche) invite("E", "monter dans " + proche, L / 2, H - 150); // (livre n° 1 : une petite pastille, plus un gros texte jaune)
+        for (const x of monde.engins) if (x.equipe !== "rouges") voir(x, x.sorte === "dca" ? "!conduire le " + x.fiche.icone + " camion antiaérien" : x.fiche.icone + " " + x.nom, x.sorte === "bateau" ? 7 : x.sorte === "sousmarin" ? 11 : x.sorte === "camion" ? 3.5 : x.genre === "helico" ? x.fiche.rayon : 2);
+        if (proche) invite("E", proche[0] === "!" ? proche.slice(1) : "monter dans " + proche, L / 2, H - 150); // (livre n° 1 : une petite pastille, plus un gros texte jaune) (demande 113 : « E : conduire le camion antiaérien »)
       }
       return;
     }
+    // ✍️ (demande 113) LE CAMION ANTIAÉRIEN. Au canon (F) : le viseur dans le ciel, le carré rouge sur l'avion visé et le
+    // petit rond jaune « tire ici » (devant lui). Au volant : le carré rouge sur la cible de ton tireur, et ce qu'il fait.
     if (e.sorte === "dca") {
-      const R = C.engins.dca, a = e.angle + e.tourelle, h = e.hausse;
-      const v = Tanks.Scene.versEcran(e.x + Math.cos(a) * Math.cos(h) * 400, e.y + 2.2 + Math.sin(h) * 400, e.z + Math.sin(a) * Math.cos(h) * 400, L, H);
-      if (v) viseur(v, !!e.cible, 16);
+      const R = C.engins.dca, a = e.angle + e.tourelle, h = e.hausse, ti = e.tireur, auCanon = e.siege === "canon", b = Tanks.AntiAerien.bouche(e);
+      if (auCanon) {
+        const v = Tanks.Scene.versEcran(b.x + Math.cos(a) * Math.cos(h) * 400, b.y + Math.sin(h) * 400, b.z + Math.sin(a) * Math.cos(h) * 400, L, H);
+        if (v) viseur(v, !!e.cible, 16);
+      }
       if (e.cible) {
         const c = Tanks.Scene.versEcran(e.cible.x, e.cible.y, e.cible.z, L, H);
         if (c) {
           ctx.strokeStyle = "#ff4a3d";
           ctx.lineWidth = 2;
           ctx.strokeRect(c.x - 20, c.y - 20, 40, 40); // (son nom est déjà écrit au-dessus de lui)
+          if (!auCanon) texte("🎯 ton tireur vise · " + ti.distance + " m", c.x, c.y + 36, 13, "#ff7a6a", "center");
         }
         const p = e.avance && Tanks.Scene.versEcran(e.avance.x, e.avance.y, e.avance.z, L, H);
         if (p) {
@@ -373,14 +378,18 @@ Tanks.Tableau = (function () {
           ctx.beginPath();
           ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
           ctx.stroke();
-          texte("visée assistée : tire !", p.x, p.y + 22, 12, "#ffe27a", "center");
+          if (auCanon) texte("visée assistée : tire !", p.x, p.y + 22, 12, "#ffe27a", "center");
         }
       }
-      panneau(12, H - 98, 330, 86);
-      texte(R.icone + " " + R.nom, 24, H - 72, 17, "#ffe27a");
-      cases(24, H - 60, R.vie, e.vie);
-      texte("vie · hausse " + Math.round((h * 180) / Math.PI) + "°", 24 + R.vie * 30 + 4, H - 48, 13, "#ccc");
-      barre(24, H - 36, 200, 1 - e.recharge / R.cadence, e.recharge === 0, "Espace : tirer en l'air");
+      panneau(12, H - 118, 430, 106);
+      texte(R.icone + " " + R.nom + (auCanon ? " · 🎯 TU ES AU CANON" : " · au volant"), 24, H - 92, 16, "#ffe27a");
+      cases(24, H - 80, R.vie, e.vie);
+      texte("vie · " + Math.round(Math.abs(e.vitesse) * 3.6) + " km/h · canon levé de " + Math.round((h * 180) / Math.PI) + "°", 24 + R.vie * 30 + 4, H - 68, 13, "#ccc");
+      const etatTireur = !ti.vivant ? "🪖 tireur à terre : ramène le camion à ta base" + (ti.remplace > 0 ? " (un nouveau dans " + Math.ceil(R.tireur.remplace - ti.remplace) + " s)" : "") : auCanon ? "🪖 ton tireur a pris le volant" : "🪖 tireur (vie " + ti.vie + " / " + R.tireur.vie + ") : " + ti.etat;
+      texte(etatTireur, 24, H - 44, 13, ti.vivant ? "#e8e4d6" : "#ff9a8a");
+      if (auCanon) barre(24, H - 32, 200, 1 - e.feu / R.cadence, e.feu === 0, "Espace : tirer · F : reprendre le volant");
+      else texte("💥 " + e.tirs + " obus · " + e.touches + " touches · " + e.abattus + " abattu(s) · F : prendre le canon", 24, H - 22, 12, "#ccc");
+      dessinerAide(monde, auCanon ? "← → tourner les canons · ↑ ↓ les lever / baisser · Espace tirer · F reprendre le volant · E descendre" : "↑ ↓ ← → conduire · ton tireur tire tout seul · F prendre le canon · E descendre (arrêté)");
       return;
     }
     if (e.sorte === "sousmarin") {
@@ -808,7 +817,7 @@ Tanks.Tableau = (function () {
       ctx.stroke();
     }
     for (const e of monde.engins) { // les engins de ton camp : un petit carré blanc
-      if (e === t.engin) continue;
+      if (e === t.engin || e.equipe === "rouges") continue; // (demande 113 : pas le camion antiaérien ennemi)
       ctx.fillStyle = e.detruit ? "#555" : "#fff";
       ctx.fillRect(x0 + tc / 2 + e.x * k - 2, y0 + tc / 2 + e.z * k - 2, 4, 4);
     }
@@ -850,7 +859,7 @@ Tanks.Tableau = (function () {
     if (monde.phase === "victoire" || monde.phase === "defaite") {
       const gagne = monde.phase === "victoire";
       panneau(L / 2 - 240, H / 2 - 90, 480, 170);
-      const perdu = t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "moto" ? "💥 Ta moto est hors de combat…" : t.mode === "quad" ? "💥 Ton quad est hors de combat…" : t.mode === "camion" ? "💥 Ton camion est détruit…" : t.engin && t.engin.genre === "helico" ? "🔥 Ton " + t.engin.nom + " est abattu…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : t.mode === "sousmarin" ? "🌊 Ton sous-marin est coulé…" : t.mode === "dca" ? "💥 Ta DCA est détruite…" : "💥 Ton tank est détruit…";
+      const perdu = t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "moto" ? "💥 Ta moto est hors de combat…" : t.mode === "quad" ? "💥 Ton quad est hors de combat…" : t.mode === "camion" ? "💥 Ton camion est détruit…" : t.engin && t.engin.genre === "helico" ? "🔥 Ton " + t.engin.nom + " est abattu…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : t.mode === "sousmarin" ? "🌊 Ton sous-marin est coulé…" : t.mode === "dca" ? "💥 Ton camion antiaérien est détruit…" : t.mode === "helico" || t.mode === "drone" ? "🔥 Ton " + t.engin.nom + " est abattu…" : "💥 Ton tank est détruit…";
       texte(gagne ? "🏆 VICTOIRE !" : perdu, L / 2, H / 2 - 40, 38, gagne ? "#7dffa0" : "#ff7a6a", "center");
       const qgFin = monde.metro && monde.metro.qg && !monde.campagne ? monde.metro.qg : null; // (livre n° 25)
       texte(gagne ? (qgFin && qgFin.rouges.detruit ? "🏚️ Le QG du Front est détruit : ils n'ont plus de commandement !" : monde.metro ? "Les Rouges n'ont plus ni renfort ni soldat debout dans la station" : "Tous les tanks rouges sont détruits") : qgFin && qgFin.bleus.detruit ? "🏚️ Ton QG Rempart est détruit…" : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
@@ -871,7 +880,7 @@ Tanks.Tableau = (function () {
         drone: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · Espace grenade · E descendre (posé)",
         avion: "↑ piquer · ↓ cabrer · ← → virer · Espace missile · E s'éjecter",
         bateau: "↑ ↓ ← → naviguer · Q / D canon · Espace tirer · E descendre (près de la rive)",
-        dca: "← → tourner les canons · ↑ ↓ les lever / baisser · Espace tirer · E descendre",
+        dca: "↑ ↓ ← → conduire · ton tireur tire tout seul · F : prendre le canon · E descendre (arrêté)",
         sousmarin: "↑ ↓ ← → naviguer · D plonger · Q remonter · Espace torpille · E descendre (à la surface, près d'une rive)",
       }[t.mode];
       dessinerAide(monde, aide);

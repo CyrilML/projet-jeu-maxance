@@ -198,7 +198,7 @@ Tanks.Monde = (function () {
     const l = listeCibles;
     l.length = 0;
     for (const c of monde.chars) l.push(c);
-    for (const e of monde.engins) if ((e.sorte === "jeep" || e.sorte === "dca" || e.sorte === "bateau" || e.genre === "vehicule" || (e.sorte === "sousmarin" && !Tanks.SousMarins.sousLEau(e))) && e.pilote && !e.detruit) l.push(e);
+    for (const e of monde.engins) if ((e.sorte === "jeep" || e.sorte === "dca" || e.sorte === "bateau" || e.genre === "vehicule" || (e.sorte === "sousmarin" && !Tanks.SousMarins.sousLEau(e))) && (e.pilote || e.ia) && !e.detruit) l.push(e); // (demande 113 : le camion antiaérien ennemi, conduit par l'ordinateur)
     for (const v of monde.vehicules) if (!v.detruit) l.push(v); // (étape 71 : les motos, quads et camions de l'ordinateur)
     for (const h of Tanks.Helicos.bas(monde, helicosBas)) l.push(h); // (étape 73 : les hélicos de transport, seulement quand ils volent bas)
     for (const b of monde.bateaux) if (!b.detruit) l.push(b);
@@ -506,12 +506,12 @@ Tanks.Monde = (function () {
     // 5. La fin de la bataille ?
     if (enJeu) {
       const finQG = monde.metro ? Tanks.QG.fin(monde) : null; // ✍️ (livre n° 25) un QG détruit : la bataille est finie
-      const horsDeCombat = finQG === "defaite" || (t.mode === "char" && monde.joueur.detruit) || (toi && toi.mort && !toi.aTerre) || (t.engin && t.engin.genre === "helico" && t.engin.detruit) || ((t.mode === "jeep" || t.mode === "bateau" || t.mode === "sousmarin" || t.mode === "dca" || t.mode === "moto" || t.mode === "quad" || t.mode === "camion") && t.engin.detruit);
+      const horsDeCombat = finQG === "defaite" || (t.mode === "char" && monde.joueur.detruit) || (toi && toi.mort && !toi.aTerre) || (t.engin && t.engin.genre === "helico" && t.engin.detruit) || ((t.mode === "helico" || t.mode === "drone") && t.engin.detruit) || ((t.mode === "jeep" || t.mode === "bateau" || t.mode === "sousmarin" || t.mode === "dca" || t.mode === "moto" || t.mode === "quad" || t.mode === "camion") && t.engin.detruit);
       if (horsDeCombat) {
         monde.phase = "defaite";
         S.donnees.defaites++;
         S.ecrire("défaite");
-        radio.emettre("defaite", { temps: monde.chrono, allies: vivants(monde, "bleus"), ennemis: monde.metro ? soldatsVivants(monde, "rouges") + monde.metro.renforts.rouges : vivants(monde, "rouges"), comment: finQG === "defaite" ? "ton QG est détruit" : toi && toi.mort ? "ton soldat est à terre" : t.mode === "jeep" ? "ton 4x4 est détruit" : t.mode === "moto" || t.mode === "quad" ? (t.engin.tombe ? "tu es tombé " + (t.mode === "moto" ? "de ta moto" : "de ton quad") : t.mode === "moto" ? "ta moto est détruite" : "ton quad est détruit") : t.mode === "camion" ? "ton camion est détruit" : t.engin && t.engin.genre === "helico" ? "ton " + t.engin.nom + " est abattu" : t.mode === "bateau" ? "ta vedette est coulée" : t.mode === "sousmarin" ? "ton sous-marin est coulé" : t.mode === "dca" ? "ta DCA est détruite" : "ton tank est détruit" });
+        radio.emettre("defaite", { temps: monde.chrono, allies: vivants(monde, "bleus"), ennemis: monde.metro ? soldatsVivants(monde, "rouges") + monde.metro.renforts.rouges : vivants(monde, "rouges"), comment: finQG === "defaite" ? "ton QG est détruit" : toi && toi.mort ? "ton soldat est à terre" : t.mode === "helico" || t.mode === "drone" ? "ton " + t.engin.nom + " est abattu" : t.mode === "jeep" ? "ton 4x4 est détruit" : t.mode === "moto" || t.mode === "quad" ? (t.engin.tombe ? "tu es tombé " + (t.mode === "moto" ? "de ta moto" : "de ton quad") : t.mode === "moto" ? "ta moto est détruite" : "ton quad est détruit") : t.mode === "camion" ? "ton camion est détruit" : t.engin && t.engin.genre === "helico" ? "ton " + t.engin.nom + " est abattu" : t.mode === "bateau" ? "ta vedette est coulée" : t.mode === "sousmarin" ? "ton sous-marin est coulé" : t.mode === "dca" ? "ton camion antiaérien est détruit" : "ton tank est détruit" });
       } else if (!monde.campagne && (monde.metro ? finQG === "victoire" || (monde.metro.renforts.rouges === 0 && soldatsVivants(monde, "rouges") === 0) : vivants(monde, "rouges") === 0)) { // (étape 88 : en campagne, ce sont les objectifs)
         monde.phase = "victoire";
         S.donnees.victoires++;

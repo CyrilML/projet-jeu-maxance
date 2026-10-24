@@ -1417,46 +1417,45 @@ Tanks.Engins3D = (function () {
     return { g, caisse, helice };
   }
 
-  // (étape 64, refait à l'étape 70) LA DCA : un socle posé sur 4 bras avec leurs vérins, une tourelle qui tourne avec
-  // le siège du tireur (et le tireur), son viseur, le bouclier avec sa vitre, et 2 longs canons (avec leurs chargeurs et
-  // leurs freins de bouche) qui se lèvent.
+  // (étape 64, refait à l'étape 70) LA DCA : une tourelle qui tourne avec le siège du tireur (et le tireur), son viseur, le
+  // bouclier avec sa vitre, et 2 longs canons (avec leurs chargeurs et leurs freins de bouche) qui se lèvent.
+  // ✍️ (demande 113) Elle n'est plus posée sur un socle : c'est le CAMION ANTIAÉRIEN. Le châssis est celui du camion de
+  // transport (affichage/vehicules3d.js, sans bâche, avec ses béquilles), et la tourelle est posée sur son plateau.
+  // Le tireur est une pièce à part (on le cache quand il est tombé).
   function dca(equipe) {
     mats();
-    const m = MT(), p = peintureSoudee(equipe), g = new THREE.Group(), caisse = new THREE.Group(), V = vitreClaire();
-    g.add(caisse);
-    caisse.add(O.cylindre(1.6, 1.9, 0.45, p, 20).translateY(0.25)); // le socle
-    for (let k = 0; k < 4; k++) { // les 4 bras et leurs vérins
-      const a = (k * Math.PI) / 2 + Math.PI / 4, c = Math.cos(a), s = -Math.sin(a);
-      caisse.add(O.boite(2.4, 0.22, 0.32, p, c * 1.6, 0.18, s * 1.6).rotateY(a));
-      caisse.add(O.cylindre(0.06, 0.06, 0.5, m.teinte, 8, CT.acier).translateX(c * 2.6).translateY(0.3).translateZ(s * 2.6));
-      caisse.add(O.cylindre(0.25, 0.28, 0.06, m.teinte, 12, CT.noir).translateX(c * 2.6).translateY(0.03).translateZ(s * 2.6)); // le patin
-    }
-    caisse.add(O.boite(0.6, 0.35, 0.45, m.teinte, -1.0, 0.65, 1.0, CT.olive)); // les caisses de munitions
-    caisse.add(O.boite(0.6, 0.35, 0.45, m.teinte, -1.1, 0.65, 0.45, CT.olive));
-    O.souder(caisse);
+    const R = Tanks.CONFIG.engins.dca, base = Tanks.Vehicules3D.fabriquer("camionAA", equipe);
+    const m = MT(), p = peintureSoudee(equipe), g = base.g, V = vitreClaire();
     const tourelle = new THREE.Group();
-    tourelle.position.y = 0.6;
-    caisse.add(tourelle);
-    tourelle.add(O.cylindre(1.0, 1.1, 0.6, p, 18).translateY(0.3));
+    tourelle.position.set(R.canon.x, 1.5, 0);
+    g.add(tourelle);
+    tourelle.add(O.cylindre(1.05, 1.1, 0.22, m.teinte, 18, CT.noir).translateY(0.11)); // la couronne (elle tourne dessus)
+    tourelle.add(O.cylindre(0.95, 1.05, 0.5, p, 18).translateY(0.45));
     tourelle.add(O.boite(0.5, 0.12, 0.5, m.teinte, -0.65, 0.95, 0, CT.noir), O.boite(0.1, 0.55, 0.5, m.teinte, -0.92, 1.22, 0, CT.noir)); // le siège
     tourelle.add(O.tube([-0.3, 0.6, 0], [-0.65, 0.9, 0], 0.06, m.teinte, 6, CT.acier));
-    // le tireur
-    const buste = O.piece(new THREE.CapsuleGeometry(0.17, 0.25, 3, 8), m.teinte, -0.62, 1.38, 0, CT.tissu);
-    buste.scale.set(0.8, 1, 1.15);
-    tourelle.add(buste, O.boite(0.26, 0.32, 0.36, m.teinte, -0.6, 1.38, 0, 0x5f6a4a));
-    tourelle.add(O.piece(new THREE.SphereGeometry(0.1, 10, 8), m.teinte, -0.58, 1.76, 0, CT.peau));
-    tourelle.add(O.piece(new THREE.SphereGeometry(0.125, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.55), m.teinte, -0.6, 1.8, 0, CT.casque));
-    for (const s of [-1, 1]) {
-      tourelle.add(O.tube([-0.6, 1.1, s * 0.12], [-0.2, 1.05, s * 0.14], 0.07, m.teinte, 6, CT.tissu), O.tube([-0.2, 1.05, s * 0.14], [-0.15, 0.62, s * 0.14], 0.06, m.teinte, 6, CT.tissu));
-      tourelle.add(O.tube([-0.6, 1.55, s * 0.18], [-0.3, 1.45, s * 0.25], 0.045, m.teinte, 6, CT.tissu), O.tube([-0.3, 1.45, s * 0.25], [-0.05, 1.5, s * 0.2], 0.04, m.teinte, 6, CT.tissu));
-      tourelle.add(O.boite(0.06, 0.18, 0.06, m.teinte, -0.03, 1.5, s * 0.2, CT.noir)); // les poignées
-    }
     // le bouclier, avec sa vitre et le viseur
     tourelle.add(O.boite(0.12, 0.7, 2.0, p, 0.5, 1.45, 0));
     tourelle.add(O.boite(0.12, 0.32, 0.9, p, 0.5, 1.97, 0));
     tourelle.add(O.boite(0.04, 0.3, 0.5, V, 0.5, 1.95, 0));
     tourelle.add(O.boite(0.25, 0.2, 0.15, m.teinte, 0.2, 2.0, 0, CT.noir), O.boite(0.02, 0.14, 0.12, M.verre, 0.33, 2.02, 0));
+    for (const z of [-0.55, 0.55]) tourelle.add(O.boite(0.45, 0.4, 0.3, m.teinte, -0.2, 0.9, z * 1.45, CT.olive)); // les caisses d'obus des chargeurs
     O.souder(tourelle);
+    // le tireur (assis, les mains sur les poignées)
+    const tireur = new THREE.Group();
+    tireur.name = "tireur";
+    const buste = O.piece(new THREE.CapsuleGeometry(0.17, 0.25, 3, 8), m.teinte, -0.62, 1.38, 0, CT.tissu);
+    buste.scale.set(0.8, 1, 1.15);
+    tireur.add(buste, O.boite(0.26, 0.32, 0.36, m.teinte, -0.6, 1.38, 0, 0x5f6a4a));
+    tireur.add(O.piece(new THREE.SphereGeometry(0.1, 10, 8), m.teinte, -0.58, 1.76, 0, CT.peau));
+    tireur.add(O.piece(new THREE.SphereGeometry(0.125, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.55), m.teinte, -0.6, 1.8, 0, CT.casque));
+    tireur.add(O.boite(0.2, 0.05, 0.27, m.teinte, -0.6, 1.83, 0, Tanks.CONFIG.equipes[equipe].marque)); // le bandeau de son équipe
+    for (const s of [-1, 1]) {
+      tireur.add(O.tube([-0.6, 1.1, s * 0.12], [-0.2, 1.05, s * 0.14], 0.07, m.teinte, 6, CT.tissu), O.tube([-0.2, 1.05, s * 0.14], [-0.15, 0.62, s * 0.14], 0.06, m.teinte, 6, CT.tissu));
+      tireur.add(O.tube([-0.6, 1.55, s * 0.18], [-0.3, 1.45, s * 0.25], 0.045, m.teinte, 6, CT.tissu), O.tube([-0.3, 1.45, s * 0.25], [-0.05, 1.5, s * 0.2], 0.04, m.teinte, 6, CT.tissu));
+      tireur.add(O.boite(0.06, 0.18, 0.06, m.teinte, -0.03, 1.5, s * 0.2, CT.noir)); // les poignées
+    }
+    O.souder(tireur);
+    tourelle.add(tireur);
     const canons = new THREE.Group();
     canons.position.set(0.3, 1.6, 0);
     tourelle.add(canons);
@@ -1477,7 +1476,7 @@ Tanks.Engins3D = (function () {
       canons.add(f);
       flammes.push(f);
     }
-    return { g, caisse, tourelle, canons, flammes };
+    return Object.assign(base, { tourelle, canons, flammes, tireur });
   }
 
   // (demande 96) l'image de la lueur des portails : un rond blanc qui s'efface vers le bord (faite une seule fois)

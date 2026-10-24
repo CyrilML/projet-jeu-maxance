@@ -11,8 +11,9 @@
 //     redescends en parachute (l'avion revient à l'aérodrome) ;
 //   - le DRONE : petit et rapide, piloté comme l'hélico ; il lâche des GRENADES (contre les soldats).
 //   - (étape 62) la VEDETTE DE COMBAT, amarrée au bord du lac (logique/bateaux.js) : un petit canon sur tourelle ;
-//   - (étape 64) la DCA : un canon anti-aérien double. ← → tourner, ↑ ↓ lever / baisser, Espace tirer. Sa VISÉE ASSISTÉE
-//     calcule où sera l'avion quand l'obus arrivera (on vise DEVANT l'avion, comme un chasseur de canards) ;
+//   - (étape 64) la DCA : un canon anti-aérien double. ✍️ (demande 113) Elle est devenue le CAMION ANTIAÉRIEN : toi au
+//     volant, un tireur de ton camp au canon (il vise DEVANT l'avion, comme un chasseur de canards) ; F : prendre le
+//     canon toi-même. Sa mécanique est dans logique/antiaerien.js. L'ennemi a le même (rangé ici aussi, « equipe » rouges) ;
 //   - (étape 63) le SOUS-MARIN, amarré à côté (logique/sousmarins.js) : D plonger, Q remonter, Espace une torpille.
 //   - (étape 71) la MOTO CROSS, le QUAD et le CAMION DE TRANSPORT (leur mécanique est dans logique/vehicules.js) : la moto
 //     penche dans les virages et son pilote tire au pistolet, le quad a une petite mitrailleuse devant, le camion emmène
@@ -39,12 +40,14 @@ Tanks.Engins = (function () {
     const liste = PLACES.map((sorte) => garer({ sorte, fiche: Object.assign({ longueur: 4.8, largeur: 2.2, hauteur: 2 }, G[sorte]) }));
     liste.push(garer({ sorte: "bateau", fiche: Object.assign({}, C.bateaux.joueur) })); // (étape 62)
     liste.push(garer({ sorte: "sousmarin", fiche: Object.assign({}, C.sousMarins.joueur) })); // (étape 63)
+    liste.push(Tanks.AntiAerien.ennemi()); // (demande 113) le camion antiaérien de l'ennemi, conduit par l'ordinateur
     return liste;
   }
   // (étape 62) La place de la vedette : au bord du lac, au sud-ouest (de ton côté), le nez vers le milieu du lac.
   const QUAI = { t: 1.85, dl: 0.95 };
   const QUAI_SOUSMARIN = { t: 2.02, dl: 0.92 };
   function garer(e) {
+    if (e.sorte === "dca") return Tanks.AntiAerien.garer(e, e.equipe || "bleus"); // (demande 113 : le camion antiaérien)
     if (e.sorte === "sousmarin") {
       const p = Tanks.Bateaux.surLeLac(QUAI_SOUSMARIN.t, QUAI_SOUSMARIN.dl), R = C.sousMarins.joueur;
       Object.assign(e, {
@@ -67,7 +70,6 @@ Tanks.Engins = (function () {
       vitesse: 0, vy: 0, tangage: 0, roulis: 0, tourelle: 0, vie: G[e.sorte].vie || 1, detruit: false, touche: 9,
       munitions: G[e.sorte].munitions || 0, recharge: 0, rechargeMunition: 0, pilote: false, rotor: 0, enVol: false,
     });
-    if (e.sorte === "dca") Object.assign(e, { tourelle: 0, hausse: 0.5, canon: 0, cible: null, angle: -Math.PI / 2 });
     // (étape 71) la moto, le quad, le camion : le braquage, la vie de TON pilote (plus solide), les 6 soldats du camion
     if (Tanks.Vehicules.SORTES.includes(e.sorte)) Object.assign(e, { genre: "vehicule", braquage: 0, rotation: 0, balles: G[e.sorte].ballesJoueur || 0, passagers: G[e.sorte].places || 0, tombe: false, tirs: 0, reussis: 0, remplissage: 0 });
     if (Tanks.Helicos.SORTES.includes(e.sorte)) Object.assign(Tanks.Helicos.equiper(e), { reussis: 0 }); // (étape 73 : 10 soldats, les cordes, les 2 tireurs)
@@ -78,8 +80,10 @@ Tanks.Engins = (function () {
   // tous = { chars, soldats } pour viser. Renvoie des événements.
   function avancer(e, intentions, dt, monde) {
     const ev = [], R = G[e.sorte];
+    if (e.genre === "antiaerien") return Tanks.AntiAerien.avancer(e, intentions, dt, monde, ev), ev; // (demande 113)
     e.touche += dt;
     if (e.detruit) {
+      if (e.sorte === "helico" || e.sorte === "drone") return tomber(e, dt, ev), ev; // (demande 113 : abattu par le camion antiaérien ennemi)
       if (e.genre === "helico") { // (étape 73) il tombe ; 60 s après le crash, un nouveau t'attend à l'aérodrome
         Tanks.Helicos.tomber(e, dt, ev);
         if (e.chute.auSol && e.chute.depuis > C.helicosTransport.retour && !e.pilote) {
@@ -113,8 +117,7 @@ Tanks.Engins = (function () {
         e.munitions++;
       }
     }
-    if (e.sorte === "dca") viserLeCiel(e, intentions, dt, R, monde, ev);
-    else if (e.sorte === "jeep") rouler(e, intentions, dt, R, monde, ev);
+    if (e.sorte === "jeep") rouler(e, intentions, dt, R, monde, ev);
     else if (Tanks.Vehicules.SORTES.includes(e.sorte)) {
       // (étape 71) garé, sans personne dessus, immobile : rien à calculer (sauf le remplissage du camion)
       if (e.pilote || Math.abs(e.vitesse) > 0.01) Tanks.Vehicules.conduire(e, intentions, dt, monde, ev);
@@ -186,45 +189,26 @@ Tanks.Engins = (function () {
     }
   }
 
-  // (étape 64) La DCA : elle ne bouge pas ; on tourne les canons (← →) et on les lève (↑ ↓).
-  // La visée assistée : si un avion ennemi est à moins de 10° de là où pointent les canons, on calcule où il sera quand
-  // l'obus arrivera (temps = distance ÷ vitesse de l'obus), et on vise là (un peu plus haut, car l'obus retombe).
-  function viserLeCiel(e, I, dt, R, monde, ev) {
-    e.recharge = Math.max(0, e.recharge - dt);
-    e.tourelle = angleEntre(e.tourelle + ((I.droite ? 1 : 0) - (I.gauche ? 1 : 0)) * R.rotation * dt);
-    e.hausse = Math.max(0.05, Math.min(1.4, e.hausse + ((I.avancer ? 1 : 0) - (I.reculer ? 1 : 0)) * R.levee * dt));
-    const a = e.angle + e.tourelle, h = e.hausse, F = C.projectiles.flak;
-    const vise = { x: Math.cos(a) * Math.cos(h), y: Math.sin(h), z: Math.sin(a) * Math.cos(h) };
-    const depart = { x: e.x, y: e.y + 2.2, z: e.z };
-    let meilleur = null;
-    for (const av of Tanks.Avions.enLAir(monde)) {
-      if (av.equipe === e.equipe) continue;
-      const d = { x: av.x - depart.x, y: av.y - depart.y, z: av.z - depart.z }, l = Math.hypot(d.x, d.y, d.z);
-      const ecart = Math.acos(Math.max(-1, Math.min(1, (d.x * vise.x + d.y * vise.y + d.z * vise.z) / l)));
-      if (l < 2200 && ecart < 0.18 && (!meilleur || ecart < meilleur.ecart)) meilleur = { av, ecart };
+  // (demande 113) Ton Tigre ou ton drone abattu (par le camion antiaérien ennemi) : il tombe en tournant ; au sol, c'est
+  // une épave ; « retour » s plus tard (et si tu n'es plus dedans), un neuf t'attend sur son aire.
+  function tomber(e, dt, ev) {
+    const sol = T.hauteur(e.x, e.z);
+    if (e.y > sol + 0.05) {
+      e.vy -= 9.8 * dt;
+      e.y = Math.max(sol, e.y + e.vy * dt);
+      e.angle = angleEntre(e.angle + 2.2 * dt);
+      e.x += Math.cos(e.angle) * e.vitesse * dt;
+      e.z += Math.sin(e.angle) * e.vitesse * dt;
+      e.vitesse *= 1 - dt * 0.5;
+      e.roulis += dt * 0.6;
+      if (e.y <= sol) ev.push(["crash", { nom: e.nom, x: e.x, y: sol, z: e.z, dansLEau: T.dansLEau(e.x, e.z) }]);
+      e.epave = 0;
+      return;
     }
-    e.cible = meilleur ? meilleur.av : null;
-    let dir = vise;
-    if (e.cible) {
-      // on vise DEVANT l'avion : là où il sera dans t secondes (2 essais suffisent pour bien tomber)
-      let t = Math.hypot(e.cible.x - depart.x, e.cible.y - depart.y, e.cible.z - depart.z) / F.vitesse;
-      let p;
-      for (let k = 0; k < 2; k++) {
-        p = { x: e.cible.x + e.cible.vx * t, y: e.cible.y + e.cible.vy * t + 0.5 * F.gravite * t * t, z: e.cible.z + e.cible.vz * t };
-        t = Math.hypot(p.x - depart.x, p.y - depart.y, p.z - depart.z) / F.vitesse;
-      }
-      const l = Math.hypot(p.x - depart.x, p.y - depart.y, p.z - depart.z);
-      dir = { x: (p.x - depart.x) / l, y: (p.y - depart.y) / l, z: (p.z - depart.z) / l };
-      e.avance = p; // (pour le dessin : le petit rond « vise ici »)
-    } else e.avance = null;
-    if (I.tirer && e.recharge === 0 && e.pilote) {
-      e.recharge = R.cadence;
-      e.canon = 1 - e.canon; // (les 2 canons tirent chacun leur tour)
-      const g = a + Math.PI / 2, ecartCanon = e.canon ? 0.35 : -0.35, alea = () => (Math.random() - 0.5) * 0.012;
-      const d2 = { x: dir.x + alea(), y: dir.y + alea(), z: dir.z + alea() };
-      Tanks.Obus.lancer(monde.obus, e, "flak", { x: depart.x + Math.cos(g) * ecartCanon + d2.x * 2.5, y: depart.y + d2.y * 2.5, z: depart.z + Math.sin(g) * ecartCanon + d2.z * 2.5 }, d2, null);
-      ev.push(["flak", { tireur: e, x: depart.x, y: depart.y, z: depart.z, assiste: !!e.cible }]);
-    }
+    e.vitesse = 0;
+    e.enVol = false;
+    e.epave = (e.epave || 0) + dt;
+    if (e.epave > G.dca.retour && !e.pilote) garer(e);
   }
 
   // (étape 63) Le sous-marin : il navigue comme la vedette (en plus lent), D le fait plonger, Q le fait remonter.

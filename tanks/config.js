@@ -203,11 +203,44 @@ Tanks.CONFIG = {
   // bombes, l'avion de chasse, et le drone. Touche E : monter ou descendre.
   engins: {
     jeep: { nom: "4x4 à mitrailleuse", icone: "🚙", vitesseMax: 26, acceleration: 7, virage: 1.4, vie: 2, tourelle: 1.6, arme: "mitrailleuse" },
-    helico: { nom: "Hélicoptère Tigre", icone: "🚁", vitesseMax: 45, acceleration: 9, virage: 1, montee: 9, hauteurMax: 150, munitions: 8, recharge: 5, arme: "bombe" },
+    helico: { nom: "Hélicoptère Tigre", icone: "🚁", vitesseMax: 45, acceleration: 9, virage: 1, montee: 9, hauteurMax: 150, munitions: 8, recharge: 5, arme: "bombe", vie: 3 }, // (demande 113 : 3 obus du camion antiaérien ennemi l'abattent)
     avion: { nom: "Avion de chasse Rafale", icone: "✈️", vitesse: 95, virage: 0.9, tangage: 0.8, hauteurMin: 25, hauteurMax: 400, munitions: 6, recharge: 2.5, arme: "missile", ejection: true, vie: 3 }, // (étape 64 : 3 missiles ennemis l'abattent)
-    // (étape 64) ✍️ La DCA (« défense contre les avions ») : un canon double anti-aérien, dans ton camp.
-    // ← → tourner, ↑ ↓ lever / baisser les canons, Espace tirer. Ses obus explosent tout seuls près d'un avion.
-    dca: { nom: "DCA (canon anti-aérien)", icone: "🎯", longueur: 3.2, largeur: 3.2, hauteur: 2.4, vie: 3, rotation: 1.2, levee: 0.8, cadence: 0.12 },
+    // (étape 64) La DCA (« défense contre les avions ») était un canon double anti-aérien posé sur un socle.
+    // ✍️ (demande 113) « Le canon antiaérien, il est mauvais. Je ne connais pas ça. Je veux que tu fasses un camion. Toi,
+    // tu pilotes le camion, et quelqu'un d'autre tire avec le canon antiaérien. » C'est maintenant LE CAMION ANTIAÉRIEN
+    // (son nom de code reste « dca », pour la sauvegarde et la campagne) : un camion militaire 6 roues avec le canon
+    // double sur son plateau. TOI, tu conduis (comme le camion de transport : mêmes réglages de roues) ; le TIREUR (un
+    // soldat de ton camp, l'ordinateur) vise et tire tout seul. F : changer de siège (tu prends le canon : ← → tourner,
+    // ↑ ↓ lever, Espace tirer ; le camion s'arrête). L'ennemi a le même camion, qui patrouille près de sa base.
+    // Ses obus (le « flak ») explosent tout seuls près d'un avion. Unités : m, m/s, rad, rad/s, s.
+    dca: { nom: "Camion antiaérien", icone: "🚚", modele: "6x6, canon double de 35 mm", longueur: 7.4, largeur: 2.5, hauteur: 3.6, rayon: 2.6,
+      vitesseMax: 20, acceleration: 3.6, freinage: 8, ralentissement: 2, marcheArriere: 5, braquage: 0.55, empattement: 4.6, virage: 0.72,
+      penche: 0.04, vie: 4, lourd: true, son: [30, 76],
+      rotation: 1.2, levee: 0.8, cadence: 0.12, // le canon à la main : rad/s pour tourner, rad/s pour se lever, s entre 2 obus
+      hausse: [0.05, 1.4], // rad : le canon se lève de 3° à 80°
+      canon: { x: -1.7, y: 3.15 }, // m : la bouche des canons, sur le plateau (derrière le milieu du camion, en haut)
+      retour: 45, // s : détruit, un camion tout neuf revient au parking de sa base
+      // LE TIREUR (l'ordinateur) : il regarde le ciel « pense » fois par seconde, choisit l'avion ou l'hélico ennemi le plus
+      // proche à moins de « portee » m, tourne le canon (« rotation », « levee » : moins vite qu'à la main, c'est lourd !),
+      // vise DEVANT lui (là où il sera quand l'obus arrivera) ; quand le canon est à moins de « vise » rad de ce point, il
+      // tire des RAFALES de « rafale » obus, puis attend « pause » s. « erreur » : il tremble un peu (rad), l'ennemi plus.
+      // « vie » : les balles qu'il encaisse (il n'est protégé que par le petit bouclier) ; tombé, le canon se tait jusqu'à
+      // ce que le camion revienne à sa base : un nouveau tireur monte au bout de « remplace » s.
+      tireur: { indicatif: "Tireur DCA", vie: 4, pense: 0.25, portee: 950, hauteurMin: 8, rotation: 0.9, levee: 0.6, vise: 0.06, rafale: 8, pause: 1.3,
+        erreur: { bleus: 0.012, rouges: 0.05 }, remplace: 12, parole: 4, // s entre 2 « Touché ! »
+        phrases: {
+          engage: ["{quoi} à {heures}, {distance} mètres, j'engage !", "Contact ciel ! {quoi} à {heures}. J'ouvre le feu !", "{quoi} en vue, {heures} ! Je le prends !"],
+          touche: ["Touché !", "Je le touche !", "Coup au but, il fume !"],
+          abattu: ["{quoi} abattu ! Il tombe !", "Cible détruite, il s'écrase ! Ciel dégagé.", "Je l'ai eu ! {quoi} au tapis !"],
+          blesse: ["Je suis touché ! Je tiens le canon…", "Aïe ! On nous tire dessus, sur le plateau !"],
+          tombe: ["Tireur à terre ! Le canon ne tire plus !"],
+          nouveau: ["Nouveau tireur au canon. Prêt !"],
+        },
+      },
+      // L'ENNEMI : son camion patrouille entre ces points [x, z] (écrits pour les Bleus ; chez les Rouges, z change de
+      // signe), et s'arrête pour tirer quand son tireur a une cible.
+      patrouille: [[160, 470], [-120, 430], [-330, 520], [-40, 560]],
+    },
     drone: { nom: "Drone", icone: "🛸", vitesseMax: 30, acceleration: 12, virage: 2, montee: 12, hauteurMax: 120, munitions: 6, recharge: 3, arme: "grenade" },
     // ✍️ (étape 71) Trois nouveaux engins qui roulent (pour toi ET pour l'ordinateur, dans les deux camps).
     // Ils tournent comme un vrai vélo : vitesse de rotation = vitesse × tan(braquage) ÷ empattement (l'écart entre les roues),
@@ -225,7 +258,7 @@ Tanks.CONFIG = {
       penche: 0.06, vie: 1, balles: 4, ballesJoueur: 14, arme: "quad", son: [70, 170] },
     camion: { nom: "Camion de transport", icone: "🚛", longueur: 7.4, largeur: 2.5, hauteur: 3.2, rayon: 2.6,
       vitesseMax: 22, acceleration: 4, freinage: 8, ralentissement: 2, marcheArriere: 5, braquage: 0.55, empattement: 4.6, virage: 0.75,
-      penche: 0.04, vie: 3, places: 6, son: [32, 80] },
+      penche: 0.04, vie: 3, places: 6, son: [32, 80], lourd: true }, // (lourd : il écrase les arbres en roulant vite)
     // ✍️ (étape 73) Les deux HÉLICOS DE TRANSPORT (pour toi ET pour l'ordinateur, dans les deux camps). Ils volent comme
     // le Tigre (↑ ↓ ← →, Q monter, D descendre), emmènent 10 soldats (F : la descente à la corde) et ont 2 mitrailleuses
     // de porte qui tirent toutes seules. Mesures réelles du fuselage (sans les rotors) ; vie = les obus, roquettes ou
@@ -334,7 +367,7 @@ Tanks.CONFIG = {
     places: {
       helico: [-70, 46], blackhawk: [-110, 46], chinook: [-150, 46], iaBlackhawk: [-190, 46], iaChinook: [-230, 46], drone: [-38, 46],
       avion: [-60, 150, "ouest"],
-      jeep: [66, 32], moto: [78, 32], quad: [88, 32], camion: [104, 32], dca: [150, 0],
+      jeep: [66, 32], moto: [78, 32], quad: [88, 32], camion: [104, 32], dca: [126, 32], // (demande 113 : le camion antiaérien au parking)
     },
     // le parking de l'ordinateur (2e rangée) : la place n° k (moto 1, moto 2, quad 1, quad 2, camion 1) = [x0 + k × pas, dz]
     parkingIA: { x0: 66, pas: 12, dz: 58 },

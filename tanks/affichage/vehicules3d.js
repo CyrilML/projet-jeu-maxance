@@ -334,7 +334,9 @@ Tanks.Vehicules3D = (function () {
 
   // ------------------------------------------------------------------ le CAMION DE TRANSPORT (6 roues motrices)
   // Mesures : 7,4 m de long, 2,5 m de large, 3,25 m avec la bâche, des roues de 1,1 m.
-  function camion(equipe) {
+  // (demande 113) antiaerien = true : le même camion pour le CAMION ANTIAÉRIEN : sans bâche ni bancs ni passagers (le
+  // canon est posé sur le plateau, par affichage/engins3d.js), mais avec 4 béquilles repliées (relevées pour rouler) et des caisses d'obus.
+  function camion(equipe, antiaerien) {
     const m = MT(), E = Tanks.CONFIG.equipes[equipe], P = OU().peintureSoudee(equipe), V = OU().vitreClaire();
     const g = new THREE.Group(), caisse = new THREE.Group();
     g.add(caisse);
@@ -413,11 +415,25 @@ Tanks.Vehicules3D = (function () {
     for (const s of [-1, 1]) {
       caisse.add(O.boite(long, 0.55, 0.06, P, xMil, 1.78, s * 1.2));
       for (let k = 0; k < 5; k++) caisse.add(O.boite(0.06, 0.6, 0.08, m.teinte, xAr + 0.2 + (k * (long - 0.4)) / 4, 1.78, s * 1.24, fonce)); // les ranchers
-      caisse.add(O.boite(long - 0.6, 0.06, 0.36, m.teinte, xMil - 0.2, 1.82, s * 0.95, CT.bois)); // le banc
+      if (!antiaerien) caisse.add(O.boite(long - 0.6, 0.06, 0.36, m.teinte, xMil - 0.2, 1.82, s * 0.95, CT.bois)); // le banc
       caisse.add(O.boite(0.05, 0.12, 0.22, m.teinte, xAr - 0.04, 1.62, s * 0.95, CT.rouge)); // le feu arrière
     }
     caisse.add(O.boite(0.06, 0.55, 2.46, P, xAv, 1.78, 0));
     caisse.add(O.boite(0.06, 0.42, 2.46, P, xAr, 1.71, 0)); // la ridelle arrière (un peu plus basse : on monte par là)
+    if (antiaerien) {
+      // les 4 BÉQUILLES (repliées pour rouler) aux coins du plateau, et les caisses d'obus contre la cabine
+      for (const x of [xAv - 0.35, xAr + 0.35]) for (const s of [-1, 1]) {
+        caisse.add(O.boite(0.24, 0.18, 0.3, m.teinte, x, 1.28, s * 1.12, fonce));
+        caisse.add(O.cylindre(0.07, 0.07, 0.5, m.teinte, 8, CT.acier).translateX(x).translateY(1.05).translateZ(s * 1.2));
+        caisse.add(O.cylindre(0.16, 0.16, 0.05, m.teinte, 12, CT.noir).translateX(x).translateY(0.8).translateZ(s * 1.2));
+      }
+      for (const z of [-0.75, 0, 0.75]) caisse.add(O.boite(0.5, 0.36, 0.6, m.teinte, xAv - 0.4, 1.68, z, CT.olive));
+      caisse.add(O.boite(0.5, 0.36, 0.6, m.teinte, xAv - 0.4, 2.04, 0.4, CT.olive));
+      for (const s of [-1, 1]) caisse.add(O.boite(1.4, 0.4, 0.012, m.teinte, xMil - 0.6, 1.78, s * 1.235, E.marque)); // la marque de l'équipe
+      O.souder(caisse);
+      for (const x of essieux) for (const z of [zR, -zR]) roueCamion(g, x, z, rR, fonce);
+      return { g, xPlateau: xMil, yPlateau: 1.5 };
+    }
     // 5. La BÂCHE : une voûte creuse (on voit dedans par l'arrière), tendue sur 5 arceaux ; le rabat arrière est roulé en haut.
     const ext = [], int = [], N = 10, haut = 3.25, bas = 2.04, demi = 1.22, coin = 0.38;
     for (let k = 0; k <= N; k++) { // le contour : un rectangle aux coins arrondis, vu de l'arrière
@@ -461,25 +477,26 @@ Tanks.Vehicules3D = (function () {
     O.souder(passagers);
     g.add(passagers);
     // 7. Les 6 roues (les 2 de devant tournent quand on braque).
-    for (const x of essieux) for (const z of [zR, -zR]) {
-      const r = roue(geoRoueLarge(rR, 0.4, 0.2, "#" + fonce.getHexString(), Math.sign(z), 20), 0, 0, 0, rR);
-      if (x > 0) {
-        const pivot = new THREE.Group();
-        pivot.position.set(x, rR, z);
-        pivot.userData.pivot = true;
-        pivot.add(r);
-        g.add(pivot);
-      } else {
-        r.position.set(x, rR, z);
-        g.add(r);
-      }
-    }
+    for (const x of essieux) for (const z of [zR, -zR]) roueCamion(g, x, z, rR, fonce);
     return { g };
+  }
+  function roueCamion(g, x, z, rR, fonce) {
+    const r = roue(geoRoueLarge(rR, 0.4, 0.2, "#" + fonce.getHexString(), Math.sign(z), 20), 0, 0, 0, rR);
+    if (x > 0) {
+      const pivot = new THREE.Group();
+      pivot.position.set(x, rR, z);
+      pivot.userData.pivot = true;
+      pivot.add(r);
+      g.add(pivot);
+    } else {
+      r.position.set(x, rR, z);
+      g.add(r);
+    }
   }
 
   // ------------------------------------------------------------------ les modèles (une fois), et leurs copies
   const modeles = {};
-  const FABRIQUES = { moto, quad, camion };
+  const FABRIQUES = { moto, quad, camion, camionAA: (equipe) => camion(equipe, true) }; // (demande 113 : le châssis du camion antiaérien)
   function fabriquer(sorte, equipe) {
     const cle = sorte + ":" + equipe;
     if (!modeles[cle]) modeles[cle] = FABRIQUES[sorte](equipe).g;

@@ -291,6 +291,7 @@ Tanks.Radio = (function () {
   // Le monde nous montre chaque événement AVANT de l'annoncer (avec les vrais objets : qui a été touché, par qui).
   function noter(monde, nom, d) {
     if (monde.phase !== "bataille" || !d) return;
+    if (nom.startsWith("aa-")) return void tireurAA(monde, nom, d); // (demande 113)
     const m = ici(monde), c = d.cible, tireur = d.tireur, t = monde.toi;
     const deToi = tireur && (tireur === monde.joueur || tireur === t.soldat || tireur === t.engin);
     if (nom === "soldat-touche") {
@@ -356,6 +357,20 @@ Tanks.Radio = (function () {
         if (temoin) bavarder(monde, temoin, estChar(c) ? "allieDetruit" : "vehiculeDetruit", null, { victime: c.nom });
       }
     }
+  }
+
+  // (demande 113) LE TIREUR DE TON CAMION ANTIAÉRIEN parle à la radio (seulement quand tu es dans le camion) :
+  // « Avion ennemi à 2 heures, 600 mètres, j'engage ! », « Touché ! », « Abattu ! ». Ses phrases sont dans config.js
+  // (engins.dca.tireur.phrases). « force » : il parle même si quelqu'un vient de parler (c'est urgent, dans le ciel).
+  function tireurAA(monde, nom, d) {
+    const e = nom === "aa-tireur-touche" || nom === "aa-tireur-abattu" || nom === "aa-nouveau-tireur" ? d.cible || d.tireur : d.tireur;
+    if (!e || e.equipe !== "bleus" || !e.pilote || e !== monde.toi.engin) return;
+    if ((nom === "aa-touche" || nom === "aa-abattu") && d.parToi) return; // (c'est toi qui tires : il ne va pas se vanter)
+    const P = C.engins.dca.tireur.phrases;
+    const genre = { "aa-engage": "engage", "aa-touche": "touche", "aa-abattu": "abattu", "aa-tireur-touche": "blesse", "aa-tireur-abattu": "tombe", "aa-nouveau-tireur": "nouveau" }[nom];
+    if (!genre) return;
+    const texte = majuscule(remplir(choisir(P[genre], "aa:" + genre), { quoi: d.quoi, heures: d.heures === 1 ? "une heure" : enLettres(d.heures) + " heures", distance: metres(d.distance || 0) }));
+    dire(monde, null, "tireurAA", "urgent", {}, { qui: C.engins.dca.tireur.indicatif, texte, force: true });
   }
 
   // ------------------------------------------------------------------ 3. À CHAQUE PETIT PAS

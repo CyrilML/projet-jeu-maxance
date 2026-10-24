@@ -13,6 +13,8 @@
 // « sinus »), les PORTAILS (le tourbillon tourne), et la caméra qui SAUTE d'un coup quand tu passes un portail.
 // Étape 64 : les AVIONS ennemis et de transport (ils penchent dans les virages ; abattus, ils tombent en fumant), la DCA
 // (sa tourelle tourne, ses canons se lèvent), et la caméra de la DCA qui regarde vers le ciel, là où visent les canons.
+// Demande 113 : la DCA est devenue le CAMION ANTIAÉRIEN (« placerCamionAA ») : au volant, la caméra suit le camion ; au
+// canon (F), elle regarde là où visent les canons.
 // Étape 63 : chaque objet est dessiné ENTRE sa position d'avant et celle de maintenant (« interpolation ») : le jeu
 // calcule 120 pas par seconde, mais l'écran n'affiche pas toujours ses images pile entre deux pas ; sans ça, ton
 // personnage faisait de tout petits sauts. Et la caméra ne passe plus à travers les murs : elle s'avance devant.
@@ -433,6 +435,40 @@ Tanks.Scene = (function () {
     if (o.passagers) o.passagers.visible = e.passagers > 0;
   }
 
+  // (demande 113) Le CAMION ANTIAÉRIEN : posé comme un camion (la pente, le roulis, le tangage), ses roues tournent, ses
+  // roues avant braquent ; la tourelle tourne, les canons se lèvent, les flammes au bout des canons quand ils tirent ; le
+  // chauffeur dans la cabine et le tireur au canon (cachés quand il n'y a personne).
+  function placerCamionAA(o, e, dt, original) {
+    const d = Math.hypot(e.x - cam.position.x, e.z - cam.position.z);
+    const n = T.normale(e.x, e.z);
+    qLacet.setFromAxisAngle(haut, -e.angle);
+    qPente.setFromUnitVectors(haut, vn.set(n.x, n.y, n.z));
+    qLocal.setFromEuler(eLocal.set(e.roulis || 0, 0, e.tangage || 0, "XZY"));
+    o.g.quaternion.copy(qPente).multiply(qLacet).multiply(qLocal);
+    o.g.position.set(e.x, e.y, e.z);
+    o.g.visible = d < Q.vue + 50;
+    if (!o.g.visible) return void lod.enginsCaches++;
+    if (e.detruit) {
+      if (!o.brule) (Tanks.Engins3D.bruler(o), (o.brule = true));
+      if (o.pilote) o.pilote.visible = false;
+      o.tireur.visible = false;
+      return;
+    }
+    if (o.brule) { // (un camion tout neuf revenu au parking : on refait son dessin)
+      scene.remove(o.g);
+      dessinsEngins.delete(original || e);
+      return;
+    }
+    o.dist += e.vitesse * dt;
+    for (const r of o.roues) r.rotation.y = -o.dist / r.userData.rayon;
+    for (const p of o.pivots) p.rotation.y = -(e.braquage || 0);
+    if (o.pilote) o.pilote.visible = !!(e.pilote || e.ia);
+    o.tireur.visible = e.tireur && e.tireur.vivant ? !!(e.pilote || e.ia) : !!e.pilote && e.siege === "canon";
+    o.tourelle.rotation.y = -e.tourelle;
+    o.canons.rotation.z = e.hausse;
+    o.flammes.forEach((f, i) => (f.visible = e.feu > C.engins.dca.cadence * 0.5 && e.canon === i));
+  }
+
   // (étape 73) Un hélico de transport : en vol, tourné et penché ; posé, comme la colline. Loin : la version simple.
   function placerHelico(o, e, dt, original) {
     const d = Math.hypot(e.x - cam.position.x, e.y - cam.position.y, e.z - cam.position.z);
@@ -588,6 +624,7 @@ Tanks.Scene = (function () {
     if (Tanks.Vehicules3D.sait(e.sorte)) return placerVehicule(o, e, dt, original); // (étape 71)
     if (Tanks.Helicos3D.sait(e.sorte)) return placerHelico(o, e, dt, original); // (étape 73)
     if (Tanks.Avions3D.sait(e.sorte)) return placerAvion(o, e, dt, original); // (étape 76)
+    if (e.sorte === "dca") return placerCamionAA(o, e, dt, original); // (demande 113)
     o.g.visible = e.etat !== "attend" && e.etat !== "parti" && e.etat !== "cloue";
     // (étape 72) plus loin que la vue (dans le brouillard) : pas dessiné
     if (o.g.visible && Math.hypot(e.x - cam.position.x, e.y - cam.position.y, e.z - cam.position.z) > Q.vue + 50) (o.g.visible = false), lod.enginsCaches++;
@@ -625,10 +662,6 @@ Tanks.Scene = (function () {
       o.tourelle.rotation.y = -e.tourelle;
       o.tour = (o.tour || 0) + (e.vitesse * dt) / 0.5;
       for (const r of o.roues) r.rotation.y = -o.tour;
-    } else if (e.sorte === "dca") {
-      o.tourelle.rotation.y = -e.tourelle;
-      o.canons.rotation.z = e.hausse;
-      o.flammes.forEach((f, i) => (f.visible = e.recharge > C.engins.dca.cadence * 0.5 && e.canon === i));
     }
   }
   // Les projectiles qui volent (sauf l'obus, qui a déjà son traceur dans les effets) : roquette, bombe, missile, grenade.
@@ -708,7 +741,9 @@ Tanks.Scene = (function () {
       return { x: s.x, y: s.y, z: s.z, angle: s.angle, distance: mix(v(EP.distance, EP.viseeDistance), CI.distance), hauteur: mix(v(EP.hauteur, EP.viseeHauteur), CI.hauteur), devant: mix(EP.devant, CI.devant), regardY: mix(v(EP.regardY, EP.viseeRegardY), CI.regardY), cote: mix(v(EP.cote, EP.viseeCote), CI.cote) * camera.coteLisse };
     }
     const e = vue(t.engin);
-    if (e.sorte === "dca") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle, distance: 0.5, hauteur: 0.4, devant: 1, regardY: 1.5 + Math.tan(Math.min(1.2, e.hausse)) * C.camera.regardDevant * 0.7 };
+    // (demande 113) au canon du camion antiaérien : la caméra regarde là où visent les canons ; au volant : comme le camion
+    if (e.sorte === "dca" && e.siege === "canon") return { x: e.x + Math.cos(e.angle) * C.engins.dca.canon.x, y: e.y + 1.6, z: e.z + Math.sin(e.angle) * C.engins.dca.canon.x, angle: e.angle + e.tourelle, distance: 0.75, hauteur: 0.6, devant: 1, regardY: 1.5 + Math.tan(Math.min(1.2, e.hausse)) * C.camera.regardDevant * 0.7 };
+    if (e.sorte === "dca") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 1.15, hauteur: 1.05, devant: 1, regardY: 3 };
     if (e.sorte === "sousmarin") return { x: e.x, y: Math.max(e.y, C.lac.niveau - 1.3), z: e.z, angle: e.angle, distance: 1.5, hauteur: 0.75, devant: 1, regardY: 1.5 };
     if (e.sorte === "jeep") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle * 0.7, distance: 0.75, hauteur: 0.7, devant: 1, regardY: 2 };
     if (e.sorte === "moto") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 0.42, hauteur: 0.42, devant: 0.8, regardY: 1.4 }; // (étape 71)

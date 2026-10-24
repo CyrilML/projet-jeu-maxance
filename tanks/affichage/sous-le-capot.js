@@ -238,6 +238,15 @@ Tanks.SousLeCapot = (function () {
     crash: (d) => "💥 " + d.nom + " s'écrase " + (d.dansLEau ? "dans le lac" : "au sol"),
     parachutistes: (d) => "🪂 " + d.nombre + " parachutistes " + (d.equipe === "bleus" ? "bleus" : "rouges") + " sautent de l'avion de transport (" + Math.round(d.x) + " ; " + Math.round(d.z) + ")",
     flak: (d) => "🎯 La DCA tire" + (d.assiste ? " (visée assistée : devant l'avion)" : ""),
+    // demande 113 : le camion antiaérien (son chauffeur, son tireur)
+    "aa-engage": (d) => "🎯 " + (d.equipe === "bleus" ? "Ton tireur antiaérien" : "Le tireur du camion antiaérien ENNEMI") + " vise " + d.cible + " : à " + d.heures + " h sur l'horloge du camion, " + d.distance + " m (il vise DEVANT lui)",
+    "aa-touche": (d) => "💥 " + (d.parToi ? "Ton obus de flak" : d.equipe === "bleus" ? "Le flak de ton tireur" : "Le flak du camion ennemi") + " éclate près de " + d.cible + " : touché (vie " + d.vie + ") · " + d.touches + " touche(s) en tout",
+    "aa-abattu": (d) => "🔥 " + d.cible + " ABATTU par " + (d.parToi ? "toi, au canon du camion antiaérien" : d.equipe === "bleus" ? "ton tireur antiaérien" : "le camion antiaérien ennemi") + " · " + d.abattus + " abattu(s) par ce camion",
+    "aa-siege": (d) => d.siege === "canon" ? "🪑 F : tu passes au CANON (← → tourner, ↑ ↓ lever, Espace tirer) ; le camion freine et s'arrête" + (d.tireur ? " (le tireur prend le volant)" : "") : "🪑 F : tu reprends le VOLANT" + (d.tireur ? " ; le tireur retourne au canon et tire tout seul" : " (personne au canon)"),
+    "aa-tireur-touche": (d) => "🩹 Le tireur " + (d.equipe === "bleus" ? "de ton camion antiaérien" : "du camion antiaérien ennemi") + " est touché par " + d.tireur + " (vie " + d.vie + " / " + d.vieMax + ")",
+    "aa-tireur-abattu": (d) => "✖ Le tireur " + (d.equipe === "bleus" ? "de ton camion antiaérien est à terre : le canon se tait (ramène le camion à ta base, ou F pour tirer toi-même)" : "du camion antiaérien ennemi est à terre (abattu par " + d.tireur + ") : son canon se tait"),
+    "aa-nouveau-tireur": (d) => "🪖 Un nouveau tireur monte au canon " + (d.equipe === "bleus" ? "de ton camion antiaérien" : "du camion antiaérien ennemi"),
+    "aa-retour": (d) => "🚚 Un " + d.nom.toLowerCase() + " tout neuf attend au parking de la base " + (d.equipe === "bleus" ? "bleue" : "rouge"),
     // étape 63
     plongee: (d) => "🫧 " + (d.toi ? "Ton sous-marin plonge" : d.nom + " plonge") + " : à plus de " + virgule(C.sousMarins.sousLEau, 1) + " m, seule une torpille peut le toucher",
     surface: (d) => "🐋 " + (d.toi ? "Ton sous-marin remonte" : d.nom + " remonte") + " à la surface",
@@ -249,7 +258,7 @@ Tanks.SousLeCapot = (function () {
     portail: (d) => "🌀 " + d.qui + " entre dans le portail " + d.de + " et ressort par le portail " + d.vers,
     // étape 61
     sortir: (d) => "🚪 Tu sors de " + d.de + " : te voilà à pied (E pour remonter)",
-    monter: (d) => "🪜 Tu montes dans " + d.dans + ({ moto: " : ↑ ↓ ← → conduire (elle penche dans les virages), Espace tirer au pistolet", quad: " : ↑ ↓ ← → conduire, Espace la mitrailleuse (droit devant)", camion: " : ↑ ↓ ← → conduire, F faire descendre les soldats", dca: " : ← → tourner, ↑ ↓ lever les canons, Espace tirer en l'air", jeep: " : ↑ ↓ ← → conduire, Q / D la mitrailleuse, Espace tirer", helico: " : Q monter, D descendre, Espace lâcher une bombe", chinook: " : Q monter, D descendre, F la descente à la corde (bas et presque arrêté) ; les mitrailleuses tirent toutes seules", blackhawk: " : Q monter, D descendre, F la descente à la corde (bas et presque arrêté) ; les mitrailleuses tirent toutes seules", avion: " : ↑ piquer, ↓ cabrer, Espace un missile, E s'éjecter", drone: " : Q monter, D descendre, Espace lâcher une grenade" }[d.mode] || ""),
+    monter: (d) => "🪜 Tu montes dans " + d.dans + ({ moto: " : ↑ ↓ ← → conduire (elle penche dans les virages), Espace tirer au pistolet", quad: " : ↑ ↓ ← → conduire, Espace la mitrailleuse (droit devant)", camion: " : ↑ ↓ ← → conduire, F faire descendre les soldats", dca: " : ↑ ↓ ← → conduire ; ton tireur tire tout seul sur les avions et les hélicos ennemis ; F : prendre le canon toi-même", jeep: " : ↑ ↓ ← → conduire, Q / D la mitrailleuse, Espace tirer", helico: " : Q monter, D descendre, Espace lâcher une bombe", chinook: " : Q monter, D descendre, F la descente à la corde (bas et presque arrêté) ; les mitrailleuses tirent toutes seules", blackhawk: " : Q monter, D descendre, F la descente à la corde (bas et presque arrêté) ; les mitrailleuses tirent toutes seules", avion: " : ↑ piquer, ↓ cabrer, Espace un missile, E s'éjecter", drone: " : Q monter, D descendre, Espace lâcher une grenade" }[d.mode] || ""),
     ejection: (d) => (d.abattu ? "🔥 Ton Rafale est abattu ! " : "") + "🪂 Éjection à " + d.hauteur + " m de haut ! Tu redescends en parachute à " + C.engins.parachute + " m/s",
     atterrissage: () => "🪂 Tu touches le sol : te voilà à pied",
     impossible: (d) => "✋ Impossible : " + d.raison,
@@ -267,6 +276,18 @@ Tanks.SousLeCapot = (function () {
     enflamme: (d) => "🔥 " + d.cible + " prend FEU (cartouche incendiaire de " + d.tireur + ") : il brûle " + d.duree + " s et perdra " + virgule(d.degats, 1) + " de vie",
     "soldat-mort": (d) => "✖ " + d.cible + " est à terre (" + ({ chute: "tombé de la corde de " + d.tireur, ecrase: "écrasé par " + d.tireur, bombe: "bombe de " + d.tireur, missile: "missile de " + d.tireur, grenade: "grenade de " + d.tireur, effondrement: "écrasé sous une maison qui s'effondre", mine: "mine de " + d.tireur, c4: "C4 de " + d.tireur, claymore: "claymore de " + d.tireur, feu: "brûlé par la cartouche incendiaire de " + d.tireur, roquette: "roquette de " + d.tireur, obus: "obus de " + d.tireur }[d.par] || "balle de " + d.tireur) + ")",
   };
+
+  // (demande 113) LE CAMION ANTIAÉRIEN : le camion (qui conduit, sa vitesse, sa vie) et son TIREUR (ce qu'il fait, sa
+  // cible, la distance, l'ANGLE D'AVANCE : de combien il vise devant l'avion, l'écart du canon), et ses tirs, touches, abattus.
+  function lignesAntiAerien(l, e) {
+    const R = C.engins.dca, ti = e.tireur, a = e.equipe === "bleus" ? "🔵 " : "🔴 ";
+    const chauffeur = e.pilote ? (e.siege === "canon" ? "👤 toi AU CANON (le camion est arrêté)" : "👤 toi au volant") : e.ia ? "🤖 l'ordinateur : " + e.ia.etat : "personne (garé)";
+    l.push([a + R.icone + " " + e.nom, e.detruit ? "détruit ✖ (un neuf dans " + Math.max(0, Math.ceil(R.retour - e.retour)) + " s)" : chauffeur + " · " + Math.round(Math.abs(e.vitesse) * 3.6) + " km/h · vie " + e.vie + " / " + R.vie]);
+    if (e.detruit) return;
+    const c = ti.cible;
+    l.push(["   🎯 son tireur", !ti.vivant ? "à terre ✖" + (ti.remplace > 0 ? " · un nouveau monte dans " + Math.ceil(R.tireur.remplace - ti.remplace) + " s" : " · ramène le camion à sa base") : "vie " + ti.vie + " / " + R.tireur.vie + " · " + ti.etat + (c ? " · cible " + c.nom + " à " + ti.distance + " m, " + ti.heures + " h · avance " + virgule((ti.avanceAngle * 180) / Math.PI, 1) + "° · écart du canon " + virgule((ti.ecart * 180) / Math.PI, 1) + "°" + (ti.pause > 0 ? " · pause " + virgule(ti.pause, 1) + " s" : " · rafale " + ti.rafale + " / " + R.tireur.rafale) : "")]);
+    l.push(["   🔫 le canon", "tourné à " + degres(e.angle + e.tourelle) + ", levé de " + degres(e.hausse) + " · " + e.tirs + " obus tirés · " + e.touches + " touches · " + e.abattus + " abattu(s)" + (e.tirs ? " · réussite " + Math.round((100 * e.touches) / e.tirs) + " %" : "")]);
+  }
 
   function initialiser(m) {
     monde = m;
@@ -736,7 +757,7 @@ Tanks.SousLeCapot = (function () {
     if (monde.phase !== "garage") lignesRealismeAbsurde(l, s); // (livre n° 26)
     l.push(["Où tu es (étape 61)"], ["phase", monde.phase]);
     if (s) {
-      const ou = { dca: "à la DCA 🎯", sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", chinook: "aux commandes du Chinook 🚁", blackhawk: "aux commandes du Black Hawk 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];
+      const ou = { dca: t.engin && t.engin.siege === "canon" ? "au canon du camion antiaérien 🎯" : "au volant du camion antiaérien 🚚", sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", chinook: "aux commandes du Chinook 🚁", blackhawk: "aux commandes du Black Hawk 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];
       l.push(["mode", t.mode + " = " + ou]);
       l.push(["ton soldat", "vie " + s.vie + " / " + s.vieMax + (s.seSoigne ? " ➕ (se soigne)" : s.vie < s.vieMax ? " (soin dans " + virgule(Math.max(0, C.soins.attente - s.touche), 1) + " s)" : "") + " · arme " + nomArme(s) + (s.recharge > 0 ? " (recharge " + virgule(s.recharge, 2) + " s)" : "")]);
       if (s.armes) lignesEquipement(l, s);
@@ -744,8 +765,8 @@ Tanks.SousLeCapot = (function () {
       if (t.mode === "pied") l.push(["à pied", "x, z " + virgule(s.x, 1) + " ; " + virgule(s.z, 1) + " · " + virgule(s.vitesse, 1) + " m/s · cap " + degres(s.angle) + (s.dedans ? " · 🏠 dans " + s.dedans.b.nom + (s.dedans.etage === 1 ? " (à l'étage)" : s.dedans.etage === "escalier" ? " (dans l'escalier)" : " (en bas)") : "")]);
       l.push(["Les engins de ton camp"]);
       for (const e of monde.engins) {
-        if (e.sorte === "dca") {
-          l.push([C.engins.dca.icone + " " + e.nom, e.detruit ? "détruite ✖" : (e.pilote ? "👤 tu tires · " : "personne · ") + "canons à " + degres(e.angle + e.tourelle) + ", levés de " + degres(e.hausse) + " · vie " + e.vie + " / " + C.engins.dca.vie + (e.cible ? " · suit " + e.cible.nom : "")]);
+        if (e.sorte === "dca") { // (demande 113 : le camion antiaérien, le tien et celui de l'ennemi)
+          lignesAntiAerien(l, e);
           continue;
         }
         if (e.sorte === "sousmarin") {

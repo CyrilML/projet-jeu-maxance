@@ -174,7 +174,8 @@ Tanks.Campagne = (function () {
   function creerCible(monde, etat, c) {
     let o = null;
     if (c.sorte === "dca") {
-      o = Tanks.Engins.garer({ sorte: "dca", fiche: Object.assign({ longueur: 4.8, largeur: 2.2, hauteur: 2 }, C.engins.dca) });
+      // (demande 113 : c'est maintenant un camion antiaérien, garé là, sans chauffeur ni tireur : une batterie à faire taire)
+      o = Tanks.Engins.garer({ sorte: "dca", fiche: Object.assign({}, C.engins.dca) });
       Object.assign(o, { equipe: "rouges", nom: c.nom, angle: c.angle === undefined ? Math.PI / 2 : c.angle, tourelle: hasard() * 6, hausse: 0.7 });
       poser(o, c.x, c.z);
       monde.engins.push(o);
@@ -235,6 +236,7 @@ Tanks.Campagne = (function () {
       if (!F.avions) monde.avions = monde.avions.filter((a) => a.sorte !== "chasseur");
       if (!F.paras) monde.chronoParas = -1e9; // (les avions de transport ne viendront pas)
       if (!F.vehicules) monde.vehicules = [];
+      if (!F.vehicules) monde.engins = monde.engins.filter((e) => !(e.sorte === "dca" && e.equipe === "rouges")); // (demande 113 : ni le camion antiaérien ennemi)
       if (!F.lac) (monde.bateaux = []), (monde.sousMarins = []);
       for (const h of monde.helicos) if (!F.helicos) h.ia.attente = 1e9; // (les hélicos restent au camp : seuls ceux du scénario volent)
     }

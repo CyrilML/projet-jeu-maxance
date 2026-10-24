@@ -192,7 +192,7 @@ Tanks.Soldat = (function () {
   function vehiculesDe(monde) {
     vehiculesBalle.length = 0;
     for (const c of monde.chars) vehiculesBalle.push(c);
-    for (const e of monde.engins) if (e.sorte === "jeep" || e.sorte === "camion") vehiculesBalle.push(e);
+    for (const e of monde.engins) if (e.sorte === "jeep" || e.sorte === "camion" || e.sorte === "dca") vehiculesBalle.push(e); // (demande 113 : le camion antiaérien est blindé aussi)
     for (const v of monde.vehicules || []) if (v.sorte === "camion") vehiculesBalle.push(v); // (étape 71 : le camion est blindé)
     return vehiculesBalle;
   }

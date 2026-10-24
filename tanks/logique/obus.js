@@ -100,7 +100,7 @@ Tanks.Obus = (function () {
     }
   }
   // Tous les véhicules qu'un projectile peut toucher : les tanks, le 4x4 (étape 61), et les bateaux (étape 62).
-  // (étape 63 : et les sous-marins ; étape 64 : et la DCA)
+  // (étape 63 : et les sous-marins ; étape 64 : et la DCA, devenue le camion antiaérien à la demande 113)
   // (étape 72 : rangés dans une liste réutilisée)
   const listeVehicules = [], listeSouffle = [];
   function vehicules(monde, l) {
@@ -250,11 +250,13 @@ Tanks.Obus = (function () {
       }
       // un avion ? (étape 64) le missile le touche à moins de 5 m ; le flak éclate à moins de 9 m
       if (!fini && (p.sorte === "missile" || p.sorte === "flak") && p.y > T.hauteur(p.x, p.z) + 8) {
-        for (const a of Tanks.Avions.enLAir(monde)) {
+        // (demande 113 : le flak du camion antiaérien ennemi peut aussi abattre ton Tigre et ton drone)
+        for (const a of p.sorte === "flak" ? Tanks.AntiAerien.ciel(monde) : Tanks.Avions.enLAir(monde)) {
           if (a.equipe === p.tireur.equipe) continue;
           const d = Math.hypot(a.x - p.x, a.y - p.y, a.z - p.z);
           if (d < (p.sorte === "flak" ? R.fusee : 5)) {
             abimer(a, p.sorte === "flak" ? R.degatsAvion : 1, p.tireur, p.x, p.y, p.z, p.vx, p.vz, ev);
+            if (p.sorte === "flak") Tanks.AntiAerien.touche(p.tireur, a, ev); // (le tireur le voit : « Touché ! »)
             fini = ["impact", { x: p.x, y: p.y, z: p.z, sur: "air", sorte: p.sorte }];
             break;
           }

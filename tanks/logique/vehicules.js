@@ -87,17 +87,17 @@ Tanks.Vehicules = (function () {
     const voulu = e.sorte === "moto" ? Math.max(-R.penche, Math.min(R.penche, equilibre)) : -Math.max(-1, Math.min(1, equilibre)) * R.penche;
     e.roulis += (voulu - e.roulis) * Math.min(1, dt * 5);
     // (il lève un peu le nez quand il accélère fort, et le baisse quand il freine)
-    e.tangage += ((I.avancer && e.vitesse < R.vitesseMax * 0.8 ? 0.03 : I.reculer && e.vitesse > 1 ? -0.03 : 0) * (e.sorte === "camion" ? 0.3 : 1) - e.tangage) * Math.min(1, dt * 4);
+    e.tangage += ((I.avancer && e.vitesse < R.vitesseMax * 0.8 ? 0.03 : I.reculer && e.vitesse > 1 ? -0.03 : 0) * (R.lourd ? 0.3 : 1) - e.tangage) * Math.min(1, dt * 4);
     // 4. les bords, les murs, les arbres, les tanks
     const lim = T.demi - C.monde.bord;
     e.x = Math.max(-lim, Math.min(lim, e.x));
     e.z = Math.max(-lim, Math.min(lim, e.z));
-    if (T.repousser(e, R.rayon)) e.vitesse *= e.sorte === "camion" ? 0.9 : 0.7;
+    if (T.repousser(e, R.rayon)) e.vitesse *= R.lourd ? 0.9 : 0.7;
     for (const a of T.arbresAutour(e.x, e.z, R.rayon + 1, prochesArbres)) {
       if (a.ecrase) continue;
       const d = Math.hypot(a.x - e.x, a.z - e.z), min = R.rayon * 0.8 + a.r;
       if (d >= min || d < 0.001) continue;
-      if (e.sorte === "camion" && Math.abs(e.vitesse) > 6) {
+      if (R.lourd && Math.abs(e.vitesse) > 6) { // (le camion, et le camion antiaérien de la demande 113 : lourds)
         a.ecrase = true;
         a.angleChute = e.angle;
         if (e.pilote) ev.push(["arbre-ecrase", { nom: "toi", vitesse: e.vitesse }]);
@@ -131,6 +131,7 @@ Tanks.Vehicules = (function () {
   // Une balle touche le pilote d'une moto ou d'un quad : à 0, il tombe (l'engin est hors de combat, couché par terre).
   function blesserPilote(v, degats, tireur, ev) {
     if (v.detruit) return;
+    if (v.genre === "antiaerien") return void Tanks.AntiAerien.blesserTireur(v, degats, tireur, ev); // (demande 113 : la balle touche le tireur du canon)
     v.balles = Math.max(0, v.balles - degats);
     v.touche = 0;
     ev.push(["soldat-touche", { cible: v, tireur, vie: v.balles, vieMax: v.ia ? G[v.sorte].balles : G[v.sorte].ballesJoueur, par: "balle" }]);
@@ -147,6 +148,7 @@ Tanks.Vehicules = (function () {
     l.length = 0;
     for (const v of monde.vehicules || []) if (!v.detruit && v.sorte !== "camion") l.push(v);
     for (const e of monde.engins) if ((e.sorte === "moto" || e.sorte === "quad") && e.pilote && !e.detruit) l.push(e);
+    for (const e of monde.engins) if (e.genre === "antiaerien" && Tanks.AntiAerien.tireurExpose(e)) l.push(e); // (demande 113 : le tireur assis au canon, à découvert)
     return l;
   }
 
@@ -440,5 +442,5 @@ Tanks.Vehicules = (function () {
     }
   }
 
-  return { creer, avancer, conduire, rouler, legers, blesserPilote, decharger, remplirAuParking, SORTES, nouveau, garerAuCamp }; // (étape 88 : nouveau, garerAuCamp pour la campagne)
+  return { creer, avancer, conduire, rouler, legers, blesserPilote, decharger, remplirAuParking, SORTES, nouveau, garerAuCamp, decider }; // (demande 113 : decider, pour le camion antiaérien ennemi) // (étape 88 : nouveau, garerAuCamp pour la campagne)
 })();
