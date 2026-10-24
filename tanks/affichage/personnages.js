@@ -269,7 +269,7 @@ Tanks.EcranPersonnages = (function () {
       const pr = Math.min(2, devicePixelRatio || 1);
       if (ST.toile.width !== Math.round(l * pr) || ST.toile.height !== Math.round(h * pr)) ST.rendu.setPixelRatio(pr), ST.rendu.setSize(l, h, false);
       ST.cam.aspect = l / h;
-      const tv = Math.tan((ST.cam.fov * Math.PI) / 360), d = (1.15 / tv) * ST.zoom * Math.max(1, 0.75 / ST.cam.aspect), y = 0.92 + Math.max(0, 1 - ST.zoom) * 0.9; // (en zoomant, on monte vers le visage)
+      const tv = Math.tan((ST.cam.fov * Math.PI) / 360), d = (1.4 / tv) * ST.zoom * Math.max(1, 0.75 / ST.cam.aspect), y = 0.92 + Math.max(0, 1 - ST.zoom) * 1.25; // (en zoomant, on monte vers le visage)
       // (le soldat regarde vers x+ : la caméra part de 3/4 face)
       ST.cam.position.set(Math.cos(ST.lacet) * Math.cos(ST.tangage) * d, y + Math.sin(ST.tangage) * d, Math.sin(ST.lacet) * Math.cos(ST.tangage) * d);
       ST.cam.lookAt(0, y, 0);

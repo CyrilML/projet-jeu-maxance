@@ -44,7 +44,7 @@ Tanks.Accueil = (function () {
       '<button class="a-jouer a-mode a-boutique" data-accueil="boutique">🛒 BOUTIQUE<small>armes · skins · packs · avancements</small></button>' + // (livre n° 28)
       '<button class="a-jouer a-mode a-personnages" data-accueil="personnages">🎖️ PERSONNAGES<small>les soldats en 3D · classes · tenues</small></button>' + // (demande 114)
       '<button class="a-film" data-accueil="film" title="La bande-annonce du jeu (demande 101)">🎬 Bande-annonce</button>' +
-      '<a class="a-carnet" href="../index.html#etape113">📓 Le carnet</a>' +
+      '<a class="a-carnet" href="../index.html#etape114">📓 Le carnet</a>' +
       '<button class="a-reglages" data-accueil="reglages" title="Les réglages du jeu (demande 114)">⚙️ Réglages</button>' +
       "</div>" +
       '<div class="a-coins" title="Gagnés à chaque mission réussie de la campagne (demande 101) et en bataille libre (livre n° 22)">🪙 <b></b> Battle Coins</div>' +

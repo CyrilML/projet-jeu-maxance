@@ -1,6 +1,6 @@
 # Demande n° 114 : des personnages plus beaux, leur vitrine, et un peu de sang (avec un bouton)
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée (tanks version 58).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -18,6 +18,6 @@ dans les options. Pas de flaques, pas de blessures dessinées.
 - Option « Sang (léger) » dans les réglages, sauvegardée, éteinte au départ.
 
 ## ✅ Critères de réussite
-- [ ] Tanks « version 58 ».
-- [ ] Des soldats plus beaux. [ ] La vitrine des personnages.
-- [ ] L'option sang : éteinte au départ ; allumée, un petit nuage rouge à l'impact.
+- [x] Tanks « version 58 ».
+- [x] Des soldats plus beaux. [x] La vitrine des personnages.
+- [x] L'option sang : éteinte au départ ; allumée, un petit nuage rouge à l'impact.

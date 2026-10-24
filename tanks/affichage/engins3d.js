@@ -23,6 +23,12 @@
 // Demande 88 : le soldat ne tient plus « le » fusil de tout le monde, mais SA vraie arme, fabriquée par l'armurier
 // (affichage/armes3d.js) : la tienne avec ses pièces, et pour l'ordinateur une arme tirée au sort selon son camp. Ses
 // mains vont sur la poignée et le garde-main de CETTE arme, et le haut de son corps tourne un peu (épaule gauche en avant).
+// ✍️ Demande 114 (« fais des maquettes pour les personnages ») : chaque CLASSE se reconnaît à son équipement (l'Assaut et
+// son gilet lourd, l'Ingénieur et sa ceinture à outils, l'Éclaireur et son chapeau de brousse, le Médecin et ses brassards
+// à croix rouge), les visages changent (5 barbes), les doigts se replient sur l'arme ; et les gestes sont plus naturels :
+// les hanches roulent à chaque pas, l'arme se balance en courant, la position de tir (genoux un peu pliés, la joue sur la
+// crosse), le bras libre qui se balance avec un pistolet. Toujours 2 dessins par soldat ; la vitrine des personnages
+// (affichage/personnages.js) montre les mêmes maquettes.
 // Tout est construit « nez vers x+ », posé au sol (y = 0). Ce fichier ne connaît pas les règles du jeu.
 
 window.Tanks = window.Tanks || {};

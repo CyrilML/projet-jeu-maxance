@@ -234,6 +234,7 @@
       <a href="#etape111">Étape 111</a>
       <a href="#etape112">Étape 112</a>
       <a href="#etape113">Étape 113</a>
+      <a href="#etape114">Étape 114</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5715,6 +5716,45 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape114">
+      <h2>🎖️ Étape 114 : des soldats plus beaux, la vitrine des personnages, et l'option sang <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les soldats sont refaits (visages, équipement de chaque classe, mouvements), une vitrine 🎖️ PERSONNAGES les montre en 3D, et un réglage ⚙️ permet d'allumer un peu de sang (éteint au départ). <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/114-personnages-et-sang.md</code>.</p>
+          <ul>
+            <li>✍️ « Fais des maquettes pour les personnages. » → « Les deux » : des soldats plus beaux ET une vitrine.</li>
+            <li>✍️ « Un peu le sang, comme sur Battlefield ? » → Cyril : « Oui, avec un bouton ».</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 58 ».</li>
+            <li>☐ Chaque classe se reconnaît : Assaut (gilet lourd), Ingénieur (ceinture d'outils, lampe frontale), Éclaireur (chapeau de brousse, jumelles), Médecin (brassards à croix rouge).</li>
+            <li>☐ Des barbes, des visages différents ; les hanches et les bras bougent en marchant ; une vraie position de tir en visant.</li>
+            <li>☐ Accueil → 🎖️ PERSONNAGES : 22 fiches, le modèle 3D qui tourne, les poses 1 à 5.</li>
+            <li>☐ Accueil → ⚙️ Réglages → « 🩸 Sang (léger) » : éteint au départ ; allumé, un petit nuage rouge quand une balle touche un soldat.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🏗️ Une maquette se fabrique une fois</h3>
+      <p>Chaque forme de soldat (camp × classe × tenue × niveau de détail) est fabriquée la première fois qu'on en a besoin (environ 20 ms), puis réutilisée pour tous les soldats pareils. Toutes ses pièces sont « soudées » en 2 dessins seulement : c'est pour ça que 74 soldats ne font pas ramer le jeu.</p>
+      <h3>⚙️ Un réglage sauvegardé</h3>
+      <p>Le réglage du sang est rangé dans ta sauvegarde (version 18). Comme c'est une nouvelle case, les anciennes sauvegardes reçoivent « sang : éteint » au moment de la conversion.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot : la ligne « maquettes des soldats (114) » : combien de formes fabriquées, et en combien de millisecondes.</li>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>vitrinePersonnages</code> et change la description d'un personnage.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Le sang est-il allumé au départ ? <span class="petit">(non, il faut l'allumer dans ⚙️ Réglages)</span></li>
+            <li>Comment reconnaître le médecin ? <span class="petit">(les brassards et les croix rouges)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7165,6 +7205,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-113" data-cle="appris-113" placeholder="Ex. : …"></textarea>
         <label for="idees-113"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-113" data-cle="idees-113" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 114 · des soldats plus beaux, la vitrine des personnages, l'option sang <span class="petit">· 24 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/affichage/engins3d.js</code>, <code>tanks/affichage/personnages.js</code>, <code>tanks/logique/reglages.js</code>, <code>donnees/sauvegarde.js</code> (version 18), <code>tirs.js</code>, <code>config.js</code>.</p>
+        <p class="petit">✍️ Maxance a demandé : des maquettes pour les personnages, et un peu de sang comme sur Battlefield (Cyril : avec un bouton).</p>
+        <label for="appris-114"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-114" data-cle="appris-114" placeholder="Ex. : …"></textarea>
+        <label for="idees-114"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-114" data-cle="idees-114" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
