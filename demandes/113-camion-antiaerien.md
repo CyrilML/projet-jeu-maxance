@@ -1,6 +1,6 @@
 # Demande n° 113 : le camion antiaérien
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée (tanks version 57).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -16,6 +16,6 @@ camion, et quelqu'un d'autre tire avec le canon antiaérien. »
 - Tout se voit sous le capot (cible du tireur, tirs, avions abattus).
 
 ## ✅ Critères de réussite
-- [ ] Tanks « version 57 ».
-- [ ] Je conduis le camion ; le tireur abat les avions tout seul.
-- [ ] Le camion ennemi tire sur mes avions et hélicos.
+- [x] Tanks « version 57 ».
+- [x] Je conduis le camion ; le tireur abat les avions tout seul.
+- [x] Le camion ennemi tire sur mes avions et hélicos.

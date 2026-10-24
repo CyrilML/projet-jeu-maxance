@@ -233,6 +233,7 @@
       <a href="#etape110">Étape 110</a>
       <a href="#etape111">Étape 111</a>
       <a href="#etape112">Étape 112</a>
+      <a href="#etape113">Étape 113</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5678,6 +5679,42 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape113">
+      <h2>🚛 Étape 113 : le camion antiaérien <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Le canon antiaérien fixe est remplacé par un camion : tu conduis, et un tireur assis au canon abat les avions et les hélicos ennemis tout seul. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/113-camion-antiaerien.md</code>.</p>
+          <ul>
+            <li>✍️ « Le canon antiaérien, il est mauvais. Je ne connais pas ça. Je veux que tu fasses un camion. Toi, tu pilotes le camion, et quelqu'un d'autre tire avec le canon antiaérien. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 57 ».</li>
+            <li>☐ Au parking de ta base : le camion antiaérien. <strong>E</strong> : tu conduis.</li>
+            <li>☐ Le tireur vise et tire tout seul sur les avions et hélicos ennemis (carré rouge sur sa cible, point jaune là où il vise). Il parle à la radio : « Avion ennemi à deux heures, j'engage ! ».</li>
+            <li>☐ <strong>F</strong> : tu prends le canon (← → tourner, ↑ ↓ lever, Espace tirer) ; <strong>F</strong> encore : retour au volant.</li>
+            <li>☐ L'ennemi a aussi son camion : attention à ton Tigre, ton Rafale et ton drone !</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🎯 Tirer là où l'avion VA être</h3>
+      <p>Un avion va très vite, et l'obus met du temps à monter jusqu'à lui. Si le tireur visait l'avion, l'obus arriverait trop tard, derrière lui. Alors il calcule : « l'obus mettra 1,5 s ; en 1,5 s, l'avion aura avancé de tant de mètres » et il vise devant l'avion. Ça s'appelle « l'avance » (environ 7° dans le test).</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot : la cible du tireur, sa distance, l'angle d'avance, et le nombre de tirs, de touches et d'avions abattus.</li>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>erreur</code> dans la partie antiaérienne : rends le tireur ennemi moins précis si c'est trop dur.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Pourquoi le tireur vise-t-il devant l'avion ? <span class="petit">(l'avion avance pendant que l'obus monte)</span></li>
+            <li>Quelle touche change de siège ? <span class="petit">(F)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7119,6 +7156,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-112" data-cle="appris-112" placeholder="Ex. : …"></textarea>
         <label for="idees-112"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-112" data-cle="idees-112" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 113 · le camion antiaérien <span class="petit">· 24 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/logique/antiaerien.js</code>, <code>engins.js</code>, <code>vehicules.js</code>, <code>affichage/engins3d.js</code>, <code>vehicules3d.js</code>, <code>config.js</code>.</p>
+        <p class="petit">✍️ Maxance a demandé : un camion antiaérien qu'on conduit pendant qu'un autre tire.</p>
+        <label for="appris-113"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-113" data-cle="appris-113" placeholder="Ex. : …"></textarea>
+        <label for="idees-113"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-113" data-cle="idees-113" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
