@@ -316,10 +316,10 @@ Tanks.Scene = (function () {
   // ------------------------------------------------------------------ étape 61 : les soldats et les engins
   function soldat3d(s) {
     let o = dessinsSoldats.get(s);
-    const camp = campDe(s.equipe, s.joueur ? porte().tenue : null);
-    if (o && o.camp !== camp) (scene.remove(o.g), (o = null));
+    const camp = campDe(s.equipe, s.joueur ? porte().tenue : null), classe = Tanks.Engins3D.classeDe(s); // (demande 114 : sa classe se voit)
+    if (o && (o.camp !== camp || o.classe !== classe)) (scene.remove(o.g), (o = null));
     if (!o) {
-      o = Tanks.Engins3D.soldat(camp, s.joueur);
+      o = Tanks.Engins3D.soldat(camp, s.joueur, classe);
       o.camp = camp;
       scene.add(o.g);
       dessinsSoldats.set(s, o);

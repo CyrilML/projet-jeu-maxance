@@ -1793,6 +1793,9 @@ Tanks.Armes3D = (function () {
       id = enMain.id;
       pieces = enMain.pieces;
       lg = s.gadget && s.gadget.id === "lanceGrenades";
+    } else if (s.armeVitrine) { // (demande 114) un personnage de la vitrine : l'arme de sa classe, avec ses pièces d'origine
+      id = s.armeVitrine;
+      pieces = null;
     } else {
       const c = armeIA(s.nom || "?", s.equipe, !!s.roquettesIA || s.arme === "roquettes", !!s.tireurElite);
       id = c.id;

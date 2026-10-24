@@ -50,12 +50,15 @@
 //     « boostCoins » = les batailles qui restent avec un avancement × 2 ; « achats » = la liste de tes achats ; « gagnes » =
 //     les Battle Coins gagnés en bataille libre). Les armes et les pièces achetées vont dans progression.cadeaux (comme
 //     les cadeaux de la version 13). Une ancienne version garde tout, avec une boutique vide (rien acheté, rien porté).
+//   18 (demande 114 : ⚙️ les réglages) : + reglages (les interrupteurs du panneau ⚙️ Réglages de l'accueil : « sang » =
+//     le petit nuage rouge quand une balle touche un soldat, ✍️ décidé par Cyril : ÉTEINT au départ). Une ancienne version
+//     garde tout, avec les réglages de départ (le sang éteint).
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 17; // (étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents ; livre n° 6 : + l'arme bonus ; livre n° 28 : + la boutique)
+  const VERSION = 18; // (demande 114 : + les réglages ; étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents ; livre n° 6 : + l'arme bonus ; livre n° 28 : + la boutique)
   const radio = Tanks.Evenements;
 
   function vide() {
@@ -65,7 +68,14 @@ Tanks.Sauvegarde = (function () {
       campagne: { debloque: 1, chapitres: {}, enCours: null, difficulte: Tanks.CONFIG.campagne.difficulteDepart }, // (étape 88 ; demande 90 : + difficulte)
       equipement: equipementDeDepart(), // (étape 77)
       progression: { xp: 0, armes: {}, cadeaux: { armes: [], pieces: {} }, parties: 0 }, // (demande 97)
-      boutique: boutiqueVide() }; // (livre n° 28)
+      boutique: boutiqueVide(), // (livre n° 28)
+      reglages: reglagesDeDepart() }; // (demande 114)
+  }
+  // (demande 114) les réglages au départ : ceux de config.js (« reglages.liste » : le sang ÉTEINT)
+  function reglagesDeDepart() {
+    const L = Tanks.CONFIG.reglages.liste, r = {};
+    for (const k in L) r[k] = L[k].depart;
+    return r;
   }
   // (livre n° 28) la boutique au départ : rien d'acheté, rien de porté
   function boutiqueVide() {
@@ -168,12 +178,12 @@ Tanks.Sauvegarde = (function () {
       if (brut) {
         const ancienne = JSON.parse(brut);
         const neuve = vide();
-        donnees = Object.assign(neuve, ancienne, { version: VERSION, equipement: fusionner(neuve.equipement, ancienne.equipement), campagne: fusionner(neuve.campagne, ancienne.campagne), progression: fusionner(neuve.progression, ancienne.progression), boutique: fusionner(neuve.boutique, ancienne.boutique) }); // (livre n° 28 : + la boutique) // (étape 88 : la campagne aussi ; demande 97 : la progression)
+        donnees = Object.assign(neuve, ancienne, { version: VERSION, equipement: fusionner(neuve.equipement, ancienne.equipement), campagne: fusionner(neuve.campagne, ancienne.campagne), progression: fusionner(neuve.progression, ancienne.progression), boutique: fusionner(neuve.boutique, ancienne.boutique), reglages: fusionner(neuve.reglages, ancienne.reglages) }); // (demande 114 : + les réglages) // (livre n° 28 : + la boutique) // (étape 88 : la campagne aussi ; demande 97 : la progression)
         if ((ancienne.version || 1) < 13) convertir13(donnees, ancienne); // (demande 97)
         const coins = (ancienne.version || 1) < 14 ? convertir14(donnees) : 0; // (demande 101)
         if ((ancienne.version || 1) < 15) convertir15(donnees); // (demande 102)
         const bonus = (ancienne.version || 1) < 16 ? convertir16(donnees) : []; // (livre n° 6)
-        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins, bonus, boutique: (ancienne.version || 1) < 17 }); // (livre n° 28)
+        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins, bonus, boutique: (ancienne.version || 1) < 17, reglages: (ancienne.version || 1) < 18 }); // (livre n° 28 ; demande 114)
       }
     } catch (e) {
       donnees = vide();

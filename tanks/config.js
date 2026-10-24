@@ -1890,13 +1890,39 @@ Tanks.CONFIG.realisme = Object.assign(Tanks.CONFIG.realisme || {}, {
     ia: { chargeur: 20, rechargement: 2.6 },
     // LES GESTES (l'affichage) : en combien de temps on passe d'une position à l'autre (s : plus petit = plus vif) ;
     // le recul de l'arme à chaque tir (m vers l'arrière, rad vers le haut) ; la longueur d'une foulée (m, 2 pas).
-    gestes: { souplesse: 0.18, reculArriere: 0.04, reculHaut: 0.07, foulee: 2.4, regardAutour: 0.35 },
+    gestes: { souplesse: 0.18, reculArriere: 0.04, reculHaut: 0.07, foulee: 2.4, regardAutour: 0.35,
+      // ✍️ (demande 114, « des animations plus naturelles ») balancement : m de balancement de l'arme (et donc des bras) à
+      // chaque pas quand il court l'arme basse ; brasLibre : m de balancement du bras gauche, LIBRE, quand il court avec
+      // un pistolet ; roulis : rad de roulis des hanches à chaque pas ; joue : rad de la tête qui se penche vers la crosse
+      // en visant ; flechi : rad des genoux un peu pliés quand il vise debout (la position de tir) ; penche : rad du buste
+      // penché vers l'avant en visant.
+      balancement: 0.05, brasLibre: 0.16, roulis: 0.035, joue: 0.16, flechi: 0.22, penche: 0.07 },
     // (demande 93) LE VISAGE (affichage/engins3d.js, la tête sculptée) : grain : les nuances au hasard de la peau (0 = toute
     // d'une couleur) ; rougeur : les joues et le nez plus roses ; barbe : la force de la barbe de 3 jours (0 = rasé de près) ;
     // poils : combien de petits poils le tailleur sème dans la barbe (0 à 1) ; lunettes : une par soldat, à tour de rôle
     // ("casque" = relevées sur le casque, "soleil" = lunettes de soleil, "masque" = le masque de protection sur les yeux) ;
     // casque : sa hauteur (m au-dessus du cou) et sa pente (rad : posé un peu en arrière).
-    visage: { grain: 0.07, rougeur: 0.1, barbe: 0.24, poils: 0.32, lunettes: ["casque", "soleil", "masque", "casque"], casque: { hauteur: 0.176, pente: 0.09 } },
+    visage: { grain: 0.07, rougeur: 0.1, barbe: 0.24, poils: 0.32, lunettes: ["casque", "soleil", "masque", "casque"], casque: { hauteur: 0.176, pente: 0.09 },
+      // ✍️ (demande 114, « des maquettes pour les personnages ») LES BARBES changent d'un soldat à l'autre (selon sa peau et
+      // sa classe) : force = × « barbe » (0 = rasé de près) ; haut : jusqu'où elle monte sur les joues (m sous les yeux) ;
+      // pleine : une vraie barbe en volume sur le menton ; moustache, bouc : seulement là.
+      barbes: [
+        { nom: "3 jours", force: 1, haut: 0.03 },
+        { nom: "rasé de près", force: 0.25, haut: 0.03 },
+        { nom: "barbe pleine", force: 3.2, haut: 0.012, pleine: true },
+        { nom: "moustache", force: 2.6, haut: 0.03, moustache: true },
+        { nom: "bouc", force: 2.8, haut: 0.03, bouc: true },
+      ] },
+    // ✍️ (demande 114) LES MAQUETTES DES SOLDATS : chaque CLASSE se reconnaît à son équipement (affichage/engins3d.js) :
+    //   assaut : le gilet LOURD (épaulières, plaques de côté, plus de porte-chargeurs, la protection du bas-ventre) ;
+    //   ingenieur : la ceinture à OUTILS (clé, marteau, pince), le rouleau d'outils et le câble sur le sac ;
+    //   eclaireur : le CHAPEAU de brousse (« boonie ») à la place du casque, des lanières de camouflage, les jumelles ;
+    //   medecin : le BRASSARD BLANC à CROIX ROUGE sur les deux bras, la croix sur le sac, les poches de soins rouges.
+    // Un soldat de l'ordinateur prend la classe qui va avec son rôle : un médecin (ou un infirmier de la radio) → medecin ;
+    // un lance-roquettes ou un mécanicien → ingenieur ; un tireur d'élite → eclaireur ; les autres → assaut.
+    // tete : le nombre de « tranches » de la tête sculptée (de près ; avant : 30 × 22) : un peu moins, pour payer les
+    // nouveaux détails sans faire ramer.
+    maquettes: { classes: ["assaut", "ingenieur", "eclaireur", "medecin"], croix: "#c81e24", brassardSoin: "#e9e6de", outils: "#9a9a92", tete: [26, 18] },
   },
   // ------------------------------------------------------------------ LE SOL
   sol: {
@@ -2891,6 +2917,55 @@ Tanks.CONFIG.boutique = {
     for (const schema in A) A[schema]["bleus~" + p.id] = Object.assign({}, A[schema].bleus, { fond: p.camouflage[0], taches: p.camouflage.slice(1, 4), ventre: A[schema].bleus.ventre ? p.ventre : null });
   }
 })();
+
+// ================================================================== demande 114 : ⚙️ LES RÉGLAGES (et 🩸 le sang, avec un bouton)
+// ✍️ « Quand fais-tu un peu le sang, comme sur Battlefield ? » → ✍️ Cyril (le producteur) a choisi « Oui, avec un
+// bouton » : ÉTEINT au départ, à allumer dans les ⚙️ Réglages de l'accueil. Allumé : quand une balle touche un soldat, un
+// PETIT NUAGE ROUGE à l'endroit touché, qui disparaît vite. Rien d'autre : pas de flaques, pas de blessures dessinées.
+// Les réglages sont rangés dans la sauvegarde (donnees/sauvegarde.js, « reglages ») ; logique/reglages.js les change.
+//   liste : chaque réglage : nom, icone, depart (sa valeur au tout début), texte (l'explication sous l'interrupteur) ;
+//   sang : le nuage rouge : particules (combien d'autocollants par balle), vie (s avant qu'il ait disparu), taille (m au
+//     début et à la fin), vitesse (m/s : il gicle un peu dans le sens de la balle), couleur [r, v, b], opacite (0 à 1).
+Tanks.CONFIG.reglages = {
+  liste: {
+    sang: { nom: "Sang (léger)", icone: "🩸", depart: false, texte: "Un petit nuage rouge quand une balle touche un soldat, qui disparaît vite. Pas de flaques, pas de blessures." },
+  },
+  sang: { particules: 4, vie: 0.4, taille: [0.14, 0.55], vitesse: 1.6, couleur: [0.5, 0.03, 0.03], opacite: 0.7 },
+};
+
+// ================================================================== demande 114 : 🎖️ LA VITRINE DES PERSONNAGES
+// ✍️ « Fais des maquettes pour les personnages » → ✍️ « Les deux » : des soldats plus beaux ET une vitrine où l'on voit
+// chaque personnage en 3D, qu'on fait tourner. On y entre par la porte 🎖️ PERSONNAGES de l'accueil (affichage/personnages.js).
+//   vue : la caméra du studio : depart (rad : de 3/4 face), hauteur (rad), zoomMin, zoomMax (× la distance), reprise (s
+//     sans toucher avant qu'il se remette doucement de face), vitesse (rad/s quand il tourne tout seul) ;
+//   poses : les boutons sous le personnage (repos, en joue, marche, course, accroupi) ; vitesses : m/s de la marche et de la course ;
+//   classes : pour chaque classe, l'arme qu'il tient dans la vitrine et son ÉQUIPEMENT (ce qu'on voit sur la maquette) ;
+//   tenues : la classe qui porte chaque tenue de la boutique dans la vitrine ;
+//   campagne : chaque personnage de « campagne.personnages » : sa maquette (camp : le camp à dessiner, avec sa tenue ;
+//     classe ; peau : 0 à 3 ; barbe : un numéro de « realisme.soldats.visage.barbes ») ou null (pas de soldat : son
+//     portrait seulement), son arme, et une phrase pour le présenter.
+Tanks.CONFIG.vitrinePersonnages = {
+  vue: { depart: 0.55, hauteur: 0.1, zoomMin: 0.35, zoomMax: 1.7, reprise: 5, vitesse: 0.25 },
+  poses: [["repos", "🧍 Repos"], ["joue", "🎯 En joue"], ["marche", "🚶 Marche"], ["course", "🏃 Course"], ["accroupi", "🧎 Accroupi"]],
+  vitesses: { marche: 1.5, course: 5 },
+  classes: {
+    assaut: { arme: "ar4", equipement: ["Casque à housse camouflée, support de jumelles de nuit, balise infrarouge", "Gilet LOURD : épaulières, plaques de côté, col protège-cou", "5 porte-chargeurs, poche à grenade, protection du bas-ventre", "Sac à dos, radio et son antenne, gourde, duvet roulé", "Genouillères, coudières, gants coqués, bottes lacées"] },
+    ingenieur: { arme: "rpg7", equipement: ["Ceinture à OUTILS : clé à molette, marteau, pochette de la pince", "Rouleau d'outils sous le sac, câble enroulé", "Écusson jaune et noir du génie, lampe frontale sur la bretelle", "Casque, gilet porte-plaques, radio, gants et genouillères"] },
+    eclaireur: { arme: "m110", equipement: ["Chapeau de BROUSSE (boonie) à bord tombant, avec ses lanières", "Jumelles dans leur poche, sur la poitrine", "Lanières de camouflage sur les épaules et le sac", "Gilet léger, radio, genouillères pour tirer couché"] },
+    medecin: { arme: "mp5", equipement: ["BRASSARD BLANC à CROIX ROUGE sur chaque bras", "Croix rouge sur le casque et sur le sac", "Grosse poche de soins rouge, poche du garrot", "Gilet porte-plaques (touche 6 : les plaquettes)"] },
+  },
+  tenues: { commandoNuit: "assaut", forcesSpeciales: "assaut", desertTempete: "assaut", neige: "eclaireur", officier: "assaut", ghillie: "eclaireur" },
+  campagne: {
+    hargrave: { modele: { camp: "bleus~officier", classe: "assaut", peau: 0, barbe: 3 }, arme: "scarh", texte: "Le chef de l'Alliance de Valdrie. Depuis le QG Rempart, il donne les ordres de chaque chapitre à la radio." },
+    volk: { modele: { camp: "bleus", classe: "assaut", peau: 1, barbe: 1 }, arme: "famas", texte: "La cheffe de l'escouade Lion 2 : sur le terrain, elle avance avec toi et te dit où aller." },
+    dorn: { modele: { camp: "bleus", classe: "ingenieur", peau: 2, barbe: 2 }, arme: "m4courte", texte: "Le chef de char du Marteau 1 : il commande les blindés qui t'accompagnent, et sait réparer un tank sous le feu." },
+    faucon: { modele: { camp: "bleus~commandoNuit", classe: "assaut", peau: 3, barbe: 0 }, arme: "mp7", texte: "Le pilote d'hélicoptère : il dépose les soldats à la corde et appuie l'attaque avec ses roquettes." },
+    tonnerre: { modele: null, texte: "L'escadrille des chasseurs-bombardiers : on ne les voit que passer, très haut et très vite, quand le QG demande une frappe." },
+    moreau: { modele: { camp: "bleus~ghillie", classe: "eclaireur", peau: 0, barbe: 4 }, arme: "lapua", texte: "Le tireur d'élite de l'Alliance : caché dans sa tenue ghillie, il couvre ton avance de très loin." },
+    arnaud: { modele: null, texte: "La maire de Valcourt. Ce n'est pas une soldate (pas de maquette) : elle aide à protéger les habitants pendant les combats." },
+    varrok: { modele: { camp: "rouges", classe: "assaut", peau: 3, barbe: 2 }, arme: "ak12", texte: "Le chef du Front Écarlate. Tu n'entends que sa radio, interceptée : il menace, il ordonne, il enrage." },
+  },
+};
 
 // ================================================================== livre de demandes n° 25 : les phrases du QG à la radio
 // (« QG Rempart » parle pour ton camp ; la radio ennemie interceptée, pour le Front.) {baies} : les baies encore debout.

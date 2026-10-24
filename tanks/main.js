@@ -37,6 +37,7 @@ window.Tanks = window.Tanks || {};
   // (étape 77) le menu : il ne touche pas au monde lui-même, il fait des DEMANDES que le quartier-maître accepte
   Tanks.PleinEcran.initialiser(); // (étape 91 : ⛶ ou K)
   Tanks.Ambiance.initialiser(); // (étape 87 : le filtre « Battlefield »)
+  Tanks.EcranPersonnages.initialiser(); // (demande 114 : la vitrine des personnages, 4e porte de l'accueil)
   Tanks.EcranBoutique.initialiser(); // (livre n° 28 : la boutique, 3e porte de l'accueil ; son clavier passe AVANT celui du menu, ouvert derrière)
   Tanks.Accueil.initialiser((type) => type === "film" && monde.phase === "garage" && Tanks.Cinematique.lancer(monde, C.cinematiques.bandeAnnonce, { pour: "accueil" })); // (étape 84 : la page d'accueil, avec la musique ; demande 101 : la bande-annonce)
   Tanks.Menu.initialiser(monde, (type, valeur) => (type === "combat" ? Tanks.Monde.lancer(monde) : Tanks.Equipement.demander(monde, type, valeur)));

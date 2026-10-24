@@ -77,6 +77,7 @@ Tanks.Engins3D = (function () {
   const OT = Tanks.Outils3D;
   const matsEquipe = {};
   const PEAUX = [0xc8956c, 0xe2b896, 0x9c6b48, 0x6b4630]; // (4 couleurs de peau)
+  const MQ = () => Tanks.CONFIG.realisme.soldats.maquettes; // (demande 114 : les maquettes des classes)
   function matsSoldat(equipe) {
     if (matsEquipe[equipe]) return matsEquipe[equipe];
     const E = Tanks.CONFIG.equipes[equipe], U = Tanks.CONFIG.realisme.soldats.uniformes, UE = U[equipe] || U.bleus;
@@ -94,6 +95,9 @@ Tanks.Engins3D = (function () {
         sangle: 0x35342a, bottes: /^bleus/.test(equipe) ? 0x3e3226 : 0x8a6e4c, semelle: 0x1d1a17, gants: 0x2b2b27, protege: 0x2e3029, lacets: 0x2a241c,
         arme: 0x232528, polymere: 0x2d2c28, verre: 0x0d1418, blanc: 0xe6e1d8, pupille: 0x1c140f, sourcils: 0x3a2a1c, noir: 0x1b1c1c, radio: 0x2c2f2b,
         metal: 0x6c6c66, levres: 0x8d5a4a, olive: 0x4a5532,
+        // (demande 114) l'équipement des classes : la croix rouge et le brassard blanc du médecin, les outils de l'ingénieur
+        croix: new THREE.Color(MQ().croix).getHex(), soin: new THREE.Color(MQ().brassardSoin).getHex(), outils: new THREE.Color(MQ().outils).getHex(),
+        cuir: 0x5a3f28, bois: 0x7a5534, genie: new THREE.Color(Tanks.CONFIG.classes.ingenieur.couleur).getHex(),
         marque: new THREE.Color(E.marque).getHex(), marqueToi: new THREE.Color(E.marque).multiplyScalar(1.35).getHex(),
         casqueBord: new THREE.Color(E.camouflage[2]).getHex(), tenue: coul(UE.fond),
       },
@@ -161,14 +165,16 @@ Tanks.Engins3D = (function () {
   // secours, la poche de vidage ; le col de la veste ; le casque avec son contrepoids, le micro du casque radio ; les
   // lèvres, les coques des gants. Et le VISAGE est peint : les yeux un peu creusés, les joues plus roses, la barbe de 3 jours.
   // Chaque pièce dit aussi sa MATIÈRE (la peau, le nylon, le cuir…) : le tailleur (affichage/uniformes.js) s'en sert.
-  function pieces(equipe, detail, peau, joueur) {
+  // ✍️ (demande 114) classe : "assaut", "ingenieur", "eclaireur" ou "medecin" (son équipement à lui, voir plus bas,
+  // « l'équipement de sa classe ») ; rien : le soldat de base (les pilotes, les passagers, les silhouettes).
+  function pieces(equipe, detail, peau, joueur, classe, barbe) {
     const K = matsSoldat(equipe).couleurs, L = [], s = detail ? 12 : 7;
     const p = (osNom, geo, x, y, z, couleur, rx, ry, rz) => L.push({ os: osNom, geo, x, y, z, couleur, rx: rx || 0, ry: ry || 0, rz: rz || 0 });
     const pc = (osNom, geo, x, y, z, couleur, rx, ry, rz) => p(osNom, geo, x, y, z, couleur, rx, ry, rz);
     const dernier = () => L[L.length - 1];
     const peint = (f) => (dernier().peint = f); // (des nuances peintes sur la pièce, selon la place de chaque point)
     // les matières (1 = la peau, 2 = le gilet à sangles MOLLE, 3 = le cuir et le caoutchouc, 4 = le nylon uni)
-    L.matieres = new Map([[peau, 1], [K.sac, 4], [K.rabat, 4], [K.sangle, 4], [K.radio, 4], [K.gilet, 2], [K.bottes, 3], [K.semelle, 3], [K.gants, 3], [K.protege, 3], [K.lacets, 3]]);
+    L.matieres = new Map([[peau, 1], [K.sac, 4], [K.rabat, 4], [K.sangle, 4], [K.radio, 4], [K.gilet, 2], [K.bottes, 3], [K.semelle, 3], [K.gants, 3], [K.protege, 3], [K.lacets, 3], [K.soin, 4], [K.croix, 4], [K.cuir, 3]]);
     const anneau = (r, e, n) => new THREE.TorusGeometry(r, e, 4, n || (detail ? 14 : 8));
     // les jambes (0 : gauche, z < 0 ; 1 : droite)
     for (const k of [0, 1]) {
@@ -231,14 +237,14 @@ Tanks.Engins3D = (function () {
       pc("dos", galet(0.05, 0.1, 0.07, 0.4, 6), -0.15, 0.04, -0.07, K.sac); // la gourde
     }
     // la tête (demande 93 : une TÊTE SCULPTÉE, voir « tete » plus bas)
-    tete(pc, peint, dernier, K, peau, detail, joueur);
+    tete(pc, peint, dernier, K, peau, detail, joueur, classe, barbe);
     // les bras (0 : droit, z > 0 ; 1 : gauche)
     for (const k of [0, 1]) {
       const cote = k ? -1 : 1, e = "epaule" + k, c = "coude" + k;
       pc(e, galet(0.135, 0.125, 0.135, 0.7, s), 0, -0.02, 0, "tenue"); // l'épaule
       pc(e, membre(0.068, 0.056, OS.bras + 0.02, s), 0, 0, 0, "tenue");
       pc(e, new THREE.CylinderGeometry(0.071, 0.069, 0.07, s), 0, -0.1, 0, k === 0 && joueur ? K.marqueToi : K.marque); // ✍️ le brassard
-      if (detail) pc(e, galet(0.06, 0.07, 0.025, 0.35, 6), 0.0, -0.2, cote * 0.062, "tenue"); // la poche de manche
+      if (detail && classe !== "medecin") pc(e, galet(0.06, 0.07, 0.025, 0.35, 6), 0.0, -0.2, cote * 0.062, "tenue"); // la poche de manche
       pc(c, membre(0.056, 0.043, OS.avantBras, s), 0, 0, 0, "tenue");
       if (detail) pc(c, galet(0.065, 0.075, 0.085, 0.45, 8), -0.03, -0.01, 0, K.protege); // la coudière
       if (detail) pc(c, anneau(0.046, 0.012), 0, -OS.avantBras + 0.03, 0, K.gants, Math.PI / 2); // le haut du gant
@@ -246,9 +252,74 @@ Tanks.Engins3D = (function () {
       if (detail) {
         pc(c, galet(0.028, 0.055, 0.028, 0.5, 6), 0.03, -OS.avantBras - 0.01, -cote * 0.03, K.gants, 0, 0, 0.4); // le pouce
         pc(c, galet(0.045, 0.03, 0.022, 0.4, 6), 0, -OS.avantBras - 0.055, cote * 0.043, K.protege); // la coque des articulations
+        for (const x of [-0.016, 0.016]) pc(c, galet(0.02, 0.05, 0.02, 0.5, 4), 0.006 + x, -OS.avantBras - 0.075, cote * 0.012, K.gants); // (demande 114) les doigts repliés sur l'arme
       }
     }
+    if (classe) equipementClasse(pc, K, detail, classe, s, anneau);
     return L;
+  }
+
+  // ------------------------------------------------------------------ ✍️ (demande 114) L'ÉQUIPEMENT DE SA CLASSE
+  // « Fais des maquettes pour les personnages » : on doit RECONNAÎTRE chaque classe de loin, rien qu'à sa silhouette :
+  //   - l'ASSAUT, le plus lourd : des épaulières, des plaques sur les côtés, 2 porte-chargeurs de plus, le col protège-cou
+  //     et la protection du bas-ventre ;
+  //   - l'INGÉNIEUR : une ceinture de cuir avec ses OUTILS (la clé à molette, le marteau, la pochette de la pince), le
+  //     rouleau d'outils sous le sac, le câble enroulé et l'écusson jaune et noir du génie ;
+  //   - l'ÉCLAIREUR (le tireur d'élite) : son chapeau de brousse (dans « tete »), les JUMELLES sur la poitrine, et des
+  //     lanières de camouflage sur les épaules et le sac (pour casser sa silhouette dans l'herbe) ;
+  //   - le MÉDECIN : un BRASSARD BLANC à CROIX ROUGE sur chaque bras, une grande croix sur le sac et les poches de soins.
+  // Les pièces les plus fines seulement en détail (de près) : la version simple garde ce qui se voit de loin.
+  function equipementClasse(pc, K, detail, classe, s, anneau) {
+    const B = (lx, ly, lz) => new THREE.BoxGeometry(lx, ly, lz);
+    if (classe === "assaut") {
+      for (const k of [0, 1]) pc("epaule" + k, galet(0.15, 0.12, 0.075, 0.45, detail ? 10 : 6), 0, -0.04, (k ? -1 : 1) * 0.045, K.gilet, (k ? -1 : 1) * 0.35, 0, 0); // les épaulières
+      for (const z of [-0.19, 0.19]) pc("dos", galet(0.16, 0.19, 0.04, 0.25, s), -0.01, 0.2, z, K.gilet); // les plaques de côté
+      for (const z of [-0.16, 0.16]) pc("dos", galet(0.07, 0.12, 0.07, 0.3, detail ? 8 : 5), 0.15, 0.15, z, K.gilet); // 2 porte-chargeurs de plus
+      pc("dos", galet(0.05, 0.15, 0.17, 0.35, detail ? 8 : 5), 0.135, -0.13, 0, K.gilet); // la protection du bas-ventre
+      if (detail) {
+        pc("dos", anneau(0.085, 0.028), 0.0, 0.47, 0, K.gilet, Math.PI / 2); // le col protège-cou
+        for (const z of [-0.16, 0.16]) pc("dos", galet(0.076, 0.03, 0.076, 0.3, 5), 0.152, 0.22, z, K.rabat); // leurs rabats
+      }
+    } else if (classe === "ingenieur") {
+      pc("dos", galet(0.29, 0.055, 0.4, 0.3, s), 0, -0.075, 0, K.cuir); // la ceinture à outils
+      pc("dos", B(0.02, 0.17, 0.01), 0.03, -0.17, 0.215, K.outils); // la clé à molette (le manche)…
+      pc("dos", new THREE.TorusGeometry(0.022, 0.009, 4, detail ? 10 : 6), 0.03, -0.075, 0.218, K.outils); // … et sa tête
+      pc("dos", new THREE.CylinderGeometry(0.012, 0.012, 0.2, 6), 0.05, -0.16, -0.222, K.bois); // le marteau (le manche)…
+      pc("dos", B(0.1, 0.032, 0.032), 0.05, -0.06, -0.222, K.outils); // … et sa tête
+      pc("dos", galet(0.055, 0.1, 0.065, 0.35, 6), 0.14, -0.08, 0.1, K.cuir); // la pochette de la pince
+      if (detail) {
+        pc("dos", new THREE.CylinderGeometry(0.05, 0.05, 0.3, 10), -0.26, 0.06, 0, K.cuir, Math.PI / 2); // le rouleau d'outils
+        pc("dos", new THREE.TorusGeometry(0.075, 0.013, 5, 14), -0.365, 0.3, 0, K.noir, 0, Math.PI / 2, 0); // le câble enroulé
+        pc("dos", galet(0.012, 0.06, 0.1, 0.3, 4), -0.358, 0.42, 0, K.genie); // l'écusson du génie (jaune…)
+        pc("dos", B(0.008, 0.016, 0.1), -0.364, 0.42, 0, K.noir, 0.5); // (… avec sa bande noire)
+        pc("dos", galet(0.02, 0.05, 0.03, 0.4, 4), 0.06, 0.35, -0.12, K.genie); // la lampe frontale, sur la bretelle
+      }
+    } else if (classe === "eclaireur") {
+      pc("dos", galet(0.07, 0.085, 0.15, 0.35, detail ? 8 : 5), 0.2, 0.36, 0, K.sac); // les jumelles, dans leur poche sur la poitrine
+      if (detail) {
+        for (const z of [-0.045, 0.045]) pc("dos", new THREE.CylinderGeometry(0.022, 0.022, 0.04, 8), 0.24, 0.37, z, K.noir, 0, 0, Math.PI / 2); // (leurs 2 objectifs)
+        // les lanières de camouflage (le tissu camouflé), sur les épaules et le haut du sac, chacune un peu de travers
+        const L = [[-0.12, 0.47, -0.16, 0.4], [-0.16, 0.47, 0.14, -0.5], [-0.3, 0.47, -0.08, 0.3], [-0.3, 0.46, 0.1, -0.2], [-0.36, 0.38, -0.12, 0.15], [-0.36, 0.36, 0.13, -0.25], [-0.05, 0.46, 0.2, -0.6], [-0.05, 0.46, -0.2, 0.6]];
+        for (const [x, y, z, r] of L) pc("dos", galet(0.03, 0.17, 0.06, 0.3, 4), x, y - 0.06, z, "tenue", r, 0, 0.4);
+      }
+    } else if (classe === "medecin") {
+      for (const k of [0, 1]) { // le BRASSARD BLANC À CROIX ROUGE (sur chaque bras)
+        const e = "epaule" + k, cote = k ? -1 : 1;
+        pc(e, new THREE.CylinderGeometry(0.073, 0.071, 0.065, s), 0, -0.18, 0, K.soin);
+        pc(e, B(0.042, 0.013, 0.008), 0, -0.18, cote * 0.073, K.croix);
+        pc(e, B(0.013, 0.042, 0.008), 0, -0.18, cote * 0.073, K.croix);
+        if (detail) (pc(e, B(0.008, 0.013, 0.042), 0.073, -0.18, 0, K.croix), pc(e, B(0.008, 0.042, 0.013), 0.073, -0.18, 0, K.croix)); // (et devant)
+      }
+      pc("dos", galet(0.012, 0.15, 0.15, 0.3, detail ? 6 : 4), -0.357, 0.28, 0, K.soin); // la croix sur le sac (le carré blanc…)
+      pc("dos", B(0.008, 0.11, 0.034), -0.364, 0.28, 0, K.croix); // (… et la croix rouge)
+      pc("dos", B(0.008, 0.034, 0.11), -0.364, 0.28, 0, K.croix);
+      pc("dos", galet(0.075, 0.1, 0.1, 0.4, detail ? 8 : 5), 0.08, -0.03, -0.205, K.croix); // la grosse poche de soins (rouge)
+      if (detail) {
+        pc("dos", galet(0.06, 0.08, 0.07, 0.4, 6), 0.06, 0.06, 0.22, K.croix); // la poche du garrot (rouge)
+        pc("dos", B(0.006, 0.03, 0.01), 0.093, 0.06, 0.22, K.soin); // (sa petite croix blanche)
+        pc("dos", B(0.006, 0.01, 0.03), 0.093, 0.06, 0.22, K.soin);
+      }
+    }
   }
 
   // ------------------------------------------------------------------ (demande 93) LA TÊTE SCULPTÉE
@@ -272,7 +343,7 @@ Tanks.Engins3D = (function () {
   const formesTete = {};
   function teteSculptee(detail) {
     if (formesTete[detail]) return formesTete[detail];
-    const g = new THREE.SphereGeometry(1, detail ? 30 : 12, detail ? 22 : 9), p = g.attributes.position;
+    const g = new THREE.SphereGeometry(1, detail ? MQ().tete[0] : 12, detail ? MQ().tete[1] : 9), p = g.attributes.position; // (demande 114 : un peu moins de tranches)
     for (let i = 0; i < p.count; i++) {
       const nx = p.getX(i), ny = p.getY(i), nz = p.getZ(i);
       let x = nx * 0.097, y = ny * 0.114, z = nz * 0.083;
@@ -310,15 +381,20 @@ Tanks.Engins3D = (function () {
     }
     return x;
   }
-  function tete(pc, peint, dernier, K, peau, detail, joueur) {
+  function tete(pc, peint, dernier, K, peau, detail, joueur, classe, barbe) {
     const V = Tanks.CONFIG.realisme.soldats.visage, variante = joueur ? 0 : Math.max(0, PEAUX.indexOf(peau));
-    const lunettes = V.lunettes[variante % V.lunettes.length], ecouteurs = lunettes !== "soleil";
+    const chapeau = classe === "eclaireur"; // (demande 114 : l'éclaireur porte son chapeau de brousse, pas de casque)
+    let lunettes = V.lunettes[variante % V.lunettes.length];
+    if (chapeau && lunettes === "casque") lunettes = "aucune"; // (pas de casque où les relever)
+    const ecouteurs = lunettes !== "soleil";
+    // ✍️ (demande 114) SA BARBE (une sur « barbes », selon sa peau et sa classe : pas tous la même tête)
+    const BB = V.barbes[barbe !== undefined ? barbe % V.barbes.length : (variante * 2 + MQ().classes.indexOf(classe) + 1) % V.barbes.length]; // (la vitrine peut la choisir)
     const H = teteSculptee(detail), cx = 0.012, cy = 0.135; // (le centre de la tête, dans le repère du cou)
     const av = (y, z) => cx + devant(H, y, z); // (le devant de la peau, dans le repère du cou)
     pc("cou", membre(0.05, 0.056, 0.13, 8), 0, 0.1, 0, peau); // le cou
     pc("cou", H, cx, cy, 0, peau);
     // la peinture de la peau (x, y, z : le point sur la tête, autour de son centre)
-    const B = V.barbe;
+    const B = V.barbe * BB.force;
     peint((x, y, z) => {
       const az = Math.abs(z), face = Math.max(0, Math.min(1, x / 0.06));
       let r = 1, v = 1, b = 1;
@@ -335,9 +411,11 @@ Tanks.Engins3D = (function () {
     function barbeIci(x, y, z) {
       const az = Math.abs(z);
       if (x < -0.02) return 0;
-      const joues = Math.max(0, Math.min(1, (-0.03 - y) / 0.03)) * (az > 0.02 || y < -0.068 ? 1 : 0); // le bas des joues, le menton
+      let joues = Math.max(0, Math.min(1, (-BB.haut - y) / 0.03)) * (az > 0.02 || y < -0.068 ? 1 : 0); // le bas des joues, le menton
       const moustache = gauss(y + 0.047, 0.008) * gauss(az, 0.024) * (x > 0.06 ? 1 : 0);
-      return Math.min(1, joues + moustache) * (y < -0.115 ? 0.5 : 1);
+      const bouc = BB.bouc ? gauss(y + 0.088, 0.022) * gauss(az, 0.024) * (x > 0.03 ? 1 : 0) : 0; // (demande 114 : le bouc, au menton)
+      if (BB.moustache || BB.bouc) joues *= 0.12; // (seulement la moustache, ou le bouc : les joues restent rasées)
+      return Math.min(1, joues + moustache + bouc) * (y < -0.115 ? 0.5 : 1);
     }
     dernier().matiere = (x, y, z) => 1 + barbeIci(x, y, z) * 0.4;
     if (!detail) {
@@ -369,6 +447,14 @@ Tanks.Engins3D = (function () {
       pc("cou", galet(0.008, 0.0055, 0.036, 0.5, 8), xb - 0.002, cy - 0.054, 0, K.levres);
       pc("cou", galet(0.009, 0.0075, 0.033, 0.5, 8), xb - 0.003, cy - 0.061, 0, K.levres);
       peint((x, y) => (y > 0 ? 0.9 : 1.04));
+      // ✍️ (demande 114) une VRAIE barbe en volume (barbe pleine), ou la moustache bien fournie
+      if (BB.pleine) {
+        pc("cou", galet(0.07, 0.06, 0.118, 0.65, 10), av(-0.088, 0) - 0.026, cy - 0.09, 0, K.sourcils);
+        peint((x, y) => 0.8 + (bruitVisage(x * 400, y * 400, 3) - 0.5) * 0.4);
+        dernier().matiere = () => 1.4;
+        for (const z of [-1, 1]) (pc("cou", galet(0.05, 0.075, 0.03, 0.6, 8), av(-0.06, z * 0.055) - 0.03, cy - 0.06, z * 0.06, K.sourcils, 0, z * 0.5, 0), (dernier().matiere = () => 1.4)); // (les côtés)
+      }
+      if (BB.moustache || BB.pleine) (pc("cou", galet(0.012, 0.011, 0.05, 0.6, 8), xb + 0.002, cy - 0.047, 0, K.sourcils), (dernier().matiere = () => 1.4));
       // les OREILLES (cachées sous le casque radio quand il en a un)
       if (!ecouteurs) for (const z of [-1, 1]) {
         pc("cou", galet(0.034, 0.058, 0.013, 0.55, 10), cx - 0.012, cy + 0.0, z * 0.081, peau, 0, z * 0.35, 0.12);
@@ -391,10 +477,11 @@ Tanks.Engins3D = (function () {
         pc("cou", galet(0.026, 0.04, 0.11, 0.3, 10), av(0.012, 0) + 0.006, cy + 0.013, 0, K.noir);
         pc("cou", new THREE.TorusGeometry(0.103, 0.008, 4, 20), cx - 0.005, cy + 0.014, 0, K.sangle, Math.PI / 2);
         dernier().echelle = [1.15, 1, 1];
-      } else pc("cou", galet(0.035, 0.05, 0.17, 0.35, 8), 0.125, 0.245, 0, K.verre, 0, 0, 0.1); // relevées sur le casque
+      } else if (lunettes === "casque") pc("cou", galet(0.035, 0.05, 0.17, 0.35, 8), 0.125, 0.245, 0, K.verre, 0, 0, 0.1); // relevées sur le casque
     }
     // le CASQUE : posé un peu en arrière (le bord juste au-dessus des sourcils, plus bas sur la nuque)
     const pente = V.casque.pente, yc = V.casque.hauteur;
+    if (chapeau) return chapeauDeBrousse(pc, dernier, K, detail, joueur, pente, yc);
     const casque = new THREE.SphereGeometry(0.13, detail ? 22 : 12, detail ? 10 : 6, 0, Math.PI * 2, 0, Math.PI * 0.5);
     pc("cou", casque, -0.008, yc, 0, "tenue", 0, 0, pente); // le casque (avec sa housse camouflée et son filet)
     dernier().echelle = [1.06, 0.98, 1.04];
@@ -409,6 +496,36 @@ Tanks.Engins3D = (function () {
       pc("cou", galet(0.06, 0.05, 0.09, 0.4, 6), -0.158, yc + 0.025, 0, K.sac); // le contrepoids, à l'arrière du casque
       for (const z of [-0.138, 0.138]) pc("cou", galet(0.1, 0.018, 0.012, 0.3, 6), -0.008, yc + 0.03, z, K.sangle, 0, 0, pente); // les rails
       for (const z of [-0.088, 0.088]) pc("cou", galet(0.012, 0.11, 0.008, 0.5, 4), 0.045, 0.105, z * 1.04, K.sangle, 0.0, 0, -0.35); // la jugulaire
+      // (demande 114) la balise infrarouge sur le dessus (pour que les amis le voient la nuit), le carré à scratch derrière
+      pc("cou", galet(0.035, 0.022, 0.03, 0.4, 6), -0.06, yc + 0.125, 0, K.noir, 0, 0, pente);
+      pc("cou", galet(0.03, 0.045, 0.065, 0.3, 4), -0.128, yc + 0.075, 0, K.sangle, 0, 0, pente + 0.7);
+      if (classe === "medecin") for (const z of [-1, 1]) { // (et la croix rouge du médecin, sur les côtés du casque)
+        pc("cou", galet(0.05, 0.05, 0.01, 0.3, 4), -0.01, yc + 0.07, z * 0.128, K.soin, z * -0.45, 0, 0);
+        pc("cou", new THREE.BoxGeometry(0.036, 0.011, 0.006), -0.01, yc + 0.07, z * 0.133, K.croix, z * -0.45, 0, 0);
+        pc("cou", new THREE.BoxGeometry(0.011, 0.036, 0.006), -0.01, yc + 0.07, z * 0.133, K.croix, z * -0.45, 0, 0);
+      }
+    }
+  }
+  // ✍️ (demande 114) LE CHAPEAU DE BROUSSE (« boonie ») de l'éclaireur : le haut en tissu camouflé, le large bord tombant
+  // (un profil qu'on fait tourner, comme sur un tour de potier), le bandeau de l'équipe, et de près des lanières de
+  // camouflage qui pendent du bord.
+  function chapeauDeBrousse(pc, dernier, K, detail, joueur, pente, yc) {
+    const n = detail ? 20 : 10, yb = yc - 0.012;
+    pc("cou", new THREE.CylinderGeometry(0.1, 0.118, 0.095, n), -0.008, yb + 0.05, 0, "tenue", 0, 0, pente); // le haut
+    dernier().echelle = [1.08, 1, 1.02];
+    pc("cou", galet(0.215, 0.04, 0.2, 0.7, n), -0.008, yb + 0.096, 0, "tenue", 0, 0, pente); // le dessus, un peu bombé
+    const bord = [[0.112, 0.004], [0.16, -0.008], [0.205, -0.03], [0.212, -0.04], [0.2, -0.036], [0.155, -0.016], [0.112, -0.006], [0.112, 0.004]].map(([r, y]) => new THREE.Vector2(r, y));
+    pc("cou", new THREE.LatheGeometry(bord, detail ? 22 : 12), -0.008, yb, 0, "tenue", 0, 0, pente); // le bord tombant
+    dernier().echelle = [1.06, 1, 1];
+    pc("cou", new THREE.TorusGeometry(0.118, 0.012, 4, n), -0.008, yb + 0.018, 0, joueur ? K.marqueToi : K.marque, Math.PI / 2); // ✍️ le bandeau de l'équipe
+    dernier().echelle = [1.07, 1.03, 1];
+    dernier().rz2 = pente;
+    if (detail) {
+      for (let k = 0; k < 7; k++) { // les lanières qui pendent du bord
+        const a = 0.6 + k * 0.72, x = Math.cos(a) * 0.19, z = Math.sin(a) * 0.19;
+        pc("cou", galet(0.03, 0.075, 0.012, 0.3, 4), x - 0.008, yb - 0.065, z, "tenue", Math.sin(a) * 0.5, -a, Math.cos(a) * 0.3);
+      }
+      for (const z of [-0.088, 0.088]) pc("cou", new THREE.CylinderGeometry(0.003, 0.003, 0.15, 4), 0.03, 0.09, z * 1.1, K.sangle, 0, 0, -0.3); // la cordelette sous le menton
     }
   }
 
@@ -538,16 +655,31 @@ Tanks.Engins3D = (function () {
 
   // La forme « chair et os » (une par équipe, par version et par couleur de peau), partagée par tous les soldats.
   const formes = {};
-  function formeSoldat(equipe, detail, peau, joueur) {
-    const cle = [equipe, detail, peau, joueur].join(":");
+  // (demande 114 : et par CLASSE ; fabriquée la 1re fois qu'on en a besoin, comptée sous le capot)
+  const maquettes = { formes: 0, ms: 0, triangles: { detail: 0, simple: 0 }, parClasse: {} };
+  function formeSoldat(equipe, detail, peau, joueur, classe, barbe) {
+    const cle = [equipe, detail, peau, joueur, classe, barbe].join(":");
     if (formes[cle]) return formes[cle];
-    const squel = os();
-    return (formes[cle] = cuire(pieces(equipe, detail, PEAUX[peau], joueur), squel, matsSoldat(equipe), true));
+    const squel = os(), t0 = performance.now();
+    const f = (formes[cle] = cuire(pieces(equipe, detail, PEAUX[peau], joueur, classe, barbe), squel, matsSoldat(equipe), true));
+    maquettes.formes++;
+    maquettes.ms += performance.now() - t0;
+    maquettes.triangles[detail ? "detail" : "simple"] = Math.round((f.tenue.attributes.position.count + f.teinte.attributes.position.count) / 3);
+    return f;
+  }
+  // ✍️ (demande 114) LA CLASSE qu'on dessine pour ce soldat : toi, ta classe ; l'ordinateur, celle qui va avec son rôle
+  // (voir config.js, « realisme.soldats.maquettes »). L'affichage lit seulement le soldat, il ne change rien.
+  function classeDe(s) {
+    if (s.joueur) return Tanks.CONFIG.classes[s.classe] ? s.classe : "assaut";
+    if (s.medecin || s.role === "infirmier") return "medecin";
+    if (s.roquettesIA || s.arme === "roquettes" || s.role === "mecanicien") return "ingenieur";
+    if (s.tireurElite) return "eclaireur";
+    return "assaut";
   }
   // Un squelette tout neuf (ses os), habillé de la forme partagée.
   let numeroSoldat = 0;
-  function squelette(equipe, joueur, detail, peau) {
-    const M = matsSoldat(equipe), formesCorps = formeSoldat(equipe, detail, peau, !!joueur), r = os();
+  function squelette(equipe, joueur, detail, peau, classe, barbe) {
+    const M = matsSoldat(equipe), formesCorps = formeSoldat(equipe, detail, peau, !!joueur, classe, barbe), r = os();
     const porteur = new THREE.Group(), squel = new THREE.Skeleton(r.liste);
     // (demande 96) un squelette « gelé » n'est pas recalculé ni renvoyé à la carte graphique à cette image (la scène gèle
     // les soldats assez loin une image sur deux : ils bougent à 30 images par seconde au lieu de 60, on ne le voit pas)
@@ -598,11 +730,13 @@ Tanks.Engins3D = (function () {
     poserBras(r.epaules[1], r.coudes[1], m.gauche, poles[1]);
   }
 
-  function soldat(equipe, joueur) {
-    const g = new THREE.Group(), peau = joueur ? 0 : numeroSoldat++ % PEAUX.length;
-    const detail = squelette(equipe, joueur, true, peau), simple = squelette(equipe, joueur, false, peau);
-    g.add(detail.porteur, simple.porteur);
-    simple.porteur.visible = false;
+  // (demande 114) visage : { peau, barbe } pour la vitrine des personnages (sinon : à tour de rôle)
+  function soldat(equipe, joueur, classe, visage) {
+    const V = visage || {}, g = new THREE.Group(), peau = V.peau !== undefined ? V.peau % PEAUX.length : joueur ? 0 : numeroSoldat++ % PEAUX.length;
+    if (classe) maquettes.parClasse[classe] = (maquettes.parClasse[classe] || 0) + 1;
+    const detail = squelette(equipe, joueur, true, peau, classe, V.barbe), simple = V.seulDetail ? null : squelette(equipe, joueur, false, peau, classe, V.barbe);
+    g.add(detail.porteur);
+    if (simple) (g.add(simple.porteur), (simple.porteur.visible = false));
     // le parachute (pour toi, quand tu t'éjectes de l'avion ; et, étape 64, pour les parachutistes)
     let parachute = null;
     {
@@ -622,7 +756,7 @@ Tanks.Engins3D = (function () {
       parachute.visible = false;
       g.add(parachute);
     }
-    return { g, detail, simple, parachute };
+    return { g, detail, simple, parachute, classe, peau };
   }
 
   // (demande 88) ACCROCHER LA VRAIE ARME dans les mains (ou dans le dos, à la corde). Chaque famille se tient à sa façon :
@@ -669,9 +803,10 @@ Tanks.Engins3D = (function () {
   // L'animation : marcher, courir, tourner sur place, nager, tomber, (étape 74) glisser à la corde. t = l'horloge (s).
   const DANS_LE_DOS = { position: new THREE.Vector3(-0.27, 0.3, -0.05), rotation: new THREE.Euler(0.15, 0, -1.0) }; // (le fusil, à la corde)
   function animer(o, s, t, tourne, pres) {
+    if (!o.simple) pres = true; // (demande 114 : la vitrine n'a que la version détaillée)
     const r = pres ? o.detail : o.simple;
     o.detail.porteur.visible = pres;
-    o.simple.porteur.visible = !pres;
+    if (o.simple) o.simple.porteur.visible = !pres;
     // (demande 88) LA VRAIE ARME de ce soldat : la tienne (avec ses pièces), ou celle tirée au sort pour lui (armes3d.js)
     const corde = !!s.corde && !s.mort;
     const modele = Tanks.Armes3D.pourSoldat(s, pres);
@@ -813,16 +948,19 @@ Tanks.Engins3D = (function () {
     }
     // le genou à terre (la jambe droite, i = 1) et la jambe gauche devant ; accroupi en marchant : tout plié
     const GEN = { hanches: [1.35, 0.12], genoux: [-1.4, -1.68] };
+    // ✍️ (demande 114) LA POSITION DE TIR : arrêté et en joue, debout, il plie un peu les genoux (plus stable)
+    const enJoue = G.vise * (1 - bouge) * (1 - acc);
     for (let i = 0; i < 2; i++) {
-      r.jambes[i].rotation.set(cotes[i] * (1 - aGenou), 0, hanches[i] + (GEN.hanches[i] - hanches[i]) * aGenou + 0.62 * aMarche);
-      r.genoux[i].rotation.z = genoux[i] + (GEN.genoux[i] - genoux[i]) * aGenou - 1.0 * aMarche;
+      r.jambes[i].rotation.set(cotes[i] * (1 - aGenou), 0, hanches[i] + (GEN.hanches[i] - hanches[i]) * aGenou + 0.62 * aMarche + RG.flechi * 0.5 * enJoue);
+      r.genoux[i].rotation.z = genoux[i] + (GEN.genoux[i] - genoux[i]) * aGenou - 1.0 * aMarche - RG.flechi * enJoue;
     }
     // le corps : il monte et descend 2 fois par foulée, se penche en avant en courant, se baisse accroupi
     const souffle = Math.sin(t * 2.1 + G.graine), calme = (1 - bouge) * (1 - acc);
     const rebond = -Math.abs(Math.cos(phase)) * (0.02 + 0.045 * allure) * bouge * (1 - acc);
-    c.position.set(-0.04 * aGenou, rebond - 0.39 * aGenou - 0.24 * aMarche, 0);
-    c.rotation.set(-fCote * 0.07 * bouge + Math.sin(t * 0.37 + G.graine) * 0.018 * calme, -Math.sin(phase) * 0.11 * allure * bouge, 0);
-    const penche = (0.04 + 0.2 * allure) * bouge * Math.max(0, fAvant) - 0.05 * bouge * Math.max(0, -fAvant) + 0.12 * aGenou + 0.26 * aMarche;
+    c.position.set(-0.04 * aGenou, rebond - 0.39 * aGenou - 0.24 * aMarche - 0.012 * enJoue, 0);
+    // (demande 114) les hanches roulent un peu à chaque pas (le poids passe d'une jambe à l'autre)
+    c.rotation.set(-fCote * 0.07 * bouge + Math.sin(t * 0.37 + G.graine) * 0.018 * calme + Math.sin(phase) * RG.roulis * bouge * (1 - acc), -Math.sin(phase) * 0.11 * allure * bouge, 0);
+    const penche = (0.04 + 0.2 * allure) * bouge * Math.max(0, fAvant) - 0.05 * bouge * Math.max(0, -fAvant) + 0.12 * aGenou + 0.26 * aMarche + RG.penche * G.vise * (1 - 0.5 * bouge);
     const tir = G.recul * (r.tenue === TENUES.roquettes ? 1.8 : 1);
     // les gestes en cours : recharger (0 → 1) et lancer (0 → 1) ; -1 = rien
     const rp = G.rechargeK, lp = G.lancerK, ch = G.charge, jet = G.jet;
@@ -831,14 +969,17 @@ Tanks.Engins3D = (function () {
     r.dos.scale.y = 1 + souffle * 0.008 * calme;
     // la tête : elle regarde devant (elle compense la torsion et la course), et au repos elle regarde autour
     const regard = Math.sin(t * 0.23 + G.graine * 3) * RG.regardAutour * calme * (1 - G.vise);
-    r.cou.rotation.set(0, -r.torsion * 0.9 - torsionLancer * 0.7 + regard, penche * 0.7 - 0.03 * aGenou);
+    // (demande 114) en visant, la joue vient se poser sur la crosse : la tête penche vers l'épaule droite et baisse un peu
+    r.cou.rotation.set(RG.joue * G.vise * (r.tenue === TENUES.pistolet ? 0.3 : 1), -r.torsion * 0.9 - torsionLancer * 0.7 + regard, penche * 0.7 - 0.03 * aGenou - 0.05 * G.vise);
     // L'ARME (dans le repère du dos) : en joue, ou canon vers le bas ; le recul ; penchée pour recharger ; baissée pour lancer
     const T = r.tenue || TENUES.fusil, A = r.porteArme, bas = 1 - G.vise;
     A.position.fromArray(T.place).applyAxisAngle(_axeY, -r.torsion);
     A.position.x += -tir * RG.reculArriere - 0.04 * ch - 0.02 * bas;
-    A.position.y += Math.sin(phase * 2) * 0.012 * allure * bouge - 0.05 * bas - 0.03 * ch - 0.1 * jet;
-    A.position.z += -0.1 * jet;
-    A.rotation.set(0.45 * ch * cloche(rp) + 0.2 * jet, -r.torsion + Math.sin(phase) * 0.05 * allure * bouge, -0.5 * bas + tir * RG.reculHaut + 0.15 * ch * cloche(rp) - 0.8 * jet, "YXZ");
+    // ✍️ (demande 114) en COURANT l'arme basse, elle se balance d'un côté à l'autre à chaque pas (et les bras avec elle)
+    const balance = Math.sin(phase) * allure * bouge * bas;
+    A.position.y += Math.sin(phase * 2) * 0.012 * allure * bouge - 0.05 * bas - 0.03 * ch - 0.1 * jet + Math.abs(balance) * RG.balancement * 0.4;
+    A.position.z += -0.1 * jet + balance * RG.balancement;
+    A.rotation.set(0.45 * ch * cloche(rp) + 0.2 * jet + balance * 0.18, -r.torsion + Math.sin(phase) * 0.05 * allure * bouge + balance * 0.1, -0.5 * bas + tir * RG.reculHaut + 0.15 * ch * cloche(rp) - 0.8 * jet, "YXZ");
     A.updateMatrix();
     // les mains : la droite sur la poignée, la gauche sur le garde-main… sauf pendant un geste
     const mainD = _mD.copy(r.mainD).applyMatrix4(A.matrix), mainG = _mG.copy(r.mainG).applyMatrix4(A.matrix);
@@ -856,6 +997,9 @@ Tanks.Engins3D = (function () {
       chemin([mainD, LANCER_POINTS[0], LANCER_POINTS[1], LANCER_POINTS[2], mainD], LANCER_TEMPS, lp, _mP);
       mainD.lerp(_mP, jet);
     }
+    // ✍️ (demande 114) avec un PISTOLET, en courant sans viser, la main gauche lâche l'arme et le bras se balance librement
+    const libre = r.tenue === TENUES.pistolet && !tenu && rp < 0 && lp < 0 ? bas * allure * bouge : 0;
+    if (libre > 0.01) mainG.lerp(_mP.set(-Math.sin(phase) * RG.brasLibre * Math.max(0, fAvant), -0.07 + Math.abs(Math.cos(phase)) * 0.03, -0.25), Math.min(1, libre * 1.4));
     if (tenu) Tanks.Objets3D.troisiemeMains(r, s, mainD, mainG);
     r.pose = null;
     poserBras(r.epaules[0], r.coudes[0], mainD.toArray(_tabD), POLES[0]);
@@ -1556,5 +1700,5 @@ Tanks.Engins3D = (function () {
   // (étape 73) le Chinook et le Black Hawk, dans affichage/helicos3d.js
   // (étape 76) le Rafale, les chasseurs ennemis, l'avion de transport, le drone et le Tigre, dans affichage/avions3d.js
   const outils = { pilote, siege, peintureSoudee, vitreClaire, mats, figurine, figurineDans, poserBras, MAINS, galet, membre, formesArmes };
-  return { soldat, animer, fabriquer, bruler, portail, silhouettes, outils, gestes, baisse };
+  return { soldat, animer, fabriquer, bruler, portail, silhouettes, outils, gestes, baisse, classeDe, maquettes, PEAUX };
 })();

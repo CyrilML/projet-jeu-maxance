@@ -13,6 +13,9 @@
 // s'allument au survol, les touches dessinées comme des touches (le style est dans tanks/index.html).
 // ✍️ (livre de demandes n° 28 : « Faire une boutique ») une 3e porte : 🛒 BOUTIQUE (affichage/boutique.js). L'accueil reste
 // derrière ; « ← Retour » (ou Échap) y ramène.
+// ✍️ (demande 114) une 4e porte : 🎖️ PERSONNAGES (la vitrine des soldats en 3D : affichage/personnages.js), et un petit
+// bouton ⚙️ Réglages : un panneau d'interrupteurs (🩸 « Sang (léger) », ✍️ décidé par Cyril : éteint au départ). L'accueil
+// ne change pas le réglage lui-même : il le DEMANDE à logique/reglages.js.
 // L'accueil est un ÉCRAN (de l'affichage) : il ne touche pas au monde. Le menu attend qu'il soit fermé.
 
 window.Tanks = window.Tanks || {};
@@ -39,10 +42,13 @@ Tanks.Accueil = (function () {
       '<button class="a-jouer a-mode a-campagne" data-accueil="campagne">▶ CAMPAGNE<small>' + Tanks.CONFIG.campagne.chapitres.length + " chapitres · l'histoire</small></button>" + // (étape 88)
       '<button class="a-jouer a-mode a-bataille" data-accueil="bataille">⚔️ BATAILLE<small>bataille libre · toutes les cartes</small></button>' +
       '<button class="a-jouer a-mode a-boutique" data-accueil="boutique">🛒 BOUTIQUE<small>armes · skins · packs · avancements</small></button>' + // (livre n° 28)
+      '<button class="a-jouer a-mode a-personnages" data-accueil="personnages">🎖️ PERSONNAGES<small>les soldats en 3D · classes · tenues</small></button>' + // (demande 114)
       '<button class="a-film" data-accueil="film" title="La bande-annonce du jeu (demande 101)">🎬 Bande-annonce</button>' +
       '<a class="a-carnet" href="../index.html#etape113">📓 Le carnet</a>' +
+      '<button class="a-reglages" data-accueil="reglages" title="Les réglages du jeu (demande 114)">⚙️ Réglages</button>' +
       "</div>" +
       '<div class="a-coins" title="Gagnés à chaque mission réussie de la campagne (demande 101) et en bataille libre (livre n° 22)">🪙 <b></b> Battle Coins</div>' +
+      '<div class="a-panneau" hidden></div>' + // (demande 114 : le panneau des réglages)
       '<p class="a-pied"><kbd>←</kbd> <kbd>→</kbd> choisir · <kbd>Entrée</kbd> entrer · <kbd>M</kbd> musique</p>' + // (livre n° 4 : les touches dans de vraies petites touches)
       "</div>";
     // (le clavier et la souris : capturés avant les oreilles du jeu tant que l'accueil est là)
@@ -58,6 +64,7 @@ Tanks.Accueil = (function () {
         if (e.type === "keydown") e.stopPropagation();
         return;
       }
+      if (panneauOuvert()) return void reglagesClavier(e); // (demande 114 : le panneau des réglages a son propre clavier)
       const portes = [...racine.querySelectorAll("[data-accueil]")], ici = portes.indexOf(document.activeElement);
       if (e.type === "keydown" && (e.code === "ArrowLeft" || e.code === "ArrowRight" || e.code === "ArrowUp" || e.code === "ArrowDown" || e.code === "Tab")) {
         e.preventDefault(), e.stopPropagation();
@@ -69,10 +76,55 @@ Tanks.Accueil = (function () {
     window.addEventListener("keydown", geste, true);
     racine.addEventListener("pointerdown", geste);
     racine.querySelectorAll("[data-accueil]").forEach((b) => b.addEventListener("click", (e) => (e.stopPropagation(), fermer(b.dataset.accueil))));
+    racine.querySelector(".a-panneau").addEventListener("click", (e) => {
+      e.stopPropagation();
+      const b = e.target.closest("[data-reglage]");
+      if (b) Tanks.Reglages.changer(b.dataset.reglage), dessinerReglages(b.dataset.reglage);
+      else if (e.target.closest("[data-fermer]") || e.target.classList.contains("a-panneau")) fermerReglages();
+    });
+  }
+
+  // ------------------------------------------------------------------ ✍️ (demande 114) LE PANNEAU ⚙️ RÉGLAGES
+  // Un interrupteur par réglage (config.js, « reglages.liste ») : cliquer (ou Entrée) le bascule ; Échap ferme le panneau.
+  const panneauOuvert = () => racine && !racine.querySelector(".a-panneau").hidden;
+  function dessinerReglages(focus) {
+    const P = racine.querySelector(".a-panneau"), L = Tanks.CONFIG.reglages.liste;
+    P.innerHTML = "<div><h3>⚙️ RÉGLAGES</h3>" + Object.keys(L).map((k) => {
+      const on = Tanks.Reglages.valeur(k);
+      return '<button class="a-interrupteur' + (on ? " allume" : "") + '" data-reglage="' + k + '" role="switch" aria-checked="' + on + '"><span class="a-bascule"></span><span><b>' + L[k].icone + " " + L[k].nom + " : " + (on ? "ALLUMÉ" : "éteint") + "</b><small>" + L[k].texte + "</small></span></button>";
+    }).join("") + '<p class="a-panneau-pied"><kbd>Entrée</kbd> allumer / éteindre · <kbd>Échap</kbd> fermer · rangé dans ton livret</p><button class="a-reglages" data-fermer="1">← Fermer</button></div>';
+    const b = P.querySelector('[data-reglage="' + (focus || Object.keys(L)[0]) + '"]');
+    if (b) b.focus();
+  }
+  function ouvrirReglages() {
+    racine.querySelector(".a-panneau").hidden = false;
+    dessinerReglages();
+  }
+  function fermerReglages() {
+    racine.querySelector(".a-panneau").hidden = true;
+    racine.querySelector(".a-reglages").focus();
+  }
+  function reglagesClavier(e) {
+    if (e.type !== "keydown") return;
+    if (e.code === "KeyM" || e.code === "Semicolon") return;
+    e.preventDefault(), e.stopImmediatePropagation();
+    const b = document.activeElement && document.activeElement.closest && document.activeElement.closest("[data-reglage]");
+    if (e.code === "Escape" || e.code === "Backspace") fermerReglages();
+    else if ((e.code === "Enter" || e.code === "Space" || e.code === "NumpadEnter") && b) Tanks.Reglages.changer(b.dataset.reglage), dessinerReglages(b.dataset.reglage);
+    else if (e.code === "Enter" || e.code === "NumpadEnter") fermerReglages();
   }
 
   // mode : "campagne" (la liste des chapitres) ou "bataille" (le menu de la bataille libre)
   function fermer(mode) {
+    if (mode === "reglages") return ouvrirReglages(); // (demande 114 : le panneau s'ouvre SUR l'accueil, qui reste là)
+    if (mode === "personnages") { // (demande 114) la vitrine s'ouvre par-dessus l'accueil ; en sortant, on revient ici
+      visible = false;
+      Tanks.EcranPersonnages.ouvrir(() => {
+        montrer();
+        racine.querySelector(".a-personnages").focus();
+      });
+      return;
+    }
     if (mode === "boutique") { // (livre n° 28) la boutique s'ouvre PAR-DESSUS l'accueil ; en sortant, on revient ici
       visible = false;
       Tanks.EcranBoutique.ouvrir(() => {

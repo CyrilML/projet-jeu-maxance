@@ -70,6 +70,8 @@ Tanks.Tirs = (function () {
       culot: { image: I.trait, mode: P.TRAIT, brille: true, couleur: [3.2, 1.1, 0.35], taille: [0.12, 0.12], portee: 5 },
       // (fusils à pompe incendiaires) les petites flammes sur un soldat qui brûle
       flammeFeu: { image: I.flamme, images: 4, mode: P.FACE, brille: true, vie: 0.55, taille: [0.28, 0.65], couleurs: [[2.6, 1.6, 0.5], [2, 0.7, 0.15], [0.6, 0.16, 0.04]], opacite: 0.9, tourne: 2, entree: 0.0001, sortie: 1.2, portee: 2 },
+      // (demande 114) le petit nuage rouge du réglage « Sang (léger) » (éteint au départ)
+      sang: { image: I.fumee2, mode: P.FACE, vie: C.reglages.sang.vie, taille: C.reglages.sang.taille, couleur: C.reglages.sang.couleur, opacite: C.reglages.sang.opacite, frein: 5, tourne: 1, entree: 0.02, sortie: 1.6, portee: 1.5 },
       lueurCulot: { image: I.lueur, mode: P.FACE, brille: true, couleur: [3, 1.2, 0.4], taille: [0.5, 0.5], portee: 5 },
     };
   }
@@ -122,6 +124,7 @@ Tanks.Tirs = (function () {
     if (d.touche && d.feu) for (let k = 0; k < 3; k++) P.emettre(M.flammeFeu, d.a.x + alea(0.15), d.a.y + alea(0.2), d.a.z + alea(0.15), alea(0.3), 0.8 + Math.random() * 0.6, alea(0.3), 1);
     if (d.touche) {
       P.emettre(M.poussiere, d.a.x, d.a.y, d.a.z, -ux * 1.5, 0.4, -uz * 1.5, 0.45, [0.5, 0.47, 0.4]);
+      if (d.surSoldat && Tanks.Reglages.sang) sang(d.a, ux, uy, uz); // (demande 114 : seulement si le réglage est ALLUMÉ)
       return;
     }
     let y = d.a.y, nx = -ux, ny = -uy, nz = -uz;
@@ -131,6 +134,15 @@ Tanks.Tirs = (function () {
       (y = sol + 0.03), (nx = 0), (ny = 1), (nz = 0);
     }
     impact(d.a.x, y, d.a.z, d.matiere || "terre", nx, ny, nz, false, d.ricochet);
+  }
+
+  // ✍️ (demande 114, ✍️ Cyril : « Oui, avec un bouton ») LE SANG (LÉGER) : quand le réglage ⚙️ « Sang » est allumé, une
+  // balle qui touche un soldat fait un PETIT NUAGE ROUGE à l'endroit touché : quelques autocollants qui giclent un peu dans
+  // le sens de la balle, grossissent, et ont disparu en ~0,4 s. Rien d'autre (pas de flaque, pas de tache qui reste).
+  function sang(a, ux, uy, uz) {
+    const S = C.reglages.sang, v = S.vitesse;
+    for (let k = 0; k < S.particules; k++) P.emettre(M.sang, a.x + alea(0.06), a.y + alea(0.08), a.z + alea(0.06), ux * v + alea(v * 0.6), uy * v + 0.3 + alea(v * 0.4), uz * v + alea(v * 0.6), 0.7 + Math.random() * 0.5);
+    bilan.sang = (bilan.sang || 0) + 1;
   }
 
   // ✍️ (livre n° 26) LE RICOCHET : des étincelles qui jaillissent du point touché, un petit éclair, et un trait (traçant

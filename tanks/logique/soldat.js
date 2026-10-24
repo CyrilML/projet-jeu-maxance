@@ -177,7 +177,7 @@ Tanks.Soldat = (function () {
       if (meilleur.s.accroupi) chance *= RS.accroupi.touche; // (demande 92 : accroupi, il est plus petit)
       if (Tanks.Perchoirs.abrite(meilleur.s, y)) chance *= C.perchoirs.couvert.touche; // (livre n° 12 : accroupi derrière les sacs de sable, tiré d'en bas)
       if (Math.random() < chance) {
-        ev.push(["balle", { tireur, de: { x: ox, y: oy, z: oz }, a: { x: meilleur.s.x, y: meilleur.s.y + hauteurVisee(meilleur.s), z: meilleur.s.z }, touche: true, suite, traverse: suite }]);
+        ev.push(["balle", { tireur, de: { x: ox, y: oy, z: oz }, a: { x: meilleur.s.x, y: meilleur.s.y + hauteurVisee(meilleur.s), z: meilleur.s.z }, touche: true, surSoldat: !(meilleur.s.genre === "vehicule" || meilleur.s.sorte), suite, traverse: suite }]); // (demande 114 : sur un soldat ? pour le nuage rouge, s'il est allumé)
         if (meilleur.s.genre === "vehicule" || meilleur.s.sorte) Tanks.Vehicules.blesserPilote(meilleur.s, Math.ceil(degats * (R.vsVehicule || 1) * 2) / 2, tireur, ev); // (demande 97 : × les munitions perforantes ou à pointe creuse)
         else blesser(meilleur.s, degats, tireur, ev, typeof arme === "string" ? arme : "balle", { x, z });
         return;
