@@ -1,6 +1,6 @@
 # Demande n° 115 : les éditions de The Last Battlefield (livre de demandes n° 24)
 
-> Statut : 🛠️ en cours : le système et l'édition 1916 (tanks version 59), l'édition 1944 (version 60) sont livrés.
+> Statut : 🛠️ en cours : le système et l'édition 1916 (tanks version 59), l'édition 1944 (version 60), l'édition Guerre froide (version 61) sont livrés.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
