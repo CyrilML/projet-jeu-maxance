@@ -559,6 +559,26 @@ Tanks.Engins3D = (function () {
       dernier().echelle = [1.08, 1.0, 1];
       dernier().rz2 = pente;
       if (detail) pc("cou", galet(0.26, 0.11, 0.26, 0.6, 8), -0.01, yc + 0.04, 0, K.sangle, 0, 0, pente); // le filet de camouflage
+    } else if (K.casqueStyle === "pot") { // ✍️ (demande 115, Guerre froide, Ostrel) le casque « POT » : la grande bombe ronde et profonde, couverte
+      // de TOILE camouflée, l'élastique tout autour (on y glisse des choses), un petit bord qui descend sur la nuque
+      pc("cou", new THREE.SphereGeometry(0.145, n, detail ? 10 : 5, 0, Math.PI * 2, 0, Math.PI * 0.58), -0.012, yc - 0.018, 0, acier, 0, 0, pente);
+      dernier().echelle = [1.1, 1.0, 1.02];
+      const bord = [[0.14, 0.002], [0.158, -0.012], [0.162, -0.02], [0.14, -0.008]].map(([r, y]) => new THREE.Vector2(r, y));
+      pc("cou", new THREE.LatheGeometry(bord, n), -0.012, yc - 0.03, 0, acier, 0, 0, pente);
+      dernier().echelle = [1.1, 1, 1.02];
+      pc("cou", new THREE.TorusGeometry(0.15, 0.009, 4, n), -0.012, yc + 0.02, 0, K.sangle, Math.PI / 2, 0, 0); // l'élastique
+      dernier().echelle = [1.08, 1.0, 1];
+      dernier().rz2 = pente;
+      if (detail) pc("cou", galet(0.05, 0.02, 0.03, 0.3, 4), -0.02, yc + 0.05, 0.145, 0xd8d0b0, 0.5, 0, 0); // (un paquet glissé sous l'élastique)
+    } else if (K.casqueStyle === "colonial") { // ✍️ (demande 115, Guerre froide, Khavar) le CASQUE COLONIAL en liège : la bombe allongée, le large
+      // bord qui descend tout autour (contre le soleil), le petit bouton d'aération sur le dessus, l'insigne devant
+      pc("cou", new THREE.SphereGeometry(0.13, n, detail ? 9 : 5, 0, Math.PI * 2, 0, Math.PI * 0.5), -0.012, yc - 0.01, 0, acier, 0, 0, pente);
+      dernier().echelle = [1.22, 1.1, 1.05];
+      const bord = [[0.13, 0.004], [0.19, -0.022], [0.215, -0.04], [0.21, -0.046], [0.18, -0.03], [0.13, -0.004]].map(([r, y]) => new THREE.Vector2(r, y));
+      pc("cou", new THREE.LatheGeometry(bord, n), -0.012, yc - 0.012, 0, acier, 0, 0, pente);
+      dernier().echelle = [1.18, 1, 1.02];
+      pc("cou", new THREE.CylinderGeometry(0.016, 0.02, 0.016, 8), -0.02, yc + 0.142, 0, acier, 0, 0, pente);
+      if (detail) pc("cou", new THREE.CylinderGeometry(0.018, 0.018, 0.006, 10), 0.152, yc + 0.06, 0, joueur ? K.marqueToi : K.marque, 0, 0, Math.PI / 2 + pente - 0.25); // l'insigne
     } else {
       const prof = [[0.0, 0.125], [0.07, 0.118], [0.112, 0.085], [0.132, 0.03], [0.136, -0.025], [0.15, -0.06], [0.168, -0.08], [0.172, -0.088], [0.13, -0.03], [0.124, 0.03], [0.1, 0.09], [0.0, 0.11]].map(([r, y]) => new THREE.Vector2(r, y));
       pc("cou", new THREE.LatheGeometry(prof, n), -0.012, yc - 0.008, 0, acier, 0, 0, pente);

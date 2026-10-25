@@ -127,6 +127,12 @@ Tanks.Perchoirs3D = (function () {
     return pieces;
   }
 
+  // ✍️ (demande 115, Guerre froide) LES PERCHOIRS DES ÉDITIONS : une édition inscrit le dessin d'une nouvelle sorte (la hutte sur pilotis de
+  // la Guerre froide : affichage/jungle3d.js), avec les outils du charpentier (les sacs de sable, l'échelle, les couleurs).
+  const MODELES = {};
+  const ajouterModele = (sorte, f) => (MODELES[sorte] = f);
+  const outils = { sacs, echelle, mirador, couleurs: { BOIS, BOIS_CLAIR, BOIS_SOMBRE, PLANCHE, SACS } };
+
   // ------------------------------------------------------------------ CONSTRUIRE (une fois, au début)
   function construire(g) {
     const PP = Tanks.Perchoirs;
@@ -135,7 +141,7 @@ Tanks.Perchoirs3D = (function () {
     mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88, metalness: 0.02 });
     for (const p of PP.liste) {
       const H = p.haut - p.base;
-      const pieces = p.sorte === "mirador" ? mirador(p, H) : p.sorte === "chateau" ? chateau(p, H) : p.sorte === "echafaudage" ? echafaudage(p, H) : nid(p);
+      const pieces = MODELES[p.sorte] ? MODELES[p.sorte](p, H, mat, outils) : p.sorte === "mirador" ? mirador(p, H) : p.sorte === "chateau" ? chateau(p, H) : p.sorte === "echafaudage" ? echafaudage(p, H) : nid(p); // (demande 115, Guerre froide : ou le modèle d'une édition)
       const geo = OT().geometrieTeintee(pieces, mat);
       const mesh = new THREE.Mesh(geo, mat);
       mesh.rotation.y = -p.angle;
@@ -213,5 +219,5 @@ Tanks.Perchoirs3D = (function () {
     bilan.reflets = n;
   }
 
-  return { construire, maj, bilan, vues };
+  return { construire, maj, bilan, vues, ajouterModele };
 })();

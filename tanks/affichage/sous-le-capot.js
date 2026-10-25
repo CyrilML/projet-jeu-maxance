@@ -429,6 +429,14 @@ Tanks.SousLeCapot = (function () {
     l.push(["L'édition (demande 115)"]);
     l.push(["📜 édition", ED.icone + " " + ED.nom + " (" + ED.epoque + ") · lue dans : " + ED.source + " · " + ED.pieces + " réglage(s) de config.js recousus par le tailleur · règles allumées : " + R.join(", ")]);
     l.push(["camps", "🔵 " + C.equipes.bleus.nom + " contre 🔴 " + C.equipes.rouges.nom + " · tanks : " + C.chars.map((c) => c.nom).join(", ") + " · engins garés : " + C.parc.engins.join(", ")]);
+    // ✍️ (demande 115, Guerre froide) la JUNGLE de la Guerre froide : les rizières, la base de feu, les huttes sur pilotis, les palmiers
+    const TT = Tanks.Terrain, J3 = Tanks.Jungle3D && Tanks.Jungle3D.bilan;
+    if (TT.rizieres && TT.rizieres.length) {
+      const toi = monde.toi && (monde.toi.soldat || monde.toi.engin), riz = toi && TT.dansRiziere(toi.x, toi.z);
+      l.push(["🌾 rizières", TT.rizieres.length + " rizières en terrasses (" + J3.cases + " cases pleines d'eau, une marche de 0,55 m par rangée, " + J3.diguettes + " diguettes) · sous tes pieds : " + (toi ? TT.matiere(toi.x, toi.z) : "?") + (riz ? " (dans une rizière, terrasse à " + TT.niveauRiz(riz, toi.z).toFixed(1) + " m)" : "")]);
+    }
+    if (TT.baseDeFeu) l.push(["⛰️ " + TT.baseDeFeu.nom, "colline de " + TT.baseDeFeu.hauteur + " m au sommet aplati (plateau de " + TT.baseDeFeu.plateau + " m de rayon), plateforme des hélicos, " + Tanks.Perchoirs.liste.filter((p) => p.sorte === "colline").length + " nids de sacs de sable"]);
+    if (J3 && J3.huttes) l.push(["🛖 Ban-Tarak", J3.huttes + " huttes sur pilotis (des perchoirs : on monte par l'échelle) · " + Tanks.Perchoirs.liste.filter((p) => p.sorte === "hutte" && p.occupants > 0).length + " occupée(s) · " + TT.arbres.filter((a) => a.sorte === "palmier").length + " palmiers dans la jungle"]);
     const TR = Tanks.Tranchees;
     if (!TR.actif) return;
     if (!TR.reseau) { for (const e of monde.engins) if (e.genre === "mitrailleuse") l.push([(e.equipe === "bleus" ? "🔵 " : "🔴 ") + e.nom, (e.pilote ? "👤 TOI · " : e.servant.etat + " · ") + "tourelle " + degres(e.tourelle) + " · " + e.tirs + " balles"]); return; } // (1944 : les nids de mitrailleuse)

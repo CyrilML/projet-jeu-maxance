@@ -597,9 +597,22 @@ Tanks.Helicos3D = (function () {
 
   // ------------------------------------------------------------------ les modèles (une fois), et leurs copies
   const modeles = {}, FABRIQUES = { chinook, blackhawk };
+  // ✍️ (demande 115, Guerre froide) LES MODÈLES DES ÉDITIONS : une édition inscrit ses propres hélicos (le « Colibri » et le « Bourdon » de la
+  // Guerre froide : affichage/helicos3d-froide.js), et dit lequel prendre pour chaque sorte, et chaque camp (config
+  // « edition.modeles.helicos » : { blackhawk: "colibri" } ou { blackhawk: { bleus: "colibri", rouges: "bourdon" } }).
+  // Un modèle d'édition garde les mêmes pièces nommées (rotor0, rotorQueue, passagers, corde0/1, flamme0/1).
+  const MODELES = {}, SIMPLES = {};
+  function ajouterModele(id, fabrique, simple) {
+    MODELES[id] = fabrique;
+    if (simple) SIMPLES[id] = simple;
+  }
+  function modeleDe(sorte, equipe) {
+    const m = ((Tanks.CONFIG.edition.modeles || {}).helicos || {})[sorte], id = m && typeof m === "object" ? m[String(equipe).split("~")[0]] : m;
+    return id && MODELES[id] ? id : null;
+  }
   function fabriquer(sorte, equipe) {
-    const cle = sorte + ":" + equipe;
-    if (!modeles[cle]) modeles[cle] = FABRIQUES[sorte](equipe);
+    const id = modeleDe(sorte, equipe), cle = sorte + ":" + equipe + (id ? ":" + id : "");
+    if (!modeles[cle]) modeles[cle] = id ? MODELES[id](equipe, sorte, outilsEditions) : FABRIQUES[sorte](equipe);
     const g = modeles[cle].clone(true); // (une copie : les formes et les matières sont partagées)
     const nom = (n) => g.getObjectByName(n) || null;
     const rotors = [nom("rotor0"), nom("rotor1")].filter(Boolean), queue = nom("rotorQueue");
@@ -614,6 +627,8 @@ Tanks.Helicos3D = (function () {
   // (étape 74) La même coque arrondie, mais avec beaucoup moins de points, les vitres sombres peintes dans les sommets,
   // et des rotors en disques fins : 1 seule pièce.
   function formeSimple(sorte, equipe) {
+    const idE = modeleDe(sorte, equipe); // (demande 115, Guerre froide : la version simple du modèle de l'édition)
+    if (idE && SIMPLES[idE]) return SIMPLES[idE](equipe, sorte, outilsEditions);
     const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8 });
     const g = new THREE.Group(), P = peintureDe(equipe), E = Tanks.CONFIG.equipes[equipe], c = new THREE.Color(P);
     const peinte = (cles, zone) => {
@@ -663,5 +678,7 @@ Tanks.Helicos3D = (function () {
     return lot;
   }
 
-  return { sait, fabriquer, lotSimple, SORTES, PENTE_RAMPE };
+  // (demande 115, Guerre froide) les outils prêtés aux hélicos des éditions
+  const outilsEditions = { O, CT, MT, OU, peinture, verre, peint, peintureDe, couleurPeinture, poserCoque, repeindre, roue, rotor, pale, cordesEtFlammes, mitrailleuse, poserFigurine, POSE, siege, COUL };
+  return { sait, fabriquer, lotSimple, SORTES, PENTE_RAMPE, ajouterModele };
 })();

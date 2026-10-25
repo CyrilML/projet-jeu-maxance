@@ -224,6 +224,7 @@ Tanks.Decor = (function () {
     }
     if (Tanks.Tranchees3D) Tanks.Tranchees3D.peindreSol(ctx, X, k, hasard); // (demande 115 : la boue, les cratères et la terre rejetée des tranchées)
     if (Tanks.Bocage3D) Tanks.Bocage3D.peindreSol(ctx, X, k); // (demande 115, 1944 : la rivière)
+    if (Tanks.Jungle3D) Tanks.Jungle3D.peindreSol(ctx, X, k); // (demande 115, Guerre froide : les rizières, la base de feu)
     // les chemins : le bord usé, la terre, les 2 ornières plus sombres, l'herbe au milieu
     const L = BE.chemins.largeur * k;
     const tracer = (l, largeur, style) => {
@@ -466,7 +467,10 @@ Tanks.Decor = (function () {
     g.setAttribute("color", new THREE.BufferAttribute(c, 3));
     return g;
   }
-  const ECORCE = lin(118, 98, 76), ECORCE_PIN = lin(124, 88, 62), FEUILLE = lin(112, 150, 66), AIGUILLE = lin(74, 116, 62);
+  // (demande 115, Guerre froide) dans la JUNGLE de la Guerre froide : un feuillage plus sombre et plus vert, et des PALMIERS à la place
+  // des sapins (affichage/jungle3d.js les dessine, avec les mêmes outils)
+  const JUNGLE = (Tanks.CONFIG.edition.modeles || {}).arbres === "jungle" && !!Tanks.Jungle3D;
+  const ECORCE = lin(118, 98, 76), ECORCE_PIN = lin(124, 88, 62), FEUILLE = JUNGLE ? lin(80, 132, 50) : lin(112, 150, 66), AIGUILLE = lin(74, 116, 62);
   function tronc(points, seg) {
     const g = new THREE.LatheGeometry(points.map(([r, y]) => new THREE.Vector2(r, y)), seg).toNonIndexed();
     return peindre(g, (x, y) => ECORCE.clone().multiplyScalar(0.62 + 0.38 * Math.min(1, y / 2.5)));
@@ -598,9 +602,10 @@ Tanks.Decor = (function () {
       groupe.add(m);
       return m;
     };
-    pres = { troncs: lot(geoFeuilluTronc(), matEcorce, true), feuilles: lot(geoFeuilluFeuilles(), matFeuilles, true), troncsSapins: lot(geoSapinTronc(), matEcorce, true), sapins: lot(geoSapin(18), matAiguilles, true) };
+    const P = JUNGLE ? Tanks.Jungle3D.palmier({ fusion, peindre, tronc, lin }) : null; // (demande 115, Guerre froide : les palmiers)
+    pres = { troncs: lot(geoFeuilluTronc(), matEcorce, true), feuilles: lot(geoFeuilluFeuilles(), matFeuilles, true), troncsSapins: lot(P ? P.tronc : geoSapinTronc(), matEcorce, true), sapins: lot(P ? P.palmes : geoSapin(18), matAiguilles, true) };
     arbresFeuilles = lot(geoFeuilluSimple(), matSimple, false);
-    sapins = lot(geoSapinSimple(), matSimple, false);
+    sapins = lot(P ? P.simple : geoSapinSimple(), matSimple, false);
     T.arbres.forEach((a, i) => {
       const h = hasard(), jaune = hasard() < 0.15 ? 0.12 : 0;
       couleursArbres[i] = a.sorte === "feuillu" ? new THREE.Color(0.86 + h * 0.26 + jaune, 0.88 + hasard() * 0.22 + jaune * 0.5, 0.82 + hasard() * 0.2) : new THREE.Color(0.86 + h * 0.2, 0.9 + hasard() * 0.18, 0.88 + hasard() * 0.18);
@@ -972,6 +977,7 @@ Tanks.Decor = (function () {
     Tanks.Base3D.construire(g); // (demande 99 : les 2 bases aériennes, posées sur le sol aplati)
     Tanks.Tranchees3D.construire(g, ajouterMorceau); // (demande 115 : en 1916, les tranchées, les barbelés, les arbres déchiquetés)
     Tanks.Bocage3D.construire(g, ajouterMorceau); // (demande 115 : en 1944, la rivière et ses ponts de pierre)
+    if (Tanks.Jungle3D) Tanks.Jungle3D.construire(g, ajouterMorceau); // (demande 115, Guerre froide : les rizières, la plateforme des hélicos)
     return g;
   }
 

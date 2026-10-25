@@ -222,6 +222,53 @@ Tanks.Musique = (function () {
     s.stop(t + 0.15);
   }
 
+  // ✍️ (demande 115, Guerre froide) LA GUITARE ÉLECTRIQUE des années 70 : 2 cordes en dents de scie un peu désaccordées,
+  // passées dans une SATURATION (une courbe qui écrase le son : c'est le « crunch » de l'ampli), puis un filtre qui garde
+  // le médium. L'accord « en puissance » = la basse + la quinte (le riff) ; la mélodie = une note seule, plus longue.
+  let saturation = null;
+  function guitare(fs, t, duree, fort) {
+    if (!saturation) {
+      saturation = ctx.createWaveShaper();
+      const n = 1024, courbe = new Float32Array(n);
+      for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; courbe[i] = Math.tanh(x * 6) * 0.8; }
+      saturation.curve = courbe;
+      const ampli = ctx.createBiquadFilter();
+      ampli.type = "lowpass";
+      ampli.frequency.value = 2600;
+      saturation.connect(ampli);
+      brancher(ampli, 0.35);
+    }
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(M.guitare * fort, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(M.guitare * fort * 0.4, t + duree * 0.8);
+    g.gain.linearRampToValueAtTime(0.0001, t + duree);
+    g.connect(saturation);
+    for (const f of fs) for (const d of [-6, 6]) {
+      const o = ctx.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.value = f;
+      o.detune.value = d;
+      o.connect(g);
+      o.start(t);
+      o.stop(t + duree + 0.05);
+    }
+    etat.notes++;
+  }
+  // la CAISSE CLAIRE (un claquement de souffle) et le CHARLESTON (un petit « tss » aigu)
+  function caisseClaire(t, fort, aigu) {
+    const s = ctx.createBufferSource(), g = ctx.createGain(), fi = ctx.createBiquadFilter();
+    s.buffer = bruit;
+    fi.type = aigu ? "highpass" : "bandpass";
+    fi.frequency.value = aigu ? 7000 : 1800;
+    g.gain.setValueAtTime(M.batterie * fort, t);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + (aigu ? 0.05 : 0.18));
+    s.connect(fi).connect(g);
+    brancher(g, 0.3);
+    s.start(t);
+    s.stop(t + 0.2);
+  }
+
   // Une « croche » : le morceau avance par petits pas (6 par mesure, à 6/8)
   function jouerLePas(t) {
     const croche = 60 / M.tempo / 2;
@@ -238,6 +285,15 @@ Tanks.Musique = (function () {
     pulsation(basseNote / 2, t, croche * 0.6);
     // le BRAAAM au début de l'intro, puis toutes les 4 mesures
     if (i === 0 && mesure % 4 === 0) braam(basseNote / 2, t);
+    // (demande 115, Guerre froide) le RIFF de guitare (dès l'intro) et la batterie rock
+    if (M.guitare) {
+      const f = M.riff[i] || 0;
+      if (f) guitare([basseNote, quinte], t, croche * 0.9, f);
+      if (M.batterie) {
+        caisseClaire(t, 0.12, true);
+        if (partie !== "intro" && i === 3) caisseClaire(t, 0.5, false);
+      }
+    }
     if (partie === "intro") return;
     // (étape 84) la cymbale monte pendant la dernière mesure de la montée, puis ÉCLATE avec le thème
     if (mesure === 7 && i === 0) cymbale(t, croche * 6, true);
@@ -257,6 +313,7 @@ Tanks.Musique = (function () {
     // la mélodie de cuivres (et un cor une octave plus bas)
     if (partie === "thème") {
       for (const [quand, nom, longueur] of M.melodie[(mesure - 8) % M.melodie.length]) if (quand === i) {
+        if (M.guitare) { guitare([hz(nom)], t, croche * longueur, 1.1); continue; } // (demande 115, Guerre froide : la mélodie à la guitare)
         cuivre(hz(nom), t, croche * longueur);
         cuivre(hz(nom) / 2, t, croche * longueur); // (les trombones, une octave plus bas : plus puissant)
         cor(hz(nom) / 2, t, croche * longueur);

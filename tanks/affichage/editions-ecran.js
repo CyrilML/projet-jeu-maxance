@@ -131,6 +131,13 @@ Tanks.EcranEditions = (function () {
       x.beginPath(), x.ellipse(30, 14, 3, 6, 0.4, 0, Math.PI * 2), x.fill();
     } else if (d.embleme === "losange") { // (1944, la Ligue : un losange doré)
       x.beginPath(), x.moveTo(30, 3), x.lineTo(41, 14), x.lineTo(30, 25), x.lineTo(19, 14), x.fill();
+    } else if (d.embleme === "triangle") { // (Guerre froide, Ostrel : un triangle dans un anneau)
+      x.lineWidth = 3, x.strokeStyle = d.fond[1], x.beginPath(), x.arc(30, 13, 10, 0, Math.PI * 2), x.stroke();
+      x.beginPath(), x.moveTo(30, 5), x.lineTo(37, 18), x.lineTo(23, 18), x.fill();
+    } else if (d.embleme === "roue") { // (Guerre froide, Khavar : une roue dentée dorée)
+      for (let k = 0; k < 10; k++) (x.save(), x.translate(30, 13), x.rotate((k * Math.PI) / 5), x.fillRect(-2, -12, 4, 5), x.restore());
+      x.beginPath(), x.arc(30, 13, 8, 0, Math.PI * 2), x.fill();
+      x.fillStyle = d.fond[0], x.beginPath(), x.arc(30, 13, 3.5, 0, Math.PI * 2), x.fill();
     } else if (d.embleme === "aigle") {
       x.beginPath(), x.moveTo(30, 6), x.lineTo(44, 10), x.lineTo(36, 14), x.lineTo(44, 20), x.lineTo(32, 18), x.lineTo(30, 24), x.lineTo(28, 18), x.lineTo(16, 20), x.lineTo(24, 14), x.lineTo(16, 10), x.fill();
     }

@@ -1366,6 +1366,7 @@ Tanks.Avions3D = (function () {
     if (id) { // (demande 115) un avion d'édition : son hélice qui tourne, pas de postcombustion, ni de train qui rentre
       Object.assign(o, { flamme: nom("flamme"), lueur: nom("lueur"), train: null, jambes: [], verriere: null, pilote: nom("pilote"), missiles: [], helice: nom("helice"), helices: tous("helice"), flous: nom("flous"), sortie: 1, ouverture: 1, edition: id });
       if (sorte === "transport") Object.assign(o, { rampe: nom("rampe") || new THREE.Group(), porteSoute: nom("porteSoute") || new THREE.Group(), ouverture: 0 });
+      if (sorte === "helico") Object.assign(o, { rotor: nom("rotor"), rotorQueue: nom("rotorQueue") }); // (demande 115, Guerre froide : l'hélico de combat d'une édition)
     } else if (sorte === "avion" || sorte === "chasseur") {
       Object.assign(o, { flamme: nom("flamme"), lueur: nom("lueur"), train: nom("train"), jambes: tous("jambe"), verriere: nom("verriere"), pilote: nom("pilote"), sortie: 1, ouverture: 1 });
       if (sorte === "avion") o.missiles = o.caisse.children.filter((x) => x.isGroup && x.name === "" && x !== o.train && x !== o.verriere && x !== o.pilote);

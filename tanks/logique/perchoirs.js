@@ -76,7 +76,7 @@ Tanks.Perchoirs = (function () {
       vieMax: F.vie, vie: F.vie, debout: true, chuteT: 0, sensChute: 0, occupants: 0, reserve: null, sacs: !!F.sacs,
       plateforme: sorte !== "colline", echelle: null, lieu: directionDe(x, z),
     }, extra || {});
-    p.nom = (sorte === "chateau" ? "le " : sorte === "colline" ? "le " : sorte === "echafaudage" ? "l'" : "le ") + F.nom + " n° " + n + " (" + p.lieu + ")";
+    p.nom = (F.feminin ? "la " : sorte === "chateau" ? "le " : sorte === "colline" ? "le " : sorte === "echafaudage" ? "l'" : "le ") + F.nom + " n° " + n + " (" + p.lieu + ")";
     p.elevation = Math.max(0, p.haut - solAutour(x, z, PL.anneau)); // (de combien il domine le sol d'alentour)
     liste.push(p);
     return p;
@@ -89,6 +89,25 @@ Tanks.Perchoirs = (function () {
   }
 
   if (!T.souterrain) {
+    // ✍️ (demande 115, Guerre froide) les PERCHOIRS À LEUR PLACE : [sorte, x, z, angle] (les huttes sur pilotis du village,
+    // les nids de sacs de sable de la base de feu). Une plateforme (la hutte) a son échelle comme un mirador.
+    for (const [sorte, x, z, angle] of P.places || []) {
+      const F = P.sortes[sorte];
+      if (!F) continue;
+      if (sorte === "colline") {
+        const p = ajouter("colline", x, z, angle);
+        p.haut = p.base;
+        p.elevation = Math.max(0, p.base - solAutour(x, z, PL.anneau));
+        p.nom = "le nid de sacs de sable n° " + compteurs.colline + " (" + ((T.baseDeFeu && T.baseDeFeu.nom) || p.lieu) + ")";
+        continue;
+      }
+      let bas = Infinity;
+      for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, 0]]) bas = Math.min(bas, T.hauteur(x + a * F.pied, z + b * F.pied));
+      const p = ajouter(sorte, x, z, angle, { base: bas + 0.05 });
+      p.haut = p.base + F.hauteur;
+      p.elevation = Math.max(0, p.haut - solAutour(x, z, PL.anneau));
+      echelle(p, F.pied + 0.25, F.demi + 0.1);
+    }
     // les MIRADORS et les CHÂTEAUX D'EAU : dans les champs, entre les deux camps (une moitié de chaque côté)
     for (const sorte of ["chateau", "mirador"]) {
       const F = P.sortes[sorte], n = voulus[sorte] || 0;

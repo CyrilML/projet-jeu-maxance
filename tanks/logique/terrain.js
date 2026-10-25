@@ -103,6 +103,28 @@ Tanks.Terrain = (function () {
     return d < demiL ? RIV.profondeur : (RIV.profondeur * (demiL + RIV.talus - d)) / RIV.talus;
   }
   const dansRiviere = (x, z) => !!RIV && creuxRiviere(x, z) > RIV.profondeur * 0.6;
+  // ✍️ (demande 115, Guerre froide) LES RIZIÈRES : des TERRASSES plates de « case » m de côté, rangée par rangée ; chaque
+  // rangée est une marche plus haute que la précédente (« MARCHE » m, vers le sud : z plus grand). Chaque case est pleine
+  // d'eau et bordée de DIGUETTES (dessinées par affichage/jungle3d.js). Autour, le sol rejoint la colline en douceur.
+  // Et LA BASE DE FEU : une colline au sommet APLATI (un plateau de « plateau » m de rayon, qui descend jusqu'à « pied » m).
+  const RIZ = (VAR.rizieres || []).map(([x, z, nc, nr, c]) => ({ x0: x, z0: z, x1: x + nc * c, z1: z + nr * c, nc, nr, c, h0: null }));
+  const MARCHE_RIZ = 0.55, BORD_RIZ = 8, BF = VAR.baseDeFeu || null;
+  const solNaturel = (x, z) => B.fractal(bruit, x / W.collines.taille, z / W.collines.taille, 4) * W.collines.hauteur * (VAR.collines || 1);
+  function niveauRiz(r, z) {
+    if (r.h0 === null) r.h0 = solNaturel((r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2);
+    const rang = Math.max(0, Math.min(r.nr - 1, Math.floor((z - r.z0) / r.c)));
+    return r.h0 + (rang - (r.nr - 1) / 2) * MARCHE_RIZ;
+  }
+  // dans l'EAU d'une rizière ? (pas sur une diguette : à plus de 0,7 m du bord de sa case)
+  function dansRiziere(x, z) {
+    for (const r of RIZ) {
+      if (x < r.x0 || x > r.x1 || z < r.z0 || z > r.z1) continue;
+      const u = (x - r.x0) % r.c, v = (z - r.z0) % r.c;
+      return u > 0.7 && u < r.c - 0.7 && v > 0.7 && v < r.c - 0.7 ? r : null;
+    }
+    return null;
+  }
+  let hautBase = null;
   function hauteurExacte(x, z) {
     let h = B.fractal(bruit, x / W.collines.taille, z / W.collines.taille, 4) * W.collines.hauteur * (VAR.collines || 1); // (étape 81 : × 1,8 dans le désert = des dunes)
     if (TRA) h += TR.cratere(x, z); // (demande 115 : les cratères du no man's land)
@@ -114,6 +136,22 @@ Tanks.Terrain = (function () {
       if (d < v.rayon * 1.7) plat = Math.min(plat, Math.max(0, (d - v.rayon * 0.8) / (v.rayon * 0.9)));
     }
     h = h * (0.15 + 0.85 * plat);
+    // (demande 115, Guerre froide) les rizières : à plat dans chaque rangée de cases ; le sol rejoint la colline sur « BORD_RIZ » m autour
+    for (let i = 0; i < RIZ.length; i++) {
+      const r = RIZ[i], dx = Math.max(r.x0 - x, 0, x - r.x1), dz = Math.max(r.z0 - z, 0, z - r.z1);
+      if (dx > BORD_RIZ || dz > BORD_RIZ) continue;
+      const t = Math.min(1, Math.hypot(dx, dz) / BORD_RIZ), f = t * t * (3 - 2 * t);
+      h = niveauRiz(r, z) * (1 - f) + h * f;
+    }
+    // (demande 115, Guerre froide) la base de feu : la colline au sommet aplati
+    if (BF) {
+      const d = Math.hypot(x - BF.x, z - BF.z);
+      if (d < BF.pied) {
+        if (hautBase === null) hautBase = solNaturel(BF.x, BF.z) + BF.hauteur;
+        const t = Math.min(1, (BF.pied - d) / (BF.pied - BF.plateau)), f = t * t * (3 - 2 * t);
+        h = h * (1 - f) + hautBase * f;
+      }
+    }
     // ✍️ (demande 99) les BASES AÉRIENNES : bien à plat (une piste ne monte pas !), à la hauteur du milieu de la base,
     // avec une pente douce tout autour (« bord » m). On mélange : 0 dans la base, 1 à « bord » m de son bord.
     for (let i = 0; i < ZONES.length; i++) {
@@ -245,8 +283,13 @@ Tanks.Terrain = (function () {
       z = (hasard() * 2 - 1) * (demi - 40);
     }
     if (Math.max(Math.abs(x), Math.abs(z)) > demi - 30 || presDUnVillage(x, z, -0.1 * VILLAGES[0].rayon) || dansUnCamp(x, z) || !loinDe(x, z, 2) || dansLEau(x, z, 3) || presDUnPortail(x, z, 9)) continue; // (pas sur les départs)
+    if (RIZ.length && RIZ.some((r) => x > r.x0 - 4 && x < r.x1 + 4 && z > r.z0 - 4 && z < r.z1 + 4)) continue; // (demande 115, Guerre froide : pas d'arbre dans les rizières)
+    if (BF && Math.hypot(x - BF.x, z - BF.z) < BF.plateau + 12) continue; // (ni sur la base de feu : le terrain est dégagé)
     if (TR.reseau && Math.abs(z) < TR.R.arriere + 25 && x > TR.R.x[0] - 40 && x < TR.R.x[1] + 40) continue; // (demande 115 : sur le front de 1916, plus un arbre debout : seulement des troncs déchiquetés, dessinés par affichage/tranchees3d.js)
-    arbres.push({ x, z, r: 0.6, taille: 0.8 + hasard() * 0.6, ecrase: false, sorte: hasard() < 0.35 ? "sapin" : "feuillu", angleChute: 0 });
+    // (demande 115, Guerre froide : dans la jungle, « palmiers » des arbres sont des PALMIERS — rangés avec les sapins, dessinés en palmiers —,
+    // et les feuillus sont plus grands)
+    const sorteArbre = VAR.palmiers ? (hasard() < VAR.palmiers ? "palmier" : "feuillu") : hasard() < 0.35 ? "sapin" : "feuillu";
+    arbres.push({ x, z, r: 0.6, taille: (0.8 + hasard() * 0.6) * (VAR.palmiers && sorteArbre === "feuillu" ? 1.25 : 1), ecrase: false, sorte: sorteArbre, angleChute: 0 });
   }
 
   // (demande 115, 1944) les VERGERS : [x, z, rangées, colonnes, écart] → des pommiers bien alignés
@@ -354,6 +397,7 @@ Tanks.Terrain = (function () {
     if (dansLEau(x, z)) return "eau";
     if (VAR.herbe === false) return VAR.matiereSol || "sable"; // (demande 115 : en 1916, de la boue, pas du sable)
     if (dansRiviere(x, z)) return "eau"; // (demande 115, 1944 : la rivière)
+    if (RIZ.length && dansRiziere(x, z)) return "eau"; // (demande 115, Guerre froide : l'eau des rizières)
     if (Q && Math.hypot(x - Q.x, z - Q.z) < Q.rayon) {
       const ix = ((((x - Q.x) % Q.ilot) + Q.ilot) % Q.ilot), iz = ((((z - Q.z) % Q.ilot) + Q.ilot) % Q.ilot), demiRue = Q.rue / 2;
       if (ix < demiRue || ix > Q.ilot - demiRue || iz < demiRue || iz > Q.ilot - demiRue) return "pierre";
@@ -361,5 +405,5 @@ Tanks.Terrain = (function () {
     return "terre";
   }
 
-  return { matiere, riviere: RIV ? { zRiviere, creux: creuxRiviere, dans: dansRiviere, R: RIV } : null, variante: VAR, rues, choisirCarte, get carte() { return carte; }, get souterrain() { return carte === "souterrain"; }, hauteur, hauteurExacte, cahierBilan, normale, boites, arbres, arbresAutour, boitesAutour, grilles: { arbres: grilleArbres, boites: grilleBoites }, dansBoite, repousser, vueLibre, departs, demi, camp: CAMP, villages: VILLAGES, forets, distLac, dansLEau, ileProche, iles: ILES };
+  return { rizieres: RIZ, niveauRiz, dansRiziere, baseDeFeu: BF, matiere, riviere: RIV ? { zRiviere, creux: creuxRiviere, dans: dansRiviere, R: RIV } : null, variante: VAR, rues, choisirCarte, get carte() { return carte; }, get souterrain() { return carte === "souterrain"; }, hauteur, hauteurExacte, cahierBilan, normale, boites, arbres, arbresAutour, boitesAutour, grilles: { arbres: grilleArbres, boites: grilleBoites }, dansBoite, repousser, vueLibre, departs, demi, camp: CAMP, villages: VILLAGES, forets, distLac, dansLEau, ileProche, iles: ILES };
 })();

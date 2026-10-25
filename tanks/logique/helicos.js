@@ -47,7 +47,7 @@ Tanks.Helicos = (function () {
   function nouveau(sorte, equipe, n) {
     const R = G[sorte];
     return equiper({
-      sorte, equipe, n, nom: NOMS[sorte] + " " + (equipe === "bleus" ? "bleu" : "rouge") + (H.parCamp[sorte] > 1 ? " " + n : ""),
+      sorte, equipe, n, nom: ((H.noms && H.noms[sorte] && H.noms[sorte][equipe]) || NOMS[sorte] + " " + (equipe === "bleus" ? "bleu" : "rouge")) + (H.parCamp[sorte] > 1 ? " " + n : ""), // (demande 115, Guerre froide : le nom de l'édition pour chaque camp)
       fiche: R, x: 0, y: 0, z: 0, angle: 0, vitesse: 0, tangage: 0, roulis: 0, rotor: 0, enVol: false,
       vie: R.vie, detruit: false, touche: 9, pilote: false, reussis: 0,
     });

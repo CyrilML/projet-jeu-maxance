@@ -599,7 +599,16 @@ Tanks.Scene = (function () {
       o.porteSoute.rotation.z = -Tanks.Avions3D.PENTE + 0.95 * o.ouverture;
     }
     if (o.helices && o.edition) for (const h of o.helices) h.rotation.x += dt * (e.pilote || e.sorte !== "avion" ? 42 : 0); // (demande 115 : l'hélice du biplan)
-    if (o.edition) { if (o.pilote) o.pilote.visible = !!e.pilote || e.sorte !== "avion"; if (o.flous) o.flous.visible = !!e.pilote || e.sorte !== "avion"; return; }
+    if (o.edition) {
+      if (o.pilote) o.pilote.visible = !!e.pilote || e.sorte !== "avion";
+      if (o.flous && e.sorte !== "helico") o.flous.visible = !!e.pilote || e.sorte !== "avion";
+      if (o.flamme) { // (demande 115, Guerre froide : la flamme d'un chasseur à réaction d'édition, plus longue quand il va vite)
+        const p = e.sorte === "avion" ? Math.max(0, Math.min(1, (e.vitesse / C.engins.avion.vitesse - A.postCombustion[0]) / (A.postCombustion[1] - A.postCombustion[0]))) : A.flammeChasseur;
+        o.flamme.visible = (!!e.pilote || e.sorte !== "avion") && p > 0.02;
+        o.flamme.scale.set(Math.max(0.3, p) * (0.85 + Math.random() * 0.3), 1, 1);
+      }
+      return;
+    }
     if (e.sorte === "avion" || e.sorte === "chasseur") {
       // le train : il rentre en vol (chaque jambe tourne autour de sa charnière), il sort au sol
       if (o.jambes.length) {
