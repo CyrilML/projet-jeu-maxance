@@ -91,9 +91,22 @@ Tanks.Terrain = (function () {
   // (demande 115) « hauteurExacte » est le sol NATUREL (avec les cratères d'obus de 1916, mais sans le creux des tranchées :
   // c'est ce sol que le peintre dessine ; les tranchées ont leurs propres parois, affichage/tranchees3d.js)
   const TR = Tanks.Tranchees, TRA = TR.actif;
+  // ✍️ (demande 115, édition 1944) LA RIVIÈRE : un lit peu profond (on la traverse à gué) qui serpente (z = z0 + A × sin(x ÷ P)),
+  // de « largeur » m, avec ses talus ; sur les PONTS (x de « ponts »), le sol n'est pas creusé : on passe au sec.
+  const RIV = VAR.riviere || null;
+  const zRiviere = (x) => RIV.z0 + RIV.amplitude * Math.sin(x / RIV.periode);
+  function creuxRiviere(x, z) {
+    if (x < RIV.x[0] || x > RIV.x[1]) return 0;
+    const d = Math.abs(z - zRiviere(x)), demiL = RIV.largeur / 2;
+    if (d > demiL + RIV.talus) return 0;
+    if (RIV.ponts.some((px) => Math.abs(x - px) < RIV.pont / 2)) return 0;
+    return d < demiL ? RIV.profondeur : (RIV.profondeur * (demiL + RIV.talus - d)) / RIV.talus;
+  }
+  const dansRiviere = (x, z) => !!RIV && creuxRiviere(x, z) > RIV.profondeur * 0.6;
   function hauteurExacte(x, z) {
     let h = B.fractal(bruit, x / W.collines.taille, z / W.collines.taille, 4) * W.collines.hauteur * (VAR.collines || 1); // (étape 81 : × 1,8 dans le désert = des dunes)
     if (TRA) h += TR.cratere(x, z); // (demande 115 : les cratères du no man's land)
+    if (RIV) h -= creuxRiviere(x, z); // (demande 115, 1944 : le lit de la rivière)
     // le village est sur un terrain presque plat : on « aplatit » les collines près du centre (étape 71 : et sous les hameaux)
     let plat = 1;
     for (let i = 0; i < VILLAGES.length; i++) {
@@ -193,6 +206,17 @@ Tanks.Terrain = (function () {
     boites.push({ x: E2.x, z: E2.z, demiL: 11, demiP: 5.5, angle: 0, h: 8.5, sorte: "maison", type: "maison", lieu: "l'église", nom: "l'église de " + V.nom.replace(/^le village en ruines de /, ""), ruinesDepart: 0, eglise: true, graine: 1916 });
     boites.push({ x: E2.x - 14, z: E2.z, demiL: 3.2, demiP: 3.2, angle: 0, h: 17, sorte: "maison", type: "tour", lieu: "l'église", nom: "le clocher", graine: 1917 });
   }
+  // ✍️ (demande 115, édition 1944) LE BOCAGE : un damier de champs (« cellule » m), bordés de HAIES épaisses et hautes
+  // (avec des trouées : « part » des bords ont une haie) ; et des VERGERS : des pommiers en rangées.
+  if (VAR.bocage) {
+    const Bo = VAR.bocage, n = Math.floor(Bo.etendue / Bo.cellule);
+    for (let i = -n; i < n; i++) for (let j = -n; j < n; j++) for (const vertical of [false, true]) {
+      if (hasard() > Bo.part) continue;
+      const L = Bo.cellule * (0.55 + hasard() * 0.35), x = (i + (vertical ? 0 : 0.5)) * Bo.cellule + (hasard() - 0.5) * 8, z = (j + (vertical ? 0.5 : 0)) * Bo.cellule + (hasard() - 0.5) * 8;
+      if (Math.abs(z) > Bo.etendueZ || presDUnVillage(x, z, 25) || dansUnCamp(x, z) || !loinDe(x, z, 6) || (RIV && Math.abs(z - zRiviere(x)) < RIV.largeur + 10)) continue;
+      boites.push({ x, z, demiL: L / 2, demiP: Bo.epaisseur / 2, angle: (vertical ? Math.PI / 2 : 0) + (hasard() - 0.5) * 0.08, h: Bo.hauteur, sorte: "muret", type: "haie", lieu: "le bocage" });
+    }
+  }
   // Les haies et les murets dans la campagne (pour se cacher), et quelques ruines isolées (des granges).
   for (let k = 0, nHaies = VAR.haies == null ? W.haies : VAR.haies; k < nHaies; k++) { // (étape 81 : pas de haies dans le désert)
     const x = (hasard() * 2 - 1) * (demi - 80), z = (hasard() * 2 - 1) * (demi - 80);
@@ -221,10 +245,15 @@ Tanks.Terrain = (function () {
       z = (hasard() * 2 - 1) * (demi - 40);
     }
     if (Math.max(Math.abs(x), Math.abs(z)) > demi - 30 || presDUnVillage(x, z, -0.1 * VILLAGES[0].rayon) || dansUnCamp(x, z) || !loinDe(x, z, 2) || dansLEau(x, z, 3) || presDUnPortail(x, z, 9)) continue; // (pas sur les départs)
-    if (TRA && Math.abs(z) < TR.R.arriere + 25 && x > TR.R.x[0] - 40 && x < TR.R.x[1] + 40) continue; // (demande 115 : sur le front de 1916, plus un arbre debout : seulement des troncs déchiquetés, dessinés par affichage/tranchees3d.js)
+    if (TR.reseau && Math.abs(z) < TR.R.arriere + 25 && x > TR.R.x[0] - 40 && x < TR.R.x[1] + 40) continue; // (demande 115 : sur le front de 1916, plus un arbre debout : seulement des troncs déchiquetés, dessinés par affichage/tranchees3d.js)
     arbres.push({ x, z, r: 0.6, taille: 0.8 + hasard() * 0.6, ecrase: false, sorte: hasard() < 0.35 ? "sapin" : "feuillu", angleChute: 0 });
   }
 
+  // (demande 115, 1944) les VERGERS : [x, z, rangées, colonnes, écart] → des pommiers bien alignés
+  for (const [vx, vz, nr, nc, e] of VAR.vergers || []) for (let a = 0; a < nr; a++) for (let b = 0; b < nc; b++) {
+    const x = vx + b * e + (hasard() - 0.5), z = vz + a * e + (hasard() - 0.5);
+    if (loinDe(x, z, 1.5)) arbres.push({ x, z, r: 0.45, taille: 0.55 + hasard() * 0.15, ecrase: false, sorte: "feuillu", angleChute: 0, verger: true });
+  }
   // (étape 63) Sur les îles : des arbres (surtout des pins), et une vieille tour en ruines sur la grande île.
   for (const ile of ILES) {
     const n = Math.round(ile.rayon * 0.6);
@@ -324,6 +353,7 @@ Tanks.Terrain = (function () {
     if (carte === "souterrain") return "beton";
     if (dansLEau(x, z)) return "eau";
     if (VAR.herbe === false) return VAR.matiereSol || "sable"; // (demande 115 : en 1916, de la boue, pas du sable)
+    if (dansRiviere(x, z)) return "eau"; // (demande 115, 1944 : la rivière)
     if (Q && Math.hypot(x - Q.x, z - Q.z) < Q.rayon) {
       const ix = ((((x - Q.x) % Q.ilot) + Q.ilot) % Q.ilot), iz = ((((z - Q.z) % Q.ilot) + Q.ilot) % Q.ilot), demiRue = Q.rue / 2;
       if (ix < demiRue || ix > Q.ilot - demiRue || iz < demiRue || iz > Q.ilot - demiRue) return "pierre";
@@ -331,5 +361,5 @@ Tanks.Terrain = (function () {
     return "terre";
   }
 
-  return { matiere, variante: VAR, rues, choisirCarte, get carte() { return carte; }, get souterrain() { return carte === "souterrain"; }, hauteur, hauteurExacte, cahierBilan, normale, boites, arbres, arbresAutour, boitesAutour, grilles: { arbres: grilleArbres, boites: grilleBoites }, dansBoite, repousser, vueLibre, departs, demi, camp: CAMP, villages: VILLAGES, forets, distLac, dansLEau, ileProche, iles: ILES };
+  return { matiere, riviere: RIV ? { zRiviere, creux: creuxRiviere, dans: dansRiviere, R: RIV } : null, variante: VAR, rues, choisirCarte, get carte() { return carte; }, get souterrain() { return carte === "souterrain"; }, hauteur, hauteurExacte, cahierBilan, normale, boites, arbres, arbresAutour, boitesAutour, grilles: { arbres: grilleArbres, boites: grilleBoites }, dansBoite, repousser, vueLibre, departs, demi, camp: CAMP, villages: VILLAGES, forets, distLac, dansLEau, ileProche, iles: ILES };
 })();

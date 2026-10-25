@@ -126,6 +126,11 @@ Tanks.EcranEditions = (function () {
     if (d.embleme === "fleur") {
       for (let k = 0; k < 3; k++) (x.beginPath(), x.ellipse(30 + (k - 1) * 6, 13 - (k === 1 ? 3 : 0), 3, 7, (k - 1) * 0.5, 0, Math.PI * 2), x.fill());
       x.fillRect(22, 17, 16, 2.5);
+    } else if (d.embleme === "anneau") { // (1944, l'Union : un anneau et une feuille de chêne)
+      x.lineWidth = 4, x.strokeStyle = d.fond[1], x.beginPath(), x.arc(30, 14, 9, 0, Math.PI * 2), x.stroke();
+      x.beginPath(), x.ellipse(30, 14, 3, 6, 0.4, 0, Math.PI * 2), x.fill();
+    } else if (d.embleme === "losange") { // (1944, la Ligue : un losange doré)
+      x.beginPath(), x.moveTo(30, 3), x.lineTo(41, 14), x.lineTo(30, 25), x.lineTo(19, 14), x.fill();
     } else if (d.embleme === "aigle") {
       x.beginPath(), x.moveTo(30, 6), x.lineTo(44, 10), x.lineTo(36, 14), x.lineTo(44, 20), x.lineTo(32, 18), x.lineTo(30, 24), x.lineTo(28, 18), x.lineTo(16, 20), x.lineTo(24, 14), x.lineTo(16, 10), x.fill();
     }

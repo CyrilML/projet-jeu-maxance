@@ -108,7 +108,7 @@ Tanks.Engins3D = (function () {
         casqueBord: new THREE.Color(E.camouflage[2]).getHex(), tenue: coul(UE.fond),
         // ✍️ (demande 115) le CASQUE de l'édition (« adrian » à cimier, « kressien » à couvre-nuque… ou le moderne) et sa couleur
         casqueStyle: ((Tanks.CONFIG.edition.modeles.casques || {})[String(equipe).split("~")[0]]) || "moderne",
-        casqueAcier: /^bleus/.test(equipe) ? 0x6c7c90 : 0x5a5e54, molletieres: new THREE.Color(UE.fond).multiplyScalar(0.82).getHex(),
+        casqueAcier: UE.casque ? coul(UE.casque) : /^bleus/.test(equipe) ? 0x6c7c90 : 0x5a5e54, // (demande 115 : la couleur du casque de l'édition, sinon l'acier de 1916) molletieres: new THREE.Color(UE.fond).multiplyScalar(0.82).getHex(),
       },
     });
   }
@@ -552,6 +552,13 @@ Tanks.Engins3D = (function () {
       dernier().echelle = [1.05, 1, 0.72];
       pc("cou", galet(0.2, 0.05, 0.016, 0.3, 6), -0.012, yc + 0.11, 0, acier, 0, 0, pente); // la crête (le cimier)
       if (detail) pc("cou", galet(0.008, 0.035, 0.03, 0.3, 4), 0.13, yc + 0.06, 0, joueur ? K.marqueToi : K.marque, 0, 0, pente - 0.4); // l'insigne
+    } else if (K.casqueStyle === "rond") { // (1944, l'Union d'Aldermont) le casque ROND : la bombe profonde, un petit bord tout autour, le filet
+      pc("cou", new THREE.SphereGeometry(0.135, n, detail ? 9 : 5, 0, Math.PI * 2, 0, Math.PI * 0.56), -0.01, yc - 0.012, 0, acier, 0, 0, pente);
+      dernier().echelle = [1.08, 1.02, 1.0];
+      pc("cou", new THREE.TorusGeometry(0.142, 0.012, 4, n), -0.01, yc - 0.03, 0, acier, Math.PI / 2, 0, 0);
+      dernier().echelle = [1.08, 1.0, 1];
+      dernier().rz2 = pente;
+      if (detail) pc("cou", galet(0.26, 0.11, 0.26, 0.6, 8), -0.01, yc + 0.04, 0, K.sangle, 0, 0, pente); // le filet de camouflage
     } else {
       const prof = [[0.0, 0.125], [0.07, 0.118], [0.112, 0.085], [0.132, 0.03], [0.136, -0.025], [0.15, -0.06], [0.168, -0.08], [0.172, -0.088], [0.13, -0.03], [0.124, 0.03], [0.1, 0.09], [0.0, 0.11]].map(([r, y]) => new THREE.Vector2(r, y));
       pc("cou", new THREE.LatheGeometry(prof, n), -0.012, yc - 0.008, 0, acier, 0, 0, pente);

@@ -54,6 +54,7 @@ window.Tanks = window.Tanks || {};
     groupe.add(a);
   }
 
+  Tanks.Chars1916 = { plaque, retrecir, chenilles, embleme }; // (demande 115 : prêtés aux tanks des éditions suivantes)
   // ------------------------------------------------------------------ LE LOSANGE R-16 « Taureau »
   C3.ajouterModele("losange", (fiche, equipe, numero) => {
     const E = C3.outils.matsEquipe(equipe), P = E.peinture, m = C3.materiaux(), T = m.teinte;

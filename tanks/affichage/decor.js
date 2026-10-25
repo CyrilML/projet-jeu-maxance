@@ -223,6 +223,7 @@ Tanks.Decor = (function () {
       ctx.fillRect(x - r, y - r, r * 2, r * 2);
     }
     if (Tanks.Tranchees3D) Tanks.Tranchees3D.peindreSol(ctx, X, k, hasard); // (demande 115 : la boue, les cratères et la terre rejetée des tranchées)
+    if (Tanks.Bocage3D) Tanks.Bocage3D.peindreSol(ctx, X, k); // (demande 115, 1944 : la rivière)
     // les chemins : le bord usé, la terre, les 2 ornières plus sombres, l'herbe au milieu
     const L = BE.chemins.largeur * k;
     const tracer = (l, largeur, style) => {
@@ -970,6 +971,7 @@ Tanks.Decor = (function () {
     Tanks.MarquesSol.construire(g); // (demande 92 : les traces de chenilles et les cratères, posés sur le sol)
     Tanks.Base3D.construire(g); // (demande 99 : les 2 bases aériennes, posées sur le sol aplati)
     Tanks.Tranchees3D.construire(g, ajouterMorceau); // (demande 115 : en 1916, les tranchées, les barbelés, les arbres déchiquetés)
+    Tanks.Bocage3D.construire(g, ajouterMorceau); // (demande 115 : en 1944, la rivière et ses ponts de pierre)
     return g;
   }
 

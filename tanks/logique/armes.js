@@ -167,6 +167,7 @@ Tanks.Armes = (function () {
   function tirer(s, A, monde, ev) {
     const st = A.stats, sigma = dispersion(s, st);
     A.chargeur--;
+    if (st.ping && A.chargeur === 0) ev.push(["clip-ping", { tireur: s, arme: st.nom, x: s.x, z: s.z }]); // ✍️ (demande 115, 1944) la lame-chargeur vide saute du fusil : « PING ! »
     s.recharge = st.cadence;
     s.tir = 0.08;
     s.compteurs.tirs++;

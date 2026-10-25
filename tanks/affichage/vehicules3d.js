@@ -497,9 +497,14 @@ Tanks.Vehicules3D = (function () {
   // ------------------------------------------------------------------ les modèles (une fois), et leurs copies
   const modeles = {};
   const FABRIQUES = { moto, quad, camion, camionAA: (equipe) => camion(equipe, true) }; // (demande 113 : le châssis du camion antiaérien)
+  // ✍️ (demande 115) LES VÉHICULES DES ÉDITIONS : une édition inscrit son propre modèle (le semi-chenillé de 1944 :
+  // affichage/vehicules3d-1944.js) et dit lequel prendre pour chaque sorte (config « edition.modeles.vehicules »).
+  const MODELES = {}, SIMPLES = {};
+  const ajouterModele = (id, f, simple) => ((MODELES[id] = f), simple && (SIMPLES[id] = simple));
+  const modeleDe = (sorte) => { const id = ((Tanks.CONFIG.edition.modeles || {}).vehicules || {})[sorte]; return id && MODELES[id] ? id : null; };
   function fabriquer(sorte, equipe) {
-    const cle = sorte + ":" + equipe;
-    if (!modeles[cle]) modeles[cle] = FABRIQUES[sorte](equipe).g;
+    const id = modeleDe(sorte), cle = sorte + ":" + equipe;
+    if (!modeles[cle]) modeles[cle] = id ? MODELES[id](equipe, sorte).g : FABRIQUES[sorte](equipe).g;
     const g = modeles[cle].clone(true); // (une copie : les formes et les matières sont partagées, rien n'est refabriqué)
     const o = { g, sorte, roues: [], pivots: [], dist: 0 };
     g.traverse((x) => {
@@ -515,6 +520,7 @@ Tanks.Vehicules3D = (function () {
   // ------------------------------------------------------------------ la version SIMPLE, pour de loin (des instances)
   // Quelques boîtes et cylindres soudés en UNE forme à couleurs de sommets ; toutes les copies d'une équipe = 1 dessin.
   function formeSimple(sorte, equipe) {
+    if (modeleDe(sorte) && SIMPLES[modeleDe(sorte)]) return SIMPLES[modeleDe(sorte)](equipe, sorte); // (demande 115)
     const E = Tanks.CONFIG.equipes[equipe], mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8 });
     const g = new THREE.Group(), base = new THREE.Color(E.camouflage[0]);
     const b = (lx, ly, lz, x, y, z, c, rz) => {
@@ -564,5 +570,5 @@ Tanks.Vehicules3D = (function () {
     return lot;
   }
 
-  return { sait, fabriquer, lotSimple, SORTES };
+  return { sait, fabriquer, lotSimple, SORTES, ajouterModele };
 })();

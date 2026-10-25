@@ -30,6 +30,9 @@ Tanks.Tranchees = (function () {
   const C = Tanks.CONFIG, VAR = (Tanks.CarteDuJour && Tanks.CarteDuJour.variante) || {};
   const actif = !!(VAR.tranchees && C.edition && C.edition.regles.tranchees && C.tranchees);
   const R = C.tranchees || {};
+  // (demande 115, édition 1944) « reseau: false » : pas de tranchées, de cratères ni de barbelés, seulement les nids de
+  // mitrailleuse posés aux « places » de config (derrière les haies du bocage)
+  const reseau = actif && R.reseau !== false;
   const radio = Tanks.Evenements;
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   let graine = 1916;
@@ -49,7 +52,7 @@ Tanks.Tranchees = (function () {
     lignes.push(l);
     return l;
   }
-  if (actif) {
+  if (reseau) {
     for (const equipe of ["bleus", "rouges"]) {
       const s = equipe === "bleus" ? 1 : -1, X = R.x;
       ligne("x", s * R.feu, R.zigzag[0], R.zigzag[1], equipe === "bleus" ? 0 : 0.5, X[0], X[1], equipe, "tranchée de tir", -s);
@@ -70,7 +73,7 @@ Tanks.Tranchees = (function () {
   // ✍️ LE CREUX ici (m) : 0 hors des tranchées ; dans une tranchée de tir, le fond (profondeur), la BANQUETTE côté ennemi
   // (moins profonde : on y monte pour tirer), et les parois raides jusqu'au bord.
   function creux(x, z) {
-    if (!actif || Math.abs(z) > R.arriere + 6 || x < R.x[0] - 20 || x > R.x[1] + 20) return 0;
+    if (!reseau || Math.abs(z) > R.arriere + 6 || x < R.x[0] - 20 || x > R.x[1] + 20) return 0;
     let h = 0;
     for (let i = 0; i < lignes.length; i++) {
       const l = lignes[i], u = ecart(l, x, z);
@@ -101,7 +104,7 @@ Tanks.Tranchees = (function () {
 
   // ------------------------------------------------------------------ 2. LES CRATÈRES (des cuvettes, dans le no man's land)
   const crateres = [], CASE = 32, casesCrateres = new Map();
-  if (actif) {
+  if (reseau && R.crateres) {
     const K = R.crateres;
     for (let essai = 0; crateres.length < K.nombre && essai < K.nombre * 6; essai++) {
       const derriere = hasard() < K.partDerriere, x = R.x[0] + 40 + hasard() * (R.x[1] - R.x[0] - 60);
@@ -122,7 +125,7 @@ Tanks.Tranchees = (function () {
   bilan.crateres = crateres.length;
   // Le sol abaissé par les cratères en (x, z) (m, négatif : un creux avec un petit bourrelet de terre autour).
   function cratere(x, z) {
-    if (!actif) return 0;
+    if (!reseau) return 0;
     const l = casesCrateres.get(Math.floor(x / CASE) + ":" + Math.floor(z / CASE));
     if (!l) return 0;
     let h = 0;
@@ -136,7 +139,7 @@ Tanks.Tranchees = (function () {
 
   // ------------------------------------------------------------------ 3. LES BARBELÉS (des tronçons de 8 m)
   const barbeles = []; // { equipe, z, x0, x1, segments: [{ x0, x1, z, coupe, par }] }
-  if (actif) {
+  if (reseau && R.barbeles) {
     const B = R.barbeles;
     for (const equipe of ["bleus", "rouges"]) {
       const s = equipe === "bleus" ? 1 : -1;
@@ -170,7 +173,7 @@ Tanks.Tranchees = (function () {
   }
   // ✍️ FREINÉ dans les barbelés : × la vitesse d'un soldat (1 = pas de barbelés)
   function frein(s) {
-    if (!actif || s.dansUnEngin || s.mort || Math.abs(Math.abs(s.z) - (R.feu - R.barbeles.rangs[0])) > 12) return 1;
+    if (!barbeles.length || s.dansUnEngin || s.mort || Math.abs(Math.abs(s.z) - (R.feu - R.barbeles.rangs[0])) > 12) return 1;
     const g = segmentIci(s.x, s.z, 0);
     if (!g) return (s.accroche = false), 1;
     if (!s.accroche) bilan.freines++;
@@ -207,10 +210,12 @@ Tanks.Tranchees = (function () {
     const liste = [];
     if (!actif) return liste;
     let n = 0;
-    for (const equipe of ["bleus", "rouges"]) for (const x of M.x) {
-      const p = poste(equipe, equipe === "bleus" ? x : -x * 0.9 + 30, P.bord + 0.35); // (sur le parapet, devant la banquette)
+    const places = M.places ? M.places.map(([x, z, angle, equipe]) => ({ x, z, angle, equipe })) : [];
+    if (!M.places) for (const equipe of ["bleus", "rouges"]) for (const x of M.x) places.push(Object.assign({ equipe }, poste(equipe, equipe === "bleus" ? x : -x * 0.9 + 30, P.bord + 0.35)));
+    for (const p of places) {
+      const equipe = p.equipe; // (1916 : sur le parapet, devant la banquette ; 1944 : aux places de config.js)
       liste.push({
-        genre: "mitrailleuse", sorte: "mitrailleuse", equipe, nom: "Mitrailleuse lourde " + (equipe === "bleus" ? "bleue" : "rouge") + " n° " + ++n,
+        genre: "mitrailleuse", sorte: "mitrailleuse", equipe, nom: (M.nom || "Mitrailleuse lourde") + " " + (equipe === "bleus" ? "bleue" : "rouge") + " n° " + ++n,
         fiche: { longueur: 1.6, largeur: 0, hauteur: 1.2, rayon: 1.2, vie: 99 }, x: p.x, z: p.z, y: Tanks.Terrain.hauteurExacte(p.x, p.z) - M.enfonce, angle: p.angle, base: p.angle,
         tourelle: 0, hausse: 0, vitesse: 0, vie: 99, detruit: false, touche: 9, pilote: false, recharge: 0, chaleur: 0, enrayee: 0, tirs: 0, reussis: 0,
         servant: { etat: "guette", pense: hasard() * 0.3, cible: null, rafale: 0, pause: 0, pris: 0 },
@@ -300,7 +305,7 @@ Tanks.Tranchees = (function () {
   const etat = { vague: { bleus: 0, rouges: 0 }, chrono: { bleus: 0, rouges: 0 }, barrage: null, prochainBarrage: 0, campBarrage: "rouges", nVague: { bleus: 0, rouges: 0 } };
   // Au début de la bataille : chaque soldat de l'ordinateur prend sa place sur la banquette ; TOI, à pied dans ta tranchée.
   function installer(monde) {
-    if (!actif) return;
+    if (!reseau) return; // (sans tranchées : chacun part de son camp, comme en Moderne)
     for (const k of ["vagues", "montes", "renforts", "tiennent", "assaut"]) bilan[k] = { bleus: 0, rouges: 0 };
     for (const k of ["coupes", "ecrases", "dechires", "barrages", "obusBarrage", "freines"]) bilan[k] = 0;
     for (const b of barbeles) for (const g of b.segments) (g.coupe = false), (g.par = null);
@@ -362,7 +367,7 @@ Tanks.Tranchees = (function () {
   const ARTILLERIE = { bleus: { nom: "l'artillerie de " + C.equipes.bleus.nom, equipe: "bleus", genre: "artillerie", reussis: 0, x: 0, z: 900 }, rouges: { nom: "l'artillerie de " + C.equipes.rouges.nom, equipe: "rouges", genre: "artillerie", reussis: 0, x: 0, z: -900 } };
   function etape(monde, dt) {
     const ev = [];
-    if (!actif || monde.phase !== "bataille" || monde.metro) return ev;
+    if (!reseau || monde.phase !== "bataille" || monde.metro) return ev;
     const T = Tanks.Terrain;
     // a) LES VAGUES : au coup de sifflet, une partie de ceux qui tiennent la tranchée monte à l'assaut ; des renforts arrivent
     for (const equipe of ["bleus", "rouges"]) {
@@ -433,7 +438,7 @@ Tanks.Tranchees = (function () {
   }
   // (un obus du barrage, une grenade, un obus de tank qui explose tout près d'un barbelé le déchire : monde.js appelle ceci)
   function explosion(x, z, sorte, ev) {
-    if (!actif || Math.abs(Math.abs(z) - (R.feu - R.barbeles.rangs[0])) > 16) return;
+    if (!barbeles.length || Math.abs(Math.abs(z) - (R.feu - R.barbeles.rangs[0])) > 16) return;
     const r = sorte === "barrage" || sorte === "bombe" ? B.rayonCoupe : sorte === "obus" || sorte === "c4" ? B.rayonCoupe * 0.7 : 0;
     if (!r) return;
     for (const b of barbeles) for (const g of b.segments) if (!g.coupe && Math.abs(g.z - z) < r && x > g.x0 - r && x < g.x1 + r) couperSegment(g, "l'explosion", "obus", ev);
@@ -445,5 +450,5 @@ Tanks.Tranchees = (function () {
     return c > 0.9 && Math.hypot(cible.x - x, cible.z - z) > 6 && creux(x, z) < 0.9;
   }
 
-  return { actif, lignes, ecart, tri, creux, cratere, crateres, dansTranchee, ligneProche, barbeles, get versionBarbeles() { return versionBarbeles; }, frein, couper, creerMitrailleuses, avancerMitrailleuse, installer, retoucher, etape, explosion, abrite, poste, etat, bilan, R, P };
+  return { actif, reseau, lignes, ecart, tri, creux, cratere, crateres, dansTranchee, ligneProche, barbeles, get versionBarbeles() { return versionBarbeles; }, frein, couper, creerMitrailleuses, avancerMitrailleuse, installer, retoucher, etape, explosion, abrite, poste, etat, bilan, R, P };
 })();

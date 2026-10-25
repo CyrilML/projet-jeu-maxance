@@ -335,7 +335,7 @@ Tanks.Tranchees3D = (function () {
 
   // ------------------------------------------------------------------ 4. LA PEINTURE DU SOL (dans la grande image du décor)
   function peindreSol(ctx, X, k, h) {
-    if (!TR.actif) return;
+    if (!TR.reseau) return;
     const R = TR.R;
     // une grande nappe de boue sur tout le front (plus sombre au milieu du no man's land)
     for (let i = 0; i < 1600; i++) {
@@ -372,7 +372,7 @@ Tanks.Tranchees3D = (function () {
 
   // ------------------------------------------------------------------ 5. LE TROU DANS LE SOL (le programme du sol)
   function trouerSol(sh) {
-    if (!TR.actif) return;
+    if (!TR.reseau) return;
     const L = TR.lignes.slice(0, 24), A = [], B = [];
     for (const l of L) A.push(new THREE.Vector4(l.sorte === "x" ? 0 : 1, l.c, l.A, l.P)), B.push(new THREE.Vector4(l.phase * l.P, l.k, l.de, l.a));
     while (A.length < 24) A.push(new THREE.Vector4(0, 0, 0, 1)), B.push(new THREE.Vector4(0, 1, 1, 0));
@@ -448,7 +448,7 @@ Tanks.Tranchees3D = (function () {
 
   // ------------------------------------------------------------------ la construction et chaque image
   function construire(groupe, ajouter) {
-    if (!TR.actif) return;
+    if (!TR.reseau) return; // (1944 : pas de tranchées, seulement des nids de mitrailleuse)
     const t0 = performance.now();
     construireTranchees(groupe, ajouter);
     construireBarbeles(groupe, ajouter);
@@ -456,7 +456,7 @@ Tanks.Tranchees3D = (function () {
     bilan.ms = Math.round(performance.now() - t0);
   }
   function maj() {
-    if (!TR.actif) return;
+    if (!TR.reseau) return;
     majBarbeles();
   }
 

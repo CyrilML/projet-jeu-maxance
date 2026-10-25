@@ -191,6 +191,7 @@ Tanks.SousLeCapot = (function () {
     "barbele-coupe": (d) => "✂️ Barbelés : " + d.longueur + " m " + ({ cisailles: "COUPÉS aux cisailles", tank: "ÉCRASÉS par un tank", obus: "déchirés par une explosion" }[d.comment] || "coupés") + (d.par ? " (" + d.par + ")" : "") + " en (" + Math.round(d.x) + " ; " + Math.round(d.z) + ") · un passage est ouvert",
     "mitrailleuse-prise": (d) => "🤚 " + d.nom + " se tait : " + d.par + " est arrivé tout près, son servant est à terre (un autre revient dans " + d.retour + " s)",
     "mitrailleuse-cible": (d) => "🎯 " + d.nom + " vise " + d.cible + " à " + d.distance + " m",
+    "clip-ping": (d) => "🔔 PING ! La lame-chargeur vide saute du " + d.arme + " (" + (d.parToi ? "le tien" : d.tireur) + ") : il faut recharger",
     "mitrailleuse-chaude": (d) => "🔥 Ta mitrailleuse CHAUFFE trop : elle s'enraye " + d.duree + " s (lâche Espace de temps en temps !)",
     "sauvegarde-convertie": (d) => "💾 Ton livret militaire (version " + d.de + ") est converti en version " + d.vers + " : rien n'est perdu, les nouveaux compteurs commencent à 0" + (d.battleCoins ? " · 🪙 +" + d.battleCoins.toLocaleString("fr-FR") + " Battle Coins pour tes chapitres déjà réussis (demande 101)" : "") + (d.de < 15 ? " · ⭐ tes points sont recalculés pour les niveaux plus lents : tu gardes ton niveau (demande 102)" : "") + (d.bonus && d.bonus.length ? " · 🎁 " + d.bonus.join(" ; ") + " (livre n° 6)" : "") + (d.boutique ? " · 🛒 + le carnet de la boutique (vide : rien acheté)" : "") + (d.reglages ? " · ⚙️ + les réglages (🩸 sang : éteint, demande 114)" : "") + (d.edition ? " · 📜 + l'édition (tu es en Moderne, demande 115)" : ""),
     // étape 72
@@ -430,6 +431,7 @@ Tanks.SousLeCapot = (function () {
     l.push(["camps", "🔵 " + C.equipes.bleus.nom + " contre 🔴 " + C.equipes.rouges.nom + " · tanks : " + C.chars.map((c) => c.nom).join(", ") + " · engins garés : " + C.parc.engins.join(", ")]);
     const TR = Tanks.Tranchees;
     if (!TR.actif) return;
+    if (!TR.reseau) { for (const e of monde.engins) if (e.genre === "mitrailleuse") l.push([(e.equipe === "bleus" ? "🔵 " : "🔴 ") + e.nom, (e.pilote ? "👤 TOI · " : e.servant.etat + " · ") + "tourelle " + degres(e.tourelle) + " · " + e.tirs + " balles"]); return; } // (1944 : les nids de mitrailleuse)
     const B = TR.bilan, T3 = Tanks.Tranchees3D.bilan, E = TR.etat;
     l.push(["🪖 le réseau", B.lignes + " tranchées en zigzag (tir, soutien, boyaux) · creux : " + TR.P.profondeur + " m au fond, " + TR.P.banquette + " m sur la banquette de tir · " + B.crateres + " cratères · dessin : " + T3.morceaux + " morceaux, " + Math.round(T3.triangles / 1000) + " k triangles, " + T3.abris + " abris, " + T3.arbres + " arbres déchiquetés (" + (T3.ms || 0) + " ms)"]);
     l.push(["✂️ barbelés", B.barbeles + " tronçons de " + TR.R.barbeles.segment + " m · coupés aux cisailles " + B.coupes + " · écrasés par un tank " + B.ecrases + " · déchirés par un obus " + B.dechires + " · soldats accrochés " + B.freines + " (× " + TR.R.barbeles.frein + " la vitesse) · dessin : " + Math.round(T3.fils / 1000) + " k bouts de fil, " + T3.piquets + " piquets"]);

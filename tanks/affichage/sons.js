@@ -91,6 +91,7 @@ Tanks.Sons = (function () {
     radio.ecouter("campagne-echouee", () => (bip(392, 0, 0.25), bip(294, 0.25, 0.25), bip(196, 0.5, 0.6)));
     radio.ecouter("torpille", (e) => pschh(e.joueur ? 0.5 : attenuation(e.x, e.z) * 0.4)); // (étape 63)
     // ✍️ (demande 115) 1916 : le COUP DE SIFFLET de l'officier (« À l'assaut ! ») et le SIFFLEMENT des obus qui tombent
+    radio.ecouter("clip-ping", (e) => (e.parToi ? (tink(0.6, 3200), tink(0.25, 4300)) : null)); // (1944 : le « ping » de la lame-chargeur vide)
     radio.ecouter("coup-de-sifflet", (e) => sifflet(Math.max(0.25, attenuation(e.x, e.z))));
     radio.ecouter("obus-siffle", (e) => sifflement(attenuation(e.x, e.z), e.arrive));
     radio.ecouter("impact", (e) => {

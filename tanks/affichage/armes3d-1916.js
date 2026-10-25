@@ -77,6 +77,7 @@ window.Tanks = window.Tanks || {};
       lampe: null, laser: null, ejection: V3(0.0, by + 0.03, 0.018), mireNative: { ligne: by + 0.047, arriere: xr - 0.1, z: 0, nom: "hausse et guidon" }, lunetteNative, levier,
       crosse: cr, grip: { centre: V3(-0.085, by - 0.045), axe: V3(0.5, 0.86, 0).normalize() } };
   }
+  Tanks.Armes1916 = { fusil }; // (demande 115 : prêté aux éditions suivantes : le fusil à verrou de 1944)
   A.ajouterFabrique("fusil86", (e, p) => fusil(e, p, { canon: 0.68, fut: 0.66, lame: 0.4 }));
   A.ajouterFabrique("kress98", (e, p) => fusil(e, p, { canon: 0.6, fut: 0.6, kress: true, lame: 0.25 }));
   A.ajouterFabrique("mousqueton92", (e, p) => fusil(e, p, { canon: 0.36, fut: 0.4 }));
