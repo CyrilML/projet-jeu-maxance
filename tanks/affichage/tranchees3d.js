@@ -338,7 +338,7 @@ Tanks.Tranchees3D = (function () {
     if (!TR.reseau) return;
     const R = TR.R;
     // une grande nappe de boue sur tout le front (plus sombre au milieu du no man's land)
-    for (let i = 0; i < 1600; i++) {
+    for (let i = 0, n = R.boue === undefined ? 1600 : R.boue; i < n; i++) { // (demande 115, Europe de l'Est : « boue » : moins de boue, la neige reste)
       const x = R.x[0] + h() * (R.x[1] - R.x[0]), z = (h() * 2 - 1) * (R.arriere + 40), r = (6 + h() * 22) * k;
       const g = ctx.createRadialGradient(X(x), X(z), 0, X(x), X(z), r);
       g.addColorStop(0, "rgba(" + (52 + h() * 20) + "," + (42 + h() * 14) + ",30," + (0.25 + h() * 0.3) + ")");

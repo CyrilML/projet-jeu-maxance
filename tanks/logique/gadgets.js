@@ -63,6 +63,7 @@ Tanks.Gadgets = (function () {
     }
     if (s.arme !== "gadget" || s.nage) return;
     if (g.id === "cisailles") return Tanks.Tranchees.couper(s, intentions, dt, monde, ev); // (demande 115 : couper les barbelés)
+    if (g.id === "brouilleur") return Tanks.DronesFPV.brouiller(s, intentions, monde, ev); // (demande 115, Europe de l'Est : le brouilleur anti-drones)
     if (g.id === "reparation") {
       g.cible = null;
       if (!intentions.tirer) return;

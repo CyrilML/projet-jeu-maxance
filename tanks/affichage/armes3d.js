@@ -218,6 +218,10 @@ Tanks.Armes3D = (function () {
   function etabli(qualite, peinture) {
     matieres();
     const seul = qualite !== "beau", leger = qualite === "simple", MPx = peinture && !seul ? matierePeinture(peinture) : null;
+    // ✍️ (demande 115, Europe de l'Est) une arme SIMPLE (un soldat de l'ordinateur) peinte : pas d'image de camouflage (trop
+    // cher pour 40 soldats), seulement les couleurs de la peinture posées pièce par pièce (une pièce sur deux, deux tons)
+    const tonsSeuls = peinture && seul ? (C.atelier.peinture.pieces.find((x) => x.id === peinture) || {}).couleurs || null : null;
+    let nTons = 0;
     const groupes = { corps: new THREE.Group(), chargeur: new THREE.Group(), culasse: new THREE.Group() };
     let ici = groupes.corps;
     const S = (n) => (leger ? Math.max(5, Math.round(n * 0.45)) : n);
@@ -234,6 +238,7 @@ Tanks.Armes3D = (function () {
       if (max < plancher) max > 0.001 ? c.multiplyScalar(plancher / max) : c.setScalar(plancher);
       if (seul && mat === "bois") m.userData.teinte = new THREE.Color(0x7a4320);
       if (seul && (mat === "vitre" || mat === "fume")) m.userData.teinte = new THREE.Color(0x2a3036);
+      if (tonsSeuls && e.peindre && (mat === "poly" || mat === "metal") && (coul === undefined || coul === null || (!NON_PEINT.has(coul) && clarte(coul) > 0.035))) m.userData.teinte = new THREE.Color(tonsSeuls[nTons++ % 2]).multiplyScalar(0.85);
       if (peinte) m.userData.teinte = new THREE.Color(0xffffff).multiplyScalar((0.74 + 0.26 * Math.min(1, clarte(coul === undefined || coul === null ? DEFAUT[mat] : coul) * 2.5)) * (mat === "metal" ? 0.9 : 1));
       ici.add(m);
       return m;
@@ -1567,8 +1572,9 @@ Tanks.Armes3D = (function () {
   }
   // ✍️ (demande 115) LES ARMES DES ÉDITIONS : une édition d'une autre époque inscrit ses propres fabriques (les fusils à
   // verrou de 1916 : affichage/armes3d-1916.js) avec les mêmes outils que l'armurier (les poignées, les pontets, la lunette…).
+  // (demande 115, Europe de l'Est) « f » peut aussi être le NOM d'une autre arme : la même forme sous un autre nom
   function ajouterFabrique(id, f) {
-    FABRIQUES[id] = f;
+    FABRIQUES[id] = typeof f === "string" ? (e, p) => FABRIQUES[f](e, p) : f;
   }
   FABRIQUES.m870 = (e, p) => fusilPompe(e, p, false);
   FABRIQUES.m870dragon = (e, p) => fusilPompe(e, p, true);
@@ -1617,7 +1623,8 @@ Tanks.Armes3D = (function () {
     }
     const t0 = performance.now();
     // (demande 97) la PEINTURE : seulement sur les belles armes (la tienne, celles du menu) ; pas sur les soldats de l'ordinateur
-    const peinture = qualite === "beau" && pieces.peinture !== "aucune" ? pieces.peinture : null;
+    // (demande 115, Europe de l'Est : « armes3d.ia.peinture » : les soldats de l'ordinateur ont aussi une peinture, en tons simples)
+    const peinture = (qualite === "beau" || A3.ia.peinture) && pieces.peinture !== "aucune" ? pieces.peinture : null;
     const e = etabli(qualite, peinture), famille = F.famille, liste = [], ancres = {};
     const P = FABRIQUES[id](e, pieces);
     e.peindre = false; // (les accessoires vissés ensuite ne sont pas peints)
@@ -1775,7 +1782,7 @@ Tanks.Armes3D = (function () {
     // ses pièces : une des 4 « versions » de cette arme (pas une par soldat : le magasin reste petit, et 30 soldats avec
     // la même version partagent la même forme)
     const pieces = vides(), version = Math.floor(hacher(nom, 3) * 4);
-    if (!roquettes) for (const emp of ["viseur", "canon", "bouche", "chargeur", "poignee"]) pieces[emp] = tirer(I[emp], hacher(id + ":" + version + ":" + emp, 11)); // (demande 97 : les nouveaux emplacements)
+    if (!roquettes) for (const emp of ["viseur", "canon", "bouche", "chargeur", "poignee"].concat(I.peinture ? ["peinture"] : [])) pieces[emp] = tirer(I[emp], hacher(id + ":" + version + ":" + emp, 11)); // (demande 97 : les nouveaux emplacements)
     if (elite && I.elite) pieces.viseur = tirer(I.elite.viseur, hacher(nom, 13));
     const c = { id, pieces, version };
     choixIA.set(cle, c);

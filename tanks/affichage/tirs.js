@@ -293,7 +293,7 @@ Tanks.Tirs = (function () {
     const ox = o.x - d.de.x, oy = o.y - d.de.y, oz = o.z - d.de.z, t = ox * ux + oy * uy + oz * uz;
     if (t < R.frole.tireurMin || t > dist + 1) return; // (trop près du tireur, ou la balle s'est arrêtée avant toi)
     const px = d.de.x + ux * t - o.x, py = d.de.y + uy * t - o.y, pz = d.de.z + uz * t - o.z, ecart = Math.hypot(px, py, pz);
-    if (ecart > R.frole.distance || d.touche) return;
+    if (!(ecart <= R.frole.distance) || d.touche) return; // (« !(… <= …) » : une balle de longueur nulle donne NaN, et un NaN ne doit pas arriver jusqu'au son)
     const crac = ecart < R.frole.crac;
     bilan.frolements++;
     if (crac) bilan.cracs++;

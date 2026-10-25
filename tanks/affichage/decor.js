@@ -225,6 +225,7 @@ Tanks.Decor = (function () {
     if (Tanks.Tranchees3D) Tanks.Tranchees3D.peindreSol(ctx, X, k, hasard); // (demande 115 : la boue, les cratères et la terre rejetée des tranchées)
     if (Tanks.Bocage3D) Tanks.Bocage3D.peindreSol(ctx, X, k); // (demande 115, 1944 : la rivière)
     if (Tanks.Jungle3D) Tanks.Jungle3D.peindreSol(ctx, X, k); // (demande 115, Guerre froide : les rizières, la base de feu)
+    if (Tanks.Est3D) Tanks.Est3D.peindreSol(ctx, X, k, hasard); // (demande 115, Europe de l'Est : les champs de tournesols coupés, les traces de chenilles dans la neige)
     // les chemins : le bord usé, la terre, les 2 ornières plus sombres, l'herbe au milieu
     const L = BE.chemins.largeur * k;
     const tracer = (l, largeur, style) => {
@@ -470,7 +471,9 @@ Tanks.Decor = (function () {
   // (demande 115, Guerre froide) dans la JUNGLE de la Guerre froide : un feuillage plus sombre et plus vert, et des PALMIERS à la place
   // des sapins (affichage/jungle3d.js les dessine, avec les mêmes outils)
   const JUNGLE = (Tanks.CONFIG.edition.modeles || {}).arbres === "jungle" && !!Tanks.Jungle3D;
-  const ECORCE = lin(118, 98, 76), ECORCE_PIN = lin(124, 88, 62), FEUILLE = JUNGLE ? lin(80, 132, 50) : lin(112, 150, 66), AIGUILLE = lin(74, 116, 62);
+  // (demande 115, Europe de l'Est) en HIVER : les feuillus n'ont plus que des feuilles sèches, brun-gris ; les sapins sont poudrés de neige
+  const HIVER = (Tanks.CONFIG.edition.modeles || {}).arbres === "hiver";
+  const ECORCE = HIVER ? lin(96, 88, 80) : lin(118, 98, 76), ECORCE_PIN = lin(124, 88, 62), FEUILLE = JUNGLE ? lin(80, 132, 50) : HIVER ? lin(132, 120, 104) : lin(112, 150, 66), AIGUILLE = HIVER ? lin(96, 116, 104) : lin(74, 116, 62);
   function tronc(points, seg) {
     const g = new THREE.LatheGeometry(points.map(([r, y]) => new THREE.Vector2(r, y)), seg).toNonIndexed();
     return peindre(g, (x, y) => ECORCE.clone().multiplyScalar(0.62 + 0.38 * Math.min(1, y / 2.5)));
@@ -978,6 +981,7 @@ Tanks.Decor = (function () {
     Tanks.Tranchees3D.construire(g, ajouterMorceau); // (demande 115 : en 1916, les tranchées, les barbelés, les arbres déchiquetés)
     Tanks.Bocage3D.construire(g, ajouterMorceau); // (demande 115 : en 1944, la rivière et ses ponts de pierre)
     if (Tanks.Jungle3D) Tanks.Jungle3D.construire(g, ajouterMorceau); // (demande 115, Guerre froide : les rizières, la plateforme des hélicos)
+    if (Tanks.Est3D) Tanks.Est3D.construire(g, ajouterMorceau); // (demande 115, Europe de l'Est : les silos, les dents de dragon, les panneaux « MINES », les filets de camouflage)
     return g;
   }
 

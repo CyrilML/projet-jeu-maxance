@@ -90,9 +90,23 @@ Tanks.EcranEditions = (function () {
       for (let k = 0; k < 6; k++) { const px = k * 60 + h() * 30; x.fillStyle = noir; x.fillRect(px, H * 0.35, 3, H * 0.35); for (let f = 0; f < 5; f++) (x.save(), x.translate(px + 1, H * 0.35), x.rotate(-1.4 + f * 0.7), x.beginPath(), x.ellipse(12, 0, 13, 3, 0, 0, Math.PI * 2), x.fill(), x.restore()); }
       x.fillStyle = noir, x.fillRect(150, 40, 40, 8), x.fillRect(132, 36, 76, 1.5), x.fillRect(186, 42, 24, 2.5); // un hélico à rotor bipale
     } else if (M === "neige") {
-      for (let k = 0; k < 120; k++) (x.fillStyle = "rgba(255,255,255,0.8)", x.fillRect(h() * L, h() * H, 1.5, 1.5));
-      silhouetteTank(140, H * 0.74, 1.2, false);
-      x.fillStyle = noir; for (const px of [70, 230]) x.fillRect(px, 40 + h() * 20, 8, 8); // de petits drones
+      // (demande 115, Europe de l'Est) les immeubles de la petite ville et le silo au loin, un rideau d'arbres nus, la
+      // tranchée, le char et sa cage, deux drones FPV (des petits « X » à 4 hélices), la neige qui tombe
+      x.fillStyle = "rgba(70,74,80,0.55)";
+      for (const [px, l, hh] of [[200, 22, 34], [226, 18, 42], [248, 24, 30], [276, 16, 38]]) x.fillRect(px, H * 0.62 - hh, l, hh);
+      x.fillRect(40, H * 0.62 - 46, 14, 46), x.fillRect(56, H * 0.62 - 30, 9, 30), x.fillRect(66, H * 0.62 - 30, 9, 30); // le silo
+      x.fillStyle = "rgba(52,46,40,0.75)";
+      for (let k = 0; k < 14; k++) (x.beginPath(), x.ellipse(90 + k * 8, H * 0.6, 4.5, 6, 0, 0, Math.PI * 2), x.fill(), x.fillRect(89.5 + k * 8, H * 0.6, 1, 6));
+      x.strokeStyle = "rgba(40,34,28,0.9)", x.lineWidth = 5, x.beginPath();
+      for (let px = 0, k = 0; px <= L; px += 22, k++) x.lineTo(px, H * 0.86 + (k % 2 ? 4 : -3));
+      x.stroke();
+      silhouetteTank(150, H * 0.76, 1.2, false);
+      x.strokeStyle = noir, x.lineWidth = 1; // la cage anti-drones au-dessus de la tourelle
+      for (let k = 0; k < 6; k++) (x.beginPath(), x.moveTo(132 + k * 5, H * 0.76 - 21), x.lineTo(134 + k * 5, H * 0.76 - 13), x.stroke());
+      x.fillRect(128, H * 0.76 - 22, 32, 1.2);
+      x.fillStyle = noir; x.strokeStyle = noir;
+      for (const [px, py] of [[70, 42], [236, 58]]) { x.fillRect(px - 3, py - 1.5, 6, 3); for (const [dx, dy] of [[-6, -4], [6, -4], [-6, 4], [6, 4]]) (x.beginPath(), x.moveTo(px, py), x.lineTo(px + dx, py + dy * 0.5), x.stroke(), x.fillRect(px + dx - 3, py + dy * 0.5 - 1, 6, 1)); } // les drones FPV
+      for (let k = 0; k < 160; k++) (x.fillStyle = "rgba(255,255,255,0.85)", x.fillRect(h() * L, h() * H, 1.5, 1.5)); // la neige qui tombe
     } else if (M === "drones") {
       for (let k = 0; k < 9; k++) { const px = 30 + h() * 260, py = 20 + h() * 80, s = 0.6 + h() * 0.8; x.fillStyle = noir; x.fillRect(px - 8 * s, py, 16 * s, 3 * s); for (const dx of [-9, 9]) x.fillRect(px + dx * s - 4 * s, py - 1.5 * s, 8 * s, 1.2 * s); x.fillStyle = "rgba(120,220,255,0.9)"; x.fillRect(px - 1, py + 3 * s, 2, 2); }
     } else if (M === "barricades") {
@@ -138,6 +152,12 @@ Tanks.EcranEditions = (function () {
       for (let k = 0; k < 10; k++) (x.save(), x.translate(30, 13), x.rotate((k * Math.PI) / 5), x.fillRect(-2, -12, 4, 5), x.restore());
       x.beginPath(), x.arc(30, 13, 8, 0, Math.PI * 2), x.fill();
       x.fillStyle = d.fond[0], x.beginPath(), x.arc(30, 13, 3.5, 0, Math.PI * 2), x.fill();
+    } else if (d.embleme === "chevron") { // (Europe de l'Est, Sarmatie : un chevron d'argent, pointe en haut)
+      x.beginPath(), x.moveTo(30, 4), x.lineTo(42, 18), x.lineTo(37, 18), x.lineTo(30, 10), x.lineTo(23, 18), x.lineTo(18, 18), x.fill();
+    } else if (d.embleme === "tour") { // (Europe de l'Est, Korvast : une tour crénelée grise)
+      x.fillRect(24, 8, 12, 14);
+      for (const cx of [23, 28, 33]) x.fillRect(cx, 5, 4, 4);
+      x.fillStyle = d.fond[0], x.fillRect(28.5, 15, 3, 7);
     } else if (d.embleme === "aigle") {
       x.beginPath(), x.moveTo(30, 6), x.lineTo(44, 10), x.lineTo(36, 14), x.lineTo(44, 20), x.lineTo(32, 18), x.lineTo(30, 24), x.lineTo(28, 18), x.lineTo(16, 20), x.lineTo(24, 14), x.lineTo(16, 10), x.fill();
     }
@@ -208,7 +228,7 @@ Tanks.EcranEditions = (function () {
         '<span class="ed-nom">' + e.nom + "</span><small class=\"ed-epoque\">" + e.epoque + "</small>" + etat + "</button>";
     }).join("");
     const e = ED.liste[choix];
-    const flags = D ? '<span class="ed-drapeaux"><img alt="drapeau inventé" src="' + drapeau(D.bleus) + '"> ' + C.equipes.bleus.nom + " <em>contre</em> " + C.equipes.rouges.nom + ' <img alt="drapeau inventé" src="' + drapeau(D.rouges) + '"></span>' : "";
+    const flags = D ? '<span class="ed-drapeaux"><img alt="drapeau inventé" src="' + drapeau(D.bleus) + '"> ' + C.equipes.bleus.nom + " <em>contre</em> " + C.equipes.rouges.nom + ' <img alt="drapeau inventé" src="' + drapeau(D.rouges) + '">' + (D.chefs ? " <small>(" + D.chefs + ")</small>" : "") + "</span>" : ""; // (demande 115, Europe de l'Est : les chefs inventés)
     racine.innerHTML = '<div class="ed-haut"><div class="ed-titre">📜 ÉDITIONS<small>le même jeu, une autre époque · toutes les histoires sont inventées</small></div>' + flags +
       '<button class="ed-retour" data-ed="retour">← Retour (Échap)</button></div>' +
       '<div class="ed-grille">' + cartes + "</div>" +

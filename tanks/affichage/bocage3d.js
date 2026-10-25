@@ -18,12 +18,13 @@ Tanks.Bocage3D = (function () {
     if (!RV) return;
     const R = RV.R, PAS = 6, pos = [], idx = [];
     // 1. l'eau : un ruban, 2 points par tranche (les 2 rives), coupé en morceaux de 140 m (pour ne dessiner que ce qu'on voit)
-    const mat = new THREE.MeshStandardMaterial({ color: 0x4d5a40, roughness: 0.12, metalness: 0.25, transparent: true, opacity: 0.88 });
+    // (demande 115, Europe de l'Est : « glace » : une rivière GELÉE, une glace blanc bleuté, mate, opaque, à fleur de berge)
+    const mat = R.glace ? new THREE.MeshStandardMaterial({ color: 0xc9d6de, roughness: 0.35, metalness: 0.05 }) : new THREE.MeshStandardMaterial({ color: 0x4d5a40, roughness: 0.12, metalness: 0.25, transparent: true, opacity: 0.88 });
     let x = R.x[0];
     while (x < R.x[1]) {
       const pts = [], fin = Math.min(R.x[1], x + 140);
       for (let xx = x; xx <= fin + 0.01; xx += PAS) {
-        const z = RV.zRiviere(xx), bord = (T.hauteurExacte(xx, z - R.largeur / 2 - R.talus) + T.hauteurExacte(xx, z + R.largeur / 2 + R.talus)) / 2, y = bord - R.profondeur * 0.55;
+        const z = RV.zRiviere(xx), bord = (T.hauteurExacte(xx, z - R.largeur / 2 - R.talus) + T.hauteurExacte(xx, z + R.largeur / 2 + R.talus)) / 2, y = bord - R.profondeur * (R.glace ? 0.25 : 0.55);
         pts.push([xx, y, z - R.largeur / 2 - R.talus * 0.5], [xx, y, z + R.largeur / 2 + R.talus * 0.5]);
       }
       const p = [], ix = [];
@@ -62,7 +63,9 @@ Tanks.Bocage3D = (function () {
     if (!RV) return;
     const R = RV.R;
     ctx.lineCap = ctx.lineJoin = "round";
-    for (const [l, c] of [[R.largeur + R.talus * 2 + 6, "rgba(52,70,34,0.55)"], [R.largeur + R.talus, "rgba(86,82,58,0.9)"], [R.largeur, "rgba(58,72,60,0.95)"]]) {
+    const couches = R.glace ? [[R.largeur + R.talus * 2 + 6, "rgba(150,140,128,0.35)"], [R.largeur + R.talus, "rgba(110,102,92,0.6)"], [R.largeur, "rgba(190,204,212,0.95)"]] // (gelée : les roseaux secs, la berge, la glace)
+      : [[R.largeur + R.talus * 2 + 6, "rgba(52,70,34,0.55)"], [R.largeur + R.talus, "rgba(86,82,58,0.9)"], [R.largeur, "rgba(58,72,60,0.95)"]];
+    for (const [l, c] of couches) {
       ctx.strokeStyle = c;
       ctx.lineWidth = l * k;
       ctx.beginPath();

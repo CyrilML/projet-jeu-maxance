@@ -185,6 +185,7 @@ Tanks.Monde = (function () {
     for (const p of monde.portails) p.passages = 0;
     monde.toi = { mode: "char", engin: monde.joueur, soldat: toi };
     Tanks.Tranchees.installer(monde); // (demande 115 : en 1916, chacun à son poste dans la tranchée ; toi, à pied sur la banquette)
+    Tanks.DronesFPV.installer(monde); // (demande 115, Europe de l'Est : les pilotes de drones FPV se préparent)
     radio.emettre("bataille", { classe: C.classes[equipement.classe].nom, arme: Tanks.Equipement.fiche(equipement.arme).nom, gadget: C.gadgets[equipement.gadget].nom, char: monde.joueur.fiche.nom, allies: E.allies, ennemis: E.ennemis, soldats: C.soldats.parEquipe, engins: monde.engins.length, vehicules: monde.vehicules.length, helicos: monde.helicos.length, bateaux: monde.bateaux.length, sousMarins: monde.sousMarins.length, portails: monde.portails.length });
   }
 
@@ -255,6 +256,7 @@ Tanks.Monde = (function () {
         t.engin = null;
         return;
       }
+      if (t.mode === "drone" && G.drone.fpv) return void Tanks.DronesFPV.lacher(monde); // (demande 115, Europe de l'Est : tu retires tes lunettes, le drone FPV s'écrase)
       const auSol = e.enVol === undefined || !e.enVol;
       if (Math.abs(e.vitesse) > 3 || !auSol) {
         radio.emettre("impossible", { raison: e.enVol ? "pose-toi d'abord (D pour descendre)" : "arrête-toi d'abord" });
@@ -276,7 +278,7 @@ Tanks.Monde = (function () {
     // à pied : le plus proche (ton tank, ou un engin)
     let meilleur = null;
     const regarder = (e, mode, rayon) => {
-      if (e.detruit) return;
+      if (e.detruit || e.fpvAttente > 0) return; // (demande 115, Europe de l'Est : le drone FPV suivant n'est pas encore prêt)
       const d = Math.hypot(e.x - s.x, e.z - s.z) - rayon;
       if (d < G.distanceMonter && (!meilleur || d < meilleur.d)) meilleur = { e, mode, d };
     };
@@ -470,6 +472,8 @@ Tanks.Monde = (function () {
     if (enJeu) for (const [nom, d] of Tanks.Explosifs.etape(monde, dt, [])) annoncer(nom, d); // (demande 98 : les mines, les claymores, les C4 collés, les nuages)
     if (enJeu) for (const [nom, d] of Tanks.Base.etape(monde, dt)) annoncer(nom, d); // (demande 99 : l'ennemi rebouche les cratères de sa piste)
     if (enJeu && Tanks.Tranchees.actif) for (const [nom, d] of Tanks.Tranchees.etape(monde, dt)) annoncer(nom, d); // (demande 115 : les vagues, le barrage, les barbelés écrasés)
+    if (enJeu && Tanks.DronesFPV.actif) for (const [nom, d] of Tanks.DronesFPV.etape(monde, dt)) annoncer(nom, d); // (demande 115, Europe de l'Est : les drones FPV des deux camps, ton brouilleur)
+    if (enJeu && Tanks.FrontEst.actif) for (const [nom, d] of Tanks.FrontEst.etape(monde)) annoncer(nom, d); // (demande 115, Europe de l'Est : les dents de dragon, les silos)
     // (étape 67) TA VIE REMONTE : pas touché depuis 5 s ? Ton soldat et ton tank se soignent doucement.
     if (enJeu) {
       if (toi && (toi.dansUnEngin || toi.parachute)) toi.touche += dt; // (dans un engin, le temps passe aussi pour lui)

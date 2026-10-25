@@ -172,7 +172,7 @@ Tanks.Sons = (function () {
   // (demande 92) Une balle qui te frôle : un « fffiou » (du bruit filtré dont la note glisse), du côté où elle passe ;
   // tout près, un « CRAC » sec (le petit « bang » de la balle qui va plus vite que le son).
   function frole(force, cote, crac) {
-    if (!ctx || coupe) return;
+    if (!ctx || coupe || !isFinite(force) || !isFinite(cote)) return;
     const t = ctx.currentTime, b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
     const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
     b.buffer = tampon;
@@ -288,7 +288,7 @@ Tanks.Sons = (function () {
   // (demande 88) LE COUP DE FEU d'une famille d'arme (réglages : config.js, « armes3d.sons ») : un « crac » de bruit
   // (sa note et sa durée), un « boum » grave qui plonge (le souffle), et un ÉCHO qui traîne (plus long pour les gros calibres).
   function coupDeFeu(famille, force, apres) {
-    if (!ctx || coupe || force < 0.03) return;
+    if (!ctx || coupe || !(force >= 0.03) || !isFinite(apres || 0)) return; // (« !(… >= …) » : un NaN ne doit jamais arriver jusqu'au son : il arrêterait la boucle du jeu)
     const R = Tanks.CONFIG.armes3d.sons[famille] || Tanks.CONFIG.armes3d.sons.fusil, t = ctx.currentTime + (apres || 0);
     const b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
     b.buffer = tampon;
@@ -488,6 +488,7 @@ Tanks.Sons = (function () {
     monde = m;
     if (!ctx) return;
     respirer(m); // (livre n° 26)
+    if (Tanks.DronesFPV3D) Tanks.DronesFPV3D.bourdonner(ctx, sortie, m); // (demande 115, Europe de l'Est : le bourdonnement des drones FPV)
     for (const p of m.obus) {
       if (!p.main) continue;
       const deja = rebondsEntendus.get(p) || 0;

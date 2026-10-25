@@ -125,6 +125,12 @@ Tanks.Tableau = (function () {
     radio.ecouter("qg-attaque", (d) => dire(d.equipe === "bleus" ? "🚨 TON QG EST ATTAQUÉ ! (" + d.baies + " baie" + (d.baies > 1 ? "s" : "") + " debout)" : "🎯 Le QG du Front est touché !", d.equipe === "bleus" ? "#ff7a6a" : "#ffe27a", 2200));
     radio.ecouter("qg-baie-detruite", (d) => dire(d.equipe === "bleus" ? "💥 Une baie de ton QG a sauté ! Plus que " + d.baies : "💥 Une baie du Front a sauté ! Plus que " + d.baies, d.equipe === "bleus" ? "#ff7a6a" : "#7dffa0", 2800));
     radio.ecouter("qg-detruit", (d) => dire(d.equipe === "bleus" ? "🏚️ TON QG EST DÉTRUIT…" : "🏚️ LE QG DU FRONT EST DÉTRUIT !", d.equipe === "bleus" ? "#ff7a6a" : "#7dffa0", 4000));
+    // ✍️ (demande 115, Europe de l'Est) les drones FPV, ton drone, ton brouilleur, les dents de dragon
+    radio.ecouter("fpv-decolle", (d) => d.versToi ? dire("🛸 Un drone FPV ennemi décolle : il vient sur TOI !", "#ff7a6a", 2500) : null);
+    radio.ecouter("fpv-toi", (d) => dire(d.vise ? (d.cage ? "🛡️ Ton drone éclate sur la CAGE de " + d.vise + " !" : "💥 Ton drone FPV touche " + d.vise + " !") : "💥 Ton drone FPV explose (" + d.raison + ")", d.vise && !d.cage ? "#7dffa0" : "#ffb37a", 2500));
+    radio.ecouter("fpv-pret", () => dire("🛸 Un nouveau drone FPV est prêt sur son aire", "#c8e68a"));
+    radio.ecouter("brouilleur", (d) => dire(d.fin ? "📡 Brouilleur éteint (il refroidit)" : "📡 BROUILLEUR ALLUMÉ : les drones ennemis tombent autour de toi", d.fin ? "#ccc" : "#7dffa0"));
+    radio.ecouter("dents-dragon", () => dire("🧱 Des dents de dragon : ton char ne passe pas ! Fais le tour", "#ffb37a", 2200));
     // (étape 75) les maisons et les grenades
     radio.ecouter("maison-effondree", (d) => d.parToi ? dire("🏚️ La maison s'effondre !", "#ffb37a", 2500) : null);
     radio.ecouter("mur-troue", (d) => d.parToi && d.sorte !== "balle" ? dire("🧱 Un trou dans le mur ! (" + d.debout + " / " + d.total + " morceaux debout)", "#e6c9a0") : null);
@@ -493,6 +499,8 @@ Tanks.Tableau = (function () {
       const a = e.angle + e.tourelle;
       const v = Tanks.Scene.versEcran(e.x + Math.cos(a) * 60, e.y + 2, e.z + Math.sin(a) * 60, L, H);
       if (v) viseur(v, false, 12);
+    } else if (e.sorte === "drone" && R.fpv) {
+      if (Tanks.DronesFPV3D) Tanks.DronesFPV3D.lunettes(ctx, L, H, e, monde); // ✍️ (demande 115, Europe de l'Est : les lunettes du drone FPV)
     } else if (e.sorte === "helico" || e.sorte === "drone") {
       // la bombe garde la vitesse de l'engin : elle tombe en √(2h ÷ g) secondes, et avance pendant ce temps
       const g = C.projectiles[R.arme].gravite, chute = Math.sqrt((2 * Math.max(0, haut)) / g), d = e.vitesse * chute;
@@ -543,7 +551,7 @@ Tanks.Tableau = (function () {
       barre(24, H - 36, 200, e.munitions < R.munitions ? e.rechargeMunition / R.recharge : 1, e.munitions > 0, e.munitions < R.munitions ? "+1 dans " + virgule(R.recharge - e.rechargeMunition) + " s" : "plein");
     } else {
       cases(24, H - 60, R.munitions, e.munitions, "#ffcf5a");
-      texte(e.munitions + " " + (R.arme === "missile" ? "missiles" : R.arme === "bombe" ? "bombes" : "grenades"), 24 + R.munitions * 30 + 4, H - 48, 13, "#ccc");
+      texte(e.munitions + " " + (R.fpv ? "charge explosive (la tienne : c'est le drone !)" : R.arme === "missile" ? "missiles" : R.arme === "bombe" ? "bombes" : "grenades"), 24 + R.munitions * 30 + 4, H - 48, 13, "#ccc");
       barre(24, H - 36, 200, e.munitions < R.munitions ? e.rechargeMunition / R.recharge : 1, e.munitions > 0, e.munitions < R.munitions ? "+1 dans " + virgule(R.recharge - e.rechargeMunition) + " s" : "plein");
     }
     // la hauteur (pour ceux qui volent)
@@ -863,6 +871,7 @@ Tanks.Tableau = (function () {
     if (reponse && performance.now() < reponse.jusqua) texte(reponse.texte, L / 2, 140, 16, "#e8f0ff", "center");
     const grandMessage = message && performance.now() < message.jusqua && message.texte;
     if (ordreEnCours && performance.now() < ordreEnCours.jusqua && !Tanks.BarreOrdres.ouverte && !grandMessage) texte(ordreEnCours.texte, L / 2, 88, 13, "rgba(255,226,122,.9)", "center");
+    if (Tanks.DronesFPV3D) Tanks.DronesFPV3D.alerte(ctx, L, H, monde); // (demande 115, Europe de l'Est : un drone FPV ennemi sur toi, ton brouilleur)
     finEtAide(monde, t);
   }
   function finEtAide(monde, t) {
@@ -890,7 +899,7 @@ Tanks.Tableau = (function () {
         helico: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · Espace bombe · E descendre (posé)",
         chinook: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · F soldats à la corde (bas, presque arrêté) · E descendre (posé)",
         blackhawk: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · F soldats à la corde (bas, presque arrêté) · E descendre (posé)",
-        drone: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · Espace grenade · E descendre (posé)",
+        drone: C.engins.drone.aide || "↑ ↓ avancer · ← → tourner · Q monter · D descendre · Espace grenade · E descendre (posé)", // (demande 115 : le drone FPV a sa propre aide)
         avion: "↑ piquer · ↓ cabrer · ← → virer · Espace " + (C.engins.avion.projectile ? "mitrailleuse" : "missile") + " · E s'éjecter", // (demande 115 : le biplan)
         mitrailleuse: "← → tourner · ↑ ↓ lever · Espace rafale (elle chauffe !) · E la lâcher", // (demande 115)
         bateau: "↑ ↓ ← → naviguer · Q / D canon · Espace tirer · E descendre (près de la rive)",

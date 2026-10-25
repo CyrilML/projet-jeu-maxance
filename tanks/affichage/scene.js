@@ -538,7 +538,7 @@ Tanks.Scene = (function () {
   const vers = (a, b, pas) => (a < b ? Math.min(b, a + pas) : Math.max(b, a - pas)); // (aller doucement de a vers b)
   function placerAvion(o, e, dt, original) {
     const A = C.avions3d;
-    o.g.visible = e.etat !== "attend" && e.etat !== "parti" && e.etat !== "cloue";
+    o.g.visible = e.etat !== "attend" && e.etat !== "parti" && e.etat !== "cloue" && !(e.sorte === "drone" && C.engins.drone.fpv && (e.pilote || e.fpvAttente > 0)); // (demande 115 : le drone FPV : on est dedans, ou le suivant n'est pas encore prêt)
     o.g.position.set(e.x, e.y, e.z);
     if (e.enVol) o.g.rotation.set(e.roulis || 0, -e.angle, e.tangage || 0, "YXZ");
     else { // (au sol, il se penche comme la colline)
@@ -647,7 +647,7 @@ Tanks.Scene = (function () {
       if (o.servant) o.servant.visible = !e.pilote && !(e.servant && e.servant.pris > 0);
       return;
     }
-    o.g.visible = e.etat !== "attend" && e.etat !== "parti" && e.etat !== "cloue";
+    o.g.visible = e.etat !== "attend" && e.etat !== "parti" && e.etat !== "cloue" && !(e.sorte === "drone" && C.engins.drone.fpv && (e.pilote || e.fpvAttente > 0)); // (demande 115 : le drone FPV : on est dedans, ou le suivant n'est pas encore prêt)
     // (étape 72) plus loin que la vue (dans le brouillard) : pas dessiné
     if (o.g.visible && Math.hypot(e.x - cam.position.x, e.y - cam.position.y, e.z - cam.position.z) > Q.vue + 50) (o.g.visible = false), lod.enginsCaches++;
     o.g.position.set(e.x, e.y, e.z);
@@ -774,6 +774,8 @@ Tanks.Scene = (function () {
     if (e.sorte === "camion") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 1.05, hauteur: 0.85, devant: 1, regardY: 2.6 };
     if (e.sorte === "bateau") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle, distance: 1.1, hauteur: 0.8, devant: 1, regardY: 2 };
     if (e.sorte === "avion") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 1.9, hauteur: 0.9, devant: 2, regardY: 2, sansSol: true, tangage: e.tangage };
+    // ✍️ (demande 115, Europe de l'Est) le drone FPV : la caméra est DANS le drone (tes lunettes vidéo), elle regarde là où il va
+    if (e.sorte === "drone" && C.engins.drone.fpv) return { x: e.x, y: e.y - 0.2, z: e.z, angle: e.angle, distance: 0.01, hauteur: 0.02, devant: 1, regardY: Math.tan(Math.max(-1.2, Math.min(0.6, (e.pique || 0) * 0.9 - 0.12))) * C.camera.regardDevant };
     if (e.sorte === "drone") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 0.6, hauteur: 0.9, devant: 0.6, regardY: -2 };
     if (e.sorte === "chinook") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 2.4, hauteur: 1.5, devant: 1.2, regardY: -1 }; // (étape 73 : il est long !)
     if (e.sorte === "blackhawk") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 1.9, hauteur: 1.3, devant: 1.2, regardY: -1 };
@@ -877,6 +879,7 @@ Tanks.Scene = (function () {
       if (tous.count) tous.instanceMatrix.needsUpdate = true;
     }
     placerProjectiles(monde);
+    if (Tanks.DronesFPV3D) Tanks.DronesFPV3D.maj(scene, monde); // (demande 115, Europe de l'Est : les drones FPV des deux camps)
     Tanks.Explosifs3D.maj(monde, dt, scene); // (demande 98 : les mines, les C4, les claymores posés et les nuages de fumée)
     Tanks.Objets3D.maj(monde, dt, scene); // (livre n° 15 : la trousse posée et son anneau vert ; l'étincelle du défibrillateur)
     // la caméra

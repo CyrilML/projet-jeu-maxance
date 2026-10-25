@@ -238,6 +238,7 @@
       <a href="#etape115">Étape 115</a>
       <a href="#etape116">Étape 116</a>
       <a href="#etape117">Étape 117</a>
+      <a href="#etape118">Étape 118</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5879,6 +5880,47 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape118">
+      <h2>🛡️ Étape 118 : l'édition Europe de l'Est, et les drones FPV <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">La 4e édition : la République de Sarmatie (scotch vert) contre la Fédération de Korvast (scotch orange), deux pays inventés, dans la plaine enneigée de Velmora. La grande nouveauté : les drones FPV. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/115-editions.md</code>.</p>
+          <ul>
+            <li>✍️ « Bataille en Ukraine » (dans la liste des éditions).</li>
+            <li>✍️ (Cyril) « Fais du faux, évidemment » : tout est inventé (pays, drapeaux, chefs, lieux).</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 62 ».</li>
+            <li>☐ 📜 ÉDITIONS → « Europe de l'Est ».</li>
+            <li>☐ La plaine sous la neige, les champs de tournesols coupés, les rangées d'arbres, la petite ville, les silos, la rivière gelée, les tranchées avec filets de camouflage, les « dents de dragon » qui bloquent les chars.</li>
+            <li>☐ Des petits drones FPV qui bourdonnent, plongent et explosent ; « DRONE FPV SUR TOI ! » quand l'un te vise.</li>
+            <li>☐ Ton drone FPV : vue des lunettes, parasites quand le signal faiblit, batterie, « ARMÉ » ; Espace : il explose.</li>
+            <li>☐ L'ingénieur : le brouilleur (Espace, 10 s) fait tomber les drones ennemis à moins de 70 m.</li>
+            <li>☐ Les chars ont une cage anti-drone : 40 % de chances qu'un drone éclate dessus.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>📡 Le signal et la batterie</h3>
+      <p>Un drone FPV est piloté par radio. Plus il s'éloigne de son pilote, plus le signal faiblit et plus l'image a des parasites. Sa batterie se vide aussi pendant le vol. Le jeu calcule ces deux nombres à chaque instant et les affiche, et le brouilleur de l'ingénieur « casse » le signal des drones ennemis proches.</p>
+      <h3>✍️ Inventé, par respect</h3>
+      <p>Cette édition s'inspire d'une vraie guerre, qui fait de vraies victimes. C'est pour ça que tout y est inventé : la Sarmatie et le Korvast n'existent pas, leurs chefs non plus.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot : la liste des drones en vol, et l'état du brouilleur.</li>
+            <li>Ouvre <code>tanks/editions/europe-est.js</code> : change le nombre maximum de drones en vol.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Pourquoi l'image du drone a-t-elle des parasites ? <span class="petit">(le signal faiblit quand il s'éloigne)</span></li>
+            <li>À quoi sert la cage sur les chars ? <span class="petit">(à faire éclater les drones avant qu'ils touchent le char)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7365,6 +7407,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-117" data-cle="appris-117" placeholder="Ex. : …"></textarea>
         <label for="idees-117"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-117" data-cle="idees-117" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 118 · l'édition Europe de l'Est et les drones FPV <span class="petit">· 25 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/editions/europe-est.js</code>, <code>logique/drones-fpv.js</code>, <code>logique/front-est.js</code>, <code>affichage/est3d.js</code>, <code>drones-fpv3d.js</code>, <code>chars3d-est.js</code>.</p>
+        <p class="petit">✍️ Maxance a demandé : l'édition Europe de l'Est (inventée), avec des drones FPV.</p>
+        <label for="appris-118"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-118" data-cle="appris-118" placeholder="Ex. : …"></textarea>
+        <label for="idees-118"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-118" data-cle="idees-118" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

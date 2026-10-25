@@ -244,6 +244,9 @@ Tanks.Terrain = (function () {
     boites.push({ x: E2.x, z: E2.z, demiL: 11, demiP: 5.5, angle: 0, h: 8.5, sorte: "maison", type: "maison", lieu: "l'église", nom: "l'église de " + V.nom.replace(/^le village en ruines de /, ""), ruinesDepart: 0, eglise: true, graine: 1916 });
     boites.push({ x: E2.x - 14, z: E2.z, demiL: 3.2, demiP: 3.2, angle: 0, h: 17, sorte: "maison", type: "tour", lieu: "l'église", nom: "le clocher", graine: 1917 });
   }
+  // ✍️ (demande 115, Europe de l'Est) DES BÂTIMENTS posés à la main (la zone industrielle : le grand silo à grain, les
+  // hangars) : [x, z, demi-longueur, demi-largeur, angle, hauteur, type (« tour », « grange », « maison »), nom]
+  for (const [x, z, demiL, demiP, angle, h, type, nom] of VAR.batiments || []) boites.push({ x, z, demiL, demiP, angle, h, sorte: "maison", type, lieu: "la zone industrielle", nom, ruinesDepart: 0, graine: Math.round(Math.abs(x * 31 + z * 17)) });
   // ✍️ (demande 115, édition 1944) LE BOCAGE : un damier de champs (« cellule » m), bordés de HAIES épaisses et hautes
   // (avec des trouées : « part » des bords ont une haie) ; et des VERGERS : des pommiers en rangées.
   if (VAR.bocage) {
@@ -293,9 +296,12 @@ Tanks.Terrain = (function () {
   }
 
   // (demande 115, 1944) les VERGERS : [x, z, rangées, colonnes, écart] → des pommiers bien alignés
-  for (const [vx, vz, nr, nc, e] of VAR.vergers || []) for (let a = 0; a < nr; a++) for (let b = 0; b < nc; b++) {
+  // (demande 115, Europe de l'Est : un 6e nombre, la « taille » des arbres : les grands RIDEAUX D'ARBRES contre le vent ; pas
+  // d'arbre dans une tranchée)
+  for (const [vx, vz, nr, nc, e, taille] of VAR.vergers || []) for (let a = 0; a < nr; a++) for (let b = 0; b < nc; b++) {
     const x = vx + b * e + (hasard() - 0.5), z = vz + a * e + (hasard() - 0.5);
-    if (loinDe(x, z, 1.5)) arbres.push({ x, z, r: 0.45, taille: 0.55 + hasard() * 0.15, ecrase: false, sorte: "feuillu", angleChute: 0, verger: true });
+    if (TR.reseau && TR.creux(x, z) > 0) continue;
+    if (loinDe(x, z, 1.5)) arbres.push({ x, z, r: 0.45, taille: (taille || 0.55) + hasard() * 0.15, ecrase: false, sorte: "feuillu", angleChute: 0, verger: true });
   }
   // (étape 63) Sur les îles : des arbres (surtout des pins), et une vieille tour en ruines sur la grande île.
   for (const ile of ILES) {
