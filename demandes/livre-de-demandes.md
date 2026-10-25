@@ -26,7 +26,7 @@ On commence par les fusils à pompe (demande 103), puis on suit la liste dans l'
 21. ✅ Améliorer les robots (les soldats de l'ordinateur). (demande 111, version 55)
 22. ✅ Développer les Battle Coins. (demande 106, version 50)
 23. ❓ Faire tester le jeu par des beta testers. (il faut de vrais joueurs : avec Cyril)
-24. ❓ Faire des éditions, genre d'autres jeux de combat. (à préciser)
+24. 🛠️ Faire des éditions, genre d'autres jeux de combat. (à préciser) → 7 éditions (demande 115)
 25. ✅ Dans les souterrains, un QG à détruire pour chaque camp. (demande 112, version 56)
 26. ✅ Un réalisme absurde. (demande 112, version 56)
 27. ✅ Bannir toute publicité. (demande 112, version 56)
