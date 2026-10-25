@@ -152,6 +152,12 @@ Tanks.EcranEditions = (function () {
       for (let k = 0; k < 10; k++) (x.save(), x.translate(30, 13), x.rotate((k * Math.PI) / 5), x.fillRect(-2, -12, 4, 5), x.restore());
       x.beginPath(), x.arc(30, 13, 8, 0, Math.PI * 2), x.fill();
       x.fillStyle = d.fond[0], x.beginPath(), x.arc(30, 13, 3.5, 0, Math.PI * 2), x.fill();
+    } else if (d.embleme === "hexagone") { // (Bataille de drones, Coalition Nordane : un hexagone creux)
+      x.lineWidth = 3, x.strokeStyle = d.fond[1], x.beginPath();
+      for (let k = 0; k <= 6; k++) x.lineTo(30 + Math.cos((k * Math.PI) / 3) * 9, 13 + Math.sin((k * Math.PI) / 3) * 9);
+      x.stroke();
+    } else if (d.embleme === "eclair") { // (Bataille de drones, Syndicat Vexis : un éclair)
+      x.beginPath(), x.moveTo(33, 3), x.lineTo(24, 15), x.lineTo(30, 15), x.lineTo(26, 24), x.lineTo(37, 11), x.lineTo(31, 11), x.lineTo(35, 3), x.fill();
     } else if (d.embleme === "chevron") { // (Europe de l'Est, Sarmatie : un chevron d'argent, pointe en haut)
       x.beginPath(), x.moveTo(30, 4), x.lineTo(42, 18), x.lineTo(37, 18), x.lineTo(30, 10), x.lineTo(23, 18), x.lineTo(18, 18), x.fill();
     } else if (d.embleme === "tour") { // (Europe de l'Est, Korvast : une tour crénelée grise)

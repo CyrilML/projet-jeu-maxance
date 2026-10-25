@@ -239,6 +239,7 @@
       <a href="#etape116">Étape 116</a>
       <a href="#etape117">Étape 117</a>
       <a href="#etape118">Étape 118</a>
+      <a href="#etape119">Étape 119</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5921,6 +5922,44 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape119">
+      <h2>🛸 Étape 119 : l'édition Bataille de drones <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">La 5e édition, en 2040 : la Coalition Nordane (bleu glacier) contre le Syndicat Vexis (magenta), dans la ferme solaire d'Aurelia. Tu es le pilote de drones ! <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/115-editions.md</code>.</p>
+          <ul>
+            <li>✍️ « Bataille de drones » (dans la liste des éditions).</li>
+            <li>✍️ (Cyril) « Fais du faux » : tout est inventé.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 63 ».</li>
+            <li>☐ 📜 ÉDITIONS → « Bataille de drones » : tu commences dans ton poste de commande, déjà en vol.</li>
+            <li>☐ 1 drone espion (Espace : marquer les ennemis), 2 kamikaze, 3 bombardier (4 grenades), 4 « Faucon-pèlerin » (il verrouille un véhicule et plonge dessus), 5 robot « Mule » (mitrailleuse). E : sortir à pied.</li>
+            <li>☐ Les antennes relais : en dehors de leur portée, un drone perd le signal et tombe. Près des antennes ennemies : brouillage et parasites.</li>
+            <li>☐ Les canons anti-drones tirent tout seuls ; les soldats peuvent tirer sur les drones (le fusil à pompe marche bien !).</li>
+            <li>☐ Détruis les 3 antennes ennemies ou leur poste de commande → victoire.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>📶 Un réseau, c'est un objectif</h3>
+      <p>Chaque drone a besoin du signal d'une antenne de son camp (ou du poste). Le jeu calcule, pour chaque drone, la distance à l'antenne la plus proche : trop loin = plus de signal = il tombe. Alors détruire une antenne ennemie, c'est raccourcir la « laisse » de tous ses drones. C'est pour ça que la victoire se gagne sur les antennes.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot : la vie de chaque antenne et le signal de ton drone en %.</li>
+            <li>Ouvre <code>tanks/editions/bataille-drones.js</code> : change la portée des antennes.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Que se passe-t-il quand ton drone sort de la portée des antennes ? <span class="petit">(il perd le signal et tombe)</span></li>
+            <li>Quelle touche prend le robot à roues ? <span class="petit">(5)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7416,6 +7455,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-118" data-cle="appris-118" placeholder="Ex. : …"></textarea>
         <label for="idees-118"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-118" data-cle="idees-118" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 119 · l'édition Bataille de drones <span class="petit">· 25 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/editions/bataille-drones.js</code>, <code>logique/relais.js</code>, <code>logique/flotte.js</code>, <code>affichage/relais3d.js</code>, <code>drones-fpv.js</code>.</p>
+        <p class="petit">✍️ Maxance a demandé : l'édition Bataille de drones (inventée).</p>
+        <label for="appris-119"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-119" data-cle="appris-119" placeholder="Ex. : …"></textarea>
+        <label for="idees-119"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-119" data-cle="idees-119" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

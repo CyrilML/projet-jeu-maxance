@@ -293,6 +293,9 @@ Tanks.Musique = (function () {
         caisseClaire(t, 0.12, true);
         if (partie !== "intro" && i === 3) caisseClaire(t, 0.5, false);
       }
+    } else if (M.batterie) { // (demande 115, Bataille de drones) la batterie ÉLECTRONIQUE, sans guitare : le « tss » à chaque croche, le claquement au milieu
+      caisseClaire(t, 0.08, true);
+      if (partie !== "intro" && i === 3) caisseClaire(t, 0.45, false);
     }
     if (partie === "intro") return;
     // (étape 84) la cymbale monte pendant la dernière mesure de la montée, puis ÉCLATE avec le thème

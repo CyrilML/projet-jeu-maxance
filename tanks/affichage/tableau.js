@@ -540,6 +540,7 @@ Tanks.Tableau = (function () {
         }
       }
     }
+    if (R.types) return; // (demande 115, Bataille de drones : les lunettes montrent déjà toute ta flotte)
     panneau(12, H - 98, 330, 86);
     texte(R.icone + " " + R.nom, 24, H - 72, 17, "#ffe27a");
     if (e.sorte === "jeep") {
@@ -884,7 +885,7 @@ Tanks.Tableau = (function () {
       const perdu = t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "moto" ? "💥 Ta moto est hors de combat…" : t.mode === "quad" ? "💥 Ton quad est hors de combat…" : t.mode === "camion" ? "💥 Ton camion est détruit…" : t.engin && t.engin.genre === "helico" ? "🔥 Ton " + t.engin.nom + " est abattu…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : t.mode === "sousmarin" ? "🌊 Ton sous-marin est coulé…" : t.mode === "dca" ? "💥 Ton camion antiaérien est détruit…" : t.mode === "helico" || t.mode === "drone" ? "🔥 Ton " + t.engin.nom + " est abattu…" : "💥 Ton tank est détruit…";
       texte(gagne ? "🏆 VICTOIRE !" : perdu, L / 2, H / 2 - 40, 38, gagne ? "#7dffa0" : "#ff7a6a", "center");
       const qgFin = monde.metro && monde.metro.qg && !monde.campagne ? monde.metro.qg : null; // (livre n° 25)
-      texte(gagne ? (qgFin && qgFin.rouges.detruit ? "🏚️ Le QG du Front est détruit : ils n'ont plus de commandement !" : monde.metro ? "Les Rouges n'ont plus ni renfort ni soldat debout dans la station" : "Tous les tanks rouges sont détruits") : qgFin && qgFin.bleus.detruit ? "🏚️ Ton QG Rempart est détruit…" : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
+      texte(gagne ? (qgFin && qgFin.rouges.detruit ? "🏚️ Le QG du Front est détruit : ils n'ont plus de commandement !" : monde.metro ? "Les Rouges n'ont plus ni renfort ni soldat debout dans la station" : (Tanks.Relais && Tanks.Relais.actif && Tanks.Relais.bilan.raison ? Tanks.Relais.bilan.raison : "Tous les tanks rouges sont détruits")) : qgFin && qgFin.bleus.detruit ? "🏚️ Ton QG Rempart est détruit…" : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
       const S = Tanks.Sauvegarde.donnees;
       texte("Victoires : " + S.victoires + " · défaites : " + S.defaites + (monde.metro ? " · victoires dans le souterrain : " + S.souterrain : " · tanks détruits : " + S.detruits), L / 2, H / 2 + 24, 15, "#e8e4d6", "center");
       texte("Entrée : menu · R : rejouer avec le même équipement", L / 2, H / 2 + 56, 17, "#ffe27a", "center");

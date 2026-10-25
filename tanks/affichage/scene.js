@@ -775,6 +775,7 @@ Tanks.Scene = (function () {
     if (e.sorte === "bateau") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle, distance: 1.1, hauteur: 0.8, devant: 1, regardY: 2 };
     if (e.sorte === "avion") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 1.9, hauteur: 0.9, devant: 2, regardY: 2, sansSol: true, tangage: e.tangage };
     // ✍️ (demande 115, Europe de l'Est) le drone FPV : la caméra est DANS le drone (tes lunettes vidéo), elle regarde là où il va
+    if (e.sorte === "drone" && C.engins.drone.types && Tanks.Flotte.fiche(e).vol === "sol") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 0.32, hauteur: 0.32, devant: 0.8, regardY: 1.2 }; // (demande 115, Bataille de drones : derrière ton robot)
     if (e.sorte === "drone" && C.engins.drone.fpv) return { x: e.x, y: e.y - 0.2, z: e.z, angle: e.angle, distance: 0.01, hauteur: 0.02, devant: 1, regardY: Math.tan(Math.max(-1.2, Math.min(0.6, (e.pique || 0) * 0.9 - 0.12))) * C.camera.regardDevant };
     if (e.sorte === "drone") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 0.6, hauteur: 0.9, devant: 0.6, regardY: -2 };
     if (e.sorte === "chinook") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 2.4, hauteur: 1.5, devant: 1.2, regardY: -1 }; // (étape 73 : il est long !)
@@ -880,6 +881,7 @@ Tanks.Scene = (function () {
     }
     placerProjectiles(monde);
     if (Tanks.DronesFPV3D) Tanks.DronesFPV3D.maj(scene, monde); // (demande 115, Europe de l'Est : les drones FPV des deux camps)
+    if (Tanks.Relais3D) Tanks.Relais3D.maj(scene, monde, dt); // (demande 115, Bataille de drones : les canons anti-drones, les antennes, ton robot)
     Tanks.Explosifs3D.maj(monde, dt, scene); // (demande 98 : les mines, les C4, les claymores posés et les nuages de fumée)
     Tanks.Objets3D.maj(monde, dt, scene); // (livre n° 15 : la trousse posée et son anneau vert ; l'étincelle du défibrillateur)
     // la caméra

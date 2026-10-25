@@ -200,6 +200,17 @@ Tanks.SousLeCapot = (function () {
     "fpv-toi": (d) => "🛸 TON drone FPV explose (" + d.raison + ")" + (d.vise ? " sur " + d.vise + (d.cage ? " · mais il éclate sur sa CAGE anti-drones !" : " !") : "") + " après " + d.vol + " s de vol (batterie : " + d.batterie + " %) · tu retires tes lunettes ; le drone suivant sera prêt dans " + C.engins.drone.recharge + " s",
     "fpv-pret": (d) => "🛸 Un nouveau " + d.nom + " est prêt sur son aire (E pour le piloter)",
     brouilleur: (d) => (d.fin ? "📡 Ton brouilleur s'éteint (il refroidit)" : "📡 BROUILLEUR ALLUMÉ " + d.duree + " s : les drones FPV ennemis à moins de " + d.rayon + " m perdent leur signal (" + d.proches + " tout près en ce moment)"),
+    // ✍️ (demande 115, Bataille de drones) ta flotte, les antennes relais, la défense anti-drones
+    "flotte-choix": (d) => "🎮 Touche " + d.touche + " : tu prends " + d.icone + " " + d.nom + (d.attente ? " (il se prépare encore " + d.attente + " s)" : "") + " · " + d.aide,
+    "flotte-decolle": (d) => d.icone + " " + d.nom + " décolle de ton aire",
+    "flotte-rappel": (d) => "↩️ " + d.nom + " est rappelé : il rentre sur son aire (sans attente)",
+    "flotte-fin": (d) => (d.explose ? "💥 " : "📉 ") + d.icone + " " + d.nom + (d.explose ? " explose" : " est perdu") + " (" + d.raison + ")" + (d.vise ? " sur " + d.vise + (d.cage ? " · mais il éclate sur sa CAGE !" : " !") : "") + " après " + d.vol + " s de vol · le même sera prêt dans " + d.attente + " s (prends-en un autre : touches 1 à 5)",
+    "flotte-touche": (d) => "🎯 Ton " + d.nom + " est TOUCHÉ par " + d.par + " (" + d.vie + " / " + d.vieMax + ")",
+    "flotte-pret": (d) => "✅ " + d.icone + " " + d.nom + " : de nouveau disponible (touche " + d.touche + ")",
+    "rodeuse-plonge": (d) => "✈️ " + d.nom + " PLONGE sur " + d.vise + " (" + d.distance + " m) : elle se guide toute seule",
+    "relais-touche": (d) => "📡 " + d.nom + " est touché" + (d.filet ? " (le FILET arrête une partie de la charge)" : "") + " : " + d.vie + " / " + d.vieMax,
+    "relais-detruit": (d) => "💥 " + d.nom + " est DÉTRUIT" + (d.genre === "antenne" ? " : ses drones perdent de la portée · il reste " + d.restent + " antenne(s) à ce camp" : " !"),
+    "drone-abattu": (d) => "🔫 " + d.nom + " : ABATTU par " + d.par + " (il tombe)",
     "dents-dragon": (d) => "🧱 " + d.nom + " bute contre les DENTS DE DRAGON : le béton l'arrête, il faut faire le tour (ou trouver le passage)",
     "mitrailleuse-chaude": (d) => "🔥 Ta mitrailleuse CHAUFFE trop : elle s'enraye " + d.duree + " s (lâche Espace de temps en temps !)",
     "sauvegarde-convertie": (d) => "💾 Ton livret militaire (version " + d.de + ") est converti en version " + d.vers + " : rien n'est perdu, les nouveaux compteurs commencent à 0" + (d.battleCoins ? " · 🪙 +" + d.battleCoins.toLocaleString("fr-FR") + " Battle Coins pour tes chapitres déjà réussis (demande 101)" : "") + (d.de < 15 ? " · ⭐ tes points sont recalculés pour les niveaux plus lents : tu gardes ton niveau (demande 102)" : "") + (d.bonus && d.bonus.length ? " · 🎁 " + d.bonus.join(" ; ") + " (livre n° 6)" : "") + (d.boutique ? " · 🛒 + le carnet de la boutique (vide : rien acheté)" : "") + (d.reglages ? " · ⚙️ + les réglages (🩸 sang : éteint, demande 114)" : "") + (d.edition ? " · 📜 + l'édition (tu es en Moderne, demande 115)" : ""),
@@ -457,8 +468,26 @@ Tanks.SousLeCapot = (function () {
       if (dr) l.push(["🛸 ton drone FPV", dr.fpvAttente > 0 ? "le suivant se prépare : " + Math.ceil(dr.fpvAttente) + " s" : dr.pilote ? "EN VOL · signal " + Math.round((dr.signal || 0) * 100) + " % · batterie " + Math.round(dr.batterie || 0) + " s · parasites des lunettes " + D3.bruit + " %" : "prêt sur son aire · lancés : " + B.toi.lances + " · sur une cible : " + B.toi.touches]);
       const g = monde.toi && monde.toi.soldat && monde.toi.soldat.gadget;
       if (g && g.id === "brouilleur") l.push(["📡 ton brouilleur", g.actif > 0 ? "ALLUMÉ encore " + Math.ceil(g.actif) + " s (rayon " + g.fiche.rayon + " m)" : g.attente > 0 ? "refroidit : " + Math.ceil(g.attente) + " s" : "prêt (Espace, gadget en main)"]);
+      const RL = Tanks.Relais, FL = Tanks.Flotte;
+      if (RL && RL.actif) { // ✍️ (Bataille de drones) le réseau, la défense anti-drones, ta flotte
+        const formes = DF.liste.filter((d) => d.forme === "aile").length;
+        l.push(["✈️ les essaims", (DF.liste.length - formes) + " drone(s) FPV et " + formes + " munition(s) rôdeuse(s) en l'air · rôdeuses lancées : " + B.rodeuses + " · sur les antennes : " + B.surAntennes + " · ABATTUS : " + B.abattus + " (par toi : " + B.toi.abattus + ")"]);
+        for (const eq of ["bleus", "rouges"]) {
+          const p = RL.postes[eq];
+          l.push([(eq === "bleus" ? "🔷 " : "🔶 ") + "réseau " + C.equipes[eq].nom, RL.antennes.filter((a) => a.equipe === eq).map((a) => a.court + " " + (a.detruit ? "💥 détruite" : virgule(a.vie, 1) + "/" + a.vieMax)).join(" · ") + " · poste " + (p.detruit ? "💥 détruit" : virgule(p.vie, 1) + "/" + p.vieMax) + " · portée : " + C.relais.rayon + " m par antenne, brouilleur " + C.relais.brouillage + " m"]);
+        }
+        l.push(["🔫 canons anti-drones", RL.canons.length + " canons · " + RL.bilan.tirs + " rafales · " + RL.bilan.abattus + " drones abattus · en ce moment : " + RL.canons.filter((c) => c.cible && !c.garde.detruit).length + " visent un drone"]);
+        const dr = monde.engins.find((e) => e.sorte === "drone");
+        if (dr && FL.actif) {
+          const K = FL.fiche(dr), sig = RL.couverture(dr.equipe, dr.x, dr.z);
+          l.push(["🎮 ta flotte", K.icone + " " + K.nom + (dr.pilote ? (dr.vol > 0 ? " · EN VOL " + Math.round(dr.vol) + " s · signal " + Math.round((dr.signal || 0) * 100) + " %" + (dr.brouille ? " (BROUILLÉ)" : "") + " · batterie " + Math.round(dr.batterie || 0) + " s · vie " + dr.vieDrone : dr.attenteFlotte ? " · se prépare " + Math.ceil(dr.attentes[dr.typeDrone]) + " s" : " · prêt") : " · (tu n'es pas dans ton poste)") + " · ici le signal de ton camp vaut " + Math.round(sig * 100) + " %"]);
+          l.push(["🎮 vols", FL.bilan.vols + " vols (" + Object.entries(FL.bilan.parSorte).map(([k, n]) => FL.fiches[k].icone + "×" + n).join(" ") + ") · explosions " + FL.bilan.explosions + " (sur une cible " + FL.bilan.touches + ") · perdus " + FL.bilan.perdus + " · abattus " + FL.bilan.abattu + " · marques " + FL.bilan.marques + " · grenades " + FL.bilan.grenades + " · balles du robot " + FL.bilan.balles + " · rappels " + FL.bilan.rappels]);
+        }
+        const R3 = Tanks.Relais3D.bilan;
+        l.push(["☀️ la ferme solaire", R3.panneaux + " panneaux solaires en 1 seul dessin · " + R3.bornes + " bornes de recharge · " + R3.antennes + " antennes · " + R3.cercles + " cercles de portée · " + R3.canons + " têtes de canon en 1 dessin"]);
+      }
       const FE = Tanks.FrontEst.bilan, E3 = Tanks.Est3D.bilan;
-      l.push(["🧱 le génie", FE.dents + " dents de dragon en " + FE.rangees + " rangées (" + FE.arretes + " fois un véhicule arrêté" + (FE.dernier ? ", le dernier : " + FE.dernier : "") + ") · " + FE.silos + " silos ronds · " + FE.panneaux + " panneaux « MINES » · " + E3.filets + " filets de camouflage · " + E3.champs + " champs de tournesols · " + E3.traces + " traces de chenilles · dessin : " + E3.dessins + " objets soudés"]);
+      if (Tanks.FrontEst.actif) l.push(["🧱 le génie", FE.dents + " dents de dragon en " + FE.rangees + " rangées (" + FE.arretes + " fois un véhicule arrêté" + (FE.dernier ? ", le dernier : " + FE.dernier : "") + ") · " + FE.silos + " silos ronds · " + FE.panneaux + " panneaux « MINES » · " + E3.filets + " filets de camouflage · " + E3.champs + " champs de tournesols · " + E3.traces + " traces de chenilles · dessin : " + E3.dessins + " objets soudés"]);
     }
     const TR = Tanks.Tranchees;
     if (!TR.actif) return;

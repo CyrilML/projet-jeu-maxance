@@ -17,7 +17,7 @@ Tanks.DronesFPV3D = (function () {
   const C = Tanks.CONFIG, DF = Tanks.DronesFPV, O = Tanks.Outils3D;
   const MAX = 24;
   const bilan = { dessines: 0, son: 0, bruit: 0 };
-  let lot = null;
+  let lot = null, lotAile = null;
   const objet = new THREE.Object3D();
 
   // ------------------------------------------------------------------ la maquette (fabriquée une fois)
@@ -40,6 +40,17 @@ Tanks.DronesFPV3D = (function () {
     m.geometry.scale(1.4, 1.4, 1.4); // (un peu plus grand que le vrai : sinon on ne le voit pas du tout)
     return new THREE.InstancedMesh(m.geometry, mat, MAX);
   }
+  // ✍️ (Bataille de drones) la MUNITION RÔDEUSE : une petite aile volante (le fuselage, les ailes en X, l'hélice derrière)
+  function maquetteAile() {
+    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0.3 }), g = new THREE.Group();
+    g.add(O.piece(new THREE.CylinderGeometry(0.07, 0.06, 1.2, 8).rotateZ(Math.PI / 2), mat, 0, 0, 0, 0x3a3f46)); // le fuselage
+    g.add(O.piece(new THREE.ConeGeometry(0.07, 0.2, 8).rotateZ(-Math.PI / 2), mat, 0.7, 0, 0, 0x22262a)); // le nez (la charge)
+    for (const [x, r] of [[0.25, 0.4], [-0.4, -0.4]]) { const a = O.boite(0.18, 0.015, 1.3, mat, x, 0, 0, 0x5c6670); a.rotation.x = r; g.add(a); } // les ailes en X
+    g.add(O.piece(new THREE.CylinderGeometry(0.16, 0.16, 0.01, 10).rotateZ(Math.PI / 2), mat, -0.62, 0, 0, 0x55585c)); // l'hélice
+    const [m] = O.souder(g, false);
+    m.geometry.scale(1.3, 1.3, 1.3);
+    return new THREE.InstancedMesh(m.geometry, mat, MAX);
+  }
   // Chaque image : placer les drones (scene.js appelle ceci)
   function maj(scene, monde) {
     if (!DF || !DF.actif) return;
@@ -48,20 +59,27 @@ Tanks.DronesFPV3D = (function () {
       lot.frustumCulled = false;
       lot.castShadow = false;
       scene.add(lot);
+      lotAile = maquetteAile();
+      lotAile.frustumCulled = false;
+      scene.add(lotAile);
     }
-    let n = 0;
+    let n = 0, na = 0;
     if (monde.phase === "bataille" || monde.phase === "victoire" || monde.phase === "defaite") for (const d of DF.liste) {
-      if (n >= MAX) break;
+      if (n >= MAX || na >= MAX) break;
       objet.position.set(d.x, d.y, d.z);
       const h = Math.hypot(d.vx, d.vz);
-      objet.rotation.set(d.etat === "brouille" || d.etat === "tombe" ? d.angle * 0.7 : 0, -d.angle, Math.atan2(d.vy, Math.max(0.1, h)) * 0.8, "YZX");
+      objet.rotation.set(DF.tombe(d) ? d.angle * 0.7 : 0, -d.angle, Math.atan2(d.vy, Math.max(0.1, h)) * (d.forme === "aile" ? 1 : 0.8), "YZX");
       objet.updateMatrix();
-      lot.setMatrixAt(n++, objet.matrix);
+      if (d.forme === "aile") lotAile.setMatrixAt(na++, objet.matrix);
+      else lot.setMatrixAt(n++, objet.matrix);
     }
     lot.count = n;
     lot.instanceMatrix.needsUpdate = true;
     lot.visible = n > 0;
-    bilan.dessines = n;
+    lotAile.count = na;
+    lotAile.instanceMatrix.needsUpdate = true;
+    lotAile.visible = na > 0;
+    bilan.dessines = n + na;
   }
 
   // ------------------------------------------------------------------ le bourdonnement (sons.js appelle ceci à chaque image)
@@ -100,7 +118,7 @@ Tanks.DronesFPV3D = (function () {
 
   // ------------------------------------------------------------------ les lunettes de TON drone FPV (tableau.js appelle ceci)
   function lunettes(ctx, L, H, e, monde) {
-    const R = C.engins.drone, sig = e.signal === undefined ? 1 : e.signal, batt = e.batterie === undefined ? R.batterie : e.batterie;
+    const R = Tanks.Flotte && Tanks.Flotte.actif ? Tanks.Flotte.fiche(e) : C.engins.drone, sig = e.signal === undefined ? 1 : e.signal, batt = e.batterie === undefined ? R.batterie : e.batterie;
     const bruit = Math.min(1, 0.1 + Math.pow(1 - sig, 1.5) * 1.1 + (batt < 12 ? 0.25 : 0));
     bilan.bruit = Math.round(bruit * 100);
     // la neige (les parasites) : des petits points gris, et des bandes qui sautent
@@ -129,7 +147,24 @@ Tanks.DronesFPV3D = (function () {
     ecrire(Math.round(e.vitesse * 3.6) + " km/h", 40, 132);
     if (Math.floor(performance.now() / 400) % 2) ecrire("● ARMÉ", L / 2 - 36, 128, "#ff4a3d");
     ctx.textAlign = "center";
-    ecrire("Espace : FAIRE EXPLOSER · E : retirer les lunettes", L / 2, H - 70, "#ffe27a");
+    const FL = Tanks.Flotte && Tanks.Flotte.actif ? Tanks.Flotte : null;
+    if (FL) {
+      // ✍️ (Bataille de drones) TA FLOTTE : les 5 drones, celui que tu pilotes, ceux qui se préparent
+      const ids = Object.keys(FL.fiches), K = FL.fiche(e);
+      ids.forEach((id, i) => {
+        const f = FL.fiches[id], att = (e.attentes || {})[id] || 0, x = L / 2 + (i - (ids.length - 1) / 2) * 120;
+        ctx.fillStyle = id === e.typeDrone ? "rgba(90,216,255,.35)" : "rgba(0,0,0,.45)";
+        ctx.fillRect(x - 56, H - 128, 112, 40);
+        ecrire(f.touche + " " + f.icone + (att > 0 ? " " + Math.ceil(att) + " s" : ""), x, H - 112, att > 0 ? "#ff9a8a" : id === e.typeDrone ? "#7fe8ff" : null);
+        ctx.font = "11px sans-serif";
+        ecrire(f.nom.replace(/ «.*/, ""), x, H - 96, "#ccd");
+        ctx.font = "bold 16px monospace";
+      });
+      ecrire(K.icone + " " + K.nom + (e.attenteFlotte ? " · se prépare : " + Math.ceil(e.attentes[e.typeDrone]) + " s (choisis-en un autre !)" : ""), L / 2, H - 140, e.attenteFlotte ? "#ff9a8a" : "#7fe8ff");
+      ecrire(K.aide, L / 2, H - 70, "#ffe27a");
+      if (e.vieDrone !== undefined && e.vol > 0) ecrire("❤ " + Math.max(0, e.vieDrone) + " / " + K.vie + (e.munitionsDrone ? " · 🎯 " + e.munitionsDrone : "") + (e.brouille ? " · 📡 BROUILLÉ !" : ""), L / 2, 160, e.brouille ? "#ff5a4a" : null);
+      if (e.plongee) { const p = Tanks.Scene.versEcran(e.plongee.x, e.plongee.y + 1.5, e.plongee.z, L, H); if (p) (ctx.strokeStyle = "#ff3a3a", ctx.lineWidth = 3, ctx.strokeRect(p.x - 18, p.y - 18, 36, 36)); }
+    } else ecrire("Espace : FAIRE EXPLOSER · E : retirer les lunettes", L / 2, H - 70, "#ffe27a");
     ctx.textAlign = "left";
     // la croix au milieu, et les véhicules ennemis devant (un carré blanc)
     ctx.strokeStyle = "rgba(255,255,255,.85)", ctx.lineWidth = 1.5;

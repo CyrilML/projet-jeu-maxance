@@ -90,6 +90,7 @@ Tanks.Soldat = (function () {
   function balle(tireur, x, y, z, angle, arme, soldats, vehicules, ev, legers) {
     // (étape 77) arme : un nom (les soldats de l'ordinateur) ou les vrais chiffres de TON arme (logique/armes.js)
     const R = typeof arme === "string" ? A[arme] : arme, CONE = R.cone || 0.12;
+    if (Tanks.DronesFPV && Tanks.DronesFPV.tirSurDrones(tireur, x, y, z, angle, R, ev)) return; // ✍️ (demande 115, Bataille de drones : TA balle peut abattre un drone ennemi)
     let meilleur = null;
     for (const s of soldats) {
       if (s.mort || s.dansUnEngin || s.equipe === tireur.equipe || s === tireur) continue;

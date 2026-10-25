@@ -127,6 +127,7 @@ Tanks.Engins = (function () {
       Tanks.Vehicules.remplirAuParking(e, place(e.sorte), dt, ev);
     }
     else if (e.sorte === "avion") voler(e, intentions, dt, R, monde, ev);
+    else if (e.sorte === "drone" && R.types) Tanks.Flotte.piloter(e, intentions, dt, R, monde, ev); // (demande 115, Bataille de drones : ta flotte de 5 drones)
     else if (e.sorte === "drone" && R.fpv) Tanks.DronesFPV.piloter(e, intentions, dt, R, monde, ev); // (demande 115, Europe de l'Est : le drone FPV)
     else {
       planer(e, intentions, dt, R, monde, ev);

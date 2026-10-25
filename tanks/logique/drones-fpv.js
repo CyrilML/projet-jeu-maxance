@@ -28,10 +28,16 @@ Tanks.DronesFPV = (function () {
   const liste = []; // les drones de l'ordinateur en l'air
   const chrono = { bleus: 0, rouges: 0 };
   const compteur = { bleus: 0, rouges: 0 };
-  const nouveauBilan = () => ({ decolles: { bleus: 0, rouges: 0 }, surChars: 0, surSoldats: 0, cages: 0, brouilles: 0, perdus: 0, toi: { lances: 0, touches: 0 }, penseParSeconde: 0 });
+  const nouveauBilan = () => ({ decolles: { bleus: 0, rouges: 0 }, surChars: 0, surSoldats: 0, surAntennes: 0, cages: 0, brouilles: 0, perdus: 0, abattus: 0, rodeuses: 0, toi: { lances: 0, touches: 0, abattus: 0 }, penseParSeconde: 0 });
   let bilan = nouveauBilan(), pensees = 0, depuis = 0;
   const autre = (equipe) => (equipe === "bleus" ? "rouges" : "bleus");
-  const NOM_CAMP = { bleus: "vert", rouges: "orange" }; // (la couleur du ruban de chaque camp)
+  const NOM_CAMP = F.noms || { bleus: "vert", rouges: "orange" }; // (la couleur du ruban de chaque camp)
+  // ✍️ (Bataille de drones) les MUNITIONS RÔDEUSES de l'ordinateur : une aile volante, plus haute, plus rapide (ses réglages
+  // remplacent ceux du drone FPV) ; les ANTENNES RELAIS (logique/relais.js) : portée du signal, brouilleurs, cibles
+  const FR = F.rodeuse ? Object.assign({}, F, F.rodeuse) : F;
+  const RL = () => (Tanks.Relais && Tanks.Relais.actif ? Tanks.Relais : null);
+  const reglagesDe = (d) => (d.forme === "aile" ? FR : F);
+  const tombe = (d) => d.etat === "brouille" || d.etat === "tombe" || d.etat === "abattu";
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 
   function installer() {
@@ -53,9 +59,14 @@ Tanks.DronesFPV = (function () {
   }
   const deja = (cible, d) => liste.some((x) => x !== d && x.cible === cible && x.equipe === d.equipe);
   function choisirCible(d, monde) {
-    const portee2 = F.portee * F.portee, loin = (o) => (o.x - d.x) ** 2 + (o.z - d.z) ** 2 > portee2;
+    const portee2 = F.portee * F.portee, rl = RL(), loin = (o) => (o.x - d.x) ** 2 + (o.z - d.z) ** 2 > portee2 || (rl && rl.couverture(d.equipe, o.x, o.z) <= 0.03); // (Bataille de drones : seulement à portée de ses antennes)
+    // (Bataille de drones) une ANTENNE RELAIS ennemie (ou toujours, pour une munition rôdeuse : elle vise les gros objets)
+    if (rl && (Math.random() < (F.partRelais || 0) || (d.forme === "aile" && Math.random() < 0.5))) {
+      const a = rl.cibles(d.equipe).filter((o) => !loin(o) && !deja(o, d));
+      if (a.length) return { o: a[Math.floor(Math.random() * a.length)], sorte: "antenne" };
+    }
     // a) un véhicule (le plus souvent)
-    if (Math.random() < F.partChars) {
+    if (Math.random() < F.partChars || d.forme === "aile") {
       const v = vehiculesEnnemis(monde, d.equipe).filter((o) => !loin(o) && !deja(o, d));
       if (v.length) return { o: v[Math.floor(Math.random() * v.length)], sorte: "vehicule" };
     }
@@ -83,7 +94,8 @@ Tanks.DronesFPV = (function () {
     const dansTranchee = pilotes.filter((s) => s.ia.vague === "tient");
     const p = (dansTranchee.length ? dansTranchee : pilotes)[Math.floor(Math.random() * Math.max(1, (dansTranchee.length || pilotes.length)))];
     const x = p ? p.x : 0, z = p ? p.z : (equipe === "bleus" ? 1 : -1) * T.camp;
-    const d = { equipe, genre: "drone-fpv", nom: "le drone FPV " + NOM_CAMP[equipe] + " n° " + ++compteur[equipe], x, y: T.hauteur(x, z) + 1.5, z, vx: 0, vy: 3, vz: 0,
+    const aile = !!F.rodeuse && Math.random() < F.rodeuse.part; // (Bataille de drones : une munition rôdeuse)
+    const d = { equipe, genre: "drone-fpv", forme: aile ? "aile" : "quadri", charge: aile ? FR.sorte : "fpv", nom: (aile ? "la munition rôdeuse " : "le drone FPV ") + NOM_CAMP[equipe] + " n° " + ++compteur[equipe], x, y: T.hauteur(x, z) + 1.5, z, vx: 0, vy: 3, vz: 0,
       angle: equipe === "bleus" ? -Math.PI / 2 : Math.PI / 2, etat: "vol", cible: null, sorteCible: "", batterie: F.batterie, pense: 0, reussis: 0, pilote: p ? p.nom : "le camp", age: 0, rotor: 0 };
     const c = choisirCible(d, monde);
     if (!c) return;
@@ -91,16 +103,17 @@ Tanks.DronesFPV = (function () {
     d.sorteCible = c.sorte;
     liste.push(d);
     bilan.decolles[equipe]++;
+    if (aile) bilan.rodeuses++;
     ev.push(["fpv-decolle", { equipe, camp: C.equipes[equipe].nom, nom: d.nom, pilote: d.pilote, vise: nomDe(c.o, monde), sorte: c.sorte, groupe: c.n || 0, x, z, distance: Math.round(Math.hypot(c.o.x - x, c.o.z - z)), versToi: c.o === monde.joueur || !!c.o.joueur }]);
   }
 
   // ------------------------------------------------------------------ 3. L'EXPLOSION (la charge part de tout près de la cible)
-  function exploser(monde, d, cible, sur, ev, tireur) {
-    let sorte = "fpv", dx = d.vx, dy = d.vy, dz = d.vz;
+  function exploser(monde, d, cible, sur, ev, tireur, charge) {
+    let sorte = charge || d.charge || "fpv", dx = d.vx, dy = d.vy, dz = d.vz;
     if (cible) {
       const h = cible.fiche ? (cible.fiche.hauteur || 2) * 0.7 : 0.4;
       dx = cible.x - d.x, dy = cible.y + h - d.y, dz = cible.z - d.z;
-      if (cible.fiche && cible.fiche.cage && Math.random() < cible.fiche.cage) sorte = "fpvCage"; // ✍️ la cage anti-drones l'arrête
+      if (sorte === "fpv" && cible.fiche && cible.fiche.cage && Math.random() < cible.fiche.cage) sorte = "fpvCage"; // ✍️ la cage anti-drones l'arrête
     } else if (sur === "sol") (dy = -1), (dx *= 0.1), (dz *= 0.1);
     const n = Math.hypot(dx, dy, dz) || 1, u = { x: dx / n, y: dy / n, z: dz / n };
     Tanks.Obus.lancer(monde.obus, tireur || d, sorte, { x: d.x - u.x * 0.8, y: d.y - u.y * 0.8, z: d.z - u.z * 0.8 }, u, null);
@@ -125,7 +138,7 @@ Tanks.DronesFPV = (function () {
     if (g && g.id === "brouilleur" && g.actif > 0) {
       g.actif = Math.max(0, g.actif - dt);
       for (const d of liste) {
-        if (d.equipe === toi.equipe || d.etat === "brouille" || d.etat === "tombe") continue;
+        if (d.equipe === toi.equipe || tombe(d)) continue;
         if (Math.hypot(d.x - toi.x, d.z - toi.z) < g.fiche.rayon) {
           d.etat = "brouille";
           bilan.brouilles++;
@@ -145,7 +158,8 @@ Tanks.DronesFPV = (function () {
         bilan.perdus++;
         ev.push(["fpv-perdu", { nom: d.nom, equipe: d.equipe, raison: "batterie vide" }]);
       }
-      if (d.etat === "brouille" || d.etat === "tombe") {
+      const P = reglagesDe(d);
+      if (tombe(d)) {
         // sans pilote : il tombe en tournant
         d.vy -= 9.8 * dt;
         d.vx *= 1 - dt * 0.6;
@@ -157,6 +171,7 @@ Tanks.DronesFPV = (function () {
         if (d.pense <= 0) {
           pensees++;
           d.pense = F.pense * (0.8 + Math.random() * 0.4);
+          surveiller(d, monde, ev); // (Bataille de drones : la portée des antennes, les brouilleurs, les soldats qui tirent)
           if (!vivant(d.cible) || d.cible.dansUnEngin || d.cible.parachute) {
             const c = choisirCible(d, monde);
             d.cible = c ? c.o : null;
@@ -169,15 +184,15 @@ Tanks.DronesFPV = (function () {
           }
         }
         const c = d.cible;
-        if (c && d.etat !== "tombe") {
+        if (c && !tombe(d)) {
           const h = c.fiche ? (c.fiche.hauteur || 2) * 0.7 : 1.0, dh = Math.hypot(c.x - d.x, c.z - d.z);
-          if (d.etat === "vol" && dh < F.distancePique) d.etat = "pique";
+          if (d.etat === "vol" && dh < P.distancePique) d.etat = "pique";
           let ux, uy, uz, v;
           if (d.etat === "pique") {
-            ux = c.x - d.x, uy = c.y + h - d.y, uz = c.z - d.z, v = F.pique;
+            ux = c.x - d.x, uy = c.y + h - d.y, uz = c.z - d.z, v = P.pique;
           } else {
-            const voulu = Math.max(sol, T.hauteur(c.x, c.z)) + F.altitude;
-            ux = c.x - d.x, uz = c.z - d.z, uy = (voulu - d.y) * 0.25 * Math.max(1, dh / 40), v = F.vitesse;
+            const voulu = Math.max(sol, T.hauteur(c.x, c.z)) + P.altitude;
+            ux = c.x - d.x, uz = c.z - d.z, uy = (voulu - d.y) * 0.25 * Math.max(1, dh / 40), v = P.vitesse;
           }
           const n = Math.hypot(ux, uy, uz) || 1, k = Math.min(1, F.virage * dt);
           const vit = Math.hypot(d.vx, d.vy, d.vz) || 1;
@@ -191,6 +206,7 @@ Tanks.DronesFPV = (function () {
             if (c.fiche) bilan.surChars++;
             else bilan.surSoldats++;
             if (sorte === "fpvCage") bilan.cages++;
+            if (c.genre === "antenne" || c.genre === "poste") bilan.surAntennes++;
             ev.push(["fpv-explose", { nom: d.nom, equipe: d.equipe, vise: nomDe(c, monde), sur: c.fiche ? "vehicule" : d.sorteCible, cage: sorte === "fpvCage", x: d.x, z: d.z, versToi: c === monde.joueur || !!c.joueur }]);
             liste.splice(i, 1);
             continue;
@@ -207,11 +223,64 @@ Tanks.DronesFPV = (function () {
         if (mur) (d.x = mur.x), (d.y = mur.y), (d.z = mur.z);
         exploser(monde, d, null, "sol", ev);
         if (d.etat === "vol" || d.etat === "pique") bilan.perdus++;
-        ev.push(["fpv-explose", { nom: d.nom, equipe: d.equipe, vise: null, sur: mur ? "mur" : "sol", brouille: d.etat === "brouille", x: d.x, z: d.z }]);
+        ev.push(["fpv-explose", { nom: d.nom, equipe: d.equipe, vise: null, sur: mur ? "mur" : "sol", brouille: d.etat === "brouille", abattu: d.etat === "abattu", x: d.x, z: d.z }]);
         liste.splice(i, 1);
       }
     }
     return ev;
+  }
+
+  // ------------------------------------------------------------------ 4 bis. (Bataille de drones) LA PORTÉE ET LA DÉFENSE ANTI-DRONES
+  // À chaque coup d'œil d'un drone de l'ordinateur : est-il encore à portée d'une antenne de son camp ? dans le brouilleur
+  // d'une antenne ennemie ? un soldat ennemi tout près lui tire-t-il dessus (« fpv.tir ») ?
+  function surveiller(d, monde, ev) {
+    const rl = RL();
+    if (rl) {
+      if (rl.couverture(d.equipe, d.x, d.z) <= 0) {
+        d.etat = "brouille";
+        bilan.perdus++;
+        return void ev.push(["fpv-perdu", { nom: d.nom, equipe: d.equipe, raison: "hors de portée de ses antennes relais : plus de signal" }]);
+      }
+      const b = rl.brouillePar(d.equipe, d.x, d.z);
+      if (b && Math.random() < C.relais.chanceBrouillage) {
+        d.etat = "brouille";
+        bilan.brouilles++;
+        return void ev.push(["fpv-brouille", { nom: d.nom, equipe: d.equipe, par: "le brouilleur de " + b.nom, distance: Math.round(Math.hypot(d.x - b.x, d.z - b.z)) }]);
+      }
+    }
+    const tir = F.tir;
+    if (!tir || d.y - T.hauteur(d.x, d.z) > tir.hauteur) return;
+    for (const s of monde.soldats) {
+      if (s.mort || s.dansUnEngin || s.joueur || s.equipe === d.equipe || Math.abs(s.x - d.x) > tir.portee || Math.abs(s.z - d.z) > tir.portee) continue;
+      if (Math.hypot(s.x - d.x, s.z - d.z) > tir.portee) continue;
+      ev.push(["balle", { tireur: s, de: { x: s.x, y: s.y + 1.5, z: s.z }, a: { x: d.x + (Math.random() - 0.5) * 2, y: d.y, z: d.z + (Math.random() - 0.5) * 2 }, matiere: "metal", antiDrone: true }]);
+      if (Math.random() < tir.chance) abattre(d, s.nom, ev);
+      return;
+    }
+  }
+  // Un drone de l'ordinateur ABATTU (par un soldat, un canon anti-drones, toi) : il tombe, et explose au sol
+  function abattre(d, par, ev) {
+    if (tombe(d)) return false;
+    d.etat = "abattu";
+    bilan.abattus++;
+    ev.push(["drone-abattu", { nom: d.nom, equipe: d.equipe, par, x: d.x, z: d.z }]);
+    return true;
+  }
+  // (Bataille de drones) TA balle (logique/soldat.js) : passe-t-elle tout près d'un drone ennemi ? (un drone est tout petit :
+  // il faut viser juste, et un fusil à pompe — ses plombs — a plus de chances). Renvoie vrai si la balle s'arrête sur lui.
+  function tirSurDrones(tireur, x, y, z, angle, R, ev) {
+    if (!actif || !F.tir || !tireur.joueur || !liste.length) return false;
+    for (const d of liste) {
+      if (d.equipe === tireur.equipe || tombe(d)) continue;
+      const dist = Math.hypot(d.x - x, d.z - z);
+      if (dist > Math.min(R.portee || 150, 160) || d.y - y > F.tir.hauteur + 10) continue;
+      const ecart = Math.abs(angleEntre(Math.atan2(d.z - z, d.x - x) - angle));
+      if (ecart > Math.max(0.03, Math.atan2(1.6, dist))) continue;
+      ev.push(["balle", { tireur, de: { x, y, z }, a: { x: d.x, y: d.y, z: d.z }, matiere: "metal", antiDrone: true }]);
+      if (Math.random() < (R.plombs ? 0.75 : 0.45)) (bilan.toi.abattus++, abattre(d, "toi", ev));
+      return true;
+    }
+    return false;
   }
 
   // ------------------------------------------------------------------ 5. LE BROUILLEUR de l'ingénieur (Espace)
@@ -300,5 +369,5 @@ Tanks.DronesFPV = (function () {
     if (e) e.lache = true;
   }
 
-  return { actif, liste, installer, etape, brouiller, piloter, lacher, get bilan() { return bilan; }, chrono, NOM_CAMP };
+  return { actif, liste, installer, etape, brouiller, piloter, lacher, exploser, nomDe, abattre, tirSurDrones, tombe, get bilan() { return bilan; }, chrono, NOM_CAMP };
 })();
