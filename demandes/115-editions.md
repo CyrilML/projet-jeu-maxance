@@ -23,6 +23,9 @@ Ukraine, Bataille de drones, Guerre civile, Bataille contre des aliens. Fais tou
   5. 🛸 Bataille de drones : chaque joueur pilote des drones (reconnaissance, kamikaze, bombardier), brouilleurs.
   6. ⚔️ Guerre civile : un pays inventé coupé en deux, milices, pick-ups armés (« technicals »), barricades en ville.
   7. 👽 Bataille contre des aliens : envahisseurs extraterrestres, armes à plasma, vaisseaux, mur de bouclier.
+- ✍️ (Cyril) « Il veut être un écrivain, mais il ne veut pas que ce soit tout réel. C'est triste. Fais du faux,
+  évidemment. » → TOUTES les éditions sont des histoires INVENTÉES, inspirées des époques : pays, camps, drapeaux,
+  chefs et lieux inventés (comme la Valdrie de la campagne). Pas de vraies personnes, pas de vrais drapeaux.
 - Rien de cassé : l'édition choisie est sauvegardée ; la campagne reste dans l'édition Moderne.
 
 ## ✅ Critères de réussite
