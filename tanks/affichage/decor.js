@@ -222,6 +222,7 @@ Tanks.Decor = (function () {
       ctx.fillStyle = g;
       ctx.fillRect(x - r, y - r, r * 2, r * 2);
     }
+    if (Tanks.Tranchees3D) Tanks.Tranchees3D.peindreSol(ctx, X, k, hasard); // (demande 115 : la boue, les cratères et la terre rejetée des tranchées)
     // les chemins : le bord usé, la terre, les 2 ornières plus sombres, l'herbe au milieu
     const L = BE.chemins.largeur * k;
     const tracer = (l, largeur, style) => {
@@ -396,6 +397,7 @@ Tanks.Decor = (function () {
           "  diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.92, 0.82, 0.7), pente * 0.6) * (1.0 - pente * 0.18);",
           "}",
         ].join("\n"));
+      if (Tanks.Tranchees3D) Tanks.Tranchees3D.trouerSol(sh); // (demande 115 : en 1916, le sol s'ouvre au-dessus des tranchées)
     };
     const idx = geo.index.array, parTuile = [];
     for (let t = 0; t < idx.length; t += 3) {
@@ -967,6 +969,7 @@ Tanks.Decor = (function () {
     touffes(g);
     Tanks.MarquesSol.construire(g); // (demande 92 : les traces de chenilles et les cratères, posés sur le sol)
     Tanks.Base3D.construire(g); // (demande 99 : les 2 bases aériennes, posées sur le sol aplati)
+    Tanks.Tranchees3D.construire(g, ajouterMorceau); // (demande 115 : en 1916, les tranchées, les barbelés, les arbres déchiquetés)
     return g;
   }
 

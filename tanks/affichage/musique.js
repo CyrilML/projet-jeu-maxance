@@ -46,7 +46,23 @@ Tanks.Musique = (function () {
     comp.connect(ctx.destination);
     sortie = ctx.createGain();
     sortie.gain.value = 0;
-    sortie.connect(comp);
+    // ✍️ (demande 115) LE GRAMOPHONE de 1916 : le son passe par un pavillon (on coupe les graves et les aigus : un
+    // « passe-bande »), et le disque CRÉPITE (un petit souffle de craquements, en boucle)
+    if (Tanks.CONFIG.edition.regles.gramophone) {
+      const pavillon = ctx.createBiquadFilter();
+      pavillon.type = "bandpass";
+      pavillon.frequency.value = 1300;
+      pavillon.Q.value = 0.55;
+      sortie.connect(pavillon).connect(comp);
+      const n = ctx.sampleRate * 2, disque = ctx.createBuffer(1, n, ctx.sampleRate), dd = disque.getChannelData(0);
+      for (let i = 0; i < n; i++) dd[i] = (Math.random() < 0.0009 ? (Math.random() * 2 - 1) * 0.9 : 0) + (Math.random() * 2 - 1) * 0.02;
+      const craque = ctx.createBufferSource(), vol = ctx.createGain();
+      craque.buffer = disque;
+      craque.loop = true;
+      vol.gain.value = 0.35;
+      craque.connect(vol).connect(sortie);
+      craque.start();
+    } else sortie.connect(comp);
     // la SALLE : un écho fabriqué avec un souffle qui s'éteint en M.salle.duree secondes
     salle = ctx.createConvolver();
     const n = Math.floor(ctx.sampleRate * M.salle.duree), ir = ctx.createBuffer(2, n, ctx.sampleRate);

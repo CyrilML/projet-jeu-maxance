@@ -34,13 +34,15 @@ Tanks.Engins = (function () {
   // Les places de parking : (demande 99) elles sont sur le PLAN de ta base aérienne (logique/base.js, config.js
   // « baseAerienne.places ») : le 4x4, la moto, le quad et le camion au parking ; le Tigre, le drone, le Chinook et le
   // Black Hawk sur leurs aires « H » ; le Rafale au bout de la piste ; la DCA sur sa plateforme.
-  const PLACES = ["jeep", "helico", "avion", "drone", "dca", "moto", "quad", "camion", "chinook", "blackhawk"];
+  // (demande 115) la liste vient du PARC de config.js : une édition d'une autre époque en garde moins
+  const PLACES = C.parc.engins;
   const place = (sorte) => Tanks.Base.place("bleus", sorte);
   function creer() {
     const liste = PLACES.map((sorte) => garer({ sorte, fiche: Object.assign({ longueur: 4.8, largeur: 2.2, hauteur: 2 }, G[sorte]) }));
-    liste.push(garer({ sorte: "bateau", fiche: Object.assign({}, C.bateaux.joueur) })); // (étape 62)
-    liste.push(garer({ sorte: "sousmarin", fiche: Object.assign({}, C.sousMarins.joueur) })); // (étape 63)
-    liste.push(Tanks.AntiAerien.ennemi()); // (demande 113) le camion antiaérien de l'ennemi, conduit par l'ordinateur
+    if (C.parc.bateau) liste.push(garer({ sorte: "bateau", fiche: Object.assign({}, C.bateaux.joueur) })); // (étape 62)
+    if (C.parc.sousmarin) liste.push(garer({ sorte: "sousmarin", fiche: Object.assign({}, C.sousMarins.joueur) })); // (étape 63)
+    if (C.parc.dcaEnnemi) liste.push(Tanks.AntiAerien.ennemi()); // (demande 113) le camion antiaérien de l'ennemi, conduit par l'ordinateur
+    if (Tanks.Tranchees.actif) for (const m of Tanks.Tranchees.creerMitrailleuses()) liste.push(m); // (demande 115 : les mitrailleuses lourdes des tranchées, en 1916)
     return liste;
   }
   // (étape 62) La place de la vedette : au bord du lac, au sud-ouest (de ton côté), le nez vers le milieu du lac.
@@ -81,6 +83,7 @@ Tanks.Engins = (function () {
   function avancer(e, intentions, dt, monde) {
     const ev = [], R = G[e.sorte];
     if (e.genre === "antiaerien") return Tanks.AntiAerien.avancer(e, intentions, dt, monde, ev), ev; // (demande 113)
+    if (e.genre === "mitrailleuse") return Tanks.Tranchees.avancerMitrailleuse(e, intentions, dt, monde, ev), ev; // (demande 115 : la mitrailleuse lourde)
     e.touche += dt;
     if (e.detruit) {
       if (e.sorte === "helico" || e.sorte === "drone") return tomber(e, dt, ev), ev; // (demande 113 : abattu par le camion antiaérien ennemi)
@@ -320,7 +323,7 @@ Tanks.Engins = (function () {
     const lim = T.demi + 150;
     if (Math.abs(e.x) > lim || Math.abs(e.z) > lim) e.angle = angleEntre(e.angle + Math.PI * dt * 0.8);
     if (I.tirer && e.recharge === 0 && e.munitions > 0 && e.enVol) {
-      e.recharge = 0.8;
+      e.recharge = R.cadence || 0.8; // (demande 115 : la mitrailleuse du biplan tire plus vite qu'un lance-missiles)
       e.munitions--;
       // la cible : un AVION ennemi devant toi (étape 64, il passe en premier), sinon le tank ennemi le plus en face
       // (dans un cône de 25°)
@@ -337,8 +340,8 @@ Tanks.Engins = (function () {
       }
       const dir = { x: Math.cos(e.angle) * Math.cos(e.tangage), y: Math.sin(e.tangage), z: Math.sin(e.angle) * Math.cos(e.tangage) };
       const depart = { x: e.x + dir.x * 6, y: e.y - 1, z: e.z + dir.z * 6 };
-      Tanks.Obus.lancer(monde.obus, e, "missile", depart, dir, cible);
-      ev.push(["missile", { cible, reste: e.munitions, x: depart.x, y: depart.y, z: depart.z }]);
+      Tanks.Obus.lancer(monde.obus, e, R.projectile || "missile", depart, dir, cible); // (demande 115 : en 1916, une rafale de mitrailleuse)
+      ev.push(["missile", { cible, reste: e.munitions, x: depart.x, y: depart.y, z: depart.z, projectile: R.projectile || "missile" }]);
     }
   }
 

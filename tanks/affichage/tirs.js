@@ -90,6 +90,7 @@ Tanks.Tirs = (function () {
     radio.ecouter("flak", (d) => eclairBouche(d.x, d.y, d.z, 0, 1, 0, 1.6, true));
     radio.ecouter("mur-abime", (d) => impact(d.x, d.y, d.z, d.matiere, d.nx, d.ny, d.nz, true));
     for (const n of ["roquette", "missile"]) radio.ecouter(n, (d) => { // le départ : un souffle de fumée vers l'arrière
+      if (d.projectile === "rafale") return void P.emettre(M.lueurCanon, d.x, d.y, d.z, 0, 0, 0, 0.15); // (demande 115 : la mitrailleuse du biplan : juste un éclair)
       const dir = d.dir || { x: 0, y: 0, z: 0 };
       for (let k = 0; k < 7; k++) P.emettre(M.fumeeCanon, d.x - dir.x, d.y - dir.y, d.z - dir.z, -dir.x * 7 + alea(1.5), alea(1), -dir.z * 7 + alea(1.5), 0.45);
       P.emettre(M.lueurCanon, d.x, d.y, d.z, 0, 0, 0, 0.3);

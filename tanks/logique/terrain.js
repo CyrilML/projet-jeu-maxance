@@ -81,13 +81,19 @@ Tanks.Terrain = (function () {
   function hauteur(x, z) {
     if (carte === "souterrain") return SO().hauteur(x, z);
     const u = (x + demi) / PAS_H, v = (z + demi) / PAS_H, i = Math.floor(u), j = Math.floor(v);
-    if (i < 0 || j < 0 || i >= NH - 1 || j >= NH - 1) return hauteurExacte(x, z); // (hors de la carte : le calcul exact)
+    if (i < 0 || j < 0 || i >= NH - 1 || j >= NH - 1) return hauteurExacte(x, z) - TR.creux(x, z); // (hors de la carte : le calcul exact)
     const fu = u - i, fv = v - j;
     const h00 = coin(i, j), h10 = coin(i + 1, j), h01 = coin(i, j + 1), h11 = coin(i + 1, j + 1);
-    return (h00 * (1 - fu) + h10 * fu) * (1 - fv) + (h01 * (1 - fu) + h11 * fu) * fv;
+    // ✍️ (demande 115) les TRANCHÉES de 1916 sont trop fines pour le cahier (2,3 m de large, un point tous les 2 m) : leur
+    // creux est calculé exactement à chaque fois (logique/tranchees.js), et retiré du sol naturel
+    return (h00 * (1 - fu) + h10 * fu) * (1 - fv) + (h01 * (1 - fu) + h11 * fu) * fv - (TRA ? TR.creux(x, z) : 0);
   }
+  // (demande 115) « hauteurExacte » est le sol NATUREL (avec les cratères d'obus de 1916, mais sans le creux des tranchées :
+  // c'est ce sol que le peintre dessine ; les tranchées ont leurs propres parois, affichage/tranchees3d.js)
+  const TR = Tanks.Tranchees, TRA = TR.actif;
   function hauteurExacte(x, z) {
     let h = B.fractal(bruit, x / W.collines.taille, z / W.collines.taille, 4) * W.collines.hauteur * (VAR.collines || 1); // (étape 81 : × 1,8 dans le désert = des dunes)
+    if (TRA) h += TR.cratere(x, z); // (demande 115 : les cratères du no man's land)
     // le village est sur un terrain presque plat : on « aplatit » les collines près du centre (étape 71 : et sous les hameaux)
     let plat = 1;
     for (let i = 0; i < VILLAGES.length; i++) {
@@ -170,7 +176,7 @@ Tanks.Terrain = (function () {
       const x = vi.x + (rue ? le_long : cote), z = vi.z + (rue ? cote : le_long);
       const demiL = 4 + hasard() * 3.5, demiP = 3.5 + hasard() * 2.5;
       if (!loinDe(x, z, 4)) continue;
-      boites.push({ x, z, demiL, demiP, angle: rue ? 0 : Math.PI / 2, h: 4 + hasard() * 4, sorte: "maison", type: "maison", hameau: vi !== VILLAGES[0], lieu: vi.nom, graine: Math.floor(hasard() * 1e6) });
+      boites.push({ x, z, demiL, demiP, angle: rue ? 0 : Math.PI / 2, h: 4 + hasard() * 4, sorte: "maison", type: "maison", hameau: vi !== VILLAGES[0], lieu: vi.nom, graine: Math.floor(hasard() * 1e6), ruinesDepart: VAR.ruinesVillage }); // (demande 115 : « ruinesVillage » : la part déjà en ruines)
       n++;
     }
     for (let essai = 0, n = 0; n < vi.murets && essai < 600; essai++) {
@@ -180,6 +186,12 @@ Tanks.Terrain = (function () {
       boites.push({ x, z, demiL: 3 + hasard() * 5, demiP: 0.35, angle: hasard() < 0.5 ? a : a + Math.PI / 2, h: 1.1, sorte: "muret", type: "muret", lieu: vi.nom });
       n++;
     }
+  }
+  // ✍️ (demande 115) L'ÉGLISE EN RUINES du village de 1916 : la nef (une longue maison haute) et son clocher (une tour).
+  if (VAR.eglise) {
+    const E2 = VAR.eglise;
+    boites.push({ x: E2.x, z: E2.z, demiL: 11, demiP: 5.5, angle: 0, h: 8.5, sorte: "maison", type: "maison", lieu: "l'église", nom: "l'église de " + V.nom.replace(/^le village en ruines de /, ""), ruinesDepart: 0, eglise: true, graine: 1916 });
+    boites.push({ x: E2.x - 14, z: E2.z, demiL: 3.2, demiP: 3.2, angle: 0, h: 17, sorte: "maison", type: "tour", lieu: "l'église", nom: "le clocher", graine: 1917 });
   }
   // Les haies et les murets dans la campagne (pour se cacher), et quelques ruines isolées (des granges).
   for (let k = 0, nHaies = VAR.haies == null ? W.haies : VAR.haies; k < nHaies; k++) { // (étape 81 : pas de haies dans le désert)
@@ -209,6 +221,7 @@ Tanks.Terrain = (function () {
       z = (hasard() * 2 - 1) * (demi - 40);
     }
     if (Math.max(Math.abs(x), Math.abs(z)) > demi - 30 || presDUnVillage(x, z, -0.1 * VILLAGES[0].rayon) || dansUnCamp(x, z) || !loinDe(x, z, 2) || dansLEau(x, z, 3) || presDUnPortail(x, z, 9)) continue; // (pas sur les départs)
+    if (TRA && Math.abs(z) < TR.R.arriere + 25 && x > TR.R.x[0] - 40 && x < TR.R.x[1] + 40) continue; // (demande 115 : sur le front de 1916, plus un arbre debout : seulement des troncs déchiquetés, dessinés par affichage/tranchees3d.js)
     arbres.push({ x, z, r: 0.6, taille: 0.8 + hasard() * 0.6, ecrase: false, sorte: hasard() < 0.35 ? "sapin" : "feuillu", angleChute: 0 });
   }
 
@@ -310,7 +323,7 @@ Tanks.Terrain = (function () {
   function matiere(x, z) {
     if (carte === "souterrain") return "beton";
     if (dansLEau(x, z)) return "eau";
-    if (VAR.herbe === false) return "sable";
+    if (VAR.herbe === false) return VAR.matiereSol || "sable"; // (demande 115 : en 1916, de la boue, pas du sable)
     if (Q && Math.hypot(x - Q.x, z - Q.z) < Q.rayon) {
       const ix = ((((x - Q.x) % Q.ilot) + Q.ilot) % Q.ilot), iz = ((((z - Q.z) % Q.ilot) + Q.ilot) % Q.ilot), demiRue = Q.rue / 2;
       if (ix < demiRue || ix > Q.ilot - demiRue || iz < demiRue || iz > Q.ilot - demiRue) return "pierre";

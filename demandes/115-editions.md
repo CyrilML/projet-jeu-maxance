@@ -1,6 +1,6 @@
 # Demande n° 115 : les éditions de The Last Battlefield (livre de demandes n° 24)
 
-> Statut : 🛠️ en cours.
+> Statut : 🛠️ en cours : le système et l'édition 1916 sont livrés (tanks version 59).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -29,5 +29,5 @@ Ukraine, Bataille de drones, Guerre civile, Bataille contre des aliens. Fais tou
 - Rien de cassé : l'édition choisie est sauvegardée ; la campagne reste dans l'édition Moderne.
 
 ## ✅ Critères de réussite
-- [ ] La porte ÉDITIONS et le système d'éditions.
+- [x] La porte ÉDITIONS et le système d'éditions.
 - [ ] Les 7 éditions, chacune avec ses armes, ses véhicules, ses uniformes, sa carte et sa musique.

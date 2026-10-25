@@ -285,7 +285,7 @@ Tanks.Scene = (function () {
       for (const r of o.roues) r.visible = !loin;
     }
     // (étape 75) de près, les vrais maillons de la chenille ; plus loin, la chenille « image »
-    const maillons = !c.detruit && d < Q.roues * C.peinture.maillons;
+    const maillons = !c.detruit && !!o.maillons && d < Q.roues * C.peinture.maillons; // (demande 115 : les tanks de 1916 n'ont pas de maillons en 3D)
     if (o.maillons && o.maillons.mesh.visible !== maillons) {
       o.maillons.mesh.visible = maillons;
       for (const ch of o.chenillesImages) ch.visible = !maillons;
@@ -382,7 +382,7 @@ Tanks.Scene = (function () {
     const camp = campEngin(e);
     if (o && o.camp !== camp) (scene.remove(o.g), (o = null));
     if (!o) {
-      o = Tanks.Engins3D.fabriquer(e.sorte, camp);
+      o = Tanks.Engins3D.fabriquer(e.sorte, camp, e.modele3d); // (demande 115 : « modele3d » : un autre modèle pour cet engin, par exemple le bombardier biplan)
       o.camp = camp;
       o.brule = false;
       scene.add(o.g);
@@ -590,14 +590,17 @@ Tanks.Scene = (function () {
       o.helices.forEach((h, i) => (h.rotation.y = e.rotor * (i % 2 ? 2 : -2)));
       o.flous.visible = (o.tours || 0) * 2 > A.flou;
       o.grenades.forEach((g, i) => (g.visible = i < e.munitions)); // (les grenades qui restent)
-    } else if (e.sorte === "transport") {
+    } else if (e.sorte === "transport" && !o.edition) {
       o.helices.forEach((h) => (h.rotation.x += dt * 30 * h.userData.sens));
       // la rampe s'ouvre avant la zone de largage (tant qu'il reste des parachutistes, et un peu après le dernier)
       const dx = Math.abs(e.x - e.largage.x), ouvert = dx < A.rampe.distance && (e.restent > 0 || dx < 120);
       o.ouverture = vers(o.ouverture, ouvert ? 1 : 0, dt / A.rampe.duree);
       o.rampe.rotation.z = -Tanks.Avions3D.PENTE * (1 - o.ouverture);
       o.porteSoute.rotation.z = -Tanks.Avions3D.PENTE + 0.95 * o.ouverture;
-    } else if (e.sorte === "avion" || e.sorte === "chasseur") {
+    }
+    if (o.helices && o.edition) for (const h of o.helices) h.rotation.x += dt * (e.pilote || e.sorte !== "avion" ? 42 : 0); // (demande 115 : l'hélice du biplan)
+    if (o.edition) { if (o.pilote) o.pilote.visible = !!e.pilote || e.sorte !== "avion"; if (o.flous) o.flous.visible = !!e.pilote || e.sorte !== "avion"; return; }
+    if (e.sorte === "avion" || e.sorte === "chasseur") {
       // le train : il rentre en vol (chaque jambe tourne autour de sa charnière), il sort au sol
       if (o.jambes.length) {
         o.sortie = !e.pilote ? 1 : vers(o.sortie, e.enVol ? 0 : 1, dt / A.train);
@@ -625,6 +628,16 @@ Tanks.Scene = (function () {
     if (Tanks.Helicos3D.sait(e.sorte)) return placerHelico(o, e, dt, original); // (étape 73)
     if (Tanks.Avions3D.sait(e.sorte)) return placerAvion(o, e, dt, original); // (étape 76)
     if (e.sorte === "dca") return placerCamionAA(o, e, dt, original); // (demande 113)
+    if (e.sorte === "mitrailleuse") { // (demande 115) la mitrailleuse lourde : droite sur son trépied, le canon tourne et se lève
+      o.g.visible = Math.hypot(e.x - cam.position.x, e.z - cam.position.z) < Q.vue + 20;
+      o.g.position.set(e.x, e.y, e.z);
+      o.g.rotation.set(0, -e.angle, 0);
+      o.tourelle.rotation.y = -e.tourelle;
+      o.canon.rotation.z = e.hausse;
+      o.feu.visible = e.feu > 0.03;
+      if (o.servant) o.servant.visible = !e.pilote && !(e.servant && e.servant.pris > 0);
+      return;
+    }
     o.g.visible = e.etat !== "attend" && e.etat !== "parti" && e.etat !== "cloue";
     // (étape 72) plus loin que la vue (dans le brouillard) : pas dessiné
     if (o.g.visible && Math.hypot(e.x - cam.position.x, e.y - cam.position.y, e.z - cam.position.z) > Q.vue + 50) (o.g.visible = false), lod.enginsCaches++;
@@ -680,7 +693,7 @@ Tanks.Scene = (function () {
     }
     return projectiles3d[i];
   }
-  const TAILLES = { roquette: 1, bombe: 1.6, missile: 1.5, grenade: 0.5, torpille: 1.8, flak: 0.35 };
+  const TAILLES = { roquette: 1, bombe: 1.6, missile: 1.5, grenade: 0.5, torpille: 1.8, flak: 0.35, rafale: 0.2, barrage: 1.2 }; // (demande 115 : la rafale du biplan, l'obus du barrage)
   // (étape 75) La GRENADE À MAIN : un œuf vert olive (le corps quadrillé), la cuillère (le levier) et le bouchon. On la
   // dessine 2 fois plus grosse que la vraie (6 cm), sinon on ne la verrait pas voler. Elle tourne sur elle-même en l'air.
   const grenades3d = [];
@@ -717,7 +730,7 @@ Tanks.Scene = (function () {
       g.position.set(p.x, p.y, p.z);
       g.rotation.set(0, -Math.atan2(p.vz, p.vx), Math.atan2(p.vy, Math.hypot(p.vx, p.vz)), "YZX");
       g.scale.setScalar(TAILLES[p.sorte] || 1);
-      g.feu.visible = p.sorte === "roquette" || p.sorte === "missile" || p.sorte === "flak"; // (les bombes tombent sans moteur ; la torpille fait des bulles)
+      g.feu.visible = p.sorte === "roquette" || p.sorte === "missile" || p.sorte === "flak" || p.sorte === "rafale"; // (les bombes tombent sans moteur ; la torpille fait des bulles ; demande 115 : la rafale est un traceur)
     }
     for (let i = n; i < projectiles3d.length; i++) projectiles3d[i].visible = false;
     for (let i = ng; i < grenades3d.length; i++) grenades3d[i].visible = false;
@@ -744,6 +757,7 @@ Tanks.Scene = (function () {
     // (demande 113) au canon du camion antiaérien : la caméra regarde là où visent les canons ; au volant : comme le camion
     if (e.sorte === "dca" && e.siege === "canon") return { x: e.x + Math.cos(e.angle) * C.engins.dca.canon.x, y: e.y + 1.6, z: e.z + Math.sin(e.angle) * C.engins.dca.canon.x, angle: e.angle + e.tourelle, distance: 0.75, hauteur: 0.6, devant: 1, regardY: 1.5 + Math.tan(Math.min(1.2, e.hausse)) * C.camera.regardDevant * 0.7 };
     if (e.sorte === "dca") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 1.15, hauteur: 1.05, devant: 1, regardY: 3 };
+    if (e.sorte === "mitrailleuse") return { x: e.x, y: e.y + 0.75, z: e.z, angle: e.angle + e.tourelle, distance: 0.16, hauteur: 0.14, devant: 1, regardY: 0.6 + Math.tan(e.hausse) * C.camera.regardDevant }; // (demande 115 : derrière la mitrailleuse)
     if (e.sorte === "sousmarin") return { x: e.x, y: Math.max(e.y, C.lac.niveau - 1.3), z: e.z, angle: e.angle, distance: 1.5, hauteur: 0.75, devant: 1, regardY: 1.5 };
     if (e.sorte === "jeep") return { x: e.x, y: e.y, z: e.z, angle: e.angle + e.tourelle * 0.7, distance: 0.75, hauteur: 0.7, devant: 1, regardY: 2 };
     if (e.sorte === "moto") return { x: e.x, y: e.y, z: e.z, angle: e.angle, distance: 0.42, hauteur: 0.42, devant: 0.8, regardY: 1.4 }; // (étape 71)
@@ -926,6 +940,7 @@ Tanks.Scene = (function () {
     Tanks.Decor.majEau(dt);
     Tanks.MarquesSol.maj(dt, monde, cam.position); // (demande 92 : les traces de chenilles et les cratères)
     Tanks.Base3D.maj(monde, cam.position, Q.vue); // (demande 99 : les bases aériennes, les cratères des pistes)
+    Tanks.Tranchees3D.maj(); // (demande 115 : les barbelés coupés disparaissent)
     Tanks.Interieurs3D.maj(dt, cam.position, Q.interieurs || 30);
     Tanks.Perchoirs3D.maj(dt, cam.position, monde); // (livre n° 12 : les perchoirs qui s'effondrent, le reflet des lunettes)
     Tanks.Ville3D.maj(dt, cam.position, Q.objetsVille || 90); // (livre n° 9 et 11 : la ville abandonnée ; les petits objets de près) // (livre de demandes n° 8 : les intérieurs près de la caméra, les portes)

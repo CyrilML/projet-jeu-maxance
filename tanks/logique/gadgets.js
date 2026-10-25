@@ -62,6 +62,7 @@ Tanks.Gadgets = (function () {
       if (g.regain >= F.regain) (g.regain = 0), g.munitions++;
     }
     if (s.arme !== "gadget" || s.nage) return;
+    if (g.id === "cisailles") return Tanks.Tranchees.couper(s, intentions, dt, monde, ev); // (demande 115 : couper les barbelés)
     if (g.id === "reparation") {
       g.cible = null;
       if (!intentions.tirer) return;

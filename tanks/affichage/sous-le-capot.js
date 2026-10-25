@@ -181,7 +181,18 @@ Tanks.SousLeCapot = (function () {
     "maison-ejecte": (d) => "💨 " + d.nom + " s'effondre sur toi : tu es blessé et projeté dehors, dans la poussière",
     "grenade-lancee": (d) => "💣 " + (d.parToi ? "Tu lances une grenade" : d.tireur + " lance une grenade") + (d.vise ? " sur " + d.vise + " à " + d.distance + " m" + (d.groupe > 1 ? " (" + d.groupe + " ennemis groupés)" : "") : "") + " · elle explose dans " + d.meche + " s · il " + (d.parToi ? "t'" : "lui ") + "en reste " + d.reste + " / " + d.max,
     grenades: (d) => "🎒 " + (d.camp ? "Au camp : tu reprends toutes tes grenades (" + d.nombre + " / " + d.max + ")" : "Tu regagnes une grenade (" + d.nombre + " / " + d.max + ", 1 toutes les " + C.grenades.recharge + " s)"),
-    "sauvegarde-convertie": (d) => "💾 Ton livret militaire (version " + d.de + ") est converti en version " + d.vers + " : rien n'est perdu, les nouveaux compteurs commencent à 0" + (d.battleCoins ? " · 🪙 +" + d.battleCoins.toLocaleString("fr-FR") + " Battle Coins pour tes chapitres déjà réussis (demande 101)" : "") + (d.de < 15 ? " · ⭐ tes points sont recalculés pour les niveaux plus lents : tu gardes ton niveau (demande 102)" : "") + (d.bonus && d.bonus.length ? " · 🎁 " + d.bonus.join(" ; ") + " (livre n° 6)" : "") + (d.boutique ? " · 🛒 + le carnet de la boutique (vide : rien acheté)" : "") + (d.reglages ? " · ⚙️ + les réglages (🩸 sang : éteint, demande 114)" : ""),
+    // ✍️ demande 115 : les ÉDITIONS et le front de 1916
+    editions: (d) => (d.ouverte ? "📜 Tu ouvres la galerie des ÉDITIONS : " + d.nombre + " époques, " + d.pretes + " prête(s) (en cours : " + d.actuelle + ")" : "📜 Tu refermes la galerie des éditions"),
+    edition: (d) => "📜 Édition choisie : " + d.icone + " " + d.nom + " (" + d.epoque + ")" + (d.recharger ? " · le jeu se recharge pour coudre le nouveau costume (avant : " + d.avant + ")" : " · c'est déjà celle-là"),
+    "edition-refusee": (d) => "🔒 " + d.icone + " " + d.nom + " : " + d.raison,
+    "coup-de-sifflet": (d) => "📯 COUP DE SIFFLET chez " + d.nom + " : vague n° " + d.vague + " · " + d.soldats + " soldat(s) montent à l'assaut hors de la tranchée · " + d.renforts + " renfort(s) arrivent par les boyaux",
+    barrage: (d) => d.debut ? "💥 BARRAGE D'ARTILLERIE : " + d.nom + " envoie " + d.obus + " obus sur le no man's land en " + d.duree + " s (écoute le sifflement, reste dans ta tranchée !)" : "🌫️ Fin du barrage de " + d.nom,
+    "obus-siffle": (d) => "🎯 Un obus de " + (d.camp === "bleus" ? "ton" : "l'") + " artillerie siffle : il tombe dans " + virgule(d.arrive, 1) + " s en (" + Math.round(d.x) + " ; " + Math.round(d.z) + ")",
+    "barbele-coupe": (d) => "✂️ Barbelés : " + d.longueur + " m " + ({ cisailles: "COUPÉS aux cisailles", tank: "ÉCRASÉS par un tank", obus: "déchirés par une explosion" }[d.comment] || "coupés") + (d.par ? " (" + d.par + ")" : "") + " en (" + Math.round(d.x) + " ; " + Math.round(d.z) + ") · un passage est ouvert",
+    "mitrailleuse-prise": (d) => "🤚 " + d.nom + " se tait : " + d.par + " est arrivé tout près, son servant est à terre (un autre revient dans " + d.retour + " s)",
+    "mitrailleuse-cible": (d) => "🎯 " + d.nom + " vise " + d.cible + " à " + d.distance + " m",
+    "mitrailleuse-chaude": (d) => "🔥 Ta mitrailleuse CHAUFFE trop : elle s'enraye " + d.duree + " s (lâche Espace de temps en temps !)",
+    "sauvegarde-convertie": (d) => "💾 Ton livret militaire (version " + d.de + ") est converti en version " + d.vers + " : rien n'est perdu, les nouveaux compteurs commencent à 0" + (d.battleCoins ? " · 🪙 +" + d.battleCoins.toLocaleString("fr-FR") + " Battle Coins pour tes chapitres déjà réussis (demande 101)" : "") + (d.de < 15 ? " · ⭐ tes points sont recalculés pour les niveaux plus lents : tu gardes ton niveau (demande 102)" : "") + (d.bonus && d.bonus.length ? " · 🎁 " + d.bonus.join(" ; ") + " (livre n° 6)" : "") + (d.boutique ? " · 🛒 + le carnet de la boutique (vide : rien acheté)" : "") + (d.reglages ? " · ⚙️ + les réglages (🩸 sang : éteint, demande 114)" : "") + (d.edition ? " · 📜 + l'édition (tu es en Moderne, demande 115)" : ""),
     // étape 72
     qualite: (d) => "⚙️ Qualité " + d.niveau + "/" + d.max + " (" + d.nom + ")" + (d.auto ? "" : " ✋") + " : " + d.raison + " → pixels ×" + virgule(d.reglages.pixels, 1) + ", ombres " + (d.reglages.ombres ? d.reglages.ombres + (d.reglages.douces ? " douces" : "") : "aucune") + ", vue " + d.reglages.vue + " m",
     "programmes-prets": (d) => "🧩 La carte graphique a préparé d'un coup ses " + d.programmes + " programmes de dessin (" + Math.round(d.ms) + " ms, " + d.caches + " objets cachés montrés un instant) : plus d'à-coup quand un nouvel objet apparaît",
@@ -293,6 +304,8 @@ Tanks.SousLeCapot = (function () {
     l.push(["   🔫 le canon", "tourné à " + degres(e.angle + e.tourelle) + ", levé de " + degres(e.hausse) + " · " + e.tirs + " obus tirés · " + e.touches + " touches · " + e.abattus + " abattu(s)" + (e.tirs ? " · réussite " + Math.round((100 * e.touches) / e.tirs) + " %" : "")]);
   }
 
+  // (demande 115) loin de toi (à pied, dans un engin ou dans ton tank) ?
+  const loinDeToi = (x, z, max) => { const t = monde && monde.toi, ici = t && t.soldat && t.mode !== "char" ? t.engin || t.soldat : monde && monde.joueur; return !ici || Math.hypot(x - ici.x, z - ici.z) > max; };
   function initialiser(m) {
     monde = m;
     if (branche) return;
@@ -317,6 +330,9 @@ Tanks.SousLeCapot = (function () {
       if (nom === "soldat-touche" && !d.parToi && !d.surToi) return;
       if (nom === "roquette" && !d.parToi) return;
       if (nom === "flak") return;
+      // (demande 115) le barrage : 16 obus qui sifflent ; on n'écrit que ceux qui tombent près de toi ; et les mitrailleuses qui changent de cible : seulement quand c'est toi
+      if (nom === "obus-siffle" && loinDeToi(d.x, d.z, 60)) return;
+      if (nom === "mitrailleuse-cible" && d.cible !== "toi") return;
       // (étape 75) les murs : seulement tes balles quand un morceau se fissure ; les trous et les grenades : les tiens, ou près de toi
       const ici = monde && monde.toi && monde.toi.soldat && monde.toi.mode !== "char" ? (monde.toi.engin || monde.toi.soldat) : monde && monde.joueur;
       const loin = (x, z, max) => ici && Math.hypot(x - ici.x, z - ici.z) > max;
@@ -405,6 +421,26 @@ Tanks.SousLeCapot = (function () {
     const g = monde.toi && monde.toi.soldat && monde.toi.soldat.gadget;
     if (g && g.cratere) l.push(["🔧 ton outil", "tu rebouches un cratère : " + Math.round(g.cratere.repare * 100) + " % (" + DE.reparation.outil + " s par cratère)"]);
     l.push(["dessin des bases", B3.visibles + " / " + B3.bases + " base(s) dessinée(s) (les autres sont trop loin) · " + B3.dessins + " dessins par base · " + B3.balises + " balises (des boîtes qui brillent, 1 dessin, aucune vraie lumière) · " + Math.round(B3.triangles / 1000) + " k triangles soudés · " + B3.crateres + " cratère(s) dessiné(s) · " + B3.croix + " croix « X »"]);
+  }
+  // ✍️ (demande 115) L'ÉDITION et LE FRONT DE 1916 : les tranchées, les barbelés, les vagues, le barrage, les mitrailleuses
+  function lignesEdition(l) {
+    const ED = C.edition, R = Object.entries(ED.regles).filter(([, v]) => v === true).map(([k]) => k);
+    l.push(["L'édition (demande 115)"]);
+    l.push(["📜 édition", ED.icone + " " + ED.nom + " (" + ED.epoque + ") · lue dans : " + ED.source + " · " + ED.pieces + " réglage(s) de config.js recousus par le tailleur · règles allumées : " + R.join(", ")]);
+    l.push(["camps", "🔵 " + C.equipes.bleus.nom + " contre 🔴 " + C.equipes.rouges.nom + " · tanks : " + C.chars.map((c) => c.nom).join(", ") + " · engins garés : " + C.parc.engins.join(", ")]);
+    const TR = Tanks.Tranchees;
+    if (!TR.actif) return;
+    const B = TR.bilan, T3 = Tanks.Tranchees3D.bilan, E = TR.etat;
+    l.push(["🪖 le réseau", B.lignes + " tranchées en zigzag (tir, soutien, boyaux) · creux : " + TR.P.profondeur + " m au fond, " + TR.P.banquette + " m sur la banquette de tir · " + B.crateres + " cratères · dessin : " + T3.morceaux + " morceaux, " + Math.round(T3.triangles / 1000) + " k triangles, " + T3.abris + " abris, " + T3.arbres + " arbres déchiquetés (" + (T3.ms || 0) + " ms)"]);
+    l.push(["✂️ barbelés", B.barbeles + " tronçons de " + TR.R.barbeles.segment + " m · coupés aux cisailles " + B.coupes + " · écrasés par un tank " + B.ecrases + " · déchirés par un obus " + B.dechires + " · soldats accrochés " + B.freines + " (× " + TR.R.barbeles.frein + " la vitesse) · dessin : " + Math.round(T3.fils / 1000) + " k bouts de fil, " + T3.piquets + " piquets"]);
+    if (monde.phase !== "garage") {
+      for (const eq of ["bleus", "rouges"]) l.push([(eq === "bleus" ? "🔵 " : "🔴 ") + "vagues", B.tiennent[eq] + " tiennent la tranchée · " + B.assaut[eq] + " à l'assaut · " + B.vagues[eq] + " coup(s) de sifflet (" + B.montes[eq] + " sortis) · " + B.renforts[eq] + " renforts · prochain sifflet dans " + Math.max(0, Math.round(E.vague[eq] - E.chrono[eq])) + " s"]);
+      l.push(["💥 barrage", E.barrage ? "EN COURS : " + E.barrage.camp + ", encore " + E.barrage.reste + " obus" : "prochain dans " + Math.max(0, Math.round(E.prochainBarrage)) + " s (" + E.campBarrage + ")" ]);
+      l.push(["💥 barrages tirés", B.barrages + " barrage(s), " + B.obusBarrage + " obus"]);
+      for (const e of monde.engins) if (e.genre === "mitrailleuse") l.push([(e.equipe === "bleus" ? "🔵 " : "🔴 ") + e.nom, (e.pilote ? "👤 TOI · " : e.servant.etat + " · ") + "tourelle " + degres(e.tourelle) + " · " + e.tirs + " balles" + (e.chaleur > 0.05 ? " · 🌡️ " + Math.round(e.chaleur * 100) + " %" : "") + (e.enrayee > 0 ? " · ENRAYÉE " + virgule(e.enrayee, 1) + " s" : "")]);
+      const s = monde.toi && monde.toi.soldat;
+      if (s) l.push(["toi et la tranchée", "creux sous tes pieds : " + virgule(TR.creux(s.x, s.z), 2) + " m" + (TR.dansTranchee(s.x, s.z) ? " · 🪖 À L'ABRI dans " + (TR.ligneProche(s.x, s.z) || { nom: "une tranchée" }).nom + " (× " + C.tranchees.couvert + " la chance d'être touché de loin)" : " · à découvert") + (s.accroche ? " · ✂️ ACCROCHÉ dans les barbelés !" : "")]);
+    }
   }
   function lignesCarte(l) {
     const T = Tanks.Terrain, W = C.monde, D = Tanks.Decor.bilan, km2 = (W.taille * W.taille) / 1e6;
@@ -764,7 +800,7 @@ Tanks.SousLeCapot = (function () {
     if (monde.phase !== "garage") lignesRealismeAbsurde(l, s); // (livre n° 26)
     l.push(["Où tu es (étape 61)"], ["phase", monde.phase]);
     if (s) {
-      const ou = { dca: t.engin && t.engin.siege === "canon" ? "au canon du camion antiaérien 🎯" : "au volant du camion antiaérien 🚚", sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", chinook: "aux commandes du Chinook 🚁", blackhawk: "aux commandes du Black Hawk 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];
+      const ou = { mitrailleuse: "à la mitrailleuse lourde 🔫 (← → tourner, ↑ ↓ lever, Espace tirer)", dca: t.engin && t.engin.siege === "canon" ? "au canon du camion antiaérien 🎯" : "au volant du camion antiaérien 🚚", sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", chinook: "aux commandes du Chinook 🚁", blackhawk: "aux commandes du Black Hawk 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];
       l.push(["mode", t.mode + " = " + ou]);
       l.push(["ton soldat", "vie " + s.vie + " / " + s.vieMax + (s.seSoigne ? " ➕ (se soigne)" : s.vie < s.vieMax ? " (soin dans " + virgule(Math.max(0, C.soins.attente - s.touche), 1) + " s)" : "") + " · arme " + nomArme(s) + (s.recharge > 0 ? " (recharge " + virgule(s.recharge, 2) + " s)" : "")]);
       if (s.armes) lignesEquipement(l, s);
@@ -785,7 +821,7 @@ Tanks.SousLeCapot = (function () {
           l.push([C.bateaux.joueur.icone + " " + e.nom, e.detruit ? "coulée ✖" : (e.pilote ? "👤 pilotée · " : "amarrée · ") + Math.round(Math.abs(e.vitesse) * 3.6) + " km/h · vie " + e.vie + " / " + C.bateaux.joueur.vie + " · dl " + virgule(Tanks.Terrain.distLac(e.x, e.z), 2) + (e.echoue ? " (échouée !)" : "")]);
           continue;
         }
-        if (e.genre === "helico") continue; // (étape 73 : plus bas, avec les autres hélicos de transport)
+        if (e.genre === "helico" || e.genre === "mitrailleuse") continue; // (étape 73 : plus bas, avec les autres hélicos de transport ; demande 115 : les mitrailleuses, avec l'édition)
         if (e.genre === "vehicule") { // (étape 71)
           l.push([C.engins[e.sorte].icone + " " + e.nom + " (à toi)", ligneVehicule(e, true)]);
           continue;
@@ -796,6 +832,7 @@ Tanks.SousLeCapot = (function () {
       lignesMaisons(l, s); // (étape 75)
       lignesPerchoirs(l, s); // (livre n° 12)
       lignesBases(l); // (demande 99)
+      lignesEdition(l); // (demande 115)
       lignesCarte(l);
       lignesHelicos(l);
       lignesAvions(l); // (étape 76)

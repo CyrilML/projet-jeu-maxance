@@ -249,7 +249,7 @@ Tanks.Obus = (function () {
         break;
       }
       // un avion ? (étape 64) le missile le touche à moins de 5 m ; le flak éclate à moins de 9 m
-      if (!fini && (p.sorte === "missile" || p.sorte === "flak") && p.y > T.hauteur(p.x, p.z) + 8) {
+      if (!fini && (p.sorte === "missile" || p.sorte === "flak" || R.aerien) && p.y > T.hauteur(p.x, p.z) + 8) { // (demande 115 : « aerien » : la rafale du biplan)
         // (demande 113 : le flak du camion antiaérien ennemi peut aussi abattre ton Tigre et ton drone)
         for (const a of p.sorte === "flak" ? Tanks.AntiAerien.ciel(monde) : Tanks.Avions.enLAir(monde)) {
           if (a.equipe === p.tireur.equipe) continue;

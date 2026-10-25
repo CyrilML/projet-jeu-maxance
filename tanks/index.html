@@ -627,13 +627,56 @@
     .pe-tech { color: var(--bf-gris) !important; font-size: .74rem; }
     .pe-pied { margin: 0; color: var(--bf-gris); font-size: .8rem; text-align: center; }
     @media (max-width: 760px) { .pe-corps { grid-template-columns: 1fr; grid-template-rows: 150px 300px auto; } }
+    /* (demande 115) 📜 LES ÉDITIONS : la galerie des affiches, par-dessus l'accueil */
+    .a-editions { color: #f6ead0; background: linear-gradient(rgba(70,52,28,.92), rgba(30,22,12,.94)); border-color: #d8b06a; box-shadow: 0 0 18px rgba(230,190,110,.25), 0 6px 0 #3a2a0a; }
+    .a-ferme { opacity: .55; filter: grayscale(.8); }
+    .a-edition { margin-top: 4px; color: #e8d6a8; font-size: .78rem; letter-spacing: .2em; text-transform: uppercase; }
+    .a-refus { margin: 10px auto 0; max-width: 620px; padding: 6px 12px; border: 1px solid #ff7a1a; background: rgba(40,16,8,.85); color: #ffd9c2; font-size: .9rem; }
+    .a-refus[hidden] { display: none; }
+    #editions { position: absolute; inset: 0; z-index: 11; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; overflow-y: auto; color: #f2efe6;
+      font-family: "Bahnschrift", "Roboto Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif; font-stretch: condensed; font-size: 14px;
+      background: radial-gradient(ellipse at 50% -10%, #2b261d 0%, #100e0b 60%, #060505 100%); }
+    #editions[hidden] { display: none; }
+    #editions button { font-family: inherit; color: #f2efe6; background: #1b1915; border: 1px solid #3a342a; border-radius: 3px; touch-action: manipulation; }
+    .ed-haut { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; border-bottom: 1px solid #3a342a; padding-bottom: 8px; }
+    .ed-titre { font-size: 1.7rem; font-weight: 800; letter-spacing: .06em; border-left: 4px solid #d8b06a; padding-left: 10px; }
+    .ed-titre small { display: block; font-size: .62rem; font-weight: 600; letter-spacing: .14em; color: #b4aa96; text-transform: uppercase; }
+    .ed-drapeaux { display: flex; align-items: center; gap: 8px; color: #e6dcc4; font-size: .9rem; }
+    .ed-drapeaux img { width: 36px; height: 24px; border: 1px solid #00000080; box-shadow: 0 2px 6px #0008; }
+    .ed-drapeaux em { color: #b4aa96; font-style: normal; }
+    .ed-retour { margin-left: auto; padding: 6px 12px !important; }
+    .ed-grille { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .ed-carte { position: relative; display: flex; flex-direction: column; gap: 3px; padding: 0 0 8px !important; text-align: left; cursor: pointer; overflow: hidden; transition: transform .15s, box-shadow .15s; }
+    .ed-carte:hover { transform: translateY(-2px); }
+    .ed-carte.focus { box-shadow: 0 0 0 2px #fff, 0 0 18px rgba(216,176,106,.6); outline: none; }
+    .ed-carte.actuelle { border-color: #d8b06a !important; }
+    .ed-carte.verrou .ed-image { filter: grayscale(.75) brightness(.7); }
+    .ed-image { position: relative; aspect-ratio: 16 / 9; background: #14171b center / cover no-repeat; border-bottom: 1px solid #3a342a; }
+    .ed-icone { position: absolute; left: 6px; top: 4px; font-size: 1.6rem; filter: drop-shadow(0 2px 3px #000); }
+    .ed-nom, .ed-epoque, .ed-etat { padding: 0 8px; }
+    .ed-nom { font-weight: 800; font-size: .98rem; text-transform: uppercase; letter-spacing: .02em; }
+    .ed-epoque { color: #b4aa96; font-size: .76rem; }
+    .ed-etat { font-size: .72rem; font-weight: 700; color: #ffcf7a; letter-spacing: .06em; }
+    .ed-etat.ed-choisie { color: #7dff9e; }
+    .ed-etat.ed-bientot { color: #9aa3ad; }
+    .ed-detail { padding: 8px 12px; border: 1px solid #3a342a; background: rgba(20,18,14,.85); }
+    .ed-detail p { margin: 4px 0 0; color: #ddd5c3; }
+    .ed-message { color: #ffd9c2 !important; }
+    .ed-note { color: #b4aa96 !important; font-size: .85rem; }
+    .ed-pied { margin: 0; color: #a99f84; font-size: .8rem; text-align: center; }
+    .ed-charge { position: absolute; inset: 0; display: grid; place-items: center; background: #0b0a08; }
+    .ed-charge div { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .ed-charge b { font-size: 1.8rem; letter-spacing: .1em; }
+    .ed-charge small { color: #b4aa96; }
+    .ed-charge i { display: block; width: 220px; height: 3px; background: linear-gradient(90deg, transparent, #d8b06a, transparent); animation: cp-charge 1s linear infinite; }
+    @media (max-width: 800px) { .ed-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   </style>
 </head>
 <body>
   <div class="page">
     <header class="entete">
       <h1>🛡️ The Last Battlefield · bataille de tanks, soldats, grenades, maisons à détruire, engins, motos, quads, camions, hélicos de transport, bateaux, sous-marins, avions et portails · et le souterrain</h1>
-      <span><span id="version" class="version"></span> <a href="../index.html#etape114">📓 Ouvrir le carnet (étapes 60 à 114)</a> <button id="plein-ecran" type="button" title="Plein écran (touche K)">⛶ Plein écran (K)</button> <span class="sans-pub" title="Livre de demandes n° 27 : rien n'est chargé d'Internet, rien n'est envoyé nulle part">🚫 Aucune publicité, aucun traqueur</span></span>
+      <span><span id="version" class="version"></span> <a href="../index.html#etape115">📓 Ouvrir le carnet (étapes 60 à 115)</a> <button id="plein-ecran" type="button" title="Plein écran (touche K)">⛶ Plein écran (K)</button> <span class="sans-pub" title="Livre de demandes n° 27 : rien n'est chargé d'Internet, rien n'est envoyé nulle part">🚫 Aucune publicité, aucun traqueur</span></span>
     </header>
 
     <div class="cadre-ecran">
@@ -648,6 +691,7 @@
       <div id="menu" hidden aria-label="Le menu avant la bataille"></div>
       <div id="boutique" hidden aria-label="La boutique : armes, skins, packs et avancements"></div>
       <div id="personnages" hidden aria-label="La vitrine des personnages : les soldats en 3D"></div>
+      <div id="editions" hidden aria-label="Les éditions : le même jeu dans une autre époque"></div>
       <div id="campagne" hidden aria-label="La campagne : chapitres, briefing, fin de mission"></div>
       <div id="progression" aria-label="Ta progression : niveaux et bilan d'expérience"></div>
       <div id="pause" hidden>⏸️ Pause (Échap pour reprendre)</div>
@@ -693,89 +737,100 @@
   </div>
 
   <script src="../circuit/vendor/three.min.js"></script>
-  <script src="config.js?v=58"></script>
-  <script src="moteur/evenements.js?v=58"></script>
-  <script src="moteur/bruit.js?v=58"></script>
-  <script src="moteur/entrees.js?v=58"></script>
-  <script src="moteur/grille.js?v=58"></script>
-  <script src="donnees/carte-du-jour.js?v=58"></script>
-  <script src="logique/base.js?v=58"></script>
-  <script src="logique/terrain.js?v=58"></script>
-  <script src="logique/souterrain.js?v=58"></script>
-  <script src="logique/qg.js?v=58"></script>
-  <script src="logique/realisme.js?v=58"></script>
-  <script src="logique/structures.js?v=58"></script>
-  <script src="logique/interieurs.js?v=58"></script>
-  <script src="logique/ville.js?v=58"></script>
-  <script src="logique/perchoirs.js?v=58"></script>
-  <script src="logique/char.js?v=58"></script>
-  <script src="logique/obus.js?v=58"></script>
-  <script src="logique/ia.js?v=58"></script>
-  <script src="logique/soldat.js?v=58"></script>
-  <script src="logique/troupes.js?v=58"></script>
-  <script src="logique/vehicules.js?v=58"></script>
-  <script src="logique/helicos.js?v=58"></script>
-  <script src="logique/bateaux.js?v=58"></script>
-  <script src="logique/portails.js?v=58"></script>
-  <script src="logique/sousmarins.js?v=58"></script>
-  <script src="logique/avions.js?v=58"></script>
-  <script src="logique/antiaerien.js?v=58"></script>
-  <script src="logique/ordres.js?v=58"></script>
-  <script src="logique/radio.js?v=58"></script>
-  <script src="logique/engins.js?v=58"></script>
-  <script src="logique/progression.js?v=58"></script>
-  <script src="logique/equipement.js?v=58"></script>
-  <script src="logique/armes.js?v=58"></script>
-  <script src="logique/gadgets.js?v=58"></script>
-  <script src="logique/explosifs.js?v=58"></script>
-  <script src="logique/plaques.js?v=58"></script>
-  <script src="logique/secours.js?v=58"></script>
-  <script src="donnees/sauvegarde.js?v=58"></script>
-  <script src="logique/boutique.js?v=58"></script>
-  <script src="logique/reglages.js?v=58"></script>
-  <script src="logique/monde.js?v=58"></script>
-  <script src="logique/campagne.js?v=58"></script>
-  <script src="logique/cinematique.js?v=58"></script>
-  <script src="affichage/outils3d.js?v=58"></script>
-  <script src="affichage/chars3d.js?v=58"></script>
-  <script src="affichage/armes3d.js?v=58"></script>
-  <script src="affichage/uniformes.js?v=58"></script>
-  <script src="affichage/engins3d.js?v=58"></script>
-  <script src="affichage/vehicules3d.js?v=58"></script>
-  <script src="affichage/helicos3d.js?v=58"></script>
-  <script src="affichage/avions3d.js?v=58"></script>
-  <script src="affichage/maisons3d.js?v=58"></script>
-  <script src="affichage/interieurs3d.js?v=58"></script>
-  <script src="affichage/ville3d.js?v=58"></script>
-  <script src="affichage/perchoirs3d.js?v=58"></script>
-  <script src="affichage/base3d.js?v=58"></script>
-  <script src="affichage/decor.js?v=58"></script>
-  <script src="affichage/marques-sol.js?v=58"></script>
-  <script src="affichage/effets.js?v=58"></script>
-  <script src="affichage/particules.js?v=58"></script>
-  <script src="affichage/tirs.js?v=58"></script>
-  <script src="affichage/explosions.js?v=58"></script>
-  <script src="affichage/explosifs3d.js?v=58"></script>
-  <script src="affichage/objets3d.js?v=58"></script>
-  <script src="affichage/station3d.js?v=58"></script>
-  <script src="affichage/scene.js?v=58"></script>
-  <script src="affichage/qualite.js?v=58"></script>
-  <script src="affichage/tableau.js?v=58"></script>
-  <script src="affichage/sous-le-capot.js?v=58"></script>
-  <script src="affichage/sons.js?v=58"></script>
-  <script src="affichage/musique.js?v=58"></script>
-  <script src="affichage/barre-ordres.js?v=58"></script>
-  <script src="affichage/radio-voix.js?v=58"></script>
-  <script src="affichage/ambiance.js?v=58"></script>
-  <script src="affichage/plein-ecran.js?v=58"></script>
-  <script src="affichage/accueil.js?v=58"></script>
-  <script src="affichage/menu.js?v=58"></script>
-  <script src="affichage/boutique.js?v=58"></script>
-  <script src="affichage/personnages.js?v=58"></script>
-  <script src="affichage/progression-ecrans.js?v=58"></script>
-  <script src="affichage/campagne-tableau.js?v=58"></script>
-  <script src="affichage/campagne-ecrans.js?v=58"></script>
-  <script src="affichage/cinematique.js?v=58"></script>
-  <script src="main.js?v=58"></script>
+  <script src="config.js?v=59"></script>
+  <script src="editions/catalogue.js?v=59"></script>
+  <script src="editions/premiere-guerre.js?v=59"></script>
+  <script src="donnees/edition-du-jour.js?v=59"></script>
+  <script src="editions/appliquer.js?v=59"></script>
+  <script src="moteur/evenements.js?v=59"></script>
+  <script src="moteur/bruit.js?v=59"></script>
+  <script src="moteur/entrees.js?v=59"></script>
+  <script src="moteur/grille.js?v=59"></script>
+  <script src="donnees/carte-du-jour.js?v=59"></script>
+  <script src="logique/base.js?v=59"></script>
+  <script src="logique/tranchees.js?v=59"></script>
+  <script src="logique/terrain.js?v=59"></script>
+  <script src="logique/souterrain.js?v=59"></script>
+  <script src="logique/qg.js?v=59"></script>
+  <script src="logique/realisme.js?v=59"></script>
+  <script src="logique/structures.js?v=59"></script>
+  <script src="logique/interieurs.js?v=59"></script>
+  <script src="logique/ville.js?v=59"></script>
+  <script src="logique/perchoirs.js?v=59"></script>
+  <script src="logique/char.js?v=59"></script>
+  <script src="logique/obus.js?v=59"></script>
+  <script src="logique/ia.js?v=59"></script>
+  <script src="logique/soldat.js?v=59"></script>
+  <script src="logique/troupes.js?v=59"></script>
+  <script src="logique/vehicules.js?v=59"></script>
+  <script src="logique/helicos.js?v=59"></script>
+  <script src="logique/bateaux.js?v=59"></script>
+  <script src="logique/portails.js?v=59"></script>
+  <script src="logique/sousmarins.js?v=59"></script>
+  <script src="logique/avions.js?v=59"></script>
+  <script src="logique/antiaerien.js?v=59"></script>
+  <script src="logique/ordres.js?v=59"></script>
+  <script src="logique/radio.js?v=59"></script>
+  <script src="logique/engins.js?v=59"></script>
+  <script src="logique/progression.js?v=59"></script>
+  <script src="logique/equipement.js?v=59"></script>
+  <script src="logique/armes.js?v=59"></script>
+  <script src="logique/gadgets.js?v=59"></script>
+  <script src="logique/explosifs.js?v=59"></script>
+  <script src="logique/plaques.js?v=59"></script>
+  <script src="logique/secours.js?v=59"></script>
+  <script src="donnees/sauvegarde.js?v=59"></script>
+  <script src="logique/boutique.js?v=59"></script>
+  <script src="logique/reglages.js?v=59"></script>
+  <script src="logique/edition.js?v=59"></script>
+  <script src="logique/monde.js?v=59"></script>
+  <script src="logique/campagne.js?v=59"></script>
+  <script src="logique/cinematique.js?v=59"></script>
+  <script src="affichage/outils3d.js?v=59"></script>
+  <script src="affichage/chars3d.js?v=59"></script>
+  <script src="affichage/chars3d-1916.js?v=59"></script>
+  <script src="affichage/armes3d.js?v=59"></script>
+  <script src="affichage/armes3d-1916.js?v=59"></script>
+  <script src="affichage/uniformes.js?v=59"></script>
+  <script src="affichage/engins3d.js?v=59"></script>
+  <script src="affichage/vehicules3d.js?v=59"></script>
+  <script src="affichage/helicos3d.js?v=59"></script>
+  <script src="affichage/avions3d.js?v=59"></script>
+  <script src="affichage/avions3d-1916.js?v=59"></script>
+  <script src="affichage/maisons3d.js?v=59"></script>
+  <script src="affichage/interieurs3d.js?v=59"></script>
+  <script src="affichage/ville3d.js?v=59"></script>
+  <script src="affichage/perchoirs3d.js?v=59"></script>
+  <script src="affichage/base3d.js?v=59"></script>
+  <script src="affichage/tranchees3d.js?v=59"></script>
+  <script src="affichage/decor.js?v=59"></script>
+  <script src="affichage/marques-sol.js?v=59"></script>
+  <script src="affichage/effets.js?v=59"></script>
+  <script src="affichage/particules.js?v=59"></script>
+  <script src="affichage/tirs.js?v=59"></script>
+  <script src="affichage/explosions.js?v=59"></script>
+  <script src="affichage/explosifs3d.js?v=59"></script>
+  <script src="affichage/objets3d.js?v=59"></script>
+  <script src="affichage/station3d.js?v=59"></script>
+  <script src="affichage/scene.js?v=59"></script>
+  <script src="affichage/qualite.js?v=59"></script>
+  <script src="affichage/tableau.js?v=59"></script>
+  <script src="affichage/sous-le-capot.js?v=59"></script>
+  <script src="affichage/sons.js?v=59"></script>
+  <script src="affichage/musique.js?v=59"></script>
+  <script src="affichage/barre-ordres.js?v=59"></script>
+  <script src="affichage/radio-voix.js?v=59"></script>
+  <script src="affichage/ambiance.js?v=59"></script>
+  <script src="affichage/plein-ecran.js?v=59"></script>
+  <script src="affichage/accueil.js?v=59"></script>
+  <script src="affichage/menu.js?v=59"></script>
+  <script src="affichage/boutique.js?v=59"></script>
+  <script src="affichage/personnages.js?v=59"></script>
+  <script src="affichage/editions-ecran.js?v=59"></script>
+  <script src="affichage/progression-ecrans.js?v=59"></script>
+  <script src="affichage/campagne-tableau.js?v=59"></script>
+  <script src="affichage/campagne-ecrans.js?v=59"></script>
+  <script src="affichage/cinematique.js?v=59"></script>
+  <script src="main.js?v=59"></script>
 </body>
 </html>

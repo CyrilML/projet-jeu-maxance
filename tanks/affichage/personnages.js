@@ -32,12 +32,15 @@ Tanks.EcranPersonnages = (function () {
   // Chaque entrée : { id, groupe, nom, role, icone, couleur, texte, modele: { camp, classe, peau, barbe } | null, arme,
   //   equipement: [..], verrou: texte | null }
   function liste() {
-    const L = [], nomsCamps = C.campagne.camps;
+    // (demande 115) dans une autre édition que Moderne : les camps de l'édition, ses armes, et ni boutique ni campagne
+    const R = C.edition.regles, moderne = C.edition.id === "moderne", nomsCamps = moderne ? C.campagne.camps : { bleus: C.equipes.bleus.nom, rouges: C.equipes.rouges.nom }, L = [];
+    const court = (camp) => (moderne ? (camp === "bleus" ? " · Alliance" : " · Front") : " · " + nomsCamps[camp].replace(/^l'(Entente|Empire) de /, ""));
     for (const camp of ["bleus", "rouges"]) for (const k of C.realisme.soldats.maquettes.classes) {
-      const K = C.classes[k];
-      L.push({ id: "classe:" + camp + ":" + k, groupe: "Les classes", nom: K.nom + (camp === "bleus" ? " · Alliance" : " · Front"), role: (camp === "bleus" ? "🔵 " : "🔴 ") + nomsCamps[camp], icone: K.icone, couleur: K.couleur, texte: K.texte,
-        modele: { camp, classe: k, peau: camp === "bleus" ? 0 : 2 }, arme: VP.classes[k].arme, equipement: VP.classes[k].equipement });
+      const K = C.classes[k], arme = K.armes.includes(VP.classes[k].arme) ? VP.classes[k].arme : K.armes[0];
+      L.push({ id: "classe:" + camp + ":" + k, groupe: "Les classes", nom: K.nom + court(camp), role: (camp === "bleus" ? "🔵 " : "🔴 ") + nomsCamps[camp], icone: K.icone, couleur: K.couleur, texte: K.texte,
+        modele: { camp, classe: k, peau: camp === "bleus" ? 0 : 2 }, arme, equipement: VP.classes[k].equipement });
     }
+    if (!R.boutique && !R.campagne) return L;
     const articles = Tanks.Boutique ? Tanks.Boutique.catalogue("personnages") : [];
     for (const t of C.boutique.tenues) {
       const a = articles.find((x) => x.id === "tenue:" + t.id) || {}, classe = VP.tenues[t.id] || "assaut";

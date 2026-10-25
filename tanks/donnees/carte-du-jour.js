@@ -18,7 +18,8 @@ Tanks.CarteDuJour = (function () {
     const brut = localStorage.getItem(CLE);
     if (brut) {
       const d = JSON.parse(brut);
-      id = (d.campagne && d.campagne.enCours && d.campagne.enCours.carte) || d.carte || "bataille"; // (étape 88)
+      id = (C.edition.regles.campagne && d.campagne && d.campagne.enCours && d.campagne.enCours.carte) || d.carte || "bataille"; // (étape 88 ; demande 115 : la campagne seulement en Moderne)
+      if (C.edition.id !== "moderne") id = (d.editions && d.editions[C.edition.id] && d.editions[C.edition.id].carte) || "bataille"; // (demande 115 : la carte rangée pour cette édition)
     }
   } catch (e) {
     id = "bataille";

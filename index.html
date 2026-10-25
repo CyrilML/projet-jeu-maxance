@@ -235,6 +235,7 @@
       <a href="#etape112">Étape 112</a>
       <a href="#etape113">Étape 113</a>
       <a href="#etape114">Étape 114</a>
+      <a href="#etape115">Étape 115</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -5755,6 +5756,49 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape115">
+      <h2>📜 Étape 115 : les éditions, et la première : 🪖 1916 <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Une nouvelle porte 📜 ÉDITIONS : le même jeu, habillé pour d'autres époques, avec des pays INVENTÉS. La première est prête : la guerre des tranchées entre l'Entente de Valmont et l'Empire de Kressia. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/115-editions.md</code>.</p>
+          <ul>
+            <li>✍️ « Les autres éditions : Première Guerre mondiale, Seconde Guerre mondiale, Guerre froide, Bataille en Ukraine, Bataille de drones, Guerre civile, Bataille contre des aliens. Fais tout. »</li>
+            <li>✍️ (Cyril) « Fais du faux, évidemment » : tous les pays et camps sont inventés.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 59 ».</li>
+            <li>☐ Accueil → 📜 ÉDITIONS : 8 affiches ; « 1916 » est prête, les autres disent « 🔒 bientôt ».</li>
+            <li>☐ En 1916 : tu commences à pied dans ta tranchée (en zigzag, sacs de sable, caillebotis, abris).</li>
+            <li>☐ Le no man's land : cratères, boue, barbelés (ils ralentissent ; les cisailles du Sapeur les coupent), arbres brisés, village et église en ruine.</li>
+            <li>☐ Fusils à verrou (vue C : la culasse se lève et recule après chaque tir), mitrailleuse légère, revolvers.</li>
+            <li>☐ <strong>E</strong> sur une mitrailleuse lourde : tu la prends (elle chauffe et s'enraye).</li>
+            <li>☐ Les coups de sifflet : la moitié des soldats sortent de la tranchée ; les tirs d'artillerie tombent sur le no man's land.</li>
+            <li>☐ Le tank losange, le petit char « Fourmi », et les biplans qui se battent dans le ciel.</li>
+            <li>☐ Retour à « Moderne » : tout revient comme avant (ton équipement aussi).</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🎭 Un costume par-dessus le jeu</h3>
+      <p>Une édition ne refait pas tout le jeu : c'est un « costume ». Au chargement de la page, le jeu lit l'édition choisie et REMPLACE certains réglages de <code>config.js</code> (les camps, les armes, les véhicules, la carte, le ciel, la musique) par ceux de l'édition. Tout le reste (le moteur, les touches, les soldats qui réfléchissent) est le même. C'est pour ça que les 6 prochaines éditions iront plus vite : ce seront surtout des données.</p>
+      <h3>✍️ Des pays inventés</h3>
+      <p>Comme la Valdrie de la campagne, l'Entente de Valmont et l'Empire de Kressia n'existent pas. On s'inspire d'une époque, mais l'histoire est la tienne : tu es l'écrivain.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot, section « L'édition » : les tranchées, les barbelés coupés, les vagues d'assaut, l'artillerie.</li>
+            <li>Ouvre <code>tanks/editions/premiere-guerre.js</code> : change le nom d'un des deux pays.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Pourquoi pas d'hélicoptères en 1916 ? <span class="petit">(ils n'existaient pas encore)</span></li>
+            <li>Comment passer les barbelés plus vite ? <span class="petit">(les couper avec les cisailles du Sapeur, ou les écraser en tank)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7214,6 +7258,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-114" data-cle="appris-114" placeholder="Ex. : …"></textarea>
         <label for="idees-114"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-114" data-cle="idees-114" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 115 · les éditions, et la Première Guerre mondiale <span class="petit">· 25 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/editions/</code> (catalogue, appliquer, premiere-guerre), <code>logique/edition.js</code>, <code>logique/tranchees.js</code>, <code>affichage/editions-ecran.js</code>, <code>tranchees3d.js</code>, <code>armes3d-1916.js</code>, <code>chars3d-1916.js</code>, <code>avions3d-1916.js</code>, <code>donnees/sauvegarde.js</code> (version 19).</p>
+        <p class="petit">✍️ Maxance a demandé : des éditions (autres époques), en commençant par la Première Guerre mondiale.</p>
+        <label for="appris-115"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-115" data-cle="appris-115" placeholder="Ex. : …"></textarea>
+        <label for="idees-115"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-115" data-cle="idees-115" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

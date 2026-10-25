@@ -650,7 +650,12 @@ Tanks.Chars3D = (function () {
   }
 
   // ------------------------------------------------------------------ le tank
+  // ✍️ (demande 115) LES TANKS DES ÉDITIONS : une édition d'une autre époque inscrit ses propres modèles (le losange et la
+  // « Fourmi » de 1916 : affichage/chars3d-1916.js) ; une fiche de tank avec « modele3d » les prend à la place.
+  const MODELES = {};
+  const ajouterModele = (id, f) => (MODELES[id] = f);
   function fabriquer(fiche, equipe, numero) {
+    if (fiche.modele3d && MODELES[fiche.modele3d]) return MODELES[fiche.modele3d](fiche, equipe, numero, outilsEditions);
     const E = matsEquipe(equipe), P = E.peinture;
     const m = Object.assign(Object.create(materiaux()), { teinte: E.teinte }); // (étape 75 : les petites pièces du tank ont aussi l'usure)
     const T = TYPES[fiche.id] || TYPES.leclerc, F = T.tourelle;
@@ -983,5 +988,6 @@ Tanks.Chars3D = (function () {
     o.canon.rotation.z = -0.15;
   }
 
-  return { fabriquer, bruler, camouflage, materiaux, C };
+  const outilsEditions = { matsEquipe, materiaux, texturePatins, camouflage, usure, geoGalet, hauteurs, imageNumero, rouesSoudees }; // (demande 115 : prêtés aux tanks des éditions)
+  return { fabriquer, bruler, camouflage, materiaux, C, ajouterModele, outils: outilsEditions };
 })();

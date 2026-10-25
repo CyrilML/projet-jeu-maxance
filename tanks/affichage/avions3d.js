@@ -1336,10 +1336,18 @@ Tanks.Avions3D = (function () {
     });
     return { triangles: Math.round(triangles), objets };
   }
-  function fabriquer(sorte, equipe) {
-    const cle = sorte + ":" + equipe;
+  // ✍️ (demande 115) LES MODÈLES DES ÉDITIONS : une édition d'une autre époque inscrit ses propres avions (le biplan, le
+  // bombardier de 1916 : affichage/avions3d-1916.js), et dit lequel prendre pour chaque sorte (config « edition.modeles.avions »).
+  const MODELES = {}, SIMPLES = {};
+  function ajouterModele(id, fabrique, simple) {
+    MODELES[id] = fabrique;
+    if (simple) SIMPLES[id] = simple;
+  }
+  const modeleDe = (sorte, modele) => { const id = modele || ((Tanks.CONFIG.edition.modeles || {}).avions || {})[sorte]; return id && MODELES[id] ? id : null; };
+  function fabriquer(sorte, equipe, modele) {
+    const id = modeleDe(sorte, modele), cle = sorte + ":" + equipe + (id ? ":" + id : "");
     if (!modeles[cle]) {
-      const g = FABRIQUES[sorte](equipe);
+      const g = id ? MODELES[id](equipe, sorte, outilsEditions) : FABRIQUES[sorte](equipe);
       // (les décalcomanies ne font pas d'ombre)
       g.traverse((m) => {
         if (m.isMesh && m.material === M.decalcos) m.castShadow = false;
@@ -1355,7 +1363,10 @@ Tanks.Avions3D = (function () {
       return t;
     };
     const o = { g, caisse: g.children[0], sorte, avion3d: true };
-    if (sorte === "avion" || sorte === "chasseur") {
+    if (id) { // (demande 115) un avion d'édition : son hélice qui tourne, pas de postcombustion, ni de train qui rentre
+      Object.assign(o, { flamme: nom("flamme"), lueur: nom("lueur"), train: null, jambes: [], verriere: null, pilote: nom("pilote"), missiles: [], helice: nom("helice"), helices: tous("helice"), flous: nom("flous"), sortie: 1, ouverture: 1, edition: id });
+      if (sorte === "transport") Object.assign(o, { rampe: nom("rampe") || new THREE.Group(), porteSoute: nom("porteSoute") || new THREE.Group(), ouverture: 0 });
+    } else if (sorte === "avion" || sorte === "chasseur") {
       Object.assign(o, { flamme: nom("flamme"), lueur: nom("lueur"), train: nom("train"), jambes: tous("jambe"), verriere: nom("verriere"), pilote: nom("pilote"), sortie: 1, ouverture: 1 });
       if (sorte === "avion") o.missiles = o.caisse.children.filter((x) => x.isGroup && x.name === "" && x !== o.train && x !== o.verriere && x !== o.pilote);
     } else if (sorte === "helico") {
@@ -1374,6 +1385,8 @@ Tanks.Avions3D = (function () {
   // La même forme, avec beaucoup moins de points, les couleurs dans les sommets (le fond du camouflage, le ventre plus
   // clair, la verrière sombre), et les hélices ou le rotor en disques fins : 1 seule pièce, 1 dessin pour toutes les copies.
   function formeSimple(sorte, equipe) {
+    const idE = modeleDe(sorte); // (demande 115 : la version simple du modèle de l'édition)
+    if (idE && SIMPLES[idE]) return SIMPLES[idE](equipe, sorte, outilsEditions);
     const mat = new THREE.MeshStandardMaterial({ vertexColors: true });
     const g = new THREE.Group(), PE = K().peinture[SCHEMA[sorte]][equipe];
     const fond = new THREE.Color(PE.fond), ventre = new THREE.Color(PE.ventre || PE.fond), sombre = new THREE.Color(0x1a1e22);
@@ -1461,5 +1474,7 @@ Tanks.Avions3D = (function () {
     return lot;
   }
 
-  return { sait, fabriquer, lotSimple, SORTES, NOMS, bilan, PENTE };
+  // (demande 115) les outils prêtés aux modèles des éditions : la peinture, la tôle, le verre, le pilote, les décalcomanies…
+  const outilsEditions = { peinture, verre, poser, cuire, pilote, roue, geoPaleHelice, matFlou, M, COUL, O, compter };
+  return { sait, fabriquer, lotSimple, SORTES, NOMS, bilan, PENTE, ajouterModele, outils: outilsEditions };
 })();

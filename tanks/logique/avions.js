@@ -27,7 +27,8 @@ Tanks.Avions = (function () {
 
   function chasseur(n) {
     return {
-      genre: "avion", sorte: "chasseur", equipe: "rouges", nom: A.nom + " " + n, pilote: true, enVol: true,
+      genre: "avion", sorte: "chasseur", equipe: "rouges", nom: A.noms ? A.noms[(n - 1) % A.noms.length] : A.nom + " " + n, pilote: true, enVol: true,
+      modele3d: A.modeles ? A.modeles[(n - 1) % A.modeles.length] : null, // (demande 115 : en 1916, le 2e est un gros bombardier biplan)
       fiche: { vie: A.vie, longueur: 14, largeur: 10, hauteur: 4 },
       x: 0, y: 0, z: 0, angle: 0, tangage: 0, roulis: 0, vitesse: A.vitesse, vx: 0, vy: 0, vz: 0,
       vie: A.vie, detruit: false, touche: 9, etat: "attend", attente: A.premierPassage + n * 8, cible: null, bombes: 0,
@@ -136,7 +137,7 @@ Tanks.Avions = (function () {
         a.recharge = A.missile.recharge;
         const d = { x: rafale.x - a.x, y: rafale.y - a.y, z: rafale.z - a.z }, l = Math.hypot(d.x, d.y, d.z);
         const depart = { x: a.x + (d.x / l) * 8, y: a.y - 1, z: a.z + (d.z / l) * 8 };
-        Tanks.Obus.lancer(monde.obus, a, "missile", depart, { x: d.x / l, y: d.y / l, z: d.z / l }, rafale);
+        Tanks.Obus.lancer(monde.obus, a, A.projectile || "missile", depart, { x: d.x / l, y: d.y / l, z: d.z / l }, rafale); // (demande 115 : en 1916, une rafale)
         ev.push(["missile-ennemi", { tireur: a, cible: rafale, x: depart.x, y: depart.y, z: depart.z }]);
       }
       return;

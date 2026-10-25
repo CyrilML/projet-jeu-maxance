@@ -363,6 +363,7 @@ Tanks.Base3D = (function () {
   }
 
   function construire(groupe) {
+    if (Tanks.CONFIG.edition.regles.base3d === false) return; // (demande 115 : en 1916, pas d'aérodrome en béton : un pré)
     const plan = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
     const decalco = (map) => new THREE.MeshStandardMaterial({ map, transparent: true, depthWrite: false, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
     const mats = {

@@ -176,6 +176,7 @@ Tanks.Soldat = (function () {
       if (tireur.equipe === "rouges") chance *= Tanks.Campagne.facteur("precision"); // (demande 90 : la précision du Front)
       if (meilleur.s.accroupi) chance *= RS.accroupi.touche; // (demande 92 : accroupi, il est plus petit)
       if (Tanks.Perchoirs.abrite(meilleur.s, y)) chance *= C.perchoirs.couvert.touche; // (livre n° 12 : accroupi derrière les sacs de sable, tiré d'en bas)
+      if (Tanks.Tranchees.abrite(meilleur.s, x, z)) chance *= C.tranchees.couvert; // (demande 115 : à l'abri dans sa tranchée, derrière le parapet)
       if (Math.random() < chance) {
         ev.push(["balle", { tireur, de: { x: ox, y: oy, z: oz }, a: { x: meilleur.s.x, y: meilleur.s.y + hauteurVisee(meilleur.s), z: meilleur.s.z }, touche: true, surSoldat: !(meilleur.s.genre === "vehicule" || meilleur.s.sorte), suite, traverse: suite }]); // (demande 114 : sur un soldat ? pour le nuage rouge, s'il est allumé)
         if (meilleur.s.genre === "vehicule" || meilleur.s.sorte) Tanks.Vehicules.blesserPilote(meilleur.s, Math.ceil(degats * (R.vsVehicule || 1) * 2) / 2, tireur, ev); // (demande 97 : × les munitions perforantes ou à pointe creuse)
@@ -279,7 +280,8 @@ Tanks.Soldat = (function () {
       s.angle = angleEntre(s.angle + Math.max(-S.rotation * dt, Math.min(S.rotation * dt, diff)));
     } else s.angle = angleEntre(s.angle + ((intentions.droite ? 1 : 0) - (intentions.gauche ? 1 : 0)) * S.rotation * 0.8 * dt);
     const vMax = (s.nage ? S.nage : S.vitesse * (s.armes ? Tanks.Armes.mobilite(s) : 1)) * (s.accroupi ? RS.accroupi.vitesse : 1); // (étape 77 : ton arme pèse plus ou moins lourd) (demande 92 : accroupi, plus lent)
-    const voulue = intentions.avancer ? vMax * (intentions.lent ? 0.5 : 1) : intentions.reculer ? -Math.min(S.recul, vMax) : 0;
+    const accroche = Tanks.Tranchees.actif ? Tanks.Tranchees.frein(s) : 1; // (demande 115 : dans les barbelés, il avance à peine)
+    const voulue = (intentions.avancer ? vMax * (intentions.lent ? 0.5 : 1) : intentions.reculer ? -Math.min(S.recul, vMax) : 0) * accroche;
     s.vitesse += Math.max(-20 * dt, Math.min(20 * dt, voulue - s.vitesse));
     const dir = intentions.direction !== undefined ? intentions.direction : s.angle;
     s.x += Math.cos(dir) * s.vitesse * dt;

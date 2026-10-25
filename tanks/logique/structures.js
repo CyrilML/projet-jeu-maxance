@@ -49,7 +49,7 @@ Tanks.Structures = (function () {
     let graine = (b.graine || 7) + 17;
     const h2 = () => ((graine = (graine * 1664525 + 1013904223) >>> 0) / 4294967296);
     b.type = b.type || (b.sorte === "maison" ? "maison" : "muret");
-    b.nom = nommer(b);
+    b.nom = b.nom || nommer(b); // (demande 115 : l'église et son clocher ont déjà leur nom)
     b.morceaux = [];
     b.colonnes = [];
     b.murs = [];
@@ -119,7 +119,7 @@ Tanks.Structures = (function () {
     b.tombes = 0;
     // ✍️ (choix de Claude) quelques maisons des hameaux sont DÉJÀ en ruines au début de la bataille
     // (étape 81) et celles de la ville selon la variante (« ruinesDepart » de la carte : 80 % dans la ville en ruines)
-    if (b.type === "maison" && h2() < (b.quartier ? b.ruinesDepart : b.hameau ? S.ruinesDepart : 0)) {
+    if (b.type === "maison" && h2() < (b.quartier || b.ruinesDepart !== undefined ? b.ruinesDepart : b.hameau ? S.ruinesDepart : 0)) { // (demande 115 : en 1916, le village est déjà en ruines)
       for (const m of b.morceaux) if (!m.tombe && (m.rang > 0 ? h2() < 0.8 : h2() < 0.3)) tomber(m, null);
       b.toit.intact = false;
       b.gravatsDedans = S.gravatsDedans * 0.8;

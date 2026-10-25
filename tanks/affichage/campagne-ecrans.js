@@ -48,7 +48,7 @@ Tanks.EcranCampagne = (function () {
     window.addEventListener("keydown", clavier, true);
     // ✍️ La page vient d'être rechargée pour un chapitre (un autre décor) ? On y retourne tout de suite.
     const P = Tanks.Campagne.progression();
-    if (P.enCours && Tanks.Campagne.estDebloque(Tanks.Campagne.chapitre(P.enCours.id))) {
+    if (P.enCours && Tanks.CONFIG.edition.regles.campagne && Tanks.Campagne.estDebloque(Tanks.Campagne.chapitre(P.enCours.id))) { // (demande 115 : la campagne ne reprend que dans l'édition Moderne)
       const r = demander("chapitre", P.enCours.id);
       if (r.ok && !r.recharger) {
         Tanks.Accueil.cacher();

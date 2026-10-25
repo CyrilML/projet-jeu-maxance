@@ -16,6 +16,9 @@
 // ✍️ (demande 114) une 4e porte : 🎖️ PERSONNAGES (la vitrine des soldats en 3D : affichage/personnages.js), et un petit
 // bouton ⚙️ Réglages : un panneau d'interrupteurs (🩸 « Sang (léger) », ✍️ décidé par Cyril : éteint au départ). L'accueil
 // ne change pas le réglage lui-même : il le DEMANDE à logique/reglages.js.
+// ✍️ (demande 115) une 5e porte : 📜 ÉDITIONS (le même jeu dans une autre époque : affichage/editions-ecran.js). Dans une
+// autre édition que Moderne, la CAMPAGNE, la BOUTIQUE et la bande-annonce restent fermées (elles sont modernes) : la porte
+// le dit, au lieu de s'ouvrir. Le sur-titre et une petite étiquette disent quelle édition est en cours.
 // L'accueil est un ÉCRAN (de l'affichage) : il ne touche pas au monde. Le menu attend qu'il soit fermé.
 
 window.Tanks = window.Tanks || {};
@@ -29,26 +32,30 @@ Tanks.Accueil = (function () {
     // (à la fin de la bande-annonce, ou si on la passe : retour à l'accueil)
     for (const n of ["cinematique-fin", "cinematique-passee"]) Tanks.Evenements.ecouter(n, (d) => d.pour === "accueil" && montrer());
     racine = document.getElementById("accueil");
+    const ED = Tanks.CONFIG.edition, R = ED.regles, ferme = (nom) => (R[nom] ? "" : " a-ferme"); // (demande 115)
     document.getElementById("ecran2d").style.visibility = "hidden"; // (le tableau de bord du garage attend derrière)
     racine.innerHTML =
       '<div class="a-fond"></div>' +
       '<div class="a-contenu">' +
-      '<div class="a-sur-titre">⚔️ Bataille · Infanterie · Blindés · Hélicos · Avions</div>' +
+      '<div class="a-sur-titre">' + (ED.textes.surTitre || "⚔️ Bataille · Infanterie · Blindés · Hélicos · Avions") + "</div>" + // (demande 115 : le sur-titre de l'édition)
       '<h2 class="a-titre">THE LAST<br><span>BATTLEFIELD</span></h2>' + // ✍️ (étape 84) le nom du jeu, choisi par Maxance
       '<div class="a-auteur">un jeu de Maxance</div>' +
+      '<div class="a-edition">édition ' + ED.icone + " " + ED.nom + (ED.id === "moderne" ? "" : " · " + ED.epoque) + "</div>" + // (demande 115)
       '<div class="a-ligne"></div>' +
       '<p class="a-attente">🔊 Clique ou appuie sur une touche</p>' +
       '<div class="a-boutons" hidden>' +
-      '<button class="a-jouer a-mode a-campagne" data-accueil="campagne">▶ CAMPAGNE<small>' + Tanks.CONFIG.campagne.chapitres.length + " chapitres · l'histoire</small></button>" + // (étape 88)
-      '<button class="a-jouer a-mode a-bataille" data-accueil="bataille">⚔️ BATAILLE<small>bataille libre · toutes les cartes</small></button>' +
-      '<button class="a-jouer a-mode a-boutique" data-accueil="boutique">🛒 BOUTIQUE<small>armes · skins · packs · avancements</small></button>' + // (livre n° 28)
+      '<button class="a-jouer a-mode a-campagne' + ferme("campagne") + '" data-accueil="campagne">▶ CAMPAGNE<small>' + (R.campagne ? Tanks.CONFIG.campagne.chapitres.length + " chapitres · l'histoire" : "🔒 dans l'édition Moderne") + "</small></button>" + // (étape 88 ; demande 115)
+      '<button class="a-jouer a-mode a-bataille" data-accueil="bataille">⚔️ BATAILLE<small>' + (ED.textes.bataille || "bataille libre · toutes les cartes") + "</small></button>" +
+      '<button class="a-jouer a-mode a-editions" data-accueil="editions">📜 ÉDITIONS<small>' + Tanks.EDITIONS.liste.length + " époques · " + ED.icone + " " + (ED.id === "moderne" ? "Moderne" : ED.epoque) + "</small></button>" + // (demande 115)
+      '<button class="a-jouer a-mode a-boutique' + ferme("boutique") + '" data-accueil="boutique">🛒 BOUTIQUE<small>' + (R.boutique ? "armes · skins · packs · avancements" : "🔒 dans l'édition Moderne") + "</small></button>" + // (livre n° 28 ; demande 115)
       '<button class="a-jouer a-mode a-personnages" data-accueil="personnages">🎖️ PERSONNAGES<small>les soldats en 3D · classes · tenues</small></button>' + // (demande 114)
       '<button class="a-film" data-accueil="film" title="La bande-annonce du jeu (demande 101)">🎬 Bande-annonce</button>' +
-      '<a class="a-carnet" href="../index.html#etape114">📓 Le carnet</a>' +
+      '<a class="a-carnet" href="../index.html#etape115">📓 Le carnet</a>' +
       '<button class="a-reglages" data-accueil="reglages" title="Les réglages du jeu (demande 114)">⚙️ Réglages</button>' +
       "</div>" +
       '<div class="a-coins" title="Gagnés à chaque mission réussie de la campagne (demande 101) et en bataille libre (livre n° 22)">🪙 <b></b> Battle Coins</div>' +
       '<div class="a-panneau" hidden></div>' + // (demande 114 : le panneau des réglages)
+      '<p class="a-refus" hidden></p>' + // (demande 115 : « la campagne se joue dans l'édition Moderne »)
       '<p class="a-pied"><kbd>←</kbd> <kbd>→</kbd> choisir · <kbd>Entrée</kbd> entrer · <kbd>M</kbd> musique</p>' + // (livre n° 4 : les touches dans de vraies petites touches)
       "</div>";
     // (le clavier et la souris : capturés avant les oreilles du jeu tant que l'accueil est là)
@@ -59,7 +66,7 @@ Tanks.Accueil = (function () {
         pret = true;
         racine.querySelector(".a-attente").hidden = true;
         racine.querySelector(".a-boutons").hidden = false;
-        racine.querySelector(".a-campagne").focus();
+        racine.querySelector(premiere()).focus();
         e.preventDefault && e.type === "keydown" && e.preventDefault();
         if (e.type === "keydown") e.stopPropagation();
         return;
@@ -114,9 +121,27 @@ Tanks.Accueil = (function () {
     else if (e.code === "Enter" || e.code === "NumpadEnter") fermerReglages();
   }
 
+  // (demande 115) la 1re porte : la campagne en Moderne ; ailleurs, la bataille (la campagne est fermée)
+  const premiere = () => (Tanks.CONFIG.edition.regles.campagne ? ".a-campagne" : ".a-bataille");
+  // (demande 115) une porte fermée dans cette édition : on le dit, au lieu d'entrer
+  function refuser(mode) {
+    const p = racine.querySelector(".a-refus"), ED = Tanks.CONFIG.edition;
+    p.textContent = "🔒 " + ({ campagne: "La campagne", boutique: "La boutique", film: "La bande-annonce" }[mode]) + " se joue dans l'édition Moderne. Tu es dans l'édition " + ED.icone + " " + ED.nom + " : ⚔️ BATAILLE pour jouer, 📜 ÉDITIONS pour changer.";
+    p.hidden = false;
+    Tanks.Evenements.emettre("edition-refusee", { id: ED.id, nom: ED.nom, icone: ED.icone, raison: mode + " : seulement dans l'édition Moderne" });
+  }
   // mode : "campagne" (la liste des chapitres) ou "bataille" (le menu de la bataille libre)
   function fermer(mode) {
+    if ((mode === "campagne" || mode === "boutique" || mode === "film") && !Tanks.CONFIG.edition.regles[mode]) return refuser(mode); // (demande 115)
     if (mode === "reglages") return ouvrirReglages(); // (demande 114 : le panneau s'ouvre SUR l'accueil, qui reste là)
+    if (mode === "editions") { // (demande 115) la galerie des éditions s'ouvre par-dessus l'accueil ; en sortant, on revient ici
+      visible = false;
+      Tanks.EcranEditions.ouvrir(() => {
+        montrer();
+        racine.querySelector(".a-editions").focus();
+      });
+      return;
+    }
     if (mode === "personnages") { // (demande 114) la vitrine s'ouvre par-dessus l'accueil ; en sortant, on revient ici
       visible = false;
       Tanks.EcranPersonnages.ouvrir(() => {
@@ -170,7 +195,7 @@ Tanks.Accueil = (function () {
     racine.querySelector(".a-attente").hidden = true;
     racine.querySelector(".a-boutons").hidden = false;
     document.getElementById("ecran2d").style.visibility = "hidden";
-    racine.querySelector(".a-campagne").focus();
+    racine.querySelector(premiere()).focus();
   }
 
   return { initialiser, cacher, montrer, get visible() { return visible; } };

@@ -53,12 +53,15 @@
 //   18 (demande 114 : ⚙️ les réglages) : + reglages (les interrupteurs du panneau ⚙️ Réglages de l'accueil : « sang » =
 //     le petit nuage rouge quand une balle touche un soldat, ✍️ décidé par Cyril : ÉTEINT au départ). Une ancienne version
 //     garde tout, avec les réglages de départ (le sang éteint).
+//   19 (demande 115 : 📜 les éditions) : + edition (l'édition choisie : "moderne", "1916"…) et editions (pour chaque autre
+//     édition que Moderne, SON équipement, SON tank et SA carte : en 1916, ton Fantassin a son fusil Valmont, et quand tu
+//     reviens en Moderne, ton Assaut retrouve son AR-4 et ses pièces). Une ancienne version garde tout, en édition Moderne.
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 18; // (demande 114 : + les réglages ; étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents ; livre n° 6 : + l'arme bonus ; livre n° 28 : + la boutique)
+  const VERSION = 19; // (demande 115 : + l'édition ; demande 114 : + les réglages ; étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents ; livre n° 6 : + l'arme bonus ; livre n° 28 : + la boutique)
   const radio = Tanks.Evenements;
 
   function vide() {
@@ -69,7 +72,8 @@ Tanks.Sauvegarde = (function () {
       equipement: equipementDeDepart(), // (étape 77)
       progression: { xp: 0, armes: {}, cadeaux: { armes: [], pieces: {} }, parties: 0 }, // (demande 97)
       boutique: boutiqueVide(), // (livre n° 28)
-      reglages: reglagesDeDepart() }; // (demande 114)
+      reglages: reglagesDeDepart(), // (demande 114)
+      edition: "moderne", editions: {} }; // (demande 115)
   }
   // (demande 114) les réglages au départ : ceux de config.js (« reglages.liste » : le sang ÉTEINT)
   function reglagesDeDepart() {
@@ -170,6 +174,30 @@ Tanks.Sauvegarde = (function () {
     return changes;
   }
 
+  // ✍️ (demande 115) LES ÉDITIONS : ce qui est rangé à part pour chaque édition (l'équipement, le tank, la carte). Dans
+  // une autre édition que Moderne, le livret ouvert montre CELUI de l'édition ; les choix modernes attendent à l'abri
+  // (« moderne ») et retournent à leur place quand on écrit.
+  const PAR_EDITION = ["equipement", "char", "carte"];
+  const ED = () => (Tanks.CONFIG.edition && Tanks.CONFIG.edition.id) || "moderne";
+  let moderne = null;
+  function ouvrirEdition() {
+    moderne = null;
+    if (ED() === "moderne") return;
+    const C = Tanks.CONFIG, a = (donnees.editions && donnees.editions[ED()]) || {};
+    moderne = {};
+    for (const k of PAR_EDITION) moderne[k] = donnees[k];
+    donnees.equipement = fusionner(equipementDeDepart(), a.equipement);
+    donnees.char = C.chars.some((c) => c.id === a.char) ? a.char : C.chars[0].id;
+    donnees.carte = C.cartes.some((c) => c.id === a.carte) ? a.carte : C.cartes[0].id;
+  }
+  function pourEcrire() {
+    if (!moderne) return donnees;
+    const o = Object.assign({}, donnees, moderne), a = {};
+    for (const k of PAR_EDITION) a[k] = donnees[k];
+    o.editions = Object.assign({}, donnees.editions, { [ED()]: a });
+    return o;
+  }
+
   let donnees = vide();
   function lire() {
     try {
@@ -183,22 +211,26 @@ Tanks.Sauvegarde = (function () {
         const coins = (ancienne.version || 1) < 14 ? convertir14(donnees) : 0; // (demande 101)
         if ((ancienne.version || 1) < 15) convertir15(donnees); // (demande 102)
         const bonus = (ancienne.version || 1) < 16 ? convertir16(donnees) : []; // (livre n° 6)
-        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins, bonus, boutique: (ancienne.version || 1) < 17, reglages: (ancienne.version || 1) < 18 }); // (livre n° 28 ; demande 114)
+        if ((ancienne.version || 1) < 19) (donnees.edition = "moderne"), (donnees.editions = {}); // (demande 115 : une ancienne partie est en Moderne)
+        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins, bonus, boutique: (ancienne.version || 1) < 17, reglages: (ancienne.version || 1) < 18, edition: (ancienne.version || 1) < 19 }); // (livre n° 28 ; demande 114 ; demande 115)
       }
     } catch (e) {
       donnees = vide();
     }
+    if (typeof donnees.edition !== "string") donnees.edition = "moderne";
+    donnees.editions = donnees.editions && typeof donnees.editions === "object" ? donnees.editions : {};
+    ouvrirEdition(); // (demande 115)
     return donnees;
   }
   // (étape 77) discret = true : on écrit sans l'annoncer à la radio (les points gagnés pendant la bataille)
   function ecrire(raison, discret) {
     try {
-      localStorage.setItem(CLE, JSON.stringify(donnees));
+      localStorage.setItem(CLE, JSON.stringify(pourEcrire())); // (demande 115 : les choix modernes reprennent leur place)
       if (!discret) radio.emettre("sauvegarde", { raison });
     } catch (e) {
       // (navigation privée : le jeu continue sans mémoire)
     }
   }
 
-  return { lire, ecrire, get donnees() { return donnees; } };
+  return { lire, ecrire, get donnees() { return donnees; }, VERSION };
 })();

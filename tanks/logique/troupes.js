@@ -59,7 +59,7 @@ Tanks.Troupes = (function () {
       for (let k = 0; k < S.parEquipe; k++) {
         const x = (k - (S.parEquipe - 1) / 2) * 9;
         const s = Tanks.Soldat.creer(equipe, x, z0 + (k % 2) * 4 * sens, sens > 0 ? -Math.PI / 2 : Math.PI / 2, (equipe === "bleus" ? "soldat bleu n° " : "soldat rouge n° ") + (k + 1));
-        if (k % Math.round(S.parEquipe / S.lanceRoquettes) === 2) s.arme = "roquettes";
+        if (S.lanceRoquettes && k % Math.round(S.parEquipe / S.lanceRoquettes) === 2) s.arme = "roquettes"; // (demande 115 : en 1916, aucun)
         else if (C.perchoirs.ia.numeros.slice(0, C.perchoirs.ia.parEquipe).includes(k)) (s.tireurElite = true), (s.arme = "elite"); // ✍️ (livre n° 12) les tireurs d'élite
         s.ia = nouvelleIA(s, (k / S.parEquipe) * S.pense, x * 1.4, "avance", k);
         if (equipe === "rouges" && C.secours.medecins.includes(k) && s.arme !== "roquettes" && !s.tireurElite) s.medecin = true; // (livre n° 17 : les médecins rouges)
@@ -124,7 +124,15 @@ Tanks.Troupes = (function () {
     for (const v of Tanks.Vehicules.legers(monde)) if (v.equipe !== equipe) l.push(v);
     return l;
   }
-  function decider(s, monde, dt) {
+  // ✍️ (demande 115) en 1916 : un soldat qui TIENT la tranchée garde son poste (le chef des tranchées retouche ses intentions)
+  const decider = (s, monde, dt) => Tanks.Tranchees.actif ? Tanks.Tranchees.retoucher(s, monde, deciderSeul(s, monde, dt)) : deciderSeul(s, monde, dt);
+  // (demande 115) une RECRUE qui arrive par un boyau de la tranchée (logique/tranchees.js la pose à son poste)
+  function recrue(equipe, x, z, angle, nom) {
+    const s = Tanks.Soldat.creer(equipe, x, z, angle, nom);
+    s.ia = nouvelleIA(s, Math.random() * S.pense, x * 1.1, "tient la tranchée");
+    return s;
+  }
+  function deciderSeul(s, monde, dt) {
     const ia = s.ia;
     if (s.mort || s.parachute || s.corde) return {};
     nouveauPas(monde);
@@ -650,5 +658,5 @@ Tanks.Troupes = (function () {
     return r;
   }
 
-  return { creer, decider, parachutiste, renfort, parCorde, compterTactiques, budget, place };
+  return { creer, decider, parachutiste, renfort, parCorde, recrue, compterTactiques, budget, place };
 })();

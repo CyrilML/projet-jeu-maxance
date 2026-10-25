@@ -90,6 +90,9 @@ Tanks.Sons = (function () {
     radio.ecouter("campagne-objectif", () => (bip(660, 0, 0.12), bip(880, 0.12, 0.12), bip(1320, 0.24, 0.22)));
     radio.ecouter("campagne-echouee", () => (bip(392, 0, 0.25), bip(294, 0.25, 0.25), bip(196, 0.5, 0.6)));
     radio.ecouter("torpille", (e) => pschh(e.joueur ? 0.5 : attenuation(e.x, e.z) * 0.4)); // (étape 63)
+    // ✍️ (demande 115) 1916 : le COUP DE SIFFLET de l'officier (« À l'assaut ! ») et le SIFFLEMENT des obus qui tombent
+    radio.ecouter("coup-de-sifflet", (e) => sifflet(Math.max(0.25, attenuation(e.x, e.z))));
+    radio.ecouter("obus-siffle", (e) => sifflement(attenuation(e.x, e.z), e.arrive));
     radio.ecouter("impact", (e) => {
       if (e.sur === "air" || e.sur === "char") return;
       const g = (Tanks.CONFIG.realisme.explosions.tailles[e.grenade ? "grenade" : e.sorte] || 1);
@@ -112,7 +115,7 @@ Tanks.Sons = (function () {
     });
     // (demande 88) le rechargement de TON arme : « clic » (le chargeur sort), puis « clac » (le neuf est enfoncé)
     radio.ecouter("recharge-arme", (e) => e.parToi && (e.fini ? (clic(0.5, 1800, 0), clic(0.35, 900, 0.07)) : (clic(0.4, 1300, 0.05), clic(0.3, 2400, 0.32))));
-    for (const n of ["roquette", "missile"]) radio.ecouter(n, (e) => pschh(e.parToi || n === "missile" ? 0.7 : attenuation(e.x, e.z) * 0.5));
+    for (const n of ["roquette", "missile"]) radio.ecouter(n, (e) => (e.projectile === "rafale" ? tac(0.5) : pschh(e.parToi || n === "missile" ? 0.7 : attenuation(e.x, e.z) * 0.5))); // (demande 115 : la rafale du biplan : « tac »)
     // le souffle de l'hélico et de l'avion : du bruit filtré, en boucle
     souffle = ctx.createBufferSource();
     souffle.buffer = tampon;
@@ -358,6 +361,38 @@ Tanks.Sons = (function () {
     o.connect(g).connect(sortie);
     o.start(t);
     o.stop(t + (duree || 0.1) + 0.02);
+  }
+  // ✍️ (demande 115) LE SIFFLET : une note aiguë qui « roule » (la bille du sifflet), deux coups : un court, un long
+  function sifflet(force) {
+    if (!ctx || coupe) return;
+    for (const [debut, duree] of [[0, 0.22], [0.32, 0.75]]) {
+      const t = ctx.currentTime + debut, o = ctx.createOscillator(), roule = ctx.createOscillator(), rg = ctx.createGain(), g = ctx.createGain();
+      o.type = "triangle";
+      o.frequency.value = 2900;
+      roule.frequency.value = 34; // (la bille qui roule : la note tremble 34 fois par seconde)
+      rg.gain.value = 180;
+      roule.connect(rg).connect(o.frequency);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.09 * force, t + 0.03);
+      g.gain.setValueAtTime(0.09 * force, t + duree - 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + duree);
+      o.connect(g).connect(sortie);
+      for (const x of [o, roule]) (x.start(t), x.stop(t + duree + 0.05));
+    }
+  }
+  // ✍️ (demande 115) LE SIFFLEMENT d'un obus qui arrive : une note qui descend (de l'aigu vers le grave) pendant sa chute
+  function sifflement(force, duree) {
+    if (!ctx || coupe || force < 0.08) return;
+    const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(), d = Math.max(0.4, Math.min(2, duree || 1.3));
+    o.type = "sine";
+    o.frequency.setValueAtTime(1500, t);
+    o.frequency.exponentialRampToValueAtTime(420, t + d);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.05 * force, t + d * 0.7);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g).connect(sortie);
+    o.start(t);
+    o.stop(t + d + 0.05);
   }
   // (étape 88) Le grésillement de la radio : un petit souffle de bruit, filtré comme dans un talkie-walkie.
   function gresillement() {

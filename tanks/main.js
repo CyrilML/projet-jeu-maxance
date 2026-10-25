@@ -15,6 +15,9 @@
 // (affichage/progression-ecrans.js : « NIVEAU SUPÉRIEUR ! », le bilan d'expérience) suivent la bataille.
 // Demande 94 : la RADIO QUI PARLE (affichage/radio-voix.js) : sa file d'attente avance à chaque image, ses sous-titres se
 // dessinent en dernier, et N coupe ou remet les voix.
+// Demande 115 : LES ÉDITIONS. Le costume du jeu (editions/appliquer.js) est déjà cousu quand ce fichier démarre ; la
+// galerie des éditions (affichage/editions-ecran.js) s'ouvre par la porte 📜 de l'accueil, et le chef des tranchées
+// (logique/tranchees.js, seulement en 1916) avance pendant les petits pas.
 // Demande 101 : LES CINÉMATIQUES : le réalisateur (logique/cinematique.js) joue pendant les petits pas (phase
 // "cinematique") ; le caméraman (affichage/cinematique.js) filme et dessine l'écran de cinéma en tout dernier.
 
@@ -37,6 +40,7 @@ window.Tanks = window.Tanks || {};
   // (étape 77) le menu : il ne touche pas au monde lui-même, il fait des DEMANDES que le quartier-maître accepte
   Tanks.PleinEcran.initialiser(); // (étape 91 : ⛶ ou K)
   Tanks.Ambiance.initialiser(); // (étape 87 : le filtre « Battlefield »)
+  Tanks.EcranEditions.initialiser(); // (demande 115 : la galerie des éditions, porte 📜 de l'accueil)
   Tanks.EcranPersonnages.initialiser(); // (demande 114 : la vitrine des personnages, 4e porte de l'accueil)
   Tanks.EcranBoutique.initialiser(); // (livre n° 28 : la boutique, 3e porte de l'accueil ; son clavier passe AVANT celui du menu, ouvert derrière)
   Tanks.Accueil.initialiser((type) => type === "film" && monde.phase === "garage" && Tanks.Cinematique.lancer(monde, C.cinematiques.bandeAnnonce, { pour: "accueil" })); // (étape 84 : la page d'accueil, avec la musique ; demande 101 : la bande-annonce)

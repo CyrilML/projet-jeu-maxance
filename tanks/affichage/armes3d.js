@@ -1565,6 +1565,11 @@ Tanks.Armes3D = (function () {
       ejection: V3(0.045, 0.026, 0.02), mireAvant: 0.13 + lc - 0.02, mireArriere: 0.0, mireNative: { ligne: by + 0.017, arriere: -0.02, z: 0, nom: "guidon-bille" }, crosse: -0.44,
       grip: p.crosse === "standard" ? { centre: V3(-0.115, -0.05), axe: V3(0.55, 1, 0).normalize() } : null };
   }
+  // ✍️ (demande 115) LES ARMES DES ÉDITIONS : une édition d'une autre époque inscrit ses propres fabriques (les fusils à
+  // verrou de 1916 : affichage/armes3d-1916.js) avec les mêmes outils que l'armurier (les poignées, les pontets, la lunette…).
+  function ajouterFabrique(id, f) {
+    FABRIQUES[id] = f;
+  }
   FABRIQUES.m870 = (e, p) => fusilPompe(e, p, false);
   FABRIQUES.m870dragon = (e, p) => fusilPompe(e, p, true);
 
@@ -1730,6 +1735,7 @@ Tanks.Armes3D = (function () {
       cle, id, qualite, nom: F.nom, famille, pieces, liste, racine, triangles: Math.round(tri), objets, peinture,
       by: P.by, bouche: V3(tip, P.bout ? P.bout.y : P.by, P.tipZ || 0), visee, poignee: grip, garde, lampe: pLampe, laser: pLaser, ancres,
       ejection: P.ejection, chargeur: P.ch, arriere: P.arriere !== undefined ? P.arriere : P.crosse, decalageVue: P.vue || null,
+      levier: P.levier || null, // (demande 115 : la boule du levier de verrou, là où va la main droite)
     };
     magasin.set(cle, modele);
     // (demande 97) l'armurerie fabrique beaucoup de variantes : au-delà de 48 modèles, on jette les plus vieux (sauf ceux
@@ -2134,7 +2140,7 @@ Tanks.Armes3D = (function () {
     if (camo) (camo.needsUpdate = true), camo.repeat.set(1.5, 3);
     const manche = new THREE.MeshStandardMaterial({ map: camo, color: camo ? 0xffffff : 0x55603e, roughness: 0.95 });
     V.manche = manche;
-    V.mancheCamp = "bleus";
+    V.mancheCamp = C.edition.id === "moderne" ? "bleus" : null; // (demande 115 : dans une autre édition, la manche prend la couleur de l'uniforme)
     V.mains = [gantGeo(1), gantGeo(-1)].map((g) => { const m = new THREE.Mesh(g, gant); m.matrixAutoUpdate = false; V.scene.add(m); return m; });
     V.avantBras = [0, 1].map(() => {
       const g = new THREE.Group();
@@ -2210,7 +2216,7 @@ Tanks.Armes3D = (function () {
     // (livre n° 28) ta TENUE de la boutique : les manches (et les gants, assombris pour la nuit) prennent ses couleurs
     const tenueBoutique = Tanks.Boutique && Tanks.Boutique.porte().tenue, camp = tenueBoutique ? "bleus~" + tenueBoutique : "bleus";
     if (V.mancheCamp !== camp && Tanks.Chars3D && Tanks.Chars3D.camouflage) {
-      const t = Tanks.Chars3D.camouflage(C.equipes[camp].camouflage).clone();
+      const U = C.realisme.soldats.uniformes.bleus, t = Tanks.Chars3D.camouflage(C.edition.id !== "moderne" && !tenueBoutique ? [U.fond].concat(U.taches) : C.equipes[camp].camouflage).clone(); // (demande 115 : en 1916, la manche bleu horizon)
       (t.needsUpdate = true), t.repeat.set(1.5, 3);
       V.manche.map = t;
       V.manche.needsUpdate = true;
@@ -2278,7 +2284,7 @@ Tanks.Armes3D = (function () {
         V.roulis = (Math.random() * 2 - 1) * 0.04;
         V.dernierTir = V.t;
         V.culasse = 1;
-        ejecter(m);
+        if (!(fiche(m.id).verrou && m.levier)) ejecter(m); // (demande 115 : avec un verrou, la douille sort quand on tire la culasse)
       }
       V.tirs = tirs;
     }
@@ -2333,14 +2339,29 @@ Tanks.Armes3D = (function () {
       if (pompe) { // (fusil à pompe) la POMPE : le garde-main recule puis revient, juste après chaque tir
         const PO = A3.pompe, t = V.t - V.dernierTir, c = t > PO.debut && t < PO.fin ? Math.sin(Math.PI * (t - PO.debut) / (PO.fin - PO.debut)) : 0;
         groupeCul.position.set(-c * PO.course, 0, 0);
+      } else if (fiche(m.id).verrou && m.levier) { // ✍️ (demande 115) le VERROU de 1916, en 4 temps : lever le levier (il tourne
+        // autour du canon), le tirer en arrière (la douille saute), le repousser, le rabattre. La main droite quitte la
+        // poignée pour aller le chercher, puis revient.
+        const VR = A3.verrou, duree = Math.min(VR.duree, Math.max(0.35, (st.cadence || 1) - 0.25)), t = (V.t - V.dernierTir - VR.debut) / duree;
+        const leve = t <= 0 || t >= 1 ? 0 : t < 0.2 ? lisse(t / 0.2) : t < 0.8 ? 1 : 1 - lisse((t - 0.8) / 0.2);
+        const tire = t <= 0.2 || t >= 0.8 ? 0 : t < 0.45 ? lisse((t - 0.2) / 0.25) : t < 0.55 ? 1 : 1 - lisse((t - 0.55) / 0.25);
+        const a = -leve * VR.angle, by = m.by + 0.012;
+        groupeCul.rotation.set(a, 0, 0);
+        groupeCul.position.set(-tire * VR.course, by - by * Math.cos(a), -by * Math.sin(a));
+        V.mainVerrou = t > -0.05 && t < 1.08 ? Math.min(1, Math.max(0, Math.min((t + 0.05) / 0.15, (1.08 - t) / 0.15))) : 0;
+        if (t > 0.45 && t < 0.5 && !V.douilleVerrou) (V.douilleVerrou = true), ejecter(m);
+        if (t > 1 || t < 0) V.douilleVerrou = false;
       } else if (fiche(m.id).verrou) { // le verrou (le .338 et le M24) : on le tire en arrière puis on le repousse, après chaque tir
         const t = V.t - V.dernierTir, c = t > 0.15 && t < 0.85 ? Math.sin(Math.PI * Math.min(1, (t - 0.15) / 0.6)) : 0;
         groupeCul.position.set(-c * 0.075, 0, 0);
       } else groupeCul.position.set(-V.culasse * 0.03, 0, 0);
     }
+    if (!(groupeCul && fiche(m.id).verrou && m.levier)) V.mainVerrou = 0;
     // 6. les mains
     const M0 = V.mains[0], M1 = V.mains[1];
-    poserMain(M0, m, V.objet, m.poignee, 1);
+    // (demande 115) pendant le coup de verrou, la main droite tient la boule du levier (qui tourne et recule avec la culasse)
+    const decD = V.mainVerrou > 0 && groupeCul ? m.levier.clone().applyEuler(groupeCul.rotation).add(groupeCul.position).sub(m.poignee.centre).multiplyScalar(lisse(V.mainVerrou)) : null;
+    poserMain(M0, m, V.objet, m.poignee, 1, decD);
     let decG = null;
     if (recharge > 0 && m.chargeur && !roquettes) { // la main gauche va chercher un chargeur neuf, puis le pousse dans l'arme
       const loin = entre(recharge, 0.14, 0.3) * (1 - entre(recharge, 0.46, 0.6)), surCh = entre(recharge, 0.42, 0.55) * (1 - entre(recharge, 0.76, 0.86));
@@ -2506,5 +2527,7 @@ Tanks.Armes3D = (function () {
     get armeDuJoueur() { return armeDuJoueur; },
     get vue() { return { actif: V.actif, modele: V.modele, objet: V.objet, cam: V.cam, baisse: V.baisse, recul: V.recul, scene: V.scene, dansLeX2: !!(V.actif && V.dansLeX2), reticule: bilan.reticule || "—" }; },
     LISTE: () => Object.keys(C.armesPrincipales).concat(Object.keys(C.pistolets)),
+    ajouterFabrique, // (demande 115 : les armes des éditions)
+    outils: { K, V3, poignee, pontet, chargeur, unChargeur, bout, canonTube, LONGUEUR_CANON, lunette, mire, rail }, // (demande 115 : prêtés aux armes des éditions)
   };
 })();

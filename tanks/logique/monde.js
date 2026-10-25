@@ -184,6 +184,7 @@ Tanks.Monde = (function () {
     monde.portails = Tanks.Portails.creer();
     for (const p of monde.portails) p.passages = 0;
     monde.toi = { mode: "char", engin: monde.joueur, soldat: toi };
+    Tanks.Tranchees.installer(monde); // (demande 115 : en 1916, chacun à son poste dans la tranchée ; toi, à pied sur la banquette)
     radio.emettre("bataille", { classe: C.classes[equipement.classe].nom, arme: Tanks.Equipement.fiche(equipement.arme).nom, gadget: C.gadgets[equipement.gadget].nom, char: monde.joueur.fiche.nom, allies: E.allies, ennemis: E.ennemis, soldats: C.soldats.parEquipe, engins: monde.engins.length, vehicules: monde.vehicules.length, helicos: monde.helicos.length, bateaux: monde.bateaux.length, sousMarins: monde.sousMarins.length, portails: monde.portails.length });
   }
 
@@ -460,11 +461,15 @@ Tanks.Monde = (function () {
         if (d.nom === "toi" && t.mode === "char") radio.emettre("recharge", {});
       } else annoncer(nom, d);
     }
-    for (const [nom, d] of Tanks.Obus.avancer(monde.obus, monde, dt)) annoncer(nom, d);
+    for (const [nom, d] of Tanks.Obus.avancer(monde.obus, monde, dt)) {
+      if (nom === "impact" && Tanks.Tranchees.actif && d.sur !== "air") { const ex = []; Tanks.Tranchees.explosion(d.x, d.z, d.sorte, ex); for (const [n2, d2] of ex) annoncer(n2, d2); } // (demande 115 : une explosion déchire les barbelés)
+      annoncer(nom, d);
+    }
     if (enJeu) for (const [nom, d] of Tanks.Gadgets.etape(monde, dt, []) || []) annoncer(nom, d);
     if (enJeu) for (const [nom, d] of Tanks.Secours.etape(monde, dt, t.mode === "pied" ? intentions : {}, [])) annoncer(nom, d); // (livre n° 17, 18, 19 : le brancardier)
     if (enJeu) for (const [nom, d] of Tanks.Explosifs.etape(monde, dt, [])) annoncer(nom, d); // (demande 98 : les mines, les claymores, les C4 collés, les nuages)
     if (enJeu) for (const [nom, d] of Tanks.Base.etape(monde, dt)) annoncer(nom, d); // (demande 99 : l'ennemi rebouche les cratères de sa piste)
+    if (enJeu && Tanks.Tranchees.actif) for (const [nom, d] of Tanks.Tranchees.etape(monde, dt)) annoncer(nom, d); // (demande 115 : les vagues, le barrage, les barbelés écrasés)
     // (étape 67) TA VIE REMONTE : pas touché depuis 5 s ? Ton soldat et ton tank se soignent doucement.
     if (enJeu) {
       if (toi && (toi.dansUnEngin || toi.parachute)) toi.touche += dt; // (dans un engin, le temps passe aussi pour lui)

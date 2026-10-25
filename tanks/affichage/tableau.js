@@ -161,7 +161,7 @@ Tanks.Tableau = (function () {
     radio.ecouter("avion-arrive", () => dire("✈️ Avion ennemi en approche !", "#ff9a8a"));
     radio.ecouter("bombardement", (d) => dire(d.cible === "toi" ? "💣 Un avion ennemi te bombarde ! BOUGE !" : "💣 Bombardement sur " + d.cible + " !", "#ff7a6a"));
     radio.ecouter("duel", () => dire("⚔️ Un chasseur ennemi te prend en chasse !", "#ff7a6a"));
-    radio.ecouter("missile-ennemi", () => dire("🚨 MISSILE ENNEMI ! Vire !", "#ff4a3d"));
+    radio.ecouter("missile-ennemi", () => dire(C.avionsEnnemis.projectile ? "🚨 IL TE TIRE DESSUS ! Vire !" : "🚨 MISSILE ENNEMI ! Vire !", "#ff4a3d")); // (demande 115 : en 1916, une rafale de mitrailleuse)
     radio.ecouter("abattu", (d) => d.parToi && dire("🔥 " + d.cible + " ABATTU !", "#7dffa0", 2500));
     radio.ecouter("parachutistes", (d) => dire("🪂 " + d.nombre + " parachutistes " + (d.equipe === "bleus" ? "bleus (des renforts !)" : "ROUGES en approche !"), d.equipe === "bleus" ? "#9cc4ff" : "#ff9a8a"));
     radio.ecouter("nage", (d) => dire(d.nage ? "🏊 Tu nages (pas de tir dans l'eau)" : "🦶 Pied à terre", "#8fd3ff"));
@@ -478,6 +478,16 @@ Tanks.Tableau = (function () {
       texte("m haut", L - 16, H - 90, 13, "#ccc", "right");
       return;
     }
+    // ✍️ (demande 115) LA MITRAILLEUSE LOURDE de 1916 : le viseur là où va la rafale, la chaleur du canon
+    if (e.genre === "mitrailleuse") {
+      const a = e.angle + e.tourelle, v = Tanks.Scene.versEcran(e.x + Math.cos(a) * 80, e.y + 1 + Math.tan(e.hausse) * 80, e.z + Math.sin(a) * 80, L, H);
+      if (v) viseur(v, false, 16);
+      panneau(12, H - 98, 380, 86);
+      texte("🔫 " + e.nom, 24, H - 72, 16, "#ffe27a");
+      barre(24, H - 56, 220, 1 - e.chaleur, e.enrayee === 0, e.enrayee > 0 ? "🔥 ENRAYÉE (" + Math.ceil(e.enrayee) + " s)" : "chaleur du canon " + Math.round(e.chaleur * 100) + " %");
+      texte("← → tourner · ↑ ↓ lever · Espace : rafale · E : la lâcher", 24, H - 24, 13, "#e8e4d6");
+      return;
+    }
     const R = C.engins[e.sorte], haut = e.y - T.hauteur(e.x, e.z);
     if (e.sorte === "jeep") {
       const a = e.angle + e.tourelle;
@@ -518,7 +528,7 @@ Tanks.Tableau = (function () {
           ctx.strokeStyle = "#ff4a3d";
           ctx.lineWidth = 2;
           ctx.strokeRect(v.x - 18, v.y - 18, 36, 36);
-          texte("🚀 " + cible.nom + " · " + Math.round(Math.hypot(cible.x - e.x, cible.z - e.z)) + " m", v.x, v.y + 34, 13, "#ff7a6a", "center");
+          texte((R.projectile ? "🔫 " : "🚀 ") + cible.nom + " · " + Math.round(Math.hypot(cible.x - e.x, cible.z - e.z)) + " m", v.x, v.y + 34, 13, "#ff7a6a", "center"); // (demande 115 : la mitrailleuse du biplan)
         }
       }
     }
@@ -528,6 +538,9 @@ Tanks.Tableau = (function () {
       cases(24, H - 60, R.vie, e.vie);
       texte("vie", 24 + R.vie * 30 + 4, H - 48, 13, "#ccc");
       barre(24, H - 36, 200, 1 - e.recharge / C.armes.mitrailleuse.cadence, e.recharge === 0, "Espace : mitrailleuse");
+    } else if (R.munitions > 12) { // (demande 115 : le biplan a 40 rafales : une barre au lieu de 40 cases)
+      barre(24, H - 60, 200, e.munitions / R.munitions, e.munitions > 0, e.munitions + " / " + R.munitions + " rafales (" + R.arme + ")");
+      barre(24, H - 36, 200, e.munitions < R.munitions ? e.rechargeMunition / R.recharge : 1, e.munitions > 0, e.munitions < R.munitions ? "+1 dans " + virgule(R.recharge - e.rechargeMunition) + " s" : "plein");
     } else {
       cases(24, H - 60, R.munitions, e.munitions, "#ffcf5a");
       texte(e.munitions + " " + (R.arme === "missile" ? "missiles" : R.arme === "bombe" ? "bombes" : "grenades"), 24 + R.munitions * 30 + 4, H - 48, 13, "#ccc");
@@ -878,7 +891,8 @@ Tanks.Tableau = (function () {
         chinook: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · F soldats à la corde (bas, presque arrêté) · E descendre (posé)",
         blackhawk: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · F soldats à la corde (bas, presque arrêté) · E descendre (posé)",
         drone: "↑ ↓ avancer · ← → tourner · Q monter · D descendre · Espace grenade · E descendre (posé)",
-        avion: "↑ piquer · ↓ cabrer · ← → virer · Espace missile · E s'éjecter",
+        avion: "↑ piquer · ↓ cabrer · ← → virer · Espace " + (C.engins.avion.projectile ? "mitrailleuse" : "missile") + " · E s'éjecter", // (demande 115 : le biplan)
+        mitrailleuse: "← → tourner · ↑ ↓ lever · Espace rafale (elle chauffe !) · E la lâcher", // (demande 115)
         bateau: "↑ ↓ ← → naviguer · Q / D canon · Espace tirer · E descendre (près de la rive)",
         dca: "↑ ↓ ← → conduire · ton tireur tire tout seul · F : prendre le canon · E descendre (arrêté)",
         sousmarin: "↑ ↓ ← → naviguer · D plonger · Q remonter · Espace torpille · E descendre (à la surface, près d'une rive)",

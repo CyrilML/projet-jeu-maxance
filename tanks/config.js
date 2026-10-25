@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 58,
+  version: 59,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -273,6 +273,11 @@ Tanks.CONFIG = {
     distanceMonter: 6, // m : on peut monter dans un engin à moins de 6 m
     parachute: 4, // m/s : la vitesse de descente en parachute (on s'éjecte de l'avion avec E)
   },
+
+  // (demande 115) LE PARC de ton camp : les engins garés pour toi (« engins », dans cet ordre), ta vedette et ton
+  // sous-marin au bord du lac, et le camion antiaérien de l'ennemi. Une ÉDITION d'une autre époque en garde moins
+  // (en 1916 : seulement le biplan). En Moderne : tout, comme avant.
+  parc: { engins: ["jeep", "helico", "avion", "drone", "dca", "moto", "quad", "camion", "chinook", "blackhawk"], bateau: true, sousmarin: true, dcaEnnemi: true },
 
   // ------------------------------------------------------------------ étape 62 : le lac, les bateaux et les portails
   // ✍️ Un LAC à l'est du champ de bataille (une ellipse : un cercle étiré). Ton bateau de guerre est amarré au bord, de
@@ -1302,6 +1307,9 @@ Tanks.CONFIG = {
     // (fusils à pompe) la POMPE à la 1re personne : le garde-main recule de « course » m puis revient, de « debut » à
     // « fin » s après le tir.
     pompe: { course: 0.075, debut: 0.18, fin: 0.62 },
+    // ✍️ (demande 115) LE VERROU des fusils de 1916, à la 1re personne : il commence « debut » s après le tir et dure au plus
+    // « duree » s (moins si l'arme tire plus vite) ; le levier tourne de « angle » rad, la culasse recule de « course » m.
+    verrou: { debut: 0.12, duree: 0.85, angle: 1.25, course: 0.085 },
   },
   // ✍️ (livre de demandes n° 15 et 16) « Je veux que tu puisses voir le défibrillateur » ; « quand tu as les grenades et les
   // C4, je veux que tu les voies. » L'ACCESSOIRISTE (affichage/objets3d.js) fabrique ce que tu tiens EN MAIN quand ce

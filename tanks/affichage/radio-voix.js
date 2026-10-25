@@ -34,7 +34,8 @@ Tanks.RadioVoix = (function () {
     synthese = null;
   }
   let meilleure = "aucune"; // (étape 95 : le nom de la plus belle voix trouvée)
-  let actives = true, voixFr = [], toutes = 0, ctx = null, L = 1280, H = 720, blancJusqua = 0, bouton = null;
+  // (demande 115 : dans une édition sans radio, comme 1916, les voix sont coupées au départ ; N les remet)
+  let actives = Tanks.CONFIG.edition.regles.voixRadio !== false, voixFr = [], toutes = 0, ctx = null, L = 1280, H = 720, blancJusqua = 0, bouton = null;
   const file = []; // les phrases qui attendent leur tour
   let enCours = null; // celle qu'on dit en ce moment
   const sousTitres = []; // ce qui est écrit en bas de l'écran
