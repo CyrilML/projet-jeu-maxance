@@ -58,6 +58,7 @@ Tanks.Obus = (function () {
   function abimer(cible, degats, tireur, x, y, z, vx, vz, ev) {
     if (cible.detruit) return;
     degats *= Tanks.Campagne.facteurDegats(tireur, cible); // (demande 90 : la difficulté de la campagne ; × 1 en bataille libre)
+    if (Tanks.Aliens && Tanks.Aliens.actif) degats *= Tanks.Aliens.facteur(cible, y); // ✍️ (demande 115, Aliens : un coup dans le ventre d'un tripode, là où brille son cœur)
     cible.vie = Math.max(0, cible.vie - degats);
     cible.touche = 0;
     if (tireur && tireur.reussis !== undefined) tireur.reussis++;

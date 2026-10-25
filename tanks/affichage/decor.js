@@ -227,7 +227,8 @@ Tanks.Decor = (function () {
     if (Tanks.Jungle3D) Tanks.Jungle3D.peindreSol(ctx, X, k); // (demande 115, Guerre froide : les rizières, la base de feu)
     if (Tanks.Relais3D) Tanks.Relais3D.peindreSol(ctx, X, k); // (demande 115, Bataille de drones : le gravier sous les panneaux solaires)
     if (Tanks.Est3D) Tanks.Est3D.peindreSol(ctx, X, k, hasard); // (demande 115, Europe de l'Est : les champs de tournesols coupés, les traces de chenilles dans la neige)
-    if (Tanks.Civile3D) Tanks.Civile3D.peindreSol(ctx, X, k, hasard); // (demande 115, Guerre civile : la poussière, les traces de pneus, la place du souk)
+    if (Tanks.Civile3D) Tanks.Civile3D.peindreSol(ctx, X, k, hasard);
+    if (Tanks.Aliens3D) Tanks.Aliens3D.peindreSol(ctx, X, k, hasard); // (demande 115, Aliens : la biomasse violette de la zone terraformée) // (demande 115, Guerre civile : la poussière, les traces de pneus, la place du souk)
     // les chemins : le bord usé, la terre, les 2 ornières plus sombres, l'herbe au milieu
     const L = BE.chemins.largeur * k;
     const tracer = (l, largeur, style) => {
@@ -987,7 +988,8 @@ Tanks.Decor = (function () {
     if (Tanks.Jungle3D) Tanks.Jungle3D.construire(g, ajouterMorceau); // (demande 115, Guerre froide : les rizières, la plateforme des hélicos)
     if (Tanks.Relais3D) Tanks.Relais3D.construire(g, ajouterMorceau); // (demande 115, Bataille de drones : les panneaux solaires, les antennes, les postes, les canons anti-drones)
     if (Tanks.Est3D) Tanks.Est3D.construire(g, ajouterMorceau); // (demande 115, Europe de l'Est : les silos, les dents de dragon, les panneaux « MINES », les filets de camouflage)
-    if (Tanks.Civile3D) Tanks.Civile3D.construire(g, ajouterMorceau); // (demande 115, Guerre civile : les barricades, les draps, le souk, les postes, les mortiers, les drapeaux)
+    if (Tanks.Civile3D) Tanks.Civile3D.construire(g, ajouterMorceau);
+    if (Tanks.Aliens3D) Tanks.Aliens3D.construire(g, ajouterMorceau); // (demande 115, Aliens : les cristaux, les flèches, les pylônes, le vaisseau-mère, les aurores) // (demande 115, Guerre civile : les barricades, les draps, le souk, les postes, les mortiers, les drapeaux)
     return g;
   }
 

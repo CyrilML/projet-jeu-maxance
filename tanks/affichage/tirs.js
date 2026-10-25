@@ -31,6 +31,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.Tirs = (function () {
   const C = Tanks.CONFIG, R = C.realisme.tirs, T = Tanks.Terrain;
+  const PLASMA = { vitesse: 75, longueur: 1.4, largeur: 0.16, couleur: [0.5, 2.4, 1.3] }; // (demande 115, Aliens : m/s, m, m, la couleur qui brille)
   let P, I, M = null, monde = null, horloge = 0, derniereLumiere = -1, dernierJournal = -99;
   const comptes = new Map(); // tireur → combien de balles il a tirées (pour savoir laquelle est traçante)
   const bilan = { balles: 0, traceuses: 0, eclairs: 0, eclairsLumiere: 0, frolements: 0, cracs: 0, impacts: {}, impactsTotal: 0, trainees: 0, obusEnVol: 0, coupsDeCanon: 0, poussiereCanon: 0 };
@@ -41,6 +42,9 @@ Tanks.Tirs = (function () {
     const TR = R.traceur, BA = R.balle, EC = R.eclair, FU = R.fumee;
     return {
       traceuse: { image: I.trait, mode: P.TRAIT, brille: true, exacte: true, longueur: TR.longueur, couleur: TR.couleur, force: TR.force, taille: [TR.largeur, TR.largeur], entree: 0.0001, sortie: 0.15, portee: 4 },
+      // ✍️ (demande 115, Aliens) la BOULE DE PLASMA : un trait vert épais et lent, avec sa lueur
+      plasma: { image: I.trait, mode: P.TRAIT, brille: true, exacte: true, longueur: PLASMA.longueur, couleur: PLASMA.couleur, force: 2.2, taille: [PLASMA.largeur, PLASMA.largeur], entree: 0.0001, sortie: 0.15, portee: 4 },
+      lueurPlasma: { image: I.lueur, mode: P.FACE, brille: true, exacte: true, couleur: PLASMA.couleur, force: 1.2, taille: [0.7, 0.7], entree: 0.0001, sortie: 0.1, portee: 4 },
       lueurTraceuse: { image: I.lueur, mode: P.FACE, brille: true, exacte: true, couleur: TR.couleur, force: TR.force * 0.5, taille: [0.35, 0.35], entree: 0.0001, sortie: 0.1, portee: 4 },
       balle: { image: I.trait, mode: P.TRAIT, brille: true, exacte: true, longueur: BA.longueur, couleur: [1, 0.85, 0.6], force: 1.4, opacite: BA.opacite, taille: [BA.largeur, BA.largeur], entree: 0.0001, sortie: 0.3 },
       etoile: { image: I.etoile, mode: P.FACE, brille: true, vie: EC.duree, taille: [EC.taille, EC.taille * 1.25], couleurs: [[2, 1.3, 0.55], [1.5, 0.6, 0.18]], entree: 0.0001, sortie: 1.6, portee: 2 },
@@ -114,6 +118,14 @@ Tanks.Tirs = (function () {
     const cle = (d.tireur || "?") + (d.equipeTireur || ""), n = (comptes.get(cle) || 0) + 1;
     comptes.set(cle, n);
     const traceuse = d.feu || n % R.traceur.chaque === 1 % R.traceur.chaque; // (les plombs incendiaires brillent tous)
+    // ✍️ (demande 115, Aliens) les Xyl'tharr (et TON fusil à plasma, ou ton fusil à rails) tirent des boules de plasma, lentes et vertes
+    const ts = monde && monde.toi && monde.toi.soldat, armeToi = d.parToi && ts && ts.arme === "principale" && ts.armes && ts.armes.principale && C.armesPrincipales[ts.armes.principale.id];
+    if (C.edition.regles.aliens && (d.equipeTireur === "rouges" || (armeToi && armeToi.plasma))) {
+      const v = PLASMA.vitesse * (armeToi && armeToi.vitesseBalle > 1000 ? 6 : 1), x0 = d.de.x + ux * 0.5, y0 = d.de.y + uy * 0.5, z0 = d.de.z + uz * 0.5, vie = Math.max(0.02, dist / v);
+      P.emettre(M.plasma, x0, y0, z0, ux * v, uy * v, uz * v, 1, null, vie);
+      P.emettre(M.lueurPlasma, x0, y0, z0, ux * v, uy * v, uz * v, 1, null, vie);
+      return; // (pas de douille, pas de gerbe de terre : la boule s'éteint là où elle arrive)
+    }
     const S = traceuse ? R.traceur : R.balle, v = S.vitesse, vie = Math.max(0.02, dist / v);
     // (la balle part un peu devant le canon, pour ne pas briller DANS l'arme)
     const depart = premiere ? 1.2 : 0.4, x0 = d.de.x + ux * depart, y0 = d.de.y + uy * depart, z0 = d.de.z + uz * depart;

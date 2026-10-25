@@ -745,6 +745,11 @@ Tanks.Tableau = (function () {
     const sb = Tanks.Monde.soldatsVivants(monde, "bleus"), sr = Tanks.Monde.soldatsVivants(monde, "rouges");
     texte("🪖 " + sb + " / " + C.soldats.parEquipe + "   soldats   " + sr + " / " + C.soldats.parEquipe + " 🪖", L / 2, 66, 12, "rgba(232,228,214,.85)", "center");
     if (Tanks.GuerreCivile && Tanks.GuerreCivile.actif) drapeauxDeQuartier(monde); // (demande 115, Guerre civile)
+    if (Tanks.Aliens && Tanks.Aliens.actif) { // (demande 115, Aliens) les 3 pylônes et le cœur du vaisseau-mère
+      const AL = Tanks.Aliens, V = AL.vaisseau;
+      panneau(L / 2 - 190, 76, 380, 30);
+      texte(AL.pylones.map((p) => (p.detruit ? "💥" : "💎")).join(" ") + "  pylônes   ·   " + (V.coeur.detruit ? "🌟 cœur détruit" : V.bouclier ? "🛡️ cœur protégé" : "💚 CŒUR : " + Math.ceil(V.coeur.vie) + " / " + V.coeur.vieMax), L / 2, 96, 14, V.bouclier ? "#9dd8ff" : "#7dffb8", "center");
+    }
     }
     // En bas à gauche : ta vie et la recharge
     if (dansLeTank) {
@@ -886,7 +891,7 @@ Tanks.Tableau = (function () {
       const perdu = Tanks.GuerreCivile && Tanks.GuerreCivile.actif && Tanks.GuerreCivile.etat.tickets.bleus <= 0 && !(t.soldat && t.soldat.mort) ? "🎟️ Plus de renforts…" : t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "moto" ? "💥 Ta moto est hors de combat…" : t.mode === "quad" ? "💥 Ton quad est hors de combat…" : t.mode === "camion" ? "💥 Ton camion est détruit…" : t.engin && t.engin.genre === "helico" ? "🔥 Ton " + t.engin.nom + " est abattu…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : t.mode === "sousmarin" ? "🌊 Ton sous-marin est coulé…" : t.mode === "dca" ? "💥 Ton " + (C.engins.dca.nomCourt || "camion antiaérien") + " est détruit…" : t.mode === "helico" || t.mode === "drone" ? "🔥 Ton " + t.engin.nom + " est abattu…" : "💥 Ton tank est détruit…";
       texte(gagne ? "🏆 VICTOIRE !" : perdu, L / 2, H / 2 - 40, 38, gagne ? "#7dffa0" : "#ff7a6a", "center");
       const qgFin = monde.metro && monde.metro.qg && !monde.campagne ? monde.metro.qg : null; // (livre n° 25)
-      texte(gagne ? (qgFin && qgFin.rouges.detruit ? "🏚️ Le QG du Front est détruit : ils n'ont plus de commandement !" : monde.metro ? "Les Rouges n'ont plus ni renfort ni soldat debout dans la station" : (Tanks.Relais && Tanks.Relais.actif && Tanks.Relais.bilan.raison ? Tanks.Relais.bilan.raison : Tanks.GuerreCivile && Tanks.GuerreCivile.actif && Tanks.GuerreCivile.bilan.raison ? Tanks.GuerreCivile.bilan.raison : "Tous les tanks rouges sont détruits")) : qgFin && qgFin.bleus.detruit ? "🏚️ Ton QG Rempart est détruit…" : Tanks.GuerreCivile && Tanks.GuerreCivile.actif && Tanks.GuerreCivile.etat.tickets.bleus <= 0 ? "🎟️ Le Front n'a plus de tickets : la Garde tient la ville…" : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
+      texte(gagne ? (qgFin && qgFin.rouges.detruit ? "🏚️ Le QG du Front est détruit : ils n'ont plus de commandement !" : monde.metro ? "Les Rouges n'ont plus ni renfort ni soldat debout dans la station" : (Tanks.Relais && Tanks.Relais.actif && Tanks.Relais.bilan.raison ? Tanks.Relais.bilan.raison : Tanks.GuerreCivile && Tanks.GuerreCivile.actif && Tanks.GuerreCivile.bilan.raison ? Tanks.GuerreCivile.bilan.raison : Tanks.Aliens && Tanks.Aliens.actif && Tanks.Aliens.bilan.raison ? Tanks.Aliens.bilan.raison : "Tous les tanks rouges sont détruits")) : qgFin && qgFin.bleus.detruit ? "🏚️ Ton QG Rempart est détruit…" : Tanks.GuerreCivile && Tanks.GuerreCivile.actif && Tanks.GuerreCivile.etat.tickets.bleus <= 0 ? "🎟️ Le Front n'a plus de tickets : la Garde tient la ville…" : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
       const S = Tanks.Sauvegarde.donnees;
       texte("Victoires : " + S.victoires + " · défaites : " + S.defaites + (monde.metro ? " · victoires dans le souterrain : " + S.souterrain : " · tanks détruits : " + S.detruits), L / 2, H / 2 + 24, 15, "#e8e4d6", "center");
       texte("Entrée : menu · R : rejouer avec le même équipement", L / 2, H / 2 + 56, 17, "#ffe27a", "center");

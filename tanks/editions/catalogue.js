@@ -43,8 +43,8 @@ Tanks.EDITIONS = (function () {
     { id: "civile", nom: "Guerre civile", icone: "⚔️", epoque: "un pays coupé en deux", pret: true,
       pitch: "La ville de Tessaline, en Corvanie (un pays inventé), coupée en deux : le Front des Oliviers (toi, une milice) contre la Garde républicaine. Barricades, pick-ups armés, souk, citadelle, 5 drapeaux de quartier à prendre.",
       image: { ciel: ["#c79a6a", "#f0d6a8"], sol: "#8a7458", motif: "barricades", soleil: "#ffd68a" } },
-    { id: "aliens", nom: "Bataille contre des aliens", icone: "👽", epoque: "l'invasion", pret: false,
-      pitch: "Les Vorrks débarquent : armes à plasma, vaisseaux, murs de bouclier. Toute l'humanité dans le même camp.",
+    { id: "aliens", nom: "Bataille contre des aliens", icone: "👽", epoque: "l'invasion", pret: true,
+      pitch: "2061 : les Xyl'tharr débarquent à Néo-Lyriane. Tripodes, soucoupes, rampants, boucliers d'énergie. Détruis leurs 3 pylônes, puis le cœur du vaisseau-mère ! Toute l'humanité dans la Ligue Terrienne.",
       image: { ciel: ["#1d1035", "#6a3f8f"], sol: "#2b2440", motif: "aliens", soleil: "#9effc8" } },
   ];
   const donnees = {}; // id → les données d'une édition prête (remplace, regles, modeles)

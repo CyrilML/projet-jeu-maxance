@@ -241,6 +241,7 @@
       <a href="#etape118">Étape 118</a>
       <a href="#etape119">Étape 119</a>
       <a href="#etape120">Étape 120</a>
+      <a href="#etape121">Étape 121</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -6000,6 +6001,46 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape121">
+      <h2>👽 Étape 121 : l'édition Bataille contre des aliens <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">La 7e et dernière édition : en 2061, la Ligue Terrienne contre les envahisseurs Xyl'tharr. Les 8 éditions sont maintenant ouvertes ! <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/115-editions.md</code>.</p>
+          <ul>
+            <li>✍️ « Bataille contre des aliens » (dans la liste des éditions).</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 65 ».</li>
+            <li>☐ 📜 ÉDITIONS → « Aliens » : plus aucune édition « bientôt ».</li>
+            <li>☐ Les soldats Xyl'tharr (casque à crête, yeux verts) tirent du plasma vert lent ; leur bouclier arrête 3 balles puis surcharge (le fusil électrique RX-9 le casse d'un coup).</li>
+            <li>☐ Les petits robots rampants foncent sur toi ; les tripodes ont un cœur lumineux sous le ventre (double dégâts) ; deux soucoupes bombardent.</li>
+            <li>☐ Détruis les 3 pylônes de cristal (explosifs) → le dôme du vaisseau-mère tombe → détruis son cœur → victoire !</li>
+            <li>☐ Un alien vaincu se dissout en lumière verte (pas de sang).</li>
+            <li>☐ Le ciel violet et vert, les aurores, les cristaux, la musique étrange (thérémine et chœur).</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🛡️ Un bouclier qui se recharge</h3>
+      <p>Le bouclier d'un alien est un 2e compteur de vie (3 points) qui passe AVANT la vraie vie. S'il n'est pas touché pendant 3 secondes, il se recharge. Alors il faut tirer en rafale pour le casser, puis continuer avant qu'il revienne ! Les explosions, elles, passent à travers.</p>
+      <h3>🔗 Un objectif en chaîne</h3>
+      <p>Pylônes → dôme → cœur : chaque étape débloque la suivante. Le jeu vérifie à chaque instant « reste-t-il un pylône ? ». Si non, le dôme disparaît. C'est une condition qui en ouvre une autre.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot : l'état des pylônes, du dôme et du cœur, et les boucliers des aliens.</li>
+            <li>Ouvre <code>tanks/editions/aliens.js</code> : change la force du bouclier.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Comment casser le bouclier d'un alien d'un seul coup ? <span class="petit">(avec le fusil électrique RX-9)</span></li>
+            <li>Que faut-il détruire avant le cœur du vaisseau ? <span class="petit">(les 3 pylônes)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7513,6 +7554,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-120" data-cle="appris-120" placeholder="Ex. : …"></textarea>
         <label for="idees-120"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-120" data-cle="idees-120" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 121 · l'édition Aliens <span class="petit">· 25 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/editions/aliens.js</code>, <code>logique/aliens.js</code>, <code>affichage/aliens3d.js</code>.</p>
+        <p class="petit">✍️ Maxance a demandé : l'édition Bataille contre des aliens.</p>
+        <label for="appris-121"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-121" data-cle="appris-121" placeholder="Ex. : …"></textarea>
+        <label for="idees-121"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-121" data-cle="idees-121" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

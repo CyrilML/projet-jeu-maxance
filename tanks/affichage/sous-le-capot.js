@@ -211,6 +211,17 @@ Tanks.SousLeCapot = (function () {
     "relais-touche": (d) => "📡 " + d.nom + " est touché" + (d.filet ? " (le FILET arrête une partie de la charge)" : "") + " : " + d.vie + " / " + d.vieMax,
     "relais-detruit": (d) => "💥 " + d.nom + " est DÉTRUIT" + (d.genre === "antenne" ? " : ses drones perdent de la portée · il reste " + d.restent + " antenne(s) à ce camp" : " !"),
     "drone-abattu": (d) => "🔫 " + d.nom + " : ABATTU par " + d.par + " (il tombe)",
+    // ✍️ (demande 115, Aliens) les pylônes, le vaisseau-mère, les boucliers, les rampants
+    "pylone-touche": (d) => "💎 " + d.nom + " est touché (" + d.sorte + ") : " + d.vie + " / " + d.vieMax,
+    "pylone-detruit": (d) => "💥 " + d.nom + " est DÉTRUIT ! Il reste " + d.restent + " pylône(s) pour tenir le bouclier du vaisseau-mère",
+    "vaisseau-bouclier": () => "🛸 Les 3 pylônes sont détruits : le DÔME qui protégeait le cœur du vaisseau-mère s'éteint ! Attaque le cœur, au pied du rayon !",
+    "coeur-protege": (d) => "🛡️ Le dôme d'énergie arrête l'explosion : détruis d'abord les pylônes (il en reste " + d.restent + ")",
+    "coeur-touche": (d) => "💚 Le CŒUR du vaisseau-mère est touché : " + d.vie + " / " + d.vieMax,
+    "coeur-detruit": () => "🌟 Le CŒUR du vaisseau-mère est DÉTRUIT : l'invasion est repoussée !",
+    "bouclier-alien": (d) => d.surcharge ? "⚡ Le bouclier de " + d.cible + " est SURCHARGÉ : maintenant, les balles passent !" : "🔵 Le bouclier de " + d.cible + " arrête la balle (" + d.reste + " / " + d.max + ")",
+    "rampants-sortent": (d) => "🕷️ Un rampant sort de la base des Xyl'tharr (" + d.enJeu + " en jeu)",
+    "rampant-abattu": (d) => "✖ " + d.nom + " est détruit (" + d.par + ")" + (d.parToi ? " — par toi !" : ""),
+    "rampant-explose": (d) => "💥 " + d.nom + " saute sur " + d.cible + " et explose",
     // ✍️ (demande 115, Guerre civile) les drapeaux de quartier, les tickets, les renforts, les mortiers
     "quartier-pris": (d) => "🏴 " + d.campNom + " PREND " + d.nom + (d.avecToi ? " (avec toi !)" : "") + " · drapeaux : 🟢 " + d.tenusBleus + " · 🔴 " + d.tenusRouges + " sur " + d.total + " (celui qui en tient le plus fait baisser les tickets de l'autre)",
     "quartier-neutralise": (d) => "🏳️ " + d.nom + " n'est plus " + (d.avant === "bleus" ? "au Front" : "à la Garde") + " : le drapeau est descendu (neutre). Encore un peu, et il est " + (d.par === "bleus" ? "au Front" : "à la Garde") + " !",
@@ -451,6 +462,21 @@ Tanks.SousLeCapot = (function () {
     if (g && g.cratere) l.push(["🔧 ton outil", "tu rebouches un cratère : " + Math.round(g.cratere.repare * 100) + " % (" + DE.reparation.outil + " s par cratère)"]);
     l.push(["dessin des bases", B3.visibles + " / " + B3.bases + " base(s) dessinée(s) (les autres sont trop loin) · " + B3.dessins + " dessins par base · " + B3.balises + " balises (des boîtes qui brillent, 1 dessin, aucune vraie lumière) · " + Math.round(B3.triangles / 1000) + " k triangles soudés · " + B3.crateres + " cratère(s) dessiné(s) · " + B3.croix + " croix « X »"]);
   }
+  // ✍️ (demande 115, Aliens) LES PYLÔNES, LE VAISSEAU-MÈRE, LES ALIENS PAR SORTE, LES BOUCLIERS
+  function lignesAliens(l) {
+    const AL = Tanks.Aliens;
+    if (!AL || !AL.actif) return;
+    const B = AL.bilan, V = AL.vaisseau, A = C.aliens, A3 = Tanks.Aliens3D && Tanks.Aliens3D.bilan;
+    l.push(["👽 la règle", "détruis les " + AL.pylones.length + " pylônes (des explosions à moins de " + A.souffle + " m) → le dôme du vaisseau-mère tombe → détruis son CŒUR (explosions à moins de " + A.vaisseau.coeur.rayon + " m) = victoire"]);
+    l.push(["💎 pylônes", AL.pylones.map((p) => p.nom.replace(/^le pylône /, "") + " " + (p.detruit ? "💥 détruit" : virgule(p.vie, 1) + " / " + p.vieMax)).join(" · ") + " · coups reçus : " + B.touches]);
+    l.push(["🛸 vaisseau-mère", "à " + A.vaisseau.hauteur + " m de haut · dôme " + (V.bouclier ? "🛡️ ALLUMÉ (" + AL.debout() + " pylône(s) debout)" : "ÉTEINT") + " · cœur " + (V.coeur.detruit ? "💥 détruit" : virgule(V.coeur.vie, 1) + " / " + V.coeur.vieMax) + " · coups sur le cœur : " + B.coeurTouche]);
+    const sold = monde.soldats.filter((s) => s.equipe === "rouges" && !s.mort), avecB = sold.filter((s) => s.bouclier > 0).length;
+    const tri = monde.chars.filter((c) => c.equipe === "rouges"), sou = monde.avions.filter((a) => a.equipe === "rouges" && a.sorte === "chasseur");
+    l.push(["👽 aliens", "🧍 soldats " + sold.length + " (bouclier chargé : " + avecB + ") · 🕷️ rampants " + AL.rampants.filter((r) => !r.mort).length + " (sortis " + B.rampants.sortis + ", détruits " + B.rampants.abattus + " dont " + B.rampants.parToi + " par toi, explosés " + B.rampants.explose + ") · 🦿 tripodes " + tri.filter((c) => !c.detruit).length + " / " + tri.length + " (coups au ventre ×" + (C.charsEnnemis[0].coeurFaible || 1) + " : " + B.ventre + ") · 🛸 soucoupes " + sou.filter((a) => !a.detruit).length + " / " + sou.length]);
+    l.push(["🔵 boucliers", "chaque Xyl'tharr : " + A.bouclier.points + " points (il remonte de " + A.bouclier.recharge + " par seconde après " + A.bouclier.attente + " s sans être touché) · dégâts arrêtés : " + virgule(B.absorbe, 1) + " · surcharges : " + B.surcharges + " · dissous en lumière : " + B.dissous]);
+    for (const r of AL.rampants.filter((r) => !r.mort).slice(0, 4)) l.push(["   🕷️ " + r.nom, r.etat]);
+    if (A3) l.push(["🎨 dessin", A3.cristaux + " cristaux et " + A3.fleches + " flèches soudés en " + A3.dessins + " dessins (" + Math.round(A3.triangles / 1000) + " k triangles) · rampants dessinés : " + A3.rampantsVus + " (1 dessin) · éclairs : " + A3.eclairs + " · poussières de lumière : " + A3.poussieres + " · aucune vraie lumière"]);
+  }
   // ✍️ (demande 115, Guerre civile) LES DRAPEAUX DE QUARTIER, LES TICKETS, LES BARRICADES, LES PICK-UPS ARMÉS, LES MORTIERS
   function lignesGuerreCivile(l) {
     const GC = Tanks.GuerreCivile;
@@ -515,6 +541,7 @@ Tanks.SousLeCapot = (function () {
       if (Tanks.FrontEst.actif) l.push(["🧱 le génie", FE.dents + " dents de dragon en " + FE.rangees + " rangées (" + FE.arretes + " fois un véhicule arrêté" + (FE.dernier ? ", le dernier : " + FE.dernier : "") + ") · " + FE.silos + " silos ronds · " + FE.panneaux + " panneaux « MINES » · " + E3.filets + " filets de camouflage · " + E3.champs + " champs de tournesols · " + E3.traces + " traces de chenilles · dessin : " + E3.dessins + " objets soudés"]);
     }
     lignesGuerreCivile(l);
+    lignesAliens(l);
     const TR = Tanks.Tranchees;
     if (!TR.actif) return;
     if (!TR.reseau) { for (const e of monde.engins) if (e.genre === "mitrailleuse") l.push([(e.equipe === "bleus" ? "🔵 " : "🔴 ") + e.nom, (e.pilote ? "👤 TOI · " : e.servant.etat + " · ") + "tourelle " + degres(e.tourelle) + " · " + e.tirs + " balles"]); return; } // (1944 : les nids de mitrailleuse)

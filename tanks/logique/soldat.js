@@ -50,6 +50,7 @@ Tanks.Soldat = (function () {
     degats *= Tanks.Campagne.facteurDegats(tireur, s); // (demande 90 : la difficulté de la campagne ; × 1 en bataille libre)
     const avant = degats;
     if (s.gilet) degats = Tanks.Plaques.absorber(s, degats, par, ev); // (livre n° 14 : les plaques du gilet arrêtent le coup d'abord)
+    if (Tanks.Aliens && Tanks.Aliens.actif) degats = Tanks.Aliens.absorber(s, degats, par, ev); // ✍️ (demande 115, Aliens : le BOUCLIER d'énergie d'un Xyl'tharr arrête la balle d'abord)
     s.vie = Math.max(0, s.vie - degats);
     s.touche = 0;
     if (tireur && tireur.x !== undefined && tireur.genre === "soldat") s.blessePar = tireur; // (livre n° 21 : il saura d'où vient le coup)
@@ -90,7 +91,8 @@ Tanks.Soldat = (function () {
   function balle(tireur, x, y, z, angle, arme, soldats, vehicules, ev, legers) {
     // (étape 77) arme : un nom (les soldats de l'ordinateur) ou les vrais chiffres de TON arme (logique/armes.js)
     const R = typeof arme === "string" ? A[arme] : arme, CONE = R.cone || 0.12;
-    if (Tanks.DronesFPV && Tanks.DronesFPV.tirSurDrones(tireur, x, y, z, angle, R, ev)) return; // ✍️ (demande 115, Bataille de drones : TA balle peut abattre un drone ennemi)
+    if (Tanks.DronesFPV && Tanks.DronesFPV.tirSurDrones(tireur, x, y, z, angle, R, ev)) return;
+    if (Tanks.Aliens && Tanks.Aliens.actif && Tanks.Aliens.tirSurRampants(tireur, x, y, z, angle, R, ev)) return; // ✍️ (demande 115, Aliens : la balle peut détruire un rampant) // ✍️ (demande 115, Bataille de drones : TA balle peut abattre un drone ennemi)
     let meilleur = null;
     for (const s of soldats) {
       if (s.mort || s.dansUnEngin || s.equipe === tireur.equipe || s === tireur) continue;

@@ -164,6 +164,12 @@ Tanks.EcranEditions = (function () {
       x.fillRect(24, 8, 12, 14);
       for (const cx of [23, 28, 33]) x.fillRect(cx, 5, 4, 4);
       x.fillStyle = d.fond[0], x.fillRect(28.5, 15, 3, 7);
+    } else if (d.embleme === "globe") { // (Aliens, la Ligue Terrienne : la Terre, ses méridiens)
+      x.lineWidth = 2, x.strokeStyle = d.fond[1], x.beginPath(), x.arc(30, 13, 9, 0, Math.PI * 2), x.stroke();
+      x.beginPath(), x.ellipse(30, 13, 4, 9, 0, 0, Math.PI * 2), x.moveTo(21, 13), x.lineTo(39, 13), x.stroke();
+    } else if (d.embleme === "oeil") { // (Aliens, les Xyl'tharr : un œil en amande, la pupille fendue)
+      x.beginPath(), x.moveTo(17, 13), x.quadraticCurveTo(30, 1, 43, 13), x.quadraticCurveTo(30, 25, 17, 13), x.fill();
+      x.fillStyle = d.fond[0], x.fillRect(29, 6, 2.5, 14);
     } else if (d.embleme === "rameau" || d.embleme === "etoile") { // (Guerre civile : le rameau d'olivier du Front, l'étoile de la Garde)
       if (Tanks.Civile3D) Tanks.Civile3D.symbole(x, d.embleme, 30, 13, 10, d.fond[1]);
       else x.fillRect(25, 8, 10, 10);

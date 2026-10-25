@@ -570,6 +570,14 @@ Tanks.Engins3D = (function () {
       dernier().echelle = [1.08, 1.0, 1];
       dernier().rz2 = pente;
       if (detail) pc("cou", galet(0.05, 0.02, 0.03, 0.3, 4), -0.02, yc + 0.05, 0.145, 0xd8d0b0, 0.5, 0, 0); // (un paquet glissé sous l'élastique)
+    } else if (K.casqueStyle === "xyl") { // ✍️ (demande 115, Aliens, les Xyl'tharr) le CASQUE-CARAPACE : il enferme toute la tête, s'allonge
+      // vers l'arrière en une crête, et deux grands YEUX brillent devant (la couleur du camp)
+      pc("cou", new THREE.SphereGeometry(0.15, n, detail ? 10 : 6), 0.0, yc - 0.04, 0, acier, 0, 0, pente);
+      dernier().echelle = [1.22, 1.12, 0.95];
+      pc("cou", galet(0.3, 0.09, 0.07, 0.5, 8), -0.13, yc + 0.07, 0, acier, 0, 0, 0.55); // la crête
+      pc("cou", galet(0.07, 0.12, 0.2, 0.5, 8), 0.12, yc - 0.13, 0, K.sangle); // la mâchoire (une plaque sombre)
+      for (const z of [-0.05, 0.05]) pc("cou", galet(0.03, 0.026, 0.05, 0.6, 8), 0.172, yc - 0.03, z, joueur ? K.marqueToi : K.marque, 0, z > 0 ? 0.35 : -0.35, 0); // les yeux
+      return;
     } else if (K.casqueStyle === "milice") { // ✍️ (demande 115, Guerre civile, le Front des Oliviers) pas de casque : une CASQUETTE (la
       // calotte en tissu, la visière devant) et le FOULARD de la couleur du camp noué autour du cou
       pc("cou", new THREE.SphereGeometry(0.122, n, detail ? 8 : 5, 0, Math.PI * 2, 0, Math.PI * 0.42), -0.01, yc - 0.035, 0, acier, 0, 0, pente);

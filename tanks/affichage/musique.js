@@ -279,6 +279,31 @@ Tanks.Musique = (function () {
     for (const x of [o, o2]) x.start(t), x.stop(t + fin + 0.05);
     etat.notes++;
   }
+  // ✍️ (demande 115, Aliens) LA VOIX ÉTRANGE (comme un « thérémine ») : une onde toute douce (sinus) qui GLISSE d'une note
+  // à l'autre et TREMBLE (le vibrato), doublée une octave plus haut, très bas, dans beaucoup d'écho.
+  let noteTheremine = 0;
+  function theremine(f, t, duree) {
+    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), vib = ctx.createOscillator(), pv = ctx.createGain(), g = ctx.createGain();
+    o.type = "sine", o2.type = "sine";
+    o.frequency.setValueAtTime(noteTheremine || f, t);
+    o.frequency.exponentialRampToValueAtTime(f, t + Math.min(0.35, duree * 0.4)); // (le glissé depuis la note d'avant)
+    o2.frequency.setValueAtTime((noteTheremine || f) * 2, t);
+    o2.frequency.exponentialRampToValueAtTime(f * 2, t + Math.min(0.35, duree * 0.4));
+    noteTheremine = f;
+    vib.frequency.value = 5.5;
+    pv.gain.value = f * 0.012;
+    vib.connect(pv), pv.connect(o.frequency), pv.connect(o2.frequency);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(M.theremine, t + 0.25);
+    g.gain.setValueAtTime(M.theremine, t + Math.max(0.3, duree - 0.3));
+    g.gain.linearRampToValueAtTime(0.0001, t + duree + 0.2);
+    const g2 = ctx.createGain();
+    g2.gain.value = 0.25;
+    o.connect(g), o2.connect(g2).connect(g);
+    brancher(g, 0.9);
+    for (const x of [o, o2, vib]) x.start(t), x.stop(t + duree + 0.3);
+    etat.notes++;
+  }
   // ✍️ (demande 115, Guerre civile) LA DARBOUKA : un petit tambour en forme de gobelet. « D » (doum) : la main frappe le
   // MILIEU de la peau (un son grave qui descend) ; « t » (tek) : les doigts claquent sur le BORD (un petit coup sec, aigu).
   function darbouka(t, coup) {
@@ -368,6 +393,7 @@ Tanks.Musique = (function () {
     if (partie === "thème") {
       for (const [quand, nom, longueur] of M.melodie[(mesure - 8) % M.melodie.length]) if (quand === i) {
         if (M.guitare) { guitare([hz(nom)], t, croche * longueur, 1.1); continue; }
+        if (M.theremine) { theremine(hz(nom), t, croche * longueur); continue; } // (demande 115, Aliens : la mélodie à la voix étrange)
         if (M.oud) { for (let r = 0; r < (longueur >= 3 ? longueur * 2 : 1); r++) oud(hz(nom), t + (r * croche) / 2, croche * (longueur >= 3 ? 0.7 : longueur), r ? 0.55 : 1.2); continue; } // (demande 115 : la mélodie au oud ; une note longue = le « trémolo » : la corde pincée très vite, encore et encore) // (demande 115, Guerre froide : la mélodie à la guitare)
         cuivre(hz(nom), t, croche * longueur);
         cuivre(hz(nom) / 2, t, croche * longueur); // (les trombones, une octave plus bas : plus puissant)

@@ -321,6 +321,7 @@ Tanks.Scene = (function () {
     if (!o) {
       o = Tanks.Engins3D.soldat(camp, s.joueur, classe);
       o.camp = camp;
+      if (Tanks.Aliens && Tanks.Aliens.actif && s.equipe === "rouges") o.g.scale.setScalar(1.15); // (demande 115, Aliens : les Xyl'tharr sont plus grands)
       scene.add(o.g);
       dessinsSoldats.set(s, o);
     }
@@ -339,7 +340,7 @@ Tanks.Scene = (function () {
   function placerSoldat(o, s, cam, dt) {
     // (étape 72) loin de la caméra (plus loin que les silhouettes), on ne le dessine pas : il serait plus petit qu'un point
     const d = Math.hypot(s.x - cam.position.x, s.z - cam.position.z);
-    const cache = s.dansUnEngin || d > Q.soldatSilhouette || (s.mort && s.depuisMort > 20);
+    const cache = s.dansUnEngin || d > Q.soldatSilhouette || (s.mort && s.depuisMort > 20) || s.dissous; // (demande 115, Aliens : un Xyl'tharr vaincu s'est dissous en lumière)
     // assez loin (et pas toi, pas en parachute, pas à la nage) : une silhouette au lieu du squelette
     const silhouette = !cache && !s.joueur && !s.parachute && !s.nage && d > Q.soldatSimple && poserSilhouette(s);
     o.g.visible = !cache && !silhouette;
@@ -881,7 +882,8 @@ Tanks.Scene = (function () {
     }
     placerProjectiles(monde);
     if (Tanks.DronesFPV3D) Tanks.DronesFPV3D.maj(scene, monde); // (demande 115, Europe de l'Est : les drones FPV des deux camps)
-    if (Tanks.Civile3D) Tanks.Civile3D.maj(scene, monde, dt); // (demande 115, Guerre civile : les drapeaux de quartier qui montent et flottent, l'horloge)
+    if (Tanks.Civile3D) Tanks.Civile3D.maj(scene, monde, dt);
+    if (Tanks.Aliens3D) Tanks.Aliens3D.maj(scene, monde, dt, cam); // (demande 115, Aliens : les rampants, les éclats des boucliers, la poussière de lumière, le dôme) // (demande 115, Guerre civile : les drapeaux de quartier qui montent et flottent, l'horloge)
     if (Tanks.Relais3D) Tanks.Relais3D.maj(scene, monde, dt); // (demande 115, Bataille de drones : les canons anti-drones, les antennes, ton robot)
     Tanks.Explosifs3D.maj(monde, dt, scene); // (demande 98 : les mines, les C4, les claymores posés et les nuages de fumée)
     Tanks.Objets3D.maj(monde, dt, scene); // (livre n° 15 : la trousse posée et son anneau vert ; l'étincelle du défibrillateur)

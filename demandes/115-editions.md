@@ -1,6 +1,6 @@
 # Demande n° 115 : les éditions de The Last Battlefield (livre de demandes n° 24)
 
-> Statut : 🛠️ en cours : le système et l'édition 1916 (tanks version 59), l'édition 1944 (version 60), l'édition Guerre froide (version 61), l'édition Europe de l'Est (version 62), l'édition Bataille de drones (version 63), l'édition Guerre civile (version 64) sont livrés.
+> Statut : ✅ livrée : le système et 1916 (tanks version 59), 1944 (60), Guerre froide (61), Europe de l'Est (62), Bataille de drones (63), Guerre civile (64), Aliens (65).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -30,4 +30,4 @@ Ukraine, Bataille de drones, Guerre civile, Bataille contre des aliens. Fais tou
 
 ## ✅ Critères de réussite
 - [x] La porte ÉDITIONS et le système d'éditions.
-- [ ] Les 7 éditions, chacune avec ses armes, ses véhicules, ses uniformes, sa carte et sa musique.
+- [x] Les 7 éditions, chacune avec ses armes, ses véhicules, ses uniformes, sa carte et sa musique.
