@@ -357,7 +357,7 @@ Tanks.Tableau = (function () {
           if (d < dmin) (dmin = d), (proche = nom);
         };
         voir(monde.joueur, "ton tank", C.char.rayon);
-        for (const x of monde.engins) if (x.equipe !== "rouges") voir(x, x.sorte === "dca" ? "!conduire le " + x.fiche.icone + " camion antiaérien" : x.fiche.icone + " " + x.nom, x.sorte === "bateau" ? 7 : x.sorte === "sousmarin" ? 11 : x.sorte === "camion" ? 3.5 : x.genre === "helico" ? x.fiche.rayon : 2);
+        for (const x of monde.engins) if (x.equipe !== "rouges") voir(x, x.sorte === "dca" ? "!conduire le " + x.fiche.icone + " " + (C.engins.dca.nomCourt || "camion antiaérien") : x.fiche.icone + " " + x.nom, x.sorte === "bateau" ? 7 : x.sorte === "sousmarin" ? 11 : x.sorte === "camion" ? 3.5 : x.genre === "helico" ? x.fiche.rayon : 2);
         if (proche) invite("E", proche[0] === "!" ? proche.slice(1) : "monter dans " + proche, L / 2, H - 150); // (livre n° 1 : une petite pastille, plus un gros texte jaune) (demande 113 : « E : conduire le camion antiaérien »)
       }
       return;
@@ -365,7 +365,7 @@ Tanks.Tableau = (function () {
     // ✍️ (demande 113) LE CAMION ANTIAÉRIEN. Au canon (F) : le viseur dans le ciel, le carré rouge sur l'avion visé et le
     // petit rond jaune « tire ici » (devant lui). Au volant : le carré rouge sur la cible de ton tireur, et ce qu'il fait.
     if (e.sorte === "dca") {
-      const R = C.engins.dca, a = e.angle + e.tourelle, h = e.hausse, ti = e.tireur, auCanon = e.siege === "canon", b = Tanks.AntiAerien.bouche(e);
+      const R = C.engins.dca, SOL = !!R.sol, CAMION = R.nomCourt || "camion", a = e.angle + e.tourelle, h = e.hausse, ti = e.tireur, auCanon = e.siege === "canon", b = Tanks.AntiAerien.bouche(e);
       if (auCanon) {
         const v = Tanks.Scene.versEcran(b.x + Math.cos(a) * Math.cos(h) * 400, b.y + Math.sin(h) * 400, b.z + Math.sin(a) * Math.cos(h) * 400, L, H);
         if (v) viseur(v, !!e.cible, 16);
@@ -384,18 +384,18 @@ Tanks.Tableau = (function () {
           ctx.beginPath();
           ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
           ctx.stroke();
-          if (auCanon) texte("visée assistée : tire !", p.x, p.y + 22, 12, "#ffe27a", "center");
+          if (auCanon && !SOL) texte("visée assistée : tire !", p.x, p.y + 22, 12, "#ffe27a", "center");
         }
       }
       panneau(12, H - 118, 430, 106);
-      texte(R.icone + " " + R.nom + (auCanon ? " · 🎯 TU ES AU CANON" : " · au volant"), 24, H - 92, 16, "#ffe27a");
+      texte(R.icone + " " + R.nom + (auCanon ? (SOL ? " · 🎯 MITRAILLEUSE" : " · 🎯 TU ES AU CANON") : " · au volant"), 24, H - 92, 16, "#ffe27a");
       cases(24, H - 80, R.vie, e.vie);
-      texte("vie · " + Math.round(Math.abs(e.vitesse) * 3.6) + " km/h · canon levé de " + Math.round((h * 180) / Math.PI) + "°", 24 + R.vie * 30 + 4, H - 68, 13, "#ccc");
-      const etatTireur = !ti.vivant ? "🪖 tireur à terre : ramène le camion à ta base" + (ti.remplace > 0 ? " (un nouveau dans " + Math.ceil(R.tireur.remplace - ti.remplace) + " s)" : "") : auCanon ? "🪖 ton tireur a pris le volant" : "🪖 tireur (vie " + ti.vie + " / " + R.tireur.vie + ") : " + ti.etat;
+      texte("vie · " + Math.round(Math.abs(e.vitesse) * 3.6) + (SOL ? " km/h · mitrailleuse levée de " : " km/h · canon levé de ") + Math.round((h * 180) / Math.PI) + "°", 24 + R.vie * 30 + 4, H - 68, 13, "#ccc");
+      const etatTireur = !ti.vivant ? "🪖 tireur à terre : ramène le " + CAMION + " à ta base" + (ti.remplace > 0 ? " (un nouveau dans " + Math.ceil(R.tireur.remplace - ti.remplace) + " s)" : "") : auCanon ? "🪖 ton tireur a pris le volant" : "🪖 tireur (vie " + ti.vie + " / " + R.tireur.vie + ") : " + ti.etat;
       texte(etatTireur, 24, H - 44, 13, ti.vivant ? "#e8e4d6" : "#ff9a8a");
       if (auCanon) barre(24, H - 32, 200, 1 - e.feu / R.cadence, e.feu === 0, "Espace : tirer · F : reprendre le volant");
-      else texte("💥 " + e.tirs + " obus · " + e.touches + " touches · " + e.abattus + " abattu(s) · F : prendre le canon", 24, H - 22, 12, "#ccc");
-      dessinerAide(monde, auCanon ? "← → tourner les canons · ↑ ↓ les lever / baisser · Espace tirer · F reprendre le volant · E descendre" : "↑ ↓ ← → conduire · ton tireur tire tout seul · F prendre le canon · E descendre (arrêté)");
+      else texte(SOL ? "💥 " + e.tirs + " balles · F : prendre la mitrailleuse" : "💥 " + e.tirs + " obus · " + e.touches + " touches · " + e.abattus + " abattu(s) · F : prendre le canon", 24, H - 22, 12, "#ccc");
+      dessinerAide(monde, SOL ? (auCanon ? "← → tourner la mitrailleuse · Espace tirer (le carré rouge : un ennemi devant) · F reprendre le volant · E descendre" : "↑ ↓ ← → conduire · ton mitrailleur tire tout seul · F prendre la mitrailleuse · E descendre (arrêté)") : auCanon ? "← → tourner les canons · ↑ ↓ les lever / baisser · Espace tirer · F reprendre le volant · E descendre" : "↑ ↓ ← → conduire · ton tireur tire tout seul · F prendre le canon · E descendre (arrêté)");
       return;
     }
     if (e.sorte === "sousmarin") {
@@ -744,6 +744,7 @@ Tanks.Tableau = (function () {
     texte(rouges + " / " + E.ennemis + " 🔴", L / 2 + 34, 37, 20, E.rouges.marque);
     const sb = Tanks.Monde.soldatsVivants(monde, "bleus"), sr = Tanks.Monde.soldatsVivants(monde, "rouges");
     texte("🪖 " + sb + " / " + C.soldats.parEquipe + "   soldats   " + sr + " / " + C.soldats.parEquipe + " 🪖", L / 2, 66, 12, "rgba(232,228,214,.85)", "center");
+    if (Tanks.GuerreCivile && Tanks.GuerreCivile.actif) drapeauxDeQuartier(monde); // (demande 115, Guerre civile)
     }
     // En bas à gauche : ta vie et la recharge
     if (dansLeTank) {
@@ -882,10 +883,10 @@ Tanks.Tableau = (function () {
     if (monde.phase === "victoire" || monde.phase === "defaite") {
       const gagne = monde.phase === "victoire";
       panneau(L / 2 - 240, H / 2 - 90, 480, 170);
-      const perdu = t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "moto" ? "💥 Ta moto est hors de combat…" : t.mode === "quad" ? "💥 Ton quad est hors de combat…" : t.mode === "camion" ? "💥 Ton camion est détruit…" : t.engin && t.engin.genre === "helico" ? "🔥 Ton " + t.engin.nom + " est abattu…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : t.mode === "sousmarin" ? "🌊 Ton sous-marin est coulé…" : t.mode === "dca" ? "💥 Ton camion antiaérien est détruit…" : t.mode === "helico" || t.mode === "drone" ? "🔥 Ton " + t.engin.nom + " est abattu…" : "💥 Ton tank est détruit…";
+      const perdu = Tanks.GuerreCivile && Tanks.GuerreCivile.actif && Tanks.GuerreCivile.etat.tickets.bleus <= 0 && !(t.soldat && t.soldat.mort) ? "🎟️ Plus de renforts…" : t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "moto" ? "💥 Ta moto est hors de combat…" : t.mode === "quad" ? "💥 Ton quad est hors de combat…" : t.mode === "camion" ? "💥 Ton camion est détruit…" : t.engin && t.engin.genre === "helico" ? "🔥 Ton " + t.engin.nom + " est abattu…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : t.mode === "sousmarin" ? "🌊 Ton sous-marin est coulé…" : t.mode === "dca" ? "💥 Ton " + (C.engins.dca.nomCourt || "camion antiaérien") + " est détruit…" : t.mode === "helico" || t.mode === "drone" ? "🔥 Ton " + t.engin.nom + " est abattu…" : "💥 Ton tank est détruit…";
       texte(gagne ? "🏆 VICTOIRE !" : perdu, L / 2, H / 2 - 40, 38, gagne ? "#7dffa0" : "#ff7a6a", "center");
       const qgFin = monde.metro && monde.metro.qg && !monde.campagne ? monde.metro.qg : null; // (livre n° 25)
-      texte(gagne ? (qgFin && qgFin.rouges.detruit ? "🏚️ Le QG du Front est détruit : ils n'ont plus de commandement !" : monde.metro ? "Les Rouges n'ont plus ni renfort ni soldat debout dans la station" : (Tanks.Relais && Tanks.Relais.actif && Tanks.Relais.bilan.raison ? Tanks.Relais.bilan.raison : "Tous les tanks rouges sont détruits")) : qgFin && qgFin.bleus.detruit ? "🏚️ Ton QG Rempart est détruit…" : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
+      texte(gagne ? (qgFin && qgFin.rouges.detruit ? "🏚️ Le QG du Front est détruit : ils n'ont plus de commandement !" : monde.metro ? "Les Rouges n'ont plus ni renfort ni soldat debout dans la station" : (Tanks.Relais && Tanks.Relais.actif && Tanks.Relais.bilan.raison ? Tanks.Relais.bilan.raison : Tanks.GuerreCivile && Tanks.GuerreCivile.actif && Tanks.GuerreCivile.bilan.raison ? Tanks.GuerreCivile.bilan.raison : "Tous les tanks rouges sont détruits")) : qgFin && qgFin.bleus.detruit ? "🏚️ Ton QG Rempart est détruit…" : Tanks.GuerreCivile && Tanks.GuerreCivile.actif && Tanks.GuerreCivile.etat.tickets.bleus <= 0 ? "🎟️ Le Front n'a plus de tickets : la Garde tient la ville…" : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
       const S = Tanks.Sauvegarde.donnees;
       texte("Victoires : " + S.victoires + " · défaites : " + S.defaites + (monde.metro ? " · victoires dans le souterrain : " + S.souterrain : " · tanks détruits : " + S.detruits), L / 2, H / 2 + 24, 15, "#e8e4d6", "center");
       texte("Entrée : menu · R : rejouer avec le même équipement", L / 2, H / 2 + 56, 17, "#ffe27a", "center");
@@ -1008,6 +1009,28 @@ Tanks.Tableau = (function () {
   }
   // ✍️ (livre n° 25) LA VIE DES DEUX QG, sous le panneau du haut : une barre par camp, et ses 3 baies (un carré chacune).
   // Attaqué depuis moins de 3 s ? la barre clignote en rouge.
+  // ✍️ (demande 115, Guerre civile) LES DRAPEAUX DE QUARTIER et LES TICKETS : 5 ronds (la couleur du camp qui tient le
+  // drapeau ; le rond se remplit quand on le prend ; il clignote quand il est disputé), et les tickets des deux camps.
+  function drapeauxDeQuartier(monde) {
+    const GC = Tanks.GuerreCivile, P = GC.points, n = P.length, l = 64 * n + 150, x0 = L / 2 - l / 2, Tk = GC.etat.tickets, Q = C.quartiers;
+    panneau(x0, 76, l, 46);
+    texte("🎟️ " + Tk.bleus, x0 + 10, 104, 16, E.bleus.marque);
+    texte(Tk.rouges + " 🎟️", x0 + l - 10, 104, 16, E.rouges.marque, "right");
+    const clin = Math.floor((monde.temps || 0) * 4) % 2 === 0;
+    P.forEach((p, k) => {
+      const cx = x0 + 75 + k * 64 + 32, cy = 96, couleur = p.prise > 0 ? E.bleus.marque : p.prise < 0 ? E.rouges.marque : "#bbb";
+      ctx.fillStyle = "rgba(0,0,0,.45)";
+      ctx.beginPath(), ctx.arc(cx, cy, 13, 0, Math.PI * 2), ctx.fill();
+      ctx.fillStyle = couleur;
+      ctx.beginPath(), ctx.moveTo(cx, cy), ctx.arc(cx, cy, 13, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.abs(p.prise)), ctx.fill();
+      ctx.strokeStyle = p.etat.startsWith("⚔️") && clin ? "#fff" : p.proprio ? couleur : "rgba(255,255,255,.5)";
+      ctx.lineWidth = 2;
+      ctx.beginPath(), ctx.arc(cx, cy, 13, 0, Math.PI * 2), ctx.stroke();
+      texte("ABCDE"[k] || "?", cx, cy + 5, 13, "#111", "center");
+      texte(p.nom.replace(/^(la |le |l')/, "").slice(0, 10), cx, cy + 24, 9, "rgba(232,228,214,.85)", "center");
+    });
+    void Q;
+  }
   function barresQG(qg) {
     panneau(L / 2 - 230, 76, 460, 34);
     const QC = C.souterrain.qg, now = Tanks.monde ? Tanks.monde.temps : 0;

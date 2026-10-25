@@ -188,6 +188,7 @@ Tanks.Monde = (function () {
     Tanks.DronesFPV.installer(monde); // (demande 115, Europe de l'Est : les pilotes de drones FPV se préparent)
     Tanks.Relais.installer(monde); // (demande 115, Bataille de drones : les antennes relais et les postes, comme neufs)
     Tanks.Flotte.installer(monde); // (demande 115, Bataille de drones : toi, dans ton poste de commandement, aux commandes de ta flotte)
+    Tanks.GuerreCivile.installer(monde); // (demande 115, Guerre civile : les drapeaux de quartier, les tickets, les mortiers)
     radio.emettre("bataille", { classe: C.classes[equipement.classe].nom, arme: Tanks.Equipement.fiche(equipement.arme).nom, gadget: C.gadgets[equipement.gadget].nom, char: monde.joueur.fiche.nom, allies: E.allies, ennemis: E.ennemis, soldats: C.soldats.parEquipe, engins: monde.engins.length, vehicules: monde.vehicules.length, helicos: monde.helicos.length, bateaux: monde.bateaux.length, sousMarins: monde.sousMarins.length, portails: monde.portails.length });
   }
 
@@ -478,7 +479,8 @@ Tanks.Monde = (function () {
     if (enJeu && Tanks.Tranchees.actif) for (const [nom, d] of Tanks.Tranchees.etape(monde, dt)) annoncer(nom, d); // (demande 115 : les vagues, le barrage, les barbelés écrasés)
     if (enJeu && Tanks.DronesFPV.actif) for (const [nom, d] of Tanks.DronesFPV.etape(monde, dt)) annoncer(nom, d); // (demande 115, Europe de l'Est : les drones FPV des deux camps, ton brouilleur)
     if (enJeu && Tanks.Relais.actif) for (const [nom, d] of Tanks.Relais.etape(monde, dt)) annoncer(nom, d); // (demande 115, Bataille de drones : les canons anti-drones)
-    if (enJeu && Tanks.FrontEst.actif) for (const [nom, d] of Tanks.FrontEst.etape(monde)) annoncer(nom, d); // (demande 115, Europe de l'Est : les dents de dragon, les silos)
+    if (enJeu && Tanks.FrontEst.actif) for (const [nom, d] of Tanks.FrontEst.etape(monde)) annoncer(nom, d);
+    if (enJeu && Tanks.GuerreCivile.actif) for (const [nom, d] of Tanks.GuerreCivile.etape(monde, dt)) annoncer(nom, d); // (demande 115, Guerre civile : les drapeaux, les tickets, les renforts, les mortiers) // (demande 115, Europe de l'Est : les dents de dragon, les silos)
     // (étape 67) TA VIE REMONTE : pas touché depuis 5 s ? Ton soldat et ton tank se soignent doucement.
     if (enJeu) {
       if (toi && (toi.dansUnEngin || toi.parachute)) toi.touche += dt; // (dans un engin, le temps passe aussi pour lui)
@@ -519,13 +521,13 @@ Tanks.Monde = (function () {
     }
     // 5. La fin de la bataille ?
     if (enJeu) {
-      const finQG = monde.metro ? Tanks.QG.fin(monde) : Tanks.Relais.actif ? Tanks.Relais.fin(monde) : null; // (demande 115, Bataille de drones : les antennes et les postes) // ✍️ (livre n° 25) un QG détruit : la bataille est finie
+      const finQG = monde.metro ? Tanks.QG.fin(monde) : Tanks.Relais.actif ? Tanks.Relais.fin(monde) : Tanks.GuerreCivile.actif ? Tanks.GuerreCivile.fin() : null; // (demande 115, Guerre civile : les tickets) // (demande 115, Bataille de drones : les antennes et les postes) // ✍️ (livre n° 25) un QG détruit : la bataille est finie
       const horsDeCombat = finQG === "defaite" || (t.mode === "char" && monde.joueur.detruit) || (toi && toi.mort && !toi.aTerre) || (t.engin && t.engin.genre === "helico" && t.engin.detruit) || ((t.mode === "helico" || t.mode === "drone") && t.engin.detruit) || ((t.mode === "jeep" || t.mode === "bateau" || t.mode === "sousmarin" || t.mode === "dca" || t.mode === "moto" || t.mode === "quad" || t.mode === "camion") && t.engin.detruit);
       if (horsDeCombat) {
         monde.phase = "defaite";
         S.donnees.defaites++;
         S.ecrire("défaite");
-        radio.emettre("defaite", { temps: monde.chrono, allies: vivants(monde, "bleus"), ennemis: monde.metro ? soldatsVivants(monde, "rouges") + monde.metro.renforts.rouges : vivants(monde, "rouges"), comment: finQG === "defaite" ? (Tanks.Relais.actif ? Tanks.Relais.bilan.raison : "ton QG est détruit") : toi && toi.mort ? "ton soldat est à terre" : t.mode === "helico" || t.mode === "drone" ? "ton " + t.engin.nom + " est abattu" : t.mode === "jeep" ? "ton 4x4 est détruit" : t.mode === "moto" || t.mode === "quad" ? (t.engin.tombe ? "tu es tombé " + (t.mode === "moto" ? "de ta moto" : "de ton quad") : t.mode === "moto" ? "ta moto est détruite" : "ton quad est détruit") : t.mode === "camion" ? "ton camion est détruit" : t.engin && t.engin.genre === "helico" ? "ton " + t.engin.nom + " est abattu" : t.mode === "bateau" ? "ta vedette est coulée" : t.mode === "sousmarin" ? "ton sous-marin est coulé" : t.mode === "dca" ? "ton camion antiaérien est détruit" : "ton tank est détruit" });
+        radio.emettre("defaite", { temps: monde.chrono, allies: vivants(monde, "bleus"), ennemis: monde.metro ? soldatsVivants(monde, "rouges") + monde.metro.renforts.rouges : vivants(monde, "rouges"), comment: finQG === "defaite" ? (Tanks.Relais.actif ? Tanks.Relais.bilan.raison : Tanks.GuerreCivile.actif ? Tanks.GuerreCivile.bilan.raison : "ton QG est détruit") : toi && toi.mort ? "ton soldat est à terre" : t.mode === "helico" || t.mode === "drone" ? "ton " + t.engin.nom + " est abattu" : t.mode === "jeep" ? "ton 4x4 est détruit" : t.mode === "moto" || t.mode === "quad" ? (t.engin.tombe ? "tu es tombé " + (t.mode === "moto" ? "de ta moto" : "de ton quad") : t.mode === "moto" ? "ta moto est détruite" : "ton quad est détruit") : t.mode === "camion" ? "ton camion est détruit" : t.engin && t.engin.genre === "helico" ? "ton " + t.engin.nom + " est abattu" : t.mode === "bateau" ? "ta vedette est coulée" : t.mode === "sousmarin" ? "ton sous-marin est coulé" : t.mode === "dca" ? "ton camion antiaérien est détruit" : "ton tank est détruit" });
       } else if (!monde.campagne && (monde.metro ? finQG === "victoire" || (monde.metro.renforts.rouges === 0 && soldatsVivants(monde, "rouges") === 0) : vivants(monde, "rouges") === 0 || finQG === "victoire")) { // (étape 88 : en campagne, ce sont les objectifs)
         monde.phase = "victoire";
         S.donnees.victoires++;

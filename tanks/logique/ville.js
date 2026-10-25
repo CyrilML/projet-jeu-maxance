@@ -130,7 +130,8 @@ Tanks.Ville = (function () {
       }
       bilan.parSorte.papier = (bilan.parSorte.papier || 0) + V.papiers;
       // --- les coins sans maison : un parking, un panneau de pub, ou une petite place
-      for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      // (demande 115, Guerre civile : pas dans un pâté « vide » — la place de l'Horloge, le souk —, il a son propre décor)
+      if (!(Q.vides || []).some(([vi, vj]) => vi === gi && vj === gj)) for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
         const qx = cx + sx * 7, qz = cz + sz * 7;
         if (maisons.some((b) => Math.abs(b.x - qx) < 7 + b.demiL && Math.abs(b.z - qz) < 7 + b.demiL && Math.sign(b.x - cx) === sx && Math.sign(b.z - cz) === sz)) continue;
         const genre = h();
@@ -261,7 +262,7 @@ Tanks.Ville = (function () {
     if (!actif || T.souterrain) return null;
     let touche = null;
     for (const p of solidesAutour(o.x, o.z, r, prochesS)) {
-      if (p === o || p.ecrase) continue;
+      if (p === o || p.ecrase || p.traversable) continue; // (demande 115, Guerre civile : on passe sous un drap tendu ; il cache seulement)
       if (o.y !== undefined && o.y - p.y > p.h - 0.2) continue; // (au-dessus : à l'étage d'une maison, sur un toit…)
       const c = Math.cos(p.angle), s = Math.sin(p.angle), dx = o.x - p.x, dz = o.z - p.z;
       P.u = dx * c + dz * s;
@@ -365,5 +366,9 @@ Tanks.Ville = (function () {
     return { voitures, brulees, portes, ecrases };
   }
 
-  return { actif, trottoir, boite: actif ? [Q.x - Q.rayon - 40, Q.x + Q.rayon + 40, Q.z - Q.rayon - 40, Q.z + Q.rayon + 40] : [0, 0, 0, 0], mode: VAR.ville || null, objets, solides, petits, accroches, sols, bilan, solidesAutour, repousser, balle, exploser, avancer, compter, reglages: V };
+  // ✍️ (demande 115, Guerre civile) un AUTRE urbaniste peut poser ses gros objets (les barricades : logique/guerre-civile.js) :
+  // ils deviennent solides comme les voitures (on se cache derrière, ils arrêtent les balles et les regards). « poser » les
+  // ajoute, « ranger » refait le quadrillage. (dessinAutre : c'est un autre peintre qui les dessine, pas affichage/ville3d.js)
+  const poser = (o) => ajouter(o);
+  return { actif, poser, ranger, trottoir, boite: actif ? [Q.x - Q.rayon - 40, Q.x + Q.rayon + 40, Q.z - Q.rayon - 40, Q.z + Q.rayon + 40] : [0, 0, 0, 0], mode: VAR.ville || null, objets, solides, petits, accroches, sols, bilan, solidesAutour, repousser, balle, exploser, avancer, compter, reglages: V };
 })();

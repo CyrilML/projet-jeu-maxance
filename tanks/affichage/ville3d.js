@@ -35,6 +35,7 @@ Tanks.Ville3D = (function () {
   for (let i = 0; i < 4; i++) RECTS.pub.push([i * 512, 384, 512, 256]);
   for (let i = 0; i < 8; i++) RECTS.enseigne.push([(i % 4) * 512, 640 + Math.floor(i / 4) * 96, 512, 96]);
   const uvDe = (r) => [r[0] / W, 1 - (r[1] + r[3]) / H, r[2] / W, r[3] / H];
+  const PEINTRES = []; // (demande 115 : les peintres d'une édition, qui repassent par-dessus les affiches)
   function peindreAtlas() {
     const c = document.createElement("canvas");
     c.width = W;
@@ -121,6 +122,9 @@ Tanks.Ville3D = (function () {
     // les enseignes des boutiques
     const E = RECTS.enseigne, NOMS = [["BOULANGERIE", "#6a3a14", "#f3e2c0"], ["PHARMACIE", "#fff", "#1f8a3a"], ["CAFÉ DU MARCHÉ", "#f4e8c8", "#5a1e14"], ["TABAC · PRESSE", "#fff", "#b8202a"], ["COIFFURE ÉLODIE", "#4a1a4a", "#f2c6e0"], ["ÉPICERIE FINE", "#fff", "#2a5a2a"], ["BAR LE CENTRAL", "#ffd23c", "#1a1a1a"], ["LIBRAIRIE", "#1a2a5a", "#e6dcc0"]];
     E.forEach((r2, i) => { fond(r2, NOMS[i][2]); g.strokeStyle = NOMS[i][0]; g.lineWidth = 4; g.strokeRect(r2[0] + 6, r2[1] + 6, r2[2] - 12, r2[3] - 12); texte(NOMS[i][0], r2[0] + 256, r2[1] + 50, 46, NOMS[i][1], true); });
+    // ✍️ (demande 115) une ÉDITION peut repeindre les affiches, les panneaux et les enseignes (Guerre civile : les GRAFFITIS
+    // des deux camps, les boutiques du souk) : affichage/civile3d.js
+    for (const f of PEINTRES) f(g, RECTS, h);
     // ✍️ l'abandon : des coulures, des taches, des déchirures, et une couleur passée
     for (let i = 0; i < 900; i++) {
       const x = h() * W, y = h() * H;
@@ -404,6 +408,7 @@ Tanks.Ville3D = (function () {
     const instance = (forme, o, couleur, y, rx, rz) => (insts[forme] = insts[forme] || []).push({ o, couleur, y, rx, rz });
     for (const o of V.objets) {
       const s = o.sorte;
+      if (o.dessinAutre) continue; // (demande 115, Guerre civile : les barricades, les draps, les étals : c'est affichage/civile3d.js qui les peint)
       if (s === "voiture") {
         instance(o.modele, o, o.couleur);
         const P = [[0.75, 0.9], [0.75, -0.9], [-0.35, 0.9]];
@@ -632,5 +637,5 @@ Tanks.Ville3D = (function () {
     });
   }
 
-  return { construire, maj, bilan, quartiers, instances, get pret() { return pret; } };
+  return { construire, maj, bilan, quartiers, instances, get pret() { return pret; }, ajouterPeintre: (f) => PEINTRES.push(f) };
 })();

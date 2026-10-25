@@ -335,6 +335,9 @@ Tanks.Troupes = (function () {
     const sens = s.equipe === "bleus" ? -1 : 1;
     const objectifZ = s.z * sens < -20 ? 0 : sens * (T.camp + 10);
     let gx = ia.couloir - s.x, gz = objectifZ - s.z;
+    // ✍️ (demande 115, Guerre civile) il marche vers un DRAPEAU DE QUARTIER à prendre (ou à défendre)
+    const quartier = Tanks.GuerreCivile && Tanks.GuerreCivile.actif && !T.souterrain ? Tanks.GuerreCivile.but(s, monde) : null;
+    if (quartier) (gx = quartier.x - s.x), (gz = quartier.z - s.z), (ia.etat = "va vers " + quartier.nom);
     // ✍️ (livre n° 21) en ESCOUADE : il suit son chef (à sa place dans la file, écartée), au lieu d'avancer seul
     const chef = ia.chef && !ia.chef.mort && !ia.chef.dansUnEngin ? ia.chef : null;
     if (chef && !T.souterrain) {
@@ -461,7 +464,7 @@ Tanks.Troupes = (function () {
     };
     for (const b of T.boitesAutour(s.x, s.z, TA.abri, prochesCouvert)) essayer(b, b.sorte === "muret" ? "un muret" : b.sorte === "maison" ? "une maison" : "un mur");
     const VI = Tanks.Ville;
-    if (VI && VI.actif) for (const o of VI.solidesAutour(s.x, s.z, TA.abri, prochesVille2)) essayer(o, o.sorte === "voiture" ? "une voiture" : "un " + o.sorte);
+    if (VI && VI.actif) for (const o of VI.solidesAutour(s.x, s.z, TA.abri, prochesVille2)) essayer(o, o.sorte === "voiture" ? "une voiture" : o.abri || "un " + o.sorte); // (demande 115, Guerre civile : « un tas de pneus », « un conteneur »…)
     return mieux;
   }
   // AGIR : se replier, s'écarter du canon, courir à l'abri (puis tirer de là), contourner. null = « fais comme avant ».

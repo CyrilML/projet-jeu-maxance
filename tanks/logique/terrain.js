@@ -205,6 +205,7 @@ Tanks.Terrain = (function () {
     for (let gi = -n; gi < n; gi++) for (let gj = -n; gj < n; gj++) {
       const cx = Q.x + (gi + 0.5) * Q.ilot, cz = Q.z + (gj + 0.5) * Q.ilot;
       if (Math.hypot(cx - Q.x, cz - Q.z) > Q.rayon - Q.ilot * 0.3) continue;
+      if ((Q.vides || []).some(([vi, vj]) => vi === gi && vj === gj)) continue; // (demande 115, Guerre civile : un pâté SANS maison — une place, le souk)
       const coins = [[-1, -1], [1, -1], [-1, 1], [1, 1]].sort(() => hasard() - 0.5).slice(0, Q.maisons);
       for (const [sx, sz] of coins) {
         const demiL = 4 + hasard() * 2.5, demiP = 3.5 + hasard() * 1.5, tourne = hasard() < 0.5;
@@ -246,7 +247,8 @@ Tanks.Terrain = (function () {
   }
   // ✍️ (demande 115, Europe de l'Est) DES BÂTIMENTS posés à la main (la zone industrielle : le grand silo à grain, les
   // hangars) : [x, z, demi-longueur, demi-largeur, angle, hauteur, type (« tour », « grange », « maison »), nom]
-  for (const [x, z, demiL, demiP, angle, h, type, nom] of VAR.batiments || []) boites.push({ x, z, demiL, demiP, angle, h, sorte: "maison", type, lieu: "la zone industrielle", nom, ruinesDepart: 0, graine: Math.round(Math.abs(x * 31 + z * 17)) });
+  // (demande 115, Guerre civile : un 9e nombre, le LIEU ; et le type « rempart » : un mur épais en pierre, sans toit — les remparts de la citadelle)
+  for (const [x, z, demiL, demiP, angle, h, type, nom, lieu] of VAR.batiments || []) boites.push({ x, z, demiL, demiP, angle, h, sorte: type === "rempart" ? "muret" : "maison", type: type === "rempart" ? "muret" : type, lieu: lieu || "la zone industrielle", nom, ruinesDepart: 0, graine: Math.round(Math.abs(x * 31 + z * 17)) });
   // ✍️ (demande 115, édition 1944) LE BOCAGE : un damier de champs (« cellule » m), bordés de HAIES épaisses et hautes
   // (avec des trouées : « part » des bords ont une haie) ; et des VERGERS : des pommiers en rangées.
   if (VAR.bocage) {

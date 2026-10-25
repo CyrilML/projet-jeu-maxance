@@ -255,6 +255,54 @@ Tanks.Musique = (function () {
     }
     etat.notes++;
   }
+  // ✍️ (demande 115, Guerre civile) LE OUD : un grand luth à manche court, dont on PINCE les cordes. Une note pincée =
+  // un son clair qui claque (la dent de scie, et une octave plus haut en triangle) puis s'éteint vite ; un filtre qui
+  // se referme (le son devient plus doux en s'éteignant), et la note « glisse » un tout petit peu en arrivant.
+  function oud(f, t, duree, fort) {
+    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), fi = ctx.createBiquadFilter(), fin = Math.max(0.25, duree);
+    o.type = "sawtooth";
+    o2.type = "triangle";
+    o.frequency.setValueAtTime(f * 0.985, t);
+    o.frequency.exponentialRampToValueAtTime(f, t + 0.04);
+    o2.frequency.value = f * 2;
+    o2.detune.value = 5;
+    fi.type = "lowpass";
+    fi.Q.value = 2;
+    fi.frequency.setValueAtTime(3400, t);
+    fi.frequency.exponentialRampToValueAtTime(650, t + Math.min(0.5, fin));
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(M.oud * fort, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(M.oud * fort * 0.25, t + 0.16);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + fin);
+    o.connect(fi), o2.connect(fi), fi.connect(g);
+    brancher(g, 0.45);
+    for (const x of [o, o2]) x.start(t), x.stop(t + fin + 0.05);
+    etat.notes++;
+  }
+  // ✍️ (demande 115, Guerre civile) LA DARBOUKA : un petit tambour en forme de gobelet. « D » (doum) : la main frappe le
+  // MILIEU de la peau (un son grave qui descend) ; « t » (tek) : les doigts claquent sur le BORD (un petit coup sec, aigu).
+  function darbouka(t, coup) {
+    if (coup === "D") {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.frequency.setValueAtTime(190, t);
+      o.frequency.exponentialRampToValueAtTime(95, t + 0.18);
+      g.gain.setValueAtTime(M.darbouka * 0.7, t);
+      g.gain.exponentialRampToValueAtTime(0.0008, t + 0.35);
+      o.connect(g);
+      brancher(g, 0.35);
+      o.start(t), o.stop(t + 0.4);
+    }
+    const s = ctx.createBufferSource(), gs = ctx.createGain(), fs = ctx.createBiquadFilter();
+    s.buffer = bruit;
+    fs.type = "bandpass";
+    fs.frequency.value = coup === "D" ? 600 : 3200;
+    fs.Q.value = coup === "D" ? 1 : 3;
+    gs.gain.setValueAtTime(M.darbouka * (coup === "D" ? 0.25 : 0.45), t);
+    gs.gain.exponentialRampToValueAtTime(0.0008, t + (coup === "D" ? 0.08 : 0.05));
+    s.connect(fs).connect(gs);
+    brancher(gs, 0.3);
+    s.start(t), s.stop(t + 0.1);
+  }
   // la CAISSE CLAIRE (un claquement de souffle) et le CHARLESTON (un petit « tss » aigu)
   function caisseClaire(t, fort, aigu) {
     const s = ctx.createBufferSource(), g = ctx.createGain(), fi = ctx.createBiquadFilter();
@@ -285,6 +333,9 @@ Tanks.Musique = (function () {
     pulsation(basseNote / 2, t, croche * 0.6);
     // le BRAAAM au début de l'intro, puis toutes les 4 mesures
     if (i === 0 && mesure % 4 === 0) braam(basseNote / 2, t);
+    // (demande 115, Guerre civile) la DARBOUKA (dès l'intro : seulement les « doum ») et l'ARPÈGE DU OUD sur l'accord
+    if (M.darbouka) { const c = M.rythme[i]; if (c && (partie !== "intro" || c === "D")) darbouka(t, c); }
+    if (M.oud && partie !== "thème") oud([basseNote, octave, quinte, tierce, octave, quinte][i] * 2, t, croche * 1.4, i === 0 ? 1 : i === 3 ? 0.85 : 0.6);
     // (demande 115, Guerre froide) le RIFF de guitare (dès l'intro) et la batterie rock
     if (M.guitare) {
       const f = M.riff[i] || 0;
@@ -316,7 +367,8 @@ Tanks.Musique = (function () {
     // la mélodie de cuivres (et un cor une octave plus bas)
     if (partie === "thème") {
       for (const [quand, nom, longueur] of M.melodie[(mesure - 8) % M.melodie.length]) if (quand === i) {
-        if (M.guitare) { guitare([hz(nom)], t, croche * longueur, 1.1); continue; } // (demande 115, Guerre froide : la mélodie à la guitare)
+        if (M.guitare) { guitare([hz(nom)], t, croche * longueur, 1.1); continue; }
+        if (M.oud) { for (let r = 0; r < (longueur >= 3 ? longueur * 2 : 1); r++) oud(hz(nom), t + (r * croche) / 2, croche * (longueur >= 3 ? 0.7 : longueur), r ? 0.55 : 1.2); continue; } // (demande 115 : la mélodie au oud ; une note longue = le « trémolo » : la corde pincée très vite, encore et encore) // (demande 115, Guerre froide : la mélodie à la guitare)
         cuivre(hz(nom), t, croche * longueur);
         cuivre(hz(nom) / 2, t, croche * longueur); // (les trombones, une octave plus bas : plus puissant)
         cor(hz(nom) / 2, t, croche * longueur);

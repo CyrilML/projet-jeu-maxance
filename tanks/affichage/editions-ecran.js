@@ -164,6 +164,9 @@ Tanks.EcranEditions = (function () {
       x.fillRect(24, 8, 12, 14);
       for (const cx of [23, 28, 33]) x.fillRect(cx, 5, 4, 4);
       x.fillStyle = d.fond[0], x.fillRect(28.5, 15, 3, 7);
+    } else if (d.embleme === "rameau" || d.embleme === "etoile") { // (Guerre civile : le rameau d'olivier du Front, l'étoile de la Garde)
+      if (Tanks.Civile3D) Tanks.Civile3D.symbole(x, d.embleme, 30, 13, 10, d.fond[1]);
+      else x.fillRect(25, 8, 10, 10);
     } else if (d.embleme === "aigle") {
       x.beginPath(), x.moveTo(30, 6), x.lineTo(44, 10), x.lineTo(36, 14), x.lineTo(44, 20), x.lineTo(32, 18), x.lineTo(30, 24), x.lineTo(28, 18), x.lineTo(16, 20), x.lineTo(24, 14), x.lineTo(16, 10), x.fill();
     }

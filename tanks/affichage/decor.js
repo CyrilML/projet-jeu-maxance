@@ -227,6 +227,7 @@ Tanks.Decor = (function () {
     if (Tanks.Jungle3D) Tanks.Jungle3D.peindreSol(ctx, X, k); // (demande 115, Guerre froide : les rizières, la base de feu)
     if (Tanks.Relais3D) Tanks.Relais3D.peindreSol(ctx, X, k); // (demande 115, Bataille de drones : le gravier sous les panneaux solaires)
     if (Tanks.Est3D) Tanks.Est3D.peindreSol(ctx, X, k, hasard); // (demande 115, Europe de l'Est : les champs de tournesols coupés, les traces de chenilles dans la neige)
+    if (Tanks.Civile3D) Tanks.Civile3D.peindreSol(ctx, X, k, hasard); // (demande 115, Guerre civile : la poussière, les traces de pneus, la place du souk)
     // les chemins : le bord usé, la terre, les 2 ornières plus sombres, l'herbe au milieu
     const L = BE.chemins.largeur * k;
     const tracer = (l, largeur, style) => {
@@ -474,7 +475,9 @@ Tanks.Decor = (function () {
   const JUNGLE = (Tanks.CONFIG.edition.modeles || {}).arbres === "jungle" && !!Tanks.Jungle3D;
   // (demande 115, Europe de l'Est) en HIVER : les feuillus n'ont plus que des feuilles sèches, brun-gris ; les sapins sont poudrés de neige
   const HIVER = (Tanks.CONFIG.edition.modeles || {}).arbres === "hiver";
-  const ECORCE = HIVER ? lin(96, 88, 80) : lin(118, 98, 76), ECORCE_PIN = lin(124, 88, 62), FEUILLE = JUNGLE ? lin(80, 132, 50) : HIVER ? lin(132, 120, 104) : lin(112, 150, 66), AIGUILLE = HIVER ? lin(96, 116, 104) : lin(74, 116, 62);
+  // (demande 115, Guerre civile) au bord de la mer chaude : des OLIVIERS (un feuillage gris-vert, une écorce grise) et des PALMIERS
+  const MEDIT = (Tanks.CONFIG.edition.modeles || {}).arbres === "mediterranee";
+  const ECORCE = HIVER ? lin(96, 88, 80) : MEDIT ? lin(112, 104, 92) : lin(118, 98, 76), ECORCE_PIN = lin(124, 88, 62), FEUILLE = JUNGLE ? lin(80, 132, 50) : HIVER ? lin(132, 120, 104) : MEDIT ? lin(126, 138, 98) : lin(112, 150, 66), AIGUILLE = HIVER ? lin(96, 116, 104) : lin(74, 116, 62);
   function tronc(points, seg) {
     const g = new THREE.LatheGeometry(points.map(([r, y]) => new THREE.Vector2(r, y)), seg).toNonIndexed();
     return peindre(g, (x, y) => ECORCE.clone().multiplyScalar(0.62 + 0.38 * Math.min(1, y / 2.5)));
@@ -606,7 +609,7 @@ Tanks.Decor = (function () {
       groupe.add(m);
       return m;
     };
-    const P = JUNGLE ? Tanks.Jungle3D.palmier({ fusion, peindre, tronc, lin }) : null; // (demande 115, Guerre froide : les palmiers)
+    const P = JUNGLE || (MEDIT && Tanks.Jungle3D) ? Tanks.Jungle3D.palmier({ fusion, peindre, tronc, lin }) : null; // (demande 115, Guerre froide : les palmiers)
     pres = { troncs: lot(geoFeuilluTronc(), matEcorce, true), feuilles: lot(geoFeuilluFeuilles(), matFeuilles, true), troncsSapins: lot(P ? P.tronc : geoSapinTronc(), matEcorce, true), sapins: lot(P ? P.palmes : geoSapin(18), matAiguilles, true) };
     arbresFeuilles = lot(geoFeuilluSimple(), matSimple, false);
     sapins = lot(P ? P.simple : geoSapinSimple(), matSimple, false);
@@ -984,6 +987,7 @@ Tanks.Decor = (function () {
     if (Tanks.Jungle3D) Tanks.Jungle3D.construire(g, ajouterMorceau); // (demande 115, Guerre froide : les rizières, la plateforme des hélicos)
     if (Tanks.Relais3D) Tanks.Relais3D.construire(g, ajouterMorceau); // (demande 115, Bataille de drones : les panneaux solaires, les antennes, les postes, les canons anti-drones)
     if (Tanks.Est3D) Tanks.Est3D.construire(g, ajouterMorceau); // (demande 115, Europe de l'Est : les silos, les dents de dragon, les panneaux « MINES », les filets de camouflage)
+    if (Tanks.Civile3D) Tanks.Civile3D.construire(g, ajouterMorceau); // (demande 115, Guerre civile : les barricades, les draps, le souk, les postes, les mortiers, les drapeaux)
     return g;
   }
 

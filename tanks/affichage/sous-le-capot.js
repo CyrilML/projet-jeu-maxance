@@ -187,7 +187,7 @@ Tanks.SousLeCapot = (function () {
     "edition-refusee": (d) => "🔒 " + d.icone + " " + d.nom + " : " + d.raison,
     "coup-de-sifflet": (d) => "📯 COUP DE SIFFLET chez " + d.nom + " : vague n° " + d.vague + " · " + d.soldats + " soldat(s) montent à l'assaut hors de la tranchée · " + d.renforts + " renfort(s) arrivent par les boyaux",
     barrage: (d) => d.debut ? "💥 BARRAGE D'ARTILLERIE : " + d.nom + " envoie " + d.obus + " obus sur le no man's land en " + d.duree + " s (écoute le sifflement, reste dans ta tranchée !)" : "🌫️ Fin du barrage de " + d.nom,
-    "obus-siffle": (d) => "🎯 Un obus de " + (d.camp === "bleus" ? "ton" : "l'") + " artillerie siffle : il tombe dans " + virgule(d.arrive, 1) + " s en (" + Math.round(d.x) + " ; " + Math.round(d.z) + ")",
+    "obus-siffle": (d) => "🎯 Un obus de " + (d.mortier ? (d.camp === "bleus" ? "ton mortier" : "mortier ennemi") : (d.camp === "bleus" ? "ton" : "l'") + " artillerie") + " siffle : il tombe dans " + virgule(d.arrive, 1) + " s en (" + Math.round(d.x) + " ; " + Math.round(d.z) + ")",
     "barbele-coupe": (d) => "✂️ Barbelés : " + d.longueur + " m " + ({ cisailles: "COUPÉS aux cisailles", tank: "ÉCRASÉS par un tank", obus: "déchirés par une explosion" }[d.comment] || "coupés") + (d.par ? " (" + d.par + ")" : "") + " en (" + Math.round(d.x) + " ; " + Math.round(d.z) + ") · un passage est ouvert",
     "mitrailleuse-prise": (d) => "🤚 " + d.nom + " se tait : " + d.par + " est arrivé tout près, son servant est à terre (un autre revient dans " + d.retour + " s)",
     "mitrailleuse-cible": (d) => "🎯 " + d.nom + " vise " + d.cible + " à " + d.distance + " m",
@@ -211,6 +211,12 @@ Tanks.SousLeCapot = (function () {
     "relais-touche": (d) => "📡 " + d.nom + " est touché" + (d.filet ? " (le FILET arrête une partie de la charge)" : "") + " : " + d.vie + " / " + d.vieMax,
     "relais-detruit": (d) => "💥 " + d.nom + " est DÉTRUIT" + (d.genre === "antenne" ? " : ses drones perdent de la portée · il reste " + d.restent + " antenne(s) à ce camp" : " !"),
     "drone-abattu": (d) => "🔫 " + d.nom + " : ABATTU par " + d.par + " (il tombe)",
+    // ✍️ (demande 115, Guerre civile) les drapeaux de quartier, les tickets, les renforts, les mortiers
+    "quartier-pris": (d) => "🏴 " + d.campNom + " PREND " + d.nom + (d.avecToi ? " (avec toi !)" : "") + " · drapeaux : 🟢 " + d.tenusBleus + " · 🔴 " + d.tenusRouges + " sur " + d.total + " (celui qui en tient le plus fait baisser les tickets de l'autre)",
+    "quartier-neutralise": (d) => "🏳️ " + d.nom + " n'est plus " + (d.avant === "bleus" ? "au Front" : "à la Garde") + " : le drapeau est descendu (neutre). Encore un peu, et il est " + (d.par === "bleus" ? "au Front" : "à la Garde") + " !",
+    tickets: (d) => "🎟️ " + d.nom + " : plus que " + d.reste + " ticket(s) sur " + d.total + (d.reste === 0 ? " → PLUS DE RENFORTS : ce camp a perdu !" : d.pourquoi === "saigne" ? " (l'autre camp tient plus de drapeaux)" : ""),
+    "quartier-renforts": (d) => "🚶 Des renforts arrivent pour " + d.nom + " à l'arrière de la ville (" + d.arrives + " depuis le début · " + d.tickets + " tickets)",
+    mortier: (d) => "💣 " + d.nom + " envoie une salve de " + d.obus + " obus sur " + d.cible + " (écoute le sifflement !)",
     "dents-dragon": (d) => "🧱 " + d.nom + " bute contre les DENTS DE DRAGON : le béton l'arrête, il faut faire le tour (ou trouver le passage)",
     "mitrailleuse-chaude": (d) => "🔥 Ta mitrailleuse CHAUFFE trop : elle s'enraye " + d.duree + " s (lâche Espace de temps en temps !)",
     "sauvegarde-convertie": (d) => "💾 Ton livret militaire (version " + d.de + ") est converti en version " + d.vers + " : rien n'est perdu, les nouveaux compteurs commencent à 0" + (d.battleCoins ? " · 🪙 +" + d.battleCoins.toLocaleString("fr-FR") + " Battle Coins pour tes chapitres déjà réussis (demande 101)" : "") + (d.de < 15 ? " · ⭐ tes points sont recalculés pour les niveaux plus lents : tu gardes ton niveau (demande 102)" : "") + (d.bonus && d.bonus.length ? " · 🎁 " + d.bonus.join(" ; ") + " (livre n° 6)" : "") + (d.boutique ? " · 🛒 + le carnet de la boutique (vide : rien acheté)" : "") + (d.reglages ? " · ⚙️ + les réglages (🩸 sang : éteint, demande 114)" : "") + (d.edition ? " · 📜 + l'édition (tu es en Moderne, demande 115)" : ""),
@@ -275,13 +281,13 @@ Tanks.SousLeCapot = (function () {
     parachutistes: (d) => "🪂 " + d.nombre + " parachutistes " + (d.equipe === "bleus" ? "bleus" : "rouges") + " sautent de l'avion de transport (" + Math.round(d.x) + " ; " + Math.round(d.z) + ")",
     flak: (d) => "🎯 La DCA tire" + (d.assiste ? " (visée assistée : devant l'avion)" : ""),
     // demande 113 : le camion antiaérien (son chauffeur, son tireur)
-    "aa-engage": (d) => "🎯 " + (d.equipe === "bleus" ? "Ton tireur antiaérien" : "Le tireur du camion antiaérien ENNEMI") + " vise " + d.cible + " : à " + d.heures + " h sur l'horloge du camion, " + d.distance + " m (il vise DEVANT lui)",
+    "aa-engage": (d) => "🎯 " + (d.equipe === "bleus" ? "Ton tireur" + (C.engins.dca.sol ? " de " + AA() : " antiaérien") : "Le tireur du " + AA() + " ENNEMI") + " vise " + (d.quoi || d.cible) + " : à " + d.heures + " h sur l'horloge du " + (C.engins.dca.sol ? AA() : "camion") + ", " + d.distance + " m" + (C.engins.dca.sol ? "" : " (il vise DEVANT lui)"),
     "aa-touche": (d) => "💥 " + (d.parToi ? "Ton obus de flak" : d.equipe === "bleus" ? "Le flak de ton tireur" : "Le flak du camion ennemi") + " éclate près de " + d.cible + " : touché (vie " + d.vie + ") · " + d.touches + " touche(s) en tout",
     "aa-abattu": (d) => "🔥 " + d.cible + " ABATTU par " + (d.parToi ? "toi, au canon du camion antiaérien" : d.equipe === "bleus" ? "ton tireur antiaérien" : "le camion antiaérien ennemi") + " · " + d.abattus + " abattu(s) par ce camion",
-    "aa-siege": (d) => d.siege === "canon" ? "🪑 F : tu passes au CANON (← → tourner, ↑ ↓ lever, Espace tirer) ; le camion freine et s'arrête" + (d.tireur ? " (le tireur prend le volant)" : "") : "🪑 F : tu reprends le VOLANT" + (d.tireur ? " ; le tireur retourne au canon et tire tout seul" : " (personne au canon)"),
-    "aa-tireur-touche": (d) => "🩹 Le tireur " + (d.equipe === "bleus" ? "de ton camion antiaérien" : "du camion antiaérien ennemi") + " est touché par " + d.tireur + " (vie " + d.vie + " / " + d.vieMax + ")",
-    "aa-tireur-abattu": (d) => "✖ Le tireur " + (d.equipe === "bleus" ? "de ton camion antiaérien est à terre : le canon se tait (ramène le camion à ta base, ou F pour tirer toi-même)" : "du camion antiaérien ennemi est à terre (abattu par " + d.tireur + ") : son canon se tait"),
-    "aa-nouveau-tireur": (d) => "🪖 Un nouveau tireur monte au canon " + (d.equipe === "bleus" ? "de ton camion antiaérien" : "du camion antiaérien ennemi"),
+    "aa-siege": (d) => d.siege === "canon" ? "🪑 F : tu passes " + (C.engins.dca.sol ? "à la MITRAILLEUSE (← → tourner, Espace tirer) ; le " + AA() : "au CANON (← → tourner, ↑ ↓ lever, Espace tirer) ; le camion") + " freine et s'arrête" + (d.tireur ? " (le tireur prend le volant)" : "") : "🪑 F : tu reprends le VOLANT" + (d.tireur ? " ; le tireur retourne au canon et tire tout seul" : " (personne au canon)"),
+    "aa-tireur-touche": (d) => "🩹 Le tireur " + (d.equipe === "bleus" ? "de ton " + AA() : "du " + AA() + " ennemi") + " est touché par " + d.tireur + " (vie " + d.vie + " / " + d.vieMax + ")",
+    "aa-tireur-abattu": (d) => "✖ Le tireur " + (d.equipe === "bleus" ? "de ton " + AA() + " est à terre : il ne tire plus (ramène-le à ta base, ou F pour tirer toi-même)" : "du " + AA() + " ennemi est à terre (abattu par " + d.tireur + ") : il ne tire plus"),
+    "aa-nouveau-tireur": (d) => "🪖 Un nouveau tireur monte " + (d.equipe === "bleus" ? "sur ton " + AA() : "sur le " + AA() + " ennemi"),
     "aa-retour": (d) => "🚚 Un " + d.nom.toLowerCase() + " tout neuf attend au parking de la base " + (d.equipe === "bleus" ? "bleue" : "rouge"),
     // étape 63
     plongee: (d) => "🫧 " + (d.toi ? "Ton sous-marin plonge" : d.nom + " plonge") + " : à plus de " + virgule(C.sousMarins.sousLEau, 1) + " m, seule une torpille peut le toucher",
@@ -315,6 +321,8 @@ Tanks.SousLeCapot = (function () {
 
   // (demande 113) LE CAMION ANTIAÉRIEN : le camion (qui conduit, sa vitesse, sa vie) et son TIREUR (ce qu'il fait, sa
   // cible, la distance, l'ANGLE D'AVANCE : de combien il vise devant l'avion, l'écart du canon), et ses tirs, touches, abattus.
+  // (demande 115) le nom de l'engin « dca » de l'édition : le camion antiaérien (Moderne) ou le pick-up armé (Guerre civile)
+  function AA() { return C.engins.dca.nomCourt || "camion antiaérien"; }
   function lignesAntiAerien(l, e) {
     const R = C.engins.dca, ti = e.tireur, a = e.equipe === "bleus" ? "🔵 " : "🔴 ";
     const chauffeur = e.pilote ? (e.siege === "canon" ? "👤 toi AU CANON (le camion est arrêté)" : "👤 toi au volant") : e.ia ? "🤖 l'ordinateur : " + e.ia.etat : "personne (garé)";
@@ -443,6 +451,23 @@ Tanks.SousLeCapot = (function () {
     if (g && g.cratere) l.push(["🔧 ton outil", "tu rebouches un cratère : " + Math.round(g.cratere.repare * 100) + " % (" + DE.reparation.outil + " s par cratère)"]);
     l.push(["dessin des bases", B3.visibles + " / " + B3.bases + " base(s) dessinée(s) (les autres sont trop loin) · " + B3.dessins + " dessins par base · " + B3.balises + " balises (des boîtes qui brillent, 1 dessin, aucune vraie lumière) · " + Math.round(B3.triangles / 1000) + " k triangles soudés · " + B3.crateres + " cratère(s) dessiné(s) · " + B3.croix + " croix « X »"]);
   }
+  // ✍️ (demande 115, Guerre civile) LES DRAPEAUX DE QUARTIER, LES TICKETS, LES BARRICADES, LES PICK-UPS ARMÉS, LES MORTIERS
+  function lignesGuerreCivile(l) {
+    const GC = Tanks.GuerreCivile;
+    if (!GC || !GC.actif) return;
+    const B = GC.bilan, Q = C.quartiers, Tk = GC.etat.tickets, C3 = Tanks.Civile3D && Tanks.Civile3D.bilan;
+    l.push(["⚔️ la règle", "5 drapeaux de quartier · toutes les " + Q.saigne + " s, le camp qui en tient le plus enlève (la différence) tickets à l'autre · un soldat tombé = 1 ticket, un char = " + Q.char + " · à 0 ticket, perdu"]);
+    l.push(["🎟️ tickets", "🟢 " + C.equipes.bleus.nom + " " + Tk.bleus + " / " + Q.tickets + " · 🔴 " + C.equipes.rouges.nom + " " + Tk.rouges + " / " + Q.tickets + " · drapeaux tenus : 🟢 " + GC.tenus("bleus") + " · 🔴 " + GC.tenus("rouges") + " · perdus par les drapeaux : 🟢 " + B.saignes.bleus + " · 🔴 " + B.saignes.rouges + " · par les pertes : 🟢 " + B.tombes.bleus + " · 🔴 " + B.tombes.rouges]);
+    GC.points.forEach((p, k) => l.push(["🏴 " + "ABCDE"[k] + " " + p.nom, (p.proprio === "bleus" ? "🟢 au Front" : p.proprio === "rouges" ? "🔴 à la Garde" : "⚪ neutre") + " · drapeau " + Math.round(Math.abs(p.prise) * 100) + " % " + (p.prise > 0 ? "vert" : p.prise < 0 ? "rouge" : "") + " · autour (" + Q.rayon + " m) : 🟢 " + p.presents.bleus + " · 🔴 " + p.presents.rouges + " · " + p.etat]));
+    l.push(["🚶 renforts", "arrivés : 🟢 " + B.renforts.bleus + " · 🔴 " + B.renforts.rouges + " (un toutes les " + Q.renforts.toutesLes + " s s'il en manque, à " + Q.renforts.arriere + " m du centre) · drapeaux pris : 🟢 " + B.prises.bleus + " · 🔴 " + B.prises.rouges + " · neutralisés : " + B.neutralises + " · " + B.pensees + " coups d'œil (4 par seconde)"]);
+    const bar = Object.entries(B.barricades).filter(([, n]) => n > 0).map(([k, n]) => k + " " + n).join(" · ");
+    l.push(["🧱 barricades", B.total + " morceaux (" + bar + ") · " + B.postes + " postes de contrôle · " + B.draps + " draps dans la rue des draps (ils cachent, on passe dessous) · " + B.etals + " étals au souk" + (C3 ? " · dessin : " + C3.dessins + " dessins, " + Math.round(C3.triangles / 1000) + " k triangles, " + C3.graffitis + " graffitis" : "")]);
+    const pk = [];
+    for (const e of monde.engins) if (e.sorte === "dca") pk.push((e.equipe === "bleus" ? "🟢 " : "🔴 ") + e.nom + " : " + (e.detruit ? "détruit" : (e.pilote ? "👤 toi " + (e.siege === "canon" ? "à la mitrailleuse" : "au volant") : e.ia ? e.ia.etat : "garé") + " · tireur " + (e.tireur.vivant ? e.tireur.etat : "à terre") + " · " + e.tirs + " balles"));
+    for (const v of monde.vehicules || []) if (v.sorte === "quad") pk.push((v.equipe === "bleus" ? "🟢 " : "🔴 ") + v.nom + " : " + (v.detruit ? "hors de combat" : v.ia.etat + " · tireur " + v.balles + " / " + C.engins.quad.balles + " · " + v.tirs + " balles"));
+    l.push(["🛻 pick-ups armés", pk.length + " : " + pk.join(" | ")]);
+    l.push(["💣 mortiers", GC.mortiers.map((m) => m.nom + " : " + (m.salve ? "TIRE sur " + m.cible + " (encore " + m.salve.reste + ")" : "prochaine salve dans " + Math.max(0, Math.ceil(m.attente)) + " s") + " · " + m.tirs + " obus").join(" | ")]);
+  }
   // ✍️ (demande 115) L'ÉDITION et LE FRONT DE 1916 : les tranchées, les barbelés, les vagues, le barrage, les mitrailleuses
   function lignesEdition(l) {
     const ED = C.edition, R = Object.entries(ED.regles).filter(([, v]) => v === true).map(([k]) => k);
@@ -489,6 +514,7 @@ Tanks.SousLeCapot = (function () {
       const FE = Tanks.FrontEst.bilan, E3 = Tanks.Est3D.bilan;
       if (Tanks.FrontEst.actif) l.push(["🧱 le génie", FE.dents + " dents de dragon en " + FE.rangees + " rangées (" + FE.arretes + " fois un véhicule arrêté" + (FE.dernier ? ", le dernier : " + FE.dernier : "") + ") · " + FE.silos + " silos ronds · " + FE.panneaux + " panneaux « MINES » · " + E3.filets + " filets de camouflage · " + E3.champs + " champs de tournesols · " + E3.traces + " traces de chenilles · dessin : " + E3.dessins + " objets soudés"]);
     }
+    lignesGuerreCivile(l);
     const TR = Tanks.Tranchees;
     if (!TR.actif) return;
     if (!TR.reseau) { for (const e of monde.engins) if (e.genre === "mitrailleuse") l.push([(e.equipe === "bleus" ? "🔵 " : "🔴 ") + e.nom, (e.pilote ? "👤 TOI · " : e.servant.etat + " · ") + "tourelle " + degres(e.tourelle) + " · " + e.tirs + " balles"]); return; } // (1944 : les nids de mitrailleuse)
@@ -862,7 +888,7 @@ Tanks.SousLeCapot = (function () {
     if (monde.phase !== "garage") lignesRealismeAbsurde(l, s); // (livre n° 26)
     l.push(["Où tu es (étape 61)"], ["phase", monde.phase]);
     if (s) {
-      const ou = { mitrailleuse: "à la mitrailleuse lourde 🔫 (← → tourner, ↑ ↓ lever, Espace tirer)", dca: t.engin && t.engin.siege === "canon" ? "au canon du camion antiaérien 🎯" : "au volant du camion antiaérien 🚚", sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", chinook: "aux commandes du Chinook 🚁", blackhawk: "aux commandes du Black Hawk 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];
+      const ou = { mitrailleuse: "à la mitrailleuse lourde 🔫 (← → tourner, ↑ ↓ lever, Espace tirer)", dca: t.engin && t.engin.siege === "canon" ? (C.engins.dca.sol ? "à la mitrailleuse du " : "au canon du ") + AA() + " 🎯" : "au volant du " + AA() + " " + C.engins.dca.icone, sousmarin: "dans ton sous-marin 🐋", bateau: "dans ta vedette 🚤", char: "dans ton tank", pied: s.parachute ? "en parachute 🪂 (" + virgule(s.y - Tanks.Terrain.hauteur(s.x, s.z), 0) + " m du sol)" : s.nage ? "à la nage 🏊" : "à pied 🪖", jeep: "dans le 4x4 🚙", helico: "dans l'hélico 🚁", chinook: "aux commandes du Chinook 🚁", blackhawk: "aux commandes du Black Hawk 🚁", avion: "dans l'avion de chasse ✈️", drone: "aux commandes du drone 🛸" }[t.mode];
       l.push(["mode", t.mode + " = " + ou]);
       l.push(["ton soldat", "vie " + s.vie + " / " + s.vieMax + (s.seSoigne ? " ➕ (se soigne)" : s.vie < s.vieMax ? " (soin dans " + virgule(Math.max(0, C.soins.attente - s.touche), 1) + " s)" : "") + " · arme " + nomArme(s) + (s.recharge > 0 ? " (recharge " + virgule(s.recharge, 2) + " s)" : "")]);
       if (s.armes) lignesEquipement(l, s);

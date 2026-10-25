@@ -881,6 +881,7 @@ Tanks.Scene = (function () {
     }
     placerProjectiles(monde);
     if (Tanks.DronesFPV3D) Tanks.DronesFPV3D.maj(scene, monde); // (demande 115, Europe de l'Est : les drones FPV des deux camps)
+    if (Tanks.Civile3D) Tanks.Civile3D.maj(scene, monde, dt); // (demande 115, Guerre civile : les drapeaux de quartier qui montent et flottent, l'horloge)
     if (Tanks.Relais3D) Tanks.Relais3D.maj(scene, monde, dt); // (demande 115, Bataille de drones : les canons anti-drones, les antennes, ton robot)
     Tanks.Explosifs3D.maj(monde, dt, scene); // (demande 98 : les mines, les C4, les claymores posés et les nuages de fumée)
     Tanks.Objets3D.maj(monde, dt, scene); // (livre n° 15 : la trousse posée et son anneau vert ; l'étincelle du défibrillateur)

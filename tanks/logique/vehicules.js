@@ -35,7 +35,7 @@ Tanks.Vehicules = (function () {
   function nouveau(sorte, equipe, n) {
     const R = G[sorte];
     return {
-      genre: "vehicule", sorte, equipe, nom: NOMS[sorte] + " " + (equipe === "bleus" ? "bleu" : "rouge") + " " + n, n,
+      genre: "vehicule", sorte, equipe, nom: (R.nomCourt || NOMS[sorte]) + " " + (equipe === "bleus" ? "bleu" : "rouge") + " " + n, n,
       fiche: R, x: 0, y: 0, z: 0, angle: 0, vitesse: 0, braquage: 0, rotation: 0, roulis: 0, tangage: 0,
       vie: R.vie, balles: R.balles || 0, detruit: false, tombe: false, touche: 9, recharge: 0, tirs: 0, reussis: 0,
       passagers: R.places || 0, pilote: false, cible: null,

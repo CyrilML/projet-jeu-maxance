@@ -570,6 +570,15 @@ Tanks.Engins3D = (function () {
       dernier().echelle = [1.08, 1.0, 1];
       dernier().rz2 = pente;
       if (detail) pc("cou", galet(0.05, 0.02, 0.03, 0.3, 4), -0.02, yc + 0.05, 0.145, 0xd8d0b0, 0.5, 0, 0); // (un paquet glissé sous l'élastique)
+    } else if (K.casqueStyle === "milice") { // ✍️ (demande 115, Guerre civile, le Front des Oliviers) pas de casque : une CASQUETTE (la
+      // calotte en tissu, la visière devant) et le FOULARD de la couleur du camp noué autour du cou
+      pc("cou", new THREE.SphereGeometry(0.122, n, detail ? 8 : 5, 0, Math.PI * 2, 0, Math.PI * 0.42), -0.01, yc - 0.035, 0, acier, 0, 0, pente);
+      dernier().echelle = [1.08, 0.9, 1.0];
+      pc("cou", galet(0.11, 0.014, 0.17, 0.5, 6), 0.13, yc - 0.03, 0, acier, 0, 0, pente - 0.12); // la visière
+      pc("cou", new THREE.TorusGeometry(0.075, 0.03, 5, n), 0.0, 0.05, 0, joueur ? K.marqueToi : K.marque, Math.PI / 2, 0, 0); // le foulard autour du cou
+      dernier().echelle = [1.1, 1.0, 1];
+      if (detail) pc("cou", galet(0.05, 0.09, 0.06, 0.5, 6), -0.08, 0.0, 0.0, joueur ? K.marqueToi : K.marque, 0, 0, 0.5); // le nœud, dans le dos
+      return;
     } else if (K.casqueStyle === "colonial") { // ✍️ (demande 115, Guerre froide, Khavar) le CASQUE COLONIAL en liège : la bombe allongée, le large
       // bord qui descend tout autour (contre le soleil), le petit bouton d'aération sur le dessus, l'insigne devant
       pc("cou", new THREE.SphereGeometry(0.13, n, detail ? 9 : 5, 0, Math.PI * 2, 0, Math.PI * 0.5), -0.012, yc - 0.01, 0, acier, 0, 0, pente);
@@ -1649,7 +1658,13 @@ Tanks.Engins3D = (function () {
   // ✍️ (demande 113) Elle n'est plus posée sur un socle : c'est le CAMION ANTIAÉRIEN. Le châssis est celui du camion de
   // transport (affichage/vehicules3d.js, sans bâche, avec ses béquilles), et la tourelle est posée sur son plateau.
   // Le tireur est une pièce à part (on le cache quand il est tombé).
+  // ✍️ (demande 115) une ÉDITION peut inscrire sa propre arme sur le plateau (Guerre civile : la mitrailleuse lourde du
+  // pick-up armé, affichage/vehicules3d-civile.js) : config « edition.modeles.dca »
+  const DCA = {};
+  const ajouterDCA = (id, f) => (DCA[id] = f);
   function dca(equipe) {
+    const idDCA = (Tanks.CONFIG.edition.modeles || {}).dca;
+    if (idDCA && DCA[idDCA]) return (mats(), DCA[idDCA](equipe));
     mats();
     const R = Tanks.CONFIG.engins.dca, base = Tanks.Vehicules3D.fabriquer("camionAA", equipe);
     const m = MT(), p = peintureSoudee(equipe), g = base.g, V = vitreClaire();
@@ -1784,5 +1799,5 @@ Tanks.Engins3D = (function () {
   // (étape 73) le Chinook et le Black Hawk, dans affichage/helicos3d.js
   // (étape 76) le Rafale, les chasseurs ennemis, l'avion de transport, le drone et le Tigre, dans affichage/avions3d.js
   const outils = { pilote, siege, peintureSoudee, vitreClaire, mats, figurine, figurineDans, poserBras, MAINS, galet, membre, formesArmes };
-  return { soldat, animer, fabriquer, bruler, portail, silhouettes, outils, gestes, baisse, classeDe, maquettes, PEAUX };
+  return { soldat, animer, fabriquer, bruler, portail, silhouettes, outils, gestes, baisse, classeDe, maquettes, PEAUX, ajouterDCA };
 })();

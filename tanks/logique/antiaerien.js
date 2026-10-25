@@ -18,12 +18,18 @@
 //   - L'ENNEMI a le même camion, conduit par l'ordinateur : il patrouille près de sa base (sa route : « patrouille »),
 //     s'arrête quand son tireur a une cible, et tire sur TES avions et hélicos (le Rafale, le Tigre, le drone, le Chinook,
 //     le Black Hawk).
+// ✍️ (demande 115, Guerre civile) LE PICK-UP ARMÉ (« technical ») : la même équipe de deux, mais avec une mitrailleuse
+// lourde sur le plateau qui vise le SOL (config « engins.dca.sol ») : le tireur cherche le soldat ou le véhicule léger
+// ennemi le plus proche qu'il VOIT (pas à travers un mur), tourne la mitrailleuse et tire des rafales de balles (les
+// mêmes balles que celles d'un soldat : logique/soldat.js). Toi au plateau (F) : ← → tourner, Espace tirer.
 // Ce fichier ne dessine rien : il renvoie des événements (« aa-engage », « aa-touche », « aa-abattu »…).
 
 window.Tanks = window.Tanks || {};
 
 Tanks.AntiAerien = (function () {
   const C = Tanks.CONFIG, R = C.engins.dca, TI = R.tireur, T = Tanks.Terrain, F = C.projectiles.flak;
+  const SOL = R.sol || null; // (demande 115, Guerre civile : la mitrailleuse du pick-up vise le sol)
+  const listeSol = [], parDistance = [];
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   const borne = (v, a, b) => Math.max(a, Math.min(b, v));
   const FREIN = { freiner: true };
@@ -65,6 +71,18 @@ Tanks.AntiAerien = (function () {
     for (const e of monde.engins) if ((e.sorte === "helico" || e.sorte === "drone") && e.pilote && e.enVol && !e.detruit && e.y - T.hauteur(e.x, e.z) > TI.hauteurMin) l.push(e);
     return l;
   }
+  // (demande 115, Guerre civile) LE SOL : les soldats ennemis à pied et les véhicules légers ennemis (motos, pick-ups…) à
+  // moins de « portee » m du pick-up « e », rangés du plus proche au plus loin
+  function sol(monde, e) {
+    const l = listeSol, P = SOL.portee;
+    l.length = 0;
+    parDistance.length = 0;
+    for (const s of monde.soldats) if (!s.mort && !s.dansUnEngin && !s.parachute && s.equipe !== e.equipe && Math.abs(s.x - e.x) < P && Math.abs(s.z - e.z) < P) parDistance.push(s);
+    for (const v of Tanks.Vehicules.legers(monde)) if (v.equipe !== e.equipe && v !== e && Math.abs(v.x - e.x) < P && Math.abs(v.z - e.z) < P) parDistance.push(v);
+    for (const o of parDistance) (o.dSol = Math.hypot(o.x - e.x, o.z - e.z)), o.dSol < P && l.push(o);
+    l.sort((a, b) => a.dSol - b.dSol);
+    return l;
+  }
   // Sa vitesse (m/s), en x, y, z : les avions la donnent (vx, vy, vz) ; pour les autres, on la calcule.
   function vitesseDe(o) {
     if (o.vx !== undefined && o.genre === "avion" && o.sorte !== "avion") return { x: o.vx, y: o.vy || 0, z: o.vz };
@@ -74,6 +92,7 @@ Tanks.AntiAerien = (function () {
   // Ce qu'on dit à la radio : « Avion ennemi », « Hélico ennemi »…
   function quoi(o) {
     const camp = o.equipe === "bleus" ? "" : " ennemi";
+    if (SOL) return o.genre === "soldat" || o.sorte === undefined ? "Fantassin" + camp : o.sorte === "moto" ? "Moto" + camp : o.sorte === "quad" ? "Pick-up" + camp : "Véhicule" + camp; // (demande 115)
     if (o.sorte === "transport") return "Avion de transport" + camp;
     if (o.genre === "avion" || o.sorte === "avion") return "Avion" + camp;
     if (o.sorte === "drone") return "Drone" + camp;
@@ -91,6 +110,7 @@ Tanks.AntiAerien = (function () {
   }
   // Viser DEVANT : là où sera la cible quand l'obus arrivera (2 essais suffisent), un peu plus haut (l'obus retombe).
   function pointAvance(o, depart) {
+    if (SOL) return { x: o.x, y: (o.y !== undefined ? o.y : T.hauteur(o.x, o.z)) + 1.2, z: o.z }; // (demande 115 : des balles, presque instantanées)
     const v = vitesseDe(o);
     let t = Math.hypot(o.x - depart.x, o.y - depart.y, o.z - depart.z) / F.vitesse, p = null;
     for (let k = 0; k < 2; k++) {
@@ -179,20 +199,27 @@ Tanks.AntiAerien = (function () {
       // (on ne regarde le ciel que 4 fois par seconde : ça coûte moins cher que 120 fois)
       ti.pense = TI.pense;
       let meilleur = null, dm = TI.portee;
-      for (const o of ciel(monde)) {
+      if (SOL) { // (demande 115) le plus proche qu'il VOIT (on ne regarde la ligne de vue que des 4 plus proches : pas de lag)
+        let k = 0;
+        for (const o of sol(monde, e)) {
+          if (k++ >= 4) break;
+          if (T.vueLibre(depart.x, depart.y, depart.z, o.x, (o.y || 0) + 1.2, o.z)) { (meilleur = o), (dm = o.dSol); break; }
+        }
+      } else for (const o of ciel(monde)) {
         if (o.equipe === e.equipe) continue;
         const d = Math.hypot(o.x - depart.x, o.y - depart.y, o.z - depart.z);
         if (d < dm) (dm = d), (meilleur = o);
       }
-      if (meilleur && meilleur !== ti.cible && meilleur !== ti.annonce) (ti.annonce = meilleur), ev.push(["aa-engage", { tireur: e, cible: meilleur, quoi: quoi(meilleur), heures: heures(e, meilleur), distance: Math.round(dm), equipe: e.equipe, toi: !!e.pilote }]);
+      const bavard = !SOL || (e.horloge || 0) - (ti.engageA || -99) > (TI.engage || 0); // (au sol, les cibles changent vite : il ne crie pas à chaque fois)
+      if (meilleur && meilleur !== ti.cible && meilleur !== ti.annonce && bavard) (ti.annonce = meilleur), (ti.engageA = e.horloge || 0), ev.push(["aa-engage", { tireur: e, cible: meilleur, quoi: quoi(meilleur), heures: heures(e, meilleur), distance: Math.round(dm), equipe: e.equipe, toi: !!e.pilote }]);
       ti.cible = meilleur;
     }
-    const c = ti.cible && !ti.cible.detruit ? ti.cible : null;
+    const c = ti.cible && !ti.cible.detruit && !ti.cible.mort ? ti.cible : null;
     if (!c) {
       ti.cible = e.cible = e.avance = null;
-      ti.etat = "guette le ciel";
+      ti.etat = SOL ? "guette la rue" : "guette le ciel";
       ti.rafale = 0;
-      e.hausse += (0.5 - e.hausse) * Math.min(1, dt * 0.5); // (il remet doucement le canon à mi-hauteur)
+      e.hausse += ((SOL ? 0.02 : 0.5) - e.hausse) * Math.min(1, dt * 0.5); // (il remet doucement le canon à mi-hauteur ; la mitrailleuse du pick-up, à plat)
       return;
     }
     const p = pointAvance(c, depart), dx = p.x - depart.x, dy = p.y - depart.y, dz = p.z - depart.z, horiz = Math.hypot(dx, dz);
@@ -224,6 +251,16 @@ Tanks.AntiAerien = (function () {
     const ti = e.tireur;
     e.tourelle = angleEntre(e.tourelle + ((I.droite ? 1 : 0) - (I.gauche ? 1 : 0)) * R.rotation * dt);
     e.hausse = borne(e.hausse + ((I.avancer ? 1 : 0) - (I.reculer ? 1 : 0)) * R.levee * dt, R.hausse[0], R.hausse[1]);
+    if (SOL) { // (demande 115, Guerre civile) la mitrailleuse du pick-up à la main : le carré rouge sur l'ennemi presque devant
+      const a = e.angle + e.tourelle;
+      e.cible = null;
+      for (const o of sol(monde, e)) if (Math.abs(angleEntre(Math.atan2(o.z - e.z, o.x - e.x) - a)) < 0.1) { e.cible = o; break; }
+      e.avance = null;
+      ti.cible = null;
+      ti.etat = ti.vivant ? "au volant (c'est toi qui tires)" : "personne (c'est toi qui tires)";
+      if (I.tirer && e.feu === 0) tirer(e, monde, ev, 0.012, false);
+      return;
+    }
     const a = e.angle + e.tourelle, h = e.hausse, depart = bouche(e);
     const vise = { x: Math.cos(a) * Math.cos(h), y: Math.sin(h), z: Math.sin(a) * Math.cos(h) };
     let meilleur = null;
@@ -245,6 +282,11 @@ Tanks.AntiAerien = (function () {
     e.feu = R.cadence;
     e.canon = 1 - e.canon;
     e.tirs++;
+    if (SOL) { // (demande 115, Guerre civile) une BALLE de mitrailleuse lourde (comme celle d'un soldat), dans la direction de la mitrailleuse
+      const depart = bouche(e), a = e.angle + e.tourelle + (Math.random() - 0.5) * 2 * erreur;
+      Tanks.Soldat.balle(e, depart.x + Math.cos(a) * 1.2, depart.y, depart.z + Math.sin(a) * 1.2, a, SOL.arme, monde.soldats, Tanks.Soldat.vehiculesDe(monde), ev, Tanks.Vehicules.legers(monde));
+      return;
+    }
     const depart = bouche(e), a = e.angle + e.tourelle;
     let dir = { x: Math.cos(a) * Math.cos(e.hausse), y: Math.sin(e.hausse), z: Math.sin(a) * Math.cos(e.hausse) };
     if (e.avance && !auto) { // (la visée assistée, à la main)
@@ -288,5 +330,5 @@ Tanks.AntiAerien = (function () {
     }
   }
 
-  return { garer, ennemi, avancer, ciel, touche, tireurExpose, blesserTireur, heures, quoi, pointAvance, vitesseDe, bouche };
+  return { garer, ennemi, avancer, ciel, sol: SOL ? sol : null, touche, tireurExpose, blesserTireur, heures, quoi, pointAvance, vitesseDe, bouche };
 })();
