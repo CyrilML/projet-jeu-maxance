@@ -11,7 +11,7 @@ window.Tanks = window.Tanks || {};
 
 (function () {
   const O = Tanks.Outils3D, { boite, cylindre, couche, souder } = O, CT = Tanks.Chars3D.C;
-  const couleurs = (equipe) => { const E = Tanks.CONFIG.equipes[String(equipe).split("~")[0]] || Tanks.CONFIG.equipes.bleus; return { base: new THREE.Color(E.camouflage[3]), clair: new THREE.Color(E.camouflage[1]), sombre: new THREE.Color(E.camouflage[2]), marque: E.marque }; // (la caisse : la couleur la plus claire du camouflage, l'aluminium peint) };
+  const couleurs = (equipe) => { const E = Tanks.CONFIG.equipes[String(equipe).split("~")[0]] || Tanks.CONFIG.equipes.bleus; return { base: new THREE.Color(E.camouflage[3]), clair: new THREE.Color(E.camouflage[1]), sombre: new THREE.Color(E.camouflage[2]), marque: E.marque }; }; // (la caisse : la couleur la plus claire du camouflage, l'aluminium peint)
   function tortue(equipe, sorte, simple) {
     const T = Tanks.Chars3D.materiaux().teinte, K = couleurs(equipe), g = new THREE.Group(), caisse = new THREE.Group();
     g.add(caisse);
