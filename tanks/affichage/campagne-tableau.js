@@ -57,6 +57,7 @@ Tanks.TableauCampagne = (function () {
   // Écrire en ESPAÇANT les lettres (les titres en capitales, façon Battlefield)
   function espace(t, x, y, taille, couleur, ecart, align, gras) {
     police(taille, gras);
+    t = Tanks.Langue.t(t); // (demande 116 : traduit AVANT d'être écrit lettre par lettre)
     const lettres = [...t], largeurs = lettres.map((c) => ctx.measureText(c).width), total = largeurs.reduce((a, b) => a + b, 0) + ecart * (lettres.length - 1);
     let px = align === "center" ? x - total / 2 : align === "right" ? x - total : x;
     ctx.textAlign = "left";
@@ -79,7 +80,7 @@ Tanks.TableauCampagne = (function () {
   // Couper une phrase en lignes qui tiennent dans « largeur » pixels.
   function lignes(texte, largeur, taille, gras) {
     police(taille, gras);
-    const mots = texte.split(" "), l = [];
+    const mots = Tanks.Langue.t(texte).split(" "), l = []; // (demande 116 : traduite AVANT d'être coupée en lignes)
     let ligne = "";
     for (const m of mots) {
       const essai = ligne ? ligne + " " + m : m;

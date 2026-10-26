@@ -1,6 +1,6 @@
 # Demande n° 116 : le jeu en anglais (bouton FR / EN)
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée (tanks version 66).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -17,6 +17,6 @@
 - Les traductions sont rangées comme des données (un dictionnaire), pas mélangées au code.
 
 ## ✅ Critères de réussite
-- [ ] Tanks « version 66 ».
-- [ ] Le bouton FR / EN, gardé après rechargement.
-- [ ] En anglais, aucun texte français visible pendant le jeu (hors sous le capot).
+- [x] Tanks « version 66 ».
+- [x] Le bouton FR / EN, gardé après rechargement.
+- [x] En anglais, aucun texte français visible pendant le jeu (hors sous le capot).

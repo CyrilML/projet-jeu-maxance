@@ -18,6 +18,8 @@
 // « Bravo, où es-tu ? », « merci ! ») ; les soldats ont un INDICATIF radio (Écho, Fox, Golf…) pour être appelés par
 // leur nom. Une question n'est pas un ordre : personne ne bouge, quelqu'un répond (logique/radio.js). Et un gros mot
 // n'est pas un ordre non plus !
+// ✍️ Demande 116 (le jeu en anglais) : en anglais, tu écris en anglais (« Bravo, cover me ») ; chaque mot anglais est
+// changé en son mot français (« ordres.alias », dans langues/en.js) avant d'être cherché dans le dictionnaire.
 
 window.Tanks = window.Tanks || {};
 
@@ -58,7 +60,10 @@ Tanks.Ordres = (function () {
 
   // 2 et 3. Comprendre une phrase. Renvoie ce qui a été compris (ou null), et les mots devinés.
   function comprendre(texte, monde) {
-    const brut = nettoyer(texte), mots = [];
+    // ✍️ (demande 116 : le jeu en anglais) chaque mot d'une AUTRE langue est d'abord changé en son mot français
+    // (« attack » → « attaquez », « me » → « moi ») : la liste « ordres.alias » est rangée dans langues/en.js
+    const ALIAS = O.alias || {};
+    const brut = nettoyer(texte).map((m) => ALIAS[m] || m), mots = [];
     for (const m of brut) {
       mots.push(m);
       if (m.includes("-")) mots.push(...m.split("-").filter(Boolean)); // (« suivez-moi » → aussi « suivez » et « moi »)
@@ -82,6 +87,8 @@ Tanks.Ordres = (function () {
       return meilleur;
     }
     let premierOrdre = Infinity;
+    // (demande 116 : en anglais, la couleur vient AVANT le portail, « the green portal » : on regarde d'abord s'il y a un portail)
+    if (mots.includes("portail") || mots.includes("portails")) r.portail = true;
     mots.forEach((m, i) => {
       if (["ici", "moi", "nous", "la"].includes(m)) return (r.ici = r.ici || m === "ici" || m === "moi");
       if (m === "portail" || m === "portails") return (r.portail = true);

@@ -242,6 +242,7 @@
       <a href="#etape119">Étape 119</a>
       <a href="#etape120">Étape 120</a>
       <a href="#etape121">Étape 121</a>
+      <a href="#etape122">Étape 122</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -6041,6 +6042,43 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape122">
+      <h2>🇬🇧 Étape 122 : le jeu en anglais (bouton FR | EN) <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Un bouton FR | EN sur l'accueil : tout le jeu passe en anglais (menus, écran de jeu, radio et voix, campagne, cinématiques, les 8 éditions). Ton carnet et « sous le capot » restent en français. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/116-jeu-en-anglais.md</code>.</p>
+          <ul>
+            <li>✍️ « Je veux le jeu entier en anglais. » → « Bouton FR / EN ».</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 66 ».</li>
+            <li>☐ Accueil, en haut à droite : FR | EN (ou ⚙️ Réglages → 🌐 Langue). La page se recharge dans la langue choisie, et s'en souvient.</li>
+            <li>☐ En anglais : menus, armurerie, boutique, personnages, éditions, écran de jeu, bilan.</li>
+            <li>☐ La radio parle en anglais (voix anglaises du navigateur), avec des sous-titres anglais.</li>
+            <li>☐ Ordres tapés avec T en anglais : « Bravo, cover me », « where are the enemies? », « Echo, heal me ».</li>
+            <li>☐ La campagne, les briefings, les cinématiques et la bande-annonce en anglais.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>📖 Un dictionnaire, pas un deuxième jeu</h3>
+      <p>Le jeu « pense » toujours en français : les règles, les noms internes, la sauvegarde ne changent pas. Juste avant d'afficher un texte (ou de le faire dire à la radio), un traducteur le cherche dans un dictionnaire de 2 899 phrases (<code>tanks/langues/en.js</code>). Pour les phrases avec des trous comme « {nom} est à terre », le dictionnaire a des « modèles » (207) : il traduit le modèle, puis remet le nom dans le trou.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Ouvre <code>tanks/langues/en.js</code> : trouve la traduction de « Au combat ! ».</li>
+            <li>Sous le capot : la ligne « 🌐 langue (116) » compte les phrases traduites.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Le jeu change-t-il ses règles en anglais ? <span class="petit">(non : il traduit seulement ce qu'il affiche et dit)</span></li>
+            <li>Où est rangé le dictionnaire ? <span class="petit">(tanks/langues/en.js)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7563,6 +7601,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-121" data-cle="appris-121" placeholder="Ex. : …"></textarea>
         <label for="idees-121"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-121" data-cle="idees-121" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 122 · le jeu en anglais <span class="petit">· 26 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/langues/en.js</code>, <code>moteur/traducteur.js</code>, <code>affichage/interprete.js</code>, <code>donnees/langue-du-jour.js</code>, <code>radio-voix.js</code>, <code>ordres.js</code>, <code>sauvegarde.js</code> (version 20).</p>
+        <p class="petit">✍️ Maxance a demandé : le jeu entier en anglais, avec un bouton FR / EN.</p>
+        <label for="appris-122"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-122" data-cle="appris-122" placeholder="Ex. : …"></textarea>
+        <label for="idees-122"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-122" data-cle="idees-122" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

@@ -931,7 +931,7 @@ Tanks.Tableau = (function () {
       ctx.globalAlpha = 1;
       return;
     }
-    const lignes = aide.split(" · "), h = 30 + lignes.length * 18;
+    const lignes = Tanks.Langue.t(aide).split(" · "), h = 30 + lignes.length * 18; // (demande 116 : traduite AVANT d'être coupée)
     ctx.globalAlpha = force;
     panneau(x, y0, 270, h);
     ctx.fillStyle = "#ff7a1a";
@@ -1032,7 +1032,7 @@ Tanks.Tableau = (function () {
       ctx.lineWidth = 2;
       ctx.beginPath(), ctx.arc(cx, cy, 13, 0, Math.PI * 2), ctx.stroke();
       texte("ABCDE"[k] || "?", cx, cy + 5, 13, "#111", "center");
-      texte(p.nom.replace(/^(la |le |l')/, "").slice(0, 10), cx, cy + 24, 9, "rgba(232,228,214,.85)", "center");
+      texte(Tanks.Langue.t(p.nom).replace(/^(la |le |l'|the )/, "").slice(0, 10), cx, cy + 24, 9, "rgba(232,228,214,.85)", "center");
     });
     void Q;
   }

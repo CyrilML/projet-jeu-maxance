@@ -19,12 +19,18 @@
 //   - on la coupe en MORCEAUX (à chaque « . ! ? ») : la voix respire entre deux, et chaque morceau a son propre rythme ;
 //   - l'ÉMOTION change la voix : urgent = plus vite et un peu plus haut, bavardage = calme, l'ennemi = grave et posé ;
 //   - autour : le « clic-kchh » du talkie-walkie, des petits crépitements dans le souffle, et un « bip » à la fin.
+// ✍️ (demande 116 : le jeu en anglais) En anglais, la phrase est traduite (moteur/traducteur.js) AVANT d'être dite et
+// écrite ; on choisit des voix ANGLAISES (« en-US », « en-GB » : les naturelles d'abord) et les petits mots humains
+// changent de langue (« Uh… », « Okay, ») : tout ça est rangé dans langues/en.js (« voix »), par-dessus config.js.
 // Ce fichier ne touche pas au monde : il écoute la radio du jeu et il dessine.
 
 window.Tanks = window.Tanks || {};
 
 Tanks.RadioVoix = (function () {
-  const C = Tanks.CONFIG, V = C.radio.voix;
+  const C = Tanks.CONFIG, LV = (Tanks.Langue.actif && Tanks.Langue.dico.voix) || {}, tr = Tanks.Langue.t; // (demande 116)
+  // (demande 116) les réglages de la voix de config.js, et par-dessus ceux de la langue du jour (sa langue, ses voix, ses petits mots)
+  const V = Object.assign({}, C.radio.voix, LV, { humain: LV.humain ? Object.assign({}, C.radio.voix.humain, LV.humain) : C.radio.voix.humain, qualite: (LV.qualite || []).concat(C.radio.voix.qualite) });
+  const PREFIXE = V.langue.slice(0, 2).toLowerCase(); // (« fr », ou « en » en anglais)
   const POLICE = '"Bahnschrift SemiBold", "Bahnschrift", "Arial Narrow", "Roboto Condensed", "Liberation Sans", Arial, sans-serif';
   const RANG = { reponse: 0, urgent: 1, bavardage: 2 }; // (plus petit = passe avant)
   let synthese = null;
@@ -54,10 +60,10 @@ Tanks.RadioVoix = (function () {
       v = [];
     }
     toutes = v.length;
-    voixFr = v.filter((x) => (x.lang || "").toLowerCase().replace("_", "-").startsWith("fr"));
+    voixFr = v.filter((x) => (x.lang || "").toLowerCase().replace("_", "-").startsWith(PREFIXE)); // (demande 116 : les voix de la langue du jour)
     // (étape 95) les plus belles voix d'abord (voir config « qualite »), puis le français de France ; on ne garde que
     // les meilleures, pour qu'aucun soldat n'ait une vieille voix très robotique quand il en existe une naturelle
-    const points = (x) => V.qualite.reduce((n, [mot, pts]) => n + ((x.name || "").toLowerCase().includes(mot) ? pts : 0), 0) + (x.lang === V.langue ? V.langueBonus || 5 : 0) + (x.localService === false ? 3 : 0);
+    const points = (x) => V.qualite.reduce((n, [mot, pts]) => n + ((x.name || "").toLowerCase().includes(mot) ? pts : 0), 0) + (x.lang === V.langue ? V.langueBonus || 5 : 0) + ((V.languesBonus || {})[(x.lang || "").replace("_", "-")] || 0) + (x.localService === false ? 3 : 0);
     voixFr.sort((a, b) => points(b) - points(a));
     meilleure = voixFr.length ? voixFr[0].name : "aucune";
     const seuil = voixFr.length ? points(voixFr[0]) : 0;
@@ -125,7 +131,7 @@ Tanks.RadioVoix = (function () {
   // J : chaque soldat passe à la voix suivante ; un message de la radio fait entendre la nouvelle voix tout de suite
   function changerVoix() {
     decalage++;
-    const v = voixFr.length ? voixFr[decalage % voixFr.length].name : "aucune voix française";
+    const v = voixFr.length ? voixFr[decalage % voixFr.length].name : PREFIXE === "fr" ? "aucune voix française" : "aucune voix " + V.langue; // (demande 116)
     Tanks.Evenements.emettre("voix-changees", { decalage, voix: v, nombre: voixFr.length });
     recevoir({ qui: "Radio", texte: "Nouvelles voix, à vous ! Ici " + v.split(" - ")[0].replace("Microsoft ", "").replace(" Online (Natural)", "") + ".", priorite: "reponse", equipe: "bleus" });
   }
@@ -158,7 +164,7 @@ Tanks.RadioVoix = (function () {
     let t = texte;
     if (!HU) return t;
     // 1. on « mange » le « ne » : « je ne bouge plus » → « je bouge plus », « n'y a plus » → « y a plus »
-    if (Math.random() < HU.negation) {
+    if (HU.negation && Math.random() < HU.negation) { // (demande 116 : en anglais, negation = 0 : pas de « ne » à manger)
       const avant = t;
       t = t.replace(/\b([Nn])e ([^\s,.!?]+) (pas|plus|rien|jamais|personne)\b/g, (m, n, mot, fin) => (n === "N" ? mot[0].toUpperCase() + mot.slice(1) : mot) + " " + fin);
       t = t.replace(/\b([Jj])e n'(?=[^\s,.!?]+ (pas|plus|rien|jamais|personne)\b)/g, "$1'"); // (« je n'ai rien » → « j'ai rien »)
@@ -168,7 +174,7 @@ Tanks.RadioVoix = (function () {
     // 2. un petit mot pour commencer (jamais quand c'est urgent)
     const liste = HU.debuts[priorite];
     if (liste && Math.random() < (HU.hesitation[priorite] || 0)) {
-      t = liste[Math.floor(Math.random() * liste.length)] + t[0].toLowerCase() + t.slice(1);
+      t = liste[Math.floor(Math.random() * liste.length)] + (/^I\b/.test(t) ? t : t[0].toLowerCase() + t.slice(1)); // (demande 116 : en anglais, « I » garde sa majuscule)
       humain.hesitations++;
     }
     // 3. « : » et « ; » deviennent des virgules (la voix fait une petite pause au lieu de lire bizarrement)
@@ -187,7 +193,7 @@ Tanks.RadioVoix = (function () {
     item.limite = maintenant + item.duree * 1000;
     if (!voixPossible()) return; // (pas de voix : le sous-titre seulement, pendant la durée prévue)
     try {
-      const dit = humaniser(p.texte, p.priorite), emo = emotionDe(p), E = (HU && HU.emotions[emo]) || { vitesse: 1, hauteur: 1 };
+      const dit = humaniser(tr(p.texte), p.priorite), emo = emotionDe(p), E = (HU && HU.emotions[emo]) || { vitesse: 1, hauteur: 1 };
       // (livre n° 3) LES MORCEAUX : une phrase par « . ! ? … » ; la voix respire entre deux
       const morceaux = HU && HU.morceaux ? (dit.match(/[^.!?…]+[.!?…]*/g) || [dit]).map((x) => x.trim()).filter(Boolean) : [dit];
       // (étape 96) un peu de hasard à CHAQUE phrase : on ne dit jamais deux fois une phrase exactement pareil
@@ -253,7 +259,7 @@ Tanks.RadioVoix = (function () {
     if (!voixPossible()) return;
     try {
       const tb = interceptee ? V.interceptee : V.timbres[numero(qui) % V.timbres.length];
-      const u = new window.SpeechSynthesisUtterance(texte);
+      const u = new window.SpeechSynthesisUtterance(tr(texte)); // (demande 116 : dite dans la langue du jour)
       u.lang = V.langue;
       u.voice = voixPour(qui);
       u.pitch = tb.hauteur;
@@ -286,7 +292,7 @@ Tanks.RadioVoix = (function () {
 
   // ------------------------------------------------------------------ 3. les sous-titres (en bas au milieu)
   function couper(texte, largeur) {
-    const mots = texte.split(" "), lignes = [];
+    const mots = tr(texte).split(" "), lignes = []; // (demande 116 : traduite AVANT d'être coupée en lignes)
     let l = "";
     for (const m of mots) {
       const essai = l ? l + " " + m : m;

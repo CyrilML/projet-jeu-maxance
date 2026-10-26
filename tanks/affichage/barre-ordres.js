@@ -20,7 +20,8 @@ Tanks.BarreOrdres = (function () {
     champ = document.getElementById("ordre");
     aide = document.getElementById("exemples-ordres");
     if (!barre) return;
-    for (const ex of Tanks.CONFIG.ordres.exemples) {
+    for (const exFr of Tanks.CONFIG.ordres.exemples) {
+      const ex = Tanks.Langue.t(exFr); // (demande 116 : en anglais, l'exemple est écrit en anglais, et le jeu le comprend)
       const b = document.createElement("button");
       b.type = "button";
       b.textContent = ex;

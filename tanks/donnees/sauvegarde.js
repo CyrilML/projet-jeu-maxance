@@ -56,12 +56,14 @@
 //   19 (demande 115 : 📜 les éditions) : + edition (l'édition choisie : "moderne", "1916"…) et editions (pour chaque autre
 //     édition que Moderne, SON équipement, SON tank et SA carte : en 1916, ton Fantassin a son fusil Valmont, et quand tu
 //     reviens en Moderne, ton Assaut retrouve son AR-4 et ses pièces). Une ancienne version garde tout, en édition Moderne.
+//   20 (demande 116 : 🌐 le jeu en anglais) : + langue (la langue choisie avec le bouton FR / EN : "fr" ou "en"). Une
+//     ancienne version garde tout, en français (comme avant).
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 19; // (demande 115 : + l'édition ; demande 114 : + les réglages ; étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents ; livre n° 6 : + l'arme bonus ; livre n° 28 : + la boutique)
+  const VERSION = 20; // (demande 116 : + la langue ; demande 115 : + l'édition ; demande 114 : + les réglages ; étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents ; livre n° 6 : + l'arme bonus ; livre n° 28 : + la boutique)
   const radio = Tanks.Evenements;
 
   function vide() {
@@ -73,7 +75,8 @@ Tanks.Sauvegarde = (function () {
       progression: { xp: 0, armes: {}, cadeaux: { armes: [], pieces: {} }, parties: 0 }, // (demande 97)
       boutique: boutiqueVide(), // (livre n° 28)
       reglages: reglagesDeDepart(), // (demande 114)
-      edition: "moderne", editions: {} }; // (demande 115)
+      edition: "moderne", editions: {}, // (demande 115)
+      langue: "fr" }; // (demande 116)
   }
   // (demande 114) les réglages au départ : ceux de config.js (« reglages.liste » : le sang ÉTEINT)
   function reglagesDeDepart() {
@@ -212,13 +215,15 @@ Tanks.Sauvegarde = (function () {
         if ((ancienne.version || 1) < 15) convertir15(donnees); // (demande 102)
         const bonus = (ancienne.version || 1) < 16 ? convertir16(donnees) : []; // (livre n° 6)
         if ((ancienne.version || 1) < 19) (donnees.edition = "moderne"), (donnees.editions = {}); // (demande 115 : une ancienne partie est en Moderne)
-        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins, bonus, boutique: (ancienne.version || 1) < 17, reglages: (ancienne.version || 1) < 18, edition: (ancienne.version || 1) < 19 }); // (livre n° 28 ; demande 114 ; demande 115)
+        if ((ancienne.version || 1) < 20) donnees.langue = "fr"; // (demande 116 : une ancienne partie est en français)
+        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins, bonus, boutique: (ancienne.version || 1) < 17, reglages: (ancienne.version || 1) < 18, edition: (ancienne.version || 1) < 19, langue: (ancienne.version || 1) < 20 }); // (livre n° 28 ; demande 114 ; demande 115 ; demande 116)
       }
     } catch (e) {
       donnees = vide();
     }
     if (typeof donnees.edition !== "string") donnees.edition = "moderne";
     donnees.editions = donnees.editions && typeof donnees.editions === "object" ? donnees.editions : {};
+    if (!Tanks.LangueDuJour.connues.includes(donnees.langue)) donnees.langue = "fr"; // (demande 116)
     ouvrirEdition(); // (demande 115)
     return donnees;
   }

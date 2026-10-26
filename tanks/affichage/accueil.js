@@ -19,6 +19,9 @@
 // ✍️ (demande 115) une 5e porte : 📜 ÉDITIONS (le même jeu dans une autre époque : affichage/editions-ecran.js). Dans une
 // autre édition que Moderne, la CAMPAGNE, la BOUTIQUE et la bande-annonce restent fermées (elles sont modernes) : la porte
 // le dit, au lieu de s'ouvrir. Le sur-titre et une petite étiquette disent quelle édition est en cours.
+// ✍️ (demande 116 : « Bouton FR / EN ») en haut à droite, le petit bouton FR | EN, et dans ⚙️ Réglages la ligne
+// « 🌐 Langue : Français / English ». L'accueil DEMANDE la langue à logique/reglages.js, puis recharge la page : au
+// chargement, l'interprète (affichage/interprete.js) traduit tout ce qui s'affiche.
 // L'accueil est un ÉCRAN (de l'affichage) : il ne touche pas au monde. Le menu attend qu'il soit fermé.
 
 window.Tanks = window.Tanks || {};
@@ -36,6 +39,7 @@ Tanks.Accueil = (function () {
     document.getElementById("ecran2d").style.visibility = "hidden"; // (le tableau de bord du garage attend derrière)
     racine.innerHTML =
       '<div class="a-fond"></div>' +
+      boutonsLangue("a-langue") + // (demande 116 : le petit bouton FR | EN)
       '<div class="a-contenu">' +
       '<div class="a-sur-titre">' + (ED.textes.surTitre || "⚔️ Bataille · Infanterie · Blindés · Hélicos · Avions") + "</div>" + // (demande 115 : le sur-titre de l'édition)
       '<h2 class="a-titre">THE LAST<br><span>BATTLEFIELD</span></h2>' + // ✍️ (étape 84) le nom du jeu, choisi par Maxance
@@ -50,7 +54,7 @@ Tanks.Accueil = (function () {
       '<button class="a-jouer a-mode a-boutique' + ferme("boutique") + '" data-accueil="boutique">🛒 BOUTIQUE<small>' + (R.boutique ? "armes · skins · packs · avancements" : "🔒 dans l'édition Moderne") + "</small></button>" + // (livre n° 28 ; demande 115)
       '<button class="a-jouer a-mode a-personnages" data-accueil="personnages">🎖️ PERSONNAGES<small>les soldats en 3D · classes · tenues</small></button>' + // (demande 114)
       '<button class="a-film" data-accueil="film" title="La bande-annonce du jeu (demande 101)">🎬 Bande-annonce</button>' +
-      '<a class="a-carnet" href="../index.html#etape121">📓 Le carnet</a>' +
+      '<a class="a-carnet" href="../index.html#etape122">📓 Le carnet</a>' +
       '<button class="a-reglages" data-accueil="reglages" title="Les réglages du jeu (demande 114)">⚙️ Réglages</button>' +
       "</div>" +
       '<div class="a-coins" title="Gagnés à chaque mission réussie de la campagne (demande 101) et en bataille libre (livre n° 22)">🪙 <b></b> Battle Coins</div>' +
@@ -83,7 +87,12 @@ Tanks.Accueil = (function () {
     window.addEventListener("keydown", geste, true);
     racine.addEventListener("pointerdown", geste);
     racine.querySelectorAll("[data-accueil]").forEach((b) => b.addEventListener("click", (e) => (e.stopPropagation(), fermer(b.dataset.accueil))));
+    racine.addEventListener("click", (e) => { // (demande 116 : FR | EN, sur l'affiche ou dans le panneau)
+      const b = e.target.closest("[data-langue]");
+      if (b) e.stopPropagation(), choisirLangue(b.dataset.langue);
+    });
     racine.querySelector(".a-panneau").addEventListener("click", (e) => {
+      if (e.target.closest("[data-langue]")) return; // (la langue : le clic du dessus s'en occupe)
       e.stopPropagation();
       const b = e.target.closest("[data-reglage]");
       if (b) Tanks.Reglages.changer(b.dataset.reglage), dessinerReglages(b.dataset.reglage);
@@ -99,9 +108,24 @@ Tanks.Accueil = (function () {
     P.innerHTML = "<div><h3>⚙️ RÉGLAGES</h3>" + Object.keys(L).map((k) => {
       const on = Tanks.Reglages.valeur(k);
       return '<button class="a-interrupteur' + (on ? " allume" : "") + '" data-reglage="' + k + '" role="switch" aria-checked="' + on + '"><span class="a-bascule"></span><span><b>' + L[k].icone + " " + L[k].nom + " : " + (on ? "ALLUMÉ" : "éteint") + "</b><small>" + L[k].texte + "</small></span></button>";
-    }).join("") + '<p class="a-panneau-pied"><kbd>Entrée</kbd> allumer / éteindre · <kbd>Échap</kbd> fermer · rangé dans ton livret</p><button class="a-reglages" data-fermer="1">← Fermer</button></div>';
+    }).join("") + '<div class="a-langues"><b>🌐 Langue :</b>' + boutonsLangue("a-langue-panneau") + "</div>" + // (demande 116)
+      '<p class="a-panneau-pied"><kbd>Entrée</kbd> allumer / éteindre · <kbd>Échap</kbd> fermer · rangé dans ton livret</p><button class="a-reglages" data-fermer="1">← Fermer</button></div>';
     const b = P.querySelector('[data-reglage="' + (focus || Object.keys(L)[0]) + '"]');
     if (b) b.focus();
+  }
+  // ✍️ (demande 116) LA LANGUE : le bouton FR | EN (deux petits boutons ; celui de la langue du jour est allumé)
+  function boutonsLangue(classe) {
+    const ici = Tanks.Reglages.langue(), noms = { fr: ["FR", "Français"], en: ["EN", "English"] }, court = classe === "a-langue";
+    return '<span class="' + classe + '" role="group" aria-label="Langue / Language">' + Tanks.LangueDuJour.connues.map((c) =>
+      '<button class="a-lang' + (c === ici ? " allume" : "") + '" data-langue="' + c + '" aria-pressed="' + (c === ici) + '" title="' + noms[c][1] + '">' + noms[c][court ? 0 : 1] + "</button>").join(court ? '<i>|</i>' : "") + "</span>";
+  }
+  function choisirLangue(code) {
+    const r = Tanks.Reglages.changerLangue(code);
+    if (!r.ok || !r.recharger) return;
+    const p = racine.querySelector(".a-refus");
+    p.textContent = code === "en" ? "🌐 English… (the page reloads)" : "🌐 Français… (la page se recharge)"; // (écrit dans la NOUVELLE langue)
+    p.hidden = false;
+    setTimeout(() => location.reload(), 350);
   }
   function ouvrirReglages() {
     racine.querySelector(".a-panneau").hidden = false;
@@ -118,6 +142,11 @@ Tanks.Accueil = (function () {
     const b = document.activeElement && document.activeElement.closest && document.activeElement.closest("[data-reglage]");
     if (e.code === "Escape" || e.code === "Backspace") fermerReglages();
     else if ((e.code === "Enter" || e.code === "Space" || e.code === "NumpadEnter") && b) Tanks.Reglages.changer(b.dataset.reglage), dessinerReglages(b.dataset.reglage);
+    else if ((e.code === "Enter" || e.code === "Space" || e.code === "NumpadEnter") && document.activeElement && document.activeElement.dataset && document.activeElement.dataset.langue) choisirLangue(document.activeElement.dataset.langue); // (demande 116)
+    else if (e.code === "Tab" || e.code === "ArrowDown" || e.code === "ArrowUp") { // (demande 116 : passer d'un bouton du panneau à l'autre)
+      const l = [...racine.querySelectorAll(".a-panneau button")], i = l.indexOf(document.activeElement);
+      l[(i + (e.code === "ArrowUp" || e.shiftKey ? l.length - 1 : 1)) % l.length].focus();
+    }
     else if (e.code === "Enter" || e.code === "NumpadEnter") fermerReglages();
   }
 

@@ -209,7 +209,7 @@ Tanks.EcranCinematique = (function () {
     ctx.textBaseline = "alphabetic";
     ctx.fillStyle = "rgba(255,138,31,.95)";
     ctx.font = "600 15px " + POLICE;
-    if (T0.etiquette) ctx.fillText(T0.etiquette.toUpperCase().split("").join(" "), L / 2, H * 0.4);
+    if (T0.etiquette) ctx.fillText(Tanks.Langue.t(T0.etiquette).toUpperCase().split("").join(" "), L / 2, H * 0.4);
     if (T0.haut) (ctx.fillStyle = "rgba(244,241,234,.8)"), (ctx.font = "16px " + POLICE), ctx.fillText(T0.haut, L / 2, H * 0.4 - 26), (ctx.fillStyle = "rgba(255,138,31,.95)");
     ctx.font = "bold " + (T0.taille || 62) + "px " + POLICE;
     ctx.fillStyle = T0.couleur || "#f4f1ea";
@@ -233,7 +233,7 @@ Tanks.EcranCinematique = (function () {
     ctx.restore();
   }
   function couper(texte, largeur) {
-    const mots = texte.split(" "), lignes = [];
+    const mots = Tanks.Langue.t(texte).split(" "), lignes = []; // (demande 116 : traduite AVANT d'être coupée en lignes)
     let l = "";
     for (const m of mots) {
       const essai = l ? l + " " + m : m;
