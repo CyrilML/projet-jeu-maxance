@@ -135,7 +135,13 @@ Tanks.Scene = (function () {
     // demande la PUISSANTE (« high-performance ») ; et l'anticrénelage (les bords lisses, qui coûte cher en pixels) seulement
     // si la partie commence à un niveau de qualité 2 ou plus (il ne peut plus changer après).
     antialias = Tanks.Qualite.niveauDeDepart() >= C.qualite.anticrenelage;
-    rendu = new THREE.WebGLRenderer({ canvas: toile, antialias, powerPreference: "high-performance" });
+    // (demande 125) si la carte graphique « puissante » refuse, on réessaie sans rien demander de spécial
+    try {
+      rendu = new THREE.WebGLRenderer({ canvas: toile, antialias, powerPreference: "high-performance" });
+    } catch (e) {
+      antialias = false;
+      rendu = new THREE.WebGLRenderer({ canvas: toile });
+    }
     rendu.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
     rendu.outputColorSpace = THREE.SRGBColorSpace;
     rendu.toneMapping = THREE.ACESFilmicToneMapping;
