@@ -21,3 +21,9 @@ capot plantait → la boucle du jeu s'arrêtait (plus jamais d'image suivante) �
 d'une sauvegarde neuve, d'où le bug invisible chez nous.
 Réparations : le panneau gère une arme absente ; la boucle demande l'image suivante en premier (une erreur ne fige
 plus le jeu) ; test ajouté avec une sauvegarde « vétéran » sur les 8 éditions.
+
+## Version 71
+Le cadre rouge a 3 boutons : 📋 Copier le rapport (l'erreur complète + la version + l'état du livret, à coller dans la
+discussion), 🧹 Réparer ma sauvegarde (garde niveaux, points d'armes, Battle Coins, boutique, campagne, réglages ; jette
+l'équipement, le tank, la carte et les livrets d'édition), 🆕 Essayer sans sauvegarde (« ?propre=1 » : livret neuf,
+rien n'est lu ni écrit).

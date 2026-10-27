@@ -206,7 +206,23 @@ Tanks.Sauvegarde = (function () {
   }
 
   let donnees = vide();
+  // (demande 125) « …/index.html?propre=1 » : on joue avec un livret NEUF, sans rien lire ni écrire (pour vérifier si un
+  // problème vient de la sauvegarde, sans la toucher).
+  let propre = false;
+  try { propre = new URLSearchParams(location.search).get("propre") === "1"; } catch (e) { /* (pas d'adresse) */ }
+  // (demande 125) RÉPARER le livret : on garde le précieux (niveaux, points d'armes, Battle Coins, boutique, victoires,
+  // campagne, réglages) et on jette ce qui peut s'emmêler entre les éditions (l'équipement, le tank, la carte, les
+  // livrets de chaque édition). Le jeu repart avec l'équipement de base.
+  function reparer() {
+    try {
+      const d = JSON.parse(localStorage.getItem(CLE) || "{}");
+      for (const k of ["equipement", "char", "carte", "editions", "edition"]) delete d[k];
+      localStorage.setItem(CLE, JSON.stringify(d));
+      return true;
+    } catch (e) { return false; }
+  }
   function lire() {
+    if (propre) return (donnees = vide()), ouvrirEdition(), donnees;
     try {
       const brut = localStorage.getItem(CLE);
       // (une ancienne version : on garde tout ce qu'elle avait, et les nouveaux compteurs commencent à 0)
@@ -234,6 +250,7 @@ Tanks.Sauvegarde = (function () {
   }
   // (étape 77) discret = true : on écrit sans l'annoncer à la radio (les points gagnés pendant la bataille)
   function ecrire(raison, discret) {
+    if (propre) return; // (demande 125 : livret neuf, rien n'est écrit)
     try {
       localStorage.setItem(CLE, JSON.stringify(pourEcrire())); // (demande 115 : les choix modernes reprennent leur place)
       if (!discret) radio.emettre("sauvegarde", { raison });
@@ -242,5 +259,5 @@ Tanks.Sauvegarde = (function () {
     }
   }
 
-  return { lire, ecrire, get donnees() { return donnees; }, VERSION };
+  return { lire, ecrire, reparer, get propre() { return propre; }, get donnees() { return donnees; }, VERSION };
 })();
