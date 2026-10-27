@@ -2801,7 +2801,7 @@ Tanks.LANGUES.en = {
     "l'épave du bus": "the bus wreck",
 
     // ---- les phrases assemblées par le jeu (des morceaux et des trous), et les oubliées
-    "📓 Ouvrir le carnet (étapes 60 à 121)": "📓 Open the notebook (steps 60 to 121)",
+    "📓 Ouvrir le carnet (étapes 60 à 122)": "📓 Open the notebook (steps 60 to 122)",
     "⛶ Plein écran (K)": "⛶ Full screen (K)",
     "Plein écran (touche K)": "Full screen (key K)",
     "🚫 Aucune publicité, aucun traqueur": "🚫 No ads, no trackers",
