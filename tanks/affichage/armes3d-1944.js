@@ -14,7 +14,7 @@
 window.Tanks = window.Tanks || {};
 
 (function () {
-  const A = Tanks.Armes3D, { K, V3, pontet, poignee } = A.outils;
+  const A = Tanks.Armes3D, { K, V3, pontet, poignee, culasseStriee } = A.outils;
   const N = 0x2b2d30, P = 0x3a3c3e, LAITON = 0xb08a40, BAKE = 0x2a1a12, OLIVE = 0x4a5232;
 
   // ------------------------------------------------------------------ les FUSILS SEMI-AUTOMATIQUES
@@ -22,7 +22,7 @@ window.Tanks = window.Tanks || {};
     const by = 0.04, xr = 0.15, tip = xr + o.canon;
     e.boite(0.24, 0.03, 0.03, 0.02, by + 0.004, 0, "metal", N); // la carcasse
     e.boite(0.12, 0.012, 0.032, 0.0, by + 0.024, 0, "metal", P);
-    e.cote([[0.04, by - 0.02], [-0.06, by - 0.03], [-0.12, by - 0.065], [-0.44, by - 0.11], [-0.46, by - 0.11], [-0.46, by + 0.025], [-0.42, by + 0.03], [-0.13, by + 0.012], [-0.09, by + 0.012]], 0.042, "bois", null, 0, 0.007, null, 2);
+    e.cote([[0.04, by - 0.02], [-0.06, by - 0.03], [-0.12, by - 0.065], [-0.44, by - 0.11], [-0.46, by - 0.11], [-0.46, by + 0.025], [-0.42, by + 0.03], [-0.13, by + 0.012], [-0.09, by + 0.012]], 0.042, "bois", null, 0, 0.007, null, 2, { x: [-0.44, 1, -0.08, 0.7] });
     e.boite(0.008, 0.14, 0.044, -0.462, by - 0.042, 0, "metal", N);
     e.cote([[0.05, by - 0.03], [o.fut, by - 0.012], [o.fut, by + 0.008], [0.05, by + 0.006]], 0.038, "bois", null, 0, 0.005);
     e.galet(o.fut - xr, 0.018, 0.032, (xr + o.fut) / 2, by + 0.022, 0, "bois", null, 0.3);
@@ -144,10 +144,12 @@ window.Tanks = window.Tanks || {};
   // ------------------------------------------------------------------ LES PISTOLETS
   function pistolet(e, p, o) {
     const by = 0.042, L = o.long;
-    e.boite(0.1, 0.022, 0.024, 0.01, by - 0.006, 0, "metal", N); // la carcasse
+    // la carcasse ; (armes réalistes, 2e passe) dans la belle version, découpée de côté avec l'avant arrondi sous le canon
+    if (e.beau) e.cote([[-0.04, by - 0.017], [-0.04, by + 0.005], [0.06, by + 0.005], [0.064, by - 0.004], [0.056, by - 0.017]], 0.024, "metal", N, 0, 0.003, null, 2);
+    else e.boite(0.1, 0.022, 0.024, 0.01, by - 0.006, 0, "metal", N);
     e.cote([[0.0, by - 0.016], [-0.012, by - 0.07], [-0.022, by - 0.12], [-0.06, by - 0.118], [-0.052, by - 0.07], [-0.04, by - 0.016]], 0.03, o.bois ? "bois" : "poly", o.bois ? 0x5a3a20 : BAKE, 0, 0.006, null, 2);
     pontet(e, -0.004, 0.04, by - 0.014, N);
-    e.dans("culasse", () => { e.boite(L, 0.026, 0.026, L / 2 - 0.05, by + 0.014, 0, "metal", o.couleur); e.boite(0.006, 0.008, 0.004, L - 0.06, by + 0.031, 0, "metal", N); });
+    e.dans("culasse", () => { if (e.beau) culasseStriee(e, -0.05, L - 0.05, by + 0.001, 0.026, 0.013, o.couleur, 8, -0.043, 0.0042); else e.boite(L, 0.026, 0.026, L / 2 - 0.05, by + 0.014, 0, "metal", o.couleur); e.boite(0.006, 0.008, 0.004, L - 0.06, by + 0.031, 0, "metal", N); });
     e.tube(L - 0.05, L - 0.04, 0.007, 0.007, by + 0.012, 0, "metal", K.canon, 10);
     return { by, tip: L - 0.04, ch: { x: -0.03, y: by - 0.02 }, rail: null, dessous: null, garde: { centre: V3(-0.03, -0.08, -0.036), axe: V3(0.6, 1, 0.25).normalize(), sorte: "pistolet" },
       lampe: null, laser: null, ejection: V3(0.0, by + 0.02, 0.0), mireNative: { ligne: by + 0.034, arriere: -0.04, z: 0, nom: "cran et guidon" }, glissiere: { x: 0.0, y: by + 0.026 }, bout: { x: L - 0.04, y: by + 0.012, r: 0.007 },

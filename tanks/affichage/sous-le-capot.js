@@ -713,6 +713,8 @@ Tanks.SousLeCapot = (function () {
     const A3 = Tanks.Armes3D.bilan, VU = Tanks.Armes3D.vue, mod = VU.modele || Tanks.Armes3D.fabriquer(A.id, A.pieces, "beau", { lanceGrenades: g.id === "lanceGrenades" });
     l.push(["🔫 modèle 3D (demande 88)", mod.nom + " · " + mod.liste.join(" · ") + " · " + mod.triangles.toLocaleString("fr-FR") + " triangles en " + mod.objets + " dessins (1 par matière)"]);
     l.push(["👁️ vue de l'arme", (VU.actif ? "première personne : " + A3.vueTriangles.toLocaleString("fr-FR") + " triangles (arme + 2 mains gantées + avant-bras), " + A3.vueObjets + " dessins, dessinée par-dessus le monde · recul " + virgule(VU.recul || 0, 2) + (VU.baisse > 0 ? " · arme baissée à " + Math.round(VU.baisse * 100) + " %" : "") : "pas active (C à pied pour la voir)") + " · 🔦 " + A3.lampe + " · 🔴 laser " + A3.laser]);
+    // ✍️ (armes réalistes) « Fais pareil pour les armes » : ce que l'armurier a ajouté pour que les armes aient l'air vraies
+    l.push(["🪛 armes réalistes", (A3.arrondies || 0) + " boîtes aux arêtes arrondies · " + (A3.usees || 0) + " pièces aux bords usés (couleur des sommets) · 1 carte des bosses (rayures, grain) partagée par toutes les armes · soldats de l'ordinateur : version simple (1 seule matière, pas d'arrondis)"]);
     l.push(["🏭 l'armurier", A3.modeles + " modèles fabriqués en " + Math.round(A3.ms) + " ms (gardés au magasin, partagés par tous les soldats) · armes vues sur les soldats : " + Object.keys(A3.soldatsArmes).join(", ") + " · aperçu du menu : " + A3.apercu]);
     // (livre de demandes n° 13 à 16) la vue par-dessus l'épaule, le viseur dynamique, les plaques, ce que tu tiens en main
     const SV = Tanks.Scene.vue, TE = Tanks.Tableau.ecran, OB = Tanks.Objets3D.bilan;

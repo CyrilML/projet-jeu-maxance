@@ -31,8 +31,8 @@ window.Tanks = window.Tanks || {};
     pontet(e, -0.015, 0.04, by - 0.02, N);
     // la CROSSE et le poignet (en bois), et la plaque de couche en acier
     const cr = -0.48;
-    if (o.kress) e.cote([[0.0, by - 0.02], [-0.05, by - 0.03], [-0.09, by - 0.085], [-0.12, by - 0.08], [-0.42, by - 0.13], [cr, by - 0.135], [cr, by + 0.02], [-0.44, by + 0.025], [-0.16, by + 0.0], [-0.08, by + 0.006], [-0.075, by + 0.01]], 0.042, "bois", null, 0, 0.007, null, 2);
-    else e.cote([[0.0, by - 0.02], [-0.07, by - 0.03], [-0.13, by - 0.06], [-0.42, by - 0.115], [cr, by - 0.12], [cr, by + 0.025], [-0.44, by + 0.03], [-0.15, by + 0.005], [-0.08, by + 0.006], [-0.075, by + 0.01]], 0.04, "bois", null, 0, 0.007, null, 2);
+    if (o.kress) e.cote([[0.0, by - 0.02], [-0.05, by - 0.03], [-0.09, by - 0.085], [-0.12, by - 0.08], [-0.42, by - 0.13], [cr, by - 0.135], [cr, by + 0.02], [-0.44, by + 0.025], [-0.16, by + 0.0], [-0.08, by + 0.006], [-0.075, by + 0.01]], 0.042, "bois", null, 0, 0.007, null, 2, { x: [-0.44, 1, -0.08, 0.7] });
+    else e.cote([[0.0, by - 0.02], [-0.07, by - 0.03], [-0.13, by - 0.06], [-0.42, by - 0.115], [cr, by - 0.12], [cr, by + 0.025], [-0.44, by + 0.03], [-0.15, by + 0.005], [-0.08, by + 0.006], [-0.075, by + 0.01]], 0.04, "bois", null, 0, 0.007, null, 2, { x: [-0.44, 1, -0.08, 0.7] });
     e.boite(0.008, 0.15, 0.044, cr - 0.002, by - 0.05, 0, "metal", N);
     // le FÛT sous le canon, et le garde-main au-dessus
     e.cote([[xr - 0.13, by - 0.028], [o.fut, by - 0.012], [o.fut, by + 0.006], [xr - 0.13, by + 0.002]], 0.036, "bois", null, 0, 0.005);
@@ -125,7 +125,7 @@ window.Tanks = window.Tanks || {};
     e.tube(0.16, tip - 0.08, 0.019, 0.019, by + 0.012, 0, "metal", 0x3c3e41, 12); // le CACHE-CHALEUR…
     if (!e.leger) for (let x = 0.18; x < tip - 0.1; x += 0.03) for (const s of [-1, 1]) e.boite(0.012, 0.006, 0.004, x, by + 0.014, s * 0.018, "poly", K.fente); // … et ses trous
     e.boite(0.01, 0.012, 0.004, tip - 0.01, by + 0.026, 0, "metal", N);
-    e.cote([[-0.06, by - 0.02], [-0.11, by - 0.05], [-0.4, by - 0.1], [-0.42, by - 0.1], [-0.42, by + 0.02], [-0.38, by + 0.024], [-0.1, by + 0.012], [-0.06, by + 0.015]], 0.04, "bois", null, 0, 0.007, null, 2);
+    e.cote([[-0.06, by - 0.02], [-0.11, by - 0.05], [-0.4, by - 0.1], [-0.42, by - 0.1], [-0.42, by + 0.02], [-0.38, by + 0.024], [-0.1, by + 0.012], [-0.06, by + 0.015]], 0.04, "bois", null, 0, 0.007, null, 2, { x: [-0.44, 1, -0.08, 0.7] });
     e.boite(0.008, 0.13, 0.044, -0.424, by - 0.04, 0, "metal", N);
     pontet(e, -0.02, 0.03, by - 0.025, N);
     // la baïonnette au bout
@@ -143,8 +143,16 @@ window.Tanks = window.Tanks || {};
   // ------------------------------------------------------------------ LE REVOLVER 92
   A.ajouterFabrique("revolver92", (e, p) => {
     const by = 0.04, L = 0.115, Ac = 0x2a2c30;
-    e.cote([[-0.04, 0.0], [-0.04, 0.06], [0.07, 0.06], [0.07, 0.004], [0.02, -0.006], [0.0, 0.0]], 0.028, "metal", Ac, 0, 0.003, [[[-0.006, 0.015], [0.058, 0.015], [0.058, 0.052], [-0.006, 0.052]]]);
-    e.tube(-0.004, 0.056, 0.02, 0.02, by, 0, "metal", 0x34363a, 18); // le barillet
+    if (e.beau) {
+      // ✍️ (armes réalistes : « Fais pareil pour les armes. ») la carcasse au dos arrondi, et le barillet aux bords chanfreinés
+      // creusé de 6 cannelures (les sillons entre les chambres)
+      e.cote([[0.0, 0.0], [-0.04, 0.0], [-0.047, 0.026], [-0.046, 0.05], [-0.036, 0.062], [0.0, 0.065], [0.07, 0.062], [0.074, 0.056], [0.074, 0.006], [0.06, -0.004], [0.02, -0.006]], 0.028, "metal", Ac, 0, 0.003, [[[-0.006, 0.015], [0.058, 0.015], [0.058, 0.052], [-0.006, 0.052]]], 2);
+      e.tour([[-0.004, 0.0165], [-0.002, 0.0198], [0.052, 0.0198], [0.056, 0.0172]], by, 0, "metal", 0x34363a, 30);
+      for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2 + Math.PI / 6; e.boite(0.034, 0.0042, 0.003, 0.028, by + Math.sin(a) * 0.0192, Math.cos(a) * 0.0192, "metal", 0x1e2023, a); }
+    } else {
+      e.cote([[-0.04, 0.0], [-0.04, 0.06], [0.07, 0.06], [0.07, 0.004], [0.02, -0.006], [0.0, 0.0]], 0.028, "metal", Ac, 0, 0.003, [[[-0.006, 0.015], [0.058, 0.015], [0.058, 0.052], [-0.006, 0.052]]]);
+      e.tube(-0.004, 0.056, 0.02, 0.02, by, 0, "metal", 0x34363a, 18); // le barillet
+    }
     if (!e.leger) for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; e.tube(-0.007, -0.004, 0.0045, 0.0045, by + Math.sin(a) * 0.011, Math.cos(a) * 0.011, "metal", LAITON, 8); }
     e.tube(0.07, 0.07 + L, 0.0085, 0.0075, by, 0, "metal", Ac, 8); // le canon octogonal
     e.boite(0.006, 0.01, 0.003, 0.068 + L, by + 0.012, 0, "metal", Ac);
@@ -160,7 +168,9 @@ window.Tanks = window.Tanks || {};
   // ------------------------------------------------------------------ LE PISTOLET KRESS 08 (la genouillère)
   A.ajouterFabrique("pistolet08", (e, p) => {
     const by = 0.042, Ac = 0x2c2e31;
-    e.boite(0.12, 0.026, 0.024, 0.02, by - 0.004, 0, "metal", Ac); // la carcasse
+    // la carcasse ; (armes réalistes) dans la belle version, découpée avec son avant arrondi sous le canon
+    if (e.beau) e.cote([[-0.04, by - 0.017], [-0.04, by + 0.009], [0.08, by + 0.009], [0.084, by + 0.002], [0.078, by - 0.008], [0.06, by - 0.017]], 0.024, "metal", Ac, 0, 0.003, null, 2);
+    else e.boite(0.12, 0.026, 0.024, 0.02, by - 0.004, 0, "metal", Ac);
     e.tube(0.06, 0.16, 0.0085, 0.0085, by + 0.006, 0, "metal", Ac, 12); // le canon fin
     e.boite(0.006, 0.01, 0.003, 0.155, by + 0.017, 0, "metal", Ac);
     e.cote([[0.0, by - 0.016], [-0.02, by - 0.07], [-0.034, by - 0.12], [-0.068, by - 0.118], [-0.054, by - 0.07], [-0.04, by - 0.016]], 0.03, "bois", 0x5a3a20, 0, 0.006, null, 2); // la poignée, très penchée
