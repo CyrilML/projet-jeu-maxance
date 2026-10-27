@@ -29,6 +29,12 @@
 // les hanches roulent à chaque pas, l'arme se balance en courant, la position de tir (genoux un peu pliés, la joue sur la
 // crosse), le bras libre qui se balance avec un pistolet. Toujours 2 dessins par soldat ; la vitrine des personnages
 // (affichage/personnages.js) montre les mêmes maquettes.
+// ✍️ Demande 126 (« fais des maquettes de soldats, je veux qu'ils ressemblent à des humains ») : le corps n'est plus un
+// assemblage de blocs, mais une PEAU sculptée d'un seul morceau par membre (le sculpteur, affichage/corps3d.js) : le
+// tronc, les bras, les jambes, le cou, des mains à 5 doigts, des bottes, un visage sculpté (nez, lèvres, paupières,
+// sourcils). Les points des genoux, des coudes, des épaules, de la taille et du cou sont accrochés à DEUX os à la fois :
+// ils plient en douceur. Toujours 2 dessins par soldat, et la carte graphique a 3 à 4 fois moins de points à déplacer
+// (les points partagés entre deux triangles ne sont plus recopiés).
 // Tout est construit « nez vers x+ », posé au sol (y = 0). Ce fichier ne connaît pas les règles du jeu.
 
 window.Tanks = window.Tanks || {};
@@ -108,7 +114,8 @@ Tanks.Engins3D = (function () {
         casqueBord: new THREE.Color(E.camouflage[2]).getHex(), tenue: coul(UE.fond),
         // ✍️ (demande 115) le CASQUE de l'édition (« adrian » à cimier, « kressien » à couvre-nuque… ou le moderne) et sa couleur
         casqueStyle: ((Tanks.CONFIG.edition.modeles.casques || {})[String(equipe).split("~")[0]]) || "moderne",
-        casqueAcier: UE.casque ? coul(UE.casque) : /^bleus/.test(equipe) ? 0x6c7c90 : 0x5a5e54, // (demande 115 : la couleur du casque de l'édition, sinon l'acier de 1916) molletieres: new THREE.Color(UE.fond).multiplyScalar(0.82).getHex(),
+        casqueAcier: UE.casque ? coul(UE.casque) : /^bleus/.test(equipe) ? 0x6c7c90 : 0x5a5e54, // (demande 115 : la couleur du casque de l'édition, sinon l'acier de 1916)
+        molletieres: new THREE.Color(UE.fond).multiplyScalar(0.82).getHex(), // (demande 126 : elle était restée dans le commentaire)
       },
     });
   }
@@ -188,36 +195,46 @@ Tanks.Engins3D = (function () {
     // les matières (1 = la peau, 2 = le gilet à sangles MOLLE, 3 = le cuir et le caoutchouc, 4 = le nylon uni)
     L.matieres = new Map([[peau, 1], [K.sac, 4], [K.rabat, 4], [K.sangle, 4], [K.radio, 4], [K.gilet, 2], [K.bottes, 3], [K.semelle, 3], [K.gants, 3], [K.protege, 3], [K.lacets, 3], [K.soin, 4], [K.croix, 4], [K.cuir, 3]]);
     const anneau = (r, e, n) => new THREE.TorusGeometry(r, e, 4, n || (detail ? 14 : 8));
+    // ✍️ (demande 126, « qu'ils ressemblent à des humains ») le CORPS est sculpté d'un seul morceau par membre (le sculpteur,
+    // affichage/corps3d.js) : chaque point dit à quels os il est accroché (« poids ») pour que les genoux, les coudes,
+    // les épaules, la taille et le cou plient EN DOUCEUR, comme une vraie peau.
+    const C3 = Tanks.Corps3D;
+    const poids = (f) => (dernier().poids = f);
     // les jambes (0 : gauche, z < 0 ; 1 : droite)
     for (const k of [0, 1]) {
       const cote = k ? 1 : -1, h = "jambe" + k, g = "genou" + k;
-      pc(h, membre(0.094, 0.07, OS.cuisse + 0.03, s), 0, 0.02, 0, "tenue");
+      // la jambe du pantalon : de la hanche (dans le bassin) jusqu'en haut de la botte (1916 : jusqu'aux bandes molletières)
+      pc(h, C3.jambe(cote, detail, ancien ? -0.58 : -0.69), 0, 0, 0, "tenue");
+      poids(C3.deuxJoints("corps", h, g, 0.085, -0.06, -0.38, -0.5, 0.35));
       if (detail && !ancien) {
-        pc(h, galet(0.08, 0.14, 0.055, 0.4, 8), 0.0, -0.21, cote * 0.08, "tenue"); // la poche de cuisse
-        pc(h, galet(0.088, 0.035, 0.062, 0.35, 8), 0.0, -0.135, cote * 0.083, "tenue"); // son rabat
+        pc(h, galet(0.075, 0.13, 0.04, 0.4, 8), 0.0, -0.21, cote * 0.084, "tenue"); // la poche de cuisse
+        pc(h, galet(0.082, 0.032, 0.048, 0.35, 8), 0.0, -0.14, cote * 0.087, "tenue"); // son rabat
         if (k === 1) { // le HOLSTER sur la cuisse droite, avec ses 2 sangles autour de la cuisse
           pc(h, galet(0.075, 0.17, 0.045, 0.3, 8), 0.025, -0.15, 0.108, K.polymere);
           for (const y of [-0.09, -0.22]) pc(h, anneau(0.093 - y * 0.06, 0.011), 0, y, 0, K.sangle, Math.PI / 2);
         }
       }
-      pc(g, membre(0.07, 0.052, OS.tibia - 0.02, s), 0, 0, 0, "tenue");
-      if (ancien) pc(g, membre(0.064, 0.062, 0.2, s), 0, -0.13, 0, K.molletieres); // (demande 115) les bandes molletières
-      else pc(g, galet(0.07, 0.14, 0.12, 0.42, detail ? 10 : 6), 0.065, -0.03, 0, K.protege); // la genouillère
-      if (detail) pc(g, anneau(0.066, 0.01), 0, -0.1, 0, K.sangle, Math.PI / 2); // sa sangle
-      pc(g, membre(0.063, 0.06, 0.19, s), 0, -0.25, 0, K.bottes); // la tige de la botte
+      if (ancien) { // (demande 115) les bandes molletières : enroulées en spirale (peintes en biais), jusqu'à la chaussure
+        pc(g, C3.loft([{ y: -0.1, xf: 0.06, xb: 0.066, z: 0.06 }, { y: -0.16, xf: 0.057, xb: 0.07, z: 0.059 }, { y: -0.26, xf: 0.052, xb: 0.06, z: 0.053 }, { y: -0.35, xf: 0.047, xb: 0.05, z: 0.047 }], detail ? 14 : 7, detail ? 2 : 1), 0, 0, 0, K.molletieres);
+        if (detail) peint((x, y, z) => 0.86 + 0.14 * Math.abs(Math.sin((y * 3 + Math.atan2(z, x) * 0.03) * 38)));
+      } else pc(g, galet(0.07, 0.14, 0.12, 0.42, detail ? 10 : 6), 0.065, -0.03, 0, K.protege); // la genouillère
+      if (detail && !ancien) pc(g, anneau(0.064, 0.01), 0, -0.1, 0, K.sangle, Math.PI / 2); // sa sangle
+      pc(g, C3.tigeBotte(detail, ancien ? -0.33 : -0.22), 0, 0, 0, K.bottes); // la tige de la botte (1916 : la chaussure montante)
       if (detail) {
-        pc(g, anneau(0.066, 0.017), 0.0, -0.225, 0, "tenue", Math.PI / 2); // le bas du pantalon, replié sur la botte
-        pc(g, galet(0.022, 0.13, 0.05, 0.4, 6), 0.06, -0.31, 0, K.bottes); // la languette
-        for (let n = 0; n < 4; n++) pc(g, galet(0.014, 0.009, 0.066, 0.3, 4), 0.068, -0.265 - n * 0.033, 0, K.lacets, 0, 0, 0.12); // les LACETS
-        pc(g, galet(0.09, 0.075, 0.118, 0.45, 8), 0.155, -0.425, 0, K.bottes); // le bout renforcé
-        peint((x, y) => (y > 0 ? 0.85 : 1)); // (le dessus du bout, frotté, plus sombre)
+        if (!ancien) pc(g, anneau(0.064, 0.016), 0.0, -0.228, 0, "tenue", Math.PI / 2); // le bas du pantalon, replié sur la botte
+        pc(g, galet(0.022, ancien ? 0.06 : 0.12, 0.05, 0.4, 6), 0.055, ancien ? -0.37 : -0.32, 0, K.bottes); // la languette
+        for (let n = 0; n < (ancien ? 2 : 4); n++) pc(g, galet(0.012, 0.008, 0.06, 0.3, 4), 0.06 + n * 0.002, -0.27 - n * 0.032 - (ancien ? 0.07 : 0), 0, K.lacets, 0, 0, 0.12); // les LACETS
       }
-      pc(g, galet(0.28, 0.11, 0.115, 0.3, detail ? 12 : 7), 0.05, -0.41, 0, K.bottes); // le pied
-      pc(g, galet(0.295, 0.04, 0.125, 0.2, detail ? 10 : 6), 0.05, -0.47, 0, K.semelle); // la semelle
+      pc(g, C3.pied(detail), 0.03, -0.43, 0, K.bottes); // le pied (le talon, le cou-de-pied, le bout arrondi)
+      if (detail) peint((x, y) => (y > 0.02 ? 0.88 : 1)); // (le dessus, frotté, plus sombre)
+      pc(g, galet(0.29, 0.03, 0.108, 0.25, detail ? 10 : 6), 0.1, -0.468, 0, K.semelle); // la semelle
+      if (detail) pc(g, galet(0.07, 0.016, 0.11, 0.3, 6), -0.015, -0.452, 0, K.semelle); // le talon
     }
     // le bassin, le buste, le gilet porte-plaques, le sac
-    pc("dos", galet(0.25, 0.22, 0.35, 0.5, s), 0, -0.05, 0, "tenue"); // le bassin
-    pc("dos", galet(0.26, 0.48, 0.38, 0.55, s), 0, 0.24, 0, "tenue"); // le buste
+    // (demande 126) le TRONC d'un seul morceau : le bassin et les fesses suivent les hanches (l'os du corps), la poitrine
+    // suit le dos ; entre les deux, la taille se tord et se penche en douceur
+    pc("dos", C3.tronc(detail), 0, 0, 0, "tenue");
+    poids(C3.melange("corps", "dos", -0.02, 0.16));
     pc("dos", galet(0.285, 0.07, 0.385, 0.3, s), 0, 0.0, 0, ancien ? K.cuir : K.gilet); // le ceinturon de combat (demande 115 : en cuir, en 1916)
     if (ancien) { // (demande 115) 1916 : les 3 cartouchières de cuir sur le ventre, les brelages, le havresac et sa couverture roulée
       for (const z of [-0.1, 0, 0.1]) pc("dos", galet(0.06, 0.08, 0.085, 0.3, 6), 0.165, 0.03, z, K.cuir);
@@ -263,20 +280,19 @@ Tanks.Engins3D = (function () {
     // les bras (0 : droit, z > 0 ; 1 : gauche)
     for (const k of [0, 1]) {
       const cote = k ? -1 : 1, e = "epaule" + k, c = "coude" + k;
-      pc(e, galet(0.135, 0.125, 0.135, 0.7, s), 0, -0.02, 0, "tenue"); // l'épaule
-      pc(e, membre(0.068, 0.056, OS.bras + 0.02, s), 0, 0, 0, "tenue");
-      pc(e, new THREE.CylinderGeometry(0.071, 0.069, 0.07, s), 0, -0.1, 0, k === 0 && joueur ? K.marqueToi : K.marque); // ✍️ le brassard
-      if (detail && classe !== "medecin") pc(e, galet(0.06, 0.07, 0.025, 0.35, 6), 0.0, -0.2, cote * 0.062, "tenue"); // la poche de manche
-      pc(c, membre(0.056, 0.043, OS.avantBras, s), 0, 0, 0, "tenue");
+      // (demande 126) le bras d'un seul morceau : le haut de l'épaule suit un peu le dos, le coude plie en douceur
+      pc(e, C3.bras(cote, detail), 0, 0, 0, "tenue");
+      poids(C3.deuxJoints("dos", e, c, 0.085, -0.04, -0.24, -0.335, 0.4));
+      pc(e, new THREE.CylinderGeometry(0.066, 0.064, 0.07, s, 1, true), 0, -0.1, 0, k === 0 && joueur ? K.marqueToi : K.marque); // ✍️ le brassard
+      if (detail && classe !== "medecin") pc(e, galet(0.06, 0.07, 0.022, 0.35, 6), 0.0, -0.19, cote * 0.056, "tenue"); // la poche de manche
       const gant = ancien ? peau : K.gants; // (demande 115 : en 1916, pas de gants : les mains nues)
-      if (detail && !ancien) pc(c, galet(0.065, 0.075, 0.085, 0.45, 8), -0.03, -0.01, 0, K.protege); // la coudière
-      if (detail && !ancien) pc(c, anneau(0.046, 0.012), 0, -OS.avantBras + 0.03, 0, K.gants, Math.PI / 2); // le haut du gant
-      pc(c, galet(0.058, 0.1, 0.088, 0.45, detail ? 10 : 6), 0, -OS.avantBras - 0.03, 0, gant); // la main gantée
-      if (detail) {
-        pc(c, galet(0.028, 0.055, 0.028, 0.5, 6), 0.03, -OS.avantBras - 0.01, -cote * 0.03, gant, 0, 0, 0.4); // le pouce
-        if (!ancien) pc(c, galet(0.045, 0.03, 0.022, 0.4, 6), 0, -OS.avantBras - 0.055, cote * 0.043, K.protege); // la coque des articulations
-        for (const x of [-0.016, 0.016]) pc(c, galet(0.02, 0.05, 0.02, 0.5, 4), 0.006 + x, -OS.avantBras - 0.075, cote * 0.012, gant); // (demande 114) les doigts repliés sur l'arme
-      }
+      if (detail && !ancien) pc(c, galet(0.06, 0.075, 0.085, 0.45, 8), -0.035, -0.01, 0, K.protege); // la coudière
+      if (!ancien) pc(c, anneau(0.034, 0.011), 0, -OS.avantBras + 0.03, 0, K.gants, Math.PI / 2); // le haut du gant
+      else if (detail) pc(c, anneau(0.032, 0.008), 0, -OS.avantBras + 0.025, 0, "tenue", Math.PI / 2); // le bout de la manche
+      // (demande 126) la MAIN : le poignet, la paume, le pouce et 4 doigts repliés sur l'arme (corps3d.js)
+      pc(c, new THREE.CapsuleGeometry(0.026, 0.035, 2, detail ? 8 : 5), 0, -0.25, 0, gant); // le poignet
+      for (const m of C3.main(cote, detail)) pc(c, m.geo, m.x, m.y, m.z, gant, m.rx, m.ry, m.rz);
+      if (detail && !ancien) pc(c, galet(0.048, 0.032, 0.012, 0.4, 6), 0.004, -0.335, cote * 0.02, K.protege); // la coque des articulations
     }
     if (classe) equipementClasse(pc, K, detail, classe, s, anneau);
     return L;
@@ -330,10 +346,10 @@ Tanks.Engins3D = (function () {
     } else if (classe === "medecin") {
       for (const k of [0, 1]) { // le BRASSARD BLANC À CROIX ROUGE (sur chaque bras)
         const e = "epaule" + k, cote = k ? -1 : 1;
-        pc(e, new THREE.CylinderGeometry(0.073, 0.071, 0.065, s), 0, -0.18, 0, K.soin);
-        pc(e, B(0.042, 0.013, 0.008), 0, -0.18, cote * 0.073, K.croix);
-        pc(e, B(0.013, 0.042, 0.008), 0, -0.18, cote * 0.073, K.croix);
-        if (detail) (pc(e, B(0.008, 0.013, 0.042), 0.073, -0.18, 0, K.croix), pc(e, B(0.008, 0.042, 0.013), 0.073, -0.18, 0, K.croix)); // (et devant)
+        pc(e, new THREE.CylinderGeometry(0.06, 0.058, 0.065, s, 1, true), 0, -0.17, 0, K.soin);
+        pc(e, B(0.042, 0.013, 0.008), 0, -0.17, cote * 0.061, K.croix);
+        pc(e, B(0.013, 0.042, 0.008), 0, -0.17, cote * 0.061, K.croix);
+        if (detail) (pc(e, B(0.008, 0.013, 0.042), 0.062, -0.17, 0, K.croix), pc(e, B(0.008, 0.042, 0.013), 0.062, -0.17, 0, K.croix)); // (et devant)
       }
       pc("dos", galet(0.012, 0.15, 0.15, 0.3, detail ? 6 : 4), -0.357, 0.28, 0, K.soin); // la croix sur le sac (le carré blanc…)
       pc("dos", B(0.008, 0.11, 0.034), -0.364, 0.28, 0, K.croix); // (… et la croix rouge)
@@ -368,32 +384,8 @@ Tanks.Engins3D = (function () {
   const formesTete = {};
   function teteSculptee(detail) {
     if (formesTete[detail]) return formesTete[detail];
-    const g = new THREE.SphereGeometry(1, detail ? MQ().tete[0] : 12, detail ? MQ().tete[1] : 9), p = g.attributes.position; // (demande 114 : un peu moins de tranches)
-    for (let i = 0; i < p.count; i++) {
-      const nx = p.getX(i), ny = p.getY(i), nz = p.getZ(i);
-      let x = nx * 0.097, y = ny * 0.114, z = nz * 0.083;
-      const bas = Math.max(0, Math.min(1, (0.15 - ny) / 1.05)), b2 = bas * bas * (3 - 2 * bas); // (0 en haut, 1 sous le menton)
-      z *= 1 - 0.36 * b2; // la mâchoire, puis le menton : plus étroits
-      x += 0.03 * b2 * Math.max(0, Math.min(1, nx + 0.5)); // le bas du visage avance (la bouche, le menton)
-      if (nx < 0) (x *= 1 - 0.4 * b2), (y *= 1 - 0.25 * b2 * -nx); // la nuque rentre, le dessous remonte vers le cou
-      if (nx > 0 && ny > 0.2) x *= 1 - 0.1 * (ny - 0.2); // le front, plus droit
-      z *= 1 - 0.05 * gauss(ny - 0.3, 0.2) * (nx > 0 ? 1 : 0); // les tempes
-      if (nx > 0.2) { // les reliefs du visage (vers l'avant, plus forts au milieu)
-        const az = Math.abs(z), f = Math.min(1, (nx - 0.2) * 2);
-        let d = 0;
-        d += 0.009 * gauss(y - 0.03, 0.012) * gauss(az - 0.03, 0.03); // l'arcade des sourcils
-        d -= 0.013 * gauss(y - 0.011, 0.014) * gauss(az - 0.032, 0.017); // les orbites (les yeux creusés)
-        d += 0.006 * gauss(y + 0.02, 0.018) * gauss(az - 0.052, 0.018); // les pommettes
-        d += 0.005 * gauss(y + 0.06, 0.016) * gauss(az, 0.025); // la bouche
-        d -= 0.003 * gauss(y + 0.082, 0.006) * gauss(az, 0.02); // le creux sous la lèvre
-        d += 0.008 * gauss(y + 0.1, 0.016) * gauss(az, 0.02); // le menton
-        x += d * f;
-        if (az > 0.045) z += Math.sign(z) * 0.004 * gauss(y + 0.075, 0.025) * f; // l'angle de la mâchoire
-      }
-      p.setXYZ(i, x, y, z);
-    }
-    g.computeVertexNormals();
-    return (formesTete[detail] = g);
+    // (demande 126 : le sculpteur la reprend, avec l'arête du nez, des orbites plus creuses, les joues, le crâne plus rond)
+    return (formesTete[detail] = Tanks.Corps3D.crane(detail ? MQ().tete[0] : 12, detail ? MQ().tete[1] : 9));
   }
   // Le point de la peau tout devant, à la hauteur y et au côté z (pour y coller les yeux, le nez, la bouche).
   function devant(geo, y, z) {
@@ -416,7 +408,8 @@ Tanks.Engins3D = (function () {
     const BB = V.barbes[barbe !== undefined ? barbe % V.barbes.length : (variante * 2 + MQ().classes.indexOf(classe) + 1) % V.barbes.length]; // (la vitrine peut la choisir)
     const H = teteSculptee(detail), cx = 0.012, cy = 0.135; // (le centre de la tête, dans le repère du cou)
     const av = (y, z) => cx + devant(H, y, z); // (le devant de la peau, dans le repère du cou)
-    pc("cou", membre(0.05, 0.056, 0.13, 8), 0, 0.1, 0, peau); // le cou
+    pc("cou", Tanks.Corps3D.cou(detail), 0, 0, 0, peau); // le cou (demande 126 : sa base suit le dos, le haut suit la tête)
+    dernier().poids = Tanks.Corps3D.melange("dos", "cou", -0.045, 0.035);
     pc("cou", H, cx, cy, 0, peau);
     // la peinture de la peau (x, y, z : le point sur la tête, autour de son centre)
     const B = V.barbe * BB.force;
@@ -447,31 +440,31 @@ Tanks.Engins3D = (function () {
       pc("cou", galet(0.03, 0.04, 0.024, 0.5, 6), av(-0.02, 0) + 0.008, cy - 0.022, 0, peau); // le nez
       for (const z of [-0.033, 0.033]) pc("cou", new THREE.SphereGeometry(0.012, 6, 4), av(0.011, z) + 0.004, cy + 0.011, z, K.blanc);
     } else {
-      // le NEZ : l'arête, le bout, les ailes (les narines)
-      const xn = av(-0.02, 0);
-      pc("cou", galet(0.022, 0.048, 0.019, 0.6, 10), xn - 0.002, cy - 0.012, 0, peau, 0, 0, 0.3);
-      peint((x, y) => (y < -0.012 ? [1.07, 0.93, 0.9] : 1));
-      pc("cou", new THREE.SphereGeometry(0.0105, 10, 8), xn + 0.004, cy - 0.032, 0, peau); // le bout
-      peint(() => [1.08, 0.92, 0.88]);
-      for (const z of [-0.012, 0.012]) pc("cou", new THREE.SphereGeometry(0.008, 8, 6), xn - 0.003, cy - 0.034, z, peau); // les ailes
-      // les YEUX : le blanc, l'iris (sa couleur change d'un soldat à l'autre), les paupières, les sourcils
-      const iris = [0x3b2a1a, 0x4a6a7a, 0x2c1e12, 0x5a6a3a][variante % 4];
-      for (const z of [-0.032, 0.032]) {
-        const xo = av(0.011, z);
-        pc("cou", new THREE.SphereGeometry(0.0108, 12, 8), xo - 0.001, cy + 0.011, z, K.blanc); // le blanc de l'œil
-        peint((x) => (x > 0.004 ? 1 : 0.8)); // (dans l'ombre sur les côtés)
-        pc("cou", new THREE.SphereGeometry(0.0058, 10, 6), xo + 0.0072, cy + 0.0102, z * 0.98, iris); // l'iris
-        pc("cou", new THREE.SphereGeometry(0.003, 6, 4), xo + 0.0113, cy + 0.0102, z * 0.98, K.pupille); // la pupille
-        pc("cou", galet(0.017, 0.011, 0.032, 0.5, 8), xo + 0.002, cy + 0.0178, z, peau, 0, 0, 0.3); // la paupière du haut
-        peint(() => [0.92, 0.84, 0.82]);
-        pc("cou", galet(0.012, 0.005, 0.028, 0.5, 6), xo + 0.004, cy + 0.0012, z, peau); // la paupière du bas
-        pc("cou", galet(0.008, 0.0055, 0.036, 0.5, 8), av(0.03, z) - 0.001, cy + 0.029, z * 1.08, K.sourcils, 0, z > 0 ? 0.25 : -0.25, z > 0 ? -0.12 : 0.12); // le sourcil
+      // (demande 126) le NEZ sculpté (la racine, l'arête, le bout, les ailes ; les narines dessous, plus sombres)
+      const xn = av(-0.012, 0), C3 = Tanks.Corps3D;
+      pc("cou", C3.nez(true), xn - 0.006, cy + 0.0, 0, peau);
+      peint((x, y) => (y < -0.04 ? [0.55, 0.42, 0.4] : y < -0.025 ? [1.06, 0.94, 0.9] : 1));
+      // les YEUX dans leurs orbites : le blanc, l'iris (sa couleur change d'un soldat à l'autre), la pupille, les
+      // paupières (des coquilles de peau posées sur l'œil), les sourcils
+      const iris = [0x3b2a1a, 0x4a6a7a, 0x2c1e12, 0x5a6a3a][variante % 4], rO = 0.0112;
+      for (const z of [-0.031, 0.031]) {
+        const xo = av(0.012, z) - 0.0068, yo = cy + 0.011;
+        pc("cou", new THREE.SphereGeometry(rO, 12, 8), xo, yo, z, K.blanc); // le blanc de l'œil
+        peint((x) => (x > 0.004 ? 1 : 0.75)); // (dans l'ombre sur les côtés)
+        pc("cou", new THREE.SphereGeometry(0.0052, 10, 6), xo + rO - 0.0035, yo - 0.0006, z * 0.985, iris); // l'iris
+        pc("cou", new THREE.SphereGeometry(0.0026, 6, 4), xo + rO - 0.0012, yo - 0.0006, z * 0.985, K.pupille); // la pupille
+        pc("cou", C3.paupiere(true, rO), xo, yo, z, peau); // la paupière du haut
+        peint((x, y) => (y < -0.002 ? [0.8, 0.68, 0.66] : [0.95, 0.88, 0.86]));
+        pc("cou", C3.paupiere(false, rO), xo, yo, z, peau); // la paupière du bas
+        peint(() => [0.93, 0.85, 0.84]);
+        pc("cou", C3.sourcil(), av(0.03, z) - 0.001, cy + 0.03, z * 1.06, K.sourcils, 0, z > 0 ? -0.2 : 0.2, 0); // le sourcil
       }
-      // la BOUCHE : la lèvre du haut, la lèvre du bas (plus pleine), le coin des lèvres
-      const xb = av(-0.056, 0);
-      pc("cou", galet(0.008, 0.0055, 0.036, 0.5, 8), xb - 0.002, cy - 0.054, 0, K.levres);
-      pc("cou", galet(0.009, 0.0075, 0.033, 0.5, 8), xb - 0.003, cy - 0.061, 0, K.levres);
-      peint((x, y) => (y > 0 ? 0.9 : 1.04));
+      // la BOUCHE : la lèvre du haut (fine), la lèvre du bas (plus pleine)
+      const xb = av(-0.056, 0), levres = new THREE.Color(peau).lerp(new THREE.Color(K.levres), 0.6).getHex();
+      pc("cou", C3.levre(true), xb - 0.004, cy - 0.0525, 0, levres);
+      peint((x, y) => (y > 0.002 ? 0.92 : 0.82));
+      pc("cou", C3.levre(false), xb - 0.0055, cy - 0.0605, 0, levres);
+      peint((x, y) => (y > 0.002 ? 0.8 : 1.04));
       // ✍️ (demande 114) une VRAIE barbe en volume (barbe pleine), ou la moustache bien fournie
       if (BB.pleine) {
         pc("cou", galet(0.07, 0.06, 0.118, 0.65, 10), av(-0.088, 0) - 0.026, cy - 0.09, 0, K.sourcils);
@@ -526,7 +519,7 @@ Tanks.Engins3D = (function () {
       pc("cou", galet(0.03, 0.055, 0.05, 0.3, 6), 0.145, yc + 0.035, 0, K.sangle, 0, 0, pente); // le support des jumelles de nuit
       pc("cou", galet(0.06, 0.05, 0.09, 0.4, 6), -0.158, yc + 0.025, 0, K.sac); // le contrepoids, à l'arrière du casque
       for (const z of [-0.138, 0.138]) pc("cou", galet(0.1, 0.018, 0.012, 0.3, 6), -0.008, yc + 0.03, z, K.sangle, 0, 0, pente); // les rails
-      for (const z of [-0.088, 0.088]) pc("cou", galet(0.012, 0.11, 0.008, 0.5, 4), 0.045, 0.105, z * 1.04, K.sangle, 0.0, 0, -0.35); // la jugulaire
+      for (const z of [-0.088, 0.088]) pc("cou", galet(0.012, 0.11, 0.008, 0.5, 4), 0.032, 0.1, z * 0.96, K.sangle, 0.0, 0, -0.2); // la jugulaire
       // (demande 114) la balise infrarouge sur le dessus (pour que les amis le voient la nuit), le carré à scratch derrière
       pc("cou", galet(0.035, 0.022, 0.03, 0.4, 6), -0.06, yc + 0.125, 0, K.noir, 0, 0, pente);
       pc("cou", galet(0.03, 0.045, 0.065, 0.3, 4), -0.128, yc + 0.075, 0, K.sangle, 0, 0, pente + 0.7);
@@ -631,23 +624,37 @@ Tanks.Engins3D = (function () {
 
   // Fabriquer la forme d'un soldat dans une pose (les os déjà tournés) : chaque pièce est placée là où son os la met.
   // pourChair = true : on écrit aussi, pour chaque point, le numéro de son os (le « skinning ») et on reste « au repos ».
+  // ✍️ (demande 126) une pièce peut dire, point par point, qu'elle est accrochée à DEUX os (« poids » : le genou à moitié à
+  // la cuisse, à moitié au tibia). Pour la chair et os, c'est la carte graphique qui mélange ; pour une figurine immobile
+  // (le pilote assis), on fait le mélange ici, une fois pour toutes. Et les points partagés entre deux triangles ne
+  // sont plus recopiés (des « index ») : 3 à 4 fois moins de points à déplacer pour la carte graphique.
   const TEMP = new THREE.Object3D();
+  const nomsOs = (q) => ({ corps: q.corps, dos: q.dos, cou: q.cou, jambe0: q.jambes[0], genou0: q.genoux[0], jambe1: q.jambes[1], genou1: q.genoux[1], epaule0: q.epaules[0], coude0: q.coudes[0], epaule1: q.epaules[1], coude1: q.coudes[1] });
+  let repos = null; // (un squelette au garde-à-vous, pour savoir où est chaque os « au repos »)
+  const _p = new THREE.Vector3(), _pa = new THREE.Vector3(), _n = new THREE.Vector3(), _na = new THREE.Vector3(), _mz = new THREE.Matrix4(), _mt = new THREE.Matrix4();
   function cuire(liste, squel, M, pourChair) {
     const parMat = { tenue: [], teinte: [] }, index = new Map(squel.liste.map((b, i) => [b, i]));
-    const noms = { dos: squel.dos, cou: squel.cou, jambe0: squel.jambes[0], genou0: squel.genoux[0], jambe1: squel.jambes[1], genou1: squel.genoux[1], epaule0: squel.epaules[0], coude0: squel.coudes[0], epaule1: squel.epaules[1], coude1: squel.coudes[1] };
+    const noms = nomsOs(squel);
+    if (!repos) (repos = os()), repos.corps.updateMatrixWorld(true);
+    const nomsR = nomsOs(repos);
     squel.corps.updateMatrixWorld(true);
     const racine = new THREE.Matrix4().copy(squel.corps.parent ? squel.corps.parent.matrixWorld : new THREE.Matrix4()).invert();
+    // (pour une figurine) ce que chaque os a bougé depuis le repos, et la même chose pour les normales
+    const D = {}, DN = {};
+    if (!pourChair) for (const k in noms) (D[k] = new THREE.Matrix4().multiplyMatrices(racine, noms[k].matrixWorld).multiply(new THREE.Matrix4().copy(nomsR[k].matrixWorld).invert())), (DN[k] = new THREE.Matrix3().getNormalMatrix(D[k]));
     const c = new THREE.Color();
+    let melanges = 0, sommets = 0;
     for (const pc of liste) {
-      const b = noms[pc.os];
       TEMP.position.set(pc.x, pc.y, pc.z);
       TEMP.rotation.set(pc.rx, pc.ry, pc.rz);
       TEMP.scale.set(...(pc.echelle || [1, 1, 1]));
       TEMP.updateMatrix();
-      const m = new THREE.Matrix4().multiplyMatrices(racine, b.matrixWorld);
-      if (pc.rz2) m.multiply(new THREE.Matrix4().makeTranslation(pc.x, pc.y, pc.z)).multiply(new THREE.Matrix4().makeRotationZ(pc.rz2)).multiply(new THREE.Matrix4().makeTranslation(-pc.x, -pc.y, -pc.z)); // (demande 93 : un anneau penché avec le casque)
+      const m = new THREE.Matrix4().copy(nomsR[pc.os].matrixWorld);
+      if (pc.rz2) m.multiply(_mt.makeTranslation(pc.x, pc.y, pc.z)).multiply(_mz.makeRotationZ(pc.rz2)).multiply(_mt.makeTranslation(-pc.x, -pc.y, -pc.z)); // (demande 93 : un anneau penché avec le casque)
       m.multiply(TEMP.matrix);
-      const g = pc.geo.index ? pc.geo.toNonIndexed() : pc.geo.clone(), n = g.attributes.position.count, loc = g.attributes.position;
+      const g = pc.geo.clone(), n = g.attributes.position.count, loc = g.attributes.position;
+      if (!g.index) { const ix = new (n > 65535 ? Uint32Array : Uint16Array)(n); for (let i = 0; i < n; i++) ix[i] = i; g.setIndex(new THREE.BufferAttribute(ix, 1)); }
+      for (const a in g.attributes) if (!["position", "normal", "uv"].includes(a)) g.deleteAttribute(a);
       if (!g.attributes.uv) g.setAttribute("uv", new THREE.Float32BufferAttribute(new Float32Array(n * 2), 2));
       if (pc.couleur !== "tenue") {
         c.set(pc.couleur);
@@ -662,12 +669,38 @@ Tanks.Engins3D = (function () {
         if (pc.matiere) for (let i = 0; i < n; i++) mats[i] = pc.matiere(loc.getX(i), loc.getY(i), loc.getZ(i)); // (demande 93 : la barbe de 3 jours)
         g.setAttribute("matiere", new THREE.BufferAttribute(mats, 1)); // (demande 92 : la peau, le nylon, le cuir…)
       }
-      g.applyMatrix4(m);
+      // (demande 126) les poids de chaque point : [l'os a, l'os b, la part de b], lus AVANT de placer la pièce
+      let P = null;
+      if (pc.poids) {
+        P = new Array(n);
+        for (let i = 0; i < n; i++) {
+          const q = pc.poids(loc.getX(i), loc.getY(i), loc.getZ(i));
+          P[i] = q;
+          if (q[2] > 0.02 && q[2] < 0.98) melanges++;
+        }
+      }
+      sommets += n;
+      g.applyMatrix4(m); // (au repos)
       if (pourChair) {
-        const si = new Uint16Array(n * 4), sw = new Float32Array(n * 4), k = index.get(b);
-        for (let i = 0; i < n; i++) (si[i * 4] = k), (sw[i * 4] = 1);
+        const si = new Uint16Array(n * 4), sw = new Float32Array(n * 4), k = index.get(noms[pc.os]);
+        for (let i = 0; i < n; i++) {
+          if (P) (si[i * 4] = index.get(noms[P[i][0]])), (si[i * 4 + 1] = index.get(noms[P[i][1]])), (sw[i * 4] = 1 - P[i][2]), (sw[i * 4 + 1] = P[i][2]);
+          else (si[i * 4] = k), (sw[i * 4] = 1);
+        }
         g.setAttribute("skinIndex", new THREE.BufferAttribute(si, 4));
         g.setAttribute("skinWeight", new THREE.BufferAttribute(sw, 4));
+      } else if (!P) g.applyMatrix4(D[pc.os]);
+      else { // (une figurine : on mélange ici les deux os, point par point)
+        const pos = g.attributes.position, nor = g.attributes.normal;
+        for (let i = 0; i < n; i++) {
+          const [a, b, w] = P[i];
+          _p.fromBufferAttribute(pos, i);
+          _pa.copy(_p).applyMatrix4(D[a]).multiplyScalar(1 - w).add(_p.applyMatrix4(D[b]).multiplyScalar(w));
+          pos.setXYZ(i, _pa.x, _pa.y, _pa.z);
+          _n.fromBufferAttribute(nor, i);
+          _na.copy(_n).applyMatrix3(DN[a]).multiplyScalar(1 - w).add(_n.applyMatrix3(DN[b]).multiplyScalar(w)).normalize();
+          nor.setXYZ(i, _na.x, _na.y, _na.z);
+        }
       }
       parMat[pc.couleur === "tenue" ? "tenue" : "teinte"].push(g);
     }
@@ -684,9 +717,20 @@ Tanks.Engins3D = (function () {
         for (const g of geos) (tab.set(g.attributes[a].array.subarray(0, g.attributes[a].count * taille), k), (k += g.attributes[a].count * taille));
         geo.setAttribute(a, new THREE.BufferAttribute(tab, taille));
       }
+      // les index (les triangles), décalés pour chaque pièce
+      const total = geos.reduce((t, g) => t + g.index.count, 0), nb = geo.attributes.position.count;
+      const ix = new (nb > 65535 ? Uint32Array : Uint16Array)(total);
+      let k = 0, base = 0;
+      for (const g of geos) {
+        const src = g.index.array;
+        for (let i = 0; i < g.index.count; i++) ix[k++] = src[i] + base;
+        base += g.attributes.position.count;
+      }
+      geo.setIndex(new THREE.BufferAttribute(ix, 1));
       geo.computeBoundingSphere();
       res[nom] = geo;
     }
+    Object.defineProperty(res, "bilan", { value: { melanges, sommets }, enumerable: false }); // (pas une forme : le compte)
     return res;
   }
 
@@ -764,7 +808,8 @@ Tanks.Engins3D = (function () {
     const f = (formes[cle] = cuire(pieces(equipe, detail, PEAUX[peau], joueur, classe, barbe), squel, matsSoldat(equipe), true));
     maquettes.formes++;
     maquettes.ms += performance.now() - t0;
-    maquettes.triangles[detail ? "detail" : "simple"] = Math.round((f.tenue.attributes.position.count + f.teinte.attributes.position.count) / 3);
+    maquettes.triangles[detail ? "detail" : "simple"] = Math.round((f.tenue.index.count + f.teinte.index.count) / 3);
+    if (detail) Object.assign(Tanks.Corps3D.bilan, { sommets: f.bilan.sommets, melanges: f.bilan.melanges }); // (demande 126, sous le capot)
     return f;
   }
   // ✍️ (demande 114) LA CLASSE qu'on dessine pour ce soldat : toi, ta classe ; l'ordinateur, celle qui va avec son rôle
