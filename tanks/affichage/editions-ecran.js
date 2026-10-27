@@ -231,7 +231,15 @@ Tanks.EcranEditions = (function () {
     if (!r.recharger) return fermer();
     // le costume change : un petit écran de chargement, puis la page se recharge avec la nouvelle édition
     racine.innerHTML = '<div class="ed-charge"><div><b>' + e.icone + " " + e.nom.toUpperCase() + "</b><small>" + e.epoque + " · on coud le costume du jeu…</small><i></i></div></div>";
-    setTimeout(() => location.reload(), 500);
+    // (demande 124) on recharge avec l'édition ÉCRITE DANS L'ADRESSE (« ?edition=1916 ») : ça marche même si le navigateur
+    // refuse de garder la sauvegarde, et un ancien lien « ?edition=… » ne peut plus forcer l'ancienne édition.
+    setTimeout(() => {
+      try {
+        const u = new URL(location.href);
+        u.searchParams.set("edition", e.id);
+        location.href = u.toString();
+      } catch (er) { location.reload(); }
+    }, 500);
   }
   function dessiner() {
     if (!ouverte) return;

@@ -244,6 +244,7 @@
       <a href="#etape121">Étape 121</a>
       <a href="#etape122">Étape 122</a>
       <a href="#etape123">Étape 123</a>
+      <a href="#etape124">Étape 124</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -6118,6 +6119,39 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape124">
+      <h2>🔧 Étape 124 : choisir une édition marche sur tous les navigateurs <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Un bug : sur certains navigateurs, choisir une édition ne faisait rien. C'est réparé. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/124-editions-ne-se-lancent-pas.md</code>.</p>
+          <ul>
+            <li>✍️ « Je ne peux lancer aucune édition. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 68 ».</li>
+            <li>☐ 📜 ÉDITIONS → choisis 1916 : la page se recharge et l'adresse finit par « ?edition=1916 ».</li>
+            <li>☐ Reviens à « Moderne » : ça marche aussi, même si tu étais venu par un lien « ?edition=… ».</li>
+            <li>☐ Le bouton FR | EN marche de la même façon (« ?langue=en »).</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🐛 Le bug : une mémoire qui oublie</h3>
+      <p>Pour changer d'édition, le jeu l'écrivait dans sa sauvegarde (la mémoire du navigateur), puis rechargeait la page. Mais certains navigateurs (ou certains réglages, ou une page ouverte dans une autre appli) REFUSENT de garder la sauvegarde : après le rechargement, le jeu avait oublié, et revenait à Moderne. Et un lien « ?edition=1916 » forçait toujours 1916. La réparation : l'édition choisie est maintenant écrite dans l'ADRESSE de la page, que le navigateur garde toujours.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Choisis une édition et regarde l'adresse de la page changer.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Où le jeu écrit-il maintenant l'édition choisie ? <span class="petit">(dans l'adresse de la page, en plus de la sauvegarde)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7658,6 +7692,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-123" data-cle="appris-123" placeholder="Ex. : …"></textarea>
         <label for="idees-123"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-123" data-cle="idees-123" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 124 · choisir une édition marche partout <span class="petit">· 27 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/affichage/editions-ecran.js</code>, <code>tanks/affichage/accueil.js</code>.</p>
+        <p class="petit">✍️ Maxance a demandé : pouvoir lancer les éditions.</p>
+        <label for="appris-124"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-124" data-cle="appris-124" placeholder="Ex. : …"></textarea>
+        <label for="idees-124"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-124" data-cle="idees-124" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

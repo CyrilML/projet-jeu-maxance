@@ -54,7 +54,7 @@ Tanks.Accueil = (function () {
       '<button class="a-jouer a-mode a-boutique' + ferme("boutique") + '" data-accueil="boutique">🛒 BOUTIQUE<small>' + (R.boutique ? "armes · skins · packs · avancements" : "🔒 dans l'édition Moderne") + "</small></button>" + // (livre n° 28 ; demande 115)
       '<button class="a-jouer a-mode a-personnages" data-accueil="personnages">🎖️ PERSONNAGES<small>les soldats en 3D · classes · tenues</small></button>' + // (demande 114)
       '<button class="a-film" data-accueil="film" title="La bande-annonce du jeu (demande 101)">🎬 Bande-annonce</button>' +
-      '<a class="a-carnet" href="../index.html#etape123">📓 Le carnet</a>' +
+      '<a class="a-carnet" href="../index.html#etape124">📓 Le carnet</a>' +
       '<button class="a-reglages" data-accueil="reglages" title="Les réglages du jeu (demande 114)">⚙️ Réglages</button>' +
       "</div>" +
       '<div class="a-coins" title="Gagnés à chaque mission réussie de la campagne (demande 101) et en bataille libre (livre n° 22)">🪙 <b></b> Battle Coins</div>' +
@@ -129,7 +129,14 @@ Tanks.Accueil = (function () {
     const p = racine.querySelector(".a-refus");
     p.textContent = code === "en" ? "🌐 English… (the page reloads)" : "🌐 Français… (la page se recharge)"; // (écrit dans la NOUVELLE langue)
     p.hidden = false;
-    setTimeout(() => location.reload(), 350);
+    // (demande 124) la langue est aussi écrite dans l'adresse (« ?langue=en ») : elle tient même sans sauvegarde
+    setTimeout(() => {
+      try {
+        const u = new URL(location.href);
+        u.searchParams.set("langue", code);
+        location.href = u.toString();
+      } catch (er) { location.reload(); }
+    }, 350);
   }
   function ouvrirReglages() {
     racine.querySelector(".a-panneau").hidden = false;
