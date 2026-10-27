@@ -143,8 +143,16 @@ window.Tanks = window.Tanks || {};
   // ------------------------------------------------------------------ LE REVOLVER 92
   A.ajouterFabrique("revolver92", (e, p) => {
     const by = 0.04, L = 0.115, Ac = 0x2a2c30;
-    e.cote([[-0.04, 0.0], [-0.04, 0.06], [0.07, 0.06], [0.07, 0.004], [0.02, -0.006], [0.0, 0.0]], 0.028, "metal", Ac, 0, 0.003, [[[-0.006, 0.015], [0.058, 0.015], [0.058, 0.052], [-0.006, 0.052]]]);
-    e.tube(-0.004, 0.056, 0.02, 0.02, by, 0, "metal", 0x34363a, 18); // le barillet
+    if (e.beau) {
+      // ✍️ (armes réalistes : « Fais pareil pour les armes. ») la carcasse au dos arrondi, et le barillet aux bords chanfreinés
+      // creusé de 6 cannelures (les sillons entre les chambres)
+      e.cote([[0.0, 0.0], [-0.04, 0.0], [-0.047, 0.026], [-0.046, 0.05], [-0.036, 0.062], [0.0, 0.065], [0.07, 0.062], [0.074, 0.056], [0.074, 0.006], [0.06, -0.004], [0.02, -0.006]], 0.028, "metal", Ac, 0, 0.003, [[[-0.006, 0.015], [0.058, 0.015], [0.058, 0.052], [-0.006, 0.052]]], 2);
+      e.tour([[-0.004, 0.0165], [-0.002, 0.0198], [0.052, 0.0198], [0.056, 0.0172]], by, 0, "metal", 0x34363a, 30);
+      for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2 + Math.PI / 6; e.boite(0.034, 0.0042, 0.003, 0.028, by + Math.sin(a) * 0.0192, Math.cos(a) * 0.0192, "metal", 0x1e2023, a); }
+    } else {
+      e.cote([[-0.04, 0.0], [-0.04, 0.06], [0.07, 0.06], [0.07, 0.004], [0.02, -0.006], [0.0, 0.0]], 0.028, "metal", Ac, 0, 0.003, [[[-0.006, 0.015], [0.058, 0.015], [0.058, 0.052], [-0.006, 0.052]]]);
+      e.tube(-0.004, 0.056, 0.02, 0.02, by, 0, "metal", 0x34363a, 18); // le barillet
+    }
     if (!e.leger) for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; e.tube(-0.007, -0.004, 0.0045, 0.0045, by + Math.sin(a) * 0.011, Math.cos(a) * 0.011, "metal", LAITON, 8); }
     e.tube(0.07, 0.07 + L, 0.0085, 0.0075, by, 0, "metal", Ac, 8); // le canon octogonal
     e.boite(0.006, 0.01, 0.003, 0.068 + L, by + 0.012, 0, "metal", Ac);
@@ -160,7 +168,9 @@ window.Tanks = window.Tanks || {};
   // ------------------------------------------------------------------ LE PISTOLET KRESS 08 (la genouillère)
   A.ajouterFabrique("pistolet08", (e, p) => {
     const by = 0.042, Ac = 0x2c2e31;
-    e.boite(0.12, 0.026, 0.024, 0.02, by - 0.004, 0, "metal", Ac); // la carcasse
+    // la carcasse ; (armes réalistes) dans la belle version, découpée avec son avant arrondi sous le canon
+    if (e.beau) e.cote([[-0.04, by - 0.017], [-0.04, by + 0.009], [0.08, by + 0.009], [0.084, by + 0.002], [0.078, by - 0.008], [0.06, by - 0.017]], 0.024, "metal", Ac, 0, 0.003, null, 2);
+    else e.boite(0.12, 0.026, 0.024, 0.02, by - 0.004, 0, "metal", Ac);
     e.tube(0.06, 0.16, 0.0085, 0.0085, by + 0.006, 0, "metal", Ac, 12); // le canon fin
     e.boite(0.006, 0.01, 0.003, 0.155, by + 0.017, 0, "metal", Ac);
     e.cote([[0.0, by - 0.016], [-0.02, by - 0.07], [-0.034, by - 0.12], [-0.068, by - 0.118], [-0.054, by - 0.07], [-0.04, by - 0.016]], 0.03, "bois", 0x5a3a20, 0, 0.006, null, 2); // la poignée, très penchée

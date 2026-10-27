@@ -1278,6 +1278,20 @@ Tanks.CONFIG = {
       chargeur: [["standard", 6], ["grand", 1], ["rapide", 1]],
       poignee: [["aucun", 3], ["vertical", 2], ["incline", 1], ["arretoir", 1]],
     },
+    // ✍️ « Fais pareil pour les armes. » (armes réalistes, après les soldats) LES MATIÈRES ET LES DÉTAILS de la belle version
+    // (ton arme, l'armurerie, la boutique). Les soldats de l'ordinateur gardent la version simple (une seule matière).
+    //   rugosite : 0 miroir … 1 tout mat ; metal : 0 plastique … 1 métal pur ; relief : la force des petites bosses dessinées
+    //   (rayures, grain) ; vernis (bois) : la couche brillante par-dessus.
+    realisme: {
+      acier: { rugosite: 0.62, metal: 0.6, relief: 0.22 }, // l'acier « parkerisé » (traité, gris mat)
+      polymere: { rugosite: 0.86, metal: 0.04, relief: 0.3 }, // le plastique dur des crosses et des poignées
+      bois: { rugosite: 0.62, vernis: 0.3 },
+      // les ARÊTES USÉES : le bord des pièces s'éclaircit là où la peinture part (0 = neuf, 1 = très usé)
+      usure: { acier: 0.5, polymere: 0.32, peinture: 0.28 },
+      arrondi: { min: 0.004, rayon: 0.2, max: 0.004 }, // m : une boîte plus petite que « min » reste une boîte ; sinon ses arêtes sont arrondies (rayon × la plus petite taille, au plus « max »)
+      facettes: 1.5, // × le nombre de facettes des tubes et des canons (au moins 12) : plus ronds
+      biseau: 3, // nombre de facettes des bords biseautés des pièces découpées
+    },
     // LA VUE À LA PREMIÈRE PERSONNE (C) : l'arme a sa propre petite caméra, dessinée PAR-DESSUS le monde (elle ne rentre
     // jamais dans un mur). Positions en m devant l'œil : x à droite, y en haut, z vers toi (−0,3 = 30 cm devant).
     vue: {
