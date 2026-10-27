@@ -66,7 +66,11 @@ window.Tanks = window.Tanks || {};
   let rechargement = false; // (étape 81)
   let enPause = false, reste = 0, avant = performance.now(), ordre = null;
   const parts = { logique: 0, dessin: 0, scene: 0, rendu: 0, tableau: 0, capot: 0, pas: 0, abandonnes: 0 }; // (étape 72 : le chronomètre ; demande 96 : le dessin coupé en « scène » et « rendu »)
+  // (demande 125) ✍️ « Rien ne bouge, j'ai l'impression d'avoir une photo. » Une seule erreur dans une image arrêtait
+  // TOUTE la boucle (l'image suivante n'était jamais demandée) : le jeu se figeait. Maintenant, la prochaine image est
+  // demandée AVANT de faire celle-ci : une erreur est montrée par le garde (affichage/garde.js), mais le jeu continue.
   function boucle(maintenant) {
+    requestAnimationFrame(boucle);
     const dtMs = Math.max(0, maintenant - avant), dt = Math.min(0.1, dtMs / 1000); // (demande 88 : jamais négatif : la 1re image peut dater d'avant la fin du chargement)
     avant = maintenant;
     if (E.consommer("qualite")) Tanks.Qualite.basculer(); // (étape 72 : touche G)
@@ -144,7 +148,6 @@ window.Tanks = window.Tanks || {};
     Tanks.Musique.maj(monde, Tanks.Sons.coupe()); // (étape 83 : seulement au menu)
     Tanks.Qualite.compter(dtMs); // (demande 123 : le compteur d'images 📈)
     if (!enPause && !Tanks.Menu.ouvert) Tanks.Qualite.noterImage(dtMs, parts); // (étape 77 : pas pendant le menu) // (en pause, les images ne coûtent rien : on ne les compte pas)
-    requestAnimationFrame(boucle);
   }
   requestAnimationFrame(boucle);
 })();

@@ -6154,7 +6154,7 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
     </section>
 
     <section id="etape125">
-      <h2>🚨 Étape 125 : le garde qui dit ce qui casse <span class="etiquette">✅ livrée · à valider</span></h2>
+      <h2>🚨 Étape 125 : le garde qui dit ce qui casse (et le bug trouvé) <span class="etiquette">✅ livrée · à valider</span></h2>
       <p class="chapeau">Quand le jeu reste figé comme une photo, un cadre rouge explique maintenant pourquoi : 3D éteinte dans le navigateur, fichier qui ne charge pas, ou erreur du jeu. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
       <div class="grille">
         <div class="carte">
@@ -6183,6 +6183,8 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <ol>
             <li>Que faire si un cadre rouge apparaît ? <span class="petit">(le prendre en photo et l'envoyer à Claude)</span></li>
       </ol>
+      <h3>🐛 Le vrai coupable (version 70), trouvé grâce à ta photo !</h3>
+      <p>Le cadre rouge disait : « Cannot read properties of undefined (reading 'nom') — sous-le-capot.js:872 ». Ta sauvegarde a des points d'arme pour l'AR-4, le FAMAS… de l'édition Moderne. Dans l'édition 1944, ces armes n'existent pas : le panneau « sous le capot » cherchait leur nom… et trouvait « rien ». Le jeu s'arrêtait net, et l'image restait figée. Deux réparations : le panneau écrit l'identifiant de l'arme quand elle n'existe pas dans l'édition, et surtout la boucle du jeu demande maintenant l'image suivante AVANT de dessiner celle-ci : une erreur ne peut plus jamais tout figer.</p>
     </section>
 
     <!-- ============ LE VILLAGE (projet à part) ============ -->
