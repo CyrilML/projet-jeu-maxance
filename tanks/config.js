@@ -523,6 +523,7 @@ Tanks.CONFIG = {
   // Quand « effondrement » des morceaux d'une maison sont tombés (ou que son toit a reçu « toitVie » coups), le TOIT
   // S'EFFONDRE : la maison devient une ruine. ✍️ Un tank lancé à plus de « ecraserMur » m/s défonce un mur.
   structures: {
+    ombreBelle: 15, // m (demande 123) : à moins de ça d'un quartier, son ombre vient de la belle version (le soleil passe par les fenêtres) ; plus loin, de la version simple (10 fois moins de triangles)
     colonne: 1.6, etage: 2.8, // m
     epaisseur: 0.45, // m : l'épaisseur des murs des maisons (les murets ont la leur)
     vie: { brique: 26, pierre: 36, bois: 14, porte: 10, haie: 18 }, // points par morceau (une balle = 1)
@@ -813,6 +814,9 @@ Tanks.CONFIG = {
     // (livre n° 9 et 11) objetsVille (m : les petits objets de la ville — sacs, téléphones, papiers, chaises — plus près).
     // (demande 123, « le jeu rame totalement ») voitures (m : les voitures, bus et scooters de la ville abandonnée ne sont
     //   dessinés qu'à moins de cette distance de la caméra ; avant : les 433 à chaque image, même à 1 km derrière toi).
+    //   (et maisons : la belle version des maisons plus près aux niveaux 0 et 1 : 30 et 50 m au lieu de 60 et 90)
+    //   maisonsBord : un quartier de maisons (140 m) passe en belle version quand son bord est à moins de « maisons » m,
+    //   en comptant seulement cette part de son rayon (1 = tout le rayon, comme avant ; 0,5 = la moitié : moins de quartiers)
     //   feuxStation : dans le souterrain, combien de feux de rames éclairent VRAIMENT (une vraie lumière coûte un calcul de
     //   plus pour chaque point de l'écran ; les flammes et la fumée restent toutes là ; les 2 néons aussi).
     // (demande 96, « le jeu rame souvent ») de nouveaux réglages, mesurés un par un :
@@ -826,11 +830,11 @@ Tanks.CONFIG = {
     // Les réglages qui obligent la carte graphique à refaire ses PROGRAMMES (un à-coup) changent seulement entre les niveaux
     // 0 et 1 (ombres, lumières) et entre 1 et 2 (reflets) ; « douces » entre 2 et 3.
     niveaux: [
-      { nom: "très léger", pixels: 0.6, ombres: 0, douces: false, vue: 380, decor: 300, soldatDetail: 12, soldatSimple: 30, soldatSilhouette: 150, roues: 35, effets: 120, herbe: 0, arbresDetail: 50, maisons: 60, interieurs: 15, objetsVille: 45, voitures: 180, feuxStation: 1,
+      { nom: "très léger", pixels: 0.6, ombres: 0, douces: false, vue: 380, decor: 300, soldatDetail: 12, soldatSimple: 30, soldatSilhouette: 150, roues: 35, effets: 120, herbe: 0, arbresDetail: 50, maisons: 30, interieurs: 15, objetsVille: 45, voitures: 180, feuxStation: 1, maisonsBord: 0.3,
         reflets: false, ombresChaque: 1, anisotropie: 2, solFin: false, animLoin: 3, filtre: false },
-      { nom: "léger", pixels: 0.75, ombres: 1024, douces: false, vue: 520, decor: 380, soldatDetail: 18, soldatSimple: 40, soldatSilhouette: 200, roues: 60, effets: 180, herbe: 18, arbresDetail: 70, maisons: 90, interieurs: 25, objetsVille: 70, voitures: 250, feuxStation: 2,
+      { nom: "léger", pixels: 0.75, ombres: 1024, douces: false, vue: 520, decor: 380, soldatDetail: 18, soldatSimple: 40, soldatSilhouette: 200, roues: 60, effets: 180, herbe: 18, arbresDetail: 70, maisons: 50, interieurs: 25, objetsVille: 70, voitures: 250, feuxStation: 2, maisonsBord: 0.5,
         reflets: false, ombresChaque: 2, anisotropie: 4, solFin: false, animLoin: 2, filtre: true },
-      { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 800, decor: 540, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280, herbe: 38, arbresDetail: 130, maisons: 160, interieurs: 40, objetsVille: 110, voitures: 380, feuxStation: 4,
+      { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 800, decor: 540, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280, herbe: 38, arbresDetail: 130, maisons: 160, interieurs: 40, objetsVille: 110, voitures: 380, feuxStation: 4, maisonsBord: 1, maisonsBord: 1,
         reflets: true, ombresChaque: 1, anisotropie: 8, solFin: true, animLoin: 2, filtre: true },
       { nom: "beau", pixels: 1.25, selonEcran: true, ombres: 2048, douces: true, vue: 1300, decor: 850, soldatDetail: 50, soldatSimple: 110, soldatSilhouette: 300, roues: 160, effets: 400, herbe: 60, arbresDetail: 220, maisons: 240, interieurs: 60, objetsVille: 160, voitures: 600, feuxStation: 4,
         reflets: true, ombresChaque: 1, anisotropie: 8, solFin: true, animLoin: 1, filtre: true },

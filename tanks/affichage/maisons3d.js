@@ -618,7 +618,20 @@ Tanks.Maisons3D = (function () {
         ajouterMorceau(g, mesh);
         bilan.lots++;
         const sphere = geo.boundingSphere;
-        objetsQuartiers.push({ mesh, loin: nom === "loin", x: sphere.center.x, z: sphere.center.z, r: sphere.radius });
+        const o = { mesh, loin: nom === "loin", x: sphere.center.x, z: sphere.center.z, r: sphere.radius, quartier: q };
+        objetsQuartiers.push(o);
+        // ✍️ (demande 123, « ça rame totalement ») L'OMBRE SIMPLE : l'ombre d'un quartier se dessine avec la version simple
+        // (des boîtes : 10 fois moins de triangles) ; seul le quartier où est la caméra garde l'ombre de la belle version
+        // (le soleil qui entre par les fenêtres). Ce double est sur le « calque 1 » : seul le soleil le voit, pas la caméra.
+        if (nom === "loin") {
+          const ombre = new THREE.Mesh(geo, mats.loin);
+          ombre.customDepthMaterial = profondeur;
+          ombre.castShadow = true;
+          ombre.layers.set(1);
+          ajouterMorceau(g, ombre);
+          q.ombre = ombre;
+          o.mesh.castShadow = false;
+        }
       }
     }
     // les instances : les gravats (ceux des ruines du début, ceux de la bataille), les débris qui volent, les trous, les traces
@@ -986,15 +999,36 @@ Tanks.Maisons3D = (function () {
   let generationVue = -1;
   // De près, la belle version ; plus loin que « distance » (le niveau de qualité), la version simple.
   function choisirVersion(cam, distance) {
-    let pres = 0, loin = 0;
+    const bord = Tanks.Qualite.reglages.maisonsBord === undefined ? 1 : Tanks.Qualite.reglages.maisonsBord;
+    let pres = 0, loin = 0, ombresSimples = 0, ombresBelles = 0;
     for (const o of objetsQuartiers) {
+      const d = Math.hypot(o.x - cam.x, o.z - cam.z) - o.r;
+      // (demande 123) l'ombre : la belle version seulement dans le quartier de la caméra (à moins de « ombreBelle » m)
+      if (!o.loin && o.quartier.ombre) {
+        const belle = d < S.ombreBelle;
+        o.mesh.castShadow = belle && o.mesh.material !== mats.verre;
+        if (o.quartier.ombreVue !== cam) (o.quartier.ombreVue = cam), (o.quartier.ombreBelle = false);
+        if (belle) o.quartier.ombreBelle = true;
+      }
       if (!o.mesh.visible) continue; // (déjà caché par le décor : trop loin, au-delà de la vue)
-      const proche = Math.hypot(o.x - cam.x, o.z - cam.z) - o.r < distance;
+      // (demande 123) aux niveaux légers, un quartier voisin (140 m de large) n'est « proche » que si une bonne partie l'est
+      // (« maisonsBord » × son rayon), pas seulement son bord : moins de quartiers en belle version
+      const proche = d + o.r * (1 - bord) < distance;
       o.mesh.visible = o.loin ? !proche : proche;
       if (o.mesh.visible) o.loin ? loin++ : pres++;
     }
+    // le double « ombre simple » d'un quartier ne sert que si sa belle version ne fait pas l'ombre (sinon : 2 ombres)
+    for (const o of objetsQuartiers) {
+      const q = o.quartier;
+      if (!o.loin || !q.ombre) continue;
+      if (q.ombreBelle && q.ombreVue === cam) q.ombre.castShadow = false, ombresBelles++;
+      else q.ombre.castShadow = true, ombresSimples++;
+      q.ombreVue = null;
+    }
     bilan.objetsPres = pres;
     bilan.objetsLoin = loin;
+    bilan.ombresSimples = ombresSimples;
+    bilan.ombresBelles = ombresBelles;
   }
   function maj(dt, cam, distance) {
     if (!mats) return;

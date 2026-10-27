@@ -163,6 +163,7 @@ Tanks.Scene = (function () {
     soleil.castShadow = true;
     soleil.shadow.mapSize.set(2048, 2048);
     const o = soleil.shadow.camera;
+    o.layers.enable(1); // (demande 123) le soleil voit aussi le « calque 1 » : les ombres simples des maisons (affichage/maisons3d.js), que la caméra ne voit pas
     o.left = o.bottom = -70;
     o.right = o.top = 70;
     o.near = 1;
