@@ -37,6 +37,9 @@
 // clair apparaît sous la peinture), une « carte des bosses » partagée dessine le grain, les traces de lime et les rayures,
 // et certaines pièces sont refaites : le rail en peigne, le pontet et la détente courbe, les fentes M-LOK, la culasse de la
 // Glock striée, le frein percé du Barrett, l'ogive du RPG-7, la pompe rainurée du M870, la tôle de l'AK, la carcasse du M4.
+// 2e passe (« elles ont encore l'air de planches ») : les pièces découpées ont un biseau GÉNÉREUX (une coupe aux coins bien
+// ronds, lissée), les crosses et les poignées s'AMINCISSENT, les poignées ont un granulé, les culasses des pistolets (Glock,
+// M17, Colton, Varn P38) ont des stries creusées et un nez qui plonge, et la carte des rayures est plus discrète.
 // Les soldats de l'ordinateur gardent la version simple (une seule matière) : la bataille ne coûte pas plus cher.
 // Comme tout l'affichage, il LIT le monde et ne le modifie jamais.
 
@@ -79,9 +82,9 @@ Tanks.Armes3D = (function () {
       H[i] = fin(u, v) * 0.3 + moyen(u, v) * 0.18 + hasard() * 0.05 + lime[y] * 0.5;
       Ru[i] = 0.8 + 0.2 * taches(u, v) + (hasard() - 0.5) * 0.06;
     }
-    for (let k = 0; k < 60; k++) { // les rayures : un sillon fin, plus lisse que le reste
+    for (let k = 0; k < 28; k++) { // les rayures : un sillon fin, plus lisse que le reste
       let x = hasard() * n, y = hasard() * n;
-      const a = hasard() < 0.6 ? (hasard() - 0.5) * 0.5 : hasard() * Math.PI, L = 6 + hasard() * 40, p = 0.12 + hasard() * 0.25;
+      const a = hasard() < 0.6 ? (hasard() - 0.5) * 0.5 : hasard() * Math.PI, L = 6 + hasard() * 30, p = 0.05 + hasard() * 0.1;
       for (let t = 0; t < L; t++, x += Math.cos(a), y += Math.sin(a)) {
         const i = (((Math.round(y) % n) + n) % n) * n + (((Math.round(x) % n) + n) % n);
         H[i] -= p;
@@ -233,7 +236,7 @@ Tanks.Armes3D = (function () {
     matieres();
     const P = piecePeinture(id), t = toile(256, 256, (ctx, l, h) => peindreMotif(ctx, l, h, P)), b = P.brillant || 0;
     t.colorSpace = THREE.SRGBColorSpace;
-    const commun = { vertexColors: true, map: t, normalMap: M.relief.normale, normalScale: new THREE.Vector2(0.4, 0.4), roughnessMap: M.relief.rugosite };
+    const commun = { vertexColors: true, map: t, normalMap: M.relief.normale, normalScale: new THREE.Vector2(0.2, 0.2), roughnessMap: M.relief.rugosite };
     MP[id] = {
       poly: new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.74 - 0.46 * b, metalness: 0.05 + 0.9 * b }, commun)),
       metal: new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.55 - 0.3 * b, metalness: 0.3 + 0.65 * b }, commun)),
@@ -354,6 +357,68 @@ Tanks.Armes3D = (function () {
       }
       g.userData.aretes = w;
     }
+    // ✍️ (armes réalistes, 2e passe : « elles ont encore l'air de planches ») L'EXTRUDEUSE de la belle version :
+    //   - un BISEAU GÉNÉREUX : le bord est arrondi sur près d'un tiers de l'épaisseur (3 facettes), et la face rentre d'autant
+    //     (« bevelOffset ») : la pièce garde sa taille, mais sa coupe devient un rectangle aux coins bien ronds (une crosse,
+    //     une poignée, une carcasse moulée) ;
+    //   - « forme » : la pièce peut s'AMINCIR (forme.x = [xa, ka, xb, kb] : épaisseur × ka en xa et × kb en xb ; forme.y de
+    //     même vers le bas : une poignée plus fine en bas, une crosse plus fine vers l'épaule) ;
+    //   - le LISSAGE : les facettes du biseau sont adoucies (la lumière glisse dessus comme sur un vrai arrondi).
+    function extruder(s, points, l, b0, segs, forme) {
+      const V = RA.volume;
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      for (const [x, y] of points) (x0 = Math.min(x0, x)), (x1 = Math.max(x1, x)), (y0 = Math.min(y0, y)), (y1 = Math.max(y1, y));
+      let b = b0, dec = 0;
+      if (b0 > 0) {
+        const bg = Math.min(l * V.epaisseur, Math.min(x1 - x0, y1 - y0) * V.largeur, V.max);
+        if (bg > b0) (dec = -(bg - b0)), (b = bg);
+      }
+      const g = new THREE.ExtrudeGeometry(s, { depth: Math.max(0.0005, l - 2 * b), bevelEnabled: b > 0, bevelThickness: b, bevelSize: b, bevelOffset: dec, bevelSegments: Math.max(segs || 1, RA.biseau), curveSegments: 14 });
+      g.translate(0, 0, -(l - 2 * b) / 2);
+      if (forme) effiler(g, forme);
+      lisserNormales(g);
+      if (b > 0) aretesBiseau(g);
+      return g;
+    }
+    function effiler(g, forme) {
+      const p = g.attributes.position;
+      const k = (f, v) => { const [a, ka, c, kc] = f, t = Math.max(0, Math.min(1, (v - a) / (c - a))); return ka + (kc - ka) * t; };
+      for (let i = 0; i < p.count; i++) {
+        let s = 1;
+        if (forme.x) s *= k(forme.x, p.getX(i));
+        if (forme.y) s *= k(forme.y, p.getY(i));
+        p.setZ(i, p.getZ(i) * s);
+      }
+    }
+    // le lissage « automatique » : chaque sommet prend la moyenne des faces voisines presque dans le même sens (moins de
+    // RA.lissage degrés d'écart) ; les grandes faces plates (les flancs) restent plates, les vrais angles restent vifs.
+    function lisserNormales(g, axe) {
+      const p = g.attributes.position.array, n = p.length / 3, fn = new Float32Array(n), cosMin = Math.cos((RA.lissage * Math.PI) / 180);
+      const F = new Float32Array((n / 3) * 3), groupes = new Map();
+      for (let t = 0; t < n / 3; t++) {
+        const o = t * 9, ux = p[o + 3] - p[o], uy = p[o + 4] - p[o + 1], uz = p[o + 5] - p[o + 2], vx = p[o + 6] - p[o], vy = p[o + 7] - p[o + 1], vz = p[o + 8] - p[o + 2];
+        F[t * 3] = uy * vz - uz * vy; F[t * 3 + 1] = uz * vx - ux * vz; F[t * 3 + 2] = ux * vy - uy * vx;
+      }
+      const cle = (i) => Math.round(p[i * 3] * 1e5) + "," + Math.round(p[i * 3 + 1] * 1e5) + "," + Math.round(p[i * 3 + 2] * 1e5);
+      for (let i = 0; i < n; i++) { const c = cle(i); let l = groupes.get(c); if (!l) groupes.set(c, (l = [])); l.push(i); }
+      const no = new Float32Array(n * 3), u = (t) => { const a = F[t * 3], b = F[t * 3 + 1], c = F[t * 3 + 2], l = Math.hypot(a, b, c) || 1; return [a / l, b / l, c / l]; };
+      const plat = (t) => Math.abs(u(t)[axe === undefined ? 2 : axe]) > 0.999; // une face du dessus ou du dessous (la grande face plate)
+      for (const l of groupes.values()) for (const i of l) {
+        const t = (i / 3) | 0, a = u(t);
+        let sx = 0, sy = 0, sz = 0;
+        if (plat(t)) (sx = a[0]), (sy = a[1]), (sz = a[2]);
+        else for (const j of l) {
+          const tj = (j / 3) | 0;
+          if (plat(tj)) continue;
+          const b = u(tj);
+          if (a[0] * b[0] + a[1] * b[1] + a[2] * b[2] >= cosMin) (sx += F[tj * 3]), (sy += F[tj * 3 + 1]), (sz += F[tj * 3 + 2]);
+        }
+        const L = Math.hypot(sx, sy, sz) || 1;
+        no[i * 3] = sx / L; no[i * 3 + 1] = sy / L; no[i * 3 + 2] = sz / L;
+      }
+      g.setAttribute("normal", new THREE.BufferAttribute(no, 3));
+      void fn;
+    }
     function galetGeo(lx, ly, lz, rond, n) {
       const g = new THREE.SphereGeometry(1, S(n || 12), Math.max(4, Math.round(S(n || 12) * 0.7))), p = g.attributes.position, e = rond === undefined ? 0.3 : rond;
       for (let i = 0; i < p.count; i++) {
@@ -394,24 +459,27 @@ Tanks.Armes3D = (function () {
         return m;
       },
       // un PROFIL vu de côté (des points [x, y]) « tiré » sur une épaisseur l (en z), avec des TROUS éventuels
-      cote(points, l, mat, coul, z, biseau, trous, segments) {
+      cote(points, l, mat, coul, z, biseau, trous, segments, forme) {
         const s = new THREE.Shape(points.map(([x, y]) => new THREE.Vector2(x, y)));
         for (const t of trous || []) s.holes.push(new THREE.Path(t.map(([x, y]) => new THREE.Vector2(x, y))));
         const b = Math.min(biseau === undefined ? 0.003 : biseau, l * 0.3);
-        // (armes réalistes) la belle version a des biseaux à plusieurs facettes : des bords bien arrondis
-        const g = new THREE.ExtrudeGeometry(s, { depth: Math.max(0.0005, l - 2 * b), bevelEnabled: b > 0, bevelThickness: b, bevelSize: b, bevelSegments: leger ? 1 : seul ? segments || 1 : Math.max(segments || 1, RA.biseau), curveSegments: seul ? S(10) : 14 });
-        g.translate(0, 0, -(l - 2 * b) / 2);
-        if (!seul && b > 0) aretesBiseau(g);
-        return poser(g, mat || "metal", coul, 0, 0, z || 0);
+        if (seul) {
+          const g = new THREE.ExtrudeGeometry(s, { depth: Math.max(0.0005, l - 2 * b), bevelEnabled: b > 0, bevelThickness: b, bevelSize: b, bevelSegments: leger ? 1 : segments || 1, curveSegments: S(10) });
+          g.translate(0, 0, -(l - 2 * b) / 2);
+          return poser(g, mat || "metal", coul, 0, 0, z || 0);
+        }
+        // (armes réalistes) la belle version : une pièce en VOLUME, pas une planche (voir « extruder »)
+        return poser(extruder(s, points, l, b, segments, forme), mat || "metal", coul, 0, 0, z || 0);
       },
       // (armes réalistes) un PROFIL vu DE DESSUS (des points [x, z]) « tiré » vers le haut, de y0 à y0 + h : la culasse d'un
       // pistolet avec ses stries de chaque côté, découpées dans le métal.
       dessus(points, y0, h, mat, coul, biseau, segments) {
         const s = new THREE.Shape(points.map(([x, z]) => new THREE.Vector2(x, -z)));
         const b = Math.min(biseau === undefined ? 0.002 : biseau, h * 0.3);
-        const g = new THREE.ExtrudeGeometry(s, { depth: Math.max(0.0005, h - 2 * b), bevelEnabled: b > 0, bevelThickness: b, bevelSize: b, bevelSegments: leger ? 1 : seul ? 1 : Math.max(segments || 1, RA.biseau), curveSegments: S(10) });
-        if (!seul && b > 0) aretesBiseau(g);
-        g.translate(0, 0, b);
+        let g;
+        if (seul) (g = new THREE.ExtrudeGeometry(s, { depth: Math.max(0.0005, h - 2 * b), bevelEnabled: b > 0, bevelThickness: b, bevelSize: b, bevelSegments: 1, curveSegments: S(10) })), g.translate(0, 0, b - h / 2);
+        else g = extruder(s, points, h, b, segments);
+        g.translate(0, 0, h / 2);
         g.rotateX(-Math.PI / 2);
         return poser(g, mat || "metal", coul, 0, y0, 0);
       },
@@ -434,6 +502,7 @@ Tanks.Armes3D = (function () {
       // un ANNEAU (tore) dont le trou regarde vers x
       anneau(R, r, x, y, z, mat, coul) { const g = new THREE.TorusGeometry(R, r, seul ? S(8) : 10, seul ? S(24) : 32); g.rotateY(Math.PI / 2); return poser(g, mat || "metal", coul, x, y, z); },
       fin: () => groupes,
+      lisser: (g, axe) => { if (!seul) lisserNormales(g, axe); }, // (2e passe) relisser une pièce qu'on vient de déformer
     };
     return e;
   }
@@ -467,13 +536,43 @@ Tanks.Armes3D = (function () {
   };
   function poignee(e, forme, coul, x, y, l, mat, z) {
     const p = POIGNEES[forme] || POIGNEES.ar;
-    e.cote(p.map(([a, b]) => [a + (x || 0), b + (y || 0)]), l || 0.03, mat || "poly", coul, z || 0, 0.006, null, 2);
+    // (armes réalistes, 2e passe) la poignée s'AMINCIT vers le bas (comme une vraie poignée moulée pour la main)
+    e.cote(p.map(([a, b]) => [a + (x || 0), b + (y || 0)]), l || 0.03, mat || "poly", coul, z || 0, 0.006, null, 2, { y: [(y || 0) - 0.1, 0.82, (y || 0) - 0.01, 1] });
+    if (e.beau && !e.leger) { // le GRANULÉ (le « stippling ») : de petits plots sur les flancs, pour que la main ne glisse pas
+      for (let k = 0; k < 26; k++) {
+        const t = 0.18 + (k % 13) * 0.058, j = (k * 7) % 3;
+        const [a1, b1] = p[p.length - 3], [a2, b2] = p[p.length - 5];
+        const xx = a1 + (a2 - a1) * t + 0.006 + j * 0.006, yy = b1 + (b2 - b1) * t;
+        if (yy > -0.012 || yy < -0.095) continue;
+        const s = k < 13 ? 1 : -1;
+        e.boule(0.0011, xx + (x || 0), yy + (y || 0), (z || 0) + s * ((l || 0.03) / 2) * (0.82 + 0.18 * ((yy + 0.1) / 0.09)), "poly", 0x141414, 5);
+      }
+    }
     if (!e.leger) for (const k of [0.3, 0.55, 0.8]) { // les petites stries de la poignée
       const [a, b] = [p[p.length - 3][0] * (1 - k) + p[p.length - 5][0] * k, -0.02 - k * 0.075];
       e.boite(0.012, 0.0025, (l || 0.03) + 0.002, a + (x || 0) - 0.004, b + (y || 0), z || 0, "poly", 0x0d0d0d);
     }
   }
   // Le PONTET (l'anneau sous la détente) et la DÉTENTE.
+  // ✍️ (armes réalistes) la CULASSE D'UN PISTOLET, découpée vue de dessus : n stries creusées de chaque côté (à partir de
+  // x = xs, tous les « pas » m), les arêtes du dessus cassées par le biseau, et le NEZ qui plonge en pente vers l'avant (le
+  // haut de l'avant est rabattu, comme sur une vraie culasse). xa → xb : de l'arrière à l'avant ; dl : la demi-largeur.
+  function culasseStriee(e, xa, xb, y0, h, dl, coul, n, xs, pas) {
+    const flanc = (sg) => {
+      const t = [];
+      for (let k = 0; k < n; k++) { const x = xs + k * pas; t.push([x - pas * 0.28, sg * dl], [x - pas * 0.12, sg * (dl - 0.0013)], [x + pas * 0.12, sg * (dl - 0.0013)], [x + pas * 0.28, sg * dl]); }
+      return t;
+    };
+    const m = e.dessus([[xa, dl]].concat(flanc(1), [[xb - 0.008, dl], [xb, dl - 0.0035], [xb, -dl + 0.0035], [xb - 0.008, -dl]], flanc(-1).reverse(), [[xa, -dl]]), y0, h, "metal", coul, 0.0022, 2);
+    const p = m.geometry.attributes.position, xn = xb - 0.03;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i);
+      if (x > xn) p.setY(i, y - (x - xn) * 0.28 * (y / h));
+    }
+    e.lisser(m.geometry, 1);
+    m.geometry.computeBoundingSphere();
+    return m;
+  }
   // (armes réalistes) un RECTANGLE AUX COINS RONDS (des points), pour découper des pièces
   function rectRond(xa, ya, xb, yb, r, n) {
     const t = [], q = n || 4;
@@ -887,7 +986,7 @@ Tanks.Armes3D = (function () {
         e.tube(-0.262 + r, -0.072, 0.0145, 0.0145, by, 0, "metal", A, 16); // le tube de crosse
         e.tube(-0.084, -0.074, 0.019, 0.019, by, 0, "metal", A, 8);
         // la crosse réglable : le corps, l'appui-joue bombé, les 2 « poches » à piles sur les côtés, la plaque de couche
-        e.cote([[-0.2 + r, 0.062], [-0.2 + r, 0.026], [-0.3 + r, -0.03], [-0.335 + r, -0.048], [-0.342 + r, -0.048], [-0.342 + r, 0.074], [-0.33 + r, 0.078], [-0.24 + r, 0.07]], 0.04, "poly", K.noir, 0, 0.006, null, 2);
+        e.cote([[-0.2 + r, 0.062], [-0.2 + r, 0.026], [-0.3 + r, -0.03], [-0.335 + r, -0.048], [-0.342 + r, -0.048], [-0.342 + r, 0.074], [-0.33 + r, 0.078], [-0.24 + r, 0.07]], 0.04, "poly", K.noir, 0, 0.006, null, 2, { x: [-0.34 + r, 1, -0.2 + r, 0.82] });
         e.galet(0.12, 0.022, 0.046, -0.275 + r, 0.072, 0, "poly", K.noir, 0.32);
         for (const zz of [-1, 1]) e.galet(0.1, 0.034, 0.016, -0.262 + r, 0.03, zz * 0.026, "poly", K.noir, 0.35, 12, 0, 0, 0.42);
         e.boite(0.014, 0.126, 0.046, -0.348 + r, 0.014, 0, "poly", K.caoutchouc);
@@ -985,7 +1084,7 @@ Tanks.Armes3D = (function () {
       e.cote([[0.448, by - 0.012], [0.474, by - 0.012], [0.474, by + 0.02], [0.465, by + 0.05], [0.455, by + 0.05], [0.448, by + 0.02]], 0.018, "metal", N, 0, 0.002); // le guidon
       e.boite(0.003, 0.012, 0.003, 0.461, by + 0.058, 0, "metal", N);
       if (!crosseSpeciale(e, p, -0.105, by + 0.005, K.noir)) {
-        e.cote([[-0.105, 0.044], [-0.105, -0.012], [-0.135, -0.022], [-0.42, -0.075], [-0.432, -0.073], [-0.432, 0.03], [-0.42, 0.033], [-0.14, 0.046]], 0.04, "bois", null, 0, 0.006, null, 2);
+        e.cote([[-0.105, 0.044], [-0.105, -0.012], [-0.135, -0.022], [-0.42, -0.075], [-0.432, -0.073], [-0.432, 0.03], [-0.42, 0.033], [-0.14, 0.046]], 0.04, "bois", null, 0, 0.006, null, 2, { x: [-0.44, 1, -0.08, 0.7] });
         e.boite(0.008, 0.11, 0.043, -0.436, -0.022, 0, "metal", N);
       }
       poignee(e, "ak", K.bakelite);
@@ -1044,7 +1143,7 @@ Tanks.Armes3D = (function () {
       e.boite(0.012, 0.012, 0.014, 0.13, 0.034, 0.024, "metal", K.acier);
       if (!crosseSpeciale(e, p, -0.1, by + 0.006, K.noir)) {
         e.cote([[0.005, 0.0], [-0.1, 0.0], [-0.1, 0.044], [-0.44, 0.034], [-0.475, 0.034], [-0.475, -0.1], [-0.44, -0.106], [-0.06, -0.112], [-0.03, -0.108], [-0.012, -0.06]], 0.038, "bois", null, 0, 0.006,
-          [[[-0.068, -0.012], [-0.36, 0.01], [-0.398, 0.0], [-0.398, -0.068], [-0.37, -0.084], [-0.09, -0.09], [-0.072, -0.07]]], 2);
+          [[[-0.068, -0.012], [-0.36, 0.01], [-0.398, 0.0], [-0.398, -0.068], [-0.37, -0.084], [-0.09, -0.09], [-0.072, -0.07]]], 2, { x: [-0.44, 1, -0.08, 0.7] });
         e.galet(0.13, 0.03, 0.044, -0.25, 0.046, 0, "poly", 0x3e342b, 0.3); // l'appui-joue
         e.boite(0.008, 0.14, 0.04, -0.478, -0.033, 0, "metal", N);
       }
@@ -1247,9 +1346,10 @@ Tanks.Armes3D = (function () {
       e.boite(0.004, 0.02, 0.006, 0.026, -0.012, 0, "metal", K.acier, 0, 0, -0.3);
       const yb = rail(e, 0.09, 0.145, 0.0, 0, "bas", F);
       e.dans("culasse", () => {
-        e.cote([[-0.042, 0.014], [-0.042, 0.043], [-0.032, 0.047], [0.15, 0.047], [0.157, 0.04], [0.157, 0.014]], 0.026, "metal", K.noir, 0, 0.003);
+        if (e.beau) culasseStriee(e, -0.042, 0.157, 0.014, 0.033, 0.013, K.noir, 6, -0.036, 0.006); // (armes réalistes, 2e passe)
+        else e.cote([[-0.042, 0.014], [-0.042, 0.043], [-0.032, 0.047], [0.15, 0.047], [0.157, 0.04], [0.157, 0.014]], 0.026, "metal", K.noir, 0, 0.003);
         if (!e.leger) {
-          for (let k = 0; k < 6; k++) for (const s of [-1, 1]) e.boite(0.0025, 0.026, 0.002, -0.036 + k * 0.006, 0.03, s * 0.0132, "poly", 0x0a0a0a);
+          if (!e.beau) for (let k = 0; k < 6; k++) for (const s of [-1, 1]) e.boite(0.0025, 0.026, 0.002, -0.036 + k * 0.006, 0.03, s * 0.0132, "poly", 0x0a0a0a);
           e.boite(0.04, 0.012, 0.002, 0.03, 0.035, 0.0132, "poly", K.fente);
         }
         e.boite(0.012, 0.008, 0.024, -0.026, 0.051, 0, "metal", K.noir);
@@ -1508,7 +1608,7 @@ Tanks.Armes3D = (function () {
       const yr = rail(e, -0.1, 0.1, by + 0.019, 0);
       if (p.crosse === "standard") {
         e.cote([[0.44, 0.033], [0.44, 0.02], [0.42, 0.01], [0.12, 0.006], [0.09, -0.004], [0.0, -0.008], [-0.02, -0.04], [-0.045, -0.095], [-0.085, -0.1], [-0.09, -0.07], [-0.12, -0.056], [-0.46, -0.088], [-0.476, -0.082],
-          [-0.476, 0.05], [-0.46, 0.058], [-0.2, 0.046], [-0.14, 0.04], [-0.12, 0.03], [0.12, 0.03], [0.14, 0.033]], 0.044, "poly", B, 0, 0.007, null, 3);
+          [-0.476, 0.05], [-0.46, 0.058], [-0.2, 0.046], [-0.14, 0.04], [-0.12, 0.03], [0.12, 0.03], [0.14, 0.033]], 0.044, "poly", B, 0, 0.007, null, 3, { x: [-0.46, 1, -0.1, 0.78] });
         e.boite(0.016, 0.142, 0.046, -0.484, -0.016, 0, "poly", K.caoutchouc);
         if (!e.leger) for (let k = 0; k < 40; k++) e.boule(0.0022, -0.45 + hasard() * 0.86, -0.06 + hasard() * 0.1, (hasard() < 0.5 ? -1 : 1) * 0.0225, "poly", 0x1a1d16, 5); // les mouchetures
       } else {
@@ -1644,13 +1744,7 @@ Tanks.Armes3D = (function () {
         if (e.beau) {
           // (armes réalistes) la culasse découpée VUE DE DESSUS : ses 7 stries de chaque côté sont de vrais creux dans le
           // métal, son nez se rétrécit, et ses arêtes du dessus sont cassées (le biseau arrondi d'une Glock)
-          const h = 0.013, cote = (sg) => {
-            const t = [];
-            for (let k = 0; k < 7; k++) { const x = -0.034 + k * 0.0055; t.push([x - 0.0015, sg * h], [x - 0.0007, sg * (h - 0.0013)], [x + 0.0007, sg * (h - 0.0013)], [x + 0.0015, sg * h]); }
-            return t;
-          };
-          const droite = cote(1), gauche = cote(-1).reverse();
-          e.dessus([[-0.04, h]].concat(droite, [[0.15, h], [0.158, h - 0.0035], [0.158, -h + 0.0035], [0.15, -h]], gauche, [[-0.04, -h]]), 0.014, 0.032, "metal", N, 0.0022, 2);
+          culasseStriee(e, -0.04, 0.158, 0.014, 0.032, 0.013, N, 7, -0.034, 0.0055);
         } else e.cote([[-0.04, 0.014], [-0.04, 0.046], [0.152, 0.046], [0.158, 0.038], [0.158, 0.014]], 0.026, "metal", N, 0, 0.0025);
         if (!e.leger) {
           if (!e.beau) for (let k = 0; k < 7; k++) for (const s of [-1, 1]) e.boite(0.003, 0.024, 0.002, -0.034 + k * 0.0055, 0.03, s * 0.0132, "poly", 0x0a0a0a);
@@ -1754,7 +1848,7 @@ Tanks.Armes3D = (function () {
     pontet(e, -0.005, 0.055, -0.016, A);
     // la CROSSE : d'origine, en bois verni (M870) ou en polymère noir (Dragon), avec une poignée « col de cygne » et une plaque de couche
     if (!crosseSpeciale(e, p, -0.085, by, dragon ? K.noir : undefined)) {
-      e.cote([[-0.083, 0.04], [-0.083, -0.014], [-0.1, -0.032], [-0.13, -0.065], [-0.17, -0.078], [-0.42, -0.1], [-0.435, -0.098], [-0.435, 0.046], [-0.42, 0.05], [-0.16, 0.042]], 0.04, matCrosse, Bx, 0, 0.007, null, 3);
+      e.cote([[-0.083, 0.04], [-0.083, -0.014], [-0.1, -0.032], [-0.13, -0.065], [-0.17, -0.078], [-0.42, -0.1], [-0.435, -0.098], [-0.435, 0.046], [-0.42, 0.05], [-0.16, 0.042]], 0.04, matCrosse, Bx, 0, 0.007, null, 3, { x: [-0.44, 1, -0.08, 0.7] });
       e.boite(0.016, 0.152, 0.044, -0.443, -0.026, 0, "poly", K.caoutchouc); // la plaque de couche en caoutchouc
       if (!e.leger) for (let k = 0; k < 4; k++) e.boite(0.0165, 0.003, 0.0445, -0.443, -0.085 + k * 0.035, 0, "poly", 0x141414);
       e.disque(0.008, 0.042, -0.36, -0.08, 0, "metal", K.acier, 12); // l'anneau de la sangle
@@ -2766,6 +2860,6 @@ Tanks.Armes3D = (function () {
     get vue() { return { actif: V.actif, modele: V.modele, objet: V.objet, cam: V.cam, baisse: V.baisse, recul: V.recul, scene: V.scene, dansLeX2: !!(V.actif && V.dansLeX2), reticule: bilan.reticule || "—" }; },
     LISTE: () => Object.keys(C.armesPrincipales).concat(Object.keys(C.pistolets)),
     ajouterFabrique, // (demande 115 : les armes des éditions)
-    outils: { K, V3, poignee, pontet, chargeur, unChargeur, bout, canonTube, LONGUEUR_CANON, lunette, mire, rail }, // (demande 115 : prêtés aux armes des éditions)
+    outils: { K, V3, poignee, pontet, chargeur, unChargeur, bout, canonTube, LONGUEUR_CANON, lunette, mire, rail, culasseStriee, rectRond }, // (demande 115 : prêtés aux armes des éditions)
   };
 })();
