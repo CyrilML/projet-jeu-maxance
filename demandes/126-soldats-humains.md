@@ -1,6 +1,6 @@
 # Demande n° 126 : des soldats qui ressemblent à des humains
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée (tanks version 72), avec aussi ✍️ « Fais pareil pour les armes ».
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -16,6 +16,6 @@
   gardées. Sans faire ramer : version détaillée près de toi, version simple au loin.
 
 ## ✅ Critères de réussite
-- [ ] Tanks « version 72 ».
-- [ ] De près, les soldats ressemblent à des humains (visage, mains, corps arrondi, articulations souples).
-- [ ] Le jeu ne rame pas plus qu'avant (mesuré).
+- [x] Tanks « version 72 ».
+- [x] De près, les soldats ressemblent à des humains (visage, mains, corps arrondi, articulations souples).
+- [x] Le jeu ne rame pas plus qu'avant (mesuré).

@@ -246,6 +246,7 @@
       <a href="#etape123">Étape 123</a>
       <a href="#etape124">Étape 124</a>
       <a href="#etape125">Étape 125</a>
+      <a href="#etape126">Étape 126</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -6187,6 +6188,45 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       <p>Le cadre rouge disait : « Cannot read properties of undefined (reading 'nom') — sous-le-capot.js:872 ». Ta sauvegarde a des points d'arme pour l'AR-4, le FAMAS… de l'édition Moderne. Dans l'édition 1944, ces armes n'existent pas : le panneau « sous le capot » cherchait leur nom… et trouvait « rien ». Le jeu s'arrêtait net, et l'image restait figée. Deux réparations : le panneau écrit l'identifiant de l'arme quand elle n'existe pas dans l'édition, et surtout la boucle du jeu demande maintenant l'image suivante AVANT de dessiner celle-ci : une erreur ne peut plus jamais tout figer.</p>
     </section>
 
+    <section id="etape126">
+      <h2>🧍 Étape 126 : des soldats qui ressemblent à des humains, et des armes réalistes <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Fini les soldats en blocs : un corps sculpté et arrondi, des mains avec des doigts, un vrai visage, et des articulations qui plient en douceur. Les armes aussi : du volume, des biseaux, du métal, du plastique et du bois. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/126-soldats-humains.md</code>.</p>
+          <ul>
+            <li>✍️ « Fais des maquettes de soldats. Je veux qu'ils ressemblent à des humains. »</li>
+            <li>✍️ « Fais pareil pour les armes. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 72 ».</li>
+            <li>☐ 🎖️ PERSONNAGES : fais tourner un soldat, zoome sur le visage (nez, lèvres, sourcils, paupières, pommettes, mâchoire).</li>
+            <li>☐ Les mains ont un pouce et 4 doigts qui tiennent l'arme ; les coudes et les genoux plient sans trous.</li>
+            <li>☐ Armurerie : l'AK et son chargeur courbé, le Glock et ses rainures, le RPG et son obus, le M870 et sa pompe striée, le métal qui brille un peu, le bois veiné.</li>
+            <li>☐ Le jeu ne rame pas plus qu'avant (mesuré).</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🦴 Un squelette invisible</h3>
+      <p>Un soldat est maintenant UNE seule « peau » (un maillage) posée sur 11 os invisibles : hanches, dos, cou, épaules, coudes, genoux… Chaque point de la peau sait à quel(s) os il est attaché. Près d'un genou, un point est attaché à moitié à la cuisse et à moitié au mollet : quand le genou plie, la peau se plie en douceur au lieu de se casser. C'est le « skinning », la technique de tous les jeux 3D.</p>
+      <h3>🔩 Une matière, ce n'est pas qu'une couleur</h3>
+      <p>Les armes ont maintenant des matières « physiques » : le métal (un peu brillant, un peu rugueux), le plastique (mat), le bois (verni). Une petite image de rayures, dessinée par le jeu, est partagée par toutes les armes : c'est gratuit pour la carte graphique.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot : la ligne « corps humains (126) » : combien de points de peau sont attachés à 2 os ?</li>
+            <li>Sous le capot : la ligne « 🪛 armes réalistes ».</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Combien d'os a un soldat ? <span class="petit">(11)</span></li>
+            <li>Pourquoi les genoux ne font plus de trou ? <span class="petit">(la peau est attachée à moitié aux deux os)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7745,6 +7785,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-125" data-cle="appris-125" placeholder="Ex. : …"></textarea>
         <label for="idees-125"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-125" data-cle="idees-125" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 126 · des soldats humains et des armes réalistes <span class="petit">· 27 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/affichage/corps3d.js</code> (le sculpteur), <code>engins3d.js</code>, <code>armes3d.js</code>, <code>armes3d-1916.js</code>, <code>armes3d-1944.js</code>, <code>config.js</code> (<code>armes3d.realisme</code>).</p>
+        <p class="petit">✍️ Maxance a demandé : des soldats qui ressemblent à des humains, et pareil pour les armes.</p>
+        <label for="appris-126"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-126" data-cle="appris-126" placeholder="Ex. : …"></textarea>
+        <label for="idees-126"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-126" data-cle="idees-126" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
