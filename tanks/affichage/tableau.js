@@ -604,6 +604,11 @@ Tanks.Tableau = (function () {
     ecran.nomsMontres = ecran.nomsCaches = 0;
     // (étape 72) le petit mot du régulateur de qualité, sous la carte : « ⚙️ qualité 2/3 · 58 i/s »
     const Q = Tanks.Qualite;
+    // ✍️ (demande 123) le COMPTEUR D'IMAGES 📈 (⚙️ Réglages) : vert à 50 i/s et plus, orange dès 30, rouge en dessous
+    if (Q && Tanks.Reglages.valeur("ips") && monde.phase !== "garage") {
+      const ips = Q.mesures.ipsDirect || 0;
+      texte("📈 " + Math.round(ips) + " i/s · qualité " + Q.niveau + "/" + (C.qualite.niveaux.length - 1) + (Q.auto ? " auto" : "") + " · " + virgule(Q.mesures.calcul || 0) + " ms", L - 12, 210, 14, ips >= 50 ? "#7dffa0" : ips >= 30 ? "#ffcf5a" : "#ff7a6a", "right");
+    }
     if (Q && IU.qualiteAEcran) texte("⚙️ qualité " + Q.niveau + "/" + (C.qualite.niveaux.length - 1) + (Q.auto ? "" : " ✋") + " · " + Math.round(Q.mesures.ips) + " i/s", L - 12, 192, 12, "rgba(255,255,255,.75)", "right");
     const j = monde.joueur, f = j.fiche;
     if (monde.phase === "garage" && Tanks.Menu && Tanks.Menu.ouvert) return; // (étape 77 : le menu montre déjà tout)

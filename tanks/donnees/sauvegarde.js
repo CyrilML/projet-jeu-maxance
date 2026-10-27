@@ -58,12 +58,16 @@
 //     reviens en Moderne, ton Assaut retrouve son AR-4 et ses pièces). Une ancienne version garde tout, en édition Moderne.
 //   20 (demande 116 : 🌐 le jeu en anglais) : + langue (la langue choisie avec le bouton FR / EN : "fr" ou "en"). Une
 //     ancienne version garde tout, en français (comme avant).
+//   21 (demande 123 : « le jeu rame ») : + reglages.qualite (le choix 🎚️ Qualité : "auto", "basse", "moyenne" ou "haute") et
+//     reglages.ips (le compteur d'images 📈, éteint au départ), et reglages.niveauAuto (le dernier niveau choisi par le
+//     régulateur automatique : la partie suivante recommence là). Une ancienne version garde tout, en qualité « auto », sans
+//     compteur, et le régulateur repart du niveau de départ (config.js, qualite.depart).
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 20; // (demande 116 : + la langue ; demande 115 : + l'édition ; demande 114 : + les réglages ; étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents ; livre n° 6 : + l'arme bonus ; livre n° 28 : + la boutique)
+  const VERSION = 21; // (demande 123 : + la qualité et le compteur d'images ; demande 116 : + la langue ; demande 115 : + l'édition ; demande 114 : + les réglages ; étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents ; livre n° 6 : + l'arme bonus ; livre n° 28 : + la boutique)
   const radio = Tanks.Evenements;
 
   function vide() {
@@ -216,7 +220,8 @@ Tanks.Sauvegarde = (function () {
         const bonus = (ancienne.version || 1) < 16 ? convertir16(donnees) : []; // (livre n° 6)
         if ((ancienne.version || 1) < 19) (donnees.edition = "moderne"), (donnees.editions = {}); // (demande 115 : une ancienne partie est en Moderne)
         if ((ancienne.version || 1) < 20) donnees.langue = "fr"; // (demande 116 : une ancienne partie est en français)
-        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins, bonus, boutique: (ancienne.version || 1) < 17, reglages: (ancienne.version || 1) < 18, edition: (ancienne.version || 1) < 19, langue: (ancienne.version || 1) < 20 }); // (livre n° 28 ; demande 114 ; demande 115 ; demande 116)
+        if ((ancienne.version || 1) < 21) (donnees.reglages.qualite = "auto"), (donnees.reglages.ips = false); // (demande 123 : qualité automatique, pas de compteur)
+        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins, bonus, boutique: (ancienne.version || 1) < 17, reglages: (ancienne.version || 1) < 18, edition: (ancienne.version || 1) < 19, langue: (ancienne.version || 1) < 20, qualite: (ancienne.version || 1) < 21 }); // (livre n° 28 ; demande 114 ; demande 115 ; demande 116 ; demande 123)
       }
     } catch (e) {
       donnees = vide();

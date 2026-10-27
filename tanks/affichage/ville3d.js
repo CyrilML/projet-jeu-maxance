@@ -553,26 +553,49 @@ Tanks.Ville3D = (function () {
     placer(o.x, o.y + (o.brule ? -0.12 : 0), o.z, o.rot !== undefined && o.sorte === "scooter" ? o.rot : -o.angle, it.rx || 0, o.penche || 0);
     return o.ecrase ? 0 : 1;
   }
-  function majInstances(tout) {
+  // (demande 123 : « ça rame totalement ») Les voitures, portières, bus et scooters : chaque forme est UN dessin pour toutes
+  // ses copies. Avant, les 433 voitures de toute la ville étaient dessinées à chaque image (2 fois : l'image et les
+  // ombres), même à 1 km derrière toi. Maintenant on ne met dans le dessin que celles à moins de « voitures » m de la
+  // caméra (selon le niveau de qualité), et on ne refait la liste que si la caméra a bougé de plus de 8 m ou qu'une
+  // voiture a changé (déplacée, brûlée, écrasée). Chaque voiture garde sa matrice toute prête (it.m).
+  let voituresX = 1e9, voituresZ = 1e9, voituresD = -1;
+  function majInstances(tout, cam, distance) {
+    let change = !!tout;
     for (const forme in instances) {
-      const im = instances[forme], liste = im.userData.liste;
-      let change = false;
-      liste.forEach((it, i) => {
-        const o = it.o.porteDe || it.o, cle = o.x.toFixed(2) + o.z.toFixed(2) + (o.angle || 0).toFixed(3) + (o.brule ? "b" : "") + (o.ecrase ? "e" : "");
-        if (!tout && it.vu === cle) return;
-        it.vu = cle;
-        const visible = poseInstance(it);
-        if (!visible) m4.makeScale(0, 0, 0);
-        im.setMatrixAt(i, m4);
-        im.setColorAt(i, o.brule ? BRULE : cI.setHex(it.couleur || 0xffffff));
+      const liste = instances[forme].userData.liste;
+      // on compare les NOMBRES gardés de la dernière fois (avant : un texte fabriqué pour chaque voiture à CHAQUE image)
+      for (let i = 0; i < liste.length; i++) {
+        const it = liste[i], o = it.o.porteDe || it.o, a = o.angle || 0, etat = (o.brule ? 1 : 0) + (o.ecrase ? 2 : 0);
+        if (!tout && it.vuX === o.x && it.vuZ === o.z && it.vuA === a && it.vuE === etat) continue;
+        it.vuX = o.x, it.vuZ = o.z, it.vuA = a, it.vuE = etat;
+        it.visible = !!poseInstance(it);
+        it.m = (it.m || new THREE.Matrix4()).copy(m4);
+        it.coul = (it.coul || new THREE.Color()).copy(o.brule ? BRULE : cI.setHex(it.couleur || 0xffffff));
         change = true;
-      });
-      if (change) {
-        im.instanceMatrix.needsUpdate = true;
-        if (im.instanceColor) im.instanceColor.needsUpdate = true;
-        im.computeBoundingSphere();
       }
     }
+    const cx = cam ? cam.x : 0, cz = cam ? cam.z : 0, d = distance || 1e9;
+    if (!change && d === voituresD && Math.abs(cx - voituresX) < 8 && Math.abs(cz - voituresZ) < 8) return;
+    (voituresX = cx), (voituresZ = cz), (voituresD = d);
+    const d2 = (d + 8) * (d + 8);
+    let total = 0;
+    for (const forme in instances) {
+      const im = instances[forme], liste = im.userData.liste;
+      let n = 0;
+      for (let i = 0; i < liste.length; i++) {
+        const it = liste[i], o = it.o.porteDe || it.o;
+        if (!it.visible || (cam && (o.x - cx) * (o.x - cx) + (o.z - cz) * (o.z - cz) > d2)) continue;
+        im.setMatrixAt(n, it.m);
+        im.setColorAt(n, it.coul);
+        n++;
+      }
+      im.count = n;
+      total += n;
+      im.instanceMatrix.needsUpdate = true;
+      if (im.instanceColor) im.instanceColor.needsUpdate = true;
+      im.computeBoundingSphere();
+    }
+    bilan.voituresDessinees = total;
   }
   // cacher (attribut « cache ») les sommets d'un objet écrasé, ou accroché à un morceau de mur tombé
   const aEnvoyer = new Set();
@@ -589,7 +612,7 @@ Tanks.Ville3D = (function () {
   function maj(dt, cam, distance) {
     if (!pret) return;
     const V = VI();
-    majInstances(false);
+    majInstances(false, cam, Tanks.Qualite.reglages.voitures || 400);
     // les objets écrasés (ou remis à leur place à une nouvelle bataille)
     attente -= dt;
     if (attente <= 0 || generationVue !== Tanks.Structures.generation) {

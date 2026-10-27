@@ -789,7 +789,8 @@ Tanks.CONFIG = {
   //   - s'il a dû descendre d'un niveau, il n'y remonte pas avant 60 s (sinon il ferait le yo-yo).
   // Touche G : choisir le niveau soi-même (0, 1, 2, 3), puis revenir en automatique.
   qualite: {
-    depart: 1, // ✍️ on commence au niveau 1
+    depart: 1, // ✍️ on commence au niveau 1 (demande 123 : la 1re fois ; ensuite, là où le régulateur s'était arrêté)
+    anticrenelage: 2, // (demande 123) les bords lisses (cher en pixels) seulement si la partie commence à ce niveau ou plus
     intervalle: 2, // s entre deux décisions
     lent: 25, rapide: 18.5, // ms
     foisRapide: 2, // combien de fois de suite « rapide » avant de remonter
@@ -810,6 +811,10 @@ Tanks.CONFIG = {
     // (livre de demandes n° 8) interieurs (m : les INTÉRIEURS des maisons — sol, escalier, meubles — ne sont fabriqués et
     // dessinés qu'à moins de cette distance de la caméra ; plus loin, on ne les voit pas par les fenêtres).
     // (livre n° 9 et 11) objetsVille (m : les petits objets de la ville — sacs, téléphones, papiers, chaises — plus près).
+    // (demande 123, « le jeu rame totalement ») voitures (m : les voitures, bus et scooters de la ville abandonnée ne sont
+    //   dessinés qu'à moins de cette distance de la caméra ; avant : les 433 à chaque image, même à 1 km derrière toi).
+    //   feuxStation : dans le souterrain, combien de feux de rames éclairent VRAIMENT (une vraie lumière coûte un calcul de
+    //   plus pour chaque point de l'écran ; les flammes et la fumée restent toutes là ; les 2 néons aussi).
     // (demande 96, « le jeu rame souvent ») de nouveaux réglages, mesurés un par un :
     //   reflets : le ciel qui se reflète sur TOUT (le « miroir du ciel ») ; il coûte cher pour chaque point de l'écran ;
     //     sans lui, la lumière du ciel est un peu plus forte (realisme.sansReflets) pour garder la même clarté ;
@@ -821,13 +826,13 @@ Tanks.CONFIG = {
     // Les réglages qui obligent la carte graphique à refaire ses PROGRAMMES (un à-coup) changent seulement entre les niveaux
     // 0 et 1 (ombres, lumières) et entre 1 et 2 (reflets) ; « douces » entre 2 et 3.
     niveaux: [
-      { nom: "très léger", pixels: 0.6, ombres: 0, douces: false, vue: 380, decor: 300, soldatDetail: 12, soldatSimple: 30, soldatSilhouette: 150, roues: 35, effets: 120, herbe: 0, arbresDetail: 50, maisons: 60, interieurs: 15, objetsVille: 45,
+      { nom: "très léger", pixels: 0.6, ombres: 0, douces: false, vue: 380, decor: 300, soldatDetail: 12, soldatSimple: 30, soldatSilhouette: 150, roues: 35, effets: 120, herbe: 0, arbresDetail: 50, maisons: 60, interieurs: 15, objetsVille: 45, voitures: 180, feuxStation: 1,
         reflets: false, ombresChaque: 1, anisotropie: 2, solFin: false, animLoin: 3, filtre: false },
-      { nom: "léger", pixels: 0.75, ombres: 1024, douces: false, vue: 520, decor: 380, soldatDetail: 18, soldatSimple: 40, soldatSilhouette: 200, roues: 60, effets: 180, herbe: 18, arbresDetail: 70, maisons: 90, interieurs: 25, objetsVille: 70,
+      { nom: "léger", pixels: 0.75, ombres: 1024, douces: false, vue: 520, decor: 380, soldatDetail: 18, soldatSimple: 40, soldatSilhouette: 200, roues: 60, effets: 180, herbe: 18, arbresDetail: 70, maisons: 90, interieurs: 25, objetsVille: 70, voitures: 250, feuxStation: 2,
         reflets: false, ombresChaque: 2, anisotropie: 4, solFin: false, animLoin: 2, filtre: true },
-      { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 800, decor: 540, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280, herbe: 38, arbresDetail: 130, maisons: 160, interieurs: 40, objetsVille: 110,
+      { nom: "normal", pixels: 1, ombres: 2048, douces: false, vue: 800, decor: 540, soldatDetail: 35, soldatSimple: 70, soldatSilhouette: 250, roues: 100, effets: 280, herbe: 38, arbresDetail: 130, maisons: 160, interieurs: 40, objetsVille: 110, voitures: 380, feuxStation: 4,
         reflets: true, ombresChaque: 1, anisotropie: 8, solFin: true, animLoin: 2, filtre: true },
-      { nom: "beau", pixels: 1.25, selonEcran: true, ombres: 2048, douces: true, vue: 1300, decor: 850, soldatDetail: 50, soldatSimple: 110, soldatSilhouette: 300, roues: 160, effets: 400, herbe: 60, arbresDetail: 220, maisons: 240, interieurs: 60, objetsVille: 160,
+      { nom: "beau", pixels: 1.25, selonEcran: true, ombres: 2048, douces: true, vue: 1300, decor: 850, soldatDetail: 50, soldatSimple: 110, soldatSilhouette: 300, roues: 160, effets: 400, herbe: 60, arbresDetail: 220, maisons: 240, interieurs: 60, objetsVille: 160, voitures: 600, feuxStation: 4,
         reflets: true, ombresChaque: 1, anisotropie: 8, solFin: true, animLoin: 1, filtre: true },
     ],
     // (demande 96) l'herbe qui repousse autour de toi est recalculée par petits morceaux : au plus « herbeBudget » ms par
@@ -2937,6 +2942,13 @@ Tanks.CONFIG.boutique = {
 Tanks.CONFIG.reglages = {
   liste: {
     sang: { nom: "Sang (léger)", icone: "🩸", depart: false, texte: "Un petit nuage rouge quand une balle touche un soldat, qui disparaît vite. Pas de flaques, pas de blessures." },
+    // ✍️ (demande 123, « le jeu rame totalement ») LA QUALITÉ : un CHOIX (pas un interrupteur). « auto » : le régulateur
+    // (affichage/qualite.js) choisit tout seul ; sinon le niveau est fixé. choix : le nom de chaque bouton → son niveau de
+    // qualité (« qualite.niveaux » : 0 = très léger … 3 = beau ; null = automatique).
+    qualite: { nom: "Qualité", icone: "🎚️", depart: "auto", texte: "Auto : le jeu choisit tout seul pour rester fluide. Basse : le plus rapide (ordinateur portable). Haute : le plus beau (gros ordinateur).",
+      choix: { auto: { nom: "Auto", niveau: null }, basse: { nom: "Basse", niveau: 0 }, moyenne: { nom: "Moyenne", niveau: 1 }, haute: { nom: "Haute", niveau: 3 } } },
+    // ✍️ (demande 123) LE COMPTEUR D'IMAGES : en haut à droite, combien d'images par seconde (i/s) et le niveau de qualité.
+    ips: { nom: "Compteur d'images (FPS)", icone: "📈", depart: false, texte: "En bataille, en haut à droite : combien d'images par seconde (60 = très fluide, moins de 30 = ça rame) et la qualité." },
   },
   sang: { particules: 4, vie: 0.4, taille: [0.14, 0.55], vitesse: 1.6, couleur: [0.5, 0.03, 0.03], opacite: 0.7 },
 };

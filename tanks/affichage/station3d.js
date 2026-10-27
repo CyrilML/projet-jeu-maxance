@@ -681,7 +681,13 @@ Tanks.Station3D = (function () {
     horloge += dt;
     majBaies(); // (livre n° 25)
     const F = S.feux, E = Tanks.Effets;
+    // (demande 123, « ça rame ») selon le niveau de qualité, seuls les « feuxStation » premiers feux éclairent vraiment
+    const nFeux = Tanks.Qualite.reglages.feuxStation === undefined ? feux.length : Tanks.Qualite.reglages.feuxStation;
+    let k = 0, allumes = 0;
     for (const f of feux) {
+      if (f.lum && f.lum.visible !== k < nFeux) f.lum.visible = k < nFeux;
+      if (f.lum) (k++, f.lum.visible && allumes++);
+      bilan.lumieresAllumees = allumes + neons.length;
       if (f.lum) f.lum.intensity = F.force * (0.7 + 0.18 * Math.sin(horloge * 13 + f.phase) + 0.12 * Math.sin(horloge * 31 + f.phase * 2) + Math.random() * 0.15);
       f.reste += dt * F.flammes;
       while (f.reste > 1) {

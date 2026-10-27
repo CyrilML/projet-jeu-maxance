@@ -15,6 +15,10 @@
 // suite, sans attendre la fin des 2 s ; juste après un changement de niveau, il attend 1 s avant de recompter (la carte
 // graphique prépare alors ses programmes : ces images-là ne disent rien de la vitesse du jeu). Il compte aussi les
 // À-COUPS : les images de plus de 50 ms.
+// ✍️ Demande 123 (« le jeu rame totalement ») : le choix 🎚️ QUALITÉ des ⚙️ Réglages (Auto / Basse / Moyenne / Haute, rangé
+// dans le livret) : « Auto » = le thermostat ; sinon le niveau est fixé (G le change encore pour essayer). S'il rame
+// ÉNORMÉMENT (plus de 2 × « lent » ms par image), le thermostat descend de 2 niveaux d'un coup. Et il compte les images
+// de la dernière seconde pour le compteur 📈 (« ipsDirect »), dessiné par le tableau de bord si le réglage est allumé.
 // Comme tout l'affichage, il ne touche jamais au monde : il règle seulement la façon de dessiner.
 
 window.Tanks = window.Tanks || {};
@@ -25,14 +29,49 @@ Tanks.Qualite = (function () {
   let fenetre = nouvelleFenetre(), rapides = 0, horloge = 0, calme = 0;
   const interditJusqua = N.map(() => 0); // (après avoir ramé à un niveau, on n'y remonte pas avant « punition » secondes)
   // Les mesures (moyennes sur la dernière fenêtre de 2 s), pour « sous le capot » et le tableau de bord.
-  const mesures = { ms: 0, ips: 0, logique: 0, dessin: 0, scene: 0, rendu: 0, longues: 0, pire: 0, tableau: 0, capot: 0, calcul: 0, pasParImage: 0, abandonnes: 0, abandonnesTotal: 0, changements: 0, derniere: "" };
+  const mesures = { ms: 0, ips: 0, logique: 0, dessin: 0, scene: 0, rendu: 0, longues: 0, pire: 0, tableau: 0, capot: 0, calcul: 0, pasParImage: 0, abandonnes: 0, abandonnesTotal: 0, changements: 0, derniere: "", ipsDirect: 0, sauts: 0 };
 
   function nouvelleFenetre() {
     return { temps: 0, images: 0, logique: 0, dessin: 0, scene: 0, rendu: 0, longues: 0, pire: 0, tableau: 0, capot: 0, pas: 0, abandonnes: 0 };
   }
 
+  // (demande 123) le niveau du DÉBUT : celui du réglage 🎚️ s'il est fixé ; sinon celui où le régulateur s'était arrêté la
+  // dernière fois (retenu dans le livret) ; sinon « depart ». La scène le lit avant de créer son pinceau 3D.
+  function niveauDeDepart() {
+    const fixe = niveauChoisi(), auto = Tanks.Reglages ? Tanks.Reglages.niveauAuto : null;
+    return fixe !== null ? fixe : auto !== null ? Math.max(0, Math.min(N.length - 1, auto)) : R.depart;
+  }
   function initialiser() {
-    changer(niveau, "au départ");
+    const fixe = niveauChoisi();
+    niveau = niveauDeDepart();
+    if (fixe !== null) force = fixe;
+    changer(niveau, fixe !== null ? "réglage 🎚️ Qualité : " + nomChoix() : "au départ");
+    // (demande 123) le choix des ⚙️ Réglages change pendant le jeu : on l'applique tout de suite
+    radio.ecouter("reglage", (d) => {
+      if (d.nom !== "qualite") return;
+      const n = niveauChoisi();
+      force = n;
+      rapides = 0;
+      changer(n === null ? niveau : n, "réglage 🎚️ Qualité : " + nomChoix());
+    });
+  }
+  // (demande 123) le niveau fixé par le réglage 🎚️ Qualité (null = automatique)
+  function choixActuel() {
+    const L = C.reglages.liste.qualite, v = Tanks.Reglages ? Tanks.Reglages.valeur("qualite") : "auto";
+    return L.choix[v] ? v : "auto";
+  }
+  const nomChoix = () => C.reglages.liste.qualite.choix[choixActuel()].nom;
+  function niveauChoisi() {
+    const n = C.reglages.liste.qualite.choix[choixActuel()].niveau;
+    return n === null || n === undefined ? null : Math.max(0, Math.min(N.length - 1, n));
+  }
+  // (demande 123) le compteur 📈 : les images de la dernière seconde (même au menu et en pause)
+  let compteImages = 0, compteTemps = 0;
+  function compter(dtMs) {
+    if (dtMs > 1000) return;
+    compteImages++;
+    compteTemps += dtMs;
+    if (compteTemps >= 500) (mesures.ipsDirect = (compteImages * 1000) / compteTemps), (compteImages = compteTemps = 0);
   }
 
   // Appliquer un niveau (la scène fait le travail) et l'annoncer à la radio.
@@ -96,7 +135,10 @@ Tanks.Qualite = (function () {
       rapides = 0;
       if (niveau > 0) {
         interditJusqua[niveau] = horloge + R.punition;
-        changer(niveau - 1, "ça rame : " + ms.toFixed(1).replace(".", ",") + " ms par image (plus de " + R.lent + ")");
+        // (demande 123) ça rame ÉNORMÉMENT : 2 niveaux d'un coup (au lieu d'attendre encore une mesure)
+        const pas = ms > R.lent * 2 && niveau > 1 ? 2 : 1;
+        if (pas === 2) (interditJusqua[niveau - 1] = horloge + R.punition), mesures.sauts++;
+        changer(niveau - pas, "ça rame : " + ms.toFixed(1).replace(".", ",") + " ms par image (plus de " + (pas === 2 ? R.lent * 2 + " : 2 niveaux d'un coup" : R.lent) + ")");
       }
       return;
     }
@@ -120,7 +162,7 @@ Tanks.Qualite = (function () {
   }
 
   return {
-    initialiser, noterImage, basculer, mesures,
+    initialiser, noterImage, basculer, mesures, compter, niveauDeDepart,
     get niveau() { return niveau; },
     get auto() { return force === null; },
     get reglages() { return N[niveau]; },

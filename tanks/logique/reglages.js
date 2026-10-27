@@ -21,7 +21,7 @@ Tanks.Reglages = (function () {
   // Changer un réglage (oui / non) ; sans valeur : on bascule l'interrupteur
   function changer(nom, v) {
     const L = C.reglages.liste[nom];
-    if (!L) return;
+    if (!L || L.choix) return; // (demande 123 : un CHOIX se change avec « choisir »)
     v = v === undefined ? !valeur(nom) : !!v;
     carnet()[nom] = v;
     Tanks.Sauvegarde.ecrire("réglage : " + L.nom, true);
@@ -39,6 +39,23 @@ Tanks.Reglages = (function () {
     radio.emettre("langue", { code, avant, recharger });
     return { ok: true, recharger };
   }
+  // ✍️ (demande 123) Un réglage à CHOIX (la 🎚️ qualité : "auto", "basse", "moyenne", "haute") : rangé dans le livret,
+  // annoncé à la radio (l'événement « reglage » ; le régulateur de qualité l'écoute et change de niveau tout de suite).
+  function choisir(nom, v) {
+    const L = C.reglages.liste[nom];
+    if (!L || !L.choix || !L.choix[v]) return false;
+    carnet()[nom] = v;
+    Tanks.Sauvegarde.ecrire("réglage : " + L.nom + " " + L.choix[v].nom, true);
+    radio.emettre("reglage", { nom, valeur: v, titre: L.nom + " : " + L.choix[v].nom, icone: L.icone, choix: true });
+    return true;
+  }
+  // ✍️ (demande 123) le dernier niveau choisi par le régulateur AUTOMATIQUE est retenu dans le livret (« niveauAuto ») :
+  // à la prochaine partie, il recommence là (sur un ordinateur portable : tout de suite au niveau léger, sans ramer d'abord).
+  radio.ecouter("qualite", (d) => {
+    if (!d.auto || /^au départ|^réglage/.test(d.raison || "") || typeof d.niveau !== "number" || carnet().niveauAuto === d.niveau) return;
+    carnet().niveauAuto = d.niveau;
+    Tanks.Sauvegarde.ecrire("qualité automatique : niveau " + d.niveau, true);
+  });
   const langue = () => Tanks.LangueDuJour.code;
-  return { valeur, changer, changerLangue, langue, get sang() { return !!valeur("sang"); } };
+  return { valeur, changer, choisir, changerLangue, langue, get niveauAuto() { const n = carnet().niveauAuto; return typeof n === "number" ? n : null; }, get sang() { return !!valeur("sang"); } };
 })();

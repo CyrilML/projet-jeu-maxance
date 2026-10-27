@@ -55,6 +55,8 @@ window.Tanks = window.Tanks || {};
 
 Tanks.Scene = (function () {
   const C = Tanks.CONFIG, T = Tanks.Terrain;
+  let antialias = true; // (demande 123)
+  const optim = { texte: "" }; // (demande 123 : ce que l'anti-lag a fait, pour « sous le capot »)
   let rendu, scene, cam, soleil, leDecor, ambiance, reflets, sousTerre = false; // (étape 80 : le dehors, l'ambiance, les reflets du ciel, où on est)
   const objets = new Map(); // tank du monde → son dessin
   const dessinsSoldats = new Map(), dessinsEngins = new Map(); // (étape 61) soldat → dessin, engin → dessin
@@ -129,7 +131,11 @@ Tanks.Scene = (function () {
   const RAYON_CIEL = 3000;
 
   function initialiser(toile) {
-    rendu = new THREE.WebGLRenderer({ canvas: toile, antialias: true });
+    // ✍️ (demande 123, « le jeu rame totalement ») le pinceau 3D : sur un ordinateur portable à 2 cartes graphiques, on
+    // demande la PUISSANTE (« high-performance ») ; et l'anticrénelage (les bords lisses, qui coûte cher en pixels) seulement
+    // si la partie commence à un niveau de qualité 2 ou plus (il ne peut plus changer après).
+    antialias = Tanks.Qualite.niveauDeDepart() >= C.qualite.anticrenelage;
+    rendu = new THREE.WebGLRenderer({ canvas: toile, antialias, powerPreference: "high-performance" });
     rendu.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
     rendu.outputColorSpace = THREE.SRGBColorSpace;
     rendu.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1003,7 +1009,7 @@ Tanks.Scene = (function () {
     return { x: (v.x * 0.5 + 0.5) * L, y: (-v.y * 0.5 + 0.5) * H };
   }
 
-  return { initialiser, dessiner, versEcran, appliquerQualite, lod, poseJeu, cinema: (f) => (cinema = f || null), get filme() { return !!plan; }, changerCamera: (aPied) => {
+  return { initialiser, dessiner, versEcran, appliquerQualite, lod, poseJeu, get optimisations() { return { anticrenelage: antialias, texte: optim.texte }; }, cinema: (f) => (cinema = f || null), get filme() { return !!plan; }, changerCamera: (aPied) => {
       // (étape 78) à pied, C passe de la vue de derrière à la vue dans les yeux ; dans un engin, C éloigne la caméra
       if (aPied) camera.premiere = !camera.premiere;
       else camera.mode = (camera.mode + 1) % 2;

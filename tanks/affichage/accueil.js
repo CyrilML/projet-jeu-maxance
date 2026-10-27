@@ -94,8 +94,9 @@ Tanks.Accueil = (function () {
     racine.querySelector(".a-panneau").addEventListener("click", (e) => {
       if (e.target.closest("[data-langue]")) return; // (la langue : le clic du dessus s'en occupe)
       e.stopPropagation();
-      const b = e.target.closest("[data-reglage]");
-      if (b) Tanks.Reglages.changer(b.dataset.reglage), dessinerReglages(b.dataset.reglage);
+      const b = e.target.closest("[data-reglage]"), ch = e.target.closest("[data-choix]");
+      if (ch) Tanks.Reglages.choisir(ch.dataset.choix, ch.dataset.valeur), dessinerReglages(ch.dataset.choix); // (demande 123)
+      else if (b) Tanks.Reglages.changer(b.dataset.reglage), dessinerReglages(b.dataset.reglage);
       else if (e.target.closest("[data-fermer]") || e.target.classList.contains("a-panneau")) fermerReglages();
     });
   }
@@ -107,10 +108,13 @@ Tanks.Accueil = (function () {
     const P = racine.querySelector(".a-panneau"), L = Tanks.CONFIG.reglages.liste;
     P.innerHTML = "<div><h3>⚙️ RÉGLAGES</h3>" + Object.keys(L).map((k) => {
       const on = Tanks.Reglages.valeur(k);
+      // ✍️ (demande 123) un réglage à CHOIX (la 🎚️ qualité) : une rangée de boutons, celui choisi est allumé
+      if (L[k].choix) return '<div class="a-langues a-choix"><b>' + L[k].icone + " " + L[k].nom + " :</b><span class=\"a-langue-panneau\" role=\"group\">" + Object.keys(L[k].choix).map((c) =>
+        '<button class="a-lang' + (c === on ? " allume" : "") + '" data-choix="' + k + '" data-valeur="' + c + '" aria-pressed="' + (c === on) + '">' + L[k].choix[c].nom + "</button>").join("") + "</span><small>" + L[k].texte + "</small></div>";
       return '<button class="a-interrupteur' + (on ? " allume" : "") + '" data-reglage="' + k + '" role="switch" aria-checked="' + on + '"><span class="a-bascule"></span><span><b>' + L[k].icone + " " + L[k].nom + " : " + (on ? "ALLUMÉ" : "éteint") + "</b><small>" + L[k].texte + "</small></span></button>";
     }).join("") + '<div class="a-langues"><b>🌐 Langue :</b>' + boutonsLangue("a-langue-panneau") + "</div>" + // (demande 116)
       '<p class="a-panneau-pied"><kbd>Entrée</kbd> allumer / éteindre · <kbd>Échap</kbd> fermer · rangé dans ton livret</p><button class="a-reglages" data-fermer="1">← Fermer</button></div>';
-    const b = P.querySelector('[data-reglage="' + (focus || Object.keys(L)[0]) + '"]');
+    const b = P.querySelector('[data-reglage="' + (focus || Object.keys(L)[0]) + '"]') || P.querySelector('[data-choix="' + focus + '"].allume');
     if (b) b.focus();
   }
   // ✍️ (demande 116) LA LANGUE : le bouton FR | EN (deux petits boutons ; celui de la langue du jour est allumé)
@@ -142,6 +146,7 @@ Tanks.Accueil = (function () {
     const b = document.activeElement && document.activeElement.closest && document.activeElement.closest("[data-reglage]");
     if (e.code === "Escape" || e.code === "Backspace") fermerReglages();
     else if ((e.code === "Enter" || e.code === "Space" || e.code === "NumpadEnter") && b) Tanks.Reglages.changer(b.dataset.reglage), dessinerReglages(b.dataset.reglage);
+    else if ((e.code === "Enter" || e.code === "Space" || e.code === "NumpadEnter") && document.activeElement && document.activeElement.dataset && document.activeElement.dataset.choix) Tanks.Reglages.choisir(document.activeElement.dataset.choix, document.activeElement.dataset.valeur), dessinerReglages(document.activeElement.dataset.choix); // (demande 123)
     else if ((e.code === "Enter" || e.code === "Space" || e.code === "NumpadEnter") && document.activeElement && document.activeElement.dataset && document.activeElement.dataset.langue) choisirLangue(document.activeElement.dataset.langue); // (demande 116)
     else if (e.code === "Tab" || e.code === "ArrowDown" || e.code === "ArrowUp") { // (demande 116 : passer d'un bouton du panneau à l'autre)
       const l = [...racine.querySelectorAll(".a-panneau button")], i = l.indexOf(document.activeElement);
