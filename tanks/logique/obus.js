@@ -29,6 +29,7 @@ Tanks.Obus = (function () {
   const C = Tanks.CONFIG, O = C.obus, T = Tanks.Terrain;
   // (étape 72 : les réglages de chaque sorte sont préparés une seule fois, au lieu d'être recopiés à chaque pas)
   const reglagesPrets = {};
+  const plafond = { enleves: 0 }; // (demande 127 : combien de projectiles enlevés parce qu'il y en avait trop en vol)
   const reglages = (sorte) => reglagesPrets[sorte] || (reglagesPrets[sorte] = Object.assign({ vitesse: O.vitesse, gravite: O.gravite }, C.projectiles[sorte]));
 
   // Un obus de tank (il part du bout du canon).
@@ -42,6 +43,13 @@ Tanks.Obus = (function () {
     const R = reglages(sorte), v = R.vitesse;
     const p = { sorte, x: depart.x, y: depart.y, z: depart.z, vx: dir.x * v, vy: dir.y * v, vz: dir.z * v, tireur, cible, age: 0, depart: { x: depart.x, y: depart.y, z: depart.z } };
     if (vitesseEnPlus) (p.vx += vitesseEnPlus.x), (p.vy += vitesseEnPlus.y), (p.vz += vitesseEnPlus.z); // (une bombe garde la vitesse de l'hélico)
+    // ✍️ (demande 127, « plus jamais de lag ») jamais plus de « vitesse.plafonds.projectiles » en vol : au-delà, le plus vieux
+    // qui n'est pas à toi disparaît (sans exploser), pour qu'une énorme bataille ne puisse pas tout ralentir
+    if (liste.length >= C.vitesse.plafonds.projectiles) {
+      let i = liste.findIndex((q) => !(q.tireur && (q.tireur.joueur || q.tireur === Tanks.monde?.joueur)));
+      liste.splice(i < 0 ? 0 : i, 1);
+      plafond.enleves++;
+    }
     liste.push(p);
     return p;
   }
@@ -295,5 +303,5 @@ Tanks.Obus = (function () {
     return ev;
   }
 
-  return { tirer, lancer, avancer, dansLeChar, abimer, cibles: (monde, l) => vehicules(monde, l || []) }; // (demande 98 : « cibles » pour les mines et le C4)
+  return { tirer, lancer, avancer, dansLeChar, abimer, plafond, cibles: (monde, l) => vehicules(monde, l || []) }; // (demande 98 : « cibles » pour les mines et le C4)
 })();

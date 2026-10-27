@@ -234,6 +234,10 @@ Tanks.SousLeCapot = (function () {
     "sauvegarde-convertie": (d) => "💾 Ton livret militaire (version " + d.de + ") est converti en version " + d.vers + " : rien n'est perdu, les nouveaux compteurs commencent à 0" + (d.battleCoins ? " · 🪙 +" + d.battleCoins.toLocaleString("fr-FR") + " Battle Coins pour tes chapitres déjà réussis (demande 101)" : "") + (d.de < 15 ? " · ⭐ tes points sont recalculés pour les niveaux plus lents : tu gardes ton niveau (demande 102)" : "") + (d.bonus && d.bonus.length ? " · 🎁 " + d.bonus.join(" ; ") + " (livre n° 6)" : "") + (d.boutique ? " · 🛒 + le carnet de la boutique (vide : rien acheté)" : "") + (d.reglages ? " · ⚙️ + les réglages (🩸 sang : éteint, demande 114)" : "") + (d.edition ? " · 📜 + l'édition (tu es en Moderne, demande 115)" : "") + (d.langue ? " · 🌐 + la langue (français, demande 116)" : "") + (d.qualite ? " · 🎚️ + la qualité (Auto) et 📈 le compteur d'images (éteint), demande 123" : ""),
     // étape 72
     qualite: (d) => "⚙️ Qualité " + d.niveau + "/" + d.max + " (" + d.nom + ")" + (d.auto ? "" : " ✋") + " : " + d.raison + " → pixels ×" + virgule(d.reglages.pixels, 1) + ", ombres " + (d.reglages.ombres ? d.reglages.ombres + (d.reglages.douces ? " douces" : "") : "aucune") + ", vue " + d.reglages.vue + " m",
+    // (demande 127) la résolution dynamique, les pics, la préparation de la bataille
+    resolution: (d) => "🖼️ Taille de l'image : " + Math.round(d.echelle * 100) + " % (avant " + Math.round(d.avant * 100) + " %) = " + d.largeur + " × " + d.hauteur + " points : " + d.raison,
+    pic: (d) => "⚡ PIC : une image a pris " + Math.round(d.ms) + " ms de calcul (surtout « " + d.partie + " » : " + Math.round(d.partieMs) + " ms) · " + d.nombre + " pic(s) depuis le début",
+    "bataille-preparee": (d) => "🧰 Bataille préparée pendant le chargement : " + d.formes + " formes de soldats fabriquées d'avance (" + Math.round(d.msFormes) + " ms), " + d.programmes + " programmes de dessin (" + Math.round(d.ms) + " ms) : rien de lourd à fabriquer pendant le combat",
     "programmes-prets": (d) => "🧩 La carte graphique a préparé d'un coup ses " + d.programmes + " programmes de dessin (" + Math.round(d.ms) + " ms, " + d.caches + " objets cachés montrés un instant) : plus d'à-coup quand un nouvel objet apparaît",
     "son-endormi": (d) => "🔇 Le son s'endort : " + d.raison,
     "son-reveille": () => "🔊 Tu es revenu : le son se réveille",
@@ -422,6 +426,15 @@ Tanks.SousLeCapot = (function () {
       })()],
       // ✍️ (demande 123, « le jeu rame totalement ») le choix 🎚️ des réglages, le compteur, et ce qui est décidé au chargement
       ["anti-lag (123)", (() => { const RG = Tanks.Reglages, Lq = C.reglages.liste.qualite, S = Tanks.Scene.optimisations || {}; return "🎚️ réglage : " + Lq.choix[RG.valeur("qualite")].nom + " · niveau de départ " + Q.niveauDeDepart() + (RG.niveauAuto !== null ? " (retenu de la dernière partie : " + RG.niveauAuto + ")" : "") + " · 📈 " + Math.round(M.ipsDirect) + " i/s (compteur " + (RG.valeur("ips") ? "ALLUMÉ" : "éteint") + ") · bords lisses : " + (S.anticrenelage ? "oui" : "non (niveau de départ < " + C.qualite.anticrenelage + ")") + " · carte graphique demandée : la puissante · sauts de 2 niveaux : " + M.sauts + (S.texte ? " · " + S.texte : ""); })()],
+      // ✍️ (demande 127, « plus jamais de lag ») le garde-vitesse : la taille de l'image, les pics, la tirelire, les plafonds
+      ["garde-vitesse (127)", (() => {
+        const RZ = Q.resolution, PI = Q.pics, BU = Tanks.Budget, V = C.vitesse, SV = Tanks.Sons.voix, P2 = Tanks.Particules.bilan;
+        const travaux = Object.entries(BU.travaux).map(([k, t]) => k + " " + t.fois + "× (" + virgule(t.ms / Math.max(1, t.fois), 2) + " ms, pire " + virgule(t.pire, 1) + ", " + t.reportes + " reporté(s))").join(" · ");
+        return "🖼️ image " + Math.round(RZ.echelle * 100) + " % (" + (Q.auto ? "résolution dynamique : " + Math.round(V.resolution.min * 100) + " à " + Math.round(V.resolution.max * 100) + " %" : "fixe : niveau choisi") + ") → " + virgule(RZ.pixels, 2) + " point(s) par point = " + (Tanks.Scene.rendu ? Tanks.Scene.rendu.domElement.width + " × " + Tanks.Scene.rendu.domElement.height : "—") + " · écran : " + (window.devicePixelRatio || 1) + " point(s) par point" + (Q.auto ? " (Auto : au plus " + (RZ.aisance ? V.resolution.aisance.pixels + ", grande aisance" : V.resolution.ecranMaxAuto) + ")" : "") + " · " + RZ.baisses + " baisse(s), " + RZ.hausses + " hausse(s), " + RZ.calculsLents + " fois « ce sont les calculs » · dernière : " + (RZ.derniere || "—") +
+          " ⚡ pics : la pire image " + Math.round(PI.pire) + " ms entre deux images, " + Math.round(PI.pireCalcul) + " ms de calcul · " + PI.nombre + " image(s) de plus de " + V.pic.ms + " ms, dont " + PI.calcul + " par le calcul" + (PI.dernier ? " (dernier : " + PI.dernier + ")" : "") +
+          " ⏱️ tirelire : " + V.budget.msParImage + " ms par image, " + virgule(BU.bilan.depenseImage, 2) + " ms à la dernière (pire " + virgule(BU.bilan.pireImage, 1) + ") · " + (travaux || "aucun travail lourd") +
+          " 🧱 plafonds : projectiles " + Tanks.monde.obus.length + " / " + V.plafonds.projectiles + " (" + Tanks.Obus.plafond.enleves + " enlevé(s)) · fumées d'explosion " + Tanks.Explosions.bilan.actives + " / " + V.plafonds.explosions + " (" + Tanks.Explosions.bilan.plafonnees + " arrêtée(s) tôt) · sons " + Tanks.Sons.enCours() + " / " + V.plafonds.sons + " (le plus : " + SV.max + ", " + SV.sautes + " sauté(s)) · particules " + P2.vivantes + " / " + P2.max + " · lumières à ombres : " + Tanks.Scene.preparation.ombres + " / " + V.plafonds.lumieresOmbres;
+      })()],
       ["pas jetés", M.abandonnes + " dans les 2 dernières s · " + M.abandonnesTotal + " en tout (jamais plus de " + C.boucle.pasMaxParImage + " pas par image)"],
       ["réglages du niveau", "pixels ×" + virgule(R.pixels, 1) + " · ombres " + (R.ombres ? R.ombres + (R.douces ? " douces" : "") : "aucune") + " · vue " + R.vue + " m · décor " + Math.min(R.decor, R.vue) + " m · effets " + R.effets + " m · herbe " + (R.herbe ? R.herbe + " m" : "aucune") + " · beaux arbres " + R.arbresDetail + " m"],
       ["soldats dessinés", L.soldatsDetail + " en détail (< " + R.soldatDetail + " m) · " + L.soldatsSimples + " simples (< " + R.soldatSimple + " m) · " + L.silhouettes + " silhouettes (< " + R.soldatSilhouette + " m, 2 dessins pour toutes) · " + L.soldatsCaches + " cachés · (étape 74) « chair et os » : 2 dessins par soldat + son arme"],
@@ -1030,10 +1043,16 @@ Tanks.SousLeCapot = (function () {
       observe = true;
       new IntersectionObserver((e) => (visible = e[e.length - 1].isIntersecting)).observe(table);
     }
-    if (!visible) return;
-    dernier = performance.now();
-    table.innerHTML = lignes().map((x) => (x.length === 1 ? '<tr class="groupe"><th colspan="2">' + x[0] + "</th></tr>" : "<tr><td>" + x[0] + "</td><td>" + x[1] + "</td></tr>")).join("");
+    if (!visible || document.hidden) return;
+    // (demande 127) le réécrire coûte cher : seulement s'il reste du temps dans la tirelire de cette image (moteur/budget.js),
+    // et seulement si le texte a changé (sinon le navigateur refait toute la mise en page pour rien)
+    Tanks.Budget.tranche("panneau sous le capot", () => {
+      dernier = performance.now();
+      const html = lignes().map((x) => (x.length === 1 ? '<tr class="groupe"><th colspan="2">' + x[0] + "</th></tr>" : "<tr><td>" + x[0] + "</td><td>" + x[1] + "</td></tr>")).join("");
+      if (html !== dejaEcrit) (table.innerHTML = html), (dejaEcrit = html);
+    });
   }
+  let dejaEcrit = "";
 
   return { initialiser, maj };
 })();

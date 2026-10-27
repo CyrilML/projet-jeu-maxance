@@ -420,7 +420,9 @@ Tanks.Interieurs3D = (function () {
       for (const b of IN().maisons) {
         if (n >= 2) { attente = 0; break; }
         if (faits.has(b) || !IN().actif(b) || Math.hypot(b.x - cam.x, b.z - cam.z) - b.rayon > distance) continue;
-        const f = fabriquer(b);
+        // (demande 127) seulement s'il reste du temps dans la tirelire de cette image (moteur/budget.js) ; sinon, à la suivante
+        let f = null;
+        if (!Tanks.Budget.tranche("intérieurs de maisons", () => (f = fabriquer(b)))) { attente = 0; break; }
         faits.set(b, f);
         n++;
         visibles++;

@@ -1,6 +1,6 @@
 # Demande n° 127 : que le jeu ne rame plus jamais
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée (tanks version 73). Le test de vitesse passe sur les 10 batailles et sur la « machine lente ».
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -16,4 +16,4 @@
   fait ramer est réparée avant d'être publiée.
 
 ## ✅ Critères de réussite
-- [ ] Tanks « version 73 ». [ ] Résolution dynamique et plafonds. [ ] Le test de vitesse existe et passe.
+- [x] Tanks « version 73 ». [ ] Résolution dynamique et plafonds. [ ] Le test de vitesse existe et passe.

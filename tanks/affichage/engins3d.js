@@ -812,6 +812,22 @@ Tanks.Engins3D = (function () {
     if (detail) Object.assign(Tanks.Corps3D.bilan, { sommets: f.bilan.sommets, melanges: f.bilan.melanges }); // (demande 126, sous le capot)
     return f;
   }
+  // ✍️ (demande 127, « plus jamais de lag ») FABRIQUER D'AVANCE : chaque forme (camp, classe, peau, détail) prend du temps à
+  // fabriquer ; avant, la 1re fois qu'un soldat d'une nouvelle classe ou d'une nouvelle peau arrivait EN PLEIN COMBAT, l'image
+  // ramait. Maintenant la scène les fabrique pendant le menu (une par image, dans la tirelire de temps) et finit au début de la
+  // bataille (le moment du chargement). « preparerUneForme » en fabrique une ; faux quand tout est prêt.
+  let aPreparer = null;
+  const PARA = {}; // (demande 127 : la forme du parachute, partagée)
+  function preparerUneForme() {
+    if (!aPreparer) {
+      aPreparer = [];
+      for (const equipe of ["bleus", "rouges"]) for (const classe of Object.keys(Tanks.CONFIG.classes)) for (let peau = 0; peau < PEAUX.length; peau++) for (const detail of [true, false]) aPreparer.push([equipe, detail, peau, false, classe, undefined]);
+    }
+    const x = aPreparer.shift();
+    if (!x) return false;
+    formeSoldat(...x);
+    return aPreparer.length > 0;
+  }
   // ✍️ (demande 114) LA CLASSE qu'on dessine pour ce soldat : toi, ta classe ; l'ordinateur, celle qui va avec son rôle
   // (voir config.js, « realisme.soldats.maquettes »). L'affichage lit seulement le soldat, il ne change rien.
   function classeDe(s) {
@@ -887,11 +903,15 @@ Tanks.Engins3D = (function () {
     {
       const m = mats();
       parachute = new THREE.Group();
-      const voile = new THREE.Mesh(new THREE.SphereGeometry(3.2, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.35), new THREE.MeshStandardMaterial({ color: 0x8a9a5a, roughness: 0.9, side: THREE.DoubleSide }));
+      // (demande 127) la voile et les fils sont PARTAGÉS par tous les soldats (avant : fabriqués pour chaque nouveau soldat,
+      // même en plein combat, et le navigateur devait ensuite les jeter)
+      if (!PARA.voile) (PARA.voile = new THREE.SphereGeometry(3.2, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.35)), (PARA.tissu = new THREE.MeshStandardMaterial({ color: 0x8a9a5a, roughness: 0.9, side: THREE.DoubleSide })), (PARA.fil = new THREE.CylinderGeometry(0.01, 0.01, 4.5, 4));
+      const voile = new THREE.Mesh(PARA.voile, PARA.tissu);
       voile.position.y = 2.2;
       parachute.add(voile);
       for (const [x, z] of [[1.8, 1.8], [-1.8, 1.8], [1.8, -1.8], [-1.8, -1.8]]) {
-        const fil = cyl(0.01, 0.01, 4.5, m.noir, 4);
+        const fil = new THREE.Mesh(PARA.fil, m.noir);
+        fil.castShadow = true;
         fil.position.set(x / 2, 3.6, z / 2);
         fil.lookAt(new THREE.Vector3(0, 1.4, 0));
         fil.rotateX(Math.PI / 2);
@@ -1852,5 +1872,5 @@ Tanks.Engins3D = (function () {
   // (étape 73) le Chinook et le Black Hawk, dans affichage/helicos3d.js
   // (étape 76) le Rafale, les chasseurs ennemis, l'avion de transport, le drone et le Tigre, dans affichage/avions3d.js
   const outils = { pilote, siege, peintureSoudee, vitreClaire, mats, figurine, figurineDans, poserBras, MAINS, galet, membre, formesArmes };
-  return { soldat, animer, fabriquer, bruler, portail, silhouettes, outils, gestes, baisse, classeDe, maquettes, PEAUX, ajouterDCA };
+  return { soldat, animer, fabriquer, bruler, portail, silhouettes, outils, gestes, baisse, classeDe, maquettes, PEAUX, ajouterDCA, preparerUneForme, get formesAPreparer() { return aPreparer ? aPreparer.length : -1; } };
 })();

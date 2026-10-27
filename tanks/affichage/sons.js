@@ -31,6 +31,24 @@ Tanks.Sons = (function () {
   let souffle, filtreSouffle, volumeSouffle; // (étape 61)
   let dernierPing = 0; // (étape 63)
 
+  // (demande 127) LE PLAFOND DES SONS : chaque son court fabrique quelques petits appareils (oscillateurs, filtres) que la
+  // carte son doit calculer en même temps. Dans une énorme bataille (une mitrailleuse, 20 explosions…), il pourrait y en
+  // avoir des centaines : le son grésille et le jeu ralentit. Alors pas plus de « plafonds.sons » sons à la fois (on garde
+  // la date où chacun finit) ; une explosion a droit à « sonsPrioritaires » places de plus. Les sons en trop sont sautés
+  // (comptés sous le capot).
+  const finsSons = [], voix = { max: 0, sautes: 0, joues: 0 };
+  function place(duree, prioritaire) {
+    const P = C.vitesse.plafonds, t = ctx.currentTime;
+    let n = 0;
+    for (let i = 0; i < finsSons.length; i++) if (finsSons[i] > t) finsSons[n++] = finsSons[i];
+    finsSons.length = n;
+    if (n >= P.sons + (prioritaire ? P.sonsPrioritaires : 0)) return void voix.sautes++, false;
+    finsSons.push(t + Math.max(0.05, duree || 0.2));
+    voix.joues++;
+    if (finsSons.length > voix.max) voix.max = finsSons.length;
+    return true;
+  }
+
   // Le jeu est-il caché ou derrière une autre fenêtre ? Alors le son dort.
   let endormi = false;
   function verifierLaFenetre() {
@@ -145,7 +163,7 @@ Tanks.Sons = (function () {
   }
   const retard = (x, z) => distance(x, z) / Tanks.CONFIG.realisme.explosions.son.vitesse;
   function explosion(x, z, g) {
-    if (!ctx || coupe) return;
+    if (!ctx || coupe || !place(2.4 + Math.min(1, distance(x, z) / 600), true)) return;
     const S = Tanks.CONFIG.realisme.explosions.son, d = distance(x, z), loin = Math.min(1, d / S.loin);
     const force = Math.min(1.2, attenuation(x, z) * Math.min(1.4, 0.55 + g * 0.35) * S.fort), t = ctx.currentTime + d / S.vitesse;
     const b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g2 = ctx.createGain(), duree = 1.2 + g * 0.6 + loin * 1.2;
@@ -172,7 +190,7 @@ Tanks.Sons = (function () {
   // (demande 92) Une balle qui te frôle : un « fffiou » (du bruit filtré dont la note glisse), du côté où elle passe ;
   // tout près, un « CRAC » sec (le petit « bang » de la balle qui va plus vite que le son).
   function frole(force, cote, crac) {
-    if (!ctx || coupe || !isFinite(force) || !isFinite(cote)) return;
+    if (!ctx || coupe || !isFinite(force) || !isFinite(cote) || !place(0.3)) return;
     const t = ctx.currentTime, b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
     const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
     b.buffer = tampon;
@@ -195,6 +213,7 @@ Tanks.Sons = (function () {
     if (!ctx || coupe || force < 0.05) return;
     if (sorte === "metal" || ricochet === "toujours") {
       if (ricochet === "toujours" || (ricochet && Math.random() < 0.5)) { // le « piouuu » du ricochet : une note qui glisse vers le grave
+        if (!place(0.4)) return;
         const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
         o.frequency.setValueAtTime(2600 + Math.random() * 1200, t);
         o.frequency.exponentialRampToValueAtTime(700, t + 0.35);
@@ -209,7 +228,7 @@ Tanks.Sons = (function () {
     else clic(force * 0.45, sorte === "pierre" || sorte === "beton" || sorte === "brique" ? 2400 : 450, 0);
   }
   function boum(force, duree, frequence, apres) {
-    if (!ctx || coupe) return;
+    if (!ctx || coupe || !place((apres || 0) + duree + 0.1, true)) return;
     const t = ctx.currentTime + (apres || 0);
     const b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
     b.buffer = tampon;
@@ -231,7 +250,7 @@ Tanks.Sons = (function () {
     o.stop(t + duree);
   }
   function clang(force) {
-    if (!ctx || coupe) return;
+    if (!ctx || coupe || !place(0.45)) return;
     const t = ctx.currentTime;
     for (const f of [520, 830, 1290]) {
       const o = ctx.createOscillator(), g = ctx.createGain();
@@ -247,7 +266,7 @@ Tanks.Sons = (function () {
 
   // (étape 75) Un « tink » de métal (une grenade qui rebondit, la goupille qu'on tire).
   function tink(force, frequence) {
-    if (!ctx || coupe || force < 0.03) return;
+    if (!ctx || coupe || force < 0.03 || !place(0.14)) return;
     const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
     o.type = "triangle";
     o.frequency.value = frequence || 1900;
@@ -259,7 +278,7 @@ Tanks.Sons = (function () {
   }
   // (étape 75) Un fracas de pierres qui tombent : du bruit grave et rugueux qui dure un peu.
   function fracas(force, duree) {
-    if (!ctx || coupe || force < 0.03) return;
+    if (!ctx || coupe || force < 0.03 || !place(duree + 0.1)) return;
     const t = ctx.currentTime, b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
     b.buffer = tampon;
     f.type = "lowpass";
@@ -274,7 +293,7 @@ Tanks.Sons = (function () {
   }
   // Un coup de feu : un « tac » très court.
   function tac(force) {
-    if (!ctx || coupe || force < 0.03) return;
+    if (!ctx || coupe || force < 0.03 || !place(0.1)) return;
     const t = ctx.currentTime, b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
     b.buffer = tampon;
     f.type = "bandpass";
@@ -288,7 +307,8 @@ Tanks.Sons = (function () {
   // (demande 88) LE COUP DE FEU d'une famille d'arme (réglages : config.js, « armes3d.sons ») : un « crac » de bruit
   // (sa note et sa durée), un « boum » grave qui plonge (le souffle), et un ÉCHO qui traîne (plus long pour les gros calibres).
   function coupDeFeu(famille, force, apres) {
-    if (!ctx || coupe || !(force >= 0.03) || !isFinite(apres || 0)) return; // (« !(… >= …) » : un NaN ne doit jamais arriver jusqu'au son : il arrêterait la boucle du jeu)
+    if (!ctx || coupe || !(force >= 0.03) || !isFinite(apres || 0)) return;
+    if (!place((apres || 0) + Math.max(((Tanks.CONFIG.armes3d.sons[famille] || Tanks.CONFIG.armes3d.sons.fusil).echo || 0), 0.2))) return; // (demande 127) // (« !(… >= …) » : un NaN ne doit jamais arriver jusqu'au son : il arrêterait la boucle du jeu)
     const R = Tanks.CONFIG.armes3d.sons[famille] || Tanks.CONFIG.armes3d.sons.fusil, t = ctx.currentTime + (apres || 0);
     const b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
     b.buffer = tampon;
@@ -326,7 +346,7 @@ Tanks.Sons = (function () {
   }
   // (demande 88) Un petit « clic » métallique (un chargeur, une culasse), retardé de « retard » s.
   function clic(force, frequence, retard) {
-    if (!ctx || coupe) return;
+    if (!ctx || coupe || !place((retard || 0) + 0.06)) return;
     const t = ctx.currentTime + (retard || 0), b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
     b.buffer = tampon;
     f.type = "bandpass";
@@ -429,6 +449,7 @@ Tanks.Sons = (function () {
   }
   // une courte rafale de « friture » (du bruit filtré comme dans un talkie-walkie)
   function friture(force, duree, frequence) {
+    if (!place(duree + 0.02)) return;
     const t = ctx.currentTime, b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
     b.buffer = tampon;
     f.type = "bandpass";
@@ -471,7 +492,7 @@ Tanks.Sons = (function () {
   }
   // Une roquette qui part : « pschhh ».
   function pschh(force) {
-    if (!ctx || coupe) return;
+    if (!ctx || coupe || !place(0.9)) return;
     const t = ctx.currentTime, b = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
     b.buffer = tampon;
     f.type = "highpass";
@@ -563,5 +584,5 @@ Tanks.Sons = (function () {
     b.stop(h + duree);
     inspire = !inspire;
   }
-  return { demarrer, maj, basculer, frole, impact, explosion, radioDebut, radioFin, radioFond, crepitement, coupe: () => coupe, etat: () => (ctx ? (ctx.state === "running" ? "allumé 🔊" : "endormi 🔇") : "pas encore allumé (appuie sur une touche)") };
+  return { demarrer, maj, basculer, frole, impact, explosion, radioDebut, radioFin, radioFond, crepitement, coupe: () => coupe, voix, enCours: () => (ctx ? finsSons.filter((t) => t > ctx.currentTime).length : 0), etat: () => (ctx ? (ctx.state === "running" ? "allumé 🔊" : "endormi 🔇") : "pas encore allumé (appuie sur une touche)") };
 })();

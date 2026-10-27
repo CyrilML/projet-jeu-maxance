@@ -26,7 +26,7 @@ Tanks.Explosions = (function () {
   const actives = []; // les explosions dont la fumée sort encore
   const epaves = []; // les épaves qui brûlent
   const secousse = { force: 0, angle: 0 };
-  const bilan = { explosions: 0, actives: 0, epaves: 0, epavesEnFeu: 0, secousse: 0, parSorte: {}, debris: 0, nappes: 0, nappesMax: 0, nappesFaites: 0 };
+  const bilan = { plafonnees: 0, explosions: 0, actives: 0, epaves: 0, epavesEnFeu: 0, secousse: 0, parSorte: {}, debris: 0, nappes: 0, nappesMax: 0, nappesFaites: 0 };
   const alea = (f) => (Math.random() * 2 - 1) * f;
   const COULEURS = { terre: [0.36, 0.3, 0.23], sable: [0.8, 0.68, 0.5], pierre: [0.55, 0.53, 0.5], brique: [0.6, 0.45, 0.36], bois: [0.45, 0.35, 0.24], feuilles: [0.36, 0.42, 0.26], metal: [0.3, 0.3, 0.3], beton: [0.55, 0.55, 0.55], eau: [0.9, 0.95, 1] };
   const SORTES = { terre: "terre", sable: "sable", pierre: "pierre", gravats: "pierre", tuiles: "brique", brique: "brique", bois: "bois", porte: "bois", haie: "feuilles", metal: "metal", eau: "eau", beton: "beton" };
@@ -162,6 +162,8 @@ Tanks.Explosions = (function () {
       P.emettre(M.etincelle, x, y + 0.5, z, Math.cos(a) * Math.cos(b) * v, Math.sin(b) * v + 2, Math.sin(a) * Math.cos(b) * v, 0.7 + Math.random() * 0.6);
     }
     // 5. la fumée : elle sortira pendant « emission » s (une colonne qui monte), la poussière brûlée qui reste au sol
+    // (demande 127) jamais plus de « vitesse.plafonds.explosions » colonnes de fumée à la fois : la plus vieille s'arrête
+    if (actives.length >= C.vitesse.plafonds.explosions) (actives.shift(), bilan.plafonnees++);
     actives.push({ x, y: air ? y : Math.max(y, sol), z, g, age: 0, sorties: 0, total: Math.round(R.fumee.nombre * Math.min(2.2, rg) * (air && g < 0.5 ? 0.4 : 1)), duree: R.fumee.emission * Math.min(2, rg), air, auSol, gris: s === "sable" || s === "pierre" || s === "beton" });
     if (auSol) for (let k = 0; k < 5 * rg; k++) P.emettre(M.poussiereBrulee, x + alea(g * 1.5), sol + 0.6, z + alea(g * 1.5), alea(1.5), 0.3, alea(1.5), g * (0.6 + Math.random() * 0.5), s === "sable" ? [0.55, 0.47, 0.36] : null);
   }

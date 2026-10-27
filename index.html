@@ -247,6 +247,7 @@
       <a href="#etape124">Étape 124</a>
       <a href="#etape125">Étape 125</a>
       <a href="#etape126">Étape 126</a>
+      <a href="#etape127">Étape 127</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -6227,6 +6228,43 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape127">
+      <h2>🐇 Étape 127 : le garde-vitesse (pour ne plus ramer) <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Quand le jeu commence à ralentir, il rapetisse l'image et baisse les détails tout seul, puis remonte quand ça va mieux. Tout ce qui est lourd est préparé avant la bataille, et un test de vitesse automatique passe avant chaque mise en ligne. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/127-plus-jamais-de-lag.md</code>.</p>
+          <ul>
+            <li>✍️ « Fais en sorte que le jeu ne rame plus jamais. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 73 ».</li>
+            <li>☐ ⚙️ Réglages → Qualité « Auto » (le garde-vitesse ne marche qu'en Auto) et 📈 compteur d'images : il affiche aussi « image NN % ».</li>
+            <li>☐ Si l'ordinateur peine, l'image devient un peu moins nette (taille 85 %, puis moins) au lieu de ramer ; elle redevient nette quand ça va mieux.</li>
+            <li>☐ Plus d'à-coup la première fois qu'un nouveau soldat apparaît ou que tu appuies sur C.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>📐 La résolution dynamique</h3>
+      <p>Un écran Retina de Mac a 4 fois plus de pixels qu'un écran normal : 4 fois plus de travail pour la carte graphique ! Maintenant, toutes les demi-secondes, le jeu chronomètre ses images. Plus de 21 millisecondes ? Il dessine l'image un peu plus petite (85 %), puis l'agrandit pour l'écran. Plus rapide que 18,5 ms quatre fois de suite ? Il la remet en grand. Et pour ne pas faire le yo-yo, une taille trop lente est « interdite » 20 secondes.</p>
+      <h3>🧪 Le test de vitesse</h3>
+      <p>Avant chaque mise en ligne, un robot joue les 10 batailles (3 cartes Moderne + 7 éditions) et vérifie que chaque image coûte moins qu'une limite. Si une nouveauté fait ramer, le test échoue : on répare avant de publier.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Sous le capot : la ligne « garde-vitesse (127) » : la taille de l'image et la pire image.</li>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>plafonds</code> : combien d'obus au plus en même temps ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Que fait le jeu quand une image prend plus de 21 ms ? <span class="petit">(il dessine l'image plus petite)</span></li>
+            <li>Pourquoi un Mac Retina demande plus de travail ? <span class="petit">(il a 4 fois plus de pixels)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7794,6 +7832,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-126" data-cle="appris-126" placeholder="Ex. : …"></textarea>
         <label for="idees-126"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-126" data-cle="idees-126" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 127 · le garde-vitesse contre les lags <span class="petit">· 27 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/affichage/qualite.js</code>, <code>moteur/budget.js</code>, <code>scene.js</code>, <code>tableau.js</code>, <code>engins3d.js</code>, <code>config.js</code> (<code>vitesse</code>).</p>
+        <p class="petit">✍️ Maxance a demandé : que le jeu ne rame plus jamais.</p>
+        <label for="appris-127"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-127" data-cle="appris-127" placeholder="Ex. : …"></textarea>
+        <label for="idees-127"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-127" data-cle="idees-127" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

@@ -2843,6 +2843,19 @@ Tanks.Armes3D = (function () {
     majVue(monde, dt, cam, scene, s, premiere);
     majLumieres(monde, cam, scene, s);
   }
+  // ✍️ (demande 127, « plus jamais de lag ») PRÉPARER D'AVANCE la vue à la 1re personne (au début de la bataille) : sa petite
+  // scène, tes mains, et ton arme ; puis la carte graphique prépare leurs programmes de dessin. Avant, tout ça se faisait la
+  // 1re fois que tu appuyais sur C : un à-coup.
+  function prechauffer(s, rendu) {
+    preparerVue();
+    let objet = null;
+    try {
+      const tenue = s && s.armes ? Tanks.Armes.enMain(s) : null;
+      if (tenue && !V.objet) (objet = exemplaire(fabriquer(tenue.id, tenue.pieces, "beau", {}))), V.scene.add(objet);
+    } catch (e) { objet = null; }
+    rendu.compile(V.scene, V.cam);
+    if (objet) V.scene.remove(objet);
+  }
   function dessinerVue(rendu) {
     if (!V.actif || !V.objet) return;
     const auto = rendu.autoClear;
@@ -2853,7 +2866,7 @@ Tanks.Armes3D = (function () {
   }
 
   return {
-    bilan, fabriquer, exemplaire, pourSoldat, armeIA, sonDe, vitrine, maj, dessinerVue, normaliser, matierePeinture,
+    bilan, fabriquer, exemplaire, pourSoldat, armeIA, sonDe, vitrine, maj, dessinerVue, normaliser, matierePeinture, prechauffer,
     get vitrineEtat() { return { actif: VI.actif, images: VI.images, zoom: VI.zoom, lacet: VI.lacet, modele: VI.modele, magasin: magasin.size }; },
     noterArmeDuJoueur: (objet, modele) => (armeDuJoueur = objet ? { objet, modele } : null),
     get armeDuJoueur() { return armeDuJoueur; },

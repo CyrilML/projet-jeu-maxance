@@ -877,7 +877,7 @@ Tanks.Decor = (function () {
       if (!brouillonHerbe) brouillonHerbe = { mat: new Float32Array(max * 16), col: new Float32Array(max * 3), sorte: new Float32Array(max) };
       chantierHerbe = { x: position.x, z: position.z, rayon, K, i0: Math.floor((position.x - rayon) / K), i1: Math.floor((position.x + rayon) / K), j: Math.floor((position.z - rayon) / K), j1: Math.floor((position.z + rayon) / K), n: 0, images: 0, ms: 0 };
     }
-    const ch = chantierHerbe, B = brouillonHerbe, debut = performance.now(), budget = C.qualite.herbeBudget || 1.5;
+    const ch = chantierHerbe, B = brouillonHerbe, debut = performance.now(), budget = Math.min(C.qualite.herbeBudget || 1.5, Math.max(0.3, Tanks.Budget.restant())); // (demande 127 : pas plus que ce qui reste dans la tirelire de l'image ; 0,3 ms au moins, pour avancer)
     const r2 = ch.rayon * ch.rayon, max = herbe.instanceMatrix.count, [hMin, hMax] = RH.hauteur, Kc = ch.K, cx = ch.x, cz = ch.z, R = ch.rayon;
     ch.images++;
     for (; ch.j <= ch.j1 && ch.n < max; ch.j++) {
@@ -902,6 +902,7 @@ Tanks.Decor = (function () {
       }
     }
     ch.ms += performance.now() - debut;
+    Tanks.Budget.payer("herbe qui repousse", performance.now() - debut); // (demande 127)
     if (ch.j <= ch.j1 && ch.n < max) return; // (pas encore fini)
     // le chantier est fini : la nouvelle herbe remplace l'ancienne, d'un coup
     const n = ch.n;

@@ -2846,6 +2846,9 @@ Tanks.LANGUES.en = {
     "En bataille, en haut à droite : combien d'images par seconde (60 = très fluide, moins de 30 = ça rame) et la qualité.": "In battle, top right: how many frames per second (60 = very smooth, under 30 = lagging) and the quality.",
     "📈 {n} i/s · qualité {q} auto · {ms} ms": "📈 {n} fps · quality {q} auto · {ms} ms",
     "📈 {n} i/s · qualité {q} · {ms} ms": "📈 {n} fps · quality {q} · {ms} ms",
+    // ---- (demande 127) 🖼️ la taille de l'image (la résolution dynamique) dans le compteur
+    "📈 {n} i/s · qualité {q} auto · image {p} % · {ms} ms": "📈 {n} fps · quality {q} auto · resolution {p} % · {ms} ms",
+    "📈 {n} i/s · qualité {q} · image {p} % · {ms} ms": "📈 {n} fps · quality {q} · resolution {p} % · {ms} ms",
     "🔒 {quoi} se joue dans l'édition Moderne. Tu es dans l'édition {ed} : ⚔️ BATAILLE pour jouer, 📜 ÉDITIONS pour changer.": "🔒 {quoi} is played in the Modern edition. You are in the {ed} edition: ⚔️ BATTLE to play, 📜 EDITIONS to switch.",
     "réussi à ces difficultés": "completed at these difficulties",
     "drapeau inventé": "made-up flag",

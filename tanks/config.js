@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 72,
+  version: 73,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -3068,3 +3068,38 @@ Tanks.CONFIG.realismeAbsurde = {
 // rien nulle part, n'a ni pub, ni mouchard, ni statistiques. Les affiches et les panneaux de la ville (affichage/ville3d.js)
 // sont du DÉCOR : des marques INVENTÉES (Valdrie, Valcourt…), aucune vraie. La boutique se paie en Battle Coins du jeu.
 Tanks.CONFIG.sansPublicite = "Aucune publicité, aucun traqueur";
+
+// ================================================================== demande 127 : ✍️ « QUE LE JEU NE RAME PLUS JAMAIS »
+// ✍️ « Fais en sorte que le jeu ne rame plus jamais. » Le GARDE-VITESSE (affichage/qualite.js, moteur/budget.js) :
+//   1. resolution : LA TAILLE DE L'IMAGE qui change toute seule (la « résolution dynamique »). Toutes les « intervalle » s,
+//      le régulateur regarde le temps moyen d'une image : plus de « lent » ms → l'image devient plus petite (× « pas »,
+//      jusqu'à « min » = la moitié des points dans chaque sens, donc 4 fois moins de points à colorier) ; moins de « rapide »
+//      ms « foisRapide » fois de suite → elle regrandit (+ « montee »), jusqu'à « max ». Pour ne pas faire le yo-yo : après
+//      une baisse, il attend « attente » s avant de remonter, et une taille qui ramait est interdite pendant « interdit » s
+//      (2 fois plus longtemps à chaque nouvelle fois, au plus « interditMax » s). Si l'image reste plus petite que « confort »,
+//      le régulateur baisse plutôt les détails (un niveau de qualité, au plus un toutes les « attenteConfort » s) : l'image
+//      regrandit et redevient nette.
+//      Si ce sont les CALCULS (les règles, la scène : au moins « calculs » de l'image) qui prennent le temps, rapetisser
+//      l'image ne sert à rien : il baisse alors directement les détails (le niveau de qualité).
+//      ecranMaxAuto : en « Auto », jamais plus de 1 point d'image par point de l'écran (un Mac « Retina » en a 2 × 2 = 4
+//      fois plus !) ; sauf s'il reste ÉNORMÉMENT de marge (aisance : moins de « ms » par image « fois » fois de suite, au
+//      niveau le plus beau, l'image déjà à « max ») : alors jusqu'à « pixels ».
+//   2. budget : le « travail lourd » d'une image (l'herbe qui repousse, les intérieurs des maisons, la petite carte, le panneau
+//      sous le capot…) se partage « msParImage » ms par image ; le reste attend l'image suivante (mais un travail qui a
+//      attendu « attenteMax » images passe quand même).
+//   3. cadences : ce qui n'a pas besoin d'être refait 60 fois par seconde : la petite carte (« carte » fois par seconde).
+//   4. plafonds : jamais plus de… (pour qu'une énorme bataille ne puisse pas tout bloquer) : projectiles en vol, explosions
+//      qui fument en même temps, sons en même temps (« sons » ; une explosion a droit à « sonsPrioritaires » de plus),
+//      lumières qui font des ombres (le soleil seulement). Les autres plafonds existaient déjà : particules et cailloux
+//      (realisme.tirs), douilles (armes3d.douilles), traces et cratères (realisme.sol), drones en l'air (chaque édition),
+//      phrases de la radio en attente (radioVoix.file), soldats (soldats.maxEnJeu), intérieurs fabriqués par image.
+//   5. pic : une image de plus de « ms » ms de CALCUL est un « pic » (un à-coup) : le plus long et leur nombre se lisent
+//      sous le capot.
+Tanks.CONFIG.vitesse = {
+  resolution: { min: 0.5, max: 1, pas: 0.85, montee: 0.05, intervalle: 0.5, lent: 21, rapide: 18.5, foisRapide: 4, attente: 3, interdit: 20, interditMax: 300, calculs: 0.6, confort: 0.7, attenteConfort: 8,
+    ecranMaxAuto: 1, aisance: { ms: 12, fois: 8, pixels: 1.25 } },
+  budget: { msParImage: 3, attenteMax: 30 },
+  cadences: { carte: 12 },
+  plafonds: { projectiles: 300, explosions: 24, sons: 40, sonsPrioritaires: 12, lumieresOmbres: 1 },
+  pic: { ms: 50 },
+};

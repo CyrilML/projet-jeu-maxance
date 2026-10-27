@@ -34,6 +34,8 @@ window.Tanks = window.Tanks || {};
 // la petite carte devient le PLAN DE LA STATION (les quais, les voies, la mezzanine, les escaliers, les rames, les feux).
 Tanks.Tableau = (function () {
   const C = Tanks.CONFIG, T = Tanks.Terrain, E = C.equipes, IU = C.interface;
+  let carteVive = null, carteViveCtx = null, carteVivePour = null; // (demande 127 : la petite carte, redessinée 12 fois par seconde)
+  const bilanCarte = { redessins: 0, images: 0 };
   let ctx, L, H, carte = null, message = null, reponse = null, ordreEnCours = null;
   // ✍️ (livre de demandes, n° 1) l'écran épuré : la ligne des touches (H), et ce qu'on a caché à cette image (pour « sous le capot »)
   let aideForcee = false;
@@ -607,7 +609,7 @@ Tanks.Tableau = (function () {
     // ✍️ (demande 123) le COMPTEUR D'IMAGES 📈 (⚙️ Réglages) : vert à 50 i/s et plus, orange dès 30, rouge en dessous
     if (Q && Tanks.Reglages.valeur("ips") && monde.phase !== "garage") {
       const ips = Q.mesures.ipsDirect || 0;
-      texte("📈 " + Math.round(ips) + " i/s · qualité " + Q.niveau + "/" + (C.qualite.niveaux.length - 1) + (Q.auto ? " auto" : "") + " · " + virgule(Q.mesures.calcul || 0) + " ms", L - 12, 210, 14, ips >= 50 ? "#7dffa0" : ips >= 30 ? "#ffcf5a" : "#ff7a6a", "right");
+      texte("📈 " + Math.round(ips) + " i/s · qualité " + Q.niveau + "/" + (C.qualite.niveaux.length - 1) + (Q.auto ? " auto" : "") + " · image " + Math.round((Q.resolution.echelle || 1) * 100) + " %" + " · " + virgule(Q.mesures.calcul || 0) + " ms", L - 12, 210, 14, ips >= 50 ? "#7dffa0" : ips >= 30 ? "#ffcf5a" : "#ff7a6a", "right");
     }
     if (Q && IU.qualiteAEcran) texte("⚙️ qualité " + Q.niveau + "/" + (C.qualite.niveaux.length - 1) + (Q.auto ? "" : " ✋") + " · " + Math.round(Q.mesures.ips) + " i/s", L - 12, 192, 12, "rgba(255,255,255,.75)", "right");
     const j = monde.joueur, f = j.fiche;
@@ -777,7 +779,17 @@ Tanks.Tableau = (function () {
     croixSoins(monde); // (livre n° 18 : une croix rouge au-dessus des amis à terre qu'on peut relever)
     ecranATerre(monde); // (livre n° 19 : TOI à terre : l'écran gris, le compteur, E pour appeler un médecin)
     // La petite carte
-    const tc = 160, x0 = L - tc - 12, y0 = 12, k = tc / C.monde.taille;
+    // (demande 127) elle est redessinée « cadences.carte » fois par seconde seulement (12 : assez pour suivre les points),
+    // dans sa propre petite toile (avec une marge de « MC » points pour les flèches qui dépassent) ; entre deux, on recolle
+    // la même image : beaucoup moins de travail à chaque image.
+    const tc = 160, MC = 16, X0 = L - tc - 12, Y0 = 12, k = tc / C.monde.taille;
+    if (!carteVive) ((carteVive = document.createElement("canvas")).width = carteVive.height = tc + 2 * MC), (carteViveCtx = carteVive.getContext("2d"));
+    if (Tanks.Budget.cadence("petite carte", C.vitesse.cadences.carte) || carteVivePour !== monde) {
+    carteVivePour = monde;
+    const ctxEcran = ctx, x0 = MC, y0 = MC;
+    ctx = carteViveCtx;
+    ctx.clearRect(0, 0, tc + 2 * MC, tc + 2 * MC);
+    try {
     ctx.globalAlpha = 0.9;
     ctx.drawImage(carte, x0, y0, tc, tc);
     ctx.globalAlpha = 1;
@@ -877,6 +889,11 @@ Tanks.Tableau = (function () {
         }
       } else ctx.fillRect(px - 2.5, pz - 2.5, 5, 5);
     }
+    } finally { ctx = ctxEcran; }
+    bilanCarte.redessins++;
+    }
+    ctx.drawImage(carteVive, X0 - MC, Y0 - MC);
+    bilanCarte.images++;
     // Les messages (touché, détruit…)
     if (message && performance.now() < message.jusqua && message.texte) texte(message.texte, L / 2, 110, 26, message.couleur, "center");
     // (étape 65) la réponse de la radio, et l'ordre en cours (sous le compteur des soldats)

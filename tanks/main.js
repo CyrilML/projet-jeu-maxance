@@ -20,6 +20,8 @@
 // (logique/tranchees.js, seulement en 1916) avance pendant les petits pas.
 // Demande 101 : LES CINÉMATIQUES : le réalisateur (logique/cinematique.js) joue pendant les petits pas (phase
 // "cinematique") ; le caméraman (affichage/cinematique.js) filme et dessine l'écran de cinéma en tout dernier.
+// Demande 127 (« plus jamais de lag ») : au début de chaque image, la TIRELIRE de temps (moteur/budget.js) est remplie : les
+// travaux lourds qui peuvent attendre (le panneau sous le capot, la petite carte, l'herbe, les intérieurs) se la partagent.
 
 window.Tanks = window.Tanks || {};
 
@@ -73,6 +75,7 @@ window.Tanks = window.Tanks || {};
     requestAnimationFrame(boucle);
     const dtMs = Math.max(0, maintenant - avant), dt = Math.min(0.1, dtMs / 1000); // (demande 88 : jamais négatif : la 1re image peut dater d'avant la fin du chargement)
     avant = maintenant;
+    Tanks.Budget.debutImage(); // (demande 127 : la tirelire de temps du travail lourd est remplie)
     if (E.consommer("qualite")) Tanks.Qualite.basculer(); // (étape 72 : touche G)
     if (E.consommer("pause")) enPause = !enPause;
     if (E.consommer("epaule")) Tanks.Scene.changerEpaule(); // (livre n° 13) Y : l'autre épaule
@@ -142,7 +145,7 @@ window.Tanks = window.Tanks || {};
     t1 = performance.now();
     parts.tableau = t1 - t0;
     pause.hidden = !enPause;
-    Tanks.SousLeCapot.maj();
+    Tanks.SousLeCapot.maj(); // (demande 127 : il attend s'il ne reste plus de temps dans la tirelire de cette image)
     parts.capot = performance.now() - t1;
     Tanks.Sons.maj(monde);
     Tanks.Musique.maj(monde, Tanks.Sons.coupe()); // (étape 83 : seulement au menu)

@@ -191,7 +191,7 @@ Tanks.Scene = (function () {
   function appliquerQualite(n) {
     if (!rendu) return;
     Q = n;
-    rendu.setPixelRatio(n.selonEcran ? Math.min(n.pixels, window.devicePixelRatio || 1) : n.pixels);
+    poserPixels(Tanks.Qualite && Tanks.Qualite.pixels ? Tanks.Qualite.pixels() : n.pixels); // (demande 127 : le régulateur décide, avec la résolution dynamique)
     // les ombres : on ne touche à la carte graphique que si ça change (changer les ombres oblige à refaire les
     // « programmes » de dessin de toutes les matières : c'est un petit à-coup, une seule fois)
     const ombres = n.ombres > 0, sorte = n.douces ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap, taille = n.ombres || 512;
@@ -225,6 +225,14 @@ Tanks.Scene = (function () {
     cam.updateProjectionMatrix();
     leCiel.scale.setScalar((n.vue * 0.95) / RAYON_CIEL);
     if (sousTerre) (scene.fog.near = C.souterrain.brouillard[0]), (scene.fog.far = C.souterrain.brouillard[1]);
+  }
+
+  // (demande 127) LA TAILLE DE L'IMAGE : combien de points d'image par point de la toile (1 280 × 720). On ne touche à la
+  // carte graphique que si ça change (changer la taille oblige à refaire la grande image où elle dessine).
+  function poserPixels(p) {
+    if (!rendu) return null;
+    if (Math.abs(rendu.getPixelRatio() - p) > 0.001) rendu.setPixelRatio(p);
+    return { largeur: rendu.domElement.width, hauteur: rendu.domElement.height };
   }
 
   // (étape 80) Descendre dans le souterrain, ou remonter dehors : on cache l'un, on montre l'autre, on change la lumière.
@@ -987,6 +995,8 @@ Tanks.Scene = (function () {
     rendu.render(scene, cam);
     chrono.rendu = performance.now() - debutRendu; // (demande 96 : le temps pour ENVOYER le dessin à la carte graphique)
     if (!dejaPrepare && monde.phase !== "garage") preparerProgrammes(); // (demande 96)
+    // (demande 127) au menu : les formes des soldats sont fabriquées d'avance, une par image (dans la tirelire de temps)
+    if (monde.phase === "garage" && Tanks.Engins3D.formesAPreparer !== 0) Tanks.Budget.tranche("formes des soldats (d'avance)", Tanks.Engins3D.preparerUneForme);
     Tanks.Armes3D.dessinerVue(rendu); // (dessinée PAR-DESSUS le monde : elle ne rentre jamais dans un mur)
   }
 
@@ -997,14 +1007,30 @@ Tanks.Scene = (function () {
   let dejaPrepare = false, compteOmbres = 0;
   const listeVivants = new Set(), listePresents = new Set();
   const chrono = { rendu: 0 }; // (demande 96 : lu par la boucle, main.js)
-  const preparation = { programmes: 0, ms: 0 };
+  const preparation = { programmes: 0, ms: 0, formes: 0, msFormes: 0, ombres: 1 };
   function preparerProgrammes() {
     dejaPrepare = true;
+    // (demande 127) d'abord les formes de soldats qui manquent encore (si on a lancé la bataille très vite)
+    const tf = performance.now(), formes0 = Tanks.Engins3D.maquettes.formes;
+    while (Tanks.Engins3D.preparerUneForme());
+    const msFormes = performance.now() - tf;
+    // (demande 127) une seule lumière fait des ombres : le soleil (chaque lumière à ombres redessine toute la scène en plus)
+    let enlevees = 0;
+    scene.traverse((o) => { if (o.isLight && o.castShadow && o !== soleil) (o.castShadow = false), enlevees++; });
+    preparation.ombres = soleil.castShadow ? 1 : 0;
+    preparation.ombresEnlevees = enlevees;
     const t0 = performance.now(), caches = [];
     scene.traverse((o) => { if (!o.visible) (caches.push(o), (o.visible = true)); });
     try { rendu.compile(scene, cam); } finally { for (const o of caches) o.visible = false; }
+    // (demande 127) et la scène de l'arme à la 1re personne (ses lumières à elle : d'autres programmes)
+    const toi = Tanks.monde && Tanks.monde.toi ? Tanks.monde.toi.soldat : null;
+    try { Tanks.Armes3D.prechauffer(toi, rendu); } catch (e) { /* (rien de grave : elle sera préparée au 1er C) */ }
     preparation.programmes = rendu.info.programs.length;
     preparation.ms = performance.now() - t0;
+    preparation.formes = Tanks.Engins3D.maquettes.formes - formes0;
+    preparation.fraiche = true; // (demande 127 : cette image-là est un « chargement » : le régulateur ne la compte pas)
+    preparation.msFormes = msFormes;
+    Tanks.Evenements.emettre("bataille-preparee", { formes: Tanks.Engins3D.maquettes.formes, msFormes: Tanks.Engins3D.maquettes.ms, programmes: preparation.programmes, ms: preparation.ms + msFormes });
     Tanks.Evenements.emettre("programmes-prets", { programmes: preparation.programmes, ms: preparation.ms, caches: caches.length });
   }
 
@@ -1016,7 +1042,7 @@ Tanks.Scene = (function () {
     return { x: (v.x * 0.5 + 0.5) * L, y: (-v.y * 0.5 + 0.5) * H };
   }
 
-  return { initialiser, dessiner, versEcran, appliquerQualite, lod, poseJeu, get optimisations() { return { anticrenelage: antialias, texte: optim.texte }; }, cinema: (f) => (cinema = f || null), get filme() { return !!plan; }, changerCamera: (aPied) => {
+  return { initialiser, dessiner, versEcran, appliquerQualite, poserPixels, lod, poseJeu, get optimisations() { return { anticrenelage: antialias, texte: optim.texte }; }, cinema: (f) => (cinema = f || null), get filme() { return !!plan; }, changerCamera: (aPied) => {
       // (étape 78) à pied, C passe de la vue de derrière à la vue dans les yeux ; dans un engin, C éloigne la caméra
       if (aPied) camera.premiere = !camera.premiere;
       else camera.mode = (camera.mode + 1) % 2;
