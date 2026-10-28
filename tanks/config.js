@@ -164,6 +164,10 @@ Tanks.CONFIG = {
     nage: 1.6, // m/s
     detail: 45, // m : plus près que ça, on dessine le soldat en détail (genoux, coudes, visage…) ; plus loin, en simple
     // (étape 72 : cette distance dépend maintenant du niveau de qualité : voir « qualite.niveaux », soldatDetail)
+    // ✍️ (demande 129) COUCHÉ (à plat ventre) : hauteur = m où les balles le visent (debout 1,2 ; accroupi 0,8) ; touche :
+    // × la chance d'être touché (en plus de l'accroupi) ; oeil : m, la hauteur de ses yeux ; explosion : la chance qu'une
+    // explosion tout près ne le blesse que légèrement (les éclats passent au-dessus de lui)
+    couche: { hauteur: 0.35, touche: 0.6, oeil: 0.45, explosion: 0.6 },
   },
   // ✍️ Les armes à pied : le pistolet, la mitrailleuse et le lance-roquettes (touches 1, 2, 3).
   // Une balle va tout de suite où on vise (pas de vol) : la chance de toucher baisse avec la distance.
@@ -920,7 +924,44 @@ Tanks.CONFIG = {
     // (contre le lag) à chaque petit pas (1/120 s) : au plus « penseesParPas » soldats réfléchissent (les autres attendent,
     // au plus « attenteMax » s de plus), « vuesParPas » lignes de vue et « abrisParPas » recherches d'abri ; en tir de
     // suppression, il ne tire qu'une fois sur « 1 ÷ suppressionTir » (des rafales espacées : moins de balles à calculer)
-    penseesParPas: 2, attenteMax: 0.4, vuesParPas: 8, abrisParPas: 1, suppressionTir: 0.12 },
+    penseesParPas: 2, attenteMax: 0.4, vuesParPas: 8, abrisParPas: 1, suppressionTir: 0.12,
+    // ✍️ (demande 129, « refais les comportements des soldats ») LES COMPORTEMENTS HUMAINS (logique/troupes.js) :
+    //   allures : × la vitesse de marche (marche, trot, course, sprint ; traine : en tirant un blessé ; rampe : couché) ;
+    //     hasard : ± la part de vitesse propre à chaque soldat (on ne marche pas tous pareil) ;
+    //   bruit : le petit ZIGZAG naturel (rad au plus, et la période en s) : plus de lignes droites de robot ;
+    //   ecart : m de place personnelle, et la force avec laquelle on s'écarte d'un voisin trop près ;
+    //   bonds : LES BONDS PAR DEUX (« bounding overwatch ») : un binôme d'escouade avance d'abri en abri, l'un COURT
+    //     (de « distance » m vers l'ennemi), l'autre le COUVRE en tirant ; puis ils échangent. Seulement si l'ennemi est
+    //     entre « portee » m ; un bond dure « duree » s au plus ; « contact » : s pendant lesquels un ennemi vu compte encore ;
+    //   couche : SE PLAQUER AU SOL : un obus de barrage (ou de mortier) qui siffle à moins de « obus » m, une grosse
+    //     explosion (barrage, bombe, missile) à moins de « explosion » m depuis moins de « souvenir » s, ou trop de balles
+    //     qui le frôlent (« pression » : +1 par balle ratée de peu, −« baisse » par s) ; il reste couché « duree » s ;
+    //   penche : derrière un mur HAUT (plus de « mur » m), il se met au COIN et SE PENCHE pour tirer (« decalage » m de côté),
+    //     « tir » s penché, puis « abri » s caché ;
+    //   recharge : RECHARGEMENT TACTIQUE : chargeur à moins de « tactique » (la moitié), personne en vue depuis « calme » s
+    //     (ou à l'abri) : il recharge avant d'être vide (« duree » × le temps normal) ;
+    //   sursaut : touché, frôlé ou secoué par une explosion à moins de « explosion » m : il SURSAUTE « duree » s (il ne
+    //     tire pas, il vise « erreur » rad plus mal ; « frole » : chance de sursauter pour une balle qui frôle) ;
+    //   grenade : une grenade posée à moins de « rayon » m : il FUIT à « fuite » m d'elle et crie « Grenade ! » (« phrases »,
+    //     au plus une fois toutes les « cri » s à la radio) ;
+    //   aide : un ami À TERRE à moins de « rayon » m : au plus « max » soldat par camp le COUVRE (accroupi à côté, il tire),
+    //     ou le TRAÎNE jusqu'à un abri à moins de « abri » m (au plus « traine » m) ; « duree » s au plus ;
+    //   signe : s d'un SIGNE DE LA MAIN du chef d'escouade (« contact », « avance ») ; regarde : quand il n'y a personne, il
+    //     REGARDE AUTOUR de lui (± « ecart » rad, un nouveau coup d'œil toutes les « periode » s).
+    comportements: {
+      allures: { marche: 0.55, trot: 0.85, course: 1, sprint: 1.3, traine: 0.3, rampe: 0.2, hasard: 0.08 },
+      bruit: { angle: 0.13, periode: [4, 8] },
+      ecart: { rayon: 2.6, force: 1.2 },
+      bonds: { distance: [9, 24], portee: [25, 170], duree: 9, arrivee: 1.4, contact: 6 },
+      couche: { obus: 30, explosion: 24, souvenir: 1.2, duree: [3, 5.5], pression: 5, baisse: 1.2 },
+      penche: { decalage: 0.7, mur: 1.5, tir: [1.4, 2.6], abri: [0.9, 1.8] },
+      recharge: { tactique: 0.5, calme: 2.5, duree: 0.85 },
+      sursaut: { duree: 0.4, erreur: 0.2, explosion: 16, frole: 0.3 },
+      grenade: { rayon: 9, fuite: 13, cri: 3, phrases: ["Grenade !", "Grenade ! À couvert !", "Attention, grenade !", "Grenade, dégagez !"] },
+      aide: { rayon: 16, max: 1, traine: 8, abri: 9, duree: 20 },
+      signe: { duree: 0.9, silence: 10 },
+      regarde: { ecart: 1.1, periode: [1.8, 3.5] },
+    } },
   // ✍️ (livre de demandes n° 14) LES PLAQUETTES (les plaques de blindage du gilet, comme dans Warzone). Seulement pour les
   // classes qui ont « plaques: true » (le Médecin, décidé par Maxance).
   //   gilet : combien de plaques le gilet porte ; solidite : la vie d'une plaque (une balle d'ennemi = 1, ta vie = 20) :

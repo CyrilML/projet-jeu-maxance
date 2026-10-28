@@ -22,13 +22,19 @@
 // RICOCHE en rasant le béton ou le métal (« ricochet »), et le VENT la fait dériver (logique/realisme.js).
 // Livre de demandes n° 8 : ✍️ « Pouvoir entrer dans les maisons. » La hauteur de tes pieds vient du concierge des maisons
 // (logique/interieurs.js) : le plancher, la pente de l'escalier, l'étage — ou le terrain dehors.
+// ✍️ Demande 129 (« refais les comportements des soldats ») : un soldat de l'ordinateur peut se COUCHER (plus petit encore,
+// et les éclats passent souvent au-dessus de lui), se PENCHER au coin d'un mur (sa balle part du côté), choisir son ALLURE
+// (de la marche au sprint), recharger AVANT d'être vide (rechargement tactique) ; il SURSAUTE quand il est touché, et
+// une balle qui le frôle fait monter sa PRESSION (logique/troupes.js le fait se plaquer au sol quand elle est trop forte).
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Soldat = (function () {
   const C = Tanks.CONFIG, S = C.soldats, A = C.armes, T = Tanks.Terrain, RS = C.realisme.soldats;
   // (demande 92) à quelle hauteur on vise un soldat (accroupi : plus bas) ; un engin : 1,2 m comme avant
-  const hauteurVisee = (o) => (o.accroupi ? RS.accroupi.hauteur : 1.2);
+  // ✍️ (demande 129) couché à plat ventre : encore plus bas
+  const hauteurVisee = (o) => (o.couche ? S.couche.hauteur : o.accroupi ? RS.accroupi.hauteur : 1.2);
+  const TC = C.tactiques.comportements, EXPLOSIFS = ["grenade", "roquette", "obus", "bombe", "missile", "mine", "c4", "claymore", "barrage", "lg40", "at4", "javelin"];
   const angleEntre = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   const prochesArbres = [], vehiculesBalle = []; // (étape 72 : des listes réutilisées)
 
@@ -40,6 +46,10 @@ Tanks.Soldat = (function () {
       arme: joueur ? "mitrailleuse" : "soldat", roquettes: false, recharge: 0, tir: 0, pas: 0, touche: 9,
       dansUnEngin: null, accroupi: false, // (demande 92)
       grenades: joueur ? C.grenades.nombre : C.grenades.ia.nombre, attenteGrenade: 0, regainGrenade: 0, lancer: 0, // (étape 75)
+      // ✍️ (demande 129) les gestes et les réflexes (logique/troupes.js) : prévus dès le départ (le navigateur va plus vite
+      // quand tous les soldats ont les mêmes cases, dans le même ordre)
+      geste: null, gesteDebut: 0, gesteTemps: 0, gesteDuree: 0, allure: "arret", couche: false, penche: 0, regard: angle, signe: null, signeAngle: 0,
+      traine: null, sursaut: 0, pression: 0, pressionDe: null, rechargeTactique: false, aidePar: null, rythme: 1,
     };
   }
 
@@ -48,11 +58,14 @@ Tanks.Soldat = (function () {
   function blesser(s, degats, tireur, ev, par, origine) {
     if (s.mort) return;
     degats *= Tanks.Campagne.facteurDegats(tireur, s); // (demande 90 : la difficulté de la campagne ; × 1 en bataille libre)
+    // ✍️ (demande 129) COUCHÉ, les éclats d'une explosion passent souvent au-dessus de lui : il n'est que blessé
+    if (s.couche && degats > 1 && EXPLOSIFS.includes(par) && Math.random() < S.couche.explosion) degats = degats >= 99 ? 2 : 1;
     const avant = degats;
     if (s.gilet) degats = Tanks.Plaques.absorber(s, degats, par, ev); // (livre n° 14 : les plaques du gilet arrêtent le coup d'abord)
     if (Tanks.Aliens && Tanks.Aliens.actif) degats = Tanks.Aliens.absorber(s, degats, par, ev); // ✍️ (demande 115, Aliens : le BOUCLIER d'énergie d'un Xyl'tharr arrête la balle d'abord)
     s.vie = Math.max(0, s.vie - degats);
     s.touche = 0;
+    s.sursaut = TC.sursaut.duree; // ✍️ (demande 129) le SURSAUT : touché, il a un mouvement de recul (il vise mal un instant)
     if (tireur && tireur.x !== undefined && tireur.genre === "soldat") s.blessePar = tireur; // (livre n° 21 : il saura d'où vient le coup)
     // (livre n° 13) « de » : d'où vient le coup (pour la flèche rouge des dégâts) ; « plaque » : combien le gilet a arrêté
     const o = origine || tireur;
@@ -178,9 +191,18 @@ Tanks.Soldat = (function () {
       }
       if (tireur.equipe === "rouges") chance *= Tanks.Campagne.facteur("precision"); // (demande 90 : la précision du Front)
       if (meilleur.s.accroupi) chance *= RS.accroupi.touche; // (demande 92 : accroupi, il est plus petit)
+      if (meilleur.s.couche) chance *= S.couche.touche; // ✍️ (demande 129 : couché, encore plus petit)
       if (Tanks.Perchoirs.abrite(meilleur.s, y)) chance *= C.perchoirs.couvert.touche; // (livre n° 12 : accroupi derrière les sacs de sable, tiré d'en bas)
       if (Tanks.Tranchees.abrite(meilleur.s, x, z)) chance *= C.tranchees.couvert; // (demande 115 : à l'abri dans sa tranchée, derrière le parapet)
-      if (Math.random() < chance) {
+      const tirage = Math.random();
+      if (tirage >= chance && meilleur.s.genre === "soldat") {
+        // ✍️ (demande 129) une balle qui le FRÔLE : la PRESSION monte (trop de balles autour : il se plaque au sol), et il
+        // sait d'où ça vient ; parfois, il sursaute
+        meilleur.s.pression = (meilleur.s.pression || 0) + 1;
+        meilleur.s.pressionDe = tireur;
+        if (Math.random() < TC.sursaut.frole && !(meilleur.s.sursaut > 0)) meilleur.s.sursaut = TC.sursaut.duree * 0.6;
+      }
+      if (tirage < chance) {
         ev.push(["balle", { tireur, de: { x: ox, y: oy, z: oz }, a: { x: meilleur.s.x, y: meilleur.s.y + hauteurVisee(meilleur.s), z: meilleur.s.z }, touche: true, surSoldat: !(meilleur.s.genre === "vehicule" || meilleur.s.sorte), suite, traverse: suite }]); // (demande 114 : sur un soldat ? pour le nuage rouge, s'il est allumé)
         if (meilleur.s.genre === "vehicule" || meilleur.s.sorte) Tanks.Vehicules.blesserPilote(meilleur.s, Math.ceil(degats * (R.vsVehicule || 1) * 2) / 2, tireur, ev); // (demande 97 : × les munitions perforantes ou à pointe creuse)
         else blesser(meilleur.s, degats, tireur, ev, typeof arme === "string" ? arme : "balle", { x, z });
@@ -268,9 +290,16 @@ Tanks.Soldat = (function () {
         s.accroupi = !s.accroupi;
         ev.push(["accroupi", { nom: s.nom, accroupi: s.accroupi, vitesse: RS.accroupi.vitesse, hauteur: RS.accroupi.hauteur }]);
       }
-    } else s.accroupi = !!intentions.accroupi;
+    } else {
+      // ✍️ (demande 129) COUCHÉ, PENCHÉ (logique/troupes.js le décide ; couché, il est aussi « accroupi » : petit et lent)
+      s.couche = !!intentions.couche && !s.nage;
+      s.accroupi = !!intentions.accroupi || s.couche;
+      s.penche = intentions.penche || 0;
+    }
     if (s.nage) s.accroupi = false;
     s.touche += dt;
+    if (s.sursaut > 0) s.sursaut = Math.max(0, s.sursaut - dt); // (demande 129)
+    if (s.pression > 0) s.pression = Math.max(0, s.pression - TC.couche.baisse * dt);
     s.tir = Math.max(0, s.tir - dt);
     s.lancer = Math.max(0, (s.lancer || 0) - dt);
     s.attenteGrenade = Math.max(0, (s.attenteGrenade || 0) - dt);
@@ -284,7 +313,8 @@ Tanks.Soldat = (function () {
     } else s.angle = angleEntre(s.angle + ((intentions.droite ? 1 : 0) - (intentions.gauche ? 1 : 0)) * S.rotation * 0.8 * dt);
     const vMax = (s.nage ? S.nage : S.vitesse * (s.armes ? Tanks.Armes.mobilite(s) : 1)) * (s.accroupi ? RS.accroupi.vitesse : 1); // (étape 77 : ton arme pèse plus ou moins lourd) (demande 92 : accroupi, plus lent)
     const accroche = Tanks.Tranchees.actif ? Tanks.Tranchees.frein(s) : 1; // (demande 115 : dans les barbelés, il avance à peine)
-    const voulue = (intentions.avancer ? vMax * (intentions.lent ? 0.5 : 1) : intentions.reculer ? -Math.min(S.recul, vMax) : 0) * accroche;
+    // ✍️ (demande 129) l'ALLURE (marche, trot, course, sprint…) choisie par logique/troupes.js : un × de la vitesse
+    const voulue = (intentions.avancer ? vMax * (s.ia && !s.joueur ? s.rythme : intentions.lent ? 0.5 : 1) * (s.couche ? TC.allures.rampe / RS.accroupi.vitesse : 1) : intentions.reculer ? -Math.min(S.recul, vMax) : 0) * accroche;
     s.vitesse += Math.max(-20 * dt, Math.min(20 * dt, voulue - s.vitesse));
     const dir = intentions.direction !== undefined ? intentions.direction : s.angle;
     s.x += Math.cos(dir) * s.vitesse * dt;
@@ -325,6 +355,11 @@ Tanks.Soldat = (function () {
       s.rechargement = Math.max(0, s.rechargement - dt);
       if (s.rechargement === 0) s.balles = RS.ia.chargeur;
     }
+    // ✍️ (demande 129) le RECHARGEMENT TACTIQUE : à l'abri (ou au calme), il recharge AVANT d'être vide (un peu plus vite)
+    if (!s.armes && intentions.recharger && !s.joueur && !(s.rechargement > 0) && s.balles !== undefined && s.balles < RS.ia.chargeur) {
+      s.rechargement = s.rechargementDuree = RS.ia.rechargement * TC.recharge.duree;
+      s.rechargeTactique = true;
+    } else if (!(s.rechargement > 0)) s.rechargeTactique = false;
     // (étape 77) TON soldat : ton arme (chargeur, recul, dispersion, assistance…) et ton gadget
     if (s.armes) {
       Tanks.Armes.avancer(s, intentions, dt, monde, ev);
@@ -365,7 +400,9 @@ Tanks.Soldat = (function () {
         Tanks.Obus.lancer(monde.obus, s, "roquette", depart, dir, null);
         ev.push(["roquette", { tireur: s, x: depart.x, y, z: depart.z, dir }]);
       } else {
-        balle(s, s.x + Math.cos(s.angle) * 0.7, y, s.z + Math.sin(s.angle) * 0.7, s.angle + (intentions.erreur || 0), s.arme, monde.soldats, vehiculesDe(monde), ev, Tanks.Vehicules.legers(monde));
+        // ✍️ (demande 129) PENCHÉ au coin d'un mur : la balle part de « decalage » m sur le côté (côté angle + 90°)
+        const pc = s.penche ? s.penche * TC.penche.decalage : 0;
+        balle(s, s.x + Math.cos(s.angle) * 0.7 - Math.sin(s.angle) * pc, s.couche ? s.y + S.couche.oeil : y, s.z + Math.sin(s.angle) * 0.7 + Math.cos(s.angle) * pc, s.angle + (intentions.erreur || 0), s.arme, monde.soldats, vehiculesDe(monde), ev, Tanks.Vehicules.legers(monde));
         if (!s.armes && s.arme === "soldat") { // (demande 92) une balle de moins dans son chargeur ; vide : il recharge
           s.balles = (s.balles === undefined ? RS.ia.chargeur : s.balles) - 1;
           if (s.balles <= 0) s.rechargement = s.rechargementDuree = RS.ia.rechargement;
