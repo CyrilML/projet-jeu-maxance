@@ -3103,3 +3103,59 @@ Tanks.CONFIG.vitesse = {
   plafonds: { projectiles: 300, explosions: 24, sons: 40, sonsPrioritaires: 12, lumieresOmbres: 1 },
   pic: { ms: 50 },
 };
+
+// ================================================================== demande 128 : 🎭 LES SKINS DES 4 CLASSES
+// ✍️ Maxance : « Les personnages ressemblent à des jouets. » Il a envoyé une image pour chaque classe. On ne copie pas ces
+// images (elles appartiennent à leurs auteurs) : on refait leur STYLE en 3D, pièce par pièce (affichage/engins3d.js), avec
+// des tissus peints par le tailleur (affichage/uniformes.js). Les drapeaux des images deviennent les insignes du jeu.
+//   editions : les éditions où les skins remplacent l'uniforme (les autres gardent leurs uniformes d'époque) ;
+//   camps.bleus : TON camp, une fiche par classe. camps.rouges : l'ennemi garde les MÊMES formes d'équipement (cagoule,
+//     masque à gaz…), mais « tous » lui donne SES couleurs (un camouflage à petites taches, « flecktarn ») : on le reconnaît
+//     de loin, avec son brassard et son bandeau rouges.
+// Chaque fiche : nom ; motif du camouflage ("urbain", "desert", "multicam", "uni", "flecktarn") ; fond et taches (ses
+//   couleurs) ; equipement (le gilet) ; giletMotif ("numerique" : le gilet en camouflage numérique, peint par le peintre de
+//   la carte graphique) ; casque ("tactique" : coupé haut sur les oreilles, ou "capuche" : pas de casque) et casqueCouleur ;
+//   casqueLunettes (des lunettes de protection posées SUR le casque) ; nvg (le support de jumelles de nuit) ; oreilles (les
+//   grosses coquilles anti-bruit) ; visage ("cagoule", "foulard" ou "masqueGaz") et visageCouleur ; lunettes ("masque" :
+//   lunettes de protection sombres, "soleil", "aucune") ; gants et gants2 (les coques des doigts) ; protections (genouillères
+//   et coudières) et grosses (× leur taille) ; bottes ; basses (des chaussures de randonnée basses) ; etuiCuisse (le
+//   porte-chargeurs noir sur la cuisse gauche) ; ecussonSoin (✍️ le carré blanc à croix rouge sur les bras) ; roquette (une
+//   roquette dans le dos) ; bandouliere (une sangle en travers de la poitrine) ; sangles (leur couleur) ; harnais (les
+//   bretelles en H sur le devant du gilet).
+// ombres : l'ombre dans les creux (sous le gilet, entre les poches, aux aisselles), calculée UNE fois quand la forme est
+//   fabriquée : force (0 = pas d'ombre, 1 = noir) ; cellule : la taille des cases (m) de la grille qui sert à la mesurer
+//   [de près, de loin] ; rayons : combien de directions on essaie depuis chaque point.
+Tanks.CONFIG.realisme.soldats.skins = {
+  editions: ["moderne"],
+  ombres: { force: 0.62, cellule: [0.02, 0.035], rayons: 7 },
+  camps: {
+    bleus: {
+      assaut: { nom: "Assaut urbain", motif: "urbain", fond: "#8a8b89", taches: ["#5e605f", "#3b3d3e", "#b4b5b0"], equipement: "#2a2c2d",
+        casque: "tactique", casqueCouleur: "#2c2e2f", casqueLunettes: true, nvg: false, oreilles: true, visage: "cagoule", visageCouleur: "#1b1c1e", lunettes: "aucune",
+        gants: "#1e1f21", gants2: "#2a2b2d", protections: "#202123", grosses: 1.35, bottes: "#1d1d1e", sangles: "#232425", harnais: true, coudieres: true },
+      medecin: { nom: "Médecin désert", motif: "desert", fond: "#a99272", taches: ["#8c7556", "#bba88a", "#76654b"], equipement: "#9a8566",
+        casque: "tactique", casqueCouleur: "#a08b6a", nvg: true, oreilles: true, visage: "foulard", visageCouleur: "#9c8566", lunettes: "masque",
+        gants: "#5a4430", gants2: "#4a3828", protections: "#8e7a5c", grosses: 1.15, bottes: "#7a6448", sangles: "#7e6b50", ecussonSoin: true, coudieres: false },
+      eclaireur: { nom: "Éclaireur multicam", motif: "multicam", fond: "#a39a7c", taches: ["#7d7d58", "#6e5a40", "#c2b796", "#4c4a36"], equipement: "#a49476",
+        casque: "tactique", casqueCouleur: "#a6997a", nvg: true, oreilles: true, visage: "cagoule", visageCouleur: "#a8997a", lunettes: "soleil",
+        gants: "#8c7d62", gants2: "#3a3833", protections: "#6f6650", grosses: 1, bottes: "#7d6b52", sangles: "#7a6c55", etuiCuisse: "#1f2022", coudieres: false },
+      ingenieur: { nom: "Ingénieur NRBC", motif: "uni", fond: "#24272d", taches: ["#1d2025", "#2c3037", "#1a1c20"], equipement: "#7c8086", giletMotif: "numerique",
+        casque: "capuche", casqueCouleur: "#1c1d20", visage: "masqueGaz", visageCouleur: "#1a1b1d", lunettes: "aucune",
+        gants: "#1c1d1f", gants2: "#26272a", protections: "#18191b", grosses: 1.5, bottes: "#2c2b28", basses: true, sangles: "#2a2b2d", roquette: true, bandouliere: true, coudieres: true },
+    },
+    rouges: {
+      tous: { motif: "flecktarn", fond: "#77704f", taches: ["#4f5a37", "#6e4532", "#2f2e25", "#958a66"], equipement: "#5b5a40", casqueCouleur: "#4d5136",
+        visageCouleur: "#2c2b24", gants: "#3b3328", gants2: "#2c261e", protections: "#3a3a2c", bottes: "#3a3027", sangles: "#3d3b2c" },
+    },
+  },
+};
+// Chaque skin devient un « camp » à part pour le dessin (« bleus#assaut »), comme les tenues de la boutique (« bleus~ghillie ») :
+// le tailleur et l'atelier le trouvent comme un vrai camp. (La tenue de la boutique, elle, garde le dessus quand tu la portes.)
+(function () {
+  const C = Tanks.CONFIG, SK = C.realisme.soldats.skins, U = C.realisme.soldats.uniformes;
+  for (const camp in SK.camps) for (const classe of C.realisme.soldats.maquettes.classes) {
+    const S = Object.assign({ classe }, SK.camps.bleus[classe], SK.camps[camp].tous || {}, SK.camps[camp][classe] || {}), cle = camp + "#" + classe;
+    U[cle] = { nom: S.nom, fond: S.fond, taches: S.taches, equipement: S.equipement, motif: S.motif, skin: S };
+    C.equipes[cle] = Object.assign({}, C.equipes[camp], { camouflage: [S.fond].concat(S.taches) });
+  }
+})();

@@ -69,27 +69,55 @@ Tanks.Uniformes = (function () {
   // ------------------------------------------------------------------ LE TISSU CAMOUFLÉ (512 × 512, la hauteur dans « a »)
   const tissus = {};
   function tissu(equipe) {
-    if (tissus[equipe]) return tissus[equipe];
     // (livre n° 28) une tenue de la boutique (« bleus~ghillie ») a sa palette et son motif (« bois » ou « desert »)
-    const t0 = performance.now(), P = U()[equipe] || U().bleus, N = 512, B = 256, desert = equipe === "rouges" || P.motif === "desert";
+    // ✍️ (demande 128) un skin de classe (« bleus#assaut ») aussi : "urbain", "desert", "multicam", "uni" ou "flecktarn".
+    // Deux camps qui ont la MÊME palette (les 4 classes ennemies) partagent la même image.
+    const P = U()[equipe] || U().bleus, cleTissu = [P.motif || (equipe === "rouges" ? "desert" : "bois"), P.fond].concat(P.taches).join(":");
+    if (tissus[cleTissu]) return (tissus[equipe] = tissus[cleTissu]);
+    if (tissus[equipe]) return tissus[equipe];
+    const t0 = performance.now(), N = 512, B = 256, sorte = P.motif === "urbain" || P.motif === "multicam" || P.motif === "uni" || P.motif === "flecktarn" ? P.motif : equipe === "rouges" || P.motif === "desert" ? "desert" : "bois", desert = sorte === "desert";
+    const graine = { bois: 81, desert: 91, urbain: 101, multicam: 111, uni: 121, flecktarn: 131 }[sorte];
     // 1. Les grandes formes, calculées sur une image plus petite (256 × 256) : le motif, les plis, l'usure.
-    const deforme = fractal(desert ? 91 : 81, 3, 3, 2), n1 = fractal(desert ? 92 : 82, 4, 4, 3), n2 = fractal(desert ? 93 : 83, 4, 4, 3), n3 = fractal(desert ? 94 : 84, 5, 5, 3), n4 = fractal(85, 3, 3, 2);
+    const deforme = fractal(graine, 3, 3, 2), n1 = fractal(graine + 1, 4, 4, 3), n2 = fractal(graine + 2, 4, 4, 3), n3 = fractal(graine + 3, 5, 5, 3), n4 = fractal(85, 3, 3, 2);
+    // (demande 128) l'urbain : des coups de pinceau ALLONGÉS (plus de taches en largeur qu'en hauteur) ; le multicam : des
+    // taches douces qui se chevauchent et de petites « brindilles » ; le flecktarn : des petits points serrés
+    const long1 = fractal(graine + 4, 3, 8, 3), long2 = fractal(graine + 5, 4, 10, 3), fin1 = fractal(graine + 6, 9, 9, 2), fin2 = fractal(graine + 7, 10, 10, 2), fin3 = fractal(graine + 8, 12, 12, 2);
     const plis = fractal(86, 3, 12, 3), plis2 = fractal(87, 2, 7, 2), usure = fractal(88, 2, 2, 3);
     const motif = new Uint8Array(B * B), pli = new Float32Array(B * B), use = new Float32Array(B * B);
     for (let j = 0; j < B; j++) for (let i = 0; i < B; i++) {
       const u = i / B, v = j / B, k = j * B + i;
       const du = (deforme(u, v) - 0.5) * 0.09, dv = (deforme(u + 0.37, v + 0.61) - 0.5) * 0.09; // (les bords des taches ondulent)
       let m = 0;
-      if (desert) {
+      if (sorte === "desert") {
         if (n1(u + du, v + dv) > 0.54) m = 1; // les grandes taches brunes
         if (n2(u - dv, v + du) > 0.6) m = 2; // le gris-vert
         if (n3(u + du * 2, v * 1.0 + dv) > 0.62 && n4(u, v) > 0.45) m = 3; // les traînées claires
+      } else if (sorte === "urbain") {
+        if (long1(u + du, v + dv) > 0.5) m = 1; // le gris moyen, en longs coups de pinceau
+        if (long2(u - dv, v + du) > 0.58) m = 2; // le gris très sombre
+        if (fin1(u + du, v + dv) > 0.66 && m !== 2) m = 3; // des éclats clairs
+        const b = n3(u + du * 1.5, v + dv * 1.5);
+        if (Math.abs(b - 0.5) < 0.022 && n4(u, v) > 0.5) m = 2; // des « branches » sombres, fines
+      } else if (sorte === "multicam") {
+        if (n1(u + du, v + dv) > 0.52) m = 1; // l'olive
+        if (n2(u - dv, v + du) > 0.6) m = 2; // le brun
+        if (n3(u + du, v - dv) > 0.63) m = 3; // le beige clair, par-dessus
+        if (fin1(u + du * 2, v + dv * 2) > 0.7) m = 4; // les petites brindilles sombres
+      } else if (sorte === "uni") {
+        if (n1(u + du, v + dv) > 0.62) m = 1; // (presque uni : le tissu a juste pris des nuances au lavage)
+        if (n2(u, v) > 0.66) m = 2;
+      } else if (sorte === "flecktarn") {
+        if (n1(u + du, v + dv) > 0.56) m = 1; // de larges zones vertes…
+        if (fin1(u + du, v + dv) > 0.64) m = 2; // … couvertes de petits points bruns,
+        if (fin2(u - dv, v + du) > 0.67) m = 3; // de points noirs
+        if (fin3(u + dv, v - du) > 0.7) m = 4; // et de points clairs
       } else {
         if (n1(u + du, v + dv) > 0.5) m = 1; // le vert
         if (n2(u - dv, v + du) > 0.57) m = 2; // le brun
         const b = n3(u + du * 1.5, v + dv * 1.5);
         if (Math.abs(b - 0.5) < 0.03 && n4(u, v) > 0.42) m = 3; // les « branches » noires, fines
       }
+      if (m >= P.taches.length + 1) m = P.taches.length; // (une palette plus courte : la dernière tache)
       motif[k] = m;
       // les plis : des crêtes allongées (de travers sur les manches et les jambes), un peu cassées
       const r = 1 - Math.abs(plis(u + du, v) * 2 - 1), r2 = 1 - Math.abs(plis2(u, v + dv) * 2 - 1);
@@ -129,7 +157,7 @@ Tanks.Uniformes = (function () {
     bilan.tissus++;
     bilan.pointsTissu = N;
     bilan.ms += performance.now() - t0;
-    return (tissus[equipe] = texture(data, N, true));
+    return (tissus[equipe] = tissus[cleTissu] = texture(data, N, true));
   }
 
   // ------------------------------------------------------------------ L'ÉQUIPEMENT (256 × 256, 0,23 m)
@@ -163,8 +191,8 @@ Tanks.Uniformes = (function () {
   // uni (le sac, les poches), 0 = le reste).
   const GLSL_COMMUN = [
     "uniform sampler2D tissuTex; uniform sampler2D equipTex; uniform vec4 tissuReglages; uniform vec4 visageReglages;",
-    "varying vec3 vPosB; varying vec3 vNorB; varying float vMatiere;",
-    "float hTissu = 0.5; float peau = 0.0;",
+    "varying vec3 vPosB; varying vec3 vNorB; varying float vMatiere; varying float vOmbre;",
+    "float hTissu = 0.5; float peau = 0.0; float verre = 0.0; float caout = 0.0; float poly = 0.0; float tricot = 0.0;",
     "vec4 triplan(sampler2D t, vec3 p, vec3 n) {",
     "  vec3 w = pow(abs(n), vec3(4.0)); w /= (w.x + w.y + w.z + 1e-5);",
     "  return texture2D(t, p.zy) * w.x + texture2D(t, p.xz) * w.y + texture2D(t, p.xy) * w.z;",
@@ -202,8 +230,8 @@ Tanks.Uniformes = (function () {
     mat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, uniformes);
       sh.vertexShader = sh.vertexShader
-        .replace("#include <common>", "#include <common>\nvarying vec3 vPosB; varying vec3 vNorB; varying float vMatiere;\n" + (tenue ? "" : "attribute float matiere;"))
-        .replace("#include <begin_vertex>", "#include <begin_vertex>\nvPosB = position; vNorB = normal; vMatiere = " + (tenue ? "0.0" : "matiere") + ";");
+        .replace("#include <common>", "#include <common>\nvarying vec3 vPosB; varying vec3 vNorB; varying float vMatiere; varying float vOmbre;\n" + (tenue ? "attribute float ombre;" : "attribute float matiere;"))
+        .replace("#include <begin_vertex>", "#include <begin_vertex>\nvPosB = position; vNorB = normal; vMatiere = " + (tenue ? "0.0" : "matiere") + "; vOmbre = " + (tenue ? "ombre" : "0.0") + ";");
       const couleur = tenue ? [
         "{",
         "  vec4 tis = triplan(tissuTex, vPosB * tissuReglages.x, vNorB);",
@@ -220,16 +248,37 @@ Tanks.Uniformes = (function () {
         "  float points = step(0.45, fract(vPosB.y * 110.0));",
         "  diffuseColor.rgb *= 1.0 - cote * (0.22 + points * 0.12);",
         "  hTissu -= cote * 0.25;",
+        // ✍️ (demande 128, « moins jouet ») les PLIS aux articulations : le tissu se froisse derrière les genoux, au pli
+        // du coude, à l'aine et sous le gilet (des vaguelettes cassées, plus sombres dans leurs creux)
+        "  float bras = smoothstep(0.15, 0.19, abs(vPosB.z)) * step(0.9, vPosB.y);",
+        "  float joint = exp(-pow((vPosB.y - 0.48) / 0.07, 2.0)) * (1.0 - bras) + exp(-pow((vPosB.y - 0.84) / 0.06, 2.0)) * (1.0 - bras) * 0.8",
+        "              + exp(-pow((vPosB.y - 1.13) / 0.06, 2.0)) * bras + exp(-pow((vPosB.y - 1.0) / 0.05, 2.0)) * (1.0 - bras) * 0.6;",
+        "  float ondes = sin(vPosB.y * 150.0 + bruit3(vPosB * 24.0) * 7.0 + vPosB.z * 30.0);",
+        "  hTissu += joint * ondes * 0.3;",
+        "  diffuseColor.rgb *= 1.0 - joint * max(0.0, -ondes) * 0.22;",
         GLSL_BOUE,
+        // l'OMBRE dans les creux (sous le gilet, aux aisselles, entre les jambes), calculée une fois par l'atelier
+        "  diffuseColor.rgb *= 1.0 - vOmbre;",
         "}",
       ] : [
         "{",
         "  vec4 eq = triplan(equipTex, vPosB * 4.4, vNorB);",
         "  float m = vMatiere;",
         "  peau = 1.0 - step(0.5, abs(m - 1.0));",
-        "  float molle = 1.0 - step(0.5, abs(m - 2.0)), nylon = 1.0 - step(0.5, abs(m - 4.0)), cuir = 1.0 - step(0.5, abs(m - 3.0));",
+        "  float numerique = 1.0 - step(0.5, abs(m - 5.0));",
+        "  float molle = 1.0 - step(0.5, abs(m - 2.0)) + numerique, nylon = 1.0 - step(0.5, abs(m - 4.0)), cuir = 1.0 - step(0.5, abs(m - 3.0));",
+        // ✍️ (demande 128) de nouvelles matières : 5 = le gilet en camouflage NUMÉRIQUE (des petits carrés de 3 gris), 6 = le
+        // TRICOT (la cagoule, la capuche : de fines côtes), 7 = le VERRE (les lunettes, les hublots du masque : lisse et
+        // brillant), 8 = le CAOUTCHOUC (le masque à gaz), 9 = le PLASTIQUE DUR (le casque, les coques des genouillères)
+        "  tricot = 1.0 - step(0.5, abs(m - 6.0)); verre = 1.0 - step(0.5, abs(m - 7.0)); caout = 1.0 - step(0.5, abs(m - 8.0)); poly = 1.0 - step(0.5, abs(m - 9.0));",
+        "  vec3 pix = floor(vPosB * 34.0); float pa = h31(pix), pb = h31(floor(vPosB * 17.0) + 7.0);",
+        "  float tonNum = pb > 0.62 ? 0.52 : (pa > 0.55 ? 1.28 : (pa > 0.25 ? 0.92 : 0.7));",
+        "  diffuseColor.rgb *= mix(1.0, tonNum, numerique);",
+        "  float cote = 0.5 + 0.5 * sin((vPosB.x * 0.6 + vPosB.z) * 520.0);",
+        "  diffuseColor.rgb *= mix(1.0, 0.88 + cote * 0.16 + (bruit3(vPosB * 300.0) - 0.5) * 0.1, tricot);",
+        "  diffuseColor.rgb *= mix(1.0, 0.9 + bruit3(vPosB * 90.0) * 0.18, poly + caout);",
         "  diffuseColor.rgb *= mix(1.0, eq.r * 2.0, molle) * mix(1.0, 0.9 + eq.b * 0.2, nylon + cuir) * mix(1.0, 0.95 + eq.a * 0.1, peau);",
-        "  hTissu = 0.5 + molle * (eq.g - 0.5) + (cuir + nylon * 0.5) * (eq.b - 0.5) * 0.6 + peau * (eq.a - 0.5) * 0.25;",
+        "  hTissu = 0.5 + molle * (eq.g - 0.5) + (cuir + nylon * 0.5) * (eq.b - 0.5) * 0.6 + peau * (eq.a - 0.5) * 0.25 + tricot * (cote - 0.5) * 0.5 + (poly + caout) * (eq.b - 0.5) * 0.15;",
         // (demande 93) la PEAU vivante : des petites marbrures (un peu plus rouge ici, plus pâle là), et dans la barbe de
         // 3 jours (la « matière » entre 1 et 1,4) des petits POILS sombres semés au hasard, qui accrochent la lumière
         "  float marbre = bruit3(vPosB * 140.0) - 0.5;",
@@ -238,8 +287,10 @@ Tanks.Uniformes = (function () {
         "  float poil = step(1.0 - visageReglages.x, h31(floor(vPosB * 650.0))) * barbe;",
         "  diffuseColor.rgb *= 1.0 - poil * 0.45;",
         "  hTissu -= poil * 0.35;",
-        "  if (peau < 0.5) {",
+        "  if (peau < 0.5 && verre < 0.5) {",
         GLSL_BOUE,
+        // (demande 128) la POUSSIÈRE sur ce qui regarde vers le ciel (les épaules, le dessus des poches, les bottes)
+        "    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.42, 0.38, 0.31), smoothstep(0.55, 0.95, vNorB.y) * (0.1 + 0.1 * bruit3(vPosB * 23.0)));",
         "  }",
         "}",
       ];
@@ -247,7 +298,7 @@ Tanks.Uniformes = (function () {
         .replace("#include <common>", "#include <common>\n" + GLSL_COMMUN)
         .replace("#include <color_fragment>", "#include <color_fragment>\n" + couleur.join("\n"))
         .replace("#include <normal_fragment_maps>", "#include <normal_fragment_maps>\nnormal = bosseTissu(-vViewPosition, normal, vec2(dFdx(hTissu), dFdy(hTissu)) * tissuReglages.w, faceDirection);")
-        .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.5, peau);")
+        .replace("#include <roughnessmap_fragment>", "#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.5, peau); roughnessFactor = mix(roughnessFactor, 0.1, verre); roughnessFactor = mix(roughnessFactor, 0.5, caout); roughnessFactor = mix(roughnessFactor, 0.6, poly); roughnessFactor = mix(roughnessFactor, 1.0, tricot);")
         // la PEAU : un peu plus chaude, et la lumière qui la traverse au bord (les oreilles, le nez : rosé)
         .replace("#include <opaque_fragment>", "outgoingLight += peau * diffuseColor.rgb * vec3(0.16, 0.05, 0.03) * pow(1.0 - abs(dot(normal, normalize(vViewPosition))), 2.0);\n#include <opaque_fragment>");
     };

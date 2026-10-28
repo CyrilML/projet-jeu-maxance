@@ -321,7 +321,31 @@ Tanks.Corps3D = (function () {
     return g;
   }
 
+  // ✍️ (demande 128) UNE COQUE : une peau posée PAR-DESSUS une forme (la cagoule, la capuche, le foulard sur la tête) :
+  // chaque point de la forme est poussé de « ecart » m vers l'extérieur ; « garder(x, y, z) » dit quels triangles on garde
+  // (la fente des yeux d'une cagoule est un trou : ses triangles sont enlevés) ; « nez » : la bosse du nez sous le tissu.
+  function coque(geo, ecart, garder, nez) {
+    const g = geo.clone(), p = g.attributes.position, n = g.attributes.normal;
+    for (let i = 0; i < p.count; i++) {
+      let x = p.getX(i) + n.getX(i) * ecart;
+      const y = p.getY(i) + n.getY(i) * ecart, z = p.getZ(i) + n.getZ(i) * ecart;
+      if (nez && x > 0) x += nez * gauss(y + 0.016, 0.024) * gauss(z, 0.018); // (le tissu tendu sur le nez)
+      p.setXYZ(i, x, y, z);
+    }
+    if (garder) {
+      const ix = g.index.array, gardes = [];
+      for (let t = 0; t < ix.length; t += 3) {
+        let cx = 0, cy = 0, cz = 0;
+        for (let k = 0; k < 3; k++) (cx += p.getX(ix[t + k]) / 3), (cy += p.getY(ix[t + k]) / 3), (cz += p.getZ(ix[t + k]) / 3);
+        if (garder(cx, cy, cz)) gardes.push(ix[t], ix[t + 1], ix[t + 2]);
+      }
+      g.setIndex(gardes);
+    }
+    g.computeVertexNormals();
+    return g;
+  }
+
   // (sous le capot : ce que le sculpteur a fabriqué)
   const bilan = { morceaux: 0, sommets: 0, melanges: 0 };
-  return { loft, lisser, melange, deuxJoints, tronc, jambe, bras, cou, tigeBotte, pied, main, segment, crane, nez, levre, sourcil, paupiere, bilan };
+  return { loft, lisser, melange, deuxJoints, tronc, jambe, bras, cou, tigeBotte, pied, main, segment, crane, nez, levre, sourcil, paupiere, coque, bilan };
 })();
