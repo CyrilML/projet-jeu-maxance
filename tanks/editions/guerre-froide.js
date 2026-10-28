@@ -115,13 +115,13 @@ window.Tanks = window.Tanks || {};
       // ---------------------------------------------------------------- 🎖️ LES CLASSES ET LES ARMES des années 70
       classes: {
         assaut: { nom: "Fusilier", icone: "🪖", texte: "Le fusil d'assaut (Carlton noir et léger, ou Drovnik en bois et increvable) ou la mitrailleuse M-61. Et des grenades.",
-          armes: ["carlton", "drovnik", "garrow"], gadgets: ["sacMunitions"], explosifs: ["grenades", "fumigene"] },
+          armes: ["carlton", "drovnik", "garrow", "m14", "sks"], gadgets: ["sacMunitions", "lanceGrenades"], explosifs: ["grenades", "fumigene"] },
         ingenieur: { nom: "Sapeur", icone: "🚀", texte: "Le lance-roquettes contre les chars, ou le lance-grenades « Becker » contre les soldats. Il répare aussi les engins.",
-          armes: ["rpg7", "becker40"], gadgets: ["reparation"], explosifs: ["mineAT", "c4"], armesBonus: ["carlton", "drovnik"] },
+          armes: ["rpg7", "becker40"], gadgets: ["reparation"], explosifs: ["mineAT", "c4"], armesBonus: ["carlton", "drovnik", "sks"] },
         eclaireur: { nom: "Éclaireur", icone: "🎯", texte: "Le fusil de précision à lunette, les jumelles, et les mines directionnelles.",
-          armes: ["dv63", "rennick03"], gadgets: ["jumelles"], explosifs: ["claymore", "grenades"] },
+          armes: ["dv63", "rennick03", "m21", "m40"], gadgets: ["jumelles"], explosifs: ["claymore", "grenades"] },
         medecin: { nom: "Infirmier", icone: "⛑️", texte: "Il soigne et relève les blessés. Un fusil d'assaut pour se défendre.",
-          armes: ["carlton", "drovnik"], gadgets: ["trousse"], explosifs: ["grenades", "fumigene"], plaques: false },
+          armes: ["carlton", "drovnik", "sks"], gadgets: ["trousse"], explosifs: ["grenades", "fumigene"], plaques: false },
       },
       armesPrincipales: {
         carlton: { nom: "Fusil d'assaut Carlton M-17", type: "Fusil d'assaut (5,56 mm, 20 coups)", icone: "🔫", classe: "assaut", famille: "fusil", niveau: 0, exclus: SANS_ATELIER,
@@ -136,6 +136,25 @@ window.Tanks = window.Tanks || {};
           texte: "Lourde, longue, sur son bipied : une BANDE de 100 cartouches. Elle arrose tout, mais tu bouges lentement.",
           degats: 1.3, cadence: 0.1, portee: 260, porteeEfficace: 120, degatsLoin: 0.65, chargeur: 100, reserve: 300, rechargement: 5.5,
           dispersion: 0.05, dispersionVisee: 0.012, recul: 0.012, visee: 0.45, mobilite: 0.82, bruit: 1.5, zoom: 1.3 },
+        // ✍️ (demande 128) « Et cela pour les éditions. » (un râtelier de musée) : le fusil de combat en bois, sa version de tireur
+        // d'élite à lunette, la carabine de Khavar à baïonnette repliable, et le fusil à verrou « de chasse ». (Le fusil noir à
+        // lance-grenades : c'est le Carlton avec le gadget « lance-grenades sous le canon » du Fusilier.)
+        m14: { nom: "Fusil de combat Ostrel M-14", type: "Fusil de combat (7,62 mm, 20 coups)", icone: "🔫", classe: "assaut", famille: "fusil", niveau: 3, exclus: SANS_ATELIER,
+          texte: "Le long fusil en bois d'avant le Carlton : une grosse balle qui va loin et fait mal, 20 coups. Lourd, et il saute en rafale.",
+          degats: 1.55, cadence: 0.11, portee: 260, porteeEfficace: 120, degatsLoin: 0.7, chargeur: 20, reserve: 140, rechargement: 2.6,
+          dispersion: 0.034, dispersionVisee: 0.0055, recul: 0.016, visee: 0.32, mobilite: 0.95, bruit: 1.25, zoom: 1.35, vitesseBalle: 850 },
+        sks: { nom: "Carabine Khavar SK-45", type: "Carabine semi-automatique (10 coups)", icone: "🔫", classe: "assaut", famille: "fusil", niveau: 1, coupParCoup: true, exclus: SANS_ATELIER,
+          texte: "La carabine en bois de Khavar : 10 balles, remplie par le haut avec une lame-chargeur, et sa baïonnette repliée sous le canon.",
+          degats: 1.3, cadence: 0.22, portee: 220, porteeEfficace: 100, degatsLoin: 0.65, chargeur: 10, reserve: 100, rechargement: 2.6,
+          dispersion: 0.03, dispersionVisee: 0.006, recul: 0.014, visee: 0.27, mobilite: 0.99, bruit: 1.15, zoom: 1.3, vitesseBalle: 735 },
+        m21: { nom: "Ostrel M-21 à lunette", type: "Fusil de tireur d'élite semi-auto, lunette ×4", icone: "🎯", classe: "eclaireur", famille: "precision", niveau: 4, coupParCoup: true, exclus: SANS_ATELIER,
+          texte: "Le M-14 choisi pour sa précision, avec une lunette : 20 balles semi-automatiques, très loin.",
+          degats: 2.3, cadence: 0.4, portee: 400, porteeEfficace: 250, degatsLoin: 0.8, chargeur: 20, reserve: 60, rechargement: 2.8,
+          dispersion: 0.07, dispersionVisee: 0.0011, recul: 0.022, visee: 0.4, mobilite: 0.95, bruit: 1.3, zoom: 4, vitesseBalle: 850 },
+        m40: { nom: "Fusil à verrou M-40 « de chasse »", type: "Fusil à verrou, lunette ×4", icone: "🎯", classe: "eclaireur", famille: "precision", niveau: 6, verrou: true, coupParCoup: true, exclus: SANS_ATELIER,
+          texte: "La crosse de chasse en noyer, le gros canon, la longue lunette : 5 balles, le plus précis de tous.",
+          degats: 3.2, cadence: 1.2, portee: 460, porteeEfficace: 320, degatsLoin: 0.85, chargeur: 5, reserve: 40, rechargement: 3,
+          dispersion: 0.07, dispersionVisee: 0.0008, recul: 0.026, visee: 0.43, mobilite: 0.95, bruit: 1.3, zoom: 4, vitesseBalle: 820 },
         rpg7: { nom: "Lance-roquettes RK-7", type: "Lance-roquettes", exclus: SANS_ATELIER, texte: "Le tube et sa roquette en ogive : 1 roquette = 1 obus sur un char." },
         becker40: { nom: "Lance-grenades Becker 40", type: "Lance-grenades (40 mm, coup par coup)", icone: "💥", classe: "ingenieur", famille: "roquettes", projectile: "lg40", niveau: 0, coupParCoup: true, exclus: SANS_ATELIER,
           texte: "Le gros fusil à canon court, cassé comme un fusil de chasse : une grenade de 40 mm qui explose en touchant. « Bloup ! »",
@@ -160,12 +179,12 @@ window.Tanks = window.Tanks || {};
           degats: 1, cadence: 0.27, portee: 65, porteeEfficace: 25, degatsLoin: 0.5, chargeur: 8, reserve: Infinity, rechargement: 1.6,
           dispersion: 0.03, dispersionVisee: 0.011, recul: 0.024, visee: 0.15, mobilite: 1.05, bruit: 0.9, zoom: 1.2 },
       }),
-      gadgets: { trousse: { nom: "Trousse d'infirmier" }, jumelles: { nom: "Jumelles" }, reparation: { nom: "Caisse à outils" }, sacMunitions: { nom: "Musette de munitions" } },
+      gadgets: { trousse: { nom: "Trousse d'infirmier" }, jumelles: { nom: "Jumelles" }, reparation: { nom: "Caisse à outils" }, sacMunitions: { nom: "Musette de munitions" }, lanceGrenades: { nom: "Lance-grenades LG-20 sous le canon" } }, // (demande 128 : le fusil noir et son lance-grenades)
       explosifs: { c4: { nom: "Charge de démolition", icone: "🧨" }, mineAT: { nom: "Mine antichar" }, claymore: { nom: "Mine directionnelle" } },
       armes3d: {
         ia: {
-          bleus: [["carlton", 7], ["garrow", 1]],
-          rouges: [["drovnik", 7], ["garrow", 1]],
+          bleus: [["carlton", 7], ["garrow", 1], ["m14", 2]],
+          rouges: [["drovnik", 7], ["garrow", 1], ["sks", 2]],
           roquettes: [["rpg7", 1]],
           elite: { bleus: [["rennick03", 1]], rouges: [["dv63", 1]], viseur: [["mire", 1]] },
           viseur: [["mire", 1]], canon: [["standard", 1]], bouche: [["aucune", 1]], chargeur: [["standard", 1]], poignee: [["aucun", 1]],

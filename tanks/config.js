@@ -860,20 +860,20 @@ Tanks.CONFIG = {
   classes: {
     assaut: { nom: "Assaut", icone: "🪖", couleur: "#ff8a3d", vie: 1.25,
       texte: "En première ligne : fusil d'assaut, lance-grenades sous le canon, et 25 % de vie en plus.",
-      armes: ["ar4", "famas", "ak12", "g36", "scarh", "m870", "m870dragon"], gadgets: ["lanceGrenades", "sacMunitions"], explosifs: ["grenades", "fumigene"] },
+      armes: ["ar4", "famas", "ak12", "g36", "scarh", "m870", "m870dragon", "scorpio"], gadgets: ["lanceGrenades", "sacMunitions"], explosifs: ["grenades", "fumigene"] },
     ingenieur: { nom: "Ingénieur", icone: "🔧", couleur: "#ffd23d", vie: 1,
       texte: "Le chasseur de tanks : lance-roquettes PLUS une arme bonus contre les soldats, et il RÉPARE les tanks et les engins de son camp.",
-      armes: ["rpg7", "at4", "javelin", "carlgustaf"], gadgets: ["reparation", "droneReparation"], explosifs: ["mineAT", "c4"],
+      armes: ["rpg7", "at4", "javelin", "carlgustaf", "rg6"], gadgets: ["reparation", "droneReparation"], explosifs: ["mineAT", "c4"],
       // (livre de demandes n° 6) ✍️ « Faire en sorte que l'ingénieur ait le droit à une arme bonus en plus de son
       // lance-roquettes. » L'ARME BONUS (touche 5) : une petite arme contre les soldats, EN PLUS du lance-roquettes (2)
       // et du pistolet (1). Tu en choisis une dans cette liste (la 1re est libre dès le début ; les autres : leur « niveau »).
-      armesBonus: ["ump45", "mp5", "m870", "m4courte"] },
+      armesBonus: ["k416", "ump45", "mp5", "m870", "m4courte", "scorpio"] }, // (demande 128 : le K416 en 1er, libre dès le début ; le Scorpio)
     eclaireur: { nom: "Éclaireur", icone: "🔭", couleur: "#7dff8a", vie: 1,
       texte: "Tireur de loin : fusil de précision avec lunette, et des JUMELLES qui marquent les ennemis.",
-      armes: ["m110", "svd", "m24", "mk14", "lapua", "barrett"], gadgets: ["jumelles", "capteur"], explosifs: ["grenades", "claymore"] },
+      armes: ["m110", "svd", "m24", "mk14", "lapua", "barrett", "scorpio"], gadgets: ["jumelles", "capteur"], explosifs: ["grenades", "claymore"] },
     medecin: { nom: "Médecin de guerre", icone: "⛑️", couleur: "#ff5a6a", vie: 1,
       texte: "Il SOIGNE ses amis avec sa trousse et RELÈVE les soldats tombés avec son défibrillateur.",
-      armes: ["mp5", "vector", "mp7", "p90", "bizon", "m870", "m870dragon"], gadgets: ["trousse", "defibrillateur"], explosifs: ["grenades", "fumigene"],
+      armes: ["mp5", "vector", "mp7", "p90", "bizon", "m870", "m870dragon", "scorpio"], gadgets: ["trousse", "defibrillateur"], explosifs: ["grenades", "fumigene"],
       // ✍️ (livre de demandes n° 14) « Avoir les grenades et les plaquettes quand tu es médecin. »
       //   grenadesEnPlus : il garde TOUJOURS ses grenades à main, même s'il a choisi les fumigènes (touche 4 encore une
       //     fois : on passe de l'un à l'autre) ;
@@ -977,6 +977,13 @@ Tanks.CONFIG = {
       texte: "Pour se défendre contre les soldats : de grosses balles lentes. Ton lance-roquettes reste sur ton dos (touche 2) !",
       degats: 1, cadence: 0.09, portee: 95, porteeEfficace: 35, degatsLoin: 0.5, chargeur: 25, reserve: 175, rechargement: 2.1,
       dispersion: 0.03, dispersionVisee: 0.011, recul: 0.006, visee: 0.2, mobilite: 1.06, bruit: 0.9, zoom: 1.2 },
+    // ✍️ (demande 128) « Ceci est l'arme bonus de l'ingénieur. » Le K416 : une carabine deux tons (sable et noir), livrée AVEC
+    // sa lunette de combat ×2,5, son long silencieux, sa poignée verticale et sa lampe (on les voit sur l'arme ; l'atelier peut
+    // les remplacer). Le silencieux d'origine : bruit bas et presque pas de flamme ; la lunette : zoom ×2,2.
+    k416: { nom: "K416", type: "Carabine (5,56 mm)", icone: "🔫", classe: "ingenieur", famille: "fusil", niveau: 0,
+      texte: "Livré tout équipé : lunette ×2,5, long silencieux, poignée et lampe. Précis et discret, mais un peu lourd. Ton lance-roquettes reste sur ton dos (touche 2) !",
+      degats: 1.05, cadence: 0.085, portee: 160, porteeEfficace: 60, degatsLoin: 0.6, chargeur: 30, reserve: 150, rechargement: 2.2, flamme: 0.15,
+      dispersion: 0.03, dispersionVisee: 0.0065, recul: 0.0058, visee: 0.27, mobilite: 0.98, bruit: 0.45, zoom: 2.2 },
     // (livre n° 6) la carabine COURTE de l'ingénieur (arme bonus) : un AR-4 au canon raccourci et à la crosse rentrée
     m4courte: { nom: "M4 courte", type: "Carabine compacte", icone: "🔫", classe: "ingenieur", famille: "fusil", niveau: 7,
       texte: "Un AR-4 tout court : il tire plus loin qu'un pistolet-mitrailleur et fait plus mal, mais il recule plus et on court un peu moins vite.",
@@ -995,6 +1002,13 @@ Tanks.CONFIG = {
       texte: "Un canon d'épaule : son obus fait 1,5 fois plus mal qu'une roquette, et il en emporte 6. Très lourd et bruyant.",
       degats: 1.5, cadence: 0.5, portee: 340, porteeEfficace: 340, degatsLoin: 1, chargeur: 1, reserve: 6, rechargement: 3.4,
       dispersion: 0.026, dispersionVisee: 0.0045, recul: 0.035, visee: 0.55, mobilite: 0.86, bruit: 1.6, zoom: 1.7 },
+    // ✍️ (demande 128) « Voici le lance-grenades pour l'édition moderne. » Le RG-6 : un barillet de 6 grenades de 40 mm (la même
+    // que le lance-grenades sous le canon de l'Assaut : « lg40 », elle vole en cloche et explose en touchant). Le barillet tourne
+    // d'un cran à chaque tir ; on le recharge en entier (long). degats : sur un tank (une grenade fait peu de mal à un blindé).
+    rg6: { nom: "RG-6", type: "Lance-grenades à barillet (40 mm)", icone: "💥", classe: "ingenieur", famille: "roquettes", projectile: "lg40", niveau: 8,
+      texte: "6 grenades de 40 mm qui explosent en touchant, tirées en cloche, une par seconde. Terrible contre les groupes de soldats, faible contre les tanks. Long à recharger.",
+      degats: 0.3, cadence: 0.7, portee: 180, porteeEfficace: 180, degatsLoin: 1, chargeur: 6, reserve: 18, rechargement: 4.2,
+      dispersion: 0.03, dispersionVisee: 0.01, recul: 0.03, visee: 0.3, mobilite: 0.94, bruit: 1.2, zoom: 1.4 },
     // ---------- 🔭 ÉCLAIREUR
     m110: { nom: "M110", type: "Fusil de tireur d'élite", icone: "🎯", classe: "eclaireur", famille: "precision", niveau: 0,
       texte: "Semi-automatique : 2 balles mettent un soldat à terre, de très loin.",
@@ -1046,6 +1060,13 @@ Tanks.CONFIG = {
       texte: "Son gros chargeur en tube, SOUS le canon, tient 64 balles ! Mais il est long à recharger.",
       degats: 0.75, cadence: 0.07, portee: 90, porteeEfficace: 32, degatsLoin: 0.5, chargeur: 64, reserve: 192, rechargement: 3.1,
       dispersion: 0.033, dispersionVisee: 0.011, recul: 0.005, visee: 0.21, mobilite: 1.06, bruit: 0.9, zoom: 1.2 },
+    // ---------- ✍️ (demande 128) « Aussi, un pistolet mitrailleur disponible dans toutes les classes. »
+    // Le SCORPIO est rangé dans la liste de CHAQUE classe (et dans les armes bonus de l'Ingénieur : son lance-roquettes reste
+    // son arme principale). « classe: "toutes" » : il n'appartient à aucune classe en particulier.
+    scorpio: { nom: "Scorpio", type: "Pistolet-mitrailleur compact", icone: "🔫", classe: "toutes", famille: "pm", niveau: 0,
+      texte: "Le pistolet-mitrailleur de TOUTES les classes : il tire très vite et on court avec, mais il ne porte pas loin.",
+      degats: 0.75, cadence: 0.055, portee: 85, porteeEfficace: 30, degatsLoin: 0.45, chargeur: 30, reserve: 180, rechargement: 2,
+      dispersion: 0.032, dispersionVisee: 0.011, recul: 0.0048, visee: 0.17, mobilite: 1.1, bruit: 0.85, zoom: 1.2 },
     // ---------- 💥 LES FUSILS À POMPE (pour l'Assaut ET le Médecin)
     // ✍️ « Je veux que tu fasses les fusils à pompe, normaux et incendiaires… qu'ils soient assez beaux et réalistes. »
     // Famille « pompe » : chaque coup lance « plombs » petites billes (la « gerbe ») ; chaque bille est une balle à elle
@@ -1068,10 +1089,13 @@ Tanks.CONFIG = {
   // ✍️ Les PISTOLETS (arme 1, pour toutes les classes ; demande 97 : on en choisit un dans l'armurerie). Les mêmes
   // réglages que les armes principales ; « niveau » : le niveau de joueur qu'il faut pour le débloquer.
   pistolets: {
-    pistolet: { nom: "M17", type: "Pistolet", icone: "🔫", famille: "pistolet", niveau: 0,
-      texte: "Le pistolet de tout le monde : solide et précis, 12 balles, et des munitions sans fin.",
-      degats: 1, cadence: 0.3, portee: 70, porteeEfficace: 25, degatsLoin: 0.5, chargeur: 12, reserve: Infinity, rechargement: 1.4,
-      dispersion: 0.03, dispersionVisee: 0.012, recul: 0.02, visee: 0.15, mobilite: 1.05, bruit: 0.8, zoom: 1.2 },
+    // ✍️ (demande 128) « Ceci sera notre gun. » Le pistolet de tout le monde devient un M1911 (acier bleui, plaquettes en bois) :
+    // de grosses balles de .45 (elles font plus mal) mais 8 seulement, et il tire un peu moins vite. (Son id reste « pistolet » :
+    // les sauvegardes le connaissent sous ce nom.)
+    pistolet: { nom: "M1911", type: "Pistolet (.45)", icone: "🔫", famille: "pistolet", niveau: 0,
+      texte: "Le pistolet de tout le monde : de grosses balles de .45 qui font mal, 8 par chargeur, et des munitions sans fin.",
+      degats: 1.25, cadence: 0.34, portee: 70, porteeEfficace: 25, degatsLoin: 0.5, chargeur: 8, reserve: Infinity, rechargement: 1.5,
+      dispersion: 0.03, dispersionVisee: 0.012, recul: 0.026, visee: 0.15, mobilite: 1.05, bruit: 0.9, zoom: 1.2 },
     glock17: { nom: "Glock 17", type: "Pistolet", icone: "🔫", famille: "pistolet", niveau: 3,
       texte: "Carré et léger : 17 balles, il tire vite. Un peu moins fort.",
       degats: 0.9, cadence: 0.2, portee: 65, porteeEfficace: 25, degatsLoin: 0.5, chargeur: 17, reserve: Infinity, rechargement: 1.5,
@@ -1266,8 +1290,8 @@ Tanks.CONFIG = {
     // ✍️ les armes des soldats de l'ordinateur : tirées au sort (toujours la même pour un même soldat, d'après son nom)
     // dans la liste de son camp. [arme, poids] : un poids 4 sort 4 fois plus souvent qu'un poids 1.
     ia: {
-      bleus: [["ar4", 4], ["famas", 3], ["g36", 2], ["scarh", 1], ["mp5", 2], ["mp7", 1], ["p90", 1], ["vector", 1], ["ump45", 1], ["m110", 1.2], ["m24", 0.6], ["mk14", 0.6], ["lapua", 0.6]],
-      rouges: [["ak12", 5], ["svd", 1.6], ["bizon", 1.2], ["vector", 1.2], ["mp5", 1], ["ar4", 1], ["scarh", 0.8], ["mk14", 0.6], ["barrett", 0.5]],
+      bleus: [["ar4", 4], ["famas", 3], ["g36", 2], ["scarh", 1], ["mp5", 2], ["mp7", 1], ["p90", 1], ["vector", 1], ["ump45", 1], ["k416", 0.6], ["scorpio", 0.8], ["m110", 1.2], ["m24", 0.6], ["mk14", 0.6], ["lapua", 0.6]],
+      rouges: [["ak12", 5], ["svd", 1.6], ["bizon", 1.2], ["vector", 1.2], ["mp5", 1], ["scorpio", 0.6], ["ar4", 1], ["scarh", 0.8], ["mk14", 0.6], ["barrett", 0.5]],
       roquettes: [["rpg7", 3], ["at4", 2], ["javelin", 1], ["carlgustaf", 1]], // (les soldats « anti-tank »)
       // ✍️ (livre n° 12) les TIREURS D'ÉLITE de l'ordinateur (sur les perchoirs) : un vrai fusil de précision, avec une lunette
       elite: { bleus: [["m110", 2], ["m24", 1], ["lapua", 1]], rouges: [["svd", 3], ["barrett", 1], ["mk14", 1]], viseur: [["lunette", 2], ["lunette8", 1]] },
@@ -1295,6 +1319,7 @@ Tanks.CONFIG = {
       // l'épaisseur de la pièce, « largeur » × sa plus petite taille vue de côté, et « max » m
       volume: { epaisseur: 0.34, largeur: 0.16, max: 0.011 },
       lissage: 46, // ° : deux facettes qui font moins que cet angle sont adoucies (un arrondi), au-delà l'angle reste vif
+      quadrillage: 37, // (armes de Maxance) × la répétition des petits losanges taillés dans les plaquettes en bois du 1911 (plus = plus fin)
     },
     // LA VUE À LA PREMIÈRE PERSONNE (C) : l'arme a sa propre petite caméra, dessinée PAR-DESSUS le monde (elle ne rentre
     // jamais dans un mur). Positions en m devant l'œil : x à droite, y en haut, z vers toi (−0,3 = 30 cm devant).

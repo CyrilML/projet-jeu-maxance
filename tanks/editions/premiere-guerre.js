@@ -132,13 +132,13 @@ window.Tanks = window.Tanks || {};
       // ---------------------------------------------------------------- 🎖️ LES CLASSES ET LES ARMES de 1916
       classes: {
         assaut: { nom: "Fantassin", icone: "🪖", texte: "En première ligne : le fusil à verrou et sa baïonnette, ou le fusil-mitrailleur. Et des grenades.",
-          armes: ["fusil86", "kress98", "chaumard"], gadgets: ["sacMunitions"], explosifs: ["grenades", "fumigene"] },
+          armes: ["fusil86", "kress98", "chaumard", "kress18"], gadgets: ["sacMunitions"], explosifs: ["grenades", "fumigene"] },
         ingenieur: { nom: "Sapeur", icone: "✂️", texte: "Il COUPE les barbelés (cisailles), répare les tanks, et fait sauter les blindés avec le pétard de mélinite.",
           armes: ["mousqueton92", "fusil86"], gadgets: ["cisailles", "reparation"], explosifs: ["c4", "grenades"], armesBonus: ["fusilTranchee"] },
         eclaireur: { nom: "Tireur d'élite", icone: "🎯", texte: "Le fusil à lunette, posé sur le parapet. Et des jumelles pour repérer.",
           armes: ["fusil86lunette", "kress98lunette"], gadgets: ["jumelles"], explosifs: ["grenades"] },
         medecin: { nom: "Brancardier", icone: "⛑️", texte: "Il soigne avec ses pansements et relève les blessés. Le mousqueton pour se défendre.",
-          armes: ["mousqueton92"], gadgets: ["trousse"], explosifs: ["grenades", "fumigene"], plaques: false },
+          armes: ["mousqueton92", "kress18"], gadgets: ["trousse"], explosifs: ["grenades", "fumigene"], plaques: false },
       },
       armesPrincipales: {
         // 🪖 FANTASSIN — tous à VERROU (verrou : on réarme à la main après chaque tir : la culasse recule puis revient)
@@ -154,6 +154,12 @@ window.Tanks = window.Tanks || {};
           texte: "Il tire en RAFALE (300 coups par minute), avec son chargeur en demi-lune de 20 balles. Lourd, et il bouge beaucoup !",
           degats: 1.3, cadence: 0.2, portee: 200, porteeEfficace: 90, degatsLoin: 0.6, chargeur: 20, reserve: 120, rechargement: 3.6,
           dispersion: 0.05, dispersionVisee: 0.012, recul: 0.016, visee: 0.38, mobilite: 0.88, bruit: 1.35, zoom: 1.25 },
+        // ✍️ (demande 128) « Les pistolets-mitrailleurs de la Première … Guerre mondiale. » Le tout premier, arrivé à la FIN de la
+        // guerre (d'où son niveau élevé) : pour le Fantassin et le Brancardier.
+        kress18: { nom: "Pistolet-mitrailleur Kress 18", type: "Pistolet-mitrailleur (escargot de 32)", icone: "🔫", classe: "assaut", famille: "pm", niveau: 9, exclus: SANS_ATELIER,
+          texte: "Le tout premier pistolet-mitrailleur, arrivé à la fin de la guerre : une crosse de fusil, un manchon troué, et son chargeur « escargot » de 32 balles sur le côté. Il nettoie une tranchée en un clin d'œil.",
+          degats: 0.9, cadence: 0.11, portee: 100, porteeEfficace: 35, degatsLoin: 0.45, chargeur: 32, reserve: 160, rechargement: 3.4,
+          dispersion: 0.04, dispersionVisee: 0.013, recul: 0.007, visee: 0.24, mobilite: 1, bruit: 1.1, zoom: 1.2 },
         // ✂️ SAPEUR
         mousqueton92: { nom: "Mousqueton Valmont 92", type: "Carabine à verrou", icone: "🔫", classe: "ingenieur", famille: "fusil", niveau: 0, verrou: true, coupParCoup: true, exclus: SANS_ATELIER,
           texte: "Le fusil court des sapeurs, des artilleurs et des brancardiers : léger et maniable, 5 balles.",
@@ -182,6 +188,37 @@ window.Tanks = window.Tanks || {};
           texte: "Le pistolet de Kressia, avec sa culasse à genouillère qui se plie comme un genou à chaque tir. 8 balles.",
           degats: 1, cadence: 0.3, portee: 65, porteeEfficace: 25, degatsLoin: 0.5, chargeur: 8, reserve: Infinity, rechargement: 1.7,
           dispersion: 0.03, dispersionVisee: 0.012, recul: 0.022, visee: 0.15, mobilite: 1.05, bruit: 0.85, zoom: 1.2 },
+        // ✍️ (demande 128) « Ajoute ça dans l'édition de la Première … Guerre mondiale. » D'autres armes de poing de 1916 (inventées,
+        // d'après une photo de vraies armes anciennes). Les REVOLVERS : 6 ou 7 balles, forts, mais lents à recharger (une à une) ;
+        // les AUTOMATIQUES : 7 à 10 balles, rechargés plus vite. « niveau » : le niveau de joueur qui les débloque.
+        hartwell6: { nom: "Revolver Hartwell Mk VI", type: "Revolver basculant (.455)", icone: "🔫", famille: "pistolet", niveau: 1, exclus: SANS_ATELIER,
+          texte: "Le gros revolver de l'Entente : on le casse en deux (le canon bascule) et les 6 douilles sautent d'un coup. Très fort.",
+          degats: 1.5, cadence: 0.55, portee: 60, porteeEfficace: 22, degatsLoin: 0.5, chargeur: 6, reserve: Infinity, rechargement: 2.6,
+          dispersion: 0.034, dispersionVisee: 0.013, recul: 0.038, visee: 0.17, mobilite: 1.04, bruit: 1, zoom: 1.15 },
+        marne10: { nom: "Pistolet de poche Marne 10", type: "Pistolet de poche (7,65 mm)", icone: "🔫", famille: "pistolet", niveau: 2, exclus: SANS_ATELIER,
+          texte: "Tout petit, tout rond, avec une sûreté dans la poignée : 7 balles qui font peu de mal, mais il est rapide à recharger.",
+          degats: 0.75, cadence: 0.24, portee: 50, porteeEfficace: 18, degatsLoin: 0.45, chargeur: 7, reserve: Infinity, rechargement: 1.3,
+          dispersion: 0.036, dispersionVisee: 0.015, recul: 0.016, visee: 0.13, mobilite: 1.07, bruit: 0.75, zoom: 1.15 },
+        ostrel95: { nom: "Revolver Ostrel 95", type: "Revolver à portillon (7,62 mm)", icone: "🔫", famille: "pistolet", niveau: 3, exclus: SANS_ATELIER,
+          texte: "Le revolver de l'Est : 7 balles, et le barillet avance pour ne laisser fuir aucun gaz. On le remplit une balle à la fois par une petite porte : TRÈS long.",
+          degats: 1.1, cadence: 0.45, portee: 65, porteeEfficace: 25, degatsLoin: 0.5, chargeur: 7, reserve: Infinity, rechargement: 4.2,
+          dispersion: 0.03, dispersionVisee: 0.011, recul: 0.026, visee: 0.16, mobilite: 1.05, bruit: 0.8, zoom: 1.15 },
+        kress96: { nom: "Pistolet Kress 96", type: "Pistolet à magasin avant (7,63 mm)", icone: "🔫", famille: "pistolet", niveau: 4, exclus: SANS_ATELIER,
+          texte: "Le « manche à balai » : son magasin de 10 balles est DEVANT la détente, et on le remplit par le haut avec une lame-chargeur. Long canon : il tire loin.",
+          degats: 1.05, cadence: 0.26, portee: 85, porteeEfficace: 32, degatsLoin: 0.55, chargeur: 10, reserve: Infinity, rechargement: 2.4,
+          dispersion: 0.03, dispersionVisee: 0.009, recul: 0.022, visee: 0.18, mobilite: 1.03, bruit: 0.95, zoom: 1.25 },
+        varnhahn12: { nom: "Pistolet Varn-Hahn 12", type: "Pistolet à magasin fixe (9 mm)", icone: "🔫", famille: "pistolet", niveau: 6, exclus: SANS_ATELIER,
+          texte: "Son magasin de 8 balles est FIXE dans la poignée : on le remplit par le haut avec une lame-chargeur. Solide et précis.",
+          degats: 1.15, cadence: 0.3, portee: 70, porteeEfficace: 26, degatsLoin: 0.5, chargeur: 8, reserve: Infinity, rechargement: 2.2,
+          dispersion: 0.03, dispersionVisee: 0.011, recul: 0.026, visee: 0.15, mobilite: 1.05, bruit: 0.9, zoom: 1.2 },
+        colton11: { nom: "Pistolet Colton 11", type: "Pistolet (.45)", icone: "🔫", famille: "pistolet", niveau: 8, exclus: SANS_ATELIER,
+          texte: "Le tout nouveau pistolet d'Aldermont : 7 grosses balles, et un chargeur qu'on change vite. Le meilleur de 1916… pour ceux qui l'ont mérité.",
+          degats: 1.3, cadence: 0.32, portee: 65, porteeEfficace: 25, degatsLoin: 0.5, chargeur: 7, reserve: Infinity, rechargement: 1.6,
+          dispersion: 0.03, dispersionVisee: 0.011, recul: 0.03, visee: 0.15, mobilite: 1.05, bruit: 0.9, zoom: 1.2 },
+        brandt17: { nom: "Revolver Brandt 17", type: "Revolver à barillet latéral (.45)", icone: "🔫", famille: "pistolet", niveau: 10, exclus: SANS_ATELIER,
+          texte: "Un gros revolver moderne : le barillet sort sur le côté et se remplit avec 2 demi-lunes de 3 balles. 6 balles très fortes.",
+          degats: 1.55, cadence: 0.5, portee: 65, porteeEfficace: 25, degatsLoin: 0.5, chargeur: 6, reserve: Infinity, rechargement: 2.2,
+          dispersion: 0.03, dispersionVisee: 0.011, recul: 0.04, visee: 0.17, mobilite: 1.03, bruit: 1, zoom: 1.2 },
       }),
       gadgets: {
         // ✍️ LES CISAILLES du sapeur : Espace tout près d'un barbelé = on le coupe (logique/tranchees.js)
