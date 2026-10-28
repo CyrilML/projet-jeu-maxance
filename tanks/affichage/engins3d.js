@@ -293,7 +293,7 @@ Tanks.Engins3D = (function () {
     pc("dos", galet(ep, 0.33, 0.3, 0.22, s), -xp, 0.27, 0, K.gilet); // la plaque de derrière
     pc("dos", galet(S ? 0.29 : 0.27, 0.16, S ? 0.41 : 0.395, 0.3, s), 0, 0.16, 0, K.gilet); // la large ceinture du gilet
     for (const z of [-0.1, 0.1]) pc("dos", galet(S ? 0.3 : 0.27, 0.055, 0.075, 0.3, 6), 0, 0.445, z, K.gilet); // les bretelles
-    if (S) pc("dos", galet(0.17, 0.32, 0.27, 0.3, s), -0.255, 0.25, 0, K.sac); // le sac d'assaut
+    if (S) pc("dos", galet(0.075, 0.31, 0.25, 0.3, s), -0.218, 0.25, 0, K.sac); // (demande 128 : pas de gros sac, comme sur les images : la poche à eau plate, sur la plaque de dos)
     else pc("dos", galet(0.21, 0.36, 0.3, 0.3, s), -0.25, 0.27, 0, K.sac); // le sac à dos
     }
     if (detail && !ancien) {
@@ -308,23 +308,23 @@ Tanks.Engins3D = (function () {
       // la RADIO, dans sa poche sur le côté gauche, avec son antenne souple
       pc("dos", galet(0.07, 0.13, 0.065, 0.3, 8), -0.04, 0.22, -0.212, K.gilet);
       pc("dos", galet(0.055, 0.06, 0.05, 0.25, 6), -0.04, 0.31, -0.212, K.radio);
-      pc("dos", new THREE.CylinderGeometry(0.005, 0.007, 0.42, 4), -0.07, 0.53, -0.225, K.noir, -0.12, 0, 0.18);
+      pc("dos", new THREE.CylinderGeometry(0.005, 0.007, S ? 0.26 : 0.42, 4), -0.06, S ? 0.45 : 0.53, -0.225, K.noir, -0.12, 0, 0.18);
       // la poche à grenade (côté droit), avec le haut de la grenade qui dépasse
       pc("dos", galet(0.065, 0.085, 0.065, 0.35, 8), 0.06, 0.07, 0.215, K.gilet);
       pc("dos", new THREE.SphereGeometry(0.03, 8, 6), 0.06, 0.12, 0.215, K.olive);
       pc("dos", galet(0.08, 0.1, 0.12, 0.35, 8), -0.14, 0.02, 0.13, K.rabat); // la trousse de secours (dans le dos, à droite)
       pc("dos", galet(0.09, 0.12, 0.08, 0.5, 8), -0.08, -0.03, -0.19, K.sac); // la poche de vidage (à gauche)
       pc("dos", galet(0.05, 0.03, 0.06, 0.3, 6), 0.15, 0.0, 0.0, K.metal); // la boucle du ceinturon
-      if (S) { // (demande 128) le petit sac d'assaut : son rabat, sa poche devant, ses sangles de compression
-        pc("dos", galet(0.17, 0.06, 0.26, 0.3, 8), -0.255, 0.415, 0, K.rabat);
-        pc("dos", galet(0.06, 0.16, 0.2, 0.35, 8), -0.35, 0.22, 0, K.rabat);
-        for (const z of [-0.1, 0.1]) pc("dos", galet(0.012, 0.28, 0.024, 0.3, 4), -0.344, 0.26, z, K.sangle);
+      if (S) { // (demande 128) la poche à eau : ses 2 sangles, son tuyau qui passe sur l'épaule, 2 poches de dos
+        for (const z of [-0.08, 0.08]) pc("dos", galet(0.012, 0.28, 0.024, 0.3, 4), -0.257, 0.25, z, K.sangle);
+        pc("dos", new THREE.CylinderGeometry(0.007, 0.007, 0.3, 5), -0.05, 0.42, 0.12, K.noir, 0, 0, 1.25);
+        for (const z of [-0.075, 0.075]) pc("dos", galet(0.05, 0.1, 0.07, 0.35, 6), -0.25, 0.11, z, K.rabat);
       } else {
       pc("dos", galet(0.22, 0.07, 0.31, 0.3, 8), -0.25, 0.465, 0, K.rabat); // le rabat du sac
       for (const z of [-0.17, 0.17]) pc("dos", galet(0.11, 0.16, 0.06, 0.35, 8), -0.26, 0.2, z, K.gilet); // les poches du sac
       pc("dos", new THREE.CylinderGeometry(0.058, 0.058, 0.36, 10), -0.24, 0.53, 0, 0x3e4631, Math.PI / 2); // le duvet roulé
       }
-      pc("dos", new THREE.CylinderGeometry(0.006, 0.008, 0.55, 4), -0.33, 0.7, -0.1, K.sangle, 0, 0, 0.15); // l'antenne radio
+      if (!S) pc("dos", new THREE.CylinderGeometry(0.006, 0.008, 0.55, 4), -0.33, 0.7, -0.1, K.sangle, 0, 0, 0.15); // l'antenne radio
       pc("dos", galet(0.05, 0.1, 0.07, 0.4, 6), -0.15, 0.04, -0.07, K.sac); // la gourde
     }
     // la tête (demande 93 : une TÊTE SCULPTÉE, voir « tete » plus bas)
@@ -387,10 +387,11 @@ Tanks.Engins3D = (function () {
       pc("dos", B(0.1, 0.032, 0.032), 0.05, -0.06, -0.222, K.outils); // … et sa tête
       pc("dos", galet(0.055, 0.1, 0.065, 0.35, 6), 0.14, -0.08, 0.1, cuir); // la pochette de la pince
       if (detail) {
-        pc("dos", new THREE.CylinderGeometry(0.05, 0.05, 0.3, 10), -0.26, 0.06, 0, S ? K.sac : K.cuir, Math.PI / 2); // le rouleau d'outils
-        pc("dos", new THREE.TorusGeometry(0.075, 0.013, 5, 14), -0.365, 0.3, 0, K.noir, 0, Math.PI / 2, 0); // le câble enroulé
-        pc("dos", galet(0.012, 0.06, 0.1, 0.3, 4), -0.358, 0.42, 0, K.genie); // l'écusson du génie (jaune…)
-        pc("dos", B(0.008, 0.016, 0.1), -0.364, 0.42, 0, K.noir, 0.5); // (… avec sa bande noire)
+        const xd = S ? -0.258 : -0.358; // (demande 128 : sur la poche à eau, plus de gros sac)
+        if (!S) pc("dos", new THREE.CylinderGeometry(0.05, 0.05, 0.3, 10), -0.26, 0.06, 0, K.cuir, Math.PI / 2); // le rouleau d'outils
+        if (!S) pc("dos", new THREE.TorusGeometry(0.075, 0.013, 5, 14), -0.365, 0.3, 0, K.noir, 0, Math.PI / 2, 0); // le câble enroulé
+        pc("dos", galet(0.012, 0.06, 0.1, 0.3, 4), xd, S ? 0.36 : 0.42, 0, K.genie); // l'écusson du génie (jaune…)
+        pc("dos", B(0.008, 0.016, 0.1), xd - 0.006, S ? 0.36 : 0.42, 0, K.noir, 0.5); // (… avec sa bande noire)
         pc("dos", galet(0.02, 0.05, 0.03, 0.4, 4), 0.06, 0.35, -0.12, K.genie); // la lampe frontale, sur la bretelle
       }
     } else if (classe === "eclaireur") {
@@ -410,9 +411,10 @@ Tanks.Engins3D = (function () {
         pc(e, B(0.013, 0.042, 0.008), 0, -0.17, cote * 0.061, K.croix);
         if (detail) (pc(e, B(0.008, 0.013, 0.042), 0.062, -0.17, 0, K.croix), pc(e, B(0.008, 0.042, 0.013), 0.062, -0.17, 0, K.croix)); // (et devant)
       }
-      pc("dos", galet(0.012, 0.15, 0.15, 0.3, detail ? 6 : 4), -0.357, 0.28, 0, K.soin); // la croix sur le sac (le carré blanc…)
-      pc("dos", B(0.008, 0.11, 0.034), -0.364, 0.28, 0, K.croix); // (… et la croix rouge)
-      pc("dos", B(0.008, 0.034, 0.11), -0.364, 0.28, 0, K.croix);
+      const xs = S ? -0.258 : -0.357; // (demande 128 : sur la poche à eau)
+      pc("dos", galet(0.012, 0.15, 0.15, 0.3, detail ? 6 : 4), xs, 0.28, 0, K.soin); // la croix sur le sac (le carré blanc…)
+      pc("dos", B(0.008, 0.11, 0.034), xs - 0.007, 0.28, 0, K.croix); // (… et la croix rouge)
+      pc("dos", B(0.008, 0.034, 0.11), xs - 0.007, 0.28, 0, K.croix);
       pc("dos", galet(0.075, 0.1, 0.1, 0.4, detail ? 8 : 5), 0.08, -0.03, -0.205, S ? K.sac : K.croix); // la grosse poche de soins (rouge ; demande 128 : sable)
       if (detail) {
         pc("dos", galet(0.06, 0.08, 0.07, 0.4, 6), 0.06, 0.06, 0.22, S ? K.sac : K.croix); // la poche du garrot (rouge ; demande 128 : sable)
