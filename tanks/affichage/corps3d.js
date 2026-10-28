@@ -335,9 +335,10 @@ Tanks.Corps3D = (function () {
     if (garder) {
       const ix = g.index.array, gardes = [];
       for (let t = 0; t < ix.length; t += 3) {
-        let cx = 0, cy = 0, cz = 0;
-        for (let k = 0; k < 3; k++) (cx += p.getX(ix[t + k]) / 3), (cy += p.getY(ix[t + k]) / 3), (cz += p.getZ(ix[t + k]) / 3);
-        if (garder(cx, cy, cz)) gardes.push(ix[t], ix[t + 1], ix[t + 2]);
+        // (un triangle est gardé si ses 3 coins le sont : les bords suivent les rangées de la tête, sans dents de scie)
+        let ok = true;
+        for (let k = 0; k < 3 && ok; k++) ok = garder(p.getX(ix[t + k]), p.getY(ix[t + k]), p.getZ(ix[t + k]));
+        if (ok) gardes.push(ix[t], ix[t + 1], ix[t + 2]);
       }
       g.setIndex(gardes);
     }

@@ -117,16 +117,18 @@ Tanks.Engins3D = (function () {
         casqueAcier: UE.casque ? coul(UE.casque) : /^bleus/.test(equipe) ? 0x6c7c90 : 0x5a5e54, // (demande 115 : la couleur du casque de l'édition, sinon l'acier de 1916)
         molletieres: new THREE.Color(UE.fond).multiplyScalar(0.82).getHex(), // (demande 126 : elle était restée dans le commentaire)
         // ✍️ (demande 128) les couleurs du SKIN de sa classe (les gants, les protections, les bottes, le casque, la cagoule…)
-        ...(UE.skin ? skinCouleurs(UE.skin, coul) : {}),
+        ...(UE.skin ? skinCouleurs(UE.skin, coul, E) : {}),
       },
       skin: UE.skin || null,
     });
   }
-  function skinCouleurs(S, coul) {
+  function skinCouleurs(S, coul, E) {
     const eq = new THREE.Color(S.equipement);
     return { gants: coul(S.gants), protege: coul(S.gants2 || S.gants), genouillere: coul(S.protections), bottes: coul(S.bottes), sangle: coul(S.sangles),
       sac: eq.clone().multiplyScalar(0.88).getHex(), rabat: eq.clone().multiplyScalar(0.8).getHex(), casqueSkin: coul(S.casqueCouleur), visage: coul(S.visageCouleur),
-      etui: coul(S.etuiCuisse || "#1f2022"), caoutchouc: 0x17181a, filtre: 0x3a3d38, roquette: 0x4f5a36, ogive: 0x5b6440 };
+      etui: coul(S.etuiCuisse || "#1f2022"), caoutchouc: 0x17181a, filtre: 0x3a3d38, roquette: 0x4f5a36, ogive: 0x5b6440, hublot: 0x2c3a42,
+      // (les marques de l'équipe un peu moins vives : toujours lisibles, mais moins « jouet »)
+      marque: new THREE.Color(E.marque).lerp(new THREE.Color(0x6a6a66), 0.22).multiplyScalar(0.85).getHex(), marqueToi: new THREE.Color(E.marque).lerp(new THREE.Color(0x6a6a66), 0.1).getHex() };
   }
   // ✍️ (demande 128) LE SKIN d'un soldat : dans les éditions de « realisme.soldats.skins », un soldat des Bleus ou des Rouges
   // qui a une classe porte la tenue de sa classe : son « camp de dessin » devient « bleus#assaut »… (une tenue de la
@@ -370,14 +372,15 @@ Tanks.Engins3D = (function () {
         for (const z of [-0.16, 0.16]) pc("dos", galet(0.076, 0.03, 0.076, 0.3, 5), 0.152, 0.22, z, K.rabat); // leurs rabats
       }
     } else if (classe === "ingenieur") {
-      pc("dos", galet(0.29, 0.055, 0.4, 0.3, s), 0, -0.075, 0, K.cuir); // la ceinture à outils
+      const cuir = S ? K.sangle : K.cuir; // (demande 128 : avec son skin, la ceinture et le rouleau sont en nylon sombre)
+      pc("dos", galet(0.29, 0.055, 0.4, 0.3, s), 0, -0.075, 0, cuir); // la ceinture à outils
       pc("dos", B(0.02, 0.17, 0.01), 0.03, -0.17, 0.215, K.outils); // la clé à molette (le manche)…
       pc("dos", new THREE.TorusGeometry(0.022, 0.009, 4, detail ? 10 : 6), 0.03, -0.075, 0.218, K.outils); // … et sa tête
-      pc("dos", new THREE.CylinderGeometry(0.012, 0.012, 0.2, 6), 0.05, -0.16, -0.222, K.bois); // le marteau (le manche)…
+      pc("dos", new THREE.CylinderGeometry(0.012, 0.012, 0.2, 6), 0.05, -0.16, -0.222, S ? K.noir : K.bois); // le marteau (le manche)…
       pc("dos", B(0.1, 0.032, 0.032), 0.05, -0.06, -0.222, K.outils); // … et sa tête
-      pc("dos", galet(0.055, 0.1, 0.065, 0.35, 6), 0.14, -0.08, 0.1, K.cuir); // la pochette de la pince
+      pc("dos", galet(0.055, 0.1, 0.065, 0.35, 6), 0.14, -0.08, 0.1, cuir); // la pochette de la pince
       if (detail) {
-        pc("dos", new THREE.CylinderGeometry(0.05, 0.05, 0.3, 10), -0.26, 0.06, 0, K.cuir, Math.PI / 2); // le rouleau d'outils
+        pc("dos", new THREE.CylinderGeometry(0.05, 0.05, 0.3, 10), -0.26, 0.06, 0, S ? K.sac : K.cuir, Math.PI / 2); // le rouleau d'outils
         pc("dos", new THREE.TorusGeometry(0.075, 0.013, 5, 14), -0.365, 0.3, 0, K.noir, 0, Math.PI / 2, 0); // le câble enroulé
         pc("dos", galet(0.012, 0.06, 0.1, 0.3, 4), -0.358, 0.42, 0, K.genie); // l'écusson du génie (jaune…)
         pc("dos", B(0.008, 0.016, 0.1), -0.364, 0.42, 0, K.noir, 0.5); // (… avec sa bande noire)
@@ -698,7 +701,7 @@ Tanks.Engins3D = (function () {
   function visageCouvert(pc, dernier, peint, K, detail, couvert, cx, cy, av) {
     const C3 = Tanks.Corps3D, H = teteFine(detail), mat = (n) => (dernier().mat = n);
     if (couvert === "cagoule") { // la CAGOULE : tout couvert, sauf la fente des yeux
-      pc("cou", C3.coque(H, 0.0055, (x, y, z) => !(x > 0.025 && y > -0.008 && y < 0.03 && Math.abs(z) < 0.062), 0.012), cx, cy, 0, K.visage);
+      pc("cou", C3.coque(H, 0.0055, (x, y, z) => !(x > 0 && Math.abs(Math.atan2(z, x)) < 0.62 && y > -0.003 && y < 0.026), 0.012), cx, cy, 0, K.visage);
       mat(6);
       peint((x, y) => (x > 0.06 && y > -0.012 && y < 0.034 ? 0.82 : 1)); // (le bord de la fente, dans l'ombre)
     } else if (couvert === "foulard") { // le FOULARD : sur le nez et la bouche, puis enroulé autour du cou
@@ -713,11 +716,12 @@ Tanks.Engins3D = (function () {
     } else if (couvert === "masqueGaz") { // le MASQUE À GAZ
       pc("cou", C3.coque(H, 0.0065, null, 0), cx, cy, 0, K.visage); // la capuche (le tissu caoutchouté, noir)
       mat(6);
-      pc("cou", C3.coque(H, 0.018, (x, y, z) => x > 0.03 && y < 0.05 && y > -0.13 && Math.abs(z) < 0.085, 0.006), cx, cy, 0, K.caoutchouc); // la pièce faciale en caoutchouc
+      pc("cou", C3.coque(H, 0.018, (x, y, z) => x > 0 && Math.abs(Math.atan2(z, x)) < 0.95 && y < 0.05 && y > -0.135, 0.006), cx, cy, 0, K.caoutchouc); // la pièce faciale en caoutchouc
       mat(8);
       for (const z of [-0.034, 0.034]) { // les 2 grands HUBLOTS ronds, et leur bague
         const x = av(0.012, z) + 0.022;
-        pc("cou", new THREE.CylinderGeometry(0.027, 0.027, 0.016, detail ? 16 : 8), x, cy + 0.012, z, K.verre, 0, z > 0 ? -0.25 : 0.25, Math.PI / 2);
+        pc("cou", new THREE.CylinderGeometry(0.027, 0.027, 0.016, detail ? 16 : 8), x, cy + 0.012, z, K.hublot, 0, z > 0 ? -0.25 : 0.25, Math.PI / 2);
+        dernier().mat = 7;
         if (detail) pc("cou", new THREE.TorusGeometry(0.028, 0.006, 5, 16), x + 0.006, cy + 0.012, z, K.caoutchouc, 0, Math.PI / 2 + (z > 0 ? -0.25 : 0.25), 0);
       }
       pc("cou", new THREE.CylinderGeometry(0.024, 0.02, 0.03, detail ? 12 : 6), av(-0.06, 0) + 0.03, cy - 0.06, 0, K.caoutchouc, 0, 0, Math.PI / 2); // la membrane (pour parler)
