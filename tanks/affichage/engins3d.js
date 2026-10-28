@@ -539,6 +539,11 @@ Tanks.Engins3D = (function () {
         for (const z of [-1, 1]) (pc("cou", galet(0.05, 0.075, 0.03, 0.6, 8), av(-0.06, z * 0.055) - 0.03, cy - 0.06, z * 0.06, K.sourcils, 0, z * 0.5, 0), (dernier().matiere = () => 1.4)); // (les côtés)
       }
       if (BB.moustache || BB.pleine) (pc("cou", galet(0.012, 0.011, 0.05, 0.6, 8), xb + 0.002, cy - 0.047, 0, K.sourcils), (dernier().matiere = () => 1.4));
+      if (BB.grosse) for (const z of [-1, 1]) { // ✍️ (demande 128, 1916) la GROSSE MOUSTACHE du poilu : 2 touffes qui tombent sur les coins de la bouche
+        pc("cou", galet(0.022, 0.016, 0.045, 0.6, 8), xb + 0.004, cy - 0.05, z * 0.02, K.sourcils, z * 0.35, z * -0.25, 0);
+        peint((x, y) => 0.75 + (bruitVisage(x * 500, y * 500, z) - 0.5) * 0.5);
+        dernier().matiere = () => 1.4;
+      }
       }
       // les OREILLES (cachées sous le casque radio quand il en a un ; demande 128 : sous la cagoule ou les coquilles)
       if (!ecouteurs && !S) for (const z of [-1, 1]) {
@@ -814,7 +819,8 @@ Tanks.Engins3D = (function () {
       const t = k / 5, y = 0.99 - (0.99 - bas) * t;
       T.push({ y, xf: 0.122 + 0.02 * t + ev * t * t, xb: 0.132 + 0.03 * t + ev * t * t, z: 0.176 + 0.03 * t + ev * 0.8 * t * t, e: 2.3 });
     }
-    pc("corps", C3.loft(T, n, detail ? 2 : 1, false), 0, 0, 0, "tenue");
+    // (les pans s'ouvrent devant, en V renversé, sur le pantalon : on enlève les triangles du devant, de plus en plus larges vers le bas)
+    pc("corps", C3.coque(C3.loft(T, n, detail ? 2 : 1, false), 0, (x, y, z) => !(x > 0.05 && Math.abs(z) < 0.075 * Math.max(0, Math.min(1, (0.86 - y) / (0.86 - bas))))), 0, 0, 0, "tenue");
     // chaque côté suit sa cuisse, de plus en plus vers le bas (jusqu'à 70 %)
     poids((x, y, z) => ["corps", z < 0 ? "jambe0" : "jambe1", 0.7 * Math.max(0, Math.min(1, (0.9 - y) / (0.9 - bas)))]);
     // le BAS des pans, un ourlet un peu plus épais

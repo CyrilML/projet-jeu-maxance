@@ -214,18 +214,18 @@ window.Tanks = window.Tanks || {};
       realisme: {
         soldats: {
           uniformes: {
-            bleus: { nom: "bleu horizon", fond: "#7b8ca4", taches: ["#7b8ca4", "#7d8ea6", "#798aa2"], equipement: "#6a5638" },
+            bleus: { nom: "bleu horizon", fond: "#62799a", taches: ["#5f7697", "#657c9d", "#5a7090"], equipement: "#6a5638" }, // (demande 128 : un bleu plus profond, comme le drap de 1915)
             rouges: { nom: "gris de campagne", fond: "#6b6e62", taches: ["#6b6e62", "#6d7064", "#696c60"], equipement: "#574632" },
             motif: 0.7, ripstop: 0.006, plis: 1.2, boue: 0.95, relief: 1.6,
           },
           visage: { lunettes: ["aucune", "aucune", "masqueGaz", "aucune", "aucune", "masqueGaz", "aucune"], barbe: 0.4,
             // ✍️ (demande 128) en 1916, beaucoup de MOUSTACHES (les « poilus ») : la liste des barbes de cette édition
             barbes: [
-              { nom: "moustache", force: 2.6, haut: 0.03, moustache: true },
+              { nom: "moustache", force: 2.6, haut: 0.03, moustache: true, grosse: true },
               { nom: "barbe pleine", force: 3.2, haut: 0.012, pleine: true },
-              { nom: "moustache", force: 2.6, haut: 0.03, moustache: true },
+              { nom: "moustache", force: 2.6, haut: 0.03, moustache: true, grosse: true },
               { nom: "3 jours", force: 1, haut: 0.03 },
-              { nom: "moustache", force: 2.6, haut: 0.03, moustache: true },
+              { nom: "moustache", force: 2.6, haut: 0.03, moustache: true, grosse: true },
             ] },
         },
         // 🌫️ un ciel COUVERT et bas, une lumière grise, la brume qui commence tout près
