@@ -76,7 +76,8 @@ Tanks.Armes = (function () {
       meilleur = { o, ecart, d };
     };
     if (roquettes) for (const v of vehiculesEnnemis(s, monde)) regarder(v, 1.5);
-    else for (const o of monde.soldats) if (!o.mort && !o.dansUnEngin && o.equipe !== s.equipe) regarder(o, 1.2);
+    // (demande 128) le RG-6 tire des grenades de 40 mm : il vise aussi les SOLDATS
+    if (!roquettes || st.projectile === "lg40") for (const o of monde.soldats) if (!o.mort && !o.dansUnEngin && o.equipe !== s.equipe) regarder(o, 1.2);
     return meilleur;
   }
 

@@ -41,6 +41,12 @@
 // ronds, lissée), les crosses et les poignées s'AMINCISSENT, les poignées ont un granulé, les culasses des pistolets (Glock,
 // M17, Colton, Varn P38) ont des stries creusées et un nez qui plonge, et la carte des rayures est plus discrète.
 // Les soldats de l'ordinateur gardent la version simple (une seule matière) : la bataille ne coûte pas plus cher.
+// ✍️ LES ARMES DE MAXANCE (demande 128) : d'après ses photos, le pistolet de tout le monde devient un M1911 (acier bleui,
+// plaquettes en BOIS QUADRILLÉ), le MP5 du Médecin a son garde-main à LAMPE INTÉGRÉE, l'Assaut a de vrais M4 (AR-4 et M4
+// courte : mires rabattables, garde-main à 4 rails, chargeur STANAG et sa boucle), l'Ingénieur a le K416 sable et noir LIVRÉ
+// ÉQUIPÉ (lunette de combat, long silencieux, poignée, lampe : des pièces « d'origine » que l'atelier peut remplacer), et le
+// Scorpio est le pistolet-mitrailleur de toutes les classes ; le lance-grenades RG-6 de l'Ingénieur a un BARILLET qui tourne
+// d'un cran à chaque tir, et le lance-grenades sous le canon est refait. (Voir « LES ARMES DE MAXANCE » plus bas.)
 // Comme tout l'affichage, il LIT le monde et ne le modifie jamais.
 
 window.Tanks = window.Tanks || {};
@@ -54,6 +60,8 @@ Tanks.Armes3D = (function () {
     noir: 0x37383b, anodise: 0x3d3f43, acier: 0x55585d, canon: 0x3b3d41, fente: 0x0a0a0a, caoutchouc: 0x252525,
     fde: 0xa08760, fdeFonce: 0x857050, od: 0x4d5536, odClair: 0x5f6844, gris: 0x3a3c3a, olive: 0x40463a,
     bakelite: 0x58291a, laiton: 0xc89b45, blanc: 0xe0ddd2, jaune: 0xc9a227, rouge: 0x9a2216, bois: 0xffffff,
+    // (armes de Maxance) l'acier BLEUI du pistolet 1911 (un noir qui tire sur le bleu), et le SABLE du fusil 416
+    bleui: 0x2f353f, sable: 0xb39a72, sableFonce: 0x9a825e,
   };
   let M = null, MS = null; // les matières de la belle version, et la matière unique des soldats de l'ordinateur
   function toile(l, h, peindre) {
@@ -150,6 +158,19 @@ Tanks.Armes3D = (function () {
       fume: new THREE.MeshPhysicalMaterial({ color: 0x9a7a40, metalness: 0, roughness: 0.12, transparent: true, opacity: 0.42, depthWrite: false }),
       lumiere: new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }),
     };
+    // ✍️ (armes de Maxance : « Ceci sera notre gun. ») le BOIS QUADRILLÉ des plaquettes du pistolet 1911 : le même bois, et une
+    // carte des bosses faite de petites PYRAMIDES en losange (le quadrillage taillé dans le bois pour que la main ne glisse pas)
+    const losanges = toile(128, 128, (ctx, l, h) => {
+      const img = ctx.createImageData(l, h), fr = (v) => v - Math.floor(v);
+      for (let y = 0; y < h; y++) for (let x = 0; x < l; x++) {
+        const a = 1 - Math.abs(2 * fr((x + y) / 16) - 1), b = 1 - Math.abs(2 * fr((x - y) / 16) - 1), v = Math.min(a, b) * 230 + 12, i = (y * l + x) * 4;
+        img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+        img.data[i + 3] = 255;
+      }
+      ctx.putImageData(img, 0, 0);
+    });
+    losanges.repeat.set(RA.quadrillage, RA.quadrillage);
+    M.quadrille = new THREE.MeshPhysicalMaterial({ map: bois, color: 0x7c8a90, roughness: 0.74, metalness: 0.02, bumpMap: losanges, bumpScale: 3.5, clearcoat: 0.12, clearcoatRoughness: 0.5 });
     MS = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.58, metalness: 0.38 });
     return M;
   }
@@ -248,7 +269,7 @@ Tanks.Armes3D = (function () {
   // (les petites pièces qu'on ne peint jamais : le canon, l'acier, les fentes, le caoutchouc, le laiton…)
   const NON_PEINT = new Set([K.canon, K.acier, K.fente, K.caoutchouc, K.laiton, K.rouge, K.jaune, K.blanc, 0x0e0e0e, 0x101010, 0x0d0d0d, 0x0a0a0a, 0x0c0c0c, 0x0f0f10, 0x151617, 0x141414, 0x15160f, 0x161616, 0x18191a, 0x18191b, 0x1c1d1b, 0x202225, 0x2a1608, 0x2c2d2f]);
   const clarte = (hex) => { const c = new THREE.Color(hex); return Math.max(c.r, c.g, c.b); };
-  const DEFAUT = { poly: K.noir, metal: K.anodise, bois: 0x8a5028, verre: 0x1a2c3a, vitre: 0x6a8aa0, fume: 0x4a3c28, lumiere: 0xff2a1a };
+  const DEFAUT = { poly: K.noir, metal: K.anodise, bois: 0x8a5028, quadrille: 0x6a4028, verre: 0x1a2c3a, vitre: 0x6a8aa0, fume: 0x4a3c28, lumiere: 0xff2a1a };
 
   // Les coordonnées de texture « à plat » (comme le camouflage des tanks) : pour chaque triangle, on projette selon sa
   // direction principale (de côté, de dessus ou de face), « k » répétitions par mètre.
@@ -279,7 +300,7 @@ Tanks.Armes3D = (function () {
     // cher pour 40 soldats), seulement les couleurs de la peinture posées pièce par pièce (une pièce sur deux, deux tons)
     const tonsSeuls = peinture && seul ? (C.atelier.peinture.pieces.find((x) => x.id === peinture) || {}).couleurs || null : null;
     let nTons = 0;
-    const groupes = { corps: new THREE.Group(), chargeur: new THREE.Group(), culasse: new THREE.Group() };
+    const groupes = { corps: new THREE.Group(), chargeur: new THREE.Group(), culasse: new THREE.Group(), barillet: new THREE.Group(), genou: new THREE.Group() }; // (demande 128 : le barillet qui tourne, la genouillère qui se plie)
     let ici = groupes.corps;
     const RA = A3.realisme;
     const S = (n) => (leger ? Math.max(5, Math.round(n * 0.45)) : n);
@@ -296,7 +317,7 @@ Tanks.Armes3D = (function () {
       // un noir trop noir ne montre plus aucune forme : le métal garde au moins 13 % de clarté, le polymère 5 % (sauf les fentes)
       const plancher = mat === "metal" ? 0.13 : mat === "poly" && coul !== K.fente && coul !== 0x0e0e0e && coul !== 0x101010 && coul !== 0x0d0d0d ? 0.05 : 0, max = Math.max(c.r, c.g, c.b);
       if (max < plancher) max > 0.001 ? c.multiplyScalar(plancher / max) : c.setScalar(plancher);
-      if (seul && mat === "bois") m.userData.teinte = new THREE.Color(0x7a4320);
+      if (seul && (mat === "bois" || mat === "quadrille")) m.userData.teinte = new THREE.Color(mat === "bois" ? 0x7a4320 : 0x5e3a22);
       if (seul && (mat === "vitre" || mat === "fume")) m.userData.teinte = new THREE.Color(0x2a3036);
       if (tonsSeuls && e.peindre && (mat === "poly" || mat === "metal") && (coul === undefined || coul === null || (!NON_PEINT.has(coul) && clarte(coul) > 0.035))) m.userData.teinte = new THREE.Color(tonsSeuls[nTons++ % 2]).multiplyScalar(0.85);
       if (peinte) m.userData.teinte = new THREE.Color(0xffffff).multiplyScalar((0.74 + 0.26 * Math.min(1, clarte(coul === undefined || coul === null ? DEFAUT[mat] : coul) * 2.5)) * (mat === "metal" ? 0.9 : 1));
@@ -533,6 +554,8 @@ Tanks.Armes3D = (function () {
     ar: [[0.012, 0.0], [0.002, -0.028], [-0.004, -0.048], [-0.01, -0.06], [-0.012, -0.08], [-0.02, -0.102], [-0.046, -0.106], [-0.056, -0.096], [-0.047, -0.06], [-0.038, -0.024], [-0.046, -0.006], [-0.048, 0.0]],
     ak: [[0.008, 0.0], [-0.004, -0.045], [-0.016, -0.1], [-0.044, -0.102], [-0.04, -0.06], [-0.03, -0.018], [-0.038, 0.0]],
     droite: [[0.01, 0.0], [0.004, -0.05], [0.0, -0.098], [-0.034, -0.1], [-0.036, -0.05], [-0.032, -0.01], [-0.04, 0.0]],
+    // (armes de Maxance) la poignée « A2 » du M4 : penchée, avec la petite BOSSE devant, entre le majeur et l'annulaire
+    a2: [[0.012, 0.0], [0.004, -0.026], [0.0, -0.04], [0.0035, -0.048], [-0.003, -0.058], [-0.008, -0.08], [-0.016, -0.1], [-0.042, -0.104], [-0.051, -0.094], [-0.044, -0.06], [-0.036, -0.024], [-0.044, -0.006], [-0.047, 0.0]],
   };
   function poignee(e, forme, coul, x, y, l, mat, z) {
     const p = POIGNEES[forme] || POIGNEES.ar;
@@ -557,17 +580,20 @@ Tanks.Armes3D = (function () {
   // ✍️ (armes réalistes) la CULASSE D'UN PISTOLET, découpée vue de dessus : n stries creusées de chaque côté (à partir de
   // x = xs, tous les « pas » m), les arêtes du dessus cassées par le biseau, et le NEZ qui plonge en pente vers l'avant (le
   // haut de l'avant est rabattu, comme sur une vraie culasse). xa → xb : de l'arrière à l'avant ; dl : la demi-largeur.
-  function culasseStriee(e, xa, xb, y0, h, dl, coul, n, xs, pas) {
-    const flanc = (sg) => {
+  // (armes de Maxance) « avant » : une 2e série de stries tout devant ({ xs, n } : le 1911 en a aux deux bouts) ; « nez » : la
+  // pente du nez (0,28 par défaut ; le 1911 a un nez presque droit).
+  function culasseStriee(e, xa, xb, y0, h, dl, coul, n, xs, pas, avant, nez) {
+    const serie = (sg, x0, nn) => {
       const t = [];
-      for (let k = 0; k < n; k++) { const x = xs + k * pas; t.push([x - pas * 0.28, sg * dl], [x - pas * 0.12, sg * (dl - 0.0013)], [x + pas * 0.12, sg * (dl - 0.0013)], [x + pas * 0.28, sg * dl]); }
+      for (let k = 0; k < nn; k++) { const x = x0 + k * pas; t.push([x - pas * 0.28, sg * dl], [x - pas * 0.12, sg * (dl - 0.0013)], [x + pas * 0.12, sg * (dl - 0.0013)], [x + pas * 0.28, sg * dl]); }
       return t;
     };
+    const flanc = (sg) => serie(sg, xs, n).concat(avant ? serie(sg, avant.xs, avant.n) : []);
     const m = e.dessus([[xa, dl]].concat(flanc(1), [[xb - 0.008, dl], [xb, dl - 0.0035], [xb, -dl + 0.0035], [xb - 0.008, -dl]], flanc(-1).reverse(), [[xa, -dl]]), y0, h, "metal", coul, 0.0022, 2);
-    const p = m.geometry.attributes.position, xn = xb - 0.03;
+    const p = m.geometry.attributes.position, xn = xb - 0.03, kn = nez === undefined ? 0.28 : nez;
     for (let i = 0; i < p.count; i++) {
       const x = p.getX(i), y = p.getY(i);
-      if (x > xn) p.setY(i, y - (x - xn) * 0.28 * (y / h));
+      if (x > xn) p.setY(i, y - (x - xn) * kn * (y / h));
     }
     e.lisser(m.geometry, 1);
     m.geometry.computeBoundingSphere();
@@ -614,6 +640,26 @@ Tanks.Armes3D = (function () {
       const cx = x + (f.a || 0) * l * t + f.k * l * t * t, a = Math.atan((f.a || 0) + 2 * f.k * t);
       for (const s of [-1, 1]) e.boite(f.p * 0.9, 0.0035, 0.002, cx, y - l * t, (z || 0) + s * (f.w / 2 + 0.0008), "poly", 0x0e0e0e, 0, 0, a);
     }
+    // ✍️ (armes de Maxance : « genre M4 ») le chargeur « STANAG » en alu : 2 longues nervures EMBOUTIES de chaque côté (des
+    // bandes un peu plus sombres, qui suivent la courbe), et la BOUCLE en caoutchouc sous la semelle (on tire dessus pour le
+    // sortir de la poche, très vite)
+    if (e.beau && f.nervures === "stanag") {
+      const bande = (c1, c2, ta, tb2) => {
+        const av = [], ar = [];
+        for (let i = 0; i <= 8; i++) {
+          const t = ta + ((tb2 - ta) * i) / 8, cx = x + (f.a || 0) * l * t + f.k * l * t * t, cy = y - l * t, p = f.p * (1 + 0.12 * t);
+          av.push([cx + p * c2, cy]);
+          ar.unshift([cx + p * c1, cy]);
+        }
+        return av.concat(ar);
+      };
+      for (const s of [-1, 1]) for (const [c1, c2] of [[-0.34, -0.16], [0.06, 0.24]]) e.cote(bande(c1, c2, 0.08, 0.86), 0.0016, f.mat || "poly", 0x1f2124, (z || 0) + s * (f.w / 2 + 0.0004), 0.0004);
+    }
+    if (!e.leger && f.boucle) {
+      const cx0 = x + (f.a || 0) * l + f.k * l, cy0 = y - l - 0.007, ca = Math.cos(pente), sa = Math.sin(pente);
+      const tourner = (pts) => pts.map(([a, b]) => [cx0 + (a - cx0) * ca - (b - cy0) * sa, cy0 + (a - cx0) * sa + (b - cy0) * ca]);
+      e.cote(tourner(rectRond(cx0 - 0.012, cy0 - 0.02, cx0 + 0.012, cy0 + 0.002, 0.008, 3)), 0.014, "poly", f.boucle, z || 0, 0.0025, [tourner(rectRond(cx0 - 0.0075, cy0 - 0.015, cx0 + 0.0075, cy0 - 0.004, 0.0045, 3))], 2);
+    }
     // (demande 97) la place de la BANDE DE COULEUR des munitions spéciales : aux 3/4 du chargeur
     const tb = 0.78;
     return { x: x + (f.a || 0) * l * tb + f.k * l * tb * tb, y: y - l * tb, z: z || 0, p: f.p * (1 + 0.12 * tb), w: f.w, a: Math.atan((f.a || 0) + 2 * f.k * tb) };
@@ -630,7 +676,7 @@ Tanks.Armes3D = (function () {
       } else if (piece === "tambour") {
         // un TAMBOUR : un cou court, puis une grosse boîte ronde (double pour les fusils « AR », comme un C-Mag)
         const cou = f.l * 0.32;
-        bande = unChargeur(e, x, y, cou, Object.assign({}, f, { k: 0 }));
+        bande = unChargeur(e, x, y, cou, Object.assign({}, f, { k: 0, boucle: null, nervures: null }));
         const r = Math.max(0.05, f.l * 0.36), cx = x + (f.a || 0) * cou + 0.01, cy = y - cou - r * 0.75;
         if (f.double) {
           for (const s of [-1, 1]) {
@@ -709,8 +755,14 @@ Tanks.Armes3D = (function () {
     }
     if (style === "aucun") return x0;
     // le cache-flamme « cage à oiseaux » (A2) : un petit tube avec des fentes
-    e.tube(x0, x0 + 0.05, r * 1.5, r * 1.5, y, 0, "metal", K.acier, 12);
+    // (armes de Maxance) dans la belle version : un vrai cache-flamme tourné (l'écrou à 2 pans plats, le corps, le bord
+    // chanfreiné, le trou du canon) ; ses fentes ne font pas le tour : en bas, il est FERMÉ (la poussière ne se soulève pas)
+    if (e.beau) {
+      e.tube(x0 - 0.002, x0 + 0.006, r * 1.45, r * 1.45, y, 0, "metal", 0x2c2e31, 6, Math.PI / 6); // l'écrou de blocage (6 pans)
+      e.tour([[x0 + 0.006, r * 1.3], [x0 + 0.009, r * 1.5], [x0 + 0.046, r * 1.5], [x0 + 0.05, r * 1.32], [x0 + 0.05, r * 0.95], [x0 + 0.046, r * 0.78]], y, 0, "metal", 0x34363a, 18);
+    } else e.tube(x0, x0 + 0.05, r * 1.5, r * 1.5, y, 0, "metal", K.acier, 12);
     if (!e.leger) for (const a of [0.6, 2.1, -0.6, -2.1, Math.PI / 2]) e.boite(0.028, 0.0025, 0.003, x0 + 0.03, y + Math.sin(a) * r * 1.5, Math.cos(a) * r * 1.5, "poly", fente, a);
+    if (e.beau) e.tube(x0 + 0.047, x0 + 0.0502, r * 0.72, r * 0.72, y, 0, "poly", fente, 12);
     return x0 + 0.05;
   }
 
@@ -954,72 +1006,6 @@ Tanks.Armes3D = (function () {
   const LONGUEUR_CANON = (piece, base, long, court) => ({ long, court }[piece] !== undefined ? { long, court }[piece] : base);
 
   const FABRIQUES = {
-    // ✍️ AR-4 : le fusil d'assaut classique (comme un M4) : carcasse en alu noir, crosse à tube réglable, garde-main
-    // octogonal à fentes « M-LOK », rail sur toute la longueur, chargeur sable courbe.
-    // (livre n° 6) « court » : la M4 COURTE de l'Ingénieur : le même fusil, garde-main et canon raccourcis, crosse rentrée.
-    ar4(e, p, court) {
-      const by = 0.045, A = K.anodise, rentre = court ? 0.06 : 0; // (m : la crosse rentrée de 6 cm)
-      e.cote([[-0.072, 0.0], [-0.072, 0.03], [0.112, 0.03], [0.112, 0.012], [0.104, 0.0], [0.1, -0.038], [0.034, -0.038], [0.03, -0.006], [0.014, 0.0]], 0.032, "metal", A, 0, 0.003);
-      e.cote([[-0.078, 0.03], [-0.078, 0.064], [0.116, 0.064], [0.116, 0.03]], 0.03, "metal", A, 0, 0.003);
-      e.boite(0.045, 0.014, 0.002, 0.025, 0.046, 0.0158, "poly", K.fente); // la fenêtre d'éjection
-      e.barre([-0.038, 0.052, 0.012], [-0.014, 0.052, 0.022], 0.0055, "metal", A); // l'assistance de fermeture
-      e.boite(0.012, 0.014, 0.008, -0.004, 0.05, 0.018, "metal", A);
-      e.boite(0.014, 0.007, 0.04, -0.086, 0.059, 0, "metal", A); // le levier d'armement
-      e.boite(0.194, 0.006, 0.022, 0.019, 0.066, 0, "metal", A);
-      e.boite(0.014, 0.008, 0.006, -0.025, 0.012, 0.018, "metal", A); // le sélecteur de tir
-      if (e.beau) {
-        // (armes réalistes) les petits détails d'une vraie carcasse de M4 : la lèvre évasée du puits de chargeur, les 2
-        // goupilles de démontage (on les voit des deux côtés), le bouton du chargeur, l'arrêtoir de culasse (à gauche), le
-        // capot de la fenêtre d'éjection ouvert (il pend sous la fenêtre), le déflecteur de douilles derrière la fenêtre,
-        // le gros bouton de l'assistance de fermeture, les « oreilles » du levier d'armement.
-        e.boite(0.07, 0.007, 0.036, 0.067, -0.0355, 0, "metal", A);
-        for (const [x, y] of [[-0.062, 0.022], [0.098, 0.02], [-0.062, 0.042]]) e.disque(0.0032, 0.0345, x, y, 0, "metal", 0x4a4c50, 14);
-        e.disque(0.0048, 0.004, 0.034, 0.012, 0.0168, "metal", 0x2c2e31, 16);
-        e.cote([[0.044, 0.006], [0.07, 0.006], [0.074, 0.018], [0.05, 0.02]], 0.004, "metal", A, -0.018, 0.0012);
-        e.boite(0.048, 0.0016, 0.012, 0.026, 0.0378, 0.0215, "metal", A, -0.25);
-        e.cote([[-0.006, 0.036], [0.004, 0.036], [0.004, 0.058], [-0.002, 0.06], [-0.006, 0.056]], 0.007, "metal", A, 0.0185, 0.0015);
-        e.barre([-0.046, 0.052, 0.0085], [-0.039, 0.052, 0.0115], 0.0072, "metal", 0x2c2e31, 16);
-        for (const s of [-1, 1]) e.boite(0.01, 0.006, 0.012, -0.088, 0.059, s * 0.022, "metal", A);
-      }
-      if (!crosseSpeciale(e, p, -0.072, by, K.noir)) {
-        const r = rentre;
-        e.tube(-0.262 + r, -0.072, 0.0145, 0.0145, by, 0, "metal", A, 16); // le tube de crosse
-        e.tube(-0.084, -0.074, 0.019, 0.019, by, 0, "metal", A, 8);
-        // la crosse réglable : le corps, l'appui-joue bombé, les 2 « poches » à piles sur les côtés, la plaque de couche
-        e.cote([[-0.2 + r, 0.062], [-0.2 + r, 0.026], [-0.3 + r, -0.03], [-0.335 + r, -0.048], [-0.342 + r, -0.048], [-0.342 + r, 0.074], [-0.33 + r, 0.078], [-0.24 + r, 0.07]], 0.04, "poly", K.noir, 0, 0.006, null, 2, { x: [-0.34 + r, 1, -0.2 + r, 0.82] });
-        e.galet(0.12, 0.022, 0.046, -0.275 + r, 0.072, 0, "poly", K.noir, 0.32);
-        for (const zz of [-1, 1]) e.galet(0.1, 0.034, 0.016, -0.262 + r, 0.03, zz * 0.026, "poly", K.noir, 0.35, 12, 0, 0, 0.42);
-        e.boite(0.014, 0.126, 0.046, -0.348 + r, 0.014, 0, "poly", K.caoutchouc);
-        e.boite(0.03, 0.01, 0.03, -0.22 + r, 0.018, 0, "poly", K.noir, 0, 0, 0.5); // le levier de réglage
-        e.boite(0.016, 0.01, 0.03, -0.31 + r, -0.03, 0, "metal", K.acier, 0, 0, 0.5); // l'anneau de la sangle
-      }
-      poignee(e, "ar", K.noir);
-      pontet(e, 0.008, 0.075, 0.0, A);
-      const ch = chargeur(e, { l: 0.15, p: 0.058, w: 0.022, k: 0.2, a: 0.05, coul: court ? K.noir : K.fde, nervures: "pmag", double: true }, p.chargeur, 0.067, -0.03);
-      // le garde-main octogonal, ses fentes M-LOK, son rail du haut, ses petits rails dessous et à gauche
-      const hg = court ? 0.31 : 0.44;
-      e.tube(0.116, hg, 0.028, 0.028, by, 0, "metal", A, 8, Math.PI / 8);
-      e.tube(hg - 0.004, hg, 0.0295, 0.0295, by, 0, "metal", 0x18191b, 8, Math.PI / 8);
-      if (!e.leger) for (let x = 0.16; x < hg - 0.03; x += 0.05) for (const s of [-1, 1]) e.fenteRonde(x - 0.016, x + 0.016, by, 0.007, s * 0.026, 0.004);
-      if (e.beau) { // (armes réalistes) la bague qui serre le garde-main sur la carcasse, et la prise pour la sangle
-        e.tube(0.114, 0.124, 0.0265, 0.0265, by, 0, "metal", 0x2c2e31, 24);
-        e.disque(0.0055, 0.006, hg - 0.03, by - 0.01, -0.0275, "metal", 0x2c2e31, 14);
-      }
-      const yr = rail(e, -0.076, hg - 0.004, 0.069, 0);
-      const yb = rail(e, hg - 0.16, hg - 0.02, by - 0.027, 0, "bas");
-      rail(e, hg - 0.08, hg - 0.006, by, -0.027, "gauche");
-      const lc = court ? LONGUEUR_CANON(p.canon, 0.06, 0.12, 0.025) : LONGUEUR_CANON(p.canon, 0.105, 0.2, 0.03, 0.06);
-      canonTube(e, p, hg, hg + lc, by, 0.0095);
-      const tip = bout(e, p.bouche, hg + lc, by, 0.0095, "a2");
-      return { by, tip, ch, rail: { xa: -0.075, xb: hg - 0.01, y: yr }, dessous: { x: hg - 0.08, y: yb, rail: true }, garde: { centre: V3(Math.min(0.24, hg - 0.09), by - 0.03), axe: V3(1, 0, 0), sorte: "dessous" },
-        lampe: { x: hg - 0.012, y: by, z: -0.037, sens: -1 }, laser: { x: hg - 0.07, y: yr, z: 0, sens: "haut" }, ejection: V3(0.025, 0.047, 0.017), mireAvant: hg - 0.03, mireArriere: -0.06, crosse: -0.35 + rentre };
-    },
-    // ✍️ (livre de demandes n° 6) M4 COURTE : l'arme bonus de l'Ingénieur. C'est l'AR-4 en version courte (comme une
-    // carabine de commando) : un garde-main de 19 cm au lieu de 32, un canon plus court, la crosse rentrée, un chargeur noir.
-    m4courte(e, p) {
-      return FABRIQUES.ar4(e, p, true);
-    },
-
     // ✍️ FAMAS : le « clairon » français. Un « bullpup » : le chargeur est DERRIÈRE la poignée (l'arme est courte), et la
     // grande poignée de transport court sur tout le dessus. Les pieds du bipied sont repliés sur les côtés.
     famas(e, p) {
@@ -1246,42 +1232,6 @@ Tanks.Armes3D = (function () {
         lunetteNative: (e2, y) => lunette(e2, -0.1, y, 0, { long: 0.36, obj: 0.033, tube: 0.017, haut: 0.065, coul: 0x323232, nom: "lunette du Barrett" }), crosse: -0.45 };
     },
 
-    // ✍️ MP5 : le pistolet-mitrailleur fin et noir : la carcasse ronde à nervures, le tube d'armement au-dessus du canon
-    // avec son levier à gauche, le guidon dans un anneau, la hausse « tambour », le chargeur très courbe et la crosse à
-    // 2 tiges qui rentre.
-    mp5(e, p) {
-      const by = 0.035, N = 0x343538;
-      e.cote([[-0.095, by - 0.012], [-0.095, by + 0.026], [-0.08, by + 0.038], [0.15, by + 0.038], [0.15, by - 0.012]], 0.038, "metal", N, 0, 0.009, null, 3);
-      if (!e.leger) for (const s of [-1, 1]) for (const yy of [by + 0.004, by + 0.02]) e.boite(0.2, 0.003, 0.002, 0.03, yy, s * 0.0195, "metal", 0x151617);
-      e.cote([[0.04, by - 0.01], [-0.075, by - 0.01], [-0.08, 0.0], [0.03, 0.0]], 0.034, "poly", K.noir, 0, 0.004);
-      poignee(e, "droite", K.noir);
-      pontet(e, 0.006, 0.05, 0.0, K.noir);
-      e.boite(0.05, 0.03, 0.03, 0.065, by - 0.025, 0, "metal", N);
-      const ch = chargeur(e, { l: 0.15, p: 0.034, w: 0.022, k: 0.33, a: 0.12, coul: 0x323232, mat: "metal" }, p.chargeur, 0.066, -0.006);
-      e.tube(0.15, 0.315, 0.012, 0.012, by + 0.028, 0, "metal", N, 12); // le tube d'armement
-      e.barre([0.27, by + 0.03, -0.01], [0.262, by + 0.046, -0.034], 0.0035, "metal", N);
-      e.boule(0.006, 0.261, by + 0.047, -0.036, "poly", K.noir, 8);
-      e.tour([[0.15, 0.021], [0.16, 0.025], [0.29, 0.023], [0.3, 0.019]], by - 0.002, 0, "poly", K.noir, 16); // le garde-main fin
-      if (!e.leger) for (let x = 0.18; x < 0.29; x += 0.022) e.tube(x, x + 0.004, 0.0245, 0.0245, by - 0.002, 0, "poly", 0x101010, 16);
-      e.boite(0.03, 0.03, 0.016, 0.31, by + 0.044, 0, "metal", N);
-      e.anneau(0.012, 0.0025, 0.31, by + 0.062, 0, "metal", N); // le guidon dans son anneau
-      e.boite(0.003, 0.012, 0.003, 0.31, by + 0.058, 0, "metal", N);
-      e.anneau(0.007, 0.0035, -0.07, by + 0.062, 0, "metal", N); // la hausse « tambour » (on vise à travers son petit trou)
-      e.disque(0.0095, 0.012, -0.072, by + 0.062, -0.014, "metal", N, 14);
-      e.boite(0.02, 0.016, 0.024, -0.07, by + 0.046, 0, "metal", N);
-      if (!crosseSpeciale(e, p, -0.095, by + 0.008, K.noir)) {
-        for (const s of [-1, 1]) e.barre([-0.095, by + 0.012, s * 0.017], [-0.32, by + 0.0, s * 0.018], 0.0045, "metal", N);
-        e.cote([[-0.318, by + 0.03], [-0.338, by + 0.03], [-0.338, -0.065], [-0.318, -0.065]], 0.05, "metal", N, 0, 0.004);
-        e.boite(0.008, 0.1, 0.048, -0.342, -0.018, 0, "poly", K.caoutchouc);
-      }
-      const lc = LONGUEUR_CANON(p.canon, 0.03, 0.085, 0.006, 0.0);
-      canonTube(e, p, 0.3, 0.315 + lc, by, 0.0085);
-      const tip = bout(e, p.bouche, 0.315 + lc, by, 0.0085, "mp5");
-      return { by, tip, ch, rail: { xa: -0.06, xb: 0.08, y: by + 0.072, griffe: true }, dessous: { x: 0.23, y: by - 0.026 }, garde: { centre: V3(0.22, by - 0.028), axe: V3(1, 0, 0), sorte: "dessous" },
-        lampe: { x: 0.28, y: by - 0.002, z: -0.025, sens: -1, petitRail: true }, laser: { x: 0.24, y: by - 0.002, z: 0.025, sens: "droite", petitRail: true }, ejection: V3(0.06, by + 0.02, 0.02),
-        mireNative: { ligne: by + 0.062, arriere: -0.08, z: 0, nom: "hausse tambour et guidon" }, crosse: -0.34 };
-    },
-
     // ✍️ VECTOR : un pistolet-mitrailleur de science-fiction : un gros « nez » en biais sous le canon (le mécanisme qui
     // absorbe le recul), le chargeur tout droit devant, une couleur sable, un rail noir sur tout le dessus.
     vector(e, p) {
@@ -1333,39 +1283,6 @@ Tanks.Armes3D = (function () {
       return { by, tip, ch, rail: { xa: -0.11, xb: 0.12, y: yr }, dessous: { x: 0.2, y: -0.07 }, garde: { centre: V3(0.176, -0.078), axe: V3(1, 0.2, 0).normalize(), sorte: "dessous" },
         lampe: { x: 0.215, y: 0.0, z: -0.031, sens: -1, petitRail: true }, laser: { x: 0.215, y: 0.0, z: 0.031, sens: "droite", petitRail: true }, ejection: V3(-0.06, -0.09, 0),
         mireNative: null, integre: true, grip: { centre: V3(0.0, -0.052), axe: V3(0.12, 1, 0).normalize() }, crosse: -0.27 };
-    },
-
-    // ✍️ LE PISTOLET : la carcasse sable, la culasse noire striée (elle recule à chaque tir !), les points lumineux des
-    // organes de visée, le chargeur dans la poignée.
-    pistolet(e, p) {
-      const by = 0.03, F = 0x9a8460;
-      e.cote([[-0.035, 0.0], [-0.035, 0.015], [0.15, 0.015], [0.15, 0.0], [0.07, 0.0], [0.06, -0.004], [0.03, -0.004], [0.012, 0.0]], 0.026, "poly", F, 0, 0.003);
-      e.cote([[0.0, 0.002], [0.074, 0.002], [0.078, -0.01], [0.062, -0.032], [0.0, -0.034]], 0.018, "poly", F, 0, 0.003, [[[0.008, -0.004], [0.062, -0.004], [0.064, -0.012], [0.054, -0.026], [0.008, -0.026]]]);
-      e.cote([[0.008, 0.0], [-0.004, -0.04], [-0.014, -0.1], [-0.052, -0.103], [-0.05, -0.08], [-0.04, -0.03], [-0.046, 0.0], [-0.05, 0.01], [-0.035, 0.012]], 0.03, "poly", F, 0, 0.006, null, 2);
-      if (!e.leger) for (let k = 0; k < 5; k++) for (const s of [-1, 1]) e.boite(0.03, 0.006, 0.002, -0.026 + k * 0.0012, -0.03 - k * 0.013, s * 0.0152, "poly", 0x7a6848, 0, 0, -0.2);
-      e.boite(0.004, 0.02, 0.006, 0.026, -0.012, 0, "metal", K.acier, 0, 0, -0.3);
-      const yb = rail(e, 0.09, 0.145, 0.0, 0, "bas", F);
-      e.dans("culasse", () => {
-        if (e.beau) culasseStriee(e, -0.042, 0.157, 0.014, 0.033, 0.013, K.noir, 6, -0.036, 0.006); // (armes réalistes, 2e passe)
-        else e.cote([[-0.042, 0.014], [-0.042, 0.043], [-0.032, 0.047], [0.15, 0.047], [0.157, 0.04], [0.157, 0.014]], 0.026, "metal", K.noir, 0, 0.003);
-        if (!e.leger) {
-          if (!e.beau) for (let k = 0; k < 6; k++) for (const s of [-1, 1]) e.boite(0.0025, 0.026, 0.002, -0.036 + k * 0.006, 0.03, s * 0.0132, "poly", 0x0a0a0a);
-          e.boite(0.04, 0.012, 0.002, 0.03, 0.035, 0.0132, "poly", K.fente);
-        }
-        e.boite(0.012, 0.008, 0.024, -0.026, 0.051, 0, "metal", K.noir);
-        e.boite(0.006, 0.007, 0.006, 0.145, 0.05, 0, "metal", K.noir);
-        for (const s of [-1, 1]) e.boule(0.0015, -0.032, 0.053, s * 0.006, "lumiere", 0x52ff60, 6);
-        e.boule(0.0015, 0.145, 0.0535, 0, "lumiere", 0x52ff60, 6);
-        e.tube(0.155, 0.159, 0.006, 0.006, by, 0, "poly", K.fente, 10);
-      });
-      e.dans("chargeur", () => {
-        const g = p.chargeur === "grand" || p.chargeur === "tambour";
-        e.cote([[-0.012, -0.01], [-0.042, -0.01], [-0.054, -0.105 - (g ? 0.035 : 0)], [-0.022, -0.105 - (g ? 0.035 : 0)]], 0.022, "metal", 0x343434, 0, 0.002);
-        e.boite(0.044, 0.008, 0.032, -0.035, -0.107 - (g ? 0.035 : 0), 0, "poly", K.noir, 0, 0, 0.1);
-        if (g) e.cote([[-0.018, -0.1], [-0.054, -0.1], [-0.058, -0.138], [-0.022, -0.138]], 0.032, "poly", F, 0, 0.004);
-      });
-      return { by, tip: 0.159, ch: { x: -0.035, y: -0.11 }, rail: null, dessous: { x: 0.12, y: yb }, garde: { centre: V3(-0.016, -0.072, -0.034), axe: V3(0.55, 1, 0.25).normalize(), sorte: "pistolet" },
-        lampe: null, laser: null, ejection: V3(0.03, 0.038, 0.014), mireNative: { ligne: 0.054, arriere: -0.028, z: 0, nom: "points lumineux" }, glissiere: { x: 0.035, y: 0.047 }, bout: { x: 0.159, y: by, r: 0.006 }, grip: { centre: V3(-0.026, -0.05), axe: V3(0.25, 1, 0).normalize() }, crosse: -0.05 };
     },
 
     // ✍️ RPG-7 : le tube vert, ses 2 protections en BOIS, l'entonnoir à l'arrière (le souffle sort par là !), les 2
@@ -1904,18 +1821,435 @@ Tanks.Armes3D = (function () {
   FABRIQUES.m870 = (e, p) => fusilPompe(e, p, false);
   FABRIQUES.m870dragon = (e, p) => fusilPompe(e, p, true);
 
+  // ================================================================== ✍️ LES ARMES DE MAXANCE (demande 128)
+  // Maxance a envoyé des photos d'armes : ✍️ « Ceci sera notre gun. » (un pistolet 1911), ✍️ « Ceci, le fusil d'assaut du
+  // médecin. » (un MP5), ✍️ « Ceci est l'arme bonus de l'ingénieur. » (un fusil 416 deux tons), ✍️ « Ce seront les fusils
+  // d'assaut, genre M4, de l'Assaut. » et ✍️ « Aussi, un pistolet mitrailleur disponible dans toutes les classes. » (le
+  // Scorpio). L'armurier les a refaits pièce par pièce d'après les FORMES des photos : aucune image n'est copiée, tout est
+  // taillé avec ses outils (pièces découpées biseautées, tubes tournés, vis, goupilles, stries, dents de rail, trous).
+
+  // LES MIRES RABATTABLES (sur le rail du dessus, dont le dessus est à la hauteur y) : LEVÉES quand on vise avec elles,
+  // COUCHÉES sous un viseur (comme les vraies : on les rabat d'un coup de pouce). Renvoie la hauteur de la ligne de visée
+  // (le centre du petit trou de la hausse = le haut du guidon).
+  function mireRabattable(e, x, y, arriere, levee, coul) {
+    const c = coul === undefined ? K.noir : coul;
+    e.boite(0.026, 0.007, 0.024, x, y + 0.0035, 0, "metal", c); // le collier sur le rail
+    if (!e.leger) e.disque(0.0026, 0.03, x + (arriere ? 0.006 : -0.006), y + 0.004, 0, "metal", K.acier, 10); // la vis qui serre le collier
+    if (!levee) {
+      e.boite(0.024, 0.005, 0.019, x + (arriere ? 0.003 : -0.003), y + 0.0095, 0, "metal", c);
+      return y + 0.022;
+    }
+    for (const s of [-1, 1]) e.boite(arriere ? 0.012 : 0.01, 0.026, 0.003, x, y + 0.019, s * 0.0092, "metal", c); // les 2 oreilles qui la protègent
+    if (arriere) {
+      e.boite(0.004, 0.012, 0.007, x, y + 0.012, 0, "metal", c);
+      e.anneau(0.0034, 0.0016, x, y + 0.022, 0, "metal", c); // l'œilleton : on vise à travers ce petit trou
+    } else {
+      e.boite(0.008, 0.006, 0.012, x, y + 0.009, 0, "metal", c);
+      e.boite(0.003, 0.014, 0.003, x, y + 0.015, 0, "metal", c); // le guidon : son haut est pile sur la ligne
+    }
+    return y + 0.022;
+  }
+  // LE GUIDON « A2 » du M4 court : le bloc des gaz serré sur le canon, la tour triangulaire, ses 2 oreilles et le guidon rond
+  // (son haut est à la hauteur « ligne »), le tenon de baïonnette et l'anneau de la sangle dessous.
+  function guidonA2(e, x, by, ligne, coul) {
+    e.tube(x - 0.013, x + 0.013, 0.0135, 0.0135, by, 0, "metal", coul, 18);
+    e.cote([[x - 0.013, by + 0.006], [x + 0.013, by + 0.006], [x + 0.008, ligne - 0.01], [x - 0.008, ligne - 0.01]], 0.013, "metal", coul, 0, 0.002);
+    for (const s of [-1, 1]) e.boite(0.011, 0.016, 0.0028, x, ligne - 0.004, s * 0.0062, "metal", coul);
+    e.cyl(0.0016, 0.0019, 0.013, x, ligne - 0.0065, 0, "metal", coul, 8);
+    e.boite(0.018, 0.009, 0.009, x + 0.003, by - 0.018, 0, "metal", coul);
+    if (!e.leger) {
+      e.boite(0.006, 0.01, 0.01, x - 0.007, by - 0.017, 0, "metal", coul);
+      e.anneau(0.0065, 0.0013, x - 0.007, by - 0.026, 0, "metal", K.acier);
+      e.tube(x - 0.018, x - 0.013, 0.0035, 0.0035, by + 0.0165, 0, "metal", coul, 8); // le tube des gaz qui entre dans le bloc
+    }
+  }
+  // LA LUNETTE DE COMBAT ×2,5 du fusil 416 (comme sur la photo de Maxance) : un corps forgé carré, un tube court au gros
+  // objectif, la fibre optique orange qui allume le réticule en plein jour, les 2 molettes et les écrous de serrage.
+  // Épaulé, on voit le réticule en CHEVRON du viseur ×2 (tableau.js).
+  function lunetteCombat(e, x, y, z) {
+    z = z || 0;
+    const yc = y + 0.042, N = 0x2a2c2f;
+    e.boite(0.07, 0.008, 0.026, x, y + 0.004, z, "metal", K.noir);
+    e.cote([[x - 0.032, y + 0.006], [x - 0.036, y + 0.027], [x + 0.032, y + 0.027], [x + 0.038, y + 0.006]], 0.022, "metal", N, z, 0.003);
+    if (!e.leger) for (const s of [-1, 1]) e.disque(0.005, 0.004, x + 0.018, y + 0.012, z + s * 0.0125, "metal", K.acier, 12);
+    e.tour([[x - 0.06, 0.0125], [x - 0.056, 0.0145], [x - 0.04, 0.0145], [x - 0.032, 0.0135], [x + 0.012, 0.0135], [x + 0.028, 0.0195], [x + 0.06, 0.0195], [x + 0.062, 0.0185]], yc, z, "metal", N, 24);
+    e.boite(0.07, 0.022, 0.026, x - 0.006, yc - 0.008, z, "metal", N); // le dos carré qui relie le tube au corps
+    e.tube(x - 0.059, x - 0.057, 0.0115, 0.0115, yc, z, "verre", null, 20);
+    e.tube(x + 0.057, x + 0.0605, 0.0172, 0.0172, yc, z, "verre", null, 22);
+    e.boite(0.03, 0.004, 0.008, x + 0.028, yc + 0.0158, z, "lumiere", 0xff7a1a);
+    if (!e.leger) {
+      e.cyl(0.0055, 0.0055, 0.008, x - 0.008, yc + 0.0165, z, "metal", N, 12);
+      e.cyl(0.0055, 0.0055, 0.008, x - 0.008, yc, z + 0.0165, "metal", N, 12, Math.PI / 2);
+    }
+    return { ligne: yc, arriere: x - 0.06, z, nom: "lunette de combat ×2,5", x2: true };
+  }
+  // LE LONG SILENCIEUX ROND (du fusil 416) : vissé sur un petit cache-flamme, 2 rainures pour la main, et 3 rangées de
+  // TROUS d'aération près du bout (les gaz chauds sortent par là, tout doucement)
+  function silencieuxLong(e, x0, y, r, L) {
+    const R = 0.0185, c = 0x202225;
+    e.tube(x0 - 0.012, x0 + 0.002, r * 1.4, r * 1.4, y, 0, "metal", 0x2c2e31, 6, Math.PI / 6);
+    e.tour([[x0, r * 1.5], [x0 + 0.006, R * 0.9], [x0 + 0.014, R], [x0 + L - 0.012, R], [x0 + L - 0.002, R * 0.86], [x0 + L, R * 0.62], [x0 + L, r * 0.85]], y, 0, "metal", c, 24);
+    if (!e.leger) {
+      for (const k of [0.024, 0.031]) e.tube(x0 + k, x0 + k + 0.0024, R + 0.0006, R + 0.0006, y, 0, "metal", 0x0f0f10, 24);
+      if (e.beau) for (let rg = 0; rg < 3; rg++) for (let k = 0; k < 8; k++) {
+        const a = (k / 8) * Math.PI * 2 + (rg % 2) * (Math.PI / 8), xx = x0 + L - 0.052 + rg * 0.014;
+        e.cyl(0.0024, 0.0024, 0.004, xx, y + Math.cos(a) * (R - 0.0013), Math.sin(a) * (R - 0.0013), "poly", K.fente, 8, a);
+      }
+    }
+    e.tube(x0 + L - 0.001, x0 + L + 0.0005, r * 0.75, r * 0.75, y, 0, "poly", K.fente, 10);
+    return x0 + L;
+  }
+
+  // ✍️ LA FAMILLE « AR » (le M4 de l'Assaut, le M4 court, le fusil 416 de l'Ingénieur) : la même mécanique, d'autres habits.
+  //   - la carcasse INFÉRIEURE (le puits du chargeur évasé, le pontet, les goupilles de démontage, le bouton du chargeur à
+  //     droite, l'arrêtoir de culasse et le sélecteur à gauche) et la carcasse SUPÉRIEURE (le rail plat, la fenêtre
+  //     d'éjection et son capot ouvert, le déflecteur de douilles, l'assistance de fermeture, le levier d'armement en T) ;
+  //   - o.gm : le garde-main « quad » (4 rails : dessus, dessous, gauche, droite) ou « hk » (long, rails dessus et dessous,
+  //     des fentes sur les flancs, un petit rail devant pour la lampe) ;
+  //   - o.avant : les mires « flip » (rabattables) ou le guidon « a2 » (la tour du bloc des gaz) ;
+  //   - o.stock : la crosse « sopmod » (avec ses poches à piles), « moe » (fine, évidée) ou « hk » (large, avec l'appui-joue) ;
+  //   - le tube de crosse (avec son écrou crénelé et ses crans de réglage), le chargeur STANAG en alu et sa boucle ;
+  //   - o.lunette / o.silencieux : la lunette de combat et le long silencieux montés d'origine (le fusil 416).
+  function fusilAR(e, p, o) {
+    const by = 0.045, A = o.corps, N = K.noir, CR = o.crosse || N, r = o.rentre || 0, hg = o.hg, mire = p.viseur === "mire" && !o.lunette;
+    e.cote([[-0.072, 0.0], [-0.072, 0.03], [0.112, 0.03], [0.112, 0.012], [0.104, 0.0], [0.1, -0.038], [0.034, -0.038], [0.03, -0.006], [0.014, 0.0]], 0.032, "metal", A, 0, 0.003);
+    e.cote([[-0.078, 0.03], [-0.078, 0.064], [0.116, 0.064], [0.116, 0.03]], 0.03, "metal", A, 0, 0.003);
+    e.boite(0.045, 0.014, 0.002, 0.025, 0.046, 0.0158, "poly", K.fente);
+    e.barre([-0.038, 0.052, 0.012], [-0.014, 0.052, 0.022], 0.0055, "metal", A);
+    e.boite(0.012, 0.014, 0.008, -0.004, 0.05, 0.018, "metal", A);
+    e.boite(0.014, 0.007, 0.04, -0.086, 0.059, 0, "metal", A);
+    e.boite(0.194, 0.006, 0.022, 0.019, 0.066, 0, "metal", A);
+    e.boite(0.014, 0.008, 0.006, -0.025, 0.012, -0.018, "metal", N); // le sélecteur de tir (à gauche, sous le pouce)
+    if (e.beau) {
+      e.boite(0.07, 0.007, 0.036, 0.067, -0.0355, 0, "metal", A); // la lèvre évasée du puits de chargeur
+      for (const [x, y] of [[-0.062, 0.022], [0.098, 0.02], [-0.062, 0.042]]) e.disque(0.0032, 0.0345, x, y, 0, "metal", 0x4a4c50, 14); // les goupilles
+      e.disque(0.0048, 0.004, 0.034, 0.012, 0.0168, "metal", 0x2c2e31, 16); // le bouton du chargeur (à droite)
+      e.cote([[0.044, 0.006], [0.07, 0.006], [0.074, 0.018], [0.05, 0.02]], 0.004, "metal", A, -0.018, 0.0012); // la nervure du puits (à gauche)
+      e.cote([[0.002, 0.012], [0.016, 0.012], [0.02, 0.028], [0.006, 0.03], [0.0, 0.022]], 0.004, "metal", A, -0.0175, 0.0012); // l'arrêtoir de culasse (à gauche)
+      e.boite(0.048, 0.0016, 0.012, 0.026, 0.0378, 0.0215, "metal", A, -0.25); // le capot de la fenêtre, ouvert
+      e.cote([[-0.006, 0.036], [0.004, 0.036], [0.004, 0.058], [-0.002, 0.06], [-0.006, 0.056]], 0.007, "metal", A, 0.0185, 0.0015); // le déflecteur de douilles
+      e.barre([-0.046, 0.052, 0.0085], [-0.039, 0.052, 0.0115], 0.0072, "metal", 0x2c2e31, 16); // le bouton de l'assistance
+      for (const s of [-1, 1]) e.boite(0.01, 0.006, 0.012, -0.088, 0.059, s * 0.022, "metal", A); // les oreilles du levier d'armement
+    }
+    // ---- la CROSSE sur son tube
+    if (!crosseSpeciale(e, p, -0.072, by, CR)) {
+      e.tube(-0.262 + r, -0.072, 0.0145, 0.0145, by, 0, "metal", 0x2c2e31, 16); // le tube de crosse
+      e.tube(-0.084, -0.074, 0.019, 0.019, by, 0, "metal", A, 8); // la plaque de fixation (avec la boucle de la sangle)
+      if (e.beau) {
+        e.tube(-0.096, -0.086, 0.0172, 0.0172, by, 0, "metal", 0x2c2e31, 18); // l'écrou crénelé
+        for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; e.boite(0.0105, 0.0035, 0.003, -0.091, by + Math.sin(a) * 0.0168, Math.cos(a) * 0.0168, "poly", K.fente, a); }
+        for (let k = 0; k < 6; k++) e.boite(0.003, 0.002, 0.006, -0.112 - k * 0.0135 + r * 0.4, by - 0.0142, 0, "poly", K.fente); // les crans de réglage
+      }
+      if (o.stock === "moe") { // la crosse FINE et évidée (M4 court)
+        e.cote([[-0.2 + r, 0.066], [-0.2 + r, 0.026], [-0.236 + r, 0.024], [-0.334 + r, -0.046], [-0.344 + r, -0.046], [-0.344 + r, 0.074], [-0.334 + r, 0.078], [-0.24 + r, 0.072]], 0.036, "poly", CR, 0, 0.006,
+          [[[-0.262 + r, 0.019], [-0.328 + r, 0.019], [-0.328 + r, -0.026]]], 2, { x: [-0.344 + r, 1, -0.2 + r, 0.85] });
+        e.boite(0.012, 0.124, 0.04, -0.35 + r, 0.014, 0, "poly", K.caoutchouc);
+        e.boite(0.034, 0.008, 0.012, -0.222 + r, 0.021, 0, "poly", CR, 0, 0, 0.35); // le levier de réglage, dessous
+        if (!e.leger) e.disque(0.0045, 0.042, -0.316 + r, 0.062, 0, "metal", K.acier, 12); // la prise de la sangle
+      } else if (o.stock === "hk") { // la crosse LARGE du 416, avec son appui-joue
+        e.cote([[-0.19 + r, 0.068], [-0.19 + r, 0.024], [-0.226 + r, 0.02], [-0.33 + r, -0.05], [-0.348 + r, -0.05], [-0.348 + r, 0.078], [-0.334 + r, 0.084], [-0.25 + r, 0.08]], 0.046, "poly", CR, 0, 0.007,
+          [[[-0.256 + r, 0.013], [-0.318 + r, 0.013], [-0.318 + r, -0.026]]], 2, { x: [-0.348 + r, 1, -0.19 + r, 0.8] });
+        e.galet(0.1, 0.02, 0.05, -0.29 + r, 0.08, 0, "poly", CR, 0.3);
+        e.boite(0.014, 0.132, 0.052, -0.354 + r, 0.015, 0, "poly", K.caoutchouc);
+        e.boite(0.034, 0.009, 0.014, -0.212 + r, 0.019, 0, "poly", CR, 0, 0, 0.3);
+      } else { // la crosse « SOPMOD » (M4) : le corps, l'appui-joue bombé, les 2 poches à piles, la plaque de couche
+        e.cote([[-0.2 + r, 0.062], [-0.2 + r, 0.026], [-0.3 + r, -0.03], [-0.335 + r, -0.048], [-0.342 + r, -0.048], [-0.342 + r, 0.074], [-0.33 + r, 0.078], [-0.24 + r, 0.07]], 0.04, "poly", CR, 0, 0.006, null, 2, { x: [-0.34 + r, 1, -0.2 + r, 0.82] });
+        e.galet(0.12, 0.022, 0.046, -0.275 + r, 0.072, 0, "poly", CR, 0.32);
+        for (const zz of [-1, 1]) e.galet(0.1, 0.034, 0.016, -0.262 + r, 0.03, zz * 0.026, "poly", CR, 0.35, 12, 0, 0, 0.42);
+        e.boite(0.014, 0.126, 0.046, -0.348 + r, 0.014, 0, "poly", K.caoutchouc);
+        e.boite(0.03, 0.01, 0.03, -0.22 + r, 0.018, 0, "poly", CR, 0, 0, 0.5);
+        e.boite(0.016, 0.01, 0.03, -0.31 + r, -0.03, 0, "metal", K.acier, 0, 0, 0.5);
+      }
+    }
+    poignee(e, "a2", N);
+    pontet(e, 0.008, 0.075, 0.0, A);
+    const ch = chargeur(e, { l: 0.15, p: 0.058, w: 0.022, k: 0.2, a: 0.05, coul: o.chargeur || 0x2f3134, mat: "metal", nervures: "stanag", boucle: o.boucle, double: true }, p.chargeur, 0.067, -0.03);
+    // ---- le GARDE-MAIN et ses rails
+    e.tube(0.114, 0.124, 0.0265, 0.0265, by, 0, "metal", 0x2c2e31, 24); // l'écrou du canon
+    let yb, zl;
+    if (o.gm === "hk") {
+      e.boite(hg - 0.122, 0.05, 0.05, (0.122 + hg) / 2, by - 0.001, 0, "metal", A);
+      yb = rail(e, 0.13, hg - 0.004, by - 0.026, 0, "bas", A);
+      zl = rail(e, hg - 0.09, hg - 0.006, by, -0.025, "gauche", A);
+      rail(e, hg - 0.09, hg - 0.006, by, 0.025, "droite", A);
+      if (!e.leger) for (let x = 0.16; x < hg - 0.11; x += 0.042) for (const s of [-1, 1]) for (const yy of [by + 0.008, by - 0.01]) e.fenteRonde(x - 0.014, x + 0.014, yy, 0.0075, s * 0.0245, 0.003);
+    } else {
+      e.boite(hg - 0.122, 0.048, 0.044, (0.122 + hg) / 2, by, 0, "metal", A);
+      yb = rail(e, 0.13, hg - 0.004, by - 0.024, 0, "bas", A);
+      zl = rail(e, 0.13, hg - 0.004, by, -0.022, "gauche", A);
+      rail(e, 0.13, hg - 0.004, by, 0.022, "droite", A);
+    }
+    if (e.beau) e.tube(hg - 0.004, hg + 0.001, 0.02, 0.02, by, 0, "metal", 0x18191b, 20); // le bouchon avant du garde-main
+    const yr = rail(e, -0.076, hg - 0.004, 0.069, 0);
+    // ---- les MIRES (levées sans viseur ; couchées sous un viseur), ou le guidon A2
+    const ligne = mireRabattable(e, -0.067, yr, true, mire, N);
+    if (o.avant === "a2") guidonA2(e, hg + 0.03, by, ligne, N);
+    else mireRabattable(e, hg - 0.02, yr, false, mire, N);
+    // ---- le CANON et sa bouche (le 416 : son long silencieux d'origine, sauf si l'atelier visse autre chose)
+    const lc = LONGUEUR_CANON(p.canon, o.canon, o.canon + 0.09, o.avant === "a2" ? 0.055 : o.canon * 0.4);
+    canonTube(e, p, hg, hg + lc, by, 0.0095);
+    const tip = o.silencieux && p.bouche === "aucune" ? silencieuxLong(e, hg + lc, by, 0.0095, 0.2) : bout(e, p.bouche, hg + lc, by, 0.0095, "a2");
+    return { by, tip, ch, rail: { xa: -0.075, xb: hg - 0.01, y: yr }, dessous: { x: hg - 0.09, y: yb, rail: true }, garde: { centre: V3(Math.min(0.24, hg - 0.09), by - 0.03), axe: V3(1, 0, 0), sorte: "dessous" },
+      lampe: { x: hg - 0.012, y: by, z: zl, sens: -1 }, laser: { x: hg - (o.avant === "a2" ? 0.06 : 0.075), y: yr, z: 0, sens: "haut" }, ejection: V3(0.025, 0.047, 0.017),
+      mireNative: { ligne, arriere: -0.071, z: 0, nom: "mires rabattables" }, crosse: -0.35 + r,
+      viseurDefaut: o.lunette ? (e2, y) => lunetteCombat(e2, 0.02, y, 0) : null, poigneeDefaut: o.lunette ? "vertical" : null, lampeDefaut: !!o.lunette };
+  }
+  // ✍️ AR-4 (« genre M4 », l'arme de l'Assaut) : tout noir, le garde-main à 4 rails, les mires rabattables, la crosse SOPMOD,
+  // le cache-flamme « cage à oiseaux », le chargeur STANAG et sa boucle.
+  FABRIQUES.ar4 = (e, p) => fusilAR(e, p, { corps: K.anodise, hg: 0.38, canon: 0.1, gm: "quad", avant: "flip", stock: "sopmod", boucle: 0x25292a });
+  // ✍️ M4 COURTE (la 2e de la photo) : un garde-main court à 4 rails, le guidon A2 sur le bloc des gaz, la hausse rabattable,
+  // la crosse fine évidée un peu rentrée, un canon court et la boucle verte sur le chargeur.
+  FABRIQUES.m4courte = (e, p) => fusilAR(e, p, { corps: K.anodise, hg: 0.25, canon: 0.08, gm: "quad", avant: "a2", stock: "moe", rentre: 0.03, boucle: 0x37432f });
+  // ✍️ K416 (l'arme bonus de l'Ingénieur, « deux tons ») : la carcasse et le long garde-main couleur SABLE, la crosse, la poignée
+  // et le chargeur NOIRS ; d'origine : la lunette de combat, le long silencieux, la poignée verticale et la lampe sur le côté.
+  FABRIQUES.k416 = (e, p) => fusilAR(e, p, { corps: K.sable, hg: 0.42, canon: 0.03, gm: "hk", avant: "flip", stock: "hk", chargeur: 0x26282b, lunette: true, silencieux: true });
+
+  // ✍️ MP5 (« le fusil d'assaut du médecin ») : la carcasse ronde en tôle à nervures et son petit rail, la hausse à TAMBOUR, le
+  // guidon dans son anneau, le tube d'armement au-dessus du canon et son levier à gauche, le large garde-main avec sa LAMPE
+  // INTÉGRÉE devant (la lentille brille quand l'atelier y met une lampe), le chargeur fin et courbe, la poignée en polymère
+  // et la crosse en acier qui rentre (2 rails et une plaque de couche courbe).
+  FABRIQUES.mp5 = (e, p) => {
+    const by = 0.035, N = 0x2e3033, P2 = K.noir, allumee = p.lampe !== "aucune";
+    e.cote([[-0.095, by - 0.013], [-0.095, by + 0.024], [-0.084, by + 0.036], [0.15, by + 0.036], [0.15, by - 0.013]], 0.038, "metal", N, 0, 0.009, null, 3);
+    if (!e.leger) for (const s of [-1, 1]) for (const yy of [by + 0.006, by + 0.021]) e.boite(0.2, 0.003, 0.002, 0.03, yy, s * 0.0193, "metal", 0x1c1d1f);
+    e.boite(0.05, 0.012, 0.002, 0.05, by + 0.014, 0.0192, "poly", K.fente); // la fenêtre d'éjection
+    const yr = rail(e, -0.058, 0.13, by + 0.036, 0);
+    // la HAUSSE À TAMBOUR : on vise à travers un des trous du tambour (on le tourne pour viser plus loin)
+    e.boite(0.024, 0.016, 0.026, -0.072, by + 0.044, 0, "metal", N);
+    e.anneau(0.0072, 0.0042, -0.072, by + 0.062, 0, "metal", N);
+    for (const s of [-1, 1]) e.disque(0.0112, 0.004, -0.072, by + 0.062, s * 0.0118, "metal", N, 16);
+    // le TUBE D'ARMEMENT, son bouchon, sa fente et son levier (à gauche)
+    e.tube(0.15, 0.318, 0.0115, 0.0115, by + 0.029, 0, "metal", N, 14);
+    e.tour([[0.318, 0.0115], [0.322, 0.009], [0.322, 0.002]], by + 0.029, 0, "metal", N, 14);
+    if (!e.leger) e.boite(0.07, 0.003, 0.002, 0.235, by + 0.029, -0.0115, "poly", K.fente);
+    e.barre([0.265, by + 0.029, -0.01], [0.258, by + 0.044, -0.034], 0.0032, "metal", N);
+    e.galet(0.012, 0.012, 0.016, 0.257, by + 0.046, -0.037, "poly", K.noir, 0.4);
+    // le GUIDON dans son anneau, sur un pied posé sur le tube
+    e.cote([[0.296, by + 0.039], [0.324, by + 0.039], [0.32, by + 0.05], [0.3, by + 0.05]], 0.014, "metal", N, 0, 0.002);
+    e.anneau(0.0115, 0.0024, 0.31, by + 0.062, 0, "metal", N);
+    e.boite(0.003, 0.012, 0.003, 0.31, by + 0.056, 0, "metal", N);
+    // le GARDE-MAIN LARGE, sa lampe intégrée, ses rainures et ses 2 interrupteurs à pression
+    e.cote([[0.152, by + 0.012], [0.164, by + 0.017], [0.284, by + 0.017], [0.298, by + 0.01], [0.305, by - 0.01], [0.305, by - 0.04], [0.294, by - 0.049], [0.176, by - 0.049], [0.16, by - 0.04], [0.152, by - 0.024]], 0.048, "poly", P2, 0, 0.011, null, 3);
+    e.tour([[0.301, 0.0145], [0.308, 0.0152], [0.312, 0.0137], [0.312, 0.0118]], by - 0.026, 0, "poly", 0x1a1b1d, 22); // la couronne
+    e.tour([[0.299, 0.0035], [0.3105, 0.0112]], by - 0.026, 0, "metal", 0xc8ccd0, 18); // le réflecteur
+    e.tube(0.3108, 0.3116, 0.0118, 0.0118, by - 0.026, 0, allumee ? "lumiere" : "vitre", allumee ? 0xe8eef4 : null, 22); // la vitre
+    e.tube(0.3052, 0.3058, 0.0092, 0.0092, by, 0, "poly", K.fente, 14); // le trou d'où sort le canon
+    if (!e.leger) for (const s of [-1, 1]) {
+      for (const yy of [by - 0.004, by - 0.038]) e.boite(0.11, 0.0025, 0.002, 0.225, yy, s * 0.0238, "poly", K.fente);
+      e.boite(0.045, 0.016, 0.003, 0.215, by - 0.021, s * 0.024, "poly", 0x161616);
+    }
+    // le bloc de détente en polymère, la poignée, le pontet, le sélecteur, les goupilles, le puits et le chargeur
+    e.cote([[0.04, by - 0.01], [-0.075, by - 0.01], [-0.08, 0.0], [0.03, 0.0]], 0.034, "poly", P2, 0, 0.004);
+    poignee(e, "ar", P2);
+    pontet(e, 0.006, 0.05, 0.0, P2);
+    e.disque(0.006, 0.003, -0.03, 0.014, -0.0185, "metal", N, 14);
+    e.boite(0.016, 0.005, 0.003, -0.022, 0.018, -0.0195, "metal", N, 0, 0, 0.5);
+    if (e.beau) for (const x of [-0.083, 0.035]) e.disque(0.0028, 0.04, x, by - 0.004, 0, "metal", K.acier, 12);
+    e.boite(0.05, 0.03, 0.03, 0.065, by - 0.025, 0, "metal", N);
+    e.boite(0.006, 0.014, 0.012, 0.036, 0.002, 0, "metal", N, 0, 0, 0.3); // le levier du chargeur
+    const ch = chargeur(e, { l: 0.15, p: 0.032, w: 0.022, k: 0.33, a: 0.12, coul: 0x2c2d30, mat: "metal", nervures: "ak" }, p.chargeur, 0.066, -0.006);
+    if (!crosseSpeciale(e, p, -0.095, by + 0.008, N)) {
+      e.boite(0.016, 0.03, 0.04, -0.1, by + 0.006, 0, "metal", N); // le verrou de crosse
+      for (const s of [-1, 1]) e.barre([-0.1, by + 0.012, s * 0.016], [-0.322, by + 0.0, s * 0.017], 0.0042, "metal", N, 10);
+      e.cote([[-0.318, by + 0.03], [-0.334, by + 0.034], [-0.344, by + 0.012], [-0.347, -0.02], [-0.342, -0.062], [-0.326, -0.066], [-0.33, -0.024], [-0.326, by + 0.008]], 0.05, "metal", N, 0, 0.004, null, 2);
+      e.boite(0.006, 0.096, 0.046, -0.349, -0.016, 0, "poly", K.caoutchouc);
+    }
+    const lc = LONGUEUR_CANON(p.canon, 0.03, 0.085, 0.006);
+    canonTube(e, p, 0.3, 0.318 + lc, by, 0.0085);
+    const tip = bout(e, p.bouche, 0.318 + lc, by, 0.0085, "mp5");
+    return { by, tip, ch, rail: { xa: -0.058, xb: 0.125, y: yr }, dessous: { x: 0.235, y: by - 0.049 }, garde: { centre: V3(0.22, by - 0.052), axe: V3(1, 0, 0), sorte: "dessous" },
+      lampe: { x: 0.312, y: by - 0.026, z: 0, sens: -1, integree: true }, laser: { x: 0.24, y: by - 0.016, z: 0.024, sens: "droite", petitRail: true }, ejection: V3(0.05, by + 0.016, 0.02),
+      mireNative: { ligne: by + 0.062, arriere: -0.08, z: 0, nom: "hausse tambour et guidon" }, crosse: -0.35 };
+  };
+
+  // ✍️ M1911 (« Ceci sera notre gun. ») : l'acier BLEUI, la culasse aux stries devant ET derrière (elle recule à chaque tir),
+  // la bague du canon tout devant, le chien rond évidé, la longue sûreté de poignée (la « queue de castor »), la sûreté et
+  // l'arrêtoir à gauche, la détente plate à 3 trous, les plaquettes en BOIS QUADRILLÉ et leurs 2 vis, le dos plat strié.
+  FABRIQUES.pistolet = (e, p) => {
+    const by = 0.03, B = K.bleui, cercle = (cx, cy, rr, n) => { const t = []; for (let k = 0; k < (n || 10); k++) { const a = (k / (n || 10)) * Math.PI * 2; t.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]); } return t; };
+    // la CARCASSE (le cache-poussière devant, le pontet, la poignée bien penchée vers l'arrière)
+    e.cote([[-0.046, 0.0125], [0.148, 0.0125], [0.15, 0.006], [0.144, 0.0], [0.072, 0.0], [0.07, -0.003], [0.014, -0.003], [0.012, 0.0], [0.004, -0.028], [-0.008, -0.064], [-0.018, -0.092], [-0.024, -0.098], [-0.052, -0.1], [-0.058, -0.094], [-0.05, -0.06], [-0.04, -0.022], [-0.04, -0.004], [-0.046, 0.004]], 0.021, "metal", B, 0, 0.003, null, 2);
+    // le pontet, et la détente plate à 3 trous
+    e.cote(rectRond(0.01, -0.03, 0.074, 0.001, 0.008), 0.01, "metal", B, 0, 0.0018, [rectRond(0.0145, -0.0255, 0.069, -0.002, 0.006)], 2);
+    e.cote(rectRond(0.0235, -0.021, 0.0335, 0.001, 0.003, 2), 0.0062, "metal", 0x5c6168, 0, 0.0009, e.leger ? null : [cercle(0.0272, -0.0045, 0.0017), cercle(0.0302, -0.0095, 0.0017), cercle(0.0272, -0.0148, 0.0017)], 2);
+    // la sûreté de poignée (« queue de castor » : elle protège la main du chien) et le chien rond évidé
+    e.cote([[-0.037, -0.002], [-0.04, 0.011], [-0.05, 0.0135], [-0.064, 0.012], [-0.073, 0.0065], [-0.071, 0.0015], [-0.058, 0.002], [-0.049, -0.006], [-0.046, -0.022], [-0.045, -0.034], [-0.04, -0.03]], 0.017, "metal", B, 0, 0.003, null, 2);
+    const hx = -0.058, hy = 0.035, chien = [[-0.048, 0.012], [-0.046, 0.024]];
+    for (let k = 0; k <= 10; k++) { const a = -0.35 + (k / 10) * 3.6; chien.push([hx + Math.cos(a) * 0.0072, hy + Math.sin(a) * 0.0072]); }
+    chien.push([-0.057, 0.012]);
+    e.cote(chien, 0.0075, "metal", B, 0, 0.0012, e.leger ? null : [cercle(hx, hy, 0.0031)], 2);
+    // à gauche : la sûreté (sous le pouce), l'arrêtoir de culasse (et le bout de son axe à droite), le bouton du chargeur
+    e.cote([[-0.04, 0.008], [-0.03, 0.011], [-0.018, 0.012], [-0.008, 0.016], [-0.006, 0.02], [-0.016, 0.019], [-0.03, 0.017], [-0.042, 0.015]], 0.0024, "metal", B, -0.0117, 0.0007);
+    e.cote([[0.004, 0.004], [0.032, 0.006], [0.036, 0.011], [0.03, 0.0145], [0.012, 0.012], [0.004, 0.009]], 0.0024, "metal", B, -0.0117, 0.0007);
+    e.disque(0.0028, 0.0236, 0.032, 0.0085, 0, "metal", B, 12);
+    e.disque(0.0034, 0.003, 0.002, -0.01, -0.0108, "metal", B, 14);
+    if (!e.leger) { // les goupilles du chien, de la gâchette et du boîtier de ressort (on voit leurs bouts des 2 côtés), le tube du poussoir
+      for (const [x, y, rr] of [[-0.0455, 0.005, 0.0021], [-0.034, 0.0035, 0.0019], [-0.0545, -0.088, 0.0017]]) e.disque(rr, 0.0222, x, y, 0, "metal", 0x454b55, 10);
+      e.tube(-0.03, -0.006, 0.0021, 0.0021, 0.0152, -0.0125, "metal", B, 10);
+    }
+    // les PLAQUETTES en bois quadrillé, chacune avec ses 2 vis (une fente pour le tournevis)
+    for (const s of [-1, 1]) {
+      e.cote([[-0.002, -0.01], [0.001, -0.015], [-0.017, -0.084], [-0.021, -0.088], [-0.048, -0.09], [-0.052, -0.086], [-0.038, -0.016], [-0.034, -0.01]], 0.0042, "quadrille", null, s * 0.0126, 0.0014, null, 2);
+      for (const [x, y] of [[-0.015, -0.022], [-0.034, -0.079]]) {
+        e.disque(0.0027, 0.0012, x, y, s * 0.0151, "metal", 0x8a8e94, 12);
+        if (!e.leger) e.boite(0.0045, 0.0008, 0.0006, x, y, s * 0.0158, "poly", K.fente);
+      }
+    }
+    // le dos plat strié (le boîtier du ressort)
+    if (!e.leger) for (let k = 0; k < 9; k++) { const t = k / 8; e.boite(0.0014, 0.0011, 0.016, -0.0508 - t * 0.0078, -0.063 - t * 0.029, 0, "poly", K.fente); }
+    e.dans("culasse", () => {
+      if (e.beau) culasseStriee(e, -0.05, 0.164, 0.012, 0.031, 0.0115, B, 9, -0.0445, 0.0042, { xs: 0.124, n: 7 }, 0.1);
+      else e.cote([[-0.05, 0.012], [-0.05, 0.043], [0.164, 0.043], [0.164, 0.012]], 0.023, "metal", B, 0, 0.003);
+      e.boite(0.042, 0.011, 0.002, 0.034, by + 0.003, 0.0112, "poly", K.fente); // la fenêtre d'éjection (à droite)
+      if (!e.leger) e.boite(0.032, 0.007, 0.001, 0.037, by + 0.0035, 0.0121, "metal", 0x70747a); // le canon qu'on voit dans la fenêtre
+      for (const s of [-1, 1]) e.boite(0.009, 0.0055, 0.0065, -0.042, 0.0455, s * 0.0055, "metal", B); // la hausse et son cran
+      e.boite(0.009, 0.003, 0.0045, -0.042, 0.0445, 0, "metal", B);
+      e.cote([[0.142, 0.0422], [0.152, 0.0422], [0.151, 0.048], [0.146, 0.048]], 0.003, "metal", B, 0, 0.0004); // le guidon
+      if (!e.leger) {
+        for (const s of [-1, 1]) e.boule(0.0011, -0.0466, 0.0465, s * 0.0055, "poly", K.blanc, 6); // les 3 points blancs
+        e.boule(0.0011, 0.1455, 0.0465, 0, "poly", K.blanc, 6);
+      }
+      e.tube(0.162, 0.168, 0.0078, 0.0078, by, 0, "metal", 0x3a3f48, 20); // la bague du canon
+      e.tube(0.1675, 0.1686, 0.0056, 0.0056, by, 0, "poly", K.fente, 14);
+      e.tube(0.161, 0.166, 0.004, 0.004, 0.0175, 0, "metal", B, 14); // le bouchon du ressort de rappel
+      if (!e.leger) e.tube(0.1655, 0.1663, 0.0024, 0.0024, 0.0175, 0, "poly", K.fente, 10);
+    });
+    e.dans("chargeur", () => {
+      const g = p.chargeur === "grand" || p.chargeur === "tambour";
+      e.cote([[-0.014, -0.008], [-0.04, -0.008], [-0.054, -0.096], [-0.026, -0.096]], 0.018, "metal", 0x3a3c40, 0, 0.002);
+      if (g) e.cote([[-0.024, -0.094], [-0.056, -0.096], [-0.064, -0.134], [-0.032, -0.134]], 0.03, "poly", K.noir, 0, 0.004);
+      e.boite(0.036, 0.006, 0.024, -0.039 - (g ? 0.009 : 0), -0.1015 - (g ? 0.035 : 0), 0, "metal", B, 0, 0, 0.25);
+    });
+    return { by, tip: 0.1686, ch: { x: -0.039, y: -0.1 }, rail: null, dessous: null, garde: { centre: V3(-0.022, -0.068, -0.034), axe: V3(0.6, 1, 0.25).normalize(), sorte: "pistolet" },
+      lampe: null, laser: null, ejection: V3(0.034, 0.035, 0.013), mireNative: { ligne: 0.0465, arriere: -0.047, z: 0, nom: "hausse et guidon à points blancs" }, glissiere: { x: 0.03, y: 0.043 },
+      bout: { x: 0.1686, y: by, r: 0.0056 }, grip: { centre: V3(-0.03, -0.05), axe: V3(0.28, 1, 0).normalize() }, crosse: -0.07 };
+  };
+
+  // ✍️ RG-6 (« le lance-grenades pour l'édition moderne ») : un GROS BARILLET à 6 chambres de 40 mm (il tourne d'un cran à
+  // chaque tir, voir « barillet »), son axe, ses cannelures, les plaques avant et arrière et le pont du dessus avec son rail et
+  // son viseur réflexe, le canon court et large dans un garde-main à 4 rails, la poignée verticale, la poignée « A2 », le
+  // pontet, et la crosse réglable sur son tube. On le tient comme un fusil.
+  FABRIQUES.rg6 = (e, p) => {
+    const by = 0.062, N = 0x2b2c2f, P2 = K.noir, ya = by - 0.044, dx = -0.06, dy = by - 0.045;
+    e.dans("barillet", () => {
+      e.tour([[-0.03, 0.056], [-0.026, 0.065], [0.081, 0.065], [0.086, 0.058], [0.086, 0.014], [-0.03, 0.014]], ya, 0, "metal", N, 36);
+      for (let k = 0; k < 6; k++) {
+        const a = (k / 6) * Math.PI * 2 + Math.PI / 6, b = (k / 6) * Math.PI * 2;
+        if (!e.leger) e.boite(0.094, 0.013, 0.012, 0.028, ya + Math.cos(a) * 0.063, Math.sin(a) * 0.063, "metal", 0x18191b, a); // les cannelures
+        e.tube(0.0855, 0.0868, 0.0205, 0.0205, ya + Math.cos(b) * 0.042, Math.sin(b) * 0.042, "poly", K.fente, 18); // les 6 chambres
+        if (e.beau) e.tube(0.0835, 0.0858, 0.0128, 0.0128, ya + Math.cos(b) * 0.042, Math.sin(b) * 0.042, "metal", 0x6a7a3a, 14); // l'ogive verte de la grenade, au fond
+      }
+    });
+    e.tube(-0.036, 0.096, 0.0085, 0.0085, ya, 0, "metal", K.acier, 14); // l'axe du barillet
+    // les plaques avant et arrière, le pont du dessus et son rail, la barre du dessous
+    e.cote(rectRond(-0.042, ya - 0.03, -0.03, by + 0.034, 0.005), 0.05, "metal", N, 0, 0.003);
+    e.cote(rectRond(0.088, ya - 0.024, 0.102, by + 0.034, 0.006), 0.056, "metal", N, 0, 0.003);
+    e.boite(0.144, 0.012, 0.034, 0.03, by + 0.03, 0, "metal", N);
+    const yr = rail(e, -0.058, 0.1, by + 0.036, 0);
+    e.barre([-0.036, ya - 0.026, 0], [0.095, ya - 0.022, 0], 0.005, "metal", N);
+    if (!e.leger) {
+      e.boite(0.02, 0.01, 0.01, -0.03, ya - 0.034, -0.02, "metal", K.acier, 0, 0, 0.4); // le levier qui libère le barillet
+      e.anneau(0.008, 0.0018, 0.06, ya - 0.032, 0, "metal", K.acier); // l'anneau de la sangle
+      for (const s of [-1, 1]) e.disque(0.006, 0.004, 0.095, by + 0.01, s * 0.029, "metal", K.acier, 12); // les vis de la plaque avant
+    }
+    // le CANON large et son garde-main à 4 rails, la poignée verticale
+    e.tube(0.1, 0.342, 0.0255, 0.0255, by, 0, "metal", 0x232427, 24);
+    e.tube(0.34, 0.343, 0.0215, 0.0215, by, 0, "poly", K.fente, 20);
+    e.boite(0.15, 0.06, 0.06, 0.225, by, 0, "metal", N);
+    rail(e, 0.155, 0.295, by + 0.03, 0);
+    const yb = rail(e, 0.155, 0.295, by - 0.03, 0, "bas");
+    const zl = rail(e, 0.24, 0.295, by, -0.03, "gauche");
+    const zd = rail(e, 0.24, 0.295, by, 0.03, "droite");
+    const garde = poigneeAvant(e, "vertical", 0.2, yb);
+    // la carcasse arrière, la poignée, le pontet, la sûreté
+    e.cote([[-0.042, by + 0.032], [-0.132, by + 0.032], [-0.136, by + 0.02], [-0.136, by - 0.026], [-0.1, by - 0.05], [-0.044, by - 0.05], [-0.042, by - 0.03]], 0.042, "metal", N, 0, 0.004, null, 2);
+    poignee(e, "a2", P2, -0.06, by - 0.05);
+    pontet(e, -0.052, 0.006, by - 0.05, N);
+    e.boite(0.014, 0.008, 0.006, -0.09, by - 0.02, -0.022, "metal", P2); // la sûreté
+    // la CROSSE réglable sur son tube
+    e.tube(-0.33 + dx, -0.134, 0.0145, 0.0145, by + 0.004, 0, "metal", 0x2c2e31, 16);
+    e.cote([[-0.2, 0.066], [-0.2, 0.026], [-0.236, 0.024], [-0.334, -0.046], [-0.344, -0.046], [-0.344, 0.074], [-0.334, 0.078], [-0.24, 0.072]].map(([x, y]) => [x + dx - 0.02, y + dy]), 0.036, "poly", P2, 0, 0.006,
+      [[[-0.262, 0.019], [-0.328, 0.019], [-0.328, -0.026]].map(([x, y]) => [x + dx - 0.02, y + dy])], 2);
+    e.boite(0.012, 0.124, 0.04, -0.35 + dx - 0.02, 0.014 + dy, 0, "poly", K.caoutchouc);
+    return { by, tip: 0.343, ch: null, rail: { xa: -0.055, xb: 0.095, y: yr }, railRoquette: true, dessous: null, garde,
+      lampe: { x: 0.292, y: by, z: zl, sens: -1 }, laser: { x: 0.26, y: by, z: zd, sens: "droite" }, ejection: null, crosse: -0.43, barillet: { y: ya, z: 0, n: 6 }, vueFamille: "fusil",
+      viseurDefaut: (e2, y) => Object.assign(pointRouge(e2, 0.02, y), { nom: "point rouge" }), grip: { centre: V3(-0.086, by - 0.1), axe: V3(0.34, 0.94, 0).normalize() } };
+  };
+
+  // ✍️ SCORPIO (« un pistolet mitrailleur disponible dans toutes les classes ») : une carcasse ANGULEUSE en alu avec un long
+  // rail sur tout le dessus et ses 2 mires rabattables, un bloc en polymère (poignée, pontet, puits), des commandes des DEUX
+  // côtés (sélecteur, bouton du chargeur : pour les droitiers et les gauchers), le levier d'armement à gauche devant, un
+  // garde-main à fentes M-LOK, un chargeur fin presque droit, et la crosse SQUELETTE (une plaque évidée et une plaque de couche
+  // courbe) qui se replie.
+  FABRIQUES.scorpio = (e, p) => {
+    const by = 0.04, N = 0x2a2b2e, P2 = 0x222326, mire = p.viseur === "mire";
+    e.cote([[-0.078, 0.025], [-0.078, 0.054], [-0.07, 0.058], [0.196, 0.058], [0.2, 0.052], [0.2, 0.028], [0.19, 0.022], [-0.06, 0.022]], 0.032, "metal", N, 0, 0.004, null, 2);
+    if (!e.leger) {
+      for (const s of [-1, 1]) e.boite(0.24, 0.004, 0.002, 0.06, 0.049, s * 0.0162, "metal", 0x1e1f21); // la rainure le long des flancs
+      e.boite(0.045, 0.011, 0.002, 0.03, by + 0.002, 0.0162, "poly", K.fente); // la fenêtre d'éjection
+      e.boite(0.1, 0.003, 0.002, 0.13, 0.043, -0.0162, "poly", K.fente); // la fente du levier d'armement
+    }
+    const yr = rail(e, -0.076, 0.198, 0.058, 0);
+    e.boite(0.016, 0.01, 0.014, 0.17, 0.043, -0.022, "metal", K.noir);
+    e.galet(0.012, 0.014, 0.01, 0.17, 0.043, -0.03, "poly", K.noir, 0.4);
+    e.cote([[-0.066, 0.024], [0.16, 0.024], [0.16, 0.006], [0.14, -0.004], [0.122, -0.004], [0.118, -0.03], [0.072, -0.03], [0.068, -0.004], [0.014, 0.0], [-0.04, 0.0], [-0.066, 0.008]], 0.036, "poly", P2, 0, 0.005, null, 2);
+    poignee(e, "a2", P2);
+    pontet(e, 0.008, 0.062, 0.0, P2);
+    for (const s of [-1, 1]) {
+      e.disque(0.0055, 0.003, -0.03, 0.012, s * 0.019, "poly", K.noir, 14);
+      e.boite(0.016, 0.005, 0.003, -0.022, 0.016, s * 0.0205, "poly", K.noir, 0, 0, 0.5);
+      e.boite(0.01, 0.008, 0.004, 0.064, 0.006, s * 0.019, "poly", K.noir);
+    }
+    if (e.beau) for (const [x, y] of [[-0.05, 0.01], [0.15, 0.012]]) e.disque(0.0028, 0.038, x, y, 0, "metal", K.acier, 12);
+    const ch = chargeur(e, { l: 0.16, p: 0.034, w: 0.021, k: 0.07, a: 0.05, coul: 0x1d1f23, nervures: "pmag" }, p.chargeur, 0.095, -0.025);
+    // le garde-main à fentes, au bout de la carcasse
+    e.boite(0.09, 0.036, 0.036, 0.245, by - 0.001, 0, "poly", P2);
+    if (!e.leger) for (const x of [0.226, 0.264]) {
+      for (const s of [-1, 1]) e.fenteRonde(x - 0.014, x + 0.014, by - 0.001, 0.0075, s * 0.0178, 0.003);
+      e.boite(0.026, 0.002, 0.0075, x, by - 0.0192, 0, "poly", K.fente);
+    }
+    const ligne = mireRabattable(e, -0.064, yr, true, mire, N);
+    mireRabattable(e, 0.186, yr, false, mire, N);
+    if (!crosseSpeciale(e, p, -0.078, by, N)) {
+      e.boite(0.02, 0.036, 0.03, -0.088, by + 0.004, 0, "metal", N); // la charnière
+      e.disque(0.006, 0.034, -0.088, by + 0.016, 0, "metal", K.acier, 12);
+      const trous = e.leger ? null : [rectRond(-0.165, by - 0.0005, -0.125, by + 0.0125, 0.004), rectRond(-0.215, by - 0.0005, -0.175, by + 0.0125, 0.004), rectRond(-0.27, by - 0.0005, -0.225, by + 0.0125, 0.004)];
+      e.cote([[-0.095, by + 0.02], [-0.3, by + 0.022], [-0.3, by - 0.006], [-0.095, by - 0.008]], 0.012, "metal", N, 0, 0.003, trous, 2);
+      e.cote([[-0.29, by + 0.03], [-0.308, by + 0.034], [-0.316, by + 0.01], [-0.318, by - 0.03], [-0.31, by - 0.068], [-0.298, by - 0.07], [-0.302, by - 0.03], [-0.298, by + 0.004]], 0.036, "poly", P2, 0, 0.005, null, 2);
+      e.boite(0.006, 0.1, 0.034, -0.32, by - 0.02, 0, "poly", K.caoutchouc);
+    }
+    const lc = LONGUEUR_CANON(p.canon, 0.012, 0.08, 0.0);
+    canonTube(e, p, 0.29, 0.292 + lc, by, 0.0085);
+    let tip;
+    if (p.bouche === "aucune") { // le protège-filetage (le bout du canon, fileté pour visser un silencieux)
+      e.tube(0.292 + lc, 0.304 + lc, 0.0095, 0.0095, by, 0, "metal", 0x2c2e31, 16);
+      e.tube(0.3035 + lc, 0.3045 + lc, 0.0055, 0.0055, by, 0, "poly", K.fente, 12);
+      tip = 0.304 + lc;
+    } else tip = bout(e, p.bouche, 0.292 + lc, by, 0.0085, "pm");
+    return { by, tip, ch, rail: { xa: -0.074, xb: 0.19, y: yr }, dessous: { x: 0.245, y: by - 0.019 }, garde: { centre: V3(0.24, by - 0.022), axe: V3(1, 0, 0), sorte: "dessous" },
+      lampe: { x: 0.285, y: by - 0.001, z: -0.018, sens: -1, petitRail: true }, laser: { x: 0.25, y: by - 0.001, z: 0.018, sens: "droite", petitRail: true }, ejection: V3(0.03, by + 0.006, 0.018),
+      mireNative: { ligne, arriere: -0.068, z: 0, nom: "mires rabattables" }, crosse: -0.32 };
+  };
+
   const FAMILLES_FUSIL = ["fusil", "pm", "precision"];
 
   // Le M320 : le lance-grenades sous le canon (le gadget de l'Assaut).
   function lanceGrenades(e, x, y) {
-    e.tube(x - 0.2, x, 0.023, 0.023, y - 0.03, 0, "metal", 0x3e3f3b, 18);
-    e.tube(x - 0.005, x + 0.002, 0.019, 0.019, y - 0.03, 0, "poly", K.fente, 16);
-    e.boite(0.09, 0.05, 0.05, x - 0.22, y - 0.032, 0, "poly", K.noir);
-    e.boite(0.18, 0.012, 0.03, x - 0.11, y - 0.004, 0, "metal", K.noir);
-    poignee(e, "droite", K.noir, x - 0.24, y - 0.057);
-    e.boite(0.04, 0.004, 0.01, x - 0.22, y - 0.088, 0, "metal", K.noir);
-    e.boite(0.03, 0.026, 0.004, x - 0.13, y - 0.012, -0.026, "metal", K.noir); // la hausse sur le côté
-    return { centre: V3(x - 0.27, y - 0.11), axe: V3(0.2, 1, 0).normalize(), sorte: "vertical" };
+    // ✍️ (demande 128) refait comme un vrai lance-grenades sous le canon : le tube de 40 mm et son garde-main à côtes (on le
+    // tient par là), le boîtier et sa petite détente (juste devant le chargeur du fusil), le verrou du tube, le rail qui le
+    // tient sous le garde-main, et la hausse à cadran sur le côté gauche.
+    const yc = y - 0.036, N = K.noir;
+    e.boite(0.22, 0.012, 0.03, x - 0.11, y - 0.008, 0, "metal", N); // le rail de fixation
+    e.tube(x - 0.21, x + 0.004, 0.0215, 0.0215, yc, 0, "metal", 0x34363a, 24); // le tube
+    e.tube(x + 0.0025, x + 0.0045, 0.0185, 0.0185, yc, 0, "poly", K.fente, 20);
+    e.tube(x - 0.2, x - 0.05, 0.0262, 0.0262, yc, 0, "poly", N, 16); // son garde-main…
+    if (!e.leger) for (let k = 0; k < 12; k++) { const a = (k / 12) * Math.PI * 2; e.boite(0.14, 0.0025, 0.004, x - 0.125, yc + Math.cos(a) * 0.0265, Math.sin(a) * 0.0265, "poly", 0x101112, a); } // … et ses côtes
+    e.cote([[x - 0.3, yc + 0.026], [x - 0.205, yc + 0.026], [x - 0.205, yc - 0.022], [x - 0.24, yc - 0.026], [x - 0.3, yc - 0.012]], 0.038, "metal", N, 0, 0.004, null, 2); // le boîtier
+    pontet(e, x - 0.295, x - 0.255, yc - 0.014, N);
+    e.boite(0.014, 0.01, 0.006, x - 0.225, yc + 0.004, -0.021, "metal", K.acier); // le verrou du tube
+    e.boite(0.03, 0.026, 0.004, x - 0.13, y - 0.012, -0.028, "metal", N); // la hausse à cadran (à gauche)
+    if (!e.leger) e.disque(0.009, 0.004, x - 0.13, y - 0.004, -0.031, "metal", 0x2c2e31, 16);
+    return { centre: V3(x - 0.13, yc - 0.024), axe: V3(1, 0, 0), sorte: "dessous" };
   }
 
   // ------------------------------------------------------------------ LE MAGASIN : fabriquer (une fois) et ranger
@@ -1961,7 +2295,7 @@ Tanks.Armes3D = (function () {
       e.boite(0.13, 0.024, 0.03, (P.rail.xa + P.rail.xb) / 2, P.by + 0.05, 0, "metal", K.noir);
       rail(e, P.rail.xa, P.rail.xb, P.by + 0.062, 0);
     }
-    if (famille === "roquettes") {
+    if (famille === "roquettes" && !P.railRoquette) { // (demande 128 : le RG-6 a un vrai rail sur le dessus, comme un fusil)
       if (v !== "mire" && P.bracket) { // un support sur le côté gauche du tube, qui porte le viseur
         const b = P.bracket;
         e.boite(0.03, 0.03, Math.abs(b.z) + 0.02, b.x, b.y - 0.01, b.z / 2, "metal", K.noir);
@@ -1981,6 +2315,9 @@ Tanks.Armes3D = (function () {
         e.boule(0.001, x + 0.012, yc + 0.014, 0, "lumiere", 0xff1a0a, 6);
         liste.push("mini point rouge sur la lunette");
       }
+    } else if (v === "mire" && P.viseurDefaut) { // (demande 128) le viseur monté D'ORIGINE (la lunette de combat du K416)
+      visee = P.viseurDefaut(e, railY);
+      liste.push("monté d'origine :");
     } else if (P.rail && (v !== "mire" || !visee)) {
       const xr = P.rail.xa;
       if (VISEURS[v]) visee = VISEURS[v](e, xr + DECALAGE_VISEUR[v], railY);
@@ -2009,14 +2346,23 @@ Tanks.Armes3D = (function () {
       // (un petit rail sous le garde-main, si l'arme n'en a pas déjà un)
       const y = P.dessous.rail ? P.dessous.y : rail(e, P.dessous.x - 0.035, P.dessous.x + 0.035, P.dessous.y, 0, "bas");
       garde = poigneeAvant(e, pieces.poignee, P.dessous.x + (pieces.poignee === "bipied" ? 0.05 : 0), y);
+    } else if (P.poigneeDefaut && P.dessous && P.dessous.rail) { // (demande 128) la poignée montée D'ORIGINE (le K416)
+      garde = poigneeAvant(e, P.poigneeDefaut, P.dessous.x, P.dessous.y);
+      liste.push("d'origine : " + nomPiece("poignee", P.poigneeDefaut).toLowerCase());
     }
     ancres.poignee = P.dessous ? V3(P.dessous.x, P.dessous.y - 0.035, 0) : garde.centre.clone();
     // ---- la LAMPE et le LASER
     let pLampe = null, pLaser = null;
-    if (pieces.lampe !== "aucune" && P.lampe) {
+    if (pieces.lampe !== "aucune" && P.lampe && P.lampe.integree) { // (demande 128) la lampe INTÉGRÉE au garde-main du MP5 : sa lentille s'allume
+      pLampe = V3(P.lampe.x + 0.001, P.lampe.y, P.lampe.z);
+      liste.push("lampe intégrée au garde-main");
+    } else if (pieces.lampe !== "aucune" && P.lampe) {
       const L = P.lampe;
       if (L.petitRail) rail(e, L.x - 0.07, L.x - 0.005, L.y, L.z, "gauche");
       pLampe = lampe(e, pieces.lampe, L.x, L.y, L.petitRail ? L.z - 0.01 : L.z, -1);
+    } else if (P.lampeDefaut && P.lampe) { // (demande 128) la lampe montée d'origine (le K416) : éteinte tant que l'atelier n'y met pas de pile
+      lampe(e, "lampe", P.lampe.x, P.lampe.y, P.lampe.z, -1);
+      liste.push("d'origine : lampe (éteinte)");
     }
     if (pieces.laser !== "aucun" && P.laser) {
       const L = P.laser, couleur = C.atelier.laser.pieces.find((x) => x.id === pieces.laser).effets.laser;
@@ -2050,12 +2396,13 @@ Tanks.Armes3D = (function () {
     // ---- on soude, matière par matière, et on range
     const groupes = e.fin(), racine = new THREE.Group();
     let tri = 0, objets = 0;
-    for (const nom of ["corps", "chargeur", "culasse"]) {
+    for (const nom of ["corps", "chargeur", "culasse", "barillet", "genou"]) {
       const g = groupes[nom];
       if (!g.children.length) continue;
       for (const m of OT.souder(g, true)) {
         const mp = m.material.userData.peinture;
-        if (qualite === "beau" && (mp || m.material === M.poly || m.material === M.metal || m.material === M.bois)) uvAPlat(m.geometry, mp ? 2.6 : m.material === M.bois ? 1.2 : 9, mp ? 2.6 : m.material === M.bois ? 3.5 : 9);
+        const bo = m.material === M.bois || m.material === M.quadrille; // (le bois quadrillé du 1911 : les mêmes veines)
+        if (qualite === "beau" && (mp || m.material === M.poly || m.material === M.metal || bo)) uvAPlat(m.geometry, mp ? 2.6 : bo ? 1.2 : 9, mp ? 2.6 : bo ? 3.5 : 9);
         tri += m.geometry.attributes.position.count / 3;
         objets++;
       }
@@ -2067,7 +2414,8 @@ Tanks.Armes3D = (function () {
       cle, id, qualite, nom: F.nom, famille, pieces, liste, racine, triangles: Math.round(tri), objets, peinture,
       by: P.by, bouche: V3(tip, P.bout ? P.bout.y : P.by, P.tipZ || 0), visee, poignee: grip, garde, lampe: pLampe, laser: pLaser, ancres,
       ejection: P.ejection, chargeur: P.ch, arriere: P.arriere !== undefined ? P.arriere : P.crosse, decalageVue: P.vue || null,
-      levier: P.levier || null, // (demande 115 : la boule du levier de verrou, là où va la main droite)
+      levier: P.levier || null, barillet: P.barillet || null, genou: P.genou || null, vueFamille: P.vueFamille || null, // (demande 115 : la boule du levier de verrou, là où va la main droite)
+      // (demande 128 : l'axe du barillet { y, z, n } et le pivot de la genouillère { x, y, angle })
     };
     magasin.set(cle, modele);
     // (demande 97) l'armurerie fabrique beaucoup de variantes : au-delà de 48 modèles, on jette les plus vieux (sauf ceux
@@ -2510,7 +2858,7 @@ Tanks.Armes3D = (function () {
   const lisse = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
   const entre = (t, a, b) => lisse((t - a) / (b - a));
   // La famille de la vue (où l'arme est tenue, comment elle recule).
-  const familleVue = (m) => m.famille;
+  const familleVue = (m) => m.vueFamille || m.famille; // (demande 128 : le RG-6 est un lance-grenades tenu comme un fusil)
   const _m = new THREE.Matrix4(), _p = new THREE.Vector3(), _e = new THREE.Euler(), _q2 = new THREE.Quaternion(), _x = new THREE.Vector3(1, 0, 0), _ndc = new THREE.Vector3();
   function poserMain(main, modele, objet, prise, sens, decalage) {
     // la main : son axe y suit l'axe de la poignée, ses jointures regardent devant (ou sur le côté pour le garde-main)
@@ -2619,6 +2967,7 @@ Tanks.Armes3D = (function () {
         V.roulis = (Math.random() * 2 - 1) * 0.04;
         V.dernierTir = V.t;
         V.culasse = 1;
+        V.coups = (V.coups || 0) + 1; // (demande 128 : le barillet tourne d'une chambre)
         if (!(fiche(m.id).verrou && m.levier)) ejecter(m); // (demande 115 : avec un verrou, la douille sort quand on tire la culasse)
       }
       V.tirs = tirs;
@@ -2691,6 +3040,22 @@ Tanks.Armes3D = (function () {
         groupeCul.position.set(-c * 0.075, 0, 0);
       } else groupeCul.position.set(-V.culasse * 0.03, 0, 0);
     }
+    // ✍️ (demande 128) le BARILLET d'un revolver (ou d'un lance-grenades) tourne d'une chambre à chaque tir, autour de son axe
+    // (y, z) ; la GENOUILLÈRE d'un pistolet à genouillère se plie vers le haut (autour de son pivot arrière) pendant le recul.
+    const groupeBa = V.objet.getObjectByName("barillet"), groupeGe = V.objet.getObjectByName("genou");
+    if (groupeBa && m.barillet) {
+      const B = m.barillet, voulu = (V.coups || 0) * ((Math.PI * 2) / B.n);
+      V.angleBarillet = V.angleBarillet === undefined || Math.abs(voulu - V.angleBarillet) > 7 ? voulu : V.angleBarillet + (voulu - V.angleBarillet) * Math.min(1, dt * 28);
+      const a = V.angleBarillet, c = Math.cos(a), sn = Math.sin(a);
+      groupeBa.rotation.set(a, 0, 0);
+      groupeBa.position.set(0, B.y - (B.y * c - B.z * sn), B.z - (B.y * sn + B.z * c));
+      bilan.barillet = Math.round(((a / ((Math.PI * 2) / B.n)) % B.n + B.n) % B.n) + 1 + " / " + B.n;
+    }
+    if (groupeGe && m.genou) {
+      const G = m.genou, a = Math.sin(Math.PI * Math.min(1, V.culasse)) * G.angle, c = Math.cos(a), sn = Math.sin(a);
+      groupeGe.rotation.set(0, 0, a);
+      groupeGe.position.set(G.x - (G.x * c - G.y * sn) - V.culasse * 0.012, G.y - (G.x * sn + G.y * c), 0);
+    }
     if (!(groupeCul && fiche(m.id).verrou && m.levier)) V.mainVerrou = 0;
     // 6. les mains
     const M0 = V.mains[0], M1 = V.mains[1];
@@ -2758,7 +3123,7 @@ Tanks.Armes3D = (function () {
     if (st.lunette && (s.visee || 0) > 0.82) V.actif = false;
     // (livre n° 13) le viseur ×2 compact, épaulé : l'œil est collé à l'œilleton ; le tableau de bord dessine ce qu'on voit
     // dedans (le cercle, le chevron) : l'arme et les mains (déjà autour de l'œil) ne se dessinent plus
-    V.dansLeX2 = vis.nom === "viseur ×2" && (s.visee || 0) > 0.88 && !tient;
+    V.dansLeX2 = (vis.nom === "viseur ×2" || vis.x2) &&(s.visee || 0) > 0.88 && !tient;
     if (V.dansLeX2) for (const x of [V.objet, V.mains[0], V.mains[1], V.avantBras[0], V.avantBras[1]]) x.visible = false;
   }
   // ✍️ (livre n° 13) LE RÉTICULE LUMINEUX des viseurs à point rouge et holographiques, épaulé à la 1re personne : le petit
@@ -2876,6 +3241,6 @@ Tanks.Armes3D = (function () {
     get vue() { return { actif: V.actif, modele: V.modele, objet: V.objet, cam: V.cam, baisse: V.baisse, recul: V.recul, scene: V.scene, dansLeX2: !!(V.actif && V.dansLeX2), reticule: bilan.reticule || "—" }; },
     LISTE: () => Object.keys(C.armesPrincipales).concat(Object.keys(C.pistolets)),
     ajouterFabrique, // (demande 115 : les armes des éditions)
-    outils: { K, V3, poignee, pontet, chargeur, unChargeur, bout, canonTube, LONGUEUR_CANON, lunette, mire, rail, culasseStriee, rectRond }, // (demande 115 : prêtés aux armes des éditions)
+    outils: { K, V3, poignee, pontet, chargeur, unChargeur, bout, canonTube, LONGUEUR_CANON, lunette, mire, rail, culasseStriee, rectRond, mireRabattable, guidonA2, silencieuxLong, lunetteCombat, poigneeAvant, crosseSpeciale, fusilAR }, // (demande 115 : prêtés aux armes des éditions)
   };
 })();

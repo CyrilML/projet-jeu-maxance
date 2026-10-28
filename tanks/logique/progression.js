@@ -171,7 +171,7 @@ Tanks.Progression = (function () {
       // (livre n° 6) une balle : l'arme EN MAIN (le pistolet, l'arme principale ou l'arme bonus de l'Ingénieur)
       if (d.par === "balle") return toi.arme === "pistolet" || toi.arme === "principale" || (toi.arme === "bonus" && toi.armes.bonus) ? toi.armes[toi.arme].id : null;
       const P2 = toi.armes.principale;
-      return ["roquette", "at4", "javelin"].includes(d.par) || (nom !== "soldat-mort" && toi.arme === "principale" && P2.stats.famille === "roquettes") ? P2.id : null;
+      return ["roquette", "at4", "javelin"].includes(d.par) || (d.par === "lg40" && P2.stats.projectile === "lg40") ||(nom !== "soldat-mort" && toi.arme === "principale" && P2.stats.famille === "roquettes") ? P2.id : null;
     };
     const ennemi = d.cible && d.cible.equipe && d.cible.equipe !== "bleus";
     // (pour le MVP : qui, dans ton camp, a abattu le plus d'ennemis ?)

@@ -739,6 +739,16 @@ Tanks.Scene = (function () {
       cuillere.position.set(0.05, 0.035, 0);
       cuillere.rotation.z = -0.3;
       for (const m of [corps, bouchon, cuillere]) (m.castShadow = true), g.add(m);
+      // ✍️ (demande 128) en 1944, c'est la grenade « ANANAS » : son corps est couvert de petits pavés (5 rangées de 8)
+      if (C.edition && C.edition.id === "1944") {
+        const pave = new THREE.BoxGeometry(0.022, 0.02, 0.014), fonce = new THREE.MeshStandardMaterial({ color: 0x353e24, roughness: 0.8, metalness: 0.1 });
+        for (let r = 0; r < 5; r++) for (let k = 0; k < 8; k++) {
+          const v = -0.75 + (r / 4) * 1.5, a = (k / 8) * Math.PI * 2 + (r % 2) * 0.2, R = 0.064 * Math.cos(v), o = new THREE.Mesh(pave, fonce);
+          o.position.set(Math.cos(a) * R, Math.sin(v) * 0.064 * 1.12, Math.sin(a) * R);
+          o.lookAt(o.position.x * 3, o.position.y * 3, o.position.z * 3);
+          g.add(o);
+        }
+      }
       g.scale.setScalar(2);
       scene.add(g);
       grenades3d[i] = g;
