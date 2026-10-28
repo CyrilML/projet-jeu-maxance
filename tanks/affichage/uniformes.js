@@ -86,7 +86,7 @@ Tanks.Uniformes = (function () {
     const deforme = fractal(graine, 3, 3, 2), n1 = fractal(graine + 1, 4, 4, 3), n2 = fractal(graine + 2, 4, 4, 3), n3 = fractal(graine + 3, 5, 5, 3), n4 = fractal(85, 3, 3, 2);
     // (demande 128) l'urbain : des coups de pinceau ALLONGÉS (plus de taches en largeur qu'en hauteur) ; le multicam : des
     // taches douces qui se chevauchent et de petites « brindilles » ; le flecktarn : des petits points serrés
-    const long1 = fractal(graine + 4, 3, 8, 3), long2 = fractal(graine + 5, 4, 10, 3), fin1 = fractal(graine + 6, 9, 9, 2), fin2 = fractal(graine + 7, 10, 10, 2), fin3 = fractal(graine + 8, 12, 12, 2);
+    const long1 = fractal(graine + 4, 2, 9, 3), long2 = fractal(graine + 5, 3, 12, 3), fin1 = fractal(graine + 6, 9, 9, 2), fin2 = fractal(graine + 7, 10, 10, 2), fin3 = fractal(graine + 8, 12, 12, 2);
     const plis = fractal(86, 3, 12, 3), plis2 = fractal(87, 2, 7, 2), usure = fractal(88, 2, 2, 3);
     const motif = new Uint8Array(B * B), pli = new Float32Array(B * B), use = new Float32Array(B * B);
     for (let j = 0; j < B; j++) for (let i = 0; i < B; i++) {
@@ -98,7 +98,7 @@ Tanks.Uniformes = (function () {
         if (n2(u - dv, v + du) > 0.6) m = 2; // le gris-vert
         if (n3(u + du * 2, v * 1.0 + dv) > 0.62 && n4(u, v) > 0.45) m = 3; // les traînées claires
       } else if (sorte === "urbain") {
-        if (long1(u + du, v + dv) > 0.5) m = 1; // le gris moyen, en longs coups de pinceau
+        if (long1(u + du * 0.5, v + dv) > 0.5) m = 1; // le gris moyen, en longs coups de pinceau
         if (long2(u - dv, v + du) > 0.58) m = 2; // le gris très sombre
         if (fin1(u + du, v + dv) > 0.66 && m !== 2) m = 3; // des éclats clairs
         const b = n3(u + du * 1.5, v + dv * 1.5);
@@ -284,7 +284,7 @@ Tanks.Uniformes = (function () {
         "  float cote = 0.5 + 0.5 * sin((vPosB.x * 0.6 + vPosB.z) * 520.0);",
         "  diffuseColor.rgb *= mix(1.0, 0.88 + cote * 0.16 + (bruit3(vPosB * 300.0) - 0.5) * 0.1, tricot);",
         "  diffuseColor.rgb *= mix(1.0, 0.9 + bruit3(vPosB * 90.0) * 0.18, poly + caout);",
-        "  diffuseColor.rgb *= mix(1.0, eq.r * 2.0, molle) * mix(1.0, 0.9 + eq.b * 0.2, nylon + cuir) * mix(1.0, 0.95 + eq.a * 0.1, peau);",
+        "  diffuseColor.rgb *= mix(1.0, eq.r * 2.0, molle * 0.6) * mix(1.0, 0.9 + eq.b * 0.2, nylon + cuir) * mix(1.0, 0.95 + eq.a * 0.1, peau);",
         "  hTissu = 0.5 + molle * (eq.g - 0.5) + (cuir + nylon * 0.5) * (eq.b - 0.5) * 0.6 + peau * (eq.a - 0.5) * 0.25 + tricot * (cote - 0.5) * 0.5 + (poly + caout) * (eq.b - 0.5) * 0.15;",
         // (demande 93) la PEAU vivante : des petites marbrures (un peu plus rouge ici, plus pâle là), et dans la barbe de
         // 3 jours (la « matière » entre 1 et 1,4) des petits POILS sombres semés au hasard, qui accrochent la lumière

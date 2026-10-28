@@ -3137,18 +3137,18 @@ Tanks.CONFIG.realisme.soldats.skins = {
   ombres: { force: 0.62, cellule: [0.02, 0.035], rayons: 7 },
   camps: {
     bleus: {
-      assaut: { nom: "Assaut urbain", motif: "urbain", fond: "#7b7d7b", taches: ["#555756", "#323435", "#a3a49f"], equipement: "#2a2c2d",
+      assaut: { nom: "Assaut urbain", motif: "urbain", fond: "#6e706f", taches: ["#4b4d4d", "#2b2d2e", "#9b9c97"], equipement: "#2a2c2d",
         casque: "tactique", casqueCouleur: "#2c2e2f", casqueLunettes: true, nvg: false, oreilles: true, visage: "cagoule", visageCouleur: "#1b1c1e", lunettes: "aucune",
         gants: "#1e1f21", gants2: "#2a2b2d", protections: "#202123", grosses: 1.35, bottes: "#1d1d1e", sangles: "#232425", harnais: true, coudieres: true },
-      medecin: { nom: "Médecin désert", motif: "desert", fond: "#a99272", taches: ["#8c7556", "#bba88a", "#76654b"], equipement: "#9a8566",
-        casque: "tactique", casqueCouleur: "#a08b6a", nvg: true, oreilles: true, visage: "foulard", visageCouleur: "#9c8566", lunettes: "masque",
-        gants: "#5a4430", gants2: "#4a3828", protections: "#8e7a5c", grosses: 1.15, bottes: "#7a6448", sangles: "#7e6b50", ecussonSoin: true, coudieres: false },
+      medecin: { nom: "Médecin désert", motif: "desert", fond: "#8b7457", taches: ["#6c5741", "#a08a69", "#584736"], equipement: "#7f6a4e",
+        casque: "tactique", casqueCouleur: "#86704f", nvg: true, oreilles: true, visage: "foulard", visageCouleur: "#7c6850", lunettes: "masque",
+        gants: "#4a3626", gants2: "#3a2b1f", protections: "#6f5d45", grosses: 1.15, bottes: "#56442f", sangles: "#7e6b50", ecussonSoin: true, coudieres: false },
       eclaireur: { nom: "Éclaireur multicam", motif: "multicam", fond: "#a39a7c", taches: ["#7d7d58", "#6e5a40", "#c2b796", "#4c4a36"], equipement: "#a49476",
         casque: "tactique", casqueCouleur: "#a6997a", nvg: true, oreilles: true, visage: "cagoule", visageCouleur: "#a8997a", lunettes: "soleil",
         gants: "#8c7d62", gants2: "#3a3833", protections: "#6f6650", grosses: 1, bottes: "#7d6b52", sangles: "#7a6c55", etuiCuisse: "#1f2022", coudieres: false },
       ingenieur: { nom: "Ingénieur NRBC", motif: "uni", fond: "#24272d", taches: ["#1d2025", "#2c3037", "#1a1c20"], equipement: "#666a70", giletMotif: "numerique",
         casque: "capuche", casqueCouleur: "#1c1d20", visage: "masqueGaz", visageCouleur: "#1a1b1d", lunettes: "aucune",
-        gants: "#1c1d1f", gants2: "#26272a", protections: "#18191b", grosses: 1.5, bottes: "#2c2b28", basses: true, sangles: "#2a2b2d", roquette: true, bandouliere: true, coudieres: true },
+        gants: "#1c1d1f", gants2: "#26272a", protections: "#18191b", grosses: 1.5, bottes: "#1c1d1b", basses: true, sangles: "#2a2b2d", roquette: true, bandouliere: true, coudieres: true },
     },
     rouges: {
       tous: { motif: "flecktarn", fond: "#77704f", taches: ["#4f5a37", "#6e4532", "#2f2e25", "#958a66"], equipement: "#5b5a40", casqueCouleur: "#4d5136",
