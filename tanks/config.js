@@ -2996,6 +2996,13 @@ Tanks.CONFIG.vitrinePersonnages = {
     eclaireur: { arme: "m110", equipement: ["Chapeau de BROUSSE (boonie) à bord tombant, avec ses lanières", "Jumelles dans leur poche, sur la poitrine", "Lanières de camouflage sur les épaules et le sac", "Gilet léger, radio, genouillères pour tirer couché"] },
     medecin: { arme: "mp5", equipement: ["BRASSARD BLANC à CROIX ROUGE sur chaque bras", "Croix rouge sur le casque et sur le sac", "Grosse poche de soins rouge, poche du garrot", "Gilet porte-plaques (touche 6 : les plaquettes)"] },
   },
+  // ✍️ (demande 128) ce que porte le SKIN de chaque classe (dans les éditions où les skins s'appliquent)
+  skins: {
+    assaut: ["Camouflage GRIS URBAIN, cagoule noire (on ne voit que les yeux)", "Casque tactique coupé haut, lunettes posées dessus, coquilles anti-bruit", "Gilet porte-plaques lourd, bretelles en H, poche radio", "Grosses genouillères et coudières, gants et rangers noirs"],
+    medecin: ["Camouflage SABLE (désert), foulard sur le nez et la bouche", "Casque sable, support de jumelles de nuit, lunettes sombres", "Écusson BLANC à CROIX ROUGE sur les deux bras", "Gilet sable, poches de hanche, étui de cuisse, gants marron"],
+    eclaireur: ["Camouflage MULTICAM (beige, olive, brun)", "Casque beige, cagoule beige, lunettes de soleil", "Gilet beige, jumelles, porte-chargeurs NOIR sur la cuisse", "Gants deux tons, genouillères"],
+    ingenieur: ["Tenue NOIRE, MASQUE À GAZ (2 hublots, cartouche filtrante)", "Gilet camouflage NUMÉRIQUE gris, sangle en travers", "Une ROQUETTE dans le dos, ceinture à outils", "Grosses genouillères, gants noirs, chaussures de randonnée basses"],
+  },
   tenues: { commandoNuit: "assaut", forcesSpeciales: "assaut", desertTempete: "assaut", neige: "eclaireur", officier: "assaut", ghillie: "eclaireur" },
   campagne: {
     hargrave: { modele: { camp: "bleus~officier", classe: "assaut", peau: 0, barbe: 3 }, arme: "scarh", texte: "Le chef de l'Alliance de Valdrie. Depuis le QG Rempart, il donne les ordres de chaque chapitre à la radio." },

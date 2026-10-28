@@ -31,6 +31,12 @@ Tanks.EcranPersonnages = (function () {
   // ------------------------------------------------------------------ la liste
   // Chaque entrée : { id, groupe, nom, role, icone, couleur, texte, modele: { camp, classe, peau, barbe } | null, arme,
   //   equipement: [..], verrou: texte | null }
+  // ✍️ (demande 128) avec les SKINS des classes : la liste de ce que porte le skin (config.js, « vitrinePersonnages.skins »)
+  function skinTexte(camp, k) {
+    const habit = Tanks.Engins3D.habit(camp, k), S = (C.realisme.soldats.uniformes[habit] || {}).skin;
+    if (!S || !VP.skins) return null;
+    return ["Skin « " + S.nom + " »" + (camp === "rouges" ? " (aux couleurs du Front : camouflage à petits points)" : "")].concat(VP.skins[k] || []);
+  }
   function liste() {
     // (demande 115) dans une autre édition que Moderne : les camps de l'édition, ses armes, et ni boutique ni campagne
     const R = C.edition.regles, moderne = C.edition.id === "moderne", nomsCamps = moderne ? C.campagne.camps : { bleus: C.equipes.bleus.nom, rouges: C.equipes.rouges.nom }, L = [];
@@ -38,7 +44,7 @@ Tanks.EcranPersonnages = (function () {
     for (const camp of ["bleus", "rouges"]) for (const k of C.realisme.soldats.maquettes.classes) {
       const K = C.classes[k], arme = K.armes.includes(VP.classes[k].arme) ? VP.classes[k].arme : K.armes[0];
       L.push({ id: "classe:" + camp + ":" + k, groupe: "Les classes", nom: K.nom + court(camp), role: (camp === "bleus" ? "🔵 " : "🔴 ") + nomsCamps[camp], icone: K.icone, couleur: K.couleur, texte: K.texte,
-        modele: { camp, classe: k, peau: camp === "bleus" ? 0 : 2 }, arme, equipement: VP.classes[k].equipement });
+        modele: { camp, classe: k, peau: camp === "bleus" ? 0 : 2 }, arme, equipement: skinTexte(camp, k) || VP.classes[k].equipement });
     }
     if (!R.boutique && !R.campagne) return L;
     const articles = Tanks.Boutique ? Tanks.Boutique.catalogue("personnages") : [];

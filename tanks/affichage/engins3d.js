@@ -35,6 +35,11 @@
 // sourcils). Les points des genoux, des coudes, des épaules, de la taille et du cou sont accrochés à DEUX os à la fois :
 // ils plient en douceur. Toujours 2 dessins par soldat, et la carte graphique a 3 à 4 fois moins de points à déplacer
 // (les points partagés entre deux triangles ne sont plus recopiés).
+// ✍️ Demande 128 (« les personnages ressemblent à des jouets ») : chaque classe a son SKIN, d'après les images de Maxance
+// (refaites en 3D, pas copiées) : l'Assaut en gris urbain et cagoule noire, le Médecin tout sable avec son foulard et son
+// écusson blanc à croix rouge, l'Éclaireur en multicam, l'Ingénieur en noir avec son MASQUE À GAZ et sa roquette dans le
+// dos ; l'ennemi a les mêmes formes à ses couleurs. Et contre l'effet « jouet » : l'OMBRE DANS LES CREUX, mesurée une fois
+// quand la forme est fabriquée. En 1916, la CAPOTE à pans du poilu, le havresac, la gamelle et le bidon rond.
 // Tout est construit « nez vers x+ », posé au sol (y = 0). Ce fichier ne connaît pas les règles du jeu.
 
 window.Tanks = window.Tanks || {};
@@ -279,6 +284,8 @@ Tanks.Engins3D = (function () {
       pc("dos", new THREE.TorusGeometry(0.15, 0.04, 6, 12, Math.PI), -0.3, 0.3, 0, K.molletieres, 0, Math.PI / 2, 0); // la couverture roulée en fer à cheval
       pc("dos", galet(0.05, 0.11, 0.08, 0.4, 6), -0.12, 0.02, -0.19, K.metal); // le bidon
       if (detail) pc("dos", galet(0.07, 0.1, 0.06, 0.4, 6), -0.05, 0.03, 0.2, K.sac); // la musette
+      const CP = Tanks.CONFIG.edition.modeles.capote;
+      if (CP) capote(pc, dernier, K, detail, equipe, CP, poids, peint);
     } else {
     // (demande 128 : avec un skin, le gilet est plus ÉPAIS et plus massif, et le sac est un petit sac d'assaut)
     const ep = S ? 0.095 : 0.075, xp = S ? 0.138 : 0.13;
@@ -784,6 +791,58 @@ Tanks.Engins3D = (function () {
         dernier().rz2 = pente - 0.12;
       }
     }
+  }
+  // ✍️ (demande 128, 1916) LA CAPOTE DU POILU (et celle de Kressia, en gris de campagne) : on refait le STYLE d'une affiche
+  // de musée (sans la copier) :
+  //   - les PANS du long manteau, du ceinturon jusqu'au-dessus du genou, fendus derrière : chaque moitié suit un peu SA
+  //     jambe quand il marche (des poids mélangés « corps → cuisse ») ;
+  //   - le devant croisé à 2 RANGÉES DE BOUTONS, le col droit, les pattes des poches ;
+  //   - les BRETELLES DE CUIR en Y (2 devant qui se rejoignent derrière), le GROS HAVRESAC avec la couverture roulée
+  //     dessus, la GAMELLE et le quart accrochés, la musette et le BIDON ROND sur la hanche.
+  function capote(pc, dernier, K, detail, equipe, CP, poids, peint) {
+    const C3 = Tanks.Corps3D, bas = CP.bas, ev = CP.evase, n = detail ? 20 : 9;
+    const bouton = new THREE.Color((CP.boutons || {})[String(equipe).split(/[~#]/)[0]] || "#8a7a50").getHex(), gamelle = new THREE.Color(CP.gamelle || "#8a8c86").getHex();
+    // les pans : un loft du ceinturon (0,98 m) jusqu'en bas, qui s'évase ; posé sur le CORPS (y = la hauteur au repos)
+    const T = [];
+    for (let k = 0; k <= 5; k++) {
+      const t = k / 5, y = 0.99 - (0.99 - bas) * t;
+      T.push({ y, xf: 0.122 + 0.02 * t + ev * t * t, xb: 0.132 + 0.03 * t + ev * t * t, z: 0.176 + 0.03 * t + ev * 0.8 * t * t, e: 2.3 });
+    }
+    pc("corps", C3.loft(T, n, detail ? 2 : 1, false), 0, 0, 0, "tenue");
+    // chaque côté suit sa cuisse, de plus en plus vers le bas (jusqu'à 70 %)
+    poids((x, y, z) => ["corps", z < 0 ? "jambe0" : "jambe1", 0.7 * Math.max(0, Math.min(1, (0.9 - y) / (0.9 - bas)))]);
+    // le BAS des pans, un ourlet un peu plus épais
+    pc("corps", new THREE.TorusGeometry(0.17, 0.011, 4, n), 0, bas + 0.006, 0, "tenue", Math.PI / 2);
+    dernier().echelle = [(0.152 + 0.025 + ev) / 0.17, (0.206 + ev * 0.8) / 0.17, 1];
+    poids((x, y) => ["corps", y > 0 ? "jambe1" : "jambe0", 0.7]); // (le tore est couché : son « y » devient z)
+    // le devant croisé : 2 rangées de boutons, de la poitrine au ceinturon
+    for (let r = 0; r < (detail ? 5 : 3); r++) for (const z of [-0.055, 0.055]) {
+      const y = 0.4 - r * (detail ? 0.075 : 0.13);
+      pc("dos", new THREE.SphereGeometry(0.009, 6, 4), 0.122 + 0.006 * (r < 2 ? 1 : 0.4) - 0.01 * (r / 4), y, z * (1 - r * 0.05), bouton);
+    }
+    if (detail) {
+      pc("dos", new THREE.TorusGeometry(0.066, 0.02, 5, 14), 0.005, 0.5, 0, "tenue", Math.PI / 2); // le col droit
+      for (const z of [-0.09, 0.09]) pc("dos", galet(0.018, 0.035, 0.09, 0.3, 4), 0.11, 0.1, z * 1.1, "tenue", 0, 0, 0.1); // les pattes des poches
+      for (let r = 0; r < 2; r++) pc("dos", new THREE.SphereGeometry(0.008, 6, 4), -0.13, 0.03, (r ? -1 : 1) * 0.05, bouton); // (la martingale, derrière)
+    }
+    // les BRETELLES DE CUIR en Y : 2 devant (de l'épaule au ceinturon), qui se rejoignent derrière
+    for (const z of [-1, 1]) pc("dos", galet(0.014, 0.42, 0.038, 0.3, 4), 0.124, 0.24, z * 0.085, K.cuir, z * -0.12, 0, -0.06);
+    pc("dos", galet(0.014, 0.3, 0.04, 0.3, 4), -0.13, 0.17, 0, K.cuir);
+    // le GROS HAVRESAC : la couverture roulée sur le dessus, la gamelle et le quart, la poêle derrière
+    pc("dos", new THREE.CylinderGeometry(0.055, 0.055, 0.42, detail ? 10 : 6), -0.25, 0.47, 0, K.molletieres, Math.PI / 2);
+    if (detail) peint((x, y, z) => 0.85 + 0.15 * Math.abs(Math.sin(Math.atan2(x, y) * 3 + z * 30)));
+    pc("dos", new THREE.CylinderGeometry(0.065, 0.06, 0.12, detail ? 12 : 6), -0.27, 0.58, 0.07, gamelle); // la gamelle, debout
+    if (detail) {
+      pc("dos", new THREE.CylinderGeometry(0.066, 0.066, 0.012, 12), -0.27, 0.645, 0.07, gamelle); // (son couvercle)
+      pc("dos", new THREE.CylinderGeometry(0.08, 0.08, 0.025, 12), -0.345, 0.25, 0, gamelle, 0, 0, Math.PI / 2); // la poêle, sanglée derrière
+      pc("dos", new THREE.CylinderGeometry(0.008, 0.008, 0.16, 4), -0.35, 0.12, 0, K.noir); // (son manche)
+      pc("dos", new THREE.CylinderGeometry(0.03, 0.026, 0.06, 8), -0.12, -0.02, 0.2, gamelle); // le quart, au ceinturon
+      for (const y of [0.18, 0.36]) pc("dos", galet(0.2, 0.014, 0.31, 0.3, 4), -0.245, y, 0, K.cuir); // les courroies du havresac
+    }
+    // le BIDON ROND (couvert de drap) sur la hanche gauche, et la MUSETTE à droite (plus grosse qu'avant)
+    pc("dos", new THREE.SphereGeometry(0.075, detail ? 12 : 6, detail ? 8 : 5), -0.06, -0.06, -0.215, 0x5e5040);
+    dernier().echelle = [1, 1.1, 0.5];
+    pc("dos", galet(0.12, 0.13, 0.06, 0.4, detail ? 8 : 5), 0.0, -0.08, 0.215, K.sac);
   }
   function equipementSkin(pc, K, detail, S, s, anneau, peint, mat) {
     const B = (lx, ly, lz) => new THREE.BoxGeometry(lx, ly, lz);

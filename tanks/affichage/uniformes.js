@@ -17,6 +17,11 @@
 // Le peintre ajoute encore : le FILET sur le casque, les COUTURES sur les côtés (avec leurs points), la BOUE sur le bas
 // des jambes et les genoux, et une peau un peu plus douce et plus chaude que le tissu.
 // (Demande 93) La peau n'est plus d'une seule couleur : de petites marbrures, et des POILS dans la barbe de 3 jours.
+// ✍️ (Demande 128, « ils ressemblent à des jouets ») de nouveaux camouflages pour les SKINS des classes : l'URBAIN gris (de
+// longs coups de pinceau), le MULTICAM (taches douces et brindilles), l'UNI (presque noir), le FLECKTARN de l'ennemi (des
+// petits points) ; de nouvelles matières (le gilet NUMÉRIQUE, le TRICOT des cagoules, le VERRE brillant, le CAOUTCHOUC, le
+// PLASTIQUE DUR) ; les PLIS aux genoux, aux coudes et à l'aine ; l'OMBRE DANS LES CREUX que l'atelier a mesurée ; une
+// boue plus légère sur les bottes, et la poussière sur ce qui regarde le ciel.
 // Comme tout l'affichage, il ne touche jamais au monde : il habille seulement.
 
 window.Tanks = window.Tanks || {};

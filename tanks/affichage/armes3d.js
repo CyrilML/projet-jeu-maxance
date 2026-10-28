@@ -2546,14 +2546,17 @@ Tanks.Armes3D = (function () {
     // 1. quelle arme en main ? (les grenades et la plupart des gadgets : l'arme est baissée hors de l'écran)
     const tenue = Tanks.Armes.enMain(s); // (livre n° 6 : ou l'arme bonus)
     // (livre n° 28) ta TENUE de la boutique : les manches (et les gants, assombris pour la nuit) prennent ses couleurs
-    const tenueBoutique = Tanks.Boutique && Tanks.Boutique.porte().tenue, camp = tenueBoutique ? "bleus~" + tenueBoutique : "bleus";
+    // ✍️ (demande 128) sinon, le SKIN de ta classe : la manche camouflée et la couleur des gants
+    const tenueBoutique = Tanks.Boutique && Tanks.Boutique.porte().tenue, camp = tenueBoutique ? "bleus~" + tenueBoutique : Tanks.Engins3D.habit("bleus", s.classe);
     if (V.mancheCamp !== camp && Tanks.Chars3D && Tanks.Chars3D.camouflage) {
       const U = C.realisme.soldats.uniformes.bleus, t = Tanks.Chars3D.camouflage(C.edition.id !== "moderne" && !tenueBoutique ? [U.fond].concat(U.taches) : C.equipes[camp].camouflage).clone(); // (demande 115 : en 1916, la manche bleu horizon)
       (t.needsUpdate = true), t.repeat.set(1.5, 3);
       V.manche.map = t;
       V.manche.needsUpdate = true;
       V.mancheCamp = camp;
-      bilan.manches = tenueBoutique ? "tenue « " + C.boutique.tenues.find((x) => x.id === tenueBoutique).nom + " »" : "uniforme des Bleus";
+      const SK = (C.realisme.soldats.uniformes[camp] || {}).skin;
+      if (V.mains && V.mains[0]) V.mains[0].material.color.set(SK ? new THREE.Color(SK.gants).lerp(new THREE.Color(1, 1, 1), 0.25).multiplyScalar(2.2) : 0xffffff); // (les gants : leur couleur, sur le cuir peint)
+      bilan.manches = tenueBoutique ? "tenue « " + C.boutique.tenues.find((x) => x.id === tenueBoutique).nom + " »" : SK ? "skin « " + SK.nom + " »" : "uniforme des Bleus";
     }
     // (livre n° 14, 15, 16) une grenade, un explosif, un gadget ou une plaque en main : l'arme est baissée, et
     // l'accessoiriste (affichage/objets3d.js) lève l'objet

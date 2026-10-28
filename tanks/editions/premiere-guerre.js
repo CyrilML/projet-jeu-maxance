@@ -35,6 +35,11 @@ window.Tanks = window.Tanks || {};
       casques: { bleus: "adrian", rouges: "kressien" }, // (affichage/engins3d.js : le casque à cimier, le casque à couvre-nuque)
       chapeauEclaireur: false, // (l'éclaireur garde son casque)
       equipementModerne: false, // (pas de support de lunettes de nuit, de balise, de rails sur les casques)
+      // ✍️ (demande 128, « une photo de tous les personnages : les soldats de la Première Guerre mondiale ») LA CAPOTE : le
+      // long manteau à 2 rangées de boutons et ses pans, les bretelles de cuir en Y, le gros havresac avec la couverture
+      // roulée, la gamelle et le quart, la musette et le bidon rond (affichage/engins3d.js). bas : m, où s'arrêtent les pans
+      // (au-dessus du genou) ; evase : m de plus en bas (les pans s'écartent) ; boutons : la couleur des boutons de chaque camp.
+      capote: { bas: 0.56, evase: 0.025, boutons: { bleus: "#b39a5a", rouges: "#6e6a5c" }, gamelle: "#8a8c86" },
       avions: { avion: "biplan", chasseur: "biplan", transport: "bombardier" }, // (affichage/avions3d-1916.js)
       projectiles: { missile: "balles" }, // (les « missiles » des biplans sont des rafales de mitrailleuse : on dessine des traceurs)
     },
@@ -213,7 +218,15 @@ window.Tanks = window.Tanks || {};
             rouges: { nom: "gris de campagne", fond: "#6b6e62", taches: ["#6b6e62", "#6d7064", "#696c60"], equipement: "#574632" },
             motif: 0.7, ripstop: 0.006, plis: 1.2, boue: 0.95, relief: 1.6,
           },
-          visage: { lunettes: ["aucune", "aucune", "masqueGaz", "aucune", "aucune", "masqueGaz", "aucune"], barbe: 0.4 },
+          visage: { lunettes: ["aucune", "aucune", "masqueGaz", "aucune", "aucune", "masqueGaz", "aucune"], barbe: 0.4,
+            // ✍️ (demande 128) en 1916, beaucoup de MOUSTACHES (les « poilus ») : la liste des barbes de cette édition
+            barbes: [
+              { nom: "moustache", force: 2.6, haut: 0.03, moustache: true },
+              { nom: "barbe pleine", force: 3.2, haut: 0.012, pleine: true },
+              { nom: "moustache", force: 2.6, haut: 0.03, moustache: true },
+              { nom: "3 jours", force: 1, haut: 0.03 },
+              { nom: "moustache", force: 2.6, haut: 0.03, moustache: true },
+            ] },
         },
         // 🌫️ un ciel COUVERT et bas, une lumière grise, la brume qui commence tout près
         lumiere: { bataille: { direction: [0.45, 0.5, 0.4], couleur: "#e6dcc8", force: 1.9, ciel: "#a7a9a4", sol: "#4c4234", ambiance: 1.0, exposition: 1.0,
