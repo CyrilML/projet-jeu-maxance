@@ -231,6 +231,8 @@ Tanks.Uniformes = (function () {
       visageReglages: { value: new THREE.Vector4(Tanks.CONFIG.realisme.soldats.visage.poils, 0, 0, 0) }, // (demande 93)
     };
     mat.userData.tailleur = sorte;
+    mat.userData.tissuTex = uniformes.tissuTex.value; // (demande 128 : pour l'envoyer d'avance à la carte graphique)
+    mat.userData.equipTex = uniformes.equipTex.value;
     mat.customProgramCacheKey = () => "uniforme-" + sorte;
     mat.onBeforeCompile = (sh) => {
       Object.assign(sh.uniforms, uniformes);

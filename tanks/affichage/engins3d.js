@@ -99,7 +99,7 @@ Tanks.Engins3D = (function () {
     if (matsEquipe[equipe]) return matsEquipe[equipe];
     const E = Tanks.CONFIG.equipes[equipe], U = Tanks.CONFIG.realisme.soldats.uniformes, UE = U[equipe] || U.bleus;
     const coul = (h) => new THREE.Color(h).getHex();
-    return (matsEquipe[equipe] = {
+    matsEquipe[equipe] = {
       // (demande 92) le tissu camouflé est peint par le tailleur (affichage/uniformes.js) : woodland ou désert, ripstop,
       // plis, coutures, filet du casque, boue
       tenue: Tanks.Uniformes.habiller(new THREE.MeshStandardMaterial({ roughness: 0.93 }), "tenue", equipe),
@@ -125,7 +125,16 @@ Tanks.Engins3D = (function () {
         ...(UE.skin ? skinCouleurs(UE.skin, coul, E) : {}),
       },
       skin: UE.skin || null,
-    });
+    };
+    envoyerTissu(matsEquipe[equipe]);
+    return matsEquipe[equipe];
+  }
+  // (demande 128) envoyer TOUT DE SUITE le tissu d'un nouveau camp de dessin à la carte graphique (pendant la préparation,
+  // avant la bataille) : sinon c'est la 1re image où l'on voit ce skin qui paie l'envoi (un à-coup en plein combat)
+  function envoyerTissu(M) {
+    const R = Tanks.Scene && Tanks.Scene.rendu;
+    if (!R || !R.initTexture) return;
+    for (const m of [M.tenue, M.teinte]) for (const t of [m.userData.tissuTex, m.userData.equipTex]) if (t && !t.userData.envoye) (R.initTexture(t), (t.userData.envoye = true));
   }
   function skinCouleurs(S, coul, E) {
     const eq = new THREE.Color(S.equipement);
@@ -473,7 +482,8 @@ Tanks.Engins3D = (function () {
     const av = (y, z) => cx + devant(H, y, z); // (le devant de la peau, dans le repère du cou)
     pc("cou", Tanks.Corps3D.cou(detail), 0, 0, 0, cagoule ? K.visage : peau); // le cou (demande 126 : sa base suit le dos, le haut suit la tête ; demande 128 : sous la cagoule)
     dernier().poids = Tanks.Corps3D.melange("dos", "cou", -0.045, 0.035);
-    pc("cou", H, cx, cy, 0, peau);
+    // (demande 128 : sous une cagoule ou un masque, on ne garde de la tête que le tour des yeux : le reste est caché)
+    pc("cou", cagoule ? teteCachee(H, detail) : H, cx, cy, 0, peau);
     // la peinture de la peau (x, y, z : le point sur la tête, autour de son centre)
     const B = V.barbe * BB.force;
     peint((x, y, z) => {
@@ -714,7 +724,11 @@ Tanks.Engins3D = (function () {
   const formesFines = {};
   function teteFine(detail) { // (une tête plus finement découpée pour les coques : la fente des yeux a des bords plus nets)
     const k = detail ? "d" : "s";
-    return formesFines[k] || (formesFines[k] = Tanks.Corps3D.crane(detail ? 36 : 14, detail ? 28 : 10));
+    return formesFines[k] || (formesFines[k] = Tanks.Corps3D.crane(detail ? 32 : 14, detail ? 24 : 10));
+  }
+  function teteCachee(H, detail) {
+    const k = "c" + detail;
+    return formesFines[k] || (formesFines[k] = Tanks.Corps3D.coque(H, 0, (x, y, z) => x > -0.01 && Math.abs(Math.atan2(z, x)) < 0.9 && y > -0.03 && y < 0.05));
   }
   function visageCouvert(pc, dernier, peint, K, detail, couvert, cx, cy, av) {
     const C3 = Tanks.Corps3D, H = teteFine(detail), mat = (n) => (dernier().mat = n);
@@ -996,10 +1010,14 @@ Tanks.Engins3D = (function () {
       geo.computeBoundingSphere();
       res[nom] = geo;
     }
-    const tOmbre = performance.now();
-    ombrer(res, liste.detail !== false);
-    bilanOmbres.ms += performance.now() - tOmbre;
-    bilanOmbres.formes++;
+    // (l'ombre des creux : pour les soldats, fabriqués d'avance, et les silhouettes ; pas pour les figurines assises dans les
+    // engins, fabriquées quand l'engin arrive : ce serait un à-coup, pour un soldat qu'on voit à peine)
+    if (pourChair || liste.ombrer) {
+      const tOmbre = performance.now();
+      ombrer(res, liste.detail !== false);
+      bilanOmbres.ms += performance.now() - tOmbre;
+      bilanOmbres.formes++;
+    }
     Object.defineProperty(res, "bilan", { value: { melanges, sommets }, enumerable: false }); // (pas une forme : le compte)
     return res;
   }
@@ -1155,6 +1173,8 @@ Tanks.Engins3D = (function () {
     if (!aPreparer) {
       aPreparer = [];
       for (const equipe of ["bleus", "rouges"]) for (const classe of Object.keys(Tanks.CONFIG.classes)) for (let peau = 0; peau < PEAUX.length; peau++) for (const detail of [true, false]) aPreparer.push([equipe, detail, peau, false, classe, undefined]);
+      // (demande 128) et TON soldat (ta peau, chaque classe) : sinon ses 2 formes étaient fabriquées au début de la bataille
+      for (const classe of Object.keys(Tanks.CONFIG.classes)) for (const detail of [true, false]) aPreparer.unshift(["bleus", detail, 0, true, classe, undefined]);
     }
     const x = aPreparer.shift();
     if (!x) return false;
@@ -1609,7 +1629,9 @@ Tanks.Engins3D = (function () {
     new THREE.Group().add(r.corps);
     poserBras(r.epaules[0], r.coudes[0], MAINS.fusil.droite, POLES[0]);
     poserBras(r.epaules[1], r.coudes[1], MAINS.fusil.gauche, POLES[1]);
-    const geos = cuire(pieces(equipe, false, PEAUX[0], false), r, M, false);
+    const liste = pieces(equipe, false, PEAUX[0], false);
+    liste.ombrer = true;
+    const geos = cuire(liste, r, M, false);
     // le tissu camouflé prend la couleur de fond du camouflage (une instance n'a qu'une matière : celle à couleurs)
     const tenue = geos.tenue, n = tenue.attributes.position.count, t = new Float32Array(n * 3), c = new THREE.Color(M.couleurs.tenue);
     const om = tenue.attributes.ombre ? tenue.attributes.ombre.array : null; // (demande 128 : avec son ombre dans les creux)
