@@ -213,7 +213,7 @@ Tanks.Uniformes = (function () {
     "  float tache = bruit3(vPosB * 9.0) * 0.65 + bruit3(vPosB * 31.0) * 0.35;",
     "  float boue = (1.0 - smoothstep(0.06, tissuReglages.z, vPosB.y)) * smoothstep(0.35, 0.7, tache + 0.25 * (1.0 - vPosB.y / tissuReglages.z));",
     "  boue = max(boue, smoothstep(0.55, 0.8, tache) * step(0.36, vPosB.y) * step(vPosB.y, 0.56) * smoothstep(0.2, 0.6, vNorB.x) * 0.8);",
-    "  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.12, 0.08), boue * 0.7);",
+    "  diffuseColor.rgb = mix(diffuseColor.rgb, min(diffuseColor.rgb * 0.9 + vec3(0.04, 0.03, 0.02), vec3(0.16, 0.12, 0.08)) * 0.4 + vec3(0.16, 0.12, 0.08) * 0.6 * forceBoue, boue * forceBoue);",
     "  hTissu = mix(hTissu, 0.5 + (tache - 0.5) * 0.6, boue);",
   ].join("\n");
 
@@ -235,6 +235,7 @@ Tanks.Uniformes = (function () {
       const couleur = tenue ? [
         "{",
         "  vec4 tis = triplan(tissuTex, vPosB * tissuReglages.x, vNorB);",
+        "  float forceBoue = 0.7;",
         "  diffuseColor.rgb = tis.rgb;",
         "  hTissu = tis.a;",
         // le FILET du casque (au-dessus de 1,65 m, il n'y a que le casque) : des mailles en losange
@@ -263,6 +264,7 @@ Tanks.Uniformes = (function () {
       ] : [
         "{",
         "  vec4 eq = triplan(equipTex, vPosB * 4.4, vNorB);",
+        "  float forceBoue = 0.35;", // (demande 128 : sur les bottes et les gants, de la boue plus légère : une botte noire reste noire)
         "  float m = vMatiere;",
         "  peau = 1.0 - step(0.5, abs(m - 1.0));",
         "  float numerique = 1.0 - step(0.5, abs(m - 5.0));",
@@ -272,7 +274,7 @@ Tanks.Uniformes = (function () {
         // brillant), 8 = le CAOUTCHOUC (le masque à gaz), 9 = le PLASTIQUE DUR (le casque, les coques des genouillères)
         "  tricot = 1.0 - step(0.5, abs(m - 6.0)); verre = 1.0 - step(0.5, abs(m - 7.0)); caout = 1.0 - step(0.5, abs(m - 8.0)); poly = 1.0 - step(0.5, abs(m - 9.0));",
         "  vec3 pix = floor(vPosB * 34.0); float pa = h31(pix), pb = h31(floor(vPosB * 17.0) + 7.0);",
-        "  float tonNum = pb > 0.62 ? 0.52 : (pa > 0.55 ? 1.28 : (pa > 0.25 ? 0.92 : 0.7));",
+        "  float tonNum = pb > 0.62 ? 0.5 : (pa > 0.55 ? 1.18 : (pa > 0.25 ? 0.88 : 0.68));",
         "  diffuseColor.rgb *= mix(1.0, tonNum, numerique);",
         "  float cote = 0.5 + 0.5 * sin((vPosB.x * 0.6 + vPosB.z) * 520.0);",
         "  diffuseColor.rgb *= mix(1.0, 0.88 + cote * 0.16 + (bruit3(vPosB * 300.0) - 0.5) * 0.1, tricot);",
