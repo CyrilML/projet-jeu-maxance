@@ -332,6 +332,13 @@ Tanks.SousLeCapot = (function () {
     "soldat-touche": (d) => "🩹 " + d.cible + " est touché par " + d.tireur + " (vie " + d.vie + ")",
     // (fusils à pompe) une cartouche incendiaire met le feu à un soldat
     enflamme: (d) => "🔥 " + d.cible + " prend FEU (cartouche incendiaire de " + d.tireur + ") : il brûle " + d.duree + " s et perdra " + virgule(d.degats, 1) + " de vie",
+    // ✍️ (demande 129) LES COMPORTEMENTS des soldats (logique/troupes.js)
+    bond: (d) => "🏃 " + d.cible + " a fini son bond" + (d.decouvert ? " (pas d'abri : couché dans l'herbe)" : " derrière " + d.abri) + " : à " + d.partenaire + " de courir pendant qu'il le couvre (bond n° " + d.n + " du binôme)",
+    "alerte-grenade": (d) => "💣 " + d.cible + " voit une grenade " + (d.ennemie ? "ENNEMIE" : "de son camp") + " à " + d.distance + " m (elle explose dans " + virgule(d.meche, 1) + " s) : il s'enfuit" + (d.crie ? " en criant « " + d.phrase + " »" : ""),
+    "se-couche": (d) => "🫥 " + d.cible + " se plaque au sol : " + d.raison,
+    "signe-main": (d) => "✋ " + d.cible + " fait un signe de la main : " + (d.sorte === "contact" ? "« contact ! » (il montre l'ennemi)" : "« en avant ! »"),
+    "aide-blesse": (d) => "🛡️ " + d.cible + (d.role === "traine" ? " va traîner " + d.blesse + " (à terre) derrière " + d.abri : " couvre " + d.blesse + " (à terre)" + (d.medecin ? " : un médecin arrive" : " en attendant un médecin")),
+    "blesse-traine": (d) => "🫳 " + d.cible + " a traîné " + d.blesse + " sur " + virgule(d.distance, 1) + " m, à l'abri derrière " + d.abri + " : il le couvre maintenant",
     "soldat-mort": (d) => "✖ " + d.cible + " est à terre (" + ({ chute: "tombé de la corde de " + d.tireur, ecrase: "écrasé par " + d.tireur, bombe: "bombe de " + d.tireur, missile: "missile de " + d.tireur, grenade: "grenade de " + d.tireur, effondrement: "écrasé sous une maison qui s'effondre", mine: "mine de " + d.tireur, c4: "C4 de " + d.tireur, claymore: "claymore de " + d.tireur, feu: "brûlé par la cartouche incendiaire de " + d.tireur, roquette: "roquette de " + d.tireur, obus: "obus de " + d.tireur }[d.par] || "balle de " + d.tireur) + ")",
   };
 
@@ -384,6 +391,9 @@ Tanks.SousLeCapot = (function () {
       if (nom === "mur-abime" && !(d.parToi && d.fissure)) return;
       if (nom === "mur-troue" && !d.parToi && loin(d.x, d.z, 150)) return;
       if (nom === "grenade-lancee" && !d.parToi && loin(d.x, d.z, 100)) return;
+      // ✍️ (demande 129) les gestes des soldats : seulement près de toi (ils sont des dizaines !)
+      if ((nom === "bond" || nom === "se-couche" || nom === "signe-main") && loin(d.x, d.z, 80)) return;
+      if ((nom === "alerte-grenade" || nom === "aide-blesse" || nom === "blesse-traine") && loin(d.x, d.z, 150)) return;
       if (nom === "impact" && d.grenade && !d.parToi && loin(d.x, d.z, 100)) return; // (la DCA tire 8 obus par seconde : on ne les écrit pas tous ; ils sont comptés sous le capot)
       if (nom === "portail" && !d.quiToi && d.qui.startsWith("soldat")) return; // (les soldats de l'ordinateur : pas dans le journal)
       const li = document.createElement("li");
@@ -905,6 +915,15 @@ Tanks.SousLeCapot = (function () {
     l.push(["⛑️ les secours (livre n° 17-19)", (s && s.aTerre ? "TOI À TERRE : encore " + virgule(s.aTerre.reste, 1) + " s" + (s.aTerre.appel ? " (médecin appelé)" : " (E : appeler)") + " · " : "") + "à terre (relevables) : 🔵 " + SE.aTerre.bleus + " · 🔴 " + SE.aTerre.rouges + " · blessés : 🔵 " + SE.blesses.bleus + " · 🔴 " + SE.blesses.rouges + " · missions " + SE.missions + " · relevés " + SE.releves + " · points de vie rendus " + SE.soins + " · appels " + SE.appels + " · secouristes en route : " + monde.soldats.filter((o) => o.ia && o.ia.secours).map((o) => Tanks.Radio.nomDe(o) + " → " + (o.ia.secours.patient.joueur ? "toi" : Tanks.Radio.nomDe(o.ia.secours.patient))).join(", ")]);
     l.push(["🤖 tactiques 🔵 (livre n° 21)", enMots(TT.bleus)]);
     l.push(["🤖 tactiques 🔴", enMots(TT.rouges)]);
+    // ✍️ (demande 129) LES COMPORTEMENTS HUMAINS : les gestes de chacun (ce que le dessin peut montrer), les allures, les
+    // binômes qui avancent par bonds, ceux qui sont couchés, penchés, qui aident un blessé, qui fuient une grenade
+    const G = Tanks.Troupes.compterGestes(monde), TB = Tanks.Troupes.bilan;
+    l.push(["🧍 gestes 🔵 (demande 129)", enMots(G.bleus)]);
+    l.push(["🧍 gestes 🔴", enMots(G.rouges)]);
+    l.push(["🚶 allures", enMots(G.allures) + " · " + G.couches + " couchés · " + G.penches + " penchés au coin d'un mur · " + G.aident + " aident un blessé · " + G.fuient + " fuient une grenade"]);
+    l.push(["🏃 bonds par deux", G.binomes + " binômes en ce moment (" + G.courent + " en train de courir) · " + TB.binomes + " binômes formés · " + TB.bonds + " bonds finis · " + TB.signes + " signes de la main"]);
+    l.push(["💥 réflexes", TB.couches + " fois couchés (" + TB.couchesBarrage + " sous les obus, " + TB.couchesFeu + " sous les balles) · " + TB.sursauts + " sursauts · " + TB.alertesGrenade + " grenades repérées (" + TB.fuites + " fuites, " + TB.cris + " « Grenade ! » criés) · " + TB.penches + " fois penchés pour tirer"]);
+    l.push(["🔄 rechargements et blessés", TB.rechargesTactiques + " rechargements tactiques (avant d'être vide) · " + TB.rechargesAbri + " abris cherchés pour recharger · " + TB.couvreBlesses + " blessés couverts · " + TB.traines + " traînés à l'abri"]);
   }
 
   // ✍️ (livre n° 26) LE RÉALISME ABSURDE : le vent, la peur, la fatigue, les balles qui traversent ou ricochent, le

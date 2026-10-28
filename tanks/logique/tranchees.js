@@ -339,6 +339,9 @@ Tanks.Tranchees = (function () {
     if (!actif || !s.ia || s.ia.vague !== "tient" || s.ordre || I.grenade || I.descendre) return I;
     const p = s.ia.poste, d = Math.hypot(p.x - s.x, p.z - s.z);
     if (I.secours) return I;
+    // ✍️ (demande 129) une grenade à fuir, ou plaqué au fond de la tranchée sous le barrage : le réflexe passe avant le poste
+    if (I.fuite) return I;
+    if (I.couche) return (s.ia.etat = "🪖 plaqué au fond de la tranchée (" + s.ia.etat + ")"), (s.ia.tactique = "couché"), I;
     if (d > 1.4) { // (poussé hors de sa place : il y retourne)
       I.versAngle = Math.atan2(p.z - s.z, p.x - s.x);
       I.avancer = true;

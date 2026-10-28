@@ -417,7 +417,7 @@ Tanks.Monde = (function () {
           continue;
         }
         Tanks.Soldat.avancer(s, pourToi("pied"), dt, monde, evenements);
-      } else Tanks.Soldat.avancer(s, Tanks.Troupes.decider(s, monde, dt), dt, monde, evenements);
+      } else Tanks.Soldat.avancer(s, Tanks.Troupes.decider(s, monde, dt, evenements), dt, monde, evenements); // (demande 129 : il peut annoncer ses gestes : « bond », « alerte-grenade »…)
     }
     // (livre de demandes n° 8) les portes des maisons qui s'ouvrent et se referment, les soldats dedans
     if (!monde.metro) Tanks.Interieurs.avancer(monde, dt, evenements);
@@ -438,6 +438,7 @@ Tanks.Monde = (function () {
     const parToi = (o) => !!o && (o === toi || (o === monde.joueur && t.mode === "char") || o === t.engin);
     const journal = (d) => Object.assign({}, d, d.qui ? { qui: d.qui === monde.joueur ? "ton tank" : d.qui.nom, quiToi: parToi(d.qui) } : {}, { tireur: d.tireur && d.tireur.nom, equipeTireur: d.tireur && d.tireur.equipe, cible: d.cible && d.cible.nom, equipeCible: d.cible && d.cible.equipe, parToi: d.tireur === monde.joueur || d.tireur === toi || (d.tireur && d.tireur === t.engin), surToi: d.cible === monde.joueur || d.cible === toi || (d.cible && d.cible === t.engin) });
     const annoncer = (nom, d) => {
+      if (nom === "impact" && d.sur !== "air") Tanks.Troupes.explosion(monde, d.x, d.z, d.sorte); // ✍️ (demande 129 : les soldats tout près sursautent, se plaquent au sol)
       if (enJeu) Tanks.Radio.noter(monde, nom, d); // (demande 94 : l'opérateur radio voit les vrais objets : qui est touché, par qui)
       radio.emettre(nom, journal(d));
       if (nom === "touche" && d.tireur === monde.joueur) S.donnees.touches++;

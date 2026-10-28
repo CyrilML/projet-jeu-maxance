@@ -332,6 +332,13 @@ Tanks.Radio = (function () {
       if (!tireur || tireur.joueur) return;
       if (tireur.equipe === "bleus") bavarder(monde, tireur, "grenade");
       else intercepter(monde, tireur, "grenade");
+    } else if (nom === "alerte-grenade") {
+      // ✍️ (demande 129) « Grenade ! » : le soldat qui voit une grenade tomber près de lui le crie (pas trop souvent : la
+      // troupe ne crie qu'une fois toutes les « cri » s, et la radio garde ses pauses) ; l'ennemi, on l'intercepte parfois
+      const s = d.cible;
+      if (!s || s.mort || s.joueur || !d.crie) return;
+      if (s.equipe === "bleus") { if (dist(s, m) < B.portee) dire(monde, s, "alerteGrenade", "urgent", {}, { texte: d.phrase }); }
+      else if (dist(s, m) < B.interceptePortee) dire(monde, s, "alerteGrenade", "bavardage", {}, { interceptee: true, texte: d.phrase });
     } else if (nom === "touche") {
       if (estChar(c) && c.equipe === "bleus" && c !== monde.joueur && !c.detruit) bavarder(monde, c, "toucheChar");
     } else if (nom === "qg-attaque" || nom === "qg-baie-detruite" || nom === "qg-detruit") {
