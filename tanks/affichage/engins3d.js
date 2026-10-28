@@ -128,7 +128,7 @@ Tanks.Engins3D = (function () {
       sac: eq.clone().multiplyScalar(0.88).getHex(), rabat: eq.clone().multiplyScalar(0.8).getHex(), casqueSkin: coul(S.casqueCouleur), visage: coul(S.visageCouleur),
       etui: coul(S.etuiCuisse || "#1f2022"), caoutchouc: 0x17181a, filtre: 0x3a3d38, roquette: 0x4f5a36, ogive: 0x5b6440, hublot: 0x2c3a42,
       // (les marques de l'équipe un peu moins vives : toujours lisibles, mais moins « jouet »)
-      marque: new THREE.Color(E.marque).lerp(new THREE.Color(0x6a6a66), 0.22).multiplyScalar(0.85).getHex(), marqueToi: new THREE.Color(E.marque).lerp(new THREE.Color(0x6a6a66), 0.1).getHex() };
+      marque: new THREE.Color(E.marque).lerp(new THREE.Color(0x6a6a66), 0.3).multiplyScalar(0.8).getHex(), marqueToi: new THREE.Color(E.marque).lerp(new THREE.Color(0x6a6a66), 0.1).getHex() };
   }
   // ✍️ (demande 128) LE SKIN d'un soldat : dans les éditions de « realisme.soldats.skins », un soldat des Bleus ou des Rouges
   // qui a une classe porte la tenue de sa classe : son « camp de dessin » devient « bleus#assaut »… (une tenue de la
@@ -551,8 +551,8 @@ Tanks.Engins3D = (function () {
       } else if (lunettes === "masque") { // le masque de protection sur les yeux, et sa sangle autour du casque
         pc("cou", galet(0.022, 0.034, 0.105, 0.35, 12), av(0.012, 0) + 0.014, cy + 0.013, 0, K.verre);
         pc("cou", galet(0.026, 0.04, 0.11, 0.3, 10), av(0.012, 0) + 0.006, cy + 0.013, 0, K.noir);
-        pc("cou", new THREE.TorusGeometry(0.103, 0.008, 4, 20), cx - 0.005, cy + 0.014, 0, K.sangle, Math.PI / 2);
-        dernier().echelle = [1.15, 1, 1];
+        if (S) dernier().echelle = [1.15, 1.3, 1.08]; // (demande 128 : de grandes lunettes sombres ; la sangle passe sous le casque)
+        else (pc("cou", new THREE.TorusGeometry(0.103, 0.008, 4, 20), cx - 0.005, cy + 0.014, 0, K.sangle, Math.PI / 2), (dernier().echelle = [1.15, 1, 1]));
       } else if (lunettes === "casque") pc("cou", galet(0.035, 0.05, 0.17, 0.35, 8), 0.125, 0.245, 0, K.verre, 0, 0, 0.1); // relevées sur le casque
       else if (lunettes === "masqueGaz") { // ✍️ (demande 115) le MASQUE À GAZ de 1916 : la toile sur le visage, 2 gros yeux ronds, la cartouche filtrante
         pc("cou", galet(0.07, 0.12, 0.13, 0.5, 10), av(-0.02, 0) - 0.005, cy - 0.02, 0, 0x5a5a48);
@@ -701,7 +701,7 @@ Tanks.Engins3D = (function () {
   function visageCouvert(pc, dernier, peint, K, detail, couvert, cx, cy, av) {
     const C3 = Tanks.Corps3D, H = teteFine(detail), mat = (n) => (dernier().mat = n);
     if (couvert === "cagoule") { // la CAGOULE : tout couvert, sauf la fente des yeux
-      pc("cou", C3.coque(H, 0.0055, (x, y, z) => !(x > 0 && Math.abs(Math.atan2(z, x)) < 0.62 && y > -0.003 && y < 0.026), 0.012), cx, cy, 0, K.visage);
+      pc("cou", C3.coque(H, 0.0055, (x, y, z) => !(x > 0 && Math.abs(Math.atan2(z, x)) < 0.52 && y > -0.002 && y < 0.025), 0.012), cx, cy, 0, K.visage);
       mat(6);
       peint((x, y) => (x > 0.06 && y > -0.012 && y < 0.034 ? 0.82 : 1)); // (le bord de la fente, dans l'ombre)
     } else if (couvert === "foulard") { // le FOULARD : sur le nez et la bouche, puis enroulé autour du cou
@@ -779,8 +779,8 @@ Tanks.Engins3D = (function () {
       pc("cou", galet(0.04, 0.05, 0.18, 0.35, detail ? 10 : 6), 0.118, yc + 0.07, 0, K.noir, 0, 0, pente - 0.55);
       if (detail) {
         pc("cou", galet(0.022, 0.04, 0.16, 0.4, 10), 0.135, yc + 0.08, 0, K.verre, 0, 0, pente - 0.55);
-        pc("cou", new THREE.TorusGeometry(0.125, 0.009, 4, n), -0.008, yc + 0.07, 0, K.sangle, Math.PI / 2);
-        dernier().echelle = [1.08, 1.0, 1.04];
+        pc("cou", new THREE.TorusGeometry(0.113, 0.008, 4, n), -0.008 - Math.sin(pente) * 0.07, yc + 0.07, 0, K.sangle, Math.PI / 2);
+        dernier().echelle = [1.06, 1.0, 1.05];
         dernier().rz2 = pente - 0.12;
       }
     }
