@@ -1,6 +1,6 @@
 # Demande n° 128 : les skins des 4 classes (d'après les images de Maxance)
 
-> Statut : 🛠️ en cours.
+> Statut : ✅ livrée (tanks version 74).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -25,6 +25,6 @@
 - Ce sont les tenues de ton camp (édition Moderne) ; l'ennemi garde ses couleurs pour qu'on le reconnaisse.
 
 ## ✅ Critères de réussite
-- [ ] Les 4 classes ressemblent à leur image (sans copier l'image).
-- [ ] Le médecin a son carré blanc à croix rouge sur le bras.
-- [ ] Moins « jouet », plus réaliste. Le jeu ne rame pas plus (test de vitesse).
+- [x] Les 4 classes ressemblent à leur image (sans copier l'image).
+- [x] Le médecin a son carré blanc à croix rouge sur le bras.
+- [x] Moins « jouet », plus réaliste. Le jeu ne rame pas plus (test de vitesse).

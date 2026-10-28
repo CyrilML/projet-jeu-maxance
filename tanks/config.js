@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 73,
+  version: 74,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -1997,7 +1997,29 @@ Tanks.CONFIG.realisme = Object.assign(Tanks.CONFIG.realisme || {}, {
       // un pistolet ; roulis : rad de roulis des hanches à chaque pas ; joue : rad de la tête qui se penche vers la crosse
       // en visant ; flechi : rad des genoux un peu pliés quand il vise debout (la position de tir) ; penche : rad du buste
       // penché vers l'avant en visant.
-      balancement: 0.05, brasLibre: 0.16, roulis: 0.035, joue: 0.16, flechi: 0.22, penche: 0.07 },
+      balancement: 0.05, brasLibre: 0.16, roulis: 0.035, joue: 0.16, flechi: 0.22, penche: 0.07,
+      // ✍️ (demande 129, « refais les comportements des soldats ») CE QUE LE DESSIN MONTRE de leurs nouveaux gestes :
+      //   couche : À PLAT VENTRE : transition (s pour se plaquer au sol ou se relever), recul / haut (m : où va le bassin),
+      //     buste (rad : la poitrine relevée sur les coudes), tete (rad : la tête relevée pour voir devant), rampe (m d'une
+      //     « foulée » quand il RAMPE : un genou remonte sur le côté, puis l'autre) ;
+      //   penche : SE PENCHER au coin d'un mur : buste (rad, ~23°), hanches (rad), glisse (m : le bassin glisse du côté), tete (rad) ;
+      //   sprint : penche (rad : le buste en avant), foulee [a, b] : la longueur d'une foulée = foulee × (a + b × la vitesse,
+      //     de 0 à 1,5 : plus il va vite, plus ses pas sont longs ; ses pieds ne glissent jamais : ils avancent avec lui),
+      //     pompe (m : l'arme, tenue en travers de la poitrine, monte et descend avec les bras) ;
+      //   sursaut : duree (s) et force (× : le buste rejeté en arrière, les genoux qui fléchissent) ;
+      //   regard : tete (rad : la tête tourne seule jusqu'à ±80°), buste (rad : au-delà, le buste aide, au plus tant),
+      //     vitesse (× par s : la tête rattrape son regard) ;
+      //   signe : vague (aller-retour par s du bras « en avant ! ») ;
+      //   chargeurs : max (chargeurs vides qui tombent par terre en même temps), reste (s posés au sol avant de disparaître).
+      humains: {
+        couche: { transition: 0.4, recul: -0.92, haut: 0.15, buste: 0.24, tete: 1.05, rampe: 0.75 },
+        penche: { buste: 0.4, hanches: 0.08, glisse: 0.13, tete: 0.1 },
+        sprint: { penche: 0.24, foulee: [0.8, 0.3], pompe: 0.05 },
+        sursaut: { duree: 0.4, force: 1 },
+        regard: { tete: 1.4, buste: 0.7, vitesse: 7 },
+        signe: { vague: 1.6 },
+        chargeurs: { max: 12, reste: 4 },
+      } },
     // (demande 93) LE VISAGE (affichage/engins3d.js, la tête sculptée) : grain : les nuances au hasard de la peau (0 = toute
     // d'une couleur) ; rougeur : les joues et le nez plus roses ; barbe : la force de la barbe de 3 jours (0 = rasé de près) ;
     // poils : combien de petits poils le tailleur sème dans la barbe (0 à 1) ; lunettes : une par soldat, à tour de rôle

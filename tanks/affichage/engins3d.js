@@ -293,6 +293,20 @@ Tanks.Engins3D = (function () {
       pc("dos", new THREE.TorusGeometry(0.15, 0.04, 6, 12, Math.PI), -0.3, 0.3, 0, K.molletieres, 0, Math.PI / 2, 0); // la couverture roulée en fer à cheval
       pc("dos", galet(0.05, 0.11, 0.08, 0.4, 6), -0.12, 0.02, -0.19, K.metal); // le bidon
       if (detail) pc("dos", galet(0.07, 0.1, 0.06, 0.4, 6), -0.05, 0.03, 0.2, K.sac); // la musette
+      // ✍️ (demande 129, l'édition 1944) au ceinturon, dans les deux camps : le COUTEAU DE COMBAT dans son fourreau de cuir
+      // (sur la hanche droite, le manche qui dépasse) et la PELLE-BÊCHE pliante dans sa housse de toile (derrière, à gauche,
+      // le manche vers le haut). Accrochés au bassin (l'os du corps) : ils suivent les hanches. Quelques pièces seulement,
+      // soudées avec le reste du soldat (aucun dessin en plus).
+      if (Tanks.CONFIG.edition.id === "1944") {
+        pc("corps", galet(0.032, 0.19, 0.04, 0.35, detail ? 6 : 4), -0.035, 0.87, 0.212, K.cuir, 0.12); // le fourreau
+        if (detail) {
+          pc("corps", new THREE.CylinderGeometry(0.013, 0.015, 0.085, 6), -0.035, 1.005, 0.205, K.bois, 0.12); // le manche du couteau
+          pc("corps", galet(0.05, 0.012, 0.03, 0.3, 4), -0.035, 0.962, 0.207, K.metal); // sa garde
+        }
+        pc("corps", galet(0.03, 0.2, 0.16, 0.35, detail ? 6 : 4), -0.2, 0.84, -0.085, K.sac, 0, 0, 0.1); // la housse de la pelle (la lame)
+        pc("corps", new THREE.CylinderGeometry(0.016, 0.016, detail ? 0.2 : 0.16, detail ? 6 : 4), -0.215, 1.03, -0.085, K.bois, 0, 0, 0.1); // son manche
+        if (detail) pc("corps", galet(0.035, 0.025, 0.05, 0.3, 4), -0.226, 1.13, -0.085, K.bois); // le bout du manche
+      }
       const CP = Tanks.CONFIG.edition.modeles.capote;
       if (CP) capote(pc, dernier, K, detail, equipe, CP, poids, peint);
     } else {
@@ -1221,19 +1235,21 @@ Tanks.Engins3D = (function () {
   // La « cinématique inverse » à 2 os : l'épaule S, la main voulue M ; on cherche le coude.
   // (Le triangle épaule-coude-main a deux côtés connus, le bras et l'avant-bras, et le troisième côté, c'est la
   // distance de l'épaule à la main : la loi des cosinus donne l'angle à l'épaule.)
-  const BAS = new THREE.Vector3(0, -1, 0), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion();
+  // (demande 129 : avec des vecteurs RÉUTILISÉS : avant, chaque bras de chaque soldat fabriquait 7 vecteurs neufs à chaque image)
+  const BAS = new THREE.Vector3(0, -1, 0), q1 = new THREE.Quaternion(), q2 = new THREE.Quaternion(), q3 = new THREE.Quaternion();
+  const _ikV = new THREE.Vector3(), _ikP = new THREE.Vector3(), _ikC = new THREE.Vector3(), _ikM = new THREE.Vector3(), _ikT = new THREE.Vector3();
   function poserBras(epaule, coude, cible, pole) {
     const S = epaule.position, a = OS.bras, b = OS.avantBras + 0.01;
-    const vers = new THREE.Vector3().fromArray(cible).sub(S), d = Math.min(a + b - 0.001, Math.max(0.05, vers.length()));
+    const vers = _ikV.fromArray(cible).sub(S), d = Math.min(a + b - 0.001, Math.max(0.05, vers.length()));
     vers.normalize();
     const cosA = (a * a + d * d - b * b) / (2 * a * d), sinA = Math.sqrt(Math.max(0, 1 - cosA * cosA));
-    const p = pole.clone().sub(vers.clone().multiplyScalar(pole.dot(vers))).normalize();
-    const coudeEn = vers.clone().multiplyScalar(a * cosA).add(p.multiplyScalar(a * sinA));
-    const main = vers.clone().multiplyScalar(d);
-    q1.setFromUnitVectors(BAS, coudeEn.clone().normalize());
+    const p = _ikP.copy(pole).sub(_ikT.copy(vers).multiplyScalar(pole.dot(vers))).normalize();
+    const coudeEn = _ikC.copy(vers).multiplyScalar(a * cosA).add(p.multiplyScalar(a * sinA));
+    const main = _ikM.copy(vers).multiplyScalar(d);
+    q1.setFromUnitVectors(BAS, _ikT.copy(coudeEn).normalize());
     epaule.quaternion.copy(q1);
     q2.setFromUnitVectors(BAS, main.sub(coudeEn).normalize());
-    coude.quaternion.copy(q1.clone().invert().multiply(q2));
+    coude.quaternion.copy(q3.copy(q1).invert().multiply(q2));
   }
   const POLES = [new THREE.Vector3(-0.3, -1, 0.8), new THREE.Vector3(-0.3, -1, -0.8)]; // (les coudes vont en bas et vers l'extérieur)
   const POLES_CORDE = [new THREE.Vector3(0.4, -0.2, 1), new THREE.Vector3(0.4, -0.2, -1)]; // (à la corde : coudes écartés, vers l'avant)
@@ -1301,6 +1317,30 @@ Tanks.Engins3D = (function () {
     r.mainD = modele.poignee.centre;
     r.mainG = modele.garde.centre;
     r.chargeurArme = modele.chargeur ? new THREE.Vector3(modele.chargeur.x, modele.chargeur.y - 0.05, 0) : null;
+    // ✍️ (demande 129) le LEVIER d'armement (ou la boule du verrou) que la main gauche tire à la fin du rechargement, et le
+    // CHARGEUR de cette arme : une copie (les mêmes formes) va dans la main pendant qu'on le change
+    r.levierArme = modele.levier ? new THREE.Vector3(modele.levier.x, modele.levier.y, modele.levier.z || 0) : new THREE.Vector3(r.mainD.x + 0.08, (modele.by || 0) + 0.035, -0.045);
+    r.groupeChargeur = r.objetArme.getObjectByName("chargeur") || null;
+    if (r.chargeurMain) r.dos.remove(r.chargeurMain);
+    r.chargeurMain = null;
+    if (r.chargeurArme && famille !== "roquettes") {
+      r.chargeurMain = new THREE.Group();
+      // (l'arme d'un soldat de l'ordinateur est soudée d'un seul morceau : son chargeur ne s'enlève pas ; alors la main
+      // prend un chargeur tout simple, le même pour tous : une seule forme, une seule matière)
+      if (r.groupeChargeur) r.chargeurMain.add(r.groupeChargeur.clone());
+      else {
+        if (!CHARGEUR_SIMPLE.geo) (CHARGEUR_SIMPLE.geo = new THREE.BoxGeometry(0.055, famille === "pistolet" ? 0.11 : 0.18, 0.024)), (CHARGEUR_SIMPLE.mat = new THREE.MeshStandardMaterial({ color: 0x26272a, roughness: 0.6, metalness: 0.4 }));
+        const m = new THREE.Mesh(CHARGEUR_SIMPLE.geo, CHARGEUR_SIMPLE.mat);
+        m.position.set(r.chargeurArme.x, r.chargeurArme.y - 0.04, 0);
+        m.rotation.z = 0.2;
+        m.castShadow = true;
+        r.chargeurMain.add(m);
+      }
+      r.chargeurMain.visible = false;
+      r.chargeurMain.userData.cle = cle;
+      r.dos.add(r.chargeurMain);
+    }
+    r.chargeurTenu = 0; // (0 : rien en main ; 1 : le vide ; 2 : le neuf)
     if (corde) {
       r.torsion = 0;
       r.porteArme.position.copy(DANS_LE_DOS.position);
@@ -1341,11 +1381,16 @@ Tanks.Engins3D = (function () {
       // il tombe sur le dos en une demi-seconde, les bras ouverts
       // (étape 85) en avant ou en arrière selon sa chute (logique/soldat.js), à la vitesse de sa chute, un peu de travers
       // (étape 85, les vraies poses) chaque GENRE de chute a sa façon de bouger les os ; k va de 0 (touché) à 1 (couché)
-      const ch = s.chute, k = Math.min(1, ch ? Math.max(0, s.depuisMort - ch.debut) / ch.duree : s.depuisMort * 2);
+      const ch = s.chute;
+      let k = Math.min(1, ch ? Math.max(0, s.depuisMort - ch.debut) / ch.duree : s.depuisMort * 2);
       const doux = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x)); // (lent, puis vite, puis lent : plus naturel)
       const tombe = (x) => (x <= 0 ? 0 : x >= 1 ? 1 : x * x); // (une chute accélère, comme tout ce qui tombe)
       const de = (a, b) => Math.max(0, Math.min(1, (k - a) / (b - a))); // (une partie de la chute, entre a et b)
-      const genre = ch ? ch.genre : "face", travers = ch ? ch.travers : 0, Q = Math.PI / 2;
+      // ✍️ (demande 129) TRAÎNÉ par un ami (logique/troupes.js : « s.aidePar » le traîne, « .traine ») : il est sur le dos,
+      // la tête et les épaules vers celui qui le tire (un peu relevées : il le tient par le gilet), et il glisse avec lui
+      const tireur = s.aidePar && !s.aidePar.mort && s.aidePar.traine && (s.aidePar.traine === s || Object.getPrototypeOf(s) === s.aidePar.traine) ? s.aidePar : null; // (la scène dessine une « vue » du soldat, faite à partir de lui)
+      const genre = tireur ? "face" : ch ? ch.genre : "face", travers = ch && !tireur ? ch.travers : 0, Q = Math.PI / 2;
+      if (tireur) k = 1;
       r.pose = null;
       r.dos.scale.y = 1;
       for (const e of r.epaules) e.quaternion.identity();
@@ -1403,6 +1448,13 @@ Tanks.Engins3D = (function () {
         r.cou.rotation.set(0, 0, -0.35 * ciel);
       }
       r.jambes.forEach((j, i) => j.rotation.set(hasard(13 + i) * R.asymetrie * 0.5 * k, 0, hanches + hasard(15 + i) * R.asymetrie * 0.6 * k));
+      if (tireur) {
+        o.g.rotation.y = -Math.atan2(s.z - tireur.z, s.x - tireur.x); // (sa tête, vers −x quand il est sur le dos, pointe vers le tireur)
+        r.dos.rotation.set(0, 0, -0.45); // (le buste relevé : il est tiré par le gilet)
+        r.cou.rotation.set(0, 0, 0.35); // (la tête qui pend en arrière)
+        for (const e of r.epaules) e.rotation.set(0, 0, 0.35);
+        compter("traines", pres, true);
+      }
       return;
     }
     c.scale.set(1, 1, 1); // (étape 85 : un soldat relevé par le médecin n'est plus aplati)
@@ -1452,54 +1504,101 @@ Tanks.Engins3D = (function () {
     //   - RECHARGER : il penche l'arme, la main gauche enlève le chargeur, va en chercher un neuf dans le gilet et le met ;
     //   - LANCER une grenade : le bras droit part en arrière, lance, puis revient sur l'arme ;
     //   - au REPOS : il respire, change d'appui, tourne la tête pour regarder autour.
+    //   - ✍️ (demande 129) LES GESTES HUMAINS que l'ordinateur décide (logique/troupes.js, « s.geste ») : À PLAT VENTRE (il
+    //     rampe), PENCHÉ au coin d'un mur, le SPRINT (l'arme en travers de la poitrine, les bras qui pompent, de grands pas),
+    //     le SURSAUT, le SIGNE DE LA MAIN, le REGARD (la tête tourne seule, puis le buste aide), À COUVERT (l'arme basse,
+    //     prête), la FUITE devant une grenade (le bras sur le casque) et TRAÎNER un blessé (à reculons, les mains sur son gilet).
     // Les mains vont toujours sur l'arme là où elle est (cinématique inverse, comme avant), donc elles la suivent.
-    const RG = Tanks.CONFIG.realisme.soldats.gestes, v = Math.hypot(G.avant, G.cote);
+    const RG = Tanks.CONFIG.realisme.soldats.gestes, GH = RG.humains, v = Math.hypot(G.avant, G.cote);
+    const kc = G.coucheK, debout = 1 - kc; // (0 = debout, 1 = à plat ventre)
+    const sp = G.sprint * debout, pk = G.penche * debout, cv = G.couvert * debout, fu = G.fuite * debout, tr = G.traine * debout, sg = G.signe * debout;
     const allure = Math.min(1, v / 4.2), bouge = Math.max(Math.min(1, v / 1.4), tourne ? 0.35 : 0);
     const fAvant = v > 0.25 ? G.avant / v : 1, fCote = v > 0.25 ? G.cote / v : 0;
-    const phase = (s.pas * Math.PI * 2) / RG.foulee + (tourne && v < 0.5 ? t * 7 : 0);
-    const acc = G.accroupi, aGenou = acc * (1 - bouge), aMarche = acc * bouge; // (accroupi arrêté : un genou à terre ; en marchant : jambes pliées)
+    const phase = G.phase + (tourne && v < 0.5 ? t * 7 : 0);
+    const acc = G.accroupi * (1 - tr), aGenou = acc * (1 - bouge), aMarche = acc * bouge; // (accroupi arrêté : un genou à terre ; en marchant : jambes pliées)
     const pas = 1 - 0.35 * aMarche; // (accroupi, les pas sont plus petits)
-    const hanches = [0, 0], genoux = [0, 0], cotes = [0, 0];
+    const grand = 1 + 0.28 * sp; // (en sprint, de plus grands pas, les genoux plus hauts)
+    const hanches = _hanches, genoux = _genoux, cotes = _cotes;
     for (let i = 0; i < 2; i++) {
       const p = phase + i * Math.PI;
-      hanches[i] = (Math.sin(p) * (0.3 + 0.32 * allure) * fAvant + 0.08 * allure) * bouge * pas;
+      hanches[i] = (Math.sin(p) * (0.3 + 0.32 * allure) * fAvant * grand + 0.08 * allure) * bouge * pas;
       cotes[i] = (-Math.sin(p) * 0.3 * fCote + (i ? -0.05 : 0.05) * Math.abs(fCote)) * bouge * pas;
-      genoux[i] = -(Math.max(0, Math.sin(p + (fAvant < 0 ? -1.3 : 1.3))) * (0.5 + 0.95 * allure) + 0.08 + 0.12 * allure) * bouge;
+      genoux[i] = -(Math.max(0, Math.sin(p + (fAvant < 0 ? -1.3 : 1.3))) * (0.5 + 0.95 * allure) * (1 + 0.4 * sp) + 0.08 + 0.12 * allure) * bouge;
     }
     // le genou à terre (la jambe droite, i = 1) et la jambe gauche devant ; accroupi en marchant : tout plié
     const GEN = { hanches: [1.35, 0.12], genoux: [-1.4, -1.68] };
     // ✍️ (demande 114) LA POSITION DE TIR : arrêté et en joue, debout, il plie un peu les genoux (plus stable)
     const enJoue = G.vise * (1 - bouge) * (1 - acc);
+    // (demande 129) le SURSAUT : un coup sec (le buste rejeté en arrière, les genoux qui lâchent un peu), puis il se reprend
+    const DS = GH.sursaut.duree, jolt = G.sursautT < DS ? Math.sin((Math.PI * G.sursautT) / DS) * (1 - G.sursautT / DS) * 1.6 * GH.sursaut.force : 0;
+    const crawl = kc * Math.min(1, v / 0.25), phC = G.phaseRampe; // (il RAMPE : couché et il avance)
+    const PH = GH.penche, pied = (i) => (i ? 1 : -1) * pk > 0 ? -0.16 * pk : 0; // (la jambe du côté où il se penche fait un petit pas de côté)
     for (let i = 0; i < 2; i++) {
-      r.jambes[i].rotation.set(cotes[i] * (1 - aGenou), 0, hanches[i] + (GEN.hanches[i] - hanches[i]) * aGenou + 0.62 * aMarche + RG.flechi * 0.5 * enJoue);
-      r.genoux[i].rotation.z = genoux[i] + (GEN.genoux[i] - genoux[i]) * aGenou - 1.0 * aMarche - RG.flechi * enJoue;
+      const lever = Math.max(0, Math.sin(phC + i * Math.PI)) * crawl, cote = i ? -1 : 1; // (à plat ventre : un genou remonte sur le côté)
+      const hx = cotes[i] * (1 - aGenou) + PH.glisse * 1.15 * pk + pied(i), hz = hanches[i] + (GEN.hanches[i] - hanches[i]) * aGenou + 0.62 * aMarche + RG.flechi * 0.5 * enJoue + 0.45 * tr + 0.2 * jolt;
+      const gz = genoux[i] + (GEN.genoux[i] - genoux[i]) * aGenou - 1.0 * aMarche - RG.flechi * enJoue - 0.75 * tr - 0.35 * jolt;
+      r.jambes[i].rotation.set(hx + (cote * (0.16 + 0.55 * lever) - hx) * kc, (cote * 0.25 + cote * 1.1 * lever) * kc, hz + (-0.04 + 0.5 * lever - hz) * kc);
+      r.genoux[i].rotation.z = gz + (-0.12 - 1.45 * lever - gz) * kc;
     }
     // le corps : il monte et descend 2 fois par foulée, se penche en avant en courant, se baisse accroupi
-    const souffle = Math.sin(t * 2.1 + G.graine), calme = (1 - bouge) * (1 - acc);
-    const rebond = -Math.abs(Math.cos(phase)) * (0.02 + 0.045 * allure) * bouge * (1 - acc);
-    c.position.set(-0.04 * aGenou, rebond - 0.39 * aGenou - 0.24 * aMarche - 0.012 * enJoue, 0);
+    // (au REPOS : il respire, et son poids passe doucement d'une jambe à l'autre)
+    const souffle = Math.sin(t * 2.1 + G.graine), calme = (1 - bouge) * (1 - acc) * debout, appui = Math.sin(t * 0.37 + G.graine);
+    const rebond = -Math.abs(Math.cos(phase)) * (0.02 + 0.045 * allure * grand) * bouge * (1 - acc);
+    const CH = GH.couche;
+    c.position.set(-0.04 * aGenou - 0.05 * jolt, rebond - 0.39 * aGenou - 0.24 * aMarche - 0.012 * enJoue - 0.2 * tr, appui * 0.022 * calme + PH.glisse * pk);
+    c.position.x += (CH.recul - c.position.x) * kc;
+    c.position.y += (CH.haut - c.position.y) * kc;
+    c.position.z *= 1 - kc;
     // (demande 114) les hanches roulent un peu à chaque pas (le poids passe d'une jambe à l'autre)
-    c.rotation.set(-fCote * 0.07 * bouge + Math.sin(t * 0.37 + G.graine) * 0.018 * calme + Math.sin(phase) * RG.roulis * bouge * (1 - acc), -Math.sin(phase) * 0.11 * allure * bouge, 0);
-    const penche = (0.04 + 0.2 * allure) * bouge * Math.max(0, fAvant) - 0.05 * bouge * Math.max(0, -fAvant) + 0.12 * aGenou + 0.26 * aMarche + RG.penche * G.vise * (1 - 0.5 * bouge);
+    const roulis = -fCote * 0.07 * bouge + appui * 0.018 * calme + Math.sin(phase) * RG.roulis * bouge * (1 - acc) + PH.hanches * pk;
+    c.rotation.set(roulis * debout + Math.sin(phC) * 0.07 * crawl, -Math.sin(phase) * 0.11 * allure * bouge * debout, (-0.07 * sp * bouge) * debout + (-Math.PI / 2 + 0.04) * kc);
+    const penche = (0.04 + 0.2 * allure) * bouge * Math.max(0, fAvant) - 0.05 * bouge * Math.max(0, -fAvant) + 0.12 * aGenou + 0.26 * aMarche + RG.penche * G.vise * (1 - 0.5 * bouge)
+      + GH.sprint.penche * sp * bouge + 0.18 * fu + 0.5 * tr + 0.1 * cv - 0.28 * jolt;
     const tir = G.recul * (r.tenue === TENUES.roquettes ? 1.8 : 1);
     // les gestes en cours : recharger (0 → 1) et lancer (0 → 1) ; -1 = rien
     const rp = G.rechargeK, lp = G.lancerK, ch = G.charge, jet = G.jet;
     const torsionLancer = jet * courbe(LANCER_TORSION, lp < 0 ? 1 : lp);
-    r.dos.rotation.set(0, r.torsion + Math.sin(phase) * 0.1 * allure * bouge * (1 - G.vise * 0.6) + torsionLancer, -penche + tir * 0.04 + souffle * 0.012 * calme);
+    const tors = r.torsion * (1 - 0.85 * kc) * (1 - 0.6 * sp) * (1 - tr); // (à plat ventre, en sprint, en traînant : le buste face à l'avant)
+    // (demande 129) LE REGARD : la tête tourne seule jusqu'à ±80° ; au-delà, le buste tourne aussi pour aider
+    const RGd = GH.regard, tete = Math.max(-RGd.tete, Math.min(RGd.tete, G.regard)), surplus = Math.max(-RGd.buste, Math.min(RGd.buste, G.regard - tete)) * debout;
+    r.dos.rotation.set((PH.buste * pk + 0.12 * jolt * G.cote1) * debout, tors + Math.sin(phase) * 0.1 * allure * bouge * (1 - G.vise * 0.6) * debout + torsionLancer - surplus,
+      -penche * debout + tir * 0.04 + souffle * 0.012 * calme + (CH.buste + souffle * 0.015) * kc);
     r.dos.scale.y = 1 + souffle * 0.008 * calme;
-    // la tête : elle regarde devant (elle compense la torsion et la course), et au repos elle regarde autour
-    const regard = Math.sin(t * 0.23 + G.graine * 3) * RG.regardAutour * calme * (1 - G.vise);
+    // la tête : elle regarde devant (elle compense la torsion et la course), et au repos elle regarde autour (toi) ou là où
+    // il regarde (l'ordinateur, « s.regard »)
+    const autour = G.regardIA ? 0 : Math.sin(t * 0.23 + G.graine * 3) * RG.regardAutour * calme * (1 - G.vise);
     // (demande 114) en visant, la joue vient se poser sur la crosse : la tête penche vers l'épaule droite et baisse un peu
-    r.cou.rotation.set(RG.joue * G.vise * (r.tenue === TENUES.pistolet ? 0.3 : 1), -r.torsion * 0.9 - torsionLancer * 0.7 + regard, penche * 0.7 - 0.03 * aGenou - 0.05 * G.vise);
+    r.cou.rotation.set(RG.joue * G.vise * (r.tenue === TENUES.pistolet ? 0.3 : 1) * debout + PH.tete * pk, -tors * 0.9 - torsionLancer * 0.7 + autour - tete * (1 - 0.6 * kc),
+      (penche * 0.7 - 0.03 * aGenou - 0.05 * G.vise) * debout - 0.5 * fu - 0.35 * tr - 0.12 * cv + 0.45 * jolt + CH.tete * kc);
     // L'ARME (dans le repère du dos) : en joue, ou canon vers le bas ; le recul ; penchée pour recharger ; baissée pour lancer
     const T = r.tenue || TENUES.fusil, A = r.porteArme, bas = 1 - G.vise;
-    A.position.fromArray(T.place).applyAxisAngle(_axeY, -r.torsion);
+    A.position.fromArray(T.place).applyAxisAngle(_axeY, -tors);
     A.position.x += -tir * RG.reculArriere - 0.04 * ch - 0.02 * bas;
     // ✍️ (demande 114) en COURANT l'arme basse, elle se balance d'un côté à l'autre à chaque pas (et les bras avec elle)
-    const balance = Math.sin(phase) * allure * bouge * bas;
+    const balance = Math.sin(phase) * allure * bouge * bas * (1 - sp);
     A.position.y += Math.sin(phase * 2) * 0.012 * allure * bouge - 0.05 * bas - 0.03 * ch - 0.1 * jet + Math.abs(balance) * RG.balancement * 0.4;
     A.position.z += -0.1 * jet + balance * RG.balancement;
-    A.rotation.set(0.45 * ch * cloche(rp) + 0.2 * jet + balance * 0.18, -r.torsion + Math.sin(phase) * 0.05 * allure * bouge + balance * 0.1, -0.5 * bas + tir * RG.reculHaut + 0.15 * ch * cloche(rp) - 0.8 * jet, "YXZ");
+    let ax = 0.45 * ch * cloche(rp) + 0.2 * jet + balance * 0.18, ay = -tors + Math.sin(phase) * 0.05 * allure * bouge + balance * 0.1, az = -0.5 * bas + tir * RG.reculHaut + 0.15 * ch * cloche(rp) - 0.8 * jet + 0.35 * jolt;
+    // (demande 129) en SPRINT : l'arme en travers de la poitrine (le canon vers le haut à gauche), elle monte et descend avec
+    // les bras qui pompent ; en fuyant une grenade aussi
+    const port = Math.max(sp, fu) * (1 - ch) * (1 - jet), pompe = Math.sin(phase) * GH.sprint.pompe * bouge;
+    if (port > 0.01 && famille !== "roquettes") {
+      A.position.x += (0.25 + Math.cos(phase) * 0.02 * bouge - A.position.x) * port;
+      A.position.y += (0.16 + pompe - A.position.y) * port;
+      A.position.z += (0.03 - A.position.z) * port;
+      (ax += (0.35 + pompe * 2 - ax) * port), (ay += (0.95 - ay) * port), (az += (0.7 - az) * port);
+    }
+    // (demande 129) À PLAT VENTRE : l'arme devant le visage, à l'horizontale ; en rampant, elle avance par petits coups
+    if (kc > 0.01) {
+      const coup = Math.sin(phC) * 0.06 * crawl;
+      A.position.x += (0.05 + coup - A.position.x) * kc;
+      A.position.y += (0.5 + Math.abs(coup) * 0.5 - A.position.y) * kc;
+      A.position.z += (0.13 - A.position.z) * kc;
+      (ax += (0.2 * ch * cloche(rp) - ax) * kc), (ay += (-0.1 - ay) * kc), (az += (1.28 - 0.25 * crawl + tir * RG.reculHaut - az) * kc);
+    }
+    A.rotation.set(ax, ay, az, "YXZ");
+    // (demande 129) en TRAÎNANT un blessé : le fusil passe dans le dos (à la bretelle), les deux mains sont prises
+    if (tr > 0.5) (A.position.copy(DANS_LE_DOS.position), A.rotation.copy(DANS_LE_DOS.rotation));
     A.updateMatrix();
     // les mains : la droite sur la poignée, la gauche sur le garde-main… sauf pendant un geste
     const mainD = _mD.copy(r.mainD).applyMatrix4(A.matrix), mainG = _mG.copy(r.mainG).applyMatrix4(A.matrix);
@@ -1507,10 +1606,11 @@ Tanks.Engins3D = (function () {
     // dos (à la bretelle) et l'accessoiriste (affichage/objets3d.js) met l'objet dans tes mains
     // (livre n° 17) un MÉDECIN de l'ordinateur qui soigne ou relève : la trousse ou le défibrillateur dans les mains
     const tenu = s.joueur || s.soinEnCours || s.chocSecours > 0 || r.objets ? Tanks.Objets3D.troisieme(r, s, A, mainD, mainG) : null;
-    if (ch > 0.01 && rp >= 0) { // RECHARGER : la main gauche fait le trajet du chargeur
+    if (ch > 0.01 && rp >= 0) { // RECHARGER : la main gauche fait le trajet du chargeur (et, demande 129, tire le levier d'armement)
       const mag = _mC.copy(r.chargeurArme || _mC.set(r.mainD.x + 0.1, r.mainD.y - 0.06, 0)).applyMatrix4(A.matrix);
-      const dessous = _mT.copy(mag).add(_bas18);
-      chemin([mainG, mag, dessous, POCHE, dessous, mag, mainG], RECHARGE_TEMPS, rp, _mP);
+      const dessous = _mT.copy(mag).add(_bas18), levier = _mL.copy(r.levierArme).applyMatrix4(A.matrix);
+      _chemin[0] = mainG; _chemin[1] = mag; _chemin[2] = dessous; _chemin[3] = POCHE; _chemin[4] = dessous; _chemin[5] = mag; _chemin[6] = levier; _chemin[7] = mainG;
+      chemin(_chemin, RECHARGE_TEMPS, rp, _mP);
       mainG.lerp(_mP, ch);
     }
     if (jet > 0.01 && lp >= 0) { // LANCER : la main droite part en arrière, lance, revient
@@ -1520,19 +1620,42 @@ Tanks.Engins3D = (function () {
     // ✍️ (demande 114) avec un PISTOLET, en courant sans viser, la main gauche lâche l'arme et le bras se balance librement
     const libre = r.tenue === TENUES.pistolet && !tenu && rp < 0 && lp < 0 ? bas * allure * bouge : 0;
     if (libre > 0.01) mainG.lerp(_mP.set(-Math.sin(phase) * RG.brasLibre * Math.max(0, fAvant), -0.07 + Math.abs(Math.cos(phase)) * 0.03, -0.25), Math.min(1, libre * 1.4));
+    if (!tenu) {
+      // (demande 129) la FUITE devant une grenade : le bras gauche sur le casque
+      if (fu > 0.01) mainG.lerp(_mP.set(0.22, 0.72, -0.03), fu);
+      // (demande 129) le SIGNE DE LA MAIN : « contact » (le bras tendu montre l'ennemi), « en avant ! » (le bras s'agite vers l'avant)
+      if (sg > 0.01) {
+        const rel = Math.max(-1.5, Math.min(1.0, G.signeRel)), a = rel + tors; // (vers où, dans le repère du dos)
+        const dx = Math.cos(a), dz = Math.sin(a);
+        if (G.signeSorte === "contact") _mP.set(dx * 0.56, 0.5, -0.2 + dz * 0.56);
+        else {
+          const w = 0.5 + 0.5 * Math.sin(t * GH.signe.vague * 2 * Math.PI);
+          _mP.set(0.08 + dx * 0.45 * w, 0.98 - 0.42 * w, -0.24 + dz * 0.45 * w);
+        }
+        mainG.lerp(_mP, sg);
+      }
+      // (demande 129) TRAÎNER un blessé : les deux mains tiennent son gilet, devant, en bas
+      if (tr > 0.01) (mainD.lerp(_mP.set(0.6, -0.12, 0.13), tr), mainG.lerp(_mP.set(0.6, -0.12, -0.13), tr));
+    }
     if (tenu) Tanks.Objets3D.troisiemeMains(r, s, mainD, mainG);
     r.pose = null;
     poserBras(r.epaules[0], r.coudes[0], mainD.toArray(_tabD), POLES[0]);
     poserBras(r.epaules[1], r.coudes[1], mainG.toArray(_tabG), POLES[1]);
+    if (pres) chargeurs(r, s, rp, A, mainG, t); // (demande 129 : le chargeur dans la main, et le vide qui tombe par terre)
     // (pour « sous le capot » : ce que fait ce soldat)
-    compter(rp >= 0 ? "rechargent" : lp >= 0 ? "lancent" : acc > 0.5 ? "accroupis" : v > 3 ? "courent" : v > 0.4 ? "marchent" : G.vise > 0.5 ? "visent" : "repos", pres);
+    compter(rp >= 0 ? "rechargent" : lp >= 0 ? "lancent" : kc > 0.5 ? "couches" : tr > 0.5 ? "trainent" : fu > 0.5 ? "fuient" : sg > 0.5 ? "signes" : Math.abs(pk) > 0.5 ? "penches" : sp > 0.5 && v > 2 ? "sprintent" : acc > 0.5 ? "accroupis" : v > 3 ? "courent" : v > 0.4 ? "marchent" : G.vise > 0.5 ? "visent" : "repos", pres);
+    if (jolt > 0.01) compter("sursautent", false, true);
   }
 
   // (demande 92) L'ÉTAT DES GESTES d'un soldat dessiné : il glisse doucement vers ce que fait le soldat (« souplesse » s).
   // La vitesse vient du vrai déplacement depuis l'image d'avant (vers l'avant et sur le côté, dans le repère du soldat).
   function etatGeste(o, s, t) {
     let G = o.geste;
-    if (!G) G = o.geste = { t, x: s.x, z: s.z, avant: 0, cote: 0, accroupi: s.accroupi ? 1 : 0, vise: 0, recul: 0, tirAvant: 0, depuisTir: 9, charge: 0, jet: 0, rechargeK: -1, lancerK: -1, graine: (numeroGeste++ * 2.39) % 6.28 };
+    if (!G) G = o.geste = { t, x: s.x, z: s.z, avant: 0, cote: 0, accroupi: s.accroupi ? 1 : 0, vise: 0, recul: 0, tirAvant: 0, depuisTir: 9, charge: 0, jet: 0, rechargeK: -1, lancerK: -1, graine: (numeroGeste++ * 2.39) % 6.28,
+      // (demande 129) les gestes humains, lissés : à plat ventre (de 0 à 1), sprint, penché (−1 à 1), à couvert, fuite,
+      // traîner, signe ; le regard (rad, par rapport au corps) ; le sursaut (s depuis le dernier) ; les foulées (la phase des pas)
+      phase: ((s.pas || 0) * Math.PI * 2) / Tanks.CONFIG.realisme.soldats.gestes.foulee, phaseRampe: 0, pasAvant: s.pas || 0, coucheLin: s.couche ? 1 : 0, coucheK: s.couche ? 1 : 0,
+      sprint: 0, penche: 0, couvert: 0, fuite: 0, traine: 0, signe: 0, signeRel: 0, signeSorte: null, regard: 0, regardIA: false, sursautT: 9, sursautAvant: 0, cote1: numeroGeste % 2 ? 1 : -1 };
     const dt = Math.max(0, Math.min(0.1, t - G.t)), RG = Tanks.CONFIG.realisme.soldats.gestes;
     G.t = t;
     if (s.joueur) gesteJoueur = G;
@@ -1554,8 +1677,36 @@ Tanks.Engins3D = (function () {
     const duree = s.rechargementTotal || (s.rechargementDe && s.rechargementDe.stats ? s.rechargementDe.stats.rechargement : s.rechargementDuree || 2.5); // (livre n° 26)
     G.rechargeK = s.rechargement > 0 ? Math.max(0, Math.min(1, 1 - s.rechargement / duree)) : -1;
     G.lancerK = s.lancer > 0 ? 1 - s.lancer / 0.5 : -1;
-    const vise = s.visee > 0.1 || G.depuisTir < 2 || !!(s.ia && s.ia.cible && !s.ia.cible.mort && !s.ia.cible.detruit) || s.accroupi;
-    const k = 1 - Math.exp(-dt / RG.souplesse);
+    // ✍️ (demande 129) LES GESTES HUMAINS de l'ordinateur (logique/troupes.js : « s.geste », « s.allure », « s.couche »…)
+    // (pendant un film de la campagne, logique/cinematique.js mène les acteurs : on ne lit pas ces gestes, ils seraient d'avant)
+    const film = !!(Tanks.monde && Tanks.monde.cinematique), GH = RG.humains, geste = film ? null : s.geste || null, k = 1 - Math.exp(-dt / RG.souplesse);
+    const couche = !film && !!s.couche;
+    const sprint = !s.mort && ((!film && s.allure === "sprint") || geste === "sprint" || geste === "fuite-grenade"), fuite = geste === "fuite-grenade", traine = geste === "traine" && !!s.traine;
+    const couvert = geste === "couvert" && G.depuisTir > 0.8 && !(s.visee > 0.1);
+    const vise = !sprint && !traine && !couvert && (s.visee > 0.1 || G.depuisTir < 2 || !!(s.ia && s.ia.cible && !s.ia.cible.mort && !s.ia.cible.detruit) || s.accroupi);
+    // à plat ventre : il descend (ou se relève) en « transition » s, en douceur (lent, puis vite, puis lent)
+    G.coucheLin = Math.max(0, Math.min(1, G.coucheLin + ((couche ? 1 : -1) * dt) / GH.couche.transition));
+    G.coucheK = G.coucheLin * G.coucheLin * (3 - 2 * G.coucheLin);
+    // les foulées : la phase avance avec la distance parcourue (les pieds ne glissent pas), et les pas s'allongent avec la vitesse
+    const dPas = Math.max(0, Math.min(3, (s.pas || 0) - G.pasAvant)), vit = Math.min(1.5, Math.hypot(G.avant, G.cote) / 4.2);
+    G.pasAvant = s.pas || 0;
+    G.phase = (G.phase + (dPas * Math.PI * 2) / (RG.foulee * (GH.sprint.foulee[0] + GH.sprint.foulee[1] * vit))) % 1e4;
+    G.phaseRampe = (G.phaseRampe + (dPas * Math.PI * 2) / GH.couche.rampe) % 1e4;
+    G.sprint += ((sprint ? 1 : 0) - G.sprint) * k;
+    G.fuite += ((fuite ? 1 : 0) - G.fuite) * Math.min(1, k * 1.5);
+    G.traine += ((traine ? 1 : 0) - G.traine) * k;
+    G.couvert += ((couvert ? 1 : 0) - G.couvert) * k;
+    G.penche += ((film ? 0 : s.penche || 0) - G.penche) * k;
+    if (s.signe && geste === "signe") (G.signeSorte = s.signe), (G.signeRel = Math.atan2(Math.sin(s.signeAngle - s.angle), Math.cos(s.signeAngle - s.angle)));
+    G.signe += ((s.signe && geste === "signe" ? 1 : 0) - G.signe) * Math.min(1, k * 1.5);
+    // le regard (l'ordinateur) : la tête rattrape doucement l'endroit où il regarde
+    G.regardIA = !film && !s.joueur && !!s.ia && s.regard !== undefined && s.regard !== null;
+    const rel = G.regardIA ? Math.atan2(Math.sin(s.regard - s.angle), Math.cos(s.regard - s.angle)) : 0;
+    G.regard += (rel - G.regard) * Math.min(1, dt * GH.regard.vitesse);
+    // le sursaut : il repart chaque fois que « s.sursaut » remonte
+    if ((s.sursaut || 0) > G.sursautAvant + 0.01) (G.sursautT = 0), (G.cote1 = -G.cote1);
+    G.sursautAvant = s.sursaut || 0;
+    G.sursautT += dt;
     G.accroupi += ((s.accroupi ? 1 : 0) - G.accroupi) * k;
     G.vise += ((vise ? 1 : 0) - G.vise) * k;
     G.charge += ((G.rechargeK >= 0 ? 1 : 0) - G.charge) * Math.min(1, k * 1.6);
@@ -1580,21 +1731,95 @@ Tanks.Engins3D = (function () {
   const _mD = new THREE.Vector3(), _mG = new THREE.Vector3(), _mC = new THREE.Vector3(), _mT = new THREE.Vector3(), _mP = new THREE.Vector3(), _bas18 = new THREE.Vector3(0, -0.18, 0.02);
   const _tabD = [0, 0, 0], _tabG = [0, 0, 0];
   const POCHE = new THREE.Vector3(0.24, 0.19, -0.05); // (le porte-chargeurs du gilet, devant)
-  const RECHARGE_TEMPS = [0, 0.12, 0.3, 0.48, 0.64, 0.78, 0.94];
+  // (demande 129) le trajet de la main gauche : le chargeur vide (0,12 → 0,3, puis il le lâche), la poche, le neuf (0,48 →
+  // 0,78, enfoncé), le LEVIER d'armement (0,88), et elle revient sur le garde-main
+  const RECHARGE_TEMPS = [0, 0.12, 0.3, 0.48, 0.64, 0.78, 0.88, 0.97];
+  const _chemin = [null, null, null, null, null, null, null, null], _mL = new THREE.Vector3(), _hanches = [0, 0], _genoux = [0, 0], _cotes = [0, 0];
   const LANCER_POINTS = [new THREE.Vector3(-0.14, 0.66, 0.3), new THREE.Vector3(0.52, 0.62, 0.12), new THREE.Vector3(0.32, 0.12, -0.1)];
   const LANCER_TEMPS = [0, 0.12, 0.3, 0.55, 1];
   const LANCER_TORSION = [[0, 0], [0.12, 0.4], [0.3, -0.35], [0.55, -0.45], [1, 0]];
+  // ✍️ (demande 129) LE CHARGEUR pendant un rechargement (seulement les soldats proches, dessinés en détail) : le chargeur
+  // de l'arme disparaît quand la main gauche l'enlève ; elle le tient (le vide), le LÂCHE (il tombe par terre, y reste
+  // « reste » s puis s'enfonce et disparaît), va chercher le neuf dans la poche du gilet et l'enfonce dans l'arme.
+  // Les chargeurs qui tombent viennent d'une petite réserve (« max ») fabriquée une fois : rien de neuf à chaque image.
+  const CHARGEUR_SIMPLE = {};
+  const chutes = [], bilanChargeurs = { tombes: 0, auSol: 0 }, _cM = new THREE.Vector3(), _cQ = new THREE.Quaternion(), _cS = new THREE.Vector3();
+  let tChutes = -1;
+  function chargeurs(r, s, rp, A, mainG, t) {
+    const CM = r.chargeurMain;
+    if (CM) {
+      const tenu = rp >= 0.12 && rp < 0.3 ? 1 : rp >= 0.48 && rp < 0.78 ? 2 : 0;
+      if (r.chargeurTenu === 1 && tenu !== 1 && rp >= 0.3) lacherChargeur(r, s, CM);
+      r.chargeurTenu = tenu;
+      CM.visible = tenu > 0 && !s.mort;
+      if (r.groupeChargeur) r.groupeChargeur.visible = !(rp >= 0.12 && rp < 0.78);
+      if (CM.visible) {
+        // la copie suit la main : même orientation que l'arme, son point d'attache (le haut du chargeur) dans la main gauche
+        CM.quaternion.copy(A.quaternion);
+        CM.position.copy(r.chargeurArme).applyMatrix4(A.matrix);
+        CM.position.subVectors(mainG, CM.position).add(A.position);
+      }
+    } else if (r.groupeChargeur && !r.groupeChargeur.visible) r.groupeChargeur.visible = true;
+    // (une fois par image) les chargeurs tombés : ils tombent, se posent, puis s'enfoncent et disparaissent
+    if (t === tChutes) return; // (une seule fois par image : tous les soldats d'une image ont la même horloge)
+    const dt = Math.max(0, Math.min(0.1, t - tChutes)), RESTE = Tanks.CONFIG.realisme.soldats.gestes.humains.chargeurs.reste;
+    tChutes = t;
+    let n = 0;
+    for (const c of chutes) {
+      if (!c.g.visible) continue;
+      c.age += dt;
+      if (!c.pose) {
+        c.vy -= 9.8 * dt;
+        c.g.position.y += c.vy * dt;
+        c.g.position.x += c.vx * dt;
+        c.g.position.z += c.vz * dt;
+        c.g.rotation.x += c.tourne * dt;
+        if (c.g.position.y <= c.sol) (c.g.position.y = c.sol), (c.pose = true), (c.age = 0);
+      } else if (c.age > RESTE) {
+        const f = Math.max(0, 1 - (c.age - RESTE));
+        c.g.scale.setScalar(f);
+        c.g.position.y = c.sol - (1 - f) * 0.05;
+        if (f <= 0) c.g.visible = false;
+      }
+      n++;
+    }
+    bilanChargeurs.auSol = n;
+  }
+  function lacherChargeur(r, s, CM) {
+    const parent = r.porteur.parent && r.porteur.parent.parent; // (la scène : le soldat → son groupe → la scène)
+    if (!parent) return;
+    const MAX = Tanks.CONFIG.realisme.soldats.gestes.humains.chargeurs.max;
+    let c = chutes.find((x) => !x.g.visible);
+    if (!c && chutes.length < MAX) chutes.push((c = { g: new THREE.Group(), cle: null, vy: 0, vx: 0, vz: 0, tourne: 0, sol: 0, age: 0, pose: false }));
+    if (!c) c = chutes.reduce((a, b) => (a.age > b.age ? a : b)); // (toutes prises : on reprend la plus vieille)
+    if (c.g.parent !== parent) parent.add(c.g);
+    if (c.cle !== CM.userData.cle) { // (une autre arme : on change la copie du chargeur ; pas à chaque fois)
+      while (c.g.children.length) c.g.remove(c.g.children[0]);
+      c.g.add(CM.children[0].clone());
+      c.cle = CM.userData.cle;
+    }
+    CM.updateWorldMatrix(true, false);
+    CM.matrixWorld.decompose(_cM, _cQ, _cS);
+    c.g.position.copy(_cM);
+    c.g.quaternion.copy(_cQ);
+    c.g.scale.setScalar(1);
+    c.g.visible = true;
+    (c.vy = -0.3), (c.vx = (Math.random() - 0.5) * 0.4), (c.vz = (Math.random() - 0.5) * 0.4), (c.tourne = (Math.random() - 0.5) * 6);
+    (c.sol = (s.y || 0) + 0.03), (c.age = 0), (c.pose = false);
+    bilanChargeurs.tombes++;
+  }
   // (demande 92) Pour « sous le capot » : combien de soldats dessinés courent, marchent, sont accroupis, rechargent…
   // (on recommence à compter à chaque nouvelle image)
-  const gestes = { image: -1, courent: 0, marchent: 0, accroupis: 0, rechargent: 0, lancent: 0, visent: 0, repos: 0, nagent: 0, corde: 0, detail: 0 };
-  function compter(etat, pres) {
+  const gestes = { image: -1, courent: 0, marchent: 0, accroupis: 0, rechargent: 0, lancent: 0, visent: 0, repos: 0, nagent: 0, corde: 0, detail: 0,
+    couches: 0, penches: 0, sprintent: 0, signes: 0, fuient: 0, trainent: 0, traines: 0, sursautent: 0 }; // (demande 129)
+  function compter(etat, pres, enPlus) {
     const image = Tanks.Scene.infos.frame;
     if (image !== gestes.image) {
       for (const k in gestes) gestes[k] = 0;
       gestes.image = image;
     }
     gestes[etat]++;
-    if (pres) gestes.detail++;
+    if (pres && !enPlus) gestes.detail++;
   }
   // (demande 92) De combien la tête de ce soldat est baissée (m) : accroupi. Pour la caméra à la 1re personne.
   let gesteJoueur = null;
@@ -2230,5 +2455,5 @@ Tanks.Engins3D = (function () {
   // (étape 73) le Chinook et le Black Hawk, dans affichage/helicos3d.js
   // (étape 76) le Rafale, les chasseurs ennemis, l'avion de transport, le drone et le Tigre, dans affichage/avions3d.js
   const outils = { pilote, siege, peintureSoudee, vitreClaire, mats, figurine, figurineDans, poserBras, MAINS, galet, membre, formesArmes };
-  return { soldat, animer, fabriquer, bruler, portail, silhouettes, outils, gestes, baisse, classeDe, maquettes, PEAUX, ajouterDCA, preparerUneForme, habit, bilanOmbres, get formesAPreparer() { return aPreparer ? aPreparer.length : -1; } };
+  return { soldat, animer, fabriquer, bruler, portail, silhouettes, outils, gestes, bilanChargeurs, baisse, classeDe, maquettes, PEAUX, ajouterDCA, preparerUneForme, habit, bilanOmbres, get formesAPreparer() { return aPreparer ? aPreparer.length : -1; } };
 })();

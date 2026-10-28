@@ -1,6 +1,6 @@
 # Demande n° 129 : refaire les comportements des soldats
 
-> Statut : 🛠️ prévue (après les skins et les armes, demande 128).
+> Statut : ✅ livrée (tanks version 74).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi

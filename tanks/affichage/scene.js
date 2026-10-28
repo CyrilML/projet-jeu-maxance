@@ -354,8 +354,10 @@ Tanks.Scene = (function () {
     const tous = silhouettes[s.equipe];
     if (!tous || tous.count >= tous.instanceMatrix.count) return false;
     const k = s.mort ? Math.min(1, s.depuisMort * 2) : 0; // (à terre : couché sur le dos, comme le soldat détaillé)
-    eS.set(0, -s.angle, k * (Math.PI / 2), "YZX");
-    tous.setMatrixAt(tous.count++, m4.compose(pS.set(s.x, s.y + 0.12 * k, s.z), qS.setFromEuler(eS), un));
+    const kc = !s.mort && s.couche ? 1 : 0; // ✍️ (demande 129) À PLAT VENTRE : la silhouette aussi est couchée (sur le ventre, le bassin à sa place)
+    eS.set(0, -s.angle, (k - kc) * (Math.PI / 2), "YZX");
+    const recul = 0.92 * kc;
+    tous.setMatrixAt(tous.count++, m4.compose(pS.set(s.x - Math.cos(s.angle) * recul, s.y + 0.12 * k + 0.15 * kc, s.z - Math.sin(s.angle) * recul), qS.setFromEuler(eS), un));
     return true;
   }
   function placerSoldat(o, s, cam, dt) {
