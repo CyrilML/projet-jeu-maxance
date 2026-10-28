@@ -551,7 +551,11 @@ Tanks.Engins3D = (function () {
         pc("cou", new THREE.CylinderGeometry(0.004, 0.004, 0.11, 4), 0.05, 0.088, -0.085, K.noir, 0, -0.6, Math.PI / 2 - 0.25); // sa tige
       }
       // les LUNETTES
-      if (lunettes === "soleil") { // des lunettes de soleil enveloppantes : 2 verres sombres, le pont, les branches
+      if (lunettes === "soleil" && S) { // (demande 128) des lunettes balistiques ENVELOPPANTES : un seul écran sombre courbé, et les branches
+        pc("cou", new THREE.CylinderGeometry(0.097, 0.097, 0.036, 16, 1, true, -0.62, 1.24), cx + 0.004, cy + 0.0125, 0, K.verre, 0, Math.PI / 2, 0);
+        pc("cou", galet(0.008, 0.008, 0.02, 0.5, 4), av(0.016, 0) + 0.009, cy + 0.026, 0, K.noir);
+        for (const z of [-1, 1]) pc("cou", galet(0.09, 0.006, 0.004, 0.5, 4), cx + 0.03, cy + 0.016, z * 0.083, K.noir);
+      } else if (lunettes === "soleil") { // des lunettes de soleil enveloppantes : 2 verres sombres, le pont, les branches
         for (const z of [-0.032, 0.032]) pc("cou", galet(0.007, 0.024, 0.036, 0.7, 10), av(0.011, z) + 0.011, cy + 0.012, z, K.verre, 0, z > 0 ? -0.2 : 0.2, 0);
         pc("cou", galet(0.006, 0.006, 0.02, 0.5, 4), av(0.014, 0) + 0.008, cy + 0.02, 0, K.noir);
         for (const z of [-1, 1]) pc("cou", galet(0.09, 0.006, 0.004, 0.5, 4), cx + 0.035, cy + 0.016, z * 0.08, K.noir);
