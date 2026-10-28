@@ -540,7 +540,7 @@ Tanks.Engins3D = (function () {
       }
       if (BB.moustache || BB.pleine) (pc("cou", galet(0.012, 0.011, 0.05, 0.6, 8), xb + 0.002, cy - 0.047, 0, K.sourcils), (dernier().matiere = () => 1.4));
       if (BB.grosse) for (const z of [-1, 1]) { // ✍️ (demande 128, 1916) la GROSSE MOUSTACHE du poilu : 2 touffes qui tombent sur les coins de la bouche
-        pc("cou", galet(0.022, 0.016, 0.045, 0.6, 8), xb + 0.004, cy - 0.05, z * 0.02, K.sourcils, z * 0.35, z * -0.25, 0);
+        pc("cou", galet(0.016, 0.013, 0.042, 0.6, 8), xb + 0.003, cy - 0.051, z * 0.021, K.sourcils, z * 0.45, z * -0.3, 0);
         peint((x, y) => 0.75 + (bruitVisage(x * 500, y * 500, z) - 0.5) * 0.5);
         dernier().matiere = () => 1.4;
       }
@@ -820,11 +820,11 @@ Tanks.Engins3D = (function () {
       T.push({ y, xf: 0.122 + 0.02 * t + ev * t * t, xb: 0.132 + 0.03 * t + ev * t * t, z: 0.176 + 0.03 * t + ev * 0.8 * t * t, e: 2.3 });
     }
     // (les pans s'ouvrent devant, en V renversé, sur le pantalon : on enlève les triangles du devant, de plus en plus larges vers le bas)
-    pc("corps", C3.coque(C3.loft(T, n, detail ? 2 : 1, false), 0, (x, y, z) => !(x > 0.05 && Math.abs(z) < 0.075 * Math.max(0, Math.min(1, (0.86 - y) / (0.86 - bas))))), 0, 0, 0, "tenue");
+    pc("corps", C3.coque(C3.loft(T, n, detail ? 2 : 1, false), 0, (x, y, z) => !(x > 0.05 && Math.abs(z) < 0.075 * Math.max(0, Math.min(1, (0.8 - y) / (0.8 - bas))))), 0, 0, 0, "tenue");
     // chaque côté suit sa cuisse, de plus en plus vers le bas (jusqu'à 70 %)
     poids((x, y, z) => ["corps", z < 0 ? "jambe0" : "jambe1", 0.7 * Math.max(0, Math.min(1, (0.9 - y) / (0.9 - bas)))]);
     // le BAS des pans, un ourlet un peu plus épais
-    pc("corps", new THREE.TorusGeometry(0.17, 0.011, 4, n), 0, bas + 0.006, 0, "tenue", Math.PI / 2);
+    pc("corps", new THREE.TorusGeometry(0.17, 0.011, 4, n, Math.PI * 2 - 0.8).rotateZ(0.4), 0, bas + 0.006, 0, "tenue", Math.PI / 2); // (ouvert devant)
     dernier().echelle = [(0.152 + 0.025 + ev) / 0.17, (0.206 + ev * 0.8) / 0.17, 1];
     poids((x, y) => ["corps", y > 0 ? "jambe1" : "jambe0", 0.7]); // (le tore est couché : son « y » devient z)
     // le devant croisé : 2 rangées de boutons, de la poitrine au ceinturon
