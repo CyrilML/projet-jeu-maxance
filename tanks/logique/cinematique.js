@@ -21,6 +21,10 @@
 // Chinook, le Black Hawk, l'avion de chasse…) qui suivent un chemin à une hauteur donnée (« hauteurs »), qui roulent
 // sur la piste puis décollent ; des EXPLOSIONS commandées (action « explose ») ; un tireur d'élite avec sa vraie arme
 // (« armeId »). La base aérienne est montrée même au garage (« bases: true »), puis tout est rangé comme avant.
+// ✍️ (demande 130) La NOUVELLE bande-annonce : des figurants de chaque CLASSE (« classe » : le skin de sa classe), avec
+// les nouvelles armes (« armeId » : aussi le pistolet M1911 ; « pieces » : silencieux, lunette…), qui font les GESTES
+// HUMAINS de la demande 129 sur commande (action « geste » : sprint, à plat ventre, penché au coin, recharge, signe de la
+// main, fuite devant une grenade) et qui TIRENT des rafales de cinéma (action « tire » : flamme et recul, sans balle).
 // Pendant le film, le monde est en phase "cinematique" : la bataille est FIGÉE (personne ne tire, personne n'est
 // blessé, l'ordinateur ne réfléchit pas) ; seuls les acteurs bougent, et seulement comme le scénario le dit.
 // Ce fichier ne dessine rien : la caméra de cinéma, les bandes noires, les sous-titres et la voix sont faits par
@@ -93,13 +97,20 @@ Tanks.Cinematique = (function () {
         monde.chars.push(o);
       } else {
         o = Tanks.Soldat.creer(equipe, x, z, angle, (equipe === "bleus" ? "Lion " : "soldat du Front ") + (k + 1));
-        if (k % 5 === 3) o.arme = "roquettes";
-        if (g.armeId && C.armesPrincipales[g.armeId]) {
+        // ✍️ (demande 130) « classe » : sa CLASSE (une pour tous, ou une liste : une par soldat), pour que le tailleur
+        // (affichage/engins3d.js) lui mette le SKIN de sa classe (assaut, médecin, éclaireur, ingénieur au masque à gaz)
+        const classe = parSoldat(g.classe, k), armeId = parSoldat(g.armeId, k);
+        if (classe && C.classes[classe]) o.classe = classe;
+        else if (k % 5 === 3) o.arme = "roquettes";
+        if (armeId && (C.armesPrincipales[armeId] || C.pistolets[armeId])) {
           // (morceau 3) une vraie arme de l'armurerie (le tireur d'élite et son fusil à lunette), avec ses pièces d'origine
+          // (demande 130 : ou un pistolet, le M1911 ; « pieces » : des pièces choisies, le silencieux, la lunette…)
           const pieces = {};
           for (const emp in C.atelier) pieces[emp] = C.atelier[emp].pieces[0].id;
-          o.armes = { principale: { id: g.armeId, pieces } };
-          o.arme = "principale";
+          Object.assign(pieces, parSoldat(g.pieces, k) || {});
+          const pistolet = !!C.pistolets[armeId];
+          o.armes = { principale: { id: pistolet ? "ar4" : armeId, pieces }, pistolet: { id: pistolet ? armeId : "pistolet", pieces } };
+          o.arme = pistolet ? "pistolet" : "principale";
         }
         monde.soldats.push(o);
       }
@@ -109,6 +120,8 @@ Tanks.Cinematique = (function () {
     }
     return l;
   }
+  // (demande 130) une valeur pour tout le groupe, ou une liste (une par soldat : le 1er, le 2e…)
+  const parSoldat = (v, k) => (Array.isArray(v) ? v[k % v.length] : v);
   // Un chemin : ses morceaux et sa longueur (pour trouver le point qui est à « d » mètres du départ).
   function preparerChemin(points) {
     const pts = points.map((p) => ({ x: p[0], z: p[1] })), longueurs = [0];
@@ -200,6 +213,7 @@ Tanks.Cinematique = (function () {
     for (const a of etat.acteurs) {
       const s = a.s;
       if (s.figurant || s.genre !== "soldat") continue;
+      if (s.gesteFilm) finirGeste(s), (s.tir = 0), (s.rechargement = 0); // (demande 130 : plus de geste de cinéma)
       s.visee = a.avant.visee;
       s.accroupi = a.avant.accroupi;
       s.vitesse = 0;
@@ -278,8 +292,13 @@ Tanks.Cinematique = (function () {
       return;
     } else if (act.faire === "celebre") {
       for (const a of l) (a.fete = act.duree || 6), (a.geste = null), (a.s.accroupi = false), (a.feteDans = hasard() * 0.6);
+    } else if (act.faire === "geste") {
+      for (const a of l) if (a.s.genre === "soldat") poserGeste(monde, a, act);
+    } else if (act.faire === "tire") {
+      // (demande 130) une RAFALE de cinéma : la flamme au bout du canon et le recul, « coups » fois (personne n'est touché)
+      for (const a of l) a.rafale = { reste: act.coups || 1, cadence: act.cadence || 0.12, dans: 0 };
     }
-    radio.emettre("cinematique-action", { acteur: act.acteur, faire: act.faire, soldats: l.length, t: etat.t });
+    radio.emettre("cinematique-action", { acteur: act.acteur, faire: act.faire, geste: act.faire === "geste" ? act.geste || "rien" : undefined, soldats: l.length, t: etat.t });
   }
 
   // ------------------------------------------------------------------ les gestes de soldat prudent
@@ -299,6 +318,37 @@ Tanks.Cinematique = (function () {
       cumul += chances[sorte] || 0;
       if (tirage < cumul) return commencerGeste(a, sorte);
     }
+  }
+
+  // ------------------------------------------------------------------ ✍️ (demande 130) les GESTES HUMAINS au cinéma
+  // Les gestes que les soldats de l'ordinateur font tout seuls en bataille (logique/troupes.js, demande 129) : ici, c'est
+  // le scénario qui les donne (action « geste »). Le dessin les lit comme en bataille (« s.geste », « s.couche »,
+  // « s.penche »…), parce que le soldat porte l'étiquette « gesteFilm » ; à la fin du geste (ou du film), tout est remis.
+  //   sprint (il court d'un abri à l'autre), couche (à plat ventre), penche (« cote » : +1 à droite, −1 à gauche),
+  //   recharge (« duree » s : le chargeur vide tombe), signe (« signe » : "avance" ou "contact", « vers » : [x, z]),
+  //   fuite-grenade (il s'enfuit, le bras sur le casque), couvert (l'arme basse, prête) ; geste absent : plus rien.
+  function poserGeste(monde, a, act) {
+    const s = a.s, g = act.geste || null;
+    s.gesteFilm = true;
+    s.geste = g;
+    s.gesteDebut = monde.temps || 0;
+    s.gesteTemps = 0;
+    s.gesteDuree = act.duree || 0;
+    s.couche = g === "couche";
+    if (s.couche) s.accroupi = true;
+    else if (act.accroupi !== undefined) s.accroupi = !!act.accroupi;
+    s.penche = g === "penche" ? act.cote || 1 : 0;
+    s.allure = g === "sprint" || g === "fuite-grenade" ? "sprint" : "marche";
+    s.signe = g === "signe" ? act.signe || "avance" : null;
+    s.signeAngle = act.vers ? Math.atan2(act.vers[1] - s.z, act.vers[0] - s.x) : s.angle;
+    if (g === "recharge") s.rechargement = s.rechargementDuree = s.rechargementTotal = act.duree || 2.4;
+    a.finGeste = act.duree || 0;
+    a.geste = null; // (plus de geste de soldat prudent : celui-ci passe avant)
+  }
+  function finirGeste(s) {
+    Object.assign(s, { geste: null, gesteDuree: 0, couche: false, penche: 0, signe: null, allure: "arret" });
+    delete s.gesteFilm;
+    delete s.rechargementTotal;
   }
 
   // ------------------------------------------------------------------ un petit pas du film (appelé par logique/monde.js)
@@ -442,6 +492,18 @@ Tanks.Cinematique = (function () {
     // 3. l'arme : levée (en joue) pour un soldat prudent ; jamais pour toi (sinon la caméra « épaule » et zoome)
     if (!s.joueur) s.visee = a.arme && !(a.fete > 0) ? 1 : 0;
     if (s.lancer > 0) s.lancer = Math.max(0, s.lancer - dt);
+    // (demande 130) le geste de cinéma qui se termine, le chargeur qui se remplit, la rafale (la flamme dure 0,08 s)
+    if (a.finGeste > 0 && (a.finGeste -= dt) <= 0) {
+      if (s.couche) s.accroupi = false; // (il se relève)
+      finirGeste(s);
+    }
+    if (s.rechargement > 0 && s.gesteFilm) s.rechargement = Math.max(0, s.rechargement - dt);
+    if (s.tir > 0) s.tir = Math.max(0, s.tir - dt);
+    if (a.rafale && (a.rafale.dans -= dt) <= 0) {
+      s.tir = 0.08;
+      a.rafale.dans += a.rafale.cadence;
+      if (--a.rafale.reste <= 0) a.rafale = null;
+    }
   }
 
   // ------------------------------------------------------------------ les demandes de l'écran (Entrée, Échap)

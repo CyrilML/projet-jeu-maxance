@@ -1199,7 +1199,7 @@ Tanks.Engins3D = (function () {
   // ✍️ (demande 114) LA CLASSE qu'on dessine pour ce soldat : toi, ta classe ; l'ordinateur, celle qui va avec son rôle
   // (voir config.js, « realisme.soldats.maquettes »). L'affichage lit seulement le soldat, il ne change rien.
   function classeDe(s) {
-    if (s.joueur) return Tanks.CONFIG.classes[s.classe] ? s.classe : "assaut";
+    if (s.joueur || (s.figurant && Tanks.CONFIG.classes[s.classe])) return Tanks.CONFIG.classes[s.classe] ? s.classe : "assaut"; // (demande 130 : un figurant de film a sa classe)
     if (s.medecin || s.role === "infirmier") return "medecin";
     if (s.roquettesIA || s.arme === "roquettes" || s.role === "mecanicien") return "ingenieur";
     if (s.tireurElite) return "eclaireur";
@@ -1678,8 +1678,9 @@ Tanks.Engins3D = (function () {
     G.rechargeK = s.rechargement > 0 ? Math.max(0, Math.min(1, 1 - s.rechargement / duree)) : -1;
     G.lancerK = s.lancer > 0 ? 1 - s.lancer / 0.5 : -1;
     // ✍️ (demande 129) LES GESTES HUMAINS de l'ordinateur (logique/troupes.js : « s.geste », « s.allure », « s.couche »…)
-    // (pendant un film de la campagne, logique/cinematique.js mène les acteurs : on ne lit pas ces gestes, ils seraient d'avant)
-    const film = !!(Tanks.monde && Tanks.monde.cinematique), GH = RG.humains, geste = film ? null : s.geste || null, k = 1 - Math.exp(-dt / RG.souplesse);
+    // (pendant un film de la campagne, logique/cinematique.js mène les acteurs : on ne lit pas ces gestes, ils seraient d'avant ;
+    // ✍️ demande 130 : sauf ceux que le scénario vient de lui donner, « gesteFilm »)
+    const film = !!(Tanks.monde && Tanks.monde.cinematique) && !s.gesteFilm, GH = RG.humains, geste = film ? null : s.geste || null, k = 1 - Math.exp(-dt / RG.souplesse);
     const couche = !film && !!s.couche;
     const sprint = !s.mort && ((!film && s.allure === "sprint") || geste === "sprint" || geste === "fuite-grenade"), fuite = geste === "fuite-grenade", traine = geste === "traine" && !!s.traine;
     const couvert = geste === "couvert" && G.depuisTir > 0.8 && !(s.visee > 0.1);

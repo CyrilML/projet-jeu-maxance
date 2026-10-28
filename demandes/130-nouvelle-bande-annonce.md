@@ -1,6 +1,6 @@
 # Demande n° 130 : refaire la bande-annonce avec les nouvelles armes et les nouveaux skins
 
-> Statut : 🗓️ prévue (après les demandes 128 et 129).
+> Statut : ✅ livrée (tanks version 75) + vidéo MP4 v2 envoyée à Maxance.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi

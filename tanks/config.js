@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 74,
+  version: 75,
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -2492,6 +2492,10 @@ Tanks.CONFIG.radio = {
 //       tactique: { balaye, retourne, accroupi } (la chance de chaque geste, à chaque fois qu'un soldat en fait un) }
 //   actions : [{ a (s), acteur: "escouade" | "escouade.chef" | "escouade.3" | "toi", faire: "marche" | "halte" |
 //     "seTourne" (vers: [x, z] ou un acteur) | "balaye" | "retourne" | "accroupi" | "debout" | "signe" | "arme" (levee) , duree }]
+//     (demande 130) aussi : "geste" (geste: "sprint" | "couche" | "penche" (cote: ±1) | "recharge" | "signe" (signe:
+//     "avance" | "contact", vers: [x, z]) | "fuite-grenade" | "couvert" | absent (plus rien), duree : s avant que ça
+//     s'arrête tout seul) · "tire" (coups, cadence : s entre deux coups) ; figurants : classe, armeId, pieces (une valeur
+//     ou une liste, une par soldat)
 //   repliques : [{ a (s), qui (un personnage de campagne.personnages), texte, duree (s, sinon selon la longueur),
 //     radio: true (à la radio, de loin ; sinon il parle en face) }]
 //   plans : les morceaux du film, l'un après l'autre. Chacun : { nom, duree (s), camera, titre, fondu, musique,
@@ -2502,11 +2506,12 @@ Tanks.CONFIG.radio = {
 //                "orbite" (acteur, rayon, hauteur, de → a : angles en rad autour de lui, regardHauteur) ·
 //                "rejoindre" (la caméra glisse jusque derrière ton soldat : la main est rendue sans coupure) ·
 //                courbe: "doux" | "lineaire", tremble (m : la caméra à l'épaule) }
-//     titre : { etiquette, grand, petit, de (s), a (s) } · fondu : { entree (s), sortie (s) } (au noir).
+//     titre : { etiquette, grand, petit, de (s), a (s), bas (demande 130 : true = en bas de l'image) } · fondu : { entree (s), sortie (s) } (au noir).
 Tanks.CONFIG.cinematiques = {
   regles: {
     bandes: 0.11, // la hauteur de chaque bande noire (part de l'écran)
     bandesEntree: 1.2, // s : les bandes arrivent au début du film
+    titreBas: 0.64, // (demande 130) un titre « bas » : sa ligne (part de la hauteur de l'écran ; 0,4 pour les autres)
     replique: { base: 2.4, parLettre: 0.055, max: 9 }, // s : la durée d'une réplique sans « duree » = base + parLettre × lettres
     tourne: 2.6, // rad/s : un acteur tourne au plus à cette vitesse
     rattrape: 1.6, // × la vitesse du groupe : un soldat en retard rattrape sa place
@@ -2911,47 +2916,124 @@ Tanks.CONFIG.cinematiques = {
 
 // ✍️ (demande 101, morceau 3) LA BANDE-ANNONCE DU JEU : « À la fin, une vidéo qui fait l'introduction du jeu. » Le bouton
 // « 🎬 Bande-annonce » de la page d'accueil la lance ; à la fin (ou Entrée / Échap), on revient à l'accueil. Elle est
-// tournée sur la carte du moment avec des figurants (des chars, une escouade, un tireur d'élite, les hélicos et l'avion
-// de chasse de la base aérienne) : rien ne reste après le film. « nettoyer » : les explosions et la fumée du film
-// disparaissent à la fin.
+// tournée sur la carte du moment avec des figurants (des chars, des soldats, les hélicos et l'avion de chasse de la base
+// aérienne) : rien ne reste après le film. « nettoyer » : les explosions et la fumée du film disparaissent à la fin.
+// ✍️ (demande 130) « Refais la bande-annonce avec les nouvelles armes et les nouveaux skins. » La nouvelle version (90 s) :
+//   1. les 4 CLASSES alignées, avec leur skin (la caméra glisse devant elles) ; 2. les nouvelles ARMES en gros plan (M1911,
+//   Scorpio, M4, puis K416 à silencieux et lunette, MP5, RG-6) ; 3. les nouveaux COMPORTEMENTS (demande 129) : le binôme
+//   qui avance d'abri en abri avec un signe de la main, à plat ventre sous les obus, penché au coin de la grange, le
+//   chargeur qui tombe, « Grenade ! » ; 4. comme avant : les blindés, les hélicos, l'avion de la base, la bataille, le logo.
+// Les figurants à pied jouent dans un grand pré sans arbres (vers x = 90…140, z = 400…480), et à la grange (−37 ; 472)
+// pour le coin du mur : les caméras restent dans l'herbe, jamais dans un mur. Les actions « geste » et « tire » sont
+// expliquées dans logique/cinematique.js. « depart: 999 » : le groupe attend que le scénario lui dise « marche ».
 Tanks.CONFIG.cinematiques.bandeAnnonce = "bande-annonce";
 (function () {
-  const C = Tanks.CONFIG, armes = Object.keys(C.armesPrincipales).length + Object.keys(C.pistolets).length;
-  const slogan = (grand, etiquette, petit) => ({ etiquette: etiquette || "", grand, petit, taille: 58, de: 1.5, a: 7 });
+  const C = Tanks.CONFIG;
+  const slogan = (grand, etiquette, petit, a) => ({ etiquette: etiquette || "", grand, petit, taille: 58, de: 0.8, a: a || 5.6 });
+  const NORD = -Math.PI / 2, SUD = Math.PI / 2;
+  const K416 = { bouche: "silencieux", viseur: "lunette4" }; // (le K416 à silencieux et lunette ×4)
   C.cinematiques.films["bande-annonce"] = {
     titre: "Bande-annonce · The Last Battlefield", musique: 1, nettoyer: true, bases: true,
-    decor: { feux: [[-60, 250, 1.6], [50, 300, 1.4], [120, 180, 1.2], [-130, 120, 1.2]] },
+    decor: { feux: [[-60, 250, 1.6], [50, 300, 1.4], [120, 180, 1.2], [-130, 120, 1.2], [160, 360, 1.1]] },
     acteurs: [
-      { id: "blindes", prendre: "chars", camp: "bleus", nombre: 4, nom: "Marteau", chemin: [[0, 560], [0, -300]], vitesse: 7, formation: "colonne", ecart: 18, largeur: 0 },
-      { id: "escouade", prendre: "figurants", camp: "bleus", nombre: 8, chemin: [[40, 470], [40, 380]], vitesse: 0.9, formation: "colonne", ecart: 2.5, arme: "levee", tactique: { balaye: 0.45, retourne: 0.25, accroupi: 0.2 } },
-      { id: "sniper", prendre: "figurants", camp: "bleus", nombre: 1, armeId: "lapua", places: [[-20, 420, -1.57]] },
-      { id: "helicos", prendre: "engins", sortes: ["helico", "blackhawk", "chinook"], chemin: [[-110, 690], [-110, 600], [-60, 200], [0, -400]], vitesse: 28, acceleration: 7, depart: 30,
+      // les 4 classes alignées (de gauche à droite pour la caméra : assaut, médecin, éclaireur, ingénieur), l'arme basse
+      { id: "classes", prendre: "figurants", camp: "bleus", classe: ["assaut", "medecin", "eclaireur", "ingenieur"], armeId: ["k416", "mp5", "m110", "rg6"], pieces: [K416, null, null, null],
+        places: [[104, 440, SUD + 0.25], [107.6, 440, SUD + 0.1], [111.2, 440, SUD - 0.1], [114.8, 440, SUD - 0.25]], arme: "basse" },
+      // les nouvelles armes, en joue : le M1911, le Scorpio, la M4
+      { id: "armes", prendre: "figurants", camp: "bleus", classe: ["assaut", "medecin", "eclaireur"], armeId: ["pistolet", "scorpio", "m4courte"],
+        places: [[104, 425, NORD], [107.5, 425, NORD], [111, 425, NORD]] },
+      // le binôme : l'un court d'abri en abri, l'autre le couvre (puis ils échangent)
+      { id: "b1", prendre: "figurants", camp: "bleus", nombre: 1, classe: "assaut", armeId: "k416", pieces: K416, chemin: [[100, 410], [97, 395]], vitesse: 5.6, depart: 999 },
+      { id: "b2", prendre: "figurants", camp: "bleus", nombre: 1, classe: "medecin", armeId: "mp5", chemin: [[104.5, 412], [102, 392]], vitesse: 5.6, depart: 999 },
+      // la patrouille qui se plaque au sol sous les obus
+      { id: "patrouille", prendre: "figurants", camp: "bleus", nombre: 4, classe: ["eclaireur", "assaut", "ingenieur", "medecin"], armeId: ["m110", "k416", "rg6", "mp5"],
+        chemin: [[126, 458], [126, 380]], vitesse: 1.3, depart: 999, formation: "colonne", ecart: 2.6, largeur: 1.2 },
+      // au coin de la grange : il se penche, tire, se recache
+      { id: "coin", prendre: "figurants", camp: "bleus", classe: "assaut", armeId: "m4courte", places: [[-34.5, 482.5, NORD]] },
+      // le médecin qui recharge (le chargeur vide tombe dans l'herbe)
+      { id: "rech", prendre: "figurants", camp: "bleus", classe: "medecin", armeId: "mp5", places: [[95, 462, NORD + 0.2]] },
+      // l'ingénieur et son RG-6
+      { id: "lg", prendre: "figurants", camp: "bleus", classe: "ingenieur", armeId: "rg6", places: [[132, 472, NORD + 0.15]] },
+      // « Grenade ! » : ils s'enfuient
+      { id: "gren", prendre: "figurants", camp: "bleus", nombre: 3, classe: ["assaut", "eclaireur", "ingenieur"], armeId: ["k416", "m4courte", "rg6"],
+        chemin: [[88, 431], [88, 446]], vitesse: 5.2, depart: 999, formation: "ligne", ecart: 2.4 },
+      { id: "blindes", prendre: "chars", camp: "bleus", nombre: 4, nom: "Marteau", chemin: [[40, 560], [40, -300]], vitesse: 7, depart: 47, formation: "colonne", ecart: 18, largeur: 0 },
+      { id: "helicos", prendre: "engins", sortes: ["helico", "blackhawk", "chinook"], chemin: [[-110, 690], [-110, 600], [-60, 200], [0, -400]], vitesse: 28, acceleration: 7, depart: 61,
         formation: "ligne", ecart: 40, hauteurs: [[0, 0], [30, 12], [160, 45], [1500, 60]], rotor: 30 },
-      { id: "avion", prendre: "engins", sortes: ["avion"], chemin: [[-60, 790], [-480, 790], [-1000, 700]], vitesse: 80, acceleration: 13, depart: 47,
+      { id: "avion", prendre: "engins", sortes: ["avion"], chemin: [[-60, 790], [-480, 790], [-1000, 700]], vitesse: 80, acceleration: 13, depart: 68.2,
         hauteurs: [[0, 0], [230, 0], [430, 22], [900, 110]] },
     ],
     plans: [
-      { nom: "le champ de bataille", duree: 7, fondu: { entree: 2 },
-        camera: { type: "travelling", de: { oeil: [300, 120, 900], cible: [0, 0, 300] }, a: { oeil: [220, 95, 780], cible: [0, 0, 250] } },
-        titre: { etiquette: "Un jeu de Maxance", grand: "", petit: "Valdrie, 2041. Toutes les radios se sont tues.", de: 1.5, a: 6.5 } },
-      { nom: "les blindés", duree: 8, camera: { type: "suivre", acteur: "blindes", de: [-34, 4, 12], a: [-22, 3, 9], regardHauteur: 2, tremble: 0.05 },
+      { nom: "le champ de bataille", duree: 6, fondu: { entree: 2 },
+        camera: { type: "travelling", de: { oeil: [300, 120, 900], cible: [0, 0, 300] }, a: { oeil: [230, 98, 790], cible: [0, 0, 260] } },
+        titre: { etiquette: "Un jeu de Maxance", grand: "", petit: "Valdrie, 2041. Toutes les radios se sont tues.", de: 1.2, a: 5.6 },
+        actions: [{ a: 0.1, acteur: "gren", faire: "seTourne", vers: [88, 380] }, { a: 0.1, acteur: "b1", faire: "accroupi" }] },
+      { nom: "les 4 classes", duree: 7.5,
+        camera: { type: "travelling", courbe: "lineaire", de: { oeil: [101, 1.45, 443.3], cible: [103.2, 1.2, 440] }, a: { oeil: [118, 1.45, 443.3], cible: [115.8, 1.2, 440] } },
+        titre: Object.assign(slogan("4 CLASSES. 4 TENUES.", "Nouveaux soldats", "Assaut · Médecin · Éclaireur · Ingénieur", 7), { bas: true }) },
+      { nom: "les nouvelles armes", duree: 6.5,
+        camera: { type: "travelling", courbe: "lineaire", de: { oeil: [102.4, 1.45, 422.6], cible: [104.2, 1.35, 425] }, a: { oeil: [112.4, 1.45, 422.6], cible: [110.6, 1.35, 425] } },
+        actions: [{ a: 0.4, acteur: "armes.0", faire: "tire", coups: 6, cadence: 0.36 }, { a: 1.6, acteur: "armes.1", faire: "tire", coups: 22, cadence: 0.06 }, { a: 3.4, acteur: "armes.2", faire: "tire", coups: 14, cadence: 0.09 }],
+        titre: Object.assign(slogan("M1911 · SCORPIO · M4", "Nouvelles armes", "Et aussi le K416 à silencieux, le MP5 et le lance-grenades RG-6.", 6), { bas: true }) },
+      { nom: "en binôme", duree: 7,
+        camera: { type: "suivre", acteur: "b1", de: [-1.5, 1.5, -5.5], a: [-6.5, 1.6, -4.5], regardHauteur: 1, tremble: 0.05 },
+        actions: [
+          { a: 0.2, acteur: "b2", faire: "geste", geste: "signe", signe: "avance", vers: [97, 380], duree: 1.2 },
+          { a: 0.5, acteur: "b2", faire: "tire", coups: 10, cadence: 0.08 },
+          { a: 0.8, acteur: "b1", faire: "marche" }, { a: 0.8, acteur: "b1", faire: "geste", geste: "sprint", duree: 2.6 },
+          { a: 3.4, acteur: "b1", faire: "accroupi" }, { a: 3.6, acteur: "b1", faire: "tire", coups: 9, cadence: 0.1 },
+          { a: 3.8, acteur: "b2", faire: "marche" }, { a: 3.8, acteur: "b2", faire: "geste", geste: "sprint", duree: 3.2 },
+        ],
+        titre: Object.assign(slogan("EN BINÔME.", "Nouveaux comportements", "L'un court d'abri en abri, l'autre le couvre.", 6.4), { bas: true }) },
+      { nom: "plaqués au sol", duree: 6,
+        camera: { type: "travelling", de: { oeil: [131.5, 0.9, 462.5], cible: [126, 0.5, 458] }, a: { oeil: [130.6, 0.7, 461], cible: [126, 0.4, 457.5] } },
+        actions: [
+          { a: 0, acteur: "patrouille", faire: "marche" },
+          { a: 1.3, faire: "explose", ou: [118, 441], force: 1.8 }, { a: 1.6, acteur: "patrouille", faire: "halte" },
+          { a: 1.6, acteur: "patrouille", faire: "geste", geste: "couche" },
+          { a: 2.6, faire: "explose", ou: [135, 444], force: 2 }, { a: 3.7, faire: "explose", ou: [123, 436], force: 1.6, sorte: "bombe" },
+          { a: 4.8, acteur: "patrouille.0", faire: "tire", coups: 1 },
+        ],
+        titre: slogan("À TERRE !", "Sous les obus", "Ils se plaquent au sol, puis répliquent.", 3.8) },
+      { nom: "au coin du mur", duree: 5,
+        camera: { type: "travelling", de: { oeil: [-31.2, 1.6, 485.3], cible: [-33.9, 1.4, 481.8] }, a: { oeil: [-31.9, 1.7, 484.5], cible: [-33.4, 1.45, 480.8] } },
+        actions: [
+          { a: 0, acteur: "coin", faire: "geste", geste: "couvert" },
+          { a: 1.0, acteur: "coin", faire: "geste", geste: "penche", cote: 1 }, { a: 1.5, acteur: "coin", faire: "tire", coups: 6, cadence: 0.11 },
+          { a: 3.4, acteur: "coin", faire: "geste", geste: "couvert" },
+        ],
+        titre: Object.assign(slogan("AU COIN DU MUR.", "", "Il se penche, tire, et se recache.", 4.6), { bas: true }) },
+      { nom: "la recharge", duree: 5,
+        camera: { type: "orbite", acteur: "rech", repere: "regard", rayon: 2.3, hauteur: 1.55, de: 0.95, a: 0.45, regardHauteur: 1.2 },
+        actions: [{ a: 0.2, acteur: "rech", faire: "tire", coups: 7, cadence: 0.07 }, { a: 0.9, acteur: "rech", faire: "geste", geste: "recharge", duree: 2.6 }, { a: 3.9, acteur: "rech", faire: "tire", coups: 6, cadence: 0.07 }],
+        titre: Object.assign(slogan("RECHARGE.", "", "Le chargeur vide tombe, le neuf sort du gilet.", 4.6), { bas: true }) },
+      { nom: "le RG-6", duree: 6,
+        camera: { type: "travelling", de: { oeil: [134.6, 1.7, 475.2], cible: [132.2, 1.5, 471] }, a: { oeil: [135.8, 2.4, 476.8], cible: [133, 1.2, 430] } },
+        actions: [
+          { a: 0.6, acteur: "lg", faire: "tire", coups: 6, cadence: 0.55 },
+          { a: 1.6, faire: "explose", ou: [140, 414], force: 1.3 }, { a: 2.15, faire: "explose", ou: [128, 410], force: 1.3 }, { a: 2.7, faire: "explose", ou: [136, 402], force: 1.3 },
+          { a: 3.25, faire: "explose", ou: [124, 416], force: 1.3 }, { a: 3.8, faire: "explose", ou: [146, 406], force: 1.3 }, { a: 4.35, faire: "explose", ou: [131, 398], force: 1.5 },
+        ],
+        titre: slogan("RG-6.", "Ingénieur", "Six grenades de 40 mm, coup sur coup.", 3.6) },
+      { nom: "grenade", duree: 6,
+        camera: { type: "travelling", de: { oeil: [91.5, 1.3, 449.6], cible: [88, 1.1, 438] }, a: { oeil: [91, 1.05, 449.2], cible: [88, 0.7, 444] } },
+        actions: [
+          { a: 0.7, acteur: "gren", faire: "marche" }, { a: 0.7, acteur: "gren", faire: "geste", geste: "fuite-grenade", duree: 2.8 },
+          { a: 3.4, faire: "explose", ou: [88, 429], force: 1.4 }, { a: 3.6, acteur: "gren", faire: "geste", geste: "couche" },
+        ],
+        repliques: [{ a: 0.4, qui: "volk", duree: 2.6, texte: "Grenade ! À couvert !" }] },
+      { nom: "les blindés", duree: 6, camera: { type: "suivre", acteur: "blindes", de: [-34, 4, 12], a: [-24, 3, 9], regardHauteur: 2, tremble: 0.05 },
         titre: slogan("BLINDÉS.", "Leclerc · Abrams · Leopard 2") },
-      { nom: "l'infanterie", duree: 8, camera: { type: "suivre", acteur: "escouade", de: [-10, 1.7, 3], a: [-7, 1.6, 2], regardHauteur: 1.3, tremble: 0.06 },
-        titre: slogan("INFANTERIE.", "4 classes · grenades · explosifs") },
-      { nom: "le tireur d'élite", duree: 7, camera: { type: "suivre", acteur: "sniper", repere: "regard", de: [2.4, 1.45, 0.8], a: [1.5, 1.3, 0.55], regard: [-20, 2, 250] },
-        actions: [{ a: 0.3, acteur: "sniper", faire: "accroupi" }],
-        titre: slogan("DÉBLOQUE " + armes + " ARMES.", "L'armurerie · lunettes · silencieux · peintures") },
-      { nom: "les hélicos décollent", duree: 9, camera: { type: "travelling", de: { oeil: [-30, 6, 640], cible: [-110, 6, 686] }, a: { oeil: [-50, 22, 590], cible: [-100, 40, 600] } },
-        titre: slogan("HÉLICOS.", "Tigre · Black Hawk · Chinook") },
-      { nom: "en vol", duree: 8, camera: { type: "suivre", acteur: "helicos", de: [55, 14, 25], a: [40, 8, 18], regardHauteur: 0, tremble: 0.15 } },
-      { nom: "l'avion décolle", duree: 10, camera: { type: "travelling", de: { oeil: [-170, 4, 825], cible: [-60, 3, 790] }, a: { oeil: [-300, 12, 835], cible: [-520, 25, 790] } },
-        titre: slogan("AVIONS.", "La base aérienne · la piste · le ciel") },
-      { nom: "la bataille", duree: 8, camera: { type: "suivre", acteur: "blindes", de: [-45, 9, 26], a: [-34, 6, 20], regardHauteur: 2, tremble: 0.2 },
-        actions: [{ a: 0.6, faire: "explose", ou: [-24, 150], force: 2.2 }, { a: 2.2, faire: "explose", ou: [26, 130], force: 2.6, sorte: "bombe" }, { a: 3.6, faire: "explose", ou: [-14, 112], force: 1.8 }, { a: 5.2, faire: "explose", ou: [30, 100], force: 2.4, sorte: "bombe" }, { a: 6.6, faire: "explose", ou: [-30, 90], force: 2 }],
-        titre: { etiquette: "La campagne", grand: C.campagne.chapitres.length + " CHAPITRES.", petit: "Les Lions de Valdrie contre le Front Écarlate.", taille: 58, de: 1.5, a: 7.5 } },
-      { nom: "le logo", duree: 12, fondu: { sortie: 1.5 },
-        camera: { type: "travelling", de: { oeil: [200, 60, 500], cible: [0, 20, 0] }, a: { oeil: [150, 140, 450], cible: [0, 30, 0] } },
-        titre: { etiquette: "Infanterie · Blindés · Hélicos · Avions", grand: "THE LAST BATTLEFIELD", taille: 72, couleur: "#ffcf5a", petit: "Un jeu de Maxance · Appuie sur Entrée", de: 1, a: 11.5 } },
+      { nom: "les hélicos décollent", duree: 7, camera: { type: "travelling", de: { oeil: [-30, 6, 640], cible: [-110, 6, 686] }, a: { oeil: [-50, 22, 590], cible: [-100, 38, 590] } },
+        titre: slogan("HÉLICOS.", "Tigre · Black Hawk · Chinook", "", 6.4) },
+      { nom: "l'avion décolle", duree: 7.5, camera: { type: "suivre", acteur: "avion", de: [-22, 2, 10], a: [-9, 3, 7], regardHauteur: 1.5, tremble: 0.08 },
+        titre: slogan("AVIONS.", "La base aérienne · la piste · le ciel", "", 6.8) },
+      { nom: "la bataille", duree: 6, camera: { type: "suivre", acteur: "blindes", de: [-32, 14, -14], a: [-24, 11, -11], regardHauteur: 1, tremble: 0.2 },
+        actions: [{ a: 0.5, faire: "explose", ou: [16, 336], force: 2.2 }, { a: 1.7, faire: "explose", ou: [66, 322], force: 2.6, sorte: "bombe" }, { a: 2.9, faire: "explose", ou: [26, 304], force: 1.8 }, { a: 4.1, faire: "explose", ou: [70, 292], force: 2.4, sorte: "bombe" }, { a: 5.2, faire: "explose", ou: [10, 280], force: 2 }],
+        titre: { etiquette: "La campagne", grand: C.campagne.chapitres.length + " CHAPITRES.", petit: "Les Lions de Valdrie contre le Front Écarlate.", taille: 58, de: 0.8, a: 5.6 } },
+      { nom: "le logo", duree: 8.5, fondu: { sortie: 1.5 },
+        camera: { type: "travelling", de: { oeil: [200, 60, 500], cible: [0, 20, 0] }, a: { oeil: [160, 125, 460], cible: [0, 30, 0] } },
+        titre: { etiquette: "Infanterie · Blindés · Hélicos · Avions", grand: "THE LAST BATTLEFIELD", taille: 72, couleur: "#ffcf5a", petit: "Un jeu de Maxance · Appuie sur Entrée", de: 0.8, a: 8.2 } },
     ],
   };
 })();
