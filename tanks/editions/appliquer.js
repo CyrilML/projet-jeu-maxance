@@ -23,5 +23,13 @@ window.Tanks = window.Tanks || {};
     }
   }
   if (id !== "moderne" && d.remplace) coudre(C, d.remplace);
-  C.edition = { id, nom: f.nom, icone: f.icone, epoque: f.epoque, regles: Object.assign({}, ED.REGLES_MODERNE, d.regles || {}), modeles: d.modeles || {}, textes: d.textes || {}, pieces, source: Tanks.EditionDuJour.source };
+  // ✍️ (demande 136) LA CAMPAGNE DE L'ÉDITION : ses chapitres, ses personnages et ses films prennent la place de ceux de
+  // Valdrie (les difficultés, les règles et les Battle Coins restent ceux de config.js) ; ses cartes s'ajoutent.
+  const K = id !== "moderne" && ED.campagnes[id];
+  if (K) {
+    C.campagne = Object.assign({}, C.campagne, K.campagne);
+    for (const c of K.cartes || []) if (!C.cartes.some((x) => x.id === c.id)) C.cartes.push(c);
+    Object.assign(C.cinematiques.films, K.films || {});
+  }
+  C.edition = { id, nom: f.nom, icone: f.icone, epoque: f.epoque, regles: Object.assign({}, ED.REGLES_MODERNE, d.regles || {}, K ? { campagne: true } : {}), modeles: d.modeles || {}, textes: d.textes || {}, pieces, source: Tanks.EditionDuJour.source, campagne: !!K };
 })();

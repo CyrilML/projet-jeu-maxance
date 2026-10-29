@@ -62,12 +62,15 @@
 //     reglages.ips (le compteur d'images 📈, éteint au départ), et reglages.niveauAuto (le dernier niveau choisi par le
 //     régulateur automatique : la partie suivante recommence là). Une ancienne version garde tout, en qualité « auto », sans
 //     compteur, et le régulateur repart du niveau de départ (config.js, qualite.depart).
+//   22 (demande 136 : une campagne par édition) : + editions[…].campagne (pour chaque autre édition que Moderne, SA campagne :
+//     les chapitres ouverts, les étoiles, les records, la difficulté). La campagne de Valdrie reste dans « campagne ».
+//     Une ancienne version garde tout : chaque édition commence sa campagne au chapitre 1 (à la difficulté de Moderne).
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 21; // (demande 123 : + la qualité et le compteur d'images ; demande 116 : + la langue ; demande 115 : + l'édition ; demande 114 : + les réglages ; étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents ; livre n° 6 : + l'arme bonus ; livre n° 28 : + la boutique)
+  const VERSION = 22; // (demande 136 : + la campagne de chaque édition, dans editions[…].campagne) (demande 123 : + la qualité et le compteur d'images ; demande 116 : + la langue ; demande 115 : + l'édition ; demande 114 : + les réglages ; étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents ; livre n° 6 : + l'arme bonus ; livre n° 28 : + la boutique)
   const radio = Tanks.Evenements;
 
   function vide() {
@@ -184,7 +187,7 @@ Tanks.Sauvegarde = (function () {
   // ✍️ (demande 115) LES ÉDITIONS : ce qui est rangé à part pour chaque édition (l'équipement, le tank, la carte). Dans
   // une autre édition que Moderne, le livret ouvert montre CELUI de l'édition ; les choix modernes attendent à l'abri
   // (« moderne ») et retournent à leur place quand on écrit.
-  const PAR_EDITION = ["equipement", "char", "carte"];
+  const PAR_EDITION = ["equipement", "char", "carte", "campagne"]; // (demande 136 : + la campagne : chaque édition a la sienne)
   const ED = () => (Tanks.CONFIG.edition && Tanks.CONFIG.edition.id) || "moderne";
   let moderne = null;
   function ouvrirEdition() {
@@ -196,6 +199,8 @@ Tanks.Sauvegarde = (function () {
     donnees.equipement = fusionner(equipementDeDepart(), a.equipement);
     donnees.char = C.chars.some((c) => c.id === a.char) ? a.char : C.chars[0].id;
     donnees.carte = C.cartes.some((c) => c.id === a.carte) ? a.carte : C.cartes[0].id;
+    // (demande 136) la campagne de l'édition : un livret neuf la première fois (avec la difficulté choisie en Moderne)
+    donnees.campagne = fusionner({ debloque: 1, chapitres: {}, enCours: null, difficulte: (moderne.campagne && moderne.campagne.difficulte) || C.campagne.difficulteDepart }, a.campagne);
   }
   function pourEcrire() {
     if (!moderne) return donnees;
@@ -216,7 +221,9 @@ Tanks.Sauvegarde = (function () {
   function reparer() {
     try {
       const d = JSON.parse(localStorage.getItem(CLE) || "{}");
-      for (const k of ["equipement", "char", "carte", "editions", "edition"]) delete d[k];
+      for (const k of ["equipement", "char", "carte", "edition"]) delete d[k];
+      // (demande 136) dans le livret de chaque édition, on garde seulement sa campagne (le précieux)
+      for (const e in d.editions || {}) d.editions[e] = d.editions[e] && d.editions[e].campagne ? { campagne: d.editions[e].campagne } : {};
       localStorage.setItem(CLE, JSON.stringify(d));
       return true;
     } catch (e) { return false; }

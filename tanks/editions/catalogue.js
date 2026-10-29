@@ -48,6 +48,15 @@ Tanks.EDITIONS = (function () {
       image: { ciel: ["#1d1035", "#6a3f8f"], sol: "#2b2440", motif: "aliens", soleil: "#9effc8" } },
   ];
   const donnees = {}; // id → les données d'une édition prête (remplace, regles, modeles)
+  // ✍️ (demande 136) « Chaque édition doit être une campagne qui fait revivre les moments qui sont arrivés. » Chaque
+  // édition peut avoir SA campagne, rangée dans son propre fichier (editions/campagnes/1916.js…). Elle s'inscrit ici :
+  //   campagne : titre, sousTitre, camps, personnages, chapitres (comme campagne dans config.js ; le reste — difficultés,
+  //     règles, Battle Coins — reste celui de config.js), films : ses cinématiques (cinematiques.films), cartes : les
+  //     cartes en plus dont ses chapitres ont besoin (des variantes de la carte de l'édition).
+  const campagnes = {};
+  function ajouterCampagne(id, c) {
+    campagnes[id] = c;
+  }
   // (une édition prête s'inscrit ici, depuis son propre fichier)
   function ajouter(id, d) {
     donnees[id] = d;
@@ -57,5 +66,5 @@ Tanks.EDITIONS = (function () {
   const fiche = (id) => liste.find((e) => e.id === id) || null;
   // Les règles de l'édition Moderne (les interrupteurs, tous « comme avant »).
   const REGLES_MODERNE = { campagne: true, boutique: true, film: true, tranchees: false, barrage: false, vagues: false, voixRadio: true };
-  return { liste, donnees, ajouter, toutRemplacer, fiche, REGLES_MODERNE };
+  return { liste, donnees, ajouter, campagnes, ajouterCampagne, toutRemplacer, fiche, REGLES_MODERNE };
 })();
