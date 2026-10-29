@@ -254,6 +254,7 @@
       <a href="#etape131">Étape 131</a>
       <a href="#etape132">Étape 132</a>
       <a href="#etape133">Étape 133</a>
+      <a href="#etape134">Étape 134</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -6492,6 +6493,45 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape134">
+      <h2>🎻 Étape 134 : une musique plus lente, plus triste, plus grave <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">La musique de la bande-annonce est refaite : plus lente, avec des accords tristes, un piano grave, un grondement très bas, et un motif qui frappe : DOUM… DOUM… DOOOUM. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/134-musique-plus-triste.md</code>.</p>
+          <ul>
+            <li>✍️ « Fais la musique plus lente et plus triste, surtout plus marquante et plus grave. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 79 ».</li>
+            <li>☐ Accueil → 🎬 Bande-annonce : plus lente, plus grave, plus triste.</li>
+            <li>☐ Le DOUM… DOUM… DOOOUM revient à la fin de chaque phrase.</li>
+            <li>☐ Le silence puis le BOUM tombent toujours sur le logo.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>😢 Pourquoi une musique sonne triste ?</h3>
+      <p>Trois secrets : elle est <b>lente</b>, ses accords sont <b>mineurs</b> (do mineur, fa mineur : ils sonnent sombres, alors que les accords majeurs sonnent joyeux), et sa mélodie <b>descend</b> (comme quelqu'un qui baisse la tête).</p>
+      <h3>🔊 Grave = des vibrations lentes</h3>
+      <p>Un son, c'est l'air qui vibre. Une note grave vibre lentement : le grondement de la bande-annonce vibre seulement 33 fois par seconde (33 Hz) ! Une note aiguë du piano vibre plus de 500 fois par seconde. Jouer « une octave plus bas », c'est diviser les vibrations par 2.</p>
+      <h3>🧮 Garder le BOUM sur le logo</h3>
+      <p>Plus lent, mais le logo arrive toujours à 81,5 s. J'ai cherché un tempo pour que 26 mesures durent pile 81,5 s : une mesure = 81,5 ÷ 26 = 3,13 s, donc 4 temps × 60 ÷ 3,13 = 76,6 battements par minute.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>musiquesFilms</code> et regarde les <code>accords</code> : trouve les accords « mineurs » (les tristes).</li>
+            <li>Change <code>grondement: 0.07</code> en <code>grondement: 0.2</code>, écoute avec un casque… puis remets 0.07.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Qu'est-ce qui rend une musique triste ? <span class="petit">(lente, accords mineurs, mélodie qui descend)</span></li>
+            <li>Une note une octave plus bas vibre combien de fois moins vite ? <span class="petit">(2 fois moins)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -8122,6 +8162,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-133" data-cle="appris-133" placeholder="Ex. : …"></textarea>
         <label for="idees-133"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-133" data-cle="idees-133" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 134 · une musique plus triste et plus grave <span class="petit">· 29 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/config.js</code> (la partition), <code>affichage/musique.js</code> (le grondement, le motif, le nouveau chef d'orchestre).</p>
+        <p class="petit">✍️ Maxance a demandé : la musique de la bande-annonce plus lente, plus triste, plus grave et plus marquante.</p>
+        <label for="appris-134"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-134" data-cle="appris-134" placeholder="Ex. : …"></textarea>
+        <label for="idees-134"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-134" data-cle="idees-134" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

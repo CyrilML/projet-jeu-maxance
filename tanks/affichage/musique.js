@@ -406,7 +406,24 @@ Tanks.Musique = (function () {
     s.start(t), o.start(t);
     s.stop(t + duree + 0.05), o.stop(t + duree + 0.05);
   }
-  // ✍️ (demande 133) LE CHEF D'ORCHESTRE DE LA BANDE-ANNONCE : 16 petits pas par mesure (des doubles croches, en 4/4)
+  // ✍️ (demande 134) LE GRONDEMENT : une note TRÈS grave (sinus), tenue, qui arrive et repart doucement : on la sent
+  // plus qu'on ne l'entend (dans un casque ou une grosse enceinte, ça fait vibrer)
+  function grondement(f, t, duree, fort) {
+    const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
+    o.type = "sine", o2.type = "triangle";
+    o.frequency.value = f, o2.frequency.value = f * 2;
+    o2.detune.value = 4;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(M.grondement * fort, t + Math.min(1.2, duree * 0.3));
+    g.gain.setValueAtTime(M.grondement * fort, t + duree * 0.75);
+    g.gain.linearRampToValueAtTime(0.0001, t + duree + 0.6);
+    const g2 = ctx.createGain();
+    g2.gain.value = 0.18;
+    o.connect(g), o2.connect(g2).connect(g);
+    brancher(g, 0.15);
+    for (const x of [o, o2]) x.start(t), x.stop(t + duree + 0.7);
+  }
+  // ✍️ (demande 133, refait à la demande 134) LE CHEF D'ORCHESTRE DE LA BANDE-ANNONCE : 16 petits pas par mesure (en 4/4)
   function jouerBandeAnnonce(t) {
     const P = M.parties, pas16 = 60 / M.tempo / 4;
     const mesure = Math.floor(pas / 16), i = pas % 16;
@@ -415,62 +432,70 @@ Tanks.Musique = (function () {
     const [basseNote, quinte, octave, tierce] = grille.notes.map(hz);
     Object.assign(etat, { mesure: mesure + 1, partie, accord: grille.nom });
     if (partie === "fin") return;
-    const unePiano = (bar) => { for (const [quand, nom, longueur] of M.notesPiano[bar % M.notesPiano.length]) if (quand === i) piano(hz(nom), t, pas16 * longueur, 1); };
-    // LE CHOC (sur le logo) : le gros coup, les tambours, la cymbale, le chœur, puis le piano tout seul
+    const unePiano = (bar) => { for (const [quand, nom, longueur] of M.notesPiano[bar % M.notesPiano.length]) if (quand === i) piano(hz(nom), t, pas16 * longueur, 1), piano(hz(nom) / 2, t, pas16 * longueur, 0.5); };
+    // LE CHOC (sur le logo) : le gros coup, les tambours, la cymbale, le chœur, puis le piano grave tout seul
     if (partie === "le choc") {
       const k = mesure - P.choc;
       if (k === 0 && i === 0) {
         braam(basseNote / 2, t, M.choc), braam(basseNote / 4, t, M.choc);
-        taiko(t, 1.4 * M.choc, true), taiko(t + 0.02, M.choc, false), taiko(t + 0.6, 0.9, true);
-        cymbale(t, 4, false);
-        for (const f of [quinte, octave, tierce * 2]) chorale(f, t, 5);
-        for (const f of [basseNote, quinte, tierce]) nappe(f, t, 8, 1.5);
-        for (const f of [basseNote, octave]) cuivre(f, t, 3.5), cuivre(f * 2, t, 3.5);
+        taiko(t, 1.4 * M.choc, true), taiko(t + 0.02, M.choc, false), taiko(t + 0.8, 0.9, true);
+        cymbale(t, 5, false);
+        for (const f of [quinte, octave, tierce * 2]) chorale(f, t, 6);
+        for (const f of [basseNote, quinte, tierce]) nappe(f, t, 9, 1.5);
+        for (const f of [basseNote, octave]) cuivre(f, t, 4), cuivre(f / 2, t, 4);
+        grondement(basseNote / 2, t, 8, 1.3);
       }
-      if (k === 1 && i === 8) piano(hz("G4"), t, 2, 0.9);
-      if (k === 2 && i === 0) piano(hz("C5"), t, 4, 1);
+      if (k === 1 && i === 8) piano(hz("G3"), t, 3, 0.9), piano(hz("G2"), t, 3, 0.5);
+      if (k === 2 && i === 0) piano(hz("C3"), t, 5, 1), piano(hz("C2"), t, 5, 0.6);
       return;
     }
-    // LE TROU : la première moitié de la mesure, tout le monde frappe ; puis plus RIEN (le silence avant le choc)
+    // LE TROU : les 3 premiers temps, un roulement qui monte ; le dernier temps, plus RIEN (le silence avant le choc)
     if (partie === "le trou") {
-      if (i === 0) souffle(t, pas16 * 8);
-      if (i < 8) taiko(t, 0.6 + i * 0.1, i % 2 === 0), violoncelle(basseNote, t, pas16 * 0.7, 1);
+      if (i === 0) souffle(t, pas16 * 12);
+      if (i < 12 && i % 2 === 0) taiko(t, 0.6 + i * 0.06, i % 4 === 0), violoncelle(basseNote, t, pas16 * 1.4, 1);
       return;
     }
     const fort = partie === "calme" ? 0 : partie === "montée" ? 0.45 + 0.55 * (mesure - P.montee) / (P.theme - P.montee) : 1;
-    // la nappe sombre et le gros BRAAAM (toutes les 4 mesures)
-    if (i === 0) for (const f of [basseNote, quinte, tierce]) nappe(f, t, pas16 * 16, partie === "calme" ? M.calme : 1);
-    if (i === 0 && mesure % 4 === 0) braam(basseNote / 2, t, partie === "calme" ? M.calme : 1);
+    const calme = partie === "calme" ? M.calme : 1;
+    // le grondement très grave et la nappe sombre (toute la mesure) ; le gros BRAAAM toutes les 2 mesures
+    if (i === 0) {
+      grondement(basseNote / 2, t, pas16 * 16, calme);
+      for (const f of [basseNote, quinte, tierce]) nappe(f, t, pas16 * 16, calme);
+      if (mesure % 2 === 0) braam(basseNote / 2, t, calme);
+    }
     if (partie === "calme" || partie === "montée") {
       if (i % 4 === 0) horloge(t, i % 8 === 0); // tic… tac… (à chaque temps)
       if (partie === "calme") { unePiano(mesure); return; }
     }
-    // les VIOLONCELLES qui martèlent : en croches au début de la montée, puis en doubles croches
-    const doubles = mesure >= P.montee + 3;
-    if (doubles || i % 2 === 0) {
-      const note = [basseNote, basseNote, quinte, basseNote, octave, basseNote, quinte, basseNote][(i >> (doubles ? 0 : 1)) % 8];
-      violoncelle(note, t, pas16 * (doubles ? 0.8 : 1.6), (i % 4 === 0 ? 1 : 0.6) * fort);
-      if (partie !== "montée") violoncelle(note * 2, t, pas16 * 0.7, 0.45), violoncelle(note * 4, t, pas16 * 0.6, 0.35); // (et les violons)
+    // LE MOTIF qui frappe : DOUM… DOUM… DOOOUM, dans la dernière mesure de chaque phrase de 4 (à partir de la montée)
+    if ((mesure - P.montee) % 4 === 3 && M.motif.includes(i)) {
+      const dernier = i === M.motif[M.motif.length - 1];
+      taiko(t, (dernier ? 1.1 : 0.9) * Math.max(0.6, fort), true), taiko(t + 0.01, 0.6 * Math.max(0.6, fort), false);
+      braam(basseNote / 2, t, dernier ? 0.8 : 0.5);
+      if (partie !== "montée") for (const f of [basseNote, octave]) cuivre(f, t, pas16 * (dernier ? 7 : 3)), cuivre(f / 2, t, pas16 * (dernier ? 7 : 3));
     }
-    if (i % 2 === 0) pulsation(basseNote / 2, t, pas16 * 1.2);
-    // les tambours
-    if (i === 0 || i === 8) taiko(t, (i === 0 ? 1 : 0.8) * Math.max(0.5, fort), true);
-    if (partie !== "montée") {
-      if (i === 6 || i === 11 || i === 14) taiko(t, 0.55, i !== 11);
-      if (i === 4 || i === 12) caisseClaire(t, partie === "final" ? 0.9 : 0.7, false);
-      if (i % 2 === 0) caisseClaire(t, 0.12, true);
+    // les VIOLONCELLES, graves et lents : en noires au début de la montée, puis en croches
+    const croches = mesure >= P.montee + 2, chaque = croches ? 2 : 4;
+    if (i % chaque === 0) {
+      const note = [basseNote, basseNote, quinte, basseNote][(i / chaque) % 4];
+      violoncelle(note, t, pas16 * chaque * 0.85, (i % 4 === 0 ? 1.1 : 0.7) * fort); // (les contrebasses et les violoncelles,
+      violoncelle(note * 2, t, pas16 * chaque * 0.85, (i % 4 === 0 ? 0.6 : 0.4) * fort); //  une octave au-dessus)
+      if (partie === "final") violoncelle(note * 2, t, pas16 * chaque * 0.8, 0.4); // (et les violons, au final)
     }
+    if (i % 4 === 0) pulsation(basseNote / 2, t, pas16 * 2.5);
+    // les tambours : lourds, sur le 1er et le 3e temps seulement
+    if (i === 0 || i === 8) taiko(t, (i === 0 ? 1 : 0.75) * Math.max(0.5, fort), true);
+    if (partie === "final" && (i === 6 || i === 14)) taiko(t, 0.5, true);
     // la montée finit par le souffle et un roulement ; le thème et le final commencent par un coup de cymbale
-    if (mesure === P.theme - 1) { if (i === 0) souffle(t, pas16 * 16); if (i >= 8) taiko(t, 0.4 + (i - 8) * 0.08, i % 2 === 0); }
-    if (mesure === P.trou - 1 && i >= 8) taiko(t, 0.5 + (i - 8) * 0.08, i % 2 === 0);
-    if (i === 0 && (mesure === P.theme || mesure === P.theme + 8 || mesure === P.final)) cymbale(t, 3, false);
+    if (mesure === P.theme - 1) { if (i === 0) souffle(t, pas16 * 16); if (i >= 8 && i % 2 === 0) taiko(t, 0.4 + (i - 8) * 0.08, i % 4 === 0); }
+    if (i === 0 && (mesure === P.theme || mesure === P.final)) cymbale(t, 4, false);
     if (partie === "montée") return;
-    // le chœur, et la mélodie des cuivres (au final : en plus, les violons la jouent une octave plus haut)
+    // le chœur, et la mélodie lente des cuivres, une octave plus bas (au final : le chœur la chante aussi)
     if (i === 0) for (const f of [quinte, octave, tierce * 2]) chorale(f, t, pas16 * 16);
     for (const [quand, nom, longueur] of M.melodie[(mesure - P.theme) % M.melodie.length]) if (quand === i) {
-      const f = hz(nom), d = pas16 * longueur;
-      cuivre(f, t, d), cuivre(f / 2, t, d), cor(f / 2, t, d);
-      if (partie === "final") cuivre(f * 2, t, d), chorale(f, t, d);
+      const f = hz(nom) / 2, d = pas16 * longueur;
+      cuivre(f, t, d), cuivre(f / 2, t, d), cor(f, t, d);
+      if (partie === "final") cuivre(f * 2, t, d), chorale(f * 2, t, d);
     }
   }
 

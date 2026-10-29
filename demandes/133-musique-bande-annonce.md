@@ -1,6 +1,6 @@
 # Demande n° 133 : une autre musique pour la bande-annonce
 
-> Statut : ✅ livrée (tanks version 78) + le morceau en fichier audio envoyé à Maxance.
+> Statut : ✅ livrée (tanks version 78) + le morceau en fichier audio envoyé à Maxance. Refaite plus lente, plus triste et plus grave : demande 134.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi

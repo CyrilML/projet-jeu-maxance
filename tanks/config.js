@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 78,
+  version: 79,
   // ✍️ (étape 131) Le nom du studio qui signe le jeu, choisi par Maxance (pour ne pas montrer son vrai nom).
   studio: "Iron Wolf Studio",
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
@@ -63,43 +63,47 @@ Tanks.CONFIG = {
   },
 
   // ✍️ (demande 133) « Trouve-moi une autre musique pour la bande-annonce. » LA MUSIQUE DE LA BANDE-ANNONCE (inventée, comme
-  // celle du menu) : une vraie musique de film-annonce, en 4/4, calée sur les 90 s du film. Le film la choisit avec
-  // « morceau: "bandeAnnonce" ». Ses parties (en mesures de 4 temps ; à 100 battements par minute, une mesure = 2,4 s) :
-  //   calme (l'horloge qui fait tic-tac, le piano, la nappe), montée (les violoncelles qui martèlent de plus en plus vite,
-  //   les tambours), thème (le chœur, les cuivres, la batterie), final (encore plus fort), puis LE TROU (une demi-mesure de
-  //   silence total), et LE CHOC sur le logo (le gros coup, le chœur), et le piano qui finit tout seul.
-  //   pasParTemps : 4 = des doubles croches (16 petits pas par mesure) ; mélodie et notesPiano : [pas 0 à 15, note, durée en pas].
+  // celle du menu), en 4/4, calée sur les 90 s du film. Le film la choisit avec « morceau: "bandeAnnonce" ».
+  // ✍️ (demande 134) « Plus lente et plus triste, surtout plus marquante et plus grave. » Alors : 76,6 battements par
+  // minute (une mesure = 3,13 s : 26 mesures pile jusqu'au logo), des accords tristes (do mineur, la bémol, FA MINEUR…),
+  // une mélodie lente qui DESCEND, tout joué une octave plus bas, un GRONDEMENT très grave sous toute la musique, un
+  // BRAAAM toutes les 2 mesures et le « motif » qui frappe : DOUM… DOUM… DOOOUM (3 coups énormes, à la fin de chaque phrase).
+  // Les parties (la mesure où chacune commence) : calme (l'horloge, le piano grave), montée (les violoncelles en noires
+  // puis en croches, les tambours), thème (le chœur, les cuivres graves), final (encore plus fort), LE TROU (un roulement
+  // puis le silence), LE CHOC sur le logo (le gros coup, le chœur) et le piano qui finit tout seul.
+  //   pasParTemps : 4 (16 petits pas par mesure) ; mélodie et notesPiano : [pas 0 à 15, note, durée en pas].
   musiquesFilms: {
     bandeAnnonce: {
       nom: "la musique de la bande-annonce", style: "bande-annonce",
-      tempo: 100, pasParTemps: 4, volume: 0.4, fondu: 1.2,
-      nappe: 0.03, violoncelles: 0.055, cuivres: 0.07, pulsation: 0.05, tambours: 1.1, choeur: 0.055, cymbales: 0.12, batterie: 0.3,
-      piano: 0.1, horloge: 0.05, souffle: 0.07, // (souffle : la grande montée de bruit avant le thème et avant le choc)
-      braam: { fort: 0.14, duree: 4 },
-      calme: 0.45, choc: 1.2, // × la nappe et le braam pendant le calme (plus doux) ; × le gros coup du choc (plus fort)
+      tempo: 76.6, pasParTemps: 4, volume: 0.31, fondu: 1.2,
+      nappe: 0.034, violoncelles: 0.06, cuivres: 0.1, pulsation: 0.04, tambours: 1.2, choeur: 0.075, cymbales: 0.1,
+      piano: 0.28, horloge: 0.05, souffle: 0.07, grondement: 0.07, // (grondement : la note très grave, tenue, sous tout)
+      braam: { fort: 0.15, duree: 5 },
+      calme: 0.2, choc: 1.25, // × la nappe et le braam pendant le calme (plus doux) ; × le gros coup du choc (plus fort)
       salle: { duree: 2.8, part: 0.55 },
-      parties: { montee: 5, theme: 12, final: 28, trou: 33, choc: 34, fin: 38 }, // (la mesure où chaque partie commence)
+      parties: { montee: 4, theme: 9, final: 21, trou: 25, choc: 26, fin: 29 },
+      motif: [0, 4, 8], // les pas des 3 coups DOUM… DOUM… DOOOUM, dans la dernière mesure de chaque phrase de 4
       accords: [
         { nom: "do mineur", notes: ["C2", "G2", "C3", "Eb3"] }, { nom: "la bémol", notes: ["Ab1", "Eb2", "Ab2", "C3"] },
-        { nom: "mi bémol", notes: ["Eb2", "Bb2", "Eb3", "G3"] }, { nom: "si bémol", notes: ["Bb1", "F2", "Bb2", "D3"] },
-        { nom: "do mineur", notes: ["C2", "G2", "C3", "Eb3"] }, { nom: "la bémol", notes: ["Ab1", "Eb2", "Ab2", "C3"] },
-        { nom: "fa mineur", notes: ["F2", "C3", "F3", "Ab3"] }, { nom: "sol", notes: ["G1", "D2", "G2", "B2"] },
+        { nom: "fa mineur", notes: ["F1", "C2", "F2", "Ab2"] }, { nom: "do mineur", notes: ["C2", "G2", "C3", "Eb3"] },
+        { nom: "la bémol", notes: ["Ab1", "Eb2", "Ab2", "C3"] }, { nom: "mi bémol", notes: ["Eb2", "Bb2", "Eb3", "G3"] },
+        { nom: "fa mineur", notes: ["F1", "C2", "F2", "Ab2"] }, { nom: "sol", notes: ["G1", "D2", "G2", "B2"] },
       ],
       notesPiano: [
-        [[0, "C5", 6], [6, "Eb5", 2], [8, "G4", 8]],
-        [[0, "Ab4", 8], [8, "C5", 8]],
-        [[0, "G4", 6], [6, "Bb4", 2], [8, "Eb5", 8]],
-        [[0, "D5", 12], [12, "Bb4", 4]],
+        [[0, "C4", 8], [8, "Eb4", 4], [12, "G3", 4]],
+        [[0, "Ab3", 16]],
+        [[0, "F3", 8], [8, "Ab3", 8]],
+        [[0, "G3", 16]],
       ],
       melodie: [
-        [[0, "G4", 6], [6, "C5", 2], [8, "D5", 4], [12, "Eb5", 4]],
-        [[0, "C5", 12], [12, "Bb4", 2], [14, "Ab4", 2]],
-        [[0, "G4", 6], [6, "Bb4", 2], [8, "Eb5", 8]],
-        [[0, "D5", 8], [8, "F5", 4], [12, "D5", 4]],
-        [[0, "Eb5", 6], [6, "D5", 2], [8, "C5", 4], [12, "G4", 4]],
-        [[0, "Ab4", 6], [6, "C5", 2], [8, "Eb5", 8]],
-        [[0, "F5", 6], [6, "Eb5", 2], [8, "D5", 4], [12, "C5", 4]],
-        [[0, "B4", 8], [8, "D5", 8]],
+        [[0, "G4", 8], [8, "Eb4", 4], [12, "C4", 4]],
+        [[0, "C4", 12], [12, "Eb4", 4]],
+        [[0, "F4", 8], [8, "Ab4", 4], [12, "G4", 4]],
+        [[0, "G4", 16]],
+        [[0, "Ab4", 8], [8, "G4", 4], [12, "Eb4", 4]],
+        [[0, "Bb4", 12], [12, "G4", 4]],
+        [[0, "Ab4", 6], [6, "G4", 2], [8, "F4", 4], [12, "Eb4", 4]],
+        [[0, "D4", 8], [8, "B3", 8]],
       ],
     },
   },
