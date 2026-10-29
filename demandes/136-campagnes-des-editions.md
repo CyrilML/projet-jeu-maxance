@@ -1,6 +1,6 @@
 # Demande n° 136 : une campagne pour chaque édition
 
-> Statut : 🚧 livrée édition par édition. ✅ Drones (tanks version 82) · ✅ Guerre froide (83) · ✅ 1916 (84) · ✅ 1944 (85) · ✅ Europe de l'Est (86) · ✅ Aliens (87).
+> Statut : ✅ livrée, édition par édition : ✅ Drones (tanks version 82) · ✅ Guerre froide (83) · ✅ 1916 (84) · ✅ 1944 (85) · ✅ Europe de l'Est (86) · ✅ Aliens (87) · ✅ Guerre civile (88). Les 7 éditions ont leur campagne.
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -40,7 +40,10 @@ l'édition, **avec des films** (début, réussite, échec). « Édition par édi
 - ✅ **Aliens** — « Le Jour de la Terre » : 1. La nuit de la radio (« La Guerre des mondes », 1938) · 2. Le défilé des
   Étoiles (les Thermopyles) · 3. La flottille du lac (Dunkerque, 1940) · 4. Le grand bond (Apollo 11, 1969) · 5. La station
   de tous les peuples (la Station spatiale internationale) · 6. Le Jour de la Terre (le Débarquement, 6 juin 1944).
-- 🚧 Guerre civile : en cours.
+- ✅ **Guerre civile** — « Les Oliviers de Tessaline » : 1. La ligne des barricades (les « Trois Glorieuses », Paris,
+  1830) · 2. L'avenue des tireurs (les draps tendus entre les maisons des villes assiégées) · 3. Le convoi de la Colombe
+  (le pont aérien de Berlin, 1948-1949) · 4. Radio Tessaline (la radio « Błyskawica », Varsovie, 1944) · 5. La trêve du
+  moulin (la trêve de Noël, 1914) · 6. Tessaline réunie (la chute du mur de Berlin, 9 novembre 1989).
 
 ## ✅ Critères
 - [ ] Édition Drones → ▶ CAMPAGNE : 6 chapitres, le briefing montre « 📜 Inspiré d'un vrai moment ».
