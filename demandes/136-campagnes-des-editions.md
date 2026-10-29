@@ -1,6 +1,6 @@
 # Demande n° 136 : une campagne pour chaque édition
 
-> Statut : 🚧 livrée édition par édition. ✅ Drones (tanks version 82) · ✅ Guerre froide (83) · ✅ 1916 (84) · ✅ 1944 (85).
+> Statut : 🚧 livrée édition par édition. ✅ Drones (tanks version 82) · ✅ Guerre froide (83) · ✅ 1916 (84) · ✅ 1944 (85) · ✅ Europe de l'Est (86).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -34,7 +34,10 @@ l'édition, **avec des films** (début, réussite, échec). « Édition par édi
   Héron (le pont Pegasus) · 3. Le labyrinthe de haies (le bocage normand) · 4. La poche de Falbourg (la poche de Falaise) ·
   5. Les cloches de Bellerive (la libération de Paris, 25 août 1944) · 6. Encerclés à Hautval (Bastogne, décembre 1944).
   3 nouvelles cartes : l'aube, la ville de Bellerive, l'hiver.
-- 🚧 Europe de l'Est, Guerre civile, Aliens : en cours.
+- ✅ **Europe de l'Est** — « Les Gardiens de Velmora » (pays inventés ; par respect, les « inspiré de » restent généraux,
+  sans aucun vrai nom) : 1. La première nuit · 2. Le duel des tournesols (drones contre chars) · 3. La tranchée d'hiver ·
+  4. Le chemin du grain (un convoi de farine) · 5. La rivière de glace · 6. Le retour à Velmora (les habitants rentrent).
+- 🚧 Guerre civile, Aliens : en cours.
 
 ## ✅ Critères
 - [ ] Édition Drones → ▶ CAMPAGNE : 6 chapitres, le briefing montre « 📜 Inspiré d'un vrai moment ».
