@@ -1,6 +1,6 @@
 # Demande n° 136 : une campagne pour chaque édition
 
-> Statut : 🚧 livrée édition par édition. ✅ Drones (tanks version 82) · ✅ Guerre froide (83) · ✅ 1916 (84) · ✅ 1944 (85) · ✅ Europe de l'Est (86).
+> Statut : 🚧 livrée édition par édition. ✅ Drones (tanks version 82) · ✅ Guerre froide (83) · ✅ 1916 (84) · ✅ 1944 (85) · ✅ Europe de l'Est (86) · ✅ Aliens (87).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -37,7 +37,10 @@ l'édition, **avec des films** (début, réussite, échec). « Édition par édi
 - ✅ **Europe de l'Est** — « Les Gardiens de Velmora » (pays inventés ; par respect, les « inspiré de » restent généraux,
   sans aucun vrai nom) : 1. La première nuit · 2. Le duel des tournesols (drones contre chars) · 3. La tranchée d'hiver ·
   4. Le chemin du grain (un convoi de farine) · 5. La rivière de glace · 6. Le retour à Velmora (les habitants rentrent).
-- 🚧 Guerre civile, Aliens : en cours.
+- ✅ **Aliens** — « Le Jour de la Terre » : 1. La nuit de la radio (« La Guerre des mondes », 1938) · 2. Le défilé des
+  Étoiles (les Thermopyles) · 3. La flottille du lac (Dunkerque, 1940) · 4. Le grand bond (Apollo 11, 1969) · 5. La station
+  de tous les peuples (la Station spatiale internationale) · 6. Le Jour de la Terre (le Débarquement, 6 juin 1944).
+- 🚧 Guerre civile : en cours.
 
 ## ✅ Critères
 - [ ] Édition Drones → ▶ CAMPAGNE : 6 chapitres, le briefing montre « 📜 Inspiré d'un vrai moment ».
