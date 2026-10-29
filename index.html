@@ -256,6 +256,7 @@
       <a href="#etape133">Étape 133</a>
       <a href="#etape134">Étape 134</a>
       <a href="#etape135">Étape 135</a>
+      <a href="#etape137">Étape 137</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -6569,6 +6570,41 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape137">
+      <h2>🌳 Étape 137 : plus de cachettes, une bande-annonce plus vivante <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Plus d'arbres partout, plus de bosquets, de haies et de granges en ruines pour se cacher. Et la bande-annonce bouge enfin : feux, fumée, obus autour des tanks, et on voit les ennemis tomber quand nos soldats tirent. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/137-bande-annonce-cachettes.md</code>.</p>
+          <ul>
+            <li>✍️ « Il n'y a pas assez de cachettes : l'infanterie avance sur un terrain découvert. Plus d'arbres, des maisons détruites. Les tanks collés : sépare-les. Des bombardements, de la fumée, du feu. Montre quand ils tirent sur quelqu'un. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 81 ».</li>
+            <li>☐ Bataille libre : beaucoup plus d'arbres et de haies, des granges en ruines.</li>
+            <li>☐ Bande-annonce : les 4 tanks roulent en V, séparés, avec des explosions autour.</li>
+            <li>☐ « Au coin du mur » et « À terre » : les ennemis en face sont touchés et tombent.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🎲 Des arbres placés au hasard… mais pas n'importe comment</h3>
+      <p>Le terrain plante les arbres en 3 façons : en <b>forêts</b>, en <b>bosquets</b> (des petits bois) et <b>tout seuls</b>. <code>partForets: 0.37</code> et <code>partBosquets: 0.33</code> veulent dire 37 % en forêts, 33 % en bosquets, donc 30 % tout seuls, un peu partout : ce sont eux qui font les cachettes au milieu des champs.</p>
+      <h3>🛡️ La formation en V</h3>
+      <p>Les tanks roulaient « en colonne » avec une largeur de 0 : deux tanks se retrouvaient au même endroit, l'un dans l'autre ! En formation « coin » (en V), chacun a sa place, à 26 m du chef.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>arbres: 3300</code>. Combien d'arbres poussent tout seuls ? (3 300 × 30 % = 990)</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Pourquoi deux tanks étaient collés ? <span class="petit">(la colonne avait une largeur de 0 : deux tanks avaient la même place)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -8217,6 +8253,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-135" data-cle="appris-135" placeholder="Ex. : …"></textarea>
         <label for="idees-135"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-135" data-cle="idees-135" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 137 · plus de cachettes <span class="petit">· 29 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/config.js</code> (monde : les arbres ; cinematiques : la bande-annonce).</p>
+        <p class="petit">✍️ Maxance a demandé : plus de cachettes sur la carte et une bande-annonce plus vivante.</p>
+        <label for="appris-137"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-137" data-cle="appris-137" placeholder="Ex. : …"></textarea>
+        <label for="idees-137"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-137" data-cle="idees-137" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

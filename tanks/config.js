@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 80,
+  version: 81,
   // ✍️ (étape 131) Le nom du studio qui signe le jeu, choisi par Maxance (pour ne pas montrer son vrai nom).
   studio: "Iron Wolf Studio",
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
@@ -126,8 +126,10 @@ Tanks.CONFIG = {
       { nom: "la ferme du nord-est", x: 300, z: -620, rayon: 48, maisons: 7, murets: 12 },
     ],
     // les arbres : en petits bois (« bosquets »), en grandes FORÊTS (étape 71) et quelques-uns tout seuls
-    arbres: 2700, bosquets: 70, forets: 9, partForets: 0.45, partBosquets: 0.4,
-    haies: 120, granges: 30,
+    // ✍️ (demande 137) « Il n'y a pas assez de cachettes : l'infanterie avance à découvert. » Plus d'arbres un peu partout
+    // (3 300 au lieu de 2 700, et 30 % tout seuls au lieu de 15 %), plus de bosquets, de haies et de granges en ruines.
+    arbres: 3300, bosquets: 95, forets: 9, partForets: 0.37, partBosquets: 0.33,
+    haies: 170, granges: 44,
     camp: 640, // m : (étape 71) chaque camp est à 640 m du centre (avant : 280 m) ; les Bleus au sud, les Rouges au nord
     pasHauteurs: 2, // m : (étape 71) le « cahier des hauteurs » retient la hauteur du sol tous les 2 m (voir logique/terrain.js)
     sol: 5, // m entre deux points du sol 3D (avant : 4 m ; la carte est plus grande, on garde le même nombre de triangles près de toi)
@@ -2982,7 +2984,8 @@ Tanks.CONFIG.cinematiques.bandeAnnonce = "bande-annonce";
   const K416 = { bouche: "silencieux", viseur: "lunette4" }; // (le K416 à silencieux et lunette ×4)
   C.cinematiques.films["bande-annonce"] = {
     titre: "Bande-annonce · The Last Battlefield", musique: 1, morceau: "bandeAnnonce", nettoyer: true, bases: true, // (demande 133 : sa propre musique)
-    decor: { feux: [[-60, 250, 1.6], [50, 300, 1.4], [120, 180, 1.2], [-130, 120, 1.2], [160, 360, 1.1]] },
+    // ✍️ (demande 137) plus de feux et de fumée partout derrière les soldats et le long de la route des blindés
+    decor: { feux: [[-60, 250, 1.6], [50, 300, 1.4], [120, 180, 1.2], [-130, 120, 1.2], [160, 360, 1.1], [92, 505, 1.4], [-12, 470, 1.3], [-22, 530, 1.5], [150, 430, 1.1], [70, 392, 1.3], [160, 470, 1.2], [6, 430, 1.2], [118, 520, 1.1]] },
     acteurs: [
       // les 4 classes alignées (de gauche à droite pour la caméra : assaut, médecin, éclaireur, ingénieur), l'arme basse
       { id: "classes", prendre: "figurants", camp: "bleus", classe: ["assaut", "medecin", "eclaireur", "ingenieur"], armeId: ["k416", "mp5", "m110", "rg6"], pieces: [K416, null, null, null],
@@ -3005,7 +3008,12 @@ Tanks.CONFIG.cinematiques.bandeAnnonce = "bande-annonce";
       // « Grenade ! » : ils s'enfuient
       { id: "gren", prendre: "figurants", camp: "bleus", nombre: 3, classe: ["assaut", "eclaireur", "ingenieur"], armeId: ["k416", "m4courte", "rg6"],
         chemin: [[88, 431], [88, 446]], vitesse: 5.2, depart: 999, formation: "ligne", ecart: 2.4 },
-      { id: "blindes", prendre: "chars", camp: "bleus", nombre: 4, nom: "Marteau", chemin: [[40, 560], [40, -300]], vitesse: 7, depart: 47, formation: "colonne", ecart: 18, largeur: 0 },
+      // ✍️ (demande 137) « deux tanks sont collés : il faut les séparer » : en coin (en V), bien espacés
+      { id: "blindes", prendre: "chars", camp: "bleus", nombre: 4, nom: "Marteau", chemin: [[40, 560], [40, -300]], vitesse: 7, depart: 47, formation: "coin", ecart: 26 },
+      // ✍️ (demande 137) LES ENNEMIS EN FACE : quand nos soldats tirent, on voit les coups arriver sur eux (la poussière des
+      // impacts) et ils tombent à plat ventre. Tirs de cinéma : personne n'est blessé.
+      { id: "cibleCoin", prendre: "figurants", camp: "rouges", nombre: 2, classe: ["assaut", "eclaireur"], places: [[-37, 452, SUD + 0.2], [-31, 447, SUD - 0.15]] },
+      { id: "ciblePatrouille", prendre: "figurants", camp: "rouges", nombre: 3, classe: ["assaut", "ingenieur", "assaut"], places: [[118, 404, SUD], [126, 400, SUD + 0.2], [134, 405, SUD - 0.2]] },
       { id: "helicos", prendre: "engins", sortes: ["helico", "blackhawk", "chinook"], chemin: [[-110, 690], [-110, 600], [-60, 200], [0, -400]], vitesse: 28, acceleration: 7, depart: 61,
         formation: "ligne", ecart: 40, hauteurs: [[0, 0], [30, 12], [160, 45], [1500, 60]], rotor: 30 },
       { id: "avion", prendre: "engins", sortes: ["avion"], chemin: [[-60, 790], [-480, 790], [-1000, 700]], vitesse: 80, acceleration: 13, depart: 68.2,
@@ -3040,7 +3048,9 @@ Tanks.CONFIG.cinematiques.bandeAnnonce = "bande-annonce";
           { a: 1.3, faire: "explose", ou: [118, 441], force: 1.8 }, { a: 1.6, acteur: "patrouille", faire: "halte" },
           { a: 1.6, acteur: "patrouille", faire: "geste", geste: "couche" },
           { a: 2.6, faire: "explose", ou: [135, 444], force: 2 }, { a: 3.7, faire: "explose", ou: [123, 436], force: 1.6, sorte: "bombe" },
-          { a: 4.8, acteur: "patrouille.0", faire: "tire", coups: 1 },
+          { a: 4.8, acteur: "patrouille.0", faire: "tire", coups: 1 }, { a: 4.9, acteur: "patrouille.1", faire: "tire", coups: 5, cadence: 0.1 },
+          { a: 5.05, faire: "explose", ou: [118.4, 404.5], force: 0.25 }, { a: 5.2, acteur: "ciblePatrouille.0", faire: "geste", geste: "couche" },
+          { a: 5.3, faire: "explose", ou: [126.3, 400.6], force: 0.25 }, { a: 5.45, acteur: "ciblePatrouille.1", faire: "geste", geste: "couche" },
         ],
         titre: slogan("À TERRE !", "Sous les obus", "Ils se plaquent au sol, puis répliquent.", 3.8) },
       { nom: "au coin du mur", duree: 5,
@@ -3048,6 +3058,8 @@ Tanks.CONFIG.cinematiques.bandeAnnonce = "bande-annonce";
         actions: [
           { a: 0, acteur: "coin", faire: "geste", geste: "couvert" },
           { a: 1.0, acteur: "coin", faire: "geste", geste: "penche", cote: 1 }, { a: 1.5, acteur: "coin", faire: "tire", coups: 6, cadence: 0.11 },
+          { a: 1.75, faire: "explose", ou: [-36.4, 451.4], force: 0.22 }, { a: 1.95, faire: "explose", ou: [-37.3, 452.6], force: 0.22 }, { a: 2.0, acteur: "cibleCoin.0", faire: "geste", geste: "couche" },
+          { a: 2.15, faire: "explose", ou: [-31.2, 446.6], force: 0.22 }, { a: 2.3, acteur: "cibleCoin.1", faire: "geste", geste: "couche" },
           { a: 3.4, acteur: "coin", faire: "geste", geste: "couvert" },
         ],
         titre: Object.assign(slogan("AU COIN DU MUR.", "", "Il se penche, tire, et se recache.", 4.6), { bas: true }) },
@@ -3070,7 +3082,11 @@ Tanks.CONFIG.cinematiques.bandeAnnonce = "bande-annonce";
           { a: 3.4, faire: "explose", ou: [88, 429], force: 1.4 }, { a: 3.6, acteur: "gren", faire: "geste", geste: "couche" },
         ],
         repliques: [{ a: 0.4, qui: "volk", duree: 2.6, texte: "Grenade ! À couvert !" }] },
-      { nom: "les blindés", duree: 6, camera: { type: "suivre", acteur: "blindes", de: [-34, 4, 12], a: [-24, 3, 9], regardHauteur: 2, tremble: 0.05 },
+      { nom: "les blindés", duree: 6, camera: { type: "suivre", acteur: "blindes", de: [-34, 4, 12], a: [-24, 3, 9], regardHauteur: 2, tremble: 0.12 },
+        // ✍️ (demande 137) « quand les tanks avancent, il ne se passe rien » : des obus et des bombes tombent sur les côtés
+        actions: [{ a: 0.3, faire: "explose", ou: [88, 470], force: 2.2 }, { a: 0.9, faire: "explose", ou: [-8, 482], force: 1.8, sorte: "bombe" }, { a: 1.6, faire: "explose", ou: [96, 445], force: 2.4 },
+          { a: 2.2, faire: "explose", ou: [-14, 452], force: 2 }, { a: 2.9, faire: "explose", ou: [104, 420], force: 2.6, sorte: "bombe" }, { a: 3.5, faire: "explose", ou: [-4, 430], force: 1.9 },
+          { a: 4.1, faire: "explose", ou: [90, 400], force: 2.2 }, { a: 4.7, faire: "explose", ou: [-18, 408], force: 2.4, sorte: "bombe" }, { a: 5.3, faire: "explose", ou: [100, 382], force: 2 }],
         titre: slogan("BLINDÉS.", "Leclerc · Abrams · Leopard 2") },
       { nom: "les hélicos décollent", duree: 7, camera: { type: "travelling", de: { oeil: [-30, 6, 640], cible: [-110, 6, 686] }, a: { oeil: [-50, 22, 590], cible: [-100, 38, 590] } },
         titre: slogan("HÉLICOS.", "Tigre · Black Hawk · Chinook", "", 6.4) },
