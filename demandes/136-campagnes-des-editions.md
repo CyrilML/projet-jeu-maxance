@@ -1,6 +1,6 @@
 # Demande n° 136 : une campagne pour chaque édition
 
-> Statut : 🚧 livrée édition par édition. ✅ Drones (tanks version 82).
+> Statut : 🚧 livrée édition par édition. ✅ Drones (tanks version 82) · ✅ Guerre froide (83).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -22,7 +22,11 @@ l'édition, **avec des films** (début, réussite, échec). « Édition par édi
 - ✅ **Drones** — « Les Pilotes d'Aurelia » : 1. Les yeux du ciel (drones de reconnaissance, vallée de la Bekaa, 1982) ·
   2. Le convoi des lucioles · 3. Le robot démineur · 4. Le brouillard électronique (le brouillage) · 5. L'essaim (2016 :
   103 petits drones en essaim) · 6. La Couronne (17 janvier 1991 : on attaque d'abord les radars).
-- 🚧 1916, 1944, Guerre froide, Europe de l'Est, Guerre civile, Aliens : en cours.
+- ✅ **Guerre froide** — « Les Cigognes de Ternovie » : 1. L'œil du Corbeau (crise des missiles de Cuba, 1962) ·
+  2. La zone Albatros (vallée de la Ia Drang, 1965) · 3. Le Rocher tiendra (siège de Khe Sanh, 1968) · 4. La nuit des
+  Lanternes (Hué, offensive du Têt, 1968) · 5. Libellule est tombée (le sauvetage « Bat 21 », 1972) · 6. Les derniers
+  Colibris (l'évacuation de Saïgon en hélicoptère, avril 1975).
+- 🚧 1916, 1944, Europe de l'Est, Guerre civile, Aliens : en cours.
 
 ## ✅ Critères
 - [ ] Édition Drones → ▶ CAMPAGNE : 6 chapitres, le briefing montre « 📜 Inspiré d'un vrai moment ».
