@@ -24,7 +24,7 @@ Tanks.LANGUES.en = {
 
     // ---- affichage/accueil.js
     "⚔️ Bataille · Infanterie · Blindés · Hélicos · Avions": "⚔️ Battle · Infantry · Armor · Helicopters · Planes",
-    "un jeu de Maxance": "a game by Maxance",
+    "un jeu Iron Wolf Studio": "an Iron Wolf Studio game",
     "édition": "edition",
     "🔊 Clique ou appuie sur une touche": "🔊 Click or press any key",
     "chapitres · l'histoire": "chapters · the story",
@@ -1862,7 +1862,7 @@ Tanks.LANGUES.en = {
     "Mais les Lions ne renoncent jamais. Réessaie le chapitre pour couper le Brouilleur.": "But the Lions never give up. Retry the chapter to shut down the Jammer.",
     "Bande-annonce · The Last Battlefield": "Trailer · The Last Battlefield",
     "le champ de bataille": "the battlefield",
-    "Un jeu de Maxance": "A game by Maxance",
+    "Iron Wolf Studio présente": "Iron Wolf Studio presents",
     "Valdrie, 2041. Toutes les radios se sont tues.": "Valdrie, 2041. All the radios have gone silent.",
     "les blindés": "the armor",
     "BLINDÉS.": "ARMOR.",
@@ -1884,7 +1884,7 @@ Tanks.LANGUES.en = {
     "Les Lions de Valdrie contre le Front Écarlate.": "The Lions of Valdrie against the Scarlet Front.",
     "le logo": "the logo",
     "Infanterie · Blindés · Hélicos · Avions": "Infantry · Armor · Helicopters · Planes",
-    "Un jeu de Maxance · Appuie sur Entrée": "A game by Maxance · Press Enter",
+    "Un jeu Iron Wolf Studio · Appuie sur Entrée": "An Iron Wolf Studio game · Press Enter",
     // (demande 130) la nouvelle bande-annonce
     "les 4 classes": "the 4 classes",
     "4 CLASSES. 4 TENUES.": "4 CLASSES. 4 OUTFITS.",

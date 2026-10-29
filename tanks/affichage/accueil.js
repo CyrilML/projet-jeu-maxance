@@ -43,7 +43,7 @@ Tanks.Accueil = (function () {
       '<div class="a-contenu">' +
       '<div class="a-sur-titre">' + (ED.textes.surTitre || "⚔️ Bataille · Infanterie · Blindés · Hélicos · Avions") + "</div>" + // (demande 115 : le sur-titre de l'édition)
       '<h2 class="a-titre">THE LAST<br><span>BATTLEFIELD</span></h2>' + // ✍️ (étape 84) le nom du jeu, choisi par Maxance
-      '<div class="a-auteur">un jeu de Maxance</div>' +
+      '<div class="a-auteur">un jeu ' + Tanks.CONFIG.studio + "</div>" + // ✍️ (étape 131) le nom du studio, réglé dans config.js
       '<div class="a-edition">édition ' + ED.icone + " " + ED.nom + (ED.id === "moderne" ? "" : " · " + ED.epoque) + "</div>" + // (demande 115)
       '<div class="a-ligne"></div>' +
       '<p class="a-attente">🔊 Clique ou appuie sur une touche</p>' +
@@ -54,7 +54,7 @@ Tanks.Accueil = (function () {
       '<button class="a-jouer a-mode a-boutique' + ferme("boutique") + '" data-accueil="boutique">🛒 BOUTIQUE<small>' + (R.boutique ? "armes · skins · packs · avancements" : "🔒 dans l'édition Moderne") + "</small></button>" + // (livre n° 28 ; demande 115)
       '<button class="a-jouer a-mode a-personnages" data-accueil="personnages">🎖️ PERSONNAGES<small>les soldats en 3D · classes · tenues</small></button>' + // (demande 114)
       '<button class="a-film" data-accueil="film" title="La bande-annonce du jeu (demande 101)">🎬 Bande-annonce</button>' +
-      '<a class="a-carnet" href="../index.html#etape130">📓 Le carnet</a>' +
+      '<a class="a-carnet" href="../index.html#etape131">📓 Le carnet</a>' +
       '<button class="a-reglages" data-accueil="reglages" title="Les réglages du jeu (demande 114)">⚙️ Réglages</button>' +
       "</div>" +
       '<div class="a-coins" title="Gagnés à chaque mission réussie de la campagne (demande 101) et en bataille libre (livre n° 22)">🪙 <b></b> Battle Coins</div>' +

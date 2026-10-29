@@ -27,7 +27,9 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 75,
+  version: 76,
+  // ✍️ (étape 131) Le nom du studio qui signe le jeu, choisi par Maxance (pour ne pas montrer son vrai nom).
+  studio: "Iron Wolf Studio",
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
   // les ombres et de l'orange dans les lumières, de 0 à 1), vignette (les bords sombres, de 0 à 1), grain (de 0 à 1).
@@ -2886,7 +2888,7 @@ Tanks.CONFIG.cinematiques = {
           repliques: [{ a: 0.5, qui: "arnaud", radio: true, duree: 7, texte: "Ici Valcourt… les cloches sonnent dans toute la ville. Merci, les Lions. Merci pour tout." }] },
         { nom: "fin", duree: 10, fondu: { sortie: 3 }, musique: 0.9,
           camera: { type: "travelling", de: { oeil: [66, 4.6, -7], cible: [-20, 1.5, 5] }, a: { oeil: [72, 5, -4], cible: [-20, 2, 5] } },
-          titre: { etiquette: "The Last Battlefield", grand: "FIN", taille: 110, couleur: OK, petit: "un jeu de Maxance", de: 0.5, a: 9.8 } },
+          titre: { etiquette: "The Last Battlefield", grand: "FIN", taille: 110, couleur: OK, petit: "un jeu Iron Wolf Studio", de: 0.5, a: 9.8 } },
       ],
     },
     "fin-terminus-echec": {
@@ -2966,7 +2968,7 @@ Tanks.CONFIG.cinematiques.bandeAnnonce = "bande-annonce";
     plans: [
       { nom: "le champ de bataille", duree: 6, fondu: { entree: 2 },
         camera: { type: "travelling", de: { oeil: [300, 120, 900], cible: [0, 0, 300] }, a: { oeil: [230, 98, 790], cible: [0, 0, 260] } },
-        titre: { etiquette: "Un jeu de Maxance", grand: "", petit: "Valdrie, 2041. Toutes les radios se sont tues.", de: 1.2, a: 5.6 },
+        titre: { etiquette: "Iron Wolf Studio présente", grand: "", petit: "Valdrie, 2041. Toutes les radios se sont tues.", de: 1.2, a: 5.6 },
         actions: [{ a: 0.1, acteur: "gren", faire: "seTourne", vers: [88, 380] }, { a: 0.1, acteur: "b1", faire: "accroupi" }] },
       { nom: "les 4 classes", duree: 7.5,
         camera: { type: "travelling", courbe: "lineaire", de: { oeil: [101, 1.45, 443.3], cible: [103.2, 1.2, 440] }, a: { oeil: [118, 1.45, 443.3], cible: [115.8, 1.2, 440] } },
@@ -3033,7 +3035,7 @@ Tanks.CONFIG.cinematiques.bandeAnnonce = "bande-annonce";
         titre: { etiquette: "La campagne", grand: C.campagne.chapitres.length + " CHAPITRES.", petit: "Les Lions de Valdrie contre le Front Écarlate.", taille: 58, de: 0.8, a: 5.6 } },
       { nom: "le logo", duree: 8.5, fondu: { sortie: 1.5 },
         camera: { type: "travelling", de: { oeil: [200, 60, 500], cible: [0, 20, 0] }, a: { oeil: [160, 125, 460], cible: [0, 30, 0] } },
-        titre: { etiquette: "Infanterie · Blindés · Hélicos · Avions", grand: "THE LAST BATTLEFIELD", taille: 72, couleur: "#ffcf5a", petit: "Un jeu de Maxance · Appuie sur Entrée", de: 0.8, a: 8.2 } },
+        titre: { etiquette: "Infanterie · Blindés · Hélicos · Avions", grand: "THE LAST BATTLEFIELD", taille: 72, couleur: "#ffcf5a", petit: "Un jeu Iron Wolf Studio · Appuie sur Entrée", de: 0.8, a: 8.2 } },
     ],
   };
 })();
