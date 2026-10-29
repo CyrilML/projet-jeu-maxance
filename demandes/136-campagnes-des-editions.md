@@ -1,6 +1,6 @@
 # Demande n° 136 : une campagne pour chaque édition
 
-> Statut : 🚧 livrée édition par édition. ✅ Drones (tanks version 82) · ✅ Guerre froide (83).
+> Statut : 🚧 livrée édition par édition. ✅ Drones (tanks version 82) · ✅ Guerre froide (83) · ✅ 1916 (84).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -26,7 +26,11 @@ l'édition, **avec des films** (début, réussite, échec). « Édition par édi
   2. La zone Albatros (vallée de la Ia Drang, 1965) · 3. Le Rocher tiendra (siège de Khe Sanh, 1968) · 4. La nuit des
   Lanternes (Hué, offensive du Têt, 1968) · 5. Libellule est tombée (le sauvetage « Bat 21 », 1972) · 6. Les derniers
   Colibris (l'évacuation de Saïgon en hélicoptère, avril 1975).
-- 🚧 1916, 1944, Europe de l'Est, Guerre civile, Aliens : en cours.
+- ✅ **1916** — « Les Bleuets de la Marne-Vive » : 1. Ils ne passeront pas (Verdun, 1916) · 2. Le coup de sifflet
+  (1er jour de la Somme, 1er juillet 1916) · 3. Les monstres d'acier (Flers-Courcelette, 15 septembre 1916 : les premiers
+  tanks) · 4. Le raid du brouillard (les raids de tranchée) · 5. Le bataillon perdu (forêt d'Argonne, 1918 : le pigeon
+  voyageur) · 6. La onzième heure (l'Armistice du 11 novembre 1918).
+- 🚧 1944, Europe de l'Est, Guerre civile, Aliens : en cours.
 
 ## ✅ Critères
 - [ ] Édition Drones → ▶ CAMPAGNE : 6 chapitres, le briefing montre « 📜 Inspiré d'un vrai moment ».
