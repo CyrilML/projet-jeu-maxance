@@ -98,8 +98,8 @@ window.Tanks = window.Tanks || {};
       baseAerienne: { hangars: { places: [] }, rangesHangars: [], dalles: [] },
       // ---------------------------------------------------------------- 🗺️ LA CARTE : le front de la Marne-Vive
       monde: { camp: 330, arbres: 900, forets: 3, bosquets: 30, haies: 20, granges: 8, pasHauteurs: 2,
-        village: { nom: "le village en ruines de Saint-Aubrac", ruines: 60 },
-        hameaux: [{ nom: "la ferme brûlée de Vaulx", x: -560, z: 60, rayon: 50, maisons: 6, murets: 10 }] },
+        village: { nom: "le village en ruines de Saint-Aubrac", ruines: 60, rayon: 30, maisons: 12, murets: 16 }, // ✍️ (demande 132) plus petit : il tient entre les deux lignes, rapprochées
+        hameaux: [{ nom: "la ferme brûlée de Vaulx", x: -560, z: 0, rayon: 26, maisons: 4, murets: 8 }] }, // (demande 132 : au milieu du no man's land)
       cartes: [
         { id: "bataille", nom: "Le front de la Marne-Vive", icone: "🪖", texte: "Deux lignes de tranchées, le no man's land plein de cratères et de barbelés, le village en ruines et son église.", infanterie: false,
           variante: { arbres: 1, collines: 0.35, herbe: false, matiereSol: "terre", village: true, tranchees: true, eglise: { x: 18, z: 34 }, ruinesVillage: 0.65,
@@ -123,15 +123,17 @@ window.Tanks = window.Tanks || {};
       //   renforts (par vague), front : [x, x] où sont leurs postes, toi : x de ton poste au départ ;
       //   barrage : premier, toutesLes, duree (s), obus, zone (|z|), hauteur (m d'où il tombe), vise (part des obus sur
       //   un soldat), ecart (m), rayonCoupe (m : il déchire les barbelés) ; couvert : × la chance d'être touché, à l'abri.
+      // ✍️ (demande 132) « Les tranchées sont trop éloignées. Rapproche-les énormément. » : 124 m entre les deux tranchées
+      //   de tir (avant : 320 m). Le no man's land, les barbelés, les cratères et le barrage sont resserrés avec elles.
       tranchees: {
-        x: [-940, 390], feu: 160, soutien: 212, arriere: 300, boyaux: [-780, -470, -180, 90, 330],
+        x: [-940, 390], feu: 62, soutien: 108, arriere: 300, boyaux: [-780, -470, -180, 90, 330],
         zigzag: [4.5, 24], zigzagSoutien: [3, 32], zigzagBoyau: [1.5, 14],
         profil: { profondeur: 1.85, banquette: 1.15, fond: 0.7, bord: 1.2, marche: [0.32, 0.92] },
-        crateres: { nombre: 380, rayon: [2.4, 7], profondeur: [0.5, 1.7], zone: 138, partDerriere: 0.18, derriere: 110, eau: 0.35 },
-        barbeles: { rangs: [24, 30], segment: 8, largeur: 3.2, frein: 0.28 },
+        crateres: { nombre: 220, rayon: [2.4, 7], profondeur: [0.5, 1.7], zone: 46, partDerriere: 0.18, derriere: 110, eau: 0.35 },
+        barbeles: { rangs: [10, 15], segment: 8, largeur: 3.2, frein: 0.28 },
         mitrailleuses: { x: [-430, -110, 200], cadence: 0.085, cadenceIA: 0.13, portee: 330, cone: 1.05, rotation: 0.9, levee: 0.5, rafale: 14, pause: [0.9, 2.1], erreur: 0.035, pense: 0.3, prise: 6, retour: 25, chauffe: 0.012, refroidit: 0.25, enrayage: 3, enfonce: 0.3 },
         vagues: { premier: 30, toutesLes: 55, decalage: 22, part: 0.5, renforts: 8, front: [-560, 300], toi: 4 },
-        barrage: { premier: 45, toutesLes: 50, duree: 10, obus: 16, zone: 135, hauteur: 260, vise: 0.55, ecart: 14, rayonCoupe: 5 },
+        barrage: { premier: 45, toutesLes: 50, duree: 10, obus: 16, zone: 50, hauteur: 260, vise: 0.55, ecart: 14, rayonCoupe: 5 },
         couvert: 0.4,
       },
       // ---------------------------------------------------------------- 🎖️ LES CLASSES ET LES ARMES de 1916

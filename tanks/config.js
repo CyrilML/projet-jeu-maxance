@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 76,
+  version: 77,
   // ✍️ (étape 131) Le nom du studio qui signe le jeu, choisi par Maxance (pour ne pas montrer son vrai nom).
   studio: "Iron Wolf Studio",
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.

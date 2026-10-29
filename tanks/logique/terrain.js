@@ -91,6 +91,9 @@ Tanks.Terrain = (function () {
   // (demande 115) « hauteurExacte » est le sol NATUREL (avec les cratères d'obus de 1916, mais sans le creux des tranchées :
   // c'est ce sol que le peintre dessine ; les tranchées ont leurs propres parois, affichage/tranchees3d.js)
   const TR = Tanks.Tranchees, TRA = TR.actif;
+  // ✍️ (demande 132) sur une TRANCHÉE (ou à moins de « r » m) ? Les tranchées de 1916 sont rapprochées : on n'y pose ni
+  // grange ni haie (on regarde le creux au centre et sur un cercle de rayon r).
+  const surUneTranchee = (x, z, r) => { if (!TRA || TR.creux(x, z) > 0) return TRA; for (let k = 0; k < 16; k++) if (TR.creux(x + r * Math.cos(k * Math.PI / 8), z + r * Math.sin(k * Math.PI / 8)) > 0) return true; return false; };
   // ✍️ (demande 115, édition 1944) LA RIVIÈRE : un lit peu profond (on la traverse à gué) qui serpente (z = z0 + A × sin(x ÷ P)),
   // de « largeur » m, avec ses talus ; sur les PONTS (x de « ponts »), le sol n'est pas creusé : on passe au sec.
   const RIV = VAR.riviere || null;
@@ -263,12 +266,12 @@ Tanks.Terrain = (function () {
   // Les haies et les murets dans la campagne (pour se cacher), et quelques ruines isolées (des granges).
   for (let k = 0, nHaies = VAR.haies == null ? W.haies : VAR.haies; k < nHaies; k++) { // (étape 81 : pas de haies dans le désert)
     const x = (hasard() * 2 - 1) * (demi - 80), z = (hasard() * 2 - 1) * (demi - 80);
-    if (presDUnVillage(x, z, 20) || dansUnCamp(x, z) || !loinDe(x, z, 8)) continue;
+    if (presDUnVillage(x, z, 20) || dansUnCamp(x, z) || !loinDe(x, z, 8) || surUneTranchee(x, z, 19)) continue;
     boites.push({ x, z, demiL: 8 + hasard() * 10, demiP: 0.6, angle: hasard() * Math.PI, h: 1.6, sorte: "muret", type: "haie", lieu: "la campagne" });
   }
   for (let k = 0; k < W.granges; k++) {
     const x = (hasard() * 2 - 1) * (demi - 120), z = (hasard() * 2 - 1) * (demi - 120);
-    if (presDUnVillage(x, z, 40) || dansUnCamp(x, z) || !loinDe(x, z, 10)) continue;
+    if (presDUnVillage(x, z, 40) || dansUnCamp(x, z) || !loinDe(x, z, 10) || surUneTranchee(x, z, 12) || surUneTranchee(x, z, 6.5)) continue;
     boites.push({ x, z, demiL: 6 + hasard() * 3, demiP: 4.5, angle: hasard() * Math.PI, h: 5, sorte: "maison", type: "grange", lieu: "la campagne", graine: Math.floor(hasard() * 1e6) });
   }
   // Les arbres : en grandes forêts (étape 71), en bosquets (des petits bois), et quelques-uns tout seuls.
