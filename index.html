@@ -255,6 +255,7 @@
       <a href="#etape132">Étape 132</a>
       <a href="#etape133">Étape 133</a>
       <a href="#etape134">Étape 134</a>
+      <a href="#etape135">Étape 135</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -6532,6 +6533,42 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape135">
+      <h2>🔓 Étape 135 : le lien de toute la campagne <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Un lien spécial ouvre les 6 chapitres de la campagne d'un coup, sans rien effacer de ta partie. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/135-lien-toute-la-campagne.md</code>.</p>
+          <ul>
+            <li>✍️ « Fais-moi un lien avec la campagne du début jusqu'à la fin, sans la progression à zéro. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 80 ».</li>
+            <li>☐ Le lien <code>…/tanks/index.html?edition=moderne&amp;campagne=toute</code> → Campagne : 6 chapitres, aucun cadenas.</li>
+            <li>☐ Tes étoiles et tes Battle Coins sont toujours là.</li>
+            <li>☐ Sans le lien, les chapitres restent ouverts.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🔗 Ce qu'il y a après le « ? »</h3>
+      <p>Dans une adresse, tout ce qui vient après le <code>?</code> sont des <b>paramètres</b> : des petits messages pour la page. <code>edition=moderne</code> choisit l'édition, <code>campagne=toute</code> demande d'ouvrir tous les chapitres. On les sépare avec <code>&amp;</code>. Le jeu les lit au démarrage (<code>donnees/sauvegarde.js</code>).</p>
+      <h3>🔒 Un seul nombre pour les cadenas</h3>
+      <p>La sauvegarde ne garde pas un cadenas par chapitre : elle garde un seul nombre, <code>debloque</code> = « le plus grand chapitre ouvert ». Le lien le met à 6. Les étoiles et les records sont rangés ailleurs, alors on n'y touche pas.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Ouvre « sous le capot » → la base de données, et trouve <code>campagne.debloque</code>.</li>
+            <li>Essaie le lien avec <code>?propre=1&amp;campagne=toute</code> : une partie neuve, mais tous les chapitres ouverts (et rien n'est sauvegardé).</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Avec quel signe sépare-t-on deux paramètres dans une adresse ? <span class="petit">(le &amp;)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -8171,6 +8208,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-134" data-cle="appris-134" placeholder="Ex. : …"></textarea>
         <label for="idees-134"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-134" data-cle="idees-134" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 135 · le lien de toute la campagne <span class="petit">· 29 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>donnees/sauvegarde.js</code> (le paramètre campagne=toute), <code>affichage/sous-le-capot.js</code> (le journal).</p>
+        <p class="petit">✍️ Maxance a demandé : un lien qui ouvre toute la campagne sans effacer ma progression.</p>
+        <label for="appris-135"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-135" data-cle="appris-135" placeholder="Ex. : …"></textarea>
+        <label for="idees-135"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-135" data-cle="idees-135" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>

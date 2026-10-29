@@ -167,6 +167,7 @@ Tanks.SousLeCapot = (function () {
     "campagne-quitte": (d) => "↩ Tu quittes le chapitre " + d.numero + " « " + d.titre + " » (" + (d.raison === "accueil" ? "retour à l'accueil" : "retour à la liste des chapitres") + ")",
     "campagne-decor": (d) => "🔄 Le chapitre " + d.numero + " se passe sur un autre décor (« " + d.carte + " ») : la page se recharge, et la sauvegarde te ramène directement au chapitre",
     musique: (d) => (d.allumee ? "🎻 La musique joue (M pour la couper)" : "🔇 Musique coupée (M pour la remettre)"),
+    "campagne-toute": (d) => "🔓 Le lien « ?campagne=toute » ouvre TOUS les chapitres de la campagne (" + d.chapitres + " ; avant : jusqu'au chapitre " + d.avant + "). Rien n'est effacé", // (demande 135)
     "musique-morceau": (d) => "🎼 Le chef d'orchestre change de partition : « " + d.nom + " » (" + d.tempo + " battements/min)" + (d.film ? ", pour le film" : ", le film est fini"), // (demande 133)
     vue: (d) => (d.aPied ? (d.premiere ? "👁️ Vue à la première personne (C) : tu vois par les yeux du soldat" : "🎥 Vue de derrière le soldat (C)") : "🎥 Caméra du véhicule changée (C)"),
     // étape 75

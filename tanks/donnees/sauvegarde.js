@@ -221,8 +221,20 @@ Tanks.Sauvegarde = (function () {
       return true;
     } catch (e) { return false; }
   }
+  // ✍️ (demande 135) « Fais-moi un lien avec la campagne du début jusqu'à la fin, sans la progression à zéro. »
+  // « …/index.html?campagne=toute » : TOUS les chapitres de la campagne sont ouverts. Rien n'est effacé : les étoiles,
+  // les records, les niveaux, les armes et les Battle Coins restent ; on ouvre seulement les cadenas (pour toujours).
+  let toute = false;
+  try { toute = new URLSearchParams(location.search).get("campagne") === "toute"; } catch (e) { /* (pas d'adresse) */ }
+  function ouvrirToute() {
+    const n = Tanks.CONFIG.campagne.chapitres.length, avant = donnees.campagne.debloque || 1;
+    if (!toute || avant >= n) return;
+    donnees.campagne.debloque = n;
+    radio.emettre("campagne-toute", { avant, chapitres: n });
+    ecrire("toute la campagne ouverte", true);
+  }
   function lire() {
-    if (propre) return (donnees = vide()), ouvrirEdition(), donnees;
+    if (propre) return (donnees = vide()), ouvrirEdition(), ouvrirToute(), donnees;
     try {
       const brut = localStorage.getItem(CLE);
       // (une ancienne version : on garde tout ce qu'elle avait, et les nouveaux compteurs commencent à 0)
@@ -246,6 +258,7 @@ Tanks.Sauvegarde = (function () {
     donnees.editions = donnees.editions && typeof donnees.editions === "object" ? donnees.editions : {};
     if (!Tanks.LangueDuJour.connues.includes(donnees.langue)) donnees.langue = "fr"; // (demande 116)
     ouvrirEdition(); // (demande 115)
+    ouvrirToute(); // (demande 135)
     return donnees;
   }
   // (étape 77) discret = true : on écrit sans l'annoncer à la radio (les points gagnés pendant la bataille)
