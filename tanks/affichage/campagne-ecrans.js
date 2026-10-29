@@ -241,6 +241,7 @@ Tanks.EcranCampagne = (function () {
       '<div class="cp-lieu">' + html(c.icone + " " + c.lieu) + " <span>· " + html(c.date) + "</span></div>" +
       badgeDifficulte(monde.campagne.difficulte) +
       '<div class="cp-histoire">' + c.briefing.map((p, k) => '<p style="--k:' + k + '">' + html(p) + "</p>").join("") + "</div>" +
+      (c.inspire ? '<div class="cp-inspire">📜 Inspiré d\'un vrai moment de l\'Histoire : ' + html(c.inspire) + "</div>" : "") + // ✍️ (demande 136) le vrai moment qui a inspiré ce chapitre
       '<div class="cp-sous-titre">Objectifs</div><ol class="cp-objectifs">' + objectifs + "</ol>" +
       "</section>" +
       '<section class="cp-droite">' +
