@@ -1,6 +1,6 @@
 # Demande n° 136 : une campagne pour chaque édition
 
-> Statut : 🚧 livrée édition par édition. ✅ Drones (tanks version 82) · ✅ Guerre froide (83) · ✅ 1916 (84).
+> Statut : 🚧 livrée édition par édition. ✅ Drones (tanks version 82) · ✅ Guerre froide (83) · ✅ 1916 (84) · ✅ 1944 (85).
 > ✍️ = ce que Maxance a décidé.
 
 ## 🎯 Quoi
@@ -30,7 +30,11 @@ l'édition, **avec des films** (début, réussite, échec). « Édition par édi
   (1er jour de la Somme, 1er juillet 1916) · 3. Les monstres d'acier (Flers-Courcelette, 15 septembre 1916 : les premiers
   tanks) · 4. Le raid du brouillard (les raids de tranchée) · 5. Le bataillon perdu (forêt d'Argonne, 1918 : le pigeon
   voyageur) · 6. La onzième heure (l'Armistice du 11 novembre 1918).
-- 🚧 1944, Europe de l'Est, Guerre civile, Aliens : en cours.
+- ✅ **1944** — « Les Chouettes d'Aldermont » : 1. La nuit du clocher (Sainte-Mère-Église, 6 juin 1944) · 2. Le pont du
+  Héron (le pont Pegasus) · 3. Le labyrinthe de haies (le bocage normand) · 4. La poche de Falbourg (la poche de Falaise) ·
+  5. Les cloches de Bellerive (la libération de Paris, 25 août 1944) · 6. Encerclés à Hautval (Bastogne, décembre 1944).
+  3 nouvelles cartes : l'aube, la ville de Bellerive, l'hiver.
+- 🚧 Europe de l'Est, Guerre civile, Aliens : en cours.
 
 ## ✅ Critères
 - [ ] Édition Drones → ▶ CAMPAGNE : 6 chapitres, le briefing montre « 📜 Inspiré d'un vrai moment ».
