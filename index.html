@@ -257,6 +257,7 @@
       <a href="#etape134">Étape 134</a>
       <a href="#etape135">Étape 135</a>
       <a href="#etape137">Étape 137</a>
+      <a href="#etape136">Étape 136</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -6605,6 +6606,45 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape136">
+      <h2>📖 Étape 136 : une campagne pour chaque édition <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Chaque édition reçoit sa propre campagne de 6 chapitres, inspirés de vrais moments de l'Histoire, avec ses films. Première arrivée : la Bataille de drones, « Les Pilotes d'Aurelia ». <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/136-campagnes-des-editions.md</code>.</p>
+          <ul>
+            <li>✍️ « Je veux que chaque édition soit une campagne qui puisse revivre les moments actuels ou qui sont arrivés. »</li>
+            <li>✍️ Tes choix : 6 chapitres, inspirés du vrai, avec des films, livrés édition par édition.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 82 ».</li>
+            <li>☐ 📜 Éditions → Bataille de drones → ▶ CAMPAGNE : 6 chapitres.</li>
+            <li>☐ Le briefing montre « 📜 Inspiré d'un vrai moment de l'Histoire ».</li>
+            <li>☐ Ta campagne Moderne a toujours ses étoiles.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>📚 Une campagne = des données</h3>
+      <p>Chaque campagne est un fichier de données : <code>tanks/editions/campagnes/drones.js</code>. Il dit les chapitres, les objectifs, les répliques de la radio, les films. Le même « metteur en scène » (<code>logique/campagne.js</code>) fait jouer toutes les campagnes : on n'a pas réécrit le moteur, seulement de nouvelles histoires.</p>
+      <h3>💾 Une progression par édition</h3>
+      <p>La sauvegarde a un « tiroir » par édition (<code>editions.drones.campagne</code>) : quand tu joues aux drones, tes étoiles de Valdrie attendent à l'abri dans leur tiroir.</p>
+      <h3>📜 Du vrai dans le faux</h3>
+      <p>Les pays et les chefs sont inventés, mais chaque chapitre s'inspire d'un vrai moment : tu peux le chercher et apprendre ce qui s'est vraiment passé.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Dans le briefing d'un chapitre drones, lis la ligne 📜 et cherche ce moment de l'Histoire (avec un adulte).</li>
+            <li>Ouvre « sous le capot » → la base de données, et trouve le tiroir <code>editions</code>.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Combien de chapitres a chaque campagne d'édition ? <span class="petit">(6)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -8262,6 +8302,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-137" data-cle="appris-137" placeholder="Ex. : …"></textarea>
         <label for="idees-137"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-137" data-cle="idees-137" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 136 · les campagnes des éditions <span class="petit">· 29 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>editions/campagnes/*.js</code> (les campagnes), <code>editions/appliquer.js</code>, <code>donnees/sauvegarde.js</code> (version 22), <code>affichage/campagne-ecrans.js</code> (la ligne 📜).</p>
+        <p class="petit">✍️ Maxance a demandé : une campagne de 6 chapitres pour chaque édition, inspirée de vrais moments.</p>
+        <label for="appris-136"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-136" data-cle="appris-136" placeholder="Ex. : …"></textarea>
+        <label for="idees-136"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-136" data-cle="idees-136" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
