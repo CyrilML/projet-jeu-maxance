@@ -167,6 +167,7 @@ Tanks.SousLeCapot = (function () {
     "campagne-quitte": (d) => "↩ Tu quittes le chapitre " + d.numero + " « " + d.titre + " » (" + (d.raison === "accueil" ? "retour à l'accueil" : "retour à la liste des chapitres") + ")",
     "campagne-decor": (d) => "🔄 Le chapitre " + d.numero + " se passe sur un autre décor (« " + d.carte + " ») : la page se recharge, et la sauvegarde te ramène directement au chapitre",
     musique: (d) => (d.allumee ? "🎻 La musique joue (M pour la couper)" : "🔇 Musique coupée (M pour la remettre)"),
+    "musique-morceau": (d) => "🎼 Le chef d'orchestre change de partition : « " + d.nom + " » (" + d.tempo + " battements/min)" + (d.film ? ", pour le film" : ", le film est fini"), // (demande 133)
     vue: (d) => (d.aPied ? (d.premiere ? "👁️ Vue à la première personne (C) : tu vois par les yeux du soldat" : "🎥 Vue de derrière le soldat (C)") : "🎥 Caméra du véhicule changée (C)"),
     // étape 75
     "mur-abime": (d) => "🧱 " + (d.parToi ? "Tes balles fissurent " : d.tireur + " fissure ") + d.nom + " (ce morceau de mur : " + d.vie + " / " + d.vieMax + " points)",
@@ -727,7 +728,7 @@ Tanks.SousLeCapot = (function () {
     if (st.lunette) {
       // (étape 79) la lunette : la respiration, le souffle (Maj) et la chute de la balle
       const b = s.souffle || { reserve: 1, retenu: false, reprise: 0, force: 1 }, bal = s.balancement || { x: 0, y: 0 }, LU = C.tir.lunette;
-      l.push(["🎻 la musique du menu (étapes 82-83)", (Tanks.Musique.etat.joue ? "joue (" + Tanks.Musique.etat.partie + ")" : Tanks.Musique.etat.allumee ? "se tait pendant la bataille" : "coupée (M)") + " · " + C.musique.tempo + " battements/min en 6/8 · mesure " + (Tanks.Musique.etat.mesure + 1) + " · accord de " + (Tanks.Musique.etat.accord || "—") + " · " + Tanks.Musique.etat.notes + " notes jouées"]);
+      l.push(["🎻 la musique du menu (étapes 82-83)", (Tanks.Musique.etat.joue ? "joue (" + Tanks.Musique.etat.partie + ")" : Tanks.Musique.etat.allumee ? "se tait pendant la bataille" : "coupée (M)") + " · " + Tanks.Musique.etat.morceau + " · mesure " + (Tanks.Musique.etat.mesure + 1) + " · accord de " + (Tanks.Musique.etat.accord || "—") + " · " + Tanks.Musique.etat.notes + " notes jouées"]);
       l.push(["👁️ la vue (étape 78)", Tanks.Scene.vue.premiere ? "première personne : l'œil à " + virgule(C.premiere.oeil, 2) + " m, " + virgule(C.premiere.avance, 2) + " m devant la tête, la caméra dessine dès " + virgule(C.premiere.proche, 2) + " m" : "troisième personne (derrière le soldat)"]);
       l.push(["🔭 lunette · souffle", "×" + virgule(st.zoom, 0) + (s.visee > 0.6 ? " (dans la lunette)" : " (épaule avec V)") + " · respiration : un « 8 » de " + v(LU.balancement) + " en " + LU.periode + " s, × " + virgule(b.force, 2) + " maintenant → écart " + v(bal.x) + " de côté, " + v(bal.y) + " en haut · souffle " + Math.round(b.reserve * 100) + " %" + (b.retenu ? " 🤫 RETENU (Maj)" : "") + (b.reprise > 0 ? " · 😮‍💨 reprise " + virgule(b.reprise, 1) + " s (× " + LU.essouffle + ")" : "")]);
       const d = s.vise ? s.vise.d : 300, dc = s.derniereChute;

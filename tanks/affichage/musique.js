@@ -12,15 +12,17 @@
 // « compresseur » égalise le volume. Le chef d'orchestre regarde 0,25 s en avance et prépare les notes qui arrivent.
 // Le morceau a 3 parties : l'INTRO (4 mesures sombres), la MONTÉE (4 mesures, les violoncelles et les tambours
 // arrivent), le THÈME (8 mesures, avec la mélodie), puis on reprend à la montée. Réglages : config.js (« musique »).
+// ✍️ (demande 133) Un FILM peut demander son propre morceau (« morceau: "bandeAnnonce" ») : le chef d'orchestre change
+// alors de partition (config.js, « musiquesFilms ») et recommence au début ; à la fin du film, il reprend celle du menu.
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Musique = (function () {
   const C = Tanks.CONFIG;
-  const M = C.musique;
+  let M = C.musique, morceau = null; // (demande 133 : la partition en cours, et le nom du morceau de film, ou null)
   let ctx = null, sortie = null, salle = null, sec = null, bruit = null, coupee = false, endormie = false;
   let prochaine = 0, pas = 0, minuteur = null, joue = false;
-  const etat = { mesure: 0, partie: "", accord: "", notes: 0, joue: false };
+  const etat = { mesure: 0, partie: "", accord: "", notes: 0, joue: false, morceau: M.nom || "la musique du menu" };
 
   // Une note par son nom (« D3 » = le ré de la 3e octave) → sa fréquence (Hz)
   const NOMS = { C: -9, "C#": -8, Db: -8, D: -7, "D#": -6, Eb: -6, E: -5, F: -4, "F#": -3, Gb: -3, G: -2, "G#": -1, Ab: -1, A: 0, "A#": 1, Bb: 1, B: 2 };
@@ -130,14 +132,14 @@ Tanks.Musique = (function () {
   }
 
   // Les instruments
-  const nappe = (f, t, duree) => choeur({ type: "sawtooth", f, t, duree, fort: M.nappe, filtre: 500, filtreFin: 900, attaque: 1.2, relache: 1.2, voix: 4, ecart: 14, echo: 0.9 });
+  const nappe = (f, t, duree, k) => choeur({ type: "sawtooth", f, t, duree, fort: M.nappe * (k || 1), filtre: 500, filtreFin: 900, attaque: 1.2, relache: 1.2, voix: 4, ecart: 14, echo: 0.9 });
   const violoncelle = (f, t, duree, fort) => choeur({ type: "sawtooth", f, t, duree, fort: M.violoncelles * fort, filtre: 700, attaque: 0.012, relache: 0.08, voix: 3, ecart: 9, echo: 0.35 });
   const cuivre = (f, t, duree) => choeur({ type: "sawtooth", f, t, duree, fort: M.cuivres, filtre: 300, filtreFin: 1500, attaque: 0.09, relache: 0.35, voix: 3, ecart: 7, echo: 0.7, vibrato: duree > 0.5 });
   const cor = (f, t, duree) => choeur({ type: "triangle", f, t, duree, fort: M.cuivres * 0.7, filtre: 1200, attaque: 0.12, relache: 0.4, voix: 2, ecart: 5, echo: 0.8 });
   function pulsation(f, t, duree) { // la pulsation de synthé grave de Battlefield
     choeur({ type: "square", f, t, duree, fort: M.pulsation, filtre: 180, filtreFin: 380, attaque: 0.005, relache: 0.05, voix: 2, ecart: 6, echo: 0.1 });
   }
-  function braam(f, t) { // le gros coup sourd : des voix graves, saturées, qui s'ouvrent lentement
+  function braam(f, t, k) { // le gros coup sourd : des voix graves, saturées, qui s'ouvrent lentement
     const dist = ctx.createWaveShaper(), courbe = new Float32Array(256);
     for (let i = 0; i < 256; i++) { const x = i / 128 - 1; courbe[i] = Math.tanh(x * 3); }
     dist.curve = courbe;
@@ -147,7 +149,7 @@ Tanks.Musique = (function () {
     fi.frequency.linearRampToValueAtTime(900, t + D * 0.35);
     fi.frequency.linearRampToValueAtTime(200, t + D);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(M.braam.fort, t + 0.18);
+    g.gain.linearRampToValueAtTime(M.braam.fort * (k || 1), t + 0.18);
     g.gain.linearRampToValueAtTime(0.0001, t + D);
     dist.connect(fi).connect(g);
     brancher(g, 0.8);
@@ -342,8 +344,139 @@ Tanks.Musique = (function () {
     s.stop(t + 0.2);
   }
 
+  // ✍️ (demande 133) LE PIANO : une corde frappée par un marteau. Un son clair qui claque (un triangle et son octave, très
+  // peu de sinus en plus), qui s'éteint lentement, et un filtre qui se referme (la note devient plus douce en mourant).
+  function piano(f, t, duree, fort) {
+    const g = ctx.createGain(), fi = ctx.createBiquadFilter(), fin = Math.max(1.2, duree) + 1.5;
+    fi.type = "lowpass";
+    fi.frequency.setValueAtTime(4200, t);
+    fi.frequency.exponentialRampToValueAtTime(900, t + fin);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(M.piano * fort, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(M.piano * fort * 0.3, t + 0.5);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + fin);
+    fi.connect(g);
+    brancher(g, 1);
+    [[1, "triangle", 1], [2, "sine", 0.35], [3, "sine", 0.12]].forEach(([k, type, part]) => {
+      const o = ctx.createOscillator(), go = ctx.createGain();
+      o.type = type;
+      o.frequency.value = f * k;
+      o.detune.value = k === 1 ? 0 : 3;
+      go.gain.value = part;
+      o.connect(go).connect(fi);
+      o.start(t);
+      o.stop(t + fin + 0.05);
+    });
+    etat.notes++;
+  }
+  // ✍️ (demande 133) L'HORLOGE : « tic » (aigu) puis « tac » (plus grave) : un tout petit claquement de bruit, très court
+  function horloge(t, tic) {
+    const s = ctx.createBufferSource(), g = ctx.createGain(), fi = ctx.createBiquadFilter();
+    s.buffer = bruit;
+    fi.type = "bandpass";
+    fi.frequency.value = tic ? 3800 : 2400;
+    fi.Q.value = 9;
+    g.gain.setValueAtTime(M.horloge, t);
+    g.gain.exponentialRampToValueAtTime(0.0005, t + 0.03);
+    s.connect(fi).connect(g);
+    brancher(g, 0.5);
+    s.start(t);
+    s.stop(t + 0.05);
+  }
+  // ✍️ (demande 133) LE SOUFFLE QUI MONTE (le « riser » des bandes-annonces) : du bruit dont on laisse passer une bande
+  // de plus en plus aiguë, de plus en plus fort, avec une note grave qui monte en même temps. Il s'arrête net.
+  function souffle(t, duree) {
+    const s = ctx.createBufferSource(), g = ctx.createGain(), fi = ctx.createBiquadFilter(), o = ctx.createOscillator(), go = ctx.createGain();
+    s.buffer = bruit;
+    s.loop = true;
+    fi.type = "bandpass";
+    fi.Q.value = 2.5;
+    fi.frequency.setValueAtTime(300, t);
+    fi.frequency.exponentialRampToValueAtTime(7000, t + duree);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(M.souffle, t + duree);
+    g.gain.linearRampToValueAtTime(0.0001, t + duree + 0.03);
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(55, t);
+    o.frequency.exponentialRampToValueAtTime(440, t + duree);
+    go.gain.value = 0.25;
+    s.connect(fi).connect(g);
+    o.connect(go).connect(fi);
+    brancher(g, 0.6);
+    s.start(t), o.start(t);
+    s.stop(t + duree + 0.05), o.stop(t + duree + 0.05);
+  }
+  // ✍️ (demande 133) LE CHEF D'ORCHESTRE DE LA BANDE-ANNONCE : 16 petits pas par mesure (des doubles croches, en 4/4)
+  function jouerBandeAnnonce(t) {
+    const P = M.parties, pas16 = 60 / M.tempo / 4;
+    const mesure = Math.floor(pas / 16), i = pas % 16;
+    const partie = mesure < P.montee ? "calme" : mesure < P.theme ? "montée" : mesure < P.final ? "thème" : mesure < P.trou ? "final" : mesure < P.choc ? "le trou" : mesure < P.fin ? "le choc" : "fin";
+    const grille = mesure >= P.trou ? M.accords[0] : M.accords[mesure % M.accords.length];
+    const [basseNote, quinte, octave, tierce] = grille.notes.map(hz);
+    Object.assign(etat, { mesure: mesure + 1, partie, accord: grille.nom });
+    if (partie === "fin") return;
+    const unePiano = (bar) => { for (const [quand, nom, longueur] of M.notesPiano[bar % M.notesPiano.length]) if (quand === i) piano(hz(nom), t, pas16 * longueur, 1); };
+    // LE CHOC (sur le logo) : le gros coup, les tambours, la cymbale, le chœur, puis le piano tout seul
+    if (partie === "le choc") {
+      const k = mesure - P.choc;
+      if (k === 0 && i === 0) {
+        braam(basseNote / 2, t, M.choc), braam(basseNote / 4, t, M.choc);
+        taiko(t, 1.4 * M.choc, true), taiko(t + 0.02, M.choc, false), taiko(t + 0.6, 0.9, true);
+        cymbale(t, 4, false);
+        for (const f of [quinte, octave, tierce * 2]) chorale(f, t, 5);
+        for (const f of [basseNote, quinte, tierce]) nappe(f, t, 8, 1.5);
+        for (const f of [basseNote, octave]) cuivre(f, t, 3.5), cuivre(f * 2, t, 3.5);
+      }
+      if (k === 1 && i === 8) piano(hz("G4"), t, 2, 0.9);
+      if (k === 2 && i === 0) piano(hz("C5"), t, 4, 1);
+      return;
+    }
+    // LE TROU : la première moitié de la mesure, tout le monde frappe ; puis plus RIEN (le silence avant le choc)
+    if (partie === "le trou") {
+      if (i === 0) souffle(t, pas16 * 8);
+      if (i < 8) taiko(t, 0.6 + i * 0.1, i % 2 === 0), violoncelle(basseNote, t, pas16 * 0.7, 1);
+      return;
+    }
+    const fort = partie === "calme" ? 0 : partie === "montée" ? 0.45 + 0.55 * (mesure - P.montee) / (P.theme - P.montee) : 1;
+    // la nappe sombre et le gros BRAAAM (toutes les 4 mesures)
+    if (i === 0) for (const f of [basseNote, quinte, tierce]) nappe(f, t, pas16 * 16, partie === "calme" ? M.calme : 1);
+    if (i === 0 && mesure % 4 === 0) braam(basseNote / 2, t, partie === "calme" ? M.calme : 1);
+    if (partie === "calme" || partie === "montée") {
+      if (i % 4 === 0) horloge(t, i % 8 === 0); // tic… tac… (à chaque temps)
+      if (partie === "calme") { unePiano(mesure); return; }
+    }
+    // les VIOLONCELLES qui martèlent : en croches au début de la montée, puis en doubles croches
+    const doubles = mesure >= P.montee + 3;
+    if (doubles || i % 2 === 0) {
+      const note = [basseNote, basseNote, quinte, basseNote, octave, basseNote, quinte, basseNote][(i >> (doubles ? 0 : 1)) % 8];
+      violoncelle(note, t, pas16 * (doubles ? 0.8 : 1.6), (i % 4 === 0 ? 1 : 0.6) * fort);
+      if (partie !== "montée") violoncelle(note * 2, t, pas16 * 0.7, 0.45), violoncelle(note * 4, t, pas16 * 0.6, 0.35); // (et les violons)
+    }
+    if (i % 2 === 0) pulsation(basseNote / 2, t, pas16 * 1.2);
+    // les tambours
+    if (i === 0 || i === 8) taiko(t, (i === 0 ? 1 : 0.8) * Math.max(0.5, fort), true);
+    if (partie !== "montée") {
+      if (i === 6 || i === 11 || i === 14) taiko(t, 0.55, i !== 11);
+      if (i === 4 || i === 12) caisseClaire(t, partie === "final" ? 0.9 : 0.7, false);
+      if (i % 2 === 0) caisseClaire(t, 0.12, true);
+    }
+    // la montée finit par le souffle et un roulement ; le thème et le final commencent par un coup de cymbale
+    if (mesure === P.theme - 1) { if (i === 0) souffle(t, pas16 * 16); if (i >= 8) taiko(t, 0.4 + (i - 8) * 0.08, i % 2 === 0); }
+    if (mesure === P.trou - 1 && i >= 8) taiko(t, 0.5 + (i - 8) * 0.08, i % 2 === 0);
+    if (i === 0 && (mesure === P.theme || mesure === P.theme + 8 || mesure === P.final)) cymbale(t, 3, false);
+    if (partie === "montée") return;
+    // le chœur, et la mélodie des cuivres (au final : en plus, les violons la jouent une octave plus haut)
+    if (i === 0) for (const f of [quinte, octave, tierce * 2]) chorale(f, t, pas16 * 16);
+    for (const [quand, nom, longueur] of M.melodie[(mesure - P.theme) % M.melodie.length]) if (quand === i) {
+      const f = hz(nom), d = pas16 * longueur;
+      cuivre(f, t, d), cuivre(f / 2, t, d), cor(f / 2, t, d);
+      if (partie === "final") cuivre(f * 2, t, d), chorale(f, t, d);
+    }
+  }
+
   // Une « croche » : le morceau avance par petits pas (6 par mesure, à 6/8)
   function jouerLePas(t) {
+    if (M.style === "bande-annonce") return jouerBandeAnnonce(t);
     const croche = 60 / M.tempo / 2;
     // les 16 mesures du morceau ; après la première fois, on reprend à la montée (mesure 4)
     const brut = Math.floor(pas / 6), i = pas % 6;
@@ -404,7 +537,7 @@ Tanks.Musique = (function () {
 
   function planifier() {
     if (!ctx || ctx.state !== "running") return;
-    const croche = 60 / M.tempo / 2;
+    const croche = 60 / M.tempo / (M.pasParTemps || 2);
     if (prochaine < ctx.currentTime - 0.5) prochaine = ctx.currentTime + 0.05; // (on revient d'une pause : on repart d'ici)
     while (prochaine < ctx.currentTime + 0.25) {
       if (joue) jouerLePas(prochaine), pas++;
@@ -422,6 +555,15 @@ Tanks.Musique = (function () {
     const doitDormir = document.hidden || !document.hasFocus();
     if (doitDormir !== endormie) (endormie = doitDormir), endormie ? ctx.suspend() : ctx.resume();
     const film = (Tanks.EcranCinematique && Tanks.EcranCinematique.musique) || 0; // (demande 101 : pendant un film, la musique joue au volume du plan)
+    // (demande 133) le film veut-il son propre morceau ? Alors on change de partition et on recommence au début
+    const voulu = (film > 0 && Tanks.EcranCinematique.morceau) || null;
+    if (voulu !== morceau && (!voulu || C.musiquesFilms[voulu])) {
+      morceau = voulu;
+      M = voulu ? C.musiquesFilms[voulu] : C.musique;
+      (pas = 0), (prochaine = ctx.currentTime + 0.1);
+      etat.morceau = M.nom || "la musique du menu";
+      Tanks.Evenements.emettre("musique-morceau", { nom: etat.morceau, tempo: M.tempo, film: !!voulu });
+    }
     const auMenu = Tanks.Accueil.visible || !!(Tanks.EcranCampagne && Tanks.EcranCampagne.musique) || film > 0; // (étape 84 : la musique joue sur la page d'accueil seulement ; étape 88 : et sur les écrans de la campagne)
     if (auMenu && !joue) (joue = true), (pas = 0), (prochaine = ctx.currentTime + 0.1); // (on revient au menu : le morceau recommence au début)
     if (!auMenu && joue) joue = false;

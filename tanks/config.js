@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 77,
+  version: 78,
   // ✍️ (étape 131) Le nom du studio qui signe le jeu, choisi par Maxance (pour ne pas montrer son vrai nom).
   studio: "Iron Wolf Studio",
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
@@ -60,6 +60,48 @@ Tanks.CONFIG = {
       [[0, "D5", 2], [2, "C5", 1], [3, "Bb4", 2], [5, "G4", 1]],
       [[0, "A4", 6]],
     ],
+  },
+
+  // ✍️ (demande 133) « Trouve-moi une autre musique pour la bande-annonce. » LA MUSIQUE DE LA BANDE-ANNONCE (inventée, comme
+  // celle du menu) : une vraie musique de film-annonce, en 4/4, calée sur les 90 s du film. Le film la choisit avec
+  // « morceau: "bandeAnnonce" ». Ses parties (en mesures de 4 temps ; à 100 battements par minute, une mesure = 2,4 s) :
+  //   calme (l'horloge qui fait tic-tac, le piano, la nappe), montée (les violoncelles qui martèlent de plus en plus vite,
+  //   les tambours), thème (le chœur, les cuivres, la batterie), final (encore plus fort), puis LE TROU (une demi-mesure de
+  //   silence total), et LE CHOC sur le logo (le gros coup, le chœur), et le piano qui finit tout seul.
+  //   pasParTemps : 4 = des doubles croches (16 petits pas par mesure) ; mélodie et notesPiano : [pas 0 à 15, note, durée en pas].
+  musiquesFilms: {
+    bandeAnnonce: {
+      nom: "la musique de la bande-annonce", style: "bande-annonce",
+      tempo: 100, pasParTemps: 4, volume: 0.4, fondu: 1.2,
+      nappe: 0.03, violoncelles: 0.055, cuivres: 0.07, pulsation: 0.05, tambours: 1.1, choeur: 0.055, cymbales: 0.12, batterie: 0.3,
+      piano: 0.1, horloge: 0.05, souffle: 0.07, // (souffle : la grande montée de bruit avant le thème et avant le choc)
+      braam: { fort: 0.14, duree: 4 },
+      calme: 0.45, choc: 1.2, // × la nappe et le braam pendant le calme (plus doux) ; × le gros coup du choc (plus fort)
+      salle: { duree: 2.8, part: 0.55 },
+      parties: { montee: 5, theme: 12, final: 28, trou: 33, choc: 34, fin: 38 }, // (la mesure où chaque partie commence)
+      accords: [
+        { nom: "do mineur", notes: ["C2", "G2", "C3", "Eb3"] }, { nom: "la bémol", notes: ["Ab1", "Eb2", "Ab2", "C3"] },
+        { nom: "mi bémol", notes: ["Eb2", "Bb2", "Eb3", "G3"] }, { nom: "si bémol", notes: ["Bb1", "F2", "Bb2", "D3"] },
+        { nom: "do mineur", notes: ["C2", "G2", "C3", "Eb3"] }, { nom: "la bémol", notes: ["Ab1", "Eb2", "Ab2", "C3"] },
+        { nom: "fa mineur", notes: ["F2", "C3", "F3", "Ab3"] }, { nom: "sol", notes: ["G1", "D2", "G2", "B2"] },
+      ],
+      notesPiano: [
+        [[0, "C5", 6], [6, "Eb5", 2], [8, "G4", 8]],
+        [[0, "Ab4", 8], [8, "C5", 8]],
+        [[0, "G4", 6], [6, "Bb4", 2], [8, "Eb5", 8]],
+        [[0, "D5", 12], [12, "Bb4", 4]],
+      ],
+      melodie: [
+        [[0, "G4", 6], [6, "C5", 2], [8, "D5", 4], [12, "Eb5", 4]],
+        [[0, "C5", 12], [12, "Bb4", 2], [14, "Ab4", 2]],
+        [[0, "G4", 6], [6, "Bb4", 2], [8, "Eb5", 8]],
+        [[0, "D5", 8], [8, "F5", 4], [12, "D5", 4]],
+        [[0, "Eb5", 6], [6, "D5", 2], [8, "C5", 4], [12, "G4", 4]],
+        [[0, "Ab4", 6], [6, "C5", 2], [8, "Eb5", 8]],
+        [[0, "F5", 6], [6, "Eb5", 2], [8, "D5", 4], [12, "C5", 4]],
+        [[0, "B4", 8], [8, "D5", 8]],
+      ],
+    },
   },
 
   pasFixe: 1 / 120,
@@ -2935,7 +2977,7 @@ Tanks.CONFIG.cinematiques.bandeAnnonce = "bande-annonce";
   const NORD = -Math.PI / 2, SUD = Math.PI / 2;
   const K416 = { bouche: "silencieux", viseur: "lunette4" }; // (le K416 à silencieux et lunette ×4)
   C.cinematiques.films["bande-annonce"] = {
-    titre: "Bande-annonce · The Last Battlefield", musique: 1, nettoyer: true, bases: true,
+    titre: "Bande-annonce · The Last Battlefield", musique: 1, morceau: "bandeAnnonce", nettoyer: true, bases: true, // (demande 133 : sa propre musique)
     decor: { feux: [[-60, 250, 1.6], [50, 300, 1.4], [120, 180, 1.2], [-130, 120, 1.2], [160, 360, 1.1]] },
     acteurs: [
       // les 4 classes alignées (de gauche à droite pour la caméra : assaut, médecin, éclaireur, ingénieur), l'arme basse

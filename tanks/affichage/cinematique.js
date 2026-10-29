@@ -300,11 +300,17 @@ Tanks.EcranCinematique = (function () {
     return info.plan.musique !== undefined ? info.plan.musique : info.film.musique || 0;
   }
 
+  // (demande 133) le morceau de musique que le film demande (« morceau » dans config.js), ou null : celui du menu
+  function morceau() {
+    const info = monde && monde.cinematique && Tanks.Cinematique.planEnCours(monde);
+    return (info && info.film.morceau) || null;
+  }
+
   // Pour « sous le capot »
   function etat() {
     const e = monde && monde.cinematique, info = e && Tanks.Cinematique.planEnCours(monde);
     return { actif: !!e, feux: feux.length, bilan, plan: info ? { numero: info.numero + 1, nom: info.plan.nom || "", camera: (info.plan.camera || {}).type || "fixe", t: info.t, duree: info.plan.duree } : null };
   }
 
-  return { initialiser, maj, dessiner, etat, get musique() { return musique(); }, get actif() { return actif; } };
+  return { initialiser, maj, dessiner, etat, get musique() { return musique(); }, get morceau() { return morceau(); }, get actif() { return actif; } };
 })();

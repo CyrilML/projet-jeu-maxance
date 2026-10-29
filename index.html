@@ -253,6 +253,7 @@
       <a href="#etape130">Étape 130</a>
       <a href="#etape131">Étape 131</a>
       <a href="#etape132">Étape 132</a>
+      <a href="#etape133">Étape 133</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -6451,6 +6452,46 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape133">
+      <h2>🎼 Étape 133 : la musique de la bande-annonce <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">La bande-annonce a sa propre musique, inventée pour elle : le tic-tac et le piano, la montée des violoncelles, le thème avec le chœur et les cuivres, un silence, et un grand coup pile sur le logo. <a href="tanks/index.html"><strong>▶ The Last Battlefield</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/133-musique-bande-annonce.md</code>.</p>
+          <ul>
+            <li>✍️ « Trouve-moi une autre musique à mettre pour la bande-annonce. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 78 ».</li>
+            <li>☐ Accueil → 🎬 Bande-annonce : ça commence par un tic-tac et un piano (pas la musique du menu).</li>
+            <li>☐ Vers 29 s, le thème éclate (cymbale, chœur, cuivres).</li>
+            <li>☐ Juste avant le logo : un silence… puis BOUM sur le logo.</li>
+            <li>☐ Échap : la musique du menu revient.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🎼 Une partition, c'est des données</h3>
+      <p>La musique n'est pas un fichier son : c'est une <b>partition</b> rangée dans <code>tanks/config.js</code> (<code>musiquesFilms.bandeAnnonce</code>). L'ordinateur la joue note par note, comme un orchestre. Le film dit juste <code>morceau: "bandeAnnonce"</code>, et le chef d'orchestre (<code>affichage/musique.js</code>) change de partition.</p>
+      <h3>⏱️ Caler la musique sur le film</h3>
+      <p>À 100 battements par minute, un temps dure 0,6 s et une mesure (4 temps) 2,4 s. Le logo arrive à 81,5 s : 81,5 ÷ 2,4 ≈ 34. Donc le CHOC est à la mesure 34. C'est comme ça que les vrais compositeurs calent leur musique sur les images !</p>
+      <h3>🤫 Le silence fait peur</h3>
+      <p>Juste avant le logo, toute la musique s'arrête une seconde. Ce trou rend le coup qui suit beaucoup plus fort : c'est un truc de toutes les bandes-annonces.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>musiquesFilms</code> et change <code>tempo: 100</code> en <code>tempo: 120</code> : la musique va plus vite… mais le choc n'est plus sur le logo ! Pourquoi ? Puis remets 100.</li>
+            <li>Ouvre « sous le capot » pendant la bande-annonce : regarde la partie de la musique (calme, montée, thème…) changer.</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>À 100 battements par minute, combien dure une mesure de 4 temps ? <span class="petit">(2,4 s)</span></li>
+            <li>Pourquoi un silence juste avant le logo ? <span class="petit">(pour que le grand coup paraisse encore plus fort)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -8072,6 +8113,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-132" data-cle="appris-132" placeholder="Ex. : …"></textarea>
         <label for="idees-132"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-132" data-cle="idees-132" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 133 · la musique de la bande-annonce <span class="petit">· 29 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/config.js</code> (la partition), <code>affichage/musique.js</code> (le piano, l'horloge, le souffle, le chef d'orchestre de la bande-annonce), <code>affichage/cinematique.js</code>.</p>
+        <p class="petit">✍️ Maxance a demandé : une nouvelle musique, inventée, pour la bande-annonce.</p>
+        <label for="appris-133"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Maxance, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-133" data-cle="appris-133" placeholder="Ex. : …"></textarea>
+        <label for="idees-133"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-133" data-cle="idees-133" placeholder="Ex. : …"></textarea>
       </div>
     </section>
   </main>
