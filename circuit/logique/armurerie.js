@@ -93,7 +93,11 @@ Circuit.Armurerie = (function () {
     const p = monde.pieton;
     if (p && !monde.magasin) {
       choisir(monde, intentions);
-      if ((intentions.tir || intentions.tirAppui) && monde.temps >= monde.prochainCoup) frapper(monde, p);
+      if (intentions.tirAppui) monde.appuiF = true; // (un appui très court sur F est gardé jusqu'à ce que l'arme soit prête)
+      if ((intentions.tir || monde.appuiF) && monde.temps >= monde.prochainCoup) {
+        monde.appuiF = false;
+        frapper(monde, p);
+      }
       if (intentions.missile && monde.dynamites.length) boum(monde);
     }
     // Les grenades volent, retombent, roulent un peu… puis explosent.
@@ -135,6 +139,7 @@ Circuit.Armurerie = (function () {
     if (intentions.chiffre && liste[intentions.chiffre - 1]) nouvelle = liste[intentions.chiffre - 1];
     if (nouvelle === monde.arme) return;
     monde.arme = nouvelle;
+    monde.prochainCoup = monde.temps; // une nouvelle arme est prête tout de suite
     radio.emettre("arme-choisie", { arme: nouvelle, nom: NOMS[nouvelle], numero: liste.indexOf(nouvelle) + 1, total: liste.length });
   }
 
@@ -250,7 +255,7 @@ Circuit.Armurerie = (function () {
   function casserStand(monde, c, arme) {
     c.cassee = true;
     c.retour = monde.temps + A.stand.retour;
-    monde.explosions.push({ x: c.x, y: c.y - 0.5, z: c.z, age: 0.6, taille: 1.4, sorte: "eclats" });
+    monde.explosions.push({ x: c.x, y: c.y - 0.5, z: c.z, age: 0.8, taille: 0.7, sorte: "eclats" });
     radio.emettre("stand-casse", { sorte: c.sorte, arme, montant: c.sorte === "cible" ? A.stand.paieCible : 0 });
   }
 
