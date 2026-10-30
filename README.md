@@ -1,8 +1,8 @@
-# 🧱 Le projet de jeu de Maxance
+# 🧱 Le projet de jeu d'Iron Wolf Studio
 
-Un jeu en 2D que Maxance dirige et que Claude code, étape par étape : on commence par courir,
+Un jeu en 2D qu'Iron Wolf Studio dirige et que Claude code, étape par étape : on commence par courir,
 sauter et esquiver des obstacles, et on va vers un monde de blocs façon Minecraft.
-À chaque étape, Maxance découvre comment le jeu fonctionne à l'intérieur : architecture,
+À chaque étape, Iron Wolf Studio découvre comment le jeu fonctionne à l'intérieur : architecture,
 boucle de jeu, physique, événements, base de données…
 
 Projet **totalement indépendant** de ScorAsin et de Mission Liberté 2.0 : pas de compte,
@@ -37,7 +37,7 @@ Outils : `X` rayons X, `Échap` pause, `N` avancer d'un pas, `L` ralenti. `P` (e
 ```
 ├── index.html          le carnet de bord
 ├── CLAUDE.md           les consignes pour Claude (rôles, architecture, façon de travailler)
-├── demandes/           les demandes de Maxance, une par étape
+├── demandes/           les demandes d'Iron Wolf Studio, une par étape
 ├── circuit/            le jeu de course en 3D (mêmes familles : moteur, logique, donnees, affichage)
 ├── village/            le jeu de gestion du village (mêmes familles)
 └── jeu/
@@ -52,7 +52,7 @@ Outils : `X` rayons X, `Échap` pause, `N` avancer d'un pas, `L` ralenti. `P` (e
 
 ## Passer à l'étape suivante
 
-1. Maxance remplit la fiche de demande dans le carnet (rubrique « Passer commande »).
+1. Iron Wolf Studio remplit la fiche de demande dans le carnet (rubrique « Passer commande »).
 2. Cyril copie le message préparé et le donne à Claude, dans une session claude.ai/code ouverte sur ce dépôt.
 3. Claude code, met à jour le carnet et publie sur `main`.
-4. Environ une minute plus tard, Maxance recharge la page du jeu et teste.
+4. Environ une minute plus tard, Iron Wolf Studio recharge la page du jeu et teste.

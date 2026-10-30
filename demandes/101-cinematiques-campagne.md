@@ -1,7 +1,7 @@
 # Demande n° 101 : les cinématiques de la campagne, les Battle Coins par mission, et la vidéo d'introduction
 
 > Statut : ✅ livrée : morceau 1 (tanks version 43), morceau 2 (version 44), morceau 3 (version 45).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Quand tu commences la campagne, tu as la cinématique qui explique ce qui se passe. La caméra montre une ville
@@ -10,7 +10,7 @@ a autour. Certains se tournent, certains tournent de droite à gauche rapidement
 viser. Le commandant de ton escadron prend la parole et explique la mission. Après, la caméra se place derrière ton
 personnage et tu es sur ton personnage. »
 ✍️ Battle Coins gagnés à chaque mission réussie : très facile 100, facile 200, normal 500, difficile 1 000,
-très difficile 2 000. (La boutique pour les dépenser viendra plus tard, quand Maxance le demandera.)
+très difficile 2 000. (La boutique pour les dépenser viendra plus tard, quand Iron Wolf Studio le demandera.)
 ✍️ « À chaque fin de mission, une cinématique plus courte que la première, de 50 à 90 secondes. Elle expliquera les
 conséquences de ta mission : si tu l'as échouée, ce qui se passe, et si tu l'as réussie, ce qui se passe. À chaque
 mission jusqu'à la fin. »

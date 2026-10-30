@@ -1,6 +1,6 @@
 // 🔥 LES PROBLÈMES : le destin de la ville (incendies, vols, pannes, grèves)
 //
-// Étape 20 : ✍️ « Le jeu devient vite lassant et sans but. » Choix de Maxance : des PROBLÈMES À RÉGLER.
+// Étape 20 : ✍️ « Le jeu devient vite lassant et sans but. » Choix d'Iron Wolf Studio : des PROBLÈMES À RÉGLER.
 // Un problème n'arrive que si quelque chose MANQUE (pas de pompiers, pas de police, des impôts trop hauts…) :
 // une ville bien gérée est tranquille. Le « destin » tire au sort de temps en temps (selon la difficulté) :
 //

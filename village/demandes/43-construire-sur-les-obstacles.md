@@ -1,9 +1,9 @@
 # Village · demande n° 43 : construire même sur les arbres et les obstacles
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 45 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 45 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « On doit pouvoir construire un bâtiment ou une route même s'il y a des arbres ou des obstacles. »
 
 ## 📏 Les règles

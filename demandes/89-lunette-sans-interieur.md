@@ -1,6 +1,6 @@
 # Demande n° 89 : la lunette ×6 montre l'intérieur du personnage
 
-> Statut : ✅ corrigée le 21/10/2026 (tanks version 29), à valider par Maxance.
+> Statut : ✅ corrigée le 21/10/2026 (tanks version 29), à valider par Iron Wolf Studio.
 
 ## 🎯 Quoi
 ✍️ « Quand tu fais des viseurs ×6, ça ne va pas du tout. Je vois l'intérieur du personnage. Corrige-moi ça. »

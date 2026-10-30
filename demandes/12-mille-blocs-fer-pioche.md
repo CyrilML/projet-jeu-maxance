@@ -1,6 +1,6 @@
 # Demande n° 12 : 1 000 blocs, fer et pioche
 
-> Demandée par Maxance. Les règles marquées ✍️ ont été précisées par Maxance quand Claude lui a
+> Demandée par Iron Wolf Studio. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio quand Claude lui a
 > posé des questions (réponses : 1A, 2A, 3A, 4A, 5A). Statut : ✅ livrée le 25/09/2026, à valider.
 
 ## 🎯 Quoi

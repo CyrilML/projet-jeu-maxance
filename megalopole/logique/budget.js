@@ -1,7 +1,7 @@
 // 🧾 LE BUDGET : le trésorier de la ville
 //
 // Étape 2 : ✍️ « La gestion des impôts et des coûts sera importante : il faut bien réfléchir et paramétrer le système. »
-// Choix de Maxance : un taux d'impôt PAR ZONE, un budget PAR SERVICE, des PRÊTS à la banque, et 3 DIFFICULTÉS.
+// Choix d'Iron Wolf Studio : un taux d'impôt PAR ZONE, un budget PAR SERVICE, des PRÊTS à la banque, et 3 DIFFICULTÉS.
 //
 // Chaque mois, le trésorier fait les comptes (comme une feuille de calcul) :
 //

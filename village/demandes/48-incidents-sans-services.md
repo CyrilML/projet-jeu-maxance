@@ -1,11 +1,11 @@
 # Village · demande n° 48 : ce qui arrive aux maisons sans services
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 50 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 50 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé
+## 🎯 Ce qu'Iron Wolf Studio a demandé
 - « Fais-moi des propositions » : que se passe-t-il dans une maison qui n'a pas un service ?
-- Choix de Maxance parmi 3 propositions : **des événements**.
+- Choix d'Iron Wolf Studio parmi 3 propositions : **des événements**.
 
 ## 📏 Les règles (`config.js` : « incidents »)
 - **Le dé** : toutes les 15 s, un dé est lancé pour chaque service.

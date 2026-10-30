@@ -1,8 +1,8 @@
 # Village · demande n° 13 : poser, déplacer, de belles routes (et le maçon-couvreur)
 
-> Demandée par Maxance (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 12 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 12 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Revois le placement des bâtiments : on ne sait pas vraiment si on va le positionner ou pas. Il faut qu'il soit,
   par transparence, là où on bouge le doigt, avec une coche verte ou une croix rouge pour le placer ou annuler. »
 - « Pour déplacer un bâtiment, il suffirait de rester appuyé longtemps dessus. »

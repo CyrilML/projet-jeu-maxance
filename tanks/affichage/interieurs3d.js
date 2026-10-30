@@ -3,7 +3,7 @@
 // ✍️ « Pouvoir entrer dans les maisons. » Ce peintre lit le PLAN de chaque maison (logique/interieurs.js) et le meuble :
 // le parquet, le plafond, l'escalier (des marches), le garde-corps, la cloison, la table et ses chaises, l'étagère et ses
 // livres, le canapé, le buffet, le frigo, le lit, l'armoire, le bureau, les tapis, les lampes…
-// Pour que le jeu ne rame pas (✍️ Maxance déteste le lag) :
+// Pour que le jeu ne rame pas (✍️ Iron Wolf Studio déteste le lag) :
 //   - TOUT l'intérieur d'une maison est recollé en UN seul objet, dessiné en UN coup (chaque sommet dit s'il a le grain
 //     du bois et s'il « brille », comme les abat-jour) ;
 //   - un intérieur n'est FABRIQUÉ que si la caméra est à moins de « interieurs » m (le niveau de qualité : 15 à 60 m),

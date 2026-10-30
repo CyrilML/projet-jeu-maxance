@@ -82,7 +82,7 @@ Megalopole.Peintre = (function () {
       for (let j = 0; j < l.length; j += 2) { const x = l[j], y = l[j + 1]; ctx.moveTo(x - L / 2 - 0.5, y); ctx.lineTo(x, y - Hc / 2 - 0.5); ctx.lineTo(x + L / 2 + 0.5, y); ctx.lineTo(x, y + Hc / 2 + 0.5); }
       ctx.fillStyle = couleur; ctx.fill();
     }
-    // 🗺️ le calque (étape 6, demande de Maxance : « les calques doivent laisser la ville ») : un voile de couleur
+    // 🗺️ le calque (étape 6, demande d'Iron Wolf Studio : « les calques doivent laisser la ville ») : un voile de couleur
     // transparent sur les cases concernées, et un voile gris sur les autres. Les bâtiments restent dessinés.
     if (calque) {
       const parVoile = new Map();

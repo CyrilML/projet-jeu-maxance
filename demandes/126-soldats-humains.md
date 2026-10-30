@@ -1,7 +1,7 @@
 # Demande n° 126 : des soldats qui ressemblent à des humains
 
 > Statut : ✅ livrée (tanks version 72), avec aussi ✍️ « Fais pareil pour les armes ».
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Fais des maquettes de soldats. Je veux qu'ils ressemblent à des humains. »

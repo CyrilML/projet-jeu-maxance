@@ -1,8 +1,8 @@
 # Village · demande n° 23 : moins de brouillon, des champs et des enclos
 
-> Demandée par Maxance (via Cyril) le 06/10/2026, en 2 messages. Statut : ✅ livrée le 06/10/2026 (étape 22 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 06/10/2026, en 2 messages. Statut : ✅ livrée le 06/10/2026 (étape 22 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Ça devient vite illisible : tout le monde demande du pain, donc il y a des petites bulles de pain partout. »
 - « Les maisons sont trop petites ; d'un coup d'œil, on doit voir ce que c'est. »
 - « La ferme doit être plus grande avec un champ. Idem pour les animaux. On ne devrait pas avoir besoin de cliquer. »

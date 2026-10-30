@@ -41,12 +41,12 @@
 // ronds, lissée), les crosses et les poignées s'AMINCISSENT, les poignées ont un granulé, les culasses des pistolets (Glock,
 // M17, Colton, Varn P38) ont des stries creusées et un nez qui plonge, et la carte des rayures est plus discrète.
 // Les soldats de l'ordinateur gardent la version simple (une seule matière) : la bataille ne coûte pas plus cher.
-// ✍️ LES ARMES DE MAXANCE (demande 128) : d'après ses photos, le pistolet de tout le monde devient un M1911 (acier bleui,
+// ✍️ LES ARMES DE IRON WOLF STUDIO (demande 128) : d'après ses photos, le pistolet de tout le monde devient un M1911 (acier bleui,
 // plaquettes en BOIS QUADRILLÉ), le MP5 du Médecin a son garde-main à LAMPE INTÉGRÉE, l'Assaut a de vrais M4 (AR-4 et M4
 // courte : mires rabattables, garde-main à 4 rails, chargeur STANAG et sa boucle), l'Ingénieur a le K416 sable et noir LIVRÉ
 // ÉQUIPÉ (lunette de combat, long silencieux, poignée, lampe : des pièces « d'origine » que l'atelier peut remplacer), et le
 // Scorpio est le pistolet-mitrailleur de toutes les classes ; le lance-grenades RG-6 de l'Ingénieur a un BARILLET qui tourne
-// d'un cran à chaque tir, et le lance-grenades sous le canon est refait. (Voir « LES ARMES DE MAXANCE » plus bas.)
+// d'un cran à chaque tir, et le lance-grenades sous le canon est refait. (Voir « LES ARMES DE IRON WOLF STUDIO » plus bas.)
 // Comme tout l'affichage, il LIT le monde et ne le modifie jamais.
 
 window.Tanks = window.Tanks || {};
@@ -60,7 +60,7 @@ Tanks.Armes3D = (function () {
     noir: 0x37383b, anodise: 0x3d3f43, acier: 0x55585d, canon: 0x3b3d41, fente: 0x0a0a0a, caoutchouc: 0x252525,
     fde: 0xa08760, fdeFonce: 0x857050, od: 0x4d5536, odClair: 0x5f6844, gris: 0x3a3c3a, olive: 0x40463a,
     bakelite: 0x58291a, laiton: 0xc89b45, blanc: 0xe0ddd2, jaune: 0xc9a227, rouge: 0x9a2216, bois: 0xffffff,
-    // (armes de Maxance) l'acier BLEUI du pistolet 1911 (un noir qui tire sur le bleu), et le SABLE du fusil 416
+    // (armes d'Iron Wolf Studio) l'acier BLEUI du pistolet 1911 (un noir qui tire sur le bleu), et le SABLE du fusil 416
     bleui: 0x2f353f, sable: 0xb39a72, sableFonce: 0x9a825e,
   };
   let M = null, MS = null; // les matières de la belle version, et la matière unique des soldats de l'ordinateur
@@ -158,7 +158,7 @@ Tanks.Armes3D = (function () {
       fume: new THREE.MeshPhysicalMaterial({ color: 0x9a7a40, metalness: 0, roughness: 0.12, transparent: true, opacity: 0.42, depthWrite: false }),
       lumiere: new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }),
     };
-    // ✍️ (armes de Maxance : « Ceci sera notre gun. ») le BOIS QUADRILLÉ des plaquettes du pistolet 1911 : le même bois, et une
+    // ✍️ (armes d'Iron Wolf Studio : « Ceci sera notre gun. ») le BOIS QUADRILLÉ des plaquettes du pistolet 1911 : le même bois, et une
     // carte des bosses faite de petites PYRAMIDES en losange (le quadrillage taillé dans le bois pour que la main ne glisse pas)
     const losanges = toile(128, 128, (ctx, l, h) => {
       const img = ctx.createImageData(l, h), fr = (v) => v - Math.floor(v);
@@ -554,7 +554,7 @@ Tanks.Armes3D = (function () {
     ar: [[0.012, 0.0], [0.002, -0.028], [-0.004, -0.048], [-0.01, -0.06], [-0.012, -0.08], [-0.02, -0.102], [-0.046, -0.106], [-0.056, -0.096], [-0.047, -0.06], [-0.038, -0.024], [-0.046, -0.006], [-0.048, 0.0]],
     ak: [[0.008, 0.0], [-0.004, -0.045], [-0.016, -0.1], [-0.044, -0.102], [-0.04, -0.06], [-0.03, -0.018], [-0.038, 0.0]],
     droite: [[0.01, 0.0], [0.004, -0.05], [0.0, -0.098], [-0.034, -0.1], [-0.036, -0.05], [-0.032, -0.01], [-0.04, 0.0]],
-    // (armes de Maxance) la poignée « A2 » du M4 : penchée, avec la petite BOSSE devant, entre le majeur et l'annulaire
+    // (armes d'Iron Wolf Studio) la poignée « A2 » du M4 : penchée, avec la petite BOSSE devant, entre le majeur et l'annulaire
     a2: [[0.012, 0.0], [0.004, -0.026], [0.0, -0.04], [0.0035, -0.048], [-0.003, -0.058], [-0.008, -0.08], [-0.016, -0.1], [-0.042, -0.104], [-0.051, -0.094], [-0.044, -0.06], [-0.036, -0.024], [-0.044, -0.006], [-0.047, 0.0]],
   };
   function poignee(e, forme, coul, x, y, l, mat, z) {
@@ -580,7 +580,7 @@ Tanks.Armes3D = (function () {
   // ✍️ (armes réalistes) la CULASSE D'UN PISTOLET, découpée vue de dessus : n stries creusées de chaque côté (à partir de
   // x = xs, tous les « pas » m), les arêtes du dessus cassées par le biseau, et le NEZ qui plonge en pente vers l'avant (le
   // haut de l'avant est rabattu, comme sur une vraie culasse). xa → xb : de l'arrière à l'avant ; dl : la demi-largeur.
-  // (armes de Maxance) « avant » : une 2e série de stries tout devant ({ xs, n } : le 1911 en a aux deux bouts) ; « nez » : la
+  // (armes d'Iron Wolf Studio) « avant » : une 2e série de stries tout devant ({ xs, n } : le 1911 en a aux deux bouts) ; « nez » : la
   // pente du nez (0,28 par défaut ; le 1911 a un nez presque droit).
   function culasseStriee(e, xa, xb, y0, h, dl, coul, n, xs, pas, avant, nez) {
     const serie = (sg, x0, nn) => {
@@ -640,7 +640,7 @@ Tanks.Armes3D = (function () {
       const cx = x + (f.a || 0) * l * t + f.k * l * t * t, a = Math.atan((f.a || 0) + 2 * f.k * t);
       for (const s of [-1, 1]) e.boite(f.p * 0.9, 0.0035, 0.002, cx, y - l * t, (z || 0) + s * (f.w / 2 + 0.0008), "poly", 0x0e0e0e, 0, 0, a);
     }
-    // ✍️ (armes de Maxance : « genre M4 ») le chargeur « STANAG » en alu : 2 longues nervures EMBOUTIES de chaque côté (des
+    // ✍️ (armes d'Iron Wolf Studio : « genre M4 ») le chargeur « STANAG » en alu : 2 longues nervures EMBOUTIES de chaque côté (des
     // bandes un peu plus sombres, qui suivent la courbe), et la BOUCLE en caoutchouc sous la semelle (on tire dessus pour le
     // sortir de la poche, très vite)
     if (e.beau && f.nervures === "stanag") {
@@ -755,7 +755,7 @@ Tanks.Armes3D = (function () {
     }
     if (style === "aucun") return x0;
     // le cache-flamme « cage à oiseaux » (A2) : un petit tube avec des fentes
-    // (armes de Maxance) dans la belle version : un vrai cache-flamme tourné (l'écrou à 2 pans plats, le corps, le bord
+    // (armes d'Iron Wolf Studio) dans la belle version : un vrai cache-flamme tourné (l'écrou à 2 pans plats, le corps, le bord
     // chanfreiné, le trou du canon) ; ses fentes ne font pas le tour : en bas, il est FERMÉ (la poussière ne se soulève pas)
     if (e.beau) {
       e.tube(x0 - 0.002, x0 + 0.006, r * 1.45, r * 1.45, y, 0, "metal", 0x2c2e31, 6, Math.PI / 6); // l'écrou de blocage (6 pans)
@@ -1821,8 +1821,8 @@ Tanks.Armes3D = (function () {
   FABRIQUES.m870 = (e, p) => fusilPompe(e, p, false);
   FABRIQUES.m870dragon = (e, p) => fusilPompe(e, p, true);
 
-  // ================================================================== ✍️ LES ARMES DE MAXANCE (demande 128)
-  // Maxance a envoyé des photos d'armes : ✍️ « Ceci sera notre gun. » (un pistolet 1911), ✍️ « Ceci, le fusil d'assaut du
+  // ================================================================== ✍️ LES ARMES DE IRON WOLF STUDIO (demande 128)
+  // Iron Wolf Studio a envoyé des photos d'armes : ✍️ « Ceci sera notre gun. » (un pistolet 1911), ✍️ « Ceci, le fusil d'assaut du
   // médecin. » (un MP5), ✍️ « Ceci est l'arme bonus de l'ingénieur. » (un fusil 416 deux tons), ✍️ « Ce seront les fusils
   // d'assaut, genre M4, de l'Assaut. » et ✍️ « Aussi, un pistolet mitrailleur disponible dans toutes les classes. » (le
   // Scorpio). L'armurier les a refaits pièce par pièce d'après les FORMES des photos : aucune image n'est copiée, tout est
@@ -1863,7 +1863,7 @@ Tanks.Armes3D = (function () {
       e.tube(x - 0.018, x - 0.013, 0.0035, 0.0035, by + 0.0165, 0, "metal", coul, 8); // le tube des gaz qui entre dans le bloc
     }
   }
-  // LA LUNETTE DE COMBAT ×2,5 du fusil 416 (comme sur la photo de Maxance) : un corps forgé carré, un tube court au gros
+  // LA LUNETTE DE COMBAT ×2,5 du fusil 416 (comme sur la photo d'Iron Wolf Studio) : un corps forgé carré, un tube court au gros
   // objectif, la fibre optique orange qui allume le réticule en plein jour, les 2 molettes et les écrous de serrage.
   // Épaulé, on voit le réticule en CHEVRON du viseur ×2 (tableau.js).
   function lunetteCombat(e, x, y, z) {

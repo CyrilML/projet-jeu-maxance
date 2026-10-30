@@ -1,7 +1,7 @@
 # Demande n° 67 : le personnage a plus de vie
 
-> Statut : ✅ livrée le 09/10/2026 (version 8 du jeu de tanks), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 09/10/2026 (version 8 du jeu de tanks), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Je veux que le personnage ait plus de vie. »

@@ -1,6 +1,6 @@
 // ⬆️ LES AMÉLIORATIONS : l'atelier du menuisier
 //
-// Étape 13 : ✍️ l'idée de Maxance. Chaque bâtiment peut être amélioré, directement depuis son panneau :
+// Étape 13 : ✍️ l'idée d'Iron Wolf Studio. Chaque bâtiment peut être amélioré, directement depuis son panneau :
 // une hache aiguisée pour le bûcheron, une scie à cadre pour la scierie, une écurie pour l'entrepôt…
 // C'est rangé comme des données dans config.js (« ameliorations ») : 2 niveaux au plus par bâtiment,
 // chacun débloqué à un âge, payé tout de suite avec le stock.
@@ -101,7 +101,7 @@ Village.Ameliorations = (function () {
   }
 
   // Étape 40 : ✍️ « le 2e entrepôt s'améliore-t-il en même temps que le premier ? Sinon, il faut pouvoir l'améliorer ».
-  // Choix de Maxance : un bouton « Agrandir » dans CHAQUE entrepôt secondaire, avec son propre prix.
+  // Choix d'Iron Wolf Studio : un bouton « Agrandir » dans CHAQUE entrepôt secondaire, avec son propre prix.
   const D = C.depot;
   function prixAgrandirDepot(monde, b) {
     const f = Math.pow(D.facteurPrix, (b.niveau || 1) - 1), ressources = {};

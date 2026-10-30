@@ -1,6 +1,6 @@
 # Village · demande n° 2 : la première chaîne (bûcheron, forestier, scierie, carrière) et le jeu sur mobile
 
-> Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
+> Demandée par Iron Wolf Studio (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
 > questions. Statut : ✅ livrée le 05/10/2026, à valider.
 
 ## 🎯 Quoi
@@ -14,7 +14,7 @@
 Comprendre une chaîne de production : l'arbre devient un tronc, le tronc devient des planches, et les
 planches servent à construire. Si un maillon manque, tout s'arrête.
 
-## 🛠️ Ce que Claude a choisi (à valider ou à changer par Maxance)
+## 🛠️ Ce que Claude a choisi (à valider ou à changer par Iron Wolf Studio)
 - **L'entrepôt** est déjà posé à côté du feu de camp. C'est là que tout le stock est rangé.
 - 4 bâtiments à construire (1 case chacun) :
   - 🪓 **Bûcheron** : 3 planches. Il va couper l'arbre le plus proche (6 cases autour au maximum), 4 s,

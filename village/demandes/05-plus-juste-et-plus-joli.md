@@ -1,9 +1,9 @@
 # Village · demande n° 5 : moins de faim, des cabanes à la bonne place, et de plus jolies animations
 
-> Demandée par Maxance (via Cyril), après avoir testé l'étape 4 sur son téléphone.
+> Demandée par Iron Wolf Studio (via Cyril), après avoir testé l'étape 4 sur son téléphone.
 > Statut : ✅ livrée le 05/10/2026, à valider.
 
-## 🎯 Ce que Maxance a trouvé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a trouvé (ses mots)
 - La consommation de nourriture est trop importante : le chasseur et le pêcheur n'ont pas le temps de
   remplir les réserves. C'est trop restrictif.
 - Le pêcheur n'a pas l'air d'aller pêcher : il faut que sa cabane soit près de l'eau, et ne pas pouvoir la
@@ -21,7 +21,7 @@
 - Plus de pierres, de bois et de nourriture au départ (les routes coûtent cher).
 - Un menu plus joli sur mobile, avec moins de boutons toujours affichés, regroupés par ressource.
 
-## 🛠️ Ce que Claude a fait (à valider ou à changer par Maxance)
+## 🛠️ Ce que Claude a fait (à valider ou à changer par Iron Wolf Studio)
 - **Repas** : 1 par saison (2 min 30) au lieu de 2 minutes, pris directement à l'entrepôt (les porteurs
   n'apportent plus les repas dans les cabanes). ✍️ Le ventre vide ne bloque plus : on marche et on travaille
   **2 fois moins vite**, avec la bulle 🍽️ et un message. On ne quitte le village qu'après un an le ventre vide.

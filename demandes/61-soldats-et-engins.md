@@ -1,7 +1,7 @@
 # Demande n° 61 : sortir du tank, les soldats, le 4x4, l'hélico, l'avion de chasse
 
-> Statut : ✅ livrée le 06/10/2026 (version 2 du jeu de tanks), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 06/10/2026 (version 2 du jeu de tanks), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Je veux aussi que tu puisses sortir du tank. Voir monter dans un 4x4 avec une mitrailleuse. Il y a aussi un hélico

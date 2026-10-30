@@ -1,7 +1,7 @@
 # Demande n° 136 : une campagne pour chaque édition
 
 > Statut : ✅ livrée, édition par édition : ✅ Drones (tanks version 82) · ✅ Guerre froide (83) · ✅ 1916 (84) · ✅ 1944 (85) · ✅ Europe de l'Est (86) · ✅ Aliens (87) · ✅ Guerre civile (88). Les 7 éditions ont leur campagne.
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Je veux que chaque édition soit une campagne qui puisse revivre les moments actuels ou qui sont arrivés. »

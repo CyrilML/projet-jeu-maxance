@@ -1,6 +1,6 @@
 # Demande n° 27 : un monde sur mesure pour le héros de 2 blocs, et tirer caché derrière un bloc
 
-> Demandée par Maxance. Règles assez précises pour coder sans question. Statut : ✅ livrée le 30/09/2026, à valider.
+> Demandée par Iron Wolf Studio. Règles assez précises pour coder sans question. Statut : ✅ livrée le 30/09/2026, à valider.
 
 ## 🎯 Quoi
 - Maintenant que le personnage fait 2 blocs, tout le monde doit être adapté, fait sur mesure pour sa taille.

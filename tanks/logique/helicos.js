@@ -1,6 +1,6 @@
 // 🚁 LES HÉLICOS DE TRANSPORT : le pont aérien des deux camps (étape 73)
 //
-// ✍️ Maxance : « Un Chinook (le gros, à 2 rotors, rampe à l'arrière) et un Black Hawk (1 rotor, portes sur les côtés,
+// ✍️ Iron Wolf Studio : « Un Chinook (le gros, à 2 rotors, rampe à l'arrière) et un Black Hawk (1 rotor, portes sur les côtés,
 // plus rapide). Les deux camps en ont : moi je peux les piloter, et l'ordinateur en a dans chaque camp, qui amènent des
 // soldats au front. 10 soldats à bord, 2 mitrailleuses sur les côtés qui tirent toutes seules, et les soldats descendent
 // À LA CORDE. » Comme un bus aérien : il charge au camp, vole jusqu'à l'arrêt « front », s'arrête EN L'AIR, et ses

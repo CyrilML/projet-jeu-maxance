@@ -1,6 +1,6 @@
 # Demande n° 16 : musique et bruitages
 
-> Demandée par Maxance. Les règles marquées ✍️ ont été précisées par Maxance quand Claude lui a
+> Demandée par Iron Wolf Studio. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio quand Claude lui a
 > posé des questions (réponses : 1a 2b 3a 4abcd 5b). Statut : ✅ livrée le 29/09/2026, à valider.
 
 ## 🎯 Quoi

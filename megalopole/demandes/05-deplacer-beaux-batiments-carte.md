@@ -1,14 +1,14 @@
 # Mégalopole · demande n° 5 : déplacer, de plus beaux bâtiments, une carte plus riche
 
-> Demandée par Maxance (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 5 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 5 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Un maintien long sur téléphone doit donner la possibilité de déplacer les bâtiments. »
 - « Au niveau architecture des bâtiments, tu ne t'es pas foulé : fais ça mieux. »
 - « Également pour la map : il doit y avoir des arbres, des rivières… »
 
-## 🤔 Les choix de Maxance
+## 🤔 Les choix d'Iron Wolf Studio
 - **Déplacer : gratuit, pour les gros bâtiments.** Les maisons, magasins, usines et fermes ne se déplacent pas : ce
   sont les habitants qui les construisent.
 - **Architecture : riche et variée.**

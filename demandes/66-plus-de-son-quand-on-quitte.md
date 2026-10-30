@@ -1,6 +1,6 @@
 # Demande n° 66 : plus de son quand on quitte le site
 
-> Statut : ✅ livrée le 08/10/2026 (tanks version 7, rallye-raid version 2), à valider par Maxance.
+> Statut : ✅ livrée le 08/10/2026 (tanks version 7, rallye-raid version 2), à valider par Iron Wolf Studio.
 
 ## 🎯 Quoi
 « Quand je quitte le site, je ne veux plus qu'il y ait de son. »

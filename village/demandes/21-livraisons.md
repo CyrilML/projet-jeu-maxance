@@ -1,8 +1,8 @@
 # Village · demande n° 21 : les livraisons qui ne traînent plus
 
-> Demandée par Maxance (via Cyril) le 06/10/2026, en plusieurs messages. Statut : ✅ livrée le 06/10/2026 (étape 20 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 06/10/2026, en plusieurs messages. Statut : ✅ livrée le 06/10/2026 (étape 20 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « J'ai 294 livraisons en retard. Je pense que ça fait un peu trop et ça ralentit vraiment trop le jeu. »
 - « Peut-être augmenter le stockage de chaque cabane, qu'ils puissent stocker devant, car là, ça arrête la production. »
 - « Les ressources ne sont pas décomptées du stock visuel tout de suite. On ne comprend pas pourquoi on n'a pas les

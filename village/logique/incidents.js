@@ -1,6 +1,6 @@
 // 🎲 LES INCIDENTS : ce qui arrive aux maisons qui n'ont pas leurs services publics
 //
-// Étape 50 : ✍️ choix de Maxance : « des événements ». Ce module est le DÉ DE LA VILLE : toutes les 15 secondes, il lance
+// Étape 50 : ✍️ choix d'Iron Wolf Studio : « des événements ». Ce module est le DÉ DE LA VILLE : toutes les 15 secondes, il lance
 // un dé pour chaque service. Plus il y a de lits SANS ce service, plus l'incident a de chances d'arriver :
 //
 //   chance = taux × part des lits sans le service        (ex. 0,12 × 50 % = 6 % toutes les 15 s)

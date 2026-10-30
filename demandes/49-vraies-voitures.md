@@ -1,7 +1,7 @@
 # Demande n° 49 : les vraies voitures
 
-> Statut : ✅ livrée le 05/10/2026 (version 18 du circuit), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé. Les messages d'origine sont aussi dans `47-meteo-et-decor-realiste.md`.
+> Statut : ✅ livrée le 05/10/2026 (version 18 du circuit), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé. Les messages d'origine sont aussi dans `47-meteo-et-decor-realiste.md`.
 
 ## 🎯 Quoi
 « Je ne veux plus que les voitures soient genre style Bugatti, plus le style Porsche, plus le style Lamborghini. »

@@ -1,6 +1,6 @@
 // 🏜️ LES VÉHICULES : le carrossier du désert (étape 54, refaits à l'étape 70)
 //
-// ✍️ Maxance veut « des véhicules vraiment très réalistes » : des 4x4 de rallye-raid, des buggys, des motos de rallye
+// ✍️ Iron Wolf Studio veut « des véhicules vraiment très réalistes » : des 4x4 de rallye-raid, des buggys, des motos de rallye
 // et un camion, comme au Dakar. Chacun est construit avec ses VRAIES mesures (longueur, largeur, hauteur, empattement,
 // taille des roues).
 //

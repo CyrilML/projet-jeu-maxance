@@ -1,7 +1,7 @@
 # Demande n° 97 : l'armurerie refaite, plus d'armes et de pièces, et les déblocages
 
 > Statut : ✅ livrée (tanks version 40).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Refais le menu du jeu avec les armes. Ajoute des armes, des canons, des viseurs, des chargeurs et tout ça. Lance

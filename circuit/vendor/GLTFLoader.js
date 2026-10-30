@@ -1,6 +1,6 @@
 // 📦 LE LECTEUR DE MAQUETTES 3D (GLTFLoader, de Three.js r159, licence MIT)
 //
-// Étape 52 : Maxance et Cyril ont décidé d'utiliser de VRAIS modèles 3D de voitures, faits par des artistes.
+// Étape 52 : Iron Wolf Studio et Cyril ont décidé d'utiliser de VRAIS modèles 3D de voitures, faits par des artistes.
 // Ces modèles sont au format « glTF » (le « JPEG de la 3D »). Ce fichier sait les lire : il vient tel quel de
 // Three.js (examples/jsm/loaders/GLTFLoader.js, version r159), seulement transformé pour se charger avec une simple
 // balise <script> (comme three.min.js), sans serveur. Il ne contient aucune règle du jeu.

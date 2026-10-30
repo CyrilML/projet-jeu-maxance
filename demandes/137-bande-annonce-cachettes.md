@@ -1,7 +1,7 @@
 # Demande n° 137 : plus de cachettes, et une bande-annonce plus vivante
 
 > Statut : ✅ livrée (tanks version 81).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Sur la map et dans la pub, il n'y a pas assez de cachettes. L'infanterie avance sur un terrain découvert : les gens

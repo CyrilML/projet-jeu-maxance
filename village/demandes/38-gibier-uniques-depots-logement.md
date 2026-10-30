@@ -1,15 +1,15 @@
 # Village · demande n° 38 : du gibier qui revient, une seule université, des entrepôts 2 qu'on agrandit, un seul logement
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 40 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 40 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Le chasseur ne devrait jamais être en rupture de gibier : il doit se renouveler seul. »
 - « Une seule université peut être construite : une fois faite, elle est grisée dans les constructions. Idem pour le marché. »
 - « Le deuxième entrepôt s'améliore-t-il en même temps que le premier ? Si ce n'est pas le cas, il faut pouvoir l'améliorer. »
 - « Les huttes deviennent des maisons automatiquement : il n'y a pas 2 sortes d'habitation. »
 
-## ❓ Les questions posées, et les choix de Maxance
+## ❓ Les questions posées, et les choix d'Iron Wolf Studio
 - Le gibier ? → **des naissances partout** (plus il y a d'animaux, plus il en naît).
 - Les entrepôts secondaires ? → **un bouton « Agrandir » dans chaque entrepôt**.
 - Le logement ? → **un seul à construire (la hutte), qui devient maison quand les besoins sont remplis, comme avant**.

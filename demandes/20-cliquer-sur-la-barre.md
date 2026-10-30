@@ -1,9 +1,9 @@
 # Demande n° 20 : cliquer sur la barre pour prendre un objet
 
-> Demandée par Maxance. Règle assez précise pour coder sans question. Statut : ✅ livrée le 29/09/2026, à valider.
+> Demandée par Iron Wolf Studio. Règle assez précise pour coder sans question. Statut : ✅ livrée le 29/09/2026, à valider.
 
 ## 🎯 Quoi
-Cliquer sur un objet de la barre d'inventaire pour l'avoir en main. Par exemple, Maxance n'arrivait
+Cliquer sur un objet de la barre d'inventaire pour l'avoir en main. Par exemple, Iron Wolf Studio n'arrivait
 pas à prendre le Magnum : il clique sur le Magnum et il l'a dans la main.
 
 ## ⚙️ Comment (les règles)

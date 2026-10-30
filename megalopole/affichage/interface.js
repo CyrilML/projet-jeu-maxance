@@ -346,7 +346,7 @@ Megalopole.Interface = (function () {
     if (!z) h += "<p>" + (m.routeProche[i] >= 0 ? "🛣️ près d'une route" : "🚫 trop loin d'une route") + "</p>"; // (un terrain bâti a sa liste « pour grandir » juste au-dessus)
     return h;
   }
-  // 🏭 Étape 13 (✍️ Maxance : « quand je clique sur un incinérateur ou un traitement de l'eau, j'aimerais voir les capacités
+  // 🏭 Étape 13 (✍️ Iron Wolf Studio : « quand je clique sur un incinérateur ou un traitement de l'eau, j'aimerais voir les capacités
   // unitaire et totale, et la demande, pour savoir s'il faut en faire plus ») : une fiche par réseau que sert ce bâtiment
   //   CE BÂTIMENT : sa capacité, et ce qu'il fait en ce moment
   //   TOUTE LA VILLE : combien il y en a, la capacité totale, la demande
@@ -445,7 +445,7 @@ Megalopole.Interface = (function () {
     }
     return h;
   }
-  // 📊 Étape 8 (demande de Maxance) : les BESOINS de la ville face à ce qu'elle PRODUIT, ligne par ligne
+  // 📊 Étape 8 (demande d'Iron Wolf Studio) : les BESOINS de la ville face à ce qu'elle PRODUIT, ligne par ligne
   //   ✅ assez (100 % et plus) · ⚠️ presque (80 %) · ❌ pas assez — avec un conseil quand ça manque
   function bilanHTML(m) {
     const s = m.stats, b = m.bilan || { habitants: 0, actifs: 0, emplois: 0, nourris: 0, fabriques: 0, vendus: 0, couverts: {} }, H = b.habitants, el = m.reseaux.courant, ea = m.reseaux.eau;

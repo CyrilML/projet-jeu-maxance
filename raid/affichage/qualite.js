@@ -1,6 +1,6 @@
 // ⚙️ LA QUALITÉ : le régulateur du rallye (étape 72)
 //
-// ✍️ Maxance : « Ça rame trop, le jeu a des lags. Arrange ça. »
+// ✍️ Iron Wolf Studio : « Ça rame trop, le jeu a des lags. Arrange ça. »
 // Ce fichier, c'est comme le RÉGULATEUR de vitesse d'une voiture, mais pour les images : il chronomètre le temps
 // entre deux images (au moins 60 images par seconde = 16,7 ms chacune). Toutes les 2 s, il fait la moyenne :
 //   - plus de 20 ms par image (l'image saccade) → il BAISSE la qualité d'un cran (moins de points, moins d'ombres,

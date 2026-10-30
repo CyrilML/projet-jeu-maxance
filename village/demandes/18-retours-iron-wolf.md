@@ -1,8 +1,8 @@
-# Village · demande n° 18 : les retours de Maxance (routes, bâtiments, entrepôt, interface)
+# Village · demande n° 18 : les retours d'Iron Wolf Studio (routes, bâtiments, entrepôt, interface)
 
-> Demandée par Maxance (via Cyril) le 06/10/2026, en plusieurs messages. Statut : ✅ livrée le 06/10/2026 (étape 17 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 06/10/2026, en plusieurs messages. Statut : ✅ livrée le 06/10/2026 (étape 17 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Quand une recherche est terminée, il faut que l'évolution se fasse automatiquement : il vient de finir les routes
   pavées, il faut que cela change le design des routes. » « Pour upgrader les routes en pierre, il faudrait quelque chose
   de plus simple : là, on est obligé de tout resélectionner. »

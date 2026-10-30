@@ -72,7 +72,7 @@
 //  19 (étape 31) : pour le monument, ses paliers construits (palier) et ce qu'on a déjà donné (dons). Rien à convertir.
 //  20 (étape 32) : ✍️ « tu peux reset la partie que j'ai en cours pour tout recommencer ». Le jeu change beaucoup (une
 //                  carte de 256 × 256, les époques qui arrivent) : une partie plus ancienne n'est PAS convertie, on
-//                  recommence une nouvelle partie (décision de Maxance, une seule fois).
+//                  recommence une nouvelle partie (décision d'Iron Wolf Studio, une seule fois).
 //  21 (étape 38) : les grands gisements visibles dès le début (gisements : 1). Une partie plus ancienne garde ses mines :
 //                  au chargement, une mine qui n'a plus de filon autour d'elle reçoit une veine sous elle (comme si le
 //                  géologue était passé), pour qu'elle continue de creuser.
@@ -112,7 +112,7 @@ Village.Sauvegarde = (function () {
   let donnees = vide();
 
   function convertir(lues) {
-    // Étape 32 : une partie d'avant la version 20 : on recommence tout (choix de Maxance)
+    // Étape 32 : une partie d'avant la version 20 : on recommence tout (choix d'Iron Wolf Studio)
     if ((lues.version || 1) < 20) {
       const d = vide();
       d.cartesInventees = lues.cartesInventees || 0; d.casesChoisies = lues.casesChoisies || 0; d.batimentsConstruits = lues.batimentsConstruits || 0; d.tempsDeJeu = lues.tempsDeJeu || 0;

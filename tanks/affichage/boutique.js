@@ -9,7 +9,7 @@
 //     SEULEMENT pendant que la boutique est ouverte), une tenue, un tank ou un pack est peint avec ses vraies couleurs ;
 //     et le bouton : Acheter, Équiper, Retirer… ou « Trop cher » ;
 //   - acheter demande une CONFIRMATION (« Il te restera … BC »).
-// ⚠️ Le rayon Battle Coins montre les packs en euros voulus par Maxance, mais SANS VRAI ARGENT : le bouton explique qu'il
+// ⚠️ Le rayon Battle Coins montre les packs en euros voulus par Iron Wolf Studio, mais SANS VRAI ARGENT : le bouton explique qu'il
 // faut l'accord et l'aide d'un adulte (Cyril). Aucun paiement, aucune carte, aucun lien.
 // Clavier : ↑ ↓ changer de rayon · ← → changer d'article · Entrée acheter / équiper (puis Entrée pour confirmer) ·
 // Échap fermer la confirmation, puis revenir à l'accueil.

@@ -1,6 +1,6 @@
 // ⚙️ LE RÉGULATEUR DE QUALITÉ : le thermostat du jeu (étape 72)
 //
-// ✍️ Maxance : « Ça rame trop, le jeu a des lags. Arrange ça et fais en sorte qu'il n'y en ait plus. »
+// ✍️ Iron Wolf Studio : « Ça rame trop, le jeu a des lags. Arrange ça et fais en sorte qu'il n'y en ait plus. »
 // Un thermostat regarde la température et allume ou éteint le chauffage. Le régulateur, lui, regarde le TEMPS QUE DURE
 // CHAQUE IMAGE (pour un jeu fluide : 60 images par seconde, donc 16,7 millisecondes par image) :
 //   - toutes les 2 s, il fait la moyenne ;

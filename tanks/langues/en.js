@@ -2984,7 +2984,7 @@ Tanks.LANGUES.en = {
     "HUILE DU MOULIN": "MILL OIL", "THÉ ORIZA": "ORIZA TEA", "à la menthe fraîche": "with fresh mint", "SOUK AUX ÉPICES": "SPICE SOUK", "CAFÉ DE LA CITADELLE": "CITADEL CAFÉ",
     "BOULANGERIE": "BAKERY", "TISSUS & TAPIS": "FABRICS & RUGS", "PHARMACIE": "PHARMACY", "QUINCAILLERIE": "HARDWARE", "PÂTISSERIE AU MIEL": "HONEY PASTRIES", "ÉPICERIE": "GROCERY",
     "LIGNE 80": "LINE 80", "QUAI N : OK": "PLATF. N: OK", "QUAI S : ??": "PLATF. S: ??", "COM : 3/3": "COM: 3/3", "ÉNERGIE 92%": "POWER 92%",
-    "GARE MAXANCE": "MAXANCE STATION", "SORTIE ➜": "EXIT ➜", "HORS SERVICE": "OUT OF ORDER", "QG RAMPART": "RAMPART HQ", "QG DU FRONT": "FRONT HQ",
+    "GARE IRON WOLF STUDIO": "IRON WOLF STUDIO STATION", "SORTIE ➜": "EXIT ➜", "HORS SERVICE": "OUT OF ORDER", "QG RAMPART": "RAMPART HQ", "QG DU FRONT": "FRONT HQ",
     "base aérienne": "air base", "MINES": "MINES",
     "● ARMÉ": "● ARMED", "· 📡 BROUILLÉ !": "· 📡 JAMMED!", "Espace : FAIRE EXPLOSER · E : retirer les lunettes": "Space: DETONATE · E: take off the goggles",
     "🛸 DRONE FPV SUR TOI ! ({n} m) · bouge, ou brouille-le !": "🛸 FPV DRONE ON YOU! ({n} m) · move, or jam it!",

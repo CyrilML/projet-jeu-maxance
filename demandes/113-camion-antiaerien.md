@@ -1,7 +1,7 @@
 # Demande n° 113 : le camion antiaérien
 
 > Statut : ✅ livrée (tanks version 57).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Le canon antiaérien, il est mauvais. Je ne connais pas ça. Je veux que tu fasses un camion. Toi, tu pilotes le

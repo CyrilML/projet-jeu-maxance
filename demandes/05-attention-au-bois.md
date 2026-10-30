@@ -1,8 +1,8 @@
 # Demande n° 5 : attention au bois !
 
-> Demandée par Maxance après l'étape 4. Les règles marquées ✍️ ont été précisées par Maxance
+> Demandée par Iron Wolf Studio après l'étape 4. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio
 > quand Claude lui a posé des questions (réponses : 1A, 2A).
-> Statut : ✅ livrée le 25/09/2026, à valider par Maxance.
+> Statut : ✅ livrée le 25/09/2026, à valider par Iron Wolf Studio.
 
 ## 🎯 Quoi
 Quand j'atterris sur un petit cube (caisse) ou un bloc (muret), je réapparais au dernier drapeau.
@@ -19,9 +19,9 @@ de marchepied.
 - ✍️ Les toucher par le côté, c'est pareil : il faut les sauter entièrement.
 
 ## 👥 Qui fait quoi
-- **Maxance** : décide des règles, teste avec les rayons X, valide.
+- **Iron Wolf Studio** : décide des règles, teste avec les rayons X, valide.
 - **Claude** : code, explique ce qu'il a fait et pourquoi, met à jour le carnet.
-- **Cyril** : relit la demande avec Maxance et la transmet.
+- **Cyril** : relit la demande avec Iron Wolf Studio et la transmet.
 
 ## ✅ Critères de réussite
 - [ ] J'atterris sur une caisse ou un muret : je perds un cœur et je repars au dernier drapeau.

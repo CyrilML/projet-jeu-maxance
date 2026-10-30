@@ -1,13 +1,13 @@
 # Village · demande n° 34 : une route doit toujours pouvoir passer
 
-> Demandée par Maxance (via Cyril) le 09/10/2026. Statut : ✅ livrée le 09/10/2026 (étape 36 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 09/10/2026. Statut : ✅ livrée le 09/10/2026 (étape 36 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Il y a beaucoup d'endroits où les routes ne peuvent pas passer, car soit il y a des rochers, soit des arbres ou
   autres. C'est très, très embêtant. Évite ce genre de problème afin qu'il y ait toujours une route qui puisse passer. »
 
-## ❓ Les questions posées, et les choix de Maxance
+## ❓ Les questions posées, et les choix d'Iron Wolf Studio
 - Un arbre, un rocher ou une jeune pousse sur le passage ? → **dégagé, et ce qu'il donne va à l'entrepôt**.
 - Et l'eau ? → **des ponts partout** (même sur l'eau profonde), 2 planches par case.
 

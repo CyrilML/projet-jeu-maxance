@@ -1,16 +1,16 @@
 # Village · demande n° 37 : un entrepôt plus clair, la livraison directe, des gisements de pierre
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 39 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 39 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Dans l'entrepôt, on distingue mal ce qu'on va améliorer. »
 - « Est-il possible que le porteur ne retourne pas à l'entrepôt : par exemple, s'il porte du bois et que la scierie est en
   demande de bois, il va direct à la scierie ? »
 - « J'aimerais aussi que les carrières de pierre soient comme les filons, juste à certains endroits, et que le géologue
   trouve de nouvelles veines dans la carrière. »
 
-## ❓ Les questions posées, et les choix de Maxance
+## ❓ Les questions posées, et les choix d'Iron Wolf Studio
 - Les gisements de pierre ? → **10 gisements, les rochers restent un décor**.
 - La livraison directe ? → **vers les ateliers et les chantiers**.
 

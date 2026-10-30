@@ -1,6 +1,6 @@
 // 👆 LE PLACEMENT : l'aperçu avant de valider
 //
-// Étape 12 : ✍️ Maxance trouvait qu'on ne savait pas vraiment si le bâtiment allait être posé ou pas.
+// Étape 12 : ✍️ Iron Wolf Studio trouvait qu'on ne savait pas vraiment si le bâtiment allait être posé ou pas.
 // Maintenant, tout se fait en 2 temps, comme quand on essaie un meuble avant de le visser :
 //   1. un APERÇU : le bâtiment transparent (le « projet ») suit le doigt. Vert = possible, rouge = non.
 //      ✍️ 1B : le jeu propose aussi une route (transparente) jusqu'au réseau, qui arrive à la PORTE ;
@@ -14,7 +14,7 @@
 //
 // Étape 38 : ✍️ « le placement n'est pas très agréable, difficile de les aligner pour faire un village propre ».
 //   - le doigt tient le bâtiment par son MILIEU (avant : par un coin), et on voit toute sa place ;
-//   - l'AIMANT : près d'une route, le bâtiment se colle tout seul le long d'elle, bien aligné (choix de Maxance) ;
+//   - l'AIMANT : près d'une route, le bâtiment se colle tout seul le long d'elle, bien aligné (choix d'Iron Wolf Studio) ;
 //   - le peintre montre une grille et des lignes guides quand il est aligné avec ses voisins.
 //
 // Ce fichier ne dessine rien : il prépare monde.projet et monde.trace, que le peintre montre.

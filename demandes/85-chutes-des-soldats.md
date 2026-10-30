@@ -1,7 +1,7 @@
 # Demande n° 85 : des chutes réalistes quand un soldat est touché
 
-> Statut : ✅ livrée le 20/10/2026 (tanks version 25, les vraies poses), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 20/10/2026 (tanks version 25, les vraies poses), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Le personnage meurt : il tombe, mais il est droit. Fais ça autrement. Par exemple : une balle dans la tête, il

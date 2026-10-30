@@ -1,13 +1,13 @@
 # Mégalopole · demande n° 10 : les commerces, industries et fermes n'ont pas besoin d'école
 
-> Demandée par Maxance (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 10 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 10 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Les fermes, les industries et les commerces n'ont pas besoin de parc, d'école ou de santé pour évoluer. Juste
   pompiers et police, peut-être. »
 
-## 🤔 Le choix de Maxance
+## 🤔 Le choix d'Iron Wolf Studio
 - **Police + pompiers** ; les très gros niveaux demandent aussi un arrêt de bus, pour les employés.
 - Plus besoin d'un terrain cher 💎 non plus.
 

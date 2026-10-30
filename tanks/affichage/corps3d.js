@@ -1,6 +1,6 @@
 // 🗿 LE SCULPTEUR : le CORPS HUMAIN des soldats (demande 126)
 //
-// ✍️ Maxance : « Fais des maquettes de soldats. Je veux qu'ils ressemblent à des humains. »
+// ✍️ Iron Wolf Studio : « Fais des maquettes de soldats. Je veux qu'ils ressemblent à des humains. »
 // Avant, le soldat était un assemblage de « galets » et de tubes posés bout à bout (des blocs). Le sculpteur, lui,
 // fabrique le corps comme un vrai sculpteur fait une statue en fil de fer : on dessine des TRANCHES (des anneaux, comme
 // les tranches d'un saucisson), de la cheville jusqu'à la hanche, du poignet jusqu'à l'épaule, du bassin jusqu'au cou,

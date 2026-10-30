@@ -1,14 +1,14 @@
 # Village · demande n° 10 : un village plus beau, plus fin et plus vivant
 
-> Demandée par Maxance (via Cyril) le 06/10/2026. Statut : ✅ 1re partie livrée le 06/10/2026 (étape 9 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 06/10/2026. Statut : ✅ 1re partie livrée le 06/10/2026 (étape 9 du carnet du village), à valider.
 > La 2e partie (les bonshommes) sera l'étape 10.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 « Du côté design, j'aimerais que ce soit un peu plus travaillé, un peu plus joli à voir, un peu plus animé.
 Les maisons, les bonshommes, les matériaux, comment c'est transporté, etc. Il faut que ça vive un peu plus
 et que ça soit plus fin au niveau du détail. »
 
-## ❓ Les questions de Claude et les choix de Maxance
+## ❓ Les questions de Claude et les choix d'Iron Wolf Studio
 | Question | Choix |
 |---|---|
 | 1. Par quoi commencer ? | **C** : un peu de tout en 2 étapes. D'abord les bâtiments et les matériaux (étape 9), puis les bonshommes (étape 10) |

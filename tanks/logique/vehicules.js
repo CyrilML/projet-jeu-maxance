@@ -1,6 +1,6 @@
 // 🏍️ LES MOTOS, LES QUADS ET LES CAMIONS : le garage roulant des deux camps (étape 71)
 //
-// ✍️ Maxance : « Une moto cross (une Honda rouge), un quad, et un camion qui transporte 6 soldats. Pour moi ET pour
+// ✍️ Iron Wolf Studio : « Une moto cross (une Honda rouge), un quad, et un camion qui transporte 6 soldats. Pour moi ET pour
 // l'ordinateur, dans les deux camps. » Une seule « mécanique » pour les trois (comme un vélo) :
 //   - la VITESSE monte (accélérateur), descend (frein), ou baisse toute seule (on lâche tout) ; en montée, la pente freine ;
 //   - pour TOURNER, on braque la roue avant. Comme un vélo, on tourne d'autant plus vite qu'on roule vite :

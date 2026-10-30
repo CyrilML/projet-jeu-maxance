@@ -1,9 +1,9 @@
 # Village · demande n° 44 : un jeu de nouveau fluide
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 46 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 46 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Le jeu est beaucoup moins fluide, c'est beaucoup moins agréable à jouer. »
 
 ## 🔎 Ce que la mesure a montré (un grand village : 79 bâtiments, 29 porteurs, 160 animaux)

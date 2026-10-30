@@ -1,6 +1,6 @@
 # Demande n° 125 : « j'ai toujours une image, rien ne bouge »
 
-> Statut : ✅ réparée (tanks version 70), grâce à la photo du cadre rouge envoyée par Maxance.
+> Statut : ✅ réparée (tanks version 70), grâce à la photo du cadre rouge envoyée par Iron Wolf Studio.
 
 ## 🎯 Quoi
 ✍️ « Rien ne bouge. J'ai l'impression d'avoir une photo. » ✍️ « Je joue sur ordinateur… Fais en sorte que je puisse jouer. »
@@ -12,10 +12,10 @@
 - Si la carte graphique « puissante » refuse de démarrer, le jeu réessaie normalement.
 
 ## ✅ Critères
-- [ ] Maxance peut jouer sur son ordinateur.
+- [ ] Iron Wolf Studio peut jouer sur son ordinateur.
 
 ## 🐛 Le coupable (version 70)
-« Cannot read properties of undefined (reading 'nom') — sous-le-capot.js:872 » : la sauvegarde de Maxance a des
+« Cannot read properties of undefined (reading 'nom') — sous-le-capot.js:872 » : la sauvegarde d'Iron Wolf Studio a des
 points d'arme pour des armes Moderne (AR-4…) ; dans une autre édition, ces armes n'existent pas → le panneau sous le
 capot plantait → la boucle du jeu s'arrêtait (plus jamais d'image suivante) → l'écran figé. Nos tests partaient
 d'une sauvegarde neuve, d'où le bug invisible chez nous.

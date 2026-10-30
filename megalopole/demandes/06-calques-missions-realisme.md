@@ -1,15 +1,15 @@
 # Mégalopole · demande n° 6 : calques, missions, réalisme et couverture
 
-> Demandée par Maxance (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 6 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 6 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Les calques doivent laisser la ville, sinon on ne voit pas quels bâtiments sont concernés. »
 - « Les missions doivent apparaître dans une icône dédiée. »
 - « Les bâtiments restent très sommaires : tu peux faire mieux en termes de design et de réalité. »
 - « Quand on place un bâtiment, on devrait voir la zone qu'il couvre et la zone déjà couverte par ceux existants. »
 
-## 🤔 Le choix de Maxance
+## 🤔 Le choix d'Iron Wolf Studio
 - **Réalisme : la 2D très détaillée** (on garde la vue, pas de vraie 3D).
 
 ## 📏 Les règles

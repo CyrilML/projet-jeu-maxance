@@ -1,13 +1,13 @@
 # Mégalopole · demande n° 17 : améliorer les bâtiments, et des recherches payantes
 
-> Demandée par Maxance (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 17 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 17 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Peut-être offrir la possibilité d'améliorer les bâtiments pour augmenter la production ou le service. Et faire
   des recherches payantes pour améliorer l'industrie, afin qu'elle soit moins polluante. »
 
-## 🤔 Les choix de Maxance
+## 🤔 Les choix d'Iron Wolf Studio
 - **3 niveaux ★** pour chaque centrale, station d'eau, bâtiment de déchets et service.
 - **4 familles de recherches** : industrie propre, énergie, eau et déchets, agriculture.
 

@@ -1,6 +1,6 @@
 # Demande n° 29 : le monde à la taille du héros (et Entrée, et le son qui s'endort)
 
-> Demandée par Maxance. Les règles marquées ✍️ ont été précisées par Maxance quand Claude lui a
+> Demandée par Iron Wolf Studio. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio quand Claude lui a
 > posé des questions (réponse : « toutes les options »). Statut : ✅ livrée le 04/10/2026, à valider.
 
 ## 🎯 Quoi

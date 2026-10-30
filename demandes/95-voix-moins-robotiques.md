@@ -1,6 +1,6 @@
 # Demande n° 95 : des voix moins robotiques
 
-> Statut : ✅ livrée le 21/10/2026 (tanks version 37), à valider par Maxance.
+> Statut : ✅ livrée le 21/10/2026 (tanks version 37), à valider par Iron Wolf Studio.
 
 ## 🎯 Quoi
 ✍️ « Améliore les voix. Ne les fais pas si robotiques, fais des voix plus réalistes. »

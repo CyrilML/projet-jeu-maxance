@@ -1,7 +1,7 @@
 # Demande n° 130 : refaire la bande-annonce avec les nouvelles armes et les nouveaux skins
 
-> Statut : ✅ livrée (tanks version 75) + vidéo MP4 v2 envoyée à Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée (tanks version 75) + vidéo MP4 v2 envoyée à Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Pour la bande-annonce, je veux que tu la refasses avec les nouvelles armes et les nouveaux skins. Tu la feras quand

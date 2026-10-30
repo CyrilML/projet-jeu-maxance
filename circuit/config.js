@@ -46,14 +46,14 @@ Circuit.CONFIG = {
   },
 
   // Étape 36 : LE GARAGE. 5 voitures, chacune avec sa forme, sa couleur, sa vitesse et son bruit.
-  // ✍️ Choix de Maxance : les plus chères vont plus vite ; prix 0, 50, 100, 200, 400 pièces ;
+  // ✍️ Choix d'Iron Wolf Studio : les plus chères vont plus vite ; prix 0, 50, 100, 200, 400 pièces ;
   // la 1re reste telle quelle, puis une « Lamborghini », une « Porsche », une « Bugatti » et une Formule 1 au son aigu.
   // vitesseMax en m/s (× 3,6 = km/h) ; acceleration en m/s² ; son = fréquences du moteur en Hz (ralenti → à fond).
   voitures: [
     { id: "classique", nom: "La Peugeot 208 rouge", modele: "classique", prix: 0, vitesseMax: 41.7, acceleration: 14,
       couleurs: [[0.9, 0.15, 0.1], [0.65, 0.08, 0.06]], son: { ralenti: 38, max: 90 } },
     // Étape 49 : ✍️ les voitures « style » sont remplacées par de VRAIES voitures : la Porsche 911, la Lamborghini
-    // Aventador et la Bugatti Chiron (choix de Maxance). Elles prennent la place (et le prix) des anciennes.
+    // Aventador et la Bugatti Chiron (choix d'Iron Wolf Studio). Elles prennent la place (et le prix) des anciennes.
     { id: "porsche911", sportive: true, nom: "La Porsche 911", modele: "porsche911", prix: 50, vitesseMax: 44.4, acceleration: 15,
       couleurs: [[0.78, 0.8, 0.84], [0.12, 0.12, 0.14]], son: { ralenti: 62, max: 175 } }, // 6 cylindres à plat : un son rauque et aigu
     { id: "aventador", sportive: true, nom: "La Lamborghini Aventador", modele: "aventador", prix: 100, vitesseMax: 47.2, acceleration: 16,
@@ -250,7 +250,7 @@ Circuit.CONFIG = {
     graine: 23,
     // Étape 50 : le nom des rues (on le voit sur les plaques aux carrefours, et en haut à gauche de l'écran).
     nomsRues: {
-      estOuest: ["avenue Maxance", "rue des Pilotes", "boulevard du Turbo", "rue des Nitros", "avenue des Champions", "rue du Klaxon", "rue des Collines", "avenue de la Rivière"],
+      estOuest: ["avenue Iron Wolf Studio", "rue des Pilotes", "boulevard du Turbo", "rue des Nitros", "avenue des Champions", "rue du Klaxon", "rue des Collines", "avenue de la Rivière"],
       nordSud: ["rue Cyril", "boulevard de la Police", "rue des Pizzas", "avenue des Avions", "rue du Garage", "boulevard de la Mer", "rue des Forêts", "avenue du Pont"],
     },
     limiteVitesse: 50, // km/h : ce qui est écrit sur les panneaux (ce n'est qu'un panneau : la police ne flashe pas !)
@@ -287,7 +287,7 @@ Circuit.CONFIG = {
   //   unique = on ne l'achète qu'une fois ; sinon on peut en acheter autant qu'on veut.
   magasins: {
     distancePorte: 4, // m : il faut être à moins de 4 m de la porte pour entrer
-    noms: ["le magasin de sport", "le bazar de Maxance", "la boutique du coin", "le garage peinture"],
+    noms: ["le magasin de sport", "le bazar d'Iron Wolf Studio", "la boutique du coin", "le garage peinture"],
     articles: [
       { id: "baskets", nom: "Les baskets de course", icone: "👟", prix: 30, unique: true, texte: "Ton personnage court 2 fois plus vite" },
       { id: "casquette", nom: "La casquette dorée", icone: "🧢", prix: 15, unique: true, texte: "Une casquette qui brille comme de l'or" },
@@ -493,7 +493,7 @@ Circuit.CONFIG = {
 
   // Étape 34 : la voiture adverse, conduite par l'ordinateur.
   adversaire: {
-    vitesseMax: 38.9, // m/s = 140 km/h (✍️ choix de Maxance : « moyen ») ; toi, tu vas jusqu'à 150 km/h
+    vitesseMax: 38.9, // m/s = 140 km/h (✍️ choix d'Iron Wolf Studio : « moyen ») ; toi, tu vas jusqu'à 150 km/h
     acceleration: 12, // m/s² : elle démarre un peu moins vite que toi
     voie: 3.5, // m : elle roule à 3,5 m du milieu de la route (côté intérieur au départ)
     regardDevant: 18, // m : le pilote vise un point 18 m devant lui sur sa voie
@@ -515,7 +515,7 @@ Circuit.CONFIG = {
   // Étape 35 : les sons (fabriqués par le synthétiseur, aucun fichier). Fréquences en hertz (Hz).
   sons: {
     volumeGeneral: 0.5,
-    // ✍️ Choix de Maxance : un gros moteur grave. Plus on va vite, plus le son monte.
+    // ✍️ Choix d'Iron Wolf Studio : un gros moteur grave. Plus on va vite, plus le son monte.
     moteur: { frequenceRalenti: 38, frequenceMax: 90, volumeAccelere: 0.55, volumeLache: 0.3 },
     // ✍️ On entend la voiture bleue selon la distance : fort tout près, plus rien à 70 m.
     adversaire: { volume: 0.45, distanceMax: 70 },
@@ -540,7 +540,7 @@ Circuit.CONFIG = {
     ],
   },
 
-  // Étape 57 : ✍️ la TAILLE des véhicules (1 = la vraie taille). Maxance les trouvait trop petits.
+  // Étape 57 : ✍️ la TAILLE des véhicules (1 = la vraie taille). Iron Wolf Studio les trouvait trop petits.
   taille: { voitures: 1.15, moto: 1.5, crf: 1.4, trial: 1.4 }, // (étape 71 : les motos tout-terrain, agrandies elles aussi)
   // Étape 71 : ✍️ les motos PENCHENT dans les virages (seulement le dessin : ça ne change pas comment elles roulent).
   // inclinaison = l'angle (radians) quand on tourne à fond assez vite ; vitesse = à partir de quelle vitesse (m/s) on penche à fond.

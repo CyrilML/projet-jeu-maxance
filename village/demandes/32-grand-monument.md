@@ -1,12 +1,12 @@
 # Village · demande n° 32 : le grand monument de la ville
 
-> Demandée par Maxance (via Cyril) le 08/10/2026 (dans la même demande que la n° 29). Statut : ✅ livrée le 08/10/2026
+> Demandée par Iron Wolf Studio (via Cyril) le 08/10/2026 (dans la même demande que la n° 29). Statut : ✅ livrée le 08/10/2026
 > (étape 31 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Je suis arrivé à la ville, mais les améliorations ne sont pas encore disponibles. »
 
-## ❓ La question posée, et le choix de Maxance
+## ❓ La question posée, et le choix d'Iron Wolf Studio
 - Par quoi commencer à la ville ? → **un grand monument** (les fêtes et le port viendront après).
 
 ## 📏 Les règles (dans `village/config.js` : `monument`)

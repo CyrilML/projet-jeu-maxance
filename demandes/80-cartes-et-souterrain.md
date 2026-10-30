@@ -1,7 +1,7 @@
 # Demande n° 80 : de nouvelles cartes, et d'abord le souterrain
 
 > Statut : ✅ le souterrain est livré (tanks version 19) ; les 4 autres cartes aussi, en version rapide (demande n° 81, tanks version 20).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Des nouvelles maps : en pleine ville ; une ville en ruine, détruite ; le désert ; un village en désert ; un souterrain

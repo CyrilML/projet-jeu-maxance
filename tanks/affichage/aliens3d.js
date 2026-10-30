@@ -12,7 +12,7 @@
 //   - l'ÉCLAIR BLEU d'un bouclier qui arrête une balle, et la POUSSIÈRE DE LUMIÈRE d'un alien vaincu (pas de sang) ;
 //   - les modèles : le TRIPODE (Tanks.Chars3D), la SOUCOUPE (Tanks.Avions3D), le FUSIL À PLASMA et le FUSIL À RAILS
 //     (Tanks.Armes3D).
-// Pour que le jeu ne rame pas (✍️ Maxance déteste le lag) : pas une seule vraie lumière (seulement des matières qui
+// Pour que le jeu ne rame pas (✍️ Iron Wolf Studio déteste le lag) : pas une seule vraie lumière (seulement des matières qui
 // « brillent » toutes seules) ; les cristaux soudés par carré de 200 m (dessinés seulement près de toi) ; les rampants,
 // les éclairs et la poussière : 3 dessins en tout, avec un nombre maximum.
 // Comme tout l'affichage, il lit le monde et ne le modifie jamais.

@@ -1,6 +1,6 @@
 // 🐔 LA VIE DU VILLAGE : les figurants
 //
-// Étape 9 : ✍️ Maxance voulait un village qui VIT. Les figurants, c'est comme au cinéma : des personnages
+// Étape 9 : ✍️ Iron Wolf Studio voulait un village qui VIT. Les figurants, c'est comme au cinéma : des personnages
 // qui ne jouent pas dans l'histoire, mais qui rendent la scène vivante. Ici :
 //   - des poules autour des huttes et des maisons (elles picorent) ;
 //   - des enfants qui jouent à chat autour du feu de camp (1 enfant pour 4 habitants) ;

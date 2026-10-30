@@ -1,6 +1,6 @@
 # Demande n° 6 : pseudo, arrivée et classement
 
-> Demandée par Maxance. Les règles marquées ✍️ ont été précisées par Maxance quand Claude lui a
+> Demandée par Iron Wolf Studio. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio quand Claude lui a
 > posé des questions (réponses : 1B, 2B, 3 « A et B », 4A).
 > Statut : ✅ livrée le 25/09/2026 avec un classement sur l'ordinateur ; ⏳ le classement EN LIGNE
 > attend que Cyril choisisse et crée une base de données sur Internet.
@@ -24,9 +24,9 @@ Pour se comparer aux autres et avoir envie de battre les meilleurs.
   à la fin, Espace pour rejouer, C pour changer de pseudo ; « Max » et « max » sont le même joueur.
 
 ## 👥 Qui fait quoi
-- **Maxance** : décide des règles, teste avec les rayons X, valide.
+- **Iron Wolf Studio** : décide des règles, teste avec les rayons X, valide.
 - **Claude** : code, explique ce qu'il a fait et pourquoi, met à jour le carnet.
-- **Cyril** : relit la demande avec Maxance, la transmet, et choisit le service pour le classement en ligne.
+- **Cyril** : relit la demande avec Iron Wolf Studio, la transmet, et choisit le service pour le classement en ligne.
 
 ## ✅ Critères de réussite
 - [ ] Avant de jouer, j'écris mon pseudo ; sans pseudo, je ne peux pas commencer.

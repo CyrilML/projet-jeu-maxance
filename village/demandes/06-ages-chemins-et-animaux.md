@@ -1,8 +1,8 @@
 # Village · demande n° 6 : les âges, les chemins de terre, plus d'animaux
 
-> Demandée par Maxance (via Cyril), après avoir testé l'étape 5. Statut : ✅ livrée le 05/10/2026, à valider.
+> Demandée par Iron Wolf Studio (via Cyril), après avoir testé l'étape 5. Statut : ✅ livrée le 05/10/2026, à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - Les poissons qui sortent de l'eau sautent à l'envers.
 - Une plus grande variété d'animaux.
 - ✍️ À l'âge de pierre, les routes sont en terre, donc **gratuites**. Mais on se déplace moins vite sur
@@ -15,7 +15,7 @@
 - Le géologue ne peut pas être disponible à un âge aussi faible.
 - Les planches ressemblent à des cubes de bois.
 
-## 🛠️ Ce que Claude a fait (à valider ou à changer par Maxance)
+## 🛠️ Ce que Claude a fait (à valider ou à changer par Iron Wolf Studio)
 - **Poissons** : dessinés tête en avant, ventre clair en bas, et ils suivent la courbe du saut.
 - **Animaux** : 5 espèces, chacune dans son habitat : 🦌 cerf (4 🍖) et 🐗 sanglier (3 🍖) en forêt,
   🐇 lapin (1 🍖) dans l'herbe, 🦆 canard (1 🍖) au bord de l'eau, 🐐 bouquetin (2 🍖) dans les rochers.

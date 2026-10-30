@@ -1,7 +1,7 @@
 # Demande n° 83 : refaire la musique, seulement au menu
 
-> Statut : ✅ livrée le 20/10/2026 (tanks version 22), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 20/10/2026 (tanks version 22), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Ça ne va pas du tout. Refais la musique dans un mix un peu Battlefield 6 et Pirates des Caraïbes, et je veux que ce
@@ -18,4 +18,4 @@ soit seulement quand j'accède au jeu, pas pendant la partie. »
 ## ✅ Critères de réussite
 - [ ] Tanks « version 22 ».
 - [ ] Au menu : la musique joue. Au combat : elle se tait.
-- [ ] Le style plaît à Maxance (sinon : dire ce qui ne va pas : trop lent, trop aigu, trop fort…).
+- [ ] Le style plaît à Iron Wolf Studio (sinon : dire ce qui ne va pas : trop lent, trop aigu, trop fort…).

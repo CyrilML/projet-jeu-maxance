@@ -1,7 +1,7 @@
 // 🎛️ LES RÉGLAGES DU JEU
 //
 // Tous les nombres qui changent la « sensation » du jeu sont rangés ici, et nulle part ailleurs.
-// Quand Maxance demande « le saut doit être plus haut » ou « les obstacles arrivent trop vite »,
+// Quand Iron Wolf Studio demande « le saut doit être plus haut » ou « les obstacles arrivent trop vite »,
 // c'est ce fichier qu'on modifie : pas besoin de fouiller dans tout le code.
 //
 // Unités : les distances sont en pixels (px), les durées en secondes (s),
@@ -99,7 +99,7 @@ Jeu.CONFIG = {
 
   // Toucher un muret (étape 8) : le héros devient un petit squelette qui danse, puis réapparaît.
   squelette: {
-    duree: 3, // le squelette danse pendant 3 s avant le retour au dernier drapeau (5 s au début, trop long pour Maxance)
+    duree: 3, // le squelette danse pendant 3 s avant le retour au dernier drapeau (5 s au début, trop long pour Iron Wolf Studio)
     pasDeDanse: 6, // nombre de mouvements de danse par seconde
   },
 
@@ -146,7 +146,7 @@ Jeu.CONFIG = {
     epee: { nom: "épée", degats: 5, usure: 20, attente: 0 }, // l'épée de départ (étapes 11 et 12)
     epeeDoree: { nom: "épée dorée", degats: 7, usure: 40, attente: 0 }, // plus stylée, et elle s'use 2 fois moins vite
     hache: { nom: "petite hache", degats: 8, usure: 30, attente: 0.8, casseLesCaisses: true }, // forte mais lente
-    // Les armes à feu. Balles INFINIES, sans chargeur (étape 23 : demandé par Maxance).
+    // Les armes à feu. Balles INFINIES, sans chargeur (étape 23 : demandé par Iron Wolf Studio).
     // `recharge` : pour les armes lentes, une petite animation de rechargement (en s) qui se joue PENDANT
     // l'attente entre deux tirs, juste pour le style : elle ne ralentit jamais le tir.
     // `eclair` : la couleur de la flamme du tir ; `douille` : la couleur des douilles (null = pas de douille).

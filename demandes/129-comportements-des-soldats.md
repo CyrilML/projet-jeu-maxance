@@ -1,12 +1,12 @@
 # Demande n° 129 : refaire les comportements des soldats
 
 > Statut : ✅ livrée (tanks version 74).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Fais tout d'un coup. Et aussi, je veux que tu refasses les comportements des soldats. »
 
-## ⚙️ Comment — choix de Claude (Maxance ne veut pas de questions)
+## ⚙️ Comment — choix de Claude (Iron Wolf Studio ne veut pas de questions)
 - Des gestes VIVANTS, moins « robot » : respirer et regarder autour au repos, vraie animation de rechargement (sortir le
   chargeur, en mettre un neuf), sprint, se mettre à couvert accroupi ou couché, se pencher pour tirer depuis un coin,
   sursauter quand ils sont touchés, signes de la main, se retourner vers un bruit.

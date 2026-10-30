@@ -1,7 +1,7 @@
 # Demande n° 86 : des chutes encore plus réalistes
 
-> Statut : ✅ livrée le 20/10/2026 (tanks version 26), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 20/10/2026 (tanks version 26), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « En 5 minutes, un réalisme total, des choses vraiment très réalistes. »

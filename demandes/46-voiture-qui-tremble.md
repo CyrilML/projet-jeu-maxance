@@ -1,6 +1,6 @@
 # Demande n° 46 : la voiture tremble dans les montées et les descentes
 
-> Signalée par Maxance (via Cyril). Statut : ✅ corrigée le 05/10/2026, à valider.
+> Signalée par Iron Wolf Studio (via Cyril). Statut : ✅ corrigée le 05/10/2026, à valider.
 
 ## 🐞 Le problème
 « Sur chacun des jeux, à chaque fois que je prends une montée ou une descente, la voiture tremble. »

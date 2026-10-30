@@ -1,7 +1,7 @@
 # Demande n° 76 : refaire les avions et le Tigre
 
-> Statut : ✅ livrée le 16/10/2026 (tanks version 15), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 16/10/2026 (tanks version 15), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Refais aussi les avions et le tigre. »
@@ -9,7 +9,7 @@
 ## ⚙️ Comment (les règles)
 - ✍️ Dans les tanks, redessiner **tous les avions** : le Rafale (ton avion de chasse), les chasseurs ennemis, l'avion de
   transport des parachutistes, et aussi le drone. Et **l'hélicoptère Tigre**.
-- Choix de Claude (comme aux étapes 74 et 75, à valider par Maxance) : **le plus beau possible**, avec de vraies formes
+- Choix de Claude (comme aux étapes 74 et 75, à valider par Iron Wolf Studio) : **le plus beau possible**, avec de vraies formes
   arrondies, cockpit vitré, pilote, armes sous les ailes, peinture et usure, et une version simple de loin.
 - Les règles du jeu (vitesses, armes, vie) ne changent pas.
 

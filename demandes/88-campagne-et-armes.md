@@ -1,14 +1,14 @@
 # Demande n° 88 : la campagne et toutes les armes, style Battlefield
 
-> Statut : ✅ livrée le 20/10/2026 (tanks version 28), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 20/10/2026 (tanks version 28), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Refais l'histoire style Battlefield. Refais toutes les armes. Refais les histoires, refais la campagne, refais
 tout. Ne me pose pas de questions. Fais tout normalement, pas en 5 minutes, un vrai travail. Dans le style de
 Battlefield. »
 
-## ⚙️ Comment (les règles) — choix de Claude (Maxance a dit : pas de questions)
+## ⚙️ Comment (les règles) — choix de Claude (Iron Wolf Studio a dit : pas de questions)
 - **Une campagne** (le mode histoire), comme les campagnes de Battlefield :
   - une histoire de guerre inventée (sans vrais pays nommés comme ennemis), racontée en **chapitres** ;
   - chaque chapitre a un **briefing** (le texte de la mission, les objectifs, la carte), des **objectifs** en jeu

@@ -10,7 +10,7 @@ Un jeu en 3D : une voiture sur un circuit. Le circuit doit être le plus simple 
 Découvrir la 3D : comment un écran plat peut montrer un monde avec de la profondeur.
 
 ## ⚙️ Comment (les règles)
-Choisi par Claude (la demande disait « le plus simple ») : à valider ou à changer par Maxance.
+Choisi par Claude (la demande disait « le plus simple ») : à valider ou à changer par Iron Wolf Studio.
 - Le circuit est un ovale, comme un stade : 2 lignes droites de 120 m reliées par 2 virages
   de 40 m de rayon. La route fait 14 m de large, avec des bordures rouges et blanches.
 - La voiture : ↑ (ou Z) accélère, ↓ (ou S) freine puis recule, ← → (ou Q D) tournent.

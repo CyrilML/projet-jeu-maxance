@@ -1,8 +1,8 @@
 # Village · demande n° 22 : des porteurs plus calmes, l'université en pages, des mines plus loin
 
-> Demandée par Maxance (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 21 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 21 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Les bonshommes qui travaillent sur la route, qui chargent, vont beaucoup trop vite. C'est très désagréable à l'œil. »
 - « Dans l'université, je ne peux pas descendre pour voir toutes les améliorations, et il faudrait enlever celles qui
   sont déjà faites. »

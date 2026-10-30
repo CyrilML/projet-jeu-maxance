@@ -10,7 +10,7 @@
 //   - les FILETS DE CAMOUFLAGE tendus au-dessus des tranchées de tir (blancs et gris, troués comme un vrai filet) ;
 //   - sur la grande image du sol : les CHAMPS DE TOURNESOLS coupés (les rangs de tiges sèches qui sortent de la neige) et
 //     les TRACES DE CHENILLES (la terre noire retournée par les chars).
-// Pour que le jeu ne rame pas (✍️ Maxance déteste le lag) : chaque sorte d'objet est SOUDÉE en un seul dessin par rangée
+// Pour que le jeu ne rame pas (✍️ Iron Wolf Studio déteste le lag) : chaque sorte d'objet est SOUDÉE en un seul dessin par rangée
 // ou par groupe (les dents d'une rangée : 1 dessin ; tous les panneaux : 2 dessins ; tous les filets : 1 dessin).
 // Comme tout l'affichage, il lit le monde et ne le modifie jamais.
 

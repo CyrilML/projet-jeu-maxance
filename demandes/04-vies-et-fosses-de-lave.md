@@ -1,8 +1,8 @@
 # Demande n° 4 : 5 vies et fosses de lave
 
-> Demandée par Maxance après avoir testé l'étape 3. Les règles marquées ✍️ ont été précisées par
-> Maxance quand Claude lui a posé des questions (réponses : 1A, 2A, 3B).
-> Statut : ✅ livrée le 24/09/2026, à valider par Maxance.
+> Demandée par Iron Wolf Studio après avoir testé l'étape 3. Les règles marquées ✍️ ont été précisées par
+> Iron Wolf Studio quand Claude lui a posé des questions (réponses : 1A, 2A, 3B).
+> Statut : ✅ livrée le 24/09/2026, à valider par Iron Wolf Studio.
 
 ## 🎯 Quoi
 Je veux avoir 5 vies, et des fosses de lave.
@@ -24,9 +24,9 @@ Pour ne pas tout recommencer dès la première erreur, et pour avoir plus de dan
 - Une fosse de lave tous les 30 blocs.
 
 ## 👥 Qui fait quoi
-- **Maxance** : décide des règles, teste avec les rayons X, valide.
+- **Iron Wolf Studio** : décide des règles, teste avec les rayons X, valide.
 - **Claude** : code, explique ce qu'il a fait et pourquoi, met à jour le carnet.
-- **Cyril** : relit la demande avec Maxance et la transmet.
+- **Cyril** : relit la demande avec Iron Wolf Studio et la transmet.
 
 ## ✅ Critères de réussite
 - [ ] Je vois 5 cœurs en haut de l'écran.

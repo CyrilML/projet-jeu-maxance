@@ -27,7 +27,7 @@
 //     le retrouver après le rechargement de la page). Une ancienne version garde tout, avec le chapitre 1 ouvert.
 //   12 (demande 90) : + campagne.difficulte (le niveau choisi : "tres-facile", "facile", "normal", "difficile" ou
 //     "tres-difficile") et, pour chaque chapitre réussi, « niveaux » = les meilleures étoiles à chaque difficulté. Une
-//     ancienne version garde tout, avec le niveau « facile » (✍️ Maxance trouvait la campagne trop dure).
+//     ancienne version garde tout, avec le niveau « facile » (✍️ Iron Wolf Studio trouvait la campagne trop dure).
 //   13 (demande 97 : l'armurerie et les déblocages) : + progression (« xp » = tes points d'expérience, « armes » = les points
 //     de chaque arme, « cadeaux » = ce qui est débloqué quoi qu'il arrive, « parties » = tes batailles terminées) et
 //     equipement.pistolet (le pistolet choisi). Les pièces changent de place : l'ancien « manche » devient la « poignée »

@@ -1,6 +1,6 @@
 # Demande n° 47 : un décor ultra réaliste et la météo
 
-> Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
+> Demandée par Iron Wolf Studio (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
 > questions. Statut : étapes 47, 48, 49 et 50 ✅ livrées le 05/10/2026, à valider.
 
 ## 🎯 Quoi
@@ -21,9 +21,9 @@ pluie, soleil, neige, brouillard, orage, blizzard, vent.
 - Étape 47 : la météo (7 temps, qui changent tout seuls et changent la conduite), le ciel et la lumière.
 - Étape 48 ✅ : la nature (herbe en touffes qui plie au vent, fleurs, rochers, feuillus/sapins/bouleaux) et l'eau
   (mer et étangs qui ondulent, vagues plus grosses avec le vent). Les plantes blanchissent sous la neige.
-- Étape 49 ✅ (faite en premier, à la demande de Maxance) : les voitures (détails dans `demandes/49-vraies-voitures.md`).
+- Étape 49 ✅ (faite en premier, à la demande d'Iron Wolf Studio) : les voitures (détails dans `demandes/49-vraies-voitures.md`).
 - Étape 50 ✅ : les routes et la ville (détails dans `demandes/50-routes-et-ville.md`).
-- Les voitures (étape 49). ✍️ Nouveau message de Maxance : PLUS de voitures « genre Bugatti, Porsche, Lamborghini ».
+- Les voitures (étape 49). ✍️ Nouveau message d'Iron Wolf Studio : PLUS de voitures « genre Bugatti, Porsche, Lamborghini ».
   À la place, des véhicules plus réalistes :
   - une citadine beaucoup plus réaliste ;
   - un SUV un peu du genre d'une Peugeot 508 ;
@@ -33,7 +33,7 @@ pluie, soleil, neige, brouillard, orage, blizzard, vent.
     un peu sur les bosses ;
   - un quad plus réaliste ;
   - la voiture basse genre Honda.
-  - ✍️ Réponse de Maxance (05/10/2026) : les voitures « style » Bugatti, Porsche et Lamborghini du garage, on les
+  - ✍️ Réponse d'Iron Wolf Studio (05/10/2026) : les voitures « style » Bugatti, Porsche et Lamborghini du garage, on les
     ENLÈVE. À la place : une VRAIE Bugatti, une VRAIE Porsche et une VRAIE Lamborghini (des modèles qui
     ressemblent le plus possible aux vraies).
   - ✍️ Modèles choisis : Bugatti CHIRON, Porsche 911, Lamborghini AVENTADOR.

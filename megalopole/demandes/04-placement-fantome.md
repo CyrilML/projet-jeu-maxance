@@ -1,14 +1,14 @@
 # Mégalopole · demande n° 4 : mieux placer les bâtiments et les zones
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 4 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 4 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Le placement des bâtiments, ça va pas du tout. Et pour les zones, peut-être travailler par carré de plusieurs
   cases pour faciliter les choses. »
 - « Il faudrait peut-être standardiser, non ? »
 
-## 🤔 Les choix de Maxance
+## 🤔 Les choix d'Iron Wolf Studio
 - **Fantôme + ✅** pour les bâtiments : un toucher montre le bâtiment en transparent, collé à la route la plus proche.
   On retouche ailleurs pour le déplacer, puis ✅.
 - **Standardiser** : les zones marchent pareil, par **lot carré de 3 × 3 cases**.

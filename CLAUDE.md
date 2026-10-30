@@ -1,4 +1,4 @@
-# Projet de jeu de Maxance : consignes pour Claude
+# Projet de jeu d'Iron Wolf Studio : consignes pour Claude
 
 Ce dépôt est un projet **totalement indépendant** : il n'a aucun lien avec ScorAsin ni avec la
 plateforme Mission Liberté 2.0. Ne jamais y importer de code venant de ces projets, et ne jamais
@@ -9,16 +9,16 @@ est en ligne environ une minute après. Ne pousse sur `main` que du code testé.
 
 ## Les rôles
 
-- **Maxance** est le directeur du jeu. Il ne code pas : il décide, décrit ses demandes avec la
+- **Iron Wolf Studio** est le directeur du jeu. Il ne code pas : il décide, décrit ses demandes avec la
   fiche (`demandes/modele.md`), teste et valide. Il est jeune : parle-lui simplement, en
   français, en le tutoyant.
 - **Claude** est le développeur : il écrit tout le code et explique ce qu'il fait.
-- **Cyril** est le producteur : il transmet les demandes et accompagne Maxance.
+- **Cyril** est le producteur : il transmet les demandes et accompagne Iron Wolf Studio.
 
 ## Quand une demande arrive
 
 1. Relis la demande. Si une règle, un nombre ou un critère manque, **pose la question** avant de
-   coder, en proposant 2 ou 3 choix concrets. Apprendre à Maxance à préciser fait partie du but.
+   coder, en proposant 2 ou 3 choix concrets. Apprendre à Iron Wolf Studio à préciser fait partie du but.
 2. Enregistre la demande dans `demandes/NN-titre.md` (même format que `modele.md`).
 3. Code en respectant l'architecture ci-dessous.
 4. Mets à jour le carnet (`index.html`) :
@@ -26,7 +26,7 @@ est en ligne environ une minute après. Ne pousse sur `main` que du code testé.
      internes expliquées simplement (schéma si utile), des missions d'exploration et un quiz ;
    - le statut dans la feuille de route ;
    - une entrée dans le journal de bord, avec les zones « ce que j'ai appris » et « mes idées ».
-5. Rappelle à Maxance, en fin de réponse : ce qui a été fait, comment le tester (touches,
+5. Rappelle à Iron Wolf Studio, en fin de réponse : ce qui a été fait, comment le tester (touches,
    critères à cocher), et ce qu'il va apprendre en explorant.
 
 ## Architecture du jeu (`jeu/`)
@@ -45,26 +45,26 @@ Les autres jeux suivent les mêmes familles et les mêmes règles, chacun dans s
 `Raid`, qui réutilise `circuit/vendor/three.min.js`) et `tanks/` (la bataille de tanks 3D de l'étape 60, objet global
 `Tanks`, qui réutilise aussi `circuit/vendor/three.min.js`).
 
-**La Mégalopole est un projet à part** (décidé par Maxance, comme le village) : `megalopole/` (le jeu de ville façon SimCity,
+**La Mégalopole est un projet à part** (décidé par Iron Wolf Studio, comme le village) : `megalopole/` (le jeu de ville façon SimCity,
 objet global `Megalopole`), avec son propre carnet (`megalopole/carnet.html`), ses propres demandes
 (`megalopole/demandes/NN-titre.md`), sa propre numérotation d'étapes (1, 2, 3…), son `config.js`, sa version et sa
 sauvegarde (`megalopole/donnees/sauvegarde.js`, clé `megalopole:sauvegarde` ; chaque changement de format augmente
 `VERSION` et convertit l'ancienne). `index.html` (racine) garde seulement un lien vers la Mégalopole et son carnet.
 
-**Le village est un projet à part** (décidé par Maxance) : il a son propre carnet (`village/carnet.html`),
+**Le village est un projet à part** (décidé par Iron Wolf Studio) : il a son propre carnet (`village/carnet.html`),
 ses propres demandes (`village/demandes/NN-titre.md`) et sa propre numérotation d'étapes (1, 2, 3…),
 séparée de celle du carnet principal. Une demande pour le village se range et s'explique là, pas dans
 `demandes/` ni dans `index.html` (qui garde seulement un lien vers le village et son carnet).
 Le contenu du village (âges, recherches, missions, boutique) est rangé comme des données dans
-`village/config.js`. ✍️ Maxance tient à garder sa partie : ne jamais casser la sauvegarde
+`village/config.js`. ✍️ Iron Wolf Studio tient à garder sa partie : ne jamais casser la sauvegarde
 (`village/donnees/sauvegarde.js`) ; chaque changement de format augmente `VERSION` et convertit l'ancienne.
 ✍️ Public du village (décision n° 8) : **surtout les adultes**. Style dessin animé conservé, mais une gestion
-plus riche (chiffres, statistiques, marché, objectifs longs). Le carnet reste écrit pour Maxance.
+plus riche (chiffres, statistiques, marché, objectifs longs). Le carnet reste écrit pour Iron Wolf Studio.
 
 Règles :
 - Pas d'étape de compilation, pas de dépendances : de simples fichiers `<script>` chargés dans
   l'ordre, pour que le jeu s'ouvre d'un double-clic. Chaque module s'attache à l'objet global `Jeu`.
-  Exception décidée par Maxance et Cyril (étape 38) : le jeu de course `circuit/` utilise Three.js
+  Exception décidée par Iron Wolf Studio et Cyril (étape 38) : le jeu de course `circuit/` utilise Three.js
   pour un rendu réaliste. Il est rangé dans `circuit/vendor/three.min.js` (version r159, la dernière
   qui se charge avec une simple balise `<script>`, licence MIT) : pas de téléchargement, pas de serveur.
   Aucune autre dépendance.
@@ -72,12 +72,12 @@ Règles :
   connaître l'autre. Chaque nouvel événement doit avoir son message dans le journal
   (`affichage/sous-le-capot.js`).
 - Toute nouvelle mécanique doit être **visible sous le capot** : dans les rayons X, l'état en
-  direct, le journal ou la base de données. C'est ce qui permet à Maxance d'apprendre.
+  direct, le journal ou la base de données. C'est ce qui permet à Iron Wolf Studio d'apprendre.
 - Noms de variables et commentaires en français, avec un en-tête de fichier qui explique son
   rôle avec une image simple (« les oreilles », « le peintre »…).
 - Si le format de la sauvegarde change, augmente `version` et convertis les anciennes données.
 - À chaque livraison, augmente `version` dans `jeu/config.js` ET le `?v=…` de tous les `<script>` de
-  `jeu/index.html` (même numéro). Sinon le navigateur de Maxance peut mélanger des fichiers anciens
+  `jeu/index.html` (même numéro). Sinon le navigateur d'Iron Wolf Studio peut mélanger des fichiers anciens
   (gardés 10 minutes en cache par GitHub Pages) et nouveaux.
 - Teste dans un navigateur (Playwright est disponible) avant de livrer : pas d'erreur console,
   critères de la demande vérifiés.

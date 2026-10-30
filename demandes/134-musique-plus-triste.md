@@ -1,7 +1,7 @@
 # Demande n° 134 : la musique de la bande-annonce, plus lente, plus triste, plus grave
 
-> Statut : ✅ livrée (tanks version 79) + le nouveau morceau en fichier audio envoyé à Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée (tanks version 79) + le nouveau morceau en fichier audio envoyé à Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Fais la musique plus lente et plus triste, surtout plus marquante et plus grave. »

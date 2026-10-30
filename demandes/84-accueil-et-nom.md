@@ -1,14 +1,14 @@
 # Demande n° 84 : la page d'accueil, une musique plus épique, et le nom du jeu
 
-> Statut : ✅ livrée le 20/10/2026 (tanks version 23), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 20/10/2026 (tanks version 23), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « C'est mieux, mais rends-le plus épique. Fais une page d'accueil pour quand tu accèdes au jeu, et c'est là que la
 musique se jouera. » Puis : ✍️ « Le jeu s'appellera **The Last Battlefield**. »
 
 ## ⚙️ Comment (les règles)
-- Une **page d'accueil** quand on ouvre le jeu : le titre « THE LAST BATTLEFIELD », « un jeu de Maxance », le champ de
+- Une **page d'accueil** quand on ouvre le jeu : le titre « THE LAST BATTLEFIELD », « un jeu d'Iron Wolf Studio », le champ de
   bataille qui tourne derrière, un bouton ▶ JOUER (ou Entrée) qui ouvre le menu de l'équipement, et un lien vers le carnet.
 - Le navigateur interdit la musique avant un premier geste : on t'invite d'abord à cliquer ou à appuyer sur une touche.
 - ✍️ La musique joue **seulement sur la page d'accueil**, et se tait quand on clique sur JOUER.

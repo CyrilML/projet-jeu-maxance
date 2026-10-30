@@ -1,6 +1,6 @@
 // 🏛️ LES GRANDS CHANTIERS : les monuments de chaque âge
 //
-// Étape 31 : ✍️ « je suis arrivé à la ville, mais il n'y a encore rien de nouveau » → choix de Maxance : un grand
+// Étape 31 : ✍️ « je suis arrivé à la ville, mais il n'y a encore rien de nouveau » → choix d'Iron Wolf Studio : un grand
 // monument. Le Grand Beffroi se construit en 4 PALIERS (config.js : « monument »). Chaque palier demande beaucoup de
 // ressources, de TOUTES les chaînes (la pierre, le métal, le tissu, les bijoux, la nourriture…) : c'est l'objectif
 // long de la ville. On DONNE ce qu'on a quand on veut (même un peu) ; quand tout le palier est donné, il est construit,

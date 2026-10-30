@@ -74,7 +74,7 @@ Jeu.Inventaire = (function () {
 
   // Les règles communes aux deux façons de poser : renvoie la raison du refus, ou null si c'est permis.
   // Étape 28 : plus de limite en hauteur (on construit au-dessus du monde) ni de portée pour la souris.
-  // Étape 28 : plus AUCUNE limite de construction (demande de Maxance) : briques illimitées, pas de
+  // Étape 28 : plus AUCUNE limite de construction (demande d'Iron Wolf Studio) : briques illimitées, pas de
   // limite de hauteur ni de distance, et on peut construire près d'un dragon. Il faut juste une case vide.
   function refusCommun(monde, colonne, ligne) {
     if (ligne >= C.carte.lignes) return "c'est sous le monde";

@@ -6,7 +6,7 @@
 //   - entre les deux : de l'HERBE, prête à recevoir des routes et des zones.
 // La carte ne change presque jamais (seuls les arbres disparaissent) : c'est le décor de la ville.
 //
-// Étape 5 (demande de Maxance : « il doit y avoir des arbres, des rivières… ») : une NOUVELLE carte (version 2) :
+// Étape 5 (demande d'Iron Wolf Studio : « il doit y avoir des arbres, des rivières… ») : une NOUVELLE carte (version 2) :
 //   - la MER 🌊 sur un des 4 bords, avec une longue PLAGE 🏖️ de sable (le terrain y vaut plus cher) ;
 //   - une grande RIVIÈRE qui descend jusqu'à la mer en serpentant, et un AFFLUENT qui la rejoint ;
 //   - des LACS dans les creux ;

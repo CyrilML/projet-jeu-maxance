@@ -7,7 +7,7 @@
 //   - sans outil ✋ : il fait GLISSER la carte ;
 //   - avec un outil (route, zone, démolir…) : il TRACE (une route, un rectangle de zone).
 //   Le clic droit fait toujours glisser, et la molette zoome.
-// Au DOIGT (téléphone, tablette) : 1 doigt fait TOUJOURS glisser la carte, même avec un outil (demande de Maxance :
+// Au DOIGT (téléphone, tablette) : 1 doigt fait TOUJOURS glisser la carte, même avec un outil (demande d'Iron Wolf Studio :
 // sinon on pose des routes n'importe où). Un petit TOUCHER (le doigt ne bouge presque pas) est un « clic » : la
 // logique s'en sert pour poser le départ puis l'arrivée d'un tracé, qu'on confirme avec ✅. Deux doigts : on pince.
 // Étape 5 : un MAINTIEN LONG (le doigt reste ½ seconde sans bouger) est encore autre chose : « souris.maintien ».

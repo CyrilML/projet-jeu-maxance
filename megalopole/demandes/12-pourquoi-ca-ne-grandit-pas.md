@@ -1,9 +1,9 @@
 # Mégalopole · demande n° 12 : « pas d'eau, pas d'électricité », et les fermes et usines qui ne grandissent pas
 
-> Signalé par Maxance (via Cyril) le 11/10/2026. Statut : ✅ corrigé le 11/10/2026 (étape 12 du carnet de la
+> Signalé par Iron Wolf Studio (via Cyril) le 11/10/2026. Statut : ✅ corrigé le 11/10/2026 (étape 12 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a dit (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a dit (ses mots)
 - « Certaines zones me disent qu'il n'y a pas d'eau ou d'électricité alors que j'en produis assez. »
 - « Certaines zones de fermes et d'industrie ne grandissent pas. On dirait qu'elles demandent encore des parcs et autres,
   alors qu'on a décidé qu'elles n'en avaient pas besoin. »

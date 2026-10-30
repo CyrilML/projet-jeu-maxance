@@ -1,6 +1,6 @@
 # Demande n° 91 : le plein écran
 
-> Statut : ✅ livrée le 21/10/2026 (tanks version 32), corrigée en version 33 (K ne marchait pas sur l’accueil, le menu et la campagne), à valider par Maxance.
+> Statut : ✅ livrée le 21/10/2026 (tanks version 32), corrigée en version 33 (K ne marchait pas sur l’accueil, le menu et la campagne), à valider par Iron Wolf Studio.
 
 ## 🎯 Quoi
 ✍️ « Fais en sorte, en 2 minutes, que tu puisses mettre le jeu en plein écran. »

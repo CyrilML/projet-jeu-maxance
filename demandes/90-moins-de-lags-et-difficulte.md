@@ -1,7 +1,7 @@
 # Demande n° 90 : le jeu rame, et la campagne est trop difficile
 
-> Statut : ✅ lags allégés (tanks version 30) et 5 difficultés (tanks version 31), livrés le 21/10/2026, à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ lags allégés (tanks version 30) et 5 difficultés (tanks version 31), livrés le 21/10/2026, à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « La campagne est beaucoup trop compliquée. Fais-le changer pour que tu puisses choisir entre un mode très facile,

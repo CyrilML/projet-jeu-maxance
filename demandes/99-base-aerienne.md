@@ -1,7 +1,7 @@
 # Demande n° 99 : une base aérienne dans chaque camp, et des pistes qu'on peut détruire
 
 > Statut : ✅ livrée (tanks version 42).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « À part dans le souterrain, une base aérienne avec une piste d'atterrissage, des hangars et des zones pour pouvoir

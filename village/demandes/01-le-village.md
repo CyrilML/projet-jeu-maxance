@@ -1,6 +1,6 @@
 # Village · demande n° 1 : un nouveau jeu, le village (gestion, sans combat)
 
-> Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
+> Demandée par Iron Wolf Studio (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
 > questions. Gros projet découpé en étapes. Statut : étape 1 (la carte et la caméra) ✅ livrée le
 > 05/10/2026, à valider.
 
@@ -23,7 +23,7 @@ maillon de la chaîne manque, tout s'arrête.
 - ✍️ On peut perdre : les habitants qui ont faim trop longtemps partent, et il y a des saisons
   (en hiver, les champs ne poussent pas : il faut faire des réserves).
 - ✍️ La carte : une nouvelle carte au hasard à chaque partie (forêts, rivières, montagnes, rochers).
-  (Maxance a écrit « 5Q » : Claude a compris « 5A », la touche Q est juste sous le A sur un clavier
+  (Iron Wolf Studio a écrit « 5Q » : Claude a compris « 5A », la touche Q est juste sous le A sur un clavier
   français. À corriger si ce n'est pas ça.)
 
 ## 🧱 Les étapes prévues

@@ -1,7 +1,7 @@
 # Demande n° 9 : un muret tous les 50 blocs
 
-> Demandée par Maxance. La règle marquée ✍️ a été précisée par Maxance quand Claude lui a posé
-> la question (réponse : 1A). Statut : ✅ livrée le 25/09/2026, à valider par Maxance.
+> Demandée par Iron Wolf Studio. La règle marquée ✍️ a été précisée par Iron Wolf Studio quand Claude lui a posé
+> la question (réponse : 1A). Statut : ✅ livrée le 25/09/2026, à valider par Iron Wolf Studio.
 
 ## 🎯 Quoi
 Les murets à pics rouges sont à environ 50 blocs de distance les uns des autres.

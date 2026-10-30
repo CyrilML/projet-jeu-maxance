@@ -1,13 +1,13 @@
 # Village · demande n° 42 : des ateliers qui stockent plus, des porteurs qui portent plus
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 44 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 44 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Il faudrait que les ateliers puissent stocker plus de ressources pour fabriquer, et stocker plus de produits fabriqués. »
 - « Le porteur doit aussi en porter plus, surtout au fil des améliorations. »
 
-## ❓ Les questions posées, et les choix de Maxance
+## ❓ Les questions posées, et les choix d'Iron Wolf Studio
 - La réserve d'un atelier ? → **6 de chaque ingrédient, puis + 3 par amélioration ⭐** (jusqu'à 12).
 - Devant la porte ? → **16 produits, puis + 8 par amélioration ⭐** (jusqu'à 32).
 - Les porteurs ? → **4 au départ, et plus à chaque recherche** : × 1,5 « Brouettes », × 2 « Ânes et charrettes »,

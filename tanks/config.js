@@ -19,7 +19,7 @@
 // (étape 71) ✍️ « Une carte 3 fois plus grande, une moto cross, un quad et un camion qui transporte 6 soldats. »
 // Voir « monde » (2 100 m), « engins » (moto, quad, camion) et « vehicules » (ceux que conduit l'ordinateur).
 //
-// ✍️ Maxance a choisi : un nouveau jeu à part, une BATAILLE D'ÉQUIPES (toi + 3 alliés bleus contre 4 ennemis rouges),
+// ✍️ Iron Wolf Studio a choisi : un nouveau jeu à part, une BATAILLE D'ÉQUIPES (toi + 3 alliés bleus contre 4 ennemis rouges),
 // dans une campagne avec un village en ruines, avec de vrais tanks modernes (Leclerc, Abrams, Leopard 2), et
 // 4 obus pour détruire un tank. Unités : m, s, m/s, radians.
 
@@ -27,8 +27,8 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 88,
-  // ✍️ (étape 131) Le nom du studio qui signe le jeu, choisi par Maxance (pour ne pas montrer son vrai nom).
+  version: 89,
+  // ✍️ (étape 131) Le nom du studio qui signe le jeu, choisi par Iron Wolf Studio (pour ne pas montrer son vrai nom).
   studio: "Iron Wolf Studio",
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
   // contraste, saturation (1 = normal ; 0,8 = couleurs un peu éteintes), luminosité, teinte (la force du bleu-vert dans
@@ -1013,7 +1013,7 @@ Tanks.CONFIG = {
       regarde: { ecart: 1.1, periode: [1.8, 3.5] },
     } },
   // ✍️ (livre de demandes n° 14) LES PLAQUETTES (les plaques de blindage du gilet, comme dans Warzone). Seulement pour les
-  // classes qui ont « plaques: true » (le Médecin, décidé par Maxance).
+  // classes qui ont « plaques: true » (le Médecin, décidé par Iron Wolf Studio).
   //   gilet : combien de plaques le gilet porte ; solidite : la vie d'une plaque (une balle d'ennemi = 1, ta vie = 20) :
   //   un coup abîme d'abord la plaque du dessus, le reste passe à la suivante, puis à ta vie (une plaque cassée ne protège
   //   plus) ; explosion : × les dégâts d'une explosion que les plaques arrêtent (le souffle passe en partie à côté) ;
@@ -1410,7 +1410,7 @@ Tanks.CONFIG = {
       // l'épaisseur de la pièce, « largeur » × sa plus petite taille vue de côté, et « max » m
       volume: { epaisseur: 0.34, largeur: 0.16, max: 0.011 },
       lissage: 46, // ° : deux facettes qui font moins que cet angle sont adoucies (un arrondi), au-delà l'angle reste vif
-      quadrillage: 37, // (armes de Maxance) × la répétition des petits losanges taillés dans les plaquettes en bois du 1911 (plus = plus fin)
+      quadrillage: 37, // (armes d'Iron Wolf Studio) × la répétition des petits losanges taillés dans les plaquettes en bois du 1911 (plus = plus fin)
     },
     // LA VUE À LA PREMIÈRE PERSONNE (C) : l'arme a sa propre petite caméra, dessinée PAR-DESSUS le monde (elle ne rentre
     // jamais dans un mur). Positions en m devant l'œil : x à droite, y en haut, z vers toi (−0,3 = 30 cm devant).
@@ -3105,7 +3105,7 @@ Tanks.CONFIG.cinematiques.bandeAnnonce = "bande-annonce";
 // ================================================================== livre de demandes n° 7, 22 et 28 : 🛒 LA BOUTIQUE
 // ✍️ « Faire un menu avec des achats, par exemple un pack de skins de véhicules avec des avancements de jeu. »
 // ✍️ « Développer les battle coins, la monnaie du jeu. » ✍️ « Faire une boutique. »
-// ⚠️ PAS DE VRAI ARGENT : les packs en euros sont seulement AFFICHÉS (comme Maxance les a voulus, demande 100). Le bouton
+// ⚠️ PAS DE VRAI ARGENT : les packs en euros sont seulement AFFICHÉS (comme Iron Wolf Studio les a voulus, demande 100). Le bouton
 // dit qu'un achat avec de vrais euros demande l'accord et l'aide d'un adulte (Cyril) : il ne donne JAMAIS de Battle Coins.
 // Tout s'achète avec les BATTLE COINS (BC) gagnés en jouant (logique/boutique.js : le marchand).
 //   gains : les BC gagnés en BATAILLE LIBRE (et dans le souterrain) : par ennemi abattu, par victoire, par niveau de
@@ -3263,7 +3263,7 @@ Object.assign(Tanks.CONFIG.radio.bavard, {
 
 // ================================================================== livre de demandes n° 26 : ✍️ « FAIRE UN RÉALISME ABSURDE »
 // (= un réalisme extrême.) Des détails comme dans la vraie vie, qu'on REMARQUE en jouant, mais sans ralentir le jeu
-// (✍️ Maxance déteste le lag) : chacun se règle ici, et on peut l'éteindre (actif: false). Déjà là avant (demande 92) :
+// (✍️ Iron Wolf Studio déteste le lag) : chacun se règle ici, et on peut l'éteindre (actif: false). Déjà là avant (demande 92) :
 // le « crac » des balles qui frôlent, le son qui arrive en retard de loin (340 m/s), la fumée au bout du canon, la
 // poussière soulevée par le coup de canon d'un tank, le vent qui pousse la fumée.
 Tanks.CONFIG.realismeAbsurde = {
@@ -3346,7 +3346,7 @@ Tanks.CONFIG.vitesse = {
 };
 
 // ================================================================== demande 128 : 🎭 LES SKINS DES 4 CLASSES
-// ✍️ Maxance : « Les personnages ressemblent à des jouets. » Il a envoyé une image pour chaque classe. On ne copie pas ces
+// ✍️ Iron Wolf Studio : « Les personnages ressemblent à des jouets. » Il a envoyé une image pour chaque classe. On ne copie pas ces
 // images (elles appartiennent à leurs auteurs) : on refait leur STYLE en 3D, pièce par pièce (affichage/engins3d.js), avec
 // des tissus peints par le tailleur (affichage/uniformes.js). Les drapeaux des images deviennent les insignes du jeu.
 //   editions : les éditions où les skins remplacent l'uniforme (les autres gardent leurs uniformes d'époque) ;

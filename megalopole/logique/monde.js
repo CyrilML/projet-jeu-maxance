@@ -139,7 +139,7 @@ Megalopole.Monde = (function () {
     monde.fantome = Co.aimanter(monde, monde.outil, { colonne: b.colonne + (b.taille >> 1), ligne: b.ligne + (b.taille >> 1) }); monde.fantome.doigt = true;
     radio.emettre("batiment-souleve", { nom: B.nom, emoji: B.emoji, colonne: b.colonne, ligne: b.ligne });
   }
-  // Le reposer : à sa nouvelle place (ou à l'ancienne, si on annule). C'est gratuit (choix de Maxance).
+  // Le reposer : à sa nouvelle place (ou à l'ancienne, si on annule). C'est gratuit (choix d'Iron Wolf Studio).
   function reposer(monde, c, l) {
     const e = monde.enMain;
     if (!e) return;

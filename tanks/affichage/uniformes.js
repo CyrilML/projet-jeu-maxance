@@ -1,6 +1,6 @@
 // 🧵 LES UNIFORMES : le tailleur des soldats (demande 92, « le réalisme total »)
 //
-// ✍️ Maxance : « Absolument tout doit être très réaliste : le soldat… » Le tailleur fabrique (une seule fois, au
+// ✍️ Iron Wolf Studio : « Absolument tout doit être très réaliste : le soldat… » Le tailleur fabrique (une seule fois, au
 // premier soldat) les TISSUS du soldat, peints point par point avec du « bruit » (comme les nuages : des taches au
 // hasard, mais douces) :
 //   - le CAMOUFLAGE de chaque équipe : ✍️ les Bleus en « woodland » (les taches vertes, brunes et noires des forêts),

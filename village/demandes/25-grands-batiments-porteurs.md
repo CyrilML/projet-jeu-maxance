@@ -1,8 +1,8 @@
 # Village · demande n° 25 : des bâtiments sur 2 × 2 cases, une grande carte, des porteurs qui suivent
 
-> Demandée par Maxance (via Cyril) le 07/10/2026. Statut : ✅ livrée le 07/10/2026 (étape 24 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 07/10/2026. Statut : ✅ livrée le 07/10/2026 (étape 24 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Toujours un problème avec le nombre de porteurs : même avec un deuxième entrepôt, cela ne suffit pas. Il faut trouver
   une parade. »
 - « Dans l'entrepôt, un message me dit de construire un 2e entrepôt alors que je l'ai déjà. »

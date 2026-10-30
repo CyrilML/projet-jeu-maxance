@@ -1,9 +1,9 @@
 # Mégalopole · demande n° 8 : une interface plus légère, et le menu des besoins
 
-> Demandée par Maxance (via Cyril) le 11/10/2026, avec une capture d'écran de son téléphone. Statut : ✅ livrée le
+> Demandée par Iron Wolf Studio (via Cyril) le 11/10/2026, avec une capture d'écran de son téléphone. Statut : ✅ livrée le
 > 11/10/2026 (étape 8 du carnet de la Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Les icônes prennent trop de place. »
 - « Le calque devrait être une icône, comme sur Google Maps. »
 - « Le bouton avec pause, play, avance rapide : un seul bouton qui, au clic, change de pause à play, puis avance rapide… »

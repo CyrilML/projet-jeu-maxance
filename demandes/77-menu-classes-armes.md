@@ -1,7 +1,7 @@
 # Demande n° 77 : le menu avant la bataille, les classes, les armes et leurs modifications
 
-> Statut : ✅ livrée en version simple le 20/10/2026 (tanks version 16), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée en version simple le 20/10/2026 (tanks version 16), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Je veux que tu fasses un menu avant de jouer et de choisir son véhicule, pour pouvoir choisir sa classe […] Pouvoir
@@ -21,7 +21,7 @@ l'arme. »
 - ✍️ Les 7 modifications : **le viseur, le canon, le chargeur, le manche (la poignée), l'assistance à la visée, la
   lampe, le laser**. Elles ont de **vrais effets** (précision, portée, recul, balles par chargeur, vitesse de visée…),
   avec des avantages ET des défauts, et on les **voit sur l'arme en 3D**. La lampe éclaire, le laser fait un point rouge.
-- ✍️ Au départ, les armes et les modifications devaient être **à débloquer**. Pour finir plus vite, Maxance a décidé
+- ✍️ Au départ, les armes et les modifications devaient être **à débloquer**. Pour finir plus vite, Iron Wolf Studio a décidé
   de **l'enlever pour l'instant** : tout est disponible tout de suite (on pourra l'ajouter plus tard).
 - ✍️ Seul **le joueur** a une classe : les soldats de l'ordinateur restent comme avant (enlevé pour finir plus vite).
 - Tous les nombres (dégâts, effets des pièces) sont dans `tanks/config.js`.

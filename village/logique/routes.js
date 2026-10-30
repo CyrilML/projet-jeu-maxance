@@ -15,7 +15,7 @@
 // Un bâtiment qui n'est pas relié est bloqué : aucun porteur ne peut venir chez lui.
 //
 // Étape 36 : ✍️ « il y a beaucoup d'endroits où les routes ne peuvent pas passer (rochers, arbres…) : c'est très
-// embêtant, il faut qu'une route puisse toujours passer ». Maintenant la route est un BULLDOZER (choix de Maxance) :
+// embêtant, il faut qu'une route puisse toujours passer ». Maintenant la route est un BULLDOZER (choix d'Iron Wolf Studio) :
 //   🪓 un arbre ou un sapin sur le passage est abattu : son tronc va à l'entrepôt ;
 //   ⛏️ un rocher est cassé : ses pierres vont à l'entrepôt ; une jeune pousse est arrachée ;
 //   🌉 sur l'eau (même profonde), la route devient un PONT, qui coûte 2 planches par case.

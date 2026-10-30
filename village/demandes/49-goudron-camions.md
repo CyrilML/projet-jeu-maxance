@@ -1,9 +1,9 @@
 # Village · demande n° 49 : le goudron, les camions et les voitures
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 51 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 51 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé
+## 🎯 Ce qu'Iron Wolf Studio a demandé
 - « Oui, attaque la suite » (les routes goudronnées, les voitures et les camions).
 - Ses choix :
   - **les camions sont les porteurs** ;

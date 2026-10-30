@@ -1,7 +1,7 @@
 # Demande n° 75 : de beaux tanks, des maisons qu'on peut détruire, des grenades
 
-> Statut : ✅ livrée le 16/10/2026 (tanks version 14), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 16/10/2026 (tanks version 14), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Refais aussi les tanks et les maisons. »
@@ -11,7 +11,7 @@
   formes arrondies, chenilles détaillées, peinture camouflage et usure.
 - ✍️ **Les maisons et les autres constructions** (murs, granges, ruines…) : « si tu tires dessus avec un tank ou une
   mitraillette, tu fais des dégâts, cela se détruit, et je veux que ce soit un peu réaliste ».
-  - Choix de Claude (à valider par Maxance) : les maisons sont entières au début (murs, toit, fenêtres, porte).
+  - Choix de Claude (à valider par Iron Wolf Studio) : les maisons sont entières au début (murs, toit, fenêtres, porte).
   - La mitrailleuse fait des petits trous et des éclats ; un obus de tank fait un gros trou dans le mur, les morceaux
     tombent ; quand il ne reste plus assez de mur, le toit s'effondre et il reste une ruine et des gravats.
   - Les gravats restent par terre (un abri pour les soldats).

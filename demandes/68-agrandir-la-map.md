@@ -1,7 +1,7 @@
 # Demande n° 68 : agrandir la map
 
-> Statut : ✅ livrée le 12/10/2026 (version 28 du circuit 3D), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 12/10/2026 (version 28 du circuit 3D), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Agrandis la map. »

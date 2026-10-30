@@ -9,7 +9,7 @@
 //     dans le pinceau qui écrit les lettres (fillText) ;
 //   - les longs textes de la page (la ligne des touches sous l'écran) : remplacés d'un coup (« html » du dictionnaire).
 // ✍️ Ce qui RESTE en français : le panneau « sous le capot » (l'état en direct et le journal) : c'est l'outil
-// d'apprentissage de Maxance. En français, l'interprète ne fait rien du tout.
+// d'apprentissage d'Iron Wolf Studio. En français, l'interprète ne fait rien du tout.
 // Il ne touche pas au monde : il ne change que des lettres à l'écran.
 
 window.Tanks = window.Tanks || {};

@@ -1,6 +1,6 @@
 # Village · demande n° 4 : pêcheur, chasseur, repas et saisons
 
-> Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
+> Demandée par Iron Wolf Studio (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
 > questions. Statut : ✅ livrée le 05/10/2026, à valider.
 
 ## 🎯 Quoi
@@ -12,12 +12,12 @@ Nourrir les habitants, et faire passer les saisons.
 - ✍️ Sans repas, l'ouvrier **arrête de travailler**. S'il a vraiment trop faim, il **quitte le village**.
 - ✍️ En hiver, les lacs gèlent, mais le pêcheur fait des **trous dans la glace** pour pêcher, et le
   chasseur chasse du **gibier dans la neige**.
-- Maxance a demandé si 1 repas par minute, ce n'était pas trop. Claude a fait le calcul (un pêcheur
+- Iron Wolf Studio a demandé si 1 repas par minute, ce n'était pas trop. Claude a fait le calcul (un pêcheur
   nourrit 4 ouvriers à 1 repas par minute, 8 à 1 repas toutes les 2 minutes) et a conseillé 2 minutes.
-  Maxance n'a pas choisi : **1 repas toutes les 2 minutes**, à changer dans `village/config.js`
+  Iron Wolf Studio n'a pas choisi : **1 repas toutes les 2 minutes**, à changer dans `village/config.js`
   (`repas.intervalle`) si besoin.
 
-## 🛠️ Ce que Claude a choisi (à valider ou à changer par Maxance)
+## 🛠️ Ce que Claude a choisi (à valider ou à changer par Iron Wolf Studio)
 - 🎣 Pêcheur : 3 planches, va au bord de l'eau (6 pas maximum), pêche 8 s, rapporte 1 poisson.
 - 🏹 Chasseur : 3 planches, vise un cerf ou un lapin (8 pas maximum), chasse 4 s, rapporte 1 viande.
 - Le gibier : 24 animaux au départ, 40 au maximum, un petit naît toutes les 20 s (pas en hiver).

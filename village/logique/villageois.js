@@ -1,6 +1,6 @@
 // 👥 LES VILLAGEOIS : ceux qui attendent du travail
 //
-// Étape 13 : ✍️ Maxance trouvait qu'on ne comprenait pas que la production dépend des maisons. Alors on
+// Étape 13 : ✍️ Iron Wolf Studio trouvait qu'on ne comprenait pas que la production dépend des maisons. Alors on
 // le VOIT maintenant : des villageois sans travail se promènent autour du feu de camp. Quand une cabane
 // est finie, le plus proche y va à pied, et devient son ouvrier. L'entrepôt en prend aussi comme
 // manutentionnaires (les porteurs), selon ses places (voir logique/ameliorations.js).

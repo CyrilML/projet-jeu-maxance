@@ -9,7 +9,7 @@
 //     repliée, le long chargeur droit), la mitraillette STELLAN (un tube, la crosse en fil de fer, le chargeur sur le côté) ;
 //   - les LANCE-ROQUETTES : le long tube BAZKO à épaule, et le gros tube VARN 54 avec son bouclier ;
 //   - les fusils à LUNETTE (le fusil à verrou de 1916, avec une lunette) et les pistolets COLTON 45 et VARN 38.
-// ✍️ (demande 128, d'après les photos de Maxance) le Varn 40, la Stellan et le Thornton refaits pièce par pièce ; le Thornton
+// ✍️ (demande 128, d'après les photos d'Iron Wolf Studio) le Varn 40, la Stellan et le Thornton refaits pièce par pièce ; le Thornton
 // M1, les carabines Hartley M1 (et parachutiste), la mitraillette Corwin M3, 6 autres armes de poing, et la grenade « ANANAS ».
 // Il ne fait que dessiner (comme tout l'affichage).
 
@@ -345,7 +345,7 @@ window.Tanks = window.Tanks || {};
   A.ajouterFabrique("varnP38", (e, p) => V16.automatique(e, p, { long: 0.19, haut: 0.026, chien: true, penche: 0.26, plaquettes: "ebonite", stries: 0, coul: 0x262729 })); // (demande 128 : refait avec la famille « automatique »)
 
   // ------------------------------------------------------------------ ✍️ (demande 128) LA GRENADE « ANANAS » de 1944
-  // Sur la photo de Maxance : la grenade à corps QUADRILLÉ (des rangées de petits pavés, pour qu'elle éclate en morceaux), son
+  // Sur la photo d'Iron Wolf Studio : la grenade à corps QUADRILLÉ (des rangées de petits pavés, pour qu'elle éclate en morceaux), son
   // bouchon allumeur, sa longue cuillère et l'anneau de la goupille. En 1944, c'est elle que ton soldat tient dans la main
   // (l'accessoiriste, affichage/objets3d.js, demande sa maquette : on lui prête celle-ci à la place de la ronde).
   let MA = null;

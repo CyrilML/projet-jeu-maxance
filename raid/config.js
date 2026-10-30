@@ -1,6 +1,6 @@
 // ⚙️ LES RÉGLAGES DU RALLYE-RAID
 //
-// Étape 54. ✍️ Maxance veut un nouveau jeu : une grande balade libre dans le désert, comme au Dakar, avec plusieurs
+// Étape 54. ✍️ Iron Wolf Studio veut un nouveau jeu : une grande balade libre dans le désert, comme au Dakar, avec plusieurs
 // sortes de 4x4, de buggys, de motos et un camion, et plusieurs terrains (sable, boue, gué, cailloux).
 //
 // TOUS les nombres réglables du jeu sont ici. Unités : m (mètres), s (secondes), m/s (× 3,6 = km/h), m/s².

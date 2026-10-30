@@ -11,7 +11,7 @@
 //     côté pour voir les cartouches), la poignée pistolet en bois, la poignée avant, le bipied replié ;
 //   - le FUSIL DE TRANCHÉE WARDELL : un fusil à pompe en bois, avec son cache-chaleur troué et sa baïonnette ;
 //   - le REVOLVER 92 (barillet, canon octogonal, anneau de dragonne) et le PISTOLET KRESS 08 (la culasse à genouillère).
-// ✍️ (demande 128, d'après les photos de Maxance) les PISTOLETS D'AUTREFOIS : 4 familles réglables (le revolver dont le
+// ✍️ (demande 128, d'après les photos d'Iron Wolf Studio) les PISTOLETS D'AUTREFOIS : 4 familles réglables (le revolver dont le
 // barillet tourne à chaque tir, l'automatique, le pistolet à genouillère qui se plie, le « manche à balai » à magasin avant),
 // 7 nouvelles armes de poing pour 1916 (et prêtées à 1944), et le PISTOLET-MITRAILLEUR KRESS 18 et son chargeur « escargot ».
 // Chaque fabrique répond comme celles de l'armurier : où est le canon, le viseur, la poignée, la main gauche… Elle ne fait

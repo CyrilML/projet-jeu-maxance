@@ -1,9 +1,9 @@
 # Village · demande n° 51 : la Grande Tour, un monument immense
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 53 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 53 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « On avait aussi parlé de construire un monument immense qui demande beaucoup de ressources. »
 
 ## 📏 Les règles (`config.js` : « merveille »)

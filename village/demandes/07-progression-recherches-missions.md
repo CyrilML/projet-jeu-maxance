@@ -1,9 +1,9 @@
 # Village · demande n° 7 : la progression sur plusieurs âges, l'université, les missions et les gemmes
 
-> Demandée par Maxance (via Cyril). Statut : ✅ livrée le 05/10/2026 (le hameau complet), à valider.
+> Demandée par Iron Wolf Studio (via Cyril). Statut : ✅ livrée le 05/10/2026 (le hameau complet), à valider.
 > Les âges suivants sont prévus ci-dessous et seront construits aux prochaines étapes.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - Chaque niveau débloque des choses : des technologies, de nouveaux bâtiments, de nouvelles recherches
   dans un bâtiment qu'on appellera l'université, qui permet, en payant, de faire des recherches pour
   augmenter la production de nourriture, des outils pour la pierre, etc.
@@ -16,7 +16,7 @@
   de la gestion économique.
 - Garder l'évolution du village : « à chaque mise à jour, on repart de zéro ».
 
-## 🗺️ Le grand plan (proposé par Claude, à valider par Maxance)
+## 🗺️ Le grand plan (proposé par Claude, à valider par Iron Wolf Studio)
 
 | Âge | Débloque | Recherches (université) | Minerai | Pour passer à l'âge suivant |
 |---|---|---|---|---|

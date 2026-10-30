@@ -1,7 +1,7 @@
 # Demande n° 60 : une bataille de tanks (un nouveau jeu)
 
-> Statut : ✅ livrée le 06/10/2026 (version 1 du jeu de tanks), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé. La suite (sortir du tank, soldats, 4x4 à mitrailleuse, hélico, avion de chasse) est l'étape 61.
+> Statut : ✅ livrée le 06/10/2026 (version 1 du jeu de tanks), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé. La suite (sortir du tank, soldats, 4x4 à mitrailleuse, hélico, avion de chasse) est l'étape 61.
 
 ## 🎯 Quoi
 « Fais des tanks. »

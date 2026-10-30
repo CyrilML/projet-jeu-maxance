@@ -1,7 +1,7 @@
 # Demande n° 55 : voitures, routes et immeubles très réalistes
 
-> Statut : ✅ livrée le 06/10/2026 (version 23 du circuit), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 06/10/2026 (version 23 du circuit), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Continue de faire des voitures réalistes, pas en maquette, en code, mais très réalistes, vraiment très réalistes.

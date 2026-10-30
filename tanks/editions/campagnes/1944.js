@@ -5,7 +5,7 @@
 // ville qui se libère, un siège dans la neige), mais avec les pays, les chefs et les lieux INVENTÉS de l'édition :
 //   - 🔵 l'UNION D'ALDERMONT (toi : « Chouette 7 », un parachutiste) contre 🔴 la LIGUE DE VARNHOLD ;
 //   - le vrai moment n'est nommé qu'une fois, sur le briefing : « 📜 Inspiré d'un vrai moment de l'Histoire » (« inspire »).
-// ✍️ (Maxance) « Je veux que chaque édition soit une campagne qui puisse revivre les moments qui sont arrivés. » Il a
+// ✍️ (Iron Wolf Studio) « Je veux que chaque édition soit une campagne qui puisse revivre les moments qui sont arrivés. » Il a
 // choisi : 6 chapitres, de vrais moments mais des pays inventés, et des FILMS (une ouverture pour chaque chapitre, une
 // fin quand c'est réussi, une fin quand c'est raté).
 // Ce fichier ne contient que des DONNÉES (comme config.js) : il s'inscrit au catalogue des éditions

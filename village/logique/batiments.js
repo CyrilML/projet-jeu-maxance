@@ -104,7 +104,7 @@ Village.Batiments = (function () {
   let prochainNumero = 1;
 
   const cout = (type) => (C.batiments[type] && C.batiments[type].cout) || {};
-  // Étape 12 : ✍️ le COUP DE POUCE. Maxance s'est retrouvé bloqué : plus de scierie, et plus de planches pour
+  // Étape 12 : ✍️ le COUP DE POUCE. Iron Wolf Studio s'est retrouvé bloqué : plus de scierie, et plus de planches pour
   // en construire une ! Pour que ça n'arrive plus : si le village n'a AUCUN bâtiment de ce type (même en
   // chantier) et pas assez de matériaux pour le construire, il est OFFERT. Ça marche pour les bâtiments
   // sans lesquels on ne peut plus rien faire : le bûcheron et la scierie (les planches).

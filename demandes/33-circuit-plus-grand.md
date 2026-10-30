@@ -1,6 +1,6 @@
 # Demande n° 33 : un circuit plus grand
 
-> Demandée par Maxance (via Cyril), après avoir testé le circuit 3D : « tout va bien, j'aime le style ».
+> Demandée par Iron Wolf Studio (via Cyril), après avoir testé le circuit 3D : « tout va bien, j'aime le style ».
 > Les règles marquées ✍️ ont été précisées quand Claude a posé des questions. Statut : ✅ livrée le 04/10/2026, à valider.
 
 ## 🎯 Quoi

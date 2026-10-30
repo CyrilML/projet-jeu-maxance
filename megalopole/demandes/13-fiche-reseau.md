@@ -1,9 +1,9 @@
 # Mégalopole · demande n° 13 : la fiche « réseau » des bâtiments
 
-> Demandée par Maxance (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 13 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 13 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Sur les bâtiments comme l'incinérateur ou le traitement de l'eau, quand je clique, j'aimerais avoir les capacités
   unitaire et totale, et la demande, pour savoir s'il faut en faire plus ou pas. »
 

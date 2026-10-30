@@ -1,7 +1,7 @@
 # Demande n° 57 : des voitures plus vraies, plus grandes, et plus dorées
 
-> Statut : ✅ livrée le 06/10/2026 (version 25 du circuit), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 06/10/2026 (version 25 du circuit), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Les voitures ne sont pas encore assez réalistes. Les phares sont énormes, les rétros aussi, et la moto, je veux

@@ -1,6 +1,6 @@
 // 🐄 L'ÉLEVAGE : le carnet de santé des troupeaux
 //
-// Étape 15 : ✍️ Maxance veut des animaux à soigner (3C). Chaque étable a son troupeau de vaches.
+// Étape 15 : ✍️ Iron Wolf Studio veut des animaux à soigner (3C). Chaque étable a son troupeau de vaches.
 // Elles boivent l'eau du puits 💧 et, en hiver, mangent le foin du faneur 🌿 (c'est la recette de
 // l'étable, dans config.js). Ce fichier s'occupe de leur SANTÉ, à partir du village :
 //

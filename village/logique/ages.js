@@ -1,6 +1,6 @@
 // ⏳ LES ÂGES : l'échelle du temps du village
 //
-// ✍️ Étape 6 : Maxance a remarqué qu'à « l'âge de pierre », il n'y avait ni scierie, ni planches, ni
+// ✍️ Étape 6 : Iron Wolf Studio a remarqué qu'à « l'âge de pierre », il n'y avait ni scierie, ni planches, ni
 // entrepôt ! Alors le village grandit maintenant par ÂGES :
 //   🏕️ le campement → 🛖 le hameau → 🏡 le village → 🏰 le bourg → 🏙️ la ville.
 //

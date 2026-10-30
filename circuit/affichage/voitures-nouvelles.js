@@ -1,6 +1,6 @@
 // 🏭 LES NOUVELLES VOITURES : le bureau d'études (étape 68, redessinées à l'étape 69)
 //
-// ✍️ Maxance veut de nouvelles voitures : des ALLEMANDES (Audi R8, Mercedes Classe G, BMW M3, Porsche Taycan), des
+// ✍️ Iron Wolf Studio veut de nouvelles voitures : des ALLEMANDES (Audi R8, Mercedes Classe G, BMW M3, Porsche Taycan), des
 // SUPERCARS (Ferrari SF90, McLaren 720S, Bugatti Bolide), des FRANÇAISES (Alpine A110, Renault 5, Citroën 2CV), des
 // TOUT-TERRAIN (Land Rover Defender, Jeep Wrangler, Ford Raptor) et des VOITURES DE RÊVE (Tesla Cybertruck,
 // Batmobile, DeLorean).

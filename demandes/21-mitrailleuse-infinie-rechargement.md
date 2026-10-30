@@ -1,6 +1,6 @@
 # Demande n° 21 : mitrailleuse infinie et rechargement du bazooka
 
-> Demandée par Maxance. Règles assez précises pour coder sans question. Statut : ✅ livrée le 29/09/2026, à valider.
+> Demandée par Iron Wolf Studio. Règles assez précises pour coder sans question. Statut : ✅ livrée le 29/09/2026, à valider.
 > (Dans le même message : « plusieurs types d'armes à feu ». Il manque des règles : Claude a posé des
 > questions, ce sera la demande n° 22.)
 

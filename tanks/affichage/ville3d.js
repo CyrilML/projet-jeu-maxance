@@ -7,7 +7,7 @@
 // marques inventées, peintes au démarrage sur une grande image ; ✍️ livre n° 27 « bannir toute publicité » : ce sont
 // des affiches du DÉCOR, aucune vraie marque — les noms qui ressemblaient à une vraie marque ont été changés), les voitures, les bus, les scooters… et les objets
 // laissés dans la fuite (sacs, valises, téléphones, nounours, journaux, chaises renversées, papiers partout).
-// Pour que le jeu ne rame pas (✍️ Maxance déteste le lag) :
+// Pour que le jeu ne rame pas (✍️ Iron Wolf Studio déteste le lag) :
 //   - tout ce qui ne bouge pas est RECOLLÉ par quartier de 70 m : 1 dessin pour le mobilier, 1 pour les affiches, 1 pour
 //     les petits objets — et les petits objets ne sont dessinés qu'à moins de « objetsVille » m (le niveau de qualité) ;
 //   - chaque sommet porte un petit nombre « cache » : un objet écrasé par un tank (ou un store dont le mur est tombé) est

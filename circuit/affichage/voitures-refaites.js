@@ -652,7 +652,7 @@ Circuit.VoituresRefaites = (function () {
       plaqueNum.rotation.y = cote > 0 ? 0 : Math.PI;
       plaqueNum.position.set(0.1, 0.68, cote * (c.tranche(0.1).w + 0.015));
       caisse.add(plaqueNum);
-      lettresFlanc(caisse, c, -0.95, 0.55, cote, "MAXANCE RALLY", 0.62, 0.11, "#ffffff");
+      lettresFlanc(caisse, c, -0.95, 0.55, cote, "IRON WOLF STUDIO RALLY", 0.62, 0.11, "#ffffff");
       // les bavettes rouges derrière chaque roue
       for (const r of R) caisse.add(boite(0.02, 0.3, 0.26, peinture([0.8, 0.05, 0.05]), r.x - r.r - 0.12, 0.22, cote * 0.8));
     }
@@ -713,7 +713,7 @@ Circuit.VoituresRefaites = (function () {
     caisse.add(boite(lC, 2.45, 2.48, boiteC, xMC, 2.28, 0));
     for (const y of [1.08, 3.48]) for (const z of [-1.24, 1.24]) caisse.add(boite(lC, 0.05, 0.05, M.chrome, xMC, y, z));
     for (const cote of [-1, 1]) {
-      const nom = etiquette("MAXANCE TRANSPORTS", "#f2f2f0", "#1d3f9a", 4.2, 0.55);
+      const nom = etiquette("IRON WOLF STUDIO TRANSPORTS", "#f2f2f0", "#1d3f9a", 4.2, 0.55);
       nom.rotation.y = cote > 0 ? 0 : Math.PI;
       nom.position.set(xMC, 2.5, cote * 1.25);
       caisse.add(nom);
@@ -1012,7 +1012,7 @@ Circuit.VoituresRefaites = (function () {
       num.rotation.y = cote > 0 ? 0 : Math.PI;
       num.position.set(-1.2, 0.72, cote * 0.21);
       caisse.add(num);
-      lettresFlanc(caisse, c, -0.6, 0.38, cote, "MAXANCE RACING", 0.8, 0.1, "#ffffff");
+      lettresFlanc(caisse, c, -0.6, 0.38, cote, "IRON WOLF STUDIO RACING", 0.8, 0.1, "#ffffff");
     }
     const roues = roues4(g, R, 0.8, "turbine", { etrier: false });
     return voiture(g, caisse, roues, 0.85);

@@ -1,6 +1,6 @@
 # Demande n° 26 : la caméra qui monte
 
-> Demandée par Maxance. Règle assez précise pour coder sans question. Statut : ✅ livrée le 29/09/2026, à valider.
+> Demandée par Iron Wolf Studio. Règle assez précise pour coder sans question. Statut : ✅ livrée le 29/09/2026, à valider.
 
 ## 🎯 Quoi
 Quand le héros monte (en grimpant sur des blocs), la caméra le suit. Avant, elle ne suivait que

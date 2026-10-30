@@ -1,14 +1,14 @@
 # Demande n° 98 : débloquer les gadgets et les explosifs (et les faire vraiment marcher)
 
 > Statut : ✅ livrée (tanks version 41).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « C'est aussi le déblocage du gadget des explosifs. »
 Après l'étape 97 (les armes et leurs pièces se débloquent), les **gadgets** et les **explosifs** doivent eux aussi se
 débloquer avec le niveau de joueur.
 
-## ⚙️ Comment (les règles) — choix de Claude (Maxance ne veut pas de questions)
+## ⚙️ Comment (les règles) — choix de Claude (Iron Wolf Studio ne veut pas de questions)
 - Le 1er gadget et le 1er explosif de chaque classe sont libres dès le début ; le 2e se débloque à un **niveau de joueur** :
   - gadgets : défibrillateur 3, sac de munitions 4, capteur de mouvement 5, drone de réparation 7 ;
   - explosifs : grenades fumigènes 2, claymore 6, C4 8 (les grenades et la mine antichar sont libres).

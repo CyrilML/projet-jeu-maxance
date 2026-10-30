@@ -1,7 +1,7 @@
 // 📖 LA CAMPAGNE DE L'ÉDITION « BATAILLE CONTRE DES ALIENS » : « Le Jour de la Terre » (demande 136)
 //
 // ✍️ « Je veux que chaque édition soit une campagne qui puisse revivre les moments actuels ou qui sont arrivés. »
-// ✍️ Maxance a choisi : 6 chapitres, inspirés de VRAIS moments de l'Histoire, mais dans le monde INVENTÉ de l'édition, avec
+// ✍️ Iron Wolf Studio a choisi : 6 chapitres, inspirés de VRAIS moments de l'Histoire, mais dans le monde INVENTÉ de l'édition, avec
 // des films (une ouverture pour chaque chapitre, et une fin pour la réussite et une pour l'échec).
 //
 // Ce fichier est comme un LIVRE DE CONTES posé à côté du jeu : il ne fait rien lui-même, il raconte. Le metteur en scène

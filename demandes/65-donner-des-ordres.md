@@ -1,7 +1,7 @@
 # Demande n° 65 : donner des ordres en les écrivant
 
-> Statut : ✅ livrée le 07/10/2026 (version 6 du jeu de tanks), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 07/10/2026 (version 6 du jeu de tanks), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Je veux aussi que tu puisses donner des ordres. Il y a une barre tout en haut, et tu puisses donner des ordres.

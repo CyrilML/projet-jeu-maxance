@@ -1,7 +1,7 @@
 # Demande n° 2 : un monde en blocs
 
-> Envoyée par Cyril pour la séance de samedi. Les règles marquées ✍️ ont été précisées par Maxance
-> quand Claude lui a posé des questions. Statut : ✅ livrée le 24/09/2026, à valider par Maxance.
+> Envoyée par Cyril pour la séance de samedi. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio
+> quand Claude lui a posé des questions. Statut : ✅ livrée le 24/09/2026, à valider par Iron Wolf Studio.
 
 ## 🎯 Quoi
 Je veux que le sol soit fait de blocs, avec des trous et des plateformes, et que la caméra me suive
@@ -24,9 +24,9 @@ Pour explorer un vrai monde au lieu de rester au même endroit.
 - Un trou tous les 10 blocs environ, un drapeau tous les 30 blocs.
 
 ## 👥 Qui fait quoi
-- **Maxance** : décide des règles, teste avec les rayons X, valide.
+- **Iron Wolf Studio** : décide des règles, teste avec les rayons X, valide.
 - **Claude** : code, explique ce qu'il a fait et pourquoi, met à jour le carnet.
-- **Cyril** : relit la demande avec Maxance et la transmet.
+- **Cyril** : relit la demande avec Iron Wolf Studio et la transmet.
 
 ## ✅ Critères de réussite
 - [ ] Je peux marcher sur les plateformes sans passer à travers.

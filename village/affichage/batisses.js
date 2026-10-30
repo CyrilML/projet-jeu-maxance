@@ -1832,7 +1832,7 @@ Village.Batisses = (function () {
   }
 
   // ---------------------------------------------------------------- étape 14 : la vie devant les bâtiments
-  // ✍️ Maxance voulait plus d'animations devant chaque bâtiment. Chacune a sa petite scène, qui bouge avec
+  // ✍️ Iron Wolf Studio voulait plus d'animations devant chaque bâtiment. Chacune a sa petite scène, qui bouge avec
   // l'heure (t) : pas besoin de mémoire, comme les figurants de l'étape 9.
   function animations(ctx, b, x, y, t, m) {
     const s = b.numero * 1.3, aLaMaison = b.ouvrier && !["aller", "travailler", "revenir"].includes(b.ouvrier.etat);

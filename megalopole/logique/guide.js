@@ -1,7 +1,7 @@
 // 🎓 LE GUIDE : le professeur du nouveau maire
 //
 // Étape 3 : ✍️ « Il faut un guide au début pour expliquer ce qu'il faut placer en premier. »
-// Choix de Maxance : des MISSIONS PAS À PAS. Le professeur donne une mission à la fois (la liste est rangée dans
+// Choix d'Iron Wolf Studio : des MISSIONS PAS À PAS. Le professeur donne une mission à la fois (la liste est rangée dans
 // config.js, « guide »). Deux fois par seconde, il REGARDE LA VILLE pour savoir si la mission est faite :
 //
 //   mission 1 « Trace une route »      → la ville a-t-elle au moins 15 cases de route ?

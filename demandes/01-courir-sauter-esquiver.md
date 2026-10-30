@@ -1,6 +1,6 @@
 # Demande n° 1 : courir, sauter, esquiver
 
-> Reconstituée à partir de ce que Maxance a raconté. Statut : ✅ livrée le 24/09/2026.
+> Reconstituée à partir de ce qu'Iron Wolf Studio a raconté. Statut : ✅ livrée le 24/09/2026.
 
 ## 🎯 Quoi
 Un jeu en 2D où je me déplace de gauche à droite et où je saute pour esquiver des obstacles.
@@ -22,7 +22,7 @@ C'est la base de mon futur jeu façon Minecraft : un héros qui bouge et saute d
 - Les obstacles accélèrent petit à petit, jusqu'à 2,5 fois plus vite qu'au début.
 
 ## 👥 Qui fait quoi
-- **Maxance** : décide des règles, teste, valide.
+- **Iron Wolf Studio** : décide des règles, teste, valide.
 - **Claude** : code tout le jeu, explique l'architecture dans le carnet.
 - **Cyril** : transmet la demande et accompagne les tests.
 

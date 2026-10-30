@@ -1,9 +1,9 @@
 # Demande n° 8 : demi-tour, bras levés et squelette qui danse
 
-> Demandée par Maxance après avoir validé les flammes de l'étape 7. Les réglages marqués ✍️ ont été
-> décidés par Maxance ; ceux marqués 💡 sont les conseils de Claude, pris parce que Maxance n'a pas
+> Demandée par Iron Wolf Studio après avoir validé les flammes de l'étape 7. Les réglages marqués ✍️ ont été
+> décidés par Iron Wolf Studio ; ceux marqués 💡 sont les conseils de Claude, pris parce qu'Iron Wolf Studio n'a pas
 > répondu à ces questions (réglables dans `config.js` ou à redemander).
-> Statut : ✅ livrée le 25/09/2026, à valider par Maxance.
+> Statut : ✅ livrée le 25/09/2026, à valider par Iron Wolf Studio.
 
 ## 🎯 Quoi
 - Quand le personnage recule, il se retourne : ses yeux regardent vers l'arrière (« on dirait qu'il
@@ -15,14 +15,14 @@
 ## ⚙️ Comment (les règles)
 - ✍️ Le squelette est le personnage lui-même, qui devient un petit squelette qui DANSE.
 - ✍️ Il danse environ 5 secondes, puis 1 vie en moins et retour au dernier drapeau.
-  → Changé le 28/09/2026 à la demande de Maxance : 3 secondes (5, c'était trop long).
+  → Changé le 28/09/2026 à la demande d'Iron Wolf Studio : 3 secondes (5, c'était trop long).
 - 💡 Touchée par le côté, la caisse est un mur (il faut sauter dessus), comme la tour.
 - 💡 Le muret dangereux a des pics rouges pour qu'on le reconnaisse (nouveau bloc n° 7, « bois à pics »).
 
 ## 👥 Qui fait quoi
-- **Maxance** : décide des règles, teste avec les rayons X, valide.
+- **Iron Wolf Studio** : décide des règles, teste avec les rayons X, valide.
 - **Claude** : code, explique ce qu'il a fait et pourquoi, met à jour le carnet.
-- **Cyril** : relit la demande avec Maxance et la transmet.
+- **Cyril** : relit la demande avec Iron Wolf Studio et la transmet.
 
 ## ✅ Critères de réussite
 - [ ] Quand je vais à gauche, mon personnage regarde à gauche (plus de moonwalk).

@@ -17,9 +17,9 @@ Où ça apparaît, comment ça bouge, ce qui se passe quand on le touche.
 Durées et vitesses dans le jeu : combien de temps dure l'action, à quelle vitesse, tous les combien.
 
 ## 👥 Qui fait quoi
-- **Maxance** : décide des règles, teste avec les rayons X, valide.
+- **Iron Wolf Studio** : décide des règles, teste avec les rayons X, valide.
 - **Claude** : code, explique ce qu'il a fait et pourquoi, met à jour le carnet.
-- **Cyril** : relit la demande avec Maxance et la transmet.
+- **Cyril** : relit la demande avec Iron Wolf Studio et la transmet.
 
 ## ✅ Critères de réussite
 Des tests que je peux faire moi-même :

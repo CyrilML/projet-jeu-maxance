@@ -1,12 +1,12 @@
 # Village · demande n° 28 : la tournée du géologue, du maçon et du vétérinaire
 
-> Demandée par Maxance (via Cyril) le 08/10/2026. Statut : ✅ livrée le 08/10/2026 (étape 27 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 08/10/2026. Statut : ✅ livrée le 08/10/2026 (étape 27 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Le géologue et le maçon devraient pouvoir se déplacer partout sur la carte, sans forcément rentrer à chaque fois chez
   eux pour faire avancer leur travail. »
 
-## ❓ Les questions posées, et les choix de Maxance
+## ❓ Les questions posées, et les choix d'Iron Wolf Studio
 - Les outils du maçon ? → **il part avec 3 outils**, répare 3 bâtiments à la suite, puis rentre en chercher.
 - Quand rentrent-ils ? → **quand il n'y a plus rien à faire** (ou plus d'outils pour le maçon).
 - Le vétérinaire aussi ? → **oui**.

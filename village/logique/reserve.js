@@ -1,6 +1,6 @@
 // 📦 LA RÉSERVE : le silo de l'entrepôt (le village continue quand tu n'es pas là)
 //
-// Étape 11 : ✍️ l'idée de Maxance. Quand tu fermes le jeu, le village continue de travailler…
+// Étape 11 : ✍️ l'idée d'Iron Wolf Studio. Quand tu fermes le jeu, le village continue de travailler…
 // mais ce qu'il produit doit être rangé quelque part : dans la RÉSERVE, le grand silo à côté de l'entrepôt.
 // Quand elle est pleine, plus rien n'est rangé : il faut revenir ! Plus elle est grande, plus le village
 // continue longtemps sans toi. L'agrandir coûte très cher (ou des 💎).

@@ -1,7 +1,7 @@
 # Demande n° 58 : la course à 12 et le métier de policier
 
-> Statut : ✅ livrée le 06/10/2026 (version 26 du circuit), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 06/10/2026 (version 26 du circuit), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Pour la course, il y a plus de concurrents : 11 + ton personnage, ce qui fait 12. Si tu prends une Formule 1, tout

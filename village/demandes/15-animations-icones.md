@@ -1,8 +1,8 @@
 # Village · demande n° 15 : des bâtiments plus gros, plus d'animations, de vraies icônes
 
-> Demandée par Maxance (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 14 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 14 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Plus d'animations devant chaque cabane, la scierie, etc. : on voit de la sciure, une scie qui bouge. »
 - « Pour le bûcheron, on voit des boules, des boulets quand il pose la bûche. »
 - « Le charbon : que ça ressemble plus à du minerai. »

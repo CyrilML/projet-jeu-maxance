@@ -1,6 +1,6 @@
 // 🏎️ LES VRAIES VOITURES : l'atelier du carrossier (étape 49)
 //
-// ✍️ Maxance a demandé des voitures qui ressemblent aux vraies : une Bugatti Chiron, une Porsche 911, une
+// ✍️ Iron Wolf Studio a demandé des voitures qui ressemblent aux vraies : une Bugatti Chiron, une Porsche 911, une
 // Lamborghini Aventador, une Honda NSX (la voiture basse), une citadine, un SUV genre Peugeot 508, une
 // camionnette genre Mercedes Vito, une moto genre Kawasaki, un quad et un monster truck rétro à ressorts.
 //

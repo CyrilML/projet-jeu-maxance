@@ -1,8 +1,8 @@
 # Village · demande n° 17 : les poules, les moutons et les cochons
 
-> Demandée par Maxance (via Cyril) le 06/10/2026 (« vas-y, continue »). Statut : ✅ livrée le 06/10/2026 (étape 16 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 06/10/2026 (« vas-y, continue »). Statut : ✅ livrée le 06/10/2026 (étape 16 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé
+## 🎯 Ce qu'Iron Wolf Studio a demandé
 - La suite de son choix **1C** (partie B) : d'autres élevages que les vaches, avec des chaînes qui s'agrandissent au fil
   des âges, jusqu'à une ville riche en industries et en commodités.
 

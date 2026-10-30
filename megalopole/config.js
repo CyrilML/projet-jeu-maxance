@@ -1,7 +1,7 @@
 // ⚙️ LES RÉGLAGES : tous les nombres de la Mégalopole, rangés au même endroit
 //
 // Étape 1 : ✍️ « Plus on avance, plus c'est compliqué de gérer chaque chaîne de production. On devrait reprendre le
-// système de SimCity, et le pousser un peu plus. » Ce jeu est un projet à part (choix de Maxance) : le village garde
+// système de SimCity, et le pousser un peu plus. » Ce jeu est un projet à part (choix d'Iron Wolf Studio) : le village garde
 // ses bûcherons et ses chaînes ; ici, on est le MAIRE. On trace les routes, on PEINT des zones (habitation, commerce,
 // industrie, agriculture), et les bâtiments y poussent tout seuls. On gère l'énergie, l'eau, les services et les
 // loisirs ; les habitants réclament ce qui leur manque, et la ville grandit quand tout le monde est content.
@@ -60,7 +60,7 @@ Megalopole.CONFIG = {
   consommation: { courant: [0, 1, 2, 4, 8, 16, 32], eau: [0, 1, 2, 4, 8, 16, 32], dechets: [0, 1, 2, 3, 6, 10, 16] }, // par niveau (étape 11 : les déchets)
   // 🗑️ les déchets (étape 11) : les camions passent par les routes, comme l'eau ; un terrain pas ramassé perd de la valeur
   dechets: { recyclage: 0.3, valeurSale: 0.12, cableMer: 8 },
-  // 👻 Le PLACEMENT (étape 4, demande de Maxance : « standardiser ») : bâtiments et zones se posent de la même façon.
+  // 👻 Le PLACEMENT (étape 4, demande d'Iron Wolf Studio : « standardiser ») : bâtiments et zones se posent de la même façon.
   // Un FANTÔME suit la souris (ou le doigt) ; il se COLLE tout seul à la route la plus proche, en cherchant jusqu'à
   // « aimant » cases autour. Une zone se pose par LOT carré de « lot » × « lot » cases.
   placement: { lot: 3, aimant: 3, aimantZone: 2 },
@@ -72,17 +72,17 @@ Megalopole.CONFIG = {
     seuil: 0.15, // l'envie de construire doit dépasser ce seuil
     eauDesLeNiveau: 2, // sans eau courante, on ne dépasse pas le niveau 1
     patience: 25, // s (étape 12) : un bâtiment ne perd un niveau que si le problème dure (un coup de vent faible, la nuit…)
-    // 🏘️ étape 15 (✍️ Maxance : « plus le quartier grandit, plus il devrait être attirant ») : le BONUS DE QUARTIER,
+    // 🏘️ étape 15 (✍️ Iron Wolf Studio : « plus le quartier grandit, plus il devrait être attirant ») : le BONUS DE QUARTIER,
     // ajouté à l'envie de TOUTES les zones. rayon en cases ; parNiveau par niveau moyen des voisins ; parService par service reçu
     quartier: { rayon: 4, parNiveau: 0.06, parService: 0.03, maxServices: 0.2, max: 0.4 },
   },
 
-  // ⭐ Les AMÉLIORATIONS (étape 17, ✍️ Maxance : « améliorer les bâtiments pour augmenter la production ou le service »)
+  // ⭐ Les AMÉLIORATIONS (étape 17, ✍️ Iron Wolf Studio : « améliorer les bâtiments pour augmenter la production ou le service »)
   // Chaque centrale, station d'eau, bâtiment de déchets ou service peut monter de ★1 à ★3.
   //   chaque étoile : + « bonus » de production ou de places ; coûte « prix » × son prix d'achat ; + « entretien » d'entretien
   ameliorations: { max: 3, bonus: 0.5, prix: 0.5, entretien: 0.3 },
 
-  // 🔬 Les RECHERCHES (étape 17, ✍️ Maxance : « des recherches payantes pour que l'industrie soit moins polluante »)
+  // 🔬 Les RECHERCHES (étape 17, ✍️ Iron Wolf Studio : « des recherches payantes pour que l'industrie soit moins polluante »)
   // Une seule à la fois ; elle dure « duree » secondes de jeu. effets : ce qu'elle ajoute (−0,25 = −25 %).
   //   pollutionIndustrie : la pollution des usines · production : le courant des centrales · carburant : le carburant acheté
   //   dechets : les poubelles de la ville · epuration : l'eau sale nettoyée · agriculture : ce que nourrit une ferme
@@ -116,7 +116,7 @@ Megalopole.CONFIG = {
     eolienne: { nom: "Éolienne", emoji: "🌬️", groupe: "energie", taille: 1, prix: 600, entretien: 15, palier: 0, courant: 40, vent: true },
     solaire: { nom: "Panneaux solaires", emoji: "☀️", groupe: "energie", taille: 2, prix: 1800, entretien: 40, palier: 2, courant: 120, soleil: true },
     nucleaire: { nom: "Centrale nucléaire", emoji: "☢️", groupe: "energie", taille: 4, prix: 25000, entretien: 1500, palier: 4, courant: 4000 },
-    // (étape 11, demande de Maxance : plus de choix, chacun avec sa puissance)
+    // (étape 11, demande d'Iron Wolf Studio : plus de choix, chacun avec sa puissance)
     gaz: { nom: "Centrale au gaz", emoji: "🔥", groupe: "energie", taille: 3, prix: 4000, entretien: 120, palier: 1, courant: 600, pollution: 0.4 },
     barrage: { nom: "Barrage hydraulique", emoji: "🌊", groupe: "energie", taille: 3, prix: 15000, entretien: 300, palier: 3, courant: 1500, riviere: true }, // contre une rivière ou un lac (pas la mer)
     geothermie: { nom: "Géothermie", emoji: "♨️", groupe: "energie", taille: 2, prix: 18000, entretien: 200, palier: 3, courant: 800 },
@@ -134,11 +134,11 @@ Megalopole.CONFIG = {
     decharge: { nom: "Décharge", emoji: "🗑️", groupe: "dechets", taille: 3, prix: 800, entretien: 40, poste: "proprete", palier: 0, dechets: 120, contenance: 4000, salete: { rayon: 7, force: 0.25 } }, // elle se remplit, et salit le terrain autour
     incinerateur: { nom: "Incinérateur", emoji: "🔥", groupe: "dechets", taille: 3, prix: 9000, entretien: 300, poste: "proprete", palier: 2, dechets: 600, pollution: 0.6, courantDechets: 150 }, // brûler les déchets fait un peu d'électricité
     recyclage: { nom: "Centre de recyclage", emoji: "♻️", groupe: "dechets", taille: 2, prix: 4000, entretien: 150, poste: "proprete", palier: 1, recyclage: 150 }, // −30 % de déchets (jusqu'à 150 de moins chacun)
-    // 🏛️ les services (étape 14, demande de Maxance : plus de cercles ! chaque service a une CAPACITÉ, en habitants
+    // 🏛️ les services (étape 14, demande d'Iron Wolf Studio : plus de cercles ! chaque service a une CAPACITÉ, en habitants
     //  — « pour: "tous" » = habitants ET emplois : la police, les pompiers et les bus servent aussi les commerces et usines)
     ecole: { nom: "École", emoji: "🏫", groupe: "services", taille: 2, prix: 1500, entretien: 100, poste: "education", palier: 0, capacite: 3000, pour: "habitants", service: "education" }, // (étape 16 : places doublées)
     lycee: { nom: "Lycée", emoji: "🎓", groupe: "services", taille: 3, prix: 5000, entretien: 300, poste: "education", palier: 2, capacite: 10000, pour: "habitants", service: "education" },
-    // 🏛️ étape 16 (✍️ Maxance : « il faut des pompiers, des commissariats et une éducation plus gros, là il faut trop de bâtiments »)
+    // 🏛️ étape 16 (✍️ Iron Wolf Studio : « il faut des pompiers, des commissariats et une éducation plus gros, là il faut trop de bâtiments »)
     universite: { nom: "Université", emoji: "🏛️", groupe: "services", taille: 4, prix: 15000, entretien: 900, poste: "education", palier: 3, capacite: 20000, pour: "habitants", service: "education" },
     police: { nom: "Commissariat", emoji: "🚓", groupe: "services", taille: 2, prix: 1500, entretien: 120, poste: "securite", palier: 1, capacite: 6000, pour: "tous", service: "securite" },
     hotelPolice: { nom: "Hôtel de police", emoji: "🚔", groupe: "services", taille: 3, prix: 6000, entretien: 400, poste: "securite", palier: 3, capacite: 12000, pour: "tous", service: "securite" },
@@ -177,7 +177,7 @@ Megalopole.CONFIG = {
     { id: "monuments", nom: "Monuments", emoji: "🗽" }, // étape 19
   ],
 
-  // 🔥 Les PROBLÈMES (étape 20, ✍️ Maxance : des problèmes à régler, pour que le jeu ne soit plus lassant)
+  // 🔥 Les PROBLÈMES (étape 20, ✍️ Iron Wolf Studio : des problèmes à régler, pour que le jeu ne soit plus lassant)
   //   intervalle : s en moyenne entre deux problèmes, selon la difficulté (seulement quand quelque chose MANQUE)
   //   habitantsMin : pas de problème dans une toute petite ville
   problemes: {
@@ -194,7 +194,7 @@ Megalopole.CONFIG = {
     greve: { taux: 12, bonheur: 45, mois: 1 },
   },
 
-  // 🏆 Les OBJECTIFS (étape 19, ✍️ Maxance : « le jeu devient vite lassant et sans but »)
+  // 🏆 Les OBJECTIFS (étape 19, ✍️ Iron Wolf Studio : « le jeu devient vite lassant et sans but »)
   // On en montre toujours 3 : le prochain FACILE (rang 1), MOYEN (2) et DUR (3), dans l'ordre de la liste.
   // test : ce qu'on mesure (voir logique/objectifs.js) · but : le nombre à atteindre · recompense en 🪙 · monument débloqué
   //   (avec : une condition en plus, par exemple au moins tant d'habitants)
@@ -240,9 +240,9 @@ Megalopole.CONFIG = {
   pollution: { industrie: 0.12, rayon: 5, centraleRayon: 9 },
   // 💎 la valeur du terrain (de 0 à 1)
   valeur: { base: 0.34, bordDeLEau: 0.12, parPollution: 0.6, parTrafic: 0.25, arbres: 0.04,
-    // (étape 14) ce que chaque service REÇU ajoute à la valeur du terrain (avant : selon la place des parcs ; choix de Maxance)
+    // (étape 14) ce que chaque service REÇU ajoute à la valeur du terrain (avant : selon la place des parcs ; choix d'Iron Wolf Studio)
     services: { loisirs: 0.16, education: 0.07, sante: 0.05, securite: 0.04, feu: 0.03, transport: 0.03 },
-    // 🏘️ (étape 18, ✍️ Maxance : « la valeur du terrain pose encore problème ») : de grands immeubles autour rendent le
+    // 🏘️ (étape 18, ✍️ Iron Wolf Studio : « la valeur du terrain pose encore problème ») : de grands immeubles autour rendent le
     // terrain plus cher : + parNiveau par niveau MOYEN des voisins (dans croissance.quartier.rayon cases), au plus « max »
     quartier: { parNiveau: 0.05, max: 0.25 },
     // 💎 la valeur qu'il faut à une habitation pour passer aux niveaux 2, 3, 4, 5, 6 (étape 18 : avant 0,3 0,4 0,5 0,6 0,7)
@@ -261,7 +261,7 @@ Megalopole.CONFIG = {
   },
   // 🧾 Étape 2 : ✍️ « la gestion des impôts et des coûts sera importante : il faut bien réfléchir et paramétrer le système ».
   // LE BUDGET (logique/budget.js). Chaque mois :
-  //   ➕ les IMPÔTS : chaque zone a son taux (choix de Maxance). Ce qu'elle paie = ses gens × leur revenu × son taux.
+  //   ➕ les IMPÔTS : chaque zone a son taux (choix d'Iron Wolf Studio). Ce qu'elle paie = ses gens × leur revenu × son taux.
   //      Plus un bâtiment est grand, plus ses gens gagnent : un gratte-ciel rapporte bien plus que 125 maisons !
   //   ➖ l'ENTRETIEN des routes et des bâtiments, × le budget de leur poste (de 0 à 150 %, réglable) ;
   //   ➖ le CARBURANT des centrales et des pompes, selon ce qu'elles produisent vraiment ;
@@ -331,7 +331,7 @@ Megalopole.CONFIG = {
     { batiment: "attractions", habitants: 40000, texte: "Un parc d'attractions !" },
   ],
 
-  // 🎓 Le GUIDE du début (étape 3, demande de Maxance) : une mission à la fois. Le professeur (logique/guide.js) vérifie
+  // 🎓 Le GUIDE du début (étape 3, demande d'Iron Wolf Studio) : une mission à la fois. Le professeur (logique/guide.js) vérifie
   // chaque mission dans la ville : quand c'est fait, il passe à la suivante. « groupe » : le menu que montre 👉.
   //   test : « routes » (cases de route), « courant » / « eau » (ce que produit la ville), « zone » (cases peintes),
   //          « batiment » (combien de ce bâtiment), « habitants »

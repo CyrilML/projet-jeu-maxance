@@ -1,7 +1,7 @@
 # Demande n° 50 : les routes et la ville
 
-> Statut : ✅ livrée le 05/10/2026 (version 19 du circuit), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé. Le message d'origine est dans `47-meteo-et-decor-realiste.md` (« refais le décor
+> Statut : ✅ livrée le 05/10/2026 (version 19 du circuit), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé. Le message d'origine est dans `47-meteo-et-decor-realiste.md` (« refais le décor
 > entièrement sur toutes les maps, ultra réaliste », avec les routes et la ville dans la liste).
 
 ## 🎯 Quoi
@@ -16,7 +16,7 @@ Des routes et une ville plus réalistes.
 - Le mobilier de la rue : 120 panneaux « 50 », 144 plaques de rue, des lignes d'arrêt, des bancs, des poubelles,
   des bouches d'incendie et des plaques d'égout.
 - Le NOM DES RUES : sur les plaques bleues aux carrefours, en haut à gauche de l'écran et dans le journal.
-  Choisis par Claude (tu peux les changer dans `circuit/config.js`, `ville.nomsRues`) : avenue Maxance, rue Cyril,
+  Choisis par Claude (tu peux les changer dans `circuit/config.js`, `ville.nomsRues`) : avenue Iron Wolf Studio, rue Cyril,
   boulevard du Turbo, rue des Pizzas…
 
 ## ✅ Critères de réussite

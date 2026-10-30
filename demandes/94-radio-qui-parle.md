@@ -1,7 +1,7 @@
 # Demande n° 94 : la radio qui parle
 
-> Statut : ✅ livrée le 21/10/2026 (tanks version 36), à valider par Maxance (le son des voix est à vérifier sur son ordinateur).
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 21/10/2026 (tanks version 36), à valider par Iron Wolf Studio (le son des voix est à vérifier sur son ordinateur).
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Je ne veux pas qu'on paye. Je veux que tu puisses inventer ton propre ordre et que tu puisses entendre les réponses à

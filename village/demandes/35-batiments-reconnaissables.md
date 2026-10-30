@@ -1,15 +1,15 @@
 # Village · demande n° 35 : des bâtiments reconnaissables de loin (pas juste plus grands)
 
-> Demandée par Maxance (via Cyril) le 09/10/2026. Statut : ✅ livrée le 09/10/2026 (étape 37 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 09/10/2026. Statut : ✅ livrée le 09/10/2026 (étape 37 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Tu les as juste agrandis : maintenant ils font une taille considérable qui ne va plus avec le reste du paysage, mais
   ils sont toujours les mêmes. Je t'ai demandé qu'ils soient reconnaissables de loin. Ce n'est pas juste le fait de les
   rendre plus grands : il faut qu'ils aient vraiment des spécificités qu'on puisse voir de loin. »
 - « Un entrepôt doit avoir des piles de cartons ou de matériaux à l'extérieur, sur des étagères… Pareil pour les autres. »
 
-## ❓ Les questions posées, et les choix de Maxance
+## ❓ Les questions posées, et les choix d'Iron Wolf Studio
 - La taille ? → **un bâtiment de taille normale + une cour** : le bâtiment est au fond de sa place, le reste est une cour
   remplie des objets de son métier.
 - Une enseigne ? → **oui, une enseigne discrète** au-dessus de la porte.

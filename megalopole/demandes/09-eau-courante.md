@@ -1,9 +1,9 @@
 # Mégalopole · demande n° 9 : des bâtiments sans eau alors qu'il y a assez de stations
 
-> Signalé par Maxance (via Cyril) le 11/10/2026. Statut : ✅ corrigé le 11/10/2026 (étape 9 du carnet de la
+> Signalé par Iron Wolf Studio (via Cyril) le 11/10/2026. Statut : ✅ corrigé le 11/10/2026 (étape 9 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a dit (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a dit (ses mots)
 - « Certaines maisons ou industries n'ont pas l'eau courante alors que j'ai suffisamment de stations : je ne comprends pas. »
 
 ## 🔎 L'enquête (une ville de test, avec Playwright)

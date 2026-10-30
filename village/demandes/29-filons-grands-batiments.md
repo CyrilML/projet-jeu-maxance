@@ -1,17 +1,17 @@
 # Village · demande n° 29 : plus de montagnes, des filons à découvrir, des bâtiments encore plus grands, des icônes plus claires
 
-> Demandée par Maxance (via Cyril) le 08/10/2026. Statut : ✅ livrée le 08/10/2026 (étape 28 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 08/10/2026. Statut : ✅ livrée le 08/10/2026 (étape 28 du carnet du village), à valider.
 > La même demande contient aussi le bilan, le conseiller, les commandes, les objectifs pas à pas et le monument :
 > ils sont livrés dans les étapes 29, 30 et 31.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Certains objets ne sont pas ressemblants dans l'inventaire, on devrait mieux les distinguer, et en cliquant dessus le nom
   doit s'afficher. »
 - « Encore une fois les bâtiments sont trop petits et difficiles à distinguer : fais-les beaucoup plus gros. »
 - « Les montagnes ne me conviennent pas, elles gênent beaucoup et ne sont pas esthétiques : les remplacer par des filons que
   le géologue trouve, et une mine doit creuser dans le sol. Les filons seraient représentés avec des paillettes à la surface. »
 
-## ❓ Les questions posées, et les choix de Maxance
+## ❓ Les questions posées, et les choix d'Iron Wolf Studio
 - Montagnes → **plus de montagnes, filons cachés** que le géologue découvre.
 - Taille → « les tailles peuvent varier, même 5 × 5 ».
 

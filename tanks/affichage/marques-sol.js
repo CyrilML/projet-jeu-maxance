@@ -1,6 +1,6 @@
 // 🐾 LES MARQUES SUR LE SOL : le tampon encreur du champ de bataille (demande 92, « le réalisme total »)
 //
-// ✍️ Maxance : « Le sol… les traces de chenilles derrière les tanks ; les cratères qui restent après les explosions. »
+// ✍️ Iron Wolf Studio : « Le sol… les traces de chenilles derrière les tanks ; les cratères qui restent après les explosions. »
 // Comme un tampon qu'on appuie sur une feuille :
 //   - LES TRACES : tous les 0,9 m, chaque tank (et chaque camion, quad, moto, 4x4) « tamponne » derrière lui un petit
 //     morceau de trace pour chacune de ses chenilles (ou de ses roues), avec les crampons dessinés dedans. Les morceaux

@@ -1,7 +1,7 @@
 // 📖 LA CAMPAGNE DE L'ÉDITION « 1916 » : « Les Bleuets de la Marne-Vive » (demande 136)
 //
 // ✍️ « Je veux que chaque édition soit une campagne qui puisse revivre les moments actuels ou qui sont arrivés. »
-// ✍️ Maxance a choisi : 6 chapitres, chacun INSPIRÉ D'UN VRAI MOMENT de la Grande Guerre, mais joué avec les pays, les
+// ✍️ Iron Wolf Studio a choisi : 6 chapitres, chacun INSPIRÉ D'UN VRAI MOMENT de la Grande Guerre, mais joué avec les pays, les
 // chefs et les lieux INVENTÉS de l'édition (l'Entente de Valmont contre l'Empire de Kressia, sur le front de la
 // Marne-Vive), avec des FILMS : une cinématique d'ouverture pour chaque chapitre, et un film de fin (réussite ou échec).
 //

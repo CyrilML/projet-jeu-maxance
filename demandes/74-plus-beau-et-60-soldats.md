@@ -1,7 +1,7 @@
 # Demande n° 74 : 60 soldats, et des tanks plus beaux
 
-> Statut : ✅ livrée le 15/10/2026 (tanks version 13), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 15/10/2026 (tanks version 13), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Augmente la limite à 60 soldats et refais les images. Elles ne sont pas belles. »

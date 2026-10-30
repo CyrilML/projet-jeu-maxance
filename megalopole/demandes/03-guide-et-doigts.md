@@ -1,14 +1,14 @@
 # Mégalopole · demande n° 3 : un guide au début, et tracer au doigt
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 3 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 3 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Il faut un guide au début pour expliquer ce qu'il faut placer en premier. »
 - « Quand on pose des routes, on ne peut pas se déplacer sur l'écran sur mobile, sinon ça place des routes n'importe
   où. C'est très chiant. »
 
-## 🤔 Les choix de Maxance
+## 🤔 Les choix d'Iron Wolf Studio
 - **Des missions pas à pas** : une bulle donne une mission à la fois et passe à la suivante quand c'est fait. On peut
   la passer.
 - **1 doigt bouge la carte, on confirme** : pour tracer, on touche le départ puis l'arrivée, on voit le tracé, et on

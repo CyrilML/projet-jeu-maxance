@@ -1,9 +1,9 @@
 # Village · demande n° 39 : toutes les routes pavées après la recherche
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 41 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 41 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Les routes doivent toutes être pavées à partir de l'amélioration : plus de chemin en terre possible. »
 
 ## 📏 Les règles (`logique/routes.js` : `sorteDe`)

@@ -1,7 +1,7 @@
 # Demande n° 96 : le jeu rame souvent, et des voix qui ne sont pas toujours les mêmes
 
-> Statut : ✅ voix livrées (tanks version 38, touche J) et lags corrigés (tanks version 39), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ voix livrées (tanks version 38, touche J) et lags corrigés (tanks version 39), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Le jeu rame souvent. Arrange ça et fais aussi que les voix ne soient pas toujours les mêmes. »

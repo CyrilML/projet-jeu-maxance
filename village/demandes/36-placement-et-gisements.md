@@ -1,16 +1,16 @@
 # Village · demande n° 36 : des bâtiments qui ne débordent plus, de grands gisements, un placement plus facile
 
-> Demandée par Maxance (via Cyril) le 09/10/2026. Statut : ✅ livrée le 09/10/2026 (étape 38 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 09/10/2026. Statut : ✅ livrée le 09/10/2026 (étape 38 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Certains bâtiments débordent sur la route : ce n'est pas esthétique. »
 - « Le géologue trouve des filons sur la route aussi, ce n'est pas joli, et il en trouve énormément. Peut-être qu'il faut
   juste qu'il trouve de nouveaux filons dans les mines existantes, et que la carte contienne de base plusieurs
   emplacements de différents minerais. »
 - « Le placement des bâtiments n'est pas très agréable : difficile de les aligner pour faire un village propre. »
 
-## ❓ Les questions posées, et les choix de Maxance
+## ❓ Les questions posées, et les choix d'Iron Wolf Studio
 - Les minerais ? → **des gisements visibles dès le début**.
 - Une mine épuisée ? → **le géologue la recharge**.
 - Le placement ? → **voir toute la place**, **l'aimant à la route**, **la grille et les lignes guides**.

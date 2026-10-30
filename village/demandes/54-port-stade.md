@@ -1,9 +1,9 @@
 # Village · demande n° 54 : le port et le stade
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 56 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 56 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Oui, développe le port, la fusée, le stade… »
 
 ## 📏 Les règles (à la métropole, menu « 🌃 Métropole »)

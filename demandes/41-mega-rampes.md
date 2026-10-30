@@ -1,6 +1,6 @@
 # Demande n° 41 : les méga-rampes (une piste dans le ciel)
 
-> Demandée par Maxance (via Cyril), avec l'image d'un jeu de « méga-rampes ». Les règles marquées ✍️ ont été
+> Demandée par Iron Wolf Studio (via Cyril), avec l'image d'un jeu de « méga-rampes ». Les règles marquées ✍️ ont été
 > précisées quand Claude a posé des questions. Statut : ✅ livrée le 05/10/2026, à valider.
 
 ## 🎯 Quoi

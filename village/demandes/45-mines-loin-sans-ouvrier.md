@@ -1,9 +1,9 @@
 # Village · demande n° 45 : la mine d'or et la carrière sans ouvrier
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 47 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 47 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Dans ma partie, la mine d'or et la mine de pierre : personne n'y va travailler. Pourquoi ? »
 - « Il ne devrait pas y avoir de limite de déplacement. »
 - Ce que montrait le jeu : « 👥 Personne ne travaille ici pour l'instant », et une bulle « vide » au-dessus de la mine

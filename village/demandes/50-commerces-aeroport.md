@@ -1,12 +1,12 @@
 # Village · demande n° 50 : les centres commerciaux et l'aéroport
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 52 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 52 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé
+## 🎯 Ce qu'Iron Wolf Studio a demandé
 - « Oui, vas-y, fais tout ce qu'il faut » (la suite de la feuille de route : les centres commerciaux et l'aéroport).
 
-## 📏 Les règles (choisies par Claude, que Maxance peut changer dans `config.js`)
+## 📏 Les règles (choisies par Claude, qu'Iron Wolf Studio peut changer dans `config.js`)
 - **🛍️ Le centre commercial** (4 × 4, électrique, un vendeur) :
   - c'est un nouveau service : il sert 100 lits, les plus proches par la route d'abord (le besoin « 🛍️ Commerces ») ;
   - toutes les 20 s, il vend 4 objets de ton produit le plus abondant (habits, pain, fromage, jambon, yaourt, beurre,

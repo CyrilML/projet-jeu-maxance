@@ -1,9 +1,9 @@
 # Mégalopole · demande n° 1 : une ville façon SimCity, qui pousse toute seule
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 1 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 1 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Plus on avance, plus je me dis que c'est compliqué de gérer chaque chaîne de production. Je pense qu'on devrait
   reprendre le système de SimCity, et le pousser un peu plus. »
 - « Des endroits pour les habitations, les commerces, l'industrie. Et on ajouterait aussi d'autres pôles, comme
@@ -13,7 +13,7 @@
 - « Les habitants réclament au fur et à mesure. La population grandit toute seule quand tout le monde est content, et
   les habitations, l'industrie et le reste évoluent seuls, jusqu'à devenir une mégalopole. »
 
-## 🤔 Les choix de Maxance
+## 🤔 Les choix d'Iron Wolf Studio
 - **Un nouveau jeu à part**, « 🌐 La Mégalopole », dans le dossier `megalopole/`. Le village reste comme il est, et
   ta partie n'est jamais cassée.
 - **Peindre des zones**, comme dans SimCity.

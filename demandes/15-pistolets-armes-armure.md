@@ -1,6 +1,6 @@
 # Demande n° 15 : pistolets, hache, épée dorée et armure
 
-> Demandée par Maxance. Les règles marquées ✍️ ont été précisées par Maxance quand Claude lui a
+> Demandée par Iron Wolf Studio. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio quand Claude lui a
 > posé des questions (réponses : 1a 2b 3b 4a 5a 6b 7c). Statut : ✅ livrée le 29/09/2026, à valider.
 
 ## 🎯 Quoi

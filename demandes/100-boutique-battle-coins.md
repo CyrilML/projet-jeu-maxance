@@ -1,11 +1,11 @@
 # Demande n° 100 : la boutique et les Battle Coins
 
 > Statut : ✅ reprise et livrée dans la demande 106 (tanks version 50).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « À l'entrée du jeu, un menu qui te demande de choisir entre la campagne, la boutique et les batailles libres. »
-✍️ « La boutique : des Battle Coins, la monnaie du jeu. » Packs prévus par Maxance : 100 BC = 0,99 € ; 550 BC = 4,99 € ;
+✍️ « La boutique : des Battle Coins, la monnaie du jeu. » Packs prévus par Iron Wolf Studio : 100 BC = 0,99 € ; 550 BC = 4,99 € ;
 1 200 BC = 9,99 € ; 2 600 BC = 19,99 €.
 ✍️ Avec les Battle Coins, on débloque dans la boutique : des armes, des viseurs, des canons, plein de pièces de
 l'armurerie, des personnages, de jolis skins, des peintures d'armes, plein de nouvelles choses.
@@ -14,7 +14,7 @@ l'armurerie, des personnages, de jolis skins, des peintures d'armes, plein de no
 - L'accueil a 3 portes : ▶ CAMPAGNE, 🛒 BOUTIQUE, ⚔️ BATAILLE LIBRE.
 - ⚠️ **Pas de vrai argent pour l'instant.** Le jeu est un site sans serveur ; encaisser des euros demande un adulte
   (Cyril), un compte de paiement, un serveur et des règles légales (surtout pour des joueurs mineurs). Les packs en
-  euros sont affichés comme Maxance les a voulus, mais le bouton dit « pas encore possible : il faut l'accord et l'aide
+  euros sont affichés comme Iron Wolf Studio les a voulus, mais le bouton dit « pas encore possible : il faut l'accord et l'aide
   d'un adulte ». Rien n'est payé, aucune carte bancaire n'est demandée.
 - **On gagne les Battle Coins en jouant** (gratuit) : ennemis abattus, victoires, chapitres de campagne, montée de niveau.
 - Dans la boutique, les Battle Coins débloquent tout de suite (sans attendre le niveau) : armes, pièces d'armurerie

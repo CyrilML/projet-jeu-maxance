@@ -1,7 +1,7 @@
 # Demande n° 104 : un écran épuré, des voix plus humaines, des menus refaits (livre de demandes n° 1, 3, 4)
 
 > Statut : ✅ livrée (tanks version 48).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Retirer toutes les infos inutiles. » ✍️ « Faire des voix plus réalistes et plus humaines. »

@@ -1,11 +1,11 @@
 # Demande n° 56 : le circuit rame
 
-> Statut : ✅ livrée le 06/10/2026 (version 24 du circuit), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 06/10/2026 (version 24 du circuit), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Le jeu bugue un peu. Arrange-moi ça. »
-✍️ Précisé par Maxance : c'est le **circuit 3D**, et **ça rame, ça saccade**.
+✍️ Précisé par Iron Wolf Studio : c'est le **circuit 3D**, et **ça rame, ça saccade**.
 
 ## 🔍 L'enquête
 On a chronométré chaque partie du jeu. Les règles (la physique) prennent 1 ms par image : ce n'est pas elles.

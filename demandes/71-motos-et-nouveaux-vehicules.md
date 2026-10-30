@@ -1,7 +1,7 @@
 # Demande n° 71 : une moto cross (un peu une Honda) et de nouveaux véhicules
 
-> Statut : ✅ livrée (circuit 3D version 32 le 13/10/2026, tanks version 11 le 14/10/2026), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée (circuit 3D version 32 le 13/10/2026, tanks version 11 le 14/10/2026), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Ajoute des nouveaux véhicules dans les tanks et dans le jeu de voitures en 3D. Fais une moto cross. Un peu une Honda. »
@@ -16,10 +16,10 @@
 - Les motos **penchent dans les virages** (seulement le dessin), d'autant plus qu'elles vont vite : au plus 26°.
 
 ### Tanks (version 11)
-- ✍️ La map **5 fois plus grande** au départ ; après l'étape 72 (les lags), Maxance a choisi **3 fois plus grande** (2,1 km de côté au lieu de 700 m), pour ne pas refaire ramer le jeu.
+- ✍️ La map **5 fois plus grande** au départ ; après l'étape 72 (les lags), Iron Wolf Studio a choisi **3 fois plus grande** (2,1 km de côté au lieu de 700 m), pour ne pas refaire ramer le jeu.
 - ✍️ La moto cross, aussi pour **l'ordinateur** (alliés et ennemis).
 - ✍️ Un **quad** avec une petite mitrailleuse, et un **camion de transport** qui emmène 6 soldats, pour **les deux camps**.
-- (Mis en pause quand Maxance a demandé d'abord de supprimer les lags : demande n° 72. Reprise le 14/10/2026 : tanks version 11.)
+- (Mis en pause quand Iron Wolf Studio a demandé d'abord de supprimer les lags : demande n° 72. Reprise le 14/10/2026 : tanks version 11.)
 
 ## ✅ Critères de réussite
 - [ ] Au garage du parcours, du grand parcours et de la ville : « La moto cross Honda CRF450R » et « La moto de trial ».

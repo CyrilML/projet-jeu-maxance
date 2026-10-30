@@ -1,12 +1,12 @@
 # Mégalopole · demande n° 20 : des problèmes à régler
 
-> Demandée par Maxance (via Cyril) le 12/10/2026. Statut : ✅ livrée le 12/10/2026 (étape 20 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 12/10/2026. Statut : ✅ livrée le 12/10/2026 (étape 20 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Le jeu devient vite lassant et sans but, que proposes-tu ? » → 2ᵉ idée choisie : **des problèmes à régler**.
 
-## 🤔 Les choix de Maxance
+## 🤔 Les choix d'Iron Wolf Studio
 - **Les 4 problèmes** : 🔥 incendies, 🦹 vols, ⚡ pannes, 🪧 grèves.
 - **Selon la difficulté** : Facile ≈ 1 toutes les 6 min, Normal ≈ 2 min, Difficile ≈ 1 min, seulement s'il manque
   quelque chose ; avec un bouton pour les couper.

@@ -1,8 +1,8 @@
 # Demande n° 7 : les flammes de la lave
 
-> Demandée par Maxance. Les règles marquées ✍️ ont été précisées par Maxance quand Claude lui a
+> Demandée par Iron Wolf Studio. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio quand Claude lui a
 > posé des questions (réponses : 1A, 2B).
-> Statut : ✅ livrée le 25/09/2026, à valider par Maxance.
+> Statut : ✅ livrée le 25/09/2026, à valider par Iron Wolf Studio.
 
 ## 🎯 Quoi
 Quand le personnage tombe dans la lave, il y a des petites flammes.
@@ -22,9 +22,9 @@ Pour qu'on voie bien que la lave brûle.
 - Le personnage brûle 1 seconde ; chaque flamme vit environ 2 secondes.
 
 ## 👥 Qui fait quoi
-- **Maxance** : décide des règles, teste avec les rayons X, valide.
+- **Iron Wolf Studio** : décide des règles, teste avec les rayons X, valide.
 - **Claude** : code, explique ce qu'il a fait et pourquoi, met à jour le carnet.
-- **Cyril** : relit la demande avec Maxance et la transmet.
+- **Cyril** : relit la demande avec Iron Wolf Studio et la transmet.
 
 ## ✅ Critères de réussite
 - [ ] Quand je tombe dans la lave, mon personnage clignote et des flammes montent de lui.

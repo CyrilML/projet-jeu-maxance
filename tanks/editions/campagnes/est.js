@@ -6,7 +6,7 @@
 // caméraman (logique/cinematique.js) tourne les films, et le tailleur (editions/appliquer.js) les coud par-dessus la
 // campagne de Valdrie quand l'édition « est » est choisie.
 //
-// ✍️ (Maxance) « Je veux que chaque édition soit une campagne qui puisse revivre les moments actuels ou qui sont
+// ✍️ (Iron Wolf Studio) « Je veux que chaque édition soit une campagne qui puisse revivre les moments actuels ou qui sont
 // arrivés. » 6 chapitres, inspirés de VRAIS moments, mais avec les pays, les chefs et les lieux INVENTÉS de l'édition,
 // et des films (une ouverture pour chaque chapitre, une fin quand tu réussis, une autre quand tu échoues).
 // ⚠️ Cette édition rappelle une guerre qui a lieu AUJOURD'HUI. ✍️ La règle de l'édition : « Par respect : rien de

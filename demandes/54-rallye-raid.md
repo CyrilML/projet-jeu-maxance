@@ -1,7 +1,7 @@
 # Demande n° 54 : le rallye-raid (un nouveau jeu)
 
-> Statut : ✅ livrée le 05/10/2026 (version 1 du rallye-raid), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé. Les voitures, routes et immeubles très réalistes du circuit deviennent l'étape 55.
+> Statut : ✅ livrée le 05/10/2026 (version 1 du rallye-raid), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé. Les voitures, routes et immeubles très réalistes du circuit deviennent l'étape 55.
 
 ## 🎯 Quoi
 « Fais-moi une piste avec plusieurs types de 4x4 et de moto dessus » (avec une image du Dakar 2017), puis

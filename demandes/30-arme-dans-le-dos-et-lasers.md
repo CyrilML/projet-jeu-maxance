@@ -1,6 +1,6 @@
 # Demande n° 30 : l'arme dans le dos, le petit saut pour tirer, et les lasers
 
-> Demandée par Maxance. Les règles marquées ✍️ ont été précisées par Maxance quand Claude lui a
+> Demandée par Iron Wolf Studio. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio quand Claude lui a
 > posé des questions (réponses : 1b avec un petit saut, 2b, 3b, 4b, 5b). Statut : ✅ livrée le 04/10/2026, à valider.
 
 ## 🎯 Quoi

@@ -1,14 +1,14 @@
 # Mégalopole · demande n° 11 : plus de centrales, plus de choix pour l'eau, et les déchets
 
-> Demandée par Maxance (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 11 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 11 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Il faut plus de choix sur les centrales électriques et sur le réseau d'eau, avec pour chacun une puissance attribuée
   visible à l'achat. »
 - « On peut aussi gérer le ramassage des poubelles. Incinérateur. Enfouissement… »
 
-## 🤔 Les choix de Maxance
+## 🤔 Les choix d'Iron Wolf Studio
 - Les 4 nouvelles centrales, et les 3 nouveaux bâtiments pour l'eau.
 - Les déchets **comme l'eau** : un réseau par les routes, avec une place limitée.
 - La puissance affichée **sur la carte du tiroir**.

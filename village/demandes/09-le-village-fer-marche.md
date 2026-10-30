@@ -1,12 +1,12 @@
 # Village · demande n° 9 : l'âge du village (le fer, la fonderie, la forge, les maisons, le marché)
 
-> Demandée par Maxance (via Cyril) le 05/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 8 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 05/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 8 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé
-Claude a proposé le contenu de l'âge du village 🏡, avec 3 questions. Les réponses de Maxance :
+## 🎯 Ce qu'Iron Wolf Studio a demandé
+Claude a proposé le contenu de l'âge du village 🏡, avec 3 questions. Les réponses d'Iron Wolf Studio :
 « 1a / 2B / 3A / Et fais le marché et des missions aussi ».
 
-| Question | Choix de Maxance |
+| Question | Choix d'Iron Wolf Studio |
 |---|---|
 | 1. La fonderie | **A, simple** : 1 🟤 minerai de fer + 1 ⚫ charbon → 1 🔩 lingot |
 | 2. Les habitants | **B** : chaque ouvrier a besoin d'une **place pour dormir** (huttes, maisons) |

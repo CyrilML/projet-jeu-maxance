@@ -1,8 +1,8 @@
 # Village · demande n° 14 : les villageois, les manutentionnaires et les améliorations
 
-> Demandée par Maxance (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 13 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 13 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « On ne comprend pas bien que la production est liée au nombre de maisons. Il faut plus de villageois à chaque fois
   qu'on construit une nouvelle cabane, sinon la cabane ne travaille pas. Idem pour l'entrepôt : il doit contenir des
   manutentionnaires pour livrer le plus rapidement possible. »

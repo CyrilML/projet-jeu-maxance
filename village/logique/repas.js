@@ -2,7 +2,7 @@
 //
 // Chaque habitant (les ouvriers ET les porteurs) mange 1 poisson 🐟 ou 1 morceau de viande 🍖.
 //
-// Étape 5 : ✍️ Maxance a trouvé ça trop dur, alors les règles ont changé :
+// Étape 5 : ✍️ Iron Wolf Studio a trouvé ça trop dur, alors les règles ont changé :
 //   - on mange 1 repas PAR SAISON (toutes les 2 min 30), plus toutes les 2 minutes ;
 //   - on mange directement à l'entrepôt (la cantine) : les porteurs n'ont plus besoin d'apporter
 //     les repas dans chaque cabane (ils étaient débordés !) ;

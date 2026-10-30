@@ -121,8 +121,8 @@ Village.CONFIG = {
   // Étape 2 : les bâtiments. Depuis l'étape 3, le coût est RÉSERVÉ quand on pose le chantier,
   // puis les porteurs apportent les matériaux un par un.
   //   construction : durée du chantier (s) ; rayon : jusqu'où l'ouvrier va travailler (en cases).
-  // Étape 17 : ✍️ Maxance trouvait le périmètre trop petit : les rayons sont doublés (bûcheron 6 → 12…).
-  // Étape 26 : ✍️ « ils ne vont pas assez loin » : encore + 50 % pour tous (choix de Maxance).
+  // Étape 17 : ✍️ Iron Wolf Studio trouvait le périmètre trop petit : les rayons sont doublés (bûcheron 6 → 12…).
+  // Étape 26 : ✍️ « ils ne vont pas assez loin » : encore + 50 % pour tous (choix d'Iron Wolf Studio).
   batiments: {
     bucheron: { cout: { planches: 3 }, construction: 8, rayon: 18 },
     forestier: { cout: { planches: 3 }, construction: 8, rayon: 14 },
@@ -347,7 +347,7 @@ Village.CONFIG = {
     poulailler: [[2, 0]],
   },
   // Étape 21 : ✍️ « les mines sont trop éloignées » : la cabane du mineur peut être à 4 cases du filon (1 avant).
-  // Étape 26 : ✍️ « les mineurs ne voient pas les filons des montagnes un peu plus loin » : 12 cases (choix de Maxance).
+  // Étape 26 : ✍️ « les mineurs ne voient pas les filons des montagnes un peu plus loin » : 12 cases (choix d'Iron Wolf Studio).
   // Mais le mineur MARCHE jusqu'au filon et revient avec son morceau : plus le filon est loin, plus c'est long
   // (aller-retour à la vitesse des ouvriers). Il creuse toujours le filon le plus proche d'abord.
   // Étape 38 : ✍️ les GRANDS GISEMENTS de minerai, visibles dès le début (logique/carte.js). Pour chaque minerai : combien,
@@ -399,7 +399,7 @@ Village.CONFIG = {
     arriveeTravail: 7, // étape 47 : quand des bâtiments attendent un ouvrier, un villageois arrive toutes les 7 s
     vitesse: 1.2, // cases par seconde quand ils vont au travail (0,6 en se promenant)
     promenade: 3, // cases autour du feu de camp
-    // Étape 19 : ✍️ Maxance trouvait qu'il fallait une ÉNORME quantité de nourriture. La mesure : sur 46 habitants,
+    // Étape 19 : ✍️ Iron Wolf Studio trouvait qu'il fallait une ÉNORME quantité de nourriture. La mesure : sur 46 habitants,
     // 35 n'avaient pas de travail (chaque hutte faisait venir 3 bouches de plus) ! Maintenant, un villageois
     // n'arrive que s'il y a du travail pour lui, ou s'il y a moins de 2 villageois qui attendent déjà.
     attenteMax: 2,
@@ -408,7 +408,7 @@ Village.CONFIG = {
   // Étape 13 : ✍️ (2B) l'ENTREPÔT s'agrandit pour accueillir plus de manutentionnaires (les porteurs).
   //   places = 3 + 2 × (niveau − 1) + celles achetées à la boutique ; niveau 5 au plus.
   //   prix pour passer au niveau suivant = prix × facteurPrix^(niveau − 1)
-  // Étape 20 : ✍️ 294 livraisons en retard chez Maxance ! 4 places au départ (3 avant), + 3 par niveau (2 avant).
+  // Étape 20 : ✍️ 294 livraisons en retard chez Iron Wolf Studio ! 4 places au départ (3 avant), + 3 par niveau (2 avant).
   entrepot: { porteurs: 4, parNiveau: 3, niveauMax: 5, prix: { planches: 30, pierres: 20 }, prixPieces: 40, facteurPrix: 2 },
 
   // Étape 13 : ✍️ les AMÉLIORATIONS de chaque bâtiment (2 niveaux au plus), payées tout de suite avec le stock.
@@ -533,7 +533,7 @@ Village.CONFIG = {
   entreeParAmelioration: 3, // étape 44 : + 3 par amélioration ⭐ de l'atelier (jusqu'à 12)
   // Étape 27 : ✍️ « le géologue et le maçon devraient pouvoir aller partout sur la carte, sans rentrer chez eux à chaque
   // fois ». Ces métiers font une TOURNÉE : ils cherchent sur toute la carte, et après un travail ils cherchent le suivant
-  // depuis l'endroit où ils sont. Ils ne rentrent que quand il n'y a plus rien à faire (choix de Maxance), et le maçon
+  // depuis l'endroit où ils sont. Ils ne rentrent que quand il n'y a plus rien à faire (choix d'Iron Wolf Studio), et le maçon
   // aussi quand il n'a plus d'outils : il part avec 3 🔨 au plus (1 par réparation).
   tournee: { metiers: ["geologue", "macon", "veterinaire"], outilsMacon: 3 },
 
@@ -602,7 +602,7 @@ Village.CONFIG = {
     depart: 160, // au début de la partie (24 avant l'étape 5 ; 40 avant l'étape 32)
     maximum: 280, // (40 avant l'étape 5 ; 70 avant l'étape 32)
     naissance: 12, // (avant l'étape 40 : s entre deux naissances)
-    // Étape 40 : ✍️ « le chasseur ne devrait jamais être en rupture de gibier ». Choix de Maxance : des naissances PARTOUT,
+    // Étape 40 : ✍️ « le chasseur ne devrait jamais être en rupture de gibier ». Choix d'Iron Wolf Studio : des naissances PARTOUT,
     // et plus il y a d'animaux, plus il en naît : chaque animal a 20 % de chances par minute d'avoir un petit (6 % en
     // hiver). Une espèce qui n'a presque plus d'animaux (moins de 6) en voit arriver de nouveaux dans son habitat.
     fecondite: 0.2, feconditeHiver: 0.06, minimumEspece: 6,
@@ -654,7 +654,7 @@ Village.CONFIG = {
     { id: "bourg", nom: "Le bourg", emoji: "🏰", debloque: ["cathedrale", "ferme", "moulin", "boulangerie", "mineOr", "orfevre", "macon", "fromagerie", "cremerie", "tailleur", "charcuterie"], // étape 16 : les vêtements et le jambon
       objectifs: { batiments: 32, habitants: 34, recherches: 13, stock: { pain: 60, bijoux: 8, outils: 25, fromage: 15 }, pieces: 600, bonheur: 70, chantier: "cathedrale" } },
     { id: "ville", nom: "La ville", emoji: "🏙️", debloque: ["monument"], // étape 31 : le grand monument
-      // Étape 34 : ✍️ (choix de Maxance) pour l'époque industrielle : le Grand Beffroi fini, 80 habitants, 3 000 🪙
+      // Étape 34 : ✍️ (choix d'Iron Wolf Studio) pour l'époque industrielle : le Grand Beffroi fini, 80 habitants, 3 000 🪙
       objectifs: { monument: 4, habitants: 80, pieces: 3000 } },
     // Étape 34 : 🏭 l'ÉPOQUE INDUSTRIELLE : l'électricité, et les premières usines
     { id: "industrie", nom: "L'époque industrielle", emoji: "🏭", debloque: ["centrale", "eolienne", "acierie", "filature", "pompage", "epuration", "gare"], // étape 59 : l'éolienne // étape 35 : l'eau et les égouts
@@ -670,7 +670,7 @@ Village.CONFIG = {
     // Étape 53 : 🌃 la MÉTROPOLE : le dernier âge (pour l'instant !)
     // Étape 56 et 57 : ✍️ « développe le port, la fusée, le stade » : le but final, lancer une fusée dans l'espace
     { id: "metropole", nom: "La métropole", emoji: "🌃", debloque: ["port", "stade", "spatial"], objectifs: null,
-      aVenir: "la suite… à toi de l'imaginer, Maxance !" },
+      aVenir: "la suite… à toi de l'imaginer, Iron Wolf Studio !" },
   ],
   gemmesParAge: 3, // étape 7 : 💎 offertes à chaque nouvel âge
 
@@ -720,7 +720,7 @@ Village.CONFIG = {
 
   // Étape 7 : 📜 les MISSIONS. Un personnage raconte une petite histoire et demande des ressources
   // avant la fin du temps. Réussie : une récompense et des 💎. Ratée : rien de grave, une autre viendra.
-  // Étape 30 : ✍️ (idées choisies par Maxance) 📦 les COMMANDES : 3 demandes claires à la fois, avec une récompense.
+  // Étape 30 : ✍️ (idées choisies par Iron Wolf Studio) 📦 les COMMANDES : 3 demandes claires à la fois, avec une récompense.
   // Elles demandent ce que le village sait fabriquer à son âge ; la quantité dépend du prix au marché (une commande vaut
   // environ « valeur × (âge + 1) » pièces), et elle rapporte 1,5 fois ce qu'elle vaut (et parfois 💎).
   commandes: {
@@ -944,7 +944,7 @@ Village.CONFIG = {
     vitesse: 1.5, // un atelier alimenté travaille 1,5 fois plus vite
   },
 
-  // Étape 35 : 🚰 l'EAU COURANTE et 🚽 les ÉGOUTS (logique/electricite.js). ✍️ Choix de Maxance : « comme l'électricité ».
+  // Étape 35 : 🚰 l'EAU COURANTE et 🚽 les ÉGOUTS (logique/electricite.js). ✍️ Choix d'Iron Wolf Studio : « comme l'électricité ».
   // Une station (qui a l'électricité et son ouvrier) fournit 40 unités ; les tuyaux suivent les routes, les plus proches
   // d'abord. La station de pompage doit être au bord de l'eau (à 3 cases au plus).
   // Ce que ça change : un besoin des habitants, les maisons bourgeoises deviennent des immeubles, et les élevages
@@ -1051,7 +1051,7 @@ Village.CONFIG = {
     ],
   },
 
-  // Étape 50 : 🎲 les INCIDENTS des maisons sans services (logique/incidents.js). ✍️ Choix de Maxance : « des événements ».
+  // Étape 50 : 🎲 les INCIDENTS des maisons sans services (logique/incidents.js). ✍️ Choix d'Iron Wolf Studio : « des événements ».
   // Toutes les « intervalle » secondes, un dé par service : chance = taux × part des lits sans ce service.
   incidents: {
     intervalle: 15, // s entre deux tirages

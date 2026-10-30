@@ -1,7 +1,7 @@
 // ✈️ LE VOL : le moniteur de pilotage
 //
 // Étape 44. ✍️ On peut piloter ce qui vole : le petit avion, l'avion de ligne, l'avion de chasse et l'hélicoptère.
-// Pilotage simple (choix de Maxance) :
+// Pilotage simple (choix d'Iron Wolf Studio) :
 //   - AVION : ↑ ↓ = les gaz (accélérer, ralentir) ; ← → = tourner ; Z (ou Espace) = monter ; S (ou Maj) = descendre.
 //     Pour DÉCOLLER, il faut rouler sur la piste jusqu'à la « vitesse de décollage », puis monter (Z).
 //     En l'air, un avion trop lent DÉCROCHE : ses ailes ne le portent plus, il tombe (la gravité) !

@@ -1,12 +1,12 @@
 # Mégalopole · demande n° 2 : les impôts et les coûts
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 2 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 2 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « La gestion des impôts et des coûts sera importante, il faut bien réfléchir et paramétrer le système. »
 
-## 🤔 Les choix de Maxance
+## 🤔 Les choix d'Iron Wolf Studio
 - **Un taux par zone** : 🏠 habitation, 🛍️ commerce, 🏭 industrie et 🌾 agriculture ont chacune leur impôt.
 - **Un budget par service** : un curseur de 0 à 150 % pour chaque poste, qui change l'efficacité du service.
   Les centrales et les pompes paient aussi leur carburant.

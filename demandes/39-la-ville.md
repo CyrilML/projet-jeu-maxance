@@ -1,6 +1,6 @@
 # Demande n° 39 : la ville
 
-> Demandée par Maxance (via Cyril), en plusieurs messages. Les règles marquées ✍️ ont été précisées
+> Demandée par Iron Wolf Studio (via Cyril), en plusieurs messages. Les règles marquées ✍️ ont été précisées
 > quand Claude a posé des questions. Statut : ✅ livrée le 04/10/2026, à valider.
 
 ## 🎯 Quoi

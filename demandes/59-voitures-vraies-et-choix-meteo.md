@@ -1,7 +1,7 @@
 # Demande n° 59 : des voitures encore plus vraies, et choisir sa météo
 
-> Statut : ✅ livrée le 06/10/2026 (version 27 du circuit), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 06/10/2026 (version 27 du circuit), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Les voitures ne sont pas encore assez réalistes. Améliore ça. Et je veux aussi pouvoir choisir dans quelle météo

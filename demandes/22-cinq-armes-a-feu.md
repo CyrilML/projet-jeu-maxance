@@ -1,6 +1,6 @@
 # Demande n° 22 : cinq nouvelles armes à feu, avec du style
 
-> Demandée par Maxance. Les règles marquées ✍️ ont été précisées par Maxance quand Claude lui a
+> Demandée par Iron Wolf Studio. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio quand Claude lui a
 > posé des questions (réponses : 1abcde 2a 3b 4abc). Statut : ✅ livrée le 29/09/2026, à valider.
 
 ## 🎯 Quoi

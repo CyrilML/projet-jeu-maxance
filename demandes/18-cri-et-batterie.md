@@ -1,6 +1,6 @@
 # Demande n° 18 : un cri dans les trous et une batterie sur les murets
 
-> Demandée par Maxance. Règles assez précises pour coder sans question. Statut : ✅ livrée le 29/09/2026, à valider.
+> Demandée par Iron Wolf Studio. Règles assez précises pour coder sans question. Statut : ✅ livrée le 29/09/2026, à valider.
 
 ## 🎯 Quoi
 Quand le personnage tombe dans un trou, il fait un petit cri de surprise. Quand il tombe sur le

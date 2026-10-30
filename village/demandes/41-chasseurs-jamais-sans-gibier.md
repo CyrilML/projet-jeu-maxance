@@ -1,9 +1,9 @@
 # Village · demande n° 41 : un chasseur n'est jamais sans gibier
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 43 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 43 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Je vois que des chasseurs n'ont rien à faire : j'ai demandé à ce que cela n'arrive pas. »
 
 ## 🔎 Pourquoi ça arrivait encore

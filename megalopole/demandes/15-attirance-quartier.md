@@ -1,13 +1,13 @@
 # Mégalopole · demande n° 15 : plus le quartier grandit, plus il attire
 
-> Demandée par Maxance (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 15 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 15 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « L'envie de venir ne monte pas malgré tous les besoins comblés. Plus le quartier grandit, plus il devrait être
   attirant. »
 
-## 🤔 Les choix de Maxance
+## 🤔 Les choix d'Iron Wolf Studio
 - **Bonus de quartier** : un nouveau « 🏘️ bonus de quartier », jusqu'à +0,4. La demande de la ville compte toujours.
 - **Pareil** pour les commerces, les industries et les fermes.
 

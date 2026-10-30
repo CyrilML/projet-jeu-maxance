@@ -1,7 +1,7 @@
 # Demande n° 92 : le réalisme total
 
-> Statut : ✅ livrée le 21/10/2026 en version raccourcie (environ 1 h, tanks version 34), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 21/10/2026 en version raccourcie (environ 1 h, tanks version 34), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Refais un réalisme total. Absolument tout doit être très réaliste, que ce soit le soldat, le sol, les tirs, les

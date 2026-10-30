@@ -1,6 +1,6 @@
 // 🏆 LES OBJECTIFS : le tableau des défis du maire
 //
-// Étape 19 : ✍️ « Le jeu devient vite lassant et sans but. » Choix de Maxance : des OBJECTIFS et des MONUMENTS.
+// Étape 19 : ✍️ « Le jeu devient vite lassant et sans but. » Choix d'Iron Wolf Studio : des OBJECTIFS et des MONUMENTS.
 // Le tableau montre toujours 3 défis : le prochain facile (rang 1), moyen (rang 2) et dur (rang 3) de la liste de
 // config.js. Une fois par seconde, il regarde la ville :
 //

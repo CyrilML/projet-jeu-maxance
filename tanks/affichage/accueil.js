@@ -42,7 +42,7 @@ Tanks.Accueil = (function () {
       boutonsLangue("a-langue") + // (demande 116 : le petit bouton FR | EN)
       '<div class="a-contenu">' +
       '<div class="a-sur-titre">' + (ED.textes.surTitre || "⚔️ Bataille · Infanterie · Blindés · Hélicos · Avions") + "</div>" + // (demande 115 : le sur-titre de l'édition)
-      '<h2 class="a-titre">THE LAST<br><span>BATTLEFIELD</span></h2>' + // ✍️ (étape 84) le nom du jeu, choisi par Maxance
+      '<h2 class="a-titre">THE LAST<br><span>BATTLEFIELD</span></h2>' + // ✍️ (étape 84) le nom du jeu, choisi par Iron Wolf Studio
       '<div class="a-auteur">un jeu ' + Tanks.CONFIG.studio + "</div>" + // ✍️ (étape 131) le nom du studio, réglé dans config.js
       '<div class="a-edition">édition ' + ED.icone + " " + ED.nom + (ED.id === "moderne" ? "" : " · " + ED.epoque) + "</div>" + // (demande 115)
       '<div class="a-ligne"></div>' +

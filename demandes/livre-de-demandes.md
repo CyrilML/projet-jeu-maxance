@@ -1,4 +1,4 @@
-# 📖 Le livre de demandes de Maxance (23 octobre 2026)
+# 📖 Le livre de demandes d'Iron Wolf Studio (23 octobre 2026)
 
 ✍️ « Je vais te les donner un par un, et tu vas devoir les faire un par un… tu fais tout dans l'ordre que je t'ai donné. »
 On commence par les fusils à pompe (demande 103), puis on suit la liste dans l'ordre. ✅ = fait.

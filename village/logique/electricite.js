@@ -1,15 +1,15 @@
 // ⚡🚰🚽 LES RÉSEAUX : l'électricité, l'eau courante et les égouts, qui suivent les routes
 //
 // Étape 34 : ✍️ « ajouter la gestion de l'énergie électrique, au fil des avancées dans le temps ». À l'époque industrielle,
-// la CENTRALE à charbon brûle du charbon et fournit de l'électricité (config.js : « electricite »). Choix de Maxance :
+// la CENTRALE à charbon brûle du charbon et fournit de l'électricité (config.js : « electricite »). Choix d'Iron Wolf Studio :
 // l'électricité suit les ROUTES (des poteaux le long des routes) : tout bâtiment relié par la route à une centrale qui
 // tourne peut être alimenté.
 // Mais une centrale a une puissance limitée ! Le réseau sert d'abord les bâtiments les plus PROCHES (par la route) ; quand
 // il n'y a plus assez, les plus loin sont coupés : c'est une PÉNURIE. Il faut alors une centrale de plus.
-// Ce que l'électricité change (choix de Maxance) : les ateliers vont 1,5 fois plus vite, les usines ne marchent pas sans,
+// Ce que l'électricité change (choix d'Iron Wolf Studio) : les ateliers vont 1,5 fois plus vite, les usines ne marchent pas sans,
 // et c'est un nouveau besoin des habitants (⚡ dans le panneau 👥).
 //
-// Étape 35 : ✍️ l'EAU COURANTE et les ÉGOUTS marchent exactement pareil (choix de Maxance : « comme l'électricité ») :
+// Étape 35 : ✍️ l'EAU COURANTE et les ÉGOUTS marchent exactement pareil (choix d'Iron Wolf Studio : « comme l'électricité ») :
 //   🚰 la station de pompage (au bord de l'eau, avec de l'électricité) envoie l'eau dans des tuyaux sous les routes ;
 //   🚽 la station d'épuration (avec de l'électricité) nettoie les eaux usées, elle aussi par les tuyaux des routes.
 // Un seul outil, la fonction « distribuer », sert pour les 3 réseaux : seules les sources et les consommations changent.

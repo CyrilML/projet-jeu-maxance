@@ -20,7 +20,7 @@
 window.Tanks = window.Tanks || {};
 
 Tanks.EDITIONS = (function () {
-  // Les 8 cartes de l'écran, dans l'ordre de Maxance. « image » : ce que le peintre de l'écran dessine (ciel, sol, motif).
+  // Les 8 cartes de l'écran, dans l'ordre d'Iron Wolf Studio. « image » : ce que le peintre de l'écran dessine (ciel, sol, motif).
   const liste = [
     { id: "moderne", nom: "Moderne", icone: "🛡️", epoque: "aujourd'hui", pret: true,
       pitch: "L'édition de départ : Leclerc, Abrams et Leopard, hélicos, Rafale, drones, la campagne de Valdrie et la boutique.",

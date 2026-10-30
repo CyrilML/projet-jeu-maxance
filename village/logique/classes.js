@@ -1,6 +1,6 @@
 // 🎩 LES CLASSES D'HABITANTS : l'échelle des maisons
 //
-// Étape 18 : ✍️ Maxance veut que « les classes d'habitants suivent l'évolution de leur habitation ».
+// Étape 18 : ✍️ Iron Wolf Studio veut que « les classes d'habitants suivent l'évolution de leur habitation ».
 // Il y a 3 classes, et chacune habite sa sorte de logement :
 //   👨‍🌾 paysans (tentes du campement, huttes) → 👷 artisans (maisons) → 🎩 bourgeois (maisons bourgeoises)
 //

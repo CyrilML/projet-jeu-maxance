@@ -1,6 +1,6 @@
 # Demande n° 40 : le grand parcours (comme un circuit Carrera)
 
-> Demandée par Maxance (via Cyril), avec la photo d'un circuit Carrera. Les règles marquées ✍️ ont été
+> Demandée par Iron Wolf Studio (via Cyril), avec la photo d'un circuit Carrera. Les règles marquées ✍️ ont été
 > précisées quand Claude a posé des questions. Statut : ✅ livrée le 04/10/2026, à valider.
 
 ## 🎯 Quoi

@@ -1,7 +1,7 @@
 # Demande n° 103 : les fusils à pompe, normal et incendiaire
 
 > Statut : ✅ livrée (tanks version 47).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Je veux que tu fasses les fusils à pompe, normaux et incendiaires… en 10 minutes, mais qu'ils soient assez beaux et

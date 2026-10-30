@@ -1,8 +1,8 @@
 # Village · demande n° 26 : une silhouette par métier, et l'inventaire en pleine page
 
-> Demandée par Maxance (via Cyril) le 07/10/2026. Statut : ✅ livrée le 07/10/2026 (étape 25 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 07/10/2026. Statut : ✅ livrée le 07/10/2026 (étape 25 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « La forme des bâtiments reste toujours pareille, et il est toujours aussi difficile de les discerner : tu peux mieux
   faire. »
 - « L'inventaire est maintenant trop large pour tout afficher en permanence. Il faut mettre une touche inventaire, où il

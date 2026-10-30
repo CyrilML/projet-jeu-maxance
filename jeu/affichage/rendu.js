@@ -807,7 +807,7 @@ Jeu.Rendu = (function () {
       ctx.closePath();
       ctx.fill();
     };
-    // Des couleurs de dessin animé : impressionnant, mais pas trop effrayant (demande de Maxance).
+    // Des couleurs de dessin animé : impressionnant, mais pas trop effrayant (demande d'Iron Wolf Studio).
     const peau = m.touche > 0 ? "#ff8a8a" : "#7a4fb0";
     const ventre = m.touche > 0 ? "#ffc4c4" : "#f0c96a";
     // L'aile (derrière le corps), qui bat
@@ -1425,7 +1425,7 @@ Jeu.Rendu = (function () {
 
   function ecranAccueil() {
     voile();
-    texte("PROJET MAXANCE", L / 2, 78, 52, "#ffe27a", "center");
+    texte("PROJET IRON WOLF STUDIO", L / 2, 78, 52, "#ffe27a", "center");
     texte("Étape 31 : le carrefour et la voiture", L / 2, 116, 22, "#fff", "center");
     // Au milieu : le formulaire du pseudo (une vraie case de texte HTML, posée par-dessus l'écran).
     texte("← → (ou Q D) : se déplacer     Espace / ↑ / Z : sauter", L / 2, 330, 17, "#cfe0ff", "center");

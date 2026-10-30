@@ -1,6 +1,6 @@
 # Demande n° 13 : grottes, charbon, cochons et cuisine
 
-> Demandée par Maxance. Les règles marquées ✍️ ont été précisées par Maxance quand Claude lui a
+> Demandée par Iron Wolf Studio. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio quand Claude lui a
 > posé des questions (réponses : 1A, puis « tout en A »). Statut : ✅ livrée le 28/09/2026, à valider.
 
 ## 🎯 Quoi

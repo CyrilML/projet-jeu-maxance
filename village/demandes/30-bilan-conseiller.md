@@ -1,13 +1,13 @@
 # Village · demande n° 30 : le bilan dans l'inventaire, et le conseiller
 
-> Demandée par Maxance (via Cyril) le 08/10/2026 (dans la même demande que la n° 29). Statut : ✅ livrée le 08/10/2026
+> Demandée par Iron Wolf Studio (via Cyril) le 08/10/2026 (dans la même demande que la n° 29). Statut : ✅ livrée le 08/10/2026
 > (étape 29 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « J'ai l'impression que le jeu est assez brouillon : on ne sait pas vraiment quoi produire et pourquoi. Peut-être as-tu des
   idées pour améliorer cela, car on risque de se lasser rapidement. »
 
-## ❓ Les idées proposées, et les choix de Maxance
+## ❓ Les idées proposées, et les choix d'Iron Wolf Studio
 - Il a choisi les 4 : **les commandes**, **le conseiller**, **le bilan dans l'inventaire**, **les objectifs pas à pas**.
   Cette étape livre le bilan et le conseiller ; les commandes et les objectifs pas à pas arrivent à l'étape 30.
 

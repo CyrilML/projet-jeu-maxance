@@ -1,7 +1,7 @@
 // 🔧 SOUS LE CAPOT : le panneau qui montre ce qui se passe à l'intérieur du jeu (étape 54)
 //
 // Deux parties : l'ÉTAT EN DIRECT (les nombres du monde, en ce moment) et le JOURNAL (tout ce qui est annoncé à la
-// radio, avec l'heure du jeu). C'est ici que Maxance voit les règles en action : le terrain, l'adhérence, la pente,
+// radio, avec l'heure du jeu). C'est ici qu'Iron Wolf Studio voit les règles en action : le terrain, l'adhérence, la pente,
 // les sauts… Chaque événement de la radio a son message ici.
 
 window.Raid = window.Raid || {};

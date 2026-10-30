@@ -1,6 +1,6 @@
 # Demande n° 14 : 100 blocs pour construire
 
-> Demandée par Maxance. Les règles marquées ✍️ ont été précisées par Maxance quand Claude lui a
+> Demandée par Iron Wolf Studio. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio quand Claude lui a
 > posé des questions (réponses : 1c 2c 3a 4b). Statut : ✅ livrée le 29/09/2026, à valider.
 
 ## 🎯 Quoi

@@ -1,7 +1,7 @@
 # Demande n° 78 : la vue à la première personne (touche C)
 
-> Statut : ✅ livrée en version simple le 20/10/2026 (tanks version 18), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée en version simple le 20/10/2026 (tanks version 18), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Fais en sorte que le personnage avec C puisse voir comme dans Battlefield. Il voit les armes, mais il ne voit pas le

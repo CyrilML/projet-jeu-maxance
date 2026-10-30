@@ -1,7 +1,7 @@
 # Demande n° 51 : les voitures ultra réalistes
 
-> Statut : ✅ livrée le 05/10/2026 (version 20 du circuit), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 05/10/2026 (version 20 du circuit), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Je t'avais dit que les voitures doivent être ultra réalistes. Là, tu me fais encore des voitures en fiction. Je veux

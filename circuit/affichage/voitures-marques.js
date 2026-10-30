@@ -1,6 +1,6 @@
 // 🏁 LES VOITURES DE MARQUE : le bureau de design (étape 51)
 //
-// ✍️ Maxance veut des voitures « ultra réalistes », avec leur vrai nom : la Bugatti Chiron, la Porsche 911, la
+// ✍️ Iron Wolf Studio veut des voitures « ultra réalistes », avec leur vrai nom : la Bugatti Chiron, la Porsche 911, la
 // Lamborghini Aventador, la Honda NSX, la Peugeot 508, la Mercedes Vito et la Kawasaki Ninja.
 //
 // Chaque voiture est construite avec SES VRAIES MESURES (longueur, largeur, hauteur, et l'empattement : la distance

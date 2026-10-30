@@ -1,6 +1,6 @@
 // 🚚 LE CAMION ANTIAÉRIEN : un chauffeur et un tireur (demande 113)
 //
-// ✍️ Maxance : « Le canon antiaérien, il est mauvais. Je ne connais pas ça. Je veux que tu fasses un camion. Toi, tu
+// ✍️ Iron Wolf Studio : « Le canon antiaérien, il est mauvais. Je ne connais pas ça. Je veux que tu fasses un camion. Toi, tu
 // pilotes le camion, et quelqu'un d'autre tire avec le canon antiaérien. »
 // C'est comme une équipe de deux dans une voiture de rallye : le CHAUFFEUR regarde la route, le TIREUR regarde le ciel.
 //   - LE CHAUFFEUR (toi, touche E) conduit le camion comme le camion de transport (la même mécanique de roues :

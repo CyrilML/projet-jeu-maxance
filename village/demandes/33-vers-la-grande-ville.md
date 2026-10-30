@@ -1,9 +1,9 @@
 # Village · demande n° 33 : vers la grande ville (le grand changement)
 
-> Demandée par Maxance (via Cyril) le 08/10/2026. Statut : 🚧 en cours, en plusieurs étapes (étapes 32, 33 et 34 livrées le
+> Demandée par Iron Wolf Studio (via Cyril) le 08/10/2026. Statut : 🚧 en cours, en plusieurs étapes (étapes 32, 33 et 34 livrées le
 > 08/10/2026).
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Faire un design moins enfantin, car notre cible est plutôt des adultes. »
 - « Faire attention à la taille des routes, qui avec l'évolution pourront devenir des routes avec des voitures, des
   camions. »
@@ -14,7 +14,7 @@
 - « À chaque évolution, on explique quel bâtiment fait quoi et quel besoin il a. »
 - « Les maps doivent être immenses. Tu peux reset la partie que j'ai en cours pour tout recommencer. »
 
-## ❓ Les questions posées, et les choix de Maxance
+## ❓ Les questions posées, et les choix d'Iron Wolf Studio
 - Comment ? → **transformer le village** : on ajoute des ÉPOQUES (Moyen Âge → industrielle → moderne).
 - Comment la ville grandit ? → **comme aujourd'hui** : on pose chaque bâtiment soi-même.
 - Le style ? → **2D de biais, réaliste** (couleurs naturelles, traits fins).
@@ -30,7 +30,7 @@
 7. Étape 38 : l'époque moderne (centres commerciaux, aéroport).
 
 ## 📏 Les règles de l'étape 32
-- Sauvegarde version 20 : une partie plus ancienne recommence (une seule fois, choix de Maxance).
+- Sauvegarde version 20 : une partie plus ancienne recommence (une seule fois, choix d'Iron Wolf Studio).
 - Carte de 256 × 256 cases : 9 massifs rocheux (filons), 8 rivières, 160 animaux au départ (280 au plus).
 - Style : couleurs du sol et des bâtiments adoucies (moins vives), traits fins et moins noirs, arbres sans gros contour,
   interface plus sobre (police, cadres fins).
@@ -62,7 +62,7 @@
 - [ ] Le bouton 📖 : je comprends ce que fait chaque bâtiment et ce dont il a besoin.
 - [ ] Au passage à un nouvel âge, l'encyclopédie m'explique les nouveaux bâtiments (version 34 en haut).
 
-## ❓ Les questions de l'étape 34, et les choix de Maxance
+## ❓ Les questions de l'étape 34, et les choix d'Iron Wolf Studio
 - Comment passer à l'époque industrielle ? → **le Grand Beffroi fini + 80 habitants** (et 3 000 🪙).
 - Comment l'électricité arrive-t-elle ? → **le long des routes**.
 - Qu'est-ce qu'elle change ? → **les 3** : un besoin des habitants, des usines qui ne marchent pas sans, des ateliers 1,5 fois
@@ -85,7 +85,7 @@
 - [ ] Trop de bâtiments : pénurie, les plus loin sont coupés.
 - [ ] Version 35 en haut.
 
-## ❓ Les questions de l'étape 35, et les choix de Maxance
+## ❓ Les questions de l'étape 35, et les choix d'Iron Wolf Studio
 - Comment marche l'eau courante ? → **comme l'électricité** : une station de pompage au bord de l'eau (qui a besoin du
   courant), des tuyaux sous les routes, une puissance limitée, les plus proches d'abord.
 - Et les égouts ? → **une station d'épuration**, qui marche pareil.

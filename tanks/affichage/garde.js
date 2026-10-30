@@ -4,7 +4,7 @@
 // personne : l'image se fige, c'est tout. Le message d'erreur part dans une console cachée que seul un développeur ouvre.
 // Le garde, lui, est le tout premier chargé. Il fait deux choses :
 //   1. il vérifie que l'ordinateur sait dessiner en 3D (« WebGL ») ; sinon il explique comment l'allumer dans Chrome ;
-//   2. il écoute toutes les erreurs ; s'il y en a une, il l'affiche dans un cadre rouge, pour que Maxance puisse la
+//   2. il écoute toutes les erreurs ; s'il y en a une, il l'affiche dans un cadre rouge, pour qu'Iron Wolf Studio puisse la
 //      photographier et l'envoyer à Claude.
 // Il ne touche jamais au monde : il ne fait qu'afficher.
 

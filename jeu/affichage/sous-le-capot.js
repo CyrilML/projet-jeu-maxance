@@ -195,7 +195,7 @@ Jeu.SousLeCapot = (function () {
     afficherClassement();
     // On ne remet à jour les tableaux que si on peut les voir : pas quand ils sont en bas de la page,
     // hors de l'écran, ni quand l'onglet est caché. Sinon, c'est du travail pour rien, qui fait
-    // saccader le jeu sur les ordinateurs lents (bug trouvé par Maxance le 28/09).
+    // saccader le jeu sur les ordinateurs lents (bug trouvé par Iron Wolf Studio le 28/09).
     let panneauVisible = true;
     const panneau = elements.etat.closest("section");
     if (panneau && "IntersectionObserver" in window) {

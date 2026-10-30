@@ -1,6 +1,6 @@
 // 🌀 LES RESSORTS : le rebond du monster truck (étape 49)
 //
-// ✍️ Maxance veut un monster truck avec des ressorts qui le font rebondir un peu sur les bosses.
+// ✍️ Iron Wolf Studio veut un monster truck avec des ressorts qui le font rebondir un peu sur les bosses.
 //
 // Un ressort, c'est une règle toute simple (la « loi de Hooke ») : plus on l'écrase, plus il pousse fort pour
 // reprendre sa place. On ajoute un AMORTISSEUR, qui freine le mouvement : sans lui, ça rebondirait pour toujours.

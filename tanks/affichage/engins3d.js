@@ -35,7 +35,7 @@
 // sourcils). Les points des genoux, des coudes, des épaules, de la taille et du cou sont accrochés à DEUX os à la fois :
 // ils plient en douceur. Toujours 2 dessins par soldat, et la carte graphique a 3 à 4 fois moins de points à déplacer
 // (les points partagés entre deux triangles ne sont plus recopiés).
-// ✍️ Demande 128 (« les personnages ressemblent à des jouets ») : chaque classe a son SKIN, d'après les images de Maxance
+// ✍️ Demande 128 (« les personnages ressemblent à des jouets ») : chaque classe a son SKIN, d'après les images d'Iron Wolf Studio
 // (refaites en 3D, pas copiées) : l'Assaut en gris urbain et cagoule noire, le Médecin tout sable avec son foulard et son
 // écusson blanc à croix rouge, l'Éclaireur en multicam, l'Ingénieur en noir avec son MASQUE À GAZ et sa roquette dans le
 // dos ; l'ennemi a les mêmes formes à ses couleurs. Et contre l'effet « jouet » : l'OMBRE DANS LES CREUX, mesurée une fois
@@ -726,7 +726,7 @@ Tanks.Engins3D = (function () {
   }
 
   // ------------------------------------------------------------------ ✍️ (demande 128) LES SKINS DES 4 CLASSES
-  // « Les personnages ressemblent à des jouets » : Maxance a envoyé une image par classe. On ne copie pas ces images : on
+  // « Les personnages ressemblent à des jouets » : Iron Wolf Studio a envoyé une image par classe. On ne copie pas ces images : on
   // refait leur STYLE, pièce par pièce (les couleurs et les choix sont dans config.js, « realisme.soldats.skins ») :
   //   - le VISAGE COUVERT : la CAGOULE (une coque de tricot posée sur la tête sculptée, avec la fente des yeux), le FOULARD
   //     (sur le nez et la bouche, noué autour du cou), le MASQUE À GAZ (la capuche, la pièce de caoutchouc qui épouse le

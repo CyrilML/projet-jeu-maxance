@@ -1,7 +1,7 @@
 // 🏛️ LES CARTES DE LA VILLE : services, loisirs, pollution, trafic et valeur du terrain
 //
 // Ce module dessine des CARTES INVISIBLES (une valeur par case), que tu peux voir avec les calques (bouton 🗺️) :
-//   - les SERVICES (étape 14, ✍️ Maxance : « plutôt que des rayons d'action, travailler au nombre d'habitants ») :
+//   - les SERVICES (étape 14, ✍️ Iron Wolf Studio : « plutôt que des rayons d'action, travailler au nombre d'habitants ») :
 //     chaque école, hôpital, commissariat, caserne, parc, arrêt de bus… a une CAPACITÉ (1 500 habitants pour une école).
 //     Comme l'eau, il sert d'abord les plus proches PAR LA ROUTE, tant qu'il reste de la place. Peu importe où on le
 //     pose, pourvu qu'il touche une route reliée à la ville (et qu'il ait l'électricité ; un parc, lui, s'en passe) ;

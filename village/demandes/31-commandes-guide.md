@@ -1,9 +1,9 @@
 # Village · demande n° 31 : les commandes et les objectifs pas à pas
 
-> Demandée par Maxance (via Cyril) le 08/10/2026 (dans la même demande que la n° 29). Statut : ✅ livrée le 08/10/2026
+> Demandée par Iron Wolf Studio (via Cyril) le 08/10/2026 (dans la même demande que la n° 29). Statut : ✅ livrée le 08/10/2026
 > (étape 30 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé
+## 🎯 Ce qu'Iron Wolf Studio a demandé
 - « On ne sait pas vraiment quoi produire et pourquoi » → ses choix : **les commandes** et **les objectifs pas à pas**.
 
 ## 📏 Les règles (dans `village/config.js` : `commandes` et `guide`)

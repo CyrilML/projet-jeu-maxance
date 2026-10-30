@@ -1,9 +1,9 @@
 # Mégalopole · demande n° 7 : la 3ᵉ rangée des lots, et la croix qui ne lâchait pas l'outil
 
-> Demandée par Maxance (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 7 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 7 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Les zones font trois cases, mais la troisième, la plus éloignée de la route, ne construit pas : il faut corriger cela. »
 - « Quand on construit un bâtiment et qu'on clique sur la croix, cela continue de poser le bâtiment au clic sur la map :
   il faut corriger. »

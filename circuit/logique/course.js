@@ -7,7 +7,7 @@
 //     puis la ligne d'arrivée (la porte 0). Sinon on pourrait tricher en faisant demi-tour !
 //   - la sortie de piste (dans l'herbe) et la clôture tout autour ;
 //   - depuis l'étape 34 : la voiture ADVERSE, les chocs, la position (1er ou 2e).
-//     ✍️ Règle de Maxance : si l'adversaire finit ses 3 tours avant toi, c'est « Perdu ! » tout de suite.
+//     ✍️ Règle d'Iron Wolf Studio : si l'adversaire finit ses 3 tours avant toi, c'est « Perdu ! » tout de suite.
 //   - ✍️ depuis l'étape 58 : 11 ADVERSAIRES (12 voitures avec toi), tous avec LA MÊME voiture que toi (si tu prends
 //     une F1, tout le monde a une F1), chacun de sa couleur, et chacun avec son « allure » (de 85 % à 100 % de la
 //     vitesse de la voiture ; 97 % au plus, sinon on ne pourrait jamais les doubler). ✍️ Gagné seulement si tu finis 1er : si un adversaire finit avant toi, c'est perdu.
@@ -486,7 +486,7 @@ Circuit.Course = (function () {
       // Un adversaire (étape 58 : on annonce seulement les tours de celui qui est en tête, sinon le journal déborde)
       if (placeAdv(monde, c) === 1) radio.emettre("tour-adversaire", { numero: c.tour, temps, nom: c.nom });
       if (dernier) {
-        // ✍️ Règle de Maxance : un adversaire a fini avant toi → perdu tout de suite.
+        // ✍️ Règle d'Iron Wolf Studio : un adversaire a fini avant toi → perdu tout de suite.
         monde.phase = "perdu";
         monde.position = placeDe(monde);
         monde.vainqueur = c.nom;

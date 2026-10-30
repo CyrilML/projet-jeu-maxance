@@ -1,10 +1,10 @@
 # Demande n° 79 : le sniper
 
-> Statut : ✅ livrée en version courte le 20/10/2026 (tanks version 17), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée en version courte le 20/10/2026 (tanks version 17), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
-« Fais un sniper. » Maxance a choisi : une vraie vue de lunette, des snipers ennemis et un nouveau fusil. Puis : « fais
+« Fais un sniper. » Iron Wolf Studio a choisi : une vraie vue de lunette, des snipers ennemis et un nouveau fusil. Puis : « fais
 quelque chose de court, 10 à 15 minutes, mais potable ».
 
 ## ⚙️ Comment (les règles)

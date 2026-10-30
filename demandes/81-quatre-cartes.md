@@ -1,7 +1,7 @@
 # Demande n° 81 : la ville, la ville en ruines, le désert, le village du désert
 
-> Statut : ✅ livrée en version rapide le 20/10/2026 (tanks version 20), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée en version rapide le 20/10/2026 (tanks version 20), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 La suite de la demande n° 80 : « en pleine ville ; une ville en ruine, détruite ; le désert ; un village en désert ».

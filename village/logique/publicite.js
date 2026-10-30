@@ -1,6 +1,6 @@
 // 📺 LA PUBLICITÉ : la régie (pour l'instant, de FAUSSES pubs)
 //
-// Étape 11 : ✍️ Maxance veut que le jeu puisse gagner de l'argent avec des « pubs récompensées » :
+// Étape 11 : ✍️ Iron Wolf Studio veut que le jeu puisse gagner de l'argent avec des « pubs récompensées » :
 // de temps en temps, une proposition apparaît AU HASARD : « Regarde une courte pub et reçois +24 🟫 ».
 // Le joueur choisit : regarder, ou non merci. Aucune vraie pub n'est encore branchée : à la place, on
 // attend 5 secondes. Le jour où le jeu sera sur les stores, on remplacera cette attente par une vraie

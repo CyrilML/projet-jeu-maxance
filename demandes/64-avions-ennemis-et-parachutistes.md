@@ -1,7 +1,7 @@
 # Demande n° 64 : des avions ennemis et des parachutistes
 
-> Statut : ✅ livrée le 07/10/2026 (version 5 du jeu de tanks), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 07/10/2026 (version 5 du jeu de tanks), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Ajoute des avions ennemis et des parachutistes. »

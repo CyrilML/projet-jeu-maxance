@@ -2,7 +2,7 @@
 //
 // ✍️ « Pour les autres éditions, ce sera : Première Guerre mondiale, Seconde Guerre mondiale, Guerre froide, Bataille en
 // Ukraine, Bataille de drones, Guerre civile, Bataille contre des aliens. Fais tout. »
-// La porte « 📜 ÉDITIONS » de l'accueil ouvre cette galerie : 8 affiches (Moderne + les 7 de Maxance). Chaque affiche est
+// La porte « 📜 ÉDITIONS » de l'accueil ouvre cette galerie : 8 affiches (Moderne + les 7 d'Iron Wolf Studio). Chaque affiche est
 // PEINTE au démarrage sur une petite toile (pas d'image téléchargée) : le ciel de l'époque, le sol, et un motif (des
 // tranchées et des barbelés, des haies de bocage, des palmiers, des drones…). Celles qui ne sont pas encore construites
 // portent un cadenas « bientôt ». ← → ↑ ↓ pour choisir, Entrée pour prendre l'édition, Échap pour revenir.

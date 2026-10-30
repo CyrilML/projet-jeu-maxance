@@ -24,7 +24,7 @@
 // Étape 39 : ✍️ « est-il possible que le porteur ne retourne pas à l'entrepôt : s'il porte du bois et que la scierie est en
 // demande de bois, il va direct à la scierie ? ». Oui : la LIVRAISON DIRECTE. Quand un porteur ramasse quelque chose devant
 // un bâtiment, il regarde dans la file s'il y a un papier « apporter » de la même chose pour un atelier ou un chantier
-// (choix de Maxance) relié par la route. Si oui, il prend ces papiers et y va tout droit ; ce qui reste dans ses bras
+// (choix d'Iron Wolf Studio) relié par la route. Si oui, il prend ces papiers et y va tout droit ; ce qui reste dans ses bras
 // (s'il en a plus) rentre ensuite à l'entrepôt avec lui. Moins de pas, et l'atelier est servi plus vite !
 //
 // Un mot important : RÉSERVÉ. Quand on pose un chantier, ses planches restent dans l'entrepôt,

@@ -1,8 +1,8 @@
 # Village · demande n° 24 : le niveau se voit, sans icônes
 
-> Demandée par Maxance (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 23 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 23 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Sur ma partie, modifie ce que tu as fait : les bâtiments plus grands. Tu peux séparer les bâtiments pour qu'il y ait
   la place, les déplacer. Ça me dérange pas. »
 - « Tu mets des icônes sur chaque bâtiment pour faire voir ce que c'est, mais j'aime pas trop ça. On devrait les

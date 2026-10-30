@@ -1,8 +1,8 @@
 # Village · demande n° 12 : donner envie de continuer (le bourg, la réserve, les pubs)
 
-> Demandée par Maxance (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 11 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 11 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Qu'est-ce que tu ajouterais pour avoir une réelle envie de continuer à jouer ? Il faut que ce soit de plus en
   plus difficile de passer d'un niveau à un autre. »
 - « Je pense faire de la monétisation en échange de ressources : régulièrement, on propose de regarder une vidéo

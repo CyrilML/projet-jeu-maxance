@@ -1,7 +1,7 @@
 # Demande n° 102 : des déblocages plus lents
 
 > Statut : ✅ livrée (tanks version 46).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Quand tu joues au jeu, à chaque fois que tu fais plusieurs kills, tout se débloque trop rapidement. Change ça. Je

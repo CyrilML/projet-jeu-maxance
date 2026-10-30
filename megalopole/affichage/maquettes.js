@@ -203,7 +203,7 @@ Megalopole.Maquettes = (function () {
   const COULEURS_AUTO = ["#c8443a", "#3f6fc4", "#e8b830", "#f2f2ee", "#3f8a4a", "#2a2c30"];
 
   // ---------------------------------------------------------------- les bâtiments des zones (un par case)
-  // Étape 5 (« fais ça mieux », demande de Maxance) : PLUSIEURS MODÈLES par niveau (le hasard de la case choisit), des
+  // Étape 5 (« fais ça mieux », demande d'Iron Wolf Studio) : PLUSIEURS MODÈLES par niveau (le hasard de la case choisit), des
   // ombres, des jardins, des piscines, des balcons, des enseignes, des parkings, des silos… Rien n'est inventé au hasard
   // à chaque image : le même terrain garde toujours le même modèle (sa « graine » g).
   const BRIQUES = ["#c87a5a", "#d8b48a", "#e8dcc8", "#a8a4a0", "#c8a07a", "#b86a50"], TOITS = ["#b8503a", "#8a4a3a", "#4a5a7a", "#6a5a4a", "#3a6a5a"];

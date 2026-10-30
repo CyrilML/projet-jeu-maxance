@@ -1,7 +1,7 @@
 # Demande n° 132 : rapprocher les tranchées de 1916
 
 > Statut : ✅ livrée (tanks version 77).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Dans la Première Guerre mondiale, les tranchées sont trop éloignées. Rapprochez-les énormément. »

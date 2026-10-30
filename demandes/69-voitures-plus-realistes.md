@@ -1,7 +1,7 @@
 # Demande n° 69 : des voitures plus réalistes
 
-> Statut : ✅ livrée le 12/10/2026 (version 29 du circuit 3D), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 12/10/2026 (version 29 du circuit 3D), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Quand tu auras fini, tu referas les voitures. Elles ne sont pas assez réalistes. »

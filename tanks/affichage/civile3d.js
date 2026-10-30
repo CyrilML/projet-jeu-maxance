@@ -15,7 +15,7 @@
 //   - les 5 DRAPEAUX DE QUARTIER : le mât, le drapeau qui monte et descend (à la couleur du camp qui le tient), et le
 //     cercle peint par terre qui montre jusqu'où il faut venir pour le prendre ;
 //   - sur la grande image du sol : la poussière, les traces de pneus, les pavés de la place du souk et de l'Horloge.
-// Pour que le jeu ne rame pas (✍️ Maxance déteste le lag) : tout ce qui ne bouge pas est SOUDÉ par carré de 200 m (1 dessin
+// Pour que le jeu ne rame pas (✍️ Iron Wolf Studio déteste le lag) : tout ce qui ne bouge pas est SOUDÉ par carré de 200 m (1 dessin
 // par matière et par carré, et le carré n'est dessiné que près de toi) ; seuls les 5 drapeaux bougent.
 // Comme tout l'affichage, il lit le monde et ne le modifie jamais.
 

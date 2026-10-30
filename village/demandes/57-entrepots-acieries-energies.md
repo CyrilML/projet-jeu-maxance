@@ -1,9 +1,9 @@
 # Village · demande n° 57 : plus d'entrepôts, les aciéries, et les énergies
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 59 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 59 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « La limite de 4 entrepôts doit sauter, ce n'est pas suffisant. »
 - « Les fonderies doivent être remplacées automatiquement par les aciéries. »
 - « La centrale à charbon consomme beaucoup trop, et il faut augmenter son stockage. »

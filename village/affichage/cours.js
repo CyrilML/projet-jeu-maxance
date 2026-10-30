@@ -3,7 +3,7 @@
 // Étape 37 : ✍️ « Tu les as juste agrandis : ils font une taille qui ne va plus avec le paysage, mais ils sont toujours
 // les mêmes. Je veux qu'ils soient reconnaissables de loin, avec de vraies spécificités. Un entrepôt doit avoir des
 // piles de cartons ou de matériaux dehors, sur des étagères… Pareil pour les autres. »
-// Choix de Maxance : le bâtiment redevient de taille normale, posé au FOND de sa place ; le reste devient une COUR
+// Choix d'Iron Wolf Studio : le bâtiment redevient de taille normale, posé au FOND de sa place ; le reste devient une COUR
 // remplie des objets typiques de son métier (des étagères pleines de caisses pour l'entrepôt, des grumes et des piles de
 // planches pour la scierie, des étals colorés pour le marché…). Et une petite ENSEIGNE au-dessus de la porte.
 //

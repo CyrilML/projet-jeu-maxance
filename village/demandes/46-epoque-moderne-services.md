@@ -1,13 +1,13 @@
 # Village · demande n° 46 : la suite après l'époque industrielle (l'époque moderne, 1re partie)
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 48 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 48 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Après le bourg, tu as fait la suite ? »
 - « Vas-y, commence à faire la suite. »
 
-## 🤔 Les choix faits pour commencer (Maxance peut les changer)
+## 🤔 Les choix faits pour commencer (Iron Wolf Studio peut les changer)
 La feuille de route prévoyait 3 morceaux : les services publics, les voitures, puis les commerces et l'aéroport.
 On commence par les **services publics**, parce que le panneau 👥 les annonçait déjà avec un cadenas.
 
@@ -48,7 +48,7 @@ On commence par les **services publics**, parce que le panneau 👥 les annonça
 - [ ] Sous le capot : le groupe « 🌆 Les services publics » et les messages « Pas assez de places pour… ».
 - [ ] Version 49 en haut.
 
-## 💡 Pour la suite (à décider par Maxance)
+## 💡 Pour la suite (à décider par Iron Wolf Studio)
 - Que se passe-t-il **sans** service ? Des incendies sans pompiers, des vols sans police, des malades sans hôpital ?
 - Les routes goudronnées, les voitures et les camions.
 - Les centres commerciaux et l'aéroport.

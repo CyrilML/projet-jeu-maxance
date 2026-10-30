@@ -1,6 +1,6 @@
 # Village · demande n° 3 : les routes et les porteurs
 
-> Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
+> Demandée par Iron Wolf Studio (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
 > questions. Statut : ✅ livrée le 05/10/2026, à valider.
 
 ## 🎯 Quoi
@@ -12,7 +12,7 @@ bâtiments.
 - ✍️ **Quelques porteurs** partent de l'entrepôt (pas un porteur par morceau de route).
 - ✍️ Un bâtiment **doit être relié à l'entrepôt par une route**, sinon il est bloqué.
 
-## 🛠️ Ce que Claude a choisi (à valider ou à changer par Maxance)
+## 🛠️ Ce que Claude a choisi (à valider ou à changer par Iron Wolf Studio)
 - **Tracer une route** : bouton 🛤️ (touche R). On touche la case de départ, puis la case d'arrivée :
   le jeu trace tout seul le plus court chemin entre les deux (la « tache d'encre »). On peut continuer
   depuis la fin de la route. Les cases déjà en route ne coûtent rien. Pas de route sur l'eau, les

@@ -1,6 +1,6 @@
 # Demande n° 42 : la ville géante (pont, aéroports, avions, motos, magasins, petits boulots)
 
-> Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
+> Demandée par Iron Wolf Studio (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
 > questions. Statut : étapes 42 et 43 ✅ livrées le 05/10/2026, à valider · étape 44 à venir.
 
 ## 🎯 Quoi

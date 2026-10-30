@@ -1,6 +1,6 @@
 # Demande n° 28 : des arbres, des portes et des escaliers (et plus de limite pour construire)
 
-> Demandée par Maxance. Les règles marquées ✍️ ont été précisées par Maxance quand Claude lui a
+> Demandée par Iron Wolf Studio. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio quand Claude lui a
 > posé des questions (réponses : tout en A). Statut : ✅ livrée le 30/09/2026, à valider.
 
 ## 🎯 Quoi

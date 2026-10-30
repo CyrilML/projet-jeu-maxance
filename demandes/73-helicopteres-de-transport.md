@@ -1,7 +1,7 @@
 # Demande n° 73 : des hélicoptères de transport dans les tanks
 
-> Statut : ✅ livrée le 15/10/2026 (tanks version 12), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 15/10/2026 (tanks version 12), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Ajoute un hélicoptère de transport dans les tanks. »

@@ -1,7 +1,7 @@
 # Demande n° 114 : des personnages plus beaux, leur vitrine, et un peu de sang (avec un bouton)
 
 > Statut : ✅ livrée (tanks version 58).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Fais des maquettes pour les personnages. » → précisé : ✍️ « Les deux » = des soldats en 3D plus beaux ET une

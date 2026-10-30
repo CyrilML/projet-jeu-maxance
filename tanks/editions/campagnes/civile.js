@@ -1,7 +1,7 @@
 // 📖 LA CAMPAGNE DE L'ÉDITION « GUERRE CIVILE » : « Les Oliviers de Tessaline » (demande 136)
 //
 // ✍️ « Je veux que chaque édition soit une campagne qui puisse revivre les moments actuels ou qui sont arrivés. »
-// ✍️ Maxance a choisi : 6 CHAPITRES, inspirés de VRAIS moments de l'Histoire, mais avec les pays, les chefs et les lieux
+// ✍️ Iron Wolf Studio a choisi : 6 CHAPITRES, inspirés de VRAIS moments de l'Histoire, mais avec les pays, les chefs et les lieux
 // INVENTÉS de l'édition, et des FILMS (une ouverture pour chaque chapitre, et une fin pour la réussite et pour l'échec).
 //
 // Ce fichier, c'est le LIVRE D'HISTOIRE de la ville de Tessaline : comme un scénariste, il écrit les 6 chapitres (qui

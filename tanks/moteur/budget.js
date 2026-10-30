@@ -1,6 +1,6 @@
 // ⏱️ LE BUDGET : la tirelire de temps de chaque image (demande 127)
 //
-// ✍️ Maxance : « Fais en sorte que le jeu ne rame plus jamais. »
+// ✍️ Iron Wolf Studio : « Fais en sorte que le jeu ne rame plus jamais. »
 // Pour que le jeu soit fluide, une image doit être finie en 16,7 ms (60 images par seconde). Certains travaux sont LOURDS
 // mais peuvent attendre un peu : faire repousser l'herbe, fabriquer l'intérieur d'une maison, redessiner la petite carte,
 // réécrire le panneau « sous le capot »… S'ils tombent tous dans la même image, elle dure trop : un à-coup.

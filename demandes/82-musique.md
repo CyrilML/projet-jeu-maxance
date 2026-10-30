@@ -1,7 +1,7 @@
 # Demande n° 82 : la musique
 
-> Statut : ✅ livrée le 20/10/2026 (tanks version 21), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 20/10/2026 (tanks version 21), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Une musique un peu dans le style Pirates des Caraïbes et Battlefield 6 », en 5 minutes.

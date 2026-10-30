@@ -10,7 +10,7 @@
 //
 // De temps en temps (toutes les 20 s, sauf en hiver), un nouvel animal naît dans une forêt,
 // tant qu'il y en a moins de 40 sur la carte.
-// Étape 40 : ✍️ « le chasseur ne devrait jamais être en rupture de gibier, il doit se renouveler seul ». Choix de Maxance :
+// Étape 40 : ✍️ « le chasseur ne devrait jamais être en rupture de gibier, il doit se renouveler seul ». Choix d'Iron Wolf Studio :
 // des naissances PARTOUT, et plus il y a d'animaux, plus il en naît (chaque animal a 20 % de chances par minute d'avoir
 // un petit, 6 % en hiver). Et si une espèce n'a presque plus d'animaux, de nouveaux arrivent dans son habitat.
 

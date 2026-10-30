@@ -1,6 +1,6 @@
 // 😊 LE BONHEUR : le thermomètre du moral des habitants
 //
-// Étape 15 : ✍️ Maxance veut que « la population soit contente de son niveau de vie » (2C : d'abord une
+// Étape 15 : ✍️ Iron Wolf Studio veut que « la population soit contente de son niveau de vie » (2C : d'abord une
 // jauge, plus tard des classes d'habitants). La jauge va de 0 à 100 %. Elle se calcule comme une note
 // avec plusieurs parties (les nombres sont dans config.js, « bonheur ») :
 //

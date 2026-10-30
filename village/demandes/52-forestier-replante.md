@@ -1,9 +1,9 @@
 # Village · demande n° 52 : le forestier replante selon les coupes
 
-> Demandée par Maxance (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 54 du carnet du village),
+> Demandée par Iron Wolf Studio (via Cyril) le 10/10/2026. Statut : ✅ livrée le 10/10/2026 (étape 54 du carnet du village),
 > à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « La maison du forestier doit replanter beaucoup plus d'arbres, en fonction du nombre de coupes. »
 
 ## 📏 Les règles

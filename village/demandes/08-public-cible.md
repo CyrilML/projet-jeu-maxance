@@ -1,6 +1,6 @@
 # Village · décision n° 8 : le public du jeu
 
-> Décidé par Maxance (via Cyril) le 05/10/2026. Ce n'est pas une étape de code : c'est une décision qui
+> Décidé par Iron Wolf Studio (via Cyril) le 05/10/2026. Ce n'est pas une étape de code : c'est une décision qui
 > guide toutes les suivantes.
 
 ## 🎯 La question
@@ -11,7 +11,7 @@ plus strictes sur les achats, la publicité et les données.)
 - Le style reste le même : dessin animé, couleurs gaies, pas de violence.
 - Le jeu peut aller plus loin dans la **gestion** : plus de chaînes de production, des chiffres, des
   statistiques, un marché avec des prix qui bougent, des objectifs longs (sur plusieurs semaines).
-- Les textes du jeu s'adressent à tous les joueurs. Le **carnet**, lui, reste écrit pour Maxance (pour apprendre).
+- Les textes du jeu s'adressent à tous les joueurs. Le **carnet**, lui, reste écrit pour Iron Wolf Studio (pour apprendre).
 - Les **💎 gemmes** pourront peut-être s'acheter plus tard (sur les stores), avec des règles honnêtes :
   prix clairs, rien d'obligatoire pour avancer, tout peut se gagner en jouant. Pour l'instant : seulement en jouant.
 

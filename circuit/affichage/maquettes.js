@@ -1,6 +1,6 @@
 // 🧸 LES MAQUETTES : le garage des maquettes 3D (étape 52)
 //
-// ✍️ Maxance veut des voitures « réellement réelles, comme je les vois tous les jours ». Pour ça, on utilise de VRAIES
+// ✍️ Iron Wolf Studio veut des voitures « réellement réelles, comme je les vois tous les jours ». Pour ça, on utilise de VRAIES
 // maquettes 3D faites par des artistes (sur Sketchfab, licence CC BY : on écrit toujours leur nom).
 //
 // Comment une maquette arrive dans le jeu :

@@ -966,7 +966,7 @@ Circuit.Modeles = (function () {
     for (const racine of [objet.g].concat([...bougent])) fusionner(racine, bougent);
   }
 
-  // Étape 57 : ✍️ Maxance veut des véhicules plus grands : les voitures × 1,15, la moto × 1,5 (config.js : taille).
+  // Étape 57 : ✍️ Iron Wolf Studio veut des véhicules plus grands : les voitures × 1,15, la moto × 1,5 (config.js : taille).
   // On agrandit tout le dessin d'un coup (il est posé au sol en y = 0, donc il grandit vers le haut).
   function agrandir(objet, modele) {
     if (VOLANTS.includes(modele)) return;

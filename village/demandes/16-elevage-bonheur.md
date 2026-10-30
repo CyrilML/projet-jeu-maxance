@@ -1,8 +1,8 @@
 # Village · demande n° 16 : l'élevage, la laiterie et le bonheur des habitants
 
-> Demandée par Maxance (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 15 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 15 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Ajouter des fermes, moulin, boulangerie, élevage de différents animaux. Il faut que le jeu soit de plus en plus
   riche rapidement. On peut aller assez loin dans différentes industries : élevage de vaches pour le lait, le lait
   fait du beurre, du yaourt… jusqu'à avoir une mégalopole à gérer avec une diversité d'industries et de commodités,

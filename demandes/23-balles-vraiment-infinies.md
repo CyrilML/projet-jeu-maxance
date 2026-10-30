@@ -1,11 +1,11 @@
 # Demande n° 23 : des balles vraiment infinies
 
-> Demandée par Maxance : « Je t'avais dit que je voulais qu'il y ait des balles infinies. »
+> Demandée par Iron Wolf Studio : « Je t'avais dit que je voulais qu'il y ait des balles infinies. »
 > Statut : ✅ livrée le 29/09/2026, à valider.
 
 ## 🎯 Quoi
 À l'étape 22, Claude avait ajouté un chargeur à chaque arme : les balles étaient infinies, mais il
-fallait s'arrêter pour recharger. Ce n'était pas ce que Maxance voulait : on doit pouvoir tirer sans
+fallait s'arrêter pour recharger. Ce n'était pas ce qu'Iron Wolf Studio voulait : on doit pouvoir tirer sans
 jamais s'arrêter.
 
 ## ⚙️ Comment (les règles)

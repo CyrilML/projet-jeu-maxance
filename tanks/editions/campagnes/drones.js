@@ -1,7 +1,7 @@
 // 🛸 LA CAMPAGNE DE L'ÉDITION « BATAILLE DE DRONES » : « Les Pilotes d'Aurelia » (demande 136)
 //
 // ✍️ « Je veux que chaque édition soit une campagne qui puisse revivre les moments actuels ou qui sont arrivés. »
-// ✍️ Maxance a choisi : 6 chapitres, inspirés de VRAIS moments de l'histoire des drones et des robots, mais joués avec
+// ✍️ Iron Wolf Studio a choisi : 6 chapitres, inspirés de VRAIS moments de l'histoire des drones et des robots, mais joués avec
 // les pays, les chefs et les lieux INVENTÉS de l'édition (la Coalition Nordane contre le Syndicat Vexis, en 2040, dans la
 // ferme solaire d'Aurelia), avec des FILMS : une ouverture pour chaque chapitre, et une fin réussie ou ratée.
 //

@@ -1,12 +1,12 @@
 # Village · demande n° 27 : les ouvriers vont plus loin, et le mineur marche jusqu'au filon
 
-> Demandée par Maxance (via Cyril) le 08/10/2026. Statut : ✅ livrée le 08/10/2026 (étape 26 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 08/10/2026. Statut : ✅ livrée le 08/10/2026 (étape 26 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « J'ai l'impression que les mineurs ne vont pas assez loin, et qu'ils ne voient pas les filons dans les montagnes un peu
   plus éloignées. Il faudrait augmenter ça, peut-être aussi pour les bûcherons, les chasseurs, etc. »
 
-## ❓ Les questions posées, et les choix de Maxance
+## ❓ Les questions posées, et les choix d'Iron Wolf Studio
 - Jusqu'où pour le mineur ? 6, 8 ou 12 cases → **12 cases** (× 3).
 - Et les autres ? + 25 %, + 50 % ou rien → **+ 50 % pour tous**.
 

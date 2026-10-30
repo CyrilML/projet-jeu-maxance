@@ -1,10 +1,10 @@
-# Demande n° 128 : les skins des 4 classes (d'après les images de Maxance)
+# Demande n° 128 : les skins des 4 classes (d'après les images d'Iron Wolf Studio)
 
 > Statut : ✅ livrée (tanks version 74).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
-✍️ « Les personnages ressemblent à des jouets. » Maxance a envoyé une image de référence pour chaque classe :
+✍️ « Les personnages ressemblent à des jouets. » Iron Wolf Studio a envoyé une image de référence pour chaque classe :
 - ✍️ ASSAUT : tenue camouflage gris urbain, cagoule noire, casque tactique avec lunettes et protections d'oreilles,
   gilet porte-plaques chargé, gants noirs, genouillères et coudières, rangers noires, mitrailleuse légère.
 - ✍️ MÉDECIN DE GUERRE : tenue sable (camouflage désert), casque tactique sable, lunettes sombres, foulard sur le bas

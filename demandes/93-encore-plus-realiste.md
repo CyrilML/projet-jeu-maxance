@@ -1,6 +1,6 @@
 # Demande n° 93 : un peu plus réaliste
 
-> Statut : ✅ livrée le 21/10/2026 (tanks version 35), à valider par Maxance.
+> Statut : ✅ livrée le 21/10/2026 (tanks version 35), à valider par Iron Wolf Studio.
 
 ## 🎯 Quoi
 ✍️ « Fais un peu plus réaliste. »

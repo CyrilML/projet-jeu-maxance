@@ -1,6 +1,6 @@
 # Demande n° 25 : des dragons tous les 100 blocs, des grottes à conquérir, miner avec T
 
-> Demandée par Maxance, en plusieurs messages. Les règles marquées ✍️ ont été précisées par Maxance
+> Demandée par Iron Wolf Studio, en plusieurs messages. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio
 > (réponses : « tout en A, sauf la 7 », et la 7 avec toutes les options). Statut : ✅ livrée le 29/09/2026, à valider.
 
 ## 🎯 Quoi

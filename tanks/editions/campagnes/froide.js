@@ -1,7 +1,7 @@
 // 📖 LA CAMPAGNE DE L'ÉDITION « Guerre froide » : « Les Cigognes de Ternovie » (demande 136)
 //
 // ✍️ « Je veux que chaque édition soit une campagne qui puisse revivre les moments actuels ou qui sont arrivés. »
-// ✍️ Maxance a choisi : 6 chapitres, inspirés de VRAIS moments de l'Histoire, mais joués avec les pays, les chefs et
+// ✍️ Iron Wolf Studio a choisi : 6 chapitres, inspirés de VRAIS moments de l'Histoire, mais joués avec les pays, les chefs et
 // les lieux INVENTÉS de l'édition, et des FILMS (une ouverture pour chaque chapitre, une fin réussie et une fin ratée).
 // Ce fichier est comme le CAHIER DU SCÉNARISTE : il ne contient que des DONNÉES (les chapitres, les personnages, les
 // films). Le metteur en scène (logique/campagne.js) les fait jouer, le réalisateur (logique/cinematique.js) tourne

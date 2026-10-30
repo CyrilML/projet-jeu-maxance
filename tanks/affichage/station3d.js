@@ -248,7 +248,7 @@ Tanks.Station3D = (function () {
       caoutchouc: mat({ color: 0x18181a, roughness: 0.6 }),
       vitre: new THREE.MeshStandardMaterial({ color: 0x9fc4d0, roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.22, depthWrite: false }),
       gravats: mat({ color: 0x6d6862, roughness: 1 }),
-      bleuNom: mat({ map: panneau("GARE MAXANCE", "#1b3d8a", "#ffffff", 1024, 192, "#e6e6e6"), roughness: 0.5 }),
+      bleuNom: mat({ map: panneau("GARE IRON WOLF STUDIO", "#1b3d8a", "#ffffff", 1024, 192, "#e6e6e6"), roughness: 0.5 }),
       sortie: mat({ map: panneau("SORTIE ➜", "#13703a", "#ffffff", 512, 128), emissive: 0x0a3a1c, roughness: 0.5 }),
       horsService: mat({ map: panneau("HORS SERVICE", "#b81c1c", "#ffffff", 512, 128), emissive: 0x3a0606, roughness: 0.5 }),
       affiche: mat({ map: panneau("LIGNE 80", "#c9a227", "#1a1a1a", 512, 256, "#1a1a1a"), roughness: 0.6 }),

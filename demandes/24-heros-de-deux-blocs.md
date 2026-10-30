@@ -1,6 +1,6 @@
 # Demande n° 24 : un héros de 2 blocs de haut
 
-> Demandée par Maxance. Les règles marquées ✍️ ont été précisées par Maxance quand Claude lui a
+> Demandée par Iron Wolf Studio. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio quand Claude lui a
 > posé des questions (réponses : tout en B). Statut : ✅ prête le 29/09/2026, à valider.
 
 ## 🎯 Quoi

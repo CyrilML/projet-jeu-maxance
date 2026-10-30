@@ -1,6 +1,6 @@
 # Demande n° 17 : pelle, casser les blocs et mitrailleuse
 
-> Demandée par Maxance. Les règles marquées ✍️ ont été précisées par Maxance quand Claude lui a
+> Demandée par Iron Wolf Studio. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio quand Claude lui a
 > posé des questions (réponses : tout en A, sauf 3B). Statut : ✅ livrée le 29/09/2026, à valider.
 
 ## 🎯 Quoi

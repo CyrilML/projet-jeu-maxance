@@ -1,7 +1,7 @@
 # Demande n° 127 : que le jeu ne rame plus jamais
 
 > Statut : ✅ livrée (tanks version 73). Le test de vitesse passe sur les 10 batailles et sur la « machine lente ».
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Quand tu auras terminé, je veux que tu fasses en sorte que le jeu ne rame plus jamais. »

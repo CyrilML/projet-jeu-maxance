@@ -1,6 +1,6 @@
 # Demande n° 38 : des maps et des voitures plus réalistes
 
-> Demandée par Maxance (via Cyril) : « plus réalistes, pas en pixels ». Statut : ✅ livrée le 04/10/2026, à valider.
+> Demandée par Iron Wolf Studio (via Cyril) : « plus réalistes, pas en pixels ». Statut : ✅ livrée le 04/10/2026, à valider.
 
 ## ⚙️ Comment (les règles)
 - ✍️ On passe à Three.js, un moteur 3D connu (rangé dans `circuit/vendor/`, le jeu s'ouvre toujours d'un double-clic).
@@ -10,7 +10,7 @@
   - vraies ombres du soleil, reflets du ciel sur la peinture et les vitres ;
   - textures dessinées par le code : herbe, goudron, terre, béton, planches, carton, tremplins rayés ;
   - ciel en dégradé avec un soleil, brouillard au loin, arbres ronds, spectateurs dans la tribune ;
-  - en plus (question de Maxance « comment changer de map ? ») : `⌫` marche aussi pendant une course,
+  - en plus (question d'Iron Wolf Studio « comment changer de map ? ») : `⌫` marche aussi pendant une course,
     un bouton « 🗺️ Cartes » sous l'écran, et un rappel des touches en bas de l'écran.
 
 ## ✅ Critères de réussite

@@ -1,6 +1,6 @@
 # Demande n° 36 : le garage, 5 voitures et les pièces
 
-> Demandée par Maxance (via Cyril), en deux messages. Les règles marquées ✍️ ont été précisées quand
+> Demandée par Iron Wolf Studio (via Cyril), en deux messages. Les règles marquées ✍️ ont été précisées quand
 > Claude a posé des questions. Statut : ✅ livrée le 04/10/2026, à valider.
 
 ## 🎯 Quoi

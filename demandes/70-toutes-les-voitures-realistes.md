@@ -1,7 +1,7 @@
 # Demande n° 70 : toutes les voitures plus réalistes
 
-> Statut : ✅ livrée le 13/10/2026 (circuit 3D version 30, rallye-raid version 3, tanks version 9), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 13/10/2026 (circuit 3D version 30, rallye-raid version 3, tanks version 9), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Améliore toutes les voitures pour qu'elles soient plus réalistes. »

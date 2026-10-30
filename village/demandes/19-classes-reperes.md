@@ -1,8 +1,8 @@
 # Village · demande n° 19 : les classes d'habitants, et des bâtiments reconnaissables de loin
 
-> Demandée par Maxance (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 18 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 18 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Tous doivent être reconnaissables de loin. »
 - « Les classes d'habitants doivent suivre l'évolution de leur habitation. » (la partie B de son choix 2C)
 

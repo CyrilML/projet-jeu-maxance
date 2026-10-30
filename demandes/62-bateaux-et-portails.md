@@ -1,7 +1,7 @@
 # Demande n° 62 : des bateaux et des portails
 
-> Statut : ✅ livrée le 06/10/2026 (version 3 du jeu de tanks), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 06/10/2026 (version 3 du jeu de tanks), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Ajoute des bateaux et des portails. »
@@ -14,7 +14,7 @@
     naviguer, Q / D le canon, Espace tirer. 3 obus la coulent. Pour descendre : près de la rive.
   - 2 patrouilleurs ennemis se promènent sur le lac et tirent sur tout ce qui est bleu près de l'eau (3 obus chacun).
   - Les tanks ne savent pas nager : la rive les arrête, et ceux de l'ordinateur tirent sur les bateaux depuis le bord.
-- Les portails (Maxance n'a pas choisi : Claude a pris ce qu'il conseillait) : 2 PAIRES.
+- Les portails (Iron Wolf Studio n'a pas choisi : Claude a pris ce qu'il conseillait) : 2 PAIRES.
   - bleu (dans ton camp) ↔ orange (à l'ouest du village) ; violet (dans le camp ennemi) ↔ vert (entre le village
     et le lac) ;
   - on entre dans l'un, on ressort par l'autre dans la même direction ; tout ce qui roule ou marche peut les prendre

@@ -1,6 +1,6 @@
 # Demande n° 44 : les avions, les avions de chasse… et la police aux 5 étoiles
 
-> Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
+> Demandée par Iron Wolf Studio (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé des
 > questions. Statut : étapes 44 (ce qui vole) et 45 (la police) ✅ livrées le 05/10/2026, à valider.
 
 ## 🎯 Quoi

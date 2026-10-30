@@ -1,13 +1,13 @@
 # Mégalopole · demande n° 16 : des pompiers, une police et une éducation plus gros
 
-> Demandée par Maxance (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 16 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 16 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Il faut des pompiers, commissariats et éducation plus gros pour combler plus d'habitants, car là il faut trop
   de bâtiments de chaque. »
 
-## 🤔 Les choix de Maxance
+## 🤔 Les choix d'Iron Wolf Studio
 - **Les deux** : doubler les places des petits ET ajouter de grands bâtiments.
 - **Palier 3** (Ville, 10 000 habitants) pour débloquer les grands.
 

@@ -7,7 +7,7 @@
 //        il lui faut une route à 3 cases au plus ; l'électricité ; l'eau courante dès le niveau 2 ;
 //        puis, pour les HABITATIONS, une belle valeur du terrain 💎 et des services (pas d'immeuble sans école !) ;
 //        pour les commerces, les industries et les fermes : seulement la police 🚓 et les pompiers 🚒 (et un bus pour
-//        les plus gros) — décision de Maxance à l'étape 10 ;
+//        les plus gros) — décision d'Iron Wolf Studio à l'étape 10 ;
 //        et le palier de la ville : les gratte-ciel n'arrivent qu'avec une métropole.
 //   2. Les gens ont-ils ENVIE d'y venir ? (son envie, de −1 à +1)
 //        la DEMANDE de la ville pour cette zone (la barre R C I A), plus ce qui est bien ou mal autour :
@@ -45,7 +45,7 @@ Megalopole.Zones = (function () {
     let etapes;
     const sR = C.valeur.seuilsR; // (étape 18 : les seuils sont rangés dans config.js)
     if (z === "R") etapes = [[sR[0], []], [sR[1], ["education"]], [sR[2], ["sante"]], [sR[3], ["securite", "loisirs"]], [sR[4], ["transport"]]];
-    // (étape 10, ✍️ Maxance : « les fermes, les industries et les commerces n'ont pas besoin de parc, d'école ou de santé
+    // (étape 10, ✍️ Iron Wolf Studio : « les fermes, les industries et les commerces n'ont pas besoin de parc, d'école ou de santé
     //  pour évoluer, juste pompiers et police ») : plus de valeur du terrain ni d'école pour eux ; les très gros niveaux
     //  (tours de bureaux, usines robotisées, fermes verticales) demandent aussi un arrêt de bus, pour les employés
     else if (z === "C") etapes = [[0, []], [0, ["securite"]], [0, ["feu"]], [0, ["transport"]], [0, ["securite", "feu", "transport"]]];

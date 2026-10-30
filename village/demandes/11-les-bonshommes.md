@@ -1,6 +1,6 @@
 # Village · demande n° 11 : les bonshommes
 
-> Demandée par Maxance (via Cyril) le 06/10/2026 : « passe aux bonshommes ». C'est la 2e partie du choix 1C
+> Demandée par Iron Wolf Studio (via Cyril) le 06/10/2026 : « passe aux bonshommes ». C'est la 2e partie du choix 1C
 > de la demande n° 10. Statut : ✅ livrée le 06/10/2026 (étape 10 du carnet du village), à valider.
 
 ## 🎯 Ce qui était prévu (choix 1C, 2e étape)

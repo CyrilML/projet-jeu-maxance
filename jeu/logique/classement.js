@@ -3,7 +3,7 @@
 // Ce fichier connaît les RÈGLES du classement, mais il ne range rien lui-même :
 // c'est donnees/sauvegarde.js qui garde la liste dans la base de données.
 //
-// Les règles (décidées par Maxance) :
+// Les règles (décidées par Iron Wolf Studio) :
 //   1. le plus de BLOCS parcourus passe devant ;
 //   2. à égalité de blocs, celui qui a le plus de VIES restantes passe devant ;
 //   3. encore à égalité ? Le plus RAPIDE (le moins de temps) passe devant.

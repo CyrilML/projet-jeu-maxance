@@ -1,7 +1,7 @@
 # Demande n° 72 : plus de lags
 
-> Statut : ✅ livrée le 13/10/2026 (circuit 3D version 32, rallye-raid version 4, tanks version 10), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé.
+> Statut : ✅ livrée le 13/10/2026 (circuit 3D version 32, rallye-raid version 4, tanks version 10), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 « Ça rame trop, le jeu a des lags. Arrange ça et fais en sorte qu'il n'y en ait plus. »

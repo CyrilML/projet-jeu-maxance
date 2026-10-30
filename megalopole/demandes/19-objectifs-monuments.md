@@ -1,12 +1,12 @@
 # Mégalopole · demande n° 19 : des objectifs et des monuments
 
-> Demandée par Maxance (via Cyril) le 12/10/2026. Statut : ✅ livrée le 12/10/2026 (étape 19 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 12/10/2026. Statut : ✅ livrée le 12/10/2026 (étape 19 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Le jeu devient vite lassant et sans but, que proposes-tu ? »
 
-## 🤔 Les choix de Maxance
+## 🤔 Les choix d'Iron Wolf Studio
 - Parmi les idées proposées : **objectifs + monuments** (étape 19) et **problèmes à régler** (étape 20).
 - **3 objectifs en même temps** : un facile, un moyen, un dur ; quand on en réussit un, le suivant de son rang arrive.
 - **Monuments avec un gros bonus** : bonheur pour toute la ville, touristes, terrain plus cher autour.

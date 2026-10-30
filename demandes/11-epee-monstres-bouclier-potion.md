@@ -1,8 +1,8 @@
 # Demande n° 11 : épée, monstres, bouclier et potion
 
-> Demandée par Maxance. Les règles marquées ✍️ ont été précisées par Maxance quand Claude lui a
+> Demandée par Iron Wolf Studio. Les règles marquées ✍️ ont été précisées par Iron Wolf Studio quand Claude lui a
 > posé des questions (réponses : 1A, 2B, 3B, 4B, 5A, 6A, puis 7A, 8A).
-> Statut : ✅ livrée le 25/09/2026, à valider par Maxance.
+> Statut : ✅ livrée le 25/09/2026, à valider par Iron Wolf Studio.
 
 ## 🎯 Quoi
 Le personnage a une petite épée, car tous les 100 blocs il y a un petit monstre à vaincre

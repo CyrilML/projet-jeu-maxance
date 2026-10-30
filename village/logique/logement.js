@@ -1,6 +1,6 @@
 // 🛏️ LE LOGEMENT : le gardien des lits
 //
-// Étape 8 : ✍️ Maxance a choisi la règle 2B : chaque ouvrier a besoin d'une PLACE pour dormir.
+// Étape 8 : ✍️ Iron Wolf Studio a choisi la règle 2B : chaque ouvrier a besoin d'une PLACE pour dormir.
 // C'est comme compter les lits d'une colonie de vacances :
 //   places = 6 (les tentes du campement, autour de l'entrepôt) + 3 par hutte 🛖 + 6 par maison 🏠
 //   habitants = les ouvriers des bâtiments + (étape 13) les porteurs + les villageois sans travail

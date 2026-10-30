@@ -1,13 +1,13 @@
 # Mégalopole · demande n° 14 : des services en nombre d'habitants, plus des cercles
 
-> Demandée par Maxance (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 14 du carnet de la
+> Demandée par Iron Wolf Studio (via Cyril) le 11/10/2026. Statut : ✅ livrée le 11/10/2026 (étape 14 du carnet de la
 > Mégalopole), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Plutôt que des bâtiments comme les pompiers, police, hôpitaux, parcs avec des rayons d'action, on pourrait
   travailler au nombre d'habitants, comme pour le reste. Cela facilitera le placement. »
 
-## 🤔 Les choix de Maxance
+## 🤔 Les choix d'Iron Wolf Studio
 - **Par les routes** : comme l'eau, les plus proches par la route d'abord, tant qu'il reste de la place.
 - **Les capacités proposées.**
 - **Plus d'effet de place sur la valeur du terrain** : elle monte avec les services reçus, pas avec la place des parcs.

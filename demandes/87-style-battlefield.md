@@ -1,7 +1,7 @@
 # Demande n° 87 : le style Battlefield
 
 > Statut : 🟡 version 5 minutes livrée le 20/10/2026 (tanks version 27) : le filtre de cinéma. Refaire les objets eux-mêmes reste à faire.
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Je veux que les décors, les soldats, les tanks, les villes et les souterrains soient dans le même style que

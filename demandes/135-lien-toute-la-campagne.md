@@ -1,7 +1,7 @@
 # Demande n° 135 : un lien pour jouer toute la campagne, sans repartir de zéro
 
 > Statut : ✅ livrée (tanks version 80).
-> ✍️ = ce que Maxance a décidé.
+> ✍️ = ce qu'Iron Wolf Studio a décidé.
 
 ## 🎯 Quoi
 ✍️ « Fais-moi un lien avec la campagne du début jusqu'à la fin, sans la progression à zéro. »

@@ -1,8 +1,8 @@
 # Village · demande n° 20 : la nourriture rééquilibrée, et l'entrepôt 2 qu'on ne trouvait pas
 
-> Demandée par Maxance (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 19 du carnet du village), à valider.
+> Demandée par Iron Wolf Studio (via Cyril) le 06/10/2026. Statut : ✅ livrée le 06/10/2026 (étape 19 du carnet du village), à valider.
 
-## 🎯 Ce que Maxance a demandé (ses mots)
+## 🎯 Ce qu'Iron Wolf Studio a demandé (ses mots)
 - « Je ne vois pas la possibilité de construire un autre entrepôt. »
 - « La consommation par rapport à la production de nourriture est déséquilibrée : il faut un apport de nourriture énorme. »
 

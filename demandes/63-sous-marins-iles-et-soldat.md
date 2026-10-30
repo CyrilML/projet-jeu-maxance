@@ -1,7 +1,7 @@
 # Demande n° 63 : des sous-marins, des îles, un personnage plus réaliste, et ses petits bugs
 
-> Statut : ✅ livrée le 07/10/2026 (version 4 du jeu de tanks), à valider par Maxance.
-> ✍️ = ce que Maxance a décidé. Il a dit « sans me poser de questions » : les autres choix sont ceux de Claude.
+> Statut : ✅ livrée le 07/10/2026 (version 4 du jeu de tanks), à valider par Iron Wolf Studio.
+> ✍️ = ce qu'Iron Wolf Studio a décidé. Il a dit « sans me poser de questions » : les autres choix sont ceux de Claude.
 
 ## 🎯 Quoi
 « Ajoute des sous-marins et des îles sur le lac. Le personnage n'est pas encore assez réaliste. Travaille ça, et il y a

@@ -1,6 +1,6 @@
 # Demande n° 35 : le bruit du moteur
 
-> Demandée par Maxance (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé
+> Demandée par Iron Wolf Studio (via Cyril). Les règles marquées ✍️ ont été précisées quand Claude a posé
 > des questions. Statut : ✅ livrée le 04/10/2026, à valider.
 
 ## 🎯 Quoi

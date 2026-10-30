@@ -1,6 +1,6 @@
 // 🧰 L'ATELIER : la boîte à outils du carrossier du désert (étape 70)
 //
-// ✍️ Maxance : « Améliore toutes les voitures pour qu'elles soient plus réalistes. » Alors on range ici les OUTILS de
+// ✍️ Iron Wolf Studio : « Améliore toutes les voitures pour qu'elles soient plus réalistes. » Alors on range ici les OUTILS de
 // l'atelier, comme sur l'établi d'un vrai carrossier (ils viennent du bureau d'études du circuit, étape 69, recopiés et
 // adaptés au rallye-raid) :
 //   - la PEAU : la carrosserie d'un seul morceau (le capot, le pare-brise, le toit et l'arrière), avec une ÉPAULE sous
