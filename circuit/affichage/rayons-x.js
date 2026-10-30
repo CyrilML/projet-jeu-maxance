@@ -175,6 +175,17 @@ Circuit.RayonsX = (function () {
       const n = Circuit.Armes.nez(v);
       c.ligne([v.x, (v.y || 0) + 1.5, v.z], [v.x + n.x * 300, (v.y || 0) + 1.5 + n.y * 300, v.z + n.z * 300], COULEURS.fleche);
     }
+    // Étape 138 : le chemin de chaque balle (le « lancer de rayon », en rouge), la ligne de visée du personnage
+    // armé (en vert, aussi longue que la portée), et un rond autour de chaque grenade = la zone qui va exploser.
+    if (monde.carte === "ville" && monde.traits) {
+      for (const t of monde.traits) c.ligne([t.de.x, t.de.y, t.de.z], [t.a.x, t.a.y, t.a.z], COULEURS.rouge);
+      const p = monde.pieton, F = p && C.armurerie.armes[monde.arme];
+      if (F && F.portee) c.ligne([p.x, (p.y || 0) + 1.45, p.z], [p.x + Math.cos(p.angle) * F.portee, (p.y || 0) + 1.45, p.z + Math.sin(p.angle) * F.portee], COULEURS.fleche);
+      for (const e of (monde.grenades || []).concat(monde.dynamites || [])) {
+        const r = e.meche !== undefined ? C.armurerie.armes.grenade.rayon : C.armurerie.armes.dynamite.rayon;
+        for (let i = 0; i < 24; i++) c.ligne([e.x + Math.cos((i / 24) * 6.283) * r, (e.y || 0) + 0.3, e.z + Math.sin((i / 24) * 6.283) * r], [e.x + Math.cos(((i + 1) / 24) * 6.283) * r, (e.y || 0) + 0.3, e.z + Math.sin(((i + 1) / 24) * 6.283) * r], COULEURS.ecart);
+      }
+    }
     // Étape 45 : chaque voiture de police a un trait bleu vers là où elle va, et un cercle montre jusqu'où un
     // policier peut te voir (150 m).
     if (monde.carte === "ville" && monde.police && monde.police.etoiles) {

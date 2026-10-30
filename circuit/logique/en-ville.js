@@ -18,6 +18,7 @@
 // Étape 44 : dans un avion ou un hélico (aux aéroports), on vole (logique/vol.js) ; l'avion de chasse tire
 // (F = mitrailleuse, G = missile, logique/armes.js).
 // Étape 45 : emboutir une voiture fait venir la police (logique/police.js).
+// Étape 138 : l'ARMURERIE (logique/armurerie.js) : à pied, Tab ou 1 à 6 = choisir l'arme, F = tirer, G = dynamite.
 
 window.Circuit = window.Circuit || {};
 
@@ -58,6 +59,7 @@ Circuit.EnVille = (function () {
       monde.garees.push(avion);
     }
     Circuit.Armes.preparer(monde);
+    Circuit.Armurerie.preparer(monde); // étape 138
     // Étape 45 : la police, et deux voitures de police garées devant le commissariat.
     Circuit.Police.preparer(monde);
     const cp = Circuit.Police.commissariat;
@@ -115,7 +117,7 @@ Circuit.EnVille = (function () {
     // Étape 42 : devant la porte d'un magasin, E fait entrer dans le magasin.
     const magasin = Archipel.magasinProche(monde.pieton.x, monde.pieton.z, C.magasins.distancePorte);
     if (magasin) {
-      monde.magasin = { numero: magasin.numero, nom: magasin.nom, index: 0, message: null };
+      monde.magasin = { numero: magasin.numero, nom: magasin.nom, index: 0, message: null, armurerie: !!magasin.armurerie };
       radio.emettre("magasin-entree", { nom: magasin.nom });
       return;
     }
@@ -146,7 +148,8 @@ Circuit.EnVille = (function () {
     if (monde.magasin) {
       // Étape 42 : dans le magasin. Le monde continue de tourner dehors (la circulation roule).
       // Étape 43 : J dans un magasin = travailler comme vendeur (logique/boulots.js).
-      if (!Circuit.Boulots.auMagasin(monde, dt, intentions)) dansLeMagasin(monde, intentions);
+      if (monde.magasin.armurerie) Circuit.Armurerie.auComptoir(monde, intentions); // étape 138 : l'armurerie
+      else if (!Circuit.Boulots.auMagasin(monde, dt, intentions)) dansLeMagasin(monde, intentions);
       Circuit.Circulation.avancer(monde.circulation, monde.temps, dt, [monde.voiture, monde.pieton], hasard);
       return;
     }
@@ -169,6 +172,7 @@ Circuit.EnVille = (function () {
     ramasser(monde, monde.pieton || v);
     Circuit.Boulots.etape(monde, dt, intentions); // étape 43 : les petits boulots
     Circuit.Armes.etape(monde, dt, intentions); // étape 44 : la mitrailleuse et les missiles
+    Circuit.Armurerie.etape(monde, dt, intentions); // étape 138 : les armes de l'armurerie (à pied)
     Circuit.Police.etape(monde, dt); // étape 45 : la police et ses étoiles
     // Étape 42 : où es-tu ? (la ville, un pont, une île…) On l'annonce quand ça change.
     const qui = monde.pieton || v;

@@ -258,6 +258,7 @@
       <a href="#etape135">Étape 135</a>
       <a href="#etape137">Étape 137</a>
       <a href="#etape136">Étape 136</a>
+      <a href="#etape138">Étape 138</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -6645,6 +6646,55 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape138">
+      <h2>🔫 Étape 138 : l'armurerie du jeu de voitures <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">En ville, une nouvelle boutique : l'ARMURERIE. Avec tes pièces, tu achètes des pistolets, une épée, un katana, des grenades et de la dynamite. À pied, tu t'en sers au stand de tir d'en face… ou sur les voitures (attention à la police !). On ne peut jamais toucher une personne. <a href="circuit/index.html"><strong>▶ Le jeu de voitures 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/138-armurerie-circuit.md</code>.</p>
+          <ul>
+            <li>✍️ « On va retourner au jeu de voitures en 3D. Je veux que, maintenant, il y ait une boutique où tu puisses acheter des armes, des explosifs, des petits pistolets, des épées, une armurerie quoi. »</li>
+            <li>Claude a choisi les prix et les règles : tu peux tout changer dans <code>circuit/config.js</code>, rubrique <code>armurerie</code>.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 34 » en haut de la page.</li>
+            <li>☐ Ville → E pour descendre : l'armurerie (grande enseigne) est tout près du départ. E sur le tapis orange pour entrer.</li>
+            <li>☐ Achète : petit pistolet 25, gros pistolet 50, épée 20, katana 45, balles 5, 3 grenades 15, 2 dynamites 20.</li>
+            <li>☐ Dehors : Tab (ou 1 à 7) pour choisir, F pour tirer : les caisses du stand de tir (dans le parc en face) cassent.</li>
+            <li>☐ Une voiture touchée plusieurs fois explose, et la police arrive (étoiles).</li>
+            <li>☐ Grenade : elle explose 2 s après. Dynamite : F pour poser, G pour BOUM.</li>
+            <li>☐ Recharge la page : ton sac (armes, balles…) est toujours là (base de données, <code>armurerie</code>).</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🎯 Le lancer de rayon : comment une balle sait ce qu'elle touche</h3>
+      <p>La balle du pistolet ne vole pas vraiment. Le jeu fait glisser un « doigt » sur la ligne du tir, de <b>50 cm en 50 cm</b>, et regarde à chaque pas : « Y a-t-il une caisse, une cible ou une voiture ici ? Un mur ? » Il s'arrête à la première chose trouvée. C'est le <b>lancer de rayon</b>. Aux rayons X (touche X), tu vois ce trait en rouge.</p>
+      <pre>départ ●──·──·──·──·──📦  ← touché ici, à 11 m
+          0,5 m par pas</pre>
+      <h3>💣 La grenade qui retombe</h3>
+      <p>La grenade, elle, vole vraiment : à chaque pas de temps, la gravité enlève un peu de sa vitesse vers le haut (<code>gravite: 12</code> m/s²), comme les sauts de la voiture. Elle rebondit, puis sa <b>mèche</b> arrive à 0 : BOUM ! Tout ce qui est à moins de 8 m est touché.</p>
+      <h3>❤️ Les points de vie</h3>
+      <p>Chaque voiture a <b>6 points de vie</b> (<code>pvVoiture: 6</code>). Le petit pistolet en enlève 1, le gros pistolet 3, l'épée 2. À 0, elle explose. Une grenade ou une dynamite, elle, fait exploser d'un coup.</p>
+      <h3>🎒 Le sac dans la base de données</h3>
+      <p>Ce que tu achètes est rangé dans la sauvegarde, dans <code>armurerie</code> : <code>armes</code>, <code>balles</code>, <code>grenades</code>, <code>dynamites</code>. La sauvegarde est passée en <b>version 13</b> : une ancienne sauvegarde reçoit un sac vide, sans rien perdre.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Dans <code>circuit/config.js</code>, cherche <code>pvVoiture: 6</code>. Combien de balles de petit pistolet faut-il pour faire exploser une voiture ? Et avec le gros pistolet ?</li>
+            <li>Allume les rayons X (X) avec un pistolet en main : la ligne verte montre la portée. Combien de mètres pour le petit pistolet ? (cherche <code>portee</code>)</li>
+            <li>Lance une grenade et regarde le panneau « sous le capot » : la mèche descend. Change <code>meche: 2</code> en <code>meche: 4</code>, recharge : que se passe-t-il ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Pourquoi les balles ne peuvent-elles jamais toucher une personne ? <span class="petit">(la liste des choses touchables ne contient que les voitures, les caisses et les cibles)</span></li>
+            <li>Avec 6 points de vie, combien de coups d'épée (2 points) pour faire exploser une voiture ? <span class="petit">(3)</span></li>
+            <li>Où est rangé ce que tu as acheté, pour le retrouver demain ? <span class="petit">(dans la sauvegarde, rubrique « armurerie »)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7096,6 +7146,12 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
           <h4>Multijoueur</h4>
           <p>Jouer à plusieurs dans le même monde, chacun sur son ordinateur.</p>
           <p class="apprend"><b>Tu apprends :</b> client et serveur, réseau et latence, « le serveur a toujours raison » (anti-triche), base de données sur un serveur, comptes joueurs. <b>Durée :</b> plusieurs séances.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">138</div>
+          <h4>L'armurerie du jeu de voitures <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Une boutique d'armes en ville (pistolets, épée, katana, grenades, dynamite), un stand de tir, et des voitures qui explosent.</p>
+          <p class="apprend"><b>Tu apprends :</b> lancer de rayon, points de vie, gravité d'une grenade, sauvegarde qui change de version. <a href="#etape138">Voir l'étape 138</a>.</p>
         </div>
       </div>
     </section>
@@ -8302,6 +8358,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-137" data-cle="appris-137" placeholder="Ex. : …"></textarea>
         <label for="idees-137"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-137" data-cle="idees-137" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 138 · l'armurerie <span class="petit">· 30 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>circuit/logique/armurerie.js</code> (nouveau : les règles des armes), <code>circuit/affichage/armurerie3d.js</code> (nouveau : la boutique, le stand de tir, l'arme en main), <code>circuit/config.js</code> (rubrique armurerie), <code>circuit/donnees/sauvegarde.js</code> (version 13).</p>
+        <p class="petit">✍️ Iron Wolf Studio a demandé : une armurerie pour acheter des armes et des explosifs.</p>
+        <label for="appris-138"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Iron Wolf Studio, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-138" data-cle="appris-138" placeholder="Ex. : …"></textarea>
+        <label for="idees-138"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-138" data-cle="idees-138" placeholder="Ex. : …"></textarea>
       </div>
       <div class="carte" style="margin-top: 14px">
         <h4>Étape 136 · les campagnes des éditions <span class="petit">· 29 octobre 2026</span></h4>

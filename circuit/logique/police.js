@@ -72,6 +72,11 @@ Circuit.Police = (function () {
     if (!monde || monde.phase !== "ville" || d.sorte !== "voiture" || !monde.police) return;
     monter(monde, Math.min(5, monde.police.etoiles + P.etoilesExplosion), "voiture explosée");
   });
+  radio.ecouter("voiture-abimee", () => { // étape 138 : une voiture abîmée par une arme de l'armurerie
+    const monde = Circuit.monde;
+    if (!monde || monde.phase !== "ville" || !monde.police) return;
+    monter(monde, C.armurerie.etoilesAbimee, "voiture abîmée par une arme");
+  });
   radio.ecouter("helico-touche", () => {
     const monde = Circuit.monde;
     const p = monde && monde.police;

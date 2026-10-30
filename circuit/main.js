@@ -62,6 +62,7 @@
   // Ce que veut le joueur, traduit en intentions (la logique ne connaît pas les touches).
   function lireIntentions() {
     const E = Circuit.Entrees;
+    const chiffres = [1, 2, 3, 4, 5, 6].map((k) => E.consommer("carte" + k)).concat(E.consommer("chiffre7")); // (lus une seule fois : ils servent aux cartes ET aux armes)
     return {
       accelerer: E.estEnfoncee("accelerer"),
       freiner: E.estEnfoncee("freiner"),
@@ -71,12 +72,14 @@
       gaucheAppui: E.consommer("gauche"),
       droiteAppui: E.consommer("droite"),
       // Étape 37 : le menu des cartes.
-      carte1: E.consommer("carte1"),
-      carte2: E.consommer("carte2"),
-      carte3: E.consommer("carte3"),
-      carte4: E.consommer("carte4"), // étape 40
-      carte5: E.consommer("carte5"), // étape 41
-      carte6: E.consommer("carte6"), // étape 59
+      carte1: chiffres[0],
+      carte2: chiffres[1],
+      carte3: chiffres[2],
+      carte4: chiffres[3], // étape 40
+      carte5: chiffres[4], // étape 41
+      carte6: chiffres[5], // étape 59
+      chiffre: chiffres.indexOf(true) + 1, // étape 138 : 1 à 7 = choisir une arme (0 = aucun chiffre)
+      armeSuivante: E.consommer("armeSuivante"), // étape 138 : Tab
       sirene: E.consommer("sirene"), // étape 40 : H
       klaxon: E.consommer("klaxon"), // étape 42 : K
       boulot: E.consommer("boulot"), // étape 43 : J
@@ -86,6 +89,7 @@
       volMonter: E.estEnfoncee("volMonter"),
       volDescendre: E.estEnfoncee("volDescendre"),
       tir: E.estEnfoncee("tir"),
+      tirAppui: E.consommer("tir"), // étape 138 : un appui très court sur F compte aussi (lancer une grenade)
       missile: E.consommer("missile"),
       retour: E.consommer("retour"),
       monter: E.consommer("monter"), // étape 39 : E en ville

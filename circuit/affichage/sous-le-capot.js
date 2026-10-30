@@ -91,6 +91,16 @@ Circuit.SousLeCapot = (function () {
     "magasin-entree": (d) => "🛍️ Tu entres dans " + d.nom + " (← → pour choisir, Entrée pour acheter)",
     "magasin-sortie": (d) => "🚪 Tu sors de " + d.nom,
     "achat-objet": (d) => "🛍️ ACHAT : " + d.nom + " pour " + d.prix + " pièce(s)" + (d.id === "peinture" ? " → " + d.nomVoiture + " devient dorée" : ""),
+    // Étape 138 : l'armurerie.
+    "achat-arme": (d) => "🔫 ARMURERIE : " + d.nom + " pour " + d.prix + " pièce(s)" + (Object.keys(d.donne).length ? " → dans le sac : " + Object.entries(d.donne).map(([q, n]) => "+" + n + " " + q).join(", ") : ""),
+    "arme-choisie": (d) => "✋ En main : " + d.nom + " (" + d.numero + " sur " + d.total + ", Tab pour changer)",
+    "tir-arme": (d) => "🔫 Pan ! (" + d.arme + ") Le rayon du tir s'arrête sur " + d.touche + " à " + d.distance + " m · reste " + d.balles + " balle(s)",
+    "coup-lame": (d) => "🗡️ Coup de " + d.arme + " : " + d.touches,
+    "grenade-lancee": (d) => "💣 Grenade lancée : elle explose dans " + d.meche + " s (reste " + d.reste + ")",
+    "dynamite-posee": (d) => "🧨 Dynamite posée (" + d.posees + " par terre, " + d.reste + " dans le sac) : G pour tout faire sauter",
+    explosif: (d) => "💥 BOUM ! " + (d.sorte === "grenade" ? "Grenade" : "Dynamite") + " : rayon " + d.rayon + " m, " + d.touches + " chose(s) touchée(s)" + (d.noms ? " (" + d.noms + ")" : ""),
+    "voiture-abimee": (d) => "💢 " + d.nom + " abîmée (" + d.arme + ") : encore " + d.pv + " point(s) de vie sur " + d.max + " avant d'exploser",
+    "stand-casse": (d) => (d.sorte === "caisse" ? "📦 Caisse cassée" : "🎯 Cible du stand touchée") + (d.montant ? " : +" + d.montant + " pièce" : "") + " (elle revient dans " + Circuit.CONFIG.armurerie.stand.retour + " s)",
     klaxon: (d) => "📯 Tut-tuuut ! (" + d.voiture + ")",
     descendre: (d) => "🚶 Tu descends de " + d.voiture + " (E pour remonter)",
     monter: (d) => "🔑 Tu montes dans " + d.voiture + (d.ou === "garée" ? " (elle était garée)" : d.ou === "circulation" ? " (la voiture de la circulation t'a laissé la place)" : ""),
@@ -260,6 +270,15 @@ Circuit.SousLeCapot = (function () {
         ["décrochage", Circuit.Vol.estVolant(v) && Circuit.Garage.ficheDe(v.modele).vol === "avion" ? "sous " + Math.round(Circuit.Garage.ficheDe(v.modele).decollage * 0.75 * 3.6) + " km/h" + (v.decroche ? " ⚠️ EN CE MOMENT" : "") : "—"],
         ["balles et missiles en l'air", (monde.tirs || []).length],
         ["cibles touchées · voitures explosées", (monde.ciblesTouchees || 0) + " · " + (monde.voituresExplosees || 0)],
+        ["L'armurerie (étape 138)"],
+        ["en main", monde.arme ? Circuit.Armurerie.NOMS[monde.arme] + " (choix : " + Circuit.Armurerie.disponibles().map((a, i) => i + 1 + "=" + a).join(" ") + ")" : "—"],
+        ["sac", (function () {
+          const s = Circuit.Sauvegarde.donnees.armurerie;
+          return s ? s.balles + " balles · " + s.grenades + " grenades · " + s.dynamites + " dynamites · armes : " + (s.armes.join(", ") || "aucune") : "—";
+        })()],
+        ["en l'air / posé", (monde.grenades || []).map((g) => "💣 mèche " + virgule(Math.max(0, g.meche), 1) + " s, à " + virgule(g.y, 1) + " m de haut").join(" · ") + ((monde.dynamites || []).length ? " 🧨 × " + monde.dynamites.length : "") || "rien"],
+        ["stand de tir", monde.stand ? monde.stand.filter((c) => !c.cassee).length + " / " + monde.stand.length + " debout" : "—"],
+        ["tirs · touchés · voitures", monde.armurerieBilan ? monde.armurerieBilan.tirs + " · " + monde.armurerieBilan.touches + " · " + monde.armurerieBilan.voitures : "—"],
         ["Le petit boulot (étape 43)"],
         ["boulot", monde.boulot ? monde.boulot.nom + " · étape « " + monde.boulot.etape + " »" : monde.magasin && monde.magasin.vendeur ? "vendeur dans " + monde.magasin.nom : monde.boulotProche ? "devant " + monde.boulotProche + " (J)" : "aucun"],
         ["fait / à faire", monde.boulot ? monde.boulot.faits + " / " + monde.boulot.total : "—"],

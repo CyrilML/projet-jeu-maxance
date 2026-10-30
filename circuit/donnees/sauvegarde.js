@@ -26,6 +26,7 @@
 //  11 (étape 45) : la police : le plus d'étoiles atteint, combien de fois attrapé, combien de fois semée.
 //  12 (étape 49) : les voitures « style » deviennent de vraies voitures : le Taureau → la Porsche 911, la Flèche → la
 //      Lamborghini Aventador, la Fusée → la Bugatti Chiron (même prix : on garde ce qu'on a acheté).
+//  13 (étape 138) : l'armurerie : le sac d'armes (armes achetées, balles, grenades, dynamites) et ses compteurs.
 //
 // Les pièces sont comptées dès qu'on les ramasse, mais écrites dans le tiroir à la fin de la course
 // (ou si on recommence, ou si on ferme la page) : écrire 50 fois par course, ce serait du gaspillage.
@@ -34,7 +35,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.Sauvegarde = (function () {
   const CLE = "circuit-maxance:sauvegarde";
-  const VERSION = 12;
+  const VERSION = 13;
   const radio = Circuit.Evenements;
 
   function vide() {
@@ -56,6 +57,7 @@ Circuit.Sauvegarde = (function () {
       piecesGagneesAuTravail: 0, // depuis la version 9
       vols: { decollages: 0, volsDeLigne: 0, crashs: 0, ciblesTouchees: 0, voituresExplosees: 0 }, // depuis la version 10
       police: { etoilesMax: 0, arrestations: 0, semee: 0 }, // depuis la version 11
+      armurerie: { armes: [], balles: 0, grenades: 0, dynamites: 0, tirs: 0, explosifs: 0, standCasse: 0 }, // depuis la version 13
       toursTotal: 0,
       sortiesTotal: 0,
       distanceTotale: 0, // m parcourus dans toutes les courses finies
@@ -153,6 +155,10 @@ Circuit.Sauvegarde = (function () {
       for (const [id, p] of Object.entries(d.peintures || {})) peintures[renommer(id)] = p;
       d.peintures = peintures;
     }
+    if ((anciennes.version || 1) < 13) {
+      // Version 12 → 13 : l'armurerie arrive. Le sac est vide (rien acheté encore).
+      d.armurerie = { armes: [], balles: 0, grenades: 0, dynamites: 0, tirs: 0, explosifs: 0, standCasse: 0 };
+    }
     d.version = VERSION;
     return d;
   }
@@ -246,6 +252,26 @@ Circuit.Sauvegarde = (function () {
       donnees.piecesGagneesAuTravail += d.montant;
       donnees.boulots[d.sorte] = (donnees.boulots[d.sorte] || 0) + 1;
       ecrire("paie du boulot (" + d.sorte + ") : +" + d.montant + " pièce(s)");
+    });
+
+    // Étape 138 : l'armurerie. L'achat range l'arme (ou les balles, les grenades…) dans le sac.
+    radio.ecouter("achat-arme", (d) => {
+      const sac = donnees.armurerie;
+      donnees.pieces -= d.prix;
+      if (d.arme && !sac.armes.includes(d.id)) sac.armes.push(d.id);
+      for (const [quoi, combien] of Object.entries(d.donne || {})) sac[quoi] = (sac[quoi] || 0) + combien;
+      ecrire("achat à l'armurerie : " + d.nom + " pour " + d.prix + " pièce(s)");
+    });
+    // (les balles et les grenades sont enlevées du sac par logique/armurerie.js ; on écrira à la fermeture de la page)
+    for (const nom of ["tir-arme", "grenade-lancee", "dynamite-posee"]) radio.ecouter(nom, () => (piecesAEcrire = true));
+    radio.ecouter("explosif", () => {
+      donnees.armurerie.explosifs++;
+      ecrire("explosion d'un explosif");
+    });
+    radio.ecouter("stand-casse", (d) => {
+      donnees.armurerie.standCasse++;
+      donnees.pieces += d.montant;
+      piecesAEcrire = true;
     });
 
     // Étape 42 : un achat au magasin.

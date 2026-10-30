@@ -113,7 +113,7 @@ Circuit.DecorArchipel = (function () {
     // 5. Les devantures des magasins de la ville.
     const couleurs = [0xd8332a, 0x2a7bd8, 0x2ab56a, 0xe08a1a];
     for (const m of AR.magasins) {
-      if (m.aeroport) continue;
+      if (m.aeroport || m.armurerie) continue; // (étape 138 : l'armurerie a sa propre devanture, affichage/armurerie3d.js)
       const devanture = new THREE.Group();
       devanture.add(boite(1.6, 0.25, 9, mat({ color: couleurs[m.numero % 4] }), -0.3, 4.2, 0)); // l'auvent
       const nom = enseigne(m.nom.charAt(0).toUpperCase() + m.nom.slice(1), "#" + couleurs[m.numero % 4].toString(16).padStart(6, "0"), 9, 1.6);

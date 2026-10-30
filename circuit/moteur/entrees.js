@@ -41,6 +41,8 @@ Circuit.Entrees = (function () {
     volDescendre: ["KeyS", "ShiftLeft", "ShiftRight"],
     tir: ["KeyF"], // la mitrailleuse (tenir F)
     missile: ["KeyG"], // un missile (appuyer sur G)
+    armeSuivante: ["Tab"], // étape 138 : changer d'arme (à pied, en ville)
+    chiffre7: ["Digit7", "Numpad7"], // étape 138 : la 7e arme
     meteo: ["KeyM"], // étape 47 : passer tout de suite à la météo suivante
   };
 

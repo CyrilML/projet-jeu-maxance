@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 33,
+  version: 34,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -325,6 +325,38 @@ Circuit.CONFIG = {
     missile: { vitesse: 140, vie: 6, recharge: 0.8, virage: 2.2, cone: 0.6, rayonExplosion: 10 }, // il suit sa cible (virage en rad/s)
     // ✍️ Les cibles d'entraînement, autour de l'île lointaine : des ballons dans le ciel et des cibles au sol.
     ballons: 16, ciblesAuSol: 6, paieBallon: 3, paieCibleSol: 5, retour: 30, // retour = les cibles reviennent après 30 s
+  },
+
+  // Étape 138 : L'ARMURERIE. ✍️ Une boutique en ville où l'on achète des armes avec ses pièces. On s'en sert À PIED.
+  //   Elle est dans l'immeuble n° 61, tout près du départ ; le STAND DE TIR est juste en face, dans le parc.
+  //   ✍️ On ne peut JAMAIS toucher une personne : seulement les voitures, les cibles et les caisses.
+  //   Articles : arme = une arme qu'on garde (achetée une fois) ; donne = ce qu'on reçoit (balles, grenades…).
+  armurerie: {
+    nom: "l'armurerie",
+    immeuble: 61, // le numéro de l'immeuble (sa porte donne sur la rue, en face du parc)
+    articles: [
+      { id: "pistolet", nom: "Le petit pistolet", icone: "🔫", prix: 25, arme: true, donne: { balles: 12 }, texte: "F : tirer (3 balles par seconde) · 12 balles offertes" },
+      { id: "revolver", nom: "Le gros pistolet", icone: "🤠", prix: 50, arme: true, donne: { balles: 6 }, texte: "F : tirer · plus lent mais 3 fois plus fort" },
+      { id: "epee", nom: "L'épée", icone: "🗡️", prix: 20, arme: true, texte: "F : donner un coup (casse les caisses, cabosse les voitures)" },
+      { id: "katana", nom: "Le katana", icone: "⚔️", prix: 45, arme: true, texte: "F : un coup plus long et plus fort que l'épée" },
+      { id: "balles", nom: "Boîte de balles", icone: "📦", prix: 5, donne: { balles: 24 }, texte: "24 balles (pour les deux pistolets)" },
+      { id: "grenades", nom: "3 grenades", icone: "💣", prix: 15, donne: { grenades: 3 }, texte: "F : lancer · elle explose 2 secondes après" },
+      { id: "dynamite", nom: "2 bâtons de dynamite", icone: "🧨", prix: 20, donne: { dynamites: 2 }, texte: "F : poser · G : tout faire exploser !" },
+    ],
+    // Comment marche chaque arme : cadence = coups par seconde ; portee (m) ; degats (points de vie enlevés).
+    armes: {
+      pistolet: { sorte: "tir", cadence: 3, portee: 70, degats: 1 },
+      revolver: { sorte: "tir", cadence: 1.2, portee: 90, degats: 3 },
+      epee: { sorte: "lame", cadence: 2, portee: 2.6, degats: 2, cone: 0.9 },
+      katana: { sorte: "lame", cadence: 2.5, portee: 3.4, degats: 3, cone: 1 },
+      grenade: { sorte: "lancer", cadence: 1, vitesse: 14, montee: 6, meche: 2, rayon: 8 },
+      dynamite: { sorte: "poser", cadence: 2, maxPosees: 3, rayon: 10 },
+    },
+    gravite: 12, // m/s² : ce qui fait retomber la grenade
+    pvVoiture: 6, // ✍️ une voiture supporte 6 points de dégâts, puis elle explose
+    etoilesAbimee: 1, // abîmer une voiture : 1 étoile de police (la faire exploser : + 2, comme avec l'avion de chasse)
+    // Le stand de tir, dans le parc d'en face : des caisses en bois et des cibles. Elles reviennent après 20 s.
+    stand: { x: -26, z: -18, caisses: 5, cibles: 4, pvCaisse: 2, pvCible: 1, paieCible: 1, retour: 20 },
   },
 
   // Étape 47 : LA MÉTÉO. ✍️ Elle change toute seule, toutes les 2 minutes, et elle change la conduite.

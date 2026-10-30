@@ -482,7 +482,8 @@ Circuit.TableauDeBord = (function () {
     const aide = fiche.vol === "helico" ? "Z/Espace : monter · S/Maj : descendre · ↑ ↓ avancer · ← → tourner · E : descendre (posé)"
       : fiche.vol ? "↑ ↓ : gaz · ← → : tourner · Z/Espace : monter · S/Maj : descendre" + (fiche.armes ? " · F : mitrailleuse · G : missile" : "")
       : "E : descendre · R : retour au départ · ⌫ : changer de carte" + (fiche.sirene ? " · H : sirène" : "") + (sauvegarde.objets && sauvegarde.objets.klaxon ? " · K : klaxon" : "");
-    texte(p ? "↑ ↓ ← → marcher · E : monter · R : départ · ⌫ : cartes" : aide, 24, H - 22, 14, "#cfd6ff");
+    texte(p ? "↑ ↓ ← → marcher · E : monter · R : départ · ⌫ : cartes" + (sauvegarde.armurerie && Circuit.Armurerie.disponibles().length > 1 ? " · Tab : arme · F : tirer · G : dynamite" : "") : aide, 24, H - 22, 14, "#cfd6ff");
+    if (p) dessinerArmeEnMain(monde, sauvegarde); // étape 138
     if (fiche.vol && !p) dessinerVol(monde, v, fiche); // étape 44
     dessinerEtoiles(monde); // étape 45
     if (monde.sirene && fiche.sirene && !p) texte("🚨 Sirène", 300, monde.boulot ? 172 : 70, 20, // (étape 58 : plus bas pendant un boulot, sous le panneau)
@@ -693,6 +694,7 @@ Circuit.TableauDeBord = (function () {
   // Étape 42 : l'écran du magasin : les articles, leur prix, et ce que tu as déjà.
   function dessinerMagasin(monde, sauvegarde) {
     const m = monde.magasin;
+    if (m.armurerie) return dessinerArmurerie(monde, sauvegarde); // étape 138
     const articles = C.magasins.articles;
     panneau(W / 2 - 330, 60, 660, 360);
     texte("🛍️ " + m.nom.charAt(0).toUpperCase() + m.nom.slice(1), W / 2 - 310, 100, 21, "#ffe27a");
@@ -729,6 +731,48 @@ Circuit.TableauDeBord = (function () {
     }
     texte(m.message || a.texte, W / 2, 392, 18, m.message ? "#7dffa0" : "#cfd6ff", "center");
     texte("← → choisir · Entrée : acheter · J : travailler comme vendeur · E ou ⌫ : sortir", W / 2, 412, 14, "#cfd6ff", "center");
+  }
+
+  // Étape 138 : l'écran de l'armurerie (7 articles, en 3 rangées) et ce qu'il y a dans ton sac.
+  function dessinerArmurerie(monde, sauvegarde) {
+    const m = monde.magasin;
+    const articles = C.armurerie.articles;
+    const sac = sauvegarde.armurerie || { armes: [], balles: 0, grenades: 0, dynamites: 0 };
+    panneau(W / 2 - 330, 50, 660, 380);
+    texte("🔫 L'ARMURERIE", W / 2 - 310, 86, 22, "#ff8a5a");
+    texte("🪙 " + sauvegarde.pieces, W / 2 + 310, 86, 24, "#ffd34d", "right");
+    articles.forEach((a, i) => {
+      const x = W / 2 - 300 + (i % 3) * 205, y = 100 + Math.floor(i / 3) * 86;
+      const ici = i === m.index;
+      const deja = a.arme && sac.armes.includes(a.id);
+      ctx.fillStyle = ici ? "rgba(255,170,110,.95)" : "rgba(255,255,255,.08)";
+      ctx.beginPath();
+      ctx.roundRect(x, y, 190, 78, 10);
+      ctx.fill();
+      const encre = ici ? "#1a1a1a" : "#fff";
+      texte(a.icone, x + 24, y + 44, 28, encre, "center", ici);
+      texte(a.nom, x + 46, y + 28, 12, encre, "left", ici);
+      texte(deja ? "✅ à toi" : "🪙 " + a.prix, x + 46, y + 54, 16, ici ? "#7a3b00" : deja ? "#7dffa0" : "#ffd34d", "left", ici);
+    });
+    texte("🎒 Ton sac : " + sac.balles + " balles · " + sac.grenades + " grenades · " + sac.dynamites + " dynamites", W / 2, 372, 15, "#cfd6ff", "center");
+    const a = articles[m.index];
+    texte(m.message || a.texte, W / 2, 398, 18, m.message ? "#7dffa0" : "#ffe27a", "center");
+    texte("← → choisir · Entrée : acheter · E ou ⌫ : sortir", W / 2, 420, 14, "#cfd6ff", "center");
+  }
+
+  // Étape 138 : à pied, l'arme en main et ses munitions (en bas à gauche).
+  function dessinerArmeEnMain(monde, sauvegarde) {
+    const sac = sauvegarde.armurerie;
+    if (!sac || !monde.arme || !Circuit.Armurerie) return;
+    const liste = Circuit.Armurerie.disponibles();
+    if (liste.length < 2) return; // rien acheté : on ne montre rien
+    const icones = { mains: "✋", pistolet: "🔫", revolver: "🤠", epee: "🗡️", katana: "⚔️", grenade: "💣", dynamite: "🧨" };
+    const munitions = { pistolet: sac.balles + " balles", revolver: sac.balles + " balles", grenade: sac.grenades + " grenade(s)", dynamite: sac.dynamites + " dans le sac" + (monde.dynamites.length ? " · " + monde.dynamites.length + " posée(s) : G = BOUM" : "") };
+    const y = monde.boulot ? 250 : 156; // sous le panneau de la ville (et sous celui du boulot s'il y en a un)
+    panneau(12, y, 330, 78);
+    texte(icones[monde.arme] + " " + Circuit.Armurerie.NOMS[monde.arme], 24, y + 26, 18, "#ffb37a");
+    texte(munitions[monde.arme] || (monde.arme === "mains" ? "Tab ou 1-" + liste.length + " : prendre une arme" : "F : frapper"), 24, y + 48, 14, "#fff");
+    texte(liste.map((a, i) => (a === monde.arme ? "[" : "") + (i + 1) + icones[a] + (a === monde.arme ? "]" : "")).join(" "), 24, y + 68, 14, "#cfd6ff");
   }
 
   // La mini-carte du parcours : les formes, les loopings, les pièces et la voiture, vus d'en haut.

@@ -214,6 +214,9 @@ Circuit.Archipel = (function () {
     magasins.push(Object.assign({ numero: i, nom: C.magasins.noms[i], immeuble: b }, porteImmeuble(b)));
   });
   for (const ap of aeroports) magasins.push({ numero: magasins.length, nom: "la boutique de " + ap.nom, x: ap.porte.x, z: ap.porte.z, angle: ap.angle + Math.PI / 2, aeroport: ap });
+  // Étape 138 : l'armurerie (une boutique à part : ses articles sont dans C.armurerie, pas dans C.magasins).
+  const immArmurerie = Circuit.Ville.immeubles[C.armurerie.immeuble];
+  magasins.push(Object.assign({ numero: magasins.length, nom: C.armurerie.nom, immeuble: immArmurerie, armurerie: true }, porteImmeuble(immArmurerie)));
 
   // Le magasin dont la porte est à moins de `distance` m, ou null.
   function magasinProche(x, z, distance) {

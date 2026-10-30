@@ -697,6 +697,7 @@ Circuit.Scene3D = (function () {
 
     dessinerBoulots(monde); // étape 43
     dessinerArmes(monde); // étape 44
+    Circuit.Armurerie3D.dessiner(monde, scene, monde.pieton ? bonhomme : null); // étape 138 : l'armurerie, le stand de tir, l'arme en main
 
     // Les pièces qui tournent sur elles-mêmes et flottent, et les cartons.
     // (Étape 56 : toutes les pièces sont des « instances » d'une seule forme : un seul dessin pour les 100 pièces.)
