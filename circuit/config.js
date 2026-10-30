@@ -448,6 +448,7 @@ Circuit.CONFIG = {
     feu: 3, // s : une voiture en feu (lance-flammes) explose 3 secondes après
     flecheReste: 6, // s : une flèche plantée reste visible 6 secondes
     epauleCamera: 1.1, // m : avec une arme en main, la caméra se décale sur le côté (par-dessus l'épaule)
+    biaisEnMain: 0.5, // rad : l'arme en main est un peu tournée vers l'extérieur (on voit son profil, pas son bout)
     tailleEnMain: 2.4, // ✍️ l'arme en main est dessinée 2,4 fois plus grande (avant 1,5 : on ne la voyait pas)
     gravite: 12, // m/s² : ce qui fait retomber la grenade (et la flèche, l'obus : étape 139)
     pvVoiture: 6, // ✍️ une voiture supporte 6 points de dégâts, puis elle explose

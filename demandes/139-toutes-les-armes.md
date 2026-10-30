@@ -24,7 +24,8 @@ famille d'armes, chacune avec sa façon de marcher.
   à pompe, 5 précision, 6 armes lourdes, 7 lanceurs, 8 arcs et armes anciennes, 9 corps à corps, 0 explosifs
   (appuyer encore = l'arme suivante de la famille). V = la lunette. F = s'en servir. G = faire sauter dynamite et C4.
 - **L'arme en main** est dessinée 2,4 fois plus grande qu'avant (on ne la voyait pas), un modèle par forme, avec sa
-  couleur et sa taille.
+  couleur et sa taille ; elle est un peu tournée vers l'extérieur et la caméra passe par-dessus l'épaule
+  (`biaisEnMain`, `epauleCamera`) pour qu'on la voie de profil.
 - **Jamais une personne**, pas de sang : on touche les voitures, les caisses et cibles du stand, les cibles de
   l'avion de chasse. La grenade flash éblouit la police (elle s'arrête), la fumée te cache.
 - **Sauvegarde** : version 14 ; une sauvegarde 13 garde tout ce qui a été acheté.

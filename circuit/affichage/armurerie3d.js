@@ -358,8 +358,13 @@ Circuit.Armurerie3D = (function () {
     const arme = monde.arme || "mains";
     const f = Circuit.Armurerie.fiche(arme);
     if (f && !r3.armes[arme]) {
-      r3.armes[arme] = fabriquer(f); // fabriquée la première fois qu'on la prend en main
-      r3.tenue.add(r3.armes[arme]);
+      // fabriquée la première fois qu'on la prend en main ; un peu tournée vers l'extérieur (A.biaisEnMain), pour
+      // qu'on la voie de côté depuis la caméra (de pile derrière, on ne verrait que son bout).
+      const pivot = new THREE.Group();
+      pivot.rotation.y = A.biaisEnMain;
+      pivot.add(fabriquer(f));
+      r3.armes[arme] = pivot;
+      r3.tenue.add(pivot);
     }
     for (const [nom, a] of Object.entries(r3.armes)) a.visible = nom === arme;
     if (!f) return;
