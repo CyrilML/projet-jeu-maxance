@@ -179,11 +179,36 @@ Circuit.RayonsX = (function () {
     // armé (en vert, aussi longue que la portée), et un rond autour de chaque grenade = la zone qui va exploser.
     if (monde.carte === "ville" && monde.traits) {
       for (const t of monde.traits) c.ligne([t.de.x, t.de.y, t.de.z], [t.a.x, t.a.y, t.a.z], COULEURS.rouge);
-      const p = monde.pieton, F = p && C.armurerie.armes[monde.arme];
-      if (F && F.portee) c.ligne([p.x, (p.y || 0) + 1.45, p.z], [p.x + Math.cos(p.angle) * F.portee, (p.y || 0) + 1.45, p.z + Math.sin(p.angle) * F.portee], COULEURS.fleche);
-      for (const e of (monde.grenades || []).concat(monde.dynamites || [])) {
-        const r = e.meche !== undefined ? C.armurerie.armes.grenade.rayon : C.armurerie.armes.dynamite.rayon;
-        for (let i = 0; i < 24; i++) c.ligne([e.x + Math.cos((i / 24) * 6.283) * r, (e.y || 0) + 0.3, e.z + Math.sin((i / 24) * 6.283) * r], [e.x + Math.cos(((i + 1) / 24) * 6.283) * r, (e.y || 0) + 0.3, e.z + Math.sin(((i + 1) / 24) * 6.283) * r], COULEURS.ecart);
+      const p = monde.pieton, F = p && Circuit.Armurerie.fiche(monde.arme);
+      const cercle = (x, y, z, r, couleur) => {
+        for (let i = 0; i < 24; i++) c.ligne([x + Math.cos((i / 24) * 6.283) * r, y, z + Math.sin((i / 24) * 6.283) * r], [x + Math.cos(((i + 1) / 24) * 6.283) * r, y, z + Math.sin(((i + 1) / 24) * 6.283) * r], couleur);
+      };
+      if (F && F.portee && F.famille !== "flamme") c.ligne([p.x, (p.y || 0) + 1.45, p.z], [p.x + Math.cos(p.angle) * F.portee, (p.y || 0) + 1.45, p.z + Math.sin(p.angle) * F.portee], COULEURS.fleche);
+      // Étape 139 : le CÔNE du lance-flammes, du fusil à pompe (ses plombs s'écartent) et des coups au corps à corps.
+      const ouverture = F && (F.famille === "flamme" || F.famille === "melee" ? F.cone : F.plombs ? F.dispersion : 0);
+      if (ouverture) {
+        const h = (p.y || 0) + 1.2;
+        for (const s2 of [-1, 1]) c.ligne([p.x, h, p.z], [p.x + Math.cos(p.angle + s2 * ouverture) * F.portee, h, p.z + Math.sin(p.angle + s2 * ouverture) * F.portee], COULEURS.rouge);
+      }
+      for (const e of monde.grenades || []) cercle(e.x, (e.y || 0) + 0.3, e.z, e.rayon, COULEURS.ecart);
+      for (const e of monde.dynamites || []) cercle(e.x, (e.y || 0) + 0.3, e.z, Circuit.Armurerie.fiche(e.id).rayon, COULEURS.ecart);
+      for (const e of monde.mines || []) cercle(e.x, (e.y || 0) + 0.2, e.z, Circuit.Armurerie.fiche(e.id).declenche, monde.temps >= e.prete ? COULEURS.rouge : COULEURS.fleche);
+      for (const e of monde.fumees || []) cercle(e.x, (e.y || 0) + 1, e.z, e.rayon, COULEURS.cercles);
+      // Étape 139 : chaque flèche, roquette ou obus : sa vitesse (un trait vert) et le chemin qu'il VA suivre
+      // (en rouge, calculé avec la gravité, comme dans logique/armurerie.js) : on voit la courbe avant qu'elle arrive.
+      for (const pr of monde.projectiles || []) {
+        const fi = Circuit.Armurerie.fiche(pr.id);
+        c.ligne([pr.x, pr.y, pr.z], [pr.x + pr.vx * 0.2, pr.y + pr.vy * 0.2, pr.z + pr.vz * 0.2], COULEURS.fleche);
+        let x = pr.x, y = pr.y, z = pr.z, vy = pr.vy;
+        for (let i = 0; i < 30 && y > 0 && !fi.revient; i++) {
+          const dt = 0.05;
+          vy -= C.armurerie.gravite * (fi.gravite || 0) * dt;
+          c.ligne([x, y, z], [x + pr.vx * dt, y + vy * dt, z + pr.vz * dt], COULEURS.rouge);
+          x += pr.vx * dt;
+          y += vy * dt;
+          z += pr.vz * dt;
+        }
+        if (fi.explosion) cercle(x, Math.max(0.3, y), z, fi.explosion, COULEURS.ecart);
       }
     }
     // Étape 45 : chaque voiture de police a un trait bleu vers là où elle va, et un cercle montre jusqu'où un

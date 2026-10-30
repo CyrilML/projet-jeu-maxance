@@ -265,7 +265,8 @@ Circuit.EnVille = (function () {
     const direction = (intentions.droite ? 1 : 0) - (intentions.gauche ? 1 : 0);
     p.angle += direction * P.virage * dt;
     const baskets = Circuit.Sauvegarde.donnees.objets.baskets ? 2 : 1; // étape 42 : les baskets de course
-    p.vitesse = intentions.accelerer ? P.vitesse * baskets : intentions.freiner ? -P.recul : 0;
+    const lourd = Circuit.Armurerie.marche(monde); // étape 139 : une mitrailleuse, c'est lourd (on marche moins vite)
+    p.vitesse = intentions.accelerer ? P.vitesse * baskets * lourd : intentions.freiner ? -P.recul * lourd : 0;
     const avantX = p.x, avantZ = p.z;
     p.x += Math.cos(p.angle) * p.vitesse * dt;
     p.z += Math.sin(p.angle) * p.vitesse * dt;

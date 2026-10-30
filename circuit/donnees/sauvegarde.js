@@ -27,6 +27,8 @@
 //  12 (étape 49) : les voitures « style » deviennent de vraies voitures : le Taureau → la Porsche 911, la Flèche → la
 //      Lamborghini Aventador, la Fusée → la Bugatti Chiron (même prix : on garde ce qu'on a acheté).
 //  13 (étape 138) : l'armurerie : le sac d'armes (armes achetées, balles, grenades, dynamites) et ses compteurs.
+//  14 (étape 139) : toutes les armes du monde : le sac a une case pour chaque sorte de munition (balles de fusil,
+//                   cartouches, flèches, roquettes, obus, carburant, poudre, fumigènes, flashs, C4, mines).
 //
 // Les pièces sont comptées dès qu'on les ramasse, mais écrites dans le tiroir à la fin de la course
 // (ou si on recommence, ou si on ferme la page) : écrire 50 fois par course, ce serait du gaspillage.
@@ -35,7 +37,13 @@ window.Circuit = window.Circuit || {};
 
 Circuit.Sauvegarde = (function () {
   const CLE = "circuit-maxance:sauvegarde";
-  const VERSION = 13;
+  const VERSION = 14;
+  // Étape 139 : le sac d'armes vide (une case par munition du catalogue, voir config.js).
+  function sacVide() {
+    const sac = { armes: [], tirs: 0, explosifs: 0, standCasse: 0 };
+    for (const m of Object.keys(Circuit.CONFIG.armurerie.munitions)) sac[m] = 0;
+    return sac;
+  }
   const radio = Circuit.Evenements;
 
   function vide() {
@@ -57,7 +65,7 @@ Circuit.Sauvegarde = (function () {
       piecesGagneesAuTravail: 0, // depuis la version 9
       vols: { decollages: 0, volsDeLigne: 0, crashs: 0, ciblesTouchees: 0, voituresExplosees: 0 }, // depuis la version 10
       police: { etoilesMax: 0, arrestations: 0, semee: 0 }, // depuis la version 11
-      armurerie: { armes: [], balles: 0, grenades: 0, dynamites: 0, tirs: 0, explosifs: 0, standCasse: 0 }, // depuis la version 13
+      armurerie: sacVide(), // depuis la version 13 (version 14 : une case par munition)
       toursTotal: 0,
       sortiesTotal: 0,
       distanceTotale: 0, // m parcourus dans toutes les courses finies
@@ -158,6 +166,11 @@ Circuit.Sauvegarde = (function () {
     if ((anciennes.version || 1) < 13) {
       // Version 12 → 13 : l'armurerie arrive. Le sac est vide (rien acheté encore).
       d.armurerie = { armes: [], balles: 0, grenades: 0, dynamites: 0, tirs: 0, explosifs: 0, standCasse: 0 };
+    }
+    if ((anciennes.version || 1) < 14) {
+      // Version 13 → 14 : on garde TOUT ce qui a été acheté (armes, balles, grenades, dynamites) et on ajoute
+      // une case à 0 pour chaque nouvelle munition.
+      d.armurerie = Object.assign(sacVide(), d.armurerie || {});
     }
     d.version = VERSION;
     return d;
@@ -263,7 +276,7 @@ Circuit.Sauvegarde = (function () {
       ecrire("achat à l'armurerie : " + d.nom + " pour " + d.prix + " pièce(s)");
     });
     // (les balles et les grenades sont enlevées du sac par logique/armurerie.js ; on écrira à la fermeture de la page)
-    for (const nom of ["tir-arme", "grenade-lancee", "dynamite-posee"]) radio.ecouter(nom, () => (piecesAEcrire = true));
+    for (const nom of ["tir-arme", "grenade-lancee", "dynamite-posee", "projectile-tire", "lance-flammes", "mine-posee"]) radio.ecouter(nom, () => (piecesAEcrire = true));
     radio.ecouter("explosif", () => {
       donnees.armurerie.explosifs++;
       ecrire("explosion d'un explosif");

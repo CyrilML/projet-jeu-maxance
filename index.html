@@ -259,6 +259,7 @@
       <a href="#etape137">Étape 137</a>
       <a href="#etape136">Étape 136</a>
       <a href="#etape138">Étape 138</a>
+      <a href="#etape139">Étape 139</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -6695,6 +6696,66 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
       </ol>
     </section>
 
+    <section id="etape139">
+      <h2>🌍 Étape 139 : toutes les armes du monde <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">L'armurerie passe de 7 à 63 articles : 55 armes (pistolets, mitraillettes, AK-47, M4, fusils à pompe, fusils de précision avec lunette, minigun, lance-flammes, bazooka, arcs, arbalètes, mousquet, hache, nunchaku, C4, mines, boomerang…) et 8 sortes de munitions. Toujours jamais une personne : seulement des voitures, des caisses et des cibles. <a href="circuit/index.html"><strong>▶ Le jeu de voitures 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/139-toutes-les-armes.md</code>.</p>
+          <ul>
+            <li>✍️ « Ajoute toutes les armes qui existent au monde et ne me pose pas de questions. »</li>
+            <li>Pas de questions, donc Claude a tout choisi : prix, dégâts, portées… Tout se change dans <code>circuit/config.js</code>, rubrique <code>armurerie</code>.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 35 » en haut de la page du circuit.</li>
+            <li>☐ À l'armurerie : ← → les 12 catégories, ↑ ↓ les articles, Entrée acheter. Tu vois 💥 dégâts, 📏 portée, ⏱ cadence.</li>
+            <li>☐ Ton ancien sac (étape 138) est toujours là.</li>
+            <li>☐ Dehors : 2 pistolets, 3 mitraillettes et fusils d'assaut, 4 pompe, 5 précision, 6 armes lourdes, 7 lanceurs, 8 arcs et armes anciennes, 9 corps à corps, 0 explosifs (appuie encore pour l'arme suivante). L'arme est bien grande dans la main.</li>
+            <li>☐ Fusil à pompe : plusieurs plombs d'un coup. Fusil de précision : V pour la lunette.</li>
+            <li>☐ Lance-flammes : la voiture prend feu… et explose 3 s après.</li>
+            <li>☐ Bazooka : la roquette vole puis explose. Arc : la flèche retombe en courbe (rayons X).</li>
+            <li>☐ Mine : une voiture qui roule dessus saute. C4 et dynamite : G.</li>
+            <li>☐ Recharge la page : tout est encore là.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🧁 Une recette par famille, une fiche par arme</h3>
+      <p>Écrire 55 fois le code d'une arme, ce serait très long et plein d'erreurs. Alors le jeu range les armes en <b>6 familles</b> : <code>tir</code>, <code>projectile</code>, <code>flamme</code>, <code>melee</code>, <code>lancer</code>, <code>poser</code>. Chaque famille est une <b>recette</b> écrite une seule fois dans <code>logique/armurerie.js</code>. Chaque arme n'est qu'une <b>fiche d'ingrédients</b> dans <code>config.js</code> : ses dégâts, sa portée, sa cadence, sa couleur…</p>
+      <pre>fiche AK-47  : famille "tir", degats 2, portee 120, cadence 9, auto
+fiche Uzi    : famille "tir", degats 1, portee 50,  cadence 12, auto
+                    │
+                    ▼
+     recette « tir » : lancer un rayon, enlever des points de vie</pre>
+      <p>Pour ajouter une arme, il suffit d'ajouter <b>une ligne</b> dans <code>config.js</code> ! Le dessin marche pareil : un <b>patron</b> par forme (pistolet, fusil, arc, hache…), peint avec la couleur et la taille de chaque arme.</p>
+      <h3>🏹 Ce qui vole vraiment : la flèche en courbe</h3>
+      <p>Une balle est un <b>lancer de rayon</b> (étape 138). Mais une flèche, une roquette ou un obus <b>volent</b> : à chaque pas de temps (1/120 s), ils avancent de leur vitesse, et la gravité enlève un peu de vitesse vers le haut. Résultat : une courbe. Aux rayons X, la ligne rouge montre le chemin que la flèche <b>va</b> suivre, calculé à l'avance avec la même règle.</p>
+      <pre>   ➶ ‧ ‧ ‧
+            ‧ ‧
+                ‧  🎯   (gravite: 12 m/s², vitesse 35 m/s)</pre>
+      <h3>🔭 La lunette : changer le « champ de vision »</h3>
+      <p>La caméra du jeu voit un angle de 60°. Avec la lunette (V), on le divise par le zoom : le Barrett (zoom 7) ne voit plus que 60 ÷ 7 ≈ 9°… et tout paraît 7 fois plus gros !</p>
+      <h3>🎒 La sauvegarde version 14</h3>
+      <p>Le sac a maintenant une case par munition : <code>ballesFusil</code>, <code>cartouches</code>, <code>fleches</code>, <code>roquettes</code>, <code>obus</code>, <code>carburant</code>, <code>poudre</code>, <code>fumigenes</code>, <code>flashs</code>, <code>c4</code>, <code>mines</code>. Une sauvegarde version 13 garde tout et reçoit des cases à 0.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Dans <code>circuit/config.js</code>, copie la ligne du <code>couteau</code>, change son <code>id</code>, son <code>nom</code> et sa <code>couleur</code> : tu viens d'inventer une arme ! Elle apparaît au comptoir.</li>
+            <li>Change <code>plombs: 8</code> du fusil à pompe en <code>plombs: 30</code> : regarde le journal « sous le capot » quand tu tires.</li>
+            <li>Tire une flèche avec les rayons X (X) : change <code>gravite: 1</code> de l'arc en <code>gravite: 0</code>. Que devient la courbe ?</li>
+            <li>Avec le minigun, regarde « sous le capot » : « marche à 45 % ». Où est ce nombre dans <code>config.js</code> ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Combien de familles d'armes y a-t-il dans le code ? <span class="petit">(6 : tir, projectile, flamme, melee, lancer, poser)</span></li>
+            <li>Pourquoi une flèche retombe-t-elle et pas une balle ? <span class="petit">(la flèche vole et la gravité agit à chaque pas ; la balle est un rayon tout droit)</span></li>
+            <li>Que fait la touche V avec un fusil de précision ? <span class="petit">(la lunette : le champ de vision est divisé par le zoom)</span></li>
+            <li>Que faut-il faire pour ajouter une nouvelle arme ? <span class="petit">(ajouter une ligne, sa fiche, dans config.js)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7152,6 +7213,12 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
           <h4>L'armurerie du jeu de voitures <span class="etiquette">✅ fait · à valider</span></h4>
           <p>Une boutique d'armes en ville (pistolets, épée, katana, grenades, dynamite), un stand de tir, et des voitures qui explosent.</p>
           <p class="apprend"><b>Tu apprends :</b> lancer de rayon, points de vie, gravité d'une grenade, sauvegarde qui change de version. <a href="#etape138">Voir l'étape 138</a>.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">139</div>
+          <h4>Toutes les armes du monde <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>55 armes en 12 catégories (des pistolets au bazooka, de l'arc au C4), chacune avec sa façon de marcher, et des munitions pour chaque famille.</p>
+          <p class="apprend"><b>Tu apprends :</b> une recette par famille et une fiche par arme (les données), projectiles et gravité, champ de vision de la lunette. <a href="#etape139">Voir l'étape 139</a>.</p>
         </div>
       </div>
     </section>
@@ -8358,6 +8425,15 @@ APRÈS :  [ tous les trottoirs soudés ]                   →   1 dessin</pre>
         <textarea class="journal" id="appris-137" data-cle="appris-137" placeholder="Ex. : …"></textarea>
         <label for="idees-137"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-137" data-cle="idees-137" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 139 · toutes les armes du monde <span class="petit">· 30 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>circuit/config.js</code> (le grand catalogue : 12 catégories, 55 armes, 8 munitions), <code>circuit/logique/armurerie.js</code> (une recette par famille), <code>circuit/affichage/armurerie3d.js</code> (un patron 3D par forme, flèches, roquettes, flammes, fumée, mines), <code>circuit/affichage/tableau-de-bord.js</code> (le comptoir en catégories, la lunette), <code>circuit/donnees/sauvegarde.js</code> (version 14).</p>
+        <p class="petit">✍️ Iron Wolf Studio a demandé : « Ajoute toutes les armes qui existent au monde et ne me pose pas de questions. »</p>
+        <label for="appris-139"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Iron Wolf Studio, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-139" data-cle="appris-139" placeholder="Ex. : …"></textarea>
+        <label for="idees-139"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-139" data-cle="idees-139" placeholder="Ex. : …"></textarea>
       </div>
       <div class="carte" style="margin-top: 14px">
         <h4>Étape 138 · l'armurerie <span class="petit">· 30 octobre 2026</span></h4>

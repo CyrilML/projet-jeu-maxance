@@ -92,13 +92,25 @@ Circuit.SousLeCapot = (function () {
     "magasin-sortie": (d) => "🚪 Tu sors de " + d.nom,
     "achat-objet": (d) => "🛍️ ACHAT : " + d.nom + " pour " + d.prix + " pièce(s)" + (d.id === "peinture" ? " → " + d.nomVoiture + " devient dorée" : ""),
     // Étape 138 : l'armurerie.
-    "achat-arme": (d) => "🔫 ARMURERIE : " + d.nom + " pour " + d.prix + " pièce(s)" + (Object.keys(d.donne).length ? " → dans le sac : " + Object.entries(d.donne).map(([q, n]) => "+" + n + " " + q).join(", ") : ""),
-    "arme-choisie": (d) => "✋ En main : " + d.nom + " (" + d.numero + " sur " + d.total + ", Tab pour changer)",
-    "tir-arme": (d) => "🔫 Pan ! (" + d.arme + ") Le rayon du tir s'arrête sur " + d.touche + " à " + d.distance + " m · reste " + d.balles + " balle(s)",
+    "achat-arme": (d) => "🔫 ARMURERIE (" + (d.categorie || "") + ") : " + d.nom + " pour " + d.prix + " pièce(s)" + (Object.keys(d.donne).length ? " → dans le sac : " + Object.entries(d.donne).map(([q, n]) => "+" + n + " " + (Circuit.CONFIG.armurerie.munitions[q] || q)).join(", ") : ""),
+    "arme-choisie": (d) => "✋ En main : " + d.nom + " (famille « " + d.famille + " », " + d.numero + " sur " + d.total + ")",
+    "tir-arme": (d) => "🔫 Pan ! (" + d.arme + ") " + (d.plombs > 1 ? d.plombs + " plombs d'un coup, " + d.touches + " ont touché ; le 1er rayon" : "Le rayon du tir") + " s'arrête sur " + d.touche + " à " + d.distance + " m · reste " + d.balles + " " + d.mun,
     "coup-lame": (d) => "🗡️ Coup de " + d.arme + " : " + d.touches,
-    "grenade-lancee": (d) => "💣 Grenade lancée : elle explose dans " + d.meche + " s (reste " + d.reste + ")",
-    "dynamite-posee": (d) => "🧨 Dynamite posée (" + d.posees + " par terre, " + d.reste + " dans le sac) : G pour tout faire sauter",
-    explosif: (d) => "💥 BOUM ! " + (d.sorte === "grenade" ? "Grenade" : "Dynamite") + " : rayon " + d.rayon + " m, " + d.touches + " chose(s) touchée(s)" + (d.noms ? " (" + d.noms + ")" : ""),
+    "grenade-lancee": (d) => (d.effet === "fumee" ? "🌫️ Fumigène" : d.effet === "flash" ? "⚡ Grenade flash" : "💣 Grenade") + " lancée : elle agit dans " + d.meche + " s (reste " + d.reste + ")",
+    "dynamite-posee": (d) => "🧨 " + (d.nom || "Dynamite") + " posé(e) (" + d.posees + " par terre, " + d.reste + " dans le sac) : G pour tout faire sauter",
+    explosif: (d) => "💥 BOUM ! " + (d.nom || d.sorte) + " : rayon " + d.rayon + " m, " + d.touches + " chose(s) touchée(s)" + (d.noms ? " (" + d.noms + ")" : ""),
+    // Étape 139 : toutes les armes du monde.
+    "rayon-armurerie": (d) => "🏷️ Rayon « " + d.nom + " » : " + d.nombre + " article(s)",
+    lunette: (d) => (d.zoom ? "🔭 Lunette de " + d.arme + " : tout est " + d.zoom + " fois plus gros (le champ de vision est divisé par " + d.zoom + ")" : "🔭 On sort de la lunette"),
+    "projectile-tire": (d) => "🏹 " + d.arme + " : " + ({ fleche: "une flèche", roquette: "une roquette", obus: "un obus", boomerang: "le boomerang" }[d.sorte] || d.sorte) + " part à " + d.vitesse + " m/s" + (d.explosion ? " (elle explosera, rayon " + d.explosion + " m)" : "") + (d.reste !== null ? " · reste " + d.reste + " " + d.mun : ""),
+    "fleche-plantee": (d) => "🎯 La flèche (" + d.arme + ") se plante dans " + d.dans + " à " + d.distance + " m (la gravité l'a fait descendre en courbe)",
+    "boomerang-revenu": (d) => "🪃 Le boomerang est revenu dans ta main (" + d.touches + " chose(s) touchée(s))",
+    "lance-flammes": (d) => "🔥 Lance-flammes : un cône de feu de " + d.portee + " m · reste " + d.carburant + " L de carburant",
+    "voiture-en-feu": (d) => "🔥 " + d.nom + " prend feu : elle explose dans " + d.dans + " s !",
+    "mine-posee": (d) => "⭕ Mine posée (" + d.posees + " par terre, " + d.reste + " dans le sac) : prête dans " + d.armement + " s, elle saute si une voiture passe à moins de " + d.declenche + " m",
+    "mine-declenchee": (d) => "⭕💥 Une voiture a roulé sur une mine (x " + d.x + ", z " + d.z + ")",
+    fumigene: (d) => "🌫️ Nuage de fumée : " + d.rayon + " m de rayon pendant " + d.duree + " s (caché dedans, la police ne te voit pas)",
+    flash: (d) => "⚡ FLASH ! " + d.etourdies + " voiture(s) de police éblouie(s) pendant " + d.duree + " s (rayon " + d.rayon + " m)",
     "voiture-abimee": (d) => "💢 " + d.nom + " abîmée (" + d.arme + ") : encore " + d.pv + " point(s) de vie sur " + d.max + " avant d'exploser",
     "stand-casse": (d) => (d.sorte === "caisse" ? "📦 Caisse cassée" : "🎯 Cible du stand touchée") + (d.montant ? " : +" + d.montant + " pièce" : "") + " (elle revient dans " + Circuit.CONFIG.armurerie.stand.retour + " s)",
     klaxon: (d) => "📯 Tut-tuuut ! (" + d.voiture + ")",
@@ -271,12 +283,18 @@ Circuit.SousLeCapot = (function () {
         ["balles et missiles en l'air", (monde.tirs || []).length],
         ["cibles touchées · voitures explosées", (monde.ciblesTouchees || 0) + " · " + (monde.voituresExplosees || 0)],
         ["L'armurerie (étape 138)"],
-        ["en main", monde.arme ? Circuit.Armurerie.NOMS[monde.arme] + " (choix : " + Circuit.Armurerie.disponibles().map((a, i) => i + 1 + "=" + a).join(" ") + ")" : "—"],
-        ["sac", (function () {
+        ["en main", monde.arme ? Circuit.Armurerie.NOMS[monde.arme] + (Circuit.Armurerie.fiche(monde.arme) ? " · famille « " + Circuit.Armurerie.fiche(monde.arme).famille + " »" + (monde.zoom ? " · 🔭 lunette" : "") + (Circuit.Armurerie.marche(monde) < 1 ? " · marche à " + Math.round(Circuit.Armurerie.marche(monde) * 100) + " %" : "") : "") : "—"],
+        ["armes à toi (étape 139)", (function () {
           const s = Circuit.Sauvegarde.donnees.armurerie;
-          return s ? s.balles + " balles · " + s.grenades + " grenades · " + s.dynamites + " dynamites · armes : " + (s.armes.join(", ") || "aucune") : "—";
+          return s ? Circuit.Armurerie.disponibles().length - 1 + " sur " + Object.keys(Circuit.Armurerie.FICHES).length + " : " + (Circuit.Armurerie.disponibles().slice(1).join(", ") || "aucune") : "—";
         })()],
-        ["en l'air / posé", (monde.grenades || []).map((g) => "💣 mèche " + virgule(Math.max(0, g.meche), 1) + " s, à " + virgule(g.y, 1) + " m de haut").join(" · ") + ((monde.dynamites || []).length ? " 🧨 × " + monde.dynamites.length : "") || "rien"],
+        ["munitions dans le sac", (function () {
+          const s = Circuit.Sauvegarde.donnees.armurerie, M = Circuit.CONFIG.armurerie.munitions;
+          return s ? Object.keys(M).filter((k) => s[k]).map((k) => s[k] + " " + M[k]).join(" · ") || "aucune" : "—";
+        })()],
+        ["en l'air / posé", (monde.grenades || []).map((g) => "💣 mèche " + virgule(Math.max(0, g.meche), 1) + " s, à " + virgule(g.y, 1) + " m de haut").join(" · ") + ((monde.dynamites || []).length ? " 🧨 × " + monde.dynamites.length : "") + ((monde.mines || []).length ? " ⭕ × " + monde.mines.length : "") || "rien"],
+        ["projectiles qui volent", (monde.projectiles || []).map((p) => p.sorte + " à " + virgule(p.y, 1) + " m de haut, vitesse verticale " + virgule(p.vy, 1) + " m/s").join(" · ") || "aucun"],
+        ["feu · fumée", (monde.flammes || []).length + " flamme(s) · " + (monde.garees || []).concat((monde.circulation || []).map((c) => c.voiture)).filter((x) => x.enFeu !== undefined).length + " voiture(s) en feu · " + (monde.fumees || []).length + " nuage(s)" + (monde.pieton && Circuit.Armurerie.cache(monde, monde.pieton) ? " · 😶‍🌫️ tu es caché" : "")],
         ["stand de tir", monde.stand ? monde.stand.filter((c) => !c.cassee).length + " / " + monde.stand.length + " debout" : "—"],
         ["tirs · touchés · voitures", monde.armurerieBilan ? monde.armurerieBilan.tirs + " · " + monde.armurerieBilan.touches + " · " + monde.armurerieBilan.voitures : "—"],
         ["Le petit boulot (étape 43)"],

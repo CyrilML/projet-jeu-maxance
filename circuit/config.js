@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 34,
+  version: 35,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -330,29 +330,126 @@ Circuit.CONFIG = {
   // Étape 138 : L'ARMURERIE. ✍️ Une boutique en ville où l'on achète des armes avec ses pièces. On s'en sert À PIED.
   //   Elle est dans l'immeuble n° 61, tout près du départ ; le STAND DE TIR est juste en face, dans le parc.
   //   ✍️ On ne peut JAMAIS toucher une personne : seulement les voitures, les cibles et les caisses.
-  //   Articles : arme = une arme qu'on garde (achetée une fois) ; donne = ce qu'on reçoit (balles, grenades…).
+  //   Articles : donne = ce qu'on reçoit (balles, grenades…). Étape 139 : le grand catalogue, juste en dessous.
   armurerie: {
     nom: "l'armurerie",
     immeuble: 61, // le numéro de l'immeuble (sa porte donne sur la rue, en face du parc)
-    articles: [
-      { id: "pistolet", nom: "Le petit pistolet", icone: "🔫", prix: 25, arme: true, donne: { balles: 12 }, texte: "F : tirer (3 balles par seconde) · 12 balles offertes" },
-      { id: "revolver", nom: "Le gros pistolet", icone: "🤠", prix: 50, arme: true, donne: { balles: 6 }, texte: "F : tirer · plus lent mais 3 fois plus fort" },
-      { id: "epee", nom: "L'épée", icone: "🗡️", prix: 20, arme: true, texte: "F : donner un coup (casse les caisses, cabosse les voitures)" },
-      { id: "katana", nom: "Le katana", icone: "⚔️", prix: 45, arme: true, texte: "F : un coup plus long et plus fort que l'épée" },
-      { id: "balles", nom: "Boîte de balles", icone: "📦", prix: 5, donne: { balles: 24 }, texte: "24 balles (pour les deux pistolets)" },
-      { id: "grenades", nom: "3 grenades", icone: "💣", prix: 15, donne: { grenades: 3 }, texte: "F : lancer · elle explose 2 secondes après" },
-      { id: "dynamite", nom: "2 bâtons de dynamite", icone: "🧨", prix: 20, donne: { dynamites: 2 }, texte: "F : poser · G : tout faire exploser !" },
+    // Étape 139 : ✍️ « Ajoute toutes les armes qui existent au monde. » Le catalogue est rangé par CATÉGORIES
+    // (← → au comptoir). touche = le chiffre qui choisit cette famille à pied (appuie encore = l'arme suivante).
+    categories: [
+      { id: "pistolets", nom: "Pistolets", icone: "🔫", touche: 2 },
+      { id: "mitraillettes", nom: "Mitraillettes", icone: "💨", touche: 3 },
+      { id: "assaut", nom: "Fusils d'assaut", icone: "🪖", touche: 3 },
+      { id: "pompe", nom: "Fusils à pompe", icone: "💥", touche: 4 },
+      { id: "precision", nom: "Précision", icone: "🎯", touche: 5 },
+      { id: "lourdes", nom: "Armes lourdes", icone: "🔥", touche: 6 },
+      { id: "lanceurs", nom: "Lanceurs", icone: "🚀", touche: 7 },
+      { id: "arcs", nom: "Arcs", icone: "🏹", touche: 8 },
+      { id: "anciennes", nom: "Armes anciennes", icone: "🏴‍☠️", touche: 8 },
+      { id: "melee", nom: "Corps à corps", icone: "⚔️", touche: 9 },
+      { id: "explosifs", nom: "Explosifs", icone: "💣", touche: 0 },
+      { id: "munitions", nom: "Munitions", icone: "📦", touche: null },
     ],
-    // Comment marche chaque arme : cadence = coups par seconde ; portee (m) ; degats (points de vie enlevés).
-    armes: {
-      pistolet: { sorte: "tir", cadence: 3, portee: 70, degats: 1 },
-      revolver: { sorte: "tir", cadence: 1.2, portee: 90, degats: 3 },
-      epee: { sorte: "lame", cadence: 2, portee: 2.6, degats: 2, cone: 0.9 },
-      katana: { sorte: "lame", cadence: 2.5, portee: 3.4, degats: 3, cone: 1 },
-      grenade: { sorte: "lancer", cadence: 1, vitesse: 14, montee: 6, meche: 2, rayon: 8 },
-      dynamite: { sorte: "poser", cadence: 2, maxPosees: 3, rayon: 10 },
+    // Les munitions : le nom de chaque sorte (le « sac » compte combien il en reste).
+    munitions: {
+      balles: "balles de pistolet", ballesFusil: "balles de fusil", cartouches: "cartouches", fleches: "flèches",
+      roquettes: "roquettes", obus: "obus de 40 mm", carburant: "litres de carburant", poudre: "charges de poudre",
+      grenades: "grenades", fumigenes: "fumigènes", flashs: "grenades flash", dynamites: "dynamites", c4: "pains de C4", mines: "mines",
     },
-    gravite: 12, // m/s² : ce qui fait retomber la grenade
+    // LE CATALOGUE. Chaque arme a une FAMILLE (sa façon de marcher, codée UNE fois dans logique/armurerie.js) :
+    //   tir        : une balle = un « lancer de rayon ». auto = on tient F ; rafale = n balles par appui ;
+    //                plombs = n balles d'un coup dans un cône (fusil à pompe) ; dispersion (rad) ; zoom (touche V) ;
+    //                marche = la vitesse de marche quand on la porte (0,6 = 60 %, c'est lourd).
+    //   projectile : quelque chose qui VOLE (flèche, roquette, obus) : vitesse (m/s), gravite (1 = normale),
+    //                explosion = rayon (m) de l'explosion à l'arrivée (0 = la flèche plante juste).
+    //   flamme     : un cône de feu court : les caisses brûlent, les voitures prennent feu puis explosent.
+    //   melee      : un coup dans un éventail devant soi (portee m, cone rad).
+    //   lancer     : on lance (grenade, fumigène, flash) : meche (s), effet, rayon (m). Le boomerang revient !
+    //   poser      : on pose par terre (dynamite et C4 : G = BOUM ; mine : une voiture qui roule dessus explose).
+    // forme = le modèle 3D (affichage/armurerie3d.js) ; couleur et taille le rendent unique.
+    // degats = points de vie enlevés (une voiture en a 6) ; portee (m) ; cadence = coups par seconde.
+    articles: [
+      // --- Pistolets (touche 2)
+      { id: "pistolet", cat: "pistolets", nom: "Le petit pistolet", icone: "🔫", prix: 25, famille: "tir", forme: "pistolet", couleur: 0x2b2d33, taille: 1, degats: 1, portee: 70, cadence: 3, mun: "balles", donne: { balles: 12 } },
+      { id: "revolver", cat: "pistolets", nom: "Le gros revolver", icone: "🤠", prix: 50, famille: "tir", forme: "revolver", couleur: 0xd8dde6, taille: 1.1, degats: 3, portee: 90, cadence: 1.2, mun: "balles", donne: { balles: 6 } },
+      { id: "auto", cat: "pistolets", nom: "Pistolet automatique", icone: "🔫", prix: 70, famille: "tir", forme: "pistolet", couleur: 0x555a60, taille: 1.1, degats: 1, portee: 60, cadence: 9, rafale: 3, dispersion: 0.04, mun: "balles", donne: { balles: 24 } },
+      { id: "deagle", cat: "pistolets", nom: "Desert Eagle", icone: "🦅", prix: 90, famille: "tir", forme: "pistolet", couleur: 0xc9a227, taille: 1.35, degats: 4, portee: 100, cadence: 1, mun: "balles", donne: { balles: 8 } },
+      { id: "starter", cat: "pistolets", nom: "Pistolet de starter", icone: "🏁", prix: 8, famille: "tir", forme: "pistolet", couleur: 0xe03030, taille: 0.9, degats: 0, portee: 20, cadence: 2, mun: "balles", donne: { balles: 10 } },
+      // --- Mitraillettes (touche 3)
+      { id: "uzi", cat: "mitraillettes", nom: "Uzi", icone: "💨", prix: 80, famille: "tir", forme: "mitraillette", couleur: 0x333333, taille: 0.9, degats: 1, portee: 50, cadence: 12, auto: true, dispersion: 0.06, mun: "balles", donne: { balles: 40 } },
+      { id: "mp5", cat: "mitraillettes", nom: "MP5", icone: "💨", prix: 110, famille: "tir", forme: "mitraillette", couleur: 0x1d1f22, taille: 1.1, degats: 1, portee: 65, cadence: 10, rafale: 3, dispersion: 0.03, mun: "balles", donne: { balles: 45 } },
+      { id: "p90", cat: "mitraillettes", nom: "P90", icone: "💨", prix: 140, famille: "tir", forme: "mitraillette", couleur: 0x4a5a3a, taille: 1.15, degats: 1, portee: 70, cadence: 14, auto: true, dispersion: 0.05, mun: "balles", donne: { balles: 50 } },
+      { id: "thompson", cat: "mitraillettes", nom: "Thompson (1920)", icone: "🎩", prix: 120, famille: "tir", forme: "mitraillette", couleur: 0x6b3a1c, taille: 1.3, degats: 1, portee: 60, cadence: 11, auto: true, dispersion: 0.07, mun: "balles", donne: { balles: 50 } },
+      // --- Fusils d'assaut (touche 3 aussi)
+      { id: "ak47", cat: "assaut", nom: "AK-47", icone: "🪖", prix: 160, famille: "tir", forme: "fusil", couleur: 0x8a4a20, taille: 1, degats: 2, portee: 120, cadence: 9, auto: true, dispersion: 0.035, mun: "ballesFusil", donne: { ballesFusil: 30 } },
+      { id: "m4", cat: "assaut", nom: "M4", icone: "🪖", prix: 180, famille: "tir", forme: "fusil", couleur: 0x2a2a2a, taille: 1, degats: 2, portee: 130, cadence: 10, auto: true, dispersion: 0.025, mun: "ballesFusil", donne: { ballesFusil: 30 } },
+      { id: "famas", cat: "assaut", nom: "FAMAS", icone: "🇫🇷", prix: 170, famille: "tir", forme: "fusil", couleur: 0x3a3f46, taille: 0.95, degats: 2, portee: 120, cadence: 12, rafale: 3, dispersion: 0.02, mun: "ballesFusil", donne: { ballesFusil: 30 } },
+      { id: "scar", cat: "assaut", nom: "SCAR", icone: "🪖", prix: 220, famille: "tir", forme: "fusil", couleur: 0xb59a6a, taille: 1.05, degats: 3, portee: 140, cadence: 7, auto: true, dispersion: 0.025, mun: "ballesFusil", donne: { ballesFusil: 20 } },
+      { id: "g36", cat: "assaut", nom: "G36", icone: "🪖", prix: 200, famille: "tir", forme: "fusil", couleur: 0x2f3a2f, taille: 1.02, degats: 2, portee: 135, cadence: 9, auto: true, dispersion: 0.02, mun: "ballesFusil", donne: { ballesFusil: 30 } },
+      // --- Fusils à pompe (touche 4) : plusieurs plombs d'un coup, dans un cône
+      { id: "pompe", cat: "pompe", nom: "Fusil à pompe", icone: "💥", prix: 120, famille: "tir", forme: "pompe", couleur: 0x2b2d33, taille: 1, degats: 1, portee: 25, cadence: 1.2, plombs: 8, dispersion: 0.18, mun: "cartouches", donne: { cartouches: 8 } },
+      { id: "doubleCanon", cat: "pompe", nom: "Fusil à double canon", icone: "💥", prix: 90, famille: "tir", forme: "pompe", couleur: 0x6b3a1c, taille: 0.9, degats: 1, portee: 20, cadence: 2, plombs: 10, dispersion: 0.25, mun: "cartouches", donne: { cartouches: 8 } },
+      { id: "aa12", cat: "pompe", nom: "Fusil à pompe automatique", icone: "💥", prix: 260, famille: "tir", forme: "pompe", couleur: 0x3a4a3a, taille: 1.1, degats: 1, portee: 25, cadence: 5, auto: true, plombs: 6, dispersion: 0.2, mun: "cartouches", donne: { cartouches: 20 } },
+      // --- Précision (touche 5) : V = viser avec la lunette (zoom)
+      { id: "chasse", cat: "precision", nom: "Carabine à lunette", icone: "🎯", prix: 150, famille: "tir", forme: "precision", couleur: 0x6b3a1c, taille: 1, degats: 5, portee: 250, cadence: 0.9, zoom: 3, mun: "ballesFusil", donne: { ballesFusil: 10 } },
+      { id: "dragunov", cat: "precision", nom: "Dragunov", icone: "🎯", prix: 250, famille: "tir", forme: "precision", couleur: 0x8a4a20, taille: 1.15, degats: 6, portee: 300, cadence: 1.5, zoom: 4, mun: "ballesFusil", donne: { ballesFusil: 10 } },
+      { id: "l115", cat: "precision", nom: "Fusil de précision L115", icone: "🎯", prix: 320, famille: "tir", forme: "precision", couleur: 0x4a5a3a, taille: 1.25, degats: 8, portee: 400, cadence: 0.6, zoom: 6, mun: "ballesFusil", donne: { ballesFusil: 8 } },
+      { id: "barrett", cat: "precision", nom: "Barrett .50", icone: "🎯", prix: 450, famille: "tir", forme: "precision", couleur: 0x2a2a2a, taille: 1.45, degats: 12, portee: 500, cadence: 0.5, zoom: 7, marche: 0.8, mun: "ballesFusil", donne: { ballesFusil: 8 } },
+      // --- Armes lourdes (touche 6) : beaucoup de balles, mais on marche moins vite
+      { id: "m249", cat: "lourdes", nom: "Mitrailleuse M249", icone: "🔩", prix: 300, famille: "tir", forme: "mitrailleuse", couleur: 0x2b2d33, taille: 1, degats: 2, portee: 110, cadence: 13, auto: true, dispersion: 0.05, marche: 0.7, mun: "ballesFusil", donne: { ballesFusil: 100 } },
+      { id: "m60", cat: "lourdes", nom: "Mitrailleuse M60", icone: "🔩", prix: 350, famille: "tir", forme: "mitrailleuse", couleur: 0x3a3a2a, taille: 1.15, degats: 2, portee: 120, cadence: 10, auto: true, dispersion: 0.045, marche: 0.65, mun: "ballesFusil", donne: { ballesFusil: 100 } },
+      { id: "minigun", cat: "lourdes", nom: "Minigun", icone: "🌀", prix: 600, famille: "tir", forme: "minigun", couleur: 0x555a60, taille: 1.2, degats: 2, portee: 100, cadence: 25, auto: true, dispersion: 0.07, marche: 0.45, mun: "ballesFusil", donne: { ballesFusil: 200 } },
+      { id: "lanceFlammes", cat: "lourdes", nom: "Lance-flammes", icone: "🔥", prix: 400, famille: "flamme", forme: "lanceFlammes", couleur: 0xb02a1a, taille: 1, degats: 1, portee: 9, cone: 0.35, cadence: 10, auto: true, marche: 0.75, mun: "carburant", donne: { carburant: 100 } },
+      // --- Lanceurs (touche 7) : un projectile qui vole, puis explose
+      { id: "bazooka", cat: "lanceurs", nom: "Bazooka", icone: "🚀", prix: 350, famille: "projectile", forme: "tube", couleur: 0x4a5a3a, taille: 1, projectile: "roquette", vitesse: 45, gravite: 0.1, explosion: 7, degats: 99, portee: 200, cadence: 0.7, marche: 0.8, mun: "roquettes", donne: { roquettes: 3 } },
+      { id: "rpg", cat: "lanceurs", nom: "RPG-7", icone: "🚀", prix: 400, famille: "projectile", forme: "tube", couleur: 0x6b3a1c, taille: 1.1, projectile: "roquette", vitesse: 55, gravite: 0.1, explosion: 8, degats: 99, portee: 250, cadence: 0.6, marche: 0.8, mun: "roquettes", donne: { roquettes: 3 } },
+      { id: "m79", cat: "lanceurs", nom: "Lance-grenades M79", icone: "🥚", prix: 250, famille: "projectile", forme: "lanceGrenades", couleur: 0x6b3a1c, taille: 1, projectile: "obus", vitesse: 30, gravite: 1, montee: 0.35, explosion: 5, degats: 99, portee: 90, cadence: 1, mun: "obus", donne: { obus: 6 } },
+      { id: "lanceMulti", cat: "lanceurs", nom: "Lance-grenades à barillet", icone: "🥚", prix: 500, famille: "projectile", forme: "lanceGrenades", couleur: 0x2a2a2a, taille: 1.25, projectile: "obus", vitesse: 32, gravite: 1, montee: 0.3, explosion: 5, degats: 99, portee: 100, cadence: 3, auto: true, marche: 0.8, mun: "obus", donne: { obus: 12 } },
+      // --- Arcs et arbalètes (touche 8) : la flèche vole en courbe (la gravité la fait retomber)
+      { id: "arc", cat: "arcs", nom: "Arc", icone: "🏹", prix: 30, famille: "projectile", forme: "arc", couleur: 0x8a5a2a, taille: 1, projectile: "fleche", vitesse: 35, gravite: 1, montee: 0.08, explosion: 0, degats: 2, portee: 100, cadence: 1.5, mun: "fleches", donne: { fleches: 10 } },
+      { id: "arcLong", cat: "arcs", nom: "Arc long anglais", icone: "🏹", prix: 60, famille: "projectile", forme: "arc", couleur: 0x5a3a1a, taille: 1.4, projectile: "fleche", vitesse: 48, gravite: 1, montee: 0.06, explosion: 0, degats: 3, portee: 150, cadence: 1, mun: "fleches", donne: { fleches: 10 } },
+      { id: "arcPoulies", cat: "arcs", nom: "Arc à poulies", icone: "🏹", prix: 120, famille: "projectile", forme: "arc", couleur: 0x2a2a2a, taille: 1.1, projectile: "fleche", vitesse: 60, gravite: 1, montee: 0.04, explosion: 0, degats: 3, portee: 180, cadence: 1.8, mun: "fleches", donne: { fleches: 15 } },
+      { id: "arbalete", cat: "arcs", nom: "Arbalète", icone: "🏹", prix: 90, famille: "projectile", forme: "arbalete", couleur: 0x6b3a1c, taille: 1, projectile: "fleche", vitesse: 55, gravite: 1, montee: 0.04, explosion: 0, degats: 4, portee: 150, cadence: 0.7, mun: "fleches", donne: { fleches: 10 } },
+      { id: "arbaleteLourde", cat: "arcs", nom: "Arbalète lourde", icone: "🏹", prix: 160, famille: "projectile", forme: "arbalete", couleur: 0x333333, taille: 1.3, projectile: "fleche", vitesse: 70, gravite: 1, montee: 0.03, explosion: 0, degats: 6, portee: 200, cadence: 0.5, mun: "fleches", donne: { fleches: 10 } },
+      // --- Armes anciennes (touche 8 aussi) : il faut de la poudre
+      { id: "silex", cat: "anciennes", nom: "Pistolet à silex", icone: "🏴‍☠️", prix: 40, famille: "tir", forme: "silex", couleur: 0x6b3a1c, taille: 1.1, degats: 3, portee: 40, cadence: 0.4, dispersion: 0.05, mun: "poudre", donne: { poudre: 6 } },
+      { id: "mousquet", cat: "anciennes", nom: "Mousquet", icone: "🎖️", prix: 70, famille: "tir", forme: "mousquet", couleur: 0x6b3a1c, taille: 1.1, degats: 4, portee: 80, cadence: 0.3, dispersion: 0.04, mun: "poudre", donne: { poudre: 6 } },
+      { id: "arquebuse", cat: "anciennes", nom: "Arquebuse", icone: "🎖️", prix: 60, famille: "tir", forme: "mousquet", couleur: 0x4a2a10, taille: 1, degats: 3, portee: 60, cadence: 0.3, dispersion: 0.06, mun: "poudre", donne: { poudre: 6 } },
+      { id: "tromblon", cat: "anciennes", nom: "Tromblon", icone: "🎺", prix: 80, famille: "tir", forme: "tromblon", couleur: 0xc9a227, taille: 1, degats: 1, portee: 18, cadence: 0.5, plombs: 10, dispersion: 0.3, mun: "poudre", donne: { poudre: 6 } },
+      // --- Corps à corps (touche 9) : pas de munitions
+      { id: "couteau", cat: "melee", nom: "Couteau", icone: "🔪", prix: 10, famille: "melee", forme: "lame", couleur: 0xd8dde6, taille: 0.35, degats: 1, portee: 1.8, cone: 0.8, cadence: 3 },
+      { id: "machette", cat: "melee", nom: "Machette", icone: "🔪", prix: 18, famille: "melee", forme: "lame", couleur: 0xc0c4c8, taille: 0.6, degats: 2, portee: 2.2, cone: 0.9, cadence: 2.5 },
+      { id: "epee", cat: "melee", nom: "L'épée", icone: "🗡️", prix: 20, famille: "melee", forme: "lame", couleur: 0xd8dde6, taille: 1, degats: 2, portee: 2.6, cone: 0.9, cadence: 2 },
+      { id: "katana", cat: "melee", nom: "Le katana", icone: "⚔️", prix: 45, famille: "melee", forme: "lame", couleur: 0xeef2f8, taille: 1.25, degats: 3, portee: 3.4, cone: 1, cadence: 2.5 },
+      { id: "hache", cat: "melee", nom: "Hache", icone: "🪓", prix: 30, famille: "melee", forme: "hache", couleur: 0x9aa0a8, taille: 1, degats: 3, portee: 2.4, cone: 0.8, cadence: 1.4 },
+      { id: "marteau", cat: "melee", nom: "Marteau de guerre", icone: "🔨", prix: 25, famille: "melee", forme: "marteau", couleur: 0x707070, taille: 1, degats: 3, portee: 2.3, cone: 0.7, cadence: 1.2 },
+      { id: "lance", cat: "melee", nom: "Lance", icone: "🔱", prix: 35, famille: "melee", forme: "lance", couleur: 0xd8dde6, taille: 1, degats: 2, portee: 4.2, cone: 0.35, cadence: 1.8 },
+      { id: "masse", cat: "melee", nom: "Masse d'armes", icone: "⚙️", prix: 40, famille: "melee", forme: "masse", couleur: 0x555a60, taille: 1, degats: 4, portee: 2.4, cone: 0.8, cadence: 1 },
+      { id: "batte", cat: "melee", nom: "Batte de baseball", icone: "⚾", prix: 15, famille: "melee", forme: "batte", couleur: 0xc8a060, taille: 1, degats: 2, portee: 2.4, cone: 1, cadence: 1.8 },
+      { id: "nunchaku", cat: "melee", nom: "Nunchaku", icone: "🥋", prix: 28, famille: "melee", forme: "nunchaku", couleur: 0x2a2a2a, taille: 1, degats: 1, portee: 2, cone: 1.4, cadence: 4 },
+      // --- Explosifs et objets à lancer (touche 0) : on les achète par paquets
+      { id: "grenade", cat: "explosifs", nom: "3 grenades", icone: "💣", prix: 15, famille: "lancer", forme: "grenade", couleur: 0x3f5a2a, taille: 1, effet: "explosion", vitesse: 14, montee: 6, meche: 2, rayon: 8, cadence: 1, consommable: true, mun: "grenades", donne: { grenades: 3 } },
+      { id: "fumigene", cat: "explosifs", nom: "3 fumigènes", icone: "🌫️", prix: 12, famille: "lancer", forme: "grenade", couleur: 0x9aa0a8, taille: 1.1, effet: "fumee", vitesse: 13, montee: 6, meche: 1.5, rayon: 9, duree: 12, cadence: 1, consommable: true, mun: "fumigenes", donne: { fumigenes: 3 } },
+      { id: "flash", cat: "explosifs", nom: "3 grenades flash", icone: "⚡", prix: 15, famille: "lancer", forme: "grenade", couleur: 0xe8e8e8, taille: 0.9, effet: "flash", vitesse: 14, montee: 6, meche: 1.5, rayon: 25, duree: 4, cadence: 1, consommable: true, mun: "flashs", donne: { flashs: 3 } },
+      { id: "dynamite", cat: "explosifs", nom: "2 bâtons de dynamite", icone: "🧨", prix: 20, famille: "poser", forme: "dynamite", couleur: 0xc8261e, taille: 1, effet: "telecommande", rayon: 10, maxPosees: 3, cadence: 2, consommable: true, mun: "dynamites", donne: { dynamites: 2 } },
+      { id: "c4", cat: "explosifs", nom: "2 pains de C4", icone: "📟", prix: 45, famille: "poser", forme: "c4", couleur: 0xd8cfa0, taille: 1, effet: "telecommande", rayon: 13, maxPosees: 3, cadence: 2, consommable: true, mun: "c4", donne: { c4: 2 } },
+      { id: "mine", cat: "explosifs", nom: "3 mines", icone: "⭕", prix: 35, famille: "poser", forme: "mine", couleur: 0x4a5a3a, taille: 1, effet: "mine", rayon: 6, maxPosees: 5, armement: 1.5, declenche: 2.5, cadence: 2, consommable: true, mun: "mines", donne: { mines: 3 } },
+      { id: "boomerang", cat: "explosifs", nom: "Boomerang", icone: "🪃", prix: 20, famille: "projectile", forme: "boomerang", couleur: 0xc87a30, taille: 1, projectile: "boomerang", vitesse: 20, gravite: 0, explosion: 0, degats: 2, portee: 30, cadence: 1, revient: true },
+      // --- Munitions
+      { id: "balles", cat: "munitions", nom: "Boîte de balles de pistolet", icone: "📦", prix: 5, donne: { balles: 24 }, texte: "24 balles (pistolets et mitraillettes)" },
+      { id: "ballesFusil", cat: "munitions", nom: "Caisse de balles de fusil", icone: "🧰", prix: 10, donne: { ballesFusil: 60 }, texte: "60 balles (fusils d'assaut, précision, mitrailleuses)" },
+      { id: "cartouches", cat: "munitions", nom: "Boîte de cartouches", icone: "🟥", prix: 8, donne: { cartouches: 16 }, texte: "16 cartouches (fusils à pompe)" },
+      { id: "fleches", cat: "munitions", nom: "Carquois de flèches", icone: "➶", prix: 6, donne: { fleches: 20 }, texte: "20 flèches (arcs et arbalètes)" },
+      { id: "roquettes", cat: "munitions", nom: "3 roquettes", icone: "🚀", prix: 30, donne: { roquettes: 3 }, texte: "3 roquettes (bazooka, RPG-7)" },
+      { id: "obus", cat: "munitions", nom: "6 obus de 40 mm", icone: "🥚", prix: 20, donne: { obus: 6 }, texte: "6 obus (lance-grenades)" },
+      { id: "carburant", cat: "munitions", nom: "Bidon de carburant", icone: "⛽", prix: 25, donne: { carburant: 100 }, texte: "100 litres (lance-flammes : 10 secondes de feu)" },
+      { id: "poudre", cat: "munitions", nom: "Corne de poudre", icone: "🧂", prix: 5, donne: { poudre: 10 }, texte: "10 charges (mousquet, tromblon, pistolet à silex)" },
+    ],
+    feu: 3, // s : une voiture en feu (lance-flammes) explose 3 secondes après
+    flecheReste: 6, // s : une flèche plantée reste visible 6 secondes
+    epauleCamera: 1.1, // m : avec une arme en main, la caméra se décale sur le côté (par-dessus l'épaule)
+    tailleEnMain: 2.4, // ✍️ l'arme en main est dessinée 2,4 fois plus grande (avant 1,5 : on ne la voyait pas)
+    gravite: 12, // m/s² : ce qui fait retomber la grenade (et la flèche, l'obus : étape 139)
     pvVoiture: 6, // ✍️ une voiture supporte 6 points de dégâts, puis elle explose
     etoilesAbimee: 1, // abîmer une voiture : 1 étoile de police (la faire exploser : + 2, comme avec l'avion de chasse)
     // Le stand de tir, dans le parc d'en face : des caisses en bois et des cibles. Elles reviennent après 20 s.

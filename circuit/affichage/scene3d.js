@@ -409,6 +409,12 @@ Circuit.Scene3D = (function () {
       oeil = [v.x + Math.cos(a) * recul, 2.6, v.z + Math.sin(a) * recul];
       cible = [v.x, 0.9, v.z];
       camera.angle = v.angle;
+    } else if (monde.pieton && monde.zoom) {
+      // Étape 139 : la LUNETTE du fusil de précision (V). On regarde par les yeux du personnage, droit devant,
+      // à la hauteur des balles (1,45 m).
+      oeil = [v.x + cos * 0.3, y + 1.5, v.z + sin * 0.3];
+      cible = [v.x + cos * 100, y + 1.45, v.z + sin * 100];
+      camera.angle = v.angle;
     } else if (camera.mode === "ciel") {
       oeil = [v.x, 110, v.z];
       cible = [v.x, 0, v.z];
@@ -425,6 +431,22 @@ Circuit.Scene3D = (function () {
       const suivi = monde.carte === "grand" || monde.carte === "ciel" || monde.carte === "ville" ? 1 : 0.75; // (la ville : les ponts, étape 42)
       oeil = [v.x - cos * R.distance * recul, R.hauteur * recul + y * suivi, v.z - sin * R.distance * recul];
       cible = [v.x + cos * R.regardDevant, 1 + y * Math.min(1, suivi + 0.1), v.z + sin * R.regardDevant];
+      // Étape 139 : une arme en main → la caméra passe par-dessus l'épaule (à droite), pour bien voir l'arme
+      // (✍️ « on ne la voyait pas » : de juste derrière, le corps la cachait).
+      if (monde.pieton && monde.arme && monde.arme !== "mains") {
+        const e = C.armurerie.epauleCamera;
+        oeil[0] += -sin * e;
+        oeil[2] += cos * e;
+        cible[0] += -sin * e * 0.5;
+        cible[2] += cos * e * 0.5;
+      }
+    }
+    // Étape 139 : à travers la lunette, l'œil s'ouvre beaucoup moins (le « champ de vision » baisse) : ça grossit.
+    const f = monde.pieton && monde.zoom && Circuit.Armurerie.fiche(monde.arme);
+    const champ = f && f.zoom ? C.camera.champDeVision / f.zoom : C.camera.champDeVision;
+    if (cam.fov !== champ) {
+      cam.fov = champ;
+      cam.updateProjectionMatrix();
     }
     cam.position.set(oeil[0], oeil[1], oeil[2]);
     cam.up.set(haut[0], haut[1], haut[2]);
@@ -685,7 +707,7 @@ Circuit.Scene3D = (function () {
         bonhomme.casquette.material = bonhomme.visiere.material = bonhomme.dore;
       }
       // Dans un magasin, on ne le voit plus (il est à l'intérieur !).
-      bonhomme.g.visible = camera.mode !== "capot" && !monde.magasin;
+      bonhomme.g.visible = camera.mode !== "capot" && !monde.magasin && !monde.zoom; // (étape 139 : pas dans la lunette)
       bonhomme.g.rotation.set(0, -p.angle, 0);
       // Les jambes et les bras se balancent quand il marche (comme un pendule).
       const balance = Math.sin(p.pas * 2.4) * Math.min(1, Math.abs(p.vitesse)) * 0.7;

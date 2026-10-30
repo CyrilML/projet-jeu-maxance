@@ -62,7 +62,7 @@
   // Ce que veut le joueur, traduit en intentions (la logique ne connaît pas les touches).
   function lireIntentions() {
     const E = Circuit.Entrees;
-    const chiffres = [1, 2, 3, 4, 5, 6].map((k) => E.consommer("carte" + k)).concat(E.consommer("chiffre7")); // (lus une seule fois : ils servent aux cartes ET aux armes)
+    const chiffres = [1, 2, 3, 4, 5, 6].map((k) => E.consommer("carte" + k)).concat([7, 8, 9, 0].map((k) => E.consommer("chiffre" + k))); // (lus une seule fois : ils servent aux cartes ET aux armes)
     return {
       accelerer: E.estEnfoncee("accelerer"),
       freiner: E.estEnfoncee("freiner"),
@@ -78,7 +78,10 @@
       carte4: chiffres[3], // étape 40
       carte5: chiffres[4], // étape 41
       carte6: chiffres[5], // étape 59
-      chiffre: chiffres.indexOf(true) + 1, // étape 138 : 1 à 7 = choisir une arme (0 = aucun chiffre)
+      chiffre: chiffres.indexOf(true) < 0 ? null : (chiffres.indexOf(true) + 1) % 10, // étape 139 : 1 = mains vides, 2 à 9 et 0 = une famille d'armes (null = aucun chiffre)
+      hautAppui: E.consommer("accelerer"), // étape 139 : ↑ au comptoir de l'armurerie
+      basAppui: E.consommer("freiner"), // étape 139 : ↓
+      zoom: E.consommer("zoom"), // étape 139 : V = la lunette
       armeSuivante: E.consommer("armeSuivante"), // étape 138 : Tab
       sirene: E.consommer("sirene"), // étape 40 : H
       klaxon: E.consommer("klaxon"), // étape 42 : K

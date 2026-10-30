@@ -43,6 +43,10 @@ Circuit.Entrees = (function () {
     missile: ["KeyG"], // un missile (appuyer sur G)
     armeSuivante: ["Tab"], // étape 138 : changer d'arme (à pied, en ville)
     chiffre7: ["Digit7", "Numpad7"], // étape 138 : la 7e arme
+    chiffre8: ["Digit8", "Numpad8"], // étape 139 : les familles d'armes (8 = arcs et armes anciennes)
+    chiffre9: ["Digit9", "Numpad9"], // étape 139 : 9 = corps à corps
+    chiffre0: ["Digit0", "Numpad0"], // étape 139 : 0 = explosifs
+    zoom: ["KeyV"], // étape 139 : regarder dans la lunette d'un fusil de précision
     meteo: ["KeyM"], // étape 47 : passer tout de suite à la météo suivante
   };
 

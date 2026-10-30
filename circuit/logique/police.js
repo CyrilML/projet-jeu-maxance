@@ -226,6 +226,11 @@ Circuit.Police = (function () {
     // Les voitures foncent, et elles se cognent à toi.
     for (const pv of p.voitures) {
       pv.voiture.vitesseMax = P.vitesse + P.vitesseParEtoile * p.etoiles;
+      // Étape 139 : une grenade FLASH éblouit le conducteur : la voiture freine et s'arrête quelques secondes.
+      if (pv.etourdi && monde.temps < pv.etourdi) {
+        pv.voiture.vitesse *= 0.9;
+        continue;
+      }
       conduire(monde, pv, p.derniereVue && !p.vu ? p.derniereVue : qui, dt);
       if (!monde.pieton && Math.abs((monde.voiture.y || 0) - (pv.voiture.y || 0)) < 3 && Circuit.Chocs.resoudre(monde.voiture, pv.voiture, C.chocs).touche) p.pousse = monde.temps;
     }
@@ -246,7 +251,8 @@ Circuit.Police = (function () {
     } else monde.helicoPolice = null;
 
     // Te voit-on ?
-    p.vu = p.voitures.some((pv) => Math.hypot(pv.voiture.x - qui.x, pv.voiture.z - qui.z) < P.vue && vueLibre(pv.voiture, qui))
+    // (Étape 139 : caché dans la fumée d'un fumigène, personne ne te voit.)
+    p.vu = !(Circuit.Armurerie && Circuit.Armurerie.cache(monde, qui)) && p.voitures.some((pv) => Math.hypot(pv.voiture.x - qui.x, pv.voiture.z - qui.z) < P.vue && vueLibre(pv.voiture, qui))
       || (p.helico && Math.hypot(p.helico.x - qui.x, p.helico.z - qui.z) < P.vueHelico);
     if (p.vu) {
       p.cache = 0;
