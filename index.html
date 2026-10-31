@@ -260,6 +260,7 @@
       <a href="#etape136">Étape 136</a>
       <a href="#etape138">Étape 138</a>
       <a href="#etape139">Étape 139</a>
+      <a href="#etape140">Étape 140</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -6756,6 +6757,71 @@ fiche Uzi    : famille "tir", degats 1, portee 50,  cadence 12, auto
       </ol>
     </section>
 
+    <section id="etape140">
+      <h2>🧍 Étape 140 : de beaux personnages, de belles armes, et leurs bruits <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Le personnage de la ville devient un vrai humain (comme les soldats du jeu de tanks), les 55 armes sont fabriquées pièce par pièce, et chacune a son bruit. Toujours jamais une personne visée. <a href="circuit/index.html"><strong>▶ Le jeu de voitures 3D</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/140-beaux-personnages-armes-bruits.md</code>.</p>
+          <ul>
+            <li>✍️ « Fais de beaux personnages et de belles armes, comme tu m'as fait pour le jeu de tank, et ajoute des bruits pour toutes les nouvelles armes. »</li>
+            <li>Claude a tout choisi (vêtements, gestes, bruits) : tout se règle dans <code>circuit/config.js</code>, rubriques <code>personnage</code> et <code>sons.armes</code>.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 36 » en haut de la page du circuit.</li>
+            <li>☐ En ville, E pour descendre : un visage (yeux, nez, lèvres, oreilles, cheveux), des mains à 5 doigts, un sweat rouge à capuche, un jean, des baskets, la casquette jaune.</li>
+            <li>☐ ↑ : il court, les bras balancent, le corps se penche. À l'arrêt, il respire.</li>
+            <li>☐ 3 (AK-47) : il tient le fusil à deux mains et recule à chaque tir. 5 : la lunette du fusil de précision. 6 : les 6 canons du minigun tournent. 7 : le RPG et sa roquette sur l'épaule.</li>
+            <li>☐ 8 (arc) : il tend la corde jusqu'à la joue. 9 (katana) : il frappe. 0 (grenade) : il lance ; (dynamite) : il s'accroupit pour la poser.</li>
+            <li>☐ F avec chaque arme : chacune fait son bruit (le pistolet claque, le fusil à pompe fait « BAOUM… clac-clac », le sniper résonne avec 2 échos, l'arc fait « toïng », la mine « clic »…). B coupe tout.</li>
+            <li>☐ Casquette dorée, lunettes, baskets de course (orange fluo) : si tu les as achetées, elles se voient.</li>
+            <li>☐ Sous le capot (H) : « Le personnage et les bruits » : les os, le geste, la belle arme, le dernier bruit.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🦴 Un personnage en os : le squelette</h3>
+      <p>Le personnage est <b>une seule peau</b> posée sur <b>11 os</b> (comme une marionnette à fils). Chaque point de la peau dit à quel os il est accroché. Au genou ou au coude, un point est accroché à <b>deux</b> os à la fois (par exemple 50 % cuisse, 50 % tibia) : quand la jambe plie, la peau plie en douceur au lieu de se casser. C'est le « skinning » des vrais jeux vidéo.</p>
+      <pre>        cou ── tête (casquette, lunettes)
+         │
+ épaule ─ dos ─ épaule          le jeu ne bouge que les os…
+   │      │       │
+ coude  corps   coude ── main ── 🔫 l'arme
+         │  │
+     hanche hanche              … et la peau suit !
+        │     │
+     genou  genou</pre>
+      <h3>🎯 La cinématique inverse : la main va sur l'arme</h3>
+      <p>Pour tenir un fusil à deux mains, on ne dit pas « plie le coude de 40° » : on dit « mets la main <b>ici</b>, sur le garde-main ». Le jeu connaît la longueur du bras et de l'avant-bras ; avec la distance entre l'épaule et la main, la <b>loi des cosinus</b> (un triangle dont on connaît les 3 côtés) donne l'angle de l'épaule et du coude. C'est la « cinématique inverse ».</p>
+      <h3>🔧 Une arme pièce par pièce</h3>
+      <p>Chaque forme a sa <b>recette</b> (<code>circuit/affichage/armes-detail3d.js</code>) : le canon (un cylindre), la culasse et la crosse (un dessin à plat qu'on « extrude », comme un emporte-pièce dans la pâte), le pontet (un demi-anneau), la lunette (un tube, deux cloches, un verre bleu)… Le point 0 de chaque arme, c'est la main droite. Seule l'arme <b>en main</b> est fabriquée : la ville reste fluide.</p>
+      <h3>🔊 Un bruit de pistolet sans aucun fichier de son</h3>
+      <p>Le jeu n'a pas un seul fichier de son : il <b>fabrique</b> chaque bruit en mélangeant des briques :</p>
+      <pre>PAN ! =  claquement (bruit très court, aigu)      ▁█▁▁▁▁
+       + corps      (bruit grave qui s'éteint)     ▁██▇▅▃▁
+       + boum       (note qui plonge 170 → 50 Hz)  ▁▇▅▃▂▁
+       + écho       (une copie qui traîne 1,6 s)   ▁▁▂▂▂▁▁▁</pre>
+      <p>Le sniper a en plus <b>2 échos</b> qui reviennent plus tard et plus sourds (les collines), le fusil à pompe fait « clac-clac » 0,38 s après, le silex fait « clic » puis la poudre met 0,16 s à prendre feu avant le BOUM.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Dans <code>circuit/config.js</code>, rubrique <code>personnage</code>, change <code>sweat: 0xd33b2f</code> en <code>0x2a7ad3</code> : ton personnage a un sweat bleu !</li>
+            <li>Rubrique <code>sons.armes.recettes</code>, change le <code>boum</code> du pistolet de 170 à 60 : il gronde comme un canon. Et <code>echo: 0.3</code> en <code>1</code> ?</li>
+            <li>Change <code>foulee: 2.6</code> en <code>1</code> : il fait des tout petits pas très rapides.</li>
+            <li>Regarde « sous le capot » pendant que tu tires au minigun : le moteur monte à 100 % puis redescend doucement quand tu lâches F.</li>
+            <li>Dans <code>tenues</code>, change la <code>torsion</code> du fusil : que deviennent les bras ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Combien d'os a le personnage ? <span class="petit">(11 : le corps, le dos, le cou, 2 hanches, 2 genoux, 2 épaules, 2 coudes)</span></li>
+            <li>Pourquoi un point du genou est-il accroché à 2 os ? <span class="petit">(pour que la peau plie en douceur)</span></li>
+            <li>Avec la cinématique inverse, on donne quoi au jeu ? <span class="petit">(l'endroit où la main doit aller ; il calcule les angles)</span></li>
+            <li>Avec quelles briques fabrique-t-on un « PAN » ? <span class="petit">(un claquement de bruit, un bruit grave, une note qui plonge, un écho)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7219,6 +7285,12 @@ fiche Uzi    : famille "tir", degats 1, portee 50,  cadence 12, auto
           <h4>Toutes les armes du monde <span class="etiquette">✅ fait · à valider</span></h4>
           <p>55 armes en 12 catégories (des pistolets au bazooka, de l'arc au C4), chacune avec sa façon de marcher, et des munitions pour chaque famille.</p>
           <p class="apprend"><b>Tu apprends :</b> une recette par famille et une fiche par arme (les données), projectiles et gravité, champ de vision de la lunette. <a href="#etape139">Voir l'étape 139</a>.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">140</div>
+          <h4>De beaux personnages, de belles armes, et leurs bruits <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Un vrai humain à 11 os qui marche, vise, frappe et lance ; 55 armes faites pièce par pièce ; un bruit fabriqué pour chacune.</p>
+          <p class="apprend"><b>Tu apprends :</b> squelette et skinning, cinématique inverse, fabriquer un son avec des briques (bruit, note, écho). <a href="#etape140">Voir l'étape 140</a>.</p>
         </div>
       </div>
     </section>
@@ -8425,6 +8497,15 @@ fiche Uzi    : famille "tir", degats 1, portee 50,  cadence 12, auto
         <textarea class="journal" id="appris-137" data-cle="appris-137" placeholder="Ex. : …"></textarea>
         <label for="idees-137"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-137" data-cle="idees-137" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 140 · de beaux personnages, de belles armes, et leurs bruits <span class="petit">· 31 octobre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>circuit/affichage/corps3d.js</code> (nouveau : le sculpteur, recopié du jeu de tanks), <code>circuit/affichage/personnage3d.js</code> (nouveau : le tailleur et le marionnettiste), <code>circuit/affichage/armes-detail3d.js</code> (nouveau : l'armurier), <code>circuit/affichage/sons-armes.js</code> (nouveau : le bruiteur), <code>circuit/moteur/son.js</code>, <code>circuit/config.js</code> (rubriques personnage et sons.armes), <code>circuit/logique/armurerie.js</code>, <code>circuit/affichage/scene3d.js</code>, <code>circuit/affichage/sous-le-capot.js</code>.</p>
+        <p class="petit">✍️ Iron Wolf Studio a demandé : « Fais de beaux personnages et de belles armes, comme tu m'as fait pour le jeu de tank, et ajoute des bruits pour toutes les nouvelles armes. »</p>
+        <label for="appris-140"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Iron Wolf Studio, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-140" data-cle="appris-140" placeholder="Ex. : …"></textarea>
+        <label for="idees-140"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-140" data-cle="idees-140" placeholder="Ex. : …"></textarea>
       </div>
       <div class="carte" style="margin-top: 14px">
         <h4>Étape 139 · toutes les armes du monde <span class="petit">· 30 octobre 2026</span></h4>

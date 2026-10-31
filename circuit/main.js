@@ -46,6 +46,7 @@
   // La sauvegarde est lue APRÈS le branchement du panneau, pour que le journal voie la lecture.
   Circuit.Sauvegarde.initialiser(() => monde.voiture.distance);
   Circuit.Sons.initialiser(); // étape 35 : le bruit du moteur, de l'herbe, des chocs et du départ
+  Circuit.SonsArmes.initialiser(); // étape 140 : les bruits de toutes les armes
   Circuit.Course.ouvrirCartes(monde); // étape 37 : on commence par choisir la carte, puis le garage
 
   // Les boutons sous l'écran font comme les touches.
@@ -141,6 +142,7 @@
     Circuit.Scene3D.dessiner(monde, options, options.pause ? 0 : ecoule);
     Circuit.TableauDeBord.dessiner(monde, options, Circuit.Sauvegarde.donnees);
     Circuit.Sons.mettreAJour(monde, options);
+    Circuit.SonsArmes.mettreAJour(monde, options, options.pause ? 0 : ecoule); // étape 140 : le minigun, le lance-flammes
     Circuit.SousLeCapot.mettreAJour(maintenant);
 
     images++;

@@ -17,6 +17,7 @@ Circuit.Scene3D = (function () {
   const C = Circuit.CONFIG;
   const M = Circuit.Maths3D;
   const camera = { mode: "poursuite", angle: 0, pret: false };
+  let vuePhoto = null; // étape 140 : { distance, hauteur, angle, cibleY } ou rien
   const MODES = ["poursuite", "ciel", "capot"];
   const compteur = { triangles: 0, lignes: 0, objets: 0 };
   const RECUL_VOL = { avionDeLigne: 3.6, petitAvion: 1.6, avionChasse: 2, helico: 1.8 }; // étape 44 : la caméra recule pour les avions
@@ -617,6 +618,13 @@ Circuit.Scene3D = (function () {
     lod.proches = lod.loin = 0; // (étape 72 : on recompte à chaque image)
     if (monde.carte !== carteDessinee) preparerCarte(monde.carte);
     placerCamera(monde, dt);
+    // Étape 140 : la VUE PHOTO (pour les photos du carnet, et pour regarder le personnage de près) : la caméra tourne
+    // autour du personnage, à « distance » m, à « hauteur » m, en regardant à « cibleY » m du sol.
+    if (vuePhoto && monde.pieton) {
+      const p = monde.pieton, a = p.angle + vuePhoto.angle;
+      cam.position.set(p.x + Math.cos(a) * vuePhoto.distance, (p.y || 0) + vuePhoto.hauteur, p.z + Math.sin(a) * vuePhoto.distance);
+      cam.lookAt(p.x, (p.y || 0) + vuePhoto.cibleY, p.z);
+    }
     const v = monde.voiture;
 
     // Les voitures : on montre seulement celle du joueur, et la voiture bleue s'il y en a une.
@@ -693,33 +701,19 @@ Circuit.Scene3D = (function () {
     dessinerProjecteur(police && police.helico, monde.pieton || v);
     for (const [modele, reserve] of Object.entries(flotte)) for (let k = compte[modele] || 0; k < reserve.length; k++) reserve[k].g.visible = false;
     if (monde.pieton) {
+      // Étape 140 : le VRAI personnage (affichage/personnage3d.js) : un corps humain à 11 os, qui marche, court, vise,
+      // frappe et lance ; ce qu'il a acheté au magasin (casquette dorée, lunettes, baskets) se voit toujours.
       if (!bonhomme) {
-        bonhomme = Circuit.Modeles.personnage();
+        bonhomme = Circuit.Personnage3D.fabriquer();
         scene.add(bonhomme.g);
       }
-      const p = monde.pieton;
-      bonhomme.g.position.set(p.x, (p.y || 0) + 0.12, p.z);
-      // Étape 42 : ce qu'il a acheté au magasin (la casquette dorée, les lunettes).
-      const objets = Circuit.Sauvegarde.donnees.objets || {};
-      bonhomme.lunettes.visible = !!objets.lunettes;
-      if (objets.casquette && !bonhomme.dore) {
-        bonhomme.dore = new THREE.MeshStandardMaterial({ color: 0xffc83a, metalness: 1, roughness: 0.25 });
-        bonhomme.casquette.material = bonhomme.visiere.material = bonhomme.dore;
-      }
-      // Dans un magasin, on ne le voit plus (il est à l'intérieur !).
-      bonhomme.g.visible = camera.mode !== "capot" && !monde.magasin && !monde.zoom; // (étape 139 : pas dans la lunette)
-      bonhomme.g.rotation.set(0, -p.angle, 0);
-      // Les jambes et les bras se balancent quand il marche (comme un pendule).
-      const balance = Math.sin(p.pas * 2.4) * Math.min(1, Math.abs(p.vitesse)) * 0.7;
-      bonhomme.jambes[0].rotation.z = balance;
-      bonhomme.jambes[1].rotation.z = -balance;
-      bonhomme.bras[0].rotation.z = -balance;
-      bonhomme.bras[1].rotation.z = balance;
+      // Dans un magasin, on ne le voit plus (il est à l'intérieur !) ; ni dans la lunette (étape 139).
+      Circuit.Personnage3D.dessiner(bonhomme, monde, options.pause ? 0 : dt, camera.mode !== "capot" && !monde.magasin && !monde.zoom);
     } else if (bonhomme) bonhomme.g.visible = false;
 
     dessinerBoulots(monde); // étape 43
     dessinerArmes(monde); // étape 44
-    Circuit.Armurerie3D.dessiner(monde, scene, monde.pieton ? bonhomme : null); // étape 138 : l'armurerie, le stand de tir, l'arme en main
+    Circuit.Armurerie3D.dessiner(monde, scene); // étape 138 : l'armurerie, le stand de tir, l'arme en main
 
     // Les pièces qui tournent sur elles-mêmes et flottent, et les cartons.
     // (Étape 56 : toutes les pièces sont des « instances » d'une seule forme : un seul dessin pour les 100 pièces.)
@@ -799,6 +793,9 @@ Circuit.Scene3D = (function () {
     lod, // étape 72 : combien de voitures sont dessinées en détail, et combien simplifiées
     get objetJoueur() {
       return objetJoueur;
+    },
+    photo(v) { // étape 140 : la vue photo (rien = la caméra normale)
+      vuePhoto = v || null;
     },
   };
 })();

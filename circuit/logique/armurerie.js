@@ -211,6 +211,7 @@ Circuit.Armurerie = (function () {
     if (F.mun && (s[F.mun] || 0) <= 0) {
       message(monde, "📦 Plus de " + nomMun(F.mun) + " ! Achète-en à l'armurerie (rayon « Munitions »)", 2);
       monde.rafale = null;
+      radio.emettre("plus-de-munitions", { arme: F.nom, mun: nomMun(F.mun) }); // étape 140 : « tic » (la détente à vide)
       return;
     }
     const dir = { x: Math.cos(p.angle), z: Math.sin(p.angle) };
@@ -227,7 +228,7 @@ Circuit.Armurerie = (function () {
       const monte = F.montee || 0;
       monde.projectiles.push({ id: F.id, sorte: F.projectile, x: main.x, y: main.y + 0.1, z: main.z, vx: dir.x * v, vy: v * monte, vz: dir.z * v, age: 0, parcouru: 0, depart: { x: main.x, z: main.z }, deja: [] });
       monde.armurerieBilan.tirs++;
-      radio.emettre("projectile-tire", { arme: F.nom, sorte: F.projectile, vitesse: v, explosion: F.explosion, reste: F.mun ? s[F.mun] : null, mun: F.mun ? nomMun(F.mun) : "" });
+      radio.emettre("projectile-tire", { id: F.id, arme: F.nom, sorte: F.projectile, vitesse: v, explosion: F.explosion, reste: F.mun ? s[F.mun] : null, mun: F.mun ? nomMun(F.mun) : "" });
     } else if (F.famille === "flamme") {
       s[F.mun]--;
       monde.coup = monde.temps;
@@ -237,12 +238,12 @@ Circuit.Armurerie = (function () {
       // Un coup touche tout ce qui est assez près ET devant (dans un « cône », comme un éventail).
       const touches = dansLeCone(monde, p, dir, F.portee, F.cone);
       for (const o of touches) blesser(monde, o, F.degats, F.id);
-      radio.emettre("coup-lame", { arme: F.nom, touches: touches.map((o) => o.nom).join(", ") || "rien (dans le vide)" });
+      radio.emettre("coup-lame", { id: F.id, nombre: touches.length, arme: F.nom, touches: touches.map((o) => o.nom).join(", ") || "rien (dans le vide)" });
     } else if (F.famille === "lancer") {
       s[F.mun]--;
       monde.coup = monde.temps;
       monde.grenades.push({ id: F.id, effet: F.effet, rayon: F.rayon, x: main.x, y: main.y + 0.3, z: main.z, vx: dir.x * F.vitesse, vy: F.montee, vz: dir.z * F.vitesse, meche: F.meche });
-      radio.emettre("grenade-lancee", { nom: F.nom, effet: F.effet, reste: s[F.mun], meche: F.meche });
+      radio.emettre("grenade-lancee", { id: F.id, nom: F.nom, effet: F.effet, reste: s[F.mun], meche: F.meche });
     } else if (F.famille === "poser") {
       const sol = Circuit.Archipel.lieu(p.x, p.z).h;
       const ou = { x: p.x + dir.x * 1.2, y: sol, z: p.z + dir.z * 1.2, id: F.id };
@@ -281,7 +282,7 @@ Circuit.Armurerie = (function () {
       }
       if (!premier || touche.quoi) premier = premier && premier.quoi ? premier : touche;
     }
-    radio.emettre("tir-arme", { arme: F.nom, touche: premier.nom, distance: Math.round(premier.distance), balles: s[F.mun], mun: nomMun(F.mun), plombs: n, touches: nbTouches });
+    radio.emettre("tir-arme", { id: F.id, arme: F.nom, touche: premier.nom, distance: Math.round(premier.distance), balles: s[F.mun], mun: nomMun(F.mun), plombs: n, touches: nbTouches });
   }
 
   // Ce qui est devant soi, assez près, dans l'éventail (cône) de l'arme.

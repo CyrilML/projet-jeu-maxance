@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 35,
+  version: 36,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -449,7 +449,10 @@ Circuit.CONFIG = {
     flecheReste: 6, // s : une flèche plantée reste visible 6 secondes
     epauleCamera: 1.1, // m : avec une arme en main, la caméra se décale sur le côté (par-dessus l'épaule)
     biaisEnMain: 0.5, // rad : l'arme en main est un peu tournée vers l'extérieur (on voit son profil, pas son bout)
-    tailleEnMain: 2.4, // ✍️ l'arme en main est dessinée 2,4 fois plus grande (avant 1,5 : on ne la voyait pas)
+    // ✍️ l'arme en main est dessinée plus grande que la réalité, pour bien la voir de derrière (étape 139 : 2,4 × de
+    // petites formes ; étape 140 : les belles armes sont fabriquées à leur VRAIE taille, puis agrandies 1,3 fois, et le
+    // personnage aussi est grand : au total 1,5 fois la vraie taille. Plus grande, les mains n'arriveraient plus à la tenir.)
+    tailleEnMain: 1.3,
     gravite: 12, // m/s² : ce qui fait retomber la grenade (et la flèche, l'obus : étape 139)
     pvVoiture: 6, // ✍️ une voiture supporte 6 points de dégâts, puis elle explose
     etoilesAbimee: 1, // abîmer une voiture : 1 étoile de police (la faire exploser : + 2, comme avec l'avion de chasse)
@@ -531,6 +534,37 @@ Circuit.CONFIG = {
     virage: 3, // rad/s : il tourne vite sur lui-même
     distanceMonter: 4, // m : il peut monter dans une voiture à moins de 4 m
     vitesseMaxPourDescendre: 3, // m/s : on ne descend pas d'une voiture qui roule vite !
+  },
+
+  // Étape 140 : ✍️ « Fais de beaux personnages et de belles armes, comme tu m'as fait pour le jeu de tank. »
+  // Le personnage a un vrai corps humain (affichage/personnage3d.js) : 11 os, une peau sculptée, des vêtements.
+  personnage: {
+    taille: 1.13, // le corps est sculpté pour 1,80 m ; × 1,13 = 2,03 m (comme l'ancien personnage, à l'échelle des voitures du jeu)
+    couleurs: {
+      peau: 0xe0b48f, sweat: 0xd33b2f, jean: 0x2b4a7a, cheveux: 0x3a2414, iris: 0x4a6a7a, blanc: 0xf4f0ea,
+      baskets: 0xf4f4f4, semelle: 0xdcdcdc, bande: 0xd33b2f, lacets: 0xffffff, cordons: 0xf0f0f0, logo: 0xffffff,
+      casquette: 0xffd21a, // la casquette jaune (dorée et brillante si on l'a achetée au magasin)
+      basketsCourse: 0xff7a1a, // ✍️ les baskets de course achetées au magasin : orange fluo
+    },
+    animation: {
+      foulee: 2.6, // m parcourus pendant un pas gauche + un pas droit
+      vitesseCourse: 4, // m/s : à partir de là, il court à fond (bras pliés, corps penché)
+      jambes: 0.7, genoux: 1.1, bras: 0.7, penche: 0.16, // rad : de combien les jambes, les genoux, les bras balancent
+      dureeCoup: 0.45, dureeLancer: 0.5, dureePoser: 0.6, dureeRecul: 0.12, // s : la durée de chaque geste
+      // Comment on tient chaque sorte d'arme. place = où va la main droite (m, devant les pieds : x devant, y en haut,
+      // z à droite) ; torsion = de combien les épaules tournent (rad) pour que l'autre main atteigne l'arme ;
+      // recul (m) et releve (rad) = de combien l'arme recule et se relève à chaque tir.
+      tenues: {
+        pistolet: { place: [0.5, 1.36, 0.07], torsion: -0.15, recul: 0.04, releve: 0.4 },
+        fusil: { place: [0.22, 1.27, 0.15], torsion: -0.62, recul: 0.06, releve: 0.12 },
+        epaule: { place: [0.08, 1.33, 0.2], torsion: -0.5, recul: 0.1, releve: 0.08 },
+        hanche: { place: [0.3, 1.02, 0.2], torsion: -0.35, recul: 0.03, releve: 0.03 },
+        arc: { place: [0.64, 1.4, -0.1], torsion: -0.95, recul: 0, releve: 0 },
+        melee: { leve: 0.55, coude: 0.9, torsion: 0 },
+        lancer: { leve: 0.35, coude: 1.5, torsion: 0 },
+        poser: { leve: 0.3, coude: 1.4, torsion: 0 },
+      },
+    },
   },
 
   // Étape 41 : les MÉGA-RAMPES. ✍️ Une piste en bois, toute seule dans le ciel, au-dessus des nuages,
@@ -651,6 +685,50 @@ Circuit.CONFIG = {
     adversaire: { volume: 0.45, distanceMax: 70 },
     herbe: { volume: 0.35, frequenceFiltre: 900 }, // le « chhhh » dans l'herbe
     bips: { frequenceFeu: 440, frequenceGo: 880, volume: 0.2 }, // 440 Hz = la note La
+    // Étape 140 : ✍️ « Ajoute des bruits pour toutes les nouvelles armes. » Les recettes du bruiteur (affichage/sons-armes.js).
+    // Un coup de feu = claque (s : sa durée) + aigu (Hz : le claquement sec) + grave (Hz : le corps du bruit) + boum
+    // (Hz : la note grave qui plonge) + echo (0 à 1 : combien il résonne dans la rue) + volume (0 à 1).
+    armes: {
+      volume: 0.75, // le volume de toutes les armes (multiplié par le volume général ; B coupe tout)
+      salle: 1.6, // s : la durée de l'écho de la ville
+      maxVoix: 28, // pas plus de 28 bruits à la fois (le minigun tire 25 balles par seconde !)
+      recettes: {
+        pistolet: { claque: 0.16, aigu: 2400, grave: 2600, boum: 170, echo: 0.3, volume: 0.7 },
+        starter: { claque: 0.08, aigu: 2600, echo: 0.15, volume: 0.45 },
+        revolver: { claque: 0.32, aigu: 1800, grave: 1800, boum: 120, echo: 0.5, volume: 0.95 },
+        mitraillette: { claque: 0.08, aigu: 2800, grave: 3000, boum: 200, echo: 0.15, volume: 0.5 },
+        fusil: { claque: 0.14, aigu: 2200, grave: 3500, boum: 140, echo: 0.3, volume: 0.75 },
+        mitrailleuse: { claque: 0.13, aigu: 1800, grave: 2600, boum: 110, echo: 0.3, volume: 0.75 },
+        minigun: { claque: 0.04, aigu: 1500, echo: 0.1, volume: 0.35 },
+        moteurMinigun: { ralenti: 40, max: 210, volume: 0.22 }, // Hz : le moteur qui fait tourner les 6 canons
+        pompe: { claque: 0.38, aigu: 1500, grave: 2200, boum: 90, echo: 0.45, volume: 1, pompe: 0.38 }, // pompe : quand on recharge (s)
+        double: { claque: 0.42, aigu: 1400, grave: 2000, boum: 85, echo: 0.5, volume: 1 },
+        precision: { claque: 0.5, aigu: 3200, grave: 1500, boum: 95, echo: 0.6, volume: 1, echos: [[0.45, 0.25], [0.9, 0.12]], culasse: 0.75 },
+        silex: { claque: 0.45, aigu: 1500, grave: 1600, boum: 90, echo: 0.55, volume: 0.9, retard: 0.16 }, // retard : la poudre met 0,16 s à prendre feu
+        poudre: { claque: 0.55, aigu: 1300, grave: 1400, boum: 75, echo: 0.6, volume: 1, retard: 0.2 },
+        roquette: { duree: 0.9, echo: 0.35, volume: 0.7 },
+        thump: { boum: 150, echo: 0.2, volume: 0.8 },
+        arc: { corde: 0.28, note: 210, vol: 0.6, volume: 0.35 },
+        arbalete: { note: 320, vol: 0.5, volume: 0.45 },
+        lame: { duree: 0.24, f: 700, f2: 3000, volume: 0.45 },
+        lourd: { duree: 0.34, f: 300, f2: 1100, volume: 0.55 },
+        rapide: { f: 900, f2: 2600, volume: 0.35 },
+        estoc: { duree: 0.18, f: 900, f2: 1900, volume: 0.4 },
+        impact: { boum: 130, volume: 0.6 },
+        goupille: { ting: 1900 },
+        explosion: { duree: 1.3, grave: 1300, echo: 0.7, volume: 1 },
+        fumigene: { duree: 3, volume: 0.22 },
+        flash: { sifflement: 2.5, note: 3600, volume: 1 },
+        meche: { duree: 1.6, volume: 0.14 },
+        bipC4: { note: 1900, volume: 0.12 },
+        minePosee: { note: 620, volume: 0.1 },
+        boomerang: { tours: 6, volume: 0.35 },
+        planter: { volume: 0.4 },
+        caisse: { volume: 0.6 },
+        tole: { duree: 0.5, volume: 0.35 },
+        flamme: { filtre: 450, volume: 0.45 }, // le grondement du lance-flammes (un bruit grave qui dure)
+      },
+    },
   },
 
   course: {

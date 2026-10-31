@@ -3,7 +3,7 @@
 // Étape 138. Ce fichier fabrique, avec des boîtes et des cylindres (des formes « low-poly ») :
 //   - la DEVANTURE de l'armurerie, avec sa grande enseigne « ARMURERIE » (on la voit de loin) ;
 //   - le STAND DE TIR du parc d'en face : des caisses en bois et des cibles rouges et blanches ;
-//   - l'ARME DANS LA MAIN du personnage ;
+//   - (jusqu'à l'étape 139) l'arme dans la main du personnage : depuis l'étape 140, c'est affichage/armes-detail3d.js ;
 //   - les grenades qui volent, les dynamites posées, et le trait jaune de chaque balle.
 // Étape 139 : plus de 50 armes ! Le sculpteur a UN PATRON par forme (pistolet, fusil, arc, hache…) ; chaque arme
 // prend le patron de sa forme avec SA couleur et SA taille (config.js). L'arme en main est 2,4 fois plus grande
@@ -282,7 +282,7 @@ Circuit.Armurerie3D = (function () {
     });
   }
 
-  function dessiner(monde, scene, bonhomme) {
+  function dessiner(monde, scene) {
     const ici = monde.carte === "ville" && monde.phase === "ville" && monde.stand;
     if (!ici) {
       if (r3) r3.g.visible = false;
@@ -344,36 +344,8 @@ Circuit.Armurerie3D = (function () {
     for (const t of monde.traits.slice(-40)) pos.array.set([t.de.x, t.de.y, t.de.z, t.a.x, t.a.y, t.a.z], 6 * n++);
     r3.traits.geometry.setDrawRange(0, n * 2);
     pos.needsUpdate = true;
-    // L'arme dans la main droite (le bras n° 2 du personnage).
-    if (!bonhomme) return;
-    if (r3.main !== bonhomme) {
-      const tenue = new THREE.Group();
-      tenue.position.y = -0.72; // au bout du bras
-      tenue.rotation.z = -Math.PI / 2; // l'arme reste droite quand le bras est levé devant
-      tenue.scale.setScalar(A.tailleEnMain); // ✍️ bien plus grande que la réalité, pour bien la voir de derrière
-      bonhomme.bras[1].add(tenue);
-      r3.tenue = tenue;
-      r3.main = bonhomme;
-    }
-    const arme = monde.arme || "mains";
-    const f = Circuit.Armurerie.fiche(arme);
-    if (f && !r3.armes[arme]) {
-      // fabriquée la première fois qu'on la prend en main ; un peu tournée vers l'extérieur (A.biaisEnMain), pour
-      // qu'on la voie de côté depuis la caméra (de pile derrière, on ne verrait que son bout).
-      const pivot = new THREE.Group();
-      pivot.rotation.y = A.biaisEnMain;
-      pivot.add(fabriquer(f));
-      r3.armes[arme] = pivot;
-      r3.tenue.add(pivot);
-    }
-    for (const [nom, a] of Object.entries(r3.armes)) a.visible = nom === arme;
-    if (!f) return;
-    const depuis = monde.temps - monde.coup;
-    const lame = f.famille === "melee";
-    // Le bras est levé devant (1,4 rad). Un coup d'épée le fait descendre d'un coup ; un tir le fait reculer un peu.
-    let leve = lame ? 2.1 : 1.45;
-    if (depuis < 0.25) leve = lame ? 2.4 - depuis * 7 : 1.45 + Math.sin((depuis / 0.25) * Math.PI) * (f.famille === "tir" ? 0.35 : 0.15);
-    bonhomme.bras[1].rotation.z = leve;
+    // (Étape 140 : l'arme EN MAIN est maintenant fabriquée par l'armurier, affichage/armes-detail3d.js, et tenue par le
+    // personnage, affichage/personnage3d.js. Ce fichier garde ses patrons simples pour ce qui vole : le boomerang.)
   }
 
   return { dessiner, fabriquer };

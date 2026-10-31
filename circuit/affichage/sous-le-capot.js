@@ -98,6 +98,8 @@ Circuit.SousLeCapot = (function () {
     "coup-lame": (d) => "🗡️ Coup de " + d.arme + " : " + d.touches,
     "grenade-lancee": (d) => (d.effet === "fumee" ? "🌫️ Fumigène" : d.effet === "flash" ? "⚡ Grenade flash" : "💣 Grenade") + " lancée : elle agit dans " + d.meche + " s (reste " + d.reste + ")",
     "dynamite-posee": (d) => "🧨 " + (d.nom || "Dynamite") + " posé(e) (" + d.posees + " par terre, " + d.reste + " dans le sac) : G pour tout faire sauter",
+    // Étape 140 : la détente à vide (les autres bruits suivent les événements déjà écrits ici).
+    "plus-de-munitions": (d) => "🔇 Tic ! " + d.arme + " : plus de " + d.mun + " (la détente claque à vide)",
     explosif: (d) => "💥 BOUM ! " + (d.nom || d.sorte) + " : rayon " + d.rayon + " m, " + d.touches + " chose(s) touchée(s)" + (d.noms ? " (" + d.noms + ")" : ""),
     // Étape 139 : toutes les armes du monde.
     "rayon-armurerie": (d) => "🏷️ Rayon « " + d.nom + " » : " + d.nombre + " article(s)",
@@ -297,6 +299,20 @@ Circuit.SousLeCapot = (function () {
         ["feu · fumée", (monde.flammes || []).length + " flamme(s) · " + (monde.garees || []).concat((monde.circulation || []).map((c) => c.voiture)).filter((x) => x.enFeu !== undefined).length + " voiture(s) en feu · " + (monde.fumees || []).length + " nuage(s)" + (monde.pieton && Circuit.Armurerie.cache(monde, monde.pieton) ? " · 😶‍🌫️ tu es caché" : "")],
         ["stand de tir", monde.stand ? monde.stand.filter((c) => !c.cassee).length + " / " + monde.stand.length + " debout" : "—"],
         ["tirs · touchés · voitures", monde.armurerieBilan ? monde.armurerieBilan.tirs + " · " + monde.armurerieBilan.touches + " · " + monde.armurerieBilan.voitures : "—"],
+        ["Le personnage et les bruits (étape 140)"],
+        ["corps", (function () {
+          const B = Circuit.Personnage3D.bilan;
+          return B.triangles ? B.os + " os · " + Math.round(B.triangles).toLocaleString("fr-FR") + " triangles · " + B.sommets.toLocaleString("fr-FR") + " points, dont " + B.melanges.toLocaleString("fr-FR") + " accrochés à 2 os (ils plient en douceur)" : "pas encore fabriqué (descends de la voiture : E)";
+        })()],
+        ["geste · tenue", Circuit.Personnage3D.bilan.pose + " · " + Circuit.Personnage3D.bilan.tenue],
+        ["belles armes fabriquées", (function () {
+          const B = Circuit.ArmesDetail3D.bilan;
+          return B.fabriquees + " (seulement celles prises en main) · la dernière : " + B.derniere + " en " + B.piecesDerniere + " pièces";
+        })()],
+        ["dernier bruit", (function () {
+          const E = Circuit.SonsArmes.enDirect;
+          return E.dernier + " · " + E.total + " bruit(s) joué(s)" + (E.sautes ? " (" + E.sautes + " sautés : trop à la fois)" : "") + (E.minigun ? " · moteur du minigun à " + E.minigun + " %" : "") + (E.flamme ? " · 🔥 grondement du lance-flammes" : "");
+        })()],
         ["Le petit boulot (étape 43)"],
         ["boulot", monde.boulot ? monde.boulot.nom + " · étape « " + monde.boulot.etape + " »" : monde.magasin && monde.magasin.vendeur ? "vendeur dans " + monde.magasin.nom : monde.boulotProche ? "devant " + monde.boulotProche + " (J)" : "aucun"],
         ["fait / à faire", monde.boulot ? monde.boulot.faits + " / " + monde.boulot.total : "—"],

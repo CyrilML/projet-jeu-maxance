@@ -191,6 +191,12 @@ Circuit.Son = (function () {
     return !coupe;
   }
 
+  // Étape 140 : L'ATELIER, pour les bruits des armes (affichage/sons-armes.js) : l'usine à sons, la sortie (qui respecte
+  // le volume et la touche B) et le bruit blanc. Rien si le synthétiseur est éteint ou endormi.
+  function atelier() {
+    return ctx && !endormi && ctx.state !== "closed" ? { ctx, sortie, bruit: bruitBlanc } : null;
+  }
+
   // Pour le panneau « sous le capot ».
   function etat() {
     if (!ctx) return "éteint (appuie sur une touche)";
@@ -199,5 +205,5 @@ Circuit.Son = (function () {
     return "🔊 allumé";
   }
 
-  return { initialiser, creerMoteur, reglerMoteur, creerBruit, reglerBruit, bip, boum, basculer, etat };
+  return { initialiser, creerMoteur, reglerMoteur, creerBruit, reglerBruit, bip, boum, basculer, etat, atelier };
 })();
