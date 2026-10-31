@@ -726,6 +726,7 @@ Circuit.CONFIG = {
         planter: { volume: 0.4 },
         caisse: { volume: 0.6 },
         tole: { duree: 0.5, volume: 0.35 },
+        feu: { volume: 0.5 }, // une bouffée de feu (toutes les 0,6 s)
         flamme: { filtre: 450, volume: 0.45 }, // le grondement du lance-flammes (un bruit grave qui dure)
       },
     },

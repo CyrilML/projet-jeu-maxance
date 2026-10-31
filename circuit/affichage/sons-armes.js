@@ -171,6 +171,7 @@ Circuit.SonsArmes = (function () {
     recharger: (a) => (clic(a, 0, 1900, 0.4), souffle(a, { t: 0.06, d: 0.12, f: 1200, type: "bandpass", v: 0.12 }), clic(a, 0.3, 2400, 0.5)), // « clic… clac »
     armer: (a) => (souffle(a, { d: 0.1, f: 900, type: "bandpass", v: 0.12 }), clic(a, 0.08, 2000, 0.35)), // on prend une arme à feu
     tissu: (a) => souffle(a, { d: 0.16, f: 600, type: "bandpass", v: 0.15, a: 0.05 }), // on prend un objet
+    feu: (a, R) => souffle(a, { d: 0.6, f: 250, f2: 900, type: "lowpass", v: R.volume, a: 0.1 }), // « FRRROOO » (une bouffée de feu)
     allumage: (a) => (souffle(a, { d: 0.35, f: 300, f2: 1500, type: "lowpass", v: 0.6, a: 0.05 }), note(a, { d: 0.3, f: 60, f2: 40, v: 0.4 })), // le lance-flammes s'allume : « FFOUMM »
   };
 
@@ -215,6 +216,7 @@ Circuit.SonsArmes = (function () {
     radio.ecouter("grenade-lancee", () => jouer("goupille"));
     radio.ecouter("explosif", () => jouer("explosion"));
     radio.ecouter("fumigene", () => jouer("fumigene"));
+    radio.ecouter("lance-flammes", () => jouer("feu"));
     radio.ecouter("flash", () => jouer("flash"));
     radio.ecouter("dynamite-posee", (d) => jouer(d.nom === "C4" ? "bipC4" : "meche"));
     radio.ecouter("mine-posee", () => jouer("minePosee"));
