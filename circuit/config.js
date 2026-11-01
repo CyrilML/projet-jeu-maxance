@@ -14,7 +14,7 @@ window.Circuit = window.Circuit || {};
 
 Circuit.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans index.html.
-  version: 36,
+  version: 37,
 
   ecran: { largeur: 960, hauteur: 540 },
 
@@ -451,8 +451,9 @@ Circuit.CONFIG = {
     biaisEnMain: 0.5, // rad : l'arme en main est un peu tournée vers l'extérieur (on voit son profil, pas son bout)
     // ✍️ l'arme en main est dessinée plus grande que la réalité, pour bien la voir de derrière (étape 139 : 2,4 × de
     // petites formes ; étape 140 : les belles armes sont fabriquées à leur VRAIE taille, puis agrandies 1,3 fois, et le
-    // personnage aussi est grand : au total 1,5 fois la vraie taille. Plus grande, les mains n'arriveraient plus à la tenir.)
-    tailleEnMain: 1.3,
+    // personnage aussi est grand : au total 1,5 fois la vraie taille.) ✍️ (étape 140, suite) « Fais-les plus grosses dans la
+    // main » : 2 fois (au total 2,3 fois la vraie taille).
+    tailleEnMain: 2,
     gravite: 12, // m/s² : ce qui fait retomber la grenade (et la flèche, l'obus : étape 139)
     pvVoiture: 6, // ✍️ une voiture supporte 6 points de dégâts, puis elle explose
     etoilesAbimee: 1, // abîmer une voiture : 1 étoile de police (la faire exploser : + 2, comme avec l'avion de chasse)
