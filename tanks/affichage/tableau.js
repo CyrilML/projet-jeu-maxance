@@ -755,8 +755,8 @@ Tanks.Tableau = (function () {
     texte("contre", L / 2, 36, 13, "#ccc", "center");
     texte(rouges + " / " + E.ennemis + " 🔴", L / 2 + 34, 37, 20, E.rouges.marque);
     const sb = Tanks.Monde.soldatsVivants(monde, "bleus"), sr = Tanks.Monde.soldatsVivants(monde, "rouges");
-    const nbS = Tanks.Percee && Tanks.Percee.actif ? C.percee.soldats : C.soldats.parEquipe; // (demande 142 : plus de soldats en Percée)
-    texte("🪖 " + sb + " / " + nbS + "   soldats   " + sr + " / " + nbS + " 🪖", L / 2, 66, 12, "rgba(232,228,214,.85)", "center");
+    const PS = Tanks.Percee && Tanks.Percee.actif ? Tanks.Percee.etat : null, nbS = (eq) => (PS ? C.percee.soldats[PS.attaque === eq ? "attaque" : "defense"] : C.soldats.parEquipe); // (demande 142 : en Percée, chaque camp a son nombre)
+    texte("🪖 " + sb + " / " + nbS("bleus") + "   soldats   " + sr + " / " + nbS("rouges") + " 🪖", L / 2, 66, 12, "rgba(232,228,214,.85)", "center");
     if (Tanks.GuerreCivile && Tanks.GuerreCivile.actif) drapeauxDeQuartier(monde); // (demande 115, Guerre civile)
     if (Tanks.Percee && Tanks.Percee.actif) pointsPercee(monde, t); // ✍️ (demande 142, Percée)
     if (Tanks.Aliens && Tanks.Aliens.actif) { // (demande 115, Aliens) les 3 pylônes et le cœur du vaisseau-mère

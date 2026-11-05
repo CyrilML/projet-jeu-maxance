@@ -262,6 +262,7 @@
       <a href="#etape139">Étape 139</a>
       <a href="#etape140">Étape 140</a>
       <a href="#etape141">Étape 141</a>
+      <a href="#etape142">Étape 142</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -6864,6 +6865,59 @@ avec stabilisateur :  ●──●─●─●●●●  (rejoint sa place en do
       </ol>
     </section>
 
+    <section id="etape142">
+      <h2>🚩 Étape 142 : le mode PERCÉE, attaque et défense <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Un nouveau mode dans la bataille de tanks : un camp défend 3 points chez lui, l'autre attaque avec des renforts comptés. La ligne de front avance point après point. <a href="tanks/index.html"><strong>▶ La bataille de tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/142-mode-percee.md</code>.</p>
+          <ul>
+            <li>✍️ « J'aimerais un nouveau mode de jeu attaque et défense, donc PERCÉE. Un camp doit rester à la base sur trois points et les défendre sans que l'ennemi les ait. L'attaque doit capturer ces points sans qu'elle perde tous ses renforts. À chaque point capturé, tu gagnes des renforts. »</li>
+            <li>✍️ Tes choix : <b>120</b> renforts, <b>+40</b> par point ; <b>A puis B puis C</b> (un seul point ouvert à la fois) ; la défense peut <b>reprendre</b> le dernier point pris (pas de 2e bonus) ; <b>15 minutes</b> au plus, sinon la défense gagne.</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 91 » en haut de la page des tanks.</li>
+            <li>☐ Accueil → <b>🚩 PERCÉE</b> → choisis <b>⚔️ ATTAQUE</b> ou <b>🛡️ DÉFENSE</b>, puis « Au combat ! ».</li>
+            <li>☐ En haut : 🎟️ les renforts de l'attaque, les ronds A B C (🔒 verrouillé, la barre qui se remplit, 🏁 pris) et ⏱️ le chrono 15:00.</li>
+            <li>☐ Petite carte : les 3 points (jaune = ouvert).</li>
+            <li>☐ À l'attaque, entre dans le cercle de A (25 m) : la barre monte. A pris → « Point A capturé ! +40 renforts » et B s'ouvre.</li>
+            <li>☐ La radio : « On prend le point B ! » ou « Ils capturent A, défendez ! ».</li>
+            <li>☐ Hors de combat : « Tu reviens avec les renforts dans 6 s ».</li>
+            <li>☐ Sous le capot : les lignes 🚩 de la Percée ; le journal écrit chaque capture.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🧑‍⚖️ L'arbitre et son carnet</h3>
+      <p>Un nouveau fichier, <code>tanks/logique/percee.js</code>, est un <b>arbitre</b> : 4 fois par seconde, il compte les soldats de chaque camp dans le cercle du point ouvert (un tank compte pour 2). Plus d'attaquants ? La barre monte. Plus de défenseurs ? Elle redescend. Autant ? « Disputé » : elle ne bouge plus.</p>
+      <h3>🔁 Une machine à états qui fait avancer le front</h3>
+      <p>Chaque point a un <b>état</b>, et il ne peut passer que par certaines flèches :</p>
+      <pre>🔒 verrouillé ──(le point d'avant tombe)──▶ 🟡 ouvert ──(barre à 100 %)──▶ 🏁 capturé
+                                              ▲                                │
+                                              └──(la défense le reprend : contre-attaque)┘
+départ :  A 🟡   B 🔒   C 🔒
+A pris :  A 🏁   B 🟡   C 🔒     (+40 renforts la 1re fois)
+A repris: A 🟡   B 🔒   C 🔒     (le front recule)</pre>
+      <p>Les <b>renforts</b> sont un simple compteur : −1 à chaque attaquant tombé, +40 à la 1re capture de chaque point. À 0, la défense gagne. C'est aussi l'arbitre qui fait arriver les nouveaux soldats, et qui te fait revenir au combat au bout de 6 s.</p>
+      <p>✍️ Les nombres sont tes choix, et ils restent modifiables : tout est dans <code>tanks/config.js</code>, rubrique <code>percee</code>. La Percée marche dans les éditions Moderne, 1944 et Guerre froide (la même grande carte) ; les autres éditions ont déjà leur propre règle.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>percee</code> et mets <code>capture: 5</code> : les points tombent en 5 s. Remets 20.</li>
+            <li>Change <code>points</code> : déplace le point C plus près du front (profondeur 400 au lieu de 520).</li>
+            <li>Mets <code>limite: 0</code> : plus de chrono. Ou <code>renforts: { depart: 30, … }</code> : l'attaque devient très dure !</li>
+            <li>Sous le capot, regarde la ligne « point A » : combien de soldats de chaque camp dans le cercle ?</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Que se passe-t-il s'il y a autant d'attaquants que de défenseurs dans le cercle ? <span class="petit">(le point est disputé : la barre ne bouge plus)</span></li>
+            <li>L'attaque reprend un point qu'elle avait déjà pris. Gagne-t-elle encore 40 renforts ? <span class="petit">(non : seule la 1re capture rapporte)</span></li>
+            <li>Pourquoi l'arbitre compte 4 fois par seconde et pas 120 ? <span class="petit">(c'est assez précis, et ça évite le lag)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7339,6 +7393,12 @@ avec stabilisateur :  ●──●─●─●●●●  (rejoint sa place en do
           <h4>Des voix plus humaines, un laser stable <span class="etiquette">✅ fait · à valider</span></h4>
           <p>Les soldats du jeu de tanks ne parlent plus avec des voix de robot, et le laser ne balaie plus l'écran quand tu tournes.</p>
           <p class="apprend"><b>Tu apprends :</b> choisir les meilleures voix, suivre en douceur (le lissage). <a href="#etape141">Voir l'étape 141</a>.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">142</div>
+          <h4>Le mode PERCÉE <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Attaque et défense sur 3 points A, B, C : l'attaque a des renforts comptés (+40 par point pris), la défense tient 15 minutes.</p>
+          <p class="apprend"><b>Tu apprends :</b> une machine à états (verrouillé, ouvert, capturé), compter dans un cercle, un compteur de renforts. <a href="#etape142">Voir l'étape 142</a>.</p>
         </div>
       </div>
     </section>
@@ -8545,6 +8605,15 @@ avec stabilisateur :  ●──●─●─●●●●  (rejoint sa place en do
         <textarea class="journal" id="appris-137" data-cle="appris-137" placeholder="Ex. : …"></textarea>
         <label for="idees-137"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-137" data-cle="idees-137" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 142 · le mode PERCÉE, attaque et défense <span class="petit">· 5 novembre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/logique/percee.js</code> (nouveau : l'arbitre), <code>tanks/config.js</code> (rubrique percee, phrases de la radio), <code>tanks/logique/monde.js</code>, <code>tanks/logique/troupes.js</code>, <code>tanks/logique/ia.js</code>, <code>tanks/logique/radio.js</code>, <code>tanks/affichage/accueil.js</code> (la porte 🚩), <code>tanks/affichage/tableau.js</code> (A B C, renforts, chrono, petite carte), <code>tanks/affichage/sous-le-capot.js</code>, <code>tanks/donnees/sauvegarde.js</code> (version 23), <code>tanks/langues/en.js</code>.</p>
+        <p class="petit">✍️ Iron Wolf Studio a demandé : « J'aimerais un nouveau mode de jeu attaque et défense, donc PERCÉE. » ✍️ Tes choix : A puis B puis C, la défense peut reprendre le dernier point, 15 minutes.</p>
+        <label for="appris-142"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Iron Wolf Studio, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-142" data-cle="appris-142" placeholder="Ex. : …"></textarea>
+        <label for="idees-142"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-142" data-cle="idees-142" placeholder="Ex. : …"></textarea>
       </div>
       <div class="carte" style="margin-top: 14px">
         <h4>Étape 141 · des voix plus humaines, un laser stable <span class="petit">· 5 novembre 2026</span></h4>

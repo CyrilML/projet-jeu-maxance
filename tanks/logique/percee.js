@@ -85,7 +85,7 @@ Tanks.Percee = (function () {
     if (equipe === etat.defense) return { x: o.x * 0.5, z: sd * Math.min(Math.abs(o.z) + R.defense, C.monde.camp - 20) };
     const d = dernierPris();
     const z = d ? d.z - sd * R.attaque * 0.6 : o.z - sd * R.attaque;
-    return { x: (d || o).x * 0.5, z };
+    return { x: (d || o).x, z }; // (dans l'axe du point : loin des maisons du village au centre)
   }
 
   // Combien de soldats (un tank = 2) de chaque camp dans le cercle de chaque point ?
@@ -175,7 +175,7 @@ Tanks.Percee = (function () {
   function renfort(monde, equipe, ev) {
     if (equipe === etat.attaque && etat.renforts <= 0) return;
     const debout = monde.soldats.filter((s) => s.equipe === equipe && !s.mort && !s.joueur).length;
-    if (debout >= P.soldats || Tanks.Troupes.place(monde, equipe) <= 0) return;
+    if (debout >= P.soldats[equipe === etat.attaque ? "attaque" : "defense"] || Tanks.Troupes.place(monde, equipe) <= 0) return;
     const a = arrivee(equipe), x = a.x + (h() - 0.5) * 140, z = a.z + (h() - 0.5) * 30;
     const s = Tanks.Troupes.recrue(equipe, x, z, sensDe(equipe) > 0 ? -Math.PI / 2 : Math.PI / 2, "renfort " + (equipe === etat.attaque ? "de l'attaque" : "de la défense") + " n° " + ++etat.arrives[equipe]);
     s.ia.etat = "arrive en renfort";
@@ -231,6 +231,21 @@ Tanks.Percee = (function () {
     const p = ia.percee, avant = ia.perceeAvant ? -sensDe(etat.defense) * P.ia.avance : 0;
     return { x: p.x + ia.perceeEcart[0], z: p.z + ia.perceeEcart[1] + avant, nom: p.nom + (ia.perceeAvant ? " (en avant)" : "") };
   }
+  // ✍️ LA RUÉE (troupes.js la demande avant tout le reste) : certains attaquants foncent sur le point ouvert sans s'arrêter
+  // pour tirer ; quand l'attaque prend le point (la barre monte), certains défenseurs y courent aussi. Choix gardé ~15 s.
+  function ruee(s, monde) {
+    if (!etat.actif || !s.ia || s.joueur) return null;
+    const ia = s.ia, t = monde.temps, o = ouvert();
+    if (!o) return null;
+    if (ia.rueeJusqua === undefined || t > ia.rueeJusqua) {
+      const attaque = s.equipe === etat.attaque, chance = attaque ? P.ia.ruee : o.prise > 0 ? P.ia.rueeDefense : 0;
+      ia.ruee = h() < chance;
+      ia.rueeJusqua = t + (attaque || o.prise > 0 ? 12 + h() * 8 : 3);
+    }
+    if (!ia.ruee) return null;
+    const b = but(s, monde);
+    return b && Math.hypot(o.x - s.x, o.z - s.z) > P.rayon * 0.7 ? { x: b.x, z: b.z, rayon: P.rayon * 0.5, nom: b.nom } : null;
+  }
   // ✍️ Les TANKS : l'attaque appuie à « appui » m devant le point ouvert ; la défense se poste derrière le point
   function butChar(c, monde) {
     if (!etat.actif) return null;
@@ -238,7 +253,7 @@ Tanks.Percee = (function () {
     if (!o) return null;
     const sd = sensDe(etat.defense), cote = ((c.nom || "").length % 3 - 1) * 30;
     const z = c.equipe === etat.attaque ? o.z - sd * P.ia.appui : o.z + sd * P.ia.garde;
-    return { x: o.x + cote, z, rayon: 25, nom: o.nom };
+    return { x: o.x + cote, z, rayon: 25, nom: "point " + o.lettre };
   }
 
   // ✍️ LA FIN : « victoire » ou « defaite » vue par TOI (les Bleus), ou null
@@ -260,5 +275,5 @@ Tanks.Percee = (function () {
     radio.emettre("percee-victoire", { gagnant: etat.fin, camp: etat.camp, gagne, raison: etat.raison, pris: pris(), renforts: etat.renforts, temps: Math.round(etat.temps), captures: bilan.captures, reprises: bilan.reprises });
   }
   const tempsRestant = () => (P.limite > 0 ? Math.max(0, P.limite - etat.temps) : Infinity);
-  return { get actif() { return etat.actif; }, get voulu() { return voulu; }, permise, etat, bilan, choisir, oublier, installer, etape, but, butChar, fin, noterFin, toiHorsDeCombat, ouvert, dernierPris, pris, tempsRestant, arrivee };
+  return { get actif() { return etat.actif; }, get voulu() { return voulu; }, permise, etat, bilan, choisir, oublier, installer, etape, but, butChar, fin, noterFin, toiHorsDeCombat, ruee, ouvert, dernierPris, pris, tempsRestant, arrivee };
 })();

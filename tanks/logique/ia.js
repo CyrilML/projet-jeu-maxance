@@ -79,7 +79,7 @@ Tanks.IA = (function () {
       gz = but.z - c.z;
       const reste = Math.hypot(gx, gz);
       if (reste < but.rayon) gx = gz = 0;
-      ia.etat = (butPercee ? "🚩 " + (c.equipe === Tanks.Percee.etat.attaque ? "appuie l'attaque de " : "garde ") + but.nom : "📢 " + Tanks.Ordres.enMots(c)) + (reste < but.rayon ? " (en place)" : " (" + Math.round(reste) + " m)");
+      ia.etat = (butPercee ? "🚩 " + (c.equipe === Tanks.Percee.etat.attaque ? "appuie l'attaque du " : "garde le ") + but.nom : "📢 " + Tanks.Ordres.enMots(c)) + (reste < but.rayon ? " (en place)" : " (" + Math.round(reste) + " m)");
     } else if (ia.esquive > 0) {
       gx = Math.cos(c.angle + ia.sensEsquive * Math.PI / 2) * 30;
       gz = Math.sin(c.angle + ia.sensEsquive * Math.PI / 2) * 30;

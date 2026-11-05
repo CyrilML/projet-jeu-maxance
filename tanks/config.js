@@ -3423,10 +3423,10 @@ Tanks.CONFIG.percee = {
   pense: 0.25, // s : l'arbitre compte les soldats 4 fois par seconde (pas 120 : pas de lag)
   renforts: { depart: 120, parPoint: 40, char: 1 }, // les renforts de l'attaque ; un tank d'attaque détruit en coûte « char »
   limite: 15 * 60, // s : ✍️ 15 minutes ; écoulées sans les 3 points → la défense gagne (0 = pas de limite)
-  soldats: 18, // soldats debout par camp (les renforts arrivent jusqu'à ce nombre)
-  arrivee: { toutesLes: 2, attaque: 260, defense: 150 }, // s ; m : l'attaque arrive 260 m avant le point ouvert, la défense 150 m derrière
+  soldats: { attaque: 22, defense: 14 }, // soldats debout de chaque camp (les renforts arrivent jusqu'à ce nombre ; la défense a des renforts sans fin, alors elle en a moins à la fois)
+  arrivee: { toutesLes: 2, attaque: 170, defense: 150 }, // s ; m : l'attaque arrive 170 m avant le point ouvert, la défense 150 m derrière
   retour: 6, // s : TOI, à terre, tu reviens au bout de 6 s (à ton point d'arrivée, à pied)
-  ia: { contreAttaque: 0.3, enAvant: 0.25, avance: 45, appui: 70, garde: 35 }, // part des défenseurs qui contre-attaquent le dernier point pris, part en avant (à 45 m) ; les tanks : l'attaque à 70 m devant le point, la défense à 35 m derrière
+  ia: { contreAttaque: 0.3, enAvant: 0.25, avance: 45, appui: 70, garde: 35, ruee: 0.6, rueeDefense: 0.5 }, // ruee : part des attaquants qui FONCENT sur le point sans s'arrêter (rueeDefense : des défenseurs, quand l'attaque prend le point) ; part des défenseurs qui contre-attaquent le dernier point pris, part en avant (à 45 m) ; les tanks : l'attaque à 70 m devant le point, la défense à 35 m derrière
 };
 // les phrases de la radio (« {lettre} » : A, B ou C)
 Object.assign(Tanks.CONFIG.radio.bavard, {

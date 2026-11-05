@@ -280,32 +280,36 @@ Tanks.Troupes = (function () {
     const reflexe = reflexes(s, ia, cible, monde, dt, intentions);
     if (reflexe) return reflexe;
     // (étape 65) TON ORDRE de mouvement : il y va d'abord ; arrivé, il se bat sur place (sans repartir en avant)
-    const but = Tanks.Ordres.but(s, monde);
+    // ✍️ (demande 142, Percée) LA RUÉE : une partie de l'attaque fonce sur le point ouvert sans s'arrêter (comme un ordre de
+    // mouvement) ; et quand l'attaque prend le point, une partie de la défense y court aussi pour le disputer
+    const ruee = !s.ordre && Tanks.Percee.actif && !T.souterrain ? Tanks.Percee.ruee(s, monde) : null;
+    const but = Tanks.Ordres.but(s, monde) || ruee;
+    const mots = ruee ? "🚩 fonce sur " + ruee.nom : but ? "📢 " + Tanks.Ordres.enMots(s) : "";
     if (but) {
       const gx = but.x - s.x, gz = but.z - s.z, reste = Math.hypot(gx, gz);
       // (livre n° 12) en haut d'un perchoir, et l'endroit est ailleurs ? il redescend d'abord par l'échelle
       if (s.perchoir && s.perchoir.plateforme && reste > but.rayon + 4) {
-        ia.etat = "📢 " + Tanks.Ordres.enMots(s) + " · 🪜 redescend de " + s.perchoir.nom;
+        ia.etat = mots + " · 🪜 redescend de " + s.perchoir.nom;
         ia.enPlace = false;
         return { descendre: true };
       }
       // (livre n° 8) l'endroit est dehors (ou dans une autre maison) ? il sort d'abord de la maison où il est
       const so = reste > but.rayon && s.dedansMaison && !Tanks.Structures.dedans(s.dedansMaison, but.x, but.z) ? Tanks.Interieurs.sortie(s) : null;
       if (so) {
-        ia.etat = "📢 " + Tanks.Ordres.enMots(s) + " · 🚪 " + so.quoi;
+        ia.etat = mots + " · 🚪 " + so.quoi;
         intentions.versAngle = Math.atan2(so.z - s.z, so.x - s.x);
         intentions.avancer = Math.abs(angleEntre(intentions.versAngle - s.angle)) < 0.9;
         return debloquer(s, ia, intentions, dt);
       }
       if (reste > but.rayon) {
-        ia.etat = "📢 " + Tanks.Ordres.enMots(s) + " (" + Math.round(reste) + " m)";
+        ia.etat = mots + " (" + Math.round(reste) + " m)";
         intentions.versAngle = Math.atan2(gz, gx);
         intentions.avancer = Math.abs(angleEntre(intentions.versAngle - s.angle)) < 1;
         return intentions;
       }
       if (!cible || s.feuLibre === false) {
-        ia.etat = "📢 " + Tanks.Ordres.enMots(s) + " (en place)";
-        if (s.ordre.action === "suis" || s.ordre.action === "ligne") intentions.versAngle = Tanks.Ordres.ici(monde).angle; // (il regarde où tu regardes)
+        ia.etat = mots + " (en place)";
+        if (s.ordre && (s.ordre.action === "suis" || s.ordre.action === "ligne")) intentions.versAngle = Tanks.Ordres.ici(monde).angle; // (il regarde où tu regardes)
         return intentions;
       }
     }

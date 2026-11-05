@@ -32,6 +32,9 @@ Tanks.LANGUES.en = {
     "⚔️ BATAILLE": "⚔️ BATTLE",
     // ---- demande 142 : 🚩 la Percée (accueil, tableau, radio)
     "🚩 PERCÉE": "🚩 BREAKTHROUGH",
+    "🚩 Percée · {c} · {r} · bilan d'expérience": "🚩 Breakthrough · {c} · {r} · experience report",
+    "⚔️ attaque": "⚔️ attack",
+    "🛡️ défense": "🛡️ defense",
     "attaque et défense · 3 points": "attack and defense · 3 points",
     "🔒 Moderne, 1944, Guerre froide": "🔒 Modern, 1944, Cold War",
     "🚩 PERCÉE · choisis ton camp": "🚩 BREAKTHROUGH · choose your side",
