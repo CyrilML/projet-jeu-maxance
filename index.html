@@ -261,6 +261,7 @@
       <a href="#etape138">Étape 138</a>
       <a href="#etape139">Étape 139</a>
       <a href="#etape140">Étape 140</a>
+      <a href="#etape141">Étape 141</a>
       <a href="#route">Vers Minecraft</a>
       <a href="#journal">Journal</a>
       <a class="jouer" href="jeu/index.html">▶ Jouer</a>
@@ -6822,6 +6823,47 @@ fiche Uzi    : famille "tir", degats 1, portee 50,  cadence 12, auto
       </ol>
     </section>
 
+    <section id="etape141">
+      <h2>🎙️ Étape 141 : des voix plus humaines, un laser stable <span class="etiquette">✅ livrée · à valider</span></h2>
+      <p class="chapeau">Les soldats ne parlent plus avec des voix de robot, et le laser de ton arme ne balaie plus tout l'écran quand tu tournes. <a href="tanks/index.html"><strong>▶ La bataille de tanks</strong></a></p>
+      <div class="grille">
+        <div class="carte">
+          <h4>📋 La demande</h4>
+          <p class="petit">Le fichier complet est dans <code>demandes/141-voix-humaines-laser-stable.md</code>.</p>
+          <ul>
+            <li>✍️ « Les voix ne sont pas assez réalistes, on dirait trop des robots. Fais une voix plus humaine. Le laser, quand tu tournes, il bouge énormément : arrange ça aussi. »</li>
+          </ul>
+        </div>
+        <div class="carte">
+          <h4>✅ Ce que tu peux vérifier</h4>
+          <ul>
+            <li>☐ « version 90 » en haut de la page des tanks.</li>
+            <li>☐ Donne des ordres (T) : les voix sonnent plus humaines, moins rapides.</li>
+            <li>☐ Mets un laser sur ton arme (atelier) et tourne vite : le trait et le point rouge restent calmes.</li>
+            <li>☐ Sous le capot : la ligne du laser dit « stabilisé ».</li>
+          </ul>
+        </div>
+      </div>
+      <h3>🗣️ Pourquoi « robot » ?</h3>
+      <p>Le jeu utilise les voix déjà rangées dans ton ordinateur. Certaines sont belles (« naturelles »), d'autres très vieilles et robotiques. Pour que les soldats ne parlent pas tous pareil, le jeu mélangeait les deux : maintenant, il ne garde que les belles, et chaque soldat parle juste un peu plus grave ou plus aigu. Une voix qui parle trop vite fait aussi « robot » : elles parlent maintenant à une vitesse normale.</p>
+      <p>💡 Astuce : le navigateur <b>Microsoft Edge</b> a des voix « Natural » presque humaines ; le jeu les choisit tout seul.</p>
+      <h3>🎯 Le stabilisateur du laser</h3>
+      <p>Quand tu tournes, ton arme traîne un peu derrière (comme dans la vraie vie), et le point rouge sautait d'un mur proche à une colline lointaine. Maintenant, le point reste sur ta ligne de visée, mais sa <b>distance</b> change en douceur, et le départ du trait <b>suit en douceur</b> : à chaque image, il fait une partie du chemin vers sa vraie place, au lieu d'y sauter d'un coup.</p>
+      <pre>sans stabilisateur :  ●─────────●  (saute d'un coup)
+avec stabilisateur :  ●──●─●─●●●●  (rejoint sa place en douceur)</pre>
+      <p>Mesuré en tournant vite : le point bouge 2 à 5 fois moins, et ses plus grands sauts sont 3 fois plus petits.</p>
+      <h3>🔍 Missions d'exploration</h3>
+      <ul>
+            <li>Dans <code>tanks/config.js</code>, cherche <code>lissage</code> et mets <code>point: 2</code> : le point devient tout mou. Remets 7.</li>
+            <li>Cherche <code>timbres</code> : chaque soldat a sa hauteur et sa vitesse de voix. Essaie une vitesse de 1,4 : ça fait robot !</li>
+      </ul>
+      <h3>❓ Quiz</h3>
+      <ol>
+            <li>Qu'est-ce que « suivre en douceur » ? <span class="petit">(faire une partie du chemin à chaque image, au lieu de sauter d'un coup)</span></li>
+            <li>Pourquoi une voix trop rapide sonne robotique ? <span class="petit">(personne ne parle aussi vite, sans respirer)</span></li>
+      </ol>
+    </section>
+
     <!-- ============ LE VILLAGE (projet à part) ============ -->
     <section id="village">
       <h2>🏘️ Le village : un projet à part</h2>
@@ -7291,6 +7333,12 @@ fiche Uzi    : famille "tir", degats 1, portee 50,  cadence 12, auto
           <h4>De beaux personnages, de belles armes, et leurs bruits <span class="etiquette">✅ fait · à valider</span></h4>
           <p>Un vrai humain à 11 os qui marche, vise, frappe et lance ; 55 armes faites pièce par pièce ; un bruit fabriqué pour chacune.</p>
           <p class="apprend"><b>Tu apprends :</b> squelette et skinning, cinématique inverse, fabriquer un son avec des briques (bruit, note, écho). <a href="#etape140">Voir l'étape 140</a>.</p>
+        </div>
+        <div class="carte fait">
+          <div class="num">141</div>
+          <h4>Des voix plus humaines, un laser stable <span class="etiquette">✅ fait · à valider</span></h4>
+          <p>Les soldats du jeu de tanks ne parlent plus avec des voix de robot, et le laser ne balaie plus l'écran quand tu tournes.</p>
+          <p class="apprend"><b>Tu apprends :</b> choisir les meilleures voix, suivre en douceur (le lissage). <a href="#etape141">Voir l'étape 141</a>.</p>
         </div>
       </div>
     </section>
@@ -8497,6 +8545,15 @@ fiche Uzi    : famille "tir", degats 1, portee 50,  cadence 12, auto
         <textarea class="journal" id="appris-137" data-cle="appris-137" placeholder="Ex. : …"></textarea>
         <label for="idees-137"><strong>Mes idées pour la suite</strong></label>
         <textarea class="journal" id="idees-137" data-cle="idees-137" placeholder="Ex. : …"></textarea>
+      </div>
+      <div class="carte" style="margin-top: 14px">
+        <h4>Étape 141 · des voix plus humaines, un laser stable <span class="petit">· 5 novembre 2026</span></h4>
+        <p><strong>Ce qui a été changé :</strong> <code>tanks/affichage/radio-voix.js</code> (seulement les belles voix), <code>tanks/affichage/armes3d.js</code> (le stabilisateur du laser), <code>tanks/config.js</code> (timbres, vitesses, lissage).</p>
+        <p class="petit">✍️ Iron Wolf Studio a demandé : « Les voix ne sont pas assez réalistes, on dirait trop des robots. Le laser, quand tu tournes, il bouge énormément. »</p>
+        <label for="appris-141"><strong>Ce que j'ai appris</strong> <span class="petit">(à remplir par Iron Wolf Studio, sauvegardé dans ce navigateur)</span></label>
+        <textarea class="journal" id="appris-141" data-cle="appris-141" placeholder="Ex. : …"></textarea>
+        <label for="idees-141"><strong>Mes idées pour la suite</strong></label>
+        <textarea class="journal" id="idees-141" data-cle="idees-141" placeholder="Ex. : …"></textarea>
       </div>
       <div class="carte" style="margin-top: 14px">
         <h4>Étape 140 · de beaux personnages, de belles armes, et leurs bruits <span class="petit">· 31 octobre 2026</span></h4>

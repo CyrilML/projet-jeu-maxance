@@ -71,7 +71,10 @@ Tanks.RadioVoix = (function () {
     // moins de « auMoins », on complète avec les suivantes : mieux vaut plusieurs voix différentes qu'une seule
     if (seuil >= 40) {
       const belles = voixFr.filter((x) => points(x) >= 40);
-      voixFr = (belles.length >= V.auMoins ? belles : belles.concat(voixFr.filter((x) => points(x) < 40)).slice(0, V.auMoins)).slice(0, V.garder);
+      // ✍️ (demande 141 : « les voix ne sont pas assez réalistes, on dirait des robots ») on ne complète PLUS avec des voix
+      // robotiques : une seule belle voix, avec un timbre un peu différent pour chaque soldat, sonne bien plus humain
+      // que trois voix dont deux robots
+      voixFr = belles.slice(0, V.garder);
     }
   }
 

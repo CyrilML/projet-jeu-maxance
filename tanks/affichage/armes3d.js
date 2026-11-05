@@ -2666,6 +2666,10 @@ Tanks.Armes3D = (function () {
   }
   // ------------------------------------------------------------------ LA LAMPE ET LE LASER (dans le monde)
   const LM = { spot: null, faisceau: null, trait: null, point: null, lueur: null };
+  // ✍️ (demande 141) « Le laser, quand tu tournes, il bouge énormément. » Le STABILISATEUR du laser : son départ (la
+  // lentille, qui traîne derrière quand tu tournes) et son point rouge (qui saute d'un objet à l'autre) ne vont plus
+  // tout de suite à leur nouvelle place : ils la rejoignent en douceur (config : armes3d.laser.lissage).
+  const LS = { debut: null, fin: null, t: 0, sauts: 0 };
   function texturePoint() {
     return toile(64, 64, (ctx) => {
       const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
@@ -2759,8 +2763,28 @@ Tanks.Armes3D = (function () {
     const laserOk = !!(enMain && st && st.laser && s.vise && modele && modele.laser);
     LM.trait.visible = LM.point.visible = false;
     bilan.laser = st && st.laser ? (laserOk ? st.laser + " → " + s.vise.sur + " à " + s.vise.d.toFixed(1).replace(".", ",") + " m" : "(pas en main)") : "pas de laser";
+    if (!laserOk) LS.debut = null;
     if (laserOk && pointDansLeMonde(modele.laser, cam, _a)) {
       _b.set(s.vise.x, s.vise.y, s.vise.z);
+      // (demande 141) le stabilisateur, vu DEPUIS LA CAMÉRA (sinon le point traînerait derrière sur l'écran) :
+      //   - le point rouge reste exactement là où tu vises (sur la même ligne que ton œil), mais sa DISTANCE change en
+      //     douceur : il ne saute plus d'un mur proche à une colline lointaine quand tu tournes ;
+      //   - le départ du trait (ta lentille) est lissé par rapport à la caméra : l'arme qui traîne quand tu tournes ne
+      //     fait plus balayer le trait sur tout l'écran.
+      const maintenant = performance.now(), dt = Math.min(0.1, (maintenant - LS.t) / 1000), Z = A3.laser.lissage;
+      LS.t = maintenant;
+      _q.copy(cam.quaternion).invert();
+      const local = _a.clone().sub(cam.position).applyQuaternion(_q); // (la lentille, dans le repère de la caméra)
+      _d.copy(_b).sub(cam.position);
+      const distance = _d.length();
+      if (!LS.debut || LS.debut.distanceTo(local) > Z.saut) (LS.debut = local.clone()), (LS.fin = distance), LS.sauts++;
+      else {
+        LS.debut.lerp(local, 1 - Math.exp(-dt * Z.depart));
+        LS.fin += (distance - LS.fin) * (1 - Math.exp(-dt * Z.point));
+      }
+      _a.copy(LS.debut).applyQuaternion(cam.quaternion).add(cam.position);
+      _b.copy(cam.position).addScaledVector(_d.normalize(), LS.fin);
+      bilan.laser += " · stabilisé (" + LS.sauts + " remise" + (LS.sauts > 1 ? "s" : "") + " en place)"; // (demande 141 : visible sous le capot)
       _d.copy(_b).sub(_a);
       const L = _d.length();
       LM.trait.position.copy(_a);
@@ -3238,6 +3262,7 @@ Tanks.Armes3D = (function () {
     get vitrineEtat() { return { actif: VI.actif, images: VI.images, zoom: VI.zoom, lacet: VI.lacet, modele: VI.modele, magasin: magasin.size }; },
     noterArmeDuJoueur: (objet, modele) => (armeDuJoueur = objet ? { objet, modele } : null),
     get armeDuJoueur() { return armeDuJoueur; },
+    get laser() { return { point: LM.point, trait: LM.trait, sauts: LS.sauts }; }, // (demande 141 : pour mesurer le stabilisateur)
     get vue() { return { actif: V.actif, modele: V.modele, objet: V.objet, cam: V.cam, baisse: V.baisse, recul: V.recul, scene: V.scene, dansLeX2: !!(V.actif && V.dansLeX2), reticule: bilan.reticule || "—" }; },
     LISTE: () => Object.keys(C.armesPrincipales).concat(Object.keys(C.pistolets)),
     ajouterFabrique, // (demande 115 : les armes des éditions)

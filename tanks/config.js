@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 89,
+  version: 90,
   // ✍️ (étape 131) Le nom du studio qui signe le jeu, choisi par Iron Wolf Studio (pour ne pas montrer son vrai nom).
   studio: "Iron Wolf Studio",
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
@@ -1432,7 +1432,10 @@ Tanks.CONFIG = {
       douilles: 12, // douilles éjectées en même temps (au plus)
     },
     lampe: { force: 1.1, faisceau: 0.2 }, // × la force de la lampe de l'atelier (la vraie lumière) ; l'opacité du faisceau qu'on voit
-    laser: { epaisseur: 0.0035, point: 0.07, opacite: 0.55 }, // m, m, 0 à 1
+    laser: { epaisseur: 0.0035, point: 0.07, opacite: 0.55, // m, m, 0 à 1
+      // ✍️ (demande 141) le stabilisateur : la vitesse à laquelle le départ du trait et le point rouge rejoignent leur
+      // place (par seconde : plus petit = plus doux, plus lent) ; saut : m, au-delà on les remet directement à leur place
+      lissage: { depart: 9, point: 7, saut: 3 } },
     apercu: { vitesse: 0.55, hauteur: 210 }, // rad/s : l'arme tourne dans le menu ; px de haut
     // ✍️ LE SON de chaque famille d'arme (affichage/sons.js) : la note du « crac » (Hz), sa durée (s), la force du
     // « boum » grave (0 à 1) et sa note (Hz), et l'écho (s). Le silencieux étouffe tout (un « pfft »).
@@ -2286,9 +2289,11 @@ Tanks.CONFIG.radio = {
     // ✍️ (étape 95 : « pas si robotiques ») tordre beaucoup la hauteur d'une voix la rend robotique (une voix d'humain
     // pousse à 0,6 ou 1,3 sonne comme un dessin animé). On ne la change plus que très peu : la VARIÉTÉ vient surtout
     // du choix de VOIX différentes (homme, femme, autres voix de l'ordinateur), et des meilleures voix d'abord.
+    // ✍️ (demande 141 : « on dirait trop des robots ») une voix qui parle trop VITE sonne robotique : les vitesses sont
+    // maintenant proches de la vitesse normale d'une personne (avant : jusqu'à 1,15)
     timbres: [
-      { hauteur: 0.96, vitesse: 1.06 }, { hauteur: 1.0, vitesse: 1.1 }, { hauteur: 1.04, vitesse: 1.04 }, { hauteur: 0.93, vitesse: 1.12 },
-      { hauteur: 1.02, vitesse: 1.15 }, { hauteur: 0.98, vitesse: 1.02 }, { hauteur: 1.06, vitesse: 1.08 }, { hauteur: 0.95, vitesse: 1.14 },
+      { hauteur: 0.96, vitesse: 1.0 }, { hauteur: 1.0, vitesse: 1.03 }, { hauteur: 1.03, vitesse: 0.98 }, { hauteur: 0.94, vitesse: 1.04 },
+      { hauteur: 1.02, vitesse: 1.05 }, { hauteur: 0.98, vitesse: 0.97 }, { hauteur: 1.05, vitesse: 1.01 }, { hauteur: 0.95, vitesse: 1.03 },
     ],
     interceptee: { hauteur: 0.88, vitesse: 1.0 }, // la radio ennemie : un peu plus grave
     // (étape 95) Les MEILLEURES voix d'abord : les voix « naturelles » (Microsoft Edge : « Online (Natural) »), puis
@@ -2300,8 +2305,8 @@ Tanks.CONFIG.radio = {
       ["espeak", -120], ["compact", -40], ["eloquence", -80], ["grandma (", -80], ["grandpa (", -80], ["eddy (", -60], ["flo (", -60], ["reed (", -60], ["rocko (", -60], ["sandy (", -60], ["shelley (", -60]],
     langueBonus: 15, // (livre n° 3) points en plus pour le français de France (avant le français du Canada, de Belgique…)
     garder: 6,
-    auMoins: 3, // (étape 96) au moins 3 voix différentes si l'ordinateur en a (même un peu moins belles)
-    hasard: { hauteur: 0.04, vitesse: 0.06, urgent: 1.08 }, // (étape 96) ± 4 % de hauteur, ± 6 % de vitesse à chaque phrase ; × 1,08 si c'est urgent
+    auMoins: 3, // (étape 96 ; plus utilisé depuis la demande 141 : on ne mélange plus de voix robotiques aux belles voix)
+    hasard: { hauteur: 0.03, vitesse: 0.04, urgent: 1.05 }, // (demande 141 : un peu moins de hasard) // (étape 96) ± 4 % de hauteur, ± 6 % de vitesse à chaque phrase ; × 1,08 si c'est urgent
     couleurs: { bleus: "#5aa8ff", rouges: "#ff5a4a", radio: "#ffd27a" },
     // ✍️ (livre de demandes n° 3) DES VOIX PLUS HUMAINES. La voix de l'ordinateur ne sait pas jouer la comédie ; alors on
     // lui écrit les phrases comme on PARLE (pas comme on écrit), et on change son rythme selon l'émotion :
@@ -2316,8 +2321,8 @@ Tanks.CONFIG.radio = {
       hesitation: { bavardage: 0.22, reponse: 0.08, urgent: 0 },
       debuts: { bavardage: ["Euh… ", "Bon, ", "Alors, ", "Ouais, "], reponse: ["Ok, ", "Reçu, ", "Ouais, "] },
       morceaux: true,
-      emotions: { urgent: { vitesse: 1.12, hauteur: 1.04 }, reponse: { vitesse: 1.03, hauteur: 1 }, bavardage: { vitesse: 0.95, hauteur: 0.99 }, ennemi: { vitesse: 0.94, hauteur: 0.97 } },
-      bornes: { vitesse: [0.85, 1.3], hauteur: [0.88, 1.12] },
+      emotions: { urgent: { vitesse: 1.08, hauteur: 1.03 }, reponse: { vitesse: 1.0, hauteur: 1 }, bavardage: { vitesse: 0.94, hauteur: 0.99 }, ennemi: { vitesse: 0.93, hauteur: 0.97 } },
+      bornes: { vitesse: [0.85, 1.15], hauteur: [0.9, 1.1] }, // (demande 141 : au plus 1,15 fois plus vite, avant 1,3)
     },
     // (livre n° 3) LE TALKIE-WALKIE autour de la voix (affichage/sons.js) : fond = le volume du souffle pendant qu'il
     // parle ; crepitements = petits « crr » par seconde dans ce souffle ; bipFin = le petit « bip » quand on relâche le
