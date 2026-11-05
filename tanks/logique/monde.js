@@ -140,7 +140,7 @@ Tanks.Monde = (function () {
 
   // ✍️ La bataille : toi + 3 alliés contre 4 ennemis, 12 soldats par équipe, et les engins garés dans ton camp.
   function lancer(monde) {
-    if (monde.carte === "souterrain") return lancerSouterrain(monde); // (étape 80)
+    if (monde.carte === "souterrain" && !Tanks.Percee.voulu) return lancerSouterrain(monde); // (étape 80 ; demande 142 : la Percée se joue toujours dehors)
     T.choisirCarte("bataille");
     monde.metro = null;
     monde.phase = "bataille";
@@ -191,6 +191,7 @@ Tanks.Monde = (function () {
     Tanks.Flotte.installer(monde); // (demande 115, Bataille de drones : toi, dans ton poste de commandement, aux commandes de ta flotte)
     Tanks.GuerreCivile.installer(monde);
     Tanks.Aliens.installer(monde); // (demande 115, Aliens : les pylônes, le vaisseau-mère, les boucliers, les rampants) // (demande 115, Guerre civile : les drapeaux de quartier, les tickets, les mortiers)
+    Tanks.Percee.installer(monde); // ✍️ (demande 142) LA PERCÉE : les 3 points A B C, les renforts de l'attaque (si elle a été choisie à l'accueil)
     radio.emettre("bataille", { classe: C.classes[equipement.classe].nom, arme: Tanks.Equipement.fiche(equipement.arme).nom, gadget: C.gadgets[equipement.gadget].nom, char: monde.joueur.fiche.nom, allies: E.allies, ennemis: E.ennemis, soldats: C.soldats.parEquipe, engins: monde.engins.length, vehicules: monde.vehicules.length, helicos: monde.helicos.length, bateaux: monde.bateaux.length, sousMarins: monde.sousMarins.length, portails: monde.portails.length });
   }
 
@@ -485,6 +486,7 @@ Tanks.Monde = (function () {
     if (enJeu && Tanks.Relais.actif) for (const [nom, d] of Tanks.Relais.etape(monde, dt)) annoncer(nom, d); // (demande 115, Bataille de drones : les canons anti-drones)
     if (enJeu && Tanks.FrontEst.actif) for (const [nom, d] of Tanks.FrontEst.etape(monde)) annoncer(nom, d);
     if (enJeu && Tanks.GuerreCivile.actif) for (const [nom, d] of Tanks.GuerreCivile.etape(monde, dt)) annoncer(nom, d);
+    if (enJeu && Tanks.Percee.actif) for (const [nom, d] of Tanks.Percee.etape(monde, dt)) annoncer(nom, d); // ✍️ (demande 142) la Percée : les points, les renforts
     if (enJeu && Tanks.Aliens.actif) for (const [nom, d] of Tanks.Aliens.etape(monde, dt)) annoncer(nom, d); // (demande 115, Aliens : les rampants, les boucliers qui remontent) // (demande 115, Guerre civile : les drapeaux, les tickets, les renforts, les mortiers) // (demande 115, Europe de l'Est : les dents de dragon, les silos)
     // (étape 67) TA VIE REMONTE : pas touché depuis 5 s ? Ton soldat et ton tank se soignent doucement.
     if (enJeu) {
@@ -526,14 +528,17 @@ Tanks.Monde = (function () {
     }
     // 5. La fin de la bataille ?
     if (enJeu) {
-      const finQG = monde.metro ? Tanks.QG.fin(monde) : Tanks.Relais.actif ? Tanks.Relais.fin(monde) : Tanks.GuerreCivile.actif ? Tanks.GuerreCivile.fin() : Tanks.Aliens.actif ? Tanks.Aliens.fin() : null; // (demande 115, Guerre civile : les tickets) // (demande 115, Bataille de drones : les antennes et les postes) // ✍️ (livre n° 25) un QG détruit : la bataille est finie
+      const finQG = monde.metro ? Tanks.QG.fin(monde) : Tanks.Percee.actif ? Tanks.Percee.fin() : Tanks.Relais.actif ? Tanks.Relais.fin(monde) : Tanks.GuerreCivile.actif ? Tanks.GuerreCivile.fin() : Tanks.Aliens.actif ? Tanks.Aliens.fin() : null; // (demande 115, Guerre civile : les tickets) // (demande 115, Bataille de drones : les antennes et les postes) // ✍️ (livre n° 25) un QG détruit : la bataille est finie
       const horsDeCombat = finQG === "defaite" || (t.mode === "char" && monde.joueur.detruit) || (toi && toi.mort && !toi.aTerre) || (t.engin && t.engin.genre === "helico" && t.engin.detruit) || ((t.mode === "helico" || t.mode === "drone") && t.engin.detruit) || ((t.mode === "jeep" || t.mode === "bateau" || t.mode === "sousmarin" || t.mode === "dca" || t.mode === "moto" || t.mode === "quad" || t.mode === "camion") && t.engin.detruit);
-      if (horsDeCombat) {
+      // ✍️ (demande 142) en Percée, TOI à terre, tu reviens avec les renforts (l'arbitre s'en occupe) : la bataille continue
+      const revient = horsDeCombat && !finQG && Tanks.Percee.actif && Tanks.Percee.toiHorsDeCombat(monde, dt);
+      if (Tanks.Percee.actif && (finQG === "victoire" || finQG === "defaite")) Tanks.Percee.noterFin(finQG === "victoire");
+      if (horsDeCombat && !revient && !(Tanks.Percee.actif && finQG === "victoire")) {
         monde.phase = "defaite";
         S.donnees.defaites++;
         S.ecrire("défaite");
-        radio.emettre("defaite", { temps: monde.chrono, allies: vivants(monde, "bleus"), ennemis: monde.metro ? soldatsVivants(monde, "rouges") + monde.metro.renforts.rouges : vivants(monde, "rouges"), comment: finQG === "defaite" ? (Tanks.Relais.actif ? Tanks.Relais.bilan.raison : Tanks.GuerreCivile.actif ? Tanks.GuerreCivile.bilan.raison : "ton QG est détruit") : toi && toi.mort ? "ton soldat est à terre" : t.mode === "helico" || t.mode === "drone" ? "ton " + t.engin.nom + " est abattu" : t.mode === "jeep" ? "ton 4x4 est détruit" : t.mode === "moto" || t.mode === "quad" ? (t.engin.tombe ? "tu es tombé " + (t.mode === "moto" ? "de ta moto" : "de ton quad") : t.mode === "moto" ? "ta moto est détruite" : "ton quad est détruit") : t.mode === "camion" ? "ton camion est détruit" : t.engin && t.engin.genre === "helico" ? "ton " + t.engin.nom + " est abattu" : t.mode === "bateau" ? "ta vedette est coulée" : t.mode === "sousmarin" ? "ton sous-marin est coulé" : t.mode === "dca" ? "ton camion antiaérien est détruit" : "ton tank est détruit" });
-      } else if (!monde.campagne && (monde.metro ? finQG === "victoire" || (monde.metro.renforts.rouges === 0 && soldatsVivants(monde, "rouges") === 0) : vivants(monde, "rouges") === 0 || finQG === "victoire")) { // (étape 88 : en campagne, ce sont les objectifs)
+        radio.emettre("defaite", { temps: monde.chrono, allies: vivants(monde, "bleus"), ennemis: monde.metro ? soldatsVivants(monde, "rouges") + monde.metro.renforts.rouges : vivants(monde, "rouges"), comment: finQG === "defaite" ? (Tanks.Percee.actif ? Tanks.Percee.etat.raison : Tanks.Relais.actif ? Tanks.Relais.bilan.raison : Tanks.GuerreCivile.actif ? Tanks.GuerreCivile.bilan.raison : "ton QG est détruit") : toi && toi.mort ? "ton soldat est à terre" : t.mode === "helico" || t.mode === "drone" ? "ton " + t.engin.nom + " est abattu" : t.mode === "jeep" ? "ton 4x4 est détruit" : t.mode === "moto" || t.mode === "quad" ? (t.engin.tombe ? "tu es tombé " + (t.mode === "moto" ? "de ta moto" : "de ton quad") : t.mode === "moto" ? "ta moto est détruite" : "ton quad est détruit") : t.mode === "camion" ? "ton camion est détruit" : t.engin && t.engin.genre === "helico" ? "ton " + t.engin.nom + " est abattu" : t.mode === "bateau" ? "ta vedette est coulée" : t.mode === "sousmarin" ? "ton sous-marin est coulé" : t.mode === "dca" ? "ton camion antiaérien est détruit" : "ton tank est détruit" });
+      } else if (!monde.campagne && !revient && (monde.metro ? finQG === "victoire" || (monde.metro.renforts.rouges === 0 && soldatsVivants(monde, "rouges") === 0) : Tanks.Percee.actif ? finQG === "victoire" : vivants(monde, "rouges") === 0 || finQG === "victoire")) { // (demande 142 : en Percée, seuls les points comptent) // (étape 88 : en campagne, ce sont les objectifs)
         monde.phase = "victoire";
         S.donnees.victoires++;
         if (monde.metro) S.donnees.souterrain++; // (étape 80)

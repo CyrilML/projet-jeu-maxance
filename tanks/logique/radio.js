@@ -346,6 +346,12 @@ Tanks.Radio = (function () {
       const notre = d.equipe === "bleus";
       const genre = nom === "qg-attaque" ? (notre ? "qgAttaque" : "qgEnnemiAttaque") : nom === "qg-baie-detruite" ? (notre ? "qgBaie" : "qgEnnemiBaie") : notre ? "qgPerdu" : "qgDetruit";
       dire(monde, null, genre, "urgent", { baies: enLettres(d.baies) }, { qui: "QG Rempart", force: nom !== "qg-attaque" });
+    } else if (nom === "point-capture-commence" || nom === "point-capture" || nom === "point-repris") {
+      // ✍️ (demande 142, Percée) « On prend le point B ! » · « Ils capturent A, défendez ! »
+      const nous = nom === "point-repris" ? d.defense === "bleus" : d.attaque === "bleus";
+      const genre = nom === "point-capture-commence" ? (nous ? "perceePrend" : "perceeAlerte") : nom === "point-capture" ? (nous ? "perceePris" : "perceePerdu") : nous ? "perceeRepris" : "perceeReprisEnnemi";
+      const parleur = plusProche(alliesVivants(monde), d, 400);
+      dire(monde, parleur || null, genre, "urgent", { lettre: d.lettre }, { qui: parleur ? undefined : "Commandement", force: nom !== "point-capture-commence" });
     } else if (nom === "piste-fermee" || nom === "piste-rouverte") {
       // (demande 99) la tour de contrôle annonce l'état des pistes
       const genre = (d.equipe === "rouges" ? "pisteEnnemie" : "notrePiste") + (nom === "piste-fermee" ? "Fermee" : "Rouverte");

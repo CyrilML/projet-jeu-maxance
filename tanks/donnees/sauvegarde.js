@@ -65,12 +65,16 @@
 //   22 (demande 136 : une campagne par édition) : + editions[…].campagne (pour chaque autre édition que Moderne, SA campagne :
 //     les chapitres ouverts, les étoiles, les records, la difficulté). La campagne de Valdrie reste dans « campagne ».
 //     Une ancienne version garde tout : chaque édition commence sa campagne au chapitre 1 (à la difficulté de Moderne).
+//   23 (demande 142 : 🚩 la Percée) : + percee (« camp » = le dernier camp choisi : "attaque" ou "defense" ; « victoires » et
+//     « defaites » = pour chaque camp, tes batailles gagnées et perdues ; « meilleurAttaque » = le plus de renforts qui te
+//     restaient en gagnant à l'attaque ; « meilleurDefense » = le plus de points encore tenus en gagnant à la défense). Une
+//     ancienne version garde tout, avec une Percée jamais jouée (camp « attaque », tout à 0).
 
 window.Tanks = window.Tanks || {};
 
 Tanks.Sauvegarde = (function () {
   const CLE = "tanks-maxance:sauvegarde";
-  const VERSION = 22; // (demande 136 : + la campagne de chaque édition, dans editions[…].campagne) (demande 123 : + la qualité et le compteur d'images ; demande 116 : + la langue ; demande 115 : + l'édition ; demande 114 : + les réglages ; étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents ; livre n° 6 : + l'arme bonus ; livre n° 28 : + la boutique)
+  const VERSION = 23; // (demande 142 : + la Percée) (demande 136 : + la campagne de chaque édition, dans editions[…].campagne) (demande 123 : + la qualité et le compteur d'images ; demande 116 : + la langue ; demande 115 : + l'édition ; demande 114 : + les réglages ; étape 88 : + campagne ; demande 90 : + campagne.difficulte ; demande 97 : + progression ; demande 101 : + battleCoins ; demande 102 : niveaux plus lents ; livre n° 6 : + l'arme bonus ; livre n° 28 : + la boutique)
   const radio = Tanks.Evenements;
 
   function vide() {
@@ -83,13 +87,18 @@ Tanks.Sauvegarde = (function () {
       boutique: boutiqueVide(), // (livre n° 28)
       reglages: reglagesDeDepart(), // (demande 114)
       edition: "moderne", editions: {}, // (demande 115)
-      langue: "fr" }; // (demande 116)
+      langue: "fr", // (demande 116)
+      percee: perceeVide() }; // (demande 142)
   }
   // (demande 114) les réglages au départ : ceux de config.js (« reglages.liste » : le sang ÉTEINT)
   function reglagesDeDepart() {
     const L = Tanks.CONFIG.reglages.liste, r = {};
     for (const k in L) r[k] = L[k].depart;
     return r;
+  }
+  // (demande 142) la Percée au départ : jamais jouée
+  function perceeVide() {
+    return { camp: "attaque", victoires: { attaque: 0, defense: 0 }, defaites: { attaque: 0, defense: 0 }, meilleurAttaque: 0, meilleurDefense: 0 };
   }
   // (livre n° 28) la boutique au départ : rien d'acheté, rien de porté
   function boutiqueVide() {
@@ -248,7 +257,7 @@ Tanks.Sauvegarde = (function () {
       if (brut) {
         const ancienne = JSON.parse(brut);
         const neuve = vide();
-        donnees = Object.assign(neuve, ancienne, { version: VERSION, equipement: fusionner(neuve.equipement, ancienne.equipement), campagne: fusionner(neuve.campagne, ancienne.campagne), progression: fusionner(neuve.progression, ancienne.progression), boutique: fusionner(neuve.boutique, ancienne.boutique), reglages: fusionner(neuve.reglages, ancienne.reglages) }); // (demande 114 : + les réglages) // (livre n° 28 : + la boutique) // (étape 88 : la campagne aussi ; demande 97 : la progression)
+        donnees = Object.assign(neuve, ancienne, { version: VERSION, equipement: fusionner(neuve.equipement, ancienne.equipement), campagne: fusionner(neuve.campagne, ancienne.campagne), progression: fusionner(neuve.progression, ancienne.progression), boutique: fusionner(neuve.boutique, ancienne.boutique), reglages: fusionner(neuve.reglages, ancienne.reglages), percee: fusionner(neuve.percee, ancienne.percee) }); // (demande 142 : + la Percée) // (demande 114 : + les réglages) // (livre n° 28 : + la boutique) // (étape 88 : la campagne aussi ; demande 97 : la progression)
         if ((ancienne.version || 1) < 13) convertir13(donnees, ancienne); // (demande 97)
         const coins = (ancienne.version || 1) < 14 ? convertir14(donnees) : 0; // (demande 101)
         if ((ancienne.version || 1) < 15) convertir15(donnees); // (demande 102)
@@ -256,7 +265,7 @@ Tanks.Sauvegarde = (function () {
         if ((ancienne.version || 1) < 19) (donnees.edition = "moderne"), (donnees.editions = {}); // (demande 115 : une ancienne partie est en Moderne)
         if ((ancienne.version || 1) < 20) donnees.langue = "fr"; // (demande 116 : une ancienne partie est en français)
         if ((ancienne.version || 1) < 21) (donnees.reglages.qualite = "auto"), (donnees.reglages.ips = false); // (demande 123 : qualité automatique, pas de compteur)
-        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins, bonus, boutique: (ancienne.version || 1) < 17, reglages: (ancienne.version || 1) < 18, edition: (ancienne.version || 1) < 19, langue: (ancienne.version || 1) < 20, qualite: (ancienne.version || 1) < 21 }); // (livre n° 28 ; demande 114 ; demande 115 ; demande 116 ; demande 123)
+        if ((ancienne.version || 1) < VERSION) radio.emettre("sauvegarde-convertie", { de: ancienne.version || 1, vers: VERSION, battleCoins: coins, bonus, boutique: (ancienne.version || 1) < 17, reglages: (ancienne.version || 1) < 18, edition: (ancienne.version || 1) < 19, langue: (ancienne.version || 1) < 20, qualite: (ancienne.version || 1) < 21, percee: (ancienne.version || 1) < 23 }); // (livre n° 28 ; demande 114 ; demande 115 ; demande 116 ; demande 123)
       }
     } catch (e) {
       donnees = vide();

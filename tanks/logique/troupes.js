@@ -416,6 +416,9 @@ Tanks.Troupes = (function () {
     // ✍️ (demande 115, Guerre civile) il marche vers un DRAPEAU DE QUARTIER à prendre (ou à défendre)
     const quartier = Tanks.GuerreCivile && Tanks.GuerreCivile.actif && !T.souterrain ? Tanks.GuerreCivile.but(s, monde) : null;
     if (quartier) (gx = quartier.x - s.x), (gz = quartier.z - s.z), (ia.etat = "va vers " + quartier.nom);
+    // ✍️ (demande 142, Percée) l'attaque se jette sur le point ouvert ; la défense le garde (ou contre-attaque le dernier pris)
+    const pointPercee = Tanks.Percee.actif && !T.souterrain ? Tanks.Percee.but(s, monde) : null;
+    if (pointPercee) (gx = pointPercee.x - s.x), (gz = pointPercee.z - s.z), (ia.etat = (s.equipe === Tanks.Percee.etat.attaque ? "⚔️ attaque " : "🛡️ défend ") + pointPercee.nom);
     // ✍️ (livre n° 21) en ESCOUADE : il suit son chef (à sa place dans la file, écartée), au lieu d'avancer seul
     const chef = ia.chef && !ia.chef.mort && !ia.chef.dansUnEngin ? ia.chef : null;
     if (chef && !T.souterrain) {

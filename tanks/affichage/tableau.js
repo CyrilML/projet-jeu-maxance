@@ -114,6 +114,11 @@ Tanks.Tableau = (function () {
     });
     // étape 61
     radio.ecouter("impossible", (d) => dire("✋ " + d.raison, "#ffb37a"));
+    // ✍️ (demande 142) LA PERCÉE : les grands moments des points
+    radio.ecouter("point-capture-commence", (d) => dire(d.camp === "attaque" ? "🚩 On prend le point " + d.lettre + " !" : "🚨 Ils capturent " + d.lettre + ", défendez !", d.camp === "attaque" ? "#ffe27a" : "#ff7a6a", 2500));
+    radio.ecouter("point-capture", (d) => dire(d.camp === "attaque" ? "🏁 Point " + d.lettre + " capturé !" + (d.gain ? " +" + d.gain + " renforts" : "") : "💥 Point " + d.lettre + " perdu…" + (d.suivant ? " Repli sur " + d.suivant + " !" : ""), d.camp === "attaque" ? "#7dffa0" : "#ff7a6a", 3500));
+    radio.ecouter("point-repris", (d) => dire(d.camp === "defense" ? "🔄 Point " + d.lettre + " repris !" : "🔄 Ils ont repris le point " + d.lettre + " !", d.camp === "defense" ? "#7dffa0" : "#ff7a6a", 3000));
+    radio.ecouter("percee-retour", () => dire("🪂 De retour au combat !", "#9cc4ff", 2000));
     radio.ecouter("monter", (d) => dire("🪜 Tu montes dans " + d.dans, "#9cc4ff"));
     radio.ecouter("sortir", () => dire("🪖 À pied ! (1 pistolet · 2 ton arme · 3 ton gadget · 4 ton explosif)", "#9cc4ff", 2500));
     // (étape 77)
@@ -752,6 +757,7 @@ Tanks.Tableau = (function () {
     const sb = Tanks.Monde.soldatsVivants(monde, "bleus"), sr = Tanks.Monde.soldatsVivants(monde, "rouges");
     texte("🪖 " + sb + " / " + C.soldats.parEquipe + "   soldats   " + sr + " / " + C.soldats.parEquipe + " 🪖", L / 2, 66, 12, "rgba(232,228,214,.85)", "center");
     if (Tanks.GuerreCivile && Tanks.GuerreCivile.actif) drapeauxDeQuartier(monde); // (demande 115, Guerre civile)
+    if (Tanks.Percee && Tanks.Percee.actif) pointsPercee(monde, t); // ✍️ (demande 142, Percée)
     if (Tanks.Aliens && Tanks.Aliens.actif) { // (demande 115, Aliens) les 3 pylônes et le cœur du vaisseau-mère
       const AL = Tanks.Aliens, V = AL.vaisseau;
       panneau(L / 2 - 190, 76, 380, 30);
@@ -809,6 +815,13 @@ Tanks.Tableau = (function () {
       ctx.fillStyle = "#e0242a";
       ctx.fillRect(ox - 3.5, oz - 1, 7, 2);
       ctx.fillRect(ox - 1, oz - 3.5, 2, 7);
+    }
+    if (Tanks.Percee && Tanks.Percee.actif) for (const p of Tanks.Percee.etat.points) { // ✍️ (demande 142) les 3 points de la Percée : un rond avec sa lettre
+      const px = x0 + tc / 2 + p.x * k, pz = y0 + tc / 2 + p.z * k, PE = Tanks.Percee.etat;
+      ctx.fillStyle = p.etat === "capture" ? E[PE.attaque].marque : p.etat === "ouvert" ? "#ffe27a" : "#666";
+      ctx.beginPath(), ctx.arc(px, pz, 6, 0, Math.PI * 2), ctx.fill();
+      ctx.strokeStyle = "#111", ctx.lineWidth = 1, ctx.stroke();
+      texte(p.lettre, px, pz + 3.5, 9, "#111", "center");
     }
     for (const q of Tanks.Perchoirs.liste) { // ✍️ (livre n° 12) les perchoirs des tireurs d'élite : un petit triangle doré (gris : effondré)
       const qx = x0 + tc / 2 + q.x * k, qz = y0 + tc / 2 + q.z * k;
@@ -910,9 +923,19 @@ Tanks.Tableau = (function () {
     if (monde.phase === "victoire" || monde.phase === "defaite") {
       const gagne = monde.phase === "victoire";
       panneau(L / 2 - 240, H / 2 - 90, 480, 170);
-      const perdu = Tanks.GuerreCivile && Tanks.GuerreCivile.actif && Tanks.GuerreCivile.etat.tickets.bleus <= 0 && !(t.soldat && t.soldat.mort) ? "🎟️ Plus de renforts…" : t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "moto" ? "💥 Ta moto est hors de combat…" : t.mode === "quad" ? "💥 Ton quad est hors de combat…" : t.mode === "camion" ? "💥 Ton camion est détruit…" : t.engin && t.engin.genre === "helico" ? "🔥 Ton " + t.engin.nom + " est abattu…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : t.mode === "sousmarin" ? "🌊 Ton sous-marin est coulé…" : t.mode === "dca" ? "💥 Ton " + (C.engins.dca.nomCourt || "camion antiaérien") + " est détruit…" : t.mode === "helico" || t.mode === "drone" ? "🔥 Ton " + t.engin.nom + " est abattu…" : "💥 Ton tank est détruit…";
+      const PE = Tanks.Percee && Tanks.Percee.actif ? Tanks.Percee : null; // ✍️ (demande 142)
+      const perdu = PE ? (PE.etat.camp === "attaque" ? "🎟️ L'attaque a échoué…" : "🏁 La ligne est percée…") : Tanks.GuerreCivile && Tanks.GuerreCivile.actif && Tanks.GuerreCivile.etat.tickets.bleus <= 0 && !(t.soldat && t.soldat.mort) ? "🎟️ Plus de renforts…" : t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "moto" ? "💥 Ta moto est hors de combat…" : t.mode === "quad" ? "💥 Ton quad est hors de combat…" : t.mode === "camion" ? "💥 Ton camion est détruit…" : t.engin && t.engin.genre === "helico" ? "🔥 Ton " + t.engin.nom + " est abattu…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : t.mode === "sousmarin" ? "🌊 Ton sous-marin est coulé…" : t.mode === "dca" ? "💥 Ton " + (C.engins.dca.nomCourt || "camion antiaérien") + " est détruit…" : t.mode === "helico" || t.mode === "drone" ? "🔥 Ton " + t.engin.nom + " est abattu…" : "💥 Ton tank est détruit…";
       texte(gagne ? "🏆 VICTOIRE !" : perdu, L / 2, H / 2 - 40, 38, gagne ? "#7dffa0" : "#ff7a6a", "center");
       const qgFin = monde.metro && monde.metro.qg && !monde.campagne ? monde.metro.qg : null; // (livre n° 25)
+      if (PE) {
+        const e = PE.etat, B = PE.bilan, SP = Tanks.Sauvegarde.donnees.percee;
+        texte(gagne ? (e.camp === "attaque" ? "🏆 PERCÉE RÉUSSIE !" : "🏆 DÉFENSE TENUE !") : perdu, L / 2, H / 2 - 40, 34, gagne ? "#7dffa0" : "#ff7a6a", "center");
+        texte(e.raison, L / 2, H / 2 - 8, 16, "#fff", "center");
+        texte("Points pris : " + PE.pris() + " / 3 · renforts restants : " + e.renforts + " · captures " + B.captures + " · reprises " + B.reprises + " · " + Math.floor(e.temps / 60) + " min " + String(Math.floor(e.temps % 60)).padStart(2, "0"), L / 2, H / 2 + 18, 14, "#e8e4d6", "center");
+        texte("Ton livret : ⚔️ " + SP.victoires.attaque + " victoire(s) en attaque · 🛡️ " + SP.victoires.defense + " en défense", L / 2, H / 2 + 38, 13, "#e8e4d6", "center");
+        texte("Entrée : menu · R : rejouer avec le même équipement", L / 2, H / 2 + 62, 16, "#ffe27a", "center");
+        return;
+      }
       texte(gagne ? (qgFin && qgFin.rouges.detruit ? "🏚️ Le QG du Front est détruit : ils n'ont plus de commandement !" : monde.metro ? "Les Rouges n'ont plus ni renfort ni soldat debout dans la station" : (Tanks.Relais && Tanks.Relais.actif && Tanks.Relais.bilan.raison ? Tanks.Relais.bilan.raison : Tanks.GuerreCivile && Tanks.GuerreCivile.actif && Tanks.GuerreCivile.bilan.raison ? Tanks.GuerreCivile.bilan.raison : Tanks.Aliens && Tanks.Aliens.actif && Tanks.Aliens.bilan.raison ? Tanks.Aliens.bilan.raison : "Tous les tanks rouges sont détruits")) : qgFin && qgFin.bleus.detruit ? "🏚️ Ton QG Rempart est détruit…" : Tanks.GuerreCivile && Tanks.GuerreCivile.actif && Tanks.GuerreCivile.etat.tickets.bleus <= 0 ? "🎟️ Le Front n'a plus de tickets : la Garde tient la ville…" : "Les Rouges ont gagné cette fois", L / 2, H / 2 - 6, 18, "#fff", "center");
       const S = Tanks.Sauvegarde.donnees;
       texte("Victoires : " + S.victoires + " · défaites : " + S.defaites + (monde.metro ? " · victoires dans le souterrain : " + S.souterrain : " · tanks détruits : " + S.detruits), L / 2, H / 2 + 24, 15, "#e8e4d6", "center");
@@ -1057,6 +1080,40 @@ Tanks.Tableau = (function () {
       texte(Tanks.Langue.t(p.nom).replace(/^(la |le |l'|the )/, "").slice(0, 10), cx, cy + 24, 9, "rgba(232,228,214,.85)", "center");
     });
     void Q;
+  }
+  // ✍️ (demande 142) LA PERCÉE : les 3 points (🔒 verrouillé, la barre de capture du point ouvert, 🏁 capturé), les
+  // renforts de l'attaque en GRAND, le chrono, et « tu reviens dans N s » quand tu es hors de combat
+  function pointsPercee(monde, t) {
+    const PE = Tanks.Percee, e = PE.etat, l = 420, x0 = L / 2 - l / 2, attaqueToi = e.camp === "attaque";
+    const coulA = E[e.attaque].marque, coulD = E[e.defense].marque, clin = Math.floor((monde.temps || 0) * 4) % 2 === 0;
+    panneau(x0, 76, l, 58);
+    // les renforts (en grand) et le chrono
+    const peu = e.renforts <= 20;
+    texte("🎟️ " + e.renforts, x0 + 12, 110, 26, peu && clin ? "#ff5a3a" : coulA);
+    texte("renforts de l'attaque", x0 + 12, 126, 9, "rgba(232,228,214,.8)");
+    const r = PE.tempsRestant();
+    texte(isFinite(r) ? "⏱️ " + Math.floor(r / 60) + ":" + String(Math.floor(r % 60)).padStart(2, "0") : "⏱️ ∞", x0 + l - 12, 106, 18, r < 60 && clin ? "#ff5a3a" : "#e8e4d6", "right");
+    texte(attaqueToi ? "⚔️ tu attaques" : "🛡️ tu défends", x0 + l - 12, 124, 10, "rgba(232,228,214,.85)", "right");
+    e.points.forEach((p, k) => {
+      const cx = L / 2 - 64 + k * 64, cy = 100;
+      ctx.fillStyle = "rgba(0,0,0,.5)";
+      ctx.beginPath(), ctx.arc(cx, cy, 16, 0, Math.PI * 2), ctx.fill();
+      if (p.etat !== "verrouille") {
+        ctx.fillStyle = coulA;
+        ctx.beginPath(), ctx.moveTo(cx, cy), ctx.arc(cx, cy, 16, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p.prise), ctx.fill();
+      }
+      ctx.strokeStyle = p.etat === "ouvert" ? (p.dispute && clin ? "#fff" : "#ffe27a") : p.etat === "capture" ? coulA : coulD;
+      ctx.lineWidth = p.etat === "ouvert" ? 3 : 2;
+      ctx.beginPath(), ctx.arc(cx, cy, 16, 0, Math.PI * 2), ctx.stroke();
+      texte(p.lettre, cx, cy + 6, 16, p.etat === "verrouille" ? "#888" : "#fff", "center");
+      texte(p.etat === "verrouille" ? "🔒" : p.etat === "capture" ? "🏁 pris" : p.dispute ? "⚔️" : Math.round(p.prise * 100) + " %", cx, cy + 30, 9, "rgba(232,228,214,.9)", "center");
+    });
+    // hors de combat : le compte à rebours du retour
+    if (e.toiAttente > 0) {
+      panneau(L / 2 - 170, H / 2 + 40, 340, 40);
+      texte("⏳ Tu reviens avec les renforts dans " + Math.ceil(e.toiAttente) + " s", L / 2, H / 2 + 66, 16, "#9cc4ff", "center");
+    }
+    void t;
   }
   function barresQG(qg) {
     panneau(L / 2 - 230, 76, 460, 34);

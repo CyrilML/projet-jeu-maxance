@@ -3405,3 +3405,35 @@ Tanks.CONFIG.realisme.soldats.skins = {
     C.equipes[cle] = Object.assign({}, C.equipes[camp], { camouflage: [S.fond].concat(S.taches) });
   }
 })();
+
+// ================================================================== demande 142 : 🚩 LA PERCÉE (logique/percee.js)
+// ✍️ « Un nouveau mode de jeu attaque et défense, donc PERCÉE. » Un camp DÉFEND 3 points chez lui, l'autre ATTAQUE avec
+// des renforts comptés. Tous les nombres se règlent ici (m, s). ✍️ Tes choix (Iron Wolf Studio) : A puis B puis C (un seul
+// point ouvert à la fois), la défense peut reprendre le dernier point pris, 15 minutes au plus.
+Tanks.CONFIG.percee = {
+  editions: ["moderne", "1944", "froide"], // les éditions où la grande carte est la même (les autres ont leur propre règle)
+  camps: { attaque: { nom: "Attaque", icone: "⚔️" }, defense: { nom: "Défense", icone: "🛡️" } },
+  // les 3 points [x, profondeur] : la profondeur se compte depuis le centre de la carte, VERS la base de la défense
+  // (A est le plus près du front, C au fond, devant la base). Le lac est à l'est (x > 430) : on reste à l'ouest.
+  points: [[-120, 200], [140, 360], [-40, 520]],
+  rayon: 25, // m : le cercle de capture autour de chaque point
+  capture: 20, // s : le temps pour 1 attaquant seul (de 0 à 100 %)
+  plusieurs: 3, // la barre va au plus 3 fois plus vite (+ 50 % par soldat d'avance en plus)
+  char: 2, // un tank dans le cercle compte comme 2 soldats
+  pense: 0.25, // s : l'arbitre compte les soldats 4 fois par seconde (pas 120 : pas de lag)
+  renforts: { depart: 120, parPoint: 40, char: 1 }, // les renforts de l'attaque ; un tank d'attaque détruit en coûte « char »
+  limite: 15 * 60, // s : ✍️ 15 minutes ; écoulées sans les 3 points → la défense gagne (0 = pas de limite)
+  soldats: 18, // soldats debout par camp (les renforts arrivent jusqu'à ce nombre)
+  arrivee: { toutesLes: 2, attaque: 260, defense: 150 }, // s ; m : l'attaque arrive 260 m avant le point ouvert, la défense 150 m derrière
+  retour: 6, // s : TOI, à terre, tu reviens au bout de 6 s (à ton point d'arrivée, à pied)
+  ia: { contreAttaque: 0.3, enAvant: 0.25, avance: 45, appui: 70, garde: 35 }, // part des défenseurs qui contre-attaquent le dernier point pris, part en avant (à 45 m) ; les tanks : l'attaque à 70 m devant le point, la défense à 35 m derrière
+};
+// les phrases de la radio (« {lettre} » : A, B ou C)
+Object.assign(Tanks.CONFIG.radio.bavard, {
+  perceePrend: ["On prend le point {lettre} !", "Tout le monde sur {lettre}, on le capture !", "On est sur le point {lettre}, couvrez-nous !"],
+  perceePris: ["Point {lettre} capturé ! Plus quarante renforts !", "Le point {lettre} est à nous ! En avant vers le suivant !"],
+  perceeAlerte: ["Ils capturent {lettre}, défendez !", "Le point {lettre} tombe ! Tout le monde au point {lettre} !", "Ennemis sur {lettre} ! Repoussez-les !"],
+  perceePerdu: ["On a perdu le point {lettre} ! On recule au suivant !", "Le point {lettre} est tombé… Repli !"],
+  perceeRepris: ["On a repris le point {lettre} !", "Le point {lettre} est de nouveau à nous !"],
+  perceeReprisEnnemi: ["Ils ont repris le point {lettre} ! Il faut y retourner !"],
+});
