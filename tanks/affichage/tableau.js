@@ -755,7 +755,8 @@ Tanks.Tableau = (function () {
     texte("contre", L / 2, 36, 13, "#ccc", "center");
     texte(rouges + " / " + E.ennemis + " 🔴", L / 2 + 34, 37, 20, E.rouges.marque);
     const sb = Tanks.Monde.soldatsVivants(monde, "bleus"), sr = Tanks.Monde.soldatsVivants(monde, "rouges");
-    texte("🪖 " + sb + " / " + C.soldats.parEquipe + "   soldats   " + sr + " / " + C.soldats.parEquipe + " 🪖", L / 2, 66, 12, "rgba(232,228,214,.85)", "center");
+    const nbS = Tanks.Percee && Tanks.Percee.actif ? C.percee.soldats : C.soldats.parEquipe; // (demande 142 : plus de soldats en Percée)
+    texte("🪖 " + sb + " / " + nbS + "   soldats   " + sr + " / " + nbS + " 🪖", L / 2, 66, 12, "rgba(232,228,214,.85)", "center");
     if (Tanks.GuerreCivile && Tanks.GuerreCivile.actif) drapeauxDeQuartier(monde); // (demande 115, Guerre civile)
     if (Tanks.Percee && Tanks.Percee.actif) pointsPercee(monde, t); // ✍️ (demande 142, Percée)
     if (Tanks.Aliens && Tanks.Aliens.actif) { // (demande 115, Aliens) les 3 pylônes et le cœur du vaisseau-mère
@@ -908,11 +909,12 @@ Tanks.Tableau = (function () {
     ctx.drawImage(carteVive, X0 - MC, Y0 - MC);
     bilanCarte.images++;
     // Les messages (touché, détruit…)
-    if (message && performance.now() < message.jusqua && message.texte) texte(message.texte, L / 2, 110, 26, message.couleur, "center");
+    const basPercee = Tanks.Percee && Tanks.Percee.actif ? 62 : 0; // (demande 142 : sous le panneau des 3 points)
+    if (message && performance.now() < message.jusqua && message.texte) texte(message.texte, L / 2, 110 + basPercee, 26, message.couleur, "center");
     // (étape 65) la réponse de la radio, et l'ordre en cours (sous le compteur des soldats)
-    if (reponse && performance.now() < reponse.jusqua) texte(reponse.texte, L / 2, 140, 16, "#e8f0ff", "center");
+    if (reponse && performance.now() < reponse.jusqua) texte(reponse.texte, L / 2, 140 + basPercee, 16, "#e8f0ff", "center");
     const grandMessage = message && performance.now() < message.jusqua && message.texte;
-    if (ordreEnCours && performance.now() < ordreEnCours.jusqua && !Tanks.BarreOrdres.ouverte && !grandMessage) texte(ordreEnCours.texte, L / 2, 88, 13, "rgba(255,226,122,.9)", "center");
+    if (ordreEnCours && performance.now() < ordreEnCours.jusqua && !Tanks.BarreOrdres.ouverte && !grandMessage) texte(ordreEnCours.texte, L / 2, 88 + basPercee * 1.2, 13, "rgba(255,226,122,.9)", "center");
     if (Tanks.DronesFPV3D) Tanks.DronesFPV3D.alerte(ctx, L, H, monde); // (demande 115, Europe de l'Est : un drone FPV ennemi sur toi, ton brouilleur)
     finEtAide(monde, t);
   }
@@ -925,7 +927,7 @@ Tanks.Tableau = (function () {
       panneau(L / 2 - 240, H / 2 - 90, 480, 170);
       const PE = Tanks.Percee && Tanks.Percee.actif ? Tanks.Percee : null; // ✍️ (demande 142)
       const perdu = PE ? (PE.etat.camp === "attaque" ? "🎟️ L'attaque a échoué…" : "🏁 La ligne est percée…") : Tanks.GuerreCivile && Tanks.GuerreCivile.actif && Tanks.GuerreCivile.etat.tickets.bleus <= 0 && !(t.soldat && t.soldat.mort) ? "🎟️ Plus de renforts…" : t.soldat && t.soldat.mort ? "💀 Ton soldat est à terre…" : t.mode === "jeep" ? "💥 Ton 4x4 est détruit…" : t.mode === "moto" ? "💥 Ta moto est hors de combat…" : t.mode === "quad" ? "💥 Ton quad est hors de combat…" : t.mode === "camion" ? "💥 Ton camion est détruit…" : t.engin && t.engin.genre === "helico" ? "🔥 Ton " + t.engin.nom + " est abattu…" : t.mode === "bateau" ? "🌊 Ta vedette est coulée…" : t.mode === "sousmarin" ? "🌊 Ton sous-marin est coulé…" : t.mode === "dca" ? "💥 Ton " + (C.engins.dca.nomCourt || "camion antiaérien") + " est détruit…" : t.mode === "helico" || t.mode === "drone" ? "🔥 Ton " + t.engin.nom + " est abattu…" : "💥 Ton tank est détruit…";
-      texte(gagne ? "🏆 VICTOIRE !" : perdu, L / 2, H / 2 - 40, 38, gagne ? "#7dffa0" : "#ff7a6a", "center");
+      if (!PE) texte(gagne ? "🏆 VICTOIRE !" : perdu, L / 2, H / 2 - 40, 38, gagne ? "#7dffa0" : "#ff7a6a", "center");
       const qgFin = monde.metro && monde.metro.qg && !monde.campagne ? monde.metro.qg : null; // (livre n° 25)
       if (PE) {
         const e = PE.etat, B = PE.bilan, SP = Tanks.Sauvegarde.donnees.percee;

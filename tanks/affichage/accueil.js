@@ -22,6 +22,9 @@
 // ✍️ (demande 116 : « Bouton FR / EN ») en haut à droite, le petit bouton FR | EN, et dans ⚙️ Réglages la ligne
 // « 🌐 Langue : Français / English ». L'accueil DEMANDE la langue à logique/reglages.js, puis recharge la page : au
 // chargement, l'interprète (affichage/interprete.js) traduit tout ce qui s'affiche.
+// ✍️ (demande 142) une porte 🚩 PERCÉE (attaque et défense) juste après ⚔️ BATAILLE : elle ouvre un petit panneau pour
+// choisir son camp (⚔️ ATTAQUE ou 🛡️ DÉFENSE). Le choix est une DEMANDE à l'arbitre (logique/percee.js), puis on passe
+// par le menu de l'équipement comme pour la bataille, et « Au combat ! » lance la Percée.
 // L'accueil est un ÉCRAN (de l'affichage) : il ne touche pas au monde. Le menu attend qu'il soit fermé.
 
 window.Tanks = window.Tanks || {};
@@ -50,11 +53,12 @@ Tanks.Accueil = (function () {
       '<div class="a-boutons" hidden>' +
       '<button class="a-jouer a-mode a-campagne' + ferme("campagne") + '" data-accueil="campagne">▶ CAMPAGNE<small>' + (R.campagne ? Tanks.CONFIG.campagne.chapitres.length + " chapitres · l'histoire" : "🔒 dans l'édition Moderne") + "</small></button>" + // (étape 88 ; demande 115)
       '<button class="a-jouer a-mode a-bataille" data-accueil="bataille">⚔️ BATAILLE<small>' + (ED.textes.bataille || "bataille libre · toutes les cartes") + "</small></button>" +
+      '<button class="a-jouer a-mode a-percee' + (Tanks.Percee.permise ? "" : " a-ferme") + '" data-accueil="percee">🚩 PERCÉE<small>' + (Tanks.Percee.permise ? "attaque et défense · 3 points" : "🔒 Moderne, 1944, Guerre froide") + "</small></button>" + // ✍️ (demande 142)
       '<button class="a-jouer a-mode a-editions" data-accueil="editions">📜 ÉDITIONS<small>' + Tanks.EDITIONS.liste.length + " époques · " + ED.icone + " " + (ED.id === "moderne" ? "Moderne" : ED.epoque) + "</small></button>" + // (demande 115)
       '<button class="a-jouer a-mode a-boutique' + ferme("boutique") + '" data-accueil="boutique">🛒 BOUTIQUE<small>' + (R.boutique ? "armes · skins · packs · avancements" : "🔒 dans l'édition Moderne") + "</small></button>" + // (livre n° 28 ; demande 115)
       '<button class="a-jouer a-mode a-personnages" data-accueil="personnages">🎖️ PERSONNAGES<small>les soldats en 3D · classes · tenues</small></button>' + // (demande 114)
       '<button class="a-film" data-accueil="film" title="La bande-annonce du jeu (demande 101)">🎬 Bande-annonce</button>' +
-      '<a class="a-carnet" href="../index.html#etape141">📓 Le carnet</a>' +
+      '<a class="a-carnet" href="../index.html#etape142">📓 Le carnet</a>' +
       '<button class="a-reglages" data-accueil="reglages" title="Les réglages du jeu (demande 114)">⚙️ Réglages</button>' +
       "</div>" +
       '<div class="a-coins" title="Gagnés à chaque mission réussie de la campagne (demande 101) et en bataille libre (livre n° 22)">🪙 <b></b> Battle Coins</div>' +
@@ -94,8 +98,9 @@ Tanks.Accueil = (function () {
     racine.querySelector(".a-panneau").addEventListener("click", (e) => {
       if (e.target.closest("[data-langue]")) return; // (la langue : le clic du dessus s'en occupe)
       e.stopPropagation();
-      const b = e.target.closest("[data-reglage]"), ch = e.target.closest("[data-choix]");
-      if (ch) Tanks.Reglages.choisir(ch.dataset.choix, ch.dataset.valeur), dessinerReglages(ch.dataset.choix); // (demande 123)
+      const b = e.target.closest("[data-reglage]"), ch = e.target.closest("[data-choix]"), pc = e.target.closest("[data-percee]");
+      if (pc) prendreCamp(pc.dataset.percee); // (demande 142)
+      else if (ch) Tanks.Reglages.choisir(ch.dataset.choix, ch.dataset.valeur), dessinerReglages(ch.dataset.choix); // (demande 123)
       else if (b) Tanks.Reglages.changer(b.dataset.reglage), dessinerReglages(b.dataset.reglage);
       else if (e.target.closest("[data-fermer]") || e.target.classList.contains("a-panneau")) fermerReglages();
     });
@@ -143,8 +148,28 @@ Tanks.Accueil = (function () {
     dessinerReglages();
   }
   function fermerReglages() {
-    racine.querySelector(".a-panneau").hidden = true;
-    racine.querySelector(".a-reglages").focus();
+    const P = racine.querySelector(".a-panneau"), percee = P.dataset.percee === "1";
+    P.hidden = true;
+    P.dataset.percee = "";
+    racine.querySelector(percee ? ".a-percee" : ".a-reglages").focus();
+  }
+  // ✍️ (demande 142) LE PANNEAU 🚩 PERCÉE : choisir son camp (le dernier choisi est allumé, retenu dans le livret)
+  function ouvrirPercee() {
+    const P = racine.querySelector(".a-panneau"), SP = Tanks.Sauvegarde.donnees.percee || {}, dernier = SP.camp || "attaque", V = SP.victoires || { attaque: 0, defense: 0 }, R = Tanks.CONFIG.percee;
+    P.dataset.percee = "1";
+    P.hidden = false;
+    P.innerHTML = "<div><h3>🚩 PERCÉE · choisis ton camp</h3>" +
+      '<button class="a-camp' + (dernier === "attaque" ? " allume" : "") + '" data-percee="attaque">⚔️ ATTAQUE<small>Prends les points A, puis B, puis C avant de perdre tes ' + R.renforts.depart + " renforts. +" + R.renforts.parPoint + " renforts par point pris. (" + V.attaque + " victoire(s))</small></button>" +
+      '<button class="a-camp' + (dernier === "defense" ? " allume" : "") + '" data-percee="defense">🛡️ DÉFENSE<small>Garde tes 3 points pendant ' + Math.round(R.limite / 60) + " minutes, ou jusqu'à ce que l'attaque n'ait plus de renforts. Tu peux reprendre le dernier point perdu. (" + V.defense + " victoire(s))</small></button>" +
+      '<p class="a-panneau-pied"><kbd>↑</kbd> <kbd>↓</kbd> choisir · <kbd>Entrée</kbd> prendre ce camp · <kbd>Échap</kbd> fermer</p><button class="a-reglages" data-fermer="1">← Retour</button></div>';
+    P.querySelector('[data-percee="' + dernier + '"]').focus();
+  }
+  function prendreCamp(camp) {
+    Tanks.Percee.choisir(camp);
+    const P = racine.querySelector(".a-panneau");
+    P.hidden = true;
+    P.dataset.percee = "";
+    fermer("percee-go");
   }
   function reglagesClavier(e) {
     if (e.type !== "keydown") return;
@@ -152,6 +177,7 @@ Tanks.Accueil = (function () {
     e.preventDefault(), e.stopImmediatePropagation();
     const b = document.activeElement && document.activeElement.closest && document.activeElement.closest("[data-reglage]");
     if (e.code === "Escape" || e.code === "Backspace") fermerReglages();
+    else if ((e.code === "Enter" || e.code === "Space" || e.code === "NumpadEnter") && document.activeElement && document.activeElement.dataset && document.activeElement.dataset.percee) prendreCamp(document.activeElement.dataset.percee); // (demande 142)
     else if ((e.code === "Enter" || e.code === "Space" || e.code === "NumpadEnter") && b) Tanks.Reglages.changer(b.dataset.reglage), dessinerReglages(b.dataset.reglage);
     else if ((e.code === "Enter" || e.code === "Space" || e.code === "NumpadEnter") && document.activeElement && document.activeElement.dataset && document.activeElement.dataset.choix) Tanks.Reglages.choisir(document.activeElement.dataset.choix, document.activeElement.dataset.valeur), dessinerReglages(document.activeElement.dataset.choix); // (demande 123)
     else if ((e.code === "Enter" || e.code === "Space" || e.code === "NumpadEnter") && document.activeElement && document.activeElement.dataset && document.activeElement.dataset.langue) choisirLangue(document.activeElement.dataset.langue); // (demande 116)
@@ -167,14 +193,17 @@ Tanks.Accueil = (function () {
   // (demande 115) une porte fermée dans cette édition : on le dit, au lieu d'entrer
   function refuser(mode) {
     const p = racine.querySelector(".a-refus"), ED = Tanks.CONFIG.edition;
-    p.textContent = "🔒 " + ({ campagne: "La campagne", boutique: "La boutique", film: "La bande-annonce" }[mode]) + " se joue dans l'édition Moderne. Tu es dans l'édition " + ED.icone + " " + ED.nom + " : ⚔️ BATAILLE pour jouer, 📜 ÉDITIONS pour changer.";
+    p.textContent = "🔒 " + ({ campagne: "La campagne", boutique: "La boutique", film: "La bande-annonce", percee: "La Percée" }[mode]) + (mode === "percee" ? " se joue dans les éditions Moderne, 1944 et Guerre froide." : " se joue dans l'édition Moderne.") + " Tu es dans l'édition " + ED.icone + " " + ED.nom + " : ⚔️ BATAILLE pour jouer, 📜 ÉDITIONS pour changer.";
     p.hidden = false;
     Tanks.Evenements.emettre("edition-refusee", { id: ED.id, nom: ED.nom, icone: ED.icone, raison: mode + " : seulement dans l'édition Moderne" });
   }
   // mode : "campagne" (la liste des chapitres) ou "bataille" (le menu de la bataille libre)
   function fermer(mode) {
     if ((mode === "campagne" || mode === "boutique" || mode === "film") && !Tanks.CONFIG.edition.regles[mode]) return refuser(mode); // (demande 115)
-    if (mode === "reglages") return ouvrirReglages(); // (demande 114 : le panneau s'ouvre SUR l'accueil, qui reste là)
+    if (mode === "reglages") return ouvrirReglages();
+    if (mode === "percee") return Tanks.Percee.permise ? ouvrirPercee() : refuser("percee"); // ✍️ (demande 142)
+    if (mode === "bataille" || mode === "campagne") Tanks.Percee.oublier(); // (une bataille libre normale, ou la campagne)
+    if (mode === "percee-go") mode = "bataille"; // (le camp est choisi : on passe par le menu de l'équipement, comme la bataille) // (demande 114 : le panneau s'ouvre SUR l'accueil, qui reste là)
     if (mode === "editions") { // (demande 115) la galerie des éditions s'ouvre par-dessus l'accueil ; en sortant, on revient ici
       visible = false;
       Tanks.EcranEditions.ouvrir(() => {

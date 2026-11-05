@@ -27,7 +27,7 @@ window.Tanks = window.Tanks || {};
 
 Tanks.CONFIG = {
   // Numéro de version. Il doit être le même que le « ?v=… » des fichiers dans tanks/index.html.
-  version: 90,
+  version: 91,
   // ✍️ (étape 131) Le nom du studio qui signe le jeu, choisi par Iron Wolf Studio (pour ne pas montrer son vrai nom).
   studio: "Iron Wolf Studio",
   // ✍️ (étape 87) L'AMBIANCE « BATTLEFIELD » (affichage/ambiance.js) : un filtre de cinéma sur l'image 3D.
@@ -3431,7 +3431,7 @@ Tanks.CONFIG.percee = {
 // les phrases de la radio (« {lettre} » : A, B ou C)
 Object.assign(Tanks.CONFIG.radio.bavard, {
   perceePrend: ["On prend le point {lettre} !", "Tout le monde sur {lettre}, on le capture !", "On est sur le point {lettre}, couvrez-nous !"],
-  perceePris: ["Point {lettre} capturé ! Plus quarante renforts !", "Le point {lettre} est à nous ! En avant vers le suivant !"],
+  perceePris: ["Point {lettre} capturé ! Des renforts arrivent !", "Le point {lettre} est à nous ! En avant vers le suivant !"],
   perceeAlerte: ["Ils capturent {lettre}, défendez !", "Le point {lettre} tombe ! Tout le monde au point {lettre} !", "Ennemis sur {lettre} ! Repoussez-les !"],
   perceePerdu: ["On a perdu le point {lettre} ! On recule au suivant !", "Le point {lettre} est tombé… Repli !"],
   perceeRepris: ["On a repris le point {lettre} !", "Le point {lettre} est de nouveau à nous !"],
